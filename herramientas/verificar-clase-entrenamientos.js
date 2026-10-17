@@ -28,7 +28,10 @@ const path = require("path");
 const { chromium } = require("./lib/playwright-con-sesion");
 const R = require("./verificar-clase-registrada.js");
 
-const { abrir, CHROME } = R;
+const { CHROME } = R;
+// Los anuncios de la presencia salen al instante: acá se prueba lo que dicen, no su ritmo.
+const abrir = (browser, quien, clase, semilla, opciones) =>
+  R.abrir(browser, quien, clase, semilla, Object.assign({ sinTopeDePresencia: true }, opciones));
 const RAIZ = path.join(__dirname, "..");
 const CLASE = { id: "c-viva", created_by: "u-profe", started_at: new Date().toISOString(), ended_at: null };
 const INICIO = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
@@ -78,7 +81,15 @@ function laParteQueNoTocaLaPagina() {
 
 async function pruebaDelProfe(browser) {
   console.log("\n=== El profe: cada entrenamiento con sus ejercicios, y las puertas ===");
-  const { page, ctx, errores } = await abrir(browser, "u-profe", CLASE, { game_state: [fila()] });
+  /* Lo que Ana ya resolvió de Habilidades en esta clase (como lo deja la base):
+     a la primera (3 estrellas, 1000 → 20), con dos errores (1, 3000 → 30 % de
+     50 = 15) y con la solución (0: no suma). */
+  const HABILIDADES = [
+    { class_session_id: "c-viva", student_id: "u-ana", ejercicio: "detective:x1", estrellas: 3, dificultad: 1000 },
+    { class_session_id: "c-viva", student_id: "u-ana", ejercicio: "detective:x2", estrellas: 1, dificultad: 3000 },
+    { class_session_id: "c-viva", student_id: "u-ana", ejercicio: "detective:x3", estrellas: 0, dificultad: 2000 },
+  ];
+  const { page, ctx, errores } = await abrir(browser, "u-profe", CLASE, { game_state: [fila()], habilidad_resultados: HABILIDADES });
   await page.setViewportSize({ width: 1300, height: 1000 });
   await page.evaluate(() => {
     window.__ponerPresencia("u-ana", { email: "ana@x.cr", full_name: "Ana Rojas", role: "alumno" });
@@ -316,6 +327,62 @@ async function pruebaDelProfe(browser) {
   await page.waitForSelector("#tipos-body button");
   igual("Habilidades abre sus diecinueve", await page.$$eval("#tipos-body > div > button", (b) => b.length), 19);
 
+  /* «Que lo practiquen solos»: en TODOS los tipos con lista (la mayoría no
+     tiene «Preguntar»), el nivel entero o desde un ejercicio, y el profe ve
+     cuántos acierta cada uno. */
+  const tipos = JSON.parse(fs.readFileSync(path.join(RAIZ, "entreno", "data", "tipos.json"), "utf8"));
+  const sinSolos = await page.evaluate(() => TiposCatalogo.TIPOS.filter((t) => !t.propio && t.id !== "maestro").map((t) => {
+    tiposView = { tipo: t.id, nivel: t.niveles[0].n }; renderTiposView();
+    const filas = document.querySelectorAll("#tipos-body li[data-tipo-item]").length;
+    const conBoton = [...document.querySelectorAll("#tipos-body li[data-tipo-item]")].filter((li) => [...li.querySelectorAll("button")].some((b) => b.textContent === "🪟 Que la practiquen")).length;
+    return document.querySelector("#tipos-body [data-practicar-solos]") && filas && filas === conBoton ? null : t.id;
+  }).filter(Boolean));
+  igual("cada habilidad tiene «Que lo practiquen solos» y cada ejercicio «Que la practiquen»", sinSolos, []);
+  await page.evaluate(() => { tiposView = { tipo: "detective", nivel: 1 }; renderTiposView(); });
+  await page.click("#tipos-body [data-practicar-solos]");
+  const primerTipo = tipos.detective.filter((x) => x.nivel === 1)[0].id;
+  await page.waitForFunction(() => window.__tracks.slice(-1)[0].entreno && window.__tracks.slice(-1)[0].entreno.slug === "tipos", null, { timeout: 5000 });
+  const pedidoTipos = await page.evaluate(() => window.__tracks.slice(-1)[0].entreno);
+  // La lista del nivel va a la base antes de pedirlo, con la dificultad de cada uno.
+  const guardado = await page.evaluate(() => window.__inserts.filter((x) => x.tabla === "entreno_pedidos").slice(-1)[0]);
+  const nivel1 = tipos.detective.filter((x) => x.nivel === 1);
+  const difDe = (x) => x.rating || 600 + 400 * x.nivel;
+  igual("la lista del nivel va a la base: cada ejercicio con su dificultad, y su id viaja con el pedido",
+    [guardado && guardado.fila.slug, guardado && Object.keys(guardado.fila.ejercicios).length,
+      guardado && nivel1.every((x) => guardado.fila.ejercicios["detective:" + x.id] === difDe(x)), typeof pedidoTipos.pedido === "string" && pedidoTipos.pedido.length > 0],
+    ["tipos", nivel1.length, true, true]);
+  igual("el nivel entero va desde su primer ejercicio, y el enlace sale de la lista",
+    [pedidoTipos.slug, pedidoTipos.recorte, await page.evaluate((r) => EntrenosClase.enlaceDe(herramientasDelSitio(), "tipos", r).href, pedidoTipos.recorte)],
+    ["tipos", "detective/1/" + primerTipo, "entreno/tipos.html#" + encodeURIComponent("detective/1/" + primerTipo)]);
+  igual("el profe ve la tabla de aciertos: los conectados, todavía sin ninguno",
+    [await seVe(page, "#entreno-aciertos"), await page.textContent("#entreno-aciertos-titulo"),
+      await page.$$eval("#entreno-aciertos-lista li", (li) => li.every((x) => /Todavía no termina ninguno$/.test(x.textContent)))],
+    [true, "Cómo van en «Habilidades»", true]);
+  await page.evaluate((at) => {
+    window.__ponerPresencia("u-ana", { role: "alumno", full_name: "Ana", entreno_hechos: { at, hechos: 4, bien: 3, perfectos: 2 } });
+    window.__ponerPresencia("u-beto", { role: "alumno", full_name: "Beto", entreno_hechos: { at: "un-pedido-viejo", hechos: 9, bien: 9, perfectos: 9 } });
+  }, pedidoTipos.at);
+  await page.waitForFunction(() => /puntos/.test(document.getElementById("entreno-aciertos-lista").textContent), null, { timeout: 6000 }).catch(() => {});
+  igual("cada alumno con sus aciertos y sus puntos, que calcula la base (lo de un pedido viejo no cuenta)",
+    await page.$$eval("#entreno-aciertos-lista li", (li) => li.map((x) => x.textContent)),
+    ["Ana3 de 4 bien · 2 sin errores · 35 puntos", "BetoTodavía no termina ninguno"]);
+  const conPuntos = await page.evaluate(async () => {
+    const { filas } = await ResumenClase.cargarConPuntos(sb, "c-viva");
+    const ana = filas.find((f) => f.student_id === "u-ana") || {};
+    return [ana.puntos_habilidades, PuntosClase.puntos(ana), PuntosClase.desglose(ana)];
+  });
+  igual("«Puntos de esta clase» los suma, y dice de dónde salen", conPuntos, [35, 35, "2 ejercicios de Habilidades bien (1 a la primera) (+35)"]);
+  const segundo = tipos.detective.filter((x) => x.nivel === 1)[1].id;
+  await page.locator('#tipos-body li[data-tipo-item="' + segundo + '"]').getByRole("button", { name: "Que la practiquen" }).click();
+  igual("un ejercicio se manda desde ese ejercicio (y es otro pedido: la tabla empieza de cero)",
+    [await page.evaluate(() => window.__tracks.slice(-1)[0].entreno.recorte), await page.$$eval("#entreno-aciertos-lista li", (li) => li.map((x) => x.textContent))],
+    ["detective/1/" + segundo, ["AnaTodavía no termina ninguno · 35 puntos", "BetoTodavía no termina ninguno"]]);
+  await page.evaluate(() => window.__ponerPresencia("u-ana", { role: "alumno", full_name: "Ana", entreno_hechos: { at: entrenoEnCurso.at, hechos: 1, bien: 1, perfectos: 1 } }));
+  await page.click("#entreno-pedido-quitar");
+  igual("al cerrar la ventana a todos, la tabla se queda para ver cómo les fue",
+    [await seVe(page, "#entreno-aciertos"), await page.textContent("#entreno-aciertos-titulo"), await page.$$eval("#entreno-aciertos-lista li", (li) => li.map((x) => x.textContent))],
+    [true, "Así les fue en «Habilidades»", ["Ana1 de 1 bien · 1 sin errores · 35 puntos", "BetoTodavía no termina ninguno"]]);
+
   // Coordenadas: tiene su propio tablero → «Abrirlo a todos en una ventana».
   await page.evaluate(() => { entrenosView = { slug: null, grupo: null, mostrar: 30 }; pintarEntrenos(); });
   igual("Habilidades se esconde al volver", await seVe(page, "#tipos-body"), false);
@@ -429,6 +496,46 @@ async function pruebaDelAlumno(browser) {
   await page.evaluate(() => window.__ponerPresencia("u-profe", { role: "profesor", full_name: "Profe", entreno: { slug: "aprende-a-jugar", recorte: "torre/3", at: new Date(Date.now() + 2000).toISOString() } }));
   await page.waitForFunction(() => /aprende-a-jugar/.test(document.getElementById("entreno-ventana-marco").getAttribute("src") || ""), null, { timeout: 5000 });
   igual("un nivel de Aprende a jugar se abre con su fragmento al final", await page.getAttribute("#entreno-ventana-marco", "src"), "entreno/aprende-a-jugar.html?en-clase=1#torre/3");
+
+  /* Habilidades: la página de adentro le avisa a la clase cada ejercicio que
+     termina, y el alumno anuncia cuántos lleva. Se resuelve un Detective de
+     verdad, probando opciones hasta la buena (cada error le quita una estrella). */
+  const tiposJson = JSON.parse(fs.readFileSync(path.join(RAIZ, "entreno", "data", "tipos.json"), "utf8"));
+  const det = tiposJson.detective.filter((x) => x.nivel === 1)[0];
+  const atTipos = new Date(Date.now() + 1500).toISOString();
+  const PEDIDO = "3f2a9c1e-7b4d-4e8a-9c2f-1a2b3c4d5e6f";
+  await page.evaluate((o) => window.__ponerPresencia("u-profe", { role: "profesor", full_name: "Profe", entreno: { slug: "tipos", recorte: "detective/1/" + o.id, at: o.at, pedido: o.pedido } }), { id: det.id, at: atTipos, pedido: PEDIDO });
+  await page.waitForFunction(() => /tipos\.html/.test(document.getElementById("entreno-ventana-marco").getAttribute("src") || ""), null, { timeout: 5000 });
+  igual("Habilidades se abre en ese nivel, desde ese ejercicio", await page.getAttribute("#entreno-ventana-marco", "src"),
+    "entreno/tipos.html?en-clase=1#" + encodeURIComponent("detective/1/" + det.id));
+  const marco = page.frameLocator("#entreno-ventana-marco");
+  await marco.locator("#det-op-0").waitFor({ timeout: 20000 });
+  const nOps = await marco.locator('input[name="det-op"]').count();
+  for (let k = 0; k < nOps; k++) {
+    // Ya resuelto (o descartada esa opción): quedan deshabilitadas.
+    if (await marco.locator("#det-op-" + k).isDisabled()) continue;
+    await marco.locator("#det-op-" + k).check();
+    await marco.getByRole("button", { name: "Comprobar" }).click();
+    await page.waitForTimeout(150);
+  }
+  await page.waitForFunction(() => window.__tracks.some((t) => t.entreno_hechos && t.entreno_hechos.hechos === 1), null, { timeout: 8000 }).catch(() => {});
+  const anunciado = await page.evaluate(() => (window.__tracks.filter((t) => t.entreno_hechos).slice(-1)[0] || {}).entreno_hechos || {});
+  igual("al resolverlo, el alumno anuncia que lo hizo y lo acertó, con el pedido del profe",
+    [anunciado.at, anunciado.hechos, anunciado.bien, await page.evaluate(() => Object.keys((entrenoHechosMios || {}).items || {}))],
+    [atTipos, 1, 1, ["detective:" + det.id]]);
+  // «Otra vez» no mejora lo que ya sacó: cuenta lo primero.
+  await page.evaluate(() => document.getElementById("entreno-ventana-marco").contentWindow.parent.postMessage({ fuente: "entreno-en-clase", slug: "tipos", id: Object.keys(entrenoHechosMios.items)[0], estrellas: 0 }, location.origin));
+  await page.waitForTimeout(200);
+  igual("el mismo ejercicio otra vez no cambia lo que sacó", Object.values(await page.evaluate(() => entrenoHechosMios.items)).length, 1);
+  await page.waitForFunction(() => window.__inserts.some((x) => x.tabla === "habilidad_resultados"), null, { timeout: 5000 }).catch(() => {});
+  igual("cada ejercicio terminado se guarda en la base, una vez, contra el pedido del profe (los puntos los pone la base)",
+    await page.evaluate(() => window.__inserts.filter((x) => x.tabla === "habilidad_resultados").map((x) => [x.fila.pedido_id, x.fila.ejercicio, typeof x.fila.estrellas, Object.keys(x.fila).sort().join(",")])),
+    [[PEDIDO, "detective:" + det.id, "number", "ejercicio,estrellas,pedido_id"]]);
+  // Lo que no viene de su marco (otra ventana, otra página) no cuenta.
+  await page.evaluate(() => window.postMessage({ fuente: "entreno-en-clase", slug: "tipos", id: "detective:falso", estrellas: 3 }, location.origin));
+  await page.waitForTimeout(200);
+  igual("un aviso que no viene del marco no cuenta", await page.evaluate(() => "detective:falso" in entrenoHechosMios.items), false);
+  igual("lo que lleva se guarda por si recarga", await page.evaluate(() => JSON.parse(sessionStorage.getItem("sesion_entreno_hechos_v1")).at), atTipos);
 
   // El profe cierra la ventana a todos: se cierra y el marco se vacía.
   await page.evaluate(() => window.__ponerPresencia("u-profe", { role: "profesor", full_name: "Profe" }));

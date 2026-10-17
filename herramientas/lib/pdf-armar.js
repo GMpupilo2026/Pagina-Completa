@@ -12,6 +12,7 @@
  */
 "use strict";
 const fs = require("fs");
+const path = require("path");
 const { execFileSync } = require("child_process");
 
 /* La marca de agua NO se pone con CSS (position: fixed): Chromium la repite en
@@ -103,4 +104,21 @@ with open(archivo, "wb") as f:
   console.log(`Protegido: se abre sin contraseña, no se puede copiar${datos.imprimir ? "" : " ni imprimir"}.`);
 }
 
-module.exports = { unir, proteger };
+/* Deja en regla con PDF/UA-1 un PDF ADAPTADO (letra grande y etiquetado, para
+   quien ve poco o no ve): marca como Artifact lo que Chromium no etiquetó (los
+   dibujos y tableros con aria-hidden, el número de página), le pone el XMP
+   con pdfuaid, el idioma y el título a la vista. NO se cifra: el cifrado y los
+   permisos estorban a más de un lector de pantalla. El detalle, en
+   pdf-adaptado.py; lo comprueba veraPDF (ver «El PDF adaptado: letra grande y
+   lector de pantalla»). */
+function datosAdaptado(archivo, datos) {
+  try {
+    execFileSync("python3", [path.join(__dirname, "pdf-adaptado.py"), archivo, datos.autor, datos.titulo, datos.asunto], { stdio: ["ignore", "pipe", "pipe"] });
+  } catch (e) {
+    console.error("\nNo se pudo dejar en regla el PDF adaptado. ¿Falta pypdf? pip install pypdf");
+    console.error(String(e.stderr || "").trim().split("\n").slice(-3).join("\n"));
+    process.exit(1);
+  }
+}
+
+module.exports = { unir, proteger, datosAdaptado };

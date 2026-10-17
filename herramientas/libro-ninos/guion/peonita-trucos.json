@@ -1,0 +1,2173 @@
+{
+  "libro": "peonita-trucos",
+  "titulo": "Peonita, Tizón y los trucos del bosque",
+  "autor": "Oscar Angulo Cubero",
+  "nota": "Generado por herramientas/libro-ninos-pdf.js: no se edita a mano. Las voces y quién dice cada diálogo, en herramientas/libro-ninos/voces.js. «pausa» son segundos de silencio después del trozo; «piensa» marca la pausa para que el niño conteste.",
+  "voces": {
+    "narrador": {
+      "voz": "mujer adulta",
+      "velocidad": 0.95,
+      "como": "cálida y clara, como quien lee un cuento antes de dormir"
+    },
+    "Peonita": {
+      "voz": "niña",
+      "velocidad": 1,
+      "como": "alegre y curiosa, la más pequeña del tablero"
+    },
+    "Tizón": {
+      "voz": "niño",
+      "velocidad": 1.05,
+      "como": "entusiasta y bromista, el mejor amigo de Peonita"
+    },
+    "Don Lento": {
+      "voz": "hombre mayor",
+      "velocidad": 0.8,
+      "como": "un perezoso sabio: habla muuuy despacio, con pausas"
+    },
+    "Galope": {
+      "voz": "hombre joven",
+      "velocidad": 1.1,
+      "como": "el caballo: enérgico, a saltos"
+    },
+    "Dama Estrella": {
+      "voz": "mujer adulta",
+      "velocidad": 1,
+      "como": "la dama: elegante y brillante"
+    },
+    "Don Saleras": {
+      "voz": "hombre adulto",
+      "velocidad": 1,
+      "como": "el alfil: simpático, con gracia"
+    },
+    "Doña Muralla": {
+      "voz": "mujer adulta",
+      "velocidad": 0.95,
+      "como": "la torre: firme y segura"
+    },
+    "coro": {
+      "voz": "varios niños",
+      "velocidad": 1,
+      "como": "cuando hablan todos a la vez («¡Te encontramos!»)"
+    },
+    "Rey Sereno": {
+      "voz": "hombre mayor",
+      "velocidad": 0.9,
+      "como": "el rey blanco: tranquilo y amable"
+    },
+    "Don Pillo": {
+      "voz": "hombre adulto",
+      "velocidad": 1.05,
+      "como": "el mapache: pícaro y travieso, pero buena gente"
+    }
+  },
+  "pistas": [
+    {
+      "n": 1,
+      "titulo": "Presentación",
+      "segmentos": [
+        {
+          "voz": "narrador",
+          "texto": "Peonita, Tizón y los trucos del bosque. Un cuento para aprender los primeros trucos del ajedrez.",
+          "pausa": 1.2
+        },
+        {
+          "voz": "narrador",
+          "texto": "Escrito por Oscar Angulo Cubero. Academia Ajedrez Integral, Costa Rica.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "Dedicatoria.",
+          "pausa": 1.2
+        },
+        {
+          "voz": "narrador",
+          "texto": "Para quien ya sabe mover las piezas",
+          "pausa": 0.4
+        },
+        {
+          "voz": "narrador",
+          "texto": "y ahora quiere descubrir sus trucos.",
+          "pausa": 0.4
+        },
+        {
+          "voz": "narrador",
+          "texto": "Mira despacio, piensa con calma",
+          "pausa": 0.4
+        },
+        {
+          "voz": "narrador",
+          "texto": "y que el bosque te guarde sus secretos.",
+          "pausa": 0.4
+        },
+        {
+          "voz": "narrador",
+          "texto": "¡Hola otra vez!.",
+          "pausa": 1.2
+        },
+        {
+          "voz": "Peonita",
+          "texto": "¡Hola otra vez! Soy Peonita, y este es mi mejor amigo, Tizón. Si leíste nuestro primer libro, ya sabes cómo se mueve cada pieza, qué es el jaque, el jaque mate y el ahogado.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "Peonita",
+          "texto": "Pero el ajedrez tiene mucho más: tiene trucos. Jugadas sorpresa que te hacen ganar una pieza, o hasta la partida entera, cuando el otro no se da cuenta.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "Peonita",
+          "texto": "En este libro te vamos a contar la aventura que vivimos en el bosque, cuando un mapache muy travieso empezó a llevarse nuestras piezas. Para detenerlo tuvimos que aprender todos los trucos… y ahora te los enseñamos a ti.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "Peonita",
+          "texto": "Ten a mano tu lupa de detective (o un tablero de verdad). ¿Lista? ¿Listo? ¡Vamos al bosque!",
+          "pausa": 1.5
+        }
+      ]
+    },
+    {
+      "n": 2,
+      "titulo": "Capítulo 1. Atención: piezas sin cuidar",
+      "segmentos": [
+        {
+          "voz": "narrador",
+          "texto": "Capítulo 1. Atención: piezas sin cuidar.",
+          "pausa": 1.2
+        },
+        {
+          "voz": "narrador",
+          "texto": "En el dibujo: De noche, en el bosque, un mapache con antifaz se lleva una torre blanca bajo el brazo. Peonita lo ve desde atrás de un árbol, con cara de sorpresa. En el tronco del árbol hay un corazoncito grabado.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "Un viernes, la maestra llevó a toda la clase de excursión al bosque, y la caja de ajedrez fue con ellos. En la noche, mientras los niños dormían en las tiendas de campaña, la caja se abrió y las piezas salieron a jugar sobre una piedra plana.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "Pero a la mañana siguiente, ¡faltaba una torre!",
+          "pausa": 0.5
+        },
+        {
+          "voz": "Tizón",
+          "texto": "¿Dónde está Doña Muralla?",
+          "pausa": 0.2
+        },
+        {
+          "voz": "narrador",
+          "texto": "preguntó Tizón, preocupado.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "La noche siguiente, Peonita se quedó despierta, escondida detrás de un árbol. Entonces lo vio: un mapache con antifaz negro se acercó de puntillas y se llevó un caballo que había quedado solito en una esquina.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "Don Lento",
+          "texto": "¡Es Don Pillo!",
+          "pausa": 0.2
+        },
+        {
+          "voz": "narrador",
+          "texto": "susurró Don Lento desde su rama",
+          "pausa": 0.2
+        },
+        {
+          "voz": "Don Lento",
+          "texto": "El mapache más travieso del bosque. Se lleva las piezas que nadie cuida.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "Peonita",
+          "texto": "¿Y cómo sabe cuáles nadie cuida?",
+          "pausa": 0.5
+        },
+        {
+          "voz": "Don Lento",
+          "texto": "Se fija en las que están sin cuidar: piezas que nadie defiende. En el ajedrez pasa igual. Si dejas una pieza donde el otro la puede comer y ninguna pieza tuya la defiende… te la come gratis.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "Desde esa noche, antes de dejar una pieza en su casilla, Peonita se preguntaba: «¿Quién la cuida?». Y cuando veía una pieza de Tizón sin cuidar… ¡se la comía!",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "Ahora, con tu tablero.",
+          "pausa": 1.2
+        },
+        {
+          "voz": "narrador",
+          "texto": "El alfil negro de c4 está sin cuidar: nadie lo defiende, y la torre se lo puede comer.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "La posición. Piezas blancas: rey en g1; torre en c1; peones en f2, g2, h2. Piezas negras: rey en g8; alfil en c4; peones en f7, g7, h6.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "Arma esta posición en tu tablero. Con el dedo, sigue el camino de c1 a c4.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "Lo que aprendí.",
+          "pausa": 1.2
+        },
+        {
+          "voz": "narrador",
+          "texto": "Una pieza sin cuidar es una pieza que ninguna otra defiende.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "Si el otro deja una pieza sin cuidar y la puedes comer, ¡cómetela!",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "Antes de dejar una pieza tuya, pregúntate: ¿quién la cuida?",
+          "pausa": 1.5
+        }
+      ]
+    },
+    {
+      "n": 3,
+      "titulo": "¡A jugar! Capítulo 1",
+      "segmentos": [
+        {
+          "voz": "narrador",
+          "texto": "¡A jugar! Capítulo 1. Ten listo tu tablero. Si necesitas más tiempo para armar la posición o para pensar, pausa el audio.",
+          "pausa": 1.2
+        },
+        {
+          "voz": "narrador",
+          "texto": "Ejercicio 1.",
+          "pausa": 1.2
+        },
+        {
+          "voz": "narrador",
+          "texto": "La posición. Piezas blancas: rey en g1; torre en d1; peones en f2, g2, h2. Piezas negras: rey en g8; caballo en d5; peones en f7, g7, h6.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "Arma esta posición en tu tablero. Prueba las jugadas con tus piezas antes de contestar.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "Juegan las blancas. ¿Qué pieza negra está sin cuidar? ¿Con qué jugada te la comes?",
+          "pausa": 8,
+          "piensa": true
+        },
+        {
+          "voz": "narrador",
+          "texto": "La respuesta. Torre captura david 5.  El caballo negro estaba sin cuidar: la torre se lo come gratis.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "Ejercicio 2.",
+          "pausa": 1.2
+        },
+        {
+          "voz": "narrador",
+          "texto": "La posición. Piezas blancas: rey en g1; dama en d2; peones en f2, g2, h2. Piezas negras: rey en g8; alfil en b4; caballo en f6; peones en f7, g7, h7.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "Arma esta posición en tu tablero. Prueba las jugadas con tus piezas antes de contestar.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "Juegan las blancas. El alfil negro ataca a tu dama. ¿Qué haces?",
+          "pausa": 8,
+          "piensa": true
+        },
+        {
+          "voz": "narrador",
+          "texto": "La respuesta. Dama captura bella 4.  ¡El alfil está sin cuidar! La dama no tiene que escaparse: se lo come.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "Ejercicio 3.",
+          "pausa": 1.2
+        },
+        {
+          "voz": "narrador",
+          "texto": "La posición. Piezas blancas: rey en g1; alfil en e2; peones en f2, g2, h2. Piezas negras: rey en g8; torre en e8; peones en f7, g7, h7.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "Arma esta posición en tu tablero. Prueba las jugadas con tus piezas antes de contestar.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "Le toca a Peonita. ¿Qué pieza blanca está sin cuidar? ¿Qué jugada quiere hacer Tizón?",
+          "pausa": 8,
+          "piensa": true
+        },
+        {
+          "voz": "narrador",
+          "texto": "La respuesta. Tizón quiere jugar torre captura eva 2.  El alfil blanco de e2 está sin cuidar y la torre negra lo ataca. Peonita tiene que moverlo o defenderlo.",
+          "pausa": 1.5
+        }
+      ]
+    },
+    {
+      "n": 4,
+      "titulo": "Capítulo 2. Los tenedores de Galope",
+      "segmentos": [
+        {
+          "voz": "narrador",
+          "texto": "Capítulo 2. Los tenedores de Galope.",
+          "pausa": 1.2
+        },
+        {
+          "voz": "narrador",
+          "texto": "En el dibujo: Galope, el caballo blanco, salta hacia el centro. De él salen dos flechas: una hacia el rey negro y otra hacia la torre negra.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "Al día siguiente, Galope reunió a todos junto al río.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "Galope",
+          "texto": "Si queremos ganarle a Don Pillo, tenemos que aprender sus trucos",
+          "pausa": 0.2
+        },
+        {
+          "voz": "narrador",
+          "texto": "relinchó",
+          "pausa": 0.2
+        },
+        {
+          "voz": "Galope",
+          "texto": "Y el primero es mío: el tenedor.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "Peonita",
+          "texto": "¿Un tenedor? ¿Como el de comer?",
+          "pausa": 0.2
+        },
+        {
+          "voz": "narrador",
+          "texto": "preguntó Peonita.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "Galope",
+          "texto": "¡Exacto! Un tenedor tiene varias puntas y pincha dos pedazos de comida a la vez. Yo hago lo mismo: con un solo salto ataco dos piezas al mismo tiempo.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "Galope saltó al centro del tablero, justo a una casilla desde donde atacaba al rey negro y a la torre negra.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "Galope",
+          "texto": "¡Jaque!",
+          "pausa": 0.2
+        },
+        {
+          "voz": "narrador",
+          "texto": "dijo",
+          "pausa": 0.2
+        },
+        {
+          "voz": "Galope",
+          "texto": "El rey tiene que escaparse… y la torre se queda sola. ¡Tacatán, me la como!",
+          "pausa": 0.5
+        },
+        {
+          "voz": "Don Lento",
+          "texto": "Por eso hay que tener cuidado con los caballos",
+          "pausa": 0.2
+        },
+        {
+          "voz": "narrador",
+          "texto": "dijo Don Lento",
+          "pausa": 0.2
+        },
+        {
+          "voz": "Don Lento",
+          "texto": "Como saltan en L, sus ataques se ven poco. Antes de cada jugada… busquen adónde puede saltar el caballo del otro.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "Esa noche, Don Pillo intentó llevarse otra pieza, pero Galope lo estaba esperando con un tenedor preparado. El mapache salió corriendo con las manos vacías.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "Ahora, con tu tablero.",
+          "pausa": 1.2
+        },
+        {
+          "voz": "narrador",
+          "texto": "Galope saltó a c7: da jaque al rey y ataca a la torre. ¡Un tenedor!",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "La posición. Piezas blancas: rey en e1; caballo en c7. Piezas negras: rey en e8; torre en a8.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "Arma esta posición en tu tablero. Con el dedo, sigue los caminos de c7 a e8 y de c7 a a8.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "Lo que aprendí.",
+          "pausa": 1.2
+        },
+        {
+          "voz": "narrador",
+          "texto": "Un tenedor es un ataque a dos piezas al mismo tiempo.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "El caballo es el rey de los tenedores: con un salto ataca a dos.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "Si una de las piezas atacadas es el rey, el otro tiene que salvarlo y pierde la otra.",
+          "pausa": 1.5
+        }
+      ]
+    },
+    {
+      "n": 5,
+      "titulo": "¡A jugar! Capítulo 2",
+      "segmentos": [
+        {
+          "voz": "narrador",
+          "texto": "¡A jugar! Capítulo 2. Ten listo tu tablero. Si necesitas más tiempo para armar la posición o para pensar, pausa el audio.",
+          "pausa": 1.2
+        },
+        {
+          "voz": "narrador",
+          "texto": "Ejercicio 1.",
+          "pausa": 1.2
+        },
+        {
+          "voz": "narrador",
+          "texto": "La posición. Piezas blancas: rey en g1; caballo en f5; peones en f2, g2, h2. Piezas negras: rey en g8; dama en c8; peones en f7, g7, h7.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "Arma esta posición en tu tablero. Prueba las jugadas con tus piezas antes de contestar.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "Juegan las blancas. ¿Adónde salta Galope para atacar a dos piezas?",
+          "pausa": 8,
+          "piensa": true
+        },
+        {
+          "voz": "narrador",
+          "texto": "La respuesta. Caballo eva 7 jaque.  Desde e7, Galope da jaque al rey y ataca a la dama. El rey se escapa y Galope se come a la dama.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "Ejercicio 2.",
+          "pausa": 1.2
+        },
+        {
+          "voz": "narrador",
+          "texto": "La posición. Piezas blancas: rey en e1; caballo en e4. Piezas negras: rey en f7; torre en b5.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "Arma esta posición en tu tablero. Prueba las jugadas con tus piezas antes de contestar.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "Juegan las blancas. Busca el tenedor.",
+          "pausa": 8,
+          "piensa": true
+        },
+        {
+          "voz": "narrador",
+          "texto": "La respuesta. Caballo david 6 jaque.  Desde d6, Galope ataca al rey de f7 y a la torre de b5.",
+          "pausa": 1.5
+        }
+      ]
+    },
+    {
+      "n": 6,
+      "titulo": "Capítulo 3. El ataque doble de la Dama Estrella",
+      "segmentos": [
+        {
+          "voz": "narrador",
+          "texto": "Capítulo 3. El ataque doble de la Dama Estrella.",
+          "pausa": 1.2
+        },
+        {
+          "voz": "narrador",
+          "texto": "En el dibujo: La Dama Estrella brilla en el centro, con dos flechas que salen de ella: una hacia el rey negro y otra hacia un alfil negro.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "Dama Estrella",
+          "texto": "Galope no es el único que sabe atacar a dos piezas a la vez",
+          "pausa": 0.2
+        },
+        {
+          "voz": "narrador",
+          "texto": "dijo la Dama Estrella, con su corona brillando bajo la luna.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "Tizón",
+          "texto": "¡Claro!",
+          "pausa": 0.2
+        },
+        {
+          "voz": "narrador",
+          "texto": "dijo Tizón",
+          "pausa": 0.2
+        },
+        {
+          "voz": "Tizón",
+          "texto": "Tú caminas para todos lados.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "Dama Estrella",
+          "texto": "Por eso soy la mejor para los ataques dobles. Miren: si me pongo donde le doy jaque al rey y, por otro camino, ataco a una pieza sin cuidar… el rey tiene que salvarse primero, y la pieza se queda sola.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "La dama se movió y, con un solo paso, dio jaque al rey negro por una diagonal y atacó a un alfil por la fila.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "Peonita",
+          "texto": "¡Es como un tenedor, pero de dama!",
+          "pausa": 0.2
+        },
+        {
+          "voz": "narrador",
+          "texto": "gritó Peonita.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "Dama Estrella",
+          "texto": "Así es",
+          "pausa": 0.2
+        },
+        {
+          "voz": "narrador",
+          "texto": "sonrió la Dama Estrella",
+          "pausa": 0.2
+        },
+        {
+          "voz": "Dama Estrella",
+          "texto": "Y el jaque es lo mejor: obliga al otro a contestar. Cuando busquen un ataque doble, empiecen por los jaques.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "Don Lento asintió desde su rama:",
+          "pausa": 0.2
+        },
+        {
+          "voz": "Don Lento",
+          "texto": "Los jaques… son jugadas que obligan. Revísenlos siempre primero.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "Ahora, con tu tablero.",
+          "pausa": 1.2
+        },
+        {
+          "voz": "narrador",
+          "texto": "La dama da jaque desde a4 y, por la columna, ataca a la torre de a8.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "La posición. Piezas blancas: rey en e1; dama en a4. Piezas negras: rey en e8; torre en a8.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "Arma esta posición en tu tablero. Con el dedo, sigue los caminos de a4 a e8 y de a4 a a8.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "Lo que aprendí.",
+          "pausa": 1.2
+        },
+        {
+          "voz": "narrador",
+          "texto": "La dama ataca en ocho direcciones: es ideal para los ataques dobles.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "El ataque doble más fuerte es el que da jaque y además ataca a otra pieza.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "Para buscar trucos, empieza por revisar los jaques.",
+          "pausa": 1.5
+        }
+      ]
+    },
+    {
+      "n": 7,
+      "titulo": "¡A jugar! Capítulo 3",
+      "segmentos": [
+        {
+          "voz": "narrador",
+          "texto": "¡A jugar! Capítulo 3. Ten listo tu tablero. Si necesitas más tiempo para armar la posición o para pensar, pausa el audio.",
+          "pausa": 1.2
+        },
+        {
+          "voz": "narrador",
+          "texto": "Ejercicio 1.",
+          "pausa": 1.2
+        },
+        {
+          "voz": "narrador",
+          "texto": "La posición. Piezas blancas: rey en g1; dama en d1; peones en f2, g2, h2. Piezas negras: rey en e8; alfil en h4; peones en f7, g7, h7.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "Arma esta posición en tu tablero. Prueba las jugadas con tus piezas antes de contestar.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "Juegan las blancas. Busca un jaque de la dama que ataque también a otra pieza.",
+          "pausa": 8,
+          "piensa": true
+        },
+        {
+          "voz": "narrador",
+          "texto": "La respuesta. Dama anna 4 jaque.  La dama da jaque desde a4 y, por la misma fila, ataca al alfil de h4. El rey se salva y la dama se come al alfil.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "Ejercicio 2.",
+          "pausa": 1.2
+        },
+        {
+          "voz": "narrador",
+          "texto": "La posición. Piezas blancas: rey en g1; dama en e1; peones en g2, h2. Piezas negras: rey en h8; torre en b8; peones en g6, h7.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "Arma esta posición en tu tablero. Prueba las jugadas con tus piezas antes de contestar.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "Juegan las blancas. ¿Qué jaque de la dama gana la torre?",
+          "pausa": 8,
+          "piensa": true
+        },
+        {
+          "voz": "narrador",
+          "texto": "La respuesta. Dama eva 5 jaque.  Desde e5, la dama da jaque al rey por la diagonal y ataca a la torre de b8 por la otra diagonal.",
+          "pausa": 1.5
+        }
+      ]
+    },
+    {
+      "n": 8,
+      "titulo": "Capítulo 4. Sorpresa: el peón también ataca doble",
+      "segmentos": [
+        {
+          "voz": "narrador",
+          "texto": "Capítulo 4. Sorpresa: el peón también ataca doble.",
+          "pausa": 1.2
+        },
+        {
+          "voz": "narrador",
+          "texto": "En el dibujo: Peonita, en el centro, da un paso adelante. De ella salen dos flechas cortas hacia dos caballos negros, uno a cada lado, que la miran asombrados.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "Peonita estaba un poco triste.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "Peonita",
+          "texto": "Galope hace tenedores, la Dama Estrella hace ataques dobles… y yo soy solo un peón",
+          "pausa": 0.2
+        },
+        {
+          "voz": "narrador",
+          "texto": "suspiró.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "Don Lento bajó un poquito de su rama.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "Don Lento",
+          "texto": "Peonita… ¿cómo come un peón?",
+          "pausa": 0.5
+        },
+        {
+          "voz": "Peonita",
+          "texto": "En diagonal, hacia adelante: una casilla a la izquierda o una a la derecha.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "Don Lento",
+          "texto": "Entonces… un peón ataca dos casillas a la vez. Si tú avanzas y quedas justo en medio de dos piezas del otro…",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "Peonita abrió los ojos muy grandes. Avanzó una casilla y quedó entre los dos caballos de Tizón: ¡los atacaba a los dos! Tizón solo pudo salvar a uno.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "Tizón",
+          "texto": "¡Un tenedor de peón!",
+          "pausa": 0.2
+        },
+        {
+          "voz": "narrador",
+          "texto": "celebró Tizón, aunque había perdido el caballo",
+          "pausa": 0.2
+        },
+        {
+          "voz": "Tizón",
+          "texto": "Y lo mejor es que un peón vale poco: aunque te coman después, ya ganaste.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "Desde ese día, Peonita no volvió a sentirse pequeña. En el ajedrez, hasta el peón más chiquito puede hacer el truco más grande.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "Ahora, con tu tablero.",
+          "pausa": 1.2
+        },
+        {
+          "voz": "narrador",
+          "texto": "El peón avanzó a d5 y ataca a los dos caballos. Uno se va a escapar… y el otro, se lo come.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "La posición. Piezas blancas: rey en g1; peones en d5, g2, h2. Piezas negras: rey en g8; caballos en c6, e6; peones en f7, g7, h7.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "Arma esta posición en tu tablero. Con el dedo, sigue los caminos de d5 a c6 y de d5 a e6.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "Lo que aprendí.",
+          "pausa": 1.2
+        },
+        {
+          "voz": "narrador",
+          "texto": "El peón ataca las dos casillas de adelante en diagonal.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "Si avanza y queda entre dos piezas, ¡las ataca a las dos!",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "Vale poco, así que aunque se lo coman, el tenedor de peón casi siempre gana.",
+          "pausa": 1.5
+        }
+      ]
+    },
+    {
+      "n": 9,
+      "titulo": "¡A jugar! Capítulo 4",
+      "segmentos": [
+        {
+          "voz": "narrador",
+          "texto": "¡A jugar! Capítulo 4. Ten listo tu tablero. Si necesitas más tiempo para armar la posición o para pensar, pausa el audio.",
+          "pausa": 1.2
+        },
+        {
+          "voz": "narrador",
+          "texto": "Ejercicio 1.",
+          "pausa": 1.2
+        },
+        {
+          "voz": "narrador",
+          "texto": "La posición. Piezas blancas: rey en g1; peones en c3, d3, f2, g2, h2. Piezas negras: rey en g8; alfil en c5; caballo en e5; peones en f7, g7, h7.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "Arma esta posición en tu tablero. Prueba las jugadas con tus piezas antes de contestar.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "Juegan las blancas. ¿Qué peón hace el tenedor?",
+          "pausa": 8,
+          "piensa": true
+        },
+        {
+          "voz": "narrador",
+          "texto": "La respuesta. d4.  El peón avanza a d4 y ataca al alfil y al caballo. Si el alfil se lo come, el peón de c3 se come al alfil, y el caballo sigue atacado.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "Ejercicio 2.",
+          "pausa": 1.2
+        },
+        {
+          "voz": "narrador",
+          "texto": "La posición. Piezas blancas: rey en g1; peones en e2, f2, g2, h2. Piezas negras: rey en g8; caballos en d5, f5; peones en f7, g7, h7.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "Arma esta posición en tu tablero. Prueba las jugadas con tus piezas antes de contestar.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "Juegan las blancas. ¿Qué peón ataca a los dos caballos? Pista: acuérdate de su primera salida.",
+          "pausa": 8,
+          "piensa": true
+        },
+        {
+          "voz": "narrador",
+          "texto": "La respuesta. e4.  En su primera salida, el peón avanza dos casillas, hasta e4, y ataca a los dos caballos.",
+          "pausa": 1.5
+        }
+      ]
+    },
+    {
+      "n": 10,
+      "titulo": "Capítulo 5. Sujeta y no la sueltes: la clavada",
+      "segmentos": [
+        {
+          "voz": "narrador",
+          "texto": "Capítulo 5. Sujeta y no la sueltes: la clavada.",
+          "pausa": 1.2
+        },
+        {
+          "voz": "narrador",
+          "texto": "En el dibujo: Don Saleras, el alfil blanco, apunta con una flecha larga e inclinada que atraviesa a un caballo negro y llega hasta el rey negro, que está detrás.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "Al cuarto día, muy temprano, apareció un viejo amigo: Don Saleras, el alfil, con su gorro de punta.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "Don Saleras",
+          "texto": "Les voy a enseñar mi truco favorito",
+          "pausa": 0.2
+        },
+        {
+          "voz": "narrador",
+          "texto": "dijo",
+          "pausa": 0.2
+        },
+        {
+          "voz": "Don Saleras",
+          "texto": "Se llama la clavada.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "Don Saleras se puso en una diagonal donde había un caballo negro, y detrás del caballo, en la misma línea, el rey negro.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "Don Saleras",
+          "texto": "Ahora el caballo no se puede mover",
+          "pausa": 0.2
+        },
+        {
+          "voz": "narrador",
+          "texto": "explicó",
+          "pausa": 0.2
+        },
+        {
+          "voz": "Don Saleras",
+          "texto": "Si se quita, el rey queda en jaque, y eso no está permitido. Es como si el caballo estuviera pegado al tablero con goma.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "Tizón",
+          "texto": "¡Pobrecito!",
+          "pausa": 0.2
+        },
+        {
+          "voz": "narrador",
+          "texto": "dijo Tizón.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "Don Saleras",
+          "texto": "Y lo mejor viene ahora: como no se puede mover, lo podemos atacar con otra pieza… y no se va a poder escapar.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "Peonita avanzó y atacó al caballo clavado. El caballo quiso huir, pero no podía.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "Don Saleras",
+          "texto": "Una pieza clavada no se puede mover",
+          "pausa": 0.2
+        },
+        {
+          "voz": "narrador",
+          "texto": "repitió Don Saleras",
+          "pausa": 0.2
+        },
+        {
+          "voz": "Don Saleras",
+          "texto": "Así que hay que atacarla otra vez, y más fuerte.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "Ahora, con tu tablero.",
+          "pausa": 1.2
+        },
+        {
+          "voz": "narrador",
+          "texto": "El alfil clava al caballo: si el caballo se mueve, el rey queda en jaque, y eso no se puede.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "La posición. Piezas blancas: rey en e1; alfil en b5. Piezas negras: rey en e8; torre en a8; caballo en c6.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "Arma esta posición en tu tablero. Con el dedo, sigue el camino de b5 a e8.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "Lo que aprendí.",
+          "pausa": 1.2
+        },
+        {
+          "voz": "narrador",
+          "texto": "En una clavada, una pieza no se puede mover porque detrás está su rey.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "Las clavadas las hacen el alfil, la torre y la dama: las piezas que caminan en línea.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "A una pieza clavada, ¡atácala otra vez!: no se puede escapar.",
+          "pausa": 1.5
+        }
+      ]
+    },
+    {
+      "n": 11,
+      "titulo": "¡A jugar! Capítulo 5",
+      "segmentos": [
+        {
+          "voz": "narrador",
+          "texto": "¡A jugar! Capítulo 5. Ten listo tu tablero. Si necesitas más tiempo para armar la posición o para pensar, pausa el audio.",
+          "pausa": 1.2
+        },
+        {
+          "voz": "narrador",
+          "texto": "Ejercicio 1.",
+          "pausa": 1.2
+        },
+        {
+          "voz": "narrador",
+          "texto": "La posición. Piezas blancas: rey en g1; torre en e1; peón en d4. Piezas negras: rey en e8; caballo en e6; peón en f7.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "Arma esta posición en tu tablero. Prueba las jugadas con tus piezas antes de contestar.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "Juegan las blancas. La torre clava al caballo negro. ¿Cómo lo atacas otra vez?",
+          "pausa": 8,
+          "piensa": true
+        },
+        {
+          "voz": "narrador",
+          "texto": "La respuesta. d5.  El peón avanza a d5 y ataca al caballo clavado, que no puede escapar.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "Ejercicio 2.",
+          "pausa": 1.2
+        },
+        {
+          "voz": "narrador",
+          "texto": "La posición. Piezas blancas: rey en g1; alfil en f1; peón en b3. Piezas negras: rey en g8; dama en d5.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "Arma esta posición en tu tablero. Prueba las jugadas con tus piezas antes de contestar.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "Juegan las blancas. ¿Cómo clava Don Saleras a la dama negra?",
+          "pausa": 8,
+          "piensa": true
+        },
+        {
+          "voz": "narrador",
+          "texto": "La respuesta. Alfil cesar 4.  En c4, el alfil ataca a la dama y detrás de ella está el rey: la dama está clavada. Aunque se coma al alfil, el peón de b3 se come a la dama.",
+          "pausa": 1.5
+        }
+      ]
+    },
+    {
+      "n": 12,
+      "titulo": "Capítulo 6. Al revés de la clavada: la enfilada",
+      "segmentos": [
+        {
+          "voz": "narrador",
+          "texto": "Capítulo 6. Al revés de la clavada: la enfilada.",
+          "pausa": 1.2
+        },
+        {
+          "voz": "narrador",
+          "texto": "En el dibujo: Doña Muralla, la torre blanca, apunta con una flecha recta al rey negro, que se aparta asustado. Detrás del rey, en la misma fila, espera una torre negra.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "Doña Muralla",
+          "texto": "Yo sé un truco que es la clavada al revés",
+          "pausa": 0.2
+        },
+        {
+          "voz": "narrador",
+          "texto": "dijo Doña Muralla, la torre.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "coro",
+          "texto": "¿Al revés?",
+          "pausa": 0.2
+        },
+        {
+          "voz": "narrador",
+          "texto": "preguntaron Peonita y Tizón.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "Doña Muralla",
+          "texto": "En la clavada, la pieza de adelante es la chiquita y la de atrás, la importante. En la enfilada es al revés: ataco primero a la pieza importante, y cuando se quita… me como a la que estaba detrás.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "Doña Muralla se puso en la misma fila que el rey negro y le dio jaque. Detrás del rey, en esa misma fila, había una torre negra.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "El rey tuvo que apartarse… ¡y Doña Muralla se comió a la torre!",
+          "pausa": 0.5
+        },
+        {
+          "voz": "Tizón",
+          "texto": "Es como en la fila de la soda de la escuela",
+          "pausa": 0.2
+        },
+        {
+          "voz": "narrador",
+          "texto": "se rió Tizón",
+          "pausa": 0.2
+        },
+        {
+          "voz": "Tizón",
+          "texto": "si el primero se quita, el de atrás queda de frente.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "Don Lento",
+          "texto": "Exactamente",
+          "pausa": 0.2
+        },
+        {
+          "voz": "narrador",
+          "texto": "dijo Don Lento",
+          "pausa": 0.2
+        },
+        {
+          "voz": "Don Lento",
+          "texto": "Cuando vean dos piezas del otro en la misma línea… piensen en una clavada o en una enfilada.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "Ahora, con tu tablero.",
+          "pausa": 1.2
+        },
+        {
+          "voz": "narrador",
+          "texto": "La torre da jaque por la fila. Cuando el rey se aparte, se come a la torre de a4.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "La posición. Piezas blancas: rey en g1; torre en h4. Piezas negras: rey en e4; torre en a4.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "Arma esta posición en tu tablero. Con el dedo, sigue el camino de h4 a a4.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "Lo que aprendí.",
+          "pausa": 1.2
+        },
+        {
+          "voz": "narrador",
+          "texto": "En la enfilada se ataca a la pieza importante, que tiene otra detrás.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "Cuando la de adelante se aparta, se come a la de atrás.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "Dos piezas del otro en la misma línea: ¡busca la clavada o la enfilada!",
+          "pausa": 1.5
+        }
+      ]
+    },
+    {
+      "n": 13,
+      "titulo": "¡A jugar! Capítulo 6",
+      "segmentos": [
+        {
+          "voz": "narrador",
+          "texto": "¡A jugar! Capítulo 6. Ten listo tu tablero. Si necesitas más tiempo para armar la posición o para pensar, pausa el audio.",
+          "pausa": 1.2
+        },
+        {
+          "voz": "narrador",
+          "texto": "Ejercicio 1.",
+          "pausa": 1.2
+        },
+        {
+          "voz": "narrador",
+          "texto": "La posición. Piezas blancas: rey en h3; torre en a8. Piezas negras: rey en d6; torre en d1.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "Arma esta posición en tu tablero. Prueba las jugadas con tus piezas antes de contestar.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "Juegan las blancas. El rey y la torre negros están en la misma columna. ¿Cómo haces la enfilada?",
+          "pausa": 8,
+          "piensa": true
+        },
+        {
+          "voz": "narrador",
+          "texto": "La respuesta. Torre david 8 jaque.  La torre da jaque desde d8. El rey se aparta y la torre se come a la torre de d1.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "Ejercicio 2.",
+          "pausa": 1.2
+        },
+        {
+          "voz": "narrador",
+          "texto": "La posición. Piezas blancas: rey en h1; alfil en d1. Piezas negras: rey en d5; dama en g8.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "Arma esta posición en tu tablero. Prueba las jugadas con tus piezas antes de contestar.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "Juegan las blancas. El rey y la dama negros están en la misma diagonal. ¿Qué jugada hace Don Saleras?",
+          "pausa": 8,
+          "piensa": true
+        },
+        {
+          "voz": "narrador",
+          "texto": "La respuesta. Alfil bella 3 jaque.  El alfil da jaque desde b3. El rey se aparta y el alfil se come a la dama de g8.",
+          "pausa": 1.5
+        }
+      ]
+    },
+    {
+      "n": 14,
+      "titulo": "Capítulo 7. Nunca dejes al rey sin aire: el mate del pasillo",
+      "segmentos": [
+        {
+          "voz": "narrador",
+          "texto": "Capítulo 7. Nunca dejes al rey sin aire: el mate del pasillo.",
+          "pausa": 1.2
+        },
+        {
+          "voz": "narrador",
+          "texto": "En el dibujo: El Rey Sereno, detrás de tres peones que no lo dejan salir, mira asustado a una torre negra que le apunta desde el otro lado. Arriba del rey brilla una ventanita.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "Una mañana, el Rey Sereno estaba muy tranquilo en su esquina, protegido por tres peones que tenía adelante.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "Rey Sereno",
+          "texto": "Aquí nadie me puede molestar",
+          "pausa": 0.2
+        },
+        {
+          "voz": "narrador",
+          "texto": "dijo, satisfecho.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "Pero entonces, la torre de Tizón llegó por la última fila y le dio jaque. El Rey Sereno quiso escaparse… ¡y no pudo! Sus propios peones le tapaban la salida.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "Tizón",
+          "texto": "¡Jaque mate!",
+          "pausa": 0.2
+        },
+        {
+          "voz": "narrador",
+          "texto": "dijo Tizón.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "Don Lento",
+          "texto": "Ese es el mate del pasillo",
+          "pausa": 0.2
+        },
+        {
+          "voz": "narrador",
+          "texto": "explicó Don Lento",
+          "pausa": 0.2
+        },
+        {
+          "voz": "Don Lento",
+          "texto": "El rey se queda encerrado en la última fila, como en un pasillo, y una torre o una dama le da mate desde un lado.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "Peonita",
+          "texto": "¿Y cómo se evita?",
+          "pausa": 0.2
+        },
+        {
+          "voz": "narrador",
+          "texto": "preguntó Peonita.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "Don Lento",
+          "texto": "Con una ventanita. Cuando ya no haya peligro en el centro… mueve uno de los peones que están frente a tu rey. Así, si un día le dan jaque por la última fila, el rey tiene una casilla para escaparse.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "Desde entonces, el Rey Sereno siempre tuvo su ventanita abierta. Y cuando el rey de Tizón se olvidaba de la suya… ¡Peonita le daba el mate del pasillo!",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "Ahora, con tu tablero.",
+          "pausa": 1.2
+        },
+        {
+          "voz": "narrador",
+          "texto": "Jaque mate del pasillo: el rey negro no puede salir, porque sus peones le tapan el camino.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "La posición. Piezas blancas: rey en g1; torre en d8; peones en f2, g2, h2. Piezas negras: rey en g8; peones en f7, g7, h7.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "Arma esta posición en tu tablero. Con el dedo, sigue el camino de d8 a g8.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "Lo que aprendí.",
+          "pausa": 1.2
+        },
+        {
+          "voz": "narrador",
+          "texto": "El mate del pasillo: el rey queda encerrado por sus propios peones en la última fila.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "Una torre o una dama le da mate desde un lado.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "Para evitarlo, mueve a tiempo un peón y ábrele una ventanita a tu rey.",
+          "pausa": 1.5
+        }
+      ]
+    },
+    {
+      "n": 15,
+      "titulo": "¡A jugar! Capítulo 7",
+      "segmentos": [
+        {
+          "voz": "narrador",
+          "texto": "¡A jugar! Capítulo 7. Ten listo tu tablero. Si necesitas más tiempo para armar la posición o para pensar, pausa el audio.",
+          "pausa": 1.2
+        },
+        {
+          "voz": "narrador",
+          "texto": "Ejercicio 1.",
+          "pausa": 1.2
+        },
+        {
+          "voz": "narrador",
+          "texto": "La posición. Piezas blancas: rey en g1; dama en b2; peones en f2, g2, h2. Piezas negras: rey en g8; peones en f7, g7, h7.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "Arma esta posición en tu tablero. Prueba con tus piezas las jugadas de las blancas. Después de cada una, toca las casillas de alrededor del rey negro: ¿puede escapar a alguna?",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "Juegan las blancas. ¿Qué jugada da jaque mate?",
+          "pausa": 8,
+          "piensa": true
+        },
+        {
+          "voz": "narrador",
+          "texto": "La respuesta. Dama bella 8: la dama va a b8 y da jaque mate.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "Ejercicio 2.",
+          "pausa": 1.2
+        },
+        {
+          "voz": "narrador",
+          "texto": "La posición. Piezas blancas: rey en g1; torre en e7; peones en f2, g2, h2. Piezas negras: rey en g8; peones en f7, g7, h7.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "Arma esta posición en tu tablero. Prueba con tus piezas las jugadas de las blancas. Después de cada una, toca las casillas de alrededor del rey negro: ¿puede escapar a alguna?",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "Juegan las blancas. ¿Qué jugada da jaque mate?",
+          "pausa": 8,
+          "piensa": true
+        },
+        {
+          "voz": "narrador",
+          "texto": "La respuesta. Torre eva 8: la torre va a e8 y da jaque mate.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "Ejercicio 3.",
+          "pausa": 1.2
+        },
+        {
+          "voz": "narrador",
+          "texto": "La posición. Piezas blancas: rey en g1; peones en f2, g2, h2. Piezas negras: rey en g8; torre en d8; peones en g7, h6, h7.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "Arma esta posición en tu tablero. Prueba las jugadas con tus piezas antes de contestar.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "Le toca a Peonita. ¿Qué jugada quiere hacer Tizón? ¿Qué peón mueves para evitarla?",
+          "pausa": 8,
+          "piensa": true
+        },
+        {
+          "voz": "narrador",
+          "texto": "La respuesta. Tizón quiere jugar torre david 1.  Torre david 1 sería mate del pasillo. Para evitarlo, Peonita mueve un peón (h3, g3 o f3) y su rey tiene una ventanita para escapar.",
+          "pausa": 1.5
+        }
+      ]
+    },
+    {
+      "n": 16,
+      "titulo": "Capítulo 8. Descubre el truco: el ataque a la descubierta",
+      "segmentos": [
+        {
+          "voz": "narrador",
+          "texto": "Capítulo 8. Descubre el truco: el ataque a la descubierta.",
+          "pausa": 1.2
+        },
+        {
+          "voz": "narrador",
+          "texto": "En el dibujo: Galope se aparta de un salto y deja ver a Doña Muralla, que estaba escondida detrás de él. Una flecha sale de la torre hacia el rey negro y otra sale del caballo.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "La última lección antes del torneo la dieron dos amigos juntos: Galope y Doña Muralla.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "Galope se puso delante de la torre, en la misma columna que el rey negro. Desde atrás, Doña Muralla no podía ver nada.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "Galope",
+          "texto": "Ahora miren",
+          "pausa": 0.2
+        },
+        {
+          "voz": "narrador",
+          "texto": "dijo Galope, y dio un salto hacia un lado.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "¡Sorpresa! Al apartarse, Galope destapó a Doña Muralla, que de pronto le daba jaque al rey negro. Y además, desde su nueva casilla, Galope atacaba a la dama negra.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "Doña Muralla",
+          "texto": "Tizón tiene que salvar a su rey",
+          "pausa": 0.2
+        },
+        {
+          "voz": "narrador",
+          "texto": "explicó Doña Muralla",
+          "pausa": 0.2
+        },
+        {
+          "voz": "Doña Muralla",
+          "texto": "y no le queda tiempo para salvar a la dama.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "Peonita",
+          "texto": "¡Es como abrir una cortina!",
+          "pausa": 0.2
+        },
+        {
+          "voz": "narrador",
+          "texto": "dijo Peonita.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "Don Lento",
+          "texto": "Eso se llama ataque a la descubierta",
+          "pausa": 0.2
+        },
+        {
+          "voz": "narrador",
+          "texto": "dijo Don Lento",
+          "pausa": 0.2
+        },
+        {
+          "voz": "Don Lento",
+          "texto": "Una pieza se mueve y destapa el ataque de otra que estaba detrás. Son dos ataques en una sola jugada… y casi nadie los ve venir.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "Ahora, con tu tablero.",
+          "pausa": 1.2
+        },
+        {
+          "voz": "narrador",
+          "texto": "Galope se apartó y destapó a la torre: ¡jaque! Y además, Galope ataca a la dama de h7.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "La posición. Piezas blancas: rey en g1; torre en e1; caballo en f6. Piezas negras: rey en e8; dama en h7.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "Arma esta posición en tu tablero. Con el dedo, sigue los caminos de e1 a e8 y de f6 a h7.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "Lo que aprendí.",
+          "pausa": 1.2
+        },
+        {
+          "voz": "narrador",
+          "texto": "En el ataque a la descubierta, una pieza se aparta y destapa el ataque de otra.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "La pieza que se mueve puede atacar a otra cosa: ¡son dos ataques a la vez!",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "Si la pieza destapada da jaque, el otro tiene que salvar a su rey primero.",
+          "pausa": 1.5
+        }
+      ]
+    },
+    {
+      "n": 17,
+      "titulo": "¡A jugar! Capítulo 8",
+      "segmentos": [
+        {
+          "voz": "narrador",
+          "texto": "¡A jugar! Capítulo 8. Ten listo tu tablero. Si necesitas más tiempo para armar la posición o para pensar, pausa el audio.",
+          "pausa": 1.2
+        },
+        {
+          "voz": "narrador",
+          "texto": "Ejercicio 1.",
+          "pausa": 1.2
+        },
+        {
+          "voz": "narrador",
+          "texto": "La posición. Piezas blancas: rey en g1; torre en e1; alfil en e4. Piezas negras: rey en e8; dama en a4; peón en b5.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "Arma esta posición en tu tablero. Prueba las jugadas con tus piezas antes de contestar.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "Juegan las blancas. ¿Adónde se aparta el alfil para destapar a la torre y atacar a la dama?",
+          "pausa": 8,
+          "piensa": true
+        },
+        {
+          "voz": "narrador",
+          "texto": "La respuesta. Alfil cesar 2 jaque.  El alfil va a c2: destapa el jaque de la torre y ataca a la dama por la diagonal. El rey se salva y el alfil se come a la dama.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "Ejercicio 2.",
+          "pausa": 1.2
+        },
+        {
+          "voz": "narrador",
+          "texto": "La posición. Piezas blancas: rey en g1; torre en e1; alfil en e4. Piezas negras: rey en e8; dama en a6; peón en c6.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "Arma esta posición en tu tablero. Prueba las jugadas con tus piezas antes de contestar.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "Juegan las blancas. Busca el ataque a la descubierta.",
+          "pausa": 8,
+          "piensa": true
+        },
+        {
+          "voz": "narrador",
+          "texto": "La respuesta. Alfil david 3 jaque.  El alfil va a d3: destapa el jaque de la torre y ataca a la dama de a6.",
+          "pausa": 1.5
+        }
+      ]
+    },
+    {
+      "n": 18,
+      "titulo": "Capítulo 9. Revisa qué quiere tu amigo",
+      "segmentos": [
+        {
+          "voz": "narrador",
+          "texto": "Capítulo 9. Revisa qué quiere tu amigo.",
+          "pausa": 1.2
+        },
+        {
+          "voz": "narrador",
+          "texto": "En el dibujo: Peonita mira con su lupa a Don Pillo, el mapache, que sonríe con picardía detrás de un tablero. Alrededor de Peonita hay signos de pregunta.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "La noche antes del torneo, Don Pillo apareció de nuevo… ¡pero esta vez no venía a robar! Traía un tablero bajo el brazo.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "Don Pillo",
+          "texto": "Ya sé que aprendieron trucos",
+          "pausa": 0.2
+        },
+        {
+          "voz": "narrador",
+          "texto": "dijo con una sonrisa pícara",
+          "pausa": 0.2
+        },
+        {
+          "voz": "Don Pillo",
+          "texto": "Juguemos mañana un torneo. Si ganan, les devuelvo todas las piezas. Si gano yo… me quedo con la caja entera.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "Peonita tragó saliva. Esa noche no podía dormir, y fue a buscar a Don Lento.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "Peonita",
+          "texto": "Don Pillo sabe muchos trucos",
+          "pausa": 0.2
+        },
+        {
+          "voz": "narrador",
+          "texto": "le dijo",
+          "pausa": 0.2
+        },
+        {
+          "voz": "Peonita",
+          "texto": "¿Cómo hago para que no me los haga a mí?",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "Don Lento la miró con calma, muuuy despacio, y le dijo lo más importante de todo:",
+          "pausa": 0.5
+        },
+        {
+          "voz": "Don Lento",
+          "texto": "Antes de cada jugada… mira la última jugada del otro y pregúntate: ¿qué quiere hacer? ¿Qué pieza mía ataca? ¿Me prepara un tenedor, una clavada, un mate del pasillo? Si descubres su truco a tiempo… lo puedes evitar.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "Peonita practicó toda la noche con Tizón. Cada vez que él movía, ella se detenía, miraba con su lupa y preguntaba: «¿Qué quieres hacer?». ¡Y casi siempre lo descubría!",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "Ahora, con tu tablero.",
+          "pausa": 1.2
+        },
+        {
+          "voz": "narrador",
+          "texto": "Antes de jugar, Peonita revisa: la torre de Tizón quiere ir a d1 y dar mate del pasillo.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "La posición. Piezas blancas: rey en g1; torre en b3; peones en f2, g2, h2. Piezas negras: rey en g8; torre en d8; peones en f7, g7, h7.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "Arma esta posición en tu tablero. Con el dedo, sigue el camino de d8 a d1.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "Lo que aprendí.",
+          "pausa": 1.2
+        },
+        {
+          "voz": "narrador",
+          "texto": "Antes de jugar, mira la última jugada del otro.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "Pregúntate: ¿qué quiere hacer? ¿Qué ataca? ¿Qué truco me prepara?",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "Un truco que descubres a tiempo, lo puedes evitar.",
+          "pausa": 1.5
+        }
+      ]
+    },
+    {
+      "n": 19,
+      "titulo": "¡A jugar! Capítulo 9",
+      "segmentos": [
+        {
+          "voz": "narrador",
+          "texto": "¡A jugar! Capítulo 9. Ten listo tu tablero. Si necesitas más tiempo para armar la posición o para pensar, pausa el audio.",
+          "pausa": 1.2
+        },
+        {
+          "voz": "narrador",
+          "texto": "Ejercicio 1.",
+          "pausa": 1.2
+        },
+        {
+          "voz": "narrador",
+          "texto": "La posición. Piezas blancas: rey en e1; torre en a1; peones en f2, g2, h2. Piezas negras: rey en g8; caballo en b4; peones en f7, g7, h7.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "Arma esta posición en tu tablero. Prueba las jugadas con tus piezas antes de contestar.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "Le toca a Peonita, pero antes piensa: ¿qué jugada quiere hacer Tizón?",
+          "pausa": 8,
+          "piensa": true
+        },
+        {
+          "voz": "narrador",
+          "texto": "La respuesta. Tizón quiere jugar caballo cesar 2 jaque.  El caballo negro quiere saltar a c2: jaque al rey y ataque a la torre, ¡un tenedor! Peonita tiene que mover la torre o el rey antes.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "Ejercicio 2.",
+          "pausa": 1.2
+        },
+        {
+          "voz": "narrador",
+          "texto": "La posición. Piezas blancas: rey en e1; torre en a1; peones en f2, g2, h2. Piezas negras: rey en g8; caballo en b4; peones en f7, g7, h7.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "Arma esta posición en tu tablero. Prueba las jugadas con tus piezas antes de contestar.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "En la misma posición, ¿qué jugada harías para que Tizón no pueda hacer su truco?",
+          "pausa": 8,
+          "piensa": true
+        },
+        {
+          "voz": "narrador",
+          "texto": "La respuesta. Por ejemplo, mover la torre a b1, c1 o d1, o el rey a d2: así el caballo ya no puede atacar a los dos a la vez.",
+          "pausa": 1.5
+        }
+      ]
+    },
+    {
+      "n": 20,
+      "titulo": "Capítulo 10. Ojo de águila: el torneo de los trucos",
+      "segmentos": [
+        {
+          "voz": "narrador",
+          "texto": "Capítulo 10. Ojo de águila: el torneo de los trucos.",
+          "pausa": 1.2
+        },
+        {
+          "voz": "narrador",
+          "texto": "En el dibujo: Peonita y Tizón celebran con un trofeo dorado. A su lado, Don Pillo, el mapache, sonríe y les devuelve una torre blanca. Hay confeti de colores.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "El día del torneo, todo el bosque vino a mirar. Los tucanes se sentaron en las ramas, las ardillas en las piedras y hasta un perezoso muy lento llegó, justo a tiempo, a su rama favorita.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "Peonita y Tizón jugaron contra Don Pillo, uno por uno. El mapache era muy astuto: preparaba tenedores, clavadas y mates del pasillo. Pero antes de cada jugada, Peonita se preguntaba: «¿Qué quiere hacer?», y descubría el truco a tiempo.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "En la última partida, Don Pillo se descuidó. Peonita vio con ojo de águila que el rey y la dama del mapache estaban donde Galope los podía atacar a los dos a la vez.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "Peonita",
+          "texto": "¡Jaque!",
+          "pausa": 0.2
+        },
+        {
+          "voz": "narrador",
+          "texto": "dijo, con un tenedor perfecto.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "Don Pillo se rascó la cabeza, miró el tablero un buen rato… y se rió.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "Don Pillo",
+          "texto": "¡Me ganaste con mi propio truco!",
+          "pausa": 0.2
+        },
+        {
+          "voz": "narrador",
+          "texto": "dijo, y le dio la mano",
+          "pausa": 0.2
+        },
+        {
+          "voz": "Don Pillo",
+          "texto": "Buena partida.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "Esa misma tarde, el mapache devolvió todas las piezas que se había llevado: Doña Muralla, el caballo y hasta un peón que nadie había echado de menos.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "Don Pillo",
+          "texto": "Ya no necesito robar piezas",
+          "pausa": 0.2
+        },
+        {
+          "voz": "narrador",
+          "texto": "dijo Don Pillo",
+          "pausa": 0.2
+        },
+        {
+          "voz": "Don Pillo",
+          "texto": "Es mucho más divertido ganarlas jugando. ¿Me enseñan a jugar mejor?",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "Y así, el mapache más travieso del bosque se volvió el amigo más nuevo de Peonita y Tizón.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "Lo que aprendí.",
+          "pausa": 1.2
+        },
+        {
+          "voz": "narrador",
+          "texto": "Los trucos de este libro: pieza sin cuidar, tenedor, ataque doble, clavada, enfilada, mate del pasillo y ataque a la descubierta.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "Antes de cada jugada, mira qué quiere hacer el otro.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "Los trucos se ganan jugando limpio, ¡y se aprenden jugando mucho!",
+          "pausa": 1.5
+        }
+      ]
+    },
+    {
+      "n": 21,
+      "titulo": "¡A jugar! Capítulo 10",
+      "segmentos": [
+        {
+          "voz": "narrador",
+          "texto": "¡A jugar! Capítulo 10. Ten listo tu tablero. Si necesitas más tiempo para armar la posición o para pensar, pausa el audio.",
+          "pausa": 1.2
+        },
+        {
+          "voz": "narrador",
+          "texto": "Ejercicio 1.",
+          "pausa": 1.2
+        },
+        {
+          "voz": "narrador",
+          "texto": "La posición. Piezas blancas: rey en g1; caballo en g5; peones en f2, g2, h2. Piezas negras: rey en h8; torre en d8; peones en g7, h7.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "Arma esta posición en tu tablero. Prueba las jugadas con tus piezas antes de contestar.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "Juegan las blancas. ¿Qué truco hay? ¿Qué jugada lo hace?",
+          "pausa": 8,
+          "piensa": true
+        },
+        {
+          "voz": "narrador",
+          "texto": "La respuesta. Caballo felix 7 jaque.  Tenedor: Galope salta a f7, da jaque al rey de h8 y ataca a la torre de d8.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "Ejercicio 2.",
+          "pausa": 1.2
+        },
+        {
+          "voz": "narrador",
+          "texto": "La posición. Piezas blancas: rey en f1; torre en a1; peones en f2, g2, h2. Piezas negras: rey en e8; dama en e6.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "Arma esta posición en tu tablero. Prueba las jugadas con tus piezas antes de contestar.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "Juegan las blancas. ¿Qué truco hay? ¿Qué jugada lo hace?",
+          "pausa": 8,
+          "piensa": true
+        },
+        {
+          "voz": "narrador",
+          "texto": "La respuesta. Torre eva 1.  Clavada: la torre va a e1 y la dama negra queda clavada delante de su rey. Si se come a la torre, el rey blanco se come a la dama.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "Ejercicio 3.",
+          "pausa": 1.2
+        },
+        {
+          "voz": "narrador",
+          "texto": "La posición. Piezas blancas: rey en g1; dama en e1; peones en g2, h2. Piezas negras: rey en h8; torre en b8; peones en g6, h7.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "Arma esta posición en tu tablero. Prueba las jugadas con tus piezas antes de contestar.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "Juegan las blancas. ¿Qué truco hay? ¿Qué jugada lo hace?",
+          "pausa": 8,
+          "piensa": true
+        },
+        {
+          "voz": "narrador",
+          "texto": "La respuesta. Dama eva 5 jaque.  Ataque doble: la dama da jaque desde e5 y ataca a la torre de b8.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "Ejercicio 4.",
+          "pausa": 1.2
+        },
+        {
+          "voz": "narrador",
+          "texto": "La posición. Piezas blancas: rey en g1; dama en e1; peones en f2, g2, h2. Piezas negras: rey en g8; peones en f7, g7, h7.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "Arma esta posición en tu tablero. Prueba con tus piezas las jugadas de las blancas. Después de cada una, toca las casillas de alrededor del rey negro: ¿puede escapar a alguna?",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "Juegan las blancas. ¿Qué jugada da jaque mate?",
+          "pausa": 8,
+          "piensa": true
+        },
+        {
+          "voz": "narrador",
+          "texto": "La respuesta. Dama eva 8: la dama va a e8 y da jaque mate.",
+          "pausa": 1.5
+        }
+      ]
+    },
+    {
+      "n": 22,
+      "titulo": "¡Ya conoces los trucos del bosque!",
+      "segmentos": [
+        {
+          "voz": "narrador",
+          "texto": "¡Ya conoces los trucos del bosque!",
+          "pausa": 1.2
+        },
+        {
+          "voz": "narrador",
+          "texto": "En el dibujo: Bajo la luna, todos celebran juntos: Peonita, Tizón, Don Pillo el mapache, Galope, la Dama Estrella y Doña Muralla, con confeti de colores. Don Lento sonríe desde su rama.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "¡Lo lograste! Ahora conoces los primeros trucos del ajedrez: la pieza sin cuidar, el tenedor, el ataque doble, el tenedor de peón, la clavada, la enfilada, el mate del pasillo y el ataque a la descubierta.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "Pero el truco más importante es el de Don Lento: antes de cada jugada, mira qué quiere hacer el otro. Juega mucho, busca los trucos con tu lupa de detective y, sobre todo, ¡diviértete como Peonita, Tizón y su nuevo amigo, Don Pillo!",
+          "pausa": 1.5
+        }
+      ]
+    },
+    {
+      "n": 23,
+      "titulo": "Diploma: Detective de trucos",
+      "segmentos": [
+        {
+          "voz": "narrador",
+          "texto": "Tu diploma número 2: Detective de trucos.",
+          "pausa": 1.2
+        },
+        {
+          "voz": "narrador",
+          "texto": "Peonita, Tizón y Don Pillo reconocen a… aquí va tu nombre… porque aprendió a encontrar tenedores, clavadas y enfiladas, y a mirar siempre qué quiere hacer su amigo.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "Firman: Peonita, Tizón y Don Pillo.",
+          "pausa": 1.5
+        }
+      ]
+    },
+    {
+      "n": 24,
+      "titulo": "Para las familias y el personal docente",
+      "segmentos": [
+        {
+          "voz": "narrador",
+          "texto": "Para las familias y el personal docente.",
+          "pausa": 1.2
+        },
+        {
+          "voz": "narrador",
+          "texto": "Este segundo libro es para quienes ya saben mover las piezas y conocen el jaque y el jaque mate (lo que enseña «Peonita y el reino de las 64 casillas»). Sigue pensado para leer acompañado, un capítulo por vez, con un tablero de verdad sobre la mesa.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "Cada capítulo presenta un truco: la pieza sin cuidar, el tenedor del caballo, el ataque doble de la dama, el tenedor del peón, la clavada, la enfilada, el mate del pasillo y el ataque a la descubierta. El capítulo 9 enseña lo más importante de todo: antes de mover, mirar qué quiere hacer el otro. El 10 repasa todo.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "En «¡A jugar!», cada respuesta es la única jugada que hace el truco. Conviene armar la posición en el tablero y dejar que la niña o el niño pruebe con las piezas: el truco se entiende mucho mejor cuando se ve qué pasa después.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "Si se equivoca, no le digan la respuesta enseguida: pregúntenle qué piezas ataca su jugada. Encontrar el truco solo, aunque tarde, enseña más que leerlo.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "Para leer con las manos.",
+          "pausa": 1.2
+        },
+        {
+          "voz": "narrador",
+          "texto": "Este libro se puede leer con un niño o una niña que no ve. Los ejercicios se hacen con las manos, en un tablero de ajedrez táctil, y se contestan en voz alta: usted lee, el niño arma, toca y responde.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "En la mayoría de los tableros táctiles, las casillas oscuras son más altas que las claras, y cada pieza entra en un agujero para que no se caiga al tocarla. Las piezas negras tienen una puntita o un clavito arriba; así se distinguen de las blancas.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "Tenga a mano unos botones o monedas: son las «fichas». Donde el libro con dibujos tiene una estrella, usted pone una ficha en esa casilla.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "Cada ejercicio empieza con «Con las manos»: qué piezas poner y qué tocar. La posición viene escrita pieza por pieza: primero las blancas y después las negras. Arme la posición con el niño, no por él: buscar la casilla también es aprender.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "Las casillas se nombran con una letra y un número: la letra dice la columna, contando desde la izquierda (a, b, c… hasta h), y el número dice la fila, contando desde abajo (1 hasta 8). El niño se sienta del lado de las piezas blancas.",
+          "pausa": 0.5
+        },
+        {
+          "voz": "narrador",
+          "texto": "Antes de empezar, recorran juntos el tablero: las orillas, las cuatro esquinas, una fila de izquierda a derecha y una columna de abajo hacia arriba.",
+          "pausa": 1.5
+        }
+      ]
+    }
+  ]
+}

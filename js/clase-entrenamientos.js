@@ -730,19 +730,35 @@ function cajaQueLoAbran(t, recorte) {
     return fila;
 }
 
-function pedirQueLoAbran(slug, recorte) {
+/* `puntuables` ({titulo, ejercicios: {"tipo:id": dificultad}}, solo
+   Habilidades): la lista va a la base ANTES de pedirlo (entreno_pedidos), y
+   su id viaja con el pedido: cada ejercicio que resuelva un alumno se guarda
+   contra él y suma puntos de la clase (ver «Habilidades: los puntos»). Si no
+   se pudo guardar, se abre igual, sin puntos. */
+async function pedirQueLoAbran(slug, recorte, puntuables) {
     const e = EntrenosClase.enlaceDe(herramientasDelSitio(), slug, recorte);
     if (!e) return;
-    entrenoEnCurso = { slug, recorte: recorte || null, at: new Date().toISOString() };
-    if (presenceChannel && presenceChannel.track) presenceChannel.track(metaDePresencia()).catch((err) => console.error(err));
+    let pedido = null;
+    if (puntuables && puntuables.ejercicios && !vistaPrevia) {
+        const { data, error } = await sb.from("entreno_pedidos")
+            .insert({ slug, titulo: String(puntuables.titulo || "").slice(0, 120) || null, ejercicios: puntuables.ejercicios })
+            .select("id").single();
+        if (error) console.error(error);
+        else pedido = data && data.id;
+    }
+    entrenoEnCurso = Object.assign({ slug, recorte: recorte || null, at: new Date().toISOString() }, pedido ? { pedido } : {});
+    anunciarPresencia();
     pintarEntrenoPedido();
-    setStatus("🪟 A tus alumnos se les abre «" + e.label + "» en una ventana encima de la clase.");
+    pintarAciertosDelEntreno();
+    setStatus("🪟 A tus alumnos se les abre «" + e.label + "» en una ventana encima de la clase."
+        + (puntuables && !pedido ? " Esta vez no suma puntos: no se pudo guardar la lista de ejercicios." : ""));
 }
 
 function dejarDePedirloAbrir() {
     entrenoEnCurso = null;
-    if (presenceChannel && presenceChannel.track) presenceChannel.track(metaDePresencia()).catch((err) => console.error(err));
+    anunciarPresencia();
     pintarEntrenoPedido();
+    pintarAciertosDelEntreno();
 }
 
 // Profe: lo que está pidiendo, con su botón para dejar de pedirlo.
@@ -827,9 +843,160 @@ function pintarEntrenoDelProfe(state) {
         abrirVentanaDeEntreno(e, pedido.at);
         anunciarALaClase("entreno", pedido.at, "Tu profe abrió " + e.label + " para la clase, en una ventana encima. Para volver a la clase, el botón «Volver a la clase».");
     }
-    entrenoPedidoVisto = { e, at: pedido.at };
+    entrenoPedidoVisto = { e, at: pedido.at, pedido: EntrenoHechos.esId(pedido.pedido) ? pedido.pedido : null };
+    if (!entrenoHechosMios || entrenoHechosMios.at !== pedido.at) retomarHechosDelEntreno(pedido.at);
 }
 let entrenoPedidoVisto = null; // alumno: el último pedido válido, para el botón «Volver a…»
+
+/* ---------- Cuántos acierta cada uno («Que lo practiquen solos») ----------
+   La página abierta en la ventana (hoy, entreno/tipos.html) le avisa a la
+   clase cada ejercicio que termina, con un postMessage al marco: {fuente:
+   "entreno-en-clase", id, estrellas}. El alumno lo anota (lo PRIMERO que sacó
+   en cada ejercicio: «Otra vez» no lo mejora, como en el calentamiento) y lo
+   anuncia en su presencia como `entreno_hechos` {at, hechos, bien, perfectos},
+   con el `at` del pedido del profe. El profe arma la tabla de lo que anuncian.
+   Bien es con una estrella o más (lo resolvió); perfecto, con tres (sin error
+   ni pista). Ver «Habilidades: que lo practiquen solos» en
+   docs/decisiones/clase-en-vivo.md. */
+const CLAVE_HECHOS_ENTRENO = "sesion_entreno_hechos_v1";
+let entrenoHechosMios = null;        // alumno: {at, items: {id: estrellas}} del pedido abierto
+let entrenoHechosPresencia = null;   // alumno: lo que anuncia, {at, hechos, bien, perfectos}
+let entrenoHechosPendiente = null;
+const entrenoAciertos = new Map();   // profe: id → {nombre, hechos, bien, perfectos, conectado}
+let entrenoPuntos = new Map();       // profe: id → puntos de Habilidades en esta clase (puntos_de_habilidades)
+let entrenoPuntosFirma = null, entrenoPuntosEspera = null;
+let entrenoAciertosDe = null;        // profe: el `at` del pedido de esa tabla
+let entrenoAciertosSlug = null;
+
+const EntrenoHechos = {
+    // El resumen de lo hecho: {id: estrellas} → {hechos, bien, perfectos}.
+    cuenta(items) {
+        const v = Object.values(items || {});
+        return { hechos: v.length, bien: v.filter((n) => n >= 1).length, perfectos: v.filter((n) => n >= 3).length };
+    },
+    // El id de un pedido guardado en la base (entreno_pedidos): un uuid.
+    esId(x) {
+        return typeof x === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(x);
+    },
+    // Un aviso del marco que vale: un id corto y unas estrellas de 0 a 3.
+    valido(d) {
+        return !!d && d.fuente === "entreno-en-clase" && typeof d.id === "string" && d.id.length > 0 && d.id.length <= 120
+            && Number.isInteger(d.estrellas) && d.estrellas >= 0 && d.estrellas <= 3;
+    },
+};
+
+function retomarHechosDelEntreno(at) {
+    let guardado = null;
+    try { guardado = JSON.parse(sessionStorage.getItem(CLAVE_HECHOS_ENTRENO) || "null"); } catch (e) { guardado = null; }
+    entrenoHechosMios = guardado && guardado.at === at && guardado.items && typeof guardado.items === "object"
+        ? { at, items: guardado.items } : { at, items: {} };
+    if (Object.keys(entrenoHechosMios.items).length) anunciarHechosDelEntreno();
+}
+
+function anunciarHechosDelEntreno() {
+    if (entrenoHechosPendiente) return;
+    // Un rato al azar: que no anuncie toda la clase en el mismo instante.
+    entrenoHechosPendiente = setTimeout(() => {
+        entrenoHechosPendiente = null;
+        const nuevo = entrenoHechosMios ? Object.assign({ at: entrenoHechosMios.at }, EntrenoHechos.cuenta(entrenoHechosMios.items)) : null;
+        if (JSON.stringify(nuevo) === JSON.stringify(entrenoHechosPresencia)) return;
+        entrenoHechosPresencia = nuevo;
+        if (!vistaPrevia) anunciarPresencia();
+    }, 300 + Math.random() * 2700);
+}
+
+window.addEventListener("message", (ev) => {
+    if (typeof isTeacher === "undefined" || isTeacher || ev.origin !== location.origin) return;
+    const marco = document.getElementById("entreno-ventana-marco");
+    if (!marco || ev.source !== marco.contentWindow || !entrenoEnLaVentana || !EntrenoHechos.valido(ev.data)) return;
+    if (!entrenoHechosMios || entrenoHechosMios.at !== entrenoEnLaVentana) retomarHechosDelEntreno(entrenoEnLaVentana);
+    if (ev.data.id in entrenoHechosMios.items) return;
+    entrenoHechosMios.items[ev.data.id] = ev.data.estrellas;
+    try { sessionStorage.setItem(CLAVE_HECHOS_ENTRENO, JSON.stringify(entrenoHechosMios)); } catch (e) { /* sin almacenamiento, vale lo de esta pestaña */ }
+    anunciarHechosDelEntreno();
+    if (entrenoPedidoVisto && entrenoPedidoVisto.at === entrenoEnLaVentana && entrenoPedidoVisto.pedido) {
+        guardarHechoDelEntreno(entrenoPedidoVisto.pedido, ev.data.id, ev.data.estrellas);
+    }
+});
+
+/* Cada ejercicio terminado queda en la base (habilidad_resultados), de a uno:
+   la base pone quién, de qué clase y su dificultad, y saca los puntos. El
+   mismo ejercicio otra vez en la clase (23505) no es un error: ya estaba. Sin
+   conexión, la ventana sigue igual. */
+let entrenoGuardando = Promise.resolve();
+function guardarHechoDelEntreno(pedido, ejercicio, estrellas) {
+    if (isTeacher || esObservador || vistaPrevia) return;
+    entrenoGuardando = entrenoGuardando.then(async () => {
+        const { error } = await sb.from("habilidad_resultados").insert({ pedido_id: pedido, ejercicio, estrellas });
+        if (error && error.code !== "23505") console.error(error);
+    }).catch((e) => console.error(e));
+}
+
+/* Profe: la tabla, debajo de lo que pidió abrir. Se queda después de «Cerrar
+   la ventana a todos» (para ver cómo les fue) y se limpia con el pedido
+   siguiente. Quien se desconecta sigue en la tabla, con lo que llevaba. */
+function pintarAciertosDelEntreno() {
+    const caja = document.getElementById("entreno-aciertos");
+    if (!caja || typeof isTeacher === "undefined" || !isTeacher) return;
+    if (entrenoEnCurso && entrenoEnCurso.at !== entrenoAciertosDe) {
+        entrenoAciertos.clear();
+        entrenoAciertosDe = entrenoEnCurso.at;
+        entrenoAciertosSlug = entrenoEnCurso.slug;
+    }
+    const abierto = !!entrenoEnCurso && entrenoEnCurso.at === entrenoAciertosDe;
+    for (const v of entrenoAciertos.values()) v.conectado = false;
+    for (const [id, s] of onlineStudents.entries()) {
+        const h = s.entreno_hechos && s.entreno_hechos.at === entrenoAciertosDe ? s.entreno_hechos : null;
+        const antes = entrenoAciertos.get(id);
+        if (!h && !antes && !abierto) continue;
+        entrenoAciertos.set(id, Object.assign({ hechos: 0, bien: 0, perfectos: 0 }, antes || {},
+            h ? { hechos: +h.hechos || 0, bien: +h.bien || 0, perfectos: +h.perfectos || 0 } : {},
+            { nombre: s.full_name || s.email || "Alumno", conectado: true }));
+    }
+    const filas = [...entrenoAciertos.values()];
+    pedirPuntosDelEntreno();
+    // Solo los que avisan lo que hace cada uno (Habilidades) tienen tabla.
+    const conTabla = entrenoAciertosSlug === "tipos" || filas.some((v) => v.hechos);
+    caja.hidden = !conTabla || (!abierto && !filas.some((v) => v.hechos));
+    if (caja.hidden) return;
+    const e = EntrenosClase.enlaceDe(herramientasDelSitio(), entrenoAciertosSlug);
+    document.getElementById("entreno-aciertos-titulo").textContent = (abierto ? "Cómo van en «" : "Así les fue en «") + (e ? e.label : "el entrenamiento") + "»"
+        + (filas.length ? "" : ": todavía no hay alumnos conectados.");
+    const ul = document.getElementById("entreno-aciertos-lista");
+    ul.replaceChildren();
+    for (const [id, v] of [...entrenoAciertos.entries()].sort((a, b) => b[1].bien - a[1].bien || String(a[1].nombre).localeCompare(String(b[1].nombre)))) {
+        const li = document.createElement("li");
+        li.className = "flex flex-wrap items-center gap-2 py-1 border-b border-brand-100 dark:border-brand-700 last:border-0";
+        const nombre = document.createElement("span");
+        nombre.className = "font-semibold flex-1 min-w-0";
+        // El nombre lo escribió una persona: textContent.
+        nombre.textContent = v.nombre + (v.conectado ? "" : " (se desconectó)");
+        const cuenta = document.createElement("span");
+        cuenta.textContent = !v.hechos ? "Todavía no termina ninguno"
+            : v.bien + " de " + v.hechos + " bien" + (v.perfectos ? " · " + v.perfectos + " sin errores" : "");
+        const pts = entrenoPuntos.get(id);
+        if (pts) cuenta.textContent += " · " + pts + (pts === 1 ? " punto" : " puntos");
+        li.append(nombre, cuenta);
+        ul.appendChild(li);
+    }
+}
+
+/* Los puntos los calcula la base (puntos_de_habilidades: los de Habilidades
+   de toda esta clase, por alumno). Se piden cuando cambia lo que anuncian,
+   con un respiro: no una vez por cada eco de la presencia. */
+function pedirPuntosDelEntreno() {
+    if (typeof currentOpenSessionId === "undefined" || !currentOpenSessionId || entrenoAciertosSlug !== "tipos") return;
+    const firma = currentOpenSessionId + "|" + [...entrenoAciertos.values()].reduce((s, v) => s + v.hechos, 0);
+    if (firma === entrenoPuntosFirma || entrenoPuntosEspera) return;
+    entrenoPuntosEspera = setTimeout(async () => {
+        entrenoPuntosEspera = null;
+        const { data, error } = await sb.rpc("puntos_de_habilidades", { p_clase: currentOpenSessionId });
+        if (error) { console.error(error); return; }
+        entrenoPuntosFirma = firma;
+        entrenoPuntos = new Map((data || []).map((r) => [r.student_id, Number(r.puntos) || 0]));
+        pintarAciertosDelEntreno();
+    }, 1500);
+}
 
 if (document.getElementById("entreno-aviso-cerrar")) {
     document.getElementById("entreno-aviso-cerrar").addEventListener("click", () => {

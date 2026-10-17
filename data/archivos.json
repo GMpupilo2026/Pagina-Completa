@@ -23,7 +23,7 @@
     "nombre": "Formación docente"
    }
   ],
-  "total": 887,
+  "total": 890,
   "material": [
    {
     "ruta": "material/cambiar-o-no-cambiar/cambiar-o-no-cambiar.pdf",
@@ -180,6 +180,13 @@
     "libro": "Mide tu fuerza"
    },
    {
+    "ruta": "material/peonita-rey/peonita-rey-adaptado.pdf",
+    "titulo": "Peonita y el rey escondido — versión adaptada (letra grande y lector de pantalla)",
+    "tipo": "otro",
+    "kb": 1032,
+    "libro": "Peonita y el rey escondido"
+   },
+   {
     "ruta": "material/peonita-rey/peonita-rey.pdf",
     "titulo": "Peonita y el rey escondido — el cuento ilustrado",
     "tipo": "otro",
@@ -187,11 +194,25 @@
     "libro": "Peonita y el rey escondido"
    },
    {
+    "ruta": "material/peonita-trucos/peonita-trucos-adaptado.pdf",
+    "titulo": "Peonita, Tizón y los trucos del bosque — versión adaptada (letra grande y lector de pantalla)",
+    "tipo": "otro",
+    "kb": 971,
+    "libro": "Peonita, Tizón y los trucos del bosque"
+   },
+   {
     "ruta": "material/peonita-trucos/peonita-trucos.pdf",
     "titulo": "Peonita, Tizón y los trucos del bosque — el cuento ilustrado",
     "tipo": "otro",
     "kb": 1221,
     "libro": "Peonita, Tizón y los trucos del bosque"
+   },
+   {
+    "ruta": "material/peonita/peonita-adaptado.pdf",
+    "titulo": "Peonita y el reino de las 64 casillas — versión adaptada (letra grande y lector de pantalla)",
+    "tipo": "otro",
+    "kb": 1377,
+    "libro": "Peonita y el reino de las 64 casillas"
    },
    {
     "ruta": "material/peonita/peonita.pdf",
@@ -8143,7 +8164,7 @@
   ]
  },
  "word": {
-  "total": 91,
+  "total": 94,
   "grupos": [
    {
     "carpeta": "documentos/jdn",
@@ -8702,6 +8723,45 @@
       "titulo": "11 Undécimo año   Programa de Estudio de Ajedrez, parte 2 (malla curricular)",
       "tipo": "otro",
       "kb": 36
+     }
+    ]
+   },
+   {
+    "carpeta": "material/peonita",
+    "titulo": "Peonita y el reino de las 64 casillas",
+    "grupo": "Carpetas",
+    "archivos": [
+     {
+      "ruta": "material/peonita/peonita-adaptado.docx",
+      "titulo": "Peonita y el reino de las 64 casillas — versión adaptada en Word (letra grande y lector de pantalla)",
+      "tipo": "otro",
+      "kb": 3859
+     }
+    ]
+   },
+   {
+    "carpeta": "material/peonita-trucos",
+    "titulo": "Peonita, Tizón y los trucos del bosque",
+    "grupo": "Carpetas",
+    "archivos": [
+     {
+      "ruta": "material/peonita-trucos/peonita-trucos-adaptado.docx",
+      "titulo": "Peonita, Tizón y los trucos del bosque — versión adaptada en Word (letra grande y lector de pantalla)",
+      "tipo": "otro",
+      "kb": 3146
+     }
+    ]
+   },
+   {
+    "carpeta": "material/peonita-rey",
+    "titulo": "Peonita y el rey escondido",
+    "grupo": "Carpetas",
+    "archivos": [
+     {
+      "ruta": "material/peonita-rey/peonita-rey-adaptado.docx",
+      "titulo": "Peonita y el rey escondido — versión adaptada en Word (letra grande y lector de pantalla)",
+      "tipo": "otro",
+      "kb": 2871
      }
     ]
    }
@@ -13557,7 +13617,7 @@
         "ruta": "cursos/recursos/formacion-ajedrez/01-encuadre-y-reglas-basicas.pptx",
         "titulo": "Presentación",
         "tipo": "presentacion",
-        "kb": 300
+        "kb": 5081
        }
       ]
      },
@@ -13569,7 +13629,7 @@
         "ruta": "cursos/recursos/formacion-ajedrez/02-reglas-de-competicion.pptx",
         "titulo": "Presentación",
         "tipo": "presentacion",
-        "kb": 97
+        "kb": 2971
        }
       ]
      },
@@ -13581,7 +13641,7 @@
         "ruta": "cursos/recursos/formacion-ajedrez/03-apendices-normativa-y-emparejamiento.pptx",
         "titulo": "Presentación",
         "tipo": "presentacion",
-        "kb": 139
+        "kb": 4790
        }
       ]
      },
@@ -13593,7 +13653,7 @@
         "ruta": "cursos/recursos/formacion-ajedrez/04-uso-y-control-del-reloj.pptx",
         "titulo": "Presentación",
         "tipo": "presentacion",
-        "kb": 81
+        "kb": 2255
        }
       ]
      },
@@ -13605,7 +13665,7 @@
         "ruta": "cursos/recursos/formacion-ajedrez/05-resolucion-de-casos-en-grupos.pptx",
         "titulo": "Presentación",
         "tipo": "presentacion",
-        "kb": 75
+        "kb": 2109
        }
       ]
      },
@@ -13617,7 +13677,7 @@
         "ruta": "cursos/recursos/formacion-ajedrez/06-talleres-y-simulacros-de-arbitraje.pptx",
         "titulo": "Presentación",
         "tipo": "presentacion",
-        "kb": 71
+        "kb": 1946
        }
       ]
      }
@@ -13987,21 +14047,21 @@
     "ruta": "material/peonita-rey/peonita-rey-accesible.html",
     "titulo": "Peonita y el rey escondido",
     "tipo": "accesible",
-    "kb": 32,
+    "kb": 41,
     "libro": "Peonita y el rey escondido"
    },
    {
     "ruta": "material/peonita-trucos/peonita-trucos-accesible.html",
     "titulo": "Peonita, Tizón y los trucos del bosque",
     "tipo": "accesible",
-    "kb": 32,
+    "kb": 38,
     "libro": "Peonita, Tizón y los trucos del bosque"
    },
    {
     "ruta": "material/peonita/peonita-accesible.html",
     "titulo": "Peonita y el reino de las 64 casillas",
     "tipo": "accesible",
-    "kb": 45,
+    "kb": 58,
     "libro": "Peonita y el reino de las 64 casillas"
    },
    {

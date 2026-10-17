@@ -1669,6 +1669,39 @@ callado de siempre: se lee bien, y el día que hace falta no está.
 El comando queda escrito en `RESTAURAR.md` para correrlo desde una máquina con
 permiso de escribir etiquetas.
 
+### La huella no cuadraba: lo anotado en la base no era el archivo
+
+El 17/10 la huella de `schema_migrations` no coincidía con la del repositorio,
+y no por un cambio de esquema: todo lo que dicen esas migraciones está
+aplicado (se comprobó política por política, 119 de 119, y las tablas y
+funciones de las consultas de arbitraje). Era la anotación:
+
+- **Seis archivos tenían un salto de línea al final que la base no**
+  (`apply_migration` guarda el texto sin él) y **tres tenían el comentario de
+  cabecera agregado después** (las de los JDN: tableros, jugadores, partidas).
+  Mismo SQL, otro md5.
+- `20261010191238_jdn_comites_sin_licencia` estaba aplicada y anotada, pero
+  **nunca se guardó en el repositorio**: se armó el archivo con su texto exacto.
+- `20261008195500_consultas_arbitraje` estaba aplicada y **no anotada**.
+- `20261011031200_politicas_rls_sin_duplicar` estaba anotada **sin texto**
+  (`statements` nulo).
+
+Se arregló dejando en la base el texto exacto de cada archivo (el criterio de
+siempre: `statements` = el archivo entero), sin tocar el esquema. Los saltos de
+línea se sumaron en la base sin copiar texto; las cabeceras y la de arbitraje
+se mandaron con una guarda que solo escribe si el md5 da el del archivo.
+
+**La de `politicas_rls_sin_duplicar` se corrió a mano en el editor SQL de
+Supabase**: su texto lleva `drop policy`, y por `execute_sql` toda consulta con
+`drop` pide una confirmación aparte que en la sesión web nunca llega (se
+cuelga; ver «Retos, marcador, regalos y bromas» en puntos-y-premios.md).
+Pegado desde Windows, **cada salto de línea llegó como `\r\n`** y la huella
+salió otra; se arregló en la base con `replace(…, E'\r', '')`, con una guarda
+que solo escribe si el md5 da el del archivo. Si se vuelve a pegar algo a mano,
+mirar la huella que devuelve antes de darlo por bueno. Y al aplicar una
+migración, guardar el archivo **sin** el salto de línea final o sumárselo en
+la base: si no, el desfase vuelve.
+
 ## Realtime escucha solo lo que la pantalla muestra
 
 Pregunta del dueño del sitio: «¿aguanta 10 mil usuarios?». Las páginas sí, porque

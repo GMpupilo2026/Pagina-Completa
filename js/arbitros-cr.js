@@ -391,9 +391,11 @@
         $("tabla-arbitros").tBodies[0].replaceChildren(...filas.map((r) => {
             const boton = el("button", { type: "button", class: "font-semibold underline underline-offset-2 hover:no-underline text-left" }, r.a.nombre);
             boton.addEventListener("click", () => elegir(r.a.fide_id));
-            const td = (v, der) => el("td", { class: "px-3 py-2" + (der ? " text-right tabular-nums" : "") }, v);
+            // px-1.5 y sin cortar los números: con sus 18 columnas, la tabla cabe
+            // en una portátil (1280 px) sin barra de lado.
+            const td = (v, der) => el("td", { class: "px-1.5 py-2 whitespace-nowrap" + (der ? " text-right tabular-nums" : "") }, v);
             return el("tr", { class: "border-t border-brand-100 dark:border-brand-800" },
-                el("th", { scope: "row", class: "px-3 py-2 font-normal" }, boton),
+                el("th", { scope: "row", class: "px-1.5 py-2 font-normal text-left" }, boton),
                 td(tituloCorto(r.a) || "—"), td(r.anioAf ? String(r.anioAf) : "—", true), td(r.anioAi ? String(r.anioAi) : "—", true), td(r.enFide), td(miles(r.torneos), true), td(miles(r.fide), true), td(miles(r.nofide), true), td(miles(r.fuera), true),
                 td(miles(r.principal), true), td(miles(r.adjunto), true), td(miles(r.arbitro), true),
                 td(conRev(r.af, r.afRevisar), true), td(conRev(r.ai, r.aiRevisar), true),

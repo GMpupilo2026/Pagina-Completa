@@ -4049,3 +4049,29 @@ panel) **y `verificar-academias.js`** (la casilla).
   lista vacía.
 
 Se rompieron a propósito seis cosas y saltaron todas.
+
+## `verificar-panel.js` no puede colgar la tanda del CI
+
+Es el verificador más largo de la tanda 2/4 (unos 200 s), y en el CI se quedó
+quieto dos veces en el mismo punto: justo después de que «Ver los planes»
+navega a `precios.html`, con todas las comprobaciones en verde. Lo mató el
+tope de 10 minutos de `verificar-todo.js` y la tanda salió roja por una prueba
+que había pasado; como la salida quedaba cortada, tampoco se veía dónde. En
+las sesiones de Claude Code no se reproduce (doce vueltas seguidas en un solo
+núcleo): allí corre el Chromium de `/opt/pw-browsers`, y el CI usa el de
+Playwright 1.63, más nuevo.
+
+Las únicas llamadas sin tope en esa zona son cerrar el contexto y
+`page.evaluate`. Por eso el verificador ahora corre sus pruebas en una lista
+(`PRUEBAS`) con dos topes:
+
+- **Cerrar un contexto** (o el navegador) que pasa de 15 s se avisa con ⚠ y
+  el nombre de la prueba, y se sigue sin esperarlo. Cerrar es limpieza: no
+  comprueba nada de la página.
+- **Cada prueba** tiene 120 s (la más larga tarda unos 30). Si no termina,
+  cuenta como fallo **con su nombre** y se sigue con la siguiente. Un cuelgue
+  de verdad sigue saliendo en rojo, pero en dos minutos y diciendo dónde.
+
+Se rompieron a propósito los dos (un cierre que nunca termina y una prueba
+que nunca termina) y saltaron los dos. Una prueba nueva del panel va en
+`PRUEBAS`.

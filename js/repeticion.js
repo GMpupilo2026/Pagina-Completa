@@ -68,8 +68,36 @@
     return cuenta.get(k);
   }
 
+  /* Para las partidas que se juegan en la misma página (contra el bot) y
+     vuelven a cargar su motor desde la FEN después de cada jugada: no hay una
+     lista de jugadas que reproducir, así que se anota cada posición al pasar.
+     `anotar(motor)` se llama al empezar y después de CADA jugada (de los dos
+     lados) y devuelve cuántas veces apareció la posición de ahora. */
+  function contador() {
+    const cuenta = new Map();
+    let ultima = null;
+    return {
+      anotar(motor) {
+        try { ultima = clave(motor); } catch (e) { ultima = null; return 0; }
+        cuenta.set(ultima, (cuenta.get(ultima) || 0) + 1);
+        return cuenta.get(ultima);
+      },
+      veces: () => (ultima ? cuenta.get(ultima) : 0),
+      reiniciar() { cuenta.clear(); ultima = null; },
+    };
+  }
+
+  // 50 jugadas de cada lado sin captura ni avance de peón: el reloj de medias
+  // jugadas de la FEN (el quinto campo) llega a 100.
+  function cincuentaJugadas(fen) {
+    const medias = parseInt(String(fen || "").split(" ")[4], 10);
+    return medias >= 100;
+  }
+
   window.Repeticion = {
     veces: veces,
     esTriple: (fenInicial, jugadas, crear, fenFinal) => veces(fenInicial, jugadas, crear, fenFinal) >= 3,
+    contador: contador,
+    cincuentaJugadas: cincuentaJugadas,
   };
 })();

@@ -781,8 +781,21 @@
     caja.appendChild(ir);
     caja.classList.remove("hidden");
   }
+  /* Abierta por el profe dentro de la clase (la ventana de sesion.html, con
+     ?en-clase=1): cada ejercicio terminado se le avisa a la clase, que lo
+     anuncia para que el profe vea cuántos acertó cada alumno (ver «Habilidades:
+     que lo practiquen solos» en docs/decisiones/clase-en-vivo.md). Solo al
+     marco de la misma página: a otro origen no sale nada. */
+  const EN_CLASE = window.parent !== window && /[?&]en-clase=1(&|$)/.test(location.search);
+  function avisarALaClase(tipo, item, estrellas) {
+    if (!EN_CLASE) return;
+    try {
+      window.parent.postMessage({ fuente: "entreno-en-clase", slug: "tipos", id: C.clave(tipo, item.id), estrellas: +estrellas || 0 }, location.origin);
+    } catch (e) { /* sin la clase alrededor, no hay a quién avisar */ }
+  }
   function terminar(item, estrellas, extra) {
     const completoAntes = nivelCompleto();
+    avisarALaClase(partida.tipo, item, estrellas);
     anotarEstrellas(partida.tipo, item.id, estrellas);
     if (estrellas >= 1) registrar(partida.tipo, item, estrellas);
     const repaso = anotarRepaso(partida.tipo, item, estrellas);
@@ -1385,6 +1398,13 @@
       estado(texto + (estrellas ? " " + textoEstrellas(estrellas) : ""));
       if (estrellas) { anotarMejor(item.id, jugadas); terminar(item, estrellas); }
     }
+    // Triple repetición y 50 jugadas, automáticas como en toda partida (las
+    // decide chess.js, que tiene el historial entero).
+    function tablasPorReglamento() {
+      if (juego.in_threefold_repetition()) { fin("✗ La misma posición se repitió tres veces: tablas por triple repetición. Prueba otra vez.", 0); return true; }
+      if (juego.in_draw()) { fin("✗ 50 jugadas sin mover un peón ni capturar: tablas por la regla de las 50 jugadas. Prueba otra vez.", 0); return true; }
+      return false;
+    }
     function jugar(mov) {
       if (hecho || ocupado) return;
       const m = juego.move(mov);
@@ -1394,6 +1414,7 @@
       tab.ultima = [m.from, m.to];
       if (juego.in_checkmate()) return fin("✓ ¡Jaque mate en " + jugadas + "! Contra la mejor defensa hacen falta " + item.minimo + ".", R.estrellasFinal(jugadas, item.minimo));
       if (juego.in_stalemate()) return fin("✗ Ahogado: el rey negro no tiene jugadas y no está en jaque. Son tablas. Prueba otra vez.", 0);
+      if (tablasPorReglamento()) return;
       ocupado = true;
       redibujar([m.from, m.to]);
       setTimeout(() => {
@@ -1402,6 +1423,7 @@
         const r = juego.move(d);
         estado("El rey negro juega " + R.sanEs(r.san) + ".");
         if (r.captured) return fin("✗ El rey se comió una pieza que estaba sola: ya no hay mate posible. Prueba otra vez.", 0);
+        if (tablasPorReglamento()) return;
         if (jugadas >= 50) return fin("✗ Pasaron 50 jugadas sin mate: son tablas. Prueba otra vez.", 0);
         redibujar([r.from, r.to]);
       }, 350);

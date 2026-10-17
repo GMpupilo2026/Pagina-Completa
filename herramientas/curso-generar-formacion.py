@@ -44,7 +44,9 @@ sesión tiene sus datos en herramientas/datos/ (poco texto, una idea por
 lámina); si no, salen del .pptx, y para eso hace
 falta LibreOffice (pptx a PDF) y PyMuPDF; los tableros salen de
 herramientas/lib/tablero-png.js (playwright). La Clase 1 se da con la
-presentación propia del profe ("presentacion_clase": "propia"). La guía rápida
+presentación propia del profe ("presentacion_clase": "propia"). Al final, el
+.pptx de cada sesión con láminas se vuelve a armar con esas mismas láminas
+(herramientas/formacion-pptx.py): lo que se baja es lo que se proyecta. La guía rápida
 de la persona árbitra la arma herramientas/formacion-guia-rapida.py.
 
     pip install pymupdf pillow      (y LibreOffice instalado)
@@ -1082,6 +1084,11 @@ def main():
                 ejercicios_pdf(curso, leccion, os.path.join(carpeta, leccion["archivo"] + "-ejercicios.pdf"))
 
     sesiones_json(curso, carpeta)
+
+    # El .pptx que se baja es el que se proyecta: el de presentacion() se
+    # reemplaza por uno armado con las láminas, en las sesiones que las tienen
+    # (también la Clase 1, cuyas láminas no las arma presentacion_de_clase()).
+    subprocess.run(["python3", os.path.join(RAIZ, "herramientas", "formacion-pptx.py")], check=True)
 
     # La guía rápida de la persona árbitra (JDE), que va con la Sesión 1.
     subprocess.run(["python3", os.path.join(RAIZ, "herramientas", "formacion-guia-rapida.py"),

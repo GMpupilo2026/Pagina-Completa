@@ -43,7 +43,9 @@ ajuste a mano futuro) pasan `referencia` con un valor nuevo cada vez
 ## Qué fuentes de puntos se decidió cubrir, y qué se dejó afuera
 
 - **Clase**: al cerrarla (`class_sessions.ended_at` pasa de `null` a una
-  fecha), se suman `puntos_de_la_clase()` + `puntos_de_tandas()` de esa
+  fecha), se suman `puntos_de_la_clase()` + `puntos_de_tandas()` +
+  `puntos_de_habilidades()` (los ejercicios de Habilidades que el profe mandó
+  a practicar, ver «Habilidades: los puntos» en `clase-en-vivo.md`) de esa
   clase, por alumno. **No** se incluyen los turnos de palabra, las prácticas
   ni las partidas de `js/puntos-clase.js` (`REGLAS`): esos números viven solo
   en `game_state` (podio, equipos), que se limpia al cerrar la clase — para
@@ -105,6 +107,21 @@ porque está pensada para que alguien registre a mano un pago por WhatsApp.
 `registrar_compra()`), como una vía distinta y propia para un «pago» con
 puntos en lugar de dinero. El resultado para `puede_bajar()`/`worker.js` es
 exactamente el mismo: da igual por cuál de las dos vías se compró.
+
+### El material canjeado se abre desde «Mis premios»
+
+**Corregido después.** El candado quedaba abierto, pero no había puerta: la
+fila de «Mis premios» decía «Canjeado el…» y nada más, y `tienda.html` (la
+única pantalla con los enlaces a cada material) es solo de administración. Un
+alumno canjeó el libro de diagnóstico por 500 puntos el 13/10/2026, la base le
+registró la compra, el worker se lo habría dejado bajar, y no tuvo por dónde
+llegar; se le devolvieron los puntos a mano (`ajuste_manual`, con la
+referencia `devolucion:canje:<id>`). Ahora la fila de un `material_tienda`
+trae un enlace por cada archivo del producto, sacados de
+`js/tienda-catalogo.js` (la misma lista que la tienda, que
+`verificar-tienda.js` compara contra el disco), así que un material nuevo en
+el catálogo de premios sale con sus enlaces sin tocar `js/puntos.js`. Lo
+revisa la prueba «4 bis» de `verificar-puntos.js`.
 
 ## Los accesorios de avatar: lo único que otros alumnos (no solo quien lo tiene) llegan a ver
 
@@ -310,6 +327,19 @@ crean existen). Quedó pendiente agregar esos dos renglones con su texto
 exacto; intentarlo de nuevo desde `apply_migration`/`execute_sql` también se
 cuelga (`cancelled`), así que falta correrlo a mano en el editor SQL de
 Supabase, como la primera vez.
+
+**Esos dos renglones se anotaron también en el proyecto equivocado.** Al
+pegarlos a mano, quedaron además en la **Base de Colegios**
+(`prcfbzvshnusisczlpxl`). Se vio el 17/10: Colegios tenía 9 migraciones
+anotadas y el repositorio 7, y su huella no coincidía. Ahí el SQL nunca
+corrió, porque no había ninguna de sus tablas ni el esquema `interno`: solo
+las dos filas de `schema_migrations`, con los `\r\n` de lo pegado desde
+Windows. El dueño las borró en el editor SQL de Colegios, porque por
+`execute_sql` un `delete` se cuelga igual que un `drop`. Colegios volvió a 7 y
+a la huella del repositorio (`35dfa766…`). En la Academia las dos siguen
+anotadas, y bien. **Antes de pegar algo en el editor SQL, mirar en la
+dirección qué proyecto está abierto**: `bgtijpimpcokxatxxbki` es la Academia y
+`prcfbzvshnusisczlpxl` es Colegios.
 
 ## El robo de puntos
 

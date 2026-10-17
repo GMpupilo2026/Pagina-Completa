@@ -9,13 +9,7 @@
    docs/decisiones/sitio-e-infraestructura.md. */
 
         const FORMAT_LABEL = { swiss: "Suizo", elimination: "Eliminación directa", round_robin: "Todos contra todos" };
-        const VARIANT_LABEL = { estandar: "⚔️ Ajedrez Estándar", crazyhouse: "♞ Crazyhouse", cartas: "🃏 Ajedrez de Cartas", duelo: "⚡ Duelo Simultáneo", niebla: "🌫️ Niebla de Guerra" };
-
-        function escapeHtml(text) {
-            const div = document.createElement("div");
-            div.textContent = text;
-            return div.innerHTML.replace(/"/g, "&quot;").replace(/'/g, "&#39;");
-        }
+        // El nombre de la modalidad (y escapeHtml) salen de js/juegos-comun.js.
 
         async function load() {
             const { data, error } = await sb.from("public_tournament_champions").select("*").order("finished_at", { ascending: false });
@@ -54,7 +48,7 @@
                 const fecha = new Date(g.row.finished_at).toLocaleDateString("es-CR", { year: "numeric", month: "long", day: "numeric", timeZone: "America/Costa_Rica" });
                 li.innerHTML =
                     "<p class='font-semibold text-brand-800 dark:text-white'>" + escapeHtml(g.row.tournament_name) + "</p>" +
-                    "<p class='text-xs text-brand-450 dark:text-brand-350'>" + (FORMAT_LABEL[g.row.format] || g.row.format) + " · " + (VARIANT_LABEL[g.row.variant] || g.row.variant) + " · " + fecha + "</p>" +
+                    "<p class='text-xs text-brand-450 dark:text-brand-350'>" + (FORMAT_LABEL[g.row.format] || g.row.format) + " · " + etiquetaModoTorneo(g.row.variant) + " · " + fecha + "</p>" +
                     "<p class='text-sm text-accent-600 dark:text-accent-400 font-medium'>🏆 " + g.names.map(escapeHtml).join(" y ") + "</p>";
                 historyEl.appendChild(li);
             });

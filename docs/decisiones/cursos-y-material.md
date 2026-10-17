@@ -1094,7 +1094,10 @@ soluciones.
   **sus respuestas escritas a mano**, la tapa, el final, el diploma y sus
   secretos. `dibujos.js` tiene los personajes y las escenas, y
   `herramientas/libro-ninos-pdf.js` los pone en papel **con una sola
-  maqueta**: `material/<slug>/<slug>.pdf` y `<slug>-accesible.html`.
+  maqueta**: `material/<slug>/<slug>.pdf`, `<slug>-accesible.html`,
+  `<slug>-adaptado.pdf`, `.docx` y `.epub` (ver «El PDF adaptado: letra
+  grande y lector de pantalla», «El adaptado también en Word» y «Para quien no
+  ve: los ejercicios con las manos y el EPUB»).
 - Los revisa `verificar-libro-ninos.js`, todos. Un cuento nuevo se suma a
   `libros.js` y entra solo al generador y al verificador.
 
@@ -1193,6 +1196,254 @@ porque está escondido. Este archivo y `herramientas/` no se publican
 - Comparte con «Ponte a prueba» el cierre (`lib/pdf-armar.js`) y el
   `describir()` de la versión accesible. Va en `admin.html#materiales` y se
   comparte igual; sin pruebas como cuestionario, esa sección no aparece.
+
+### El PDF adaptado: letra grande y lector de pantalla
+
+El dueño pidió el libro de Peonita «adaptado al 100 %» y en PDF. La versión
+accesible en HTML ya estaba, pero un PDF es lo que se imprime, se manda por
+WhatsApp y se abre con la lupa del celular. Sale del mismo generador
+(`adaptado()` de `libro-ninos-pdf.js`), para los tres cuentos:
+`material/<slug>/<slug>-adaptado.pdf`; `--solo-adaptado` rehace solo esos.
+
+- **Para quien ve poco:** Atkinson Hyperlegible (la letra hecha para baja
+  visión) a 20 pt, interlineado 1,5, negro sobre blanco y títulos azul oscuro
+  (13,4:1), sin justificar ni cortar palabras. Un tablero grande por página
+  (150 mm en los diagramas, 108 mm en los ejercicios para que la pregunta y la
+  raya de la respuesta quepan en la misma hoja), con la casilla oscura más
+  oscura que la madera del libro. Sin marca de agua.
+- **Para quien no ve:** el PDF va **etiquetado** (`tagged` de Chromium:
+  títulos H1–H4, párrafos y listas), con marcadores por capítulo, `/Lang
+  es-CR` y el título a la vista (`DisplayDocTitle`), **sin cifrar**: el
+  cifrado y los permisos estorban a más de un lector de pantalla.
+- **Los dibujos y los tableros van con `aria-hidden`**, y al lado va escrito
+  lo que muestran (el dibujo contado, la posición pieza por pieza, adónde
+  puede ir). Con texto alternativo además, el lector lo diría dos veces.
+- Las jugadas van como en la versión accesible («torre anna 8»), y la portada
+  explica los nombres de las letras. Las promesas y los consejos del último
+  capítulo van en lista, no pegados a la pregunta.
+- **Cumple PDF/UA-1, validado con veraPDF** (1.28.2, `-f ua1`: 0 reglas
+  fallidas en los tres cuentos). Lo que Chromium deja a medias lo arregla
+  `herramientas/lib/pdf-adaptado.py` (lo llama `datosAdaptado()` de
+  `lib/pdf-armar.js`). veraPDF encontró dos fallos y los dos callados:
+  - **11 001 trozos de contenido sin marcar** (7.1-3): Chromium etiqueta lo
+    que está en el árbol de accesibilidad, pero lo que va con `aria-hidden`
+    (dibujos y tableros) y el número de página quedaban ni etiquetados ni
+    como Artifact. El script envuelve en `/Artifact BMC … EMC` todo lo que se
+    pinta fuera de una secuencia marcada, sin partir un trazado ni un texto a
+    la mitad y sin tocar lo etiquetado (los MCID quedan iguales).
+  - **Faltaba el XMP** (7.1-8): se pone con `pdfuaid:part` 1, el título, el
+    autor y el idioma.
+- **Los datos del PDF se ponen con `clone_from`**, no copiando página por
+  página como en `proteger()`: así se pierde el árbol de etiquetas sin ningún
+  error.
+- `verificar-libro-ninos.js` lo lee con pypdf: que esté etiquetado, sin
+  cifrar, en español, con su título, marcadores y el XMP de PDF/UA, **sin
+  ningún trazo ni texto fuera de una secuencia marcada** (lo mismo que
+  rechaza veraPDF, para no tener que bajar Java en el CI), y con cada
+  capítulo, cada dibujo contado y las soluciones. Se rompió a propósito dos
+  veces (el PDF cifrado en su lugar; el script sin marcar los Artifact ni el
+  XMP) y saltó las dos.
+- Para volver a validarlo con veraPDF: Maven Central sí se alcanza desde el
+  contenedor (la página de veraPDF no). Un `pom.xml` con la dependencia
+  `org.verapdf.apps:greenfield-apps:1.28.2`, `mvn dependency:copy-dependencies
+  -DoutputDirectory=lib` y `java -cp "lib/*"
+  org.verapdf.apps.GreenfieldCliWrapper -f ua1 --format xml <pdf>`: tiene que
+  dar `isCompliant="true"`. Las advertencias «Invalid glyph code» de las
+  fuentes no son fallos.
+
+### El adaptado también en Word
+
+Después del PDF, el dueño lo pidió **en Word**: un .docx se agranda, se
+cambia de letra o de color y se lee con el lector de pantalla que cada quien
+ya usa. Sale del mismo generador: `material/<slug>/<slug>-adaptado.docx`, con
+`--solo-adaptado` igual que el PDF.
+
+- **Una sola copia del contenido.** `bloquesAdaptado()` arma el libro una vez
+  como lista de bloques (título, párrafo, recuadro, lista, imagen, raya para
+  la respuesta, grupo) y de ahí salen los dos: `adaptadoHTML()` para el PDF y
+  `adaptadoDocx()` para el Word (librería `docx` del `package.json`). Si cada
+  formato armara su texto, el primer arreglo en uno dejaría al otro atrás.
+- **Lo accesible en Word:** títulos con los estilos Título 1–4 de Word (el
+  panel de navegación y el lector saltan por ellos), listas con numeración de
+  verdad, idioma español (Costa Rica) en el estilo base, el título en las
+  propiedades del documento y **cada imagen marcada como decorativa** (la
+  extensión `adec:decorative` que pone «Marcar como decorativa»; la librería
+  no la trae y se agrega al final). Al lado de cada imagen va escrito lo que
+  muestra, como en el PDF.
+- **Verdana a 18 pt, no Atkinson Hyperlegible**: una letra que la computadora
+  no tiene, Word la cambia por otra sin avisar, y Atkinson no viene en Windows
+  ni en Mac. Verdana está en todas y es de las que se recomiendan para baja
+  visión. Las imágenes se sacan de los mismos SVG con Chromium, a unos
+  290 ppp.
+- **Tres cosas que fallaban calladas** y que ahora revisa el verificador:
+  - **El interlineado sin `lineRule`**: Word lo toma como automático, pero
+    LibreOffice como exacto, y recortaba cada tablero a la altura de un
+    renglón (solo se veía la fila de letras) y encimaba los títulos de dos
+    renglones. Va `lineRule: auto` en todos.
+  - **Los títulos con `paragraphStyles`** dejaban dos estilos «Heading1», el
+    de la librería y el propio: van en `styles.default.heading1…`.
+  - **El Word salía con el cuento equivocado**: el paso del Word corre
+    después de recorrer todos los libros y leía `L`, que había quedado en el
+    último. Los tres .docx tenían el cuento del rey escondido. Se fija `L`
+    antes de armarlo, y el verificador comprueba que cada Word sea de su libro.
+- Además, `docx` 9.7.1 escribe los bordes de un párrafo en un orden que el
+  esquema de Word no acepta (top, bottom, left, right): Word lo abre igual,
+  pero el archivo no valida. Se reordenan al final.
+- «Lo que aprendí» va sin recuadro en el Word: Word solo une los bordes de
+  párrafos con la misma sangría, y el título y la lista quedaban en dos
+  recuadros.
+- `verificar-libro-ninos.js` lo lee con python-docx: título del documento,
+  idioma, un solo Título 1 y un solo estilo «Heading1», cada capítulo en
+  Título 2, cada dibujo contado, todas las imágenes decorativas, ningún
+  interlineado exacto o sin regla, listas con numeración y las soluciones.
+  Los tres validan contra el esquema de Office.
+
+### Para quien no ve: los ejercicios con las manos y el EPUB
+
+El dueño preguntó qué era lo mejor para un niño ciego y eligió dos cosas: los
+ejercicios con las manos y el libro en EPUB.
+
+**Con las manos.** Un niño ciego de 4 a 8 años no hace los ejercicios con
+un lector de pantalla: los hace en un tablero táctil (las casillas oscuras
+más altas, las piezas negras con una puntita arriba) y contesta en voz alta
+a quien le lee. Las versiones para quien no ve decían todavía «la casilla
+amarilla», «la estrella», «marca con una ✗», «pinta», «mira».
+
+- `tactil(e)` de `libro-ninos-pdf.js` da, para cada tipo de ejercicio, **qué
+  armar y qué tocar** («Con las manos.») y la pregunta sin nada que solo se
+  ve. La estrella es una **ficha** (un botón o una moneda) que se pone en la
+  casilla; en el ejercicio de nombrar la casilla, la pone el adulto sin
+  decir cuál, porque encontrarla es el ejercicio. «Pintar» pasa a tocar las
+  casillas altas; «unir» a reconocer cada pieza por su forma (las pistas de
+  cómo se siente cada una).
+- `solucionTactil(e)` hace lo mismo con las soluciones, y `manosMuestra(m)`
+  con los diagramas del cuento («pon el dedo en la torre de d4 y recorre sus
+  caminos: puede ir a…»).
+- **Para leer con las manos** (`MANOS_ADULTOS`): una página para la persona
+  adulta (qué es un tablero táctil, las fichas, cómo se nombran las
+  casillas, armar la posición CON el niño y no por él, recorrer el tablero
+  antes de empezar).
+- Va en la versión accesible, el PDF, el Word y el EPUB, que salen del mismo
+  contenido; el libro con dibujos no cambia.
+- Con el recuadro nuevo, el ejercicio ya no cabía en su hoja: la raya de la
+  respuesta (y a veces el «Con las manos») se pasaba sola a la siguiente. El
+  tablero de un ejercicio quedó en 90 mm (72 si tiene más de 12 piezas), el
+  de un diagrama en 120 (95), los diagramas no se parten y en los adaptados
+  ya no se repite «puede ir a» en «La posición». Ninguna hoja de los tres
+  libros queda casi vacía.
+
+**El EPUB** (`adaptadoEpub()`, `material/<slug>/<slug>-adaptado.epub`): el
+formato de los libros accesibles. El texto se acomoda a la pantalla y a la
+letra que elige quien lee, y se lee con VoiceOver, TalkBack o un lector de
+libros saltando por capítulos.
+
+- Una página XHTML por parte del libro, con sus títulos; índice (nav) con
+  los capítulos y su «¡A jugar!» (sin «Diagrama» ni «Lo que aprendí», que se
+  repiten en cada capítulo y leídos en fila no dicen nada); idioma es-CR;
+  los metadatos de EPUB Accessibility 1.1 (accessMode, accessModeSufficient
+  textual, accessibilityFeature, hazard, resumen, conformsTo); imágenes con
+  `alt=""` porque al lado va escrito lo que muestran; sin colores ni tamaños
+  de letra fijos. La raya de la respuesta no va: en la pantalla se contesta
+  en voz alta. El identificador sale del slug: vuelto a generar, sigue
+  siendo el mismo libro para la biblioteca del lector.
+- **Validado** en los tres cuentos con **EPUBCheck 5.4.0** (0 errores, 0
+  advertencias) y **Ace by DAISY** (pass, sin ningún problema). EPUBCheck se
+  baja de Maven Central (`org.w3c:epubcheck`) como veraPDF; Ace con `npm
+  install @daisy/ace` en una carpeta aparte y `ace-puppeteer` con
+  `PUPPETEER_EXECUTABLE_PATH` apuntando al Chromium de Playwright (`ace` a
+  secas usa Electron, que como root no arranca).
+- `verificar-libro-ninos.js` comprueba sin Java ni navegador: el mimetype
+  primero y sin comprimir (si no, un lector no lo reconoce), idioma,
+  metadatos de accesibilidad, índice, cada página XML bien formado y con su
+  idioma, cada imagen con alt, que sea de este libro, y el «Con las manos».
+  En la versión accesible: que cada ejercicio con posición diga «Con las
+  manos» y que ni los ejercicios ni las soluciones pidan algo que solo se ve.
+  Se rompió a propósito («la casilla amarilla» en un ejercicio; el EPUB con el
+  mimetype comprimido) y saltó.
+
+### El guion del audiolibro con voces
+
+El dueño quiere una versión en audio con voces. En este entorno no hay
+ninguna voz (las de Piper se bajan de huggingface.co, que la red bloquea, y
+Google Text-to-Speech pide una clave que no está), así que primero quedó
+listo el **guion**: `guionAudio()` de `libro-ninos-pdf.js` lo escribe, con
+`--solo-accesible` igual que la versión accesible, en
+`herramientas/libro-ninos/guion/<slug>.json` (para el programa que genere
+las voces) y `<slug>.md` (para leerlo y revisarlo). No se publica.
+
+- **Una pista por parte:** la presentación (la cuenta Peonita, en primera
+  persona), cada capítulo (el dibujo contado, el cuento, los diagramas con
+  las manos y «Lo que aprendí»), su «¡A jugar!» (la posición, qué armar, la
+  pregunta, **8 segundos para que el niño conteste** y la respuesta; al
+  empezar se le dice que puede pausar el audio), el final, el diploma y, al
+  final y aparte, lo que es para la persona adulta.
+- **Una voz por personaje**, la misma en los tres libros: `PERSONAJES` de
+  `herramientas/libro-ninos/voces.js` describe cada una (tipo de voz,
+  velocidad y cómo suena: Don Lento a 0,8, porque es un perezoso) para quien
+  elija las voces de verdad.
+- **Quién dice cada diálogo** sale del inciso: el primer personaje que
+  nombra, buscando el nombre más largo en el mismo lugar y con los apodos del
+  cuento («el alfil» es Don Saleras; «el rey negro», el Rey Carbón). Si el
+  diálogo viene tras dos puntos dentro del párrafo, habla el sujeto de esa
+  oración. La raya en medio de la narración es un paréntesis («bajó de su
+  rama —solo un poquito— y…»), no un diálogo. Lo que el texto no dice
+  («—Fácil. Mira la esquina…») está escrito a mano en `HABLA`, decidido
+  leyendo el contexto (58 diálogos en los tres libros). Si un diálogo no
+  tiene dueño, el generador se detiene y dice cuál.
+- Se revisaron a mano todas las líneas de diálogo de los tres libros, con el inciso al lado.
+- `verificar-libro-ninos.js` comprueba que cada clave de `HABLA` empiece
+  exactamente un párrafo del cuento (si se corrige el párrafo, la línea iría
+  a quien no es, sin ningún error), que toda voz esté descrita, que estén
+  todos los párrafos del cuento (el guion no quedó viejo), cada capítulo y
+  las pausas para contestar. Se rompió a propósito (una clave vieja, un
+  párrafo borrado) y saltó.
+- **Falta generar el audio**: con Google Text-to-Speech (una clave en la
+  configuración del entorno, `GOOGLE_TTS_API_KEY`) o con Piper (agregar
+  `huggingface.co` a los dominios permitidos). Con eso, el siguiente paso es
+  un MP3 por pista y el EPUB con el audio sincronizado.
+
+### Las voces las graban personas
+
+El dueño prefirió voces de personas a una voz de computadora. Doce voces
+(la narración es el 85 % del texto, unos 130 minutos de lectura; los
+personajes, de unos segundos a 8 minutos), y a cada persona le sirve solo lo
+suyo: `herramientas/audiolibro-grabar.js` lee el guion y arma en
+`herramientas/libro-ninos/guion/grabar/` un Word por voz y la autorización
+para firmar. No se publica (está bajo `herramientas/`).
+
+- **Un Word por voz, de los tres cuentos**, porque cada personaje es la misma
+  persona en toda la colección. Arriba: cómo es el personaje y su velocidad
+  en palabras («bastante más despacio que una conversación normal», no
+  «0,8»), cómo grabar con un celular, cómo nombrar y dónde subir; después,
+  pista por pista, cada línea con su número y en gris lo que se dice justo
+  antes, para entrar a tiempo.
+- **El número de la línea es su lugar en la pista contando todas las voces**,
+  no 1, 2, 3 dentro de cada guion: los números saltan, pero cada toma dice
+  sola dónde va. Quien graba **dice el número en voz alta** antes de cada
+  línea y, si se equivoca, lo repite y vuelve a leer: vale la última. Sin el
+  número, cortar 1211 líneas de la narración con repeticiones en medio sería
+  adivinar.
+- **Un archivo por persona y por pista**, `<libro>_pista<NN>_<voz>.wav`, en
+  la carpeta de Google Drive «Audiolibro Peonita», una subcarpeta por cuento.
+  Las pausas, los 8 segundos para pensar y el volumen se ponen al armar: nadie
+  graba silencios.
+- **La autorización** (`cesion-de-voz.docx`): una voz grabada que se publica
+  es un dato personal (Ley 8968) y una interpretación (Ley 6683). Dice para
+  qué se usa y para qué no —nunca para hacer una voz artificial ni entrenar
+  una—, el crédito y el pago a elegir, que se puede retirar (30 días para
+  dejar de publicarla) y cuánto se guarda cada cosa. Si la voz es de una
+  persona menor, firma quien tiene su representación, y se marca que se le
+  explicó y está de acuerdo. Es un modelo: no lo revisó un abogado.
+- `privacidad.html` dice que en Google Drive se guardan también las
+  grabaciones de quien presta su voz.
+- `verificar-libro-ninos.js` comprueba que estén todos los Word, que cada uno
+  traiga cada línea de su voz **con su número** y el nombre de archivo de cada
+  pista (si el guion cambia y el Word no, la persona graba líneas viejas o
+  corridas), y que la autorización traiga la parte de la persona menor. Se
+  rompió a propósito (el Word del coro en lugar del de Tizón) y saltó.
+- Al cambiar un cuento: `libro-ninos-pdf.js --solo-accesible` y después
+  `audiolibro-grabar.js`. Si alguien ya grabó, ver qué líneas cambiaron
+  antes de volver a mandarle el guion.
 
 ### Los diplomas se coleccionan
 

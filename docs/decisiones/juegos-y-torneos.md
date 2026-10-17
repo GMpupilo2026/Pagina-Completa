@@ -225,7 +225,8 @@ compañeros. Quien decía que no era la pantalla, no el candado.
   `fourplayer_games_select` **no** lleva `es_companero`, así que ahí la base
   nunca le entrega la fila a un compañero y quitarle el candado a la página no
   cambiaría nada. Escribir el mismo comentario ahí sería prometer un alcance que
-  la política no da. Y los torneos son solo de las cinco variantes de a dos.
+  la política no da. Y los torneos son solo de las modalidades de a dos (ver
+  «Los torneos, en todas las modalidades y en aleatorio»).
 
 ### Las dos puertas que siguen cerradas, y por qué
 
@@ -511,6 +512,127 @@ antes saltan el motor y el «-3».
   **pintada**, que es lo último que hace la página. Y cada prueba atrapa su
   propio error: con la página vieja, la del campo reventaba después de «-3» y
   lo que venía detrás no se miraba.
+
+### Los torneos, en todas las modalidades y en aleatorio
+
+Se pidió poder crear torneos con todos los modos de juego, y uno «aleatorio»
+que cambie de modo ronda a ronda. El formulario ofrecía cinco (estándar,
+crazyhouse, cartas, duelo y niebla) y la base aceptaba esas cinco
+(`tournaments_variant_check`), aunque `game_rooms` ya aceptaba once.
+
+- **Entran las once de a dos, y ninguna más**: las seis que faltaban
+  (abrazos, camaleón, vampiro, a ciegas, volcanes y misiones secretas) se
+  juegan en las mismas salas de `game_rooms`, así que un cruce de torneo es una
+  sala más. Relevo (por equipos) y las de 4 jugadores no: un torneo empareja de
+  a dos. La lista es `MODOS_TORNEO` de `js/juegos-comun.js`, sacada de
+  `VARIANTS`: una modalidad de a dos nueva entra sola al formulario (en la base
+  hay que sumarla a las dos restricciones).
+- **Una sola copia de cómo arranca una sala**: `torneo.js` tenía su propio
+  `buildGameRoomFields` con el estado inicial de tres variantes y su propio
+  `pageFor2pVariant`, que mandaba a `crazyhouse.html` todo lo que no conocía.
+  Ahora usa `estadoInicial()` y `pageFor2pVariant()` de `juegos-comun.js`, los
+  mismos de una partida amistosa: un Volcanes de torneo sortea su volcán y un
+  A ciegas lleva sus cinco miradas, igual que en `juegos.html`. Y los nombres
+  de las modalidades (`torneos.html`, `torneo.html`, `campeones.html`) salen
+  de ahí también: había tres copias de la lista de cinco.
+- **La modalidad de cada ronda queda escrita en `tournament_rounds.variant`**,
+  y la pone la base: en un torneo fijo, la del torneo diga lo que diga quien
+  inserta; en uno aleatorio tiene que venir (si no, la ronda no se crea), y
+  después no cambia (`interno.modalidad_de_la_ronda()`). Hacía falta lo
+  segundo porque los jugadores también actualizan la ronda —la cierran desde
+  `js/torneo-sync.js`—, y la modalidad de una ronda en juego no es de ellos.
+  Las rondas de antes quedan con `variant` nulo y se leen con la del torneo.
+  Comprobado en SQL: una ronda de un torneo de Volcanes que llega como
+  «cartas» queda en Volcanes, y la de un aleatorio que se intenta pasar a
+  Niebla al cerrarla se queda en la suya.
+- **El sorteo lo hace quien arma la ronda** (`sortearModoDeRonda`): entre las
+  que todavía no salieron en el torneo, y cuando ya salieron todas, cualquiera
+  menos la de la ronda anterior. Así en once rondas salen las once y nunca se
+  repite una dos rondas seguidas. No es secreto ni tiene por qué: la ronda lo
+  dice escrito («Se juega: 🌋 Volcanes») en cuanto se arma, que es lo primero
+  que hay que saber antes de sentarse.
+- **Cada cruce va a la página de SU sala**, no a la del torneo: en uno
+  aleatorio, el «Jugar →» de la ronda 3 lleva a `cartas.html` y el de la 4 a
+  `variante.html`.
+- **Las partidas en vivo que no se dibujan son tres**: Niebla (como antes), A
+  ciegas, por la misma razón —el que juega puede tener `torneo.html` abierta al
+  lado, y con las piezas a la vista se acabó jugar a ciegas—, y Abrazos, que
+  guarda en `fen` un JSON con sus unidades abrazadas: `ClasesBoard` no lo
+  entiende, cae en la posición inicial y enseñaría una partida que nadie
+  juega. Las tres lo dicen en la tarjeta en vez de dejar un hueco, y ninguna
+  escucha su sala por Realtime.
+- **`variante.html` dejó de cerrarle la puerta a quien mira**: tenía el mismo
+  `if (!myColor && !isTeacher)` que se les quitó a las otras páginas de
+  partida (ver «Las partidas de un torneo se pueden VER»), y desde que los
+  torneos se juegan también en sus modalidades, el «Ver →» llevaba al
+  compañero a «No formas parte de esta partida». Mirar lo decide la RLS. La
+  excepción es A ciegas en curso, como Niebla. Misiones secretas sí se mira:
+  la misión la esconde `misiones_secretas`, no la pantalla.
+
+**Al tocar las modalidades de los torneos, `js/juegos-comun.js` o la ronda de
+`torneo.js`, correr `node herramientas/verificar-torneo-modos.js`**: la lista
+contra las restricciones de las migraciones, el sorteo en mil torneos
+simulados, el formulario, un torneo aleatorio de 13 rondas de punta a punta
+(cada ronda con salas de su modalidad, su estado inicial, escrita y con su
+enlace), uno fijo en Camaleón, las partidas en vivo que no se dibujan y
+`variante.html` mirada por un compañero. Contra el código de antes saltan 13
+comprobaciones.
+
+### Las modalidades que entran al sorteo
+
+Después de «Aleatorio» se pidió que el profe pueda elegir qué modos entran al
+sorteo: no todas las modalidades sirven para todos los grupos (a ciegas o
+Misiones secretas con los más pequeños, por ejemplo).
+
+- **La lista vive en `tournaments.modos_aleatorio`**, nula = las once. Nula y
+  no la lista entera escrita a propósito: un torneo que eligió «todas» sigue
+  eligiéndolas todas si mañana se suma una modalidad de a dos. Por eso
+  `montarCasillasModos().leer()` devuelve `null` con todas marcadas, y los
+  aleatorios creados antes de esto (sin lista) se siguen sorteando entre todas.
+- **Al menos dos**, y lo exige la base (`tournaments_modos_aleatorio_check`,
+  que además pide que sean de a dos y que el torneo sea aleatorio): con una
+  sola no hay sorteo —para eso está el torneo fijo— y «nunca dos rondas
+  seguidas» necesita otra. La pantalla lo dice antes de mandar («Marca al
+  menos 2») y no crea nada.
+- **La base hace cumplir la lista al crear la ronda**:
+  `interno.modalidad_de_la_ronda()` rechaza una ronda de un aleatorio cuya
+  modalidad no está en la lista. La lista la cambia solo quien organiza (o
+  administra): `proteger_torneo()` se la revierte en silencio a un inscrito,
+  como el ritmo, y un torneo terminado ya no la cambia. Comprobado en SQL
+  impersonando al organizador y a un inscrito, y con una ronda fuera de la
+  lista, una lista de una sola y una con Relevo, que la base rechaza.
+- **Se elige al crear y se puede cambiar después**: la tarjeta «🎲
+  Modalidades del sorteo» de `torneo.html`, que solo ve quien organiza
+  mientras el torneo no terminó, igual que la del tiempo. Vale desde la ronda
+  siguiente (la que está en juego ya tiene la suya). Lo jugado antes con
+  modalidades que ya no están en la lista no estorba al sorteo: se recorre la
+  lista nueva desde cero.
+- **Todos ven cuáles entran**, debajo de la cabecera del torneo («Entran al
+  sorteo 3 de 11: …»): quien juega quiere saber qué le puede tocar para
+  repasar las reglas antes.
+- **Las casillas son una sola copia** (`montarCasillasModos` en
+  `js/juegos-comun.js`) para crear y para cambiar, con `leer()`, `poner()` y
+  `cuantas()`; se vuelven a poner solo si lo guardado cambió, por lo mismo que
+  el selector del ritmo.
+
+Lo comprueba el mismo `verificar-torneo-modos.js` (apartado 7): el sorteo con
+una lista en mil torneos, crear con una sola (no crea), con tres (las manda) y
+con todas (manda nulo), un aleatorio de tres modalidades que cambia a otras
+dos a mitad de torneo, y la inscrita que ve la lista pero no la tarjeta. Con
+`torneo.js` y `torneos.js` de antes saltan las pruebas de las dos páginas.
+
+**En eliminación directa ya funcionaba, y ahora se prueba.** Se pidió que el
+aleatorio sirva también en eliminación directa. No hubo que cambiar nada: la
+modalidad se sortea en `generateRound()` antes de mirar el formato, y la llave,
+los byes y las tablas («Avanza …») no dependen de la modalidad. Pero nada lo
+comprobaba, y un `if` por formato lo habría apagado sin ningún error, así que
+`verificar-torneo-modos.js` (apartado 8) juega llaves de 8, 6 y 5 inscritos
+(con byes, y una con tablas en la primera ronda) hasta el campeón. Con pocas
+rondas (log₂ de los inscritos) salen pocas modalidades: con 8 inscritos son 3
+rondas y 3 de las once, distintas entre sí. El doble del verificador hace
+cumplir además los CHECK de modalidad de `game_rooms` y `tournament_rounds`:
+sin eso, una ronda que la página mandaba como «aleatorio» la tragaba, y la
+base de verdad la rechaza.
 
 ### El verificador de voseo no miraba la mitad del sitio
 
@@ -888,6 +1010,40 @@ podían repetir la misma posición veinte veces y la partida seguía.
 - Va en `estandar`, `niebla` y `crazyhouse`, las de reglas de ajedrez de
   siempre. **Las de `variante.html` y Cartas no la tienen**: sus motores y sus
   cartas cambian lo que significa «la misma posición», y es otra decisión.
+
+### En las prácticas también: triple repetición y 50 jugadas, solas
+
+En toda práctica o entrenamiento que se juega como partida (contra el bot, el
+motor o la defensa de un ejercicio), la triple repetición y la regla de las 50
+jugadas terminan la partida en tablas **automáticamente**, y el final dice por
+qué. Donde el juego conserva el historial de chess.js (Finales contra la
+máquina, Finales 100, las partidas de los cursos, el entrenador de líneas, la
+práctica de la clase en vivo, el bot de `tablero.html`, Remata y Salva las
+tablas) ya lo hacía `in_draw()`. Faltaba en cuatro lugares, y en ninguno daba
+error: la partida seguía y nada más.
+
+- **Bot de Oscar (`bot.html`), en Estándar, Niebla, A ciegas y Crazyhouse.**
+  El motor se recargaba desde la FEN en cada jugada (el tablero lleva el suyo),
+  así que chess.js nunca veía una posición repetida. Ahora se anota cada
+  posición al pasar con `Repeticion.contador()` (`js/repeticion.js`, la misma
+  clave que en línea, con la captura al paso recortada) y las 50 jugadas se
+  leen del reloj de medias jugadas de la FEN (`Repeticion.cincuentaJugadas`).
+  El mate manda: si la jugada que repite da mate, ganó. Abrazos, Camaleón y
+  Cartas no la llevan, por lo mismo que en línea.
+- **«La clase juega» (`js/clase-votacion.js`).** Miraba `new Chess(board.fen())`,
+  sin historial. Ahora reproduce con `Repeticion.esTriple` las jugadas desde
+  que empezó la partida (`fenInicial` y `desde`, guardados al empezar): lo que
+  el profe mostró antes en el tablero no cuenta. Una partida guardada de antes,
+  sin `fenInicial`, no declara repetición (equivocarse hacia «no hay»).
+- **Habilidades: «Con lo justo» y «Rey y peón».** Solo miraban el mate, el
+  ahogado y la captura; dando vueltas, la partida no terminaba nunca. El tope
+  propio de «Con lo justo» (mate antes de 50 jugadas desde el principio) sigue:
+  es la consigna del ejercicio, no la regla.
+
+Lo comprueba `verificar-reloj-y-repeticion.js` (el contador, las 50 jugadas,
+que cada jugada del bot anote su posición antes de revisar el final, «La clase
+juega» corrida de verdad y los dos tipos). Probado que falla: quitando el
+`anotarPosicion()` de una jugada del bot o la repetición de la clase, salta.
 
 **Al tocar el reloj, `js/reloj-servidor.js`, `js/repeticion.js` o
 `handleLocalMove` de una página de partida, correr `node

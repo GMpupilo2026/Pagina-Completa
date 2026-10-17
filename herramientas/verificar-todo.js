@@ -46,6 +46,8 @@ const TOPE_MS = 10 * 60 * 1000;
 const ANTES = {
   "verificar-planes-semilla.js": [["node", ["herramientas/planes-semilla.js"]], ["node", ["herramientas/proyecto-semilla.js"]]],
   "verificar-proyectos.js": [["node", ["herramientas/proyecto-semilla.js"]]],
+  "verificar-sesiones-intensivas.js": [["node", ["herramientas/sesion-finales-intensiva.js"]], ["node", ["herramientas/sesion-estrategia-intensiva.js"]],
+                                      ["node", ["herramientas/sesion-tactica-intensiva.js"]]],
 };
 
 /* verificar-reportes.py no corre solo: revisa los archivos que deja

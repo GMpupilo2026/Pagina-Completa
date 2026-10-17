@@ -355,14 +355,16 @@
         {
           "titulo": "Practicar contra el motor",
           "donde": "sesion.html › 🎯 Practicar",
-          "intro": "Manda a toda la clase a jugar la posición contra el motor, cada quien en su tablero, con el nivel y el reloj que elijas.",
+          "intro": "Manda a toda la clase a jugar la posición contra el motor, cada quien en su tablero, con el nivel, el reloj y los intentos que elijas.",
           "pasos": [
-            "En la pestaña Practicar, elige el nivel del motor y el reloj del alumno.",
+            "En la pestaña Practicar, elige el nivel del motor, el reloj del alumno y cuántos intentos tiene cada uno.",
             "«🎯 Practicar: posición actual».",
             "Ves cómo va cada alumno en «Tableros de los alumnos». «Terminar práctica» cierra la ronda."
           ],
           "ojo": [
             "Puedes mirar la partida de un alumno y mandarle una ayuda, sin que la vea el resto.",
+            "Con un tope de intentos, el alumno no puede reintentar más de lo que le diste; con la ronda en curso puedes cambiarlo (por ejemplo, darles uno más).",
+            "En «🔁 Revisar los intentos» quedan las jugadas de cada intento de cada alumno, también después de terminar la ronda: «📺 Mostrar» pasa la que elijas al tablero de la clase.",
             "La ronda es tuya: cerrarla no toca la de ningún otro profesor que esté dando clase al mismo tiempo."
           ]
         },
@@ -1102,7 +1104,7 @@
           "donde": "clases.html › Jugar y competir › Competir › Torneos",
           "intro": "Un torneo con sus inscripciones, sus rondas, sus cruces y su tabla.",
           "pasos": [
-            "«Crear un torneo nuevo»: nombre, modalidad y control de tiempo.",
+            "«Crear un torneo nuevo»: nombre, modalidad (cualquiera de las de a dos, o «Aleatorio», que cambia de modalidad en cada ronda entre las que marques) y control de tiempo.",
             "Los alumnos se inscriben. Tú también puedes inscribirte y jugarlo.",
             "Generas cada ronda y se crean todas las partidas.",
             "Anotas los resultados y la tabla se actualiza."

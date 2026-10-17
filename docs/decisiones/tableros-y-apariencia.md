@@ -44,6 +44,15 @@ artículos y Partidas no tenían ninguna.
   tablero el margen que haga falta (18 px) si no lo tiene, porque las letras
   quedaban montadas sobre el borde de su tarjeta. Un tablero `absolute` no se
   toca: con margen se achataría.
+- **Un tablero dentro de una lista con barra propia** (los ejercicios de la
+  pestaña Entrenamientos de la clase, `max-h-96 overflow-y-auto`): la capa se
+  coloca respecto de un bloque de afuera de la lista, así que la lista ni la
+  recorta ni la mueve, y al desplazarla las etiquetas quedaban sueltas encima
+  del panel, sobre «Así les fue» y los nombres. El ayudante busca las cajas
+  con barra que hay entre el tablero y ese bloque, se recoloca cuando alguna
+  se desplaza y esconde cada etiqueta cuyo centro cae fuera de lo que se ve.
+  No se le pone `position: relative` a la lista: cambiaría dónde caen las
+  demás capas absolutas de adentro.
 - **El de cuatro jugadores se nombra a–n y 1–14** desde el lado de Rojo
   (`FourPlayerChess.nombre`). Por dentro la casilla sigue siendo `"3,0"` (es lo
   que viaja por la red); lo que se ve —las coordenadas, la lista de jugadas y

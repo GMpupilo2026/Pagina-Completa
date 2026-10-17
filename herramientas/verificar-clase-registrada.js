@@ -291,6 +291,18 @@ window.__deletes = [];
     });
     return Object.values(suma);
   }
+  // Los de Habilidades, como puntos_de_habilidades: cada ejercicio con una estrella o más,
+  // con su dificultad y las estrellas como intentos (tres: a la primera).
+  function puntosDeHabilidades(clase) {
+    const suma = {};
+    (TABLAS.habilidad_resultados || []).filter((r) => r.class_session_id === clase && r.estrellas >= 1).forEach((r) => {
+      const x = suma[r.student_id] = suma[r.student_id] || { student_id: r.student_id, puntos: 0, resueltos: 0, a_la_primera: 0 };
+      x.puntos += puntosDeUnaRespuesta(r.dificultad, 4 - r.estrellas, null);
+      x.resueltos += 1;
+      if (r.estrellas === 3) x.a_la_primera += 1;
+    });
+    return Object.values(suma);
+  }
   const QUIEN = ${JSON.stringify(quien)};
   window.sb = {
     auth: {
@@ -436,6 +448,8 @@ window.__deletes = [];
       if (n === "puntos_de_la_clase") return constructor(n, puntosDeLaClase(args.p_clase));
       if (n === "puntos_de_tandas") return constructor(n, puntosDeTandas(args.p_clase));
       if (n === "puntos_de_tandas_del_mes") return constructor(n, []);
+      if (n === "puntos_de_habilidades") return constructor(n, puntosDeHabilidades(args.p_clase));
+      if (n === "puntos_de_habilidades_del_mes") return constructor(n, []);
       if (n === "puntos_del_mes") {
         const desde = new Date(); desde.setDate(1); desde.setHours(0, 0, 0, 0);
         const clases = SESIONES.concat(TABLAS.clases_del_mes || []).filter((c) => new Date(c.started_at) >= desde
@@ -567,6 +581,12 @@ async function abrir(browser, quien, claseAbierta, semilla, opciones) {
      profesor, un alumno sin clase abierta NO monta #app — y esperarlo a secas
      dejaría la prueba colgada treinta segundos por algo que es lo correcto. */
   await page.waitForSelector("#app:not(.hidden), #sin-clase:not(.hidden)", { timeout: 30000 });
+  /* Quien prueba QUÉ dice cada anuncio de la presencia, y no a qué ritmo
+     salen, los ve salir al instante: el tope (js/sesion.js, cupoDePresencia)
+     lo prueba verificar-clase-presencia-tope.js. */
+  if (opciones && opciones.sinTopeDePresencia) {
+    await page.evaluate(() => { if (typeof cupoDePresencia !== "undefined") cupoDePresencia.tope = Infinity; });
+  }
   return { page, ctx, errores };
 }
 

@@ -309,6 +309,9 @@
         const d = M.defensaKpk(Chess, bitsKpk, juego.fen());
         const r = juego.move(d);
         if (r.captured) return fin("✗ El rey negro se comió el peón: tablas.", 0);
+        // Triple repetición y 50 jugadas, automáticas como en toda partida.
+        if (juego.in_threefold_repetition()) return fin("✗ La misma posición se repitió tres veces: tablas por triple repetición. Prueba otra vez.", 0);
+        if (juego.in_draw()) return fin("✗ 50 jugadas sin mover el peón ni capturar: tablas por la regla de las 50 jugadas. Prueba otra vez.", 0);
         estado("El rey negro juega " + R.sanEs(r.san) + ".");
         redibujar([r.from, r.to]);
       }, 350);

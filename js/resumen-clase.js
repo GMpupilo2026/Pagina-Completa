@@ -17,15 +17,17 @@ window.ResumenClase = (function () {
     }
 
     /* Con los puntos de las preguntas (puntos_de_la_clase: la dificultad, los
-       intentos y quién acertó primero) y de los calentamientos
-       (puntos_de_tandas), para los puntos y el podio. Aparte,
+       intentos y quién acertó primero), de los calentamientos
+       (puntos_de_tandas) y de Habilidades (puntos_de_habilidades), para los puntos y el podio. Aparte,
        para que el registro de clases del panel no pague una consulta más. */
     async function cargarConPuntos(sb, claseId) {
         const args = { p_clase: claseId };
-        const [r, p, t] = await Promise.all([sb.rpc("resumen_de_la_clase", args), sb.rpc("puntos_de_la_clase", args), sb.rpc("puntos_de_tandas", args)]);
+        const [r, p, t, h] = await Promise.all([sb.rpc("resumen_de_la_clase", args), sb.rpc("puntos_de_la_clase", args), sb.rpc("puntos_de_tandas", args),
+            sb.rpc("puntos_de_habilidades", args)]);
         if (p.error) console.error(p.error);
         if (t.error) console.error(t.error);
-        return { filas: window.PuntosClase ? PuntosClase.juntar(r.data || [], p.data || [], t.data || []) : (r.data || []), error: r.error || p.error || t.error };
+        if (h.error) console.error(h.error);
+        return { filas: window.PuntosClase ? PuntosClase.juntar(r.data || [], p.data || [], t.data || [], h.data || []) : (r.data || []), error: r.error || p.error || t.error || h.error };
     }
 
     /* La jugada del alumno (se guarda como la da chess.js, en inglés) va en

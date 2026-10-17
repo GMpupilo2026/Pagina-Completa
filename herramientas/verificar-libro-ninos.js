@@ -25,8 +25,14 @@
  *
  * Revisa también los secretos para Alessandro de cada libro (un acróstico o un
  * anagrama se rompen con una corrección y nadie lo nota, justo porque están
- * escondidos), y lo generado: que exista el PDF y que la versión accesible
- * traiga todos los capítulos y una descripción de cada dibujo.
+ * escondidos), y lo generado: que exista el PDF, que la versión accesible
+ * traiga todos los capítulos y una descripción de cada dibujo, y que el PDF
+ * adaptado esté etiquetado, sin cifrar, en español, con todo el cuento, con
+ * su XMP de PDF/UA-1 y sin contenido suelto (ni etiquetado ni Artifact), y
+ * que el Word adaptado tenga sus títulos, su idioma y las imágenes decorativas,
+ * que el EPUB sea un EPUB accesible de este libro, que los ejercicios para
+ * quien no ve se hagan con las manos y no pidan nada que solo se ve, y que el
+ * guion del audiolibro esté al día y con sus voces.
  *
  *   node herramientas/verificar-libro-ninos.js
  */
@@ -297,14 +303,277 @@ if (fs.existsSync(acc)) {
     ok(html.includes(c.escena.alt), `${L.SLUG}: la versión accesible no describe el dibujo del capítulo ${c.n}`);
   });
   ok(!/<img|<svg/i.test(html), `${L.SLUG}: la versión accesible tiene imágenes: tiene que ser solo texto`);
+  // Con las manos: un niño ciego hace los ejercicios en un tablero táctil.
+  // Cada ejercicio con posición dice qué armar y qué tocar, y ni los
+  // ejercicios ni las soluciones le piden algo que solo se ve (la casilla
+  // amarilla, la estrella, marcar con una ✗, pintar). Los nombres propios
+  // («la Dama Estrella», «caminos de colores») y el aviso de dónde estaba la
+  // estrella del libro sí pueden ir.
+  const conPosicion = L.CAPITULOS.reduce((n, c) => n + c.ejercicios.filter((e) => e.fen).length, 0);
+  const manos = (html.match(/<strong>Con las manos\.<\/strong>/g) || []).length;
+  ok(manos >= conPosicion, `${L.SLUG}: la versión accesible dice «Con las manos» ${manos} veces y hay ${conPosicion} ejercicios con posición: cada uno tiene que decir qué armar y qué tocar`);
+  ok(html.includes("<h2>Para leer con las manos</h2>"), `${L.SLUG}: la versión accesible no explica cómo leer el libro con un tablero táctil`);
+  const ejercicios = (html.match(/<h3>¡A jugar!<\/h3><ol>[\s\S]*?<\/ol>\s*<\/section>/g) || []).join(" ") + html.slice(html.indexOf("<h2>Soluciones</h2>"));
+  const plano = ejercicios.replace(/<[^>]+>/g, " ").replace(/Dama Estrella|caminos de colores|en el libro, ahí hay una estrella|la de la estrella del libro/g, "");
+  const VISUAL = /amarill|estrella|✗|encierra|\bpinta|colorea|\bmira\b|\bves\b|puntos? verdes?|flecha|círculo|marca con/gi;
+  const vistas = [...new Set(plano.match(VISUAL) || [])];
+  ok(!vistas.length, `${L.SLUG}: los ejercicios o las soluciones de la versión accesible piden algo que solo se ve: ${vistas.join(", ")}`);
   ok(html.includes(L.AUTOR), `${L.SLUG}: la versión accesible no dice quién es el autor`);
 } else {
   fallos.push(`falta material/${L.SLUG}/${L.SLUG}-accesible.html: hay que correr herramientas/libro-ninos-pdf.js`);
 }
 ok(fs.existsSync(path.join(CARPETA, L.SLUG + ".pdf")), `falta material/${L.SLUG}/${L.SLUG}.pdf`);
+
+// El PDF adaptado (letra grande, para quien ve poco o no ve). Lo que lo hace
+// adaptado no se ve a simple vista, y se pierde sin ningún error: un
+// PdfWriter que copia página por página bota las etiquetas, un cifrado de más
+// estorba al lector de pantalla. Se lee con pypdf.
+const adap = path.join(CARPETA, L.SLUG + "-adaptado.pdf");
+if (fs.existsSync(adap)) {
+  const guion = `
+import sys, json
+from pypdf import PdfReader
+r = PdfReader(sys.argv[1])
+raiz = r.trailer["/Root"]
+prefs = raiz.get("/ViewerPreferences")
+marca = raiz.get("/MarkInfo")
+# Lo que se pinta fuera de toda secuencia marcada (ni etiquetado ni
+# Artifact): PDF/UA-1 lo prohíbe (7.1-3) y veraPDF lo rechaza.
+PINTA = {b"S", b"s", b"f", b"F", b"f*", b"B", b"B*", b"b", b"b*", b"Do", b"sh", b"INLINE IMAGE", b"Tj", b"TJ", b"'", b'"'}
+from pypdf.generic import ContentStream
+sueltos = 0
+for pag in r.pages:
+    nivel = 0
+    for _, op in ContentStream(pag.get_contents(), r).operations:
+        if op in (b"BMC", b"BDC"): nivel += 1
+        elif op == b"EMC": nivel -= 1
+        elif nivel == 0 and op in PINTA: sueltos += 1
+xmp = raiz.get("/Metadata")
+xmp = xmp.get_object().get_data().decode("utf-8", "replace") if xmp is not None else ""
+def titulos(o):
+    for x in o:
+        if isinstance(x, list): yield from titulos(x)
+        else: yield x.title
+print(json.dumps({
+  "cifrado": r.is_encrypted,
+  "etiquetado": bool(marca and marca.get_object().get("/Marked")) and "/StructTreeRoot" in raiz,
+  "idioma": str(raiz.get("/Lang", "")),
+  "titulo_visible": bool(prefs and prefs.get_object().get("/DisplayDocTitle")),
+  "titulo": (r.metadata or {}).get("/Title", ""),
+  "marcadores": list(titulos(r.outline)),
+  "texto": "".join(p.extract_text() for p in r.pages),
+  "sueltos": sueltos,
+  "pdfua": "<pdfuaid:part>1</pdfuaid:part>" in xmp,
+}))`;
+  let d = null;
+  try {
+    d = JSON.parse(require("child_process").execFileSync("python3", ["-c", guion, adap], { maxBuffer: 64 * 1024 * 1024 }));
+  } catch (e) {
+    fallos.push(`${L.SLUG}: no se pudo leer el PDF adaptado (¿falta pypdf? pip install pypdf)`);
+  }
+  if (d) {
+    // pypdf saca el texto con los renglones cortados donde cae el salto: se
+    // compara sin espacios.
+    const junto = (t) => String(t).replace(/\s+/g, "");
+    const texto = junto(d.texto);
+    ok(!d.cifrado, `${L.SLUG}: el PDF adaptado está cifrado: el cifrado estorba al lector de pantalla`);
+    ok(d.etiquetado, `${L.SLUG}: el PDF adaptado no está etiquetado (tagged): el lector de pantalla no sabe qué es título ni en qué orden se lee`);
+    ok(/^es/.test(d.idioma), `${L.SLUG}: el PDF adaptado no dice que está en español (/Lang)`);
+    ok(d.titulo_visible && d.titulo.includes(L.TITULO), `${L.SLUG}: el PDF adaptado no muestra su título`);
+    ok(d.pdfua, `${L.SLUG}: el PDF adaptado no dice en su XMP que es PDF/UA-1 (pdfuaid:part): ¿se saltó pdf-adaptado.py?`);
+    ok(d.sueltos === 0, `${L.SLUG}: el PDF adaptado tiene ${d.sueltos} trozo(s) de contenido sin etiquetar ni marcar como Artifact: PDF/UA-1 lo rechaza (¿se saltó pdf-adaptado.py?)`);
+    ok(d.marcadores.length > 0, `${L.SLUG}: el PDF adaptado no tiene marcadores para saltar de capítulo`);
+    L.CAPITULOS.forEach((c) => {
+      ok(texto.includes(junto(c.titulo)), `${L.SLUG}: el PDF adaptado no tiene el capítulo «${c.titulo}»: hay que volver a correr libro-ninos-pdf.js`);
+      ok(texto.includes(junto(c.escena.alt)), `${L.SLUG}: el PDF adaptado no cuenta el dibujo del capítulo ${c.n}`);
+    });
+    ok(texto.includes(junto("Soluciones")), `${L.SLUG}: el PDF adaptado no trae las soluciones`);
+  }
+} else {
+  fallos.push(`falta material/${L.SLUG}/${L.SLUG}-adaptado.pdf: hay que correr herramientas/libro-ninos-pdf.js --solo-adaptado`);
+}
+
+// El Word adaptado: lo que lo hace accesible tampoco se ve a simple vista.
+// Los títulos con los estilos de Word (el lector de pantalla y el panel de
+// navegación saltan por ellos), el idioma, el título del documento, cada
+// imagen marcada como decorativa (si no, el Comprobador de accesibilidad de
+// Word pide texto alternativo y el lector la anuncia) y el interlineado
+// automático (con uno exacto, LibreOffice recorta las imágenes).
+const docx = path.join(CARPETA, L.SLUG + "-adaptado.docx");
+if (fs.existsSync(docx)) {
+  const guionW = `
+import sys, json, re, zipfile
+from docx import Document
+d = Document(sys.argv[1])
+z = zipfile.ZipFile(sys.argv[1])
+xml = z.read("word/document.xml").decode("utf-8")
+estilos = z.read("word/styles.xml").decode("utf-8")
+print(json.dumps({
+  "titulo": d.core_properties.title or "",
+  "idioma": bool(re.search(r'<w:docDefaults>.*?<w:lang w:val="es-CR"', estilos, re.S)),
+  "titulos2": [p.text for p in d.paragraphs if p.style is not None and p.style.name == "Heading 2"],
+  "h1": sum(1 for p in d.paragraphs if p.style is not None and p.style.name == "Heading 1"),
+  "estilos_repetidos": len(re.findall(r'w:styleId="Heading1"', estilos)),
+  "imagenes": len(re.findall(r"<wp:docPr\\b", xml)),
+  "decorativas": len(re.findall(r'<adec:decorative [^>]*val="1"', xml)),
+  "exactos": len(re.findall(r'w:lineRule="exact"', xml + estilos)),
+  "sin_regla": len(re.findall(r'<w:spacing(?![^>]*w:lineRule)[^>]*w:line="', xml + estilos)),
+  "listas": len(re.findall(r"<w:numPr>", xml)),
+  "texto": " ".join(p.text for p in d.paragraphs),
+}))`;
+  let w = null;
+  try {
+    w = JSON.parse(require("child_process").execFileSync("python3", ["-c", guionW, docx], { maxBuffer: 64 * 1024 * 1024 }));
+  } catch (e) {
+    fallos.push(`${L.SLUG}: no se pudo leer el Word adaptado (¿falta python-docx? pip install python-docx)`);
+  }
+  if (w) {
+    const junto = (t) => String(t).replace(/\s+/g, "");
+    const texto = junto(w.texto);
+    ok(w.titulo.includes(L.TITULO), `${L.SLUG}: el Word adaptado no tiene su título en las propiedades del documento`);
+    ok(w.idioma, `${L.SLUG}: el Word adaptado no está en español (Costa Rica): el lector de pantalla lo pronunciaría en otro idioma`);
+    ok(w.h1 === 1 && w.estilos_repetidos === 1, `${L.SLUG}: el Word adaptado tiene que tener un solo título principal y un solo estilo «Heading1» (hay ${w.h1} y ${w.estilos_repetidos})`);
+    // El Word es de ESTE libro (y no del último que se armó).
+    ok(w.titulo.includes(L.TITULO) && texto.includes(junto(L.DEDICATORIA.join(""))), `${L.SLUG}: el Word adaptado no es de este libro`);
+    L.CAPITULOS.forEach((c) => {
+      ok(w.titulos2.some((t) => t.includes(c.titulo)), `${L.SLUG}: en el Word adaptado, el capítulo «${c.titulo}» no va con el estilo Título 2`);
+      ok(texto.includes(junto(c.escena.alt)), `${L.SLUG}: el Word adaptado no cuenta el dibujo del capítulo ${c.n}`);
+    });
+    ok(w.imagenes > 0 && w.decorativas === w.imagenes, `${L.SLUG}: en el Word adaptado hay ${w.imagenes} imágenes y ${w.decorativas} marcadas como decorativas: tienen que ser todas`);
+    ok(w.exactos === 0 && w.sin_regla === 0, `${L.SLUG}: el Word adaptado tiene interlineados que no son automáticos: LibreOffice recorta las imágenes y encima los títulos`);
+    ok(w.listas > 0, `${L.SLUG}: el Word adaptado no tiene listas de verdad (con su numeración)`);
+    ok(texto.includes(junto("Soluciones")), `${L.SLUG}: el Word adaptado no trae las soluciones`);
+  }
+} else {
+  fallos.push(`falta material/${L.SLUG}/${L.SLUG}-adaptado.docx: hay que correr herramientas/libro-ninos-pdf.js --solo-adaptado`);
+}
+
+// El EPUB adaptado. Lo validan EPUBCheck y Ace by DAISY (a mano: piden Java y
+// un Chromium); acá se comprueba sin ellos lo que se rompe callado: el
+// mimetype primero y sin comprimir (si no, el lector no lo reconoce como
+// EPUB), el idioma, los metadatos de accesibilidad, el índice, que cada
+// página sea XML bien formado con su idioma, que cada imagen tenga su alt y
+// que el libro sea ESTE (con sus capítulos, sus dibujos contados y el «Con
+// las manos»).
+const epub = path.join(CARPETA, L.SLUG + "-adaptado.epub");
+if (fs.existsSync(epub)) {
+  const guionE = `
+import sys, json, re, zipfile
+import xml.etree.ElementTree as ET
+z = zipfile.ZipFile(sys.argv[1])
+primero = z.infolist()[0]
+opf = z.read("EPUB/package.opf").decode("utf-8")
+paginas, malas, sin_idioma, imgs, sin_alt, texto = [], [], [], 0, 0, []
+for n in z.namelist():
+    if not n.endswith(".xhtml"): continue
+    x = z.read(n).decode("utf-8")
+    try:
+        raiz = ET.fromstring(x.encode("utf-8"))
+    except ET.ParseError as e:
+        malas.append(n + ": " + str(e)); continue
+    if 'lang="es-CR"' not in x: sin_idioma.append(n)
+    for im in raiz.iter("{http://www.w3.org/1999/xhtml}img"):
+        imgs += 1
+        if im.get("alt") is None: sin_alt += 1
+    if n != "EPUB/nav.xhtml": texto.append("".join(raiz.itertext()))
+    paginas.append(n)
+print(json.dumps({
+  "mimetype": primero.filename == "mimetype" and primero.compress_type == zipfile.ZIP_STORED and z.read("mimetype") == b"application/epub+zip",
+  "idioma": "<dc:language>es-CR</dc:language>" in opf,
+  "titulo": (re.search(r"<dc:title>(.*?)</dc:title>", opf) or [None, ""])[1],
+  "a11y": [p for p in ["schema:accessMode", "schema:accessModeSufficient", "schema:accessibilityFeature", "schema:accessibilityHazard", "schema:accessibilitySummary", "dcterms:conformsTo"] if 'property="' + p + '"' not in opf],
+  "nav": 'properties="nav"' in opf and "EPUB/nav.xhtml" in z.namelist(),
+  "paginas": len(paginas), "malas": malas, "sin_idioma": sin_idioma, "imgs": imgs, "sin_alt": sin_alt,
+  "texto": " ".join(texto),
+}))`;
+  let ep = null;
+  try {
+    ep = JSON.parse(require("child_process").execFileSync("python3", ["-c", guionE, epub], { maxBuffer: 64 * 1024 * 1024 }));
+  } catch (e) {
+    fallos.push(`${L.SLUG}: no se pudo leer el EPUB adaptado`);
+  }
+  if (ep) {
+    const junto = (t) => String(t).replace(/\s+/g, "");
+    const texto = junto(ep.texto);
+    ok(ep.mimetype, `${L.SLUG}: el EPUB no empieza con su mimetype sin comprimir: un lector no lo reconoce como libro`);
+    ok(ep.idioma, `${L.SLUG}: el EPUB no dice que está en español (Costa Rica)`);
+    ok(ep.titulo.includes(L.TITULO) && texto.includes(junto(L.DEDICATORIA.join(""))), `${L.SLUG}: el EPUB no es de este libro`);
+    ok(!ep.a11y.length, `${L.SLUG}: al EPUB le faltan metadatos de accesibilidad: ${ep.a11y.join(", ")}`);
+    ok(ep.nav, `${L.SLUG}: el EPUB no tiene índice (nav)`);
+    ok(!ep.malas.length, `${L.SLUG}: páginas del EPUB que no son XML bien formado: ${ep.malas.join("; ")}`);
+    ok(!ep.sin_idioma.length, `${L.SLUG}: páginas del EPUB sin idioma: ${ep.sin_idioma.join(", ")}`);
+    ok(ep.imgs > 0 && ep.sin_alt === 0, `${L.SLUG}: en el EPUB hay ${ep.sin_alt} imágenes sin alt`);
+    L.CAPITULOS.forEach((c) => {
+      ok(texto.includes(junto(c.titulo)), `${L.SLUG}: el EPUB no tiene el capítulo «${c.titulo}»`);
+      ok(texto.includes(junto(c.escena.alt)), `${L.SLUG}: el EPUB no cuenta el dibujo del capítulo ${c.n}`);
+    });
+    ok(texto.includes(junto("Con las manos.")) && texto.includes(junto("Para leer con las manos")), `${L.SLUG}: el EPUB no trae los ejercicios para hacer con las manos`);
+  }
+} else {
+  fallos.push(`falta material/${L.SLUG}/${L.SLUG}-adaptado.epub: hay que correr herramientas/libro-ninos-pdf.js --solo-adaptado`);
+}
+
+// El guion del audiolibro (herramientas/libro-ninos/guion/). Quién dice cada
+// diálogo sale del inciso o de HABLA en voces.js; lo que se rompe callado es
+// una clave de HABLA que ya no está en el cuento (se corrigió el párrafo: la
+// línea iría a quien no es), una voz sin describir, o el guion viejo después
+// de cambiar el cuento.
+const VOCES = require("./libro-ninos/voces.js");
+const guion = path.join(__dirname, "libro-ninos", "guion", L.SLUG + ".json");
+if (fs.existsSync(guion)) {
+  const g = JSON.parse(fs.readFileSync(guion, "utf8"));
+  const parrafos = [...L.PRESENTACION.parrafos, ...L.CAPITULOS.flatMap((c) => c.cuento), ...L.FINAL];
+  Object.keys((VOCES.LIBROS[L.SLUG] || {}).habla || {}).forEach((k) => {
+    const n = parrafos.filter((t) => t.startsWith(k)).length;
+    ok(n === 1, `${L.SLUG}: en HABLA de voces.js, «${k}» empieza ${n} párrafos del cuento (tiene que ser uno): ¿se corrigió el párrafo?`);
+  });
+  const voces = new Set(g.pistas.flatMap((p) => p.segmentos.map((s) => s.voz)));
+  [...voces].forEach((v) => ok(VOCES.PERSONAJES[v], `${L.SLUG}: el guion usa la voz «${v}», que no está en PERSONAJES de voces.js`));
+  ok(voces.size > 2, `${L.SLUG}: el guion tiene una sola voz: los personajes no hablan`);
+  // Cada párrafo del cuento está en el guion (sin rayas ni espacios: el guion
+  // separa lo que dice cada uno).
+  const letras = (t) => t.replace(/[^\p{L}\p{N}]/gu, "").toLowerCase();
+  const todo = letras(g.pistas.flatMap((p) => p.segmentos.map((s) => s.texto)).join(""));
+  const faltan = parrafos.filter((t) => !todo.includes(letras(t)));
+  ok(!faltan.length, `${L.SLUG}: al guion le faltan ${faltan.length} párrafos del cuento (¿se cambió el cuento sin volver a correr libro-ninos-pdf.js?): «${(faltan[0] || "").slice(0, 50)}…»`);
+  L.CAPITULOS.forEach((c) => ok(g.pistas.some((p) => p.titulo === `Capítulo ${c.n}. ${c.titulo}`), `${L.SLUG}: el guion no tiene la pista del capítulo ${c.n}`));
+  ok(g.pistas.some((p) => p.segmentos.some((s) => s.piensa)), `${L.SLUG}: el guion no deja pausas para que el niño conteste`);
+} else {
+  fallos.push(`falta herramientas/libro-ninos/guion/${L.SLUG}.json: hay que correr herramientas/libro-ninos-pdf.js --solo-accesible`);
+}
 }
 
 LIBROS.forEach(verificarLibro);
+
+// Los guiones por voz (herramientas/audiolibro-grabar.js): lo que se le da a
+// cada persona que graba. Si el guion cambió y el Word no, la persona graba
+// líneas viejas o con el número corrido, y nadie lo nota hasta armar el audio.
+{
+  const G = require("./audiolibro-grabar.js");
+  let guiones = null;
+  try { guiones = G.leerGuiones(); } catch (e) { /* ya avisó cada libro */ }
+  if (guiones) {
+    const voces = G.vocesUsadas(guiones);
+    const docs = [...voces.map((v) => path.join(G.SALIDA, G.slugVoz(v) + ".docx")), path.join(G.SALIDA, "cesion-de-voz.docx")];
+    const faltan = docs.filter((f) => !fs.existsSync(f));
+    ok(!faltan.length, `faltan los guiones por voz (${faltan.map((f) => path.basename(f)).join(", ")}): hay que correr herramientas/audiolibro-grabar.js`);
+    if (!faltan.length) {
+      const leer = `
+import sys, json, zipfile, re, html
+print(json.dumps([html.unescape(re.sub(r"<[^>]+>", " ", zipfile.ZipFile(f).read("word/document.xml").decode("utf-8"))) for f in sys.argv[1:]]))`;
+      const textos = JSON.parse(require("child_process").execFileSync("python3", ["-c", leer, ...docs], { maxBuffer: 64 * 1024 * 1024 }));
+      const letras = (t) => t.replace(/[^\p{L}\p{N}]/gu, "").toLowerCase();
+      voces.forEach((v, i) => {
+        const doc = letras(textos[i]);
+        const pistas = G.lineasDe(guiones, v).flatMap((l) => l.pistas);
+        const viejas = pistas.flatMap((x) => x.lineas.filter((y) => !doc.includes(letras(`${y.n}. ${y.texto}`))));
+        ok(!viejas.length, `${G.slugVoz(v)}.docx: le faltan ${viejas.length} líneas del guion o tienen otro número (¿se cambió el guion sin volver a correr audiolibro-grabar.js?): «${viejas.length ? viejas[0].texto.slice(0, 50) : ""}…»`);
+        ok(pistas.every((x) => doc.includes(letras(x.archivo))), `${G.slugVoz(v)}.docx: no dice el nombre de archivo de cada pista`);
+      });
+      ok(textos[voces.length].includes("persona menor") && textos[voces.length].includes("Ley 8968"), "cesion-de-voz.docx no trae la parte de la persona menor o la de datos personales");
+    }
+  }
+}
 // Los diplomas se coleccionan: el n.º de cada uno es su lugar en libros.js y
 // cada medalla es distinta.
 LIBROS.forEach((l, i) => ok(l.DIPLOMA.numero === i + 1, `${l.SLUG}: su diploma dice n.º ${l.DIPLOMA.numero} y es el libro ${i + 1} de la colección`));
