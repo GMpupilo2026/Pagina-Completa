@@ -781,8 +781,21 @@
     caja.appendChild(ir);
     caja.classList.remove("hidden");
   }
+  /* Abierta por el profe dentro de la clase (la ventana de sesion.html, con
+     ?en-clase=1): cada ejercicio terminado se le avisa a la clase, que lo
+     anuncia para que el profe vea cuántos acertó cada alumno (ver «Habilidades:
+     que lo practiquen solos» en docs/decisiones/clase-en-vivo.md). Solo al
+     marco de la misma página: a otro origen no sale nada. */
+  const EN_CLASE = window.parent !== window && /[?&]en-clase=1(&|$)/.test(location.search);
+  function avisarALaClase(tipo, item, estrellas) {
+    if (!EN_CLASE) return;
+    try {
+      window.parent.postMessage({ fuente: "entreno-en-clase", slug: "tipos", id: C.clave(tipo, item.id), estrellas: +estrellas || 0 }, location.origin);
+    } catch (e) { /* sin la clase alrededor, no hay a quién avisar */ }
+  }
   function terminar(item, estrellas, extra) {
     const completoAntes = nivelCompleto();
+    avisarALaClase(partida.tipo, item, estrellas);
     anotarEstrellas(partida.tipo, item.id, estrellas);
     if (estrellas >= 1) registrar(partida.tipo, item, estrellas);
     const repaso = anotarRepaso(partida.tipo, item, estrellas);
