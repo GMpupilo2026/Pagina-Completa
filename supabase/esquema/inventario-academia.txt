@@ -1670,6 +1670,7 @@ columna  tournament_rounds.id  uuid
 columna  tournament_rounds.round_number  integer
 columna  tournament_rounds.status  text
 columna  tournament_rounds.tournament_id  uuid
+columna  tournament_rounds.variant  text
 columna  tournaments.created_at  timestamp with time zone
 columna  tournaments.created_by  uuid
 columna  tournaments.current_round  integer
@@ -2007,6 +2008,7 @@ funcion  interno.me_sacaron_de_la_pregunta(p_pregunta uuid)  definer  anon=false
 funcion  interno.mensajes_casa_al_crear()  definer  anon=false  auth=false
 funcion  interno.mis_relevos()  definer  anon=false  auth=true
 funcion  interno.mis_retos_ejercicios()  definer  anon=false  auth=true
+funcion  interno.modalidad_de_la_ronda()  invoker  anon=false  auth=false
 funcion  interno.monto_rango(p_base date, p_meses integer, p_precio numeric, p_desde date, p_hasta date)  invoker  anon=false  auth=false
 funcion  interno.nombre_libre_de_subgrupo(p_profesor uuid, p_base text, p_excepto uuid)  definer  anon=false  auth=false
 funcion  interno.otorgar_puntos(p_alumno uuid, p_cantidad integer, p_origen text, p_motivo text, p_referencia text, p_creado_por uuid)  definer  anon=false  auth=false
@@ -2802,6 +2804,7 @@ trigger  tanda_resultados  tanda_resultado_de_la_base
 trigger  tarea_items  proteger_tarea_items_alumno
 trigger  tareas  tareas_avisa_push
 trigger  tareas  tareas_protege_alumno
+trigger  tournament_rounds  tournament_rounds_modalidad
 trigger  tournaments  tournaments_proteger
 trigger  training_progress  otorgar_puntos_de_entrenamiento
 trigger  training_progress  training_progress_hora

@@ -538,7 +538,20 @@
             if (roomError || !roomData) { showError("No se encontró esa partida — puede que ya se haya eliminado."); return; }
             room = roomData;
             myColor = room.white_id === profile.id ? "w" : (room.black_id === profile.id ? "b" : null);
-            if (!myColor && !isTeacher) { showError("No formas parte de esta partida."); return; }
+            /* Mirar lo decide la RLS, como en las demás páginas de partida (ver
+               el comentario largo de js/niebla.js): si `game_rooms_select`
+               devolvió la sala, quien la pidió puede verla. Hacía falta desde
+               que los torneos se juegan también en estas modalidades: el «Ver →»
+               de torneo.html llevaba al compañero a «No formas parte». Jugar
+               sigue cerrado: todo lo interactivo cuelga de myColor.
+               La excepción es A ciegas en curso, por lo mismo que Niebla: el que
+               juega podría tener esta pantalla al lado, y con las piezas a la
+               vista se acabó el jugar a ciegas. Misiones secretas sí se mira:
+               la misión la esconde la base (misiones_secretas), no la pantalla. */
+            if (!myColor && !isTeacher && room.variant === "ciegas" && room.status === "playing") {
+                showError("Esta partida a ciegas está en curso. Las piezas no se pueden mirar desde fuera hasta que termine — si no, se acabaría el jugar a ciegas para quien la está jugando.");
+                return;
+            }
 
             /* El nombre de los dos lados sale de nombres_de_jugadores() y no de
                `profiles`: desde que el reto está abierto a toda la Academia el

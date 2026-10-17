@@ -24,7 +24,29 @@
         }
 
         const FORMAT_LABEL = { swiss: "Suizo", elimination: "Eliminación directa", round_robin: "Todos contra todos" };
-        const VARIANT_LABEL = { estandar: "⚔️ Ajedrez Estándar", crazyhouse: "♞ Crazyhouse", cartas: "🃏 Ajedrez de Cartas", duelo: "⚡ Duelo Simultáneo", niebla: "🌫️ Niebla de Guerra" };
+
+        /* La modalidad: cualquiera de las de a dos (MODOS_TORNEO, de
+           js/juegos-comun.js, la misma lista de juegos.html) y, al final,
+           «Aleatorio», que sortea una distinta en cada ronda. Debajo, en una
+           línea, de qué se trata la elegida: con once modalidades, el nombre
+           solo no alcanza para decidir. */
+        function populateVariantSelect() {
+            const select = document.getElementById("variant-select");
+            MODOS_TORNEO.concat(ALEATORIO.id).forEach((id) => {
+                const opcion = document.createElement("option");
+                opcion.value = id;
+                opcion.textContent = etiquetaModoTorneo(id);
+                select.appendChild(opcion);
+            });
+            const describir = () => {
+                const v = VARIANTS.find((x) => x.id === select.value);
+                document.getElementById("variant-desc").textContent = select.value === ALEATORIO.id
+                    ? "Cada ronda se juega en una modalidad distinta, sorteada al armarla entre las " + MODOS_TORNEO.length + " de arriba: no se repite ninguna hasta que salgan todas, y nunca dos rondas seguidas."
+                    : (v ? v.desc : "");
+            };
+            select.addEventListener("change", describir);
+            describir();
+        }
         const STATUS_LABEL = { registration: "🟢 Inscripción abierta", in_progress: "🔵 En curso", finished: "🏁 Terminado" };
 
         async function register(tournamentId) {
@@ -50,7 +72,7 @@
                 const info = document.createElement("div");
                 info.innerHTML =
                     '<p class="font-semibold text-brand-800 dark:text-white">' + escapeHtml(t.name) + '</p>' +
-                    '<p class="text-xs text-brand-450 dark:text-brand-350">' + (FORMAT_LABEL[t.format] || t.format) + ' · ' + (VARIANT_LABEL[t.variant] || t.variant) + ' · ⏱️ ' + Ritmos.etiqueta(t.initial_seconds, t.increment_seconds) + ' · ' + (STATUS_LABEL[t.status] || t.status) + '</p>';
+                    '<p class="text-xs text-brand-450 dark:text-brand-350">' + (FORMAT_LABEL[t.format] || t.format) + ' · ' + etiquetaModoTorneo(t.variant) + ' · ⏱️ ' + Ritmos.etiqueta(t.initial_seconds, t.increment_seconds) + ' · ' + (STATUS_LABEL[t.status] || t.status) + '</p>';
                 card.appendChild(info);
                 const actions = document.createElement("div");
                 actions.className = "flex items-center gap-2";
@@ -78,12 +100,6 @@
                 card.appendChild(actions);
                 listEl.appendChild(card);
             });
-        }
-
-        function escapeHtml(text) {
-            const div = document.createElement("div");
-            div.textContent = text;
-            return div.innerHTML.replace(/"/g, "&quot;").replace(/'/g, "&#39;");
         }
 
         document.getElementById("create-form").addEventListener("submit", async (e) => {
@@ -127,6 +143,7 @@
             document.getElementById("teacher-panel").classList.toggle("hidden", !isManager);
             document.getElementById("list-empty").textContent = "Todavía no hay ningún torneo" + (isManager ? " — crea el primero arriba." : ".");
             populateTimeSelect();
+            populateVariantSelect();
             await loadAll();
 
             document.getElementById("loading").classList.add("hidden");
