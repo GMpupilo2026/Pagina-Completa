@@ -328,6 +328,19 @@ exacto; intentarlo de nuevo desde `apply_migration`/`execute_sql` también se
 cuelga (`cancelled`), así que falta correrlo a mano en el editor SQL de
 Supabase, como la primera vez.
 
+**Esos dos renglones se anotaron también en el proyecto equivocado.** Al
+pegarlos a mano, quedaron además en la **Base de Colegios**
+(`prcfbzvshnusisczlpxl`). Se vio el 17/10: Colegios tenía 9 migraciones
+anotadas y el repositorio 7, y su huella no coincidía. Ahí el SQL nunca
+corrió, porque no había ninguna de sus tablas ni el esquema `interno`: solo
+las dos filas de `schema_migrations`, con los `\r\n` de lo pegado desde
+Windows. El dueño las borró en el editor SQL de Colegios, porque por
+`execute_sql` un `delete` se cuelga igual que un `drop`. Colegios volvió a 7 y
+a la huella del repositorio (`35dfa766…`). En la Academia las dos siguen
+anotadas, y bien. **Antes de pegar algo en el editor SQL, mirar en la
+dirección qué proyecto está abierto**: `bgtijpimpcokxatxxbki` es la Academia y
+`prcfbzvshnusisczlpxl` es Colegios.
+
 ## El robo de puntos
 
 Migración `20261009140000_robo_de_puntos_al_perder_la_ventaja.sql`. Cuando dos
