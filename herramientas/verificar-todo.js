@@ -48,7 +48,8 @@ const ANTES = {
   "verificar-proyectos.js": [["node", ["herramientas/proyecto-semilla.js"]]],
   "verificar-sesiones-intensivas.js": [["node", ["herramientas/sesion-finales-intensiva.js"]], ["node", ["herramientas/sesion-estrategia-intensiva.js"]],
                                       ["node", ["herramientas/sesion-tactica-intensiva.js"]],
-                                      ["node", ["herramientas/sesion-aperturas-intensiva.js"]]],
+                                      ["node", ["herramientas/sesion-aperturas-intensiva.js"]],
+                                      ["node", ["herramientas/sesion-medio-juego-intensiva.js"]]],
 };
 
 /* verificar-reportes.py no corre solo: revisa los archivos que deja
