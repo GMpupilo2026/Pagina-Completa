@@ -109,7 +109,7 @@
         FID: "evento de FIDE", CCA: "evento de la Confederación de Ajedrez de América", XXX: "sin federación" };
     const pais = (codigo) => PAISES[codigo] || codigo;
 
-    let LISTA = "", sinId = [], equipos = new Map(), arbitros = [], torneos = new Map(), torneosCr = new Map(), crDeFide = new Map(), PRIMER = 0, ULTIMO = 0;
+    let eloCr = new Map(), LISTA = "", sinId = [], equipos = new Map(), arbitros = [], torneos = new Map(), torneosCr = new Map(), crDeFide = new Map(), PRIMER = 0, ULTIMO = 0;
     const estado = { q: "", titulo: "", tipo: "", donde: "", contar: "", desde: 0, hasta: 0, orden: { col: "torneos", dir: -1 }, normaAf: "", normaAi: "", elegido: null, otro: null, enFide: "",
         rankAnio: 0, rankPor: "torneos" };
 
@@ -131,6 +131,16 @@
     // Un torneo de chess-results de prueba o que no se jugó (la base ya no
     // los guarda; esto es por si queda alguno).
     const esBasura = (t) => !t.rondas || !t.jugadores || /\b(prueba|pruebas|test|testing)\b/.test(sinTildes(t.nombre));
+
+    /* Con qué Elo se evaluó un torneo de chess-results, como lo dice su página
+       («Cálculo de elo»): nacional, internacional, ambos o ninguno; sin dato si
+       no se leyó. «Solo con Elo nacional»: los de Costa Rica que no son de
+       FIDE, que chess-results evaluó solo con el nacional y no son rápidos ni
+       blitz: el Elo nacional solo se calcula para el clásico (los 25 rápidos o
+       blitz marcados así están mal marcados; los viejos no escriben el ritmo
+       en la ficha y cuentan). */
+    const calculoDe = (x) => { const e = x.cr ? eloCr.get(x.cr.clave) : null; return e ? e.calculo : undefined; };
+    const soloNacional = (x) => !x.fide && !x.fuera && calculoDe(x) === "nacional" && !["rapido", "blitz"].includes(eloCr.get(x.cr.clave).ritmo);
 
     /* La norma de un torneo de FIDE para alguien según su cargo en la ficha
        de FIDE y su rol en chess-results. */
@@ -295,7 +305,7 @@
     // primero; con «festivales como uno», los del mismo día juntos.
     function torneosDe(a, desde = estado.desde, hasta = estado.hasta) {
         const l = a.todos.filter((x) => x.anio >= desde && x.anio <= hasta
-            && (!estado.tipo || (estado.tipo === "fide") === x.fide)
+            && (!estado.tipo || (estado.tipo === "nacional" ? soloNacional(x) : (estado.tipo === "fide") === x.fide))
             && (!estado.donde || (estado.donde === "fuera") === x.fuera));
         return (estado.contar === "festival" ? enFestivales(l) : l)
             .sort((x, y) => (y.inicio + y.clave).localeCompare(x.inicio + x.clave));
@@ -1319,7 +1329,9 @@
     }
 
     // Afuera no se cruzó con FIDE: no se sabe si lo valoró.
-    const siFide = (x) => x.fide ? "Sí" : x.fuera ? "No consta" : "No";
+    // «No» dice además con qué Elo se evaluó, si se sabe: solo el nacional, o ninguno.
+    const siFide = (x) => x.fide ? "Sí" : x.fuera ? "No consta"
+        : x.festival ? "No" : soloNacional(x) ? "No (Elo nacional)" : calculoDe(x) === "ninguno" ? "No (sin Elo)" : "No";
     const lugarCr = (c) => [c.lugar, (c.pais || "CRC") !== "CRC" ? pais(c.pais) : ""].filter(Boolean).join(", ");
 
     // Un festival en la ficha: sus torneos uno debajo del otro, con sus enlaces.
@@ -1362,7 +1374,7 @@
     function documentoPdf(a) {
         const r = resumen(a);
         const filtros = [`de ${estado.desde} a ${estado.hasta}`];
-        if (estado.tipo) filtros.push(estado.tipo === "fide" ? "solo FIDE" : "no FIDE");
+        if (estado.tipo) filtros.push({ fide: "solo FIDE", nofide: "no FIDE", nacional: "solo con Elo nacional" }[estado.tipo]);
         if (estado.donde) filtros.push(estado.donde === "fuera" ? "en el extranjero" : "en Costa Rica");
         if (estado.contar === "festival") filtros.push("festivales como uno");
         if (estado.normaAf) filtros.push("norma de AF: " + $("norma-af").selectedOptions[0].textContent.toLowerCase());
@@ -1488,7 +1500,7 @@
         const { data: adm } = await sb.rpc("soy_admin");
         soyAdmin = adm === true;
         try {
-            const [a, t, c, cr, crc, f, s] = await Promise.all([
+            const [a, t, c, cr, crc, f, s, ce] = await Promise.all([
                 leerTodo("arbitros_cr", "fide_id,nombre,titulo,titulo_detalle,solo_chess_results", "fide_id"),
                 leerTodo("arbitros_cr_torneos", "id,nombre,ciudad,pais,inicio,fin,sistema,ritmo,jugadores,con_elo,contados,rondas,federaciones,valorado,af_estado,af_detalle,ai_estado,ai_detalle", "id"),
                 leerTodo("arbitros_cr_cargos", "torneo_id,fide_id,cargo", "torneo_id,fide_id,cargo"),
@@ -1496,8 +1508,10 @@
                 leerTodo("arbitros_cr_cr_cargos", "clave,fide_id,rol", "clave,fide_id,rol"),
                 leerTodo("arbitros_cr_fide", "fide_id,titulo,inactivo,categoria,licencia,af_fecha,af_consejo,ia_fecha,ia_consejo,lista,solicitudes,seminarios,af_perfil,ia_perfil,categoria_nacional,fca_leida", "fide_id"),
                 leerTodo("arbitros_cr_sin_id", "texto,roles,torneos,primero,ultimo,claves,ids", "texto"),
+                leerTodo("arbitros_cr_cr_elo", "clave,calculo,ritmo", "clave"),
             ]);
             sinId = s;
+            eloCr = new Map(ce.map((e) => [e.clave, e]));
             preparar(a, t, c, cr, crc, f);
         } catch (e) {
             $("loading").classList.add("hidden"); $("app").classList.remove("hidden");

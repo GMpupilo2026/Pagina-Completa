@@ -3207,6 +3207,52 @@ no de AF.
   lista otra vez y leer el informe de la última reunión del Consejo, por si
   hay títulos nuevos.
 
+## Los torneos con Elo nacional
+
+El dueño pidió (octubre de 2026) filtrar los torneos que se evaluaron
+**únicamente con Elo nacional**: en chess-results lo dice la ficha de cada
+torneo («Cálculo de elo»), y el Elo nacional solo se calcula para el clásico.
+Es la opción «Solo con Elo nacional» del filtro «Tipo», y en la columna FIDE
+de la ficha de un árbitro un torneo así dice «No (Elo nacional)», y uno que no
+se evaluó con ningún Elo, «No (sin Elo)».
+
+- **Lo que no se ve a la primera.** chess-results esconde la ficha de los
+  torneos que terminaron hace más de dos semanas detrás de un botón («Mostrar
+  detalles del torneo», contra los robots de búsqueda): un GET trae la página
+  sin ficha y sin error. De 3238, el GET solo trajo la de 11. Hay que mandar el
+  formulario de la página (`__VIEWSTATE`, `__EVENTVALIDATION` y
+  `cb_alleDetails`), y **solo lo acepta el mismo servidor que la armó**: el pie
+  dice «Node S1», «S2» o «S3», y el POST va a `s1.`, `s2.` o
+  `s3.chess-results.com`. Mandados todos a `s1`, dos de cada tres volvieron con
+  error 500, y reintentarlos no sirvió. A `s0` no se llega (su certificado no
+  vale): se vuelve a pedir la página hasta que la arme otro servidor. Así se
+  leyeron 3237 de 3238.
+- **Lo que dicen las fichas** (los de Costa Rica que no son de FIDE, octubre de
+  2026):
+  - solo «Elo nacional»: 550 (153 clásicos, 372 sin el ritmo escrito, que son
+    las fichas viejas, 18 blitz y 7 rápidos);
+  - ningún Elo: 2194;
+  - «Elo nacional, Elo internacional»: 317;
+  - solo «Elo internacional»: 176.
+- **La regla.** Solo «Elo nacional» y que no sea rápido ni blitz: los 25 rápidos
+  o blitz marcados así están mal marcados (el nacional es solo del clásico), y
+  los que no escriben el ritmo cuentan.
+- **Dónde va.** `arbitros_cr_cr_elo` (clave, calculo, ritmo, leido; migraciones
+  `20261017224002` y `20261017224637`), aparte de `arbitros_cr_cr`, porque la
+  carga completa de esa tabla la borra y la vuelve a llenar. Solo la lee quien
+  tiene la herramienta. El dato queda en
+  `herramientas/datos/arbitros-cr-calculo-elo.json`, sacado de la base y no
+  copiado a mano (la huella dio igual), y
+  `herramientas/arbitros-cr/calculo-elo.py` lo vuelve a cargar.
+- **Antes se probó la plataforma de la Federación** (`ajedrezcostarica.com`):
+  tiene «Tipo de elo» por torneo, pero solo de los torneos publicados ahí (unos
+  550, de los últimos años) y el dato viene escondido en el JavaScript de la
+  página. chess-results cubre todos los años.
+- `verificar-arbitros-cr.js`: el del club (solo nacional, sin el ritmo escrito)
+  entra; el Sub-16 (nacional, pero rápido), el que no se leyó y el de Panamá
+  no. Rompí a propósito la regla del ritmo (quitándola y exigiendo «clásico»)
+  y salta.
+
 ## La categoría nacional: la lista de la Federación
 
 La lista oficial de FIDE dice si alguien es NA, pero no su categoría nacional.

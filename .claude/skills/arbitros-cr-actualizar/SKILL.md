@@ -102,6 +102,16 @@ Los árbitros nuevos (alguien de Costa Rica que figura por primera vez con su
 ID) **no entran solos**: hace falta su perfil de FIDE para saber su nombre y su
 país. Si el resumen los nombra, anotarlos en el PR.
 
+**El cálculo de Elo de los torneos nuevos** (para «Solo con Elo nacional»).
+De los torneos de Costa Rica que no son de FIDE y no están en
+`arbitros_cr_cr_elo`: pedir la ficha (`tnrCLAVE.aspx?lan=2&turdet=YES&art=99`)
+y, si viene sin «Número de rondas», mandar su formulario con `cb_alleDetails`
+al servidor que dice su pie («Node S1» → `s1.chess-results.com`; uno de S0 se
+vuelve a pedir). Sacar «Cálculo de elo» y «Control de tiempo (…)», sumarlos a
+`herramientas/datos/arbitros-cr-calculo-elo.json` y cargar con
+`python3 herramientas/arbitros-cr/calculo-elo.py`. El detalle, en «Los torneos
+con Elo nacional».
+
 ## 3 bis. La lista de FIDE y los títulos nuevos
 
 Ver «Lo que dice FIDE de cada árbitro» en `docs/decisiones/juegos-y-torneos.md`.
