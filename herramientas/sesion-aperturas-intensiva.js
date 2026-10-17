@@ -232,6 +232,7 @@ module.exports = crear({
   resultados: { tablas: "no saca ventaja", escapa: "se le va la ventaja", rival: "el rival queda mejor",
                 pierde: "pierde" },
   conOrigen: true,
+  conLlegada: true,
   consigna: (ej, a) => (a.fen.split(" ")[1] === "w" ? "Juegan blancas" : "Juegan negras") +
     " y castigan el error. ③ " + ej.minutos + " min en papel: la jugada, la respuesta del rival y por qué las " +
     "otras no sirven.",

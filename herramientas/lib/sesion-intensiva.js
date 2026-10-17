@@ -192,8 +192,8 @@ function crear(s) {
       items.push({ tipo: "posicion", titulo: recorta("Ejercicio " + n + " · " + ej.nombre, 200), fen: a.fen,
                    pregunta: chuleta(ej, a) });
       const deDonde = s.conOrigen && a.origen ? "\nDe: " + a.origen.replace(/\.+$/, "") + "." : "";
-      // En una partida, la nota empieza por cómo se llegó: la apertura y sus jugadas.
-      const llegada = a.previas ? "Cómo se llegó · " + a.apertura + ": " + numerar(a.inicio, a.previas) + "\n\n" : "";
+      // En la sesión de aperturas, la nota empieza por cómo se llegó: la apertura y sus jugadas.
+      const llegada = s.conLlegada && a.previas ? "Cómo se llegó · " + a.apertura + ": " + numerar(a.inicio, a.previas) + "\n\n" : "";
       items.push(nota("Ejercicio " + n + " · El cálculo", llegada + ej.explicacion + deDonde));
       salida.push({ n, banco: ej.banco, saltar: ej.saltar || 0, delBanco: a.delBanco, fen: a.fen,
                     linea: a.linea, antes: a.antes, final: a.final,

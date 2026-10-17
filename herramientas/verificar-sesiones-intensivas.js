@@ -203,14 +203,14 @@ for (const nombre of NOMBRES) {
     if (!c) { mal("la línea de la chuleta no se puede jugar: " + it.titulo); return; }
     if (c.fen() !== ej.final) mal("la línea de la chuleta no es la del ejercicio: " + it.titulo);
   });
-  // En un ejercicio de partida, la nota dice cómo se llegó: la apertura y sus
-  // jugadas desde el principio. Tienen que llevar a ESTA posición.
+  // Si la nota de un ejercicio de partida dice cómo se llegó (la apertura y
+  // sus jugadas desde el principio), tienen que llevar a ESTA posición.
   ejercicios.forEach((ej) => {
     const b = delBanco(ej.banco);
-    if (!b || !b.previas) return;
     const it = plan.items.find((x) => x.tipo === "nota" && x.titulo === "Ejercicio " + ej.n + " · El cálculo");
-    const m = it && /^Cómo se llegó · (.+?): (\d+\..+)$/m.exec(it.nota);
-    if (!m) { mal("Ejercicio " + ej.n + ": la nota no dice cómo se llegó a la posición"); return; }
+    if (!b || !it || !/^Cómo se llegó/.test(it.nota)) return;
+    const m = b.previas && /^Cómo se llegó · (.+?): (\d+\..+)$/m.exec(it.nota);
+    if (!m) { mal("Ejercicio " + ej.n + ": «Cómo se llegó» sin la apertura y sus jugadas"); return; }
     if (!m[1].startsWith(b.apertura)) mal("Ejercicio " + ej.n + ": la apertura de la nota no es la de la partida");
     const sans = m[2].trim().split(/\s+/).map((x) => aIngles(x.replace(/^\d+\.+/, ""))).filter(Boolean);
     const c = jugar("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", sans);
