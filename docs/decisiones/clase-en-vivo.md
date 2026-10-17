@@ -1576,6 +1576,9 @@ valía 2 y cada contestada 1, fuera un mate en 1 o un mate en 3.
   calentamiento de 20 ejercicios».
 - **Quien solo hizo el calentamiento también entra** en los puntos:
   `PuntosClase.juntar` lo agrega aunque no esté en el resumen.
+- **Los ejercicios de Habilidades que el profe manda a practicar también
+  suman** (`habilidad_resultados`): con la misma regla, las estrellas como
+  intentos y sin puesto. Ver «Habilidades: los puntos».
 
 **Al tocar esto, correr `node herramientas/verificar-todo.js clase-encuesta
 clase-remoto`.**
@@ -4163,13 +4166,55 @@ cada alumno («Abrirlo a todos en una ventana»).
   (`#entreno-aciertos`): quien se desconecta sigue con lo que llevaba, la tabla
   se queda al cerrar la ventana («Así les fue») y se limpia con el pedido
   siguiente. Lo de un pedido viejo no cuenta.
-- **No queda en la base como el calentamiento** (`tanda_resultados`): la tabla
-  es de esa clase. Lo que sí queda es lo de siempre: cada ejercicio resuelto
-  va a `training_progress` desde la página (meta del día, informes, tareas).
+- Además, cada ejercicio resuelto va a `training_progress` desde la página,
+  como siempre (meta del día, informes, tareas).
 
 Lo revisa `verificar-clase-entrenamientos.js`: cada tipo con lista tiene los
 dos botones, el recorte y el enlace, la tabla del profe, y un Detective
 resuelto de verdad dentro de la ventana llega anunciado.
+
+#### Habilidades: los puntos
+
+«Que también generen puntos: a la primera más, y con más intentos, menos.»
+Los suma la base, con la regla de las preguntas (ver «Los puntos de la clase:
+dificultad, intentos y quién acierta primero»), migración
+`habilidades_puntos_en_clase`.
+
+- **Las estrellas son los intentos**: tres (sin error ni pista) es a la
+  primera, todo; dos (un error o una pista), el 60 %; una (más), el 30 %;
+  ninguna (pidió la solución), nada. La base, de 10 a 50 según la
+  dificultad: la de «Preguntar» (el rating del ejercicio o el de su nivel,
+  `tiposDificultad`). Sin puesto: cada uno va a su ritmo, no hay «primero».
+- **Lo que el profe manda queda en la base** (`entreno_pedidos`): la lista de
+  ejercicios del nivel con la dificultad de cada uno, ANTES de pedirlo, y su
+  id viaja con el pedido en la presencia. La base pone quién y su clase
+  abierta, deja solo de 1 a 60 ejercicios y lleva la dificultad a 400–3000.
+  Si no se pudo guardar, se abre igual y el aviso dice que esta vez no suma.
+- **Cada ejercicio terminado es un renglón** (`habilidad_resultados`): el
+  alumno manda el pedido, el ejercicio y sus estrellas; la base pone quién es,
+  el profe y la clase del pedido (que tiene que seguir abierta), la
+  dificultad DEL PEDIDO (no la que diga el alumno) y la hora, y rechaza un
+  ejercicio que no es de ese pedido. Uno por ejercicio en cada clase (índice
+  único): mandar el mismo nivel otra vez no paga dos veces. Las estrellas las
+  pone la computadora del alumno, como el «bien» del calentamiento: el banco
+  es público, así que corregir en la base no impediría nada.
+- **Comprobado impersonando** (y deshecho): el profe que manda otro profe y
+  otra clase queda con los suyos, un ejercicio mal escrito se descarta y
+  9999 queda en 3000; el alumno que se escribe otra dificultad y otro
+  `student_id` queda con los del pedido y el suyo; 3 estrellas en 1000 más 1
+  en 3000 dan 35 (20 + 15); repetir choca con el índice; un ejercicio ajeno,
+  «Ese ejercicio no es de lo que mandó tu profe»; un alumno que pide, «No
+  tienes una clase abierta»; un alumno de otro profe, la RLS; nadie cambia
+  las estrellas; el alumno no ve la lista del profe; y al cerrar la clase,
+  los 20 llegaron a Puntos Ajedrez.
+- **Dónde se ven**: en la tabla del profe («· 35 puntos», de
+  `puntos_de_habilidades` de la clase, pedida con un respiro cuando cambia lo
+  que anuncian), en «Puntos de esta clase» y el podio
+  (`PuntosClase.juntar`, con su renglón «N ejercicios de Habilidades bien
+  (M a la primera)»), en los puntos del mes
+  (`puntos_de_habilidades_del_mes`) y, al cerrar la clase, en el mismo
+  renglón de Puntos Ajedrez que preguntas y calentamiento
+  (`otorgar_puntos_de_clase`).
 
 ## La clase en vivo, sin ver la pantalla (y lo que quedaba de la Academia)
 
