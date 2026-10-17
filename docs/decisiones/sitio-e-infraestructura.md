@@ -1691,13 +1691,16 @@ siempre: `statements` = el archivo entero), sin tocar el esquema. Los saltos de
 línea se sumaron en la base sin copiar texto; las cabeceras y la de arbitraje
 se mandaron con una guarda que solo escribe si el md5 da el del archivo.
 
-**La de `politicas_rls_sin_duplicar` queda pendiente de correr a mano en el
-editor SQL de Supabase**: su texto lleva `drop policy`, y por `execute_sql` toda
-consulta con `drop` pide una confirmación aparte que en la sesión web nunca
-llega (se cuelga; ver «Retos, marcador, regalos y bromas» en
-puntos-y-premios.md). Hasta que se corra, la huella sigue sin cuadrar por esa
-sola fila. Al aplicar una migración, conviene guardar el archivo **sin** el
-salto de línea final o sumárselo en la base: si no, el desfase vuelve.
+**La de `politicas_rls_sin_duplicar` se corrió a mano en el editor SQL de
+Supabase**: su texto lleva `drop policy`, y por `execute_sql` toda consulta con
+`drop` pide una confirmación aparte que en la sesión web nunca llega (se
+cuelga; ver «Retos, marcador, regalos y bromas» en puntos-y-premios.md).
+Pegado desde Windows, **cada salto de línea llegó como `\r\n`** y la huella
+salió otra; se arregló en la base con `replace(…, E'\r', '')`, con una guarda
+que solo escribe si el md5 da el del archivo. Si se vuelve a pegar algo a mano,
+mirar la huella que devuelve antes de darlo por bueno. Y al aplicar una
+migración, guardar el archivo **sin** el salto de línea final o sumárselo en
+la base: si no, el desfase vuelve.
 
 ## Realtime escucha solo lo que la pantalla muestra
 
