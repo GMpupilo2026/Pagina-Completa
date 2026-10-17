@@ -30,8 +30,9 @@
  * adaptado esté etiquetado, sin cifrar, en español, con todo el cuento, con
  * su XMP de PDF/UA-1 y sin contenido suelto (ni etiquetado ni Artifact), y
  * que el Word adaptado tenga sus títulos, su idioma y las imágenes decorativas,
- * que el EPUB sea un EPUB accesible de este libro, y que los ejercicios para
- * quien no ve se hagan con las manos y no pidan nada que solo se ve.
+ * que el EPUB sea un EPUB accesible de este libro, que los ejercicios para
+ * quien no ve se hagan con las manos y no pidan nada que solo se ve, y que el
+ * guion del audiolibro esté al día y con sus voces.
  *
  *   node herramientas/verificar-libro-ninos.js
  */
@@ -510,6 +511,35 @@ print(json.dumps({
   }
 } else {
   fallos.push(`falta material/${L.SLUG}/${L.SLUG}-adaptado.epub: hay que correr herramientas/libro-ninos-pdf.js --solo-adaptado`);
+}
+
+// El guion del audiolibro (herramientas/libro-ninos/guion/). Quién dice cada
+// diálogo sale del inciso o de HABLA en voces.js; lo que se rompe callado es
+// una clave de HABLA que ya no está en el cuento (se corrigió el párrafo: la
+// línea iría a quien no es), una voz sin describir, o el guion viejo después
+// de cambiar el cuento.
+const VOCES = require("./libro-ninos/voces.js");
+const guion = path.join(__dirname, "libro-ninos", "guion", L.SLUG + ".json");
+if (fs.existsSync(guion)) {
+  const g = JSON.parse(fs.readFileSync(guion, "utf8"));
+  const parrafos = [...L.PRESENTACION.parrafos, ...L.CAPITULOS.flatMap((c) => c.cuento), ...L.FINAL];
+  Object.keys((VOCES.LIBROS[L.SLUG] || {}).habla || {}).forEach((k) => {
+    const n = parrafos.filter((t) => t.startsWith(k)).length;
+    ok(n === 1, `${L.SLUG}: en HABLA de voces.js, «${k}» empieza ${n} párrafos del cuento (tiene que ser uno): ¿se corrigió el párrafo?`);
+  });
+  const voces = new Set(g.pistas.flatMap((p) => p.segmentos.map((s) => s.voz)));
+  [...voces].forEach((v) => ok(VOCES.PERSONAJES[v], `${L.SLUG}: el guion usa la voz «${v}», que no está en PERSONAJES de voces.js`));
+  ok(voces.size > 2, `${L.SLUG}: el guion tiene una sola voz: los personajes no hablan`);
+  // Cada párrafo del cuento está en el guion (sin rayas ni espacios: el guion
+  // separa lo que dice cada uno).
+  const letras = (t) => t.replace(/[^\p{L}\p{N}]/gu, "").toLowerCase();
+  const todo = letras(g.pistas.flatMap((p) => p.segmentos.map((s) => s.texto)).join(""));
+  const faltan = parrafos.filter((t) => !todo.includes(letras(t)));
+  ok(!faltan.length, `${L.SLUG}: al guion le faltan ${faltan.length} párrafos del cuento (¿se cambió el cuento sin volver a correr libro-ninos-pdf.js?): «${(faltan[0] || "").slice(0, 50)}…»`);
+  L.CAPITULOS.forEach((c) => ok(g.pistas.some((p) => p.titulo === `Capítulo ${c.n}. ${c.titulo}`), `${L.SLUG}: el guion no tiene la pista del capítulo ${c.n}`));
+  ok(g.pistas.some((p) => p.segmentos.some((s) => s.piensa)), `${L.SLUG}: el guion no deja pausas para que el niño conteste`);
+} else {
+  fallos.push(`falta herramientas/libro-ninos/guion/${L.SLUG}.json: hay que correr herramientas/libro-ninos-pdf.js --solo-accesible`);
 }
 }
 

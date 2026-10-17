@@ -11,7 +11,8 @@
  * todos con la MISMA maqueta: material/<slug>/<slug>.pdf,
  * <slug>-accesible.html, y <slug>-adaptado.pdf, .docx y .epub (letra grande,
  * listos para lector de pantalla y con los ejercicios para hacer con las
- * manos, para quien ve poco o no ve). Las respuestas las comprueba verificar-libro-ninos.js.
+ * manos, para quien ve poco o no ve). Y el guion del audiolibro con voces, en
+ * herramientas/libro-ninos/guion/ (ver voces.js). Las respuestas las comprueba verificar-libro-ninos.js.
  *
  * Se cierra como los otros libros (tapa a página completa, marca de agua con
  * el logo, firma del autor y PDF protegido: herramientas/lib/pdf-armar.js),
@@ -1274,6 +1275,160 @@ ${partes.map((x, i) => `<itemref idref="p${i + 1}"/>`).join("\n")}
   return { partes: partes.length, imagenes: imagenes.length };
 }
 
+/* ---------------------------------------------------------- el guion del audiolibro */
+/* El guion para grabar el audiolibro con voces: quién lee cada trozo (el
+   narrador o un personaje, con las voces de libro-ninos/voces.js), en qué
+   orden y con qué pausas. Sale del mismo contenido que los demás formatos y
+   con los ejercicios para hacer con las manos: la pregunta, una pausa para
+   que el niño conteste y la respuesta. Se escribe en
+   herramientas/libro-ninos/guion/<slug>.json (para el programa de voces) y
+   <slug>.md (para leerlo y revisarlo); no se publica. */
+const VOCES = require("./libro-ninos/voces.js");
+const PAUSA = { titulo: 1.2, parrafo: 0.5, piensa: 8, pista: 1.5 };
+
+/* Los trozos de un párrafo con diálogo: lo que dice el personaje y lo que
+   cuenta el narrador. La raya abre el diálogo al comienzo del párrafo, o
+   después de dos puntos («asintió desde su rama: —Los jaques…»); en medio de
+   la narración es un paréntesis («bajó de su rama —solo un poquito— y…»). */
+function trozosDialogo(t) {
+  const out = [];
+  let resto = t;
+  if (!t.startsWith("—")) {
+    const i = t.indexOf(": —");
+    if (i < 0) return [{ tipo: "narra", texto: t }];
+    out.push({ tipo: "narra", texto: t.slice(0, i + 1) });
+    resto = t.slice(i + 2);
+  }
+  resto.split("—").forEach((x, k) => {
+    const limpio = x.trim().replace(/^[,.;:]\s*/, "").trim();
+    if (k && limpio) out.push({ tipo: k % 2 ? "dice" : "narra", texto: limpio });
+  });
+  return out;
+}
+
+/* El personaje que nombra un texto: el que aparece primero y, en el mismo
+   lugar, el nombre más largo. */
+function nombrado(texto) {
+  const V = VOCES.LIBROS[L.SLUG] || { alias: {} };
+  const nombres = Object.assign({}, ...Object.keys(VOCES.PERSONAJES).filter((p) => p !== "narrador" && p !== "coro").map((p) => ({ [p]: p })), VOCES.ALIAS_COMUNES, V.alias);
+  let mejor = null;
+  const bajo = texto.toLowerCase();
+  for (const [n, quien] of Object.entries(nombres)) {
+    const i = bajo.indexOf(n.toLowerCase());
+    if (i >= 0 && (!mejor || i < mejor.i || (i === mejor.i && n.length > mejor.n.length))) mejor = { i, n, quien };
+  }
+  return mejor && mejor.quien;
+}
+
+function quienHabla(t, trozos) {
+  const V = VOCES.LIBROS[L.SLUG] || { habla: {} };
+  const clave = Object.keys(V.habla).find((k) => t.startsWith(k));
+  if (clave) return V.habla[clave];
+  let quien;
+  if (!t.startsWith("—")) {
+    // «El rey suspiró: —¡Gracias!»: el sujeto de la última oración.
+    const oraciones = trozos[0].texto.split(/(?<=[.!?…])\s+/);
+    quien = nombrado(oraciones[oraciones.length - 1]);
+  } else {
+    const inciso = trozos.find((x) => x.tipo === "narra");
+    quien = inciso && nombrado(inciso.texto);
+  }
+  if (!quien) throw new Error(`${L.SLUG}: no se sabe quién dice «${t.slice(0, 60)}…». Va en HABLA de herramientas/libro-ninos/voces.js.`);
+  return quien;
+}
+
+function segmentosDe(t, pausa) {
+  if (!t.includes("—")) return [{ voz: "narrador", texto: t, pausa }];
+  const tr = trozosDialogo(t);
+  if (!tr.some((x) => x.tipo === "dice")) return [{ voz: "narrador", texto: t, pausa }];
+  const quien = quienHabla(t, tr);
+  return tr.map((x, i) => ({ voz: x.tipo === "dice" ? quien : "narrador", texto: x.texto, pausa: i === tr.length - 1 ? pausa : 0.2 }));
+}
+
+function guionAudio() {
+  const N_ = (t) => ({ voz: "narrador", texto: t, pausa: PAUSA.parrafo });
+  const T_ = (t) => ({ voz: "narrador", texto: t, pausa: PAUSA.titulo });
+  const pistas = [];
+  const pista = (titulo, segmentos) => pistas.push({ n: pistas.length + 1, titulo, segmentos });
+  const PRES = L.PRESENTACION;
+
+  pista("Presentación", [
+    T_(`${L.TITULO}. ${L.SUBTITULO}.`),
+    N_(`Escrito por ${L.AUTOR}. Academia Ajedrez Integral, Costa Rica.`),
+    T_("Dedicatoria."),
+    ...L.DEDICATORIA.map((v) => ({ voz: "narrador", texto: v, pausa: 0.4 })),
+    T_(PRES.titulo + "."),
+    // La presentación la cuenta Peonita, en primera persona.
+    ...PRES.parrafos.map((t) => ({ voz: "Peonita", texto: t, pausa: PAUSA.parrafo })),
+  ]);
+  L.CAPITULOS.forEach((c) => {
+    pista(`Capítulo ${c.n}. ${c.titulo}`, [
+      T_(`Capítulo ${c.n}. ${c.titulo}.`),
+      N_(`En el dibujo: ${c.escena.alt}`),
+      ...c.cuento.flatMap((t) => segmentosDe(t, PAUSA.parrafo)),
+      ...c.muestras.flatMap((m) => [
+        T_("Ahora, con tu tablero."),
+        N_(hab(m.pie)),
+        N_(`La posición. ${posicionTexto(m.fen)}`),
+        N_(hab(manosMuestra(m))),
+      ]),
+      T_("Lo que aprendí."),
+      ...c.aprendi.map(N_),
+    ]);
+    pista(`¡A jugar! Capítulo ${c.n}`, [
+      T_(`¡A jugar! Capítulo ${c.n}. Ten listo tu tablero. Si necesitas más tiempo para armar la posición o para pensar, pausa el audio.`),
+      ...c.ejercicios.flatMap((e, i) => {
+        const t = tactil(e);
+        const items = { promesas: L.PROMESAS, partida: L.CONSEJOS_PARTIDA }[e.tipo];
+        return [
+          T_(`Ejercicio ${i + 1}.`),
+          ...(e.fen && e.tipo !== "casilla" ? [N_(`La posición. ${posicionTexto(e.fen)}`)] : []),
+          ...(t.manos ? [N_(hab(t.manos))] : []),
+          { voz: "narrador", texto: hab(t.pregunta), pausa: items ? PAUSA.parrafo : PAUSA.piensa, piensa: !items },
+          ...(items || []).map(N_),
+          N_(`La respuesta. ${hab(solucionTactil(e))}`),
+        ];
+      }),
+    ]);
+  });
+  pista(L.FINAL_TITULO, [T_(L.FINAL_TITULO), N_(`En el dibujo: ${L.ESCENA_FINAL.alt}`), ...L.FINAL.flatMap((t) => segmentosDe(t, PAUSA.parrafo))]);
+  pista(`Diploma: ${L.DIPLOMA.nombre}`, [
+    T_(`Tu diploma número ${L.DIPLOMA.numero}: ${L.DIPLOMA.nombre}.`),
+    N_(`${L.DIPLOMA.sub}… aquí va tu nombre… ${L.DIPLOMA.texto.join(" ")}`),
+    N_(`Firman: ${L.DIPLOMA.firma}.`),
+  ]);
+  // Lo que es para la persona adulta va al final, en su propia pista.
+  pista("Para las familias y el personal docente", [
+    T_("Para las familias y el personal docente."),
+    ...L.NOTA_ADULTOS.map(N_),
+    T_("Para leer con las manos."),
+    ...MANOS_ADULTOS.map(N_),
+  ]);
+  pistas.forEach((p) => { p.segmentos[p.segmentos.length - 1].pausa = PAUSA.pista; });
+  const usadas = [...new Set(pistas.flatMap((p) => p.segmentos.map((s) => s.voz)))];
+  return {
+    libro: L.SLUG, titulo: L.TITULO, autor: L.AUTOR,
+    nota: "Generado por herramientas/libro-ninos-pdf.js: no se edita a mano. Las voces y quién dice cada diálogo, en herramientas/libro-ninos/voces.js. «pausa» son segundos de silencio después del trozo; «piensa» marca la pausa para que el niño conteste.",
+    voces: Object.fromEntries(usadas.map((v) => [v, VOCES.PERSONAJES[v]])),
+    pistas,
+  };
+}
+
+/* El mismo guion, para leerlo y revisarlo: pista por pista, quién dice qué. */
+function guionTexto(g) {
+  const linea = (s) => `**${s.voz === "narrador" ? "Narración" : s.voz}:** ${s.texto}${s.piensa ? `\n\n*(${PAUSA.piensa} segundos para pensar y contestar)*` : ""}`;
+  return `# ${g.titulo}: guion del audiolibro
+
+${g.nota}
+
+## Las voces
+
+${Object.entries(g.voces).map(([v, d]) => `- **${v === "narrador" ? "Narración" : v}:** ${d.voz}, ${d.como} (velocidad ${String(d.velocidad).replace(".", ",")}).`).join("\n")}
+
+${g.pistas.map((p) => `## Pista ${String(p.n).padStart(2, "0")}. ${p.titulo}\n\n${p.segmentos.map(linea).join("\n\n")}`).join("\n\n")}
+`;
+}
+
 /* ---------------------------------------------------------- generar */
 const elegidos = process.argv.slice(2).filter((x) => !x.startsWith("--"));
 const aArmar = elegidos.length ? LIBROS.filter((l) => elegidos.includes(l.SLUG)) : LIBROS;
@@ -1289,6 +1444,8 @@ function archivos(libro) {
     adaptado: path.join(carpeta, libro.SLUG + "-adaptado.pdf"),
     adaptadoDocx: path.join(carpeta, libro.SLUG + "-adaptado.docx"),
     adaptadoEpub: path.join(carpeta, libro.SLUG + "-adaptado.epub"),
+    guion: path.join(__dirname, "libro-ninos", "guion", libro.SLUG + ".json"),
+    guionTexto: path.join(__dirname, "libro-ninos", "guion", libro.SLUG + ".md"),
     htmlAdaptado: path.join(tmp, libro.SLUG + "-adaptado.html"),
     htmlCuerpo: path.join(tmp, libro.SLUG + "-cuerpo.html"),
     htmlTapa: path.join(tmp, libro.SLUG + "-tapa.html"),
@@ -1305,6 +1462,10 @@ for (const libro of aArmar) {
   fs.writeFileSync(a.htmlSello, htmlMarca);
   fs.writeFileSync(a.accesible, accesible());
   fs.writeFileSync(a.htmlAdaptado, adaptadoHTML());
+  const g = guionAudio();
+  fs.mkdirSync(path.dirname(a.guion), { recursive: true });
+  fs.writeFileSync(a.guion, JSON.stringify(g, null, 2) + "\n");
+  fs.writeFileSync(a.guionTexto, guionTexto(g));
   console.log(`${libro.TITULO}: ${libro.CAPITULOS.length} capítulos · ${libro.CAPITULOS.reduce((s, c) => s + c.ejercicios.length, 0)} ejercicios\n  Maqueta: ${a.htmlCuerpo}\n  Accesible: ${a.accesible}`);
 }
 if (process.argv.includes("--solo-accesible")) process.exit(0);

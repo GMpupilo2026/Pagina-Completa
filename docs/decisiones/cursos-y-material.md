@@ -1361,6 +1361,47 @@ libros saltando por capítulos.
   Se rompió a propósito («la casilla amarilla» en un ejercicio; el EPUB con el
   mimetype comprimido) y saltó.
 
+### El guion del audiolibro con voces
+
+El dueño quiere una versión en audio con voces. En este entorno no hay
+ninguna voz (las de Piper se bajan de huggingface.co, que la red bloquea, y
+Google Text-to-Speech pide una clave que no está), así que primero quedó
+listo el **guion**: `guionAudio()` de `libro-ninos-pdf.js` lo escribe, con
+`--solo-accesible` igual que la versión accesible, en
+`herramientas/libro-ninos/guion/<slug>.json` (para el programa que genere
+las voces) y `<slug>.md` (para leerlo y revisarlo). No se publica.
+
+- **Una pista por parte:** la presentación (la cuenta Peonita, en primera
+  persona), cada capítulo (el dibujo contado, el cuento, los diagramas con
+  las manos y «Lo que aprendí»), su «¡A jugar!» (la posición, qué armar, la
+  pregunta, **8 segundos para que el niño conteste** y la respuesta; al
+  empezar se le dice que puede pausar el audio), el final, el diploma y, al
+  final y aparte, lo que es para la persona adulta.
+- **Una voz por personaje**, la misma en los tres libros: `PERSONAJES` de
+  `herramientas/libro-ninos/voces.js` describe cada una (tipo de voz,
+  velocidad y cómo suena: Don Lento a 0,8, porque es un perezoso) para quien
+  elija las voces de verdad.
+- **Quién dice cada diálogo** sale del inciso: el primer personaje que
+  nombra, buscando el nombre más largo en el mismo lugar y con los apodos del
+  cuento («el alfil» es Don Saleras; «el rey negro», el Rey Carbón). Si el
+  diálogo viene tras dos puntos dentro del párrafo, habla el sujeto de esa
+  oración. La raya en medio de la narración es un paréntesis («bajó de su
+  rama —solo un poquito— y…»), no un diálogo. Lo que el texto no dice
+  («—Fácil. Mira la esquina…») está escrito a mano en `HABLA`, decidido
+  leyendo el contexto (58 diálogos en los tres libros). Si un diálogo no
+  tiene dueño, el generador se detiene y dice cuál.
+- Se revisaron a mano todas las líneas de diálogo de los tres libros, con el inciso al lado.
+- `verificar-libro-ninos.js` comprueba que cada clave de `HABLA` empiece
+  exactamente un párrafo del cuento (si se corrige el párrafo, la línea iría
+  a quien no es, sin ningún error), que toda voz esté descrita, que estén
+  todos los párrafos del cuento (el guion no quedó viejo), cada capítulo y
+  las pausas para contestar. Se rompió a propósito (una clave vieja, un
+  párrafo borrado) y saltó.
+- **Falta generar el audio**: con Google Text-to-Speech (una clave en la
+  configuración del entorno, `GOOGLE_TTS_API_KEY`) o con Piper (agregar
+  `huggingface.co` a los dominios permitidos). Con eso, el siguiente paso es
+  un MP3 por pista y el EPUB con el audio sincronizado.
+
 ### Los diplomas se coleccionan
 
 Cada cuento cierra con su diploma, y los diplomas forman una colección:
