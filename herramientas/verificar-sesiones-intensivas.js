@@ -1,6 +1,6 @@
 /* Comprueba las sesiones intensivas (herramientas/sesion-*-intensiva.js):
- * finales, estrategia, táctica, aperturas y las que se agreguen, que se
- * encuentran solas.
+ * finales, estrategia, táctica, aperturas, medio juego y las que se
+ * agreguen, que se encuentran solas.
  *
  * Sin navegador ni motor: el CI no tiene Stockfish. Lo que dice el motor lo
  * deja herramientas/sesion-intensiva-motor.js en sesion-<nombre>-motor.json,
