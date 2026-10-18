@@ -24,6 +24,11 @@
  *     abrir o cambiar, se elegiría por la posición en pantalla.
  *  7. UNA CALIBRACIÓN IMPOSIBLE. Cada posición calibrada existe, con a y b en
  *     su rango y con 30 respuestas o más (herramientas/estilo-calibrar.js).
+ *  8. UNA POSICIÓN VIEJA QUE CAMBIÓ. Las 45 de la versión 1 tienen
+ *     respuestas guardadas: si el generador las rehiciera, esas respuestas
+ *     pasarían a decir otra cosa. Su huella (id, eje, posición, jugadas y
+ *     polos) está escrita acá. Y cada versión de FORMAS pide ejes que existen
+ *     y no más preguntas de las que tiene cada eje.
  *
  * Uso:  npm install && node herramientas/verificar-estilo.js
  */
@@ -36,6 +41,7 @@ const M = require("../js/estilo-medidas");
 const Banco = require(path.join(RAIZ, "js", "estilo-items.js"));
 
 const POR_EJE = 15, MIN_COLOR = 5, PAREJAS = 30, DECIDIDA = 150;
+const HUELLA_V1 = "055db13c2dccfe04aad19e64d618d97e";   // es01…es45, tal cual quedaron en la versión 1
 const fallas = [];
 const falla = (id, msg) => fallas.push(id + ": " + msg);
 
@@ -160,6 +166,20 @@ for (const it of items) {
       falla(id, "los polos dicen " + it.a.polo + "/" + it.b.polo + " y las medidas " + esperado.join("/"));
   }
 }
+
+// 8. Lo viejo no cambia, y las formas piden lo que hay.
+const crypto = require("crypto");
+const v1 = items.filter((i) => +i.id.slice(2) <= 45);
+const huellaV1 = crypto.createHash("md5").update(v1.map((i) => [i.id, i.eje, i.fen, i.a.uci, i.a.polo, i.b.uci, i.b.polo].join("|")).join("\n")).digest("hex");
+if (v1.length !== 45 || huellaV1 !== HUELLA_V1) falla("banco", "las 45 posiciones de la versión 1 cambiaron (huella " + huellaV1 + "): sus respuestas guardadas dirían otra cosa");
+for (const [v, f] of Object.entries(Banco.FORMAS || {})) {
+  for (const e of f.ejes) {
+    if (!ejes.includes(e)) falla("FORMAS", "la versión " + v + " pide el eje desconocido «" + e + "»");
+    else if (f.porEje + f.extraPorEje > items.filter((i) => i.eje === e).length) falla("FORMAS", "la versión " + v + " pide más preguntas de «" + e + "» de las que hay");
+  }
+}
+if (Banco.FORMA !== (Banco.FORMAS || {})[Banco.VERSION]) falla("FORMAS", "FORMA no es la de VERSION");
+if (JSON.stringify(Banco.FORMAS[Banco.VERSION].ejes) !== JSON.stringify(ejes)) falla("FORMAS", "la versión de hoy no mide todos los ejes");
 
 // 7. La calibración (js/estilo-items.js, CALIBRADO; la escribe estilo-calibrar.js).
 for (const [id, c] of Object.entries(Banco.CALIBRADO || {})) {

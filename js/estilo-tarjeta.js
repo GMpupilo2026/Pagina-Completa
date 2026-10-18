@@ -12,10 +12,15 @@
  * ese día): es la que se sigue después.
  *
  *   EstiloTarjeta.cargar() → Promise        (los módulos que hacen falta, a pedido)
- *   EstiloTarjeta.pintarPerfil(caja, perfil, { tu })
+ *   EstiloTarjeta.pintarPerfil(caja, perfil, { tu, opinar })
  *   EstiloTarjeta.pintarRecomendacion(caja, rec, { tu, base })
  *   EstiloTarjeta.seguir(caja, { sb, alumnoId, recomendacion, desde, tu })
- *   EstiloTarjeta.montarProfe(contenedor, { sb, alumnoId, nombre })
+ *   EstiloTarjeta.montarProfe(contenedor, { sb, alumnoId, nombre, yo, puedeEscribir })
+ *
+ * La opinión del profe («¿Coincide con lo que ves?», debajo de cada eje) se
+ * guarda en estilo_opiniones y entra al perfil con el peso de dos preguntas
+ * (js/estilo-perfil.js). La recomendación guardada no cambia (es el acta de
+ * ese día): debajo se dice qué se le recomendaría hoy con lo que ve.
  */
 (function () {
   "use strict";
@@ -65,7 +70,8 @@
     const B = window.EstiloItems;
     const lista = el("div", "space-y-3");
     lista.setAttribute("data-estilo-perfil", "");
-    for (const e of EstiloPerfil.EJES) {
+    // Los ejes de SU prueba: una de la versión 1 no tiene el cuarto.
+    for (const e of perfil.lista || EstiloPerfil.EJES) {
       const x = perfil[e];
       const [uno, otro] = EstiloMedidas.POLOS[e];
       const fila = el("div", "bg-white dark:bg-brand-900 rounded-xl shadow-md p-4");
@@ -92,6 +98,7 @@
       punto.style.left = pct(x.p) + "%";
       barra.append(franja, punto);
       fila.append(extremos, barra, el("p", SUB + " mt-2", EstiloPerfil.frase(e, x, tu)));
+      if (o && o.opinar) fila.appendChild(botonesOpinion(e, o.opinar));
       lista.appendChild(fila);
     }
     caja.appendChild(lista);
@@ -101,6 +108,47 @@
         ? `En ${c.fallados} de las ${c.total} posiciones de control ${tu ? "elegiste" : "eligió"} distinto la segunda vez: parte de las respuestas fueron al azar, y por eso los márgenes son más anchos.`
         : `En las ${c.total} posiciones de control ${tu ? "elegiste" : "eligió"} lo mismo las dos veces: ${tu ? "contestaste" : "contestó"} lo que ${tu ? "prefieres" : "prefiere"}.`));
     }
+  }
+
+  /* «¿Coincide con lo que ves?»: tres botones, el elegido con aria-pressed y
+     con «✓» escrito (el color nunca va solo). */
+  const OPINION_BTN = "px-3 py-1.5 rounded-lg text-sm font-semibold border transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 disabled:opacity-60";
+  const OPINION_SI = " bg-brand-800 text-white border-brand-800 dark:bg-brand-200 dark:text-brand-900 dark:border-brand-200";
+  const OPINION_NO = " bg-white text-brand-800 border-brand-300 hover:bg-brand-50 dark:bg-brand-900 dark:text-brand-100 dark:border-brand-600 dark:hover:bg-brand-800";
+  function botonesOpinion(e, op) {
+    const B = window.EstiloItems;
+    const [uno, otro] = EstiloMedidas.POLOS[e];
+    const caja = el("div", "mt-3");
+    caja.setAttribute("data-opinion-eje", e);
+    const id = "opinion-" + e + "-" + Math.random().toString(36).slice(2, 8);
+    const titulo = el("p", TXT + " font-semibold mb-1", "¿Coincide con lo que ves?");
+    titulo.id = id;
+    const grupo = el("div", "flex flex-wrap gap-2");
+    grupo.setAttribute("role", "group");
+    grupo.setAttribute("aria-labelledby", id);
+    const estado = el("p", SUB + " mt-1");
+    estado.setAttribute("role", "status");
+    const actual = op.mias ? op.mias[e] : undefined;
+    for (const [valor, texto] of [[1, B.EJES[e].polos[uno]], [0, "Las dos por igual"], [-1, B.EJES[e].polos[otro]]]) {
+      const si = actual === valor;
+      const b = el("button", OPINION_BTN + (si ? OPINION_SI : OPINION_NO), (si ? "✓ " : "") + texto);
+      b.type = "button";
+      b.setAttribute("aria-pressed", si ? "true" : "false");
+      b.setAttribute("data-opinion", String(valor));
+      b.addEventListener("click", async () => {
+        grupo.querySelectorAll("button").forEach((x) => { x.disabled = true; });
+        estado.textContent = "Guardando…";
+        try { await op.guardar(e, valor); }
+        catch (err) {
+          estado.textContent = "No se pudo guardar: " + (err && err.message ? err.message : err);
+          grupo.querySelectorAll("button").forEach((x) => { x.disabled = false; });
+        }
+      });
+      grupo.appendChild(b);
+    }
+    caja.append(titulo, grupo, estado);
+    if (actual === undefined) caja.appendChild(el("p", SUB + " mt-1", "Lo que marques cuenta como dos preguntas más en su perfil."));
+    return caja;
   }
 
   /* ---------------- La recomendación ---------------- */
@@ -175,8 +223,12 @@
     estado.setAttribute("role", "status");
     contenedor.appendChild(estado);
     await cargar();
-    const { data, error } = await o.sb.from("estilo_pruebas").select("id, version, respuestas, partidas, recomendacion, created_at")
-      .eq("alumno_id", o.alumnoId).order("created_at", { ascending: false }).range(0, 4);
+    const [{ data, error }, op] = await Promise.all([
+      o.sb.from("estilo_pruebas").select("id, version, respuestas, contexto, partidas, recomendacion, created_at")
+        .eq("alumno_id", o.alumnoId).order("created_at", { ascending: false }).range(0, 4),
+      o.sb.from("estilo_opiniones").select("profesor_id, eje, opinion").eq("alumno_id", o.alumnoId),
+    ]);
+    const opiniones = (op && op.data) || [];
     if (contenedor.dataset.turno !== turno) return;
     contenedor.textContent = "";
     contenedor.appendChild(el("h3", H3.replace("mt-4", "mt-0"), "Su estilo de juego y la apertura sugerida"));
@@ -187,8 +239,23 @@
     }
     const ultima = data[0];
     contenedor.appendChild(el("p", SUB, "Prueba del " + fecha(ultima.created_at) + "."));
-    const perfil = EstiloPerfil.medir(ultima.respuestas, ultima.partidas);
-    pintarPerfil(contenedor, perfil, { tu: false });
+    const perfil = EstiloPerfil.medir(ultima.respuestas, ultima.partidas, ultima.version, opiniones);
+    const mias = {};
+    opiniones.filter((x) => x.profesor_id === o.yo).forEach((x) => { mias[x.eje] = x.opinion; });
+    const opinar = o.puedeEscribir && o.yo ? {
+      mias,
+      async guardar(eje, opinion) {
+        const { error: e } = await o.sb.from("estilo_opiniones").upsert({ alumno_id: o.alumnoId, profesor_id: o.yo, eje, opinion }, { onConflict: "alumno_id,profesor_id,eje" });
+        if (e) throw e;
+        // Se vuelve a pintar con la opinión nueva, y el foco vuelve al botón.
+        await montarProfe(contenedor, o);
+        const b = contenedor.querySelector('[data-opinion-eje="' + eje + '"] [data-opinion="' + opinion + '"]');
+        if (b) b.focus();
+        const st = contenedor.querySelector('[data-opinion-eje="' + eje + '"] [role="status"]');
+        if (st) st.textContent = "Guardado: ya cuenta en su perfil.";
+      },
+    } : null;
+    pintarPerfil(contenedor, perfil, { tu: false, opinar });
     if (ultima.recomendacion) {
       contenedor.appendChild(el("h3", H3, "Lo que se le recomendó ese día"));
       pintarRecomendacion(contenedor, ultima.recomendacion, { tu: false, base: "" });
@@ -205,14 +272,26 @@
       });
       caja.append(btn, res);
       contenedor.appendChild(caja);
+      // Lo que se le recomendaría hoy, con lo que ven sus profes: el acta de
+      // arriba no cambia.
+      if (opiniones.some((x) => perfil.lista.includes(x.eje))) {
+        const hoy = EstiloAperturas.recomendar(perfil, ultima.contexto || {});
+        const cambia = ["blancas", "e4", "d4"].filter((g) => hoy[g] && ultima.recomendacion[g] && hoy[g].principal.id !== ultima.recomendacion[g].principal.id);
+        const p = el("p", TXT + " mt-3");
+        p.setAttribute("data-estilo-con-opinion", cambia.length ? "cambia" : "igual");
+        p.textContent = cambia.length
+          ? "Con lo que ven sus profes, hoy le recomendaríamos: " + cambia.map((g) => hoy[g].titulo.toLowerCase() + ", " + hoy[g].principal.nombre).join("; ") + "."
+          : "Con lo que ven sus profes, la recomendación sería la misma.";
+        contenedor.appendChild(p);
+      }
     }
     // Antes y ahora: las pruebas anteriores, eje por eje.
     if (data.length > 1) {
       contenedor.appendChild(el("h3", H3, "Pruebas anteriores"));
       const ul = el("ul", "list-disc pl-5 space-y-1 " + TXT);
       data.slice(1).forEach((p) => {
-        const pf = EstiloPerfil.medir(p.respuestas, p.partidas);
-        ul.appendChild(el("li", null, fecha(p.created_at) + ": " + EstiloPerfil.EJES.map((e) => pf[e].etiqueta.texto.toLowerCase()).join(" · ") + "."));
+        const pf = EstiloPerfil.medir(p.respuestas, p.partidas, p.version);
+        ul.appendChild(el("li", null, fecha(p.created_at) + ": " + pf.lista.map((e) => pf[e].etiqueta.texto.toLowerCase()).join(" · ") + "."));
       });
       contenedor.appendChild(ul);
     }

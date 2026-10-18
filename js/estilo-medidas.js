@@ -1,5 +1,5 @@
-/* Las medidas de la prueba de estilo: qué tiene de «atacar», de «abrir» y de
- * «cambiar» cada una de las dos jugadas de una pregunta.
+/* Las medidas de la prueba de estilo: qué tiene de «atacar», de «abrir», de
+ * «cambiar» y de «dar material» cada una de las dos jugadas de una pregunta.
  *
  * Una pregunta de estilo pone dos jugadas que Stockfish valora casi igual y
  * que son de carácter opuesto. Ese «carácter opuesto» no se pone a ojo: lo
@@ -9,7 +9,7 @@
  * tiene motor, y el navegador mida con ellas el estilo en las partidas del
  * alumno (js/estilo-partidas.js) y el de cada apertura en las partidas de
  * maestros (herramientas/estilo-aperturas-medir.js). Una sola copia para las
- * cuatro cosas. Los tres ejes:
+ * cuatro cosas. Los cuatro ejes:
  *
  *   ataque      presión sobre el rey rival: cuántos ataques caen en su zona
  *               (su casilla, las de alrededor y dos filas hacia adelante),
@@ -22,11 +22,18 @@
  *               medias jugadas de la línea del motor; y `propone`, si es la
  *               jugada misma la que cambia (captura una pieza, o el rival
  *               captura en la respuesta la pieza que movió).
+ *   material    cuánto material (con peones: P 1, C y A 3, T 5, D 9) gana o
+ *               pierde quien juega, en la última posición TRANQUILA de la
+ *               línea (hasta seis medias jugadas: la última que no fue una
+ *               captura ni dejó un jaque, desde la respuesta del rival). A
+ *               mitad de un cambio el material no dice nada: falta la
+ *               recaptura. Si no hay ninguna tranquila, `null`.
  */
 (function () {
 "use strict";
 
 const VALOR = { n: 3, b: 3, r: 5, q: 9 };
+const VALOR_CON_PEONES = { p: 1, n: 3, b: 3, r: 5, q: 9 };
 const COL = "abcdefgh";
 
 /* El tablero como mapa casilla → {type, color}, sin depender de la versión
@@ -124,6 +131,28 @@ function piezas(fen) {
   return Object.values(mapa).reduce((s, p) => s + (VALOR[p.type] || 0), 0);
 }
 
+/* El material de `color` menos el del rival, con peones. */
+function balance(fen, color) {
+  const mapa = tablero(fen);
+  return Object.values(mapa).reduce((s, p) => s + (p.color === color ? 1 : -1) * (VALOR_CON_PEONES[p.type] || 0), 0);
+}
+
+/* Lo que gana (+) o da (−) quien juega, en la última posición tranquila de la
+ * línea: desde la respuesta del rival, la última que no vino de una captura
+ * ni quedó en jaque. null si la línea no tiene ninguna. */
+function materialDeLinea(Chess, fen, linea) {
+  const color = fen.split(" ")[1];
+  const inicio = balance(fen, color);
+  const c = new Chess(fen);
+  let ultimo = null;
+  linea.slice(0, 6).forEach((u, k) => {
+    const m = c.move({ from: u.slice(0, 2), to: u.slice(2, 4), promotion: u[4] });
+    if (!m) throw new Error("Jugada ilegal " + u + " en " + c.fen());
+    if (k >= 1 && !m.captured && !c.in_check()) ultimo = balance(c.fen(), color) - inicio;
+  });
+  return ultimo;
+}
+
 /* Juega una lista de jugadas UCI sobre un FEN con chess.js; devuelve los FEN
  * de cada paso (el primero es el de partida). Lanza si una no es legal. */
 function jugarUci(Chess, fen, ucis) {
@@ -137,8 +166,9 @@ function jugarUci(Chess, fen, ucis) {
   return fens;
 }
 
-/* Las tres medidas de una jugada, con la línea del motor que la sigue
- * (`linea` empieza con la jugada misma). */
+/* Las medidas de una jugada, con la línea del motor que la sigue (`linea`
+ * empieza con la jugada misma; las primeras cuatro medias jugadas para los
+ * tres primeros ejes, hasta seis para el material). */
 function medir(Chess, fen, linea) {
   const color = fen.split(" ")[1];
   const fens = jugarUci(Chess, fen, linea.slice(0, 4));
@@ -156,6 +186,7 @@ function medir(Chess, fen, linea) {
     estructura: apertura(tras2) - apertura(fen),
     cambios: piezas(fen) - piezas(tras4),
     propone: (capturada && capturada.type !== "p") || ofrece ? 1 : 0,
+    material: materialDeLinea(Chess, fen, linea),
   };
 }
 
@@ -163,10 +194,18 @@ function medir(Chess, fen, linea) {
  * dos jugadas en su eje; `otros` lo máximo que pueden separarse en los demás
  * para que la pregunta mida UNA cosa. */
 const UMBRAL = {
-  ataque: { polo: 3, primero: 2, segundo: 0, otros: { estructura: 1, cambios: 0 } },
-  estructura: { polo: 1.5, primero: 1, segundo: 0, otros: { ataque: 2, cambios: 3 } },
-  cambios: { polo: 6, primero: 6, segundo: 0, otros: { ataque: 2, estructura: 1 } },
+  ataque: { polo: 3, primero: 2, segundo: 0, otros: { estructura: 1, cambios: 0, material: 1 } },
+  estructura: { polo: 1.5, primero: 1, segundo: 0, otros: { ataque: 2, cambios: 3, material: 1 } },
+  cambios: { polo: 6, primero: 6, segundo: 0, otros: { ataque: 2, estructura: 1, material: 1 } },
+  // La de quedarse con el material no pierde nada (≥ 0) y la de la
+  // iniciativa da al menos un peón (≤ −1), con el motor diciendo que las dos
+  // valen lo mismo: lo que da, lo compensa la iniciativa.
+  material: { polo: 1, primero: 0, segundo: -1, otros: { ataque: 2, estructura: 1.5, cambios: 3 } },
 };
+/* En los tres primeros ejes el material puede separarse hasta un peón: las
+ * 45 posiciones se eligieron antes de que existiera el cuarto eje, y una (en
+ * «abrir o cerrar») abre dando un peón. Ver «El cuarto eje» en
+ * docs/decisiones/entrenamiento.md. */
 /* Además de separarse, cada jugada tiene que SER lo que dice su polo: la de
  * atacar suma al menos `primero` de presión y la de maniobrar no suma nada
  * (`segundo`); igual en los otros ejes. Sin esto, «atacar» podía ser una
@@ -178,6 +217,7 @@ const POLOS = {
   ataque: ["atacar", "maniobrar"],
   estructura: ["abrir", "cerrar"],
   cambios: ["cambiar", "mantener"],
+  material: ["material", "iniciativa"],
 };
 
 /* Qué clase de jugada es: si mueve un peón y si captura. */
@@ -193,12 +233,19 @@ function tipoDeJugada(Chess, fen, uci) {
  * tipoDeJugada(): en «estructura» la que abre tiene que ser una jugada de
  * peón o una captura (la ruptura la hace quien elige, no la respuesta del
  * rival) y la que cierra no puede capturar; en «cambios», la que cambia
- * propone el cambio ella misma (`propone`) y la que mantiene no captura. */
+ * propone el cambio ella misma (`propone`) y la que mantiene no captura; en
+ * «material», las dos tienen su medida (una posición tranquila en la línea). */
 function poloDe(eje, ma, mb, ta, tb) {
   const u = UMBRAL[eje];
   const d = ma[eje] - mb[eje];
   if (Math.abs(d) < u.polo) return null;
-  for (const [otro, max] of Object.entries(u.otros)) if (Math.abs(ma[otro] - mb[otro]) > max) return null;
+  if (ma[eje] == null || mb[eje] == null) return null;
+  for (const [otro, max] of Object.entries(u.otros)) {
+    // Sin posición tranquila en la línea no hay medida de material: no se
+    // sabe si separa, y no se cuenta en contra.
+    if (ma[otro] == null || mb[otro] == null) continue;
+    if (Math.abs(ma[otro] - mb[otro]) > max) return null;
+  }
   const [p, s, tp, ts] = d > 0 ? [ma, mb, ta, tb] : [mb, ma, tb, ta];
   if (p[eje] < u.primero || s[eje] > u.segundo) return null;
   if (eje === "estructura" && (!(tp.peon || tp.captura) || ts.captura)) return null;
@@ -222,7 +269,7 @@ function espejoFen(fen) {
 }
 const espejoUci = (u) => espejoCasilla(u.slice(0, 2)) + espejoCasilla(u.slice(2, 4)) + (u[4] || "");
 
-const api = { tablero, ataquesDe, zonaDelRey, presionSobreElRey, apertura, piezas, jugarUci, medir, tipoDeJugada, UMBRAL, POLOS, poloDe, espejoFen, espejoUci };
+const api = { tablero, ataquesDe, zonaDelRey, presionSobreElRey, apertura, piezas, balance, materialDeLinea, jugarUci, medir, tipoDeJugada, UMBRAL, POLOS, poloDe, espejoFen, espejoUci };
 if (typeof window !== "undefined") window.EstiloMedidas = api;
 if (typeof module !== "undefined" && module.exports) module.exports = api;
 })();

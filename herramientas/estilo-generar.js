@@ -1,7 +1,8 @@
 /* ===== El banco de la prueba de estilo =====
  *
- * Arma las 45 posiciones de la prueba de estilo (js/estilo-items.js): 15 por
- * eje (atacar o maniobrar, abrir o cerrar, cambiar o mantener piezas). Cada
+ * Arma las 60 posiciones de la prueba de estilo (js/estilo-items.js): 15 por
+ * eje (atacar o maniobrar, abrir o cerrar, cambiar o mantener piezas, y
+ * quedarse con el material o darlo por la iniciativa). Cada
  * posición trae DOS jugadas que Stockfish valora casi igual y que son de
  * carácter opuesto en su eje: como las dos son buenas, no hay respuesta
  * correcta, y lo que la persona elige dice qué tipo de juego prefiere.
@@ -25,6 +26,12 @@
  *     otros dos, para que cada pregunta mida una sola cosa.
  *   - Una sola posición por partida, y en cada eje al menos 5 con cada color
  *     al turno: el estilo no se mide solo con blancas.
+ *   - LO QUE YA ESTÁ NO SE TOCA. Las posiciones del banco tienen respuestas
+ *     guardadas (y su calibración): se conservan con su id, y solo se buscan
+ *     las de un eje que no tiene sus 15 (así entró el cuarto, «material o
+ *     iniciativa», con es46 a es60). De las que ya están solo se vuelven a
+ *     calcular las medidas, por si se sumó una. Para rehacer un eje entero
+ *     hay que sacar sus posiciones del bloque a mano y subir VERSION.
  *
  * El análisis se guarda en herramientas/.cache-estilo.json (fuera del
  * repositorio). La salida reemplaza el bloque entre ESTILO-INICIO y
@@ -58,7 +65,8 @@ const DECIDIDA = 150;         // la mejor jugada, entre −DECIDIDA y +DECIDIDA
 const POR_EJE = 15;
 const MIN_COLOR = 5;          // por eje, al menos esto con cada color al turno
 const PLY_DESDE = 14, PLY_HASTA = 70, CADA = 3;
-const EJES = ["ataque", "estructura", "cambios"];
+const EJES = Object.keys(M.POLOS);
+const BancoActual = require("../js/estilo-items");
 
 const huella = (s) => crypto.createHash("md5").update(s).digest("hex");
 
@@ -124,7 +132,7 @@ const uciASan = (fen, uci) => {
 /* ---------- Las preguntas ---------- */
 
 /* Primer barrido: las parejas de jugadas que podrían ser pregunta de un eje. */
-function candidatasDe(pos, lineas) {
+function candidatasDe(pos, lineas, ejes) {
   if (!lineas.length || Math.abs(lineas[0].score) > DECIDIDA) return [];
   const buenas = lineas.filter((l) => lineas[0].score - l.score <= PAREJAS && Math.abs(l.score) < 50000);
   const out = [];
@@ -132,7 +140,7 @@ function candidatasDe(pos, lineas) {
     for (let j = i + 1; j < buenas.length; j++) {
       let ma, mb;
       try { ma = M.medir(Chess, pos.fen, buenas[i].pv); mb = M.medir(Chess, pos.fen, buenas[j].pv); } catch (e) { continue; }
-      for (const eje of EJES) {
+      for (const eje of ejes) {
         const ta = M.tipoDeJugada(Chess, pos.fen, buenas[i].uci), tb = M.tipoDeJugada(Chess, pos.fen, buenas[j].uci);
         if (M.poloDe(eje, ma, mb, ta, tb)) out.push({ eje, a: buenas[i].uci, b: buenas[j].uci, fuerza: Math.abs(ma[eje] - mb[eje]) / M.UMBRAL[eje].polo });
       }
@@ -154,7 +162,9 @@ async function confirmar(pos, cand) {
   const tope = Math.max(mejor.score, la.score, lb.score);
   if (tope - la.score > PAREJAS || tope - lb.score > PAREJAS) return null;
   if (Math.abs(la.score) > DECIDIDA || Math.abs(lb.score) > DECIDIDA) return null;
-  const pa = la.pv.slice(0, 4), pb = lb.pv.slice(0, 4);
+  // Seis medias jugadas: el material se lee en la última posición tranquila,
+  // y con cuatro muchas líneas quedan a mitad de un cambio.
+  const pa = la.pv.slice(0, 6), pb = lb.pv.slice(0, 6);
   const ma = M.medir(Chess, pos.fen, pa), mb = M.medir(Chess, pos.fen, pb);
   const polo = M.poloDe(cand.eje, ma, mb, M.tipoDeJugada(Chess, pos.fen, cand.a), M.tipoDeJugada(Chess, pos.fen, cand.b));
   if (!polo) return null;
@@ -169,27 +179,31 @@ async function confirmar(pos, cand) {
 async function main() {
   if (!fs.existsSync(RUTA)) { console.error("Falta Stockfish en " + RUTA + " (apt install stockfish, o STOCKFISH=/ruta)."); process.exit(2); }
   const lista = partidas();
+  const viejos = BancoActual.ITEMS;
+  const faltan = EJES.filter((e) => viejos.filter((i) => i.eje === e).length < POR_EJE);
+  if (!faltan.length) console.log("Todos los ejes tienen sus " + POR_EJE + ": solo se vuelven a calcular las medidas.");
+  else console.log("Ejes a completar: " + faltan.join(", "));
   const todas = [];
   for (const p of lista) for (const pos of posiciones(p)) todas.push({ p, pos });
   console.log(lista.length + " partidas, " + todas.length + " posiciones para el primer barrido");
 
   const candidatas = [];
   let hechas = 0;
-  await Promise.all(todas.map(async ({ p, pos }) => {
+  if (faltan.length) await Promise.all(todas.map(async ({ p, pos }) => {
     const lineas = await analizar(pos.fen, 5, PROF_RAPIDA);
-    for (const c of candidatasDe(pos, lineas)) candidatas.push({ p, pos, c });
+    for (const c of candidatasDe(pos, lineas, faltan)) candidatas.push({ p, pos, c });
     if (++hechas % 1000 === 0) console.log("  " + hechas + " / " + todas.length + " (" + candidatas.length + " candidatas)");
   }));
   guardarCache(true);
   const porEje = {};
-  EJES.forEach((e) => (porEje[e] = candidatas.filter((x) => x.c.eje === e).length));
+  faltan.forEach((e) => (porEje[e] = candidatas.filter((x) => x.c.eje === e).length));
   console.log("Candidatas del primer barrido: " + JSON.stringify(porEje));
 
   /* Se confirman primero las de más diferencia en su eje, una por partida y
    * eje, en tandas, hasta tener de sobra para elegir (CONFIRMAR por eje). */
   const CONFIRMAR = 60;
   const confirmadas = [];
-  for (const eje of EJES) {
+  for (const eje of faltan) {
     const mejorPorPartida = new Map();
     for (const x of candidatas) {
       if (x.c.eje !== eje) continue;
@@ -211,8 +225,12 @@ async function main() {
   /* La elección: por eje, las de más fuerza, una por partida en todo el
    * banco, y al menos MIN_COLOR con cada color al turno. */
   const usadas = new Set();
+  for (const v of viejos) {
+    usadas.add(v.fuente.partida);
+    usadas.add(v.fen.split(" ").slice(0, 2).join(" "));
+  }
   const banco = [];
-  for (const eje of EJES) {
+  for (const eje of faltan) {
     const del = confirmadas.filter((x) => x.r.eje === eje)
       .sort((x, y) => (y.r.fuerza - x.r.fuerza) || (x.h < y.h ? -1 : 1));
     const elegidas = [];
@@ -241,11 +259,19 @@ async function main() {
     banco.push(...elegidas);
   }
 
-  const items = banco.map((x, i) => {
+  // Las que ya estaban, con sus medidas al día (la línea guardada es la misma).
+  const conservadas = viejos.map((v) => {
+    const it = JSON.parse(JSON.stringify(v));
+    it.a.medidas = M.medir(Chess, it.fen, it.a.linea);
+    it.b.medidas = M.medir(Chess, it.fen, it.b.linea);
+    return it;
+  });
+  const nuevas = banco.map((x, i) => {
     const r = x.r;
     // El orden de las dos jugadas no puede delatar el polo: en cada eje, el
-    // primer polo (atacar, abrir, cambiar) va una vez como «a» y otra como «b».
-    const enEje = banco.slice(0, i).filter((y) => y.r.eje === r.eje).length;
+    // primer polo (atacar, abrir, cambiar, material) va una vez como «a» y
+    // otra como «b».
+    const enEje = conservadas.filter((y) => y.eje === r.eje).length + banco.slice(0, i).filter((y) => y.r.eje === r.eje).length;
     const polo = enEje % 2 === 0 ? "a" : "b";
     const [a, b] = (r.polo === polo) ? [r.a, r.b] : [r.b, r.a];
     const jugada = (j, esPrimero) => ({
@@ -253,7 +279,7 @@ async function main() {
       eval: j.eval, linea: j.linea, medidas: j.medidas,
     });
     return {
-      id: "es" + String(i + 1).padStart(2, "0"),
+      id: "es" + String(conservadas.length + i + 1).padStart(2, "0"),
       eje: r.eje,
       fen: x.pos.fen,
       a: jugada(a, polo === "a"),
@@ -271,6 +297,7 @@ async function main() {
   const fin = texto.indexOf("/* ESTILO-FIN */");
   if (ini < 0 || fin < 0) throw new Error("Faltan las marcas ESTILO-INICIO / ESTILO-FIN en " + BANCO);
   const finLinea = texto.indexOf("\n", ini) + 1;
+  const items = conservadas.concat(nuevas);
   const cuerpo = "  const ITEMS = " + JSON.stringify(items, null, 1).replace(/\n/g, "\n  ") + ";\n  ";
   fs.writeFileSync(BANCO, texto.slice(0, finLinea) + cuerpo + texto.slice(fin));
   console.log("Listo: " + items.length + " preguntas en js/estilo-items.js");

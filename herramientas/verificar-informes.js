@@ -97,22 +97,26 @@ const ANALISIS_ANA = (() => {
 })();
 
 /* Las pruebas de estilo de Ana (y una de Bruno, que no se tiene que ver):
-   Ana elige siempre atacar y mantener las piezas, con la recomendación que
-   le habría dado la página (js/estilo-aperturas.js de verdad). */
+   Ana elige siempre atacar, mantener las piezas y dar material por la
+   iniciativa, con la recomendación que le habría dado la página
+   (js/estilo-aperturas.js de verdad). La de octubre es de la versión 2
+   (cuatro ejes); la de julio, de la 1: se tiene que leer con sus tres. */
 const ESTILO = (() => {
   const B = require("../js/estilo-items.js");
   const Pf = require("../js/estilo-perfil.js");
   const Ap = require("../js/estilo-aperturas.js");
-  const respuestas = [];
-  for (const eje of ["ataque", "estructura", "cambios"]) {
-    B.ITEMS.filter((i) => i.eje === eje).slice(0, 10).forEach((it, k) => {
-      const quiere = eje === "ataque" ? "atacar" : eje === "cambios" ? "mantener" : (k % 2 ? "abrir" : "cerrar");
-      respuestas.push({ id: it.id, eleccion: it.a.polo === quiere ? "a" : "b", seguridad: 3, ms: 5000 });
-    });
-  }
-  const recomendacion = Ap.recomendar(Pf.medir(respuestas, null), { ritmo: "rapidas", estudio: "medio", elo: 1500, actual: {} });
-  const fila = (id, alumno, fecha) => ({ id, alumno_id: alumno, version: 1, respuestas, contexto: {}, partidas: null, recomendacion, created_at: fecha });
-  return [fila("e-2", "a-1", "2026-10-02T15:00:00Z"), fila("e-1", "a-1", "2026-07-02T15:00:00Z"), fila("e-b", "a-2", "2026-08-15T15:00:00Z")];
+  const de = (version) => {
+    const respuestas = [];
+    for (const eje of B.FORMAS[version].ejes) {
+      B.ITEMS.filter((i) => i.eje === eje).slice(0, B.FORMAS[version].porEje).forEach((it, k) => {
+        const quiere = eje === "ataque" ? "atacar" : eje === "cambios" ? "mantener" : eje === "material" ? "iniciativa" : (k % 2 ? "abrir" : "cerrar");
+        respuestas.push({ id: it.id, eleccion: it.a.polo === quiere ? "a" : "b", seguridad: 3, ms: 5000 });
+      });
+    }
+    return { respuestas, recomendacion: Ap.recomendar(Pf.medir(respuestas, null, version), { ritmo: "rapidas", estudio: "medio", elo: 1500, actual: {} }) };
+  };
+  const fila = (id, alumno, fecha, version) => Object.assign({ id, alumno_id: alumno, version, contexto: {}, partidas: null, created_at: fecha }, de(version));
+  return [fila("e-2", "a-1", "2026-10-02T15:00:00Z", 2), fila("e-1", "a-1", "2026-07-02T15:00:00Z", 1), fila("e-b", "a-2", "2026-08-15T15:00:00Z", 2)];
 })();
 
 // El cliente de mentira: los mismos métodos encadenados que usa la página
@@ -166,6 +170,16 @@ window.__funcion = [];
         /* Un insert/upsert con .select() devuelve LO ESCRITO, no la tabla: es
            de donde la página refresca su estado, y un doble que devolviera la
            tabla entera daría por bueno un recuento equivocado. */
+        /* Un upsert con onConflict queda escrito, como en la base: la página
+           que vuelve a leer después (la opinión del profe sobre el estilo) ve
+           lo que escribió, pisando la fila con las mismas claves. */
+        if (pendiente && pendiente.accion === "upsert" && pendiente.opciones && pendiente.opciones.onConflict && Array.isArray(filas)) {
+          const claves = pendiente.opciones.onConflict.split(",").map((c) => c.trim());
+          (Array.isArray(pendiente.fila) ? pendiente.fila : [pendiente.fila]).forEach((f) => {
+            const i = filas.findIndex((x) => claves.every((c) => String(x[c]) === String(f[c])));
+            if (i >= 0) filas[i] = Object.assign({}, filas[i], f); else filas.push(Object.assign({}, f));
+          });
+        }
         if (pendiente && (pendiente.accion === "insert" || pendiente.accion === "upsert")) {
           // Como la base: lo que se inserta sin id recibe uno (el plan nuevo
           // tiene que tener con qué colgarle sus renglones).
@@ -526,6 +540,8 @@ async function pruebaProfesor(browser) {
       analisis_partidas_alumno: [{ alumno_id: "a-1", lichess: "ana_123", chesscom: null, partidas: 22,
         analizado_at: "2026-10-01T15:00:00Z", analisis: ANALISIS_ANA }],
       estilo_pruebas: ESTILO,
+      // Una opinión de su profe sobre OTRO alumno: no tiene que contar.
+      estilo_opiniones: [{ alumno_id: "a-2", profesor_id: "prof-1", eje: "material", opinion: 1 }],
       plantillas_casa: [
         { id: "p-1", situacion: "poco", texto: "{nombre} puede más: lo vemos el jueves.", created_at: "2026-09-01T00:00:00Z" },
         { id: "p-2", situacion: "bien", texto: "Sigan así.", created_at: "2026-09-02T00:00:00Z" },
@@ -1048,12 +1064,43 @@ async function pruebaProfesor(browser) {
       grupos: [...c.querySelectorAll("[data-grupo]")].map((x) => x.dataset.grupo),
       fecha: /Prueba del 2 de octubre de 2026/.test(t),
       anteriores: /Pruebas anteriores/.test(t) && /2 de julio de 2026/.test(t),
+      // La de julio es de la versión 1: sus tres ejes, separados por « · ».
+      ejesDeJulio: ((/2 de julio de 2026: ([^.]*)\./.exec(t) || [])[1] || "").split(" · ").length,
       bruno: /15 de agosto/.test(t),
       seguir: !!c.querySelector("[data-estilo-seguir]"),
       tercera: /Eligió/.test(t),
     };
   });
-  igual("los tres ejes, con atacar y mantener claros", es.ejes.filter((x) => /^(ataque|cambios):/.test(x)), ["ataque:claro", "cambios:claro"]);
+  igual("los cuatro ejes, con atacar, mantener y la iniciativa claros", es.ejes.filter((x) => /^(ataque|cambios|material):/.test(x)), ["ataque:claro", "cambios:claro", "material:claro"]);
+  igual("la prueba vieja (versión 1), con sus tres ejes y no con un cuarto", es.ejesDeJulio, 3);
+
+  console.log("-- «¿Coincide con lo que ves?»: la opinión de su profe");
+  const opinion = () => page.evaluate(() => {
+    const c = document.getElementById("estilo-alumno-cuerpo");
+    const mat = c.querySelector('[data-eje="material"]');
+    return {
+      grupos: [...c.querySelectorAll("[data-opinion-eje]")].map((x) => x.dataset.opinionEje),
+      apretados: [...c.querySelectorAll('[data-opinion][aria-pressed="true"]')].map((b) => b.closest("[data-opinion-eje]").dataset.opinionEje + ":" + b.dataset.opinion + ":" + b.textContent),
+      frase: mat ? mat.textContent : "",
+      p: mat ? mat.querySelector(".absolute.-top-1").style.left : "",
+      foco: document.activeElement && document.activeElement.dataset ? document.activeElement.dataset.opinion : null,
+      estado: (c.querySelector('[data-opinion-eje="material"] [role="status"]') || {}).textContent || "",
+      conOpinion: !!c.querySelector("[data-estilo-con-opinion]"),
+    };
+  });
+  const op0 = await opinion();
+  igual("tres botones en cada uno de sus cuatro ejes, ninguno marcado (la de otro alumno no cuenta)",
+    [op0.grupos, op0.apretados, /lo que ve su profe/.test(op0.frase), op0.conOpinion], [["ataque", "estructura", "cambios", "material"], [], false, false]);
+  await page.click('[data-opinion-eje="material"] [data-opinion="1"]');
+  await page.waitForFunction(() => /Guardado/.test((document.querySelector('[data-opinion-eje="material"] [role="status"]') || {}).textContent || ""), null, { timeout: 8000 });
+  const escOp = await page.evaluate(() => window.__escrituras.filter((e) => /estilo_opiniones/.test(e.etiqueta)));
+  igual("guarda su opinión a su nombre, sobre este alumno, como upsert por alumno, profe y eje",
+    escOp.map((e) => [e.accion, JSON.stringify(e.fila), e.opciones && e.opciones.onConflict]),
+    [["upsert", JSON.stringify({ alumno_id: "a-1", profesor_id: "prof-1", eje: "material", opinion: 1 }), "alumno_id,profesor_id,eje"]]);
+  const op1 = await opinion();
+  igual("queda marcada («✓», no solo el color), cuenta en su perfil y lo dice, y el foco vuelve al botón",
+    [op1.apretados, /lo que ve su profe/.test(op1.frase), op1.foco, op1.conOpinion], [["material:1:✓ Quedarse con el material"], true, "1", true]);
+  igual("y mueve su perfil hacia lo que ve", parseFloat(op1.p) > parseFloat(op0.p), true);
   igual("lo que se le recomendó, en los tres grupos", es.grupos, ["blancas", "e4", "d4"]);
   igual("la fecha de su prueba, las anteriores, en tercera persona, nada de otro alumno, y el seguimiento",
     [es.fecha, es.anteriores, es.tercera, es.bruno, es.seguir], [true, true, true, false, true]);

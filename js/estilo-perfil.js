@@ -1,12 +1,15 @@
 /* ===== Ajedrez Integral — La medición de la prueba de estilo =====
  *
  * Qué tipo de juego prefiere una persona, eje por eje (atacar o maniobrar,
- * abrir o cerrar, cambiar o mantener piezas), con su margen. Las preguntas
+ * abrir o cerrar, cambiar o mantener piezas, quedarse con el material o
+ * darlo por la iniciativa), con su margen. Qué ejes mide y cuántas preguntas
+ * lleva depende de la VERSIÓN de la prueba (FORMAS en js/estilo-items.js):
+ * una prueba vieja se lee con la forma de la suya. Las preguntas
  * están en js/estilo-items.js; las aperturas que le quedan a cada estilo, en
  * js/estilo-aperturas.js.
  *
  * Cada respuesta es una elección entre las dos jugadas de una posición: «1»
- * si eligió el primer polo del eje (atacar, abrir, cambiar), «0» si no. Por
+ * si eligió el primer polo del eje (atacar, abrir, cambiar, material), «0» si no. Por
  * eje se busca la tendencia θ que mejor explica las elecciones, con el modelo
  * de dos parámetros de siempre:
  *
@@ -39,9 +42,17 @@
  * Las PARTIDAS REALES (js/estilo-partidas.js): cada momento de sus partidas
  * en que tuvo dos jugadas parejas de carácter opuesto es una elección más,
  * con peso 0,5 (la medición es más ruidosa: no se sabe si vio la otra), y
- * nunca más de 5 de peso por eje, la mitad de lo que pesan las 10 preguntas
- * de ese eje: las partidas corrigen la prueba, no la reemplazan (con 10, 200
- * momentos que decían lo contrario la dejaban en un empate exacto).
+ * nunca más de peso por eje que la mitad de las preguntas de ese eje (5 en
+ * la versión 1, 4 en la 2): las partidas corrigen la prueba, no la
+ * reemplazan (con el tope igual a las preguntas, 200 momentos que decían lo
+ * contrario la dejaban en un empate exacto).
+ *
+ * La OPINIÓN DE SU PROFE (public.estilo_opiniones): por eje, el primer
+ * polo, el segundo o «las dos por igual». Pesa lo que DOS preguntas
+ * (PESO_PROFE): lo ve jugar, pero no se sabe cuántas partidas miró; «las dos
+ * por igual» son una a cada lado. Una por profe. No cuenta para decidir si
+ * la prueba agrega preguntas: eso es lo que contesta el alumno; se suma al
+ * resultado.
  *
  * Con todo eso, θ por máximo a posteriori (con una previa normal de desvío
  * 1,5, que con pocas respuestas no deja afirmar de más) y su error estándar.
@@ -55,10 +66,11 @@
  *   «equilibrado»      el intervalo entero entre 30 % y 70 %
  *   «sin definir»      lo demás: ahí la prueba agrega preguntas de ese eje.
  *
- * LA PRUEBA ADAPTATIVA (`Prueba`): 10 preguntas por eje, alternando ejes, con
- * los dos controles intercalados; después, en cada eje «sin definir», hasta 5
- * más, de a una, mientras siga sin definir. Nadie pasa de 47 preguntas (45 y
- * los dos controles), y quien tiene un estilo claro termina en 32.
+ * LA PRUEBA ADAPTATIVA (`Prueba`): `porEje` preguntas por eje (8 en la
+ * versión 2), alternando ejes, con los dos controles intercalados; después,
+ * en cada eje «sin definir», hasta `extraPorEje` más (6), de a una, mientras
+ * siga sin definir. Nadie pasa de 58 preguntas (56 y los dos controles), y
+ * quien tiene un estilo claro termina en 34.
  */
 (function () {
   "use strict";
@@ -66,9 +78,8 @@
   const SEGURIDAD = { 3: 1, 2: 0.7, 1: 0.3 };
   const PREVIA = 1.5;
   const Z = 1.96;
-  const PESO_PARTIDA = 0.5, TOPE_PARTIDAS = 5;
+  const PESO_PARTIDA = 0.5, PESO_PROFE = 2;
   const ENSANCHE_CONTROL = 0.25;
-  const EJES = ["ataque", "estructura", "cambios"];
 
   const banco = () => (typeof window !== "undefined" && window.EstiloItems)
     || (typeof require === "function" ? require("./estilo-items.js") : null);
@@ -76,6 +87,11 @@
     || (typeof require === "function" ? require("./estilo-medidas.js") : null);
 
   const sigma = (x) => 1 / (1 + Math.exp(-x));
+  // Todos los ejes que conoce el banco; los de una prueba, los de su forma.
+  const EJES = Object.keys(banco().EJES);
+  const formaDe = (version) => (banco().FORMAS || {})[version || banco().VERSION] || banco().FORMA;
+  // Lo más que pesan sus partidas en un eje: la mitad de las preguntas.
+  const topePartidas = (version) => formaDe(version).porEje / 2;
 
   function pesoTiempo(ms) {
     if (!(ms > 0)) return 1;
@@ -124,16 +140,21 @@
   const poloElegido = (item, eleccion) => (eleccion === "a" ? item.a.polo : eleccion === "b" ? item.b.polo : null);
 
   /* respuestas: [{ id, eleccion: "a"|"b", seguridad: 1..3, ms, control?: idOriginal }]
-     partidas:   [{ eje, primero: true|false }] (js/estilo-partidas.js) */
-  function medir(respuestas, partidas) {
+     partidas:   [{ eje, primero: true|false }] (js/estilo-partidas.js)
+     version:    la de la prueba (la fila guardada); sin ella, la de hoy.
+     opiniones:  [{ eje, opinion: 1|0|-1 }], una por profe (estilo_opiniones).
+     Devuelve un eje por cada uno de su forma, y `lista` con sus nombres. */
+  function medir(respuestas, partidas, version, opiniones) {
     const B = banco(), Mm = medidas();
+    const ejes = formaDe(version).ejes;
     const porId = new Map(B.ITEMS.map((i) => [i.id, i]));
-    const obs = { ataque: [], estructura: [], cambios: [] };
+    const obs = {};
+    for (const e of ejes) obs[e] = [];
     const dadas = new Map();
     for (const r of respuestas || []) {
       if (r.control) continue;
       const it = porId.get(r.id);
-      const polo = it && poloElegido(it, r.eleccion);
+      const polo = it && obs[it.eje] && poloElegido(it, r.eleccion);
       if (!polo) continue;
       dadas.set(r.id, polo);
       const c = calibracionDe(r.id);
@@ -147,21 +168,32 @@
       return { id: r.control, eje: it && it.eje, coincide: !!(antes && ahora && antes === ahora), contestado: !!(antes && ahora) };
     }).filter((c) => c.contestado);
     const fallados = controles.filter((c) => !c.coincide).length;
-    // Las partidas: peso 0,5 cada momento, hasta 10 por eje.
-    const deJuego = { ataque: 0, estructura: 0, cambios: 0 };
-    for (const o of partidas || []) if (obs[o.eje]) deJuego[o.eje]++;
+    // Las partidas: peso 0,5 cada momento, hasta la mitad de las preguntas.
+    const deJuego = {};
+    for (const o of partidas || []) if (obs[o.eje]) deJuego[o.eje] = (deJuego[o.eje] || 0) + 1;
+    const tope = topePartidas(version);
     for (const o of partidas || []) {
       if (!obs[o.eje]) continue;
-      const w = Math.min(PESO_PARTIDA, TOPE_PARTIDAS / deJuego[o.eje]);
+      const w = Math.min(PESO_PARTIDA, tope / deJuego[o.eje]);
       obs[o.eje].push({ y: o.primero ? 1 : 0, w, a: 1, b: 0, de: "partidas" });
     }
-    const out = { controles: { total: controles.length, fallados }, ejes: {} };
-    for (const e of EJES) {
+    // Lo que ve su profe: dos preguntas a su lado, o una a cada lado.
+    for (const o of opiniones || []) {
+      if (!obs[o.eje] || ![1, 0, -1].includes(o.opinion)) continue;
+      if (o.opinion === 0) {
+        obs[o.eje].push({ y: 1, w: PESO_PROFE / 2, a: 1, b: 0, de: "profe" }, { y: 0, w: PESO_PROFE / 2, a: 1, b: 0, de: "profe" });
+      } else {
+        obs[o.eje].push({ y: o.opinion === 1 ? 1 : 0, w: PESO_PROFE, a: 1, b: 0, de: "profe" });
+      }
+    }
+    const out = { controles: { total: controles.length, fallados }, ejes: {}, lista: ejes.slice() };
+    for (const e of ejes) {
       const { theta, se } = estimar(obs[e]);
       const seAncho = se * (1 + ENSANCHE_CONTROL * fallados);
       const x = {
         n: obs[e].filter((o) => o.de === "prueba").length,
         nPartidas: obs[e].filter((o) => o.de === "partidas").length,
+        nProfe: (opiniones || []).filter((o) => o.eje === e && [1, 0, -1].includes(o.opinion)).length,
         theta, se: seAncho,
         p: sigma(theta), lo: sigma(theta - Z * seAncho), hi: sigma(theta + Z * seAncho),
       };
@@ -179,8 +211,9 @@
     const [uno] = medidas().POLOS[eje];
     const E = banco().EJES[eje];
     const momentos = x.nPartidas ? ` y ${x.nPartidas} ${x.nPartidas === 1 ? "momento" : "momentos"} de ${tu ? "tus" : "sus"} partidas` : "";
+    const profe = x.nProfe ? `, más lo que ${x.nProfe === 1 ? (tu ? "ve tu profe" : "ve su profe") : (tu ? "ven tus profes" : "ven sus profes")}` : "";
     return `${tu ? "Elegiste" : "Eligió"} «${E.polos[uno].toLowerCase()}» el ${pct(x.p)} % de las veces (entre ${pct(x.lo)} y ${pct(x.hi)} %), `
-      + `con ${x.n} ${x.n === 1 ? "pregunta" : "preguntas"}${momentos}.`;
+      + `con ${x.n} ${x.n === 1 ? "pregunta" : "preguntas"}${momentos}${profe}.`;
   }
 
   /* -------- La posición de control: la misma pregunta con los colores invertidos -------- */
@@ -211,8 +244,9 @@
     const azar = o.azar || Math.random;
     const B = banco();
     const F = B.FORMA;
+    const ejes = F.ejes;
     const porEje = {};
-    for (const e of EJES) {
+    for (const e of ejes) {
       // Las de una partida ya usada en una prueba anterior van al final: al
       // repetir la prueba, primero lo que no vio.
       const vistas = new Set(o.vistas || []);
@@ -220,9 +254,9 @@
       porEje[e] = del.filter((i) => !vistas.has(i.id)).concat(del.filter((i) => vistas.has(i.id)));
     }
     const base = [];
-    for (let k = 0; k < F.porEje; k++) for (const e of EJES) base.push(porEje[e][k]);
+    for (let k = 0; k < F.porEje; k++) for (const e of ejes) base.push(porEje[e][k]);
     const extras = {};
-    for (const e of EJES) extras[e] = porEje[e].slice(F.porEje, F.porEje + F.extraPorEje);
+    for (const e of ejes) extras[e] = porEje[e].slice(F.porEje, F.porEje + F.extraPorEje);
     // Los controles: la 2.ª y la 5.ª pregunta, de dos ejes distintos, vuelven
     // dadas vuelta en los lugares 13 y 25.
     const cola = base.slice();
@@ -233,14 +267,15 @@
     }
     const respuestas = [];
     let hechas = 0;
-    const extrasHechas = { ataque: 0, estructura: 0, cambios: 0 };
+    const extrasHechas = {};
+    for (const e of ejes) extrasHechas[e] = 0;
     return {
       respuestas,
       /* La pregunta que sigue, o null si terminó. */
       siguiente() {
         if (hechas < cola.length) return cola[hechas];
         const perfil = medir(respuestas, o.partidas);
-        for (const e of EJES) {
+        for (const e of ejes) {
           if (perfil[e].etiqueta.tipo === "sin definir" && extrasHechas[e] < extras[e].length) {
             const it = extras[e][extrasHechas[e]];
             return it;
@@ -255,11 +290,11 @@
       },
       /* Cuántas van y cuántas faltan como mínimo (para la barra). */
       avance() { return { hechas: respuestas.length, minimo: cola.length }; },
-      perfil() { return medir(respuestas, o.partidas); },
+      perfil() { return medir(respuestas, o.partidas, undefined, o.opiniones); },
     };
   }
 
-  const api = { SEGURIDAD, EJES, PREVIA, PESO_PARTIDA, TOPE_PARTIDAS, ENSANCHE_CONTROL, pesoTiempo, estimar, medir, etiquetar, frase, espejo, Prueba, sigma };
+  const api = { SEGURIDAD, EJES, PREVIA, PESO_PARTIDA, PESO_PROFE, ENSANCHE_CONTROL, formaDe, topePartidas, pesoTiempo, estimar, medir, etiquetar, frase, espejo, Prueba, sigma };
   if (typeof window !== "undefined") window.EstiloPerfil = api;
   if (typeof module !== "undefined" && module.exports) module.exports = api;
 })();

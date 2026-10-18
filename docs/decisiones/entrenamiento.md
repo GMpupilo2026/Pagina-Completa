@@ -3937,8 +3937,8 @@ Las piezas, una por archivo:
 
 | Archivo | Qué hace |
 |---|---|
-| `js/estilo-items.js` | el banco de 45 posiciones (lo genera `herramientas/estilo-generar.js`) y su calibración (`herramientas/estilo-calibrar.js`) |
-| `js/estilo-medidas.js` | qué tiene de atacar, abrir o cambiar una jugada; una sola copia para el generador, los verificadores, el navegador y la medición de aperturas |
+| `js/estilo-items.js` | el banco de 60 posiciones (45 de la versión 1 y 15 del cuarto eje) (lo genera `herramientas/estilo-generar.js`) y su calibración (`herramientas/estilo-calibrar.js`) |
+| `js/estilo-medidas.js` | qué tiene de atacar, abrir, cambiar o dar material una jugada; una sola copia para el generador, los verificadores, el navegador y la medición de aperturas |
 | `js/estilo-perfil.js` | la medición: tendencia y margen por eje, la prueba adaptativa y los controles |
 | `js/estilo-aperturas.js` | el carácter de cada apertura (lo mide `herramientas/estilo-aperturas-medir.js`) y la recomendación |
 | `js/estilo-partidas.js` | el estilo en sus partidas de Lichess y Chess.com, y el seguimiento de la recomendación |
@@ -3950,13 +3950,16 @@ Las piezas, una por archivo:
 
 Cada pregunta pone una posición y **dos jugadas que Stockfish valora casi
 igual**. Como las dos son buenas, no hay respuesta correcta: la que elige dice
-qué prefiere. Tres ejes, 15 posiciones por eje (45 en el banco):
+qué prefiere. Cuatro ejes, 15 posiciones por eje (60 en el banco; la
+versión 1 tenía los tres primeros, ver «El cuarto eje: material o
+iniciativa»):
 
 | Eje | Un polo | El otro |
 |---|---|---|
 | `ataque` | Atacar al rey | Maniobrar |
 | `estructura` | Abrir el juego | Mantenerlo cerrado |
 | `cambios` | Cambiar piezas | Mantener las piezas |
+| `material` | Quedarse con el material | Dar material por la iniciativa |
 
 - **Parejas de verdad.** A profundidad 20, cada jugada a 30 centipeones o
   menos de la más alta entre la mejor de la posición y las dos jugadas (a esa
@@ -4026,6 +4029,101 @@ hasta su posición, juega las dos jugadas y sus líneas, recalcula las medidas
 y los polos, y exige las evaluaciones parejas y el orden repartido. Saltó al
 cambiar un polo, alejar una evaluación, correr la posición dos medias
 jugadas, poner un SAN falso y subir un umbral.
+
+### El cuarto eje: material o iniciativa (versión 2)
+
+Los tres primeros ejes no distinguían a quien da un peón por el ataque de
+quien lo cuida: el gambito de rey y la escocesa salían parecidos. El cuarto
+eje lo mide con la misma regla de siempre: dos jugadas que Stockfish valora
+igual, y una de ellas da material.
+
+- **La medida** (`material` en `js/estilo-medidas.js`): cuánto material, con
+  peones, gana o pierde quien juega, **en la última posición tranquila** de la
+  línea del motor (hasta seis medias jugadas, desde la respuesta del rival,
+  que no venga de una captura ni deje un jaque). Con cuatro medias jugadas,
+  muchas líneas quedaban a mitad de un cambio y «daba» una torre que
+  recuperaba en la jugada siguiente: en la primera prueba con el caché del
+  generador, varias de las candidatas eran eso.
+- **El polo**: la de quedarse con el material no pierde nada (≥ 0) y la de la
+  iniciativa da al menos un peón (≤ −1), y en los otros ejes se separan poco.
+  Como las dos valen lo mismo para el motor, lo que da lo compensa la
+  iniciativa.
+- **Lo que ya estaba no se toca.** Las 45 posiciones tienen respuestas
+  guardadas: el generador ahora las conserva con su id, solo les vuelve a
+  calcular las medidas (suman la de material) y busca las del eje que no
+  tiene sus 15 (es46 a es60, de partidas de Capablanca, Euwe, Karpov,
+  Korchnoi y otros: 1204 candidatas en el primer barrido, 63 confirmadas a
+  profundidad 20). `verificar-estilo.js` guarda la huella de las 45 y falla
+  si cambian.
+- En los tres primeros ejes el material puede separarse **hasta un peón**:
+  es19 («abrir o cerrar») abre dando uno, y se eligió antes de que existiera
+  el eje. Cambiarla haría que sus respuestas guardadas dijeran otra cosa.
+- **`VERSION` 2 y `FORMAS`**: cada versión dice qué ejes mide y cuántas
+  preguntas lleva. La 2: **8 por eje y hasta 6 más** (34 preguntas con un
+  estilo claro, nunca más de 58: la base acepta hasta 60 respuestas). Con 10
+  por eje serían 42 de entrada. Una prueba de la versión 1 **se lee con sus
+  tres ejes** (`EstiloPerfil.medir(respuestas, partidas, version)`), no con
+  un cuarto «sin definir», y con su tope de partidas (la mitad de las
+  preguntas: 5 entonces, 4 ahora).
+- **La calibración usa las respuestas de todas las versiones**: las
+  posiciones conservan su id y su contenido, y lo que cambió es cuántas se
+  preguntan.
+- **El material de cada apertura**: en las medias jugadas 12, 16, 20 y 24 (un
+  gambito da el peón en la apertura y muchas veces lo recupera antes de la
+  20), también en posición tranquila. Los que más dan: Benko, Smith-Morra,
+  gambito de rey, gambito escocés y Catalana; los que más guardan, la
+  escocesa con blancas y la eslava con negras.
+
+### En qué partidas le va mejor
+
+Además de lo que le gusta, **lo que le rinde**: con las partidas que ya baja
+la página (Lichess y Chess.com), `EstiloPartidas.rendimiento` parte sus
+partidas por la mitad en cada eje (las más abiertas y las más cerradas, de
+las SUYAS) y compara los puntos.
+
+- **Solo `estructura` y `cambios`**, que describen la partida igual para los
+  dos bandos (columnas abiertas y peones bloqueados en las medias jugadas
+  24, 32 y 40; piezas que salieron hasta la 40). **El ataque y el material
+  no**: quien va ganando presiona más al rey y tiene más material, así que
+  «rinde mejor cuando ataca» diría solo que gana cuando va ganando.
+- Cuenta con **15 partidas o más en cada mitad y |z| ≥ 1,96**: con el
+  resultado al azar casi nunca lo afirma (el verificador lo prueba con 400
+  partidas de maestros de verdad y resultados puestos al azar).
+- En la recomendación, lo que le gusta pesa **70 %** y lo que le rinde
+  **30 %**, y ese eje pesa al menos 0,5 aunque la prueba lo haya dejado sin
+  definir. El porqué lo dice con sus números («En tus partidas te va mejor
+  cuando el juego queda abierto: 61 % de los puntos en 42 partidas, contra
+  44 % en 41»). Se guarda en `contexto.rendimiento`, con la prueba.
+
+### La opinión del profe
+
+La prueba mide lo que el alumno contesta; su profe lo ve jugar. En Informes,
+debajo de cada eje, **«¿Coincide con lo que ves?»** con tres botones: el
+primer polo, «Las dos por igual» o el segundo.
+
+- **`public.estilo_opiniones`**: una fila por alumno, profe y eje (la última
+  opinión de cada uno; la pisa si cambia de idea). La escribe solo quien le
+  da clase (`interno.alumnos_de`) o quien administra, siempre a su nombre;
+  la leen el alumno, sus profes, quien lo supervisa y administración. La
+  hora la pone la base. Comprobado impersonando roles en SQL (transacción
+  deshecha): el profe la guarda y la cambia, y aunque mande otra hora queda
+  la de la base; a nombre de otro profe, rechazado; el alumno la ve y no la
+  escribe ni la cambia; un profe ajeno no la ve ni la escribe; anónimo, sin
+  permiso.
+- **Pesa lo que dos preguntas** (`PESO_PROFE`): lo ve jugar, pero no se sabe
+  cuántas partidas miró. «Las dos por igual» es una a cada lado: achica el
+  margen sin mover la tendencia. Una por profe.
+- **No decide si la prueba agrega preguntas**: eso es lo que contesta el
+  alumno. Se suma al resultado, y la frase lo dice («más lo que ve tu
+  profe»).
+- **El acta no cambia**: la recomendación guardada es la de ese día. Debajo,
+  Informes dice qué se le recomendaría hoy con lo que ven sus profes. La
+  próxima prueba del alumno ya la trae en su resultado y en su
+  recomendación.
+- Botones con `aria-pressed` y «✓» escrito en el elegido (el color nunca va
+  solo); al guardar, el foco vuelve al botón y un aviso dice «Guardado». «Ver
+  como» y quien supervisa no ven los botones; quién escribe, de todos modos,
+  lo decide la RLS.
 
 ### La medición: el modelo de dos parámetros, con lo seguro y lo rápido
 
@@ -4192,7 +4290,9 @@ estilo-pagina informes`:
   «Cómo juegas», el resultado, lo que se guarda (sin la hora), y con sus
   partidas de Lichess y un motor de mentira.
 - `informes`: el profe ve su estilo, lo que se le recomendó, las pruebas
-  anteriores y nada de otro alumno.
+  anteriores (una de la versión 1 con sus tres ejes) y nada de otro alumno;
+  marca «¿Coincide con lo que ves?» y su opinión se guarda, se ve marcada y
+  mueve el perfil.
 
 Rompiéndolo a propósito saltaron: el tope de las partidas en 10, quitar el
 ensanche de los controles, medir una apertura quitando una jugada propia,

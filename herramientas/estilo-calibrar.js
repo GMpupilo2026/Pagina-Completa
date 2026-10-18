@@ -54,8 +54,13 @@ function calibrar(pruebas, opciones) {
   // Las observaciones: por persona y eje, [{ id, y, w }].
   const personas = [];
   for (const pr of pruebas) {
-    if (pr.version !== B.VERSION || !Array.isArray(pr.respuestas)) continue;
-    const obs = { ataque: [], estructura: [], cambios: [] };
+    // Todas las versiones sirven: las posiciones conservan su id y su
+    // contenido de una versión a otra (el generador no toca lo que ya está),
+    // y lo que cambia es cuántas se preguntan. Las 45 de la versión 1 se
+    // siguen calibrando con las respuestas de entonces.
+    if (!(B.FORMAS || {})[pr.version] || !Array.isArray(pr.respuestas)) continue;
+    const obs = {}, theta = {};
+    for (const e of P.EJES) { obs[e] = []; theta[e] = 0; }
     for (const r of pr.respuestas) {
       if (r.control) continue;
       const it = porId.get(r.id);
@@ -63,7 +68,7 @@ function calibrar(pruebas, opciones) {
       if (!polo) continue;
       obs[it.eje].push({ id: r.id, y: polo === M.POLOS[it.eje][0] ? 1 : 0, w: (P.SEGURIDAD[r.seguridad] || P.SEGURIDAD[2]) * P.pesoTiempo(r.ms) });
     }
-    personas.push({ obs, theta: { ataque: 0, estructura: 0, cambios: 0 } });
+    personas.push({ obs, theta });
   }
   const par = new Map(B.ITEMS.map((i) => [i.id, { a: 1, b: 0, n: 0 }]));
   for (const p of personas) for (const e of P.EJES) for (const o of p.obs[e]) par.get(o.id).n++;

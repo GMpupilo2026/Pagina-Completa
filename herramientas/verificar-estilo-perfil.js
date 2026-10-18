@@ -12,23 +12,36 @@
  *     ancho que con «muy seguro»; tardar 2 minutos pesa menos que 10 segundos;
  *     un control que no coincide ensancha los tres márgenes; un control no
  *     suma como respuesta.
- *  3. LAS PARTIDAS. 200 momentos de las partidas no dan vuelta 10
- *     respuestas: corrigen la prueba, no la reemplazan.
+ *  3. LAS PARTIDAS. 200 momentos de las partidas no dan vuelta las 8
+ *     respuestas de un eje: corrigen la prueba, no la reemplazan.
+ *  3c. LA OPINIÓN DEL PROFE. Pesa lo mismo que dos preguntas a su lado;
+ *     «las dos por igual» achica el margen sin mover la tendencia; una
+ *     opinión sobre un eje que esa versión no mide no cuenta; y no decide si
+ *     la prueba agrega preguntas (eso es lo que contesta el alumno).
  *  4. LA CALIBRACIÓN. Una posición que tira hacia un polo (`b`) le resta a
  *     quien la eligió en ese sentido.
- *  5. LA PRUEBA ADAPTATIVA. Un estilo claro termina en 32 posiciones (30 y los
- *     dos controles); al azar puede seguir, pero nunca pasa de 47 ni repite
+ *  5. LA PRUEBA ADAPTATIVA. Un estilo claro termina en 34 posiciones (32 y los
+ *     dos controles); al azar puede seguir, pero nunca pasa de 58 ni repite
  *     una posición; y nunca pasa de las 60 respuestas que acepta la base.
- *  6. EL ESPEJO. Cada una de las 45 posiciones dada vuelta es legal, sus dos
+ *  5b. LA VERSIÓN 1. Una prueba vieja se lee con sus tres ejes (no con un
+ *     cuarto «sin definir») y con el tope de partidas de entonces (5).
+ *  6. EL ESPEJO. Cada una de las 60 posiciones dada vuelta es legal, sus dos
  *     jugadas también, y medidas con estilo-medidas.js dan el MISMO polo.
  *  7. LA RECOMENDACIÓN. Cada apertura que propone es una línea medida de
  *     Aperturas y celadas del grupo que corresponde; a quien ataca le propone
- *     aperturas que atacan más que las que le propone a quien maniobra; la que
+ *     aperturas que atacan más que las que le propone a quien maniobra, y a
+ *     quien da material, aperturas que dan más que a quien lo guarda; la que
  *     ya juega se mantiene si queda casi igual de bien; y a quien empieza no
  *     le propone teoría de nivel 3 si hay otra.
  *  8. LAS PARTIDAS DEL ALUMNO. Un momento cuenta solo si su jugada estaba
  *     entre las buenas; el seguimiento separa antes y después de la fecha y
  *     solo cuenta las partidas que pasan por la apertura recomendada.
+ *  9. EL RENDIMIENTO SEGÚN EL TIPO DE PARTIDA. Con partidas de maestros de
+ *     verdad, a las que se les pone el resultado: si gana las abiertas y
+ *     pierde las cerradas, lo ve (y lo mide igual con blancas o negras); si
+ *     el resultado es al azar, no lo afirma; con pocas partidas, tampoco. Y
+ *     la recomendación lo suma: a quien le va mejor abierto, aperturas más
+ *     abiertas que a quien le va mejor cerrado, con el porqué y los números.
  *
  * Uso:  npm install && node herramientas/verificar-estilo-perfil.js
  */
@@ -64,7 +77,7 @@ function respuestas(quiere, o) {
   const op = o || {};
   const out = [];
   for (const eje of P.EJES) {
-    B.ITEMS.filter((i) => i.eje === eje).slice(0, op.n || 10).forEach((it) => {
+    B.ITEMS.filter((i) => i.eje === eje).slice(0, op.n || B.FORMA.porEje).forEach((it) => {
       out.push({ id: it.id, eleccion: elegir(it, quiere), seguridad: op.seguridad || 3, ms: op.ms || 8000 });
     });
   }
@@ -75,7 +88,7 @@ const ancho = (x) => x.hi - x.lo;
 console.log("-- 1. Las etiquetas");
 {
   const pf = P.medir(respuestas(() => 1));
-  ok("siempre el primer polo: «claramente» en los tres ejes", P.EJES.every((e) => pf[e].etiqueta.tipo === "claro" && pf[e].etiqueta.polo === primeroDe(e)),
+  ok("siempre el primer polo: «claramente» en los cuatro ejes", P.EJES.every((e) => pf[e].etiqueta.tipo === "claro" && pf[e].etiqueta.polo === primeroDe(e)),
     P.EJES.map((e) => pf[e].etiqueta.texto).join(" | "));
   const pf2 = P.medir(respuestas(() => 0));
   ok("siempre el segundo: «claramente» el otro polo", P.EJES.every((e) => pf2[e].etiqueta.tipo === "claro" && pf2[e].etiqueta.polo === M.POLOS[e][1]));
@@ -84,13 +97,13 @@ console.log("-- 1. Las etiquetas");
     const pf3 = P.medir(respuestas(() => null));
     afirma += P.EJES.filter((e) => pf3[e].etiqueta.tipo === "claro").length;
   }
-  ok("al azar, «claramente» en menos del 5 % de 600 ejes", afirma < 30, afirma + " de 600");
+  ok("al azar, «claramente» en menos del 5 % de 800 ejes", afirma < 40, afirma + " de 800");
   // Con los dos controles fallados (lo esperable al azar) el margen se ensancha y afirma menos.
   let conControles = 0;
   for (let k = 0; k < 200; k++) {
     const r = respuestas(() => null);
     const f = (x) => ({ id: x.id, control: x.id, eleccion: x.eleccion === "a" ? "b" : "a", seguridad: 3, ms: 5000 });
-    const pf4 = P.medir(r.concat([f(r[0]), f(r[12])]));
+    const pf4 = P.medir(r.concat([f(r[0]), f(r[B.FORMA.porEje])]));
     conControles += P.EJES.filter((e) => pf4[e].etiqueta.tipo === "claro").length;
   }
   ok("y fallando los controles, menos todavía", conControles < afirma, conControles + " contra " + afirma);
@@ -110,15 +123,16 @@ console.log("-- 2. Los pesos");
   ok("el peso del tiempo: 1 hasta 20 s, 0,7 desde 90 s", P.pesoTiempo(5000) === 1 && P.pesoTiempo(20000) === 1 && Math.abs(P.pesoTiempo(55000) - 0.85) < 1e-9 && P.pesoTiempo(200000) === 0.7);
   const base = respuestas(quiere);
   const it0 = B.ITEMS.find((i) => i.id === base[0].id);
-  const it1 = B.ITEMS.find((i) => i.id === base[12].id);
+  const otroEje = B.FORMA.porEje;   // la primera respuesta del segundo eje
+  const it1 = B.ITEMS.find((i) => i.id === base[otroEje].id);
   const igualA = (r) => ({ id: r.id, control: r.id, eleccion: r.eleccion, seguridad: 3, ms: 5000 });
   const otraA = (r) => ({ id: r.id, control: r.id, eleccion: r.eleccion === "a" ? "b" : "a", seguridad: 3, ms: 5000 });
-  const coinciden = P.medir(base.concat([igualA(base[0]), igualA(base[12])]));
-  const noCoinciden = P.medir(base.concat([otraA(base[0]), otraA(base[12])]));
+  const coinciden = P.medir(base.concat([igualA(base[0]), igualA(base[otroEje])]));
+  const noCoinciden = P.medir(base.concat([otraA(base[0]), otraA(base[otroEje])]));
   const sinControles = P.medir(base);
   ok("los controles se cuentan", coinciden.controles.total === 2 && coinciden.controles.fallados === 0 && noCoinciden.controles.fallados === 2, JSON.stringify([coinciden.controles, noCoinciden.controles, it0.eje, it1.eje]));
   ok("un control que coincide no suma como respuesta (mismo resultado que sin él)", P.EJES.every((e) => Math.abs(coinciden[e].theta - sinControles[e].theta) < 1e-12 && coinciden[e].n === sinControles[e].n));
-  ok("dos controles que no coinciden ensanchan los tres márgenes un 50 %", P.EJES.every((e) => Math.abs(noCoinciden[e].se / sinControles[e].se - 1.5) < 1e-9));
+  ok("dos controles que no coinciden ensanchan los cuatro márgenes un 50 %", P.EJES.every((e) => Math.abs(noCoinciden[e].se / sinControles[e].se - 1.5) < 1e-9));
 }
 
 console.log("-- 3. Las partidas");
@@ -126,9 +140,50 @@ console.log("-- 3. Las partidas");
   const pf = P.medir(respuestas(() => 0));
   const muchas = Array.from({ length: 200 }, () => ({ eje: "ataque", primero: true }));
   const conPartidas = P.medir(respuestas(() => 0), muchas);
-  ok("200 momentos que dicen lo contrario no dan vuelta 10 respuestas firmes", conPartidas.ataque.p < 0.5, "p = " + conPartidas.ataque.p.toFixed(2));
+  ok("200 momentos que dicen lo contrario no dan vuelta 8 respuestas firmes", conPartidas.ataque.p < 0.5, "p = " + conPartidas.ataque.p.toFixed(2));
   ok("pero sí la mueven", conPartidas.ataque.p > pf.ataque.p + 0.05);
-  ok("y se cuentan aparte", conPartidas.ataque.nPartidas === 200 && conPartidas.ataque.n === 10);
+  ok("y se cuentan aparte", conPartidas.ataque.nPartidas === 200 && conPartidas.ataque.n === B.FORMA.porEje);
+  ok("el tope de las partidas es la mitad de las preguntas del eje (4 hoy, 5 en la versión 1)", P.topePartidas() === 4 && P.topePartidas(1) === 5);
+}
+
+console.log("-- 3b. La versión 1, con su regla");
+{
+  // Una prueba de la versión 1: las 10 primeras de cada uno de sus tres ejes.
+  const v1 = [];
+  for (const eje of B.FORMAS[1].ejes) B.ITEMS.filter((i) => i.eje === eje).slice(0, 10)
+    .forEach((it) => v1.push({ id: it.id, eleccion: elegir(it, () => 1), seguridad: 3, ms: 8000 }));
+  const pf = P.medir(v1, [], 1);
+  ok("se lee con sus tres ejes, sin un cuarto «sin definir»", JSON.stringify(pf.lista) === JSON.stringify(["ataque", "estructura", "cambios"]) && !pf.material && !("material" in pf.ejes));
+  ok("y dice lo mismo que decía", pf.lista.every((e) => pf[e].etiqueta.tipo === "claro" && pf[e].n === 10));
+  const hoy = P.medir(v1);
+  ok("leída con la regla de hoy, el cuarto eje saldría sin definir (por eso se pasa la versión)", hoy.material && hoy.material.etiqueta.tipo === "sin definir");
+}
+
+console.log("-- 3c. La opinión del profe");
+{
+  const it = B.ITEMS.filter((i) => i.eje === "material");
+  const primero = (x) => ({ id: x.id, eleccion: x.a.polo === "material" ? "a" : "b", seguridad: 3, ms: 5000 });
+  const dos = P.medir([primero(it[0]), primero(it[1])]);
+  const conProfe = P.medir([], [], undefined, [{ eje: "material", opinion: 1 }]);
+  ok("una opinión pesa lo que dos preguntas a su lado", Math.abs(conProfe.material.theta - dos.material.theta) < 1e-9 && conProfe.material.nProfe === 1 && conProfe.material.n === 0,
+    conProfe.material.theta + " contra " + dos.material.theta);
+  const igual = P.medir([], [], undefined, [{ eje: "material", opinion: 0 }]);
+  const nada = P.medir([]);
+  ok("«las dos por igual» achica el margen sin mover la tendencia", Math.abs(igual.material.theta) < 1e-9 && igual.material.se < nada.material.se);
+  const v1 = P.medir([], [], 1, [{ eje: "material", opinion: 1 }]);
+  ok("en una prueba que no mide ese eje, no cuenta", !v1.material && v1.lista.length === 3);
+  ok("lo dice en la frase", /lo que ve tu profe/.test(P.frase("material", conProfe.material, true)) && /lo que ven sus profes/.test(P.frase("material", P.medir([], [], undefined, [{ eje: "material", opinion: 1 }, { eje: "material", opinion: 1 }]).material, false)));
+  // La prueba adaptativa: con o sin opiniones, las mismas preguntas.
+  const correr = (opiniones) => {
+    semilla = 4242;
+    const pr = P.Prueba({ azar, Chess, opiniones });
+    let x, n = 0;
+    while ((x = pr.siguiente()) && n < 100) { pr.responder(x, { eleccion: elegir(x, () => null), seguridad: 3, ms: 6000 }); n++; }
+    return { n, perfil: pr.perfil() };
+  };
+  const sinOp = correr([]);
+  const conOp = correr(["ataque", "estructura", "cambios", "material"].map((e) => ({ eje: e, opinion: 1 })));
+  ok("la opinión no decide si la prueba agrega preguntas, pero sí entra al resultado", sinOp.n === conOp.n && conOp.perfil.material.nProfe === 1 && conOp.perfil.material.p > sinOp.perfil.material.p, sinOp.n + " / " + conOp.n);
 }
 
 console.log("-- 4. La calibración");
@@ -152,7 +207,8 @@ console.log("-- 4b. La calibración recupera lo que se le esconde");
   B.ITEMS.forEach((it, k) => { verdad[it.id] = { a: [0.3, 1, 2][k % 3], b: -1.5 + 3 * ((k * 7) % 15) / 14 }; });
   const pruebas = [];
   for (let j = 0; j < 400; j++) {
-    const t = { ataque: 1.2 * normal(), estructura: 1.2 * normal(), cambios: 1.2 * normal() };
+    const t = {};
+    for (const e of P.EJES) t[e] = 1.2 * normal();
     const respuestas = B.ITEMS.map((it) => {
       const v = verdad[it.id];
       const uno = azar() < P.sigma(v.a * (t[it.eje] - v.b));
@@ -168,7 +224,7 @@ console.log("-- 4b. La calibración recupera lo que se le esconde");
     xs.forEach((x, i) => { n += (x - mx) * (ys[i] - my); dx += (x - mx) ** 2; dy += (ys[i] - my) ** 2; });
     return n / Math.sqrt(dx * dy);
   };
-  ok("calibra las 45 (todas con más de 30 respuestas)", ids.every((id) => cal[id] && cal[id].n === 400));
+  ok("calibra las 60 (todas con más de 30 respuestas)", ids.every((id) => cal[id] && cal[id].n === 400));
   const conA = ids.filter((id) => verdad[id].a >= 1);
   const rb = corr(conA.map((id) => verdad[id].b), conA.map((id) => cal[id].b));
   ok("recupera el tirón de las posiciones que distinguen (correlación > 0,85)", rb > 0.85, "correlación " + rb.toFixed(2));
@@ -192,17 +248,17 @@ console.log("-- 5. La prueba adaptativa");
     return { n, ids, respuestas: pr.respuestas };
   };
   const claro = correr(() => 1);
-  ok("un estilo claro termina en 32 posiciones", claro.n === 32, "vio " + claro.n);
+  ok("un estilo claro termina en 34 posiciones", claro.n === 34, "vio " + claro.n);
   ok("con los dos controles marcados", claro.respuestas.filter((r) => r.control).length === 2);
   let max = 0, alguna = false, repite = false;
   for (let k = 0; k < 40; k++) {
     const r = correr(() => null);
     max = Math.max(max, r.n);
-    if (r.n > 32) alguna = true;
+    if (r.n > 34) alguna = true;
     if (new Set(r.ids).size !== r.ids.length) repite = true;
   }
   ok("al azar, a veces sigue preguntando", alguna);
-  ok("pero nunca pasa de 47", max <= 47, "máximo " + max);
+  ok("pero nunca pasa de 58", max <= 58, "máximo " + max);
   ok("ni repite una posición", !repite);
   ok("ni pasa de las 60 respuestas que acepta la base", max <= 60);
 }
@@ -220,7 +276,7 @@ console.log("-- 6. El espejo");
       if (e.fen.split(" ")[1] === it.fen.split(" ")[1]) malos.push(it.id + " (mismo turno)");
     } catch (err) { malos.push(it.id + " (" + err.message + ")"); }
   }
-  ok("las 45 posiciones dadas vuelta son legales y miden el mismo polo", !malos.length, malos.join(", "));
+  ok("las 60 posiciones dadas vuelta son legales y miden el mismo polo", !malos.length, malos.join(", "));
 }
 
 console.log("-- 7. La recomendación");
@@ -241,6 +297,14 @@ console.log("-- 7. La recomendación");
   const car = (r, g) => A.medidaDe(r[g].principal.id).car.ataque;
   ok("a quien ataca le propone aperturas de más ataque que a quien maniobra",
     Object.keys(A.GRUPOS).every((g) => car(ra, g) > car(rm, g)), Object.keys(A.GRUPOS).map((g) => g + ": " + car(ra, g) + " contra " + car(rm, g)).join(" · "));
+  const da = P.medir(respuestas((e) => (e === "material" ? 0 : null)));
+  const guarda = P.medir(respuestas((e) => (e === "material" ? 1 : null)));
+  const rd = A.recomendar(da, ctx), rg = A.recomendar(guarda, ctx);
+  const mat = (r, g) => A.medidaDe(r[g].principal.id).car.material;
+  ok("a quien da material le propone aperturas que dan más que a quien lo guarda",
+    Object.keys(A.GRUPOS).every((g) => mat(rd, g) < mat(rg, g)), Object.keys(A.GRUPOS).map((g) => g + ": " + rd[g].principal.id + " " + mat(rd, g) + " contra " + rg[g].principal.id + " " + mat(rg, g)).join(" · "));
+  const v1 = A.recomendar(P.medir(respuestas(() => 1).filter((r) => B.ITEMS.find((i) => i.id === r.id).eje !== "material"), [], 1), ctx);
+  ok("con una prueba de la versión 1 (sin el cuarto eje) también recomienda", Object.keys(A.GRUPOS).every((g) => v1[g] && v1[g].principal));
   ok("cada una dice su porqué y de dónde sale el dato", Object.keys(A.GRUPOS).every((g) => ra[g].principal.porque.some((t) => /partidas de maestros/.test(t))));
   // La que ya juega: con la mejor misma, se mantiene; con una que le queda mal, no.
   const mejor = ra.blancas.principal.id;
@@ -288,6 +352,52 @@ console.log("-- 8. Las partidas del alumno");
   ok("con pocas partidas lo dice y no saca conclusiones", /hacen falta 5/.test(EP.fraseSeguimiento(s, true)), EP.fraseSeguimiento(s, true));
   ok("su posición propia es la de la medición", JSON.stringify(esp.define) === JSON.stringify(espanola.slice(0, esp.define.length)));
 }
+
+console.log("-- 9. El rendimiento según el tipo de partida");
+{
+  const PM = require("./lib/partidas-maestros.js");
+  const INICIAL = new Chess().fen();
+  const reales = PM.leer(Chess).filter((p) => p.inicial === INICIAL && p.sans.length >= 40).slice(0, 400);
+  const tipos = reales.map((p) => EP.tipoDePartida({ jugadas: p.sans }));
+  const mediana = tipos.map((x) => x.estructura).sort((a, b) => a - b)[Math.floor(tipos.length / 2)];
+  // «ana» juega la mitad con blancas y la mitad con negras; gana las abiertas.
+  const conResultado = (gana) => reales.map((p, k) => {
+    const blancas = k % 2 === 0;
+    const g = gana(tipos[k], k);
+    const res = g === 0.5 ? "1/2-1/2" : (g === 1) === blancas ? "1-0" : "0-1";
+    return { etiquetas: { White: blancas ? "ana" : "x", Black: blancas ? "x" : "ana", Result: res, UTCDate: "2026.01.01" }, jugadas: p.sans };
+  });
+  const abiertas = EP.rendimiento(conResultado((x) => (x.estructura > mediana ? 1 : 0)), "ana");
+  ok("si gana las abiertas y pierde las cerradas, lo ve", abiertas.ejes.estructura.cuenta && abiertas.ejes.estructura.d > 0.5, JSON.stringify(abiertas.ejes.estructura));
+  ok("el tipo de partida es el mismo para los dos bandos (no mira quién va ganando)",
+    JSON.stringify(EP.tipoDePartida({ jugadas: reales[0].sans })) === JSON.stringify(tipos[0]) && abiertas.n === reales.length);
+  semilla = 7;
+  let afirma = 0;
+  for (let k = 0; k < 20; k++) {
+    const r = EP.rendimiento(conResultado(() => (azar() < 0.5 ? 1 : 0)), "ana");
+    afirma += ["estructura", "cambios"].filter((e) => r.ejes[e].cuenta).length;
+  }
+  ok("con el resultado al azar casi nunca lo afirma (menos de 4 de 40)", afirma < 4, afirma + " de 40");
+  const pocas = EP.rendimiento(conResultado((x) => (x.estructura > mediana ? 1 : 0)).slice(0, 24), "ana");
+  ok("con menos de 15 partidas por mitad no cuenta, aunque la diferencia sea total", !pocas.ejes.estructura.cuenta, JSON.stringify(pocas.ejes.estructura));
+  ok("el ataque y el material no se miden así (dirían solo que gana cuando va ganando)", !("ataque" in abiertas.ejes) && !("material" in abiertas.ejes));
+
+  const neutro = P.medir([]);
+  const ctx = { ritmo: "clasicas", estudio: "mucho", elo: 1900, actual: {} };
+  const rinde = (d) => ({ n: 80, ejes: { estructura: { alto: { n: 40, puntos: 0.5 + d / 2 }, bajo: { n: 40, puntos: 0.5 - d / 2 }, d, z: 3 * Math.sign(d), cuenta: true } } });
+  const ra = A.recomendar(neutro, Object.assign({}, ctx, { rendimiento: rinde(0.3) }));
+  const rc = A.recomendar(neutro, Object.assign({}, ctx, { rendimiento: rinde(-0.3) }));
+  const est = (r, g) => A.medidaDe(r[g].principal.id).car.estructura;
+  ok("a quien le va mejor abierto le propone aperturas más abiertas que a quien le va mejor cerrado",
+    Object.keys(A.GRUPOS).every((g) => est(ra, g) > est(rc, g)), Object.keys(A.GRUPOS).map((g) => g + ": " + est(ra, g) + " contra " + est(rc, g)).join(" · "));
+  ok("y lo dice con sus números", Object.keys(A.GRUPOS).some((g) => ra[g].principal.porque.some((f) => /En tus partidas te va mejor cuando el juego queda abierto: 65 % de los puntos en 40 partidas, contra 35 % en 40/.test(f))),
+    JSON.stringify(ra.blancas.principal.porque));
+  const sinCuenta = rinde(0.3);
+  sinCuenta.ejes.estructura.cuenta = false;
+  const rs = A.recomendar(neutro, Object.assign({}, ctx, { rendimiento: sinCuenta }));
+  ok("si la diferencia puede ser del azar, no cambia nada", JSON.stringify(rs) === JSON.stringify(A.recomendar(neutro, ctx)));
+}
+
 
 if (fallos) { console.log(`\n✗ ${fallos} comprobación(es) fallaron.`); process.exit(1); }
 console.log("\n✓ La medición, la recomendación y las partidas de la prueba de estilo dicen lo que saben.");
