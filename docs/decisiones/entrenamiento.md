@@ -3933,8 +3933,18 @@ una apertura con blancas y sus defensas. Alguien puede resolver bien la
 táctica y sentirse incómodo en posiciones caóticas. La prueba de estilo mide
 eso aparte, sin tocar el diagnóstico (ni su `FORMA` ni su `VERSION`).
 
-**Por ahora está el banco** (`js/estilo-items.js`); la página de la prueba y la
-tarjeta de «Apertura sugerida» vienen después y se apoyan en él.
+Las piezas, una por archivo:
+
+| Archivo | Qué hace |
+|---|---|
+| `js/estilo-items.js` | el banco de 45 posiciones (lo genera `herramientas/estilo-generar.js`) y su calibración (`herramientas/estilo-calibrar.js`) |
+| `js/estilo-medidas.js` | qué tiene de atacar, abrir o cambiar una jugada; una sola copia para el generador, los verificadores, el navegador y la medición de aperturas |
+| `js/estilo-perfil.js` | la medición: tendencia y margen por eje, la prueba adaptativa y los controles |
+| `js/estilo-aperturas.js` | el carácter de cada apertura (lo mide `herramientas/estilo-aperturas-medir.js`) y la recomendación |
+| `js/estilo-partidas.js` | el estilo en sus partidas de Lichess y Chess.com, y el seguimiento de la recomendación |
+| `js/estilo-tarjeta.js` | lo que se pinta: lo usan la página y Informes |
+| `entreno/estilo.html` + `js/entreno-estilo.js` | la página «Tu estilo de juego», en el panel al lado de «Aperturas y celadas» (no con el diagnóstico, en «Lo que te pone tu profesor»: esta no la pone nadie; `verificar-panel.js` lo cuida) |
+| `public.estilo_pruebas` | una fila por prueba rendida |
 
 ### Preguntas de elección: dos jugadas buenas, de carácter opuesto
 
@@ -3955,7 +3965,7 @@ qué prefiere. Tres ejes, 15 posiciones por eje (45 en el banco):
   la pregunta mediría fuerza y no gusto: es la misma regla que «Ninguna
   opción absurda», al revés.
 - **El carácter no se pone a ojo**: lo miden las funciones de
-  `herramientas/lib/estilo-medidas.js`, solo con chess.js, sobre la línea del
+  `js/estilo-medidas.js`, solo con chess.js, sobre la línea del
   motor que sigue a cada jugada. `ataque` cuenta los ataques que caen en la
   zona del rey rival; `estructura`, columnas abiertas y semiabiertas menos
   peones bloqueados tras la jugada y la respuesta; `cambios`, el material de
@@ -4005,8 +4015,7 @@ respuestas. El resultado se muestra siempre con su margen («tendencia
 táctica» frente a «claramente táctico»).
 
 **No todas las posiciones pesan igual**: unas tientan más hacia un lado
-aunque las dos jugadas valgan lo mismo. Como en el diagnóstico, ese tirón se
-calibrará con las respuestas reales cuando las haya.
+aunque las dos jugadas valgan lo mismo. Ver «La calibración», abajo.
 
 **Al tocarlo:** el banco no se edita a mano. Se cambia el generador o las
 medidas y se corre `STOCKFISH=/usr/games/stockfish node
@@ -4017,3 +4026,156 @@ hasta su posición, juega las dos jugadas y sus líneas, recalcula las medidas
 y los polos, y exige las evaluaciones parejas y el orden repartido. Saltó al
 cambiar un polo, alejar una evaluación, correr la posición dos medias
 jugadas, poner un SAN falso y subir un umbral.
+
+### La medición: el modelo de dos parámetros, con lo seguro y lo rápido
+
+Por eje, la tendencia θ que mejor explica las elecciones con
+P(primer polo) = σ(a · (θ − b)), por máximo a posteriori con una previa normal
+de desvío 1,5 (con pocas respuestas no deja afirmar de más). `b` es el tirón
+de la posición y `a` cuánto distingue; mientras no hay calibración, a = 1 y
+b = 0. Se muestra P = σ(θ) con su intervalo del 95 % y una etiqueta que nunca
+dice más que el margen: «claramente» (el intervalo de un lado y P ≥ 75 %),
+«tendencia», «equilibrado» (el intervalo entre 30 y 70 %) o «sin definir».
+
+- **Lo seguro**: después de elegir, «Muy seguro» (1), «Más o menos» (0,7) o
+  «Me da igual» (0,3). Un «me da igual» es casi no contestar.
+- **Lo rápido**: hasta 20 segundos pesa 1, y baja hasta 0,7 a los 90. El
+  tiempo es desde que ve la posición hasta su última elección.
+- **Los controles**: la 2.ª y la 5.ª pregunta vuelven en los lugares 13 y 25
+  con los colores invertidos (`espejoFen`: el tablero dado vuelta, las piezas
+  de un color pasadas al otro). Las 45 dadas vuelta son legales y miden el
+  mismo polo. Si elige distinto, el margen de los tres ejes se ensancha 25 %
+  por control. El control no suma como respuesta.
+- **El azar**: con un margen del 95 %, quien contesta al azar sale
+  «claramente» en ~3 % de los ejes (9 de 10 al azar pasa); fallando los
+  controles, menos.
+- **La prueba adaptativa** (`Prueba`): 10 por eje alternando ejes, con los dos
+  controles; después, de a una, hasta 5 más en cada eje «sin definir».
+  Termina entre 32 y 47 posiciones; al repetirla, primero las que no vio.
+
+### El estilo en sus partidas de verdad
+
+Una prueba mide lo que contesta; sus partidas, lo que hace. Si el alumno tiene
+sus usuarios de Lichess o Chess.com (Configuración), mientras contesta su
+computadora baja hasta 100 partidas por cuenta y busca, en hasta 60
+posiciones (2 por partida, de las más nuevas), los momentos en que tuvo dos
+jugadas parejas de carácter opuesto: las MISMAS reglas del banco (30
+centipeones de la mejor, ±1,5, `poloDe`), con el Stockfish del sitio a
+profundidad 12. Si su jugada no estaba entre las buenas, el momento no cuenta:
+un error no dice qué prefiere. Cada momento pesa 0,5 y **nunca más de 5 por
+eje**, la mitad de las 10 preguntas: con un tope de 10, 200 momentos que
+decían lo contrario dejaban la prueba en un empate exacto. Se guardan solo
+`{eje, primero}`, nunca las partidas.
+
+`analisis-alumno.js` buscaba sus módulos en `js/` relativo a la PÁGINA: desde
+`entreno/` pedía `entreno/js/preparacion-lineas.js` y fallaba callado («No se
+pudieron revisar tus partidas»). Ahora los busca al lado de su propio archivo
+(`document.currentScript`), y `estilo-tarjeta.js` igual.
+
+### El carácter de cada apertura, medido
+
+La recomendación cruza el estilo con las aperturas de «Aperturas y celadas»
+(una sola copia de las líneas). Lo que tiene cada una de atacar, abrir o
+cambiar lo mide `herramientas/estilo-aperturas-medir.js` con las mismas
+medidas, en las jugadas 12, 16 y 20 de las partidas de maestros que pasan por
+ella (por la POSICIÓN propia, para contar las transposiciones). `car`, de −1
+a +1, contra las demás aperturas del mismo color.
+
+- **Las partidas del repositorio no alcanzaban**: había 7 italianas y ningún
+  Londres. `herramientas/estilo-aperturas-bajar.js` bajó 9001 partidas de
+  torneos de ritmo clásico transmitidos en Lichess (su API pública de
+  transmisiones), y de cada una guarda solo sus primeras 40 medias jugadas
+  (`herramientas/datos/estilo-aperturas-partidas.txt`), **en UCI**: chess.js
+  0.10.3, para leer SAN, escribe en SAN todas las jugadas legales, y volver a
+  jugarlas en el CI tardaba 3 minutos; en UCI, menos de uno.
+- **Nunca se quita una jugada propia**: con pocas partidas de la variante, la
+  primera versión iba acortando la posición hasta que alcanzaran, y la
+  escandinava quedaba medida con todas las partidas de 1.e4 y el gambito de
+  rey con todas las de 1.e4 e5 (es decir, la española). Ahora solo se puede
+  quitar la última respuesta del rival; si así no alcanzan las 15 partidas,
+  la apertura queda sin medir y no se recomienda. Hoy: 57 de 64 medidas.
+- Medido así, sale lo que se sabe: la española cerrada y la francesa del
+  avance, cerradas y de maniobra; la del cambio y la Berlín, de cambios; el
+  Dragón y la India de rey, de ataque al rey.
+
+### La recomendación
+
+Con blancas, contra 1.e4 y contra 1.d4: la apertura más cercana al estilo,
+eje por eje, pesando cada eje por lo seguro que es (1 − el ancho del margen),
+con su porqué escrito y de dónde sale el dato, y una alternativa de OTRA
+familia. Además:
+
+- **La teoría**: el `nivel` de la línea contra lo que conviene (por el Elo:
+  menos de 1200, 1; menos de 1700, 2; si no, 3; uno menos si estudia poco y
+  otro si juega bala o blitz). Una línea de más nivel no se descarta, se
+  castiga: contra 1.d4 hay una sola de nivel 1.
+- **La que ya juega**: si le queda casi igual de bien que la mejor (0,15), se
+  le dice que siga con la suya. Cambiar de apertura cuesta meses.
+- «Cómo juegas» pide el ritmo, cuánto estudia, su Elo (si tiene usuarios en
+  línea, viene puesto el de sus partidas) y lo que juega hoy.
+
+### La base: una fila por prueba, y la recomendación como acta
+
+`public.estilo_pruebas`: las respuestas (jugada, seguridad, tiempo, y los
+controles marcados), el contexto, los momentos de sus partidas y la
+recomendación de ese día. **El perfil no se guarda**: se recalcula con la
+regla de su versión, y mejora solo cuando se calibra. **La recomendación sí**:
+es un acta, lo que se le dijo, y es lo que se sigue después. La escribe solo
+el alumno y para sí; la leen él, quien le da clase, quien lo supervisa y
+administración; nadie la cambia; el alumno la puede borrar. **La hora la pone
+la base** (trigger): el seguimiento compara antes y después de esa fecha.
+Comprobado impersonando roles en SQL: el alumno guarda la suya aunque mande
+otra fecha (queda la de la base); a nombre de otro, rechazado; su profe la ve
+y no puede escribir una por él; un profe ajeno no ve nada; anónimo, sin
+permiso; nadie tiene `update`.
+
+### El seguimiento, a los meses
+
+En la portada de la prueba y en Informes, «¿Cómo me fue con la apertura
+recomendada?» baja sus partidas y cuenta, de las que pasan por la posición
+propia de la apertura recomendada y con su color: antes de la fecha, después,
+y **el resto de sus partidas de esos meses** (si todo le va mejor, no es la
+apertura: es que mejoró). Con menos de 5 partidas después, lo dice y no saca
+conclusiones. No se guarda: se calcula cada vez.
+
+### La calibración
+
+`herramientas/estilo-calibrar.js`, con las respuestas exportadas SIN el
+alumno (`select version, respuestas from estilo_pruebas`) a un archivo fuera
+del repositorio (el script se niega si está adentro). Máximo a posteriori
+conjunto, alternando personas y posiciones; escribe `a` y `b` en el bloque
+CALIBRADO del banco solo de las posiciones con 30 respuestas o más, y lista
+las que distinguen poco (a < 0,4) para reemplazarlas con el generador.
+
+- La primera versión dejaba quietas, en a = 1 y b = 0, las posiciones de
+  tirón grande: fuera de la zona cóncava el paso de Newton no se movía. Ahora
+  da un paso corto por el gradiente.
+- La escala se corría de vuelta en vuelta (`a` se inflaba, `b` se achicaba):
+  ahora las personas se llevan a media 0 y desvío 1 en cada vuelta.
+- Probado con 400 personas simuladas con parámetros conocidos: recupera el
+  tirón (correlación > 0,85) y ordena bien lo que distingue (0,3 < 1 < 2).
+  Conviene calibrar cada unas 50 pruebas nuevas.
+
+### Los verificadores
+
+`node herramientas/verificar-todo.js estilo estilo-perfil estilo-aperturas
+estilo-pagina informes`:
+
+- `estilo`: el banco (arriba) y el bloque CALIBRADO.
+- `estilo-perfil`: las etiquetas, los pesos, los controles, el tope de las
+  partidas, la calibración con datos simulados, la prueba adaptativa (32 con
+  un estilo claro, nunca más de 47 ni una posición repetida), el espejo de las
+  45, la recomendación (líneas medidas de su grupo, más ataque a quien ataca,
+  mantener la suya, nada de nivel 3 a quien empieza) y el seguimiento.
+- `estilo-aperturas`: vuelve a medir todas las aperturas (≈ 50 s) y exige lo
+  guardado; ninguna medida quitando una jugada propia; al menos 6 por grupo.
+- `estilo-pagina`: la prueba entera en el navegador (botones y por escrito),
+  «Cómo juegas», el resultado, lo que se guarda (sin la hora), y con sus
+  partidas de Lichess y un motor de mentira.
+- `informes`: el profe ve su estilo, lo que se le recomendó, las pruebas
+  anteriores y nada de otro alumno.
+
+Rompiéndolo a propósito saltaron: el tope de las partidas en 10, quitar el
+ensanche de los controles, medir una apertura quitando una jugada propia,
+editar a mano una medida y la calibración sin el paso de gradiente.
+

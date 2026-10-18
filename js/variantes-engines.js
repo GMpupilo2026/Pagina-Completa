@@ -138,9 +138,15 @@
       this.board = parseBoard(partes[0]);
       this.turno = partes[1] === "b" ? "b" : "w";
       this.numero = parseInt(partes[5], 10) || 1;
+      // Medias jugadas sin captura ni avance de peón (la regla de las 50
+      // jugadas). Antes iba siempre en 0 y la partida no terminaba nunca.
+      this.semi = parseInt(partes[4], 10) || 0;
       this.ultimo = null;
     }
-    serialize() { return boardToFen(this.board) + " " + this.turno + " - - 0 " + this.numero; }
+    serialize() { return boardToFen(this.board) + " " + this.turno + " - - " + this.semi + " " + this.numero; }
+    // La posición, para la triple repetición: piezas y turno (no hay enroque ni al paso).
+    clave() { return boardToFen(this.board) + " " + this.turno; }
+    medias() { return this.semi; }
     turn() { return this.turno; }
     get(s) {
       const p = this.board[s]; if (!p) return null;
@@ -201,15 +207,17 @@
         if (otras.length) des = otras.every((s) => s[0] !== m.from[0]) ? m.from[0] : otras.every((s) => s[1] !== m.from[1]) ? m.from[1] : m.from;
         san = LETRA[p.type] + des + (captura ? "x" : "") + m.to;
       }
+      this.semi = p.type === "p" || captura ? 0 : this.semi + 1;
       this.board = this._aplicar(this.board, m.from, m.to);
       if (this.turno === "b") this.numero++;
       this.turno = otro(this.turno);
       const jaque = this.inCheck(), sinJugadas = this.allMoves().length === 0;
-      let gameOver = false, result = null;
+      let gameOver = false, result = null, motivo = null;
       if (sinJugadas) { gameOver = true; result = jaque ? (this.turno === "w" ? "black" : "white") : "draw"; san += jaque ? "#" : ""; }
       else if (jaque) san += "+";
+      if (!gameOver && this.semi >= 100) { gameOver = true; result = "draw"; motivo = "cincuenta"; }
       this.ultimo = { from: m.from, to: m.to };
-      return { san, gameOver, result, captura };
+      return { san, gameOver, result, captura, motivo };
     }
   }
 
@@ -244,9 +252,17 @@
       this.turno = d.t === "b" ? "b" : "w";
       this.numero = d.n || 1;
       this.terminado = d.fin || null; // "white" | "black" cuando ya hubo abrazo al rey
+      // Medias jugadas sin abrazo ni avance de peón: la regla de las 50 jugadas
+      // (el abrazo es la captura de esta variante: tampoco tiene vuelta atrás).
+      this.semi = d.s || 0;
       this.ultimo = null;
     }
-    serialize() { return JSON.stringify({ v: 1, t: this.turno, n: this.numero, b: Abrazos._compact(this.board), fin: this.terminado || undefined }); }
+    serialize() { return JSON.stringify({ v: 1, t: this.turno, n: this.numero, s: this.semi || undefined, b: Abrazos._compact(this.board), fin: this.terminado || undefined }); }
+    // La posición, para la triple repetición: las unidades y el turno.
+    // Con las casillas ordenadas: el objeto guarda las piezas en el orden en que
+    // se movieron, y la misma posición se escribiría distinto.
+    clave() { const c = Abrazos._compact(this.board); return this.turno + " " + Object.keys(c).sort().map((k) => k + "=" + c[k]).join(","); }
+    medias() { return this.semi; }
     turn() { return this.turno; }
     static tiposOrdenados(types) { return types.slice().sort((a, b) => ORDEN[a] - ORDEN[b]); }
     get(s) {
@@ -283,16 +299,18 @@
         veces += destino.veces || 1;
       }
       if (types.indexOf("p") !== -1 && ultimaFila(u.color, m.to)) { types = types.filter((t) => t !== "p"); if (types.indexOf("q") === -1) types.push("q"); }
+      this.semi = abrazo || u.types.indexOf("p") !== -1 ? 0 : (this.semi || 0) + 1;
       delete this.board[m.from];
       this.board[m.to] = { color: u.color, types, veces };
       const san = letras + m.from + (abrazo ? "♥" : "-") + m.to + (ganaRey ? "#" : "");
-      let gameOver = false, result = null;
+      let gameOver = false, result = null, motivo = null;
       if (ganaRey) { gameOver = true; result = u.color === "w" ? "white" : "black"; this.terminado = result; }
       if (this.turno === "b") this.numero++;
       this.turno = otro(this.turno);
       if (!gameOver && this.allMoves().length === 0) { gameOver = true; result = "draw"; }
+      if (!gameOver && this.semi >= 100) { gameOver = true; result = "draw"; motivo = "cincuenta"; }
       this.ultimo = { from: m.from, to: m.to };
-      return { san, gameOver, result, abrazo };
+      return { san, gameOver, result, abrazo, motivo };
     }
   }
 
@@ -305,6 +323,10 @@
     get pieceNames() { return NOMBRE; }
     load(fen) { this.game.load(fen || Ciegas.START); }
     serialize() { return this.game.fen(); }
+    // La posición, para la triple repetición: la de js/repeticion.js (con la
+    // captura al paso solo si de verdad se puede hacer).
+    clave() { return window.Repeticion ? Repeticion.clave(this.game) : this.game.fen().split(" ").slice(0, 4).join(" "); }
+    medias() { return parseInt(this.game.fen().split(" ")[4], 10) || 0; }
     turn() { return this.game.turn(); }
     get(s) { const p = this.game.get(s); return p ? { color: p.color, types: [p.type], label: (p.color === "w" ? "Blanco " : "Negro ") + NOMBRE[p.type] } : null; }
     inCheck() { return this.game.in_check(); }
@@ -312,9 +334,14 @@
     static sanEs(san) { return san.replace(/^[KQRBN]/, (c) => EN_A_ES[c]).replace(/=([QRBN])/, (_, c) => "=" + EN_A_ES[c]); }
     _terminar(mv) {
       let gameOver = false, result = null;
+      let motivo = null;
       if (this.game.in_checkmate()) { gameOver = true; result = this.game.turn() === "w" ? "black" : "white"; }
-      else if (this.game.in_draw()) { gameOver = true; result = "draw"; }
-      return { san: Ciegas.sanEs(mv.san), sanEn: mv.san, gameOver, result, captura: !!mv.captured };
+      else if (this.game.in_draw()) {
+        gameOver = true; result = "draw";
+        if (this.medias() >= 100) motivo = "cincuenta";
+        else if (this.game.in_threefold_repetition()) motivo = "repeticion";
+      }
+      return { san: Ciegas.sanEs(mv.san), sanEn: mv.san, gameOver, result, captura: !!mv.captured, motivo };
     }
     move(m) {
       const mv = this.game.move({ from: m.from, to: m.to, promotion: m.promotion || "q" });
@@ -351,6 +378,8 @@
     get pieceNames() { return NOMBRE; }
     load(fen) { this.game.load(fen || Vampiro.START); }
     serialize() { return this.game.fen(); }
+    clave() { return Ciegas.prototype.clave.call(this); }
+    medias() { return Ciegas.prototype.medias.call(this); }
     turn() { return this.game.turn(); }
     get(s) { const p = this.game.get(s); return p ? { color: p.color, types: [p.type], label: (p.color === "w" ? "Blanco " : "Negro ") + NOMBRE[p.type] } : null; }
     inCheck() { return this.game.in_check(); }
@@ -396,10 +425,10 @@
       const tablas = !jaqueMate && (this.game.in_stalemate() || this.game.insufficient_material() || semiJugadas >= 100);
       if (jaqueMate) san += "#";
       else if (jaque) san += "+";
-      let gameOver = false, result = null;
+      let gameOver = false, result = null, motivo = null;
       if (jaqueMate) { gameOver = true; result = mv.color === "w" ? "white" : "black"; }
-      else if (tablas) { gameOver = true; result = "draw"; }
-      return { san, gameOver, result, captura: !!mv.captured, transformo, tipoFinal };
+      else if (tablas) { gameOver = true; result = "draw"; if (semiJugadas >= 100) motivo = "cincuenta"; }
+      return { san, gameOver, result, captura: !!mv.captured, transformo, tipoFinal, motivo };
     }
   }
 
@@ -438,6 +467,15 @@
       this.volcanes = lista.filter((s) => /^[a-h][1-8]$/.test(s));
     }
     jugadas() { return Volcanes.medias(this.game.fen()); }
+    /* La posición, para la triple repetición: la de chess.js y además en qué
+       punto del ciclo de volcanes va la partida. Las mismas piezas con otro
+       volcán por venir no son la misma posición (lo que puede pasar después
+       es distinto), así que solo se repite cuando el ciclo también coincide. */
+    clave() {
+      const n = this.jugadas(), ciclo = VOLCAN_CADA * Math.max(this.volcanes.length, 1);
+      const fase = n < VOLCAN_PRIMERA ? "a" + n : "c" + ((n - VOLCAN_PRIMERA) % ciclo);
+      return Ciegas.prototype.clave.call(this) + " " + fase;
+    }
     // La casilla que hace erupción al llegar a `n` medias jugadas, o null.
     erupcionEn(n) {
       if (!this.volcanes.length || n < VOLCAN_PRIMERA || (n - VOLCAN_PRIMERA) % VOLCAN_CADA) return null;
@@ -495,7 +533,7 @@
     move(m) {
       const mv = this.game.move({ from: m.from, to: m.to, promotion: m.promotion || "q" });
       if (!mv) return null;
-      let san = Ciegas.sanEs(mv.san), gameOver = false, result = null, erupcion = null;
+      let san = Ciegas.sanEs(mv.san), gameOver = false, result = null, erupcion = null, motivo = null;
       const casilla = this.erupcionEn(this.jugadas());
       if (casilla) {
         const pieza = this.game.get(casilla);
@@ -518,9 +556,9 @@
         const semi = parseInt(this.game.fen().split(" ")[4], 10) || 0;
         if (casilla) { if (mate) san += "#"; else if (this.game.in_check()) san += "+"; }
         if (mate) { gameOver = true; result = this.game.turn() === "w" ? "black" : "white"; }
-        else if (this.game.in_stalemate() || this.game.insufficient_material() || semi >= 100) { gameOver = true; result = "draw"; }
+        else if (this.game.in_stalemate() || this.game.insufficient_material() || semi >= 100) { gameOver = true; result = "draw"; if (semi >= 100) motivo = "cincuenta"; }
       }
-      return { san, gameOver, result, captura: !!mv.captured, erupcion };
+      return { san, gameOver, result, captura: !!mv.captured, erupcion, motivo };
     }
     // Lo escrito se entiende igual que en Ciegas, pero la jugada pasa por move().
     moveText(texto) {

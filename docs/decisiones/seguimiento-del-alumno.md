@@ -511,7 +511,7 @@ separando a la primera corrección.
 Se pidió una sesión intensiva de finales con unos diez ejercicios en los que
 la ventaja sea poca pero suficiente para ganar aunque el rival juegue bien, y
 en los que el alumno tenga que entender cada jugada: cálculo preciso y
-justificado. Después, otras iguales de estrategia, táctica y aperturas. Cada una es un plan de clase
+justificado. Después, otras iguales de estrategia, táctica, aperturas y medio juego. Cada una es un plan de clase
 más, de quien administra como los de arranque, así que se da desde
 `planes.html` y la clase en vivo sin nada nuevo:
 
@@ -535,6 +535,15 @@ más, de quien administra como los de arranque, así que se da desde
   Deep Blue–Kasparov, Byrne–Fischer, Marshall…) en las que el rival se
   equivocó y una sola jugada lo castiga. Cinco de 1.e4 y cinco de 1.d4 y 1.c4,
   cada una de una apertura distinta.
+- «Medio juego · Sesión intensiva: atacar, defender y convertir»
+  (`herramientas/sesion-medio-juego-intensiva.js`): diez posiciones de las
+  jugadas 16 a 30, con las damas en el tablero, de partidas de «Una clase al
+  día» (Tal–Andersson, Short–Beliavsky, Gereben–Geller…): cuatro de ataque
+  (sacrificios en h7 y g7, la torre que cambia de fila, el peón contra la
+  pieza clavada), cuatro de defender o contraatacar con tiempo y dos de
+  convertir (simplificar cuando se gana). La diferencia con estrategia es a
+  propósito: allá la ventaja es de posición y chica; acá hay piezas
+  atacando y la jugada se calcula.
 
 Lo que comparten (leer el banco, la chuleta, el SQL) está en
 `herramientas/lib/sesion-intensiva.js`; cada sesión es un archivo con sus diez
@@ -562,7 +571,13 @@ corredor).
   de +1,2 (con la segunda en +0,4 o menos) y el maestro la había encontrado;
   46 eran de partidas con su apertura nombrada en el banco (las de las
   primeras lecciones no la traen, y no se le pone nombre a ojo), y de esas se
-  eligieron diez de aperturas distintas.
+  eligieron diez de aperturas distintas. En medio juego, de los bloques de
+  ataque al rey, enroques opuestos, centro, columnas y sacrificios
+  posicionales salieron unas 24 000 posiciones de las jugadas 16 a 30 con las
+  damas en el tablero y material parejo; 288 tenían una sola jugada por
+  encima de +1,2, y se descartaron las recapturas obligadas (una sola jugada
+  buena porque el rival acaba de comer no enseña nada) y las partidas sin
+  nombres en el banco.
 - **En aperturas, la posición sale de una PARTIDA, no de un ejercicio.** La
   fuente `ucdp:<partida>@<medias jugadas>` (por ejemplo `ucdp:ml309-1@18`)
   juega las primeras jugadas de la partida y da lo que siguió como línea. La
@@ -571,7 +586,9 @@ corredor).
   error se entiende por el camino; el verificador juega esas jugadas y exige
   que lleguen a la posición. Lo que la nota cuenta de cómo terminó cada
   partida (quién ganó, en qué jugada) se miró en el `resultado` y las
-  jugadas del banco.
+  jugadas del banco. En medio juego la nota no trae «Cómo se llegó»
+  (`conLlegada` apagado): treinta jugadas de apertura no dicen nada de la
+  posición de la jugada 25.
 - **Cada ejercicio son dos renglones**: la posición, con la chuleta (tiempo,
   línea, únicas y trampas, en los 500 de la base; lo que se recorta son las
   trampas, nunca la línea), y la nota «El cálculo», con el porqué de cada
@@ -582,7 +599,7 @@ corredor).
   dice el banco**: no se escribe a mano quién ganó ni un año que el banco no
   trae.
 - **Nada de lo que se afirma se cree a ciegas.**
-  `node herramientas/sesion-intensiva-motor.js <finales|estrategia|tactica|aperturas>` (a mano,
+  `node herramientas/sesion-intensiva-motor.js <finales|estrategia|tactica|aperturas|medio-juego>` (a mano,
   como `fichas-motor.js`: el CI no tiene Stockfish) comprueba que la posición
   sea buena al principio y al final de la línea, que cada «única» llegue al
   umbral `gana` y ninguna otra jugada legal pase de `noGana`, que lo que dice
@@ -595,8 +612,9 @@ corredor).
   - **Táctica: igual que finales (+3 y +1).** La trampa que «no gana nada»
     es la de «tablas» del motor (entre −1 y +1), con otra palabra en la
     chuleta, porque en una combinación lo que se pierde es la ganancia.
-  - **Aperturas: gana +1, no gana +0,5.** El error de apertura deja una
-    ventaja de uno a tres peones, no un final ganado. Se cuenta también
+  - **Aperturas y medio juego: gana +1, no gana +0,5.** El error de
+    apertura, o la jugada única del medio juego, deja una ventaja de uno a
+    tres peones, no un final ganado. Se cuenta también
     «rival» (el rival queda mejor, −0,5 o menos) y «escapa».
   - **Estrategia: gana +0,7, no gana +0,6.** Son ventajas de posición, no
     finales ganados: los números son chicos a propósito, y por eso la única

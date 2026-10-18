@@ -4,9 +4,12 @@
  * Una pregunta de estilo pone dos jugadas que Stockfish valora casi igual y
  * que son de carácter opuesto. Ese «carácter opuesto» no se pone a ojo: lo
  * miden estas funciones, solo con chess.js, para que el generador
- * (herramientas/estilo-generar.js) elija con ellas y el verificador
+ * (herramientas/estilo-generar.js) elija con ellas, el verificador
  * (herramientas/verificar-estilo.js) las vuelva a calcular en el CI, que no
- * tiene motor. Los tres ejes:
+ * tiene motor, y el navegador mida con ellas el estilo en las partidas del
+ * alumno (js/estilo-partidas.js) y el de cada apertura en las partidas de
+ * maestros (herramientas/estilo-aperturas-medir.js). Una sola copia para las
+ * cuatro cosas. Los tres ejes:
  *
  *   ataque      presión sobre el rey rival: cuántos ataques caen en su zona
  *               (su casilla, las de alrededor y dos filas hacia adelante),
@@ -20,6 +23,7 @@
  *               jugada misma la que cambia (captura una pieza, o el rival
  *               captura en la respuesta la pieza que movió).
  */
+(function () {
 "use strict";
 
 const VALOR = { n: 3, b: 3, r: 5, q: 9 };
@@ -203,4 +207,22 @@ function poloDe(eje, ma, mb, ta, tb) {
   return d > 0 ? "a" : "b";
 }
 
-module.exports = { tablero, ataquesDe, zonaDelRey, presionSobreElRey, apertura, piezas, jugarUci, medir, tipoDeJugada, UMBRAL, POLOS, poloDe };
+/* La posición con los colores cambiados: el tablero dado vuelta de arriba
+ * abajo, con las piezas de un color pasadas al otro y el turno del otro
+ * bando. Es la misma posición para quien la mira: la prueba la usa de
+ * control (la misma pregunta otra vez, sin que se note) para saber si la
+ * persona contesta lo que prefiere o al azar. */
+const espejoCasilla = (sq) => sq[0] + (9 - +sq[1]);
+function espejoFen(fen) {
+  const [tab, turno, enroques, ap, ...resto] = fen.split(" ");
+  const cambiar = (ch) => (ch === ch.toUpperCase() ? ch.toLowerCase() : ch.toUpperCase());
+  const filas = tab.split("/").reverse().map((f) => f.replace(/[a-zA-Z]/g, cambiar));
+  const enr = enroques === "-" ? "-" : enroques.split("").map(cambiar).sort((x, y) => "KQkq".indexOf(x) - "KQkq".indexOf(y)).join("");
+  return [filas.join("/"), turno === "w" ? "b" : "w", enr, ap === "-" ? "-" : espejoCasilla(ap), ...resto].join(" ");
+}
+const espejoUci = (u) => espejoCasilla(u.slice(0, 2)) + espejoCasilla(u.slice(2, 4)) + (u[4] || "");
+
+const api = { tablero, ataquesDe, zonaDelRey, presionSobreElRey, apertura, piezas, jugarUci, medir, tipoDeJugada, UMBRAL, POLOS, poloDe, espejoFen, espejoUci };
+if (typeof window !== "undefined") window.EstiloMedidas = api;
+if (typeof module !== "undefined" && module.exports) module.exports = api;
+})();

@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"><!-- guardia: inicio --><script>(function(){try{if(window.sb||localStorage.getItem("sb-bgtijpimpcokxatxxbki-auth-token"))return;}catch(e){return;}try{window.stop()}catch(e){}var p=location.pathname.replace(/^\/+/,'');if(!p||/\/$/.test(p))p+='index.html';else if(!/\.html$/.test(p))p+='.html';location.replace('/login.html?next='+encodeURIComponent(p));})();</script><!-- guardia: fin -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" href="../img/favicon.svg">
+<title>Tu estilo de juego — Ajedrez Integral</title>
+<meta name="description" content="Qué tipo de partida te gusta jugar —atacar o maniobrar, abrir o cerrar, cambiar o mantener piezas— y qué aperturas te quedan con ese estilo.">
+<meta name="robots" content="noindex">
+<!-- Tailwind compilado: lo genera herramientas/css-construir.js.
+     Antes venía del CDN, que baja ~400 KB de JavaScript y compila el CSS
+     dentro del navegador en cada visita. -->
+<link rel="stylesheet" href="../css/tailwind.css">
+<link rel="stylesheet" href="../css/styles.css">
+<!-- oscuro: inicio --><script>(function(){try{var t=localStorage.getItem('theme');if(t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme: dark)').matches))document.documentElement.classList.add('dark');}catch(e){}})();</script><!-- oscuro: fin -->
+<script src="../js/adaptive-mode.js"></script>
+<!-- tablero: inicio -->
+<script src="../js/board-color-themes.js"></script>
+<script src="../js/piece-color-themes.js"></script>
+<!-- tablero: fin -->
+
+
+<!-- app: inicio --><meta name="theme-color" content="#102a43"><link rel="manifest" href="/manifest.json"><link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Ajedrez"><script src="../js/errores.js"></script><script src="../js/pwa.js" defer></script><script src="../js/navegacion.js" defer></script><!-- app: fin --><!-- fuentes: inicio --><link rel="stylesheet" href="../css/fuentes.css"><!-- fuentes: fin --><!-- tema: inicio --><script>(function(){try{var l=localStorage.getItem('plataforma_letra_v1');if(l&&/^[a-z]{2,24}$/.test(l)&&l!=='tema')document.documentElement.setAttribute('data-letra',l);var t=localStorage.getItem('plataforma_tema_v1');if(!t||!/^[a-z]{2,24}$/.test(t)||t==='clasico')return;document.documentElement.setAttribute('data-tema',t);var b=getComputedStyle(document.documentElement).getPropertyValue('--c-brand-800').trim();var m=document.querySelector('meta[name="theme-color"]');if(b&&m)m.setAttribute('content','rgb('+b.replace(/\s+/g,',')+')');}catch(e){}})();</script><!-- tema: fin --></head>
+<body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300">
+    <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:bg-accent-500 focus:text-brand-900 focus:font-semibold focus:px-4 focus:py-2 focus:rounded-lg">Saltar al contenido principal</a>
+    <header id="header" class="sticky top-0 z-50 bg-brand-800 shadow-lg transition-all duration-300"><nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-label="Academia"><div class="flex items-center justify-between min-h-[4rem] md:min-h-[5rem] py-2"><a id="marca-enlace" href="../clases.html" class="flex items-center gap-2 text-white min-w-0"><img src="/img/logo-marca.png" alt="" width="78" height="48" class="h-10 md:h-12 w-auto shrink-0"><span class="font-serif text-xl md:text-2xl font-bold tracking-tight">Ajedrez <span class="text-accent-400">Integral</span></span><span class="sr-only"> — panel de la Academia</span></a><div class="flex items-center gap-2"><a id="ayuda-guia" href="../guia-del-profesor-accesible.html#cap-8" target="_blank" rel="noopener" class="hidden text-white font-bold text-lg w-9 h-9 items-center justify-center rounded-lg border border-white/40 hover:bg-brand-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Ayuda: capítulo «Entrenamiento» de la guía del profesor (se abre en otra pestaña)" title="Guía del profesor: Entrenamiento"><span aria-hidden="true">?</span></a><button id="theme-toggle" class="text-white text-lg w-9 h-9 flex items-center justify-center rounded-lg hover:bg-brand-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Cambiar a modo oscuro" title="Cambiar entre modo claro y oscuro"><span id="theme-icon" aria-hidden="true">☀️</span></button></div></div></nav></header><!-- migas: inicio --><div class="bg-brand-900"><nav id="migas" aria-label="Estás en" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 text-sm"><ol class="flex flex-wrap items-center gap-x-2 gap-y-1"><li class="flex items-center gap-2"><a href="../clases.html" class="text-brand-200 underline underline-offset-2 hover:text-accent-400 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true">🏛️ </span>Academia</a></li><li class="flex items-center gap-2"><span aria-hidden="true" class="text-brand-400">›</span><span aria-current="page" class="font-semibold text-white">Tu estilo de juego</span></li></ol></nav></div><!-- migas: fin -->
+    <main id="main-content">
+
+    <div id="gate" class="min-h-[calc(100vh-5rem)] flex items-center justify-center px-4">
+        <div class="w-full max-w-sm text-center">
+            <p class="text-5xl mb-4" aria-hidden="true">🎭</p>
+            <h1 class="font-serif text-2xl font-bold text-brand-800 dark:text-white mb-2">Tu estilo de juego</h1>
+            <p id="gate-checking" class="text-brand-500 dark:text-brand-300 mb-4">Comprobando tu sesión…</p>
+        </div>
+    </div>
+
+    <div id="app" class="hidden pt-10 pb-16">
+        <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+
+            <!-- El aviso de lo que cambió de vista, fuera de las secciones: una
+                 región viva que aparece junto con lo que dice no se lee en todos
+                 los lectores. -->
+            <p id="es-anuncio" class="sr-only" role="status"></p>
+
+            <!-- ---------- Portada ---------- -->
+            <section id="intro-view">
+                <p class="text-xs font-semibold uppercase tracking-wide text-accent-700 dark:text-accent-400">Entreno · para elegir aperturas</p>
+                <h1 id="intro-titulo" tabindex="-1" class="font-serif text-3xl font-bold text-brand-800 dark:text-white mt-1 mb-2"><span aria-hidden="true">🎭</span> Tu estilo de juego</h1>
+                <p class="text-brand-500 dark:text-brand-300 mb-6">Esta prueba no mide cuánto sabes: mide qué tipo de partida te gusta jugar. Con eso, y con lo que nos cuentes de cómo juegas, te proponemos una apertura con blancas y una defensa contra 1.e4 y otra contra 1.d4 que le queden a tu estilo.</p>
+
+                <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 mb-6">
+                    <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-3">Cómo funciona</h2>
+                    <ul class="space-y-2 text-sm text-brand-600 dark:text-brand-300">
+                        <li><strong>No hay respuestas correctas.</strong> En cada posición hay dos jugadas que el motor valora casi igual. Elige la que jugarías tú.</li>
+                        <li><strong>Dinos qué tan seguro estás.</strong> Después de elegir, marca «Muy seguro», «Más o menos» o «Me da igual». Un «me da igual» cuenta poco, y está bien: también dice algo.</li>
+                        <li><strong>Unas 30 posiciones</strong>, y hasta 15 más si en algún tema todavía no queda claro qué prefieres. Dos de ellas vuelven más adelante dadas vuelta, para saber si contestas lo que prefieres.</li>
+                        <li><strong>Al final, cuatro preguntas</strong> sobre cómo juegas: en qué ritmo, cuánto estudias, tu Elo y qué aperturas usas ahora.</li>
+                    </ul>
+                </div>
+
+                <div id="partidas-opcion" class="hidden">
+                <label class="flex items-start gap-3 bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 mb-6 cursor-pointer">
+                    <input type="checkbox" id="usar-partidas" checked class="mt-1 focus-visible:ring-2 focus-visible:ring-accent-400">
+                    <span>
+                        <span class="block font-semibold text-brand-800 dark:text-white text-sm">Sumar mis partidas de Lichess y Chess.com</span>
+                        <span class="block text-xs text-brand-500 dark:text-brand-300" id="partidas-cuentas">Mientras contestas, tu computadora busca en tus partidas los momentos en que tuviste dos jugadas igual de buenas, y anota cuál elegiste. Tarda un par de minutos.</span>
+                    </span>
+                </label>
+                </div>
+
+                <div id="previo" class="hidden bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 mb-6"></div>
+
+                <button type="button" id="start-btn" class="w-full sm:w-auto bg-accent-500 hover:bg-accent-600 text-brand-900 font-bold px-6 py-3 rounded-xl text-base transition-all hover:scale-105 shadow-lg">Comenzar →</button>
+            </section>
+
+            <!-- ---------- Preguntas ---------- -->
+            <section id="pregunta-view" class="hidden">
+                <p class="text-sm text-brand-500 dark:text-brand-300 mb-4"><span id="q-counter">Posición 1</span></p>
+                <div class="w-full h-1.5 bg-brand-100 dark:bg-brand-800 rounded-full overflow-hidden mb-5">
+                    <div id="q-bar" class="h-full bg-accent-500 transition-all" style="width:0%"></div>
+                </div>
+
+                <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 mb-4">
+                    <p class="text-xs text-brand-450 dark:text-brand-350 mb-3 text-right" id="q-turno">Juegan las blancas</p>
+                    <div class="max-w-[min(80vw,320px)] mx-auto mb-4">
+                        <div id="q-board" class="example-board"></div>
+                    </div>
+                    <p class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1" id="q-text">¿Cuál jugarías?</p>
+                    <p class="text-sm text-brand-500 dark:text-brand-300 mb-4">Las dos son buenas: elige la que más te guste.</p>
+                    <div id="q-options" class="grid sm:grid-cols-2 gap-2 mb-4"></div>
+                    <p class="text-sm font-semibold text-brand-700 dark:text-brand-200 mb-2" id="q-seguridad-titulo">¿Qué tan seguro estás?</p>
+                    <div id="q-seguridad" role="group" aria-labelledby="q-seguridad-titulo" class="grid grid-cols-3 gap-2"></div>
+                    <!-- El cuadro de comandos del Modo Adaptado (js/cuadro-comandos.js). -->
+                    <div id="q-comandos"></div>
+                </div>
+
+                <div class="flex items-center justify-between gap-3">
+                    <p class="text-xs text-brand-450 dark:text-brand-350" id="q-partidas" role="status"></p>
+                    <button type="button" id="next-btn" disabled class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-6 py-2.5 rounded-lg transition-colors disabled:opacity-60">Siguiente →</button>
+                </div>
+            </section>
+
+            <!-- ---------- Cómo juegas ---------- -->
+            <section id="contexto-view" class="hidden">
+                <p class="text-xs font-semibold uppercase tracking-wide text-accent-700 dark:text-accent-400">Casi listo</p>
+                <h1 id="contexto-titulo" tabindex="-1" class="font-serif text-3xl font-bold text-brand-800 dark:text-white mt-1 mb-2">Cómo juegas</h1>
+                <p class="text-brand-500 dark:text-brand-300 mb-6">Con esto la recomendación se ajusta a ti: una apertura con mucha teoría no sirve si juegas blitz o estudias poco, y si ya tienes una que te queda bien, no hace falta cambiarla.</p>
+                <form id="contexto-form" class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 mb-6 space-y-5">
+                    <fieldset>
+                        <legend class="text-sm font-semibold text-brand-800 dark:text-white mb-2">¿En qué ritmo juegas más?</legend>
+                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2" id="ctx-ritmo"></div>
+                    </fieldset>
+                    <fieldset>
+                        <legend class="text-sm font-semibold text-brand-800 dark:text-white mb-2">¿Cuánto tiempo estudias ajedrez por semana?</legend>
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2" id="ctx-estudio"></div>
+                    </fieldset>
+                    <div>
+                        <label for="ctx-elo" class="block text-sm font-semibold text-brand-800 dark:text-white mb-1">Tu Elo aproximado (si lo sabes)</label>
+                        <input id="ctx-elo" type="number" inputmode="numeric" min="400" max="3000" step="1" class="w-40 px-3 py-2 rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-800 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                        <p class="text-xs text-brand-450 dark:text-brand-350 mt-1" id="ctx-elo-ayuda">FIDE, nacional o el de Lichess o Chess.com.</p>
+                    </div>
+                    <div class="grid sm:grid-cols-3 gap-3">
+                        <div>
+                            <label for="ctx-blancas" class="block text-sm font-semibold text-brand-800 dark:text-white mb-1">Con blancas juego</label>
+                            <select id="ctx-blancas" class="w-full px-3 py-2 rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-800 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"></select>
+                        </div>
+                        <div>
+                            <label for="ctx-e4" class="block text-sm font-semibold text-brand-800 dark:text-white mb-1">Contra 1.e4 juego</label>
+                            <select id="ctx-e4" class="w-full px-3 py-2 rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-800 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"></select>
+                        </div>
+                        <div>
+                            <label for="ctx-d4" class="block text-sm font-semibold text-brand-800 dark:text-white mb-1">Contra 1.d4 juego</label>
+                            <select id="ctx-d4" class="w-full px-3 py-2 rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-800 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"></select>
+                        </div>
+                    </div>
+                    <p class="text-xs text-red-700 dark:text-red-300 hidden" id="ctx-error" role="alert"></p>
+                    <button type="submit" id="ctx-btn" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-6 py-2.5 rounded-lg transition-colors">Ver mi estilo y mis aperturas →</button>
+                </form>
+            </section>
+
+            <!-- ---------- Resultado ---------- -->
+            <section id="resultado-view" class="hidden">
+                <p class="text-xs font-semibold uppercase tracking-wide text-accent-700 dark:text-accent-400">Resultado</p>
+                <h1 class="font-serif text-3xl font-bold text-brand-800 dark:text-white mt-1 mb-2" id="r-titulo" tabindex="-1">Tu estilo de juego</h1>
+                <p class="text-sm text-brand-500 dark:text-brand-300 mb-1" id="r-texto">La franja de cada barra es el margen: mientras más angosta, más seguro es el resultado.</p>
+                <p class="text-xs text-brand-450 dark:text-brand-350 mb-4" id="r-guardado"></p>
+                <div id="r-perfil" class="mb-8"></div>
+                <h2 class="font-serif text-xl font-bold text-brand-800 dark:text-white mb-3">Las aperturas que te quedan</h2>
+                <div id="r-recomendacion" class="mb-8"></div>
+                <div class="flex flex-wrap gap-3">
+                    <button type="button" id="repeat-btn" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-6 py-2.5 rounded-lg transition-colors">Volver al inicio</button>
+                    <a href="../clases.html" class="border border-brand-200 dark:border-brand-700 text-brand-600 dark:text-brand-300 font-semibold px-6 py-2.5 rounded-lg hover:border-accent-500 transition-colors">Volver al panel</a>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    </main>
+
+    <footer class="bg-brand-900 text-brand-300 py-8"><div class="max-w-7xl mx-auto px-4 text-center text-sm"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p><!-- legal: inicio --><p class="mt-2"><a href="../privacidad.html" class="underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Política de privacidad</a> <span aria-hidden="true">·</span> <a href="../terminos.html" class="underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Términos y condiciones</a></p><!-- legal: fin --></div></footer>
+    <!-- tablero-js: inicio -->
+    <script src="../js/board-themes.js"></script>
+    <script src="../js/pieza-preferida.js"></script>
+    <script src="../js/coordenadas-tablero.js"></script>
+    <script src="../js/coronacion.js"></script>
+    <!-- tablero-js: fin -->
+    <script src="../js/vendor/supabase.js"></script>
+    <script src="../js/supabase-client.js"></script>
+    <script src="../js/tiempo-plataforma.js" data-activity="estilo"></script>
+    <script src="../js/entreno-progress.js"></script>
+    <script src="../js/main.js"></script>
+    <script src="../js/piece-style-themes.js"></script>
+    <script src="../js/chess-piece-svg.js"></script>
+    <script src="../js/blind-notation.js"></script>
+    <script src="../js/vendor/chess.js"></script>
+    <script src="../js/article-example-board.js"></script>
+    <script src="../js/tablero-accesible.js"></script>
+    <script src="../js/comandos-tablero.js"></script>
+    <script src="../js/cuadro-comandos.js"></script>
+    <script src="../js/ejercicio-tablero.js"></script>
+    <script src="../js/hora-cr.js"></script>
+    <script src="../js/shared-engine.js"></script>
+    <script src="../js/estilo-medidas.js"></script>
+    <script src="../js/estilo-items.js"></script>
+    <script src="../js/estilo-perfil.js"></script>
+    <script src="../js/aperturas-lineas.js"></script>
+    <script src="../js/estilo-aperturas.js"></script>
+    <script src="../js/preparacion-lineas.js"></script>
+    <script src="../js/estilo-partidas.js"></script>
+    <script src="../js/analisis-alumno.js"></script>
+    <script src="../js/estilo-tarjeta.js"></script>
+    <script src="../js/entreno-estilo.js"></script>
+<!-- burbuja: inicio --><script src="../js/burbuja-en-linea.js" defer></script><!-- burbuja: fin --><!-- juego-aviso: inicio --><script src="../js/juego-aviso.js" defer></script><!-- juego-aviso: fin --><!-- aviso-profe: inicio --><script src="../js/aviso-profe.js" defer></script><!-- aviso-profe: fin --><!-- tanda: inicio --><script src="../js/tanda-diez.js" defer></script><!-- tanda: fin --><!-- bromas: inicio --><script src="../js/bromas.js" defer></script><!-- bromas: fin --><!-- acceso: inicio --><script src="../js/acceso-vigente.js" defer></script><!-- acceso: fin --><!-- modo-vista: inicio --><script src="../js/modo-vista.js" defer></script><!-- modo-vista: fin --><!-- marca: inicio --><script src="../js/marca-academia.js" defer></script><!-- marca: fin --><!-- ayuda: inicio --><script src="../js/ayuda-guia.js" defer></script><!-- ayuda: fin --><!-- atajo: inicio --><script src="../js/atajo-buscar.js" data-arriba="../" defer></script><!-- atajo: fin --></body>
+</html>

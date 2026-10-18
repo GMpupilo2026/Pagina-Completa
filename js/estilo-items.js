@@ -15,7 +15,7 @@
  * preferencia. Cada jugada lleva su `polo` (qué representa en su eje), su
  * evaluación (`eval`, en centipeones desde el bando que mueve), la línea del
  * motor que la sigue (`linea`, UCI) y sus `medidas`, las que calcula
- * herramientas/lib/estilo-medidas.js y vuelve a calcular el verificador.
+ * js/estilo-medidas.js y vuelve a calcular el verificador.
  *
  * El bloque ESTILO lo genera herramientas/estilo-generar.js y NO se edita a
  * mano: se vuelve a correr el script. Lo comprueba
@@ -2331,11 +2331,21 @@
     cambios: { nombre: "Cambiar o mantener piezas", polos: { cambiar: "Cambiar piezas", mantener: "Mantener las piezas" } },
   };
 
-  /* Cuántas preguntas por eje lleva cada prueba, y hasta cuántas más agrega
-   * en un eje que quedó dudoso. */
-  const FORMA = { porEje: 10, extraPorEje: 5 };
+  /* Cuántas preguntas por eje lleva cada prueba, hasta cuántas más agrega en
+   * un eje que quedó dudoso, y si lleva las dos posiciones de control (ver
+   * js/estilo-perfil.js). Cambiar la forma sube VERSION: las pruebas viejas
+   * se siguen leyendo con su regla. */
+  const FORMA = { porEje: 10, extraPorEje: 5, controles: true };
 
-  const api = { VERSION: 1, ITEMS, EJES, FORMA };
+  /* Cuánto distingue (`a`) y cuánto tira hacia el primer polo (`b`) cada
+   * posición, calculado con las respuestas reales: lo escribe
+   * herramientas/estilo-calibrar.js y no se edita a mano. Una posición que no
+   * está acá pesa a = 1, b = 0. */
+  /* CALIBRADO-INICIO: generado por herramientas/estilo-calibrar.js — no se edita a mano. */
+  const CALIBRADO = {};
+  /* CALIBRADO-FIN */
+
+  const api = { VERSION: 1, ITEMS, EJES, FORMA, CALIBRADO };
   raiz.EstiloItems = api;
   if (typeof module !== "undefined" && module.exports) module.exports = api;
 })(typeof window !== "undefined" ? window : globalThis);

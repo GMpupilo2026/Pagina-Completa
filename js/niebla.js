@@ -37,7 +37,7 @@
 
             let myTurnNow = false;
             if (room.status === "finished") {
-                const resultText = room.result === "draw" ? (esTripleRepeticion(room.moves, room.fen) ? "Tablas por triple repetición." : "Tablas.") : (room.result === "white" ? nameFor(room.white_id) + " ganó con blancas." : nameFor(room.black_id) + " ganó con negras.");
+                const resultText = room.result === "draw" ? SalaJuego.textoTablas(esTripleRepeticion(room.moves, room.fen) ? "repeticion" : (Repeticion.cincuentaJugadas(room.fen) ? "cincuenta" : null)) : (room.result === "white" ? nameFor(room.white_id) + " ganó con blancas." : nameFor(room.black_id) + " ganó con negras.");
                 setStatus("Partida terminada — " + resultText);
             } else if (waitingToStart) {
                 if (!myColor) setStatus("Esperando a que " + nameFor(room.white_id) + " y " + nameFor(room.black_id) + " confirmen que están listos…");
@@ -183,6 +183,7 @@
             // o hasta la respuesta del rival), se queda lo más nuevo: antes esto
             // pegaba el parche encima y la sala volvía una jugada atrás.
             room = SalaJuego.laMasNueva(room, guardada[0]);
+            SalaJuego.avisarTorneo(room);
             renderMovesPanel(room);
             updateStatusText();
             renderClocks();

@@ -18,10 +18,12 @@
  *  4. UNA JUGADA MEJOR QUE LA OTRA. Las dos a 30 centipeones o menos de la
  *     mejor, y la posición sin decidir (±1,5): si no, la pregunta mide fuerza.
  *  5. UN POLO PUESTO A OJO. Las medidas de cada jugada se recalculan con
- *     herramientas/lib/estilo-medidas.js y tienen que dar las guardadas, y el
+ *     js/estilo-medidas.js y tienen que dar las guardadas, y el
  *     polo de cada jugada tiene que ser el que dicen las medidas.
  *  6. EL ORDEN QUE DELATA. Si la jugada «a» fuera casi siempre la de atacar,
  *     abrir o cambiar, se elegiría por la posición en pantalla.
+ *  7. UNA CALIBRACIÓN IMPOSIBLE. Cada posición calibrada existe, con a y b en
+ *     su rango y con 30 respuestas o más (herramientas/estilo-calibrar.js).
  *
  * Uso:  npm install && node herramientas/verificar-estilo.js
  */
@@ -30,7 +32,7 @@ const fs = require("fs");
 const path = require("path");
 const RAIZ = path.join(__dirname, "..");
 const { Chess } = require(path.join(RAIZ, "node_modules", "chess.js"));
-const M = require("./lib/estilo-medidas");
+const M = require("../js/estilo-medidas");
 const Banco = require(path.join(RAIZ, "js", "estilo-items.js"));
 
 const POR_EJE = 15, MIN_COLOR = 5, PAREJAS = 30, DECIDIDA = 150;
@@ -157,6 +159,14 @@ for (const it of items) {
     if (it.a.polo !== esperado[0] || it.b.polo !== esperado[1])
       falla(id, "los polos dicen " + it.a.polo + "/" + it.b.polo + " y las medidas " + esperado.join("/"));
   }
+}
+
+// 7. La calibración (js/estilo-items.js, CALIBRADO; la escribe estilo-calibrar.js).
+for (const [id, c] of Object.entries(Banco.CALIBRADO || {})) {
+  if (!items.some((i) => i.id === id)) falla(id, "calibrada pero no está en el banco");
+  if (!(c.a >= 0.2 && c.a <= 3)) falla(id, "calibración: a = " + c.a + " fuera de 0,2…3");
+  if (!(c.b >= -3 && c.b <= 3)) falla(id, "calibración: b = " + c.b + " fuera de −3…3");
+  if (!(c.n >= 30)) falla(id, "calibrada con " + c.n + " respuestas (el mínimo es 30)");
 }
 
 if (fallas.length) {

@@ -94,7 +94,28 @@
     return medias >= 100;
   }
 
+  /* Para las partidas en línea cuyas jugadas no se pueden reproducir con
+     chess.js (las de variante.html, Cartas): la cuenta viaja guardada en la
+     sala (`variant_state.rep`), un objeto { clave: veces } con las posiciones
+     desde la última jugada irreversible (captura, abrazo, avance de peón), que
+     ya no pueden volver. Quien hace la jugada la pone al día y la guarda en el
+     mismo update, igual que la posición: es tan confiable como la FEN.
+       · previo: lo que había guardado (null en una partida que recién empieza:
+         se anota también la posición de antes, la de salida).
+       · claveAntes / claveAhora: la posición de antes y la de después.
+       · reinicia: la jugada fue irreversible (se empieza la cuenta de nuevo).
+     Devuelve { rep, veces }: la cuenta nueva y cuántas veces lleva la de ahora. */
+  function enSala(previo, claveAntes, claveAhora, reinicia) {
+    let rep = previo && typeof previo === "object" && !Array.isArray(previo) ? Object.assign({}, previo) : null;
+    if (!rep) { rep = {}; if (claveAntes) rep[claveAntes] = 1; }
+    if (reinicia) rep = {};
+    rep[claveAhora] = (rep[claveAhora] || 0) + 1;
+    return { rep: rep, veces: rep[claveAhora] };
+  }
+
   window.Repeticion = {
+    clave: clave,
+    enSala: enSala,
     veces: veces,
     esTriple: (fenInicial, jugadas, crear, fenFinal) => veces(fenInicial, jugadas, crear, fenFinal) >= 3,
     contador: contador,
