@@ -4456,10 +4456,9 @@ se recorre entera; mira desde el color de quien la juega.
 - **De dónde salen** (`herramientas/estilo-modelos.js`, que escribe
   `js/estilo-modelos.js`): primero las partidas de maestros del repositorio
   (`herramientas/lib/partidas-maestros.js`, que ahora devuelve también el
-  resultado y si la partida está completa); alcanzaron para 51 de las 64. Las
-  otras 13 (la escandinava, la eslava, el Londres, la holandesa y la
-  Leningrado, los gambitos Evans, escocés y danés, la Trompowsky, el Benko, la
-  Ponziani, el Grand Prix y la Nimzowitsch) salen de KingBase 2017, y esas
+  resultado y si la partida está completa); alcanzaron para 41 de las 64. Las
+  otras 23 (gambitos, sistemas de blancas y defensas que en esas partidas
+  casi no aparecen o no ganó su bando) salen de KingBase 2017, y esas
   partidas se guardan enteras con sus etiquetas en
   `herramientas/datos/estilo-modelos-kingbase.pgn`: el verificador las
   compara sin bajar nada.
