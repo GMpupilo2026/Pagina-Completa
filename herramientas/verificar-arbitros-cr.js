@@ -79,7 +79,9 @@ const ARBITROS_FIDE = [
             torneos: ["30.08-09.09.25 18th IA Seminar"], fuente: "https://arbiters.fide.com/informe-2.pdf" },
       ],
       seminarios: [{ tipo: "IA", seminario: "18th IACS Internet Based Aug 2025 (ARB)", mes: "2025-09", fecha: "2025-09-09", fuente: "https://arbiters.fide.com/informe-2.pdf",
-        evento: "https://arbiters.fide.com/news/event/18th-iacs" }] },
+        evento: "https://arbiters.fide.com/news/event/18th-iacs" },
+        // Uno viejo de AF que sale solo del informe del seminario (sin informe al Consejo).
+        { tipo: "FA", seminario: "44th Internet Based Dec 2015 (CCA)", mes: "2015-12", fecha: "2015-12-06", informe: "https://arbiters.fide.com/news/1896" }] },
     // Pedro está en la lista de la Federación y nunca arbitró: no sale en la
     // lista de la herramienta, sí en la comparación con la Federación.
     { fide_id: 6500006, nombre: "Nuevo Prueba, Pedro", titulo: "NA", inactivo: false, categoria: "", licencia: "NA", categoria_nacional: "C", fca_leida: "2026-10-16", af_fecha: null, af_consejo: "", ia_fecha: null, ia_consejo: "", lista: "2026-10-12", solicitudes: [], seminarios: [] },
@@ -572,9 +574,11 @@ const porNombre = (m) => Object.fromEntries(m.map((f) => [f[0], f]));
         + " Sigue activo por lo menos hasta el 09/09/2029: cuatro años desde su seminario de AI (B.06.3, 2). Un curso de actualización después lo corre.");
     const hist = await p.$$eval("#ficha-historial > ul > li", (ls) => ls.map((l) => l.querySelector("strong").textContent));
     igual("su historial en FIDE: las solicitudes, la más nueva primero, y el seminario", hist,
-        ["23/08/2026 · Solicitud de AI: Aprobada", "02/04/2025 · Solicitud de AI: Rechazada", "09/09/2025 · Seminario de AI: 18th IACS Internet Based Aug 2025 (ARB)"]);
-    igual("el seminario enlaza al informe y, si se conoce, a su página en el calendario de la Comisión", await p.$eval("#ficha-historial li[data-seminario]", (l) => [...l.querySelectorAll("a")].map((x) => [x.textContent, x.getAttribute("href")])),
+        ["23/08/2026 · Solicitud de AI: Aprobada", "02/04/2025 · Solicitud de AI: Rechazada", "09/09/2025 · Seminario de AI: 18th IACS Internet Based Aug 2025 (ARB)", "06/12/2015 · Seminario de AF: 44th Internet Based Dec 2015 (CCA)"]);
+    igual("el seminario enlaza al informe y, si se conoce, a su página en el calendario de la Comisión", await p.$eval("#ficha-historial li[data-seminario='IA']", (l) => [...l.querySelectorAll("a")].map((x) => [x.textContent, x.getAttribute("href")])),
         [["informe de la Comisión", "https://arbiters.fide.com/informe-2.pdf"], ["página del seminario", "https://arbiters.fide.com/news/event/18th-iacs"]]);
+    igual("el que sale solo del informe del seminario enlaza a ese informe, sin un enlace vacío", await p.$eval("#ficha-historial li[data-seminario='FA']", (l) => [/venció el 06\/12\/2019/.test(l.textContent), [...l.querySelectorAll("a")].map((x) => [x.textContent, x.getAttribute("href")])]),
+        [true, [["informe del seminario", "https://arbiters.fide.com/news/1896"]]]);
     igual("la rechazada dice por qué (como lo escribe FIDE) y lo que mandó", await p.$eval("#ficha-historial li[data-solicitud='2025-04-02']", (l) => [/«Only 3 tournament norms»/.test(l.textContent), l.querySelectorAll("details li").length]), [true, 2]);
     igual("quien ya tiene el título no lleva «Para pedir el título»", await p.$$eval("[data-ruta]", (r) => r.length), 0);
     await ctx.close();

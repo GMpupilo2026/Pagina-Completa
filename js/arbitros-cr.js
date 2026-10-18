@@ -482,7 +482,8 @@
             lista.append(el("li", { "data-seminario": x.tipo },
                 el("strong", {}, `${x.fecha ? fecha(x.fecha) : cuando(x.mes)} · Seminario de ${x.tipo === "FA" ? "AF" : "AI"}: ${x.seminario}`),
                 el("span", { class: "of-detalle" }, (vigente ? "Vale para pedir el título hasta " : "Ya no vale para pedir el título: venció ") + (vence.length === 7 ? cuando(vence) : "el " + fecha(vence)) + " (cuatro años, B.06.1 5.3.2). · ",
-                    enlace(x.fuente, "informe de la Comisión"), x.evento ? " · " : "", x.evento ? enlace(x.evento, "página del seminario") : "")));
+                    ...[x.fuente && enlace(x.fuente, "informe de la Comisión"), x.informe && enlace(x.informe, "informe del seminario"), x.evento && enlace(x.evento, "página del seminario")]
+                        .filter(Boolean).flatMap((e, i) => (i ? [" · ", e] : [e])))));
         }
         caja.replaceChildren(lista);
     }
