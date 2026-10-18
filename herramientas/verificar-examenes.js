@@ -924,6 +924,36 @@ async function main() {
     await ctx.close();
   }
 
+  // ---------- La lista del profesor: los congelados que esperan, primero ----------
+  // «Lo urgente» del panel cuenta los congelados que todavía no vencen y trae
+  // con #puestos. La lista va de la base por vencimiento: sin reordenar, el
+  // congelado quedaba debajo de los demás.
+  {
+    const dia = 86400000;
+    const fila = (id, titulo, estado, vence) => ({ id, titulo, alumno_nombre: "Ana Rojas", preguntas: 3, minutos: 10,
+      estado, vence_at: new Date(Date.now() + vence).toISOString(), nota: estado === "asignado" ? null : 5, salidas: 0 });
+    const lista = [
+      fila("ex-a", "Sin empezar", "asignado", 5 * dia),
+      fila("ex-b", "Entregado", "entregado", 3 * dia),
+      fila("ex-c", "Congelado que espera", "congelado", 2 * dia),
+      fila("ex-d", "Congelado vencido", "congelado", -2 * dia),
+    ];
+    const ctx = await contexto(navegador, clienteFalso(PROFE, EXAMEN, { lista }));
+    const p = await ctx.newPage();
+    await p.setViewportSize({ width: 1280, height: 700 });
+    await p.goto(`${BASE}/examenes.html#puestos`, { waitUntil: "networkidle" });
+    await p.waitForFunction(() => document.querySelectorAll("#puestos-lista > div").length === 4, null, { timeout: 10000 }).catch(() => {});
+    const v = await p.evaluate(() => ({
+      orden: Array.from(document.querySelectorAll("#puestos-lista > div > div:first-child > p:first-child")).map((x) => x.textContent),
+      arriba: Math.round(document.getElementById("puestos").getBoundingClientRect().top),
+      foco: document.activeElement && document.activeElement.id,
+    }));
+    ok(v.orden.join(" | ") === "Congelado que espera | Sin empezar | Entregado | Congelado vencido",
+      `el congelado que espera no va primero: ${JSON.stringify(v.orden)}`);
+    ok(v.arriba >= 0 && v.arriba < 200, `con #puestos la lista no queda a la vista (arriba a ${v.arriba} px)`);
+    ok(v.foco === "puestos", `con #puestos el foco no va al título de la lista: ${v.foco}`);
+    await ctx.close();
+  }
 
   // ---------- 7) Que las dos páginas SE VEAN ----------
   // Las dos se armaron clonando la cabecera de tareas.html, y clonar una

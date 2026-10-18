@@ -623,9 +623,10 @@
         }
         function clavesUrgenteDocente() {
             const tiene = tieneTarjeta;
-            return ["justificaciones", "informePropio", "solicitudes", "partidasTorneo", "morosos"].filter((c) =>
+            return ["justificaciones", "examenesCongelados", "informePropio", "solicitudes", "examenesEntregados", "partidasTorneo", "morosos"].filter((c) =>
                 c === "informePropio" ? tiene("informe-mensual.html")
                 : c === "justificaciones" ? tiene("justificaciones.html")
+                : c === "examenesCongelados" || c === "examenesEntregados" ? tiene("examenes.html")
                 : c === "partidasTorneo" ? tiene("libreta-torneos.html")
                 : c === "solicitudes" ? tiene("solicitudes.html")
                 : tiene("cobros.html"));
