@@ -139,6 +139,8 @@ const ELO_CR = [
     { clave: 900002, calculo: "nacional", ritmo: null }, { clave: 900006, calculo: "nacional", ritmo: null },
     { clave: 900007, calculo: "nacional", ritmo: "clasico" },
 ];
+// La categoría y los cursos que registra administración (arbitros_cr_formacion): vacía de entrada.
+const FORMACION = [];
 const CR_CARGOS = [
     { clave: 900001, fide_id: 6500001, rol: "ap" },
     { clave: 900002, fide_id: 6500001, rol: "dir" },
@@ -152,12 +154,12 @@ const CR_CARGOS = [
     { clave: 900005, fide_id: 6500001, rol: "ap" },
 ];
 
-function doble(tieneLicencia) {
+function doble(tieneLicencia, admin) {
     return `
 window.SUPABASE_URL = "https://falso.supabase.co";
 window.SUPABASE_ANON_KEY = "anon-falsa";
 (function () {
-  const TABLAS = ${JSON.stringify({ arbitros_cr: ARBITROS, arbitros_cr_torneos: TORNEOS, arbitros_cr_cargos: CARGOS, arbitros_cr_cr: CR.map((c) => ({ pais: "CRC", ...c })), arbitros_cr_cr_cargos: CR_CARGOS, arbitros_cr_fide: ARBITROS_FIDE, arbitros_cr_sin_id: SIN_ID, arbitros_cr_cr_elo: ELO_CR })};
+  const TABLAS = ${JSON.stringify({ arbitros_cr: ARBITROS, arbitros_cr_torneos: TORNEOS, arbitros_cr_cargos: CARGOS, arbitros_cr_cr: CR.map((c) => ({ pais: "CRC", ...c })), arbitros_cr_cr_cargos: CR_CARGOS, arbitros_cr_fide: ARBITROS_FIDE, arbitros_cr_sin_id: SIN_ID, arbitros_cr_cr_elo: ELO_CR, arbitros_cr_formacion: FORMACION })};
   const LICENCIA = ${tieneLicencia ? "true" : "false"};
   window.__pedidos = [];
   function respuesta(data, error) { return Promise.resolve({ data, error: error || null }); }
@@ -167,7 +169,10 @@ window.SUPABASE_ANON_KEY = "anon-falsa";
   const ALTA = {
     arbitros_cr_normas_revision: { claves: ["creada_por", "fide_id", "cual", "torneo_id"], omision: { firmante_fide_id: null, firmante_nombre: "", archivo: null, nombre_archivo: "" } },
     arbitros_cr_solicitudes_enviadas: { claves: ["creada_por", "fide_id", "cual", "enviada"], omision: { resultado: "pendiente", consejo: "", motivo: "", normas: [] } },
+    // Como el índice único de la base: una fila por categoría y árbitro (los cursos no chocan: su categoría es null).
+    arbitros_cr_formacion: { claves: ["fide_id", "categoria", "_categoria"], omision: { categoria: null, horas: null, nota: null, detalle: "" } },
   };
+  const ADMIN = ${admin ? "true" : "false"};
   window.__archivos = {};
   let nuevas = 0;
   function consulta(tabla) {
@@ -185,9 +190,11 @@ window.SUPABASE_ANON_KEY = "anon-falsa";
       const pasa = (f) => q._filtros.every(([c, v]) => f[c] === v);
       let r;
       if (!LICENCIA) r = { data: q._op === "select" ? [] : null, error: q._op === "select" ? null : { message: "sin permiso" } };   // la RLS
+      else if (tabla === "arbitros_cr_formacion" && q._op !== "select" && !ADMIN) r = { data: null, error: { message: "new row violates row-level security policy" } };   // solo administración escribe
       else if (q._op === "insert") {
         const alta = ALTA[tabla];
         const fila = { id: "n" + (++nuevas), creada_por: "yo", creada: "2026-10-16T04:00:00Z", ...alta.omision, ...q._fila };
+        if (tabla === "arbitros_cr_formacion") fila._categoria = fila.tipo === "categoria" ? "si" : fila.id;
         const rep = TABLAS[tabla].some((f) => alta.claves.every((k) => f[k] === fila[k]));
         // Como el trigger de la base: sin la versión de la privacidad, no entra.
         if (tabla === "arbitros_cr_normas_revision" && !/^\\d{4}-\\d{2}-\\d{2}$/.test(fila.privacidad_version || "")) r = { data: null, error: { message: "Para subir una norma hay que aceptar la Política de privacidad.", code: "23514" } };
@@ -210,7 +217,7 @@ window.SUPABASE_ANON_KEY = "anon-falsa";
     rpc: (nombre, args) => {
       window.__pedidos.push(nombre);
       if (nombre === "tengo_herramienta") return respuesta(LICENCIA && args.p_herramienta === "arbitros-cr");
-      if (nombre === "soy_admin") return respuesta(false);
+      if (nombre === "soy_admin") return respuesta(ADMIN);
       return respuesta(null);
     },
     from: (t) => consulta(t),
@@ -227,10 +234,10 @@ window.SUPABASE_ANON_KEY = "anon-falsa";
 })();`;
 }
 
-async function abrir(browser, ruta, tieneLicencia, reloj) {
+async function abrir(browser, ruta, tieneLicencia, reloj, admin) {
     const ctx = await browser.newContext({ serviceWorkers: "block" });
     if (reloj) await ctx.clock.setFixedTime(new Date(reloj));
-    await ctx.route("**/js/supabase-client.js", (r) => r.fulfill({ contentType: "application/javascript", body: doble(tieneLicencia) }));
+    await ctx.route("**/js/supabase-client.js", (r) => r.fulfill({ contentType: "application/javascript", body: doble(tieneLicencia, admin) }));
     await ctx.route("**/js/vendor/supabase.js", (r) => r.fulfill({ contentType: "application/javascript", body: "" }));
     await ctx.route(/supabase\.co|sentry|googletagmanager/, (r) => r.abort());
     const p = await ctx.newPage();
@@ -300,7 +307,7 @@ const porNombre = (m) => Object.fromEntries(m.map((f) => [f[0], f]));
         return window.innerWidth === 1280 && t.scrollWidth <= t.parentElement.clientWidth;
     }), true);
     igual("pide cada tabla de mil en mil", await p.evaluate(() => window.__pedidos.filter((x) => x.startsWith("arbitros_cr")).sort()),
-        ["arbitros_cr 0-999", "arbitros_cr_cargos 0-999", "arbitros_cr_cr 0-999", "arbitros_cr_cr_cargos 0-999", "arbitros_cr_cr_elo 0-999", "arbitros_cr_fide 0-999", "arbitros_cr_sin_id 0-999", "arbitros_cr_torneos 0-999"]);
+        ["arbitros_cr 0-999", "arbitros_cr_cargos 0-999", "arbitros_cr_cr 0-999", "arbitros_cr_cr_cargos 0-999", "arbitros_cr_cr_elo 0-999", "arbitros_cr_fide 0-999", "arbitros_cr_formacion 0-999", "arbitros_cr_sin_id 0-999", "arbitros_cr_torneos 0-999"]);
     let m = porNombre(await filas(p, "#tabla-arbitros"));
     igual("los cinco árbitros salen (todos los años), también quien solo está en chess-results", Object.keys(m).sort(),
         ["Ángulo Prueba, Óscar", "Quiros Prueba, Eduardo", "Rojas Prueba, Luis", "Soto Prueba, Ana", "Viejo Prueba, Juan"].sort());
@@ -516,7 +523,7 @@ const porNombre = (m) => Object.fromEntries(m.map((f) => [f[0], f]));
         ["informe-af-6500003.pdf", true, true, true, true, true, true, true]);
     igual("su ficha dice la categoría nacional, de la lista de la Federación",
         [/Árbitro Nacional \(AN\), categoría B/.test(await p.$eval("#ficha-sub", (e) => e.textContent)),
-         /Árbitro Nacional categoría B según la lista de la Federación Central de Ajedrez \(leída el 16\/10\/2026\)/.test(await p.$eval("#ficha-fide", (e) => e.textContent))], [true, true]);
+         /Árbitro Nacional categoría B según la lista de la Federación Costarricense de Ajedrez \(leída el 16\/10\/2026\)/.test(await p.$eval("#ficha-fide", (e) => e.textContent))], [true, true]);
     igual("su historial: el seminario de AF", await p.$$eval("#ficha-historial > ul > li strong", (s) => s.map((x) => x.textContent)), ["29/06/2025 · Seminario de AF: 189th Internet Based Jun 2025 (CCA)"]);
     const aiLuis = (await filas(p, "#tabla-torneos"))[0][9];
     igual("su torneo que cumple las condiciones de AI no le cuenta: no tiene el AF", [aiLuis.startsWith("No"), /No tiene el título de AF/.test(aiLuis)], [true, true]);
@@ -547,7 +554,7 @@ const porNombre = (m) => Object.fromEntries(m.map((f) => [f[0], f]));
     const af = Object.fromEntries((await filas(p, "#tabla-torneos")).filter((f) => f[2] === "Sí").map((f) => [f[0].slice(-4), f[8]]));
     igual("y para AF, el de 2025 ya no cuenta (ya tenía el AF); los de antes sí", [af["2025"].startsWith("No"), /Ya tenía el título de AF \(aprobado el 15\/04\/2024\)/.test(af["2025"]), af["2023"].startsWith("Vale")], [true, true, true]);
     igual("la ficha dice que está activo, su licencia y cuándo se le aprobó el AF", await p.$eval("#ficha-fide", (e) => e.textContent),
-        "Activo en la lista de árbitros de FIDE del 12/10/2026, licencia IA-D. AF aprobado por el Consejo el 15/04/2024 (2.ª reunión del Consejo de FIDE de 2024 (en línea)). La fecha oficial es la que FIDE anota en su perfil, de dos a cinco semanas después: hasta tenerla, lo que empezó en los 60 días siguientes queda para revisar."
+        "Activo en la lista de árbitros de FIDE del 12/10/2026, licencia IA-D. AF aprobado por el Consejo el 15/04/2024 (2.ª reunión del Consejo de FIDE de 2024 (en línea)). La fecha oficial es la que FIDE anota en su perfil, de seis días a seis semanas después: hasta tenerla, lo que empezó en los 60 días siguientes queda para revisar."
         + " Sigue activo por lo menos hasta el 09/09/2029: cuatro años desde su seminario de AI (B.06.3, 2). Un curso de actualización después lo corre.");
     const hist = await p.$$eval("#ficha-historial > ul > li", (ls) => ls.map((l) => l.querySelector("strong").textContent));
     igual("su historial en FIDE: las solicitudes, la más nueva primero, y el seminario", hist,
@@ -744,6 +751,173 @@ const porNombre = (m) => Object.fromEntries(m.map((f) => [f[0], f]));
     await p.waitForFunction(() => document.getElementById("app").checkVisibility());
     igual("Óscar arbitró 4 torneos desde 2024 (el de 2025 y tres de 2024) y no está en la lista; Eduardo, 2, no llega a 3",
         await filas(p, "#tabla-fca-fuera"), [["Ángulo Prueba, Óscar", "IA", "Activo", "4", "10/01/2025"]]);
+    await ctx.close();
+
+    console.log("\n=== Para subir de categoría (reglamento de la Federación), con el reloj en diciembre de 2025 ===");
+    const DIC = "2025-12-01T12:00:00-06:00";
+    ({ ctx, p } = await abrir(browser, "arbitros-cr.html#6500003", true, DIC));
+    await p.waitForFunction(() => document.getElementById("ficha").checkVisibility());
+    // Sin el botón «Norma (PDF)» que lleva cada torneo adelante.
+    const lis = (sel) => p.$$eval(sel, (ls) => ls.map((l) => l.textContent.replace(/^Norma \(PDF\) /, "")));
+    igual("Luis (AN-B): sin torneos con un principal conocido le faltan dos; el 104 (sin principal en la lista) queda para revisar",
+        [await p.$eval("[data-categoria='B'] .of-estado", (e) => e.textContent), (await lis("[data-subir='revisar'] li")).map((t) => t.split(" · ").slice(0, 3).join(" · ")),
+         await p.$$eval("[data-subir='firmes']", (x) => x.length)],
+        ["De B a A: Le faltan dos", ["01/03/2023 · Internacional con titulados 2023 (clásico, suizo, 9 rondas) · Árbitro adjunto principal"], 0]);
+    igual("lo que no se ve lo pide escrito, con el curso de pareo de la A", (await lis("[data-categoria='B'] li[data-estado='Revisar']")).some((t) => /programa de pareo avalado por FIDE de al menos 10 horas y de menos de un año \(art\. 14, e\)/.test(t)), true);
+    await ctx.close();
+    // Dos torneos con Óscar (IA, activo) de principal: uno blitz y otro clásico,
+    // de 7 rondas o más. Uno de 5 rondas no sirve. Y en dos fue principal más
+    // allá de lo que deja la B: uno de FIDE y uno nacional de 60 jugadores.
+    const blitz = T(109, "Blitz con norma 2025", "2025-08-01", "no", "no"); blitz.ritmo = "Blitz"; blitz.rondas = 7;
+    const corto = T(112, "Abierto corto 2025", "2025-07-01", "no", "no"); corto.rondas = 5;
+    TORNEOS.push(blitz, T(110, "Abierto clásico 2025", "2025-09-01", "si", "no"), T(111, "Internacional grande 2025", "2025-10-01", "si", "no"), corto);
+    CARGOS.push({ torneo_id: 109, fide_id: 6500003, cargo: "Arbiter" }, { torneo_id: 109, fide_id: 6500001, cargo: "Chief" },
+        { torneo_id: 110, fide_id: 6500003, cargo: "Arbiter" }, { torneo_id: 110, fide_id: 6500001, cargo: "Chief" },
+        { torneo_id: 111, fide_id: 6500003, cargo: "Chief" },
+        { torneo_id: 112, fide_id: 6500003, cargo: "Arbiter" }, { torneo_id: 112, fide_id: 6500001, cargo: "Chief" });
+    CR.push({ clave: 900008, nombre: "Nacional de Heredia 2025", inicio: "2025-07-20", fin: "2025-07-21", lugar: "Heredia", control: "90 min", rondas: 6, jugadores: 60, fide_torneo: null });
+    ELO_CR.push({ clave: 900008, calculo: "nacional", ritmo: "clasico" });
+    CR_CARGOS.push({ clave: 900008, fide_id: 6500003, rol: "ap" });
+    ({ ctx, p } = await abrir(browser, "arbitros-cr.html#6500003", true, DIC));
+    await p.waitForFunction(() => document.getElementById("ficha").checkVisibility());
+    igual("con un blitz y un clásico firmados por Óscar le alcanzarían las normas (el de 5 rondas no cuenta)",
+        [await p.$eval("[data-categoria='B'] .of-estado", (e) => e.textContent), await lis("[data-subir='firmes'] li")],
+        ["De B a A: Le alcanzaría", ["01/09/2025 · Abierto clásico 2025 (clásico, suizo, 9 rondas) · Árbitro · firmaría Ángulo Prueba, Óscar (IA) · cuenta hasta el 01/09/2028",
+            "01/08/2025 · Blitz con norma 2025 (blitz, suizo, 7 rondas) · Árbitro · firmaría Ángulo Prueba, Óscar (IA) · cuenta hasta el 01/08/2028"]]);
+    igual("y dice dónde fue principal más allá de lo que deja la B (art. 13)", await lis("[data-subir='fuera'] li"),
+        ["01/10/2025 · Internacional grande 2025 · Árbitro principal · de FIDE, 40 jugadores", "20/07/2025 · Nacional de Heredia 2025 · Árbitro principal · solo Elo nacional, 60 jugadores"]);
+    await ctx.close();
+    ({ ctx, p } = await abrir(browser, "arbitros-cr.html", true, DIC));
+    await p.waitForFunction(() => document.getElementById("app").checkVisibility());
+    igual("en la lista, «Quiénes pueden subir de categoría»", [await filas(p, "#tabla-subir"), await p.$eval("#subir-cuenta", (e) => e.textContent)],
+        [[["Rojas Prueba, Luis", "B a A", "Le alcanzaría", "2", "1", "2"]],
+         "1 Árbitro Nacional de categoría C o B tiene algo para mirar; a 1 le alcanzarían las normas para subir (lo demás —el año con la categoría y los cursos— no se ve desde acá)."]);
+    await ctx.close();
+    // La norma para firmar y el informe para la Junta, con estos mismos torneos.
+    ({ ctx, p } = await abrir(browser, "arbitros-cr.html#6500003", true, DIC));
+    await p.waitForFunction(() => document.getElementById("ficha").checkVisibility());
+    const [normaFca] = await Promise.all([p.waitForEvent("download"), p.click("[data-norma-fca='f110']")]);
+    const normaTxt = require("fs").readFileSync(await normaFca.path()).toString("latin1");
+    igual("«Norma (PDF)»: el formulario para firmar, con el aspirante, el torneo y quien firma", [normaFca.suggestedFilename(), normaTxt.includes("Rojas Prueba, Luis"),
+        normaTxt.includes("Abierto cl"), normaTxt.includes("6500001"), normaTxt.includes("01/09/2028")], ["norma-6500003-f110.pdf", true, true, true, true]);
+    igual("Luis arbitró un torneo válido para Elo en dos años: activo según el art. 19", await p.$eval("#ficha-actividad-fca", (e) => e.textContent),
+        "Actividad según el art. 19 del reglamento: Activo (torneo), arbitró un torneo válido para Elo el 01/10/2025 (Internacional grande 2025).");
+    igual("sin nada registrado lo dice, y sin ser de administración no hay formulario",
+        [await p.$eval("#tabla-formacion tbody", (e) => /No hay nada registrado/.test(e.textContent)), await visible(p, "#formacion-form")], [true, false]);
+    await ctx.close();
+    ({ ctx, p } = await abrir(browser, "arbitros-cr.html", true, DIC));
+    await p.waitForFunction(() => document.getElementById("app").checkVisibility());
+    igual("el informe para la Junta arranca en el último cuatrimestre terminado (mayo a agosto de 2025)", [await p.$eval("#informe-cuatrimestre", (e) => e.value),
+        await p.$$eval("#informe-cuatrimestre option", (os) => os.map((o) => o.textContent))],
+        ["2025-1", ["De setiembre a diciembre de 2025 (en curso)", "De mayo a agosto de 2025", "De enero a abril de 2025"]]);
+    const [informeJ] = await Promise.all([p.waitForEvent("download"), p.click("#informe-junta")]);
+    const infJ = require("fs").readFileSync(await informeJ.path()).toString("latin1");
+    igual("y trae los torneos del cuatrimestre con su principal, quién arbitró, quién puede subir y lo que arbitró de más",
+        [informeJ.suggestedFilename(), infJ.includes("Blitz con norma 2025"), infJ.includes("Nacional de Heredia 2025"), infJ.includes("Internacional grande 2025"),
+         infJ.includes("Abierto Internacional 2025")], ["informe-arbitraje-2025-05.pdf", true, true, false, false]);
+    await p.evaluate(() => { window.TablaExcel.bajar = (nombre, hojas) => { window.__excel = { nombre, hojas }; }; });
+    await p.click("#subir-excel");
+    const exSubir = await p.evaluate(() => window.__excel);
+    igual("«Quiénes pueden subir» en Excel", [exSubir.nombre, exSubir.hojas[0].filas.slice(1).map((f) => [f[0], f[2], f[3], f[5], f[6], f[7], f[8]])],
+        ["subir-de-categoria.xlsx", [["Rojas Prueba, Luis", "B", "A", "Le alcanzaría", 2, 1, 2]]]);
+    await p.selectOption("#federacion", "mas");
+    igual("el filtro «Más de lo que deja su categoría»", (await filas(p, "#tabla-arbitros")).map((f) => f[0]), ["Rojas Prueba, Luis"]);
+    await ctx.close();
+    // Con su categoría y sus cursos registrados: el 104 (de antes de la B) ya no cuenta, y puede pedirla.
+    FORMACION.push({ id: "f1", fide_id: 6500003, tipo: "categoria", categoria: "B", fecha: "2024-01-15", horas: null, nota: null, detalle: "" },
+        { id: "f2", fide_id: 6500003, tipo: "intermedio", categoria: null, fecha: "2025-06-01", horas: 20, nota: 90, detalle: "Taller intermedio FCA" },
+        { id: "f3", fide_id: 6500003, tipo: "pareo", categoria: null, fecha: "2025-03-01", horas: 10, nota: 85, detalle: "Swiss-Manager" });
+    ({ ctx, p } = await abrir(browser, "arbitros-cr.html#6500003", true, DIC));
+    await p.waitForFunction(() => document.getElementById("ficha").checkVisibility());
+    igual("con la categoría y los cursos registrados: cumple el año y los dos cursos, y puede pedirla; el 104, de antes de la B, ya no cuenta",
+        [await p.$eval("[data-categoria='B'] .of-estado", (e) => e.textContent), await p.$$eval("[data-categoria='B'] li[data-estado]", (ls) => ls.map((l) => l.dataset.estado)),
+         await p.$$eval("[data-subir='revisar']", (x) => x.length), await p.$$eval("#tabla-formacion tbody tr", (t) => t.length),
+         /\bnull\b/.test(await p.$eval("#ficha-categoria", (e) => e.textContent))],
+        ["De B a A: Puede pedirla", ["Normas", "Revisar", "Cumple", "Cumple", "Cumple"], 0, 3, false]);
+    await ctx.close();
+    FORMACION[0].fecha = "2025-08-15"; FORMACION[2].nota = null;
+    ({ ctx, p } = await abrir(browser, "arbitros-cr.html#6500003", true, DIC));
+    await p.waitForFunction(() => document.getElementById("ficha").checkVisibility());
+    igual("con la B desde agosto de 2025: le falta el año, solo cuenta el torneo de setiembre, el intermedio de junio ya no sirve (para la A, distinto del de la B) y el de pareo sin nota queda para revisar",
+        [await p.$eval("[data-categoria='B'] .of-estado", (e) => e.textContent), await p.$$eval("[data-categoria='B'] li[data-estado]", (ls) => ls.map((l) => l.dataset.estado)),
+         (await lis("[data-subir='firmes'] li")).map((t) => t.split(" · ")[1])],
+        ["De B a A: Le falta una", ["Normas", "Revisar", "Falta", "Falta", "Revisar"], ["Abierto clásico 2025 (clásico, suizo, 9 rondas)"]]);
+    await ctx.close();
+    FORMACION.length = 0;
+    TORNEOS.splice(-4, 4); CARGOS.splice(-7, 7); CR.pop(); ELO_CR.pop(); CR_CARGOS.pop();
+    ({ ctx, p } = await abrir(browser, "arbitros-cr.html", true, DIC));
+    await p.waitForFunction(() => document.getElementById("app").checkVisibility());
+    await p.selectOption("#federacion", "inactivo");
+    igual("el filtro «Sin actividad (art. 19)»: ni curso ni torneo válido para Elo en dos años (Ana fue solo asistente y de pareos)",
+        (await filas(p, "#tabla-arbitros")).map((f) => f[0]).sort(), ["Rojas Prueba, Luis", "Soto Prueba, Ana", "Viejo Prueba, Juan"]);
+    await ctx.close();
+    // Administración registra y quita.
+    ({ ctx, p } = await abrir(browser, "arbitros-cr.html#6500003", true, DIC, true));
+    await p.waitForFunction(() => document.getElementById("ficha").checkVisibility());
+    igual("administración ve el formulario; con «Categoría» no pide horas", [await visible(p, "#formacion-form"), await visible(p, "#formacion-horas")], [true, false]);
+    await p.selectOption("#formacion-categoria", "B");
+    await p.fill("#formacion-fecha", "2024-01-15");
+    await p.click("#formacion-guardar");
+    await p.waitForFunction(() => /quedó registrado/.test(document.getElementById("formacion-estado").textContent));
+    await p.selectOption("#formacion-tipo", "actualizacion");
+    igual("con un curso pide las horas", await visible(p, "#formacion-horas"), true);
+    await p.fill("#formacion-fecha", "2025-02-01"); await p.fill("#formacion-horas", "20"); await p.fill("#formacion-nota", "95");
+    await p.click("#formacion-guardar");
+    await p.waitForFunction(() => document.querySelectorAll("#tabla-formacion tbody tr[data-tipo]").length === 2);
+    igual("quedan los dos, el más nuevo primero, y el curso de actualización lo deja activo", [(await filas(p, "#tabla-formacion")).map((f) => f.slice(0, 4)),
+        /^Actividad según el art\. 19 del reglamento: Activo \(curso\), 20 horas/.test(await p.$eval("#ficha-actividad-fca", (e) => e.textContent))],
+        [[["01/02/2025", "Curso de actualización", "20", "95 %"], ["15/01/2024", "Categoría B", "—", "—"]], true]);
+    await p.selectOption("#formacion-tipo", "categoria"); await p.selectOption("#formacion-categoria", "B"); await p.fill("#formacion-fecha", "2024-03-01");
+    await p.click("#formacion-guardar");
+    await p.waitForFunction(() => /ya está registrada/.test(document.getElementById("formacion-estado").textContent));
+    igual("la misma categoría dos veces no entra (el índice único de la base)", (await filas(p, "#tabla-formacion")).length, 2);
+    await p.click("#tabla-formacion tbody tr[data-tipo='actualizacion'] button");
+    await p.click("button:text-is('Quitarlo')");
+    await p.waitForFunction(() => document.querySelectorAll("#tabla-formacion tbody tr[data-tipo]").length === 1);
+    igual("«Quitar» pide confirmar y lo quita", (await filas(p, "#tabla-formacion")).map((f) => f[1]), ["Categoría B"]);
+    await ctx.close();
+    FORMACION.length = 0;
+
+    console.log("\n=== La categoría sugerida ===");
+    ({ ctx, p } = await abrir(browser, "arbitros-cr.html", true));
+    await p.waitForFunction(() => document.getElementById("app").checkVisibility());
+    igual("Juan (AN sin categoría): sin normas, C; Luis (B): sus torneos no la respaldan, pero no baja, y ya fue adjunto en uno de FIDE (trabajo de A)",
+        (await filas(p, "#tabla-sugerida")).map((f) => f.slice(0, 6)),
+        [["Viejo Prueba, Juan", "AN", "—", "C", "C", "A"], ["Rojas Prueba, Luis", "AN", "B", "B (se queda)", "C", "A"]]);
+    igual("y la cuenta", await p.$eval("#sugerida-cuenta", (e) => e.textContent),
+        "1 árbitro debería tener otra categoría según sus torneos; 1 más arbitra como una categoría mayor sin las normas para tenerla.");
+    await ctx.close();
+    // Dos pares de normas de Luis firmados por Óscar: uno en 2025 y otro más de un año después. Y Ana (AF) con la C en la lista de la Federación.
+    const rapido = (id, nombre, inicio) => { const t = T(id, nombre, inicio, "no", "no"); t.ritmo = "Rapid"; t.rondas = 7; return t; };
+    const blitzS = T(109, "Blitz con norma 2025", "2025-08-01", "no", "no"); blitzS.ritmo = "Blitz"; blitzS.rondas = 7;
+    TORNEOS.push(blitzS, T(110, "Abierto clásico 2025", "2025-09-01", "si", "no"), rapido(113, "Rápido de setiembre 2026", "2026-09-10"), T(114, "Abierto clásico 2026", "2026-09-20", "si", "no"));
+    for (const id of [109, 110, 113, 114]) CARGOS.push({ torneo_id: id, fide_id: 6500003, cargo: "Arbiter" }, { torneo_id: id, fide_id: 6500001, cargo: "Chief" });
+    ARBITROS_FIDE.find((f) => f.fide_id === 6500002).categoria_nacional = "C";
+    ({ ctx, p } = await abrir(browser, "arbitros-cr.html", true));
+    await p.waitForFunction(() => document.getElementById("app").checkVisibility());
+    const sug = porNombre(await filas(p, "#tabla-sugerida"));
+    igual("Luis: un par en 2025 (B) y otro un año después (A) → sugerida A; Ana es AF con la C en la lista → A",
+        [sug["Rojas Prueba, Luis"].slice(2, 5), /^Para la B: Blitz con norma 2025 \(01\/08\/2025, blitz, suizo\) y Abierto clásico 2025 .*para la A, un año después: Rápido de setiembre 2026/.test(sug["Rojas Prueba, Luis"][6]),
+         sug["Soto Prueba, Ana"].slice(1, 4), (await filas(p, "#tabla-sugerida"))[0][0]],
+        [["B", "A", "A"], true, ["AF", "C", "A"], "Rojas Prueba, Luis"]);
+    await p.evaluate(() => { window.TablaExcel.bajar = (nombre, hojas) => { window.__excel = { nombre, hojas }; }; });
+    await p.click("#sugerida-excel");
+    const exSug = await p.evaluate(() => window.__excel);
+    igual("el Excel trae a todos los que tienen título (también los que coinciden)", [exSug.nombre, exSug.hojas[0].filas.slice(1).map((f) => [f[0], f[3], f[4]])],
+        ["categoria-sugerida.xlsx", [["Ángulo Prueba, Óscar", "", "A"], ["Rojas Prueba, Luis", "B", "A"], ["Soto Prueba, Ana", "C", "A"], ["Viejo Prueba, Juan", "", "C"]]]);
+    await ctx.close();
+    ({ ctx, p } = await abrir(browser, "arbitros-cr.html#6500003", true));
+    await p.waitForFunction(() => document.getElementById("ficha").checkVisibility());
+    igual("y la ficha lo dice en «Para subir de categoría»", await p.$eval("[data-categoria] [data-sugerida]", (e) => [e.dataset.sugerida, /^Categoría sugerida: A\. /.test(e.textContent)]), ["A", true]);
+    await ctx.close();
+    TORNEOS.splice(-4, 4); CARGOS.splice(-8, 8); delete ARBITROS_FIDE.find((f) => f.fide_id === 6500002).categoria_nacional;
+    ({ ctx, p } = await abrir(browser, "arbitros-cr.html#6500004", true, DIC));
+    await p.waitForFunction(() => document.getElementById("ficha").checkVisibility());
+    igual("Juan (AN sin categoría en la lista de la Federación): lo dice", /No figura con categoría en la lista de la Federación/.test(await p.$eval("#ficha-categoria", (e) => e.textContent)), true);
+    await ctx.close();
+    ({ ctx, p } = await abrir(browser, "arbitros-cr.html#6500001", true, DIC));
+    await p.waitForFunction(() => document.getElementById("ficha").checkVisibility());
+    igual("Óscar (IA): sin la tarjeta", await p.$eval("#ficha-categoria", (e) => e.childElementCount), 0);
     await ctx.close();
 
     console.log("\n=== Quien solo está en chess-results ===");

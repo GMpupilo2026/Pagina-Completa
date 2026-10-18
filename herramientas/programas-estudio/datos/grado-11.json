@@ -15,7 +15,7 @@
   "Al finalizar undécimo año, la persona estudiante administra su tiempo de reflexión con reloj y aplica técnicas concretas para regular la ansiedad, la frustración y el exceso de confianza.",
   "Al finalizar undécimo año, la persona estudiante cuida su sueño, su alimentación, su actividad física y su uso de pantallas como parte de su preparación.",
   "Al finalizar undécimo año, la persona estudiante planifica y da una lección corta de ajedrez a niñas y niños de primaria con los cuatro momentos de la mediación pedagógica.",
-  "Al finalizar undécimo año, la persona estudiante resuelve situaciones de arbitraje con las Leyes del Ajedrez de la FIDE y explica cómo funcionan la Federación Central de Ajedrez de Costa Rica y los Juegos Deportivos Nacionales.",
+  "Al finalizar undécimo año, la persona estudiante resuelve situaciones de arbitraje con las Leyes del Ajedrez de la FIDE y explica cómo funcionan la Federación Costarricense de Ajedrez de Costa Rica y los Juegos Deportivos Nacionales.",
   "Al finalizar undécimo año, la persona estudiante organiza en equipo un evento comunal de ajedrez, con reglamento, presupuesto, plan de contingencia y rendición de cuentas.",
   "Al finalizar undécimo año, la persona estudiante presenta un portafolio de egreso que valora su recorrido y plantea metas propias para después del colegio."
  ],
@@ -583,7 +583,7 @@
     136,
     168
    ],
-   "proposito": "El ajedrez tiene reglas, instituciones y oficios. En esta unidad el estudiantado arbitra casos reales con las Leyes del Ajedrez de la FIDE, conoce los sistemas de competencia y los desempates, investiga en fuentes oficiales cómo funciona la Federación Central de Ajedrez de Costa Rica y cómo participa el ajedrez en los Juegos Deportivos Nacionales que organiza el ICODER, y revisa los caminos de vida y carrera ligados al juego: entrenamiento, arbitraje, organización de eventos, docencia, programación y comunicación. Lo aprendido se aplica a la planificación del festival comunal del proyecto del II semestre.",
+   "proposito": "El ajedrez tiene reglas, instituciones y oficios. En esta unidad el estudiantado arbitra casos reales con las Leyes del Ajedrez de la FIDE, conoce los sistemas de competencia y los desempates, investiga en fuentes oficiales cómo funciona la Federación Costarricense de Ajedrez de Costa Rica y cómo participa el ajedrez en los Juegos Deportivos Nacionales que organiza el ICODER, y revisa los caminos de vida y carrera ligados al juego: entrenamiento, arbitraje, organización de eventos, docencia, programación y comunicación. Lo aprendido se aplica a la planificación del festival comunal del proyecto del II semestre.",
    "eje": "Vivencia de los derechos humanos para la democracia y la paz",
    "valores": [
     "juego limpio",
@@ -631,7 +631,7 @@
      "contenidos": {
       "conceptuales": [
        "FIDE y federaciones nacionales.",
-       "Federación Central de Ajedrez de Costa Rica: afiliación, torneos y rating.",
+       "Federación Costarricense de Ajedrez de Costa Rica: afiliación, torneos y rating.",
        "Juegos Deportivos Nacionales del ICODER y comités cantonales de deportes y recreación."
       ],
       "procedimentales": [
@@ -3408,11 +3408,11 @@
   {
    "d": 148,
    "u": 5,
-   "tema": "La Federación Central de Ajedrez de Costa Rica",
+   "tema": "La Federación Costarricense de Ajedrez de Costa Rica",
    "ae": "5.2",
-   "objetivo": "Explicar qué es la Federación Central de Ajedrez de Costa Rica y su relación con la FIDE.",
+   "objetivo": "Explicar qué es la Federación Costarricense de Ajedrez de Costa Rica y su relación con la FIDE.",
    "foc": "Pregunta: «¿Quién organiza los campeonatos nacionales? ¿Cómo se consigue un rating?» Se anotan las respuestas sin corregir.",
-   "exp": "En grupos leen una ficha preparada por la persona docente con la estructura del ajedrez federado: la FIDE como federación internacional, las federaciones nacionales afiliadas, la Federación Central de Ajedrez de Costa Rica como federación del país, los clubes y las personas afiliadas. Dibujan un esquema.",
+   "exp": "En grupos leen una ficha preparada por la persona docente con la estructura del ajedrez federado: la FIDE como federación internacional, las federaciones nacionales afiliadas, la Federación Costarricense de Ajedrez de Costa Rica como federación del país, los clubes y las personas afiliadas. Dibujan un esquema.",
    "con": "Se revisan las respuestas iniciales. La persona docente aclara que datos como requisitos de afiliación, costos y calendario cambian y se consultan en los canales oficiales de la Federación.",
    "apl": "Cada grupo escribe cinco preguntas para investigar en la siguiente lección.",
    "eval": {
@@ -3428,7 +3428,7 @@
    "ae": "5.2",
    "objetivo": "Buscar y verificar información en fuentes oficiales sobre el ajedrez federado.",
    "foc": "La persona docente muestra dos páginas sobre el mismo tema: una oficial y un foro. Pregunta cuál usarían y por qué.",
-   "exp": "En la sala de cómputo, cada grupo responde sus cinco preguntas con fuentes oficiales: canales de la Federación Central de Ajedrez de Costa Rica, sitio de la FIDE y sitio del ICODER. Anotan la dirección y la fecha de consulta.",
+   "exp": "En la sala de cómputo, cada grupo responde sus cinco preguntas con fuentes oficiales: canales de la Federación Costarricense de Ajedrez de Costa Rica, sitio de la FIDE y sitio del ICODER. Anotan la dirección y la fecha de consulta.",
    "con": "Se ponen en común las respuestas y se marca cuáles quedaron sin confirmar. La persona docente insiste en no inventar ni completar datos que no aparecen.",
    "apl": "Cada grupo redacta un resumen de media página con sus fuentes.",
    "eval": {
@@ -3736,7 +3736,7 @@
    "ae": "5.1",
    "objetivo": "Demostrar el dominio del reglamento y el conocimiento del ajedrez federado.",
    "foc": "La persona docente reparte la prueba y aclara la escala de desempeño.",
-   "exp": "Primera parte (20 minutos): seis casos de arbitraje con artículo y decisión, y dos preguntas sobre la Federación Central de Ajedrez de Costa Rica y los Juegos Deportivos Nacionales respondidas con las fuentes investigadas. Segunda parte: simulación de un incidente en vivo con explicación a las partes.",
+   "exp": "Primera parte (20 minutos): seis casos de arbitraje con artículo y decisión, y dos preguntas sobre la Federación Costarricense de Ajedrez de Costa Rica y los Juegos Deportivos Nacionales respondidas con las fuentes investigadas. Segunda parte: simulación de un incidente en vivo con explicación a las partes.",
    "con": "Al entregar, se comentan las respuestas de los casos más discutidos.",
    "apl": "Cada estudiante completa una autoevaluación de la unidad.",
    "eval": {
