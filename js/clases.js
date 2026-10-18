@@ -121,6 +121,12 @@
             { title: "Entrenamiento intermedio", plegable: true, tiles: [
                 { emoji: "🗂️", label: "Ejercicios por tema", desc: "Clavadas, ataques dobles, mates, finales y táctica de ataque", href: "entreno/temas.html", soloAlumno: true },
                 { emoji: "♞", label: "Aperturas y celadas", desc: "Líneas para memorizar jugándolas, con repaso espaciado", href: "entreno/aperturas.html", soloAlumno: true },
+                /* La prueba de estilo va al lado de Aperturas y celadas: lo que
+                   sale de ella es qué aperturas te quedan, y cada una lleva a
+                   practicarla ahí. No va con el diagnóstico, en «Lo que te pone
+                   tu profesor»: esta no te la pone nadie. Su profe la ve en
+                   Informes, dentro de «Sus aperturas». */
+                { emoji: "🎭", label: "Tu estilo de juego", desc: "Qué tipo de partida te gusta y qué aperturas te quedan", href: "entreno/estilo.html", soloAlumno: true },
                 { emoji: "🔬", label: "Mis estudios", desc: "Tus líneas con variantes y comentarios, el motor para buscar mejoras y tu repertorio", href: "entreno/mis-estudios.html", soloAlumno: true },
                 { emoji: "📴", label: "Ejercicios sin internet", desc: "Guarda una tanda en el celular y resuélvela donde no hay señal", href: "entreno/sin-internet.html", soloAlumno: true },
             ] },
@@ -1392,6 +1398,7 @@
             "calendario.html": "agenda horario fechas mes semana plan entregas vence cuando",
             "reto-ejercicios.html": "retar companero duelo ejercicios competir quien resuelve mas",
             "entreno/diagnostico.html": "nivel examen de nivel prueba de nivel",
+            "entreno/estilo.html": "estilo de juego aperturas defensas repertorio que apertura jugar atacar posicional",
             "nivel-de-arbitraje.html": "arbitro reglamento fide",
             "arbitraje.html": "arbitro reglamento fide revisar",
             "pareo.html": "pareo emparejar emparejamientos suizo holandes fide desempates buchholz sonneborn arbitro arbitraje torneo rondas trf swiss manager",

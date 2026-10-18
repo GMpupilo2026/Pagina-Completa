@@ -76,6 +76,7 @@ tabla  entreno_pedidos  rls=true
 tabla  equipo_alumnos  rls=true
 tabla  equipo_entrenadores  rls=true
 tabla  equipos  rls=true
+tabla  estilo_pruebas  rls=true
 tabla  estudios  rls=true
 tabla  examen_items  rls=true
 tabla  examen_respuestas  rls=true
@@ -758,6 +759,14 @@ columna  equipos.created_at  timestamp with time zone
 columna  equipos.created_by  uuid
 columna  equipos.id  uuid
 columna  equipos.nombre  text
+columna  estilo_pruebas.alumno_id  uuid
+columna  estilo_pruebas.contexto  jsonb
+columna  estilo_pruebas.created_at  timestamp with time zone
+columna  estilo_pruebas.id  uuid
+columna  estilo_pruebas.partidas  jsonb
+columna  estilo_pruebas.recomendacion  jsonb
+columna  estilo_pruebas.respuestas  jsonb
+columna  estilo_pruebas.version  smallint
 columna  estudios.alumno_id  uuid
 columna  estudios.capitulos  jsonb
 columna  estudios.compartido  boolean
@@ -2003,6 +2012,7 @@ funcion  interno.emitir_cobros(p_hasta date, p_suscripcion uuid)  definer  anon=
 funcion  interno.emitir_recibo(p_alumno uuid, p_fecha date, p_metodo text, p_referencia text, p_nota text, p_emitido_por uuid)  definer  anon=false  auth=false
 funcion  interno.enlaces_de_sala_validos(p jsonb)  invoker  anon=true  auth=true
 funcion  interno.entreno_pedido_de_la_base()  definer  anon=false  auth=false
+funcion  interno.estilo_pruebas_al_guardar()  definer  anon=false  auth=false
 funcion  interno.estudio_al_guardar()  definer  anon=false  auth=false
 funcion  interno.frenar_envio_publico(p_tipo text, p_ambito text, p_correo text, p_ip text)  invoker  anon=false  auth=false
 funcion  interno.gente_de_mis_academias()  definer  anon=false  auth=true
@@ -2400,6 +2410,9 @@ politica  entreno_pedidos  verificacion_en_dos_pasos  ALL  restrictiva
 politica  equipo_alumnos  equipo_alumnos_select  SELECT
 politica  equipo_entrenadores  equipo_entrenadores_select  SELECT
 politica  equipos  equipos_select  SELECT
+politica  estilo_pruebas  estilo_pruebas_delete  DELETE
+politica  estilo_pruebas  estilo_pruebas_insert  INSERT
+politica  estilo_pruebas  estilo_pruebas_select  SELECT
 politica  estudios  estudios_delete_propio  DELETE
 politica  estudios  estudios_exige_acceso_ins  INSERT  restrictiva
 politica  estudios  estudios_exige_acceso_upd  UPDATE  restrictiva
@@ -2754,6 +2767,7 @@ trigger  equipo_entrenadores  auditar
 trigger  equipo_entrenadores  equipo_entrenadores_subgrupo
 trigger  equipos  auditar
 trigger  equipos  equipos_renombra_subgrupos
+trigger  estilo_pruebas  estilo_pruebas_al_guardar
 trigger  estudios  estudio_al_guardar
 trigger  examen_respuestas  examen_respuestas_exige_acceso
 trigger  examenes  avisar_examen_asignado
@@ -2998,6 +3012,8 @@ indice  equipo_entrenadores  equipo_entrenadores_teacher_idx
 indice  equipos  equipos_created_by_fk
 indice  equipos  equipos_nombre_unico
 indice  equipos  equipos_pkey
+indice  estilo_pruebas  estilo_pruebas_alumno
+indice  estilo_pruebas  estilo_pruebas_pkey
 indice  estudios  estudios_alumno_fecha
 indice  estudios  estudios_pkey
 indice  examen_items  examen_items_examen_id_orden_key
@@ -3793,6 +3809,9 @@ grant  equipos  authenticated  SELECT
 grant  equipos  authenticated  TRIGGER
 grant  equipos  authenticated  TRUNCATE
 grant  equipos  authenticated  UPDATE
+grant  estilo_pruebas  authenticated  DELETE
+grant  estilo_pruebas  authenticated  INSERT
+grant  estilo_pruebas  authenticated  SELECT
 grant  estudios  authenticated  DELETE
 grant  estudios  authenticated  INSERT
 grant  estudios  authenticated  REFERENCES

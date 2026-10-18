@@ -30,11 +30,14 @@
   const MODULOS = ["vendor/chess.js", "preparacion-lineas.js", "preparacion-posiciones.js", "preparacion-tactica.js",
     "preparacion-libro.js", "preparacion-estructuras.js", "preparacion-analisis.js", "preparacion-descarga.js"];
 
+  // Los módulos viven al lado de este archivo: así se cargan también desde
+  // una página de una subcarpeta (entreno/estilo.html), no solo desde la raíz.
+  const ESTE = typeof document !== "undefined" && document.currentScript && document.currentScript.src;
   let cargando = null;
   function cargarModulos() {
     if (window.PreparacionAnalisis && window.PreparacionDescarga) return Promise.resolve();
     if (cargando) return cargando;
-    const base = new URL("js/", document.baseURI);
+    const base = ESTE ? new URL("./", ESTE) : new URL("js/", document.baseURI);
     cargando = MODULOS.reduce((p, nombre) => p.then(() => {
       if (nombre === "vendor/chess.js" && typeof window.Chess !== "undefined") return null;
       if (document.querySelector('script[data-analisis-cargado="' + nombre + '"]')) return null;

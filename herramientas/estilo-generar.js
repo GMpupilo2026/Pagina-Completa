@@ -19,8 +19,8 @@
  *     tanto entre ellas), y la posición no está decidida (la mejor, entre
  *     −1,5 y +1,5). Si una fuera claramente mejor, la pregunta mediría fuerza
  *     y no gusto.
- *   - El carácter opuesto lo miden las funciones de herramientas/lib/
- *     estilo-medidas.js, con la línea del motor que sigue a cada jugada, y
+ *   - El carácter opuesto lo miden las funciones de js/estilo-medidas.js,
+ *     con la línea del motor que sigue a cada jugada, y
  *     con los umbrales de UMBRAL: mucha diferencia en su eje y poca en los
  *     otros dos, para que cada pregunta mida una sola cosa.
  *   - Una sola posición por partida, y en cada eje al menos 5 con cada color
@@ -42,7 +42,8 @@ const path = require("path");
 const crypto = require("crypto");
 const { Chess } = require("chess.js");
 const { Motor } = require("./lib/motor-uci");
-const M = require("./lib/estilo-medidas");
+const M = require("../js/estilo-medidas");
+const PartidasMaestros = require("./lib/partidas-maestros");
 
 const RAIZ = path.join(__dirname, "..");
 const BANCO = path.join(RAIZ, "js/estilo-items.js");
@@ -63,51 +64,7 @@ const huella = (s) => crypto.createHash("md5").update(s).digest("hex");
 
 /* ---------- Las partidas ---------- */
 
-function partidas() {
-  const out = [];
-  const dir = path.join(RAIZ, "cursos/protegido/data/una-clase-al-dia");
-  for (const f of fs.readdirSync(dir).sort()) {
-    const d = JSON.parse(fs.readFileSync(path.join(dir, f), "utf8"));
-    for (const p of Object.values(d.partidas || {})) {
-      if (p.fragmento || !p.moves || p.moves.some((m) => m.gap)) continue;
-      const vetadas = new Set();
-      for (const x of [...(p.diagramas || []), ...(p.claves || []).map((k) => k.ply)])
-        for (let k = x - 2; k <= x + 2; k++) vetadas.add(k);
-      out.push({
-        fuente: "una-clase-al-dia", id: p.id, blancas: p.blancas, negras: p.negras, evento: p.evento,
-        inicial: p.start_fen, sans: p.moves.map((m) => m.san), vetadas,
-      });
-    }
-  }
-  const cnc = JSON.parse(fs.readFileSync(path.join(__dirname, "datos/cambiar-o-no-cambiar-partidas.json"), "utf8"));
-  for (const p of cnc.partidas) {
-    out.push({
-      fuente: "cambiar-o-no-cambiar", id: p.id, blancas: p.blancas, negras: p.negras,
-      evento: [p.lugar, p.anio].filter(Boolean).join(", "),
-      inicial: p.fen_inicial || new Chess().fen(), sans: p.jugadas, vetadas: new Set(),
-    });
-  }
-  const pgn = fs.readFileSync(path.join(__dirname, "datos/ganar-con-poco-partidas.pgn"), "utf8");
-  pgn.split(/\n(?=\[Event )/).forEach((txt, i) => {
-    const c = new Chess();
-    if (!c.load_pgn(txt)) return;
-    const tag = (t) => ((new RegExp("\\[" + t + ' "([^"]*)"').exec(txt) || [])[1] || "");
-    const sans = c.history();
-    out.push({
-      fuente: "ganar-con-poco", id: "gcp-" + (i + 1), blancas: tag("White"), negras: tag("Black"),
-      evento: [tag("Event"), tag("Date").slice(0, 4)].filter(Boolean).join(", "),
-      inicial: tag("FEN") || new Chess().fen(), sans, vetadas: new Set(),
-    });
-  });
-  /* La misma partida está en más de una lección: se queda la primera. */
-  const vistas = new Set();
-  return out.filter((p) => {
-    const k = huella(p.inicial + " " + p.sans.slice(0, 40).join(" "));
-    if (vistas.has(k)) return false;
-    vistas.add(k);
-    return true;
-  });
-}
+const partidas = () => PartidasMaestros.leer(Chess);
 
 /* Las posiciones de una partida que pueden ser pregunta. */
 function posiciones(p) {

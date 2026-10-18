@@ -96,6 +96,25 @@ const ANALISIS_ANA = (() => {
   return AA.reducir(A.analizar(A.leerPgn(p.join("\n")), "ana_123", { reciente: true }));
 })();
 
+/* Las pruebas de estilo de Ana (y una de Bruno, que no se tiene que ver):
+   Ana elige siempre atacar y mantener las piezas, con la recomendación que
+   le habría dado la página (js/estilo-aperturas.js de verdad). */
+const ESTILO = (() => {
+  const B = require("../js/estilo-items.js");
+  const Pf = require("../js/estilo-perfil.js");
+  const Ap = require("../js/estilo-aperturas.js");
+  const respuestas = [];
+  for (const eje of ["ataque", "estructura", "cambios"]) {
+    B.ITEMS.filter((i) => i.eje === eje).slice(0, 10).forEach((it, k) => {
+      const quiere = eje === "ataque" ? "atacar" : eje === "cambios" ? "mantener" : (k % 2 ? "abrir" : "cerrar");
+      respuestas.push({ id: it.id, eleccion: it.a.polo === quiere ? "a" : "b", seguridad: 3, ms: 5000 });
+    });
+  }
+  const recomendacion = Ap.recomendar(Pf.medir(respuestas, null), { ritmo: "rapidas", estudio: "medio", elo: 1500, actual: {} });
+  const fila = (id, alumno, fecha) => ({ id, alumno_id: alumno, version: 1, respuestas, contexto: {}, partidas: null, recomendacion, created_at: fecha });
+  return [fila("e-2", "a-1", "2026-10-02T15:00:00Z"), fila("e-1", "a-1", "2026-07-02T15:00:00Z"), fila("e-b", "a-2", "2026-08-15T15:00:00Z")];
+})();
+
 // El cliente de mentira: los mismos métodos encadenados que usa la página
 // (select/eq/order/limit/range/maybeSingle) sobre listas fijas, apuntando qué se
 // pidió para poder comprobar el pedido por páginas.
@@ -506,6 +525,7 @@ async function pruebaProfesor(browser) {
       ],
       analisis_partidas_alumno: [{ alumno_id: "a-1", lichess: "ana_123", chesscom: null, partidas: 22,
         analizado_at: "2026-10-01T15:00:00Z", analisis: ANALISIS_ANA }],
+      estilo_pruebas: ESTILO,
       plantillas_casa: [
         { id: "p-1", situacion: "poco", texto: "{nombre} puede más: lo vemos el jueves.", created_at: "2026-09-01T00:00:00Z" },
         { id: "p-2", situacion: "bien", texto: "Sigan así.", created_at: "2026-09-02T00:00:00Z" },
@@ -1017,6 +1037,26 @@ async function pruebaProfesor(browser) {
   ]);
   igual("con sus puntos fuertes y débiles, sus cuentas y nada de otro alumno", [ap.fuerte, ap.debil, ap.cuentas, ap.bruno], [true, true, true, false]);
   igual("quien le da clase puede volver a analizar", ap.boton, true);
+
+  console.log("-- Su estilo de juego (la prueba de estilo)");
+  await page.waitForFunction(() => document.querySelector("#estilo-alumno-cuerpo [data-estilo-recomendacion]"), null, { timeout: 15000 });
+  const es = await page.evaluate(() => {
+    const c = document.getElementById("estilo-alumno-cuerpo");
+    const t = c.textContent.replace(/\s+/g, " ");
+    return {
+      ejes: [...c.querySelectorAll("[data-eje]")].map((x) => x.dataset.eje + ":" + x.dataset.etiqueta),
+      grupos: [...c.querySelectorAll("[data-grupo]")].map((x) => x.dataset.grupo),
+      fecha: /Prueba del 2 de octubre de 2026/.test(t),
+      anteriores: /Pruebas anteriores/.test(t) && /2 de julio de 2026/.test(t),
+      bruno: /15 de agosto/.test(t),
+      seguir: !!c.querySelector("[data-estilo-seguir]"),
+      tercera: /Eligió/.test(t),
+    };
+  });
+  igual("los tres ejes, con atacar y mantener claros", es.ejes.filter((x) => /^(ataque|cambios):/.test(x)), ["ataque:claro", "cambios:claro"]);
+  igual("lo que se le recomendó, en los tres grupos", es.grupos, ["blancas", "e4", "d4"]);
+  igual("la fecha de su prueba, las anteriores, en tercera persona, nada de otro alumno, y el seguimiento",
+    [es.fecha, es.anteriores, es.tercera, es.bruno, es.seguir], [true, true, true, false, true]);
 
   console.log("-- Unas palabras para la casa");
   await page.waitForFunction(() => /Practicó poco/.test((document.querySelector("[data-casa-situacion]") || {}).textContent || ""));

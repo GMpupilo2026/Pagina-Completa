@@ -46,6 +46,7 @@ window.TiempoSecciones = (function () {
         "preparacion":          { nombre: "Preparación de rivales", emoji: "🔭", unidad: ["línea", "líneas"] },
         "estudio":              { nombre: "Estudio (fichas)",      emoji: "📚" },
         "precision-posicional": { nombre: "Precisión posicional",  emoji: "🧭" },
+        "estilo":               { nombre: "Tu estilo de juego",    emoji: "🎭" },
         "sonar":                { nombre: "El Sonar",              emoji: "🔊" },
         "batalla-naval":        { nombre: "Batalla naval",         emoji: "🚢" },
         "buscaminas":           { nombre: "Buscaminas de ajedrez", emoji: "💣" },

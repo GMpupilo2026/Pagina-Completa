@@ -2108,6 +2108,10 @@
                 sb, alumnoId: aperturasPendiente.id, nombre: aperturasPendiente.nombre,
                 puedeEscribir: !profile._persona && (profile.is_admin || profile.role === "profesor"),
             }).catch((e) => console.error(e));
+            // Su estilo y la apertura sugerida (la prueba la hace el alumno; acá se mira).
+            if (window.EstiloTarjeta) EstiloTarjeta.montarProfe(document.getElementById("estilo-alumno-cuerpo"), {
+                sb, alumnoId: aperturasPendiente.id, nombre: aperturasPendiente.nombre,
+            }).catch((e) => console.error(e));
         }
         document.getElementById("aperturas-alumno-report").addEventListener("toggle", montarAperturasAlumno);
         var mensajeCasaPendiente = null, mensajeCasaMontado = null;   // var: renderStudentDetail está más arriba
