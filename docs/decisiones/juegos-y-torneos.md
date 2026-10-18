@@ -3555,7 +3555,9 @@ se evaluó con ningún Elo, «No (sin Elo)».
     control, dice clásico;
   - tres eliminatorias de los JDN 2011 a «40 min finish» y los Paranacionales
     2014 a «45 min», sin ficha.
-  Esas cinco quedan para que el dueño las decida.
+  El dueño las decidió las cinco como **clásico** (18/10/2026): con Elo
+  nacional, que la Federación calcula solo en clásico, el torneo se jugó como
+  clásico aunque el reloj diga menos. Con ellas el filtro queda en 454 torneos.
 - **Cuántos tiene cada árbitro.** La lista lleva la columna «Elo nacional» (con
   los filtros de años, tipo y lugar, como las demás; un festival cuenta si
   alguno de sus torneos fue así) y la ficha y su PDF lo dicen en el resumen
