@@ -1,8 +1,8 @@
 /* ===== El banco de la prueba de estilo =====
  *
- * Arma las 60 posiciones de la prueba de estilo (js/estilo-items.js): 15 por
- * eje (atacar o maniobrar, abrir o cerrar, cambiar o mantener piezas, y
- * quedarse con el material o darlo por la iniciativa). Cada
+ * Arma las 70 posiciones de la prueba de estilo (js/estilo-items.js): 15 por
+ * eje (atacar o maniobrar, abrir o cerrar, cambiar o mantener piezas) y 25 en
+ * el de quedarse con el material o darlo por la iniciativa (POR_EJE). Cada
  * posición trae DOS jugadas que Stockfish valora casi igual y que son de
  * carácter opuesto en su eje: como las dos son buenas, no hay respuesta
  * correcta, y lo que la persona elige dice qué tipo de juego prefiere.
@@ -28,9 +28,10 @@
  *     al turno: el estilo no se mide solo con blancas.
  *   - LO QUE YA ESTÁ NO SE TOCA. Las posiciones del banco tienen respuestas
  *     guardadas (y su calibración): se conservan con su id, y solo se buscan
- *     las de un eje que no tiene sus 15 (así entró el cuarto, «material o
- *     iniciativa», con es46 a es60). De las que ya están solo se vuelven a
- *     calcular las medidas, por si se sumó una. Para rehacer un eje entero
+ *     las de un eje que no tiene las suyas (así entró el cuarto, «material o
+ *     iniciativa», con es46 a es60, y sus otras diez, es61 a es70). De las
+ *     que ya están solo se vuelven a calcular las medidas, por si se sumó
+ *     una. Para rehacer un eje entero
  *     hay que sacar sus posiciones del bloque a mano y subir VERSION.
  *
  * El análisis se guarda en herramientas/.cache-estilo.json (fuera del
@@ -62,7 +63,11 @@ const PROF_RAPIDA = 12;       // primer barrido: multipv 5
 const PROF = 20;              // confirmación de cada pregunta
 const PAREJAS = 30;           // centipeones: cada jugada a lo más esto de la mejor
 const DECIDIDA = 150;         // la mejor jugada, entre −DECIDIDA y +DECIDIDA
-const POR_EJE = 15;
+// Cuántas posiciones tiene cada eje. «Material o iniciativa» tiene 25: era el
+// que medía peor (la posición que menos separaba sus dos jugadas y la que más
+// se mezclaba con los otros ejes), y con más para elegir la prueba no se queda
+// sin posiciones antes de definirlo ni le repite las mismas a quien vuelve.
+const POR_EJE = { ataque: 15, estructura: 15, cambios: 15, material: 25 };
 const MIN_COLOR = 5;          // por eje, al menos esto con cada color al turno
 const PLY_DESDE = 14, PLY_HASTA = 70, CADA = 3;
 const EJES = Object.keys(M.POLOS);
@@ -180,8 +185,8 @@ async function main() {
   if (!fs.existsSync(RUTA)) { console.error("Falta Stockfish en " + RUTA + " (apt install stockfish, o STOCKFISH=/ruta)."); process.exit(2); }
   const lista = partidas();
   const viejos = BancoActual.ITEMS;
-  const faltan = EJES.filter((e) => viejos.filter((i) => i.eje === e).length < POR_EJE);
-  if (!faltan.length) console.log("Todos los ejes tienen sus " + POR_EJE + ": solo se vuelven a calcular las medidas.");
+  const faltan = EJES.filter((e) => viejos.filter((i) => i.eje === e).length < POR_EJE[e]);
+  if (!faltan.length) console.log("Todos los ejes tienen sus posiciones: solo se vuelven a calcular las medidas.");
   else console.log("Ejes a completar: " + faltan.join(", "));
   const todas = [];
   for (const p of lista) for (const pos of posiciones(p)) todas.push({ p, pos });
@@ -234,10 +239,12 @@ async function main() {
     const del = confirmadas.filter((x) => x.r.eje === eje)
       .sort((x, y) => (y.r.fuerza - x.r.fuerza) || (x.h < y.h ? -1 : 1));
     const elegidas = [];
+    const yaHay = viejos.filter((v) => v.eje === eje);
+    const faltanDel = POR_EJE[eje] - yaHay.length;
     const turno = (x) => x.pos.fen.split(" ")[1];
     const tomar = (filtro) => {
       for (const x of del) {
-        if (elegidas.length >= POR_EJE) return;
+        if (elegidas.length >= faltanDel) return;
         // Una partida, una pregunta; y una posición, una pregunta (dos partidas
         // llegan a la misma por otro orden de jugadas).
         const tab = x.pos.fen.split(" ").slice(0, 2).join(" ");
@@ -247,13 +254,14 @@ async function main() {
         elegidas.push(x);
       }
     };
+    // Al menos MIN_COLOR con cada color en el eje, contando las que ya estaban.
     for (const color of ["w", "b"]) {
-      const antes = elegidas.length;
+      const antes = elegidas.length - yaHay.filter((v) => v.fen.split(" ")[1] === color).length;
       tomar((x) => turno(x) === color && elegidas.length - antes < MIN_COLOR);
     }
     tomar(() => true);
-    if (elegidas.length < POR_EJE) {
-      console.error("Eje «" + eje + "»: solo " + elegidas.length + " de " + POR_EJE + ". Hay que bajar umbrales o sumar partidas.");
+    if (elegidas.length < faltanDel) {
+      console.error("Eje «" + eje + "»: solo " + elegidas.length + " de " + faltanDel + ". Hay que bajar umbrales o sumar partidas.");
       process.exit(1);
     }
     banco.push(...elegidas);

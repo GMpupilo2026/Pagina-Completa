@@ -3937,7 +3937,7 @@ Las piezas, una por archivo:
 
 | Archivo | Qué hace |
 |---|---|
-| `js/estilo-items.js` | el banco de 60 posiciones (45 de la versión 1 y 15 del cuarto eje) (lo genera `herramientas/estilo-generar.js`) y su calibración (`herramientas/estilo-calibrar.js`) |
+| `js/estilo-items.js` | el banco de 70 posiciones (45 de la versión 1, y 25 del cuarto eje: es46 a es60 y las diez que se sumaron después, es61 a es70) (lo genera `herramientas/estilo-generar.js`) y su calibración (`herramientas/estilo-calibrar.js`) |
 | `js/estilo-medidas.js` | qué tiene de atacar, abrir, cambiar o dar material una jugada; una sola copia para el generador, los verificadores, el navegador y la medición de aperturas |
 | `js/estilo-perfil.js` | la medición: tendencia y margen por eje, la prueba adaptativa y los controles |
 | `js/estilo-aperturas.js` | el carácter de cada apertura (lo mide `herramientas/estilo-aperturas-medir.js`) y la recomendación |
@@ -4154,7 +4154,7 @@ cuatro ejes de su última prueba, leída con su versión, y lo que se le
 recomendó), quién no la hizo —con cómo pedírsela— y tres preguntas que dicen
 si lo que mide se sostiene:
 
-- **La calibración**: cuántas de las 60 posiciones tienen ya las 30
+- **La calibración**: cuántas de las posiciones del banco tienen ya las 30
   respuestas que pide `herramientas/estilo-calibrar.js`.
 - **La repetición**: de quien la hizo dos veces con 14 días o más entre una y
   otra, en las posiciones que vio las dos veces, cuántas veces eligió la
@@ -4172,6 +4172,62 @@ polo de cada posición. Comprobado en SQL (transacción deshecha): con dos
 pruebas de un alumno a 20 días, el control no cuenta como respuesta, la
 repetición da 2 de 3, las partidas 2 de 3; un profe ajeno ve 0 pruebas y
 anónimo no tiene permiso.
+
+### Diez posiciones más de «material o iniciativa»
+
+El cuarto eje era el que medía peor, y no por falta de respuestas: todavía no
+hay pruebas guardadas para calibrar, así que se juzgó por la calidad de sus
+posiciones. Tenía la que menos separaba sus dos jugadas (un peón, justo el
+umbral) y la que más se mezclaba con los otros ejes: en promedio, 0,80 del
+umbral de los otros contra 0,23 en «abrir o cerrar». Además, con 15
+posiciones y hasta 14 preguntas por eje en la versión 2, la prueba no tenía
+de dónde elegir, y quien la repite recibía las mismas.
+
+- **Se sumaron diez, es61 a es70**, con el mismo generador y las mismas
+  reglas (dos jugadas a 30 centipeones o menos a profundidad 20, una
+  posición por partida, cinco con cada color al turno contando las que ya
+  estaban). `POR_EJE` del generador dice ahora cuántas tiene cada eje: 15,
+  15, 15 y 25. Del primer barrido salieron 1204 candidatas y 63 confirmadas;
+  las diez elegidas dan todas un peón (las de más diferencia ya estaban en el
+  banco), pero se mezclan menos con los otros ejes: 0,52 en promedio.
+- **No cambia la forma ni la versión.** La prueba elige al azar entre las
+  posiciones de cada eje (lo que no vio primero), así que una prueba de la
+  versión 2 de hoy y una de ayer se leen con la misma regla: las posiciones
+  nuevas solo amplían de dónde se elige.
+- **La versión corta no las usa.** Su lista de posiciones quedó fija cuando
+  salió (las 8 más simples de cada eje DE LAS 60 que había); sumarle las
+  nuevas le cambiaría la forma. `verificar-estilo.js` lo comprueba así, y
+  guarda también la huella de es01 a es60: si el generador rehiciera una, sus
+  respuestas guardadas dirían otra cosa.
+- Cuando haya respuestas reales, `estilo-calibrar.js` dirá cuánto distingue
+  cada una; si alguna no distingue, se le baja el peso con la calibración, no
+  se saca del banco.
+
+### El mapa de la clase
+
+En Informes, tema «🎭 Prueba de estilo», debajo de la tabla: un punto por
+alumno en dos ejes que elige el profe (de entrada, atacar o maniobrar de
+izquierda a derecha, y abrir o cerrar de abajo hacia arriba), con el margen
+de cada uno como una cruz fina. Sirve para armar los grupos de una clase de
+aperturas y las parejas para entrenar.
+
+- **El nombre va escrito al lado del punto** (el de pila; con la inicial del
+  apellido si hay dos iguales), y si dos nombres se pisan, el segundo baja. El
+  color no dice nada: los puntos son todos iguales.
+- **Debajo, los grupos escritos**: los cuatro cuadrantes («Atacar al rey y
+  abrir el juego: …»), los que están al medio o sin definir en alguno de los
+  dos ejes, y quién no tiene uno de ellos (una prueba de la versión 1 no mide
+  el cuarto). Un alumno entra a un cuadrante **solo si todo su margen está de
+  ese lado**, la misma regla de la etiqueta: nadie va a «atacar» por un 52 %.
+- **Parejas de estilo opuesto**: se toman primero los más distintos en todos
+  sus ejes (la distancia entre sus porcentajes), y si sobra uno se suma a la
+  pareja de la que está más lejos, en un trío. De cada pareja dice en qué ejes
+  son opuestos con seguridad; si en ninguno, lo dice.
+- El perfil es el de la tabla (su última prueba, con la regla de su versión;
+  sin la opinión del profe, como la tabla). No se guarda nada: se calcula al
+  abrir el tema. Lo comprueba `verificar-informes.js` (los puntos, los grupos,
+  cambiar de eje, que los dos ejes no sean el mismo, el trío y quién queda
+  fuera del cuarto eje).
 
 ### La versión corta, para quien empieza (versión 3)
 

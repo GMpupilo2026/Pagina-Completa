@@ -21,8 +21,9 @@
  *   EstiloTarjeta.montarClase(contenedor, { sb, alumnos: [{ id, nombre }] })
  *   EstiloTarjeta.botonFicha(prueba, perfil, { nombre, tu }) → el botón que
  *     baja la ficha en PDF (js/estilo-ficha-pdf.js, que se carga al tocarlo)
- *     (Informes, tema «Prueba de estilo»: el estilo de cada alumno y si la
- *     prueba funciona, con estilo_salud())
+ *     (Informes, tema «Prueba de estilo»: el estilo de cada alumno, el mapa
+ *     de la clase en dos ejes con sus grupos y las parejas de estilo opuesto,
+ *     y si la prueba funciona, con estilo_salud())
  *
  * La opinión del profe («¿Coincide con lo que ves?», debajo de cada eje) se
  * guarda en estilo_opiniones y entra al perfil con el peso de dos preguntas
@@ -496,6 +497,208 @@
     return out;
   }
 
+  /* ---------- El mapa de la clase ----------
+   * Lo que dice, sin pintar nada (lo comprueba
+   * herramientas/verificar-estilo-clase.js). `perfiles`: [{ id, nombre,
+   * perfil }], con el perfil de EstiloPerfil.medir() de su última prueba.
+   *
+   * De qué lado está cada uno en un eje: el primer polo (0), el segundo (1) o
+   * ninguno todavía (null), con la misma regla que la etiqueta: solo si TODO
+   * su margen queda de un lado. Así nadie entra a un grupo por un 52 %. */
+  function lado(x) { return !x ? null : x.lo > 0.5 ? 0 : x.hi < 0.5 ? 1 : null; }
+
+  /* Los cuatro grupos de dos ejes (atacar y abrir, atacar y cerrar…), los que
+     están al medio en alguno de los dos y los que no tienen uno de los ejes
+     (una prueba de la versión 1 no mide el cuarto). */
+  function cuadrantes(perfiles, ex, ey) {
+    const P = window.EstiloMedidas.POLOS;
+    const grupos = [];
+    for (const iy of [0, 1]) for (const ix of [0, 1]) grupos.push({ polos: [P[ex][ix], P[ey][iy]], alumnos: [] });
+    const alMedio = [], sinEje = [];
+    for (const a of perfiles) {
+      const x = a.perfil[ex], y = a.perfil[ey];
+      if (!x || !y) { sinEje.push(a.nombre); continue; }
+      const lx = lado(x), ly = lado(y);
+      if (lx == null || ly == null) { alMedio.push(a.nombre); continue; }
+      grupos[ly * 2 + lx].alumnos.push(a.nombre);
+    }
+    return { grupos, alMedio, sinEje };
+  }
+
+  /* Parejas de estilo opuesto, para entrenar juntos: cada uno juega lo que al
+     otro no le sale solo. La distancia entre dos es la de sus porcentajes en
+     los ejes que tienen los dos; se toman primero los más lejanos, y si sobra
+     uno se suma a la pareja de la que está más lejos (un trío). `opuestos`: los
+     ejes en que cada uno está de un lado distinto, con todo su margen. */
+  function distancia(a, b) {
+    const ejes = (a.perfil.lista || []).filter((e) => b.perfil[e]);
+    if (!ejes.length) return 0;
+    return Math.sqrt(ejes.reduce((s, e) => s + (a.perfil[e].p - b.perfil[e].p) ** 2, 0) / ejes.length);
+  }
+  function opuestos(grupo) {
+    return (grupo[0].perfil.lista || []).filter((e) => {
+      const lados = grupo.map((a) => lado(a.perfil[e]));
+      return lados.includes(0) && lados.includes(1);
+    });
+  }
+  function parejas(perfiles) {
+    const todas = [];
+    for (let i = 0; i < perfiles.length; i++) for (let j = i + 1; j < perfiles.length; j++) {
+      todas.push({ i, j, d: distancia(perfiles[i], perfiles[j]) });
+    }
+    // Empates por nombre: con los mismos datos, siempre las mismas parejas.
+    const nom = (k) => perfiles[k].nombre;
+    todas.sort((x, y) => (y.d - x.d) || nom(x.i).localeCompare(nom(y.i), "es") || nom(x.j).localeCompare(nom(y.j), "es"));
+    const libre = perfiles.map(() => true);
+    const grupos = [];
+    for (const t of todas) {
+      if (!libre[t.i] || !libre[t.j]) continue;
+      libre[t.i] = libre[t.j] = false;
+      grupos.push({ idx: [t.i, t.j], distancia: t.d });
+    }
+    const queda = libre.indexOf(true);
+    if (queda >= 0 && grupos.length) {
+      let mejor = null, lejos = -1;
+      for (const g of grupos) {
+        const d = Math.min(...g.idx.map((k) => distancia(perfiles[k], perfiles[queda])));
+        if (d > lejos) { lejos = d; mejor = g; }
+      }
+      mejor.idx.push(queda);
+    }
+    return {
+      grupos: grupos.map((g) => {
+        const gente = g.idx.map((k) => perfiles[k]);
+        return { alumnos: gente.map((a) => a.nombre), distancia: g.distancia, opuestos: opuestos(gente) };
+      }),
+      sola: queda >= 0 && !grupos.length ? perfiles[queda].nombre : null,
+    };
+  }
+
+  /* El dibujo: un punto por alumno, con su nombre ESCRITO al lado (el color
+     no dice nada solo) y su margen como una cruz fina. A la derecha y arriba,
+     el primer polo de cada eje. Lo mismo va escrito debajo, en los grupos. */
+  const SVG = "http://www.w3.org/2000/svg";
+  function svgEl(tag, attrs, texto) {
+    const e = document.createElementNS(SVG, tag);
+    for (const k in attrs) e.setAttribute(k, attrs[k]);
+    if (texto != null) e.textContent = texto;
+    return e;
+  }
+  function nombreCorto(nombre, todos) {
+    const partes = String(nombre).trim().split(/\s+/);
+    const pila = partes[0];
+    const iguales = todos.filter((n) => String(n).trim().split(/\s+/)[0] === pila).length;
+    return iguales > 1 && partes[1] ? pila + " " + partes[1][0] + "." : pila;
+  }
+  function dibujarMapa(perfiles, ex, ey) {
+    const B = window.EstiloItems, P = window.EstiloMedidas.POLOS;
+    const L = 360, M0 = 48, A = L - 2 * M0;
+    const X = (p) => M0 + p * A, Y = (p) => M0 + (1 - p) * A;
+    const enMapa = perfiles.filter((a) => a.perfil[ex] && a.perfil[ey]);
+    const svg = svgEl("svg", { viewBox: "0 0 " + L + " " + L, class: "w-full max-w-md h-auto " + TXT, role: "img",
+      "aria-label": "Mapa de la clase: " + B.EJES[ex].nombre.toLowerCase() + " de izquierda a derecha y "
+        + B.EJES[ey].nombre.toLowerCase() + " de abajo hacia arriba. Los grupos van escritos debajo." });
+    svg.setAttribute("data-estilo-mapa", "");
+    svg.appendChild(svgEl("rect", { x: M0, y: M0, width: A, height: A, fill: "none", stroke: "currentColor", "stroke-opacity": "0.35" }));
+    svg.appendChild(svgEl("line", { x1: X(0.5), y1: M0, x2: X(0.5), y2: M0 + A, stroke: "currentColor", "stroke-opacity": "0.35", "stroke-dasharray": "4 4" }));
+    svg.appendChild(svgEl("line", { x1: M0, y1: Y(0.5), x2: M0 + A, y2: Y(0.5), stroke: "currentColor", "stroke-opacity": "0.35", "stroke-dasharray": "4 4" }));
+    const polo = (e, i) => B.EJES[e].polos[P[e][i]];
+    const rotulo = (x, y, texto, ancla, extra) => svg.appendChild(svgEl("text", Object.assign({ x, y, "text-anchor": ancla, "font-size": "11", fill: "currentColor", "font-weight": "600" }, extra || {}), texto));
+    rotulo(M0 + A, M0 + A + 18, polo(ex, 0) + " →", "end");
+    rotulo(M0, M0 + A + 18, "← " + polo(ex, 1), "start");
+    rotulo(14, M0, polo(ey, 0) + " →", "end", { transform: "rotate(-90 14 " + M0 + ")" });
+    rotulo(14, M0 + A, "← " + polo(ey, 1), "start", { transform: "rotate(-90 14 " + (M0 + A) + ")" });
+    const todos = enMapa.map((a) => a.nombre);
+    const puestas = [];
+    for (const a of enMapa) {
+      const x = a.perfil[ex], y = a.perfil[ey];
+      const g = svgEl("g", { "data-alumno": a.id });
+      g.appendChild(svgEl("line", { x1: X(x.lo), y1: Y(y.p), x2: X(x.hi), y2: Y(y.p), stroke: "currentColor", "stroke-opacity": "0.3" }));
+      g.appendChild(svgEl("line", { x1: X(x.p), y1: Y(y.lo), x2: X(x.p), y2: Y(y.hi), stroke: "currentColor", "stroke-opacity": "0.3" }));
+      g.appendChild(svgEl("circle", { cx: X(x.p), cy: Y(y.p), r: 4.5, fill: "currentColor" }));
+      // El nombre, en diagonal arriba del punto (así no lo cruza la línea del
+      // margen), y corrido hacia arriba si pisa otro.
+      let ty = Y(y.p) - 7;
+      const tx = X(x.p) + (x.p > 0.8 ? -7 : 7);
+      while (puestas.some((q) => Math.abs(q.x - tx) < 60 && Math.abs(q.y - ty) < 12)) ty -= 12;
+      puestas.push({ x: tx, y: ty });
+      g.appendChild(svgEl("text", { x: tx, y: ty, "font-size": "11", fill: "currentColor", "text-anchor": x.p > 0.8 ? "end" : "start" }, nombreCorto(a.nombre, todos)));
+      svg.appendChild(g);
+    }
+    return svg;
+  }
+
+  function pintarMapa(caja, perfiles) {
+    const B = window.EstiloItems, P = window.EstiloMedidas.POLOS;
+    const ejes = Object.keys(B.EJES);
+    caja.appendChild(el("h3", H3, "El mapa de la clase"));
+    caja.appendChild(el("p", SUB, "Cada punto es un alumno, con su margen. Sirve para armar grupos de una clase de aperturas y parejas para entrenar."));
+    const elegir = el("div", "flex flex-wrap gap-3 my-2");
+    const sel = (id, texto, valor) => {
+      const lab = el("label", "flex items-center gap-2 " + TXT, texto);
+      const s = el("select", "bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm text-brand-800 dark:text-brand-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400");
+      s.setAttribute("data-mapa-eje", id);
+      ejes.forEach((e) => { const op = el("option", null, B.EJES[e].nombre); op.value = e; s.appendChild(op); });
+      s.value = valor;
+      lab.appendChild(s);
+      elegir.appendChild(lab);
+      return s;
+    };
+    const sx = sel("x", "De izquierda a derecha:", "ataque");
+    const sy = sel("y", "De abajo hacia arriba:", "estructura");
+    caja.appendChild(elegir);
+    const lienzo = el("div");
+    caja.appendChild(lienzo);
+    const pintar = () => {
+      lienzo.textContent = "";
+      const ex = sx.value, ey = sy.value;
+      lienzo.appendChild(dibujarMapa(perfiles, ex, ey));
+      const c = cuadrantes(perfiles, ex, ey);
+      const ul = el("ul", "space-y-1 mt-2 " + TXT);
+      ul.setAttribute("data-estilo-grupos", "");
+      for (const g of c.grupos) {
+        const li = el("li");
+        li.appendChild(el("strong", "font-semibold text-brand-800 dark:text-white", B.EJES[ex].polos[g.polos[0]] + " y " + B.EJES[ey].polos[g.polos[1]].toLowerCase() + ": "));
+        li.appendChild(document.createTextNode(g.alumnos.length ? g.alumnos.join(", ") : "nadie"));
+        ul.appendChild(li);
+      }
+      if (c.alMedio.length) {
+        const li = el("li");
+        li.appendChild(el("strong", "font-semibold text-brand-800 dark:text-white", "Al medio o sin definir en alguno de los dos: "));
+        li.appendChild(document.createTextNode(c.alMedio.join(", ")));
+        ul.appendChild(li);
+      }
+      lienzo.appendChild(ul);
+      if (c.sinEje.length) lienzo.appendChild(el("p", SUB + " mt-1", "Sin alguno de estos ejes (su prueba es de antes de que se midiera): " + c.sinEje.join(", ") + "."));
+    };
+    // Los dos ejes no pueden ser el mismo: se intercambian.
+    let antes = { x: sx.value, y: sy.value };
+    const cambio = (s, otro, k) => () => {
+      if (s.value === otro.value) otro.value = antes[k];
+      antes = { x: sx.value, y: sy.value };
+      pintar();
+    };
+    sx.addEventListener("change", cambio(sx, sy, "x"));
+    sy.addEventListener("change", cambio(sy, sx, "y"));
+    pintar();
+
+    if (perfiles.length < 2) return;
+    caja.appendChild(el("h3", H3, "Parejas de estilo opuesto"));
+    caja.appendChild(el("p", SUB, "Primero los que más se diferencian en los cuatro ejes: cada uno le pone al otro las posiciones que no elige solo."));
+    const { grupos } = parejas(perfiles);
+    const ol = el("ol", "list-decimal pl-5 space-y-1 " + TXT);
+    ol.setAttribute("data-estilo-parejas", "");
+    for (const g of grupos) {
+      const li = el("li");
+      li.appendChild(el("strong", "font-semibold text-brand-800 dark:text-white", g.alumnos.join(" y ")));
+      li.appendChild(document.createTextNode(g.opuestos.length
+        ? ": opuestos en " + g.opuestos.map((e) => B.EJES[e].nombre.toLowerCase()).join(", ") + "."
+        : ": ningún eje opuesto con seguridad todavía; son los que más se diferencian."));
+      ol.appendChild(li);
+    }
+    caja.appendChild(ol);
+  }
+
   async function montarClase(contenedor, o) {
     if (!contenedor || !o || !o.sb) return;
     contenedor.textContent = "";
@@ -534,9 +737,11 @@
       });
       const thead = el("thead"); thead.appendChild(cab); tabla.appendChild(thead);
       const tbody = el("tbody");
+      const perfiles = [];
       for (const a of con) {
         const p = ultima.get(a.id);
         const pf = EstiloPerfil.medir(p.respuestas, p.partidas, p.version);
+        perfiles.push({ id: a.id, nombre: a.nombre, perfil: pf });
         const tr = el("tr", "border-b border-brand-50 dark:border-brand-800/60");
         tr.setAttribute("data-alumno", a.id);
         const th = el("th", "py-2 pr-3 font-semibold text-brand-800 dark:text-white", a.nombre);
@@ -553,10 +758,12 @@
       tabla.appendChild(tbody);
       envoltura.appendChild(tabla);
       contenedor.appendChild(envoltura);
+      if (sin.length) contenedor.appendChild(el("p", SUB + " mt-2", "Sin la prueba: " + sin.join(", ") + ". Se la puedes pedir como tarea (Tareas → Prueba de estilo)."));
+      pintarMapa(contenedor, perfiles);
     } else {
       contenedor.appendChild(el("p", SUB, "Ninguno hizo todavía la prueba de estilo."));
+      if (sin.length) contenedor.appendChild(el("p", SUB + " mt-2", "Sin la prueba: " + sin.join(", ") + ". Se la puedes pedir como tarea (Tareas → Prueba de estilo)."));
     }
-    if (sin.length) contenedor.appendChild(el("p", SUB + " mt-2", "Sin la prueba: " + sin.join(", ") + ". Se la puedes pedir como tarea (Tareas → Prueba de estilo)."));
 
     // ¿La prueba funciona?
     contenedor.appendChild(el("h3", H3, "¿La prueba funciona?"));
@@ -571,6 +778,6 @@
     contenedor.appendChild(el("p", SUB + " mt-2", "Cuenta las pruebas que ves (las de tus alumnos; administración, todas)."));
   }
 
-  const api = { cargar, pintarPerfil, pintarRecomendacion, seguir, montarProfe, montarClase, botonFicha, frasesSalud, correlacion };
+  const api = { cargar, pintarPerfil, pintarRecomendacion, seguir, montarProfe, montarClase, botonFicha, frasesSalud, correlacion, lado, cuadrantes, parejas };
   if (typeof window !== "undefined") window.EstiloTarjeta = api;
 })();
