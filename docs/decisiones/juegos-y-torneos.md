@@ -4025,6 +4025,14 @@ Comisión de Árbitros de 2023 a 2026, de todos los países.
     para AI; de los demás, los torneos de esos días no tenían norma de AI.
   - El desfase va de **seis días a seis semanas** (Pastor, 6; Torres, 42):
     los 60 días de «revisar» alcanzan.
+  - **Al subir de título, el perfil pierde las fechas del anterior.** El de
+    Stanley Gómez Huertas (captura del dueño, octubre de 2026) ya solo dice
+    «FIDE Arbiter (2019)» (Presidential Board del 7 y 8/9/2019, en Budapest)
+    y las fechas del AI: Consejo del 04/04/2023, «License level» del
+    25/04/2023 (`ia_perfil`) y «Licensed» del 01/05/2023. Por eso la fecha
+    del perfil de cada AF conviene copiarla antes de que suba a AI. Su norma
+    de AI más vieja, el PanAm Escolar de Medellín (del 12 al 17/11/2019),
+    es de 66 días después del Board: con el desfase de siempre, ya era AF.
 - **«Licensed» es otra cosa**: el pago anual de la licencia (B.06.1, 6.1).
   En los 343 rechazos no hay ninguno de un FA o IA por esa fecha; los de
   licencia son todos de antes del NA.
