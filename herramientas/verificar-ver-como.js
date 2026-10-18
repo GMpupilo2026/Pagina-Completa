@@ -405,12 +405,15 @@ async function pruebaProfeMiraSuAlumno(browser) {
   igual("y lo deja guiarlo: su informe y ponerle una tarea",
         await page.evaluate(() => Array.from(document.querySelectorAll("#modo-vista-barra a")).map((a) => a.textContent + " → " + a.getAttribute("href"))),
         ["📊 Su informe → informes.html?alumno=u-alu-b", "📋 Ponerle una tarea → tareas.html?alumno=u-alu-b"]);
-  // Ir a guiarlo lo saca del panel del alumno: la tarea se pone desde su vista.
+  igual("sin errores en consola", errores, []);
+  /* Ir a guiarlo lo saca del panel del alumno: la tarea se pone desde su
+     vista. La página de destino es un doble de una línea, sin la transición
+     entre páginas de las de verdad: Chromium aborta esa transición y lo dice
+     en la consola, así que los errores se miran antes de salir. */
   await page.route("**/tareas.html*", (r) => r.fulfill({ status: 200, contentType: "text/html", body: "<p>tareas</p>" }));
   await Promise.all([page.waitForURL(/tareas\.html\?alumno=u-alu-b/, { timeout: 10000 }), page.click('#modo-vista-barra a[href^="tareas.html"]')]);
   igual("al ir a ponerle una tarea, vuelve a su vista",
         await page.evaluate(() => localStorage.getItem("ver_como_persona_v1")), null);
-  igual("sin errores en consola", errores, []);
   await ctx.close();
 
   // Un alumno que no es suyo: ?ver_como= no le cambia nada.
