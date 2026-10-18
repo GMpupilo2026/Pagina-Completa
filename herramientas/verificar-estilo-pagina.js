@@ -6,10 +6,10 @@
  *   1. Sin sesión, al login.
  *   2. Con sesión: la prueba arranca, el tablero dibuja la posición, «Siguiente»
  *      no deja pasar sin la jugada Y la seguridad, y una persona que contesta
- *      siempre lo mismo termina entre 32 y 47 posiciones (30 y los dos
- *      controles, y hasta 15 más).
+ *      siempre lo mismo termina entre 34 y 58 posiciones (32 y los dos
+ *      controles, y hasta 24 más).
  *   3. «Cómo juegas» no se manda sin el ritmo y el estudio; con ellos, sale el
- *      resultado: los tres ejes con su etiqueta y su margen escrito, y las tres
+ *      resultado: los cuatro ejes con su etiqueta y su margen escrito, y las tres
  *      recomendaciones con su porqué y su enlace a Aperturas y celadas.
  *   4. Lo que se guarda en estilo_pruebas: a nombre del alumno de la sesión,
  *      con todas las respuestas (las dos de control marcadas), el contexto y
@@ -189,7 +189,7 @@ async function main() {
     await page.click("#next-btn");
     ok("pasa a la posición 2", /^Posición 2/.test(await page.textContent("#q-counter")), await page.textContent("#q-counter"));
     const n = 1 + await contestarTodo(page);
-    ok("termina entre 32 y 47 posiciones", n >= 32 && n <= 47, "vio " + n);
+    ok("termina entre 34 y 58 posiciones", n >= 34 && n <= 58, "vio " + n);
 
     await page.click("#ctx-btn");
     ok("sin ritmo ni estudio no se manda: dice qué falta", (await page.locator("#ctx-error").isVisible()) && /ritmo/.test(await page.textContent("#ctx-error")));
@@ -197,7 +197,7 @@ async function main() {
     await page.click("#ctx-btn");
     await page.waitForSelector("#resultado-view:not(.hidden)", { timeout: 10000 });
     const ejes = await page.$$eval("[data-estilo-perfil] [data-eje]", (f) => f.map((x) => [x.dataset.eje, x.dataset.etiqueta, x.textContent]));
-    ok("el resultado trae los tres ejes", ejes.length === 3 && ["ataque", "estructura", "cambios"].every((e) => ejes.some((x) => x[0] === e)), JSON.stringify(ejes.map((x) => x[0])));
+    ok("el resultado trae los cuatro ejes", ejes.length === 4 && ["ataque", "estructura", "cambios", "material"].every((e) => ejes.some((x) => x[0] === e)), JSON.stringify(ejes.map((x) => x[0])));
     ok("cada eje dice su margen escrito («entre X y Y %»)", ejes.every((x) => /entre \d+ y \d+ %/.test(x[2])));
     const grupos = await page.$$eval("[data-estilo-recomendacion] [data-grupo]", (f) => f.map((x) => [x.dataset.grupo, !!x.querySelector('a[href*="aperturas.html?linea="]'), x.querySelectorAll("li").length]));
     ok("recomienda con blancas, contra 1.e4 y contra 1.d4, con porqué y enlace", grupos.length === 3 && grupos.every((g) => g[1] && g[2] >= 2), JSON.stringify(grupos));
@@ -241,8 +241,11 @@ async function main() {
     ok("revisó sus partidas con el motor", llamadas > 0, "llamadas: " + llamadas + " · " + await page.textContent("#q-partidas"));
     const fila = await page.evaluate(() => (window.__escrituras.find((e) => e.tabla === "estilo_pruebas") || {}).fila);
     ok("guarda los momentos hallados ({eje, primero}), sin las partidas", fila && Array.isArray(fila.partidas) && fila.partidas.length > 0
-      && fila.partidas.every((m) => ["ataque", "estructura", "cambios"].includes(m.eje) && typeof m.primero === "boolean" && Object.keys(m).length === 2),
+      && fila.partidas.every((m) => ["ataque", "estructura", "cambios", "material"].includes(m.eje) && typeof m.primero === "boolean" && Object.keys(m).length === 2),
       JSON.stringify(fila && fila.partidas));
+    // Sus tres partidas terminan en la jugada 18: ninguna llega a la media
+    // jugada 40, así que no hay con qué medir en qué partidas le va mejor.
+    ok("con partidas cortas no inventa en qué partidas le va mejor", fila && fila.contexto && !("rendimiento" in fila.contexto), JSON.stringify(fila && fila.contexto));
     ok("sin errores en la consola (con partidas)", errores.length === 0, errores.join("\n      "));
     await ctx.close();
   }

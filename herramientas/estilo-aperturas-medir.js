@@ -2,8 +2,8 @@
  *
  * La recomendación de aperturas de la prueba de estilo (js/estilo-aperturas.js)
  * necesita saber de cada apertura del banco de «Aperturas y celadas»
- * (js/aperturas-lineas.js) cuánto ataca al rey, cuán abierto deja el juego y
- * cuánto se cambia. Eso no se pone a ojo: se mide, con las MISMAS funciones
+ * (js/aperturas-lineas.js) cuánto ataca al rey, cuán abierto deja el juego,
+ * cuánto se cambia y cuánto material se da por la iniciativa. Eso no se pone a ojo: se mide, con las MISMAS funciones
  * de la prueba (js/estilo-medidas.js), en las partidas de maestros que
  * pasan por esa apertura: las del repositorio
  * (herramientas/lib/partidas-maestros.js) y las de torneos de ritmo clásico
@@ -30,6 +30,13 @@
  *     12, 16 y 20 (medias jugadas 24, 32 y 40): la presión sobre el rey rival
  *     y las columnas abiertas menos los peones bloqueados (promediadas), y el
  *     material de piezas que salió del tablero hasta la jugada 20.
+ *   - El material, antes: en las jugadas 6, 8, 10 y 12 (medias jugadas 12,
+ *     16, 20 y 24), cuánto material de más o de menos tiene (con peones),
+ *     promediado. Un gambito da el peón en la apertura y muchas veces lo
+ *     recupera para la jugada 20: medido tarde, no se vería. Y como con la
+ *     prueba, en una posición tranquila: si la media jugada vino de una
+ *     captura o dejó un jaque, se mira la siguiente que no (hasta cuatro
+ *     más), porque a mitad de un cambio falta la recaptura.
  *   - `car`, lo que usa la recomendación: cada medida comparada con las demás
  *     aperturas del mismo color (puntaje z), entre −1 y +1.
  *
@@ -54,6 +61,8 @@ const CATALOGO = path.join(RAIZ, "js/estilo-aperturas.js");
 const MINIMO = 15;
 const BUSCAR_HASTA = 30;          // medias jugadas en las que se busca la posición
 const MUESTRAS = [24, 32, 40];    // medias jugadas donde se mide
+const MUESTRAS_MATERIAL = [12, 16, 20, 24];
+const TRANQUILA_HASTA = 4;        // medias jugadas que se adelanta para hallar una tranquila
 const INICIAL = new Chess().fen();
 const PIEZAS_INICIO = M.piezas(INICIAL);
 
@@ -89,9 +98,12 @@ function recorrer(partidas) {
     const pos = new Set();
     const fens = {};
     const camino = [];
+    const blancas = [];   // material de blancas menos negras tras cada media jugada tranquila (null si no lo es)
     for (let i = 0; i < Math.max(BUSCAR_HASTA, MUESTRAS[MUESTRAS.length - 1]) && i < largo; i++) {
-      if (!jugar(c, p, i)) break;
+      const m = jugar(c, p, i);
+      if (!m) break;
       const f = c.fen();
+      blancas.push(m.captured || c.in_check() ? null : M.balance(f, "w"));
       camino.push(clavePos(f));
       if (i < BUSCAR_HASTA) pos.add(clavePos(f));
       if (MUESTRAS.includes(i + 1)) fens[i + 1] = f;
@@ -101,7 +113,7 @@ function recorrer(partidas) {
     const huella = camino.join("|");
     if (vistas.has(huella)) continue;
     vistas.add(huella);
-    out.push({ id: p.id, pos, fens });
+    out.push({ id: p.id, pos, fens, blancas });
   }
   return out;
 }
@@ -111,14 +123,23 @@ function medirPartida(g, color) {
   const fs_ = MUESTRAS.map((k) => g.fens[k]).filter(Boolean);
   if (!fs_.length) return null;
   const prom = (f) => fs_.reduce((s, x) => s + f(x), 0) / fs_.length;
+  const signo = color === "w" ? 1 : -1;
+  const mat = [];
+  for (const k of MUESTRAS_MATERIAL) {
+    for (let j = k; j <= k + TRANQUILA_HASTA && j <= g.blancas.length; j++) {
+      if (g.blancas[j - 1] != null) { mat.push(signo * g.blancas[j - 1]); break; }
+    }
+  }
   return {
     ataque: prom((f) => M.presionSobreElRey(f, color)),
     estructura: prom((f) => M.apertura(f)),
     cambios: PIEZAS_INICIO - M.piezas(fs_[fs_.length - 1]),
+    material: mat.length ? mat.reduce((s, x) => s + x, 0) / mat.length : null,
   };
 }
 
 const r2 = (x) => Math.round(x * 100) / 100;
+const EJES = Object.keys(M.POLOS);
 
 function medir() {
   const aperturas = LINEAS.filter((l) => l.tipo === "apertura");
@@ -144,7 +165,10 @@ function medir() {
     if (k < 1) { salida.push({ id: l.id, color: l.color, contra, n: 0, define: l.jugadas.slice(0, propia + 1), base: null }); continue; }
     const medidas = pasan.map((g) => medirPartida(g, l.color)).filter(Boolean);
     const media = {};
-    for (const e of ["ataque", "estructura", "cambios"]) media[e] = r2(medidas.reduce((s, x) => s + x[e], 0) / medidas.length);
+    for (const e of EJES) {
+      const v = medidas.map((x) => x[e]).filter((x) => x != null);
+      media[e] = r2(v.reduce((s, x) => s + x, 0) / v.length);
+    }
     salida.push({
       id: l.id, color: l.color, contra, n: medidas.length,
       define: l.jugadas.slice(0, propia + 1),
@@ -155,7 +179,7 @@ function medir() {
   // `car`: cada medida contra las demás aperturas del mismo color.
   for (const color of ["w", "b"]) {
     const del = salida.filter((x) => x.color === color && x.n);
-    for (const e of ["ataque", "estructura", "cambios"]) {
+    for (const e of EJES) {
       const v = del.map((x) => x.media[e]);
       const mu = v.reduce((s, x) => s + x, 0) / v.length;
       const sd = Math.sqrt(v.reduce((s, x) => s + (x - mu) ** 2, 0) / v.length) || 1;
@@ -180,4 +204,4 @@ if (require.main === module) {
     + (sin.length ? "; sin medir: " + sin.join(", ") : "") + ".");
 }
 
-module.exports = { medir, MINIMO, MUESTRAS, BUSCAR_HASTA };
+module.exports = { medir, MINIMO, MUESTRAS, MUESTRAS_MATERIAL, BUSCAR_HASTA };

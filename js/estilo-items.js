@@ -45,7 +45,8 @@
       "ataque": 2,
       "estructura": 0,
       "cambios": 10,
-      "propone": 1
+      "propone": 1,
+      "material": 0
      }
     },
     "b": {
@@ -63,7 +64,8 @@
       "ataque": -2,
       "estructura": 0,
       "cambios": 10,
-      "propone": 0
+      "propone": 0,
+      "material": 0
      }
     },
     "mejor": 45,
@@ -96,7 +98,8 @@
       "ataque": -2,
       "estructura": 0,
       "cambios": 0,
-      "propone": 0
+      "propone": 0,
+      "material": 0
      }
     },
     "b": {
@@ -114,7 +117,8 @@
       "ataque": 2,
       "estructura": 0,
       "cambios": 0,
-      "propone": 0
+      "propone": 0,
+      "material": 0
      }
     },
     "mejor": 57,
@@ -147,7 +151,8 @@
       "ataque": 2,
       "estructura": 0,
       "cambios": 0,
-      "propone": 0
+      "propone": 0,
+      "material": 0
      }
     },
     "b": {
@@ -165,7 +170,8 @@
       "ataque": -2,
       "estructura": 0,
       "cambios": 0,
-      "propone": 0
+      "propone": 0,
+      "material": 0
      }
     },
     "mejor": 3,
@@ -198,7 +204,8 @@
       "ataque": 0,
       "estructura": 0,
       "cambios": 0,
-      "propone": 0
+      "propone": 0,
+      "material": 0
      }
     },
     "b": {
@@ -216,7 +223,8 @@
       "ataque": 4,
       "estructura": 1,
       "cambios": 0,
-      "propone": 1
+      "propone": 1,
+      "material": 0
      }
     },
     "mejor": 117,
@@ -249,7 +257,8 @@
       "ataque": 4,
       "estructura": 0,
       "cambios": 10,
-      "propone": 1
+      "propone": 1,
+      "material": 0
      }
     },
     "b": {
@@ -267,7 +276,8 @@
       "ataque": 0,
       "estructura": 0,
       "cambios": 10,
-      "propone": 0
+      "propone": 0,
+      "material": 0
      }
     },
     "mejor": 0,
@@ -300,7 +310,8 @@
       "ataque": -1,
       "estructura": 0,
       "cambios": 0,
-      "propone": 0
+      "propone": 0,
+      "material": 0
      }
     },
     "b": {
@@ -318,7 +329,8 @@
       "ataque": 4,
       "estructura": 0,
       "cambios": 0,
-      "propone": 0
+      "propone": 0,
+      "material": 0
      }
     },
     "mejor": -40,
@@ -351,7 +363,8 @@
       "ataque": 2,
       "estructura": 0,
       "cambios": 0,
-      "propone": 0
+      "propone": 0,
+      "material": 0
      }
     },
     "b": {
@@ -369,7 +382,8 @@
       "ataque": -3,
       "estructura": 0,
       "cambios": 0,
-      "propone": 0
+      "propone": 0,
+      "material": 0
      }
     },
     "mejor": -10,
@@ -402,7 +416,8 @@
       "ataque": -1,
       "estructura": 0,
       "cambios": 0,
-      "propone": 0
+      "propone": 0,
+      "material": 0
      }
     },
     "b": {
@@ -420,7 +435,8 @@
       "ataque": 4,
       "estructura": 0,
       "cambios": 0,
-      "propone": 0
+      "propone": 0,
+      "material": 0
      }
     },
     "mejor": -17,
@@ -453,7 +469,8 @@
       "ataque": 2,
       "estructura": 0,
       "cambios": 0,
-      "propone": 0
+      "propone": 0,
+      "material": 0
      }
     },
     "b": {
@@ -471,7 +488,8 @@
       "ataque": -2,
       "estructura": 0,
       "cambios": 0,
-      "propone": 0
+      "propone": 0,
+      "material": 0
      }
     },
     "mejor": 60,
@@ -504,7 +522,8 @@
       "ataque": 0,
       "estructura": 0,
       "cambios": 0,
-      "propone": 0
+      "propone": 0,
+      "material": 0
      }
     },
     "b": {
@@ -522,7 +541,8 @@
       "ataque": 4,
       "estructura": 0,
       "cambios": 0,
-      "propone": 0
+      "propone": 0,
+      "material": 0
      }
     },
     "mejor": 35,
@@ -555,7 +575,8 @@
       "ataque": 2,
       "estructura": 0,
       "cambios": 0,
-      "propone": 0
+      "propone": 0,
+      "material": 0
      }
     },
     "b": {
@@ -573,7 +594,8 @@
       "ataque": -2,
       "estructura": 0,
       "cambios": 0,
-      "propone": 0
+      "propone": 0,
+      "material": 0
      }
     },
     "mejor": 14,
@@ -606,7 +628,8 @@
       "ataque": 0,
       "estructura": 0,
       "cambios": 0,
-      "propone": 0
+      "propone": 0,
+      "material": 0
      }
     },
     "b": {
@@ -624,7 +647,8 @@
       "ataque": 4,
       "estructura": 0,
       "cambios": 0,
-      "propone": 0
+      "propone": 0,
+      "material": 0
      }
     },
     "mejor": 26,
@@ -657,7 +681,8 @@
       "ataque": 4,
       "estructura": 0,
       "cambios": 0,
-      "propone": 0
+      "propone": 0,
+      "material": 0
      }
     },
     "b": {
@@ -675,7 +700,8 @@
       "ataque": 0,
       "estructura": 0,
       "cambios": 0,
-      "propone": 0
+      "propone": 0,
+      "material": 0
      }
     },
     "mejor": -25,
@@ -708,7 +734,8 @@
       "ataque": 0,
       "estructura": 0,
       "cambios": 0,
-      "propone": 0
+      "propone": 0,
+      "material": 0
      }
     },
     "b": {
@@ -726,7 +753,8 @@
       "ataque": 4,
       "estructura": 0,
       "cambios": 0,
-      "propone": 0
+      "propone": 0,
+      "material": 0
      }
     },
     "mejor": 13,
@@ -759,7 +787,8 @@
       "ataque": 3,
       "estructura": 0,
       "cambios": 0,
-      "propone": 0
+      "propone": 0,
+      "material": 0
      }
     },
     "b": {
@@ -777,7 +806,8 @@
       "ataque": -1,
       "estructura": 0,
       "cambios": 0,
-      "propone": 0
+      "propone": 0,
+      "material": 0
      }
     },
     "mejor": -8,
@@ -810,7 +840,8 @@
       "ataque": 0,
       "estructura": 1,
       "cambios": 0,
-      "propone": 1
+      "propone": 1,
+      "material": null
      }
     },
     "b": {
@@ -828,7 +859,8 @@
       "ataque": 0,
       "estructura": -2,
       "cambios": 0,
-      "propone": 0
+      "propone": 0,
+      "material": 0
      }
     },
     "mejor": -39,
@@ -861,7 +893,8 @@
       "ataque": 1,
       "estructura": 0,
       "cambios": 0,
-      "propone": 0
+      "propone": 0,
+      "material": 0
      }
     },
     "b": {
@@ -879,7 +912,8 @@
       "ataque": 0,
       "estructura": 3,
       "cambios": 0,
-      "propone": 0
+      "propone": 0,
+      "material": 0
      }
     },
     "mejor": 32,
@@ -912,7 +946,8 @@
       "ataque": 1,
       "estructura": 2,
       "cambios": 0,
-      "propone": 1
+      "propone": 1,
+      "material": 0
      }
     },
     "b": {
@@ -930,7 +965,8 @@
       "ataque": 0,
       "estructura": -1,
       "cambios": 0,
-      "propone": 0
+      "propone": 0,
+      "material": 0
      }
     },
     "mejor": -16,
@@ -963,7 +999,8 @@
       "ataque": 0,
       "estructura": 0,
       "cambios": 0,
-      "propone": 0
+      "propone": 0,
+      "material": 0
      }
     },
     "b": {
@@ -981,7 +1018,8 @@
       "ataque": 0,
       "estructura": 3,
       "cambios": 0,
-      "propone": 0
+      "propone": 0,
+      "material": -1
      }
     },
     "mejor": 57,
@@ -1014,7 +1052,8 @@
       "ataque": 0,
       "estructura": 2,
       "cambios": 0,
-      "propone": 0
+      "propone": 0,
+      "material": null
      }
     },
     "b": {
@@ -1032,7 +1071,8 @@
       "ataque": 0,
       "estructura": -1,
       "cambios": 0,
-      "propone": 0
+      "propone": 0,
+      "material": 0
      }
     },
     "mejor": 145,
@@ -1065,7 +1105,8 @@
       "ataque": 0,
       "estructura": -1,
       "cambios": 0,
-      "propone": 0
+      "propone": 0,
+      "material": 0
      }
     },
     "b": {
@@ -1083,7 +1124,8 @@
       "ataque": 0,
       "estructura": 2,
       "cambios": 0,
-      "propone": 0
+      "propone": 0,
+      "material": 0
      }
     },
     "mejor": -4,
@@ -1116,7 +1158,8 @@
       "ataque": 0,
       "estructura": 2,
       "cambios": 0,
-      "propone": 1
+      "propone": 1,
+      "material": 0
      }
     },
     "b": {
@@ -1134,7 +1177,8 @@
       "ataque": 0,
       "estructura": -1,
       "cambios": 0,
-      "propone": 0
+      "propone": 0,
+      "material": 0
      }
     },
     "mejor": 0,
@@ -1167,7 +1211,8 @@
       "ataque": 0,
       "estructura": -1,
       "cambios": 0,
-      "propone": 0
+      "propone": 0,
+      "material": 0
      }
     },
     "b": {
@@ -1185,7 +1230,8 @@
       "ataque": 0,
       "estructura": 2,
       "cambios": 0,
-      "propone": 1
+      "propone": 1,
+      "material": 0
      }
     },
     "mejor": -41,
@@ -1218,7 +1264,8 @@
       "ataque": 0,
       "estructura": 2,
       "cambios": 0,
-      "propone": 1
+      "propone": 1,
+      "material": 0
      }
     },
     "b": {
@@ -1236,7 +1283,8 @@
       "ataque": 0,
       "estructura": -1,
       "cambios": 0,
-      "propone": 0
+      "propone": 0,
+      "material": 0
      }
     },
     "mejor": -104,
@@ -1269,7 +1317,8 @@
       "ataque": 0,
       "estructura": -1,
       "cambios": 0,
-      "propone": 0
+      "propone": 0,
+      "material": 0
      }
     },
     "b": {
@@ -1287,7 +1336,8 @@
       "ataque": 2,
       "estructura": 2,
       "cambios": 0,
-      "propone": 1
+      "propone": 1,
+      "material": 0
      }
     },
     "mejor": 0,
@@ -1320,7 +1370,8 @@
       "ataque": 0,
       "estructura": 2,
       "cambios": 0,
-      "propone": 1
+      "propone": 1,
+      "material": 0
      }
     },
     "b": {
@@ -1338,7 +1389,8 @@
       "ataque": 0,
       "estructura": -1,
       "cambios": 0,
-      "propone": 0
+      "propone": 0,
+      "material": 0
      }
     },
     "mejor": -91,
@@ -1371,7 +1423,8 @@
       "ataque": 0,
       "estructura": -1,
       "cambios": 0,
-      "propone": 0
+      "propone": 0,
+      "material": 0
      }
     },
     "b": {
@@ -1389,7 +1442,8 @@
       "ataque": 0,
       "estructura": 2,
       "cambios": 0,
-      "propone": 1
+      "propone": 1,
+      "material": 0
      }
     },
     "mejor": -19,
@@ -1422,7 +1476,8 @@
       "ataque": 0,
       "estructura": 2,
       "cambios": 0,
-      "propone": 1
+      "propone": 1,
+      "material": 0
      }
     },
     "b": {
@@ -1440,7 +1495,8 @@
       "ataque": 0,
       "estructura": -1,
       "cambios": 0,
-      "propone": 0
+      "propone": 0,
+      "material": 0
      }
     },
     "mejor": -76,
@@ -1473,7 +1529,8 @@
       "ataque": 0,
       "estructura": 0,
       "cambios": 0,
-      "propone": 0
+      "propone": 0,
+      "material": 0
      }
     },
     "b": {
@@ -1491,7 +1548,8 @@
       "ataque": 0,
       "estructura": 3,
       "cambios": 0,
-      "propone": 1
+      "propone": 1,
+      "material": null
      }
     },
     "mejor": -7,
@@ -1524,7 +1582,8 @@
       "ataque": 1,
       "estructura": 3,
       "cambios": 0,
-      "propone": 1
+      "propone": 1,
+      "material": null
      }
     },
     "b": {
@@ -1542,7 +1601,8 @@
       "ataque": 0,
       "estructura": 0,
       "cambios": 0,
-      "propone": 0
+      "propone": 0,
+      "material": 0
      }
     },
     "mejor": -16,
@@ -1575,7 +1635,8 @@
       "ataque": 2,
       "estructura": 0,
       "cambios": 24,
-      "propone": 1
+      "propone": 1,
+      "material": null
      }
     },
     "b": {
@@ -1593,7 +1654,8 @@
       "ataque": 0,
       "estructura": 0,
       "cambios": 0,
-      "propone": 0
+      "propone": 0,
+      "material": 0
      }
     },
     "mejor": 27,
@@ -1626,7 +1688,8 @@
       "ataque": 0,
       "estructura": 0,
       "cambios": 0,
-      "propone": 0
+      "propone": 0,
+      "material": 0
      }
     },
     "b": {
@@ -1644,7 +1707,8 @@
       "ataque": 0,
       "estructura": 0,
       "cambios": 18,
-      "propone": 1
+      "propone": 1,
+      "material": 0
      }
     },
     "mejor": 7,
@@ -1677,7 +1741,8 @@
       "ataque": 2,
       "estructura": 0,
       "cambios": 18,
-      "propone": 1
+      "propone": 1,
+      "material": 0
      }
     },
     "b": {
@@ -1695,7 +1760,8 @@
       "ataque": 1,
       "estructura": -1,
       "cambios": 0,
-      "propone": 0
+      "propone": 0,
+      "material": 0
      }
     },
     "mejor": 20,
@@ -1728,7 +1794,8 @@
       "ataque": 1,
       "estructura": 0,
       "cambios": 0,
-      "propone": 0
+      "propone": 0,
+      "material": 0
      }
     },
     "b": {
@@ -1746,7 +1813,8 @@
       "ataque": -1,
       "estructura": 0,
       "cambios": 18,
-      "propone": 1
+      "propone": 1,
+      "material": 0
      }
     },
     "mejor": 50,
@@ -1779,7 +1847,8 @@
       "ataque": 1,
       "estructura": 0,
       "cambios": 18,
-      "propone": 1
+      "propone": 1,
+      "material": null
      }
     },
     "b": {
@@ -1797,7 +1866,8 @@
       "ataque": -1,
       "estructura": 1,
       "cambios": 0,
-      "propone": 0
+      "propone": 0,
+      "material": -1
      }
     },
     "mejor": 6,
@@ -1830,7 +1900,8 @@
       "ataque": 0,
       "estructura": 0,
       "cambios": 0,
-      "propone": 0
+      "propone": 0,
+      "material": 0
      }
     },
     "b": {
@@ -1848,7 +1919,8 @@
       "ataque": -1,
       "estructura": 0,
       "cambios": 24,
-      "propone": 1
+      "propone": 1,
+      "material": null
      }
     },
     "mejor": -5,
@@ -1881,7 +1953,8 @@
       "ataque": -1,
       "estructura": 0,
       "cambios": 18,
-      "propone": 1
+      "propone": 1,
+      "material": 0
      }
     },
     "b": {
@@ -1899,7 +1972,8 @@
       "ataque": -1,
       "estructura": 0,
       "cambios": 0,
-      "propone": 0
+      "propone": 0,
+      "material": 0
      }
     },
     "mejor": 71,
@@ -1932,7 +2006,8 @@
       "ataque": 0,
       "estructura": 0,
       "cambios": 0,
-      "propone": 0
+      "propone": 0,
+      "material": 0
      }
     },
     "b": {
@@ -1950,7 +2025,8 @@
       "ataque": 0,
       "estructura": 0,
       "cambios": 18,
-      "propone": 1
+      "propone": 1,
+      "material": 0
      }
     },
     "mejor": 81,
@@ -1983,7 +2059,8 @@
       "ataque": 3,
       "estructura": 0,
       "cambios": 18,
-      "propone": 1
+      "propone": 1,
+      "material": 0
      }
     },
     "b": {
@@ -2001,7 +2078,8 @@
       "ataque": 1,
       "estructura": 0,
       "cambios": 0,
-      "propone": 0
+      "propone": 0,
+      "material": 0
      }
     },
     "mejor": -57,
@@ -2034,7 +2112,8 @@
       "ataque": -1,
       "estructura": 0,
       "cambios": 0,
-      "propone": 0
+      "propone": 0,
+      "material": 0
      }
     },
     "b": {
@@ -2052,7 +2131,8 @@
       "ataque": 1,
       "estructura": 0,
       "cambios": 18,
-      "propone": 1
+      "propone": 1,
+      "material": 0
      }
     },
     "mejor": 0,
@@ -2085,7 +2165,8 @@
       "ataque": -1,
       "estructura": 0,
       "cambios": 18,
-      "propone": 1
+      "propone": 1,
+      "material": 0
      }
     },
     "b": {
@@ -2103,7 +2184,8 @@
       "ataque": 0,
       "estructura": 0,
       "cambios": 0,
-      "propone": 0
+      "propone": 0,
+      "material": 0
      }
     },
     "mejor": 13,
@@ -2136,7 +2218,8 @@
       "ataque": 0,
       "estructura": 0,
       "cambios": 0,
-      "propone": 0
+      "propone": 0,
+      "material": 0
      }
     },
     "b": {
@@ -2154,7 +2237,8 @@
       "ataque": 0,
       "estructura": 0,
       "cambios": 18,
-      "propone": 1
+      "propone": 1,
+      "material": 0
      }
     },
     "mejor": -12,
@@ -2187,7 +2271,8 @@
       "ataque": 2,
       "estructura": 0,
       "cambios": 18,
-      "propone": 1
+      "propone": 1,
+      "material": 0
      }
     },
     "b": {
@@ -2205,7 +2290,8 @@
       "ataque": 0,
       "estructura": 0,
       "cambios": 0,
-      "propone": 0
+      "propone": 0,
+      "material": 0
      }
     },
     "mejor": 27,
@@ -2238,7 +2324,8 @@
       "ataque": 0,
       "estructura": 0,
       "cambios": 0,
-      "propone": 0
+      "propone": 0,
+      "material": 0
      }
     },
     "b": {
@@ -2256,7 +2343,8 @@
       "ataque": 0,
       "estructura": 0,
       "cambios": 18,
-      "propone": 1
+      "propone": 1,
+      "material": 0
      }
     },
     "mejor": 58,
@@ -2289,7 +2377,8 @@
       "ataque": 0,
       "estructura": 1,
       "cambios": 18,
-      "propone": 1
+      "propone": 1,
+      "material": null
      }
     },
     "b": {
@@ -2307,7 +2396,8 @@
       "ataque": 0,
       "estructura": 0,
       "cambios": 0,
-      "propone": 0
+      "propone": 0,
+      "material": 0
      }
     },
     "mejor": -54,
@@ -2320,6 +2410,861 @@
      "ply": 29,
      "enLaPartida": "Bb7"
     }
+   },
+   {
+    "id": "es46",
+    "eje": "material",
+    "fen": "4rk2/p1pq1r1p/1p1pp1p1/n7/P1PPQP2/2PB2P1/6KP/R3R3 w - - 3 23",
+    "a": {
+     "san": "Re2",
+     "uci": "e1e2",
+     "polo": "material",
+     "eval": 42,
+     "linea": [
+      "e1e2",
+      "a5c4",
+      "d3c4",
+      "d6d5",
+      "e4e5",
+      "d5c4"
+     ],
+     "medidas": {
+      "ataque": 0,
+      "estructura": 0,
+      "cambios": 3,
+      "propone": 0,
+      "material": 2
+     }
+    },
+    "b": {
+     "san": "h4",
+     "uci": "h2h4",
+     "polo": "iniciativa",
+     "eval": 33,
+     "linea": [
+      "h2h4",
+      "a5c4",
+      "h4h5",
+      "g6h5",
+      "e4e2",
+      "d7c6"
+     ],
+     "medidas": {
+      "ataque": 0,
+      "estructura": 0,
+      "cambios": 0,
+      "propone": 0,
+      "material": -2
+     }
+    },
+    "mejor": 43,
+    "fuente": {
+     "de": "una-clase-al-dia",
+     "partida": "ml167-6",
+     "blancas": "J. Capablanca",
+     "negras": "S. Tartakower",
+     "evento": "Nueva York, 1924",
+     "ply": 44,
+     "enLaPartida": "h4"
+    }
+   },
+   {
+    "id": "es47",
+    "eje": "material",
+    "fen": "rnb2rk1/p1q1n1pp/1p2p3/3pPp2/3P4/P2B2Q1/2PB1PPP/R3K1NR w KQ - 0 12",
+    "a": {
+     "san": "h4",
+     "uci": "h2h4",
+     "polo": "iniciativa",
+     "eval": 95,
+     "linea": [
+      "h2h4",
+      "c8a6",
+      "h4h5",
+      "a6d3",
+      "h5h6",
+      "g7g6"
+     ],
+     "medidas": {
+      "ataque": 0,
+      "estructura": 0,
+      "cambios": 3,
+      "propone": 0,
+      "material": -3
+     }
+    },
+    "b": {
+     "san": "c3",
+     "uci": "c2c3",
+     "polo": "material",
+     "eval": 111,
+     "linea": [
+      "c2c3",
+      "c8a6",
+      "d3a6",
+      "b8a6",
+      "h2h4",
+      "c7c4"
+     ],
+     "medidas": {
+      "ataque": 0,
+      "estructura": 0,
+      "cambios": 6,
+      "propone": 0,
+      "material": 0
+     }
+    },
+    "mejor": 111,
+    "fuente": {
+     "de": "una-clase-al-dia",
+     "partida": "ml356-7",
+     "blancas": "D. Sebastian",
+     "negras": "H. Lahlum",
+     "evento": "Hamburg, 2001",
+     "ply": 22,
+     "enLaPartida": "Ne2"
+    }
+   },
+   {
+    "id": "es48",
+    "eje": "material",
+    "fen": "r2q1rk1/p1pnppbp/1p1p2p1/8/2PPbB2/5NP1/PP1QPPBP/R4RK1 w - - 2 11",
+    "a": {
+     "san": "Rfd1",
+     "uci": "f1d1",
+     "polo": "material",
+     "eval": 23,
+     "linea": [
+      "f1d1",
+      "d7f6",
+      "f4h6",
+      "c7c6",
+      "b2b3",
+      "f8e8"
+     ],
+     "medidas": {
+      "ataque": 0,
+      "estructura": 0,
+      "cambios": 0,
+      "propone": 0,
+      "material": 0
+     }
+    },
+    "b": {
+     "san": "d5",
+     "uci": "d4d5",
+     "polo": "iniciativa",
+     "eval": 11,
+     "linea": [
+      "d4d5",
+      "d7f6",
+      "f3d4",
+      "e4g2",
+      "d4c6",
+      "d8e8"
+     ],
+     "medidas": {
+      "ataque": 0,
+      "estructura": -1,
+      "cambios": 3,
+      "propone": 0,
+      "material": -3
+     }
+    },
+    "mejor": 25,
+    "fuente": {
+     "de": "una-clase-al-dia",
+     "partida": "ml156-1",
+     "blancas": "C. Guimard",
+     "negras": "M. Euwe",
+     "evento": "Groningen, 1946",
+     "ply": 20,
+     "enLaPartida": "Bh6"
+    }
+   },
+   {
+    "id": "es49",
+    "eje": "material",
+    "fen": "r1bqkb1r/pp3pp1/1np1pn1p/6N1/3P4/3B4/PPP1QPPP/R1B1K1NR w KQkq - 0 9",
+    "a": {
+     "san": "Ne4",
+     "uci": "g5e4",
+     "polo": "iniciativa",
+     "eval": 10,
+     "linea": [
+      "g5e4",
+      "d8d4",
+      "g1f3",
+      "d4d8",
+      "e1g1",
+      "f6e4"
+     ],
+     "medidas": {
+      "ataque": -1,
+      "estructura": 0.5,
+      "cambios": 0,
+      "propone": 0,
+      "material": -1
+     }
+    },
+    "b": {
+     "san": "N5f3",
+     "uci": "g5f3",
+     "polo": "material",
+     "eval": 17,
+     "linea": [
+      "g5f3",
+      "c6c5",
+      "d4c5",
+      "b6d7",
+      "c1f4",
+      "f8c5"
+     ],
+     "medidas": {
+      "ataque": -2,
+      "estructura": 0,
+      "cambios": 0,
+      "propone": 0,
+      "material": 1
+     }
+    },
+    "mejor": 23,
+    "fuente": {
+     "de": "una-clase-al-dia",
+     "partida": "ml336-3",
+     "blancas": "J. Timman",
+     "negras": "A. Karpov",
+     "evento": "FIDE-Wch, 1993",
+     "ply": 16,
+     "enLaPartida": "N5f3"
+    }
+   },
+   {
+    "id": "es50",
+    "eje": "material",
+    "fen": "1k1r3r/ppqn1p2/3bpp2/2p2b1N/3P3P/1B4P1/PPPBQP2/2KR3R w - - 0 19",
+    "a": {
+     "san": "g4",
+     "uci": "g3g4",
+     "polo": "material",
+     "eval": 109,
+     "linea": [
+      "g3g4",
+      "f5g6",
+      "d2c3",
+      "g6h5",
+      "g4h5",
+      "d8c8"
+     ],
+     "medidas": {
+      "ataque": 0,
+      "estructura": 0,
+      "cambios": 3,
+      "propone": 0,
+      "material": 0
+     }
+    },
+    "b": {
+     "san": "Bc3",
+     "uci": "d2c3",
+     "polo": "iniciativa",
+     "eval": 132,
+     "linea": [
+      "d2c3",
+      "c5c4",
+      "b3c4",
+      "h8h5",
+      "g3g4",
+      "f5g4"
+     ],
+     "medidas": {
+      "ataque": 0,
+      "estructura": 0,
+      "cambios": 3,
+      "propone": 0,
+      "material": -2
+     }
+    },
+    "mejor": 132,
+    "fuente": {
+     "de": "una-clase-al-dia",
+     "partida": "ml280-4",
+     "blancas": "R. Ponomariov",
+     "negras": "I. Papaioannou",
+     "evento": "Plovdiv, 2003",
+     "ply": 36,
+     "enLaPartida": "g4"
+    }
+   },
+   {
+    "id": "es51",
+    "eje": "material",
+    "fen": "r2q1rk1/1pp3pp/1pn1pn2/4p3/4P3/P2P1N2/1PP3PP/R1BQ1RK1 b - - 0 12",
+    "a": {
+     "san": "Nd4",
+     "uci": "c6d4",
+     "polo": "iniciativa",
+     "eval": -44,
+     "linea": [
+      "c6d4",
+      "f3e5",
+      "d4b3",
+      "c2b3",
+      "d8d4",
+      "g1h1"
+     ],
+     "medidas": {
+      "ataque": 1,
+      "estructura": 1,
+      "cambios": 3,
+      "propone": 0,
+      "material": -4
+     }
+    },
+    "b": {
+     "san": "Qd6",
+     "uci": "d8d6",
+     "polo": "material",
+     "eval": -48,
+     "linea": [
+      "d8d6",
+      "h2h3",
+      "d6c5",
+      "g1h2",
+      "h7h6",
+      "c1d2"
+     ],
+     "medidas": {
+      "ataque": 0,
+      "estructura": 0,
+      "cambios": 0,
+      "propone": 0,
+      "material": 0
+     }
+    },
+    "mejor": -44,
+    "fuente": {
+     "de": "una-clase-al-dia",
+     "partida": "ml146-5",
+     "blancas": "F. Marshall",
+     "negras": "S. Tarrasch",
+     "evento": "Nuremberg, 1905",
+     "ply": 23,
+     "enLaPartida": "Qd6"
+    }
+   },
+   {
+    "id": "es52",
+    "eje": "material",
+    "fen": "r1bqk2r/p1p1bppp/1p2pn2/4N1B1/3P4/3B4/PPP2PPP/R2QK2R b KQkq - 1 9",
+    "a": {
+     "san": "Bb7",
+     "uci": "c8b7",
+     "polo": "material",
+     "eval": -14,
+     "linea": [
+      "c8b7",
+      "c2c3",
+      "e8g8",
+      "d1e2",
+      "f6d7",
+      "g5f4"
+     ],
+     "medidas": {
+      "ataque": 1,
+      "estructura": 0,
+      "cambios": 0,
+      "propone": 0,
+      "material": 0
+     }
+    },
+    "b": {
+     "san": "Qd5",
+     "uci": "d8d5",
+     "polo": "iniciativa",
+     "eval": -9,
+     "linea": [
+      "d8d5",
+      "f2f3",
+      "c8a6",
+      "d3a6",
+      "d5a5",
+      "c2c3"
+     ],
+     "medidas": {
+      "ataque": 1,
+      "estructura": 0,
+      "cambios": 3,
+      "propone": 0,
+      "material": -3
+     }
+    },
+    "mejor": -9,
+    "fuente": {
+     "de": "una-clase-al-dia",
+     "partida": "ml027-2",
+     "blancas": "C. Schlechter",
+     "negras": "A. Rubinstein",
+     "evento": "San Sebastian, 1912",
+     "ply": 17,
+     "enLaPartida": "Bb7"
+    }
+   },
+   {
+    "id": "es53",
+    "eje": "material",
+    "fen": "r3kb1r/pp1q1ppp/4pn2/6B1/3p4/5N2/PPP1QPPP/2KR3R b kq - 1 11",
+    "a": {
+     "san": "a6",
+     "uci": "a7a6",
+     "polo": "iniciativa",
+     "eval": -47,
+     "linea": [
+      "a7a6",
+      "f3d4",
+      "d7c7",
+      "g5f6",
+      "g7f6",
+      "c1b1"
+     ],
+     "medidas": {
+      "ataque": 0,
+      "estructura": 0.5,
+      "cambios": 3,
+      "propone": 0,
+      "material": -1
+     }
+    },
+    "b": {
+     "san": "Bc5",
+     "uci": "f8c5",
+     "polo": "material",
+     "eval": -28,
+     "linea": [
+      "f8c5",
+      "f3d4",
+      "c5d4",
+      "g5f6",
+      "g7f6",
+      "c2c3"
+     ],
+     "medidas": {
+      "ataque": 0,
+      "estructura": 0.5,
+      "cambios": 6,
+      "propone": 0,
+      "material": 2
+     }
+    },
+    "mejor": -21,
+    "fuente": {
+     "de": "una-clase-al-dia",
+     "partida": "ml191-2",
+     "blancas": "A. Mikhalchishin",
+     "negras": "A. Chernin",
+     "evento": "Cienfuegos, 1981",
+     "ply": 21,
+     "enLaPartida": "Be7"
+    }
+   },
+   {
+    "id": "es54",
+    "eje": "material",
+    "fen": "2r1r1k1/3b1pbp/5np1/q1pPB3/1pP3P1/p2N1P2/P1Q3BP/4RRK1 b - - 1 25",
+    "a": {
+     "san": "Qb6",
+     "uci": "a5b6",
+     "polo": "material",
+     "eval": 85,
+     "linea": [
+      "a5b6",
+      "c2d2",
+      "b4b3",
+      "a2b3",
+      "b6b3",
+      "d2c3"
+     ],
+     "medidas": {
+      "ataque": 0,
+      "estructura": 0,
+      "cambios": 0,
+      "propone": 0,
+      "material": 0
+     }
+    },
+    "b": {
+     "san": "Qa6",
+     "uci": "a5a6",
+     "polo": "iniciativa",
+     "eval": 86,
+     "linea": [
+      "a5a6",
+      "g4g5",
+      "f6d5",
+      "e5g7",
+      "d5e3",
+      "c2f2"
+     ],
+     "medidas": {
+      "ataque": 0,
+      "estructura": -1,
+      "cambios": 3,
+      "propone": 0,
+      "material": -2
+     }
+    },
+    "mejor": 114,
+    "fuente": {
+     "de": "una-clase-al-dia",
+     "partida": "ml210-1",
+     "blancas": "T. Balogh",
+     "negras": "A. Istratescu",
+     "evento": "Zonal Krynica, 1998",
+     "ply": 49,
+     "enLaPartida": "Ba4"
+    }
+   },
+   {
+    "id": "es55",
+    "eje": "material",
+    "fen": "r2q1rk1/2p2ppp/2n3b1/1p1pP3/p2Pn3/4B3/PPBN1PPP/R2Q1RK1 b - - 1 16",
+    "a": {
+     "san": "a3",
+     "uci": "a4a3",
+     "polo": "iniciativa",
+     "eval": -39,
+     "linea": [
+      "a4a3",
+      "d2e4",
+      "a3b2",
+      "a1b1",
+      "g6e4",
+      "b1b2"
+     ],
+     "medidas": {
+      "ataque": 0,
+      "estructura": -1,
+      "cambios": 3,
+      "propone": 0,
+      "material": -2
+     }
+    },
+    "b": {
+     "san": "Qd7",
+     "uci": "d8d7",
+     "polo": "material",
+     "eval": -41,
+     "linea": [
+      "d8d7",
+      "f2f3",
+      "e4d2",
+      "d1d2",
+      "c6a5",
+      "b2b3"
+     ],
+     "medidas": {
+      "ataque": 1,
+      "estructura": 0,
+      "cambios": 6,
+      "propone": 0,
+      "material": 0
+     }
+    },
+    "mejor": -27,
+    "fuente": {
+     "de": "una-clase-al-dia",
+     "partida": "ml045-5",
+     "blancas": "A. Karpov",
+     "negras": "A. Yusupov",
+     "evento": "URS-ch50 Moscú, 1983",
+     "ply": 31,
+     "enLaPartida": "a3"
+    }
+   },
+   {
+    "id": "es56",
+    "eje": "material",
+    "fen": "8/2rk1pp1/3p1n1p/4pPbP/4P3/1N1K4/2P3R1/R7 w - - 10 33",
+    "a": {
+     "san": "Rh2",
+     "uci": "g2h2",
+     "polo": "material",
+     "eval": 0,
+     "linea": [
+      "g2h2",
+      "d6d5",
+      "e4d5",
+      "e5e4",
+      "d3d4",
+      "f6g4"
+     ],
+     "medidas": {
+      "ataque": 0,
+      "estructura": 0,
+      "cambios": 0,
+      "propone": 0,
+      "material": 1
+     }
+    },
+    "b": {
+     "san": "c4",
+     "uci": "c2c4",
+     "polo": "iniciativa",
+     "eval": 4,
+     "linea": [
+      "c2c4",
+      "f6h5",
+      "g2a2",
+      "h5f4",
+      "d3c3",
+      "h6h5"
+     ],
+     "medidas": {
+      "ataque": 1,
+      "estructura": 1.5,
+      "cambios": 0,
+      "propone": 0,
+      "material": -1
+     }
+    },
+    "mejor": 4,
+    "fuente": {
+     "de": "una-clase-al-dia",
+     "partida": "ml344-4",
+     "blancas": "D. Andreikin",
+     "negras": "A. Areshchenko",
+     "evento": "8th ch-Euro Dresden, 2007",
+     "ply": 64,
+     "enLaPartida": "Rh2"
+    }
+   },
+   {
+    "id": "es57",
+    "eje": "material",
+    "fen": "2rq1rk1/pp2npp1/2b1p2p/4N3/3PQ3/1B6/PP3PPP/2R2RK1 w - - 1 18",
+    "a": {
+     "san": "Qe2",
+     "uci": "e4e2",
+     "polo": "iniciativa",
+     "eval": -47,
+     "linea": [
+      "e4e2",
+      "d8d4",
+      "e5f7",
+      "f8f7",
+      "e2e6",
+      "d4f6"
+     ],
+     "medidas": {
+      "ataque": -2,
+      "estructura": 0.5,
+      "cambios": 3,
+      "propone": 0,
+      "material": -2
+     }
+    },
+    "b": {
+     "san": "Qd3",
+     "uci": "e4d3",
+     "polo": "material",
+     "eval": -47,
+     "linea": [
+      "e4d3",
+      "d8b6",
+      "c1c5",
+      "f8d8",
+      "f1c1",
+      "b6b4"
+     ],
+     "medidas": {
+      "ataque": 0,
+      "estructura": 0,
+      "cambios": 0,
+      "propone": 0,
+      "material": 0
+     }
+    },
+    "mejor": -20,
+    "fuente": {
+     "de": "una-clase-al-dia",
+     "partida": "ml035-2",
+     "blancas": "V. Korchnoi",
+     "negras": "A. Karpov",
+     "evento": "Cto Mundial. Merano (9), 1981",
+     "ply": 34,
+     "enLaPartida": "Nxc6"
+    }
+   },
+   {
+    "id": "es58",
+    "eje": "material",
+    "fen": "r1b1r1k1/pp3pp1/2p2n2/7p/6PP/5P2/PPPB4/2KR1B1R w - h6 0 18",
+    "a": {
+     "san": "gxh5",
+     "uci": "g4h5",
+     "polo": "material",
+     "eval": 60,
+     "linea": [
+      "g4h5",
+      "f6h5",
+      "h1g1",
+      "c8f5",
+      "g1g5",
+      "g7g6"
+     ],
+     "medidas": {
+      "ataque": 1,
+      "estructura": 2,
+      "cambios": 0,
+      "propone": 1,
+      "material": 0
+     }
+    },
+    "b": {
+     "san": "Bd3",
+     "uci": "f1d3",
+     "polo": "iniciativa",
+     "eval": 36,
+     "linea": [
+      "f1d3",
+      "h5g4",
+      "h1g1",
+      "g4f3",
+      "d1f1",
+      "f6e4"
+     ],
+     "medidas": {
+      "ataque": 2,
+      "estructura": 2,
+      "cambios": 0,
+      "propone": 0,
+      "material": -2
+     }
+    },
+    "mejor": 60,
+    "fuente": {
+     "de": "una-clase-al-dia",
+     "partida": "ml203-4",
+     "blancas": "V. Bologan",
+     "negras": "O. Romanishin",
+     "evento": "Nikolaev, 1995",
+     "ply": 34,
+     "enLaPartida": "g5"
+    }
+   },
+   {
+    "id": "es59",
+    "eje": "material",
+    "fen": "1r4k1/3qpp2/3p1bp1/3P4/2B3P1/pP3P2/P1PQ4/1K5R b - - 0 26",
+    "a": {
+     "san": "Rc8",
+     "uci": "b8c8",
+     "polo": "iniciativa",
+     "eval": -100,
+     "linea": [
+      "b8c8",
+      "c2c3",
+      "c8c4",
+      "b3c4",
+      "d7c8",
+      "h1e1"
+     ],
+     "medidas": {
+      "ataque": -1,
+      "estructura": 0,
+      "cambios": 8,
+      "propone": 0,
+      "material": -2
+     }
+    },
+    "b": {
+     "san": "Kg7",
+     "uci": "g8g7",
+     "polo": "material",
+     "eval": -71,
+     "linea": [
+      "g8g7",
+      "c2c3",
+      "b8h8",
+      "h1h8",
+      "g7h8",
+      "d2e3"
+     ],
+     "medidas": {
+      "ataque": 0,
+      "estructura": 0,
+      "cambios": 5,
+      "propone": 0,
+      "material": 0
+     }
+    },
+    "mejor": -71,
+    "fuente": {
+     "de": "una-clase-al-dia",
+     "partida": "ml198-1",
+     "blancas": "E. Geller",
+     "negras": "I. Horowitz",
+     "evento": "USA-URS New York, 1954",
+     "ply": 51,
+     "enLaPartida": "Qc7"
+    }
+   },
+   {
+    "id": "es60",
+    "eje": "material",
+    "fen": "r3r1k1/pp2qppp/2p2n2/8/P2Pp1b1/2P1P3/2QN1PPP/RR3BK1 b - - 5 16",
+    "a": {
+     "san": "Rac8",
+     "uci": "a8c8",
+     "polo": "material",
+     "eval": -77,
+     "linea": [
+      "a8c8",
+      "h2h3",
+      "g4f5",
+      "c2b3",
+      "c8c7",
+      "b3b4"
+     ],
+     "medidas": {
+      "ataque": 0,
+      "estructura": 0,
+      "cambios": 0,
+      "propone": 0,
+      "material": 0
+     }
+    },
+    "b": {
+     "san": "Rad8",
+     "uci": "a8d8",
+     "polo": "iniciativa",
+     "eval": -67,
+     "linea": [
+      "a8d8",
+      "c3c4",
+      "c6c5",
+      "d4c5",
+      "g4c8",
+      "d2b3"
+     ],
+     "medidas": {
+      "ataque": 0,
+      "estructura": 0,
+      "cambios": 0,
+      "propone": 0,
+      "material": -1
+     }
+    },
+    "mejor": -67,
+    "fuente": {
+     "de": "una-clase-al-dia",
+     "partida": "ml276-3",
+     "blancas": "S. Volkov",
+     "negras": "V. Zvjaginsev",
+     "evento": "ch-RUS Moscú, 2005",
+     "ply": 31,
+     "enLaPartida": "Rad8"
+    }
    }
   ];
   /* ESTILO-FIN */
@@ -2329,13 +3274,27 @@
     ataque: { nombre: "Atacar o maniobrar", polos: { atacar: "Atacar al rey", maniobrar: "Maniobrar" } },
     estructura: { nombre: "Abrir o cerrar", polos: { abrir: "Abrir el juego", cerrar: "Mantenerlo cerrado" } },
     cambios: { nombre: "Cambiar o mantener piezas", polos: { cambiar: "Cambiar piezas", mantener: "Mantener las piezas" } },
+    material: { nombre: "Material o iniciativa", polos: { material: "Quedarse con el material", iniciativa: "Dar material por la iniciativa" } },
   };
 
-  /* Cuántas preguntas por eje lleva cada prueba, hasta cuántas más agrega en
-   * un eje que quedó dudoso, y si lleva las dos posiciones de control (ver
-   * js/estilo-perfil.js). Cambiar la forma sube VERSION: las pruebas viejas
-   * se siguen leyendo con su regla. */
-  const FORMA = { porEje: 10, extraPorEje: 5, controles: true };
+  /* La forma de cada versión: qué ejes mide, cuántas preguntas por eje lleva,
+   * hasta cuántas más agrega en un eje que quedó dudoso y si lleva las dos
+   * posiciones de control (ver js/estilo-perfil.js). Cambiar la forma sube
+   * VERSION, y una prueba vieja se sigue leyendo con la forma de la suya:
+   * una de la versión 1 no tiene el cuarto eje, no un cuarto eje «sin
+   * definir».
+   *   1  tres ejes, 10 por eje y hasta 5 más (32 a 47 preguntas).
+   *   2  el cuarto eje, «material o iniciativa». 8 por eje y hasta 6 más:
+   *      con 10 serían 42 preguntas de entrada; con 8, quien tiene un estilo
+   *      claro termina en 34 y la prueba agrega donde hace falta. Nadie pasa
+   *      de 58 (la base acepta hasta 60 respuestas), y la 15.ª de cada eje
+   *      queda para quien repite la prueba. */
+  const FORMAS = {
+    1: { ejes: ["ataque", "estructura", "cambios"], porEje: 10, extraPorEje: 5, controles: true },
+    2: { ejes: ["ataque", "estructura", "cambios", "material"], porEje: 8, extraPorEje: 6, controles: true },
+  };
+  const VERSION = 2;
+  const FORMA = FORMAS[VERSION];
 
   /* Cuánto distingue (`a`) y cuánto tira hacia el primer polo (`b`) cada
    * posición, calculado con las respuestas reales: lo escribe
@@ -2345,7 +3304,7 @@
   const CALIBRADO = {};
   /* CALIBRADO-FIN */
 
-  const api = { VERSION: 1, ITEMS, EJES, FORMA, CALIBRADO };
+  const api = { VERSION, ITEMS, EJES, FORMA, FORMAS, CALIBRADO };
   raiz.EstiloItems = api;
   if (typeof module !== "undefined" && module.exports) module.exports = api;
 })(typeof window !== "undefined" ? window : globalThis);

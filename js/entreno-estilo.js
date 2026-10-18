@@ -12,7 +12,9 @@
  * - Si tiene sus usuarios de Lichess o Chess.com (Configuración), mientras
  *   contesta su computadora mide el estilo en sus partidas
  *   (js/estilo-partidas.js). Al terminar se espera un poco a que acabe, y si
- *   tarda, se usa lo que alcanzó.
+ *   tarda, se usa lo que alcanzó. Con las mismas partidas se mide en qué tipo
+ *   de partida le va mejor (EstiloPartidas.rendimiento), que la
+ *   recomendación suma y que se guarda en el contexto.
  * - Se guarda una fila en `estilo_pruebas` (la hora la pone la base), con la
  *   recomendación de ese día: es la que se sigue después.
  * Ver «La prueba de estilo» en docs/decisiones/entrenamiento.md.
@@ -33,7 +35,7 @@
   let ultima = null;           // la última prueba guardada
   let prueba = null, item = null, juego = null;
   let eleccion = null, seguridad = null, desde = 0, ms = 0;
-  let momentos = [], midiendo = null, pararPartidas = false;
+  let momentos = [], midiendo = null, pararPartidas = false, rendimiento = null;
   let comandos = null, teclado = null;
 
   /* `foco`: lo que recibe el foco en la vista nueva (ver precisión posicional). */
@@ -75,6 +77,8 @@
         texto += (texto ? "\n\n" : "") + (usuario === principal ? t : D.unirCuentas(t, usuario, principal));
       }
       const partidas = An.leerPgn(texto);
+      // Sin motor: sale enseguida, y no depende de que termine lo de abajo.
+      try { rendimiento = EstiloPartidas.rendimiento(partidas, principal); } catch (e) { rendimiento = null; }
       const hallados = await EstiloPartidas.momentos(partidas, principal, {
         maximo: 60, parar: () => pararPartidas,
         alAvanzar: (i, n, m) => { estado.textContent = `Tus partidas: ${i} de ${n} posiciones revisadas, ${m} ${m === 1 ? "momento" : "momentos"} de estilo.`; },
@@ -90,6 +94,7 @@
   /* ---------------- Las preguntas ---------------- */
   function empezar() {
     momentos = [];
+    rendimiento = null;
     pararPartidas = false;
     midiendo = cuentas && $("usar-partidas").checked ? medirPartidas() : null;
     const vistas = ultima ? (ultima.respuestas || []).map((r) => r.id) : [];
@@ -264,6 +269,7 @@
     }
     err.classList.add("hidden");
     const contexto = { ritmo, estudio, elo, actual: { blancas: $("ctx-blancas").value || null, e4: $("ctx-e4").value || null, d4: $("ctx-d4").value || null } };
+    if (rendimiento && rendimiento.n) contexto.rendimiento = rendimiento;
     const btn = $("ctx-btn");
     btn.disabled = true;
     if (midiendo) {
@@ -293,7 +299,7 @@
     const rec = $("r-recomendacion");
     rec.textContent = "";
     EstiloTarjeta.pintarRecomendacion(rec, recomendacion, { tu: true, base: "../" });
-    anunciar("Listo. " + P.EJES.map((e) => B.EJES[e].nombre + ": " + resultado[e].etiqueta.texto).join(". ") + ".");
+    anunciar("Listo. " + resultado.lista.map((e) => B.EJES[e].nombre + ": " + resultado[e].etiqueta.texto).join(". ") + ".");
   }
 
   /* ---------------- Portada ---------------- */
@@ -305,10 +311,10 @@
     const h = document.createElement("h2");
     h.className = "font-serif text-lg font-bold text-brand-800 dark:text-white mb-1";
     h.textContent = "Tu última prueba";
-    const pf = P.medir(ultima.respuestas, ultima.partidas);
+    const pf = P.medir(ultima.respuestas, ultima.partidas, ultima.version);
     const p = document.createElement("p");
     p.className = "text-sm text-brand-500 dark:text-brand-300 mb-3";
-    p.textContent = "El " + HoraCR.fecha(ultima.created_at, { day: "numeric", month: "long", year: "numeric" }) + ": " + P.EJES.map((e) => pf[e].etiqueta.texto.toLowerCase()).join(" · ") + ".";
+    p.textContent = "El " + HoraCR.fecha(ultima.created_at, { day: "numeric", month: "long", year: "numeric" }) + ": " + pf.lista.map((e) => pf[e].etiqueta.texto.toLowerCase()).join(" · ") + ".";
     const botones = document.createElement("div");
     botones.className = "flex flex-wrap gap-2";
     const ver = document.createElement("button");

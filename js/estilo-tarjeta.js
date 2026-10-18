@@ -65,7 +65,8 @@
     const B = window.EstiloItems;
     const lista = el("div", "space-y-3");
     lista.setAttribute("data-estilo-perfil", "");
-    for (const e of EstiloPerfil.EJES) {
+    // Los ejes de SU prueba: una de la versión 1 no tiene el cuarto.
+    for (const e of perfil.lista || EstiloPerfil.EJES) {
       const x = perfil[e];
       const [uno, otro] = EstiloMedidas.POLOS[e];
       const fila = el("div", "bg-white dark:bg-brand-900 rounded-xl shadow-md p-4");
@@ -187,7 +188,7 @@
     }
     const ultima = data[0];
     contenedor.appendChild(el("p", SUB, "Prueba del " + fecha(ultima.created_at) + "."));
-    const perfil = EstiloPerfil.medir(ultima.respuestas, ultima.partidas);
+    const perfil = EstiloPerfil.medir(ultima.respuestas, ultima.partidas, ultima.version);
     pintarPerfil(contenedor, perfil, { tu: false });
     if (ultima.recomendacion) {
       contenedor.appendChild(el("h3", H3, "Lo que se le recomendó ese día"));
@@ -211,8 +212,8 @@
       contenedor.appendChild(el("h3", H3, "Pruebas anteriores"));
       const ul = el("ul", "list-disc pl-5 space-y-1 " + TXT);
       data.slice(1).forEach((p) => {
-        const pf = EstiloPerfil.medir(p.respuestas, p.partidas);
-        ul.appendChild(el("li", null, fecha(p.created_at) + ": " + EstiloPerfil.EJES.map((e) => pf[e].etiqueta.texto.toLowerCase()).join(" · ") + "."));
+        const pf = EstiloPerfil.medir(p.respuestas, p.partidas, p.version);
+        ul.appendChild(el("li", null, fecha(p.created_at) + ": " + pf.lista.map((e) => pf[e].etiqueta.texto.toLowerCase()).join(" · ") + "."));
       });
       contenedor.appendChild(ul);
     }

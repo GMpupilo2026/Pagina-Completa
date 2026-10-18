@@ -20,6 +20,20 @@
  *     hasta `maximo` posiciones en total: el estilo de hoy, no el de hace
  *     tres años.
  *
+ * El RENDIMIENTO según el tipo de partida: en qué partidas le va mejor, para
+ * sumarlo a la recomendación (js/estilo-aperturas.js). Solo en los dos ejes
+ * que describen la partida y no a quien va ganando:
+ *   - `estructura` (columnas abiertas menos peones bloqueados, promediado en
+ *     las medias jugadas 24, 32 y 40) y `cambios` (piezas que salieron del
+ *     tablero hasta la 40) valen lo mismo para los dos bandos.
+ *   - El ataque y el material NO: quien va ganando presiona más al rey y
+ *     tiene más material, así que «rinde mejor cuando ataca» diría solo que
+ *     gana cuando va ganando.
+ * Sus partidas de 40 medias jugadas o más se parten por la mitad en cada eje
+ * (las más abiertas y las más cerradas, de las SUYAS) y se comparan los
+ * puntos. Cuenta solo con 15 partidas o más en cada mitad y una diferencia
+ * que el azar daría menos de una vez en veinte (|z| ≥ 1,96).
+ *
  * Y el SEGUIMIENTO de la recomendación: cómo le fue con la apertura que se le
  * recomendó desde ese día, contra antes y contra el resto de sus partidas de
  * esos meses (si todo le va mejor, no es la apertura: es que mejoró).
@@ -28,6 +42,9 @@
  *     → [{ eje, primero, fen, jugada, otra }]
  *   EstiloPartidas.seguimiento(partidas, jugador, recomendacion, desde)
  *     → { blancas: {...}, e4: {...}, d4: {...} } con { id, antes, despues, resto }
+ *   EstiloPartidas.rendimiento(partidas, jugador)
+ *     → { n, ejes: { estructura: {...}, cambios: {...} } } con
+ *       { alto: {n, puntos}, bajo: {n, puntos}, d, z, cuenta }
  *   EstiloPartidas.evaluarConSharedEngine(fen, lineas, profundidad)
  *     → [{ uci, score (cp, desde quien mueve), pv }]
  */
@@ -36,7 +53,6 @@
 
   const PAREJAS = 30, DECIDIDA = 150, PROF = 12, LINEAS = 4;
   const PLY_DESDE = 14, PLY_HASTA = 60, POR_PARTIDA = 2;
-  const EJES = ["ataque", "estructura", "cambios"];
 
   const G = typeof window !== "undefined" ? window : globalThis;
   const medidas = () => G.EstiloMedidas || (typeof require === "function" ? require("./estilo-medidas.js") : null);
@@ -102,7 +118,7 @@
       let ma, mb;
       try { ma = M.medir(Chess, cand.fen, suya.pv); mb = M.medir(Chess, cand.fen, otra.pv); } catch (e) { continue; }
       const ta = M.tipoDeJugada(Chess, cand.fen, suya.uci), tb = M.tipoDeJugada(Chess, cand.fen, otra.uci);
-      for (const eje of EJES) {
+      for (const eje of Object.keys(M.POLOS)) {
         if (out.some((x) => x.eje === eje)) continue;
         const polo = M.poloDe(eje, ma, mb, ta, tb);
         if (polo) out.push({ eje, primero: polo === "a", fen: cand.fen, jugada: suya.uci, otra: otra.uci });
@@ -165,6 +181,64 @@
     });
   }
 
+  /* -------- El rendimiento según el tipo de partida -------- */
+  const RINDE_MUESTRAS = [24, 32, 40], RINDE_MINIMO = 15, RINDE_Z = 1.96;
+  const r3 = (x) => Math.round(x * 1000) / 1000;
+
+  /* Cómo fue la partida, igual para los dos bandos: null si es corta. Se
+     recuerda por la lista de jugadas: no cambia, y volver a jugarla cuesta. */
+  const tipos = new WeakMap();
+  function tipoDePartida(p) {
+    if (!Array.isArray(p.jugadas)) return null;
+    if (!tipos.has(p.jugadas)) tipos.set(p.jugadas, tipoSinGuardar(p));
+    return tipos.get(p.jugadas);
+  }
+  function tipoSinGuardar(p) {
+    const Chess = ChessDe(), M = medidas();
+    if (p.jugadas.length < RINDE_MUESTRAS[RINDE_MUESTRAS.length - 1]) return null;
+    const c = new Chess();
+    const inicio = M.piezas(c.fen());
+    const fens = [];
+    for (let i = 0; i < RINDE_MUESTRAS[RINDE_MUESTRAS.length - 1]; i++) {
+      if (!c.move(p.jugadas[i], { sloppy: true })) return null;
+      if (RINDE_MUESTRAS.includes(i + 1)) fens.push(c.fen());
+    }
+    return {
+      estructura: fens.reduce((s, f) => s + M.apertura(f), 0) / fens.length,
+      cambios: inicio - M.piezas(fens[fens.length - 1]),
+    };
+  }
+
+  function rendimiento(partidas, jugador) {
+    const filas = [];
+    for (const p of partidas || []) {
+      const color = colorDe(p, jugador);
+      const pts = color && puntosDe(p, color);
+      if (pts == null) continue;
+      const tipo = tipoDePartida(p);
+      if (tipo) filas.push({ tipo, pts });
+    }
+    const ejes = {};
+    for (const e of ["estructura", "cambios"]) {
+      // La mitad de arriba y la de abajo, de SUS partidas.
+      const orden = filas.slice().sort((x, y) => x.tipo[e] - y.tipo[e]);
+      const corte = Math.floor(orden.length / 2);
+      const bajo = orden.slice(0, corte).map((x) => x.pts), alto = orden.slice(corte).map((x) => x.pts);
+      const media = (l) => (l.length ? l.reduce((s, x) => s + x, 0) / l.length : null);
+      const todo = media(orden.map((x) => x.pts));
+      const d = alto.length && bajo.length ? media(alto) - media(bajo) : 0;
+      const se = alto.length && bajo.length ? Math.sqrt(Math.max(1e-9, todo * (1 - todo)) * (1 / alto.length + 1 / bajo.length)) : Infinity;
+      const z = d / se;
+      ejes[e] = {
+        alto: { n: alto.length, puntos: alto.length ? r3(media(alto)) : null },
+        bajo: { n: bajo.length, puntos: bajo.length ? r3(media(bajo)) : null },
+        d: r3(d), z: Math.round(z * 100) / 100,
+        cuenta: alto.length >= RINDE_MINIMO && bajo.length >= RINDE_MINIMO && Math.abs(z) >= RINDE_Z,
+      };
+    }
+    return { n: filas.length, ejes };
+  }
+
   /* -------- El seguimiento de la recomendación -------- */
   function pasaPor(p, define) {
     const Chess = ChessDe();
@@ -217,7 +291,7 @@
     return t + ".";
   }
 
-  const api = { PAREJAS, DECIDIDA, PROF, MINIMO_SEGUIMIENTO, candidatas, momentoDe, momentos, evaluarConSharedEngine, seguimiento, fraseSeguimiento, pasaPor, colorDe, fechaDe };
+  const api = { PAREJAS, DECIDIDA, PROF, MINIMO_SEGUIMIENTO, RINDE_MINIMO, RINDE_Z, tipoDePartida, rendimiento, candidatas, momentoDe, momentos, evaluarConSharedEngine, seguimiento, fraseSeguimiento, pasaPor, colorDe, fechaDe };
   if (typeof window !== "undefined") window.EstiloPartidas = api;
   if (typeof module !== "undefined" && module.exports) module.exports = api;
 })();
