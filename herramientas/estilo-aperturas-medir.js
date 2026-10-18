@@ -37,6 +37,11 @@
  *     prueba, en una posición tranquila: si la media jugada vino de una
  *     captura o dejó un jaque, se mira la siguiente que no (hasta cuatro
  *     más), porque a mitad de un cambio falta la recaptura.
+ *   - Las partidas: las del repositorio, las de torneos transmitidos en
+ *     Lichess (herramientas/datos/estilo-aperturas-partidas.txt) y, para las
+ *     aperturas que con esas no llegaban al mínimo, las de KingBase
+ *     (herramientas/datos/estilo-aperturas-kingbase.txt, las baja
+ *     herramientas/estilo-aperturas-kingbase.js).
  *   - `car`, lo que usa la recomendación: cada medida comparada con las demás
  *     aperturas del mismo color (puntaje z), entre −1 y +1.
  *
@@ -74,6 +79,7 @@ function posTras(sans, k) {
 }
 
 const TORNEOS = path.join(__dirname, "datos/estilo-aperturas-partidas.txt");
+const KINGBASE = path.join(__dirname, "datos/estilo-aperturas-kingbase.txt");
 
 /* Todas las partidas: las del repositorio (en SAN) y las de torneos (en
  * UCI). Que no se repitan lo resuelve recorrer(). */
@@ -81,6 +87,9 @@ function todas() {
   const out = PartidasMaestros.leer(Chess).filter((p) => p.inicial === INICIAL).map((p) => ({ id: p.fuente + "|" + p.id, sans: p.sans }));
   if (fs.existsSync(TORNEOS)) {
     fs.readFileSync(TORNEOS, "utf8").split("\n").filter(Boolean).forEach((l, i) => out.push({ id: "torneos|" + (i + 1), ucis: l.split(" ") }));
+  }
+  if (fs.existsSync(KINGBASE)) {
+    fs.readFileSync(KINGBASE, "utf8").split("\n").filter(Boolean).forEach((l, i) => out.push({ id: "kingbase|" + (i + 1), ucis: l.split(" ") }));
   }
   return out;
 }
@@ -141,17 +150,24 @@ function medirPartida(g, color) {
 const r2 = (x) => Math.round(x * 100) / 100;
 const EJES = Object.keys(M.POLOS);
 
-function medir() {
+/* La posición propia de cada apertura: la de la jugada más corta de su
+ * línea que no está en ninguna otra. → [{ linea, propia (índice), pos }] */
+function propias() {
   const aperturas = LINEAS.filter((l) => l.tipo === "apertura");
-  // Todas las posiciones de cada línea, para encontrar la propia.
   const posDe = new Map(aperturas.map((l) => [l.id, l.jugadas.map((_, k) => posTras(l.jugadas, k + 1))]));
+  return aperturas.map((l) => {
+    const suyas = posDe.get(l.id);
+    let propia = suyas.findIndex((p) => !aperturas.some((o) => o.id !== l.id && posDe.get(o.id).includes(p)));
+    // Dos líneas del banco iguales hasta el final: la más larga define.
+    if (propia < 0) propia = suyas.length - 1;
+    return { linea: l, propia, pos: suyas[propia] };
+  });
+}
+
+function medir() {
   const juegos = recorrer(todas());
   const salida = [];
-  for (const l of aperturas) {
-    const propias = posDe.get(l.id);
-    let propia = propias.findIndex((p) => !aperturas.some((o) => o.id !== l.id && posDe.get(o.id).includes(p)));
-    // Dos líneas del banco iguales hasta el final: la más larga define.
-    if (propia < 0) propia = propias.length - 1;
+  for (const { linea: l, propia } of propias()) {
     // La media jugada i (desde 0) es de las blancas si i es par.
     const propiaDe = (i) => (i % 2 === 0 ? "w" : "b") === l.color;
     let k = propia + 1, pasan = [];
@@ -204,4 +220,4 @@ if (require.main === module) {
     + (sin.length ? "; sin medir: " + sin.join(", ") : "") + ".");
 }
 
-module.exports = { medir, MINIMO, MUESTRAS, MUESTRAS_MATERIAL, BUSCAR_HASTA };
+module.exports = { medir, propias, posTras, clavePos, MINIMO, MUESTRAS, MUESTRAS_MATERIAL, BUSCAR_HASTA };

@@ -4125,6 +4125,54 @@ primer polo, «Las dos por igual» o el segundo.
   como» y quien supervisa no ven los botones; quién escribe, de todos modos,
   lo decide la RLS.
 
+### De la recomendación a un plan de estudio
+
+Que la prueba diga «te queda la escandinava» no cambia nada si nadie la
+practica. Dos puertas:
+
+- **El alumno, «Agregar a Mi repertorio»** en cada apertura recomendada: la
+  línea entra a su repertorio con su color. Lo que pase lo dice la base: si
+  ya estaba (la clave única) o si choca con otra línea suya en la misma
+  posición (`repertorio_coherente`, con su propio mensaje).
+- **El profe, «Armar un plan de 4 semanas»** en Informes
+  (`EstiloAperturas.plan`, una función pura): una tarea por semana con cada
+  apertura recomendada —la línea en Aperturas y celadas, cantidad 1, y un
+  rato de práctica en minutos— y la cuarta de repaso. Cada una es de 7 días
+  y aparece el día que empieza (`disponible_desde`). El profe saca las
+  semanas que no quiere y cambia los minutos antes de mandarlo; lo manda
+  `crear_tarea()`, que ya solo deja mandarle a sus alumnos.
+- La línea cuenta aunque la haya terminado antes (como cualquier tarea de
+  «cantidad»); los minutos, solo desde que se manda: por eso cada semana
+  lleva las dos cosas.
+- Se arma con la recomendación guardada (el acta), no con la que saldría hoy
+  con la opinión del profe.
+
+### ¿La prueba funciona?
+
+En Informes, el tema «🎭 Prueba de estilo»: el estilo de cada alumno (los
+cuatro ejes de su última prueba, leída con su versión, y lo que se le
+recomendó), quién no la hizo —con cómo pedírsela— y tres preguntas que dicen
+si lo que mide se sostiene:
+
+- **La calibración**: cuántas de las 60 posiciones tienen ya las 30
+  respuestas que pide `herramientas/estilo-calibrar.js`.
+- **La repetición**: de quien la hizo dos veces con 14 días o más entre una y
+  otra, en las posiciones que vio las dos veces, cuántas veces eligió la
+  misma jugada (al azar sería 50 %). Con menos de 20 posiciones así, lo dice
+  y no saca conclusiones.
+- **Las partidas**: por eje, si lo que contesta y lo que hace en sus partidas
+  van juntos (correlación entre pruebas; con menos de 8 pruebas con partidas
+  en ese eje, no la calcula). Si va al revés, hay que revisar esas
+  posiciones.
+
+Las cuentas las hace la base (`estilo_salud(p_primero)`, `SECURITY INVOKER`:
+solo las pruebas que quien pregunta ya ve; devuelve números, no respuestas).
+El banco no vive en la base, así que la página le manda el eje y el primer
+polo de cada posición. Comprobado en SQL (transacción deshecha): con dos
+pruebas de un alumno a 20 días, el control no cuenta como respuesta, la
+repetición da 2 de 3, las partidas 2 de 3; un profe ajeno ve 0 pruebas y
+anónimo no tiene permiso.
+
 ### La medición: el modelo de dos parámetros, con lo seguro y lo rápido
 
 Por eje, la tendencia θ que mejor explica las elecciones con
@@ -4191,10 +4239,32 @@ a +1, contra las demás aperturas del mismo color.
   escandinava quedaba medida con todas las partidas de 1.e4 y el gambito de
   rey con todas las de 1.e4 e5 (es decir, la española). Ahora solo se puede
   quitar la última respuesta del rival; si así no alcanzan las 15 partidas,
-  la apertura queda sin medir y no se recomienda. Hoy: 57 de 64 medidas.
+  la apertura queda sin medir y no se recomienda.
 - Medido así, sale lo que se sabe: la española cerrada y la francesa del
   avance, cerradas y de maniobra; la del cambio y la Berlín, de cambios; el
   Dragón y la India de rey, de ataque al rey.
+- **Las 7 que faltaban, de KingBase.** La holandesa, la Leningrado, el
+  gambito Evans, la Benoni moderna, la Stonewall, el gambito Budapest y la
+  Ponziani casi no se juegan en los torneos de élite transmitidos, y
+  quedaban sin medir: no se recomendaban nunca. Sus partidas salen de
+  KingBase 2017 (jugadores de 2000 o más, ordenadas por ECO; la copia de la
+  colección pública `rozim/ChessData` de GitHub), con
+  `herramientas/estilo-aperturas-kingbase.js`: solo para las aperturas que
+  hoy no llegan al mínimo de su variante (sumarle KingBase a todas cambiaría
+  cada medida sin necesidad), hasta 300 por apertura, las que llegan a su
+  posición propia, también por transposición, y lo mismo que se guarda de
+  las de torneos (40 medias jugadas en UCI, sin nombres). Quedan en
+  `herramientas/datos/estilo-aperturas-kingbase.txt`. Hoy: **64 de 64
+  medidas**, y `verificar-estilo-aperturas.js` falla si una queda sin medir.
+- La primera versión del extractor miraba, como la medición, si la partida
+  pasaba por la posición en sus primeras 30 medias jugadas, y a los 45
+  minutos no había terminado: casi todas las partidas de D00-D29 tienen d4,
+  e3 y d5 en algún momento. Una posición con k medias jugadas hechas se
+  alcanza en la media jugada k (por transposición, con las mismas jugadas en
+  otro orden): mirando solo ahí, tarda 2 minutos y medio.
+- Salen como se esperaba: el Evans y el Budapest, los que más material dan;
+  la Stonewall y la holandesa, de las más cerradas; la Benoni moderna, de
+  las que menos cambian.
 
 ### La recomendación
 
@@ -4285,14 +4355,16 @@ estilo-pagina informes`:
   45, la recomendación (líneas medidas de su grupo, más ataque a quien ataca,
   mantener la suya, nada de nivel 3 a quien empieza) y el seguimiento.
 - `estilo-aperturas`: vuelve a medir todas las aperturas (≈ 50 s) y exige lo
-  guardado; ninguna medida quitando una jugada propia; al menos 6 por grupo.
+  guardado; ninguna medida quitando una jugada propia; ninguna sin medir;
+  al menos 6 por grupo.
 - `estilo-pagina`: la prueba entera en el navegador (botones y por escrito),
   «Cómo juegas», el resultado, lo que se guarda (sin la hora), y con sus
   partidas de Lichess y un motor de mentira.
 - `informes`: el profe ve su estilo, lo que se le recomendó, las pruebas
   anteriores (una de la versión 1 con sus tres ejes) y nada de otro alumno;
   marca «¿Coincide con lo que ves?» y su opinión se guarda, se ve marcada y
-  mueve el perfil.
+  mueve el perfil; arma y manda el plan de 4 semanas; y el tema de toda la
+  clase con el estilo de cada uno y si la prueba funciona.
 
 Rompiéndolo a propósito saltaron: el tope de las partidas en 10, quitar el
 ensanche de los controles, medir una apertura quitando una jugada propia,

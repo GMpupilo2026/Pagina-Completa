@@ -14,6 +14,10 @@
  *     se midió quitando una jugada, la quitada es del rival (nunca una propia:
  *     medir el gambito de rey con todas las partidas de 1.e4 e5 sería medir
  *     la española).
+ *  3b. UNA APERTURA QUE NUNCA SE RECOMIENDA. Ninguna queda sin medir: lo que
+ *     no se midió no se recomienda nunca, sin que nadie se entere. Si una
+ *     línea nueva no tiene partidas, se buscan en KingBase
+ *     (herramientas/estilo-aperturas-kingbase.js).
  *  4. UNA RECOMENDACIÓN SIN OPCIONES. Con blancas, contra 1.e4 y contra 1.d4
  *     hay al menos 6 aperturas medidas para elegir.
  *
@@ -38,6 +42,9 @@ for (const m of A.MEDIDO) {
   if (!o) { falla(m.id, "no sale al volver a medir"); continue; }
   if (JSON.stringify(o) !== JSON.stringify(m)) falla(m.id, "no es lo que da medir de nuevo (¿se editó a mano?): " + JSON.stringify(o).slice(0, 160));
 }
+
+// 3b. Ninguna sin medir.
+for (const m of A.MEDIDO) if (!m.n) falla(m.id, "sin medir (menos de " + Medir.MINIMO + " partidas): búscale partidas con herramientas/estilo-aperturas-kingbase.js");
 
 // 2. Una fila por línea de apertura, y ninguna de más.
 const aperturas = LINEAS.filter((l) => l.tipo === "apertura");

@@ -450,6 +450,15 @@ async function pruebaProfesor(browser) {
   }));
   const { page, errores } = await abrir(browser, {
     rpc: {
+      // La salud de la prueba de estilo, como la devuelve estilo_salud(): las
+      // 60 posiciones con 30 respuestas, una repetición con 20 de 25 iguales y
+      // ocho pruebas con partidas en «ataque» que van juntas.
+      estilo_salud: {
+        pruebas: 40, alumnos: 31, por_version: { 2: 40 },
+        por_posicion: Object.fromEntries(Array.from({ length: 60 }, (_, i) => ["es" + String(i + 1).padStart(2, "0"), 30 + i])),
+        repeticion: { pares: 3, comparadas: 25, iguales: 20 },
+        partidas: [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8].map((x) => ({ eje: "ataque", prueba: x, n_prueba: 8, partidas: x + 0.05, n_partidas: 6 })),
+      },
       guardar_fide_id: "6530133",
       informes_resumen_alumnos: [ANA, BRUNO, CARLA],
       informes_cursos_alumnos: CURSOS_ANA,
@@ -1101,6 +1110,28 @@ async function pruebaProfesor(browser) {
   igual("queda marcada («✓», no solo el color), cuenta en su perfil y lo dice, y el foco vuelve al botón",
     [op1.apretados, /lo que ve su profe/.test(op1.frase), op1.foco, op1.conOpinion], [["material:1:✓ Quedarse con el material"], true, "1", true]);
   igual("y mueve su perfil hacia lo que ve", parseFloat(op1.p) > parseFloat(op0.p), true);
+
+  console.log("-- Un plan de 4 semanas con lo que se le recomendó");
+  await page.click("[data-estilo-plan] button[aria-expanded]");
+  const plan0 = await page.evaluate(() => {
+    const c = document.querySelector("[data-estilo-plan]");
+    return { abierto: c.querySelector("button[aria-expanded]").getAttribute("aria-expanded"), semanas: c.querySelectorAll("[data-plan-semana]").length,
+      boton: c.querySelector("[data-plan-mandar]").textContent, visible: c.querySelector("[data-plan-mandar]").checkVisibility() };
+  });
+  igual("se abre (y lo dice), con sus cuatro semanas", [plan0.abierto, plan0.semanas, plan0.boton, plan0.visible], ["true", 4, "Mandar el plan (4 tareas)", true]);
+  await page.uncheck('[data-plan-semana="4"] input[type=checkbox]');
+  await page.fill("[data-estilo-plan] input[type=number]", "30");
+  await page.dispatchEvent("[data-estilo-plan] input[type=number]", "change");
+  igual("el profe saca la de repaso", await page.textContent("[data-plan-mandar]"), "Mandar el plan (3 tareas)");
+  await page.evaluate(() => { window.__rpcArgs = []; });
+  await page.click("[data-plan-mandar]");
+  await page.waitForFunction(() => /Plan mandado/.test(document.querySelector("[data-estilo-plan] [role=status]:last-child").textContent), null, { timeout: 5000 });
+  const tareasPlan = await page.evaluate(() => window.__rpcArgs.filter(([n]) => n === "crear_tarea").map(([, a]) => a));
+  igual("manda tres tareas, solo a este alumno, una por semana y con los minutos que eligió",
+    tareasPlan.map((a) => [JSON.stringify(a.p_alumnos), a.p_disponible_desde === null, a.p_items.length, a.p_items[1].meta_cantidad]),
+    [['["a-1"]', true, 2, 30], ['["a-1"]', false, 2, 30], ['["a-1"]', false, 2, 30]]);
+  igual("cada semana pide su línea recomendada", tareasPlan.map((a) => a.p_items[0].filtro_clave),
+    ["blancas", "e4", "d4"].map((g) => ESTILO[0].recomendacion[g].principal.id));
   igual("lo que se le recomendó, en los tres grupos", es.grupos, ["blancas", "e4", "d4"]);
   igual("la fecha de su prueba, las anteriores, en tercera persona, nada de otro alumno, y el seguimiento",
     [es.fecha, es.anteriores, es.tercera, es.bruno, es.seguir], [true, true, true, false, true]);
@@ -1193,6 +1224,21 @@ async function pruebaProfesor(browser) {
   igual("tema Precisión posicional", await page.evaluate(() =>
     document.querySelector("#topic-report-body > div").textContent.replace(/\s+/g, " ").trim()),
     "Ana Rojas75 % en la última · 2 rondas");
+  await page.selectOption("#topic-filter", "estilo");
+  await page.waitForFunction(() => document.querySelector("#topic-report-body [data-estilo-salud]"), null, { timeout: 10000 });
+  const clase = await page.evaluate(() => ({
+    filas: [...document.querySelectorAll("#topic-report-body [data-estilo-clase] tbody tr")].map((tr) => tr.dataset.alumno + ": " + [...tr.children].map((c) => c.textContent).slice(1, 5).join(" | ")),
+    sin: (document.querySelector("#topic-report-body").textContent.match(/Sin la prueba: [^.]*\./) || [""])[0],
+    salud: Object.fromEntries([...document.querySelectorAll("#topic-report-body [data-salud]")].map((li) => [li.dataset.salud, li.textContent])),
+  }));
+  igual("el estilo de cada uno, de su última prueba (Ana, con sus cuatro ejes)", clase.filas[0],
+    "a-1: atacar al rey | sin definir | mantener las piezas | dar material por la iniciativa");
+  igual("y quién no la hizo, con cómo pedírsela", clase.sin, "Sin la prueba: Carla Soto.");
+  igual("¿funciona?: la calibración, la repetición y las partidas, con sus números",
+    [/ya se puede calibrar/.test(clase.salud.calibracion), /80 %/.test(clase.salud.repeticion), /van juntos \(r = 1,00, en 8/.test(clase.salud["partidas-ataque"]), /pocas pruebas con partidas/.test(clase.salud["partidas-cambios"])],
+    [true, true, true, true]);
+  const pedidoSalud = await page.evaluate(() => (window.__rpcArgs.find(([n]) => n === "estilo_salud") || [])[1]);
+  igual("a la base le manda el primer polo de cada una de las 60 posiciones", [Object.keys(pedidoSalud.p_primero).length, pedidoSalud.p_primero.es01.eje], [60, "ataque"]);
   await page.selectOption("#topic-filter", "diagnostico");
   await page.waitForFunction(() => document.getElementById("topic-report-body").textContent.includes("Ana Rojas"));
   igual("diagnósticos: hecho, a medias y sin empezar", await page.evaluate(() => {
@@ -1678,7 +1724,7 @@ async function pruebaClaseGrande(browser) {
     ["Cómo van tus alumnos", "Lo que entrenaron, tema por tema"]);
   igual("ningún tema se perdió al agruparlos", await page.evaluate(() =>
     [...document.querySelectorAll("#topic-filter option")].map((o) => o.value).sort().join(",")),
-    ["", "4x4", "aprender", "aperturas", "asignaciones", "asistencia", "concentracion", "coordenadas", "cursos", "diagnostico", "inactivos", "mates", "practicar", "precision", "tactica", "temas", "tipos", "visualizacion"].sort().join(","));
+    ["", "4x4", "aprender", "aperturas", "asignaciones", "asistencia", "concentracion", "coordenadas", "cursos", "diagnostico", "estilo", "inactivos", "mates", "practicar", "precision", "tactica", "temas", "tipos", "visualizacion"].sort().join(","));
   const preguntas = () => page.evaluate(() => [...document.querySelectorAll("#preguntas-rapidas button")]
     .filter((b) => b.checkVisibility()).map((b) => b.firstChild.textContent + (b.getAttribute("aria-pressed") === "true" ? " [marcada]" : "")));
   igual("se ven las cuatro preguntas, ninguna marcada", await preguntas(),

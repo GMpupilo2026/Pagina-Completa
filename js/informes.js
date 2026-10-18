@@ -2382,6 +2382,7 @@
             aperturas: "📖 Aperturas — líneas estudiadas (firmes: aguantan tres semanas sin repasar)",
             precision: "🎯 Precisión posicional — porcentaje de la última ronda",
             cursos: "🏛️ Cursos — temas estudiados por alumno",
+            estilo: "🎭 Prueba de estilo — el estilo de cada uno y si la prueba funciona",
         };
 
         // Un solo tema/actividad elegido en el segundo filtro: cuánto ha hecho CADA alumno
@@ -2409,6 +2410,14 @@
                 const cajaVis = document.createElement("div"); visitantes.appendChild(cajaVis);
                 renderDiagnosticosVisitantes(cajaVis);
                 body.append(alumnos, visitantes);
+                document.getElementById("topic-report").classList.remove("hidden");
+                return;
+            }
+            // El estilo de cada alumno y la salud de la prueba (js/estilo-tarjeta.js).
+            if (topic === "estilo") {
+                if (window.EstiloTarjeta) EstiloTarjeta.montarClase(body, {
+                    sb, alumnos: filteredStudents().map((s) => ({ id: s.id, nombre: s.full_name || s.email || "Sin nombre" })),
+                }).catch((e) => { console.error(e); body.textContent = "No se pudo cargar la prueba de estilo."; });
                 document.getElementById("topic-report").classList.remove("hidden");
                 return;
             }

@@ -12,6 +12,8 @@
  *      resultado: los cuatro ejes con su etiqueta y su margen escrito, y las tres
  *      recomendaciones con su porqué y su enlace a Aperturas y celadas.
  *      Lo que ve su profe (estilo_opiniones) entra en su eje y lo dice.
+ *      «Agregar a Mi repertorio» guarda la línea recomendada, con su color,
+ *      a su nombre, y lo dice.
  *   4. Lo que se guarda en estilo_pruebas: a nombre del alumno de la sesión,
  *      con todas las respuestas (las dos de control marcadas), el contexto y
  *      la recomendación que se mostró; la hora NO la manda el navegador.
@@ -208,6 +210,16 @@ async function main() {
       ejes.filter((x) => /lo que ve tu profe/.test(x[2])).map((x) => x[0]).join() === "material", JSON.stringify(ejes.map((x) => [x[0], /profe/.test(x[2])])));
     const grupos = await page.$$eval("[data-estilo-recomendacion] [data-grupo]", (f) => f.map((x) => [x.dataset.grupo, !!x.querySelector('a[href*="aperturas.html?linea="]'), x.querySelectorAll("li").length]));
     ok("recomienda con blancas, contra 1.e4 y contra 1.d4, con porqué y enlace", grupos.length === 3 && grupos.every((g) => g[1] && g[2] >= 2), JSON.stringify(grupos));
+    await page.click('[data-grupo="e4"] [data-repertorio]');
+    await page.waitForFunction(() => /Listo/.test((document.querySelector('[data-grupo="e4"] [data-repertorio] + [role="status"]') || {}).textContent || ""), null, { timeout: 5000 }).catch(() => {});
+    const rep = await page.evaluate(() => ({
+      esc: window.__escrituras.filter((e) => e.tabla === "repertorio").map((e) => e.fila),
+      id: document.querySelector('[data-grupo="e4"] [data-repertorio]').dataset.repertorio,
+      dice: document.querySelector('[data-grupo="e4"] [data-repertorio] + [role="status"]').textContent,
+    }));
+    ok("«Agregar a Mi repertorio» guarda la defensa recomendada contra 1.e4, con negras y a su nombre, y lo dice",
+      rep.esc.length === 1 && rep.esc[0].alumno_id === "u-1" && rep.esc[0].color === "b" && rep.esc[0].jugadas[0] === "e4" && rep.esc[0].jugadas.length >= 2 && /Listo/.test(rep.dice),
+      JSON.stringify(rep));
 
     await page.waitForFunction(() => window.__escrituras.some((e) => e.tabla === "estilo_pruebas"), null, { timeout: 5000 }).catch(() => {});
     const esc = await page.evaluate(() => window.__escrituras.filter((e) => e.tabla === "estilo_pruebas"));

@@ -292,6 +292,17 @@
     if (!error && data) ultima = data;
   }
 
+  /* «Agregar a Mi repertorio»: la línea recomendada entra a su repertorio.
+     La base dice si choca con otra línea suya (repertorio_coherente) o si ya
+     estaba (la clave única). */
+  async function agregarAlRepertorio(op, color) {
+    const { error } = await sb.from("repertorio").insert({ alumno_id: perfil.id, color, nombre: op.nombre, jugadas: op.jugadas });
+    if (!error) return "Listo: está en Mi repertorio.";
+    if (error.code === "23505") return "Ya estaba en Mi repertorio.";
+    if (error.code === "23514" && error.message) return error.message;
+    throw error;
+  }
+
   /* ---------------- El resultado ---------------- */
   function mostrarResultado(resultado, recomendacion, guardado) {
     irA("resultado-view", $("r-titulo"));
@@ -301,7 +312,7 @@
     EstiloTarjeta.pintarPerfil(caja, resultado, { tu: true });
     const rec = $("r-recomendacion");
     rec.textContent = "";
-    EstiloTarjeta.pintarRecomendacion(rec, recomendacion, { tu: true, base: "../" });
+    EstiloTarjeta.pintarRecomendacion(rec, recomendacion, { tu: true, base: "../", repertorio: agregarAlRepertorio });
     anunciar("Listo. " + resultado.lista.map((e) => B.EJES[e].nombre + ": " + resultado[e].etiqueta.texto).join(". ") + ".");
   }
 

@@ -35,76 +35,79 @@
  *     cada uno { principal, alternativa, mantener } con { id, nombre,
  *     apertura, jugadas, porque: [frases], ajuste }
  *   EstiloAperturas.medidaDe(id) → la fila de MEDIDO
+ *   EstiloAperturas.plan(rec, { ahora, minutos }) → las tareas de 4 semanas
+ *     ([{ semana, titulo, instrucciones, desde, vence, items }]) para
+ *     crear_tarea(): una semana por apertura recomendada y la última de repaso.
  */
 (function () {
   "use strict";
 
   /* MEDIDO-INICIO: generado por herramientas/estilo-aperturas-medir.js — no se edita a mano. */
   const MEDIDO = [
-    {"id":"espanola-cerrada","color":"w","contra":null,"n":328,"define":["e4","e5","Nf3","Nc6","Bb5","a6","Ba4"],"base":"variante","media":{"ataque":1.54,"estructura":0.21,"cambios":11.28,"material":-0.02},"car":{"ataque":-0.35,"estructura":-0.71,"cambios":-0.59,"material":0.21}},
-    {"id":"espanola-cambio","color":"w","contra":null,"n":19,"define":["e4","e5","Nf3","Nc6","Bb5","a6","Bxc6"],"base":"variante","media":{"ataque":2.54,"estructura":1.25,"cambios":28.89,"material":0.08},"car":{"ataque":1,"estructura":0.34,"cambios":1,"material":0.59}},
-    {"id":"italiana-giuoco","color":"w","contra":null,"n":99,"define":["e4","e5","Nf3","Nc6","Bc4","Bc5","c3"],"base":"variante","media":{"ataque":1.79,"estructura":0.59,"cambios":13.78,"material":-0.17},"car":{"ataque":0.01,"estructura":-0.33,"cambios":-0.27,"material":-0.35}},
-    {"id":"escocesa","color":"w","contra":null,"n":63,"define":["e4","e5","Nf3","Nc6","d4","exd4","Nxd4"],"base":"variante","media":{"ataque":2.1,"estructura":1.81,"cambios":21.29,"material":0.16},"car":{"ataque":0.46,"estructura":0.91,"cambios":0.68,"material":0.89}},
-    {"id":"petrov","color":"b","contra":"e4","n":113,"define":["e4","e5","Nf3","Nf6"],"base":"variante","media":{"ataque":1.69,"estructura":1.14,"cambios":17.45,"material":-0.03},"car":{"ataque":0.44,"estructura":0.25,"cambios":0.53,"material":-0.16}},
-    {"id":"gambito-de-rey","color":"w","contra":null,"n":15,"define":["e4","e5","f4"],"base":"variante","media":{"ataque":2.3,"estructura":1.91,"cambios":22,"material":-0.35},"car":{"ataque":0.75,"estructura":1,"cambios":0.77,"material":-1}},
-    {"id":"siciliana-najdorf","color":"b","contra":"e4","n":308,"define":["e4","c5","Nf3","d6","d4","cxd4","Nxd4","Nf6","Nc3","a6"],"base":"variante","media":{"ataque":1.3,"estructura":0.88,"cambios":13.45,"material":0.02},"car":{"ataque":-0.33,"estructura":0.03,"cambios":-0.24,"material":0}},
-    {"id":"siciliana-dragon","color":"b","contra":"e4","n":76,"define":["e4","c5","Nf3","d6","d4","cxd4","Nxd4","Nf6","Nc3","g6"],"base":"variante","media":{"ataque":2.13,"estructura":1.3,"cambios":16.01,"material":0.01},"car":{"ataque":1,"estructura":0.39,"cambios":0.25,"material":-0.03}},
-    {"id":"siciliana-cerrada","color":"w","contra":null,"n":25,"define":["e4","c5","Nc3","Nc6","g3"],"base":"variante","media":{"ataque":1.37,"estructura":0.28,"cambios":9.28,"material":-0.01},"car":{"ataque":-0.6,"estructura":-0.64,"cambios":-0.84,"material":0.25}},
-    {"id":"francesa-avance","color":"b","contra":"e4","n":125,"define":["e4","e6","d4","d5","e5"],"base":"variante","media":{"ataque":1.16,"estructura":0.19,"cambios":12.44,"material":0.18},"car":{"ataque":-0.61,"estructura":-0.55,"cambios":-0.44,"material":0.49}},
-    {"id":"francesa-tarrasch","color":"w","contra":null,"n":120,"define":["e4","e6","d4","d5","Nd2"],"base":"variante","media":{"ataque":2.25,"estructura":1.39,"cambios":16.08,"material":-0.13},"car":{"ataque":0.68,"estructura":0.49,"cambios":0.02,"material":-0.2}},
-    {"id":"caro-kann-clasica","color":"b","contra":"e4","n":107,"define":["e4","c6","d4","d5","Nc3"],"base":"variante","media":{"ataque":1.73,"estructura":1.36,"cambios":16.85,"material":0.03},"car":{"ataque":0.52,"estructura":0.44,"cambios":0.42,"material":0.03}},
-    {"id":"caro-kann-avance","color":"b","contra":"e4","n":206,"define":["e4","c6","d4","d5","e5"],"base":"variante","media":{"ataque":1.34,"estructura":0.08,"cambios":15.98,"material":-0.02},"car":{"ataque":-0.25,"estructura":-0.64,"cambios":0.25,"material":-0.13}},
-    {"id":"escandinava","color":"b","contra":"e4","n":109,"define":["e4","d5"],"base":"variante","media":{"ataque":1.65,"estructura":1.23,"cambios":15.85,"material":-0.03},"car":{"ataque":0.36,"estructura":0.33,"cambios":0.22,"material":-0.16}},
-    {"id":"pirc","color":"b","contra":"e4","n":183,"define":["e4","d6"],"base":"variante","media":{"ataque":1.29,"estructura":0.46,"cambios":15.1,"material":0.03},"car":{"ataque":-0.35,"estructura":-0.32,"cambios":0.08,"material":0.03}},
-    {"id":"alekhine","color":"b","contra":"e4","n":57,"define":["e4","Nf6"],"base":"variante","media":{"ataque":1.39,"estructura":0.86,"cambios":15.91,"material":0.07},"car":{"ataque":-0.16,"estructura":0.02,"cambios":0.23,"material":0.15}},
-    {"id":"gambito-dama-declinado","color":"b","contra":"d4","n":279,"define":["d4","d5","c4","e6","Nc3","Nf6"],"base":"variante","media":{"ataque":1.42,"estructura":0.84,"cambios":13.37,"material":0.02},"car":{"ataque":-0.1,"estructura":0,"cambios":-0.26,"material":0}},
-    {"id":"eslava","color":"b","contra":"d4","n":20,"define":["d4","d5","c4","c6","Nf3","Nf6","Nc3","dxc4"],"base":"variante","media":{"ataque":1.33,"estructura":1.2,"cambios":11.95,"material":0.39},"car":{"ataque":-0.27,"estructura":0.3,"cambios":-0.53,"material":1}},
-    {"id":"nimzoindia","color":"b","contra":"d4","n":362,"define":["d4","Nf6","c4","e6","Nc3"],"base":"variante","media":{"ataque":1.52,"estructura":0.84,"cambios":13.5,"material":-0.01},"car":{"ataque":0.1,"estructura":0,"cambios":-0.23,"material":-0.09}},
-    {"id":"india-de-rey","color":"b","contra":"d4","n":187,"define":["d4","Nf6","c4","g6","Nc3","Bg7"],"base":"variante","media":{"ataque":1.65,"estructura":-0.33,"cambios":9.78,"material":-0.04},"car":{"ataque":0.36,"estructura":-0.99,"cambios":-0.96,"material":-0.19}},
-    {"id":"grunfeld","color":"b","contra":"d4","n":74,"define":["d4","Nf6","c4","g6","Nc3","d5"],"base":"variante","media":{"ataque":1.61,"estructura":1.65,"cambios":19.36,"material":-0.1},"car":{"ataque":0.28,"estructura":0.68,"cambios":0.9,"material":-0.37}},
-    {"id":"india-de-dama","color":"b","contra":"d4","n":113,"define":["d4","Nf6","c4","e6","Nf3","b6"],"base":"variante","media":{"ataque":1.15,"estructura":0.66,"cambios":11.81,"material":0.06},"car":{"ataque":-0.63,"estructura":-0.15,"cambios":-0.56,"material":0.12}},
-    {"id":"sistema-londres","color":"w","contra":null,"n":58,"define":["d4","d5","Nf3","Nf6","Bf4"],"base":"variante","media":{"ataque":1.75,"estructura":0.67,"cambios":18.47,"material":0.04},"car":{"ataque":-0.05,"estructura":-0.24,"cambios":0.32,"material":0.44}},
-    {"id":"holandesa","color":"b","contra":"d4","n":0,"define":["d4","f5","g3","Nf6","Bg2","e6"],"base":null},
-    {"id":"inglesa","color":"w","contra":null,"n":147,"define":["c4","e5"],"base":"variante","media":{"ataque":1.34,"estructura":0.77,"cambios":13.97,"material":0.01},"car":{"ataque":-0.64,"estructura":-0.14,"cambios":-0.25,"material":0.32}},
-    {"id":"vienesa","color":"w","contra":null,"n":63,"define":["e4","e5","Nc3"],"base":"variante","media":{"ataque":1.78,"estructura":1.1,"cambios":17.57,"material":0.02},"car":{"ataque":0,"estructura":0.19,"cambios":0.21,"material":0.36}},
-    {"id":"gambito-evans","color":"w","contra":null,"n":0,"define":["e4","e5","Nf3","Nc6","Bc4","Bc5","b4"],"base":null},
-    {"id":"ataque-indio-de-rey","color":"w","contra":null,"n":150,"define":["Nf3","d5","g3"],"base":"variante","media":{"ataque":1.33,"estructura":0.83,"cambios":14.46,"material":-0.13},"car":{"ataque":-0.66,"estructura":-0.08,"cambios":-0.19,"material":-0.2}},
-    {"id":"colle","color":"w","contra":null,"n":66,"define":["d4","d5","Nf3","Nf6","e3"],"base":"variante","media":{"ataque":1.72,"estructura":0.69,"cambios":13.55,"material":0.01},"car":{"ataque":-0.09,"estructura":-0.22,"cambios":-0.3,"material":0.32}},
-    {"id":"alapin","color":"w","contra":null,"n":162,"define":["e4","c5","c3"],"base":"variante","media":{"ataque":1.95,"estructura":1.67,"cambios":17.44,"material":-0.04},"car":{"ataque":0.25,"estructura":0.77,"cambios":0.19,"material":0.14}},
-    {"id":"trompowsky","color":"w","contra":null,"n":51,"define":["d4","Nf6","Bg5"],"base":"variante","media":{"ataque":1.72,"estructura":0.26,"cambios":17.25,"material":0},"car":{"ataque":-0.09,"estructura":-0.66,"cambios":0.17,"material":0.29}},
-    {"id":"reti","color":"w","contra":null,"n":47,"define":["Nf3","d5","c4"],"base":"variante","media":{"ataque":1.25,"estructura":1.15,"cambios":12.49,"material":0.02},"car":{"ataque":-0.77,"estructura":0.24,"cambios":-0.44,"material":0.36}},
-    {"id":"catalana","color":"w","contra":null,"n":91,"define":["d4","Nf6","c4","e6","g3"],"base":"variante","media":{"ataque":1.55,"estructura":0.72,"cambios":14.15,"material":-0.24},"car":{"ataque":-0.34,"estructura":-0.19,"cambios":-0.23,"material":-0.61}},
-    {"id":"gambito-escoces","color":"w","contra":null,"n":24,"define":["e4","e5","Nf3","Nc6","d4","exd4","Bc4"],"base":"variante","media":{"ataque":2.13,"estructura":1.71,"cambios":15.96,"material":-0.34},"car":{"ataque":0.51,"estructura":0.81,"cambios":0,"material":-0.99}},
-    {"id":"philidor","color":"b","contra":"e4","n":27,"define":["e4","e5","Nf3","d6"],"base":"variante","media":{"ataque":1.17,"estructura":0.64,"cambios":13.52,"material":0.06},"car":{"ataque":-0.59,"estructura":-0.17,"cambios":-0.23,"material":0.12}},
-    {"id":"gambito-dama-aceptado","color":"b","contra":"d4","n":71,"define":["d4","d5","c4","dxc4"],"base":"variante","media":{"ataque":1.54,"estructura":1.89,"cambios":17.56,"material":0.25},"car":{"ataque":0.14,"estructura":0.89,"cambios":0.56,"material":0.71}},
-    {"id":"semieslava","color":"b","contra":"d4","n":87,"define":["d4","d5","c4","c6","Nf3","Nf6","Nc3","e6"],"base":"variante","media":{"ataque":1.51,"estructura":0.74,"cambios":12.84,"material":0.1},"car":{"ataque":0.08,"estructura":-0.08,"cambios":-0.36,"material":0.25}},
-    {"id":"benoni-moderna","color":"b","contra":"d4","n":0,"define":["d4","Nf6","c4","c5","d5","e6"],"base":null},
-    {"id":"siciliana-abierta","color":"w","contra":null,"n":58,"define":["e4","c5","Nf3","d6","d4","cxd4","Nxd4","Nf6","Nc3","a6","Be2"],"base":"variante","media":{"ataque":1.45,"estructura":0.41,"cambios":12.31,"material":0},"car":{"ataque":-0.48,"estructura":-0.51,"cambios":-0.46,"material":0.29}},
-    {"id":"smith-morra","color":"w","contra":null,"n":32,"define":["e4","c5","d4"],"base":"variante","media":{"ataque":1.89,"estructura":1.09,"cambios":12.91,"material":-0.37},"car":{"ataque":0.16,"estructura":0.18,"cambios":-0.38,"material":-1}},
-    {"id":"cuatro-caballos","color":"w","contra":null,"n":96,"define":["e4","e5","Nf3","Nc6","Nc3"],"base":"variante","media":{"ataque":2.07,"estructura":1.03,"cambios":20.17,"material":-0.09},"car":{"ataque":0.42,"estructura":0.12,"cambios":0.54,"material":-0.05}},
-    {"id":"gambito-danes","color":"w","contra":null,"n":21,"define":["e4","e5","d4"],"base":"variante","media":{"ataque":2.1,"estructura":1.38,"cambios":16.9,"material":-0.18},"car":{"ataque":0.46,"estructura":0.48,"cambios":0.12,"material":-0.39}},
-    {"id":"berlin","color":"b","contra":"e4","n":67,"define":["e4","e5","Nf3","Nc6","Bb5","Nf6"],"base":"variante","media":{"ataque":1.54,"estructura":1.01,"cambios":19.9,"material":0.08},"car":{"ataque":0.14,"estructura":0.14,"cambios":1,"material":0.18}},
-    {"id":"inglesa-simetrica","color":"b","contra":"c4","n":89,"define":["c4","c5"],"base":"variante","media":{"ataque":1.6,"estructura":0.65,"cambios":13.92,"material":-0.01},"car":{"ataque":0.26,"estructura":-0.16,"cambios":-0.15,"material":-0.09}},
-    {"id":"benko","color":"b","contra":"d4","n":32,"define":["d4","Nf6","c4","c5","d5","b5"],"base":"variante","media":{"ataque":1.48,"estructura":1.45,"cambios":13.97,"material":-0.67},"car":{"ataque":0.02,"estructura":0.51,"cambios":-0.14,"material":-1}},
-    {"id":"francesa-winawer","color":"b","contra":"e4","n":228,"define":["e4","e6","d4","d5","Nc3"],"base":"variante","media":{"ataque":1.45,"estructura":0.4,"cambios":16.71,"material":0.08},"car":{"ataque":-0.04,"estructura":-0.37,"cambios":0.39,"material":0.18}},
-    {"id":"defensa-moderna","color":"b","contra":"e4","n":65,"define":["e4","g6"],"base":"variante","media":{"ataque":1.23,"estructura":0.31,"cambios":13.38,"material":0.05},"car":{"ataque":-0.47,"estructura":-0.45,"cambios":-0.26,"material":0.09}},
-    {"id":"stonewall","color":"w","contra":null,"n":0,"define":["d4","d5","e3"],"base":null},
-    {"id":"gambito-budapest","color":"b","contra":"d4","n":0,"define":["d4","Nf6","c4","e5"],"base":null},
-    {"id":"ponziani","color":"w","contra":null,"n":0,"define":["e4","e5","Nf3","Nc6","c3"],"base":null},
-    {"id":"apertura-alfil","color":"w","contra":null,"n":40,"define":["e4","e5","Bc4"],"base":"variante","media":{"ataque":2.26,"estructura":0.65,"cambios":18.05,"material":-0.17},"car":{"ataque":0.7,"estructura":-0.26,"cambios":0.27,"material":-0.35}},
-    {"id":"bird","color":"w","contra":null,"n":66,"define":["f4"],"base":"variante","media":{"ataque":1.57,"estructura":0.28,"cambios":13.27,"material":-0.01},"car":{"ataque":-0.31,"estructura":-0.64,"cambios":-0.34,"material":0.25}},
-    {"id":"grand-prix","color":"w","contra":null,"n":28,"define":["e4","c5","Nc3","Nc6","f4"],"base":"variante","media":{"ataque":1.48,"estructura":0.48,"cambios":13.93,"material":-0.1},"car":{"ataque":-0.44,"estructura":-0.44,"cambios":-0.26,"material":-0.09}},
-    {"id":"siciliana-sveshnikov","color":"b","contra":"e4","n":120,"define":["e4","c5","Nf3","Nc6","d4","cxd4","Nxd4","Nf6"],"base":"variante","media":{"ataque":1.46,"estructura":0.81,"cambios":14.64,"material":0.03},"car":{"ataque":-0.02,"estructura":-0.03,"cambios":-0.01,"material":0.03}},
-    {"id":"siciliana-kan","color":"b","contra":"e4","n":83,"define":["e4","c5","Nf3","e6","d4","cxd4","Nxd4","a6"],"base":"variante","media":{"ataque":1.17,"estructura":1.15,"cambios":12.31,"material":0.04},"car":{"ataque":-0.59,"estructura":0.26,"cambios":-0.46,"material":0.06}},
-    {"id":"bogoindia","color":"b","contra":"d4","n":60,"define":["d4","Nf6","c4","e6","Nf3","Bb4+"],"base":"variante","media":{"ataque":1,"estructura":0.45,"cambios":14.13,"material":0.05},"car":{"ataque":-0.93,"estructura":-0.33,"cambios":-0.11,"material":0.09}},
-    {"id":"india-antigua","color":"b","contra":"d4","n":34,"define":["d4","Nf6","c4","d6"],"base":"variante","media":{"ataque":1.25,"estructura":-0.67,"cambios":8.62,"material":0.01},"car":{"ataque":-0.43,"estructura":-1,"cambios":-1,"material":-0.03}},
-    {"id":"holandesa-leningrado","color":"b","contra":"d4","n":0,"define":["d4","f5","g3","Nf6","Bg2","g6"],"base":null},
-    {"id":"ataque-torre","color":"w","contra":null,"n":406,"define":["d4","Nf6","Nf3"],"base":"variante","media":{"ataque":1.58,"estructura":0.72,"cambios":13.89,"material":-0.01},"car":{"ataque":-0.29,"estructura":-0.19,"cambios":-0.26,"material":0.25}},
-    {"id":"larsen","color":"w","contra":null,"n":58,"define":["b3"],"base":"variante","media":{"ataque":1.51,"estructura":0.63,"cambios":15.21,"material":0.04},"car":{"ataque":-0.4,"estructura":-0.28,"cambios":-0.09,"material":0.44}},
-    {"id":"defensa-tarrasch","color":"b","contra":"d4","n":17,"define":["d4","d5","c4","e6","Nc3","c5"],"base":"variante","media":{"ataque":2.02,"estructura":2.12,"cambios":18.12,"material":-0.21},"car":{"ataque":1,"estructura":1,"cambios":0.66,"material":-0.71}},
-    {"id":"dragon-acelerado","color":"b","contra":"e4","n":87,"define":["e4","c5","Nf3","Nc6","d4","cxd4","Nxd4","g6"],"base":"variante","media":{"ataque":1.63,"estructura":1.27,"cambios":18.3,"material":0.04},"car":{"ataque":0.32,"estructura":0.36,"cambios":0.7,"material":0.06}},
-    {"id":"defensa-nimzowitsch","color":"b","contra":"e4","n":33,"define":["e4","Nc6"],"base":"variante","media":{"ataque":1.8,"estructura":0.3,"cambios":15,"material":0.14},"car":{"ataque":0.66,"estructura":-0.46,"cambios":0.06,"material":0.37}},
-    {"id":"siciliana-taimanov","color":"b","contra":"e4","n":99,"define":["e4","c5","Nf3","e6","d4","cxd4","Nxd4","Nc6"],"base":"variante","media":{"ataque":1.29,"estructura":1.17,"cambios":13.99,"material":0.02},"car":{"ataque":-0.35,"estructura":0.28,"cambios":-0.14,"material":0}}
+    {"id":"espanola-cerrada","color":"w","contra":null,"n":328,"define":["e4","e5","Nf3","Nc6","Bb5","a6","Ba4"],"base":"variante","media":{"ataque":1.54,"estructura":0.21,"cambios":11.28,"material":-0.02},"car":{"ataque":-0.36,"estructura":-0.69,"cambios":-0.59,"material":0.19}},
+    {"id":"espanola-cambio","color":"w","contra":null,"n":19,"define":["e4","e5","Nf3","Nc6","Bb5","a6","Bxc6"],"base":"variante","media":{"ataque":2.54,"estructura":1.25,"cambios":28.89,"material":0.08},"car":{"ataque":1,"estructura":0.32,"cambios":1,"material":0.46}},
+    {"id":"italiana-giuoco","color":"w","contra":null,"n":99,"define":["e4","e5","Nf3","Nc6","Bc4","Bc5","c3"],"base":"variante","media":{"ataque":1.79,"estructura":0.59,"cambios":13.78,"material":-0.17},"car":{"ataque":0,"estructura":-0.32,"cambios":-0.26,"material":-0.2}},
+    {"id":"escocesa","color":"w","contra":null,"n":63,"define":["e4","e5","Nf3","Nc6","d4","exd4","Nxd4"],"base":"variante","media":{"ataque":2.1,"estructura":1.81,"cambios":21.29,"material":0.16},"car":{"ataque":0.46,"estructura":0.87,"cambios":0.71,"material":0.67}},
+    {"id":"petrov","color":"b","contra":"e4","n":113,"define":["e4","e5","Nf3","Nf6"],"base":"variante","media":{"ataque":1.69,"estructura":1.14,"cambios":17.45,"material":-0.03},"car":{"ataque":0.38,"estructura":0.28,"cambios":0.55,"material":-0.13}},
+    {"id":"gambito-de-rey","color":"w","contra":null,"n":15,"define":["e4","e5","f4"],"base":"variante","media":{"ataque":2.3,"estructura":1.91,"cambios":22,"material":-0.35},"car":{"ataque":0.75,"estructura":0.96,"cambios":0.81,"material":-0.68}},
+    {"id":"siciliana-najdorf","color":"b","contra":"e4","n":308,"define":["e4","c5","Nf3","d6","d4","cxd4","Nxd4","Nf6","Nc3","a6"],"base":"variante","media":{"ataque":1.3,"estructura":0.88,"cambios":13.45,"material":0.02},"car":{"ataque":-0.33,"estructura":0.06,"cambios":-0.19,"material":0.03}},
+    {"id":"siciliana-dragon","color":"b","contra":"e4","n":76,"define":["e4","c5","Nf3","d6","d4","cxd4","Nxd4","Nf6","Nc3","g6"],"base":"variante","media":{"ataque":2.13,"estructura":1.3,"cambios":16.01,"material":0.01},"car":{"ataque":1,"estructura":0.42,"cambios":0.28,"material":0}},
+    {"id":"siciliana-cerrada","color":"w","contra":null,"n":25,"define":["e4","c5","Nc3","Nc6","g3"],"base":"variante","media":{"ataque":1.37,"estructura":0.28,"cambios":9.28,"material":-0.01},"car":{"ataque":-0.61,"estructura":-0.62,"cambios":-0.85,"material":0.22}},
+    {"id":"francesa-avance","color":"b","contra":"e4","n":125,"define":["e4","e6","d4","d5","e5"],"base":"variante","media":{"ataque":1.16,"estructura":0.19,"cambios":12.44,"material":0.18},"car":{"ataque":-0.59,"estructura":-0.54,"cambios":-0.38,"material":0.53}},
+    {"id":"francesa-tarrasch","color":"w","contra":null,"n":120,"define":["e4","e6","d4","d5","Nd2"],"base":"variante","media":{"ataque":2.25,"estructura":1.39,"cambios":16.08,"material":-0.13},"car":{"ataque":0.68,"estructura":0.46,"cambios":0.04,"material":-0.1}},
+    {"id":"caro-kann-clasica","color":"b","contra":"e4","n":107,"define":["e4","c6","d4","d5","Nc3"],"base":"variante","media":{"ataque":1.73,"estructura":1.36,"cambios":16.85,"material":0.03},"car":{"ataque":0.45,"estructura":0.47,"cambios":0.44,"material":0.06}},
+    {"id":"caro-kann-avance","color":"b","contra":"e4","n":206,"define":["e4","c6","d4","d5","e5"],"base":"variante","media":{"ataque":1.34,"estructura":0.08,"cambios":15.98,"material":-0.02},"car":{"ataque":-0.26,"estructura":-0.63,"cambios":0.28,"material":-0.1}},
+    {"id":"escandinava","color":"b","contra":"e4","n":109,"define":["e4","d5"],"base":"variante","media":{"ataque":1.65,"estructura":1.23,"cambios":15.85,"material":-0.03},"car":{"ataque":0.31,"estructura":0.36,"cambios":0.25,"material":-0.13}},
+    {"id":"pirc","color":"b","contra":"e4","n":183,"define":["e4","d6"],"base":"variante","media":{"ataque":1.29,"estructura":0.46,"cambios":15.1,"material":0.03},"car":{"ataque":-0.35,"estructura":-0.3,"cambios":0.12,"material":0.06}},
+    {"id":"alekhine","color":"b","contra":"e4","n":57,"define":["e4","Nf6"],"base":"variante","media":{"ataque":1.39,"estructura":0.86,"cambios":15.91,"material":0.07},"car":{"ataque":-0.17,"estructura":0.04,"cambios":0.26,"material":0.19}},
+    {"id":"gambito-dama-declinado","color":"b","contra":"d4","n":279,"define":["d4","d5","c4","e6","Nc3","Nf6"],"base":"variante","media":{"ataque":1.42,"estructura":0.84,"cambios":13.37,"material":0.02},"car":{"ataque":-0.11,"estructura":0.02,"cambios":-0.2,"material":0.03}},
+    {"id":"eslava","color":"b","contra":"d4","n":20,"define":["d4","d5","c4","c6","Nf3","Nf6","Nc3","dxc4"],"base":"variante","media":{"ataque":1.33,"estructura":1.2,"cambios":11.95,"material":0.39},"car":{"ataque":-0.28,"estructura":0.33,"cambios":-0.47,"material":1}},
+    {"id":"nimzoindia","color":"b","contra":"d4","n":362,"define":["d4","Nf6","c4","e6","Nc3"],"base":"variante","media":{"ataque":1.52,"estructura":0.84,"cambios":13.5,"material":-0.01},"car":{"ataque":0.07,"estructura":0.02,"cambios":-0.18,"material":-0.06}},
+    {"id":"india-de-rey","color":"b","contra":"d4","n":187,"define":["d4","Nf6","c4","g6","Nc3","Bg7"],"base":"variante","media":{"ataque":1.65,"estructura":-0.33,"cambios":9.78,"material":-0.04},"car":{"ataque":0.31,"estructura":-0.98,"cambios":-0.87,"material":-0.16}},
+    {"id":"grunfeld","color":"b","contra":"d4","n":74,"define":["d4","Nf6","c4","g6","Nc3","d5"],"base":"variante","media":{"ataque":1.61,"estructura":1.65,"cambios":19.36,"material":-0.1},"car":{"ataque":0.24,"estructura":0.72,"cambios":0.9,"material":-0.35}},
+    {"id":"india-de-dama","color":"b","contra":"d4","n":113,"define":["d4","Nf6","c4","e6","Nf3","b6"],"base":"variante","media":{"ataque":1.15,"estructura":0.66,"cambios":11.81,"material":0.06},"car":{"ataque":-0.61,"estructura":-0.13,"cambios":-0.49,"material":0.16}},
+    {"id":"sistema-londres","color":"w","contra":null,"n":58,"define":["d4","d5","Nf3","Nf6","Bf4"],"base":"variante","media":{"ataque":1.75,"estructura":0.67,"cambios":18.47,"material":0.04},"car":{"ataque":-0.05,"estructura":-0.24,"cambios":0.35,"material":0.35}},
+    {"id":"holandesa","color":"b","contra":"d4","n":301,"define":["d4","f5","g3","Nf6","Bg2","e6"],"base":"variante","media":{"ataque":1.47,"estructura":0.06,"cambios":13.11,"material":0},"car":{"ataque":-0.02,"estructura":-0.65,"cambios":-0.25,"material":-0.03}},
+    {"id":"inglesa","color":"w","contra":null,"n":147,"define":["c4","e5"],"base":"variante","media":{"ataque":1.34,"estructura":0.77,"cambios":13.97,"material":0.01},"car":{"ataque":-0.65,"estructura":-0.15,"cambios":-0.24,"material":0.27}},
+    {"id":"vienesa","color":"w","contra":null,"n":63,"define":["e4","e5","Nc3"],"base":"variante","media":{"ataque":1.78,"estructura":1.1,"cambios":17.57,"material":0.02},"car":{"ataque":-0.01,"estructura":0.18,"cambios":0.23,"material":0.3}},
+    {"id":"gambito-evans","color":"w","contra":null,"n":305,"define":["e4","e5","Nf3","Nc6","Bc4","Bc5","b4"],"base":"variante","media":{"ataque":2.3,"estructura":1.7,"cambios":12.32,"material":-0.81},"car":{"ataque":0.75,"estructura":0.76,"cambios":-0.45,"material":-1}},
+    {"id":"ataque-indio-de-rey","color":"w","contra":null,"n":150,"define":["Nf3","d5","g3"],"base":"variante","media":{"ataque":1.33,"estructura":0.83,"cambios":14.46,"material":-0.13},"car":{"ataque":-0.67,"estructura":-0.09,"cambios":-0.17,"material":-0.1}},
+    {"id":"colle","color":"w","contra":null,"n":85,"define":["d4","d5","Nf3","Nf6","e3"],"base":"variante","media":{"ataque":1.6,"estructura":0.66,"cambios":13.45,"material":0.02},"car":{"ataque":-0.27,"estructura":-0.25,"cambios":-0.3,"material":0.3}},
+    {"id":"alapin","color":"w","contra":null,"n":162,"define":["e4","c5","c3"],"base":"variante","media":{"ataque":1.95,"estructura":1.67,"cambios":17.44,"material":-0.04},"car":{"ataque":0.24,"estructura":0.73,"cambios":0.21,"material":0.14}},
+    {"id":"trompowsky","color":"w","contra":null,"n":51,"define":["d4","Nf6","Bg5"],"base":"variante","media":{"ataque":1.72,"estructura":0.26,"cambios":17.25,"material":0},"car":{"ataque":-0.1,"estructura":-0.64,"cambios":0.19,"material":0.25}},
+    {"id":"reti","color":"w","contra":null,"n":47,"define":["Nf3","d5","c4"],"base":"variante","media":{"ataque":1.25,"estructura":1.15,"cambios":12.49,"material":0.02},"car":{"ataque":-0.78,"estructura":0.22,"cambios":-0.43,"material":0.3}},
+    {"id":"catalana","color":"w","contra":null,"n":91,"define":["d4","Nf6","c4","e6","g3"],"base":"variante","media":{"ataque":1.55,"estructura":0.72,"cambios":14.15,"material":-0.24},"car":{"ataque":-0.35,"estructura":-0.19,"cambios":-0.21,"material":-0.39}},
+    {"id":"gambito-escoces","color":"w","contra":null,"n":24,"define":["e4","e5","Nf3","Nc6","d4","exd4","Bc4"],"base":"variante","media":{"ataque":2.13,"estructura":1.71,"cambios":15.96,"material":-0.34},"car":{"ataque":0.5,"estructura":0.77,"cambios":0.02,"material":-0.66}},
+    {"id":"philidor","color":"b","contra":"e4","n":27,"define":["e4","e5","Nf3","d6"],"base":"variante","media":{"ataque":1.17,"estructura":0.64,"cambios":13.52,"material":0.06},"car":{"ataque":-0.57,"estructura":-0.15,"cambios":-0.18,"material":0.16}},
+    {"id":"gambito-dama-aceptado","color":"b","contra":"d4","n":71,"define":["d4","d5","c4","dxc4"],"base":"variante","media":{"ataque":1.54,"estructura":1.89,"cambios":17.56,"material":0.25},"car":{"ataque":0.11,"estructura":0.92,"cambios":0.57,"material":0.75}},
+    {"id":"semieslava","color":"b","contra":"d4","n":87,"define":["d4","d5","c4","c6","Nf3","Nf6","Nc3","e6"],"base":"variante","media":{"ataque":1.51,"estructura":0.74,"cambios":12.84,"material":0.1},"car":{"ataque":0.05,"estructura":-0.06,"cambios":-0.3,"material":0.28}},
+    {"id":"benoni-moderna","color":"b","contra":"d4","n":311,"define":["d4","Nf6","c4","c5","d5","e6"],"base":"variante","media":{"ataque":1.24,"estructura":0.43,"cambios":8.04,"material":-0.02},"car":{"ataque":-0.44,"estructura":-0.33,"cambios":-1,"material":-0.1}},
+    {"id":"siciliana-abierta","color":"w","contra":null,"n":58,"define":["e4","c5","Nf3","d6","d4","cxd4","Nxd4","Nf6","Nc3","a6","Be2"],"base":"variante","media":{"ataque":1.45,"estructura":0.41,"cambios":12.31,"material":0},"car":{"ataque":-0.49,"estructura":-0.5,"cambios":-0.45,"material":0.25}},
+    {"id":"smith-morra","color":"w","contra":null,"n":32,"define":["e4","c5","d4"],"base":"variante","media":{"ataque":1.89,"estructura":1.09,"cambios":12.91,"material":-0.37},"car":{"ataque":0.15,"estructura":0.17,"cambios":-0.37,"material":-0.74}},
+    {"id":"cuatro-caballos","color":"w","contra":null,"n":96,"define":["e4","e5","Nf3","Nc6","Nc3"],"base":"variante","media":{"ataque":2.07,"estructura":1.03,"cambios":20.17,"material":-0.09},"car":{"ataque":0.41,"estructura":0.11,"cambios":0.57,"material":0.01}},
+    {"id":"gambito-danes","color":"w","contra":null,"n":21,"define":["e4","e5","d4"],"base":"variante","media":{"ataque":2.1,"estructura":1.38,"cambios":16.9,"material":-0.18},"car":{"ataque":0.46,"estructura":0.45,"cambios":0.14,"material":-0.23}},
+    {"id":"berlin","color":"b","contra":"e4","n":67,"define":["e4","e5","Nf3","Nc6","Bb5","Nf6"],"base":"variante","media":{"ataque":1.54,"estructura":1.01,"cambios":19.9,"material":0.08},"car":{"ataque":0.11,"estructura":0.17,"cambios":1,"material":0.22}},
+    {"id":"inglesa-simetrica","color":"b","contra":"c4","n":89,"define":["c4","c5"],"base":"variante","media":{"ataque":1.6,"estructura":0.65,"cambios":13.92,"material":-0.01},"car":{"ataque":0.22,"estructura":-0.14,"cambios":-0.1,"material":-0.06}},
+    {"id":"benko","color":"b","contra":"d4","n":32,"define":["d4","Nf6","c4","c5","d5","b5"],"base":"variante","media":{"ataque":1.48,"estructura":1.45,"cambios":13.97,"material":-0.67},"car":{"ataque":0,"estructura":0.55,"cambios":-0.09,"material":-1}},
+    {"id":"francesa-winawer","color":"b","contra":"e4","n":228,"define":["e4","e6","d4","d5","Nc3"],"base":"variante","media":{"ataque":1.45,"estructura":0.4,"cambios":16.71,"material":0.08},"car":{"ataque":-0.06,"estructura":-0.36,"cambios":0.41,"material":0.22}},
+    {"id":"defensa-moderna","color":"b","contra":"e4","n":65,"define":["e4","g6"],"base":"variante","media":{"ataque":1.23,"estructura":0.31,"cambios":13.38,"material":0.05},"car":{"ataque":-0.46,"estructura":-0.43,"cambios":-0.2,"material":0.12}},
+    {"id":"stonewall","color":"w","contra":null,"n":313,"define":["d4","d5","e3"],"base":"variante","media":{"ataque":1.58,"estructura":0.12,"cambios":13.29,"material":0.02},"car":{"ataque":-0.3,"estructura":-0.78,"cambios":-0.33,"material":0.3}},
+    {"id":"gambito-budapest","color":"b","contra":"d4","n":310,"define":["d4","Nf6","c4","e5"],"base":"variante","media":{"ataque":2.25,"estructura":1.29,"cambios":16.77,"material":-0.27},"car":{"ataque":1,"estructura":0.41,"cambios":0.42,"material":-0.88}},
+    {"id":"ponziani","color":"w","contra":null,"n":307,"define":["e4","e5","Nf3","Nc6","c3"],"base":"variante","media":{"ataque":1.75,"estructura":1.18,"cambios":17.79,"material":0.08},"car":{"ataque":-0.05,"estructura":0.25,"cambios":0.26,"material":0.46}},
+    {"id":"apertura-alfil","color":"w","contra":null,"n":41,"define":["e4","e5","Bc4"],"base":"variante","media":{"ataque":2.25,"estructura":0.68,"cambios":18.34,"material":-0.18},"car":{"ataque":0.68,"estructura":-0.23,"cambios":0.33,"material":-0.23}},
+    {"id":"bird","color":"w","contra":null,"n":66,"define":["f4"],"base":"variante","media":{"ataque":1.57,"estructura":0.28,"cambios":13.27,"material":-0.01},"car":{"ataque":-0.32,"estructura":-0.62,"cambios":-0.33,"material":0.22}},
+    {"id":"grand-prix","color":"w","contra":null,"n":28,"define":["e4","c5","Nc3","Nc6","f4"],"base":"variante","media":{"ataque":1.48,"estructura":0.48,"cambios":13.93,"material":-0.1},"car":{"ataque":-0.45,"estructura":-0.43,"cambios":-0.24,"material":-0.02}},
+    {"id":"siciliana-sveshnikov","color":"b","contra":"e4","n":120,"define":["e4","c5","Nf3","Nc6","d4","cxd4","Nxd4","Nf6"],"base":"variante","media":{"ataque":1.46,"estructura":0.81,"cambios":14.64,"material":0.03},"car":{"ataque":-0.04,"estructura":0,"cambios":0.03,"material":0.06}},
+    {"id":"siciliana-kan","color":"b","contra":"e4","n":83,"define":["e4","c5","Nf3","e6","d4","cxd4","Nxd4","a6"],"base":"variante","media":{"ataque":1.17,"estructura":1.15,"cambios":12.31,"material":0.04},"car":{"ataque":-0.57,"estructura":0.29,"cambios":-0.4,"material":0.09}},
+    {"id":"bogoindia","color":"b","contra":"d4","n":60,"define":["d4","Nf6","c4","e6","Nf3","Bb4+"],"base":"variante","media":{"ataque":1,"estructura":0.45,"cambios":14.13,"material":0.05},"car":{"ataque":-0.88,"estructura":-0.31,"cambios":-0.06,"material":0.12}},
+    {"id":"india-antigua","color":"b","contra":"d4","n":34,"define":["d4","Nf6","c4","d6"],"base":"variante","media":{"ataque":1.25,"estructura":-0.67,"cambios":8.62,"material":0.01},"car":{"ataque":-0.42,"estructura":-1,"cambios":-1,"material":0}},
+    {"id":"holandesa-leningrado","color":"b","contra":"d4","n":304,"define":["d4","f5","g3","Nf6","Bg2","g6"],"base":"variante","media":{"ataque":1.39,"estructura":0.65,"cambios":13.22,"material":0.02},"car":{"ataque":-0.17,"estructura":-0.14,"cambios":-0.23,"material":0.03}},
+    {"id":"ataque-torre","color":"w","contra":null,"n":406,"define":["d4","Nf6","Nf3"],"base":"variante","media":{"ataque":1.58,"estructura":0.72,"cambios":13.89,"material":-0.01},"car":{"ataque":-0.3,"estructura":-0.19,"cambios":-0.25,"material":0.22}},
+    {"id":"larsen","color":"w","contra":null,"n":58,"define":["b3"],"base":"variante","media":{"ataque":1.51,"estructura":0.63,"cambios":15.21,"material":0.04},"car":{"ataque":-0.4,"estructura":-0.28,"cambios":-0.08,"material":0.35}},
+    {"id":"defensa-tarrasch","color":"b","contra":"d4","n":17,"define":["d4","d5","c4","e6","Nc3","c5"],"base":"variante","media":{"ataque":2.02,"estructura":2.12,"cambios":18.12,"material":-0.21},"car":{"ataque":0.99,"estructura":1,"cambios":0.67,"material":-0.69}},
+    {"id":"dragon-acelerado","color":"b","contra":"e4","n":87,"define":["e4","c5","Nf3","Nc6","d4","cxd4","Nxd4","g6"],"base":"variante","media":{"ataque":1.63,"estructura":1.27,"cambios":18.3,"material":0.04},"car":{"ataque":0.27,"estructura":0.39,"cambios":0.71,"material":0.09}},
+    {"id":"defensa-nimzowitsch","color":"b","contra":"e4","n":36,"define":["e4","Nc6"],"base":"variante","media":{"ataque":1.8,"estructura":0.3,"cambios":14.75,"material":0.13},"car":{"ataque":0.58,"estructura":-0.44,"cambios":0.05,"material":0.38}},
+    {"id":"siciliana-taimanov","color":"b","contra":"e4","n":99,"define":["e4","c5","Nf3","e6","d4","cxd4","Nxd4","Nc6"],"base":"variante","media":{"ataque":1.29,"estructura":1.17,"cambios":13.99,"material":0.02},"car":{"ataque":-0.35,"estructura":0.31,"cambios":-0.09,"material":0.03}}
   ];
   /* MEDIDO-FIN */
 
@@ -273,7 +276,67 @@
     return out;
   }
 
-  const api = { MEDIDO, EJES, GRUPOS, MARGEN_MANTENER, PESO_RINDE, nivelQueConviene, rinde, objetivos, distancia, recomendar, medidaDe };
+  /* -------- De la recomendación a un plan de 4 semanas --------
+     Una semana por apertura recomendada (con blancas, contra 1.e4, contra
+     1.d4): la línea en «Aperturas y celadas» hasta terminarla, y un rato
+     practicando. La cuarta, repaso de las tres. Cada semana es una tarea
+     aparte, que se ve recién el día que empieza (disponible_desde), con 7
+     días para hacerla. Lo arma el profe desde Informes y lo puede ajustar
+     antes de mandarlo. El rato se cuenta desde que se manda la tarea (los
+     minutos de tareas_con_avance), así que no se cumple con lo que hizo
+     antes; la línea sí: si ya la había terminado, ese renglón ya está. */
+  const DIA = 24 * 60 * 60 * 1000;
+  const MINUTOS_SEMANA = 20, MINUTOS_REPASO = 30;
+  function renglonLinea(op) {
+    return {
+      material_tipo: "herramienta", material_slug: "aperturas", material_label: "Aperturas y celadas",
+      material_href: "entreno/aperturas.html?linea=" + encodeURIComponent(op.id),
+      filtro_clave: op.id, filtro_label: op.nombre, leccion: "",
+      actividades: ["aperturas"], meta_tipo: "cantidad", meta_cantidad: 1,
+    };
+  }
+  function renglonRato(minutos) {
+    return {
+      material_tipo: "herramienta", material_slug: "aperturas", material_label: "Aperturas y celadas",
+      material_href: "entreno/aperturas.html", filtro_clave: "", filtro_label: "", leccion: "",
+      actividades: ["aperturas"], meta_tipo: "minutos", meta_cantidad: minutos,
+    };
+  }
+  function plan(rec, o) {
+    const op = o || {};
+    const ahora = op.ahora ? new Date(op.ahora) : new Date();
+    const minutos = op.minutos > 0 ? Math.round(op.minutos) : MINUTOS_SEMANA;
+    const semanas = [];
+    const elegidas = [];
+    for (const g of Object.keys(GRUPOS)) {
+      const r = rec && rec[g];
+      if (!r || !r.principal) continue;
+      elegidas.push(r.principal);
+      semanas.push({
+        grupo: g,
+        titulo: "Tu apertura, semana " + (semanas.length + 1) + ": " + r.principal.nombre,
+        instrucciones: GRUPOS[g].titulo + ": " + r.principal.nombre + ", la que te recomendó la prueba de estilo. "
+          + "Practica la línea en Aperturas y celadas hasta terminarla, y después repásala " + minutos + " minutos.",
+        items: [renglonLinea(r.principal), renglonRato(minutos)],
+      });
+    }
+    if (elegidas.length) {
+      semanas.push({
+        grupo: "repaso",
+        titulo: "Tu apertura, semana " + (semanas.length + 1) + ": repaso",
+        instrucciones: "Repasa las aperturas de estas semanas (" + elegidas.map((x) => x.nombre).join(", ") + ") en Aperturas y celadas. "
+          + "Si puedes, juega una partida con cada una.",
+        items: [renglonRato(Math.max(MINUTOS_REPASO, minutos))],
+      });
+    }
+    return semanas.map((s, k) => Object.assign(s, {
+      semana: k + 1,
+      desde: k === 0 ? null : new Date(ahora.getTime() + 7 * k * DIA).toISOString(),
+      vence: new Date(ahora.getTime() + 7 * (k + 1) * DIA).toISOString(),
+    }));
+  }
+
+  const api = { MEDIDO, EJES, GRUPOS, plan, MARGEN_MANTENER, PESO_RINDE, nivelQueConviene, rinde, objetivos, distancia, recomendar, medidaDe };
   if (typeof window !== "undefined") window.EstiloAperturas = api;
   if (typeof module !== "undefined" && module.exports) module.exports = api;
 })();
