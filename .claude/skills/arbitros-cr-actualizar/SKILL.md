@@ -112,6 +112,14 @@ vuelve a pedir). Sacar «Cálculo de elo» y «Control de tiempo (…)», sumarl
 `python3 herramientas/arbitros-cr/calculo-elo.py`. El detalle, en «Los torneos
 con Elo nacional».
 
+**Los ritmos por revisar.** `node herramientas/arbitros-cr/ritmos-raros.js`
+lista los torneos con solo Elo nacional cuyo ritmo no se puede decidir solo
+(la ficha contradice al control, el control da de 40 a 59 minutos sin ficha, o
+no hay tiempo que leer). Mirar la página de cada uno y anotar el ritmo bueno,
+con su motivo, en `herramientas/datos/arbitros-cr-ritmo-corregir.json`; los que
+no se puedan decidir, en el PR para el dueño. Volver a cargar con
+`calculo-elo.py`.
+
 ## 3 bis. La lista de FIDE y los títulos nuevos
 
 Ver «Lo que dice FIDE de cada árbitro» en `docs/decisiones/juegos-y-torneos.md`.
