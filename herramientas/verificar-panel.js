@@ -2946,10 +2946,40 @@ async function pruebaPlegables(browser) {
   igual("sin errores en consola", errores.join(" | ") || "ninguno", "ninguno");
   await ctx.close();
 
-  ({ page, ctx } = await panel(browser, [ALUMNA, PROFE], "u-ana", { viewport: { width: 1280, height: 900 } }, datosAlumna(false)));
+  /* En la computadora, de los tres escalones de entrenamiento se abre solo el
+     de su nivel (por su diagnóstico); los demás grupos, abiertos. Ver
+     «Abierto, solo el entrenamiento de tu nivel». */
+  const ESCALONES = ["Entrenamiento básico", "Entrenamiento intermedio", "Entrenamiento avanzado"];
+  const enCompu = { viewport: { width: 1280, height: 900 } };
+  const conNivel = (nivel) => Object.assign(datosAlumna(false), { rpc: Object.assign({}, datosAlumna(false).rpc,
+    { informes_diagnosticos_alumnos: [{ student_id: "u-ana", fecha: new Date(Date.now() - 40 * 86400000).toISOString(), detalle: { nivel: nivel, areas: {}, perfil: {} } }] }) });
+  const escalones = (page) => page.waitForFunction(() => window.__consultas.some((c) => c.tabla === "informes_diagnosticos_alumnos"), null, { timeout: 10000 })
+    .then(() => page.waitForTimeout(300)).catch(() => {})
+    .then(() => page.evaluate(() => Array.from(document.querySelectorAll("#tile-grid > section[data-escalon]")).map((s) => {
+      const n = s.querySelector("[data-tu-nivel]");
+      return [s.querySelector("h2").textContent, s.querySelector(".grid").checkVisibility(), !!(n && n.checkVisibility())];
+    })));
+  ({ page, ctx } = await panel(browser, [ALUMNA, PROFE], "u-ana", enCompu, datosAlumna(false)));
+  igual("en la computadora, sin diagnóstico: abierto el básico, sin decir «tu nivel»", await escalones(page),
+    [["Entrenamiento básico", true, false], ["Entrenamiento intermedio", false, false], ["Entrenamiento avanzado", false, false]]);
   e = await estado(page);
-  igual("en la computadora arrancan abiertos, que ahí sí caben",
-    e.filter((x) => PLEGABLES.includes(x.titulo)).every((x) => x.boton === "true" && x.grilla), true);
+  igual("y los demás grupos, abiertos, que ahí sí caben",
+    e.filter((x) => PLEGABLES.includes(x.titulo) && !ESCALONES.includes(x.titulo)).every((x) => x.boton === "true" && x.grilla), true);
+  await ctx.close();
+
+  ({ page, ctx } = await panel(browser, [ALUMNA, PROFE], "u-ana", enCompu, conNivel("intermedio")));
+  igual("con diagnóstico intermedio: abierto solo el intermedio, y dice «tu nivel»", await escalones(page),
+    [["Entrenamiento básico", false, false], ["Entrenamiento intermedio", true, true], ["Entrenamiento avanzado", false, false]]);
+  await page.click('#tile-grid h2 button:has-text("Entrenamiento avanzado")');
+  await page.reload({ waitUntil: "networkidle" });
+  await page.waitForSelector("#app:not(.hidden)");
+  igual("lo que abrió a mano se respeta al volver", await escalones(page),
+    [["Entrenamiento básico", false, false], ["Entrenamiento intermedio", true, true], ["Entrenamiento avanzado", true, false]]);
+  await ctx.close();
+
+  ({ page, ctx } = await panel(browser, [ALUMNA, PROFE], "u-ana", enCompu, conNivel("muy_avanzado")));
+  igual("«muy avanzado» abre el avanzado", await escalones(page),
+    [["Entrenamiento básico", false, false], ["Entrenamiento intermedio", false, false], ["Entrenamiento avanzado", true, true]]);
   await ctx.close();
 
   // A quien da clase también se le pliegan, menos la clase en vivo y «Tu cuenta».

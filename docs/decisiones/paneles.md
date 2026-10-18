@@ -324,6 +324,30 @@ lista, y el resto se acomoda solo.
   resultado en un grupo cerrado no se vería. La grilla se esconde con
   `style.display`, no con `hidden`: la clase `grid` de Tailwind le gana a ese
   atributo. Al panel docente no le toca: sus grupos son otros.
+- **Abierto, solo el entrenamiento de tu nivel.** En la computadora, con todo
+  abierto, el panel del alumno medía 4600 px: los tres escalones de
+  entrenamiento (básico, intermedio y avanzado) uno debajo del otro, aunque
+  cada alumno usa sobre todo el suyo. Ahora cada uno de esos tres grupos lleva
+  su `escalon` en `TILE_GROUPS`, y `abrirMiEscalon()` abre el que le toca según
+  el nivel de su último diagnóstico (`detalle.nivel`, el mismo
+  `informes_diagnosticos_alumnos` que ya pedía la tarjeta del diagnóstico):
+  principiante y básico → básico; intermedio → intermedio; avanzado y muy
+  avanzado → avanzado. Los otros dos quedan plegados, con su nombre y cuántos
+  accesos tienen, a un clic; al lado del suyo dice «tu nivel». Sin
+  diagnóstico (o con uno viejo, que no guardaba `nivel`) se abre el básico y
+  **no** se dice «tu nivel»: sería inventárselo. Lo demás no cambia: lo que la
+  persona abrió o cerró a mano gana (`panel_grupos_abiertos_v1`), en el
+  celular arrancan todos plegados y buscar los abre. El panel bajó a unos
+  4000 px. Mientras el diagnóstico no llega, intermedio y avanzado ya
+  arrancan plegados (`cerrado: true`), así que lo que se mueve después es
+  abrir uno, casi siempre debajo de lo que se está viendo.
+  `verificar-panel.js` («Los grupos de entrenamiento se pliegan») lo revisa.
+- **«Tus clases» lleva su flecha y no se parte en el celular.** El título se
+  partía en dos renglones («Tus / clases») con el subtítulo apretado al lado,
+  y como el `<summary>` es `flex`, no traía el triángulo de siempre: no se
+  veía que se pliega. Ahora el título va en una línea, el subtítulo pasa
+  abajo si no cabe, y lleva la misma flecha que los grupos plegables, que
+  gira con `details[open]`.
 - **"Logros" está en "Tu cuenta"**, que va en este orden: Configuración,
   Informes, Logros y, solo al alumnado, "¿Cómo van tus clases?". Lo pidió así
   el dueño de la Academia. "TV en vivo" estuvo ahí un tiempo y pasó a Competir,
