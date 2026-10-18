@@ -71,7 +71,7 @@
 
             <section id="general" class="mt-6" aria-labelledby="general-titulo">
                 <h2 id="general-titulo" class="font-serif text-xl font-bold text-brand-800 dark:text-white">Los árbitros</h2>
-                <p id="general-texto" class="text-sm text-brand-500 dark:text-brand-300 mt-1 max-w-3xl">Cada árbitro con sus torneos en los años elegidos, cada uno una vez: «FIDE» son los que valoró FIDE (estén o no también en chess-results) y «No FIDE», los que solo están en chess-results. «En el extranjero» cuenta los que se jugaron fuera de Costa Rica: salen de chess-results, buscando a cada árbitro por su ID FIDE y por su apellido en todos los países, y de esos no se sabe si FIDE los valoró («No consta»), así que no tienen norma. «Valen para AF» y «Valen para AI» cuentan los torneos que cumplen las condiciones de una norma en un cargo que cuenta (principal, adjunto o árbitro); entre paréntesis, cuántos de esos quedan para revisar. Con «Festivales como uno», los torneos de un árbitro que empiezan el mismo día cuentan como uno, con la mejor norma de ellos (FIDE da una norma por festival). «Hoy para AF» y «Hoy para AI» dicen cuántas normas de torneo junta cada uno hoy para pedir el título (3 para AF, 4 para AI, de los últimos seis años; ver su ficha), o si ya lo tiene: ordénalos para ver quién está más cerca. «En FIDE» dice si está activo o inactivo en la lista oficial de árbitros de FIDE, o si no figura en ella. Toca un nombre para ver sus torneos.</p>
+                <p id="general-texto" class="text-sm text-brand-500 dark:text-brand-300 mt-1 max-w-3xl">Cada árbitro con sus torneos en los años elegidos, cada uno una vez: «FIDE» son los que valoró FIDE (estén o no también en chess-results) y «No FIDE», los que solo están en chess-results. «Elo nacional» cuenta los de Costa Rica que chess-results evaluó solo con el Elo nacional, en clásico. «En el extranjero» cuenta los que se jugaron fuera de Costa Rica: salen de chess-results, buscando a cada árbitro por su ID FIDE y por su apellido en todos los países, y de esos no se sabe si FIDE los valoró («No consta»), así que no tienen norma. «Valen para AF» y «Valen para AI» cuentan los torneos que cumplen las condiciones de una norma en un cargo que cuenta (principal, adjunto o árbitro); entre paréntesis, cuántos de esos quedan para revisar. Con «Festivales como uno», los torneos de un árbitro que empiezan el mismo día cuentan como uno, con la mejor norma de ellos (FIDE da una norma por festival). «Hoy para AF» y «Hoy para AI» dicen cuántas normas de torneo junta cada uno hoy para pedir el título (3 para AF, 4 para AI, de los últimos seis años; ver su ficha), o si ya lo tiene: ordénalos para ver quién está más cerca. «En FIDE» dice si está activo o inactivo en la lista oficial de árbitros de FIDE, o si no figura en ella. Toca un nombre para ver sus torneos.</p>
                 <div class="overflow-x-auto mt-3 bg-white dark:bg-brand-900 rounded-2xl shadow-md">
                     <table id="tabla-arbitros" class="w-full text-sm">
                         <caption class="sr-only">Árbitros de Costa Rica con sus torneos (de FIDE y no) y cuántos de FIDE valen para norma. Los encabezados ordenan la tabla.</caption>
@@ -102,6 +102,7 @@
                     </table>
                 </div>
                 <p id="cuenta" class="text-sm text-brand-500 dark:text-brand-300 mt-2" aria-live="polite"></p>
+                <button type="button" id="lista-excel" class="mt-2 text-sm font-semibold px-4 py-2 rounded-lg bg-brand-100 dark:bg-brand-800 hover:bg-brand-200 dark:hover:bg-brand-700">Descargar la lista en Excel</button>
                 <div class="mt-6">
                     <h3 id="actividad-titulo" class="font-serif text-lg font-bold text-brand-800 dark:text-white">Torneos por año</h3>
                     <p class="text-sm text-brand-500 dark:text-brand-300 mt-1">Con los filtros puestos. La barra es el total del año; al lado, cuántos fueron de FIDE, cuántos no y cuántos en el extranjero.</p>
@@ -166,6 +167,25 @@
                     <div class="overflow-x-auto mt-2 bg-white dark:bg-brand-900 rounded-2xl shadow-md">
                         <table id="tabla-actividad-fide" class="w-full text-sm" aria-labelledby="actividad-fide-titulo">
                             <thead class="text-left text-xs uppercase tracking-wide text-brand-500 dark:text-brand-300"><tr><th scope="col" class="px-3 py-2">Árbitro</th><th scope="col" class="px-3 py-2">Título</th><th scope="col" class="px-3 py-2">En FIDE</th><th scope="col" class="px-3 py-2">Activo por lo menos hasta</th></tr></thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="mt-6">
+                    <h3 id="fca-titulo" class="font-serif text-lg font-bold text-brand-800 dark:text-white">La lista de la Federación</h3>
+                    <p class="text-sm text-brand-500 dark:text-brand-300 mt-1 max-w-3xl">La lista de árbitros de la Federación Central de Ajedrez comparada con quién arbitra de verdad: los torneos en Costa Rica como árbitro principal, adjunto o árbitro, en las fichas de FIDE o en chess-results, sin los filtros de arriba. Que alguien no figure como árbitro en chess-results no quiere decir que no haya arbitrado: puede que el organizador no lo anotara.</p>
+                    <p id="fca-cuenta" class="text-sm text-brand-600 dark:text-brand-200 mt-2" aria-live="polite"></p>
+                    <h4 id="fca-quietos-titulo" class="font-semibold mt-3">En la lista, sin arbitrar en los últimos tres años</h4>
+                    <div class="overflow-x-auto mt-2 bg-white dark:bg-brand-900 rounded-2xl shadow-md">
+                        <table id="tabla-fca-quietos" class="w-full text-sm" aria-labelledby="fca-quietos-titulo">
+                            <thead class="text-left text-xs uppercase tracking-wide text-brand-500 dark:text-brand-300"><tr><th scope="col" class="px-3 py-2">Árbitro</th><th scope="col" class="px-3 py-2">Título</th><th scope="col" class="px-3 py-2">Último torneo como árbitro</th></tr></thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                    <h4 id="fca-fuera-titulo" class="font-semibold mt-4">Arbitran seguido y no están en la lista</h4>
+                    <div class="overflow-x-auto mt-2 bg-white dark:bg-brand-900 rounded-2xl shadow-md">
+                        <table id="tabla-fca-fuera" class="w-full text-sm" aria-labelledby="fca-fuera-titulo">
+                            <thead class="text-left text-xs uppercase tracking-wide text-brand-500 dark:text-brand-300"><tr><th scope="col" class="px-3 py-2">Árbitro</th><th scope="col" class="px-3 py-2">Título</th><th scope="col" class="px-3 py-2">En FIDE</th><th scope="col" class="px-3 py-2 text-right">Torneos en dos años</th><th scope="col" class="px-3 py-2">Último</th></tr></thead>
                             <tbody></tbody>
                         </table>
                     </div>
@@ -282,6 +302,10 @@
                     </div>
                 </div>
                 <div class="flex flex-wrap gap-3 items-end mt-4">
+                <div class="min-w-[10rem]">
+                    <label for="ficha-tipo" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Torneos</label>
+                    <select id="ficha-tipo" class="w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none"><option value="">Todos</option><option value="fide">Solo FIDE</option><option value="nofide">No FIDE</option><option value="nacional">Solo con Elo nacional</option></select>
+                </div>
                 <div class="min-w-[10rem]">
                     <label for="norma-af" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Norma de AF</label>
                     <select id="norma-af" class="w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none"><option value="">Todas</option><option value="vale">Vale (con o sin condición)</option><option value="revisar">Revisar</option><option value="no">No vale</option></select>

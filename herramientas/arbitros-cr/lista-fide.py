@@ -72,11 +72,14 @@ def main():
 
 
 def categorias_nacionales(en_lista):
-    """El update de categoria_nacional desde la lista de la Federación. Quien
-    figura en ella y no en la de FIDE no se carga (no tiene fila): se avisa."""
+    """El update desde la lista de la Federación: fca_leida (la fecha de la
+    lista) a todos los que figuran en ella, y categoria_nacional a los AN (a
+    un FA o IA, null: la que trae es la de FIDE). Quien figura en ella y no en
+    la de FIDE no se carga (no tiene fila): se avisa. La página toma como «en la
+    lista de la Federación» a quien tiene la fca_leida más nueva."""
     with open(FCA, encoding="utf-8") as f:
         fca = json.load(f)
-    valores = [(fid, CATEGORIA_NACIONAL[cat]) for fid, _, _, titulo, cat, _ in fca["arbitros"] if cat in CATEGORIA_NACIONAL]
+    valores = [(fid, CATEGORIA_NACIONAL.get(cat)) for fid, _, _, titulo, cat, _ in fca["arbitros"]]
     fuera = sorted(fid for fid, _ in valores if fid not in en_lista)
     if fuera:
         raise SystemExit(f"En la lista de la Federación y no en la de FIDE: {fuera}")

@@ -103,14 +103,16 @@ ID) **no entran solos**: hace falta su perfil de FIDE para saber su nombre y su
 país. Si el resumen los nombra, anotarlos en el PR.
 
 **El cálculo de Elo de los torneos nuevos** (para «Solo con Elo nacional»).
-De los torneos de Costa Rica que no son de FIDE y no están en
-`arbitros_cr_cr_elo`: pedir la ficha (`tnrCLAVE.aspx?lan=2&turdet=YES&art=99`)
-y, si viene sin «Número de rondas», mandar su formulario con `cb_alleDetails`
-al servidor que dice su pie («Node S1» → `s1.chess-results.com`; uno de S0 se
-vuelve a pedir). Sacar «Cálculo de elo» y «Control de tiempo (…)», sumarlos a
-`herramientas/datos/arbitros-cr-calculo-elo.json` y cargar con
-`python3 herramientas/arbitros-cr/calculo-elo.py`. El detalle, en «Los torneos
-con Elo nacional».
+Los pasos de `herramientas/arbitros-cr/calculo-elo-leer.sql`, en orden con
+execute_sql: el 1 pide la ficha de los torneos de Costa Rica que no son de FIDE
+y no están en `arbitros_cr_cr_elo`; el 2 manda el formulario con
+`cb_alleDetails` al servidor que dice el pie de cada una («Node S1» →
+`s1.chess-results.com`); el 3 vuelve a pedir las que armó S0 (y se repite el 2
+con ellas); el 4 lee «Cálculo de elo» y «Control de tiempo (…)» y suma los
+torneos nuevos a la tabla. Al final, la última consulta del archivo da la tabla
+entera para `herramientas/datos/arbitros-cr-calculo-elo.json` (la lista
+«torneos», y `leido` con la fecha). El detalle, en «Los torneos con Elo
+nacional».
 
 **Los ritmos por revisar.** `node herramientas/arbitros-cr/ritmos-raros.js`
 lista los torneos con solo Elo nacional cuyo ritmo no se puede decidir solo

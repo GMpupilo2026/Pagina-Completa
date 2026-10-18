@@ -3505,7 +3505,9 @@ se evaluó con ningún Elo, «No (sin Elo)».
   `s3.chess-results.com`. Mandados todos a `s1`, dos de cada tres volvieron con
   error 500, y reintentarlos no sirvió. A `s0` no se llega (su certificado no
   vale): se vuelve a pedir la página hasta que la arme otro servidor. Así se
-  leyeron 3237 de 3238.
+  leyeron 3237 de 3238; el que faltaba (un rápido sin Elo) entró con la
+  primera prueba de `herramientas/arbitros-cr/calculo-elo-leer.sql`, el script
+  de esos pasos para la pasada de cada mes.
 - **Lo que dicen las fichas** (los de Costa Rica que no son de FIDE, octubre de
   2026):
   - solo «Elo nacional»: 550 (153 clásicos, 372 sin el ritmo escrito, que son
@@ -3562,7 +3564,11 @@ se evaluó con ningún Elo, «No (sin Elo)».
   los filtros de años, tipo y lugar, como las demás; un festival cuenta si
   alguno de sus torneos fue así) y la ficha y su PDF lo dicen en el resumen
   («…, 12 de ellos con solo Elo nacional»). El ranking del año también lo trae:
-  su columna y «Ordenar por: Torneos con solo Elo nacional», y su Excel.
+  su columna y «Ordenar por: Torneos con solo Elo nacional», y su Excel. La ficha
+  tiene su propio «Torneos» (el mismo filtro que el de arriba: cambiar uno
+  cambia el otro), y el Excel y el PDF de la ficha salen con lo elegido. La
+  lista entera se baja en Excel («Descargar la lista en Excel»: las mismas
+  columnas, con los filtros y el orden elegidos, y una hoja con los filtros).
 - **Dónde va.** `arbitros_cr_cr_elo` (clave, calculo, ritmo, leido; migraciones
   `20261017224002` y `20261017224637`), aparte de `arbitros_cr_cr`, porque la
   carga completa de esa tabla la borra y la vuelve a llenar. Solo la lee quien
@@ -3637,7 +3643,26 @@ para Carolina Muñoz). El dueño la pasó en octubre de 2026.
 - **Doce que no salen.** La Federación nombra a 12 NA que no arbitraron ningún
   torneo en lo que se leyó de FIDE y de chess-results (Edwin Vega, por ejemplo,
   sale como director, y eso no cuenta): la lista de la herramienta muestra solo
-  a quien arbitró algo.
+  a quien arbitró algo. Sí salen en «La lista de la Federación» (abajo), con el
+  nombre de la lista de FIDE.
+- **La lista de la Federación contra quién arbitra** (octubre de 2026). Para
+  eso hace falta saber quién está en la lista, no solo la categoría de los AN:
+  `fca_leida` se le pone a los 118 que figuran (también a los FA e IA, con
+  `categoria_nacional` nula; migración `20261018163850`, que solo cambia el
+  comentario de la columna). Están en la lista quienes tienen la `fca_leida` más
+  nueva: quien salió de ella se queda con la fecha vieja. La sección dice, sin
+  los filtros de arriba y contando solo los torneos en Costa Rica como
+  principal, adjunto o árbitro:
+  - quién está en la lista y no arbitró en los últimos tres años (con los que
+    nunca arbitraron);
+  - quién arbitró 3 o más torneos en los últimos dos años sin estar en ella.
+  Que alguien no figure como árbitro en chess-results no prueba que no haya
+  arbitrado: el organizador puede no haberlo anotado. La página lo dice.
+- **Lo que le falta a un AN para subir de categoría** no se hizo: hace falta
+  el reglamento de categorías de la Federación (cuántos torneos y de qué tipo
+  pide la A, la B y la C), y no está publicado en `fcacostarica.com` (se buscó
+  en octubre de 2026; solo aparecen las contrataciones, que piden la categoría
+  A o B para algunos cursos). Con el reglamento, sale de los mismos datos.
 
 ## La fecha oficial del título: la del perfil de FIDE
 
