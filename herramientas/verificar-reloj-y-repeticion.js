@@ -74,10 +74,22 @@ for (const p of PAGINAS) {
   ok(!/Date\.now\(\)\s*-\s*new Date\(room\.clock_updated_at\)/.test(s), p + ": el reloj no se calcula con la hora de la computadora");
   ok(s.includes('src="js/reloj-servidor.js"') && s.includes("RelojServidor.iniciar(sb)"), p + ": carga y arranca js/reloj-servidor.js");
 }
+/* El texto del final en tablas vive en una sola copia (js/sala-juego.js) y lo
+   usan las seis páginas de partida, también las que llevan la cuenta en la
+   sala (ver «Todas las modalidades terminan en tablas» en
+   docs/decisiones/juegos-y-torneos.md). */
+{
+  const sala = require("fs").readFileSync(require("path").join(__dirname, "..", "js", "sala-juego.js"), "utf8");
+  ok(sala.includes("Tablas por triple repetición.") && sala.includes("Tablas por la regla de las 50 jugadas."), "js/sala-juego.js: textoTablas dice la repetición y las 50 jugadas");
+  for (const p of ["cartas.html", "variante.html", "duelo.html"]) {
+    const s = require("./lib/codigo-de-pagina").leer(p);
+    ok(/SalaJuego\.textoTablas\(/.test(s), p + ": el final dice por qué fueron tablas (SalaJuego.textoTablas)");
+  }
+}
 for (const p of ["estandar.html", "niebla.html", "crazyhouse.html"]) {
   const s = require("./lib/codigo-de-pagina").leer(p);
   ok(s.includes('src="js/repeticion.js"') && /esTripleRepeticion\(newMoves, info\.fen\)/.test(s), p + ": al mover se mira la triple repetición");
-  ok(s.includes("Tablas por triple repetición."), p + ": el final dice por qué fueron tablas");
+  ok(/SalaJuego\.textoTablas\(/.test(s), p + ": el final dice por qué fueron tablas (SalaJuego.textoTablas)");
 }
 
 console.log("\nLas prácticas que se juegan en la página (triple repetición y 50 jugadas, automáticas)");
