@@ -1935,6 +1935,18 @@ lo mismo con preguntas propias, de ajedrez o no, y con puntos por rapidez.
   respuesta, los botones quedan deshabilitados y `enviarOpcion` se niega a
   mandar un segundo intento (también el de escribir otra letra en Modo
   Adaptado), con el mismo aviso que daría la base.
+  **Una respuesta tampoco se muda** (migración `respuesta_no_se_muda`): el
+  mismo trigger rechaza todo `UPDATE` que cambie `question_id` o `student_id`,
+  para todos. Sin eso el bloqueo se saltaba desde la consola: comprobado
+  impersonando a un alumno, contestaba la opción mala, mudaba su fila a otra
+  pregunta (`update … set question_id = otra`, que `question_answers_update`
+  le dejaba porque la fila es suya) y volvía a contestar la buena, y la base
+  la calificaba correcta. Mudarla también llevaba un `is_correct` ajeno a otra
+  pregunta, porque `protect_answer_grading` conserva el de antes. Borrarla no
+  se puede: la tabla no tiene política de `DELETE`. Ninguna pantalla muda
+  respuestas: todas escriben con `upsert` sobre (`question_id`, `student_id`)
+  o solo cambian `is_correct`. `verificar-clase-cuestionario.js` revisa que la
+  última definición del trigger siga con las dos reglas.
 - **Los puntos: de 500 a 1000 por acertar, más cuanto antes; 0 al fallar**
   (`Cuestionario.puntos`, la regla escrita en `REGLA` y a la vista del profe).
   Se calculan con las horas que pone **la base**: la de la pregunta y la de la

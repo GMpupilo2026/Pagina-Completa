@@ -14,6 +14,10 @@
      posición, sí. Elegida una opción, no la puede cambiar (questions.bloquea_cambio,
      que solo pone el cuestionario): las opciones quedan deshabilitadas y un
      segundo intento se frena del lado del cliente antes de mandar nada.
+   - La base: la última migración que define respuesta_calificar_y_plazo
+     sigue rechazando el cambio de opción con bloquea_cambio y una respuesta
+     que se muda a otra pregunta (mudarla y volver a contestar era la forma
+     de cambiarla desde la consola; comprobado impersonando a un alumno).
 
    Con el sitio en localhost:8777 y playwright:
        node herramientas/verificar-clase-cuestionario.js
@@ -252,8 +256,21 @@ async function pruebaListoEnClase(browser) {
   await ctx.close();
 }
 
+function laBaseNoDejaCambiar() {
+  const dir = path.join(__dirname, "..", "supabase", "migraciones");
+  const ultima = fs.readdirSync(dir).filter((f) => f.endsWith(".sql")).sort().reverse()
+    .map((f) => fs.readFileSync(path.join(dir, f), "utf8"))
+    .find((t) => /create or replace function public\.respuesta_calificar_y_plazo\(/i.test(t));
+  const cuerpo = (ultima || "").replace(/--[^\n]*/g, "");
+  igual("la base rechaza cambiar la opción ya elegida",
+    /bloquea_cambio[\s\S]*new\.opcion is distinct from old\.opcion[\s\S]*raise exception/i.test(cuerpo), true);
+  igual("la base rechaza mudar una respuesta a otra pregunta o a otra persona",
+    /new\.question_id is distinct from old\.question_id[\s\S]*new\.student_id is distinct from old\.student_id[\s\S]*raise exception/i.test(cuerpo), true);
+}
+
 (async () => {
   laParteQueNoTocaLaPagina();
+  laBaseNoDejaCambiar();
   const browser = await chromium.launch({ executablePath: CHROME });
   try {
     await pruebaProfe(browser);
