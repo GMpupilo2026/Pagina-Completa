@@ -715,15 +715,19 @@ async function pruebaCupoInvitaciones(browser) {
   }
 }
 
-/* «Lo urgente» de quien da clase: solo aparece cuando hay algo, y solo con
-   lo que se resuelve en una tarjeta suya. Su informe mensual del mes pasado
-   cuenta si tiene supervisión (mis_supervisores()) y no lo envió. */
+/* Los avisos de quien da clase van en la campana («Avisos»), no en una
+   tarjeta: lo que antes era «Lo urgente», en un solo lugar. La campana está
+   siempre y su número dice cuántas cosas tienen algo; solo con lo que se
+   resuelve en una tarjeta suya. Su informe mensual del mes pasado cuenta si
+   tiene supervisión (mis_supervisores()) y no lo envió. Ver «El panel del
+   profe, con pocas cosas a la vista» en docs/decisiones/paneles.md. */
 async function pruebaUrgenteProfesora(browser) {
-  console.log("\n=== Lo urgente de quien da clase ===");
+  console.log("\n=== Los avisos de quien da clase, en la campana ===");
   // El mes pasado, en hora de Costa Rica, como lo calcula js/pendientes.js.
   const [a, m] = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Costa_Rica", year: "numeric", month: "2-digit" }).format(new Date()).split("-").map(Number);
   const mesPasado = (m === 1 ? a - 1 : a) + "-" + String(m === 1 ? 12 : m - 1).padStart(2, "0") + "-01";
   const nombreMes = new Intl.DateTimeFormat("es-CR", { month: "long", timeZone: "UTC" }).format(new Date(Date.UTC(m === 1 ? a - 1 : a, (m === 1 ? 12 : m - 1) - 1, 15)));
+  const listo = (page) => page.waitForFunction(() => !/Revisando/.test(document.getElementById("campana-profe-estado").textContent), null, { timeout: 10000 });
 
   const dia = 864e5;
   const enDias = (n) => new Date(Date.now() + n * dia).toISOString();
@@ -743,19 +747,27 @@ async function pruebaUrgenteProfesora(browser) {
       { id: "e-6", profesor_id: "u-profe", estado: "asignado", vence_at: enDias(3) },
     ],
   });
-  await r.page.waitForFunction(() => !/Revisando/.test(document.getElementById("urgente-panel-estado").textContent), null, { timeout: 10000 });
-  igual("se ve, antes que «Tu semana»",
+  await listo(r.page);
+  igual("ya no hay tarjeta «Lo urgente» en su panel",
+    await r.page.evaluate(() => document.getElementById("urgente-panel").checkVisibility()), false);
+  igual("la campana se ve arriba, con cuántas cosas tienen algo, y cerrada",
     await r.page.evaluate(() => {
-      const u = document.getElementById("urgente-panel");
-      return u.checkVisibility() && !!(u.compareDocumentPosition(document.getElementById("progreso-profe")) & Node.DOCUMENT_POSITION_FOLLOWING);
-    }), true);
-  igual("sus justificaciones y su informe del mes pasado, cada uno a donde se resuelve",
-    await r.page.evaluate(() => Array.from(document.querySelectorAll("#urgente-panel-lista li")).filter((li) => li.checkVisibility())
+      const b = document.getElementById("campana");
+      return [b.checkVisibility(), b.innerText.replace(/\s+/g, " ").trim(), b.getAttribute("aria-label"),
+        b.getAttribute("aria-expanded"), document.getElementById("campana-panel").checkVisibility()];
+    }), [true, "🔔 Avisos 4", "Avisos: 4 cosas por mirar", "false", false]);
+  await r.page.click("#campana");
+  igual("al abrirla: sus justificaciones, el examen congelado, su informe y el entregado, cada uno a donde se resuelve",
+    await r.page.evaluate(() => Array.from(document.querySelectorAll("#campana-profe-lista li")).filter((li) => li.checkVisibility())
       .map((li) => li.querySelector("a > span:nth-child(2)").innerText.replace(/\s+/g, " ").trim() + " → " + li.querySelector("a").getAttribute("href"))),
     ["URGENTE 2 justificaciones de ausencia por revisar → justificaciones.html",
      "URGENTE 1 examen congelado esperando tu decisión → examenes.html#puestos",
      "URGENTE Tu informe mensual de " + nombreMes + " sin enviar → informe-mensual.html",
      "A VIGILAR 1 examen entregado esta semana → examenes.html#puestos"]);
+  igual("y no la lista del alumno",
+    await r.page.evaluate(() => [document.getElementById("campana-titulo").textContent, document.getElementById("campana-lista").checkVisibility()]),
+    ["Tus avisos", false]);
+  igual("abierta dice que lo está", await r.page.evaluate(() => document.getElementById("campana").getAttribute("aria-expanded")), "true");
   igual("los exámenes se cuentan sin bajarlos, por SU id",
     await r.page.evaluate(() => window.__consultas.filter((c) => c.tabla === "examenes").map((c) => [c.head, c.eq])),
     [[true, { profesor_id: "u-profe", estado: "congelado" }], [true, { profesor_id: "u-profe", estado: "entregado" }]]);
@@ -764,25 +776,31 @@ async function pruebaUrgenteProfesora(browser) {
     [{ profesor_id: "u-profe", periodo: mesPasado, estado: "enviado" }]);
   igual("sin coordinar, no se le cuentan solicitudes ni cobros",
     await r.page.evaluate(() => window.__consultas.filter((c) => c.tabla === "solicitudes_academia" || c.tabla === "cobros_morosos").length), 0);
+  await r.page.click("#campana");
+  igual("y se vuelve a cerrar", await r.page.evaluate(() => document.getElementById("campana-panel").checkVisibility()), false);
   igual("sin errores en consola", r.errores.join(" | ") || "ninguno", "ninguno");
   await r.ctx.close();
 
-  // Todo al día: la tarjeta no aparece (un «todo al día» diario deja de leerse).
+  // Todo al día: la campana sigue (es donde se mira), sin número, y adentro lo dice.
   r = await panel(browser, [PROFE], "u-profe", null, {
     rpc: { justificaciones_pendientes: 0, mis_supervisores: [{ id: "u-sup" }] },
     informes_profesor: [{ id: "i-1", profesor_id: "u-profe", periodo: mesPasado, estado: "enviado" }],
   });
-  await r.page.waitForFunction(() => window.__consultas.some((c) => c.tabla === "informes_profesor"), null, { timeout: 10000 });
-  await r.page.waitForTimeout(300);
-  igual("con todo al día, la tarjeta no aparece",
-    await r.page.evaluate(() => document.getElementById("urgente-panel").checkVisibility()), false);
+  await listo(r.page);
+  igual("con todo al día, la campana está sin número",
+    await r.page.evaluate(() => [document.getElementById("campana").checkVisibility(),
+      document.getElementById("campana-n").checkVisibility(), document.getElementById("campana").getAttribute("aria-label")]),
+    [true, false, "Avisos: nada esperando"]);
+  await r.page.click("#campana");
+  igual("y adentro dice que está todo al día",
+    await r.page.evaluate(() => document.getElementById("campana-profe-estado").textContent), "Nada esperando: todo al día.");
   await r.ctx.close();
 
   // Sin supervisión nadie le pide informe: no se le cuenta.
   r = await panel(browser, [PROFE], "u-profe", null, { rpc: { justificaciones_pendientes: 0, mis_supervisores: [] } });
-  await r.page.waitForTimeout(800);
+  await listo(r.page);
   igual("sin supervisión, su informe no se le reclama",
-    [await r.page.evaluate(() => document.getElementById("urgente-panel").checkVisibility()),
+    [await r.page.evaluate(() => document.getElementById("campana-n").checkVisibility()),
      await r.page.evaluate(() => window.__consultas.filter((c) => c.tabla === "informes_profesor").length)], [false, 0]);
   await r.ctx.close();
 }
@@ -1158,6 +1176,7 @@ async function pruebaRegistroResumen(browser) {
     // La pregunta de salida de esa clase (salida_de_la_clase): 1 de 3 entendió.
     salida_de_la_clase: [{ question_id: "q-s", prompt: "¿Entendiste?", tipo: "opciones", asistentes: 4, respondieron: 3,
       bien: 1, medio: 0, mal: 2, sin_calificar: 0 }] } });
+  await page.click("#registro-abrir");
   await page.waitForSelector("#sessions-log tbody tr", { timeout: 10000 });
   const pedidas = () => page.evaluate(() => window.__consultas.filter((c) => c.tabla === "resumen_de_la_clase").map((c) => c.args && c.args.p_clase));
   igual("con la lista no se pide ningún resumen", JSON.stringify(await pedidas()), "[]");
@@ -1261,6 +1280,18 @@ async function pruebaRegistro(browser) {
   const resumen = () => page.textContent("#sessions-log-summary");
   igual("dice cuántas muestra de cuántas hay", (await resumen()).trim(),
     "Mostrando 20 de 30 clases en el filtro elegido.");
+  /* Arranca plegado: el resumen a la vista, la tabla con «Ver el registro», y
+     lo que deja abierto se recuerda. Ver «El panel del profe, con pocas cosas
+     a la vista». */
+  const plegado = () => page.evaluate(() => [document.getElementById("sessions-log-summary").checkVisibility(),
+    document.getElementById("sessions-log").checkVisibility(), document.getElementById("registro-abrir").getAttribute("aria-expanded")]);
+  igual("arranca plegado, con el resumen a la vista", await plegado(), [true, false, "false"]);
+  await page.click("#registro-abrir");
+  igual("«Ver el registro» lo abre y dice que está abierto", await plegado(), [true, true, "true"]);
+  await page.reload({ waitUntil: "networkidle" });
+  await page.waitForSelector("#app:not(.hidden)");
+  await page.waitForFunction(() => /Mostrando/.test(document.getElementById("sessions-log-summary").textContent), null, { timeout: 10000 });
+  igual("y abierto se queda abierto al volver", await plegado(), [true, true, "true"]);
 
   // Agrupado por mes: el más reciente abierto, los de atrás cerrados.
   const meses = await page.evaluate(() => Array.from(document.querySelectorAll("#sessions-log details")).map((d) => ({
@@ -2147,8 +2178,18 @@ async function pruebaSemanaProfesora(browser) {
   igual("el nombre va como texto: no crea ningún nodo", caen.nodos, "0");
   igual("y los que no caben, a Informes", caen.mas, "Y 2 más en Informes →");
 
-  /* Hoy entrenaron: quién, cuánto y cuántos limpios. */
+  /* Los nombres van plegados en «Ver quiénes»: a la vista, los cuatro
+     números y cuántos hay en cada lista. Ver «El panel del profe, con pocas
+     cosas a la vista». */
   await page.waitForFunction(() => !document.getElementById("profe-hoy").hidden, null, { timeout: 10000 });
+  igual("las listas de nombres arrancan plegadas, y «Ver quiénes» dice cuántos",
+    await page.evaluate(() => [document.getElementById("profe-caen-lista").checkVisibility(),
+      document.getElementById("profe-hoy-lista").checkVisibility(),
+      document.querySelector("#profe-quienes summary").innerText.trim()]),
+    [false, false, "Ver quiénes: 8 se están cayendo del plan · 7 entrenaron hoy"]);
+  await page.click("#profe-quienes summary");
+
+  /* Hoy entrenaron: quién, cuánto y cuántos limpios. */
   const hoy = await page.evaluate(() => ({
     visible: document.getElementById("profe-hoy").checkVisibility(),
     filas: Array.from(document.querySelectorAll("#profe-hoy-lista a")).map((a) => [a.getAttribute("href"), a.textContent]),
@@ -2182,6 +2223,8 @@ async function pruebaSemanaProfesora(browser) {
     await r.page.evaluate(() => document.getElementById("profe-caen").hidden), "true");
   igual("ni «Hoy entrenaron» si nadie entrenó hoy",
     await r.page.evaluate(() => document.getElementById("profe-hoy").checkVisibility()), "false");
+  igual("ni «Ver quiénes», sin nadie en ninguna lista",
+    await r.page.evaluate(() => document.getElementById("profe-quienes").checkVisibility()), "false");
   await r.ctx.close();
 
   await pruebaPrimerPasoProfesor(browser);
@@ -2918,8 +2961,8 @@ async function pruebaPlegables(browser) {
   ({ page, ctx } = await panel(browser, [PROFE], "u-profe", { viewport: { width: 1280, height: 900 } }));
   const cerrados = () => page.evaluate(() => Array.from(document.querySelectorAll("#tile-grid > section")).map((s) =>
       [s.querySelector("h2").textContent, !!s.querySelector("h2 button[aria-expanded=false]"), s.querySelector(".grid").checkVisibility()]));
-  igual("en la computadora, a la profesora solo se le cierran «Aprender» y «Jugar y competir»", await cerrados(),
-    [["Clase en vivo", false, true], ["Tus alumnos", false, true], ["Tus clases", false, true], ["Aprender", true, false], ["Jugar y competir", true, false], ["Herramientas", false, true], ["Tu cuenta", false, true]]);
+  igual("en la computadora, a la profesora solo se le cierran «Aprender», «Jugar y competir» y «Herramientas»", await cerrados(),
+    [["Clase en vivo", false, true], ["Tus alumnos", false, true], ["Tus clases", false, true], ["Aprender", true, false], ["Jugar y competir", true, false], ["Herramientas", true, false], ["Tu cuenta", false, true]]);
   await page.click('#tile-grid h2 button:has-text("Aprender")');
   await page.reload({ waitUntil: "networkidle" });
   await page.waitForSelector("#app:not(.hidden)");
@@ -3415,6 +3458,7 @@ async function pruebaTercera(browser) {
 
   console.log("\n=== El registro de clases no ensancha la página en el celular ===");
   r = await panel(browser, [PROFE, ALUMNA], "u-profe", { viewport: { width: 390, height: 800 } }, {});
+  await r.page.click("#registro-abrir");
   await r.page.waitForSelector("#sessions-log table", { timeout: 10000 }).catch(() => {});
   igual("la tabla se desliza dentro de su caja y la página no se sale del ancho del celular",
     await r.page.evaluate(() => [!!document.querySelector("#sessions-log table"), document.documentElement.scrollWidth <= window.innerWidth]), [true, true]);

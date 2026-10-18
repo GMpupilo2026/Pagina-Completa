@@ -1696,7 +1696,8 @@ su lugar y sin caminos repetidos.
   selector de tema.
 - «Tu semana» ya no lleva «Ver informe completo →»: llevaba al mismo lugar que
   el número de alumnos y que la tarjeta Informes.
-- **«Lo urgente» va antes que «Tu semana», y solo cuando hay algo** (su panel ya
+- **«Lo urgente» va antes que «Tu semana», y solo cuando hay algo** (hoy va en
+  la campana: ver «El panel del profe, con pocas cosas a la vista»; su panel ya
   tiene la franja del primer paso y «Tu semana»; un «todo al día» diario deja
   de leerse). Es la misma tarjeta del supervisor (`cargarUrgente()`), con lo
   del profesor:
@@ -1749,6 +1750,50 @@ alumnos», y abajo dos grupos que no son para dar clase.
   alumnos y sus clases queda junto. La página bajó de 4128 a 3505 px.
 - Lo prueban `pruebaPlegables` (`verificar-panel.js`) y
   `verificar-aviso-profe.js`.
+
+### El panel del profe, con pocas cosas a la vista
+
+El pedido: «limpiar el panel, que tenga pocas cosas a la vista» y «las
+notificaciones en un solo lugar, como una campanita». Medido en la
+computadora con un profe de 29 alumnos y tres avisos, el panel medía
+4155 px: arriba, la tarjeta «Lo urgente»; en «Tu semana», dos listas de seis
+nombres cada una; abajo, la tabla del registro de clases abierta. Ahora mide
+2701 px.
+
+- **Sus avisos van en la campana 🔔 «Avisos»**, junto a su nombre, y la
+  tarjeta «Lo urgente» ya no se le pinta (`cargarCampanaDocente()`). Es el
+  mismo botón y el mismo panel que «Novedades» del alumno (`#campana`,
+  `#campana-panel`); adentro lo pinta `Pendientes.pintar()` con el prefijo
+  `campana-profe`, con las mismas claves de antes (`clavesUrgenteDocente()`).
+  - **Está siempre**, aunque no haya nada: es el lugar donde se mira, y una
+    campana que aparece y desaparece no se aprende. El número dice cuántas
+    cosas tienen algo (urgentes y a vigilar), y el nombre del botón lo dice
+    entero para el lector de pantalla («Avisos: 3 cosas por mirar»). Con todo
+    al día, sin número, y adentro «Nada esperando: todo al día».
+  - **Abrirla no los da por vistos**, al revés que la del alumno: un aviso
+    del profe se va cuando se resuelve (la justificación revisada, el examen
+    reabierto), no cuando se mira.
+  - **Mirando a otra persona («Ver como») no se pinta**: los avisos se
+    cuentan con el id de quien mira, y serían los suyos.
+  - La tarjeta «Lo urgente» de quien supervisa sigue como estaba: es el
+    centro de su panel. `soloSiHayAlgo` de `Pendientes.pintar()` era solo del
+    profe, y se quitó.
+- **«Tu semana» deja a la vista sus cuatro números.** «Se están cayendo del
+  plan» y «Hoy entrenaron» van plegados en «Ver quiénes» (`#profe-quienes`),
+  que dice cuántos hay en cada lista sin abrirlo («Ver quiénes: 8 se están
+  cayendo del plan · 7 entrenaron hoy»). Sin nadie en ninguna, no se pinta.
+- **«Herramientas» arranca cerrado**, como «Aprender» y «Jugar y competir»:
+  tampoco es para dar clase. Se recuerda si lo abre.
+- **El registro de clases arranca plegado**: queda a la vista su resumen
+  («Mostrando 20 de 30 clases…») y la tabla con sus filtros se abre con «Ver
+  el registro» (`aria-expanded`). Lo que deja abierto se recuerda en
+  `panel_grupos_abiertos_v1`, como los grupos. Se sigue pidiendo igual: el
+  resumen sale de la misma consulta.
+- Lo prueban `pruebaUrgenteProfesora` (la campana, su número, lo de adentro,
+  todo al día y sin supervisión), `pruebaSemanaProfesora` («Ver quiénes»),
+  `pruebaPlegables` y `pruebaRegistro` (plegado, abrir y que se recuerde) en
+  `verificar-panel.js`, y `verificar-ver-como.js` (sin campana mirando a
+  otra persona). Rompiendo a propósito el número o el plegado, saltan.
 
 ### Tu próxima clase, también para el profe
 

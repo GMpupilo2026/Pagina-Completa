@@ -1,7 +1,8 @@
 /* Lo urgente: lo que se cuenta en la base.
 
-   Lo usan «Lo urgente» de admin.html (quien administra) y la tarjeta de
-   arriba del panel de quien supervisa y del de quien da clase (clases.html). Cada uno pide SOLO lo
+   Lo usan «Lo urgente» de admin.html (quien administra), la tarjeta de
+   arriba del panel de quien supervisa y la campana «Avisos» de quien da
+   clase (clases.html). Cada uno pide SOLO lo
    suyo (`claves`), y la base acota cada conteo a lo que esa persona ve: a quien
    supervisa, sus justificaciones, sus cobros y las encuestas de sus
    profesores. Ver «Lo urgente primero» y «El panel de quien supervisa, sin
@@ -154,18 +155,15 @@
       accion: "Ver por supervisor", href: "admin.html#supervisores", alDia: "Todos entrenaron esta semana" },
   ];
 
-  /* La tarjeta «Lo urgente», pintada: la usan el panel de la Academia (quien
-     da clase) y la página de supervisión (supervisor.html). Los elementos
+  /* La tarjeta «Lo urgente», pintada: la usan el panel de la Academia (la
+     tarjeta de quien supervisa y la campana de quien da clase) y la página de
+     supervisión (supervisor.html). Los elementos
      llevan el id `prefijo` (la caja), `prefijo-lista`, `prefijo-al-dia` y
-     `prefijo-estado`. Devuelve los conteos, por si la página los quiere.
-
-     `soloSiHayAlgo`: a quien da clase la tarjeta solo le aparece cuando hay
-     algo. Su panel ya tiene la franja del primer paso y «Tu semana»; un «todo
-     al día» de todos los días deja de leerse. */
+     `prefijo-estado`. Devuelve los conteos, por si la página los quiere. */
   async function pintar(sb, claves, op) {
     const caja = document.getElementById(op.prefijo);
     if (!caja || !claves.length) return null;
-    if (!op.soloSiHayAlgo) caja.hidden = false;
+    caja.hidden = false;
     const conteos = await contarEnLaBase(sb, claves, { yo: op.yo });
     const defs = claves.map((c) => EN_LA_BASE.find((d) => d.clave === c));
     const lista = document.getElementById(op.prefijo + "-lista");
@@ -215,10 +213,6 @@
     pieAlDia.hidden = !alDia.length;
     pieAlDia.textContent = alDia.length ? "✓ Al día: " + alDia.join(" · ") + "." : "";
     const urgentes = conAlgo.filter((d) => d.nivel === "urgente" && conteos[d.clave] > 0).length;
-    if (op.soloSiHayAlgo) {
-      caja.hidden = !conAlgo.length;
-      pieAlDia.hidden = true;
-    }
     document.getElementById(op.prefijo + "-estado").textContent = !conAlgo.length
       ? "Nada esperando: todo al día."
       : urgentes

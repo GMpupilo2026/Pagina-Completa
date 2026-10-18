@@ -289,17 +289,13 @@
             inac.className = "text-2xl font-bold " + (inactivos > 0 ? "text-red-600 dark:text-red-400" : "text-brand-800 dark:text-white");
         }
 
-        /* «Lo urgente», arriba de los números: el de quien supervisa y el de
-           quien da clase. Lo cuenta js/pendientes.js (el mismo de admin.html)
-           y la base lo acota a su gente. Los que llevan días sin entrenar y
-           las tareas vencidas NO van acá: ya son números de la tarjeta de
-           abajo, y dos veces el mismo dato hace pensar que son dos cosas. Un
-           conteo que falla dice que no se pudo revisar, nunca cero.
-
-           `soloSiHayAlgo`: a quien da clase la tarjeta solo le aparece cuando
-           hay algo. Su panel ya tiene la franja del primer paso y «Tu semana»;
-           un «todo al día» de todos los días deja de leerse (la lección de la
-           franja: con todo al día no se dice nada). */
+        /* «Lo urgente», arriba de los números: el de quien supervisa (a quien
+           da clase le va en la campana, cargarCampanaDocente()). Lo cuenta
+           js/pendientes.js (el mismo de admin.html) y la base lo acota a su
+           gente. Los que llevan días sin entrenar y las tareas vencidas NO van
+           acá: ya son números de la tarjeta de abajo, y dos veces el mismo
+           dato hace pensar que son dos cosas. Un conteo que falla dice que no
+           se pudo revisar, nunca cero. */
         const URGENTE_SUPERVISOR = window.Pendientes ? Pendientes.DE_SUPERVISOR : [];
         /* La tarjeta la arma js/pendientes.js (Pendientes.pintar): la misma
            que usa la página de supervisión (supervisor.html). */
@@ -456,7 +452,7 @@
             const grupos = PANEL_DOCENTE.map((g) => ({
                 title: g.title, id: g.id, destacado: !!g.destacado,
                 plegable: !g.destacado && g.title !== "Tu cuenta",
-                cerrado: g.title === "Aprender" || g.title === "Jugar y competir",
+                cerrado: g.title === "Aprender" || g.title === "Jugar y competir" || g.title === "Herramientas",
                 compacto: g.title === "Tu cuenta",
                 tiles: g.hrefs.map((h) => todas.find((t) => t.href === h)).filter((t) => t && usadas.add(t)),
             })).filter((g) => g.tiles.length);
@@ -614,7 +610,7 @@
             return guardado;
         }
 
-        /* Lo urgente de quien da clase: lo que se resuelve en una tarjeta que
+        /* Los avisos de quien da clase (su campana): lo que se resuelve en una tarjeta que
            SÍ tiene. A quien no coordina no se le cuentan solicitudes ni
            cobros; sería decirle «al día» sobre algo que no puede ver. Su
            informe mensual va siempre (la base mira si tiene supervisión). */
@@ -2481,6 +2477,40 @@
             });
         }
 
+        /* ---------- La campana de quien da clase ----------
+           Sus avisos en un solo lugar: lo que antes era la tarjeta «Lo
+           urgente» (justificaciones, exámenes congelados, su informe mensual,
+           solicitudes, partidas de torneo, saldos…), contado en la base por
+           js/pendientes.js. La campana está siempre —es el lugar donde se
+           mira—, y el número dice cuántas cosas tienen algo. Abrirla no los da
+           por vistos: se van cuando se resuelven, no cuando se miran. Ver «El
+           panel del profe, con pocas cosas a la vista» en
+           docs/decisiones/paneles.md. */
+        async function cargarCampanaDocente() {
+            const boton = document.getElementById("campana");
+            const panelC = document.getElementById("campana-panel");
+            if (!boton || !panelC || !window.Pendientes) return;
+            document.getElementById("campana-texto").textContent = "Avisos";
+            document.getElementById("campana-titulo").textContent = "Tus avisos";
+            document.getElementById("campana-lista").hidden = true;
+            document.getElementById("campana-profe").hidden = false;
+            boton.hidden = false;
+            boton.addEventListener("click", () => {
+                const abrir = boton.getAttribute("aria-expanded") !== "true";
+                boton.setAttribute("aria-expanded", String(abrir));
+                panelC.hidden = !abrir;
+                if (abrir) panelC.scrollIntoView({ behavior: "smooth", block: "nearest" });
+            });
+            const r = await Pendientes.pintar(sb, clavesUrgenteDocente(), { yo: profile.id, prefijo: "campana-profe" });
+            const n = document.getElementById("campana-n");
+            const conAlgo = r ? Object.values(r.conteos).filter((v) => v !== 0).length : 0;
+            n.textContent = String(conAlgo);
+            n.hidden = !conAlgo;
+            // El número suelto no dice qué es: el nombre del botón lo completa.
+            boton.setAttribute("aria-label", conAlgo === 0 ? "Avisos: nada esperando"
+                : conAlgo === 1 ? "Avisos: 1 cosa por mirar" : "Avisos: " + conAlgo + " cosas por mirar");
+        }
+
         /* ---------- Tus clases: la última y los puntos del mes ----------
            Van juntos en un <details> que en el celular arranca cerrado y en la
            computadora abierto; lo que cada quien abre o cierra se recuerda en
@@ -3199,6 +3229,7 @@
             if (!caja) return;
             const { data, error } = await sb.rpc("entreno_hoy_de_mis_alumnos");
             if (error || !data || !data.length) { caja.hidden = true; return; }
+            cuantosQuienes.hoy = data.length;
             const lista = document.getElementById("profe-hoy-lista");
             lista.replaceChildren();
             data.slice(0, HOY_VISIBLES).forEach((a) => {
@@ -3222,6 +3253,22 @@
             mas.hidden = resto <= 0;
             mas.textContent = resto === 1 ? "Y 1 alumno más." : "Y " + resto + " alumnos más.";
             caja.hidden = false;
+            pintarQuienes();
+        }
+
+        /* Las dos listas de nombres de «Tu semana» van plegadas en «Ver
+           quiénes», que dice cuántos hay en cada una sin abrirlo. Sin nadie
+           en ninguna, no se pinta. */
+        const cuantosQuienes = { caen: 0, hoy: 0 };
+        function pintarQuienes(cual, n) {
+            if (cual) cuantosQuienes[cual] = n;
+            const d = document.getElementById("profe-quienes");
+            if (!d) return;
+            const partes = [];
+            if (cuantosQuienes.caen) partes.push(cuantosQuienes.caen === 1 ? "1 se está cayendo del plan" : cuantosQuienes.caen + " se están cayendo del plan");
+            if (cuantosQuienes.hoy) partes.push(cuantosQuienes.hoy === 1 ? "1 entrenó hoy" : cuantosQuienes.hoy + " entrenaron hoy");
+            d.hidden = !partes.length;
+            document.getElementById("profe-quienes-texto").textContent = "Ver quiénes: " + partes.join(" · ");
         }
 
         /* Los alumnos con plan que llevan días sin entrenar, por nombre, con
@@ -3262,6 +3309,7 @@
             mas.hidden = resto <= 0;
             mas.textContent = resto === 1 ? "Y 1 más en Informes →" : "Y " + resto + " más en Informes →";
             caja.hidden = false;
+            pintarQuienes("caen", data.length);
         }
 
         /* ---------- Por dónde empezar, del lado del que da clase ----------
@@ -3644,6 +3692,24 @@
         // Los filtros: el texto con un respiro de 300 ms para no pedirle a la
         // base una consulta por tecla.
         let sesionesTimer = null;
+        /* El registro de clases arranca plegado: a la vista queda su resumen
+           («Mostrando 20 de 30…») y la tabla se abre con «Ver el registro».
+           Lo que cada quien deja abierto se recuerda en este aparato. */
+        (function () {
+            const boton = document.getElementById("registro-abrir");
+            const cuerpo = document.getElementById("registro-cuerpo");
+            const poner = (abierto) => {
+                cuerpo.hidden = !abierto;
+                boton.setAttribute("aria-expanded", String(abierto));
+                boton.textContent = abierto ? "Ocultar el registro" : "Ver el registro";
+            };
+            poner(gruposGuardados()["Registro de clases"] === true);
+            boton.addEventListener("click", () => {
+                const abierto = cuerpo.hidden;
+                poner(abierto);
+                try { const o = gruposGuardados(); o["Registro de clases"] = abierto; localStorage.setItem(CLAVE_GRUPOS, JSON.stringify(o)); } catch (e) {}
+            });
+        })();
         document.getElementById("sessions-search").addEventListener("input", (e) => {
             sesionesBusqueda = e.target.value;
             clearTimeout(sesionesTimer);
@@ -4228,7 +4294,10 @@
                para los profesores. */
             if (isTeacher || profile.is_admin) {
                 document.getElementById("progreso-profe").hidden = false;
-                partes.push(cargarPanelProfe(), cargarUrgente(clavesUrgenteDocente(), { soloSiHayAlgo: true }));
+                partes.push(cargarPanelProfe());
+                /* Sus avisos van en la campana, no en una tarjeta. Mirando a
+                   otra persona («Ver como») no: serían los de quien mira. */
+                if (!profile._persona) cargarCampanaDocente().catch((e) => console.error(e));
                 pintarAvisoAlumnos().catch((e) => console.error(e));
                 contarUsosDelPanel();
             } else {
