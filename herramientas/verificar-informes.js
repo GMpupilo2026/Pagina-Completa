@@ -170,6 +170,16 @@ window.__funcion = [];
         /* Un insert/upsert con .select() devuelve LO ESCRITO, no la tabla: es
            de donde la página refresca su estado, y un doble que devolviera la
            tabla entera daría por bueno un recuento equivocado. */
+        /* Un upsert con onConflict queda escrito, como en la base: la página
+           que vuelve a leer después (la opinión del profe sobre el estilo) ve
+           lo que escribió, pisando la fila con las mismas claves. */
+        if (pendiente && pendiente.accion === "upsert" && pendiente.opciones && pendiente.opciones.onConflict && Array.isArray(filas)) {
+          const claves = pendiente.opciones.onConflict.split(",").map((c) => c.trim());
+          (Array.isArray(pendiente.fila) ? pendiente.fila : [pendiente.fila]).forEach((f) => {
+            const i = filas.findIndex((x) => claves.every((c) => String(x[c]) === String(f[c])));
+            if (i >= 0) filas[i] = Object.assign({}, filas[i], f); else filas.push(Object.assign({}, f));
+          });
+        }
         if (pendiente && (pendiente.accion === "insert" || pendiente.accion === "upsert")) {
           // Como la base: lo que se inserta sin id recibe uno (el plan nuevo
           // tiene que tener con qué colgarle sus renglones).
@@ -530,6 +540,8 @@ async function pruebaProfesor(browser) {
       analisis_partidas_alumno: [{ alumno_id: "a-1", lichess: "ana_123", chesscom: null, partidas: 22,
         analizado_at: "2026-10-01T15:00:00Z", analisis: ANALISIS_ANA }],
       estilo_pruebas: ESTILO,
+      // Una opinión de su profe sobre OTRO alumno: no tiene que contar.
+      estilo_opiniones: [{ alumno_id: "a-2", profesor_id: "prof-1", eje: "material", opinion: 1 }],
       plantillas_casa: [
         { id: "p-1", situacion: "poco", texto: "{nombre} puede más: lo vemos el jueves.", created_at: "2026-09-01T00:00:00Z" },
         { id: "p-2", situacion: "bien", texto: "Sigan así.", created_at: "2026-09-02T00:00:00Z" },
@@ -1061,6 +1073,34 @@ async function pruebaProfesor(browser) {
   });
   igual("los cuatro ejes, con atacar, mantener y la iniciativa claros", es.ejes.filter((x) => /^(ataque|cambios|material):/.test(x)), ["ataque:claro", "cambios:claro", "material:claro"]);
   igual("la prueba vieja (versión 1), con sus tres ejes y no con un cuarto", es.ejesDeJulio, 3);
+
+  console.log("-- «¿Coincide con lo que ves?»: la opinión de su profe");
+  const opinion = () => page.evaluate(() => {
+    const c = document.getElementById("estilo-alumno-cuerpo");
+    const mat = c.querySelector('[data-eje="material"]');
+    return {
+      grupos: [...c.querySelectorAll("[data-opinion-eje]")].map((x) => x.dataset.opinionEje),
+      apretados: [...c.querySelectorAll('[data-opinion][aria-pressed="true"]')].map((b) => b.closest("[data-opinion-eje]").dataset.opinionEje + ":" + b.dataset.opinion + ":" + b.textContent),
+      frase: mat ? mat.textContent : "",
+      p: mat ? mat.querySelector(".absolute.-top-1").style.left : "",
+      foco: document.activeElement && document.activeElement.dataset ? document.activeElement.dataset.opinion : null,
+      estado: (c.querySelector('[data-opinion-eje="material"] [role="status"]') || {}).textContent || "",
+      conOpinion: !!c.querySelector("[data-estilo-con-opinion]"),
+    };
+  });
+  const op0 = await opinion();
+  igual("tres botones en cada uno de sus cuatro ejes, ninguno marcado (la de otro alumno no cuenta)",
+    [op0.grupos, op0.apretados, /lo que ve su profe/.test(op0.frase), op0.conOpinion], [["ataque", "estructura", "cambios", "material"], [], false, false]);
+  await page.click('[data-opinion-eje="material"] [data-opinion="1"]');
+  await page.waitForFunction(() => /Guardado/.test((document.querySelector('[data-opinion-eje="material"] [role="status"]') || {}).textContent || ""), null, { timeout: 8000 });
+  const escOp = await page.evaluate(() => window.__escrituras.filter((e) => /estilo_opiniones/.test(e.etiqueta)));
+  igual("guarda su opinión a su nombre, sobre este alumno, como upsert por alumno, profe y eje",
+    escOp.map((e) => [e.accion, JSON.stringify(e.fila), e.opciones && e.opciones.onConflict]),
+    [["upsert", JSON.stringify({ alumno_id: "a-1", profesor_id: "prof-1", eje: "material", opinion: 1 }), "alumno_id,profesor_id,eje"]]);
+  const op1 = await opinion();
+  igual("queda marcada («✓», no solo el color), cuenta en su perfil y lo dice, y el foco vuelve al botón",
+    [op1.apretados, /lo que ve su profe/.test(op1.frase), op1.foco, op1.conOpinion], [["material:1:✓ Quedarse con el material"], true, "1", true]);
+  igual("y mueve su perfil hacia lo que ve", parseFloat(op1.p) > parseFloat(op0.p), true);
   igual("lo que se le recomendó, en los tres grupos", es.grupos, ["blancas", "e4", "d4"]);
   igual("la fecha de su prueba, las anteriores, en tercera persona, nada de otro alumno, y el seguimiento",
     [es.fecha, es.anteriores, es.tercera, es.bruno, es.seguir], [true, true, true, false, true]);

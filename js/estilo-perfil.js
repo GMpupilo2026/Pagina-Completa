@@ -47,6 +47,13 @@
  * reemplazan (con el tope igual a las preguntas, 200 momentos que decían lo
  * contrario la dejaban en un empate exacto).
  *
+ * La OPINIÓN DE SU PROFE (public.estilo_opiniones): por eje, el primer
+ * polo, el segundo o «las dos por igual». Pesa lo que DOS preguntas
+ * (PESO_PROFE): lo ve jugar, pero no se sabe cuántas partidas miró; «las dos
+ * por igual» son una a cada lado. Una por profe. No cuenta para decidir si
+ * la prueba agrega preguntas: eso es lo que contesta el alumno; se suma al
+ * resultado.
+ *
  * Con todo eso, θ por máximo a posteriori (con una previa normal de desvío
  * 1,5, que con pocas respuestas no deja afirmar de más) y su error estándar.
  * El margen es del 95 %: quien contesta al azar sale «claramente» en
@@ -71,7 +78,7 @@
   const SEGURIDAD = { 3: 1, 2: 0.7, 1: 0.3 };
   const PREVIA = 1.5;
   const Z = 1.96;
-  const PESO_PARTIDA = 0.5;
+  const PESO_PARTIDA = 0.5, PESO_PROFE = 2;
   const ENSANCHE_CONTROL = 0.25;
 
   const banco = () => (typeof window !== "undefined" && window.EstiloItems)
@@ -135,8 +142,9 @@
   /* respuestas: [{ id, eleccion: "a"|"b", seguridad: 1..3, ms, control?: idOriginal }]
      partidas:   [{ eje, primero: true|false }] (js/estilo-partidas.js)
      version:    la de la prueba (la fila guardada); sin ella, la de hoy.
+     opiniones:  [{ eje, opinion: 1|0|-1 }], una por profe (estilo_opiniones).
      Devuelve un eje por cada uno de su forma, y `lista` con sus nombres. */
-  function medir(respuestas, partidas, version) {
+  function medir(respuestas, partidas, version, opiniones) {
     const B = banco(), Mm = medidas();
     const ejes = formaDe(version).ejes;
     const porId = new Map(B.ITEMS.map((i) => [i.id, i]));
@@ -169,6 +177,15 @@
       const w = Math.min(PESO_PARTIDA, tope / deJuego[o.eje]);
       obs[o.eje].push({ y: o.primero ? 1 : 0, w, a: 1, b: 0, de: "partidas" });
     }
+    // Lo que ve su profe: dos preguntas a su lado, o una a cada lado.
+    for (const o of opiniones || []) {
+      if (!obs[o.eje] || ![1, 0, -1].includes(o.opinion)) continue;
+      if (o.opinion === 0) {
+        obs[o.eje].push({ y: 1, w: PESO_PROFE / 2, a: 1, b: 0, de: "profe" }, { y: 0, w: PESO_PROFE / 2, a: 1, b: 0, de: "profe" });
+      } else {
+        obs[o.eje].push({ y: o.opinion === 1 ? 1 : 0, w: PESO_PROFE, a: 1, b: 0, de: "profe" });
+      }
+    }
     const out = { controles: { total: controles.length, fallados }, ejes: {}, lista: ejes.slice() };
     for (const e of ejes) {
       const { theta, se } = estimar(obs[e]);
@@ -176,6 +193,7 @@
       const x = {
         n: obs[e].filter((o) => o.de === "prueba").length,
         nPartidas: obs[e].filter((o) => o.de === "partidas").length,
+        nProfe: (opiniones || []).filter((o) => o.eje === e && [1, 0, -1].includes(o.opinion)).length,
         theta, se: seAncho,
         p: sigma(theta), lo: sigma(theta - Z * seAncho), hi: sigma(theta + Z * seAncho),
       };
@@ -193,8 +211,9 @@
     const [uno] = medidas().POLOS[eje];
     const E = banco().EJES[eje];
     const momentos = x.nPartidas ? ` y ${x.nPartidas} ${x.nPartidas === 1 ? "momento" : "momentos"} de ${tu ? "tus" : "sus"} partidas` : "";
+    const profe = x.nProfe ? `, más lo que ${x.nProfe === 1 ? (tu ? "ve tu profe" : "ve su profe") : (tu ? "ven tus profes" : "ven sus profes")}` : "";
     return `${tu ? "Elegiste" : "Eligió"} «${E.polos[uno].toLowerCase()}» el ${pct(x.p)} % de las veces (entre ${pct(x.lo)} y ${pct(x.hi)} %), `
-      + `con ${x.n} ${x.n === 1 ? "pregunta" : "preguntas"}${momentos}.`;
+      + `con ${x.n} ${x.n === 1 ? "pregunta" : "preguntas"}${momentos}${profe}.`;
   }
 
   /* -------- La posición de control: la misma pregunta con los colores invertidos -------- */
@@ -271,11 +290,11 @@
       },
       /* Cuántas van y cuántas faltan como mínimo (para la barra). */
       avance() { return { hechas: respuestas.length, minimo: cola.length }; },
-      perfil() { return medir(respuestas, o.partidas); },
+      perfil() { return medir(respuestas, o.partidas, undefined, o.opiniones); },
     };
   }
 
-  const api = { SEGURIDAD, EJES, PREVIA, PESO_PARTIDA, ENSANCHE_CONTROL, formaDe, topePartidas, pesoTiempo, estimar, medir, etiquetar, frase, espejo, Prueba, sigma };
+  const api = { SEGURIDAD, EJES, PREVIA, PESO_PARTIDA, PESO_PROFE, ENSANCHE_CONTROL, formaDe, topePartidas, pesoTiempo, estimar, medir, etiquetar, frase, espejo, Prueba, sigma };
   if (typeof window !== "undefined") window.EstiloPerfil = api;
   if (typeof module !== "undefined" && module.exports) module.exports = api;
 })();

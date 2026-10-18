@@ -15,6 +15,8 @@
  *   tarda, se usa lo que alcanzó. Con las mismas partidas se mide en qué tipo
  *   de partida le va mejor (EstiloPartidas.rendimiento), que la
  *   recomendación suma y que se guarda en el contexto.
+ * - Lo que ven sus profes (estilo_opiniones, lo marcan en Informes) entra al
+ *   resultado con el peso de dos preguntas, y lo dice.
  * - Se guarda una fila en `estilo_pruebas` (la hora la pone la base), con la
  *   recomendación de ese día: es la que se sigue después.
  * Ver «La prueba de estilo» en docs/decisiones/entrenamiento.md.
@@ -33,6 +35,7 @@
   let cuentas = null;          // { lichess, chesscom } de analisis_partidas_alumno
   let eloEnLinea = null;
   let ultima = null;           // la última prueba guardada
+  let opiniones = [];          // lo que ven sus profes (estilo_opiniones): entra al resultado
   let prueba = null, item = null, juego = null;
   let eleccion = null, seguridad = null, desde = 0, ms = 0;
   let momentos = [], midiendo = null, pararPartidas = false, rendimiento = null;
@@ -98,7 +101,7 @@
     pararPartidas = false;
     midiendo = cuentas && $("usar-partidas").checked ? medirPartidas() : null;
     const vistas = ultima ? (ultima.respuestas || []).map((r) => r.id) : [];
-    prueba = P.Prueba({ Chess, partidas: momentos, vistas });
+    prueba = P.Prueba({ Chess, partidas: momentos, vistas, opiniones });
     irA("pregunta-view");
     siguiente();
     if (comandos && CuadroComandos.activo()) { comandos.decir(preguntaDicha()); comandos.enfocar(); }
@@ -311,7 +314,7 @@
     const h = document.createElement("h2");
     h.className = "font-serif text-lg font-bold text-brand-800 dark:text-white mb-1";
     h.textContent = "Tu última prueba";
-    const pf = P.medir(ultima.respuestas, ultima.partidas, ultima.version);
+    const pf = P.medir(ultima.respuestas, ultima.partidas, ultima.version, opiniones);
     const p = document.createElement("p");
     p.className = "text-sm text-brand-500 dark:text-brand-300 mb-3";
     p.textContent = "El " + HoraCR.fecha(ultima.created_at, { day: "numeric", month: "long", year: "numeric" }) + ": " + pf.lista.map((e) => pf[e].etiqueta.texto.toLowerCase()).join(" · ") + ".";
@@ -352,12 +355,14 @@
     let sesion = null;
     try { const { data } = await sb.auth.getSession(); sesion = data && data.session; } catch (e) { sesion = null; }
     if (!sesion) { window.location.href = "../login.html?next=" + encodeURIComponent("entreno/estilo.html"); return; }
-    const [{ data: yo }, { data: an }, { data: previas }] = await Promise.all([
+    const [{ data: yo }, { data: an }, { data: previas }, { data: ops }] = await Promise.all([
       sb.from("profiles").select("id, full_name").eq("id", sesion.user.id).maybeSingle(),
       sb.from("analisis_partidas_alumno").select("lichess, chesscom, elo:analisis->elo").eq("alumno_id", sesion.user.id).maybeSingle(),
       sb.from("estilo_pruebas").select("id, version, respuestas, contexto, partidas, recomendacion, created_at")
         .eq("alumno_id", sesion.user.id).order("created_at", { ascending: false }).range(0, 0),
+      sb.from("estilo_opiniones").select("eje, opinion").eq("alumno_id", sesion.user.id),
     ]);
+    opiniones = ops || [];
     perfil = yo || { id: sesion.user.id };
     if (an && (an.lichess || an.chesscom)) {
       cuentas = { lichess: an.lichess, chesscom: an.chesscom };

@@ -2109,8 +2109,11 @@
                 puedeEscribir: !profile._persona && (profile.is_admin || profile.role === "profesor"),
             }).catch((e) => console.error(e));
             // Su estilo y la apertura sugerida (la prueba la hace el alumno; acá se mira).
+            // Su profe (o quien administra) dice si coincide con lo que ve; «Ver
+            // como» y quien supervisa solo miran. Quién escribe lo decide la RLS.
             if (window.EstiloTarjeta) EstiloTarjeta.montarProfe(document.getElementById("estilo-alumno-cuerpo"), {
-                sb, alumnoId: aperturasPendiente.id, nombre: aperturasPendiente.nombre,
+                sb, alumnoId: aperturasPendiente.id, nombre: aperturasPendiente.nombre, yo: profile.id,
+                puedeEscribir: !profile._persona && (profile.is_admin || profile.role === "profesor"),
             }).catch((e) => console.error(e));
         }
         document.getElementById("aperturas-alumno-report").addEventListener("toggle", montarAperturasAlumno);

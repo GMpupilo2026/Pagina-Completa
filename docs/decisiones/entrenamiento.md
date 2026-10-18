@@ -4095,6 +4095,36 @@ las SUYAS) y compara los puntos.
   cuando el juego queda abierto: 61 % de los puntos en 42 partidas, contra
   44 % en 41»). Se guarda en `contexto.rendimiento`, con la prueba.
 
+### La opinión del profe
+
+La prueba mide lo que el alumno contesta; su profe lo ve jugar. En Informes,
+debajo de cada eje, **«¿Coincide con lo que ves?»** con tres botones: el
+primer polo, «Las dos por igual» o el segundo.
+
+- **`public.estilo_opiniones`**: una fila por alumno, profe y eje (la última
+  opinión de cada uno; la pisa si cambia de idea). La escribe solo quien le
+  da clase (`interno.alumnos_de`) o quien administra, siempre a su nombre;
+  la leen el alumno, sus profes, quien lo supervisa y administración. La
+  hora la pone la base. Comprobado impersonando roles en SQL (transacción
+  deshecha): el profe la guarda y la cambia, y aunque mande otra hora queda
+  la de la base; a nombre de otro profe, rechazado; el alumno la ve y no la
+  escribe ni la cambia; un profe ajeno no la ve ni la escribe; anónimo, sin
+  permiso.
+- **Pesa lo que dos preguntas** (`PESO_PROFE`): lo ve jugar, pero no se sabe
+  cuántas partidas miró. «Las dos por igual» es una a cada lado: achica el
+  margen sin mover la tendencia. Una por profe.
+- **No decide si la prueba agrega preguntas**: eso es lo que contesta el
+  alumno. Se suma al resultado, y la frase lo dice («más lo que ve tu
+  profe»).
+- **El acta no cambia**: la recomendación guardada es la de ese día. Debajo,
+  Informes dice qué se le recomendaría hoy con lo que ven sus profes. La
+  próxima prueba del alumno ya la trae en su resultado y en su
+  recomendación.
+- Botones con `aria-pressed` y «✓» escrito en el elegido (el color nunca va
+  solo); al guardar, el foco vuelve al botón y un aviso dice «Guardado». «Ver
+  como» y quien supervisa no ven los botones; quién escribe, de todos modos,
+  lo decide la RLS.
+
 ### La medición: el modelo de dos parámetros, con lo seguro y lo rápido
 
 Por eje, la tendencia θ que mejor explica las elecciones con
@@ -4260,7 +4290,9 @@ estilo-pagina informes`:
   «Cómo juegas», el resultado, lo que se guarda (sin la hora), y con sus
   partidas de Lichess y un motor de mentira.
 - `informes`: el profe ve su estilo, lo que se le recomendó, las pruebas
-  anteriores y nada de otro alumno.
+  anteriores (una de la versión 1 con sus tres ejes) y nada de otro alumno;
+  marca «¿Coincide con lo que ves?» y su opinión se guarda, se ve marcada y
+  mueve el perfil.
 
 Rompiéndolo a propósito saltaron: el tope de las partidas en 10, quitar el
 ensanche de los controles, medir una apertura quitando una jugada propia,

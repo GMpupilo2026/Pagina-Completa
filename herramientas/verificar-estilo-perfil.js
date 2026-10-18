@@ -14,6 +14,10 @@
  *     suma como respuesta.
  *  3. LAS PARTIDAS. 200 momentos de las partidas no dan vuelta las 8
  *     respuestas de un eje: corrigen la prueba, no la reemplazan.
+ *  3c. LA OPINIÓN DEL PROFE. Pesa lo mismo que dos preguntas a su lado;
+ *     «las dos por igual» achica el margen sin mover la tendencia; una
+ *     opinión sobre un eje que esa versión no mide no cuenta; y no decide si
+ *     la prueba agrega preguntas (eso es lo que contesta el alumno).
  *  4. LA CALIBRACIÓN. Una posición que tira hacia un polo (`b`) le resta a
  *     quien la eligió en ese sentido.
  *  5. LA PRUEBA ADAPTATIVA. Un estilo claro termina en 34 posiciones (32 y los
@@ -153,6 +157,33 @@ console.log("-- 3b. La versión 1, con su regla");
   ok("y dice lo mismo que decía", pf.lista.every((e) => pf[e].etiqueta.tipo === "claro" && pf[e].n === 10));
   const hoy = P.medir(v1);
   ok("leída con la regla de hoy, el cuarto eje saldría sin definir (por eso se pasa la versión)", hoy.material && hoy.material.etiqueta.tipo === "sin definir");
+}
+
+console.log("-- 3c. La opinión del profe");
+{
+  const it = B.ITEMS.filter((i) => i.eje === "material");
+  const primero = (x) => ({ id: x.id, eleccion: x.a.polo === "material" ? "a" : "b", seguridad: 3, ms: 5000 });
+  const dos = P.medir([primero(it[0]), primero(it[1])]);
+  const conProfe = P.medir([], [], undefined, [{ eje: "material", opinion: 1 }]);
+  ok("una opinión pesa lo que dos preguntas a su lado", Math.abs(conProfe.material.theta - dos.material.theta) < 1e-9 && conProfe.material.nProfe === 1 && conProfe.material.n === 0,
+    conProfe.material.theta + " contra " + dos.material.theta);
+  const igual = P.medir([], [], undefined, [{ eje: "material", opinion: 0 }]);
+  const nada = P.medir([]);
+  ok("«las dos por igual» achica el margen sin mover la tendencia", Math.abs(igual.material.theta) < 1e-9 && igual.material.se < nada.material.se);
+  const v1 = P.medir([], [], 1, [{ eje: "material", opinion: 1 }]);
+  ok("en una prueba que no mide ese eje, no cuenta", !v1.material && v1.lista.length === 3);
+  ok("lo dice en la frase", /lo que ve tu profe/.test(P.frase("material", conProfe.material, true)) && /lo que ven sus profes/.test(P.frase("material", P.medir([], [], undefined, [{ eje: "material", opinion: 1 }, { eje: "material", opinion: 1 }]).material, false)));
+  // La prueba adaptativa: con o sin opiniones, las mismas preguntas.
+  const correr = (opiniones) => {
+    semilla = 4242;
+    const pr = P.Prueba({ azar, Chess, opiniones });
+    let x, n = 0;
+    while ((x = pr.siguiente()) && n < 100) { pr.responder(x, { eleccion: elegir(x, () => null), seguridad: 3, ms: 6000 }); n++; }
+    return { n, perfil: pr.perfil() };
+  };
+  const sinOp = correr([]);
+  const conOp = correr(["ataque", "estructura", "cambios", "material"].map((e) => ({ eje: e, opinion: 1 })));
+  ok("la opinión no decide si la prueba agrega preguntas, pero sí entra al resultado", sinOp.n === conOp.n && conOp.perfil.material.nProfe === 1 && conOp.perfil.material.p > sinOp.perfil.material.p, sinOp.n + " / " + conOp.n);
 }
 
 console.log("-- 4. La calibración");
