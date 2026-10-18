@@ -260,6 +260,34 @@
                         </table>
                     </div>
                 </div>
+                <section id="registro" class="hidden mt-6 border-t border-brand-200 dark:border-brand-700 pt-6" aria-labelledby="registro-titulo">
+                    <h3 id="registro-titulo" class="font-serif text-lg font-bold text-brand-800 dark:text-white">Cargar categorías, cursos y correos desde un Excel <span class="text-sm font-normal text-brand-500 dark:text-brand-300">(solo administración)</span></h3>
+                    <p class="text-sm text-brand-500 dark:text-brand-300 mt-1 max-w-3xl">Una fila por cosa que registrar, con las columnas que tenga (en cualquier orden): <strong>ID FIDE</strong> o <strong>Nombre</strong>; <strong>Qué</strong> (categoría, curso básico, intermedio, de pareo o de actualización), <strong>Categoría</strong> (A, B o C), <strong>Fecha</strong>, <strong>Horas</strong>, <strong>Nota</strong> y <strong>Detalle</strong>; y, para los avisos por correo, <strong>Correo</strong>, <strong>Autorizó</strong> (cómo autorizó recibirlos) y <strong>Avisos</strong> (sí o no). Antes de registrar, la página muestra fila por fila qué entra y qué no, y por qué.</p>
+                    <div class="flex flex-wrap gap-3 items-end mt-2">
+                        <div>
+                            <label for="registro-archivo" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">El archivo (Excel o CSV)</label>
+                            <input id="registro-archivo" type="file" accept=".xlsx,.csv" class="text-sm">
+                        </div>
+                        <button type="button" id="registro-plantilla" class="text-sm font-semibold px-3 py-2 rounded-lg bg-brand-100 dark:bg-brand-800 hover:bg-brand-200 dark:hover:bg-brand-700">Bajar la plantilla</button>
+                        <button type="button" id="registro-guardar" class="hidden text-sm font-semibold px-3 py-2 rounded-lg bg-brand-100 dark:bg-brand-800 hover:bg-brand-200 dark:hover:bg-brand-700">Registrar</button>
+                    </div>
+                    <p id="registro-estado" class="text-sm text-brand-600 dark:text-brand-200 mt-2" aria-live="polite"></p>
+                    <div id="registro-vista" class="hidden overflow-x-auto mt-2 bg-white dark:bg-brand-900 rounded-2xl shadow-md">
+                        <table id="tabla-registro" class="w-full text-sm" aria-label="Lo que trae el archivo">
+                            <thead class="text-left text-xs uppercase tracking-wide text-brand-500 dark:text-brand-300"><tr><th scope="col" class="px-3 py-2">Fila</th><th scope="col" class="px-3 py-2">Árbitro</th><th scope="col" class="px-3 py-2">Qué</th><th scope="col" class="px-3 py-2">Queda</th></tr></thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                    <h3 id="avisos-titulo" class="font-serif text-lg font-bold text-brand-800 dark:text-white mt-6">Avisos por correo <span class="text-sm font-normal text-brand-500 dark:text-brand-300">(solo administración)</span></h3>
+                    <p class="text-sm text-brand-500 dark:text-brand-300 mt-1 max-w-3xl">El día 1 de cada mes, a las 8 a. m., a cada árbitro con correo registrado y los avisos encendidos le llega un correo con lo que se le vence en los próximos 90 días: una norma de FIDE que deja de contar para su siguiente título, el seminario que deja de valer o su actividad en la Federación (art. 19). Cada cosa se avisa una sola vez. Esta es la lista de lo que se vence en esos 90 días y qué pasa con cada una.</p>
+                    <p id="avisos-cuenta" class="text-sm text-brand-600 dark:text-brand-200 mt-2" aria-live="polite"></p>
+                    <div class="overflow-x-auto mt-2 bg-white dark:bg-brand-900 rounded-2xl shadow-md">
+                        <table id="tabla-avisos" class="w-full text-sm" aria-labelledby="avisos-titulo">
+                            <thead class="text-left text-xs uppercase tracking-wide text-brand-500 dark:text-brand-300"><tr><th scope="col" class="px-3 py-2">Vence</th><th scope="col" class="px-3 py-2">Árbitro</th><th scope="col" class="px-3 py-2">Qué</th><th scope="col" class="px-3 py-2">El correo</th></tr></thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </section>
                 <details class="mt-6">
                     <summary id="por-identificar-titulo" class="font-serif text-lg font-bold text-brand-800 dark:text-white cursor-pointer">Por identificar</summary>
                     <p class="text-sm text-brand-500 dark:text-brand-300 mt-1 max-w-3xl">Para corregir la lista: quienes no figuran en la lista de árbitros de FIDE, y las celdas de árbitro de los torneos de Costa Rica en chess-results en que no se reconoce a nadie (un nombre escrito de otra forma, un ID equivocado o alguien que falta). Una celda donde se reconoce a alguien no sale aunque traiga a otra persona más.</p>
@@ -325,6 +353,21 @@
                         <button type="submit" id="formacion-guardar" class="text-sm font-semibold px-3 py-2 rounded-lg bg-brand-100 dark:bg-brand-800 hover:bg-brand-200 dark:hover:bg-brand-700">Registrar</button>
                     </form>
                     <p id="formacion-estado" class="text-sm text-brand-500 dark:text-brand-300 mt-2" aria-live="polite"></p>
+                    <form id="contacto-form" novalidate class="hidden mt-4 flex flex-wrap gap-3 items-end" aria-labelledby="contacto-titulo">
+                        <h4 id="contacto-titulo" class="w-full text-sm font-semibold">Correo para los avisos de lo que se le vence (solo administración)</h4>
+                        <div class="min-w-[16rem] flex-1">
+                            <label for="contacto-correo" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Correo</label>
+                            <input id="contacto-correo" type="email" maxlength="200" required class="w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none">
+                        </div>
+                        <div class="min-w-[16rem] flex-1">
+                            <label for="contacto-autorizo" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Cómo autorizó recibirlos</label>
+                            <input id="contacto-autorizo" type="text" maxlength="200" required placeholder="Ej.: formulario del curso de octubre 2026" class="w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none">
+                        </div>
+                        <label class="flex items-center gap-2 text-sm pb-2"><input id="contacto-avisos" type="checkbox" checked> Mandarle los avisos</label>
+                        <button type="submit" id="contacto-guardar" class="text-sm font-semibold px-3 py-2 rounded-lg bg-brand-100 dark:bg-brand-800 hover:bg-brand-200 dark:hover:bg-brand-700">Guardar</button>
+                        <button type="button" id="contacto-quitar" class="hidden text-sm font-semibold px-3 py-2 rounded-lg bg-brand-100 dark:bg-brand-800 hover:bg-brand-200 dark:hover:bg-brand-700">Quitar el correo</button>
+                    </form>
+                    <p id="contacto-estado" class="text-sm text-brand-500 dark:text-brand-300 mt-2" aria-live="polite"></p>
                 </div>
                 <section id="revision" class="mt-6" aria-labelledby="revision-titulo">
                     <h3 id="revision-titulo" class="font-serif text-lg font-bold text-brand-800 dark:text-white">Revisar normas antes de mandarlas</h3>
@@ -477,6 +520,7 @@
     <script src="js/legal-version.js"></script>
     <script src="js/main.js"></script>
     <script src="js/tabla-excel.js"></script>
+    <script src="js/reporte-excel.js"></script>
     <script src="js/reporte-pdf.js"></script>
     <script src="js/ritmo-control.js"></script>
     <script src="js/arbitros-cr.js"></script>
