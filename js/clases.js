@@ -1504,6 +1504,21 @@
                 que.textContent = destino.que + " →";
                 a.append(quien, que);
                 li.appendChild(a);
+                /* Y su panel, como lo ve él: para guiarlo sin pedirle que
+                   comparta la pantalla (clases.html?ver_como=; el panel
+                   vuelve a preguntar si es suyo). Ver «El profe ve el panel de
+                   su alumno» en docs/decisiones/permisos-y-roles.md. */
+                if (p.role === "alumno" && (profile.role === "profesor" || profile.is_admin) && !profile._persona) {
+                    li.className = "flex items-stretch gap-2";
+                    a.classList.add("flex-1", "min-w-0");
+                    const panelDe = document.createElement("a");
+                    panelDe.href = "clases.html?ver_como=" + encodeURIComponent(p.id);
+                    panelDe.className = "shrink-0 flex items-center rounded-xl bg-white dark:bg-brand-900 shadow-md px-3 text-xs font-semibold text-accent-700 dark:text-accent-400 hover:shadow-lg transition-shadow focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400";
+                    panelDe.innerHTML = '<span aria-hidden="true">👁&nbsp;</span>Su panel<span class="sr-only"></span>';
+                    // El nombre, solo para el lector de pantalla: «Su panel de Ana Rojas».
+                    panelDe.querySelector(".sr-only").textContent = " de " + (p.full_name || p.email || "este alumno");
+                    li.appendChild(panelDe);
+                }
                 lista.appendChild(li);
                 pintadas += 1;
             });
@@ -3957,7 +3972,16 @@
                persona guardada ya no está en ella —le quitaron esa
                supervisión—, se vuelve a la vista propia en vez de pintar un
                panel que la base se niega a llenar. */
-            if (window.ModoVista && (profileData.is_admin || profileData.es_supervisor)) {
+            /* Quien da clase, además, el panel de UNO de sus alumnos, para
+               verlo como lo ve él y guiarlo: entra con «👁 Ver su panel» de
+               Informes o del buscador (clases.html?ver_como=<id>). A él no se
+               le pone el selector arriba: con treinta alumnos sería una lista
+               larga en el encabezado, y el buscador ya los encuentra por
+               nombre. Ver «El profe ve el panel de su alumno» en
+               docs/decisiones/permisos-y-roles.md. */
+            const pideVerComo = new URLSearchParams(location.search).get("ver_como");
+            if (window.ModoVista && (profileData.is_admin || profileData.es_supervisor
+                    || (profileData.role === "profesor" && (pideVerComo || ModoVista.personaDe(profileData))))) {
                 const wrap = document.getElementById("modo-vista-wrap");
                 if (profileData.is_admin) {
                     const lbl = document.createElement("label");
@@ -3966,22 +3990,24 @@
                     lbl.textContent = "Ver como:";
                     wrap.append(lbl, ModoVista.selectorModos("modo-vista-panel"));
                 }
-                const selPersona = await ModoVista.selectorPersonas(sb, profileData.id, "ver-como-persona");
+                const lista = await ModoVista.listaParaVerComo(sb, profileData);
                 /* clases.html?ver_como=<id>: así entra «Ver su panel» de
-                   supervision.html. Solo si está en la lista que dio la base. */
-                const pedida = new URLSearchParams(location.search).get("ver_como");
-                const deLista = pedida && selPersona && selPersona._personas.find((x) => x.id === pedida);
+                   supervision.html, de Informes y del buscador. Solo si está
+                   en la lista que dio la base. */
+                const deLista = pideVerComo && lista && lista.find((x) => x.id === pideVerComo);
                 if (deLista) {
                     ModoVista.fijarPersona(deLista, profileData.id);
                     location.replace("clases.html");
                     return;
                 }
                 const guardada = ModoVista.personaDe(profileData);
-                if (guardada && !(selPersona && selPersona._personas.some((x) => x.id === guardada.id))) {
+                if (guardada && !(lista && lista.some((x) => x.id === guardada.id))) {
                     ModoVista.fijarPersona(null);
                     location.reload();
                     return;
                 }
+                const selPersona = (profileData.is_admin || profileData.es_supervisor)
+                    ? ModoVista.selectorDeLista(lista, profileData.id, "ver-como-persona") : null;
                 if (selPersona) {
                     const lblP = document.createElement("label");
                     lblP.setAttribute("for", "ver-como-persona");

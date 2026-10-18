@@ -40,7 +40,14 @@
  * supervisa: panel_profesor_de(), funciones_coordinador_de(),
  * panel_supervisor_de() y alumnos_de_para_ver_como(). Los de un estudiante
  * se piden con su id a las mismas funciones que usa su panel, que la RLS le
- * deja leer a quien administra. La persona se guarda con el id de quien la
+ * deja leer a quien administra y a su profe.
+ *
+ * Quien da clase mira el panel de SUS alumnos («👁 Ver su panel» en Informes
+ * y en el buscador del panel): la lista sale de
+ * alumnos_del_profesor_con_nombre(), que la RLS acota a los suyos. Ver «El
+ * profe ve el panel de su alumno» en docs/decisiones/permisos-y-roles.md.
+ *
+ * La persona se guarda con el id de quien la
  * eligió (`de`), así una computadora compartida no le deja a la siguiente
  * cuenta mirando a alguien.
  */
@@ -101,15 +108,18 @@
   }
 
   /* La persona que ESTA cuenta está mirando, o null. Solo cuenta si la eligió
-     ella y si administra o supervisa: a cualquier otra cuenta no le cambia
-     nada, aunque quedara guardada en el aparato. Un supervisor o un
-     estudiante, solo si administra (la base tampoco se los ofrece a nadie
-     más). */
+     ella y si puede mirarla: un supervisor, solo quien administra; un
+     estudiante, quien administra o quien da clase (que solo tiene en su lista
+     a los suyos); del equipo docente, quien administra o supervisa. A
+     cualquier otra cuenta no le cambia nada, aunque quedara guardada en el
+     aparato. Que la persona siga estando en su lista lo comprueba el panel
+     con listaParaVerComo(). */
   function personaDe(perfil) {
     var p = persona();
     if (!p || !perfil || p.de !== perfil.id) return null;
     var t = tipoDe(p);
-    if (t === "supervisor" || t === "alumno") return perfil.is_admin ? p : null;
+    if (t === "supervisor") return perfil.is_admin ? p : null;
+    if (t === "alumno") return perfil.is_admin || perfil.role === "profesor" ? p : null;
     return perfil.is_admin || perfil.es_supervisor ? p : null;
   }
 
@@ -157,14 +167,35 @@
     return sel;
   }
 
-  /* El selector de personas: «Mi vista» y, agrupados, las personas que
-     devuelve personas_para_ver_como() (a quien administra, también los
-     supervisores y los estudiantes). Sin nadie, no se pinta (devuelve null):
-     un selector con una sola opción no ofrece nada. */
-  async function selectorPersonas(sb, miId, id) {
-    var r = await sb.rpc("personas_para_ver_como");
-    var lista = (r && r.data) || [];
-    if (r.error || !lista.length) return null;
+  /* A quién puede mirar esta cuenta: lo que devuelve personas_para_ver_como()
+     (a quien administra, todos; a quien supervisa, sus profesores y
+     coordinadores) y, a quien da clase, sus propios alumnos
+     (alumnos_del_profesor_con_nombre(), que la RLS acota a los suyos). Si
+     una de las dos falla, vale la otra; null si no hay ninguna. */
+  async function listaParaVerComo(sb, perfil) {
+    var lista = [], alguna = false;
+    if (perfil.is_admin || perfil.es_supervisor) {
+      var r = await sb.rpc("personas_para_ver_como");
+      if (r && !r.error) { alguna = true; lista = lista.concat(r.data || []); }
+    }
+    if (perfil.role === "profesor" && !perfil.is_admin) {
+      var a = await sb.rpc("alumnos_del_profesor_con_nombre", { p_profesor: perfil.id });
+      if (a && !a.error) {
+        alguna = true;
+        (a.data || []).forEach(function (x) {
+          if (lista.some(function (y) { return y.id === x.id; })) return;
+          lista.push({ id: x.id, nombre: x.full_name || x.email || "Sin nombre", es_coordinador: false, tipo: "alumno" });
+        });
+      }
+    }
+    return alguna ? lista : null;
+  }
+
+  /* El selector de personas: «Mi vista» y, agrupados, las personas de la
+     lista. Sin nadie, no se pinta (devuelve null): un selector con una sola
+     opción no ofrece nada. */
+  function selectorDeLista(lista, miId, id) {
+    if (!lista || !lista.length) return null;
     var sel = document.createElement("select");
     if (id) sel.id = id;
     sel.className = "px-2 py-1 rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-800 text-sm text-brand-800 dark:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400";
@@ -198,8 +229,11 @@
 
   var ETIQUETA_TIPO = { profesor: "profesor", coordinador: "coordinación", supervisor: "supervisión", alumno: "estudiante" };
 
-  /* La franja de «Ver como» una persona: de quién es el panel y qué no cambia. */
-  function montarBarraPersona(p) {
+  /* La franja de «Ver como» una persona: de quién es el panel y qué no cambia.
+     Mirando a un estudiante lleva también lo que se hace para guiarlo: su
+     informe y, a quien da clase, ponerle una tarea (las dos páginas lo abren
+     ya elegido con ?alumno=). */
+  function montarBarraPersona(p, yo) {
     if (document.getElementById("modo-vista-barra")) return;
     var barra = document.createElement("div");
     barra.id = "modo-vista-barra";
@@ -211,15 +245,40 @@
     var t = tipoDe(p);
     texto.textContent = "👁 Estás viendo el panel de " + (p.nombre || "otra persona")
       + " (" + ETIQUETA_TIPO[t] + "). "
-      + (t === "alumno" ? "Sus tareas, su progreso y su informe son los suyos"
-                        : "Sus números y sus alumnos en Informes son los suyos")
+      + (t !== "alumno" ? "Sus números y sus alumnos en Informes son los suyos"
+         /* A quien da clase la base le deja leer las tareas y los exámenes
+            que puso él, no los de otro profe del mismo alumno: se dice. */
+         : yo && yo.role === "profesor" && !yo.is_admin
+         ? "Su progreso y su informe son los suyos; de sus tareas y exámenes ves los que le pusiste tú"
+         : "Sus tareas, su progreso y su informe son los suyos")
       + "; lo que abras o guardes se hace con tu cuenta.";
     var volver = document.createElement("button");
     volver.type = "button";
     volver.className = "font-semibold underline focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-900 rounded";
     volver.textContent = "Volver a mi vista";
     volver.addEventListener("click", function () { fijarPersona(null); location.reload(); });
-    barra.append(texto, volver);
+    barra.append(texto);
+    if (t === "alumno") {
+      var id = encodeURIComponent(p.id);
+      [["📊", "Su informe", "informes.html?alumno=" + id, true],
+       ["📋", "Ponerle una tarea", "tareas.html?alumno=" + id, yo && yo.role === "profesor" && !yo.is_admin]]
+        .forEach(function (x) {
+          if (!x[3]) return;
+          var a = document.createElement("a");
+          a.href = x[2];
+          a.className = "font-semibold focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-900 rounded";
+          var ic = document.createElement("span");
+          ic.setAttribute("aria-hidden", "true");
+          ic.textContent = x[0] + " ";
+          var tx = document.createElement("span");
+          tx.className = "underline";
+          tx.textContent = x[1];
+          a.append(ic, tx);
+          a.addEventListener("click", function () { fijarPersona(null); });
+          barra.appendChild(a);
+        });
+    }
+    barra.appendChild(volver);
     var main = document.querySelector("main") || document.body;
     main.parentNode.insertBefore(barra, main);
   }
@@ -263,11 +322,11 @@
       var uid = s && s.data && s.data.session ? s.data.session.user.id : null;
       if (!uid) return;
       var r = window.MiPerfil ? await window.MiPerfil.obtener(uid)
-        : await sb.from("profiles").select("id, is_admin, es_supervisor").eq("id", uid).maybeSingle();
+        : await sb.from("profiles").select("id, role, is_admin, es_supervisor").eq("id", uid).maybeSingle();
       var yo = r && r.data;
       if (!yo) return;
       var p = personaDe(yo);
-      if (p) montarBarraPersona(p);
+      if (p) montarBarraPersona(p, yo);
       else if (yo.is_admin && actual() !== "admin") montarBarra();
     } catch (e) { /* sin barra: la página sigue igual */ }
   }
@@ -282,7 +341,8 @@
     tipoDe: tipoDe,
     fijarPersona: fijarPersona,
     selectorModos: selectorModos,
-    selectorPersonas: selectorPersonas,
+    listaParaVerComo: listaParaVerComo,
+    selectorDeLista: selectorDeLista,
     montarBarra: montarBarra,
   };
 

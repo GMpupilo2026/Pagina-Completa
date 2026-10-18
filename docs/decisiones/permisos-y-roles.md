@@ -880,6 +880,63 @@ progreso y lo último con SU id y nada de la clase ni de «Hoy te toca», y que 
 quien solo supervisa un estudiante guardado no le cambie nada. Está probado que
 falla de verdad: pidiendo con el id de quien mira, salta.
 
+### El profe ve el panel de su alumno
+
+El pedido: «hacer compatibles los perfiles de alumno y profesor, que el
+profesor siempre pueda encontrar fácil lo del estudiante y guiarlo». El profe
+veía de su alumno el informe (números, áreas, tareas), pero no lo que el alumno
+ve al entrar: qué le dice su panel, qué tarea le aparece primero, por dónde
+le dice que siga. Para guiarlo («entra a la tarea de arriba», «toca Seguir el
+curso») tenía que pedirle que compartiera la pantalla. Quien administra ya
+podía mirar el panel de un estudiante con «Panel de:»; ahora también el profe,
+**y solo el de sus alumnos**.
+
+- **Por dónde se entra**: «👁 Ver su panel» en «Con este alumno» de Informes,
+  y «👁 Su panel» al lado de su nombre en «¿Qué buscas?» del panel (escribir
+  el nombre ya lo encontraba; llevaba solo al informe). Las dos son
+  `clases.html?ver_como=<id>`. **No se le pone el selector «Panel de:»
+  arriba**: con treinta alumnos sería una lista larga en el encabezado que se
+  acababa de limpiar (ver «El panel del profe, con pocas cosas a la vista»), y
+  el buscador ya los encuentra por nombre.
+- **La lista sale de la base**: `ModoVista.listaParaVerComo()` le pide a quien
+  da clase `alumnos_del_profesor_con_nombre(p_profesor)` (SECURITY INVOKER,
+  acotada por la RLS de `profiles` a sus alumnos) y la suma a lo que ya daba
+  `personas_para_ver_como()` a quien supervisa o administra. `?ver_como=` solo
+  fija a alguien de esa lista, y una persona guardada que ya no está (le
+  quitaron el alumno) vuelve sola a su vista: lo mismo que ya hacía con quien
+  supervisa. `ModoVista.personaDe()` acepta un estudiante si quien mira
+  administra o da clase; un supervisor, solo quien administra.
+- **Todo lo de «Panel de:» un estudiante sigue valiendo**: no se entra a su
+  cuenta, `profile.id` sigue siendo el de quien mira, sus datos se piden con su
+  id a las mismas funciones de su panel (`tareas_con_avance`,
+  `mi_entreno_resumen`, su racha, lo último que hizo…), todas `SECURITY
+  INVOKER` o con su chequeo: lo que el profe lee lo decide la RLS que ya
+  tenía sobre sus alumnos (`interno.alumnos_de`). Fuera quedan la clase en
+  vivo, «Tus clases» y «Hoy te toca», que dirían lo de quien mira.
+- **La franja dice lo que no ve**: `tareas` y `examenes` le dejan leer a un
+  profe lo que él puso, no lo que le puso OTRO profe del mismo alumno. Por eso
+  a quien da clase la franja le dice «Su progreso y su informe son los suyos;
+  de sus tareas y exámenes ves los que le pusiste tú». Abrir esa lectura
+  (`alumno_id in (select interno.alumnos_de(...)) and disponible_desde <=
+  now()` en `tareas_select` y `examenes_select`; `examen_items` nunca, que
+  guarda la clave de las respuestas) es una migración aparte: se intentó
+  aplicar con este cambio y no se aprobó. Se comprobó antes que no cambiaría
+  ningún número del profe: `panel_profesor()`, `tareas.html`, `examenes.html`
+  y el calendario filtran por `p_profesor`, y las demás funciones que leen
+  esas tablas son `SECURITY DEFINER`.
+- **Para guiarlo, desde la misma franja**: «📊 Su informe» (a quien administra
+  también) y «📋 Ponerle una tarea» (solo a quien da clase), con su
+  `?alumno=`. Al tocarlos se vuelve a la vista propia, porque la tarea se pone
+  como profe, no desde el panel del alumno.
+- Lo prueban `pruebaProfeMiraSuAlumno` y `pruebaAdminBarraEstudiante` en
+  `verificar-ver-como.js` (el buscador con «Su panel» y su nombre para el
+  lector, la lista pedida con SU id y nunca `personas_para_ver_como`, sus
+  datos con el id del alumno, la franja y sus enlaces, un alumno ajeno que no
+  se fija y uno que ya no es suyo que vuelve a la vista propia),
+  `pruebaPersonas` en `verificar-panel.js` y `pruebaConEsteAlumno` en
+  `verificar-informes.js`. Negándole el estudiante a quien da clase en
+  `personaDe()`, o sin volver a mirar la lista, `verificar-ver-como.js` falla.
+
 ### Academias: la unidad del negocio
 
 El negocio se reparte en **academias**. Cada una tiene **un solo supervisor**

@@ -1083,7 +1083,7 @@ const GENTE = [
   { id: "a-maria", full_name: "María Rojas", email: "maria@x.cr", role: "alumno", grupo: "7B", is_admin: false, total: 9 },
   { id: "p-mario", full_name: "Mario Soto", email: "mario@x.cr", role: "profesor", grupo: null, is_admin: false, total: 9 },
 ];
-const PERSONAS = () => [...document.querySelectorAll("#buscar-personas-lista a")]
+const PERSONAS = () => [...document.querySelectorAll("#buscar-personas-lista li > a:first-child")]
   .filter((a) => a.checkVisibility()).map((a) => [a.querySelector("span span").textContent, a.getAttribute("href")]);
 
 async function pruebaPersonas(browser) {
@@ -1095,6 +1095,11 @@ async function pruebaPersonas(browser) {
   igual("a quien administra le aparecen las dos, cada una a su lugar", await r.page.evaluate(PERSONAS),
     [["María Rojas", "informes.html?alumno=a-maria"], ["Mario Soto", "coordinacion.html?buscar=Mario%20Soto"]]);
   igual("se ven de verdad, debajo del buscador", await r.page.evaluate(() => document.getElementById("buscar-personas").checkVisibility()), true);
+  /* El alumno, además, con su panel al lado (ver «El profe ve el panel de su
+     alumno»); quien da clase no. */
+  igual("el alumno trae también «Su panel»; el profesor no", await r.page.evaluate(() =>
+    [...document.querySelectorAll("#buscar-personas-lista li")].map((li) => [...li.querySelectorAll("a")].slice(1).map((a) => a.getAttribute("href")))),
+    [["clases.html?ver_como=a-maria"], []]);
   igual("lo que pide es lo escrito, de a pocas", await r.page.evaluate(() =>
     window.__consultas.filter((c) => c.tabla === "mi_gente").map((c) => c.args).pop()),
     { p_busqueda: "mari", p_rol: null, p_limite: 6, p_desde: 0 });

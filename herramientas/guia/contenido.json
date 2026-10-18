@@ -736,7 +736,8 @@
           "donde": "informes.html?alumno=…",
           "intro": "Eligiendo un alumno, Informes se convierte en su ficha completa.",
           "pasos": [
-            "Arriba, «Con este alumno»: ponerle una tarea o un examen (con él ya elegido), y sus atajos a la bitácora, a los informes a la casa, a su cuaderno y a su libreta de torneos.",
+            "Arriba, «Con este alumno»: «👁 Ver su panel» (su panel tal como lo ve él, para guiarlo), ponerle una tarea o un examen (con él ya elegido), y sus atajos a la bitácora, a los informes a la casa, a su cuaderno y a su libreta de torneos.",
+            "Su panel también se abre desde «¿Qué buscas?» de tu panel: escribe su nombre y toca «Su panel». Arriba, una franja dice de quién es, con su informe, ponerle una tarea y «Volver a mi vista».",
             "«📈 Cómo viene» (semana a semana) y «🌱 Antes y ahora» (si sabe más: su fuerza de un diagnóstico a otro y lo que antes fallaba y ya le sale).",
             "«📋 Tareas y exámenes», «📝 Bitácora», «🏆 Trofeos e insignias» y «🪞 Errores de sus partidas».",
             "Su diagnóstico y plan de entrenamiento, «♞ Sus aperturas» (lo que juega en Lichess y Chess.com) y «🔑 Acceso a la cuenta»."

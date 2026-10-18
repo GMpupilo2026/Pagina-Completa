@@ -954,7 +954,13 @@
             if (!studentId) return;
             const id = encodeURIComponent(studentId);
             const daClase = profile.role === "profesor" && !profile._persona;
+            /* Ver su panel como lo ve él (clases.html?ver_como=): quien da
+               clase, sus alumnos; quien administra, cualquiera. El panel
+               vuelve a preguntar si está en su lista. Ver «El profe ve el
+               panel de su alumno» en docs/decisiones/permisos-y-roles.md. */
+            const veSuPanel = (profile.role === "profesor" || profile.is_admin) && !profile._persona;
             const acciones = [
+                veSuPanel && { emoji: "👁", texto: "Ver su panel", href: "clases.html?ver_como=" + id },
                 daClase && { emoji: "📋", texto: "Ponerle una tarea", href: "tareas.html?alumno=" + id },
                 daClase && { emoji: "📝", texto: "Ponerle un examen", href: "examenes.html?alumno=" + id },
                 { emoji: "✍️", texto: "Su bitácora", seccion: "notas-report" },
