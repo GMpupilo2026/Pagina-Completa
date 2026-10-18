@@ -3514,8 +3514,29 @@ se evaluó con ningún Elo, «No (sin Elo)».
   - «Elo nacional, Elo internacional»: 317;
   - solo «Elo internacional»: 176.
 - **La regla.** Solo «Elo nacional» y que no sea rápido ni blitz: los 25 rápidos
-  o blitz marcados así están mal marcados (el nacional es solo del clásico), y
-  los que no escriben el ritmo cuentan.
+  o blitz marcados así están mal marcados (el nacional es solo del clásico).
+- **El ritmo de los que no lo escriben** (las 372 fichas viejas) sale del texto
+  de su control de tiempo, que sí está en `arbitros_cr_cr.control`
+  (`js/ritmo-control.js`). Al principio contaban todas, y entre ellas había 59
+  blitz y 17 rápidos («3 min + 2 seg», «BLITZ Equipo Infantil…»). La cuenta es
+  la de FIDE: los minutos de cada jugador más 60 veces el incremento; 60 o más
+  es clásico, más de 10 y menos de 60 rápido, 10 o menos blitz. El texto viene
+  escrito de mil maneras («30 min + 30 s from move 1», «90min+30sec/mov»,
+  «1:30 +30 sec», «2 horas para toda la partida», «cuatro minutos por
+  jugador», «90+30 min», «40 min + 30 seg (reloj mecánico 1h + 10 min)»), y
+  cuando no trae un tiempo («Pendiente», «.») mira el nombre («Blitz»,
+  «Rápido»). Lo que dice la ficha manda: el texto solo se lee si la ficha no
+  dice el ritmo. Queda uno sin saber («Pendiente», una eliminatoria de los JDN),
+  que cuenta. Con esto el filtro baja de 525 torneos a 449.
+  - Se probó contra los 1731 torneos que sí dicen el ritmo: coincide en 1552. Casi
+    todo lo demás es chess-results contra FIDE: «15 + 30» es rápido para FIDE
+    (15 + 30 = 45 minutos) y muchas fichas lo marcan clásico; «10 min» es blitz
+    para FIDE (10 o menos) y las fichas dicen rápido. Ninguno de esos llega al
+    filtro: si la ficha dice el ritmo, se usa ese.
+- **Cuántos tiene cada árbitro.** La lista lleva la columna «Elo nacional» (con
+  los filtros de años, tipo y lugar, como las demás; un festival cuenta si
+  alguno de sus torneos fue así) y la ficha y su PDF lo dicen en el resumen
+  («…, 12 de ellos con solo Elo nacional»).
 - **Dónde va.** `arbitros_cr_cr_elo` (clave, calculo, ritmo, leido; migraciones
   `20261017224002` y `20261017224637`), aparte de `arbitros_cr_cr`, porque la
   carga completa de esa tabla la borra y la vuelve a llenar. Solo la lee quien
@@ -3527,10 +3548,35 @@ se evaluó con ningún Elo, «No (sin Elo)».
   tiene «Tipo de elo» por torneo, pero solo de los torneos publicados ahí (unos
   550, de los últimos años) y el dato viene escondido en el JavaScript de la
   página. chess-results cubre todos los años.
-- `verificar-arbitros-cr.js`: el del club (solo nacional, sin el ritmo escrito)
-  entra; el Sub-16 (nacional, pero rápido), el que no se leyó y el de Panamá
-  no. Rompí a propósito la regla del ritmo (quitándola y exigiendo «clásico»)
-  y salta.
+- `verificar-arbitros-cr.js`: el del club (solo nacional, sin el ritmo escrito y
+  con un control de 60 minutos) entra; el Sub-16 (nacional, sin el ritmo escrito
+  y con 15 min + 10 seg, rápido), el que no se leyó y el de Panamá no. La
+  columna «Elo nacional» de cada uno, y veinte controles de verdad con el ritmo
+  que les toca. Rompí a propósito la regla del ritmo (quitándola, exigiendo
+  «clásico», sin leer el control), la columna y el lector de «1:30», y salta.
+
+## Por vencer: lo que deja de servir para el título
+
+Las normas de un árbitro cuentan seis años desde que empezó el torneo (B.06.1
+5.3.1) y el seminario vale cuatro (5.3.2). La ficha ya decía hasta cuándo
+cuenta cada norma, pero había que abrir la ficha de cada uno para verlo. La
+sección «Por vencer» de la lista junta, de todos los que se ven con los
+filtros, lo que alguien junta para su siguiente título (AF si no lo tiene, AI
+si es FA) y deja de servir en los próximos doce meses, lo que vence antes
+primero:
+
+- una norma de las que cuentan hoy (las mismas de «Hoy para AF/AI»), con cuántas
+  le quedan si esa se pierde; si con ella le alcanzaría o le falta una, lo dice:
+  la solicitud tiene que llegar antes;
+- el seminario vigente, solo si ya junta alguna norma (sin normas, el seminario
+  no apura nada); sin seminario no puede mandar la solicitud. Cuando el informe
+  de la Comisión da solo el mes, vale hasta que se termina ese mes.
+
+Un aviso por correo no se hizo: la herramienta no guarda el correo de los
+árbitros (solo el de quien tiene la licencia) y la sección se ve en la misma
+página que ya se usa. `verificar-arbitros-cr.js` la mira hoy (vacía: la norma
+de prueba cuenta hasta 2029) y con el reloj en julio de 2028 (la norma y el
+seminario de Luis, en orden).
 
 ## La categoría nacional: la lista de la Federación
 
