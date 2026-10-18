@@ -23,6 +23,9 @@
  *  5. LA PRUEBA ADAPTATIVA. Un estilo claro termina en 34 posiciones (32 y los
  *     dos controles); al azar puede seguir, pero nunca pasa de 58 ni repite
  *     una posición; y nunca pasa de las 60 respuestas que acepta la base.
+ *  5c. LA VERSIÓN CORTA (para quien empieza). Solo sus posiciones simples,
+ *     26 con un estilo claro, nunca más de 34, se guarda con su versión, y lo
+ *     que se recomienda es de nivel 1.
  *  5b. LA VERSIÓN 1. Una prueba vieja se lee con sus tres ejes (no con un
  *     cuarto «sin definir») y con el tope de partidas de entonces (5).
  *  6. EL ESPEJO. Cada una de las 60 posiciones dada vuelta es legal, sus dos
@@ -266,6 +269,38 @@ console.log("-- 5. La prueba adaptativa");
   ok("pero nunca pasa de 58", max <= 58, "máximo " + max);
   ok("ni repite una posición", !repite);
   ok("ni pasa de las 60 respuestas que acepta la base", max <= 60);
+}
+
+console.log("-- 5c. La versión corta, para quien empieza");
+{
+  const V = B.VERSION_INICIAL, F = B.FORMAS[V];
+  const correr = (quiere) => {
+    const pr = P.Prueba({ azar, Chess, version: V });
+    const ids = [];
+    let it, n = 0;
+    while ((it = pr.siguiente()) && n < 100) {
+      ids.push(it.control || it.id);
+      pr.responder(it, { eleccion: elegir(it, quiere), seguridad: 3, ms: 6000 });
+      n++;
+    }
+    return { n, ids, pr };
+  };
+  const claro = correr(() => 1);
+  ok("un estilo claro termina en 26 posiciones (6 por eje y los dos controles)", claro.n === 26, "vio " + claro.n);
+  ok("solo con sus posiciones simples", claro.ids.every((id) => F.posiciones.includes(id)));
+  ok("y la prueba sabe su versión (la que se guarda)", claro.pr.version === V);
+  let max = 0;
+  for (let k = 0; k < 30; k++) max = Math.max(max, correr(() => null).n);
+  ok("al azar nunca pasa de 34", max <= 34, "máximo " + max);
+  const pf = claro.pr.perfil();
+  ok("se lee con sus cuatro ejes", pf.lista.length === 4 && pf.lista.every((e) => pf[e].etiqueta.tipo === "claro"));
+  const rec = A.recomendar(pf, { ritmo: "clasicas", estudio: "mucho", elo: 1900, inicial: true, actual: {} });
+  const nivelDe = (id) => (LINEAS.find((l) => l.id === id) || {}).nivel;
+  const hayUno = (g) => LINEAS.some((l) => l.tipo === "apertura" && l.nivel === 1 && A.medidaDe(l.id) && A.medidaDe(l.id).n
+    && l.color === A.GRUPOS[g].color && (!A.GRUPOS[g].contra || l.jugadas[0] === A.GRUPOS[g].contra));
+  ok("lo que recomienda es de nivel 1, aunque diga Elo 1900 y mucho estudio", A.nivelQueConviene({ elo: 1900, estudio: "mucho", inicial: true }) === 1
+    && Object.keys(A.GRUPOS).every((g) => !hayUno(g) || nivelDe(rec[g].principal.id) === 1),
+    Object.keys(A.GRUPOS).map((g) => rec[g].principal.id + " (" + nivelDe(rec[g].principal.id) + ")").join(" · "));
 }
 
 console.log("-- 6. El espejo");

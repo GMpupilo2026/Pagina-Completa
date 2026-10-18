@@ -53,10 +53,24 @@
                     <ul class="space-y-2 text-sm text-brand-600 dark:text-brand-300">
                         <li><strong>No hay respuestas correctas.</strong> En cada posición hay dos jugadas que el motor valora casi igual. Elige la que jugarías tú.</li>
                         <li><strong>Dinos qué tan seguro estás.</strong> Después de elegir, marca «Muy seguro», «Más o menos» o «Me da igual». Un «me da igual» cuenta poco, y está bien: también dice algo.</li>
-                        <li><strong>Unas 34 posiciones</strong>, y algunas más si en algún tema todavía no queda claro qué prefieres. Dos de ellas vuelven más adelante dadas vuelta, para saber si contestas lo que prefieres.</li>
+                        <li><strong>Unas 34 posiciones</strong> (en la corta, unas 26 más fáciles), y algunas más si en algún tema todavía no queda claro qué prefieres. Dos de ellas vuelven más adelante dadas vuelta, para saber si contestas lo que prefieres.</li>
                         <li><strong>Al final, cuatro preguntas</strong> sobre cómo juegas: en qué ritmo, cuánto estudias, tu Elo y qué aperturas usas ahora.</li>
                     </ul>
                 </div>
+
+                <!-- La versión corta, para quien empieza: menos posiciones y más
+                     simples, y lo que se le recomiende con poca teoría. -->
+                <fieldset id="forma-opcion" class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 mb-6">
+                    <legend class="font-semibold text-brand-800 dark:text-white text-sm mb-2">¿Qué prueba quieres hacer?</legend>
+                    <label class="flex items-start gap-3 mb-2 cursor-pointer">
+                        <input type="radio" name="forma" value="completa" id="forma-completa" checked class="mt-1 focus-visible:ring-2 focus-visible:ring-accent-400">
+                        <span class="text-sm text-brand-700 dark:text-brand-200"><strong>La completa</strong>: unas 34 posiciones.</span>
+                    </label>
+                    <label class="flex items-start gap-3 cursor-pointer">
+                        <input type="radio" name="forma" value="corta" id="forma-corta" class="mt-1 focus-visible:ring-2 focus-visible:ring-accent-400">
+                        <span class="text-sm text-brand-700 dark:text-brand-200"><strong>La corta, si estás empezando</strong>: unas 26 posiciones, con menos piezas, y aperturas con poca teoría.</span>
+                    </label>
+                </fieldset>
 
                 <div id="partidas-opcion" class="hidden">
                 <label class="flex items-start gap-3 bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 mb-6 cursor-pointer">

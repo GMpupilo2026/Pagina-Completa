@@ -130,8 +130,11 @@
   const medidaDe = (id) => MEDIDO.find((m) => m.id === id) || null;
 
   /* Hasta qué nivel de teoría conviene: por el Elo (si no se sabe, el del
-     medio), uno menos si estudia poco y uno menos si juega rápido. */
+     medio), uno menos si estudia poco y uno menos si juega rápido; con la
+     versión corta (`inicial`), 1. */
   function nivelQueConviene(ctx) {
+    // La versión corta es para quien empieza: teoría de nivel 1.
+    if (ctx && ctx.inicial) return 1;
     const elo = ctx && ctx.elo;
     let n = elo == null ? 2 : elo < 1200 ? 1 : elo < 1700 ? 2 : 3;
     if (ctx && ctx.estudio === "poco") n -= 1;
@@ -254,6 +257,9 @@
         .map((l) => ({ l, m: medidaDe(l.id) }))
         .filter((x) => x.m && x.m.n && x.m.car)
         .map((x) => Object.assign(x, { d: distancia(perfil, x.m, x.l.nivel, tope, rend) }))
+        // A quien empieza no se le propone teoría de más si hay de su nivel:
+        // el castigo solo no alcanzaba (contra 1.d4 salía una de nivel 2).
+        .filter((x, _, todas) => !ctx.inicial || x.l.nivel <= tope || !todas.some((y) => y.l.nivel <= tope))
         .sort((a, b) => a.d - b.d || a.l.id.localeCompare(b.l.id));
       if (!cand.length) { out[g] = null; continue; }
       const mejor = cand[0];

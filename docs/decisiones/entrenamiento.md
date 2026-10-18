@@ -4173,6 +4173,50 @@ pruebas de un alumno a 20 días, el control no cuenta como respuesta, la
 repetición da 2 de 3, las partidas 2 de 3; un profe ajeno ve 0 pruebas y
 anónimo no tiene permiso.
 
+### La versión corta, para quien empieza (versión 3)
+
+Las posiciones salen de partidas de maestros, y a quien recién aprende le
+cuestan: con muchas piezas y muchas jugadas posibles, no elige por gusto sino
+por lo que alcanza a ver. En la portada se elige **la completa o la corta**;
+con menos de 1200 en línea se sugiere la corta, y la puede cambiar.
+
+- **Las mismas reglas, con las posiciones más simples**: de cada eje, las 8
+  de menor `EstiloMedidas.complejidad` (las piezas que hay más la mitad de
+  las jugadas legales de quien mueve). Las elige esa regla y no la mano:
+  `FORMAS[3].posiciones` las lista y `verificar-estilo.js` comprueba que son
+  esas.
+- **6 por eje y hasta 2 más** (26 a 34 preguntas). Con 5 por eje, un estilo
+  claro siempre pedía una más en cada eje: con 5 respuestas iguales el margen
+  todavía cruza el medio.
+- **La recomendación, con teoría de nivel 1** (`contexto.inicial`): el nivel
+  solo restaba puntos y contra 1.d4 salía una de nivel 2; para quien empieza
+  se descarta lo de más nivel cuando su grupo tiene alguna de nivel 1.
+- Se guarda como versión 3 y se lee con su forma; la calibración usa también
+  sus respuestas (son las mismas posiciones del banco).
+
+### La ficha en PDF
+
+«Bajar la ficha en PDF», en el resultado del alumno y en Informes: una hoja
+para imprimir o mandar a la casa (`js/estilo-ficha-pdf.js`, con el mismo
+generador de los reportes, `js/reporte-pdf.js`, y la marca de agua de Oscar
+Angulo Cubero en todas las páginas).
+
+- Dice lo mismo que la pantalla: el perfil de `EstiloPerfil.medir()` con la
+  versión de la prueba (una de la versión 1, sus tres ejes), con la etiqueta
+  y el margen **escritos** (se imprime en blanco y negro), y las tres
+  aperturas de la recomendación guardada con sus primeras jugadas en
+  notación española, su porqué y la otra opción. Al final, cómo seguir.
+- Al alumno le habla de tú; al profe, en tercera persona y con el nombre.
+- Cada eje va en su renglón y no en una tabla: la tabla corta lo que no
+  cabe, y «Equilibrado: atacar al rey o maniobrar, según la posición» no
+  cabía (se vio en la primera versión del PDF).
+- El generador, la marca y la ficha se cargan recién al tocar el botón. La
+  marca se busca con la dirección completa del sitio: con la relativa
+  (`img/…`), desde `entreno/` no aparecía. Sin la marca, el PDF no sale (como
+  el del diagnóstico de un visitante).
+- `verificar-estilo-ficha.js` arma el documento y el PDF sin navegador;
+  `verificar-estilo-pagina.js` baja el PDF de verdad desde la página.
+
 ### La medición: el modelo de dos parámetros, con lo seguro y lo rápido
 
 Por eje, la tendencia θ que mejor explica las elecciones con
@@ -4360,6 +4404,8 @@ estilo-pagina informes`:
 - `estilo-pagina`: la prueba entera en el navegador (botones y por escrito),
   «Cómo juegas», el resultado, lo que se guarda (sin la hora), y con sus
   partidas de Lichess y un motor de mentira.
+- `estilo-ficha`: la ficha en PDF dice lo que la pantalla (los ejes de su
+  versión, las aperturas del acta en notación española, la voz).
 - `informes`: el profe ve su estilo, lo que se le recomendó, las pruebas
   anteriores (una de la versión 1 con sus tres ejes) y nada de otro alumno;
   marca «¿Coincide con lo que ves?» y su opinión se guarda, se ve marcada y
