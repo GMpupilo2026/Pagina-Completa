@@ -152,14 +152,17 @@ const visible = (p, sel) => p.$eval(sel, (e) => e.checkVisibility());
     await v.addInitScript(() => { try { localStorage.clear(); } catch (e) { } });
     await v.goto(BASE + "/herramientas-arbitraje.html", { waitUntil: "load" });
     await v.waitForFunction(() => document.querySelectorAll("#lista > li").length > 0);
-    igual("sin sesión: todas con candado y el aviso de iniciar sesión, menos las gratis (Pareo Integral y las de datos estudiantiles)",
-        [await v.$$eval("#lista > li:not([data-herramienta='pareo']):not([data-herramienta='ajedrez-estudiantil']):not([data-herramienta='historial-jugador']):not([data-herramienta='estadisticas-colegios'])", (l) => l.every((x) => /🔒/.test(x.textContent))), await visible(v, "#activar-sin-sesion"), await visible(v, "#activar-con-sesion")],
+    igual("sin sesión: todas con candado y el aviso de iniciar sesión, menos las gratis (Pareo Integral, la lista de árbitros y las de datos estudiantiles)",
+        [await v.$$eval("#lista > li:not([data-herramienta='pareo']):not([data-herramienta='arbitros']):not([data-herramienta='ajedrez-estudiantil']):not([data-herramienta='historial-jugador']):not([data-herramienta='estadisticas-colegios'])", (l) => l.every((x) => /🔒/.test(x.textContent))), await visible(v, "#activar-sin-sesion"), await visible(v, "#activar-con-sesion")],
         [true, true, false]);
     // Pareo Integral no lleva licencia: abierto para todos, sin sesión, con su manual.
     igual("sin sesión, Pareo Integral sale gratis y se abre",
         await v.$eval("#lista li[data-herramienta='pareo']", (li) => [/Gratis/.test(li.textContent), !/🔒/.test(li.textContent),
             !!li.querySelector("a[href='pareo.html']"), !!li.querySelector("a[href='pareo-manual.html']"), !li.querySelector("a[href^='https://wa.me']")]),
         [true, true, true, true, true]);
+    igual("sin sesión, la lista de árbitros sale gratis y se abre",
+        await v.$eval("#lista li[data-herramienta='arbitros']", (li) => [/Gratis/.test(li.textContent), !/🔒/.test(li.textContent), !!li.querySelector("a[href='arbitros.html']")]),
+        [true, true, true]);
     igual("sin sesión, Ajedrez estudiantil sale gratis y se abre",
         await v.$eval("#lista li[data-herramienta='ajedrez-estudiantil']", (li) => [/Gratis/.test(li.textContent), !/🔒/.test(li.textContent), !!li.querySelector("a[href='ajedrez-estudiantil.html']")]),
         [true, true, true]);
@@ -174,7 +177,7 @@ const visible = (p, sel) => p.$eval(sel, (e) => e.checkVisibility());
     await p.waitForSelector("#lista li[data-herramienta='seleccion-codicader'] a[href='seleccion-codicader.html']");
     igual("con licencia: «Abrir la herramienta» en la que tiene, candado en las demás",
         await p.$$eval("#lista > li", (l) => l.map((x) => [x.dataset.herramienta, /🔓/.test(x.textContent)])),
-        [["pareo", false], ["seleccion-codicader", true], ["jdn-comites", false], ["universidades", false], ["jdn-proyeccion", false], ["arbitros-cr", false], ["ajedrez-estudiantil", false], ["historial-jugador", false], ["estadisticas-colegios", false], ["desempates", false], ["variacion-elo", false], ["reclamos-tablas", false], ["acta-jde", false]]);
+        [["pareo", false], ["arbitros", false], ["seleccion-codicader", true], ["jdn-comites", false], ["universidades", false], ["jdn-proyeccion", false], ["arbitros-cr", false], ["ajedrez-estudiantil", false], ["historial-jugador", false], ["estadisticas-colegios", false], ["desempates", false], ["variacion-elo", false], ["reclamos-tablas", false], ["acta-jde", false]]);
     igual("las gratis no se le preguntan a la base (y las demás sí)",
         await p.evaluate(() => [window.__pedidos.includes("tengo_herramienta ajedrez-estudiantil") || window.__pedidos.includes("tengo_herramienta historial-jugador") || window.__pedidos.includes("tengo_herramienta estadisticas-colegios"), window.__pedidos.includes("tengo_herramienta pareo"), window.__pedidos.includes("tengo_herramienta seleccion-codicader")]),
         [false, false, true]);

@@ -451,6 +451,8 @@
         pintarListaFca();
         pintarSubir();
         pintarSugerida();
+        pintarNovedades();
+        pintarNumeros();
         pintarPorIdentificar();
     }
 
@@ -1123,6 +1125,96 @@
             .map(({ a, s }) => [a.nombre, a.fide_id, TITULOS_CORTOS[a.titulo] || a.titulo, s.actual || "", s.sugerida, s.porNormas, s.porTrabajo, s.porque])) }]);
     }
 
+    const arbitro = (x) => !x.fuera && (fue(x, "Chief", "ap") || fue(x, "Dep. Chief", "adj") || fue(x, "Arbiter", "arb"));
+
+    /* «Novedades»: lo que pasó en los últimos 12 meses, para que la Comisión
+       lo note sin buscarlo: un título de FIDE (con la fecha del perfil, o la
+       del Consejo), las normas de FIDE que le completan la solicitud de su
+       siguiente título, el par de normas que le respalda la B o la A (si no la
+       tiene) y el primer torneo como árbitro en Costa Rica de alguien nuevo. */
+    function novedades(desde = masAnios(hoyCr(), -1), hasta = hoyCr()) {
+        const ev = [];
+        const pon = (a, dia, que, tipo) => { if (dia && dia >= desde && dia <= hasta) ev.push({ a, fecha: dia, que, tipo }); };
+        for (const a of arbitros) {
+            const f = a.fide || {};
+            if (a.titulo === "FA" || a.titulo === "IA") pon(a, f.af_perfil || f.af_fecha, "Título de Árbitro FIDE" + (f.af_perfil ? "" : " (lo aprobó el Consejo)"), "titulo");
+            if (a.titulo === "IA") pon(a, f.ia_perfil || f.ia_fecha, "Título de Árbitro Internacional" + (f.ia_perfil ? "" : " (lo aprobó el Consejo)"), "titulo");
+            const cual = a.titulo === "FA" ? "ai" : a.titulo === "IA" ? null : "af";
+            if (cual) {
+                const u = cuentaNormas(a, cual).usadas.slice().sort((x, y) => x.inicio.localeCompare(y.inicio));
+                if (u.length >= PIDE[cual]) pon(a, u[PIDE[cual] - 1].inicio, `Junta las ${PIDE[cual]} normas de torneo para pedir el ${cual === "af" ? "AF" : "AI"} (la última, ${nombreDe(u[PIDE[cual] - 1])})`, "fide");
+            }
+            const sug = a.titulo === "AN" ? categoriaSugerida(a) : null;
+            if (sug && sug.p1 && ORDEN_CAT[sug.actual || "C"] < 1) pon(a, sug.p1.fecha, `Completa el par de normas que respalda la categoría B (${nombreDe(sug.p1.par[1].x)})`, "categoria");
+            if (sug && sug.p2 && ORDEN_CAT[sug.actual || "C"] < 2) pon(a, sug.p2.fecha, `Completa el segundo par de normas, que respalda la categoría A (${nombreDe(sug.p2.par[1].x)})`, "categoria");
+            const primero = a.todos.filter(arbitro).sort((x, y) => x.inicio.localeCompare(y.inicio))[0];
+            if (primero) pon(a, primero.inicio, `Su primer torneo como árbitro en Costa Rica: ${nombreDe(primero)}`, "nuevo");
+        }
+        return ev.sort((x, y) => y.fecha.localeCompare(x.fecha) || x.a.nombre.localeCompare(y.a.nombre, "es"));
+    }
+    function pintarNovedades() {
+        const filas = novedades();
+        const td = (v) => el("td", { class: "px-3 py-2 align-top" }, v);
+        $("tabla-novedades").tBodies[0].replaceChildren(...(filas.length ? filas.map((r) => {
+            const b = el("button", { type: "button", class: "font-semibold underline underline-offset-2 hover:no-underline text-left" }, r.a.nombre);
+            b.addEventListener("click", () => elegir(r.a.fide_id));
+            return el("tr", { class: "border-t border-brand-100 dark:border-brand-800", "data-tipo": r.tipo },
+                td(fecha(r.fecha)), el("th", { scope: "row", class: "px-3 py-2 align-top font-normal text-left" }, b), td(r.que));
+        }) : [el("tr", {}, el("td", { colspan: "3", class: "px-3 py-2 text-brand-500 dark:text-brand-300" }, "Nada nuevo en los últimos 12 meses."))]));
+    }
+
+    /* «El arbitraje del país en números»: hoy, por título y categoría, los de
+       la lista de la Federación y cuántos están activos (art. 19); y año por
+       año, en Costa Rica, cuántos arbitraron (principal, adjunto o árbitro),
+       cuántos lo hicieron por primera vez y para cuántos fue el último año,
+       los torneos, la carga media, cuánto del trabajo hizo el 20 % que más
+       arbitró y los títulos de FIDE de ese año. */
+    const GRUPOS = ["AI", "AF", "AN-A", "AN-B", "AN-C", "AN sin categoría", "Sin título en FIDE"];
+    const grupoDe = (a) => a.titulo === "IA" ? "AI" : a.titulo === "FA" ? "AF" : a.titulo === "AN" ? (a.catNacional ? "AN-" + a.catNacional : "AN sin categoría") : "Sin título en FIDE";
+    function numeros() {
+        const porAnio = new Map(), primero = new Map(), ultimo = new Map();
+        for (const a of arbitros) for (const x of a.todos.filter(arbitro)) {
+            const d = porAnio.get(x.anio) || { carga: new Map(), torneos: new Set() };
+            d.carga.set(a.fide_id, (d.carga.get(a.fide_id) || 0) + 1); d.torneos.add(x.clave); porAnio.set(x.anio, d);
+            primero.set(a.fide_id, Math.min(primero.has(a.fide_id) ? primero.get(a.fide_id) : 9999, x.anio));
+            ultimo.set(a.fide_id, Math.max(ultimo.get(a.fide_id) || 0, x.anio));
+        }
+        const titulos = (cual, y) => arbitros.filter((a) => anioTitulo(a, cual) === y).length;
+        // También los años en que hubo un título aunque nadie de la lista arbitrara.
+        const anios = [...new Set([...porAnio.keys(), ...arbitros.flatMap((a) => [anioTitulo(a, "af"), anioTitulo(a, "ai")]).filter(Boolean)])].sort((p, q) => q - p);
+        const filas = anios.map((y) => {
+            const d = porAnio.get(y) || { carga: new Map(), torneos: new Set() }, cargas = [...d.carga.values()].sort((p, q) => q - p), total = cargas.reduce((m, n) => m + n, 0);
+            const top = cargas.slice(0, Math.max(1, Math.ceil(cargas.length * 0.2))).reduce((m, n) => m + n, 0);
+            return { anio: y, arbitros: cargas.length, nuevos: [...primero.values()].filter((v) => v === y).length, ultimoAnio: [...ultimo.values()].filter((v) => v === y).length,
+                torneos: d.torneos.size, media: cargas.length ? total / cargas.length : 0, concentracion: total ? Math.round((100 * top) / total) : 0, af: titulos("af", y), ai: titulos("ai", y) };
+        });
+        const lista = arbitros.concat(sinArbitrar).filter(enListaFca);
+        const hoy = GRUPOS.map((g) => { const l = lista.filter((a) => grupoDe(a) === g); return { grupo: g, total: l.length, activos: l.filter((a) => actividadFca(a).estado !== "inactivo").length }; }).filter((r) => r.total);
+        return { filas, hoy, total: lista.length };
+    }
+    const decimal = (n) => new Intl.NumberFormat("es-CR", { maximumFractionDigits: 1 }).format(n);
+    function pintarNumeros() {
+        const n = numeros();
+        const td = (v, der) => el("td", { class: "px-3 py-2" + (der ? " text-right tabular-nums" : "") }, v);
+        $("tabla-numeros-hoy").tBodies[0].replaceChildren(...n.hoy.map((r) => el("tr", { class: "border-t border-brand-100 dark:border-brand-800" },
+            el("th", { scope: "row", class: "px-3 py-2 font-normal text-left" }, r.grupo), td(miles(r.total), true), td(miles(r.activos), true))));
+        $("tabla-numeros-anios").tBodies[0].replaceChildren(...n.filas.map((r) => el("tr", { class: "border-t border-brand-100 dark:border-brand-800" },
+            el("th", { scope: "row", class: "px-3 py-2 font-normal text-left" }, String(r.anio)), td(miles(r.arbitros), true), td(miles(r.nuevos), true), td(miles(r.ultimoAnio), true),
+            td(miles(r.torneos), true), td(decimal(r.media), true), td(miles(r.concentracion) + " %", true), td(miles(r.af), true), td(miles(r.ai), true))));
+        const [este, antes] = n.filas;
+        $("numeros-cuenta").textContent = este && antes
+            ? `En ${este.anio} arbitraron ${plural(este.arbitros, "árbitro", "árbitros")} en Costa Rica (${miles(antes.arbitros)} en ${antes.anio}), ${miles(este.nuevos)} por primera vez. De los ${miles(n.total)} de la lista de la Federación, ${miles(n.hoy.reduce((m, r) => m + r.activos, 0))} están activos según el art. 19.`
+            : "";
+    }
+    function excelNumeros() {
+        const n = numeros();
+        window.TablaExcel.bajar("arbitraje-en-numeros.xlsx", [
+            { nombre: "Hoy", filas: [["Título o categoría", "En la lista de la Federación", "Activos (art. 19)"]].concat(n.hoy.map((r) => [r.grupo, r.total, r.activos])) },
+            { nombre: "Año por año", filas: [["Año", "Arbitraron", "Por primera vez", "Su último año", "Torneos", "Torneos por árbitro", "El 20 % que más arbitró (%)", "Títulos de AF", "Títulos de AI"]]
+                .concat(n.filas.map((r) => [r.anio, r.arbitros, r.nuevos, r.ultimoAnio, r.torneos, Math.round(r.media * 10) / 10, r.concentracion, r.af, r.ai])) },
+        ]);
+    }
+
     function tarjetaCategoria(a) {
         const s = subirCategoria(a);
         const caja = el("div", { class: "bg-white dark:bg-brand-900 rounded-2xl shadow-md p-4", "data-categoria": s.cat || "" },
@@ -1301,6 +1393,7 @@
         const enLaLista = arbitros.concat(sinArbitrar).filter(enListaFca).map((a) => ({ a, act: actividadFca(a) }));
         const cuenta = (e) => enLaLista.filter((r) => r.act.estado === e);
         const subir = filasSubir(), sugeridas = filasSugerida().filter((r) => r.s.sugerida !== r.s.actual);
+        const nuevas = novedades(c.desde, c.hasta), cifras = numeros();
         const fuera = arbitros.flatMap((a) => subirCategoria(a).fueraDeCategoria.filter((x) => x.inicio >= c.desde && x.inicio <= c.hasta).map((x) => ({ a, x })));
         const { quietos, fuera: sinLista } = listaFca();
         const vence = arbitros.flatMap(porVencer).sort((x, y) => x.vence.localeCompare(y.vence));
@@ -1319,6 +1412,13 @@
         b.push({ tipo: "titulo", texto: "Quiénes pueden subir de categoría" },
             subir.length ? { tipo: "tabla", encabezados: ["Árbitro", "Pasa", "Normas", "Posibles", "A revisar"], anchos: [38, 10, 24, 14, 14],
                 filas: subir.map(({ a, s }) => [a.nombre, `${s.cat} a ${s.sigue}`, estadoSubir(s), miles(s.firmes.length), miles(s.revisar.length)]) } : { tipo: "parrafo", texto: "Ningún AN de categoría C o B tiene torneos que puedan ser norma." },
+            { tipo: "titulo", texto: "Novedades del cuatrimestre" },
+            nuevas.length ? { tipo: "tabla", encabezados: ["Fecha", "Árbitro", "Qué pasó"], anchos: [12, 28, 60], filas: nuevas.map((r) => [fecha(r.fecha), r.a.nombre, r.que]) }
+                : { tipo: "parrafo", texto: "Nada nuevo en el cuatrimestre." },
+            { tipo: "titulo", texto: "El arbitraje en números" },
+            { tipo: "tabla", encabezados: ["Título o categoría", "En la lista", "Activos (art. 19)"], anchos: [50, 25, 25], filas: cifras.hoy.map((r) => [r.grupo, miles(r.total), miles(r.activos)]) },
+            { tipo: "tabla", encabezados: ["Año", "Arbitraron", "Nuevos", "Torneos", "Por árbitro", "Títulos AF", "Títulos AI"], anchos: [10, 15, 13, 14, 16, 16, 16],
+                filas: cifras.filas.slice(0, 5).map((r) => [String(r.anio), miles(r.arbitros), miles(r.nuevos), miles(r.torneos), decimal(r.media), miles(r.af), miles(r.ai)]) },
             { tipo: "titulo", texto: "Categoría sugerida" },
             sugeridas.length ? { tipo: "tabla", encabezados: ["Árbitro", "Hoy", "Sugerida", "Por qué"], anchos: [26, 8, 10, 56],
                 filas: sugeridas.map(({ a, s }) => [a.nombre, s.actual || "—", s.sugerida, s.porque]) } : { tipo: "parrafo", texto: "La categoría de todos coincide con lo que respaldan sus torneos." },
@@ -2059,6 +2159,7 @@
         $("lista-excel").addEventListener("click", excelLista);
         $("subir-excel").addEventListener("click", excelSubir);
         $("sugerida-excel").addEventListener("click", excelSugerida);
+        $("numeros-excel").addEventListener("click", excelNumeros);
         $("federacion").addEventListener("change", (e) => { estado.federacion = e.target.value; pintarGeneral(); });
         const cuatris = cuatrimestres();
         $("informe-cuatrimestre").replaceChildren(...cuatris.map((c) => el("option", { value: c.valor }, c.texto)));

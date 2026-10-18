@@ -878,6 +878,30 @@ const porNombre = (m) => Object.fromEntries(m.map((f) => [f[0], f]));
     await ctx.close();
     FORMACION.length = 0;
 
+    console.log("\n=== El arbitraje del país en números y las novedades ===");
+    // El AF de Ana hace 11 meses (sale) y el AI de Óscar hace 13 (ya no).
+    const anaF = ARBITROS_FIDE.find((f) => f.fide_id === 6500002), oscarF = ARBITROS_FIDE.find((f) => f.fide_id === 6500001);
+    anaF.af_perfil = "2025-11-01"; oscarF.ia_fecha = "2025-09-01";
+    ({ ctx, p } = await abrir(browser, "arbitros-cr.html", true));
+    await p.waitForFunction(() => document.getElementById("app").checkVisibility());
+    igual("año por año: quién arbitró en Costa Rica, por primera vez, su último año, torneos, carga, concentración y títulos (2026: solo el AI de Óscar)",
+        await filas(p, "#tabla-numeros-anios"),
+        [["2026", "0", "0", "0", "0", "0", "0 %", "0", "1"], ["2025", "1", "0", "1", "1", "1", "100 %", "0", "0"], ["2024", "2", "0", "1", "4", "2,5", "60 %", "2", "0"],
+         ["2023", "2", "2", "1", "1", "1", "50 %", "0", "0"], ["2019", "1", "1", "0", "1", "1", "100 %", "0", "0"], ["2015", "1", "1", "1", "1", "1", "100 %", "0", "0"]]);
+    igual("hoy, los de la lista de la Federación por categoría y cuántos activos (art. 19)", await filas(p, "#tabla-numeros-hoy"), [["AN-B", "1", "0"], ["AN-C", "1", "0"]]);
+    igual("las novedades: el AF de Ana de hace 11 meses sí, el AI de Óscar de hace 13 no", await filas(p, "#tabla-novedades"),
+        [["01/11/2025", "Soto Prueba, Ana", "Título de Árbitro FIDE"]]);
+    await p.evaluate(() => { window.TablaExcel.bajar = (nombre, hojas) => { window.__excel = { nombre, hojas }; }; });
+    await p.click("#numeros-excel");
+    const exNum = await p.evaluate(() => window.__excel);
+    igual("los números en Excel, en dos hojas", [exNum.nombre, exNum.hojas.map((h) => h.nombre), exNum.hojas[1].filas[3]], ["arbitraje-en-numeros.xlsx", ["Hoy", "Año por año"], [2024, 2, 0, 1, 4, 2.5, 60, 2, 0]]);
+    await ctx.close();
+    delete anaF.af_perfil; oscarF.ia_fecha = null;
+    ({ ctx, p } = await abrir(browser, "arbitros-cr.html", true));
+    await p.waitForFunction(() => document.getElementById("app").checkVisibility());
+    igual("sin nada en los últimos 12 meses, las novedades lo dicen", await p.$eval("#tabla-novedades tbody", (b) => b.textContent), "Nada nuevo en los últimos 12 meses.");
+    await ctx.close();
+
     console.log("\n=== La categoría sugerida ===");
     ({ ctx, p } = await abrir(browser, "arbitros-cr.html", true));
     await p.waitForFunction(() => document.getElementById("app").checkVisibility());
@@ -903,6 +927,10 @@ const porNombre = (m) => Object.fromEntries(m.map((f) => [f[0], f]));
     await p.evaluate(() => { window.TablaExcel.bajar = (nombre, hojas) => { window.__excel = { nombre, hojas }; }; });
     await p.click("#sugerida-excel");
     const exSug = await p.evaluate(() => window.__excel);
+    igual("las novedades: el 20/09/2026 Luis junta las 3 normas para el AF y completa el segundo par, que respalda la A",
+        (await filas(p, "#tabla-novedades")).map((f) => f.slice(0, 3)),
+        [["20/09/2026", "Rojas Prueba, Luis", "Junta las 3 normas de torneo para pedir el AF (la última, Abierto clásico 2026)"],
+         ["20/09/2026", "Rojas Prueba, Luis", "Completa el segundo par de normas, que respalda la categoría A (Abierto clásico 2026)"]]);
     igual("el Excel trae a todos los que tienen título (también los que coinciden)", [exSug.nombre, exSug.hojas[0].filas.slice(1).map((f) => [f[0], f[3], f[4]])],
         ["categoria-sugerida.xlsx", [["Ángulo Prueba, Óscar", "", "A"], ["Rojas Prueba, Luis", "B", "A"], ["Soto Prueba, Ana", "C", "A"], ["Viejo Prueba, Juan", "", "C"]]]);
     await ctx.close();
