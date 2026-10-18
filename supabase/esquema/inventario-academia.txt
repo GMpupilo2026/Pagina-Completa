@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20261018163850
+# al-dia-con: 20261018194338
 tabla  Ejercicios Lichess  rls=true
 tabla  _foto_rls_tmp  rls=false
 tabla  _pedidos_elo  rls=false
@@ -19,6 +19,7 @@ tabla  arbitros_cr_cr  rls=true
 tabla  arbitros_cr_cr_cargos  rls=true
 tabla  arbitros_cr_cr_elo  rls=true
 tabla  arbitros_cr_fide  rls=true
+tabla  arbitros_cr_formacion  rls=true
 tabla  arbitros_cr_normas_revision  rls=true
 tabla  arbitros_cr_sin_id  rls=true
 tabla  arbitros_cr_solicitudes_enviadas  rls=true
@@ -322,6 +323,16 @@ columna  arbitros_cr_fide.nombre  text
 columna  arbitros_cr_fide.seminarios  jsonb
 columna  arbitros_cr_fide.solicitudes  jsonb
 columna  arbitros_cr_fide.titulo  text
+columna  arbitros_cr_formacion.categoria  text
+columna  arbitros_cr_formacion.creada  timestamp with time zone
+columna  arbitros_cr_formacion.creada_por  uuid
+columna  arbitros_cr_formacion.detalle  text
+columna  arbitros_cr_formacion.fecha  date
+columna  arbitros_cr_formacion.fide_id  integer
+columna  arbitros_cr_formacion.horas  numeric(5,1)
+columna  arbitros_cr_formacion.id  uuid
+columna  arbitros_cr_formacion.nota  numeric(5,2)
+columna  arbitros_cr_formacion.tipo  text
 columna  arbitros_cr_normas_revision.archivo  text
 columna  arbitros_cr_normas_revision.cargo  text
 columna  arbitros_cr_normas_revision.creada  timestamp with time zone
@@ -2295,6 +2306,10 @@ politica  arbitros_cr_cr  arbitros_cr_cr_con_herramienta  SELECT
 politica  arbitros_cr_cr_cargos  arbitros_cr_cr_cargos_con_herramienta  SELECT
 politica  arbitros_cr_cr_elo  arbitros_cr_cr_elo_con_herramienta  SELECT
 politica  arbitros_cr_fide  arbitros_cr_fide_con_herramienta  SELECT
+politica  arbitros_cr_formacion  arbitros_cr_formacion_agregar  INSERT
+politica  arbitros_cr_formacion  arbitros_cr_formacion_borrar  DELETE
+politica  arbitros_cr_formacion  arbitros_cr_formacion_cambiar  UPDATE
+politica  arbitros_cr_formacion  arbitros_cr_formacion_ver  SELECT
 politica  arbitros_cr_normas_revision  arbitros_cr_normas_revision_borrar  DELETE
 politica  arbitros_cr_normas_revision  arbitros_cr_normas_revision_cambiar  UPDATE
 politica  arbitros_cr_normas_revision  arbitros_cr_normas_revision_subir  INSERT
@@ -2881,6 +2896,9 @@ indice  arbitros_cr_cr_cargos  arbitros_cr_cr_cargos_fide_id
 indice  arbitros_cr_cr_cargos  arbitros_cr_cr_cargos_pkey
 indice  arbitros_cr_cr_elo  arbitros_cr_cr_elo_pkey
 indice  arbitros_cr_fide  arbitros_cr_fide_pkey
+indice  arbitros_cr_formacion  arbitros_cr_formacion_fide_idx
+indice  arbitros_cr_formacion  arbitros_cr_formacion_pkey
+indice  arbitros_cr_formacion  arbitros_cr_formacion_una_categoria
 indice  arbitros_cr_normas_revision  arbitros_cr_normas_revision_creada_por_idx
 indice  arbitros_cr_normas_revision  arbitros_cr_normas_revision_pkey
 indice  arbitros_cr_normas_revision  arbitros_cr_normas_revision_una_por_torneo
@@ -3465,6 +3483,10 @@ grant  arbitros_cr_cr_elo  authenticated  SELECT
 grant  arbitros_cr_fide  authenticated  REFERENCES
 grant  arbitros_cr_fide  authenticated  SELECT
 grant  arbitros_cr_fide  authenticated  TRIGGER
+grant  arbitros_cr_formacion  authenticated  DELETE
+grant  arbitros_cr_formacion  authenticated  INSERT
+grant  arbitros_cr_formacion  authenticated  SELECT
+grant  arbitros_cr_formacion  authenticated  UPDATE
 grant  arbitros_cr_normas_revision  authenticated  DELETE
 grant  arbitros_cr_normas_revision  authenticated  INSERT
 grant  arbitros_cr_normas_revision  authenticated  SELECT

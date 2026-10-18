@@ -3667,9 +3667,11 @@ para Carolina Muñoz). El dueño la pasó en octubre de 2026.
 El dueño pasó en octubre de 2026 el **Reglamento para Árbitros de la Federación
 Costarricense de Ajedrez** (el PDF inscrito en el Registro de Personas
 Jurídicas el 17/06/2025, documento 2025-331526-1). El nombre de la Federación
-es ese: la herramienta decía «Federación Central de Ajedrez» y se corrigió (en
-`herramientas/programas-estudio/datos/` todavía queda el nombre viejo: es otro
-material y hay que regenerar sus Word para cambiarlo).
+es ese: la herramienta decía «Federación Central de Ajedrez» y se corrigió, y
+también los Programas de Estudio (`herramientas/programas-estudio/datos/`, 1.°
+a 11.°: se regeneraron los ocho Word que lo nombran y el .zip). El nombre viejo
+queda solo donde es un dato ajeno: las migraciones ya aplicadas y los nombres
+de torneos de chess-results.
 
 Lo que pide, en lo que toca a la herramienta:
 
@@ -3713,6 +3715,77 @@ Cómo lo lleva la herramienta (`subirCategoria()` en `js/arbitros-cr.js`):
 - `verificar-arbitros-cr.js` lo prueba con el reloj en diciembre de 2025: Luis
   (B) sin normas, después con un blitz y un clásico firmados por Óscar (y uno
   de 5 rondas que no cuenta), y dos torneos más allá de la B.
+
+## La categoría y los cursos de cada árbitro
+
+Lo que el reglamento pide y desde afuera no se ve (octubre de 2026, «Hacer
+todas»): desde cuándo tiene alguien su categoría y qué cursos llevó. Va en
+`arbitros_cr_formacion` (migración `20261018194338`): una fila por categoría
+(C, B o A, con la fecha en que se la dieron; un índice único no deja dos de la
+misma) o por curso (básico, intermedio, de programa de pareo o de
+actualización, con la fecha en que terminó, las horas y la nota en %).
+
+- **Quién la escribe.** Solo administración: es el registro oficial y nadie
+  con la licencia puede darse un curso. La leen quienes tienen la herramienta.
+  Comprobado en SQL: como `authenticated` sin ser admin, el `insert` choca con
+  la RLS; `anon` no tiene permiso ni para leer. No va en la bitácora de
+  auditoría: no reparte permisos, accesos ni dinero del sitio.
+- **En la ficha**, «Categoría y cursos en la Federación»: lo registrado, el
+  más nuevo primero, y para quien administra el formulario (con «Categoría»
+  pide la letra; con un curso, las horas y la nota) y «Quitar», que pide
+  confirmar.
+- **Con eso, «Para subir de categoría»** deja de pedir revisar lo que ya
+  sabe:
+  - las normas cuentan solo después de la fecha de la categoría;
+  - el año con la categoría dice «Cumple» o hasta cuándo «Falta»;
+  - los cursos suman las horas de los aprobados con 80 % o más de menos de un
+    año (sin la nota anotada cuentan, pero quedan para revisar). Para la A, el
+    intermedio tiene que ser posterior a la B: es la forma de saber que es
+    «distinto del de la B» (art. 14, b).
+  - Si el árbitro no tiene nada registrado, sigue diciendo «Revisar», no
+    «Falta»: que no esté anotado no quiere decir que no lo tenga.
+  - Cuando todo lo que se ve se cumple, dice «Puede pedirla». El informe
+    escrito de cada norma (art. 18) sigue como «Revisar», pero no lo frena.
+- **La actividad del art. 19** («Activo (curso)», «Activo (torneo)» o «Sin
+  actividad»): activo con 20 horas de cursos de actualización en dos años, o
+  con un torneo en Costa Rica válido para Elo arbitrado en dos años (el
+  artículo dice que arbitrarlo lo vuelve a activar). Sale en la ficha, en el
+  filtro «Federación» de la lista y en el Excel.
+
+## El filtro «Federación», el Excel y la norma para firmar
+
+- **El filtro «Federación»** de la lista: activos o sin actividad (art. 19) y
+  «Más de lo que deja su categoría». Van como filtro y como columnas del
+  Excel, no como columnas de la tabla: con sus 19, la tabla ya cabe justa en
+  una portátil.
+- **«Quiénes pueden subir de categoría» en Excel**, con lo que pide cada uno.
+- **«Norma (PDF)»** en cada torneo que podría ser norma: el informe escrito
+  favorable del art. 18, con el aspirante, el torneo y el principal ya
+  puestos, y el lugar para la firma, la fecha y si el desempeño fue
+  satisfactorio. El Apéndice A del reglamento, que debía traer el formato,
+  está en blanco en el PDF inscrito: este es uno propuesto, y el documento lo
+  dice.
+
+## El informe cuatrimestral para la Junta Directiva
+
+El art. 3 le pide a la Comisión Técnica de Arbitraje un informe cuatrimestral a
+la Junta Directiva a más tardar el 15 de mayo, de setiembre y de enero. La
+lista lo arma en PDF para el cuatrimestre que se elija (de enero a abril, de
+mayo a agosto o de setiembre a diciembre, desde 2025; arranca en el último que
+ya terminó, que es el que toca entregar), sin los filtros de arriba:
+
+- los torneos en Costa Rica del cuatrimestre con algún árbitro de la lista,
+  con su Elo, rondas y principal;
+- quién arbitró y cuántas veces de principal;
+- la actividad del art. 19 de los de la lista de la Federación, con los que
+  están sin actividad;
+- quiénes pueden subir de categoría;
+- quién arbitró más de lo que deja su categoría en el cuatrimestre;
+- la lista de la Federación contra quién arbitra;
+- lo que vence en los próximos 12 meses.
+
+`verificar-arbitros-cr.js` lo baja con el reloj en diciembre de 2025 (arranca en
+mayo a agosto) y mira que estén los torneos de esos meses y no los de otros.
 
 ## La fecha oficial del título: la del perfil de FIDE
 

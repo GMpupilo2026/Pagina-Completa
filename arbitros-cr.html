@@ -46,6 +46,10 @@
                     <label for="en-fide" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">En FIDE</label>
                     <select id="en-fide" class="w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none"><option value="">Todos</option><option value="activo">Activos</option><option value="inactivo">Inactivos</option><option value="no">No figuran</option></select>
                 </div>
+                <div class="min-w-[12rem]">
+                    <label for="federacion" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Federación</label>
+                    <select id="federacion" class="w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none"><option value="">Todos</option><option value="activo">Activos (art. 19)</option><option value="inactivo">Sin actividad (art. 19)</option><option value="mas">Más de lo que deja su categoría</option></select>
+                </div>
                 <div class="min-w-[10rem]">
                     <label for="tipo" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Torneos</label>
                     <select id="tipo" class="w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none"><option value="">Todos</option><option value="fide">Solo FIDE</option><option value="nofide">No FIDE</option><option value="nacional">Solo con Elo nacional</option></select>
@@ -172,6 +176,18 @@
                     </div>
                 </div>
                 <div class="mt-6">
+                    <h3 id="informe-junta-titulo" class="font-serif text-lg font-bold text-brand-800 dark:text-white">Informe cuatrimestral para la Junta Directiva</h3>
+                    <p class="text-sm text-brand-500 dark:text-brand-300 mt-1 max-w-3xl">El que el art. 3 del Reglamento para Árbitros le pide a la Comisión Técnica de Arbitraje a más tardar el 15 de mayo, de setiembre y de enero: los torneos del cuatrimestre en Costa Rica y quién los arbitró, la actividad de los árbitros (art. 19), quiénes pueden subir de categoría, quiénes arbitraron más de lo que deja su categoría, la lista de la Federación contra quién arbitra y lo que vence pronto. Sin los filtros de arriba.</p>
+                    <div class="flex flex-wrap gap-3 items-end mt-2">
+                        <div class="min-w-[14rem]">
+                            <label for="informe-cuatrimestre" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Cuatrimestre</label>
+                            <select id="informe-cuatrimestre" class="w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none"></select>
+                        </div>
+                        <button type="button" id="informe-junta" class="text-sm font-semibold px-3 py-2 rounded-lg bg-brand-100 dark:bg-brand-800 hover:bg-brand-200 dark:hover:bg-brand-700">Bajar el informe (PDF)</button>
+                    </div>
+                    <p id="informe-junta-cuenta" class="text-sm text-brand-600 dark:text-brand-200 mt-2" aria-live="polite"></p>
+                </div>
+                <div class="mt-6">
                     <h3 id="fca-titulo" class="font-serif text-lg font-bold text-brand-800 dark:text-white">La lista de la Federación</h3>
                     <p class="text-sm text-brand-500 dark:text-brand-300 mt-1 max-w-3xl">La lista de árbitros de la Federación Costarricense de Ajedrez comparada con quién arbitra de verdad: los torneos en Costa Rica como árbitro principal, adjunto o árbitro, en las fichas de FIDE o en chess-results, sin los filtros de arriba. Que alguien no figure como árbitro en chess-results no quiere decir que no haya arbitrado: puede que el organizador no lo anotara.</p>
                     <p id="fca-cuenta" class="text-sm text-brand-600 dark:text-brand-200 mt-2" aria-live="polite"></p>
@@ -194,6 +210,7 @@
                     <h3 id="subir-titulo" class="font-serif text-lg font-bold text-brand-800 dark:text-white">Quiénes pueden subir de categoría</h3>
                     <p class="text-sm text-brand-500 dark:text-brand-300 mt-1 max-w-3xl">Según el Reglamento para Árbitros de la Federación Costarricense de Ajedrez (2025), para pasar de C a B o de B a A hacen falta dos normas de los últimos tres años, de torneos de 7 rondas o más, válidos para Elo y de modalidad o sistema distintos, firmadas por un árbitro con licencia FIDE; además, un año con la categoría y los cursos, que desde acá no se ven. «Podrían ser norma» cuenta los torneos en que fue adjunto o árbitro con un principal de la lista activo en FIDE; «Para revisar», los que tienen un principal que no se sabe. La última columna cuenta las veces que, desde junio de 2025, fue principal o adjunto en un torneo de FIDE o más grande de lo que deja su categoría (30 jugadores la C, 50 la B).</p>
                     <p id="subir-cuenta" class="text-sm text-brand-600 dark:text-brand-200 mt-2" aria-live="polite"></p>
+                    <button type="button" id="subir-excel" class="mt-2 text-sm font-semibold px-3 py-1.5 rounded-lg bg-brand-100 dark:bg-brand-800 hover:bg-brand-200 dark:hover:bg-brand-700">Bajar en Excel</button>
                     <div class="overflow-x-auto mt-2 bg-white dark:bg-brand-900 rounded-2xl shadow-md">
                         <table id="tabla-subir" class="w-full text-sm" aria-labelledby="subir-titulo">
                             <thead class="text-left text-xs uppercase tracking-wide text-brand-500 dark:text-brand-300"><tr><th scope="col" class="px-3 py-2">Árbitro</th><th scope="col" class="px-3 py-2">Categoría</th><th scope="col" class="px-3 py-2">Normas</th><th scope="col" class="px-3 py-2 text-right">Podrían ser norma</th><th scope="col" class="px-3 py-2 text-right">Para revisar</th><th scope="col" class="px-3 py-2 text-right">Más de lo que deja</th></tr></thead>
@@ -228,6 +245,45 @@
                 <p id="ficha-fide" class="text-sm text-brand-600 dark:text-brand-200 mt-1"></p>
                 <div id="ficha-normas" class="grid gap-3 md:grid-cols-2 mt-4" aria-label="Las normas que podría juntar hoy"></div>
                 <div id="ficha-categoria" class="mt-3"></div>
+                <div class="mt-6">
+                    <h3 id="formacion-titulo" class="font-serif text-lg font-bold text-brand-800 dark:text-white">Categoría y cursos en la Federación</h3>
+                    <p id="ficha-actividad-fca" class="text-sm text-brand-600 dark:text-brand-200 mt-1 max-w-3xl"></p>
+                    <div class="overflow-x-auto mt-2 bg-white dark:bg-brand-900 rounded-2xl shadow-md">
+                        <table id="tabla-formacion" class="w-full text-sm" aria-labelledby="formacion-titulo">
+                            <thead class="text-left text-xs uppercase tracking-wide text-brand-500 dark:text-brand-300"><tr><th scope="col" class="px-3 py-2">Fecha</th><th scope="col" class="px-3 py-2">Qué</th><th scope="col" class="px-3 py-2 text-right">Horas</th><th scope="col" class="px-3 py-2 text-right">Nota</th><th scope="col" class="px-3 py-2">Detalle</th><th scope="col" class="px-3 py-2"><span class="sr-only">Acciones</span></th></tr></thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                    <form id="formacion-form" class="hidden mt-3 flex flex-wrap gap-3 items-end" aria-labelledby="formacion-form-titulo">
+                        <h4 id="formacion-form-titulo" class="w-full text-sm font-semibold">Registrar (solo administración)</h4>
+                        <div class="min-w-[12rem]">
+                            <label for="formacion-tipo" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Qué</label>
+                            <select id="formacion-tipo" class="w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none"><option value="categoria">Categoría</option><option value="basico">Curso básico</option><option value="intermedio">Curso intermedio</option><option value="pareo">Curso de programa de pareo</option><option value="actualizacion">Curso de actualización</option></select>
+                        </div>
+                        <div id="formacion-categoria-caja" class="min-w-[8rem]">
+                            <label for="formacion-categoria" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Categoría</label>
+                            <select id="formacion-categoria" class="w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none"><option value="C">C</option><option value="B">B</option><option value="A">A</option></select>
+                        </div>
+                        <div class="min-w-[10rem]">
+                            <label for="formacion-fecha" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Fecha</label>
+                            <input id="formacion-fecha" type="date" required class="w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none">
+                        </div>
+                        <div id="formacion-horas-caja" class="hidden w-28">
+                            <label for="formacion-horas" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Horas</label>
+                            <input id="formacion-horas" type="number" min="0.5" max="500" step="0.5" class="w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none">
+                        </div>
+                        <div id="formacion-nota-caja" class="hidden w-28">
+                            <label for="formacion-nota" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Nota (%)</label>
+                            <input id="formacion-nota" type="number" min="0" max="100" step="0.01" class="w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none">
+                        </div>
+                        <div class="min-w-[14rem] flex-1">
+                            <label for="formacion-detalle" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Detalle (opcional)</label>
+                            <input id="formacion-detalle" type="text" maxlength="200" class="w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none">
+                        </div>
+                        <button type="submit" id="formacion-guardar" class="text-sm font-semibold px-3 py-2 rounded-lg bg-brand-100 dark:bg-brand-800 hover:bg-brand-200 dark:hover:bg-brand-700">Registrar</button>
+                    </form>
+                    <p id="formacion-estado" class="text-sm text-brand-500 dark:text-brand-300 mt-2" aria-live="polite"></p>
+                </div>
                 <section id="revision" class="mt-6" aria-labelledby="revision-titulo">
                     <h3 id="revision-titulo" class="font-serif text-lg font-bold text-brand-800 dark:text-white">Revisar normas antes de mandarlas</h3>
                     <p class="text-sm text-brand-500 dark:text-brand-300 mt-1 max-w-3xl">Sube el certificado de cada norma (PDF o foto), elige el torneo, el cargo que dice y quién lo firma: la página dice si FIDE la aceptaría y qué le falta, norma por norma y la solicitud entera, con las reglas de B.06.1 y lo que FIDE rechaza en sus informes. Los certificados los ves solo tú y quien administra.</p>
