@@ -53,6 +53,10 @@ jobs:
     runs-on: windows-latest
     timeout-minutes: 20
     steps:
+      # El Git de Windows baja los archivos con CRLF: el zip y las salidas
+      # esperadas del motor (herramientas/datos/pareo-motor/) dejarían de
+      # coincidir byte a byte con lo que tiene el repositorio.
+      - run: git config --global core.autocrlf false
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
         with:
