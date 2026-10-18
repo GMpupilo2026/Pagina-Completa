@@ -3883,6 +3883,78 @@ filtros de arriba.
   - la tabla de años, con dos árbitros en 2024, mide la concentración (rota
     al 60 %, salta).
 
+## La carga desde un Excel
+
+Para que `arbitros_cr_formacion` no quede vacía (octubre de 2026): en la lista de
+`arbitros-cr.html`, solo para quien administra, «Cargar categorías, cursos y
+correos desde un Excel» (`leerRegistro()` en `js/arbitros-cr.js`, el .xlsx lo
+abre `js/reporte-excel.js`, el mismo lector de Pareo Integral).
+
+- **Las columnas, como vengan.** Se buscan por su título en cualquier orden:
+  ID FIDE o Nombre, Qué, Categoría, Fecha, Horas, Nota, Detalle, Correo,
+  Autorizó y Avisos. La plantilla se baja de la misma sección.
+- **El árbitro, por su ID FIDE o por su nombre.** El nombre cuenta si tiene las
+  mismas palabras en cualquier orden («Luis Rojas Prueba» es «Rojas Prueba,
+  Luis»). Si dos calzan, no se adivina: pide el ID.
+- **Antes de registrar, fila por fila**, qué entra y por qué no entra lo otro:
+  - un ID que no está en la lista de FIDE o un nombre que no se reconoce;
+  - una categoría que no es A, B o C, o que ya estaba registrada;
+  - un curso sin horas o con una nota fuera de 0 a 100;
+  - un correo sin la columna «Autorizó».
+- **Registrar** guarda una por una lo que entra y deja escrito qué se registró
+  y qué no.
+- `verificar-arbitros-cr.js` sube un CSV de nueve filas y mira el motivo de cada
+  una que no entra.
+
+## El aviso por correo de lo que se vence
+
+A cada árbitro con correo registrado le llega, el día 1 de cada mes a las 8:07
+de Costa Rica, lo que se le vence en los próximos 90 días (migración
+`20261018205712`, Edge Function `arbitros-avisos`, tarea `avisos-arbitros`):
+
+- una norma de FIDE que deja de contar para su siguiente título (seis años): de
+  AF si no lo tiene, de AI si es AF, solo las posteriores a su AF;
+- el seminario de FIDE que deja de valer (cuatro años), si tiene alguna norma;
+- su actividad en la Federación (art. 19): dos años desde su último torneo en
+  Costa Rica válido para Elo o su último curso de actualización.
+
+Cómo funciona:
+
+- **Lo calcula la base**, en `arbitros_cr_por_vencer(p_dias)`. Las normas salen
+  de los estados de AF y AI que ya trae cada torneo. Solo la llaman quien
+  administra y la service role: comprobado en SQL, a otra cuenta la rechaza.
+- **El correo y la autorización**, en `arbitros_cr_contacto`: los ve y escribe
+  solo administración, que los registra en la ficha («Correo para los avisos»)
+  o desde el Excel. Cómo autorizó es obligatorio. La política de privacidad lo
+  dice (versión del 18/10/2026).
+- **Cada cosa se avisa una vez**: lo mandado queda en
+  `arbitros_cr_avisos_enviados` (clave primaria `fide_id, clave`), que se lee
+  pero no se escribe desde la web.
+- **La función** sigue el patrón de `alerta-base`:
+  - exige el secreto `tanda_arbitros_secreto` de la bóveda antes de leer
+    nada;
+  - no lee el cuerpo del pedido;
+  - le escribe a cada uno lo suyo en un correo, con `reply_to` a
+    info@ajedrez-integral.com;
+  - anota lo avisado solo si Resend lo aceptó.
+- **Para dejar de recibirlos** se responde el correo y administración apaga
+  «Mandarle los avisos». No hay enlace de baja: son pocos árbitros y el registro
+  lo lleva una persona.
+- **En la página**, «Avisos por correo» (solo administración): lo que se vence
+  en 90 días y qué pasa con cada uno: sale el día 1, no sale (sin correo o
+  avisos apagados) o ya se avisó.
+- **Probado** en la base: sin el secreto contesta 401; con el disparador,
+  «0 enviados» (todavía no hay correos registrados).
+- `verificar-arbitros-avisos.js` revisa sin red:
+  - el correo: escapa lo de la base, fechas en palabras y en orden, el
+    asunto, cómo dejar de recibirlos;
+  - la función: el secreto primero, salta lo avisado y a quien no tiene
+    correo;
+  - la migración: los permisos, el secreto y la tarea.
+
+  `verificar-arbitros-cr.js` revisa la página: lo que ve administración y lo
+  que no ve nadie más.
+
 ## El informe cuatrimestral para la Junta Directiva
 
 El art. 3 le pide a la Comisión Técnica de Arbitraje un informe cuatrimestral a

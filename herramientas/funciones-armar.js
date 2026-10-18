@@ -73,6 +73,7 @@ const FUNCIONES = {
   // El correo a administración cuando la base está al límite (verify_jwt en
   // false: la llama public.vigilar_base()). Ver su cabecera.
   "alerta-base": ["marca-correo.ts"],
+  "arbitros-avisos": ["marca-correo.ts"],
   // El Elo FIDE y Nacional de cada mes (verify_jwt en false: la tanda la
   // dispara pg_cron). Su lector de las dos páginas es compartido con
   // pareo-elo-nacional. Ver su cabecera.

@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20261018202246
+# al-dia-con: 20261018205712
 tabla  Ejercicios Lichess  rls=true
 tabla  _foto_rls_tmp  rls=false
 tabla  _pedidos_elo  rls=false
@@ -14,7 +14,9 @@ tabla  analisis_partidas_alumno  rls=true
 tabla  arbitraje_consulta_config  rls=true
 tabla  arbitrajes_publicos  rls=true
 tabla  arbitros_cr  rls=true
+tabla  arbitros_cr_avisos_enviados  rls=true
 tabla  arbitros_cr_cargos  rls=true
+tabla  arbitros_cr_contacto  rls=true
 tabla  arbitros_cr_cr  rls=true
 tabla  arbitros_cr_cr_cargos  rls=true
 tabla  arbitros_cr_cr_elo  rls=true
@@ -286,9 +288,19 @@ columna  arbitros_cr.nombre  text
 columna  arbitros_cr.solo_chess_results  boolean
 columna  arbitros_cr.titulo  text
 columna  arbitros_cr.titulo_detalle  text
+columna  arbitros_cr_avisos_enviados.clave  text
+columna  arbitros_cr_avisos_enviados.enviado  timestamp with time zone
+columna  arbitros_cr_avisos_enviados.fide_id  integer
+columna  arbitros_cr_avisos_enviados.vence  date
 columna  arbitros_cr_cargos.cargo  text
 columna  arbitros_cr_cargos.fide_id  integer
 columna  arbitros_cr_cargos.torneo_id  integer
+columna  arbitros_cr_contacto.actualizada  timestamp with time zone
+columna  arbitros_cr_contacto.autorizo  text
+columna  arbitros_cr_contacto.avisos  boolean
+columna  arbitros_cr_contacto.correo  text
+columna  arbitros_cr_contacto.creada_por  uuid
+columna  arbitros_cr_contacto.fide_id  integer
 columna  arbitros_cr_cr.clave  integer
 columna  arbitros_cr_cr.control  text
 columna  arbitros_cr_cr.fide_torneo  integer
@@ -1848,6 +1860,7 @@ funcion  anular_certificado(p_codigo text)  definer  anon=false  auth=true
 funcion  anular_recibo(p_recibo uuid, p_anular boolean, p_motivo text)  definer  anon=false  auth=true
 funcion  arbitraje_consulta_config_guardar(p_modelo text, p_tope numeric)  definer  anon=false  auth=true
 funcion  arbitraje_consulta_frenar(p_ip text, p_correo text)  definer  anon=false  auth=false
+funcion  arbitros_cr_por_vencer(p_dias integer)  definer  anon=false  auth=true
 funcion  arbitros_cr_publico()  definer  anon=true  auth=true
 funcion  asesores_tablero(p_detalle text)  invoker  anon=false  auth=true
 funcion  asignar_grupo_proyecto(p_grupo uuid, p_profesor uuid)  definer  anon=false  auth=true
@@ -1923,6 +1936,7 @@ funcion  diagnostico_responder(p_sesion uuid, p_item text, p_respuesta jsonb)  d
 funcion  diagnostico_sesion_estado(p_sesion uuid)  definer  anon=true  auth=true
 funcion  diagnostico_terminar(p_sesion uuid)  definer  anon=true  auth=true
 funcion  diagnosticos_publicos_supervisor()  definer  anon=false  auth=false
+funcion  disparar_avisos_arbitros()  definer  anon=false  auth=false
 funcion  disparar_fin_de_partida()  definer  anon=false  auth=false
 funcion  disparar_informes_encargados()  definer  anon=false  auth=false
 funcion  disparar_recordatorios_cobro()  definer  anon=false  auth=false
@@ -2246,6 +2260,7 @@ funcion  se_caen_del_plan(p_dias integer)  invoker  anon=false  auth=true
 funcion  secreto_alerta_base()  definer  anon=false  auth=false
 funcion  secreto_aviso_diagnostico()  definer  anon=false  auth=false
 funcion  secreto_partida_robo()  definer  anon=false  auth=false
+funcion  secreto_tanda_arbitros()  definer  anon=false  auth=false
 funcion  secreto_tanda_cobros()  definer  anon=false  auth=false
 funcion  secreto_tanda_elo()  definer  anon=false  auth=false
 funcion  secreto_tanda_informes()  definer  anon=false  auth=false
@@ -2302,7 +2317,9 @@ politica  arbitrajes_publicos  arbitrajes_publicos_insert  INSERT
 politica  arbitrajes_publicos  arbitrajes_publicos_select  SELECT
 politica  arbitrajes_publicos  arbitrajes_publicos_update  UPDATE
 politica  arbitros_cr  arbitros_cr_con_herramienta  SELECT
+politica  arbitros_cr_avisos_enviados  arbitros_cr_avisos_enviados_admin  SELECT
 politica  arbitros_cr_cargos  arbitros_cr_cargos_con_herramienta  SELECT
+politica  arbitros_cr_contacto  arbitros_cr_contacto_admin  ALL
 politica  arbitros_cr_cr  arbitros_cr_cr_con_herramienta  SELECT
 politica  arbitros_cr_cr_cargos  arbitros_cr_cr_cargos_con_herramienta  SELECT
 politica  arbitros_cr_cr_elo  arbitros_cr_cr_elo_con_herramienta  SELECT
@@ -2889,8 +2906,10 @@ indice  arbitrajes_publicos  arbitrajes_publicos_pendientes
 indice  arbitrajes_publicos  arbitrajes_publicos_pkey
 indice  arbitrajes_publicos  arbitrajes_publicos_revisado_por_fk
 indice  arbitros_cr  arbitros_cr_pkey
+indice  arbitros_cr_avisos_enviados  arbitros_cr_avisos_enviados_pkey
 indice  arbitros_cr_cargos  arbitros_cr_cargos_fide_id
 indice  arbitros_cr_cargos  arbitros_cr_cargos_pkey
+indice  arbitros_cr_contacto  arbitros_cr_contacto_pkey
 indice  arbitros_cr_cr  arbitros_cr_cr_fide_torneo
 indice  arbitros_cr_cr  arbitros_cr_cr_pkey
 indice  arbitros_cr_cr_cargos  arbitros_cr_cr_cargos_fide_id
@@ -3399,6 +3418,7 @@ realtime  variant_nodes
 cron  auditoria-purga  17 9 1 * *
 cron  avisar-fichas-faltantes  10 * * * *
 cron  avisar-rachas  5 0 * * *
+cron  avisos-arbitros  7 14 1 * *
 cron  cerrar-clases-inactivas  */10 * * * *
 cron  cobros-generar  30 11 * * *
 cron  cobros-recordatorios  30 12 * * *
@@ -3471,9 +3491,14 @@ grant  arbitrajes_publicos  authenticated  UPDATE
 grant  arbitros_cr  authenticated  REFERENCES
 grant  arbitros_cr  authenticated  SELECT
 grant  arbitros_cr  authenticated  TRIGGER
+grant  arbitros_cr_avisos_enviados  authenticated  SELECT
 grant  arbitros_cr_cargos  authenticated  REFERENCES
 grant  arbitros_cr_cargos  authenticated  SELECT
 grant  arbitros_cr_cargos  authenticated  TRIGGER
+grant  arbitros_cr_contacto  authenticated  DELETE
+grant  arbitros_cr_contacto  authenticated  INSERT
+grant  arbitros_cr_contacto  authenticated  SELECT
+grant  arbitros_cr_contacto  authenticated  UPDATE
 grant  arbitros_cr_cr  authenticated  REFERENCES
 grant  arbitros_cr_cr  authenticated  SELECT
 grant  arbitros_cr_cr  authenticated  TRIGGER

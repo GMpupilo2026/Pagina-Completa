@@ -141,6 +141,13 @@ const ELO_CR = [
 ];
 // La categoría y los cursos que registra administración (arbitros_cr_formacion): vacía de entrada.
 const FORMACION = [];
+// Los correos para los avisos (solo administración) y lo que se vence en 90 días, como lo da arbitros_cr_por_vencer().
+const CONTACTOS = [];
+const POR_VENCER = [
+    { fide_id: 6500004, nombre: "Viejo Prueba, Juan", correo: null, avisos: false, clave: "actividad:2026-11-20", que: "Quedas inactivo en la Federación", vence: "2026-11-20", avisado: null },
+    { fide_id: 6500003, nombre: "Rojas Prueba, Luis", correo: "luis@correo.com", avisos: true, clave: "norma-af:104", que: "La norma de AF deja de contar", vence: "2026-12-01", avisado: null },
+    { fide_id: 6500003, nombre: "Rojas Prueba, Luis", correo: "luis@correo.com", avisos: true, clave: "seminario:2026-12-20", que: "El seminario deja de valer", vence: "2026-12-20", avisado: "2026-10-01T14:07:00Z" },
+];
 const CR_CARGOS = [
     { clave: 900001, fide_id: 6500001, rol: "ap" },
     { clave: 900002, fide_id: 6500001, rol: "dir" },
@@ -159,7 +166,8 @@ function doble(tieneLicencia, admin) {
 window.SUPABASE_URL = "https://falso.supabase.co";
 window.SUPABASE_ANON_KEY = "anon-falsa";
 (function () {
-  const TABLAS = ${JSON.stringify({ arbitros_cr: ARBITROS, arbitros_cr_torneos: TORNEOS, arbitros_cr_cargos: CARGOS, arbitros_cr_cr: CR.map((c) => ({ pais: "CRC", ...c })), arbitros_cr_cr_cargos: CR_CARGOS, arbitros_cr_fide: ARBITROS_FIDE, arbitros_cr_sin_id: SIN_ID, arbitros_cr_cr_elo: ELO_CR, arbitros_cr_formacion: FORMACION })};
+  const TABLAS = ${JSON.stringify({ arbitros_cr: ARBITROS, arbitros_cr_torneos: TORNEOS, arbitros_cr_cargos: CARGOS, arbitros_cr_cr: CR.map((c) => ({ pais: "CRC", ...c })), arbitros_cr_cr_cargos: CR_CARGOS, arbitros_cr_fide: ARBITROS_FIDE, arbitros_cr_sin_id: SIN_ID, arbitros_cr_cr_elo: ELO_CR, arbitros_cr_formacion: FORMACION, arbitros_cr_contacto: CONTACTOS })};
+  const POR_VENCER = ${JSON.stringify(POR_VENCER)};
   const LICENCIA = ${tieneLicencia ? "true" : "false"};
   window.__pedidos = [];
   function respuesta(data, error) { return Promise.resolve({ data, error: error || null }); }
@@ -183,6 +191,7 @@ window.SUPABASE_ANON_KEY = "anon-falsa";
     q.insert = (fila) => { q._op = "insert"; q._fila = fila; return q; };
     q.delete = () => { q._op = "delete"; return q; };
     q.update = (cambio) => { q._op = "update"; q._cambio = cambio; return q; };
+    q.upsert = (fila, opciones) => { q._op = "upsert"; q._fila = fila; q._clave = (opciones && opciones.onConflict || "").split(","); return q; };
     q.single = () => { q._single = true; return q; };
     q.range = (a, b) => { q._desde = a; q._hasta = b; return q; };
     q.then = (ok, mal) => {
@@ -200,6 +209,9 @@ window.SUPABASE_ANON_KEY = "anon-falsa";
         if (tabla === "arbitros_cr_normas_revision" && !/^\\d{4}-\\d{2}-\\d{2}$/.test(fila.privacidad_version || "")) r = { data: null, error: { message: "Para subir una norma hay que aceptar la Política de privacidad.", code: "23514" } };
         else if (rep) r = { data: null, error: { message: "duplicate key value violates unique constraint", code: "23505" } };
         else { TABLAS[tabla].push(fila); r = { data: q._single ? fila : [fila], error: null }; }
+      } else if (q._op === "upsert") {
+        if (tabla === "arbitros_cr_contacto" && !ADMIN) r = { data: null, error: { message: "new row violates row-level security policy" } };
+        else { TABLAS[tabla] = (TABLAS[tabla] || []).filter((f) => !q._clave.every((k) => f[k] === q._fila[k])).concat({ ...q._fila }); r = { data: null, error: null }; }
       } else if (q._op === "update") { for (const f of TABLAS[tabla].filter(pasa)) Object.assign(f, q._cambio); r = { data: null, error: null }; }
       else if (q._op === "delete") { TABLAS[tabla] = TABLAS[tabla].filter((f) => !pasa(f)); r = { data: null, error: null }; }
       else r = { data: (TABLAS[tabla] || []).filter(pasa).slice(q._desde, q._hasta + 1), error: null };
@@ -218,6 +230,7 @@ window.SUPABASE_ANON_KEY = "anon-falsa";
       window.__pedidos.push(nombre);
       if (nombre === "tengo_herramienta") return respuesta(LICENCIA && args.p_herramienta === "arbitros-cr");
       if (nombre === "soy_admin") return respuesta(ADMIN);
+      if (nombre === "arbitros_cr_por_vencer") return ADMIN ? respuesta(POR_VENCER) : respuesta(null, { message: "Solo administración ve los avisos de los árbitros" });
       return respuesta(null);
     },
     from: (t) => consulta(t),
@@ -946,6 +959,70 @@ const porNombre = (m) => Object.fromEntries(m.map((f) => [f[0], f]));
     ({ ctx, p } = await abrir(browser, "arbitros-cr.html#6500001", true, DIC));
     await p.waitForFunction(() => document.getElementById("ficha").checkVisibility());
     igual("Óscar (IA): sin la tarjeta", await p.$eval("#ficha-categoria", (e) => e.childElementCount), 0);
+    await ctx.close();
+
+    console.log("\n=== Lo que registra administración: el Excel, el correo y los avisos ===");
+    ({ ctx, p } = await abrir(browser, "arbitros-cr.html#6500003", true));
+    await p.waitForFunction(() => document.getElementById("ficha").checkVisibility());
+    igual("sin ser de administración no se ve ni la carga, ni el correo, ni los avisos",
+        [await p.$eval("#registro", (e) => e.checkVisibility()), await visible(p, "#contacto-form"), (await p.evaluate(() => window.__pedidos)).includes("arbitros_cr_por_vencer"),
+         (await p.evaluate(() => window.__pedidos)).some((x) => x.startsWith("arbitros_cr_contacto"))], [false, false, false, false]);
+    await ctx.close();
+    ({ ctx, p } = await abrir(browser, "arbitros-cr.html", true, null, true));
+    await p.waitForFunction(() => document.querySelectorAll("#tabla-avisos tbody tr").length > 0);
+    igual("los avisos: cuándo vence, a quién, y si sale el día 1, no sale (sin correo) o ya se avisó",
+        [await filas(p, "#tabla-avisos"), await p.$eval("#avisos-cuenta", (e) => e.textContent)],
+        [[["20/11/2026", "Viejo Prueba, Juan", "Quedas inactivo en la Federación", "No sale: no tiene correo"],
+          ["01/12/2026", "Rojas Prueba, Luis", "La norma de AF deja de contar", "Sale el 01/11/2026"],
+          ["20/12/2026", "Rojas Prueba, Luis", "El seminario deja de valer", "Avisado el 01/10/2026"]],
+         "3 cosas se vencen en los próximos 90 días: 1 sale el 01/11/2026 y 1 no sale porque esa persona no tiene correo registrado."]);
+    const csv = ["ID FIDE;Nombre;Qué;Categoría;Fecha;Horas;Nota;Detalle;Correo;Autorizó;Avisos",
+        "6500003;;Categoría;B;15/01/2024;;;;;;",
+        ";Luis Rojas Prueba;Curso intermedio;;01/06/2025;20;90%;Taller FCA;;;",
+        "6500003;;;;;;;;Luis@Correo.com;Formulario del curso;sí",
+        "9999999;;Categoría;C;01/01/2024;;;;;;",
+        "6500004;;Curso intermedio;;01/06/2025;;;;;;",
+        ";Nadie Que Exista;Categoría;C;01/01/2024;;;;;;",
+        "6500004;;Categoría;D;01/01/2024;;;;;;",
+        "6500004;;;;;;;;juan@correo.com;;"].join("\n");
+    await p.setInputFiles("#registro-archivo", { name: "registro.csv", mimeType: "text/csv", buffer: Buffer.from(csv) });
+    await p.waitForFunction(() => document.querySelectorAll("#tabla-registro tbody tr").length === 8);
+    igual("el Excel: fila por fila qué entra y por qué no (por ID o por nombre en cualquier orden)", (await filas(p, "#tabla-registro")).map((f) => [f[0], f[1], f[3].split(":")[0]]),
+        [["2", "Rojas Prueba, Luis", "Entra"], ["3", "Rojas Prueba, Luis", "Entra"], ["4", "Rojas Prueba, Luis", "Entra"], ["5", "9999999", "No entra"],
+         ["6", "Viejo Prueba, Juan", "No entra"], ["7", "Nadie Que Exista", "No entra"], ["8", "Viejo Prueba, Juan", "No entra"], ["9", "Viejo Prueba, Juan", "No entra"]]);
+    igual("y dice el porqué de cada una", (await filas(p, "#tabla-registro")).slice(3).map((f) => f[3]),
+        ["No entra: El ID FIDE 9999999 no está en la lista de árbitros de FIDE.", "No entra: Un curso lleva sus horas (de 0,5 a 500).",
+         "No entra: No se reconoce ese nombre: ponle el ID FIDE.", "No entra: La categoría tiene que ser A, B o C.",
+         "No entra: Con el correo va cómo autorizó recibir los avisos (columna «Autorizó»)."]);
+    igual("lo que registra cada fila, en palabras", (await filas(p, "#tabla-registro")).slice(0, 3).map((f) => f[2]),
+        ["Categoría B desde el 15/01/2024", "Curso intermedio del 01/06/2025, 20 horas, 90 %", "Correo luis@correo.com"]);
+    igual("el botón dice cuántas entran", await p.$eval("#registro-guardar", (b) => b.textContent), "Registrar 3 filas");
+    await p.click("#registro-guardar");
+    await p.waitForFunction(() => /Listo/.test(document.getElementById("registro-estado").textContent));
+    igual("las registra y lo dice", [await p.$eval("#registro-estado", (e) => e.textContent), (await filas(p, "#tabla-registro")).slice(0, 3).map((f) => f[3]), await visible(p, "#registro-guardar")],
+        ["Listo: 3 filas registradas.", ["Registrado", "Registrado", "Registrado"], false]);
+    await p.evaluate(() => { window.TablaExcel.bajar = (nombre, hojas) => { window.__excel = { nombre, hojas }; }; });
+    await p.click("#registro-plantilla");
+    igual("la plantilla, con las columnas que lee", await p.evaluate(() => [window.__excel.nombre, window.__excel.hojas[0].filas[0]]),
+        ["registro-arbitros.xlsx", ["ID FIDE", "Nombre", "Qué", "Categoría", "Fecha", "Horas", "Nota", "Detalle", "Correo", "Autorizó", "Avisos"]]);
+    await p.click("#tabla-arbitros tbody tr th button:text-is('Rojas Prueba, Luis')");
+    await p.waitForFunction(() => document.getElementById("ficha").checkVisibility());
+    igual("en la ficha de Luis: lo registrado y su correo, con los avisos encendidos",
+        [(await filas(p, "#tabla-formacion")).map((f) => f[1]), await p.$eval("#contacto-correo", (e) => e.value), await p.$eval("#contacto-autorizo", (e) => e.value),
+         await p.$eval("#contacto-avisos", (e) => e.checked), await p.$eval("#contacto-estado", (e) => e.textContent)],
+        [["Curso intermedio", "Categoría B"], "luis@correo.com", "Formulario del curso", true, "Le llegan los avisos de lo que se le vence."]);
+    await p.uncheck("#contacto-avisos");
+    await p.click("#contacto-guardar");
+    await p.waitForFunction(() => /guardado/.test(document.getElementById("contacto-estado").textContent));
+    igual("apagar los avisos y guardar", await p.$eval("#contacto-estado", (e) => e.textContent), "Listo: guardado. Tiene correo, pero los avisos están apagados.");
+    await p.fill("#contacto-correo", "no-es-correo");
+    await p.click("#contacto-guardar");
+    igual("un correo inválido no se guarda", await p.$eval("#contacto-estado", (e) => e.textContent), "Ese correo no parece válido.");
+    await p.click("#contacto-quitar");
+    await p.click("button:text-is('Sí, quitarlo')");
+    await p.waitForFunction(() => /Sin correo/.test(document.getElementById("contacto-estado").textContent));
+    igual("«Quitar el correo» pide confirmar y lo quita", [await p.$eval("#contacto-estado", (e) => e.textContent), await visible(p, "#contacto-quitar")],
+        ["Sin correo: no le llegan los avisos.", false]);
     await ctx.close();
 
     console.log("\n=== Quien solo está en chess-results ===");
