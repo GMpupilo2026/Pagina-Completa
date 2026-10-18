@@ -14,7 +14,11 @@ prueba de aval. Ver «Pareo Integral» en docs/decisiones/juegos-y-torneos.md.
      y lo que no se ofrece (Burstein, un desempate que no existe) se rechaza
      con el código 3.
 
-Necesita node.   python3 herramientas/verificar-pareo-cli.py
+Con --ejecutable RUTA, el paso 2 prueba el ejecutable (pareo-integral.exe,
+herramientas/pareo-exe-armar.js) en vez de `node pareo.js`, y lo corre desde
+una carpeta vacía: tiene que andar solo, sin js/ al lado.
+
+Necesita node.   python3 herramientas/verificar-pareo-cli.py [--ejecutable RUTA]
 """
 import csv
 import importlib.util
@@ -28,7 +32,10 @@ import zipfile
 
 RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ZIP = os.path.join(RAIZ, "descargas", "pareo-integral-cli.zip")
+EJECUTABLE = os.path.abspath(sys.argv[sys.argv.index("--ejecutable") + 1]) if "--ejecutable" in sys.argv else None
 fallos = 0
+# En Windows la consola no es UTF-8 y los ✓ harían caer el verificador.
+sys.stdout.reconfigure(encoding="utf-8")
 
 
 def ok(cond, texto, detalle=""):
@@ -37,7 +44,7 @@ def ok(cond, texto, detalle=""):
         print("  ✓ " + texto)
     else:
         fallos += 1
-        print("  ✗ " + texto + (" — " + detalle if detalle else ""))
+        print("  ✗ " + texto + (" — " + str(detalle) if detalle else ""))
 
 
 spec = importlib.util.spec_from_file_location("empaquetar", os.path.join(RAIZ, "herramientas", "pareo-cli-empaquetar.py"))
@@ -63,14 +70,19 @@ with zipfile.ZipFile(ZIP) as z:
     ok(not viejos, "cada archivo es igual al del repositorio",
        "desactualizados: " + ", ".join(viejos) + " — corre: python3 herramientas/pareo-cli-empaquetar.py")
 
-print("=== 2. Descomprimido, corre ===")
+print("=== 2. " + ("El ejecutable, solo en una carpeta vacía, corre ===" if EJECUTABLE else "Descomprimido, corre ==="))
 with tempfile.TemporaryDirectory() as tmp:
     with zipfile.ZipFile(ZIP) as z:
         z.extractall(tmp)
     base = os.path.join(tmp, emp.CARPETA)
 
+    if EJECUTABLE:
+        base = os.path.join(tmp, "vacia")
+        os.makedirs(base)
+
     def correr(*args):
-        r = subprocess.run(["node", "pareo.js", *args], cwd=base, capture_output=True, text=True, timeout=300)
+        orden = [EJECUTABLE] if EJECUTABLE else ["node", "pareo.js"]
+        r = subprocess.run(orden + list(args), cwd=base, capture_output=True, text=True, encoding="utf-8", timeout=300)
         return r.returncode, r.stdout, r.stderr
 
     c, out, _ = correr("--version")

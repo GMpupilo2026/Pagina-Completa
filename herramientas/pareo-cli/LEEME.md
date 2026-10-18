@@ -14,6 +14,14 @@ siempre lo mismo.
 [Node.js](https://nodejs.org) 18 o más nuevo. Nada más: el motor de
 emparejamiento viene incluido en WebAssembly.
 
+**En Windows, sin instalar Node:** está [`pareo-integral.exe`](https://github.com/GMpupilo2026/Pagina-Completa/releases/download/pareo-integral-windows/pareo-integral.exe),
+un solo archivo con todo adentro. Se usa igual que este paquete, cambiando
+`node pareo.js` por `pareo-integral.exe` (por ejemplo,
+`pareo-integral.exe --dutch TORNEO.trf -p`). Todavía no lleva firma digital,
+así que la primera vez Windows puede avisar «Windows protegió su PC»: en «Más
+información» → «Ejecutar de todas formas». Junto al .exe está su
+`SHA256SUMS.txt` para comprobar que el archivo es el original.
+
 ## Cómo se usa
 
 Para emparejar, comprobar y generar se usa la misma sintaxis de JaVaFo y

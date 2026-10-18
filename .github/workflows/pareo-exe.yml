@@ -1,0 +1,97 @@
+# Arma pareo-integral.exe (Pareo Integral sin instalar Node) en Windows, le
+# pasa las pruebas de la línea de comandos y, al llegar a main, lo publica en
+# el release «pareo-integral-windows», que es de donde lo bajan el manual
+# (pareo-manual.html) y el LEEME del zip.
+#
+# No va en el sitio: pesa más de 100 MB y Cloudflare acepta hasta 25 MiB por
+# archivo. Ver «El ejecutable de Windows» en docs/decisiones/juegos-y-torneos.md.
+name: Pareo Integral para Windows
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - js/pareo/cli.js
+      - js/pareo/torneo.js
+      - js/pareo/desempates.js
+      - js/vendor/bbppairings/**
+      - herramientas/pareo-exe-armar.js
+      - herramientas/verificar-pareo-cli.py
+      - herramientas/pareo-cli-empaquetar.py
+      - herramientas/datos/pareo-motor/**
+      - descargas/pareo-integral-cli.zip
+      - package.json
+      - package-lock.json
+      - .github/workflows/pareo-exe.yml
+  push:
+    branches: [main]
+    paths:
+      - js/pareo/cli.js
+      - js/pareo/torneo.js
+      - js/pareo/desempates.js
+      - js/vendor/bbppairings/**
+      - herramientas/pareo-exe-armar.js
+      - herramientas/verificar-pareo-cli.py
+      - herramientas/pareo-cli-empaquetar.py
+      - herramientas/datos/pareo-motor/**
+      - descargas/pareo-integral-cli.zip
+      - package.json
+      - package-lock.json
+      - .github/workflows/pareo-exe.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pareo-exe-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  windows:
+    name: Armar y probar el .exe
+    runs-on: windows-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+      - run: npm ci
+      - run: node herramientas/pareo-exe-armar.js --salida dist/pareo-integral.exe
+      - run: python herramientas/verificar-pareo-cli.py --ejecutable dist/pareo-integral.exe
+      - name: Suma de comprobación
+        shell: bash
+        run: cd dist && sha256sum pareo-integral.exe > SHA256SUMS.txt && cat SHA256SUMS.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pareo-integral-windows
+          path: dist/
+
+  publicar:
+    name: Publicar en el release
+    needs: windows
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: pareo-integral-windows
+          path: dist
+      - env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          NOTAS="Pareo Integral para Windows, sin instalar Node.js: el mismo motor y el mismo código que https://ajedrez-integral.com/pareo.html. Se usa como la línea de comandos (pareo-integral.exe --help). Armado de ${GITHUB_SHA::7}. Todavía no tiene el aval de FIDE ni firma digital."
+          if gh release view pareo-integral-windows >/dev/null 2>&1; then
+            gh release edit pareo-integral-windows --notes "$NOTAS"
+          else
+            gh release create pareo-integral-windows --target "$GITHUB_SHA" --title "Pareo Integral para Windows" --notes "$NOTAS" --latest=false
+          fi
+          gh release upload pareo-integral-windows dist/pareo-integral.exe dist/SHA256SUMS.txt --clobber

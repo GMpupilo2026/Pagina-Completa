@@ -1942,6 +1942,37 @@ de quien organiza), la casilla de consentimiento y su mención en
   descomprime y lo corre: empareja las pruebas de bbpPairings, genera, comprueba
   y saca la clasificación con los mismos números que `desempates.js`.
 
+### El ejecutable de Windows
+
+`pareo-integral.exe` es la misma línea de comandos sin instalar Node: los
+probadores de FIDE y los árbitros trabajan casi siempre en Windows, y pedirles
+Node.js para probar el programa es un paso más donde se quedan.
+
+- **Es un «Single Executable Application» de Node**: una copia del propio
+  `node.exe` con el programa adentro. Lo arma `herramientas/pareo-exe-armar.js`:
+  junta `cli.js`, `torneo.js`, `desempates.js` y `bbppairings.js` con esbuild y
+  mete el `.wasm` como recurso (`sea.getAsset`), con `postject`. Es el mismo
+  código que el zip y la página, no una copia.
+- **El motor no lee `Module.wasmBinary`**: se compiló con la lista corta de
+  opciones de Emscripten y sigue buscando el `.wasm` al lado del archivo. El
+  ejecutable se lo da con `instantiateWasm`, por el `crearMotor` que recibe
+  `principal()` de `cli.js` (el zip usa el de siempre, del disco).
+- **Sale para el sistema en que se arma**, así que el `.exe` se arma en
+  Windows: `.github/workflows/pareo-exe.yml` lo arma, le pasa
+  `verificar-pareo-cli.py --ejecutable` desde una carpeta vacía (tiene que
+  andar sin `js/` al lado) y, al llegar a `main`, lo sube con su
+  `SHA256SUMS.txt` al release `pareo-integral-windows` de GitHub, de donde lo
+  enlazan el manual y el LEEME. **No va en el sitio**: pesa más de 100 MB y
+  Cloudflare acepta hasta 25 MiB por archivo (`dist/` está en `.gitignore` y
+  `.assetsignore`).
+- **En cada PR, `verificar-pareo-exe.js`** arma el mismo ejecutable para Linux
+  y le pasa las mismas pruebas: un `require` que esbuild no junta o el motor
+  que deja de cargarse salta antes del merge, no en el Windows de `main`.
+- **No lleva firma digital** (cuesta un certificado de firma de código), así
+  que Windows avisa «Windows protegió su PC» la primera vez; el manual y el
+  LEEME dicen cómo seguir. Con un certificado, la firma va en el flujo, después
+  de armarlo y antes de probarlo.
+
 ### Dónde se entra: las herramientas de arbitraje
 
 - **En la vitrina de las herramientas de arbitraje** (`herramientas-arbitraje.html`,
@@ -1960,7 +1991,7 @@ de quien organiza), la casilla de consentimiento y su mención en
 ### Lo que falta para pedir el aval
 
 Lo que pide el C.04.A (programa, interfaz en inglés, TRF, FPC y RTG públicos)
-está, con el manual en inglés y la línea de comandos para probarlo en lote.
+está, con el manual en inglés y la línea de comandos para probarlo en lote (también como `.exe` para Windows).
 Falta lo que no es código: el formulario FE-1 y las pruebas de FIDE en su
 entorno, y que el árbitro del sitio lo pruebe con torneos reales (sus TRF de
 Swiss-Manager se abren en la ficha «Archivos»). Mientras no haya aval, la
@@ -1968,7 +1999,7 @@ página dice que no lo tiene.
 
 **Al tocar `js/pareo/`, el motor, `pareo.html` o `pareo-manual.html`, correr
 `python3 herramientas/pareo-cli-empaquetar.py` y
-`node herramientas/verificar-todo.js pareo pareo-pagina pareo-cli`.** `pareo` (sin
+`node herramientas/verificar-todo.js pareo pareo-pagina pareo-cli pareo-exe`.** `pareo` (sin
 navegador): el motor contra las pruebas del propio bbpPairings, el generador y
 el comprobador (que marca una mesa con los colores al revés), 60 torneos de
 Pareo Integral con byes, retiros, inscripciones tardías e incomparecencias

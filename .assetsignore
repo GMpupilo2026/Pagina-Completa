@@ -84,3 +84,7 @@ js/diagnostico-items.js
 # Las imágenes para redes sociales (herramientas/imagenes-redes.js): se suben
 # a mano a Facebook e Instagram, ninguna página las pide.
 img/redes
+
+# El ejecutable de Pareo Integral: se publica en GitHub Releases (pesa más
+# que los 25 MiB que acepta un archivo del sitio).
+dist

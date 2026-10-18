@@ -13,6 +13,14 @@ web page, so both always give the same answers.
 [Node.js](https://nodejs.org) 18 or later. Nothing else: the pairing engine is
 included as WebAssembly.
 
+**On Windows, without installing Node:** download
+[`pareo-integral.exe`](https://github.com/GMpupilo2026/Pagina-Completa/releases/download/pareo-integral-windows/pareo-integral.exe), a single file with everything inside. It works
+like this package, with `pareo-integral.exe` instead of `node pareo.js` (for
+example, `pareo-integral.exe --dutch TOURNAMENT.trf -p`). It is not digitally
+signed yet, so the first time Windows may show "Windows protected your PC":
+click "More info" → "Run anyway". Its `SHA256SUMS.txt`, next to the .exe,
+lets you check that the file is the original.
+
 ## Usage
 
 The syntax for pairing, checking and generating is the one of JaVaFo and

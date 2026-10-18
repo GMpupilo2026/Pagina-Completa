@@ -30,7 +30,9 @@ const D = require("./desempates.js");
 
 const VERSION = "Pareo Integral 1.1 (bbpPairings 8f9e3c5, FIDE Dutch System C.04.3 2026, tie-breaks C.07:2026)";
 
-const AYUDA = `${VERSION}
+// `nombre` es cómo se llama al programa: «node pareo.js» desde el zip,
+// «pareo-integral.exe» desde el ejecutable de Windows.
+const ayuda = (nombre) => `${VERSION}
 https://ajedrez-integral.com/pareo.html
 
 Usage / Uso:
@@ -51,12 +53,19 @@ Usage / Uso:
   node pareo.js --version | --help
 
 Exit codes (as bbpPairings / como bbpPairings): 0 ok, 1 no valid pairing,
-2 unexpected error, 3 invalid request or file, 4 size limit, 5 file error.`;
+2 unexpected error, 3 invalid request or file, 4 size limit, 5 file error.`.replace(/node pareo\.js/g, nombre);
 
 // Las opciones de bbpPairings que llevan detrás un archivo de SALIDA.
 const SALIDAS = new Set(["-p", "-o", "-l"]);
 
-async function conSalidas(args) {
+// El motor sale de js/vendor/bbppairings/ al lado de este archivo. El
+// ejecutable (herramientas/pareo-exe-armar.js) no tiene esa carpeta: trae el
+// .wasm adentro y pasa su propio `crearMotor`.
+function crearMotorDelDisco(opciones) {
+  return require(path.join(__dirname, "..", "vendor", "bbppairings", "bbppairings.js"))(opciones);
+}
+
+async function conSalidas(args, crearMotor) {
   // Los archivos de entrada se copian al sistema de archivos del motor con un
   // nombre propio, y los de salida (-p, -o, -l) se copian de vuelta al terminar.
   const archivos = {};
@@ -75,8 +84,7 @@ async function conSalidas(args) {
       argv.push(interno);
     } else argv.push(a);
   }
-  const crear = require(path.join(__dirname, "..", "vendor", "bbppairings", "bbppairings.js"));
-  const m = await crear({
+  const m = await crearMotor({
     print: (t) => process.stdout.write(t + "\n"),
     printErr: (t) => process.stderr.write(t + "\n"),
   });
@@ -124,8 +132,8 @@ function clasificacion(args) {
   return 0;
 }
 
-async function principal(args) {
-  if (!args.length || args.includes("--help") || args.includes("-h")) { console.log(AYUDA); return 0; }
+async function principal(args, { crearMotor = crearMotorDelDisco, nombre = "node pareo.js" } = {}) {
+  if (!args.length || args.includes("--help") || args.includes("-h")) { console.log(ayuda(nombre)); return 0; }
   if (args.includes("--version")) { console.log(VERSION); return 0; }
   if (args.includes("--tiebreak-codes")) {
     for (const x of D.CATALOGO) console.log(x.codigo.padEnd(7) + x.en + " / " + x.es);
@@ -136,7 +144,7 @@ async function principal(args) {
     process.stderr.write("Only the FIDE Dutch System is offered (--dutch). / Solo se ofrece el Sistema Holandés (--dutch).\n");
     return 3;
   }
-  return conSalidas(args);
+  return conSalidas(args, crearMotor);
 }
 
 if (require.main === module) {

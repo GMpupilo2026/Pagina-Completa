@@ -45,3 +45,7 @@ herramientas/.cache-estilo.json
 # nombres de menores de edad, asistencia y fotos. Se trabajan fuera del
 # repositorio; esta línea es por si alguien los guarda acá por descuido.
 informes-ccdr/
+
+# El ejecutable de Pareo Integral (herramientas/pareo-exe-armar.js): pesa
+# más de 100 MB y se publica en GitHub Releases, no en el repositorio.
+dist/
