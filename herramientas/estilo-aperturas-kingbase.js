@@ -14,10 +14,17 @@
  *     familia): las demás ya tienen sus partidas, y sumarle KingBase a todas
  *     cambiaría la medida de cada una sin necesidad.
  *   - Una partida entra si llega a la posición PROPIA de una de esas
- *     aperturas (la misma de la medición) en sus primeras 30 medias jugadas,
- *     también por transposición. Antes de jugarla con chess.js —que en la
- *     versión 0.10.3 es lento para leer SAN— se descartan las que no tienen
- *     las jugadas de esa posición entre sus primeras 15 de cada color.
+ *     aperturas (la misma de la medición), también por transposición. Esa
+ *     posición tiene k medias jugadas hechas, y se llega a ella en la media
+ *     jugada k (con las mismas jugadas en otro orden): se mira solo ahí, así
+ *     que de cada partida se juegan k medias jugadas, y las 40 de la que
+ *     entra. Antes, sin chess.js —que en la versión 0.10.3 es lento para leer
+ *     SAN—, se descartan las que no tienen las jugadas de esa posición entre
+ *     sus primeras k. Mirando hasta la media jugada 30, como la medición, la
+ *     primera corrida llevaba 45 minutos sin terminar (casi todas las
+ *     partidas de D00-D29 tienen d4, e3 y d5 en algún momento). Llegar de
+ *     nuevo con una pieza que va y vuelve también cuenta en la medición; acá
+ *     se pierden esas pocas.
  *   - Hasta TOPE partidas por apertura, en el orden del archivo, y ninguna
  *     que ya esté (en este archivo o en el de torneos).
  *   - Como en el de torneos: de cada partida solo sus primeras 40 medias
@@ -67,7 +74,7 @@ function main() {
     return !m || !m.n || m.base !== "variante";
   }).map(({ linea, propia, pos }) => {
     const define = linea.jugadas.slice(0, propia + 1).map(limpiar);
-    return { id: linea.id, pos, blancas: define.filter((_, i) => i % 2 === 0), negras: define.filter((_, i) => i % 2 === 1) };
+    return { id: linea.id, pos, k: define.length, blancas: define.filter((_, i) => i % 2 === 0), negras: define.filter((_, i) => i % 2 === 1) };
   });
   if (!objetivos.length) { console.log("Todas las aperturas llegan al mínimo: no hace falta KingBase."); return; }
   console.log("Se buscan: " + objetivos.map((o) => o.id).join(", "));
@@ -79,12 +86,13 @@ function main() {
   }
   if (fs.existsSync(SALIDA)) lineas.push(...fs.readFileSync(SALIDA, "utf8").split("\n").filter(Boolean));
   const cuenta = Object.fromEntries(objetivos.map((o) => [o.id, 0]));
+  const K = Math.max(...objetivos.map((o) => o.k));
   // Lo que ya había en el archivo cuenta para el tope.
   for (const l of lineas) {
     const c = new Chess();
-    const pos = new Set();
-    for (const u of l.split(" ").slice(0, 30)) { if (!c.move({ from: u.slice(0, 2), to: u.slice(2, 4), promotion: u[4] })) break; pos.add(Medir.clavePos(c.fen())); }
-    for (const o of objetivos) if (pos.has(o.pos)) cuenta[o.id]++;
+    const enPly = [];
+    for (const u of l.split(" ").slice(0, K)) { if (!c.move({ from: u.slice(0, 2), to: u.slice(2, 4), promotion: u[4] })) break; enPly.push(Medir.clavePos(c.fen())); }
+    for (const o of objetivos) if (enPly[o.k - 1] === o.pos) cuenta[o.id]++;
   }
 
   for (const archivo of archivos) {
@@ -93,22 +101,32 @@ function main() {
     for (const pgn of texto.split(/\n\n(?=\[Event )/)) {
       const s = sanes(pgn);
       if (!s || s.length < MIN_PLIES) continue;
-      const b = new Set(s.slice(0, 30).filter((_, i) => i % 2 === 0));
-      const n = new Set(s.slice(0, 30).filter((_, i) => i % 2 === 1));
-      const posibles = objetivos.filter((o) => cuenta[o.id] < TOPE && o.blancas.every((x) => b.has(x)) && o.negras.every((x) => n.has(x)));
+      const posibles = objetivos.filter((o) => {
+        if (cuenta[o.id] >= TOPE) return false;
+        const b = new Set(s.slice(0, o.k).filter((_, i) => i % 2 === 0));
+        const n = new Set(s.slice(0, o.k).filter((_, i) => i % 2 === 1));
+        return o.blancas.every((x) => b.has(x)) && o.negras.every((x) => n.has(x));
+      });
       if (!posibles.length) continue;
+      // Primero, solo hasta la media jugada de la posición propia.
       const c = new Chess(INICIAL);
+      const hasta = Math.max(...posibles.map((o) => o.k));
+      const enPly = [];
+      for (let i = 0; i < hasta; i++) {
+        if (!c.move(s[i], { sloppy: true })) break;
+        enPly.push(Medir.clavePos(c.fen()));
+      }
+      const llega = posibles.filter((o) => enPly[o.k - 1] === o.pos);
+      if (!llega.length) continue;
+      // La que entra, entera hasta la 40.
+      const g = new Chess(INICIAL);
       const ucis = [];
-      const pos = new Set();
       for (let i = 0; i < Math.min(PLIES, s.length); i++) {
-        const m = c.move(s[i], { sloppy: true });
+        const m = g.move(s[i], { sloppy: true });
         if (!m) break;
         ucis.push(m.from + m.to + (m.promotion || ""));
-        if (i < 30) pos.add(Medir.clavePos(c.fen()));
       }
       if (ucis.length < MIN_PLIES) continue;
-      const llega = posibles.filter((o) => pos.has(o.pos));
-      if (!llega.length) continue;
       const l = ucis.join(" ");
       if (vistas.has(l)) continue;
       vistas.add(l);
@@ -117,6 +135,7 @@ function main() {
       nuevas++;
     }
     console.log(path.basename(archivo) + ": +" + nuevas + "  " + JSON.stringify(cuenta));
+    fs.writeFileSync(SALIDA, lineas.join("\n") + "\n");   // lo que va, por si se corta
   }
   fs.writeFileSync(SALIDA, lineas.join("\n") + "\n");
   console.log("Listo: " + lineas.length + " partidas en " + path.relative(path.join(__dirname, ".."), SALIDA)

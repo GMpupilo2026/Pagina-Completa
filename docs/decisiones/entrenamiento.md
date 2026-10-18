@@ -4239,10 +4239,32 @@ a +1, contra las demás aperturas del mismo color.
   escandinava quedaba medida con todas las partidas de 1.e4 y el gambito de
   rey con todas las de 1.e4 e5 (es decir, la española). Ahora solo se puede
   quitar la última respuesta del rival; si así no alcanzan las 15 partidas,
-  la apertura queda sin medir y no se recomienda. Hoy: 57 de 64 medidas.
+  la apertura queda sin medir y no se recomienda.
 - Medido así, sale lo que se sabe: la española cerrada y la francesa del
   avance, cerradas y de maniobra; la del cambio y la Berlín, de cambios; el
   Dragón y la India de rey, de ataque al rey.
+- **Las 7 que faltaban, de KingBase.** La holandesa, la Leningrado, el
+  gambito Evans, la Benoni moderna, la Stonewall, el gambito Budapest y la
+  Ponziani casi no se juegan en los torneos de élite transmitidos, y
+  quedaban sin medir: no se recomendaban nunca. Sus partidas salen de
+  KingBase 2017 (jugadores de 2000 o más, ordenadas por ECO; la copia de la
+  colección pública `rozim/ChessData` de GitHub), con
+  `herramientas/estilo-aperturas-kingbase.js`: solo para las aperturas que
+  hoy no llegan al mínimo de su variante (sumarle KingBase a todas cambiaría
+  cada medida sin necesidad), hasta 300 por apertura, las que llegan a su
+  posición propia, también por transposición, y lo mismo que se guarda de
+  las de torneos (40 medias jugadas en UCI, sin nombres). Quedan en
+  `herramientas/datos/estilo-aperturas-kingbase.txt`. Hoy: **64 de 64
+  medidas**, y `verificar-estilo-aperturas.js` falla si una queda sin medir.
+- La primera versión del extractor miraba, como la medición, si la partida
+  pasaba por la posición en sus primeras 30 medias jugadas, y a los 45
+  minutos no había terminado: casi todas las partidas de D00-D29 tienen d4,
+  e3 y d5 en algún momento. Una posición con k medias jugadas hechas se
+  alcanza en la media jugada k (por transposición, con las mismas jugadas en
+  otro orden): mirando solo ahí, tarda 2 minutos y medio.
+- Salen como se esperaba: el Evans y el Budapest, los que más material dan;
+  la Stonewall y la holandesa, de las más cerradas; la Benoni moderna, de
+  las que menos cambian.
 
 ### La recomendación
 
@@ -4333,14 +4355,16 @@ estilo-pagina informes`:
   45, la recomendación (líneas medidas de su grupo, más ataque a quien ataca,
   mantener la suya, nada de nivel 3 a quien empieza) y el seguimiento.
 - `estilo-aperturas`: vuelve a medir todas las aperturas (≈ 50 s) y exige lo
-  guardado; ninguna medida quitando una jugada propia; al menos 6 por grupo.
+  guardado; ninguna medida quitando una jugada propia; ninguna sin medir;
+  al menos 6 por grupo.
 - `estilo-pagina`: la prueba entera en el navegador (botones y por escrito),
   «Cómo juegas», el resultado, lo que se guarda (sin la hora), y con sus
   partidas de Lichess y un motor de mentira.
 - `informes`: el profe ve su estilo, lo que se le recomendó, las pruebas
   anteriores (una de la versión 1 con sus tres ejes) y nada de otro alumno;
   marca «¿Coincide con lo que ves?» y su opinión se guarda, se ve marcada y
-  mueve el perfil.
+  mueve el perfil; arma y manda el plan de 4 semanas; y el tema de toda la
+  clase con el estilo de cada uno y si la prueba funciona.
 
 Rompiéndolo a propósito saltaron: el tope de las partidas en 10, quitar el
 ensanche de los controles, medir una apertura quitando una jugada propia,
