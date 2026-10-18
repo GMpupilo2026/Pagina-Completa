@@ -445,6 +445,7 @@
         pintarPorVencer();
         pintarActividadFide();
         pintarListaFca();
+        pintarSubir();
         pintarPorIdentificar();
     }
 
@@ -569,7 +570,7 @@
     }
 
     /* «La lista de la Federación»: comparar quién está en la lista de árbitros
-       de la Federación Central de Ajedrez con quién arbitra de verdad. Cuenta
+       de la Federación Costarricense de Ajedrez con quién arbitra de verdad. Cuenta
        los torneos en Costa Rica como árbitro (principal, adjunto o árbitro, en
        la ficha de FIDE o en chess-results), sin los filtros de arriba. Están en
        la lista quienes tienen la fecha de la lista más nueva (fca_leida). */
@@ -602,6 +603,27 @@
         $("fca-cuenta").textContent = FCA
             ? `Lista de la Federación leída el ${fecha(FCA)}: ${plural(arbitros.concat(sinArbitrar).filter(enListaFca).length, "árbitro", "árbitros")}. ${plural(quietos.length, "no arbitró", "no arbitraron")} en Costa Rica desde ${anio - ANIOS_SIN + 1}; ${plural(fuera.length, "arbitró", "arbitraron")} ${SEGUIDO} o más torneos desde ${anio - ANIOS_SEGUIDO + 1} sin estar en ella.`
             : "Todavía no se leyó la lista de la Federación.";
+    }
+
+    /* «Quiénes pueden subir de categoría»: los AN de categoría C o B con algún
+       torneo que podría ser norma (subirCategoria), el más listo primero, y
+       cuántas veces fueron principal o adjunto en más de lo que deja su
+       categoría. */
+    function pintarSubir() {
+        const ORDEN = { "Le alcanzaría": 0, "Le falta otro tipo": 1, "Le falta una": 2, "Le faltan dos": 3 };
+        const filas = arbitros.filter((a) => a.titulo === "AN" && (a.catNacional === "C" || a.catNacional === "B")).map((a) => ({ a, s: subirCategoria(a) }))
+            .filter(({ s }) => s.firmes.length || s.revisar.length || s.fueraDeCategoria.length)
+            .sort((x, y) => ORDEN[x.s.estado] - ORDEN[y.s.estado] || y.s.firmes.length - x.s.firmes.length || x.a.nombre.localeCompare(y.a.nombre, "es"));
+        const td = (v, der) => el("td", { class: "px-3 py-2 align-top" + (der ? " text-right tabular-nums" : "") }, v);
+        $("tabla-subir").tBodies[0].replaceChildren(...(filas.length ? filas.map(({ a, s }) => {
+            const b = el("button", { type: "button", class: "font-semibold underline underline-offset-2 hover:no-underline text-left" }, a.nombre);
+            b.addEventListener("click", () => elegir(a.fide_id));
+            return el("tr", { class: "border-t border-brand-100 dark:border-brand-800" },
+                el("th", { scope: "row", class: "px-3 py-2 align-top font-normal text-left" }, b),
+                td(`${s.cat} a ${s.sigue}`), td(s.estado), td(miles(s.firmes.length), true), td(miles(s.revisar.length), true), td(miles(s.fueraDeCategoria.length), true));
+        }) : [el("tr", {}, el("td", { colspan: "6", class: "px-3 py-2 text-brand-500 dark:text-brand-300" }, "Ningún AN de categoría C o B tiene torneos que puedan ser norma."))]));
+        const listos = filas.filter((f) => f.s.par).length;
+        $("subir-cuenta").textContent = `${plural(filas.length, "Árbitro Nacional de categoría C o B tiene", "Árbitros Nacionales de categoría C o B tienen")} algo para mirar; a ${plural(listos, "le alcanzarían", "les alcanzarían")} las normas para subir (lo demás —el año con la categoría y los cursos— no se ve desde acá).`;
     }
 
     /* «Por identificar»: los de la lista que no figuran en FIDE y las celdas
@@ -750,6 +772,7 @@
         $("ficha-fide").textContent = textoFide(a);
         pintarHistorial(a);
         $("ficha-normas").replaceChildren(tarjetaNorma(a, "af"), tarjetaNorma(a, "ai"));
+        $("ficha-categoria").replaceChildren(...(a.titulo === "AN" ? [tarjetaCategoria(a)] : []));
         pintarRevision(a);
         pintarComparacion(a);
         pintarActividad("ficha-actividad", torneosDe(a));
@@ -892,6 +915,108 @@
         const y = (equipos.get(x.clave) || []).find((e) => e.x.cargos.includes("Chief") || e.x.roles.includes("ap"));
         return y ? y.a : null;
     }
+
+    /* «Para subir de categoría»: lo que le pide el Reglamento para Árbitros
+       de la Federación Costarricense de Ajedrez (inscrito en junio de 2025) a
+       un AN para pasar de C a B (art. 12) o de B a A (art. 14): un año con la
+       categoría, un curso intermedio de 20 horas (y para la A, uno de un
+       programa de pareo de 10) y DOS NORMAS posteriores a la categoría,
+       firmadas por un árbitro con licencia FIDE, en torneos de al menos 7
+       rondas, válidos para Elo nacional o internacional y de modalidad o
+       sistema distintos. Las normas valen tres años (art. 18). Desde afuera
+       se ven solo los torneos: cuáles podrían ser esas normas (fue adjunto o
+       árbitro, no el principal; el principal es de la lista y tiene licencia
+       FIDE). La fecha de su categoría y los cursos no se saben: se dicen. La
+       A ya puede pedir el AF por la Federación (art. 7). Además, lo que su
+       categoría no le deja hacer (arts. 11 y 13): ser principal o adjunto en
+       un torneo de FIDE o con más de 30 jugadores (C) o de 50 (B), desde que
+       se inscribió el reglamento. Ver «Para subir de categoría» en
+       docs/decisiones/juegos-y-torneos.md. */
+    const REGLAMENTO_FCA = "2025-06-17", NORMA_FCA_ANIOS = 3, RONDAS_FCA = 7;
+    const TOPE_JUGADORES = { C: 30, B: 50 };
+    const MODALIDAD = { Standard: "clasico", Rapid: "rapido", Blitz: "blitz" };
+    const MODALIDAD_ESCRITA = { clasico: "clásico", rapido: "rápido", blitz: "blitz" };
+    const valeParaElo = (x) => x.fide || (!!calculoDe(x) && calculoDe(x) !== "ninguno");
+    const modalidadDe = (x) => (x.t ? MODALIDAD[x.t.ritmo] : ritmoCr(x)) || "";
+    const sistemaDe = (x) => (x.t ? x.t.sistema : "") || "";
+    const rondasDe = (x) => Number(x.t ? x.t.rondas : x.cr.rondas) || 0;
+    const jugadoresDe = (x) => Number(x.t ? x.t.jugadores : x.cr.jugadores) || 0;
+    const nombreDe = (x) => (x.t || x.cr).nombre;
+    // Dos normas sirven juntas si la modalidad o el sistema (los que se sepan) son distintos.
+    const distintas = (p, q) => (modalidadDe(p) && modalidadDe(q) && modalidadDe(p) !== modalidadDe(q))
+        || (sistemaDe(p) && sistemaDe(q) && sistemaDe(p) !== sistemaDe(q));
+    const tipoEscrito = (x) => [MODALIDAD_ESCRITA[modalidadDe(x)] || "ritmo sin saber", sistemaDe(x) ? (SISTEMAS[sistemaDe(x)] || sistemaDe(x)).toLowerCase() : ""].filter(Boolean).join(", ");
+
+    function subirCategoria(a) {
+        const cat = a.catNacional, sigue = { C: "B", B: "A" }[cat];
+        if (a.titulo !== "AN" || !sigue) return { cat, sigue };
+        const desde = masAnios(hoyCr(), -NORMA_FCA_ANIOS);
+        const candidatas = a.todos.filter((x) => x.inicio >= desde && rondasDe(x) >= RONDAS_FCA && valeParaElo(x)
+            && (x.cargos.some((c) => c !== "Chief") || x.roles.some((r) => r === "adj" || r === "arb")))
+            .map((x) => {
+                const p = principalDe(x);
+                // Firma un árbitro con licencia FIDE: el principal, si es de la lista y FIDE lo tiene activo.
+                const firma = p && p !== a && p.fide && !p.fide.inactivo ? p : null;
+                return { x, p, firma };
+            })
+            .sort((u, v) => v.x.inicio.localeCompare(u.x.inicio));
+        const firmes = candidatas.filter((c) => c.firma), revisar = candidatas.filter((c) => !c.firma);
+        let par = null;
+        for (let i = 0; i < firmes.length && !par; i++) for (let j = i + 1; j < firmes.length && !par; j++) if (distintas(firmes[i].x, firmes[j].x)) par = [firmes[i], firmes[j]];
+        let estado, dicho;
+        if (par) { estado = "Le alcanzaría"; dicho = `Tiene ${plural(firmes.length, "torneo que podría ser norma", "torneos que podrían ser normas")}, con dos de modalidad o sistema distintos.`; }
+        else if (firmes.length >= 2) { estado = "Le falta otro tipo"; dicho = `Tiene ${plural(firmes.length, "torneo que podría ser norma", "torneos que podrían ser normas")}, pero todos ${tipoEscrito(firmes[0].x)}: las dos normas tienen que ser de modalidad o sistema distintos.`; }
+        else { estado = firmes.length ? "Le falta una" : "Le faltan dos"; dicho = firmes.length ? "Tiene un torneo que podría ser norma; le falta otro de modalidad o sistema distintos." : "No tiene torneos que puedan ser norma en los últimos tres años."; }
+        // Lo que su categoría no le deja hacer, desde que se inscribió el reglamento.
+        const tope = TOPE_JUGADORES[cat];
+        const fueraDeCategoria = a.todos.filter((x) => !x.fuera && x.inicio >= REGLAMENTO_FCA && (fue(x, "Chief", "ap") || fue(x, "Dep. Chief", "adj"))
+            && (x.fide || calculoDe(x) === "internacional" || calculoDe(x) === "ambos" || jugadoresDe(x) > tope))
+            .sort((u, v) => v.inicio.localeCompare(u.inicio));
+        const ultimoElo = a.todos.filter((x) => valeParaElo(x) && (fue(x, "Chief", "ap") || fue(x, "Dep. Chief", "adj") || fue(x, "Arbiter", "arb")))
+            .sort((u, v) => v.inicio.localeCompare(u.inicio))[0] || null;
+        return { cat, sigue, desde, estado, dicho, firmes, revisar, par, tope, fueraDeCategoria, ultimoElo };
+    }
+
+    function tarjetaCategoria(a) {
+        const s = subirCategoria(a);
+        const caja = el("div", { class: "bg-white dark:bg-brand-900 rounded-2xl shadow-md p-4", "data-categoria": s.cat || "" },
+            el("h3", { class: "text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide" }, "Para subir de categoría (reglamento de la Federación)"));
+        if (!s.cat) {
+            caja.append(el("p", { class: "mt-1" }, "No figura con categoría en la lista de la Federación, así que no se sabe qué le pide para subir."));
+            return caja;
+        }
+        if (s.cat === "A") {
+            caja.append(el("p", { class: "mt-1" }, el("strong", { class: "of-estado" }, "Ya es categoría A"), " ",
+                "la más alta de las nacionales: la Federación ya puede tramitarle el título de AF ante FIDE (art. 7). Lo que le pide FIDE está en «Para pedir el título», arriba."));
+            return caja;
+        }
+        const linea = (c) => el("li", { class: "of-detalle" }, `${fecha(c.x.inicio)} · ${nombreDe(c.x)} (${tipoEscrito(c.x)}, ${miles(rondasDe(c.x))} rondas) · ${cargoEscrito(c.x)}`
+            + (c.firma ? ` · firmaría ${c.firma.nombre} (${tituloCorto(c.firma)})` : c.p === a ? " · el principal era él" : c.p ? ` · principal: ${c.p.nombre}, sin licencia FIDE activa` : " · no se sabe quién fue el principal")
+            + ` · cuenta hasta el ${fecha(masAnios(c.x.inicio, NORMA_FCA_ANIOS))}`);
+        const pide = [
+            ["Normas", `${s.estado}. ${s.dicho}`],
+            ["Revisar", `Que sean posteriores a la fecha en que le dieron la categoría ${s.cat} (no la tenemos) y que el principal le haya dado la norma por escrito (art. 18).`],
+            ["Revisar", `Tener la categoría ${s.cat} desde hace al menos un año (art. ${s.sigue === "B" ? "12" : "14"}, a).`],
+            ["Revisar", s.sigue === "B"
+                ? "Un curso de arbitraje intermedio de al menos 20 horas, aprobado con 80 % o más y de menos de un año (art. 12, b)."
+                : "Un curso de arbitraje intermedio de al menos 20 horas, distinto del de la B, aprobado con 80 % o más y de menos de un año (art. 14, b), y uno de un programa de pareo avalado por FIDE de al menos 10 horas (art. 14, e)."],
+        ];
+        caja.append(
+            el("p", { class: "mt-1" }, el("strong", { class: "of-estado" }, `De ${s.cat} a ${s.sigue}: ${s.estado}`)),
+            el("ul", { class: "mt-1 space-y-1 text-sm" }, ...pide.map(([e, t]) => el("li", { "data-estado": e }, el("strong", {}, e + ": "), t))),
+            s.firmes.length ? el("div", { class: "mt-2" }, el("h4", { class: "text-sm font-semibold" }, "Torneos que podrían ser norma"),
+                el("ul", { class: "mt-1 space-y-0.5", "data-subir": "firmes" }, ...s.firmes.map(linea))) : null,
+            s.revisar.length ? el("details", { class: "of-detalle mt-2" }, el("summary", { class: "cursor-pointer underline underline-offset-2" }, `Para revisar: no se sabe si el principal tenía licencia FIDE (${miles(s.revisar.length)})`),
+                el("ul", { class: "mt-1 space-y-0.5", "data-subir": "revisar" }, ...s.revisar.map(linea))) : null,
+            s.fueraDeCategoria.length ? el("div", { class: "mt-2" }, el("h4", { class: "text-sm font-semibold" }, "Más de lo que deja su categoría"),
+                el("p", { class: "of-detalle" }, `Una categoría ${s.cat} solo puede ser principal o adjunta en torneos válidos solo para Elo nacional y de hasta ${s.tope} jugadores (art. ${s.cat === "C" ? "11" : "13"}). Desde junio de 2025 fue principal o adjunto en:`),
+                el("ul", { class: "mt-1 space-y-0.5", "data-subir": "fuera" }, ...s.fueraDeCategoria.map((x) => el("li", { class: "of-detalle" },
+                    `${fecha(x.inicio)} · ${nombreDe(x)} · ${cargoEscrito(x)} · ${x.fide ? "de FIDE" : calculoDe(x) === "nacional" ? "solo Elo nacional" : "Elo internacional"}, ${miles(jugadoresDe(x))} jugadores`)))) : null,
+            el("p", { class: "of-detalle mt-2" }, (s.ultimoElo ? `Su último torneo válido para Elo como árbitro: ${fecha(s.ultimoElo.inicio)}. ` : "")
+                + "Cuentan los torneos de los últimos tres años (lo que dura una norma) de 7 rondas o más, válidos para Elo nacional o internacional, en que fue adjunto o árbitro; firma el principal si es de la lista y FIDE lo tiene activo. La modalidad es el ritmo (clásico, rápido o blitz) y el sistema, el de la ficha de FIDE (los de chess-results no lo dicen)."));
+        return caja;
+    }
+
     // El título que tenía alguien en una fecha: con las fechas que se sepan
     // (el perfil, el Consejo o el año del perfil); si no se sabe, el de hoy.
     function tituloEn(p, dia) {
@@ -1365,7 +1490,7 @@
         else if (f.af_fecha) partes.push(`AF aprobado por el Consejo el ${fecha(f.af_fecha)} (${f.af_consejo}). La fecha oficial es la que FIDE anota en su perfil, de dos a cinco semanas después: hasta tenerla, lo que empezó en los ${VENTANA} días siguientes queda para revisar.`);
         else if (["FA", "IA"].includes(a.titulo)) partes.push("De su AF solo se sabe el año (el de su perfil).");
         if (f.ia_fecha) partes.push(`AI aprobado el ${fecha(f.ia_fecha)} (${f.ia_consejo}).`);
-        if (a.catNacional) partes.push(`Árbitro Nacional categoría ${a.catNacional} según la lista de la Federación Central de Ajedrez (leída el ${fecha(f.fca_leida)}).`);
+        if (a.catNacional) partes.push(`Árbitro Nacional categoría ${a.catNacional} según la lista de la Federación Costarricense de Ajedrez (leída el ${fecha(f.fca_leida)}).`);
         const act = actividad(a);
         if (act) partes.push(act.texto);
         return partes.join(" ");

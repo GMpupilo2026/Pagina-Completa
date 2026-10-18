@@ -6,7 +6,7 @@ Rica de la lista oficial de FIDE, la fecha en que el Consejo de FIDE les
 aprobó el AF y el AI (y la fecha que dice su perfil de FIDE, la oficial, en
 «perfil» de cada aprobación cuando se conoce), y sus solicitudes de título y seminarios según los
 informes de la Comisión de Árbitros. Al final, la categoría nacional (A, B o
-C) de cada Árbitro Nacional, de la lista de la Federación Central de Ajedrez
+C) de cada Árbitro Nacional, de la lista de la Federación Costarricense de Ajedrez
 (herramientas/datos/arbitros-cr-lista-fca.json, migración
 20261016033536_arbitros_cr_categoria_nacional.sql).
 

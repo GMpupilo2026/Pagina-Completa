@@ -3613,7 +3613,7 @@ seminario de Luis, en orden).
 ## La categoría nacional: la lista de la Federación
 
 La lista oficial de FIDE dice si alguien es NA, pero no su categoría nacional.
-La Federación Central de Ajedrez la publica en
+La Federación Costarricense de Ajedrez la publica en
 `fcacostarica.com/lista-de-arbitros/`, una tabla con el FIDE ID, el nombre, la
 federación, el título, la categoría y la licencia. La categoría de un NA viene
 como «NAA», «NAB» o «NAC» (A, B o C); la de un FA o IA es la de FIDE (D, o A
@@ -3658,11 +3658,61 @@ para Carolina Muñoz). El dueño la pasó en octubre de 2026.
   - quién arbitró 3 o más torneos en los últimos dos años sin estar en ella.
   Que alguien no figure como árbitro en chess-results no prueba que no haya
   arbitrado: el organizador puede no haberlo anotado. La página lo dice.
-- **Lo que le falta a un AN para subir de categoría** no se hizo: hace falta
-  el reglamento de categorías de la Federación (cuántos torneos y de qué tipo
-  pide la A, la B y la C), y no está publicado en `fcacostarica.com` (se buscó
-  en octubre de 2026; solo aparecen las contrataciones, que piden la categoría
-  A o B para algunos cursos). Con el reglamento, sale de los mismos datos.
+- **Lo que le falta a un AN para subir de categoría**: ver «Para subir de
+  categoría», abajo. En `fcacostarica.com` el reglamento no está; lo pasó el
+  dueño.
+
+## Para subir de categoría
+
+El dueño pasó en octubre de 2026 el **Reglamento para Árbitros de la Federación
+Costarricense de Ajedrez** (el PDF inscrito en el Registro de Personas
+Jurídicas el 17/06/2025, documento 2025-331526-1). El nombre de la Federación
+es ese: la herramienta decía «Federación Central de Ajedrez» y se corrigió (en
+`herramientas/programas-estudio/datos/` todavía queda el nombre viejo: es otro
+material y hay que regenerar sus Word para cambiarlo).
+
+Lo que pide, en lo que toca a la herramienta:
+
+- **Las categorías** (art. 5): C, B y A son de la Federación; AF e IA, de FIDE.
+  Solo a la A le tramita el AF (art. 7).
+- **Para subir de C a B (art. 12) o de B a A (art. 14)**:
+  - un año con la categoría que tiene;
+  - un curso intermedio de 20 horas aprobado con 80 %, de menos de un año
+    (para la A, otro distinto del de la B y además uno de un programa de pareo
+    avalado por FIDE de 10 horas);
+  - **dos normas** posteriores a la categoría, firmadas por un árbitro con
+    licencia FIDE, en torneos de al menos 7 rondas, válidos para Elo nacional o
+    internacional y de modalidades o sistemas distintos.
+- **Una norma vale tres años** (art. 18) y la da el principal del torneo.
+- **Lo que puede hacer cada una**: la C es principal o adjunta solo en torneos
+  de Elo nacional, de cuarta o tercera división y hasta 30 jugadores (art. 11);
+  la B, hasta segunda división y 50 (art. 13); la A, todo, campeonatos
+  nacionales incluidos (art. 15).
+
+Cómo lo lleva la herramienta (`subirCategoria()` en `js/arbitros-cr.js`):
+
+- **En la ficha de un AN**, la tarjeta «Para subir de categoría». Cuenta como
+  posible norma un torneo de los últimos tres años, de 7 rondas o más, de FIDE
+  o con «Cálculo de elo» nacional o internacional, en que fue adjunto o árbitro
+  (no el principal). Firma el principal si es de la lista y FIDE lo tiene
+  activo; si el principal no es de la lista, si es él mismo o si está
+  inactivo, el torneo queda «para revisar». Dos normas sirven si la modalidad
+  (el ritmo: el de FIDE, el de la ficha de chess-results o el deducido del
+  control) o el sistema (solo el de FIDE: chess-results no lo da) son
+  distintos. Lo que no se ve —la fecha de la categoría, el año con ella, los
+  cursos y el informe escrito— lo dice como «Revisar».
+- **La A** dice que ya puede pedir el AF por la Federación; **un AN sin
+  categoría** en la lista, que no se sabe.
+- **«Más de lo que deja su categoría»**: desde el 17/06/2025 (cuándo lo aprobó
+  la Asamblea no se sabe; esa es la fecha del Registro), los torneos en Costa
+  Rica en que una C o B fue principal o adjunta y el torneo era de FIDE, tenía
+  Elo internacional o pasaba de 30 o 50 jugadores. La división de los
+  jugadores no se ve: no se mira.
+- **En la lista**, «Quiénes pueden subir de categoría»: los AN C o B con algo
+  para mirar, el más cerca primero.
+- `verificar-arbitros-cr.js` lo prueba con el reloj en diciembre de 2025: Luis
+  (B) sin normas, después con un blitz y un clásico firmados por Óscar (y uno
+  de 5 rondas que no cuenta), y dos torneos más allá de la B.
 
 ## La fecha oficial del título: la del perfil de FIDE
 
