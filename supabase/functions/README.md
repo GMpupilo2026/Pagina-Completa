@@ -69,6 +69,16 @@ está al límite, sin sesión de persona. A cambio exige el secreto
 falle a la vista. Ver «El aviso de base saturada» en
 `docs/decisiones/sitio-e-infraestructura.md`.
 
+## `arbitros-avisos` va con `verify_jwt` en **false**
+
+La llama `public.disparar_avisos_arbitros()` (pg_cron `avisos-arbitros`, el
+día 1 de cada mes), sin sesión de persona. A cambio exige el secreto
+`tanda_arbitros_secreto` de la bóveda, y a quién le escribe (los árbitros con
+correo y avisos encendidos en `arbitros_cr_contacto`) lo lee de la base con
+`arbitros_cr_por_vencer()`: el pedido no trae destinatarios. Lo avisado queda
+en `arbitros_cr_avisos_enviados` y no se repite. Ver «El aviso por correo de lo
+que se vence» en `docs/decisiones/juegos-y-torneos.md`.
+
 ## `prueba-gratis` va con `verify_jwt` en **true**, y solo para administración
 
 La prueba gratis se pide por WhatsApp y la crea quien administra desde

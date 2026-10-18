@@ -281,6 +281,7 @@
 
     function preparar(filasArb, filasTor, filasCar, filasCr, filasCrCar, filasFide) {
         const deFide = new Map(filasFide.map((f) => [f.fide_id, f]));
+        fideTodos = deFide;
         for (const t of filasTor) torneos.set(t.id, t);
         for (const t of filasCr) {
             torneosCr.set(t.clave, t);
@@ -798,6 +799,7 @@
         $("ficha-normas").replaceChildren(tarjetaNorma(a, "af"), tarjetaNorma(a, "ai"));
         $("ficha-categoria").replaceChildren(...(a.titulo === "AN" ? [tarjetaCategoria(a)] : []));
         pintarFormacion(a);
+        pintarContacto(a);
         pintarRevision(a);
         pintarComparacion(a);
         pintarActividad("ficha-actividad", torneosDe(a));
@@ -1437,6 +1439,193 @@
             subtitulo: [`Cuatrimestre ${c.texto.replace(/^De /, "de ").replace(" (en curso)", "")}`, `Se entrega a la Junta Directiva a más tardar el ${c.entrega} (art. 3)`, "al " + window.HoraCR.fecha(new Date())].join(" · "),
             pie: "Árbitros de Costa Rica · Ajedrez Integral", autor: "Ajedrez Integral", fotos: [], bloques: b,
         };
+    }
+
+    /* ---- Lo que registra administración: la carga desde un Excel, el correo
+       de cada árbitro y los avisos por correo de lo que se vence ----
+       Las tablas (arbitros_cr_formacion, arbitros_cr_contacto) las escribe
+       solo quien administra (la RLS); la página solo muestra estas partes a
+       quien lo es. Ver «La carga desde un Excel» y «El aviso por correo de lo
+       que se vence» en docs/decisiones/juegos-y-torneos.md. */
+    let contactos = new Map(), fideTodos = new Map(), registro = [];
+    const CORREO_VALIDO = /^[^\s@<>"',;]+@[^\s@<>"',;]+\.[^\s@<>"',;]+$/;
+    // Cada columna del archivo, por cómo se suele escribir su título.
+    const COLUMNAS = [["fide_id", /(^|\s)(id\s*)?fide(\s*id)?$|^id$/], ["nombre", /^(nombre|arbitro|nombre completo)$/], ["tipo", /^(que|tipo|registro)$/],
+        ["categoria", /^categoria/], ["fecha", /^fecha/], ["horas", /^horas?$/], ["nota", /^(nota|calificacion)/], ["detalle", /^(detalle|curso|descripcion)/],
+        ["correo", /(correo|e-?mail)/], ["autorizo", /^autoriz/], ["avisos", /^avisos?$/]];
+    function tipoDe(t) {
+        const x = sinTildes(String(t || "")).trim();
+        if (!x) return "";
+        if (/categ/.test(x)) return "categoria";
+        if (/basic/.test(x)) return "basico";
+        if (/intermed/.test(x)) return "intermedio";
+        if (/pareo/.test(x)) return "pareo";
+        if (/actualiz|refresc/.test(x)) return "actualizacion";
+        return null;
+    }
+    // «15/01/2024», «2024-01-15» o «15-1-2024» a «2024-01-15».
+    function fechaIso(v) {
+        const t = String(v || "").trim();
+        let m = /^(\d{4})-(\d{2})-(\d{2})/.exec(t);
+        if (m) return `${m[1]}-${m[2]}-${m[3]}`;
+        m = /^(\d{1,2})[/.-](\d{1,2})[/.-](\d{4})/.exec(t);
+        return m && +m[2] >= 1 && +m[2] <= 12 && +m[1] >= 1 && +m[1] <= 31 ? `${m[3]}-${m[2].padStart(2, "0")}-${m[1].padStart(2, "0")}` : "";
+    }
+    const numeroDe = (v) => { const t = String(v == null ? "" : v).replace("%", "").replace(",", ".").trim(); if (!t) return null; const n = Number(t); return Number.isFinite(n) ? n : NaN; };
+    // Un árbitro por su ID FIDE o por su nombre (las mismas palabras, en cualquier orden); si dos calzan, no se adivina.
+    function buscarArbitro(id, nombre) {
+        if (id) { const f = fideTodos.get(id), a = arbitros.find((x) => x.fide_id === id); return a || f ? { fide_id: id, nombre: (a && a.nombre) || f.nombre || String(id) } : { error: `El ID FIDE ${id} no está en la lista de árbitros de FIDE.` }; }
+        const clave = (n) => sinTildes(String(n || "")).replace(/[^a-z\s]/g, " ").split(/\s+/).filter(Boolean).sort().join(" ");
+        const q = clave(nombre);
+        if (!q) return { error: "No trae ni ID FIDE ni nombre." };
+        const todos = new Map();
+        for (const f of fideTodos.values()) todos.set(f.fide_id, f.nombre || "");
+        for (const a of arbitros) todos.set(a.fide_id, a.nombre);
+        const hay = [...todos].filter(([, n]) => clave(n) === q);
+        if (hay.length === 1) return { fide_id: hay[0][0], nombre: hay[0][1] };
+        return { error: hay.length ? `Hay ${hay.length} árbitros con ese nombre: ponle el ID FIDE.` : "No se reconoce ese nombre: ponle el ID FIDE." };
+    }
+    function leerRegistro(filas) {
+        const cab = filas.findIndex((f) => f.filter((c) => COLUMNAS.some(([, re]) => re.test(sinTildes(String(c || "")).trim()))).length >= 2);
+        if (cab < 0) return { error: "No se encontró la fila de títulos (ID FIDE o Nombre, Qué, Fecha…). Baja la plantilla para ver cómo va." };
+        const col = {};
+        filas[cab].forEach((c, i) => { const t = sinTildes(String(c || "")).trim(); const k = COLUMNAS.find(([, re]) => re.test(t)); if (k && !(k[0] in col)) col[k[0]] = i; });
+        const dato = (f, k) => (k in col ? String(f[col[k]] == null ? "" : f[col[k]]).trim() : "");
+        const salida = [];
+        filas.slice(cab + 1).forEach((f, i) => {
+            if (f.every((c) => !String(c || "").trim())) return;
+            const r = { fila: cab + i + 2 };
+            const quien = buscarArbitro(parseInt(dato(f, "fide_id"), 10) || 0, dato(f, "nombre"));
+            r.nombre = quien.nombre || dato(f, "nombre") || dato(f, "fide_id");
+            if (quien.error) { r.error = quien.error; salida.push(r); return; }
+            r.fide_id = quien.fide_id;
+            const tipo = tipoDe(dato(f, "tipo")), correo = dato(f, "correo").toLowerCase();
+            const errores = [];
+            if (tipo === null) errores.push(`«${dato(f, "tipo")}» no es categoría ni un curso (básico, intermedio, de pareo o de actualización).`);
+            else if (tipo) {
+                const dia = fechaIso(dato(f, "fecha")), cat = dato(f, "categoria").toUpperCase(), horas = numeroDe(dato(f, "horas")), nota = numeroDe(dato(f, "nota"));
+                if (!dia) errores.push("Falta la fecha o no se entiende (día/mes/año).");
+                if (tipo === "categoria" && !["A", "B", "C"].includes(cat)) errores.push("La categoría tiene que ser A, B o C.");
+                if (tipo !== "categoria" && !(horas > 0 && horas <= 500)) errores.push("Un curso lleva sus horas (de 0,5 a 500).");
+                if (tipo !== "categoria" && nota != null && !(nota >= 0 && nota <= 100)) errores.push("La nota va de 0 a 100.");
+                const ya = tipo === "categoria" && formacionDe({ fide_id: r.fide_id }).find((x) => x.tipo === "categoria" && x.categoria === cat);
+                if (ya) errores.push(`La categoría ${cat} ya está registrada (desde el ${fecha(ya.fecha)}).`);
+                if (!errores.length) r.formacion = { fide_id: r.fide_id, tipo, categoria: tipo === "categoria" ? cat : null, fecha: dia, horas: tipo === "categoria" ? null : horas,
+                    nota: tipo === "categoria" ? null : nota, detalle: dato(f, "detalle").slice(0, 200) };
+            }
+            if (correo) {
+                const autorizo = dato(f, "autorizo"), avisos = !/^(no|0|false|apagad)/.test(sinTildes(dato(f, "avisos")));
+                if (!CORREO_VALIDO.test(correo) || correo.length > 200) errores.push(`«${correo}» no parece un correo.`);
+                else if (autorizo.length < 3) errores.push("Con el correo va cómo autorizó recibir los avisos (columna «Autorizó»).");
+                else r.contacto = { fide_id: r.fide_id, correo, autorizo: autorizo.slice(0, 200), avisos };
+            }
+            if (!tipo && !correo && !errores.length) errores.push("No trae nada que registrar: ni «Qué» ni «Correo».");
+            if (errores.length) { r.error = errores.join(" "); delete r.formacion; delete r.contacto; }
+            salida.push(r);
+        });
+        return { filas: salida };
+    }
+    function queEscrito(r) {
+        const p = [];
+        if (r.formacion) { const f = r.formacion; p.push(f.tipo === "categoria" ? `Categoría ${f.categoria} desde el ${fecha(f.fecha)}` : `${TIPOS_FORMACION[f.tipo]} del ${fecha(f.fecha)}, ${horasEscritas(f.horas)}` + (f.nota != null ? `, ${miles(f.nota)} %` : "")); }
+        if (r.contacto) p.push(`Correo ${r.contacto.correo}` + (r.contacto.avisos ? "" : " (sin avisos)"));
+        return p.join(" · ") || "—";
+    }
+    function pintarRegistro() {
+        const td = (v) => el("td", { class: "px-3 py-2 align-top" }, v);
+        $("tabla-registro").tBodies[0].replaceChildren(...registro.map((r) => el("tr", { class: "border-t border-brand-100 dark:border-brand-800", "data-entra": r.error ? "no" : "si" },
+            td(String(r.fila)), td(r.nombre || "—"), td(queEscrito(r)), td(r.error ? "No entra: " + r.error : r.hecho || "Entra"))));
+        const entran = registro.filter((r) => !r.error && !r.hecho).length;
+        $("registro-vista").classList.toggle("hidden", !registro.length);
+        $("registro-guardar").classList.toggle("hidden", !entran);
+        $("registro-guardar").textContent = `Registrar ${entran} ${entran === 1 ? "fila" : "filas"}`;
+    }
+    async function abrirRegistro(e) {
+        const archivo = e.target.files && e.target.files[0];
+        e.target.value = "";
+        if (!archivo) return;
+        if (archivo.size > 5 * 1024 * 1024) { $("registro-estado").textContent = "El archivo pesa más de 5 MB."; return; }
+        $("registro-estado").textContent = "Leyendo el archivo…";
+        try {
+            const r = leerRegistro((await window.ReporteExcel.leer(archivo)).filas);
+            if (r.error) { registro = []; $("registro-estado").textContent = r.error; }
+            else { registro = r.filas; const malas = registro.filter((x) => x.error).length; $("registro-estado").textContent = `${plural(registro.length, "fila", "filas")}: ${miles(registro.length - malas)} ${registro.length - malas === 1 ? "entra" : "entran"} y ${miles(malas)} no. Revisa y aprieta «Registrar».`; }
+        } catch (err) { registro = []; $("registro-estado").textContent = "No se pudo leer el archivo: " + (err.message || err); }
+        pintarRegistro();
+    }
+    async function guardarRegistro() {
+        if (!soyAdmin) return;
+        $("registro-guardar").disabled = true;
+        let bien = 0, mal = 0;
+        for (const r of registro.filter((x) => !x.error && !x.hecho)) {
+            try {
+                if (r.formacion) { const { error } = await sb.from("arbitros_cr_formacion").insert(r.formacion); if (error) throw error; }
+                if (r.contacto) { const { error } = await sb.from("arbitros_cr_contacto").upsert({ ...r.contacto, actualizada: new Date().toISOString() }, { onConflict: "fide_id" }); if (error) throw error; contactos.set(r.fide_id, r.contacto); }
+                r.hecho = "Registrado"; bien++;
+            } catch (err) { r.error = /duplicate|unique/i.test(err.message || "") ? "Esa categoría ya estaba registrada." : "No se pudo: " + (err.message || err); mal++; }
+        }
+        const { data } = await sb.from("arbitros_cr_formacion").select("id,fide_id,tipo,categoria,fecha,horas,nota,detalle").order("fecha").order("id").range(0, 999);
+        if (data) { formacion = new Map(); for (const x of data) formacion.set(x.fide_id, (formacion.get(x.fide_id) || []).concat(x)); }
+        $("registro-guardar").disabled = false;
+        $("registro-estado").textContent = `Listo: ${plural(bien, "fila registrada", "filas registradas")}` + (mal ? `; ${plural(mal, "no se pudo", "no se pudieron")}.` : ".");
+        pintarRegistro();
+        pintarGeneral();
+    }
+    function bajarPlantilla() {
+        window.TablaExcel.bajar("registro-arbitros.xlsx", [{ nombre: "Registro", filas: [["ID FIDE", "Nombre", "Qué", "Categoría", "Fecha", "Horas", "Nota", "Detalle", "Correo", "Autorizó", "Avisos"],
+            [6500000, "Apellido Apellido, Nombre", "Categoría", "B", "15/01/2024", "", "", "", "", "", ""],
+            [6500000, "Apellido Apellido, Nombre", "Curso intermedio", "", "01/06/2025", 20, 90, "Taller intermedio de la Federación", "", "", ""],
+            [6500000, "Apellido Apellido, Nombre", "", "", "", "", "", "", "nombre@correo.com", "Formulario del curso de octubre 2026", "sí"]] }]);
+    }
+
+    // El correo de un árbitro en su ficha, para quien administra.
+    function pintarContacto(a) {
+        $("contacto-form").classList.toggle("hidden", !soyAdmin);
+        if (!soyAdmin) return;
+        const c = contactos.get(a.fide_id);
+        $("contacto-correo").value = c ? c.correo : "";
+        $("contacto-autorizo").value = c ? c.autorizo : "";
+        $("contacto-avisos").checked = c ? c.avisos !== false : true;
+        $("contacto-quitar").classList.toggle("hidden", !c);
+        $("contacto-estado").textContent = c ? (c.avisos !== false ? "Le llegan los avisos de lo que se le vence." : "Tiene correo, pero los avisos están apagados.") : "Sin correo: no le llegan los avisos.";
+    }
+    async function guardarContacto(e) {
+        e.preventDefault();
+        const a = arbitros.find((x) => x.fide_id === estado.elegido);
+        if (!a || !soyAdmin) return;
+        const fila = { fide_id: a.fide_id, correo: $("contacto-correo").value.trim().toLowerCase(), autorizo: $("contacto-autorizo").value.trim(), avisos: $("contacto-avisos").checked };
+        if (!CORREO_VALIDO.test(fila.correo)) { $("contacto-estado").textContent = "Ese correo no parece válido."; return; }
+        if (fila.autorizo.length < 3) { $("contacto-estado").textContent = "Escribe cómo autorizó recibir los avisos."; return; }
+        const { error } = await sb.from("arbitros_cr_contacto").upsert({ ...fila, actualizada: new Date().toISOString() }, { onConflict: "fide_id" });
+        if (error) { $("contacto-estado").textContent = "No se pudo guardar: " + error.message; return; }
+        contactos.set(a.fide_id, fila);
+        pintarContacto(a);
+        $("contacto-estado").textContent = "Listo: guardado. " + $("contacto-estado").textContent;
+    }
+    async function quitarContacto() {
+        const a = arbitros.find((x) => x.fide_id === estado.elegido);
+        if (!a || !soyAdmin) return;
+        if (!(await Avisos.confirmar(`¿Quitar el correo de ${a.nombre}? Ya no le llegarán los avisos.`, { aceptar: "Sí, quitarlo", cancelar: "Dejarlo", peligro: true }))) return;
+        const { error } = await sb.from("arbitros_cr_contacto").delete().eq("fide_id", a.fide_id);
+        if (error) { $("contacto-estado").textContent = "No se pudo quitar: " + error.message; return; }
+        contactos.delete(a.fide_id);
+        pintarContacto(a);
+    }
+
+    // Lo que se vence en 90 días y qué pasa con cada aviso.
+    async function pintarAvisos() {
+        const { data, error } = await sb.rpc("arbitros_cr_por_vencer", { p_dias: 90 });
+        const td = (v) => el("td", { class: "px-3 py-2 align-top" }, v);
+        if (error) { $("avisos-cuenta").textContent = "No se pudieron leer los avisos: " + error.message; return; }
+        const hoy = hoyCr(), y = +hoy.slice(0, 4), m = +hoy.slice(5, 7);
+        const proximo = `01/${String(m === 12 ? 1 : m + 1).padStart(2, "0")}/${m === 12 ? y + 1 : y}`;
+        const filas = data || [];
+        const estadoDe = (r) => r.avisado ? `Avisado el ${fecha(window.HoraCR.dia(r.avisado))}` : !r.correo ? "No sale: no tiene correo" : !r.avisos ? "No sale: tiene los avisos apagados" : `Sale el ${proximo}`;
+        $("tabla-avisos").tBodies[0].replaceChildren(...(filas.length ? filas.map((r) => el("tr", { class: "border-t border-brand-100 dark:border-brand-800" },
+            td(fecha(r.vence)), td(r.nombre), td(r.que), td(estadoDe(r))))
+            : [el("tr", {}, el("td", { colspan: "4", class: "px-3 py-2 text-brand-500 dark:text-brand-300" }, "No se le vence nada a nadie en los próximos 90 días."))]));
+        const saldran = filas.filter((r) => !r.avisado && r.correo && r.avisos).length, sinCorreo = filas.filter((r) => !r.correo).length;
+        $("avisos-cuenta").textContent = `${plural(filas.length, "cosa se vence", "cosas se vencen")} en los próximos 90 días: ${miles(saldran)} ${saldran === 1 ? "sale" : "salen"} el ${proximo} y ${miles(sinCorreo)} no ${sinCorreo === 1 ? "sale porque esa persona no tiene" : "salen porque esas personas no tienen"} correo registrado.`;
     }
 
     // El título que tenía alguien en una fecha: con las fechas que se sepan
@@ -2172,6 +2361,11 @@
         });
         $("formacion-tipo").addEventListener("change", ajustarFormularioFormacion);
         $("formacion-form").addEventListener("submit", guardarFormacion);
+        $("contacto-form").addEventListener("submit", guardarContacto);
+        $("contacto-quitar").addEventListener("click", quitarContacto);
+        $("registro-archivo").addEventListener("change", abrirRegistro);
+        $("registro-plantilla").addEventListener("click", bajarPlantilla);
+        $("registro-guardar").addEventListener("click", guardarRegistro);
         ajustarFormularioFormacion();
         $("pdf").addEventListener("click", pdf);
         for (const b of $("tabla-arbitros").tHead.querySelectorAll("button")) {
@@ -2207,6 +2401,8 @@
             eloCr = new Map(ce.map((e) => [e.clave, e]));
             formacion = new Map();
             for (const x of fo) formacion.set(x.fide_id, (formacion.get(x.fide_id) || []).concat(x));
+            // Los correos, solo para quien administra (a nadie más se los da la base).
+            if (soyAdmin) for (const x of await leerTodo("arbitros_cr_contacto", "fide_id,correo,autorizo,avisos", "fide_id")) contactos.set(x.fide_id, x);
             preparar(a, t, c, cr, crc, f);
         } catch (e) {
             $("loading").classList.add("hidden"); $("app").classList.remove("hidden");
@@ -2219,6 +2415,7 @@
         const este = window.HoraCR ? parseInt(HoraCR.hoy().slice(0, 4), 10) : ULTIMO;
         estado.rankAnio = Math.min(Math.max(este, PRIMER), ULTIMO);
         armarControles();
+        if (soyAdmin) { $("registro").classList.remove("hidden"); pintarAvisos(); }
         $("loading").classList.add("hidden"); $("app").classList.remove("hidden");
         const [h, o] = decodeURIComponent((location.hash || "").slice(1)).split(",").map((x) => parseInt(x, 10));
         const existe = (id) => id && arbitros.some((a) => a.fide_id === id);

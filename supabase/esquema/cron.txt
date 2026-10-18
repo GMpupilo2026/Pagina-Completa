@@ -10,3 +10,4 @@ avisar-fichas-faltantes      10 * * * *   activo=true   (cada hora — avisa al 
 limpiar-invitados-de-clase  20 7 * * *   activo=true   (1:20 a.m. CR — borra los invitados de una clase de hace más de dos días)
 elo-fide-nacional       10 9 * * *   activo=true   (3:10 a.m. CR — lee el Elo FIDE y Nacional de quien tiene código FIDE)
 cerrar-clases-inactivas  */10 * * * *  activo=true   (cada 10 min — cierra la clase en linea que lleva 1 hora sin actividad, con la hora de su ultima actividad)
+avisos-arbitros          7 14 1 * *    activo=true   (el dia 1 a las 8:07 a.m. CR — le escribe a cada arbitro lo que se le vence en 90 dias)
