@@ -14,12 +14,15 @@
  *      Lo que ve su profe (estilo_opiniones) entra en su eje y lo dice.
  *      «Agregar a Mi repertorio» guarda la línea recomendada, con su color,
  *      a su nombre, y lo dice.
+ *      «Bajar la ficha en PDF» baja un PDF de verdad, con la marca de agua.
  *   4. Lo que se guarda en estilo_pruebas: a nombre del alumno de la sesión,
  *      con todas las respuestas (las dos de control marcadas), el contexto y
  *      la recomendación que se mostró; la hora NO la manda el navegador.
  *   5. Con usuarios de Lichess: baja sus partidas y las revisa con el motor
  *      mientras contesta (motor y Lichess de mentira), y los momentos hallados
  *      se guardan con la prueba.
+ *   5b. La versión corta: con menos de 1200 en línea se sugiere, termina
+ *      entre 26 y 34 posiciones, se guarda con su versión y recomienda nivel 1.
  *   6. Contestando por el cuadro de comandos (Modo Adaptado): «A muy seguro»
  *      anota y pasa a la siguiente.
  *   7. Informes, «Sus aperturas»: el profe ve el estilo de su alumno y lo que
@@ -221,7 +224,18 @@ async function main() {
       rep.esc.length === 1 && rep.esc[0].alumno_id === "u-1" && rep.esc[0].color === "b" && rep.esc[0].jugadas[0] === "e4" && rep.esc[0].jugadas.length >= 2 && /Listo/.test(rep.dice),
       JSON.stringify(rep));
 
-    await page.waitForFunction(() => window.__escrituras.some((e) => e.tabla === "estilo_pruebas"), null, { timeout: 5000 }).catch(() => {});
+    // La ficha en PDF: baja un PDF de verdad, con la marca de agua (que se
+    // busca en ../img desde entreno/) y su nombre.
+    const [descarga] = await Promise.all([
+      page.waitForEvent("download", { timeout: 15000 }),
+      page.click("[data-estilo-ficha]"),
+    ]);
+    const ruta = await descarga.path();
+    const pdf = require("fs").readFileSync(ruta).toString("latin1");
+    ok("«Bajar la ficha en PDF» baja un PDF con la marca de agua y su nombre",
+      pdf.startsWith("%PDF") && /\/SMask/.test(pdf) && /^estilo-de-juego-.*\.pdf$/.test(descarga.suggestedFilename()),
+      descarga.suggestedFilename() + " · " + pdf.slice(0, 8));
+        await page.waitForFunction(() => window.__escrituras.some((e) => e.tabla === "estilo_pruebas"), null, { timeout: 5000 }).catch(() => {});
     const esc = await page.evaluate(() => window.__escrituras.filter((e) => e.tabla === "estilo_pruebas"));
     const fila = esc[0] && esc[0].fila;
     ok("guarda UNA prueba", esc.length === 1, JSON.stringify(esc).slice(0, 200));
@@ -266,6 +280,31 @@ async function main() {
     // jugada 40, así que no hay con qué medir en qué partidas le va mejor.
     ok("con partidas cortas no inventa en qué partidas le va mejor", fila && fila.contexto && !("rendimiento" in fila.contexto), JSON.stringify(fila && fila.contexto));
     ok("sin errores en la consola (con partidas)", errores.length === 0, errores.join("\n      "));
+    await ctx.close();
+  }
+
+  console.log("\n=== La versión corta, para quien empieza ===");
+  {
+    // Con 1150 en línea, la página sugiere la corta.
+    const { page, ctx, errores } = await abrir(browser, "/entreno/estilo.html",
+      clienteFalso({ yo: "u-1", alumno: "u-1", cuentas: { lichess: null, chesscom: "peque", elo: { reciente: 1150 } } }));
+    await page.waitForSelector("#app:not(.hidden)", { timeout: 15000 });
+    ok("con menos de 1200 en línea sugiere la corta", await page.isChecked("#forma-corta"));
+    await page.uncheck("#usar-partidas").catch(() => {});
+    await page.click("#start-btn");
+    await page.waitForSelector("#pregunta-view:not(.hidden)");
+    const n = await contestarTodo(page);
+    ok("termina entre 26 y 34 posiciones", n >= 26 && n <= 34, "vio " + n);
+    await llenarContexto(page);
+    await page.click("#ctx-btn");
+    await page.waitForSelector("#resultado-view:not(.hidden)", { timeout: 10000 });
+    await page.waitForFunction(() => window.__escrituras.some((e) => e.tabla === "estilo_pruebas"), null, { timeout: 5000 }).catch(() => {});
+    const fila = await page.evaluate(() => (window.__escrituras.find((e) => e.tabla === "estilo_pruebas") || {}).fila);
+    ok("se guarda con la versión corta y lo dice el contexto", fila && fila.version === 3 && fila.contexto.inicial === true && fila.respuestas.length === n,
+      JSON.stringify(fila && { version: fila.version, contexto: fila.contexto }));
+    ok("lo que se le recomienda es de nivel 1", fila && ["blancas", "e4", "d4"].every((g) => fila.recomendacion[g] && fila.recomendacion[g].principal.nivel === 1),
+      JSON.stringify(fila && ["blancas", "e4", "d4"].map((g) => fila.recomendacion[g] && [fila.recomendacion[g].principal.id, fila.recomendacion[g].principal.nivel])));
+    ok("sin errores en la consola (versión corta)", errores.length === 0, errores.join("\n      "));
     await ctx.close();
   }
 

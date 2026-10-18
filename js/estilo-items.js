@@ -3288,11 +3288,24 @@
    *      con 10 serían 42 preguntas de entrada; con 8, quien tiene un estilo
    *      claro termina en 34 y la prueba agrega donde hace falta. Nadie pasa
    *      de 58 (la base acepta hasta 60 respuestas), y la 15.ª de cada eje
-   *      queda para quien repite la prueba. */
+   *      queda para quien repite la prueba.
+   *   3  la versión corta, para quien empieza: los cuatro ejes, pero solo con
+   *      las 8 posiciones más simples de cada uno (`posiciones`: las de menos
+   *      piezas y menos jugadas posibles, EstiloMedidas.complejidad; las
+   *      elige esa regla y verificar-estilo.js lo comprueba), 6 por eje y
+   *      hasta 2 más: 26 preguntas con un estilo claro, nunca más de 34 (con
+   *      5 por eje, un estilo claro siempre pedía una más en cada eje: con 5
+   *      respuestas iguales el margen todavía cruza el medio). La
+   *      recomendación, con teoría de nivel 1 (`inicial`). */
   const FORMAS = {
     1: { ejes: ["ataque", "estructura", "cambios"], porEje: 10, extraPorEje: 5, controles: true },
     2: { ejes: ["ataque", "estructura", "cambios", "material"], porEje: 8, extraPorEje: 6, controles: true },
+    3: { ejes: ["ataque", "estructura", "cambios", "material"], porEje: 6, extraPorEje: 2, controles: true, inicial: true,
+      posiciones: ["es02","es06","es07","es09","es10","es11","es12","es13","es16","es18","es21","es22","es23","es27","es29","es30",
+        "es32","es33","es34","es35","es39","es40","es44","es45","es46","es51","es52","es53","es54","es56","es58","es59"] },
   };
+  // La que hace quien empieza. VERSION es la de la prueba completa.
+  const VERSION_INICIAL = 3;
   const VERSION = 2;
   const FORMA = FORMAS[VERSION];
 
@@ -3304,7 +3317,7 @@
   const CALIBRADO = {};
   /* CALIBRADO-FIN */
 
-  const api = { VERSION, ITEMS, EJES, FORMA, FORMAS, CALIBRADO };
+  const api = { VERSION, VERSION_INICIAL, ITEMS, EJES, FORMA, FORMAS, CALIBRADO };
   raiz.EstiloItems = api;
   if (typeof module !== "undefined" && module.exports) module.exports = api;
 })(typeof window !== "undefined" ? window : globalThis);

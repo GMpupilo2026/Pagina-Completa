@@ -101,7 +101,9 @@
     pararPartidas = false;
     midiendo = cuentas && $("usar-partidas").checked ? medirPartidas() : null;
     const vistas = ultima ? (ultima.respuestas || []).map((r) => r.id) : [];
-    prueba = P.Prueba({ Chess, partidas: momentos, vistas, opiniones });
+    // La corta, para quien empieza (FORMAS[3]): menos posiciones y más simples.
+    const corta = $("forma-corta").checked;
+    prueba = P.Prueba({ Chess, partidas: momentos, vistas, opiniones, version: corta ? B.VERSION_INICIAL : B.VERSION });
     irA("pregunta-view");
     siguiente();
     if (comandos && CuadroComandos.activo()) { comandos.decir(preguntaDicha()); comandos.enfocar(); }
@@ -273,6 +275,7 @@
     err.classList.add("hidden");
     const contexto = { ritmo, estudio, elo, actual: { blancas: $("ctx-blancas").value || null, e4: $("ctx-e4").value || null, d4: $("ctx-d4").value || null } };
     if (rendimiento && rendimiento.n) contexto.rendimiento = rendimiento;
+    if (B.FORMAS[prueba.version] && B.FORMAS[prueba.version].inicial) contexto.inicial = true;
     const btn = $("ctx-btn");
     btn.disabled = true;
     if (midiendo) {
@@ -285,7 +288,7 @@
     const resultado = prueba.perfil();
     const recomendacion = A.recomendar(resultado, contexto);
     mostrarResultado(resultado, recomendacion, "Guardando el resultado…");
-    const fila = { alumno_id: perfil.id, version: B.VERSION, respuestas: prueba.respuestas, contexto,
+    const fila = { alumno_id: perfil.id, version: prueba.version, respuestas: prueba.respuestas, contexto,
       partidas: momentos.length ? momentos.slice(0, 300) : null, recomendacion };
     const { data, error } = await sb.from("estilo_pruebas").insert(fila).select("id, version, respuestas, contexto, partidas, recomendacion, created_at").maybeSingle();
     $("r-guardado").textContent = error ? "No se pudo guardar en tu cuenta; el resultado quedó solo en esta pantalla." : "Resultado guardado en tu cuenta: tu profe también lo ve.";
@@ -304,7 +307,8 @@
   }
 
   /* ---------------- El resultado ---------------- */
-  function mostrarResultado(resultado, recomendacion, guardado) {
+  /* `fecha`: la de la prueba (la de hoy si se acaba de hacer), para la ficha. */
+  function mostrarResultado(resultado, recomendacion, guardado, fecha) {
     irA("resultado-view", $("r-titulo"));
     $("r-guardado").textContent = guardado || "";
     const caja = $("r-perfil");
@@ -313,6 +317,8 @@
     const rec = $("r-recomendacion");
     rec.textContent = "";
     EstiloTarjeta.pintarRecomendacion(rec, recomendacion, { tu: true, base: "../", repertorio: agregarAlRepertorio });
+    if (recomendacion) rec.appendChild(EstiloTarjeta.botonFicha({ created_at: fecha || new Date().toISOString(), recomendacion }, resultado,
+      { nombre: perfil && perfil.full_name, tu: true }));
     anunciar("Listo. " + resultado.lista.map((e) => B.EJES[e].nombre + ": " + resultado[e].etiqueta.texto).join(". ") + ".");
   }
 
@@ -335,7 +341,7 @@
     ver.type = "button";
     ver.className = "border border-brand-200 dark:border-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-4 py-2 rounded-lg text-sm hover:border-accent-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400";
     ver.textContent = "Ver el resultado completo";
-    ver.addEventListener("click", () => mostrarResultado(pf, ultima.recomendacion, "Prueba del " + HoraCR.fecha(ultima.created_at, { day: "numeric", month: "long", year: "numeric" }) + "."));
+    ver.addEventListener("click", () => mostrarResultado(pf, ultima.recomendacion, "Prueba del " + HoraCR.fecha(ultima.created_at, { day: "numeric", month: "long", year: "numeric" }) + ".", ultima.created_at));
     botones.appendChild(ver);
     const seguimiento = document.createElement("div");
     seguimiento.className = "mt-3";
@@ -382,6 +388,8 @@
         + [an.lichess && "Lichess (" + an.lichess + ")", an.chesscom && "Chess.com (" + an.chesscom + ")"].filter(Boolean).join(" y ")
         + " los momentos en que tuviste dos jugadas igual de buenas, y anota cuál elegiste. Tarda un par de minutos.";
       eloEnLinea = an.elo && an.elo.reciente ? an.elo.reciente : null;
+      // Con menos de 1200 en línea, se le sugiere la corta (la puede cambiar).
+      if (eloEnLinea && eloEnLinea < 1200) $("forma-corta").checked = true;
     }
     ultima = previas && previas[0] ? previas[0] : null;
     $("gate").classList.add("hidden");

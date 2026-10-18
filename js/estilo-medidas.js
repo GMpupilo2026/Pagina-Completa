@@ -153,6 +153,13 @@ function materialDeLinea(Chess, fen, linea) {
   return ultimo;
 }
 
+/* Cuánto hay que mirar en una posición: las piezas que hay y la mitad de
+ * las jugadas legales de quien mueve. Con esto se eligen las posiciones de
+ * la versión para quien empieza (FORMAS[3] en js/estilo-items.js). */
+function complejidad(Chess, fen) {
+  return Object.keys(tablero(fen)).length + new Chess(fen).moves().length / 2;
+}
+
 /* Juega una lista de jugadas UCI sobre un FEN con chess.js; devuelve los FEN
  * de cada paso (el primero es el de partida). Lanza si una no es legal. */
 function jugarUci(Chess, fen, ucis) {
@@ -269,7 +276,7 @@ function espejoFen(fen) {
 }
 const espejoUci = (u) => espejoCasilla(u.slice(0, 2)) + espejoCasilla(u.slice(2, 4)) + (u[4] || "");
 
-const api = { tablero, ataquesDe, zonaDelRey, presionSobreElRey, apertura, piezas, balance, materialDeLinea, jugarUci, medir, tipoDeJugada, UMBRAL, POLOS, poloDe, espejoFen, espejoUci };
+const api = { tablero, ataquesDe, zonaDelRey, presionSobreElRey, apertura, piezas, balance, materialDeLinea, complejidad, jugarUci, medir, tipoDeJugada, UMBRAL, POLOS, poloDe, espejoFen, espejoUci };
 if (typeof window !== "undefined") window.EstiloMedidas = api;
 if (typeof module !== "undefined" && module.exports) module.exports = api;
 })();

@@ -28,7 +28,8 @@
  *     respuestas guardadas: si el generador las rehiciera, esas respuestas
  *     pasarían a decir otra cosa. Su huella (id, eje, posición, jugadas y
  *     polos) está escrita acá. Y cada versión de FORMAS pide ejes que existen
- *     y no más preguntas de las que tiene cada eje.
+ *     y no más preguntas de las que tiene cada eje; la versión corta, para
+ *     quien empieza, con las 8 posiciones más simples de cada eje.
  *
  * Uso:  npm install && node herramientas/verificar-estilo.js
  */
@@ -175,7 +176,19 @@ if (v1.length !== 45 || huellaV1 !== HUELLA_V1) falla("banco", "las 45 posicione
 for (const [v, f] of Object.entries(Banco.FORMAS || {})) {
   for (const e of f.ejes) {
     if (!ejes.includes(e)) falla("FORMAS", "la versión " + v + " pide el eje desconocido «" + e + "»");
-    else if (f.porEje + f.extraPorEje > items.filter((i) => i.eje === e).length) falla("FORMAS", "la versión " + v + " pide más preguntas de «" + e + "» de las que hay");
+    else if (f.porEje + f.extraPorEje > items.filter((i) => i.eje === e && (!f.posiciones || f.posiciones.includes(i.id))).length) falla("FORMAS", "la versión " + v + " pide más preguntas de «" + e + "» de las que hay");
+  }
+  // La versión corta: sus posiciones son, de cada eje, las 8 más simples
+  // (EstiloMedidas.complejidad), no unas elegidas a ojo.
+  if (f.posiciones) {
+    const esperadas = [];
+    for (const e of f.ejes) {
+      esperadas.push(...items.filter((i) => i.eje === e)
+        .map((i) => ({ id: i.id, c: M.complejidad(Chess, i.fen) }))
+        .sort((x, y) => x.c - y.c || (x.id < y.id ? -1 : 1)).slice(0, 8).map((x) => x.id));
+    }
+    if (JSON.stringify(esperadas.sort()) !== JSON.stringify(f.posiciones.slice().sort()))
+      falla("FORMAS", "las posiciones de la versión " + v + " no son las 8 más simples de cada eje: " + JSON.stringify(esperadas.sort()));
   }
 }
 if (Banco.FORMA !== (Banco.FORMAS || {})[Banco.VERSION]) falla("FORMAS", "FORMA no es la de VERSION");

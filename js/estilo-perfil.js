@@ -66,6 +66,10 @@
  *   «equilibrado»      el intervalo entero entre 30 % y 70 %
  *   «sin definir»      lo demás: ahí la prueba agrega preguntas de ese eje.
  *
+ * La VERSIÓN CORTA para quien empieza (`Prueba({ version: 3 })`): las mismas
+ * reglas, con las posiciones más simples (FORMAS[3].posiciones), 6 por eje y
+ * hasta 2 más.
+ *
  * LA PRUEBA ADAPTATIVA (`Prueba`): `porEje` preguntas por eje (8 en la
  * versión 2), alternando ejes, con los dos controles intercalados; después,
  * en cada eje «sin definir», hasta `extraPorEje` más (6), de a una, mientras
@@ -243,14 +247,16 @@
     const o = opciones || {};
     const azar = o.azar || Math.random;
     const B = banco();
-    const F = B.FORMA;
+    const version = o.version || B.VERSION;
+    const F = formaDe(version);
     const ejes = F.ejes;
+    const permitidas = F.posiciones ? new Set(F.posiciones) : null;
     const porEje = {};
     for (const e of ejes) {
       // Las de una partida ya usada en una prueba anterior van al final: al
       // repetir la prueba, primero lo que no vio.
       const vistas = new Set(o.vistas || []);
-      const del = barajar(B.ITEMS.filter((i) => i.eje === e), azar);
+      const del = barajar(B.ITEMS.filter((i) => i.eje === e && (!permitidas || permitidas.has(i.id))), azar);
       porEje[e] = del.filter((i) => !vistas.has(i.id)).concat(del.filter((i) => vistas.has(i.id)));
     }
     const base = [];
@@ -274,7 +280,7 @@
       /* La pregunta que sigue, o null si terminó. */
       siguiente() {
         if (hechas < cola.length) return cola[hechas];
-        const perfil = medir(respuestas, o.partidas);
+        const perfil = medir(respuestas, o.partidas, version);
         for (const e of ejes) {
           if (perfil[e].etiqueta.tipo === "sin definir" && extrasHechas[e] < extras[e].length) {
             const it = extras[e][extrasHechas[e]];
@@ -290,7 +296,8 @@
       },
       /* Cuántas van y cuántas faltan como mínimo (para la barra). */
       avance() { return { hechas: respuestas.length, minimo: cola.length }; },
-      perfil() { return medir(respuestas, o.partidas, undefined, o.opiniones); },
+      version,
+      perfil() { return medir(respuestas, o.partidas, version, o.opiniones); },
     };
   }
 

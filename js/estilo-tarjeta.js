@@ -19,6 +19,8 @@
  *   EstiloTarjeta.seguir(caja, { sb, alumnoId, recomendacion, desde, tu })
  *   EstiloTarjeta.montarProfe(contenedor, { sb, alumnoId, nombre, yo, puedeEscribir })
  *   EstiloTarjeta.montarClase(contenedor, { sb, alumnos: [{ id, nombre }] })
+ *   EstiloTarjeta.botonFicha(prueba, perfil, { nombre, tu }) → el botón que
+ *     baja la ficha en PDF (js/estilo-ficha-pdf.js, que se carga al tocarlo)
  *     (Informes, tema «Prueba de estilo»: el estilo de cada alumno y si la
  *     prueba funciona, con estilo_salud())
  *
@@ -292,6 +294,43 @@
     caja.appendChild(sec);
   }
 
+  /* La ficha en PDF: el generador y la marca se cargan recién al pedirla. */
+  const MODULOS_PDF = ["reporte-pdf.js", "marca-agua.js", "estilo-ficha-pdf.js"];
+  function cargarPdf() {
+    const base = ESTE ? new URL("./", ESTE) : new URL("js/", document.baseURI);
+    return MODULOS_PDF.reduce((p, nombre) => p.then(() => {
+      const global = { "reporte-pdf.js": "ReportePDF", "marca-agua.js": "MarcaAgua", "estilo-ficha-pdf.js": "EstiloFichaPDF" }[nombre];
+      if (window[global]) return null;
+      return new Promise((ok, mal) => {
+        const sc = document.createElement("script");
+        sc.src = new URL(nombre, base).href;
+        sc.onload = ok;
+        sc.onerror = () => mal(new Error("no se pudo cargar " + nombre));
+        document.body.appendChild(sc);
+      });
+    }), Promise.resolve()).then(() => new URL("../", base).href);
+  }
+  function botonFicha(prueba, perfil, o) {
+    const d = el("div", "mt-3");
+    const b = el("button", BOTON, "Bajar la ficha en PDF");
+    b.type = "button";
+    b.setAttribute("data-estilo-ficha", "");
+    const st = el("p", SUB + " mt-1");
+    st.setAttribute("role", "status");
+    b.addEventListener("click", async () => {
+      b.disabled = true;
+      st.textContent = "Armando el PDF…";
+      try {
+        const raiz = await cargarPdf();
+        const r = await EstiloFichaPDF.descargar(prueba, perfil, Object.assign({ raiz, lineaEs: window.PreparacionLineas ? PreparacionLineas.lineaEs : null }, o));
+        st.textContent = "Listo: " + r.nombre + ".";
+      } catch (e) { st.textContent = "No se pudo armar el PDF: " + (e && e.message ? e.message : e); }
+      b.disabled = false;
+    });
+    d.append(b, st);
+    return d;
+  }
+
   /* ---------------- El seguimiento ---------------- */
   async function seguir(caja, o) {
     caja.textContent = "";
@@ -365,6 +404,7 @@
       },
     } : null;
     pintarPerfil(contenedor, perfil, { tu: false, opinar });
+    if (ultima.recomendacion) contenedor.appendChild(botonFicha(ultima, perfil, { nombre: o.nombre, tu: false }));
     if (ultima.recomendacion) {
       contenedor.appendChild(el("h3", H3, "Lo que se le recomendó ese día"));
       pintarRecomendacion(contenedor, ultima.recomendacion, { tu: false, base: "" });
@@ -531,6 +571,6 @@
     contenedor.appendChild(el("p", SUB + " mt-2", "Cuenta las pruebas que ves (las de tus alumnos; administración, todas)."));
   }
 
-  const api = { cargar, pintarPerfil, pintarRecomendacion, seguir, montarProfe, montarClase, frasesSalud, correlacion };
+  const api = { cargar, pintarPerfil, pintarRecomendacion, seguir, montarProfe, montarClase, botonFicha, frasesSalud, correlacion };
   if (typeof window !== "undefined") window.EstiloTarjeta = api;
 })();
