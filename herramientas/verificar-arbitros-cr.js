@@ -32,7 +32,9 @@
      seminarios), «La actividad en FIDE» y «Por identificar»;
    - «Solo con Elo nacional»: el ritmo que la ficha no dice sale del texto
      del control de tiempo (js/ritmo-control.js, probado con veinte textos de
-     verdad), y la columna «Elo nacional» de cada árbitro;
+     verdad), la columna «Elo nacional» de cada árbitro y en el ranking, y
+     los ritmos por revisar a mano (herramientas/arbitros-cr/ritmos-raros.js,
+     con sus correcciones bien escritas);
    - «Por vencer»: hoy vacía, y con el reloj en julio de 2028 la norma y el
      seminario de Luis, lo que vence antes primero;
    - las tablas se piden de mil en mil (range), y la lista de árbitros cabe
@@ -252,6 +254,29 @@ const porNombre = (m) => Object.fromEntries(m.map((f) => [f[0], f]));
     igual("cada control sale con su ritmo (y sin tiempo legible, el nombre; sin nada, no sabe)",
         CONTROLES.filter(([c, n, r]) => RitmoControl.deducir(c, n) !== r).map(([c, n]) => [c, RitmoControl.deducir(c, n)]), []);
 
+    console.log("\n=== Los ritmos por revisar a mano (herramientas/arbitros-cr/ritmos-raros.js) ===");
+    const { ritmosRaros } = require("./arbitros-cr/ritmos-raros.js");
+    const DE_PRUEBA = new Map([
+        [1, { nombre: "Ficha blitz, control clásico", control: "30 min + 30 seg", rondas: "7", inicio: "2020/11/21" }],
+        [2, { nombre: "Ficha clásico, control blitz", control: "3 min + 2 seg", rondas: "7", inicio: "2021/01/01" }],
+        [3, { nombre: "Sin ficha, 15 + 30", control: "15+30", rondas: "5", inicio: "2022/01/01" }],
+        [4, { nombre: "Sin ficha ni tiempo", control: "Pendiente", rondas: "5", inicio: "2023/01/01" }],
+        [5, { nombre: "Sin ficha, 30 + 30 (clásico sin duda)", control: "30+30", rondas: "5", inicio: "2024/01/01" }],
+        [6, { nombre: "Ya revisado", control: "30+30", rondas: "5", inicio: "2025/01/01" }],
+        [7, { nombre: "No se jugó", control: "Pendiente", rondas: "0", inicio: "2025/02/01" }],
+        [8, { nombre: "Sin Elo nacional", control: "Pendiente", rondas: "5", inicio: "2025/03/01" }],
+        [9, { nombre: "Blitz de la feria", control: "Pendiente", rondas: "5", inicio: "2025/04/01" }],
+    ]);
+    const ELO_PRUEBA = [[1, "nacional", "blitz"], [2, "nacional", "clasico"], [3, "nacional", null], [4, "nacional", null], [5, "nacional", null],
+        [6, "nacional", "blitz"], [7, "nacional", null], [8, "ninguno", null], [9, "nacional", null]];
+    igual("salen la ficha que contradice al control (en los dos sentidos), el de 40 a 59 minutos sin ficha y el que no se puede leer; no el clásico sin duda, el ya revisado, el que no se jugó, el que no es solo nacional ni el que dice «Blitz» en el nombre",
+        ritmosRaros(ELO_PRUEBA, DE_PRUEBA, [6]).map((r) => r.clave), [4, 3, 2, 1]);
+    const CORREGIR_RITMO = require("./datos/arbitros-cr-ritmo-corregir.json").corregir;
+    const conDatos = new Set(require("./datos/arbitros-cr-calculo-elo.json").torneos.map(([c]) => c));
+    igual(`las ${CORREGIR_RITMO.length} correcciones a mano tienen clave de un torneo leído, un ritmo que existe y su motivo, sin repetir`,
+        [CORREGIR_RITMO.filter((c) => !Number.isInteger(c.clave) || !conDatos.has(c.clave) || !["clasico", "rapido", "blitz"].includes(c.ritmo) || !(c.motivo || "").trim()).map((c) => c.clave),
+         new Set(CORREGIR_RITMO.map((c) => c.clave)).size === CORREGIR_RITMO.length], [[], true]);
+
     const browser = await chromium.launch();
 
     console.log("\n=== Sin licencia ===");
@@ -325,18 +350,22 @@ const porNombre = (m) => Object.fromEntries(m.map((f) => [f[0], f]));
     // empatan con 1; en 2024 Óscar fue 1.º y Ana 2.ª (empatada con Eduardo).
     igual("el ranking arranca en 2025: Óscar y Ana comparten el 1.º, y cómo les fue en 2024",
         [await p.$eval("#ranking-anio", (e) => e.value), await filas(p, "#tabla-ranking")],
-        ["2025", [["1.º", "Ángulo Prueba, Óscar", "1", "1", "1", "0", "0", "Igual (1.º)"], ["1.º", "Soto Prueba, Ana", "1", "0", "1", "0", "0", "Sube 1 (era 2.º)"]]]);
+        ["2025", [["1.º", "Ángulo Prueba, Óscar", "1", "1", "1", "0", "0", "0", "Igual (1.º)"], ["1.º", "Soto Prueba, Ana", "1", "0", "1", "0", "0", "0", "Sube 1 (era 2.º)"]]]);
     await p.selectOption("#ranking-anio", "2024");
     await p.selectOption("#ranking-por", "principal");
-    igual("2024 por «como principal»: Óscar y Eduardo con 1, y en 2023 nadie", (await filas(p, "#tabla-ranking")).map((f) => [f[0], f[1], f[3], f[7]]),
+    igual("2024 por «como principal»: Óscar y Eduardo con 1, y en 2023 nadie", (await filas(p, "#tabla-ranking")).map((f) => [f[0], f[1], f[3], f[8]]),
         [["1.º", "Ángulo Prueba, Óscar", "1", "No figuraba en 2023"], ["1.º", "Quiros Prueba, Eduardo", "1", "No figuraba en 2023"]]);
     igual("la columna elegida lo dice (aria-sort) y la cuenta también", [await p.$eval("#tabla-ranking th[data-col=principal]", (e) => e.getAttribute("aria-sort")),
         await p.$eval("#ranking-cuenta", (e) => e.textContent)], ["descending", "2 árbitros con torneos como principal en 2024."]);
+    await p.selectOption("#ranking-por", "nacional");
+    igual("2024 por «solo Elo nacional»: Óscar y Eduardo, con el del club (el Sub-16, rápido, no cuenta), en su columna",
+        [(await filas(p, "#tabla-ranking")).map((f) => [f[0], f[1], f[5]]), await p.$eval("#tabla-ranking th[data-col=nacional]", (e) => e.getAttribute("aria-sort"))],
+        [[["1.º", "Ángulo Prueba, Óscar", "1"], ["1.º", "Quiros Prueba, Eduardo", "1"]], "descending"]);
     await p.selectOption("#ranking-por", "torneos");
     igual("2024 por torneos: los empates comparten el puesto y el siguiente salta (1, 2, 2)", (await filas(p, "#tabla-ranking")).map((f) => [f[0], f[1], f[2]]),
         [["1.º", "Ángulo Prueba, Óscar", "4"], ["2.º", "Quiros Prueba, Eduardo", "2"], ["2.º", "Soto Prueba, Ana", "2"]]);
     await p.selectOption("#ranking-anio", "2015");
-    igual("el primer año no tiene año anterior", (await filas(p, "#tabla-ranking")).map((f) => f[7]), ["—"]);
+    igual("el primer año no tiene año anterior", (await filas(p, "#tabla-ranking")).map((f) => f[8]), ["—"]);
     igual("la lista va ordenada por cantidad de torneos", (await filas(p, "#tabla-arbitros")).map((f) => f[0])[0], "Ángulo Prueba, Óscar");
 
     await p.selectOption("#tipo", "nofide");

@@ -124,14 +124,14 @@
                         </div>
                         <div class="min-w-[12rem]">
                             <label for="ranking-por" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Ordenar por</label>
-                            <select id="ranking-por" class="w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none"><option value="torneos">Torneos</option><option value="principal">Torneos como principal</option><option value="fide">Torneos de FIDE</option><option value="fuera">Torneos en el extranjero</option><option value="af">Torneos que valen para AF</option></select>
+                            <select id="ranking-por" class="w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none"><option value="torneos">Torneos</option><option value="principal">Torneos como principal</option><option value="fide">Torneos de FIDE</option><option value="nacional">Torneos con solo Elo nacional</option><option value="fuera">Torneos en el extranjero</option><option value="af">Torneos que valen para AF</option></select>
                         </div>
                         <button type="button" id="ranking-excel" class="text-sm font-semibold px-4 py-2 rounded-lg bg-brand-100 dark:bg-brand-800 hover:bg-brand-200 dark:hover:bg-brand-700">Descargar en Excel</button>
                     </div>
                     <div class="overflow-x-auto mt-2 bg-white dark:bg-brand-900 rounded-2xl shadow-md">
                         <table id="tabla-ranking" class="w-full text-sm" aria-labelledby="ranking-titulo">
                             <thead class="text-left text-xs uppercase tracking-wide text-brand-500 dark:text-brand-300">
-                                <tr><th scope="col" class="px-3 py-2 text-right">Puesto</th><th scope="col" class="px-3 py-2">Árbitro</th><th scope="col" class="px-3 py-2 text-right" data-col="torneos">Torneos</th><th scope="col" class="px-3 py-2 text-right" data-col="principal">Principal</th><th scope="col" class="px-3 py-2 text-right" data-col="fide">FIDE</th><th scope="col" class="px-3 py-2 text-right" data-col="fuera">En el extranjero</th><th scope="col" class="px-3 py-2 text-right" data-col="af">Valen para AF</th><th scope="col" class="px-3 py-2">El año anterior</th></tr>
+                                <tr><th scope="col" class="px-3 py-2 text-right">Puesto</th><th scope="col" class="px-3 py-2">Árbitro</th><th scope="col" class="px-3 py-2 text-right" data-col="torneos">Torneos</th><th scope="col" class="px-3 py-2 text-right" data-col="principal">Principal</th><th scope="col" class="px-3 py-2 text-right" data-col="fide">FIDE</th><th scope="col" class="px-3 py-2 text-right" data-col="nacional">Elo nacional</th><th scope="col" class="px-3 py-2 text-right" data-col="fuera">En el extranjero</th><th scope="col" class="px-3 py-2 text-right" data-col="af">Valen para AF</th><th scope="col" class="px-3 py-2">El año anterior</th></tr>
                             </thead>
                             <tbody></tbody>
                         </table>
