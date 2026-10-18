@@ -15,14 +15,19 @@
  * es, sin ningún error).
  *
  * PERSONAJES describe cada voz para quien elija las voces de verdad (Google,
- * Piper…): el tipo de voz, la velocidad (1 = normal) y cómo suena. Una voz por
- * personaje en los tres libros: Peonita suena igual en todos.
+ * Piper…) o la grabe: el tipo de voz, la velocidad (1 = normal), cómo suena y,
+ * si lo tiene, quién es («es», para el papel que lee quien lo graba:
+ * libro-ninos-papel.js). Una voz por personaje en los tres libros: Peonita
+ * suena igual en todos.
  */
 "use strict";
 
 const PERSONAJES = {
   narrador: { voz: "mujer adulta", velocidad: 0.95, como: "cálida y clara, como quien lee un cuento antes de dormir" },
-  Peonita: { voz: "niña", velocidad: 1.0, como: "alegre y curiosa, la más pequeña del tablero" },
+  Peonita: {
+    voz: "niña", velocidad: 1.0, como: "alegre y curiosa, la más pequeña del tablero",
+    es: "Un peón blanco, la pieza más pequeñita del ajedrez, con un moño rosado. Vive con sus amigos en una caja de madera, en una escuela de Costa Rica. Es quien cuenta el cuento y aprende a jugar ajedrez con su maestro, Don Lento, un perezoso muy sabio. A veces se pone nerviosa, pero siempre se anima.",
+  },
   "Tizón": { voz: "niño", velocidad: 1.05, como: "entusiasta y bromista, el mejor amigo de Peonita" },
   "Don Lento": { voz: "hombre mayor", velocidad: 0.8, como: "un perezoso sabio: habla muuuy despacio, con pausas" },
   "Doña Muralla": { voz: "mujer adulta", velocidad: 0.95, como: "la torre: firme y segura" },

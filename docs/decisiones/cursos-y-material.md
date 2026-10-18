@@ -1397,6 +1397,18 @@ las voces) y `<slug>.md` (para leerlo y revisarlo). No se publica.
   todos los párrafos del cuento (el guion no quedó viejo), cada capítulo y
   las pausas para contestar. Se rompió a propósito (una clave vieja, un
   párrafo borrado) y saltó.
+- **El papel de cada personaje, para grabarlo con personas**
+  (`node herramientas/libro-ninos-papel.js <slug> <personaje> <salida.pdf>`):
+  un PDF con la ficha del personaje (`es` y `como` de `voces.js`), consejos
+  para grabar y solo sus líneas, numeradas, cada una con su pie (lo que se
+  oye justo antes) y **cómo se dice**, que es el inciso del cuento
+  («preguntó, frotándose los ojos»): para una niña, la mejor indicación de
+  actuación ya estaba escrita. Si el narrador interrumpe la frase («—Cada
+  bando tiene dieciséis piezas —contó Peonita con los dedos—: un rey…»), es
+  UNA línea con una nota en medio: partida en dos, quien graba cortaba la
+  frase. El PDF no se guarda en el repositorio: se arma cuando se pide. El
+  primero fue el de Peonita del libro 1, para una niña que la va a grabar:
+  ninguna voz sintética tiene acento costarricense.
 - **Falta generar el audio**: con Google Text-to-Speech (una clave en la
   configuración del entorno, `GOOGLE_TTS_API_KEY`) o con Piper (agregar
   `huggingface.co` a los dominios permitidos). Con eso, el siguiente paso es
