@@ -1,0 +1,6 @@
+{
+  "nota": "El ritmo de los torneos con solo Elo nacional que se miró a mano: lo que vale encima de lo que dice la ficha de chess-results o de lo que se lee del control de tiempo. Lo usa herramientas/arbitros-cr/calculo-elo.py y lo lista herramientas/arbitros-cr/ritmos-raros.js. Ver «Los torneos con Elo nacional» en docs/decisiones/juegos-y-torneos.md.",
+  "corregir": [
+    {"clave": 1183650, "ritmo": "blitz", "motivo": "Su página se llama «Etapa Nacional JDE Categoria B Individual Femenino (Blitz)» (mirada el 18/10/2026): la ficha dice bien blitz y el control «30+30» quedó copiado de los clásicos del día anterior."}
+  ]
+}

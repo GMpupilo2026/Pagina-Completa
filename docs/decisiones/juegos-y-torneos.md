@@ -3526,17 +3526,41 @@ se evaluó con ningún Elo, «No (sin Elo)».
   jugador», «90+30 min», «40 min + 30 seg (reloj mecánico 1h + 10 min)»), y
   cuando no trae un tiempo («Pendiente», «.») mira el nombre («Blitz»,
   «Rápido»). Lo que dice la ficha manda: el texto solo se lee si la ficha no
-  dice el ritmo. Queda uno sin saber («Pendiente», una eliminatoria de los JDN),
-  que cuenta. Con esto el filtro baja de 525 torneos a 449.
+  dice el ritmo. El único sin tiempo que leer («Pendiente», una eliminatoria de
+  los JDN de 2018) no tiene rondas en chess-results y no se muestra. Con esto
+  el filtro baja de 525 torneos a 449.
   - Se probó contra los 1731 torneos que sí dicen el ritmo: coincide en 1552. Casi
     todo lo demás es chess-results contra FIDE: «15 + 30» es rápido para FIDE
     (15 + 30 = 45 minutos) y muchas fichas lo marcan clásico; «10 min» es blitz
     para FIDE (10 o menos) y las fichas dicen rápido. Ninguno de esos llega al
     filtro: si la ficha dice el ritmo, se usa ese.
+- **Lo que se mira a mano.** Comparando las fichas que sí dicen el ritmo con su
+  control salió algo que la cuenta de FIDE no ve: con Elo nacional,
+  chess-results marca **clásico** a la mayoría de los torneos de 40 a 59 minutos
+  (36 de 52, casi todos «15 + 30», 45 minutos: rápido para FIDE). Con ficha,
+  manda la ficha y no hay problema; sin ficha, la cuenta de FIDE los deja fuera
+  y puede equivocarse. `herramientas/arbitros-cr/ritmos-raros.js` lista los que
+  hay que mirar: la ficha que contradice al control (blitz o rápido con 60
+  minutos o más, clásico con 20 o menos), los de 40 a 59 minutos sin ficha y
+  los que no tienen tiempo que leer. Lo que se confirma va a
+  `herramientas/datos/arbitros-cr-ritmo-corregir.json` con su motivo y
+  `calculo-elo.py` lo carga encima de la ficha, como las fechas mal escritas
+  van a `arbitros-cr-corregir.json`. La primera pasada (octubre de 2026) dio
+  seis:
+  - la del JDE 2025 «Individual Femenino» decía blitz con «30 + 30»: su página
+    se llama «… (Blitz)», así que la ficha estaba bien y el control quedó
+    copiado de los clásicos del día anterior (anotada);
+  - el «Festival de Categorías Chile Monoloco 2020 – Cuarta» dice blitz con
+    «30 + 30», pero son 7 rondas en un día y su «Abierta», con el mismo
+    control, dice clásico;
+  - tres eliminatorias de los JDN 2011 a «40 min finish» y los Paranacionales
+    2014 a «45 min», sin ficha.
+  Esas cinco quedan para que el dueño las decida.
 - **Cuántos tiene cada árbitro.** La lista lleva la columna «Elo nacional» (con
   los filtros de años, tipo y lugar, como las demás; un festival cuenta si
   alguno de sus torneos fue así) y la ficha y su PDF lo dicen en el resumen
-  («…, 12 de ellos con solo Elo nacional»).
+  («…, 12 de ellos con solo Elo nacional»). El ranking del año también lo trae:
+  su columna y «Ordenar por: Torneos con solo Elo nacional», y su Excel.
 - **Dónde va.** `arbitros_cr_cr_elo` (clave, calculo, ritmo, leido; migraciones
   `20261017224002` y `20261017224637`), aparte de `arbitros_cr_cr`, porque la
   carga completa de esa tabla la borra y la vuelve a llenar. Solo la lee quien

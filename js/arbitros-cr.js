@@ -605,7 +605,7 @@
             boton.addEventListener("click", () => elegir(r.a.fide_id));
             return el("tr", { class: "border-t border-brand-100 dark:border-brand-800" },
                 td(ORDINAL(r.puesto), true), el("th", { scope: "row", class: "px-3 py-2 font-normal text-left" }, boton),
-                td(miles(r.torneos), true), td(miles(r.principal), true), td(miles(r.fide), true), td(miles(r.fuera), true), td(miles(r.af), true),
+                td(miles(r.torneos), true), td(miles(r.principal), true), td(miles(r.fide), true), td(miles(r.nacional), true), td(miles(r.fuera), true), td(miles(r.af), true),
                 td(antes(r, previo, anio)));
         }));
         for (const th of $("tabla-ranking").tHead.rows[0].cells) {
@@ -620,8 +620,8 @@
         const anio = estado.rankAnio, filas = ranking(anio);
         const previo = new Map(anio - 1 >= PRIMER ? ranking(anio - 1).map((r) => [r.a.fide_id, r.puesto]) : []);
         window.TablaExcel.bajar("ranking-arbitros-" + anio + ".xlsx", [{ nombre: "Ranking " + anio, filas: [["Puesto", "Árbitro", "ID FIDE", "Título", "Torneos", "Principal", "FIDE",
-            "En el extranjero", "Valen para AF", "El año anterior"]].concat(filas.map((r) => [r.puesto, r.a.nombre, r.a.fide_id, tituloCorto(r.a), r.torneos, r.principal, r.fide,
-            r.fuera, r.af, antes(r, previo, anio)])) }]);
+            "Solo Elo nacional", "En el extranjero", "Valen para AF", "El año anterior"]].concat(filas.map((r) => [r.puesto, r.a.nombre, r.a.fide_id, tituloCorto(r.a), r.torneos, r.principal, r.fide,
+            r.nacional, r.fuera, r.af, antes(r, previo, anio)])) }]);
     }
 
     /* «Torneos por año»: una fila por año con una barra del total (el número
