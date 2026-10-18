@@ -189,7 +189,7 @@
         }
         if (consejo) {
             if (inicio <= consejo) return { estado: "no", detalle: `Es de antes de su título de AF (aprobado por el Consejo el ${fecha(consejo)}), y una norma de AI cuenta solo si el torneo es posterior al AF. El torneo: ` + n.detalle };
-            if (inicio <= masDias(consejo, VENTANA)) return { estado: "revisar", detalle: `Empezó después del Consejo que le aprobó el AF (${fecha(consejo)}), pero la fecha oficial es la que FIDE anota en su perfil, de dos a cinco semanas después: FIDE rechazó así una norma 22 días después del Consejo. Mirar su perfil. Si contara: ` + n.detalle };
+            if (inicio <= masDias(consejo, VENTANA)) return { estado: "revisar", detalle: `Empezó después del Consejo que le aprobó el AF (${fecha(consejo)}), pero la fecha oficial es la que FIDE anota en su perfil, de seis días a seis semanas después: FIDE rechazó así una norma 22 días después del Consejo. Mirar su perfil. Si contara: ` + n.detalle };
             return n;
         }
         const m = /Árbitro FIDE \((\d{4})\)/.exec(a.titulo_detalle || "");
@@ -1487,7 +1487,7 @@
         const partes = [`${f.inactivo ? "Inactivo" : "Activo"} en la lista de árbitros de FIDE del ${fecha(f.lista)}`
             + (f.licencia && f.licencia !== "NA" ? (f.licencia === "No" ? ", sin licencia" : `, licencia ${f.licencia}`) : "") + "."];
         if (f.af_perfil) partes.push(`AF desde el ${fecha(f.af_perfil)} según su perfil de FIDE (la fecha oficial)` + (f.af_fecha ? `; el Consejo lo aprobó el ${fecha(f.af_fecha)} (${f.af_consejo})` : "") + ": desde entonces sus torneos cuentan para AI y ya no para AF.");
-        else if (f.af_fecha) partes.push(`AF aprobado por el Consejo el ${fecha(f.af_fecha)} (${f.af_consejo}). La fecha oficial es la que FIDE anota en su perfil, de dos a cinco semanas después: hasta tenerla, lo que empezó en los ${VENTANA} días siguientes queda para revisar.`);
+        else if (f.af_fecha) partes.push(`AF aprobado por el Consejo el ${fecha(f.af_fecha)} (${f.af_consejo}). La fecha oficial es la que FIDE anota en su perfil, de seis días a seis semanas después: hasta tenerla, lo que empezó en los ${VENTANA} días siguientes queda para revisar.`);
         else if (["FA", "IA"].includes(a.titulo)) partes.push("De su AF solo se sabe el año (el de su perfil).");
         if (f.ia_fecha) partes.push(`AI aprobado el ${fecha(f.ia_fecha)} (${f.ia_consejo}).`);
         if (a.catNacional) partes.push(`Árbitro Nacional categoría ${a.catNacional} según la lista de la Federación Costarricense de Ajedrez (leída el ${fecha(f.fca_leida)}).`);

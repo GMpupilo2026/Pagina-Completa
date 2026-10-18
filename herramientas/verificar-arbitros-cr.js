@@ -547,7 +547,7 @@ const porNombre = (m) => Object.fromEntries(m.map((f) => [f[0], f]));
     const af = Object.fromEntries((await filas(p, "#tabla-torneos")).filter((f) => f[2] === "Sí").map((f) => [f[0].slice(-4), f[8]]));
     igual("y para AF, el de 2025 ya no cuenta (ya tenía el AF); los de antes sí", [af["2025"].startsWith("No"), /Ya tenía el título de AF \(aprobado el 15\/04\/2024\)/.test(af["2025"]), af["2023"].startsWith("Vale")], [true, true, true]);
     igual("la ficha dice que está activo, su licencia y cuándo se le aprobó el AF", await p.$eval("#ficha-fide", (e) => e.textContent),
-        "Activo en la lista de árbitros de FIDE del 12/10/2026, licencia IA-D. AF aprobado por el Consejo el 15/04/2024 (2.ª reunión del Consejo de FIDE de 2024 (en línea)). La fecha oficial es la que FIDE anota en su perfil, de dos a cinco semanas después: hasta tenerla, lo que empezó en los 60 días siguientes queda para revisar."
+        "Activo en la lista de árbitros de FIDE del 12/10/2026, licencia IA-D. AF aprobado por el Consejo el 15/04/2024 (2.ª reunión del Consejo de FIDE de 2024 (en línea)). La fecha oficial es la que FIDE anota en su perfil, de seis días a seis semanas después: hasta tenerla, lo que empezó en los 60 días siguientes queda para revisar."
         + " Sigue activo por lo menos hasta el 09/09/2029: cuatro años desde su seminario de AI (B.06.3, 2). Un curso de actualización después lo corre.");
     const hist = await p.$$eval("#ficha-historial > ul > li", (ls) => ls.map((l) => l.querySelector("strong").textContent));
     igual("su historial en FIDE: las solicitudes, la más nueva primero, y el seminario", hist,

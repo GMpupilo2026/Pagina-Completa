@@ -3420,7 +3420,7 @@ no de AF.
   `(\d{5,9}) ([^0-9\n]+?) CRC (IA|FA|NA) (i )?(?:([A-D]) )?([A-Z]{2}-[A-D]|No|NA)`:
   salieron 148 de las 148 veces que aparece « CRC ».
 - **La fecha de la reunión del Consejo que aprobó el AF.** Ojo: la fecha
-  OFICIAL no es esa sino la del perfil de FIDE, de dos a cinco semanas
+  OFICIAL no es esa sino la del perfil de FIDE, de seis días a seis semanas
   después (ver «La fecha oficial del título: la del perfil de FIDE»). El
   perfil que se lee desde afuera solo traía el año, y además está cerrado. La dicen los **informes de la Comisión de
   Árbitros a cada reunión del Consejo de FIDE**
@@ -3750,7 +3750,19 @@ Comisión de Árbitros de 2023 a 2026, de todos los países.
 
     Ojo: esa semana arbitró también el A, el Sub-14 y el Blitz, en las
     mismas fechas, y solo puede usar uno (2.10).
-  - El desfase va de **dos a cinco semanas**.
+  - **Los otros nueve** (capturas del dueño, octubre de 2026), los FA a
+    los que les faltaba: Loría (Consejo 17/12/2023, perfil 05/01/2024),
+    Zeledón (29/07/2024 → 16/08/2024), Murillo Tsijli (29/07/2024 →
+    07/09/2024), Argüello (05/09/2024 → 19/09/2024; el perfil dice «95th
+    2024 FIDE Congress», que es la misma reunión de Budapest), Neeshmy Núñez
+    (10/11/2024 → 18/11/2024), Quesada (22/03/2025 → 02/05/2025), Torres
+    (22/03/2025 → 03/05/2025), Francia (02/04/2026 → 03/05/2026) y Pastor
+    (23/08/2026 → 29/08/2026). Con eso, todos los FA con Consejo conocido
+    tienen su fecha oficial. Lo que cambió: el Campeonato Nacional Femenino
+    2024 (02/02/2024) de Loría, como principal, pasó de «revisar» a valer
+    para AI; de los demás, los torneos de esos días no tenían norma de AI.
+  - El desfase va de **seis días a seis semanas** (Pastor, 6; Torres, 42):
+    los 60 días de «revisar» alcanzan.
 - **«Licensed» es otra cosa**: el pago anual de la licencia (B.06.1, 6.1).
   En los 343 rechazos no hay ninguno de un FA o IA por esa fecha; los de
   licencia son todos de antes del NA.

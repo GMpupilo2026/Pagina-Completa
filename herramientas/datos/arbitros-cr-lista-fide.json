@@ -1204,7 +1204,8 @@
    "titulo": "FA",
    "fecha": "2023-12-17",
    "consejo": "3.ª reunión del Consejo de FIDE de 2023 (en línea, del 11 al 17 de diciembre)",
-   "fuente": "https://arbiters.fide.com/wp-content/uploads/Reporting/2023Q3CouncilARBReport.pdf"
+   "fuente": "https://arbiters.fide.com/wp-content/uploads/Reporting/2023Q3CouncilARBReport.pdf",
+   "perfil": "2024-01-05"
   },
   {
    "fide_id": 6504035,
@@ -1225,21 +1226,24 @@
    "titulo": "FA",
    "fecha": "2024-07-29",
    "consejo": "2.ª reunión del Consejo de FIDE de 2024 (en línea)",
-   "fuente": "https://arbiters.fide.com/wp-content/uploads/Reporting/2024Q2CouncilARBReport.pdf"
+   "fuente": "https://arbiters.fide.com/wp-content/uploads/Reporting/2024Q2CouncilARBReport.pdf",
+   "perfil": "2024-09-07"
   },
   {
    "fide_id": 6509851,
    "titulo": "FA",
    "fecha": "2024-07-29",
    "consejo": "2.ª reunión del Consejo de FIDE de 2024 (en línea)",
-   "fuente": "https://arbiters.fide.com/wp-content/uploads/Reporting/2024Q2CouncilARBReport.pdf"
+   "fuente": "https://arbiters.fide.com/wp-content/uploads/Reporting/2024Q2CouncilARBReport.pdf",
+   "perfil": "2024-08-16"
   },
   {
    "fide_id": 6508189,
    "titulo": "FA",
    "fecha": "2024-09-05",
    "consejo": "3.ª reunión del Consejo de FIDE de 2024 (Budapest)",
-   "fuente": "https://arbiters.fide.com/wp-content/uploads/Reporting/2024Q3CouncilARBReport.pdf"
+   "fuente": "https://arbiters.fide.com/wp-content/uploads/Reporting/2024Q3CouncilARBReport.pdf",
+   "perfil": "2024-09-19"
   },
   {
    "fide_id": 6513697,
@@ -1254,28 +1258,32 @@
    "titulo": "FA",
    "fecha": "2024-11-10",
    "consejo": "4.ª reunión del Consejo de FIDE de 2024 (en línea)",
-   "fuente": "https://arbiters.fide.com/wp-content/uploads/Reporting/2024Q4CouncilARBReport.pdf"
+   "fuente": "https://arbiters.fide.com/wp-content/uploads/Reporting/2024Q4CouncilARBReport.pdf",
+   "perfil": "2024-11-18"
   },
   {
    "fide_id": 6526373,
    "titulo": "FA",
    "fecha": "2025-03-22",
    "consejo": "1.ª reunión del Consejo de FIDE de 2025 (Nicosia, 21 y 22 de marzo)",
-   "fuente": "https://arbiters.fide.com/wp-content/uploads/Reporting/2025Q1CouncilARBReport.pdf"
+   "fuente": "https://arbiters.fide.com/wp-content/uploads/Reporting/2025Q1CouncilARBReport.pdf",
+   "perfil": "2025-05-02"
   },
   {
    "fide_id": 6515290,
    "titulo": "FA",
    "fecha": "2025-03-22",
    "consejo": "1.ª reunión del Consejo de FIDE de 2025 (Nicosia, 21 y 22 de marzo)",
-   "fuente": "https://arbiters.fide.com/wp-content/uploads/Reporting/2025Q1CouncilARBReport.pdf"
+   "fuente": "https://arbiters.fide.com/wp-content/uploads/Reporting/2025Q1CouncilARBReport.pdf",
+   "perfil": "2025-05-03"
   },
   {
    "fide_id": 109363,
    "titulo": "FA",
    "fecha": "2026-04-02",
    "consejo": "1.ª reunión del Consejo de FIDE de 2026 (en línea)",
-   "fuente": "https://arbiters.fide.com/wp-content/uploads/Reporting/2026Q1CouncilARBReport.pdf"
+   "fuente": "https://arbiters.fide.com/wp-content/uploads/Reporting/2026Q1CouncilARBReport.pdf",
+   "perfil": "2026-05-03"
   },
   {
    "fide_id": 6505694,
@@ -1289,7 +1297,8 @@
    "titulo": "FA",
    "fecha": "2026-08-23",
    "consejo": "2.ª reunión del Consejo de FIDE de 2026 (en línea)",
-   "fuente": "https://arbiters.fide.com/wp-content/uploads/Reporting/2026Q2CouncilARBReport.pdf"
+   "fuente": "https://arbiters.fide.com/wp-content/uploads/Reporting/2026Q2CouncilARBReport.pdf",
+   "perfil": "2026-08-29"
   }
  ],
  "solicitudes": [
