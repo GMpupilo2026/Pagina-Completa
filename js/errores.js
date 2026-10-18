@@ -42,6 +42,27 @@
   "use strict";
   if (window.ErroresSitio) return;
 
+  /* La transición entre páginas (@view-transition en css/styles.css) la
+     cancela el navegador cuando la página de llegada no la pide —
+     inscripcion.html, offline.html, un PDF—, cuando no le da tiempo o cuando
+     la navegación se corta (un marco que cambia de página antes de terminar
+     de cargar: «Transition was skipped. Navigation aborted»). Eso rechaza sus
+     promesas, y un rechazo que nadie atrapa sale como error de la página. No
+     es un error: la página cambia igual, sin fundido.
+     Va acá y no en js/navegacion.js: `pagereveal` sale en el primer pintado,
+     que puede llegar antes de que corran los scripts con `defer`; ahí nadie
+     lo escuchaba y el rechazo se escapaba (hizo fallar al CI una vez). Y va
+     antes del «apagado»: con Sentry apagado también tiene que atraparlos. */
+  function sinRechazos(e) {
+    var vt = e && e.viewTransition;
+    if (!vt) return;
+    ["ready", "finished", "updateCallbackDone"].forEach(function (k) {
+      if (vt[k] && typeof vt[k].catch === "function") vt[k].catch(function () {});
+    });
+  }
+  window.addEventListener("pageswap", sinRechazos);
+  window.addEventListener("pagereveal", sinRechazos);
+
   // El DSN no es secreto: es la dirección a la que el navegador manda los
   // errores, y cualquiera la ve en la pestaña Red. Vacío = apagado.
   var DSN = "";
