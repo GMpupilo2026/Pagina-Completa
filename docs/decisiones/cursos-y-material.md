@@ -1441,6 +1441,12 @@ para firmar. No se publica (está bajo `herramientas/`).
   pista (si el guion cambia y el Word no, la persona graba líneas viejas o
   corridas), y que la autorización traiga la parte de la persona menor. Se
   rompió a propósito (el Word del coro en lugar del de Tizón) y saltó.
+- **Para quien graba un solo cuento:** `audiolibro-grabar.js --libro
+  <slug> --salida <carpeta>` arma el Word de cada voz y la autorización solo
+  con ese cuento (la autorización, en singular: «del audiolibro del cuento…»),
+  en otra carpeta para no pisar los de la colección entera. La numeración y
+  los nombres de archivo son los mismos: cada línea sigue siendo su lugar en
+  la pista. El primero fue el de Peonita del libro 1, para una niña.
 - Al cambiar un cuento: `libro-ninos-pdf.js --solo-accesible` y después
   `audiolibro-grabar.js`. Si alguien ya grabó, ver qué líneas cambiaron
   antes de volver a mandarle el guion.

@@ -24,6 +24,8 @@
  * por cuento. No se publica nada de esto (herramientas/ está en .assetsignore).
  *
  *   node herramientas/audiolibro-grabar.js
+ *   node herramientas/audiolibro-grabar.js --libro peonita --salida /otra/carpeta
+ *        (solo un cuento, para quien graba ese y no los tres)
  *
  * Se vuelve a correr cada vez que cambia el guion (libro-ninos-pdf.js), y
  * verificar-libro-ninos.js avisa si un Word quedó viejo.
@@ -191,7 +193,9 @@ function guionDeVoz(guiones, voz) {
 /* ------------------------------------------------- la cesión de la voz */
 function cesion(guiones) {
   const titulos = guiones.map((g) => `«${g.titulo}»`);
-  const lista = titulos.slice(0, -1).join(", ") + " y " + titulos[titulos.length - 1];
+  // Con un solo cuento (--libro), en singular: «de los cuentos y «…»» no se lee.
+  const uno = titulos.length === 1;
+  const lista = uno ? titulos[0] : titulos.slice(0, -1).join(", ") + " y " + titulos[titulos.length - 1];
   const hijos = [
     h(X.HeadingLevel.HEADING_1, "Autorización de uso de la voz"),
     p(r("Audiolibros de los cuentos de Peonita · Ajedrez Integral", { bold: true })),
@@ -212,11 +216,11 @@ function cesion(guiones) {
     casilla("A la persona menor se le explicó qué se va a grabar y para qué, y está de acuerdo."),
 
     h(X.HeadingLevel.HEADING_2, "2. Qué se autoriza"),
-    p(`Autorizo a Ajedrez Integral, nombre comercial de Oscar Angulo Cubero, cédula 1-1399-0053 (en adelante, «la Academia»), a grabar mi voz —o la de la persona menor que represento— leyendo el guion de los audiolibros de los cuentos ${lista}, de Oscar Angulo Cubero, y a usar esas grabaciones como dice este documento.`),
+    p(`Autorizo a Ajedrez Integral, nombre comercial de Oscar Angulo Cubero, cédula 1-1399-0053 (en adelante, «la Academia»), a grabar mi voz —o la de la persona menor que represento— leyendo el guion ${uno ? "del audiolibro del cuento" : "de los audiolibros de los cuentos"} ${lista}, de Oscar Angulo Cubero, y a usar esas grabaciones como dice este documento.`),
     p("Para esos usos, cedo a la Academia los derechos patrimoniales sobre la interpretación grabada (Ley 6683 de Derechos de Autor y Derechos Conexos). Conservo mis derechos morales, entre ellos que se respete la interpretación."),
 
     h(X.HeadingLevel.HEADING_2, "3. Para qué se usan las grabaciones"),
-    punto("Para armar los audiolibros de esos cuentos (en audio y en libro electrónico con audio) y sus nuevas ediciones."),
+    punto(`Para armar ${uno ? "el audiolibro de ese cuento" : "los audiolibros de esos cuentos"} (en audio y en libro electrónico con audio) y sus nuevas ediciones.`),
     punto("Para publicarlos en ajedrez-integral.com, en la plataforma de la Academia y en sus clases, para escucharlos o descargarlos, con o sin costo."),
     punto("Para dar a conocer los audiolibros con fragmentos cortos."),
     p("No se usan para nada más sin pedir de nuevo el permiso por escrito."),
@@ -265,15 +269,23 @@ module.exports = { lineasDe, vocesUsadas, leerGuiones, archivoDe, slugVoz, SALID
 
 if (require.main === module) {
   (async () => {
-    const guiones = leerGuiones();
-    fs.mkdirSync(SALIDA, { recursive: true });
+    // --libro <slug> (se puede repetir): solo esos cuentos, para quien graba
+    // uno y no los tres. --salida <carpeta>: escribe ahí y no en grabar/, para
+    // no pisar los Word de la colección entera.
+    const args = process.argv.slice(2);
+    const valores = (op) => args.flatMap((a, i) => (a === op ? [args[i + 1]] : []));
+    const soloLibros = valores("--libro");
+    const salida = valores("--salida")[0] ? path.resolve(valores("--salida")[0]) : SALIDA;
+    const guiones = leerGuiones().filter((g) => !soloLibros.length || soloLibros.includes(g.libro));
+    if (!guiones.length) throw new Error(`No hay ningún libro «${soloLibros.join(", ")}». Los libros: ${LIBROS.map((l) => l.SLUG).join(", ")}`);
+    fs.mkdirSync(salida, { recursive: true });
     for (const voz of vocesUsadas(guiones)) {
-      const f = path.join(SALIDA, slugVoz(voz) + ".docx");
+      const f = path.join(salida, slugVoz(voz) + ".docx");
       fs.writeFileSync(f, await X.Packer.toBuffer(guionDeVoz(guiones, voz)));
       const n = lineasDe(guiones, voz).reduce((s, l) => s + l.pistas.reduce((t, x) => t + x.lineas.length, 0), 0);
       console.log(`${nombreVoz(voz)}: ${n} líneas → ${path.relative(process.cwd(), f)}`);
     }
-    const c = path.join(SALIDA, "cesion-de-voz.docx");
+    const c = path.join(salida, "cesion-de-voz.docx");
     fs.writeFileSync(c, await X.Packer.toBuffer(cesion(guiones)));
     console.log(`La autorización: ${path.relative(process.cwd(), c)}`);
   })().catch((e) => { console.error(e.message); process.exit(1); });
