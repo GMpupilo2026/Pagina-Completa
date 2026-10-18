@@ -634,6 +634,95 @@ cumplir además los CHECK de modalidad de `game_rooms` y `tournament_rounds`:
 sin eso, una ronda que la página mandaba como «aleatorio» la tragaba, y la
 base de verdad la rechaza.
 
+### Un torneo de todas las modalidades, jugado de punta a punta
+
+Se pidió revisar que todas las modalidades se puedan jugar sin fallas en un
+torneo, simulando al menos 6 rondas, que todos los relojes corran y que la
+triple repetición y las 50 jugadas terminen en tablas. Las pruebas de torneo
+escribían el resultado del cruce a mano; jugando las partidas de verdad
+salieron tres huecos, ninguno con error a la vista.
+
+**`variante.html` no le avisaba al torneo.** No cargaba `js/torneo-sync.js`:
+una partida de Abrazos, Camaleón, Vampiro, A ciegas, Volcanes o Misiones
+terminaba, el cruce se quedaba sin resultado y la ronda no se cerraba nunca.
+Ahora llama a `TorneoSync.onRoomUpdate` como las demás.
+
+**Y en las seis páginas avisaba solo la pantalla del rival.** Cuando la jugada
+que termina la partida es la propia, el eco de Realtime llega idéntico a lo que
+la página ya tiene y `SalaJuego.suscribir` lo descarta (con razón: no hay nada
+que pintar). Si el rival había cerrado su pestaña, nadie avisaba.
+`SalaJuego.avisarTorneo(room)` se llama también después de guardar la jugada
+propia; `onRoomUpdate` es idempotente (solo toca un cruce sin resultado).
+
+#### Todas las modalidades terminan en tablas: repetición y 50 jugadas
+
+| Modalidad | 50 jugadas | Triple repetición |
+|---|---|---|
+| Estándar, Niebla, Crazyhouse | `in_draw()` de chess.js | `js/repeticion.js` reproduce `room.moves` (como antes) |
+| A ciegas, Misiones, Vampiro, Volcanes | el motor (medias jugadas de la FEN) | `variant_state.rep` |
+| Camaleón, Abrazos | el motor, con su contador nuevo | `variant_state.rep` |
+| Cartas | el motor (chess.js) | `variant_state.rep` |
+| Duelo | el motor: 50 rondas sin captura, choque ni peón | el motor: `duelo_state.vistas` |
+
+- **La cuenta viaja en la sala** (`Repeticion.enSala`): las jugadas de esas
+  modalidades no se pueden reproducir con chess.js (cada una tiene su motor y
+  su planilla), así que quien juega pone al día un `{ posición: veces }` en
+  `variant_state.rep`, en el mismo update que la jugada. Se reinicia en cada
+  jugada irreversible (captura, abrazo, peón), que ya no puede volver.
+- **Cada motor dice qué es «la misma posición»** (`clave()`): con chess.js, la
+  de siempre (captura al paso solo si se puede hacer); en Volcanes, además, en
+  qué punto del ciclo de volcanes va (lo que puede pasar después es distinto);
+  en Cartas, además, las manos y las cartas pendientes (por eso solo se repite
+  cuando el mazo ya se acabó); en Abrazos, las casillas ordenadas (el objeto
+  las guardaba en el orden en que se movieron, y la misma posición se escribía
+  distinto).
+- **Camaleón y Abrazos no contaban las medias jugadas**: Camaleón escribía
+  siempre 0 en su FEN y Abrazos no lo guardaba. La partida no terminaba nunca.
+- **En Duelo la FEN va siempre con el turno en blancas y 0 medias jugadas**,
+  así que chess.js no puede contar nada: cuenta el motor (`sinAvance`,
+  `vistas`), y una partida guardada antes empieza a contar desde su tablero.
+- **El final dice por qué** (`SalaJuego.textoTablas`): «Tablas por triple
+  repetición.» o «Tablas por la regla de las 50 jugadas.», en las seis
+  páginas; en las que guardan el estado, `variant_state.fin.motivo`.
+- **`cargarConHistoria` de Estándar compara también el contador de medias
+  jugadas**: una sala que arrancó de otra posición con las mismas piezas se
+  tomaba por la partida desde el principio y el contador volvía a 1.
+
+#### Duelo Simultáneo con reloj
+
+Duelo era la única de a dos sin reloj: el torneo le daba un ritmo y la página
+lo ignoraba. Ahora lleva «Estoy listo» como las demás (el reloj arranca con los
+dos listos; una partida empezada antes sigue sin pedirlo) y **corren los dos
+relojes a la vez**, porque los dos piensan a la vez: cada uno se detiene cuando
+ese jugador confirma su jugada (ahí se le descuenta lo pensado y se le suma el
+incremento) y arrancan los dos de nuevo al resolverse la ronda. La bandera se
+le cae a quien no confirmó a tiempo.
+
+- **La base lo sabe**: `proteger_reloj_de_partida()` leía el turno de la
+  columna `fen`, que en el duelo se queda en la de salida («w»), así que para
+  la base el reloj de las negras no corría nunca y su bandera se habría
+  rechazado siempre. En el duelo corren los dos, menos el de quien ya confirmó
+  (nadie se lo puede bajar), y confirmar con el tiempo agotado se rechaza.
+  Comprobado en una transacción revertida: confirmar tras 30 s entra, bajarle
+  el reloj a quien confirmó se rechaza, la bandera antes de tiempo se rechaza,
+  confirmar sin tiempo se rechaza y la bandera de verdad entra.
+- `SalaJuego.restante()` y `pintarRelojes()` aceptan `corren: { w, b }` en
+  vez del turno.
+
+**Al tocar una página de partida, un motor, `js/repeticion.js`,
+`js/sala-juego.js` o `js/torneo-sync.js`, correr `node
+herramientas/verificar-torneo-jugado.js`** (necesita `npm install`; tarda unos
+minutos). Con una base de mentira compartida por todas las pestañas, que hace
+lo que hacen los triggers del reloj y de la ronda: (1) un torneo «Aleatorio»
+de 11 rondas, una por modalidad, donde el profe arma cada ronda en
+`torneo.html` y Ana y Bruno juegan cada partida de verdad (clics en el
+tablero, la jugada escrita en A ciegas, elegir y confirmar en Duelo) hasta
+tablas por repetición, mirando que corran los dos relojes, que la pantalla lo
+diga, que el resultado llegue al cruce y que la ronda se cierre sola; (2) las
+50 jugadas en las 11 modalidades; (3) la bandera en las 11, con el reloj
+detenido de quien confirmó en Duelo. Con `variante.html` sin `torneo-sync.js`,
+la ronda de Abrazos queda abierta y salta.
+
 ### El verificador de voseo no miraba la mitad del sitio
 
 Se descubrió acá, de rebote: `torneo.html` decía «Vuelve a Torneos y **entrá**
@@ -1008,8 +1097,9 @@ podían repetir la misma posición veinte veces y la partida seguía.
   «Tablas por triple repetición.» (se vuelve a contar al pintarlo: no hay
   columna de motivo, y no hace falta una).
 - Va en `estandar`, `niebla` y `crazyhouse`, las de reglas de ajedrez de
-  siempre. **Las de `variante.html` y Cartas no la tienen**: sus motores y sus
-  cartas cambian lo que significa «la misma posición», y es otra decisión.
+  siempre. Las de `variante.html`, Cartas y Duelo la tienen desde octubre de
+  2026, cada una con lo que para ella es «la misma posición» (ver «Todas las
+  modalidades terminan en tablas: repetición y 50 jugadas»).
 
 ### En las prácticas también: triple repetición y 50 jugadas, solas
 

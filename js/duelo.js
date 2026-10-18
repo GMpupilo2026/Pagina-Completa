@@ -22,6 +22,42 @@
         function nameFor(id) { return playerNames[id] || "Alumno"; }
         function secretKey(round) { return "duelo_secreto_" + ROOM_ID + "_" + round; }
 
+        /* Se juega con los dos listos, como en las demás salas: así el reloj
+           arranca cuando los dos están (lo pone la base). Una partida que ya
+           había empezado antes de que Duelo tuviera reloj no tiene esas
+           banderas: se sigue jugando igual, sin reloj. */
+        function bothReady(row) { return !!(row.white_ready && row.black_ready); }
+        function listos(row) {
+            const d = row.duelo_state || {};
+            return bothReady(row) || (d.round || 1) > 1 || !!(d.commit && (d.commit.w || d.commit.b));
+        }
+
+        /* El reloj del duelo: los dos piensan a la vez, así que corren los dos
+           relojes desde que empieza la ronda (clock_updated_at), y cada uno se
+           detiene cuando ese jugador confirma su jugada (ahí se le descuenta lo
+           pensado y se le suma el incremento). Al resolverse la ronda arrancan
+           los dos de nuevo. La base lo valida igual (proteger_reloj_de_partida:
+           en Duelo corren los dos, menos el de quien ya confirmó). */
+        function corren(row) {
+            const c = (row.duelo_state && row.duelo_state.commit) || {};
+            return { w: !c.w, b: !c.b };
+        }
+        function renderClocks() {
+            if (!room) return;
+            SalaJuego.pintarRelojes(room, { miColor: myColor, corren: corren(room), nombreDe: (c) => nameFor(c === "w" ? room.white_id : room.black_id) });
+        }
+        setInterval(() => {
+            if (!room || !board) return;
+            renderClocks();
+            // La bandera, para cada uno que todavía no confirmó su jugada.
+            const c = corren(room);
+            ["w", "b"].forEach((color) => { if (c[color]) SalaJuego.revisarBandera(room, ROOM_ID, color); });
+        }, 250);
+        function sinTiempo(color) {
+            const quedan = SalaJuego.restante(room, color, null, corren(room));
+            return quedan !== null && quedan <= 0;
+        }
+
         function updateStatusText() {
             document.getElementById("top-player").textContent = nameFor(myColor === "b" ? room.white_id : room.black_id) + (myColor === "b" ? " (blancas)" : " (negras)");
             document.getElementById("bottom-player").textContent = myColor
@@ -29,6 +65,9 @@
                 : nameFor(room.white_id) + " (blancas)";
             if (!myColor) document.getElementById("top-player").textContent = nameFor(room.black_id) + " (negras)";
             document.getElementById("resign-btn").classList.toggle("hidden", !myColor || room.status !== "playing");
+            const myReady = myColor === "w" ? room.white_ready : myColor === "b" ? room.black_ready : true;
+            const esperandoInicio = room.status === "playing" && !listos(room);
+            document.getElementById("ready-btn").classList.toggle("hidden", !myColor || !esperandoInicio || myReady);
 
             const g = board.game;
             let myTurnNow = false;
@@ -36,8 +75,12 @@
                 // Rendirse solo escribe room.result (no toca duelo_state), así que manda
                 // el de la sala y el del estado queda de respaldo.
                 const resultado = room.result || g.result;
-                const resultText = resultado === "draw" ? "Tablas." : (resultado === "white" ? nameFor(room.white_id) + " ganó con blancas." : nameFor(room.black_id) + " ganó con negras.");
+                const resultText = resultado === "draw" ? SalaJuego.textoTablas(g.motivo) : (resultado === "white" ? nameFor(room.white_id) + " ganó con blancas." : nameFor(room.black_id) + " ganó con negras.");
                 setStatus("Partida terminada — " + resultText);
+            } else if (esperandoInicio) {
+                if (!myColor) setStatus("Esperando a que " + nameFor(room.white_id) + " y " + nameFor(room.black_id) + " confirmen que están listos…");
+                else if (myReady) setStatus("Ya confirmaste que estás listo — esperando a " + nameFor(myColor === "w" ? room.black_id : room.white_id) + "…");
+                else setStatus("Toca \"Estoy listo\" cuando puedas empezar a jugar" + (room.initial_seconds != null ? " — el reloj arranca cuando ambos estén listos." : "."));
             } else if (!myColor) {
                 setStatus("Estás mirando esta partida — ronda " + g.round + ".");
             } else {
@@ -107,6 +150,7 @@
                 return false;
             }
             room = SalaJuego.laMasNueva(room, guardada[0]);
+            SalaJuego.avisarTorneo(room);
             return true;
         }
 
@@ -163,6 +207,8 @@
                 board.locked = false;
                 board.render();
                 const patch = {};
+                // La ronda nueva empieza ya: los dos relojes arrancan de nuevo.
+                if (room.initial_seconds != null && room.clock_updated_at) patch.clock_updated_at = new Date().toISOString();
                 if (res.gameOver) {
                     patch.status = "finished";
                     patch.result = res.result === "draw" ? "draw" : (res.result === "white" ? "white" : "black");
@@ -174,13 +220,21 @@
         }
 
         document.getElementById("confirm-btn").addEventListener("click", async () => {
-            if (!myColor || !board.staged) return;
+            if (!myColor || !board.staged || !listos(room)) return;
+            if (sinTiempo(myColor)) { setStatus("Se te acabó el tiempo: esta jugada ya no cuenta."); return; }
             const r = await board.game.commitMove(myColor, board.staged);
             if (!r.ok) { setStatus(r.error); return; }
             mySecret = { move: r.move, salt: r.salt };
             try { localStorage.setItem(secretKey(board.game.round), JSON.stringify(mySecret)); } catch (e) {}
             board.markLocked();
-            const ok = await pushDueloState(board.game.toJSON());
+            // Se detiene el reloj propio: lo pensado se descuenta y se suma el
+            // incremento. clock_updated_at no se toca: el del rival sigue.
+            const tiempo = {};
+            if (room.initial_seconds != null && room.clock_updated_at) {
+                const clave = myColor === "w" ? "white_time_left" : "black_time_left";
+                tiempo[clave] = Math.max(0, (room[clave] || 0) - RelojServidor.desde(room.clock_updated_at)) + (room.increment_seconds || 0);
+            }
+            const ok = await pushDueloState(board.game.toJSON(), tiempo);
             if (ok) { updateStatusText(); await maybeAdvance(); }
         });
         document.getElementById("change-btn").addEventListener("click", () => { board.clearStaged(); updateStatusText(); });
@@ -196,9 +250,10 @@
                     if (guardado) mySecret = JSON.parse(guardado);
                 } catch (e) {}
             }
-            board.setInteractive(!!myColor && room.status === "playing");
+            board.setInteractive(!!myColor && room.status === "playing" && listos(room));
             updateStatusText();
             renderRoundsHistory();
+            renderClocks();
             // Tras una escritura que no quedó (releerSala) no se reintenta solo: si el
             // fallo fuera persistente, guardar → fallar → releer daría vueltas sin fin.
             if (!desdeRelectura) maybeAdvance();
@@ -214,6 +269,16 @@
             if (mensaje) setStatus(mensaje);
         }
 
+        document.getElementById("ready-btn").addEventListener("click", async () => {
+            if (!myColor || room.status !== "playing") return;
+            const { cambio, error } = await SalaJuego.marcarListo(room, ROOM_ID, myColor);
+            if (error) { setStatus("No se pudo confirmar: " + error.message); return; }
+            room = Object.assign({}, room, cambio);
+            board.setInteractive(!!myColor && room.status === "playing" && listos(room));
+            updateStatusText();
+            renderClocks();
+        });
+
         function subscribeRoom() { SalaJuego.suscribir(ROOM_ID, (fila) => applyRemoteRoom(fila), { sala: () => room, miColor: () => myColor, esperando: () => true }); }
 
         SalaJuego.montarRendirse({ salaId: ROOM_ID, sala: () => room, miColor: () => myColor, decir: setStatus, releer: releerSala });
@@ -221,6 +286,7 @@
         async function init() {
             const { data } = await sb.auth.getSession();
             session = data.session;
+            RelojServidor.iniciar(sb);
             if (!session) { window.location.href = "login.html"; return; }
             if (!ROOM_ID) { showError("Falta indicar qué partida abrir. Vuelve a Juegos y entra desde ahí."); return; }
 
@@ -257,7 +323,7 @@
             (players || []).forEach((p) => { playerNames[p.id] = p.nombre; });
 
             board = new DueloBoard(document.getElementById("board"), {
-                interactive: !!myColor && room.status === "playing",
+                interactive: !!myColor && room.status === "playing" && listos(room),
                 myColor: myColor || "w",
                 onPromotionNeeded: showPromotionPicker,
                 onStagedChange: updateStatusText,

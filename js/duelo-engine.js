@@ -92,6 +92,18 @@ window.DueloSimultaneo = (function () {
       this.historial = []; // todas las rondas resueltas hasta ahora, en orden (para el listado de la página)
       this.gameOver = false;
       this.result = null; // "white" | "black" | "draw" | null
+      /* Las tablas por repetición y por 50 jugadas. La FEN de esta variante
+         va siempre con el turno en "w" y el contador de medias jugadas en 0
+         (ver resolveRound), así que chess.js no puede contarlas: las cuenta
+         el motor. Una ronda es una jugada de cada lado.
+           · sinAvance: rondas seguidas sin captura, choque ni peón movido;
+             a las 50 son tablas (las 50 jugadas de cada lado de siempre).
+           · vistas: cuántas veces apareció cada tablero desde la última ronda
+             irreversible; a las 3, tablas. El turno no cuenta: en el duelo
+             los dos mueven siempre. */
+      this.sinAvance = 0;
+      this.vistas = { [this.chess.fen().split(" ")[0]]: 1 };
+      this.motivo = null; // "repeticion" | "cincuenta" cuando terminó en tablas por eso
     }
 
     fen() { return this.chess.fen(); }
@@ -138,6 +150,8 @@ window.DueloSimultaneo = (function () {
       const moveB = this.reveal.b.move;
       const pieceW = this.chess.get(moveW.from);
       const pieceB = this.chess.get(moveB.from);
+      const contar = () => this.chess.board().reduce((n, fila) => n + fila.filter(Boolean).length, 0);
+      const piezasAntes = contar();
       this.chess.remove(moveW.from);
       this.chess.remove(moveB.from);
 
@@ -171,6 +185,14 @@ window.DueloSimultaneo = (function () {
       }
       this.chess.load(filas.join("/") + " w - - 0 " + this.round);
 
+      // Irreversible: salió alguna pieza del tablero (captura o choque) o se
+      // movió un peón. Ahí se empieza a contar de nuevo.
+      const irreversible = contar() < piezasAntes || pieceW.type === "p" || pieceB.type === "p";
+      this.sinAvance = irreversible ? 0 : (this.sinAvance || 0) + 1;
+      if (irreversible || !this.vistas) this.vistas = {};
+      const tablero = filas.join("/");
+      this.vistas[tablero] = (this.vistas[tablero] || 0) + 1;
+
       const sanaW = choque ? (moveW.from + "x" + moveW.to + " (choque)") : (moveW.from + "-" + moveW.to);
       const sanaB = choque ? (moveB.from + "x" + moveB.to + " (choque)") : (moveB.from + "-" + moveB.to);
       this.lastRound = {
@@ -189,6 +211,8 @@ window.DueloSimultaneo = (function () {
       else if (mateW) { this.gameOver = true; this.result = "black"; }
       else if (mateB) { this.gameOver = true; this.result = "white"; }
       else if (ahogadoW || ahogadoB) { this.gameOver = true; this.result = "draw"; }
+      else if (this.vistas[tablero] >= 3) { this.gameOver = true; this.result = "draw"; this.motivo = "repeticion"; }
+      else if (this.sinAvance >= 50) { this.gameOver = true; this.result = "draw"; this.motivo = "cincuenta"; }
       else if (this.chess.in_draw()) { this.gameOver = true; this.result = "draw"; }
 
       return { ok: true, lastRound: this.lastRound, gameOver: this.gameOver, result: this.result };
@@ -199,6 +223,7 @@ window.DueloSimultaneo = (function () {
         fen: this.chess.fen(), commit: this.commit, reveal: this.reveal,
         round: this.round, lastRound: this.lastRound, historial: this.historial,
         gameOver: this.gameOver, result: this.result,
+        sinAvance: this.sinAvance, vistas: this.vistas, motivo: this.motivo,
       };
     }
 
@@ -212,6 +237,11 @@ window.DueloSimultaneo = (function () {
       g.historial = data.historial || [];
       g.gameOver = !!data.gameOver;
       g.result = data.result || null;
+      g.sinAvance = data.sinAvance || 0;
+      // Una partida guardada antes de esto no trae la cuenta: empieza desde el
+      // tablero de ahora (equivocarse hacia «no hay repetición»).
+      g.vistas = data.vistas && typeof data.vistas === "object" ? data.vistas : { [String(data.fen || "").split(" ")[0]]: 1 };
+      g.motivo = data.motivo || null;
       return g;
     }
   }

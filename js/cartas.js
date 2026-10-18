@@ -36,7 +36,8 @@
 
             let myTurnNow = false;
             if (room.status === "finished") {
-                const resultText = room.result === "draw" ? "Tablas." : (room.result === "white" ? nameFor(room.white_id) + " ganó con blancas." : nameFor(room.black_id) + " ganó con negras.");
+                const fin = room.variant_state && room.variant_state.fin;
+                const resultText = room.result === "draw" ? SalaJuego.textoTablas(fin && fin.motivo) : (room.result === "white" ? nameFor(room.white_id) + " ganó con blancas." : nameFor(room.black_id) + " ganó con negras.");
                 setStatus("Partida terminada — " + resultText);
             } else if (waitingToStart) {
                 if (!myColor) setStatus("Esperando a que " + nameFor(room.white_id) + " y " + nameFor(room.black_id) + " confirmen que están listos…");
@@ -156,6 +157,7 @@
                 return;
             }
             room = SalaJuego.laMasNueva(room, guardada[0]);
+            SalaJuego.avisarTorneo(room);
             renderMoveHistory(room.moves);
             updateStatusText();
             renderClocks();
@@ -170,7 +172,22 @@
                 patch[storedKey] = Math.max(0, (room[storedKey] || 0) - elapsed) + (room.increment_seconds || 0);
                 patch.clock_updated_at = new Date().toISOString();
             }
-            if (info.gameOver) { patch.status = "finished"; patch.result = info.result; }
+            /* Triple repetición: el tablero se recarga desde cartas_state con
+               cada cambio y chess.js pierde la historia, así que la cuenta viaja
+               en la sala (variant_state.rep, ver Repeticion.enSala). La posición
+               incluye las manos y las cartas pendientes (CartasChess.clave):
+               las mismas piezas con otras cartas no son la misma posición. Las
+               50 jugadas ya las aplica el motor. */
+            const previo = room.variant_state && room.variant_state.rep;
+            const claveAntes = previo ? null : CartasChess.Game.fromJSON(room.cartas_state).clave();
+            const cuenta = Repeticion.enSala(previo, claveAntes, board.game.clave(), board.game.medias() === 0);
+            patch.variant_state = Object.assign({}, room.variant_state || {}, { rep: cuenta.rep });
+            if (!info.gameOver && cuenta.veces >= 3) info = Object.assign({}, info, { gameOver: true, result: "draw", motivo: "repeticion" });
+            if (info.gameOver) {
+                patch.status = "finished";
+                patch.result = info.result;
+                if (info.result === "draw" && info.motivo) patch.variant_state.fin = { motivo: info.motivo };
+            }
             await pushState(patch);
         }
 

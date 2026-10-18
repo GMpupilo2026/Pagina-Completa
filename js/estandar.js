@@ -45,7 +45,7 @@
                 if (puede) revisar.href = "entreno/tipos.html?revisar=" + encodeURIComponent("juego:" + ROOM_ID) + "#errores";
             }
             if (room.status === "finished") {
-                const resultText = room.result === "draw" ? (esTripleRepeticion(room.moves, room.fen) ? "Tablas por triple repetición." : "Tablas.") : (room.result === "white" ? nameFor(room.white_id) + " ganó con blancas." : nameFor(room.black_id) + " ganó con negras.");
+                const resultText = room.result === "draw" ? SalaJuego.textoTablas(esTripleRepeticion(room.moves, room.fen) ? "repeticion" : (Repeticion.cincuentaJugadas(room.fen) ? "cincuenta" : null)) : (room.result === "white" ? nameFor(room.white_id) + " ganó con blancas." : nameFor(room.black_id) + " ganó con negras.");
                 setStatus("Partida terminada — " + resultText);
             } else if (waitingToStart) {
                 if (!myColor) setStatus("Esperando a que " + nameFor(room.white_id) + " y " + nameFor(room.black_id) + " confirmen que están listos…");
@@ -142,7 +142,9 @@
             if (!jugadas || !jugadas.length) return;
             const prueba = new Chess();
             for (const san of jugadas) { if (!prueba.move(san)) return; }
-            const pos = (f) => String(f).split(" ").slice(0, 4).join(" ");
+            // También el contador de medias jugadas (la regla de las 50): una sala
+            // que arrancó de otra posición con las mismas piezas no es esta partida.
+            const pos = (f) => String(f).split(" ").slice(0, 5).join(" ");
             if (pos(prueba.fen()) !== pos(board.game.fen())) return;
             board.game.reset();
             jugadas.forEach((san) => board.game.move(san));
@@ -191,6 +193,7 @@
             // o hasta la respuesta del rival), se queda lo más nuevo: antes esto
             // pegaba el parche encima y la sala volvía una jugada atrás.
             room = SalaJuego.laMasNueva(room, guardada[0]);
+            SalaJuego.avisarTorneo(room);
             renderMoveHistory(room.moves);
             updateStatusText();
             renderClocks();

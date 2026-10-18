@@ -71,10 +71,13 @@
   /* Lo que le queda a `color`, contando lo que corre desde la última jugada
      si es su turno. La hora es la del servidor (js/reloj-servidor.js): la del
      celular de cada uno puede estar adelantada. */
-  function restante(room, color, turno) {
+  /* `corren`, si viene, dice qué relojes corren ({ w, b }) en vez del turno:
+     en Duelo Simultáneo los dos piensan a la vez y cada reloj se detiene
+     cuando ese jugador confirma su jugada (ver js/duelo.js). */
+  function restante(room, color, turno, corren) {
     const guardado = color === "w" ? room.white_time_left : room.black_time_left;
     if (guardado == null) return null;
-    const corre = room.status === "playing" && room.clock_updated_at && turno === color;
+    const corre = room.status === "playing" && room.clock_updated_at && (corren ? !!corren[color] : turno === color);
     if (!corre) return guardado;
     return Math.max(0, guardado - RelojServidor.desde(room.clock_updated_at));
   }
@@ -103,8 +106,8 @@
     }
     const colorAbajo = opciones.miColor || "w";
     const colorArriba = colorAbajo === "w" ? "b" : "w";
-    const segArriba = restante(room, colorArriba, opciones.turno);
-    const segAbajo = restante(room, colorAbajo, opciones.turno);
+    const segArriba = restante(room, colorArriba, opciones.turno, opciones.corren);
+    const segAbajo = restante(room, colorAbajo, opciones.turno, opciones.corren);
     arriba.textContent = formatear(segArriba);
     abajo.textContent = formatear(segAbajo);
     rotular(arriba, colorArriba, segArriba, opciones.miColor, opciones.nombreDe);
@@ -323,5 +326,29 @@
     return !!window.Repeticion && Repeticion.esTriple(SALIDA, jugadas, (f) => new Chess(f), fen);
   }
 
-  window.SalaJuego = { formatear, turnoDe, esAnterior, laMasNueva, restante, pintarRelojes, revisarBandera, releer, suscribir, marcarListo, montarRendirse, esTripleRepeticion };
+  /* Cómo se dice un final en tablas, el mismo en las seis páginas. `motivo`:
+     "repeticion" (la misma posición tres veces), "cincuenta" (50 jugadas de
+     cada lado sin captura ni avance de peón) o nada (ahogado, material
+     insuficiente, acuerdo). */
+  function textoTablas(motivo) {
+    if (motivo === "repeticion") return "Tablas por triple repetición.";
+    if (motivo === "cincuenta") return "Tablas por la regla de las 50 jugadas.";
+    return "Tablas.";
+  }
+
+  /* Si la partida es de un torneo y ya terminó, que el torneo se entere
+     (js/torneo-sync.js: el resultado al cruce y, si era la última, cerrar la
+     ronda). Cada página lo hace con lo que le llega por Realtime, pero eso no
+     alcanza: cuando la jugada que termina la partida es la PROPIA, el eco
+     llega idéntico a lo que la página ya tiene y se descarta (ver
+     suscribir), así que solo avisaba la pantalla del rival; si el rival había
+     cerrado la suya, el cruce se quedaba sin resultado y la ronda no se
+     cerraba nunca. Se llama también después de guardar la jugada propia.
+     onRoomUpdate es idempotente: solo toca un cruce todavía sin resultado. */
+  function avisarTorneo(fila) {
+    if (!fila || fila.status !== "finished" || !window.TorneoSync) return;
+    try { TorneoSync.onRoomUpdate(sb, fila); } catch (e) { console.error(e); }
+  }
+
+  window.SalaJuego = { formatear, turnoDe, esAnterior, laMasNueva, restante, pintarRelojes, revisarBandera, releer, suscribir, marcarListo, montarRendirse, esTripleRepeticion, avisarTorneo, textoTablas };
 })();
