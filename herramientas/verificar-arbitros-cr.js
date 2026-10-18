@@ -79,7 +79,11 @@ const ARBITROS_FIDE = [
             torneos: ["30.08-09.09.25 18th IA Seminar"], fuente: "https://arbiters.fide.com/informe-2.pdf" },
       ],
       seminarios: [{ tipo: "IA", seminario: "18th IACS Internet Based Aug 2025 (ARB)", mes: "2025-09", fecha: "2025-09-09", fuente: "https://arbiters.fide.com/informe-2.pdf" }] },
-    { fide_id: 6500002, titulo: "FA", inactivo: true, categoria: "D", licencia: "No", af_fecha: null, af_consejo: "", ia_fecha: null, ia_consejo: "", lista: "2026-10-12", solicitudes: [], seminarios: [] },
+    // Pedro está en la lista de la Federación y nunca arbitró: no sale en la
+    // lista de la herramienta, sí en la comparación con la Federación.
+    { fide_id: 6500006, nombre: "Nuevo Prueba, Pedro", titulo: "NA", inactivo: false, categoria: "", licencia: "NA", categoria_nacional: "C", fca_leida: "2026-10-16", af_fecha: null, af_consejo: "", ia_fecha: null, ia_consejo: "", lista: "2026-10-12", solicitudes: [], seminarios: [] },
+    // Ana figuraba en una lista vieja de la Federación: ya no está en ella.
+    { fide_id: 6500002, titulo: "FA", inactivo: true, categoria: "D", licencia: "No", fca_leida: "2025-01-01", af_fecha: null, af_consejo: "", ia_fecha: null, ia_consejo: "", lista: "2026-10-12", solicitudes: [], seminarios: [] },
     // Luis tiene su seminario de AF (vale cuatro años) y una norma de las tres.
     { fide_id: 6500003, titulo: "NA", inactivo: false, categoria: "", licencia: "NA", categoria_nacional: "B", fca_leida: "2026-10-16", af_fecha: null, af_consejo: "", ia_fecha: null, ia_consejo: "", lista: "2026-10-12", solicitudes: [],
       seminarios: [{ tipo: "FA", seminario: "189th Internet Based Jun 2025 (CCA)", mes: "2025-06", fecha: "2025-06-29", fuente: "https://arbiters.fide.com/informe-3.pdf" }] },
@@ -337,6 +341,19 @@ const porNombre = (m) => Object.fromEntries(m.map((f) => [f[0], f]));
         [[], "Nada de lo que alguien junta para su siguiente título vence en los próximos 12 meses."]);
     igual("«La actividad en FIDE»: Ana inactiva primero, Óscar activo por lo menos hasta cuatro años después de su seminario de AI", await filas(p, "#tabla-actividad-fide"),
         [["Soto Prueba, Ana", "FA", "Inactivo", "—"], ["Ángulo Prueba, Óscar", "IA", "Activo", "09/09/2029"]]);
+    igual("«La lista de la Federación»: Luis está en ella y no arbitra desde 2023, y Pedro, que nunca arbitró, también sale; Ana figuraba en una lista vieja y ya no cuenta; nadie arbitra seguido sin estar",
+        [await filas(p, "#tabla-fca-quietos"), await filas(p, "#tabla-fca-fuera"), await p.$eval("#fca-cuenta", (e) => e.textContent)],
+        [[["Rojas Prueba, Luis", "AN-B", "01/03/2023"], ["Nuevo Prueba, Pedro", "AN-C", "Ninguno"]], [["Nadie arbitra seguido sin estar en la lista."]],
+         "Lista de la Federación leída el 16/10/2026: 2 árbitros. 2 no arbitraron en Costa Rica desde 2024; 0 arbitraron 3 o más torneos desde 2025 sin estar en ella."]);
+    await p.evaluate(() => { window.TablaExcel.bajar = (nombre, hojas) => { window.__excel = { nombre, hojas }; }; });
+    await p.selectOption("#tipo", "nacional");
+    await p.click("#lista-excel");
+    const excelLista = await p.evaluate(() => window.__excel);
+    igual("«Descargar la lista en Excel»: lo que se ve con los filtros (solo Elo nacional: Óscar y Eduardo), con su columna y una hoja con los filtros",
+        [excelLista.nombre, excelLista.hojas[0].filas.length, excelLista.hojas[0].filas[0].includes("Solo Elo nacional"),
+         excelLista.hojas[0].filas.slice(1).map((f) => [f[0], f[9]]), excelLista.hojas[1].filas.find((f) => f[0] === "Torneos")],
+        ["arbitros-cr.xlsx", 3, true, [["Ángulo Prueba, Óscar", 1], ["Quiros Prueba, Eduardo", 1]], ["Torneos", "Solo con Elo nacional"]]);
+    await p.selectOption("#tipo", "");
     igual("«Por identificar»: quienes no figuran en FIDE, el de más torneos primero", (await filas(p, "#tabla-no-fide")).map((f) => [f[0], f[3]]), [["Quiros Prueba, Eduardo", "3"], ["Viejo Prueba, Juan", "1"]]);
     igual("y los nombres de chess-results sin reconocer, con su cargo, sus ID y enlaces a los torneos", await filas(p, "#tabla-sin-id"),
         [["AF Josué Prueba", "principal, árbitro", "3", "09/05/2011 al 27/08/2016", "—", "236537 · 236115"], ["AI Fulano Prueba (8400687)", "principal", "1", "01/07/2017 al 01/07/2017", "8400687", "292598"]]);
@@ -450,6 +467,11 @@ const porNombre = (m) => Object.fromEntries(m.map((f) => [f[0], f]));
         o.map((f) => [f[0], f[2], f[3]]),
         [["10/01/2025", "Sí", "Árbitro principal"], ["01/08/2024", "Sí", "Árbitro adjunto principal"], ["10/07/2024", "No (Elo nacional)", "Director del torneo"],
          ["01/05/2024", "Sí", "Árbitro principal"], ["01/05/2024", "No", "Árbitro"], ["01/03/2023", "Sí", "Árbitro"]]);
+    await p.selectOption("#ficha-tipo", "nacional");
+    igual("«Torneos: solo con Elo nacional» en la ficha deja el del club, y el filtro de arriba dice lo mismo",
+        [(await filas(p, "#tabla-torneos")).map((f) => [f[0], f[2]]), await p.$eval("#tipo", (e) => e.value)], [[["10/07/2024", "No (Elo nacional)"]], "nacional"]);
+    await p.selectOption("#tipo", "");
+    igual("y al revés: el de arriba cambia el de la ficha", [await p.$eval("#ficha-tipo", (e) => e.value), (await filas(p, "#tabla-torneos")).length], ["", 6]);
     const conPorque = await p.$eval("#tabla-torneos tbody tr", (tr) => [tr.cells[9].querySelector(".of-estado").textContent, tr.cells[9].querySelector(".of-detalle").textContent]);
     igual("la norma va escrita con su porqué", conPorque, ["Vale una vez", "porque opcion"]);
     igual("un torneo que no es de FIDE no tiene norma", o[2].slice(8), ["—", "—"]);
@@ -715,6 +737,13 @@ const porNombre = (m) => Object.fromEntries(m.map((f) => [f[0], f]));
         [["Rojas Prueba, Luis", "Norma de AF: Internacional con titulados 2023 (01/03/2023)", "01/03/2029", "Queda con 0 de 3"],
          ["Rojas Prueba, Luis", "Seminario de AF: 189th Internet Based Jun 2025 (CCA)", "29/06/2029", "Sin seminario vigente no puede mandar la solicitud"]]);
     igual("y la cuenta", await p.$eval("#por-vencer-cuenta", (e) => e.textContent), "2 cosas vencen en los próximos 12 meses, de 1 árbitro.");
+    await ctx.close();
+
+    console.log("\n=== La lista de la Federación, con el reloj en junio de 2025 ===");
+    ({ ctx, p } = await abrir(browser, "arbitros-cr.html", true, "2025-06-15T12:00:00-06:00"));
+    await p.waitForFunction(() => document.getElementById("app").checkVisibility());
+    igual("Óscar arbitró 4 torneos desde 2024 (el de 2025 y tres de 2024) y no está en la lista; Eduardo, 2, no llega a 3",
+        await filas(p, "#tabla-fca-fuera"), [["Ángulo Prueba, Óscar", "IA", "Activo", "4", "10/01/2025"]]);
     await ctx.close();
 
     console.log("\n=== Quien solo está en chess-results ===");

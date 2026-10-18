@@ -296,6 +296,13 @@
             return a;
         });
         LISTA = filasFide.length ? filasFide[0].lista : "";
+        FCA = filasFide.reduce((m, f) => (f.fca_leida && f.fca_leida > m ? f.fca_leida : m), "");
+        // Los de la lista de la Federación que nunca arbitraron: no están en la
+        // lista de la herramienta (no tienen torneos), pero sí en la comparación.
+        const conTorneos = new Set(arbitros.map((a) => a.fide_id));
+        sinArbitrar = filasFide.filter((f) => FCA && f.fca_leida === FCA && !conTorneos.has(f.fide_id))
+            .map((f) => ({ fide_id: f.fide_id, nombre: f.nombre || String(f.fide_id), titulo: TITULO_LISTA[f.titulo] || "", fide: f, todos: [],
+                catNacional: f.titulo === "NA" && f.categoria_nacional ? f.categoria_nacional : "" }));
         for (const a of arbitros) a.normas = { af: cuentaNormas(a, "af").usadas.length, ai: cuentaNormas(a, "ai").usadas.length };
         // El equipo de Costa Rica de cada torneo: quién de la lista estuvo y en qué.
         equipos = new Map();
@@ -381,7 +388,8 @@
             && (!estado.enFide || a.enFide === estado.enFide));
     }
 
-    function pintarGeneral() {
+    // La lista con los filtros y el orden elegidos: la pinta pintarGeneral y la baja excelLista.
+    function filasLista() {
         const filas = enLista().map((a) => resumen(a)).filter((r) => r.torneos > 0);
         const { col, dir } = estado.orden;
         // Sin el título, al final en los dos sentidos.
@@ -392,6 +400,12 @@
             const c = typeof a === "number" ? a - b : String(a).localeCompare(String(b), "es");
             return c * dir || x.a.nombre.localeCompare(y.a.nombre, "es");
         });
+        return filas;
+    }
+
+    function pintarGeneral() {
+        const filas = filasLista();
+        const { col, dir } = estado.orden;
         const conRev = (n, r) => miles(n) + (r ? " (" + miles(r) + ")" : "");
         $("tabla-arbitros").tBodies[0].replaceChildren(...filas.map((r) => {
             const boton = el("button", { type: "button", class: "font-semibold underline underline-offset-2 hover:no-underline text-left" }, r.a.nombre);
@@ -430,6 +444,7 @@
         pintarSolicitudes();
         pintarPorVencer();
         pintarActividadFide();
+        pintarListaFca();
         pintarPorIdentificar();
     }
 
@@ -553,6 +568,42 @@
         }));
     }
 
+    /* «La lista de la Federación»: comparar quién está en la lista de árbitros
+       de la Federación Central de Ajedrez con quién arbitra de verdad. Cuenta
+       los torneos en Costa Rica como árbitro (principal, adjunto o árbitro, en
+       la ficha de FIDE o en chess-results), sin los filtros de arriba. Están en
+       la lista quienes tienen la fecha de la lista más nueva (fca_leida). */
+    const ANIOS_SIN = 3, ANIOS_SEGUIDO = 2, SEGUIDO = 3;
+    const plural = (n, uno, varios) => `${miles(n)} ${n === 1 ? uno : varios}`;
+    let FCA = "", sinArbitrar = [];
+    const enListaFca = (a) => !!(FCA && a.fide && a.fide.fca_leida === FCA);
+    const arbitrando = (a, desde) => a.todos.filter((x) => !x.fuera && x.anio >= desde
+        && (fue(x, "Chief", "ap") || fue(x, "Dep. Chief", "adj") || fue(x, "Arbiter", "arb")))
+        .sort((x, y) => y.inicio.localeCompare(x.inicio));
+    function pintarListaFca() {
+        const anio = parseInt(hoyCr().slice(0, 4), 10);
+        const td = (v, der) => el("td", { class: "px-3 py-2 align-top" + (der ? " text-right tabular-nums" : "") }, v);
+        const boton = (a) => {
+            if (!a.todos.length) return el("th", { scope: "row", class: "px-3 py-2 align-top font-normal text-left" }, a.nombre);
+            const b = el("button", { type: "button", class: "font-semibold underline underline-offset-2 hover:no-underline text-left" }, a.nombre);
+            b.addEventListener("click", () => elegir(a.fide_id));
+            return el("th", { scope: "row", class: "px-3 py-2 align-top font-normal text-left" }, b);
+        };
+        const ultimoComo = (a) => { const l = arbitrando(a, 0); return l.length ? fecha(l[0].inicio) : "Ninguno"; };
+        const quietos = arbitros.concat(sinArbitrar).filter((a) => enListaFca(a) && !arbitrando(a, anio - ANIOS_SIN + 1).length)
+            .sort((x, y) => (arbitrando(y, 0)[0] || { inicio: "" }).inicio.localeCompare((arbitrando(x, 0)[0] || { inicio: "" }).inicio) || x.nombre.localeCompare(y.nombre, "es"));
+        const vacia = (cols, texto) => [el("tr", {}, el("td", { colspan: String(cols), class: "px-3 py-2 text-brand-500 dark:text-brand-300" }, texto))];
+        $("tabla-fca-quietos").tBodies[0].replaceChildren(...(quietos.length ? quietos.map((a) => el("tr", { class: "border-t border-brand-100 dark:border-brand-800" },
+            boton(a), td(tituloCorto(a) || "—"), td(ultimoComo(a)))) : vacia(3, "Todos los de la lista arbitraron en estos años.")));
+        const fuera = arbitros.filter((a) => !enListaFca(a)).map((a) => ({ a, l: arbitrando(a, anio - ANIOS_SEGUIDO + 1) }))
+            .filter((r) => r.l.length >= SEGUIDO).sort((x, y) => y.l.length - x.l.length || x.a.nombre.localeCompare(y.a.nombre, "es"));
+        $("tabla-fca-fuera").tBodies[0].replaceChildren(...(fuera.length ? fuera.map(({ a, l }) => el("tr", { class: "border-t border-brand-100 dark:border-brand-800" },
+            boton(a), td(tituloCorto(a) || "—"), td(ESTADO_FIDE[a.enFide]), td(miles(l.length), true), td(fecha(l[0].inicio)))) : vacia(5, "Nadie arbitra seguido sin estar en la lista.")));
+        $("fca-cuenta").textContent = FCA
+            ? `Lista de la Federación leída el ${fecha(FCA)}: ${plural(arbitros.concat(sinArbitrar).filter(enListaFca).length, "árbitro", "árbitros")}. ${plural(quietos.length, "no arbitró", "no arbitraron")} en Costa Rica desde ${anio - ANIOS_SIN + 1}; ${plural(fuera.length, "arbitró", "arbitraron")} ${SEGUIDO} o más torneos desde ${anio - ANIOS_SEGUIDO + 1} sin estar en ella.`
+            : "Todavía no se leyó la lista de la Federación.";
+    }
+
     /* «Por identificar»: los de la lista que no figuran en FIDE y las celdas
        de chess-results en que no se reconoce a nadie. */
     function pintarPorIdentificar() {
@@ -614,6 +665,28 @@
         $("ranking-cuenta").textContent = filas.length
             ? `${miles(filas.length)} ${filas.length === 1 ? "árbitro" : "árbitros"} con ${$("ranking-por").selectedOptions[0].textContent.toLowerCase()} en ${anio}.`
             : `Nadie con ${$("ranking-por").selectedOptions[0].textContent.toLowerCase()} en ${anio} con estos filtros.`;
+    }
+
+    /* «Descargar la lista en Excel»: las mismas filas y columnas que se ven, con
+       los filtros y el orden elegidos, y una hoja con los filtros. */
+    function excelLista() {
+        const filas = filasLista();
+        const elegidos = [["Años", `${estado.desde} a ${estado.hasta}`]];
+        for (const id of ["titulo", "tipo", "donde", "contar", "en-fide"]) {
+            const s = $(id);
+            if (s && s.value) elegidos.push([s.labels && s.labels[0] ? s.labels[0].textContent.trim() : id, s.selectedOptions[0].textContent]);
+        }
+        if (estado.q.trim()) elegidos.push(["Buscar", estado.q.trim()]);
+        elegidos.push(["Bajado el", window.HoraCR.fecha(new Date())]);
+        window.TablaExcel.bajar("arbitros-cr.xlsx", [
+            { nombre: "Árbitros", filas: [["Árbitro", "ID FIDE", "Título", "AF desde", "AI desde", "En FIDE", "Torneos", "FIDE", "No FIDE", "Solo Elo nacional",
+                "En el extranjero", "Principal", "Adjunto", "Árbitro", "Valen para AF", "AF por revisar", "Valen para AI", "AI por revisar", "Hoy para AF", "Hoy para AI",
+                "Primer torneo", "Último torneo"]].concat(filas.map((r) => [r.a.nombre, r.a.fide_id, tituloCorto(r.a) || "", r.anioAf || "", r.anioAi || "", r.enFide,
+                r.torneos, r.fide, r.nofide, r.nacional, r.fuera, r.principal, r.adjunto, r.arbitro, r.af, r.afRevisar, r.ai, r.aiRevisar,
+                r.cercaAf === 100 ? "Ya es AF" : `${r.cercaAf} de 3`, r.cercaAi === 100 ? "Ya es AI" : `${r.cercaAi} de 4`,
+                r.primero ? fecha(r.primero) : "", r.ultimo ? fecha(r.ultimo) : ""])) },
+            { nombre: "Filtros", filas: [["Filtro", "Elegido"]].concat(elegidos) },
+        ]);
     }
 
     function excelRanking() {
@@ -1513,7 +1586,10 @@
         $("buscar").addEventListener("input", (e) => { clearTimeout(espera); espera = setTimeout(() => { estado.q = e.target.value; if (estado.elegido) elegir(null); else pintar(); }, 200); });
         $("titulo").addEventListener("change", (e) => { estado.titulo = e.target.value; pintar(); });
         $("en-fide").addEventListener("change", (e) => { estado.enFide = e.target.value; pintar(); });
-        $("tipo").addEventListener("change", (e) => { estado.tipo = e.target.value; pintar(); });
+        // «Torneos» arriba y en la ficha son el mismo filtro: cambiar uno cambia el otro.
+        for (const id of ["tipo", "ficha-tipo"]) $(id).addEventListener("change", (e) => {
+            estado.tipo = e.target.value; $("tipo").value = $("ficha-tipo").value = estado.tipo; pintar();
+        });
         $("donde").addEventListener("change", (e) => { estado.donde = e.target.value; pintar(); });
         $("contar").addEventListener("change", (e) => { estado.contar = e.target.value; pintar(); });
         $("desde").addEventListener("change", (e) => { estado.desde = +e.target.value; if (estado.hasta < estado.desde) { estado.hasta = estado.desde; $("hasta").value = e.target.value; } pintar(); });
@@ -1533,6 +1609,7 @@
         $("ranking-anio").addEventListener("change", (e) => { estado.rankAnio = +e.target.value; pintarRanking(); });
         $("ranking-por").addEventListener("change", (e) => { estado.rankPor = e.target.value; pintarRanking(); });
         $("ranking-excel").addEventListener("click", excelRanking);
+        $("lista-excel").addEventListener("click", excelLista);
         $("pdf").addEventListener("click", pdf);
         for (const b of $("tabla-arbitros").tHead.querySelectorAll("button")) {
             b.addEventListener("click", () => {
@@ -1558,7 +1635,7 @@
                 leerTodo("arbitros_cr_cargos", "torneo_id,fide_id,cargo", "torneo_id,fide_id,cargo"),
                 leerTodo("arbitros_cr_cr", "clave,nombre,inicio,fin,lugar,control,rondas,jugadores,fide_torneo,pais", "clave"),
                 leerTodo("arbitros_cr_cr_cargos", "clave,fide_id,rol", "clave,fide_id,rol"),
-                leerTodo("arbitros_cr_fide", "fide_id,titulo,inactivo,categoria,licencia,af_fecha,af_consejo,ia_fecha,ia_consejo,lista,solicitudes,seminarios,af_perfil,ia_perfil,categoria_nacional,fca_leida", "fide_id"),
+                leerTodo("arbitros_cr_fide", "fide_id,nombre,titulo,inactivo,categoria,licencia,af_fecha,af_consejo,ia_fecha,ia_consejo,lista,solicitudes,seminarios,af_perfil,ia_perfil,categoria_nacional,fca_leida", "fide_id"),
                 leerTodo("arbitros_cr_sin_id", "texto,roles,torneos,primero,ultimo,claves,ids", "texto"),
                 leerTodo("arbitros_cr_cr_elo", "clave,calculo,ritmo", "clave"),
             ]);
