@@ -3766,6 +3766,50 @@ actualización, con la fecha en que terminó, las horas y la nota en %).
   está en blanco en el PDF inscrito: este es uno propuesto, y el documento lo
   dice.
 
+## La categoría sugerida
+
+Pedido del dueño (octubre de 2026): «sugerir qué categoría nacional debería
+tener cada árbitro». `categoriaSugerida()` en `js/arbitros-cr.js` la saca de sus
+torneos con las reglas del reglamento:
+
+- **Por sus normas** (arts. 12 y 14):
+  - un par de torneos que podrían ser norma, de modalidad o sistema
+    distintos, respalda la B;
+  - otro par, que empieza al menos un año después de completar el primero,
+    respalda la A (el año con la B).
+  - Se cuenta **toda su historia en Costa Rica**, no solo los tres años que
+    dura una norma: se mide lo que ya hizo, no lo que puede presentar hoy (eso
+    es «Para subir de categoría»).
+  - Torneo que podría ser norma: el mismo de «Para subir de categoría» (7
+    rondas o más, válido para Elo, de adjunto o árbitro, con un principal de la
+    lista activo en FIDE que no sea él).
+- **Por lo que ya hace** (arts. 11, 13 y 15):
+  - ser principal o adjunto en un torneo de FIDE, con Elo internacional o de
+    más de 50 jugadores es trabajo de A;
+  - en uno solo de Elo nacional de 31 a 50 jugadores, de B.
+  - No sube la sugerencia: hacer el trabajo no da la categoría. Se muestra al
+    lado, para que la Comisión vea quién arbitra por encima de lo que tiene.
+- **Nunca baja**: el reglamento no quita categorías. Si sus torneos no
+  respaldan la que tiene, lo dice y la deja.
+- **Un AF o un AI va en la A** (solo a la A le tramita la Federación el AF,
+  art. 7). La lista de la Federación de octubre de 2026 le da la C a Víctor
+  Francia, que es AF desde mayo de 2026: sale como «A».
+- **Los cursos no se ven**: la sugerencia los supone y la página lo dice.
+
+Dónde sale:
+- en la lista, «Categoría sugerida», solo los que no coinciden: primero a
+  quien le toca otra categoría y después a quien arbitra por encima;
+- en Excel, todos los que tienen título;
+- en la ficha, una línea en «Para subir de categoría»;
+- en el informe para la Junta.
+
+`verificar-arbitros-cr.js` lo prueba:
+- Juan (AN sin categoría): C;
+- Luis (B), con los torneos de la prueba: no baja aunque nada lo respalde,
+  pero ya fue adjunto en uno de FIDE;
+- con un par de normas en 2025 y otro un año después: A;
+- Ana (AF con la C en la lista): A.
+
 ## El informe cuatrimestral para la Junta Directiva
 
 El art. 3 le pide a la Comisión Técnica de Arbitraje un informe cuatrimestral a

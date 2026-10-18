@@ -450,6 +450,7 @@
         pintarActividadFide();
         pintarListaFca();
         pintarSubir();
+        pintarSugerida();
         pintarPorIdentificar();
     }
 
@@ -1045,17 +1046,96 @@
         return { cat, sigue, desde, desdeCat, estado, dicho, firmes, revisar, par, tope, fueraDeCategoria, ultimoElo: ultimoValidoElo(a), pide, listo };
     }
 
+    /* «Categoría sugerida»: la que respaldan sus torneos con las reglas del
+       reglamento, para comparar con la que le da la lista de la Federación.
+       - Por sus normas (arts. 12 y 14): un par de torneos que podrían ser
+         norma, de modalidad o sistema distintos, respalda la B; otro par, que
+         empieza al menos un año después de completar el primero, la A. Cuenta
+         toda su historia en Costa Rica (no solo los tres años que dura una
+         norma: se mide lo que ya hizo, no lo que puede presentar hoy).
+       - Por lo que ya hace (arts. 11, 13 y 15): ser principal o adjunto en un
+         torneo de FIDE, con Elo internacional o de más de 50 jugadores es
+         trabajo de A; en uno solo de Elo nacional de 31 a 50, de B.
+       - Nunca baja: el reglamento no quita categorías. Un AF o un AI va en la
+         A (solo a la A le tramita la Federación el AF, art. 7).
+       Los cursos no se ven: la sugerencia los supone y lo dice. */
+    const ORDEN_CAT = { C: 0, B: 1, A: 2 };
+    const mayorCat = (...l) => l.filter(Boolean).reduce((m, c) => (ORDEN_CAT[c] > ORDEN_CAT[m] ? c : m), "C");
+    // El primer momento en que una lista (en orden de fecha) completa un par de tipos distintos.
+    function primerPar(lista) {
+        for (let j = 1; j < lista.length; j++) for (let i = 0; i < j; i++) if (distintas(lista[i].x, lista[j].x)) return { par: [lista[i], lista[j]], fecha: lista[j].x.inicio };
+        return null;
+    }
+    function categoriaSugerida(a) {
+        const fca = a.fide && a.fide.categoria_nacional ? a.fide.categoria_nacional : "";
+        const actual = a.titulo === "AN" ? a.catNacional : fca;
+        if (a.titulo === "FA" || a.titulo === "IA") {
+            return { actual, sugerida: "A", porNormas: "", porTrabajo: "", difiere: !!actual && actual !== "A",
+                porque: `Es ${TITULOS_CORTOS[a.titulo]}: va en la A, la única a la que la Federación le tramita el AF (art. 7)` + (actual && actual !== "A" ? `; la lista de la Federación todavía le da la ${actual}.` : ".") };
+        }
+        if (a.titulo !== "AN") return null;
+        const normas = a.todos.filter((x) => !x.fuera && rondasDe(x) >= RONDAS_FCA && valeParaElo(x)
+            && (x.cargos.some((c) => c !== "Chief") || x.roles.some((r) => r === "adj" || r === "arb")))
+            .map((x) => { const p = principalDe(x); return { x, firma: p && p !== a && p.fide && !p.fide.inactivo ? p : null }; })
+            .filter((c) => c.firma).sort((u, v) => u.x.inicio.localeCompare(v.x.inicio));
+        const p1 = primerPar(normas), p2 = p1 ? primerPar(normas.filter((c) => c.x.inicio >= masAnios(p1.fecha, 1))) : null;
+        const porNormas = p2 ? "A" : p1 ? "B" : "C";
+        const jefe = a.todos.filter((x) => !x.fuera && (fue(x, "Chief", "ap") || fue(x, "Dep. Chief", "adj")));
+        const deA = jefe.filter((x) => x.fide || calculoDe(x) === "internacional" || calculoDe(x) === "ambos" || (valeParaElo(x) && jugadoresDe(x) > 50));
+        const deB = jefe.filter((x) => valeParaElo(x) && jugadoresDe(x) > 30 && jugadoresDe(x) <= 50);
+        const porTrabajo = deA.length ? "A" : deB.length ? "B" : "C";
+        const sugerida = mayorCat(actual, porNormas);
+        const par = (p) => `${nombreDe(p.par[0].x)} (${fecha(p.par[0].x.inicio)}, ${tipoEscrito(p.par[0].x)}) y ${nombreDe(p.par[1].x)} (${fecha(p.par[1].x.inicio)}, ${tipoEscrito(p.par[1].x)})`;
+        const partes = [];
+        if (p1) partes.push(`Para la B: ${par(p1)}`);
+        if (p2) partes.push(`para la A, un año después: ${par(p2)}`);
+        if (!p1) partes.push(normas.length ? `Tiene ${plural(normas.length, "torneo que podría ser norma", "torneos que podrían ser normas")}, pero ningún par de tipos distintos` : "No tiene torneos que puedan ser norma");
+        const deMas = porTrabajo === "A" ? deA : deB;
+        if (ORDEN_CAT[porTrabajo] > ORDEN_CAT[sugerida]) partes.push(`ya fue principal o adjunto en ${plural(deMas.length, "torneo", "torneos")} de ${porTrabajo} (el último, ${nombreDe(deMas.slice().sort((u, v) => v.inicio.localeCompare(u.inicio))[0])}), pero eso no da la categoría: le faltan las normas`);
+        if (actual && ORDEN_CAT[porNormas] < ORDEN_CAT[actual]) partes.push(`la ${actual} que tiene no la respaldan sus torneos, pero el reglamento no quita categorías`);
+        if (!actual) partes.push("no figura con categoría en la lista de la Federación");
+        return { actual, sugerida, porNormas, porTrabajo, p1, p2, difiere: sugerida !== actual || ORDEN_CAT[porTrabajo] > ORDEN_CAT[sugerida],
+            porque: partes.join("; ") + "." };
+    }
+    function filasSugerida() {
+        const ORDEN = (r) => (r.s.sugerida !== r.s.actual ? 0 : 1);
+        return arbitros.map((a) => ({ a, s: categoriaSugerida(a) })).filter((r) => r.s && r.s.difiere)
+            .sort((x, y) => ORDEN(x) - ORDEN(y) || ORDEN_CAT[y.s.sugerida] - ORDEN_CAT[x.s.sugerida] || x.a.nombre.localeCompare(y.a.nombre, "es"));
+    }
+    function pintarSugerida() {
+        const filas = filasSugerida();
+        const td = (v) => el("td", { class: "px-3 py-2 align-top" }, v);
+        $("tabla-sugerida").tBodies[0].replaceChildren(...(filas.length ? filas.map(({ a, s }) => {
+            const b = el("button", { type: "button", class: "font-semibold underline underline-offset-2 hover:no-underline text-left" }, a.nombre);
+            b.addEventListener("click", () => elegir(a.fide_id));
+            return el("tr", { class: "border-t border-brand-100 dark:border-brand-800" },
+                el("th", { scope: "row", class: "px-3 py-2 align-top font-normal text-left" }, b),
+                td(TITULOS_CORTOS[a.titulo] || a.titulo), td(s.actual || "—"), td(s.sugerida === s.actual ? s.sugerida + " (se queda)" : s.sugerida),
+                td(s.porNormas || "—"), td(s.porTrabajo || "—"), td(s.porque));
+        }) : [el("tr", {}, el("td", { colspan: "7", class: "px-3 py-2 text-brand-500 dark:text-brand-300" }, "La categoría de todos coincide con lo que respaldan sus torneos."))]));
+        const suben = filas.filter((r) => r.s.sugerida !== r.s.actual).length;
+        $("sugerida-cuenta").textContent = `${plural(suben, "árbitro debería", "árbitros deberían")} tener otra categoría según sus torneos; ${plural(filas.length - suben, "más arbitra", "más arbitran")} como una categoría mayor sin las normas para tenerla.`;
+    }
+    function excelSugerida() {
+        window.TablaExcel.bajar("categoria-sugerida.xlsx", [{ nombre: "Categoría sugerida", filas: [["Árbitro", "ID FIDE", "Título", "Categoría hoy", "Sugerida", "Por sus normas",
+            "Por lo que ya hace", "Por qué"]].concat(arbitros.map((a) => ({ a, s: categoriaSugerida(a) })).filter((r) => r.s)
+            .sort((x, y) => x.a.nombre.localeCompare(y.a.nombre, "es"))
+            .map(({ a, s }) => [a.nombre, a.fide_id, TITULOS_CORTOS[a.titulo] || a.titulo, s.actual || "", s.sugerida, s.porNormas, s.porTrabajo, s.porque])) }]);
+    }
+
     function tarjetaCategoria(a) {
         const s = subirCategoria(a);
         const caja = el("div", { class: "bg-white dark:bg-brand-900 rounded-2xl shadow-md p-4", "data-categoria": s.cat || "" },
             el("h3", { class: "text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide" }, "Para subir de categoría (reglamento de la Federación)"));
+        const sug = categoriaSugerida(a);
+        const lineaSug = sug ? el("p", { class: "mt-2 text-sm", "data-sugerida": sug.sugerida }, el("strong", {}, `Categoría sugerida: ${sug.sugerida}${sug.sugerida === sug.actual ? " (la que tiene)" : ""}. `), sug.porque) : null;
         if (!s.cat) {
-            caja.append(el("p", { class: "mt-1" }, "No figura con categoría en la lista de la Federación, así que no se sabe qué le pide para subir."));
+            caja.append(...[el("p", { class: "mt-1" }, "No figura con categoría en la lista de la Federación, así que no se sabe qué le pide para subir."), lineaSug].filter(Boolean));
             return caja;
         }
         if (s.cat === "A") {
             caja.append(el("p", { class: "mt-1" }, el("strong", { class: "of-estado" }, "Ya es categoría A"), " ",
-                "la más alta de las nacionales: la Federación ya puede tramitarle el título de AF ante FIDE (art. 7). Lo que le pide FIDE está en «Para pedir el título», arriba."));
+                "la más alta de las nacionales: la Federación ya puede tramitarle el título de AF ante FIDE (art. 7). Lo que le pide FIDE está en «Para pedir el título», arriba."), ...(lineaSug ? [lineaSug] : []));
             return caja;
         }
         const linea = (c) => el("li", { class: "of-detalle" }, botonNorma(a, s, c), " ", `${fecha(c.x.inicio)} · ${nombreDe(c.x)} (${tipoEscrito(c.x)}, ${miles(rondasDe(c.x))} rondas) · ${cargoEscrito(c.x)}`
@@ -1063,6 +1143,7 @@
             + ` · cuenta hasta el ${fecha(masAnios(c.x.inicio, NORMA_FCA_ANIOS))}`);
         caja.append(...[
             el("p", { class: "mt-1" }, el("strong", { class: "of-estado" }, `De ${s.cat} a ${s.sigue}: ${s.listo ? "Puede pedirla" : s.estado}`)),
+            lineaSug,
             el("ul", { class: "mt-1 space-y-1 text-sm" }, ...s.pide.map(([e, t]) => el("li", { "data-estado": e }, el("strong", {}, e + ": "), t))),
             s.firmes.length ? el("div", { class: "mt-2" }, el("h4", { class: "text-sm font-semibold" }, "Torneos que podrían ser norma"),
                 el("ul", { class: "mt-1 space-y-0.5", "data-subir": "firmes" }, ...s.firmes.map(linea))) : null,
@@ -1219,7 +1300,7 @@
         porArb.sort((x, y) => y.n - x.n || x.a.nombre.localeCompare(y.a.nombre, "es"));
         const enLaLista = arbitros.concat(sinArbitrar).filter(enListaFca).map((a) => ({ a, act: actividadFca(a) }));
         const cuenta = (e) => enLaLista.filter((r) => r.act.estado === e);
-        const subir = filasSubir();
+        const subir = filasSubir(), sugeridas = filasSugerida().filter((r) => r.s.sugerida !== r.s.actual);
         const fuera = arbitros.flatMap((a) => subirCategoria(a).fueraDeCategoria.filter((x) => x.inicio >= c.desde && x.inicio <= c.hasta).map((x) => ({ a, x })));
         const { quietos, fuera: sinLista } = listaFca();
         const vence = arbitros.flatMap(porVencer).sort((x, y) => x.vence.localeCompare(y.vence));
@@ -1238,6 +1319,9 @@
         b.push({ tipo: "titulo", texto: "Quiénes pueden subir de categoría" },
             subir.length ? { tipo: "tabla", encabezados: ["Árbitro", "Pasa", "Normas", "Posibles", "A revisar"], anchos: [38, 10, 24, 14, 14],
                 filas: subir.map(({ a, s }) => [a.nombre, `${s.cat} a ${s.sigue}`, estadoSubir(s), miles(s.firmes.length), miles(s.revisar.length)]) } : { tipo: "parrafo", texto: "Ningún AN de categoría C o B tiene torneos que puedan ser norma." },
+            { tipo: "titulo", texto: "Categoría sugerida" },
+            sugeridas.length ? { tipo: "tabla", encabezados: ["Árbitro", "Hoy", "Sugerida", "Por qué"], anchos: [26, 8, 10, 56],
+                filas: sugeridas.map(({ a, s }) => [a.nombre, s.actual || "—", s.sugerida, s.porque]) } : { tipo: "parrafo", texto: "La categoría de todos coincide con lo que respaldan sus torneos." },
             { tipo: "titulo", texto: "Más de lo que deja su categoría (arts. 11 y 13)" },
             fuera.length ? { tipo: "lista", items: fuera.map(({ a, x }) => `${a.nombre} (${tituloCorto(a)}): ${cargoEscrito(x)} en ${nombreDe(x)} (${fecha(x.inicio)}), ${x.fide ? "de FIDE" : calculoDe(x) === "nacional" ? "solo Elo nacional" : "Elo internacional"}, ${miles(jugadoresDe(x))} jugadores.`) }
                 : { tipo: "parrafo", texto: "Nadie, en este cuatrimestre." },
@@ -1974,6 +2058,7 @@
         $("ranking-excel").addEventListener("click", excelRanking);
         $("lista-excel").addEventListener("click", excelLista);
         $("subir-excel").addEventListener("click", excelSubir);
+        $("sugerida-excel").addEventListener("click", excelSugerida);
         $("federacion").addEventListener("change", (e) => { estado.federacion = e.target.value; pintarGeneral(); });
         const cuatris = cuatrimestres();
         $("informe-cuatrimestre").replaceChildren(...cuatris.map((c) => el("option", { value: c.valor }, c.texto)));

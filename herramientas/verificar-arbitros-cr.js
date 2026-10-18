@@ -877,6 +877,40 @@ const porNombre = (m) => Object.fromEntries(m.map((f) => [f[0], f]));
     igual("«Quitar» pide confirmar y lo quita", (await filas(p, "#tabla-formacion")).map((f) => f[1]), ["Categoría B"]);
     await ctx.close();
     FORMACION.length = 0;
+
+    console.log("\n=== La categoría sugerida ===");
+    ({ ctx, p } = await abrir(browser, "arbitros-cr.html", true));
+    await p.waitForFunction(() => document.getElementById("app").checkVisibility());
+    igual("Juan (AN sin categoría): sin normas, C; Luis (B): sus torneos no la respaldan, pero no baja, y ya fue adjunto en uno de FIDE (trabajo de A)",
+        (await filas(p, "#tabla-sugerida")).map((f) => f.slice(0, 6)),
+        [["Viejo Prueba, Juan", "AN", "—", "C", "C", "A"], ["Rojas Prueba, Luis", "AN", "B", "B (se queda)", "C", "A"]]);
+    igual("y la cuenta", await p.$eval("#sugerida-cuenta", (e) => e.textContent),
+        "1 árbitro debería tener otra categoría según sus torneos; 1 más arbitra como una categoría mayor sin las normas para tenerla.");
+    await ctx.close();
+    // Dos pares de normas de Luis firmados por Óscar: uno en 2025 y otro más de un año después. Y Ana (AF) con la C en la lista de la Federación.
+    const rapido = (id, nombre, inicio) => { const t = T(id, nombre, inicio, "no", "no"); t.ritmo = "Rapid"; t.rondas = 7; return t; };
+    const blitzS = T(109, "Blitz con norma 2025", "2025-08-01", "no", "no"); blitzS.ritmo = "Blitz"; blitzS.rondas = 7;
+    TORNEOS.push(blitzS, T(110, "Abierto clásico 2025", "2025-09-01", "si", "no"), rapido(113, "Rápido de setiembre 2026", "2026-09-10"), T(114, "Abierto clásico 2026", "2026-09-20", "si", "no"));
+    for (const id of [109, 110, 113, 114]) CARGOS.push({ torneo_id: id, fide_id: 6500003, cargo: "Arbiter" }, { torneo_id: id, fide_id: 6500001, cargo: "Chief" });
+    ARBITROS_FIDE.find((f) => f.fide_id === 6500002).categoria_nacional = "C";
+    ({ ctx, p } = await abrir(browser, "arbitros-cr.html", true));
+    await p.waitForFunction(() => document.getElementById("app").checkVisibility());
+    const sug = porNombre(await filas(p, "#tabla-sugerida"));
+    igual("Luis: un par en 2025 (B) y otro un año después (A) → sugerida A; Ana es AF con la C en la lista → A",
+        [sug["Rojas Prueba, Luis"].slice(2, 5), /^Para la B: Blitz con norma 2025 \(01\/08\/2025, blitz, suizo\) y Abierto clásico 2025 .*para la A, un año después: Rápido de setiembre 2026/.test(sug["Rojas Prueba, Luis"][6]),
+         sug["Soto Prueba, Ana"].slice(1, 4), (await filas(p, "#tabla-sugerida"))[0][0]],
+        [["B", "A", "A"], true, ["AF", "C", "A"], "Rojas Prueba, Luis"]);
+    await p.evaluate(() => { window.TablaExcel.bajar = (nombre, hojas) => { window.__excel = { nombre, hojas }; }; });
+    await p.click("#sugerida-excel");
+    const exSug = await p.evaluate(() => window.__excel);
+    igual("el Excel trae a todos los que tienen título (también los que coinciden)", [exSug.nombre, exSug.hojas[0].filas.slice(1).map((f) => [f[0], f[3], f[4]])],
+        ["categoria-sugerida.xlsx", [["Ángulo Prueba, Óscar", "", "A"], ["Rojas Prueba, Luis", "B", "A"], ["Soto Prueba, Ana", "C", "A"], ["Viejo Prueba, Juan", "", "C"]]]);
+    await ctx.close();
+    ({ ctx, p } = await abrir(browser, "arbitros-cr.html#6500003", true));
+    await p.waitForFunction(() => document.getElementById("ficha").checkVisibility());
+    igual("y la ficha lo dice en «Para subir de categoría»", await p.$eval("[data-categoria] [data-sugerida]", (e) => [e.dataset.sugerida, /^Categoría sugerida: A\. /.test(e.textContent)]), ["A", true]);
+    await ctx.close();
+    TORNEOS.splice(-4, 4); CARGOS.splice(-8, 8); delete ARBITROS_FIDE.find((f) => f.fide_id === 6500002).categoria_nacional;
     ({ ctx, p } = await abrir(browser, "arbitros-cr.html#6500004", true, DIC));
     await p.waitForFunction(() => document.getElementById("ficha").checkVisibility());
     igual("Juan (AN sin categoría en la lista de la Federación): lo dice", /No figura con categoría en la lista de la Federación/.test(await p.$eval("#ficha-categoria", (e) => e.textContent)), true);
