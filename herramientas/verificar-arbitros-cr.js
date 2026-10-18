@@ -78,7 +78,8 @@ const ARBITROS_FIDE = [
           { titulo: "IA", fecha: "2026-08-23", consejo: "2.ª reunión del Consejo de FIDE de 2026 (en línea)", veredicto: "aprobada", motivo: "",
             torneos: ["30.08-09.09.25 18th IA Seminar"], fuente: "https://arbiters.fide.com/informe-2.pdf" },
       ],
-      seminarios: [{ tipo: "IA", seminario: "18th IACS Internet Based Aug 2025 (ARB)", mes: "2025-09", fecha: "2025-09-09", fuente: "https://arbiters.fide.com/informe-2.pdf" }] },
+      seminarios: [{ tipo: "IA", seminario: "18th IACS Internet Based Aug 2025 (ARB)", mes: "2025-09", fecha: "2025-09-09", fuente: "https://arbiters.fide.com/informe-2.pdf",
+        evento: "https://arbiters.fide.com/news/event/18th-iacs" }] },
     // Pedro está en la lista de la Federación y nunca arbitró: no sale en la
     // lista de la herramienta, sí en la comparación con la Federación.
     { fide_id: 6500006, nombre: "Nuevo Prueba, Pedro", titulo: "NA", inactivo: false, categoria: "", licencia: "NA", categoria_nacional: "C", fca_leida: "2026-10-16", af_fecha: null, af_consejo: "", ia_fecha: null, ia_consejo: "", lista: "2026-10-12", solicitudes: [], seminarios: [] },
@@ -572,6 +573,8 @@ const porNombre = (m) => Object.fromEntries(m.map((f) => [f[0], f]));
     const hist = await p.$$eval("#ficha-historial > ul > li", (ls) => ls.map((l) => l.querySelector("strong").textContent));
     igual("su historial en FIDE: las solicitudes, la más nueva primero, y el seminario", hist,
         ["23/08/2026 · Solicitud de AI: Aprobada", "02/04/2025 · Solicitud de AI: Rechazada", "09/09/2025 · Seminario de AI: 18th IACS Internet Based Aug 2025 (ARB)"]);
+    igual("el seminario enlaza al informe y, si se conoce, a su página en el calendario de la Comisión", await p.$eval("#ficha-historial li[data-seminario]", (l) => [...l.querySelectorAll("a")].map((x) => [x.textContent, x.getAttribute("href")])),
+        [["informe de la Comisión", "https://arbiters.fide.com/informe-2.pdf"], ["página del seminario", "https://arbiters.fide.com/news/event/18th-iacs"]]);
     igual("la rechazada dice por qué (como lo escribe FIDE) y lo que mandó", await p.$eval("#ficha-historial li[data-solicitud='2025-04-02']", (l) => [/«Only 3 tournament norms»/.test(l.textContent), l.querySelectorAll("details li").length]), [true, 2]);
     igual("quien ya tiene el título no lleva «Para pedir el título»", await p.$$eval("[data-ruta]", (r) => r.length), 0);
     await ctx.close();
@@ -609,6 +612,15 @@ const porNombre = (m) => Object.fromEntries(m.map((f) => [f[0], f]));
     igual("si el principal fue él mismo, el certificado lo firma otro", /fue él el árbitro principal; ese certificado no lo puede firmar él \(2\.8\)/.test(await p.$eval("[data-ruta='af']", (e) => e.textContent)), true);
     const [informe2] = await Promise.all([p.waitForEvent("download"), p.click("[data-ruta='af'] button:text-is('Informe para la comisión (PDF)')")]);
     igual("y el informe lo dice en la columna de la firma", require("fs").readFileSync(await informe2.path()).toString("latin1").includes("(Él mismo: firma otro \\(2.8\\))"), true);
+    await ctx.close();
+    CARGOS.pop();
+    // El 104 tiene 40 jugadores: da dos certificados (uno cada 25, 2.7). Con
+    // Óscar (entonces sin título) y Ana además de Luis, son tres para dos.
+    CARGOS.push({ torneo_id: 104, fide_id: 6500002, cargo: "Arbiter" });
+    ({ ctx, p } = await abrir(browser, "arbitros-cr.html#6500003", true));
+    await p.waitForFunction(() => document.getElementById("ficha").checkVisibility());
+    igual("si en el torneo hubo más árbitros que certificados posibles, lo pide revisar (2.7)", await p.$$eval("[data-ruta='af'] li[data-estado='Revisar']", (ls) => ls.map((l) => l.textContent).filter((t) => /2\.7/.test(t))),
+        ["Revisar: Certificados por torneo (2.7): «Internacional con titulados 2023» da como máximo 2 (40 jugadores, uno cada 25) y lo arbitraron 2 más de la lista sin el título de AI: ver que le hayan dado el suyo."]);
     await ctx.close();
     CARGOS.pop();
 

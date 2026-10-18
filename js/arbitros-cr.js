@@ -482,7 +482,7 @@
             lista.append(el("li", { "data-seminario": x.tipo },
                 el("strong", {}, `${x.fecha ? fecha(x.fecha) : cuando(x.mes)} · Seminario de ${x.tipo === "FA" ? "AF" : "AI"}: ${x.seminario}`),
                 el("span", { class: "of-detalle" }, (vigente ? "Vale para pedir el título hasta " : "Ya no vale para pedir el título: venció ") + (vence.length === 7 ? cuando(vence) : "el " + fecha(vence)) + " (cuatro años, B.06.1 5.3.2). · ",
-                    enlace(x.fuente, "informe de la Comisión"))));
+                    enlace(x.fuente, "informe de la Comisión"), x.evento ? " · " : "", x.evento ? enlace(x.evento, "página del seminario") : "")));
         }
         caja.replaceChildren(lista);
     }
@@ -922,6 +922,20 @@
         const ajenos = principales.filter((y) => y.p && y.p !== a);
         if (cual === "ai" && n >= 2 && ajenos.length === n && new Set(ajenos.map((y) => y.p)).size === 1)
             punto("Falta", `Firmas: todas las firma ${ajenos[0].p.nombre}, y no pueden ser todas de la misma persona (4.13.1).`);
+        // Cuántos certificados da un torneo (2.7): uno cada 25 jugadores, o dos
+        // en total en un todos contra todos. Compiten por ellos los demás
+        // árbitros de la lista que todavía no eran IA (el principal los firma
+        // y el asistente no cuenta, 2.4.4); si son más que el tope, no se sabe
+        // a quién se los dieron.
+        const topes = c.usadas.map((x) => {
+            const tope = ["r", "d"].includes(x.t.sistema) ? 2 : Math.ceil((x.t.jugadores || 0) / 25);
+            const otros = (equipos.get(x.clave) || []).filter((e) => e.a !== a && tituloEn(e.a, x.inicio) !== "IA"
+                && e.x.cargos.some((k) => ["Dep. Chief", "Arbiter", "Pairings"].includes(k)) && !e.x.cargos.includes("Chief"));
+            return { x, tope, otros: otros.length };
+        }).filter((y) => y.tope && y.otros + 1 > y.tope);
+        if (topes.length) punto("Revisar", "Certificados por torneo (2.7): " + topes.map((y) => `«${y.x.t.nombre}» da ${y.tope === 1 ? "uno solo" : "como máximo " + y.tope}`
+            + ` (${["r", "d"].includes(y.x.t.sistema) ? "todos contra todos" : miles(y.x.t.jugadores) + " jugadores, uno cada 25"}) y lo arbitraron ${miles(y.otros)} más de la lista sin el título de AI`).join("; ")
+            + ": ver que le hayan dado el suyo.");
         // Las fechas: la norma más vieja vence a los seis años (5.3.1) y la
         // solicitud va a más tardar un año después del último evento (5.3.3).
         if (n) {

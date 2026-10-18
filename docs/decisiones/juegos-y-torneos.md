@@ -4103,6 +4103,18 @@ leyeron convertidos a texto con r.jina.ai, como los informes.
   - La fecha límite: la norma más vieja vale **seis años** (5.3.1), y la
     solicitud va a más tardar **un año después del último evento** que
     lleva (5.3.3), seminario incluido.
+  - Los certificados por torneo (2.7, revisado contra B.06.1 de 2026 en
+    octubre de 2026): uno cada 25 jugadores, o dos en total en un todos
+    contra todos. Compiten por ellos los demás árbitros de la lista que
+    todavía no eran IA, sin el principal (que firma) ni el asistente (2.4.4).
+    Si con él son más que el tope, sale «Revisar»: no se sabe a quién se los
+    dieron. No se aplica como «Falta» porque un árbitro con título puede no
+    haber pedido el suyo.
+  - El seminario puede traer `evento`, el enlace a su página en el
+    calendario de la Comisión (arbiters.fide.com/news/event/…), y la ficha
+    lo enlaza. De ahí salió el día del 215 (Costa Rica, 9 al 12 de enero de
+    2026, examen el 12): el informe al Consejo solo daba el mes de Johanel
+    Álvarez.
   - Lo que no se ve desde afuera: los certificados y las firmas (no todas
     de la misma persona, 4.13.1), la edad (19 y 21) y las dos finales
     nacionales.

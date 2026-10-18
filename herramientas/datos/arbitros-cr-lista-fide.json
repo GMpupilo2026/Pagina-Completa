@@ -4,7 +4,7 @@
   "publicada": "2026-10-12",
   "leida": "2026-10-16"
  },
- "nota": "arbitros: [ID FIDE, nombre, título (IA, FA o NA), inactivo («i» de la lista), categoría, licencia]. aprobaciones: el título de AF o AI de cada uno, con la reunión del Consejo de FIDE que lo aprobó y su fecha, del informe de la Comisión de Árbitros a esa reunión (solo desde 2023: lo de antes no cambia qué normas cuentan hoy). solicitudes: cada solicitud de título de Costa Rica en esos informes (veredicto, motivo y los torneos tal como los lista el informe). seminarios: quién aprobó un seminario de AF o de AI y en qué mes, con el día en que terminó si lo dice una solicitud (la norma de seminario vale 4 años, B.06.1 5.3.2).",
+ "nota": "arbitros: [ID FIDE, nombre, título (IA, FA o NA), inactivo («i» de la lista), categoría, licencia]. aprobaciones: el título de AF o AI de cada uno, con la reunión del Consejo de FIDE que lo aprobó y su fecha, del informe de la Comisión de Árbitros a esa reunión (solo desde 2023: lo de antes no cambia qué normas cuentan hoy). solicitudes: cada solicitud de título de Costa Rica en esos informes (veredicto, motivo y los torneos tal como los lista el informe). seminarios: quién aprobó un seminario de AF o de AI y en qué mes, con el día en que terminó si lo dice una solicitud o la página del seminario en el calendario de la Comisión (evento, el enlace) (la norma de seminario vale 4 años, B.06.1 5.3.2).",
  "arbitros": [
   [
    109363,
@@ -1598,7 +1598,8 @@
    "seminario": "215th Internet Based Jan 2026 (CRC)",
    "mes": "2026-01",
    "fuente": "https://arbiters.fide.com/wp-content/uploads/Reporting/2026Q1CouncilARBReport.pdf",
-   "fecha": "2026-01-12"
+   "fecha": "2026-01-12",
+   "evento": "https://arbiters.fide.com/news/event/215th-internet-based-fide-arbiters-seminar-crc?instance_id=17975"
   },
   {
    "fide_id": 6500218,
@@ -1683,7 +1684,9 @@
    "tipo": "FA",
    "seminario": "215th Internet Based Jan 2026 (CRC)",
    "mes": "2026-01",
-   "fuente": "https://arbiters.fide.com/wp-content/uploads/Reporting/2026Q1CouncilARBReport.pdf"
+   "fuente": "https://arbiters.fide.com/wp-content/uploads/Reporting/2026Q1CouncilARBReport.pdf",
+   "fecha": "2026-01-12",
+   "evento": "https://arbiters.fide.com/news/event/215th-internet-based-fide-arbiters-seminar-crc?instance_id=17975"
   },
   {
    "fide_id": 6513697,
