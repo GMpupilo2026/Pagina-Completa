@@ -6,8 +6,9 @@
  * chess.js se recalcula. Lo que puede estar mal se rompe callado: la pregunta
  * se ve perfecta y mide otra cosa.
  *
- *  1. LA FORMA. 45 preguntas, 15 por eje, ids únicos, y en cada eje al menos
- *     5 con cada color al turno.
+ *  1. LA FORMA. 70 preguntas, 15 por eje y 25 en «material o iniciativa»
+ *     (POR_EJE, como el generador), ids únicos, y en cada eje al menos 5 con
+ *     cada color al turno.
  *  2. UNA POSICIÓN INVENTADA. Cada una sale de su partida: se vuelve a jugar
  *     la partida desde el archivo del repositorio hasta su `ply` y tiene que
  *     dar el mismo FEN, sin venir de una captura ni de un jaque, sin estar en
@@ -24,12 +25,15 @@
  *     abrir o cambiar, se elegiría por la posición en pantalla.
  *  7. UNA CALIBRACIÓN IMPOSIBLE. Cada posición calibrada existe, con a y b en
  *     su rango y con 30 respuestas o más (herramientas/estilo-calibrar.js).
- *  8. UNA POSICIÓN VIEJA QUE CAMBIÓ. Las 45 de la versión 1 tienen
- *     respuestas guardadas: si el generador las rehiciera, esas respuestas
- *     pasarían a decir otra cosa. Su huella (id, eje, posición, jugadas y
- *     polos) está escrita acá. Y cada versión de FORMAS pide ejes que existen
- *     y no más preguntas de las que tiene cada eje; la versión corta, para
- *     quien empieza, con las 8 posiciones más simples de cada eje.
+ *  8. UNA POSICIÓN VIEJA QUE CAMBIÓ. Las 45 de la versión 1 y las 60 que
+ *     había antes de sumar diez a «material o iniciativa» tienen respuestas
+ *     guardadas: si el generador las rehiciera, esas respuestas pasarían a
+ *     decir otra cosa. Su huella (id, eje, posición, jugadas y polos) está
+ *     escrita acá. Y cada versión de FORMAS pide ejes que existen y no más
+ *     preguntas de las que tiene cada eje; la versión corta, para quien
+ *     empieza, con las 8 posiciones más simples de cada eje DE LAS 60 que
+ *     había cuando salió (su lista quedó fija: las nuevas no le cambian la
+ *     forma).
  *
  * Uso:  npm install && node herramientas/verificar-estilo.js
  */
@@ -41,8 +45,10 @@ const { Chess } = require(path.join(RAIZ, "node_modules", "chess.js"));
 const M = require("../js/estilo-medidas");
 const Banco = require(path.join(RAIZ, "js", "estilo-items.js"));
 
-const POR_EJE = 15, MIN_COLOR = 5, PAREJAS = 30, DECIDIDA = 150;
+const POR_EJE = { ataque: 15, estructura: 15, cambios: 15, material: 25 }, MIN_COLOR = 5, PAREJAS = 30, DECIDIDA = 150;
 const HUELLA_V1 = "055db13c2dccfe04aad19e64d618d97e";   // es01…es45, tal cual quedaron en la versión 1
+const HUELLA_60 = "fda8738e7b6f906fccb1dccbe4ac92e6";   // es01…es60, antes de sumar es61…es70
+const ANTES_DE_LAS_NUEVAS = 60;                          // la versión corta (3) se armó con estas
 const fallas = [];
 const falla = (id, msg) => fallas.push(id + ": " + msg);
 
@@ -85,11 +91,12 @@ for (const eje of ejes) {
 }
 
 // 1. La forma.
-if (items.length !== POR_EJE * ejes.length) falla("banco", items.length + " preguntas, se esperaban " + POR_EJE * ejes.length);
+const total = ejes.reduce((s, e) => s + (POR_EJE[e] || 0), 0);
+if (items.length !== total) falla("banco", items.length + " preguntas, se esperaban " + total);
 const ids = new Set(), partidas = new Set(), fens = new Set();
 for (const eje of ejes) {
   const del = items.filter((x) => x.eje === eje);
-  if (del.length !== POR_EJE) falla(eje, del.length + " preguntas, se esperaban " + POR_EJE);
+  if (del.length !== POR_EJE[eje]) falla(eje, del.length + " preguntas, se esperaban " + POR_EJE[eje]);
   for (const color of ["w", "b"]) {
     const n = del.filter((x) => x.fen.split(" ")[1] === color).length;
     if (n < MIN_COLOR) falla(eje, "solo " + n + " con " + (color === "w" ? "blancas" : "negras") + " al turno");
@@ -173,6 +180,9 @@ const crypto = require("crypto");
 const v1 = items.filter((i) => +i.id.slice(2) <= 45);
 const huellaV1 = crypto.createHash("md5").update(v1.map((i) => [i.id, i.eje, i.fen, i.a.uci, i.a.polo, i.b.uci, i.b.polo].join("|")).join("\n")).digest("hex");
 if (v1.length !== 45 || huellaV1 !== HUELLA_V1) falla("banco", "las 45 posiciones de la versión 1 cambiaron (huella " + huellaV1 + "): sus respuestas guardadas dirían otra cosa");
+const v60 = items.filter((i) => +i.id.slice(2) <= ANTES_DE_LAS_NUEVAS);
+const huella60 = crypto.createHash("md5").update(v60.map((i) => [i.id, i.eje, i.fen, i.a.uci, i.a.polo, i.b.uci, i.b.polo].join("|")).join("\n")).digest("hex");
+if (v60.length !== 60 || huella60 !== HUELLA_60) falla("banco", "las 60 posiciones de antes de es61 cambiaron (huella " + huella60 + "): sus respuestas guardadas dirían otra cosa");
 for (const [v, f] of Object.entries(Banco.FORMAS || {})) {
   for (const e of f.ejes) {
     if (!ejes.includes(e)) falla("FORMAS", "la versión " + v + " pide el eje desconocido «" + e + "»");
@@ -183,7 +193,7 @@ for (const [v, f] of Object.entries(Banco.FORMAS || {})) {
   if (f.posiciones) {
     const esperadas = [];
     for (const e of f.ejes) {
-      esperadas.push(...items.filter((i) => i.eje === e)
+      esperadas.push(...items.filter((i) => i.eje === e && +i.id.slice(2) <= ANTES_DE_LAS_NUEVAS)
         .map((i) => ({ id: i.id, c: M.complejidad(Chess, i.fen) }))
         .sort((x, y) => x.c - y.c || (x.id < y.id ? -1 : 1)).slice(0, 8).map((x) => x.id));
     }
@@ -206,4 +216,4 @@ if (fallas.length) {
   console.error("✗ Prueba de estilo: " + fallas.length + " problema(s)\n  " + fallas.join("\n  "));
   process.exit(1);
 }
-console.log("✓ Prueba de estilo: " + items.length + " preguntas, " + POR_EJE + " por eje, comprobadas");
+console.log("✓ Prueba de estilo: " + items.length + " preguntas (" + ejes.map((e) => e + " " + POR_EJE[e]).join(", ") + "), comprobadas");

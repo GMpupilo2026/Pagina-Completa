@@ -105,18 +105,22 @@ const ESTILO = (() => {
   const B = require("../js/estilo-items.js");
   const Pf = require("../js/estilo-perfil.js");
   const Ap = require("../js/estilo-aperturas.js");
-  const de = (version) => {
+  // Bruno, al revés que Ana en todo (y cerrado del todo): para el mapa y las
+  // parejas de estilo opuesto de la clase.
+  const de = (version, alReves) => {
     const respuestas = [];
     for (const eje of B.FORMAS[version].ejes) {
       B.ITEMS.filter((i) => i.eje === eje).slice(0, B.FORMAS[version].porEje).forEach((it, k) => {
-        const quiere = eje === "ataque" ? "atacar" : eje === "cambios" ? "mantener" : eje === "material" ? "iniciativa" : (k % 2 ? "abrir" : "cerrar");
+        const quiere = alReves
+          ? { ataque: "maniobrar", estructura: "cerrar", cambios: "cambiar", material: "material" }[eje]
+          : eje === "ataque" ? "atacar" : eje === "cambios" ? "mantener" : eje === "material" ? "iniciativa" : (k % 2 ? "abrir" : "cerrar");
         respuestas.push({ id: it.id, eleccion: it.a.polo === quiere ? "a" : "b", seguridad: 3, ms: 5000 });
       });
     }
     return { respuestas, recomendacion: Ap.recomendar(Pf.medir(respuestas, null, version), { ritmo: "rapidas", estudio: "medio", elo: 1500, actual: {} }) };
   };
-  const fila = (id, alumno, fecha, version) => Object.assign({ id, alumno_id: alumno, version, contexto: {}, partidas: null, created_at: fecha }, de(version));
-  return [fila("e-2", "a-1", "2026-10-02T15:00:00Z", 2), fila("e-1", "a-1", "2026-07-02T15:00:00Z", 1), fila("e-b", "a-2", "2026-08-15T15:00:00Z", 2)];
+  const fila = (id, alumno, fecha, version, alReves) => Object.assign({ id, alumno_id: alumno, version, contexto: {}, partidas: null, created_at: fecha }, de(version, alReves));
+  return [fila("e-2", "a-1", "2026-10-02T15:00:00Z", 2), fila("e-1", "a-1", "2026-07-02T15:00:00Z", 1), fila("e-b", "a-2", "2026-08-15T15:00:00Z", 2, true)];
 })();
 
 // El cliente de mentira: los mismos métodos encadenados que usa la página
@@ -451,11 +455,11 @@ async function pruebaProfesor(browser) {
   const { page, errores } = await abrir(browser, {
     rpc: {
       // La salud de la prueba de estilo, como la devuelve estilo_salud(): las
-      // 60 posiciones con 30 respuestas, una repetición con 20 de 25 iguales y
+      // posiciones del banco con 30 respuestas o más, una repetición con 20 de 25 iguales y
       // ocho pruebas con partidas en «ataque» que van juntas.
       estilo_salud: {
         pruebas: 40, alumnos: 31, por_version: { 2: 40 },
-        por_posicion: Object.fromEntries(Array.from({ length: 60 }, (_, i) => ["es" + String(i + 1).padStart(2, "0"), 30 + i])),
+        por_posicion: Object.fromEntries(Array.from({ length: require("../js/estilo-items.js").ITEMS.length }, (_, i) => ["es" + String(i + 1).padStart(2, "0"), 30 + i])),
         repeticion: { pares: 3, comparadas: 25, iguales: 20 },
         partidas: [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8].map((x) => ({ eje: "ataque", prueba: x, n_prueba: 8, partidas: x + 0.05, n_partidas: 6 })),
       },
@@ -1238,7 +1242,66 @@ async function pruebaProfesor(browser) {
     [/ya se puede calibrar/.test(clase.salud.calibracion), /80 %/.test(clase.salud.repeticion), /van juntos \(r = 1,00, en 8/.test(clase.salud["partidas-ataque"]), /pocas pruebas con partidas/.test(clase.salud["partidas-cambios"])],
     [true, true, true, true]);
   const pedidoSalud = await page.evaluate(() => (window.__rpcArgs.find(([n]) => n === "estilo_salud") || [])[1]);
-  igual("a la base le manda el primer polo de cada una de las 60 posiciones", [Object.keys(pedidoSalud.p_primero).length, pedidoSalud.p_primero.es01.eje], [60, "ataque"]);
+  igual("a la base le manda el primer polo de cada posición del banco", [Object.keys(pedidoSalud.p_primero).length, pedidoSalud.p_primero.es01.eje],
+    [require("../js/estilo-items.js").ITEMS.length, "ataque"]);
+
+  // El mapa de la clase: un punto por alumno, con su nombre escrito, del lado
+  // de su polo; los grupos, escritos debajo; y las parejas de estilo opuesto.
+  const mapa = () => page.evaluate(() => {
+    const svg = document.querySelector("#topic-report-body svg[data-estilo-mapa]");
+    const r = svg.getBoundingClientRect(), vb = svg.viewBox.baseVal;
+    const puntos = Object.fromEntries([...svg.querySelectorAll("g[data-alumno]")].map((g) => {
+      const c = g.querySelector("circle");
+      return [g.dataset.alumno, { x: +c.getAttribute("cx") > vb.width / 2 ? "derecha" : "izquierda", y: +c.getAttribute("cy") < vb.height / 2 ? "arriba" : "abajo", nombre: g.querySelector("text").textContent }];
+    }));
+    return {
+      visible: svg.checkVisibility() && r.width > 200,
+      etiqueta: svg.getAttribute("aria-label"),
+      puntos,
+      grupos: [...document.querySelectorAll("#topic-report-body [data-estilo-grupos] li")].map((li) => li.textContent),
+      parejas: [...document.querySelectorAll("#topic-report-body [data-estilo-parejas] li")].map((li) => li.textContent),
+    };
+  });
+  let m = await mapa();
+  igual("el mapa se ve y dice qué ejes muestra", [m.visible, /atacar o maniobrar de izquierda a derecha y abrir o cerrar de abajo hacia arriba/.test(m.etiqueta)], [true, true]);
+  igual("Ana, a la derecha (atacar); Bruno, a la izquierda y abajo (maniobrar, cerrado); cada punto con su nombre",
+    [m.puntos["a-1"].x, m.puntos["a-2"].x, m.puntos["a-2"].y, m.puntos["a-1"].nombre, m.puntos["a-2"].nombre], ["derecha", "izquierda", "abajo", "Ana", "Bruno"]);
+  igual("los grupos, escritos: Bruno con los que maniobran y cierran, Ana al medio (abrir o cerrar, sin definir)", m.grupos, [
+    "Atacar al rey y abrir el juego: nadie", "Maniobrar y abrir el juego: nadie",
+    "Atacar al rey y mantenerlo cerrado: nadie", "Maniobrar y mantenerlo cerrado: Bruno Mena",
+    "Al medio o sin definir en alguno de los dos: Ana Rojas"]);
+  igual("la pareja de estilo opuesto, con los ejes en que lo son", m.parejas,
+    ["Ana Rojas y Bruno Mena: opuestos en atacar o maniobrar, cambiar o mantener piezas, material o iniciativa."]);
+  await page.selectOption("#topic-report-body [data-mapa-eje=y]", "material");
+  m = await mapa();
+  igual("otro eje vertical: material o iniciativa (arriba, quedarse con el material: Bruno; abajo, Ana) y los grupos al día",
+    [m.puntos["a-1"].y, m.puntos["a-2"].y, m.grupos[1], m.grupos[2]],
+    ["abajo", "arriba", "Maniobrar y quedarse con el material: Bruno Mena", "Atacar al rey y dar material por la iniciativa: Ana Rojas"]);
+  await page.selectOption("#topic-report-body [data-mapa-eje=x]", "material");
+  igual("el mismo eje en los dos no se puede: se intercambian", await page.evaluate(() =>
+    [...document.querySelectorAll("#topic-report-body [data-mapa-eje]")].map((s) => s.value)), ["material", "ataque"]);
+  // Las cuentas con más alumnos: un trío cuando sobra uno, y una prueba de la
+  // versión 1 (sin el cuarto eje) no se pone en un mapa de ese eje.
+  const cuentas = await page.evaluate(() => {
+    const T = window.EstiloTarjeta;
+    const x = (p, ancho) => ({ p, lo: p - (ancho || 0.1), hi: p + (ancho || 0.1) });
+    const pf = (a, e, c, mt) => Object.assign({ ataque: x(a), estructura: x(e), cambios: x(c), lista: ["ataque", "estructura", "cambios"] }, mt == null ? {} : { material: x(mt), lista: ["ataque", "estructura", "cambios", "material"] });
+    const gente = [
+      { id: "1", nombre: "Uno", perfil: pf(0.9, 0.9, 0.9, 0.9) },
+      { id: "2", nombre: "Dos", perfil: pf(0.1, 0.1, 0.1, 0.1) },
+      { id: "3", nombre: "Tres", perfil: pf(0.85, 0.8, 0.85, 0.8) },
+      { id: "4", nombre: "Cuatro", perfil: pf(0.2, 0.15, 0.2, 0.2) },
+      { id: "5", nombre: "Cinco", perfil: pf(0.5, 0.5, 0.5) },
+    ];
+    const par = T.parejas(gente);
+    const c = T.cuadrantes(gente, "ataque", "material");
+    return { grupos: par.grupos.map((g) => g.alumnos.join("+")), opuestos: par.grupos[1].opuestos, sinEje: c.sinEje, lado: [T.lado(x(0.55, 0.1)), T.lado(x(0.7)), T.lado(x(0.3))] };
+  });
+  igual("parejas: primero los más lejanos, y el que sobra se suma donde más se diferencia (un trío)",
+    cuentas.grupos, ["Uno+Dos+Cinco", "Tres+Cuatro"]);
+  igual("opuestos solo donde los dos lo son con todo su margen", cuentas.opuestos, ["ataque", "estructura", "cambios", "material"]);
+  igual("una prueba sin el cuarto eje queda fuera del mapa de ese eje, dicho", cuentas.sinEje, ["Cinco"]);
+  igual("de un lado solo si todo el margen lo está (un 55 % con margen no cuenta)", cuentas.lado, [null, 0, 1]);
   await page.selectOption("#topic-filter", "diagnostico");
   await page.waitForFunction(() => document.getElementById("topic-report-body").textContent.includes("Ana Rojas"));
   igual("diagnósticos: hecho, a medias y sin empezar", await page.evaluate(() => {

@@ -3265,6 +3265,576 @@
      "ply": 31,
      "enLaPartida": "Rad8"
     }
+   },
+   {
+    "id": "es61",
+    "eje": "material",
+    "fen": "1r3rk1/4ppbp/pp1q2p1/2pn4/P7/1QPP2P1/1P3PBP/R1B2RK1 b - - 4 17",
+    "a": {
+     "san": "Rbd8",
+     "uci": "b8d8",
+     "polo": "iniciativa",
+     "eval": -21,
+     "linea": [
+      "b8d8",
+      "g2d5",
+      "d6d5",
+      "b3b6",
+      "d8d6",
+      "b6c7"
+     ],
+     "medidas": {
+      "ataque": 0,
+      "estructura": 0,
+      "cambios": 6,
+      "propone": 0,
+      "material": -1
+     }
+    },
+    "b": {
+     "san": "e6",
+     "uci": "e7e6",
+     "polo": "material",
+     "eval": 2,
+     "linea": [
+      "e7e6",
+      "h2h4",
+      "h7h5",
+      "g2d5",
+      "e6d5",
+      "c1f4"
+     ],
+     "medidas": {
+      "ataque": 0,
+      "estructura": 0,
+      "cambios": 3,
+      "propone": 0,
+      "material": 0
+     }
+    },
+    "mejor": 2,
+    "fuente": {
+     "de": "una-clase-al-dia",
+     "partida": "ml026-5",
+     "blancas": "Miroslav Filip",
+     "negras": "Ludek Pachman",
+     "evento": "Praga, 1953",
+     "ply": 33,
+     "enLaPartida": "e6"
+    }
+   },
+   {
+    "id": "es62",
+    "eje": "material",
+    "fen": "rn3rk1/pb1q1pbp/1pp3p1/3P2B1/4B3/1Q3N2/PP3PPP/R4RK1 w - - 3 16",
+    "a": {
+     "san": "Rad1",
+     "uci": "a1d1",
+     "polo": "material",
+     "eval": 11,
+     "linea": [
+      "a1d1",
+      "c6d5",
+      "e4d5",
+      "b8a6",
+      "g5e3",
+      "b7d5"
+     ],
+     "medidas": {
+      "ataque": 0,
+      "estructura": 0.5,
+      "cambios": 0,
+      "propone": 0,
+      "material": 0
+     }
+    },
+    "b": {
+     "san": "Rac1",
+     "uci": "a1c1",
+     "polo": "iniciativa",
+     "eval": -1,
+     "linea": [
+      "a1c1",
+      "c6d5",
+      "f1d1",
+      "h7h6",
+      "g5f4",
+      "d7e6"
+     ],
+     "medidas": {
+      "ataque": 0,
+      "estructura": 0.5,
+      "cambios": 0,
+      "propone": 0,
+      "material": -1
+     }
+    },
+    "mejor": 18,
+    "fuente": {
+     "de": "una-clase-al-dia",
+     "partida": "ml296-2",
+     "blancas": "Kramer",
+     "negras": "Busek",
+     "evento": "Vienna, 1955 Desfensa Eslava",
+     "ply": 30,
+     "enLaPartida": "dxc6"
+    }
+   },
+   {
+    "id": "es63",
+    "eje": "material",
+    "fen": "r2q1rk1/pb1nbppp/1p3n2/2pp2B1/3P3P/2NBPN2/PPQ2PP1/2KR3R b - h3 0 11",
+    "a": {
+     "san": "b5",
+     "uci": "b6b5",
+     "polo": "iniciativa",
+     "eval": -56,
+     "linea": [
+      "b6b5",
+      "d3b5",
+      "a8c8",
+      "b5d3",
+      "f8e8",
+      "c1b1"
+     ],
+     "medidas": {
+      "ataque": 0,
+      "estructura": 0.5,
+      "cambios": 0,
+      "propone": 1,
+      "material": -1
+     }
+    },
+    "b": {
+     "san": "a6",
+     "uci": "a7a6",
+     "polo": "material",
+     "eval": -68,
+     "linea": [
+      "a7a6",
+      "f3e5",
+      "c5d4",
+      "e3d4",
+      "f6e4",
+      "g5e7"
+     ],
+     "medidas": {
+      "ataque": 0,
+      "estructura": 0,
+      "cambios": 0,
+      "propone": 0,
+      "material": 0
+     }
+    },
+    "mejor": -43,
+    "fuente": {
+     "de": "una-clase-al-dia",
+     "partida": "ml197-5",
+     "blancas": "A. Rubinstein",
+     "negras": "R. Teichmann",
+     "evento": "Viena, 1908",
+     "ply": 21,
+     "enLaPartida": "c4"
+    }
+   },
+   {
+    "id": "es64",
+    "eje": "material",
+    "fen": "bq1rrbk1/3n1pp1/pp1ppn1p/8/2P1P3/P1N1BP2/1P1NBQPP/2RR3K b - - 0 24",
+    "a": {
+     "san": "Bc6",
+     "uci": "a8c6",
+     "polo": "material",
+     "eval": -72,
+     "linea": [
+      "a8c6",
+      "b2b4",
+      "a6a5",
+      "d2f1",
+      "a5b4",
+      "a3b4"
+     ],
+     "medidas": {
+      "ataque": 0,
+      "estructura": 0,
+      "cambios": 0,
+      "propone": 0,
+      "material": 0
+     }
+    },
+    "b": {
+     "san": "d5",
+     "uci": "d6d5",
+     "polo": "iniciativa",
+     "eval": -78,
+     "linea": [
+      "d6d5",
+      "c4d5",
+      "e6d5",
+      "e4d5",
+      "b6b5",
+      "d2e4"
+     ],
+     "medidas": {
+      "ataque": 2,
+      "estructura": 0.5,
+      "cambios": 0,
+      "propone": 1,
+      "material": -1
+     }
+    },
+    "mejor": -64,
+    "fuente": {
+     "de": "una-clase-al-dia",
+     "partida": "ml053-4",
+     "blancas": "A. Karpov",
+     "negras": "U. Andersson",
+     "evento": "Milano, 1975",
+     "ply": 47,
+     "enLaPartida": "d5"
+    }
+   },
+   {
+    "id": "es65",
+    "eje": "material",
+    "fen": "r4rk1/pp4b1/2bpp2p/4qpp1/2P5/1PNQP1P1/P4PP1/1BR2RK1 w - f6 0 22",
+    "a": {
+     "san": "g4",
+     "uci": "g3g4",
+     "polo": "iniciativa",
+     "eval": 24,
+     "linea": [
+      "g3g4",
+      "f5g4",
+      "b3b4",
+      "a8d8",
+      "c3b5",
+      "e5f5"
+     ],
+     "medidas": {
+      "ataque": 0,
+      "estructura": 0.5,
+      "cambios": 0,
+      "propone": 1,
+      "material": -1
+     }
+    },
+    "b": {
+     "san": "b4",
+     "uci": "b3b4",
+     "polo": "material",
+     "eval": 35,
+     "linea": [
+      "b3b4",
+      "h6h5",
+      "f2f4",
+      "e5f6",
+      "b4b5",
+      "c6e8"
+     ],
+     "medidas": {
+      "ataque": 0,
+      "estructura": 0,
+      "cambios": 0,
+      "propone": 0,
+      "material": 0
+     }
+    },
+    "mejor": 35,
+    "fuente": {
+     "de": "una-clase-al-dia",
+     "partida": "ml236-6",
+     "blancas": "Ravinsky",
+     "negras": "A. Kotov",
+     "evento": "Leningrad, 1949",
+     "ply": 42,
+     "enLaPartida": "g4"
+    }
+   },
+   {
+    "id": "es66",
+    "eje": "material",
+    "fen": "rn1q1rk1/pbp1bpp1/1p2pn1p/3p4/2PP3B/2N1PN2/PP2BPPP/R2QK2R w KQ - 2 9",
+    "a": {
+     "san": "Rc1",
+     "uci": "a1c1",
+     "polo": "material",
+     "eval": 11,
+     "linea": [
+      "a1c1",
+      "d5c4",
+      "e1g1",
+      "b8d7",
+      "e2c4",
+      "a7a6"
+     ],
+     "medidas": {
+      "ataque": 0,
+      "estructura": 2,
+      "cambios": 0,
+      "propone": 0,
+      "material": 0
+     }
+    },
+    "b": {
+     "san": "Bg3",
+     "uci": "h4g3",
+     "polo": "iniciativa",
+     "eval": 7,
+     "linea": [
+      "h4g3",
+      "d5c4",
+      "e1g1",
+      "b8d7",
+      "f3d2",
+      "f6d5"
+     ],
+     "medidas": {
+      "ataque": -1,
+      "estructura": 2,
+      "cambios": 0,
+      "propone": 0,
+      "material": -1
+     }
+    },
+    "mejor": 17,
+    "fuente": {
+     "de": "una-clase-al-dia",
+     "partida": "ml117-2",
+     "blancas": "V. Korchnoi",
+     "negras": "E. Geller",
+     "evento": "Moscú. Match Candidatos 1971",
+     "ply": 16,
+     "enLaPartida": "Bxf6"
+    }
+   },
+   {
+    "id": "es67",
+    "eje": "material",
+    "fen": "r1bqkb1r/p1n1pppp/2p5/2p5/Q7/2NP2P1/PP2PP1P/R1B1K1NR b KQkq - 1 8",
+    "a": {
+     "san": "e5",
+     "uci": "e7e5",
+     "polo": "iniciativa",
+     "eval": -45,
+     "linea": [
+      "e7e5",
+      "c1e3",
+      "c7e6",
+      "a4c6",
+      "c8d7",
+      "c6d5"
+     ],
+     "medidas": {
+      "ataque": 0,
+      "estructura": 0,
+      "cambios": 0,
+      "propone": 0,
+      "material": -1
+     }
+    },
+    "b": {
+     "san": "Ne6",
+     "uci": "c7e6",
+     "polo": "material",
+     "eval": -63,
+     "linea": [
+      "c7e6",
+      "g1f3",
+      "g7g6",
+      "f3g5",
+      "e6d4",
+      "e2e3"
+     ],
+     "medidas": {
+      "ataque": 0,
+      "estructura": 0,
+      "cambios": 0,
+      "propone": 0,
+      "material": 0
+     }
+    },
+    "mejor": -45,
+    "fuente": {
+     "de": "una-clase-al-dia",
+     "partida": "ml010-1",
+     "blancas": "Mark Taimanov",
+     "negras": "Alexei Suetin",
+     "evento": "URSS-ch21 Kiev, 1954",
+     "ply": 15,
+     "enLaPartida": "Qd7"
+    }
+   },
+   {
+    "id": "es68",
+    "eje": "material",
+    "fen": "1r1r2k1/1b1n1pbp/pp4p1/1q6/3pPQ2/1B6/PB1N1PPP/2R2RK1 b - - 3 22",
+    "a": {
+     "san": "Rf8",
+     "uci": "d8f8",
+     "polo": "material",
+     "eval": 8,
+     "linea": [
+      "d8f8",
+      "d2f3",
+      "d7c5",
+      "b2d4",
+      "c5b3",
+      "a2b3"
+     ],
+     "medidas": {
+      "ataque": 0,
+      "estructura": 0,
+      "cambios": 0,
+      "propone": 0,
+      "material": 0
+     }
+    },
+    "b": {
+     "san": "Nc5",
+     "uci": "d7c5",
+     "polo": "iniciativa",
+     "eval": -3,
+     "linea": [
+      "d7c5",
+      "f4f7",
+      "g8h8",
+      "b2a3",
+      "d4d3",
+      "f1d1"
+     ],
+     "medidas": {
+      "ataque": 0,
+      "estructura": 0.5,
+      "cambios": 0,
+      "propone": 0,
+      "material": -1
+     }
+    },
+    "mejor": 8,
+    "fuente": {
+     "de": "una-clase-al-dia",
+     "partida": "ml161-3",
+     "blancas": "L. Shamkovich",
+     "negras": "A. Karpov",
+     "evento": "Cto URSS. Leningrado, 1971",
+     "ply": 43,
+     "enLaPartida": "Rf8"
+    }
+   },
+   {
+    "id": "es69",
+    "eje": "material",
+    "fen": "r1b1k2r/pp2nppp/1n2p3/q2pP3/P1pP4/2P2N2/2PBBPPP/R2QK2R w KQkq - 3 11",
+    "a": {
+     "san": "g4",
+     "uci": "g2g4",
+     "polo": "iniciativa",
+     "eval": 39,
+     "linea": [
+      "g2g4",
+      "b6a4",
+      "f3h4",
+      "c8d7",
+      "f2f4",
+      "a5b6"
+     ],
+     "medidas": {
+      "ataque": 0,
+      "estructura": 0.5,
+      "cambios": 0,
+      "propone": 0,
+      "material": -1
+     }
+    },
+    "b": {
+     "san": "Ng5",
+     "uci": "f3g5",
+     "polo": "material",
+     "eval": 11,
+     "linea": [
+      "f3g5",
+      "h7h6",
+      "g5h3",
+      "c8d7",
+      "h3f4",
+      "b6a4"
+     ],
+     "medidas": {
+      "ataque": 2,
+      "estructura": 0,
+      "cambios": 0,
+      "propone": 0,
+      "material": 0
+     }
+    },
+    "mejor": 39,
+    "fuente": {
+     "de": "una-clase-al-dia",
+     "partida": "ml050-4",
+     "blancas": "A. Tolush",
+     "negras": "M. Botvinnik",
+     "evento": "URS-ch Moscú, 1945",
+     "ply": 20,
+     "enLaPartida": "O-O"
+    }
+   },
+   {
+    "id": "es70",
+    "eje": "material",
+    "fen": "4r3/1p2rk1n/2p1p3/p1Pp1n1p/3P1Pp1/1P4P1/P1N1RNKP/3R4 w - - 4 31",
+    "a": {
+     "san": "Rb1",
+     "uci": "d1b1",
+     "polo": "material",
+     "eval": 0,
+     "linea": [
+      "d1b1",
+      "h7f6",
+      "b3b4",
+      "h5h4",
+      "a2a4",
+      "a5b4"
+     ],
+     "medidas": {
+      "ataque": 0,
+      "estructura": 0,
+      "cambios": 0,
+      "propone": 0,
+      "material": 0
+     }
+    },
+    "b": {
+     "san": "a4",
+     "uci": "a2a4",
+     "polo": "iniciativa",
+     "eval": 0,
+     "linea": [
+      "a2a4",
+      "h7f6",
+      "b3b4",
+      "a5b4",
+      "d1b1",
+      "h5h4"
+     ],
+     "medidas": {
+      "ataque": 0,
+      "estructura": -1,
+      "cambios": 0,
+      "propone": 0,
+      "material": -1
+     }
+    },
+    "mejor": 0,
+    "fuente": {
+     "de": "ganar-con-poco",
+     "partida": "gcp-5",
+     "blancas": "Valeri Sálov",
+     "negras": "Nigel Short",
+     "evento": "Barcelona, 1989",
+     "ply": 60,
+     "enLaPartida": "Ne3"
+    }
    }
   ];
   /* ESTILO-FIN */
@@ -3287,8 +3857,10 @@
    *   2  el cuarto eje, «material o iniciativa». 8 por eje y hasta 6 más:
    *      con 10 serían 42 preguntas de entrada; con 8, quien tiene un estilo
    *      claro termina en 34 y la prueba agrega donde hace falta. Nadie pasa
-   *      de 58 (la base acepta hasta 60 respuestas), y la 15.ª de cada eje
-   *      queda para quien repite la prueba.
+   *      de 58 (la base acepta hasta 60 respuestas), y lo que sobra de cada eje
+   *      queda para quien repite la prueba. «Material o iniciativa» tiene 25
+   *      posiciones (es61 a es70 entraron después, sin cambiar la forma: la
+   *      prueba elige al azar entre las del eje).
    *   3  la versión corta, para quien empieza: los cuatro ejes, pero solo con
    *      las 8 posiciones más simples de cada uno (`posiciones`: las de menos
    *      piezas y menos jugadas posibles, EstiloMedidas.complejidad; las
