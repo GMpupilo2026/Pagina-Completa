@@ -913,17 +913,20 @@ podía mirar el panel de un estudiante con «Panel de:»; ahora también el prof
   INVOKER` o con su chequeo: lo que el profe lee lo decide la RLS que ya
   tenía sobre sus alumnos (`interno.alumnos_de`). Fuera quedan la clase en
   vivo, «Tus clases» y «Hoy te toca», que dirían lo de quien mira.
-- **La franja dice lo que no ve**: `tareas` y `examenes` le dejan leer a un
-  profe lo que él puso, no lo que le puso OTRO profe del mismo alumno. Por eso
-  a quien da clase la franja le dice «Su progreso y su informe son los suyos;
-  de sus tareas y exámenes ves los que le pusiste tú». Abrir esa lectura
-  (`alumno_id in (select interno.alumnos_de(...)) and disponible_desde <=
-  now()` en `tareas_select` y `examenes_select`; `examen_items` nunca, que
-  guarda la clave de las respuestas) es una migración aparte: se intentó
-  aplicar con este cambio y no se aprobó. Se comprobó antes que no cambiaría
-  ningún número del profe: `panel_profesor()`, `tareas.html`, `examenes.html`
-  y el calendario filtran por `p_profesor`, y las demás funciones que leen
-  esas tablas son `SECURITY DEFINER`.
+- **Ve también lo que le pusieron sus otros profes**: `tareas_select` y
+  `examenes_select` le dejan leer al profe lo que OTRO profe le puso a un
+  alumno suyo, `alumno_id in (select interno.alumnos_de(...)) and
+  disponible_desde <= now()` (migración
+  `20261018204456_profe_lee_tareas_y_examenes_de_sus_alumnos`, aplicada
+  desde el SQL Editor). Solo lo que el alumno ya ve, y solo leer: escribir
+  sigue siendo de quien la puso. `examen_items` no se abre, que guarda la
+  clave de las respuestas. Antes del cambio cada profe veía en ese panel solo
+  lo suyo y la franja tenía que decirlo. No cambia ningún número del profe:
+  `panel_profesor()`, `tareas.html`, `examenes.html` y el calendario filtran
+  por `p_profesor`, y las demás funciones que leen esas tablas son `SECURITY
+  DEFINER`. Comprobado impersonando a un profe con un alumno compartido: ve
+  las 5 tareas del otro profe (6 en el panel del alumno), ninguna de alumnos
+  ajenos, ninguna programada ajena y ninguna clave de examen ajena.
 - **Para guiarlo, desde la misma franja**: «📊 Su informe» (a quien administra
   también) y «📋 Ponerle una tarea» (solo a quien da clase), con su
   `?alumno=`. Al tocarlos se vuelve a la vista propia, porque la tarea se pone

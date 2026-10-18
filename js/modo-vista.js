@@ -245,12 +245,8 @@
     var t = tipoDe(p);
     texto.textContent = "👁 Estás viendo el panel de " + (p.nombre || "otra persona")
       + " (" + ETIQUETA_TIPO[t] + "). "
-      + (t !== "alumno" ? "Sus números y sus alumnos en Informes son los suyos"
-         /* A quien da clase la base le deja leer las tareas y los exámenes
-            que puso él, no los de otro profe del mismo alumno: se dice. */
-         : yo && yo.role === "profesor" && !yo.is_admin
-         ? "Su progreso y su informe son los suyos; de sus tareas y exámenes ves los que le pusiste tú"
-         : "Sus tareas, su progreso y su informe son los suyos")
+      + (t === "alumno" ? "Sus tareas, su progreso y su informe son los suyos"
+                        : "Sus números y sus alumnos en Informes son los suyos")
       + "; lo que abras o guardes se hace con tu cuenta.";
     var volver = document.createElement("button");
     volver.type = "button";
