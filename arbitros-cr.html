@@ -85,6 +85,7 @@
                                 <th scope="col" class="px-1.5 py-2 text-right" aria-sort="descending"><button type="button" data-col="torneos">Torneos</button></th>
                                 <th scope="col" class="px-1.5 py-2 text-right" aria-sort="none"><button type="button" data-col="fide">FIDE</button></th>
                                 <th scope="col" class="px-1.5 py-2 text-right" aria-sort="none"><button type="button" data-col="nofide">No FIDE</button></th>
+                                <th scope="col" class="px-1.5 py-2 text-right" aria-sort="none"><button type="button" data-col="nacional" title="Torneos de Costa Rica que no son de FIDE y que chess-results evaluó solo con el Elo nacional, en clásico">Elo nacional</button></th>
                                 <th scope="col" class="px-1.5 py-2 text-right" aria-sort="none"><button type="button" data-col="fuera">En el extranjero</button></th>
                                 <th scope="col" class="px-1.5 py-2 text-right" aria-sort="none"><button type="button" data-col="principal">Principal</button></th>
                                 <th scope="col" class="px-1.5 py-2 text-right" aria-sort="none"><button type="button" data-col="adjunto">Adjunto</button></th>
@@ -147,6 +148,17 @@
                         </table>
                     </div>
                     <p id="solicitudes-cuenta" class="text-sm text-brand-500 dark:text-brand-300 mt-2" aria-live="polite"></p>
+                </div>
+                <div class="mt-6">
+                    <h3 id="por-vencer-titulo" class="font-serif text-lg font-bold text-brand-800 dark:text-white">Por vencer</h3>
+                    <p class="text-sm text-brand-500 dark:text-brand-300 mt-1 max-w-3xl">Lo que cada uno junta para su siguiente título y deja de servir en los próximos doce meses: una norma cuenta seis años desde que empezó el torneo (B.06.1 5.3.1) y un seminario vale cuatro (5.3.2). Si la solicitud se va a mandar, conviene que llegue antes.</p>
+                    <div class="overflow-x-auto mt-2 bg-white dark:bg-brand-900 rounded-2xl shadow-md">
+                        <table id="tabla-por-vencer" class="w-full text-sm" aria-labelledby="por-vencer-titulo">
+                            <thead class="text-left text-xs uppercase tracking-wide text-brand-500 dark:text-brand-300"><tr><th scope="col" class="px-3 py-2">Árbitro</th><th scope="col" class="px-3 py-2">Qué vence</th><th scope="col" class="px-3 py-2">Deja de servir</th><th scope="col" class="px-3 py-2">Qué pasa</th></tr></thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                    <p id="por-vencer-cuenta" class="text-sm text-brand-500 dark:text-brand-300 mt-2" aria-live="polite"></p>
                 </div>
                 <div class="mt-6">
                     <h3 id="actividad-fide-titulo" class="font-serif text-lg font-bold text-brand-800 dark:text-white">La actividad en FIDE</h3>
@@ -331,6 +343,7 @@
     <script src="js/main.js"></script>
     <script src="js/tabla-excel.js"></script>
     <script src="js/reporte-pdf.js"></script>
+    <script src="js/ritmo-control.js"></script>
     <script src="js/arbitros-cr.js"></script>
 <!-- burbuja: inicio --><script src="js/burbuja-en-linea.js" defer></script><!-- burbuja: fin --><!-- juego-aviso: inicio --><script src="js/juego-aviso.js" defer></script><!-- juego-aviso: fin --><!-- aviso-profe: inicio --><script src="js/aviso-profe.js" defer></script><!-- aviso-profe: fin --><!-- tanda: inicio --><script src="js/tanda-diez.js" defer></script><!-- tanda: fin --><!-- acceso: inicio --><script src="js/acceso-vigente.js" defer></script><!-- acceso: fin --><!-- modo-vista: inicio --><script src="js/modo-vista.js" defer></script><!-- modo-vista: fin --><!-- marca: inicio --><script src="js/marca-academia.js" defer></script><!-- marca: fin --><!-- atajo: inicio --><script src="js/atajo-buscar.js" data-arriba="" defer></script><!-- atajo: fin --></body>
 </html>

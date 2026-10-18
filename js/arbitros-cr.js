@@ -137,10 +137,13 @@
        no se leyó. «Solo con Elo nacional»: los de Costa Rica que no son de
        FIDE, que chess-results evaluó solo con el nacional y no son rápidos ni
        blitz: el Elo nacional solo se calcula para el clásico (los 25 rápidos o
-       blitz marcados así están mal marcados; los viejos no escriben el ritmo
-       en la ficha y cuentan). */
+       blitz marcados así están mal marcados). El ritmo es el que dice la
+       ficha; si no lo dice (los viejos), el que sale del texto de su control
+       de tiempo (js/ritmo-control.js: «30 min + 30 seg» es clásico, «3 + 2»
+       blitz), y si tampoco se puede leer, cuenta. */
     const calculoDe = (x) => { const e = x.cr ? eloCr.get(x.cr.clave) : null; return e ? e.calculo : undefined; };
-    const soloNacional = (x) => !x.fide && !x.fuera && calculoDe(x) === "nacional" && !["rapido", "blitz"].includes(eloCr.get(x.cr.clave).ritmo);
+    const ritmoCr = (x) => eloCr.get(x.cr.clave).ritmo || RitmoControl.deducir(x.cr.control, x.cr.nombre);
+    const soloNacional = (x) => !x.fide && !x.fuera && calculoDe(x) === "nacional" && !["rapido", "blitz"].includes(ritmoCr(x));
 
     /* La norma de un torneo de FIDE para alguien según su cargo en la ficha
        de FIDE y su rol en chess-results. */
@@ -349,6 +352,8 @@
         const cuenta = (f) => l.filter(f).length;
         return {
             a, torneos: l.length, fide: cuenta((x) => x.fide), nofide: cuenta((x) => !x.fide), fuera: cuenta((x) => x.fuera),
+            // Un festival cuenta si alguno de sus torneos fue solo con Elo nacional.
+            nacional: cuenta((x) => x.festival ? x.items.some(soloNacional) : soloNacional(x)),
             principal: cuenta((x) => fue(x, "Chief", "ap")),
             adjunto: cuenta((x) => fue(x, "Dep. Chief", "adj")),
             arbitro: cuenta((x) => fue(x, "Arbiter", "arb")),
@@ -391,12 +396,12 @@
         $("tabla-arbitros").tBodies[0].replaceChildren(...filas.map((r) => {
             const boton = el("button", { type: "button", class: "font-semibold underline underline-offset-2 hover:no-underline text-left" }, r.a.nombre);
             boton.addEventListener("click", () => elegir(r.a.fide_id));
-            // px-1.5 y sin cortar los números: con sus 18 columnas, la tabla cabe
+            // px-1.5 y sin cortar los números: con sus 19 columnas, la tabla cabe
             // en una portátil (1280 px) sin barra de lado.
             const td = (v, der) => el("td", { class: "px-1.5 py-2 whitespace-nowrap" + (der ? " text-right tabular-nums" : "") }, v);
             return el("tr", { class: "border-t border-brand-100 dark:border-brand-800" },
                 el("th", { scope: "row", class: "px-1.5 py-2 font-normal text-left" }, boton),
-                td(tituloCorto(r.a) || "—"), td(r.anioAf ? String(r.anioAf) : "—", true), td(r.anioAi ? String(r.anioAi) : "—", true), td(r.enFide), td(miles(r.torneos), true), td(miles(r.fide), true), td(miles(r.nofide), true), td(miles(r.fuera), true),
+                td(tituloCorto(r.a) || "—"), td(r.anioAf ? String(r.anioAf) : "—", true), td(r.anioAi ? String(r.anioAi) : "—", true), td(r.enFide), td(miles(r.torneos), true), td(miles(r.fide), true), td(miles(r.nofide), true), td(miles(r.nacional), true), td(miles(r.fuera), true),
                 td(miles(r.principal), true), td(miles(r.adjunto), true), td(miles(r.arbitro), true),
                 td(conRev(r.af, r.afRevisar), true), td(conRev(r.ai, r.aiRevisar), true),
                 td(r.cercaAf === 100 ? "Ya es AF" : `${miles(r.cercaAf)} de 3`, true), td(r.cercaAi === 100 ? "Ya es AI" : `${miles(r.cercaAi)} de 4`, true),
@@ -423,6 +428,7 @@
             : "Ningún árbitro cumple con estos filtros.";
         pintarRanking();
         pintarSolicitudes();
+        pintarPorVencer();
         pintarActividadFide();
         pintarPorIdentificar();
     }
@@ -486,6 +492,50 @@
         $("solicitudes-cuenta").textContent = filas.length
             ? `${miles(filas.length)} con alguna norma para su siguiente título; ${miles(filas.filter((r) => !r.faltan.length).length)} con todo lo que se ve desde afuera.`
             : "Nadie con normas para su siguiente título con estos filtros.";
+    }
+
+    /* «Por vencer»: lo que alguien junta para su siguiente título y deja de
+       servir en los próximos doce meses, lo que vence antes primero. Una
+       norma cuenta seis años desde que empezó el torneo (B.06.1 5.3.1) y un
+       seminario vale cuatro (5.3.2). Dice con cuántas normas queda si la que
+       vence se pierde, para saber si urge mandar la solicitud. */
+    const MESES_AVISO = 12;
+    function porVencer(a) {
+        const cual = ["FA", "IA"].includes(a.titulo) ? (a.titulo === "FA" ? "ai" : null) : "af";
+        if (!cual) return [];
+        const hoy = hoyCr(), tope = masAnios(hoy, MESES_AVISO / 12);
+        const usadas = cuentaNormas(a, cual).usadas, lista = [];
+        for (const x of usadas) {
+            const vence = masAnios(x.inicio, 6);
+            if (vence >= hoy && vence <= tope) lista.push({ a, cual, vence, dice: fecha(vence), que: "norma", texto: `Norma de ${cual === "af" ? "AF" : "AI"}: ${x.t.nombre} (${fecha(x.inicio)})`,
+                quedan: usadas.filter((y) => masAnios(y.inicio, 6) > vence).length });
+        }
+        const sem = seminarioDe(a, cual === "af" ? "FA" : "IA");
+        if (usadas.length && sem && sem.vigente) {
+            // Con solo el mes («junio de 2029»), vale hasta que se termina ese mes.
+            const vence = sem.vence.length === 7 ? sem.vence + "-31" : sem.vence;
+            if (sem.vence <= tope.slice(0, sem.vence.length)) lista.push({ a, cual, vence, dice: cuando(sem.vence), que: "seminario", texto: `Seminario de ${cual === "af" ? "AF" : "AI"}: ${sem.seminario}`, quedan: usadas.length });
+        }
+        return lista;
+    }
+
+    function pintarPorVencer() {
+        const filas = enLista().flatMap(porVencer)
+            .sort((x, y) => x.vence.localeCompare(y.vence) || x.a.nombre.localeCompare(y.a.nombre, "es"));
+        const td = (v, der) => el("td", { class: "px-3 py-2 align-top" + (der ? " text-right tabular-nums" : "") }, v);
+        $("tabla-por-vencer").tBodies[0].replaceChildren(...filas.map((r) => {
+            const boton = el("button", { type: "button", class: "font-semibold underline underline-offset-2 hover:no-underline text-left" }, r.a.nombre);
+            boton.addEventListener("click", () => elegir(r.a.fide_id));
+            const pide = PIDE[r.cual];
+            return el("tr", { class: "border-t border-brand-100 dark:border-brand-800", "data-que": r.que },
+                el("th", { scope: "row", class: "px-3 py-2 align-top font-normal text-left" }, boton),
+                td(r.texto), td(r.dice),
+                td(r.que === "seminario" ? "Sin seminario vigente no puede mandar la solicitud"
+                    : `Queda con ${miles(r.quedan)} de ${pide}` + (r.quedan + 1 >= pide ? ": si la va a mandar, que sea antes" : "")));
+        }));
+        $("por-vencer-cuenta").textContent = filas.length
+            ? `${miles(filas.length)} ${filas.length === 1 ? "cosa vence" : "cosas vencen"} en los próximos ${MESES_AVISO} meses, de ${miles(new Set(filas.map((r) => r.a.fide_id)).size)} ${new Set(filas.map((r) => r.a.fide_id)).size === 1 ? "árbitro" : "árbitros"}.`
+            : `Nada de lo que alguien junta para su siguiente título vence en los próximos ${MESES_AVISO} meses.`;
     }
 
     // «La actividad en FIDE»: los IA y FA, inactivos primero y después el que vence antes.
@@ -621,7 +671,7 @@
             (a.titulo ? tituloLargo(a) + (a.titulo_detalle ? " (" + a.titulo_detalle + ")" : "") + " · " : ""),
             "ID FIDE ",
             enlace("https://ratings.fide.com/profile/" + a.fide_id, String(a.fide_id)),
-            ` · ${miles(r.torneos)} ${r.torneos === 1 ? "torneo" : "torneos"} de ${estado.desde} a ${estado.hasta} (${miles(r.fide)} de FIDE, ${miles(r.nofide)} que no; ${miles(r.fuera)} en el extranjero)`
+            ` · ${miles(r.torneos)} ${r.torneos === 1 ? "torneo" : "torneos"} de ${estado.desde} a ${estado.hasta} (${miles(r.fide)} de FIDE, ${miles(r.nofide)} que no${r.nacional ? ", " + miles(r.nacional) + " de ellos con solo Elo nacional" : ""}; ${miles(r.fuera)} en el extranjero)`
             + (r.torneos ? `, del ${fecha(r.primero)} al ${fecha(r.ultimo)}` : "")
             + (a.solo_chess_results ? ". No figura como árbitro en ninguna ficha de FIDE." : `: valen para AF ${miles(r.af)}, para AI ${miles(r.ai)}.`));
         $("ficha-fide").textContent = textoFide(a);
@@ -1408,7 +1458,7 @@
         return {
             titulo: a.nombre,
             subtitulo: [a.titulo ? tituloLargo(a) + (a.titulo_detalle ? " (" + a.titulo_detalle + ")" : "") : "Sin título de árbitro en FIDE",
-                "ID FIDE " + a.fide_id, ESTADO_FIDE[a.enFide] + " en FIDE" + (a.fide && a.fide.af_fecha ? ", AF aprobado el " + fecha(a.fide.af_fecha) : ""), `${miles(r.torneos)} torneos (${miles(r.fide)} de FIDE, ${miles(r.nofide)} que no; ${miles(r.fuera)} en el extranjero)`,
+                "ID FIDE " + a.fide_id, ESTADO_FIDE[a.enFide] + " en FIDE" + (a.fide && a.fide.af_fecha ? ", AF aprobado el " + fecha(a.fide.af_fecha) : ""), `${miles(r.torneos)} torneos (${miles(r.fide)} de FIDE, ${miles(r.nofide)} que no${r.nacional ? ", " + miles(r.nacional) + " de ellos con solo Elo nacional" : ""}; ${miles(r.fuera)} en el extranjero)`,
                 filtros.join(", "), "al " + window.HoraCR.fecha(new Date())].join(" · "),
             pie: "Árbitros de Costa Rica · Ajedrez Integral", autor: "Ajedrez Integral", bloques, fotos: [],
         };
