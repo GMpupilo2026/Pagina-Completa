@@ -2968,11 +2968,21 @@
             if (espera <= 0) return enviarAnuncioDePresencia();
             let cumplir;
             const promesa = new Promise((r) => { cumplir = r; });
-            presenciaPendiente = { promesa, cumplir, timer: setTimeout(() => {
-                const p = presenciaPendiente;
-                presenciaPendiente = null;
-                enviarAnuncioDePresencia().finally(() => p && p.cumplir());
-            }, espera) };
+            presenciaPendiente = { promesa, cumplir, timer: null };
+            // setTimeout puede saltar un milisegundo antes de lo pedido (lo
+            // mide Date.now, redondeado): si se adelantó, espera lo que falta
+            // en vez de mandar un anuncio de más dentro de la ventana.
+            const esperarLugar = (ms) => {
+                presenciaPendiente.timer = setTimeout(() => {
+                    const falta = presenciaEnviados.length < cupoDePresencia.tope
+                        ? 0 : presenciaEnviados[presenciaEnviados.length - cupoDePresencia.tope] + cupoDePresencia.ventanaMs - Date.now();
+                    if (falta > 0) { esperarLugar(falta + 1); return; }
+                    const p = presenciaPendiente;
+                    presenciaPendiente = null;
+                    enviarAnuncioDePresencia().finally(() => p && p.cumplir());
+                }, ms);
+            };
+            esperarLugar(espera);
             return promesa;
         }
         async function enviarAnuncioDePresencia() {
