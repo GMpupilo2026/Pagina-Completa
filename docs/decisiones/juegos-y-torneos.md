@@ -621,6 +621,134 @@ con todas (manda nulo), un aleatorio de tres modalidades que cambia a otras
 dos a mitad de torneo, y la inscrita que ve la lista pero no la tarjeta. Con
 `torneo.js` y `torneos.js` de antes saltan las pruebas de las dos páginas.
 
+**En eliminación directa ya funcionaba, y ahora se prueba.** Se pidió que el
+aleatorio sirva también en eliminación directa. No hubo que cambiar nada: la
+modalidad se sortea en `generateRound()` antes de mirar el formato, y la llave,
+los byes y las tablas («Avanza …») no dependen de la modalidad. Pero nada lo
+comprobaba, y un `if` por formato lo habría apagado sin ningún error, así que
+`verificar-torneo-modos.js` (apartado 8) juega llaves de 8, 6 y 5 inscritos
+(con byes, y una con tablas en la primera ronda) hasta el campeón. Con pocas
+rondas (log₂ de los inscritos) salen pocas modalidades: con 8 inscritos son 3
+rondas y 3 de las once, distintas entre sí. El doble del verificador hace
+cumplir además los CHECK de modalidad de `game_rooms` y `tournament_rounds`:
+sin eso, una ronda que la página mandaba como «aleatorio» la tragaba, y la
+base de verdad la rechaza.
+
+### Un torneo de todas las modalidades, jugado de punta a punta
+
+Se pidió revisar que todas las modalidades se puedan jugar sin fallas en un
+torneo, simulando al menos 6 rondas, que todos los relojes corran y que la
+triple repetición y las 50 jugadas terminen en tablas. Las pruebas de torneo
+escribían el resultado del cruce a mano; jugando las partidas de verdad
+salieron tres huecos, ninguno con error a la vista.
+
+**`variante.html` no le avisaba al torneo.** No cargaba `js/torneo-sync.js`:
+una partida de Abrazos, Camaleón, Vampiro, A ciegas, Volcanes o Misiones
+terminaba, el cruce se quedaba sin resultado y la ronda no se cerraba nunca.
+Ahora llama a `TorneoSync.onRoomUpdate` como las demás.
+
+**Y en las seis páginas avisaba solo la pantalla del rival.** Cuando la jugada
+que termina la partida es la propia, el eco de Realtime llega idéntico a lo que
+la página ya tiene y `SalaJuego.suscribir` lo descarta (con razón: no hay nada
+que pintar). Si el rival había cerrado su pestaña, nadie avisaba.
+`SalaJuego.avisarTorneo(room)` se llama también después de guardar la jugada
+propia; `onRoomUpdate` es idempotente (solo toca un cruce sin resultado).
+
+#### Todas las modalidades terminan en tablas: repetición y 50 jugadas
+
+| Modalidad | 50 jugadas | Triple repetición |
+|---|---|---|
+| Estándar, Niebla, Crazyhouse | `in_draw()` de chess.js | `js/repeticion.js` reproduce `room.moves` (como antes) |
+| A ciegas, Misiones, Vampiro, Volcanes | el motor (medias jugadas de la FEN) | `variant_state.rep` |
+| Camaleón, Abrazos | el motor, con su contador nuevo | `variant_state.rep` |
+| Cartas | el motor (chess.js) | `variant_state.rep` |
+| Duelo | el motor: 50 rondas sin captura, choque ni peón | el motor: `duelo_state.vistas` |
+
+- **La cuenta viaja en la sala** (`Repeticion.enSala`): las jugadas de esas
+  modalidades no se pueden reproducir con chess.js (cada una tiene su motor y
+  su planilla), así que quien juega pone al día un `{ posición: veces }` en
+  `variant_state.rep`, en el mismo update que la jugada. Se reinicia en cada
+  jugada irreversible (captura, abrazo, peón), que ya no puede volver.
+- **Cada motor dice qué es «la misma posición»** (`clave()`): con chess.js, la
+  de siempre (captura al paso solo si se puede hacer); en Volcanes, además, en
+  qué punto del ciclo de volcanes va (lo que puede pasar después es distinto);
+  en Cartas, además, las manos y las cartas pendientes (por eso solo se repite
+  cuando el mazo ya se acabó); en Abrazos, las casillas ordenadas (el objeto
+  las guardaba en el orden en que se movieron, y la misma posición se escribía
+  distinto).
+- **Camaleón y Abrazos no contaban las medias jugadas**: Camaleón escribía
+  siempre 0 en su FEN y Abrazos no lo guardaba. La partida no terminaba nunca.
+- **En Duelo la FEN va siempre con el turno en blancas y 0 medias jugadas**,
+  así que chess.js no puede contar nada: cuenta el motor (`sinAvance`,
+  `vistas`), y una partida guardada antes empieza a contar desde su tablero.
+- **El final dice por qué** (`SalaJuego.textoTablas`): «Tablas por triple
+  repetición.» o «Tablas por la regla de las 50 jugadas.», en las seis
+  páginas; en las que guardan el estado, `variant_state.fin.motivo`.
+- **`cargarConHistoria` de Estándar compara también el contador de medias
+  jugadas**: una sala que arrancó de otra posición con las mismas piezas se
+  tomaba por la partida desde el principio y el contador volvía a 1.
+
+#### Duelo Simultáneo con reloj
+
+Duelo era la única de a dos sin reloj: el torneo le daba un ritmo y la página
+lo ignoraba. Ahora lleva «Estoy listo» como las demás (el reloj arranca con los
+dos listos; una partida empezada antes sigue sin pedirlo) y **corren los dos
+relojes a la vez**, porque los dos piensan a la vez: cada uno se detiene cuando
+ese jugador confirma su jugada (ahí se le descuenta lo pensado y se le suma el
+incremento) y arrancan los dos de nuevo al resolverse la ronda. La bandera se
+le cae a quien no confirmó a tiempo.
+
+- **La base lo sabe**: `proteger_reloj_de_partida()` leía el turno de la
+  columna `fen`, que en el duelo se queda en la de salida («w»), así que para
+  la base el reloj de las negras no corría nunca y su bandera se habría
+  rechazado siempre. En el duelo corren los dos, menos el de quien ya confirmó
+  (nadie se lo puede bajar), y confirmar con el tiempo agotado se rechaza.
+  Comprobado en una transacción revertida: confirmar tras 30 s entra, bajarle
+  el reloj a quien confirmó se rechaza, la bandera antes de tiempo se rechaza,
+  confirmar sin tiempo se rechaza y la bandera de verdad entra.
+- `SalaJuego.restante()` y `pintarRelojes()` aceptan `corren: { w, b }` en
+  vez del turno.
+
+#### Las dos escrituras del duelo ya no se pisan
+
+Jugando muchas partidas de Duelo seguidas apareció una falla que ya estaba:
+**una de cada ~10 se quedaba para siempre en «revelando y resolviendo la
+ronda…»**. Los dos jugadores confirman y revelan casi en el mismo instante, y
+la página guardaba `duelo_state` ENTERO tal como lo había leído: la segunda
+escritura borraba la revelación (o el compromiso) que la primera acababa de
+poner. Sin error: cada pantalla creía haber guardado lo suyo.
+
+- **`public.duelo_guardar(sala, ronda, parte, valor, tiempo)`** pone solo la
+  parte propia (`commit` o `reveal` de su color, con `jsonb_set`) sobre la
+  fila ya bloqueada: dos llamadas a la vez se suman, porque la segunda espera
+  a la primera y vuelve a leer la fila. El color lo decide la base (quién
+  llama), y solo vale para la ronda que se pide: lo que llega tarde de una
+  ronda ya resuelta no entra. `SECURITY INVOKER`: la RLS y el trigger del
+  reloj siguen decidiendo, como en un update. Comprobado impersonando a los
+  dos jugadores y a un tercero: los dos compromisos quedan, la ronda
+  equivocada no entra y el tercero es rechazado.
+- **Resolver la ronda escribe el estado entero, pero solo si la ronda en la
+  base sigue siendo la que se resolvió** (`.eq("duelo_state->>round", …)`):
+  si ya la resolvió la otra pantalla y el rival confirmó la siguiente, no se
+  la borra.
+- `verificar-torneo-jugado.js` (apartado 4) juega 30 duelos en que los dos
+  confirman a la vez: con el `duelo.js` de antes se traban varios; con este,
+  ninguno.
+
+**Al tocar una página de partida, un motor, `js/repeticion.js`,
+`js/sala-juego.js` o `js/torneo-sync.js`, correr `node
+herramientas/verificar-torneo-jugado.js`** (necesita `npm install`; tarda unos
+minutos). Con una base de mentira compartida por todas las pestañas, que hace
+lo que hacen los triggers del reloj y de la ronda: (1) un torneo «Aleatorio»
+de 11 rondas, una por modalidad, donde el profe arma cada ronda en
+`torneo.html` y Ana y Bruno juegan cada partida de verdad (clics en el
+tablero, la jugada escrita en A ciegas, elegir y confirmar en Duelo) hasta
+tablas por repetición, mirando que corran los dos relojes, que la pantalla lo
+diga, que el resultado llegue al cruce y que la ronda se cierre sola; (2) las
+50 jugadas en las 11 modalidades; (3) la bandera en las 11, con el reloj
+detenido de quien confirmó en Duelo. Con `variante.html` sin `torneo-sync.js`,
+la ronda de Abrazos queda abierta y salta.
+
 ### El verificador de voseo no miraba la mitad del sitio
 
 Se descubrió acá, de rebote: `torneo.html` decía «Vuelve a Torneos y **entrá**
@@ -995,8 +1123,9 @@ podían repetir la misma posición veinte veces y la partida seguía.
   «Tablas por triple repetición.» (se vuelve a contar al pintarlo: no hay
   columna de motivo, y no hace falta una).
 - Va en `estandar`, `niebla` y `crazyhouse`, las de reglas de ajedrez de
-  siempre. **Las de `variante.html` y Cartas no la tienen**: sus motores y sus
-  cartas cambian lo que significa «la misma posición», y es otra decisión.
+  siempre. Las de `variante.html`, Cartas y Duelo la tienen desde octubre de
+  2026, cada una con lo que para ella es «la misma posición» (ver «Todas las
+  modalidades terminan en tablas: repetición y 50 jugadas»).
 
 ### En las prácticas también: triple repetición y 50 jugadas, solas
 
@@ -3349,6 +3478,52 @@ no de AF.
 - **Cada mes**, en la puesta al día (`arbitros-cr-actualizar`): bajar la
   lista otra vez y leer el informe de la última reunión del Consejo, por si
   hay títulos nuevos.
+
+## Los torneos con Elo nacional
+
+El dueño pidió (octubre de 2026) filtrar los torneos que se evaluaron
+**únicamente con Elo nacional**: en chess-results lo dice la ficha de cada
+torneo («Cálculo de elo»), y el Elo nacional solo se calcula para el clásico.
+Es la opción «Solo con Elo nacional» del filtro «Tipo», y en la columna FIDE
+de la ficha de un árbitro un torneo así dice «No (Elo nacional)», y uno que no
+se evaluó con ningún Elo, «No (sin Elo)».
+
+- **Lo que no se ve a la primera.** chess-results esconde la ficha de los
+  torneos que terminaron hace más de dos semanas detrás de un botón («Mostrar
+  detalles del torneo», contra los robots de búsqueda): un GET trae la página
+  sin ficha y sin error. De 3238, el GET solo trajo la de 11. Hay que mandar el
+  formulario de la página (`__VIEWSTATE`, `__EVENTVALIDATION` y
+  `cb_alleDetails`), y **solo lo acepta el mismo servidor que la armó**: el pie
+  dice «Node S1», «S2» o «S3», y el POST va a `s1.`, `s2.` o
+  `s3.chess-results.com`. Mandados todos a `s1`, dos de cada tres volvieron con
+  error 500, y reintentarlos no sirvió. A `s0` no se llega (su certificado no
+  vale): se vuelve a pedir la página hasta que la arme otro servidor. Así se
+  leyeron 3237 de 3238.
+- **Lo que dicen las fichas** (los de Costa Rica que no son de FIDE, octubre de
+  2026):
+  - solo «Elo nacional»: 550 (153 clásicos, 372 sin el ritmo escrito, que son
+    las fichas viejas, 18 blitz y 7 rápidos);
+  - ningún Elo: 2194;
+  - «Elo nacional, Elo internacional»: 317;
+  - solo «Elo internacional»: 176.
+- **La regla.** Solo «Elo nacional» y que no sea rápido ni blitz: los 25 rápidos
+  o blitz marcados así están mal marcados (el nacional es solo del clásico), y
+  los que no escriben el ritmo cuentan.
+- **Dónde va.** `arbitros_cr_cr_elo` (clave, calculo, ritmo, leido; migraciones
+  `20261017224002` y `20261017224637`), aparte de `arbitros_cr_cr`, porque la
+  carga completa de esa tabla la borra y la vuelve a llenar. Solo la lee quien
+  tiene la herramienta. El dato queda en
+  `herramientas/datos/arbitros-cr-calculo-elo.json`, sacado de la base y no
+  copiado a mano (la huella dio igual), y
+  `herramientas/arbitros-cr/calculo-elo.py` lo vuelve a cargar.
+- **Antes se probó la plataforma de la Federación** (`ajedrezcostarica.com`):
+  tiene «Tipo de elo» por torneo, pero solo de los torneos publicados ahí (unos
+  550, de los últimos años) y el dato viene escondido en el JavaScript de la
+  página. chess-results cubre todos los años.
+- `verificar-arbitros-cr.js`: el del club (solo nacional, sin el ritmo escrito)
+  entra; el Sub-16 (nacional, pero rápido), el que no se leyó y el de Panamá
+  no. Rompí a propósito la regla del ritmo (quitándola y exigiendo «clásico»)
+  y salta.
 
 ## La categoría nacional: la lista de la Federación
 

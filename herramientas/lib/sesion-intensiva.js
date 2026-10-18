@@ -15,6 +15,10 @@
  *                 ejercicios contrastados con Stockfish 16)
  *   lt:2mxHX      los ejercicios de Lichess de Entrenamiento
  *                 (entreno/data/temas.json, base abierta CC0)
+ *   ucdp:ml001-1@18  una PARTIDA de «Una clase al día», después de sus
+ *                 primeras 18 medias jugadas: la línea es la que siguió en la
+ *                 partida. Trae además su apertura y las jugadas que llevaron
+ *                 a la posición (para la sesión de aperturas)
  *
  * Cada ejercicio:
  *   banco      de dónde sale, con su prefijo
@@ -61,17 +65,20 @@ function deDiagramas(archivo, id) {
   return null;
 }
 
-function deUnaClase(id) {
+function leerUnaClase() {
   const dir = path.join(RAIZ, "cursos/protegido/data/una-clase-al-dia");
   if (!cache.ucd) {
     cache.ucd = {};
+    cache.ucdp = {};
     for (const f of fs.readdirSync(dir)) {
       const l = JSON.parse(fs.readFileSync(path.join(dir, f), "utf8"));
       for (const e of Object.values(l.ejercicios || {})) cache.ucd[e.id] = e;
+      for (const p of Object.values(l.partidas || {})) cache.ucdp[p.id] = p;
     }
   }
-  return cache.ucd[id] || null;
 }
+function deUnaClase(id) { leerUnaClase(); return cache.ucd[id] || null; }
+function partidaDeUnaClase(id) { leerUnaClase(); return cache.ucdp[id] || null; }
 
 /* { fen, jugadas (SAN), origen } de un ejercicio del banco. El origen es la
    partida que dice el banco, tal cual: no se escribe a mano un resultado ni
@@ -97,6 +104,18 @@ function fuente(banco) {
     const origen = String(e.explicacion || "").replace(/^anterior:\s*/, "").replace(/\s*Stockfish.*$/, "").trim();
     return { fen: e.fen, jugadas: e.solucion.map((s) => s.san), origen: origen || null };
   }
+  if (tipo === "ucdp") {
+    const [pid, ply] = id.split("@");
+    const p = partidaDeUnaClase(pid);
+    if (!p || !(+ply >= 0) || +ply >= p.moves.length) throw new Error("No está en las partidas de «Una clase al día»: " + banco);
+    const c = new Chess();
+    if (!c.load(p.start_fen)) throw new Error(banco + ": la FEN de salida de la partida no carga");
+    const sans = p.moves.map((m) => m.san);
+    for (const san of sans.slice(0, +ply)) if (!c.move(san)) throw new Error(banco + ": no se puede jugar " + san);
+    return { fen: c.fen(), jugadas: sans.slice(+ply), inicio: p.start_fen, previas: sans.slice(0, +ply),
+             apertura: p.apertura + (p.eco ? " (" + p.eco + ")" : ""),
+             origen: p.blancas + "–" + p.negras + ", " + p.evento };
+  }
   throw new Error("Banco desconocido: " + banco);
 }
 
@@ -121,7 +140,8 @@ function armar(ej) {
     antes.push(c.fen());
     if (!c.move(san)) throw new Error(ej.banco + ": la línea no se puede jugar en " + san);
   }
-  return { fen, linea, antes, final: c.fen(), origen: f.origen, delBanco: delBanco.length };
+  return { fen, linea, antes, final: c.fen(), origen: f.origen, delBanco: delBanco.length,
+           apertura: f.apertura, inicio: f.inicio, previas: f.previas };
 }
 
 /* El número de la jugada `i` de una línea que empieza en `fen`, y de quién es. */
@@ -172,7 +192,9 @@ function crear(s) {
       items.push({ tipo: "posicion", titulo: recorta("Ejercicio " + n + " · " + ej.nombre, 200), fen: a.fen,
                    pregunta: chuleta(ej, a) });
       const deDonde = s.conOrigen && a.origen ? "\nDe: " + a.origen.replace(/\.+$/, "") + "." : "";
-      items.push(nota("Ejercicio " + n + " · El cálculo", ej.explicacion + deDonde));
+      // En la sesión de aperturas, la nota empieza por cómo se llegó: la apertura y sus jugadas.
+      const llegada = s.conLlegada && a.previas ? "Cómo se llegó · " + a.apertura + ": " + numerar(a.inicio, a.previas) + "\n\n" : "";
+      items.push(nota("Ejercicio " + n + " · El cálculo", llegada + ej.explicacion + deDonde));
       salida.push({ n, banco: ej.banco, saltar: ej.saltar || 0, delBanco: a.delBanco, fen: a.fen,
                     linea: a.linea, antes: a.antes, final: a.final,
                     umbral: ej.umbral || s.umbral,

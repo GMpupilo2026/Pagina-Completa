@@ -30,7 +30,8 @@
    - «Para pedir el título» (la ruta de B.06.1 punto por punto) y su Excel,
      «Quiénes pueden pedir el título», el historial en FIDE (solicitudes y
      seminarios), «La actividad en FIDE» y «Por identificar»;
-   - las tablas se piden de mil en mil (range).
+   - las tablas se piden de mil en mil (range), y la lista de árbitros cabe
+     a lo ancho en 1280 px.
 
    Ver «Árbitros de Costa Rica en FIDE» en docs/decisiones/juegos-y-torneos.md.
 
@@ -118,6 +119,14 @@ const CR = [
     { clave: 900007, nombre: "Abierto Internacional de Panamá 2024", inicio: "2024-11-10", fin: "2024-11-15", lugar: "Ciudad de Panamá", control: "90 min + 30 s", rondas: 9, jugadores: 60, fide_torneo: null, pais: "PAN" },
     { clave: 900005, nombre: "Torneo que no se jugó 2024", inicio: "2024-09-01", fin: "2024-09-01", lugar: "", control: "", rondas: 0, jugadores: 10, fide_torneo: null },
 ];
+// «Cálculo de elo» de chess-results: el del club, solo con el nacional y sin
+// el ritmo escrito (cuenta: así vienen los viejos); el Sub-16 dice nacional pero es rápido (no cuenta: el Elo
+// nacional es solo del clásico); el 900003 no se leyó (sin dato: no entra en «solo nacional»); el
+// de Panamá (afuera) no cuenta. El «sin Elo» va en una prueba aparte.
+const ELO_CR = [
+    { clave: 900002, calculo: "nacional", ritmo: null }, { clave: 900006, calculo: "nacional", ritmo: "rapido" },
+    { clave: 900007, calculo: "nacional", ritmo: "clasico" },
+];
 const CR_CARGOS = [
     { clave: 900001, fide_id: 6500001, rol: "ap" },
     { clave: 900002, fide_id: 6500001, rol: "dir" },
@@ -136,7 +145,7 @@ function doble(tieneLicencia) {
 window.SUPABASE_URL = "https://falso.supabase.co";
 window.SUPABASE_ANON_KEY = "anon-falsa";
 (function () {
-  const TABLAS = ${JSON.stringify({ arbitros_cr: ARBITROS, arbitros_cr_torneos: TORNEOS, arbitros_cr_cargos: CARGOS, arbitros_cr_cr: CR.map((c) => ({ pais: "CRC", ...c })), arbitros_cr_cr_cargos: CR_CARGOS, arbitros_cr_fide: ARBITROS_FIDE, arbitros_cr_sin_id: SIN_ID })};
+  const TABLAS = ${JSON.stringify({ arbitros_cr: ARBITROS, arbitros_cr_torneos: TORNEOS, arbitros_cr_cargos: CARGOS, arbitros_cr_cr: CR.map((c) => ({ pais: "CRC", ...c })), arbitros_cr_cr_cargos: CR_CARGOS, arbitros_cr_fide: ARBITROS_FIDE, arbitros_cr_sin_id: SIN_ID, arbitros_cr_cr_elo: ELO_CR })};
   const LICENCIA = ${tieneLicencia ? "true" : "false"};
   window.__pedidos = [];
   function respuesta(data, error) { return Promise.resolve({ data, error: error || null }); }
@@ -233,8 +242,14 @@ const porNombre = (m) => Object.fromEntries(m.map((f) => [f[0], f]));
     console.log("\n=== Con licencia: la lista de árbitros ===");
     ({ ctx, p } = await abrir(browser, "arbitros-cr.html", true));
     await p.waitForFunction(() => document.getElementById("app").checkVisibility());
+    // Con sus 18 columnas, la lista cabe en una portátil (1280 px, el ancho
+    // que abre Playwright) sin barra de lado.
+    igual("la lista de árbitros cabe a lo ancho en 1280 px", await p.evaluate(() => {
+        const t = document.getElementById("tabla-arbitros");
+        return window.innerWidth === 1280 && t.scrollWidth <= t.parentElement.clientWidth;
+    }), true);
     igual("pide cada tabla de mil en mil", await p.evaluate(() => window.__pedidos.filter((x) => x.startsWith("arbitros_cr")).sort()),
-        ["arbitros_cr 0-999", "arbitros_cr_cargos 0-999", "arbitros_cr_cr 0-999", "arbitros_cr_cr_cargos 0-999", "arbitros_cr_fide 0-999", "arbitros_cr_sin_id 0-999", "arbitros_cr_torneos 0-999"]);
+        ["arbitros_cr 0-999", "arbitros_cr_cargos 0-999", "arbitros_cr_cr 0-999", "arbitros_cr_cr_cargos 0-999", "arbitros_cr_cr_elo 0-999", "arbitros_cr_fide 0-999", "arbitros_cr_sin_id 0-999", "arbitros_cr_torneos 0-999"]);
     let m = porNombre(await filas(p, "#tabla-arbitros"));
     igual("los cinco árbitros salen (todos los años), también quien solo está en chess-results", Object.keys(m).sort(),
         ["Ángulo Prueba, Óscar", "Quiros Prueba, Eduardo", "Rojas Prueba, Luis", "Soto Prueba, Ana", "Viejo Prueba, Juan"].sort());
@@ -304,6 +319,11 @@ const porNombre = (m) => Object.fromEntries(m.map((f) => [f[0], f]));
     m = porNombre(await filas(p, "#tabla-arbitros"));
     igual("«No FIDE»: solo quienes tienen torneos que no son de FIDE, con esos", [Object.keys(m).sort(), m["Ángulo Prueba, Óscar"][5], m["Quiros Prueba, Eduardo"][5]],
         [["Quiros Prueba, Eduardo", "Soto Prueba, Ana", "Ángulo Prueba, Óscar"].sort(), "2", "2"]);
+    await p.selectOption("#tipo", "nacional");
+    m = porNombre(await filas(p, "#tabla-arbitros"));
+    igual("«Solo con Elo nacional»: el del club (sin ritmo escrito) para Óscar y Eduardo; ni el Sub-16 (rápido), ni el que no se leyó, ni el de Panamá",
+        [Object.keys(m).sort(), m["Ángulo Prueba, Óscar"][5], m["Quiros Prueba, Eduardo"][5]],
+        [["Quiros Prueba, Eduardo", "Ángulo Prueba, Óscar"].sort(), "1", "1"]);
     await p.selectOption("#tipo", "fide");
     m = porNombre(await filas(p, "#tabla-arbitros"));
     igual("«Solo FIDE»: Óscar con 4 y Eduardo con 1", [m["Ángulo Prueba, Óscar"][5], m["Quiros Prueba, Eduardo"][5]], ["4", "1"]);
@@ -375,7 +395,7 @@ const porNombre = (m) => Object.fromEntries(m.map((f) => [f[0], f]));
     const o = await filas(p, "#tabla-torneos");
     igual("cada torneo una vez, el más nuevo primero, con FIDE sí o no y su cargo (el 900001 dentro del 101, el 900005 fuera)",
         o.map((f) => [f[0], f[2], f[3]]),
-        [["10/01/2025", "Sí", "Árbitro principal"], ["01/08/2024", "Sí", "Árbitro adjunto principal"], ["10/07/2024", "No", "Director del torneo"],
+        [["10/01/2025", "Sí", "Árbitro principal"], ["01/08/2024", "Sí", "Árbitro adjunto principal"], ["10/07/2024", "No (Elo nacional)", "Director del torneo"],
          ["01/05/2024", "Sí", "Árbitro principal"], ["01/05/2024", "No", "Árbitro"], ["01/03/2023", "Sí", "Árbitro"]]);
     const conPorque = await p.$eval("#tabla-torneos tbody tr", (tr) => [tr.cells[9].querySelector(".of-estado").textContent, tr.cells[9].querySelector(".of-detalle").textContent]);
     igual("la norma va escrita con su porqué", conPorque, ["Vale una vez", "porque opcion"]);
@@ -640,7 +660,7 @@ const porNombre = (m) => Object.fromEntries(m.map((f) => [f[0], f]));
     igual("la ficha dice que no figura en FIDE", /No figura como árbitro en ninguna ficha de FIDE/.test(await p.$eval("#ficha-sub", (e) => e.textContent)), true);
     const e = await filas(p, "#tabla-torneos");
     igual("sus tres torneos (el que no se jugó, fuera), con los dos roles juntos", e.map((f) => [f[2], f[3]]),
-        [["No", "Árbitro principal, Director del torneo"], ["Sí", "Árbitro"], ["No", "Árbitro"]]);
+        [["No (Elo nacional)", "Árbitro principal, Director del torneo"], ["Sí", "Árbitro"], ["No", "Árbitro"]]);
     igual("en un torneo de FIDE donde arbitró sin figurar en su ficha: revisar", [e[1][8].startsWith("Revisar"), /no figura como árbitro; sí en chess-results/.test(e[1][8])], [true, true]);
     igual("el que no es de FIDE enlaza a chess-results", await p.$eval("#tabla-torneos tbody tr:first-child a", (a) => a.href), "https://chess-results.com/tnr900002.aspx?lan=2");
     await ctx.close();

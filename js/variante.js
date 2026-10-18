@@ -311,9 +311,9 @@
             readyBtn.classList.toggle("hidden", !myColor || room.status !== "playing" || myReady);
 
             if (room.status === "finished") {
-                let resultText = room.result === "draw" ? "Tablas." : (room.result === "white" ? nameFor(room.white_id) + " ganó con blancas." : nameFor(room.black_id) + " ganó con negras.");
                 // Cómo se ganó, cuando no fue de la forma de siempre.
                 const fin = room.variant_state && room.variant_state.fin;
+                let resultText = room.result === "draw" ? SalaJuego.textoTablas(fin && fin.motivo) : (room.result === "white" ? nameFor(room.white_id) + " ganó con blancas." : nameFor(room.black_id) + " ganó con negras.");
                 if (fin && fin.motivo === "mision") {
                     const m = window.MisionesSecretas && MisionesSecretas.buscar(fin.mision);
                     resultText = resultText.replace(/\.$/, "") + ", cumpliendo su misión secreta" + (m ? " («" + m.titulo + "»)." : ".");
@@ -447,11 +447,33 @@
                 patch[storedKey] = remaining;
                 patch.clock_updated_at = new Date().toISOString();
             }
+            /* Triple repetición: estas jugadas no se pueden reproducir con
+               chess.js (cada modalidad tiene su motor y su planilla), así que la
+               cuenta viaja en la sala, en variant_state.rep, y la pone al día
+               quien juega (Repeticion.enSala). La posición la dice el motor
+               (engine.clave()): en Volcanes cuenta también el ciclo de los
+               volcanes. La regla de las 50 jugadas ya la aplica el motor. */
+            if (engine.clave) {
+                const previo = room.variant_state && room.variant_state.rep;
+                let claveAntes = null;
+                if (!previo) {
+                    const antes = Variantes.crear(room.variant);
+                    if (antes.configurar) antes.configurar(room.variant_state);
+                    antes.load(room.fen);
+                    claveAntes = antes.clave();
+                }
+                const cuenta = Repeticion.enSala(previo, claveAntes, engine.clave(), engine.medias() === 0);
+                patch.variant_state = Object.assign({}, room.variant_state || {}, { rep: cuenta.rep });
+                if (!info.gameOver && cuenta.veces >= 3) info = Object.assign({}, info, { gameOver: true, result: "draw", motivo: "repeticion" });
+            }
             if (info.gameOver) {
                 patch.status = "finished";
                 patch.result = info.result;
+                const estado = patch.variant_state || room.variant_state || {};
                 // Volcanes: si la partida la terminó un volcán, queda dicho cómo.
-                if (info.erupcion && info.erupcion.rey) patch.variant_state = Object.assign({}, room.variant_state || {}, { fin: { motivo: info.erupcion.rey === "volcan" ? "volcan" : "expuesto" } });
+                if (info.erupcion && info.erupcion.rey) patch.variant_state = Object.assign({}, estado, { fin: { motivo: info.erupcion.rey === "volcan" ? "volcan" : "expuesto" } });
+                // Tablas por repetición o por 50 jugadas: también queda dicho.
+                else if (info.result === "draw" && info.motivo) patch.variant_state = Object.assign({}, estado, { fin: { motivo: info.motivo } });
             }
             /* Misiones: si esta jugada deja la misión cumplida, el rival se
                entera (sin saber cuál es): su próxima jugada es su única
@@ -483,6 +505,7 @@
             // o hasta la respuesta del rival), se queda lo más nuevo: antes esto
             // pegaba el parche encima y la sala volvía una jugada atrás.
             room = SalaJuego.laMasNueva(room, guardada[0]);
+            SalaJuego.avisarTorneo(room);
             if (room.variant === "ciegas") { board.setHidePieces(ciegasOculto()); ciegasActualizarPanel(); }
             renderMoveHistory(room.moves);
             updateStatusText();
@@ -507,6 +530,9 @@
             pintarExtras();
             renderClocks();
             if (row.variant === "misiones") { if (row.status !== "playing" && !misiones) cargarMisiones(); else revisarMision(); }
+            // Las seis modalidades de esta página también se juegan en torneos:
+            // sin esto, el resultado nunca llegaba al cruce y la ronda no se cerraba.
+            TorneoSync.onRoomUpdate(sb, row);
         }
 
         // Vuelve a leer la sala de la base y la aplica como un cambio remoto, forzando

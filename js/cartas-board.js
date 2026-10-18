@@ -220,7 +220,7 @@
       this.selected = null;
       this.lastError = null;
       this.render();
-      this.onMove({ fen: this.game.fen(), san: resultado.san, gameOver: resultado.gameOver, result: resultado.result });
+      this.onMove({ fen: this.game.fen(), san: resultado.san, gameOver: resultado.gameOver, result: resultado.result, motivo: resultado.motivo });
     }
 
     render() {
