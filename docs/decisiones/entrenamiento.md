@@ -4129,6 +4129,25 @@ otra fecha (queda la de la base); a nombre de otro, rechazado; su profe la ve
 y no puede escribir una por él; un profe ajeno no ve nada; anónimo, sin
 permiso; nadie tiene `update`.
 
+### La prueba de estilo como tarea
+
+El profe la pide desde Tareas («Prueba de estilo», en `js/material-plataforma.js`),
+como el diagnóstico: una vez, sin cantidad que elegir. Sirve para lo que más
+le falta a la prueba: respuestas reales para calibrar (ver «La calibración»).
+
+- **La cuenta `tareas_con_avance()` desde `estilo_pruebas`**, no desde
+  `training_progress` (`cuentaDesde`, como el cuestionario): la fila la guarda
+  la página al terminar, solo el alumno y para sí, con la hora de la base. No
+  hay un registro aparte que se pueda dar por hecho sin rendirla.
+- **Solo vale la que rinde DESPUÉS de que se la piden**, como el diagnóstico:
+  es una medición, y una de hace meses daría la tarea por hecha el día que
+  nace.
+- Comprobado en SQL (transacción deshecha), impersonando al profe y al
+  alumno: con una prueba posterior la tarea sale «completada» para los dos;
+  la misma prueba, frente a una tarea pedida después, la deja «pendiente».
+  `verificar-tareas.js` exige que todo material con `cuentaDesde` esté
+  contado en la última `tareas_con_avance()`.
+
 ### El seguimiento, a los meses
 
 En la portada de la prueba y en Informes, «¿Cómo me fue con la apertura
