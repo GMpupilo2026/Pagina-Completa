@@ -44,13 +44,20 @@
             <div id="status-banner" class="mb-2 rounded-xl bg-brand-100 dark:bg-brand-900 px-4 py-2.5 text-sm text-brand-600 dark:text-brand-300"></div>
             <p id="round-event" class="hidden mb-4 rounded-xl bg-accent-500/15 border border-accent-500/40 px-4 py-2 text-sm text-accent-700 dark:text-accent-400 font-medium"></p>
 
-            <p class="text-center text-sm font-semibold text-brand-600 dark:text-brand-300 mb-2" id="top-player"></p>
+            <div class="flex items-center justify-center gap-2 mb-2">
+                <p class="text-center text-sm font-semibold text-brand-600 dark:text-brand-300" id="top-player"></p>
+                <span id="top-clock" role="timer" class="hidden font-mono text-sm font-bold px-2 py-0.5 rounded-md bg-brand-100 dark:bg-brand-800 text-brand-700 dark:text-brand-200"></span>
+            </div>
 
             <div class="flex justify-center">
                 <div id="board" class="grid grid-cols-8 grid-rows-[repeat(8,minmax(0,1fr))] w-full max-w-[480px] aspect-square rounded-xl overflow-hidden shadow-2xl border-4 border-brand-700 select-none"></div>
             </div>
 
-            <p class="text-center text-sm font-semibold text-brand-600 dark:text-brand-300 mt-2 mb-4" id="bottom-player"></p>
+            <div class="flex items-center justify-center gap-2 mt-2 mb-4">
+                <p class="text-center text-sm font-semibold text-brand-600 dark:text-brand-300" id="bottom-player"></p>
+                <span id="bottom-clock" role="timer" class="hidden font-mono text-sm font-bold px-2 py-0.5 rounded-md bg-brand-100 dark:bg-brand-800 text-brand-700 dark:text-brand-200"></span>
+            </div>
+            <button id="ready-btn" class="hidden w-full mb-6 bg-accent-500 hover:bg-accent-600 text-brand-900 font-bold px-4 py-2.5 rounded-xl text-sm transition-colors">✅ Estoy listo para jugar</button>
 
             <div id="stage-controls" class="hidden flex gap-2 mb-6">
                 <button id="confirm-btn" type="button" class="flex-1 bg-accent-500 hover:bg-accent-600 text-brand-900 font-bold px-4 py-2.5 rounded-xl text-sm transition-colors">🔒 Comprometer esta jugada</button>
@@ -84,6 +91,7 @@
     <script src="js/vendor/chess.js"></script>
     <script src="js/vendor/supabase.js"></script>
     <script src="js/supabase-client.js"></script>
+    <script src="js/reloj-servidor.js"></script>
     <script src="js/duelo-engine.js"></script>
     <script src="js/torneo-engine.js"></script>
     <script src="js/torneo-sync.js"></script>

@@ -321,9 +321,9 @@ window.CartasChess = (function () {
       // de esta jugada (turno del rival) — ANTES de que "doble" pueda
       // devolverle el turno a quien movió, para no preguntarle a chess.js
       // por el jaque mate del bando equivocado.
-      let gameOver = false, result = null;
+      let gameOver = false, result = null, motivo = null;
       if (this.inCheckmate()) { gameOver = true; result = color === "w" ? "white" : "black"; } // quien está mate es el rival; gana quien acaba de mover
-      else if (this.inDraw()) { gameOver = true; result = "draw"; }
+      else if (this.inDraw()) { gameOver = true; result = "draw"; if (this.medias() >= 100) motivo = "cincuenta"; }
 
       if (this.doubleTurnPending) {
         this.doubleTurnPending = false;
@@ -340,8 +340,22 @@ window.CartasChess = (function () {
       // con las jugadas reales de la partida).
       if (this.deck.length) this.hands[color].push(this.deck.shift());
 
-      return { ok: true, san: san, gameOver: gameOver, result: result };
+      return { ok: true, san: san, gameOver: gameOver, result: result, motivo: motivo };
     }
+
+    /* La posición, para la triple repetición: la de chess.js (js/repeticion.js)
+       y además las manos y lo que dejan pendiente las cartas jugadas. Las
+       mismas piezas con otras cartas en la mano no son la misma posición: lo
+       que se puede hacer desde ahí es distinto. Como las cartas se gastan,
+       una repetición de verdad solo pasa con las manos iguales. */
+    clave() {
+      const pos = window.Repeticion ? Repeticion.clave(this.chess) : this.chess.fen().split(" ").slice(0, 4).join(" ");
+      const mano = (c) => (this.hands[c] || []).slice().sort().join(",");
+      const sq = (x) => (x ? x.square + ">" + x.appliesTo : "");
+      return [pos, mano("w"), mano("b"), sq(this.frozenSquare), sq(this.shieldedSquare),
+        this.kingLeapAvailable ? 1 : 0, this.doubleTurnPending ? 1 : 0, this.visionUntil || ""].join("|");
+    }
+    medias() { return parseInt(this.chess.fen().split(" ")[4], 10) || 0; }
 
     toJSON() {
       return {
