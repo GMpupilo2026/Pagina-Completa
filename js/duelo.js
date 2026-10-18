@@ -136,17 +136,43 @@
             modal.classList.remove("hidden");
         }
 
-        async function pushDueloState(state, extraPatch) {
+        /* El compromiso y la revelación de cada jugador van por
+           duelo_guardar(): la base pone solo la parte propia (jsonb_set) sobre
+           la fila bloqueada. Los dos escriben casi a la vez, y guardando el
+           estado ENTERO tal como se había leído, la segunda escritura borraba
+           lo que la primera acababa de poner: una revelación perdida dejaba la
+           partida en «revelando…» para siempre. Ver «Las dos escrituras del
+           duelo ya no se pisan» en docs/decisiones/juegos-y-torneos.md.
+           Devuelve la sala guardada, o null si no quedó. */
+        async function guardarParte(ronda, parte, valor, tiempo) {
+            const { data, error } = await sb.rpc("duelo_guardar", { p_sala: ROOM_ID, p_ronda: ronda, p_parte: parte, p_valor: valor, p_tiempo: tiempo == null ? null : tiempo });
+            const fila = Array.isArray(data) ? data[0] : data;
+            if (error || !fila) {
+                if (error) console.error(error);
+                await releerSala(error ? "No se pudo guardar la jugada: " + error.message : null);
+                return null;
+            }
+            room = SalaJuego.laMasNueva(room, fila);
+            return fila;
+        }
+
+        // Resolver la ronda escribe el estado entero, pero solo si la ronda en la
+        // base sigue siendo la que se resolvió: si ya la resolvió la otra
+        // pantalla y el rival confirmó la siguiente, esto no se la borra.
+        async function pushDueloState(state, extraPatch, ronda) {
             const patch = Object.assign({ duelo_state: state, updated_at: new Date().toISOString() }, extraPatch || {});
             // Solo se guarda si la partida sigue en juego: si el rival se rindió mientras
             // tanto, esta ronda no puede pisar ese resultado. Y si no quedó guardada, se
             // vuelve a leer la sala para que el tablero enseñe el estado real.
             // Se pide la fila de vuelta y, si mientras viajaba ya llegó algo más nuevo
             // (el rival también escribe), se queda lo más nuevo.
-            const { data: guardada, error } = await sb.from("game_rooms").update(patch).eq("id", ROOM_ID).eq("status", "playing").select("*");
+            let guardar = sb.from("game_rooms").update(patch).eq("id", ROOM_ID).eq("status", "playing");
+            if (ronda != null) guardar = guardar.eq("duelo_state->>round", String(ronda));
+            const { data: guardada, error } = await guardar.select("*");
             if (error || !guardada || !guardada.length) {
                 if (error) console.error(error);
-                await releerSala(error ? "No se pudo guardar la jugada: " + error.message : "La partida ya había terminado: esa jugada no quedó guardada.");
+                const yaResuelta = !error && ronda != null && room.status === "playing";
+                await releerSala(error ? "No se pudo guardar la jugada: " + error.message : (yaResuelta ? null : "La partida ya había terminado: esa jugada no quedó guardada."));
                 return false;
             }
             room = SalaJuego.laMasNueva(room, guardada[0]);
@@ -187,8 +213,11 @@
                 if (g.gameOver || g.reveal[myColor] || !g.bothCommitted()) return; // ya se adelantó otra pestaña/pestañeo
                 const r = await g.revealMove(myColor, mySecret.move, mySecret.salt);
                 if (!r.ok) return;
-                const ok = await pushDueloState(g.toJSON());
-                if (ok) { board.game = g; board.render(); updateStatusText(); }
+                const fila = await guardarParte(g.round, "reveal", g.reveal[myColor]);
+                if (!fila) return;
+                // Lo guardado trae también lo del rival, si ya había revelado.
+                g = DueloSimultaneo.Game.fromJSON(fila.duelo_state);
+                board.game = g; board.render(); updateStatusText();
                 if (g.bothRevealed()) await maybeAdvance(); // por si el rival ya había revelado también
                 return;
             }
@@ -198,6 +227,7 @@
                 if (error || !fresh) return;
                 g = DueloSimultaneo.Game.fromJSON(fresh.duelo_state);
                 if (g.gameOver || fresh.status === "finished" || !g.bothRevealed()) return; // ya la resolvió otra pestaña
+                const ronda = g.round;
                 const res = g.resolveRound();
                 mySecret = null;
                 try { localStorage.removeItem(secretKey(g.round - 1)); } catch (e) {}
@@ -213,7 +243,7 @@
                     patch.status = "finished";
                     patch.result = res.result === "draw" ? "draw" : (res.result === "white" ? "white" : "black");
                 }
-                await pushDueloState(g.toJSON(), patch);
+                await pushDueloState(g.toJSON(), patch, ronda);
                 updateStatusText();
                 renderRoundsHistory();
             }
@@ -234,8 +264,14 @@
                 const clave = myColor === "w" ? "white_time_left" : "black_time_left";
                 tiempo[clave] = Math.max(0, (room[clave] || 0) - RelojServidor.desde(room.clock_updated_at)) + (room.increment_seconds || 0);
             }
-            const ok = await pushDueloState(board.game.toJSON(), tiempo);
-            if (ok) { updateStatusText(); await maybeAdvance(); }
+            const fila = await guardarParte(board.game.round, "commit", board.game.commit[myColor], Object.values(tiempo)[0]);
+            if (fila) {
+                // Lo guardado trae también el compromiso del rival, si ya había.
+                board.game = DueloSimultaneo.Game.fromJSON(fila.duelo_state);
+                board.markLocked();
+                updateStatusText();
+                await maybeAdvance();
+            }
         });
         document.getElementById("change-btn").addEventListener("click", () => { board.clearStaged(); updateStatusText(); });
 

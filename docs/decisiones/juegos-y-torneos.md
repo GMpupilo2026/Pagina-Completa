@@ -709,6 +709,32 @@ le cae a quien no confirmó a tiempo.
 - `SalaJuego.restante()` y `pintarRelojes()` aceptan `corren: { w, b }` en
   vez del turno.
 
+#### Las dos escrituras del duelo ya no se pisan
+
+Jugando muchas partidas de Duelo seguidas apareció una falla que ya estaba:
+**una de cada ~10 se quedaba para siempre en «revelando y resolviendo la
+ronda…»**. Los dos jugadores confirman y revelan casi en el mismo instante, y
+la página guardaba `duelo_state` ENTERO tal como lo había leído: la segunda
+escritura borraba la revelación (o el compromiso) que la primera acababa de
+poner. Sin error: cada pantalla creía haber guardado lo suyo.
+
+- **`public.duelo_guardar(sala, ronda, parte, valor, tiempo)`** pone solo la
+  parte propia (`commit` o `reveal` de su color, con `jsonb_set`) sobre la
+  fila ya bloqueada: dos llamadas a la vez se suman, porque la segunda espera
+  a la primera y vuelve a leer la fila. El color lo decide la base (quién
+  llama), y solo vale para la ronda que se pide: lo que llega tarde de una
+  ronda ya resuelta no entra. `SECURITY INVOKER`: la RLS y el trigger del
+  reloj siguen decidiendo, como en un update. Comprobado impersonando a los
+  dos jugadores y a un tercero: los dos compromisos quedan, la ronda
+  equivocada no entra y el tercero es rechazado.
+- **Resolver la ronda escribe el estado entero, pero solo si la ronda en la
+  base sigue siendo la que se resolvió** (`.eq("duelo_state->>round", …)`):
+  si ya la resolvió la otra pantalla y el rival confirmó la siguiente, no se
+  la borra.
+- `verificar-torneo-jugado.js` (apartado 4) juega 30 duelos en que los dos
+  confirman a la vez: con el `duelo.js` de antes se traban varios; con este,
+  ninguno.
+
 **Al tocar una página de partida, un motor, `js/repeticion.js`,
 `js/sala-juego.js` o `js/torneo-sync.js`, correr `node
 herramientas/verificar-torneo-jugado.js`** (necesita `npm install`; tarda unos

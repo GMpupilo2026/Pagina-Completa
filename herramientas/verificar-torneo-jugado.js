@@ -26,6 +26,10 @@
      2. La regla de las 50 jugadas, modalidad por modalidad: una partida que
         viene con 49 jugadas sin captura ni peón termina en tablas a la
         jugada siguiente de cada lado, y la pantalla lo dice.
+     4. Duelo, los dos a la vez: 30 partidas en que los dos confirman y
+        revelan casi en el mismo instante. Antes, guardando el estado entero,
+        una de cada ~10 se trababa en «revelando…» (la segunda escritura
+        borraba la revelación de la primera); ahora va por duelo_guardar().
      3. La bandera, página por página: con 3 segundos y nadie que mueva, se
         le cae a las blancas y gana el otro. En Duelo, las blancas confirman y
         las negras no: el reloj de quien confirmó se detiene, y la bandera se
@@ -77,9 +81,16 @@ function crearServidor(tablas) {
   const copia = (x) => JSON.parse(JSON.stringify(x));
   const ahora = () => new Date().toISOString();
 
+  // Una columna, o un camino dentro de un JSON como PostgREST: "duelo_state->>round".
+  function leer(fila, col) {
+    const partes = String(col).split(/->>?/);
+    let v = fila[partes[0]];
+    for (const k of partes.slice(1)) v = v == null ? null : v[k];
+    return v === undefined ? null : v;
+  }
   function cumple(fila, filtros) {
     return filtros.every(([op, col, val]) => {
-      const v = fila[col] === undefined ? null : fila[col];
+      const v = leer(fila, col);
       if (op === "eq") return String(v) === String(val);
       if (op === "neq") return String(v) !== String(val);
       if (op === "in") return (val || []).map(String).includes(String(v));
@@ -169,6 +180,24 @@ function crearServidor(tablas) {
       if (p.nombre === "hora_servidor_ms") return { data: Date.now(), error: null };
       if (p.nombre === "nombres_de_jugadores") return { data: (a.p_ids || []).map((id) => ({ id, nombre: (PERSONAS[id] || {}).full_name || id })), error: null };
       if (p.nombre === "mis_funciones_coordinacion") return { data: [], error: null };
+      // Lo que hace public.duelo_guardar(): solo la parte propia, sobre la fila
+      // como está ahora (las dos escrituras a la vez se suman), y en su ronda.
+      if (p.nombre === "duelo_guardar") {
+        const i = tablas.game_rooms.findIndex((g) => g.id === a.p_sala && g.variant === "duelo");
+        const vieja = tablas.game_rooms[i];
+        const color = vieja && (vieja.white_id === usuario ? "w" : vieja.black_id === usuario ? "b" : null);
+        if (!color) return { data: null, error: { message: "No juegas esta partida" } };
+        if (vieja.status !== "playing" || (vieja.duelo_state || {}).round !== a.p_ronda) return { data: [], error: null };
+        const nueva = copia(vieja);
+        nueva.duelo_state[a.p_parte] = Object.assign({}, nueva.duelo_state[a.p_parte] || {}, { [color]: copia(a.p_valor) });
+        if (a.p_tiempo != null) nueva[color === "w" ? "white_time_left" : "black_time_left"] = a.p_tiempo;
+        nueva.updated_at = ahora();
+        const error = relojDePartida(vieja, nueva);
+        if (error) { rechazos.push(error); return { data: null, error: { message: error } }; }
+        tablas.game_rooms[i] = nueva;
+        repartir("game_rooms", "UPDATE", nueva);
+        return { data: [copia(nueva)], error: null };
+      }
       return { data: null, error: null };
     }
     if (p.op === "suscribir") {
@@ -535,6 +564,29 @@ async function bandera(browser) {
   ok("en las 11 modalidades el reloj corre y la bandera termina la partida (en Duelo, el reloj de quien confirmó se detiene)", malos.length === 0, malos);
 }
 
+/* ============================================================ 4. el duelo a la vez */
+async function dueloALaVez(browser) {
+  const N = 30;
+  console.log("\n▶ Duelo: " + N + " partidas en que los dos confirman y revelan a la vez");
+  const trabadas = [];
+  for (let tanda = 0; tanda < N; tanda += 10) {
+    await Promise.all(Array.from({ length: Math.min(10, N - tanda) }, async (_, k) => {
+      const srv = crearServidor(tablasIniciales(null));
+      srv.tablas.game_rooms.push(salaSuelta("duelo", con98("duelo")));
+      const s = () => srv.tablas.game_rooms[0];
+      const { ctx, pestañas } = await abrirJugadores(browser, srv, "duelo.html?room=s-duelo", "duelo");
+      const termino = await hasta(async () => s().status === "finished", 20000);
+      const errores = pestañas.reduce((a, x) => a.concat(x.errores), []);
+      if (!termino || errores.length) {
+        const d = s().duelo_state || {};
+        trabadas.push({ partida: tanda + k + 1, commit: Object.keys(d.commit || {}).filter((c) => d.commit[c]), reveal: Object.keys(d.reveal || {}).filter((c) => d.reveal[c]), errores });
+      }
+      await ctx.close();
+    }));
+  }
+  ok("las " + N + " terminan: ningún compromiso ni revelación se pierde", trabadas.length === 0, trabadas);
+}
+
 async function correr(prueba, ...args) {
   try { await prueba(...args); }
   catch (e) { fallos++; console.log("  ❌ " + prueba.name + " se cayó: " + String(e && e.message || e).split("\n")[0]); }
@@ -547,6 +599,7 @@ async function correr(prueba, ...args) {
     if (!solo || solo === "torneo") await correr(torneo, browser);
     if (!solo || solo === "cincuenta") await correr(cincuenta, browser);
     if (!solo || solo === "bandera") await correr(bandera, browser);
+    if (!solo || solo === "duelo") await correr(dueloALaVez, browser);
   } finally {
     await browser.close();
   }
