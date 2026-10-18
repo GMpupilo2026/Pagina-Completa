@@ -88,6 +88,12 @@ async function init() {
 
   $("loading").classList.add("hidden");
   $("app").classList.remove("hidden");
+  /* «Lo urgente» del panel trae acá con #puestos. La página estaba oculta
+     cuando el navegador buscó el ancla, así que se baja ahora. */
+  if (location.hash === "#puestos" && !$("vista-profesor").classList.contains("hidden")) {
+    $("puestos").scrollIntoView({ block: "start" });
+    $("puestos").focus({ preventScroll: true });
+  }
 }
 
 // PostgREST corta la respuesta a partir de cierta cantidad de filas sin dar
@@ -599,7 +605,13 @@ async function cargarPuestos() {
   const vacia = $("puestos-vacia");
   vacia.classList.toggle("hidden", !!filas.length);
   if (error) { vacia.textContent = "No se pudieron cargar: " + error.message; vacia.classList.remove("hidden"); return; }
-  filas.forEach((e) => lista.appendChild(tarjetaPuesto(e)));
+  /* Los congelados que todavía no vencen van primero: esperan que el
+     profesor decida si los vuelve a abrir (son los que cuenta «Lo urgente»
+     del panel). El resto, en el orden de la base. */
+  const ahora = Date.now();
+  const espera = (e) => e.estado === "congelado" && new Date(e.vence_at).getTime() >= ahora;
+  filas.filter(espera).concat(filas.filter((e) => !espera(e)))
+    .forEach((e) => lista.appendChild(tarjetaPuesto(e)));
 }
 
 function tarjetaPuesto(e) {

@@ -60,6 +60,15 @@
     // acota a los suyos; las propias no cuentan). Ver «Mi libreta de torneos».
     partidasTorneo: (sb, op) => sb.from("partidas_torneo").select("id", CABEZA)
       .neq("student_id", op.yo).gte("created_at", new Date(Date.now() - 7 * 864e5).toISOString()),
+    /* Los exámenes que se congelaron (salió de la ventana de más) y todavía
+       no vencen: solo quien lo puso los vuelve a abrir, y después de vencido
+       ya no sirve. Los suyos (`profesor_id`), aunque la RLS a quien
+       administra le muestre todos. Ver «El antitrampa». */
+    examenesCongelados: (sb, op) => sb.from("examenes").select("id", CABEZA)
+      .eq("profesor_id", op.yo).eq("estado", "congelado").gte("vence_at", new Date().toISOString()),
+    // Los que le entregaron esta semana: la nota ya está, falta mirarla.
+    examenesEntregados: (sb, op) => sb.from("examenes").select("id", CABEZA)
+      .eq("profesor_id", op.yo).eq("estado", "entregado").gte("entregado_at", new Date(Date.now() - 7 * 864e5).toISOString()),
     seVan: (sb) => {
       const hoy = hoyCR();
       return sb.rpc("respuestas_satisfaccion", { p_desde: hoy.slice(0, 8) + "01", p_hasta: hoy, p_profesor: null, p_solo_se_van: true }, CABEZA);
@@ -119,6 +128,14 @@
       titulo: (n) => pl(n, "recibo de pago por revisar y entregar", "recibos de pago por revisar y entregar"),
       porque: "Se registró el pago y la familia espera su recibo. Revísalo y mándalo por correo o márcalo como entregado en mano.",
       accion: "Revisar", href: "cobros.html#recibos", alDia: "Recibos entregados" },
+    { clave: "examenesCongelados", nivel: "urgente", emoji: "🔒",
+      titulo: (n) => pl(n, "examen congelado esperando tu decisión", "exámenes congelados esperando tu decisión"),
+      porque: "Se salió de la ventana de más y se calificó con lo que llevaba. Solo tú puedes volver a abrirlo, y antes de que venza.",
+      accion: "Revisar", href: "examenes.html#puestos", alDia: "Ningún examen congelado" },
+    { clave: "examenesEntregados", nivel: "vigilar", emoji: "📝",
+      titulo: (n) => pl(n, "examen entregado esta semana", "exámenes entregados esta semana"),
+      porque: "La nota y el informe ya están: lo que falló cada uno, para llevarlo a la clase.",
+      accion: "Ver notas", href: "examenes.html#puestos", alDia: "Ningún examen entregado esta semana" },
     { clave: "partidasTorneo", nivel: "vigilar", emoji: "📒",
       titulo: (n) => pl(n, "partida de torneo anotada esta semana por tus alumnos", "partidas de torneo anotadas esta semana por tus alumnos"),
       porque: "Las anotaron de su planilla y el motor ya las revisó: sus errores, lo que pensaban, y llevarlos a la clase.",

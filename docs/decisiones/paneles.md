@@ -1705,7 +1705,19 @@ su lugar y sin caminos repetidos.
     supervisión (`mis_supervisores()`), la misma regla que los recordatorios
     de `recordar_informes_mensuales()`; se busca el enviado de ESE mes con su
     id;
-  - si coordina, solicitudes y saldos vencidos.
+  - si coordina, solicitudes y saldos vencidos;
+  - **los exámenes suyos congelados que todavía no vencen** (urgente): el
+    antitrampa los congela y solo quien los puso los reabre, pero nada se lo
+    decía; se enteraba si entraba a `examenes.html` y bajaba hasta la lista.
+    Uno vencido no cuenta: reabrirlo ya no sirve, y contarlo lo dejaría
+    «urgente» para siempre. Se cuenta con `profesor_id` = el suyo, aunque la
+    RLS a quien administra le muestre todos;
+  - **los exámenes que le entregaron esta semana** (a vigilar): la nota ya
+    está y nada lo traía a mirarla.
+  - Los dos llevan a `examenes.html#puestos`, que baja hasta «Exámenes
+    puestos» al terminar de cargar (la página estaba oculta cuando el
+    navegador buscó el ancla) y pone primero los congelados que esperan. Lo
+    prueba también `verificar-examenes.js`.
   - **Cada uno solo si su tarjeta está en el panel** (`clavesUrgenteDocente()`):
     a un coordinador al que le apagaron los cobros ni se le preguntan. Sería
     decirle «al día» sobre algo que no ve.

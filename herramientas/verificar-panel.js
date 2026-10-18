@@ -725,10 +725,23 @@ async function pruebaUrgenteProfesora(browser) {
   const mesPasado = (m === 1 ? a - 1 : a) + "-" + String(m === 1 ? 12 : m - 1).padStart(2, "0") + "-01";
   const nombreMes = new Intl.DateTimeFormat("es-CR", { month: "long", timeZone: "UTC" }).format(new Date(Date.UTC(m === 1 ? a - 1 : a, (m === 1 ? 12 : m - 1) - 1, 15)));
 
+  const dia = 864e5;
+  const enDias = (n) => new Date(Date.now() + n * dia).toISOString();
   let r = await panel(browser, [PROFE], "u-profe", null, {
     rpc: { justificaciones_pendientes: 2, mis_supervisores: [{ id: "u-sup" }] },
     // Mandó el de hace dos meses, no el del mes pasado.
     informes_profesor: [{ id: "i-viejo", profesor_id: "u-profe", periodo: "2000-01-01", estado: "enviado" }],
+    /* Cuenta un congelado suyo que todavía no vence; no el vencido (ya no
+       sirve reabrirlo) ni el de otro profesor (a quien administra la RLS se
+       lo mostraría). Y el entregado de esta semana, no el de hace un mes. */
+    examenes: [
+      { id: "e-1", profesor_id: "u-profe", estado: "congelado", vence_at: enDias(2) },
+      { id: "e-2", profesor_id: "u-profe", estado: "congelado", vence_at: enDias(-1) },
+      { id: "e-3", profesor_id: "u-otro", estado: "congelado", vence_at: enDias(2) },
+      { id: "e-4", profesor_id: "u-profe", estado: "entregado", vence_at: enDias(1), entregado_at: enDias(-2) },
+      { id: "e-5", profesor_id: "u-profe", estado: "entregado", vence_at: enDias(-20), entregado_at: enDias(-30) },
+      { id: "e-6", profesor_id: "u-profe", estado: "asignado", vence_at: enDias(3) },
+    ],
   });
   await r.page.waitForFunction(() => !/Revisando/.test(document.getElementById("urgente-panel-estado").textContent), null, { timeout: 10000 });
   igual("se ve, antes que «Tu semana»",
@@ -740,7 +753,12 @@ async function pruebaUrgenteProfesora(browser) {
     await r.page.evaluate(() => Array.from(document.querySelectorAll("#urgente-panel-lista li")).filter((li) => li.checkVisibility())
       .map((li) => li.querySelector("a > span:nth-child(2)").innerText.replace(/\s+/g, " ").trim() + " → " + li.querySelector("a").getAttribute("href"))),
     ["URGENTE 2 justificaciones de ausencia por revisar → justificaciones.html",
-     "URGENTE Tu informe mensual de " + nombreMes + " sin enviar → informe-mensual.html"]);
+     "URGENTE 1 examen congelado esperando tu decisión → examenes.html#puestos",
+     "URGENTE Tu informe mensual de " + nombreMes + " sin enviar → informe-mensual.html",
+     "A VIGILAR 1 examen entregado esta semana → examenes.html#puestos"]);
+  igual("los exámenes se cuentan sin bajarlos, por SU id",
+    await r.page.evaluate(() => window.__consultas.filter((c) => c.tabla === "examenes").map((c) => [c.head, c.eq])),
+    [[true, { profesor_id: "u-profe", estado: "congelado" }], [true, { profesor_id: "u-profe", estado: "entregado" }]]);
   igual("el informe se busca por SU id, el mes pasado y enviado",
     await r.page.evaluate(() => window.__consultas.filter((c) => c.tabla === "informes_profesor").map((c) => c.eq)),
     [{ profesor_id: "u-profe", periodo: mesPasado, estado: "enviado" }]);

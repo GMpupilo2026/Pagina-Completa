@@ -1035,6 +1035,9 @@ mentirle al profesor. Lo que sí se hace:
 - los **dos primeros avisos perdonan** —una notificación del celular no puede
   costar el examen entero— y **al tercero se congela** y se califica con lo que
   llevaba. Solo el profesor lo reabre.
+- **El profesor se entera en su panel**: «Lo urgente» cuenta sus exámenes
+  congelados que todavía no vencen, y en `examenes.html` van primero (ver
+  «El panel de quien da clase» en `paneles.md`).
 - **Las salidas van SIEMPRE en el informe**, aunque no se haya congelado: tres
   salidas cortas siguen siendo un dato que quien lee tiene que tener.
 
