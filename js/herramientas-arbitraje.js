@@ -35,6 +35,21 @@
             ],
         },
         {
+            id: "arbitros",
+            emoji: "🧑‍⚖️",
+            nombre: "Árbitros de Costa Rica: la lista y a quién contratar",
+            corto: "Lista de árbitros",
+            href: "arbitros.html",
+            disponible: true,
+            gratis: true,
+            resumen: "La lista de árbitros de la Federación con su título, su categoría nacional y su último torneo, y qué categoría pide tu torneo según el Reglamento para Árbitros. Gratis y sin cuenta.",
+            puntos: [
+                "Dices si tu torneo es de Elo nacional, de FIDE o sin Elo, de qué división son los jugadores y cuántos son.",
+                "Te dice qué categoría pide (arts. 11, 13 y 15) y quiénes la tienen, primero quienes arbitraron hace poco.",
+                "Con el título de FIDE, si está activo y el enlace a su perfil.",
+            ],
+        },
+        {
             id: "seleccion-codicader",
             emoji: "🏅",
             nombre: "Selección por parámetros (CODICADER y JDE)",

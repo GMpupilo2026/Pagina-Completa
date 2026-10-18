@@ -3810,6 +3810,79 @@ Dónde sale:
 - con un par de normas en 2025 y otro un año después: A;
 - Ana (AF con la C en la lista): A.
 
+## La lista pública de árbitros
+
+`arbitros.html` (octubre de 2026): la lista de árbitros de la Federación, gratis
+y sin cuenta, para que organizadores y clubes vean a quién pueden contratar.
+
+- **De dónde sale.** De `arbitros_cr_publico()` (migración `20261018202246`),
+  una función `SECURITY DEFINER` con execute para `anon` a propósito, como
+  `cifras_academia()`. La página la llama con `fetch` y la clave pública, sin
+  cargar el cliente de Supabase (`js/arbitros-publico.js`).
+- **Qué devuelve, y solo eso.** Para cada uno de la lista de la Federación
+  (la `fca_leida` más nueva):
+  - nombre, título de FIDE, categoría nacional y si FIDE lo tiene activo;
+  - la fecha de su último torneo en Costa Rica válido para Elo como
+    principal, adjunto o árbitro.
+
+  Todo eso ya es público (las listas de la Federación y de FIDE y
+  chess-results). De los cursos, que no lo son, sale solo un sí o un no: si
+  tiene las 20 horas de actualización de los dos últimos años, sin horas,
+  notas ni fechas. Las tablas siguen cerradas a quien no tiene la licencia.
+- **No dice «sin actividad».** En la herramienta con licencia sí: allá lo lee
+  la Comisión. En público sería injusto mientras el registro de cursos esté
+  vacío (65 de los 118 arbitraron en los últimos dos años). Muestra la fecha
+  del último torneo y «No consta» en el curso, y aclara qué quiere decir.
+- **«Buscar árbitro para un torneo».** Con el Elo del torneo, la división de
+  los jugadores y cuántos son, dice qué categoría pide el reglamento como
+  principal o adjunto y deja solo a quien la tiene:
+  - desde la C, solo Elo nacional, cuarta o tercera división y hasta 30
+    jugadores (art. 11);
+  - la B, hasta segunda y 50 (art. 13);
+  - la A, el AF o el AI, para primera división, un campeonato nacional, más de
+    50 o Elo FIDE (art. 15). En un torneo de FIDE tiene que estar activo en
+    FIDE.
+  - Un torneo sin Elo no lo regula el reglamento: cualquiera.
+
+  Siempre recuerda que cualquier categoría puede trabajar como árbitro bajo la
+  supervisión de uno con licencia FIDE. Primero va quien arbitró hace poco, y
+  la casilla (marcada al entrar) deja fuera a quien no arbitró en dos años.
+- Está en la vitrina de herramientas como gratis (`js/herramientas-arbitraje.js`,
+  `id: "arbitros"`).
+- `verificar-arbitros-publico.js` la prueba con la llamada contestada por una
+  lista falsa y el reloj fijo: el orden, cada regla de categoría, la casilla,
+  el buscador, el error de la base y los 400 px.
+
+## Las novedades y el arbitraje en números
+
+Dos secciones más en la lista de `arbitros-cr.html` (octubre de 2026), sin los
+filtros de arriba.
+
+- **«Novedades de los últimos 12 meses»** (`novedades()`):
+  - los títulos de FIDE, con la fecha del perfil o la del Consejo;
+  - quién junta las normas de torneo para pedir su siguiente título (la
+    fecha de la norma que completa las 3 o las 4);
+  - quién completa el par de normas que respalda la B o la A, si no la tiene;
+  - el primer torneo como árbitro en Costa Rica de alguien nuevo.
+
+  El informe para la Junta trae las del cuatrimestre.
+- **«El arbitraje del país en números»** (`numeros()`):
+  - hoy, los de la lista de la Federación por título y categoría y cuántos
+    están activos (art. 19);
+  - año por año, en Costa Rica y como principal, adjunto o árbitro:
+    - cuántos arbitraron, cuántos por primera vez y para cuántos fue su
+      último año hasta hoy (en los años recientes baja a medida que vuelven);
+    - los torneos y cuántos hizo cada uno en promedio;
+    - qué parte del trabajo hizo el 20 % que más arbitró;
+    - los títulos de FIDE del año, del año que dice el perfil; también salen
+      los años con un título y sin torneos.
+
+  Va en Excel y, los últimos cinco años, en el informe para la Junta.
+- En `verificar-arbitros-cr.js`:
+  - una novedad de hace 11 meses sale y una de hace 13 no;
+  - la tabla de años, con dos árbitros en 2024, mide la concentración (rota
+    al 60 %, salta).
+
 ## El informe cuatrimestral para la Junta Directiva
 
 El art. 3 le pide a la Comisión Técnica de Arbitraje un informe cuatrimestral a

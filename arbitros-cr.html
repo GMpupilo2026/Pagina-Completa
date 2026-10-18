@@ -108,6 +108,16 @@
                 <p id="cuenta" class="text-sm text-brand-500 dark:text-brand-300 mt-2" aria-live="polite"></p>
                 <button type="button" id="lista-excel" class="mt-2 text-sm font-semibold px-4 py-2 rounded-lg bg-brand-100 dark:bg-brand-800 hover:bg-brand-200 dark:hover:bg-brand-700">Descargar la lista en Excel</button>
                 <div class="mt-6">
+                    <h3 id="novedades-titulo" class="font-serif text-lg font-bold text-brand-800 dark:text-white">Novedades de los últimos 12 meses</h3>
+                    <p class="text-sm text-brand-500 dark:text-brand-300 mt-1 max-w-3xl">Lo que pasó en el año, el más nuevo primero, sin los filtros de arriba: los títulos de FIDE, quién junta las normas de torneo para pedir su siguiente título, quién completa el par de normas que respalda la categoría B o la A, y quién arbitró por primera vez en Costa Rica.</p>
+                    <div class="overflow-x-auto mt-2 bg-white dark:bg-brand-900 rounded-2xl shadow-md">
+                        <table id="tabla-novedades" class="w-full text-sm" aria-labelledby="novedades-titulo">
+                            <thead class="text-left text-xs uppercase tracking-wide text-brand-500 dark:text-brand-300"><tr><th scope="col" class="px-3 py-2">Fecha</th><th scope="col" class="px-3 py-2">Árbitro</th><th scope="col" class="px-3 py-2">Qué pasó</th></tr></thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="mt-6">
                     <h3 id="actividad-titulo" class="font-serif text-lg font-bold text-brand-800 dark:text-white">Torneos por año</h3>
                     <p class="text-sm text-brand-500 dark:text-brand-300 mt-1">Con los filtros puestos. La barra es el total del año; al lado, cuántos fueron de FIDE, cuántos no y cuántos en el extranjero.</p>
                     <div class="overflow-x-auto mt-2 bg-white dark:bg-brand-900 rounded-2xl shadow-md">
@@ -117,6 +127,26 @@
                             </thead>
                             <tbody></tbody>
                         </table>
+                    </div>
+                </div>
+                <div class="mt-6">
+                    <h3 id="numeros-titulo" class="font-serif text-lg font-bold text-brand-800 dark:text-white">El arbitraje del país en números</h3>
+                    <p class="text-sm text-brand-500 dark:text-brand-300 mt-1 max-w-3xl">Sin los filtros de arriba. Hoy: los de la lista de la Federación por título y categoría, y cuántos están activos según el art. 19 (un curso de actualización o un torneo válido para Elo en dos años). Año por año, en Costa Rica y como principal, adjunto o árbitro: cuántos arbitraron, cuántos por primera vez, para cuántos fue su último año hasta hoy (en los años recientes baja a medida que vuelven), los torneos, cuántos torneos hizo cada uno en promedio, qué parte del trabajo hizo el 20 % que más arbitró y los títulos de FIDE de ese año.</p>
+                    <p id="numeros-cuenta" class="text-sm text-brand-600 dark:text-brand-200 mt-2"></p>
+                    <button type="button" id="numeros-excel" class="mt-2 text-sm font-semibold px-3 py-1.5 rounded-lg bg-brand-100 dark:bg-brand-800 hover:bg-brand-200 dark:hover:bg-brand-700">Bajar en Excel</button>
+                    <div class="grid gap-4 lg:grid-cols-3 mt-2">
+                        <div class="overflow-x-auto bg-white dark:bg-brand-900 rounded-2xl shadow-md">
+                            <table id="tabla-numeros-hoy" class="w-full text-sm" aria-label="Hoy, por título y categoría">
+                                <thead class="text-left text-xs uppercase tracking-wide text-brand-500 dark:text-brand-300"><tr><th scope="col" class="px-3 py-2">Hoy</th><th scope="col" class="px-3 py-2 text-right">En la lista</th><th scope="col" class="px-3 py-2 text-right">Activos</th></tr></thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                        <div class="overflow-x-auto bg-white dark:bg-brand-900 rounded-2xl shadow-md lg:col-span-2">
+                            <table id="tabla-numeros-anios" class="w-full text-sm" aria-label="Año por año">
+                                <thead class="text-left text-xs uppercase tracking-wide text-brand-500 dark:text-brand-300"><tr><th scope="col" class="px-3 py-2">Año</th><th scope="col" class="px-3 py-2 text-right">Arbitraron</th><th scope="col" class="px-3 py-2 text-right">Por primera vez</th><th scope="col" class="px-3 py-2 text-right">Su último año</th><th scope="col" class="px-3 py-2 text-right">Torneos</th><th scope="col" class="px-3 py-2 text-right">Por árbitro</th><th scope="col" class="px-3 py-2 text-right">El 20 % que más arbitró</th><th scope="col" class="px-3 py-2 text-right">Títulos AF</th><th scope="col" class="px-3 py-2 text-right">Títulos AI</th></tr></thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
                 <div class="mt-6">
