@@ -551,17 +551,25 @@ async function bandera(browser) {
     // En Duelo las blancas confirman su jugada (su reloj se detiene) y las negras no.
     const { ctx, pestañas } = await abrirJugadores(browser, srv, paginaDe(modo) + "?room=" + s().id, modo,
       (u) => modo === "duelo" ? (u === "u-ana" ? { soloDuelo: true } : { quieto: true }) : { quieto: true });
+    // Confirmada la jugada, «Comprometer» y «Cambiar» se van de la pantalla.
+    let botonesQuedan = false;
+    if (modo === "duelo") {
+      const ana = pestañas.find((x) => x.usuario === "u-ana").page;
+      await hasta(async () => !!(s().duelo_state.commit || {}).w, 10000);
+      await esperar(300);
+      botonesQuedan = await ana.evaluate(() => ["stage-controls", "confirm-btn", "change-btn"].some((id) => document.getElementById(id).checkVisibility()));
+    }
     const termino = await hasta(async () => s().status === "finished", 20000);
     await esperar(600);
     const esperado = modo === "duelo" ? "white" : "black";
     const caido = modo === "duelo" ? s().black_time_left : s().white_time_left;
     const otro = modo === "duelo" ? s().white_time_left : s().black_time_left;
     const errores = pestañas.reduce((a, x) => a.concat(x.errores), []);
-    if (!termino || s().result !== esperado || caido !== 0 || !(otro > 0) || errores.length)
-      malos.push({ modo, estado: s().status, resultado: s().result, relojes: [s().white_time_left, s().black_time_left], errores, rechazos: srv.rechazos });
+    if (!termino || s().result !== esperado || caido !== 0 || !(otro > 0) || errores.length || botonesQuedan)
+      malos.push({ modo, botonesQuedan, estado: s().status, resultado: s().result, relojes: [s().white_time_left, s().black_time_left], errores, rechazos: srv.rechazos });
     await ctx.close();
   }));
-  ok("en las 11 modalidades el reloj corre y la bandera termina la partida (en Duelo, el reloj de quien confirmó se detiene)", malos.length === 0, malos);
+  ok("en las 11 modalidades el reloj corre y la bandera termina la partida (en Duelo, el reloj de quien confirmó se detiene y sus botones de comprometer se van)", malos.length === 0, malos);
 }
 
 /* ============================================================ 4. el duelo a la vez */

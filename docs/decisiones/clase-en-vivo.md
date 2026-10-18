@@ -1413,6 +1413,11 @@ competencia y el calentamiento de esa clase.
   sale **uno solo, con lo último** (`metaDePresencia()` se arma al mandar):
   nada se pierde, solo llega más tarde. Lo que cuesta: en una competencia
   rápida el profe ve la cuenta de cada uno hasta unos 30 s atrasada.
+- **El que espera vuelve a mirar el reloj al despertar.** `setTimeout` puede
+  saltar un milisegundo antes de lo pedido (Date.now va redondeado), y así
+  salía un quinto anuncio dentro de la ventana: lo pescó el CI una vez. Si se
+  adelantó, espera lo que falta. El verificador adelanta siempre 3 ms el
+  temporizador, para verlo cada vez y no una de cada tantas.
 - **Un canal recién suscrito arranca con el cupo entero**
   (`reiniciarCupoDePresencia()`): en Realtime es otro proceso, con su cuenta
   en cero.

@@ -708,6 +708,13 @@ le cae a quien no confirmó a tiempo.
   confirmar sin tiempo se rechaza y la bandera de verdad entra.
 - `SalaJuego.restante()` y `pintarRelojes()` aceptan `corren: { w, b }` en
   vez del turno.
+- **Confirmada la jugada, «Comprometer esta jugada» y «Cambiar» se van.**
+  `markLocked()` deja `board.staged` puesto a propósito (la jugada sigue
+  marcada en morado en el tablero), y los botones se mostraban solo con mirar
+  `staged`: quedaban a la vista hasta que se resolvía la ronda, aunque ya no
+  hicieran nada. Ahora se esconden también con el tablero bloqueado o el
+  compromiso propio ya guardado, y en el mismo clic, sin esperar a la base.
+  Lo revisa la prueba de la bandera de `verificar-torneo-jugado.js`.
 
 #### Las dos escrituras del duelo ya no se pisan
 

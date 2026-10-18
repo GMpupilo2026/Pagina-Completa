@@ -1120,7 +1120,15 @@ de abajo — que es lo que hace que se sienta una app y no páginas sueltas.
   `offline.html`, un PDF), el navegador la cancela. Si la página vieja
   todavía está viva, eso rechaza las promesas de la transición y saldría como
   error de la página (`InvalidStateError: … ViewTransition opt-in disabled`):
-  `js/navegacion.js` las atrapa en `pageswap` y `pagereveal`. Pero cuando la
+  `js/errores.js` las atrapa en `pageswap` y `pagereveal`. **Va ahí, síncrono
+  en el `<head>`, y no en `js/navegacion.js`**, que va con `defer`:
+  `pagereveal` sale en el primer pintado, que puede llegar antes de que corran
+  los scripts con `defer`, y una página que cambia antes de terminar de cargar
+  (un marco de la clase en vivo al que el profe le pide otro entrenamiento) no
+  tenía todavía quien escuchara. Así se escapó una vez en el CI
+  (`verificar-clase-entrenamientos.js`: «AbortError: Transition was skipped.
+  Navigation aborted»). Va antes del «apagado» de Sentry, para que atrape
+  también con Sentry apagado. Pero cuando la
   cancelación llega con la página vieja ya descargándose, Chrome 153 la anota
   igual y no hay evento ni `unhandledrejection` donde atraparla (se probó: ni
   `preventDefault()` en `errores.js` la calla). La página cambia igual, sin

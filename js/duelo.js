@@ -102,7 +102,10 @@
             }
 
             const stageControls = document.getElementById("stage-controls");
-            stageControls.classList.toggle("hidden", !board.staged);
+            // Comprometida la jugada, ya no hay nada que confirmar ni cambiar: la
+            // jugada queda marcada en el tablero, pero los botones se van.
+            const comprometida = board.locked || !!(myColor && g.commit[myColor]);
+            stageControls.classList.toggle("hidden", !board.staged || comprometida || room.status !== "playing");
         }
 
         function renderRoundsHistory() {
@@ -257,6 +260,7 @@
             mySecret = { move: r.move, salt: r.salt };
             try { localStorage.setItem(secretKey(board.game.round), JSON.stringify(mySecret)); } catch (e) {}
             board.markLocked();
+            updateStatusText(); // los botones se van ya, sin esperar a la base
             // Se detiene el reloj propio: lo pensado se descuenta y se suma el
             // incremento. clock_updated_at no se toca: el del rival sigue.
             const tiempo = {};

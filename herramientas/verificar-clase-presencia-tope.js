@@ -68,6 +68,11 @@ async function pruebaTope(browser) {
 
   // La misma regla con una ventana corta, para no esperar 31 s.
   await page.evaluate(() => {
+    // setTimeout puede saltar un milisegundo antes (pasó en el CI: salió un
+    // anuncio de más en la ventana). Acá se adelanta siempre 3 ms, para que la
+    // prueba lo vea cada vez y no una de cada tantas.
+    const st = window.setTimeout;
+    window.setTimeout = (f, ms, ...a) => st(f, Math.max(0, (ms || 0) - 3), ...a);
     cupoDePresencia.ventanaMs = 1500;
     reiniciarCupoDePresencia();
     window.__horas = [];
