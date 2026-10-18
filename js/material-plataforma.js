@@ -175,6 +175,16 @@ window.MaterialPlataforma = (function () {
       actividades: ["diagnostico"], metas: ["cantidad"], unidad: "diagnósticos",
       unaVez: true, frase: "Hacer el diagnóstico de nivel" },
 
+    /* La prueba de estilo, igual que el diagnóstico: una vez, y solo vale la
+       que rinde DESPUÉS de que se la piden. La cuenta tareas_con_avance()
+       desde estilo_pruebas, la fila que guarda la página al terminar (con la
+       hora de la base). Ver «La prueba de estilo como tarea» en
+       entrenamiento.md. */
+    { slug: "estilo", label: "Prueba de estilo", href: "entreno/estilo.html",
+      actividades: ["estilo"], metas: ["cantidad"], unidad: "pruebas",
+      cuentaDesde: "estilo_pruebas",
+      unaVez: true, frase: "Hacer la prueba de estilo (qué aperturas te quedan)" },
+
     { slug: "arbitraje", label: "Diagnóstico de arbitraje", href: "nivel-de-arbitraje.html",
       actividades: [], metas: ["completar"], unidad: "" },
 
