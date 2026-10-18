@@ -4,7 +4,7 @@
   "publicada": "2026-10-12",
   "leida": "2026-10-16"
  },
- "nota": "arbitros: [ID FIDE, nombre, título (IA, FA o NA), inactivo («i» de la lista), categoría, licencia]. aprobaciones: el título de AF o AI de cada uno, con la reunión del Consejo de FIDE que lo aprobó y su fecha, del informe de la Comisión de Árbitros a esa reunión (solo desde 2023: lo de antes no cambia qué normas cuentan hoy). solicitudes: cada solicitud de título de Costa Rica en esos informes (veredicto, motivo y los torneos tal como los lista el informe). seminarios: quién aprobó un seminario de AF o de AI y en qué mes, con el día en que terminó si lo dice una solicitud o la página del seminario en el calendario de la Comisión (evento, el enlace) (la norma de seminario vale 4 años, B.06.1 5.3.2).",
+ "nota": "arbitros: [ID FIDE, nombre, título (IA, FA o NA), inactivo («i» de la lista), categoría, licencia]. aprobaciones: el título de AF o AI de cada uno, con la reunión del Consejo de FIDE que lo aprobó y su fecha, del informe de la Comisión de Árbitros a esa reunión (solo desde 2023: lo de antes no cambia qué normas cuentan hoy). solicitudes: cada solicitud de título de Costa Rica en esos informes (veredicto, motivo y los torneos tal como los lista el informe). seminarios: quién aprobó un seminario de AF o de AI y en qué mes (de los informes al Consejo desde 2023 y, para los de AF, de los 827 informes de cada seminario que publica la Comisión desde 2010: informe, el enlace), con el día en que terminó si lo dice una solicitud o la página del seminario en el calendario de la Comisión (evento, el enlace) (la norma de seminario vale 4 años, B.06.1 5.3.2).",
  "arbitros": [
   [
    109363,
@@ -1593,13 +1593,197 @@
  ],
  "seminarios": [
   {
-   "fide_id": 109363,
+   "fide_id": 6502857,
    "tipo": "FA",
-   "seminario": "215th Internet Based Jan 2026 (CRC)",
-   "mes": "2026-01",
-   "fuente": "https://arbiters.fide.com/wp-content/uploads/Reporting/2026Q1CouncilARBReport.pdf",
-   "fecha": "2026-01-12",
-   "evento": "https://arbiters.fide.com/news/event/215th-internet-based-fide-arbiters-seminar-crc?instance_id=17975"
+   "seminario": "2nd Internet Based Dec 2010 (CRC)",
+   "mes": "2010-12",
+   "informe": "https://arbiters.fide.com/news/207",
+   "fecha": "2010-12-05"
+  },
+  {
+   "fide_id": 6505244,
+   "tipo": "FA",
+   "seminario": "2nd Internet Based Dec 2010 (CRC)",
+   "mes": "2010-12",
+   "informe": "https://arbiters.fide.com/news/207",
+   "fecha": "2010-12-05"
+  },
+  {
+   "fide_id": 6508804,
+   "tipo": "FA",
+   "seminario": "2nd Internet Based Dec 2010 (CRC)",
+   "mes": "2010-12",
+   "informe": "https://arbiters.fide.com/news/207",
+   "fecha": "2010-12-05"
+  },
+  {
+   "fide_id": 6502270,
+   "tipo": "FA",
+   "seminario": "11th Internet Based Oct 2011 (WOM)",
+   "mes": "2011-10",
+   "informe": "https://arbiters.fide.com/news/387",
+   "fecha": "2011-10-09"
+  },
+  {
+   "fide_id": 6506780,
+   "tipo": "FA",
+   "seminario": "11th Internet Based Oct 2011 (WOM)",
+   "mes": "2011-10",
+   "informe": "https://arbiters.fide.com/news/387",
+   "fecha": "2011-10-09"
+  },
+  {
+   "fide_id": 6502946,
+   "tipo": "FA",
+   "seminario": "43rd Internet Based Jul 2015 (HON)",
+   "mes": "2015-07",
+   "informe": "https://arbiters.fide.com/news/1813",
+   "fecha": "2015-07-26"
+  },
+  {
+   "fide_id": 6500358,
+   "tipo": "FA",
+   "seminario": "44th Internet Based Dec 2015 (CCA)",
+   "mes": "2015-12",
+   "informe": "https://arbiters.fide.com/news/1896",
+   "fecha": "2015-12-06"
+  },
+  {
+   "fide_id": 6501435,
+   "tipo": "FA",
+   "seminario": "44th Internet Based Dec 2015 (CCA)",
+   "mes": "2015-12",
+   "informe": "https://arbiters.fide.com/news/1896",
+   "fecha": "2015-12-06"
+  },
+  {
+   "fide_id": 6500218,
+   "tipo": "FA",
+   "seminario": "45th Internet Based Jun 2016 (HON)",
+   "mes": "2016-06",
+   "informe": "https://arbiters.fide.com/news/2018",
+   "fecha": "2016-06-05"
+  },
+  {
+   "fide_id": 6501168,
+   "tipo": "FA",
+   "seminario": "46th Internet Based Aug 2016 (CCA)",
+   "mes": "2016-08",
+   "informe": "https://arbiters.fide.com/news/2061",
+   "fecha": "2016-08-14"
+  },
+  {
+   "fide_id": 6505694,
+   "tipo": "FA",
+   "seminario": "47th Internet Based Nov 2016 (HON)",
+   "mes": "2016-11",
+   "informe": "https://arbiters.fide.com/news/2128",
+   "fecha": "2016-11-06"
+  },
+  {
+   "fide_id": 6500650,
+   "tipo": "FA",
+   "seminario": "52nd Internet Based Jul 2017 (HON)",
+   "mes": "2017-07",
+   "informe": "https://arbiters.fide.com/news/2301",
+   "fecha": "2017-07-09"
+  },
+  {
+   "fide_id": 6508677,
+   "tipo": "FA",
+   "seminario": "52nd Internet Based Jul 2017 (HON)",
+   "mes": "2017-07",
+   "informe": "https://arbiters.fide.com/news/2301",
+   "fecha": "2017-07-09"
+  },
+  {
+   "fide_id": 6502849,
+   "tipo": "FA",
+   "seminario": "53rd Internet Based Sep 2017 (CRC)",
+   "mes": "2017-09",
+   "informe": "https://arbiters.fide.com/news/2385",
+   "fecha": "2017-09-24"
+  },
+  {
+   "fide_id": 6508650,
+   "tipo": "FA",
+   "seminario": "53rd Internet Based Sep 2017 (CRC)",
+   "mes": "2017-09",
+   "informe": "https://arbiters.fide.com/news/2385",
+   "fecha": "2017-09-24"
+  },
+  {
+   "fide_id": 6508804,
+   "tipo": "FA",
+   "seminario": "53rd Internet Based Sep 2017 (CRC)",
+   "mes": "2017-09",
+   "informe": "https://arbiters.fide.com/news/2385",
+   "fecha": "2017-09-24"
+  },
+  {
+   "fide_id": 6509797,
+   "tipo": "FA",
+   "seminario": "53rd Internet Based Sep 2017 (CRC)",
+   "mes": "2017-09",
+   "informe": "https://arbiters.fide.com/news/2385",
+   "fecha": "2017-09-24"
+  },
+  {
+   "fide_id": 6502903,
+   "tipo": "FA",
+   "seminario": "56th Internet Based Dec 2017 (CCA)",
+   "mes": "2017-12",
+   "informe": "https://arbiters.fide.com/news/2424",
+   "fecha": "2017-12-17"
+  },
+  {
+   "fide_id": 6504396,
+   "tipo": "FA",
+   "seminario": "56th Internet based FIDE Arbiters’ Seminar",
+   "mes": "2017-12",
+   "fecha": "2017-12-17",
+   "fuente": "https://arbiters.fide.com/wp-content/uploads/Reporting/2023Q3CouncilARBReport.pdf",
+   "informe": "https://arbiters.fide.com/news/2424"
+  },
+  {
+   "fide_id": 6509959,
+   "tipo": "FA",
+   "seminario": "56th Internet Based Dec 2017 (CCA)",
+   "mes": "2017-12",
+   "informe": "https://arbiters.fide.com/news/2424",
+   "fecha": "2017-12-17"
+  },
+  {
+   "fide_id": 6502229,
+   "tipo": "FA",
+   "seminario": "57th Internet Based Feb 2018 (CCA)",
+   "mes": "2018-02",
+   "informe": "https://arbiters.fide.com/news/2476",
+   "fecha": "2018-02-25"
+  },
+  {
+   "fide_id": 6503306,
+   "tipo": "FA",
+   "seminario": "57th Internet Based Feb 2018 (CCA)",
+   "mes": "2018-02",
+   "informe": "https://arbiters.fide.com/news/2476",
+   "fecha": "2018-02-25"
+  },
+  {
+   "fide_id": 6500625,
+   "tipo": "FA",
+   "seminario": "65th Internet Based Jun 2019 (CCA)",
+   "mes": "2019-06",
+   "informe": "https://arbiters.fide.com/news/2967",
+   "fecha": "2019-06-17"
+  },
+  {
+   "fide_id": 6503128,
+   "tipo": "FA",
+   "seminario": "71st Internet Based Mar 2020 (CCA)",
+   "mes": "2020-03",
+   "informe": "https://arbiters.fide.com/news/3737",
+   "fecha": "2020-03-24"
   },
   {
    "fide_id": 6500218,
@@ -1607,7 +1791,79 @@
    "seminario": "80th Internet based FIDE Arbiters’ Seminar",
    "mes": "2020-08",
    "fecha": "2020-08-25",
-   "fuente": "https://arbiters.fide.com/wp-content/uploads/Reporting/2024Q2CouncilARBReport.pdf"
+   "fuente": "https://arbiters.fide.com/wp-content/uploads/Reporting/2024Q2CouncilARBReport.pdf",
+   "informe": "https://arbiters.fide.com/news/5666"
+  },
+  {
+   "fide_id": 6508189,
+   "tipo": "FA",
+   "seminario": "80th Internet based FIDE Arbiters’ Seminar",
+   "mes": "2020-08",
+   "fecha": "2020-08-25",
+   "fuente": "https://arbiters.fide.com/wp-content/uploads/Reporting/2024Q3CouncilARBReport.pdf",
+   "informe": "https://arbiters.fide.com/news/5666"
+  },
+  {
+   "fide_id": 6512062,
+   "tipo": "FA",
+   "seminario": "113th Internet-based FIDE Arbiters’ Seminar",
+   "mes": "2022-07",
+   "fecha": "2022-07-17",
+   "fuente": "https://arbiters.fide.com/wp-content/uploads/Reporting/2026Q1CouncilARBReport.pdf",
+   "informe": "https://arbiters.fide.com/news/7595"
+  },
+  {
+   "fide_id": 6504957,
+   "tipo": "FA",
+   "seminario": "120th Internet Based Sep 2022 (PUR)",
+   "mes": "2022-09",
+   "informe": "https://arbiters.fide.com/news/7698",
+   "fecha": "2022-09-04"
+  },
+  {
+   "fide_id": 6515290,
+   "tipo": "FA",
+   "seminario": "123rd Internet Based Nov 2022 (PAN)",
+   "mes": "2022-11",
+   "fuente": "https://arbiters.fide.com/wp-content/uploads/Reporting/2023Q1CouncilARBReport.pdf",
+   "fecha": "2022-11-21",
+   "informe": "https://arbiters.fide.com/news/8031"
+  },
+  {
+   "fide_id": 6558216,
+   "tipo": "FA",
+   "seminario": "136th Internet Based Jul 2023 (PER)",
+   "mes": "2023-07",
+   "fuente": "https://arbiters.fide.com/wp-content/uploads/Reporting/2023Q3CouncilARBReport.pdf",
+   "fecha": "2023-07-30",
+   "informe": "https://arbiters.fide.com/news/8474"
+  },
+  {
+   "fide_id": 6509851,
+   "tipo": "FA",
+   "seminario": "143rd Internet Based Nov 2023 (CCA)",
+   "mes": "2023-11",
+   "fuente": "https://arbiters.fide.com/wp-content/uploads/Reporting/2023Q3CouncilARBReport.pdf",
+   "fecha": "2023-11-12",
+   "informe": "https://arbiters.fide.com/news/8756"
+  },
+  {
+   "fide_id": 6503306,
+   "tipo": "FA",
+   "seminario": "147th Internet Based Dec 2023 (CCA)",
+   "mes": "2023-12",
+   "fuente": "https://arbiters.fide.com/wp-content/uploads/Reporting/2024Q1CouncilARBReport.pdf",
+   "informe": "https://arbiters.fide.com/news/8829",
+   "fecha": "2023-12-10"
+  },
+  {
+   "fide_id": 6544592,
+   "tipo": "FA",
+   "seminario": "146th Internet Based Dec 2023 (PAN)",
+   "mes": "2023-12",
+   "fuente": "https://arbiters.fide.com/wp-content/uploads/Reporting/2024Q1CouncilARBReport.pdf",
+   "informe": "https://arbiters.fide.com/news/8881",
+   "fecha": "2023-12-11"
   },
   {
    "fide_id": 6502946,
@@ -1618,27 +1874,49 @@
    "fecha": "2024-03-16"
   },
   {
-   "fide_id": 6503306,
-   "tipo": "FA",
-   "seminario": "147th Internet Based Dec 2023 (CCA)",
-   "mes": "2023-12",
-   "fuente": "https://arbiters.fide.com/wp-content/uploads/Reporting/2024Q1CouncilARBReport.pdf"
-  },
-  {
-   "fide_id": 6504396,
-   "tipo": "FA",
-   "seminario": "56th Internet based FIDE Arbiters’ Seminar",
-   "mes": "2017-12",
-   "fecha": "2017-12-17",
-   "fuente": "https://arbiters.fide.com/wp-content/uploads/Reporting/2023Q3CouncilARBReport.pdf"
-  },
-  {
    "fide_id": 6504396,
    "tipo": "FA",
    "seminario": "161st Internet Based Jul 2024 (CCA)",
    "mes": "2024-07",
    "fuente": "https://arbiters.fide.com/wp-content/uploads/Reporting/2024Q3CouncilARBReport.pdf",
-   "fecha": "2024-07-28"
+   "fecha": "2024-07-28",
+   "informe": "https://arbiters.fide.com/news/9429"
+  },
+  {
+   "fide_id": 6513697,
+   "tipo": "FA",
+   "seminario": "163rd Internet Based Aug 2024 (CCA)",
+   "mes": "2024-09",
+   "fuente": "https://arbiters.fide.com/wp-content/uploads/Reporting/2024Q3CouncilARBReport.pdf",
+   "fecha": "2024-09-01",
+   "informe": "https://arbiters.fide.com/news/9460"
+  },
+  {
+   "fide_id": 6526373,
+   "tipo": "FA",
+   "seminario": "173rd Internet Based Jan 2025 (PAN)",
+   "mes": "2025-02",
+   "fuente": "https://arbiters.fide.com/wp-content/uploads/Reporting/2025Q1CouncilARBReport.pdf",
+   "fecha": "2025-02-01",
+   "informe": "https://arbiters.fide.com/news/9840"
+  },
+  {
+   "fide_id": 6515304,
+   "tipo": "FA",
+   "seminario": "182nd Internet Based Mar 2025 (GUA)",
+   "mes": "2025-03",
+   "fuente": "https://arbiters.fide.com/wp-content/uploads/Reporting/2025Q2CouncilARBReport.pdf",
+   "informe": "https://arbiters.fide.com/news/9910",
+   "fecha": "2025-03-23"
+  },
+  {
+   "fide_id": 6516718,
+   "tipo": "FA",
+   "seminario": "189th Internet Based Jun 2025 (CCA)",
+   "mes": "2025-06",
+   "fuente": "https://arbiters.fide.com/wp-content/uploads/Reporting/2025Q3CouncilARBReport.pdf",
+   "fecha": "2025-06-29",
+   "informe": "https://arbiters.fide.com/news/10138"
   },
   {
    "fide_id": 6505694,
@@ -1649,35 +1927,14 @@
    "fecha": "2025-09-09"
   },
   {
-   "fide_id": 6508189,
+   "fide_id": 109363,
    "tipo": "FA",
-   "seminario": "80th Internet based FIDE Arbiters’ Seminar",
-   "mes": "2020-08",
-   "fecha": "2020-08-25",
-   "fuente": "https://arbiters.fide.com/wp-content/uploads/Reporting/2024Q3CouncilARBReport.pdf"
-  },
-  {
-   "fide_id": 6509851,
-   "tipo": "FA",
-   "seminario": "143rd Internet Based Nov 2023 (CCA)",
-   "mes": "2023-11",
-   "fuente": "https://arbiters.fide.com/wp-content/uploads/Reporting/2023Q3CouncilARBReport.pdf",
-   "fecha": "2023-11-12"
-  },
-  {
-   "fide_id": 6509851,
-   "tipo": "IA",
-   "seminario": "25th IACS Internet Based May 2026 (ARB)",
-   "mes": "2026-05",
-   "fuente": "https://arbiters.fide.com/wp-content/uploads/Reporting/2026Q2CouncilARBReport.pdf"
-  },
-  {
-   "fide_id": 6512062,
-   "tipo": "FA",
-   "seminario": "113th Internet-based FIDE Arbiters’ Seminar",
-   "mes": "2022-07",
-   "fecha": "2022-07-17",
-   "fuente": "https://arbiters.fide.com/wp-content/uploads/Reporting/2026Q1CouncilARBReport.pdf"
+   "seminario": "215th Internet Based Jan 2026 (CRC)",
+   "mes": "2026-01",
+   "fuente": "https://arbiters.fide.com/wp-content/uploads/Reporting/2026Q1CouncilARBReport.pdf",
+   "fecha": "2026-01-12",
+   "evento": "https://arbiters.fide.com/news/event/215th-internet-based-fide-arbiters-seminar-crc?instance_id=17975",
+   "informe": "https://arbiters.fide.com/news/10729"
   },
   {
    "fide_id": 6513590,
@@ -1686,61 +1943,15 @@
    "mes": "2026-01",
    "fuente": "https://arbiters.fide.com/wp-content/uploads/Reporting/2026Q1CouncilARBReport.pdf",
    "fecha": "2026-01-12",
-   "evento": "https://arbiters.fide.com/news/event/215th-internet-based-fide-arbiters-seminar-crc?instance_id=17975"
+   "evento": "https://arbiters.fide.com/news/event/215th-internet-based-fide-arbiters-seminar-crc?instance_id=17975",
+   "informe": "https://arbiters.fide.com/news/10729"
   },
   {
-   "fide_id": 6513697,
-   "tipo": "FA",
-   "seminario": "163rd Internet Based Aug 2024 (CCA)",
-   "mes": "2024-09",
-   "fuente": "https://arbiters.fide.com/wp-content/uploads/Reporting/2024Q3CouncilARBReport.pdf",
-   "fecha": "2024-09-01"
-  },
-  {
-   "fide_id": 6515290,
-   "tipo": "FA",
-   "seminario": "123rd Internet Based Nov 2022 (PAN)",
-   "mes": "2022-11",
-   "fuente": "https://arbiters.fide.com/wp-content/uploads/Reporting/2023Q1CouncilARBReport.pdf",
-   "fecha": "2022-11-21"
-  },
-  {
-   "fide_id": 6515304,
-   "tipo": "FA",
-   "seminario": "182nd Internet Based Mar 2025 (GUA)",
-   "mes": "2025-03",
-   "fuente": "https://arbiters.fide.com/wp-content/uploads/Reporting/2025Q2CouncilARBReport.pdf"
-  },
-  {
-   "fide_id": 6516718,
-   "tipo": "FA",
-   "seminario": "189th Internet Based Jun 2025 (CCA)",
-   "mes": "2025-06",
-   "fuente": "https://arbiters.fide.com/wp-content/uploads/Reporting/2025Q3CouncilARBReport.pdf",
-   "fecha": "2025-06-29"
-  },
-  {
-   "fide_id": 6526373,
-   "tipo": "FA",
-   "seminario": "173rd Internet Based Jan 2025 (PAN)",
-   "mes": "2025-02",
-   "fuente": "https://arbiters.fide.com/wp-content/uploads/Reporting/2025Q1CouncilARBReport.pdf",
-   "fecha": "2025-02-01"
-  },
-  {
-   "fide_id": 6544592,
-   "tipo": "FA",
-   "seminario": "146th Internet Based Dec 2023 (PAN)",
-   "mes": "2023-12",
-   "fuente": "https://arbiters.fide.com/wp-content/uploads/Reporting/2024Q1CouncilARBReport.pdf"
-  },
-  {
-   "fide_id": 6558216,
-   "tipo": "FA",
-   "seminario": "136th Internet Based Jul 2023 (PER)",
-   "mes": "2023-07",
-   "fuente": "https://arbiters.fide.com/wp-content/uploads/Reporting/2023Q3CouncilARBReport.pdf",
-   "fecha": "2023-07-30"
+   "fide_id": 6509851,
+   "tipo": "IA",
+   "seminario": "25th IACS Internet Based May 2026 (ARB)",
+   "mes": "2026-05",
+   "fuente": "https://arbiters.fide.com/wp-content/uploads/Reporting/2026Q2CouncilARBReport.pdf"
   }
  ]
 }

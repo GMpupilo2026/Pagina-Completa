@@ -4140,6 +4140,32 @@ leyeron convertidos a texto con r.jina.ai, como los informes.
   - Un seminario que empezó en un mes y terminó en el siguiente (el 163,
     del 30/08 al 01/09) sale una vez, por su número, con el día en que
     terminó si lo dice la solicitud.
+  - **Los seminarios de AF desde 2010** (octubre de 2026, pedido del dueño):
+    se leyeron los 827 informes de seminarios de la Comisión
+    (`arbiters.fide.com/news/category/arb/education/seminars/reports`, seis
+    páginas). Cada informe trae la tabla de aprobados con su federación; los
+    de antes de 2018 traen solo el nombre, o una lista en el texto.
+    - Se piden con pg_net **directo a arbiters.fide.com**, de a 60: r.jina.ai
+      corta en 20 por minuto y FIDE no contesta la mitad si se le piden 140
+      juntos. El pedido sale cuando termina la transacción, así que pedir y
+      leer van en dos consultas.
+    - Del artículo (del `<h1>` a los botones de compartir) salen las filas
+      con «CRC» o «Costa Rica». Los que nombran a Costa Rica sin fila se
+      leyeron a mano: casi siempre son ticos que participaron y no
+      aprobaron, o la conferencista (Carolina Muñoz).
+    - **28 seminarios con aprobados de Costa Rica**: 24 entradas nuevas y
+      16 de las que ya estaban completadas con el día y el enlace
+      (`informe`); la ficha enlaza «informe del seminario». Los que traían
+      solo el nombre se cruzaron por nombre con la lista de árbitros de
+      FIDE: todos dieron una sola persona (Keilor/Keylor Miranda,
+      Gretell/Grettel Elizondo).
+    - Quedan fuera dos que no están en la lista de árbitros de FIDE, así que
+      no tienen perfil donde ponerlo: Betzy Fallas Marín (11.º, mujeres,
+      2011) y Mariel Pomares Iraheta (67.º, México, 2019).
+    - El 173.º (Panamá) se queda con el 01/02/2025 de la solicitud, aunque
+      el informe diga que terminó el 2.
+    - Los seminarios de AI y los cursos de actualización no están en esa
+      categoría: siguen saliendo solo de los informes al Consejo.
   - Va en dos columnas jsonb de `arbitros_cr_fide`, `solicitudes` y
     `seminarios` (migración `20261016014132_arbitros_cr_historial_y_sin_id.sql`).
     La fuente es el mismo JSON de la lista.
