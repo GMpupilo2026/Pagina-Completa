@@ -664,6 +664,9 @@ había que volver al panel, entrar a Tareas y buscarlo otra vez en la lista.
 Arriba del informe de un alumno, debajo de su nombre, va **«Con este
 alumno»** (`#informe-acciones`, `pintarAccionesDelAlumno()`):
 
+- «👁 Ver su panel» (`clases.html?ver_como=…`): su panel tal como lo ve él,
+  a quien da clase y a quien administra (ver «El profe ve el panel de su
+  alumno» en `permisos-y-roles.md`).
 - «📋 Ponerle una tarea» (`tareas.html?alumno=…`) y «📝 Ponerle un examen»
   (`examenes.html?alumno=…`): la página abre con él ya marcado en la lista.
   Un id que no está en la lista no marca nada; lo que se puede mandar lo sigue
@@ -676,7 +679,7 @@ alumno»** (`#informe-acciones`, `pintarAccionesDelAlumno()`):
   (`profile.role === "profesor"`, la misma condición que el plan) y nunca
   mirando como otra persona, que lo mandaría a su nombre. Quien administra no
   da clase (ver «El panel de quien administra no es el de un profesor»): a él
-  le quedan los cuatro de mirar.
+  le quedan los de mirar, su panel incluido.
 - No va en el resumen del grupo ni en el informe propio del alumno.
 - Lo prueban `pruebaConEsteAlumno` en `verificar-informes.js` (los enlaces con
   su id, que la casa se abra, que no aparezca en el grupo y que quien

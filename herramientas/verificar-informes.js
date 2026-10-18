@@ -1942,6 +1942,7 @@ async function pruebaConEsteAlumno(browser) {
   let v = await leer(r.page);
   igual("al elegir un alumno, se ve", v.seVe, true);
   igual("con sus atajos, cada uno con el alumno ya elegido", v.enlaces, [
+    "👁Ver su panel → clases.html?ver_como=a-1",
     "📋Ponerle una tarea → tareas.html?alumno=a-1",
     "📝Ponerle un examen → examenes.html?alumno=a-1",
     "✍️Su bitácora → #notas-report",
@@ -1963,8 +1964,8 @@ async function pruebaConEsteAlumno(browser) {
   r = await abrir(browser, datos({ id: "adm-1", role: "admin", is_admin: true, full_name: "Oscar", email: "o@x.cr" }), "adm-1", "/informes.html?alumno=a-1");
   await r.page.waitForFunction(() => !document.getElementById("student-report").classList.contains("hidden"), null, { timeout: 10000 });
   v = await leer(r.page);
-  igual("a quien administra (no da clase) no le ofrece poner tareas ni exámenes", v.enlaces.map((e) => e.split(" → ")[1].split("?")[0]),
-    ["#notas-report", "#encargados-report", "cuaderno.html", "libreta-torneos.html"]);
+  igual("a quien administra (no da clase) no le ofrece poner tareas ni exámenes; su panel sí", v.enlaces.map((e) => e.split(" → ")[1].split("?")[0]),
+    ["clases.html", "#notas-report", "#encargados-report", "cuaderno.html", "libreta-torneos.html"]);
   await r.page.close();
 }
 

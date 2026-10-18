@@ -26,6 +26,10 @@
      progreso con SU id, y nada de la clase en vivo ni de «Hoy te toca»
      (saldrían de quien mira); y que a un supervisor que no administra un
      estudiante guardado no le cambie nada;
+   - que quien da clase mire el panel de SUS alumnos: entra con
+     ?ver_como=<id> (de Informes o del buscador), solo si está en su lista
+     (alumnos_del_profesor_con_nombre), sin selector en el encabezado, y la
+     franja le dice qué ve y lo deja ir a su informe o ponerle una tarea;
    - (lo de Informes —los alumnos de esa persona, con
      alumnos_de_para_ver_como— lo comprueba verificar-informes.js).
 
@@ -35,7 +39,7 @@
 const { chromium } = require("./lib/playwright-con-sesion");
 const P = require("./verificar-panel.js");
 
-const { panel, BASE, CHROME, ADMIN } = P;
+const { panel, BASE, CHROME, ADMIN, PROFE } = P;
 const SUP = { id: "u-sup", role: "profesor", is_admin: false, es_coordinador: false, es_supervisor: true,
               full_name: "Marta Solano", email: "marta@x.cr", grupo: null };
 const PROFE_X = { id: "u-x", role: "profesor", is_admin: false, es_coordinador: false, es_supervisor: false,
@@ -345,6 +349,101 @@ async function pruebaAdmin(browser) {
   await ctx.close();
 }
 
+/* Quien da clase mira el panel de SUS alumnos, para verlo como lo ve él y
+   guiarlo. Ver «El profe ve el panel de su alumno» en
+   docs/decisiones/permisos-y-roles.md. */
+const SUYOS = [{ id: "u-alu-b", full_name: "Luis Pérez", email: "luis@x.cr", grupo: "7B" }];
+const DATOS_PROFE = Object.assign({}, DATOS_ADMIN, {
+  rpc: Object.assign({}, DATOS.rpc, {
+    alumnos_del_profesor_con_nombre: SUYOS,
+    // El buscador del panel encuentra a su alumno por el nombre.
+    mi_gente: [{ id: "u-alu-b", full_name: "Luis Pérez", email: "luis@x.cr", role: "alumno", grupo: "7B", total: 1 }],
+  }),
+});
+
+async function pruebaProfeMiraSuAlumno(browser) {
+  console.log("\n=== Quien da clase mira el panel de su alumno ===");
+  let { page, ctx, errores } = await panel(browser, [PROFE], PROFE.id, null, DATOS_PROFE);
+  igual("en su panel no hay selector de personas arriba",
+        await page.evaluate(() => [!!document.getElementById("ver-como-persona"), document.getElementById("modo-vista-wrap").checkVisibility()]), [false, false]);
+  igual("ni pide la lista si no la necesita",
+        await page.evaluate(() => window.__consultas.some((c) => c.tabla === "alumnos_del_profesor_con_nombre" || c.tabla === "personas_para_ver_como")), false);
+
+  // El buscador: el nombre de su alumno trae «Su panel».
+  await page.fill("#buscar-panel-campo", "Luis");
+  await page.waitForSelector("#buscar-personas-lista li", { timeout: 10000 });
+  const fila = await page.evaluate(() => Array.from(document.querySelectorAll("#buscar-personas-lista li a")).map((a) => [a.getAttribute("href"), a.innerText.replace(/\s+/g, " ").trim(), a.textContent.replace(/\s+/g, " ").trim()]));
+  igual("el buscador ofrece su informe y su panel",
+        fila.map((f) => f[0]), ["informes.html?alumno=u-alu-b", "clases.html?ver_como=u-alu-b"]);
+  igual("«Su panel» dice de quién es al lector de pantalla", fila[1] && fila[1][2], "👁 Su panel de Luis Pérez");
+  igual("y en pantalla el nombre no se repite (va recortado, solo para el lector)",
+        await page.evaluate(() => {
+          const sr = document.querySelector('#buscar-personas-lista a[href^="clases.html"] .sr-only');
+          return !!sr && sr.getBoundingClientRect().width <= 1;
+        }), true);
+
+  await Promise.all([
+    page.waitForURL(/clases\.html$/, { timeout: 15000 }),
+    page.click('#buscar-personas-lista a[href="clases.html?ver_como=u-alu-b"]'),
+  ]);
+  await page.waitForSelector("#modo-vista-barra", { timeout: 10000 });
+  await page.waitForFunction(() => window.__consultas.some((c) => c.tabla === "tareas_con_avance"), null, { timeout: 10000 });
+  const g = await page.evaluate(LEER);
+  const con = (n) => g.rpcs.filter((r) => r.startsWith(n + " ") || r === n);
+  igual("guarda al alumno a su nombre", JSON.parse(g.guardada),
+        { id: "u-alu-b", nombre: "Luis Pérez", es_coordinador: false, tipo: "alumno", de: PROFE.id });
+  igual("la lista sale de SUS alumnos, no de personas_para_ver_como",
+        [con("alumnos_del_profesor_con_nombre"), con("personas_para_ver_como")],
+        [['alumnos_del_profesor_con_nombre {"p_profesor":"u-profe"}'], []]);
+  igual("rótulo", g.badge, "👁 Estudiante");
+  igual("su panel de estudiante", await page.evaluate(() => document.getElementById("progreso-alumno").checkVisibility()), true);
+  igual("sus tareas, con SU id", con("tareas_con_avance").map((r) => JSON.parse(r.slice(r.indexOf("{"))).p_alumno), ["u-alu-b"]);
+  igual("su progreso, con SU id", con("mi_entreno_resumen"), ['mi_entreno_resumen {"p_alumno":"u-alu-b"}']);
+  igual("sin estado de la clase en vivo", g.sesion, false);
+  igual("la franja dice de quién es y qué ve de sus tareas",
+        /panel de Luis Pérez \(estudiante\)\. Su progreso y su informe son los suyos; de sus tareas y exámenes ves los que le pusiste tú/.test(g.barra || ""), true);
+  igual("y lo deja guiarlo: su informe y ponerle una tarea",
+        await page.evaluate(() => Array.from(document.querySelectorAll("#modo-vista-barra a")).map((a) => a.textContent + " → " + a.getAttribute("href"))),
+        ["📊 Su informe → informes.html?alumno=u-alu-b", "📋 Ponerle una tarea → tareas.html?alumno=u-alu-b"]);
+  // Ir a guiarlo lo saca del panel del alumno: la tarea se pone desde su vista.
+  await page.route("**/tareas.html*", (r) => r.fulfill({ status: 200, contentType: "text/html", body: "<p>tareas</p>" }));
+  await Promise.all([page.waitForURL(/tareas\.html\?alumno=u-alu-b/, { timeout: 10000 }), page.click('#modo-vista-barra a[href^="tareas.html"]')]);
+  igual("al ir a ponerle una tarea, vuelve a su vista",
+        await page.evaluate(() => localStorage.getItem("ver_como_persona_v1")), null);
+  igual("sin errores en consola", errores, []);
+  await ctx.close();
+
+  // Un alumno que no es suyo: ?ver_como= no le cambia nada.
+  ({ page, ctx, errores } = await panel(browser, [PROFE], PROFE.id, null, DATOS_PROFE));
+  await page.goto(BASE + "/clases.html?ver_como=u-ajeno", { waitUntil: "networkidle" });
+  await page.waitForSelector("#app:not(.hidden)", { timeout: 15000 });
+  const g2 = await page.evaluate(LEER);
+  igual("un alumno ajeno no se fija", [g2.guardada, g2.barra, g2.semana], [null, null, true]);
+  await ctx.close();
+
+  // Guardado de antes, y ya no es su alumno: vuelve solo a su vista.
+  ({ page, ctx } = await panel(browser, [PROFE], PROFE.id,
+    CON_PERSONA({ id: "u-ya-no", nombre: "Ya No", es_coordinador: false, tipo: "alumno" }, PROFE.id), DATOS_PROFE));
+  await page.waitForSelector("#app:not(.hidden)", { timeout: 15000 });
+  const g3 = await page.evaluate(LEER);
+  igual("si ya no es su alumno, vuelve a su vista", [g3.guardada, g3.barra, g3.semana], [null, null, true]);
+  await ctx.close();
+}
+
+/* Quien administra, mirando a un estudiante: su informe sí, ponerle una
+   tarea no (no da clase). */
+async function pruebaAdminBarraEstudiante(browser) {
+  console.log("\n=== La franja del panel de un estudiante, a quien administra ===");
+  const { page, ctx } = await panel(browser, [ADMIN], ADMIN.id, CON_PERSONA(ALUMNO_B, ADMIN.id), DATOS_ADMIN);
+  await page.waitForSelector("#modo-vista-barra", { timeout: 10000 });
+  igual("su informe, sin ponerle una tarea",
+        await page.evaluate(() => Array.from(document.querySelectorAll("#modo-vista-barra a")).map((a) => a.getAttribute("href"))),
+        ["informes.html?alumno=u-alu-b"]);
+  igual("y la franja de siempre", /Sus tareas, su progreso y su informe son los suyos/.test(
+        await page.evaluate(() => document.getElementById("modo-vista-barra").textContent)), true);
+  await ctx.close();
+}
+
 (async () => {
   const browser = await chromium.launch(CHROME ? { executablePath: CHROME } : {});
   try {
@@ -358,6 +457,8 @@ async function pruebaAdmin(browser) {
     await pruebaAdminMiraSupervisor(browser);
     await pruebaAdminMiraEstudiante(browser);
     await pruebaSupervisorNoMiraEstudiantes(browser);
+    await pruebaProfeMiraSuAlumno(browser);
+    await pruebaAdminBarraEstudiante(browser);
   } finally {
     await browser.close();
   }
