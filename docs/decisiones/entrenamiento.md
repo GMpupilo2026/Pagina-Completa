@@ -4125,6 +4125,54 @@ primer polo, «Las dos por igual» o el segundo.
   como» y quien supervisa no ven los botones; quién escribe, de todos modos,
   lo decide la RLS.
 
+### De la recomendación a un plan de estudio
+
+Que la prueba diga «te queda la escandinava» no cambia nada si nadie la
+practica. Dos puertas:
+
+- **El alumno, «Agregar a Mi repertorio»** en cada apertura recomendada: la
+  línea entra a su repertorio con su color. Lo que pase lo dice la base: si
+  ya estaba (la clave única) o si choca con otra línea suya en la misma
+  posición (`repertorio_coherente`, con su propio mensaje).
+- **El profe, «Armar un plan de 4 semanas»** en Informes
+  (`EstiloAperturas.plan`, una función pura): una tarea por semana con cada
+  apertura recomendada —la línea en Aperturas y celadas, cantidad 1, y un
+  rato de práctica en minutos— y la cuarta de repaso. Cada una es de 7 días
+  y aparece el día que empieza (`disponible_desde`). El profe saca las
+  semanas que no quiere y cambia los minutos antes de mandarlo; lo manda
+  `crear_tarea()`, que ya solo deja mandarle a sus alumnos.
+- La línea cuenta aunque la haya terminado antes (como cualquier tarea de
+  «cantidad»); los minutos, solo desde que se manda: por eso cada semana
+  lleva las dos cosas.
+- Se arma con la recomendación guardada (el acta), no con la que saldría hoy
+  con la opinión del profe.
+
+### ¿La prueba funciona?
+
+En Informes, el tema «🎭 Prueba de estilo»: el estilo de cada alumno (los
+cuatro ejes de su última prueba, leída con su versión, y lo que se le
+recomendó), quién no la hizo —con cómo pedírsela— y tres preguntas que dicen
+si lo que mide se sostiene:
+
+- **La calibración**: cuántas de las 60 posiciones tienen ya las 30
+  respuestas que pide `herramientas/estilo-calibrar.js`.
+- **La repetición**: de quien la hizo dos veces con 14 días o más entre una y
+  otra, en las posiciones que vio las dos veces, cuántas veces eligió la
+  misma jugada (al azar sería 50 %). Con menos de 20 posiciones así, lo dice
+  y no saca conclusiones.
+- **Las partidas**: por eje, si lo que contesta y lo que hace en sus partidas
+  van juntos (correlación entre pruebas; con menos de 8 pruebas con partidas
+  en ese eje, no la calcula). Si va al revés, hay que revisar esas
+  posiciones.
+
+Las cuentas las hace la base (`estilo_salud(p_primero)`, `SECURITY INVOKER`:
+solo las pruebas que quien pregunta ya ve; devuelve números, no respuestas).
+El banco no vive en la base, así que la página le manda el eje y el primer
+polo de cada posición. Comprobado en SQL (transacción deshecha): con dos
+pruebas de un alumno a 20 días, el control no cuenta como respuesta, la
+repetición da 2 de 3, las partidas 2 de 3; un profe ajeno ve 0 pruebas y
+anónimo no tiene permiso.
+
 ### La medición: el modelo de dos parámetros, con lo seguro y lo rápido
 
 Por eje, la tendencia θ que mejor explica las elecciones con

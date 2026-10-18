@@ -35,6 +35,9 @@
  *     cada uno { principal, alternativa, mantener } con { id, nombre,
  *     apertura, jugadas, porque: [frases], ajuste }
  *   EstiloAperturas.medidaDe(id) → la fila de MEDIDO
+ *   EstiloAperturas.plan(rec, { ahora, minutos }) → las tareas de 4 semanas
+ *     ([{ semana, titulo, instrucciones, desde, vence, items }]) para
+ *     crear_tarea(): una semana por apertura recomendada y la última de repaso.
  */
 (function () {
   "use strict";
@@ -273,7 +276,67 @@
     return out;
   }
 
-  const api = { MEDIDO, EJES, GRUPOS, MARGEN_MANTENER, PESO_RINDE, nivelQueConviene, rinde, objetivos, distancia, recomendar, medidaDe };
+  /* -------- De la recomendación a un plan de 4 semanas --------
+     Una semana por apertura recomendada (con blancas, contra 1.e4, contra
+     1.d4): la línea en «Aperturas y celadas» hasta terminarla, y un rato
+     practicando. La cuarta, repaso de las tres. Cada semana es una tarea
+     aparte, que se ve recién el día que empieza (disponible_desde), con 7
+     días para hacerla. Lo arma el profe desde Informes y lo puede ajustar
+     antes de mandarlo. El rato se cuenta desde que se manda la tarea (los
+     minutos de tareas_con_avance), así que no se cumple con lo que hizo
+     antes; la línea sí: si ya la había terminado, ese renglón ya está. */
+  const DIA = 24 * 60 * 60 * 1000;
+  const MINUTOS_SEMANA = 20, MINUTOS_REPASO = 30;
+  function renglonLinea(op) {
+    return {
+      material_tipo: "herramienta", material_slug: "aperturas", material_label: "Aperturas y celadas",
+      material_href: "entreno/aperturas.html?linea=" + encodeURIComponent(op.id),
+      filtro_clave: op.id, filtro_label: op.nombre, leccion: "",
+      actividades: ["aperturas"], meta_tipo: "cantidad", meta_cantidad: 1,
+    };
+  }
+  function renglonRato(minutos) {
+    return {
+      material_tipo: "herramienta", material_slug: "aperturas", material_label: "Aperturas y celadas",
+      material_href: "entreno/aperturas.html", filtro_clave: "", filtro_label: "", leccion: "",
+      actividades: ["aperturas"], meta_tipo: "minutos", meta_cantidad: minutos,
+    };
+  }
+  function plan(rec, o) {
+    const op = o || {};
+    const ahora = op.ahora ? new Date(op.ahora) : new Date();
+    const minutos = op.minutos > 0 ? Math.round(op.minutos) : MINUTOS_SEMANA;
+    const semanas = [];
+    const elegidas = [];
+    for (const g of Object.keys(GRUPOS)) {
+      const r = rec && rec[g];
+      if (!r || !r.principal) continue;
+      elegidas.push(r.principal);
+      semanas.push({
+        grupo: g,
+        titulo: "Tu apertura, semana " + (semanas.length + 1) + ": " + r.principal.nombre,
+        instrucciones: GRUPOS[g].titulo + ": " + r.principal.nombre + ", la que te recomendó la prueba de estilo. "
+          + "Practica la línea en Aperturas y celadas hasta terminarla, y después repásala " + minutos + " minutos.",
+        items: [renglonLinea(r.principal), renglonRato(minutos)],
+      });
+    }
+    if (elegidas.length) {
+      semanas.push({
+        grupo: "repaso",
+        titulo: "Tu apertura, semana " + (semanas.length + 1) + ": repaso",
+        instrucciones: "Repasa las aperturas de estas semanas (" + elegidas.map((x) => x.nombre).join(", ") + ") en Aperturas y celadas. "
+          + "Si puedes, juega una partida con cada una.",
+        items: [renglonRato(Math.max(MINUTOS_REPASO, minutos))],
+      });
+    }
+    return semanas.map((s, k) => Object.assign(s, {
+      semana: k + 1,
+      desde: k === 0 ? null : new Date(ahora.getTime() + 7 * k * DIA).toISOString(),
+      vence: new Date(ahora.getTime() + 7 * (k + 1) * DIA).toISOString(),
+    }));
+  }
+
+  const api = { MEDIDO, EJES, GRUPOS, plan, MARGEN_MANTENER, PESO_RINDE, nivelQueConviene, rinde, objetivos, distancia, recomendar, medidaDe };
   if (typeof window !== "undefined") window.EstiloAperturas = api;
   if (typeof module !== "undefined" && module.exports) module.exports = api;
 })();

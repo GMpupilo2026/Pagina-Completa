@@ -42,6 +42,11 @@
  *     el resultado es al azar, no lo afirma; con pocas partidas, tampoco. Y
  *     la recomendación lo suma: a quien le va mejor abierto, aperturas más
  *     abiertas que a quien le va mejor cerrado, con el porqué y los números.
+ * 10. EL PLAN DE 4 SEMANAS. Una tarea por apertura recomendada y una de
+ *     repaso, cada una de 7 días y empezando cuando termina la anterior; cada
+ *     renglón es uno que Tareas sabe contar (Aperturas y celadas, la línea
+ *     que existe, cantidad 1; o minutos), y lo que falta en la recomendación
+ *     no se inventa.
  *
  * Uso:  npm install && node herramientas/verificar-estilo-perfil.js
  */
@@ -398,6 +403,34 @@ console.log("-- 9. El rendimiento según el tipo de partida");
   ok("si la diferencia puede ser del azar, no cambia nada", JSON.stringify(rs) === JSON.stringify(A.recomendar(neutro, ctx)));
 }
 
+
+console.log("-- 10. El plan de 4 semanas");
+{
+  // El catálogo de Tareas es un script de página (window.MaterialPlataforma).
+  const win = {};
+  new Function("window", require("fs").readFileSync(path.join(RAIZ, "js/material-plataforma.js"), "utf8"))(win);
+  const Mp = win.MaterialPlataforma;
+  const rec = A.recomendar(P.medir([]), { ritmo: "clasicas", estudio: "mucho", elo: 1800, actual: {} });
+  const ahora = "2026-10-18T12:00:00.000Z";
+  const plan = A.plan(rec, { ahora, minutos: 25 });
+  ok("cuatro semanas: con blancas, contra 1.e4, contra 1.d4 y repaso", plan.map((s) => s.grupo).join() === "blancas,e4,d4,repaso" && plan.map((s) => s.semana).join() === "1,2,3,4");
+  const dia = 24 * 3600 * 1000;
+  ok("cada una de 7 días, la primera desde hoy y cada una cuando termina la anterior",
+    plan[0].desde === null && plan.every((s, k) => Date.parse(s.vence) === Date.parse(ahora) + 7 * (k + 1) * dia && (k === 0 || s.desde === plan[k - 1].vence)));
+  const h = Mp.herramienta("aperturas");
+  const lineas = new Set(LINEAS.map((l) => l.id));
+  const malos = [];
+  plan.forEach((s) => s.items.forEach((it) => {
+    if (it.material_slug !== "aperturas" || !h.metas.includes(it.meta_tipo) || !(it.meta_cantidad > 0)) malos.push(s.semana + ": " + JSON.stringify(it));
+    if (it.meta_tipo === "cantidad" && (it.meta_cantidad !== 1 || !lineas.has(it.filtro_clave) || it.material_href !== h.hrefRecorte(it.filtro_clave))) malos.push(s.semana + ": línea " + it.filtro_clave);
+  }));
+  ok("cada renglón es uno que Tareas sabe contar (la línea que existe, una vez; o minutos)", !malos.length, malos.join(" | "));
+  ok("las semanas de cada apertura piden su línea, la que se le recomendó", ["blancas", "e4", "d4"].every((g, k) => plan[k].items[0].filtro_clave === rec[g].principal.id));
+  ok("los minutos que elige el profe, y el repaso al menos 30", plan[0].items[1].meta_cantidad === 25 && plan[3].items[0].meta_cantidad === 30);
+  const sinE4 = Object.assign({}, rec, { e4: null });
+  ok("si falta una recomendación, no la inventa", A.plan(sinE4, { ahora }).map((s) => s.grupo).join() === "blancas,d4,repaso");
+  ok("sin nada recomendado, no hay plan", A.plan({}, { ahora }).length === 0);
+}
 
 if (fallos) { console.log(`\n✗ ${fallos} comprobación(es) fallaron.`); process.exit(1); }
 console.log("\n✓ La medición, la recomendación y las partidas de la prueba de estilo dicen lo que saben.");
