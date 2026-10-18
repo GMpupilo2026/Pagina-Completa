@@ -482,7 +482,7 @@
             lista.append(el("li", { "data-seminario": x.tipo },
                 el("strong", {}, `${x.fecha ? fecha(x.fecha) : cuando(x.mes)} · Seminario de ${x.tipo === "FA" ? "AF" : "AI"}: ${x.seminario}`),
                 el("span", { class: "of-detalle" }, (vigente ? "Vale para pedir el título hasta " : "Ya no vale para pedir el título: venció ") + (vence.length === 7 ? cuando(vence) : "el " + fecha(vence)) + " (cuatro años, B.06.1 5.3.2). · ",
-                    enlace(x.fuente, "informe de la Comisión"))));
+                    enlace(x.fuente, "informe de la Comisión"), x.evento ? " · " : "", x.evento ? enlace(x.evento, "página del seminario") : "")));
         }
         caja.replaceChildren(lista);
     }
@@ -797,7 +797,7 @@
         $("ficha-fide").textContent = textoFide(a);
         pintarHistorial(a);
         $("ficha-normas").replaceChildren(tarjetaNorma(a, "af"), tarjetaNorma(a, "ai"));
-        $("ficha-categoria").replaceChildren(...(a.titulo === "AN" ? [tarjetaCategoria(a)] : []));
+        $("ficha-categoria").replaceChildren(...(a.titulo === "AN" ? [tarjetaCategoria(a)] : [tarjetaCategoriaFide(a)].filter(Boolean)));
         pintarFormacion(a);
         pintarContacto(a);
         pintarRevision(a);
@@ -922,6 +922,20 @@
         const ajenos = principales.filter((y) => y.p && y.p !== a);
         if (cual === "ai" && n >= 2 && ajenos.length === n && new Set(ajenos.map((y) => y.p)).size === 1)
             punto("Falta", `Firmas: todas las firma ${ajenos[0].p.nombre}, y no pueden ser todas de la misma persona (4.13.1).`);
+        // Cuántos certificados da un torneo (2.7): uno cada 25 jugadores, o dos
+        // en total en un todos contra todos. Compiten por ellos los demás
+        // árbitros de la lista que todavía no eran IA (el principal los firma
+        // y el asistente no cuenta, 2.4.4); si son más que el tope, no se sabe
+        // a quién se los dieron.
+        const topes = c.usadas.map((x) => {
+            const tope = ["r", "d"].includes(x.t.sistema) ? 2 : Math.ceil((x.t.jugadores || 0) / 25);
+            const otros = (equipos.get(x.clave) || []).filter((e) => e.a !== a && tituloEn(e.a, x.inicio) !== "IA"
+                && e.x.cargos.some((k) => ["Dep. Chief", "Arbiter", "Pairings"].includes(k)) && !e.x.cargos.includes("Chief"));
+            return { x, tope, otros: otros.length };
+        }).filter((y) => y.tope && y.otros + 1 > y.tope);
+        if (topes.length) punto("Revisar", "Certificados por torneo (2.7): " + topes.map((y) => `«${y.x.t.nombre}» da ${y.tope === 1 ? "uno solo" : "como máximo " + y.tope}`
+            + ` (${["r", "d"].includes(y.x.t.sistema) ? "todos contra todos" : miles(y.x.t.jugadores) + " jugadores, uno cada 25"}) y lo arbitraron ${miles(y.otros)} más de la lista sin el título de AI`).join("; ")
+            + ": ver que le hayan dado el suyo.");
         // Las fechas: la norma más vieja vence a los seis años (5.3.1) y la
         // solicitud va a más tardar un año después del último evento (5.3.3).
         if (n) {
@@ -1215,6 +1229,98 @@
             { nombre: "Año por año", filas: [["Año", "Arbitraron", "Por primera vez", "Su último año", "Torneos", "Torneos por árbitro", "El 20 % que más arbitró (%)", "Títulos de AF", "Títulos de AI"]]
                 .concat(n.filas.map((r) => [r.anio, r.arbitros, r.nuevos, r.ultimoAnio, r.torneos, Math.round(r.media * 10) / 10, r.concentracion, r.af, r.ai])) },
         ]);
+    }
+
+    /* «Para subir de categoría en FIDE» (B.06.3, vigente desde el 1 de julio
+       de 2026, artículos 3 a 7). Solo los IA suben: los FA son categoría D
+       siempre (1.2.2). Para C pide un año con el AI; para B, tres y dos en la
+       C; para A, cinco y dos en la B. Además estar activo y, en los últimos
+       cinco años, haber sido principal o adjunto principal en dos torneos de
+       la categoría a la que sube, o en uno de esa y tres de la de abajo,
+       empezados después del título o de la última subida (7.3). La
+       categoría de un torneo: D, el que daría norma de AI (1.3.4, ya
+       calculado); C, un continental de juveniles, escolares, sénior o
+       aficionados, o un internacional fuerte (9 rondas, más de 150
+       jugadores, 75 % con Elo y 20 titulados de tres federaciones; los
+       titulados no se cuentan); B, un continental mayor; A, uno mundial
+       mayor. Los de C para arriba salen por el nombre y quedan para
+       revisar. */
+    const SUBE_FIDE = { D: "C", C: "B", B: "A" };
+    const DEBAJO_FIDE = { C: "D", B: "C", A: "B" };
+    const NIVEL_FIDE = { D: 0, C: 1, B: 2, A: 3 };
+    const PIDE_FIDE = { C: { anios: 1, art: "5" }, B: { anios: 3, art: "4", previa: "C" }, A: { anios: 5, art: "3", previa: "B" } };
+    const MUNDIAL = /\b(world|mundial|olympiad|olimpiada|candidates|grand prix|grand swiss)\b/;
+    const CONTINENTAL = /\b(continental|panamerican[oa]?|pan-american|americas)\b/;
+    const MENORES = /\b(youth|cadet|senior|school|amateur|juvenil|escolar|universit\w*|disabilit\w*|u-?\d{1,2}|sub-?\d{1,2})\b/;
+    function nivelFide(x) {
+        const t = x.t;
+        if (!x.fide || !t) return null;
+        const n = sinTildes(t.nombre);
+        if (MUNDIAL.test(n)) return MENORES.test(n) || (t.ritmo !== "Standard" && /\bjunior\b/.test(n))
+            ? { nivel: "B", revisar: true, por: "por el nombre, un mundial de los que no son mayores (1.3.2.1)" }
+            : { nivel: "A", revisar: true, por: "por el nombre, un evento mundial mayor (1.3.1.1)" };
+        if (CONTINENTAL.test(n)) return MENORES.test(n)
+            ? { nivel: "C", revisar: true, por: "por el nombre, un continental de juveniles, escolares, sénior o aficionados (1.3.3.1)" }
+            : { nivel: "B", revisar: true, por: "por el nombre, un continental mayor (1.3.2.2)" };
+        if (t.ritmo === "Standard" && (t.rondas || 0) >= 9 && (t.jugadores || 0) > 150 && (t.con_elo || 0) * 4 >= t.jugadores * 3 && (t.federaciones || 0) >= 3)
+            return { nivel: "C", revisar: true, por: `internacional fuerte: ${miles(t.jugadores)} jugadores, ${miles(t.federaciones)} federaciones y ${t.rondas} rondas; falta ver que tuviera 20 titulados (1.3.3.2)` };
+        if (["si", "una", "opcion"].includes(t.ai_estado)) return { nivel: "D", revisar: false, por: "da para una norma de AI (1.3.4)" };
+        if (t.ai_estado === "revisar") return { nivel: "D", revisar: true, por: "podría dar para una norma de AI: revisar (1.3.4)" };
+        return null;
+    }
+    function subirCategoriaFide(a) {
+        if (a.titulo !== "IA" || !a.fide) return null;
+        const cat = ["A", "B", "C", "D"].includes(a.fide.categoria) ? a.fide.categoria : "D";
+        if (cat === "A") return { cat };
+        const sube = SUBE_FIDE[cat], debajo = DEBAJO_FIDE[sube], req = PIDE_FIDE[sube], hoy = hoyCr();
+        // Si del AI solo se sabe el año, se cuenta desde el 31 de diciembre:
+        // lo que vale con eso vale seguro.
+        const m = /Árbitro Internacional \((\d{4})\)/.exec(a.titulo_detalle || "");
+        const exacta = a.fide.ia_perfil || a.fide.ia_fecha, iaDia = exacta || (m ? m[1] + "-12-31" : "");
+        const anios = plural(req.anios, "año", "años"), pide = [];
+        if (!iaDia) pide.push(["Revisar", `Pide ${anios} con el título de AI (${req.art}.1): no se sabe desde cuándo lo tiene.`]);
+        else if (masAnios(iaDia, req.anios) <= hoy) pide.push(["Listo", `Tiene el AI desde ${exacta ? "el " + fecha(iaDia) : m[1]}: más de ${anios} (${req.art}.1).`]);
+        else if (!exacta && masAnios(m[1] + "-01-01", req.anios) <= hoy) pide.push(["Revisar", `Tiene el AI de ${m[1]}: cumple ${anios} entre el 01/01/${parseInt(m[1], 10) + req.anios} y el ${fecha(masAnios(iaDia, req.anios))}, según el día del título (${req.art}.1).`]);
+        else pide.push(["Falta", `Cumple ${anios} con el AI ${exacta ? "el" : "a más tardar el"} ${fecha(masAnios(iaDia, req.anios))} (${req.art}.1).`]);
+        const act = actividad(a);
+        pide.push(act && act.estado === "activo" ? ["Listo", `Está activo (${req.art}.2)${act.hasta ? ", por lo menos hasta el " + fecha(act.hasta) : ""}.`]
+            : ["Falta", `Está inactivo y la categoría pide estar activo (${req.art}.2): primero un curso de actualización.`]);
+        if (req.previa) pide.push(["Revisar", `Dos años en la categoría ${req.previa} (${req.art}.4): la lista de FIDE no dice desde cuándo la tiene.`]);
+        // Los torneos: de FIDE, como principal o adjunto principal, en los
+        // últimos cinco años y después del título (o de la última subida,
+        // que no se sabe: desde C se cuenta desde el AI y se dice).
+        const desde = [masAnios(hoy, -5), iaDia].filter(Boolean).sort().pop();
+        const torneos = a.todos.filter((x) => x.fide && x.inicio >= desde && x.cargos.some((k) => k === "Chief" || k === "Dep. Chief"))
+            .map((x) => ({ x, ...nivelFide(x) })).filter((y) => y.nivel && NIVEL_FIDE[y.nivel] >= NIVEL_FIDE[debajo])
+            .sort((p, q) => q.x.inicio.localeCompare(p.x.inicio));
+        const cumple = (l) => { const arriba = l.filter((y) => NIVEL_FIDE[y.nivel] >= NIVEL_FIDE[sube]).length; return arriba >= 2 || (arriba >= 1 && l.length - 1 >= 3); };
+        const firmes = torneos.filter((y) => !y.revisar), arriba = firmes.filter((y) => NIVEL_FIDE[y.nivel] >= NIVEL_FIDE[sube]).length;
+        const cuantos = `${plural(arriba, "torneo", "torneos")} de categoría ${sube} y ${plural(firmes.length - arriba, "torneo", "torneos")} de categoría ${debajo}`;
+        const regla = `dos de categoría ${sube}, o uno de ${sube} y tres de ${debajo}, como principal o adjunto principal en los últimos cinco años (${req.art}.${req.previa ? 5 : 4})`;
+        if (cumple(firmes)) pide.push(["Listo", `Torneos: tiene ${cuantos}; pide ${regla}.`]);
+        else if (cumple(torneos)) pide.push(["Revisar", `Torneos: seguros, ${cuantos}; con los que hay que revisar, alcanza. Pide ${regla}.`]);
+        else pide.push(["Falta", `Torneos: tiene ${cuantos}; pide ${regla}.` + (arriba ? "" : ` Le falta sobre todo uno de categoría ${sube}, que en Costa Rica casi no se juega.`)]);
+        pide.push(["Revisar", `Lo que no se ve desde afuera: la evaluación positiva en cada torneo y no tener sanciones (${req.art}.3). Los torneos tienen que ser posteriores a su última subida de categoría${req.previa ? "" : " (desde D cuenta el título de AI)"} y no haber ido en otra solicitud (7.3). La pide la Federación con el formulario IA3 (7.2).`]);
+        const estado = pide.some((p) => p[0] === "Falta") ? "Le falta" : pide.some((p) => p[0] === "Revisar" && /^Torneos/.test(p[1])) ? "Revisar" : "Puede pedirla";
+        return { cat, sube, debajo, pide, torneos, estado, desde };
+    }
+    function tarjetaCategoriaFide(a) {
+        const s = subirCategoriaFide(a);
+        if (!s) return null;
+        const caja = el("div", { class: "bg-white dark:bg-brand-900 rounded-2xl shadow-md p-4 mt-3", "data-categoria-fide": s.cat },
+            el("h3", { class: "text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide" }, "Para subir de categoría en FIDE (B.06.3)"));
+        if (s.cat === "A") {
+            caja.append(el("p", { class: "mt-1" }, el("strong", { class: "of-estado" }, "Ya es categoría A"), " la más alta de FIDE: puede ser árbitro principal de cualquier evento mundial (8.1)."));
+            return caja;
+        }
+        const linea = (y) => el("li", { class: "of-detalle" }, `${fecha(y.x.inicio)} · ${nombreDe(y.x)} · ${cargoEscrito(y.x)} · categoría ${y.nivel}${y.revisar ? " (revisar)" : ""}: ${y.por}`);
+        caja.append(...[
+            el("p", { class: "mt-1" }, el("strong", { class: "of-estado" }, `De ${s.cat} a ${s.sube}: ${s.estado}`)),
+            el("ul", { class: "mt-1 space-y-1 text-sm" }, ...s.pide.map(([e, t]) => el("li", { "data-estado": e }, el("strong", {}, e + ": "), t))),
+            s.torneos.length ? el("div", { class: "mt-2" }, el("h4", { class: "text-sm font-semibold" }, `Torneos que cuentan (desde el ${fecha(s.desde)})`),
+                el("ul", { class: "mt-1 space-y-0.5", "data-subir-fide": "" }, ...s.torneos.map(linea))) : null,
+            el("p", { class: "of-detalle mt-2" }, `Un torneo de categoría D es el que daría norma de AI (1.3.4), y eso ya lo calcula la página. Los de C para arriba se reconocen por el nombre (continentales y mundiales) o por su tamaño, y quedan para revisar: un todos contra todos fuerte se mide por el promedio de Elo, que aquí no se tiene.`)].filter(Boolean));
+        return caja;
     }
 
     function tarjetaCategoria(a) {

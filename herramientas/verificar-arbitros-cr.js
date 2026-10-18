@@ -78,7 +78,8 @@ const ARBITROS_FIDE = [
           { titulo: "IA", fecha: "2026-08-23", consejo: "2.ª reunión del Consejo de FIDE de 2026 (en línea)", veredicto: "aprobada", motivo: "",
             torneos: ["30.08-09.09.25 18th IA Seminar"], fuente: "https://arbiters.fide.com/informe-2.pdf" },
       ],
-      seminarios: [{ tipo: "IA", seminario: "18th IACS Internet Based Aug 2025 (ARB)", mes: "2025-09", fecha: "2025-09-09", fuente: "https://arbiters.fide.com/informe-2.pdf" }] },
+      seminarios: [{ tipo: "IA", seminario: "18th IACS Internet Based Aug 2025 (ARB)", mes: "2025-09", fecha: "2025-09-09", fuente: "https://arbiters.fide.com/informe-2.pdf",
+        evento: "https://arbiters.fide.com/news/event/18th-iacs" }] },
     // Pedro está en la lista de la Federación y nunca arbitró: no sale en la
     // lista de la herramienta, sí en la comparación con la Federación.
     { fide_id: 6500006, nombre: "Nuevo Prueba, Pedro", titulo: "NA", inactivo: false, categoria: "", licencia: "NA", categoria_nacional: "C", fca_leida: "2026-10-16", af_fecha: null, af_consejo: "", ia_fecha: null, ia_consejo: "", lista: "2026-10-12", solicitudes: [], seminarios: [] },
@@ -572,6 +573,8 @@ const porNombre = (m) => Object.fromEntries(m.map((f) => [f[0], f]));
     const hist = await p.$$eval("#ficha-historial > ul > li", (ls) => ls.map((l) => l.querySelector("strong").textContent));
     igual("su historial en FIDE: las solicitudes, la más nueva primero, y el seminario", hist,
         ["23/08/2026 · Solicitud de AI: Aprobada", "02/04/2025 · Solicitud de AI: Rechazada", "09/09/2025 · Seminario de AI: 18th IACS Internet Based Aug 2025 (ARB)"]);
+    igual("el seminario enlaza al informe y, si se conoce, a su página en el calendario de la Comisión", await p.$eval("#ficha-historial li[data-seminario]", (l) => [...l.querySelectorAll("a")].map((x) => [x.textContent, x.getAttribute("href")])),
+        [["informe de la Comisión", "https://arbiters.fide.com/informe-2.pdf"], ["página del seminario", "https://arbiters.fide.com/news/event/18th-iacs"]]);
     igual("la rechazada dice por qué (como lo escribe FIDE) y lo que mandó", await p.$eval("#ficha-historial li[data-solicitud='2025-04-02']", (l) => [/«Only 3 tournament norms»/.test(l.textContent), l.querySelectorAll("details li").length]), [true, 2]);
     igual("quien ya tiene el título no lleva «Para pedir el título»", await p.$$eval("[data-ruta]", (r) => r.length), 0);
     await ctx.close();
@@ -611,6 +614,15 @@ const porNombre = (m) => Object.fromEntries(m.map((f) => [f[0], f]));
     igual("y el informe lo dice en la columna de la firma", require("fs").readFileSync(await informe2.path()).toString("latin1").includes("(Él mismo: firma otro \\(2.8\\))"), true);
     await ctx.close();
     CARGOS.pop();
+    // El 104 tiene 40 jugadores: da dos certificados (uno cada 25, 2.7). Con
+    // Óscar (entonces sin título) y Ana además de Luis, son tres para dos.
+    CARGOS.push({ torneo_id: 104, fide_id: 6500002, cargo: "Arbiter" });
+    ({ ctx, p } = await abrir(browser, "arbitros-cr.html#6500003", true));
+    await p.waitForFunction(() => document.getElementById("ficha").checkVisibility());
+    igual("si en el torneo hubo más árbitros que certificados posibles, lo pide revisar (2.7)", await p.$$eval("[data-ruta='af'] li[data-estado='Revisar']", (ls) => ls.map((l) => l.textContent).filter((t) => /2\.7/.test(t))),
+        ["Revisar: Certificados por torneo (2.7): «Internacional con titulados 2023» da como máximo 2 (40 jugadores, uno cada 25) y lo arbitraron 2 más de la lista sin el título de AI: ver que le hayan dado el suyo."]);
+    await ctx.close();
+    CARGOS.pop();
 
     // Ana (FA) arbitra el 101, que vale una sola vez para AI (opción), y en
     // las mismas fechas el 106: el informe avisa de las dos cosas.
@@ -624,6 +636,51 @@ const porNombre = (m) => Object.fromEntries(m.map((f) => [f[0], f]));
         [informe3.suggestedFilename(), inf3.includes("4.9.1"), inf3.includes("2.10"), inf3.includes("(Riesgos de esta solicitud)")], ["informe-ai-6500002.pdf", true, true, true]);
     await ctx.close();
     CARGOS.splice(-2, 2); TORNEOS.pop();
+
+    console.log("\n=== Para subir de categoría en FIDE (B.06.3) ===");
+    // Óscar es IA de 2026 (solo se sabe el año): ningún torneo cuenta todavía y
+    // el año con el AI se cumple a más tardar a fin de 2027.
+    const RELOJ_CAT = "2026-10-18T12:00:00-06:00";
+    ({ ctx, p } = await abrir(browser, "arbitros-cr.html#6500001", true, RELOJ_CAT));
+    await p.waitForFunction(() => document.getElementById("ficha").checkVisibility());
+    const catFide = () => p.$eval("[data-categoria-fide]", (c) => [c.querySelector(".of-estado").textContent, [...c.querySelectorAll("li[data-estado]")].map((l) => l.textContent), [...c.querySelectorAll("[data-subir-fide] li")].map((l) => l.textContent)]);
+    let [cEst, cPide] = await catFide();
+    igual("Óscar (IA de 2026, categoría D): para C le falta el año con el AI y los torneos", [cEst, cPide.slice(0, 3)],
+        ["De D a C: Le falta", ["Falta: Cumple 1 año con el AI a más tardar el 31/12/2027 (5.1).", "Listo: Está activo (5.2), por lo menos hasta el 09/09/2029.",
+          "Falta: Torneos: tiene 0 torneos de categoría C y 0 torneos de categoría D; pide dos de categoría C, o uno de C y tres de D, como principal o adjunto principal en los últimos cinco años (5.4). Le falta sobre todo uno de categoría C, que en Costa Rica casi no se juega."]]);
+    igual("y lo que no se ve lo dice escrito", /evaluación positiva.*sanciones \(5\.3\).*IA3 \(7\.2\)/.test(cPide.at(-1)), true);
+    await ctx.close();
+    // Con el AI desde junio de 2025: un nacional que da norma de AI (D), un
+    // panamericano juvenil (C, por el nombre: revisar) y un blitz que no cuenta.
+    ARBITROS_FIDE[0].ia_fecha = "2025-06-01";
+    TORNEOS.push(T(201, "Campeonato Nacional Absoluto 2026", "2026-02-01", "si", "si"), T(202, "Panamericano Juvenil 2026", "2026-03-01", "si", "revisar"),
+        T(203, "Torneo de 2025 antes del AI", "2025-03-01", "si", "si"), T(206, "Abierto donde solo fue árbitro 2026", "2026-06-01", "si", "si"));
+    CARGOS.push({ torneo_id: 201, fide_id: 6500001, cargo: "Chief" }, { torneo_id: 202, fide_id: 6500001, cargo: "Dep. Chief" }, { torneo_id: 203, fide_id: 6500001, cargo: "Chief" },
+        { torneo_id: 206, fide_id: 6500001, cargo: "Arbiter" });   // de árbitro, sin ser principal ni adjunto principal: no cuenta
+    ({ ctx, p } = await abrir(browser, "arbitros-cr.html#6500001", true, RELOJ_CAT));
+    await p.waitForFunction(() => document.getElementById("ficha").checkVisibility());
+    let cTorneos;
+    [cEst, cPide, cTorneos] = await catFide();
+    igual("con el año cumplido, cuentan los torneos desde el AI, cada uno con su categoría y por qué", [cPide[0], cTorneos],
+        ["Listo: Tiene el AI desde el 01/06/2025: más de 1 año (5.1).",
+         ["01/03/2026 · Panamericano Juvenil 2026 · Árbitro adjunto principal · categoría C (revisar): por el nombre, un continental de juveniles, escolares, sénior o aficionados (1.3.3.1)",
+          "01/02/2026 · Campeonato Nacional Absoluto 2026 · Árbitro principal · categoría D: da para una norma de AI (1.3.4)"]]);
+    igual("uno de C para revisar y uno de D: todavía no alcanza", [cEst, /^Falta: Torneos: tiene 0 torneos de categoría C y 1 torneo de categoría D/.test(cPide[2])], ["De D a C: Le falta", true]);
+    await ctx.close();
+    TORNEOS.push(T(204, "Abierto Internacional 2026", "2026-04-01", "si", "si"), T(205, "Torneo Internacional de Mayo 2026", "2026-05-01", "si", "opcion"));
+    CARGOS.push({ torneo_id: 204, fide_id: 6500001, cargo: "Chief" }, { torneo_id: 205, fide_id: 6500001, cargo: "Dep. Chief" });
+    ({ ctx, p } = await abrir(browser, "arbitros-cr.html#6500001", true, RELOJ_CAT));
+    await p.waitForFunction(() => document.getElementById("ficha").checkVisibility());
+    [cEst, cPide] = await catFide();
+    igual("con tres de D y el de C para revisar, alcanza si el de C se confirma", [cEst, /^Revisar: Torneos: seguros, 0 torneos de categoría C y 3 torneos de categoría D; con los que hay que revisar, alcanza/.test(cPide[2])], ["De D a C: Revisar", true]);
+    await ctx.close();
+    TORNEOS.splice(TORNEOS.findIndex((t) => t.id === 201), 6);
+    CARGOS.splice(CARGOS.findIndex((c) => c.torneo_id === 201), 6);
+    ARBITROS_FIDE[0].ia_fecha = null;
+    ({ ctx, p } = await abrir(browser, "arbitros-cr.html#6500002", true, RELOJ_CAT));
+    await p.waitForFunction(() => document.getElementById("ficha").checkVisibility());
+    igual("un FA no lleva «Para subir de categoría en FIDE» (los FA son siempre D)", await p.$$eval("[data-categoria-fide]", (l) => l.length), 0);
+    await ctx.close();
 
     console.log("\n=== Revisar normas antes de mandarlas ===");
     // Un torneo más de Luis (árbitro), con Óscar de principal ya AF: sirve de reserva.
@@ -958,7 +1015,7 @@ const porNombre = (m) => Object.fromEntries(m.map((f) => [f[0], f]));
     await ctx.close();
     ({ ctx, p } = await abrir(browser, "arbitros-cr.html#6500001", true, DIC));
     await p.waitForFunction(() => document.getElementById("ficha").checkVisibility());
-    igual("Óscar (IA): sin la tarjeta", await p.$eval("#ficha-categoria", (e) => e.childElementCount), 0);
+    igual("Óscar (IA): sin la tarjeta de la Federación, solo la de FIDE", await p.$eval("#ficha-categoria", (e) => [...e.children].map((c) => c.hasAttribute("data-categoria-fide"))), [true]);
     await ctx.close();
 
     console.log("\n=== Lo que registra administración: el Excel, el correo y los avisos ===");

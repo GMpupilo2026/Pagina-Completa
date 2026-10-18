@@ -4103,6 +4103,18 @@ leyeron convertidos a texto con r.jina.ai, como los informes.
   - La fecha límite: la norma más vieja vale **seis años** (5.3.1), y la
     solicitud va a más tardar **un año después del último evento** que
     lleva (5.3.3), seminario incluido.
+  - Los certificados por torneo (2.7, revisado contra B.06.1 de 2026 en
+    octubre de 2026): uno cada 25 jugadores, o dos en total en un todos
+    contra todos. Compiten por ellos los demás árbitros de la lista que
+    todavía no eran IA, sin el principal (que firma) ni el asistente (2.4.4).
+    Si con él son más que el tope, sale «Revisar»: no se sabe a quién se los
+    dieron. No se aplica como «Falta» porque un árbitro con título puede no
+    haber pedido el suyo.
+  - El seminario puede traer `evento`, el enlace a su página en el
+    calendario de la Comisión (arbiters.fide.com/news/event/…), y la ficha
+    lo enlaza. De ahí salió el día del 215 (Costa Rica, 9 al 12 de enero de
+    2026, examen el 12): el informe al Consejo solo daba el mes de Johanel
+    Álvarez.
   - Lo que no se ve desde afuera: los certificados y las firmas (no todas
     de la misma persona, 4.13.1), la edad (19 y 21) y las dos finales
     nacionales.
@@ -4313,6 +4325,51 @@ día y que no entra una predicción inventada.
 
 Rompí a propósito el filtro de las ya subidas, la firma y la regla del
 acierto; salta cada vez.
+
+## Para subir de categoría en FIDE
+
+En la ficha de cada IA, debajo de sus normas (pedido del dueño, octubre de
+2026, después de comparar la herramienta con B.06.3 vigente desde el 1 de
+julio de 2026). La actividad (artículo 2) ya estaba; las categorías, no.
+`subirCategoriaFide()` y `tarjetaCategoriaFide()` en `js/arbitros-cr.js`.
+
+- **Solo los IA suben**: los FA son categoría D siempre (1.2.2) y no llevan
+  la tarjeta. En octubre de 2026 el país tiene 18 FA y 10 IA: 1 en A y 9
+  en D.
+- **Lo que pide cada salto** (artículos 3 a 5): para C, un año con el AI;
+  para B, tres y dos años en la C; para A, cinco y dos en la B. Además estar
+  activo y, en los últimos cinco años, haber sido **principal o adjunto
+  principal** en dos torneos de la categoría a la que sube, o en uno de esa
+  y tres de la de abajo. Los torneos empiezan después de la última subida o
+  del título y no pueden haber ido en otra solicitud (7.3). La pide la
+  Federación con el IA3 (7.2).
+- **La categoría de un torneo** (`nivelFide`):
+  - D: el que daría norma de AI (1.3.4). Es `ai_estado` del torneo, que ya
+    estaba calculado; «revisar» queda para revisar.
+  - C: un continental de juveniles, escolares, sénior o aficionados, o un
+    internacional fuerte (9 rondas, más de 150 jugadores, 75 % con Elo y tres
+    federaciones; los 20 titulados no se cuentan porque la tabla no tiene
+    los títulos de los jugadores).
+  - B, un continental mayor, y A, un mundial mayor.
+  - De la C para arriba se reconocen **por el nombre o el tamaño** y
+    siempre quedan para revisar. Un todos contra todos fuerte se mide por el
+    promedio de Elo, que no se tiene.
+- **El estado** dice «Puede pedirla» solo con torneos seguros; «Revisar»
+  cuando alcanza contando los que hay que revisar, y «Le falta» si no.
+- Lo que no se sabe va escrito como «Revisar»: desde cuándo tiene su
+  categoría (la lista de FIDE no lo dice), la evaluación positiva, las
+  sanciones y, para B y A, cuándo fue la última subida. Si del AI solo se
+  sabe el año, se cuenta desde el 31 de diciembre de ese año.
+- `verificar-arbitros-cr.js` lo prueba con Óscar:
+  - con un AI del que solo se sabe el año, le falta el año y no tiene
+    torneos;
+  - con el AI desde junio de 2025, cada torneo trae su categoría y su
+    porqué; el de antes del AI y el de simple árbitro no cuentan;
+  - con tres de D y un panamericano juvenil, sale «Revisar»;
+  - un FA no lleva la tarjeta.
+
+  Lo rompí contando un continental juvenil como seguro y contando a quien
+  fue solo árbitro, y salta.
 
 ## Comparar dos árbitros y el ranking del año
 
