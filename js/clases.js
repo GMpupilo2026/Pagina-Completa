@@ -111,14 +111,18 @@
                 { emoji: "🏛️", label: "Cursos", desc: "Tus cursos completos, con tu línea de progreso", descProfe: "Los cursos de la Academia y el temario de cada uno", href: "cursos/academia/index.html" },
                 { emoji: "🎞️", label: "Repasar mis clases", desc: "La partida de cada clase, jugada por jugada, con lo que comentó tu profe", descProfe: "Las partidas de tus clases, como las repasan tus alumnos", href: "repasar-clases.html" },
             ] },
-            { title: "Entrenamiento básico", plegable: true, tiles: [
+            /* `escalon`: en la computadora se abre solo el del nivel del alumno
+               (por su diagnóstico) y los otros dos arrancan plegados. Ver
+               «Abierto, solo el entrenamiento de tu nivel» en
+               docs/decisiones/paneles.md. */
+            { title: "Entrenamiento básico", plegable: true, escalon: "basico", tiles: [
                 { emoji: "🎯", label: "Coordenadas", desc: "Reconoce las casillas a toda velocidad", href: "entreno/coordenadas.html", soloAlumno: true },
                 { emoji: "📷", label: "Memoria", desc: "Mira una posición unos segundos y reconstrúyela", href: "entreno/memoria.html", soloAlumno: true },
                 { emoji: "♚", label: "Mates", desc: "Mate en 1, 2 o 3 jugadas", href: "entreno/mates.html", soloAlumno: true },
                 { emoji: "🏆", label: "Practicar", desc: "Series de mates y tácticas, con racha y estrellas", href: "entreno/practicas.html", soloAlumno: true },
                 { emoji: "🧩", label: "4×4", desc: "Ejercicios tácticos por nivel", href: "entreno/4x4.html", soloAlumno: true },
             ] },
-            { title: "Entrenamiento intermedio", plegable: true, tiles: [
+            { title: "Entrenamiento intermedio", plegable: true, escalon: "intermedio", cerrado: true, tiles: [
                 { emoji: "🗂️", label: "Ejercicios por tema", desc: "Clavadas, ataques dobles, mates, finales y táctica de ataque", href: "entreno/temas.html", soloAlumno: true },
                 { emoji: "♞", label: "Aperturas y celadas", desc: "Líneas para memorizar jugándolas, con repaso espaciado", href: "entreno/aperturas.html", soloAlumno: true },
                 /* La prueba de estilo va al lado de Aperturas y celadas: lo que
@@ -130,7 +134,7 @@
                 { emoji: "🔬", label: "Mis estudios", desc: "Tus líneas con variantes y comentarios, el motor para buscar mejoras y tu repertorio", href: "entreno/mis-estudios.html", soloAlumno: true },
                 { emoji: "📴", label: "Ejercicios sin internet", desc: "Guarda una tanda en el celular y resuélvela donde no hay señal", href: "entreno/sin-internet.html", soloAlumno: true },
             ] },
-            { title: "Entrenamiento avanzado", plegable: true, tiles: [
+            { title: "Entrenamiento avanzado", plegable: true, escalon: "avanzado", cerrado: true, tiles: [
                 { emoji: "👁️", label: "Visualización", desc: "Encuentra la línea sin mover ni una pieza", href: "entreno/visualizacion.html", soloAlumno: true },
                 { emoji: "🧭", label: "Precisión posicional", desc: "Sin táctica inmediata: elige el plan correcto a largo plazo", href: "entreno/precision-posicional.html", soloAlumno: true },
                 { emoji: "🏁", label: "Finales contra la máquina", desc: "Lucena, Philidor y los finales de libro, contra Stockfish", href: "entreno/finales.html", soloAlumno: true },
@@ -1297,6 +1301,12 @@
            resultado dentro de un grupo cerrado no se vería. Ver «Los grupos de
            entrenamiento se pliegan en el celular» en docs/decisiones/paneles.md. */
         const CLAVE_GRUPOS = "panel_grupos_abiertos_v1";
+        /* El escalón de entrenamiento que le toca al alumno («basico»,
+           «intermedio» o «avanzado»), sacado del nivel de su último
+           diagnóstico (abrirMiEscalon). Null mientras no se sepa. */
+        let miEscalon = null;
+        // Si salió de un diagnóstico de verdad: solo entonces se dice «tu nivel».
+        let nivelSabido = false;
         function gruposGuardados() {
             try { const o = JSON.parse(localStorage.getItem(CLAVE_GRUPOS) || "{}"); return o && typeof o === "object" ? o : {}; }
             catch (e) { return {}; }
@@ -1333,9 +1343,15 @@
             ultimo.className = "text-xs font-semibold text-brand-700 dark:text-brand-200";
             ultimo.hidden = true;
             ultimo.textContent = "· aquí está lo último que hiciste";
+            /* «tu nivel», al lado del grupo de entrenamiento que le toca. */
+            const suNivel = document.createElement("span");
+            suNivel.dataset.tuNivel = "1";
+            suNivel.className = "text-[11px] font-semibold px-2 py-0.5 rounded-full bg-brand-100 dark:bg-brand-800 text-brand-700 dark:text-brand-200";
+            suNivel.textContent = "tu nivel";
+            suNivel.hidden = !(group.escalon && group.escalon === miEscalon && nivelSabido);
             const cabeza = document.createElement("div");
             cabeza.className = "flex items-baseline flex-wrap gap-x-2 gap-y-1 mb-3";
-            cabeza.append(heading, cuenta, ultimo);
+            cabeza.append(heading, cuenta, suNivel, ultimo);
 
             const guardado = gruposGuardados()[group.title];
             const poner = (abierto) => {
@@ -1345,7 +1361,13 @@
                 tilesGrid.style.display = abierto || campoBusqueda.value.trim() ? "" : "none";
             };
             section.dataset.plegable = "1";
-            poner(guardado !== undefined ? !!guardado : !(enCelular() || group.cerrado));
+            if (group.escalon) section.dataset.escalon = group.escalon;
+            section._abrirPorNivel = () => {
+                suNivel.hidden = !nivelSabido || group.escalon !== miEscalon;
+                if (gruposGuardados()[group.title] === undefined && !enCelular()) poner(group.escalon === miEscalon);
+            };
+            const cerradoDeEntrada = group.escalon && miEscalon ? group.escalon !== miEscalon : group.cerrado;
+            poner(guardado !== undefined ? !!guardado : !(enCelular() || cerradoDeEntrada));
             boton.addEventListener("click", () => {
                 const abierto = section.dataset.abierto !== "1";
                 poner(abierto);
@@ -2679,6 +2701,26 @@
             }
         }
 
+        /* ---------- Abierto, solo el entrenamiento de tu nivel ----------
+           Con los tres grupos de entrenamiento abiertos, el panel del alumno
+           medía cuatro pantallas y media en la computadora. Ahora se abre el
+           de su nivel —el de su último diagnóstico— y los otros dos quedan
+           plegados, con su nombre y cuántos accesos tienen, a un clic. Sin
+           diagnóstico (o uno viejo, sin `nivel`), el básico. Lo que la persona
+           abrió o cerró a mano se respeta (panel_grupos_abiertos_v1), y en el
+           celular siguen todos plegados, como antes. Ver «Abierto, solo el
+           entrenamiento de tu nivel» en docs/decisiones/paneles.md. */
+        const ESCALON_DE_NIVEL = { principiante: "basico", basico: "basico", intermedio: "intermedio", avanzado: "avanzado", muy_avanzado: "avanzado" };
+        async function abrirMiEscalon() {
+            const { data, error } = await miDiagnostico();
+            if (error) return;
+            const mio = (data || []).find((f) => f.student_id === alumnoDelPanel());
+            const nivel = mio && mio.detalle && mio.detalle.nivel;
+            nivelSabido = !!ESCALON_DE_NIVEL[nivel];
+            miEscalon = ESCALON_DE_NIVEL[nivel] || "basico";
+            document.querySelectorAll("#tile-grid section[data-escalon]").forEach((s) => s._abrirPorNivel && s._abrirPorNivel());
+        }
+
         /* ---------- El diagnóstico que pidió el profe ----------
            El profe lo asigna como un renglón de una tarea (Tareas → «Diagnóstico
            de nivel»), y mientras ese renglón no esté cumplido la tarjeta del
@@ -2720,6 +2762,7 @@
             const tareas = (t.error ? [] : t.data) || [];
             const diagnosticoPedido = marcarDiagnosticoPedido(tareas);
             estadoDelDiagnostico(diagnosticoPedido);
+            abrirMiEscalon();
             /* Si los exámenes no llegan se siguen mostrando las tareas: quedarse
                sin franja por la mitad que falló sería perder también la que sí
                se pudo leer. */
