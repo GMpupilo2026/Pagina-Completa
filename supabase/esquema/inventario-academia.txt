@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20261018163850
+# al-dia-con: 20261018200653
 tabla  Ejercicios Lichess  rls=true
 tabla  _foto_rls_tmp  rls=false
 tabla  _pedidos_elo  rls=false
@@ -78,6 +78,7 @@ tabla  equipo_entrenadores  rls=true
 tabla  equipos  rls=true
 tabla  estilo_opiniones  rls=true
 tabla  estilo_pruebas  rls=true
+tabla  estilo_seguimiento  rls=true
 tabla  estudios  rls=true
 tabla  examen_items  rls=true
 tabla  examen_respuestas  rls=true
@@ -773,6 +774,13 @@ columna  estilo_pruebas.partidas  jsonb
 columna  estilo_pruebas.recomendacion  jsonb
 columna  estilo_pruebas.respuestas  jsonb
 columna  estilo_pruebas.version  smallint
+columna  estilo_seguimiento.alumno_id  uuid
+columna  estilo_seguimiento.listo_at  timestamp with time zone
+columna  estilo_seguimiento.partidas  jsonb
+columna  estilo_seguimiento.prueba_id  uuid
+columna  estilo_seguimiento.revisado_at  timestamp with time zone
+columna  estilo_seguimiento.revisado_por  uuid
+columna  estilo_seguimiento.updated_at  timestamp with time zone
 columna  estudios.alumno_id  uuid
 columna  estudios.capitulos  jsonb
 columna  estudios.compartido  boolean
@@ -2021,6 +2029,8 @@ funcion  interno.enlaces_de_sala_validos(p jsonb)  invoker  anon=true  auth=true
 funcion  interno.entreno_pedido_de_la_base()  definer  anon=false  auth=false
 funcion  interno.estilo_opiniones_al_guardar()  definer  anon=false  auth=false
 funcion  interno.estilo_pruebas_al_guardar()  definer  anon=false  auth=false
+funcion  interno.estilo_seguimiento_al_guardar()  definer  anon=false  auth=false
+funcion  interno.estilo_seguimiento_partidas_ok(p jsonb)  invoker  anon=false  auth=true
 funcion  interno.estudio_al_guardar()  definer  anon=false  auth=false
 funcion  interno.frenar_envio_publico(p_tipo text, p_ambito text, p_correo text, p_ip text)  invoker  anon=false  auth=false
 funcion  interno.gente_de_mis_academias()  definer  anon=false  auth=true
@@ -2425,6 +2435,9 @@ politica  estilo_opiniones  estilo_opiniones_update  UPDATE
 politica  estilo_pruebas  estilo_pruebas_delete  DELETE
 politica  estilo_pruebas  estilo_pruebas_insert  INSERT
 politica  estilo_pruebas  estilo_pruebas_select  SELECT
+politica  estilo_seguimiento  estilo_seguimiento_insert  INSERT
+politica  estilo_seguimiento  estilo_seguimiento_select  SELECT
+politica  estilo_seguimiento  estilo_seguimiento_update  UPDATE
 politica  estudios  estudios_delete_propio  DELETE
 politica  estudios  estudios_exige_acceso_ins  INSERT  restrictiva
 politica  estudios  estudios_exige_acceso_upd  UPDATE  restrictiva
@@ -2781,6 +2794,7 @@ trigger  equipos  auditar
 trigger  equipos  equipos_renombra_subgrupos
 trigger  estilo_opiniones  estilo_opiniones_al_guardar
 trigger  estilo_pruebas  estilo_pruebas_al_guardar
+trigger  estilo_seguimiento  estilo_seguimiento_al_guardar
 trigger  estudios  estudio_al_guardar
 trigger  examen_respuestas  examen_respuestas_exige_acceso
 trigger  examenes  avisar_examen_asignado
@@ -3029,6 +3043,9 @@ indice  estilo_opiniones  estilo_opiniones_pkey
 indice  estilo_opiniones  estilo_opiniones_profesor
 indice  estilo_pruebas  estilo_pruebas_alumno
 indice  estilo_pruebas  estilo_pruebas_pkey
+indice  estilo_seguimiento  estilo_seguimiento_pkey
+indice  estilo_seguimiento  estilo_seguimiento_prueba
+indice  estilo_seguimiento  estilo_seguimiento_revisado_por
 indice  estudios  estudios_alumno_fecha
 indice  estudios  estudios_pkey
 indice  examen_items  examen_items_examen_id_orden_key
@@ -3831,6 +3848,9 @@ grant  estilo_opiniones  authenticated  UPDATE
 grant  estilo_pruebas  authenticated  DELETE
 grant  estilo_pruebas  authenticated  INSERT
 grant  estilo_pruebas  authenticated  SELECT
+grant  estilo_seguimiento  authenticated  INSERT
+grant  estilo_seguimiento  authenticated  SELECT
+grant  estilo_seguimiento  authenticated  UPDATE
 grant  estudios  authenticated  DELETE
 grant  estudios  authenticated  INSERT
 grant  estudios  authenticated  REFERENCES

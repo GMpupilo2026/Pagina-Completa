@@ -467,5 +467,33 @@ console.log("-- 10. El plan de 4 semanas");
   ok("sin nada recomendado, no hay plan", A.plan({}, { ahora }).length === 0);
 }
 
+/* 11. «Por qué»: las posiciones de SU prueba que muestran cada eje. */
+console.log("\n=== 11. Por qué: sus propias jugadas ===");
+{
+  const r = [];
+  // Ataque: atacar en todas, «muy seguro» salvo una de «me da igual»; a
+  // igual seguridad, primero la más rápida.
+  // Estructura: mitad y mitad (equilibrado o sin definir).
+  B.ITEMS.filter((i) => i.eje === "ataque").slice(0, 8).forEach((it, k) =>
+    r.push({ id: it.id, eleccion: it.a.polo === "atacar" ? "a" : "b", seguridad: k === 0 ? 1 : 3, ms: k === 3 ? 1000 : 5000 + k }));
+  B.ITEMS.filter((i) => i.eje === "estructura").slice(0, 8).forEach((it, k) =>
+    r.push({ id: it.id, eleccion: (it.a.polo === "abrir") === (k % 2 === 0) ? "a" : "b", seguridad: 2, ms: 5000 }));
+  const ataque0 = B.ITEMS.filter((i) => i.eje === "ataque")[0];
+  r.push({ id: ataque0.id, control: ataque0.id, eleccion: "a", seguridad: 3, ms: 1 });
+  const pf = P.medir(r, null, 2);
+  const ej = P.ejemplos(r, pf);
+  const at = ej.ataque || [];
+  ok("con un lado: hasta dos posiciones, las que eligió de ese lado", at.length === 2 && at.every((x) => x.polo === pf.ataque.etiqueta.polo && x.polo === "atacar"), JSON.stringify(at.map((x) => x.polo)));
+  ok("primero la que eligió más seguro y más rápido", at[0] && at[0].item.id === B.ITEMS.filter((i) => i.eje === "ataque")[3].id, at[0] && at[0].item.id);
+  const r2 = B.ITEMS.filter((i) => i.eje === "cambios").slice(0, 3).map((it) => ({ id: it.id, eleccion: it.a.polo === "cambiar" ? "a" : "b", seguridad: 2, ms: 5000 }));
+  const pf2 = P.medir(r2, null, 2);
+  ok("sin definir pero siempre lo mismo: las de ese lado", pf2.cambios.etiqueta.tipo === "sin definir" && P.ejemplos(r2, pf2).cambios.length === 2 && P.ejemplos(r2, pf2).cambios.every((x) => x.polo === "cambiar"));
+  ok("nunca la de «me da igual» si hay otras", at.every((x) => x.item.id !== ataque0.id));
+  const es = ej.estructura || [];
+  ok("sin un lado: una de cada lado (las dos cosas que hizo)", es.length === 2 && new Set(es.map((x) => x.polo)).size === 2, pf.estructura.etiqueta.tipo + " " + JSON.stringify(es.map((x) => x.polo)));
+  ok("cada una dice la jugada que eligió y la otra", [...at, ...es].every((x) => x.item[x.eleccion].polo === x.polo && x.otroPolo !== x.polo));
+  ok("un eje sin respuestas, sin ejemplos", (ej.cambios || []).length === 0);
+}
+
 if (fallos) { console.log(`\n✗ ${fallos} comprobación(es) fallaron.`); process.exit(1); }
 console.log("\n✓ La medición, la recomendación y las partidas de la prueba de estilo dicen lo que saben.");

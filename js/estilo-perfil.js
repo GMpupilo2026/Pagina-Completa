@@ -208,6 +208,46 @@
     return out;
   }
 
+  /* POR QUÉ DICE LO QUE DICE: de cada eje, hasta `cuantos` posiciones de su
+     propia prueba que muestran el resultado. Con un lado (claro o tendencia),
+     las que eligió de ese lado; equilibrado o sin definir, una de cada lado
+     (las dos cosas que hizo), o las de uno si eligió siempre lo mismo. Primero las que eligió más seguro, después las
+     que más distinguen (a de la calibración) y las que eligió más rápido; a
+     igualdad, por id. Las posiciones de control no (son repetidas).
+     → { [eje]: [{ item, eleccion, polo, otroPolo }] } */
+  function ejemplos(respuestas, perfil, cuantos) {
+    const B = banco(), Mm = medidas();
+    const n = cuantos || 2;
+    const porId = new Map(B.ITEMS.map((i) => [i.id, i]));
+    const out = {};
+    for (const e of (perfil && perfil.lista) || []) {
+      const x = perfil[e];
+      const dadas = [];
+      for (const r of respuestas || []) {
+        if (r.control) continue;
+        const it = porId.get(r.id);
+        if (!it || it.eje !== e) continue;
+        const polo = poloElegido(it, r.eleccion);
+        if (!polo) continue;
+        const otro = r.eleccion === "a" ? it.b.polo : it.a.polo;
+        dadas.push({ item: it, eleccion: r.eleccion, polo, otroPolo: otro, seg: r.seguridad || 2, ms: r.ms || 0, a: calibracionDe(it.id).a });
+      }
+      const orden = (p, q) => (q.seg - p.seg) || (q.a - p.a) || (p.ms - q.ms) || (p.item.id < q.item.id ? -1 : 1);
+      dadas.sort(orden);
+      let elegidas;
+      if (x && x.etiqueta && x.etiqueta.polo) {
+        elegidas = dadas.filter((d) => d.polo === x.etiqueta.polo).slice(0, n);
+      } else {
+        // Sin un lado: una de cada lado si eligió de los dos; si eligió de
+        // uno solo (pocas respuestas), las de ese.
+        const deCada = Mm.POLOS[e].map((polo) => dadas.find((d) => d.polo === polo)).filter(Boolean);
+        elegidas = (deCada.length > 1 ? deCada : dadas).slice(0, n);
+      }
+      out[e] = elegidas.map(({ item, eleccion, polo, otroPolo }) => ({ item, eleccion, polo, otroPolo }));
+    }
+    return out;
+  }
+
   /* Una frase por eje, con el número y su margen (el nombre del eje y su
      etiqueta van aparte, arriba). `tu`: a la persona misma («elegiste»); si
      no, a su profe («eligió»). */
@@ -301,7 +341,7 @@
     };
   }
 
-  const api = { SEGURIDAD, EJES, PREVIA, PESO_PARTIDA, PESO_PROFE, ENSANCHE_CONTROL, formaDe, topePartidas, pesoTiempo, estimar, medir, etiquetar, frase, espejo, Prueba, sigma };
+  const api = { SEGURIDAD, EJES, PREVIA, PESO_PARTIDA, PESO_PROFE, ENSANCHE_CONTROL, formaDe, topePartidas, pesoTiempo, estimar, medir, ejemplos, etiquetar, frase, espejo, Prueba, sigma };
   if (typeof window !== "undefined") window.EstiloPerfil = api;
   if (typeof module !== "undefined" && module.exports) module.exports = api;
 })();

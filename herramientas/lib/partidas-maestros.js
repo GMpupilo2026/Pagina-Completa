@@ -10,7 +10,10 @@
  * La misma partida está en varias lecciones de «Una clase al día» con otro
  * id: se queda la primera (contadas dos veces, pesarían doble).
  *
- *   leer(Chess) → [{ fuente, id, blancas, negras, evento, inicial, sans, vetadas }]
+ *   leer(Chess) → [{ fuente, id, blancas, negras, evento, resultado, completa,
+ *                    inicial, sans, vetadas }]
+ *     `resultado`: «1-0», «0-1», «1/2-1/2» o «» si la fuente no lo dice;
+ *     `completa`: false si la fuente solo trae un tramo de la partida.
  *     `vetadas`: las medias jugadas que el curso pregunta o dibuja, con dos de
  *     margen (una posición de ahí la reconocería quien hizo el curso).
  */
@@ -22,6 +25,10 @@ const crypto = require("crypto");
 const RAIZ = path.join(__dirname, "..", "..");
 const DATOS = path.join(RAIZ, "herramientas", "datos");
 const huella = (s) => crypto.createHash("md5").update(s).digest("hex");
+const resultadoDe = (r) => {
+  const t = String(r || "").replace(/½/g, "1/2").replace(/\s+/g, "");
+  return ["1-0", "0-1", "1/2-1/2"].includes(t) ? t : "";
+};
 
 function leer(Chess) {
   const out = [];
@@ -35,7 +42,7 @@ function leer(Chess) {
         for (let k = x - 2; k <= x + 2; k++) vetadas.add(k);
       out.push({
         fuente: "una-clase-al-dia", id: p.id, blancas: p.blancas, negras: p.negras, evento: p.evento,
-        inicial: p.start_fen, sans: p.moves.map((m) => m.san), vetadas,
+        resultado: resultadoDe(p.resultado), completa: true, inicial: p.start_fen, sans: p.moves.map((m) => m.san), vetadas,
       });
     }
   }
@@ -44,7 +51,7 @@ function leer(Chess) {
     out.push({
       fuente: "cambiar-o-no-cambiar", id: p.id, blancas: p.blancas, negras: p.negras,
       evento: [p.lugar, p.anio].filter(Boolean).join(", "),
-      inicial: p.fen_inicial || new Chess().fen(), sans: p.jugadas, vetadas: new Set(),
+      resultado: resultadoDe(p.resultado), completa: p.completa !== false, inicial: p.fen_inicial || new Chess().fen(), sans: p.jugadas, vetadas: new Set(),
     });
   }
   const pgn = fs.readFileSync(path.join(DATOS, "ganar-con-poco-partidas.pgn"), "utf8");
@@ -56,7 +63,7 @@ function leer(Chess) {
     out.push({
       fuente: "ganar-con-poco", id: "gcp-" + (i + 1), blancas: tag("White"), negras: tag("Black"),
       evento: [tag("Event"), tag("Date").slice(0, 4)].filter(Boolean).join(", "),
-      inicial: tag("FEN") || new Chess().fen(), sans, vetadas: new Set(),
+      resultado: resultadoDe(tag("Result")), completa: true, inicial: tag("FEN") || new Chess().fen(), sans, vetadas: new Set(),
     });
   });
   /* La misma partida está en más de una lección: se queda la primera. */
@@ -69,4 +76,4 @@ function leer(Chess) {
   });
 }
 
-module.exports = { leer, huella };
+module.exports = { leer, huella, resultadoDe };

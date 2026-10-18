@@ -471,6 +471,11 @@ profe» y avise con `__cambioEnBase`. Está probado que falla de verdad: sin el
 tiempo en `crearPregunta` saltan dos comprobaciones, y rearmando la tarjeta en
 cada aviso salta la de «no se le borró lo que llevaba jugado».
 
+- **Los dilemas de estilo** (Entrenamientos → «🎭 Dilemas de estilo»)
+  usan esta misma pregunta de opciones sin correcta, como el termómetro:
+  las dos jugadas de una posición de la prueba de estilo, y cada uno vota
+  la que jugaría. Ver «Dilemas de estilo en la clase» en entrenamiento.md.
+
 ### Práctica con reloj, partidas entre alumnos y «a ciegas»
 
 Tres herramientas de entrenamiento que faltaban en la clase. Lo que cuenta

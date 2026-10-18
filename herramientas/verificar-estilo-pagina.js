@@ -76,6 +76,7 @@ function clienteFalso(o) {
         if (nombre === "analisis_partidas_alumno" && O.cuentas && f.alumno_id === O.alumno) data = [O.cuentas];
         if (nombre === "estilo_pruebas") data = window.__pruebas.filter(function (p) { return p.alumno_id === f.alumno_id; });
         if (nombre === "estilo_opiniones") data = (O.opiniones || []).filter(function (x) { return x.alumno_id === f.alumno_id; });
+        if (nombre === "estilo_seguimiento") data = (O.seguimiento || []).filter(function (x) { return x.alumno_id === f.alumno_id; });
         return Promise.resolve({ data: data, error: null }).then(ok, mal);
       },
     };
@@ -235,6 +236,45 @@ async function main() {
     ok("«Bajar la ficha en PDF» baja un PDF con la marca de agua y su nombre",
       pdf.startsWith("%PDF") && /\/SMask/.test(pdf) && /^estilo-de-juego-.*\.pdf$/.test(descarga.suggestedFilename()),
       descarga.suggestedFilename() + " · " + pdf.slice(0, 8));
+
+    // «Por qué»: debajo de cada eje, posiciones de SU prueba, escritas y en
+    // un tablero que se abre (js/visor-linea.js).
+    const porQue = await page.$$eval("[data-estilo-perfil] [data-eje]", (f) => f.map((x) => {
+      const d = x.querySelector("[data-estilo-por-que]");
+      return { eje: x.dataset.eje, hay: !!d, textos: d ? [...d.querySelectorAll("[data-ejemplo] > p:first-child")].map((p) => p.textContent) : [] };
+    }));
+    ok("cada eje trae «Por qué: lo que elegiste», con una o dos posiciones de su prueba",
+      porQue.every((x) => x.hay && x.textos.length >= 1 && x.textos.length <= 2), JSON.stringify(porQue.map((x) => [x.eje, x.textos.length])));
+    ok("cada una escrita: la que eligió, qué representa, y la otra",
+      porQue.every((x) => x.textos.every((t) => /elegiste \S+ —[^—]+— y no \S+ —[^—]+—/.test(t))), porQue.map((x) => x.textos[0]).join(" | "));
+    await page.click('[data-eje="ataque"] [data-estilo-por-que] summary');
+    await page.click('[data-eje="ataque"] [data-estilo-por-que] [data-ejemplo] button[aria-expanded]');
+    await page.waitForFunction(() => document.querySelectorAll('[data-eje="ataque"] [data-ejemplo] .visor-linea .visor-sq').length === 64, null, { timeout: 10000 });
+    const visor = await page.evaluate(() => {
+      const v = document.querySelector('[data-eje="ataque"] [data-ejemplo] .visor-linea');
+      const b = document.querySelector('[data-eje="ataque"] [data-ejemplo] button[aria-expanded]');
+      return { titulo: v.querySelector(".visor-titulo").textContent, jugadas: v.querySelectorAll(".visor-jugada").length, abierto: b.getAttribute("aria-expanded"), visible: v.checkVisibility() };
+    });
+    ok("«Verla en el tablero» abre la posición con su jugada y la línea del motor", visor.visible && visor.abierto === "true" && /^Elegiste /.test(visor.titulo) && visor.jugadas >= 2, JSON.stringify(visor));
+
+    // «Ver una partida modelo»: una partida de maestros con esa apertura,
+    // ganada por quien la juega, desde la posición de la apertura.
+    await page.click('[data-grupo="blancas"] [data-modelo] button[aria-expanded]');
+    await page.waitForFunction(() => document.querySelectorAll('[data-grupo="blancas"] [data-modelo] .visor-linea .visor-sq').length === 64, null, { timeout: 10000 });
+    const modelo = await page.evaluate(() => {
+      const caja = document.querySelector('[data-grupo="blancas"] [data-modelo]');
+      const v = caja.querySelector(".visor-linea");
+      const m = window.EstiloModelos[caja.dataset.modelo];
+      const linea = window.AperturasLineas.LINEAS.find((l) => l.id === caja.dataset.modelo);
+      return { titulo: v.querySelector(".visor-titulo").textContent, jugadas: v.querySelectorAll(".visor-jugada").length, total: m.jugadas.length,
+        escrita: v.querySelector(".visor-escrita").textContent, en: linea.jugadas.length, resultado: m.resultado, blancas: m.blancas };
+    });
+    ok("«Ver una partida modelo» abre la partida entera, con quién la jugó",
+      modelo.jugadas === modelo.total && modelo.titulo.startsWith(modelo.blancas + " – "), JSON.stringify(modelo));
+    ok("ganada con blancas, y arranca en la posición de la apertura", modelo.resultado === "1-0" && modelo.titulo.includes("ganan las blancas"), JSON.stringify(modelo));
+    await page.waitForFunction((n) => new RegExp("^Jugada " + n + " de ").test(document.querySelector('[data-grupo="blancas"] [data-modelo] .visor-escrita').textContent), modelo.en, { timeout: 3000 })
+      .then(() => ok("en la jugada donde termina la línea de la apertura", true), () => ok("en la jugada donde termina la línea de la apertura", false, modelo.escrita));
+
         await page.waitForFunction(() => window.__escrituras.some((e) => e.tabla === "estilo_pruebas"), null, { timeout: 5000 }).catch(() => {});
     const esc = await page.evaluate(() => window.__escrituras.filter((e) => e.tabla === "estilo_pruebas"));
     const fila = esc[0] && esc[0].fila;
@@ -280,6 +320,32 @@ async function main() {
     // jugada 40, así que no hay con qué medir en qué partidas le va mejor.
     ok("con partidas cortas no inventa en qué partidas le va mejor", fila && fila.contexto && !("rendimiento" in fila.contexto), JSON.stringify(fila && fila.contexto));
     ok("sin errores en la consola (con partidas)", errores.length === 0, errores.join("\n      "));
+    await ctx.close();
+  }
+
+  /* El aviso a su profe a las 5 partidas: al abrir la prueba, el navegador
+     del alumno cuenta solo, en segundo plano, cuántas jugó con cada apertura
+     recomendada desde su última prueba, y lo guarda (estilo_seguimiento). Si
+     ya contó hoy, no vuelve a bajar nada. */
+  console.log("\n=== Contar las partidas con la apertura, sin que nadie apriete nada ===");
+  {
+    const anterior = { id: "p-vieja", alumno_id: "u-1", version: 2, respuestas: [], contexto: {}, partidas: null, created_at: "2026-08-01T15:00:00Z",
+      recomendacion: { blancas: { titulo: "Con blancas", principal: { id: "espanola-cerrada", nombre: "Española, variante cerrada", jugadas: ["e4", "e5", "Nf3", "Nc6", "Bb5", "a6"], porque: [] } } } };
+    const cuentas = { lichess: "alumna1", chesscom: null, elo: { reciente: 1640 } };
+    let { page, ctx, errores } = await abrir(browser, "/entreno/estilo.html", clienteFalso({ yo: "u-1", alumno: "u-1", cuentas, pruebas: [anterior] }));
+    await page.waitForSelector("#app:not(.hidden)", { timeout: 15000 });
+    await page.waitForFunction(() => window.__escrituras.some((e) => e.tabla === "estilo_seguimiento"), null, { timeout: 20000 }).catch(() => {});
+    const seg = await page.evaluate(() => window.__escrituras.filter((e) => e.tabla === "estilo_seguimiento").map((e) => e.fila));
+    ok("al abrir la prueba cuenta solo y guarda: su prueba, y 3 partidas con la apertura después de ella",
+      seg.length === 1 && seg[0].alumno_id === "u-1" && seg[0].prueba_id === "p-vieja" && seg[0].partidas.blancas === 3, JSON.stringify(seg));
+    ok("el alumno no marca nada como revisado (eso es de su profe)", seg[0] && !("revisado_at" in seg[0]));
+    ok("sin errores (contando)", errores.length === 0, errores.join("\n      "));
+    await ctx.close();
+    ({ page, ctx, errores } = await abrir(browser, "/entreno/estilo.html", clienteFalso({ yo: "u-1", alumno: "u-1", cuentas, pruebas: [anterior],
+      seguimiento: [{ alumno_id: "u-1", prueba_id: "p-vieja", updated_at: new Date(Date.now() - 3600000).toISOString() }] })));
+    await page.waitForSelector("#app:not(.hidden)", { timeout: 15000 });
+    await page.waitForTimeout(2500);
+    ok("si ya contó hace una hora, no vuelve a bajar ni a guardar nada", await page.evaluate(() => window.__escrituras.filter((e) => e.tabla === "estilo_seguimiento").length) === 0);
     await ctx.close();
   }
 

@@ -70,6 +70,12 @@
     // Los que le entregaron esta semana: la nota ya está, falta mirarla.
     examenesEntregados: (sb, op) => sb.from("examenes").select("id", CABEZA)
       .eq("profesor_id", op.yo).eq("estado", "entregado").gte("entregado_at", new Date(Date.now() - 7 * 864e5).toISOString()),
+    /* Los alumnos que ya jugaron 5 partidas con una apertura que les
+       recomendó la prueba de estilo y su profe todavía no miró cómo les fue
+       (public.estilo_seguimiento; la RLS acota a los suyos). Ver «Los avisos
+       de la prueba de estilo». */
+    estiloSeguimiento: (sb, op) => sb.from("estilo_seguimiento").select("alumno_id", CABEZA)
+      .not("listo_at", "is", null).is("revisado_at", null).neq("alumno_id", op.yo),
     seVan: (sb) => {
       const hoy = hoyCR();
       return sb.rpc("respuestas_satisfaccion", { p_desde: hoy.slice(0, 8) + "01", p_hasta: hoy, p_profesor: null, p_solo_se_van: true }, CABEZA);
@@ -141,6 +147,11 @@
       titulo: (n) => pl(n, "partida de torneo anotada esta semana por tus alumnos", "partidas de torneo anotadas esta semana por tus alumnos"),
       porque: "Las anotaron de su planilla y el motor ya las revisó: sus errores, lo que pensaban, y llevarlos a la clase.",
       accion: "Verlas", href: "libreta-torneos.html", alDia: "Ninguna partida de torneo nueva esta semana" },
+    { clave: "estiloSeguimiento", nivel: "vigilar", emoji: "🎭",
+      titulo: (n) => pl(n, "alumno ya jugó 5 partidas con la apertura que le recomendó su prueba de estilo",
+        "alumnos ya jugaron 5 partidas con la apertura que les recomendó su prueba de estilo"),
+      porque: "Es el momento de mirar cómo le fue con ella y decidir si la sigue.",
+      accion: "Ver cómo les fue", href: "informes.html?tema=estilo", alDia: "Nadie con una apertura nueva por revisar" },
     { clave: "seVan", nivel: "vigilar", emoji: "🚪",
       titulo: (n) => pl(n, "alumno dijo este mes que no sigue", "alumnos dijeron este mes que no siguen"),
       porque: "Lo contestaron en la encuesta de satisfacción con su profesor.",
