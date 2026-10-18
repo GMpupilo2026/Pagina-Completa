@@ -126,6 +126,9 @@ async function pruebaCoordinadora(browser) {
   igual("sus números salen de panel_profesor_de con SU id",
         g.rpcs.filter((r) => r.startsWith("panel_profesor")), ['panel_profesor_de {"p_profesor":"u-coord"}']);
   igual("«Su semana» con sus alumnos", g.alumnos, "49");
+  // Los avisos de la campana serían los de quien mira (se cuentan con su id).
+  igual("sin la campana de avisos de quien mira",
+        await page.evaluate(() => [document.getElementById("campana").checkVisibility(), document.getElementById("urgente-panel").checkVisibility()]), [false, false]);
   igual("sus funciones, pedidas con su id",
         g.rpcs.filter((r) => r.startsWith("funciones_coordinador_de") || r.startsWith("mis_funciones")),
         ['funciones_coordinador_de {"p_persona":"u-coord"}']);

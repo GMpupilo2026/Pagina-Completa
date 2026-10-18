@@ -11,7 +11,7 @@
  *     administración (lo que se ve lo decide la RLS). Solo lectura. Quien da
  *     clase puede llevar los errores de una partida a un plan de clase.
  *   - Quien da clase sin ?alumno=: las últimas partidas que anotaron sus
- *     alumnos (adonde lleva el aviso al celular y «Lo urgente» de su panel).
+ *     alumnos (adonde lleva el aviso al celular y la campana «Avisos» de su panel).
  *
  * Todo lo que escribe una persona (el torneo, los comentarios) va por
  * textContent. Ver «Mi libreta de torneos» en docs/decisiones/entrenamiento.md.
