@@ -2050,6 +2050,11 @@ async function pruebaProgresoAlumna(browser) {
     registro: document.getElementById("registro-clases").checkVisibility(),
     marcas: Array.from(document.querySelectorAll("[data-lo-ultimo]")).map((m) => m.closest("a").getAttribute("href")),
     placeholder: document.getElementById("buscar-panel-campo").placeholder,
+    metaHoy: (document.getElementById("hoy-meta-texto") || {}).textContent || "",
+    numerosSeVen: document.getElementById("entreno-puzzles").checkVisibility(),
+    numerosResumen: document.querySelector("#tus-numeros > summary").checkVisibility(),
+    tareasTarjeta: document.querySelector('#tile-grid a[href="tareas.html"]').textContent,
+    examenesTarjeta: document.querySelector('#tile-grid a[href="examenes.html"]').textContent,
   }));
   igual("a la alumna se le muestra su tarjeta", visto.alumno, true);
   igual("y no el panel del equipo docente", visto.profe, false);
@@ -2066,8 +2071,14 @@ async function pruebaProgresoAlumna(browser) {
 
   // El saludo: el nombre de pila y sin género; el subtítulo, su racha.
   igual("«¡Hola, Ana!», no «¡Bienvenido, Ana Rojas!»", visto.saludo, "¡Hola, Ana! 👋");
-  igual("el subtítulo dice su racha y cuánto le falta hoy", visto.subtitulo,
-    "Llevas 4 días seguidos entrenando: hoy te faltan " + (visto.meta - 2) + " ejercicios para no cortarla.");
+  /* Cada cosa una vez: el saludo dice la racha, y lo que falta hoy lo dice
+     «Hoy te toca» con su barra. Ver «El panel del alumno, cada cosa una vez». */
+  igual("el subtítulo dice su racha, y nada más", visto.subtitulo, "Llevas 4 días seguidos entrenando. 🔥");
+  igual("y «Hoy te toca» dice lo de hoy, sin repetir cuántos días lleva", visto.metaHoy,
+    "Hoy llevas 2 de " + visto.meta + " ejercicios para que el día cuente. No cortes tu racha.");
+  igual("los totales y la racha táctica van plegados bajo «Tus números»", [visto.numerosResumen, visto.numerosSeVen], [true, false]);
+  cierto("la tarjeta de Tareas dice cuántas tiene pendientes (" + visto.tareasTarjeta + ")", /3 pendientes$/.test(visto.tareasTarjeta));
+  cierto("y la de Exámenes, sin ninguno, no dice ningún número (" + visto.examenesTarjeta + ")", !/\d/.test(visto.examenesTarjeta));
   igual("el buscador le sugiere cosas que tiene (no «Cobros»)", visto.placeholder, "Mates, tareas, aperturas…");
   /* El registro de clases del profe, al final de todo: al alumno no le toca.
      Lo suyo es «Repasar mis clases». */
@@ -3385,8 +3396,12 @@ async function pruebaTercera(browser) {
   console.log("\n=== Tus favoritas ===");
   let r = await panel(browser, [ALUMNA, PROFE], "u-ana", null, {});
   await r.page.waitForFunction(() => !document.getElementById("favoritas").hidden, null, { timeout: 10000 }).catch(() => {});
-  igual("sin favoritas, invita a elegirlas", await r.page.evaluate(() => [document.getElementById("favoritas-vacio").checkVisibility(), document.getElementById("favoritas-elegir").textContent]),
-    [true, "Elegir favoritas"]);
+  /* Sin ninguna, un solo renglón: ni título ni explicación aparte. */
+  igual("sin favoritas, un solo renglón que invita a elegirlas", await r.page.evaluate(() => [
+      document.getElementById("favoritas-vacio").checkVisibility(), document.getElementById("favoritas-titulo").checkVisibility(),
+      document.getElementById("favoritas-elegir").textContent, document.getElementById("favoritas").getBoundingClientRect().height < 40]),
+    [false, false, "⭐ Elegir favoritas: las páginas que más usas, arriba del panel", true]);
+  igual("y la estrella no se lee en voz alta", await r.page.evaluate(() => document.querySelector("#favoritas-elegir [aria-hidden=true]").textContent), "⭐ ");
   await r.page.click("#favoritas-elegir");
   igual("se eligen en una ventana modal, con casillas por grupo",
     await r.page.evaluate(() => { const d = document.querySelector("dialog[data-favoritas]"); return d && [d.matches(":modal"), d.querySelectorAll("fieldset").length > 3, !!d.querySelector('input[value="entreno/mates.html"]')]; }), [true, true, true]);
@@ -3399,6 +3414,7 @@ async function pruebaTercera(browser) {
     await r.page.evaluate(() => Array.from(document.querySelectorAll("#favoritas-lista a")).map((a) => a.getAttribute("href"))), ["entreno/mates.html", "juegos.html"]);
   igual("se ven de verdad, y el botón ahora dice «Cambiar»",
     await r.page.evaluate(() => [document.getElementById("favoritas-lista").checkVisibility(), document.getElementById("favoritas-elegir").textContent]), [true, "Cambiar favoritas"]);
+  igual("y con alguna, vuelve su título", await r.page.evaluate(() => document.getElementById("favoritas-titulo").checkVisibility()), true);
   igual("se guardan con la clave que viaja con la cuenta",
     await r.page.evaluate(() => localStorage.getItem("panel_favoritas_v1")), JSON.stringify(["entreno/mates.html", "juegos.html"]));
   await r.page.click("#favoritas-elegir");
