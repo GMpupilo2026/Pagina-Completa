@@ -4041,6 +4041,25 @@ Comisión de Árbitros de 2023 a 2026, de todos los países.
   Para saber si alguien mandó una norma entre su «License level» y su
   «Licensed» solo sirven las otras 26 (`siguen_af`): al aprobarle el AI a
   alguien, su perfil borra las fechas del AF.
+- **Normas entre el «License level» y el «Licensed»: FIDE no las objeta.**
+  De los 26, se leyeron 23 perfiles en el Chrome del dueño
+  (`herramientas/datos/fide-perfiles-siguen-af.json`). FIDE devolvió la
+  página vacía para 9007180, 9963642 y 10651985. Tres de esos árbitros
+  mandaron una norma de un torneo de ese espacio:
+  - **Ernestina Barrientos Carmona** (MEX, 5120721; AF del 23/09/2015 al
+    «Licensed» del 20/11/2016) mandó el Americas Women Continental de
+    Manzanillo (del 06/11/2016) en su solicitud de AI del informe 2023Q3,
+    junto con dos Olimpiadas y el Mundial Juvenil 2023. La rechazaron por
+    «Only 3 norms… (Match Arbiter at Olympiad used twice – art. 4.9.4)»:
+    de las cuatro solo descontaron una Olimpiada, así que **la de
+    Manzanillo contó**. Es el antecedente de Meza.
+  - **Paul Kehinde Boyo** (NGR, 8501491; del 15/09/2016 al 09/12/2019)
+    mandó la Zona 4.4 de Monrovia (del 22/04/2017) en 2023Q1. Lo
+    rechazaron por otra norma, que no firmó el principal, y por el IA2
+    viejo: de Monrovia no dijeron nada. En 2023Q3 ya no la incluyó.
+  - **Michael C. Forster** (ENG, 400785; del 10/04/2018 al 20/01/2020)
+    mandó el British Championship de Torquay (del 27/07/2019) en 2023Q2.
+    Lo rechazaron por «Missing and incomplete documents», sin decir cuál.
 - **«Licensed» es otra cosa**: el pago anual de la licencia (B.06.1, 6.1).
   En los 343 rechazos no hay ninguno de un FA o IA por esa fecha; los de
   licencia son todos de antes del NA.
