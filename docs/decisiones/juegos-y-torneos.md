@@ -3853,6 +3853,35 @@ y sin cuenta, para que organizadores y clubes vean a quién pueden contratar.
   lista falsa y el reloj fijo: el orden, cada regla de categoría, la casilla,
   el buscador, el error de la base y los 400 px.
 
+### La ficha pública de cada árbitro, con su QR
+
+Pedido del dueño en octubre de 2026. En `arbitros.html`, el nombre de cada
+árbitro abre su ficha. Antes enlazaba al perfil de FIDE, que ahora va
+dentro de la ficha.
+
+- **Lleva solo lo público**, lo mismo que la lista y salido de
+  `arbitros_cr_publico()`: ID FIDE, título, categoría nacional, si FIDE lo
+  tiene activo, el último torneo en Costa Rica (y si fue hace más de dos
+  años) y el curso de actualización. Agrega «Puede arbitrar», lo que
+  permite su categoría según el reglamento (arts. 11, 13 y 15); a un AF o
+  AI, también si puede en torneos de FIDE (activo). No suma nada de las
+  tablas con licencia.
+- **El número de la dirección abre la ficha** (`arbitros.html#ID FIDE`).
+  El QR y «Copiar el enlace» llevan a esa dirección, así que un
+  organizador la abre desde el celular. «Volver a la lista» saca el número
+  de la dirección y devuelve el foco al nombre.
+- **El QR sale de `js/qr-svg.js`**, que antes estaba copiado dentro de
+  `js/certificado.js`; el certificado ahora también lo usa (una sola copia).
+  `js/clase-qr.js` sigue con el suyo porque pinta la tarjeta del proyector
+  con otro margen y otro tamaño.
+- `verificar-arbitros-publico.js` lo prueba:
+  - los datos y «Puede arbitrar» de un AF inactivo y de una C;
+  - que el QR leído de vuelta lleva a la ficha;
+  - copiar el enlace, cerrar la ficha, abrir directo con `#3` y que quepa
+    a 400 px.
+
+  Se rompió codificando otro texto en el QR, y salta.
+
 ## Las novedades y el arbitraje en números
 
 Dos secciones más en la lista de `arbitros-cr.html` (octubre de 2026), sin los

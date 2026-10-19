@@ -35,32 +35,9 @@ window.Certificado = (function () {
       String(path).split("/").map(encodeURIComponent).join("/");
   }
 
-  // El QR, dibujado con el DOM (como js/clase-qr.js), con su margen blanco.
+  // El QR, de js/qr-svg.js (el mismo de la ficha pública de un árbitro).
   function qr(texto) {
-    if (!window.qrcode) return null;
-    const q = window.qrcode(0, "M");
-    q.addData(texto);
-    q.make();
-    const n = q.getModuleCount(), borde = 4, lado = n + borde * 2;
-    const NS = "http://www.w3.org/2000/svg";
-    const s = document.createElementNS(NS, "svg");
-    s.setAttribute("viewBox", "0 0 " + lado + " " + lado);
-    s.setAttribute("width", "100%");
-    s.setAttribute("height", "100%");
-    s.setAttribute("shape-rendering", "crispEdges");
-    s.setAttribute("role", "img");
-    s.setAttribute("aria-label", "Código QR para comprobar este certificado");
-    const fondo = document.createElementNS(NS, "rect");
-    fondo.setAttribute("width", String(lado));
-    fondo.setAttribute("height", String(lado));
-    fondo.setAttribute("fill", "#ffffff");
-    let d = "";
-    for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) if (q.isDark(y, x)) d += "M" + (x + borde) + " " + (y + borde) + "h1v1h-1z";
-    const puntos = document.createElementNS(NS, "path");
-    puntos.setAttribute("d", d);
-    puntos.setAttribute("fill", "#000000");
-    s.append(fondo, puntos);
-    return s;
+    return window.QrSvg ? window.QrSvg.dibujar(texto, "Código QR para comprobar este certificado") : null;
   }
 
   function sinCertificado(texto) {

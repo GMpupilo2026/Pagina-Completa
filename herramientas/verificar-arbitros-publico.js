@@ -64,7 +64,7 @@ const texto = (p, id) => p.$eval(id, (e) => e.textContent);
         ["6 árbitros en la lista de la Federación; 5 arbitraron en Costa Rica en los últimos dos años.", "16/10/2026"]);
     igual("cada fila: título, categoría, si está activo en FIDE, último torneo y curso", await p.$$eval("#ar-tabla tbody tr", (trs) => [...trs].slice(1, 3).map((t) => [...t.cells].slice(1).map((c) => c.textContent))),
         [["Árbitro FIDE", "A", "Inactivo", "01/03/2026", "No consta"], ["Árbitro Nacional", "A", "Activo", "01/12/2025", "Al día"]]);
-    igual("el nombre enlaza a su perfil de FIDE", await p.$eval("#ar-tabla tbody th a", (a) => a.href), "https://ratings.fide.com/profile/1");
+    igual("el nombre abre su ficha (#ID FIDE)", await p.$eval("#ar-tabla tbody th a", (a) => a.getAttribute("href")), "#1");
     igual("sin elegir torneo, la división y los jugadores no se usan", await p.$eval("#ar-division", (e) => e.disabled), true);
 
     console.log("\n=== Buscar árbitro para un torneo ===");
@@ -101,6 +101,48 @@ const texto = (p, id) => p.$eval(id, (e) => e.textContent);
     await p.fill("#ar-texto", "");
     igual("a 400 px, sin desplazamiento horizontal", await p.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), true);
     await ctx.close();
+
+    console.log("\n=== La ficha de cada árbitro ===");
+    ({ ctx, p } = await abrir(browser, (r) => r.fulfill({ contentType: "application/json", body: JSON.stringify(LISTA) })));
+    await p.waitForFunction(() => document.querySelectorAll("#ar-tabla tbody tr[data-fide]").length > 0);
+    igual("sin número en la dirección, no hay ficha", await p.$eval("#ar-ficha", (e) => e.checkVisibility()), false);
+    await p.click("#ar-tabla tbody th a:text-is('Dos, Beto')");
+    await p.waitForFunction(() => document.getElementById("ar-ficha").checkVisibility());
+    const datos = () => p.$$eval("#ar-ficha-datos dt", (dts) => dts.map((d) => [d.textContent, d.nextElementSibling.textContent]));
+    igual("al tocar el nombre se abre su ficha, con lo de la lista y lo que puede arbitrar", [await texto(p, "#ar-ficha-t"), await datos()],
+        ["Dos, Beto", [["ID FIDE", "2"], ["Título FIDE", "Árbitro FIDE"], ["Categoría nacional", "A"], ["En FIDE", "Inactivo"], ["Último torneo en Costa Rica", "01/03/2026"],
+          ["Curso de actualización", "No consta"], ["Puede arbitrar", "Principal o adjunto en cualquier torneo nacional o internacional, también los campeonatos nacionales (art. 15). Como Árbitro FIDE, en torneos de FIDE solo si FIDE lo tiene activo."]]]);
+    igual("el foco va al nombre de la ficha y el enlace de FIDE es el suyo", [await p.evaluate(() => document.activeElement.id), await p.$eval("#ar-ficha-fide", (a) => a.href)],
+        ["ar-ficha-t", "https://ratings.fide.com/profile/2"]);
+    igual("el QR lleva a esta ficha", await p.evaluate(() => {
+        // Se lee de vuelta: los módulos negros del dibujo, contra los de la librería con el mismo texto.
+        const svg = document.querySelector("#ar-ficha-qr svg"), q = window.qrcode(0, "M");
+        q.addData(location.href.split("#")[0] + "#2"); q.make();
+        let d = ""; const n = q.getModuleCount();
+        for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) if (q.isDark(y, x)) d += "M" + (x + 4) + " " + (y + 4) + "h1v1h-1z";
+        return [svg.getAttribute("aria-label"), svg.querySelector("path").getAttribute("d") === d];
+    }), ["Código QR que abre la ficha de Dos, Beto", true]);
+    await ctx.grantPermissions(["clipboard-read", "clipboard-write"]);
+    await p.click("#ar-ficha-copiar");
+    await p.waitForFunction(() => /copiado/.test(document.getElementById("ar-ficha-estado").textContent));
+    igual("«Copiar el enlace» copia el de la ficha", await p.evaluate(() => navigator.clipboard.readText()), PAGINA.split("#")[0] + "#2");
+    igual("una C dice hasta dónde llega (art. 11)", await (async () => { await p.click("#ar-ficha-cerrar"); await p.click("#ar-tabla tbody th a:text-is('Cinco, Elena')"); await p.waitForFunction(() => document.getElementById("ar-ficha-t").textContent === "Cinco, Elena"); return (await datos()).at(-1)[1]; })(),
+        "Principal o adjunto en torneos solo de Elo nacional, de cuarta o tercera división y hasta 30 jugadores (art. 11).");
+    await p.click("#ar-ficha-cerrar");
+    igual("«Volver a la lista» la cierra, saca el número de la dirección y deja el foco en su nombre",
+        [await p.$eval("#ar-ficha", (e) => e.checkVisibility()), await p.evaluate(() => location.hash), await p.evaluate(() => document.activeElement.textContent)], [false, "", "Cinco, Elena"]);
+    await ctx.close();
+    // Con el número en la dirección (el QR o el enlace copiado), abre directo en la ficha.
+    const ctx2 = await browser.newContext({ serviceWorkers: "block" });
+    await ctx2.clock.setFixedTime(new Date("2026-10-18T12:00:00-06:00"));
+    await ctx2.route("**/rest/v1/rpc/arbitros_cr_publico", (r) => r.fulfill({ contentType: "application/json", body: JSON.stringify(LISTA) }));
+    const p2 = await ctx2.newPage();
+    await p2.goto(PAGINA + "#3", { waitUntil: "load" });
+    await p2.waitForFunction(() => document.getElementById("ar-ficha").checkVisibility());
+    igual("el enlace con #3 abre la ficha de Carla", await p2.$eval("#ar-ficha-t", (e) => e.textContent), "Tres, Carla");
+    await p2.setViewportSize({ width: 400, height: 800 });
+    igual("la ficha a 400 px, sin desplazamiento horizontal", await p2.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), true);
+    await ctx2.close();
 
     console.log("\n=== Si la base no contesta ===");
     ({ ctx, p } = await abrir(browser, (r) => r.fulfill({ status: 500, body: "{}" })));

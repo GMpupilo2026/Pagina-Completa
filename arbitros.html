@@ -90,6 +90,28 @@
                 <p id="ar-estado" class="text-lg text-brand-800 dark:text-brand-50 max-w-3xl" aria-live="polite">Cargando la lista…</p>
             </header>
 
+            <section id="ar-ficha" class="hidden bg-white dark:bg-brand-900 rounded-2xl shadow-md p-4 space-y-4" aria-labelledby="ar-ficha-t">
+                <div class="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                        <p class="text-xs font-semibold uppercase tracking-wide text-brand-500 dark:text-brand-300">Ficha del árbitro</p>
+                        <h2 id="ar-ficha-t" class="font-serif font-bold text-2xl text-brand-800 dark:text-white"></h2>
+                    </div>
+                    <button type="button" id="ar-ficha-cerrar" class="text-sm font-semibold px-3 py-2 rounded-lg text-brand-800 dark:text-white bg-brand-100 dark:bg-brand-800 hover:bg-brand-200 dark:hover:bg-brand-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-500">Volver a la lista</button>
+                </div>
+                <div class="flex flex-wrap gap-6">
+                    <dl id="ar-ficha-datos" class="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sm grow min-w-[16rem]"></dl>
+                    <div class="w-44 shrink-0 space-y-2">
+                        <div id="ar-ficha-qr" class="w-44 h-44"></div>
+                        <p class="text-xs text-brand-600 dark:text-brand-200">Escanéalo con el celular para abrir esta ficha.</p>
+                    </div>
+                </div>
+                <div class="flex flex-wrap items-center gap-3">
+                    <button type="button" id="ar-ficha-copiar" class="text-sm font-semibold px-3 py-2 rounded-lg text-brand-800 dark:text-white bg-brand-100 dark:bg-brand-800 hover:bg-brand-200 dark:hover:bg-brand-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-500">Copiar el enlace</button>
+                    <a id="ar-ficha-fide" target="_blank" rel="noopener" class="text-sm font-semibold text-brand-800 dark:text-white underline underline-offset-2 hover:no-underline">Su perfil en FIDE</a>
+                    <p id="ar-ficha-estado" class="text-sm text-brand-600 dark:text-brand-200" aria-live="polite"></p>
+                </div>
+            </section>
+
             <section aria-labelledby="ar-buscar-t" class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-4 space-y-4">
                 <h2 id="ar-buscar-t" class="font-serif font-bold text-xl text-brand-800 dark:text-white">Buscar árbitro para un torneo</h2>
                 <div class="flex flex-wrap items-end gap-4">
@@ -149,6 +171,8 @@
     </footer>
     <script src="js/main.js"></script>
     <script src="js/hora-cr.js"></script>
+    <script src="js/vendor/qrcode.js"></script>
+    <script src="js/qr-svg.js"></script>
     <script src="js/arbitros-publico.js"></script>
 </body>
 </html>
