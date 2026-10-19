@@ -4039,8 +4039,17 @@ Comisión de Árbitros de 2023 a 2026, de todos los países.
 - **En la página**:
   - `af_perfil` (y `ia_perfil`) en `arbitros_cr_fide` (migración
     `20261016022547_arbitros_cr_fecha_del_perfil.sql`) es la fecha oficial.
-    Sale de «perfil» en cada aprobación del JSON y se copia a mano de una
-    captura, porque el perfil de FIDE no contesta a la base.
+    Sale de «perfil» en cada aprobación del JSON o, si no, del «License
+    level» de ese título en `herramientas/datos/arbitros-cr-perfiles-licencia.json`
+    (los 28 AF e IA, leídos en Chrome el 18/10/2026: el perfil de FIDE no
+    contesta ni a la base ni a la nube). `lista-fide.py` se detiene si las
+    dos fuentes dicen fechas distintas. Con eso tienen fecha oficial 19 AF y
+    8 IA, también los de antes de 2023 (Urbina, Miranda, Herrera, Rebeca y
+    Fabián Jiménez, Redondo, Amaya, Gustavo Murillo…). El perfil no trae la
+    del AF de quien ya es IA, ni la del AI de Joshebeth Núñez, que todavía
+    muestra la licencia de AF.
+  - **«Licensed» no es una demora en 2013-01-01**: es el día en que FIDE
+    empezó a cobrar la licencia, y lo tiene todo el que ya era AF o IA.
   - Con ella, una norma de AI cuenta si el torneo empezó **después**; si
     empezó antes, no cuenta; el mismo día, revisar.
   - Sin ella, se usa la fecha del Consejo:
