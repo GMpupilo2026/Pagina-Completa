@@ -4034,13 +4034,38 @@ Comisión de Árbitros de 2023 a 2026, de todos los países.
     de AI más vieja, el PanAm Escolar de Medellín (del 12 al 17/11/2019),
     es de 66 días después del Board: con el desfase de siempre, ya era AF.
 - **Las solicitudes de AI de todos los países, guardadas** (octubre de
-  2026): `herramientas/arbitros-cr/solicitudes-ia.py` las saca de los 14
-  informes (de 2023Q1 a 2026Q3; 2023Q4 no existe) a
-  `herramientas/datos/fide-solicitudes-ia.json`. Son 612 solicitudes, con
-  80 rechazos de 72 personas; 46 de ellas consiguieron el AI después.
-  Para saber si alguien mandó una norma entre su «License level» y su
-  «Licensed» solo sirven las otras 26 (`siguen_af`): al aprobarle el AI a
-  alguien, su perfil borra las fechas del AF.
+  2026): `herramientas/arbitros-cr/solicitudes-ia.py` las saca de los 25
+  informes al Consejo, de 2020Q2 a 2026Q3, a
+  `herramientas/datos/fide-solicitudes-ia.json`. El de 2023Q4 no existe,
+  el de 2020Q4 no trae solicitudes de título, y los de antes de 2020Q2 eran
+  informes al Presidential Board, con otro nombre de archivo, que el sitio
+  de la Comisión no lista. Son 873 solicitudes y 145 rechazos (612 y 80
+  desde 2023). Para saber si alguien mandó una norma entre su «License
+  level» y su «Licensed» solo sirven los que tuvieron un rechazo y ninguna
+  aprobación (`siguen_af`, 39): al aprobarle el AI a alguien, su perfil
+  borra las fechas del AF.
+  - En los 65 rechazos de 2020 a 2022 tampoco hay ninguno por la licencia.
+    Los tres «before FA title» (Idiazabal, ESP, 2022Q2; Kikvidze, GEO, y
+    Avramidou, GRE, 2022Q3) son de torneos de uno a tres años antes del AF.
+- **Normas entre el «License level» y el «Licensed»: FIDE no las objeta.**
+  De los 26, se leyeron 23 perfiles en el Chrome del dueño
+  (`herramientas/datos/fide-perfiles-siguen-af.json`). FIDE devolvió la
+  página vacía para 9007180, 9963642 y 10651985. Tres de esos árbitros
+  mandaron una norma de un torneo de ese espacio:
+  - **Ernestina Barrientos Carmona** (MEX, 5120721; AF del 23/09/2015 al
+    «Licensed» del 20/11/2016) mandó el Americas Women Continental de
+    Manzanillo (del 06/11/2016) en su solicitud de AI del informe 2023Q3,
+    junto con dos Olimpiadas y el Mundial Juvenil 2023. La rechazaron por
+    «Only 3 norms… (Match Arbiter at Olympiad used twice – art. 4.9.4)»:
+    de las cuatro solo descontaron una Olimpiada, así que **la de
+    Manzanillo contó**. Es el antecedente de Meza.
+  - **Paul Kehinde Boyo** (NGR, 8501491; del 15/09/2016 al 09/12/2019)
+    mandó la Zona 4.4 de Monrovia (del 22/04/2017) en 2023Q1. Lo
+    rechazaron por otra norma, que no firmó el principal, y por el IA2
+    viejo: de Monrovia no dijeron nada. En 2023Q3 ya no la incluyó.
+  - **Michael C. Forster** (ENG, 400785; del 10/04/2018 al 20/01/2020)
+    mandó el British Championship de Torquay (del 27/07/2019) en 2023Q2.
+    Lo rechazaron por «Missing and incomplete documents», sin decir cuál.
 - **«Licensed» es otra cosa**: el pago anual de la licencia (B.06.1, 6.1).
   En los 343 rechazos no hay ninguno de un FA o IA por esa fecha; los de
   licencia son todos de antes del NA.
