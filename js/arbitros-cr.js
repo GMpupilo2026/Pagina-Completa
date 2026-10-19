@@ -111,6 +111,10 @@
 
     // Los árbitros que fallecieron (arbitros_cr_memoria): su nombre lleva el lazo de «En memoria».
     let memoria = new Set();
+    // Lo que cada uno hizo en un seminario además de lo que trae arbitros_cr_fide
+    // (arbitros_cr_seminario_roles): conferencista, asistente, organizador, o
+    // el seminario que aprobó quien no está en la lista de árbitros de FIDE.
+    let rolesSeminario = new Map();
     let eloCr = new Map(), LISTA = "", sinId = [], equipos = new Map(), arbitros = [], torneos = new Map(), torneosCr = new Map(), crDeFide = new Map(), PRIMER = 0, ULTIMO = 0;
     const estado = { q: "", titulo: "", tipo: "", donde: "", contar: "", desde: 0, hasta: 0, orden: { col: "torneos", dir: -1 }, normaAf: "", normaAi: "", elegido: null, otro: null, enFide: "",
         rankAnio: 0, rankPor: "torneos", federacion: "" };
@@ -464,9 +468,13 @@
     /* «Historial en FIDE» de la ficha: sus solicitudes de título y sus
        seminarios según los informes de la Comisión de Árbitros (desde 2023). */
     function pintarHistorial(a) {
-        const f = a.fide, sols = (f && f.solicitudes) || [], sems = (f && f.seminarios) || [];
+        const extra = rolesSeminario.get(a.fide_id) || [];
+        const f = a.fide, sols = (f && f.solicitudes) || [];
+        const sems = ((f && f.seminarios) || []).concat(extra.filter((x) => x.rol === "aprobo")
+            .map((x) => ({ tipo: x.tipo, seminario: x.seminario, mes: x.fecha.slice(0, 7), fecha: x.fecha, informe: x.informe })));
+        const roles = extra.filter((x) => x.rol !== "aprobo");
         const caja = $("ficha-historial");
-        if (!sols.length && !sems.length) {
+        if (!sols.length && !sems.length && !roles.length) {
             caja.replaceChildren(el("p", { class: "text-sm text-brand-500 dark:text-brand-300" }, "No figura en los informes de la Comisión de Árbitros al Consejo de FIDE desde 2023: ni solicitudes de título ni seminarios."));
             return;
         }
@@ -486,6 +494,15 @@
                 el("span", { class: "of-detalle" }, (vigente ? "Vale para pedir el título hasta " : "Ya no vale para pedir el título: venció ") + (vence.length === 7 ? cuando(vence) : "el " + fecha(vence)) + " (cuatro años, B.06.1 5.3.2). · ",
                     ...[x.fuente && enlace(x.fuente, "informe de la Comisión"), x.informe && enlace(x.informe, "informe del seminario"), x.evento && enlace(x.evento, "página del seminario")]
                         .filter(Boolean).flatMap((e, i) => (i ? [" · ", e] : [e])))));
+        }
+        // Los seminarios en que fue conferencista, asistente u organizador.
+        const ROL = { conferencista: "Conferencista", asistente: "Asistente", organizador: "Organizador" };
+        for (const x of roles.slice().sort((p, q) => q.fecha.localeCompare(p.fecha))) {
+            const pegado = ["local", "técnico"].includes(x.detalle);
+            lista.append(el("li", { "data-seminario-rol": x.rol },
+                el("strong", {}, `${fecha(x.fecha)} · ${ROL[x.rol]}${pegado ? " " + x.detalle : ""} del seminario de ${x.tipo === "FA" ? "AF" : "AI"}: ${x.seminario}`),
+                x.detalle && !pegado ? ` (${x.detalle})` : null,
+                el("span", { class: "of-detalle" }, " · ", enlace(x.informe, "informe del seminario"))));
         }
         caja.replaceChildren(lista);
     }
@@ -812,6 +829,7 @@
         $("ficha-categoria").replaceChildren(...(a.titulo === "AN" ? [tarjetaCategoria(a)] : [tarjetaCategoriaFide(a)].filter(Boolean)));
         pintarFormacion(a);
         pintarContacto(a);
+        pintarMemoriaAdmin(a);
         pintarRevision(a);
         pintarComparacion(a);
         pintarActividad("ficha-actividad", torneosDe(a));
@@ -1720,6 +1738,29 @@
         pintarContacto(a);
         $("contacto-estado").textContent = "Listo: guardado. " + $("contacto-estado").textContent;
     }
+    // «En memoria» (solo administración): poner o quitar la marca de quien falleció.
+    function pintarMemoriaAdmin(a) {
+        $("memoria-admin").classList.toggle("hidden", !soyAdmin);
+        if (!soyAdmin) return;
+        const esta = memoria.has(a.fide_id);
+        $("memoria-boton").textContent = esta ? "Quitar «En memoria»" : "Marcar «En memoria»";
+        $("memoria-estado").textContent = esta ? "Su nombre lleva el lazo de «En memoria»." : "";
+    }
+    async function cambiarMemoria() {
+        const a = arbitros.find((x) => x.fide_id === estado.elegido);
+        if (!a || !soyAdmin) return;
+        const esta = memoria.has(a.fide_id);
+        const ok = await Avisos.confirmar(esta ? `¿Quitar «En memoria» del nombre de ${a.nombre}?`
+            : `¿Marcar que ${a.nombre} falleció? Su nombre llevará el lazo de «En memoria» en la lista y en su ficha.`,
+            { aceptar: esta ? "Sí, quitarlo" : "Sí, marcarlo", cancelar: "Dejarlo como está" });
+        if (!ok) return;
+        const { error } = esta ? await sb.from("arbitros_cr_memoria").delete().eq("fide_id", a.fide_id)
+            : await sb.from("arbitros_cr_memoria").insert({ fide_id: a.fide_id });
+        if (error) { $("memoria-estado").textContent = "No se pudo guardar: " + error.message; return; }
+        if (esta) memoria.delete(a.fide_id); else memoria.add(a.fide_id);
+        pintarGeneral();
+        pintarFicha();
+    }
     async function quitarContacto() {
         const a = arbitros.find((x) => x.fide_id === estado.elegido);
         if (!a || !soyAdmin) return;
@@ -2481,6 +2522,7 @@
         $("formacion-form").addEventListener("submit", guardarFormacion);
         $("contacto-form").addEventListener("submit", guardarContacto);
         $("contacto-quitar").addEventListener("click", quitarContacto);
+        $("memoria-boton").addEventListener("click", cambiarMemoria);
         $("registro-archivo").addEventListener("change", abrirRegistro);
         $("registro-plantilla").addEventListener("click", bajarPlantilla);
         $("registro-guardar").addEventListener("click", guardarRegistro);
@@ -2504,7 +2546,7 @@
         const { data: adm } = await sb.rpc("soy_admin");
         soyAdmin = adm === true;
         try {
-            const [a, t, c, cr, crc, f, s, ce, fo, me] = await Promise.all([
+            const [a, t, c, cr, crc, f, s, ce, fo, me, ro] = await Promise.all([
                 leerTodo("arbitros_cr", "fide_id,nombre,titulo,titulo_detalle,solo_chess_results", "fide_id"),
                 leerTodo("arbitros_cr_torneos", "id,nombre,ciudad,pais,inicio,fin,sistema,ritmo,jugadores,con_elo,contados,rondas,federaciones,valorado,af_estado,af_detalle,ai_estado,ai_detalle", "id"),
                 leerTodo("arbitros_cr_cargos", "torneo_id,fide_id,cargo", "torneo_id,fide_id,cargo"),
@@ -2515,8 +2557,11 @@
                 leerTodo("arbitros_cr_cr_elo", "clave,calculo,ritmo", "clave"),
                 leerTodo("arbitros_cr_formacion", "id,fide_id,tipo,categoria,fecha,horas,nota,detalle", "fecha,id"),
                 leerTodo("arbitros_cr_memoria", "fide_id", "fide_id"),
+                leerTodo("arbitros_cr_seminario_roles", "fide_id,rol,tipo,seminario,fecha,informe,detalle", "fide_id,informe,rol"),
             ]);
             memoria = new Set(me.map((x) => x.fide_id));
+            rolesSeminario = new Map();
+            for (const x of ro) rolesSeminario.set(x.fide_id, (rolesSeminario.get(x.fide_id) || []).concat(x));
             sinId = s;
             eloCr = new Map(ce.map((e) => [e.clave, e]));
             formacion = new Map();

@@ -16,6 +16,9 @@
      estar activo en FIDE (con licencia).
    - El que no arbitró en los últimos dos años sale al final; con la casilla
      marcada (lo que viene), no sale.
+   - La ficha de cada uno: lo mismo de la lista, más lo que puede arbitrar
+     según su categoría, con un código QR y un enlace que la abren directo
+     (arbitros.html#ID FIDE).
 
    Ver «La lista pública de árbitros» en docs/decisiones/juegos-y-torneos.md. */
 (function () {
@@ -75,7 +78,7 @@
         const td = (v) => el("td", { class: "px-3 py-2 align-top" }, v);
         $("ar-tabla").tBodies[0].replaceChildren(...(filas.length ? filas.map((a) => el("tr", { class: "border-t border-brand-100 dark:border-brand-800", "data-fide": String(a.fide_id) },
             el("th", { scope: "row", class: "px-3 py-2 align-top font-normal text-left" },
-                el("a", { href: "https://ratings.fide.com/profile/" + a.fide_id, target: "_blank", rel: "noopener", class: "font-semibold underline underline-offset-2 hover:no-underline" }, a.nombre),
+                el("a", { href: "#" + a.fide_id, class: "font-semibold underline underline-offset-2 hover:no-underline" }, a.nombre),
                 el("span", { class: "block text-xs text-brand-500 dark:text-brand-300" }, "ID FIDE " + a.fide_id)),
             td(TITULOS[a.titulo] || a.titulo || "—"), td(a.categoria || "—"), td(a.activo_fide ? "Activo" : "Inactivo"),
             td(a.ultimo_torneo ? fecha(a.ultimo_torneo) : "Ninguno registrado"), td(a.curso_al_dia ? "Al día" : "No consta")))
@@ -87,6 +90,58 @@
         // La división y los jugadores solo cuentan en un torneo de Elo nacional; la casilla, en cuanto se busca.
         $("ar-division").disabled = $("ar-jugadores").disabled = !pide || pide.minimo < 0 || !!pide.fide;
         $("ar-recientes").disabled = !pide;
+    }
+
+    /* La ficha: la abre el número de la dirección (#ID FIDE), así el QR y el
+       enlace copiado llevan directo a ella. */
+    const PUEDE = {
+        C: "Principal o adjunto en torneos solo de Elo nacional, de cuarta o tercera división y hasta 30 jugadores (art. 11).",
+        B: "Principal o adjunto en torneos de Elo nacional hasta segunda división y 50 jugadores (art. 13).",
+        A: "Principal o adjunto en cualquier torneo nacional o internacional, también los campeonatos nacionales (art. 15).",
+    };
+    function enlaceFicha(a) { return location.href.split("#")[0] + "#" + a.fide_id; }
+    function pintarFicha() {
+        const id = parseInt(decodeURIComponent(location.hash.slice(1)), 10);
+        const a = lista.find((x) => x.fide_id === id);
+        $("ar-ficha").classList.toggle("hidden", !a);
+        if (!a) return false;
+        const desde = masAnios(window.HoraCR.hoy(), -2);
+        const puede = a.titulo === "FA" || a.titulo === "IA" ? PUEDE.A + " Como " + TITULOS[a.titulo] + (a.activo_fide ? ", también en torneos de FIDE." : ", en torneos de FIDE solo si FIDE lo tiene activo.")
+            : PUEDE[a.categoria] || "No figura con categoría en la lista de la Federación.";
+        const datos = [
+            ["ID FIDE", String(a.fide_id)],
+            ["Título FIDE", TITULOS[a.titulo] || a.titulo || "—"],
+            ["Categoría nacional", a.categoria || "—"],
+            ["En FIDE", a.activo_fide ? "Activo" : "Inactivo"],
+            ["Último torneo en Costa Rica", a.ultimo_torneo ? fecha(a.ultimo_torneo) + (a.ultimo_torneo >= desde ? "" : " (hace más de dos años)") : "Ninguno registrado"],
+            ["Curso de actualización", a.curso_al_dia ? "Al día" : "No consta"],
+            ["Puede arbitrar", puede],
+        ];
+        $("ar-ficha-t").textContent = a.nombre;
+        $("ar-ficha-datos").replaceChildren(...datos.flatMap(([k, v]) => [
+            el("dt", { class: "font-semibold text-brand-700 dark:text-brand-200" }, k), el("dd", { class: "text-brand-800 dark:text-brand-50" }, v)]));
+        const dibujo = window.QrSvg && window.QrSvg.dibujar(enlaceFicha(a), "Código QR que abre la ficha de " + a.nombre);
+        $("ar-ficha-qr").replaceChildren(...(dibujo ? [dibujo] : []));
+        $("ar-ficha-fide").href = "https://ratings.fide.com/profile/" + a.fide_id;
+        $("ar-ficha-estado").textContent = "";
+        return true;
+    }
+    function alCambiarDireccion() {
+        if (pintarFicha()) {
+            $("ar-ficha").scrollIntoView({ block: "start" });
+            $("ar-ficha-t").setAttribute("tabindex", "-1");
+            $("ar-ficha-t").focus({ preventScroll: true });
+        }
+    }
+    async function copiarEnlace() {
+        const a = lista.find((x) => "#" + x.fide_id === location.hash);
+        if (!a) return;
+        try {
+            await navigator.clipboard.writeText(enlaceFicha(a));
+            $("ar-ficha-estado").textContent = "Listo: el enlace a esta ficha quedó copiado.";
+        } catch (e) {
+            $("ar-ficha-estado").textContent = "No se pudo copiar. El enlace es " + enlaceFicha(a);
+        }
     }
 
     async function init() {
@@ -103,7 +158,17 @@
         $("ar-leida").textContent = fecha(lista[0].lista);
         for (const id of ["ar-elo", "ar-division", "ar-recientes"]) $(id).addEventListener("change", pintar);
         for (const id of ["ar-jugadores", "ar-texto"]) $(id).addEventListener("input", pintar);
+        $("ar-ficha-copiar").addEventListener("click", copiarEnlace);
+        $("ar-ficha-cerrar").addEventListener("click", () => {
+            const id = location.hash.slice(1);
+            history.pushState(null, "", location.pathname + location.search);
+            pintarFicha();
+            const fila = document.querySelector(`#ar-tabla tr[data-fide="${id}"] a`);
+            if (fila) fila.focus();
+        });
+        window.addEventListener("hashchange", alCambiarDireccion);
         pintar();
+        alCambiarDireccion();
     }
     init();
 })();

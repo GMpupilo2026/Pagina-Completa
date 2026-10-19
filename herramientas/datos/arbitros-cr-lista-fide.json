@@ -4,7 +4,7 @@
   "publicada": "2026-10-12",
   "leida": "2026-10-16"
  },
- "nota": "arbitros: [ID FIDE, nombre, título (IA, FA o NA), inactivo («i» de la lista), categoría, licencia]. aprobaciones: el título de AF o AI de cada uno, con la reunión del Consejo de FIDE que lo aprobó y su fecha, del informe de la Comisión de Árbitros a esa reunión (solo desde 2023: lo de antes no cambia qué normas cuentan hoy). solicitudes: cada solicitud de título de Costa Rica en esos informes (veredicto, motivo y los torneos tal como los lista el informe). seminarios: quién aprobó un seminario de AF o de AI y en qué mes (de los informes al Consejo desde 2023 y, para los de AF, de los 827 informes de cada seminario que publica la Comisión desde 2010: informe, el enlace), con el día en que terminó si lo dice una solicitud o la página del seminario en el calendario de la Comisión (evento, el enlace) (la norma de seminario vale 4 años, B.06.1 5.3.2).",
+ "nota": "arbitros: [ID FIDE, nombre, título (IA, FA o NA), inactivo («i» de la lista), categoría, licencia]. aprobaciones: el título de AF o AI de cada uno, con la reunión del Consejo de FIDE que lo aprobó y su fecha, del informe de la Comisión de Árbitros a esa reunión (solo desde 2023: lo de antes no cambia qué normas cuentan hoy). solicitudes: cada solicitud de título de Costa Rica en esos informes (veredicto, motivo y los torneos tal como los lista el informe). seminarios: quién aprobó un seminario de AF o de AI y en qué mes (de los informes al Consejo desde 2023 y de los informes de cada seminario que publica la Comisión: los 827 de AF desde 2010 y los 28 de AI desde 2024; informe, el enlace), con el día en que terminó si lo dice una solicitud o la página del seminario en el calendario de la Comisión (evento, el enlace) (la norma de seminario vale 4 años, B.06.1 5.3.2).",
  "arbitros": [
   [
    109363,
@@ -1872,7 +1872,8 @@
    "seminario": "1st IA Internet Based Mar 2024 (ARB)",
    "mes": "2024-03",
    "fuente": "https://arbiters.fide.com/wp-content/uploads/Reporting/2024Q1CouncilARBReport.pdf",
-   "fecha": "2024-03-16"
+   "fecha": "2024-03-16",
+   "informe": "https://arbiters.fide.com/news/9049"
   },
   {
    "fide_id": 6504396,
@@ -1925,7 +1926,8 @@
    "seminario": "18th IACS Internet Based Aug 2025 (ARB)",
    "mes": "2025-09",
    "fuente": "https://arbiters.fide.com/wp-content/uploads/Reporting/2025Q3CouncilARBReport.pdf",
-   "fecha": "2025-09-09"
+   "fecha": "2025-09-09",
+   "informe": "https://arbiters.fide.com/news/10237"
   },
   {
    "fide_id": 109363,
@@ -1952,7 +1954,9 @@
    "tipo": "IA",
    "seminario": "25th IACS Internet Based May 2026 (ARB)",
    "mes": "2026-05",
-   "fuente": "https://arbiters.fide.com/wp-content/uploads/Reporting/2026Q2CouncilARBReport.pdf"
+   "fuente": "https://arbiters.fide.com/wp-content/uploads/Reporting/2026Q2CouncilARBReport.pdf",
+   "informe": "https://arbiters.fide.com/news/11001",
+   "fecha": "2026-05-17"
   }
  ]
 }
