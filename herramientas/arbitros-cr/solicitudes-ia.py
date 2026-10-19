@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Saca de los informes de la Comisión de Árbitros al Consejo de FIDE
-(Reporting/AAAAQnCouncilARBReport.pdf, desde 2020Q2: los de antes eran
-informes al Presidential Board, con otro nombre) todas las
+(Reporting/AAAAQnCouncilARBReport.pdf desde 2020Q2; antes, los de 2019 al
+Presidential Board, AAAAQnPBARBReport.pdf, y el del Congreso de Abu Dabi de
+febrero de 2020, 2020Q1EBARBReport.pdf) todas las
 solicitudes de título de Árbitro Internacional, de todos los países: nombre,
 federación, ID FIDE, los torneos tal como los lista el informe y el veredicto
 con su motivo. Escribe herramientas/datos/fide-solicitudes-ia.json.
@@ -16,13 +17,14 @@ perfil de FIDE borra las fechas del AF. Por eso el JSON trae aparte
 Los informes se piden desde la base con pg_net, convertidos a texto por
 r.jina.ai (`https://r.jina.ai/https://arbiters.fide.com/wp-content/uploads/Reporting/2025Q1CouncilARBReport.pdf`),
 y se guarda cada respuesta tal cual en una carpeta, un archivo AAAAQn.txt
-por informe:
+por informe (AAAAQnPB.txt o AAAAQnEB.txt los de antes de 2020Q2):
 
     python3 herramientas/arbitros-cr/solicitudes-ia.py CARPETA
 
 En cada informe, el apéndice de AI («Summaries of IA Title Applications»;
 en 2020, «International Arbiter Title Applications») va antes del de AF; cada solicitud empieza con «Nombre FED ID#número» y el veredicto
-(APPROVED o REJECTED: motivo) va DESPUÉS de sus torneos. Las que se
+(APPROVED, REJECTED: motivo o, en 2019 y 2020, CONDITIONAL: lo que falta, u ON HOLD)
+va DESPUÉS de sus torneos. Las que se
 posponen no salen en el informe.
 """
 import glob
@@ -33,7 +35,7 @@ import sys
 
 RAIZ = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 SALIDA = os.path.join(RAIZ, "herramientas", "datos", "fide-solicitudes-ia.json")
-FUENTE = "https://arbiters.fide.com/wp-content/uploads/Reporting/{}CouncilARBReport.pdf"
+FUENTE = "https://arbiters.fide.com/wp-content/uploads/Reporting/{}ARBReport.pdf"
 TORNEO = re.compile(r"(\d{2}\.\d{2}-\d{2}\.\d{2}\.\d{2})\s+(.*?)(?=\s+\d{2}\.\d{2}-\d{2}\.\d{2}\.\d{2}\s|\s*$)")
 
 
@@ -43,17 +45,20 @@ def solicitudes(informe, texto):
         return []
     fa = re.search(r"(?:Summar\w* of )?(?:FA|FIDE Arbiter) Title Applications", texto[ia.end():], re.I)
     seccion = texto[ia.end(): ia.end() + fa.start() if fa else len(texto)]
+    # En 2020Q1 una solicitud empieza en la misma línea que el APPROVED de
+    # la anterior: se separa para no perderla.
+    seccion = re.sub(r"\b(APPROVED|ON HOLD)[ \t]+(?=[A-Z])", r"\1\n", seccion)
     partes = re.split(r"\n\s*([^\n]{3,120}?)\s+([A-Z]{3})\s+ID\s*#\s*(\d+)", seccion)
     salida = []
     for i in range(1, len(partes) - 3, 4):
         nombre, fed, fid, cuerpo = partes[i].strip(), partes[i + 1], int(partes[i + 2]), partes[i + 3]
-        v = re.search(r"\b(APPROVED|REJECTED)\b[:\s]*([^\n]*)", cuerpo)
+        v = re.search(r"\b(APPROVED|REJECTED|CONDITIONAL|ON HOLD)\b[:\s]*([^\n]*)", cuerpo)
         # En 2020Q2 un rechazo vino sin la palabra REJECTED, solo el motivo.
         sin_palabra = None if v else re.search(r"\d{2}\.\d{2}\s+((?:Only|Incomplete|Missing)\b[^\n]*)", cuerpo)
-        lista = re.split(r"\b(?:APPROVED|REJECTED)\b", cuerpo)[0].replace("\n", " ")
+        lista = re.split(r"\b(?:APPROVED|REJECTED|CONDITIONAL|ON HOLD)\b", cuerpo)[0].replace("\n", " ")
         salida.append({
             "informe": informe, "fide_id": fid, "nombre": nombre, "fed": fed,
-            "veredicto": {"APPROVED": "aprobada", "REJECTED": "rechazada"}[v.group(1)] if v else ("rechazada" if sin_palabra else ""),
+            "veredicto": {"APPROVED": "aprobada", "REJECTED": "rechazada", "CONDITIONAL": "condicional", "ON HOLD": "en espera"}[v.group(1)] if v else ("rechazada" if sin_palabra else ""),
             "motivo": v.group(2).strip() if v else (sin_palabra.group(1).strip() if sin_palabra else ""),
             "torneos": [f"{fechas} {resto.strip()}" for fechas, resto in TORNEO.findall(lista)],
         })
@@ -65,13 +70,17 @@ def main():
         raise SystemExit(__doc__)
     todas, informes = [], []
     for archivo in sorted(glob.glob(os.path.join(sys.argv[1], "*Q*.txt"))):
-        informe = os.path.basename(archivo)[:-4]
+        # AAAAQn.txt es el informe al Consejo; AAAAQnPB.txt y AAAAQnEB.txt,
+        # los de antes, al Presidential Board y al Executive Board.
+        nombre = os.path.basename(archivo)[:-4]
+        informe = nombre[:6]
+        organo = nombre[6:] or "Council"
         with open(archivo, encoding="utf-8") as f:
             s = solicitudes(informe, f.read())
         if not s:
             # 2020Q4 no trae solicitudes de título.
             print(f"{informe}: sin solicitudes de AI")
-        informes.append({"informe": informe, "fuente": FUENTE.format(informe), "solicitudes": len(s)})
+        informes.append({"informe": informe, "fuente": FUENTE.format(informe + organo), "solicitudes": len(s)})
         todas += s
     sin_veredicto = [x for x in todas if not x["veredicto"]]
     if sin_veredicto:
