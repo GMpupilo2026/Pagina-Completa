@@ -2,6 +2,26 @@
  "nota": "Las solicitudes de AI de todos los países en los informes de la Comisión de Árbitros al Consejo de FIDE, tal cual. siguen_af: los que tuvieron una rechazada y ninguna aprobada (su perfil de FIDE todavía muestra las fechas del AF). Lo arma herramientas/arbitros-cr/solicitudes-ia.py.",
  "informes": [
   {
+   "informe": "2019Q1",
+   "fuente": "https://arbiters.fide.com/wp-content/uploads/Reporting/2019Q1PBARBReport.pdf",
+   "solicitudes": 45
+  },
+  {
+   "informe": "2019Q2",
+   "fuente": "https://arbiters.fide.com/wp-content/uploads/Reporting/2019Q2PBARBReport.pdf",
+   "solicitudes": 46
+  },
+  {
+   "informe": "2019Q3",
+   "fuente": "https://arbiters.fide.com/wp-content/uploads/Reporting/2019Q3PBARBReport.pdf",
+   "solicitudes": 39
+  },
+  {
+   "informe": "2020Q1",
+   "fuente": "https://arbiters.fide.com/wp-content/uploads/Reporting/2020Q1EBARBReport.pdf",
+   "solicitudes": 63
+  },
+  {
    "informe": "2020Q2",
    "fuente": "https://arbiters.fide.com/wp-content/uploads/Reporting/2020Q2CouncilARBReport.pdf",
    "solicitudes": 20
@@ -129,7 +149,9 @@
  ],
  "siguen_af": [
   400785,
+  1105337,
   1149318,
+  1183621,
   1507362,
   2103680,
   2801370,
@@ -140,6 +162,8 @@
   3802671,
   4420152,
   5120721,
+  5502950,
+  6318622,
   7603746,
   7903014,
   8400970,
@@ -156,19 +180,2782 @@
   10645926,
   10651985,
   10811672,
+  12402095,
   12600326,
   12600504,
   13300610,
   13503391,
   13808079,
+  14310988,
   14319047,
   14700824,
+  19600046,
   20642334,
   22100075,
   22103848,
   22222359
  ],
  "solicitudes": [
+  {
+   "informe": "2019Q1",
+   "fide_id": 4702131,
+   "nombre": "Collaku, Marin",
+   "fed": "ALB",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "10.10-28.10.18 Tirane ALB Kombetar Ekipor 2018 TM/RR 66 74 9 3 11.18",
+    "24.09-05.10.18 Batumi GEO 43 rd Chess Olympiad TM/SS 862 918 11 180 11.18",
+    "26.08-01.09.18 Tirana ALB 6 Recontres Intl Francophone SS 115 132 9 21 10.18",
+    "21.04-29.04.18 Durres ALB World School CC U-11 SS 38 58 9 16 06.18"
+   ]
+  },
+  {
+   "informe": "2019Q1",
+   "fide_id": 10100555,
+   "nombre": "Ribeiro, Abilio",
+   "fed": "ANG",
+   "veredicto": "rechazada",
+   "motivo": "Only 3 norms (Only 1 norm from Olympiad is valid – art. 4.8)",
+   "torneos": [
+    "24.09-05.10.18 Batumi GEO 43 World Olympiad Open TM/SS 862 918 11 180 11.18",
+    "02.09-13.09.16 Baku AZE 42 World Olympiad Open TM/SS 840 891 11 175 10.16",
+    "01.08-09.08.15 Maputo MOZ African IndvAmateurWomen RR 4 8 7 2 09.15",
+    "02.12-09.12.14 Lunda Sul ANG African Jun CC Women SS 12 18 9 10 01.15"
+   ]
+  },
+  {
+   "informe": "2019Q1",
+   "fide_id": 3213641,
+   "nombre": "D’Arcy, Michael",
+   "fed": "AUS",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "08.01-12.01.19 Auckland NZL 2019 Oceania Youth U-20 SS 23 24 9 3 02.19",
+    "15.12-23.12.18 Melbourne AUS 2018 AUS Masters GM RR 10 10 9 5 01.19",
+    "28.06-02.07.18 Gold Coast AUS 2018 Gold Coast Open Pr SS 38 38 9 13 08.18",
+    "02.01-12.01.17 Brisbane AUS 2017 AUS Open Champ SS 93 103 11 15 02.17"
+   ]
+  },
+  {
+   "informe": "2019Q1",
+   "fide_id": 1606786,
+   "nombre": "Tscheinig, Gert",
+   "fed": "AUT",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "11.08-18.08.18 Latschach AUT 34 Faaker See Open SS 117 127 9 9 09.18",
+    "12.08-19.08.17 Latschach AUT 33 Faaker See Open SS 125 134 9 8 09.17",
+    "13.08-20.08.16 Latschach AUT 32 Faaker See Open SS 81 90 9 11 09.16",
+    "08.08-15.08.15 Latschach AUT 31 Faaker See Open SS 79 90 9 10 09.15"
+   ]
+  },
+  {
+   "informe": "2019Q1",
+   "fide_id": 13504703,
+   "nombre": "Borsuk, Yuriy",
+   "fed": "BLR",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "20.10-30.10.18 Chalkidiki GRE World Youth CC Open 16 SS 118 120 11 61 12.18",
+    "12.10-18.10.18 Chalkidiki GRE Euro Chess Club Cup 2018 TM/SS 430 434 7 47 11.18",
+    "12.10-18.10.18 Chalkidiki GRE Euro Chess Club Cup Wom TM/SS 56 56 7 14 11.18",
+    "17.03-28.03.18 Batumi GEO Euro Indv CC 2018 SS 302 302 11 34 04.18",
+    "18.01-28.01.18 Minsk BLR Champ BLR 2018 Women RR 12 12 11 1 02.18",
+    "15.12-15.12.17 Katowice POL Euro Blitz CC 2017 SS 1024 1091 22 40 01.18"
+   ]
+  },
+  {
+   "informe": "2019Q1",
+   "fide_id": 4430450,
+   "nombre": "Rojas Villamil, Pedro",
+   "fed": "COL",
+   "veredicto": "rechazada",
+   "motivo": "Only 2 norms (Gachantiva rapids not valid for IA norms art. 4.6e)",
+   "torneos": [
+    "13.12-16.12.18 Tunja COL IRT Aquinaldo Boyacense SS 109 150 9 4 01.19",
+    "19.08-20.08.17 Gachantiva COL IRT Activo Alcaldia Gachantiva SS 54 59 9 4 09.17",
+    "15.11-16.11.14 Gachantiva COL IRT Act.Alcaldia deGachantiva SS 50 59 9 3 12.14",
+    "03.10-08.10.14 Plamira COL Centroam y del Car U8 Fem SS 3 16 9 3 11.14",
+    "03.10-08.10.14 Palmira COL Centroam y del Car U14 Abs SS 36 48 9 10 11.14"
+   ]
+  },
+  {
+   "informe": "2019Q1",
+   "fide_id": 14534002,
+   "nombre": "Bandur, Josip",
+   "fed": "CRO",
+   "veredicto": "condicional",
+   "motivo": "Only language listed is German – current level of license is NA",
+   "torneos": [
+    "01.12-08.12.18 Zagreb CRO Zagreb Opn III Hulak Mem SS 162 164 9 10 01.19",
+    "12.11-23.11.18 Zagreb CRO Turnir mira RR 12 12 11 7 12.18",
+    "15.09-23.09.18 Biograd na Moru CRO 1st B CRO League RR 92 93 9 8 10.18",
+    "28.09-06.10.17 Mali Losinj CRO 26 ekipno prvenstvo CRO TM/RR 78 80 9 12 10.17"
+   ]
+  },
+  {
+   "informe": "2019Q1",
+   "fide_id": 373150,
+   "nombre": "Smajzrova, Katerina",
+   "fed": "CZE",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "21.07-28.07.18 Pardubice CZE CZE Open 2018 D SS 156 247 9 23 08.18 9",
+    "28.04-06.05.18 Ostrava CZE Mistrovstvi CR muzu 2018 SS 60 60 9 1 06.18",
+    "16.12-17.12.17 Katowice POL Euro Rapid CC 2017 SS 1122 1181 11 41 01.18",
+    "18.11-08.04.18 Various CZE Extraliga 2017/2018 TM/RR 190 192 11 15 05.18"
+   ]
+  },
+  {
+   "informe": "2019Q1",
+   "fide_id": 10624147,
+   "nombre": "Agami, Ahmed",
+   "fed": "EGY",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "24.09-05.10.18 Batumi GEO 43 rd World Chess Olympiad TM/SS 862 918 11 180 11.18",
+    "28.06-02.07.18 Riyadh KSA Saudi Arabia Final 2018 SS 32 191 9 32 08.18",
+    "26.12-28.12.17 Riyadh KSA King Salman Rapid Ch 2017 SS 134 134 15 42 01.18",
+    "27.04-30.04.17 Riyadh KSA Saudi Final 2017 SS 20 47 7 1 06.17"
+   ]
+  },
+  {
+   "informe": "2019Q1",
+   "fide_id": 448613,
+   "nombre": "Clayton, David G.",
+   "fed": "ENG",
+   "veredicto": "condicional",
+   "motivo": "Current level of license is NA",
+   "torneos": [
+    "31.10-04.11.18 Telford ENG 1st 4NCL Intl Congress Open SS 46 46 9 7 12.18",
+    "07.06-15.06.18 Apeldoorn NED Schaakweek Apeldoorn RR 10 10 9 5 07.18",
+    "11.11-07.05.18 various ENG 2017/18 4NCL Division 2 TM 249 251 11 30 06.18",
+    "23.09-01.10.17 Isle of Man ENG Isle of Man Intl Masters SS 159 159 9 35 11.17"
+   ]
+  },
+  {
+   "informe": "2019Q1",
+   "fide_id": 2224690,
+   "nombre": "Pareja Lopez, Francisco Jesus",
+   "fed": "ESP",
+   "veredicto": "rechazada",
+   "motivo": "Only 3 norms (CE Rapido 2018 not valid for IA norm art. 4.6e)",
+   "torneos": [
+    "26.12-30.12.18 Lorca Murcia ESP Fest Intl Ciudad de Lorca A SS 145 145 9 22 02.19",
+    "01.11-05.11.18 Almeira ESP Fest Juan Martinez Sola Liga RR 10 10 9 5 12.18",
+    "19.08-19.08.18 Linares ESP CE Rapido 2018 SS 122 122 9 4 09.18",
+    "13.01-21.01.17 Sevilla ESP Ab.Intl Ciudad de Sevilla SS 237 257 9 20 02.17"
+   ]
+  },
+  {
+   "informe": "2019Q1",
+   "fide_id": 7603720,
+   "nombre": "Al Hamoud, Malek",
+   "fed": "FIN",
+   "veredicto": "rechazada",
+   "motivo": "Last norm (6/2016) more than 2 years from the last FIDE Congress (art. 5.3)",
+   "torneos": [
+    "30.05-07.06.16 Helsinki FIN VII ShakkiNet Intl RR 10 10 9 5 07.16",
+    "14.05-22.05.16 Helsinki FIN Finnish Champ 2016 RR 10 10 9 1 06.16",
+    "08.06-16.06.15 Helsinki FIN VI ShakkiNet Intl RR 10 10 9 3 07.15",
+    "21.12-28.12.12 Al Ain UAE Al Ain Classic 2012 SS 165 166 9 35 02.13"
+   ]
+  },
+  {
+   "informe": "2019Q1",
+   "fide_id": 13604236,
+   "nombre": "Bibilashvili, Lali",
+   "fed": "GEO",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "24.11-03.12.18 Konya TUR World Youth U-16 OlympiadTM/SS 220 222 9 39 01.19",
+    "24.09-05.10.18 Batumi GEO 43 rd Olympiad Women TM/SS 667 747 11 146 11.18",
+    "02.07-10.07.18 Batumi GEO 4th Batumi Municipality Cup SS 37 37 9 10 08.18",
+    "17.03-28.03.18 Batumi GEO Euro Indv CC 2018 SS 302 302 11 34 04.18"
+   ]
+  },
+  {
+   "informe": "2019Q1",
+   "fide_id": 5016789,
+   "nombre": "Alankar, Bhivgade",
+   "fed": "IND",
+   "veredicto": "condicional",
+   "motivo": "Current level of license is NA",
+   "torneos": [
+    "21.12-28.12.18 Bhopal IND Bhopal Intl GM Chess Tnmt SS 320 375 10 13 01.19",
+    "17.12-28.12.17 Bhopal IND Bhopal Open Intl GM Tnmt SS 275 322 10 17 01.18",
+    "11.12-18.12.17 Ahmedabad IND World Youth U-16 Olymp TM/SS 134 147 9 25 01.18",
+    "03.07-10.07.17 New Delhi IND Commonwealth CC U-20 G SS 15 16 7 4 08.17"
+   ]
+  },
+  {
+   "informe": "2019Q1",
+   "fide_id": 46690689,
+   "nombre": "Arbind Kumar Singh",
+   "fed": "IND",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "09.01-16.01.19 New Delhi IND Delhi Intl Open Cat A SS 321 322 10 21 02.19",
+    "05.10-12.10.18 Ahmedabad IND 1st Gujarat Intl Open GM SS 250 250 10 16 11.18",
+    "26.06-03.07.18 Delhi IND Commonwealth CC U10 Open SS 72 99 7 3 08.18",
+    "09.01-16.01.18 New Delhi IND Delhi Intl Open 2018 Cat A SS 264 264 10 24 02.18"
+   ]
+  },
+  {
+   "informe": "2019Q1",
+   "fide_id": 25083813,
+   "nombre": "Athulan, S",
+   "fed": "IND",
+   "veredicto": "aprobada",
+   "motivo": "10",
+   "torneos": [
+    "28.12-30.12.18 Coimbatore IND 14 th KCM Below 1600 Rtd SS 422 668 9 3 02.19",
+    "11.12-18.12.17 Ahmedabad IND World Youth U-16 Olymp TM/SS 134 147 9 25 01.18",
+    "02.02-08.02.17 Bhopal IND 37 th Nat TM CC 2017 TM/SS 156 208 9 1 03.17",
+    "18.01-25.01.17 Chennai IND 9th Chennai GM Tnmt SS 304 317 10 16 02.17"
+   ]
+  },
+  {
+   "informe": "2019Q1",
+   "fide_id": 25004107,
+   "nombre": "Gaur H C",
+   "fed": "IND",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "09.01-16.01.19 Delhi IND Delhi Intl Open 2019 Cat A SS 321 322 10 21 02.19",
+    "05.10-12.10.18 Ahmedabad IND 1st Gujarat Intl Open GM SS 250 250 10 16 11.18",
+    "26.06-03.07.18 Delhi IND CommonwealthCC U10Girls SS 32 57 7 6 08.18",
+    "11.12-18.12.17 Ahmedabad IND WorldYouth U16 Olympiad TM/SS 134 147 9 25 01.18"
+   ]
+  },
+  {
+   "informe": "2019Q1",
+   "fide_id": 5015944,
+   "nombre": "Kakade, Dhanaji",
+   "fed": "IND",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "05.10-08.10.18 Ahmedabad IND 1st Gujarat FIDE Rating SS 319 352 10 4 11.18",
+    "03.06-10.06.18 Mumbai IND 11 Mayor’s Cup Intl Cat A SS 216 216 10 18 07.18",
+    "25.05-01.06.18 Odisha IND Odisha GM Open Cat A SS 293 293 10 13 07.18",
+    "30.12-07.01.18 Mumbai IND 3rd IIFL Wealth Intl Open SS 315 315 9 23 02.18"
+   ]
+  },
+  {
+   "informe": "2019Q1",
+   "fide_id": 35010069,
+   "nombre": "Kaviraj Sawant",
+   "fed": "IND",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "09.01-16.01.19 New Delhi IND Delhi Intl Open 2019 Cat A SS 321 322 10 21 02.19",
+    "21.12-28.12.18 Bhopal IND Bhopal Intl GM Tnmt SS 320 375 10 13 01.19",
+    "05.10-08.10.18 Ahmedabad IND 1st Gujarat Rtg Cat B <2000 SS 319 352 10 4 11.18",
+    "26.06-03.07.18 Delhi IND Commonwealth CC U14 Open SS 43 46 7 4 08.18"
+   ]
+  },
+  {
+   "informe": "2019Q1",
+   "fide_id": 25000675,
+   "nombre": "Pradip, Kumar Roy",
+   "fed": "IND",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "05.10-12.10.18 Ahmedabad IND 1st Gujarat Intl Open GM SS 250 250 10 16 11.18",
+    "26.06-03.07.18 Delhi IND Commonwealth CC U-8 Op SS 35 67 7 5 08.18",
+    "14.05-22.05.18 Kolkata IND Kolkata Intl GM Open Tnmt SS 205 205 9 13 06.18",
+    "18.10-23.10.15 Assam IND RGS Intl Rtg Open SS 153 243 10 3 11.15"
+   ]
+  },
+  {
+   "informe": "2019Q1",
+   "fide_id": 46656987,
+   "nombre": "Sathiesh, G G",
+   "fed": "IND",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "05.10-12.10.18 Ahmedabad IND 1st Gujarat Intl Open GM SS 250 250 10 15 11.18",
+    "29.09-02.10.18 Coimbatore IND 13 th KCM FIDE Rtd Open SS 225 355 8 3 11.18",
+    "18.01-25.01.18 Chennai IND 10 th Chennai Open Intl GM SS 259 267 10 22 02.18",
+    "11.12-18.12.17 Ahmedabad IND World Youth U-16 OL TM/SS 134 147 9 25 01.18"
+   ]
+  },
+  {
+   "informe": "2019Q1",
+   "fide_id": 5061997,
+   "nombre": "Vikas, Sahu",
+   "fed": "IND",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "21.12-28.12.18 Bhopal IND Bhopal Open Intl GM Tnmt SS 320 375 10 13 01.19",
+    "29.03-01.04.18 Udaipur IND 2nd Holi Cup Lakecity Open SS 317 498 8 4 05.18",
+    "08.02-14.02.18 Bhubaneshwar IND 38 th Nat TM CC 2018 TM/SS 155 171 9 1 03.18",
+    "21.12-28.12.17 Bhopal IND Bhopal Open Intl GM 2017 SS 275 322 10 17 01.18"
+   ]
+  },
+  {
+   "informe": "2019Q1",
+   "fide_id": 46698035,
+   "nombre": "Vinita, Shrotri",
+   "fed": "IND",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "25.09-30.09.18 Pune IND Shri Maheswaranand Saras SS 124 184 9 3 11.18",
+    "03.06-10.06.18 Mumbai IND 11 Mayor Cup Intl Cat A SS 216 216 10 18 07.18",
+    "24.11-06.12.17 Ahmedabad IND 44 th Nat Women Premier RR 12 12 11 1 01.18",
+    "26.08-01.09.17 Odisha IND Asian Cities TM CC 2017 TM/SS 58 59 9 8 10.17"
+   ]
+  },
+  {
+   "informe": "2019Q1",
+   "fide_id": 5036917,
+   "nombre": "Vinothkumar, T",
+   "fed": "IND",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "18.01-25.01.19 Chennai IND 11 th Chennai Open Intl GM SS 276 286 10 17 02.19",
+    "13.10-16.10.18 Goa IND GoaIntlGM Open CatB<2000 SS 373 443 10 3 11.18",
+    "18.01-25.01.18 Chennai IND 10 th Chennai Open Intl GM SS 259 267 10 22 02.18",
+    "18.01-25.01.17 Chennai IND 9th Chennai Open GM for Sakthi SS 304 317 10 16 02.17"
+   ]
+  },
+  {
+   "informe": "2019Q1",
+   "fide_id": 5018951,
+   "nombre": "Yashpal, Arora",
+   "fed": "IND",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "21.12-28.12.18 Bhopal IND Bhopal Intl GM Tnmt SS 320 375 10 13 01.19",
+    "02.02-08.02.17 Bhopal IND 37 th Nat TM CC 2017 TM/SS 156 208 9 1 03.17",
+    "14.02-20.02.14 Kanpur IND Nat TM CC 2013 TM/SS 118 159 9 1 03.14",
+    "20.12-25.12.13 Bhopal IND Bhopal FIDE Rtg Tnmt SS 121 245 10 3 02.14 11"
+   ]
+  },
+  {
+   "informe": "2019Q1",
+   "fide_id": 12597740,
+   "nombre": "Ramezanpoor, Negin",
+   "fed": "IRI",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "09.11-15.11.18 Golestan IRI IRI Women CC Final 1397 SS 20 20 9 1 12.18",
+    "02.03-09.03.18 Mashhad IRI 8th Ferdowsi Cup 2018 Gr. A SS 46 46 9 18 04.18",
+    "12.11-18.11.16 Esfahan IRI Asian Amateur CC 2016 Op SS 184 237 9 8 12.16",
+    "25.10-01.11.16 Tehran IRI 1st Paytakht Cup Intl Festival SS 167 192 9 3 12.16"
+   ]
+  },
+  {
+   "informe": "2019Q1",
+   "fide_id": 13700812,
+   "nombre": "Gabdushev, Arman",
+   "fed": "KAZ",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "03.12-11.12.18 Pavlodar KAZ Cup of Pavlodar region RR 10 10 9 4 01.19",
+    "23.11-01.12.18 Pavlodar KAZ Pavlodar Open 2018 SS 102 107 10 8 01.19",
+    "16.03-23.03.18 Aksu KAZ Cup of Pavlodar region 2 st RR 10 10 9 4 04.18",
+    "21.07-29.07.17 Astana KAZ Astana Open B 2017 SS 83 141 9 4 08.17"
+   ]
+  },
+  {
+   "informe": "2019Q1",
+   "fide_id": 10806245,
+   "nombre": "Kangaru, James Mwangi",
+   "fed": "KEN",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "29.12-05.01.19 Kampala UGA 2018 African Junior CC Op SS 15 16 9 8 02.19",
+    "12.12-16.12.18 Nairobi KEN KEN Nat CC Open Section SS 72 109 9 1 01.19",
+    "12.08-18.08.18 Kisumu City KEN 2018 African Youth CC U-18 SS 10 13 9 7 09.18",
+    "14.04-14.11.18 Nairobi KEN KEN Nat Premier League TM/RR 156 274 21 4 12.18"
+   ]
+  },
+  {
+   "informe": "2019Q1",
+   "fide_id": 11604069,
+   "nombre": "Kalnins, Toms",
+   "fed": "LAT",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "15.12-16.12.18 Riga LAT LAT TM Higher League TM/RR 113 116 4 9 01.19",
+    "12.10-18.10.18 Chalkidiki GRE Euro Chess Club Cup 2018 TM/SS 430 434 7 47 11.18",
+    "09.09-10.09.18 Riga LAT LAT TM Higher League TM/RR 107 111 4 8 10.18",
+    "20.08-29.08.18 Riga LAT Euro Youth CC G-10 2018 SS 56 71 9 32 09.18",
+    "06.08-12.08.18 Riga LAT Riga Technical Uni Open A SS 260 260 9 37 09.18",
+    "09.06-10.06.18 Riga LAT LAT TM Higher League TM/RR 103 107 3 8 07.18"
+   ]
+  },
+  {
+   "informe": "2019Q1",
+   "fide_id": 11603690,
+   "nombre": "Mihailovs, Arturs",
+   "fed": "LAT",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "21.12-26.12.18 Riga LAT XIII Termo eko Cup 2018 SS 65 66 9 7 01.19",
+    "06.11-14.11.18 St.Petersburg RUS Saint Petersburg 2018 IM RR 10 10 9 4 12.18",
+    "20.08-29.08.18 Riga LAT Euro Youth CC O-10 2018 SS 117 132 9 41 09.18",
+    "06.08-12.08.18 Riga LAT Riga Technical Univ Open B SS 94 96 9 22 09.18",
+    "09.07-15.07.18 Liepaja LAT Baltic Zonal Cup 2018 SS 24 24 9 3 08.18"
+   ]
+  },
+  {
+   "informe": "2019Q1",
+   "fide_id": 15000265,
+   "nombre": "Kiroski, Toni",
+   "fed": "MKD",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "08.12-09.12.18 Skopje MKD Euro Rapid CC 2018 SS 395 409 13 37 01.19",
+    "12.10-18.10.18 Chalkidiki GRE Euro Chess Club Cup 2018 TM/SS 430 434 7 47 11.18",
+    "24.03-31.03.18 Skopje MKD Karpos Open 2018 SS 155 165 9 17 05.18",
+    "07.12-10.12.17 Skopje MKD Gambit Asseko See 2017 B SS 74 115 7 9 01.18"
+   ]
+  },
+  {
+   "informe": "2019Q1",
+   "fide_id": 3836134,
+   "nombre": "Garcia Contreras , Jesus File",
+   "fed": "PER",
+   "veredicto": "condicional",
+   "motivo": "Current level of license is NA (+ Missing Chief Arb. signature on \"Latinoamericana Cat B Open\" norm)",
+   "torneos": [
+    "01.12-07.12.18 Lima PER Sudamericano de la Juv 16 Abs SS 61 62 9 9 01.19",
+    "21.03-25.03.18 Lima PER Camp Nac Juv Sub 8 Abs SS 77 84 9 4 04.18",
+    "24.02-28.02.18 Lima PER ITT Copa Ciudad de Lima RR 10 10 9 4 03.18",
+    "06.02-10.02.18 Lima PER Magistral de Verano Fem WIM RR 10 10 9 4 03.18",
+    "29.01-04.02.18 Lima PER Latinoamericana Cat B Open SS 107 117 9 6 03.18"
+   ]
+  },
+  {
+   "informe": "2019Q1",
+   "fide_id": 1105337,
+   "nombre": "Suwarski, Pawel",
+   "fed": "POL",
+   "veredicto": "rechazada",
+   "motivo": "Recommendation by the same person on all 4 norms (art. 4.11) 12",
+   "torneos": [
+    "08.07-16.07.18 Warsaw POL 18 th Intl Najdorf Fest Gr A SS 129 129 9 17 08.18",
+    "09.07-17.07.17 Warsaw POL MetLife Warsaw Najdorf A SS 147 147 9 21 08.17",
+    "08.07-16.07.16 Warsaw POL Miguel Najdorf Fest Gr A SS 136 136 9 30 08.16",
+    "10.07-18.07.15 Warsaw POL Miguel Najdorf Fest Open A SS 83 83 9 17 08.15"
+   ]
+  },
+  {
+   "informe": "2019Q1",
+   "fide_id": 1912291,
+   "nombre": "Andrade, Nuno Filipe",
+   "fed": "POR",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "14.12-23.12.18 Sitges ESP V Sunway Sitges Intl Fest A SS 183 183 10 41 01.19",
+    "30.11-08.12.18 Benidorm ESP 17 Gran Torneo Intl Aficionados SS 136 137 10 25 01.19",
+    "12.11-18.11.18 Alba Iulia ROU IntlChessOpen Romania 100 SS 82 100 9 11 12.18",
+    "03.11-13.11.18 Budapest HUN 1st Saturday GM Nov 2018 RR 10 10 9 7 12.18",
+    "13.10-21.10.18 Arco ITA FE 40 Citta di Arco – A SS 140 141 9 16 11.18",
+    "27.09-30.09.18 Pur.delRos. ESP I Open Sub2300 Fiestas P.del R. SS 70 90 7 5 11.18"
+   ]
+  },
+  {
+   "informe": "2019Q1",
+   "fide_id": 1919679,
+   "nombre": "Silva, Alzira Maria C. Faria",
+   "fed": "POR",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "02.09-09.09.18 Braga POR CN Absoluto 2017-2018 RR 10 10 9 1 10.18",
+    "29.07-04.08.18 Famalicao POR VI Torneio Intl de Famalicao SS 107 121 9 13 09.18",
+    "16.07-22.07.18 Maia POR CN Equipas 2017/2018 1 divTM/RR 99 99 9 23 08.18",
+    "09.03-17.03.14 Porto POR 14 th ESCC 65+ Ladies 2014 RR 10 10 9 5 04.14"
+   ]
+  },
+  {
+   "informe": "2019Q1",
+   "fide_id": 1206907,
+   "nombre": "Gilea, Lucian",
+   "fed": "ROU",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "23.06-30.06.18 Jupiter ROU Intl Festival FISCA 2018 D SS 147 159 9 8 08.18",
+    "14.05-22.05.18 Olanesti ROU ROU Nat CC 2018 Wom Fin SS 24 24 9 1 06.18",
+    "05.09-14.09.17 Mamaia ROU Euro Youth CC Girls U-12 SS 92 96 9 39 10.17",
+    "10.09-16.09.15 Braila ROU Women Open Maria Albulet SS 26 26 9 6 10.15"
+   ]
+  },
+  {
+   "informe": "2019Q1",
+   "fide_id": 14301911,
+   "nombre": "Goosen, Tinus",
+   "fed": "RSA",
+   "veredicto": "condicional",
+   "motivo": "Current level of license is NA",
+   "torneos": [
+    "31.12-06.01.19 Windhoek NAM 2018 African Amateur CC SS 15 16 9 9 02.19",
+    "12.03-18.03.18 Port Elizabeth RSA Boardwalk Pearson High Sch RR 10 10 4 8 04.18",
+    "08.12-19.12.17 Cape Town RSA South African Closed CC Op RR 12 12 11 1 01.18",
+    "10.06-17.06.17 Livingstone ZAM Zone 4.3 Indv CC Open Sect SS 31 32 9 7 07.17"
+   ]
+  },
+  {
+   "informe": "2019Q1",
+   "fide_id": 34101745,
+   "nombre": "Makogon, Natalya",
+   "fed": "RUS",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "08.12-16.12.18 Chelyabinsk RUS The December evenings IM RR 10 10 9 5 01.19",
+    "06.10-14.10.18 Chelyabinsk RUS Panchenko Memorial 2018 B RR 10 10 9 6 11.18",
+    "21.06-29.06.18 Chelyabinsk RUS Memorial Kibizov 2018 B RR 10 10 9 6 08.18",
+    "05.09-14.09.17 Mamaia ROU Europ Youth CC Open 12 SS 136 137 9 43 10.17",
+    "19.06-28.06.17 Eforie Nord ROU TheSeacoast Trophy Open 27ed SS 118 123 10 3 07.17"
+   ]
+  },
+  {
+   "informe": "2019Q1",
+   "fide_id": 24191361,
+   "nombre": "Shakhov, Dmitry V.",
+   "fed": "RUS",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "26.12-28.12.18 St.Petersburg RUS FIDE OpenWorld RapidCC SS 206 206 15 40 01.19",
+    "03.12-11.12.18 St.Petersburg RUS North-West Cup Final A RR 10 10 9 4 01.19",
+    "01.05-10.05.18 Sochi RUS Team Men PL chess final TM/RR 73 73 9 6 06.18",
+    "04.12-12.12.17 St.Petersburg RUS North-West Cup Final B RR 10 10 9 6 01.18"
+   ]
+  },
+  {
+   "informe": "2019Q1",
+   "fide_id": 5802520,
+   "nombre": "Lim, Boon Seng Christopher",
+   "fed": "SGP",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "17.12-05.01.19 Singapore SGP 70 th Singapore Nat CC Men RR 10 10 9 1 02.19",
+    "16.12-23.12.17 Singapore SGP 69 th SGP Nat CC Women RR 6 6 10 1 01.18",
+    "21.09-24.09.17 Ashgabat TKM AsianIndoor&MartialArtsGamesMen SS 44 44 7 23 10.17",
+    "17.12-23.12.16 Singapore SGP 2nd Singapore Amateur CC SS 90 194 9 16 01.17"
+   ]
+  },
+  {
+   "informe": "2019Q1",
+   "fide_id": 6202306,
+   "nombre": "Klubwong, Prakarn",
+   "fed": "THA",
+   "veredicto": "aprobada",
+   "motivo": "13",
+   "torneos": [
+    "24.09-05.10.18 Batumi GEO 43 rd Olympiad 2018 Open TM/SS 862 918 11 180 11.18",
+    "13.04-21.04.18 Cha-Am THA 18 BangkokChessClub Open SS 193 196 9 37 05.18",
+    "02.04-09.04.18 Chiang Mai THA Asian Youth CC 2018 SS 28 30 9 18 05.18",
+    "28.02-04.03.18 Bangkok THA Thailand Nat Ch Open SS 45 51 9 1 04.18",
+    "03.01-07.01.18 Vientiane LAO Laos Intl Open CC SS 56 68 9 15 02.18",
+    "02.12-06.12.17 Bangkok THA Thailand Team Champ TM/SS 106 151 9 11 01.18",
+    "08.04-16.04.17 Cha-Am THA 17 th Bangkok Chess Club Open SS 190 194 9 34 05.17"
+   ]
+  },
+  {
+   "informe": "2019Q1",
+   "fide_id": 5501164,
+   "nombre": "Matoussi, Amina",
+   "fed": "TUN",
+   "veredicto": "condicional",
+   "motivo": "Championnat de Tunisie par Equipes IT3 missing",
+   "torneos": [
+    "03.03-29.04.18 Sousse TUN Champ de TUN Div Nat A TM/RR 56 75 11 3 06.18",
+    "26.11-03.12.16 Hammamet TUN African Junior CC Open SS 14 14 9 5 01.17",
+    "01.09-06.09.14 Monastir TUN Med Slama Memorial Open BSS 30 30 9 14 10.14",
+    "17.05-28.05.13 Tunis TUN African Indv Women’s CC SS 28 28 9 8 06.13"
+   ]
+  },
+  {
+   "informe": "2019Q1",
+   "fide_id": 5504015,
+   "nombre": "Zakhama, Yosri",
+   "fed": "TUN",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "02.09-08.09.18 Monastir TUN Intl Festival Monastir Open SS 98 125 9 10 10.18",
+    "28.10-04.11.18 Hammamet TUN 5 RIDEF Parties Francop SS 179 265 9 23 01.18",
+    "05.09-11.09.17 Monastir TUN Festival Moknine Open A SS 20 20 9 4 10.17",
+    "10.04-14.04.17 Sousse TUN TUN 2017 Women CC SS 11 19 7 1 05.17",
+    "06.09-12.09.15 Monastir TUN Memorial Slama Open A SS 12 12 9 4 10.15"
+   ]
+  },
+  {
+   "informe": "2019Q1",
+   "fide_id": 6318622,
+   "nombre": "Ibisoglu, Aylin",
+   "fed": "TUR",
+   "veredicto": "rechazada",
+   "motivo": "Not 4 valid norms (2 nd Intl Baskent Uni Open A is negative)",
+   "torneos": [
+    "27.08-01.09.18 Ankara TUR 4th Intl Baskent Uni Open A SS 147 148 9 9 10.18",
+    "19.08-24.08.17 Ankara TUR 3rd Intl Cubuk Municipality A SS 147 147 9 8 09.17",
+    "30.06-06.07.17 Ankara TUR 2nd Intl Baskent Uni Open A SS 172 173 9 8 08.17",
+    "08.07-13.07.16 Ankara TUR 2016 Baskent Uni Intl Open SS 421 660 9 1 08.16"
+   ]
+  },
+  {
+   "informe": "2019Q1",
+   "fide_id": 14206315,
+   "nombre": "Khaydarov, Abbos",
+   "fed": "UZB",
+   "veredicto": "condicional",
+   "motivo": "Current level of license is NA 14",
+   "torneos": [
+    "18.11-22.11.18 Tashkent UZB Western Asia Junior U-20 G SS 11 11 9 6 12.18",
+    "27.10-04.11.18 St. Petersburg RUS M. Chigorin Memorial 2018 SS 296 301 9 21 12.18",
+    "03.05-15.05.18 Tashkent UZB UZB Men CC Final RR 13 14 14 1 06.18",
+    "23.04-30.04.18 Tashkent UZB 12 th Tashkent Open SS 93 107 9 12 06.18",
+    "10.03-20.03.16 Tashkent UZB UZB Women CC Final 2016 RR 11 11 11 1 04.16"
+   ]
+  },
+  {
+   "informe": "2019Q2",
+   "fide_id": 7909705,
+   "nombre": "Djennane, Salah",
+   "fed": "ALG",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "18.12-22.12.18 Oran ALG Algerian Team CC TM/SS 66 73 9 3 01.19",
+    "12.07-18.07.18 Oran ALG Indv Cgamp 2018 Open RR 8 8 7 1 08.18",
+    "18.09-22.09.17 Oran ALG 30 th Algerian Team CC TM/SS 65 76 9 4 10.17",
+    "11.05-19.05.17 Algiers ALG African Zonal 4.1 Women RR 10 10 9 2 06.17",
+    "28.10-01.11.16 Constantine ALG Algerian Team Champ TM/SS 66 84 9 3 12.16"
+   ]
+  },
+  {
+   "informe": "2019Q2",
+   "fide_id": 13411128,
+   "nombre": "Afandiyev, Majid",
+   "fed": "AZE",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "16.01-24.01.19 Baku AZE AZE CC 2019 Men SS 20 20 9 1 02.19",
+    "23.11-02.12.18 Baku AZE Baku Open 2018 SS 143 149 9 10 01.19",
+    "13.11-21.11.17 Baku AZE Baku Open 2017 SS 121 125 9 7 12.17",
+    "02.09-13.09.16 Baku AZE 42 nd World Olympiad Open TM/SS 840 891 11 175 10.16",
+    "28.09-04.10.15 Baku AZE 22 Europ Deaf CC forClubs TM/RR 18 28 5 7 12.15"
+   ]
+  },
+  {
+   "informe": "2019Q2",
+   "fide_id": 13404318,
+   "nombre": "Baghirov, Javanshir",
+   "fed": "AZE",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "04.01-11.01.18 Baku AZE Fuad Jafarov Mem Master SS 22 22 9 4 02.18",
+    "13.11-21.11.17 Baku AZE Baku Open 2017 SS 121 125 9 7 12.17",
+    "02.09-13.09.16 Baku AZE 42 World OlympiadWomen TM/SS 622 692 11 136 10.16",
+    "05.12-14.12.15 Baku AZE Fuad Djafarov TM Tnmt TM/RR 10 10 10 4 01.16",
+    "02.05-10.05.15 Nakhchivan AZE Nakhchivan Open 2015 Gr B SS 89 104 9 3 06.15"
+   ]
+  },
+  {
+   "informe": "2019Q2",
+   "fide_id": 13500090,
+   "nombre": "Poley, Vladimir",
+   "fed": "BLR",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "18.01-24.01.19 Orsha BLR XVII Intl Orsha 2019 IM Gr RR 10 10 9 4 02.19",
+    "29.01-04.02.18 Orsha BLR Orsha 2018 SS 77 78 9 8 03.18",
+    "02.06-03.06.17 Minsk BLR 1st World Cadets Rapid CC U10 SS 97 182 9 14 07.17",
+    "30.05-10.06.17 Minsk BLR European Indv CC SS 393 397 11 39 07.17"
+   ]
+  },
+  {
+   "informe": "2019Q2",
+   "fide_id": 6400752,
+   "nombre": "Ortiz Pascual, Nelson",
+   "fed": "DOM",
+   "veredicto": "rechazada",
+   "motivo": "Only 3 norms (Maximum 2 norm from National Individual Championship – art. 4.6a) + incomplete documents (no mention to the language “English” was made)",
+   "torneos": [
+    "20.04-06.05.18 Distr.Nacion. DOM Camp Nacional Masculino SS 63 64 11 1 07.18",
+    "29.09-08.10.17 Distr.Nacion. DOM Torneo Nac Juvenil Masc SS 27 50 8 1 11.17",
+    "17.08-20.18.17 Santiago DOM Torneo Nac Por Equipos TM/SS 115 140 6 2 09.17",
+    "01.05-17.05.15 Distr.Nacion. DOM Camp Nac de Aj.Masculino SS 60 64 11 2 06.15"
+   ]
+  },
+  {
+   "informe": "2019Q2",
+   "fide_id": 15700763,
+   "nombre": "Nugusse, Dejen Zelalem",
+   "fed": "ETH",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "13.04-18.04.19 Addis Ab. ETH 2011 Women Nat Champ RR 8 10 9 1 05.19",
+    "13.04-18.04.19 Addis Ab. ETH 2011 Open Nat Champ SS 21 44 9 1 05.19",
+    "24.09-05.10.18 Batumi GEO 43 rd Olympiad Open TM/SS 862 918 11 180 11.18",
+    "17.07-21.07.18 Addis Ab. ETH Olympiad Selection Open CC SS 20 56 9 1 08.18",
+    "28.03-01.04.18 Addis Ab. ETH 2010 ETH Nat CC Women RR 6 11 11 1 05.18",
+    "28.03-01.04.18 Addis Ab. ETH 2010 ETH Nat CC Open SS 17 51 9 1 05.18",
+    "26.03-02.04.17 Jimma ETH 2017 Zone 4.2 Indv CC Women SS 13 17 9 5 05.17",
+    "26.03-02.04.17 Jimma ETH 2017 Zone 4.2 Indv CC SS 18 30 9 7 05.17"
+   ]
+  },
+  {
+   "informe": "2019Q2",
+   "fide_id": 696757,
+   "nombre": "Blot, Philippe",
+   "fed": "FRA",
+   "veredicto": "aprobada",
+   "motivo": "11",
+   "torneos": [
+    "16.02-22.02.19 Cap.la Gr. FRA 35 OpenIntl deCap.la Grande SS 306 332 9 22 03.19",
+    "26.12-30.12.18 Bethune FRA 39 Open Intl de Bethune A SS 80 80 9 12 02.19",
+    "23.04-29.04.18 Lille FRA 9 LUC Open Intl d’Echecs SS 116 123 9 16 06.18",
+    "09.04-15.04.16 Lille FRA 7 LUC Open Intl d’Echecs SS 115 124 9 13 05.16"
+   ]
+  },
+  {
+   "informe": "2019Q2",
+   "fide_id": 683906,
+   "nombre": "Lebret, Loriane",
+   "fed": "FRA",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "02.01-06.01.19 Vand.lesNancy FRA 15 Open de Vandoeuvre A SS 100 100 9 5 02.19",
+    "14.07-21.07.18 Paris FRA CC de Paris Ile-de-France Open SS 54 54 9 10 08.18",
+    "02.01-06.01.18 Van.lesNancy FRA 14 Open de Vandoeuvre A SS 102 102 9 15 02.18",
+    "29.07-05.08.17 Roux FRA 16 Intl duPays deCharleroi A SS 66 66 9 7 09.17"
+   ]
+  },
+  {
+   "informe": "2019Q2",
+   "fide_id": 4683242,
+   "nombre": "Ast, Bernhard",
+   "fed": "GER",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "18.04-22.04.19 Karlsruhe GER GRENKE Open 2019 A SS 903 904 9 49 05.19",
+    "29.03-02.04.18 Karlsruhe GER GRENKE Open 2018 A SS 782 787 9 47 05.18",
+    "13.04-17.04.17 Karlsruhe GER GRENKE Open 2017 A SS 682 688 9 40 05.17",
+    "16.10-07.05.17 various GER 2.Bundesliga Sued 16/17 TM/RR 172 173 9 20 06.17"
+   ]
+  },
+  {
+   "informe": "2019Q2",
+   "fide_id": 12961809,
+   "nombre": "Ruetemann, Dirk",
+   "fed": "GER",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "08.10-15.04.18 various GER 2.Bundesliga Nord 17/18 TM/RR 169 173 9 14 05.18",
+    "08.07-16.07.17 Lueneburg GER VMCG Schachfestival GM RR 10 10 9 6 08.17",
+    "26.01-29.01.17 Bad Zwisch. GER 19.Nord West Cup A SS 185 188 7 8 02.17",
+    "24.10-30.10.16 Hamburg GER HSK GM 2016 RR 10 10 9 4 12.16"
+   ]
+  },
+  {
+   "informe": "2019Q2",
+   "fide_id": 4282701,
+   "nombre": "Anagnostou, Zoi",
+   "fed": "GRE",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "07.03-11.03.19 Thessaloniki GRE 5th Intl Tnmt Vardaris B SS 101 112 7 8 04.19",
+    "06.07-13.07.18 Paracin SRB Intl Tnmt Paracin 2018 SS 148 148 9 26 08.18",
+    "09.04-15.04.18 Thessaloniki GRE 11 th Intl Open Triandrias A SS 100 100 9 13 05.18",
+    "15.02-19.02.18 Thessaloniki GRE 4th Intl VARDARIS 2017 B SS 113 135 11 7 03.18"
+   ]
+  },
+  {
+   "informe": "2019Q2",
+   "fide_id": 5035465,
+   "nombre": "Biswajit, Bharadwaj",
+   "fed": "IND",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "07.02-11.02.19 Kolkata IND 39 Nat TM CC 2019 TM/SS 205 214 9 1 03.19",
+    "26.09-01.10.18 Kalibari IND Silchar Open Rtg Tnmt SS 111 209 10 5 11.18",
+    "25.05-01.06.18 Odisha IND Odisha GM Festival 2018 A SS 293 293 10 13 07.18",
+    "18.01-25.01.18 Chennai IND 10 th Chennai Intl GM Tnmt SS 259 267 10 22 02.18"
+   ]
+  },
+  {
+   "informe": "2019Q2",
+   "fide_id": 5029449,
+   "nombre": "Venkata, Kumar G",
+   "fed": "IND",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "07.02-11.02.19 Kolkata IND 39 Nat TM CC 2019 TM/SS 205 214 9 1 03.19",
+    "23.11-25.11.18 Hyderabad IND Narenn Convention Champ SS 356 498 9 4 12.18",
+    "09.08-16.08.18 Hyderabad IND Women RR at Hyderabad RR 12 12 11 5 09.18",
+    "12.06-19.06.18 Mumbai IND AICF Women RR RR 12 12 11 7 07.18"
+   ]
+  },
+  {
+   "informe": "2019Q2",
+   "fide_id": 2314746,
+   "nombre": "Sigurdardottir, Hallfridur",
+   "fed": "ISL",
+   "veredicto": "condicional",
+   "motivo": "Wasa SK 100 arsjubileum IT3 missing",
+   "torneos": [
+    "08.04-16.04.19 Reykjavik ISL GAMMA Reykjavik Open SS 225 238 9 32 05.19",
+    "28.02-02.03.19 Reykjavik ISL ISL Team CC 18/19 1 st div TM/RR 145 148 9 13 04.19",
+    "06.03-14.03.18 Reykjavik ISL GAMMA Reykjavik Open SS 241 248 9 34 04.18",
+    "16.09-17.09.17 Stockholm SWE Wassa SK 100 arsjubileum SS 122 129 11 5 10.17"
+   ]
+  },
+  {
+   "informe": "2019Q2",
+   "fide_id": 13700570,
+   "nombre": "Kim, Sergey",
+   "fed": "KAZ",
+   "veredicto": "rechazada",
+   "motivo": "Only 3 norms (Maximum 2 norm from National Individual Championship – art. 4.6a)",
+   "torneos": [
+    "21.04-29.04.19 Almaty KAZ Champ ofKAZ WomenFinal RR 10 10 9 1 06.19",
+    "20.04-30.04.18 Almaty KAZ Men’s Champ 2018 RR 12 12 11 1 06.18",
+    "11.04-21.04.17 Almaty KAZ KAZ Champ Men 2017 RR 12 12 11 1 05.17",
+    "02.04-08.04.17 Tashkent UZB Asian Youth CC Open U8 SS 16 32 9 14 05.17"
+   ]
+  },
+  {
+   "informe": "2019Q2",
+   "fide_id": 10802150,
+   "nombre": "Sembei, Mutua",
+   "fed": "KEN",
+   "veredicto": "aprobada",
+   "motivo": "12",
+   "torneos": [
+    "29.12-05.01.19 Kampala UGA African Junior CC Girls RR 6 10 9 5 02.19",
+    "12.12-16.12.18 Nairobi KEN Kenya Nat CC Open Section SS 72 109 9 1 01.19",
+    "12.08-18.18.18 Kisumu City KEN African Youth CC U10 Open SS 8 24 9 10 09.18",
+    "14.04-14.11.18 various KEN KEN Nat Premier Chess League TM/RR 156 274 21 4 12.18"
+   ]
+  },
+  {
+   "informe": "2019Q2",
+   "fide_id": 11603348,
+   "nombre": "Laizans, Aivars",
+   "fed": "LAT",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "02.03-02.03.19 Riga LAT Pullman OldTownHotel Open Rapid SS 107 112 9 9 04.19",
+    "26.01-26.01.19 Riga LAT II LAT Fed President Blitz Cup SS 132 138 13 6 02.19",
+    "20.08-29.08.18 Riga LAT Europ Youth CC O-08 2018 SS 43 77 9 32 09.18",
+    "06.08-12.08.18 Riga LAT Riga Technical Univ.Open A SS 260 260 9 37 09.18",
+    "17.11-20.11.17 Riga LAT LAT TM CC 2017 TM/SS 115 115 7 11 12.17"
+   ]
+  },
+  {
+   "informe": "2019Q2",
+   "fide_id": 1601962,
+   "nombre": "Wolfinger, Dominik",
+   "fed": "LIE",
+   "veredicto": "rechazada",
+   "motivo": "Only 3 norms (One norm before FA title award – 32 Liexhtensteiner Open 2014 – art. 4.10)",
+   "torneos": [
+    "27.02-07.03.19 Bad Ragaz SUI Accentus Young masters RR 10 10 9 5 04.19",
+    "13.04-17.04.17 Bad Ragaz SUI Bad Ragazer Osteropen SS 91 100 7 14 05.17",
+    "05.04-14.04.16 Bad Ragaz SUI Accentus Young Masters RR 10 10 9 5 05.16",
+    "23.05-31.05.14 Triesen LIE 32 Liechtensteiner Open SS 100 105 9 19 07.14"
+   ]
+  },
+  {
+   "informe": "2019Q2",
+   "fide_id": 13900137,
+   "nombre": "Corotcova, Anastasia",
+   "fed": "MDA",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "30.01-07.02.19 Chisinau MDA Camp RM a.2019 Feminin RR 10 10 9 1 03.19",
+    "26.12-28.12.18 St.Petersburg RUS King Salman World Rapid SS 206 206 15 40 01.19",
+    "08.04-19.04.18 Vysoke Tatry SVK Euro Indv Women CC SS 144 144 11 30 05.18",
+    "18.08-27.08.16 Prague CZE Euro Youth CC Girls U10 SS 87 106 9 39 09.16"
+   ]
+  },
+  {
+   "informe": "2019Q2",
+   "fide_id": 5600588,
+   "nombre": "Grima, Noel",
+   "fed": "MLT",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "22.03-30.03.19 Sharjah UAE 3rd Sharjah Masters Intl CC SS 178 178 9 31 05.19",
+    "11.11-17.11.18 Bugibba MLT Malta Intl Open 2018 SS 170 178 9 31 12.18",
+    "20.10-01.11.18 Qormi MLT 83 rd Malta CC Finals DR 6 6 10 1 12.18",
+    "24.09-05.10.18 Batumi GEO 43 rd Olympiad 2018 Open TM/SS 862 918 11 180 11.18"
+   ]
+  },
+  {
+   "informe": "2019Q2",
+   "fide_id": 19600046,
+   "nombre": "Boydia, Molaye",
+   "fed": "MTN",
+   "veredicto": "rechazada",
+   "motivo": "Only 3 norms (To large time frame - between Zone 4.1 CC2013 Women and Zonal 4.1 Champ 2019 – art. 5.3)",
+   "torneos": [
+    "25.04-02.05.19 Oran ALG Zonal 4.1. Champ 2019 RR 10 10 9 3 06.19",
+    "24.09-05.10.18 Batumi GEO 43 rd Olympiad 2018 Open TM/SS 862 918 11 180 11.18",
+    "23.12-08.01.17 Nouakchott MTN Champ Nat 2016 RR 10 10 9 1 02.17",
+    "28.03-05.04.13 Nouakchott MTN Zone 4.1. CC 2013 Women RR 5 10 9 3 05.13"
+   ]
+  },
+  {
+   "informe": "2019Q2",
+   "fide_id": 1014269,
+   "nombre": "Westerduin, Philip",
+   "fed": "NED",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "01.03-10.03.19 Amsterdam NED dMP Batavia Chess Tnmt RR 10 10 9 5 04.19",
+    "18.01-27.01.19 Wijk aan Zee NED Tata Steel Tnmt Top Ten RR 10 10 9 5 02.19",
+    "04.08-11.08.18 Vlissingen NED 22e Hogeschool Zeeland SS 221 241 9 19 09.18",
+    "07.07-15.07.18 Amsterdam NED Amsterdam SciencePark OpenA SS 52 52 9 5 08.18"
+   ]
+  },
+  {
+   "informe": "2019Q2",
+   "fide_id": 1525093,
+   "nombre": "Vestby, Anniken",
+   "fed": "NOR",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "14.04-21.04.19 Fagernes NOR Fagernes Chess Intl RR 10 10 9 7 05.19",
+    "20.02-24.02.19 Kragero NOR Kragero Resort Chess Title SS 141 150 9 11 03.19",
+    "02.11-10.03.19 various NOR Eliteserien 2018-2019 TM 91 91 9 8 04.19",
+    "24.09-05.10.18 Batumi GEO 43 Olympiad 2018 Women TM/SS 862 918 11 180 11.18"
+   ]
+  },
+  {
+   "informe": "2019Q2",
+   "fide_id": 2401312,
+   "nombre": "Milligan, Helen",
+   "fed": "NZL",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "24.04-28.04.19 Sydney NZL Sydney Intl Open SS 51 56 9 15 05.19",
+    "08.01-12.01.19 Aickland NZL Oceania Youth U20 Girls SS 23 24 9 4 02.19",
+    "07.07-15.07.18 Auckland NZL George Trundle Masters RR 10 10 9 3 08.18",
+    "13.04-21.04.18 Cha Am THA 18tBangkokChessClubOpen SS 193 196 9 37 05.18"
+   ]
+  },
+  {
+   "informe": "2019Q2",
+   "fide_id": 4307011,
+   "nombre": "Wang, Ying",
+   "fed": "NZL",
+   "veredicto": "aprobada",
+   "motivo": "13",
+   "torneos": [
+    "14.01-22.01.19 Auckland NZL 126 th NZL Champ and Open SS 46 47 9 10 02.19",
+    "04.01-12.01.19 Auckland NZL George Trundle Masters RR 10 10 9 5 02.19",
+    "24.09-05.10.18 Batumi GEO 43 rd Olympiad Women TM/SS 667 747 11 146 11.18",
+    "09.10-15.10.17 Auckland NZL 8th Asian Seniors CC 50+ SS 29 30 9 8 11.17"
+   ]
+  },
+  {
+   "informe": "2019Q2",
+   "fide_id": 1160532,
+   "nombre": "Wejsig, Michal",
+   "fed": "POL",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "07.04-12.04.19 Katowice POL Closed GM Tnmt Katowice RR 10 10 9 5 05.19",
+    "07.04-12.04.19 Katowice POL Closed Intl MasterTnmt IM RR 10 10 9 5 05.19",
+    "20.11-25.11.18 Milowka POL XVI Integracyjny Turniej SS 110 116 9 4 12.18",
+    "07.05-11.05.18 Katowice POL Katowice Spring 2018 IM RR 10 10 9 3 06.18",
+    "19.03-25.03.18 Ustron POL II Mistrzostwa Polski SS 129 136 9 4 04.18",
+    "16.12-17.12.17 Katowice POL European Rapid CC 2017 SS 1122 1181 11 41 01.18"
+   ]
+  },
+  {
+   "informe": "2019Q2",
+   "fide_id": 1213393,
+   "nombre": "Sofran, Radu-Pompiliu",
+   "fed": "ROU",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "02.03-10.03.19 Olanesti ROU ROU National CC OpenFinal SS 51 51 9 1 04.19",
+    "14.05-22.05.18 Olanesti ROU ROU National CC OpenFinal SS 53 53 9 1 06.18",
+    "05.09-14.09.17 Mamaia ROU Europ Youth CC Open 8 SS 67 107 9 35 10.17",
+    "05.10-10.10.16 Calimanesti ROU 1st IBSA Indv World Champ SS 30 31 9 7 11.16",
+    "12.12-20.12.15 Bucuresti ROU December’89RevolutionMem SS 97 105 7 3 01.16"
+   ]
+  },
+  {
+   "informe": "2019Q2",
+   "fide_id": 14306930,
+   "nombre": "Ferreira, Marius",
+   "fed": "RSA",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "18.04-22.04.19 Pretoria RSA Capablanca Chess Festival RR 10 10 9 5 05.19",
+    "06.12-12.12.18 Waterberg RSA African Schools Indv CC Girls RR 0 9 9 4 01.19",
+    "03.07-11.07.15 Cape Town RSA South African Open CC SS 120 201 11 10 08.15",
+    "20.09-29.09.14 Durban RSA WYCC 2014 SS 634 944 11 87 10.14"
+   ]
+  },
+  {
+   "informe": "2019Q2",
+   "fide_id": 24190080,
+   "nombre": "Bykov, Vladimir",
+   "fed": "RUS",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "27.10-04.11.18 St.Petersburg RUS M/Chigorin Memorial 2018 SS 296 301 9 21 12.18",
+    "28.08-05.09.18 St.Petersburg RUS St.Petersburg GM 2018 RR 10 10 9 6 10.18",
+    "15.08-23.08.18 St.Petersburg RUS V.Korchnoi Memorial 2018 SS 262 268 9 21 09.18",
+    "02.12-15.12.17 St.Petersburg RUS Superfinal Women CC 2017 RR 12 12 11 1 01.18"
+   ]
+  },
+  {
+   "informe": "2019Q2",
+   "fide_id": 4188837,
+   "nombre": "Nikitin, Aleksey",
+   "fed": "RUS",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "26.12-28.12.18 St.Petersburg RUS King Salman World Rapid SS 206 206 15 40 01.19",
+    "27.10-04.11.18 St.Petersburg RUS M.Chigorin Memorial 2018 SS 296 301 9 21 12.18",
+    "15.08-23.08.18 St.Petersburg RUS V.Korchnoi Memorial 2018 SS 262 268 9 21 09.18",
+    "02.12-15.12.17 St.Petersburg RUS Superfinal Men Champ 2017 RR 12 12 11 1 01.18"
+   ]
+  },
+  {
+   "informe": "2019Q2",
+   "fide_id": 4135008,
+   "nombre": "Polovina, Elena",
+   "fed": "RUS",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "04.08-12.08.18 Drammen NOR Europ Senior CC 50+ Open SS 43 44 9 9 09.18",
+    "01.05-10.05.18 Sochi RUS Team Men PL Chess Final TM/RR 73 73 9 6 06.18",
+    "02.06-08.06.17 Dagomys RUS White Rook’17 Final Stage TM/SS 278 387 9 18 07.17",
+    "03.12-11.12.16 Sochi RUS World School Girls U9 SS 31 42 9 11 01.17"
+   ]
+  },
+  {
+   "informe": "2019Q2",
+   "fide_id": 4141733,
+   "nombre": "Shukan, Alexander",
+   "fed": "RUS",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "26.01-03.02.19 Moscow RUS Moscow Open 2019 A SS 197 198 9 19 03.19",
+    "25.08-05.09.18 Satka RUS Superfinal Men CC 2018 RR 12 12 11 1 10.18",
+    "02.06-08.06.18 Dagomys RUS White Rook 2018 Final TM/SS 299 398 9 23 07.18",
+    "27.01-04.02.18 Moscow RUS Moscow Open 2018 A SS 220 220 9 21 03.18",
+    "24.06-30.06.17 Novosibirsk RUS Chess Siberia 2017 Intl A RR 10 10 9 4 08.17"
+   ]
+  },
+  {
+   "informe": "2019Q2",
+   "fide_id": 34156213,
+   "nombre": "Volkov, Alexander P.",
+   "fed": "RUS",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "20.08-29.08.18 Riga LAT Euro Youth CC 2018 SS 857 1047 9 47 09.18",
+    "15.07-24.07.18 St.Petersburg RUS Chess Day 2018 IM RR 10 10 9 5 08.18",
+    "15.07-25.07.17 Molodezhnoe RUS Intl Chess Day 2017 IM RR 10 10 9 5 08.17",
+    "03.07-09.07.17 Panevezys LTU GM Panevezys July 2017 RR 10 10 9 5 08.17",
+    "20.01-26.01.17 Orsh BLR Orsha 2017 Masters RR 10 10 9 4 03.17"
+   ]
+  },
+  {
+   "informe": "2019Q2",
+   "fide_id": 14600587,
+   "nombre": "Mihevc-Mohr, Narcisa",
+   "fed": "SLO",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "18.11-29.11.18 Bled SLO 28th World Senior Open 50 SS 101 106 11 41 01.19",
+    "24.09-05.10.18 Batumi GEO 43rd Olympiad Women TM/SS 667 747 11 146 11.18 14",
+    "30.07-05.08.18 Maribor SLO 21.Mem.Vasje Pirca Open A SS 34 34 9 12 09.18",
+    "22.07-29.07.17 Portoroz SLO 11.Portoroz Open 2017 SS 106 113 9 17 08.17",
+    "24.06-02.07.17 Maribor SLO posamicno drzavno prven.clanic SS 62 63 9 1 08.17"
+   ]
+  },
+  {
+   "informe": "2019Q2",
+   "fide_id": 12201200,
+   "nombre": "Maher Musa",
+   "fed": "SUD",
+   "veredicto": "rechazada",
+   "motivo": "Only 3 norms (Sudan National Championship Women not valid for IA norm art. 5.2 and art. 4.6a) + incomplete documents (no mention to the language “English” was made, missing the arbiters performance)",
+   "torneos": [
+    "24.09-05.10.18 Batumi GEO 43 rd Olympiad 2018 Open TM/SS 862 918 11 180 11.18",
+    "14.05-20.06.16 Khartoum SUD Sudan Final Champ RR 11 11 11 1 07.16",
+    "03.12-07.12.15 Khartoum SUD Sudan Nat Champ Women SS 4 16 6 1 01.16",
+    "10.09-19.09.15 Khartoum SUD Sudan Nat Champ 23 SS 15 94 11 3 10.15"
+   ]
+  },
+  {
+   "informe": "2019Q2",
+   "fide_id": 12200298,
+   "nombre": "Musa, Omer",
+   "fed": "SUD",
+   "veredicto": "condicional",
+   "motivo": "Incomplete documents (no mention to the language “English” was made, missing the arbiters performance, missing the chief arbiters and federations` signature)",
+   "torneos": [
+    "15.03-25.03.19 Khartoum SUD Sudan Final Champ SS 48 72 11 1 04.19",
+    "31.10-06.11.16 Al Khartoum SUD Arab Indv CC 2016 Open RR 10 10 9 8 12.16",
+    "14.05-20.05.16 Al Khartoum SUD SUD Final CC RR 11 11 11 1 07.16",
+    "02.08-14.08.14 Tromso NOR 41 World Chess Olympiad TM/SS 784 882 11 172 09.14"
+   ]
+  },
+  {
+   "informe": "2019Q2",
+   "fide_id": 14919362,
+   "nombre": "Danada, Tomas",
+   "fed": "SVK",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "10.11-14.04.19 various SVK Extraliga 2018/2019 TM/RR 221 222 11 7 05.19",
+    "18.08-26.08.18 Stare Mesto CZE FIDE Open Stare Mesto SS 65 66 9 4 09.18",
+    "05.05-08.05.18 Lub.kupele SVK Fest Lubovnianske kupele SS 102 107 7 6 06.18",
+    "30.09-04.03.17 various SVK Extraliga SVK 2017/2018 TM/RR 215 215 11 9 04.17"
+   ]
+  },
+  {
+   "informe": "2019Q2",
+   "fide_id": 7607148,
+   "nombre": "Adeeb Zehrawi",
+   "fed": "SYR",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "14.12-20.12.18 Sharjah UAE 9th Sharjah Intl Cup CC SS 75 120 9 33 01.19",
+    "12.04-19.04.18 Sharjah UAE 2nd Sharjah Masters CC SS 129 129 9 29 05.18",
+    "05.02-12.02.18 Sharjah UAE Arab Chess Club Cup TM/RR 44 45 9 9 03.18",
+    "26.01-02.02.18 Sharjah UAE Arab Indv Women CC SS 12 12 9 7 03.18"
+   ]
+  },
+  {
+   "informe": "2019Q2",
+   "fide_id": 5502950,
+   "nombre": "Hayouni, Yahia",
+   "fed": "TUN",
+   "veredicto": "rechazada",
+   "motivo": "Only 2 norms (small Round-Robin –Arab Youth Championship U14 Girls art. 5.2 + there are 3 swiss tournaments with more than 100 players but only one norm is allowed – art. 4.6d)",
+   "torneos": [
+    "16.12-21.12.18 Monastir TUN Champ de TUN Subsidiaire SS 78 121 9 1 01.19",
+    "05.09-11.09.17 Monastir TUN Fest chess Mokhine Open B SS 71 112 9 4 10.17",
+    "23.07-30.07.16 Djerba TUN Arab Youth CC U14 Girls RR 4 6 5 4 09.16",
+    "01.09-06.09.14 Monastir TUN Med SLAMA Mem Youth SS 50 124 9 6 10.14",
+    "24.12-31.12.12 Hammamet TUN African Junior U20 Open SS 15 20 9 8 03.18"
+   ]
+  },
+  {
+   "informe": "2019Q2",
+   "fide_id": 6386377,
+   "nombre": "Alpyuruk, Mehmet Salim",
+   "fed": "TUR",
+   "veredicto": "condicional",
+   "motivo": "Incomplete documents (wrong arbiters performance – 2 nd Baskent University Intl Open Chess Tnmt )",
+   "torneos": [
+    "18.04-26.04.19 Antalya TUR World School CC G11 SS 32 40 9 15 05.19",
+    "25.11-02.12.18 Konya TUR World Youth U16 Olympiad TM/SS 220 222 9 39 01.19",
+    "08.10-14.10.17 Ankara TUR 33 rd Europ Chess Club Cup TM/SS 248 255 7 39 11.17",
+    "30.06-06.07.17 Ankara TUR 2nd Basket Univ Intl Open SS 172 173 9 8 08.17"
+   ]
+  },
+  {
+   "informe": "2019Q2",
+   "fide_id": 6320210,
+   "nombre": "Imamoglu, Mustafa",
+   "fed": "TUR",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "18.04-26.04.19 Antalya TUR World School CC U13 SS 14 14 6 9 05.19",
+    "25.11-02.12.18 Konya TUR World Youth U16 Olympiad TM/SS 220 222 9 39 01.19",
+    "05.09-15.09.18 Kocaeli TUR WJCC Open and Girls SS 165 165 11 59 10.18",
+    "16.05-21.05.17 Antalya TUR 1st Intl Serik Munic.Strawb.Fest SS 34 34 9 7 06.17"
+   ]
+  },
+  {
+   "informe": "2019Q2",
+   "fide_id": 34568786,
+   "nombre": "Yildirim, Yucel",
+   "fed": "TUR",
+   "veredicto": "aprobada",
+   "motivo": "15",
+   "torneos": [
+    "18.04-26.04.19 Antalya TUR World School CC 2019 U13 SS 35 37 14 9 05.19",
+    "09.03-13.03.19 Mugla TUR Marmaris Karya V Closed IM TM/DR 10 10 6 10 04.19",
+    "24.09-05.10.18 Batumi GEO 43 rd Olympiad 2018 Open TM/SS 862 918 11 180 11.18",
+    "05.09-15.09.18 Kocaeli TUR WJCC 2018 Open and Girls SS 97 98 11 43 10.18"
+   ]
+  },
+  {
+   "informe": "2019Q2",
+   "fide_id": 14114127,
+   "nombre": "Biliy, Vadim",
+   "fed": "UKR",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "23.03-27.03.19 Kyiv UKR Kyiv Spring 2019 Open A SS 87 109 9 5 04.19",
+    "20.06-30.06.18 Odessa UKR Open CC of Odessa region Final RR 12 12 11 5 08.18",
+    "20.05-28.05.18 Chornomorsk UKR UKR Clubs Teams CC TM/SS 120 129 9 2 06.18",
+    "16.05-24.05.17 Chornomorsk UKR UKR Clubs Teams CC TM/RR 91 99 9 1 06.17"
+   ]
+  },
+  {
+   "informe": "2019Q2",
+   "fide_id": 14135744,
+   "nombre": "Keik, Mykola",
+   "fed": "UKR",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "12.03-17.03.19 Mukachevo UKR Mukachevo Rtaing – 37 RR 10 10 9 3 04.19",
+    "09.01-14.01.19 Mukachevo UKR Mukachevo Rating – 36 RR 10 10 9 4 02.19",
+    "17.10-22.10.18 Mukachevo UKR Mukachevo Masters IM Gr.  RR  10  10  9 5 11.18",
+    "03.07-08.07.18 Mukachevo UKR Mukachevo Summer Open A SS 104 108 9 6 08.18"
+   ]
+  },
+  {
+   "informe": "2019Q2",
+   "fide_id": 3000311,
+   "nombre": "Carvalho, Guillermo",
+   "fed": "URU",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "09.02-16.02.19 Montevideo URU III de Montevideo Copa SS 126 131 9 13 03.19",
+    "17.09-26.09.17 Montevideo URU World Youth CC 2017 U16 SS 60 60 11 34 10.17",
+    "25.03-02.04.17 Montevideo URU Final Champ URU RR 10 10 9 1 05.17",
+    "25.07-31.07.16 Montevideo URU XXVII Panamericano Sub-16 SS 23 24 9 11 09.16"
+   ]
+  },
+  {
+   "informe": "2019Q2",
+   "fide_id": 14201437,
+   "nombre": "Gevorgyan, Irina",
+   "fed": "UZB",
+   "veredicto": "aprobada",
+   "motivo": "16",
+   "torneos": [
+    "12.03-18.03.19 Tashkent UZB 13 th Mem of G.Agzamov A SS 73 73 9 12 04.19",
+    "17.11-17.11.18 Tashkent UZB Western Asia Rapid U20 Open SS 16 16 7 8 12.18",
+    "23.04-30.04.18 Tashkent UZB 12 th Mem of G.Agzamov A SS 93 107 9 12 06.18",
+    "16.06-24.06.17 Tashkent UZB Zone 3.4 Women CC 2017 SS 15 15 9 4 07.17",
+    "02.04-08.04.17 Tashkent UZB Asian Youth CC U18 Girls SS 26 29 9 11 05.17"
+   ]
+  },
+  {
+   "informe": "2019Q3",
+   "fide_id": 2163942,
+   "nombre": "Jerdy, Rafael Rafic Roncoli",
+   "fed": "BRA",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "05.07-13.07.19 Sao Paulo BRA XIV American Cont 2019 SS 217 219 11 16 08.19",
+    "06.01-14.01.18 Rio de Janeiro BRA ITT do rio de Janeiro 2018 SS 10 10 9 5 02.18",
+    "16.02-21.02.17 Rio de Janeiro BRA Final do Camp BRA Fem RR 10 10 9 1 03.17",
+    "06.02-14.02.17 Rio de Janeiro BRA LXXXIII Abs Fase Final RR 12 12 11 1 03.17"
+   ]
+  },
+  {
+   "informe": "2019Q3",
+   "fide_id": 2631717,
+   "nombre": "Tsypina, Diana",
+   "fed": "CAN",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "20.07-27.07.19 Montreal CAN Champ ouvert du Quebec SS 47 51 9 5 08.19",
+    "12.07-18.07.19 Ragina CAN 2019 CAN Open SS 41 47 9 11 08.19",
+    "07.07-10.07.19 Regina CAN 2019 CAN Youth CC SS 62 104 7 5 08.19",
+    "16.04-24.04.19 Rhodes GRE 2019 World Senior TM 65+ TM/SS 124 124 9 17 05.19",
+    "06.04-14.04.19 Rhodes GRE 2019 Euro Amateur U2300 RR 10 10 9 7 05.19"
+   ]
+  },
+  {
+   "informe": "2019Q3",
+   "fide_id": 8611637,
+   "nombre": "Lin, Zhuhuan",
+   "fed": "CHN",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "07.06-15.06.19 Xingtai CHN Asian Cont Open/Women SS 73 74 9 14 07.19",
+    "14.05-16.05.19 Hengshui CHN IMSA World Masters 2019 SS 16 16 11 9 06.19",
+    "21.09-24.09.17 Ashgabat TKM 5th Asian Indoor Games SS 44 44 7 23 10.17",
+    "09.07-18.07.17 Hainan CHN 8th Hainan GM Chess RR 10 10 9 5 07.18",
+    "12.05-20.05.17 Cheng Du CHN Asian Cont CC SS 69 69 9 14 06.17"
+   ]
+  },
+  {
+   "informe": "2019Q3",
+   "fide_id": 4430450,
+   "nombre": "Rojas Villamil, Pedro",
+   "fed": "COL",
+   "veredicto": "rechazada",
+   "motivo": "Only 3 norms  (Maximum  1 norm from  a single  festival)",
+   "torneos": [
+    "31.07-04.08.19 Tunja COL IRT Bicentenario Batalla B SS 132 203 9 3 09.19",
+    "31.07-04.08.19 Tunja COL IRT Bicentenario Batalla A SS 52 52 9 4 09.19",
+    "13.12-16.12.18 Tunja COL IRT Aguinaldo Boyacense SS 109 150 9 4 01.19",
+    "03.10-08.10.14 Palmira COL Fest CAC y del Caribe U-8 SS 3 16 9 3 11.14",
+    "03.10-08.10.14 Palmira COL Fest CAC y del Caribe U-14SS 36 48 9 10 11.14"
+   ]
+  },
+  {
+   "informe": "2019Q3",
+   "fide_id": 2252350,
+   "nombre": "Corbi Marti, Joaquin",
+   "fed": "ESP",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "09.07-14.07.19 Alcoy ESP 8 Intl Tabiya Alcoy IM RR 10 10 9 6 08.19",
+    "02.07-07.07.19 L Alfaz del Pi ESP II Open de Sant Joan Alac SS 83 91 9 16 08.19",
+    "17.04-21.04.19 Alicante ESP IV Open Semana Santa Alic SS 209 229 9 18 08.19",
+    "02.12-10.12.16 Benidorn ESP XV Gran Intl Aficionado SS 395 414 10 30 01.17"
+   ]
+  },
+  {
+   "informe": "2019Q3",
+   "fide_id": 2221845,
+   "nombre": "Garcia Domingo, Jose Antonio",
+   "fed": "ESP",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "24.06-01.07.19 Platja d Aro ESP VII Intl Vila de Platja A SS 42 42 9 9 08.19",
+    "14.06-16.06.19 Silla ESP VI IRT Sub 2200 de Silla SS 115 123 7 6 07.19",
+    "02.07-06.07.18 Sant Joan ESP Open Intl de Sant d`Alacant SS 42 45 9 8 08.18",
+    "24.06-01.07.18 Platja dAro ESP VI Intl Vila de Platja dAro SS 63 66 9 6 08.18"
+   ]
+  },
+  {
+   "informe": "2019Q3",
+   "fide_id": 2283948,
+   "nombre": "Gonzalez Lopez, Julian",
+   "fed": "ESP",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "04.11-15.11.18 Santiago ESP World Cadet CC U-10 2018 SS 93 116 11 51 12.18",
+    "28.03-01.04.18 La Roda ESP 45 Intl de la Roda SS 253 257 9 13 05.18",
+    "01.12-09.12.17 Benidorn ESP XVI Aficionados S-2300 SS 169 170 10 29 01.18",
+    "12.04-16.04.17 La Roda ESP 44 Intl de Ajedrez SS 261 263 9 14 05.17"
+   ]
+  },
+  {
+   "informe": "2019Q3",
+   "fide_id": 7603720,
+   "nombre": "Al Hamoud, Malek",
+   "fed": "FIN",
+   "veredicto": "aprobada",
+   "motivo": "15",
+   "torneos": [
+    "10.06-18.06.19 Helsinki FIN FIN Champ 2019 SS 15 15 9 1 07.19",
+    "30.05-07.06.16 Helsinki FIN VII ShakkiNet Intl RR 10 10 9 5 07.16",
+    "14.05-22.05.16 Helsinki FIN FIN Champ 2016 RR 10 10 9 1 06.16",
+    "08.06-16.06.15 Helsinki FIN VI ShakkiNet Intl RR 10 10 9 3 07.15"
+   ]
+  },
+  {
+   "informe": "2019Q3",
+   "fide_id": 20656041,
+   "nombre": "Fancelli, Luc",
+   "fed": "FRA",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "29.06-07.07.19 Juvisy sur Orge FRA 3 de Juvisy sur Orge RR 10 10 9 5 08.19",
+    "08.04-14.04.17 Metz FRA XXXV Intl de Metz 2017 SS 72 73 9 10 05.17",
+    "22.10-29.10.16 Cap d`Agde FRA 14 Intl du Cap dAgde SS 157 157 9 19 11.16",
+    "24.10-30.10.15 Cap d`Agde FRA 13 Cap dAgde Open SS 262 328 9 6 12.15"
+   ]
+  },
+  {
+   "informe": "2019Q3",
+   "fide_id": 13611585,
+   "nombre": "Kikvidze, Inga",
+   "fed": "GEO",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "12.07-21.07.19 Poti GEO 14 Poti N. Alexandria Cup SS 51 51 9 7 08.19",
+    "24.09-05.10.18 Batumi GEO 43 Olympiad 2018 Women TM/SS 667 747 11 146 11.18",
+    "19.10-30.10.16 Batumi GEO World Cadets G-12 Ch SS 92 98 11 66 11.16",
+    "13.07-21.07.16 Poti GEO Open Nana Alexandria 11 SS 66 66 9 9 08.16",
+    "01.06-03.06.15 Kutaisi GEO Euro ACP Women Rapid SS 49 50 9 9 07.15",
+    "19.10-28.10.14 Batumi GEO 24 th Euro Girls 12 Champ SS 63 76 9 29 11.14"
+   ]
+  },
+  {
+   "informe": "2019Q3",
+   "fide_id": 4205022,
+   "nombre": "Komninos, Nikolaos",
+   "fed": "GRE",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "15.06-23.06.19 Heraklio GRE 22 Athens Challenge A SS 71 71 9 6 07.19",
+    "16.06-24.06.18 Athens GRE 21 Athens Challenge A SS 69 69 9 6 07.18",
+    "18.06-26.06.16 Athens GRE 19 Skakistiki Epikoinonia SS 56 56 9 4 07.16",
+    "29.03-06.04.14 Athens GRE 36 GRE Nat Women CC RR 10 10 9 1 05.14"
+   ]
+  },
+  {
+   "informe": "2019Q3",
+   "fide_id": 4291891,
+   "nombre": "Kontogiannis, Christos",
+   "fed": "GRE",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "29.04-05.05.19 Thessaloniki GRE 12 Open Intl Triandria A SS 96 96 9 14 06.19",
+    "20.10-30.10.18 Chalkidiki GRE FIDE World Youth CC SS 83 83 11 49 12.18",
+    "19.08-25.08.18 Trikala GRE Intl ERMIS 2018 SS 40 47 9 4 09.18",
+    "10.07-15.07.18 Rio Achaias GRE 2018 GRE TM CC A TM/SS 592 638 7 26 08.18"
+   ]
+  },
+  {
+   "informe": "2019Q3",
+   "fide_id": 731587,
+   "nombre": "Gyomber, Tamas",
+   "fed": "HUN",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "17.08-17.08.18 Budapest HUN 2nd BSSZ Aranytiz GM RR 10 10 9 5 09.18",
+    "02.06-12.06.18 Budapest HUN First Saturday GM June RR 10 10 9 10 07.18",
+    "18.04-26.04.18 Budapest HUN Budapest Spring Festival SS 166 166 9 28 05.18",
+    "28.01-06.02.18 Budapest HUN Vajda Arpad Mem GM RR 10 10 9 5 03.18"
+   ]
+  },
+  {
+   "informe": "2019Q3",
+   "fide_id": 5095980,
+   "nombre": "Arvind, Mhamal",
+   "fed": "IND",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "18.06-25.06.19 Goa IND 2 Goa Intl Open GM SS 246 246 10 23 07.19",
+    "09.06-12.06.19 Mumbai IND 12 Mayor Cup Category B SS 268 301 10 7 07.19",
+    "13.10-20.10.18 Goa IND Goa Intl GM Open Cat A SS 288 288 10 18 11.18",
+    "20.02-26.02.15 Goa IND Nat TM Open 2015 TM/SS 170 205 9 1 03.15"
+   ]
+  },
+  {
+   "informe": "2019Q3",
+   "fide_id": 5086264,
+   "nombre": "Desmukh, Preeti",
+   "fed": "IND",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "09.06-16.06.19 Mumbai IND 12 Mayor Cup Intl Cat A SS 217 217 10 21 07.19",
+    "31.05-07.06.19 Bhubaneswar IND 12 KIIT 2019 Cat A SS 278 278 10 17 07.19",
+    "30.12-07.01.18 Mumbai IND IIFL wealth 4 Mumbai Jun SS 166 234 9 8 02.19",
+    "21.12-28.12.18 Bhopal IND Bhopal Intl GM Tnmt SS 320 375 10 13 01.19"
+   ]
+  },
+  {
+   "informe": "2019Q3",
+   "fide_id": 25062883,
+   "nombre": "Patel, Kavita",
+   "fed": "IND",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "18.05-20.05.19 New Delhi IND DCA Below 1600 Rated SS 485 693 9 6 06.19",
+    "21.12-28.12.18 Bhopal IND Bhopal Intl GM Tnmt SS 320 375 10 13 01.19",
+    "18.11-26.11.18 Jaipur IND Nat Women CC 2018 SS 97 112 11 1 12.18",
+    "26.06-03.07.18 Delhi IND Commonwealth CC U-14 SS 33 35 7 3 08.18"
+   ]
+  },
+  {
+   "informe": "2019Q3",
+   "fide_id": 25014110,
+   "nombre": "S Chougule, Bharat",
+   "fed": "IND",
+   "veredicto": "aprobada",
+   "motivo": "16",
+   "torneos": [
+    "18.06-21.06.19 Goa IND 2 Goa Intl Open Cat B SS 403 458 10 5 07.19",
+    "06.10-19.10.14 Pune IND World Junior CC 2014 SS 135 137 13 46 11.14",
+    "24.05-31.05.14 Bhubaneshwar IND 6th KIIT Intl GM Open A SS 146 147 10 19 07.14",
+    "09.01-16.01.19 New Delhi IND 12 Delhi Intl GM 2014 SS 126 126 10 13 02.14"
+   ]
+  },
+  {
+   "informe": "2019Q3",
+   "fide_id": 25710478,
+   "nombre": "Sohani Vivek Suhas",
+   "fed": "IND",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "18.06-21.06.19 Goa IND 2 Goa Intl Open above 1999SS 246 246 10 23 07.19",
+    "09.06-16.06.19 Mumbai IND 12 Mayors Cup Intl Cat A SS 217 217 10 21 07.19",
+    "30.12-07.01.19 Mumbai IND IIFL Wealth 4 th Mumbai SS 120 120 9 20 02.19",
+    "17.10-20.10.18 Goa IND Goa Intl GM Open Cat C SS 337 536 10 5 11.18"
+   ]
+  },
+  {
+   "informe": "2019Q3",
+   "fide_id": 12556858,
+   "nombre": "Kamaei, Navid",
+   "fed": "IRI",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "21.02-27.02.19 Ahvaz IRI Karoun Intl Masters Cup SS 53 53 9 11 04.19",
+    "27.02-06.03.18 Anzali IRI 16 th Khazar Cup Gr. B SS 142 142 9 8 04.18",
+    "17.02-23.02.18 Ahvaz IRI Karoun Intl Masters Cup SS 51 51 9 11 03.18",
+    "03.05-10.05.17 Shiraz IRI Asian Juniors U-20 CC SS 49 53 9 8 06.17"
+   ]
+  },
+  {
+   "informe": "2019Q3",
+   "fide_id": 12501964,
+   "nombre": "Manouchehri, Shahram",
+   "fed": "IRI",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "05.02-11.02.19 Tehran IRI 27 th Fajr Cup Intl Festval SS 126 126 9 13 03.19",
+    "01.09-09.09.18 Tehran IRI 3rd Paytakht Intl Cup Gr. B SS 196 218 9 6 10.18",
+    "28.07-03.08.18 Hamadan IRI Asian Nations Cup 2018 TM/SS 65 67 7 12 09.18",
+    "11.07-17.07.16 Tehran IRI 12 th Asian Schools OpU-15 SS 42 42 9 10 08.16"
+   ]
+  },
+  {
+   "informe": "2019Q3",
+   "fide_id": 2806827,
+   "nombre": "Lavi, Idan",
+   "fed": "ISR",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "05.04-05.04.19 Various ISR ISR Nat TM CC 2019 TM 89 89 11 5 05.19",
+    "01.12-09.12.17 Herzliya ISR Herzliya Intl GM 2017 RR 10 10 9 4 01.18",
+    "05.07-14.07.17 Jerusalem ISR 20 th Maccabia Intl GM-B RR 10 10 9 5 08.17",
+    "05.02-05.03.17 Petah Tikva ISR IM Intl Winter 2017 RR 10 10 9 3 04.17",
+    "24.08-02.09.16 Herzliya ISR Herzliya Intl Summer Fest RR 10 10 9 4 10.16"
+   ]
+  },
+  {
+   "informe": "2019Q3",
+   "fide_id": 13702394,
+   "nombre": "Aubakirov, Azamat",
+   "fed": "KAZ",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "21.04-02.05.19 Almaty KAZ Champ of KAZ Men Final RR 12 12 11 1 06.19",
+    "27.06-03.07.18 Nur Sultan KAZ Astana Open A SS 139 149 9 8 08.18",
+    "17.06-25.06.18 Nur Sultan KAZ Astana Masters 2018 RR 10 10 9 4 07.18",
+    "21.07-29.07.17 Nur Sultan KAZ Astana Open A 2017 SS 157 169 9 10 08.17"
+   ]
+  },
+  {
+   "informe": "2019Q3",
+   "fide_id": 13703110,
+   "nombre": "Issabayev, Dias",
+   "fed": "KAZ",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "29.06-07.07.19 Nur Sultan KAZ Astana Masters June 2019 RR 10 10 9 3 08.19",
+    "24.12-29.12.18 Nur Sultan KAZ Cup of KAZ Men 2018 RR 10 10 9 4 01.19",
+    "27.06-03.07.18 Nur Sultan KAZ Astana Open A SS 157 169 9 10 08.18",
+    "21.07-29.07.17 Astana KAZ Astana Open A 2017 SS 169 9 08.17"
+   ]
+  },
+  {
+   "informe": "2019Q3",
+   "fide_id": 13700391,
+   "nombre": "Min, Valeriy",
+   "fed": "KAZ",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "16.10-23.10.18 Almaty KAZ Almaty Open 2018 A SS 39 39 9 11 11.18",
+    "21.07-29.07.17 Astana KAZ Astana Open A 2017 SS 157 169 9 10 05.17",
+    "11.04-21.04.17 Almaty KAZ KAZ Champ Men 2017 RR 12 12 11 1 05.17",
+    "02.05-13.05.16 Almaty KAZ Champ of KAZ Women RR 10 10 9 1 06.16"
+   ]
+  },
+  {
+   "informe": "2019Q3",
+   "fide_id": 13702319,
+   "nombre": "Shakenov, Yerzhan",
+   "fed": "KAZ",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "24.12-29.12.18 Nur Sultan KAZ Cup of KAZ Men 2018 RR 10 10 9 4 01.19",
+    "27.06-03.07.18 Nur Sultan KAZ Astana Open A SS 139 149 9 8 08.18",
+    "17.06-25.06.18 Nur Sultan KAZ Astana Masters 2018 RR 10 10 9 4 07.18",
+    "21.07-29.07.17 Astana KAZ Astana Open A 2017 SS 157 169 9 10 05.17"
+   ]
+  },
+  {
+   "informe": "2019Q3",
+   "fide_id": 11602074,
+   "nombre": "Kurpnieks, Varis",
+   "fed": "LAT",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "19.07-23.07.19 Riga LAT Riga Chess Holidays 2019 SS 70 102 7 7 08.19",
+    "07.08-13.08.17 Riga LAT Riga Tech Uni Open A SS 318 319 9 41 09.17",
+    "11.04-22.04.17 Riga LAT Euro Indv Women CC SS 144 144 11 33 05.17",
+    "01.06-05.06.15 Riga LAT Riga GM RR RR 10 10 9 6 07.15",
+    "30.04-06.05.15 Riga LAT LAT Champ Final 2015 SS 29 29 9 1 06.15",
+    "23.01-07.06.15 Riga LAT LAT TM CC Higher Leag TM/RR 102 104 9 11 07.15 17"
+   ]
+  },
+  {
+   "informe": "2019Q3",
+   "fide_id": 9201106,
+   "nombre": "Hatoum, Ammar",
+   "fed": "LBN",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "25.04-03.05.19 Beirut LBN 10 th Beirut Intl Open CC SS 54 54 9 12 06.19",
+    "06.09-14.09.17 Antelias LBN 1st Div Chess Clubs TM/RR 86 118 9 7 10.17",
+    "19.09-27.09.15 Beirut LBN 8th Beirut Intl Open 2015 SS 55 88 9 14 11.15",
+    "12.08-20.08.15 Beirut LBN Interclubs CC 1 st div 2015 TM/RR 64 119 9 6 10.15"
+   ]
+  },
+  {
+   "informe": "2019Q3",
+   "fide_id": 11500263,
+   "nombre": "Ihsan, Jawad",
+   "fed": "PLE",
+   "veredicto": "condicional",
+   "motivo": "Missing Federations` signatures for First Sharjah Intl CC 2014, FIDE Women GP Series and Second Sharjah Intl CC.",
+   "torneos": [
+    "24.09-05.10.18 Batumi GEO 43 World Chess Olympiad TM/SS 862 918 11 180 11.18",
+    "27.01-03.02.18 Sharjah UAE Arab Youth CC U-8 Open SS 1 12 9 8 03.18",
+    "14.07-18.07.16 Sharjah UAE Second Sharjah Intl CC SS 70 127 9 12 08.16",
+    "25.08-06.09.14 Sharjah UAE FIDE Women GP Series RR 12 12 11 9 10.14",
+    "20.03-27.03.14 Sharjah UAE First Sharjah Intl CC 2014 SS 34 79 9 7 04.14"
+   ]
+  },
+  {
+   "informe": "2019Q3",
+   "fide_id": 11501685,
+   "nombre": "Tlaib, Hani",
+   "fed": "PLE",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "20.07-26.07.19 Amman JOR Arab Indv Age Groups SS 25 30 9 12 08.19",
+    "19.06-26.06.19 Amman JOR Asian Zonal 3.1 Open SS 29 30 9 10 07.19",
+    "02.05-05.05.19 Ramallah PLE PLE Women CC 2019 SS 7 34 7 1 06.19",
+    "24.09-05.10.18 Batumi GEO 43 World Chess Olympiad TM/SS 862 918 11 180 11.18"
+   ]
+  },
+  {
+   "informe": "2019Q3",
+   "fide_id": 4133285,
+   "nombre": "Bryzgalin, Kirill",
+   "fed": "RUS",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "02.06-10.06.19 Dagomys RUS White Rook Final Stage TM/SS 312 423 9 29 07.19",
+    "21.05-25.05.19 Sochi RUS Sochi 2019 GM RR 10 10 9 6 06.19",
+    "12.05-19.05.19 Sochi RUS 1st Archibald Professionals SS 51 52 9 11 03.19",
+    "27.01-01.02.19 Lviv UKR January Lviv Tradition RR 10 10 9 5 03.19",
+    "04.01-10.01.19 Beograd SRB 5 Intl Tnmt Amatera SS 115 115 9 20 02.19",
+    "12.10-18.10.18 Sochi RUS Chess Amateur 2018 Oct SS 132 136 9 8 11.18"
+   ]
+  },
+  {
+   "informe": "2019Q3",
+   "fide_id": 24128422,
+   "nombre": "Leolko, Valeria",
+   "fed": "RUS",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "01.05-10.05.19 Sochi RUS TM Men PL Chess Final TM/SS 76 76 9 3 06.19",
+    "09.12-17.12.17 Chelyabinsk RUS The December Evenings RR 10 10 9 4 01.18",
+    "30.06-09.07.17 Satka RUS Chelyabinsk Govenor Cup RR 10 10 9 4 08.17",
+    "03.12-11.12.16 Sochi RUS World Schools Girls U-9 SS 31 42 9 11 01.17"
+   ]
+  },
+  {
+   "informe": "2019Q3",
+   "fide_id": 4133285,
+   "nombre": "Udalkin, Ruslan",
+   "fed": "RUS",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "25.05-30.05.19 Korolev RUS Open Space IM SS 10 10 9 4 07.19",
+    "20.02-27.02.19 Moscow RUS Aeroflot Open 2019 A SS 101 101 9 22 04.19",
+    "26.01-03.02.19 Moscow RUS Moscow Open 2019 A SS 197 198 9 19 03.19",
+    "01.05-07.05.18 Odintsovo RUS Cup of Chess Prodigies IM SS 10 10 9 4 06.18"
+   ]
+  },
+  {
+   "informe": "2019Q3",
+   "fide_id": 928178,
+   "nombre": "Andrejic, Vladica",
+   "fed": "SRB",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "24.06-01.07.19 Belgrade SRB Sahovska Akademija IM-1 RR 12 12 11 8 08.19",
+    "25.06-01.07.18 Belgrade SRB Sahovska Akademija GM RR 10 10 9 3 08.18",
+    "28.02-09.03.17 Belgrade SRB Intl Chess Tnmt PEP 2017 SV 20 20 10 5 04.17",
+    "22.09-02.10.16 Kragujevac SRB SRB League 2016 TM/RR 96 97 11 8 11.16"
+   ]
+  },
+  {
+   "informe": "2019Q3",
+   "fide_id": 12201324,
+   "nombre": "Eltahir, Amar",
+   "fed": "SUD",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "05.05-10.06.19 Mombasa KEN Africa Zone 4.2 Indv Open SS 26 31 9 11 06.19",
+    "25.09-03.10.17 Khartoum SUD SUD Nat CC 25 SS 25 117 11 1 11.17",
+    "31.10-06.11.16 Al Khartoum SUD Arab Indv CC Open 2016 RR 10 10 9 8 12.16",
+    "10.09-19.09.15 Khartoum SUD SUD Nat CC 23 SS 18 95 11 1 10.15"
+   ]
+  },
+  {
+   "informe": "2019Q3",
+   "fide_id": 12201200,
+   "nombre": "Maher, Musa",
+   "fed": "SUD",
+   "veredicto": "en espera",
+   "motivo": "",
+   "torneos": [
+    "24.09-05.10.18 Batumi GEO 43 World Chess Olympiad TM/SS 862 918 11 180 11.18",
+    "13.05-18.05.17 Khartoum SUD SUD Final Nat CC Women SS 7 23 7 1 06.17 18",
+    "14.05-20.05.16 Khartoum SUD SUD Final CC RR 11 11 11 1 07.16",
+    "10.09-17.09.15 Khartoum SUD SUD Nat CC 23 SS 15 94 11 3 10.15"
+   ]
+  },
+  {
+   "informe": "2019Q3",
+   "fide_id": 12200298,
+   "nombre": "Musa, Omer",
+   "fed": "SUD",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "15.03-25.03.19 Khartoum SUD SUD Final CC 26 SS 48 72 11 1 04.19",
+    "31.10-02.11.16 Khartoum SUD Arab Indv CC Open 2016 RR 10 10 9 8 12.16",
+    "14.05-20.05.16 Khartoum SUD SUD Final CC RR 11 11 11 1 07.16",
+    "02.08-14.08.14 Tromso NOR 41 st World Chess Olympiad TM/SS 784 882 11 172 09.14"
+   ]
+  },
+  {
+   "informe": "2019Q3",
+   "fide_id": 14003996,
+   "nombre": "Annayev, Vladimir",
+   "fed": "TKM",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "21.06-27.06.19 Tashkent UZB Asian Schools CC G-13 SS 14 14 9 6 07.19",
+    "28.04-08.05.18 Ashgabat TKM Champ of TKM 2018 Final RR 15 16 15 1 06.18",
+    "03.12-17.12.17 Ashgabat TKM Champ of TKM 2017 Final RR 15 16 15 1 01.18",
+    "21.09-24.09.17 Adhgabat TKM 5th Asian Indoor Games SS 37 39 7 21 10.17"
+   ]
+  },
+  {
+   "informe": "2019Q3",
+   "fide_id": 6333028,
+   "nombre": "Alev, Engin Deniz",
+   "fed": "TUR",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "24.04-28.04.19 Marmaris TUR Marmaris Karya VI IM TM/DR 10 10 10 7 05.19",
+    "26.06-01.07.18 Izmir TUR 6th Cesme Intl Open SS 659 680 9 9 08.18",
+    "17.07-23.07.17 Konya TUR 2016-2017 TUR League TM/SS 291 337 9 16 08.17",
+    "08.09-14.09.14 Izmir TUR 13th Izmir Open SS 118 166 9 8 10.14"
+   ]
+  },
+  {
+   "informe": "2019Q3",
+   "fide_id": 9311769,
+   "nombre": "Alnuaimi, Ahmed M.",
+   "fed": "UAE",
+   "veredicto": "condicional",
+   "motivo": "Missing documentation (IT3 for 25th Abu Dhabi Int. Chess Festival Open; wrong IA1 and IT3 for Asian Youth Chess Championship 2019) 19",
+   "torneos": [
+    "03.04-09.04.19 Colombo SRI Asian Youth CC 2019 SS 429 562 9 23 05.19",
+    "07.08-15.08.18 Abu Dabi UAE 25 th Abu Dabi Intl Festival SS 158 158 9 32 09.18",
+    "23.03-31.03.17 Sharjah UAE 1st Sharjah Masters Intl SS 230 230 9 38 05.17",
+    "25.12-29.12.16 Al Ain UAE Western Asia Youth CC SS 20 20 9 5 02.17"
+   ]
+  },
+  {
+   "informe": "2020Q1",
+   "fide_id": 145572,
+   "nombre": "Vilte, Hector Eduardo",
+   "fed": "ARG",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "14.08-23.08.19 Villa Martelli ARG ITT Ciudad de Vte Lopez RR 10 10 9 5 09.19",
+    "04.08-12.08.19 Caba ARG X Magistral Grafica Yael RR 10 10 9 4 09.19",
+    "13.04-20.04.19 Mar del Plata ARG 50 Abierto de Mar Del PlataSS 187 203 9 9 05.19",
+    "17.07-30.07.18 Villa Martelli ARG 93 Camp ARG Abs SuperiorRR 14 14 13 1 09.18"
+   ]
+  },
+  {
+   "informe": "2020Q1",
+   "fide_id": 3220257,
+   "nombre": "Zuccala, Christopher",
+   "fed": "AUS",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "14.12-22.12.19 Melbourne AUS 2019 AUS Masters GM RR 10 10 9 4 01.20",
+    "27.12-31.12.18 Melbourne AUS 2019 AUS Open Champ SS 165 167 9 22 02.19",
+    "09.12-17.12.17 Melbourne AUS 2017 AUS Masters IM RR 10 10 9 6 01.18",
+    "10.12-18.12.16 Melbourne AUS 2016 AUS Masters IM RR 10 10 9 5 01.17"
+   ]
+  },
+  {
+   "informe": "2020Q1",
+   "fide_id": 13403087,
+   "nombre": "Abdullayev, Elshad",
+   "fed": "AZE",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "03.07-09.07.19 Baku AZE Summer Festival GM TM/RR 12 12 9 5 08.19",
+    "12.05-18.05.19 Baku AZE Summer Cup Khazar Uni TM/RR 10 10 10 5 06.19",
+    "18.09-26.09.19 Baku AZE Baku Open 2016 Gr. A SS 52 52 9 9 10.16",
+    "02.09-13.09.16 Baku AZE 42 nd Olympiad Baku Open TM/SS 840 891 11 175 10.16",
+    "10.05-18.05.16 Nakhchivan AZE Nakhchivan Open 2016 A SS 48 48 9 10 06.16"
+   ]
+  },
+  {
+   "informe": "2020Q1",
+   "fide_id": 1928090,
+   "nombre": "Carapinha, Francisco Manuel",
+   "fed": "CPV",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "05.12-09.12.19 S Nicolau CPV III CN Absoluto Final RR 7 8 7 1 01.20",
+    "27.10-03.11.19 Figueira da Foz POR XIII Intl Figueira da Foz SS 43 45 9 14 12.19",
+    "22.09-27.09.19 Sao Tome STP Zone 4.3 Youth U-16 TM TM/RR 2 27 5 4 10.19",
+    "05.07-13.07.19 Sao Paulo BRA XIV American Cont CC SS 217 219 11 16 08.19",
+    "28.10-04.11.18 Figueira da Foz POR XII Intl Figueira da Foz SS 50 50 9 12 12.18"
+   ]
+  },
+  {
+   "informe": "2020Q1",
+   "fide_id": 6501435,
+   "nombre": "Angulo Cubero, Oscar",
+   "fed": "CRC",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "20.08-25.08.19 La Vega DOM 3er La Vega Intl Chess Op SS 70 95 9 11 09.19",
+    "26.12-30.12.18 San Jose CRC Abierto Intl Metropolitano SS 45 46 9 5 02.19",
+    "06.07-06.07.17 San Jose CRC PanAm Youth Blitz U-18 SS 13 14 9 10 08.17 01.07-06.07-17 San Jose CRC PanAm Youth Girls U-8 SS 1 15 9 11 08.17",
+    "15.03-24.03.17 La Habana CUB X Uni R. Fernandez Gr. 1 RR 10 10 9 4 04.17"
+   ]
+  },
+  {
+   "informe": "2020Q1",
+   "fide_id": 14527677,
+   "nombre": "Birk, Bojan",
+   "fed": "CRO",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "18.09-26.09.19 Mali Losinj CRO Euro Senior TM CC S65 TM/SS 70 71 9 11 10.19",
+    "06.11-12.11.16 Novi Sad SRB 32 nd Euro Chess Club Cup TM/SS 438 442 7 47 12.16",
+    "06.03-12.03.16 Rijeka CRO 16 th WGM Mediterranean RR 10 10 9 6 04.16",
+    "11.01-22.01.15 Opatija CRO CRO Champ 2014 Men RR 12 12 11 1 02.15"
+   ]
+  },
+  {
+   "informe": "2020Q1",
+   "fide_id": 14511436,
+   "nombre": "Stankovic, Sasa",
+   "fed": "CRO",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "28.09-06.10.19 Mali Losinj CRO ST: 28. CRO TM Liga 1 B TM/RR 97 99 9 12 11.19",
+    "08.09-15.09.18 Biograd na Moru CRO 27 th CRO TM 1 L Women TM/RR 61 65 9 5 10.18",
+    "08.10-16.10.16 Sibenik CRO 25 th CRO TM CC 1A Men TM/RR 74 76 9 9 11.16",
+    "21.09-30.09.15 Porec CRO 25 th Euro Youth CC U-14 SS 88 89 9 40 11.15"
+   ]
+  },
+  {
+   "informe": "2020Q1",
+   "fide_id": 3516490,
+   "nombre": "Garcia Beltran, Ibrahin",
+   "fed": "CUB",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "26.09-01.10.19 Mayabeuqe CUB XVII Andres Clemente Prem RR 10 10 9 4 11.19",
+    "25.09-01.10.19 Mayabeuqe CUB XVII Andres Clemente Elite RR 10 10 9 5 11.19",
+    "23.04-01.05.19 Santa Clara CUB Guillermo Garcia 28 th Prem RR 10 10 9 4 06.19",
+    "09.05-19.05.18 La Habana CUB LIII Capablanca in Mem Op SS 204 205 10 14 06.18",
+    "29.04-07.05.18 La Habana CUB XI Remberto Fernandez Elite RR 10 10 9 3 06.18",
+    "02.02-10.02.18 La Habana CUB 55 Final Camp Nac Abs RR 10 10 9 1 03.18 16"
+   ]
+  },
+  {
+   "informe": "2020Q1",
+   "fide_id": 305235,
+   "nombre": "Buchnicek, Petr",
+   "fed": "CZE",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "10.11-16.11.19 Ulcinj MNE 35 th Euro Club Cup TM/SS 455 457 7 48 12.19",
+    "10.08-17.08.19 Olomouc CZE Olomouc Summer A GM RR 10 10 9 5 09.19",
+    "19.07-27.07.19 Pardubice CZE CZE Open 2019 B Rtg SS 216 216 9 26 08.19",
+    "11.07-17.07.19 Pardubice CZE Euro Youth TM CC U-18 TM/SS 67 67 7 13 08.19"
+   ]
+  },
+  {
+   "informe": "2020Q1",
+   "fide_id": 330701,
+   "nombre": "Kudla, Richard",
+   "fed": "CZE",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "27.04-05.05.19 Ostrava CZE Ostravsky konik 2019 Op B SS 110 112 9 4 06.19",
+    "29.04-07.05.17 Ostrava CZE Mistrovsvi CR muzu a zen SS 58 58 9 1 06.17",
+    "13.08-20.08.16 Olomouc CZE Olomouc Summer 2016 A RR 10 10 9 6 09.16",
+    "07.11-17.04.16 Various CZE tht Extraliga 2015/2016 TM/RR 190 193 11 13 05.16"
+   ]
+  },
+  {
+   "informe": "2020Q1",
+   "fide_id": 305405,
+   "nombre": "Sikora, Jan",
+   "fed": "CZE",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "17.08-24.08.19 Vienna AUT Vienna Chess Open A SS 399 401 9 43 09.19",
+    "02.08-10.08.19 Bratislava SVK Euro Youth CC Open U18 SS 108 109 9 43 09.19",
+    "20.07-27.07.19 Pardubice CZE CZE Open D SS 149 223 9 19 08.19",
+    "03.11-21.04.19 Various CZE Extraliga druzstev 2018/19 TM 188 188 11 15 05.19"
+   ]
+  },
+  {
+   "informe": "2020Q1",
+   "fide_id": 6400752,
+   "nombre": "Ortiz Pascual, Nelson",
+   "fed": "DOM",
+   "veredicto": "condicional",
+   "motivo": "Incomplete documents (no mention to the language “English” was made – IA2, missing IA1 for 43 rd",
+   "torneos": [
+    "20.08-25.08.19 La Vega DOM 3er La Vega Intl Open 2019 SS 70 95 9 11 09.19",
+    "24.09-05.10.18 Batumi GEO 43 rd Olympiad Batumi TM/SS 862 918 11 180 11.18",
+    "20.04-06.05.18 Distr Nacional DOM Camp Nacional Masculino SS 63 64 11 1 07.18",
+    "01.05-17.05.15 Distr Nacional DOM Camp Nacional Masculino SS 60 64 11 2 06.15"
+   ]
+  },
+  {
+   "informe": "2020Q1",
+   "fide_id": 22280812,
+   "nombre": "Fernandez Calabuig, Manuel",
+   "fed": "ESP",
+   "veredicto": "rechazada",
+   "motivo": "Only 2 norms (art. 4.6d – maximum one norm)",
+   "torneos": [
+    "04.11-15.11.18 Santiago de C ESP World Cadet CC U-8 Op SS 85 131 11 56 12.18",
+    "06.08-12.08.18 Mislata ESP LII Open de Mislata Gr C SS 111 124 9 6 09.18",
+    "02.12-10.12.16 Benidorm ESP XV Intl Aficionades S-2300 SS 181 181 10 24 01.17",
+    "08.08-14.08.16 Mislata ESP L Open Vill de Mislata C SS 117 127 9 5 09.16"
+   ]
+  },
+  {
+   "informe": "2020Q1",
+   "fide_id": 2289180,
+   "nombre": "Gonzalez Gandara, David",
+   "fed": "ESP",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "19.08-23.08.19 Linares ESP CE Segunda Division TM/RR 300 310 7 13 09.19",
+    "01.07-07.07.19 Ourense ESP VI Intl Campus Ourense SS 64 67 9 7 08.19",
+    "04.11-15.11.18 Santiago de C ESP World Cadet CC U-10 Op SS 183 201 11 67 12.18",
+    "16.06-24.06.18 Sanxenxo ESP X Intl Carlos I Silgar SS 110 116 9 14 07.18"
+   ]
+  },
+  {
+   "informe": "2020Q1",
+   "fide_id": 2224690,
+   "nombre": "Pareja Lopez, Francisco Jesus",
+   "fed": "ESP",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "30.08-01.09.19 Sevilla ESP 2 Open Intl Sub 2200 SS 120 133 7 6 10.19",
+    "26.12-30.12.18 Lorca ESP VII Festival Intl de Lorca A SS 145 146 9 22 02.19",
+    "01.11-05.11.18 Almeria ESP Juan Martinez Sola Liga RR 10 10 9 5 12.18",
+    "13.01-21.01.17 Sevilla ESP XLII Intl de Sevilla SS 237 257 9 20 02.17"
+   ]
+  },
+  {
+   "informe": "2020Q1",
+   "fide_id": 675270,
+   "nombre": "Regaud, Denis",
+   "fed": "FRA",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "22.07-28.07.19 Metz FRA 5e Festival de Metz SS/RR 127 141 9 16 08.19 06.07-12.07.19Salon de ProvenceFRA Xeme de Provence Principal SS 63 74 9 7 08.19",
+    "30.06-05.07.19 Sanary Sur Mer FRA 5e Open Intl du Comite SS 112 123 9 6 08.19",
+    "08.04-14.04.19 Metz FRA 37eme Open Intl de Metz SS 94 96 9 14 05.19"
+   ]
+  },
+  {
+   "informe": "2020Q1",
+   "fide_id": 13617273,
+   "nombre": "Beria, Giorgi",
+   "fed": "GEO",
+   "veredicto": "aprobada",
+   "motivo": "17",
+   "torneos": [
+    "24.10-02.11.19 Batumi GEO 22 nd Euro TM CC TM/SS 198 198 9 39 12.19",
+    "13.07-20.07.19 Poti GEO 14 th Poti N. Alexandria A SS 51 51 9 7 08.19",
+    "24.09-05.10.18 Batumi GEO 43 rd Olympiad Batumi W TM/SS 862 918 11 180 11.18",
+    "13.07-20.07.18 Poti GEO 13 th Poti Intl Festival A SS 46 46 9 11 08.18"
+   ]
+  },
+  {
+   "informe": "2020Q1",
+   "fide_id": 12949639,
+   "nombre": "Haase, Carsten",
+   "fed": "GER",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "12.10-20.10.19 Berlin GER Lichtenrader Herbst 2019 SS 137 145 9 16 11.19",
+    "18.04-22.04.19 Karlsruhe GER Grenke Chess Open A SS 903 904 9 49 05.19",
+    "27.12-30.12.18 Berlin GER 12 Intl Winteropen SS 140 160 7 17 02.19",
+    "03.08-11.08.18 Dresden GER 89 Deutsche Meisterschaft SS 24 24 9 1 09.18"
+   ]
+  },
+  {
+   "informe": "2020Q1",
+   "fide_id": 12961914,
+   "nombre": "Weber, Michael",
+   "fed": "GER",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "26.10-03.11.19 Gmund am T GER 23 Intl Bayerische Ch SS 490 505 9 26 12.19",
+    "25.08-01.09.19 Innsbruck AUT 3 Intl Festival Innsbruck A SS 138 165 9 19 10.19",
+    "18.04-22.04.19 Karlsruhe GER Grenke Chess Open A SS 903 904 9 49 12.19",
+    "01.03-05.03.19 Neustadt der W GER 10 Pfalz Open A SS 222 223 9 14 04.19"
+   ]
+  },
+  {
+   "informe": "2020Q1",
+   "fide_id": 16209060,
+   "nombre": "Winker, Fabian",
+   "fed": "GER",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "03.08-11.08.19 Lueneburg GER Lueneburger Festival A SS 134 139 9 11 09.19",
+    "02.08-10.08.19 Lueneburg GER Lueneburger Festivak GM RR 10 10 9 5 09.19",
+    "18.04-22.04.19 Karlsruhe GER Grenke Chess Open A SS 903 904 9 49 09.19",
+    "25.12-30.12.18 Boeblingen GER 35 Intl Boeblinger A SS 147 147 9 21 02.19"
+   ]
+  },
+  {
+   "informe": "2020Q1",
+   "fide_id": 25042050,
+   "nombre": "Beig, Saleem",
+   "fed": "IND",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "11.08-18.08.19 Madurai IND Athens of the East 1 GM A SS 180 180 10 11 09.19",
+    "17.04-21.04.19 Bangalore IND Bangalore Open FIDE Rtd SS 205 390 10 3 05.19",
+    "13.10-20.10.18 Goa IND Goa Intl GM Cat A SS 288 288 10 18 11.18",
+    "11.12-18.12.17 Ahmedabad IND World Youth U-16 OL TM/SS 134 147 9 25 01.18"
+   ]
+  },
+  {
+   "informe": "2020Q1",
+   "fide_id": 5068746,
+   "nombre": "Bhaskar, V.",
+   "fed": "IND",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "06.09-10.09.19 New Delhi IND Western Asia U-16 Girls SS 22 23 9 6 10.19",
+    "19.07-27.07.19 Karaikudi IND 46 th Nat Women CC 2019 SS 96 106 11 1 08.19",
+    "28.01-04.02.19 Chennai IND Velammal AICF Women GM RR 12 12 11 5 03.19",
+    "13.10-20.10.18 Goa IND Goa Intl GM Open Cat A SS 288 288 10 18 11.18"
+   ]
+  },
+  {
+   "informe": "2020Q1",
+   "fide_id": 25075551,
+   "nombre": "Bhatt, Swati",
+   "fed": "IND",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "06.09-10.09.19 New Delhi IND Western Asian Girls U-20 SS 20 20 9 5 10.19",
+    "01.07-07.07.19 New Delhi IND Commonwealth CC U10 O SS 60 67 7 3 08.19",
+    "23.03-27.03.19 New Delhi IND DCA Open FIDE Rtd SS 532 641 9 5 04.19",
+    "09.01-16.01.19 New Delhi IND Delhi Intl Open A 2019 SS 321 322 10 21 02.19"
+   ]
+  },
+  {
+   "informe": "2020Q1",
+   "fide_id": 5065062,
+   "nombre": "Chitaranjan, Taorem",
+   "fed": "IND",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "15.10-25.10.19 New Delhi IND World Junior U-20 CC SS 94 94 11 41 11.19",
+    "06.09-10.09.19 New Delhi IND Western Asian Girls U-20 SS 41 41 9 5 10.19",
+    "30.06-07.07.19 New Delhi IND Commonwealth CC U-20 SS 92 94 9 9 08.19",
+    "09.01-12.01.19 New Delhi IND Delhi Intl Cat B SS 870 958 10 10 02.19"
+   ]
+  },
+  {
+   "informe": "2020Q1",
+   "fide_id": 35016350,
+   "nombre": "Chockalingam, Balaji Ulaganathan",
+   "fed": "IND",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "13.09-20.09.19 Udaipur IND 1st Lakecity Intl Open GM SS 204 223 10 11 10.19",
+    "20.08-27.08.19 Hyderabad IND Tetrasoft Hyderabad GM SS 151 151 10 10 09.19",
+    "11.08-18.08.19 Madurai IND Athens of the East 1 Intl A SS 180 180 10 11 09.19",
+    "22.06-25.06.19 Goa IND 2nd Goa Intl Open Cat C SS 416 610 10 3 07.19"
+   ]
+  },
+  {
+   "informe": "2020Q1",
+   "fide_id": 5045541,
+   "nombre": "Kavlekar, Sanjay R.",
+   "fed": "IND",
+   "veredicto": "aprobada",
+   "motivo": "18",
+   "torneos": [
+    "20.08-27.08.19 Hyderabad IND Tetrasoft Hyderabad GM SS 151 151 10 10 09.19",
+    "18.06-21.06.19 Goa IND 2nd Goa Intl Cat B SS 403 458 10 5 07.19",
+    "09.06-16.06.19 Mumbai IND 12 th Mayor’s Cup Intl A SS 217 217 10 21 07.19",
+    "13.10-20.10.18 Goa IND Goa Intl GM Cat A SS 288 288 10 18 11.18"
+   ]
+  },
+  {
+   "informe": "2020Q1",
+   "fide_id": 25061550,
+   "nombre": "Mrityunjay, Singh",
+   "fed": "IND",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "06.09-10.09.19 New Delhi IND Western Asian Open U-18 SS 43 44 9 5 10.19",
+    "23.03-27.03.19 New Delhi IND DCA Open FIDE Rtd SS 532 641 9 5 04.19",
+    "09.01-16.01.19 New Delhi IND 17 Delhi Intl Open 2019 A SS 321 322 10 21 02.19",
+    "26.06-03.07.18 Delhi IND Commonwealth CC U-16 SS 33 34 7 4 08.18"
+   ]
+  },
+  {
+   "informe": "2020Q1",
+   "fide_id": 25042408,
+   "nombre": "Naveen, Kumar T",
+   "fed": "IND",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "19.07-27.07.19 Karaikudi IND 46 th Nat Women CC 2019 SS 96 106 11 1 08.19",
+    "14.05-22.05.18 Kolkata IND 3rd Kolkata Intl GM Open SS 205 205 9 13 06.18",
+    "18.01-25.01.18 Chennai IND 10 th Chennai Open Intl GM SS 259 267 10 22 02.18",
+    "29.12-31.12.17 Coimbatore IND KKCA 2 nd All IND Rtd SS 201 402 9 3 02.18"
+   ]
+  },
+  {
+   "informe": "2020Q1",
+   "fide_id": 35004220,
+   "nombre": "Rupesh, Kumar",
+   "fed": "IND",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "06.09-10.09.19 New Delhi IND Western Asian Open U-10 SS 55 60 9 5 10.19",
+    "09.01-16.01.19 New Delhi IND 17 th Delhi Intl Open B SS 870 958 10 10 02.19",
+    "26.06-03.07.18 Delhi IND Commonwealth CC Open SS 164 165 9 12 08.18",
+    "09.01-16.01.18 New Delhi IND Delhi Intl Open Cat A SS 264 264 10 24 02.18",
+    "11.12-18.12.17 Ahmedabad IND World Youth U-16 OL TM/SS 134 147 9 25 01.18"
+   ]
+  },
+  {
+   "informe": "2020Q1",
+   "fide_id": 25024590,
+   "nombre": "Saini, Rashmi",
+   "fed": "IND",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "15.10-25.10.19 New Delhi IND FIDE World Junior Girls SS 94 94 11 39 11.19",
+    "06.09-10.09.19 New Delhi IND Western Asian Girls U-18 SS 19 19 9 7 10.19",
+    "01.07-07.07.19 New Delhi IND Commonwealth CC U12 O SS 45 47 7 3 08.19",
+    "03.07-10.07.17 New Delhi IND Commonwealth Girls U-10 SS 31 42 7 3 08.17",
+    "27.03-31.03.16 New Delhi IND Delhi FIDE Rtd 2016 SS 449 560 9 6 05.16"
+   ]
+  },
+  {
+   "informe": "2020Q1",
+   "fide_id": 25027042,
+   "nombre": "Selva, Manikandan S",
+   "fed": "IND",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "22.09-29.09.19 Ahmadabad IND 2nd Gujarat Intl GM Open SS 206 206 10 13 11.19",
+    "29.08-02.09.19 Tirunelveli IND 1st Courtalam Saaral Rtd SS 153 308 9 4 10.19",
+    "11.12-18.12.17 Gujarat IND World Youth U-16 OL TM/SS 134 147 9 25 01.18",
+    "03.07-10.07.17 New Delhi IND Commonwealth Girls U-14 SS 34 35 7 5 08.17",
+    "23.07-31.03.17 Karnataka IND IBCA Asian Pacific SS 17 23 8 4 05.17"
+   ]
+  },
+  {
+   "informe": "2020Q1",
+   "fide_id": 45022062,
+   "nombre": "Shivakant, Mishra",
+   "fed": "IND",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "06.09-10.09.19 New Delhi IND Western Asian Open U-08 SS 17 30 9 7 10.19",
+    "01.07-07.07.19 New Delhi IND Commonwealth CC U18 O SS 27 28 7 4 08.19",
+    "23.03-27.03.19 New Delhi IND DCA Open FIDE Rtd Tnmt SS 532 641 9 5 04.19",
+    "09.01-16.01.19 New Delhi IND 17 th Delhi Intl Open A SS 321 322 10 21 02.19",
+    "26.06-03.07.18 Delhi IND Commonwealth CC Open SS 164 165 9 12 08.18"
+   ]
+  },
+  {
+   "informe": "2020Q1",
+   "fide_id": 25088327,
+   "nombre": "Stella, Sharmila P",
+   "fed": "IND",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "15.10-25.10.19 New Delhi IND World Junior U-20 CC SS 94 94 11 39 11.19",
+    "30.06-07.07.19 New Delhi IND Commonwealth CC U-20 SS 92 94 9 9 08.19",
+    "09.01-16.01.19 New Delhi IND 17 th Delhi Intl Open B SS 870 958 10 10 02.19",
+    "26.06-03.07.18 Delhi IND Commonwealth CC Girls SS 20 21 7 4 08.18"
+   ]
+  },
+  {
+   "informe": "2020Q1",
+   "fide_id": 12501506,
+   "nombre": "Mirzapour, Hanieh",
+   "fed": "IRI",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "28.07-03.08.18 Hamadan IRI Asian Nations Women TM/RR 39 39 7 7 09.18",
+    "27.02-06.03.18 Anzali IRI 16 th Intl Khazar Gr. C SS 191 224 11 5 04.18",
+    "29.08-03.09.17 Khomein IRI 1st Aftab Cup Open Intl SS 84 124 9 10 10.17",
+    "21.08-28.08.17 Hamadan IRI 14 th Avicenna Cup Intl A SS 67 67 9 12 09.17"
+   ]
+  },
+  {
+   "informe": "2020Q1",
+   "fide_id": 12598771,
+   "nombre": "Mishani, Shideh",
+   "fed": "IRI",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "09.11-16.11.19 Rasht IRI 2019 IRI Women’s Final RR 12 12 11 1 12.19",
+    "28.07-03.08.18 Hamadan IRI Asian Nations Women TM/RR 39 39 7 7 09.18",
+    "27.02-06.03.18 Anzali IRI 16 th Intl Khazar Gr. C SS 57 57 9 9 04.18 19",
+    "24.10-31.10.17 Tehran IRI 2nd Paytakht Standard SS 207 232 9 5 12.17"
+   ]
+  },
+  {
+   "informe": "2020Q1",
+   "fide_id": 12500666,
+   "nombre": "Paridar, Shadi",
+   "fed": "IRI",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "02.10-12.10.19 Mumbai IND World Youth U-14 Girls SS 81 82 11 41 11.19",
+    "05.02-11.02.19 Tehran IRI 27 th Fajr Cup Intl Festival SS 126 126 9 13 03.19",
+    "18.11-22.11.18 Tashkent UZB Western Asia U-16 Girls SS 15 16 9 7 12.18",
+    "28.07-03.08.18 Hamadan IRI Asian Nations Cup 2018 TM/SS 65 67 7 12 09.18"
+   ]
+  },
+  {
+   "informe": "2020Q1",
+   "fide_id": 13707019,
+   "nombre": "Bauyrzhan, Kausar",
+   "fed": "KAZ",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "21.08-01.09.19 Weifang CHN World Cadet CC G-08 SS 11 63 11 36 10.19",
+    "18.04-26.04.19 Antalya TUR World School CC U-07 SS 7 38 9 13 05.19",
+    "12.02-19.02.19 Anzali IRI 17 th Caspian Cup Intl SS 79 79 9 11 03.19",
+    "05.02-11.02.19 Tehran IRI 27 th Fajr Cup Intl Festival SS 126 126 9 13 03.19"
+   ]
+  },
+  {
+   "informe": "2020Q1",
+   "fide_id": 13700570,
+   "nombre": "Kim, Sergey",
+   "fed": "KAZ",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "10.09-16.09.19 Almaty KAZ Asian Seniors CC over 65 SS 25 28 9 7 10.19",
+    "09.09-09.09.19 Almaty KAZ Asian Seniors +65 Blitz CC SS 26 28 7 6 10.19",
+    "21.04-29.04.19 Almaty KAZ KAZ Champ Men Final RR 10 10 9 1 06.19",
+    "20.04-30.04.18 Almaty KAZ Women’s CC of KAZ 2018 RR 12 12 11 1 06.18",
+    "02.04-08.04.17 Tashkent UZB Asian Youth CC Open U-8 SS 16 32 9 14 05.17"
+   ]
+  },
+  {
+   "informe": "2020Q1",
+   "fide_id": 5707579,
+   "nombre": "Muniyan, Genkeswaran",
+   "fed": "MAS",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "01.08-10.08.19 Bangkok THA Eastern Asia Youth 2019 RR 152 239 9 13 09.19",
+    "07.04-15.04.19 Ulaanbaatar MGL FIDE Zone 3.3 CC Open SS 48 48 9 6 05.19",
+    "27.04-01.05.18 Kuala Lumpur MAS 45 th Selangor Challenger SS 105 166 9 8 06.18",
+    "03.01-07.01.18 Vientiane LAO 1st Laos Intl Open 2018 SS 56 68 9 15 02.18",
+    "20.07-30.07.17 Panjin Liaoning CHN Asian Schools CC 2017 SS 156 296 9 22 08.17"
+   ]
+  },
+  {
+   "informe": "2020Q1",
+   "fide_id": 5727588,
+   "nombre": "Thiagarajoo, Kumaressan",
+   "fed": "MAS",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "21.08-01.09.19 Weifang CHN World Cadet CC G-12 SS 11 171 205 44 10.19",
+    "01.08-10.08.19 Bangkok THA Eastern Asia Youth 2019 RR 152 239 9 13 09.19",
+    "07.04-15.04.19 Ulaanbaatar MGL FIDE Zone 3.3 CC Women SS 38 38 9 6 05.19",
+    "22.12-27.12.18 Hong Kong HKG LEAP HK Intl Open SS 64 80 9 15 01.19"
+   ]
+  },
+  {
+   "informe": "2020Q1",
+   "fide_id": 4901690,
+   "nombre": "Nyamdavaa, Batbold",
+   "fed": "MGL",
+   "veredicto": "rechazada",
+   "motivo": "Only 3 norms (MGL Nat Rapid CC 2018 – not IA level)",
+   "torneos": [
+    "21.09-29.09.19 Murun MGL 59 th MGL Nat CC RR 12 12 11 1 11.19",
+    "01.08-10.08.19 Bangkok THA Eastern Asian Youth 2019 RR 152 239 9 13 09.19",
+    "07.04-15.04.19 Ulaanbaatar MGL FIDE Zone 3.3 CC Open SS 48 48 9 5 05.19",
+    "25.11-30.11.18 Ulaanbaatar MGL MGL Nat Rapid CC 2018 SS 65 01.19"
+   ]
+  },
+  {
+   "informe": "2020Q1",
+   "fide_id": 1523988,
+   "nombre": "Gressli, Kristoffer",
+   "fed": "NOR",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "05.07-13.07.19 Larvik NOR Landsturneringen 2019 SS 476 526 9 1 08.19",
+    "07.07-14.07.18 Moss-Sarpsborg NOR Landsturneringen 2018 SS 482 544 9 1 08.18",
+    "22.06-26.06.18 Oslo NOR OSS Intl 2018 SS 53 54 9 8 07.18",
+    "03.11-04.03.18 Oslo NOR NOR Premier League TM/RR 98 98 9 12 04.18"
+   ]
+  },
+  {
+   "informe": "2020Q1",
+   "fide_id": 1514237,
+   "nombre": "Lovaas, Roger",
+   "fed": "NOR",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "05.07-13.07.19 Larvik NOR Landsturneringen 2019 SS 476 526 9 1 08.19",
+    "02.11-10.03.19 Oslo NOR NOR Premier League TM/RR 91 91 9 8 04.19",
+    "04.08-12.08.18 Dammen NOR Euro Senior CC +50 Open SS/RR 118 119 9 18 09.18",
+    "03.05-04.03.17 Oslo NOR NOR Premier League TM/RR 98 98 9 12 02.18"
+   ]
+  },
+  {
+   "informe": "2020Q1",
+   "fide_id": 6601154,
+   "nombre": "Murillo Subia, Agustin",
+   "fed": "PAN",
+   "veredicto": "condicional",
+   "motivo": "Incomplete documents (missing the arbiter’s performance - XV Festival CAC PAN U-12 and Camp PanAm Amateur Abs) – pending update from federation",
+   "torneos": [
+    "04.11-04.11.18 Panama PAN Camp PanAm Amateur Blitz SS 55 86 9 11 12.18",
+    "01.11-06.11.18 Panama PAN Camp PanAm Amateur Abs SS 48 48 9 13 12.18",
+    "10.08-15.08.17 Panama PAN XV Festival CAC PAN U-12 SS 19 31 9 8 10.17 20",
+    "26.05-04.06.17 Panama PAN Final Camp Nac Abs 2017 RR 10 10 9 1 07.17",
+    "23.10-30.10.16 Panama PAN Camp Nac por Equipos TM/SS 93 170 6 11 12.16"
+   ]
+  },
+  {
+   "informe": "2020Q1",
+   "fide_id": 5228506,
+   "nombre": "Cruz, Reden",
+   "fed": "PHI",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "10.12-15.12.19 Tanuan City PHI Eastern Asia Girls CC 2019 SS 23 24 9 5 01.20",
+    "20.11-26.11.19 Quenzon City PHI Nat CC 2019 RR 11 11 11 1 01.20",
+    "04.09-11.09.19 Quenzon City PHI FIDE Nat Women’s CC RR 14 14 13 1 12.19 01.08.10.08.19 Bangkok THA Eastern Asia Youth 2019 RR 152 239 9 13 09.19"
+   ]
+  },
+  {
+   "informe": "2020Q1",
+   "fide_id": 5207614,
+   "nombre": "Navalta, Ricky",
+   "fed": "PHI",
+   "veredicto": "rechazada",
+   "motivo": "Only 2 norms (World Youth CC Girls U-18SS is too old, art. 5.3; FAITH FIDE Rtd Tnmt – not IA level, art. 4.6)",
+   "torneos": [
+    "28.06-30.06.19 Tanauan City PHI FAITH FIDE Rtd Tnmt RR 4 10 9 1 08.19",
+    "10.12-18.12.18 Makati City PHI 17 th Asian Cont CC Women SS 38 38 9 11 01.19",
+    "04.11-11.11.18 Tagaytay City PHI 9th Asian Seniors CC 2018 SS 29 34 9 9 12.18",
+    "19.10-31.10.08 Vung Tau VIE World Youth CC Girls U-18SS 41 47 11 30 01.09"
+   ]
+  },
+  {
+   "informe": "2020Q1",
+   "fide_id": 1183621,
+   "nombre": "Daniel, Damian",
+   "fed": "POL",
+   "veredicto": "rechazada",
+   "motivo": "Only 3 norms (One norm before FA title award – Euro Senior TM +65 – art. 4.10)",
+   "torneos": [
+    "05.08-11.08.19 Wroclaw POL Wroclaw Open 2019 SS 88 98 9 10 09.19",
+    "18.08-26.08.18 Polanica Zdroj POL 54 th Intl Akiba Rubinstein ASS 89 89 9 8 09.18",
+    "30.07-04.08.18 Wroclaw POL Wroclaw Open A SS 57 57 9 10 09.18",
+    "13.04-23.04.18 Walbrzych POL Euro Senior TM +65 TM 62 64 9 7 05.18"
+   ]
+  },
+  {
+   "informe": "2020Q1",
+   "fide_id": 14310988,
+   "nombre": "Steyn, Lynette",
+   "fed": "RSA",
+   "veredicto": "rechazada",
+   "motivo": "NA license level",
+   "torneos": [
+    "24.08-25.08.19 Casablanca MAR African Games CC 2019 TM/SS 65 80 9 20 09.19",
+    "03.12-09.12.17 Cairo EGY African Youth 2017 G-U18 RR 8 9 9 5 01.18",
+    "11.12-17.12.16 Lusaka ZAM 2016 African School Indv SS 0 16 9 6 01.17",
+    "20.09-29.09.14 Durban RSA WYCC 2014 SS 634 944 11 87 10.14"
+   ]
+  },
+  {
+   "informe": "2020Q1",
+   "fide_id": 4153723,
+   "nombre": "Gluhov, Viktor",
+   "fed": "RUS",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "02.06-10.06.19 Dagomys RUS White Rook 2019 Final TM/SS 312 423 9 29 07.19",
+    "08.08-17.08.16 Novokuznetsk RUS Women Kostenkovo 2016 RR 10 10 9 4 09.16",
+    "06.12-16.12.15 Pavlodar KAZ Pavlodar Open 2015 SS 82 85 10 7 01.16",
+    "01.05-07.05.15 Sochi RUS TM Men HL Chess TM 108 109 7 5 06.15"
+   ]
+  },
+  {
+   "informe": "2020Q1",
+   "fide_id": 24182370,
+   "nombre": "Shelokov, Valery",
+   "fed": "RUS",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "22.06-29.06.19 Chelyabinsk RUS Memorial Kibizov 2019 B RR 10 10 9 5 08.19",
+    "09.12-17.12.17 Chelyabinsk RUS The December Evenings IMRR 10 10 9 4 01.18",
+    "30.06-09.07.17 Satka RUS Chelyabinsk Governor Cup RR 10 10 9 5 08.17",
+    "03.12-11.12.16 Sochi RUS World Schools Boys U-13 SS 51 56 9 14 01.17"
+   ]
+  },
+  {
+   "informe": "2020Q1",
+   "fide_id": 9907513,
+   "nombre": "Anuradha, Sanjeewa",
+   "fed": "SRI",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "03.04-09.04.19 Waskaduwa SRI Asian Youth CC U-12 Op SS 53 57 9 13 05.19",
+    "09.07-14.07.18 Waskaduwa SRI 14 th Asian Schools CC 2018SS 16 18 9 5 08.18",
+    "06.09-10.09.17 Waskaduwa SRI 2nd West Asian Youth CC SS 151 187 9 7 10.17",
+    "30.07-06.08.16 Waskaduwa SRI Commonwealth CC G U-14 SS 24 25 9 5 09.16",
+    "22.07-28.07.15 Waskaduwa SRI Asian Cities CC 2015 TM/SS 72 76 9 14 08.15",
+    "06.12-11.12.14 Waskaduwa SRI Asian Senior CC 2014 SS 8 14 9 8 01.15"
+   ]
+  },
+  {
+   "informe": "2020Q1",
+   "fide_id": 12201200,
+   "nombre": "Maher, Musa",
+   "fed": "SUD",
+   "veredicto": "rechazada",
+   "motivo": "Only 3 norms (Maximum 2 norm from National Individual Championship – art. 4.6a) + incomplete documents (missing the arbiter’s performance; missing the IT3 for two norms) 21",
+   "torneos": [
+    "24.09-05.10.18 Batumi GEO 43 World Chess Olympiad TM/SS 862 918 11 180 11.18",
+    "13.05-18.05.17 Khartoum SUD SUD Final Nat CC Women SS 7 23 7 1 06.17",
+    "14.05-20.05.16 Khartoum SUD SUD Final CC RR 11 11 11 1 07.16",
+    "10.09-17.09.15 Khartoum SUD SUD Nat CC 23 SS 15 94 11 3 10.15"
+   ]
+  },
+  {
+   "informe": "2020Q1",
+   "fide_id": 7603746,
+   "nombre": "Hasan, Soliman",
+   "fed": "SYR",
+   "veredicto": "condicional",
+   "motivo": "Incomplete documents (missing the arbiter`s performance for three norms, missing the signatures for three norms) – pending update from federation",
+   "torneos": [
+    "20.07-26.07.19 Amman JOR Arab Indv Age Groups SS 22 24 9 9 08.19",
+    "28.07-03.08.18 Hamedan IRI Asian Nations Cup Open TM/SS 65 67 7 12 09.18",
+    "16.03-21.03.17 Baghdad IRQ 5th IRQ Intl CC SS 55 55 9 14 04.17",
+    "11.07-17.07.16 Tehran IRI 12 th Asian Schools Op U-13 SS 52 54 9 14 08.16"
+   ]
+  },
+  {
+   "informe": "2020Q1",
+   "fide_id": 6138622,
+   "nombre": "Ibisoglu, Aylin",
+   "fed": "TUR",
+   "veredicto": "condicional",
+   "motivo": "Incomplete documents (missing the arbiter`s performance - 2 nd Yunusemre Mun IM Cl) – pending update from federation",
+   "torneos": [
+    "29.04-04.05.19 Manisa TUR 2nd Yunusemre Mun IM Cl TM/RR 10 10 10 6 06.19",
+    "27.08-01.09.18 Ankara TUR 4 Intl Baskent Uni Open SS 147 148 9 9 10.18",
+    "19.08-24.08.17 Ankara TUR 3rd Intl Cubuk Mun Tnmt SS 147 147 9 8 09.17",
+    "08.07-13.07.16 Ankara TUR Baskent Uni Intl Open SS 421 660 9 1 08.16"
+   ]
+  },
+  {
+   "informe": "2020Q1",
+   "fide_id": 6330320,
+   "nombre": "Saglam, Emrah Sitki",
+   "fed": "TUR",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "29.07-02.08.19 Mugla TUR Marmaris Karya VIII IM TM/RR 10 10 10 4 09.19",
+    "31.01-07.02.15 Antalya TUR 2014-2015 TUR Cup SS 319 411 11 1 03.15",
+    "26.11-05.12.13 Antalya TUR FIDE World TM CC 2013 TM/RR 50 50 9 10 01.14",
+    "13.09-26.09.13 Kocaeli TUR World Junior CC 2013 SS 118 118 13 50 10.13"
+   ]
+  },
+  {
+   "informe": "2020Q1",
+   "fide_id": 34503889,
+   "nombre": "Sapan, Umut",
+   "fed": "TUR",
+   "veredicto": "condicional",
+   "motivo": "Incomplete documents (missing the IT3 for two norms, missing the signatures) – pending update from federation",
+   "torneos": [
+    "21.07-28.07.19 Konya TUR 2019 TUR League TM 332 08.19",
+    "25.05-29.05.19 Mugla TUR Marmaris Karya VII IM TM/DR 10 10 10 5 06.19",
+    "18.04-26.04.19 Antalya TUR World School CC – U15 SS 26 26 9 12 05.19",
+    "04.11-15.11.18 Santiago de C ESP World Cadet CC U-12 Op SS 189 198 11 62 12.18"
+   ]
+  },
+  {
+   "informe": "2020Q1",
+   "fide_id": 14106469,
+   "nombre": "Bodnar, Nikolay",
+   "fed": "UKR",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "12.08-17.08.19 Mukachevo UKR Mukachevo Rtg 40 IM RR 10 10 9 4 09.19",
+    "03.07-07.07.19 Vinnytsia UKR I Vinnytsia Intl Gold U-14 SS 73 112 9 6 08.19",
+    "20.05-28.05.19 Chornomorsk UKR UKR Clubs TM CC TM/SS 119 127 9 2 07.19",
+    "23.03-27.03.19 Kyiv UKR Kyiv Spring 2019 Open A SS 87 109 9 5 04.19"
+   ]
+  },
+  {
+   "informe": "2020Q1",
+   "fide_id": 14198754,
+   "nombre": "Khrypach, Andrey",
+   "fed": "UKR",
+   "veredicto": "condicional",
+   "motivo": "Incomplete documents (missing the arbiter`s performance - Chess Title Winter GM) – pending update from federation",
+   "torneos": [
+    "18.08-22.08.19 Lviv UKR Cup of Lviv SS 178 195 9 18 09.19",
+    "16.07-20.07.19 Lviv UKR 24 th Euro Open Deaf Club TM/SS 40 59 7 12 08.19",
+    "11.02-16.02.19 Lviv UKR Chess Title Winter GM RR 10 10 9 4 03.19",
+    "20.11-28.11.18 Lviv UKR 15 th Vasylyshyn Mem GM RR 10 10 9 4 12.18"
+   ]
+  },
+  {
+   "informe": "2020Q1",
+   "fide_id": 14136660,
+   "nombre": "Kovalenko, Maxim",
+   "fed": "UKR",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "31.07-06.08.19 Kyiv UKR Kyiv Summer IM 2019-2 RR 10 10 9 4 09.19",
+    "23.07-30.07.19 Kyiv UKR Master Kyiv Summer 2019 RR 10 10 9 4 09.19",
+    "20.08-29.08.18 Riga LAT Euro Youth CC G-10 SS 56 71 9 32 09.18",
+    "06.08-12.08.18 Riga LAT RTU Open 2018 Tnmt A SS 260 260 9 37 09.18"
+   ]
+  },
+  {
+   "informe": "2020Q1",
+   "fide_id": 14175630,
+   "nombre": "Larkin, Sergii",
+   "fed": "UKR",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "12.08-17.08.19 Mukachevo UKR Mukachevo Rtg 40 IM RR 10 10 9 4 09.19",
+    "20.05-28.05.19 Chornomorsk UKR UKR Clubs TM CC TM/SS 119 127 9 2 07.19",
+    "09.01-14.01.19 Mukachevo UKR Mukachevo Rtg – 36 RR 119 127 9 2 02.19",
+    "11.12-20.12.18 Kyiv UKR UKR Women’s Final RR 10 10 9 1 01.19",
+    "17.10-22.10.18 Mukachevo UKR Mukachevo Masters IM RR 10 10 9 5 11.18"
+   ]
+  },
+  {
+   "informe": "2020Q1",
+   "fide_id": 14136422,
+   "nombre": "Pepa, Yurij",
+   "fed": "UKR",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "20.11-25.11.19 Lviv UKR November Lviv Tradition RR 10 10 9 5 12.19",
+    "23.08-28.08.19 Kyiv UKR Cup Independence 2019 A SS 155 174 9 9 09.19 22",
+    "23.03-27.03.19 Kyiv UKR Kyiv Spring Open A SS 87 109 9 5 04.19",
+    "11.12-20.12.18 Kyiv UKR UKR Men’s Final 2018 RR 10 10 9 1 01.19"
+   ]
+  },
+  {
+   "informe": "2020Q1",
+   "fide_id": 3900371,
+   "nombre": "Gonzalez, Jose Luis",
+   "fed": "VEN",
+   "veredicto": "aprobada",
+   "motivo": "",
+   "torneos": [
+    "14.08-18.08.19 Caracas VEN I Gran Torneo Nac Equipos TM/SS 209 274 9 5 09.19",
+    "23.10-28.10.18 Guatire VEN IX Camp PanAm Escolar SS 13 24 9 6 12.18",
+    "28.04-03.05.18 Merida VEN CAC Sub 10 Abs SS 24 81 9 3 06.18",
+    "28.04-03.05.18 Merida VEN CAC Sub 16 Abs SS 97 127 9 3 06.18",
+    "28.04-03.05.18 Merida VEN CAC Sub 12 Abs SS 42 57 9 3 06.18",
+    "28.04-03.05.18 Merida VEN CAC Sub 18 Femenino SS 25 29 9 4 06.18",
+    "13.12-17.12.16 Caracas VEN ITT Camp Nac Abierto 81 SS 149 166 9 4 01.17",
+    "15.08-22.08.16 Caracas VEN CAC Sub 14 Abs SS 33 50 9 5 09.16"
+   ]
+  },
+  {
+   "informe": "2020Q1",
+   "fide_id": 12402095,
+   "nombre": "Lam, Minh Chau",
+   "fed": "VIE",
+   "veredicto": "rechazada",
+   "motivo": "Only 2 norms (11 th Asian Cont Women and VIE Indv CC Men are too old, art. 5.3;)",
+   "torneos": [
+    "25.10-01.11.19 Bac Giang VIE 4th ASEAN CC 2019 Men SS 21 22 9 5 12.19",
+    "07.03-13.03.19 Ho Chi Minh VIE 9th HDBank Intl Cup SS 109 148 9 12 04.19",
+    "05.05-13.05.12 Ho Chi Minh VIE 11 th Asian Cont Women SS 41 41 9 8 07.12",
+    "19.03-29.03.12 Can Tho VIE VIE Indv CC Men SS 38 38 15 1 05.12"
+   ]
+  },
   {
    "informe": "2020Q2",
    "fide_id": 411450,
