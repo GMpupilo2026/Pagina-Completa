@@ -146,6 +146,8 @@ const ELO_CR = [
 const FORMACION = [];
 // Los correos para los avisos (solo administración) y lo que se vence en 90 días, como lo da arbitros_cr_por_vencer().
 const CONTACTOS = [];
+// Quien falleció lleva el lazo de «En memoria» (arbitros_cr_memoria): Juan, solo en su bloque.
+const MEMORIA = [];
 const POR_VENCER = [
     { fide_id: 6500004, nombre: "Viejo Prueba, Juan", correo: null, avisos: false, clave: "actividad:2026-11-20", que: "Quedas inactivo en la Federación", vence: "2026-11-20", avisado: null },
     { fide_id: 6500003, nombre: "Rojas Prueba, Luis", correo: "luis@correo.com", avisos: true, clave: "norma-af:104", que: "La norma de AF deja de contar", vence: "2026-12-01", avisado: null },
@@ -169,7 +171,7 @@ function doble(tieneLicencia, admin) {
 window.SUPABASE_URL = "https://falso.supabase.co";
 window.SUPABASE_ANON_KEY = "anon-falsa";
 (function () {
-  const TABLAS = ${JSON.stringify({ arbitros_cr: ARBITROS, arbitros_cr_torneos: TORNEOS, arbitros_cr_cargos: CARGOS, arbitros_cr_cr: CR.map((c) => ({ pais: "CRC", ...c })), arbitros_cr_cr_cargos: CR_CARGOS, arbitros_cr_fide: ARBITROS_FIDE, arbitros_cr_sin_id: SIN_ID, arbitros_cr_cr_elo: ELO_CR, arbitros_cr_formacion: FORMACION, arbitros_cr_contacto: CONTACTOS })};
+  const TABLAS = ${JSON.stringify({ arbitros_cr: ARBITROS, arbitros_cr_torneos: TORNEOS, arbitros_cr_cargos: CARGOS, arbitros_cr_cr: CR.map((c) => ({ pais: "CRC", ...c })), arbitros_cr_cr_cargos: CR_CARGOS, arbitros_cr_fide: ARBITROS_FIDE, arbitros_cr_sin_id: SIN_ID, arbitros_cr_cr_elo: ELO_CR, arbitros_cr_formacion: FORMACION, arbitros_cr_contacto: CONTACTOS, arbitros_cr_memoria: MEMORIA })};
   const POR_VENCER = ${JSON.stringify(POR_VENCER)};
   const LICENCIA = ${tieneLicencia ? "true" : "false"};
   window.__pedidos = [];
@@ -323,7 +325,7 @@ const porNombre = (m) => Object.fromEntries(m.map((f) => [f[0], f]));
         return window.innerWidth === 1280 && t.scrollWidth <= t.parentElement.clientWidth;
     }), true);
     igual("pide cada tabla de mil en mil", await p.evaluate(() => window.__pedidos.filter((x) => x.startsWith("arbitros_cr")).sort()),
-        ["arbitros_cr 0-999", "arbitros_cr_cargos 0-999", "arbitros_cr_cr 0-999", "arbitros_cr_cr_cargos 0-999", "arbitros_cr_cr_elo 0-999", "arbitros_cr_fide 0-999", "arbitros_cr_formacion 0-999", "arbitros_cr_sin_id 0-999", "arbitros_cr_torneos 0-999"]);
+        ["arbitros_cr 0-999", "arbitros_cr_cargos 0-999", "arbitros_cr_cr 0-999", "arbitros_cr_cr_cargos 0-999", "arbitros_cr_cr_elo 0-999", "arbitros_cr_fide 0-999", "arbitros_cr_formacion 0-999", "arbitros_cr_memoria 0-999", "arbitros_cr_sin_id 0-999", "arbitros_cr_torneos 0-999"]);
     let m = porNombre(await filas(p, "#tabla-arbitros"));
     igual("los cinco árbitros salen (todos los años), también quien solo está en chess-results", Object.keys(m).sort(),
         ["Ángulo Prueba, Óscar", "Quiros Prueba, Eduardo", "Rojas Prueba, Luis", "Soto Prueba, Ana", "Viejo Prueba, Juan"].sort());
@@ -1085,6 +1087,26 @@ const porNombre = (m) => Object.fromEntries(m.map((f) => [f[0], f]));
     igual("«Quitar el correo» pide confirmar y lo quita", [await p.$eval("#contacto-estado", (e) => e.textContent), await visible(p, "#contacto-quitar")],
         ["Sin correo: no le llegan los avisos.", false]);
     await ctx.close();
+
+    console.log("\n=== En memoria ===");
+    MEMORIA.push({ fide_id: 6500004 });
+    ({ ctx, p } = await abrir(browser, "arbitros-cr.html", true));
+    await p.waitForFunction(() => document.querySelectorAll("#tabla-arbitros tbody tr").length > 0);
+    igual("en la lista, solo Juan lleva «En memoria», escrito y con el lazo (que el lector de pantalla no lee)",
+        await p.$$eval("#tabla-arbitros tbody th", (ths) => ths.filter((th) => th.querySelector("[data-memoria]")).map((th) => {
+            const m = th.querySelector("[data-memoria]");
+            return [th.querySelector("button").textContent, m.textContent, m.querySelector("svg").getAttribute("aria-hidden"), m.checkVisibility()];
+        })), [["Viejo Prueba, Juan", "En memoria", "true", true]]);
+    await p.click("#tabla-arbitros tbody th button:text-is('Viejo Prueba, Juan')");
+    await p.waitForFunction(() => document.getElementById("ficha").checkVisibility());
+    igual("y en su ficha, junto al nombre", await p.$eval("#ficha-titulo", (e) => [e.firstChild.textContent, e.querySelector("[data-memoria]") && e.querySelector("[data-memoria]").textContent]),
+        ["Viejo Prueba, Juan", "En memoria"]);
+    await ctx.close();
+    ({ ctx, p } = await abrir(browser, "arbitros-cr.html#6500003", true));
+    await p.waitForFunction(() => document.getElementById("ficha").checkVisibility());
+    igual("quien no está en la tabla no lo lleva", await p.$$eval("#ficha-titulo [data-memoria]", (l) => l.length), 0);
+    await ctx.close();
+    MEMORIA.pop();
 
     console.log("\n=== Quien solo está en chess-results ===");
     ({ ctx, p } = await abrir(browser, "arbitros-cr.html#6500005", true));

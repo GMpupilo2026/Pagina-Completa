@@ -4369,6 +4369,25 @@ día y que no entra una predicción inventada.
 Rompí a propósito el filtro de las ya subidas, la firma y la regla del
 acierto; salta cada vez.
 
+## En memoria
+
+Un árbitro que falleció lleva junto a su nombre, en la lista y en su ficha
+de `arbitros-cr.html`, un lazo de luto con «En memoria» escrito: el dibujo
+no va solo, y el lector de pantalla lee el texto, no el lazo
+(`aria-hidden`). Lo pidió el dueño en octubre de 2026 por Betzy Fallas
+Marín (ID 6500986), que arbitró torneos de FIDE en el país y aprobó el
+seminario de AF de mujeres en 2011.
+
+- Va en su propia tabla, `arbitros_cr_memoria` (migración
+  `20261019015814`), y no en `arbitros_cr`: esa se borra y se vuelve a
+  llenar en cada carga, y la marca se perdería. La leen quienes tienen la
+  herramienta; la escribe solo administración (por ahora, en la base).
+- El lazo es un SVG propio en `currentColor`, así que se ve en los dos
+  temas con el color del texto.
+- `verificar-arbitros-cr.js` marca a Juan solo en su bloque y comprueba la
+  lista, la ficha y que nadie más lo lleve; se rompió devolviendo siempre
+  nada y salta.
+
 ## Para subir de categoría en FIDE
 
 En la ficha de cada IA, debajo de sus normas (pedido del dueño, octubre de

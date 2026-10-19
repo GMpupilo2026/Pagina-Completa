@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20261018205712
+# al-dia-con: 20261019015814
 tabla  Ejercicios Lichess  rls=true
 tabla  _foto_rls_tmp  rls=false
 tabla  _pedidos_elo  rls=false
@@ -22,6 +22,7 @@ tabla  arbitros_cr_cr_cargos  rls=true
 tabla  arbitros_cr_cr_elo  rls=true
 tabla  arbitros_cr_fide  rls=true
 tabla  arbitros_cr_formacion  rls=true
+tabla  arbitros_cr_memoria  rls=true
 tabla  arbitros_cr_normas_revision  rls=true
 tabla  arbitros_cr_sin_id  rls=true
 tabla  arbitros_cr_solicitudes_enviadas  rls=true
@@ -345,6 +346,10 @@ columna  arbitros_cr_formacion.horas  numeric(5,1)
 columna  arbitros_cr_formacion.id  uuid
 columna  arbitros_cr_formacion.nota  numeric(5,2)
 columna  arbitros_cr_formacion.tipo  text
+columna  arbitros_cr_memoria.creada  timestamp with time zone
+columna  arbitros_cr_memoria.creada_por  uuid
+columna  arbitros_cr_memoria.fide_id  integer
+columna  arbitros_cr_memoria.nota  text
 columna  arbitros_cr_normas_revision.archivo  text
 columna  arbitros_cr_normas_revision.cargo  text
 columna  arbitros_cr_normas_revision.creada  timestamp with time zone
@@ -2328,6 +2333,10 @@ politica  arbitros_cr_formacion  arbitros_cr_formacion_agregar  INSERT
 politica  arbitros_cr_formacion  arbitros_cr_formacion_borrar  DELETE
 politica  arbitros_cr_formacion  arbitros_cr_formacion_cambiar  UPDATE
 politica  arbitros_cr_formacion  arbitros_cr_formacion_ver  SELECT
+politica  arbitros_cr_memoria  arbitros_cr_memoria_agregar  INSERT
+politica  arbitros_cr_memoria  arbitros_cr_memoria_borrar  DELETE
+politica  arbitros_cr_memoria  arbitros_cr_memoria_cambiar  UPDATE
+politica  arbitros_cr_memoria  arbitros_cr_memoria_ver  SELECT
 politica  arbitros_cr_normas_revision  arbitros_cr_normas_revision_borrar  DELETE
 politica  arbitros_cr_normas_revision  arbitros_cr_normas_revision_cambiar  UPDATE
 politica  arbitros_cr_normas_revision  arbitros_cr_normas_revision_subir  INSERT
@@ -2919,6 +2928,7 @@ indice  arbitros_cr_fide  arbitros_cr_fide_pkey
 indice  arbitros_cr_formacion  arbitros_cr_formacion_fide_idx
 indice  arbitros_cr_formacion  arbitros_cr_formacion_pkey
 indice  arbitros_cr_formacion  arbitros_cr_formacion_una_categoria
+indice  arbitros_cr_memoria  arbitros_cr_memoria_pkey
 indice  arbitros_cr_normas_revision  arbitros_cr_normas_revision_creada_por_idx
 indice  arbitros_cr_normas_revision  arbitros_cr_normas_revision_pkey
 indice  arbitros_cr_normas_revision  arbitros_cr_normas_revision_una_por_torneo
@@ -3513,6 +3523,10 @@ grant  arbitros_cr_formacion  authenticated  DELETE
 grant  arbitros_cr_formacion  authenticated  INSERT
 grant  arbitros_cr_formacion  authenticated  SELECT
 grant  arbitros_cr_formacion  authenticated  UPDATE
+grant  arbitros_cr_memoria  authenticated  DELETE
+grant  arbitros_cr_memoria  authenticated  INSERT
+grant  arbitros_cr_memoria  authenticated  SELECT
+grant  arbitros_cr_memoria  authenticated  UPDATE
 grant  arbitros_cr_normas_revision  authenticated  DELETE
 grant  arbitros_cr_normas_revision  authenticated  INSERT
 grant  arbitros_cr_normas_revision  authenticated  SELECT

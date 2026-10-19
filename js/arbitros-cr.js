@@ -109,6 +109,8 @@
         FID: "evento de FIDE", CCA: "evento de la Confederación de Ajedrez de América", XXX: "sin federación" };
     const pais = (codigo) => PAISES[codigo] || codigo;
 
+    // Los árbitros que fallecieron (arbitros_cr_memoria): su nombre lleva el lazo de «En memoria».
+    let memoria = new Set();
     let eloCr = new Map(), LISTA = "", sinId = [], equipos = new Map(), arbitros = [], torneos = new Map(), torneosCr = new Map(), crDeFide = new Map(), PRIMER = 0, ULTIMO = 0;
     const estado = { q: "", titulo: "", tipo: "", donde: "", contar: "", desde: 0, hasta: 0, orden: { col: "torneos", dir: -1 }, normaAf: "", normaAi: "", elegido: null, otro: null, enFide: "",
         rankAnio: 0, rankPor: "torneos", federacion: "" };
@@ -419,7 +421,7 @@
             // en una portátil (1280 px) sin barra de lado.
             const td = (v, der) => el("td", { class: "px-1.5 py-2 whitespace-nowrap" + (der ? " text-right tabular-nums" : "") }, v);
             return el("tr", { class: "border-t border-brand-100 dark:border-brand-800" },
-                el("th", { scope: "row", class: "px-1.5 py-2 font-normal text-left" }, boton),
+                el("th", { scope: "row", class: "px-1.5 py-2 font-normal text-left" }, boton, enMemoria(r.a)),
                 td(tituloCorto(r.a) || "—"), td(r.anioAf ? String(r.anioAf) : "—", true), td(r.anioAi ? String(r.anioAi) : "—", true), td(r.enFide), td(miles(r.torneos), true), td(miles(r.fide), true), td(miles(r.nofide), true), td(miles(r.nacional), true), td(miles(r.fuera), true),
                 td(miles(r.principal), true), td(miles(r.adjunto), true), td(miles(r.arbitro), true),
                 td(conRev(r.af, r.afRevisar), true), td(conRev(r.ai, r.aiRevisar), true),
@@ -782,12 +784,21 @@
     const urlFide = (t) => "https://ratings.fide.com/tournament_information.phtml?event=" + t.id;
     const urlCr = (c) => "https://chess-results.com/tnr" + c.clave + ".aspx?lan=2";
     const enlace = (href, texto) => el("a", { href, target: "_blank", rel: "noopener", class: "underline underline-offset-2 hover:no-underline" }, texto);
+    // El lazo de luto junto al nombre de quien falleció, con «En memoria» escrito: el dibujo no va solo.
+    const LAZO = '<svg viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor" aria-hidden="true" focusable="false"><path d="M12 2c-2.2 0-4 1.8-4 4 0 1.5.7 3 1.6 4.4L5 20l3 1 4-7.2L16 21l3-1-4.6-9.6C15.3 9 16 7.5 16 6c0-2.2-1.8-4-4-4zm0 2c1.1 0 2 .9 2 2 0 .9-.6 2.2-2 4-1.4-1.8-2-3.1-2-4 0-1.1.9-2 2-2z"/></svg>';
+    function enMemoria(a) {
+        if (!memoria.has(a.fide_id)) return null;
+        const s = el("span", { class: "inline-flex items-center gap-1 ml-2 align-middle text-xs font-semibold text-brand-800 dark:text-white", "data-memoria": "" });
+        s.insertAdjacentHTML("afterbegin", LAZO);
+        s.append("En memoria");
+        return s;
+    }
 
     function pintarFicha() {
         const a = arbitros.find((x) => x.fide_id === estado.elegido);
         if (!a) { elegir(null); return; }
         const r = resumen(a);
-        $("ficha-titulo").textContent = a.nombre;
+        $("ficha-titulo").replaceChildren(a.nombre, ...[enMemoria(a)].filter(Boolean));
         $("ficha-sub").replaceChildren(
             (a.titulo ? tituloLargo(a) + (a.titulo_detalle ? " (" + a.titulo_detalle + ")" : "") + " · " : ""),
             "ID FIDE ",
@@ -2493,7 +2504,7 @@
         const { data: adm } = await sb.rpc("soy_admin");
         soyAdmin = adm === true;
         try {
-            const [a, t, c, cr, crc, f, s, ce, fo] = await Promise.all([
+            const [a, t, c, cr, crc, f, s, ce, fo, me] = await Promise.all([
                 leerTodo("arbitros_cr", "fide_id,nombre,titulo,titulo_detalle,solo_chess_results", "fide_id"),
                 leerTodo("arbitros_cr_torneos", "id,nombre,ciudad,pais,inicio,fin,sistema,ritmo,jugadores,con_elo,contados,rondas,federaciones,valorado,af_estado,af_detalle,ai_estado,ai_detalle", "id"),
                 leerTodo("arbitros_cr_cargos", "torneo_id,fide_id,cargo", "torneo_id,fide_id,cargo"),
@@ -2503,7 +2514,9 @@
                 leerTodo("arbitros_cr_sin_id", "texto,roles,torneos,primero,ultimo,claves,ids", "texto"),
                 leerTodo("arbitros_cr_cr_elo", "clave,calculo,ritmo", "clave"),
                 leerTodo("arbitros_cr_formacion", "id,fide_id,tipo,categoria,fecha,horas,nota,detalle", "fecha,id"),
+                leerTodo("arbitros_cr_memoria", "fide_id", "fide_id"),
             ]);
+            memoria = new Set(me.map((x) => x.fide_id));
             sinId = s;
             eloCr = new Map(ce.map((e) => [e.clave, e]));
             formacion = new Map();
