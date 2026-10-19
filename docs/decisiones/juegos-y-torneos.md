@@ -4033,6 +4033,14 @@ Comisión de Árbitros de 2023 a 2026, de todos los países.
     del perfil de cada AF conviene copiarla antes de que suba a AI. Su norma
     de AI más vieja, el PanAm Escolar de Medellín (del 12 al 17/11/2019),
     es de 66 días después del Board: con el desfase de siempre, ya era AF.
+- **Las solicitudes de AI de todos los países, guardadas** (octubre de
+  2026): `herramientas/arbitros-cr/solicitudes-ia.py` las saca de los 14
+  informes (de 2023Q1 a 2026Q3; 2023Q4 no existe) a
+  `herramientas/datos/fide-solicitudes-ia.json`. Son 612 solicitudes, con
+  80 rechazos de 72 personas; 46 de ellas consiguieron el AI después.
+  Para saber si alguien mandó una norma entre su «License level» y su
+  «Licensed» solo sirven las otras 26 (`siguen_af`): al aprobarle el AI a
+  alguien, su perfil borra las fechas del AF.
 - **«Licensed» es otra cosa**: el pago anual de la licencia (B.06.1, 6.1).
   En los 343 rechazos no hay ninguno de un FA o IA por esa fecha; los de
   licencia son todos de antes del NA.
