@@ -148,6 +148,14 @@ const FORMACION = [];
 const CONTACTOS = [];
 // Quien falleció lleva el lazo de «En memoria» (arbitros_cr_memoria): Juan, solo en su bloque.
 const MEMORIA = [];
+// Lo que hicieron en un seminario además de aprobarlo (arbitros_cr_seminario_roles):
+// Óscar fue conferencista de uno de AI y asistente local de otro; Juan, que no
+// está en la lista de árbitros de FIDE, aprobó uno de AF.
+const ROLES_SEMINARIO = [
+    { fide_id: 6500001, rol: "conferencista", tipo: "IA", seminario: "9th IACS Internet Based Nov 2024 (ARB)", fecha: "2024-11-17", informe: "https://arbiters.fide.com/news/9673", detalle: "con Laurent Freyd (FRA)" },
+    { fide_id: 6500001, rol: "asistente", tipo: "FA", seminario: "215th Internet Based Jan 2026 (CRC)", fecha: "2026-01-12", informe: "https://arbiters.fide.com/news/10729", detalle: "local" },
+    { fide_id: 6500004, rol: "aprobo", tipo: "FA", seminario: "11th Internet Based Oct 2011 (WOM)", fecha: "2011-10-09", informe: "https://arbiters.fide.com/news/387", detalle: "" },
+];
 const POR_VENCER = [
     { fide_id: 6500004, nombre: "Viejo Prueba, Juan", correo: null, avisos: false, clave: "actividad:2026-11-20", que: "Quedas inactivo en la Federación", vence: "2026-11-20", avisado: null },
     { fide_id: 6500003, nombre: "Rojas Prueba, Luis", correo: "luis@correo.com", avisos: true, clave: "norma-af:104", que: "La norma de AF deja de contar", vence: "2026-12-01", avisado: null },
@@ -171,7 +179,7 @@ function doble(tieneLicencia, admin) {
 window.SUPABASE_URL = "https://falso.supabase.co";
 window.SUPABASE_ANON_KEY = "anon-falsa";
 (function () {
-  const TABLAS = ${JSON.stringify({ arbitros_cr: ARBITROS, arbitros_cr_torneos: TORNEOS, arbitros_cr_cargos: CARGOS, arbitros_cr_cr: CR.map((c) => ({ pais: "CRC", ...c })), arbitros_cr_cr_cargos: CR_CARGOS, arbitros_cr_fide: ARBITROS_FIDE, arbitros_cr_sin_id: SIN_ID, arbitros_cr_cr_elo: ELO_CR, arbitros_cr_formacion: FORMACION, arbitros_cr_contacto: CONTACTOS, arbitros_cr_memoria: MEMORIA })};
+  const TABLAS = ${JSON.stringify({ arbitros_cr: ARBITROS, arbitros_cr_torneos: TORNEOS, arbitros_cr_cargos: CARGOS, arbitros_cr_cr: CR.map((c) => ({ pais: "CRC", ...c })), arbitros_cr_cr_cargos: CR_CARGOS, arbitros_cr_fide: ARBITROS_FIDE, arbitros_cr_sin_id: SIN_ID, arbitros_cr_cr_elo: ELO_CR, arbitros_cr_formacion: FORMACION, arbitros_cr_contacto: CONTACTOS, arbitros_cr_memoria: MEMORIA, arbitros_cr_seminario_roles: ROLES_SEMINARIO })};
   const POR_VENCER = ${JSON.stringify(POR_VENCER)};
   const LICENCIA = ${tieneLicencia ? "true" : "false"};
   window.__pedidos = [];
@@ -184,6 +192,7 @@ window.SUPABASE_ANON_KEY = "anon-falsa";
     arbitros_cr_solicitudes_enviadas: { claves: ["creada_por", "fide_id", "cual", "enviada"], omision: { resultado: "pendiente", consejo: "", motivo: "", normas: [] } },
     // Como el índice único de la base: una fila por categoría y árbitro (los cursos no chocan: su categoría es null).
     arbitros_cr_formacion: { claves: ["fide_id", "categoria", "_categoria"], omision: { categoria: null, horas: null, nota: null, detalle: "" } },
+    arbitros_cr_memoria: { claves: ["fide_id"], omision: { nota: "" } },
   };
   const ADMIN = ${admin ? "true" : "false"};
   window.__archivos = {};
@@ -204,7 +213,7 @@ window.SUPABASE_ANON_KEY = "anon-falsa";
       const pasa = (f) => q._filtros.every(([c, v]) => f[c] === v);
       let r;
       if (!LICENCIA) r = { data: q._op === "select" ? [] : null, error: q._op === "select" ? null : { message: "sin permiso" } };   // la RLS
-      else if (tabla === "arbitros_cr_formacion" && q._op !== "select" && !ADMIN) r = { data: null, error: { message: "new row violates row-level security policy" } };   // solo administración escribe
+      else if (["arbitros_cr_formacion", "arbitros_cr_memoria"].includes(tabla) && q._op !== "select" && !ADMIN) r = { data: null, error: { message: "new row violates row-level security policy" } };   // solo administración escribe
       else if (q._op === "insert") {
         const alta = ALTA[tabla];
         const fila = { id: "n" + (++nuevas), creada_por: "yo", creada: "2026-10-16T04:00:00Z", ...alta.omision, ...q._fila };
@@ -325,7 +334,7 @@ const porNombre = (m) => Object.fromEntries(m.map((f) => [f[0], f]));
         return window.innerWidth === 1280 && t.scrollWidth <= t.parentElement.clientWidth;
     }), true);
     igual("pide cada tabla de mil en mil", await p.evaluate(() => window.__pedidos.filter((x) => x.startsWith("arbitros_cr")).sort()),
-        ["arbitros_cr 0-999", "arbitros_cr_cargos 0-999", "arbitros_cr_cr 0-999", "arbitros_cr_cr_cargos 0-999", "arbitros_cr_cr_elo 0-999", "arbitros_cr_fide 0-999", "arbitros_cr_formacion 0-999", "arbitros_cr_memoria 0-999", "arbitros_cr_sin_id 0-999", "arbitros_cr_torneos 0-999"]);
+        ["arbitros_cr 0-999", "arbitros_cr_cargos 0-999", "arbitros_cr_cr 0-999", "arbitros_cr_cr_cargos 0-999", "arbitros_cr_cr_elo 0-999", "arbitros_cr_fide 0-999", "arbitros_cr_formacion 0-999", "arbitros_cr_memoria 0-999", "arbitros_cr_seminario_roles 0-999", "arbitros_cr_sin_id 0-999", "arbitros_cr_torneos 0-999"]);
     let m = porNombre(await filas(p, "#tabla-arbitros"));
     igual("los cinco árbitros salen (todos los años), también quien solo está en chess-results", Object.keys(m).sort(),
         ["Ángulo Prueba, Óscar", "Quiros Prueba, Eduardo", "Rojas Prueba, Luis", "Soto Prueba, Ana", "Viejo Prueba, Juan"].sort());
@@ -576,7 +585,10 @@ const porNombre = (m) => Object.fromEntries(m.map((f) => [f[0], f]));
         + " Sigue activo por lo menos hasta el 09/09/2029: cuatro años desde su seminario de AI (B.06.3, 2). Un curso de actualización después lo corre.");
     const hist = await p.$$eval("#ficha-historial > ul > li", (ls) => ls.map((l) => l.querySelector("strong").textContent));
     igual("su historial en FIDE: las solicitudes, la más nueva primero, y el seminario", hist,
-        ["23/08/2026 · Solicitud de AI: Aprobada", "02/04/2025 · Solicitud de AI: Rechazada", "09/09/2025 · Seminario de AI: 18th IACS Internet Based Aug 2025 (ARB)", "06/12/2015 · Seminario de AF: 44th Internet Based Dec 2015 (CCA)"]);
+        ["23/08/2026 · Solicitud de AI: Aprobada", "02/04/2025 · Solicitud de AI: Rechazada", "09/09/2025 · Seminario de AI: 18th IACS Internet Based Aug 2025 (ARB)", "06/12/2015 · Seminario de AF: 44th Internet Based Dec 2015 (CCA)",
+         "12/01/2026 · Asistente local del seminario de AF: 215th Internet Based Jan 2026 (CRC)", "17/11/2024 · Conferencista del seminario de AI: 9th IACS Internet Based Nov 2024 (ARB)"]);
+    igual("el conferencista dice con quién y enlaza el informe del seminario", await p.$eval("#ficha-historial li[data-seminario-rol='conferencista']", (l) => [/\(con Laurent Freyd \(FRA\)\)/.test(l.textContent), l.querySelector("a").getAttribute("href")]),
+        [true, "https://arbiters.fide.com/news/9673"]);
     igual("el seminario enlaza al informe y, si se conoce, a su página en el calendario de la Comisión", await p.$eval("#ficha-historial li[data-seminario='IA']", (l) => [...l.querySelectorAll("a")].map((x) => [x.textContent, x.getAttribute("href")])),
         [["informe de la Comisión", "https://arbiters.fide.com/informe-2.pdf"], ["página del seminario", "https://arbiters.fide.com/news/event/18th-iacs"]]);
     igual("el que sale solo del informe del seminario enlaza a ese informe, sin un enlace vacío", await p.$eval("#ficha-historial li[data-seminario='FA']", (l) => [/venció el 06\/12\/2019/.test(l.textContent), [...l.querySelectorAll("a")].map((x) => [x.textContent, x.getAttribute("href")])]),
@@ -1107,6 +1119,27 @@ const porNombre = (m) => Object.fromEntries(m.map((f) => [f[0], f]));
     igual("quien no está en la tabla no lo lleva", await p.$$eval("#ficha-titulo [data-memoria]", (l) => l.length), 0);
     await ctx.close();
     MEMORIA.pop();
+    ({ ctx, p } = await abrir(browser, "arbitros-cr.html#6500004", true));
+    await p.waitForFunction(() => document.getElementById("ficha").checkVisibility());
+    igual("quien no está en la lista de FIDE también lleva el seminario que aprobó", await p.$$eval("#ficha-historial li[data-seminario]", (ls) => ls.map((l) => [l.querySelector("strong").textContent, /Ya no vale/.test(l.textContent)])),
+        [["09/10/2011 · Seminario de AF: 11th Internet Based Oct 2011 (WOM)", true]]);
+    igual("y sin ser de administración no se ve el botón de «En memoria»", await visible(p, "#memoria-admin"), false);
+    await ctx.close();
+    // Administración la pone y la quita desde la ficha, confirmando.
+    ({ ctx, p } = await abrir(browser, "arbitros-cr.html#6500003", true, null, true));
+    await p.waitForFunction(() => document.getElementById("ficha").checkVisibility());
+    igual("administración ve «Marcar «En memoria»»", [await visible(p, "#memoria-admin"), await p.$eval("#memoria-boton", (b) => b.textContent)], [true, "Marcar «En memoria»"]);
+    await p.click("#memoria-boton");
+    await p.click("button:text-is('Sí, marcarlo')");
+    await p.waitForFunction(() => document.querySelector("#ficha-titulo [data-memoria]"));
+    igual("al marcarla, el lazo sale en su ficha y en la lista, y el botón la deja quitar",
+        [await p.$$eval("#tabla-arbitros tbody th", (ths) => ths.filter((th) => th.querySelector("[data-memoria]")).map((th) => th.querySelector("button").textContent)), await p.$eval("#memoria-boton", (b) => b.textContent)],
+        [["Rojas Prueba, Luis"], "Quitar «En memoria»"]);
+    await p.click("#memoria-boton");
+    await p.click("button:text-is('Sí, quitarlo')");
+    await p.waitForFunction(() => !document.querySelector("#ficha-titulo [data-memoria]"));
+    igual("y al quitarla, se va", await p.$$eval("#tabla-arbitros tbody [data-memoria]", (l) => l.length), 0);
+    await ctx.close();
 
     console.log("\n=== Quien solo está en chess-results ===");
     ({ ctx, p } = await abrir(browser, "arbitros-cr.html#6500005", true));

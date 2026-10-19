@@ -4396,6 +4396,59 @@ seminario de AF de mujeres en 2011.
   lista, la ficha y que nadie más lo lleve; se rompió devolviendo siempre
   nada y salta.
 
+## Conferencistas, asistentes y seminarios de quien no está en la lista
+
+Pedido del dueño en octubre de 2026, después de leer los 827 informes de
+seminarios de AF (ver «Los seminarios de AF desde 2010»).
+
+- **Los seminarios de AI.** Los informes «NN.º IA Seminar – Report» (del
+  1.º, en marzo de 2024, al 28.º, en agosto de 2026) no están en la sección
+  de informes de seminarios sino en la de Educación
+  (`news/category/arb/education`). Se leyeron los 28. Tres ticos aprobaron:
+  Cristian Araya (1.º), Joshebeth Núñez (18.º) y Edgar Zeledón (25.º); los
+  tres ya estaban por los informes al Consejo. A Edgar le faltaba el día
+  (17/05/2026), y ahora su actividad cuenta desde ahí. Los tres llevan el
+  enlace `informe`.
+- **Los cursos de actualización no se publican.** Su sección
+  (`news/category/arb/education/refresher-courses`) tiene solo 8 anuncios
+  de alrededor de 2015, sin quién aprobó, y los informes al Consejo tampoco
+  lo dicen. Por eso la actividad (B.06.3) sigue siendo un piso, «por lo
+  menos hasta». La única fuente sería el portal de formación de FIDE
+  (arb-learn.fide.com), que pide cuenta.
+- **`arbitros_cr_seminario_roles`** (migración `20261019033231`) guarda lo
+  que no cabe en `arbitros_cr_fide.seminarios`, que solo tiene a quien está
+  en la lista de árbitros de FIDE y solo lo que aprobó:
+  - `conferencista`, `asistente` u `organizador`, con `detalle` («local»,
+    «técnico», «con Laurent Freyd (FRA)»…). Salen de las frases del
+    informe que nombran a alguien «(CRC)» como Lecturer, Assistant u
+    Organizer: Carolina Muñoz Solís fue conferencista de 8 seminarios (4 de
+    AI) y asistente de 3; Oscar Angulo, asistente local del 215.º, y
+    Stanley Gómez, organizador técnico del 53.º (2017). Se buscó también
+    por apellido, por si algún informe viejo no decía «(CRC)»: no apareció
+    ninguno más.
+  - `aprobo`, solo de quien no está en la lista de FIDE: Betzy Fallas Marín
+    (11.º, de mujeres, 2011). Mariel Pomares Iraheta (67.º, México, 2019)
+    no tiene ficha en la herramienta, así que su seminario no tiene dónde
+    ir.
+  - La leen quienes tienen la herramienta y la escribe administración.
+- En la ficha, el historial suma los seminarios de esa tabla y, debajo,
+  cada rol con su fecha, el detalle y el enlace al informe.
+- **Betzy en chess-results.** Figura como «Betsy Fallas Marin» y «AN Betsy
+  Fallas», y el nombre de pila no calzaba. `VARIANTES` en
+  `herramientas/arbitros-cr.py` acepta las formas de escribir un nombre
+  (`betzy` → `betsy`), y `verificar-arbitros-cr-fechas.py` lo prueba. Sus
+  dos torneos de 2016 (JDN, eliminatoria femenina U16) se agregaron a
+  `arbitros_cr_cr_cargos` a mano; el tercero no está en la tabla de
+  torneos. Las dos filas de `arbitros_cr_sin_id` se van en la próxima
+  carga: el `delete` desde aquí pide una confirmación que nadie da.
+- **«En memoria» desde la ficha.** Administración tiene un botón para
+  marcarlo o quitarlo, con su confirmación, debajo del correo de los
+  avisos.
+- `verificar-arbitros-cr.js` lo prueba: los roles de Óscar con su orden y
+  su enlace, el seminario de Juan (que no está en la lista de FIDE), y el
+  botón (no se ve sin ser de administración; marca y quita). Se rompió
+  dejando los roles vacíos y sin guardar la marca, y salta.
+
 ## Para subir de categoría en FIDE
 
 En la ficha de cada IA, debajo de sus normas (pedido del dueño, octubre de
