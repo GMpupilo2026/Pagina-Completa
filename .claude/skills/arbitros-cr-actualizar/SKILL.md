@@ -1,6 +1,6 @@
 ---
 name: arbitros-cr-actualizar
-description: Pone al día la herramienta «Árbitros de Costa Rica» (arbitros-cr.html) con lo nuevo de chess-results (los torneos del año en Costa Rica y los que arbitraron en el extranjero) y prueba si FIDE volvió a contestar a los perfiles de los árbitros. Usar en la pasada de cada mes o cuando pidan «poner al día los árbitros».
+description: Pone al día la herramienta «Árbitros de Costa Rica» (arbitros-cr.html) con lo nuevo de chess-results (los torneos del año en Costa Rica y los que arbitraron en el extranjero) y prueba si FIDE volvió a contestar a los perfiles de los árbitros; cuando toca, le pide al dueño leer los perfiles de FIDE con su Chrome y carga las fechas de cada título. Usar en la pasada de cada mes o cuando pidan «poner al día los árbitros».
 ---
 
 # Poner al día «Árbitros de Costa Rica»
@@ -146,7 +146,8 @@ Ver «Lo que dice FIDE de cada árbitro» en `docs/decisiones/juegos-y-torneos.m
    Si el dueño mandó capturas de perfiles de FIDE, la fecha que va junto a
    «License level» es la fecha OFICIAL del título: va como `"perfil":
    "AAAA-MM-DD"` en la aprobación de esa persona (ver «La fecha oficial del
-   título: la del perfil de FIDE»).
+   título: la del perfil de FIDE»). Para leerlos todos de una vez, el
+   paso 3 ter.
 3. `python3 herramientas/arbitros-cr/lista-fide.py > /tmp/lista-fide.sql` y
    cargarlo sentencia por sentencia (van de a 25 filas; en un solo llamado
    se corta a los 60 s). El `delete` pide confirmación: si los ID son los
@@ -154,6 +155,48 @@ Ver «Lo que dice FIDE de cada árbitro» en `docs/decisiones/juegos-y-torneos.m
    Comparar la huella como dice la decisión.
 4. Después de cargar los torneos (paso 3 de arriba): `python3 herramientas/arbitros-cr/por-identificar.py > /tmp/sin-id.sql`,
    cargarlo igual y comparar con `--huella`.
+
+## 3 ter. Los perfiles de FIDE, con el Chrome del dueño
+
+El perfil de FIDE (`ratings.fide.com/profile/ID`) no contesta ni a la base ni
+a la nube: se lee en el Chrome del dueño, con Claude in Chrome, desde una
+sesión **local** de la aplicación de escritorio (en su copia del repositorio,
+`C:\Users\angul\Pagina-Completa`). De ahí salen las fechas de
+`herramientas/datos/arbitros-cr-perfiles-licencia.json`: el «License level»
+de cada título, que es la fecha OFICIAL (`af_perfil` / `ia_perfil`; ver «La
+fecha oficial del título: la del perfil de FIDE»), y el «Licensed».
+
+**Cuándo.** Cuando el paso 3 bis sumó un AF o un IA nuevo, o la lista de FIDE
+cambió el título de alguien, y si no, una vez cada tres meses. Si no toca, no
+pedirlo.
+
+**Lo que se le pide al dueño**, en el resumen del mes: abrir la sesión local
+(Local, la carpeta de arriba, Claude in Chrome conectado, Chrome abierto),
+hacer `git pull` en esa carpeta y pegar este texto tal cual:
+
+```
+Con Claude in Chrome, abre en mi Chrome el perfil de FIDE (https://ratings.fide.com/profile/<ID>) de cada árbitro de herramientas/datos/arbitros-cr-lista-fide.json (lista "arbitros") que tenga título FA o IA. De cada uno copia, tal cual: la sección «FIDE Arbiter/Trainer» (cada título con su año, «License level» y «Licensed» con sus fechas) y la tabla «Decisions» (título, reunión y estado). Pon todo al día en herramientas/datos/arbitros-cr-perfiles-licencia.json, con el mismo formato que ya tiene, sin inventar nada que el perfil no diga. Si un título que en el archivo ya tenía «License level» ahora no lo trae (FIDE lo borra cuando el árbitro sube de AF a AI), deja la fecha que estaba. Haz commit en una rama nueva, empuja y abre el PR.
+```
+
+Si FIDE pide resolver un «no soy un robot», lo hace el dueño en esa pestaña.
+
+**Lo que se hace después, desde aquí**, cuando el dueño pasa el enlace del PR:
+
+1. Revisar el archivo de la rama: están todos los FA e IA de la lista (ni
+   sobra ni falta nadie), y ninguna fecha que ya estaba desapareció ni
+   cambió sin explicación (si cambió, preguntarle al dueño antes de cargar).
+2. `python3 herramientas/arbitros-cr/lista-fide.py` con el archivo nuevo: se
+   detiene si la fecha de una aprobación y la del perfil no coinciden.
+3. Cargar en la base solo `af_perfil` e `ia_perfil`, con un `update … from
+   (values …)` de lo que arma el script (sin el `delete` de la carga
+   entera), y comparar la base fila por fila con el script.
+4. `node herramientas/verificar-todo.js arbitros-cr arbitros-cr-fechas`,
+   esperar «Verificar» en verde y mergear el PR (squash, con el `(#NN)`).
+5. En el resumen: quién tiene fecha nueva y quién tiene torneos entre su
+   «License level» y su «Licensed» (como Meza, del 15/12/2024 al
+   13/01/2025). Esos torneos cuentan desde el «License level».
+   «Licensed: 2013-01-01» no es una demora: es el día en que FIDE empezó a
+   cobrar la licencia.
 
 **La lista de la Federación (la categoría nacional).** Pedir
 `https://fcacostarica.com/lista-de-arbitros/` con `net.http_get`, sacar la
