@@ -4063,16 +4063,18 @@ Comisión de Árbitros de 2023 a 2026, de todos los países.
     de AI más vieja, el PanAm Escolar de Medellín (del 12 al 17/11/2019),
     es de 66 días después del Board: con el desfase de siempre, ya era AF.
 - **Las solicitudes de AI de todos los países, guardadas** (octubre de
-  2026): `herramientas/arbitros-cr/solicitudes-ia.py` las saca de los 25
-  informes al Consejo, de 2020Q2 a 2026Q3, a
-  `herramientas/datos/fide-solicitudes-ia.json`. El de 2023Q4 no existe,
-  el de 2020Q4 no trae solicitudes de título, y los de antes de 2020Q2 eran
-  informes al Presidential Board, con otro nombre de archivo, que el sitio
-  de la Comisión no lista. Son 873 solicitudes y 145 rechazos (612 y 80
-  desde 2023). Para saber si alguien mandó una norma entre su «License
-  level» y su «Licensed» solo sirven los que tuvieron un rechazo y ninguna
-  aprobación (`siguen_af`, 39): al aprobarle el AI a alguien, su perfil
-  borra las fechas del AF.
+  2026): `herramientas/arbitros-cr/solicitudes-ia.py` las saca de 29
+  informes a `herramientas/datos/fide-solicitudes-ia.json`: los del
+  Presidential Board de 2019 (`2019Q1PBARBReport.pdf` a `2019Q3`), el del
+  Congreso de Abu Dabi de febrero de 2020 (`2020Q1EBARBReport.pdf`) y los
+  del Consejo de 2020Q2 a 2026Q3. El de 2023Q4 y el del Board de 2019Q4
+  no existen, el de 2020Q4 no trae solicitudes de título, y de antes de
+  2019 no hay informes con ese formato (los de 2016 a 2018 son actas,
+  anexos en fide.com, sin los torneos de cada solicitud). Son 1066
+  solicitudes y 165 rechazos (612 y 80 desde 2023). Para saber si alguien
+  mandó una norma entre su «License level» y su «Licensed» solo sirven los
+  que tuvieron un rechazo y ninguna aprobación (`siguen_af`, 46): al
+  aprobarle el AI a alguien, su perfil borra las fechas del AF.
   - En los 65 rechazos de 2020 a 2022 tampoco hay ninguno por la licencia.
     Los tres «before FA title» (Idiazabal, ESP, 2022Q2; Kikvidze, GEO, y
     Avramidou, GRE, 2022Q3) son de torneos de uno a tres años antes del AF.
@@ -4113,6 +4115,17 @@ Comisión de Árbitros de 2023 a 2026, de todos los países.
     «Missing and incomplete documents»).
   - En varios el espacio fue de años, no de semanas (López Rodríguez, casi
     tres; Boyo y Sookdeo, más de tres): FIDE no mira el «Licensed».
+- **La licencia que sí cuenta, y cuándo** (informes de 2016 a 2020):
+  - En 2016 la Comisión dejó escrito que «an arbiter must have been licensed
+    at the time of an event» para usarlo en una solicitud de título (Annex
+    22 de la Asamblea General de 2016, fide.com). Es tener licencia de
+    árbitro, la de AN alcanza: sin ella no se arbitra un torneo de FIDE.
+    No es el «Licensed» del título de AF.
+  - Al **pedir** el AI, la licencia tiene que ser ya de nivel AF: en 2019Q1
+    seis solicitudes quedaron «CONDITIONAL: Current level of license is NA»
+    (Bandur, Clayton, Alankar, García Contreras, Goosen y Khaydarov), y en
+    2020Q1 a Lynette Steyn (RSA) la rechazaron por «NA license level». Es
+    la licencia del día de la solicitud, no la de las fechas de los torneos.
 - **«Licensed» es otra cosa**: el pago anual de la licencia (B.06.1, 6.1).
   En los 343 rechazos de 2023 a 2026 no hay ninguno de un FA o IA por esa
   fecha (los de licencia son todos de antes del NA), ni en los 65 de AI de
