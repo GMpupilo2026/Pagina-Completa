@@ -2068,9 +2068,21 @@
             favs.forEach((h) => { const li = chipDeTarjeta(h); if (li) lista.appendChild(li); });
             // style.display y no `hidden`: la clase `grid` de Tailwind le gana a ese atributo.
             lista.style.display = favs.length ? "" : "none";
-            document.getElementById("favoritas-vacio").hidden = !!favs.length;
+            /* Sin ninguna, un solo renglón: el título y la explicación ocupaban
+               un bloque entero para decir que ahí no hay nada. El botón dice
+               solo para qué es. Ver «El panel del alumno, cada cosa una vez». */
+            document.getElementById("favoritas-vacio").hidden = true;
+            document.getElementById("favoritas-titulo").hidden = !favs.length;
+            caja.classList.toggle("mb-8", !!favs.length);
+            caja.classList.toggle("mb-4", !favs.length);
             const boton = document.getElementById("favoritas-elegir");
-            boton.textContent = favs.length ? "Cambiar favoritas" : "Elegir favoritas";
+            if (favs.length) boton.textContent = "Cambiar favoritas";
+            else {
+                const ic = document.createElement("span");
+                ic.setAttribute("aria-hidden", "true");
+                ic.textContent = "⭐ ";
+                boton.replaceChildren(ic, "Elegir favoritas: las páginas que más usas, arriba del panel");
+            }
             if (!favoritasArmadas) { favoritasArmadas = true; boton.addEventListener("click", elegirFavoritas); }
             caja.hidden = false;
             if (filasDelMes) pintarLoQueMasUsas(filasDelMes);
@@ -2618,9 +2630,12 @@
             const hoy = r.stats.hoy_ejercicios || 0;
             const meta = window.Logros ? Logros.META_DIARIA : 5;
             const dias = (n) => (n === 1 ? "1 día" : n + " días");
+            /* Cuántos ejercicios le faltan hoy lo dice «Hoy te toca», con su
+               barra, justo abajo: el saludo dice solo la racha. Ver «El panel
+               del alumno, cada cosa una vez» en docs/decisiones/paneles.md. */
             document.getElementById("panel-subtitulo").textContent = racha
                 ? (hoy >= meta ? "Llevas " + dias(racha) + " seguidos entrenando, y hoy ya cuenta. 🔥"
-                               : "Llevas " + dias(racha) + " seguidos entrenando: hoy te faltan " + (meta - hoy) + " ejercicios para no cortarla.")
+                               : "Llevas " + dias(racha) + " seguidos entrenando. 🔥")
                 : "Hoy es buen día para empezar una racha: bastan " + meta + " ejercicios.";
         }
 
@@ -2754,6 +2769,26 @@
             return { ...hallado, href };
         }
 
+        /* ---------- Cuántas tiene, en la tarjeta misma ----------
+           «Tareas» y «Exámenes» decían lo mismo con tres pendientes que con
+           ninguna: el número estaba solo en la franja de arriba, que habla de
+           UNA cosa. Ahora la tarjeta dice cuántas («3 pendientes», «1 por
+           hacer»), escrito y no con un color. Las cuentas son las mismas de la
+           franja (tareas_con_avance y examenes_con_nota). Ver «El panel del
+           alumno, cada cosa una vez» en docs/decisiones/paneles.md. */
+        function contarEnTarjeta(href, n, uno, varios) {
+            const grupo = TILE_GROUPS.find((g) => g.tiles.some((t) => t.href === href));
+            const tile = grupo && grupo.tiles.find((t) => t.href === href);
+            // El panel de los más pequeños lleva solo el nombre: la franja ya lo dice.
+            if (!tile || tile.disabled || grupo.grande) return;
+            tile.aviso = n ? n + " " + (n === 1 ? uno : varios) : undefined;
+            const viejo = document.querySelector('#tile-grid a[href="' + href + '"]');
+            if (!viejo) return;
+            const nuevo = renderTileCard(tile, !!grupo.destacado, !!grupo.compacto);
+            nuevo.dataset.buscar = viejo.dataset.buscar;
+            viejo.replaceWith(nuevo);
+        }
+
         async function cargarPendientes(rachaP, tallerP) {
             const [t, x] = await Promise.all([
                 sb.rpc("tareas_con_avance", { p_alumno: alumnoDelPanel(), p_pendientes: true, p_limite: 50 }),
@@ -2781,6 +2816,8 @@
             // pendientes: ya no se pueden hacer, así que sumarlos al "tienes N
             // pendientes" le ofrecería algo que no va a poder abrir.
             const hacibles = tareas.length + porHacer.length + corriendo.length;
+            contarEnTarjeta("tareas.html", tareas.length, "pendiente", "pendientes");
+            contarEnTarjeta("examenes.html", porHacer.length + corriendo.length, "por hacer", "por hacer");
             /* Sin nada que vence, la franja NO se queda vacía: la ocupa el
                siguiente paso de quien todavía no arrancó (ver abajo). Lo que
                vence manda siempre —una fecha le gana a una sugerencia—, así que

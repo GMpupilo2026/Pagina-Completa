@@ -348,6 +348,44 @@ lista, y el resto se acomoda solo.
   veía que se pliega. Ahora el título va en una línea, el subtítulo pasa
   abajo si no cabe, y lleva la misma flecha que los grupos plegables, que
   gira con `details[open]`.
+- **El panel del alumno, cada cosa una vez.** Lo de arriba del panel —lo
+  primero que ve al entrar— decía varias cosas dos veces y tenía todo a la
+  misma altura. Ahora:
+  - **El saludo dice la racha; «Hoy te toca», lo de hoy.** Arriba decía
+    «Llevas 4 días seguidos… hoy te faltan 3 ejercicios para no cortarla» y
+    justo abajo «Hoy llevas 2 de 5… Tu racha: 4 días 🔥». El saludo quedó en
+    «Llevas 4 días seguidos entrenando. 🔥» y la meta del día, en el panel
+    (`enPanel`), en «Hoy llevas 2 de 5 ejercicios para que el día cuente. No
+    cortes tu racha.». En el hub de Entrenamiento, que no tiene ese saludo, la
+    meta sigue diciendo los días.
+  - **El aviso de la racha es un enlace, no un botón naranja.** Era lo más
+    llamativo de la tarjeta, y lo que hay que hacer hoy es entrenar, no
+    encender un aviso. Hace lo mismo y sigue diciendo la racha.
+  - **«Entrenar 10 minutos» dice con qué, sin el porqué.** «Con Sugerencia
+    de hoy: Habilidades y Mates» pasó a «Con Habilidades y Mates»: el porqué de
+    la sugerencia está escrito en su renglón, justo arriba.
+  - **Los tres totales y la racha táctica del grupo van plegados** bajo «Tus
+    números y la racha táctica del grupo» (`#tus-numeros`, un `<details>`
+    cerrado). Con la meta, lo que toca hoy y «Entrenar 10 minutos», la
+    tarjeta tenía siete cosas a la vista; lo de hoy se queda arriba y esto, a
+    un clic. Los números se siguen pidiendo igual.
+  - **«Tus favoritas» sin ninguna es un solo renglón**: «⭐ Elegir favoritas:
+    las páginas que más usas, arriba del panel». El título y la explicación
+    ocupaban un bloque entero para decir que ahí no hay nada; con alguna
+    elegida vuelven el título y la lista.
+  - **Las tarjetas Tareas y Exámenes dicen cuántas tiene** («3 pendientes»,
+    «1 por hacer»), escrito, con las mismas cuentas de la franja
+    (`contarEnTarjeta`): la franja habla de UNA cosa, la más urgente. Sin
+    ninguna no dicen número. En el panel de los más pequeños, no: ahí las
+    tarjetas llevan solo el nombre.
+  - **«Clase en vivo» se queda donde está.** Se pensó meterla dentro de «Tus
+    clases» cuando no hay clase, pero sin clase ya es una sola línea, que
+    además dice cuándo es la próxima (`claseCompacta` en `js/clases.js`):
+    plegarla escondería justo eso.
+
+  `verificar-panel.js` lo revisa: el saludo y la meta sin repetirse, los
+  números plegados, «3 pendientes» en Tareas y nada en Exámenes, y las
+  favoritas en un renglón con la estrella escondida del lector de pantalla.
 - **"Logros" está en "Tu cuenta"**, que va en este orden: Configuración,
   Informes, Logros y, solo al alumnado, "¿Cómo van tus clases?". Lo pidió así
   el dueño de la Academia. "TV en vivo" estuvo ahí un tiempo y pasó a Competir,
