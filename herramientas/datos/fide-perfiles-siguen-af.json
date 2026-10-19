@@ -56,6 +56,46 @@
   ]
  },
  {
+  "fide_id": 1507362,
+  "titulos": [
+   {
+    "titulo": "FIDE Arbiter",
+    "anio": 2014,
+    "license_level": "FIDE Arbiter Category D",
+    "license_fecha": "2014-04-01",
+    "licensed": "YES",
+    "licensed_fecha": "2017-03-14"
+   }
+  ],
+  "decisiones": [
+   {
+    "titulo": "FIDE Arbiter",
+    "reunion": "1st quarter Presidential Board Meeting, Khanty-Mansiysk, RUS, 29 March - 1 April 2014",
+    "estado": "YES"
+   }
+  ]
+ },
+ {
+  "fide_id": 2103680,
+  "titulos": [
+   {
+    "titulo": "FIDE Arbiter",
+    "anio": 2013,
+    "license_level": "FIDE Arbiter Category D",
+    "license_fecha": "2013-01-21",
+    "licensed": "YES",
+    "licensed_fecha": "2013-01-21"
+   }
+  ],
+  "decisiones": [
+   {
+    "titulo": "FIDE Arbiter",
+    "reunion": "1st quarter Presidential Board Meeting 2013, 18-20 January, Yerevan, ARM",
+    "estado": "YES"
+   }
+  ]
+ },
+ {
   "fide_id": 2801370,
   "titulos": [
    {
@@ -176,6 +216,26 @@
   ]
  },
  {
+  "fide_id": 3802671,
+  "titulos": [
+   {
+    "titulo": "FIDE Arbiter",
+    "anio": 2017,
+    "license_level": "FIDE Arbiter Category D",
+    "license_fecha": "2017-05-09",
+    "licensed": "YES",
+    "licensed_fecha": "2020-02-24"
+   }
+  ],
+  "decisiones": [
+   {
+    "titulo": "FIDE Arbiter",
+    "reunion": "1st quarter Presidential Board Meeting 2017, 24-27 March, Athens, Greece",
+    "estado": "YES"
+   }
+  ]
+ },
+ {
   "fide_id": 4420152,
   "titulos": [
    {
@@ -222,6 +282,20 @@
     "estado": "YES"
    }
   ]
+ },
+ {
+  "fide_id": 7603746,
+  "titulos": [
+   {
+    "titulo": "FIDE Arbiter",
+    "anio": 2010,
+    "license_level": "FIDE Arbiter Category D",
+    "license_fecha": "2010-10-03",
+    "licensed": "YES",
+    "licensed_fecha": "2016-07-18"
+   }
+  ],
+  "decisiones": []
  },
  {
   "fide_id": 7903014,
@@ -336,6 +410,34 @@
   ]
  },
  {
+  "fide_id": 8600848,
+  "titulos": [
+   {
+    "titulo": "FIDE Arbiter",
+    "anio": 2014,
+    "license_level": "FIDE Arbiter Category D",
+    "license_fecha": "2014-08-21",
+    "licensed": "YES",
+    "licensed_fecha": "2014-08-21"
+   },
+   {
+    "titulo": "FIDE Trainer",
+    "anio": 2022,
+    "license_level": null,
+    "license_fecha": null,
+    "licensed": "Not licensed",
+    "licensed_fecha": null
+   }
+  ],
+  "decisiones": [
+   {
+    "titulo": "FIDE Arbiter",
+    "reunion": "84th FIDE Congress, Tallinn, EST, 30 September - 10 October 2013",
+    "estado": "YES"
+   }
+  ]
+ },
+ {
   "fide_id": 8616272,
   "titulos": [
    {
@@ -367,6 +469,144 @@
    {
     "titulo": "FIDE Arbiter",
     "reunion": "2020 3rd FIDE Council meeting",
+    "estado": "YES"
+   }
+  ]
+ },
+ {
+  "fide_id": 9001905,
+  "titulos": [
+   {
+    "titulo": "FIDE Arbiter",
+    "anio": 2015,
+    "license_level": "FIDE Arbiter Category D",
+    "license_fecha": "2015-09-21",
+    "licensed": "YES",
+    "licensed_fecha": "2016-12-04"
+   },
+   {
+    "titulo": "Developmental Instructor",
+    "anio": 2020,
+    "license_level": null,
+    "license_fecha": null,
+    "licensed": "Not licensed",
+    "licensed_fecha": null
+   }
+  ],
+  "decisiones": [
+   {
+    "titulo": "FIDE Arbiter",
+    "reunion": "86th FIDE Congress 2015, 1-9 September, Abu Dhabi, UAE",
+    "estado": "YES"
+   }
+  ]
+ },
+ {
+  "fide_id": 9007180,
+  "titulos": [
+   {
+    "titulo": "FIDE Arbiter",
+    "anio": 2016,
+    "license_level": "FIDE Arbiter Category D",
+    "license_fecha": "2016-09-15",
+    "licensed": "YES",
+    "licensed_fecha": "2016-09-15"
+   },
+   {
+    "titulo": "Developmental Instructor",
+    "anio": 2016,
+    "license_level": null,
+    "license_fecha": null,
+    "licensed": "Not licensed",
+    "licensed_fecha": null
+   },
+   {
+    "titulo": "School Instructor",
+    "anio": 2016,
+    "license_level": null,
+    "license_fecha": null,
+    "licensed": null,
+    "licensed_fecha": null
+   }
+  ],
+  "decisiones": [
+   {
+    "titulo": "FIDE Arbiter",
+    "reunion": "87th FIDE Congress 2016, 1-14 September, Baku, Azerbaijan",
+    "estado": "YES"
+   }
+  ]
+ },
+ {
+  "fide_id": 9201599,
+  "titulos": [
+   {
+    "titulo": "FIDE Arbiter",
+    "anio": 2010,
+    "license_level": "FIDE Arbiter Category D",
+    "license_fecha": "2010-04-23",
+    "licensed": "YES",
+    "licensed_fecha": "2015-11-01"
+   }
+  ],
+  "decisiones": []
+ },
+ {
+  "fide_id": 10603069,
+  "titulos": [
+   {
+    "titulo": "FIDE Arbiter",
+    "anio": 2018,
+    "license_level": "FIDE Arbiter Category D",
+    "license_fecha": "2018-10-22",
+    "licensed": "YES",
+    "licensed_fecha": "2019-03-20"
+   }
+  ],
+  "decisiones": [
+   {
+    "titulo": "FIDE Arbiter",
+    "reunion": "89th FIDE Congress 2018, 26 Sep - 6 Oct, Batumi, Georgia",
+    "estado": "YES"
+   }
+  ]
+ },
+ {
+  "fide_id": 10615105,
+  "titulos": [
+   {
+    "titulo": "FIDE Arbiter",
+    "anio": 2018,
+    "license_level": "FIDE Arbiter Category D",
+    "license_fecha": "2018-10-23",
+    "licensed": "YES",
+    "licensed_fecha": "2019-03-20"
+   }
+  ],
+  "decisiones": [
+   {
+    "titulo": "FIDE Arbiter",
+    "reunion": "89th FIDE Congress 2018, 26 Sep - 6 Oct, Batumi, Georgia",
+    "estado": "YES"
+   }
+  ]
+ },
+ {
+  "fide_id": 10645926,
+  "titulos": [
+   {
+    "titulo": "FIDE Arbiter",
+    "anio": 2018,
+    "license_level": "FIDE Arbiter Category D",
+    "license_fecha": "2018-10-22",
+    "licensed": "YES",
+    "licensed_fecha": "2019-03-20"
+   }
+  ],
+  "decisiones": [
+   {
+    "titulo": "FIDE Arbiter",
+    "reunion": "89th FIDE Congress 2018, 26 Sep - 6 Oct, Batumi, Georgia",
     "estado": "YES"
    }
   ]
@@ -532,6 +772,34 @@
    {
     "titulo": "FIDE Arbiter",
     "reunion": "2023 3rd FIDE Council",
+    "estado": "YES"
+   }
+  ]
+ },
+ {
+  "fide_id": 14319047,
+  "titulos": [
+   {
+    "titulo": "FIDE Arbiter",
+    "anio": 2015,
+    "license_level": "FIDE Arbiter Category D",
+    "license_fecha": "2015-09-21",
+    "licensed": "YES",
+    "licensed_fecha": "2020-01-20"
+   },
+   {
+    "titulo": "National Instructor",
+    "anio": 2016,
+    "license_level": null,
+    "license_fecha": null,
+    "licensed": "Not licensed",
+    "licensed_fecha": null
+   }
+  ],
+  "decisiones": [
+   {
+    "titulo": "FIDE Arbiter",
+    "reunion": "86th FIDE Congress 2015, 1-9 September, Abu Dhabi, UAE",
     "estado": "YES"
    }
   ]
