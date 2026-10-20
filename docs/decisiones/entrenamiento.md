@@ -1409,8 +1409,8 @@ sus aperturas, busca mejoras con el motor y analiza sus partidas.
   vigente) y lo leen su profe, quien lo supervisa y administración solo si lo
   marcó «Que lo vea mi profe». El profe lo abre con
   `mis-estudios.html?alumno=<id>`, en solo lectura: puede recorrerlo,
-  analizarlo y bajarlo, no cambiarlo. Todavía no hay un enlace desde el
-  informe del alumno: la base ya lo permite.
+  analizarlo y bajarlo, no cambiarlo. Se llega desde «🔬 Sus estudios» en
+  «Con este alumno», arriba del informe del alumno (`informes.html?alumno=…`).
 - **No cuenta tiempo por sección** todavía: hacerlo pide una sección nueva en
   `js/tiempo-secciones.js` y en `informe-html.ts`, y volver a desplegar la
   función de los correos.

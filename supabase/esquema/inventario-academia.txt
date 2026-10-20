@@ -952,6 +952,7 @@ columna  game_state.pensar  jsonb
 columna  game_state.pieces_hidden  boolean
 columna  game_state.planilla  jsonb
 columna  game_state.podio  jsonb
+columna  game_state.practica  jsonb
 columna  game_state.presentacion  jsonb
 columna  game_state.rival_id  uuid
 columna  game_state.shown_curso  text

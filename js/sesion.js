@@ -635,6 +635,8 @@
             pintarPodio(row.podio || null);
             pintarPresentacion(row.presentacion || null);
             pintarPlanilla(row.planilla || null);
+            pintarFormacion(row.practica || null);
+            if (isTeacher) cargarPracticasDeFormacion();
             updateTurnIndicator();
             updateAccessForRole();
             renderMoveList();
@@ -958,7 +960,7 @@
 
         const vistaPreviaArchivos = crearVistaPreviaLote("sesion_vista_previa_archivos_v1");
         const vistaPreviaTactica = crearVistaPreviaLote("sesion_vista_previa_tactica_v1");
-
+        const vistaPreviaPlan = crearVistaPreviaLote("sesion_vista_previa_plan_v1");
 
         // La posición de SALIDA del PGN (antes de sus jugadas), no la final: es la que
         // identifica al ejercicio ("de qué posición se trata") y la que usan las tres
@@ -1662,7 +1664,7 @@
             if (partidaClase) await terminarPartidaClase("La partida de la clase terminó al cerrar la clase.");
             if (ronda) await terminarRonda("La ronda rápida terminó al cerrar la clase.");
             if (cuestionarioEnJuego) await terminarCuestionario("El cuestionario terminó al cerrar la clase.");
-            const cambios = { encuesta: null, calentamiento: null, tanda_calentamiento: null, podio: null, equipos: null, pensar: null, elegido: null, presentacion: null, planilla: null };
+            const cambios = { encuesta: null, calentamiento: null, tanda_calentamiento: null, podio: null, equipos: null, pensar: null, elegido: null, presentacion: null, planilla: null, practica: null };
             // Las flechas del mapa se van con él; las que dibujó el profe, no.
             if (encuestaActual) { cambios.arrows = []; cambios.circles = []; }
             const { error } = await sb.from("game_state").update(cambios).eq("id", myGameStateId);
@@ -1677,6 +1679,7 @@
             pintarElegido(null);
             pintarPresentacion(null, true);
             pintarPlanilla(null, true);
+            pintarFormacion(null);
         }
 
         /* Lo que aparece para toda la clase, dicho en voz para quien usa lector
@@ -2633,6 +2636,10 @@
             const notasEl = document.getElementById("plan-notas");
             const msg = document.getElementById("plan-msg");
             lista.innerHTML = "";
+            // Las filas del plan de antes ya no están en la página: se sueltan del lote.
+            vistaPreviaPlan.reiniciar();
+            const barraPlan = document.getElementById("plan-barra");
+            barraPlan.replaceChildren();
             notasEl.classList.add("hidden");
             msg.textContent = "";
             itemsDelPlan = [];
@@ -2658,6 +2665,8 @@
             // Lo que hay que repasar de la clase pasada va primero (sort estable: el resto en su orden).
             itemsDelPlan.slice().sort((a, b) => repaso.ids.has(b.id) - repaso.ids.has(a.id))
                 .forEach((it) => lista.appendChild(pintarRenglonDelPlan(it)));
+            // Mirar todas las posiciones de una vez, para buscar a ojo la que toca dar.
+            if (itemsDelPlan.some((it) => it.tipo === "posicion")) barraPlan.appendChild(vistaPreviaPlan.control());
         }
 
         /* Lo que ya se dio del plan en ESTA clase (clase_plan_hecho). Es de la
@@ -2735,7 +2744,22 @@
             acciones.className = "flex items-center gap-1.5 flex-wrap mt-1.5";
             const clases = "text-xs font-semibold px-2 py-1 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400";
 
+            let vistaWrap = null;
             if (item.tipo === "posicion") {
+                /* «Vista previa»: la posición se mira SOLO en tu panel, sin mandarla
+                   al tablero de la clase (para eso está «Al tablero»). La misma de
+                   Táctica y Archivos: la dibuja el lote cuando la fila entra en
+                   pantalla, y dice de quién es la jugada. */
+                const previa = document.createElement("button");
+                previa.type = "button";
+                previa.className = clases;
+                previa.textContent = "👁 Vista previa";
+                previa.title = "Ver la posición aquí, sin mandarla a la clase";
+                acciones.appendChild(previa);
+                vistaWrap = document.createElement("div");
+                vistaWrap.className = "hidden mt-2";
+                vistaPreviaPlan.registrar(vistaWrap, previa, () => renderTacticsPreviewBoard(vistaWrap, item.fen));
+
                 const alTablero = document.createElement("button");
                 alTablero.type = "button";
                 alTablero.className = clases;
@@ -2792,6 +2816,7 @@
             hechoBtn.addEventListener("click", () => marcarPlanHecho(item, hechoBtn));
             acciones.appendChild(hechoBtn);
             li.appendChild(acciones);
+            if (vistaWrap) li.appendChild(vistaWrap);
             pintarBotonHecho(hechoBtn, planHecho.has(item.id));
             return li;
         }
@@ -3028,6 +3053,8 @@
                 calentamiento: calentamientoResuelto,
                 // Lo que lleva del calentamiento de 20 ejercicios (js/clase-tanda.js).
                 tanda: tandaPresencia || undefined,
+                // Lo que lleva de la práctica de Formación Ajedrez (js/clase-formacion.js).
+                formacion: formacionPresencia || undefined,
                 // La Fotografía en curso (solo el profe): ver dictarFotografiaDeLaPresencia.
                 fotografia: fotoEnCurso || undefined,
                 // El entrenamiento que el profe pide abrir (js/clase-entrenamientos.js).
@@ -3105,7 +3132,7 @@
                     }
                     if (meta && meta.role === "alumno") {
                         if (isTeacher && sacadosDeLaClase.has(key)) continue;
-                        onlineStudents.set(key, { email: meta.email, full_name: meta.full_name, hand_raised: !!meta.hand_raised, hand_at: meta.hand_at || null, calentamiento: meta.calentamiento || null, tanda: meta.tanda || null, entreno_hechos: meta.entreno_hechos || null });
+                        onlineStudents.set(key, { email: meta.email, full_name: meta.full_name, hand_raised: !!meta.hand_raised, hand_at: meta.hand_at || null, calentamiento: meta.calentamiento || null, tanda: meta.tanda || null, formacion: meta.formacion || null, entreno_hechos: meta.entreno_hechos || null });
                     } else if (meta && meta.role === "supervision") {
                         // Si además está mirando la partida de un alumno, el profe lo sabe.
                         const suya = meta.mirando_a && practiceStudentBoards[meta.mirando_a];
@@ -3120,6 +3147,7 @@
                 if (isTeacher && tandaActual) { anotarTandaDeLaPresencia(); pintarTandaProfe(); }
                 // En la competencia, el alumno ve su puesto: sale de lo que anuncian los demás.
                 else if (!isTeacher && !esObservador && tandaMia && tandaEsReto()) pintarTandaAlumno();
+                if (isTeacher && formacionActual) { anotarFormacionDeLaPresencia(); pintarFormacionProfe(); }
                 pintarEquiposProfe();
                 if (isTeacher) { pintarAciertosDelEntreno(); anotarConectados(); revisarCallados(); pintarQuienesEntraron(); }
                 pintarObservadores(mirando);

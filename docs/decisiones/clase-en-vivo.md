@@ -1517,6 +1517,26 @@ viva `sr-only`, como `#pensar-voz`).
   empieza la partida desde ella. La clase juega con el color que mueve en esa
   posición.
 
+### El plan de clase: «👁 Vista previa» en cada posición
+
+- Cada posición del plan trae **«👁 Vista previa»** (y arriba, «Ver todas las
+  posiciones»): la dibuja en el panel del profe, **sin mandarla a la clase**.
+  Antes, para saber cuál era una posición había que ponerla en el tablero de
+  todos con «Al tablero».
+- **Es el mismo mecanismo de Táctica, Archivos y Entrenamientos** (ver «Táctica
+  por tema: la vista previa y su botón»): el lote `vistaPreviaPlan`
+  (`crearVistaPreviaLote`, la preferencia en `localStorage`) y
+  `renderTacticsPreviewBoard()`, que dibuja el tablero con
+  `window.ExampleBoard` y dice de quién es la jugada. Una sola copia, no una
+  más. El lote dibuja la fila cuando entra en pantalla, no todas de golpe.
+- Una lección del plan no la lleva (no es una posición). Un plan sin
+  posiciones no muestra «Ver todas». Al cambiar de plan se suelta el lote
+  (`reiniciar()`), como al cambiar de tema en Táctica.
+- **Al tocarlo, correr `node herramientas/verificar-todo.js clase-plan-vista`**:
+  comprueba el botón cerrado y con su `aria-expanded`, que abrirla dibuje las 64
+  casillas con las piezas de ESA posición y diga quién juega, que no escriba en
+  `game_state` ni en `questions`, y el interruptor de todas.
+
 ### El control remoto
 
 `sesion.html?control=1`, en el celular del profe con su misma cuenta.
@@ -2046,6 +2066,69 @@ y la clase sigue en `clase-cuestionario`. Está probado que fallan de verdad:
 con una jugada ilegal, con la correcta siempre en la A, sin el filtro de
 nivel, perdiendo el nivel al poner la posición o copiando el listo antes de
 jugarlo, saltan.
+
+### Las prácticas de Formación Ajedrez en la clase
+
+En «Preguntar», debajo del cuestionario, «📝 Prácticas de Formación Ajedrez»
+(`js/clase-formacion.js`, `game_state.practica`): el profe elige la práctica de
+una sesión y se la manda a la clase. Cada alumno ve **las láminas de los
+ejercicios** debajo del tablero, las pasa hacia delante y hacia atrás a su ritmo
+(◀ ▶, los números o las flechas del teclado) y marca cada una como
+**completada**. El profe ve cuántas lleva cada uno, y cuando todos terminaron
+lo dice escrito («✅ Todos terminaron: 4 de 4 alumnos.»). Es para el taller de
+los asesores: los ejercicios se resolvían en salas de trabajo y el profe no veía
+quién iba por dónde.
+
+- **Qué es «una práctica»**: las láminas de la sesión que son de la práctica
+  —«Práctica · …», «Ejercicio k de N» y, en la Sesión 1, las estaciones—, de la
+  misma `diapositivas.json` que el profe proyecta. Las saca
+  `herramientas/formacion-practicas.js` a `cursos/recursos/formacion-ajedrez/practicas.json`
+  (se genera: no se edita a mano). **Nunca entran las de respuestas, quiz, tarea
+  ni receso**: la lámina se le entrega al alumno entera y una respuesta ahí sería
+  adelantársela. A diferencia de la presentación de la clase, que le pide al
+  alumno solo la lámina que se muestra, acá el alumno tiene la práctica entera
+  a su ritmo, y por eso la lista tiene que ser exactamente lo que se puede ver.
+  Una lámina nueva con otro título (que no sea «Práctica», «Ejercicio k de N» ni
+  «Estación n:») no entra sola: hay que sumarla a `ES_PRACTICA` del generador.
+- **Qué se mandó va en la base** (`game_state.practica`: `{id, deck, titulo,
+  laminas: [n…]}`), por lo mismo que la presentación: quien entra tarde o
+  recarga ve la misma. Solo el profe la pone (`protect_game_state_teacher_columns`
+  se la devuelve a cualquier otro) y el CHECK `game_state_practica_forma`, envuelto
+  en `coalesce(…, false)`, rechaza otra forma. Como un CHECK no admite
+  subconsultas, las láminas se revisan con jsonpath (`jsonb_path_exists`), no
+  con `jsonb_array_elements`. Comprobado en la base: lámina 0, 501, decimal,
+  texto, lista vacía, `deck` con otra forma o sin `id` se rechazan.
+- **Lo que marcó cada alumno NO va en la base**: es de ese rato, como el
+  calentamiento. Lo guarda en su aparato (`clase_formacion_v1:<clase>:<id>`) y lo
+  anuncia en la presencia (`formacion`: `{id, h: [láminas hechas]}`); el profe lo
+  junta en `formacionVistos`, y quien se desconecta no se borra de la lista
+  («(se desconectó)»). Va por `anunciarPresencia()` con una espera al azar (0,3–2 s),
+  como el calentamiento: 30 alumnos marcando a la vez no anuncian en el mismo
+  segundo. Qué lámina está mirando cada uno **no** se anuncia: sería un anuncio
+  por cada ◀ ▶, y el tope de la presencia es de 4 en 31 s.
+- **`id` cambia con cada envío**: «Mandar de nuevo» empieza de cero, y lo marcado
+  en un envío no se cuela en el siguiente. Una marca de otro `id` no cuenta.
+- **Quién la ve para mandarla**: quien `puede_bajar('formacion-ajedrez', false)`,
+  igual que las presentaciones de ese curso (administración, quien lo compró o a
+  quien se lo compartieron, ver «La ficha Asesores»). Sin eso, el espacio no
+  aparece.
+- **El alumno la ve como lo que tiene que HACER**: en la vista limpia y en la
+  pantalla completa para todos le sale encima, como el calentamiento; el
+  proyector y el control remoto no la muestran (no tiene `proyector-se-ve`). El
+  texto de la lámina solo con el Modo Adaptado (`.formacion-texto`), por lo mismo
+  que el de la presentación. El estado de cada lámina va escrito (el número lleva
+  «✓» y su `aria-label` dice «completada»), no solo en el color.
+- **Al cerrar la clase se quita** con lo demás (`limpiarLoDeLaClase`).
+- **Aplicada a mano el 20/10** con `apply_migration`
+  (`20261020033100_game_state_practica.sql`): reemplaza la función ENTERA tal
+  como estaba en la base (la de `20261017173336`) con una línea más. El retrato
+  del esquema se puso al día con la columna nueva a mano, no volviéndolo a armar.
+
+Lo prueba `verificar-clase-formacion.js`: que `practicas.json` esté al día y
+completo (cada lámina con su imagen, ninguna de respuestas), que el trigger y el
+CHECK la protejan, la parte pura (`FormacionPractica`) y, en el navegador, el
+alumno (pasa, marca, recarga y sigue donde iba, anuncia lo que lleva) y el
+profe (manda, ve quién falta, quién terminó y quién se desconectó, la quita).
 
 ### La participación pareja
 

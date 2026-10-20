@@ -704,6 +704,30 @@
                         </div>
                     </div>
 
+                    <!-- La práctica de Formación Ajedrez (game_state.practica, js/clase-formacion.js): las láminas
+                         de los ejercicios, que el alumno pasa a su ritmo (◀ ▶ o los números) y marca como
+                         completadas. Lo que lleva va en la presencia y el profe lo ve en la pestaña Preguntar.
+                         El texto de la lámina se ve solo con el Modo Adaptado (quien no ve la imagen). -->
+                    <section id="formacion-tarjeta" hidden aria-labelledby="formacion-titulo" class="max-w-[720px] mx-auto mt-3 rounded-xl border-2 border-accent-500 bg-white dark:bg-brand-900 px-4 py-3">
+                        <div class="flex flex-wrap items-baseline justify-between gap-2">
+                            <h2 id="formacion-titulo" class="text-sm font-semibold text-brand-700 dark:text-brand-200 break-words"><span aria-hidden="true">📝 </span>Práctica</h2>
+                            <p id="formacion-cuenta" class="text-xs font-semibold tabular-nums text-brand-700 dark:text-brand-200" aria-live="polite"></p>
+                        </div>
+                        <p id="formacion-msg" hidden role="status" class="text-sm text-brand-700 dark:text-brand-200 bg-brand-50 dark:bg-brand-950 rounded-lg px-3 py-2 mt-2"></p>
+                        <img id="formacion-img" alt="" class="block w-full h-auto aspect-video object-contain rounded-lg bg-white border border-brand-200 dark:border-brand-700 mt-2">
+                        <details id="formacion-texto-caja" class="formacion-texto mt-2">
+                            <summary class="cursor-pointer text-xs font-semibold text-brand-700 dark:text-brand-200">Leer el texto de la lámina</summary>
+                            <p id="formacion-texto" class="text-sm text-brand-700 dark:text-brand-200 mt-1 whitespace-pre-line"></p>
+                        </details>
+                        <div class="flex flex-wrap items-center gap-2 mt-2">
+                            <button id="formacion-anterior" type="button" class="min-h-[44px] sm:min-h-[2.25rem] text-sm font-semibold px-4 py-1.5 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true">◀ </span>Anterior</button>
+                            <button id="formacion-siguiente" type="button" class="min-h-[44px] sm:min-h-[2.25rem] text-sm font-semibold px-4 py-1.5 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Siguiente<span aria-hidden="true"> ▶</span></button>
+                            <button id="formacion-hecha" type="button" aria-pressed="false" class="min-h-[44px] sm:min-h-[2.25rem] ml-auto text-sm font-semibold px-4 py-1.5 rounded-lg bg-accent-500 hover:bg-accent-600 text-brand-900 transition-colors aria-pressed:bg-brand-700 aria-pressed:hover:bg-brand-800 aria-pressed:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Marcar como completada</button>
+                        </div>
+                        <div id="formacion-pasos" role="group" aria-label="Láminas de la práctica" class="flex flex-wrap gap-1.5 mt-2"></div>
+                        <p id="formacion-fin" hidden role="status" class="text-sm font-semibold text-green-800 dark:text-green-200 mt-2"></p>
+                    </section>
+
                     <!-- El podio de la clase (game_state.podio): una foto de los puntos que manda el
                          profe. Con o sin nombres; cada uno ve igual su propio lugar. -->
                     <!-- Los equipos (game_state.equipos): los ve toda la clase. El nombre del equipo es su
@@ -1432,6 +1456,29 @@
                                 <div id="cuestionario-final" hidden class="rounded-lg bg-brand-50 dark:bg-brand-800/50 px-3 py-2 text-sm text-brand-700 dark:text-brand-200"></div>
                             </div>
                         </details>
+                        <!-- Las prácticas de «Formación Ajedrez» (js/clase-formacion.js): las láminas de los
+                             ejercicios de una sesión, que cada alumno pasa a su ritmo y marca como completadas.
+                             Solo la ve quien puede mandar las de ese curso (puede_bajar). -->
+                        <details id="formacion-caja" hidden class="mb-3 rounded-lg border border-brand-100 dark:border-brand-800">
+                            <summary class="cursor-pointer px-3 py-2 text-xs font-semibold text-brand-700 dark:text-brand-200"><span aria-hidden="true">📝 </span>Prácticas de Formación Ajedrez: manda los ejercicios de una sesión y mira quién los termina</summary>
+                            <div class="px-3 pb-3 space-y-2">
+                                <p class="text-xs text-brand-450 dark:text-brand-350">Cada alumno ve en su pantalla las láminas de la práctica, las pasa hacia delante y hacia atrás a su ritmo y marca cada una como completada. Aquí ves cuántas lleva cada uno y cuándo todos terminaron. Las láminas de respuestas no se mandan.</p>
+                                <div class="flex flex-wrap items-center gap-2">
+                                    <label for="formacion-select" class="text-xs text-brand-700 dark:text-brand-200">Práctica</label>
+                                    <select id="formacion-select" class="flex-1 min-w-0 text-xs bg-white dark:bg-brand-800 border border-brand-200 dark:border-brand-700 rounded-lg px-2 py-1.5 text-brand-700 dark:text-brand-200"></select>
+                                </div>
+                                <div class="flex flex-wrap gap-2">
+                                    <button id="formacion-mandar-btn" type="button" class="w-full text-xs font-semibold px-3 py-2 rounded-lg bg-accent-500 hover:bg-accent-600 text-brand-900 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Mandar a la clase</button>
+                                </div>
+                                <p id="formacion-aviso" class="text-xs font-semibold text-brand-700 dark:text-brand-200" aria-live="polite"></p>
+                                <div id="formacion-seguimiento" hidden class="rounded-lg bg-brand-50 dark:bg-brand-800/50 px-3 py-2 space-y-1">
+                                    <p id="formacion-enviada" class="text-xs text-brand-600 dark:text-brand-300"></p>
+                                    <p id="formacion-cuenta-profe" class="text-sm font-semibold text-brand-700 dark:text-brand-200" aria-live="polite"></p>
+                                    <ul id="formacion-lista" class="text-sm text-brand-700 dark:text-brand-200"></ul>
+                                    <button id="formacion-quitar-btn" type="button" class="mt-1 text-xs font-semibold px-3 py-2 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Quitar la práctica de la clase</button>
+                                </div>
+                            </div>
+                        </details>
                         <div id="active-question" class="hidden">
                             <div class="flex items-center justify-between mb-2">
                                 <p class="text-xs text-brand-500 dark:text-brand-300">Pregunta activa <span id="question-tiempo-profe" class="font-semibold text-brand-700 dark:text-brand-200"></span></p>
@@ -1586,6 +1633,7 @@
                             <label for="plan-select" class="sr-only">Qué plan estás dando</label>
                             <select id="plan-select" class="w-full mb-3 bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"></select>
                             <p id="plan-notas" class="hidden text-xs text-brand-600 dark:text-brand-300 bg-brand-50 dark:bg-brand-950 rounded-lg px-3 py-2 mb-3 whitespace-pre-wrap break-words"></p>
+                            <div id="plan-barra" class="mb-2 flex justify-end"></div>
                             <ol id="plan-items" class="grid gap-2 text-sm"></ol>
                             <p id="plan-msg" class="text-xs text-brand-500 dark:text-brand-300 mt-2" aria-live="polite"></p>
                         </div>
@@ -1725,6 +1773,7 @@
     <script src="js/clase-calentamiento.js"></script>
     <script src="js/reloj-servidor.js"></script>
     <script src="js/clase-tanda.js"></script>
+    <script src="js/clase-formacion.js"></script>
     <script src="js/clase-entrenamientos.js"></script>
     <script src="js/clase-puntos.js"></script>
     <script src="js/clase-ronda.js"></script>
