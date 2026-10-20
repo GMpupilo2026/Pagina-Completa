@@ -471,12 +471,9 @@ Deno.serve(async (req) => {
       if (error) return json({ error: error.message }, 400);
     }
 
-    // Al dejar de ser alumno, deja de tener profesores: si no, la fila
-    // quedaría colgada dándole permisos a alguien sobre una cuenta que ya no
-    // es su alumna.
-    if (updates.role === "profesor") {
-      await adminClient.from("profile_teachers").delete().eq("student_id", targetId);
-    }
+    // Al subir a profesor NO se le quitan sus profesores: un profesor también
+    // puede seguir siendo alumno de otro (ver «Un profesor también puede ser
+    // alumno de otro» en docs/decisiones/permisos-y-roles.md).
 
     // Transferir el rol de administrador es aparte y solo hacia OTRA cuenta:
     // nunca se acepta este cambio sobre la propia fila de quien llama, para
@@ -502,8 +499,8 @@ Deno.serve(async (req) => {
     return json({ ok: true });
   }
 
-  // Los profesores de UN alumno, tal cual quedaron en la lista que manda el
-  // panel: lo que no esté, se quita.
+  // Los profesores de UN alumno (o de un profesor que también estudia), tal
+  // cual quedaron en la lista que manda el panel: lo que no esté, se quita.
   if (action === "set_teachers") {
     const targetId = typeof body.target_id === "string" ? body.target_id : "";
     if (!targetId) return json({ error: "target_id es requerido" }, 400);
@@ -511,7 +508,11 @@ Deno.serve(async (req) => {
     const { data: alumno, error: leerError } = await adminClient
       .from("profiles").select("role").eq("id", targetId).single();
     if (leerError || !alumno) return json({ error: "No se encontró esa cuenta" }, 404);
-    if (alumno.role !== "alumno") return json({ error: "Solo los alumnos tienen profesores asignados" }, 400);
+    // Un profesor también puede ser alumno de otro (Ronaldo estudia con Oscar y
+    // sigue dando clase a los suyos); la cuenta master no es alumna de nadie.
+    if (alumno.role !== "alumno" && alumno.role !== "profesor") {
+      return json({ error: "Solo los alumnos y los profesores tienen profesores asignados" }, 400);
+    }
 
     const profes = await validarProfesores(adminClient, body.teacher_ids);
     if (!profes.ok) return json({ error: profes.error }, 400);

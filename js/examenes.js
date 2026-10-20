@@ -81,6 +81,12 @@ async function init() {
     $("vista-alumno").classList.remove("hidden");
     await cargarMios();
   }
+  /* Un profesor que además estudia con otro: sus exámenes de alumno, debajo. */
+  if (puedeExaminar && !profile.is_admin && window.AlumnosMios && await AlumnosMios.estudioConAlguien(sb)) {
+    $("vista-alumno").classList.remove("hidden");
+    $("alumno-tambien").classList.remove("hidden");
+    await cargarMios();
+  }
 
   $("inf-cerrar").addEventListener("click", () => $("dlg-informe").close());
   $("inf-imprimir").addEventListener("click", () => window.print());
@@ -111,7 +117,7 @@ async function traerTodo(consulta) {
 /* ---------------- Profesor: armar ---------------- */
 async function cargarAlumnos() {
   const { data } = await traerTodo(() => sb.from("profiles").select("id, full_name, email").eq("role", "alumno").order("full_name").order("id"));
-  alumnosDisponibles = data || [];
+  alumnosDisponibles = window.AlumnosMios ? await AlumnosMios.sumarProfesores(sb, data || []) : (data || []);
   const cont = $("lista-alumnos");
   cont.innerHTML = "";
   $("sin-alumnos").classList.toggle("hidden", !!alumnosDisponibles.length);

@@ -53,6 +53,11 @@
         let modoControl = false;
         // «Ver como alumno» (sesion.html?como=alumno): el profe ve su propia clase como la ve un alumno, sin mandar nada.
         let vistaPrevia = false;
+        /* Un profesor que además estudia con otro entra a la clase de ese otro
+           como alumno (sesion.html?como_alumno=1&profe=<id>): ve y hace lo que
+           un alumno, no lo de dar clase. Ver «Un profesor también puede ser
+           alumno de otro» en docs/decisiones/permisos-y-roles.md. */
+        let comoAlumnoDeOtro = false;
         /* Quien supervisa (o administra) mirando la clase de un profesor:
            sesion.html?observar=<id>. Solo mira: ni mueve, ni contesta, ni marca
            asistencia, ni cuenta como alumno. Lo que puede leer lo decide la RLS
@@ -3014,7 +3019,7 @@
                 // Quien observa entra como "supervision": no es alumno,
                 // así que no aparece en la lista de alumnos ni en el
                 // chat, y el profesor ve que está mirando.
-                role: esObservador ? "supervision" : vistaPrevia ? "vista-previa" : profile.role,
+                role: esObservador ? "supervision" : vistaPrevia ? "vista-previa" : comoAlumnoDeOtro ? "alumno" : profile.role,
                 como: esObservador ? observaDesde.etiqueta : undefined,
                 online_at: new Date().toISOString(),
                 mirando_a: mirandoA,
@@ -3378,7 +3383,9 @@
             const wasNearBottom = listEl.scrollHeight - listEl.scrollTop - listEl.clientHeight < 40;
             listEl.innerHTML = "";
             for (const m of messages) {
-                const isFromTeacher = !!m.profiles && (m.profiles.role === "profesor" || m.profiles.is_admin === true);
+                // Quien escribe en el hilo de un alumno y no es ese alumno es del lado del profe;
+                // un profesor que estudia escribe en SU hilo, como alumno.
+                const isFromTeacher = !!m.profiles && (m.profiles.role === "profesor" || m.profiles.is_admin === true) && m.sender_id !== m.student_id;
                 const isOwn = m.sender_id === profile.id;
                 // Recuadro de chat estilo mensajería: los mensajes propios a la derecha, los
                 // del otro lado de la conversación a la izquierda — sin importar el rol de
@@ -7667,6 +7674,11 @@
             profile = profileData;
             isTeacher = profile.role === "profesor" || profile.is_admin === true;
             const observar = new URLSearchParams(location.search).get("observar");
+            let claseDeAlumno = null;
+            if (isTeacher && !profile.is_admin && !observar && new URLSearchParams(location.search).get("como_alumno") === "1") {
+                const r = await ClaseElegida.resolver();
+                if (r.elegida) claseDeAlumno = r;
+            }
             if (observar && observar !== profile.id && (profile.es_supervisor || profile.is_admin || profile.es_coordinador)) {
                 esObservador = true;
                 observaDesde = profile.is_admin ? OBSERVA_DESDE.administracion
@@ -7674,6 +7686,11 @@
                 isTeacher = false;
                 boardOwnerId = observar;
                 if (!(await prepararObservador())) return;
+            } else if (claseDeAlumno) {
+                isTeacher = false;
+                comoAlumnoDeOtro = true;
+                boardOwnerId = claseDeAlumno.elegida;
+                clasesDelAlumno = claseDeAlumno.clases;
             } else if (isTeacher) {
                 boardOwnerId = profile.id;
                 modoProyector = new URLSearchParams(location.search).get("proyector") === "1";
