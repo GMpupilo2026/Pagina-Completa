@@ -2420,6 +2420,21 @@ sesión**. Lo pinta `js/admin-asesores.js`.
   ritmo, el orden cambiado) y se cuidó que la correcta **no sea siempre la
   opción más larga**: en un Kahoot eso se aprende rápido y se contesta sin
   leer.
+- **Las tareas de nivel inicial** van en el mismo archivo, en `tareas` (hoy la
+  de la Sesión 1 y la de la 2: 14 y 12 preguntas): más simples que el Kahoot,
+  para mandar a la casa a quien recién empieza con el reglamento, y **ninguna
+  repite una pregunta del Kahoot** (`verificar-formacion.js` lo revisa). Se
+  llaman «Formación Ajedrez · Tarea inicial de la Sesión N: …», y la ficha las
+  encuentra por ese título junto al Kahoot de su sesión, con su «📨 Mandarlo
+  como tarea» (el Kahoot se busca por «· Sesión N:», que no la confunde).
+  Traen posiciones: las que son un final de partida se comprueban como las del
+  Kahoot (mate, jaque —la correcta empieza con «Jaque:»—, ahogado, tablas en el
+  acto); las que no, con su campo `comprobar`, que no va a la base: `legal` e
+  `ilegal` (jugadas que se pueden o no hacer, como el enroque por una casilla
+  atacada o la captura al paso), `sin_jugadas` (una pieza que no puede moverse:
+  el caballo clavado de pieza tocada) y `solo_rey` (el bando al que solo le
+  queda el rey, para la bandera que cae). Todas, del lado que juega y sin
+  jaque.
 - **El grupo**: una tabla con cada asesor (las cuentas temporales abiertas del
   taller), la última vez que entró, sus clases en la plataforma y la nota de
   la primera vez en el cuestionario de cada sesión, con cuántas veces lo hizo.

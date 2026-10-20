@@ -106,6 +106,30 @@
     return cuestionarios.find((c) => new RegExp("· Sesión " + n + ":").test(c.titulo));
   }
 
+  // La tarea de nivel inicial, si la sesión la tiene: «Formación Ajedrez ·
+  // Tarea inicial de la Sesión N: …» (no la confunde con el Kahoot: allá va «· Sesión»).
+  function tareaInicialDe(n) {
+    return cuestionarios.find((c) => new RegExp("· Tarea inicial de la Sesión " + n + ":").test(c.titulo));
+  }
+
+  // Abrir un cuestionario y mandarlo como tarea: con más de un taller abierto,
+  // un enlace por taller, que dice a cuál va.
+  function enlacesDe(cosas, q, nombre, cual) {
+    const a = el("a", ENLACE, nombre + " (" + (q.preguntas || []).length + " preguntas)");
+    a.href = "cuestionarios.html?id=" + encodeURIComponent(q.id);
+    cosas.appendChild(a);
+    talleres.forEach(([detalle, n]) => {
+      const m = el("a", ENLACE, "📨 Mandarlo como tarea a "
+        + (n === 1 ? "la persona" : "las " + n + " personas")
+        + (talleres.length > 1 ? " de «" + detalle + "»" : " del taller"));
+      m.href = "tareas.html?material=cuestionario&recorte=" + encodeURIComponent(q.id)
+        + "&temporales=" + encodeURIComponent(detalle);
+      m.setAttribute("aria-label", m.textContent + ": " + cual);
+      cosas.appendChild(m);
+    });
+  }
+
+
   /* ---------------------------------------------------------- escribir */
   async function guardar(n, cambios, boton) {
     if (boton) boton.disabled = true;
@@ -177,23 +201,13 @@
     }
     const q = cuestionarioDe(s.n);
     if (q) {
-      const a = el("a", ENLACE, "🎯 Cuestionario Kahoot (" + (q.preguntas || []).length + " preguntas)");
-      a.href = "cuestionarios.html?id=" + encodeURIComponent(q.id);
-      cosas.appendChild(a);
-      // Con más de un taller abierto, uno por taller: se dice a cuál va.
-      talleres.forEach(([detalle, n]) => {
-        const m = el("a", ENLACE, "📨 Mandarlo como tarea a "
-          + (n === 1 ? "la persona" : "las " + n + " personas")
-          + (talleres.length > 1 ? " de «" + detalle + "»" : " del taller"));
-        m.href = "tareas.html?material=cuestionario&recorte=" + encodeURIComponent(q.id)
-          + "&temporales=" + encodeURIComponent(detalle);
-        m.setAttribute("aria-label", m.textContent + ": el cuestionario de la sesión " + s.n);
-        cosas.appendChild(m);
-      });
+      enlacesDe(cosas, q, "🎯 Cuestionario Kahoot", "el cuestionario de la sesión " + s.n);
     } else {
       cosas.appendChild(el("span", "inline-flex items-center rounded-lg border border-dashed border-brand-300 dark:border-brand-600 px-3 py-1.5 text-sm text-brand-500 dark:text-brand-300",
         "🎯 Kahoot: por preparar"));
     }
+    const inicial = tareaInicialDe(s.n);
+    if (inicial) enlacesDe(cosas, inicial, "📝 Tarea de nivel inicial", "la tarea de nivel inicial de la sesión " + s.n);
     s.archivos.forEach((f) => {
       const a = el("a", ENLACE, f.texto);
       a.href = CARPETA + f.archivo;

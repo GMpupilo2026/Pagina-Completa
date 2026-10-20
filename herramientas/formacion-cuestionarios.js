@@ -11,6 +11,10 @@
  * base solo se los deja leer a quien administra y a quien tenga el curso
  * compartido (ver «Los materiales de clase» en docs/decisiones/cursos-y-material.md).
  *
+ * Además de los Kahoot de cada sesión (`sesiones`), van las tareas de nivel
+ * inicial (`tareas`): preguntas más simples para la casa, con posiciones, que se
+ * llaman «Formación Ajedrez · Tarea inicial de la Sesión N: …».
+ *
  * Sale herramientas/cuestionarios/formacion-ajedrez.sql (no se commitea), que se
  * aplica en el editor SQL de Supabase o con execute_sql. Actualiza por título y
  * no borra, así no rompe una tarea que ya apunte a uno.
@@ -38,6 +42,7 @@ function armarSesion(s) {
     .forEach((t, i) => lugar.set(t, i % 4));
   return {
     sesion: s.sesion,
+    tarea: !!s.tarea,
     titulo: s.titulo,
     preguntas: s.preguntas.map((p) => {
       const correcta = lugar.get(p.texto);
@@ -49,7 +54,9 @@ function armarSesion(s) {
 }
 
 function cuestionarios() {
-  return fuente().sesiones.map(armarSesion);
+  const f = fuente();
+  return f.sesiones.map(armarSesion)
+    .concat((f.tareas || []).map((t) => armarSesion(Object.assign({ tarea: true }, t))));
 }
 
 function sql() {
