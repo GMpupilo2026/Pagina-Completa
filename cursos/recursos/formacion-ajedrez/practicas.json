@@ -1,0 +1,192 @@
+{
+  "_comentario": "Generado por herramientas/formacion-practicas.js: no se edita a mano.",
+  "curso": "formacion-ajedrez",
+  "practicas": [
+    {
+      "n": 1,
+      "deck": "formacion-ajedrez/clase-01",
+      "titulo": "Sesión 1: Encuadre del curso y reglas básicas del ajedrez",
+      "laminas": [
+        {
+          "n": 41,
+          "titulo": "Práctica en salas de trabajo"
+        },
+        {
+          "n": 42,
+          "titulo": "Estación 1: posiciones 1 a 4"
+        },
+        {
+          "n": 43,
+          "titulo": "Estación 1: posiciones 5 a 8"
+        },
+        {
+          "n": 45,
+          "titulo": "Estación 2: dictado de planilla"
+        },
+        {
+          "n": 46,
+          "titulo": "Estación 3: juego de roles de un reclamo"
+        },
+        {
+          "n": 47,
+          "titulo": "Estación 4: los casos del laboratorio, en grupo"
+        }
+      ]
+    },
+    {
+      "n": 2,
+      "deck": "formacion-ajedrez/clase-02",
+      "titulo": "Sesión 2: Reglas de competición",
+      "laminas": [
+        {
+          "n": 24,
+          "titulo": "Práctica · Simulación de reclamos en salas de trabajo"
+        },
+        {
+          "n": 25,
+          "titulo": "Ejercicio 1 de 6"
+        },
+        {
+          "n": 26,
+          "titulo": "Ejercicio 2 de 6"
+        },
+        {
+          "n": 27,
+          "titulo": "Ejercicio 3 de 6"
+        },
+        {
+          "n": 28,
+          "titulo": "Ejercicio 4 de 6"
+        },
+        {
+          "n": 29,
+          "titulo": "Ejercicio 5 de 6"
+        },
+        {
+          "n": 30,
+          "titulo": "Ejercicio 6 de 6"
+        }
+      ]
+    },
+    {
+      "n": 3,
+      "deck": "formacion-ajedrez/clase-03",
+      "titulo": "Sesión 3: Apéndices de las Leyes de Ajedrez, normativa JDE y sistemas de emparejamiento",
+      "laminas": [
+        {
+          "n": 41,
+          "titulo": "Práctica · Cálculo de desempates y construcción de un cuadro de emparejamiento"
+        },
+        {
+          "n": 42,
+          "titulo": "Ejercicio 1 de 9"
+        },
+        {
+          "n": 43,
+          "titulo": "Ejercicio 2 de 9"
+        },
+        {
+          "n": 44,
+          "titulo": "Ejercicio 3 de 9"
+        },
+        {
+          "n": 45,
+          "titulo": "Ejercicio 4 de 9"
+        },
+        {
+          "n": 46,
+          "titulo": "Ejercicio 5 de 9"
+        },
+        {
+          "n": 47,
+          "titulo": "Ejercicio 6 de 9"
+        },
+        {
+          "n": 48,
+          "titulo": "Ejercicio 7 de 9"
+        },
+        {
+          "n": 49,
+          "titulo": "Ejercicio 8 de 9"
+        },
+        {
+          "n": 50,
+          "titulo": "Ejercicio 9 de 9"
+        }
+      ]
+    },
+    {
+      "n": 4,
+      "deck": "formacion-ajedrez/clase-04",
+      "titulo": "Sesión 4: Uso, configuración y control del reloj de ajedrez",
+      "laminas": [
+        {
+          "n": 18,
+          "titulo": "Práctica · Configuración de un reloj según escenario"
+        },
+        {
+          "n": 19,
+          "titulo": "Ejercicio 1 de 5"
+        },
+        {
+          "n": 20,
+          "titulo": "Ejercicio 2 de 5"
+        },
+        {
+          "n": 21,
+          "titulo": "Ejercicio 3 de 5"
+        },
+        {
+          "n": 22,
+          "titulo": "Ejercicio 4 de 5"
+        },
+        {
+          "n": 23,
+          "titulo": "Ejercicio 5 de 5"
+        }
+      ]
+    },
+    {
+      "n": 5,
+      "deck": "formacion-ajedrez/clase-05",
+      "titulo": "Sesión 5: Resolución de casos en grupos y experiencias regionales",
+      "laminas": [
+        {
+          "n": 17,
+          "titulo": "Práctica · Resolución grupal de casos integradores"
+        },
+        {
+          "n": 18,
+          "titulo": "Ejercicio 1 de 3"
+        },
+        {
+          "n": 19,
+          "titulo": "Ejercicio 2 de 3"
+        },
+        {
+          "n": 20,
+          "titulo": "Ejercicio 3 de 3"
+        }
+      ]
+    },
+    {
+      "n": 6,
+      "deck": "formacion-ajedrez/clase-06",
+      "titulo": "Sesión 6: Talleres prácticos y simulacros de arbitraje",
+      "laminas": [
+        {
+          "n": 17,
+          "titulo": "Práctica · Simulacro de arbitraje con observación entre pares"
+        },
+        {
+          "n": 18,
+          "titulo": "Ejercicio 1 de 2"
+        },
+        {
+          "n": 19,
+          "titulo": "Ejercicio 2 de 2"
+        }
+      ]
+    }
+  ]
+}

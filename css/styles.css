@@ -1380,6 +1380,7 @@ html.presentacion-forzada.chat-flotante:not(.adaptive-mode) #chat-messages { max
 }
 html.presentacion-forzada:not(.adaptive-mode) #header { display: none !important; }
 html.presentacion-forzada:not(.adaptive-mode) #calentamiento-caja:not([hidden]),
+html.presentacion-forzada:not(.adaptive-mode) #formacion-tarjeta:not([hidden]),
 html.presentacion-forzada:not(.adaptive-mode) #tanda-caja:not([hidden]) {
   position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 49;
   width: min(94vw, 600px); max-width: none; max-height: 92vh; overflow-y: auto; margin: 0;
@@ -1410,11 +1411,19 @@ html.vista-limpia:not(.adaptive-mode) .proyector-contenido { display: block; }
 }
 /* Lo que el alumno tiene que HACER le sale encima, como las preguntas. */
 html.vista-limpia:not(.adaptive-mode) #calentamiento-caja:not([hidden]),
+html.vista-limpia:not(.adaptive-mode) #formacion-tarjeta:not([hidden]),
 html.vista-limpia:not(.adaptive-mode) #tanda-caja:not([hidden]) {
   position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 45;
   width: min(94vw, 600px); max-width: none; max-height: 92vh; overflow-y: auto; margin: 0;
   box-shadow: 0 0 0 100vmax rgb(0 0 0 / 0.6);
 }
+
+/* La práctica de Formación Ajedrez (js/clase-formacion.js): el texto de la lámina
+   solo con el Modo Adaptado (quien no ve la imagen); y, cuando le sale encima al
+   alumno (vista limpia o pantalla completa para todos), con el ancho de una lámina. */
+html:not(.adaptive-mode) .formacion-texto { display: none; }
+html.presentacion-forzada:not(.adaptive-mode) #formacion-tarjeta:not([hidden]),
+html.vista-limpia:not(.adaptive-mode) #formacion-tarjeta:not([hidden]) { width: min(94vw, 860px); }
 
 /* ===== Control remoto (sesion.html?control=1) =====
    El celular del profe: el tablero chico y botones grandes para lo que ve la

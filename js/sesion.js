@@ -630,6 +630,8 @@
             pintarPodio(row.podio || null);
             pintarPresentacion(row.presentacion || null);
             pintarPlanilla(row.planilla || null);
+            pintarFormacion(row.practica || null);
+            if (isTeacher) cargarPracticasDeFormacion();
             updateTurnIndicator();
             updateAccessForRole();
             renderMoveList();
@@ -1657,7 +1659,7 @@
             if (partidaClase) await terminarPartidaClase("La partida de la clase terminó al cerrar la clase.");
             if (ronda) await terminarRonda("La ronda rápida terminó al cerrar la clase.");
             if (cuestionarioEnJuego) await terminarCuestionario("El cuestionario terminó al cerrar la clase.");
-            const cambios = { encuesta: null, calentamiento: null, tanda_calentamiento: null, podio: null, equipos: null, pensar: null, elegido: null, presentacion: null, planilla: null };
+            const cambios = { encuesta: null, calentamiento: null, tanda_calentamiento: null, podio: null, equipos: null, pensar: null, elegido: null, presentacion: null, planilla: null, practica: null };
             // Las flechas del mapa se van con él; las que dibujó el profe, no.
             if (encuestaActual) { cambios.arrows = []; cambios.circles = []; }
             const { error } = await sb.from("game_state").update(cambios).eq("id", myGameStateId);
@@ -1672,6 +1674,7 @@
             pintarElegido(null);
             pintarPresentacion(null, true);
             pintarPlanilla(null, true);
+            pintarFormacion(null);
         }
 
         /* Lo que aparece para toda la clase, dicho en voz para quien usa lector
@@ -3023,6 +3026,8 @@
                 calentamiento: calentamientoResuelto,
                 // Lo que lleva del calentamiento de 20 ejercicios (js/clase-tanda.js).
                 tanda: tandaPresencia || undefined,
+                // Lo que lleva de la práctica de Formación Ajedrez (js/clase-formacion.js).
+                formacion: formacionPresencia || undefined,
                 // La Fotografía en curso (solo el profe): ver dictarFotografiaDeLaPresencia.
                 fotografia: fotoEnCurso || undefined,
                 // El entrenamiento que el profe pide abrir (js/clase-entrenamientos.js).
@@ -3100,7 +3105,7 @@
                     }
                     if (meta && meta.role === "alumno") {
                         if (isTeacher && sacadosDeLaClase.has(key)) continue;
-                        onlineStudents.set(key, { email: meta.email, full_name: meta.full_name, hand_raised: !!meta.hand_raised, hand_at: meta.hand_at || null, calentamiento: meta.calentamiento || null, tanda: meta.tanda || null, entreno_hechos: meta.entreno_hechos || null });
+                        onlineStudents.set(key, { email: meta.email, full_name: meta.full_name, hand_raised: !!meta.hand_raised, hand_at: meta.hand_at || null, calentamiento: meta.calentamiento || null, tanda: meta.tanda || null, formacion: meta.formacion || null, entreno_hechos: meta.entreno_hechos || null });
                     } else if (meta && meta.role === "supervision") {
                         // Si además está mirando la partida de un alumno, el profe lo sabe.
                         const suya = meta.mirando_a && practiceStudentBoards[meta.mirando_a];
@@ -3115,6 +3120,7 @@
                 if (isTeacher && tandaActual) { anotarTandaDeLaPresencia(); pintarTandaProfe(); }
                 // En la competencia, el alumno ve su puesto: sale de lo que anuncian los demás.
                 else if (!isTeacher && !esObservador && tandaMia && tandaEsReto()) pintarTandaAlumno();
+                if (isTeacher && formacionActual) { anotarFormacionDeLaPresencia(); pintarFormacionProfe(); }
                 pintarEquiposProfe();
                 if (isTeacher) { pintarAciertosDelEntreno(); anotarConectados(); revisarCallados(); pintarQuienesEntraron(); }
                 pintarObservadores(mirando);
