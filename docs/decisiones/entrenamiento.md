@@ -3783,6 +3783,9 @@ enroques de B saltan las 3 que corresponden.
   herramientas/metas-indice.py`): guarda cuántos ejercicios tiene cada tema,
   que es el tope de lo que pide una tarea, y `verificar-tareas.js` falla si
   no coincide con `temas.json`.
+- **Y también `entreno/data/memoria.json`** (`node herramientas/memoria-generar.js`),
+  que saca sus posiciones de `temas.json`: `verificar-memoria.js` falla si no
+  es lo que arma el generador.
 - Los temas siguen ordenados por rating, así que las tandas «Fácil / Media /
   Difícil» de la clase en vivo (`tacticsThemeBuckets()`, en tercios) y el
   selector «desde» siguen funcionando sin tocar nada.
