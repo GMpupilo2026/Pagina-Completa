@@ -2182,6 +2182,25 @@ alumno.
   (`r` = cuántas lleva contestadas; sin Realtime ni tabla nueva en la
   publicación) y con «Actualizar». Lo que escribió una persona va por
   `textContent`.
+- **Mostrar la respuesta a los alumnos** (cuando ya la analizaron en clase): en
+  «🗂️ Lo que contestaron», sobre cada lámina, «Mostrar la respuesta a los
+  alumnos» (y «Mostrar todas las respuestas»); el profe ve escrito si ya la ven.
+  La marca va en `game_state.practica.reveladas` (los números de lámina), la
+  misma columna que solo escribe el profe, y el CHECK la acepta opcional (hasta
+  40 números). El alumno recibe la respuesta de **esa lámina y de ninguna
+  otra** por `respuestas_reveladas_practica(envio)`: la correcta, la respuesta
+  modelo **con su artículo**, y cómo le fue a él («✓ Tu respuesta fue correcta»,
+  «✗ Tu respuesta no era esa», «No contestaste», o «Tu planilla: 12 de 13
+  jugadas bien»). Aparece sola, sin recargar, y se le dice en voz.
+  **Esa lámina ya no se contesta**: `responder_practica()` la rechaza («Tu
+  profe ya mostró la respuesta de esta lámina») y su pantalla la deja apagada:
+  con la respuesta a la vista se podría «contestar» copiándola, y el registro
+  dejaría de ser de lo que sabía antes. Antes de mostrarla no hay **ni una
+  palabra** de la respuesta en su pantalla (lo comprueba el verificador).
+  Comprobado en la base con roles: antes de mostrar la función devuelve 0
+  filas; una forma mala (lámina 0, un texto) se rechaza; el alumno no puede
+  mostrarlas él (el trigger se lo devuelve); alguien que no es de ese profe ve 0.
+  Migración `practica_reveladas`.
 - **Prácticas anteriores**: lo contestado queda guardado cuando el profe quita
   la práctica o cierra la clase, y el selector «Práctica» lo ofrece después
   (por título y fecha de Costa Rica), para calificar con calma.

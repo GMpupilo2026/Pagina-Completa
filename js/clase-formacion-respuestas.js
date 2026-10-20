@@ -47,6 +47,38 @@ async function cargarMisRespuestasDeFormacion() {
     anunciarFormacion();
 }
 
+/* Las respuestas que su profe mostró: llegan de la base solo para las láminas
+   reveladas (respuestas_reveladas_practica), con cómo le fue a él. */
+async function cargarReveladasDeFormacion() {
+    if (!formacionActual || isTeacher) return;
+    const envio = formacionActual.id;
+    if (!FormacionPractica.reveladasDe(formacionActual).length) { formacionReveladas.clear(); pintarPreguntasDeFormacion(); return; }
+    const { data, error } = await sb.rpc("respuestas_reveladas_practica", { p_envio: envio });
+    if (error) { console.error("No se pudieron leer las respuestas que mostró tu profe:", error); return; }
+    if (!formacionActual || formacionActual.id !== envio) return;
+    formacionReveladas.clear();
+    (data || []).forEach((r) => formacionReveladas.set(claveDeRespuesta(r.lamina, r.pregunta), r));
+    pintarPreguntasDeFormacion();
+}
+
+/* Debajo de la pregunta, la respuesta que su profe mostró, con su artículo, y cómo le fue
+   (con palabras y con signo: el color nunca va solo). */
+function bloqueDeRespuesta(q, rev) {
+    const caja = elementoDeFormacion("div", "rounded-lg bg-green-50 dark:bg-green-900/30 px-3 py-2 mt-2 text-sm text-brand-800 dark:text-brand-100");
+    if (!rev || rev.pendiente) { caja.appendChild(elementoDeFormacion("p", "text-xs", "Cargando la respuesta…")); return caja; }
+    caja.appendChild(elementoDeFormacion("p", "font-semibold", q.tipo === "planilla" ? "La partida dictada" : q.tipo === "opciones" ? "La respuesta correcta" : "Respuesta modelo de tu profe"));
+    if (q.tipo === "opciones" && rev.opcion) caja.appendChild(elementoDeFormacion("p", "", textoDeOpcionDeFormacion(q, rev.opcion)));
+    caja.appendChild(elementoDeFormacion("p", "mt-0.5", String(rev.modelo || "").replace(/^La partida dictada:\s*/, "")));
+    if (q.tipo === "opciones") {
+        caja.appendChild(elementoDeFormacion("p", "font-semibold mt-1", !rev.respondio ? "No contestaste esta pregunta."
+            : rev.correcta ? "✓ Tu respuesta fue correcta." : "✗ Tu respuesta no era esa."));
+    } else if (q.tipo === "planilla") {
+        caja.appendChild(elementoDeFormacion("p", "font-semibold mt-1", !rev.respondio ? "No anotaste la planilla."
+            : (rev.correcta ? "✓ " : "✗ ") + "Tu planilla: " + rev.buenas + " de " + rev.total + " jugadas bien."));
+    }
+    return caja;
+}
+
 function textoDeEstado(estado, texto) {
     estado.textContent = texto || "";
 }
@@ -73,6 +105,7 @@ function guardarRespuestaDeFormacion(n, q, valor, estado) {
         if (error) {
             console.error("No se pudo guardar la respuesta:", error);
             textoDeEstado(estado, /ya no está en tu clase/.test(error.message || "") ? "Tu profe ya quitó esta práctica: no se guardó."
+                : /ya mostró la respuesta/.test(error.message || "") ? "Tu profe ya mostró la respuesta de esta lámina: no se guardó."
                 : "No se pudo guardar. Revisa tu conexión y vuelve a intentarlo.");
             return false;
         }
@@ -89,10 +122,10 @@ function guardarRespuestaDeFormacion(n, q, valor, estado) {
 
 // Antes de pasar de lámina o de marcarla: lo que está escrito y no se guardó.
 function guardarPendientesDeFormacion() {
-    formacionControles.forEach((c) => { guardarRespuestaDeFormacion(c.n, c.q, c.leer(), c.estado); });
+    formacionControles.forEach((c) => { if (!c.revelada) guardarRespuestaDeFormacion(c.n, c.q, c.leer(), c.estado); });
 }
 
-function pintarPreguntaDeOpciones(n, q, guardado) {
+function pintarPreguntaDeOpciones(n, q, guardado, rev) {
     const caja = elementoDeFormacion("fieldset", "rounded-lg bg-brand-50 dark:bg-brand-800/50 px-3 py-2");
     caja.appendChild(elementoDeFormacion("legend", "text-sm font-semibold text-brand-800 dark:text-white px-1", q.texto));
     const estado = elementoDeFormacion("p", "text-xs font-semibold text-brand-700 dark:text-brand-200 min-h-[1rem] mt-1");
@@ -104,17 +137,19 @@ function pintarPreguntaDeOpciones(n, q, guardado) {
         r.type = "radio"; r.name = nombre; r.value = o.v; r.id = nombre + "-" + k;
         r.className = "w-4 h-4 shrink-0 accent-brand-700";
         r.checked = guardado === o.v;
+        r.disabled = !!rev;
         r.addEventListener("change", () => guardarRespuestaDeFormacion(n, q, o.v, estado));
         lab.append(r, elementoDeFormacion("span", "", o.t));
         caja.appendChild(lab);
     });
     caja.appendChild(estado);
     if (guardado) textoDeEstado(estado, "Guardada ✓");
+    if (rev) caja.appendChild(bloqueDeRespuesta(q, rev));
     const leer = () => { const x = caja.querySelector("input:checked"); return x ? x.value : (formacionRespuestas.get(claveDeRespuesta(n, q.id)) || ""); };
     return { caja, leer, estado };
 }
 
-function pintarPreguntaDeTexto(n, q, guardado) {
+function pintarPreguntaDeTexto(n, q, guardado, rev) {
     const caja = elementoDeFormacion("div", "rounded-lg bg-brand-50 dark:bg-brand-800/50 px-3 py-2");
     const id = "fq-" + n + "-" + q.id;
     const lab = elementoDeFormacion("label", "block text-sm font-semibold text-brand-800 dark:text-white mb-1", q.texto);
@@ -123,9 +158,11 @@ function pintarPreguntaDeTexto(n, q, guardado) {
     area.id = id; area.rows = 4; area.maxLength = 2000; area.value = guardado || "";
     area.className = TEXTO_CAJA;
     area.setAttribute("autocomplete", "off");
+    area.disabled = !!rev;
     const fila = elementoDeFormacion("div", "flex flex-wrap items-center gap-2 mt-1");
     const guardar = elementoDeFormacion("button", BOTON_CHICO, "Guardar mi respuesta");
     guardar.type = "button";
+    guardar.hidden = !!rev;
     const estado = elementoDeFormacion("p", "text-xs font-semibold text-brand-700 dark:text-brand-200");
     estado.setAttribute("role", "status");
     if (guardado) textoDeEstado(estado, "Guardada ✓");
@@ -135,10 +172,11 @@ function pintarPreguntaDeTexto(n, q, guardado) {
     area.addEventListener("blur", mandar);
     fila.append(guardar, estado);
     caja.append(lab, area, fila);
+    if (rev) caja.appendChild(bloqueDeRespuesta(q, rev));
     return { caja, leer, estado };
 }
 
-function pintarPreguntaDePlanilla(n, q, guardado) {
+function pintarPreguntaDePlanilla(n, q, guardado, rev) {
     const caja = elementoDeFormacion("div", "rounded-lg bg-brand-50 dark:bg-brand-800/50 px-3 py-2");
     caja.appendChild(elementoDeFormacion("p", "text-sm font-semibold text-brand-800 dark:text-white mb-1", q.texto));
     caja.appendChild(elementoDeFormacion("p", "text-xs text-brand-600 dark:text-brand-300 mb-1", "Anota cada jugada como la oyes, en notación algebraica española (C, A, T, D, R; x en las capturas; + en el jaque y # en el mate)."));
@@ -164,6 +202,7 @@ function pintarPreguntaDePlanilla(n, q, guardado) {
             inp.setAttribute("autocapitalize", "off");
             inp.setAttribute("autocorrect", "off");
             inp.spellcheck = false;
+            inp.disabled = !!rev;
             inp.setAttribute("aria-label", FormacionPractica.nombreDeJugada(f * 2 + c));
             campos.push(inp);
             td.appendChild(inp);
@@ -175,6 +214,7 @@ function pintarPreguntaDePlanilla(n, q, guardado) {
     const fila = elementoDeFormacion("div", "flex flex-wrap items-center gap-2 mt-1");
     const guardar = elementoDeFormacion("button", BOTON_CHICO, "Guardar mi planilla");
     guardar.type = "button";
+    guardar.hidden = !!rev;
     const estado = elementoDeFormacion("p", "text-xs font-semibold text-brand-700 dark:text-brand-200");
     estado.setAttribute("role", "status");
     if (guardado) textoDeEstado(estado, "Guardada ✓");
@@ -187,6 +227,7 @@ function pintarPreguntaDePlanilla(n, q, guardado) {
     campos.forEach((x) => x.addEventListener("change", mandar));
     fila.append(guardar, estado);
     caja.append(tabla, fila);
+    if (rev) caja.appendChild(bloqueDeRespuesta(q, rev));
     return { caja, leer, estado };
 }
 
@@ -207,11 +248,14 @@ async function pintarPreguntasDeFormacion() {
     cont.hidden = !preguntas.length;
     // Varias preguntas de opciones (las cuatro posiciones de una lámina): de a dos por fila, para no ir tan abajo.
     cont.classList.toggle("md:grid-cols-2", preguntas.length > 1 && preguntas.every((q) => q.tipo === "opciones"));
+    const revelada = FormacionPractica.estaRevelada(formacionActual, n);
     preguntas.forEach((q) => {
         const guardado = formacionRespuestas.get(claveDeRespuesta(n, q.id)) || "";
-        const c = q.tipo === "opciones" ? pintarPreguntaDeOpciones(n, q, guardado)
-            : q.tipo === "planilla" ? pintarPreguntaDePlanilla(n, q, guardado) : pintarPreguntaDeTexto(n, q, guardado);
-        formacionControles.push({ n, q, leer: c.leer, estado: c.estado });
+        // Con la respuesta mostrada ya no se contesta: se ve lo que había y la respuesta.
+        const rev = revelada ? (formacionReveladas.get(claveDeRespuesta(n, q.id)) || { pendiente: true }) : null;
+        const c = q.tipo === "opciones" ? pintarPreguntaDeOpciones(n, q, guardado, rev)
+            : q.tipo === "planilla" ? pintarPreguntaDePlanilla(n, q, guardado, rev) : pintarPreguntaDeTexto(n, q, guardado, rev);
+        formacionControles.push({ n, q, leer: c.leer, estado: c.estado, revelada });
         cont.appendChild(c.caja);
     });
 }
@@ -328,6 +372,39 @@ function detalleDePlanilla(r, clave) {
     return partes.join(" · ");
 }
 
+/* Mostrar a los alumnos la respuesta de una lámina (o de todas) cuando ya la
+   analizaron: va en game_state.practica.reveladas, que solo escribe el profe. */
+async function cambiarReveladasDeFormacion(lista) {
+    if (!isTeacher || !formacionActual || !myGameStateId) return;
+    const nueva = FormacionPractica.conReveladas(formacionActual, lista);
+    const { data, error } = await sb.from("game_state").update({ practica: nueva }).eq("id", myGameStateId).select("practica").single();
+    if (error) { console.error(error); document.getElementById("formacion-aviso").textContent = "No se pudo cambiar. Vuelve a intentarlo."; return; }
+    document.getElementById("formacion-aviso").textContent = "";
+    pintarFormacion(data && data.practica ? data.practica : nueva);
+    cargarRespuestasDeFormacion();
+}
+
+function controlesDeRevelarFormacion(n, conPreguntas) {
+    const caja = elementoDeFormacion("div", "rounded-lg bg-brand-50 dark:bg-brand-800/50 px-3 py-2 mb-2 space-y-1");
+    const reveladas = FormacionPractica.reveladasDe(formacionActual);
+    const esta = reveladas.includes(n);
+    const estado = elementoDeFormacion("p", "text-xs font-semibold text-brand-700 dark:text-brand-200",
+        esta ? "✓ Los alumnos ven la respuesta de esta lámina, con su artículo." : "Los alumnos todavía no ven la respuesta de esta lámina.");
+    estado.setAttribute("role", "status");
+    const fila = elementoDeFormacion("div", "flex flex-wrap gap-2");
+    const uno = elementoDeFormacion("button", BOTON_CHICO, esta ? "Ocultar la respuesta a los alumnos" : "Mostrar la respuesta a los alumnos");
+    uno.type = "button";
+    uno.addEventListener("click", () => cambiarReveladasDeFormacion(esta ? reveladas.filter((x) => x !== n) : reveladas.concat([n])));
+    const todas = conPreguntas.map((l) => l.n);
+    const todasYa = todas.every((x) => reveladas.includes(x));
+    const varios = elementoDeFormacion("button", BOTON_CHICO, todasYa ? "Ocultar todas las respuestas" : "Mostrar todas las respuestas");
+    varios.type = "button";
+    varios.addEventListener("click", () => cambiarReveladasDeFormacion(todasYa ? [] : todas));
+    fila.append(uno, varios);
+    caja.append(estado, fila);
+    return caja;
+}
+
 function pintarLaminasDeFormacion(filas, practica, claves, alumnos, nombres) {
     const selL = document.getElementById("formacion-resp-lamina");
     const lista = document.getElementById("formacion-resp-lista");
@@ -339,6 +416,8 @@ function pintarLaminasDeFormacion(filas, practica, claves, alumnos, nombres) {
     lista.replaceChildren();
     const lamina = conPreguntas.find((l) => String(l.n) === selL.value);
     if (!lamina) { lista.appendChild(elementoDeFormacion("p", "text-xs text-brand-600 dark:text-brand-300", "Esta práctica no tiene preguntas para contestar.")); return; }
+    const envioElegido = document.getElementById("formacion-resp-envio").value;
+    if (formacionActual && formacionActual.id === envioElegido) lista.appendChild(controlesDeRevelarFormacion(lamina.n, conPreguntas));
     lamina.preguntas.forEach((q) => {
         const bloque = elementoDeFormacion("div", "rounded-lg bg-white dark:bg-brand-900 border border-brand-100 dark:border-brand-800 px-3 py-2 mb-2");
         bloque.appendChild(elementoDeFormacion("p", "text-sm font-semibold text-brand-800 dark:text-white", q.texto));

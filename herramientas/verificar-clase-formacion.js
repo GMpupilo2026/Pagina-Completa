@@ -18,6 +18,9 @@
      la respuesta correcta NO puede viajar en practicas.json (lo baja todo
      alumno), la clave tiene que estar sembrada en la base para cada pregunta, y
      la presentación propia de la Sesión 1 tiene que estar dibujada al día;
+   - la respuesta modelo (con su artículo) solo le llega al alumno cuando el
+     profe la muestra: antes no está en su pantalla, después sí, y esa lámina
+     ya no se puede contestar (ni en la base);
    - lo que contesta cada alumno se guarda por responder_practica() (no
      directo en la tabla), vuelve a su pantalla al recargar y el profe lo ve con
      su respuesta modelo, quién acertó y quién no contestó.
@@ -134,6 +137,23 @@ function laBase() {
   cierto("y pide id, deck, titulo y laminas", ["'id'", "'deck'", "'titulo'", "'laminas'"].every((k) => check.includes("practica->" + k)));
 }
 
+function lasReveladas() {
+  console.log("\n=== La base: la respuesta se muestra lámina por lámina y no antes ===");
+  const dirMig = path.join(RAIZ, "supabase", "migraciones");
+  const f = fs.readdirSync(dirMig).sort().filter((x) => /practica_reveladas/.test(x)).pop();
+  const sql = f ? fs.readFileSync(path.join(dirMig, f), "utf8") : "";
+  cierto("hay una migración que acepta practica.reveladas en el CHECK (en coalesce(…, false))", /practica->'reveladas'/.test(sql) && /, false\)\);/.test(sql), f);
+  cierto("la lista de reveladas se revisa con jsonpath (números de lámina de 1 a 500) y con CASE (un arreglo que no lo es no rompe)",
+    /\$\.reveladas\[\*\]/.test(sql) && /case when jsonb_typeof\(practica->'reveladas'\) = 'array'/.test(sql));
+  cierto("responder_practica rechaza una lámina revelada", /reveladas'\) @> to_jsonb\(p_lamina\)/.test(sql) && /ya mostró la respuesta/.test(sql));
+  cierto("respuestas_reveladas_practica solo une las láminas reveladas y las de quien tiene a ese profe",
+    /respuestas_reveladas_practica/.test(sql) && /\(g\.practica->'reveladas'\) @> to_jsonb\(c\.lamina\)/.test(sql) && /es_mi_profesor\(g\.owner_id\)/.test(sql));
+  cierto("y no se la entrega a anon", /revoke execute on function public\.respuestas_reveladas_practica\(text\) from public, anon;/.test(sql));
+  const ok = /new\.practica := old\.practica;/.test(fs.readdirSync(dirMig).sort().filter((x) => /function public\.protect_game_state_teacher_columns/.test(fs.readFileSync(path.join(dirMig, x), "utf8")))
+    .map((x) => fs.readFileSync(path.join(dirMig, x), "utf8")).pop());
+  cierto("el trigger sigue devolviéndole `practica` (y con ella `reveladas`) a quien no es profesor: nadie más muestra respuestas", ok);
+}
+
 function laParteQueNoTocaLaPagina() {
   console.log("\n=== FormacionPractica, sola ===");
   global.window = {};
@@ -162,6 +182,13 @@ function laParteQueNoTocaLaPagina() {
   igual("el resumen cuenta quiénes terminaron", r, { total: 3, terminaron: 1, todos: false });
   igual("todos", F.resumen([{ hechas: L }, { hechas: [26, 25, 24] }], L).todos, true);
   igual("sin alumnos no hay «todos»", F.resumen([], L).todos, false);
+  console.log("\n=== Las respuestas mostradas, solas ===");
+  const con = Object.assign({}, buena, { reveladas: [25] });
+  igual("la práctica con reveladas es válida, y una forma mala no", [F.valida(con), F.valida(Object.assign({}, buena, { reveladas: [0] })), F.valida(Object.assign({}, buena, { reveladas: "x" })),
+    F.valida(Object.assign({}, buena, { reveladas: Array(41).fill(24) }))], [true, false, false, false]);
+  igual("las reveladas son solo las de la práctica, en su orden", F.reveladasDe({ laminas: [24, 25, 26], reveladas: [26, 99, 24, 24] }), [24, 26]);
+  igual("conReveladas pone y quita la lista, sin tocar lo demás", [F.conReveladas(buena, [25, 24]).reveladas, "reveladas" in F.conReveladas(con, []), F.conReveladas(buena, [24]).id], [[24, 25], false, "abcd1234"]);
+  igual("estaRevelada", [F.estaRevelada(con, 25), F.estaRevelada(con, 24), F.estaRevelada(buena, 24)], [true, false, false]);
   console.log("\n=== Las respuestas, solas ===");
   igual("una jugada se compara sin espacios, puntos ni mayúsculas; el cero del enroque vale por la o",
     [F.normaJugada("C f3"), F.normaJugada("Cxe5"), F.normaJugada("0-0-0"), F.normaJugada(" 1.e4 "), F.normaJugada(null)], ["cf3", "cxe5", "o-o-o", "1e4", ""]);
@@ -338,6 +365,10 @@ window.__guardadas = window.__guardadas || [];
       return Promise.resolve({ data: window.__guardadas.filter((r) => r.p_envio === a.p_envio)
         .map((r) => ({ deck: r.p_deck, lamina: r.p_lamina, pregunta: r.p_pregunta, respuesta: r.p_respuesta })), error: null });
     }
+    if (n === "respuestas_reveladas_practica") {
+      (window.__rpcs = window.__rpcs || []).push({ n: n, args: a });
+      return Promise.resolve({ data: window.__reveladas || [], error: null });
+    }
     return rpc(n, a);
   };
 })();`;
@@ -450,7 +481,7 @@ async function pruebaDelProfeConRespuestas(browser) {
   await page.waitForFunction(() => document.getElementById("formacion-caja") && !document.getElementById("formacion-caja").hidden, null, { timeout: 15000 });
   await page.evaluate(() => activateTeacherTab("preguntar"));
   await page.click("#formacion-caja > summary");
-  await page.waitForFunction(() => document.querySelectorAll("#formacion-resp-lista > div").length > 0, null, { timeout: 8000 });
+  await page.waitForFunction(() => document.querySelectorAll("#formacion-resp-lista > div.border").length > 0, null, { timeout: 8000 });
   await page.evaluate(() => {
     window.__ponerPresencia("u-ana", { email: "ana@x.cr", full_name: "Ana Rojas", role: "alumno", formacion: { id: "pr1-envio", h: [1], r: 5 } });
     window.__ponerPresencia("u-beto", { email: "beto@x.cr", full_name: "Beto Mora", role: "alumno", formacion: { id: "pr1-envio", h: [], r: 2 } });
@@ -464,11 +495,11 @@ async function pruebaDelProfeConRespuestas(browser) {
   igual("lo que cuenta es una pregunta de opciones o la planilla; el texto libre no se califica",
     await page.textContent("#formacion-resp-notas p"), "Calificación: 9 preguntas con respuesta correcta (la planilla cuenta como una: sale bien si todas sus jugadas están bien).");
   igual("Estación 1: la respuesta modelo (solo del profe) y lo que eligieron, escrito",
-    await page.evaluate(() => { const b = document.querySelector("#formacion-resp-lista > div"); return [b.textContent.includes("Respuesta modelo (solo tú): Jaque mate"), b.querySelector("p.text-xs.mt-1:not(.bg-green-50)").textContent.startsWith("Qué eligieron: Jaque mate: la partida terminó 1 · Ahogado: tablas 1")]; }), [true, true]);
+    await page.evaluate(() => { const b = document.querySelector("#formacion-resp-lista > div.border"); return [b.textContent.includes("Respuesta modelo (solo tú): Jaque mate"), b.querySelector("p.text-xs.mt-1:not(.bg-green-50)").textContent.startsWith("Qué eligieron: Jaque mate: la partida terminó 1 · Ahogado: tablas 1")]; }), [true, true]);
   igual("cada alumno con su marca escrita (✓ bien / ✗ mal) y lo que eligió",
-    await page.evaluate(() => [...document.querySelectorAll("#formacion-resp-lista > div:first-child li")].map((li) => li.textContent)),
+    await page.evaluate(() => [...document.querySelectorAll("#formacion-resp-lista > div:nth-of-type(2) li")].map((li) => li.textContent)),
     ["Ana Rojas ✓ bien: Jaque mate: la partida terminó", "Beto Mora ✗ mal: Ahogado: tablas"]);
-  igual("y quién no contestó esa pregunta", await page.evaluate(() => [...document.querySelectorAll("#formacion-resp-lista > div:first-child p")].pop().textContent), "Sin contestar: Ceci Vargas");
+  igual("y quién no contestó esa pregunta", await page.evaluate(() => [...document.querySelectorAll("#formacion-resp-lista > div:nth-of-type(2) p")].pop().textContent), "Sin contestar: Ceci Vargas");
   // La planilla: qué jugada falló y cuál era.
   await page.selectOption("#formacion-resp-lamina", "3");
   await page.waitForFunction(() => /jugadas bien/.test(document.getElementById("formacion-resp-lista").textContent), null, { timeout: 5000 });
@@ -481,6 +512,83 @@ async function pruebaDelProfeConRespuestas(browser) {
   igual("el texto libre trae su respuesta modelo para analizarlo en clase", await page.evaluate(() => document.getElementById("formacion-resp-lista").textContent.includes("Respuesta modelo (solo tú): Pieza tocada: debe mover el alfil")), true);
   igual("sin errores en consola (profe)", errores, []);
   await ctx.close();
+}
+
+async function pruebaDeLasReveladas(browser) {
+  console.log("\n=== El profe muestra la respuesta: el alumno la ve con su artículo y ya no contesta esa lámina ===");
+  const filasReveladas = [
+    { deck: PRACTICA_1.deck, lamina: 1, pregunta: "p1", tipo: "opciones", opcion: "mate", modelo: "Jaque mate: el rey está en jaque y no tiene ninguna jugada legal. La partida terminó (art. 5.1).", respondio: true, correcta: true, buenas: null, total: null },
+    { deck: PRACTICA_1.deck, lamina: 1, pregunta: "p2", tipo: "opciones", opcion: "ahogado", modelo: "Ahogado: el rey no está en jaque (art. 5.2.1).", respondio: true, correcta: false, buenas: null, total: null },
+    { deck: PRACTICA_1.deck, lamina: 1, pregunta: "p3", tipo: "opciones", opcion: "jaque", modelo: "Jaque, pero no mate (art. 3.9).", respondio: false, correcta: null, buenas: null, total: null },
+    { deck: PRACTICA_1.deck, lamina: 1, pregunta: "p4", tipo: "opciones", opcion: "muerta", modelo: "Posición muerta (art. 5.2.2).", respondio: false, correcta: null, buenas: null, total: null },
+    { deck: PRACTICA_1.deck, lamina: 3, pregunta: "planilla", tipo: "planilla", opcion: null, modelo: "La partida dictada: 1. e4 e5 2. Cf3 d6", respondio: true, correcta: false, buenas: 12, total: 13 },
+    { deck: PRACTICA_1.deck, lamina: 4, pregunta: "decision", tipo: "texto", opcion: null, modelo: "Pieza tocada: debe mover el alfil (art. 4.3).", respondio: true, correcta: null, buenas: null, total: null },
+  ];
+  const sembrar = BASE_DE_RESPUESTAS + "window.__reveladas = " + JSON.stringify(filasReveladas) + ";"
+    + 'window.__guardadas.push({ p_envio: "pr1-envio", p_deck: "formacion-ajedrez/practica-01", p_lamina: 1, p_pregunta: "p1", p_respuesta: "mate" });'
+    + 'window.__guardadas.push({ p_envio: "pr1-envio", p_deck: "formacion-ajedrez/practica-01", p_lamina: 4, p_pregunta: "decision", p_respuesta: "Mi decisión" });';
+
+  // Sin mostrar nada: ni una palabra de la respuesta en la pantalla.
+  const a = await abrir(browser, "u-ana", CLASE, { game_state: [fila({ practica: PRACTICA_1 })] }, { extra: sembrar });
+  await a.page.waitForFunction(() => document.querySelectorAll("#formacion-preguntas fieldset").length === 4, null, { timeout: 20000 });
+  igual("antes de mostrarla no hay ninguna respuesta en su pantalla (ni se le pidió a la base)",
+    [await a.page.evaluate(() => /art\. 5\.1|La respuesta correcta/.test(document.getElementById("formacion-tarjeta").textContent)), await rpcsDe(a.page, "respuestas_reveladas_practica")], [false, 0]);
+  igual("y puede contestar (las opciones no están apagadas)", await a.page.evaluate(() => [...document.querySelectorAll("#formacion-preguntas input[type=radio]")].some((r) => r.disabled)), false);
+
+  // El profe la muestra (llega por la base, como Realtime): aparece sin recargar.
+  await a.page.evaluate((p) => window.__cambioEnBase("game_state", Object.assign({ id: 7, owner_id: "u-profe" }, { practica: p })), Object.assign({}, PRACTICA_1, { reveladas: [1] }));
+  await a.page.waitForFunction(() => document.querySelectorAll("#formacion-preguntas fieldset")[0].textContent.includes("La respuesta correcta"), null, { timeout: 8000 });
+  igual("la respuesta aparece sola: la correcta, el artículo y cómo le fue (escrito)",
+    await a.page.evaluate(() => [...document.querySelectorAll("#formacion-preguntas fieldset")].map((f) => f.querySelector(".bg-green-50").innerText.replace(/\s+/g, " ").trim())), [
+      "La respuesta correcta Jaque mate: la partida terminó Jaque mate: el rey está en jaque y no tiene ninguna jugada legal. La partida terminó (art. 5.1). ✓ Tu respuesta fue correcta.",
+      "La respuesta correcta Ahogado: tablas Ahogado: el rey no está en jaque (art. 5.2.1). ✗ Tu respuesta no era esa.",
+      "La respuesta correcta Jaque, pero la partida sigue Jaque, pero no mate (art. 3.9). No contestaste esta pregunta.",
+      "La respuesta correcta Posición muerta: tablas Posición muerta (art. 5.2.2). No contestaste esta pregunta."]);
+  igual("esa lámina ya no se puede contestar: todo apagado, y su respuesta de antes sigue marcada",
+    await a.page.evaluate(() => [[...document.querySelectorAll("#formacion-preguntas input[type=radio]")].every((r) => r.disabled), document.querySelector("#formacion-preguntas input:checked").value]), [true, "mate"]);
+  await a.page.waitForFunction(() => /Tu profe mostró la respuesta de la lámina 1/.test(document.getElementById("clase-voz").textContent), null, { timeout: 4000 }).catch(() => {});
+  igual("se le avisa en voz (Modo Adaptado)", await a.page.evaluate(() => /Tu profe mostró la respuesta de la lámina 1/.test(document.getElementById("clase-voz").textContent)), true);
+  // La planilla y el texto, ya mostrados.
+  await a.page.evaluate((p) => window.__cambioEnBase("game_state", Object.assign({ id: 7, owner_id: "u-profe" }, { practica: p })), Object.assign({}, PRACTICA_1, { reveladas: [1, 3, 4] }));
+  await a.page.click("#formacion-pasos button:nth-child(3)");
+  await a.page.waitForFunction(() => document.querySelectorAll("#formacion-preguntas table input").length === 20 && document.querySelector("#formacion-preguntas .bg-green-50"), null, { timeout: 8000 });
+  igual("la planilla: la partida dictada (sin repetir el rótulo) y cuántas jugadas le salieron bien; sus casillas, apagadas",
+    await a.page.evaluate(() => [document.querySelector("#formacion-preguntas .bg-green-50").innerText.replace(/\s+/g, " ").trim(), [...document.querySelectorAll("#formacion-preguntas table input")].every((i) => i.disabled)]),
+    ["La partida dictada 1. e4 e5 2. Cf3 d6 ✗ Tu planilla: 12 de 13 jugadas bien.", true]);
+  await a.page.click("#formacion-pasos button:nth-child(4)");
+  await a.page.waitForSelector("#formacion-preguntas textarea:disabled", { timeout: 5000 });
+  igual("el texto: su respuesta de antes, apagada, y la respuesta modelo de su profe",
+    await a.page.evaluate(() => [document.querySelector("#formacion-preguntas textarea").value, document.querySelector("#formacion-preguntas button").hidden,
+      document.querySelector("#formacion-preguntas .bg-green-50").innerText.replace(/\s+/g, " ").trim()]),
+    ["Mi decisión", true, "Respuesta modelo de tu profe Pieza tocada: debe mover el alfil (art. 4.3)."]);
+  igual("una lámina que no se mostró sigue abierta", await (async () => { await a.page.click("#formacion-pasos button:nth-child(5)"); await a.page.waitForSelector("#formacion-preguntas textarea"); return a.page.evaluate(() => [document.querySelector("#formacion-preguntas textarea").disabled, !!document.querySelector("#formacion-preguntas .bg-green-50")]); })(), [false, false]);
+  await a.ctx.close();
+
+  // El profe: mostrar una lámina, mostrar todas y ocultar.
+  const claves = generador.armar().claves.filter((c) => c.deck === PRACTICA_1.deck);
+  const t = await abrir(browser, "u-profe", CLASE, { game_state: [fila({ practica: PRACTICA_1 })], puede_bajar: ["formacion-ajedrez"], practica_respuestas: [], practica_claves: claves });
+  await t.page.waitForFunction(() => document.getElementById("formacion-caja") && !document.getElementById("formacion-caja").hidden, null, { timeout: 15000 });
+  await t.page.evaluate(() => activateTeacherTab("preguntar"));
+  await t.page.click("#formacion-caja > summary");
+  await t.page.waitForFunction(() => document.querySelector("#formacion-resp-lista button"), null, { timeout: 8000 });
+  igual("antes: los alumnos todavía no ven la respuesta (escrito) y el botón ofrece mostrarla",
+    await t.page.evaluate(() => [document.querySelector("#formacion-resp-lista p[role=status]").textContent, document.querySelector("#formacion-resp-lista button").textContent]),
+    ["Los alumnos todavía no ven la respuesta de esta lámina.", "Mostrar la respuesta a los alumnos"]);
+  await t.page.click("#formacion-resp-lista button:has-text('Mostrar la respuesta a los alumnos')");
+  await t.page.waitForFunction(() => window.__updates.some((u) => u.tabla === "game_state" && u.campos.practica && u.campos.practica.reveladas), null, { timeout: 8000 });
+  const u1 = (await cambiosDeGameState(t.page)).filter((c) => c.practica && c.practica.reveladas).pop().practica;
+  igual("manda practica con reveladas [1] y lo demás igual (mismo envío, mismas láminas)", [u1.reveladas, u1.id, u1.laminas.length], [[1], "pr1-envio", 10]);
+  await t.page.waitForFunction(() => /✓ Los alumnos ven la respuesta/.test(document.querySelector("#formacion-resp-lista p[role=status]").textContent), null, { timeout: 8000 });
+  igual("el profe ve que ya la ven, escrito, y el botón ofrece ocultarla", await t.page.evaluate(() => [document.querySelector("#formacion-resp-lista p[role=status]").textContent, document.querySelector("#formacion-resp-lista button").textContent]),
+    ["✓ Los alumnos ven la respuesta de esta lámina, con su artículo.", "Ocultar la respuesta a los alumnos"]);
+  await t.page.click("#formacion-resp-lista button:has-text('Mostrar todas las respuestas')");
+  await t.page.waitForFunction(() => window.__updates.filter((u) => u.tabla === "game_state" && u.campos.practica && u.campos.practica.reveladas).length === 2, null, { timeout: 8000 });
+  igual("«Mostrar todas» manda las diez", (await cambiosDeGameState(t.page)).filter((c) => c.practica && c.practica.reveladas).pop().practica.reveladas, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+  await t.page.waitForFunction(() => document.querySelector("#formacion-resp-lista button:last-child").textContent === "Ocultar todas las respuestas", null, { timeout: 8000 });
+  await t.page.click("#formacion-resp-lista button:has-text('Ocultar todas las respuestas')");
+  await t.page.waitForFunction(() => window.__updates.filter((u) => u.tabla === "game_state" && u.campos.practica).length >= 3, null, { timeout: 8000 });
+  igual("«Ocultar todas» las quita: la práctica queda sin `reveladas`", "reveladas" in (await cambiosDeGameState(t.page)).filter((c) => c.practica).pop().practica, false);
+  await t.ctx.close();
 }
 
 async function pruebaSinPermiso(browser) {
@@ -506,6 +614,7 @@ async function pruebaLaClaseSeCierra(browser) {
 (async () => {
   losDatos();
   laBase();
+  lasReveladas();
   laParteQueNoTocaLaPagina();
   const browser = await chromium.launch({ executablePath: CHROME });
   try {
@@ -513,6 +622,7 @@ async function pruebaLaClaseSeCierra(browser) {
     await pruebaDelProfe(browser);
     await pruebaDeLasRespuestas(browser);
     await pruebaDelProfeConRespuestas(browser);
+    await pruebaDeLasReveladas(browser);
     await pruebaSinPermiso(browser);
     await pruebaLaClaseSeCierra(browser);
   } catch (e) {

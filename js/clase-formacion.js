@@ -38,7 +38,21 @@ window.FormacionPractica = (function () {
             && typeof p.deck === "string" && FORMA_DECK.test(p.deck)
             && typeof p.titulo === "string" && p.titulo.length >= 1 && p.titulo.length <= 160
             && Array.isArray(p.laminas) && p.laminas.length >= 1 && p.laminas.length <= 40
-            && p.laminas.every((n) => Number.isInteger(n) && n >= 1 && n <= 500));
+            && p.laminas.every((n) => Number.isInteger(n) && n >= 1 && n <= 500)
+            && (p.reveladas === undefined || (Array.isArray(p.reveladas) && p.reveladas.length <= 40
+                && p.reveladas.every((n) => Number.isInteger(n) && n >= 1 && n <= 500))));
+    }
+
+    /* Las láminas cuya respuesta su profe ya mostró (practica.reveladas): solo las
+       que son de la práctica, en su orden. Mientras no se muestra, el alumno no recibe
+       NADA de la respuesta (la base se la niega). */
+    const reveladasDe = (p) => limpiarHechas(p && p.reveladas, p && p.laminas);
+    const estaRevelada = (p, n) => reveladasDe(p).includes(n);
+    function conReveladas(p, lista) {
+        const r = limpiarHechas(lista, p.laminas);
+        const nueva = Object.assign({}, p);
+        if (r.length) nueva.reveladas = r; else delete nueva.reveladas;
+        return nueva;
     }
 
     // Lo que viaja a la base: solo lo que el CHECK pide, con un id nuevo.
@@ -137,7 +151,7 @@ window.FormacionPractica = (function () {
     // «3.ª jugada de las blancas» para la jugada número i (desde 0) de una planilla.
     const nombreDeJugada = (i) => (Math.floor(i / 2) + 1) + ".ª jugada de " + (i % 2 ? "las negras" : "las blancas");
 
-    return { CURSO, RUTA, valida, paraMandar, limpiarHechas, alternar, completa, resumen, leerLista, preguntaValida, preguntasDe,
+    return { CURSO, RUTA, valida, paraMandar, reveladasDe, estaRevelada, conReveladas, limpiarHechas, alternar, completa, resumen, leerLista, preguntaValida, preguntasDe,
         normaJugada, planillaDeTexto, planillaATexto, compararPlanilla, nombreDeJugada };
 })();
 
@@ -149,6 +163,7 @@ let formacionMia = null;          // alumno: {clave, hechas: [n…], i} de la pr
 let formacionPresencia = null;    // lo que el alumno anuncia en la presencia: {id, h: [n…], r: cuántas contestó}
 let formacionAnuncioPendiente = null;
 let formacionPintando = 0;        // para descartar una lámina vieja que llega tarde
+const formacionReveladas = new Map();  // alumno: "lámina|pregunta" → la respuesta que su profe mostró (js/clase-formacion-respuestas.js)
 const formacionRespuestas = new Map(); // alumno: "lámina|pregunta" → lo que tiene guardado (js/clase-formacion-respuestas.js)
 const formacionVistos = new Map(); // profe: id → {nombre, hechas, conectado}, de esta práctica
 let formacionVistosDe = null;
@@ -202,6 +217,7 @@ function pintarFormacion(p) {
         tarjeta.hidden = true;
         formacionMia = null;
         formacionRespuestas.clear();
+        formacionReveladas.clear();
         formacionVistos.clear();
         formacionVistosDe = null;
         // Quitó la práctica: lo que contestaron queda guardado y se sigue mirando.
@@ -220,7 +236,17 @@ function pintarFormacion(p) {
     anunciarALaClase("formacion", formacionActual.id, "Tu profe mandó una práctica: " + formacionActual.titulo
         + ". Tiene " + formacionActual.laminas.length + (formacionActual.laminas.length === 1 ? " lámina" : " láminas")
         + ". Está en tu pantalla, debajo del tablero: pásalas con Anterior y Siguiente, y marca cada una como completada.");
-    if (antes && antes.id === formacionActual.id && formacionMia) return;
+    if (antes && antes.id === formacionActual.id && formacionMia) {
+        // El profe mostró (o escondió) la respuesta de alguna lámina.
+        if (FormacionPractica.reveladasDe(antes).join() !== FormacionPractica.reveladasDe(formacionActual).join()) {
+            const nuevas = FormacionPractica.reveladasDe(formacionActual).filter((n) => !FormacionPractica.estaRevelada(antes, n));
+            if (nuevas.length) anunciarALaClase("formacion-resp", formacionActual.id + ":" + nuevas.join(","),
+                "Tu profe mostró la respuesta de " + (nuevas.length === 1 ? "la lámina " : "las láminas ") + nuevas.map((n) => formacionActual.laminas.indexOf(n) + 1).join(", ")
+                + " de la práctica. Ya no se puede contestar: míralas debajo de la lámina.");
+            cargarReveladasDeFormacion();
+        }
+        return;
+    }
     let guardado = null;
     const clave = claveDeFormacion(formacionActual);
     try { guardado = JSON.parse(localStorage.getItem(clave) || "null"); } catch (e) { guardado = null; }
@@ -228,9 +254,11 @@ function pintarFormacion(p) {
     const i = guardado && Number.isInteger(guardado.i) && guardado.i >= 0 && guardado.i < formacionActual.laminas.length ? guardado.i : 0;
     formacionMia = { clave, hechas, i };
     formacionRespuestas.clear();
+    formacionReveladas.clear();
     pintarLaminaDeFormacion();
     anunciarFormacion();
     cargarMisRespuestasDeFormacion();
+    if (FormacionPractica.reveladasDe(formacionActual).length) cargarReveladasDeFormacion();
 }
 
 async function pintarLaminaDeFormacion() {

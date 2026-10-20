@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20261020041111
+# al-dia-con: 20261020044423
 tabla  Ejercicios Lichess  rls=true
 tabla  _foto_rls_tmp  rls=false
 tabla  _pedidos_elo  rls=false
@@ -2281,6 +2281,7 @@ funcion  responder_justificacion(p_id uuid, p_estado text, p_respuesta text)  de
 funcion  responder_practica(p_envio text, p_deck text, p_lamina integer, p_pregunta text, p_respuesta text)  definer  anon=false  auth=true
 funcion  respuesta_calificar_y_plazo()  definer  anon=false  auth=false
 funcion  respuesta_hora_de_la_base()  invoker  anon=false  auth=false
+funcion  respuestas_reveladas_practica(p_envio text)  definer  anon=false  auth=true
 funcion  respuestas_satisfaccion(p_desde date, p_hasta date, p_profesor uuid, p_solo_se_van boolean)  invoker  anon=false  auth=true
 funcion  resultados_de_la_pregunta(p_pregunta uuid)  definer  anon=false  auth=true
 funcion  resumen_de_la_clase(p_clase uuid)  invoker  anon=false  auth=true
