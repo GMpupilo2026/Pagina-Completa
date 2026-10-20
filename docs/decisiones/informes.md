@@ -674,7 +674,9 @@ alumno»** (`#informe-acciones`, `pintarAccionesDelAlumno()`):
 - «✍️ Su bitácora» y «📧 Informes a la casa»: van a su sección de esta misma
   página. La de la casa es un `<details>` plegado: se abre al llegar y el foco
   queda en su título.
-- «📓 Su cuaderno» y «🏆 Su libreta de torneos», con su `?alumno=`.
+- «📓 Su cuaderno», «🏆 Su libreta de torneos» y «🔬 Sus estudios»
+  (`entreno/mis-estudios.html?alumno=…`, solo lectura y solo los que el alumno
+  marcó «Que lo vea mi profe»), con su `?alumno=`.
 - **Ponerle una tarea o un examen es dar clase**: solo a quien da clase
   (`profile.role === "profesor"`, la misma condición que el plan) y nunca
   mirando como otra persona, que lo mandaría a su nombre. Quien administra no
