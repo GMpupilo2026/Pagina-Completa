@@ -1517,6 +1517,26 @@ viva `sr-only`, como `#pensar-voz`).
   empieza la partida desde ella. La clase juega con el color que mueve en esa
   posición.
 
+### El plan de clase: «👁 Vista previa» en cada posición
+
+- Cada posición del plan trae **«👁 Vista previa»** (y arriba, «Ver todas las
+  posiciones»): la dibuja en el panel del profe, **sin mandarla a la clase**.
+  Antes, para saber cuál era una posición había que ponerla en el tablero de
+  todos con «Al tablero».
+- **Es el mismo mecanismo de Táctica, Archivos y Entrenamientos** (ver «Táctica
+  por tema: la vista previa y su botón»): el lote `vistaPreviaPlan`
+  (`crearVistaPreviaLote`, la preferencia en `localStorage`) y
+  `renderTacticsPreviewBoard()`, que dibuja el tablero con
+  `window.ExampleBoard` y dice de quién es la jugada. Una sola copia, no una
+  más. El lote dibuja la fila cuando entra en pantalla, no todas de golpe.
+- Una lección del plan no la lleva (no es una posición). Un plan sin
+  posiciones no muestra «Ver todas». Al cambiar de plan se suelta el lote
+  (`reiniciar()`), como al cambiar de tema en Táctica.
+- **Al tocarlo, correr `node herramientas/verificar-todo.js clase-plan-vista`**:
+  comprueba el botón cerrado y con su `aria-expanded`, que abrirla dibuje las 64
+  casillas con las piezas de ESA posición y diga quién juega, que no escriba en
+  `game_state` ni en `questions`, y el interruptor de todas.
+
 ### El control remoto
 
 `sesion.html?control=1`, en el celular del profe con su misma cuenta.

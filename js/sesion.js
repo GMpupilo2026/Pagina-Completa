@@ -953,7 +953,7 @@
 
         const vistaPreviaArchivos = crearVistaPreviaLote("sesion_vista_previa_archivos_v1");
         const vistaPreviaTactica = crearVistaPreviaLote("sesion_vista_previa_tactica_v1");
-
+        const vistaPreviaPlan = crearVistaPreviaLote("sesion_vista_previa_plan_v1");
 
         // La posición de SALIDA del PGN (antes de sus jugadas), no la final: es la que
         // identifica al ejercicio ("de qué posición se trata") y la que usan las tres
@@ -2628,6 +2628,10 @@
             const notasEl = document.getElementById("plan-notas");
             const msg = document.getElementById("plan-msg");
             lista.innerHTML = "";
+            // Las filas del plan de antes ya no están en la página: se sueltan del lote.
+            vistaPreviaPlan.reiniciar();
+            const barraPlan = document.getElementById("plan-barra");
+            barraPlan.replaceChildren();
             notasEl.classList.add("hidden");
             msg.textContent = "";
             itemsDelPlan = [];
@@ -2653,6 +2657,8 @@
             // Lo que hay que repasar de la clase pasada va primero (sort estable: el resto en su orden).
             itemsDelPlan.slice().sort((a, b) => repaso.ids.has(b.id) - repaso.ids.has(a.id))
                 .forEach((it) => lista.appendChild(pintarRenglonDelPlan(it)));
+            // Mirar todas las posiciones de una vez, para buscar a ojo la que toca dar.
+            if (itemsDelPlan.some((it) => it.tipo === "posicion")) barraPlan.appendChild(vistaPreviaPlan.control());
         }
 
         /* Lo que ya se dio del plan en ESTA clase (clase_plan_hecho). Es de la
@@ -2730,7 +2736,22 @@
             acciones.className = "flex items-center gap-1.5 flex-wrap mt-1.5";
             const clases = "text-xs font-semibold px-2 py-1 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400";
 
+            let vistaWrap = null;
             if (item.tipo === "posicion") {
+                /* «Vista previa»: la posición se mira SOLO en tu panel, sin mandarla
+                   al tablero de la clase (para eso está «Al tablero»). La misma de
+                   Táctica y Archivos: la dibuja el lote cuando la fila entra en
+                   pantalla, y dice de quién es la jugada. */
+                const previa = document.createElement("button");
+                previa.type = "button";
+                previa.className = clases;
+                previa.textContent = "👁 Vista previa";
+                previa.title = "Ver la posición aquí, sin mandarla a la clase";
+                acciones.appendChild(previa);
+                vistaWrap = document.createElement("div");
+                vistaWrap.className = "hidden mt-2";
+                vistaPreviaPlan.registrar(vistaWrap, previa, () => renderTacticsPreviewBoard(vistaWrap, item.fen));
+
                 const alTablero = document.createElement("button");
                 alTablero.type = "button";
                 alTablero.className = clases;
@@ -2787,6 +2808,7 @@
             hechoBtn.addEventListener("click", () => marcarPlanHecho(item, hechoBtn));
             acciones.appendChild(hechoBtn);
             li.appendChild(acciones);
+            if (vistaWrap) li.appendChild(vistaWrap);
             pintarBotonHecho(hechoBtn, planHecho.has(item.id));
             return li;
         }
