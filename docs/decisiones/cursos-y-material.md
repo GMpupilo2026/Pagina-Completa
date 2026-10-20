@@ -2454,9 +2454,11 @@ sesión**. Lo pinta `js/admin-asesores.js`.
 - **Las prácticas, en la clase en vivo**: en «Preguntar», «📝 Prácticas de
   Formación Ajedrez» manda a los alumnos las láminas de los ejercicios de una
   sesión (sin las de respuestas), y cada uno las pasa a su ritmo y marca las que
-  terminó; el profe ve quién va por dónde (ver «Las prácticas de Formación
+  terminó, y contesta (opciones, texto o la planilla de un dictado); el profe ve
+  quién va por dónde y qué contestó cada uno (ver «Las prácticas de Formación
   Ajedrez en la clase» en `clase-en-vivo.md`). La lista sale de las mismas
-  presentaciones (`herramientas/formacion-practicas.js`).
+  presentaciones (`herramientas/formacion-practicas.js`); la Sesión 1 tiene la
+  suya (`presentaciones/practica-01/`, dibujada con `formacion-laminas.js`).
 
 El curso en sí **no** se esconde: se vende en la tienda y el proyecto Campeones
 Colegiales usa dos de sus lecciones. Lo que se reparte es el kit del taller

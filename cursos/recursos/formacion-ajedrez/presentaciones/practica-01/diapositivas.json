@@ -1,0 +1,92 @@
+{
+  "titulo": "Formación Ajedrez · Sesión 1: la práctica (posiciones, dictado y reclamos)",
+  "curso": "formacion-ajedrez",
+  "diapositivas": [
+    {
+      "titulo": "Estación 1: posiciones 1 a 4",
+      "texto": "Estación 1. Posiciones 1 a 4: posición 1, juegan las negras; posición 2, juegan las negras; posición 3, juegan las negras; posición 4, juegan las blancas. Para cada una, indica si es jaque mate, ahogado, jaque con la partida en marcha, posición muerta o si la partida sigue.",
+      "imagen": "01.webp",
+      "posiciones": [
+        {
+          "nombre": "Posición 1",
+          "fen": "R5k1/5ppp/8/8/8/8/8/6K1 b - - 1 1"
+        },
+        {
+          "nombre": "Posición 2",
+          "fen": "7k/5Q2/6K1/8/8/8/8/8 b - - 0 1"
+        },
+        {
+          "nombre": "Posición 3",
+          "fen": "4k3/8/8/8/8/8/8/4R1K1 b - - 0 1"
+        },
+        {
+          "nombre": "Posición 4",
+          "fen": "8/8/4k3/8/8/2B5/8/4K3 w - - 0 1"
+        }
+      ]
+    },
+    {
+      "titulo": "Estación 1: posiciones 5 a 8",
+      "texto": "Estación 1. Posiciones 5 a 8: posición 5, juegan las blancas; posición 6, juegan las negras; posición 7, juegan las negras; posición 8, juegan las negras. Para cada una, indica si es jaque mate, ahogado, jaque con la partida en marcha, posición muerta o si la partida sigue.",
+      "imagen": "02.webp",
+      "posiciones": [
+        {
+          "nombre": "Posición 5",
+          "fen": "rnb1kbnr/pppp1ppp/8/4p3/6Pq/5P2/PPPPP2P/RNBQKBNR w KQkq - 1 3"
+        },
+        {
+          "nombre": "Posición 6",
+          "fen": "8/8/4k3/8/8/2N5/8/4K3 b - - 0 1"
+        },
+        {
+          "nombre": "Posición 7",
+          "fen": "8/8/4k3/8/8/2R5/8/4K3 b - - 0 1"
+        },
+        {
+          "nombre": "Posición 8",
+          "fen": "k7/P7/1K6/8/8/8/8/8 b - - 0 1"
+        }
+      ]
+    },
+    {
+      "titulo": "Estación 2: dictado de planilla",
+      "texto": "Estación 2. Dictado de planilla: tu profe dicta una partida en voz alta, sin mostrar el tablero. Anótala jugada a jugada en la planilla de abajo, con notación algebraica española: capturas, jaque y mate.",
+      "imagen": "03.webp"
+    },
+    {
+      "titulo": "Reclamo 1 de 3",
+      "texto": "Estación 3. Reclamo 1. Tú eres la persona árbitra. Un jugador toca su alfil y mueve el caballo. Su rival reclama. ¿Qué decides y con qué artículo? Discútelo con tu grupo y escribe tu decisión; luego lo analizamos en clase.",
+      "imagen": "04.webp"
+    },
+    {
+      "titulo": "Reclamo 2 de 3",
+      "texto": "Estación 3. Reclamo 2. Tú eres la persona árbitra. Un jugador deja su rey en jaque y presiona el reloj. ¿Qué decides y con qué artículo? Discútelo con tu grupo y escribe tu decisión; luego lo analizamos en clase.",
+      "imagen": "05.webp"
+    },
+    {
+      "titulo": "Reclamo 3 de 3",
+      "texto": "Estación 3. Reclamo 3. Tú eres la persona árbitra. Un jugador acomoda una pieza sin decir nada antes. Su rival reclama. ¿Qué decides y con qué artículo? Discútelo con tu grupo y escribe tu decisión; luego lo analizamos en clase.",
+      "imagen": "06.webp"
+    },
+    {
+      "titulo": "Caso 1 de 4",
+      "texto": "Estación 4. Caso 1. Con el rey y la torre de h1 sin mover, un estudiante toma primero la torre para enrocar corto. ¿Qué decides y con qué artículo? Discútelo con tu grupo y escribe tu decisión; luego lo analizamos en clase.",
+      "imagen": "07.webp"
+    },
+    {
+      "titulo": "Caso 2 de 4",
+      "texto": "Estación 4. Caso 2. Un peón blanco llega a e8, el jugador lo deja como peón y presiona el reloj. ¿Qué decides y con qué artículo? Discútelo con tu grupo y escribe tu decisión; luego lo analizamos en clase.",
+      "imagen": "08.webp"
+    },
+    {
+      "titulo": "Caso 3 de 4",
+      "texto": "Estación 4. Caso 3. Tras varios cambios quedan solo los dos reyes. Los jugadores quieren seguir moviendo. ¿Qué decides y con qué artículo? Discútelo con tu grupo y escribe tu decisión; luego lo analizamos en clase.",
+      "imagen": "09.webp"
+    },
+    {
+      "titulo": "Caso 4 de 4",
+      "texto": "Estación 4. Caso 4. Un peón negro avanzó de d7 a d5 hace dos jugadas. Ahora el peón blanco de e5 lo captura al paso. ¿Qué decides y con qué artículo? Discútelo con tu grupo y escribe tu decisión; luego lo analizamos en clase.",
+      "imagen": "10.webp"
+    }
+  ]
+}
