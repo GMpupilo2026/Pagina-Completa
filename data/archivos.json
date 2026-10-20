@@ -78,14 +78,14 @@
     "ruta": "material/guia-del-profesor/guia-del-profesor-presentacion.pdf",
     "titulo": "Guía del profesor — presentación",
     "tipo": "otro",
-    "kb": 6402,
+    "kb": 6411,
     "libro": "Guía del profesor"
    },
    {
     "ruta": "material/guia-del-profesor/guia-del-profesor.pdf",
     "titulo": "Guía del profesor — manual",
     "tipo": "otro",
-    "kb": 4639,
+    "kb": 4648,
     "libro": "Guía del profesor"
    },
    {
@@ -19064,12 +19064,12 @@
     "ruta": "guia-del-profesor-accesible.html",
     "titulo": "Guía del profesor",
     "tipo": "accesible",
-    "kb": 106
+    "kb": 107
    }
   ]
  },
  "imagenes": {
-  "total": 845,
+  "total": 855,
   "grupos": [
    {
     "carpeta": "entreno/img/facil",
@@ -24243,6 +24243,73 @@
       "titulo": "23",
       "tipo": "otro",
       "kb": 48
+     }
+    ]
+   },
+   {
+    "carpeta": "cursos/recursos/formacion-ajedrez/presentaciones/practica-01",
+    "titulo": "Practica 01",
+    "grupo": "Carpetas",
+    "archivos": [
+     {
+      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/practica-01/01.webp",
+      "titulo": "01",
+      "tipo": "otro",
+      "kb": 68
+     },
+     {
+      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/practica-01/02.webp",
+      "titulo": "02",
+      "tipo": "otro",
+      "kb": 75
+     },
+     {
+      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/practica-01/03.webp",
+      "titulo": "03",
+      "tipo": "otro",
+      "kb": 63
+     },
+     {
+      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/practica-01/04.webp",
+      "titulo": "04",
+      "tipo": "otro",
+      "kb": 40
+     },
+     {
+      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/practica-01/05.webp",
+      "titulo": "05",
+      "tipo": "otro",
+      "kb": 39
+     },
+     {
+      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/practica-01/06.webp",
+      "titulo": "06",
+      "tipo": "otro",
+      "kb": 42
+     },
+     {
+      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/practica-01/07.webp",
+      "titulo": "07",
+      "tipo": "otro",
+      "kb": 45
+     },
+     {
+      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/practica-01/08.webp",
+      "titulo": "08",
+      "tipo": "otro",
+      "kb": 42
+     },
+     {
+      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/practica-01/09.webp",
+      "titulo": "09",
+      "tipo": "otro",
+      "kb": 46
+     },
+     {
+      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/practica-01/10.webp",
+      "titulo": "10",
+      "tipo": "otro",
+      "kb": 47
      }
     ]
    }
