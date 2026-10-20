@@ -154,12 +154,20 @@ const i0 = srcEditor.indexOf("window.Cuestionario"), j0 = srcEditor.indexOf("})(
 eval(srcEditor.slice(i0, j0));
 const C = global.window.Cuestionario;
 const kahoot = require("./formacion-cuestionarios.js");
+// «comprobar» vive solo en la fuente (no va a la base): se busca por el texto.
+const comprobarDe = (q, p) => {
+  const f = kahoot.fuente();
+  const lista = q.tarea ? f.tareas || [] : f.sesiones;
+  const s = lista.find((x) => x.titulo === q.titulo);
+  const o = s && s.preguntas.find((x) => x.texto === p.texto);
+  return (o && o.comprobar) || null;
+};
 const qs = kahoot.cuestionarios();
 cierto("son del material del curso", kahoot.fuente().material === curso.slug);
 qs.forEach((q) => {
-  const pre = `Sesión ${q.sesion}`;
+  const pre = (q.tarea ? "Tarea inicial de la Sesión " : "Sesión ") + q.sesion;
   cierto(`${pre}: el título nombra su sesión (la ficha Asesores lo encuentra así) y cabe`,
-    q.titulo.startsWith("Formación Ajedrez · Sesión " + q.sesion + ":") && q.titulo.length <= C.LARGO_TITULO && q.sesion >= 1 && q.sesion <= lecciones.length);
+    q.titulo.startsWith("Formación Ajedrez · " + pre + ":") && q.titulo.length <= C.LARGO_TITULO && q.sesion >= 1 && q.sesion <= lecciones.length);
   cierto(`${pre}: pasa el armador tal cual`, C.problemas(q).length === 0, C.problemas(q).join(" | "));
   cierto(`${pre}: nada se recorta al guardarlo`, q.preguntas.every((p) => JSON.stringify(C.limpiar(p)) === JSON.stringify(p)));
   cierto(`${pre}: ninguna pregunta repite una opción`, q.preguntas.every((p) => new Set(p.opciones.map((o) => o.toLowerCase())).size === p.opciones.length));
@@ -170,10 +178,25 @@ qs.forEach((q) => {
     const g = new Chess();
     const legal = g.load(p.fen);
     const dice = p.opciones[p.correcta];
-    const estado = !legal ? "ilegal" : g.in_stalemate() ? "Ahogado" : g.in_checkmate() ? "Jaque mate" : g.insufficient_material() ? "Tablas en el acto" : "sigue";
+    const comprobar = comprobarDe(q, p);
+    if (comprobar) {
+      // No es un final de partida: se revisa lo que la pregunta da por cierto.
+      const jugadas = legal ? g.moves() : [];
+      const piezas = legal ? [].concat(...g.board()).filter(Boolean) : [];
+      const ok = legal && !g.in_check()
+        && (comprobar.legal || []).every((m) => jugadas.includes(m))
+        && (comprobar.ilegal || []).every((m) => !jugadas.includes(m))
+        && (comprobar.sin_jugadas || []).every((c) => g.get(c) && g.get(c).color === g.turn() && g.moves({ square: c }).length === 0)
+        && (!comprobar.solo_rey || piezas.filter((x) => x.color === comprobar.solo_rey).every((x) => x.type === "k"));
+      cierto(`${pre}: «${p.texto.slice(0, 40)}…» es legal y pasa lo que dice (${JSON.stringify(comprobar)})`, ok);
+      return;
+    }
+    const estado = !legal ? "ilegal" : g.in_stalemate() ? "Ahogado" : g.in_checkmate() ? "Jaque mate" : g.in_check() ? "Jaque:" : g.insufficient_material() ? "Tablas en el acto" : "sigue";
     cierto(`${pre}: «${p.texto.slice(0, 40)}…» es legal y la correcta dice lo que pasa (${estado})`, legal && dice.startsWith(estado));
   });
 });
+cierto("las tareas iniciales no repiten una pregunta de los Kahoot",
+  qs.filter((q) => q.tarea).every((t) => t.preguntas.every((p) => !qs.some((k) => !k.tarea && k.preguntas.some((x) => x.texto === p.texto)))));
 const nuevaSql = kahoot.sql();
 cierto("el SQL actualiza por título y no borra", /on conflict \(titulo\) where listo do update/.test(nuevaSql) && !/delete/i.test(nuevaSql));
 
