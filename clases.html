@@ -149,6 +149,20 @@
                  ocupaba el lugar más visible de la página para avisarle de que
                  NO pasa nada, empujando hacia abajo lo que sí tiene que hacer.
                  El acceso a la sesión en vivo sigue estando en el grid. -->
+            <!-- Un profesor que también estudia con otro profesor: su lado de
+                 alumno (la clase de su profesor, sus tareas y sus exámenes),
+                 aparte de lo de dar clase. Lo pinta js/clases.js
+                 (cargarLadoAlumno) solo si de verdad tiene profesor. -->
+            <section id="lado-alumno-card" hidden aria-labelledby="lado-alumno-titulo" class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-8">
+                <h2 id="lado-alumno-titulo" class="font-serif text-lg font-bold text-brand-800 dark:text-white"><span aria-hidden="true">🎒</span> También eres alumno</h2>
+                <p class="text-sm text-brand-500 dark:text-brand-300 mt-0.5 mb-3">Sigues dando clase a los tuyos. Aquí entras a la clase de tu profesor como un alumno más.</p>
+                <ul id="lado-alumno-lista" class="grid gap-2"></ul>
+                <div class="flex flex-wrap gap-4 mt-3">
+                    <a href="tareas.html" class="text-sm font-semibold text-accent-700 dark:text-accent-400 underline underline-offset-2 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Mis tareas como alumno</a>
+                    <a href="examenes.html" class="text-sm font-semibold text-accent-700 dark:text-accent-400 underline underline-offset-2 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Mis exámenes como alumno</a>
+                </div>
+            </section>
+
             <div id="session-status-card" hidden class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-8">
                 <div id="session-status-open" class="hidden">
                     <div class="flex items-center justify-between flex-wrap gap-4">

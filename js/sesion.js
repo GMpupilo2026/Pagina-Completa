@@ -53,6 +53,11 @@
         let modoControl = false;
         // «Ver como alumno» (sesion.html?como=alumno): el profe ve su propia clase como la ve un alumno, sin mandar nada.
         let vistaPrevia = false;
+        /* Un profesor que además estudia con otro entra a la clase de ese otro
+           como alumno (sesion.html?como_alumno=1&profe=<id>): ve y hace lo que
+           un alumno, no lo de dar clase. Ver «Un profesor también puede ser
+           alumno de otro» en docs/decisiones/permisos-y-roles.md. */
+        let comoAlumnoDeOtro = false;
         /* Quien supervisa (o administra) mirando la clase de un profesor:
            sesion.html?observar=<id>. Solo mira: ni mueve, ni contesta, ni marca
            asistencia, ni cuenta como alumno. Lo que puede leer lo decide la RLS
@@ -955,7 +960,7 @@
 
         const vistaPreviaArchivos = crearVistaPreviaLote("sesion_vista_previa_archivos_v1");
         const vistaPreviaTactica = crearVistaPreviaLote("sesion_vista_previa_tactica_v1");
-
+        const vistaPreviaPlan = crearVistaPreviaLote("sesion_vista_previa_plan_v1");
 
         // La posición de SALIDA del PGN (antes de sus jugadas), no la final: es la que
         // identifica al ejercicio ("de qué posición se trata") y la que usan las tres
@@ -2631,6 +2636,10 @@
             const notasEl = document.getElementById("plan-notas");
             const msg = document.getElementById("plan-msg");
             lista.innerHTML = "";
+            // Las filas del plan de antes ya no están en la página: se sueltan del lote.
+            vistaPreviaPlan.reiniciar();
+            const barraPlan = document.getElementById("plan-barra");
+            barraPlan.replaceChildren();
             notasEl.classList.add("hidden");
             msg.textContent = "";
             itemsDelPlan = [];
@@ -2656,6 +2665,8 @@
             // Lo que hay que repasar de la clase pasada va primero (sort estable: el resto en su orden).
             itemsDelPlan.slice().sort((a, b) => repaso.ids.has(b.id) - repaso.ids.has(a.id))
                 .forEach((it) => lista.appendChild(pintarRenglonDelPlan(it)));
+            // Mirar todas las posiciones de una vez, para buscar a ojo la que toca dar.
+            if (itemsDelPlan.some((it) => it.tipo === "posicion")) barraPlan.appendChild(vistaPreviaPlan.control());
         }
 
         /* Lo que ya se dio del plan en ESTA clase (clase_plan_hecho). Es de la
@@ -2733,7 +2744,22 @@
             acciones.className = "flex items-center gap-1.5 flex-wrap mt-1.5";
             const clases = "text-xs font-semibold px-2 py-1 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400";
 
+            let vistaWrap = null;
             if (item.tipo === "posicion") {
+                /* «Vista previa»: la posición se mira SOLO en tu panel, sin mandarla
+                   al tablero de la clase (para eso está «Al tablero»). La misma de
+                   Táctica y Archivos: la dibuja el lote cuando la fila entra en
+                   pantalla, y dice de quién es la jugada. */
+                const previa = document.createElement("button");
+                previa.type = "button";
+                previa.className = clases;
+                previa.textContent = "👁 Vista previa";
+                previa.title = "Ver la posición aquí, sin mandarla a la clase";
+                acciones.appendChild(previa);
+                vistaWrap = document.createElement("div");
+                vistaWrap.className = "hidden mt-2";
+                vistaPreviaPlan.registrar(vistaWrap, previa, () => renderTacticsPreviewBoard(vistaWrap, item.fen));
+
                 const alTablero = document.createElement("button");
                 alTablero.type = "button";
                 alTablero.className = clases;
@@ -2790,6 +2816,7 @@
             hechoBtn.addEventListener("click", () => marcarPlanHecho(item, hechoBtn));
             acciones.appendChild(hechoBtn);
             li.appendChild(acciones);
+            if (vistaWrap) li.appendChild(vistaWrap);
             pintarBotonHecho(hechoBtn, planHecho.has(item.id));
             return li;
         }
@@ -3017,7 +3044,7 @@
                 // Quien observa entra como "supervision": no es alumno,
                 // así que no aparece en la lista de alumnos ni en el
                 // chat, y el profesor ve que está mirando.
-                role: esObservador ? "supervision" : vistaPrevia ? "vista-previa" : profile.role,
+                role: esObservador ? "supervision" : vistaPrevia ? "vista-previa" : comoAlumnoDeOtro ? "alumno" : profile.role,
                 como: esObservador ? observaDesde.etiqueta : undefined,
                 online_at: new Date().toISOString(),
                 mirando_a: mirandoA,
@@ -3384,7 +3411,9 @@
             const wasNearBottom = listEl.scrollHeight - listEl.scrollTop - listEl.clientHeight < 40;
             listEl.innerHTML = "";
             for (const m of messages) {
-                const isFromTeacher = !!m.profiles && (m.profiles.role === "profesor" || m.profiles.is_admin === true);
+                // Quien escribe en el hilo de un alumno y no es ese alumno es del lado del profe;
+                // un profesor que estudia escribe en SU hilo, como alumno.
+                const isFromTeacher = !!m.profiles && (m.profiles.role === "profesor" || m.profiles.is_admin === true) && m.sender_id !== m.student_id;
                 const isOwn = m.sender_id === profile.id;
                 // Recuadro de chat estilo mensajería: los mensajes propios a la derecha, los
                 // del otro lado de la conversación a la izquierda — sin importar el rol de
@@ -7673,6 +7702,11 @@
             profile = profileData;
             isTeacher = profile.role === "profesor" || profile.is_admin === true;
             const observar = new URLSearchParams(location.search).get("observar");
+            let claseDeAlumno = null;
+            if (isTeacher && !profile.is_admin && !observar && new URLSearchParams(location.search).get("como_alumno") === "1") {
+                const r = await ClaseElegida.resolver();
+                if (r.elegida) claseDeAlumno = r;
+            }
             if (observar && observar !== profile.id && (profile.es_supervisor || profile.is_admin || profile.es_coordinador)) {
                 esObservador = true;
                 observaDesde = profile.is_admin ? OBSERVA_DESDE.administracion
@@ -7680,6 +7714,11 @@
                 isTeacher = false;
                 boardOwnerId = observar;
                 if (!(await prepararObservador())) return;
+            } else if (claseDeAlumno) {
+                isTeacher = false;
+                comoAlumnoDeOtro = true;
+                boardOwnerId = claseDeAlumno.elegida;
+                clasesDelAlumno = claseDeAlumno.clases;
             } else if (isTeacher) {
                 boardOwnerId = profile.id;
                 modoProyector = new URLSearchParams(location.search).get("proyector") === "1";

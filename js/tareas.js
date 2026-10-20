@@ -74,6 +74,12 @@ async function init() {
         document.getElementById("vista-alumno").classList.remove("hidden");
         await cargarMisTareas();
     }
+    /* Un profesor que además estudia con otro: sus tareas de alumno, debajo. */
+    if (puedeAsignar && !profile.is_admin && window.AlumnosMios && await AlumnosMios.estudioConAlguien(sb)) {
+        document.getElementById("vista-alumno").classList.remove("hidden");
+        document.getElementById("alumno-tambien").classList.remove("hidden");
+        await cargarMisTareas();
+    }
 
     document.getElementById("loading").classList.add("hidden");
     document.getElementById("app").classList.remove("hidden");
@@ -113,7 +119,7 @@ async function traerTodo(consulta) {
 // ---------- Vista profesor: los alumnos ----------
 async function cargarAlumnos() {
     const { data } = await traerTodo(() => sb.from("profiles").select("id, full_name, email").eq("role", "alumno").order("full_name").order("id"));
-    alumnosDisponibles = data || [];
+    alumnosDisponibles = window.AlumnosMios ? await AlumnosMios.sumarProfesores(sb, data || []) : (data || []);
     const cont = document.getElementById("lista-alumnos");
     cont.innerHTML = "";
     document.getElementById("sin-alumnos").classList.toggle("hidden", !!alumnosDisponibles.length);

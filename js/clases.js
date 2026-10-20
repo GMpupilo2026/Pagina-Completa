@@ -1704,6 +1704,42 @@
             return h > 0 ? `${h} h ${m} min` : `${m} min`;
         }
 
+        /* ---------- Un profesor que también es alumno ----------
+           Ronaldo y Sebastián dan clase a los suyos y estudian con Oscar. Su
+           panel sigue siendo el de un profesor; esta tarjeta le suma la puerta
+           a la clase de su profesor —entra como un alumno más— y a sus tareas y
+           exámenes. Sale solo si mis_clases() trae alguien: la lista la da la
+           base (profesores_de), no el rol. Ver «Un profesor también puede ser
+           alumno de otro» en docs/decisiones/permisos-y-roles.md. */
+        async function cargarLadoAlumno() {
+            const { data, error } = await sb.rpc("mis_clases");
+            const clases = !error && Array.isArray(data) ? data : [];
+            const card = document.getElementById("lado-alumno-card");
+            card.hidden = !clases.length;
+            if (!clases.length) return;
+            const lista = document.getElementById("lado-alumno-lista");
+            lista.textContent = "";
+            clases.forEach((c) => {
+                const li = document.createElement("li");
+                li.className = "flex flex-wrap items-center justify-between gap-2 rounded-xl bg-brand-50 dark:bg-brand-950 px-3 py-2";
+                const quien = document.createElement("span");
+                quien.className = "text-sm text-brand-800 dark:text-white";
+                quien.textContent = c.profesor || "Tu profesor";
+                if (c.clase_abierta) {
+                    const abierta = document.createElement("span");
+                    abierta.className = "ml-2 text-xs font-semibold text-green-700 dark:text-green-400";
+                    abierta.textContent = "Clase abierta" + (c.titulo_clase ? " · " + c.titulo_clase : "");
+                    quien.appendChild(abierta);
+                }
+                const entrar = document.createElement("a");
+                entrar.href = "sesion.html?como_alumno=1&profe=" + encodeURIComponent(c.profesor_id);
+                entrar.className = "text-sm font-semibold text-accent-700 dark:text-accent-400 underline underline-offset-2 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400";
+                entrar.textContent = "Entrar a su clase como alumno";
+                li.append(quien, entrar);
+                lista.appendChild(li);
+            });
+        }
+
         async function refreshSessionStatus() {
             if (!boardOwnerId) { openSession = null; return; }
             const { data } = await sb.from("class_sessions").select("*").eq("created_by", boardOwnerId).is("ended_at", null).order("started_at", { ascending: false }).limit(1);
@@ -4406,6 +4442,7 @@
                 if (!profile._persona) cargarCampanaDocente().catch((e) => console.error(e));
                 pintarAvisoAlumnos().catch((e) => console.error(e));
                 contarUsosDelPanel();
+                if (!profile.is_admin && !profile._persona) cargarLadoAlumno().catch((e) => console.error(e));
             } else {
                 document.getElementById("progreso-alumno").hidden = false;
                 document.getElementById("registro-clases").hidden = true;

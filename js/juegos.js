@@ -155,7 +155,7 @@
            cayendo donde caían. */
         async function loadPlayersIntoSelects() {
             const { data } = await sb.from("profiles").select("id, full_name, email").eq("role", "alumno").order("full_name");
-            allStudents = data || [];
+            allStudents = window.AlumnosMios ? await AlumnosMios.sumarProfesores(sb, data || []) : (data || []);
             const whiteSelect = document.getElementById("white-select");
             const blackSelect = document.getElementById("black-select");
             const seatSelects = SEATS.map((s) => document.getElementById("seat-" + s + "-select"));

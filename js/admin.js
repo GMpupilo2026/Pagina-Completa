@@ -844,6 +844,9 @@
                     } else {
                         tdTeacher.innerHTML = '<span class="inline-block rounded-full bg-accent-50 dark:bg-brand-800 text-accent-700 dark:text-accent-300 px-2 py-0.5 text-xs font-semibold">Sin profesor</span>';
                     }
+                } else if (u.role === "profesor" && profesoresDe(u.id).length) {
+                    const porId = new Map(teachers.map((t) => [t.id, t]));
+                    tdTeacher.textContent = "Estudia con " + profesoresDe(u.id).map((tid) => porId.has(tid) ? teacherLabel(porId.get(tid)) : "?").join(", ");
                 } else {
                     tdTeacher.innerHTML = '<span class="text-xs text-brand-450 dark:text-brand-350">—</span>';
                 }
@@ -1041,6 +1044,13 @@
             if (u.role === "alumno") {
                 cargo.appendChild(campoFicha("Sus profesores", renderProfesoresCelda(u, teachers),
                     "Cada profesor lo ve en sus informes, su clase y sus tareas. Sin ninguno, no sale en los informes de nadie."));
+            }
+            /* Un profesor también puede estudiar con otro (Ronaldo con Oscar) sin
+               perder nada de lo suyo: sigue siendo profesor de sus alumnos, y
+               además entra a la clase de su profesor como un alumno más. */
+            if (u.role === "profesor" && !u.is_admin) {
+                cargo.appendChild(campoFicha("Estudia con", renderProfesoresCelda(u, teachers),
+                    "Si estudia con otro profesor, entra a su clase y recibe sus tareas como cualquier alumno, y ese profesor lo ve en sus informes. Sigue siendo profesor de sus propios alumnos."));
             }
             // Ir a lo suyo en las otras páginas, sin buscarlo de nuevo.
             const enlaces = document.createElement("div");

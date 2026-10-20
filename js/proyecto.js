@@ -300,7 +300,7 @@
       todos.push(...(data || []));
       if (!data || data.length < 1000) break;
     }
-    return todos;
+    return window.AlumnosMios ? AlumnosMios.sumarProfesores(sb, todos) : todos;
   }
 
   async function pintarAlumnos() {
