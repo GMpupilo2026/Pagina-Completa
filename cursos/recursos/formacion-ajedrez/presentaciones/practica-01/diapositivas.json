@@ -3,9 +3,14 @@
   "curso": "formacion-ajedrez",
   "diapositivas": [
     {
-      "titulo": "Estación 1: posiciones 1 a 4",
-      "texto": "Estación 1. Posiciones 1 a 4: posición 1, juegan las negras; posición 2, juegan las negras; posición 3, juegan las negras; posición 4, juegan las blancas. Para cada una, indica si es jaque mate, ahogado, jaque con la partida en marcha, posición muerta o si la partida sigue.",
-      "imagen": "01.webp",
+      "titulo": "Estación 1: dictado de planilla",
+      "texto": "Estación 1. Dictado de planilla: tu profe dicta una partida en voz alta, sin mostrar el tablero. Anótala jugada a jugada en la planilla de abajo, con notación algebraica española: capturas, jaque y mate.",
+      "imagen": "01.webp"
+    },
+    {
+      "titulo": "Estación 2: posiciones 1 a 4",
+      "texto": "Estación 2. Posiciones 1 a 4: posición 1, juegan las negras; posición 2, juegan las negras; posición 3, juegan las negras; posición 4, juegan las blancas. Para cada una, indica si es jaque mate, ahogado, jaque con la partida en marcha, posición muerta o si la partida sigue.",
+      "imagen": "02.webp",
       "posiciones": [
         {
           "nombre": "Posición 1",
@@ -26,9 +31,9 @@
       ]
     },
     {
-      "titulo": "Estación 1: posiciones 5 a 8",
-      "texto": "Estación 1. Posiciones 5 a 8: posición 5, juegan las blancas; posición 6, juegan las negras; posición 7, juegan las negras; posición 8, juegan las negras. Para cada una, indica si es jaque mate, ahogado, jaque con la partida en marcha, posición muerta o si la partida sigue.",
-      "imagen": "02.webp",
+      "titulo": "Estación 2: posiciones 5 a 8",
+      "texto": "Estación 2. Posiciones 5 a 8: posición 5, juegan las blancas; posición 6, juegan las negras; posición 7, juegan las negras; posición 8, juegan las negras. Para cada una, indica si es jaque mate, ahogado, jaque con la partida en marcha, posición muerta o si la partida sigue.",
+      "imagen": "03.webp",
       "posiciones": [
         {
           "nombre": "Posición 5",
@@ -47,11 +52,6 @@
           "fen": "k7/P7/1K6/8/8/8/8/8 b - - 0 1"
         }
       ]
-    },
-    {
-      "titulo": "Estación 2: dictado de planilla",
-      "texto": "Estación 2. Dictado de planilla: tu profe dicta una partida en voz alta, sin mostrar el tablero. Anótala jugada a jugada en la planilla de abajo, con notación algebraica española: capturas, jaque y mate.",
-      "imagen": "03.webp"
     },
     {
       "titulo": "Reclamo 1 de 3",

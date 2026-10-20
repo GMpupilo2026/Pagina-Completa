@@ -22,9 +22,9 @@
  *       La Sesión 1 no usa las láminas de su presentación: en salas, cada
  *       estación se resolvía de a grupos y sus láminas no traen la pregunta de
  *       cada posición ni el caso de cada reclamo. Para la práctica individual
- *       se arma una presentación aparte (las 8 posiciones, el dictado, los tres
- *       reclamos con la persona árbitra y los cuatro casos del laboratorio, uno
- *       por lámina) con el mismo dibujador de las demás (formacion-laminas.js).
+ *       se arma una presentación aparte, que EMPIEZA con el dictado (estación 1),
+ *       sigue con las 8 posiciones (2), los tres reclamos con la persona árbitra
+ *       (3) y los cuatro casos del laboratorio, uno por lámina (4) con el mismo dibujador de las demás (formacion-laminas.js).
  *       Las posiciones y los casos salen del curso: no hay una segunda copia.
  *
  * Las láminas de las sesiones 2 a 6 son las que ya se proyectan («Práctica ·»,
@@ -54,7 +54,7 @@ const DATOS_PROPIO = path.join(RAIZ, "herramientas", "datos", "formacion-laminas
 const ES_PRACTICA = [/^Práctica\b/, /^Ejercicio \d+ de \d+$/, /^Estación \d+:/];
 const NUNCA = /respuestas|^Quiz\b|^Tarea\b|^Receso$/i;
 
-/* Las cinco situaciones de la Estación 1: las mismas opciones para las ocho
+/* Las cinco situaciones de la Estación 2 (las posiciones): las mismas opciones para las ocho
    posiciones, en este orden. La correcta sale del `estado` de cada ejercicio
    del curso, y arriba se vuelve a calcular con chess.js. */
 const ESTADOS = [
@@ -65,7 +65,7 @@ const ESTADOS = [
   { v: "sigue", t: "No hay jaque ni final: la partida sigue" },
 ];
 
-/* La partida del dictado (Estación 2), en notación algebraica española: lleva
+/* La partida del dictado (Estación 1, lo primero de la práctica), en notación algebraica española: lleva
    capturas, un jaque y el mate. Es la del ejemplo de las notas de la lámina 45
    de la Clase 1 (el mate de Légal), comprobada con chess.js al armar. */
 const DICTADO = "e4 e5 Cf3 d6 Ac4 Ag4 Cc3 g6 Cxe5 Axd1 Axf7+ Re7 Cd5#".split(" ");
@@ -128,7 +128,7 @@ function presentacionDeLaSesion1(curso, clase1) {
   if (!e1 || !e2) throw new Error("No encuentro las láminas de la Estación 1 en la Clase 1");
   const lados = (fen) => (fen.split(" ")[1] === "w" ? "juegan las blancas" : "juegan las negras");
   const tablero = (d, k) => ({
-    tipo: "tableros", k: "Estación 1 · ¿jaque, mate, ahogado, posición muerta o sigue?",
+    tipo: "tableros", k: "Estación 2 · ¿jaque, mate, ahogado, posición muerta o sigue?",
     items: d.posiciones.map((p, i) => ({ pos: i, t: "Posición " + (k + i), s: lados(p.fen) })),
   });
   const diapositivas = [], datos = [], laminas = [];
@@ -141,7 +141,22 @@ function presentacionDeLaSesion1(curso, clase1) {
   const claves = [];
   const clave = (n, pregunta, tipo, c, modelo) => claves.push({ deck: CURSO + "/" + DECK_PROPIO, lamina: n, pregunta, tipo, clave: c, modelo });
 
-  // Estación 1: las ocho posiciones, cuatro por lámina.
+  // Estación 1: el dictado, lo primero de la práctica.
+  comprobarElDictado();
+  {
+    const n = diapositivas.length + 1;
+    clave(n, "planilla", "planilla", DICTADO, "La partida dictada: " + lineaDelDictado(DICTADO));
+    poner("Estación 1: dictado de planilla",
+      "Estación 1. Dictado de planilla: tu profe dicta una partida en voz alta, sin mostrar el tablero. Anótala jugada a jugada en la planilla de abajo, con notación algebraica española: capturas, jaque y mate.",
+      { tipo: "filas", k: "Estación 1 · una persona dicta, todas anotan", items: [
+        { ic: "🗣️", t: "Tu profe dicta la partida", s: "en voz alta, sin mostrar el tablero" },
+        { ic: "✍️", t: "Tú la anotas", s: "jugada a jugada, en la planilla de la pantalla" },
+        { ic: "🔎", t: "Con capturas, jaque y mate", s: "cada signo cuenta: x, + y #" },
+      ], clave: "7 jugadas. Cuando termines, marca la lámina como completada." }, null,
+      [{ id: "planilla", tipo: "planilla", texto: "Tu planilla", filas: FILAS_PLANILLA }]);
+  }
+
+  // Estación 2: las ocho posiciones, cuatro por lámina.
   [[e1, 1], [e2, 5]].forEach(([d, desde]) => {
     const n = diapositivas.length + 1;
     const preguntas = d.posiciones.map((p, i) => {
@@ -153,26 +168,11 @@ function presentacionDeLaSesion1(curso, clase1) {
       clave(n, "p" + num, "opciones", { correcta: ej.estado }, ej.respuesta);
       return { id: "p" + num, tipo: "opciones", texto: "Posición " + num + " (" + lados(p.fen) + ")", opciones: ESTADOS };
     });
-    poner("Estación 1: posiciones " + desde + " a " + (desde + 3),
-      "Estación 1. Posiciones " + desde + " a " + (desde + 3) + ": " + d.posiciones.map((p, i) => "posición " + (desde + i) + ", " + lados(p.fen)).join("; ")
+    poner("Estación 2: posiciones " + desde + " a " + (desde + 3),
+      "Estación 2. Posiciones " + desde + " a " + (desde + 3) + ": " + d.posiciones.map((p, i) => "posición " + (desde + i) + ", " + lados(p.fen)).join("; ")
       + ". Para cada una, indica si es jaque mate, ahogado, jaque con la partida en marcha, posición muerta o si la partida sigue.",
       tablero(d, desde), { posiciones: d.posiciones }, preguntas);
   });
-
-  // Estación 2: el dictado.
-  comprobarElDictado();
-  {
-    const n = diapositivas.length + 1;
-    clave(n, "planilla", "planilla", DICTADO, "La partida dictada: " + lineaDelDictado(DICTADO));
-    poner("Estación 2: dictado de planilla",
-      "Estación 2. Dictado de planilla: tu profe dicta una partida en voz alta, sin mostrar el tablero. Anótala jugada a jugada en la planilla de abajo, con notación algebraica española: capturas, jaque y mate.",
-      { tipo: "filas", k: "Estación 2 · una persona dicta, todas anotan", items: [
-        { ic: "🗣️", t: "Tu profe dicta la partida", s: "en voz alta, sin mostrar el tablero" },
-        { ic: "✍️", t: "Tú la anotas", s: "jugada a jugada, en la planilla de la pantalla" },
-        { ic: "🔎", t: "Con capturas, jaque y mate", s: "cada signo cuenta: x, + y #" },
-      ], clave: "7 jugadas. Cuando termines, marca la lámina como completada." }, null,
-      [{ id: "planilla", tipo: "planilla", texto: "Tu planilla", filas: FILAS_PLANILLA }]);
-  }
 
   // Estación 3: tres reclamos, la persona árbitra eres tú.
   RECLAMOS.forEach((r, i) => {

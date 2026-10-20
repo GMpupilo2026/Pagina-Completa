@@ -1,8 +1,30 @@
 /* Generado por herramientas/formacion-practicas.js: no se edita a mano. */
 module.exports = [
  {
+  "tipo": "filas",
+  "k": "Estación 1 · una persona dicta, todas anotan",
+  "items": [
+   {
+    "ic": "🗣️",
+    "t": "Tu profe dicta la partida",
+    "s": "en voz alta, sin mostrar el tablero"
+   },
+   {
+    "ic": "✍️",
+    "t": "Tú la anotas",
+    "s": "jugada a jugada, en la planilla de la pantalla"
+   },
+   {
+    "ic": "🔎",
+    "t": "Con capturas, jaque y mate",
+    "s": "cada signo cuenta: x, + y #"
+   }
+  ],
+  "clave": "7 jugadas. Cuando termines, marca la lámina como completada."
+ },
+ {
   "tipo": "tableros",
-  "k": "Estación 1 · ¿jaque, mate, ahogado, posición muerta o sigue?",
+  "k": "Estación 2 · ¿jaque, mate, ahogado, posición muerta o sigue?",
   "items": [
    {
     "pos": 0,
@@ -28,7 +50,7 @@ module.exports = [
  },
  {
   "tipo": "tableros",
-  "k": "Estación 1 · ¿jaque, mate, ahogado, posición muerta o sigue?",
+  "k": "Estación 2 · ¿jaque, mate, ahogado, posición muerta o sigue?",
   "items": [
    {
     "pos": 0,
@@ -51,28 +73,6 @@ module.exports = [
     "s": "juegan las negras"
    }
   ]
- },
- {
-  "tipo": "filas",
-  "k": "Estación 2 · una persona dicta, todas anotan",
-  "items": [
-   {
-    "ic": "🗣️",
-    "t": "Tu profe dicta la partida",
-    "s": "en voz alta, sin mostrar el tablero"
-   },
-   {
-    "ic": "✍️",
-    "t": "Tú la anotas",
-    "s": "jugada a jugada, en la planilla de la pantalla"
-   },
-   {
-    "ic": "🔎",
-    "t": "Con capturas, jaque y mate",
-    "s": "cada signo cuenta: x, + y #"
-   }
-  ],
-  "clave": "7 jugadas. Cuando termines, marca la lámina como completada."
  },
  {
   "tipo": "frase",
