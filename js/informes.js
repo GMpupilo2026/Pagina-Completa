@@ -950,6 +950,7 @@
             const lista = document.getElementById("informe-acciones-lista");
             if (!caja || !lista) return;
             lista.replaceChildren();
+            lista.dataset.alumno = studentId || "";
             caja.hidden = !studentId;
             if (!studentId) return;
             const id = encodeURIComponent(studentId);
@@ -968,7 +969,7 @@
                 { emoji: "📓", texto: "Su cuaderno", href: "cuaderno.html?alumno=" + id },
                 { emoji: "🏆", texto: "Su libreta de torneos", href: "libreta-torneos.html?alumno=" + id },
             ].filter(Boolean);
-            acciones.forEach((a) => {
+            const pintarAccion = (a) => {
                 const li = document.createElement("li");
                 const el = document.createElement("a");
                 el.className = "inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-900 text-sm font-medium text-brand-700 dark:text-brand-100 hover:border-accent-400 hover:text-accent-700 dark:hover:text-accent-400 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400";
@@ -995,7 +996,17 @@
                 el.append(ic, document.createTextNode(a.texto));
                 li.appendChild(el);
                 lista.appendChild(li);
-            });
+            };
+            acciones.forEach(pintarAccion);
+            /* «Sus estudios»: solo si el alumno marcó alguno «Que lo vea mi
+               profe» (lo que no compartió, la RLS no lo da). Se cuenta sin
+               bajar los PGN; si ya eligieron a otro alumno, no se pinta. */
+            sb.from("estudios").select("id", { count: "exact", head: true })
+                .eq("alumno_id", studentId).eq("compartido", true)
+                .then(({ count, error }) => {
+                    if (error || !count || lista.dataset.alumno !== studentId) return;
+                    pintarAccion({ emoji: "🔬", texto: "Sus estudios", href: "entreno/mis-estudios.html?alumno=" + id });
+                });
         }
 
         function hideAllReportPanels() {

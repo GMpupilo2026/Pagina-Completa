@@ -675,6 +675,11 @@ alumno»** (`#informe-acciones`, `pintarAccionesDelAlumno()`):
   página. La de la casa es un `<details>` plegado: se abre al llegar y el foco
   queda en su título.
 - «📓 Su cuaderno» y «🏆 Su libreta de torneos», con su `?alumno=`.
+- «🔬 Sus estudios» (`entreno/mis-estudios.html?alumno=…`, solo lectura): sale
+  **solo si el alumno tiene algún estudio marcado «Que lo vea mi profe»**
+  (`estudios.compartido`; se cuenta con `count`, sin bajar los PGN, y lo que no
+  compartió la RLS no lo da). Se pinta al final, cuando la cuenta llega, y solo
+  si todavía es el mismo alumno el elegido (`lista.dataset.alumno`).
 - **Ponerle una tarea o un examen es dar clase**: solo a quien da clase
   (`profile.role === "profesor"`, la misma condición que el plan) y nunca
   mirando como otra persona, que lo mandaría a su nombre. Quien administra no
