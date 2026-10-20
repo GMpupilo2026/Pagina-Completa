@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20261020035217
+# al-dia-con: 20261020044423
 tabla  Ejercicios Lichess  rls=true
 tabla  _foto_rls_tmp  rls=false
 tabla  _pedidos_elo  rls=false
@@ -133,6 +133,8 @@ tabla  planes_cobro  rls=true
 tabla  planes_rival_alumno  rls=true
 tabla  plantillas_casa  rls=true
 tabla  platform_activity_log  rls=true
+tabla  practica_claves  rls=true
+tabla  practica_respuestas  rls=true
 tabla  practice_games  rls=true
 tabla  practice_intentos  rls=true
 tabla  practice_sessions  rls=true
@@ -1263,6 +1265,26 @@ columna  platform_activity_log.joined_at  timestamp with time zone
 columna  platform_activity_log.left_at  timestamp with time zone
 columna  platform_activity_log.pagina  text
 columna  platform_activity_log.student_id  uuid
+columna  practica_claves.clave  jsonb
+columna  practica_claves.deck  text
+columna  practica_claves.lamina  integer
+columna  practica_claves.modelo  text
+columna  practica_claves.pregunta  text
+columna  practica_claves.tipo  text
+columna  practica_respuestas.buenas  integer
+columna  practica_respuestas.correcta  boolean
+columna  practica_respuestas.created_at  timestamp with time zone
+columna  practica_respuestas.deck  text
+columna  practica_respuestas.envio  text
+columna  practica_respuestas.id  uuid
+columna  practica_respuestas.lamina  integer
+columna  practica_respuestas.owner_id  uuid
+columna  practica_respuestas.pregunta  text
+columna  practica_respuestas.respuesta  text
+columna  practica_respuestas.student_id  uuid
+columna  practica_respuestas.titulo  text
+columna  practica_respuestas.total  integer
+columna  practica_respuestas.updated_at  timestamp with time zone
 columna  practice_games.attempts  integer
 columna  practice_games.ayuda  jsonb
 columna  practice_games.created_at  timestamp with time zone
@@ -2076,6 +2098,7 @@ funcion  interno.mis_retos_ejercicios()  definer  anon=false  auth=true
 funcion  interno.modalidad_de_la_ronda()  invoker  anon=false  auth=false
 funcion  interno.monto_rango(p_base date, p_meses integer, p_precio numeric, p_desde date, p_hasta date)  invoker  anon=false  auth=false
 funcion  interno.nombre_libre_de_subgrupo(p_profesor uuid, p_base text, p_excepto uuid)  definer  anon=false  auth=false
+funcion  interno.norma_jugada(p_jugada text)  invoker  anon=false  auth=false
 funcion  interno.otorgar_puntos(p_alumno uuid, p_cantidad integer, p_origen text, p_motivo text, p_referencia text, p_creado_por uuid)  definer  anon=false  auth=false
 funcion  interno.otorgar_puntos_de_clase()  definer  anon=false  auth=false
 funcion  interno.otorgar_puntos_de_entrenamiento()  definer  anon=false  auth=false
@@ -2160,6 +2183,7 @@ funcion  mis_clases()  invoker  anon=false  auth=true
 funcion  mis_clases_proximas(p_dias integer)  definer  anon=false  auth=true
 funcion  mis_funciones_coordinacion()  definer  anon=false  auth=true
 funcion  mis_premios(p_alumno uuid)  invoker  anon=false  auth=true
+funcion  mis_respuestas_practica(p_envio text)  definer  anon=false  auth=true
 funcion  mis_retos_de_ejercicios()  invoker  anon=false  auth=true
 funcion  mis_subgrupos()  invoker  anon=false  auth=true
 funcion  mis_supervisados()  definer  anon=false  auth=true
@@ -2256,8 +2280,10 @@ funcion  responder_encuesta_profesor(p_profesor uuid, p_explica integer, p_apren
 funcion  responder_examen(p_item uuid, p_respuesta jsonb, p_segundos integer)  definer  anon=false  auth=true
 funcion  responder_formulario(p_slug text, p_respuestas jsonb, p_version_privacidad text)  definer  anon=true  auth=true
 funcion  responder_justificacion(p_id uuid, p_estado text, p_respuesta text)  definer  anon=false  auth=true
+funcion  responder_practica(p_envio text, p_deck text, p_lamina integer, p_pregunta text, p_respuesta text)  definer  anon=false  auth=true
 funcion  respuesta_calificar_y_plazo()  definer  anon=false  auth=false
 funcion  respuesta_hora_de_la_base()  invoker  anon=false  auth=false
+funcion  respuestas_reveladas_practica(p_envio text)  definer  anon=false  auth=true
 funcion  respuestas_satisfaccion(p_desde date, p_hasta date, p_profesor uuid, p_solo_se_van boolean)  invoker  anon=false  auth=true
 funcion  resultados_de_la_pregunta(p_pregunta uuid)  definer  anon=false  auth=true
 funcion  resumen_de_la_clase(p_clase uuid)  invoker  anon=false  auth=true
@@ -2599,6 +2625,8 @@ politica  platform_activity_log  platform_activity_log_exige_acceso_upd  UPDATE 
 politica  platform_activity_log  platform_activity_log_insert_own  INSERT
 politica  platform_activity_log  platform_activity_log_select  SELECT
 politica  platform_activity_log  platform_activity_log_update_own  UPDATE
+politica  practica_claves  practica_claves_select  SELECT
+politica  practica_respuestas  practica_respuestas_select  SELECT
 politica  practice_games  practice_games_delete  DELETE
 politica  practice_games  practice_games_exige_acceso_ins  INSERT  restrictiva
 politica  practice_games  practice_games_exige_acceso_upd  UPDATE  restrictiva
@@ -3229,6 +3257,12 @@ indice  plantillas_casa  plantillas_casa_pkey
 indice  plantillas_casa  plantillas_casa_profesor_id_situacion_texto_key
 indice  platform_activity_log  platform_activity_log_pkey
 indice  platform_activity_log  platform_activity_log_student_idx
+indice  practica_claves  practica_claves_pkey
+indice  practica_respuestas  practica_respuestas_clave_idx
+indice  practica_respuestas  practica_respuestas_owner_idx
+indice  practica_respuestas  practica_respuestas_pkey
+indice  practica_respuestas  practica_respuestas_student_idx
+indice  practica_respuestas  practica_respuestas_una_por_pregunta
 indice  practice_games  practice_games_pkey
 indice  practice_games  practice_games_session_id_idx
 indice  practice_games  practice_games_session_id_student_id_key
@@ -4182,6 +4216,8 @@ grant  platform_activity_log  authenticated  SELECT
 grant  platform_activity_log  authenticated  TRIGGER
 grant  platform_activity_log  authenticated  TRUNCATE
 grant  platform_activity_log  authenticated  UPDATE
+grant  practica_claves  authenticated  SELECT
+grant  practica_respuestas  authenticated  SELECT
 grant  practice_games  anon  DELETE
 grant  practice_games  anon  INSERT
 grant  practice_games  anon  REFERENCES

@@ -38,7 +38,21 @@ window.FormacionPractica = (function () {
             && typeof p.deck === "string" && FORMA_DECK.test(p.deck)
             && typeof p.titulo === "string" && p.titulo.length >= 1 && p.titulo.length <= 160
             && Array.isArray(p.laminas) && p.laminas.length >= 1 && p.laminas.length <= 40
-            && p.laminas.every((n) => Number.isInteger(n) && n >= 1 && n <= 500));
+            && p.laminas.every((n) => Number.isInteger(n) && n >= 1 && n <= 500)
+            && (p.reveladas === undefined || (Array.isArray(p.reveladas) && p.reveladas.length <= 40
+                && p.reveladas.every((n) => Number.isInteger(n) && n >= 1 && n <= 500))));
+    }
+
+    /* Las láminas cuya respuesta su profe ya mostró (practica.reveladas): solo las
+       que son de la práctica, en su orden. Mientras no se muestra, el alumno no recibe
+       NADA de la respuesta (la base se la niega). */
+    const reveladasDe = (p) => limpiarHechas(p && p.reveladas, p && p.laminas);
+    const estaRevelada = (p, n) => reveladasDe(p).includes(n);
+    function conReveladas(p, lista) {
+        const r = limpiarHechas(lista, p.laminas);
+        const nueva = Object.assign({}, p);
+        if (r.length) nueva.reveladas = r; else delete nueva.reveladas;
+        return nueva;
     }
 
     // Lo que viaja a la base: solo lo que el CHECK pide, con un id nuevo.
@@ -71,25 +85,100 @@ window.FormacionPractica = (function () {
         return { total, terminaron, todos: total > 0 && terminaron === total };
     }
 
-    // Sin repetir una práctica mal armada: la lista que baja del sitio, validada.
+    const TIPOS = ["opciones", "texto", "planilla"];
+    const FORMA_ID = /^[a-z0-9_-]{1,40}$/;
+
+    // Una pregunta de una lámina: de opciones (con sus opciones), de texto o la planilla.
+    function preguntaValida(q) {
+        return !!(q && typeof q === "object" && FORMA_ID.test(String(q.id)) && TIPOS.includes(q.tipo) && typeof q.texto === "string"
+            && (q.tipo !== "opciones" || (Array.isArray(q.opciones) && q.opciones.length >= 2
+                && q.opciones.every((o) => o && typeof o.v === "string" && o.v && typeof o.t === "string")))
+            && (q.tipo !== "planilla" || (Number.isInteger(q.filas) && q.filas >= 1 && q.filas <= 40)));
+    }
+
+    /* Sin repetir una práctica mal armada: la lista que baja del sitio, validada.
+       Una pregunta mal armada deja la lámina sin preguntas (solo se ve): no se
+       adivina. La lista NO trae las respuestas correctas: están en la base. */
     function leerLista(json) {
         const lista = json && Array.isArray(json.practicas) ? json.practicas : [];
         return lista.filter((p) => p && typeof p.deck === "string" && FORMA_DECK.test(p.deck) && typeof p.titulo === "string"
-            && Array.isArray(p.laminas) && p.laminas.length && p.laminas.every((l) => l && Number.isInteger(l.n) && l.n >= 1 && l.n <= 500));
+            && Array.isArray(p.laminas) && p.laminas.length && p.laminas.every((l) => l && Number.isInteger(l.n) && l.n >= 1 && l.n <= 500))
+            .map((p) => Object.assign({}, p, {
+                laminas: p.laminas.map((l) => Object.assign({}, l, {
+                    preguntas: Array.isArray(l.preguntas) && l.preguntas.every(preguntaValida) ? l.preguntas : [],
+                })),
+            }));
     }
 
-    return { CURSO, RUTA, valida, paraMandar, limpiarHechas, alternar, completa, resumen, leerLista };
+    // Las preguntas de una lámina de la práctica que se mandó ([] si no hay o no se conoce).
+    function preguntasDe(lista, practica, n) {
+        const p = (lista || []).find((x) => x.deck === (practica && practica.deck));
+        const l = p && p.laminas.find((x) => x.n === n);
+        return l ? l.preguntas : [];
+    }
+
+    /* Una jugada escrita se compara sin espacios, puntos ni mayúsculas, y el cero
+       del enroque vale por la o: «cxe5», «Cxe5» y «C x e5» son la misma. Sin su x, su
+       + o su # NO es la misma. Es la misma regla que interno.norma_jugada() en la
+       base, que es la que corrige: acá solo sirve para mostrarle al profe qué falló. */
+    function normaJugada(j) {
+        return String(j == null ? "" : j).replace(/[\s.·]/g, "").replace(/[–—]/g, "-").toLowerCase().replace(/0/g, "o");
+    }
+
+    // La planilla guardada es una lista de jugadas en orden (blancas, negras, blancas…), como texto JSON.
+    function planillaDeTexto(texto, filas) {
+        let a = [];
+        try { a = JSON.parse(texto || "[]"); } catch (e) { a = []; }
+        a = Array.isArray(a) ? a.map((x) => (typeof x === "string" ? x : "")) : [];
+        while (a.length < filas * 2) a.push("");
+        return a.slice(0, filas * 2);
+    }
+    const planillaATexto = (jugadas) => JSON.stringify((jugadas || []).map((x) => String(x == null ? "" : x).trim()));
+
+    // Lo que salió bien en la planilla y lo que no, contra la partida dictada.
+    function compararPlanilla(jugadas, clave) {
+        const j = Array.isArray(jugadas) ? jugadas : [];
+        const errores = [];
+        let buenas = 0;
+        clave.forEach((esperada, i) => {
+            if (normaJugada(j[i]) === normaJugada(esperada)) buenas += 1;
+            else errores.push({ i, escribio: String(j[i] == null ? "" : j[i]).trim(), era: esperada });
+        });
+        const extras = j.slice(clave.length).some((x) => normaJugada(x) !== "");
+        return { buenas, total: clave.length, errores, extras, correcta: buenas === clave.length && !extras };
+    }
+
+    // «3.ª jugada de las blancas» para la jugada número i (desde 0) de una planilla.
+    const nombreDeJugada = (i) => (Math.floor(i / 2) + 1) + ".ª jugada de " + (i % 2 ? "las negras" : "las blancas");
+
+    return { CURSO, RUTA, valida, paraMandar, reveladasDe, estaRevelada, conReveladas, limpiarHechas, alternar, completa, resumen, leerLista, preguntaValida, preguntasDe,
+        normaJugada, planillaDeTexto, planillaATexto, compararPlanilla, nombreDeJugada };
 })();
 
+let formacionLista = null;        // las prácticas del curso (promesa de la lista que baja del sitio)
 let formacionActual = null;       // la de game_state: {id, deck, titulo, laminas} (o null)
 let formacionPracticas = null;    // profe: las prácticas del curso (null = sin pedir todavía)
 let formacionPermiso = null;      // profe: ¿puede mandar las de Formación Ajedrez?
 let formacionMia = null;          // alumno: {clave, hechas: [n…], i} de la práctica que ve
-let formacionPresencia = null;    // lo que el alumno anuncia en la presencia: {id, h: [n…]}
+let formacionPresencia = null;    // lo que el alumno anuncia en la presencia: {id, h: [n…], r: cuántas contestó}
 let formacionAnuncioPendiente = null;
 let formacionPintando = 0;        // para descartar una lámina vieja que llega tarde
+const formacionReveladas = new Map();  // alumno: "lámina|pregunta" → la respuesta que su profe mostró (js/clase-formacion-respuestas.js)
+const formacionRespuestas = new Map(); // alumno: "lámina|pregunta" → lo que tiene guardado (js/clase-formacion-respuestas.js)
 const formacionVistos = new Map(); // profe: id → {nombre, hechas, conectado}, de esta práctica
 let formacionVistosDe = null;
+
+/* La lista de prácticas (láminas y preguntas, sin respuestas correctas): la baja
+   quien da clase para mandarlas y cada alumno para ver las preguntas de su lámina. */
+function listaDeFormacion() {
+    if (!formacionLista) {
+        formacionLista = fetch(FormacionPractica.RUTA, { credentials: "same-origin" })
+            .then((r) => { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
+            .then((j) => FormacionPractica.leerLista(j))
+            .catch((e) => { formacionLista = null; throw e; });
+    }
+    return formacionLista;
+}
 
 const claveDeFormacion = (p) => "clase_formacion_v1:" + myGameStateId + ":" + p.id;
 
@@ -110,7 +199,7 @@ function anunciarFormacion() {
 }
 
 async function enviarAnuncioDeFormacion() {
-    const nuevo = formacionMia && formacionActual ? { id: formacionActual.id, h: formacionMia.hechas.slice() } : null;
+    const nuevo = formacionMia && formacionActual ? { id: formacionActual.id, h: formacionMia.hechas.slice(), r: formacionRespuestas.size } : null;
     if (JSON.stringify(nuevo) === JSON.stringify(formacionPresencia)) return;
     formacionPresencia = nuevo;
     if (!vistaPrevia) await anunciarPresencia();
@@ -127,14 +216,18 @@ function pintarFormacion(p) {
         formacionPintando += 1;
         tarjeta.hidden = true;
         formacionMia = null;
+        formacionRespuestas.clear();
+        formacionReveladas.clear();
         formacionVistos.clear();
         formacionVistosDe = null;
+        // Quitó la práctica: lo que contestaron queda guardado y se sigue mirando.
+        if (isTeacher && antes) abrirRespuestasDeFormacion();
         anunciarALaClase("formacion", null);
         if (formacionPresencia) anunciarFormacion();
         return;
     }
     if (isTeacher) {
-        if (formacionVistosDe !== formacionActual.id) { formacionVistos.clear(); formacionVistosDe = formacionActual.id; }
+        if (formacionVistosDe !== formacionActual.id) { formacionVistos.clear(); formacionVistosDe = formacionActual.id; abrirRespuestasDeFormacion(); }
         anotarFormacionDeLaPresencia();
         pintarFormacionProfe();
         return;
@@ -143,15 +236,29 @@ function pintarFormacion(p) {
     anunciarALaClase("formacion", formacionActual.id, "Tu profe mandó una práctica: " + formacionActual.titulo
         + ". Tiene " + formacionActual.laminas.length + (formacionActual.laminas.length === 1 ? " lámina" : " láminas")
         + ". Está en tu pantalla, debajo del tablero: pásalas con Anterior y Siguiente, y marca cada una como completada.");
-    if (antes && antes.id === formacionActual.id && formacionMia) return;
+    if (antes && antes.id === formacionActual.id && formacionMia) {
+        // El profe mostró (o escondió) la respuesta de alguna lámina.
+        if (FormacionPractica.reveladasDe(antes).join() !== FormacionPractica.reveladasDe(formacionActual).join()) {
+            const nuevas = FormacionPractica.reveladasDe(formacionActual).filter((n) => !FormacionPractica.estaRevelada(antes, n));
+            if (nuevas.length) anunciarALaClase("formacion-resp", formacionActual.id + ":" + nuevas.join(","),
+                "Tu profe mostró la respuesta de " + (nuevas.length === 1 ? "la lámina " : "las láminas ") + nuevas.map((n) => formacionActual.laminas.indexOf(n) + 1).join(", ")
+                + " de la práctica. Ya no se puede contestar: míralas debajo de la lámina.");
+            cargarReveladasDeFormacion();
+        }
+        return;
+    }
     let guardado = null;
     const clave = claveDeFormacion(formacionActual);
     try { guardado = JSON.parse(localStorage.getItem(clave) || "null"); } catch (e) { guardado = null; }
     const hechas = FormacionPractica.limpiarHechas(guardado && guardado.hechas, formacionActual.laminas);
     const i = guardado && Number.isInteger(guardado.i) && guardado.i >= 0 && guardado.i < formacionActual.laminas.length ? guardado.i : 0;
     formacionMia = { clave, hechas, i };
+    formacionRespuestas.clear();
+    formacionReveladas.clear();
     pintarLaminaDeFormacion();
     anunciarFormacion();
+    cargarMisRespuestasDeFormacion();
+    if (FormacionPractica.reveladasDe(formacionActual).length) cargarReveladasDeFormacion();
 }
 
 async function pintarLaminaDeFormacion() {
@@ -191,6 +298,7 @@ async function pintarLaminaDeFormacion() {
         b.addEventListener("click", () => irALaminaDeFormacion(k));
         nav.appendChild(b);
     });
+    pintarPreguntasDeFormacion();
     const img = document.getElementById("formacion-img");
     const msg = document.getElementById("formacion-msg");
     try {
@@ -219,6 +327,7 @@ async function pintarLaminaDeFormacion() {
 
 function irALaminaDeFormacion(k) {
     if (!formacionActual || !formacionMia) return;
+    guardarPendientesDeFormacion();
     formacionMia.i = Math.max(0, Math.min(formacionActual.laminas.length - 1, k));
     guardarFormacionMia();
     pintarLaminaDeFormacion();
@@ -226,6 +335,7 @@ function irALaminaDeFormacion(k) {
 
 function marcarLaminaDeFormacion() {
     if (!formacionActual || !formacionMia) return;
+    guardarPendientesDeFormacion();
     const n = formacionActual.laminas[formacionMia.i];
     const antes = FormacionPractica.completa(formacionMia.hechas, formacionActual.laminas);
     formacionMia.hechas = FormacionPractica.alternar(formacionMia.hechas, formacionActual.laminas, n);
@@ -249,9 +359,7 @@ async function cargarPracticasDeFormacion() {
         if (error) throw error;
         formacionPermiso = data === true;
         if (!formacionPermiso) { formacionPracticas = []; formacionCargando = false; return; }
-        const r = await fetch(FormacionPractica.RUTA, { credentials: "same-origin" });
-        if (!r.ok) throw new Error("HTTP " + r.status);
-        formacionPracticas = FormacionPractica.leerLista(await r.json());
+        formacionPracticas = await listaDeFormacion();
     } catch (e) {
         console.error("No se pudieron cargar las prácticas de Formación Ajedrez:", e);
         formacionCargando = false;
@@ -299,9 +407,10 @@ function anotarFormacionDeLaPresencia() {
         const f = s.formacion && s.formacion.id === formacionActual.id ? s.formacion : null;
         const antes = formacionVistos.get(id);
         formacionVistos.set(id, Object.assign({ hechas: [] }, antes || {},
-            f ? { hechas: FormacionPractica.limpiarHechas(f.h, formacionActual.laminas) } : {},
+            f ? { hechas: FormacionPractica.limpiarHechas(f.h, formacionActual.laminas), contestadas: Number.isInteger(f.r) ? f.r : 0 } : {},
             { nombre: s.full_name || s.email || "Alumno", conectado: true }));
     }
+    refrescarRespuestasDeFormacionSiCambio();
 }
 
 function pintarFormacionProfe() {

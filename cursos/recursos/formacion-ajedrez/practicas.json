@@ -4,32 +4,325 @@
   "practicas": [
     {
       "n": 1,
-      "deck": "formacion-ajedrez/clase-01",
+      "deck": "formacion-ajedrez/practica-01",
       "titulo": "Sesión 1: Encuadre del curso y reglas básicas del ajedrez",
       "laminas": [
         {
-          "n": 41,
-          "titulo": "Práctica en salas de trabajo"
+          "n": 1,
+          "titulo": "Estación 1: posiciones 1 a 4",
+          "preguntas": [
+            {
+              "id": "p1",
+              "tipo": "opciones",
+              "texto": "Posición 1 (juegan las negras)",
+              "opciones": [
+                {
+                  "v": "mate",
+                  "t": "Jaque mate: la partida terminó"
+                },
+                {
+                  "v": "ahogado",
+                  "t": "Ahogado: tablas"
+                },
+                {
+                  "v": "jaque",
+                  "t": "Jaque, pero la partida sigue"
+                },
+                {
+                  "v": "muerta",
+                  "t": "Posición muerta: tablas"
+                },
+                {
+                  "v": "sigue",
+                  "t": "No hay jaque ni final: la partida sigue"
+                }
+              ]
+            },
+            {
+              "id": "p2",
+              "tipo": "opciones",
+              "texto": "Posición 2 (juegan las negras)",
+              "opciones": [
+                {
+                  "v": "mate",
+                  "t": "Jaque mate: la partida terminó"
+                },
+                {
+                  "v": "ahogado",
+                  "t": "Ahogado: tablas"
+                },
+                {
+                  "v": "jaque",
+                  "t": "Jaque, pero la partida sigue"
+                },
+                {
+                  "v": "muerta",
+                  "t": "Posición muerta: tablas"
+                },
+                {
+                  "v": "sigue",
+                  "t": "No hay jaque ni final: la partida sigue"
+                }
+              ]
+            },
+            {
+              "id": "p3",
+              "tipo": "opciones",
+              "texto": "Posición 3 (juegan las negras)",
+              "opciones": [
+                {
+                  "v": "mate",
+                  "t": "Jaque mate: la partida terminó"
+                },
+                {
+                  "v": "ahogado",
+                  "t": "Ahogado: tablas"
+                },
+                {
+                  "v": "jaque",
+                  "t": "Jaque, pero la partida sigue"
+                },
+                {
+                  "v": "muerta",
+                  "t": "Posición muerta: tablas"
+                },
+                {
+                  "v": "sigue",
+                  "t": "No hay jaque ni final: la partida sigue"
+                }
+              ]
+            },
+            {
+              "id": "p4",
+              "tipo": "opciones",
+              "texto": "Posición 4 (juegan las blancas)",
+              "opciones": [
+                {
+                  "v": "mate",
+                  "t": "Jaque mate: la partida terminó"
+                },
+                {
+                  "v": "ahogado",
+                  "t": "Ahogado: tablas"
+                },
+                {
+                  "v": "jaque",
+                  "t": "Jaque, pero la partida sigue"
+                },
+                {
+                  "v": "muerta",
+                  "t": "Posición muerta: tablas"
+                },
+                {
+                  "v": "sigue",
+                  "t": "No hay jaque ni final: la partida sigue"
+                }
+              ]
+            }
+          ]
         },
         {
-          "n": 42,
-          "titulo": "Estación 1: posiciones 1 a 4"
+          "n": 2,
+          "titulo": "Estación 1: posiciones 5 a 8",
+          "preguntas": [
+            {
+              "id": "p5",
+              "tipo": "opciones",
+              "texto": "Posición 5 (juegan las blancas)",
+              "opciones": [
+                {
+                  "v": "mate",
+                  "t": "Jaque mate: la partida terminó"
+                },
+                {
+                  "v": "ahogado",
+                  "t": "Ahogado: tablas"
+                },
+                {
+                  "v": "jaque",
+                  "t": "Jaque, pero la partida sigue"
+                },
+                {
+                  "v": "muerta",
+                  "t": "Posición muerta: tablas"
+                },
+                {
+                  "v": "sigue",
+                  "t": "No hay jaque ni final: la partida sigue"
+                }
+              ]
+            },
+            {
+              "id": "p6",
+              "tipo": "opciones",
+              "texto": "Posición 6 (juegan las negras)",
+              "opciones": [
+                {
+                  "v": "mate",
+                  "t": "Jaque mate: la partida terminó"
+                },
+                {
+                  "v": "ahogado",
+                  "t": "Ahogado: tablas"
+                },
+                {
+                  "v": "jaque",
+                  "t": "Jaque, pero la partida sigue"
+                },
+                {
+                  "v": "muerta",
+                  "t": "Posición muerta: tablas"
+                },
+                {
+                  "v": "sigue",
+                  "t": "No hay jaque ni final: la partida sigue"
+                }
+              ]
+            },
+            {
+              "id": "p7",
+              "tipo": "opciones",
+              "texto": "Posición 7 (juegan las negras)",
+              "opciones": [
+                {
+                  "v": "mate",
+                  "t": "Jaque mate: la partida terminó"
+                },
+                {
+                  "v": "ahogado",
+                  "t": "Ahogado: tablas"
+                },
+                {
+                  "v": "jaque",
+                  "t": "Jaque, pero la partida sigue"
+                },
+                {
+                  "v": "muerta",
+                  "t": "Posición muerta: tablas"
+                },
+                {
+                  "v": "sigue",
+                  "t": "No hay jaque ni final: la partida sigue"
+                }
+              ]
+            },
+            {
+              "id": "p8",
+              "tipo": "opciones",
+              "texto": "Posición 8 (juegan las negras)",
+              "opciones": [
+                {
+                  "v": "mate",
+                  "t": "Jaque mate: la partida terminó"
+                },
+                {
+                  "v": "ahogado",
+                  "t": "Ahogado: tablas"
+                },
+                {
+                  "v": "jaque",
+                  "t": "Jaque, pero la partida sigue"
+                },
+                {
+                  "v": "muerta",
+                  "t": "Posición muerta: tablas"
+                },
+                {
+                  "v": "sigue",
+                  "t": "No hay jaque ni final: la partida sigue"
+                }
+              ]
+            }
+          ]
         },
         {
-          "n": 43,
-          "titulo": "Estación 1: posiciones 5 a 8"
+          "n": 3,
+          "titulo": "Estación 2: dictado de planilla",
+          "preguntas": [
+            {
+              "id": "planilla",
+              "tipo": "planilla",
+              "texto": "Tu planilla",
+              "filas": 10
+            }
+          ]
         },
         {
-          "n": 45,
-          "titulo": "Estación 2: dictado de planilla"
+          "n": 4,
+          "titulo": "Reclamo 1 de 3",
+          "preguntas": [
+            {
+              "id": "decision",
+              "tipo": "texto",
+              "texto": "Tu decisión y el artículo que aplicas"
+            }
+          ]
         },
         {
-          "n": 46,
-          "titulo": "Estación 3: juego de roles de un reclamo"
+          "n": 5,
+          "titulo": "Reclamo 2 de 3",
+          "preguntas": [
+            {
+              "id": "decision",
+              "tipo": "texto",
+              "texto": "Tu decisión y el artículo que aplicas"
+            }
+          ]
         },
         {
-          "n": 47,
-          "titulo": "Estación 4: los casos del laboratorio, en grupo"
+          "n": 6,
+          "titulo": "Reclamo 3 de 3",
+          "preguntas": [
+            {
+              "id": "decision",
+              "tipo": "texto",
+              "texto": "Tu decisión y el artículo que aplicas"
+            }
+          ]
+        },
+        {
+          "n": 7,
+          "titulo": "Caso 1 de 4",
+          "preguntas": [
+            {
+              "id": "decision",
+              "tipo": "texto",
+              "texto": "Tu decisión y el artículo que aplicas"
+            }
+          ]
+        },
+        {
+          "n": 8,
+          "titulo": "Caso 2 de 4",
+          "preguntas": [
+            {
+              "id": "decision",
+              "tipo": "texto",
+              "texto": "Tu decisión y el artículo que aplicas"
+            }
+          ]
+        },
+        {
+          "n": 9,
+          "titulo": "Caso 3 de 4",
+          "preguntas": [
+            {
+              "id": "decision",
+              "tipo": "texto",
+              "texto": "Tu decisión y el artículo que aplicas"
+            }
+          ]
+        },
+        {
+          "n": 10,
+          "titulo": "Caso 4 de 4",
+          "preguntas": [
+            {
+              "id": "decision",
+              "tipo": "texto",
+              "texto": "Tu decisión y el artículo que aplicas"
+            }
+          ]
         }
       ]
     },
@@ -40,31 +333,74 @@
       "laminas": [
         {
           "n": 24,
-          "titulo": "Práctica · Simulación de reclamos en salas de trabajo"
+          "titulo": "Práctica · Simulación de reclamos en salas de trabajo",
+          "preguntas": []
         },
         {
           "n": 25,
-          "titulo": "Ejercicio 1 de 6"
+          "titulo": "Ejercicio 1 de 6",
+          "preguntas": [
+            {
+              "id": "respuesta",
+              "tipo": "texto",
+              "texto": "Tu respuesta"
+            }
+          ]
         },
         {
           "n": 26,
-          "titulo": "Ejercicio 2 de 6"
+          "titulo": "Ejercicio 2 de 6",
+          "preguntas": [
+            {
+              "id": "respuesta",
+              "tipo": "texto",
+              "texto": "Tu respuesta"
+            }
+          ]
         },
         {
           "n": 27,
-          "titulo": "Ejercicio 3 de 6"
+          "titulo": "Ejercicio 3 de 6",
+          "preguntas": [
+            {
+              "id": "respuesta",
+              "tipo": "texto",
+              "texto": "Tu respuesta"
+            }
+          ]
         },
         {
           "n": 28,
-          "titulo": "Ejercicio 4 de 6"
+          "titulo": "Ejercicio 4 de 6",
+          "preguntas": [
+            {
+              "id": "respuesta",
+              "tipo": "texto",
+              "texto": "Tu respuesta"
+            }
+          ]
         },
         {
           "n": 29,
-          "titulo": "Ejercicio 5 de 6"
+          "titulo": "Ejercicio 5 de 6",
+          "preguntas": [
+            {
+              "id": "respuesta",
+              "tipo": "texto",
+              "texto": "Tu respuesta"
+            }
+          ]
         },
         {
           "n": 30,
-          "titulo": "Ejercicio 6 de 6"
+          "titulo": "Ejercicio 6 de 6",
+          "preguntas": [
+            {
+              "id": "respuesta",
+              "tipo": "texto",
+              "texto": "Tu respuesta"
+            }
+          ]
         }
       ]
     },
@@ -75,43 +411,107 @@
       "laminas": [
         {
           "n": 41,
-          "titulo": "Práctica · Cálculo de desempates y construcción de un cuadro de emparejamiento"
+          "titulo": "Práctica · Cálculo de desempates y construcción de un cuadro de emparejamiento",
+          "preguntas": []
         },
         {
           "n": 42,
-          "titulo": "Ejercicio 1 de 9"
+          "titulo": "Ejercicio 1 de 9",
+          "preguntas": [
+            {
+              "id": "respuesta",
+              "tipo": "texto",
+              "texto": "Tu respuesta"
+            }
+          ]
         },
         {
           "n": 43,
-          "titulo": "Ejercicio 2 de 9"
+          "titulo": "Ejercicio 2 de 9",
+          "preguntas": [
+            {
+              "id": "respuesta",
+              "tipo": "texto",
+              "texto": "Tu respuesta"
+            }
+          ]
         },
         {
           "n": 44,
-          "titulo": "Ejercicio 3 de 9"
+          "titulo": "Ejercicio 3 de 9",
+          "preguntas": [
+            {
+              "id": "respuesta",
+              "tipo": "texto",
+              "texto": "Tu respuesta"
+            }
+          ]
         },
         {
           "n": 45,
-          "titulo": "Ejercicio 4 de 9"
+          "titulo": "Ejercicio 4 de 9",
+          "preguntas": [
+            {
+              "id": "respuesta",
+              "tipo": "texto",
+              "texto": "Tu respuesta"
+            }
+          ]
         },
         {
           "n": 46,
-          "titulo": "Ejercicio 5 de 9"
+          "titulo": "Ejercicio 5 de 9",
+          "preguntas": [
+            {
+              "id": "respuesta",
+              "tipo": "texto",
+              "texto": "Tu respuesta"
+            }
+          ]
         },
         {
           "n": 47,
-          "titulo": "Ejercicio 6 de 9"
+          "titulo": "Ejercicio 6 de 9",
+          "preguntas": [
+            {
+              "id": "respuesta",
+              "tipo": "texto",
+              "texto": "Tu respuesta"
+            }
+          ]
         },
         {
           "n": 48,
-          "titulo": "Ejercicio 7 de 9"
+          "titulo": "Ejercicio 7 de 9",
+          "preguntas": [
+            {
+              "id": "respuesta",
+              "tipo": "texto",
+              "texto": "Tu respuesta"
+            }
+          ]
         },
         {
           "n": 49,
-          "titulo": "Ejercicio 8 de 9"
+          "titulo": "Ejercicio 8 de 9",
+          "preguntas": [
+            {
+              "id": "respuesta",
+              "tipo": "texto",
+              "texto": "Tu respuesta"
+            }
+          ]
         },
         {
           "n": 50,
-          "titulo": "Ejercicio 9 de 9"
+          "titulo": "Ejercicio 9 de 9",
+          "preguntas": [
+            {
+              "id": "respuesta",
+              "tipo": "texto",
+              "texto": "Tu respuesta"
+            }
+          ]
         }
       ]
     },
@@ -122,27 +522,63 @@
       "laminas": [
         {
           "n": 18,
-          "titulo": "Práctica · Configuración de un reloj según escenario"
+          "titulo": "Práctica · Configuración de un reloj según escenario",
+          "preguntas": []
         },
         {
           "n": 19,
-          "titulo": "Ejercicio 1 de 5"
+          "titulo": "Ejercicio 1 de 5",
+          "preguntas": [
+            {
+              "id": "respuesta",
+              "tipo": "texto",
+              "texto": "Tu respuesta"
+            }
+          ]
         },
         {
           "n": 20,
-          "titulo": "Ejercicio 2 de 5"
+          "titulo": "Ejercicio 2 de 5",
+          "preguntas": [
+            {
+              "id": "respuesta",
+              "tipo": "texto",
+              "texto": "Tu respuesta"
+            }
+          ]
         },
         {
           "n": 21,
-          "titulo": "Ejercicio 3 de 5"
+          "titulo": "Ejercicio 3 de 5",
+          "preguntas": [
+            {
+              "id": "respuesta",
+              "tipo": "texto",
+              "texto": "Tu respuesta"
+            }
+          ]
         },
         {
           "n": 22,
-          "titulo": "Ejercicio 4 de 5"
+          "titulo": "Ejercicio 4 de 5",
+          "preguntas": [
+            {
+              "id": "respuesta",
+              "tipo": "texto",
+              "texto": "Tu respuesta"
+            }
+          ]
         },
         {
           "n": 23,
-          "titulo": "Ejercicio 5 de 5"
+          "titulo": "Ejercicio 5 de 5",
+          "preguntas": [
+            {
+              "id": "respuesta",
+              "tipo": "texto",
+              "texto": "Tu respuesta"
+            }
+          ]
         }
       ]
     },
@@ -153,19 +589,41 @@
       "laminas": [
         {
           "n": 17,
-          "titulo": "Práctica · Resolución grupal de casos integradores"
+          "titulo": "Práctica · Resolución grupal de casos integradores",
+          "preguntas": []
         },
         {
           "n": 18,
-          "titulo": "Ejercicio 1 de 3"
+          "titulo": "Ejercicio 1 de 3",
+          "preguntas": [
+            {
+              "id": "respuesta",
+              "tipo": "texto",
+              "texto": "Tu respuesta"
+            }
+          ]
         },
         {
           "n": 19,
-          "titulo": "Ejercicio 2 de 3"
+          "titulo": "Ejercicio 2 de 3",
+          "preguntas": [
+            {
+              "id": "respuesta",
+              "tipo": "texto",
+              "texto": "Tu respuesta"
+            }
+          ]
         },
         {
           "n": 20,
-          "titulo": "Ejercicio 3 de 3"
+          "titulo": "Ejercicio 3 de 3",
+          "preguntas": [
+            {
+              "id": "respuesta",
+              "tipo": "texto",
+              "texto": "Tu respuesta"
+            }
+          ]
         }
       ]
     },
@@ -176,15 +634,30 @@
       "laminas": [
         {
           "n": 17,
-          "titulo": "Práctica · Simulacro de arbitraje con observación entre pares"
+          "titulo": "Práctica · Simulacro de arbitraje con observación entre pares",
+          "preguntas": []
         },
         {
           "n": 18,
-          "titulo": "Ejercicio 1 de 2"
+          "titulo": "Ejercicio 1 de 2",
+          "preguntas": [
+            {
+              "id": "respuesta",
+              "tipo": "texto",
+              "texto": "Tu respuesta"
+            }
+          ]
         },
         {
           "n": 19,
-          "titulo": "Ejercicio 2 de 2"
+          "titulo": "Ejercicio 2 de 2",
+          "preguntas": [
+            {
+              "id": "respuesta",
+              "tipo": "texto",
+              "texto": "Tu respuesta"
+            }
+          ]
         }
       ]
     }

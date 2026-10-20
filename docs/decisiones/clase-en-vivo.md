@@ -2080,8 +2080,9 @@ los asesores: los ejercicios se resolvían en salas de trabajo y el profe no ve�
 quién iba por dónde.
 
 - **Qué es «una práctica»**: las láminas de la sesión que son de la práctica
-  —«Práctica · …», «Ejercicio k de N» y, en la Sesión 1, las estaciones—, de la
-  misma `diapositivas.json` que el profe proyecta. Las saca
+  —«Práctica · …» y «Ejercicio k de N» en las sesiones 2 a 6, de la misma
+  `diapositivas.json` que el profe proyecta; la Sesión 1 tiene su presentación
+  propia (ver «Las respuestas de la práctica»)—. Las saca
   `herramientas/formacion-practicas.js` a `cursos/recursos/formacion-ajedrez/practicas.json`
   (se genera: no se edita a mano). **Nunca entran las de respuestas, quiz, tarea
   ni receso**: la lámina se le entrega al alumno entera y una respuesta ahí sería
@@ -2124,11 +2125,121 @@ quién iba por dónde.
   como estaba en la base (la de `20261017173336`) con una línea más. El retrato
   del esquema se puso al día con la columna nueva a mano, no volviéndolo a armar.
 
-Lo prueba `verificar-clase-formacion.js`: que `practicas.json` esté al día y
-completo (cada lámina con su imagen, ninguna de respuestas), que el trigger y el
-CHECK la protejan, la parte pura (`FormacionPractica`) y, en el navegador, el
-alumno (pasa, marca, recarga y sigue donde iba, anuncia lo que lleva) y el
-profe (manda, ve quién falta, quién terminó y quién se desconectó, la quita).
+#### Las respuestas de la práctica
+
+En cada lámina el alumno puede **contestar**, y queda el registro para
+analizarlo en clase y calificarlo después. Hay tres clases de pregunta
+(`practicas.json`, `laminas[].preguntas[]`):
+
+- **De opciones**: cada una con sus opciones; se guarda al elegir. Se corrige sola
+  (la correcta está en la base). Son las ocho posiciones de la Estación 1
+  («Jaque mate», «Ahogado», «Jaque, pero la partida sigue», «Posición muerta»,
+  «No hay jaque ni final»), cuatro por lámina, con la situación que dice el curso
+  y que se vuelve a calcular con chess.js al generar (si una posición cambia y
+  el curso dice otra cosa, el generador falla).
+- **De texto**: una caja para escribir la decisión y el artículo. **No se
+  califica** (no tiene una sola respuesta): se analiza en clase. Es lo de los
+  reclamos de la Estación 3 (el alumno siempre es la persona árbitra), los cuatro
+  casos del laboratorio de la Estación 4, uno por lámina, y cada «Ejercicio k de
+  N» de las sesiones 2 a 6.
+- **La planilla** del dictado (Estación 2): diez filas de blancas y negras. El
+  profe dicta en voz alta, sin mostrar el tablero, y todos anotan. La base la
+  compara con la partida dictada (7 jugadas, con capturas, un jaque y el mate:
+  el mate de Légal, comprobada con chess.js) jugada por jugada: sin espacios,
+  puntos ni mayúsculas (`C f3` vale por `Cf3`), el cero del enroque por la o, pero
+  **sin su x, su + o su # NO vale**: es justo lo que el dictado quiere ver. Sale
+  bien solo si todas están bien y no hay jugadas de más; el profe ve cuántas y
+  cuál falló.
+
+**La presentación propia de la Sesión 1** (`presentaciones/practica-01/`, 10
+láminas): las láminas de sus estaciones eran para trabajar en salas y no traen
+la pregunta de cada posición ni el caso de cada reclamo. La arma el mismo
+generador (`formacion-practicas.js`) con el dibujador de las demás
+(`formacion-laminas.js`, tipos `tableros`, `filas` y `frase`): las posiciones y
+los casos salen del curso (`formacion-ajedrez.json`), no hay una segunda copia.
+Los títulos de los reclamos no dicen de qué se trata («Reclamo 1 de 3»): la
+persona árbitra no lo sabe de antemano. Está también en la lista de
+`PresentacionClase`, para que el profe pueda **proyectar la lámina de un caso
+mientras lo analizan**. No lleva `notas` a propósito: ese JSON lo baja todo
+alumno.
+
+- **La respuesta correcta NUNCA viaja en `practicas.json`** (lo baja todo
+  navegador con acceso a la Academia). Vive en `practica_claves`
+  (`deck, lamina, pregunta → tipo, clave, modelo`), que solo lee quien da clase
+  (RLS: `role = 'profesor'` o administración) y que siembra el generador:
+  `node herramientas/formacion-practicas.js --sql`, aplicado como migración
+  (el upsert pone al día). `modelo` es la respuesta modelo del curso, que el
+  profe ve junto a lo que contestó cada uno para analizarlo.
+- **Quien corrige es la base**, no el navegador del alumno:
+  `responder_practica(envio, deck, lamina, pregunta, respuesta)`
+  (`SECURITY DEFINER`) comprueba que la práctica sea la que **su profe tiene
+  ahora en la clase** (`es_mi_profesor(owner)` y `game_state.practica`), que la
+  lámina sea una de las suyas, que tenga el acceso vigente (`acceso_vigente()`,
+  como las demás tablas que escribe un alumno), la corrige con la clave y la
+  guarda (una fila por alumno, envío, lámina y pregunta: volver a contestar
+  reemplaza). **No devuelve la corrección**, y una respuesta vacía borra la
+  anterior. No mira el rol: también contesta quien da clase y a la vez estudia
+  con otra persona (`profesores_tambien_alumnos`).
+- **El alumno no lee `practica_respuestas`** (solo el profe de la clase y
+  administración): trae `correcta`, y con ella a la vista iría probando
+  opciones hasta acertar. Lo suyo lo pide con `mis_respuestas_practica(envio)`,
+  que no trae nota. Ninguna de las dos tablas tiene política de escritura ni
+  permiso de escritura: todo pasa por la función.
+- **Comprobado en la base, impersonando roles**: el profe pone la práctica; el
+  alumno contesta (la buena queda `correcta`, la mala no, y la planilla con una
+  jugada sin su x da 12 de 13); una lámina que no es de la práctica, otro
+  envío y alguien que no es de ese profe se rechazan; el alumno ve 0 filas de
+  `practica_respuestas` y de `practica_claves`, no puede insertar ni actualizar
+  directo (`permission denied`) ni quitar la práctica; el profe ve las 4 filas y
+  las 41 claves.
+- **Lo que ve el profe** («🗂️ Lo que contestaron», en el mismo desplegable):
+  la calificación de cada alumno (de las preguntas con respuesta única, cuántas
+  salieron bien y cuántas faltan), y por lámina cada pregunta con su
+  **respuesta modelo (solo suya)**, lo que eligió cada alumno con su marca
+  escrita («✓ bien» / «✗ mal»), cuántos eligieron cada opción, quién no contestó
+  y, en la planilla, qué jugada falló y cuál era (y la partida para dictar). Se
+  pone al día solo cuando la presencia dice que alguien contestó o marcó
+  (`r` = cuántas lleva contestadas; sin Realtime ni tabla nueva en la
+  publicación) y con «Actualizar». Lo que escribió una persona va por
+  `textContent`.
+- **Mostrar la respuesta a los alumnos** (cuando ya la analizaron en clase): en
+  «🗂️ Lo que contestaron», sobre cada lámina, «Mostrar la respuesta a los
+  alumnos» (y «Mostrar todas las respuestas»); el profe ve escrito si ya la ven.
+  La marca va en `game_state.practica.reveladas` (los números de lámina), la
+  misma columna que solo escribe el profe, y el CHECK la acepta opcional (hasta
+  40 números). El alumno recibe la respuesta de **esa lámina y de ninguna
+  otra** por `respuestas_reveladas_practica(envio)`: la correcta, la respuesta
+  modelo **con su artículo**, y cómo le fue a él («✓ Tu respuesta fue correcta»,
+  «✗ Tu respuesta no era esa», «No contestaste», o «Tu planilla: 12 de 13
+  jugadas bien»). Aparece sola, sin recargar, y se le dice en voz.
+  **Esa lámina ya no se contesta**: `responder_practica()` la rechaza («Tu
+  profe ya mostró la respuesta de esta lámina») y su pantalla la deja apagada:
+  con la respuesta a la vista se podría «contestar» copiándola, y el registro
+  dejaría de ser de lo que sabía antes. Antes de mostrarla no hay **ni una
+  palabra** de la respuesta en su pantalla (lo comprueba el verificador).
+  Comprobado en la base con roles: antes de mostrar la función devuelve 0
+  filas; una forma mala (lámina 0, un texto) se rechaza; el alumno no puede
+  mostrarlas él (el trigger se lo devuelve); alguien que no es de ese profe ve 0.
+  Migración `practica_reveladas`.
+- **Prácticas anteriores**: lo contestado queda guardado cuando el profe quita
+  la práctica o cierra la clase, y el selector «Práctica» lo ofrece después
+  (por título y fecha de Costa Rica), para calificar con calma.
+- **«Ver como alumno»** muestra las preguntas pero no manda nada a la base.
+- **Aplicadas a mano el 20/10** con `apply_migration`: `practica_respuestas`,
+  `practica_claves_formacion` y `practica_respuestas_sin_exigir_rol`. El
+  aplicador se quedaba colgado con `drop policy if exists`: la migración va con
+  `create policy` a secas. El retrato del esquema se puso al día agregando las
+  líneas nuevas (en su orden) y no volviéndolo a armar entero.
+
+Lo prueba `verificar-clase-formacion.js`: que `practicas.json` y la
+presentación propia estén al día y completos (cada lámina con su imagen, ninguna
+de respuestas), que **ninguna respuesta correcta viaje en `practicas.json`**, que
+cada pregunta tenga su clave sembrada, que el trigger y el CHECK la protejan, la
+parte pura (`FormacionPractica`: cómo se compara una jugada) y, en el navegador,
+el alumno (pasa, marca, contesta de las tres clases, recarga y sigue donde iba,
+anuncia lo que lleva, la falla de red se dice) y el profe (manda, ve quién falta,
+quién terminó, qué contestó cada uno, la respuesta modelo, la calificación; lo
+escrito por una persona no se interpreta como HTML, la quita).
 
 ### La participación pareja
 
