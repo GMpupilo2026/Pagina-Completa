@@ -2132,7 +2132,7 @@ analizarlo en clase y calificarlo después. Hay tres clases de pregunta
 (`practicas.json`, `laminas[].preguntas[]`):
 
 - **De opciones**: cada una con sus opciones; se guarda al elegir. Se corrige sola
-  (la correcta está en la base). Son las ocho posiciones de la Estación 1
+  (la correcta está en la base). Son las ocho posiciones de la Estación 2
   («Jaque mate», «Ahogado», «Jaque, pero la partida sigue», «Posición muerta»,
   «No hay jaque ni final»), cuatro por lámina, con la situación que dice el curso
   y que se vuelve a calcular con chess.js al generar (si una posición cambia y
@@ -2142,7 +2142,7 @@ analizarlo en clase y calificarlo después. Hay tres clases de pregunta
   reclamos de la Estación 3 (el alumno siempre es la persona árbitra), los cuatro
   casos del laboratorio de la Estación 4, uno por lámina, y cada «Ejercicio k de
   N» de las sesiones 2 a 6.
-- **La planilla** del dictado (Estación 2): diez filas de blancas y negras. El
+- **La planilla** del dictado (Estación 1, **lo primero de la práctica**: lámina 1): diez filas de blancas y negras. El
   profe dicta en voz alta, sin mostrar el tablero, y todos anotan. La base la
   compara con la partida dictada (7 jugadas, con capturas, un jaque y el mate:
   el mate de Légal, comprobada con chess.js) jugada por jugada: sin espacios,
@@ -2150,6 +2150,17 @@ analizarlo en clase y calificarlo después. Hay tres clases de pregunta
   **sin su x, su + o su # NO vale**: es justo lo que el dictado quiere ver. Sale
   bien solo si todas están bien y no hay jugadas de más; el profe ve cuántas y
   cuál falló.
+
+**El orden de la práctica de la Sesión 1** (pedido del dueño, 20/10): el dictado
+primero (lámina 1), las ocho posiciones (2 y 3), los tres reclamos (4 a 6) y los
+cuatro casos (7 a 10), con las estaciones renumeradas 1 a 4 en ese orden (las
+láminas de la presentación de la clase siguen con su numeración de salas). Como
+las claves van por número de lámina, el cambio se aplicó con la migración
+`practica_dictado_primero`: renumera las claves en dos pasos (la llave primaria no
+deja cruzar dos filas en un mismo UPDATE) y vuelve a sembrar las de esa práctica;
+se hizo con `practica_respuestas` vacía, porque una respuesta ya guardada habría
+quedado en la lámina equivocada. **Cambiar el orden de nuevo con respuestas
+guardadas pide mover también `practica_respuestas`.**
 
 **La presentación propia de la Sesión 1** (`presentaciones/practica-01/`, 10
 láminas): las láminas de sus estaciones eran para trabajar en salas y no traen

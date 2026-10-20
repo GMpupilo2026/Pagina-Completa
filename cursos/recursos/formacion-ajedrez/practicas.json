@@ -9,7 +9,19 @@
       "laminas": [
         {
           "n": 1,
-          "titulo": "Estación 1: posiciones 1 a 4",
+          "titulo": "Estación 1: dictado de planilla",
+          "preguntas": [
+            {
+              "id": "planilla",
+              "tipo": "planilla",
+              "texto": "Tu planilla",
+              "filas": 10
+            }
+          ]
+        },
+        {
+          "n": 2,
+          "titulo": "Estación 2: posiciones 1 a 4",
           "preguntas": [
             {
               "id": "p1",
@@ -122,8 +134,8 @@
           ]
         },
         {
-          "n": 2,
-          "titulo": "Estación 1: posiciones 5 a 8",
+          "n": 3,
+          "titulo": "Estación 2: posiciones 5 a 8",
           "preguntas": [
             {
               "id": "p5",
@@ -232,18 +244,6 @@
                   "t": "No hay jaque ni final: la partida sigue"
                 }
               ]
-            }
-          ]
-        },
-        {
-          "n": 3,
-          "titulo": "Estación 2: dictado de planilla",
-          "preguntas": [
-            {
-              "id": "planilla",
-              "tipo": "planilla",
-              "texto": "Tu planilla",
-              "filas": 10
             }
           ]
         },
