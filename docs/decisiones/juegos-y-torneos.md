@@ -3853,6 +3853,35 @@ y sin cuenta, para que organizadores y clubes vean a quién pueden contratar.
   lista falsa y el reloj fijo: el orden, cada regla de categoría, la casilla,
   el buscador, el error de la base y los 400 px.
 
+### La ficha pública de cada árbitro, con su QR
+
+Pedido del dueño en octubre de 2026. En `arbitros.html`, el nombre de cada
+árbitro abre su ficha. Antes enlazaba al perfil de FIDE, que ahora va
+dentro de la ficha.
+
+- **Lleva solo lo público**, lo mismo que la lista y salido de
+  `arbitros_cr_publico()`: ID FIDE, título, categoría nacional, si FIDE lo
+  tiene activo, el último torneo en Costa Rica (y si fue hace más de dos
+  años) y el curso de actualización. Agrega «Puede arbitrar», lo que
+  permite su categoría según el reglamento (arts. 11, 13 y 15); a un AF o
+  AI, también si puede en torneos de FIDE (activo). No suma nada de las
+  tablas con licencia.
+- **El número de la dirección abre la ficha** (`arbitros.html#ID FIDE`).
+  El QR y «Copiar el enlace» llevan a esa dirección, así que un
+  organizador la abre desde el celular. «Volver a la lista» saca el número
+  de la dirección y devuelve el foco al nombre.
+- **El QR sale de `js/qr-svg.js`**, que antes estaba copiado dentro de
+  `js/certificado.js`; el certificado ahora también lo usa (una sola copia).
+  `js/clase-qr.js` sigue con el suyo porque pinta la tarjeta del proyector
+  con otro margen y otro tamaño.
+- `verificar-arbitros-publico.js` lo prueba:
+  - los datos y «Puede arbitrar» de un AF inactivo y de una C;
+  - que el QR leído de vuelta lleva a la ficha;
+  - copiar el enlace, cerrar la ficha, abrir directo con `#3` y que quepa
+    a 400 px.
+
+  Se rompió codificando otro texto en el QR, y salta.
+
 ## Las novedades y el arbitraje en números
 
 Dos secciones más en la lista de `arbitros-cr.html` (octubre de 2026), sin los
@@ -4034,41 +4063,73 @@ Comisión de Árbitros de 2023 a 2026, de todos los países.
     de AI más vieja, el PanAm Escolar de Medellín (del 12 al 17/11/2019),
     es de 66 días después del Board: con el desfase de siempre, ya era AF.
 - **Las solicitudes de AI de todos los países, guardadas** (octubre de
-  2026): `herramientas/arbitros-cr/solicitudes-ia.py` las saca de los 25
-  informes al Consejo, de 2020Q2 a 2026Q3, a
-  `herramientas/datos/fide-solicitudes-ia.json`. El de 2023Q4 no existe,
-  el de 2020Q4 no trae solicitudes de título, y los de antes de 2020Q2 eran
-  informes al Presidential Board, con otro nombre de archivo, que el sitio
-  de la Comisión no lista. Son 873 solicitudes y 145 rechazos (612 y 80
-  desde 2023). Para saber si alguien mandó una norma entre su «License
-  level» y su «Licensed» solo sirven los que tuvieron un rechazo y ninguna
-  aprobación (`siguen_af`, 39): al aprobarle el AI a alguien, su perfil
-  borra las fechas del AF.
+  2026): `herramientas/arbitros-cr/solicitudes-ia.py` las saca de 29
+  informes a `herramientas/datos/fide-solicitudes-ia.json`: los del
+  Presidential Board de 2019 (`2019Q1PBARBReport.pdf` a `2019Q3`), el del
+  Congreso de Abu Dabi de febrero de 2020 (`2020Q1EBARBReport.pdf`) y los
+  del Consejo de 2020Q2 a 2026Q3. El de 2023Q4 y el del Board de 2019Q4
+  no existen, el de 2020Q4 no trae solicitudes de título, y de antes de
+  2019 no hay informes con ese formato (los de 2016 a 2018 son actas,
+  anexos en fide.com, sin los torneos de cada solicitud). Son 1066
+  solicitudes y 165 rechazos (612 y 80 desde 2023). Para saber si alguien
+  mandó una norma entre su «License level» y su «Licensed» solo sirven los
+  que tuvieron un rechazo y ninguna aprobación (`siguen_af`, 46): al
+  aprobarle el AI a alguien, su perfil borra las fechas del AF.
   - En los 65 rechazos de 2020 a 2022 tampoco hay ninguno por la licencia.
     Los tres «before FA title» (Idiazabal, ESP, 2022Q2; Kikvidze, GEO, y
     Avramidou, GRE, 2022Q3) son de torneos de uno a tres años antes del AF.
-- **Normas entre el «License level» y el «Licensed»: FIDE no las objeta.**
-  De los 26, se leyeron 23 perfiles en el Chrome del dueño
-  (`herramientas/datos/fide-perfiles-siguen-af.json`). FIDE devolvió la
-  página vacía para 9007180, 9963642 y 10651985. Tres de esos árbitros
-  mandaron una norma de un torneo de ese espacio:
-  - **Ernestina Barrientos Carmona** (MEX, 5120721; AF del 23/09/2015 al
-    «Licensed» del 20/11/2016) mandó el Americas Women Continental de
-    Manzanillo (del 06/11/2016) en su solicitud de AI del informe 2023Q3,
-    junto con dos Olimpiadas y el Mundial Juvenil 2023. La rechazaron por
-    «Only 3 norms… (Match Arbiter at Olympiad used twice – art. 4.9.4)»:
-    de las cuatro solo descontaron una Olimpiada, así que **la de
-    Manzanillo contó**. Es el antecedente de Meza.
-  - **Paul Kehinde Boyo** (NGR, 8501491; del 15/09/2016 al 09/12/2019)
-    mandó la Zona 4.4 de Monrovia (del 22/04/2017) en 2023Q1. Lo
-    rechazaron por otra norma, que no firmó el principal, y por el IA2
-    viejo: de Monrovia no dijeron nada. En 2023Q3 ya no la incluyó.
-  - **Michael C. Forster** (ENG, 400785; del 10/04/2018 al 20/01/2020)
-    mandó el British Championship de Torquay (del 27/07/2019) en 2023Q2.
-    Lo rechazaron por «Missing and incomplete documents», sin decir cuál.
+- **Normas entre el «License level» y el «Licensed»: FIDE las cuenta.**
+  De los 39 de `siguen_af` se leyeron 35 perfiles en el Chrome del dueño
+  (`herramientas/datos/fide-perfiles-siguen-af.json`, #956 y #960). FIDE
+  no encuentra 3406369 ni 12600504, y devuelve vacíos 9963642 y 10651985.
+  **Doce** mandaron normas de torneos jugados entre su «License level» y
+  su «Licensed», y **en ningún rechazo FIDE habla de la licencia**. Que una
+  norma «contó» sale de la cuenta que da el rechazo («Only 3 norms»: las
+  que mandó menos las que nombra), no de una frase que lo diga:
+  - **Alberto Jesús López Rodríguez** (PER, 3802671; AF del 09/05/2017 al
+    «Licensed» del 24/02/2020), informe 2020Q2: **sus cinco normas** son de
+    ese espacio (2018 a 2020). «Only 3 norms (Cerrado Classico 1600 not IA
+    level; two 4.6d tournaments while only one norm is acceptable)»:
+    descontaron dos por otra razón, **las otras tres contaron**. Es el
+    antecedente más claro de Meza.
+  - **Magnus Aanstad** (NOR, 1507362; del 01/04/2014 al 14/03/2017), 2022Q2:
+    «Only 3 norms (Chess Olympiad Wom is too old norm, art. 5.3.1)».
+    Contaron el Campeonato de Noruega 2015 y Landsturneringen 2016, los dos
+    de ese espacio.
+  - **Divesh Sookdeo** (RSA, 14319047; del 21/09/2015 al 20/01/2020),
+    2022Q4: «Only 3 norms (RSA Open CC – not IA level)». Contaron el
+    African Youth y el African Lounge IM de 2016, de ese espacio.
+  - **Paul Kehinde Boyo** (NGR, 8501491; del 15/09/2016 al 09/12/2019),
+    2022Q4: «Only 3 norms (Cpan Chevron Challenge – not IA level)». Contó
+    la Zona 4.4 de Monrovia (del 22/04/2017). En 2023Q1 la volvió a mandar
+    y lo rechazaron por otra cosa; en 2023Q3 ya no la incluyó, quizá por
+    sus más de seis años.
+  - **Ernestina Barrientos Carmona** (MEX, 5120721; del 23/09/2015 al
+    20/11/2016), 2023Q3: «Only 3 norms… (Match Arbiter at Olympiad used
+    twice – art. 4.9.4)». Contó el Americas Women Continental de Manzanillo
+    (del 06/11/2016). No volvió a pedir el AI.
+  - Rechazados por otra cosa, con normas de ese espacio: los egipcios
+    Khatab, Abdel Aziz y Badr (2020Q3, nivel de los torneos, 4.6.c y
+    4.6.d), Hasan (SYR) y Mouini (MAR) (2021Q1, solicitud tardía), Almasalati
+    (LBA, 2020Q2, nivel de un torneo) y Michael C. Forster (ENG, 2023Q2,
+    «Missing and incomplete documents»).
+  - En varios el espacio fue de años, no de semanas (López Rodríguez, casi
+    tres; Boyo y Sookdeo, más de tres): FIDE no mira el «Licensed».
+- **La licencia que sí cuenta, y cuándo** (informes de 2016 a 2020):
+  - En 2016 la Comisión dejó escrito que «an arbiter must have been licensed
+    at the time of an event» para usarlo en una solicitud de título (Annex
+    22 de la Asamblea General de 2016, fide.com). Es tener licencia de
+    árbitro, la de AN alcanza: sin ella no se arbitra un torneo de FIDE.
+    No es el «Licensed» del título de AF.
+  - Al **pedir** el AI, la licencia tiene que ser ya de nivel AF: en 2019Q1
+    seis solicitudes quedaron «CONDITIONAL: Current level of license is NA»
+    (Bandur, Clayton, Alankar, García Contreras, Goosen y Khaydarov), y en
+    2020Q1 a Lynette Steyn (RSA) la rechazaron por «NA license level». Es
+    la licencia del día de la solicitud, no la de las fechas de los torneos.
 - **«Licensed» es otra cosa**: el pago anual de la licencia (B.06.1, 6.1).
-  En los 343 rechazos no hay ninguno de un FA o IA por esa fecha; los de
-  licencia son todos de antes del NA.
+  En los 343 rechazos de 2023 a 2026 no hay ninguno de un FA o IA por esa
+  fecha (los de licencia son todos de antes del NA), ni en los 65 de AI de
+  2020 a 2022.
 - **En la página**:
   - `af_perfil` (y `ia_perfil`) en `arbitros_cr_fide` (migración
     `20261016022547_arbitros_cr_fecha_del_perfil.sql`) es la fecha oficial.
@@ -4420,6 +4481,59 @@ seminario de AF de mujeres en 2011.
 - `verificar-arbitros-cr.js` marca a Juan solo en su bloque y comprueba la
   lista, la ficha y que nadie más lo lleve; se rompió devolviendo siempre
   nada y salta.
+
+## Conferencistas, asistentes y seminarios de quien no está en la lista
+
+Pedido del dueño en octubre de 2026, después de leer los 827 informes de
+seminarios de AF (ver «Los seminarios de AF desde 2010»).
+
+- **Los seminarios de AI.** Los informes «NN.º IA Seminar – Report» (del
+  1.º, en marzo de 2024, al 28.º, en agosto de 2026) no están en la sección
+  de informes de seminarios sino en la de Educación
+  (`news/category/arb/education`). Se leyeron los 28. Tres ticos aprobaron:
+  Cristian Araya (1.º), Joshebeth Núñez (18.º) y Edgar Zeledón (25.º); los
+  tres ya estaban por los informes al Consejo. A Edgar le faltaba el día
+  (17/05/2026), y ahora su actividad cuenta desde ahí. Los tres llevan el
+  enlace `informe`.
+- **Los cursos de actualización no se publican.** Su sección
+  (`news/category/arb/education/refresher-courses`) tiene solo 8 anuncios
+  de alrededor de 2015, sin quién aprobó, y los informes al Consejo tampoco
+  lo dicen. Por eso la actividad (B.06.3) sigue siendo un piso, «por lo
+  menos hasta». La única fuente sería el portal de formación de FIDE
+  (arb-learn.fide.com), que pide cuenta.
+- **`arbitros_cr_seminario_roles`** (migración `20261019033231`) guarda lo
+  que no cabe en `arbitros_cr_fide.seminarios`, que solo tiene a quien está
+  en la lista de árbitros de FIDE y solo lo que aprobó:
+  - `conferencista`, `asistente` u `organizador`, con `detalle` («local»,
+    «técnico», «con Laurent Freyd (FRA)»…). Salen de las frases del
+    informe que nombran a alguien «(CRC)» como Lecturer, Assistant u
+    Organizer: Carolina Muñoz Solís fue conferencista de 8 seminarios (4 de
+    AI) y asistente de 3; Oscar Angulo, asistente local del 215.º, y
+    Stanley Gómez, organizador técnico del 53.º (2017). Se buscó también
+    por apellido, por si algún informe viejo no decía «(CRC)»: no apareció
+    ninguno más.
+  - `aprobo`, solo de quien no está en la lista de FIDE: Betzy Fallas Marín
+    (11.º, de mujeres, 2011). Mariel Pomares Iraheta (67.º, México, 2019)
+    no tiene ficha en la herramienta, así que su seminario no tiene dónde
+    ir.
+  - La leen quienes tienen la herramienta y la escribe administración.
+- En la ficha, el historial suma los seminarios de esa tabla y, debajo,
+  cada rol con su fecha, el detalle y el enlace al informe.
+- **Betzy en chess-results.** Figura como «Betsy Fallas Marin» y «AN Betsy
+  Fallas», y el nombre de pila no calzaba. `VARIANTES` en
+  `herramientas/arbitros-cr.py` acepta las formas de escribir un nombre
+  (`betzy` → `betsy`), y `verificar-arbitros-cr-fechas.py` lo prueba. Sus
+  dos torneos de 2016 (JDN, eliminatoria femenina U16) se agregaron a
+  `arbitros_cr_cr_cargos` a mano; el tercero no está en la tabla de
+  torneos. Las dos filas de `arbitros_cr_sin_id` se van en la próxima
+  carga: el `delete` desde aquí pide una confirmación que nadie da.
+- **«En memoria» desde la ficha.** Administración tiene un botón para
+  marcarlo o quitarlo, con su confirmación, debajo del correo de los
+  avisos.
+- `verificar-arbitros-cr.js` lo prueba: los roles de Óscar con su orden y
+  su enlace, el seminario de Juan (que no está en la lista de FIDE), y el
+  botón (no se ve sin ser de administración; marca y quita). Se rompió
+  dejando los roles vacíos y sin guardar la marca, y salta.
 
 ## Para subir de categoría en FIDE
 
