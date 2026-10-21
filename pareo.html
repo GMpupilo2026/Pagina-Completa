@@ -103,6 +103,7 @@
                         <span class="block text-sm font-semibold mb-1" data-t="torneoAbierto">Torneo abierto</span>
                         <select id="pi-lista" class="w-full rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-800 text-brand-800 dark:text-white px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"></select>
                     </label>
+                    <label class="flex items-center gap-2 text-sm pb-2"><input type="checkbox" id="pi-modo-jde"><span data-t="modoJde">Solo lo de los JDE</span></label>
                     <button type="button" id="pi-nuevo" class="bg-brand-800 hover:bg-brand-900 dark:bg-brand-700 dark:hover:bg-brand-600 text-white font-semibold px-4 py-2 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400" data-t="nuevoTorneo">Nuevo torneo</button>
                 </div>
                 <p class="text-xs text-brand-600 dark:text-brand-300 mt-3" data-t="privado">Lo que escribes queda guardado solo en este navegador. Para pasarlo a otra computadora o tener una copia, baja el archivo del torneo en «Archivos».</p>
@@ -299,7 +300,7 @@
                     </div>
                     <p class="text-sm text-brand-600 dark:text-brand-300 mt-3" data-t="abrirAyuda">Sirve el TRF de Swiss-Manager, Vega u otro programa: se siguen emparejando las rondas que faltan.</p>
                 </div>
-                <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5">
+                <div class="pi-no-jde bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5">
                     <h2 class="font-serif text-xl font-bold mb-1" data-t="comprobador">Comprobador de emparejamientos</h2>
                     <p class="text-sm text-brand-600 dark:text-brand-300 mb-3" data-t="comprobadorAyuda">Pega un TRF (de cualquier programa) y se vuelve a emparejar cada ronda con el Sistema Holandés para ver si coincide con la que se jugó.</p>
                     <textarea id="pi-fpc-texto" rows="6" class="w-full rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-800 text-brand-800 dark:text-white px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 font-mono text-xs" aria-label="TRF a comprobar" data-t-aria="trfComprobar"></textarea>
@@ -310,7 +311,7 @@
                     </div>
                     <div id="pi-fpc-resultado" class="mt-3" role="status" aria-live="polite"></div>
                 </div>
-                <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5">
+                <div class="pi-no-jde bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5">
                     <h2 class="font-serif text-xl font-bold mb-1" data-t="generador">Generador de torneos al azar</h2>
                     <p class="text-sm text-brand-600 dark:text-brand-300 mb-3" data-t="generadorAyuda">Arma un torneo entero con resultados al azar, emparejado con el Sistema Holandés. Con la misma semilla sale siempre el mismo torneo: sirve para comparar programas.</p>
                     <div class="flex flex-wrap items-end gap-3">
@@ -319,7 +320,7 @@
                         <button type="button" id="pi-rtg-abrir" class="inline-block border border-brand-300 dark:border-brand-600 text-brand-800 dark:text-white font-semibold px-4 py-2 rounded-lg text-sm hover:bg-brand-50 dark:hover:bg-brand-800 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400" data-t="generarAbrir">Generar y abrirlo acá</button>
                     </div>
                 </div>
-                <div class="rounded-2xl border border-brand-200 dark:border-brand-700 p-5 text-sm text-brand-700 dark:text-brand-200">
+                <div class="pi-no-jde rounded-2xl border border-brand-200 dark:border-brand-700 p-5 text-sm text-brand-700 dark:text-brand-200">
                     <h2 class="font-semibold mb-2" data-t="creditos">Con qué está hecho</h2>
                     <p data-t="creditosMotor">Los emparejamientos los calcula bbpPairings (Jeremy Bierema, licencia Apache 2.0), el motor del Sistema Holandés que usan programas avalados por FIDE, compilado para correr en tu navegador.</p>
                     <p class="mt-2" data-t="creditosDesempates">Los desempates siguen el C.07 de FIDE (versión 2026) y están comparados con chesspairing (Gert Nutterts, licencia Apache 2.0).</p>

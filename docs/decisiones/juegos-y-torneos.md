@@ -2892,6 +2892,68 @@ localhost:8777; la API de archivos y la búsqueda del Elo Nacional, con
 dobles). Rompiendo a propósito «Deshacer», el aviso de la otra pestaña, que
 el adjunto no pise un tablero o lo último guardado del enlace, salta.
 
+### La ronda más rápida en la sala, y el evento de punta a punta
+
+Diez pedidos más, y antes un ensayo entero con la inscripción real de la
+regional de Alajuela (364 filas, 16 torneos, todas las rondas, todos los PDF y
+el paquete final, a 1280 y a 390 de ancho). El Excel real no va al
+repositorio: el ensayo se corrió fuera de él. Sacó un error de verdad: **un
+equipo con menos de 2 presentes** (uno de 1 integrante) perdía su encuentro
+por incomparecencia, pero el resultado no se ponía hasta que alguien tocara un
+tablero, y como no hay nada que anotar, la ronda quedaba en «Faltan 1
+resultados» para siempre. Ahora `emparejar()` pone el resultado de esos
+encuentros al emparejar. (Lo otro que pareció raro —un suizo de 10 equipos
+que no emparejaba la ronda 6— era del ensayo: con todo «1-0» todos los
+encuentros dan 2-2; con resultados al azar se jugaron las 7 en 5 de 5.)
+
+- **«Un día de los JDE, paso a paso»**: la sección 10 del manual
+  (`pareo-manual.html#es-jde` y `#en-jde`): antes, el congresillo, cada ronda
+  y el cierre, con el botón de cada cosa. De paso se corrigió la frase vieja
+  de que Pareo Integral no hace torneos por equipos.
+- **«Solo lo de los JDE»** (en Mis torneos): esconde el comprobador, el
+  generador al azar y los créditos (`.pi-no-jde`), que en los JDE no se usan.
+  Se recuerda en el navegador (`pareo_modo_jde_v1`). Es solo pantalla: no
+  cambia nada del torneo.
+- **Buscar una mesa por el nombre** (`#pi-buscar-mesa`): cada mesa (o
+  encuentro, con los nombres de sus integrantes) lleva `data-nombres` sin
+  tildes ni mayúsculas; Enter salta al primer resultado que se ve.
+- **Los atajos del resultado**: en un select de resultado, 1 gana blancas, 0
+  gana negras, = (o 5) tablas, y el foco salta solo a la mesa siguiente. En
+  una ronda cerrada el diálogo del motivo sale igual: el atajo no se lo salta.
+- **«Todo para imprimir»**: la plantilla de la pared, las hojas de alineación
+  (en equipos), las planillas para firmar y las de anotación, en una sola
+  impresión. Las funciones de cada hoja se juntan (`impresion.juntando`) en
+  vez de imprimir cada una por su lado; cada hoja empieza en página nueva.
+- **El desempate «Por tableros» (TB)**: en un torneo por equipos, los puntos
+  del tablero 1; a igual, los del 2, y así. Se guarda como un solo número en
+  base 100 de medios puntos (`E.codificarTableros`) para que se compare como
+  los demás, y se muestra tablero por tablero (`E.textoTableros`). En un
+  encuentro perdido por incomparecencia, el que vino suma 1 en cada tablero.
+  No va a la ficha del jugador del enlace del evento (ese número no se lee).
+- **Los capitanes confirman la alineación desde el celular**: un enlace y un
+  QR por equipo (`#capitan=<código>`, guardado en `capitanes` del torneo,
+  canal `pareo-capitan-<código>`). El capitán marca entre 2 y 4 y lo manda;
+  **lo decide la pestaña del árbitro principal**, no el celular: solo en la
+  última ronda, solo si el encuentro todavía no tiene ningún tablero anotado y
+  solo con integrantes de su equipo. Lo que no vale no entra y el celular
+  vuelve a recibir el estado. El encuentro dice «Confirmada por el capitán a
+  las …». El riesgo de un enlace pasado a quien no es aceptado como en los
+  adjuntos: el árbitro lo ve y lo cambia.
+- **El paquete para chess-results**: chess-results no recibe archivos directo
+  (se abren en Swiss-Manager y se suben desde ahí), así que se baja un `.zip`
+  con el TRF de cada torneo hasta la última ronda completa y, en los de
+  equipos, también el TRF de equipos.
+- **Comparado con el año anterior** (`V.compararAnioAnterior()`): los
+  torneos de la misma etapa y lugar del año anterior, de
+  `data/ajedrez-estudiantil.json`, por categoría, modalidad y rama, contra los
+  de este evento. Solo el ritmo clásico, y se cuentan participantes como allá
+  (jugadores en individual, equipos en equipos).
+
+Al tocar esto, `node herramientas/verificar-pareo-ronda.js` (con el sitio en
+localhost:8777; Realtime y el archivo del año anterior, con dobles). Rompiendo
+a propósito el resultado del encuentro sin presentes, la validación del
+capitán, el punto por tablero del que vino o el filtro de la búsqueda, salta.
+
 ### La barra de progreso al buscar el Elo Nacional
 
 Antes de esto, tocar «Buscar Elo Nacional de quien no tiene» con una lista

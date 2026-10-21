@@ -428,7 +428,7 @@
         }) } : {})) } : null,
       clasificacion: k ? clasificacionDe(t).map((f) => ({ p: f.puesto, n: nombre(f.id), pts: f.puntos,
         // Los primeros desempates, para la ficha del jugador en el celular.
-        d: (t.desempates || []).slice(0, 3).map((c) => ({ c, v: Math.round((f.valores[c] || 0) * 100) / 100 })) })) : [],
+        d: (t.desempates || []).filter((c) => c !== "TB").slice(0, 3).map((c) => ({ c, v: Math.round((f.valores[c] || 0) * 100) / 100 })) })) : [],
     };
   }
   function vistaEvento(evento, torneos) { return { v: 2, nombre: evento.nombre, torneos: torneos.map(vistaTorneo) }; }
@@ -633,7 +633,35 @@
     });
   }
 
+  // ---------- Comparado con el año anterior ----------
+  // Los torneos de la misma etapa y el mismo lugar del año anterior, de
+  // data/ajedrez-estudiantil.json (los de chess-results que publica
+  // «Ajedrez estudiantil en Costa Rica»), contra los de este evento, por
+  // categoría, modalidad y rama. Se cuentan participantes como allá: en
+  // individual, jugadores; en equipos, equipos. Solo el ritmo clásico.
+  const ETAPA_CR = { regional: "Regional", interregional: "Interregional" };
+  function compararAnioAnterior(evento, torneos, datos) {
+    const jde = evento.jde || {};
+    const anio = Number(jde.anio) - 1;
+    const col = (datos.columnas || []).reduce((a, c, i) => Object.assign(a, { [c]: i }), {});
+    const inter = jde.etapa === "interregional" && G.JDE_INTERREGIONALES.find((x) => x.numero === jde.lugar);
+    const delLugar = (region) => (jde.etapa === "regional" ? clave(region) === clave(jde.lugar) : !!inter && inter.regiones.some((d) => clave(d) === clave(region)));
+    const antes = (datos.torneos || []).filter((x) => x[col.anio] === anio && x[col.etapa] === ETAPA_CR[jde.etapa] && x[col.ritmo] === "Clásico" && delLugar(x[col.region]));
+    const grupoDe = (categoria, modalidad, rama) => [categoria || "—", modalidad, rama].join(" · ");
+    const mapa = new Map();
+    const sumar = (k, que, n) => { if (!mapa.has(k)) mapa.set(k, { grupo: k, antes: null, ahora: null }); const f = mapa.get(k); f[que] = (f[que] || 0) + n; };
+    for (const x of antes) sumar(grupoDe(x[col.categoria], x[col.modalidad] === "Equipos" ? "Equipos" : "Individual", x[col.rama] === "Femenina" ? "Mujeres" : "Abierto"), "antes", Number(x[col.jugadores]) || 0);
+    for (const t of torneos) {
+      const categoria = (/Categoría (\S+)/.exec(t.grupo || "") || [])[1] || (t.jugadores[0] && (t.jugadores[0].categoria || (t.jugadores[0].integrantes || [{}])[0].categoria)) || "";
+      sumar(grupoDe(String(categoria).trim(), E.esDeEquipos(t) ? "Equipos" : "Individual", /Mujeres/.test(t.grupo || t.nombre) ? "Mujeres" : "Abierto"), "ahora", t.jugadores.length);
+    }
+    const filas = [...mapa.values()].sort((a, b) => a.grupo.localeCompare(b.grupo, "es"));
+    return { anio, torneosAntes: antes.length, filas,
+      totalAntes: filas.reduce((a, f) => a + (f.antes || 0), 0), totalAhora: filas.reduce((a, f) => a + (f.ahora || 0), 0) };
+  }
+
   const api = {
+    compararAnioAnterior,
     revisarCierre,
     aplicarDesempate, empatadosEnCorte, segundosIncremento, duracionRonda, horario, porDireccion, constancias, textoConstancia,
     medallero, estadisticas, compararEtapa, minutosBase, estadoRetraso, incidenciasDe, NOMBRE_INCIDENCIA,

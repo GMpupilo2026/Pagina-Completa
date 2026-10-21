@@ -163,17 +163,55 @@
   // de tablero (lo que se usa en las olimpiadas y lo que pide la propuesta
   // de cambios a la normativa), y después los de FIDE.
   const PT = { codigo: "PT", es: "Puntos de tablero", en: "Game points (board points)" };
-  const catalogo = (t) => (esDeEquipos(t) ? [PT].concat(D.CATALOGO) : D.CATALOGO);
+  // Por tableros: los puntos del tablero 1; a igual, los del 2, y así (como
+  // lo usan algunos reglamentos de equipos para el último desempate).
+  const TB = { codigo: "TB", es: "Por tableros (los puntos del tablero 1, después los del 2…)", en: "Board by board (board 1 points, then board 2…)" };
+  const catalogo = (t) => (esDeEquipos(t) ? [PT, TB].concat(D.CATALOGO) : D.CATALOGO);
+
+  // Los puntos de un equipo en cada tablero, en las rondas [0, hasta).
+  function puntosPorTablero(t, idEquipo, hasta) {
+    const h = Math.min(hasta == null ? t.rondas.length : hasta, t.rondas.length);
+    const out = Array(nTableros(t)).fill(0);
+    for (let r = 0; r < h; r++) {
+      for (const m of t.rondas[r].mesas) {
+        if (m.n === null || (m.b !== idEquipo && m.n !== idEquipo)) continue;
+        const pe = puntosDelEncuentro(t, m);
+        if (pe.incomparecencia) {
+          const presente = m.b === idEquipo ? !pe.faltaB : !pe.faltaN;
+          if (presente) for (let k = 0; k < out.length; k++) out[k] += 1;
+          continue;
+        }
+        for (const x of tablerosDe(t, m)) {
+          if (!x.r) continue;
+          const mio = m.b === idEquipo ? x.bBlancas : !x.bBlancas;
+          out[x.k] += mio ? puntosBlancas(x.r) : puntosNegras(x.r);
+        }
+      }
+    }
+    return out;
+  }
+  // Un solo número que se compara de mayor a menor: cada tablero en medios
+  // puntos, en «cifras» de base 100 (alcanza hasta 49 rondas).
+  const codificarTableros = (v) => v.reduce((a, x) => a * 100 + Math.round(x * 2), 0);
+  function textoTableros(codigo, n) {
+    const out = [];
+    let x = Math.round(Number(codigo) || 0);
+    for (let k = 0; k < (n || TABLEROS); k++) { out.unshift((x % 100) / 2); x = Math.floor(x / 100); }
+    return out.map((p) => String(p).replace(".5", "½").replace(/^0½$/, "½")).join(" · ");
+  }
 
   // La clasificación: en un torneo individual, la de siempre; en uno por
   // equipos, la misma (puntos de encuentro y los desempates de FIDE sobre
   // los encuentros) con los puntos de tablero calculados acá.
   function clasificacion(t, codigos) {
     const lista = codigos || t.desempates || [];
-    if (!esDeEquipos(t) || !lista.includes("PT")) return D.clasificacion(t, lista);
-    const deFide = lista.filter((c) => c !== "PT");
+    if (!esDeEquipos(t) || !(lista.includes("PT") || lista.includes("TB"))) return D.clasificacion(t, lista);
+    const deFide = lista.filter((c) => c !== "PT" && c !== "TB");
     const base = D.clasificacion(t, deFide);
-    for (const f of base) f.valores.PT = puntosTablero(t, f.id);
+    for (const f of base) {
+      if (lista.includes("PT")) f.valores.PT = puntosTablero(t, f.id);
+      if (lista.includes("TB")) f.valores.TB = codificarTableros(puntosPorTablero(t, f.id));
+    }
     const cmp = (a, b) => {
       if (b.puntos !== a.puntos) return b.puntos - a.puntos;
       for (const c of lista) if (b.valores[c] !== a.valores[c]) return (b.valores[c] || 0) - (a.valores[c] || 0);
@@ -354,7 +392,7 @@
     TABLEROS, MAX_INTEGRANTES, MIN_PRESENTES, PUNTOS_EQUIPOS, PT,
     esDeEquipos, armarEquipos, eloDeEquipo, alineacionPorOmision, prepararMesa, tablerosDe,
     puntosDelEncuentro, resultadoEncuentro, puntosTablero, catalogo, clasificacion, desempatesPara, moverIntegrante,
-    fijarOrden, avisosAlineacion, mejoresTableros,
+    fijarOrden, avisosAlineacion, mejoresTableros, TB, puntosPorTablero, codificarTableros, textoTableros,
   };
   if (enNode) module.exports = api;
   else raiz.PareoEquipos = api;

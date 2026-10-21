@@ -60,7 +60,8 @@ async function jugarRondas(page, resultado) {
     const emparejar = await page.$("#pi-emparejar");
     if (emparejar) {
       await emparejar.click();
-      await page.waitForFunction(() => !document.getElementById("pi-emparejar") && document.querySelector("#pi-ronda select"));
+      // (Un encuentro perdido por no presentarse no tiene nada que anotar.)
+      await page.waitForFunction(() => !document.getElementById("pi-emparejar") && document.querySelector("#pi-rondas-nav"));
     }
     await anotar(page, resultado);
     const nav = await page.$$eval("#pi-rondas-nav button", (l) => l.map((b) => b.textContent));

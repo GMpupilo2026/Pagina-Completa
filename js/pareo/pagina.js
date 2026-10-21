@@ -27,6 +27,7 @@
   const CLAVE_IDIOMA = "pareo_idioma_v1";
   const CLAVE_FICHA = "pareo_ficha_v1";
   const PREFIJO = "pareo_torneo_v1_";
+  const CLAVE_MODO_JDE = "pareo_modo_jde_v1";
 
   const C = {
     campo: "w-full rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-800 text-brand-800 dark:text-white px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400",
@@ -63,7 +64,7 @@
   let idioma = leer(CLAVE_IDIOMA) === "en" ? "en" : "es";
   const tx = (clave, vars) => X.t(idioma, clave, vars);
 
-  const estado = { lista: leerJSON(CLAVE_LISTA, []), id: null, t: null, ficha: leer(CLAVE_FICHA) || "jugadores", ronda: null, filtroInstitucion: "", filtroJugador: "", eloPendientes: [], enVivo: false, canalVivo: null, sugerencia: null, eventoVivo: null, adjuntos: null, marcados: new Set(),
+  const estado = { lista: leerJSON(CLAVE_LISTA, []), id: null, t: null, ficha: leer(CLAVE_FICHA) || "jugadores", ronda: null, filtroInstitucion: "", filtroJugador: "", eloPendientes: [], enVivo: false, canalVivo: null, sugerencia: null, eventoVivo: null, adjuntos: null, capitanes: null, verCapitanes: false, marcados: new Set(),
     // El historial de cambios de cada torneo (solo en esta pestaña) y lo que
     // se guardó la última vez, para saber qué cambió y para notar si otra
     // pestaña lo cambió por debajo.
@@ -117,6 +118,7 @@
     if (estado.enVivo) difundirEnVivo();
     if (estado.eventoVivo && estado.t.evento && estado.t.evento.id === estado.eventoVivo.id) difundirEvento();
     if (estado.adjuntos && estado.adjuntos.idTorneo === estado.id) enviarAdjuntos();
+    if (estado.capitanes && estado.capitanes.idTorneo === estado.id) for (const c of estado.capitanes.canales.keys()) enviarCapitan(c);
     if (estado.respaldoArchivo && estado.t.evento && estado.t.evento.id === estado.respaldoArchivo.id) programarRespaldo();
   }
   const TOPE_HISTORIAL = 40;
@@ -1525,6 +1527,38 @@
         el("ul", { class: "list-disc pl-6 text-sm" }, conPendientes.map(([x, k]) => el("li", { texto: (x.grupo || x.nombre) + ": " + k })))));
     }
 
+    // Para chess-results: el TRF de cada torneo, en un .zip. chess-results no
+    // recibe archivos directo: se abren en Swiss-Manager y se suben desde ahí.
+    const bChess = el("button", { type: "button", id: "pi-evento-chess", class: C.botonSec }, tx("chessBajar"));
+    bChess.addEventListener("click", () => {
+      const lista = torneosDelEvento();
+      const partes = [];
+      const faltan = [];
+      for (const x of lista) {
+        const k = x.rondas.filter((R) => T.rondaCompleta(R)).length;
+        const nombre = window.PareoPDF.nombreArchivo(x.grupo || x.nombre, "").replace(/-?\.pdf$/, "");
+        try {
+          partes.push({ nombre: nombre + ".trf", texto: T.aTrf(x, { hasta: k }) });
+          if (E.esDeEquipos(x)) partes.push({ nombre: nombre + "-equipos.trf", texto: E.aTrfEquipos(x, k) });
+        } catch (e) { faltan.push(x.grupo || x.nombre); }
+      }
+      if (!partes.length) { Avisos.avisar(tx("chessNada"), { tipo: "error" }); return; }
+      bajar(window.PareoPDF.nombreArchivo(ev.nombre, "chess-results").replace(/\.pdf$/, ".zip"), window.TablaExcel.zip(partes), "application/zip");
+      Avisos.avisar(tx("chessListo", { n: partes.length }) + (faltan.length ? " " + tx("chessFaltan", { t: faltan.join(", ") }) : ""));
+    });
+    caja.append(el("h3", { class: "font-semibold mt-5", texto: tx("chessTitulo") }),
+      el("p", { class: C.nota, texto: tx("chessTexto") }), el("div", { class: "mt-2" }, bChess));
+
+    // Comparado con el año anterior (los torneos de chess-results que ya
+    // tiene «Ajedrez estudiantil en Costa Rica»).
+    if (ev.jde && ev.jde.etapa !== "institucional") {
+      const cajaAnio = el("div", { id: "pi-anio-anterior", class: "mt-2" });
+      const bAnio = el("button", { type: "button", id: "pi-evento-anio", class: C.botonSec }, tx("anioBoton", { a: ev.jde.anio - 1 }));
+      bAnio.addEventListener("click", () => compararAnio(ev, cajaAnio, bAnio));
+      caja.append(el("h3", { class: "font-semibold mt-5", texto: tx("anioTitulo") }),
+        el("p", { class: C.nota, texto: tx("anioTexto") }), el("div", { class: "mt-2" }, bAnio), cajaAnio);
+    }
+
     // El cierre: lo que falta, y el paquete final en un .zip.
     const cierre = V.revisarCierre(ev, torneos);
     const faltan = cierre.filter((x) => x.problemas.length);
@@ -1615,6 +1649,26 @@
     caja.append(lista, bLista, el("p", { class: C.nota + " mt-2", texto: tx("clasificadosAyuda") }));
   }
   const CLAVE_HORARIO = "pareo_horario_v1_";
+
+  async function compararAnio(ev, cont, boton) {
+    boton.disabled = true;
+    try {
+      const r = await fetch("data/ajedrez-estudiantil.json", { cache: "no-cache" });
+      if (!r.ok) throw new Error("HTTP " + r.status);
+      const c = V.compararAnioAnterior(ev, torneosDelEvento(), await r.json());
+      if (!c.torneosAntes) { cont.replaceChildren(el("p", { class: "text-sm mt-2", texto: tx("anioNada", { a: c.anio }) })); return; }
+      cont.replaceChildren(
+        el("p", { class: "text-sm mt-2 font-semibold", texto: tx("anioResumen", { a: c.anio, t: c.torneosAntes, x: c.totalAntes, y: c.totalAhora }) }),
+        el("div", { class: "overflow-x-auto mt-2" }, el("table", { id: "pi-anio-tabla", class: "pi-tabla" },
+          el("thead", {}, el("tr", {}, el("th", { scope: "col", texto: tx("anioGrupo") }), el("th", { class: "num", scope: "col", texto: String(c.anio) }), el("th", { class: "num", scope: "col", texto: String(c.anio + 1) }))),
+          el("tbody", {}, c.filas.map((f) => el("tr", {}, el("td", { texto: f.grupo }), el("td", { class: "num", texto: f.antes == null ? "—" : f.antes }), el("td", { class: "num", texto: f.ahora == null ? "—" : f.ahora })))))),
+        el("p", { class: C.nota + " mt-1", texto: tx("anioNota") }));
+    } catch (e) {
+      cont.replaceChildren(el("p", { class: "text-sm mt-2", texto: tx("anioError", { e: e.message }) }));
+    } finally {
+      boton.disabled = false;
+    }
+  }
 
   // El paquete final del evento: el acta, el informe y la premiación en
   // PDF, los clasificados y las estadísticas en Excel y el respaldo, en un
@@ -1981,10 +2035,23 @@
         el("button", { type: "button", class: C.botonSec, onclick: () => compartirLectura(r) }, tx("verDesdeElCelular")),
         ultima ? el("button", { type: "button", id: "pi-adjunto", class: C.botonSec, onclick: () => enlaceAdjunto(r) }, tx("adjuntoBoton")) : null,
         el("button", { type: "button", id: "pi-planillas-anotacion", class: C.botonSec, onclick: () => imprimirPlanillasAnotacion(r) }, tx("anotacionBoton")),
+        el("button", { type: "button", id: "pi-imprimir-todo", class: C.botonSec, onclick: () => imprimirTodoDeRonda(r) }, tx("imprimirTodo")),
         ultima ? el("button", { type: "button", class: C.miniPeligro + " px-3 py-2", onclick: () => deshacerRonda(r) }, tx("deshacerRonda")) : null)));
     caja.append(el("p", { class: C.nota + " mb-3 no-imprimir", role: "status", texto: pendientes ? tx("faltanResultados", { n: pendientes }) : tx("rondaCompleta") }));
     if (!ultima) caja.append(el("p", { class: C.nota + " mb-3 no-imprimir", texto: tx("avisoCorregir") }));
 
+    // Buscar una mesa por el nombre de quien juega, y los atajos del teclado.
+    const buscarMesa = el("input", { id: "pi-buscar-mesa", type: "search", autocomplete: "off", class: C.campo, "aria-describedby": "pi-atajos-ayuda" });
+    caja.append(el("div", { class: "no-imprimir mb-3 max-w-md" },
+      el("label", { for: "pi-buscar-mesa", class: "block text-sm font-semibold mb-1", texto: tx("buscarMesa") }), buscarMesa,
+      el("p", { id: "pi-atajos-ayuda", class: C.nota + " mt-1", texto: tx("atajosAyuda") })));
+    buscarMesa.addEventListener("input", () => filtrarMesas(buscarMesa.value));
+    buscarMesa.addEventListener("keydown", (e) => {
+      if (e.key !== "Enter") return;
+      e.preventDefault();
+      const primero = [...document.querySelectorAll("#pi-ronda select[data-resultado]")].find((s) => s.checkVisibility());
+      if (primero) primero.focus();
+    });
     if (ultima || v.rondas[r].inicio) pintarReloj(caja, r);
     const cajaAdjunto = el("div", { id: "pi-adjunto-caja", class: "no-imprimir mb-4", hidden: true });
     caja.append(cajaAdjunto);
@@ -1993,6 +2060,37 @@
     else pintarMesasIndividuales(caja, r);
     pintarNoJuegan(caja, r);
     pintarIncidencias(caja, r);
+    for (const s of caja.querySelectorAll("select[data-resultado]")) atajosResultado(s);
+  }
+
+  // Esconde las mesas en que no juega nadie con ese nombre (sin tildes ni
+  // mayúsculas). Cada mesa lleva sus nombres en data-nombres.
+  function filtrarMesas(texto) {
+    const q = normalizarBusqueda(texto).trim();
+    for (const fila of document.querySelectorAll("#pi-ronda [data-nombres]")) fila.hidden = !!q && !fila.dataset.nombres.includes(q);
+  }
+
+  // Los atajos de un resultado: 1 gana blancas, 0 gana negras, = (o 5)
+  // tablas; y salta solo al siguiente. En la ronda en juego no pide nada;
+  // en una cerrada, el diálogo del motivo sale igual (lo pide el cambio).
+  const ATAJOS = { "1": "1-0", "0": "0-1", "=": "=", "5": "=" };
+  function atajosResultado(sel) {
+    sel.addEventListener("keydown", (e) => {
+      const val = ATAJOS[e.key];
+      if (!val || e.altKey || e.ctrlKey || e.metaKey || ![...sel.options].some((o) => o.value === val)) return;
+      e.preventDefault();
+      const id = sel.id;
+      sel.value = val;
+      sel.dispatchEvent(new Event("change"));
+      // El cambio puede volver a pintar la ronda: el siguiente se busca de nuevo.
+      setTimeout(() => {
+        if (document.querySelector('dialog[open]')) return;
+        const todos = [...document.querySelectorAll("#pi-ronda select[data-resultado]")].filter((s) => s.checkVisibility());
+        const k = todos.findIndex((s) => s.id === id);
+        const siguiente = todos[k + 1];
+        if (siguiente) siguiente.focus();
+      }, 0);
+    });
   }
 
   const horaCR = (ms) => (window.HoraCR ? HoraCR.hora(ms) : new Date(ms).toLocaleTimeString("es-CR", { hour: "numeric", minute: "2-digit", timeZone: "America/Costa_Rica" }));
@@ -2141,6 +2239,100 @@
         el("div", { class: "flex flex-wrap gap-2 mt-1" }, copiar, apagar)));
     }
     cont.replaceChildren(el("p", { class: C.nota, texto: tx("adjuntoAyuda") }), lista);
+  }
+
+  // ---------- Los capitanes confirman la alineación desde su celular ----------
+  // Un enlace por equipo (#capitan=<código>), guardado en el torneo
+  // (`capitanes`: { idEquipo: código }). El capitán marca a los que juegan y
+  // lo manda; esta pestaña lo acepta solo en la última ronda, si su
+  // encuentro todavía no tiene ningún tablero anotado, y si todos son de su
+  // equipo (hasta 4, en el orden de tableros). Queda dicho en el encuentro.
+  function asegurarCapitanes() {
+    const v = t();
+    v.capitanes = v.capitanes || {};
+    for (const e of v.jugadores) if (!v.capitanes[e.id]) v.capitanes[e.id] = nuevoCodigoVivo();
+  }
+  async function conectarCapitanes() {
+    const v = t();
+    const codigos = Object.entries(v.capitanes || {});
+    if (!codigos.length) return true;
+    if (estado.capitanes && estado.capitanes.idTorneo !== estado.id) desconectarCapitanes();
+    if (!estado.capitanes) estado.capitanes = { idTorneo: estado.id, canales: new Map() };
+    try { await PareoVer.cargarSupabase(); }
+    catch (e) { Avisos.avisar(tx("errorEnVivo", { e: e.message }), { tipo: "error" }); return false; }
+    for (const [idE, codigo] of codigos) {
+      if (estado.capitanes.canales.has(codigo)) continue;
+      const canal = window.sb.channel("pareo-capitan-" + codigo);
+      canal.on("broadcast", { event: "pedir" }, () => enviarCapitan(codigo));
+      canal.on("broadcast", { event: "alineacion" }, (msg) => recibirDeCapitan(codigo, msg.payload || {}));
+      canal.subscribe((st) => { if (st === "SUBSCRIBED") enviarCapitan(codigo); });
+      estado.capitanes.canales.set(codigo, { canal, idE });
+    }
+    return true;
+  }
+  function desconectarCapitanes() {
+    if (estado.capitanes) for (const x of estado.capitanes.canales.values()) x.canal.unsubscribe();
+    estado.capitanes = null;
+  }
+  const torneoDeCapitanes = () => estado.capitanes && (estado.capitanes.idTorneo === estado.id ? t() : leerJSON(PREFIJO + estado.capitanes.idTorneo, null));
+  // El encuentro del equipo en la última ronda y de qué lado está.
+  function encuentroDe(v, idE) {
+    const R = v.rondas[v.rondas.length - 1];
+    const m = R && R.mesas.find((x) => x.b === idE || x.n === idE);
+    return m ? { m, lado: "bn"[m.b === idE ? 0 : 1] } : null;
+  }
+  function enviarCapitan(codigo) {
+    const v = torneoDeCapitanes();
+    const x = estado.capitanes && estado.capitanes.canales.get(codigo);
+    if (!v || !x) return;
+    const e = v.jugadores.find((y) => y.id === x.idE);
+    if (!e) return;
+    const enc = v.rondas.length ? encuentroDe(v, e.id) : null;
+    const m = enc && enc.m;
+    const rival = m && m.n != null ? (v.jugadores.find((y) => y.id === (enc.lado === "b" ? m.n : m.b)) || {}).nombre : null;
+    const alineacion = m && m.n != null ? ((m.alineacion && m.alineacion[enc.lado]) || E.alineacionPorOmision(v, e.id)) : [];
+    x.canal.send({ type: "broadcast", event: "estado", payload: {
+      nombre: v.nombre || "", equipo: e.nombre, ronda: v.rondas.length, rival,
+      integrantes: e.integrantes.map((j) => ({ id: j.id, nombre: j.nombre })), alineacion,
+      bloqueada: !m || m.n == null || (m.partidas || []).some((p) => p.r),
+      confirmada: (m && m.alineacionCapitan && m.alineacionCapitan[enc.lado]) || null,
+    } });
+  }
+  function recibirDeCapitan(codigo, p) {
+    const v = torneoDeCapitanes();
+    const x = estado.capitanes && estado.capitanes.canales.get(codigo);
+    if (!v || !x || Number(p.ronda) !== v.rondas.length) return enviarCapitan(codigo);
+    const e = v.jugadores.find((y) => y.id === x.idE);
+    const enc = e && encuentroDe(v, e.id);
+    if (!enc || enc.m.n == null || (enc.m.partidas || []).some((q) => q.r)) return enviarCapitan(codigo);
+    const ids = Array.isArray(p.alineacion) ? p.alineacion.map(String) : [];
+    const deEquipo = e.integrantes.map((j) => j.id);
+    if (ids.length > E.TABLEROS || new Set(ids).size !== ids.length || ids.some((id) => !deEquipo.includes(id))) return enviarCapitan(codigo);
+    E.prepararMesa(v, enc.m);
+    enc.m.alineacion[enc.lado] = deEquipo.filter((id) => ids.includes(id));
+    enc.m.alineacionCapitan = Object.assign({}, enc.m.alineacionCapitan, { [enc.lado]: Date.now() });
+    enc.m.r = E.resultadoEncuentro(v, enc.m);
+    if (v === t()) { guardar(); if (estado.ficha === "rondas") pintarRondas(); }
+    else escribir(PREFIJO + estado.capitanes.idTorneo, JSON.stringify(v));
+    Avisos.avisar(tx("capitanLlego", { e: e.nombre }), { tipo: "info" });
+    enviarCapitan(codigo);
+  }
+  async function mostrarCapitanes(cont, R) {
+    const v = t();
+    try { await PareoQr.cargar(); } catch (e) { Avisos.avisar(tx("errorQr", { e: e.message }), { tipo: "error" }); return; }
+    const enLaRonda = R.mesas.flatMap((m) => (m.n == null ? [] : [m.b, m.n]));
+    const lista = el("div", { class: "grid sm:grid-cols-2 lg:grid-cols-3 gap-3 mt-2" });
+    for (const idE of enLaRonda) {
+      const e = jugador(idE);
+      const codigo = (v.capitanes || {})[idE];
+      if (!e || !codigo) continue;
+      const url = location.origin + location.pathname + "#capitan=" + codigo;
+      lista.append(el("div", { class: "rounded-xl border border-brand-200 dark:border-brand-700 p-3", "data-capitan-equipo": idE },
+        el("h4", { class: "font-semibold", texto: e.nombre }),
+        el("div", { class: "w-28 bg-white p-2 rounded-lg mt-2" }, PareoQr.svg(url, tx("qrEtiqueta"))),
+        el("p", { class: "pi-capitan-url text-xs break-all mt-2 font-mono", texto: url })));
+    }
+    cont.replaceChildren(el("p", { class: C.nota, texto: tx("capitanesAyuda") }), lista);
   }
 
   // ---------- El reloj del retraso ----------
@@ -2339,7 +2531,7 @@
           el("td", { class: "text-center", colspan: 4, texto: tx("byePareo", { p: puntosTexto(v.puntos.bye) }) })));
         return;
       }
-      const sel = el("select", { class: C.campoChico, "aria-label": tx("resultadoMesa", { m: i + 1, b: nombreDe(m.b), n: nombreDe(m.n) }) });
+      const sel = el("select", { id: "pi-mesa-" + i, "data-resultado": "", class: C.campoChico, "aria-label": tx("resultadoMesa", { m: i + 1, b: nombreDe(m.b), n: nombreDe(m.n) }) });
       for (const [val, clave] of RESULTADOS) sel.append(el("option", { value: val, texto: tx(clave) }));
       sel.value = m.r || "";
       sel.addEventListener("change", async () => {
@@ -2357,7 +2549,7 @@
         if (estadoTxt) estadoTxt.textContent = quedan ? tx("faltanResultados", { n: quedan }) : tx("rondaCompleta");
         if (!quedan) pintarRondasNav();
       });
-      cuerpo.append(el("tr", {},
+      cuerpo.append(el("tr", { "data-nombres": normalizarBusqueda(nombreDe(m.b) + " " + nombreDe(m.n)) },
         el("td", { class: "num", texto: i + 1 }), el("td", { class: "num", texto: num.get(m.b) }),
         el("td", { class: "font-semibold", texto: nombreDe(m.b) }), el("td", { class: "num", texto: puntosTexto(antes(m.b)) }),
         el("td", { class: "text-center" }, sel, el("span", { class: "pi-solo-imprimir", texto: m.r ? tx("corto_" + m.r) : "" }),
@@ -2422,6 +2614,19 @@
       el("li", {}, el("span", { class: "font-semibold", texto: tx("cortosAviso") + " " }), tx(TEXTO_ALINEACION[a.tipo], { e: a.nombre, n: a.presentes, k: a.pierde })))) : null);
     const generales = listaAvisos(avisos.filter((a) => a.mesa == null), "pi-alin-generales");
     if (generales) caja.append(generales);
+    // Los capitanes confirman la alineación desde su celular (la última ronda).
+    if (r === v.rondas.length - 1) {
+      const cajaCap = el("div", { id: "pi-capitanes-caja", class: "no-imprimir mb-4" });
+      const bCap = el("button", { type: "button", id: "pi-capitanes", class: C.botonSec, "aria-expanded": estado.verCapitanes ? "true" : "false" }, tx("capitanesBoton"));
+      bCap.addEventListener("click", async () => {
+        estado.verCapitanes = !estado.verCapitanes;
+        if (estado.verCapitanes) { asegurarCapitanes(); guardar(); await conectarCapitanes(); }
+        pintarRondas();
+      });
+      caja.append(el("div", { class: "no-imprimir mb-3" }, bCap), cajaCap);
+      if ((v.capitanes && Object.keys(v.capitanes).length)) conectarCapitanes();
+      if (estado.verCapitanes) mostrarCapitanes(cajaCap, R);
+    }
     R.mesas.forEach((m, i) => {
       if (m.n === null) {
         lista.append(el("p", { class: "rounded-xl border border-brand-200 dark:border-brand-700 p-3 text-sm" },
@@ -2431,7 +2636,8 @@
       }
       E.prepararMesa(v, m);
       const pe = E.puntosDelEncuentro(v, m);
-      const tarjeta = el("section", { class: "rounded-xl border border-brand-200 dark:border-brand-700 p-3", "aria-labelledby": "pi-enc-" + i + "-t" });
+      const nombresEnc = [nombreDe(m.b), nombreDe(m.n)].concat([m.b, m.n].flatMap((idE) => (jugador(idE) || { integrantes: [] }).integrantes.map((j) => j.nombre)));
+      const tarjeta = el("section", { class: "rounded-xl border border-brand-200 dark:border-brand-700 p-3", "aria-labelledby": "pi-enc-" + i + "-t", "data-nombres": normalizarBusqueda(nombresEnc.join(" ")) });
       tarjeta.append(el("h3", { id: "pi-enc-" + i + "-t", class: "font-semibold" },
         tx("mesa") + " " + (i + 1) + ": " + num.get(m.b) + ". " + nombreDe(m.b) + " (" + puntosTexto(antes(m.b)) + ") – " +
         num.get(m.n) + ". " + nombreDe(m.n) + " (" + puntosTexto(antes(m.n)) + ")"));
@@ -2450,6 +2656,8 @@
         const elegidos = m.alineacion[lado];
         const lleno = elegidos.length >= E.TABLEROS;
         const fs = el("fieldset", { class: "text-sm" }, el("legend", { class: "font-semibold", texto: tx("juegan", { e: e.nombre }) }));
+        const porCapitan = m.alineacionCapitan && m.alineacionCapitan[lado];
+        if (porCapitan) fs.append(el("p", { class: C.nota, "data-capitan": lado, texto: tx("capitanConfirmo", { h: horaCR(porCapitan) }) }));
         e.integrantes.forEach((j, k) => {
           const id = "pi-enc-" + i + "-" + lado + "-" + k;
           const si = elegidos.includes(j.id);
@@ -2480,7 +2688,7 @@
         if (x.fijo || pe.incomparecencia) celda = el("span", { class: "text-sm", texto: tx("corto_" + (pe.incomparecencia ? m.r : x.r)) + " · " + tx("incomparecencia") });
         else {
           const id = "pi-enc-" + i + "-t" + x.k;
-          const sel = el("select", { id, class: C.campoChico, "aria-label": tx("resultadoTablero", { t: x.k + 1, b: blancas, n: negras }) });
+          const sel = el("select", { id, "data-resultado": "", class: C.campoChico, "aria-label": tx("resultadoTablero", { t: x.k + 1, b: blancas, n: negras }) });
           for (const [val, clave] of RESULTADOS) sel.append(el("option", { value: val, texto: tx(clave) }));
           sel.value = x.r || "";
           sel.addEventListener("change", async () => {
@@ -2520,7 +2728,7 @@
     const R = v.rondas[r];
     const num = T.numeros(v);
     const cont = $("pi-firmas");
-    cont.replaceChildren();
+    empezarHoja(cont);
     R.mesas.forEach((m, i) => {
       if (m.n === null) return;
       for (const [id, rival] of [[m.b, m.n], [m.n, m.b]]) {
@@ -2536,8 +2744,7 @@
       }
     });
     if (!cont.children.length) return;
-    document.body.classList.add("pi-imprimiendo-firmas");
-    window.print();
+    imprimirCon("pi-imprimiendo-firmas");
   }
 
   // Las planillas de anotación de la ronda: una por mesa (en equipos, una
@@ -2547,7 +2754,7 @@
     const v = t();
     const R = v.rondas[r];
     const cont = $("pi-firmas");
-    cont.replaceChildren();
+    empezarHoja(cont);
     const hoja = (titulo, blancas, negras) => {
       const tabla = el("table", { class: "pi-planilla-tabla" },
         el("thead", {}, el("tr", {}, ["#", tx("blancas"), tx("negras"), "#", tx("blancas"), tx("negras")].map((x) => el("th", { scope: "col", texto: x })))),
@@ -2577,8 +2784,7 @@
       } else hoja(tx("anotacionTitulo", { r: r + 1, m: i + 1 }), nombreDe(m.b), nombreDe(m.n));
     });
     if (!cont.children.length) return;
-    document.body.classList.add("pi-imprimiendo-firmas");
-    window.print();
+    imprimirCon("pi-imprimiendo-firmas");
   }
 
   // Cada cambio de un tablero o de una alineación vuelve a sacar el
@@ -2593,6 +2799,37 @@
     if (x) x.focus();
   }
 
+  // Imprimir varias cosas de una ronda en un solo trabajo de impresión: los
+  // armadores de cada hoja, mientras `juntando` está prendido, agregan en vez
+  // de vaciar su contenedor y no imprimen; «Todo para imprimir» los llama
+  // uno detrás de otro e imprime una vez.
+  const impresion = { juntando: false, clases: new Set() };
+  function empezarHoja(cont, ...nodos) {
+    if (impresion.juntando) cont.append(...nodos);
+    else cont.replaceChildren(...nodos);
+  }
+  function imprimirCon(clase) {
+    if (impresion.juntando) { impresion.clases.add(clase); return; }
+    document.body.classList.add(clase);
+    window.print();
+  }
+  function imprimirTodoDeRonda(r) {
+    $("pi-plantilla").replaceChildren();
+    $("pi-firmas").replaceChildren();
+    impresion.juntando = true;
+    impresion.clases.clear();
+    try {
+      imprimirPlantillaMesas(r);
+      if (E.esDeEquipos(t())) imprimirAlineaciones(r);
+      imprimirPlanillasFirma(r);
+      imprimirPlanillasAnotacion(r);
+    } finally {
+      impresion.juntando = false;
+    }
+    for (const c of impresion.clases) document.body.classList.add(c);
+    window.print();
+  }
+
   // Una hoja aparte para pegar en la pared antes de la ronda: mesa, blancas,
   // negras y un espacio en blanco para anotar el resultado a mano (nunca el
   // que ya está en la base: eso es justo lo que no se quiere acá). Separada
@@ -2603,7 +2840,7 @@
     const R = v.rondas[r];
     const num = T.numeros(v);
     const cont = $("pi-plantilla");
-    cont.replaceChildren(el("h1", { class: "pi-plantilla-titulo" },
+    empezarHoja(cont, el("h1", { class: "pi-plantilla-titulo" },
       tx("plantillaTitulo", { r: r + 1 }) + (v.nombre ? " — " + v.nombre : "")));
     const lista = el("div", { class: "pi-plantilla-lista" });
     R.mesas.forEach((m, i) => {
@@ -2622,8 +2859,7 @@
         el("span", { class: "pi-plantilla-resultado" })));
     });
     cont.append(lista);
-    document.body.classList.add("pi-imprimiendo-plantilla");
-    window.print();
+    imprimirCon("pi-imprimiendo-plantilla");
   }
 
   // Una hoja POR MESA (salto de página entre una y la siguiente) para que el
@@ -2635,7 +2871,7 @@
     const R = v.rondas[r];
     const num = T.numeros(v);
     const cont = $("pi-firmas");
-    cont.replaceChildren();
+    empezarHoja(cont);
     R.mesas.forEach((m, i) => {
       const hoja = el("div", { class: "pi-firma-mesa" },
         el("h1", { class: "pi-firma-titulo" }, tx("planillaFirmaTitulo", { r: r + 1, m: i + 1 }) + (v.nombre ? " — " + v.nombre : "")));
@@ -2672,8 +2908,7 @@
         el("p", { class: "pi-firma-linea" }, tx("firmaDe", { n: nombreDe(m.n) })));
       cont.append(hoja);
     });
-    document.body.classList.add("pi-imprimiendo-firmas");
-    window.print();
+    imprimirCon("pi-imprimiendo-firmas");
   }
 
   // El afterprint llega sea que se imprima o se cancele: ahí se limpia, una
@@ -2972,7 +3207,13 @@
     if (t() !== v || v.rondas.length !== r) throw new Error(tx("yaEmparejada"));
     // En un torneo por equipos, cada encuentro trae su alineación (los cuatro
     // primeros del orden de tableros) y un resultado por tablero.
-    if (E.esDeEquipos(v)) for (const m of ronda.mesas) E.prepararMesa(v, m);
+    // Un equipo que ya de entrada no llega a dos (art. 66.2.f) pierde el
+    // encuentro al emparejar: el resultado queda puesto, no «falta».
+    if (E.esDeEquipos(v)) for (const m of ronda.mesas) {
+      if (m.n === null) continue;
+      E.prepararMesa(v, m);
+      if (E.puntosDelEncuentro(v, m).incomparecencia) m.r = E.resultadoEncuentro(v, m);
+    }
     v.rondas.push(ronda);
     guardar();
   }
@@ -3030,7 +3271,7 @@
         el("td", { texto: j.institucion || "" }),
         el("td", { texto: j.fed || "" }), el("td", { class: "num", texto: Number(j.elo) > 0 ? j.elo : "" }),
         el("td", { class: "num font-bold", texto: puntosTexto(f.puntos) }),
-        v.desempates.map((c) => el("td", { class: "num", texto: formatoNum(f.valores[c]) }))));
+        v.desempates.map((c) => el("td", { class: "num", texto: valorDesempate(c, f.valores[c]) }))));
     }
     tabla.append(cuerpo);
     const dl = $("pi-clas-leyenda");
@@ -3066,6 +3307,10 @@
           el("td", { class: "num", texto: f.jugadas }), el("td", { class: "num", texto: Math.round(f.porcentaje * 100) })))))));
     }
   }
+
+  // El desempate por tableros es un número armado (E.codificarTableros): se
+  // escribe tablero por tablero.
+  const valorDesempate = (c, x) => (c === "TB" ? E.textoTableros(x, t().tableros) : formatoNum(x));
 
   // ---------- Tabla cruzada ----------
   function pintarCruzada() {
@@ -3128,7 +3373,7 @@
       const j = jugador(f.id);
       return [String(f.puesto), String(num.get(f.id)), j.nombre + (j.titulo ? " (" + j.titulo + ")" : ""),
         j.institucion || "", j.fed || "", Number(j.elo) > 0 ? String(j.elo) : "", puntosTexto(f.puntos)]
-        .concat(v.desempates.map((c) => formatoNum(f.valores[c])));
+        .concat(v.desempates.map((c) => valorDesempate(c, f.valores[c])));
     });
     const notas = v.desempates.map((c) => {
       const info = E.catalogo(v).find((x) => x.codigo === c);
@@ -3282,6 +3527,11 @@
       irA(FICHAS[(i + k + FICHAS.length) % FICHAS.length], true);
     });
 
+    // «Solo lo de los JDE»: esconde el comprobador, el generador y los créditos.
+    const modoJde = $("pi-modo-jde");
+    modoJde.checked = leer(CLAVE_MODO_JDE) === "1";
+    document.body.classList.toggle("pi-modo-jde", modoJde.checked);
+    modoJde.addEventListener("change", () => { escribir(CLAVE_MODO_JDE, modoJde.checked ? "1" : "0"); document.body.classList.toggle("pi-modo-jde", modoJde.checked); });
     $("pi-form-torneo").addEventListener("change", alCambiarTorneo);
     $("pi-config-jde-aplicar").addEventListener("click", aplicarConfigJde);
     $("pi-form-torneo").addEventListener("submit", (e) => e.preventDefault());
@@ -3429,6 +3679,11 @@
     if (location.hash.startsWith("#adjunto=")) {
       modoVer();
       PareoVer.iniciarAdjunto(location.hash.slice(9), idioma);
+      return;
+    }
+    if (location.hash.startsWith("#capitan=")) {
+      modoVer();
+      PareoVer.iniciarCapitan(location.hash.slice(9), idioma);
       return;
     }
     if (location.hash.startsWith("#evento=")) {

@@ -471,5 +471,53 @@ window.PareoVer = (function () {
     canal.subscribe((st) => { if (st === "SUBSCRIBED") canal.send({ type: "broadcast", event: "pedir", payload: {} }); });
   }
 
-  return { empaquetar, desempaquetar, cargarSupabase, iniciar, iniciarVivo, iniciarEvento, iniciarAdjunto, pintarEvento, pintarProyector, buscarJugador, botonIdioma };
+  // La página del capitán (#capitan=<código>): su equipo en la ronda en
+  // juego, una casilla por integrante (hasta 4, en el orden de tableros) y
+  // «Confirmar la alineación». Lo acepta o no la pestaña del árbitro
+  // principal, que contesta con el estado.
+  async function iniciarCapitan(codigo, idioma) {
+    const tx = (clave, vars) => X.t(idioma, clave, vars);
+    const cont = document.getElementById("pi-ver");
+    cont.hidden = false;
+    cont.replaceChildren(el("p", { class: "text-sm text-brand-600 dark:text-brand-300" }, tx("conectandoEnVivo")));
+    try { await cargarSupabase(); }
+    catch (e) { cont.replaceChildren(el("p", { class: "text-sm text-red-700 dark:text-red-300" }, tx("errorEnVivoVer"))); return; }
+    const canal = window.sb.channel("pareo-capitan-" + String(codigo).split("&")[0]);
+    let enviado = false;
+    canal.on("broadcast", { event: "estado" }, (msg) => {
+      const d = msg.payload || {};
+      const nodos = [el("h1", { class: "font-serif text-2xl font-bold mb-1" }, d.equipo || ""),
+        el("p", { class: "text-sm text-brand-600 dark:text-brand-300 mb-4" }, (d.nombre || "") + " · " + tx("rondaN", { r: d.ronda }) + (d.rival ? " · " + tx("capitanContra", { e: d.rival }) : ""))];
+      if (d.confirmada) { enviado = false; nodos.push(el("p", { id: "pi-cap-confirmada", class: "font-semibold mb-3" }, tx("capitanConfirmada", { h: horaCorta(d.confirmada) }))); }
+      if (d.bloqueada) {
+        nodos.push(el("p", { class: "text-sm" }, tx(d.rival ? "capitanBloqueada" : "capitanSinEncuentro")));
+        cont.replaceChildren(...nodos);
+        return;
+      }
+      const marcados = new Set(d.alineacion || []);
+      const lista = el("ul", { class: "space-y-2" });
+      const estadoTxt = el("p", { class: "text-sm mt-2", role: "status" }, enviado ? tx("adjuntoEnviando") : "");
+      const boton = el("button", { type: "button", id: "pi-cap-confirmar", class: "mt-3 bg-brand-800 hover:bg-brand-900 dark:bg-brand-700 text-white font-semibold px-4 py-2 rounded-lg text-base focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400" }, tx("capitanConfirmar"));
+      const pintarCuenta = () => { boton.disabled = marcados.size < 2 || marcados.size > 4; };
+      (d.integrantes || []).forEach((j, k) => {
+        const id = "pi-cap-" + k;
+        const c = el("input", { type: "checkbox", id, class: "w-5 h-5" });
+        c.checked = marcados.has(j.id);
+        c.addEventListener("change", () => { if (c.checked) marcados.add(j.id); else marcados.delete(j.id); if (marcados.size > 4) { marcados.delete(j.id); c.checked = false; } pintarCuenta(); });
+        lista.append(el("li", { class: "flex items-center gap-3" }, c, el("label", { for: id, class: "text-base" }, (k + 1) + ". " + j.nombre)));
+      });
+      boton.addEventListener("click", () => {
+        enviado = true;
+        boton.disabled = true;
+        estadoTxt.textContent = tx("adjuntoEnviando");
+        canal.send({ type: "broadcast", event: "alineacion", payload: { ronda: d.ronda, alineacion: [...marcados] } });
+      });
+      pintarCuenta();
+      nodos.push(el("p", { class: "text-sm mb-2" }, tx("capitanInstrucciones")), lista, boton, estadoTxt);
+      cont.replaceChildren(...nodos);
+    });
+    canal.subscribe((st) => { if (st === "SUBSCRIBED") canal.send({ type: "broadcast", event: "pedir", payload: {} }); });
+  }
+
+  return { iniciarCapitan, empaquetar, desempaquetar, cargarSupabase, iniciar, iniciarVivo, iniciarEvento, iniciarAdjunto, pintarEvento, pintarProyector, buscarJugador, botonIdioma };
 })();
