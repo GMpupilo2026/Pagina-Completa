@@ -28,6 +28,16 @@
     return "";
   }
 
+  // «Mujeres», «Femenino», «Rama femenina»… → "w"; «Abierto», «Masculino»,
+  // «Open», «Mixto»… → "m" (el abierto). La columna del torneo, que no es
+  // la del sexo: en el abierto juegan también mujeres.
+  function leerTorneo(v) {
+    const s = sinTildes(v).replace(/^(torneo|rama|categoria)\s+/, "");
+    if (/^(f|w|mujer|mujeres|femenino|femenina|femeninos|women|female|girls?)$/.test(s)) return "w";
+    if (/^(m|a|abierto|abierta|masculino|masculina|mixto|mixta|open|varones|hombres)$/.test(s)) return "m";
+    return "";
+  }
+
   // «Equipo», «Equipos», «Team», «Por equipos» → "equipo"; «Individual»,
   // «Ind», «Individuales» → "individual".
   function leerModalidad(v) {
@@ -76,9 +86,12 @@
   // "equipo" o ""). Devuelve las dimensiones que separan (las que tienen dos
   // valores o más) y los grupos, en orden: individual antes que equipos, la
   // categoría por orden alfabético y masculino antes que femenino.
-  // La mujer que pasa al abierto (pasarMujeresAlAbierto) cuenta en el
-  // grupo del abierto, aunque su sexo siga siendo "w".
-  const torneoDe = (j) => (j.alAbierto ? "m" : j.sexo || "");
+  // El torneo de cada uno: el que diga el archivo si trae una columna
+  // «Torneo» o «Rama» (Mujeres o Abierto); si no, el de su sexo. La mujer
+  // que pasa al abierto (pasarMujeresAlAbierto) cuenta en el abierto,
+  // aunque su sexo siga siendo "w".
+  const torneoBase = (j) => j.torneo || j.sexo || "";
+  const torneoDe = (j) => (j.alAbierto ? "m" : torneoBase(j));
 
   function agrupar(lista) {
     const valor = (j, d) => (d === "categoria" ? String(j.categoria || "").trim() : d === "sexo" ? torneoDe(j) : j[d] || "");
@@ -198,7 +211,7 @@
     }
     const pasadas = [], sinAbierto = [];
     for (const todos of porEquipo.values()) {
-      const mujeres = todos.filter((j) => j.sexo === "w");
+      const mujeres = todos.filter((j) => torneoBase(j) === "w");
       if (!mujeres.length || mujeres.length >= JDE_MIN_EQUIPO) continue;
       const caso = { institucion: mujeres[0].institucion || "", categoria: String(mujeres[0].categoria || "").trim(), mujeres, abierto: todos.length - mujeres.length };
       if (!caso.abierto) { sinAbierto.push(caso); continue; }
@@ -279,8 +292,16 @@
       .sort((a, b) => a.clave.localeCompare(b.clave, "es"));
   }
 
+  // Hombres en el torneo de mujeres (art. 66.1: «Torneo Individual Mujeres»
+  // y «un equipo de mujeres»). Solo puede pasar cuando el archivo dice el
+  // torneo aparte del sexo; con el sexo solo, cada hombre ya va al abierto.
+  // Se avisa: el árbitro revisa si el error es el sexo o el torneo.
+  function hombresEnMujeres(lista) {
+    return lista.filter((j) => torneoDe(j) === "w" && j.sexo === "m");
+  }
+
   const api = {
-    quitarRepetidos, equiposCortos,
+    quitarRepetidos, equiposCortos, hombresEnMujeres, leerTorneo,
     pasarMujeresAlAbierto, JDE_MIN_EQUIPO, equiposDeMas, JDE_MAX_EQUIPO,
     leerSexo, leerModalidad, ordenFechas, leerFecha, agrupar, sistemaSugerido, revisarCategorias, rangoCategoria,
     JDE_MAX_TODOS, JDE_RONDAS_SUIZO, JDE_RITMO_MINIMO, JDE_ANIO_NORMATIVA, JDE_MAX_ASCENSOS,

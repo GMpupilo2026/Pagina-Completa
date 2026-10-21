@@ -2340,6 +2340,21 @@ se juega aparte, y armar cada torneo a mano era copiar y pegar filas.
     torneo. En Alajuela 2026 son dos: Saint Josephine Bilingual School (B
     abierto, 2) y Maurilio Soto Alfaro (A mujeres, la que no tenía abierto
     al cual pasar).
+  - **Un hombre en el torneo de mujeres se avisa** (`hombresEnMujeres()`,
+    art. 66.1: «Torneo Individual Mujeres» y «un equipo de mujeres»;
+    pedido por el dueño del sitio para equipos, y se aplica también al
+    individual porque la regla es la misma). Con el Excel actual del MEP
+    no puede pasar: trae solo el sexo, y el torneo sale de ahí. Pasa cuando
+    el archivo dice el torneo aparte, con una columna «Torneo» o «Rama»
+    (Mujeres o Abierto), que es lo que pide la propuesta de cambios a la
+    normativa. Por eso `rama` dejó de leerse como sexo: «Rama femenina»
+    dice el torneo, no el sexo de la persona, y en el abierto juegan
+    también mujeres. Cuando la columna viene, el torneo es el que diga el
+    archivo (`torneoBase()`), la mujer anotada en el abierto queda en el
+    abierto sin aviso, y quien está anotado como hombre en el de mujeres
+    queda donde dice el archivo y se avisa con «Aviso:», su nombre, su
+    centro y el torneo: no se mueve, porque el error puede estar en el sexo
+    o en el torneo.
   - **Un equipo de más de cinco: el árbitro elige los cinco**
     (`equiposDeMas()`, art. 66.1.g: «un máximo de cinco [...] cuatro
     personas estudiantes titulares y una persona estudiante suplente»;

@@ -93,6 +93,18 @@ function pruebaPase() {
   igual("sin aplicar, nadie queda marcado", lista.filter((x) => x.alAbierto).length, 0);
 }
 
+function pruebaHombresEnMujeres() {
+  console.log("\n=== Hombres en el torneo de mujeres (art. 66.1) ===");
+  igual("la columna del torneo: Mujeres y Rama femenina son mujeres; Abierto y Masculino, el abierto",
+    ["Mujeres", "Rama femenina", "Femenino", "Abierto", "Masculino", "Mixto", "", "otra"].map(G.leerTorneo), ["w", "w", "w", "m", "m", "m", "", ""]);
+  const j = (sexo, torneo, modalidad) => ({ nombre: sexo + torneo + modalidad, sexo, torneo, modalidad, institucion: "X", categoria: "B" });
+  const lista = [j("m", "w", "equipo"), j("m", "w", "individual"), j("w", "m", "equipo"), j("m", "", "equipo"), j("w", "", "equipo")];
+  igual("avisa a los hombres anotados en el de mujeres, en equipos y en individual", G.hombresEnMujeres(lista).map((x) => x.modalidad), ["equipo", "individual"]);
+  igual("sin columna de torneo, el torneo es el del sexo: nadie que avisar", G.hombresEnMujeres([j("m", "", "equipo"), j("w", "", "equipo")]).length, 0);
+  const pase = G.pasarMujeresAlAbierto([j("w", "m", "equipo"), j("m", "", "equipo"), j("m", "", "equipo")], true);
+  igual("la mujer que el archivo pone en el abierto no cuenta como «mujeres sin equipo»", pase.pasadas.length + pase.sinAbierto.length, 0);
+}
+
 function pruebaCortos() {
   console.log("\n=== Equipos con menos de 3 (art. 66.1.g) ===");
   const j = (sexo, institucion, categoria, modalidad, alAbierto) => ({ nombre: sexo + institucion, sexo, institucion, categoria, modalidad: modalidad || "equipo", alAbierto });
@@ -197,7 +209,7 @@ function excelJde() {
 
 // Por omisión, el sexto (inscrito en equipos y en individual) queda en
 // equipos, como estaba antes de agregarle la fila de individual.
-async function abrir(browser, sinDecidir) {
+async function abrir(browser, sinDecidir, excel) {
   const ctx = await browser.newContext({ serviceWorkers: "block", viewport: { width: 1280, height: 1000 } });
   const page = await ctx.newPage();
   const errores = [];
@@ -207,10 +219,10 @@ async function abrir(browser, sinDecidir) {
   await page.goto(BASE + "/pareo.html", { waitUntil: "networkidle" });
   await page.click('[data-ficha="jugadores"]');
   await page.setInputFiles("#pi-subir-lista", {
-    name: "Ajedrez_Todos_Regional.xlsx", mimeType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", buffer: excelJde(),
+    name: "Ajedrez_Todos_Regional.xlsx", mimeType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", buffer: excel || excelJde(),
   });
   await page.waitForFunction(() => document.getElementById("pi-sugerencia").checkVisibility());
-  if (!sinDecidir) await page.click("#pi-dm-0-0");
+  if (!sinDecidir && !excel) await page.click("#pi-dm-0-0");
   return { ctx, page, errores };
 }
 
@@ -218,6 +230,30 @@ const torneos = (page) => page.evaluate(() => {
   const lista = JSON.parse(localStorage.getItem("pareo_lista_v1") || "[]");
   return lista.map((x) => JSON.parse(localStorage.getItem("pareo_torneo_v1_" + x.id)));
 });
+
+// Una inscripción que dice el torneo aparte del sexo (columna «Torneo»):
+// una mujer que juega el abierto y un hombre anotado en el de mujeres.
+function excelConTorneo() {
+  const filas = [["Nombre", "Sexo", "Nombre de Centro Educativo", "Categoría", "Equipo/Ind", "Torneo"]];
+  for (let i = 0; i < 3; i++) filas.push(["PRUEBA MUJER " + i, "MUJER", "ESCUELA T", "B", "Equipo", "Mujeres"]);
+  filas.push(["PRUEBA HOMBRE EN MUJERES", "HOMBRE", "ESCUELA T", "B", "Equipo", "Mujeres"]);
+  for (let i = 0; i < 3; i++) filas.push(["PRUEBA HOMBRE " + i, "HOMBRE", "ESCUELA T", "B", "Equipo", "Abierto"]);
+  filas.push(["PRUEBA MUJER EN ABIERTO", "MUJER", "ESCUELA T", "B", "Equipo", "Abierto"]);
+  return Buffer.from(TablaExcel.armar([{ nombre: "Hoja1", filas }]));
+}
+
+async function pruebaTorneoEnArchivo(browser) {
+  console.log("\n=== El torneo dicho en el archivo: un hombre en el de mujeres ===");
+  const { ctx, page, errores } = await abrir(browser, true, excelConTorneo());
+  const tam = async () => Object.fromEntries(await page.$$eval("#pi-sugerencia fieldset li", (l) => l.map((x) => [x.querySelector("label").textContent.split(" — ")[0], Number((/— (\d+) jugador/.exec(x.textContent) || [])[1])])));
+  igual("cada uno va al torneo que dice el archivo (4 y 4)", await tam(), { "Abierto": 4, "Mujeres": 4 });
+  const avisos = await page.$$eval("#pi-hombres-lista li", (l) => l.map((x) => x.textContent)).catch(() => []);
+  igual("avisa del hombre en el de mujeres, con su centro y su torneo", avisos, ["Aviso: PRUEBA HOMBRE EN MUJERES (ESCUELA T) está anotado como hombre en Equipos · Categoría B · Mujeres."]);
+  ok(!/MUJER EN ABIERTO/.test(await page.textContent("#pi-sugerencia")), "la mujer que juega el abierto no se avisa (en el abierto juegan también mujeres)");
+  ok(!(await page.$("#pi-pase-abierto")), "con 4 en el de mujeres, nadie pasa al abierto");
+  ok(!errores.length, "sin errores en la página", errores.join(" | "));
+  await ctx.close();
+}
 
 async function pruebaDosModalidades(browser) {
   console.log("\n=== Dos modalidades: el árbitro elige dónde queda (art. 66.1.h) ===");
@@ -401,8 +437,9 @@ async function pruebaPagina(browser) {
   pruebaPase();
   pruebaRepetidos();
   pruebaCortos();
+  pruebaHombresEnMujeres();
   const browser = await chromium.launch({ executablePath: fs.existsSync(CHROME) ? CHROME : undefined });
-  try { await pruebaPagina(browser); await pruebaDosModalidades(browser); }
+  try { await pruebaPagina(browser); await pruebaDosModalidades(browser); await pruebaTorneoEnArchivo(browser); }
   catch (e) { mal("la prueba de la página se cayó", e.stack); }
   finally { await browser.close(); }
   console.log(fallos ? `\n${fallos} fallo(s).` : "\nTodo bien.");

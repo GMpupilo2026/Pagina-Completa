@@ -462,7 +462,10 @@
     categoria: "categoria", category: "categoria", nivel: "categoria", division: "categoria",
     // Lo que trae la inscripción de los JDE (y cualquier lista parecida):
     // con estas tres se sugiere partirla en torneos (js/pareo/grupos.js).
-    sexo: "sexo", genero: "sexo", sex: "sexo", gender: "sexo", rama: "sexo",
+    sexo: "sexo", genero: "sexo", sex: "sexo", gender: "sexo",
+    // El torneo, cuando el archivo lo dice aparte del sexo (Mujeres o
+    // Abierto): en el abierto juegan también mujeres.
+    torneo: "torneo", rama: "torneo", "torneo (mujeres/abierto)": "torneo", seccion: "torneo", section: "torneo",
     fdn: "nacimiento", nacimiento: "nacimiento", "fecha de nacimiento": "nacimiento",
     "date of birth": "nacimiento", "birth date": "nacimiento", birthday: "nacimiento",
     "equipo/ind": "modalidad", "equipo / ind": "modalidad", "equipo/individual": "modalidad",
@@ -520,11 +523,12 @@
       modalidad: G.leerModalidad(celda(fila, "modalidad")),
       region: String(celda(fila, "region") || "").trim(),
       documento: String(celda(fila, "documento") || "").trim(),
+      torneo: G.leerTorneo(celda(fila, "torneo")),
     })).filter((d) => d.nombre);
   }
 
   // Lo que se guarda del jugador: sin la modalidad ni la regional.
-  const soloJugador = ({ modalidad, region, alAbierto, documento, ...d }) => d;
+  const soloJugador = ({ modalidad, region, alAbierto, documento, torneo, ...d }) => d;
 
   async function subirLista(archivo) {
     const estadoEl = $("pi-subir-lista-estado");
@@ -617,11 +621,25 @@
     s.grupos = grupos.map((g) => Object.assign(g, { marcado: antes.has(g.clave) ? antes.get(g.clave) : g.jugadores.length >= 2 }));
     s.revision = G.revisarCategorias(s.juegan, s.anio);
     s.cortos = G.equiposCortos(s.juegan);
+    s.hombresEnMujeres = G.hombresEnMujeres(s.juegan);
   }
 
   // Los equipos que quedan con menos de tres, con quiénes son: se recalcula
   // con cada decisión del árbitro (pase, los cinco, dónde queda quien estaba
   // en dos modalidades).
+  // Quien está anotado como hombre en un torneo de mujeres (individual o
+  // equipo): se avisa con su nombre, su centro y el torneo.
+  function pintarHombresEnMujeres(s) {
+    if (!s.hombresEnMujeres || !s.hombresEnMujeres.length) return null;
+    const modo = (j) => tx(j.modalidad === "equipo" ? "grupoEquipos" : "grupoIndividual");
+    return el("div", { id: "pi-hombres-mujeres", class: "mt-4 pt-3 border-t border-brand-100 dark:border-brand-800" },
+      el("h4", { class: "font-semibold text-sm", texto: tx("hombresTitulo") }),
+      el("p", { class: "text-sm mt-1", texto: tx("hombresTexto", { n: s.hombresEnMujeres.length }) }),
+      el("ul", { id: "pi-hombres-lista", class: "mt-1 space-y-1 text-sm list-disc pl-5" }, s.hombresEnMujeres.map((j) =>
+        el("li", {}, el("span", { class: "font-semibold", texto: tx("cortosAviso") + " " }),
+          tx("hombresCaso", { n: j.nombre, i: j.institucion || "—", m: modo(j), c: String(j.categoria || "").trim() })))));
+  }
+
   function pintarEquiposCortos(s) {
     if (!s.cortos || !s.cortos.length) return null;
     return el("div", { id: "pi-equipos-cortos", class: "mt-4 pt-3 border-t border-brand-100 dark:border-brand-800" },
@@ -781,6 +799,7 @@
       pintarRepetidos(s),
       pintarPaseAbierto(s),
       pintarEquiposDeMas(s),
+      pintarHombresEnMujeres(s),
       pintarEquiposCortos(s),
       pintarRevisionCategorias(s.revision),
       porSexo ? el("p", { class: C.nota + " mt-2", texto: tx("sugerenciaAbierto") }) : null,
