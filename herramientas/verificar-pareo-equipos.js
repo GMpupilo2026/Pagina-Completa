@@ -32,6 +32,7 @@ const T = require(path.join(RAIZ, "js/pareo/torneo.js"));
 const E = require(path.join(RAIZ, "js/pareo/equipos.js"));
 const M = require(path.join(RAIZ, "js/pareo/motor.js")).enNode();
 const TablaExcel = require(path.join(RAIZ, "js/tabla-excel.js"));
+const { contestarEtapa } = require("./lib/pareo-etapa");
 
 let fallos = 0;
 const mal = (m, detalle) => { console.log("  ✗ " + m + (detalle ? "\n      " + String(detalle).slice(0, 400) : "")); fallos += 1; };
@@ -186,6 +187,7 @@ async function pruebaPagina(browser) {
   ok(/13 jugadores en 3 equipos/.test(deEquipos), "cuenta los equipos, no solo los jugadores", deEquipos);
   ok(/todos contra todos/.test(deEquipos), "el sistema sale de cuántos equipos hay (3: todos contra todos)", deEquipos);
   await page.click("#pi-sugerencia-crear");
+  await contestarEtapa(page, "regional", "Alajuela");
   await page.waitForFunction(() => document.getElementById("pi-sugerencia").hidden);
   // Abrir el de equipos.
   const idEquipos = await page.evaluate(() => {

@@ -32,6 +32,7 @@ const CHROME = process.env.CHROME_PATH || "/opt/pw-browsers/chromium-1194/chrome
 const BASE = process.env.BASE_URL || process.env.BASE || "http://localhost:8777";
 const G = require(path.join(RAIZ, "js/pareo/grupos.js"));
 const TablaExcel = require(path.join(RAIZ, "js/tabla-excel.js"));
+const { contestarEtapa } = require("./lib/pareo-etapa");
 
 let fallos = 0;
 const mal = (m, detalle) => { console.log("  ✗ " + m + (detalle ? "\n      " + String(detalle).slice(0, 400) : "")); fallos += 1; };
@@ -115,6 +116,18 @@ function pruebaTopesYConfig() {
   igual("8: todos contra todos con sus desempates; el ritmo mínimo si no tenía", [c8.sistema, c8.desempates.join(","), c8.ritmo], ["todos", "DE,SB,WIN,KS", "10 min + 2 s por jugada"]);
   igual("9: suizo, se respetan 7 rondas y el ritmo que ya tenía", [c9.sistema, c9.rondasTotales, c9.ritmo, c9.desempates[0]], ["suizo", 7, "15 min + 5 s", "BH-C1"]);
   igual("con menos de 5 rondas, sube a 5", c8.rondasTotales, 5);
+}
+
+function pruebaEtapa() {
+  console.log("\n=== La etapa y el lugar: el nombre del evento ===");
+  igual("las 27 Direcciones Regionales del art. 56", G.JDE_DIRECCIONES.length, 27);
+  igual("una Dirección Regional se reconoce como venga escrita", ["Alajuela", "DRE ALAJUELA", "Dirección Regional de Educación de Alajuela", "sula", "San José Norte", "Prueba"].map(G.direccionDe),
+    ["Alajuela", "Alajuela", "Alajuela", "Sulá", "San José Norte", ""]);
+  igual("Regional", G.nombreEventoJde({ anio: 2026, etapa: "regional", lugar: "Alajuela" }), "JDE 2026 · Etapa Regional · DRE Alajuela");
+  igual("Interregional, con sus regiones", G.nombreEventoJde({ anio: 2026, etapa: "interregional", lugar: "X" }), "JDE 2026 · Etapa Interregional · Interregional X (Coto-Grande de Térraba-Pérez Zeledón)");
+  igual("Institucional, con el centro", G.nombreEventoJde({ anio: 2026, etapa: "institucional", lugar: "Liceo de Prueba" }), "JDE 2026 · Etapa Institucional · Liceo de Prueba");
+  igual("Institucional, sin el centro", G.nombreEventoJde({ anio: 2026, etapa: "institucional", lugar: "" }), "JDE 2026 · Etapa Institucional");
+  igual("la Interregional es todos contra todos aunque sean 10 (art. 66.2.c)", [G.configuracionJde(10, {}, "interregional").sistema, G.configuracionJde(10, {}, "regional").sistema], ["todos", "suizo"]);
 }
 
 function pruebaCortos() {
@@ -284,6 +297,7 @@ async function pruebaTopeIndividual(browser) {
   await page.click("#pi-ind-0-2");
   ok(await page.$eval("#pi-config-jde", (c) => c.checked), "la configuración de los JDE viene marcada");
   await page.click("#pi-sugerencia-crear");
+  await contestarEtapa(page, "regional", "Alajuela");
   await page.waitForFunction(() => document.getElementById("pi-sugerencia").hidden);
   let ts = await torneos(page);
   const muj = ts.find((x) => /Mujeres$/.test(x.nombre));
@@ -304,10 +318,37 @@ async function pruebaTopeIndividual(browser) {
   await page.click('[data-ficha="torneo"]');
   ok(!(await page.$eval("#pi-config-jde-aplicar", (b) => b.disabled)), "antes de la ronda 1, el botón se puede tocar");
   await page.click("#pi-config-jde-aplicar");
+  await contestarEtapa(page, "regional", "Alajuela");
+  await page.waitForFunction(() => !document.querySelector('dialog[data-avisos][open]'));
   const abiertoAhora = await page.evaluate(() => JSON.parse(localStorage.getItem("pareo_torneo_v1_" + localStorage.getItem("pareo_abierto_v1"))));
   igual("el botón deja la configuración de los JDE en el torneo abierto", [abiertoAhora.sistema, abiertoAhora.desempates.join(","), abiertoAhora.ritmo],
     [abiertoAhora.jugadores.length <= 8 ? "todos" : "suizo", abiertoAhora.jugadores.length <= 8 ? "DE,SB,WIN,KS" : "BH-C1,BH,SB,DE,WIN", "10 min + 2 s por jugada"]);
   igual("y el formulario lo muestra", await page.$eval('#pi-form-torneo [name="ritmo"]', (i) => i.value), "10 min + 2 s por jugada");
+  igual("le pone el nombre del evento, con su grupo", abiertoAhora.nombre, "JDE 2026 · Etapa Regional · DRE Alajuela — Abierto");
+
+  console.log("\n=== La etapa, otra vez: cancelar, sin elegir, Interregional ===");
+  const leerAbierto = () => page.evaluate(() => JSON.parse(localStorage.getItem("pareo_torneo_v1_" + localStorage.getItem("pareo_abierto_v1"))));
+  await page.click("#pi-config-jde-aplicar");
+  await page.waitForSelector('dialog[data-avisos="formulario"][open]');
+  await page.click('dialog[data-avisos="formulario"][open] [data-avisos-cancelar]');
+  igual("cancelar no cambia nada", (await leerAbierto()).nombre, "JDE 2026 · Etapa Regional · DRE Alajuela — Abierto");
+  await page.click("#pi-config-jde-aplicar");
+  await page.waitForSelector('dialog[data-avisos="formulario"][open]');
+  igual("la segunda vez viene en la etapa que ya tenía", await page.$eval('dialog[data-avisos="formulario"][open] select[name="etapa"]', (x) => x.value), "regional");
+  await page.selectOption('dialog[data-avisos="formulario"][open] select[name="etapa"]', "interregional");
+  await page.click('dialog[data-avisos="formulario"][open] [data-avisos-aceptar]');
+  await page.waitForFunction(() => document.querySelector('dialog[data-avisos="formulario"][open] [name="lugar"]'));
+  igual("la Interregional viene en la de su Dirección Regional (Alajuela → III)", await page.$eval('dialog[data-avisos="formulario"][open] [name="lugar"]', (x) => x.value), "III");
+  await page.selectOption('dialog[data-avisos="formulario"][open] [name="lugar"]', "");
+  await page.click('dialog[data-avisos="formulario"][open] [data-avisos-aceptar]');
+  await page.waitForFunction(() => document.querySelector('dialog[data-avisos="formulario"][open] [name="lugar"]'));
+  ok(/Elige a cuál corresponde/.test(await page.textContent("body")), "sin elegir la interregional, lo pide y vuelve a preguntar");
+  await page.selectOption('dialog[data-avisos="formulario"][open] [name="lugar"]', "III");
+  await page.click('dialog[data-avisos="formulario"][open] [data-avisos-aceptar]');
+  await page.waitForFunction(() => !document.querySelector('dialog[data-avisos][open]'));
+  const inter = await leerAbierto();
+  igual("Interregional: el nombre y todos contra todos", [inter.nombre, inter.sistema, inter.jde.etapa], ["JDE 2026 · Etapa Interregional · Interregional III (Alajuela-Occidente) — Abierto", "todos", "interregional"]);
+  ok((await page.$$eval("#pi-lista option", (o) => o.map((x) => x.textContent))).includes(inter.nombre), "«Mis torneos» trae el nombre nuevo");
   ok(!errores.length, "sin errores en la página", errores.join(" | "));
   await ctx.close();
 }
@@ -446,23 +487,25 @@ async function pruebaPagina(browser) {
     c.dispatchEvent(new Event("change", { bubbles: true }));
   });
   await page.click("#pi-sugerencia-crear");
+  await contestarEtapa(page, "regional", "Alajuela");
   await page.waitForFunction(() => document.getElementById("pi-sugerencia").hidden);
   const ts = await torneos(page);
   igual("cuatro torneos (el vacío que estaba abierto se usó para el primero)", ts.length, 4);
   const porNombre = Object.fromEntries(ts.map((x) => [x.nombre, x]));
   igual("cada uno con su nombre de regional y grupo", Object.keys(porNombre).sort(), [
-    "Regional Prueba — Equipos · Categoría B · Abierto",
-    "Regional Prueba — Equipos · Categoría B · Mujeres",
-    "Regional Prueba — Individual · Categoría A · Abierto",
-    "Regional Prueba — Individual · Categoría B · Abierto",
+    "JDE 2026 · Etapa Regional · DRE Alajuela — Equipos · Categoría B · Abierto",
+    "JDE 2026 · Etapa Regional · DRE Alajuela — Equipos · Categoría B · Mujeres",
+    "JDE 2026 · Etapa Regional · DRE Alajuela — Individual · Categoría A · Abierto",
+    "JDE 2026 · Etapa Regional · DRE Alajuela — Individual · Categoría B · Abierto",
   ]);
-  const a = porNombre["Regional Prueba — Individual · Categoría A · Abierto"];
-  const b = porNombre["Regional Prueba — Individual · Categoría B · Abierto"];
+  const a = porNombre["JDE 2026 · Etapa Regional · DRE Alajuela — Individual · Categoría A · Abierto"];
+  const b = porNombre["JDE 2026 · Etapa Regional · DRE Alajuela — Individual · Categoría B · Abierto"];
   // En un torneo por equipos, cada «jugador» es un equipo y las personas
   // están en sus integrantes.
   const personas = (x) => (x.tipo === "equipos" ? x.jugadores.flatMap((e) => e.integrantes) : x.jugadores);
   igual("cuántos en cada uno (los de equipos, en equipos: 2 y 2)", ts.map((x) => x.jugadores.length).sort((x, y) => x - y), [2, 2, 3, 10]);
-  const abiertoB = porNombre["Regional Prueba — Equipos · Categoría B · Abierto"];
+  const abiertoB = porNombre["JDE 2026 · Etapa Regional · DRE Alajuela — Equipos · Categoría B · Abierto"];
+  igual("cada torneo guarda su etapa, su lugar y su grupo", [abiertoB.jde, abiertoB.grupo], [{ anio: 2026, etapa: "regional", lugar: "Alajuela" }, "Equipos · Categoría B · Abierto"]);
   igual("los de equipos son torneos por equipos, con puntos de encuentro", [abiertoB.tipo, JSON.stringify(abiertoB.puntos)], ["equipos", JSON.stringify({ victoria: 2, tablas: 1, derrota: 0, bye: 1 })]);
   igual("un equipo por centro, con sus integrantes", abiertoB.jugadores.map((e) => e.nombre + ":" + e.integrantes.length).sort(), ["ESCUELA DEL EQUIPO:5", "ESCUELA RIVAL:3"]);
   ok(personas(abiertoB).some((j) => j.sexo === "w" && /ANA/.test(j.nombre)), "la que pasó al abierto está ahí, y sigue anotada como mujer");
@@ -474,7 +517,7 @@ async function pruebaPagina(browser) {
   ok(b.rondasTotales >= 5, "el suizo tiene al menos 5 rondas (art. 66)", b.rondasTotales);
   ok(ts.every((x) => x.ritmo === "10 min + 2 s por jugada"), "sin ritmo en el abierto, cada uno lleva el mínimo de la normativa");
   ok(ts.every((x) => personas(x).every((j) => j.sexo === "m" || j.sexo === "w")), "todos llevan su sexo");
-  ok(personas(porNombre["Regional Prueba — Equipos · Categoría B · Mujeres"]).every((j) => j.sexo === "w" && /ESCUELA (DE MUJERES|RIVAL)/.test(j.institucion)), "en el de mujeres quedaron las del centro sin equipo abierto (y las del rival)");
+  ok(personas(porNombre["JDE 2026 · Etapa Regional · DRE Alajuela — Equipos · Categoría B · Mujeres"]).every((j) => j.sexo === "w" && /ESCUELA (DE MUJERES|RIVAL)/.test(j.institucion)), "en el de mujeres quedaron las del centro sin equipo abierto (y las del rival)");
   ok(b.jugadores.some((j) => j.nacimiento === "2014-11-19"), "la fecha 11/19/2014 se leyó como mes/día");
   igual("el centro educativo es la institución", a.jugadores[0].institucion.startsWith("ESCUELA DE PRUEBA"), true);
   ok(ts.every((x) => personas(x).every((j) => !("modalidad" in j) && !("region" in j))), "ni la modalidad ni la regional se guardan en el jugador");
@@ -514,6 +557,7 @@ async function pruebaPagina(browser) {
   pruebaCortos();
   pruebaHombresEnMujeres();
   pruebaTopesYConfig();
+  pruebaEtapa();
   const browser = await chromium.launch({ executablePath: fs.existsSync(CHROME) ? CHROME : undefined });
   try { await pruebaPagina(browser); await pruebaDosModalidades(browser); await pruebaTorneoEnArchivo(browser); await pruebaTopeIndividual(browser); }
   catch (e) { mal("la prueba de la página se cayó", e.stack); }

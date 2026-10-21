@@ -2380,6 +2380,24 @@ se juega aparte, y armar cada torneo a mano era copiar y pegar filas.
     El botón «Aplicar la configuración de los JDE» de la ficha Torneo hace
     lo mismo con el torneo abierto, y solo antes de la ronda 1 (después, el
     sistema y los puntos ya no se cambian).
+  - **La etapa y el lugar, y el nombre del evento siempre igual**
+    (`pedirEtapaJde()`, pedido por el dueño del sitio: «para que el nombre
+    del evento sea siempre igual para todos pero ajustado a cada lugar»).
+    Al crear los torneos con la configuración de los JDE, y al tocar el
+    botón de la ficha Torneo, se pregunta en dos pasos (dos
+    `Avisos.formulario`: el diálogo no cambia de campos según lo elegido)
+    la etapa —Institucional, Regional o Interregional— y después lo que esa
+    etapa pide: la Dirección Regional (las 27), la interregional (las 11 del
+    art. 56, con sus regiones) o el centro educativo, opcional. La Regional
+    y la Interregional no siguen sin elegir. El nombre sale de
+    `nombreEventoJde()`: «JDE 2026 · Etapa Regional · DRE Alajuela —
+    Individual · Categoría A · Mujeres» (el grupo se guarda aparte, en
+    `grupo`, para volver a armar el nombre si cambia la etapa; `jde` guarda
+    { anio, etapa, lugar }). La Dirección Regional viene elegida si la
+    inscripción la trae («Dirección Regional») y la interregional, la de esa
+    Dirección; la segunda vez, la que ya tenía. La Interregional queda en
+    todos contra todos sin importar cuántos sean (art. 66.2.c). La Nacional
+    no está: no se pidió y su sistema es otro (art. 66.2.d y e).
   - **Un equipo de más de cinco: el árbitro elige los cinco**
     (`equiposDeMas()`, art. 66.1.g: «un máximo de cinco [...] cuatro
     personas estudiantes titulares y una persona estudiante suplente»;

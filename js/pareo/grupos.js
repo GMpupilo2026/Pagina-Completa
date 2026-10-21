@@ -256,9 +256,10 @@
   // son los de FIDE para cada sistema (C.07), y se pueden cambiar después.
   const JDE_DESEMPATES_SUIZO = ["BH-C1", "BH", "SB", "DE", "WIN"];
   const JDE_DESEMPATES_TODOS = ["DE", "SB", "WIN", "KS"];
-  function configuracionJde(n, actual) {
+  function configuracionJde(n, actual, etapa) {
     const a = actual || {};
-    const sistema = sistemaSugerido(n) || a.sistema || "suizo";
+    // La Etapa Interregional es siempre todos contra todos (art. 66.2.c).
+    const sistema = etapa === "interregional" && n >= 2 ? "todos" : sistemaSugerido(n) || a.sistema || "suizo";
     return {
       sistema,
       rondasTotales: Math.max(Number(a.rondasTotales) || 0, JDE_RONDAS_SUIZO),
@@ -327,7 +328,50 @@
     return lista.filter((j) => torneoDe(j) === "w" && j.sexo === "m");
   }
 
+  // Las etapas, las 27 Direcciones Regionales de Educación y las 11
+  // interregionales de la Normativa de los JDE 2026 (art. 56, «Sistema de
+  // regionalización»), para que el nombre de cada torneo sea siempre el
+  // mismo, ajustado al lugar: «JDE 2026 · Etapa Regional · DRE Alajuela».
+  const JDE_ETAPAS = { institucional: "Institucional", regional: "Regional", interregional: "Interregional" };
+  const JDE_INTERREGIONALES = [
+    { numero: "I", regiones: ["Cañas", "Liberia"] },
+    { numero: "II", regiones: ["Nicoya", "Peninsular", "Santa Cruz"] },
+    { numero: "III", regiones: ["Alajuela", "Occidente"] },
+    { numero: "IV", regiones: ["Aguirre", "Puntarenas"] },
+    { numero: "V", regiones: ["Desamparados", "Puriscal", "San José Oeste"] },
+    { numero: "VI", regiones: ["Heredia", "San José Central", "San José Norte"] },
+    { numero: "VII", regiones: ["San Carlos", "Zona Norte-Norte"] },
+    { numero: "VIII", regiones: ["Guápiles", "Sarapiquí"] },
+    { numero: "IX", regiones: ["Limón", "Sulá"] },
+    { numero: "X", regiones: ["Coto", "Grande de Térraba", "Pérez Zeledón"] },
+    { numero: "XI", regiones: ["Cartago", "Los Santos", "Turrialba"] },
+  ];
+  const JDE_DIRECCIONES = JDE_INTERREGIONALES.flatMap((x) => x.regiones).sort((a, b) => a.localeCompare(b, "es"));
+  const nombreInterregional = (x) => "Interregional " + x.numero + " (" + x.regiones.join("-") + ")";
+
+  // La Dirección Regional que nombra un texto («Alajuela», «DRE ALAJUELA»,
+  // «Dirección Regional de Educación de Alajuela»), o "" si no es ninguna.
+  function direccionDe(texto) {
+    const t = sinTildes(texto).replace(/^(direccion regional( de educacion)?( de)?|dre)\s+/, "").trim();
+    return JDE_DIRECCIONES.find((d) => sinTildes(d) === t) || "";
+  }
+
+  // El nombre del evento: { anio, etapa, lugar } → «JDE 2026 · Etapa
+  // Regional · DRE Alajuela». En la Regional el lugar es la Dirección
+  // Regional; en la Interregional, su número (y se escriben sus regiones);
+  // en la Institucional, el centro educativo si se dio.
+  function nombreEventoJde(jde) {
+    const partes = ["JDE " + jde.anio, "Etapa " + (JDE_ETAPAS[jde.etapa] || "")];
+    if (jde.etapa === "regional" && jde.lugar) partes.push("DRE " + jde.lugar);
+    else if (jde.etapa === "interregional") {
+      const x = JDE_INTERREGIONALES.find((i) => i.numero === jde.lugar);
+      if (x) partes.push(nombreInterregional(x));
+    } else if (jde.lugar) partes.push(String(jde.lugar).trim());
+    return partes.join(" · ");
+  }
+
   const api = {
+    JDE_ETAPAS, JDE_INTERREGIONALES, JDE_DIRECCIONES, nombreInterregional, direccionDe, nombreEventoJde,
     quitarRepetidos, equiposCortos, individualesDeMas, JDE_MAX_INDIVIDUAL, configuracionJde, hombresEnMujeres, leerTorneo,
     pasarMujeresAlAbierto, JDE_MIN_EQUIPO, equiposDeMas, JDE_MAX_EQUIPO,
     leerSexo, leerModalidad, ordenFechas, leerFecha, agrupar, sistemaSugerido, revisarCategorias, rangoCategoria,

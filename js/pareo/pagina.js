@@ -242,18 +242,74 @@
   // La de un torneo individual o, en uno por equipos, con los puntos de
   // encuentro y los puntos de tablero como primer desempate. n es cuántos
   // juegan: jugadores o equipos, que es lo que se empareja.
-  function configuracionPara(n, actual, deEquipos) {
-    const c = G.configuracionJde(n, actual);
+  function configuracionPara(n, actual, deEquipos, etapa) {
+    const c = G.configuracionJde(n, actual, etapa);
     if (deEquipos) { c.puntos = Object.assign({}, E.PUNTOS_EQUIPOS); c.desempates = E.desempatesPara(c.sistema); }
     return c;
   }
 
-  function aplicarConfigJde() {
+  // Antes de aplicar la configuración de los JDE se pregunta de qué etapa
+  // es el torneo y, en la Regional y la Interregional, de cuál: así el
+  // nombre del evento sale siempre igual para todos, ajustado al lugar
+  // («JDE 2026 · Etapa Regional · DRE Alajuela»), y la Interregional queda
+  // en todos contra todos (art. 66.2.c). Dos pasos con Avisos.formulario:
+  // la etapa, y después lo que esa etapa pide. Devuelve { anio, etapa,
+  // lugar } o null si se cancela.
+  // Las claves de textos.js de cada etapa, enteras (verificar-pareo-pagina.js
+  // busca las claves que usa la página por su nombre completo).
+  const TEXTO_ETAPA = { institucional: "etapaInstitucional", regional: "etapaRegional", interregional: "etapaInterregionalNombre" };
+  const TEXTO_ETAPA_LUGAR = { institucional: "etapaLugarInstitucional", regional: "etapaLugarRegional", interregional: "etapaLugarInterregional" };
+
+  async function pedirEtapaJde(previo, regionDelArchivo) {
+    const anterior = previo || {};
+    const opciones = (pares) => pares.map((x) => [x.valor, x.texto]);
+    const etapas = opciones(Object.keys(G.JDE_ETAPAS).map((k) => ({ valor: k, texto: tx(TEXTO_ETAPA[k]) })));
+    const r1 = await Avisos.formulario({
+      titulo: tx("etapaTitulo"), texto: tx("etapaTexto"), aceptar: tx("etapaSeguir"), cancelar: tx("cancelar"),
+      campos: [{ nombre: "etapa", etiqueta: tx("etapaCampo"), tipo: "select", opciones: etapas, valor: anterior.etapa || "regional" }],
+    });
+    if (!r1) return null;
+    const etapa = r1.etapa;
+    const anio = Number(String(t().fechaInicio || "").slice(0, 4)) || Number((window.HoraCR ? HoraCR.hoy() : "").slice(0, 4)) || G.JDE_ANIO_NORMATIVA;
+    let campo;
+    if (etapa === "regional") {
+      const sugerida = (anterior.etapa === "regional" && anterior.lugar) || G.direccionDe(regionDelArchivo) || "";
+      campo = { nombre: "lugar", etiqueta: tx("etapaDre"), tipo: "select", valor: sugerida,
+        opciones: opciones([{ valor: "", texto: tx("etapaElegir") }].concat(G.JDE_DIRECCIONES.map((d) => ({ valor: d, texto: d })))) };
+    } else if (etapa === "interregional") {
+      const dre = G.direccionDe(regionDelArchivo);
+      const sugerida = (anterior.etapa === "interregional" && anterior.lugar) || (G.JDE_INTERREGIONALES.find((x) => x.regiones.includes(dre)) || {}).numero || "";
+      campo = { nombre: "lugar", etiqueta: tx("etapaInterregional"), tipo: "select", valor: sugerida,
+        opciones: opciones([{ valor: "", texto: tx("etapaElegir") }].concat(G.JDE_INTERREGIONALES.map((x) => ({ valor: x.numero, texto: G.nombreInterregional(x) })))) };
+    } else {
+      campo = { nombre: "lugar", etiqueta: tx("etapaCentro"), valor: anterior.etapa === "institucional" ? anterior.lugar || "" : "", max: 80, ayuda: tx("etapaCentroAyuda") };
+    }
+    // La Regional y la Interregional piden a cuál: sin elegir, se vuelve a preguntar.
+    for (;;) {
+      const r2 = await Avisos.formulario({ titulo: tx(TEXTO_ETAPA[etapa]), texto: tx(TEXTO_ETAPA_LUGAR[etapa]), aceptar: tx("etapaAplicar"), cancelar: tx("cancelar"), campos: [campo] });
+      if (!r2) return null;
+      const lugar = String(r2.lugar || "").trim();
+      if (etapa !== "institucional" && !lugar) { Avisos.avisar(tx("etapaFalta"), { tipo: "error" }); continue; }
+      return { anio, etapa, lugar };
+    }
+  }
+
+  // El nombre de un torneo de los JDE: el del evento y, si lo tiene, su grupo
+  // («Individual · Categoría A · Mujeres»).
+  const nombreConGrupo = (jde, grupo) => G.nombreEventoJde(jde) + (grupo ? " — " + grupo : "");
+
+  async function aplicarConfigJde() {
     const v = t();
     if (v.rondas.length) { Avisos.avisar(tx("configJdeConRondas"), { tipo: "error" }); return; }
-    Object.assign(v, configuracionPara(v.jugadores.length, v, E.esDeEquipos(v)));
+    const jde = await pedirEtapaJde(v.jde, v.jde && v.jde.lugar);
+    if (!jde || t() !== v || v.rondas.length) return;
+    // Un torneo sin grupo guardado (armado a mano) conserva su nombre como
+    // grupo la primera vez; las siguientes, solo cambia el evento.
+    if (v.grupo == null) v.grupo = v.jde ? "" : String(v.nombre || "").trim();
+    Object.assign(v, configuracionPara(v.jugadores.length, v, E.esDeEquipos(v), jde.etapa), { jde, nombre: nombreConGrupo(jde, v.grupo) });
     guardar();
     pintarTorneo();
+    pintarLista();
     Avisos.avisar(tx("configJdeAplicada", { s: tx(v.sistema === "todos" ? "todos" : "suizo") }));
   }
 
@@ -669,7 +725,7 @@
       : String(nombreArchivo || "").replace(/\.[^.]+$/, "").replace(/[_]+/g, " ").trim();
     // El año del torneo: el de su fecha de inicio, o el de hoy.
     const anio = Number(String(t().fechaInicio || "").slice(0, 4)) || Number((window.HoraCR ? HoraCR.hoy() : "").slice(0, 4)) || G.JDE_ANIO_NORMATIVA;
-    estado.sugerencia = { lista, base, anio, pasarMujeres: true, grupos: [], elegidos: new Map(), abiertos: new Set(), limpia, dondeQueda: new Map(), configJde: true };
+    estado.sugerencia = { lista, base, anio, region: regiones.length === 1 ? regiones[0] : "", pasarMujeres: true, grupos: [], elegidos: new Map(), abiertos: new Set(), limpia, dondeQueda: new Map(), configJde: true };
     calcularSugerencia();
     pintarSugerencia();
     const caja = $("pi-sugerencia");
@@ -920,9 +976,9 @@
       porSexo ? el("p", { class: C.nota + " mt-2", texto: tx("sugerenciaAbierto") }) : null,
       hayEquipos ? el("p", { class: C.nota + " mt-2", texto: tx("sugerenciaEquipos") }) : null,
       el("p", { class: C.nota + " mt-2", texto: tx("sugerenciaNormativa", { r: G.JDE_RONDAS_SUIZO, ritmo: G.JDE_RITMO_MINIMO }) }),
-      el("p", { class: C.nota + " mt-2", texto: tx("sugerenciaNombre", { b: t().nombre.trim() || s.base }) }),
+      el("p", { class: C.nota + " mt-2", texto: s.configJde ? tx("sugerenciaNombreJde") : tx("sugerenciaNombre", { b: t().nombre.trim() || s.base }) }),
       el("label", { class: "flex items-start gap-2 text-sm mt-3" },
-        el("input", { type: "checkbox", id: "pi-config-jde", class: "mt-1", checked: s.configJde, onchange: (e) => { s.configJde = e.target.checked; } }),
+        el("input", { type: "checkbox", id: "pi-config-jde", class: "mt-1", checked: s.configJde, onchange: (e) => { s.configJde = e.target.checked; pintarSugerencia(); $("pi-config-jde").focus(); } }),
         el("span", {}, el("span", { class: "font-semibold", texto: tx("configJdeCasilla") }), " " + tx("configJdeAyuda", { r: G.JDE_RONDAS_SUIZO, ritmo: G.JDE_RITMO_MINIMO }))),
       el("div", { class: "flex flex-wrap gap-2 mt-3" },
         el("button", { type: "button", id: "pi-sugerencia-crear", class: C.boton, disabled: marcados === 0, onclick: crearTorneosDeGrupos, texto: tx("sugerenciaCrear", { n: marcados }) }),
@@ -958,11 +1014,18 @@
   // sugerido por la normativa de los JDE: el suizo con al menos 5 rondas y,
   // si el abierto no tiene ritmo, el mínimo que pide. Si el abierto está vacío —sin jugadores ni rondas— se usa para
   // el primer grupo, en vez de dejar un torneo «(sin nombre)» de más.
-  function crearTorneosDeGrupos() {
+  async function crearTorneosDeGrupos() {
     const s = estado.sugerencia;
     const elegidos = s.grupos.filter((g) => g.marcado);
     if (!elegidos.length) return;
     const actual = t();
+    // Con la configuración de los JDE, primero la etapa y el lugar: el
+    // nombre de cada torneo sale de ahí.
+    let jde = null;
+    if (s.configJde) {
+      jde = await pedirEtapaJde(actual.jde, s.region);
+      if (!jde || estado.sugerencia !== s || t() !== actual) return;
+    }
     const base = actual.nombre.trim() || s.base;
     // Con la configuración de los JDE (la casilla, marcada de entrada), cada
     // torneo lleva la suya según cuántos juegan; sin ella, copia las rondas,
@@ -984,16 +1047,19 @@
       const deEquipos = g.modalidad === "equipo";
       const participantes = deEquipos ? E.armarEquipos(jugadores, idJugador) : jugadores;
       const n = participantes.length;
+      const grupo = etiquetaGrupo(g);
       const datos = Object.assign({}, comunes, {
-        nombre: (base ? base + " — " : "") + etiquetaGrupo(g),
+        nombre: jde ? nombreConGrupo(jde, grupo) : (base ? base + " — " : "") + grupo,
+        grupo, jde: jde || undefined,
         sistema: G.sistemaSugerido(n) || "suizo",
       }, deEquipos ? { puntos: Object.assign({}, E.PUNTOS_EQUIPOS), desempates: E.desempatesPara(G.sistemaSugerido(n) || "suizo") } : {},
-      s.configJde ? configuracionPara(n, actual, deEquipos) : {}, {
+      s.configJde ? configuracionPara(n, actual, deEquipos, jde.etapa) : {}, {
         tipo: deEquipos ? "equipos" : undefined, tableros: deEquipos ? E.TABLEROS : undefined,
         jugadores: participantes,
         rondas: [], numeracion: null,
       });
       if (!deEquipos) { delete datos.tipo; delete datos.tableros; }
+      if (!jde) delete datos.jde;
       if (i === 0 && reusar) estado.t = T.nuevo(Object.assign({}, actual, datos));
       else { estado.id = nuevoId(); estado.t = T.nuevo(datos); }
       guardar();
