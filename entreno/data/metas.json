@@ -77,7 +77,7 @@
    "clave": "endgame",
    "label": "Final",
    "grupo": "Fases",
-   "total": 100,
+   "total": 167,
    "actividades": [
     "temas"
    ]
@@ -86,7 +86,7 @@
    "clave": "rookEndgame",
    "label": "Final de torres",
    "grupo": "Fases",
-   "total": 100,
+   "total": 150,
    "actividades": [
     "temas"
    ]
@@ -95,7 +95,7 @@
    "clave": "bishopEndgame",
    "label": "Final de alfiles",
    "grupo": "Fases",
-   "total": 100,
+   "total": 139,
    "actividades": [
     "temas"
    ]
@@ -104,7 +104,7 @@
    "clave": "pawnEndgame",
    "label": "Final de peones",
    "grupo": "Fases",
-   "total": 100,
+   "total": 139,
    "actividades": [
     "temas"
    ]
@@ -113,7 +113,7 @@
    "clave": "knightEndgame",
    "label": "Final de caballos",
    "grupo": "Fases",
-   "total": 100,
+   "total": 132,
    "actividades": [
     "temas"
    ]
@@ -122,7 +122,7 @@
    "clave": "queenEndgame",
    "label": "Final de damas",
    "grupo": "Fases",
-   "total": 100,
+   "total": 145,
    "actividades": [
     "temas"
    ]
@@ -131,7 +131,7 @@
    "clave": "queenRookEndgame",
    "label": "Final de dama y torre",
    "grupo": "Fases",
-   "total": 100,
+   "total": 149,
    "actividades": [
     "temas"
    ]
