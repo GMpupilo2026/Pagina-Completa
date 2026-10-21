@@ -18,6 +18,7 @@
   const D = window.PareoDesempates;
   const G = window.PareoGrupos;
   const E = window.PareoEquipos;
+  const V = window.PareoEvento;
   const X = window.PareoTextos;
   const motor = window.PareoMotor.enNavegador("js/pareo/motor-worker.js");
 
@@ -197,7 +198,7 @@
 
   function pintarPanel() {
     ({ torneo: pintarTorneo, jugadores: pintarJugadores, rondas: pintarRondas,
-      clasificacion: pintarClasificacion, cruzada: pintarCruzada, archivos: () => {} })[estado.ficha]();
+      clasificacion: pintarClasificacion, cruzada: pintarCruzada, archivos: pintarEvento })[estado.ficha]();
   }
 
   function pintarTodo() {
@@ -260,8 +261,12 @@
   const TEXTO_ETAPA = { institucional: "etapaInstitucional", regional: "etapaRegional", interregional: "etapaInterregionalNombre" };
   const TEXTO_ETAPA_LUGAR = { institucional: "etapaLugarInstitucional", regional: "etapaLugarRegional", interregional: "etapaLugarInterregional" };
 
-  async function pedirEtapaJde(previo, regionDelArchivo) {
+  async function pedirEtapaJde(previo, regionesDelArchivo) {
     const anterior = previo || {};
+    // Las Direcciones Regionales que trae la inscripción (una en la
+    // Regional; dos o tres juntas en la Interregional).
+    const dres = [].concat(regionesDelArchivo || []).map((r) => G.direccionDe(r)).filter(Boolean);
+    const regionDelArchivo = dres.length === 1 ? dres[0] : "";
     const opciones = (pares) => pares.map((x) => [x.valor, x.texto]);
     const etapas = opciones(Object.keys(G.JDE_ETAPAS).map((k) => ({ valor: k, texto: tx(TEXTO_ETAPA[k]) })));
     const r1 = await Avisos.formulario({
@@ -277,8 +282,8 @@
       campo = { nombre: "lugar", etiqueta: tx("etapaDre"), tipo: "select", valor: sugerida,
         opciones: opciones([{ valor: "", texto: tx("etapaElegir") }].concat(G.JDE_DIRECCIONES.map((d) => ({ valor: d, texto: d })))) };
     } else if (etapa === "interregional") {
-      const dre = G.direccionDe(regionDelArchivo);
-      const sugerida = (anterior.etapa === "interregional" && anterior.lugar) || (G.JDE_INTERREGIONALES.find((x) => x.regiones.includes(dre)) || {}).numero || "";
+      const sugerida = (anterior.etapa === "interregional" && anterior.lugar) ||
+        (dres.length ? (G.JDE_INTERREGIONALES.find((x) => dres.every((d) => x.regiones.includes(d))) || {}).numero : "") || "";
       campo = { nombre: "lugar", etiqueta: tx("etapaInterregional"), tipo: "select", valor: sugerida,
         opciones: opciones([{ valor: "", texto: tx("etapaElegir") }].concat(G.JDE_INTERREGIONALES.map((x) => ({ valor: x.numero, texto: G.nombreInterregional(x) })))) };
     } else {
@@ -680,20 +685,30 @@
   }
 
   // Lo que se guarda del jugador: sin la modalidad ni la regional.
-  const soloJugador = ({ modalidad, region, alAbierto, documento, torneo, ...d }) => d;
+  // La Dirección Regional sí se guarda: la usa la lista de clasificados
+  // para la etapa siguiente (js/pareo/evento.js).
+  const soloJugador = ({ modalidad, alAbierto, documento, torneo, ...d }) => (d.region ? d : (delete d.region, d));
 
-  async function subirLista(archivo) {
+  // Uno o varios archivos: en la Etapa Interregional llegan los
+  // clasificados de cada Dirección Regional por separado (la lista que baja
+  // «Clasificados», en la ficha Archivos), y se suben juntos.
+  async function subirLista(archivos) {
     const estadoEl = $("pi-subir-lista-estado");
-    if (archivo.size > 5 * 1024 * 1024) { Avisos.avisar(tx("archivoGrande"), { tipo: "error" }); return; }
-    const nombreArch = (archivo.name || "").toLowerCase();
+    const todos = Array.from(archivos.length != null ? archivos : [archivos]);
+    if (todos.some((a) => a.size > 5 * 1024 * 1024)) { Avisos.avisar(tx("archivoGrande"), { tipo: "error" }); return; }
     estadoEl.textContent = tx("leyendoArchivo");
     try {
-      let filas;
-      if (nombreArch.endsWith(".docx")) filas = await window.ReporteTextos.filasDeDocx(archivo);
-      else if (nombreArch.endsWith(".doc")) { estadoEl.textContent = ""; Avisos.avisar(tx("archivoDocAntiguo"), { tipo: "error" }); return; }
-      else filas = (await window.ReporteExcel.leer(archivo)).filas;
+      const leida = [];
+      for (const archivo of todos) {
+        const nombreArch = (archivo.name || "").toLowerCase();
+        let filas;
+        if (nombreArch.endsWith(".docx")) filas = await window.ReporteTextos.filasDeDocx(archivo);
+        else if (nombreArch.endsWith(".doc")) { estadoEl.textContent = ""; Avisos.avisar(tx("archivoDocAntiguo"), { tipo: "error" }); return; }
+        else filas = (await window.ReporteExcel.leer(archivo)).filas;
+        leida.push(...filasAJugadores(filas));
+      }
+      const archivo = todos[0];
       estadoEl.textContent = "";
-      const leida = filasAJugadores(filas);
       if (!leida.length) { Avisos.avisar(tx("archivoSinJugadores"), { tipo: "error" }); return; }
       const limpia = G.quitarRepetidos(leida);
       const lista = limpia.lista;
@@ -725,7 +740,7 @@
       : String(nombreArchivo || "").replace(/\.[^.]+$/, "").replace(/[_]+/g, " ").trim();
     // El año del torneo: el de su fecha de inicio, o el de hoy.
     const anio = Number(String(t().fechaInicio || "").slice(0, 4)) || Number((window.HoraCR ? HoraCR.hoy() : "").slice(0, 4)) || G.JDE_ANIO_NORMATIVA;
-    estado.sugerencia = { lista, base, anio, region: regiones.length === 1 ? regiones[0] : "", pasarMujeres: true, grupos: [], elegidos: new Map(), abiertos: new Set(), limpia, dondeQueda: new Map(), configJde: true };
+    estado.sugerencia = { lista, base, anio, region: regiones, pasarMujeres: true, grupos: [], elegidos: new Map(), abiertos: new Set(), limpia, dondeQueda: new Map(), configJde: true };
     calcularSugerencia();
     pintarSugerencia();
     const caja = $("pi-sugerencia");
@@ -1027,6 +1042,12 @@
       if (!jde || estado.sugerencia !== s || t() !== actual) return;
     }
     const base = actual.nombre.trim() || s.base;
+    // El evento: lo que tienen en común los torneos que se crean ahora, con
+    // las decisiones del árbitro en la sugerencia (para el acta del
+    // congresillo, js/pareo/evento.js). Cada torneo guarda su copia.
+    const evento = { id: "e" + nuevoId(), nombre: jde ? G.nombreEventoJde(jde) : base, jde: jde || undefined,
+      creado: window.HoraCR ? HoraCR.hoy() : "", decisiones: decisionesDe(s) };
+    if (!jde) delete evento.jde;
     // Con la configuración de los JDE (la casilla, marcada de entrada), cada
     // torneo lleva la suya según cuántos juegan; sin ella, copia las rondas,
     // el ritmo, los puntos y los desempates del abierto tal cual.
@@ -1050,7 +1071,7 @@
       const grupo = etiquetaGrupo(g);
       const datos = Object.assign({}, comunes, {
         nombre: jde ? nombreConGrupo(jde, grupo) : (base ? base + " — " : "") + grupo,
-        grupo, jde: jde || undefined,
+        grupo, jde: jde || undefined, evento, ordenEnEvento: i,
         sistema: G.sistemaSugerido(n) || "suizo",
       }, deEquipos ? { puntos: Object.assign({}, E.PUNTOS_EQUIPOS), desempates: E.desempatesPara(G.sistemaSugerido(n) || "suizo") } : {},
       s.configJde ? configuracionPara(n, actual, deEquipos, jde.etapa) : {}, {
@@ -1076,6 +1097,119 @@
     pintarTodo();
     Avisos.avisar(tx("torneosCreados", { n: ids.length }));
   }
+
+  // Lo que decidió el árbitro en la sugerencia, en texto llano y en español
+  // (va al acta, que es un documento oficial del MEP).
+  function decisionesDe(s) {
+    const es = (clave, vars) => X.t("es", clave, vars);
+    const MODO = { equipo: "Equipos", individual: "Individual" };
+    const TORNEO = { w: "Mujeres", m: "Abierto" };
+    const modo = (x) => (MODO[x.modalidad] || MODO.individual) + " " + x.categoria;
+    const grupoDe = (e, equipo) => (equipo ? MODO.equipo : MODO.individual) + " · Categoría " + e.categoria + " · " + (TORNEO[e.torneo] || TORNEO.m);
+    const limpia = s.limpia || { repetidos: [], dosModalidades: [] };
+    const descartados = [];
+    for (const e of s.equipos.concat(s.individuales)) {
+      const elegidos = s.elegidos.get(e.eleccion);
+      for (const j of e.integrantes) if (!elegidos.has(j)) descartados.push({ nombre: j.nombre, institucion: e.institucion, grupo: grupoDe(e, e.tipo === "eq") });
+    }
+    const r = s.revision || { permitidos: [], noPermitidos: [] };
+    const caso = (c) => {
+      const j = c.jugador;
+      const v = { n: j.nombre, i: j.institucion || "—", a: c.nace, p: c.propia, c: c.categoria, d: c.desde, k: c.cuantos, m: G.JDE_MAX_ASCENSOS };
+      const clave = c.motivo ? { mayor: "catMayor", individual: "catIndividual", salto: "catSalto", tope: "catTope" }[c.motivo] : "catPermitido";
+      return es(c.motivo ? "catNoPermitido" : "catSiPermitido") + " " + es(clave, v);
+    };
+    return {
+      repetidos: limpia.repetidos.map((x) => ({ nombre: x.jugador.nombre, institucion: x.jugador.institucion || "—", veces: x.veces })),
+      dosModalidades: limpia.dosModalidades.map((d, k) => ({
+        nombre: d.jugador.nombre, institucion: d.jugador.institucion || "—", inscripciones: d.inscripciones.map(modo).join(" y "),
+        queda: s.dondeQueda.has(k) ? modo(d.inscripciones[s.dondeQueda.get(k)]) : "",
+      })),
+      pase: s.pasarMujeres ? s.pase.pasadas.map((c) => ({ institucion: c.institucion || "—", categoria: c.categoria, nombres: c.mujeres.map((j) => j.nombre).join(", ") })) : [],
+      descartados,
+      cortos: (s.cortos || []).map((e) => ({ institucion: e.institucion || "—", grupo: grupoDe(e, true), cuantos: e.integrantes.length, nombres: e.integrantes.map((j) => j.nombre).join(", ") })),
+      categorias: r.noPermitidos.concat(r.permitidos).map(caso),
+      hombresEnMujeres: (s.hombresEnMujeres || []).map((j) => j.nombre + " (" + (j.institucion || "—") + ")"),
+    };
+  }
+
+  // ---------- El evento: acta, informe y clasificados ----------
+  // Los torneos del mismo evento que el abierto, en el orden en que se
+  // crearon (el de la sugerencia). El abierto, con lo último que tiene.
+  function torneosDelEvento() {
+    const ev = t().evento;
+    if (!ev) return [];
+    const otros = estado.lista.map((x) => (x.id === estado.id ? t() : leerJSON(PREFIJO + x.id, null)))
+      .filter((x) => x && x.evento && x.evento.id === ev.id);
+    return otros.sort((a, b) => (a.ordenEnEvento || 0) - (b.ordenEnEvento || 0));
+  }
+
+  async function bajarDocumento(doc, sufijo, boton) {
+    if (boton) boton.disabled = true;
+    try {
+      const blob = await window.ReportePDF.generar(doc);
+      const url = URL.createObjectURL(blob);
+      const a = el("a", { href: url, download: window.PareoPDF.nombreArchivo(doc.subtitulo, sufijo) });
+      document.body.append(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 10000);
+    } catch (e) {
+      Avisos.avisar(tx("noPdf", { e: e.message }), { tipo: "error" });
+    } finally {
+      if (boton) boton.disabled = false;
+    }
+  }
+
+  function pintarEvento() {
+    const caja = $("pi-evento");
+    caja.replaceChildren();
+    const ev = t().evento;
+    caja.hidden = !ev;
+    if (!ev) return;
+    const torneos = torneosDelEvento();
+    const n = V.cupo(ev.jde);
+    const siguiente = ev.jde ? V.SIGUIENTE[ev.jde.etapa] : null;
+    caja.append(
+      el("h2", { class: "font-serif text-xl font-bold mb-1", texto: tx("eventoTitulo") }),
+      el("p", { class: "font-semibold", texto: ev.nombre }),
+      el("p", { class: C.nota + " mb-3", texto: tx("eventoTexto", { n: torneos.length }) }));
+    const acciones = el("div", { class: "flex flex-wrap gap-2" });
+    const bActa = el("button", { type: "button", id: "pi-evento-acta", class: C.boton }, tx("eventoActa"));
+    bActa.addEventListener("click", () => bajarDocumento(V.acta(ev, torneosDelEvento()), "acta-congresillo", bActa));
+    const bInforme = el("button", { type: "button", id: "pi-evento-informe", class: C.botonSec }, tx("eventoInforme"));
+    bInforme.addEventListener("click", () => bajarDocumento(V.informe(ev, torneosDelEvento()), "informe-oficial", bInforme));
+    acciones.append(bActa, bInforme);
+    caja.append(acciones, el("p", { class: C.nota + " mt-2", texto: tx("eventoPapelesAyuda") }));
+
+    if (!siguiente || !n) return;
+    // Los clasificados: los primeros n de cada torneo (art. 66.1).
+    caja.append(el("h3", { class: "font-semibold mt-5", texto: tx("clasificadosTitulo", { e: tx(TEXTO_ETAPA_SIGUIENTE[siguiente]), n }) }),
+      el("p", { class: C.nota, texto: tx("clasificadosTexto", { n }) }));
+    const lista = el("div", { id: "pi-clasificados", class: "mt-2 space-y-3" });
+    for (const tor of torneos) {
+      const c = V.clasificados(tor, n);
+      const sec = el("section", { class: "text-sm" }, el("h4", { class: "font-semibold", texto: tor.grupo || tor.nombre }));
+      if (!c.filas.length) sec.append(el("p", { class: C.nota, texto: tx("clasificadosSinRondas") }));
+      else {
+        if (!c.terminado) sec.append(el("p", { class: C.nota, texto: tx("clasificadosProvisional", { r: c.rondas, t: c.total }) }));
+        sec.append(el("ol", { class: "list-decimal pl-6" }, c.filas.map((f) => {
+          const p = tor.jugadores.find((j) => j.id === f.id);
+          return el("li", { texto: p.nombre + " (" + (p.institucion || "—") + ") · " + puntosTexto(f.puntos) });
+        })));
+        if (c.empate) sec.append(el("p", { class: "font-semibold" }, tx("cortosAviso") + " " + tx("clasificadosEmpate")));
+      }
+      lista.append(sec);
+    }
+    const bLista = el("button", { type: "button", id: "pi-evento-clasificados", class: C.botonSec + " mt-3" }, tx("clasificadosBajar"));
+    bLista.addEventListener("click", () => {
+      const filas = V.filasClasificados(ev, torneosDelEvento());
+      if (!filas.length) { Avisos.avisar(tx("clasificadosNadie"), { tipo: "error" }); return; }
+      window.TablaExcel.bajar(window.PareoPDF.nombreArchivo(ev.nombre, "clasificados").replace(/\.pdf$/, ".xlsx"), [{ nombre: "Clasificados", filas: [V.ENCABEZADOS].concat(filas) }]);
+    });
+    caja.append(lista, bLista, el("p", { class: C.nota + " mt-2", texto: tx("clasificadosAyuda") }));
+  }
+  const TEXTO_ETAPA_SIGUIENTE = { regional: "etapaRegional", interregional: "etapaInterregionalNombre", nacional: "etapaNacional" };
 
   // El mismo bolsillo de palabras que usa la Edge Function, para emparejar
   // su respuesta (que viene por nombre, no por id) con el jugador de acá.
@@ -1988,9 +2122,9 @@
       else Avisos.avisar(tx("nadaQueAgregar"), { tipo: "error" });
     });
     $("pi-subir-lista").addEventListener("change", (e) => {
-      const f = e.target.files && e.target.files[0];
+      const fs = Array.from(e.target.files || []);
       e.target.value = "";
-      if (f) subirLista(f);
+      if (fs.length) subirLista(fs);
     });
     $("pi-elo-nacional").addEventListener("click", buscarEloNacional);
     $("pi-buscar-jugador").addEventListener("input", (e) => { estado.filtroJugador = e.target.value; pintarJugadores(); });

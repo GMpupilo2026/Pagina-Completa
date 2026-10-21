@@ -2538,6 +2538,65 @@ en localhost:8777). Rompiendo a propósito los colores (siempre blancas el de
 la izquierda), el mínimo de dos presentes o el desempate por puntos de
 tablero, salta.
 
+### El evento de los JDE: el acta, el informe y los clasificados
+
+Lo pidió el dueño del sitio: tres papeles que la normativa pide y que se
+hacían a mano. Un **evento** son los torneos que se crean juntos desde la
+inscripción («JDE 2026 · Etapa Regional · DRE Alajuela»), y la ficha Archivos
+de cualquiera de ellos trae la sección «El evento» (`js/pareo/evento.js`,
+`pintarEvento()`).
+
+- **Cada torneo guarda una copia de su evento** (`evento`: id, nombre,
+  `jde`, fecha y `decisiones`, y `ordenEnEvento`), no hay un registro aparte:
+  así el acta sale aunque se pida días después y aunque se mueva un torneo
+  a otra computadora con su `.json`. Los torneos del evento son los de «Mis
+  torneos» con el mismo `evento.id`, y el abierto entra con lo último que
+  tiene. Las decisiones son una foto en texto llano de la sugerencia al
+  crear (`decisionesDe()`): repetidos, dos modalidades y dónde quedó cada
+  uno, el pase al abierto, los descartados por los topes, los equipos
+  cortos, las categorías (con las frases de `textos.js` en español) y los
+  hombres en el torneo de mujeres.
+- **El acta del congresillo** (art. 33 y 34: lo acordado «debe quedar
+  necesariamente por escrito en un Acta Oficial»): fecha, sede y árbitros
+  del primer torneo, la tabla de los torneos (el ritmo va una vez arriba,
+  no en una columna: en la tabla se cortaba), cada decisión en su sección
+  (con «No hubo.» cuando no hubo), el **orden de tableros de cada equipo
+  como está ahora** (un renglón por equipo con los nombres enteros: en una
+  tabla de seis columnas se cortaban) y las firmas.
+- **El informe oficial de participación y resultados** (la normativa pide
+  remitir el «Informe Oficial de Participación y Resultados» a la Comisión
+  Ejecutiva): la participación por centro educativo y, por torneo, los
+  primeros lugares con quién clasifica, marcando el que está a medio jugar
+  como provisional.
+- **Los dos papeles van en español aunque la página esté en inglés**: son
+  documentos oficiales del MEP.
+- **Los clasificados** (art. 66.1, `cupo()`): de la Institucional, 2; de la
+  Regional, 3 si su interregional cruza dos Direcciones Regionales y 2 si
+  cruza tres (incisos i y j, con las interregionales del art. 56); de la
+  Interregional, el primero (k). Se cuentan con las rondas completas; sin
+  ninguna no hay clasificación (estarían todos «empatados» en cero). Un
+  empate en el último lugar que clasifica que los desempates no
+  resolvieron **se avisa, no lo decide el orden de la lista**: lo resuelve
+  el árbitro.
+- **La lista de clasificados se baja en el formato de la inscripción**
+  (`ENCABEZADOS`, con `js/tabla-excel.js`), más la columna «Torneo»
+  (Mujeres o Abierto), que la del MEP no trae: la etapa siguiente sabe dónde
+  juega cada una sin suponerlo. En un torneo por equipos van los cinco de
+  cada equipo que clasifica. Por eso **la Dirección Regional ya se guarda
+  en el jugador** (`soloJugador()` dejó de quitarla): la necesita esta
+  lista, sobre todo al pasar de la Interregional a la Nacional.
+- **«Subir una lista» acepta varios archivos a la vez**: en la
+  Interregional llegan las listas de cada Dirección Regional por separado.
+  Con varias Direcciones en la lista, el diálogo de la etapa propone la
+  interregional que las tiene a todas.
+
+Al tocar esto, `node herramientas/verificar-pareo-evento.js` (con el sitio en
+localhost:8777): los cupos, los clasificados con el empate en el corte, el
+acta y el informe por dentro, la lista, y en la página el evento de punta a
+punta hasta subir sus clasificados en una Interregional. Rompiendo a
+propósito el cupo de la Regional, el aviso del empate o la foto de las
+decisiones, salta.
+
 ### La barra de progreso al buscar el Elo Nacional
 
 Antes de esto, tocar «Buscar Elo Nacional de quien no tiene» con una lista

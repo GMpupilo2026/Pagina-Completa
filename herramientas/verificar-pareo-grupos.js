@@ -319,7 +319,13 @@ async function pruebaTopeIndividual(browser) {
   ok(!(await page.$eval("#pi-config-jde-aplicar", (b) => b.disabled)), "antes de la ronda 1, el botón se puede tocar");
   await page.click("#pi-config-jde-aplicar");
   await contestarEtapa(page, "regional", "Alajuela");
-  await page.waitForFunction(() => !document.querySelector('dialog[data-avisos][open]'));
+  // Guardar viene después de que se cierra el diálogo (es asíncrono): se
+  // espera lo guardado, no el diálogo. En el CI, más lento, se leía antes.
+  const guardadoCon = (re) => page.waitForFunction((fuente) => {
+    const x = JSON.parse(localStorage.getItem("pareo_torneo_v1_" + localStorage.getItem("pareo_abierto_v1")) || "null");
+    return x && new RegExp(fuente).test(x.nombre);
+  }, re);
+  await guardadoCon("^JDE 2026 · Etapa Regional");
   const abiertoAhora = await page.evaluate(() => JSON.parse(localStorage.getItem("pareo_torneo_v1_" + localStorage.getItem("pareo_abierto_v1"))));
   igual("el botón deja la configuración de los JDE en el torneo abierto", [abiertoAhora.sistema, abiertoAhora.desempates.join(","), abiertoAhora.ritmo],
     [abiertoAhora.jugadores.length <= 8 ? "todos" : "suizo", abiertoAhora.jugadores.length <= 8 ? "DE,SB,WIN,KS" : "BH-C1,BH,SB,DE,WIN", "10 min + 2 s por jugada"]);
@@ -345,7 +351,7 @@ async function pruebaTopeIndividual(browser) {
   ok(/Elige a cuál corresponde/.test(await page.textContent("body")), "sin elegir la interregional, lo pide y vuelve a preguntar");
   await page.selectOption('dialog[data-avisos="formulario"][open] [name="lugar"]', "III");
   await page.click('dialog[data-avisos="formulario"][open] [data-avisos-aceptar]');
-  await page.waitForFunction(() => !document.querySelector('dialog[data-avisos][open]'));
+  await guardadoCon("Etapa Interregional");
   const inter = await leerAbierto();
   igual("Interregional: el nombre y todos contra todos", [inter.nombre, inter.sistema, inter.jde.etapa], ["JDE 2026 · Etapa Interregional · Interregional III (Alajuela-Occidente) — Abierto", "todos", "interregional"]);
   ok((await page.$$eval("#pi-lista option", (o) => o.map((x) => x.textContent))).includes(inter.nombre), "«Mis torneos» trae el nombre nuevo");
@@ -520,7 +526,7 @@ async function pruebaPagina(browser) {
   ok(personas(porNombre["JDE 2026 · Etapa Regional · DRE Alajuela — Equipos · Categoría B · Mujeres"]).every((j) => j.sexo === "w" && /ESCUELA (DE MUJERES|RIVAL)/.test(j.institucion)), "en el de mujeres quedaron las del centro sin equipo abierto (y las del rival)");
   ok(b.jugadores.some((j) => j.nacimiento === "2014-11-19"), "la fecha 11/19/2014 se leyó como mes/día");
   igual("el centro educativo es la institución", a.jugadores[0].institucion.startsWith("ESCUELA DE PRUEBA"), true);
-  ok(ts.every((x) => personas(x).every((j) => !("modalidad" in j) && !("region" in j))), "ni la modalidad ni la regional se guardan en el jugador");
+  ok(ts.every((x) => personas(x).every((j) => !("modalidad" in j) && j.region === "Prueba")), "la modalidad no se guarda en el jugador; la Dirección Regional sí (la usa la lista de clasificados)");
   ok(ts.every((x) => personas(x).every((j) => !/Report|Exported/.test(j.nombre))), "las filas de título no entraron como jugadores");
   ok(ts.every((x) => x.ciudad === "Ciudad de Prueba"), "todos copiaron la ciudad del torneo abierto");
   ok(new Set(ts.flatMap((x) => personas(x).map((j) => j.id))).size === 26, "cada jugador con su id propio");

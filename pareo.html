@@ -196,8 +196,8 @@
                     </details>
                     <details class="mt-4">
                         <summary class="cursor-pointer font-semibold text-sm rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400" data-t="subirLista">Subir una lista (Word o Excel)</summary>
-                        <p class="text-sm text-brand-600 dark:text-brand-300 mt-2" data-t="subirListaAyuda">Un .xlsx, .csv o .docx con una fila o un párrafo por jugador. Si una de las primeras filas dice «Nombre», «Institución», «Elo»… se usa esa columna; si no, se lee en el mismo orden de arriba. Si trae sexo, categoría o equipo/individual (como la inscripción de los JDE), te sugiere separarla en un torneo por grupo.</p>
-                        <label class="mt-2 inline-block border border-brand-300 dark:border-brand-600 text-brand-800 dark:text-white font-semibold px-4 py-2 rounded-lg text-sm hover:bg-brand-50 dark:hover:bg-brand-800 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 cursor-pointer focus-within:ring-2 focus-within:ring-accent-400"><span data-t="subirListaBoton">Elegir el archivo</span><input type="file" id="pi-subir-lista" accept=".xlsx,.csv,.docx" class="sr-only"></label>
+                        <p class="text-sm text-brand-600 dark:text-brand-300 mt-2" data-t="subirListaAyuda">Un .xlsx, .csv o .docx con una fila o un párrafo por jugador. Si una de las primeras filas dice «Nombre», «Institución», «Elo»… se usa esa columna; si no, se lee en el mismo orden de arriba. Si trae sexo, categoría o equipo/individual (como la inscripción de los JDE), te sugiere separarla en un torneo por grupo. Se pueden subir varios archivos a la vez (los clasificados de cada Dirección Regional, en la Interregional).</p>
+                        <label class="mt-2 inline-block border border-brand-300 dark:border-brand-600 text-brand-800 dark:text-white font-semibold px-4 py-2 rounded-lg text-sm hover:bg-brand-50 dark:hover:bg-brand-800 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 cursor-pointer focus-within:ring-2 focus-within:ring-accent-400"><span data-t="subirListaBoton">Elegir el archivo</span><input type="file" id="pi-subir-lista" accept=".xlsx,.csv,.docx" multiple class="sr-only"></label>
                         <p id="pi-subir-lista-estado" class="text-sm text-brand-600 dark:text-brand-300 mt-2" role="status" aria-live="polite"></p>
                     </details>
                     <div id="pi-sugerencia" class="mt-4 rounded-xl border-2 border-accent-500 bg-white dark:bg-brand-900 p-4 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400" role="region" aria-labelledby="pi-sugerencia-titulo" tabindex="-1" hidden></div>
@@ -276,6 +276,7 @@
 
             <!-- ===== Archivos y comprobador ===== -->
             <section id="pi-p-archivos" role="tabpanel" aria-labelledby="pi-f-archivos" class="space-y-6" hidden>
+                <div id="pi-evento" class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5" hidden></div>
                 <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5">
                     <h2 class="font-serif text-xl font-bold mb-3" data-t="esteTorneo">Este torneo</h2>
                     <div class="flex flex-wrap gap-2">
@@ -348,7 +349,9 @@
     <script src="js/pareo/motor.js"></script>
     <script src="js/pareo/textos.js"></script>
     <script src="js/pareo/grupos.js"></script>
+    <script src="js/pareo/evento.js"></script>
     <script src="js/csv-excel.js"></script>
+    <script src="js/tabla-excel.js"></script>
     <script src="js/reporte-excel.js"></script>
     <script src="js/reporte-textos.js"></script>
     <script src="js/pareo/elo-nacional.js"></script>
