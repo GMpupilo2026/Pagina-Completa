@@ -118,7 +118,6 @@
     if (estado.eventoVivo && estado.t.evento && estado.t.evento.id === estado.eventoVivo.id) difundirEvento();
     if (estado.adjuntos && estado.adjuntos.idTorneo === estado.id) enviarAdjuntos();
     if (estado.respaldoArchivo && estado.t.evento && estado.t.evento.id === estado.respaldoArchivo.id) programarRespaldo();
-    avisarPestanas();
   }
   const TOPE_HISTORIAL = 40;
 
@@ -1367,6 +1366,10 @@
   function avisarPestanas() { if (canalPestanas && estado.id) canalPestanas.postMessage({ yo, id: estado.id }); }
   function otraPestana(clave) {
     const caja = $("pi-otra-pestana");
+    // «La otra guardó cambios» es más grave que «está abierta en otra»: no
+    // se tapa con el aviso más leve (los dos llegan en cualquier orden).
+    if (clave === "pestanaMisma" && !caja.hidden && caja.dataset.aviso === "pestanaCambio") return;
+    caja.dataset.aviso = clave;
     const recargar = el("button", { type: "button", id: "pi-otra-cargar", class: C.botonSec + " mt-2" }, tx("pestanaCargar"));
     recargar.addEventListener("click", () => { if (abrir(estado.id)) { caja.hidden = true; pintarTodo(); } });
     caja.replaceChildren(el("p", { class: "font-semibold", texto: tx(clave) }), recargar);

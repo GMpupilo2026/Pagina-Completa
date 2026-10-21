@@ -2846,9 +2846,12 @@ Doce pedidos más del dueño del sitio.
   recargar, empieza de cero. No dice **quién** cambió algo, porque Pareo
   Integral no tiene cuentas.
 - **Dos pestañas con el mismo torneo**: cada pestaña dice cuál tiene abierto
-  por un `BroadcastChannel`, y si otra guarda el mismo torneo por debajo (el
-  evento `storage`, que llega solo a las demás), el aviso de arriba lo dice y
-  ofrece «Cargar lo último guardado». No bloquea nada.
+  al abrirlo, por un `BroadcastChannel`, y si otra guarda el mismo torneo por
+  debajo (el evento `storage`, que llega solo a las demás), el aviso de arriba
+  lo dice y ofrece «Cargar lo último guardado». No bloquea nada. Los dos
+  avisos llegan en cualquier orden: el de «guardó cambios» nunca se tapa con
+  el más leve de «está abierto» (el CI lo agarró: a veces el leve llegaba
+  después).
 - **Los adjuntos en equipos y con su propio código**: cada enlace de adjunto
   se guarda en el torneo (`adjuntos`: código, rango, prendido) y tiene su
   canal; «Apagar este enlace» le avisa al celular (`apagado`) y corta solo
