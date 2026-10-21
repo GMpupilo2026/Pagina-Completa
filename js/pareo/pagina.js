@@ -16,6 +16,7 @@
 
   const T = window.PareoTorneo;
   const D = window.PareoDesempates;
+  const G = window.PareoGrupos;
   const X = window.PareoTextos;
   const motor = window.PareoMotor.enNavegador("js/pareo/motor-worker.js");
 
@@ -59,7 +60,7 @@
   let idioma = leer(CLAVE_IDIOMA) === "en" ? "en" : "es";
   const tx = (clave, vars) => X.t(idioma, clave, vars);
 
-  const estado = { lista: leerJSON(CLAVE_LISTA, []), id: null, t: null, ficha: leer(CLAVE_FICHA) || "jugadores", ronda: null, filtroInstitucion: "", filtroJugador: "", eloPendientes: [], enVivo: false, canalVivo: null };
+  const estado = { lista: leerJSON(CLAVE_LISTA, []), id: null, t: null, ficha: leer(CLAVE_FICHA) || "jugadores", ronda: null, filtroInstitucion: "", filtroJugador: "", eloPendientes: [], enVivo: false, canalVivo: null, sugerencia: null };
 
   // Al cambiar de torneo: cortar el canal del que se sale, para no seguir
   // mandando SU estado por la conexión que había quedado abierta.
@@ -108,6 +109,7 @@
     estado.filtroInstitucion = "";
     estado.filtroJugador = "";
     estado.eloPendientes = [];
+    estado.sugerencia = null;
     escribir("pareo_abierto_v1", id);
     return true;
   }
@@ -120,6 +122,7 @@
     estado.filtroInstitucion = "";
     estado.filtroJugador = "";
     estado.eloPendientes = [];
+    estado.sugerencia = null;
     guardar();
   }
 
@@ -331,6 +334,7 @@
     $("pi-orden-ayuda").textContent = tx(Array.isArray(v.numeracion) ? "ordenFijo" : "ordenAyuda");
     $("pi-buscar-jugador").value = estado.filtroJugador;
     pintarEloPendientes();
+    pintarSugerencia();
     if (!v.jugadores.length) { $("pi-sin-coincidencias").hidden = true; return; }
     const q = normalizarBusqueda(estado.filtroJugador);
     const filtrado = q ? orden.filter((id) => {
@@ -445,7 +449,10 @@
   // lista de opciones traducible, y esta no lo es.
   const SINONIMOS_COLUMNA = {
     nombre: "nombre", name: "nombre", jugador: "nombre", player: "nombre",
+    "nombre completo": "nombre",
     institucion: "institucion", colegio: "institucion", escuela: "institucion",
+    "centro educativo": "institucion", "nombre de centro educativo": "institucion",
+    "nombre del centro educativo": "institucion",
     club: "institucion", institution: "institucion", school: "institucion",
     elo: "elo", rating: "elo",
     titulo: "titulo", title: "titulo",
@@ -453,13 +460,21 @@
     fideid: "fideId", "fide id": "fideId", "id fide": "fideId",
     "codigo fide": "fideId", "fide code": "fideId",
     categoria: "categoria", category: "categoria", nivel: "categoria", division: "categoria",
+    // Lo que trae la inscripción de los JDE (y cualquier lista parecida):
+    // con estas tres se sugiere partirla en torneos (js/pareo/grupos.js).
+    sexo: "sexo", genero: "sexo", sex: "sexo", gender: "sexo", rama: "sexo",
+    fdn: "nacimiento", nacimiento: "nacimiento", "fecha de nacimiento": "nacimiento",
+    "date of birth": "nacimiento", "birth date": "nacimiento", birthday: "nacimiento",
+    "equipo/ind": "modalidad", "equipo / ind": "modalidad", "equipo/individual": "modalidad",
+    "equipo o individual": "modalidad", modalidad: "modalidad", "team/individual": "modalidad",
+    "direccion regional": "region", regional: "region",
   };
   const sinTildes = (s) => String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim();
 
-  // La primera fila es cabecera si reconoce al menos la columna "nombre"
-  // (con cualquiera de sus etiquetas); si no, se lee en ORDEN_LISTA y la
-  // primera fila es ya un jugador. Nunca se adivina a medias: o se reconoce
-  // el nombre, o se cae al orden fijo entero.
+  // Una fila es cabecera si reconoce al menos la columna "nombre" (con
+  // cualquiera de sus etiquetas); si no, se lee en ORDEN_LISTA y la primera
+  // fila es ya un jugador. Nunca se adivina a medias: o se reconoce el
+  // nombre, o se cae al orden fijo entero.
   function columnasDeLista(primeraFila) {
     const mapa = {};
     (primeraFila || []).forEach((celda, i) => {
@@ -469,12 +484,25 @@
     return mapa.nombre != null ? mapa : null;
   }
 
+  // La cabecera se busca en las primeras filas, no solo en la primera: el
+  // Excel de los JDE trae arriba el título del reporte y la fecha en que se
+  // exportó, y sin esto esas dos filas entraban como jugadores.
+  const FILAS_ANTES_DE_CABECERA = 10;
+
+  // Cada jugador, con la modalidad y la regional aparte: sirven para sugerir
+  // cómo partir la lista, pero no son datos del jugador en el torneo.
   function filasAJugadores(filas) {
     if (!filas || !filas.length) return [];
-    const conCabecera = columnasDeLista(filas[0]);
+    let fila0 = -1, conCabecera = null;
+    for (let i = 0; i < Math.min(filas.length, FILAS_ANTES_DE_CABECERA) && !conCabecera; i++) {
+      conCabecera = columnasDeLista(filas[i]);
+      if (conCabecera) fila0 = i;
+    }
     const mapa = conCabecera || Object.fromEntries(ORDEN_LISTA.map((campo, i) => [campo, i]));
-    const datos = conCabecera ? filas.slice(1) : filas;
-    return datos.map((fila) => datosJugador({
+    const datos = conCabecera ? filas.slice(fila0 + 1) : filas;
+    const celda = (fila, campo) => (mapa[campo] != null ? fila[mapa[campo]] : "");
+    const ordenFecha = G.ordenFechas(datos.map((fila) => celda(fila, "nacimiento")));
+    return datos.map((fila) => Object.assign(datosJugador({
       nombre: mapa.nombre != null ? fila[mapa.nombre] : "",
       institucion: mapa.institucion != null ? fila[mapa.institucion] : "",
       elo: mapa.elo != null ? fila[mapa.elo] : "",
@@ -482,8 +510,16 @@
       fed: mapa.fed != null ? fila[mapa.fed] : "",
       fideId: mapa.fideId != null ? fila[mapa.fideId] : "",
       categoria: mapa.categoria != null ? fila[mapa.categoria] : "",
+      sexo: G.leerSexo(celda(fila, "sexo")),
+      nacimiento: G.leerFecha(celda(fila, "nacimiento"), ordenFecha),
+    }), {
+      modalidad: G.leerModalidad(celda(fila, "modalidad")),
+      region: String(celda(fila, "region") || "").trim(),
     })).filter((d) => d.nombre);
   }
+
+  // Lo que se guarda del jugador: sin la modalidad ni la regional.
+  const soloJugador = ({ modalidad, region, ...d }) => d;
 
   async function subirLista(archivo) {
     const estadoEl = $("pi-subir-lista-estado");
@@ -498,13 +534,127 @@
       estadoEl.textContent = "";
       const lista = filasAJugadores(filas);
       if (!lista.length) { Avisos.avisar(tx("archivoSinJugadores"), { tipo: "error" }); return; }
-      const n = agregarJugadores(lista);
-      if (n) Avisos.avisar(tx("agregados", { n }));
-      else Avisos.avisar(tx("nadaQueAgregar"), { tipo: "error" });
+      const { dimensiones, grupos } = G.agrupar(lista);
+      if (grupos.length > 1) { sugerirGrupos(lista, dimensiones, grupos, archivo.name); return; }
+      agregarTodos(lista);
     } catch (err) {
       estadoEl.textContent = "";
       Avisos.avisar(tx("noAbre", { e: err.message }), { tipo: "error" });
     }
+  }
+
+  function agregarTodos(lista) {
+    const n = agregarJugadores(lista.map(soloJugador));
+    if (n) Avisos.avisar(tx("agregados", { n }));
+    else Avisos.avisar(tx("nadaQueAgregar"), { tipo: "error" });
+  }
+
+  // ---------- La sugerencia: un torneo por grupo ----------
+  // Cuando la lista trae a la vez a hombres y mujeres, equipos e individual o
+  // varias categorías, no se agrega a nadie todavía: se le muestra al árbitro
+  // cómo quedaría partida, con cada grupo marcado (menos el que tiene un solo
+  // jugador, que no alcanza para un torneo), y él decide.
+  function sugerirGrupos(lista, dimensiones, grupos, nombreArchivo) {
+    const regiones = [...new Set(lista.map((j) => j.region).filter(Boolean))];
+    const base = regiones.length === 1 ? tx("grupoRegional", { r: regiones[0] })
+      : String(nombreArchivo || "").replace(/\.[^.]+$/, "").replace(/[_]+/g, " ").trim();
+    estado.sugerencia = {
+      lista, dimensiones, base,
+      grupos: grupos.map((g) => Object.assign(g, { marcado: g.jugadores.length >= 2 })),
+    };
+    pintarSugerencia();
+    const caja = $("pi-sugerencia");
+    caja.scrollIntoView({ block: "nearest" });
+    caja.focus();
+  }
+
+  function etiquetaGrupo(g) {
+    const partes = [];
+    if (g.modalidad) partes.push(tx(g.modalidad === "equipo" ? "grupoEquipos" : "grupoIndividual"));
+    else if (estado.sugerencia.dimensiones.includes("modalidad")) partes.push(tx("grupoSinModalidad"));
+    if (g.categoria) partes.push(tx("grupoCategoria", { c: g.categoria }));
+    else if (estado.sugerencia.dimensiones.includes("categoria")) partes.push(tx("grupoSinCategoria"));
+    if (g.sexo) partes.push(tx(g.sexo === "w" ? "femenino" : "masculino"));
+    else if (estado.sugerencia.dimensiones.includes("sexo")) partes.push(tx("grupoSinSexo"));
+    return partes.join(" · ");
+  }
+
+  function pintarSugerencia() {
+    const caja = $("pi-sugerencia");
+    const s = estado.sugerencia;
+    caja.replaceChildren();
+    caja.hidden = !s;
+    if (!s) return;
+    const marcados = s.grupos.filter((g) => g.marcado).length;
+    const nombresDim = { modalidad: tx("dimensionModalidad"), categoria: tx("dimensionCategoria"), sexo: tx("dimensionSexo") };
+    const dims = s.dimensiones.map((d) => nombresDim[d]);
+    const unidas = dims.length > 1 ? dims.slice(0, -1).join(", ") + " " + tx("y") + " " + dims[dims.length - 1] : dims[0];
+    const lista = el("ul", { class: "mt-3 space-y-1 text-sm" });
+    s.grupos.forEach((g, i) => {
+      const n = g.jugadores.length;
+      const sistema = G.sistemaSugerido(n);
+      const id = "pi-sugerencia-g" + i;
+      lista.append(el("li", { class: "flex items-start gap-2" },
+        el("input", { type: "checkbox", id, class: "mt-1", checked: g.marcado, onchange: (e) => { g.marcado = e.target.checked; pintarSugerencia(); $(id).focus(); } }),
+        el("label", { for: id },
+          el("span", { class: "font-semibold", texto: etiquetaGrupo(g) }),
+          " — " + tx(n === 1 ? "grupoUnJugador" : "grupoJugadores", { n }),
+          el("span", { class: C.nota, texto: " · " + (sistema ? tx(sistema === "todos" ? "sugeridoTodos" : "sugeridoSuizo") : tx("grupoNoAlcanza")) }))));
+    });
+    const hayEquipos = s.grupos.some((g) => g.modalidad === "equipo");
+    caja.append(
+      el("h3", { id: "pi-sugerencia-titulo", class: "font-serif text-lg font-bold", texto: tx("sugerenciaTitulo", { n: s.grupos.length }) }),
+      el("p", { class: "text-sm mt-1", texto: tx("sugerenciaTexto", { total: s.lista.length, d: unidas }) }),
+      el("fieldset", {}, el("legend", { class: "sr-only", texto: tx("sugerenciaLeyenda") }), lista),
+      hayEquipos ? el("p", { class: C.nota + " mt-2", texto: tx("sugerenciaEquipos") }) : null,
+      el("p", { class: C.nota + " mt-2", texto: tx("sugerenciaNombre", { b: t().nombre.trim() || s.base }) }),
+      el("div", { class: "flex flex-wrap gap-2 mt-3" },
+        el("button", { type: "button", id: "pi-sugerencia-crear", class: C.boton, disabled: marcados === 0, onclick: crearTorneosDeGrupos, texto: tx("sugerenciaCrear", { n: marcados }) }),
+        el("button", { type: "button", id: "pi-sugerencia-todos", class: C.botonSec, onclick: () => { const l = s.lista; estado.sugerencia = null; pintarSugerencia(); agregarTodos(l); }, texto: tx("sugerenciaTodosAqui", { n: s.lista.length }) }),
+        el("button", { type: "button", id: "pi-sugerencia-descartar", class: C.botonSec, onclick: () => { estado.sugerencia = null; pintarSugerencia(); Avisos.avisar(tx("sugerenciaDescartada"), { tipo: "info" }); }, texto: tx("sugerenciaDescartar") })));
+  }
+
+  // Un torneo por cada grupo marcado, con los datos del que está abierto
+  // (ciudad, fechas, árbitros, ritmo, puntos, desempates) y el sistema
+  // sugerido. Si el abierto está vacío —sin jugadores ni rondas— se usa para
+  // el primer grupo, en vez de dejar un torneo «(sin nombre)» de más.
+  function crearTorneosDeGrupos() {
+    const s = estado.sugerencia;
+    const elegidos = s.grupos.filter((g) => g.marcado);
+    if (!elegidos.length) return;
+    const actual = t();
+    const base = actual.nombre.trim() || s.base;
+    const comunes = {
+      ciudad: actual.ciudad, federacion: actual.federacion, fechaInicio: actual.fechaInicio, fechaFin: actual.fechaFin,
+      arbitro: actual.arbitro, arbitroAdjunto: actual.arbitroAdjunto, ritmo: actual.ritmo,
+      colorInicial: actual.colorInicial, baku: actual.baku, rondasTotales: actual.rondasTotales,
+      puntos: Object.assign({}, actual.puntos), desempates: actual.desempates.slice(),
+    };
+    const reusar = !actual.jugadores.length && !actual.rondas.length;
+    apagarEnVivo();
+    const ids = [];
+    elegidos.forEach((g, i) => {
+      const datos = Object.assign({}, comunes, {
+        nombre: (base ? base + " — " : "") + etiquetaGrupo(g),
+        sistema: G.sistemaSugerido(g.jugadores.length) || "suizo",
+        jugadores: g.jugadores.map((j) => Object.assign({ id: idJugador(), retiradoDespuesDe: null }, soloJugador(j))),
+        rondas: [], numeracion: null,
+      });
+      if (i === 0 && reusar) estado.t = T.nuevo(Object.assign({}, actual, datos));
+      else { estado.id = nuevoId(); estado.t = T.nuevo(datos); }
+      guardar();
+      ids.push(estado.id);
+    });
+    // Se guardaron en el mismo milisegundo: «Mis torneos» (el más reciente
+    // arriba) los mostraría en cualquier orden. Quedan en el de la sugerencia.
+    const ahora = Date.now();
+    ids.forEach((id, i) => { const x = estado.lista.find((y) => y.id === id); if (x) x.actualizado = ahora - i; });
+    escribir(CLAVE_LISTA, JSON.stringify(estado.lista));
+    abrir(ids[0]);
+    estado.ficha = "jugadores";
+    escribir(CLAVE_FICHA, "jugadores");
+    pintarTodo();
+    Avisos.avisar(tx("torneosCreados", { n: ids.length }));
   }
 
   // El mismo bolsillo de palabras que usa la Edge Function, para emparejar

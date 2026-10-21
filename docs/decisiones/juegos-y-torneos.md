@@ -2240,6 +2240,69 @@ avise sin bloquear el alta, y que el filtro de institución filtre de verdad
 tanto la Clasificación como la Tabla cruzada. Rompiendo a propósito el freno,
 la comparación de nombres o el filtro, salta.
 
+### Subir la inscripción de los JDE: un torneo por grupo, sugerido
+
+Lo pidió el dueño del sitio con el Excel que baja el sistema del MEP
+(«Report Generation – Juegos Deportivos Estudiantiles»): una regional entera
+en una sola hoja —364 inscritos en la de Alajuela 2026—, con hombres y
+mujeres, equipos e individual y las categorías A a E juntos. Cada combinación
+se juega aparte, y armar cada torneo a mano era copiar y pegar filas.
+
+- **La cabecera se busca en las primeras diez filas, no solo en la primera**
+  (`FILAS_ANTES_DE_CABECERA` en `js/pareo/pagina.js`). Ese Excel trae arriba
+  el título del reporte y la fecha en que se exportó; antes la cabecera no
+  se reconocía, se caía al orden fijo y **esas dos filas entraban como
+  jugadores** (y el resto con las columnas cambiadas). Sin error.
+- `SINONIMOS_COLUMNA` reconoce ahora «Nombre de Centro Educativo»
+  (institución), «Sexo», «FDN» (nacimiento), «Equipo/Ind» (modalidad) y
+  «Dirección Regional». La cédula, la nacionalidad y la edad no se leen: no
+  le hacen falta al torneo y no se guardan.
+- **Las fechas «7/17/2015» se deciden por columna**, no celda por celda
+  (`ordenFechas()` en `js/pareo/grupos.js`): si algún valor solo tiene
+  sentido como mes/día (un 17 no es un mes), toda la columna es mes/día; sin
+  pistas, día/mes, como se escribe acá. Celda por celda, el 1/4/2017 de una
+  lista mes/día se habría leído 1 de abril.
+- **Solo se separa por lo que cambia en el archivo** (`agrupar()`): si todos
+  son de individual, la modalidad no parte nada. Con un solo grupo, la lista
+  se agrega como siempre; con dos o más **no se agrega a nadie**: aparece
+  `#pi-sugerencia` con cada grupo («Individual · Categoría A · Femenino — 6
+  jugadores · sugerido: todos contra todos») y el árbitro decide entre crear
+  los marcados, «No separar» (todos al torneo abierto, lo de antes) o
+  descartar. Nunca se crean torneos sin que lo confirme.
+- **El grupo de un solo jugador viene desmarcado**: no alcanza para un
+  torneo, y se dice así en vez de esconderlo (el árbitro puede marcarlo igual
+  o juntarlo a mano con otro).
+- **El sistema sugerido**: todos contra todos con 8 o menos, suizo con más
+  (`sistemaSugerido()`). Es una regla práctica, no del reglamento de los JDE
+  —un suizo de 7 rondas con 8 jugadores ya es casi un todos contra todos—, y
+  por eso dice «sugerido»: se cambia en «Torneo» antes de la ronda 1.
+- **Cada torneo copia los datos del abierto** (ciudad, fechas, árbitros,
+  ritmo, rondas, puntos y desempates) y se llama como su grupo con la
+  regional delante («Regional Alajuela — Equipos · Categoría B · Masculino»),
+  o con el nombre del torneo abierto si ya tiene uno. Si el abierto está
+  vacío (sin jugadores ni rondas) se usa para el primer grupo, para no dejar
+  un «(sin nombre)» de más. En «Mis torneos» quedan en el orden de la
+  sugerencia (se guardan en el mismo milisegundo: se les corre la hora de a
+  uno para que el orden por «el más reciente» no los mezcle).
+- **Equipos**: Pareo Integral empareja jugadores, no equipos, y el panel lo
+  dice. El torneo de equipos queda con la lista de cada colegio (el centro
+  educativo es la institución, y la Clasificación ya se filtra por
+  institución) para que el árbitro arme los equipos.
+- La modalidad y la regional sirven para partir la lista y **no se guardan
+  en el jugador** (`soloJugador()`); el sexo y la fecha de nacimiento sí,
+  en los campos que ya tenía el jugador y que van al TRF.
+- El Excel real tiene cédulas de menores: **no va al repositorio**. El
+  verificador arma uno con las mismas columnas y nombres inventados
+  (`js/tabla-excel.js`).
+
+Al tocar esto, `node herramientas/verificar-pareo-grupos.js` (con el sitio en
+localhost:8777): las funciones puras sin navegador (sexo, modalidad, fechas,
+grupos) y, en la página, que la sugerencia salga sin agregar a nadie, el orden
+y las marcas de los grupos, el inglés, que «Crear» arme un torneo por grupo
+con su sistema, sus jugadores, la ciudad del abierto y sin las filas de
+título, y los caminos de «No separar» y «Descartar». Con la cabecera buscada
+solo en la primera fila, o con el grupo de uno marcado, salta.
+
 ### La barra de progreso al buscar el Elo Nacional
 
 Antes de esto, tocar «Buscar Elo Nacional de quien no tiene» con una lista
