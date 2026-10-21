@@ -2265,17 +2265,35 @@ se juega aparte, y armar cada torneo a mano era copiar y pegar filas.
 - **Solo se separa por lo que cambia en el archivo** (`agrupar()`): si todos
   son de individual, la modalidad no parte nada. Con un solo grupo, la lista
   se agrega como siempre; con dos o más **no se agrega a nadie**: aparece
-  `#pi-sugerencia` con cada grupo («Individual · Categoría A · Femenino — 6
+  `#pi-sugerencia` con cada grupo («Individual · Categoría A · Mujeres — 6
   jugadores · sugerido: todos contra todos») y el árbitro decide entre crear
   los marcados, «No separar» (todos al torneo abierto, lo de antes) o
   descartar. Nunca se crean torneos sin que lo confirme.
 - **El grupo de un solo jugador viene desmarcado**: no alcanza para un
   torneo, y se dice así en vez de esconderlo (el árbitro puede marcarlo igual
   o juntarlo a mano con otro).
-- **El sistema sugerido**: todos contra todos con 8 o menos, suizo con más
-  (`sistemaSugerido()`). Es una regla práctica, no del reglamento de los JDE
-  —un suizo de 7 rondas con 8 jugadores ya es casi un todos contra todos—, y
-  por eso dice «sugerido»: se cambia en «Torneo» antes de la ronda 1.
+- **Lo que pide la Normativa de los JDE 2026, art. 66** (la mandó el dueño
+  del sitio; está en su Drive, no en el repositorio):
+  - Los torneos son **«Individual Mujeres» y «Abierto»**, no masculino y
+    femenino: en el abierto pueden jugar hombres y mujeres. El Excel trae el
+    sexo, no en cuál torneo se inscribió cada una, así que todas las mujeres
+    van al de mujeres, y el panel avisa que si alguna juega el abierto, se
+    mueve a mano.
+  - **Sistema en la Etapa Regional** (`sistemaSugerido()`,
+    `JDE_MAX_TODOS`, `JDE_RONDAS_SUIZO`): con más de ocho por modalidad,
+    suizo de no menos de cinco rondas (si el torneo abierto tenía menos, se
+    sube a 5); con ocho o menos, todos contra todos. La Interregional (todos
+    contra todos siempre) y la Nacional (suizo con más de 7, todos contra
+    todos con 6 o menos) tienen otras reglas, y por eso todo dice
+    «sugerido»: se cambia en «Torneo» antes de la ronda 1.
+  - **Ritmo**: no menos de 10 minutos con 2 segundos por jugada. Si el
+    torneo abierto no tiene ritmo, los nuevos llevan ese mínimo
+    (`JDE_RITMO_MINIMO`); si tiene uno, se respeta el del árbitro.
+  - Puntos 1, ½ y 0 (los de FIDE, que ya son los de omisión) y al menos
+    tres desempates (los de omisión son cinco): no hizo falta tocar nada.
+  - Equipos de 3 a 5 por centro educativo, con el orden de tableros del
+    congresillo: es un torneo por equipos que Pareo Integral no empareja
+    (ver abajo).
 - **Cada torneo copia los datos del abierto** (ciudad, fechas, árbitros,
   ritmo, rondas, puntos y desempates) y se llama como su grupo con la
   regional delante («Regional Alajuela — Equipos · Categoría B · Masculino»),

@@ -8,7 +8,9 @@
  * página se los SUGIERE al árbitro: nunca crea nada sin que lo confirme.
  *
  * Solo se separa por lo que de verdad cambia en el archivo: si todos son de
- * individual, la modalidad no parte nada. Funciones puras, sin DOM: las usa
+ * individual, la modalidad no parte nada. Los torneos por sexo son, como
+ * dice la normativa (art. 66), «Individual Mujeres» y «Abierto»: en el
+ * abierto juegan hombres y mujeres. Funciones puras, sin DOM: las usa
  * js/pareo/pagina.js y las prueba herramientas/verificar-pareo-grupos.js.
  */
 (function (raiz) {
@@ -93,16 +95,21 @@
     return { dimensiones, grupos };
   }
 
-  // El sistema que se le sugiere a cada grupo: con 8 o menos, todos contra
-  // todos (un suizo de 7 rondas con 8 ya es casi eso, y así nadie se queda
-  // sin jugar con alguien); con más, suizo. Con uno solo no hay torneo.
-  // Es una sugerencia: el árbitro lo cambia en «Torneo» antes de la ronda 1.
+  // Lo que pide la Normativa de los JDE 2026 (art. 66, «Sistema de juego»)
+  // para la Etapa Regional: con más de ocho por modalidad, suizo de no menos
+  // de cinco rondas; con ocho o menos, todos contra todos; y un ritmo de no
+  // menos de 10 minutos con 2 segundos de incremento. Con uno solo no hay
+  // torneo. Es una sugerencia: el árbitro lo cambia en «Torneo» antes de la
+  // ronda 1 (la Interregional y la Nacional tienen otras reglas).
+  const JDE_MAX_TODOS = 8;
+  const JDE_RONDAS_SUIZO = 5;
+  const JDE_RITMO_MINIMO = "10 min + 2 s por jugada";
   function sistemaSugerido(n) {
     if (n < 2) return null;
-    return n <= 8 ? "todos" : "suizo";
+    return n <= JDE_MAX_TODOS ? "todos" : "suizo";
   }
 
-  const api = { leerSexo, leerModalidad, ordenFechas, leerFecha, agrupar, sistemaSugerido };
+  const api = { leerSexo, leerModalidad, ordenFechas, leerFecha, agrupar, sistemaSugerido, JDE_MAX_TODOS, JDE_RONDAS_SUIZO, JDE_RITMO_MINIMO };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else raiz.PareoGrupos = api;
 })(typeof self !== "undefined" ? self : this);

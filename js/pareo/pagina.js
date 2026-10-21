@@ -574,7 +574,7 @@
     else if (estado.sugerencia.dimensiones.includes("modalidad")) partes.push(tx("grupoSinModalidad"));
     if (g.categoria) partes.push(tx("grupoCategoria", { c: g.categoria }));
     else if (estado.sugerencia.dimensiones.includes("categoria")) partes.push(tx("grupoSinCategoria"));
-    if (g.sexo) partes.push(tx(g.sexo === "w" ? "femenino" : "masculino"));
+    if (g.sexo) partes.push(tx(g.sexo === "w" ? "grupoMujeres" : "grupoAbierto"));
     else if (estado.sugerencia.dimensiones.includes("sexo")) partes.push(tx("grupoSinSexo"));
     return partes.join(" · ");
   }
@@ -599,14 +599,17 @@
         el("label", { for: id },
           el("span", { class: "font-semibold", texto: etiquetaGrupo(g) }),
           " — " + tx(n === 1 ? "grupoUnJugador" : "grupoJugadores", { n }),
-          el("span", { class: C.nota, texto: " · " + (sistema ? tx(sistema === "todos" ? "sugeridoTodos" : "sugeridoSuizo") : tx("grupoNoAlcanza")) }))));
+          el("span", { class: C.nota, texto: " · " + (sistema ? tx(sistema === "todos" ? "sugeridoTodos" : "sugeridoSuizo", { r: G.JDE_RONDAS_SUIZO }) : tx("grupoNoAlcanza")) }))));
     });
     const hayEquipos = s.grupos.some((g) => g.modalidad === "equipo");
+    const porSexo = s.dimensiones.includes("sexo");
     caja.append(
       el("h3", { id: "pi-sugerencia-titulo", class: "font-serif text-lg font-bold", texto: tx("sugerenciaTitulo", { n: s.grupos.length }) }),
       el("p", { class: "text-sm mt-1", texto: tx("sugerenciaTexto", { total: s.lista.length, d: unidas }) }),
       el("fieldset", {}, el("legend", { class: "sr-only", texto: tx("sugerenciaLeyenda") }), lista),
+      porSexo ? el("p", { class: C.nota + " mt-2", texto: tx("sugerenciaAbierto") }) : null,
       hayEquipos ? el("p", { class: C.nota + " mt-2", texto: tx("sugerenciaEquipos") }) : null,
+      el("p", { class: C.nota + " mt-2", texto: tx("sugerenciaNormativa", { r: G.JDE_RONDAS_SUIZO, ritmo: G.JDE_RITMO_MINIMO }) }),
       el("p", { class: C.nota + " mt-2", texto: tx("sugerenciaNombre", { b: t().nombre.trim() || s.base }) }),
       el("div", { class: "flex flex-wrap gap-2 mt-3" },
         el("button", { type: "button", id: "pi-sugerencia-crear", class: C.boton, disabled: marcados === 0, onclick: crearTorneosDeGrupos, texto: tx("sugerenciaCrear", { n: marcados }) }),
@@ -616,7 +619,8 @@
 
   // Un torneo por cada grupo marcado, con los datos del que está abierto
   // (ciudad, fechas, árbitros, ritmo, puntos, desempates) y el sistema
-  // sugerido. Si el abierto está vacío —sin jugadores ni rondas— se usa para
+  // sugerido por la normativa de los JDE: el suizo con al menos 5 rondas y,
+  // si el abierto no tiene ritmo, el mínimo que pide. Si el abierto está vacío —sin jugadores ni rondas— se usa para
   // el primer grupo, en vez de dejar un torneo «(sin nombre)» de más.
   function crearTorneosDeGrupos() {
     const s = estado.sugerencia;
@@ -626,8 +630,8 @@
     const base = actual.nombre.trim() || s.base;
     const comunes = {
       ciudad: actual.ciudad, federacion: actual.federacion, fechaInicio: actual.fechaInicio, fechaFin: actual.fechaFin,
-      arbitro: actual.arbitro, arbitroAdjunto: actual.arbitroAdjunto, ritmo: actual.ritmo,
-      colorInicial: actual.colorInicial, baku: actual.baku, rondasTotales: actual.rondasTotales,
+      arbitro: actual.arbitro, arbitroAdjunto: actual.arbitroAdjunto, ritmo: actual.ritmo.trim() || G.JDE_RITMO_MINIMO,
+      colorInicial: actual.colorInicial, baku: actual.baku, rondasTotales: Math.max(Number(actual.rondasTotales) || 0, G.JDE_RONDAS_SUIZO),
       puntos: Object.assign({}, actual.puntos), desempates: actual.desempates.slice(),
     };
     const reusar = !actual.jugadores.length && !actual.rondas.length;
