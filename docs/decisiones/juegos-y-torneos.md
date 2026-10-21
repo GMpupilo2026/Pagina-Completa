@@ -2450,6 +2450,76 @@ aparte del abierto). Con la cabecera buscada solo en la primera fila, con el
 grupo de uno marcado, con el tope en 4 o con el ascenso permitido en
 individual, salta.
 
+### Torneos por equipos: el orden de tableros y el pareo de encuentros
+
+Lo pidió el dueño del sitio: la mitad de la inscripción de los JDE (193 de
+364 en Alajuela 2026) es de equipos, y Pareo Integral los armaba como
+torneos individuales con los jugadores de cada colegio.
+
+- **Un equipo es un «jugador» del torneo** (`tipo: "equipos"`,
+  `js/pareo/equipos.js`). Así el motor no cambia: bbpPairings (o las tablas
+  de Berger) empareja equipos como empareja jugadores, con los **puntos de
+  encuentro** como puntaje (2 · 1 · 0, `PUNTOS_EQUIPOS`, que van al TRF
+  por la línea 162 como cualquier puntuación propia), y el comprobador de
+  FIDE acepta esos pareos (`verificar-pareo-equipos.js` empareja un suizo
+  de 7 equipos de punta a punta y lo pasa por el comprobador). Los
+  desempates de FIDE (`js/pareo/desempates.js`, comparado con
+  chesspairing) no se tocaron: ven cada encuentro como una partida.
+- **Cada equipo lleva sus integrantes en orden de tableros**
+  (`integrantes`, art. 66.2.h: se da en el congresillo y se mantiene en
+  toda la etapa). En la ficha Jugadores se cambia con ↑ y ↓ solo antes de
+  la ronda 1; el quinto es el suplente. «Imprimir el orden de tableros para
+  firmar» saca una hoja por equipo con la firma del delegado y del árbitro.
+  En un torneo por equipos no se agrega gente a mano ni se busca el Elo
+  Nacional (sería el de un equipo), y la ficha lo dice. El Elo del equipo,
+  que ordena la lista inicial, es el promedio de los que tienen Elo entre
+  los cuatro primeros.
+- **Cada encuentro guarda su alineación y sus tableros.** `alineacion`
+  dice quiénes juegan de cada lado (de entrada, los cuatro primeros); el
+  árbitro la cambia con casillas si falta alguien, y siempre queda en el
+  orden de tableros: los de abajo suben y el suplente entra al final, el
+  sistema olímpico que pide el art. 66.2.h. Los colores son los de las
+  olimpiadas de FIDE: el equipo de la izquierda lleva blancas en los
+  tableros 1 y 3. Cada tablero se anota como una partida, desde las
+  blancas.
+- **El resultado del encuentro no se escribe: sale de los tableros**
+  (`resultadoEncuentro()`), y se guarda en `m.r` para que el resto (el
+  puntaje, el TRF, los desempates, la tabla cruzada, el enlace de solo
+  lectura) lo trate como una partida. Un tablero sin jugador de un lado se
+  pierde solo; con menos de dos presentes (art. 66.2.f) el encuentro se
+  pierde entero por incomparecencia («+-»/«-+»/«--») y el rival se lleva
+  los cuatro tableros.
+- **Los puntos de tablero son el primer desempate** («PT»: lo que se usa
+  en las olimpiadas y lo que pide la propuesta de cambios a la normativa).
+  No están en `desempates.js` a propósito: `E.clasificacion()` los calcula
+  y le pide el resto a FIDE, y `E.catalogo()` solo los ofrece en un torneo
+  por equipos. Con la configuración de los JDE, el suizo de equipos lleva
+  PT, encuentro directo, Buchholz sin el peor y Buchholz; el todos contra
+  todos, PT, encuentro directo y Sonneborn-Berger.
+- **El bye de un equipo vale como un empate**: 1 punto de encuentro y 2 de
+  tablero (`PUNTOS_EQUIPOS.bye`). La normativa no lo dice; es lo que se
+  usa en las olimpiadas, y se cambia en «Torneo» (Bye del pareo).
+- **El sistema sugerido cuenta equipos, no jugadores**: es lo que se
+  empareja. La normativa dice «más de ocho personas estudiantes inscritas
+  por cada modalidad», que en equipos se puede leer de las dos maneras;
+  como se emparejan equipos, se cuentan equipos. El panel de la sugerencia
+  dice «41 jugadores en 10 equipos». Un grupo de equipos con un solo
+  centro viene desmarcado: no alcanza para un torneo.
+- **En el celular, los tableros son una lista, no una tabla**: con cuatro
+  columnas y nombres largos, las negras quedaban fuera de la pantalla. El
+  colegio de cada jugador va en el título del encuentro.
+- **La planilla para firmar** de un encuentro trae los cuatro tableros con
+  quién juega con cada color y su resultado, y la firma de los dos
+  capitanes.
+- Lo que falta: el TRF que se baja es el de los encuentros (los equipos
+  como jugadores), no el TRF de equipos de FIDE con cada partida; para
+  mandar un torneo por equipos a FIDE haría falta ese formato.
+
+Al tocar esto, `node herramientas/verificar-pareo-equipos.js` (con el sitio
+en localhost:8777). Rompiendo a propósito los colores (siempre blancas el de
+la izquierda), el mínimo de dos presentes o el desempate por puntos de
+tablero, salta.
+
 ### La barra de progreso al buscar el Elo Nacional
 
 Antes de esto, tocar «Buscar Elo Nacional de quien no tiene» con una lista

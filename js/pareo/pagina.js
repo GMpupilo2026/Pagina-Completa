@@ -17,6 +17,7 @@
   const T = window.PareoTorneo;
   const D = window.PareoDesempates;
   const G = window.PareoGrupos;
+  const E = window.PareoEquipos;
   const X = window.PareoTextos;
   const motor = window.PareoMotor.enNavegador("js/pareo/motor-worker.js");
 
@@ -238,10 +239,19 @@
   // «Aplicar la configuración de los JDE» al torneo abierto, antes de la
   // ronda 1: con rondas jugadas el sistema, los puntos y el color ya no se
   // cambian, así que el botón no hace nada (y lo dice).
+  // La de un torneo individual o, en uno por equipos, con los puntos de
+  // encuentro y los puntos de tablero como primer desempate. n es cuántos
+  // juegan: jugadores o equipos, que es lo que se empareja.
+  function configuracionPara(n, actual, deEquipos) {
+    const c = G.configuracionJde(n, actual);
+    if (deEquipos) { c.puntos = Object.assign({}, E.PUNTOS_EQUIPOS); c.desempates = E.desempatesPara(c.sistema); }
+    return c;
+  }
+
   function aplicarConfigJde() {
     const v = t();
     if (v.rondas.length) { Avisos.avisar(tx("configJdeConRondas"), { tipo: "error" }); return; }
-    Object.assign(v, G.configuracionJde(v.jugadores.length, v));
+    Object.assign(v, configuracionPara(v.jugadores.length, v, E.esDeEquipos(v)));
     guardar();
     pintarTorneo();
     Avisos.avisar(tx("configJdeAplicada", { s: tx(v.sistema === "todos" ? "todos" : "suizo") }));
@@ -274,7 +284,7 @@
     ol.replaceChildren();
     const lista = t().desempates;
     lista.forEach((c, i) => {
-      const info = D.CATALOGO.find((x) => x.codigo === c);
+      const info = E.catalogo(t()).find((x) => x.codigo === c);
       if (!info) return;
       const mover = (d) => () => {
         const [x] = lista.splice(i, 1);
@@ -296,7 +306,7 @@
     if (!lista.length) ol.append(el("li", { class: C.nota + " italic", texto: tx("sinDesempates") }));
     const s = $("pi-desempate-nuevo");
     s.replaceChildren();
-    for (const x of D.CATALOGO) if (!lista.includes(x.codigo)) s.append(el("option", { value: x.codigo, texto: x[idioma] + " (" + x.codigo + ")" }));
+    for (const x of E.catalogo(t())) if (!lista.includes(x.codigo)) s.append(el("option", { value: x.codigo, texto: x[idioma] + " (" + x.codigo + ")" }));
     $("pi-desempate-agregar").disabled = !s.options.length;
   }
 
@@ -342,6 +352,24 @@
     const orden = T.ordenInicial(v);
     const tabla = $("pi-tabla-jugadores");
     tabla.replaceChildren();
+    // En un torneo por equipos no se agrega gente a mano ni se busca el Elo
+    // Nacional de un equipo: los equipos salen de la inscripción.
+    const deEquipos = E.esDeEquipos(v);
+    $("pi-nota-equipos").hidden = !deEquipos;
+    $("pi-form-jugador").hidden = deEquipos;
+    $("pi-pegar-caja").hidden = deEquipos;
+    $("pi-caja-elo-nacional").hidden = deEquipos;
+    tabla.hidden = deEquipos;
+    $("pi-equipos").hidden = !deEquipos;
+    if (deEquipos) {
+      $("pi-cuenta").textContent = v.jugadores.length;
+      $("pi-sin-jugadores").hidden = v.jugadores.length > 0;
+      $("pi-sin-coincidencias").hidden = true;
+      $("pi-orden-ayuda").textContent = tx(v.rondas.length ? "ordenTablerosFijo" : "ordenTablerosAyuda");
+      pintarSugerencia();
+      pintarEquipos();
+      return;
+    }
     $("pi-cuenta").textContent = v.jugadores.length;
     $("pi-sin-jugadores").hidden = v.jugadores.length > 0;
     $("pi-orden-ayuda").textContent = tx(Array.isArray(v.numeracion) ? "ordenFijo" : "ordenAyuda");
@@ -388,6 +416,61 @@
         )));
     }
     tabla.append(cuerpo);
+  }
+
+  // Los equipos, cada uno con su orden de tableros (art. 66.2.h): se da en
+  // el congresillo y se mantiene en toda la etapa, así que ↑ y ↓ solo
+  // funcionan antes de la ronda 1. El quinto es el suplente.
+  function pintarEquipos() {
+    const v = t();
+    const num = T.numeros(v);
+    const caja = $("pi-equipos");
+    caja.replaceChildren();
+    if (!v.jugadores.length) return;
+    const fijo = v.rondas.length > 0;
+    caja.append(el("div", { class: "flex flex-wrap gap-2" },
+      el("button", { type: "button", class: C.botonSec, onclick: imprimirOrdenTableros }, tx("imprimirOrdenTableros"))));
+    for (const id of T.ordenInicial(v)) {
+      const e = jugador(id);
+      const ol = el("ol", { class: "mt-1 space-y-1 text-sm" });
+      e.integrantes.forEach((j, k) => {
+        const mover = (d) => () => {
+          if (!E.moverIntegrante(v, id, k, d)) return;
+          guardar();
+          pintarEquipos();
+          const b = $("pi-orden-" + id + "-" + (k + d) + (d < 0 ? "-sube" : "-baja"));
+          if (b && !b.disabled) b.focus();
+        };
+        ol.append(el("li", { class: "flex flex-wrap items-center gap-2" },
+          el("span", { class: "font-mono text-xs font-bold w-24", texto: k < E.TABLEROS ? tx("tableroN", { t: k + 1 }) : tx("suplente") }),
+          el("span", { class: "flex-1 min-w-[10rem]", texto: j.nombre + (Number(j.elo) > 0 ? " (" + j.elo + ")" : "") }),
+          el("button", { type: "button", id: "pi-orden-" + id + "-" + k + "-sube", class: C.mini, disabled: fijo || k === 0, "aria-label": tx("subir", { n: j.nombre }), onclick: mover(-1) }, "↑"),
+          el("button", { type: "button", id: "pi-orden-" + id + "-" + k + "-baja", class: C.mini, disabled: fijo || k === e.integrantes.length - 1, "aria-label": tx("bajar", { n: j.nombre }), onclick: mover(1) }, "↓")));
+      });
+      caja.append(el("section", { class: "rounded-xl border border-brand-200 dark:border-brand-700 p-3", "data-equipo": id },
+        el("h3", { class: "font-semibold", texto: num.get(id) + ". " + e.nombre }),
+        el("p", { class: C.nota, texto: tx("equipoResumen", { n: e.integrantes.length, p: puntosTexto(T.puntos(v, id)), pt: puntosTexto(E.puntosTablero(v, id)), elo: e.elo || "—" }) }),
+        ol));
+    }
+  }
+
+  // El orden de tableros de cada equipo, una hoja por equipo, para que el
+  // delegado la firme en el congresillo.
+  function imprimirOrdenTableros() {
+    const v = t();
+    const cont = $("pi-firmas");
+    cont.replaceChildren();
+    for (const id of T.ordenInicial(v)) {
+      const e = jugador(id);
+      const hoja = el("div", { class: "pi-firma-mesa" },
+        el("h1", { class: "pi-firma-titulo", texto: tx("ordenTablerosTitulo", { e: e.nombre }) + (v.nombre ? " — " + v.nombre : "") }));
+      e.integrantes.forEach((j, k) => hoja.append(el("p", { class: "pi-firma-jugador",
+        texto: (k < E.TABLEROS ? tx("tableroN", { t: k + 1 }) : tx("suplente")) + ": " + j.nombre })));
+      hoja.append(el("p", { class: "pi-firma-linea", texto: tx("firmaDelegado") }), el("p", { class: "pi-firma-linea", texto: tx("firmaArbitro") }));
+      cont.append(hoja);
+    }
+    document.body.classList.add("pi-imprimiendo-firmas");
+    window.print();
   }
 
   function datosJugador(f) {
@@ -594,6 +677,11 @@
     caja.focus();
   }
 
+  // Cuántos equipos (centros educativos) hay en un grupo de equipos: es lo
+  // que se empareja, y de eso sale el sistema.
+  const equiposDelGrupo = (g) => new Set(g.jugadores.map((j) => String(j.institucion || "").normalize("NFD").replace(/[̀-ͯ]/g, "").trim().toUpperCase())).size;
+  const participantesDelGrupo = (g) => (g.modalidad === "equipo" ? equiposDelGrupo(g) : g.jugadores.length);
+
   // Los grupos y la revisión de categorías salen de la lista con o sin el
   // pase de mujeres al abierto, según la casilla. Un grupo que ya estaba
   // conserva su marca; uno nuevo viene marcado si tiene al menos dos.
@@ -633,7 +721,7 @@
     const { dimensiones, grupos } = G.agrupar(s.juegan);
     const antes = new Map(s.grupos.map((g) => [g.clave, g.marcado]));
     s.dimensiones = dimensiones;
-    s.grupos = grupos.map((g) => Object.assign(g, { marcado: antes.has(g.clave) ? antes.get(g.clave) : g.jugadores.length >= 2 }));
+    s.grupos = grupos.map((g) => Object.assign(g, { marcado: antes.has(g.clave) ? antes.get(g.clave) : participantesDelGrupo(g) >= 2 }));
     s.revision = G.revisarCategorias(s.juegan, s.anio);
     s.cortos = G.equiposCortos(s.juegan);
     s.hombresEnMujeres = G.hombresEnMujeres(s.juegan);
@@ -804,14 +892,16 @@
     const unidas = dims.length > 1 ? dims.slice(0, -1).join(", ") + " " + tx("y") + " " + dims[dims.length - 1] : dims[0];
     const lista = el("ul", { class: "mt-3 space-y-1 text-sm" });
     s.grupos.forEach((g, i) => {
+      // En equipos se empareja por equipos: el sistema sale de cuántos hay.
+      const nEquipos = g.modalidad === "equipo" ? equiposDelGrupo(g) : 0;
       const n = g.jugadores.length;
-      const sistema = G.sistemaSugerido(n);
+      const sistema = G.sistemaSugerido(nEquipos || n);
       const id = "pi-sugerencia-g" + i;
       lista.append(el("li", { class: "flex items-start gap-2" },
         el("input", { type: "checkbox", id, class: "mt-1", checked: g.marcado, onchange: (e) => { g.marcado = e.target.checked; pintarSugerencia(); $(id).focus(); } }),
         el("label", { for: id },
           el("span", { class: "font-semibold", texto: etiquetaGrupo(g) }),
-          " — " + tx(n === 1 ? "grupoUnJugador" : "grupoJugadores", { n }),
+          " — " + tx(n === 1 ? "grupoUnJugador" : "grupoJugadores", { n }) + (nEquipos ? " " + tx(nEquipos === 1 ? "grupoUnEquipo" : "grupoEnEquipos", { e: nEquipos }) : ""),
           el("span", { class: C.nota, texto: " · " + (sistema ? tx(sistema === "todos" ? "sugeridoTodos" : "sugeridoSuizo", { r: G.JDE_RONDAS_SUIZO }) : tx("grupoNoAlcanza")) }))));
     });
     const hayEquipos = s.grupos.some((g) => g.modalidad === "equipo");
@@ -887,13 +977,23 @@
     apagarEnVivo();
     const ids = [];
     elegidos.forEach((g, i) => {
+      const jugadores = g.jugadores.map((j) => Object.assign({ id: idJugador(), retiradoDespuesDe: null }, soloJugador(j)));
+      // Un grupo de equipos es un torneo por equipos: un participante por
+      // centro educativo, con sus integrantes en el orden de la inscripción
+      // (que es el orden de tableros hasta que el árbitro lo cambie).
+      const deEquipos = g.modalidad === "equipo";
+      const participantes = deEquipos ? E.armarEquipos(jugadores, idJugador) : jugadores;
+      const n = participantes.length;
       const datos = Object.assign({}, comunes, {
         nombre: (base ? base + " — " : "") + etiquetaGrupo(g),
-        sistema: G.sistemaSugerido(g.jugadores.length) || "suizo",
-      }, s.configJde ? G.configuracionJde(g.jugadores.length, actual) : {}, {
-        jugadores: g.jugadores.map((j) => Object.assign({ id: idJugador(), retiradoDespuesDe: null }, soloJugador(j))),
+        sistema: G.sistemaSugerido(n) || "suizo",
+      }, deEquipos ? { puntos: Object.assign({}, E.PUNTOS_EQUIPOS), desempates: E.desempatesPara(G.sistemaSugerido(n) || "suizo") } : {},
+      s.configJde ? configuracionPara(n, actual, deEquipos) : {}, {
+        tipo: deEquipos ? "equipos" : undefined, tableros: deEquipos ? E.TABLEROS : undefined,
+        jugadores: participantes,
         rondas: [], numeracion: null,
       });
+      if (!deEquipos) { delete datos.tipo; delete datos.tableros; }
       if (i === 0 && reusar) estado.t = T.nuevo(Object.assign({}, actual, datos));
       else { estado.id = nuevoId(); estado.t = T.nuevo(datos); }
       guardar();
@@ -1046,8 +1146,6 @@
   function pintarRondaJugada(caja, r) {
     const v = t();
     const R = v.rondas[r];
-    const num = T.numeros(v);
-    const antes = (id) => T.puntosHasta(v, id, r);
     const pendientes = R.mesas.filter((m) => m.n && !m.r).length;
     const ultima = r === v.rondas.length - 1;
     caja.append(el("div", { class: "flex flex-wrap items-baseline justify-between gap-3 mb-3" },
@@ -1061,6 +1159,16 @@
     caja.append(el("p", { class: C.nota + " mb-3 no-imprimir", role: "status", texto: pendientes ? tx("faltanResultados", { n: pendientes }) : tx("rondaCompleta") }));
     if (!ultima) caja.append(el("p", { class: C.nota + " mb-3 no-imprimir", texto: tx("avisoCorregir") }));
 
+    if (E.esDeEquipos(v)) pintarEncuentros(caja, r);
+    else pintarMesasIndividuales(caja, r);
+    pintarNoJuegan(caja, r);
+  }
+
+  function pintarMesasIndividuales(caja, r) {
+    const v = t();
+    const R = v.rondas[r];
+    const num = T.numeros(v);
+    const antes = (id) => T.puntosHasta(v, id, r);
     const tabla = el("table", { class: "pi-tabla" });
     tabla.append(el("thead", {}, el("tr", {},
       el("th", { class: "num", scope: "col", texto: tx("mesa") }),
@@ -1096,8 +1204,13 @@
     });
     tabla.append(cuerpo);
     caja.append(el("div", { class: "overflow-x-auto" }, tabla));
+  }
 
-    // Quienes no jugaron esta ronda: byes pedidos, retirados, inscritos después.
+  // Quienes no jugaron esta ronda: byes pedidos, retirados, inscritos después.
+  function pintarNoJuegan(caja, r) {
+    const v = t();
+    const R = v.rondas[r];
+    const num = T.numeros(v);
     const enMesa = new Set();
     for (const m of R.mesas) { enMesa.add(m.b); if (m.n) enMesa.add(m.n); }
     const fuera = T.ordenInicial(v).filter((id) => !enMesa.has(id));
@@ -1121,6 +1234,112 @@
       }
       caja.append(el("h3", { class: "font-semibold mt-5", texto: tx("noJuegan") }), ul);
     }
+  }
+
+  // ---------- Los encuentros de un torneo por equipos ----------
+  // Cada encuentro: los dos equipos con sus puntos de encuentro antes de la
+  // ronda, quiénes juegan de cada lado (los cuatro primeros del orden de
+  // tableros, que el árbitro cambia si falta alguien: los de abajo suben y
+  // el suplente entra al final) y el resultado de cada tablero. El del
+  // encuentro sale solo de los tableros (js/pareo/equipos.js).
+  function pintarEncuentros(caja, r) {
+    const v = t();
+    const R = v.rondas[r];
+    const num = T.numeros(v);
+    const antes = (id) => T.puntosHasta(v, id, r);
+    const nombreIntegrante = (idEquipo, idJ) => {
+      const e = jugador(idEquipo);
+      const j = e && e.integrantes.find((x) => x.id === idJ);
+      return j ? j.nombre : "—";
+    };
+    const lista = el("div", { class: "space-y-4" });
+    R.mesas.forEach((m, i) => {
+      if (m.n === null) {
+        lista.append(el("p", { class: "rounded-xl border border-brand-200 dark:border-brand-700 p-3 text-sm" },
+          el("span", { class: "font-semibold", texto: tx("mesa") + " " + (i + 1) + ": " + num.get(m.b) + ". " + nombreDe(m.b) }),
+          " — " + tx("byeEquipo", { p: puntosTexto(v.puntos.bye), t: puntosTexto(E.TABLEROS / 2) })));
+        return;
+      }
+      E.prepararMesa(v, m);
+      const pe = E.puntosDelEncuentro(v, m);
+      const tarjeta = el("section", { class: "rounded-xl border border-brand-200 dark:border-brand-700 p-3", "aria-labelledby": "pi-enc-" + i + "-t" });
+      tarjeta.append(el("h3", { id: "pi-enc-" + i + "-t", class: "font-semibold" },
+        tx("mesa") + " " + (i + 1) + ": " + num.get(m.b) + ". " + nombreDe(m.b) + " (" + puntosTexto(antes(m.b)) + ") – " +
+        num.get(m.n) + ". " + nombreDe(m.n) + " (" + puntosTexto(antes(m.n)) + ")"));
+      tarjeta.append(el("p", { id: "pi-enc-" + i + "-r", class: "text-sm mt-1", role: "status" },
+        m.r ? tx(pe.incomparecencia ? "encuentroIncomp" : "encuentroResultado", {
+          b: puntosTexto(pe.b), n: puntosTexto(pe.n),
+          g: m.r === "=" ? tx("empate") : tx("ganaEquipo", { e: nombreDe(m.r === "1-0" || m.r === "+-" ? m.b : m.n) }),
+        }) : tx("encuentroFalta", { b: puntosTexto(pe.b), n: puntosTexto(pe.n) })));
+
+      // Quiénes juegan: una casilla por integrante, hasta cuatro.
+      const alineacion = el("div", { class: "grid sm:grid-cols-2 gap-3 mt-2 no-imprimir" });
+      for (const lado of "bn") {
+        const e = jugador(m[lado]);
+        const elegidos = m.alineacion[lado];
+        const lleno = elegidos.length >= E.TABLEROS;
+        const fs = el("fieldset", { class: "text-sm" }, el("legend", { class: "font-semibold", texto: tx("juegan", { e: e.nombre }) }));
+        e.integrantes.forEach((j, k) => {
+          const id = "pi-enc-" + i + "-" + lado + "-" + k;
+          const si = elegidos.includes(j.id);
+          fs.append(el("label", { class: "flex items-center gap-2" },
+            el("input", { type: "checkbox", id, checked: si, disabled: !si && lleno, onchange: (ev) => {
+              const marcados = new Set(m.alineacion[lado]);
+              if (ev.target.checked) marcados.add(j.id); else marcados.delete(j.id);
+              // Siempre en el orden de tableros (sistema olímpico).
+              m.alineacion[lado] = e.integrantes.map((x) => x.id).filter((x) => marcados.has(x));
+              alCambiarEncuentro(m, id);
+            } }),
+            el("span", { texto: (k + 1) + ". " + j.nombre + (k >= E.TABLEROS ? " (" + tx("suplente") + ")" : "") })));
+        });
+        alineacion.append(fs);
+      }
+      tarjeta.append(alineacion);
+
+      // Los tableros: con quién juega cada uno y el resultado. Una lista, no
+      // una tabla: en el celular, cuatro columnas con nombres largos sacan de
+      // la pantalla a las negras. El equipo de cada uno se alterna (el de la
+      // izquierda con blancas en los tableros 1 y 3) y va en el título.
+      const tableros = el("ol", { class: "mt-3 space-y-2" });
+      for (const x of E.tablerosDe(v, m)) {
+        const equipoBlancas = x.bBlancas ? m.b : m.n, equipoNegras = x.bBlancas ? m.n : m.b;
+        const blancas = x.blancas ? nombreIntegrante(equipoBlancas, x.blancas) : tx("nadie");
+        const negras = x.negras ? nombreIntegrante(equipoNegras, x.negras) : tx("nadie");
+        let celda;
+        if (x.fijo || pe.incomparecencia) celda = el("span", { class: "text-sm", texto: tx("corto_" + (pe.incomparecencia ? m.r : x.r)) + " · " + tx("incomparecencia") });
+        else {
+          const id = "pi-enc-" + i + "-t" + x.k;
+          const sel = el("select", { id, class: C.campoChico, "aria-label": tx("resultadoTablero", { t: x.k + 1, b: blancas, n: negras }) });
+          for (const [val, clave] of RESULTADOS) sel.append(el("option", { value: val, texto: tx(clave) }));
+          sel.value = x.r || "";
+          sel.addEventListener("change", () => { m.partidas[x.k].r = sel.value || null; alCambiarEncuentro(m, id); });
+          celda = el("span", {}, sel, el("span", { class: "pi-solo-imprimir", texto: x.r ? tx("corto_" + x.r) : "" }));
+        }
+        tableros.append(el("li", { class: "flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-brand-100 dark:border-brand-800 pt-2", "data-tablero": x.k + 1 },
+          el("span", { class: "font-mono text-xs font-bold", texto: tx("tableroN", { t: x.k + 1 }) }),
+          el("span", { class: "text-sm flex-1 min-w-[12rem]" },
+            el("span", { class: "font-semibold", title: nombreDe(equipoBlancas), texto: blancas }), " ",
+            el("span", { class: C.nota, texto: "(" + tx("blancas") + ")" }), " – ",
+            el("span", { class: "font-semibold", title: nombreDe(equipoNegras), texto: negras }), " ",
+            el("span", { class: C.nota, texto: "(" + tx("negras") + ")" })),
+          celda));
+      }
+      tarjeta.append(tableros);
+      lista.append(tarjeta);
+    });
+    caja.append(lista);
+  }
+
+  // Cada cambio de un tablero o de una alineación vuelve a sacar el
+  // resultado del encuentro, guarda y vuelve a pintar la ronda, con el foco
+  // en el mismo control.
+  function alCambiarEncuentro(m, idFoco) {
+    const v = t();
+    m.r = E.resultadoEncuentro(v, m);
+    guardar();
+    pintarRondas();
+    const x = $(idFoco);
+    if (x) x.focus();
   }
 
   // Una hoja aparte para pegar en la pared antes de la ronda: mesa, blancas,
@@ -1175,6 +1394,23 @@
         cont.append(hoja);
         return;
       }
+      if (E.esDeEquipos(v)) {
+        // Un encuentro: los cuatro tableros con quién juega con cada color y
+        // su resultado (si ya está), y la firma de los dos capitanes.
+        E.prepararMesa(v, m);
+        const nombreDeJ = (idE, idJ) => { const j = idJ && jugador(idE).integrantes.find((x) => x.id === idJ); return j ? j.nombre : tx("nadie"); };
+        hoja.append(el("p", { class: "pi-firma-jugador" }, num.get(m.b) + ". " + nombreDe(m.b) + " – " + num.get(m.n) + ". " + nombreDe(m.n)));
+        for (const x of E.tablerosDe(v, m)) {
+          const eb = x.bBlancas ? m.b : m.n, en = x.bBlancas ? m.n : m.b;
+          hoja.append(el("p", { class: "pi-firma-resultado" },
+            tx("tableroN", { t: x.k + 1 }) + ": " + nombreDeJ(eb, x.blancas) + " – " + nombreDeJ(en, x.negras) + "   ",
+            x.r ? el("span", { class: "font-semibold" }, tx("corto_" + x.r)) : el("span", { class: "pi-firma-blanco" })));
+        }
+        hoja.append(el("p", { class: "pi-firma-linea" }, tx("firmaCapitan", { e: nombreDe(m.b) })),
+          el("p", { class: "pi-firma-linea" }, tx("firmaCapitan", { e: nombreDe(m.n) })));
+        cont.append(hoja);
+        return;
+      }
       hoja.append(
         el("p", { class: "pi-firma-jugador" }, num.get(m.b) + ". " + nombreDe(m.b)),
         el("p", { class: "pi-firma-jugador" }, num.get(m.n) + ". " + nombreDe(m.n)),
@@ -1201,12 +1437,12 @@
 
   // La misma «foto» para los dos caminos (el enlace del momento y la
   // difusión en vivo): la ronda r y la clasificación de ahora, con los
-  // mismos datos que ya pintó la pantalla (filasFiltradas(), D.clasificacion()).
+  // mismos datos que ya pintó la pantalla (filasFiltradas(), E.clasificacion()).
   function datosLecturaActual(r) {
     const v = t();
     const R = v.rondas[r];
     const k = rondasCompletas();
-    const filas = filasFiltradas(D.clasificacion(hasta(k), v.desempates));
+    const filas = filasFiltradas(E.clasificacion(hasta(k), v.desempates));
     return {
       v: 1,
       nombre: v.nombre || "",
@@ -1395,6 +1631,9 @@
       ronda = { mesas, ausencias: Object.assign({}, pedidas) };
     }
     if (t() !== v || v.rondas.length !== r) throw new Error(tx("yaEmparejada"));
+    // En un torneo por equipos, cada encuentro trae su alineación (los cuatro
+    // primeros del orden de tableros) y un resultado por tablero.
+    if (E.esDeEquipos(v)) for (const m of ronda.mesas) E.prepararMesa(v, m);
     v.rondas.push(ronda);
     guardar();
   }
@@ -1412,7 +1651,7 @@
     pintarRondas();
   }
 
-  // Las mismas filas de D.clasificacion(), acotadas a la institución elegida
+  // Las mismas filas de E.clasificacion(), acotadas a la institución elegida
   // (si hay una elegida): la usan la pantalla y el PDF por igual, para que
   // lo que se baja sea siempre lo que se está viendo.
   function filasFiltradas(todasFilas) {
@@ -1425,7 +1664,7 @@
     const v = t();
     const k = rondasCompletas();
     const tc = hasta(k);
-    const todasFilas = D.clasificacion(tc, v.desempates);
+    const todasFilas = E.clasificacion(tc, v.desempates);
     const filas = filasFiltradas(todasFilas);
     const num = T.numeros(v);
     $("pi-clas-titulo").textContent = k ? tx("clasificacionTras", { r: k }) : tx("fClasificacion");
@@ -1440,7 +1679,7 @@
       el("th", { scope: "col", texto: tx("nombre") }), el("th", { scope: "col", texto: tx("institucion") }),
       el("th", { scope: "col", texto: tx("fed") }), el("th", { class: "num", scope: "col", texto: "Elo" }),
       el("th", { class: "num", scope: "col", texto: tx("pts") }),
-      v.desempates.map((c) => el("th", { class: "num", scope: "col" }, el("abbr", { title: (D.CATALOGO.find((x) => x.codigo === c) || {})[idioma], texto: c }))))));
+      v.desempates.map((c) => el("th", { class: "num", scope: "col" }, el("abbr", { title: (E.catalogo(v).find((x) => x.codigo === c) || {})[idioma], texto: c }))))));
     const cuerpo = el("tbody");
     for (const f of filas) {
       const j = jugador(f.id);
@@ -1456,7 +1695,7 @@
     const dl = $("pi-clas-leyenda");
     dl.replaceChildren();
     for (const c of v.desempates) {
-      const info = D.CATALOGO.find((x) => x.codigo === c);
+      const info = E.catalogo(v).find((x) => x.codigo === c);
       if (info) dl.append(el("div", {}, el("dt", { class: "inline font-semibold", texto: c + ": " }), el("dd", { class: "inline", texto: info[idioma] })));
     }
   }
@@ -1469,7 +1708,7 @@
     tabla.replaceChildren();
     if (!v.jugadores.length) return;
     const k = rondasCompletas();
-    const todasFilas = D.clasificacion(hasta(k), v.desempates);
+    const todasFilas = E.clasificacion(hasta(k), v.desempates);
     const filas = filasFiltradas(todasFilas);
     const num = T.numeros(v);
     const R = v.rondas.length;
@@ -1512,7 +1751,7 @@
   function datosClasificacionPDF() {
     const v = t();
     const k = rondasCompletas();
-    const todasFilas = D.clasificacion(hasta(k), v.desempates);
+    const todasFilas = E.clasificacion(hasta(k), v.desempates);
     const filas = filasFiltradas(todasFilas);
     const num = T.numeros(v);
     const encabezados = [tx("puesto"), tx("nro"), tx("nombre"), tx("institucion"), tx("fed"), "Elo", tx("pts")]
@@ -1525,7 +1764,7 @@
         .concat(v.desempates.map((c) => formatoNum(f.valores[c])));
     });
     const notas = v.desempates.map((c) => {
-      const info = D.CATALOGO.find((x) => x.codigo === c);
+      const info = E.catalogo(v).find((x) => x.codigo === c);
       return info ? c + ": " + info[idioma] : c;
     });
     return {
@@ -1541,7 +1780,7 @@
   function datosCruzadaPDF() {
     const v = t();
     const k = rondasCompletas();
-    const todasFilas = D.clasificacion(hasta(k), v.desempates);
+    const todasFilas = E.clasificacion(hasta(k), v.desempates);
     const filas = filasFiltradas(todasFilas);
     const num = T.numeros(v);
     const R = v.rondas.length;

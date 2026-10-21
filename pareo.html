@@ -175,6 +175,7 @@
             <section id="pi-p-jugadores" role="tabpanel" aria-labelledby="pi-f-jugadores" class="space-y-6" hidden>
                 <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5">
                     <h2 class="font-serif text-xl font-bold mb-4" data-t="agregarJugador">Agregar un jugador</h2>
+                    <p id="pi-nota-equipos" class="text-sm text-brand-600 dark:text-brand-300 mb-3" data-t="notaEquipos" hidden>Es un torneo por equipos: los equipos salen de la inscripción. Para otra lista, crea un torneo nuevo.</p>
                     <form id="pi-form-jugador" class="grid sm:grid-cols-6 gap-3" novalidate>
                         <label class="sm:col-span-3"><span class="block text-sm font-semibold mb-1" data-t="nombreJugador">Apellidos, nombre</span><input name="nombre" required maxlength="33" class="w-full rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-800 text-brand-800 dark:text-white px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400" autocomplete="off"></label>
                         <label class="sm:col-span-3"><span class="block text-sm font-semibold mb-1" data-t="institucion">Institución</span><input name="institucion" maxlength="80" class="w-full rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-800 text-brand-800 dark:text-white px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400" autocomplete="off"></label>
@@ -187,7 +188,7 @@
                         <label class="sm:col-span-2"><span class="block text-sm font-semibold mb-1" data-t="nacimiento">Fecha de nacimiento</span><input name="nacimiento" type="date" class="w-full rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-800 text-brand-800 dark:text-white px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"></label>
                         <div class="sm:col-span-1 flex items-end"><button type="submit" class="bg-brand-800 hover:bg-brand-900 dark:bg-brand-700 dark:hover:bg-brand-600 text-white font-semibold px-4 py-2 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 disabled:opacity-50 disabled:cursor-not-allowed w-full" data-t="agregar">Agregar</button></div>
                     </form>
-                    <details class="mt-4">
+                    <details id="pi-pegar-caja" class="mt-4">
                         <summary class="cursor-pointer font-semibold text-sm rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400" data-t="pegarVarios">Pegar una lista de jugadores</summary>
                         <p class="text-sm text-brand-600 dark:text-brand-300 mt-2" data-t="pegarAyuda">Uno por línea: Nombre; Institución; Elo; Título; Federación; ID FIDE. Sirve copiar las columnas de una hoja de cálculo (con tabuladores también); lo que no tengas, se deja en blanco.</p>
                         <textarea id="pi-pegar" rows="5" class="w-full rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-800 text-brand-800 dark:text-white px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 mt-2 font-mono text-xs" aria-label="Lista de jugadores" data-t-aria="listaJugadores"></textarea>
@@ -210,9 +211,10 @@
                         <label class="flex items-center gap-2 text-sm max-w-xs"><span class="font-semibold" data-t="buscarJugador">Buscar un jugador</span><input type="search" id="pi-buscar-jugador" class="w-full rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-800 text-brand-800 dark:text-white px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"></label>
                     </div>
                     <div class="overflow-x-auto"><table class="pi-tabla" id="pi-tabla-jugadores"></table></div>
+                    <div id="pi-equipos" class="space-y-3" hidden></div>
                     <p id="pi-sin-jugadores" class="text-sm italic text-brand-600 dark:text-brand-300" data-t="sinJugadores">Todavía no hay nadie inscrito.</p>
                     <p id="pi-sin-coincidencias" class="text-sm italic text-brand-600 dark:text-brand-300" data-t="nadieCoincide" hidden>Nadie coincide con lo que buscas.</p>
-                    <div class="mt-4 pt-4 border-t border-brand-100 dark:border-brand-800">
+                    <div id="pi-caja-elo-nacional" class="mt-4 pt-4 border-t border-brand-100 dark:border-brand-800">
                         <button type="button" id="pi-elo-nacional" class="inline-block border border-brand-300 dark:border-brand-600 text-brand-800 dark:text-white font-semibold px-4 py-2 rounded-lg text-sm hover:bg-brand-50 dark:hover:bg-brand-800 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 disabled:opacity-50 disabled:cursor-not-allowed" data-t="buscarEloNacional">Buscar Elo Nacional de quien no tiene</button>
                         <p class="text-sm text-brand-600 dark:text-brand-300 mt-2" data-t="eloNacionalAyuda">Es lo único de Pareo Integral que sale de tu computadora: se manda el nombre de cada jugador a nuestro servidor para buscarlo en ajedrezcostarica.com. No se guarda nada.</p>
                         <p id="pi-elo-nacional-estado" class="text-sm mt-2" role="status" aria-live="polite"></p>
@@ -342,6 +344,7 @@
     <script src="js/hora-cr.js"></script>
     <script src="js/pareo/torneo.js"></script>
     <script src="js/pareo/desempates.js"></script>
+    <script src="js/pareo/equipos.js"></script>
     <script src="js/pareo/motor.js"></script>
     <script src="js/pareo/textos.js"></script>
     <script src="js/pareo/grupos.js"></script>
