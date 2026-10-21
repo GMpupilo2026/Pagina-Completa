@@ -2319,8 +2319,67 @@ se juega aparte, y armar cada torneo a mano era copiar y pegar filas.
     nacimiento. La misma inscripción repetida (misma modalidad y
     categoría) queda una sola vez, y el panel dice quiénes y cuántas
     veces; la misma persona en dos modalidades o categorías (5 en
-    Alajuela) queda en las dos y se avisa: el art. 66.1.h permite una sola
-    modalidad, y cuál vale lo decide el árbitro.
+    Alajuela) se le pregunta al árbitro dónde queda: el art. 66.1.h permite
+    una sola modalidad. Cada persona trae una opción por inscripción («Que
+    quede en Equipos D», «Que quede en Individual D») y «Todavía no decido
+    (queda en las dos)», que es como viene, para no sacar a nadie de un
+    torneo sin que el árbitro lo diga; el panel cuenta cuántos faltan por
+    decidir. La inscripción que no elige sale ANTES que todo lo demás
+    (`calcularSugerencia()`): el pase al abierto, los equipos de más de cinco
+    y los grupos se arman sin ella, así que dejarlo en individual también lo
+    saca de la cuenta de su equipo.
+  - **Un equipo con menos de tres se avisa** (`equiposCortos()`, art.
+    66.1.g: «un mínimo de tres personas estudiantes»; pedido por el dueño
+    del sitio). Se cuenta sobre la lista que de verdad juega, después de
+    todas las decisiones del árbitro (el pase al abierto, los cinco de un
+    equipo de más y la modalidad de quien estaba en dos), y se recalcula con
+    cada una: dejar a alguien en individual o desmarcar a dos de un equipo
+    hace aparecer el aviso al instante. Cada caso lleva «Aviso:» escrito al
+    frente, el centro, la categoría, el torneo y quiénes son. No saca a
+    nadie: el árbitro sabe si el centro completa el equipo el día del
+    torneo. En Alajuela 2026 son dos: Saint Josephine Bilingual School (B
+    abierto, 2) y Maurilio Soto Alfaro (A mujeres, la que no tenía abierto
+    al cual pasar).
+  - **Un hombre en el torneo de mujeres se avisa** (`hombresEnMujeres()`,
+    art. 66.1: «Torneo Individual Mujeres» y «un equipo de mujeres»;
+    pedido por el dueño del sitio para equipos, y se aplica también al
+    individual porque la regla es la misma). Con el Excel actual del MEP
+    no puede pasar: trae solo el sexo, y el torneo sale de ahí. Pasa cuando
+    el archivo dice el torneo aparte, con una columna «Torneo» o «Rama»
+    (Mujeres o Abierto), que es lo que pide la propuesta de cambios a la
+    normativa. Por eso `rama` dejó de leerse como sexo: «Rama femenina»
+    dice el torneo, no el sexo de la persona, y en el abierto juegan
+    también mujeres. Cuando la columna viene, el torneo es el que diga el
+    archivo (`torneoBase()`), la mujer anotada en el abierto queda en el
+    abierto sin aviso, y quien está anotado como hombre en el de mujeres
+    queda donde dice el archivo y se avisa con «Aviso:», su nombre, su
+    centro y el torneo: no se mueve, porque el error puede estar en el sexo
+    o en el torneo.
+  - **Dos por centro en individual** (`individualesDeMas()`, art. 66.1.f:
+    «sólo podrán clasificar a la Etapa Regional dos personas estudiantes
+    mujeres y dos personas estudiantes en abierto»). Es el mismo control que
+    el de los equipos de más de cinco (`deMasPorCentro()` con otro tope, y
+    `pintarTopes()` en la página): mismo centro, categoría y torneo, vienen
+    marcados los dos primeros de la inscripción, con dos marcados no se
+    puede marcar otro, y el resto queda descartado de todo. En Alajuela 2026
+    son cuatro casos y seis descartados por omisión.
+  - **La configuración de los JDE** (`configuracionJde()`, art. 66.2 a
+    66.4). La casilla «Usar la configuración de los JDE», marcada de
+    entrada, le pone a cada torneo creado la suya según cuántos juegan: el
+    sistema sugerido, al menos cinco rondas en el suizo (si el abierto tenía
+    más, se respetan), el ritmo mínimo si el abierto no tiene uno (si tiene,
+    se respeta: la normativa dice «no podrá ser menor»), 1 · ½ · 0 con el
+    bye en 1, y desempates. La normativa no los fija (pide «al menos tres»
+    que establece el árbitro en el congresillo, «preferiblemente» los de la
+    Federación y FIDE), así que se toman los de FIDE para cada sistema:
+    Buchholz sin el peor, Buchholz, Sonneborn-Berger, encuentro directo y
+    victorias en el suizo; encuentro directo, Sonneborn-Berger, victorias y
+    Koya en el todos contra todos. El bye en 1 tampoco lo dice la normativa:
+    es el de FIDE (está en la propuesta de cambios). Sin marcar la casilla,
+    se copian del torneo abierto tal cual, como antes de esto.
+    El botón «Aplicar la configuración de los JDE» de la ficha Torneo hace
+    lo mismo con el torneo abierto, y solo antes de la ronda 1 (después, el
+    sistema y los puntos ya no se cambian).
   - **Un equipo de más de cinco: el árbitro elige los cinco**
     (`equiposDeMas()`, art. 66.1.g: «un máximo de cinco [...] cuatro
     personas estudiantes titulares y una persona estudiante suplente»;

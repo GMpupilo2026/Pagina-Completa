@@ -28,6 +28,16 @@
     return "";
   }
 
+  // «Mujeres», «Femenino», «Rama femenina»… → "w"; «Abierto», «Masculino»,
+  // «Open», «Mixto»… → "m" (el abierto). La columna del torneo, que no es
+  // la del sexo: en el abierto juegan también mujeres.
+  function leerTorneo(v) {
+    const s = sinTildes(v).replace(/^(torneo|rama|categoria)\s+/, "");
+    if (/^(f|w|mujer|mujeres|femenino|femenina|femeninos|women|female|girls?)$/.test(s)) return "w";
+    if (/^(m|a|abierto|abierta|masculino|masculina|mixto|mixta|open|varones|hombres)$/.test(s)) return "m";
+    return "";
+  }
+
   // «Equipo», «Equipos», «Team», «Por equipos» → "equipo"; «Individual»,
   // «Ind», «Individuales» → "individual".
   function leerModalidad(v) {
@@ -76,9 +86,12 @@
   // "equipo" o ""). Devuelve las dimensiones que separan (las que tienen dos
   // valores o más) y los grupos, en orden: individual antes que equipos, la
   // categoría por orden alfabético y masculino antes que femenino.
-  // La mujer que pasa al abierto (pasarMujeresAlAbierto) cuenta en el
-  // grupo del abierto, aunque su sexo siga siendo "w".
-  const torneoDe = (j) => (j.alAbierto ? "m" : j.sexo || "");
+  // El torneo de cada uno: el que diga el archivo si trae una columna
+  // «Torneo» o «Rama» (Mujeres o Abierto); si no, el de su sexo. La mujer
+  // que pasa al abierto (pasarMujeresAlAbierto) cuenta en el abierto,
+  // aunque su sexo siga siendo "w".
+  const torneoBase = (j) => j.torneo || j.sexo || "";
+  const torneoDe = (j) => (j.alAbierto ? "m" : torneoBase(j));
 
   function agrupar(lista) {
     const valor = (j, d) => (d === "categoria" ? String(j.categoria || "").trim() : d === "sexo" ? torneoDe(j) : j[d] || "");
@@ -198,7 +211,7 @@
     }
     const pasadas = [], sinAbierto = [];
     for (const todos of porEquipo.values()) {
-      const mujeres = todos.filter((j) => j.sexo === "w");
+      const mujeres = todos.filter((j) => torneoBase(j) === "w");
       if (!mujeres.length || mujeres.length >= JDE_MIN_EQUIPO) continue;
       const caso = { institucion: mujeres[0].institucion || "", categoria: String(mujeres[0].categoria || "").trim(), mujeres, abierto: todos.length - mujeres.length };
       if (!caso.abierto) { sinAbierto.push(caso); continue; }
@@ -215,17 +228,44 @@
   // integrantes en el orden de la inscripción; quién juega lo elige el
   // árbitro en la página.
   const JDE_MAX_EQUIPO = 5;
-  function equiposDeMas(lista) {
+  // Y en individual, «sólo podrán clasificar a la Etapa Regional dos
+  // personas estudiantes mujeres y dos personas estudiantes en abierto» por
+  // centro (art. 66.1.f): el mismo centro, categoría y torneo, con dos como
+  // tope.
+  const JDE_MAX_INDIVIDUAL = 2;
+  const equiposDeMas = (lista) => deMasPorCentro(lista, "equipo", JDE_MAX_EQUIPO);
+  const individualesDeMas = (lista) => deMasPorCentro(lista, "individual", JDE_MAX_INDIVIDUAL);
+  function deMasPorCentro(lista, modalidad, maximo) {
     const porEquipo = new Map();
     for (const j of lista) {
-      if (j.modalidad !== "equipo") continue;
+      if (j.modalidad !== modalidad) continue;
       const categoria = String(j.categoria || "").trim();
       const clave = [String(j.institucion || "").trim().toUpperCase(), categoria.toUpperCase(), torneoDe(j)].join("|");
       if (!porEquipo.has(clave)) porEquipo.set(clave, { clave, institucion: j.institucion || "", categoria, torneo: torneoDe(j), integrantes: [] });
       porEquipo.get(clave).integrantes.push(j);
     }
-    return [...porEquipo.values()].filter((e) => e.integrantes.length > JDE_MAX_EQUIPO)
+    return [...porEquipo.values()].filter((e) => e.integrantes.length > maximo)
       .sort((a, b) => a.clave.localeCompare(b.clave, "es"));
+  }
+
+  // La configuración de los JDE para un torneo de n jugadores (art. 66.2 a
+  // 66.4, Etapa Regional): el sistema sugerido, al menos cinco rondas en el
+  // suizo, el ritmo mínimo si no tiene uno, 1 · ½ · 0 y el bye del pareo en
+  // 1, y desempates. La normativa pide «al menos tres» que fija el árbitro
+  // en el congresillo, «preferiblemente» los de la Federación y FIDE: estos
+  // son los de FIDE para cada sistema (C.07), y se pueden cambiar después.
+  const JDE_DESEMPATES_SUIZO = ["BH-C1", "BH", "SB", "DE", "WIN"];
+  const JDE_DESEMPATES_TODOS = ["DE", "SB", "WIN", "KS"];
+  function configuracionJde(n, actual) {
+    const a = actual || {};
+    const sistema = sistemaSugerido(n) || a.sistema || "suizo";
+    return {
+      sistema,
+      rondasTotales: Math.max(Number(a.rondasTotales) || 0, JDE_RONDAS_SUIZO),
+      ritmo: String(a.ritmo || "").trim() || JDE_RITMO_MINIMO,
+      puntos: { victoria: 1, tablas: 0.5, derrota: 0, bye: 1 },
+      desempates: (sistema === "todos" ? JDE_DESEMPATES_TODOS : JDE_DESEMPATES_SUIZO).slice(),
+    };
   }
 
   // La misma persona inscrita más de una vez. El reporte de los JDE trae
@@ -255,14 +295,40 @@
     const dosModalidades = [];
     for (const suyas of porPersona.values()) {
       for (const j of suyas) if (j.veces > 1) repetidos.push({ jugador: j, veces: j.veces });
-      if (suyas.length > 1) dosModalidades.push({ jugador: suyas[0], inscripciones: suyas.map((x) => ({ modalidad: x.modalidad, categoria: String(x.categoria || "").trim() })) });
+      if (suyas.length > 1) dosModalidades.push({ jugador: suyas[0], inscripciones: suyas.map((x) => ({ jugador: x, modalidad: x.modalidad, categoria: String(x.categoria || "").trim() })) });
     }
     for (const j of unicos) delete j.veces;
     return { lista: unicos, repetidos, dosModalidades };
   }
 
+  // Los equipos con menos de tres (art. 66.1.g: «un mínimo de tres
+  // personas estudiantes»), sobre la lista que de verdad juega: ya con el
+  // pase al abierto, los descartados de un equipo de más de cinco y la
+  // modalidad elegida para quien estaba en dos. Solo se avisa: el árbitro
+  // sabe si el centro completa el equipo el día del torneo.
+  function equiposCortos(lista) {
+    const porEquipo = new Map();
+    for (const j of lista) {
+      if (j.modalidad !== "equipo") continue;
+      const categoria = String(j.categoria || "").trim();
+      const clave = [String(j.institucion || "").trim().toUpperCase(), categoria.toUpperCase(), torneoDe(j)].join("|");
+      if (!porEquipo.has(clave)) porEquipo.set(clave, { clave, institucion: j.institucion || "", categoria, torneo: torneoDe(j), integrantes: [] });
+      porEquipo.get(clave).integrantes.push(j);
+    }
+    return [...porEquipo.values()].filter((e) => e.integrantes.length < JDE_MIN_EQUIPO)
+      .sort((a, b) => a.clave.localeCompare(b.clave, "es"));
+  }
+
+  // Hombres en el torneo de mujeres (art. 66.1: «Torneo Individual Mujeres»
+  // y «un equipo de mujeres»). Solo puede pasar cuando el archivo dice el
+  // torneo aparte del sexo; con el sexo solo, cada hombre ya va al abierto.
+  // Se avisa: el árbitro revisa si el error es el sexo o el torneo.
+  function hombresEnMujeres(lista) {
+    return lista.filter((j) => torneoDe(j) === "w" && j.sexo === "m");
+  }
+
   const api = {
-    quitarRepetidos,
+    quitarRepetidos, equiposCortos, individualesDeMas, JDE_MAX_INDIVIDUAL, configuracionJde, hombresEnMujeres, leerTorneo,
     pasarMujeresAlAbierto, JDE_MIN_EQUIPO, equiposDeMas, JDE_MAX_EQUIPO,
     leerSexo, leerModalidad, ordenFechas, leerFecha, agrupar, sistemaSugerido, revisarCategorias, rangoCategoria,
     JDE_MAX_TODOS, JDE_RONDAS_SUIZO, JDE_RITMO_MINIMO, JDE_ANIO_NORMATIVA, JDE_MAX_ASCENSOS,

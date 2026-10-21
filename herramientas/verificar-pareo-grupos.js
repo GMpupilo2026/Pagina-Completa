@@ -93,6 +93,42 @@ function pruebaPase() {
   igual("sin aplicar, nadie queda marcado", lista.filter((x) => x.alAbierto).length, 0);
 }
 
+function pruebaHombresEnMujeres() {
+  console.log("\n=== Hombres en el torneo de mujeres (art. 66.1) ===");
+  igual("la columna del torneo: Mujeres y Rama femenina son mujeres; Abierto y Masculino, el abierto",
+    ["Mujeres", "Rama femenina", "Femenino", "Abierto", "Masculino", "Mixto", "", "otra"].map(G.leerTorneo), ["w", "w", "w", "m", "m", "m", "", ""]);
+  const j = (sexo, torneo, modalidad) => ({ nombre: sexo + torneo + modalidad, sexo, torneo, modalidad, institucion: "X", categoria: "B" });
+  const lista = [j("m", "w", "equipo"), j("m", "w", "individual"), j("w", "m", "equipo"), j("m", "", "equipo"), j("w", "", "equipo")];
+  igual("avisa a los hombres anotados en el de mujeres, en equipos y en individual", G.hombresEnMujeres(lista).map((x) => x.modalidad), ["equipo", "individual"]);
+  igual("sin columna de torneo, el torneo es el del sexo: nadie que avisar", G.hombresEnMujeres([j("m", "", "equipo"), j("w", "", "equipo")]).length, 0);
+  const pase = G.pasarMujeresAlAbierto([j("w", "m", "equipo"), j("m", "", "equipo"), j("m", "", "equipo")], true);
+  igual("la mujer que el archivo pone en el abierto no cuenta como «mujeres sin equipo»", pase.pasadas.length + pase.sinAbierto.length, 0);
+}
+
+function pruebaTopesYConfig() {
+  console.log("\n=== Dos por centro en individual y la configuración de los JDE ===");
+  const j = (sexo, institucion, modalidad) => ({ nombre: sexo + institucion, sexo, institucion, categoria: "C", modalidad });
+  const r = G.individualesDeMas([j("w", "X", "individual"), j("w", "X", "individual"), j("w", "X", "individual"), j("m", "X", "individual"), j("m", "X", "individual"), j("w", "X", "equipo"), j("w", "X", "equipo"), j("w", "X", "equipo")]);
+  igual("solo las tres mujeres de X en individual pasan el tope (los hombres son 2, los equipos no cuentan)", r.map((e) => e.torneo + e.integrantes.length), ["w3"]);
+  const c8 = G.configuracionJde(8, { rondasTotales: 3, ritmo: "" });
+  const c9 = G.configuracionJde(9, { rondasTotales: 7, ritmo: "15 min + 5 s" });
+  igual("8: todos contra todos con sus desempates; el ritmo mínimo si no tenía", [c8.sistema, c8.desempates.join(","), c8.ritmo], ["todos", "DE,SB,WIN,KS", "10 min + 2 s por jugada"]);
+  igual("9: suizo, se respetan 7 rondas y el ritmo que ya tenía", [c9.sistema, c9.rondasTotales, c9.ritmo, c9.desempates[0]], ["suizo", 7, "15 min + 5 s", "BH-C1"]);
+  igual("con menos de 5 rondas, sube a 5", c8.rondasTotales, 5);
+}
+
+function pruebaCortos() {
+  console.log("\n=== Equipos con menos de 3 (art. 66.1.g) ===");
+  const j = (sexo, institucion, categoria, modalidad, alAbierto) => ({ nombre: sexo + institucion, sexo, institucion, categoria, modalidad: modalidad || "equipo", alAbierto });
+  const r = G.equiposCortos([
+    j("m", "X", "A"), j("m", "X", "A"), j("m", "X", "A"),   // 3: está bien
+    j("w", "X", "A"), j("w", "X", "A"),                     // mujeres de X: 2, corto
+    j("m", "Y", "B"), j("w", "Y", "B", "equipo", true),     // la que pasó cuenta en el abierto: 2, corto
+    j("m", "Z", "B", "individual"),                         // individual: no es equipo
+  ]);
+  igual("los cortos: mujeres de X en A y el abierto de Y en B", r.map((e) => e.institucion + e.categoria + e.torneo + e.integrantes.length), ["XAw2", "YBm2"]);
+}
+
 function pruebaRepetidos() {
   console.log("\n=== Inscripciones repetidas (art. 66.1.h) ===");
   const j = (nombre, documento, modalidad, categoria, nacimiento) => ({ nombre, documento, modalidad, categoria, nacimiento: nacimiento || "2014-01-01" });
@@ -157,13 +193,15 @@ function excelJde() {
   const poner = (cuantos, sexo, cat, mod, fdn, institucion) => {
     for (let i = 0; i < cuantos; i++) {
       const f = Array.isArray(fdn) ? fdn[i] : fdn;
-      filas.push([String(n), "CÉDULA:", "100000" + n, `PRUEBA ${sexo === "MUJER" ? "ANA" : "LUIS"} ${cat}${mod[0]}${i}`, f, "COSTARRICENSE", sexo, "10", institucion || "ESCUELA DE PRUEBA " + (i % 2), "01", "Prueba", cat, "Colegio", mod, "01 Mar"]);
+      filas.push([String(n), "CÉDULA:", "100000" + n, `PRUEBA ${sexo === "MUJER" ? "ANA" : "LUIS"} ${cat}${mod[0]}${i}`, f, "COSTARRICENSE", sexo, "10", typeof institucion === "function" ? institucion(i) : institucion || "ESCUELA DE PRUEBA " + (i % 2), "01", "Prueba", cat, "Colegio", mod, "01 Mar"]);
       n++;
     }
   };
   poner(3, "HOMBRE", "A", "Individual", "1/4/2017");
   poner(1, "MUJER", "A", "Individual", "7/17/2015");
-  poner(10, "HOMBRE", "B", "Individual", ["3/2/2018", ...Array(9).fill("11/19/2014")]);
+  // De a dos por escuela: el tope de dos por centro en individual (art.
+  // 66.1.f) se prueba aparte, en pruebaTopeIndividual.
+  poner(10, "HOMBRE", "B", "Individual", ["3/2/2018", ...Array(9).fill("11/19/2014")], (i) => "ESCUELA DE PRUEBA " + Math.floor(i / 2));
   poner(4, "HOMBRE", "B", "Equipo", ["1/4/2017", "2/4/2017", "3/4/2017", "1/4/2014"], "ESCUELA DEL EQUIPO");
   poner(2, "MUJER", "B", "Equipo", "1/4/2017", "ESCUELA DE MUJERES");
   // Una sola mujer de equipos en un centro que presenta equipo abierto: no
@@ -177,10 +215,15 @@ function excelJde() {
   // inscripción (se queda una sola), y el sexto también inscrito en
   // individual (dos modalidades: se avisa, art. 66.1.h).
   filas.push(["92", "CÉDULA:", "1000091", "PRUEBA SEPTIMO DEL EQUIPO", "7/7/2014", "COSTARRICENSE", "HOMBRE", "12", "ESCUELA DEL EQUIPO", "01", "Prueba", "B", "Colegio", "Equipo", "05 Aug"]);
+  // El sexto, también en individual B (la misma cédula): dos modalidades.
+  // El árbitro elige dónde queda (art. 66.1.h).
+  filas.push(["93", "CÉDULA:", "1000090", "PRUEBA SEXTO DEL EQUIPO", "6/6/2014", "COSTARRICENSE", "HOMBRE", "12", "ESCUELA DEL EQUIPO", "01", "Prueba", "B", "Colegio", "Individual", "05 Aug"]);
   return Buffer.from(TablaExcel.armar([{ nombre: "Sheet1", filas }]));
 }
 
-async function abrir(browser) {
+// Por omisión, el sexto (inscrito en equipos y en individual) queda en
+// equipos, como estaba antes de agregarle la fila de individual.
+async function abrir(browser, sinDecidir, excel) {
   const ctx = await browser.newContext({ serviceWorkers: "block", viewport: { width: 1280, height: 1000 } });
   const page = await ctx.newPage();
   const errores = [];
@@ -190,9 +233,10 @@ async function abrir(browser) {
   await page.goto(BASE + "/pareo.html", { waitUntil: "networkidle" });
   await page.click('[data-ficha="jugadores"]');
   await page.setInputFiles("#pi-subir-lista", {
-    name: "Ajedrez_Todos_Regional.xlsx", mimeType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", buffer: excelJde(),
+    name: "Ajedrez_Todos_Regional.xlsx", mimeType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", buffer: excel || excelJde(),
   });
   await page.waitForFunction(() => document.getElementById("pi-sugerencia").checkVisibility());
+  if (!sinDecidir && !excel) await page.click("#pi-dm-0-0");
   return { ctx, page, errores };
 }
 
@@ -200,6 +244,104 @@ const torneos = (page) => page.evaluate(() => {
   const lista = JSON.parse(localStorage.getItem("pareo_lista_v1") || "[]");
   return lista.map((x) => JSON.parse(localStorage.getItem("pareo_torneo_v1_" + x.id)));
 });
+
+// Una inscripción que dice el torneo aparte del sexo (columna «Torneo»):
+// una mujer que juega el abierto y un hombre anotado en el de mujeres.
+function excelConTorneo() {
+  const filas = [["Nombre", "Sexo", "Nombre de Centro Educativo", "Categoría", "Equipo/Ind", "Torneo"]];
+  for (let i = 0; i < 3; i++) filas.push(["PRUEBA MUJER " + i, "MUJER", "ESCUELA T", "B", "Equipo", "Mujeres"]);
+  filas.push(["PRUEBA HOMBRE EN MUJERES", "HOMBRE", "ESCUELA T", "B", "Equipo", "Mujeres"]);
+  for (let i = 0; i < 3; i++) filas.push(["PRUEBA HOMBRE " + i, "HOMBRE", "ESCUELA T", "B", "Equipo", "Abierto"]);
+  filas.push(["PRUEBA MUJER EN ABIERTO", "MUJER", "ESCUELA T", "B", "Equipo", "Abierto"]);
+  return Buffer.from(TablaExcel.armar([{ nombre: "Hoja1", filas }]));
+}
+
+// Tres mujeres del mismo centro en individual B (el tope es 2, art.
+// 66.1.f) y otra de otro centro; dos en el abierto.
+function excelConTope() {
+  const filas = [["Nombre", "Sexo", "Nombre de Centro Educativo", "Categoría", "Equipo/Ind"]];
+  for (let i = 0; i < 3; i++) filas.push(["PRUEBA TOPE " + i, "MUJER", "ESCUELA T", "B", "Individual"]);
+  filas.push(["PRUEBA OTRA", "MUJER", "ESCUELA U", "B", "Individual"]);
+  filas.push(["PRUEBA ABIERTO 0", "HOMBRE", "ESCUELA T", "B", "Individual"]);
+  filas.push(["PRUEBA ABIERTO 1", "HOMBRE", "ESCUELA U", "B", "Individual"]);
+  return Buffer.from(TablaExcel.armar([{ nombre: "Hoja1", filas }]));
+}
+
+async function pruebaTopeIndividual(browser) {
+  console.log("\n=== Individual: dos por centro (art. 66.1.f) y la configuración de los JDE ===");
+  let { ctx, page, errores } = await abrir(browser, true, excelConTope());
+  igual("el resumen del centro de más", (await page.textContent("#pi-individuales-de-mas summary")).trim(), "ESCUELA T, categoría B, Mujeres: 3 inscritos, 2 de 2 elegidos");
+  ok(/\(ahora: 1\)/.test(await page.textContent("#pi-individuales-de-mas")), "dice cuántas quedan descartadas");
+  await page.click("#pi-individuales-de-mas summary");
+  const cs = await page.$$eval("#pi-individuales-de-mas li", (l) => l.map((x) => [x.querySelector("input").checked, x.querySelector("input").disabled]));
+  igual("vienen marcadas las 2 primeras; con 2, la tercera no se puede marcar", cs, [[true, false], [true, false], [false, true]]);
+  // Cambiar: sale la primera, entra la tercera.
+  await page.click("#pi-ind-0-0");
+  await page.click("#pi-ind-0-2");
+  ok(await page.$eval("#pi-config-jde", (c) => c.checked), "la configuración de los JDE viene marcada");
+  await page.click("#pi-sugerencia-crear");
+  await page.waitForFunction(() => document.getElementById("pi-sugerencia").hidden);
+  let ts = await torneos(page);
+  const muj = ts.find((x) => /Mujeres$/.test(x.nombre));
+  igual("en el de mujeres quedan las elegidas y la de otro centro", muj.jugadores.map((j) => j.nombre).sort(), ["PRUEBA OTRA", "PRUEBA TOPE 1", "PRUEBA TOPE 2"]);
+  igual("con la configuración: todos contra todos, sus desempates, 1 · ½ · 0 y el bye en 1",
+    [muj.sistema, muj.desempates.join(","), JSON.stringify(muj.puntos), muj.ritmo], ["todos", "DE,SB,WIN,KS", JSON.stringify({ victoria: 1, tablas: 0.5, derrota: 0, bye: 1 }), "10 min + 2 s por jugada"]);
+  ok(!errores.length, "sin errores en la página", errores.join(" | "));
+  await ctx.close();
+
+  console.log("\n=== Sin la configuración, y el botón de la ficha Torneo ===");
+  ({ ctx, page, errores } = await abrir(browser, true, excelConTope()));
+  await page.click("#pi-config-jde");
+  await page.click("#pi-sugerencia-crear");
+  await page.waitForFunction(() => document.getElementById("pi-sugerencia").hidden);
+  ts = await torneos(page);
+  const abierto = ts.find((x) => /Abierto$/.test(x.nombre));
+  igual("sin marcar, copia los desempates y el ritmo del torneo abierto", [abierto.desempates.join(","), abierto.ritmo], ["BH-C1,BH,SB,DE,WIN", ""]);
+  await page.click('[data-ficha="torneo"]');
+  ok(!(await page.$eval("#pi-config-jde-aplicar", (b) => b.disabled)), "antes de la ronda 1, el botón se puede tocar");
+  await page.click("#pi-config-jde-aplicar");
+  const abiertoAhora = await page.evaluate(() => JSON.parse(localStorage.getItem("pareo_torneo_v1_" + localStorage.getItem("pareo_abierto_v1"))));
+  igual("el botón deja la configuración de los JDE en el torneo abierto", [abiertoAhora.sistema, abiertoAhora.desempates.join(","), abiertoAhora.ritmo],
+    [abiertoAhora.jugadores.length <= 8 ? "todos" : "suizo", abiertoAhora.jugadores.length <= 8 ? "DE,SB,WIN,KS" : "BH-C1,BH,SB,DE,WIN", "10 min + 2 s por jugada"]);
+  igual("y el formulario lo muestra", await page.$eval('#pi-form-torneo [name="ritmo"]', (i) => i.value), "10 min + 2 s por jugada");
+  ok(!errores.length, "sin errores en la página", errores.join(" | "));
+  await ctx.close();
+}
+
+async function pruebaTorneoEnArchivo(browser) {
+  console.log("\n=== El torneo dicho en el archivo: un hombre en el de mujeres ===");
+  const { ctx, page, errores } = await abrir(browser, true, excelConTorneo());
+  const tam = async () => Object.fromEntries(await page.$$eval("#pi-sugerencia fieldset li", (l) => l.map((x) => [x.querySelector("label").textContent.split(" — ")[0], Number((/— (\d+) jugador/.exec(x.textContent) || [])[1])])));
+  igual("cada uno va al torneo que dice el archivo (4 y 4)", await tam(), { "Abierto": 4, "Mujeres": 4 });
+  const avisos = await page.$$eval("#pi-hombres-lista li", (l) => l.map((x) => x.textContent)).catch(() => []);
+  igual("avisa del hombre en el de mujeres, con su centro y su torneo", avisos, ["Aviso: PRUEBA HOMBRE EN MUJERES (ESCUELA T) está anotado como hombre en Equipos · Categoría B · Mujeres."]);
+  ok(!/MUJER EN ABIERTO/.test(await page.textContent("#pi-sugerencia")), "la mujer que juega el abierto no se avisa (en el abierto juegan también mujeres)");
+  ok(!(await page.$("#pi-pase-abierto")), "con 4 en el de mujeres, nadie pasa al abierto");
+  ok(!errores.length, "sin errores en la página", errores.join(" | "));
+  await ctx.close();
+}
+
+async function pruebaDosModalidades(browser) {
+  console.log("\n=== Dos modalidades: el árbitro elige dónde queda (art. 66.1.h) ===");
+  const { ctx, page, errores } = await abrir(browser, true);
+  const enIndividualB = async () => Number((/— (\d+) jugador/.exec(await page.$eval("#pi-sugerencia fieldset li:has-text('Individual · Categoría B · Abierto')", (x) => x.textContent)) || [])[1]);
+  ok(/PRUEBA SEXTO DEL EQUIPO \(ESCUELA DEL EQUIPO\): Equipos B y Individual B/.test(await page.textContent("#pi-dos-modalidades legend")), "dice quién y en qué dos modalidades");
+  ok(await page.$eval("#pi-dm-0-x", (r) => r.checked), "viene en «Todavía no decido»");
+  ok(/\(ahora: 1 sin decidir\)/.test(await page.textContent("#pi-repetidos")), "cuenta los que faltan por decidir");
+  igual("sin decidir, cuenta en individual B (10 + él)", await enIndividualB(), 11);
+  await page.click("#pi-dm-0-1");
+  igual("queda en individual: sigue ahí", await enIndividualB(), 11);
+  ok(!/SEXTO DEL EQUIPO/.test(await page.textContent("#pi-equipos-de-mas")), "y ya no está en el equipo");
+  await page.click("#pi-dm-0-0");
+  igual("queda en equipos: sale de individual B", await enIndividualB(), 10);
+  ok(/SEXTO DEL EQUIPO/.test(await page.textContent("#pi-equipos-de-mas")), "y vuelve al equipo");
+  ok(/\(ahora: 0 sin decidir\)/.test(await page.textContent("#pi-repetidos")), "ya no falta nadie por decidir");
+  ok(await page.$eval("#pi-dm-0-0", (r) => document.activeElement === r), "el foco se queda en la opción elegida");
+  await page.click("#pi-dm-0-x");
+  igual("«Todavía no decido»: vuelve a las dos", await enIndividualB(), 11);
+  ok(!errores.length, "sin errores en la página", errores.join(" | "));
+  await ctx.close();
+}
 
 async function pruebaPagina(browser) {
   console.log("\n=== La sugerencia sale y no agrega a nadie ===");
@@ -266,6 +408,18 @@ async function pruebaPagina(browser) {
   await page.click("#pi-eq-0-6");
   cs = await casillas();
   igual("queda el séptimo en lugar del primero", cs.map((c) => c[1]), [false, true, true, true, true, false, true]);
+
+  console.log("\n=== Equipos con menos de 3 ===");
+  const cortos = async () => page.$$eval("#pi-cortos-lista li", (l) => l.map((x) => x.textContent)).catch(() => []);
+  let cl = await cortos();
+  ok(cl.length === 1 && /^Aviso: ESCUELA DE MUJERES, categoría B, Mujeres: solo 2 \(PRUEBA ANA BE0, PRUEBA ANA BE1\)\.$/.test(cl[0]), "el equipo de 2 mujeres se avisa, con quiénes son", cl.join(" | "));
+  // Dejar el abierto del equipo en 2: salta el aviso; volver a 5: se va.
+  for (const i of [1, 2, 3]) await page.click("#pi-eq-0-" + i);
+  cl = await cortos();
+  ok(cl.some((x) => /ESCUELA DEL EQUIPO, categoría B, Abierto: solo 2/.test(x)), "al dejar el equipo abierto en 2 con las casillas, también avisa", cl.join(" | "));
+  for (const i of [1, 2, 3]) await page.click("#pi-eq-0-" + i);
+  cl = await cortos();
+  ok(!cl.some((x) => /ESCUELA DEL EQUIPO/.test(x)), "al volver a 5, ese aviso se va");
 
   igual("el botón cuenta los marcados", await page.textContent("#pi-sugerencia-crear"), "Crear los 4 torneos marcados");
 
@@ -348,8 +502,11 @@ async function pruebaPagina(browser) {
   pruebaCategorias();
   pruebaPase();
   pruebaRepetidos();
+  pruebaCortos();
+  pruebaHombresEnMujeres();
+  pruebaTopesYConfig();
   const browser = await chromium.launch({ executablePath: fs.existsSync(CHROME) ? CHROME : undefined });
-  try { await pruebaPagina(browser); }
+  try { await pruebaPagina(browser); await pruebaDosModalidades(browser); await pruebaTorneoEnArchivo(browser); await pruebaTopeIndividual(browser); }
   catch (e) { mal("la prueba de la página se cayó", e.stack); }
   finally { await browser.close(); }
   console.log(fallos ? `\n${fallos} fallo(s).` : "\nTodo bien.");
