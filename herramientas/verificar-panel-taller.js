@@ -16,10 +16,13 @@
  *    o sale en las sesiones de otro día.
  *  - Cualquiera enciende el panel de taller desde la consola: solo la función
  *    lo cambia, y solo para quien administra o supervisa esa academia.
+ *  - La grabación de una sesión no sale, sale para quien no es de esa clase
+ *    (el id del video no listado es la llave), carga YouTube aunque nadie la
+ *    pida, o sigue sonando escondida después de cerrarla.
  *
  * Lo de la base se mira leyendo supabase/ (sin red ni base); se comprobó además
- * impersonando roles en SQL (ver «El panel de taller» en
- * docs/decisiones/paneles.md). En el navegador se abre clases.html con el doble.
+ * impersonando roles en SQL (ver «El panel de taller» y «Las grabaciones de
+ * las sesiones» en docs/decisiones/paneles.md). En el navegador se abre clases.html con el doble.
  * La casilla de academias.html la prueba verificar-academias.js.
  *
  *   python3 -m http.server 8777     (desde la raíz del sitio)
@@ -62,6 +65,32 @@ function pruebaBase() {
     /academia_panel_taller[\s\S]{0,600}if\s+not\s+coalesce\(\s*public\.soy_admin\(\)\s+or\s+public\.supervisa_academia\(p_id\)\s*,\s*false\s*\)/i.test(sql));
   cierto("y se le quita el execute a public y anon",
     /revoke\s+execute\s+on\s+function\s+public\.academia_panel_taller\(uuid,\s*boolean\)\s+from\s+public,\s*anon/i.test(sql));
+
+  console.log("\n=== Las grabaciones (supabase/migraciones) ===");
+  cierto("grabaciones_clase es de una ocurrencia (horario + fecha), con el id del video validado",
+    /create\s+table\s+public\.grabaciones_clase[\s\S]{0,400}youtube_id\s+text\s+not\s+null\s+check\s+\(youtube_id\s+~\s+'\^\[A-Za-z0-9_-\]\{11\}\$'\)[\s\S]{0,300}primary\s+key\s+\(horario_id,\s*fecha\)/i.test(sql));
+  cierto("la tabla no tiene política de escritura: la escribe la función",
+    !/create\s+policy\s+\w+\s+on\s+public\.grabaciones_clase\s+for\s+(insert|update|delete|all)/i.test(sql));
+  cierto("mis_grabaciones() le da al alumno solo las de sus clases, con auth.uid() envuelto",
+    /function\s+public\.mis_grabaciones\(\)[\s\S]{0,900}interno\.horarios_del_alumno\(\(select\s+auth\.uid\(\)\)\)/i.test(sql));
+  cierto("la regla de «a quién le toca esta clase» está una sola vez: mis_clases_proximas() y mi_proxima_clase() también la usan",
+    ["mis_clases_proximas", "mi_proxima_clase"].every((f) => {
+      const ultima = sql.lastIndexOf("function public." + f + "(");
+      return ultima > 0 && /interno\.horarios_del_alumno\(/.test(sql.slice(ultima, ultima + 1500));
+    }));
+  cierto("grabacion_clase_poner() exige ser el profe de esa clase o administrar, con coalesce",
+    /grabacion_clase_poner[\s\S]{0,700}if\s+not\s+coalesce\(\s*public\.soy_admin\(\)\s+or\s+\(v_profesor\s+is\s+not\s+null\s+and\s+v_profesor\s+=\s+\(select\s+auth\.uid\(\)\)\)\s*,\s*false\s*\)/i.test(sql));
+  cierto("a las dos se les quita el execute a public y anon",
+    /revoke\s+execute\s+on\s+function\s+public\.mis_grabaciones\(\)\s+from\s+public,\s*anon/i.test(sql)
+    && /revoke\s+execute\s+on\s+function\s+public\.grabacion_clase_poner\(uuid,\s*date,\s*text,\s*text,\s*integer\)\s+from\s+public,\s*anon/i.test(sql));
+  cierto("la grabación lleva su tema y su duración, y mis_grabaciones() los devuelve",
+    /add\s+column\s+tema\s+text[\s\S]{0,200}add\s+column\s+duracion_seg\s+integer/i.test(sql)
+    && /function\s+public\.mis_grabaciones\(\)\s+returns\s+table\([^)]*tema\s+text,\s*duracion_seg\s+integer\)/i.test(sql));
+  cierto("las dos funciones viejas quedaron apartadas y sin permiso para nadie",
+    /revoke\s+execute\s+on\s+function\s+public\.mis_grabaciones_apartada\(\)\s+from\s+public,\s*anon,\s*authenticated/i.test(sql)
+    && /revoke\s+execute\s+on\s+function\s+public\.grabacion_clase_poner_apartada\(uuid,\s*date,\s*text\)\s+from\s+public,\s*anon,\s*authenticated/i.test(sql));
+  cierto("y interno.horarios_del_alumno() no se le abre a nadie",
+    /revoke\s+execute\s+on\s+function\s+interno\.horarios_del_alumno\(uuid\)\s+from\s+public,\s*anon,\s*authenticated/i.test(sql));
 
   console.log("\n=== Las páginas ===");
   const html = fs.readFileSync(path.join(RAIZ, "clases.html"), "utf8");
@@ -164,8 +193,8 @@ function sesiones() {
 }
 
 const YO = "u-asesor";
-function cfg({ taller = true, tareas = [], fallan = [], abierta = false, videollamada = null } = {}) {
-  return {
+function cfg({ taller = true, tareas = [], fallan = [], abierta = false, videollamada = null, grabaciones } = {}) {
+  const c = {
     yo: YO,
     tablas: { profiles: [{ id: YO, full_name: "Asesora de prueba · Cartago", role: "alumno", is_admin: false, grupo: "MEP" }] },
     rpc: {
@@ -178,6 +207,40 @@ function cfg({ taller = true, tareas = [], fallan = [], abierta = false, videoll
     },
     fallan,
   };
+  if (grabaciones) c.rpc.mis_grabaciones = grabaciones;
+  return c;
+}
+
+/* El contraste WCAG del texto contra el primer fondo opaco hacia arriba. Se
+   corre dentro de la página. */
+function contrasteEnPagina(sel) {
+  const el = document.querySelector(sel);
+  if (!el) return null;
+  const rgb = (c) => (c.match(/[\d.]+/g) || []).map(Number);
+  const lum = ([r, g, b]) => {
+    const f = (v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); };
+    return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b);
+  };
+  let fondo = null;
+  for (let n = el; n; n = n.parentElement) {
+    const c = rgb(getComputedStyle(n).backgroundColor);
+    if (c.length >= 3 && (c.length === 3 || c[3] === 1)) { fondo = c; break; }
+  }
+  if (!fondo) fondo = [255, 255, 255];
+  const [a, b] = [lum(rgb(getComputedStyle(el).color)), lum(fondo)].sort((x, y) => y - x);
+  return Math.round(((a + 0.05) / (b + 0.05)) * 100) / 100;
+}
+
+/* La grabación de la sesión que ya pasó (una fila de mis_grabaciones()) y una
+   con un id que no es de YouTube, que no se pinta. */
+const VIDEO = "3FzX3ksWwro";
+function grabaciones() {
+  const ayer = diaCR(-DIA);
+  return [
+    { horario_id: "h0", fecha: ayer, titulo: "<i>Sesión</i> II", modalidad: "en_linea", youtube_id: VIDEO, inicio: enCR(ayer, "08:00"), fin: enCR(ayer, "12:00"),
+      tema: "Encuadre y reglas básicas", duracion_seg: 11520 },
+    { horario_id: "hx", fecha: ayer, titulo: "Con un id roto", modalidad: "en_linea", youtube_id: "javascript:x", inicio: enCR(ayer, "08:00"), fin: enCR(ayer, "12:00") },
+  ];
 }
 
 async function pruebaTaller(browser) {
@@ -256,12 +319,127 @@ async function pruebaTaller(browser) {
   await conTarea.cerrar();
 }
 
+async function pruebaGrabaciones(browser) {
+  console.log("\n=== Las grabaciones de las sesiones ===");
+  const { page, errores, cerrar } = await abrirConYoutube(browser, cfg({ grabaciones: grabaciones() }));
+  igual("se piden una vez", (await llamadas(page, "mis_grabaciones")).length, 1);
+  igual("la sección se ve, con su título", await page.evaluate(() => {
+    const s = document.querySelector('#calendario-taller section[aria-labelledby="grabaciones-taller-titulo"]');
+    return s && s.checkVisibility() ? document.getElementById("grabaciones-taller-titulo").textContent.replace(/^\S+\s/, "") : "no se ve";
+  }), "Grabaciones de las sesiones");
+  igual("sale la buena y no la del id roto", await page.$$eval("[data-grabacion]", (bs) => bs.map((b) => b.dataset.grabacion)), [VIDEO]);
+  const tarjeta = await page.$eval("[data-grabacion]", (b) => ({
+    titulo: b.querySelector(".font-semibold").textContent, comoHtml: !!b.querySelector("i"),
+    texto: b.innerText.replace(/\s+/g, " ").trim(), nombre: b.textContent.replace(/\s+/g, " ").trim(),
+    numero: (b.querySelector('[aria-hidden="true"].font-serif') || {}).textContent, reloj: [...b.querySelectorAll('[aria-hidden="true"]')].map((e) => e.textContent).find((t) => /^\d+:\d\d/.test(t)),
+    abre: b.getAttribute("aria-haspopup") }));
+  igual("el título que escribió el profe va como texto", [tarjeta.titulo, tarjeta.comoHtml], ["<i>Sesión</i> II", false]);
+  cierto("la tarjeta dice el tema, el día y la duración escrita", /Encuadre y reglas básicas .*\d{1,2} de [a-z]+ · 3 h 12 min$/.test(tarjeta.texto), tarjeta.texto);
+  igual("y el lector de pantalla oye qué hace (sin el número ni el reloj de la miniatura)",
+    await page.getByRole("button", { name: /^Ver la grabación: <i>Sesión<\/i> II Encuadre y reglas básicas .* · 3 h 12 min$/ }).count(), 1);
+  igual("la miniatura lleva el número de la sesión y la duración como en YouTube", [tarjeta.numero, tarjeta.reloj], ["II", "3:12:00"]);
+  igual("y avisa que abre una ventana", tarjeta.abre, "dialog");
+  const proxima = await page.$eval("[data-grabacion-proxima]", (t) => [t.tabIndex, t.getAttribute("aria-disabled"), !t.getAttribute("href"), /Su grabación sale después de la clase/.test(t.innerText)]).catch(() => "no está");
+  igual("la próxima sesión va en gris: apagada, sin enlace, alcanzable con Tab y lo dice", proxima, [0, "true", true, true]);
+  igual("las sesiones que vienen siguen arriba, completas", await page.$$eval('#calendario-taller ol[aria-label="Sesiones que vienen"] > li', (ls) => ls.length), 4);
+  igual("cerrada: no hay reproductor ni ventana abierta", await page.evaluate(() => [document.querySelectorAll("iframe").length, !!document.querySelector("#grabacion-cine[open]")]), [0, false]);
+  igual("y YouTube no se carga hasta que alguien la pide", page.__youtube.length, 0);
+
+  await page.click("[data-grabacion]");
+  await page.waitForTimeout(300);
+  const cine = await page.evaluate(() => {
+    const d = document.getElementById("grabacion-cine"), v = d && d.querySelector("iframe"), a = d && d.querySelector("#grabacion-cine-youtube");
+    return { abierta: !!d && d.open && d.checkVisibility(), modal: !!d && d.matches(":modal"), titulo: d && document.getElementById("grabacion-cine-titulo").textContent,
+      nombrada: d && d.getAttribute("aria-labelledby"), src: v && v.src, vtitulo: v && v.title, completa: v && v.allowFullscreen,
+      seVe: !!v && v.checkVisibility() && v.getBoundingClientRect().height > 250, afuera: a && [a.href, a.target, a.rel],
+      foco: document.activeElement && document.activeElement.id };
+  });
+  igual("al tocarla se abre en grande, como ventana sobre la página", [cine.abierta, cine.modal, cine.nombrada], [true, true, "grabacion-cine-titulo"]);
+  igual("con la sesión y su tema de título", cine.titulo, "<i>Sesión</i> II · Encuadre y reglas básicas");
+  igual("el reproductor es el de youtube-nocookie (el que deja la CSP) y arranca solo", cine.src, "https://www.youtube-nocookie.com/embed/" + VIDEO + "?rel=0&autoplay=1");
+  igual("con título para el lector de pantalla y pantalla completa", [cine.vtitulo, cine.completa], ["Grabación de la <i>Sesión</i> II", true]);
+  igual("y se ve de verdad, grande", cine.seVe, true);
+  igual("«Abrir en YouTube» va aparte, en otra pestaña", cine.afuera, ["https://youtu.be/" + VIDEO, "_blank", "noopener noreferrer"]);
+  igual("el foco queda en «Cerrar»", cine.foco, "grabacion-cine-cerrar");
+  igual("ahora sí se pidió el video", page.__youtube.length, 1);
+  await page.click("#grabacion-cine-cerrar");
+  await page.waitForTimeout(200);
+  igual("«Cerrar» la cierra, quita el reproductor y devuelve el foco a la tarjeta", await page.evaluate(() =>
+    [document.getElementById("grabacion-cine").open, document.querySelectorAll("iframe").length, !!document.activeElement && document.activeElement.hasAttribute("data-grabacion")]), [false, 0, true]);
+  await page.click("[data-grabacion]");
+  await page.waitForTimeout(200);
+  await page.keyboard.press("Escape");
+  await page.waitForTimeout(200);
+  igual("con Esc también, y no sigue sonando escondida", await page.evaluate(() => [document.getElementById("grabacion-cine").open, document.querySelectorAll("iframe").length]), [false, 0]);
+
+  const medir = async () => [await page.evaluate(contrasteEnPagina, "[data-grabacion] .font-semibold"),
+    await page.evaluate(contrasteEnPagina, "[data-grabacion] .text-sm"),
+    await page.evaluate(contrasteEnPagina, "[data-grabacion] span.mt-1"),
+    await page.evaluate(contrasteEnPagina, "[data-grabacion-proxima] .text-sm")];
+  const claro = await medir();
+  cierto(`contraste del texto de las tarjetas ≥ 4,5 (${claro.join(", ")})`, claro.every((c) => c >= 4.5));
+  // La tarjeta anima el color al cambiar de tema: se mide cuando terminó.
+  await page.evaluate(() => document.documentElement.classList.add("dark"));
+  await page.waitForTimeout(600);
+  const oscuro = await medir();
+  cierto(`en modo oscuro también (${oscuro.join(", ")})`, oscuro.every((c) => c >= 4.5));
+  await page.evaluate(() => document.documentElement.classList.remove("dark"));
+  await page.click("[data-grabacion]");
+  await page.waitForTimeout(200);
+  const cineC = [await page.evaluate(contrasteEnPagina, "#grabacion-cine-titulo"), await page.evaluate(contrasteEnPagina, "#grabacion-cine-youtube")];
+  cierto(`contraste del modo cine ≥ 4,5 (${cineC.join(", ")})`, cineC.every((c) => c >= 4.5));
+  await page.keyboard.press("Escape");
+
+  await page.setViewportSize({ width: 390, height: 900 });
+  await page.waitForTimeout(200);
+  igual("en el celular las tarjetas van una debajo de otra y la página no se desborda", await page.evaluate(() => {
+    const ts = [...document.querySelectorAll("[data-grabacion], [data-grabacion-proxima]")].map((t) => t.getBoundingClientRect());
+    return [ts.length === 2 && ts[1].top >= ts[0].bottom, document.documentElement.scrollWidth > window.innerWidth];
+  }), [true, false]);
+  await page.click("[data-grabacion]");
+  await page.waitForTimeout(300);
+  igual("y el modo cine cabe en la pantalla", await page.evaluate(() => {
+    const v = document.querySelector("#grabacion-cine iframe").getBoundingClientRect();
+    return [v.left >= 0 && v.right <= window.innerWidth, document.documentElement.scrollWidth > window.innerWidth];
+  }), [true, false]);
+  cierto("sin errores en la página", errores.length === 0, errores.join(" | "));
+  await cerrar();
+
+  console.log("\n=== Si la base no da las grabaciones ===");
+  const sinGrab = await abrir(browser, cfg({ grabaciones: grabaciones(), fallan: ["mis_grabaciones"] }));
+  igual("el calendario sale igual, sin la sección", [await vis(sinGrab.page, "#calendario-taller"),
+    await sinGrab.page.$$eval('#calendario-taller ol[aria-label="Sesiones que vienen"] > li', (ls) => ls.length),
+    await sinGrab.page.$$eval("[data-grabacion]", (bs) => bs.length)], [true, 4, 0]);
+  cierto("sin errores en la página", sinGrab.errores.length === 0, sinGrab.errores.join(" | "));
+  await sinGrab.cerrar();
+}
+
+/* Igual que abrir(), pero contesta lo de YouTube (el CI no sale a internet) y
+   anota cada pedido, para saber si se cargó sin que nadie lo pidiera. */
+async function abrirConYoutube(browser, c) {
+  const ctx = await browser.newContext({ serviceWorkers: "block", viewport: { width: 1200, height: 900 } });
+  const page = await ctx.newPage();
+  page.__youtube = [];
+  const errores = [];
+  page.on("pageerror", (e) => errores.push(String(e)));
+  await page.route("**/cdn.jsdelivr.net/**", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: "" }));
+  await page.route("**/fonts.googleapis.com/**", (r) => r.fulfill({ status: 200, contentType: "text/css", body: "" }));
+  await page.route("**/fonts.gstatic.com/**", (r) => r.abort());
+  await page.route(/youtube/, (r) => { page.__youtube.push(r.request().url()); return r.fulfill({ status: 200, contentType: "text/html; charset=utf-8", body: "<body>video</body>" }); });
+  await page.route("**/js/supabase-client.js", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: clienteFalso(c) }));
+  await page.goto(BASE + "/clases.html", { waitUntil: "networkidle" });
+  await page.waitForFunction(() => window.__rpc.some((r) => r.n === "mi_panel_taller"), null, { timeout: 15000 }).catch(() => {});
+  await page.waitForTimeout(800);
+  return { page, errores, cerrar: () => ctx.close() };
+}
+
 async function pruebaSinTaller(browser) {
   console.log("\n=== Un alumno de una academia sin panel de taller ===");
   const { page, errores, cerrar } = await abrir(browser, cfg({ taller: false }));
   igual("ve «Hoy te toca»", await vis(page, "#progreso-alumno"), true);
   igual("no ve el calendario", await vis(page, "#calendario-taller"), false);
   igual("ni se le piden las sesiones de 90 días", (await llamadas(page, "mis_clases_proximas")).filter((a) => a && a.p_dias === 90).length, 0);
+  igual("ni las grabaciones", (await llamadas(page, "mis_grabaciones")).length, 0);
   cierto("sin errores en la página", errores.length === 0, errores.join(" | "));
   await cerrar();
 
@@ -298,8 +476,12 @@ async function pruebaTarjeta(browser) {
     caja.insertAdjacentHTML("beforeend", '<p id="dicho">Listo</p>');
     CalendarioTaller.ponerEntrada(caja, abierta);
     const despues = [[...caja.querySelectorAll("[data-entrar]")].map((e) => e.dataset.entrar), !!caja.querySelector("#dicho")];
+    const sinGrab = !caja.querySelector("[data-grabacion]");
+    const g = (titulo, youtube_id) => ({ titulo, youtube_id, inicio: "2026-10-05T14:00:00Z", fin: "2026-10-05T18:00:00Z" });
+    CalendarioTaller.pintar(caja, [], { ahora, grabaciones: [g("Sesión 0", "3FzX3ksWwro"), g("Rota", "https://evil.example/x"), g("Sin id", null)] });
+    const soloGrab = [[...caja.querySelectorAll("[data-grabacion]")].map((b) => b.dataset.grabacion), /No te quedan sesiones/.test(caja.innerText)];
     const vacia = CalendarioTaller.pintar(caja, [], { ahora });
-    return { hoy, etiquetas, titulo, sinBoton, manana, etiquetaManana, presencial, otroDia, mientras, despues, vacia, textoVacio: caja.innerText.trim(), filasVacia: caja.querySelectorAll("li").length };
+    return { sinGrab, soloGrab, hoy, etiquetas, titulo, sinBoton, manana, etiquetaManana, presencial, otroDia, mientras, despues, vacia, textoVacio: caja.innerText.trim(), filasVacia: caja.querySelectorAll("li").length };
   });
   igual("la sesión de hoy dice «Hoy» y la siguiente no lleva etiqueta", r.etiquetas, ["Hoy", ""]);
   igual("el título que escribió el profe va como texto, no como HTML", r.titulo, "<b>Sesión I</b>");
@@ -310,6 +492,8 @@ async function pruebaTarjeta(browser) {
   cierto("mientras no se sabe si hay clase, lo dice", /Viendo si hay clase/.test(r.mientras), r.mientras);
   igual("cuando la clase se abre se destapan los botones sin repintar la tarjeta", r.despues, [["sesion", "videollamada"], true]);
   igual("sin sesiones lo dice y no pinta renglones", [r.vacia, r.filasVacia, /No te quedan sesiones/.test(r.textoVacio)], [0, 0, true]);
+  igual("sin grabaciones no hay sección de grabaciones", r.sinGrab, true);
+  igual("sin sesiones por delante, las grabaciones salen igual (y solo las de un id de YouTube)", r.soloGrab, [["3FzX3ksWwro"], true]);
   await cerrar();
 }
 
@@ -318,6 +502,7 @@ async function pruebaTarjeta(browser) {
   const browser = await chromium.launch({ executablePath: fs.existsSync(CHROME) ? CHROME : undefined });
   try {
     await pruebaTaller(browser);
+    await pruebaGrabaciones(browser);
     await pruebaSinTaller(browser);
     await pruebaTarjeta(browser);
   } catch (e) {

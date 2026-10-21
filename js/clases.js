@@ -1090,14 +1090,17 @@
         async function pintarPanelTaller(tallerP) {
             if (!(await tallerP)) return;
             document.getElementById("progreso-alumno").hidden = true;
-            let sesiones = [];
-            try {
-                const { data, error } = await sb.rpc("mis_clases_proximas", { p_dias: 90 });
-                if (!error && Array.isArray(data)) sesiones = data;
-            } catch (e) { /* sin sesiones, la tarjeta lo dice */ }
+            // Las grabaciones van aparte: si esa consulta falla, el calendario sale igual.
+            const [proximas, grabadas] = await Promise.all([
+                sb.rpc("mis_clases_proximas", { p_dias: 90 }).then((r) => r, () => ({})),
+                sb.rpc("mis_grabaciones").then((r) => r, () => ({})),
+            ]);
+            const sesiones = !proximas.error && Array.isArray(proximas.data) ? proximas.data : [];
+            const grabaciones = !grabadas.error && Array.isArray(grabadas.data) ? grabadas.data : [];
             const quedan = CalendarioTaller.pintar(document.getElementById("calendario-taller"), sesiones, {
                 alBajar: (boton, estado) => bajarCalendario(boton, estado, 90),
                 entrada: entradaTaller(),
+                grabaciones,
             });
             if (!panelAdaptado && quedan) {
                 const s = sesiones.find((x) => new Date(x.fin) > new Date());

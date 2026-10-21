@@ -4175,6 +4175,112 @@ panel) **y `verificar-academias.js`** (la casilla).
 
 Se rompieron a propósito seis cosas y saltaron todas.
 
+### Las grabaciones de las sesiones
+
+Las sesiones del taller quedaron grabadas en Teams (la I dura 3 h 12 min, la
+II 4 h 02 min) y el dueño preguntó cómo aprovecharlas. Cuatro horas en un
+archivo de 9 GB en Drive no las ve nadie: se suben a YouTube como **«No
+listado»** y se ven **dentro del calendario del panel de taller**, debajo de
+las sesiones que vienen, en «🎞️ Grabaciones de las sesiones». YouTube baja la
+calidad sola con una conexión lenta, deja verla más rápido y le pone
+subtítulos automáticos en español; la CSP ya dejaba su reproductor
+(`frame-src https://www.youtube-nocookie.com`, el mismo de la TV), y la página
+de privacidad ya decía que los videos incrustados de YouTube usan su modo de
+privacidad mejorada.
+
+**Cómo se ven: una galería y el «modo cine».** El dueño eligió entre tres
+maquetas (una pantalla de cine por sesión, una lista con miniatura y una
+galería) la galería, con el tema y la duración:
+
+- Una tarjeta por sesión (`pintarGrabaciones()` de `js/calendario-taller.js`),
+  tres por fila en la computadora y una debajo de otra en el celular. La
+  miniatura **no es una imagen de YouTube** (la CSP no deja `i.ytimg.com` y no
+  hace falta): es el azul del tema de la plataforma (`--c-brand-900` a
+  `--c-brand-700`, así sigue al tema que elija cada uno) con un tablero tenue,
+  el número de la sesión sacado del final del título («Sesión II» → «II»), el
+  botón de reproducir y la duración como en YouTube («3:11:48»). Debajo, la
+  sesión, el tema y «Lunes 12 de octubre · 3 h 12 min».
+- La tarjeta entera es el botón (`aria-haspopup="dialog"`), y su nombre para
+  el lector de pantalla empieza con «Ver la grabación:»; el número y el reloj
+  de la miniatura van con `aria-hidden`, porque el texto ya los dice.
+- **La próxima sesión va en gris**, apagada («Su grabación sale después de la
+  clase»): sin acción, pero alcanzable con Tab.
+- Al tocar una, se abre en grande sobre la página, en un `<dialog>` modal (el
+  mismo patrón de la vista previa de archivos): el título con la sesión y su
+  tema, el reproductor (que arranca solo: la persona acaba de pedirlo), «✕
+  Cerrar» con el foco y «Abrir en YouTube» aparte, en otra pestaña. **El
+  reproductor no existe hasta ese momento** —YouTube no se carga en el panel
+  de quien no pidió nada— y al cerrar (con el botón, con Esc o tocando
+  afuera) se quita, para que no siga sonando escondido, y el foco vuelve a la
+  tarjeta.
+
+**La base:**
+
+- **Una grabación es de una ocurrencia, no de la fila del horario**:
+  `grabaciones_clase (horario_id, fecha)` con el id del video (11 caracteres,
+  con su `check`), migración `20261021044459`, y el tema y la duración en
+  segundos (opcionales), migración `20261021051602`. En el taller cada sesión
+  ya es su fila (`desde` = `hasta`), pero una fila semanal es muchas clases y
+  cada una tendría su video. El tema va con la grabación y no con el título del
+  horario, que es lo que dice el calendario; la duración se anota al ponerla,
+  porque desde la página no se le puede preguntar a YouTube.
+- **El id es la llave**: un video no listado lo ve cualquiera que tenga el id.
+  Por eso el alumno no lee la tabla (su política de lectura es solo para el
+  profe de esa clase y quien administra) y le llegan las suyas por
+  `mis_grabaciones()`, que contesta solo sobre quien pregunta, con la regla de
+  «Tu próxima clase»: sus profes, y su subgrupo o su grupo.
+- **Esa regla ya no está copiada.** Vivía igual en `mis_clases_proximas()` y
+  `mi_proxima_clase()`; la nueva habría sido la tercera copia. Ahora es
+  `interno.horarios_del_alumno(alumno)` y las tres la usan. Antes de
+  aplicarla se comparó, persona por persona, lo que devolvían las dos viejas
+  con lo que devuelven las nuevas: 102 personas con horario, 0 distintas.
+- **La pone `grabacion_clase_poner(horario, fecha, enlace, tema, segundos)`**,
+  solo el profe de esa clase o quien administra (con `coalesce`); la tabla no
+  tiene política de escritura. Acepta el enlace tal como lo da YouTube
+  (`youtu.be/…`, `watch?v=…`, `/live/…`, `/embed/…`, `/shorts/…`) o el id solo,
+  y rechaza otro sitio, un id de otro largo, un día en que ese horario no tiene
+  clase, un tema de más de 120 caracteres y una duración fuera de 1 a 86 400
+  segundos. El tema y la duración quedan como llegan (vacíos, se quitan); el
+  enlace vacío quita la grabación. Por ahora no tiene pantalla: las de las
+  sesiones I y II se pusieron con la función, en SQL y como administración.
+- **Dos funciones apartadas.** La segunda migración cambia la forma de
+  `mis_grabaciones()` y `grabacion_clase_poner()`, y en Postgres eso pide
+  borrarlas. Borrar pide una confirmación del dueño que desde la sesión que lo
+  hizo no le llegaba (tres veces pasó el minuto), así que se apartaron con
+  otro nombre (`mis_grabaciones_apartada()`, `grabacion_clase_poner_apartada()`)
+  y sin permiso para nadie, y las nuevas tomaron su lugar. No las llama nadie:
+  cualquier migración posterior puede borrarlas.
+
+Comprobado impersonando roles en SQL, en bloques revertidos:
+
+- `anon` no puede poner ni leer (42501), y la asesora no puede ponerla;
+- el profe de la clase la pone con los tres tipos de enlace, no a mano en la
+  tabla, y no con otro sitio, un id largo o un día sin clase (22023);
+- con tema y duración: rechaza el tema largo y la duración negativa (22023),
+  y la asesora ve las dos sesiones con su tema y su duración;
+- la asesora las ve por `mis_grabaciones()` y no en la tabla, y un alumno de
+  otra academia no las ve;
+- quien administra la cambia y, mandándola vacía, la quita.
+
+`verificar-panel-taller.js` lo prueba con el doble (YouTube se contesta en
+la prueba y se anota cada pedido): la sección, la tarjeta (título del profe
+como texto, tema, día y duración escrita, el nombre para el lector de
+pantalla, el número y el reloj de la miniatura), el id roto que no sale, la
+próxima en gris, que YouTube no se pida hasta el clic, el modo cine (modal,
+con su título, el reproductor que arranca, el enlace aparte y el foco), que
+«Cerrar» y Esc lo quiten y devuelvan el foco, el contraste en claro y en
+oscuro (medido cuando termina la animación del cambio de tema: a la mitad da
+1,1:1), el celular, la base que falla y el alumno sin taller, a quien ni se
+le piden. Contraste medido contra el fondo real: el título 13,25:1, el tema
+10,41:1 y la fecha 7,82:1 en claro (18,33, 11,18 y 8,52 en oscuro), y 18,33:1
+el modo cine. Se rompieron a propósito siete cosas y saltaron todas.
+
+**Para poner la de otra sesión** (mientras no haya pantalla), en SQL y como
+administración: `select public.grabacion_clase_poner('<id de la fila del
+horario>', '<fecha>', '<enlace de YouTube>', '<tema>', <segundos>);`. La
+duración exacta la da `ffprobe` sobre el archivo. El video tiene que estar «No
+listado» (uno privado no se ve incrustado) y con «Permitir inserción».
+
 ## `verificar-panel.js` no puede colgar la tanda del CI
 
 Es el verificador más largo de la tanda 2/4 (unos 200 s), y en el CI se quedó
