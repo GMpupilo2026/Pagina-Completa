@@ -2294,6 +2294,21 @@ se juega aparte, y armar cada torneo a mano era copiar y pegar filas.
   - Equipos de 3 a 5 por centro educativo, con el orden de tableros del
     congresillo: es un torneo por equipos que Pareo Integral no empareja
     (ver abajo).
+  - **Una o dos mujeres de equipos pasan al abierto de su centro**
+    (`pasarMujeresAlAbierto()`, pedido por el dueño del sitio «por ahora»).
+    Un equipo es de 3 a 5 (art. 66.1.g): si en equipos un centro inscribió
+    solo una o dos mujeres en una categoría, no tienen equipo de mujeres; si
+    ese centro presenta equipo abierto en esa categoría, pasan a ese torneo
+    para que puedan jugar. El centro se reconoce por el texto del centro
+    educativo, sin tildes ni mayúsculas de diferencia. Viene con una casilla
+    marcada que lo deshace, y cada caso dice el centro, la categoría, a
+    quiénes pasa y con cuántos queda el abierto. Las que no tienen abierto
+    de su centro se avisan aparte y quedan en el de mujeres. Siguen
+    anotadas como mujeres (`sexo` "w", que va al TRF); la marca `alAbierto`
+    solo decide el grupo y no se guarda. El tope de tres ascensos se cuenta
+    en el equipo donde quedaron. En Alajuela 2026 son tres: una de Grecia
+    (categoría D) y dos de San Gerardo (A); la de Maurilio Soto (A) no
+    tiene abierto al cual pasar.
   - **La categoría por año de nacimiento** (art. 17 y 18, pedido después por
     el dueño del sitio, «que avise si es permitido o si no lo es»):
     `revisarCategorias()` mira a cada inscrito con categoría A–E y fecha, y

@@ -519,7 +519,7 @@
   }
 
   // Lo que se guarda del jugador: sin la modalidad ni la regional.
-  const soloJugador = ({ modalidad, region, ...d }) => d;
+  const soloJugador = ({ modalidad, region, alAbierto, ...d }) => d;
 
   async function subirLista(archivo) {
     const estadoEl = $("pi-subir-lista-estado");
@@ -534,8 +534,8 @@
       estadoEl.textContent = "";
       const lista = filasAJugadores(filas);
       if (!lista.length) { Avisos.avisar(tx("archivoSinJugadores"), { tipo: "error" }); return; }
-      const { dimensiones, grupos } = G.agrupar(lista);
-      if (grupos.length > 1) { sugerirGrupos(lista, dimensiones, grupos, archivo.name); return; }
+      G.pasarMujeresAlAbierto(lista, true);
+      if (G.agrupar(lista).grupos.length > 1) { sugerirGrupos(lista, archivo.name); return; }
       agregarTodos(lista);
     } catch (err) {
       estadoEl.textContent = "";
@@ -554,20 +554,58 @@
   // varias categorías, no se agrega a nadie todavía: se le muestra al árbitro
   // cómo quedaría partida, con cada grupo marcado (menos el que tiene un solo
   // jugador, que no alcanza para un torneo), y él decide.
-  function sugerirGrupos(lista, dimensiones, grupos, nombreArchivo) {
+  function sugerirGrupos(lista, nombreArchivo) {
     const regiones = [...new Set(lista.map((j) => j.region).filter(Boolean))];
     const base = regiones.length === 1 ? tx("grupoRegional", { r: regiones[0] })
       : String(nombreArchivo || "").replace(/\.[^.]+$/, "").replace(/[_]+/g, " ").trim();
     // El año del torneo: el de su fecha de inicio, o el de hoy.
     const anio = Number(String(t().fechaInicio || "").slice(0, 4)) || Number((window.HoraCR ? HoraCR.hoy() : "").slice(0, 4)) || G.JDE_ANIO_NORMATIVA;
-    estado.sugerencia = {
-      lista, dimensiones, base, revision: G.revisarCategorias(lista, anio),
-      grupos: grupos.map((g) => Object.assign(g, { marcado: g.jugadores.length >= 2 })),
-    };
+    estado.sugerencia = { lista, base, anio, pasarMujeres: true, grupos: [] };
+    calcularSugerencia();
     pintarSugerencia();
     const caja = $("pi-sugerencia");
     caja.scrollIntoView({ block: "nearest" });
     caja.focus();
+  }
+
+  // Los grupos y la revisión de categorías salen de la lista con o sin el
+  // pase de mujeres al abierto, según la casilla. Un grupo que ya estaba
+  // conserva su marca; uno nuevo viene marcado si tiene al menos dos.
+  function calcularSugerencia() {
+    const s = estado.sugerencia;
+    s.pase = G.pasarMujeresAlAbierto(s.lista, s.pasarMujeres);
+    const { dimensiones, grupos } = G.agrupar(s.lista);
+    const antes = new Map(s.grupos.map((g) => [g.clave, g.marcado]));
+    s.dimensiones = dimensiones;
+    s.grupos = grupos.map((g) => Object.assign(g, { marcado: antes.has(g.clave) ? antes.get(g.clave) : g.jugadores.length >= 2 }));
+    s.revision = G.revisarCategorias(s.lista, s.anio);
+  }
+
+  // Las mujeres de equipos que no alcanzan para un equipo propio (art.
+  // 66.1.g) y pasan al abierto de su centro, con la casilla para no hacerlo.
+  function pintarPaseAbierto(s) {
+    const { pasadas, sinAbierto } = s.pase;
+    if (!pasadas.length && !sinAbierto.length) return null;
+    const caja = el("div", { id: "pi-pase-abierto", class: "mt-4 pt-3 border-t border-brand-100 dark:border-brand-800" });
+    caja.append(el("h4", { class: "font-semibold text-sm", texto: tx("paseTitulo") }));
+    const nombres = (c) => c.mujeres.map((j) => j.nombre).join(", ");
+    if (pasadas.length) {
+      caja.append(
+        el("p", { class: "text-sm mt-1", texto: tx("paseTexto", { m: G.JDE_MIN_EQUIPO }) }),
+        el("label", { class: "flex items-start gap-2 text-sm mt-2" },
+          el("input", { type: "checkbox", id: "pi-pase-abierto-si", class: "mt-1", checked: s.pasarMujeres, onchange: (e) => {
+            s.pasarMujeres = e.target.checked; calcularSugerencia(); pintarSugerencia(); $("pi-pase-abierto-si").focus();
+          } }),
+          el("span", { class: "font-semibold", texto: tx("paseCasilla", { n: pasadas.reduce((a, c) => a + c.mujeres.length, 0) }) })),
+        el("ul", { id: "pi-pase-lista", class: "mt-2 space-y-1 text-sm list-disc pl-5" }, pasadas.map((c) =>
+          el("li", { texto: tx(c.mujeres.length === 1 ? "paseUna" : "paseDos", { i: c.institucion || "—", c: c.categoria, n: nombres(c), a: c.abierto, t: c.abierto + c.mujeres.length }) }))));
+    }
+    if (sinAbierto.length) {
+      caja.append(el("p", { class: C.nota + " mt-2", texto: tx("paseSinAbierto") }),
+        el("ul", { id: "pi-pase-sin", class: "mt-1 space-y-1 text-sm list-disc pl-5" }, sinAbierto.map((c) =>
+          el("li", { texto: tx("paseSinAbiertoCaso", { i: c.institucion || "—", c: c.categoria, n: nombres(c) }) }))));
+    }
+    return caja;
   }
 
   function etiquetaGrupo(g) {
@@ -609,6 +647,7 @@
       el("h3", { id: "pi-sugerencia-titulo", class: "font-serif text-lg font-bold", texto: tx("sugerenciaTitulo", { n: s.grupos.length }) }),
       el("p", { class: "text-sm mt-1", texto: tx("sugerenciaTexto", { total: s.lista.length, d: unidas }) }),
       el("fieldset", {}, el("legend", { class: "sr-only", texto: tx("sugerenciaLeyenda") }), lista),
+      pintarPaseAbierto(s),
       pintarRevisionCategorias(s.revision),
       porSexo ? el("p", { class: C.nota + " mt-2", texto: tx("sugerenciaAbierto") }) : null,
       hayEquipos ? el("p", { class: C.nota + " mt-2", texto: tx("sugerenciaEquipos") }) : null,

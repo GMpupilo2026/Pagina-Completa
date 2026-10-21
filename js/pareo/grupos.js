@@ -76,8 +76,12 @@
   // "equipo" o ""). Devuelve las dimensiones que separan (las que tienen dos
   // valores o más) y los grupos, en orden: individual antes que equipos, la
   // categoría por orden alfabético y masculino antes que femenino.
+  // La mujer que pasa al abierto (pasarMujeresAlAbierto) cuenta en el
+  // grupo del abierto, aunque su sexo siga siendo "w".
+  const torneoDe = (j) => (j.alAbierto ? "m" : j.sexo || "");
+
   function agrupar(lista) {
-    const valor = (j, d) => (d === "categoria" ? String(j.categoria || "").trim() : j[d] || "");
+    const valor = (j, d) => (d === "categoria" ? String(j.categoria || "").trim() : d === "sexo" ? torneoDe(j) : j[d] || "");
     const dimensiones = DIMENSIONES.filter((d) => new Set(lista.map((j) => valor(j, d))).size > 1);
     const porClave = new Map();
     for (const j of lista) {
@@ -163,7 +167,7 @@
     // como permitido (la lista no dice cuáles tres eligió el centro).
     const porEquipo = new Map();
     for (const c of permitidos) {
-      const k = [String(c.jugador.institucion || "").trim().toUpperCase(), c.categoria, c.jugador.sexo || ""].join("|");
+      const k = [String(c.jugador.institucion || "").trim().toUpperCase(), c.categoria, torneoDe(c.jugador)].join("|");
       if (!porEquipo.has(k)) porEquipo.set(k, []);
       porEquipo.get(k).push(c);
     }
@@ -175,7 +179,37 @@
     return { anio, normativa: JDE_ANIO_NORMATIVA, revisados, permitidos: quedan, noPermitidos, sinFecha };
   }
 
+  // Un equipo es de tres a cinco (art. 66.1.g). Si en equipos un centro
+  // educativo inscribe solo una o dos mujeres en una categoría, no le
+  // alcanzan para un equipo de mujeres; si ese mismo centro presenta equipo
+  // abierto en esa categoría, pasan al abierto para que puedan jugar (en el
+  // abierto juegan hombres y mujeres). Con `aplicar` en false solo dice a
+  // quiénes les pasaría, sin moverlas. Las que no tienen equipo abierto al
+  // cual pasar se devuelven aparte: no hay dónde ponerlas.
+  const JDE_MIN_EQUIPO = 3;
+  function pasarMujeresAlAbierto(lista, aplicar) {
+    const porEquipo = new Map();
+    for (const j of lista) {
+      delete j.alAbierto;
+      if (j.modalidad !== "equipo") continue;
+      const k = String(j.institucion || "").trim().toUpperCase() + "|" + String(j.categoria || "").trim().toUpperCase();
+      if (!porEquipo.has(k)) porEquipo.set(k, []);
+      porEquipo.get(k).push(j);
+    }
+    const pasadas = [], sinAbierto = [];
+    for (const todos of porEquipo.values()) {
+      const mujeres = todos.filter((j) => j.sexo === "w");
+      if (!mujeres.length || mujeres.length >= JDE_MIN_EQUIPO) continue;
+      const caso = { institucion: mujeres[0].institucion || "", categoria: String(mujeres[0].categoria || "").trim(), mujeres, abierto: todos.length - mujeres.length };
+      if (!caso.abierto) { sinAbierto.push(caso); continue; }
+      if (aplicar !== false) for (const j of mujeres) j.alAbierto = true;
+      pasadas.push(caso);
+    }
+    return { pasadas, sinAbierto };
+  }
+
   const api = {
+    pasarMujeresAlAbierto, JDE_MIN_EQUIPO,
     leerSexo, leerModalidad, ordenFechas, leerFecha, agrupar, sistemaSugerido, revisarCategorias, rangoCategoria,
     JDE_MAX_TODOS, JDE_RONDAS_SUIZO, JDE_RITMO_MINIMO, JDE_ANIO_NORMATIVA, JDE_MAX_ASCENSOS,
   };

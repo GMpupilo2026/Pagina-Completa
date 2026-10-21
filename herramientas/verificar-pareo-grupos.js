@@ -72,6 +72,27 @@ function pruebaCategorias() {
   igual("otro año: los rangos se corren (2027, A es 2018–2021)", G.rangoCategoria("A", 2027), [2018, 2021]);
 }
 
+function pruebaPase() {
+  console.log("\n=== Mujeres de equipos al abierto (art. 66.1.g) ===");
+  const j = (sexo, institucion, categoria, modalidad) => ({ nombre: sexo + institucion, sexo, institucion, categoria, modalidad: modalidad || "equipo" });
+  const lista = [
+    j("w", "X", "A"), j("m", "X", "A"), j("m", "X", "A"),        // 1 mujer + abierto: pasa
+    j("w", "Y", "A"), j("w", "Y", "A"), j("m", "Y", "A"),        // 2 mujeres + abierto: pasan
+    j("w", "Z", "A"), j("w", "Z", "A"), j("w", "Z", "A"), j("m", "Z", "A"), // 3: tienen equipo, no pasan
+    j("w", "W", "A"),                                            // sin abierto: aviso
+    j("w", "X", "B"),                                            // otra categoría: sin abierto en B
+    j("w", "X", "A", "individual"),                              // individual: no se toca
+  ];
+  const r = G.pasarMujeresAlAbierto(lista, true);
+  igual("pasan las de X y las de Y", r.pasadas.map((c) => c.institucion + c.mujeres.length), ["X1", "Y2"]);
+  igual("sin abierto al cual pasar: W en A y X en B", r.sinAbierto.map((c) => c.institucion + c.categoria), ["WA", "XB"]);
+  igual("las tres de Z y la de individual no se mueven", lista.filter((x) => x.alAbierto).length, 3);
+  const g = G.agrupar(lista).grupos.find((x) => x.modalidad === "equipo" && x.categoria === "A" && x.sexo === "m");
+  igual("el abierto de equipos A las cuenta (4 hombres + 3 que pasan)", g.jugadores.length, 7);
+  G.pasarMujeresAlAbierto(lista, false);
+  igual("sin aplicar, nadie queda marcado", lista.filter((x) => x.alAbierto).length, 0);
+}
+
 function pruebaFunciones() {
   console.log("\n=== Sexo, modalidad y fechas ===");
   igual("HOMBRE, Masculino, M y H son masculino", ["HOMBRE", "Masculino", "m", "H"].map(G.leerSexo), ["m", "m", "m", "m"]);
@@ -129,7 +150,10 @@ function excelJde() {
   poner(1, "MUJER", "A", "Individual", "7/17/2015");
   poner(10, "HOMBRE", "B", "Individual", ["3/2/2018", ...Array(9).fill("11/19/2014")]);
   poner(4, "HOMBRE", "B", "Equipo", ["1/4/2017", "2/4/2017", "3/4/2017", "1/4/2014"], "ESCUELA DEL EQUIPO");
-  poner(2, "MUJER", "B", "Equipo", "1/4/2017", "ESCUELA DEL EQUIPO");
+  poner(2, "MUJER", "B", "Equipo", "1/4/2017", "ESCUELA DE MUJERES");
+  // Una sola mujer de equipos en un centro que presenta equipo abierto: no
+  // alcanza para un equipo de mujeres (mínimo 3, art. 66.1.g) y pasa al abierto.
+  poner(1, "MUJER", "B", "Equipo", "5/5/2014", "ESCUELA DEL EQUIPO");
   return Buffer.from(TablaExcel.armar([{ nombre: "Sheet1", filas }]));
 }
 
@@ -160,7 +184,7 @@ async function pruebaPagina(browser) {
   ok(await page.$eval("#pi-sugerencia", (n) => n.checkVisibility()), "el panel de la sugerencia se ve");
   igual("todavía nadie inscrito", await page.textContent("#pi-cuenta"), "0");
   igual("el título dice cuántos torneos", await page.textContent("#pi-sugerencia-titulo"), "Sugerencia: separar en 5 torneos");
-  ok(/20 jugadores/.test(await page.textContent("#pi-sugerencia")), "cuenta a los 20 (las dos filas de título no son jugadores)");
+  ok(/21 jugadores/.test(await page.textContent("#pi-sugerencia")), "cuenta a los 21 (las dos filas de título no son jugadores)");
   const filas = await page.$$eval("#pi-sugerencia fieldset li", (lis) => lis.map((li) => [li.querySelector("label").textContent, li.querySelector("input").checked]));
   igual("los cinco grupos, en orden y con el de un jugador desmarcado", filas.map(([t, c]) => [t.split(" — ")[0], c]), [
     ["Individual · Categoría A · Abierto", true],
@@ -175,14 +199,26 @@ async function pruebaPagina(browser) {
   ok(/en el abierto pueden jugar también mujeres/.test(await page.textContent("#pi-sugerencia")), "dice que en el abierto juegan también mujeres (art. 66)");
   ok(/art\. 66/.test(await page.textContent("#pi-sugerencia")), "dice de dónde sale el sistema sugerido");
   console.log("\n=== Categoría por año de nacimiento ===");
-  ok(/Se revisaron 20 inscritos: 13 están en la categoría de su año de nacimiento, 5 suben de categoría como lo permite la normativa y 2 no están permitidos/.test(await page.textContent("#pi-revision-categorias")), "el resumen cuenta bien", await page.textContent("#pi-revision-categorias"));
+  ok(/Se revisaron 21 inscritos: 14 están en la categoría de su año de nacimiento, 5 suben de categoría como lo permite la normativa y 2 no están permitidos/.test(await page.textContent("#pi-revision-categorias")), "el resumen cuenta bien", await page.textContent("#pi-revision-categorias"));
   const no = await page.$$eval("#pi-cat-no li", (l) => l.map((x) => x.textContent));
   const si = await page.$$eval("#pi-cat-si li", (l) => l.map((x) => x.textContent));
   igual("dos no permitidos y cinco permitidos", [no.length, si.length], [2, 5]);
   ok(no.every((x) => x.startsWith("No permitido:")) && si.every((x) => x.startsWith("Permitido:")), "cada uno dice escrito si está permitido");
   ok(no.some((x) => /nació en 2015 y la categoría A es para quienes nacieron desde 2017/.test(x)), "la de A nacida en 2015: no se baja de categoría");
   ok(no.some((x) => /nació en 2018, es de la categoría A y está en la B individual/.test(x)), "el de B individual nacido en 2018: en individual no se sube");
-  ok(si.every((x) => /ESCUELA DEL EQUIPO/.test(x) && /sube a la B por equipos/.test(x)), "los de equipos nacidos en 2017: ascenso permitido de A a B");
+  ok(si.every((x) => /ESCUELA DE(L EQUIPO| MUJERES)/.test(x) && /sube a la B por equipos/.test(x)), "los de equipos nacidos en 2017: ascenso permitido de A a B");
+
+  console.log("\n=== Mujeres de equipos que pasan al abierto ===");
+  ok(await page.$eval("#pi-pase-abierto-si", (c) => c.checked), "la casilla viene marcada");
+  const pase = await page.$$eval("#pi-pase-lista li", (l) => l.map((x) => x.textContent));
+  ok(pase.length === 1 && /ESCUELA DEL EQUIPO, categoría B: PRUEBA ANA BE0 pasa al equipo abierto, que queda con 5 \(tenía 4\)/.test(pase[0]), "la sola mujer de un centro con equipo abierto pasa al abierto", pase.join(" | "));
+  const sin = await page.$$eval("#pi-pase-sin li", (l) => l.map((x) => x.textContent));
+  ok(sin.length === 1 && /ESCUELA DE MUJERES, categoría B/.test(sin[0]), "las dos de un centro sin equipo abierto se avisan aparte", sin.join(" | "));
+  const tam = async () => Object.fromEntries(await page.$$eval("#pi-sugerencia fieldset li", (l) => l.map((x) => [x.querySelector("label").textContent.split(" — ")[0], Number((/— (\d+) jugador/.exec(x.textContent) || [])[1])])));
+  igual("con la casilla: el abierto de equipos B tiene 5 y el de mujeres 2", [(await tam())["Equipos · Categoría B · Abierto"], (await tam())["Equipos · Categoría B · Mujeres"]], [5, 2]);
+  await page.click("#pi-pase-abierto-si");
+  igual("sin la casilla: vuelve al de mujeres (4 y 3)", [(await tam())["Equipos · Categoría B · Abierto"], (await tam())["Equipos · Categoría B · Mujeres"]], [4, 3]);
+  await page.click("#pi-pase-abierto-si");
 
   igual("el botón cuenta los marcados", await page.textContent("#pi-sugerencia-crear"), "Crear los 4 torneos marcados");
 
@@ -217,18 +253,21 @@ async function pruebaPagina(browser) {
   ]);
   const a = porNombre["Regional Prueba — Individual · Categoría A · Abierto"];
   const b = porNombre["Regional Prueba — Individual · Categoría B · Abierto"];
-  igual("cuántos en cada uno", ts.map((x) => x.jugadores.length).sort((x, y) => x - y), [2, 3, 4, 10]);
+  igual("cuántos en cada uno", ts.map((x) => x.jugadores.length).sort((x, y) => x - y), [2, 3, 5, 10]);
+  const abiertoB = porNombre["Regional Prueba — Equipos · Categoría B · Abierto"];
+  ok(abiertoB.jugadores.some((j) => j.sexo === "w" && /ANA/.test(j.nombre)), "la que pasó al abierto está ahí, y sigue anotada como mujer");
+  ok(ts.every((x) => x.jugadores.every((j) => !("alAbierto" in j))), "la marca del pase no se guarda en el jugador");
   igual("el de 3 es todos contra todos y el de 10, suizo", [a.sistema, b.sistema], ["todos", "suizo"]);
   ok(b.rondasTotales >= 5, "el suizo tiene al menos 5 rondas (art. 66)", b.rondasTotales);
   ok(ts.every((x) => x.ritmo === "10 min + 2 s por jugada"), "sin ritmo en el abierto, cada uno lleva el mínimo de la normativa");
   ok(ts.every((x) => x.jugadores.every((j) => j.sexo === "m" || j.sexo === "w")), "todos llevan su sexo");
-  ok(porNombre["Regional Prueba — Equipos · Categoría B · Mujeres"].jugadores.every((j) => j.sexo === "w"), "las mujeres quedaron en el de mujeres");
+  ok(porNombre["Regional Prueba — Equipos · Categoría B · Mujeres"].jugadores.every((j) => j.sexo === "w" && /ESCUELA DE MUJERES/.test(j.institucion)), "en el de mujeres quedaron las del centro sin equipo abierto");
   ok(b.jugadores.some((j) => j.nacimiento === "2014-11-19"), "la fecha 11/19/2014 se leyó como mes/día");
   igual("el centro educativo es la institución", a.jugadores[0].institucion.startsWith("ESCUELA DE PRUEBA"), true);
   ok(ts.every((x) => x.jugadores.every((j) => !("modalidad" in j) && !("region" in j))), "ni la modalidad ni la regional se guardan en el jugador");
   ok(ts.every((x) => x.jugadores.every((j) => !/Report|Exported/.test(j.nombre))), "las filas de título no entraron como jugadores");
   ok(ts.every((x) => x.ciudad === "Ciudad de Prueba"), "todos copiaron la ciudad del torneo abierto");
-  ok(new Set(ts.flatMap((x) => x.jugadores.map((j) => j.id))).size === 19, "cada jugador con su id propio");
+  ok(new Set(ts.flatMap((x) => x.jugadores.map((j) => j.id))).size === 20, "cada jugador con su id propio");
   igual("queda abierto el primero, en Jugadores", await page.textContent("#pi-cuenta"), "3");
   igual("«Mis torneos» los lista en el orden de la sugerencia", await page.$$eval("#pi-lista option", (o) => o.map((x) => x.textContent.split(" — ")[1])), [
     "Individual · Categoría A · Abierto", "Individual · Categoría B · Abierto",
@@ -240,8 +279,8 @@ async function pruebaPagina(browser) {
   console.log("\n=== No separar: todos al torneo abierto ===");
   ({ ctx, page, errores } = await abrir(browser));
   await page.click("#pi-sugerencia-todos");
-  await page.waitForFunction(() => document.getElementById("pi-cuenta").textContent === "20");
-  igual("un solo torneo, con los 20", (await torneos(page)).map((x) => x.jugadores.length), [20]);
+  await page.waitForFunction(() => document.getElementById("pi-cuenta").textContent === "21");
+  igual("un solo torneo, con los 21", (await torneos(page)).map((x) => x.jugadores.length), [21]);
   ok(!(await page.$eval("#pi-sugerencia", (n) => n.checkVisibility())), "la sugerencia se cierra");
   await ctx.close();
 
@@ -257,6 +296,7 @@ async function pruebaPagina(browser) {
 (async () => {
   pruebaFunciones();
   pruebaCategorias();
+  pruebaPase();
   const browser = await chromium.launch({ executablePath: fs.existsSync(CHROME) ? CHROME : undefined });
   try { await pruebaPagina(browser); }
   catch (e) { mal("la prueba de la página se cayó", e.stack); }
