@@ -40,6 +40,13 @@
 
   // «Equipo», «Equipos», «Team», «Por equipos» → "equipo"; «Individual»,
   // «Ind», «Individuales» → "individual".
+  // La etapa de la que viene una lista de clasificados (la columna «Etapa»
+  // que escribe js/pareo/evento.js): «Regional» → "regional".
+  function leerEtapa(v) {
+    const s = sinTildes(v).replace(/^etapa\s+/, "");
+    return ["institucional", "regional", "interregional"].find((e) => e === s) || "";
+  }
+
   function leerModalidad(v) {
     const s = sinTildes(v);
     if (/^(por )?equipos?$|^team(s)?$/.test(s)) return "equipo";
@@ -283,9 +290,17 @@
       return doc ? "doc:" + doc : "nom:" + sinTildes(j.nombre).replace(/\s+/g, " ") + "|" + (j.nacimiento || "");
     };
     const porPersona = new Map();
+    // De dónde viene cada persona: su Dirección Regional o, si no la trae,
+    // el archivo. En la Etapa Interregional se suben juntos los clasificados
+    // de varias regionales, y alguien que viene en dos es un error de una de
+    // ellas: se avisa (variosOrigenes), no se elige una sola en silencio.
+    const origenes = new Map();
     const unicos = [], repetidos = [];
     for (const j of lista) {
       const k = quien(j);
+      const o = direccionDe(j.region) || String(j.region || "").trim() || String(j.origen || "").trim();
+      if (!origenes.has(k)) origenes.set(k, new Set());
+      if (o) origenes.get(k).add(o);
       if (!porPersona.has(k)) porPersona.set(k, []);
       const suyas = porPersona.get(k);
       const igual = suyas.find((x) => x.modalidad === j.modalidad && String(x.categoria).trim().toUpperCase() === String(j.categoria).trim().toUpperCase());
@@ -293,13 +308,15 @@
       suyas.push(j);
       unicos.push(j);
     }
-    const dosModalidades = [];
-    for (const suyas of porPersona.values()) {
+    const dosModalidades = [], variosOrigenes = [];
+    for (const [k, suyas] of porPersona) {
       for (const j of suyas) if (j.veces > 1) repetidos.push({ jugador: j, veces: j.veces });
       if (suyas.length > 1) dosModalidades.push({ jugador: suyas[0], inscripciones: suyas.map((x) => ({ jugador: x, modalidad: x.modalidad, categoria: String(x.categoria || "").trim() })) });
+      const o = origenes.get(k);
+      if (o.size > 1) variosOrigenes.push({ jugador: suyas[0], origenes: [...o] });
     }
     for (const j of unicos) delete j.veces;
-    return { lista: unicos, repetidos, dosModalidades };
+    return { lista: unicos, repetidos, dosModalidades, variosOrigenes };
   }
 
   // Los equipos con menos de tres (art. 66.1.g: «un mínimo de tres
@@ -371,7 +388,7 @@
   }
 
   const api = {
-    JDE_ETAPAS, JDE_INTERREGIONALES, JDE_DIRECCIONES, nombreInterregional, direccionDe, nombreEventoJde,
+    JDE_ETAPAS, JDE_INTERREGIONALES, JDE_DIRECCIONES, nombreInterregional, direccionDe, nombreEventoJde, leerEtapa,
     quitarRepetidos, equiposCortos, individualesDeMas, JDE_MAX_INDIVIDUAL, configuracionJde, hombresEnMujeres, leerTorneo,
     pasarMujeresAlAbierto, JDE_MIN_EQUIPO, equiposDeMas, JDE_MAX_EQUIPO,
     leerSexo, leerModalidad, ordenFechas, leerFecha, agrupar, sistemaSugerido, revisarCategorias, rangoCategoria,

@@ -2597,6 +2597,91 @@ punta hasta subir sus clasificados en una Interregional. Rompiendo a
 propósito el cupo de la Regional, el aviso del empate o la foto de las
 decisiones, salta.
 
+### El día del torneo y el paso de una etapa a otra (JDE)
+
+Nueve pedidos del dueño del sitio, juntos porque se usan el mismo día. El TRF
+de equipos de FIDE (cada partida tablero por tablero) quedó para más
+adelante, a propósito.
+
+- **La hoja de alineación de cada ronda** (`imprimirAlineaciones()`, botón
+  «Hojas de alineación» en una ronda de equipos): una hoja por equipo en
+  cada encuentro, con su rival, cada integrante en el orden de tableros con
+  una casilla «☐» para la X, la regla del sistema olímpico escrita, la firma
+  del capitán y la hora de entrega (art. 66.2.h). Se imprime con el mismo
+  mecanismo que las planillas de firma (`#pi-firmas`).
+- **Los avisos de alineación** (`E.avisosAlineacion()`), arriba de cada
+  encuentro: menos de dos presentes (pierde el encuentro), dos o tres
+  (pierde por incomparecencia los tableros de abajo), alguien jugando
+  arriba de un compañero que está antes en el orden (el suplente nunca
+  arriba de un titular), alguien que no es del equipo y el orden de
+  tableros cambiado después de la ronda 1. Los tres últimos no se pueden
+  provocar desde la página (las casillas siempre siguen el orden y ↑ ↓ se
+  apagan con rondas), pero sí llegan en un `.json` editado o viejo: por eso
+  **al emparejar la ronda 1 se anota `ordenTableros`** (`E.fijarOrden()`) y
+  se compara contra él; deshacer la ronda 1 lo borra. Son avisos, no
+  bloqueos: el árbitro decide.
+- **El mejor tablero** (`E.mejoresTableros()`, en Clasificación y en la
+  premiación): de cada tablero, quienes jugaron ahí al menos la mitad de las
+  rondas, por porcentaje y después por puntos. **Las partidas no jugadas no
+  cuentan** (un tablero vacío, un encuentro perdido por incomparecencia):
+  ganar porque el otro no vino no dice nada de cómo se jugó. Es la idea del
+  premio por tablero de las olimpiadas, simplificada: las olimpiadas usan el
+  rendimiento Elo, y en los JDE casi nadie tiene Elo.
+- **La lista de clasificados dice de dónde viene** (columnas «Etapa» y
+  «Lugar» al final de `ENCABEZADOS`). Al subirla de nuevo (`siguienteDe()`),
+  si todas las filas vienen de la misma etapa, la sugerencia lo dice y el
+  diálogo de la etapa abre en la que sigue, con la interregional ya elegida
+  por sus Direcciones Regionales. De la Interregional no se propone nada: la
+  Nacional la organiza el MEP con otra normativa. Una fila sin «Etapa» (una
+  lista hecha a mano mezclada) apaga la propuesta: no se adivina.
+- **Las listas de varias regionales juntas**: `quitarRepetidos()` anota de
+  dónde viene cada persona (su Dirección Regional o, si no la trae, el
+  archivo) y **quien viene en dos se avisa** (`variosOrigenes`): es un error
+  de una de las dos regionales. Queda una sola inscripción, va al acta y
+  queda para revisar antes de la ronda 1. Y si se elige una interregional
+  que no tiene a alguna de las Direcciones de la lista, se pregunta antes de
+  crear (casi siempre es un archivo equivocado).
+- **Todo el evento desde el celular** (`#evento=<código>`, `PareoVer.iniciarEvento()`):
+  un solo enlace y un QR con todos los torneos, en el mismo canal de Supabase
+  Realtime en modo Broadcast que el de un torneo (ver «El canal en vivo»), con
+  `V.vistaEvento()` como carga. El código se guarda por evento en el
+  navegador (`pareo_evento_vivo_v1_<id>`), así el QR impreso sirve todo el
+  día. **Quien abre el enlace pide el estado al entrar** (evento «pedir») y
+  el organizador contesta: el enlace de un torneo, en cambio, espera al
+  próximo resultado. Cada `guardar()` de un torneo del evento lo vuelve a
+  mandar. Quien mira tiene un desplegable por torneo que no se cierra al
+  llegar un resultado.
+- **La premiación** (PDF, `V.premiacion()`): por torneo, del tercer lugar al
+  primero (como se lee en el acto), con los empates que los desempates no
+  resolvieron todos con su medalla, el equipo con sus integrantes y el mejor
+  de cada tablero. **Los diplomas** (`imprimirDiplomas()`, `V.diplomas()`):
+  uno por hoja, apaisados (`@page diploma`), uno por persona premiada (cada
+  integrante del equipo, el suyo) y por mejor tablero. Los dos en español,
+  como el acta.
+- **Antes de la ronda 1, revisar** (`V.pendientes()`): al crear el evento,
+  `decisionesDe()` guarda en `decisiones.revisar` lo que quedó abierto de la
+  inscripción —quien sigue en dos modalidades sin decidir, quien vino en dos
+  listas, las categorías no permitidas, los hombres en un torneo de mujeres
+  y los equipos cortos— como `{ tipo, personas, vars }`, **sin texto
+  armado**: se escribe en el idioma de la página al mostrarlo. Cada torneo
+  muestra lo suyo (lo que nombra a alguien que juega ahí), con una casilla
+  por punto, y **el botón de emparejar la ronda 1 no se prende hasta
+  marcarlos todos** (y lo dice escrito). Es el único bloqueo de Pareo
+  Integral, y a propósito: el resumen de quién no tiene categoría,
+  institución o Elo sigue siendo solo un aviso. Lo marcado se guarda en
+  `revisadoAntes`; después de la ronda 1 ya no detiene nada. La tarjeta del
+  evento cuenta los puntos sin revisar de cada torneo.
+- **El respaldo del evento** (`V.respaldo()`): un `.json` con todos los
+  torneos (`formato: "pareo-integral-evento"`), que «Abrir un torneo»
+  reconoce y abre entero. Si en ese navegador ya están los torneos de ese
+  evento, pregunta antes de reemplazarlos (sin duplicarlos).
+
+Al tocar esto, `node herramientas/verificar-pareo-jde-dia.js` (con el sitio en
+localhost:8777; el canal en vivo con un doble de `window.sb`, nada sale a
+Supabase). Rompiendo a propósito el conteo de las partidas no jugadas, el
+aviso de fuera de orden, el bloqueo de la ronda 1, la respuesta al que pide
+el estado o el aviso de dos regionales, salta.
+
 ### La barra de progreso al buscar el Elo Nacional
 
 Antes de esto, tocar «Buscar Elo Nacional de quien no tiene» con una lista

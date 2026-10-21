@@ -199,10 +199,98 @@
     return true;
   }
 
+  // El orden de tableros con que arrancó el torneo: se anota al emparejar la
+  // ronda 1 y desde ahí se compara (art. 66.2.h: se mantiene en toda la
+  // etapa). En la página no se puede cambiar después de la ronda 1, pero un
+  // torneo abierto desde un archivo sí puede traerlo cambiado.
+  function fijarOrden(t) {
+    if (!esDeEquipos(t) || t.ordenTableros) return;
+    t.ordenTableros = Object.fromEntries(t.jugadores.map((e) => [e.id, e.integrantes.map((j) => j.id)]));
+  }
+
+  // Lo que el árbitro debería mirar en la alineación de cada encuentro de
+  // una ronda, equipo por equipo:
+  //   menos2       menos de dos presentes: pierde el encuentro (art. 66.2.f)
+  //   incompleto   dos o tres: pierde por incomparecencia los tableros de abajo
+  //   fueraDeOrden alguien juega más arriba que un compañero que en el orden
+  //                de tableros está antes (sistema olímpico: el suplente
+  //                nunca juega arriba de un titular)
+  //   ajeno        en la alineación hay alguien que no es del equipo
+  //   ordenCambiado el orden de tableros ya no es el de la ronda 1
+  function avisosAlineacion(t, r) {
+    const R = t.rondas[r];
+    if (!esDeEquipos(t) || !R) return [];
+    const out = [];
+    R.mesas.forEach((m, mesa) => {
+      if (m.n === null || !m.alineacion) return;
+      for (const lado of ["b", "n"]) {
+        const e = equipo(t, m[lado]);
+        if (!e) continue;
+        const ids = e.integrantes.map((j) => j.id);
+        const al = (m.alineacion[lado] || []).filter(Boolean);
+        const base = { mesa, equipo: e.id, nombre: e.nombre };
+        if (al.length < MIN_PRESENTES) out.push(Object.assign({ tipo: "menos2", presentes: al.length }, base));
+        else if (al.length < nTableros(t)) out.push(Object.assign({ tipo: "incompleto", presentes: al.length, pierde: nTableros(t) - al.length }, base));
+        const ajenos = al.filter((x) => !ids.includes(x));
+        if (ajenos.length) out.push(Object.assign({ tipo: "ajeno", cuantos: ajenos.length }, base));
+        const pos = al.filter((x) => ids.includes(x)).map((x) => ids.indexOf(x));
+        if (pos.some((p, i) => i > 0 && p < pos[i - 1])) out.push(Object.assign({ tipo: "fueraDeOrden" }, base));
+      }
+    });
+    if (t.ordenTableros) {
+      for (const e of t.jugadores) {
+        const antes = t.ordenTableros[e.id];
+        if (antes && antes.join("|") !== e.integrantes.map((j) => j.id).join("|")) out.push({ tipo: "ordenCambiado", mesa: null, equipo: e.id, nombre: e.nombre });
+      }
+    }
+    return out;
+  }
+
+  // El mejor de cada tablero, como el premio por tablero de las
+  // olimpiadas: de cada tablero, quiénes jugaron ahí al menos la mitad de
+  // las rondas, por porcentaje y, a igual porcentaje, por puntos. Las
+  // partidas que no se jugaron (un tablero vacío, un encuentro perdido por
+  // no presentarse) no cuentan: no dicen nada de cómo jugó.
+  function mejoresTableros(t, hasta) {
+    const h = Math.min(hasta == null ? t.rondas.length : hasta, t.rondas.length);
+    const minimo = Math.max(1, Math.ceil(h / 2));
+    const n = nTableros(t);
+    const porTablero = Array.from({ length: n }, () => new Map());
+    for (let r = 0; r < h; r++) {
+      for (const m of t.rondas[r].mesas) {
+        if (m.n === null || !m.alineacion || puntosDelEncuentro(t, m).incomparecencia) continue;
+        for (const x of tablerosDe(t, m)) {
+          if (x.fijo || !x.r || x.r === "+-" || x.r === "-+" || x.r === "--") continue;
+          const anotar = (idJ, idE, p) => {
+            const mapa = porTablero[x.k];
+            if (!mapa.has(idJ)) mapa.set(idJ, { id: idJ, equipo: idE, puntos: 0, jugadas: 0 });
+            const f = mapa.get(idJ);
+            f.puntos += p; f.jugadas++;
+          };
+          const eB = x.bBlancas ? m.b : m.n, eN = x.bBlancas ? m.n : m.b;
+          anotar(x.blancas, eB, puntosBlancas(x.r));
+          anotar(x.negras, eN, puntosNegras(x.r));
+        }
+      }
+    }
+    return porTablero.map((mapa, k) => {
+      const filas = [...mapa.values()].filter((f) => f.jugadas >= minimo).map((f) => {
+        const e = equipo(t, f.equipo);
+        const j = e && e.integrantes.find((x) => x.id === f.id);
+        return Object.assign(f, { nombre: j ? j.nombre : "?", institucion: e ? e.nombre : "", porcentaje: f.puntos / f.jugadas });
+      });
+      const cmp = (a, b) => b.porcentaje - a.porcentaje || b.puntos - a.puntos;
+      filas.sort((a, b) => cmp(a, b) || a.nombre.localeCompare(b.nombre, "es"));
+      filas.forEach((f, i) => { f.puesto = i > 0 && cmp(filas[i - 1], f) === 0 ? filas[i - 1].puesto : i + 1; });
+      return { tablero: k + 1, minimo, filas };
+    });
+  }
+
   const api = {
     TABLEROS, MAX_INTEGRANTES, MIN_PRESENTES, PUNTOS_EQUIPOS, PT,
     esDeEquipos, armarEquipos, eloDeEquipo, alineacionPorOmision, prepararMesa, tablerosDe,
     puntosDelEncuentro, resultadoEncuentro, puntosTablero, catalogo, clasificacion, desempatesPara, moverIntegrante,
+    fijarOrden, avisosAlineacion, mejoresTableros,
   };
   if (enNode) module.exports = api;
   else raiz.PareoEquipos = api;
