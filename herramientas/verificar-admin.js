@@ -248,13 +248,14 @@ window.__consultas = [];
         return Promise.resolve({ data: null, error: null });
       }
       /* El grupo de un taller (admin.html#asesores): lo arma la base por
-         taller. Uno ya entró y contestó la sesión 1 tres veces; el otro nunca
-         entró, y su nombre trae HTML que tiene que ir literal. */
+         taller. Uno ya entró, contestó la sesión 1 tres veces y su tarea
+         inicial una; el otro nunca entró, y su nombre trae HTML que tiene que
+         ir literal. */
       if (n === "asesores_tablero") {
         window.__tablero = (window.__tablero || []).concat([args]);
         return Promise.resolve({ data: args.p_detalle !== "Taller Formación Ajedrez del MEP" ? [] : [
           { persona_id: "u-ase1", nombre: "Ana Asesora · Heredia", clases: 2, ultima_vez: "2026-10-09T17:24:00Z",
-            cuestionarios: { "cq-fa1": { aciertos: 13, total: 22, veces: 3 } } },
+            cuestionarios: { "cq-fa1": { aciertos: 13, total: 22, veces: 3 }, "cq-fa1t": { aciertos: 12, total: 14, veces: 1 } } },
           { persona_id: "u-ase2", nombre: '<img src=x onerror="window.__xss=1">Beto', clases: 0, ultima_vez: null, cuestionarios: {} },
         ], error: null });
       }
@@ -842,21 +843,30 @@ async function pruebaAsesores(browser) {
   igual("el grupo se pide a la base, para el taller abierto", await page.evaluate(() => window.__tablero),
     [{ p_detalle: "Taller Formación Ajedrez del MEP" }]);
   igual("el resumen del grupo dice cuántos entraron y cuántos nunca", await page.textContent("#ase-grupo p"),
-    "1 de 2 personas ya entraron a la plataforma; 1 nunca ha entrado. La nota es la de la primera vez que contestó el cuestionario de cada sesión.");
+    "1 de 2 personas ya entraron a la plataforma; 1 nunca ha entrado. La nota es la de la primera vez que contestó el cuestionario de cada sesión (S) y su tarea inicial (T).");
   igual("una fila por asesor, con su nombre literal, su última vez, sus clases y su nota", await page.evaluate(() =>
     Array.from(document.querySelectorAll("#ase-grupo tbody tr")).map((tr) => Array.from(tr.children).slice(0, 5).map((c) => c.textContent.replace(/\s+/g, " ").trim()))),
     [["Ana Asesora · Heredia", "9 oct, 11:24 a. m.", "2", "13/223 veces", "—No lo contestó"],
      ['<img src=x onerror="window.__xss=1">Beto', "Nunca entró", "0", "—No lo contestó", "—No lo contestó"]]);
-  igual("una columna por sesión y una por grabación", await page.evaluate(() => document.querySelectorAll("#ase-grupo thead th").length), 3 + 7 + 2);
+  igual("una columna por sesión, una por tarea inicial y una por grabación", await page.evaluate(() => document.querySelectorAll("#ase-grupo thead th").length), 3 + 7 + 1 + 2);
+  igual("la tarea inicial va después de las sesiones, con su nombre para el lector de pantalla", await page.evaluate(() => {
+    const th = document.querySelectorAll("#ase-grupo thead th")[10];
+    return [th.textContent, th.getAttribute("aria-label")];
+  }), ["T1", "Tarea inicial de la sesión 1"]);
+  igual("con la nota de la primera vez, o escrito que no la contestó", await page.evaluate(() =>
+    Array.from(document.querySelectorAll("#ase-grupo tbody tr")).map((tr) => tr.children[10].textContent.replace(/\s+/g, " ").trim())),
+    ["12/14", "—No lo contestó"]);
+  igual("y arriba, cuántos la contestaron", await page.evaluate(() => document.querySelectorAll("#ase-grupo > p")[1].textContent),
+    "Tareas iniciales: T1, 1 de 2 la contestó.");
   igual("cuánto vio de cada grabación se pide a la base, por taller", await page.evaluate(() => window.__grabaciones),
     [{ p_detalle: "Taller Formación Ajedrez del MEP" }]);
   igual("las grabaciones, en orden de la sesión y con su nombre para el lector de pantalla", await page.evaluate(() =>
-    Array.from(document.querySelectorAll("#ase-grupo thead th")).slice(10).map((th) => [th.textContent, th.getAttribute("aria-label")])),
+    Array.from(document.querySelectorAll("#ase-grupo thead th")).slice(11).map((th) => [th.textContent, th.getAttribute("aria-label")])),
     [["▶ I", "Grabación de la Sesión I: cuánto la vio"], ["▶ II", "Grabación de la Sesión II: cuánto la vio"]]);
   igual("cuánto vio cada uno: el porcentaje y el tiempo, y lo que no vio lo dice escrito", await page.evaluate(() =>
-    Array.from(document.querySelectorAll("#ase-grupo tbody tr")).map((tr) => Array.from(tr.children).slice(10).map((c) => c.textContent.replace(/\s+/g, " ").trim()))),
+    Array.from(document.querySelectorAll("#ase-grupo tbody tr")).map((tr) => Array.from(tr.children).slice(11).map((c) => c.textContent.replace(/\s+/g, " ").trim()))),
     [["50 %1 h 36 min", "<1 %45 s"], ["—No la vio", "—No la vio"]]);
-  igual("y arriba, cuántos empezaron a ver cada una", await page.evaluate(() => document.querySelectorAll("#ase-grupo > p")[1].textContent),
+  igual("y arriba, cuántos empezaron a ver cada una", await page.evaluate(() => document.querySelectorAll("#ase-grupo > p")[2].textContent),
     "En las grabaciones (▶), cuánto vio cada uno aquí en la plataforma, sin contar lo que repitió ni lo que adelantó. Sesión I: 1 de 2 empezó a verla; Sesión II: 1 de 2.");
   igual("el nombre ajeno no se ejecuta", await page.evaluate(() => !window.__xss), true);
   igual("sin cuestionario no hay nada que mandar", await page.evaluate(() =>
