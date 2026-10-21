@@ -17,6 +17,8 @@
   const T = window.PareoTorneo;
   const D = window.PareoDesempates;
   const G = window.PareoGrupos;
+  const E = window.PareoEquipos;
+  const V = window.PareoEvento;
   const X = window.PareoTextos;
   const motor = window.PareoMotor.enNavegador("js/pareo/motor-worker.js");
 
@@ -60,7 +62,7 @@
   let idioma = leer(CLAVE_IDIOMA) === "en" ? "en" : "es";
   const tx = (clave, vars) => X.t(idioma, clave, vars);
 
-  const estado = { lista: leerJSON(CLAVE_LISTA, []), id: null, t: null, ficha: leer(CLAVE_FICHA) || "jugadores", ronda: null, filtroInstitucion: "", filtroJugador: "", eloPendientes: [], enVivo: false, canalVivo: null, sugerencia: null };
+  const estado = { lista: leerJSON(CLAVE_LISTA, []), id: null, t: null, ficha: leer(CLAVE_FICHA) || "jugadores", ronda: null, filtroInstitucion: "", filtroJugador: "", eloPendientes: [], enVivo: false, canalVivo: null, sugerencia: null, eventoVivo: null };
 
   // Al cambiar de torneo: cortar el canal del que se sale, para no seguir
   // mandando SU estado por la conexión que había quedado abierta.
@@ -97,6 +99,7 @@
     escribir(CLAVE_LISTA, JSON.stringify(estado.lista));
     escribir("pareo_abierto_v1", estado.id);
     if (estado.enVivo) difundirEnVivo();
+    if (estado.eventoVivo && estado.t.evento && estado.t.evento.id === estado.eventoVivo.id) difundirEvento();
   }
 
   function abrir(id) {
@@ -196,7 +199,7 @@
 
   function pintarPanel() {
     ({ torneo: pintarTorneo, jugadores: pintarJugadores, rondas: pintarRondas,
-      clasificacion: pintarClasificacion, cruzada: pintarCruzada, archivos: () => {} })[estado.ficha]();
+      clasificacion: pintarClasificacion, cruzada: pintarCruzada, archivos: pintarEvento })[estado.ficha]();
   }
 
   function pintarTodo() {
@@ -238,12 +241,81 @@
   // «Aplicar la configuración de los JDE» al torneo abierto, antes de la
   // ronda 1: con rondas jugadas el sistema, los puntos y el color ya no se
   // cambian, así que el botón no hace nada (y lo dice).
-  function aplicarConfigJde() {
+  // La de un torneo individual o, en uno por equipos, con los puntos de
+  // encuentro y los puntos de tablero como primer desempate. n es cuántos
+  // juegan: jugadores o equipos, que es lo que se empareja.
+  function configuracionPara(n, actual, deEquipos, etapa) {
+    const c = G.configuracionJde(n, actual, etapa);
+    if (deEquipos) { c.puntos = Object.assign({}, E.PUNTOS_EQUIPOS); c.desempates = E.desempatesPara(c.sistema); }
+    return c;
+  }
+
+  // Antes de aplicar la configuración de los JDE se pregunta de qué etapa
+  // es el torneo y, en la Regional y la Interregional, de cuál: así el
+  // nombre del evento sale siempre igual para todos, ajustado al lugar
+  // («JDE 2026 · Etapa Regional · DRE Alajuela»), y la Interregional queda
+  // en todos contra todos (art. 66.2.c). Dos pasos con Avisos.formulario:
+  // la etapa, y después lo que esa etapa pide. Devuelve { anio, etapa,
+  // lugar } o null si se cancela.
+  // Las claves de textos.js de cada etapa, enteras (verificar-pareo-pagina.js
+  // busca las claves que usa la página por su nombre completo).
+  const TEXTO_ETAPA = { institucional: "etapaInstitucional", regional: "etapaRegional", interregional: "etapaInterregionalNombre" };
+  const TEXTO_ETAPA_LUGAR = { institucional: "etapaLugarInstitucional", regional: "etapaLugarRegional", interregional: "etapaLugarInterregional" };
+
+  async function pedirEtapaJde(previo, regionesDelArchivo) {
+    const anterior = previo || {};
+    // Las Direcciones Regionales que trae la inscripción (una en la
+    // Regional; dos o tres juntas en la Interregional).
+    const dres = [].concat(regionesDelArchivo || []).map((r) => G.direccionDe(r)).filter(Boolean);
+    const regionDelArchivo = dres.length === 1 ? dres[0] : "";
+    const opciones = (pares) => pares.map((x) => [x.valor, x.texto]);
+    const etapas = opciones(Object.keys(G.JDE_ETAPAS).map((k) => ({ valor: k, texto: tx(TEXTO_ETAPA[k]) })));
+    const r1 = await Avisos.formulario({
+      titulo: tx("etapaTitulo"), texto: tx("etapaTexto"), aceptar: tx("etapaSeguir"), cancelar: tx("cancelar"),
+      campos: [{ nombre: "etapa", etiqueta: tx("etapaCampo"), tipo: "select", opciones: etapas, valor: anterior.etapa || "regional" }],
+    });
+    if (!r1) return null;
+    const etapa = r1.etapa;
+    const anio = Number(String(t().fechaInicio || "").slice(0, 4)) || Number((window.HoraCR ? HoraCR.hoy() : "").slice(0, 4)) || G.JDE_ANIO_NORMATIVA;
+    let campo;
+    if (etapa === "regional") {
+      const sugerida = (anterior.etapa === "regional" && anterior.lugar) || G.direccionDe(regionDelArchivo) || "";
+      campo = { nombre: "lugar", etiqueta: tx("etapaDre"), tipo: "select", valor: sugerida,
+        opciones: opciones([{ valor: "", texto: tx("etapaElegir") }].concat(G.JDE_DIRECCIONES.map((d) => ({ valor: d, texto: d })))) };
+    } else if (etapa === "interregional") {
+      const sugerida = (anterior.etapa === "interregional" && anterior.lugar) ||
+        (dres.length ? (G.JDE_INTERREGIONALES.find((x) => dres.every((d) => x.regiones.includes(d))) || {}).numero : "") || "";
+      campo = { nombre: "lugar", etiqueta: tx("etapaInterregional"), tipo: "select", valor: sugerida,
+        opciones: opciones([{ valor: "", texto: tx("etapaElegir") }].concat(G.JDE_INTERREGIONALES.map((x) => ({ valor: x.numero, texto: G.nombreInterregional(x) })))) };
+    } else {
+      campo = { nombre: "lugar", etiqueta: tx("etapaCentro"), valor: anterior.etapa === "institucional" ? anterior.lugar || "" : "", max: 80, ayuda: tx("etapaCentroAyuda") };
+    }
+    // La Regional y la Interregional piden a cuál: sin elegir, se vuelve a preguntar.
+    for (;;) {
+      const r2 = await Avisos.formulario({ titulo: tx(TEXTO_ETAPA[etapa]), texto: tx(TEXTO_ETAPA_LUGAR[etapa]), aceptar: tx("etapaAplicar"), cancelar: tx("cancelar"), campos: [campo] });
+      if (!r2) return null;
+      const lugar = String(r2.lugar || "").trim();
+      if (etapa !== "institucional" && !lugar) { Avisos.avisar(tx("etapaFalta"), { tipo: "error" }); continue; }
+      return { anio, etapa, lugar };
+    }
+  }
+
+  // El nombre de un torneo de los JDE: el del evento y, si lo tiene, su grupo
+  // («Individual · Categoría A · Mujeres»).
+  const nombreConGrupo = (jde, grupo) => G.nombreEventoJde(jde) + (grupo ? " — " + grupo : "");
+
+  async function aplicarConfigJde() {
     const v = t();
     if (v.rondas.length) { Avisos.avisar(tx("configJdeConRondas"), { tipo: "error" }); return; }
-    Object.assign(v, G.configuracionJde(v.jugadores.length, v));
+    const jde = await pedirEtapaJde(v.jde, v.jde && v.jde.lugar);
+    if (!jde || t() !== v || v.rondas.length) return;
+    // Un torneo sin grupo guardado (armado a mano) conserva su nombre como
+    // grupo la primera vez; las siguientes, solo cambia el evento.
+    if (v.grupo == null) v.grupo = v.jde ? "" : String(v.nombre || "").trim();
+    Object.assign(v, configuracionPara(v.jugadores.length, v, E.esDeEquipos(v), jde.etapa), { jde, nombre: nombreConGrupo(jde, v.grupo) });
     guardar();
     pintarTorneo();
+    pintarLista();
     Avisos.avisar(tx("configJdeAplicada", { s: tx(v.sistema === "todos" ? "todos" : "suizo") }));
   }
 
@@ -274,7 +346,7 @@
     ol.replaceChildren();
     const lista = t().desempates;
     lista.forEach((c, i) => {
-      const info = D.CATALOGO.find((x) => x.codigo === c);
+      const info = E.catalogo(t()).find((x) => x.codigo === c);
       if (!info) return;
       const mover = (d) => () => {
         const [x] = lista.splice(i, 1);
@@ -296,7 +368,7 @@
     if (!lista.length) ol.append(el("li", { class: C.nota + " italic", texto: tx("sinDesempates") }));
     const s = $("pi-desempate-nuevo");
     s.replaceChildren();
-    for (const x of D.CATALOGO) if (!lista.includes(x.codigo)) s.append(el("option", { value: x.codigo, texto: x[idioma] + " (" + x.codigo + ")" }));
+    for (const x of E.catalogo(t())) if (!lista.includes(x.codigo)) s.append(el("option", { value: x.codigo, texto: x[idioma] + " (" + x.codigo + ")" }));
     $("pi-desempate-agregar").disabled = !s.options.length;
   }
 
@@ -342,6 +414,24 @@
     const orden = T.ordenInicial(v);
     const tabla = $("pi-tabla-jugadores");
     tabla.replaceChildren();
+    // En un torneo por equipos no se agrega gente a mano ni se busca el Elo
+    // Nacional de un equipo: los equipos salen de la inscripción.
+    const deEquipos = E.esDeEquipos(v);
+    $("pi-nota-equipos").hidden = !deEquipos;
+    $("pi-form-jugador").hidden = deEquipos;
+    $("pi-pegar-caja").hidden = deEquipos;
+    $("pi-caja-elo-nacional").hidden = deEquipos;
+    tabla.hidden = deEquipos;
+    $("pi-equipos").hidden = !deEquipos;
+    if (deEquipos) {
+      $("pi-cuenta").textContent = v.jugadores.length;
+      $("pi-sin-jugadores").hidden = v.jugadores.length > 0;
+      $("pi-sin-coincidencias").hidden = true;
+      $("pi-orden-ayuda").textContent = tx(v.rondas.length ? "ordenTablerosFijo" : "ordenTablerosAyuda");
+      pintarSugerencia();
+      pintarEquipos();
+      return;
+    }
     $("pi-cuenta").textContent = v.jugadores.length;
     $("pi-sin-jugadores").hidden = v.jugadores.length > 0;
     $("pi-orden-ayuda").textContent = tx(Array.isArray(v.numeracion) ? "ordenFijo" : "ordenAyuda");
@@ -388,6 +478,61 @@
         )));
     }
     tabla.append(cuerpo);
+  }
+
+  // Los equipos, cada uno con su orden de tableros (art. 66.2.h): se da en
+  // el congresillo y se mantiene en toda la etapa, así que ↑ y ↓ solo
+  // funcionan antes de la ronda 1. El quinto es el suplente.
+  function pintarEquipos() {
+    const v = t();
+    const num = T.numeros(v);
+    const caja = $("pi-equipos");
+    caja.replaceChildren();
+    if (!v.jugadores.length) return;
+    const fijo = v.rondas.length > 0;
+    caja.append(el("div", { class: "flex flex-wrap gap-2" },
+      el("button", { type: "button", class: C.botonSec, onclick: imprimirOrdenTableros }, tx("imprimirOrdenTableros"))));
+    for (const id of T.ordenInicial(v)) {
+      const e = jugador(id);
+      const ol = el("ol", { class: "mt-1 space-y-1 text-sm" });
+      e.integrantes.forEach((j, k) => {
+        const mover = (d) => () => {
+          if (!E.moverIntegrante(v, id, k, d)) return;
+          guardar();
+          pintarEquipos();
+          const b = $("pi-orden-" + id + "-" + (k + d) + (d < 0 ? "-sube" : "-baja"));
+          if (b && !b.disabled) b.focus();
+        };
+        ol.append(el("li", { class: "flex flex-wrap items-center gap-2" },
+          el("span", { class: "font-mono text-xs font-bold w-24", texto: k < E.TABLEROS ? tx("tableroN", { t: k + 1 }) : tx("suplente") }),
+          el("span", { class: "flex-1 min-w-[10rem]", texto: j.nombre + (Number(j.elo) > 0 ? " (" + j.elo + ")" : "") }),
+          el("button", { type: "button", id: "pi-orden-" + id + "-" + k + "-sube", class: C.mini, disabled: fijo || k === 0, "aria-label": tx("subir", { n: j.nombre }), onclick: mover(-1) }, "↑"),
+          el("button", { type: "button", id: "pi-orden-" + id + "-" + k + "-baja", class: C.mini, disabled: fijo || k === e.integrantes.length - 1, "aria-label": tx("bajar", { n: j.nombre }), onclick: mover(1) }, "↓")));
+      });
+      caja.append(el("section", { class: "rounded-xl border border-brand-200 dark:border-brand-700 p-3", "data-equipo": id },
+        el("h3", { class: "font-semibold", texto: num.get(id) + ". " + e.nombre }),
+        el("p", { class: C.nota, texto: tx("equipoResumen", { n: e.integrantes.length, p: puntosTexto(T.puntos(v, id)), pt: puntosTexto(E.puntosTablero(v, id)), elo: e.elo || "—" }) }),
+        ol));
+    }
+  }
+
+  // El orden de tableros de cada equipo, una hoja por equipo, para que el
+  // delegado la firme en el congresillo.
+  function imprimirOrdenTableros() {
+    const v = t();
+    const cont = $("pi-firmas");
+    cont.replaceChildren();
+    for (const id of T.ordenInicial(v)) {
+      const e = jugador(id);
+      const hoja = el("div", { class: "pi-firma-mesa" },
+        el("h1", { class: "pi-firma-titulo", texto: tx("ordenTablerosTitulo", { e: e.nombre }) + (v.nombre ? " — " + v.nombre : "") }));
+      e.integrantes.forEach((j, k) => hoja.append(el("p", { class: "pi-firma-jugador",
+        texto: (k < E.TABLEROS ? tx("tableroN", { t: k + 1 }) : tx("suplente")) + ": " + j.nombre })));
+      hoja.append(el("p", { class: "pi-firma-linea", texto: tx("firmaDelegado") }), el("p", { class: "pi-firma-linea", texto: tx("firmaArbitro") }));
+      cont.append(hoja);
+    }
+    document.body.classList.add("pi-imprimiendo-firmas");
+    window.print();
   }
 
   function datosJugador(f) {
@@ -484,6 +629,9 @@
     "equipo/ind": "modalidad", "equipo / ind": "modalidad", "equipo/individual": "modalidad",
     "equipo o individual": "modalidad", modalidad: "modalidad", "team/individual": "modalidad",
     "direccion regional": "region", regional: "region",
+    // La etapa de la que viene una lista de clasificados (la escribe
+    // js/pareo/evento.js): con ella se ofrece armar la etapa que sigue.
+    etapa: "etapa", stage: "etapa",
     // Solo para reconocer a la misma persona inscrita dos veces: no se
     // guarda en el torneo (soloJugador).
     "documento de identidad": "documento", documento: "documento", cedula: "documento",
@@ -537,24 +685,36 @@
       region: String(celda(fila, "region") || "").trim(),
       documento: String(celda(fila, "documento") || "").trim(),
       torneo: G.leerTorneo(celda(fila, "torneo")),
+      etapaOrigen: G.leerEtapa(celda(fila, "etapa")),
     })).filter((d) => d.nombre);
   }
 
   // Lo que se guarda del jugador: sin la modalidad ni la regional.
-  const soloJugador = ({ modalidad, region, alAbierto, documento, torneo, ...d }) => d;
+  // La Dirección Regional sí se guarda: la usa la lista de clasificados
+  // para la etapa siguiente (js/pareo/evento.js).
+  const soloJugador = ({ modalidad, alAbierto, documento, torneo, origen, etapaOrigen, ...d }) => (d.region ? d : (delete d.region, d));
 
-  async function subirLista(archivo) {
+  // Uno o varios archivos: en la Etapa Interregional llegan los
+  // clasificados de cada Dirección Regional por separado (la lista que baja
+  // «Clasificados», en la ficha Archivos), y se suben juntos.
+  async function subirLista(archivos) {
     const estadoEl = $("pi-subir-lista-estado");
-    if (archivo.size > 5 * 1024 * 1024) { Avisos.avisar(tx("archivoGrande"), { tipo: "error" }); return; }
-    const nombreArch = (archivo.name || "").toLowerCase();
+    const todos = Array.from(archivos.length != null ? archivos : [archivos]);
+    if (todos.some((a) => a.size > 5 * 1024 * 1024)) { Avisos.avisar(tx("archivoGrande"), { tipo: "error" }); return; }
     estadoEl.textContent = tx("leyendoArchivo");
     try {
-      let filas;
-      if (nombreArch.endsWith(".docx")) filas = await window.ReporteTextos.filasDeDocx(archivo);
-      else if (nombreArch.endsWith(".doc")) { estadoEl.textContent = ""; Avisos.avisar(tx("archivoDocAntiguo"), { tipo: "error" }); return; }
-      else filas = (await window.ReporteExcel.leer(archivo)).filas;
+      const leida = [];
+      for (const archivo of todos) {
+        const nombreArch = (archivo.name || "").toLowerCase();
+        let filas;
+        if (nombreArch.endsWith(".docx")) filas = await window.ReporteTextos.filasDeDocx(archivo);
+        else if (nombreArch.endsWith(".doc")) { estadoEl.textContent = ""; Avisos.avisar(tx("archivoDocAntiguo"), { tipo: "error" }); return; }
+        else filas = (await window.ReporteExcel.leer(archivo)).filas;
+        // El archivo de cada uno: si una persona viene en dos listas, se avisa.
+        leida.push(...filasAJugadores(filas).map((j) => Object.assign(j, { origen: archivo.name || "" })));
+      }
+      const archivo = todos[0];
       estadoEl.textContent = "";
-      const leida = filasAJugadores(filas);
       if (!leida.length) { Avisos.avisar(tx("archivoSinJugadores"), { tipo: "error" }); return; }
       const limpia = G.quitarRepetidos(leida);
       const lista = limpia.lista;
@@ -586,13 +746,20 @@
       : String(nombreArchivo || "").replace(/\.[^.]+$/, "").replace(/[_]+/g, " ").trim();
     // El año del torneo: el de su fecha de inicio, o el de hoy.
     const anio = Number(String(t().fechaInicio || "").slice(0, 4)) || Number((window.HoraCR ? HoraCR.hoy() : "").slice(0, 4)) || G.JDE_ANIO_NORMATIVA;
-    estado.sugerencia = { lista, base, anio, pasarMujeres: true, grupos: [], elegidos: new Map(), abiertos: new Set(), limpia, dondeQueda: new Map(), configJde: true };
+    // Una lista de clasificados (con su columna «Etapa») trae la etapa que sigue.
+    const siguiente = V.siguienteDe(lista.map((j) => j.etapaOrigen));
+    estado.sugerencia = { lista, base, anio, region: regiones, siguiente, pasarMujeres: true, grupos: [], elegidos: new Map(), abiertos: new Set(), limpia, dondeQueda: new Map(), configJde: true };
     calcularSugerencia();
     pintarSugerencia();
     const caja = $("pi-sugerencia");
     caja.scrollIntoView({ block: "nearest" });
     caja.focus();
   }
+
+  // Cuántos equipos (centros educativos) hay en un grupo de equipos: es lo
+  // que se empareja, y de eso sale el sistema.
+  const equiposDelGrupo = (g) => new Set(g.jugadores.map((j) => String(j.institucion || "").normalize("NFD").replace(/[̀-ͯ]/g, "").trim().toUpperCase())).size;
+  const participantesDelGrupo = (g) => (g.modalidad === "equipo" ? equiposDelGrupo(g) : g.jugadores.length);
 
   // Los grupos y la revisión de categorías salen de la lista con o sin el
   // pase de mujeres al abierto, según la casilla. Un grupo que ya estaba
@@ -633,7 +800,7 @@
     const { dimensiones, grupos } = G.agrupar(s.juegan);
     const antes = new Map(s.grupos.map((g) => [g.clave, g.marcado]));
     s.dimensiones = dimensiones;
-    s.grupos = grupos.map((g) => Object.assign(g, { marcado: antes.has(g.clave) ? antes.get(g.clave) : g.jugadores.length >= 2 }));
+    s.grupos = grupos.map((g) => Object.assign(g, { marcado: antes.has(g.clave) ? antes.get(g.clave) : participantesDelGrupo(g) >= 2 }));
     s.revision = G.revisarCategorias(s.juegan, s.anio);
     s.cortos = G.equiposCortos(s.juegan);
     s.hombresEnMujeres = G.hombresEnMujeres(s.juegan);
@@ -711,6 +878,20 @@
       caja.append(lista);
     }
     return caja;
+  }
+
+  // Quien viene en las listas de dos Direcciones Regionales (al subir juntos
+  // los clasificados de varias, en la Interregional): es un error de una de
+  // ellas, y lo resuelve el árbitro con las dos. Queda una sola inscripción.
+  function pintarVariosOrigenes(s) {
+    const varios = (s.limpia && s.limpia.variosOrigenes) || [];
+    if (!varios.length) return null;
+    return el("div", { id: "pi-varios-origenes", class: "mt-4 pt-3 border-t border-brand-100 dark:border-brand-800" },
+      el("h4", { class: "font-semibold text-sm", texto: tx("origenesTitulo") }),
+      el("p", { class: "text-sm mt-1", texto: tx("origenesTexto", { n: varios.length }) }),
+      el("ul", { id: "pi-origenes-lista", class: "mt-1 space-y-1 text-sm list-disc pl-5" }, varios.map((x) =>
+        el("li", {}, el("span", { class: "font-semibold", texto: tx("cortosAviso") + " " }),
+          tx("origenesCaso", { n: x.jugador.nombre, i: x.jugador.institucion || "—", o: x.origenes.join(" " + tx("y") + " ") })))));
   }
 
   // Elegir los cinco de cada equipo que se pasa: una casilla por integrante,
@@ -804,14 +985,16 @@
     const unidas = dims.length > 1 ? dims.slice(0, -1).join(", ") + " " + tx("y") + " " + dims[dims.length - 1] : dims[0];
     const lista = el("ul", { class: "mt-3 space-y-1 text-sm" });
     s.grupos.forEach((g, i) => {
+      // En equipos se empareja por equipos: el sistema sale de cuántos hay.
+      const nEquipos = g.modalidad === "equipo" ? equiposDelGrupo(g) : 0;
       const n = g.jugadores.length;
-      const sistema = G.sistemaSugerido(n);
+      const sistema = G.sistemaSugerido(nEquipos || n);
       const id = "pi-sugerencia-g" + i;
       lista.append(el("li", { class: "flex items-start gap-2" },
         el("input", { type: "checkbox", id, class: "mt-1", checked: g.marcado, onchange: (e) => { g.marcado = e.target.checked; pintarSugerencia(); $(id).focus(); } }),
         el("label", { for: id },
           el("span", { class: "font-semibold", texto: etiquetaGrupo(g) }),
-          " — " + tx(n === 1 ? "grupoUnJugador" : "grupoJugadores", { n }),
+          " — " + tx(n === 1 ? "grupoUnJugador" : "grupoJugadores", { n }) + (nEquipos ? " " + tx(nEquipos === 1 ? "grupoUnEquipo" : "grupoEnEquipos", { e: nEquipos }) : ""),
           el("span", { class: C.nota, texto: " · " + (sistema ? tx(sistema === "todos" ? "sugeridoTodos" : "sugeridoSuizo", { r: G.JDE_RONDAS_SUIZO }) : tx("grupoNoAlcanza")) }))));
     });
     const hayEquipos = s.grupos.some((g) => g.modalidad === "equipo");
@@ -819,8 +1002,10 @@
     caja.append(
       el("h3", { id: "pi-sugerencia-titulo", class: "font-serif text-lg font-bold", texto: tx("sugerenciaTitulo", { n: s.grupos.length }) }),
       el("p", { class: "text-sm mt-1", texto: tx("sugerenciaTexto", { total: s.juegan.length, d: unidas }) }),
+      s.siguiente ? el("p", { id: "pi-sugerencia-siguiente", class: "text-sm mt-2 font-semibold", texto: tx("sugerenciaSiguiente", { d: tx(TEXTO_ETAPA[s.siguiente.desde]), e: tx(TEXTO_ETAPA[s.siguiente.etapa]) }) }) : null,
       el("fieldset", {}, el("legend", { class: "sr-only", texto: tx("sugerenciaLeyenda") }), lista),
       pintarRepetidos(s),
+      pintarVariosOrigenes(s),
       pintarPaseAbierto(s),
       pintarEquiposDeMas(s),
       pintarIndividualesDeMas(s),
@@ -830,9 +1015,9 @@
       porSexo ? el("p", { class: C.nota + " mt-2", texto: tx("sugerenciaAbierto") }) : null,
       hayEquipos ? el("p", { class: C.nota + " mt-2", texto: tx("sugerenciaEquipos") }) : null,
       el("p", { class: C.nota + " mt-2", texto: tx("sugerenciaNormativa", { r: G.JDE_RONDAS_SUIZO, ritmo: G.JDE_RITMO_MINIMO }) }),
-      el("p", { class: C.nota + " mt-2", texto: tx("sugerenciaNombre", { b: t().nombre.trim() || s.base }) }),
+      el("p", { class: C.nota + " mt-2", texto: s.configJde ? tx("sugerenciaNombreJde") : tx("sugerenciaNombre", { b: t().nombre.trim() || s.base }) }),
       el("label", { class: "flex items-start gap-2 text-sm mt-3" },
-        el("input", { type: "checkbox", id: "pi-config-jde", class: "mt-1", checked: s.configJde, onchange: (e) => { s.configJde = e.target.checked; } }),
+        el("input", { type: "checkbox", id: "pi-config-jde", class: "mt-1", checked: s.configJde, onchange: (e) => { s.configJde = e.target.checked; pintarSugerencia(); $("pi-config-jde").focus(); } }),
         el("span", {}, el("span", { class: "font-semibold", texto: tx("configJdeCasilla") }), " " + tx("configJdeAyuda", { r: G.JDE_RONDAS_SUIZO, ritmo: G.JDE_RITMO_MINIMO }))),
       el("div", { class: "flex flex-wrap gap-2 mt-3" },
         el("button", { type: "button", id: "pi-sugerencia-crear", class: C.boton, disabled: marcados === 0, onclick: crearTorneosDeGrupos, texto: tx("sugerenciaCrear", { n: marcados }) }),
@@ -868,12 +1053,33 @@
   // sugerido por la normativa de los JDE: el suizo con al menos 5 rondas y,
   // si el abierto no tiene ritmo, el mínimo que pide. Si el abierto está vacío —sin jugadores ni rondas— se usa para
   // el primer grupo, en vez de dejar un torneo «(sin nombre)» de más.
-  function crearTorneosDeGrupos() {
+  async function crearTorneosDeGrupos() {
     const s = estado.sugerencia;
     const elegidos = s.grupos.filter((g) => g.marcado);
     if (!elegidos.length) return;
     const actual = t();
+    // Con la configuración de los JDE, primero la etapa y el lugar: el
+    // nombre de cada torneo sale de ahí.
+    let jde = null;
+    if (s.configJde) {
+      jde = await pedirEtapaJde(s.siguiente ? { etapa: s.siguiente.etapa } : actual.jde, s.region);
+      if (!jde || estado.sugerencia !== s || t() !== actual) return;
+      // En la Interregional, una Dirección Regional que no es de esa
+      // interregional casi siempre es un archivo equivocado: se pregunta.
+      const inter = jde.etapa === "interregional" && G.JDE_INTERREGIONALES.find((x) => x.numero === jde.lugar);
+      const ajenas = inter ? [...new Set(s.region.map((r) => G.direccionDe(r)).filter((d) => d && !inter.regiones.includes(d)))] : [];
+      if (ajenas.length) {
+        const ok = await Avisos.confirmar(tx("interregionalAjena", { d: ajenas.join(", "), i: G.nombreInterregional(inter) }), { aceptar: tx("interregionalAjenaSi") });
+        if (!ok || estado.sugerencia !== s || t() !== actual) return;
+      }
+    }
     const base = actual.nombre.trim() || s.base;
+    // El evento: lo que tienen en común los torneos que se crean ahora, con
+    // las decisiones del árbitro en la sugerencia (para el acta del
+    // congresillo, js/pareo/evento.js). Cada torneo guarda su copia.
+    const evento = { id: "e" + nuevoId(), nombre: jde ? G.nombreEventoJde(jde) : base, jde: jde || undefined,
+      creado: window.HoraCR ? HoraCR.hoy() : "", decisiones: decisionesDe(s) };
+    if (!jde) delete evento.jde;
     // Con la configuración de los JDE (la casilla, marcada de entrada), cada
     // torneo lleva la suya según cuántos juegan; sin ella, copia las rondas,
     // el ritmo, los puntos y los desempates del abierto tal cual.
@@ -887,13 +1093,26 @@
     apagarEnVivo();
     const ids = [];
     elegidos.forEach((g, i) => {
+      const jugadores = g.jugadores.map((j) => Object.assign({ id: idJugador(), retiradoDespuesDe: null }, soloJugador(j)));
+      // Un grupo de equipos es un torneo por equipos: un participante por
+      // centro educativo, con sus integrantes en el orden de la inscripción
+      // (que es el orden de tableros hasta que el árbitro lo cambie).
+      const deEquipos = g.modalidad === "equipo";
+      const participantes = deEquipos ? E.armarEquipos(jugadores, idJugador) : jugadores;
+      const n = participantes.length;
+      const grupo = etiquetaGrupo(g);
       const datos = Object.assign({}, comunes, {
-        nombre: (base ? base + " — " : "") + etiquetaGrupo(g),
-        sistema: G.sistemaSugerido(g.jugadores.length) || "suizo",
-      }, s.configJde ? G.configuracionJde(g.jugadores.length, actual) : {}, {
-        jugadores: g.jugadores.map((j) => Object.assign({ id: idJugador(), retiradoDespuesDe: null }, soloJugador(j))),
+        nombre: jde ? nombreConGrupo(jde, grupo) : (base ? base + " — " : "") + grupo,
+        grupo, jde: jde || undefined, evento, ordenEnEvento: i,
+        sistema: G.sistemaSugerido(n) || "suizo",
+      }, deEquipos ? { puntos: Object.assign({}, E.PUNTOS_EQUIPOS), desempates: E.desempatesPara(G.sistemaSugerido(n) || "suizo") } : {},
+      s.configJde ? configuracionPara(n, actual, deEquipos, jde.etapa) : {}, {
+        tipo: deEquipos ? "equipos" : undefined, tableros: deEquipos ? E.TABLEROS : undefined,
+        jugadores: participantes,
         rondas: [], numeracion: null,
       });
+      if (!deEquipos) { delete datos.tipo; delete datos.tableros; }
+      if (!jde) delete datos.jde;
       if (i === 0 && reusar) estado.t = T.nuevo(Object.assign({}, actual, datos));
       else { estado.id = nuevoId(); estado.t = T.nuevo(datos); }
       guardar();
@@ -909,6 +1128,252 @@
     escribir(CLAVE_FICHA, "jugadores");
     pintarTodo();
     Avisos.avisar(tx("torneosCreados", { n: ids.length }));
+  }
+
+  // Lo que decidió el árbitro en la sugerencia, en texto llano y en español
+  // (va al acta, que es un documento oficial del MEP).
+  function decisionesDe(s) {
+    const es = (clave, vars) => X.t("es", clave, vars);
+    const MODO = { equipo: "Equipos", individual: "Individual" };
+    const TORNEO = { w: "Mujeres", m: "Abierto" };
+    const modo = (x) => (MODO[x.modalidad] || MODO.individual) + " " + x.categoria;
+    const grupoDe = (e, equipo) => (equipo ? MODO.equipo : MODO.individual) + " · Categoría " + e.categoria + " · " + (TORNEO[e.torneo] || TORNEO.m);
+    const limpia = s.limpia || { repetidos: [], dosModalidades: [] };
+    const descartados = [];
+    for (const e of s.equipos.concat(s.individuales)) {
+      const elegidos = s.elegidos.get(e.eleccion);
+      for (const j of e.integrantes) if (!elegidos.has(j)) descartados.push({ nombre: j.nombre, institucion: e.institucion, grupo: grupoDe(e, e.tipo === "eq") });
+    }
+    const r = s.revision || { permitidos: [], noPermitidos: [] };
+    const caso = (c) => {
+      const j = c.jugador;
+      const v = { n: j.nombre, i: j.institucion || "—", a: c.nace, p: c.propia, c: c.categoria, d: c.desde, k: c.cuantos, m: G.JDE_MAX_ASCENSOS };
+      const clave = c.motivo ? { mayor: "catMayor", individual: "catIndividual", salto: "catSalto", tope: "catTope" }[c.motivo] : "catPermitido";
+      return es(c.motivo ? "catNoPermitido" : "catSiPermitido") + " " + es(clave, v);
+    };
+    return {
+      repetidos: limpia.repetidos.map((x) => ({ nombre: x.jugador.nombre, institucion: x.jugador.institucion || "—", veces: x.veces })),
+      dosModalidades: limpia.dosModalidades.map((d, k) => ({
+        nombre: d.jugador.nombre, institucion: d.jugador.institucion || "—", inscripciones: d.inscripciones.map(modo).join(" y "),
+        queda: s.dondeQueda.has(k) ? modo(d.inscripciones[s.dondeQueda.get(k)]) : "",
+      })),
+      pase: s.pasarMujeres ? s.pase.pasadas.map((c) => ({ institucion: c.institucion || "—", categoria: c.categoria, nombres: c.mujeres.map((j) => j.nombre).join(", ") })) : [],
+      descartados,
+      cortos: (s.cortos || []).map((e) => ({ institucion: e.institucion || "—", grupo: grupoDe(e, true), cuantos: e.integrantes.length, nombres: e.integrantes.map((j) => j.nombre).join(", ") })),
+      categorias: r.noPermitidos.concat(r.permitidos).map(caso),
+      hombresEnMujeres: (s.hombresEnMujeres || []).map((j) => j.nombre + " (" + (j.institucion || "—") + ")"),
+      variosOrigenes: (limpia.variosOrigenes || []).map((x) => ({ nombre: x.jugador.nombre, institucion: x.jugador.institucion || "—", origenes: x.origenes.join(" y ") })),
+      // Lo que el árbitro tiene que marcar como visto antes de emparejar la
+      // ronda 1 de cada torneo (js/pareo/evento.js: pendientes). Sin texto
+      // armado: se escribe en el idioma de la página al mostrarlo.
+      revisar: [].concat(
+        limpia.dosModalidades.filter((d, k) => !s.dondeQueda.has(k)).map((d) => ({ tipo: "dosModalidades", personas: [d.jugador.nombre],
+          vars: { n: d.jugador.nombre, i: d.jugador.institucion || "—", m: d.inscripciones.map(modo).join(" / ") } })),
+        (limpia.variosOrigenes || []).map((x) => ({ tipo: "origenes", personas: [x.jugador.nombre], vars: { n: x.jugador.nombre, i: x.jugador.institucion || "—", o: x.origenes.join(" / ") } })),
+        r.noPermitidos.map((c) => ({ tipo: "categoria", motivo: c.motivo, personas: [c.jugador.nombre],
+          vars: { n: c.jugador.nombre, i: c.jugador.institucion || "—", a: c.nace, p: c.propia, c: c.categoria, d: c.desde, k: c.cuantos, m: G.JDE_MAX_ASCENSOS } })),
+        (s.hombresEnMujeres || []).map((j) => ({ tipo: "hombre", personas: [j.nombre], vars: { n: j.nombre, i: j.institucion || "—" } })),
+        (s.cortos || []).map((e) => ({ tipo: "corto", personas: e.integrantes.map((j) => j.nombre), vars: { i: e.institucion || "—", k: e.integrantes.length, m: G.JDE_MIN_EQUIPO } }))),
+    };
+  }
+
+  // Lo que hay que revisar antes de la ronda 1, escrito.
+  const TEXTO_REVISAR = { dosModalidades: "revisarDosModalidades", origenes: "revisarOrigenes", hombre: "revisarHombre", corto: "revisarCorto" };
+  const MOTIVO_CATEGORIA = { mayor: "catMayor", individual: "catIndividual", salto: "catSalto", tope: "catTope" };
+  const textoRevisar = (x) => (x.tipo === "categoria" ? tx("catNoPermitido") + " " + tx(MOTIVO_CATEGORIA[x.motivo], x.vars) : tx(TEXTO_REVISAR[x.tipo], x.vars));
+  const claveRevisar = (x) => x.tipo + "|" + x.personas.join(",");
+  // Cuántos puntos de la revisión siguen sin marcar en un torneo (0 si ya
+  // arrancó: después de la ronda 1 la revisión no detiene nada).
+  const sinRevisar = (v) => {
+    if (v.rondas.length) return 0;
+    const vistos = new Set(v.revisadoAntes || []);
+    return V.pendientes(v).filter((x) => !vistos.has(claveRevisar(x))).length;
+  };
+
+  // ---------- El evento: acta, informe y clasificados ----------
+  // Los torneos del mismo evento que el abierto, en el orden en que se
+  // crearon (el de la sugerencia). El abierto, con lo último que tiene.
+  function torneosDelEvento(idEvento) {
+    const id = idEvento || (t().evento && t().evento.id);
+    if (!id) return [];
+    const otros = estado.lista.map((x) => (x.id === estado.id ? t() : leerJSON(PREFIJO + x.id, null)))
+      .filter((x) => x && x.evento && x.evento.id === id);
+    return otros.sort((a, b) => (a.ordenEnEvento || 0) - (b.ordenEnEvento || 0));
+  }
+
+  async function bajarDocumento(doc, sufijo, boton) {
+    if (boton) boton.disabled = true;
+    try {
+      const blob = await window.ReportePDF.generar(doc);
+      const url = URL.createObjectURL(blob);
+      const a = el("a", { href: url, download: window.PareoPDF.nombreArchivo(doc.subtitulo, sufijo) });
+      document.body.append(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 10000);
+    } catch (e) {
+      Avisos.avisar(tx("noPdf", { e: e.message }), { tipo: "error" });
+    } finally {
+      if (boton) boton.disabled = false;
+    }
+  }
+
+  function pintarEvento() {
+    const caja = $("pi-evento");
+    caja.replaceChildren();
+    const ev = t().evento;
+    caja.hidden = !ev;
+    if (!ev) return;
+    const torneos = torneosDelEvento();
+    const n = V.cupo(ev.jde);
+    const siguiente = ev.jde ? V.SIGUIENTE[ev.jde.etapa] : null;
+    caja.append(
+      el("h2", { class: "font-serif text-xl font-bold mb-1", texto: tx("eventoTitulo") }),
+      el("p", { class: "font-semibold", texto: ev.nombre }),
+      el("p", { class: C.nota + " mb-3", texto: tx("eventoTexto", { n: torneos.length }) }));
+    const acciones = el("div", { class: "flex flex-wrap gap-2" });
+    const bActa = el("button", { type: "button", id: "pi-evento-acta", class: C.boton }, tx("eventoActa"));
+    bActa.addEventListener("click", () => bajarDocumento(V.acta(ev, torneosDelEvento()), "acta-congresillo", bActa));
+    const bInforme = el("button", { type: "button", id: "pi-evento-informe", class: C.botonSec }, tx("eventoInforme"));
+    bInforme.addEventListener("click", () => bajarDocumento(V.informe(ev, torneosDelEvento()), "informe-oficial", bInforme));
+    const bPremiacion = el("button", { type: "button", id: "pi-evento-premiacion", class: C.botonSec }, tx("eventoPremiacion"));
+    bPremiacion.addEventListener("click", () => bajarDocumento(V.premiacion(ev, torneosDelEvento()), "premiacion", bPremiacion));
+    const bDiplomas = el("button", { type: "button", id: "pi-evento-diplomas", class: C.botonSec }, tx("eventoDiplomas"));
+    bDiplomas.addEventListener("click", () => imprimirDiplomas(V.diplomas(ev, torneosDelEvento())));
+    acciones.append(bActa, bInforme, bPremiacion, bDiplomas);
+    caja.append(acciones, el("p", { class: C.nota + " mt-2", texto: tx("eventoPapelesAyuda") }),
+      el("p", { class: C.nota + " mt-1", texto: tx("eventoPremiacionAyuda") }));
+
+    // Lo que falta revisar antes de la ronda 1, en todo el evento.
+    const conPendientes = torneos.map((x) => [x, sinRevisar(x)]).filter(([, k]) => k > 0);
+    if (conPendientes.length) {
+      caja.append(el("div", { id: "pi-evento-revisar", class: "mt-4" },
+        el("p", { class: "text-sm font-semibold", texto: tx("cortosAviso") + " " + tx("eventoRevisar") }),
+        el("ul", { class: "list-disc pl-6 text-sm" }, conPendientes.map(([x, k]) => el("li", { texto: (x.grupo || x.nombre) + ": " + k })))));
+    }
+
+    // El enlace en vivo de todo el evento: un solo QR para el público.
+    const vivo = estado.eventoVivo && estado.eventoVivo.id === ev.id;
+    const qr = el("div", { id: "pi-evento-qr", class: "mt-3" });
+    const bVivo = el("button", { type: "button", id: "pi-evento-vivo", class: vivo ? C.botonSec : C.boton, "aria-pressed": vivo ? "true" : "false" },
+      tx(vivo ? "eventoVivoApagar" : "eventoVivoPrender"));
+    bVivo.addEventListener("click", async () => {
+      if (estado.eventoVivo && estado.eventoVivo.id === ev.id) apagarEventoVivo();
+      else if (!(await prenderEventoVivo(ev))) return;
+      pintarEvento();
+      const b = $("pi-evento-vivo");
+      if (b) b.focus();
+    });
+    caja.append(el("h3", { class: "font-semibold mt-5", texto: tx("eventoVivoTitulo") }),
+      el("p", { class: C.nota, texto: tx("eventoVivoTexto") }), el("div", { class: "mt-2" }, bVivo), qr);
+    if (vivo) mostrarQrEvento(qr);
+
+    // El respaldo: todos los torneos del evento en un solo archivo.
+    const bRespaldo = el("button", { type: "button", id: "pi-evento-respaldo", class: C.botonSec }, tx("eventoRespaldo"));
+    bRespaldo.addEventListener("click", () => {
+      const lista = torneosDelEvento();
+      bajar(window.PareoPDF.nombreArchivo(ev.nombre, "respaldo").replace(/\.pdf$/, ".json"), JSON.stringify(V.respaldo(ev, lista), null, 1), "application/json");
+      Avisos.avisar(tx("eventoRespaldoListo", { n: lista.length }));
+    });
+    caja.append(el("h3", { class: "font-semibold mt-5", texto: tx("eventoRespaldoTitulo") }),
+      el("p", { class: C.nota, texto: tx("eventoRespaldoTexto") }), el("div", { class: "mt-2" }, bRespaldo));
+
+    if (!siguiente || !n) return;
+    // Los clasificados: los primeros n de cada torneo (art. 66.1).
+    caja.append(el("h3", { class: "font-semibold mt-5", texto: tx("clasificadosTitulo", { e: tx(TEXTO_ETAPA_SIGUIENTE[siguiente]), n }) }),
+      el("p", { class: C.nota, texto: tx("clasificadosTexto", { n }) }));
+    const lista = el("div", { id: "pi-clasificados", class: "mt-2 space-y-3" });
+    for (const tor of torneos) {
+      const c = V.clasificados(tor, n);
+      const sec = el("section", { class: "text-sm" }, el("h4", { class: "font-semibold", texto: tor.grupo || tor.nombre }));
+      if (!c.filas.length) sec.append(el("p", { class: C.nota, texto: tx("clasificadosSinRondas") }));
+      else {
+        if (!c.terminado) sec.append(el("p", { class: C.nota, texto: tx("clasificadosProvisional", { r: c.rondas, t: c.total }) }));
+        sec.append(el("ol", { class: "list-decimal pl-6" }, c.filas.map((f) => {
+          const p = tor.jugadores.find((j) => j.id === f.id);
+          return el("li", { texto: p.nombre + " (" + (p.institucion || "—") + ") · " + puntosTexto(f.puntos) });
+        })));
+        if (c.empate) sec.append(el("p", { class: "font-semibold" }, tx("cortosAviso") + " " + tx("clasificadosEmpate")));
+      }
+      lista.append(sec);
+    }
+    const bLista = el("button", { type: "button", id: "pi-evento-clasificados", class: C.botonSec + " mt-3" }, tx("clasificadosBajar"));
+    bLista.addEventListener("click", () => {
+      const filas = V.filasClasificados(ev, torneosDelEvento());
+      if (!filas.length) { Avisos.avisar(tx("clasificadosNadie"), { tipo: "error" }); return; }
+      window.TablaExcel.bajar(window.PareoPDF.nombreArchivo(ev.nombre, "clasificados").replace(/\.pdf$/, ".xlsx"), [{ nombre: "Clasificados", filas: [V.ENCABEZADOS].concat(filas) }]);
+    });
+    caja.append(lista, bLista, el("p", { class: C.nota + " mt-2", texto: tx("clasificadosAyuda") }));
+  }
+  const TEXTO_ETAPA_SIGUIENTE = { regional: "etapaRegional", interregional: "etapaInterregionalNombre", nacional: "etapaNacional" };
+
+  // Un diploma por hoja, apaisado (el texto, de js/pareo/evento.js: en
+  // español, como el acta).
+  function imprimirDiplomas(lista) {
+    if (!lista.length) { Avisos.avisar(tx("diplomasNadie"), { tipo: "error" }); return; }
+    const cont = $("pi-firmas");
+    cont.replaceChildren();
+    const primero = torneosDelEvento()[0] || {};
+    for (const d of lista) {
+      const x = V.textoDiploma(d);
+      cont.append(el("div", { class: "pi-diploma", lang: "es" },
+        el("p", { class: "pi-diploma-evento", texto: x.encabezado }),
+        el("p", { class: "pi-diploma-otorga", texto: x.otorga }),
+        el("p", { class: "pi-diploma-nombre", texto: x.nombre }),
+        x.centro ? el("p", { class: "pi-diploma-texto", texto: x.centro }) : null,
+        el("p", { class: "pi-diploma-texto", texto: x.motivo }),
+        el("div", { class: "pi-diploma-firmas" },
+          el("p", { class: "pi-firma-linea", texto: "Árbitro principal" + (primero.arbitro ? ": " + primero.arbitro : "") }),
+          el("p", { class: "pi-firma-linea", texto: "Comité Organizador" }))));
+    }
+    document.body.classList.add("pi-imprimiendo-firmas");
+    window.print();
+  }
+
+  // ---------- El evento en vivo, desde el celular ----------
+  // El mismo canal de Supabase Realtime en modo Broadcast que el de un torneo
+  // («El canal en vivo»), con todos los torneos del evento. El código queda
+  // guardado por evento: el QR impreso sirve todo el día. Quien abre el
+  // enlace pide el estado al entrar («pedir»), así no espera al próximo
+  // resultado.
+  const CLAVE_VIVO_EVENTO = "pareo_evento_vivo_v1_";
+  async function prenderEventoVivo(ev) {
+    try { await PareoVer.cargarSupabase(); }
+    catch (e) { Avisos.avisar(tx("errorEnVivo", { e: e.message }), { tipo: "error" }); return false; }
+    apagarEventoVivo();
+    let codigo = leer(CLAVE_VIVO_EVENTO + ev.id);
+    if (!codigo) { codigo = nuevoCodigoVivo(); escribir(CLAVE_VIVO_EVENTO + ev.id, codigo); }
+    const canal = window.sb.channel("pareo-evento-" + codigo);
+    estado.eventoVivo = { id: ev.id, codigo, canal };
+    canal.on("broadcast", { event: "pedir" }, () => difundirEvento());
+    canal.subscribe((st) => { if (st === "SUBSCRIBED") difundirEvento(); });
+    return true;
+  }
+  function apagarEventoVivo() {
+    if (estado.eventoVivo) { estado.eventoVivo.canal.unsubscribe(); estado.eventoVivo = null; }
+  }
+  function difundirEvento() {
+    const x = estado.eventoVivo;
+    if (!x) return;
+    const lista = torneosDelEvento(x.id);
+    if (!lista.length) return;
+    x.canal.send({ type: "broadcast", event: "estado", payload: V.vistaEvento(lista[0].evento, lista) });
+  }
+  async function mostrarQrEvento(cont) {
+    const url = location.origin + location.pathname + "#evento=" + estado.eventoVivo.codigo;
+    try {
+      await PareoQr.cargar();
+      const copiar = el("button", { type: "button", class: C.mini }, tx("copiarEnlace"));
+      copiar.addEventListener("click", async () => {
+        try { await navigator.clipboard.writeText(url); Avisos.avisar(tx("enlaceCopiado")); }
+        catch (e) { Avisos.avisar(tx("noCopia"), { tipo: "error" }); }
+      });
+      cont.replaceChildren(el("div", { class: "w-48 bg-white p-2 rounded-lg" }, PareoQr.svg(url, tx("qrEtiqueta"))),
+        el("p", { id: "pi-evento-url", class: "text-xs break-all mt-2 font-mono", texto: url }), el("div", { class: "mt-1" }, copiar),
+        el("p", { class: C.nota + " mt-1", texto: tx("eventoVivoActivo") }));
+    } catch (e) {
+      Avisos.avisar(tx("errorQr", { e: e.message }), { tipo: "error" });
+    }
   }
 
   // El mismo bolsillo de palabras que usa la Edge Function, para emparejar
@@ -1046,8 +1511,6 @@
   function pintarRondaJugada(caja, r) {
     const v = t();
     const R = v.rondas[r];
-    const num = T.numeros(v);
-    const antes = (id) => T.puntosHasta(v, id, r);
     const pendientes = R.mesas.filter((m) => m.n && !m.r).length;
     const ultima = r === v.rondas.length - 1;
     caja.append(el("div", { class: "flex flex-wrap items-baseline justify-between gap-3 mb-3" },
@@ -1056,11 +1519,22 @@
         el("button", { type: "button", class: C.botonSec, onclick: () => window.print() }, tx("imprimir")),
         el("button", { type: "button", class: C.botonSec, onclick: () => imprimirPlantillaMesas(r) }, tx("plantillaMesas")),
         el("button", { type: "button", class: C.botonSec, onclick: () => imprimirPlanillasFirma(r) }, tx("planillasFirma")),
+        E.esDeEquipos(v) ? el("button", { type: "button", id: "pi-alineaciones", class: C.botonSec, onclick: () => imprimirAlineaciones(r) }, tx("alineacionesImprimir")) : null,
         el("button", { type: "button", class: C.botonSec, onclick: () => compartirLectura(r) }, tx("verDesdeElCelular")),
         ultima ? el("button", { type: "button", class: C.miniPeligro + " px-3 py-2", onclick: () => deshacerRonda(r) }, tx("deshacerRonda")) : null)));
     caja.append(el("p", { class: C.nota + " mb-3 no-imprimir", role: "status", texto: pendientes ? tx("faltanResultados", { n: pendientes }) : tx("rondaCompleta") }));
     if (!ultima) caja.append(el("p", { class: C.nota + " mb-3 no-imprimir", texto: tx("avisoCorregir") }));
 
+    if (E.esDeEquipos(v)) pintarEncuentros(caja, r);
+    else pintarMesasIndividuales(caja, r);
+    pintarNoJuegan(caja, r);
+  }
+
+  function pintarMesasIndividuales(caja, r) {
+    const v = t();
+    const R = v.rondas[r];
+    const num = T.numeros(v);
+    const antes = (id) => T.puntosHasta(v, id, r);
     const tabla = el("table", { class: "pi-tabla" });
     tabla.append(el("thead", {}, el("tr", {},
       el("th", { class: "num", scope: "col", texto: tx("mesa") }),
@@ -1096,8 +1570,13 @@
     });
     tabla.append(cuerpo);
     caja.append(el("div", { class: "overflow-x-auto" }, tabla));
+  }
 
-    // Quienes no jugaron esta ronda: byes pedidos, retirados, inscritos después.
+  // Quienes no jugaron esta ronda: byes pedidos, retirados, inscritos después.
+  function pintarNoJuegan(caja, r) {
+    const v = t();
+    const R = v.rondas[r];
+    const num = T.numeros(v);
     const enMesa = new Set();
     for (const m of R.mesas) { enMesa.add(m.b); if (m.n) enMesa.add(m.n); }
     const fuera = T.ordenInicial(v).filter((id) => !enMesa.has(id));
@@ -1121,6 +1600,150 @@
       }
       caja.append(el("h3", { class: "font-semibold mt-5", texto: tx("noJuegan") }), ul);
     }
+  }
+
+  // ---------- Los encuentros de un torneo por equipos ----------
+  // Cada encuentro: los dos equipos con sus puntos de encuentro antes de la
+  // ronda, quiénes juegan de cada lado (los cuatro primeros del orden de
+  // tableros, que el árbitro cambia si falta alguien: los de abajo suben y
+  // el suplente entra al final) y el resultado de cada tablero. El del
+  // encuentro sale solo de los tableros (js/pareo/equipos.js).
+  function pintarEncuentros(caja, r) {
+    const v = t();
+    const R = v.rondas[r];
+    const num = T.numeros(v);
+    const antes = (id) => T.puntosHasta(v, id, r);
+    const nombreIntegrante = (idEquipo, idJ) => {
+      const e = jugador(idEquipo);
+      const j = e && e.integrantes.find((x) => x.id === idJ);
+      return j ? j.nombre : "—";
+    };
+    const lista = el("div", { class: "space-y-4" });
+    R.mesas.forEach((m) => { if (m.n !== null) E.prepararMesa(v, m); });
+    const avisos = E.avisosAlineacion(v, r);
+    const listaAvisos = (cuales, id) => (cuales.length ? el("ul", { id, class: "mt-2 space-y-1 text-sm" }, cuales.map((a) =>
+      el("li", {}, el("span", { class: "font-semibold", texto: tx("cortosAviso") + " " }), tx(TEXTO_ALINEACION[a.tipo], { e: a.nombre, n: a.presentes, k: a.pierde })))) : null);
+    const generales = listaAvisos(avisos.filter((a) => a.mesa == null), "pi-alin-generales");
+    if (generales) caja.append(generales);
+    R.mesas.forEach((m, i) => {
+      if (m.n === null) {
+        lista.append(el("p", { class: "rounded-xl border border-brand-200 dark:border-brand-700 p-3 text-sm" },
+          el("span", { class: "font-semibold", texto: tx("mesa") + " " + (i + 1) + ": " + num.get(m.b) + ". " + nombreDe(m.b) }),
+          " — " + tx("byeEquipo", { p: puntosTexto(v.puntos.bye), t: puntosTexto(E.TABLEROS / 2) })));
+        return;
+      }
+      E.prepararMesa(v, m);
+      const pe = E.puntosDelEncuentro(v, m);
+      const tarjeta = el("section", { class: "rounded-xl border border-brand-200 dark:border-brand-700 p-3", "aria-labelledby": "pi-enc-" + i + "-t" });
+      tarjeta.append(el("h3", { id: "pi-enc-" + i + "-t", class: "font-semibold" },
+        tx("mesa") + " " + (i + 1) + ": " + num.get(m.b) + ". " + nombreDe(m.b) + " (" + puntosTexto(antes(m.b)) + ") – " +
+        num.get(m.n) + ". " + nombreDe(m.n) + " (" + puntosTexto(antes(m.n)) + ")"));
+      tarjeta.append(el("p", { id: "pi-enc-" + i + "-r", class: "text-sm mt-1", role: "status" },
+        m.r ? tx(pe.incomparecencia ? "encuentroIncomp" : "encuentroResultado", {
+          b: puntosTexto(pe.b), n: puntosTexto(pe.n),
+          g: m.r === "=" ? tx("empate") : tx("ganaEquipo", { e: nombreDe(m.r === "1-0" || m.r === "+-" ? m.b : m.n) }),
+        }) : tx("encuentroFalta", { b: puntosTexto(pe.b), n: puntosTexto(pe.n) })));
+      const deEsta = listaAvisos(avisos.filter((a) => a.mesa === i), "pi-enc-" + i + "-avisos");
+      if (deEsta) tarjeta.append(deEsta);
+
+      // Quiénes juegan: una casilla por integrante, hasta cuatro.
+      const alineacion = el("div", { class: "grid sm:grid-cols-2 gap-3 mt-2 no-imprimir" });
+      for (const lado of "bn") {
+        const e = jugador(m[lado]);
+        const elegidos = m.alineacion[lado];
+        const lleno = elegidos.length >= E.TABLEROS;
+        const fs = el("fieldset", { class: "text-sm" }, el("legend", { class: "font-semibold", texto: tx("juegan", { e: e.nombre }) }));
+        e.integrantes.forEach((j, k) => {
+          const id = "pi-enc-" + i + "-" + lado + "-" + k;
+          const si = elegidos.includes(j.id);
+          fs.append(el("label", { class: "flex items-center gap-2" },
+            el("input", { type: "checkbox", id, checked: si, disabled: !si && lleno, onchange: (ev) => {
+              const marcados = new Set(m.alineacion[lado]);
+              if (ev.target.checked) marcados.add(j.id); else marcados.delete(j.id);
+              // Siempre en el orden de tableros (sistema olímpico).
+              m.alineacion[lado] = e.integrantes.map((x) => x.id).filter((x) => marcados.has(x));
+              alCambiarEncuentro(m, id);
+            } }),
+            el("span", { texto: (k + 1) + ". " + j.nombre + (k >= E.TABLEROS ? " (" + tx("suplente") + ")" : "") })));
+        });
+        alineacion.append(fs);
+      }
+      tarjeta.append(alineacion);
+
+      // Los tableros: con quién juega cada uno y el resultado. Una lista, no
+      // una tabla: en el celular, cuatro columnas con nombres largos sacan de
+      // la pantalla a las negras. El equipo de cada uno se alterna (el de la
+      // izquierda con blancas en los tableros 1 y 3) y va en el título.
+      const tableros = el("ol", { class: "mt-3 space-y-2" });
+      for (const x of E.tablerosDe(v, m)) {
+        const equipoBlancas = x.bBlancas ? m.b : m.n, equipoNegras = x.bBlancas ? m.n : m.b;
+        const blancas = x.blancas ? nombreIntegrante(equipoBlancas, x.blancas) : tx("nadie");
+        const negras = x.negras ? nombreIntegrante(equipoNegras, x.negras) : tx("nadie");
+        let celda;
+        if (x.fijo || pe.incomparecencia) celda = el("span", { class: "text-sm", texto: tx("corto_" + (pe.incomparecencia ? m.r : x.r)) + " · " + tx("incomparecencia") });
+        else {
+          const id = "pi-enc-" + i + "-t" + x.k;
+          const sel = el("select", { id, class: C.campoChico, "aria-label": tx("resultadoTablero", { t: x.k + 1, b: blancas, n: negras }) });
+          for (const [val, clave] of RESULTADOS) sel.append(el("option", { value: val, texto: tx(clave) }));
+          sel.value = x.r || "";
+          sel.addEventListener("change", () => { m.partidas[x.k].r = sel.value || null; alCambiarEncuentro(m, id); });
+          celda = el("span", {}, sel, el("span", { class: "pi-solo-imprimir", texto: x.r ? tx("corto_" + x.r) : "" }));
+        }
+        tableros.append(el("li", { class: "flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-brand-100 dark:border-brand-800 pt-2", "data-tablero": x.k + 1 },
+          el("span", { class: "font-mono text-xs font-bold", texto: tx("tableroN", { t: x.k + 1 }) }),
+          el("span", { class: "text-sm flex-1 min-w-[12rem]" },
+            el("span", { class: "font-semibold", title: nombreDe(equipoBlancas), texto: blancas }), " ",
+            el("span", { class: C.nota, texto: "(" + tx("blancas") + ")" }), " – ",
+            el("span", { class: "font-semibold", title: nombreDe(equipoNegras), texto: negras }), " ",
+            el("span", { class: C.nota, texto: "(" + tx("negras") + ")" })),
+          celda));
+      }
+      tarjeta.append(tableros);
+      lista.append(tarjeta);
+    });
+    caja.append(lista);
+  }
+
+  const TEXTO_ALINEACION = { menos2: "alinMenos2", incompleto: "alinIncompleto", fueraDeOrden: "alinFueraDeOrden", ajeno: "alinAjeno", ordenCambiado: "alinOrdenCambiado" };
+
+  // La hoja de alineación de cada equipo en cada encuentro de la ronda: el
+  // capitán marca a los cuatro que juegan, en el orden de tableros, y la
+  // entrega firmada antes de la ronda (art. 66.2.h).
+  function imprimirAlineaciones(r) {
+    const v = t();
+    const R = v.rondas[r];
+    const num = T.numeros(v);
+    const cont = $("pi-firmas");
+    cont.replaceChildren();
+    R.mesas.forEach((m, i) => {
+      if (m.n === null) return;
+      for (const [id, rival] of [[m.b, m.n], [m.n, m.b]]) {
+        const e = jugador(id);
+        const hoja = el("div", { class: "pi-firma-mesa" },
+          el("h1", { class: "pi-firma-titulo" }, tx("alineacionTitulo", { r: r + 1, m: i + 1 }) + (v.nombre ? " — " + v.nombre : "")),
+          el("p", { class: "pi-firma-jugador" }, tx("alineacionEquipos", { e: num.get(id) + ". " + e.nombre, r: num.get(rival) + ". " + nombreDe(rival) })),
+          el("p", { class: "pi-firma-resultado" }, tx("alineacionInstrucciones", { t: E.TABLEROS })));
+        e.integrantes.forEach((j, k) => hoja.append(el("p", { class: "pi-firma-jugador" },
+          "☐  " + (k < E.TABLEROS ? tx("tableroN", { t: k + 1 }) : tx("suplente")) + ": " + j.nombre)));
+        hoja.append(el("p", { class: "pi-firma-linea" }, tx("firmaCapitan", { e: e.nombre })), el("p", { class: "pi-firma-linea" }, tx("alineacionHora")));
+        cont.append(hoja);
+      }
+    });
+    if (!cont.children.length) return;
+    document.body.classList.add("pi-imprimiendo-firmas");
+    window.print();
+  }
+
+  // Cada cambio de un tablero o de una alineación vuelve a sacar el
+  // resultado del encuentro, guarda y vuelve a pintar la ronda, con el foco
+  // en el mismo control.
+  function alCambiarEncuentro(m, idFoco) {
+    const v = t();
+    m.r = E.resultadoEncuentro(v, m);
+    guardar();
+    pintarRondas();
+    const x = $(idFoco);
+    if (x) x.focus();
   }
 
   // Una hoja aparte para pegar en la pared antes de la ronda: mesa, blancas,
@@ -1175,6 +1798,23 @@
         cont.append(hoja);
         return;
       }
+      if (E.esDeEquipos(v)) {
+        // Un encuentro: los cuatro tableros con quién juega con cada color y
+        // su resultado (si ya está), y la firma de los dos capitanes.
+        E.prepararMesa(v, m);
+        const nombreDeJ = (idE, idJ) => { const j = idJ && jugador(idE).integrantes.find((x) => x.id === idJ); return j ? j.nombre : tx("nadie"); };
+        hoja.append(el("p", { class: "pi-firma-jugador" }, num.get(m.b) + ". " + nombreDe(m.b) + " – " + num.get(m.n) + ". " + nombreDe(m.n)));
+        for (const x of E.tablerosDe(v, m)) {
+          const eb = x.bBlancas ? m.b : m.n, en = x.bBlancas ? m.n : m.b;
+          hoja.append(el("p", { class: "pi-firma-resultado" },
+            tx("tableroN", { t: x.k + 1 }) + ": " + nombreDeJ(eb, x.blancas) + " – " + nombreDeJ(en, x.negras) + "   ",
+            x.r ? el("span", { class: "font-semibold" }, tx("corto_" + x.r)) : el("span", { class: "pi-firma-blanco" })));
+        }
+        hoja.append(el("p", { class: "pi-firma-linea" }, tx("firmaCapitan", { e: nombreDe(m.b) })),
+          el("p", { class: "pi-firma-linea" }, tx("firmaCapitan", { e: nombreDe(m.n) })));
+        cont.append(hoja);
+        return;
+      }
       hoja.append(
         el("p", { class: "pi-firma-jugador" }, num.get(m.b) + ". " + nombreDe(m.b)),
         el("p", { class: "pi-firma-jugador" }, num.get(m.n) + ". " + nombreDe(m.n)),
@@ -1201,12 +1841,12 @@
 
   // La misma «foto» para los dos caminos (el enlace del momento y la
   // difusión en vivo): la ronda r y la clasificación de ahora, con los
-  // mismos datos que ya pintó la pantalla (filasFiltradas(), D.clasificacion()).
+  // mismos datos que ya pintó la pantalla (filasFiltradas(), E.clasificacion()).
   function datosLecturaActual(r) {
     const v = t();
     const R = v.rondas[r];
     const k = rondasCompletas();
-    const filas = filasFiltradas(D.clasificacion(hasta(k), v.desempates));
+    const filas = filasFiltradas(E.clasificacion(hasta(k), v.desempates));
     return {
       v: 1,
       nombre: v.nombre || "",
@@ -1320,6 +1960,32 @@
             problemas.map(([n, clave]) => el("li", { texto: tx(clave, { n }) })))));
       }
     }
+    // Lo que quedó de la inscripción para revisar (evento de los JDE): cada
+    // punto se marca como visto, y hasta marcarlos todos no se empareja.
+    let faltanRevisar = () => 0;
+    const revisarEstado = el("p", { id: "pi-revisar-estado", class: "text-sm mt-2 font-semibold", role: "status" });
+    if (r === 0) {
+      const pend = V.pendientes(v);
+      if (pend.length) {
+        const vistos = new Set(v.revisadoAntes || []);
+        const ul = el("ul", { id: "pi-revisar-lista", class: "mt-2 space-y-1 text-sm" });
+        pend.forEach((x, i) => {
+          const id = "pi-revisar-" + i, k = claveRevisar(x);
+          ul.append(el("li", { class: "flex items-start gap-2" },
+            el("input", { type: "checkbox", id, class: "mt-1", checked: vistos.has(k), onchange: (e) => {
+              if (e.target.checked) vistos.add(k); else vistos.delete(k);
+              v.revisadoAntes = [...vistos];
+              guardar();
+              actualizarRevision();
+            } }),
+            el("label", { for: id, texto: textoRevisar(x) })));
+        });
+        faltanRevisar = () => sinRevisar(v);
+        caja.append(el("section", { id: "pi-revisar", class: "mb-4 rounded-xl border-2 border-accent-500 p-3", "aria-labelledby": "pi-revisar-titulo" },
+          el("h3", { id: "pi-revisar-titulo", class: "font-semibold", texto: tx("revisarTitulo") }),
+          el("p", { class: "text-sm mt-1", texto: tx("revisarTexto") }), ul, revisarEstado));
+      }
+    }
     const pedidas = {};
     if (v.sistema === "todos") {
       caja.append(el("p", { class: C.nota + " mb-3", texto: tx("todosAyuda") }));
@@ -1357,9 +2023,16 @@
       }
       caja.append(ul);
     }
-    const boton = el("button", { type: "button", class: C.boton }, tx("emparejarRonda", { r: r + 1 }));
+    const boton = el("button", { type: "button", id: "pi-emparejar", class: C.boton }, tx("emparejarRonda", { r: r + 1 }));
     const msg = el("p", { class: "mt-3 text-sm", role: "status", "aria-live": "polite" });
+    function actualizarRevision() {
+      const f = faltanRevisar();
+      boton.disabled = f > 0;
+      revisarEstado.textContent = f ? tx(f === 1 ? "revisarFaltaUno" : "revisarFaltan", { n: f }) : tx("revisarListo");
+    }
+    actualizarRevision();
     boton.addEventListener("click", async () => {
+      if (faltanRevisar()) { Avisos.avisar(revisarEstado.textContent, { tipo: "error" }); return; }
       boton.disabled = true;
       msg.textContent = tx("emparejando");
       try {
@@ -1373,7 +2046,7 @@
         msg.textContent = "";
         Avisos.avisar(e.codigo === 1 ? tx("sinPareoPosible") : tx("errorMotor", { e: e.message }), { tipo: "error" });
       } finally {
-        boton.disabled = false;
+        boton.disabled = faltanRevisar() > 0;
       }
     });
     caja.append(boton, msg);
@@ -1383,6 +2056,7 @@
     const v = t();
     if (v.rondas.length !== r) throw new Error(tx("yaEmparejada"));
     if (r === 0 && !Array.isArray(v.numeracion)) T.fijarNumeracion(v);
+    if (r === 0) E.fijarOrden(v);
     let ronda;
     if (v.sistema === "todos") {
       if (v.jugadores.length < 2) throw new Error(tx("pocosJugadores"));
@@ -1395,6 +2069,9 @@
       ronda = { mesas, ausencias: Object.assign({}, pedidas) };
     }
     if (t() !== v || v.rondas.length !== r) throw new Error(tx("yaEmparejada"));
+    // En un torneo por equipos, cada encuentro trae su alineación (los cuatro
+    // primeros del orden de tableros) y un resultado por tablero.
+    if (E.esDeEquipos(v)) for (const m of ronda.mesas) E.prepararMesa(v, m);
     v.rondas.push(ronda);
     guardar();
   }
@@ -1407,12 +2084,14 @@
     if (!ok || v.rondas.length !== r + 1) return;
     v.rondas.pop();
     if (r === 0 && v.sistema === "suizo" && !v.numeracionDeArchivo) v.numeracion = null;
+    // Sin la ronda 1, el orden de tableros se vuelve a poder cambiar.
+    if (r === 0) delete v.ordenTableros;
     guardar();
     estado.ronda = r;
     pintarRondas();
   }
 
-  // Las mismas filas de D.clasificacion(), acotadas a la institución elegida
+  // Las mismas filas de E.clasificacion(), acotadas a la institución elegida
   // (si hay una elegida): la usan la pantalla y el PDF por igual, para que
   // lo que se baja sea siempre lo que se está viendo.
   function filasFiltradas(todasFilas) {
@@ -1425,7 +2104,7 @@
     const v = t();
     const k = rondasCompletas();
     const tc = hasta(k);
-    const todasFilas = D.clasificacion(tc, v.desempates);
+    const todasFilas = E.clasificacion(tc, v.desempates);
     const filas = filasFiltradas(todasFilas);
     const num = T.numeros(v);
     $("pi-clas-titulo").textContent = k ? tx("clasificacionTras", { r: k }) : tx("fClasificacion");
@@ -1440,7 +2119,7 @@
       el("th", { scope: "col", texto: tx("nombre") }), el("th", { scope: "col", texto: tx("institucion") }),
       el("th", { scope: "col", texto: tx("fed") }), el("th", { class: "num", scope: "col", texto: "Elo" }),
       el("th", { class: "num", scope: "col", texto: tx("pts") }),
-      v.desempates.map((c) => el("th", { class: "num", scope: "col" }, el("abbr", { title: (D.CATALOGO.find((x) => x.codigo === c) || {})[idioma], texto: c }))))));
+      v.desempates.map((c) => el("th", { class: "num", scope: "col" }, el("abbr", { title: (E.catalogo(v).find((x) => x.codigo === c) || {})[idioma], texto: c }))))));
     const cuerpo = el("tbody");
     for (const f of filas) {
       const j = jugador(f.id);
@@ -1456,8 +2135,34 @@
     const dl = $("pi-clas-leyenda");
     dl.replaceChildren();
     for (const c of v.desempates) {
-      const info = D.CATALOGO.find((x) => x.codigo === c);
+      const info = E.catalogo(v).find((x) => x.codigo === c);
       if (info) dl.append(el("div", {}, el("dt", { class: "inline font-semibold", texto: c + ": " }), el("dd", { class: "inline", texto: info[idioma] })));
+    }
+    pintarMejoresTableros(k);
+  }
+
+  // En un torneo por equipos, el mejor de cada tablero (como en las
+  // olimpiadas): js/pareo/equipos.js, mejoresTableros.
+  function pintarMejoresTableros(k) {
+    const v = t();
+    const caja = $("pi-clas-tableros");
+    caja.replaceChildren();
+    if (!E.esDeEquipos(v) || !k) return;
+    const tableros = E.mejoresTableros(v, k);
+    caja.append(el("h3", { class: "font-serif text-lg font-bold mt-6 mb-1", texto: tx("mejorTableroTitulo") }),
+      el("p", { class: C.nota + " mb-2", texto: tx("mejorTableroAyuda", { m: tableros[0].minimo }) }));
+    for (const x of tableros) {
+      caja.append(el("h4", { class: "font-semibold mt-3", texto: tx("tableroN", { t: x.tablero }) }));
+      if (!x.filas.length) { caja.append(el("p", { class: C.nota, texto: tx("mejorTableroNadie") })); continue; }
+      caja.append(el("div", { class: "overflow-x-auto" }, el("table", { class: "pi-tabla", "data-tablero": x.tablero },
+        el("thead", {}, el("tr", {},
+          el("th", { class: "num", scope: "col", texto: tx("puesto") }), el("th", { scope: "col", texto: tx("nombre") }),
+          el("th", { scope: "col", texto: tx("equipo") }), el("th", { class: "num", scope: "col", texto: tx("pts") }),
+          el("th", { class: "num", scope: "col", texto: tx("partidas") }), el("th", { class: "num", scope: "col", texto: "%" }))),
+        el("tbody", {}, x.filas.slice(0, 5).map((f) => el("tr", {},
+          el("td", { class: "num", texto: f.puesto }), el("td", { class: "font-semibold", texto: f.nombre }),
+          el("td", { texto: f.institucion }), el("td", { class: "num", texto: puntosTexto(f.puntos) }),
+          el("td", { class: "num", texto: f.jugadas }), el("td", { class: "num", texto: Math.round(f.porcentaje * 100) })))))));
     }
   }
 
@@ -1469,7 +2174,7 @@
     tabla.replaceChildren();
     if (!v.jugadores.length) return;
     const k = rondasCompletas();
-    const todasFilas = D.clasificacion(hasta(k), v.desempates);
+    const todasFilas = E.clasificacion(hasta(k), v.desempates);
     const filas = filasFiltradas(todasFilas);
     const num = T.numeros(v);
     const R = v.rondas.length;
@@ -1512,7 +2217,7 @@
   function datosClasificacionPDF() {
     const v = t();
     const k = rondasCompletas();
-    const todasFilas = D.clasificacion(hasta(k), v.desempates);
+    const todasFilas = E.clasificacion(hasta(k), v.desempates);
     const filas = filasFiltradas(todasFilas);
     const num = T.numeros(v);
     const encabezados = [tx("puesto"), tx("nro"), tx("nombre"), tx("institucion"), tx("fed"), "Elo", tx("pts")]
@@ -1525,7 +2230,7 @@
         .concat(v.desempates.map((c) => formatoNum(f.valores[c])));
     });
     const notas = v.desempates.map((c) => {
-      const info = D.CATALOGO.find((x) => x.codigo === c);
+      const info = E.catalogo(v).find((x) => x.codigo === c);
       return info ? c + ": " + info[idioma] : c;
     });
     return {
@@ -1541,7 +2246,7 @@
   function datosCruzadaPDF() {
     const v = t();
     const k = rondasCompletas();
-    const todasFilas = D.clasificacion(hasta(k), v.desempates);
+    const todasFilas = E.clasificacion(hasta(k), v.desempates);
     const filas = filasFiltradas(todasFilas);
     const num = T.numeros(v);
     const R = v.rondas.length;
@@ -1594,6 +2299,11 @@
     let nuevo;
     if (/\.json$/i.test(nombre) || /^\s*\{/.test(texto)) {
       const datos = JSON.parse(texto);
+      if (datos && datos.formato === V.FORMATO_RESPALDO) {
+        if (!V.esRespaldo(datos)) throw new Error(tx("jsonNoEs"));
+        abrirRespaldo(datos).catch((e) => Avisos.avisar(tx("noAbre", { e: e.message }), { tipo: "error" }));
+        return;
+      }
       if (!datos || datos.formato !== 1 || !Array.isArray(datos.jugadores) || !Array.isArray(datos.rondas)) throw new Error(tx("jsonNoEs"));
       nuevo = T.nuevo(datos);
     } else {
@@ -1603,6 +2313,26 @@
     crear(nuevo);
     pintarTodo();
     Avisos.avisar(tx("abierto", { n: nuevo.nombre || tx("sinNombre") }));
+  }
+
+  // El respaldo de un evento: todos sus torneos de una vez. Si en este
+  // navegador ya están (el mismo evento), se pregunta antes de reemplazarlos.
+  async function abrirRespaldo(datos) {
+    const ya = estado.lista.filter((x) => { const y = leerJSON(PREFIJO + x.id, null); return y && y.evento && y.evento.id === datos.evento.id; });
+    if (ya.length) {
+      const ok = await Avisos.confirmar(tx("respaldoReemplazar", { n: ya.length }), { aceptar: tx("respaldoReemplazarSi"), peligro: true });
+      if (!ok) return;
+      for (const x of ya) quitar(PREFIJO + x.id);
+      estado.lista = estado.lista.filter((x) => !ya.includes(x));
+    }
+    const ids = [];
+    for (const x of datos.torneos) { crear(T.nuevo(x)); ids.push(estado.id); }
+    const ahora = Date.now();
+    ids.forEach((id, i) => { const x = estado.lista.find((y) => y.id === id); if (x) x.actualizado = ahora - i; });
+    escribir(CLAVE_LISTA, JSON.stringify(estado.lista));
+    abrir(ids[0]);
+    pintarTodo();
+    Avisos.avisar(tx("respaldoAbierto", { n: ids.length, e: datos.evento.nombre || "" }));
   }
 
   async function comprobarTexto(texto) {
@@ -1683,9 +2413,9 @@
       else Avisos.avisar(tx("nadaQueAgregar"), { tipo: "error" });
     });
     $("pi-subir-lista").addEventListener("change", (e) => {
-      const f = e.target.files && e.target.files[0];
+      const fs = Array.from(e.target.files || []);
       e.target.value = "";
-      if (f) subirLista(f);
+      if (fs.length) subirLista(fs);
     });
     $("pi-elo-nacional").addEventListener("click", buscarEloNacional);
     $("pi-buscar-jugador").addEventListener("input", (e) => { estado.filtroJugador = e.target.value; pintarJugadores(); });
@@ -1782,6 +2512,11 @@
     if (location.hash.startsWith("#ver=")) {
       $("pi-editor").hidden = true;
       PareoVer.iniciar(location.hash.slice(5), idioma);
+      return;
+    }
+    if (location.hash.startsWith("#evento=")) {
+      $("pi-editor").hidden = true;
+      PareoVer.iniciarEvento(location.hash.slice(8), idioma);
       return;
     }
     if (location.hash.startsWith("#vivo=")) {

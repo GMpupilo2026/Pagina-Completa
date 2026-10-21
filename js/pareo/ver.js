@@ -81,14 +81,13 @@ window.PareoVer = (function () {
       .replace(/[.,]5$/, "½").replace(/^0½$/, "½");
   }
 
-  function pintar(cont, idioma, datos, enVivo) {
+  // La ronda y la clasificación de un torneo; `h` es el nivel de sus
+  // títulos (h2 solo, h3 dentro de un evento).
+  function tablas(idioma, datos, h) {
     const tx = (clave, vars) => X.t(idioma, clave, vars);
-    const nodos = [
-      el("h1", { class: "font-serif text-2xl font-bold mb-1" }, datos.nombre || "Pareo Integral"),
-      el("p", { class: "text-sm text-brand-600 dark:text-brand-300 mb-6" }, tx(enVivo ? "verEnVivoLeyenda" : "verFotoDelMomento")),
-    ];
+    const nodos = [];
     if (datos.ronda) {
-      nodos.push(el("h2", { class: "font-serif text-xl font-bold mb-3" }, tx("rondaN", { r: datos.ronda.n })));
+      nodos.push(el(h, { class: "font-serif text-xl font-bold mb-3" }, tx("rondaN", { r: datos.ronda.n })));
       const cuerpo = el("tbody");
       for (const m of datos.ronda.mesas) {
         cuerpo.append(el("tr", {},
@@ -104,7 +103,7 @@ window.PareoVer = (function () {
           cuerpo)));
     }
     if (datos.clasificacion && datos.clasificacion.length) {
-      nodos.push(el("h2", { class: "font-serif text-xl font-bold mb-3" }, tx("fClasificacion")));
+      nodos.push(el(h, { class: "font-serif text-xl font-bold mb-3" }, tx("fClasificacion")));
       const cuerpo = el("tbody");
       for (const f of datos.clasificacion) {
         cuerpo.append(el("tr", {}, el("td", { class: "num" }, String(f.p)), el("td", { class: "font-semibold" }, f.n),
@@ -115,6 +114,35 @@ window.PareoVer = (function () {
           el("thead", {}, el("tr", {}, el("th", { class: "num", scope: "col" }, tx("puesto")), el("th", { scope: "col" }, tx("nombre")),
             el("th", { class: "num", scope: "col" }, tx("pts")))),
           cuerpo)));
+    }
+    return nodos;
+  }
+
+  function pintar(cont, idioma, datos, enVivo) {
+    const tx = (clave, vars) => X.t(idioma, clave, vars);
+    cont.replaceChildren(
+      el("h1", { class: "font-serif text-2xl font-bold mb-1" }, datos.nombre || "Pareo Integral"),
+      el("p", { class: "text-sm text-brand-600 dark:text-brand-300 mb-6" }, tx(enVivo ? "verEnVivoLeyenda" : "verFotoDelMomento")),
+      ...tablas(idioma, datos, "h2"));
+  }
+
+  // Todo un evento: un desplegable por torneo, que queda abierto o cerrado
+  // como lo dejó quien mira aunque llegue un resultado nuevo.
+  function pintarEvento(cont, idioma, datos, abiertos) {
+    const tx = (clave, vars) => X.t(idioma, clave, vars);
+    for (const d of cont.querySelectorAll("details[data-torneo]")) {
+      if (d.open) abiertos.add(d.dataset.torneo); else abiertos.delete(d.dataset.torneo);
+    }
+    const nodos = [
+      el("h1", { class: "font-serif text-2xl font-bold mb-1" }, datos.nombre || "Pareo Integral"),
+      el("p", { class: "text-sm text-brand-600 dark:text-brand-300 mb-6" }, tx("verEventoLeyenda", { n: (datos.torneos || []).length })),
+    ];
+    for (const x of datos.torneos || []) {
+      const resumen = x.nombre + (x.ronda ? " · " + tx("rondaN", { r: x.ronda.n }) : "");
+      const cuerpo = tablas(idioma, x, "h3");
+      nodos.push(el("details", { class: "mb-4 rounded-xl border border-brand-200 dark:border-brand-700 p-3", "data-torneo": x.nombre, open: abiertos.has(x.nombre) },
+        el("summary", { class: "cursor-pointer font-semibold rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400" }, resumen),
+        el("div", { class: "mt-3" }, cuerpo.length ? cuerpo : el("p", { class: "text-sm text-brand-600 dark:text-brand-300" }, tx("clasificadosSinRondas")))));
     }
     cont.replaceChildren(...nodos);
   }
@@ -152,5 +180,26 @@ window.PareoVer = (function () {
     setTimeout(() => { if (!llego) cont.replaceChildren(el("p", { class: "text-sm text-brand-600 dark:text-brand-300" }, tx("esperandoVivo"))); }, 8000);
   }
 
-  return { empaquetar, desempaquetar, cargarSupabase, iniciar, iniciarVivo };
+  async function iniciarEvento(codigo, idioma) {
+    const cont = document.getElementById("pi-ver");
+    const tx = (clave) => X.t(idioma, clave);
+    cont.hidden = false;
+    cont.replaceChildren(el("p", { class: "text-sm text-brand-600 dark:text-brand-300" }, tx("conectandoEnVivo")));
+    try {
+      await cargarSupabase();
+    } catch (e) {
+      cont.replaceChildren(el("p", { class: "text-sm text-red-700 dark:text-red-300" }, tx("errorEnVivoVer")));
+      return;
+    }
+    let llego = false;
+    const abiertos = new Set();
+    const canal = window.sb.channel("pareo-evento-" + codigo);
+    canal.on("broadcast", { event: "estado" }, (msg) => { llego = true; pintarEvento(cont, idioma, msg.payload, abiertos); });
+    // Al entrar se pide el estado: quien organiza lo manda sin esperar al
+    // próximo resultado.
+    canal.subscribe((st) => { if (st === "SUBSCRIBED") canal.send({ type: "broadcast", event: "pedir", payload: {} }); });
+    setTimeout(() => { if (!llego) cont.replaceChildren(el("p", { class: "text-sm text-brand-600 dark:text-brand-300" }, tx("esperandoVivo"))); }, 8000);
+  }
+
+  return { empaquetar, desempaquetar, cargarSupabase, iniciar, iniciarVivo, iniciarEvento, pintarEvento };
 })();

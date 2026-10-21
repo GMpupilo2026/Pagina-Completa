@@ -1777,6 +1777,17 @@ html.dark .comparar-serie-3 { background: #199e70; }
 .pi-firma-blanco { display: inline-block; width: 6rem; border-bottom: 1px solid #333; }
 .pi-firma-bye { font-style: italic; color: #666; }
 .pi-firma-linea { margin-top: 2.5rem; border-top: 1px solid #333; padding-top: 0.25rem; font-size: 0.95rem; color: #333; }
+/* Los diplomas del evento (js/pareo/pagina.js: imprimirDiplomas): uno por
+   hoja, apaisado, centrado. */
+@page diploma { size: letter landscape; margin: 1.5cm; }
+.pi-diploma { page: diploma; break-after: page; color: #000; text-align: center; padding: 2.5rem 2rem; border: 3px double #333; min-height: 15cm; display: flex; flex-direction: column; justify-content: center; }
+.pi-diploma:last-child { break-after: auto; }
+.pi-diploma-evento { font-family: Merriweather, Georgia, serif; font-weight: 700; font-size: 1.3rem; margin-bottom: 2rem; }
+.pi-diploma-otorga { font-size: 1.1rem; }
+.pi-diploma-nombre { font-family: Merriweather, Georgia, serif; font-weight: 700; font-size: 2.2rem; margin: 1rem 0; }
+.pi-diploma-texto { font-size: 1.15rem; margin-top: 0.4rem; }
+.pi-diploma-firmas { display: flex; justify-content: space-around; gap: 2rem; margin-top: 3rem; }
+.pi-diploma-firmas .pi-firma-linea { min-width: 16rem; }
 
 /* La barra al buscar el Elo Nacional (buscarEloNacional() en
    js/pareo/pagina.js): UNA sola llamada que puede tardar varios segundos y

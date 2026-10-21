@@ -2380,6 +2380,24 @@ se juega aparte, y armar cada torneo a mano era copiar y pegar filas.
     El botón «Aplicar la configuración de los JDE» de la ficha Torneo hace
     lo mismo con el torneo abierto, y solo antes de la ronda 1 (después, el
     sistema y los puntos ya no se cambian).
+  - **La etapa y el lugar, y el nombre del evento siempre igual**
+    (`pedirEtapaJde()`, pedido por el dueño del sitio: «para que el nombre
+    del evento sea siempre igual para todos pero ajustado a cada lugar»).
+    Al crear los torneos con la configuración de los JDE, y al tocar el
+    botón de la ficha Torneo, se pregunta en dos pasos (dos
+    `Avisos.formulario`: el diálogo no cambia de campos según lo elegido)
+    la etapa —Institucional, Regional o Interregional— y después lo que esa
+    etapa pide: la Dirección Regional (las 27), la interregional (las 11 del
+    art. 56, con sus regiones) o el centro educativo, opcional. La Regional
+    y la Interregional no siguen sin elegir. El nombre sale de
+    `nombreEventoJde()`: «JDE 2026 · Etapa Regional · DRE Alajuela —
+    Individual · Categoría A · Mujeres» (el grupo se guarda aparte, en
+    `grupo`, para volver a armar el nombre si cambia la etapa; `jde` guarda
+    { anio, etapa, lugar }). La Dirección Regional viene elegida si la
+    inscripción la trae («Dirección Regional») y la interregional, la de esa
+    Dirección; la segunda vez, la que ya tenía. La Interregional queda en
+    todos contra todos sin importar cuántos sean (art. 66.2.c). La Nacional
+    no está: no se pidió y su sistema es otro (art. 66.2.d y e).
   - **Un equipo de más de cinco: el árbitro elige los cinco**
     (`equiposDeMas()`, art. 66.1.g: «un máximo de cinco [...] cuatro
     personas estudiantes titulares y una persona estudiante suplente»;
@@ -2449,6 +2467,220 @@ por año (cada motivo, el tope de tres por equipo y el equipo de mujeres
 aparte del abierto). Con la cabecera buscada solo en la primera fila, con el
 grupo de uno marcado, con el tope en 4 o con el ascenso permitido en
 individual, salta.
+
+### Torneos por equipos: el orden de tableros y el pareo de encuentros
+
+Lo pidió el dueño del sitio: la mitad de la inscripción de los JDE (193 de
+364 en Alajuela 2026) es de equipos, y Pareo Integral los armaba como
+torneos individuales con los jugadores de cada colegio.
+
+- **Un equipo es un «jugador» del torneo** (`tipo: "equipos"`,
+  `js/pareo/equipos.js`). Así el motor no cambia: bbpPairings (o las tablas
+  de Berger) empareja equipos como empareja jugadores, con los **puntos de
+  encuentro** como puntaje (2 · 1 · 0, `PUNTOS_EQUIPOS`, que van al TRF
+  por la línea 162 como cualquier puntuación propia), y el comprobador de
+  FIDE acepta esos pareos (`verificar-pareo-equipos.js` empareja un suizo
+  de 7 equipos de punta a punta y lo pasa por el comprobador). Los
+  desempates de FIDE (`js/pareo/desempates.js`, comparado con
+  chesspairing) no se tocaron: ven cada encuentro como una partida.
+- **Cada equipo lleva sus integrantes en orden de tableros**
+  (`integrantes`, art. 66.2.h: se da en el congresillo y se mantiene en
+  toda la etapa). En la ficha Jugadores se cambia con ↑ y ↓ solo antes de
+  la ronda 1; el quinto es el suplente. «Imprimir el orden de tableros para
+  firmar» saca una hoja por equipo con la firma del delegado y del árbitro.
+  En un torneo por equipos no se agrega gente a mano ni se busca el Elo
+  Nacional (sería el de un equipo), y la ficha lo dice. El Elo del equipo,
+  que ordena la lista inicial, es el promedio de los que tienen Elo entre
+  los cuatro primeros.
+- **Cada encuentro guarda su alineación y sus tableros.** `alineacion`
+  dice quiénes juegan de cada lado (de entrada, los cuatro primeros); el
+  árbitro la cambia con casillas si falta alguien, y siempre queda en el
+  orden de tableros: los de abajo suben y el suplente entra al final, el
+  sistema olímpico que pide el art. 66.2.h. Los colores son los de las
+  olimpiadas de FIDE: el equipo de la izquierda lleva blancas en los
+  tableros 1 y 3. Cada tablero se anota como una partida, desde las
+  blancas.
+- **El resultado del encuentro no se escribe: sale de los tableros**
+  (`resultadoEncuentro()`), y se guarda en `m.r` para que el resto (el
+  puntaje, el TRF, los desempates, la tabla cruzada, el enlace de solo
+  lectura) lo trate como una partida. Un tablero sin jugador de un lado se
+  pierde solo; con menos de dos presentes (art. 66.2.f) el encuentro se
+  pierde entero por incomparecencia («+-»/«-+»/«--») y el rival se lleva
+  los cuatro tableros.
+- **Los puntos de tablero son el primer desempate** («PT»: lo que se usa
+  en las olimpiadas y lo que pide la propuesta de cambios a la normativa).
+  No están en `desempates.js` a propósito: `E.clasificacion()` los calcula
+  y le pide el resto a FIDE, y `E.catalogo()` solo los ofrece en un torneo
+  por equipos. Con la configuración de los JDE, el suizo de equipos lleva
+  PT, encuentro directo, Buchholz sin el peor y Buchholz; el todos contra
+  todos, PT, encuentro directo y Sonneborn-Berger.
+- **El bye de un equipo vale como un empate**: 1 punto de encuentro y 2 de
+  tablero (`PUNTOS_EQUIPOS.bye`). La normativa no lo dice; es lo que se
+  usa en las olimpiadas, y se cambia en «Torneo» (Bye del pareo).
+- **El sistema sugerido cuenta equipos, no jugadores**: es lo que se
+  empareja. La normativa dice «más de ocho personas estudiantes inscritas
+  por cada modalidad», que en equipos se puede leer de las dos maneras;
+  como se emparejan equipos, se cuentan equipos. El panel de la sugerencia
+  dice «41 jugadores en 10 equipos». Un grupo de equipos con un solo
+  centro viene desmarcado: no alcanza para un torneo.
+- **En el celular, los tableros son una lista, no una tabla**: con cuatro
+  columnas y nombres largos, las negras quedaban fuera de la pantalla. El
+  colegio de cada jugador va en el título del encuentro.
+- **La planilla para firmar** de un encuentro trae los cuatro tableros con
+  quién juega con cada color y su resultado, y la firma de los dos
+  capitanes.
+- Lo que falta: el TRF que se baja es el de los encuentros (los equipos
+  como jugadores), no el TRF de equipos de FIDE con cada partida; para
+  mandar un torneo por equipos a FIDE haría falta ese formato.
+
+Al tocar esto, `node herramientas/verificar-pareo-equipos.js` (con el sitio
+en localhost:8777). Rompiendo a propósito los colores (siempre blancas el de
+la izquierda), el mínimo de dos presentes o el desempate por puntos de
+tablero, salta.
+
+### El evento de los JDE: el acta, el informe y los clasificados
+
+Lo pidió el dueño del sitio: tres papeles que la normativa pide y que se
+hacían a mano. Un **evento** son los torneos que se crean juntos desde la
+inscripción («JDE 2026 · Etapa Regional · DRE Alajuela»), y la ficha Archivos
+de cualquiera de ellos trae la sección «El evento» (`js/pareo/evento.js`,
+`pintarEvento()`).
+
+- **Cada torneo guarda una copia de su evento** (`evento`: id, nombre,
+  `jde`, fecha y `decisiones`, y `ordenEnEvento`), no hay un registro aparte:
+  así el acta sale aunque se pida días después y aunque se mueva un torneo
+  a otra computadora con su `.json`. Los torneos del evento son los de «Mis
+  torneos» con el mismo `evento.id`, y el abierto entra con lo último que
+  tiene. Las decisiones son una foto en texto llano de la sugerencia al
+  crear (`decisionesDe()`): repetidos, dos modalidades y dónde quedó cada
+  uno, el pase al abierto, los descartados por los topes, los equipos
+  cortos, las categorías (con las frases de `textos.js` en español) y los
+  hombres en el torneo de mujeres.
+- **El acta del congresillo** (art. 33 y 34: lo acordado «debe quedar
+  necesariamente por escrito en un Acta Oficial»): fecha, sede y árbitros
+  del primer torneo, la tabla de los torneos (el ritmo va una vez arriba,
+  no en una columna: en la tabla se cortaba), cada decisión en su sección
+  (con «No hubo.» cuando no hubo), el **orden de tableros de cada equipo
+  como está ahora** (un renglón por equipo con los nombres enteros: en una
+  tabla de seis columnas se cortaban) y las firmas.
+- **El informe oficial de participación y resultados** (la normativa pide
+  remitir el «Informe Oficial de Participación y Resultados» a la Comisión
+  Ejecutiva): la participación por centro educativo y, por torneo, los
+  primeros lugares con quién clasifica, marcando el que está a medio jugar
+  como provisional.
+- **Los dos papeles van en español aunque la página esté en inglés**: son
+  documentos oficiales del MEP.
+- **Los clasificados** (art. 66.1, `cupo()`): de la Institucional, 2; de la
+  Regional, 3 si su interregional cruza dos Direcciones Regionales y 2 si
+  cruza tres (incisos i y j, con las interregionales del art. 56); de la
+  Interregional, el primero (k). Se cuentan con las rondas completas; sin
+  ninguna no hay clasificación (estarían todos «empatados» en cero). Un
+  empate en el último lugar que clasifica que los desempates no
+  resolvieron **se avisa, no lo decide el orden de la lista**: lo resuelve
+  el árbitro.
+- **La lista de clasificados se baja en el formato de la inscripción**
+  (`ENCABEZADOS`, con `js/tabla-excel.js`), más la columna «Torneo»
+  (Mujeres o Abierto), que la del MEP no trae: la etapa siguiente sabe dónde
+  juega cada una sin suponerlo. En un torneo por equipos van los cinco de
+  cada equipo que clasifica. Por eso **la Dirección Regional ya se guarda
+  en el jugador** (`soloJugador()` dejó de quitarla): la necesita esta
+  lista, sobre todo al pasar de la Interregional a la Nacional.
+- **«Subir una lista» acepta varios archivos a la vez**: en la
+  Interregional llegan las listas de cada Dirección Regional por separado.
+  Con varias Direcciones en la lista, el diálogo de la etapa propone la
+  interregional que las tiene a todas.
+
+Al tocar esto, `node herramientas/verificar-pareo-evento.js` (con el sitio en
+localhost:8777): los cupos, los clasificados con el empate en el corte, el
+acta y el informe por dentro, la lista, y en la página el evento de punta a
+punta hasta subir sus clasificados en una Interregional. Rompiendo a
+propósito el cupo de la Regional, el aviso del empate o la foto de las
+decisiones, salta.
+
+### El día del torneo y el paso de una etapa a otra (JDE)
+
+Nueve pedidos del dueño del sitio, juntos porque se usan el mismo día. El TRF
+de equipos de FIDE (cada partida tablero por tablero) quedó para más
+adelante, a propósito.
+
+- **La hoja de alineación de cada ronda** (`imprimirAlineaciones()`, botón
+  «Hojas de alineación» en una ronda de equipos): una hoja por equipo en
+  cada encuentro, con su rival, cada integrante en el orden de tableros con
+  una casilla «☐» para la X, la regla del sistema olímpico escrita, la firma
+  del capitán y la hora de entrega (art. 66.2.h). Se imprime con el mismo
+  mecanismo que las planillas de firma (`#pi-firmas`).
+- **Los avisos de alineación** (`E.avisosAlineacion()`), arriba de cada
+  encuentro: menos de dos presentes (pierde el encuentro), dos o tres
+  (pierde por incomparecencia los tableros de abajo), alguien jugando
+  arriba de un compañero que está antes en el orden (el suplente nunca
+  arriba de un titular), alguien que no es del equipo y el orden de
+  tableros cambiado después de la ronda 1. Los tres últimos no se pueden
+  provocar desde la página (las casillas siempre siguen el orden y ↑ ↓ se
+  apagan con rondas), pero sí llegan en un `.json` editado o viejo: por eso
+  **al emparejar la ronda 1 se anota `ordenTableros`** (`E.fijarOrden()`) y
+  se compara contra él; deshacer la ronda 1 lo borra. Son avisos, no
+  bloqueos: el árbitro decide.
+- **El mejor tablero** (`E.mejoresTableros()`, en Clasificación y en la
+  premiación): de cada tablero, quienes jugaron ahí al menos la mitad de las
+  rondas, por porcentaje y después por puntos. **Las partidas no jugadas no
+  cuentan** (un tablero vacío, un encuentro perdido por incomparecencia):
+  ganar porque el otro no vino no dice nada de cómo se jugó. Es la idea del
+  premio por tablero de las olimpiadas, simplificada: las olimpiadas usan el
+  rendimiento Elo, y en los JDE casi nadie tiene Elo.
+- **La lista de clasificados dice de dónde viene** (columnas «Etapa» y
+  «Lugar» al final de `ENCABEZADOS`). Al subirla de nuevo (`siguienteDe()`),
+  si todas las filas vienen de la misma etapa, la sugerencia lo dice y el
+  diálogo de la etapa abre en la que sigue, con la interregional ya elegida
+  por sus Direcciones Regionales. De la Interregional no se propone nada: la
+  Nacional la organiza el MEP con otra normativa. Una fila sin «Etapa» (una
+  lista hecha a mano mezclada) apaga la propuesta: no se adivina.
+- **Las listas de varias regionales juntas**: `quitarRepetidos()` anota de
+  dónde viene cada persona (su Dirección Regional o, si no la trae, el
+  archivo) y **quien viene en dos se avisa** (`variosOrigenes`): es un error
+  de una de las dos regionales. Queda una sola inscripción, va al acta y
+  queda para revisar antes de la ronda 1. Y si se elige una interregional
+  que no tiene a alguna de las Direcciones de la lista, se pregunta antes de
+  crear (casi siempre es un archivo equivocado).
+- **Todo el evento desde el celular** (`#evento=<código>`, `PareoVer.iniciarEvento()`):
+  un solo enlace y un QR con todos los torneos, en el mismo canal de Supabase
+  Realtime en modo Broadcast que el de un torneo (ver «El canal en vivo»), con
+  `V.vistaEvento()` como carga. El código se guarda por evento en el
+  navegador (`pareo_evento_vivo_v1_<id>`), así el QR impreso sirve todo el
+  día. **Quien abre el enlace pide el estado al entrar** (evento «pedir») y
+  el organizador contesta: el enlace de un torneo, en cambio, espera al
+  próximo resultado. Cada `guardar()` de un torneo del evento lo vuelve a
+  mandar. Quien mira tiene un desplegable por torneo que no se cierra al
+  llegar un resultado.
+- **La premiación** (PDF, `V.premiacion()`): por torneo, del tercer lugar al
+  primero (como se lee en el acto), con los empates que los desempates no
+  resolvieron todos con su medalla, el equipo con sus integrantes y el mejor
+  de cada tablero. **Los diplomas** (`imprimirDiplomas()`, `V.diplomas()`):
+  uno por hoja, apaisados (`@page diploma`), uno por persona premiada (cada
+  integrante del equipo, el suyo) y por mejor tablero. Los dos en español,
+  como el acta.
+- **Antes de la ronda 1, revisar** (`V.pendientes()`): al crear el evento,
+  `decisionesDe()` guarda en `decisiones.revisar` lo que quedó abierto de la
+  inscripción —quien sigue en dos modalidades sin decidir, quien vino en dos
+  listas, las categorías no permitidas, los hombres en un torneo de mujeres
+  y los equipos cortos— como `{ tipo, personas, vars }`, **sin texto
+  armado**: se escribe en el idioma de la página al mostrarlo. Cada torneo
+  muestra lo suyo (lo que nombra a alguien que juega ahí), con una casilla
+  por punto, y **el botón de emparejar la ronda 1 no se prende hasta
+  marcarlos todos** (y lo dice escrito). Es el único bloqueo de Pareo
+  Integral, y a propósito: el resumen de quién no tiene categoría,
+  institución o Elo sigue siendo solo un aviso. Lo marcado se guarda en
+  `revisadoAntes`; después de la ronda 1 ya no detiene nada. La tarjeta del
+  evento cuenta los puntos sin revisar de cada torneo.
+- **El respaldo del evento** (`V.respaldo()`): un `.json` con todos los
+  torneos (`formato: "pareo-integral-evento"`), que «Abrir un torneo»
+  reconoce y abre entero. Si en ese navegador ya están los torneos de ese
+  evento, pregunta antes de reemplazarlos (sin duplicarlos).
+
+Al tocar esto, `node herramientas/verificar-pareo-jde-dia.js` (con el sitio en
+localhost:8777; el canal en vivo con un doble de `window.sb`, nada sale a
+Supabase). Rompiendo a propósito el conteo de las partidas no jugadas, el
+aviso de fuera de orden, el bloqueo de la ronda 1, la respuesta al que pide
+el estado o el aviso de dos regionales, salta.
 
 ### La barra de progreso al buscar el Elo Nacional
 

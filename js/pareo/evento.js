@@ -1,0 +1,365 @@
+/* ===== Pareo Integral — el evento de los JDE: acta, informe y clasificados =====
+ *
+ * Un «evento» es lo que se arma de una sola vez desde la inscripción de los
+ * JDE con la configuración de los JDE: todos los torneos de una etapa en un
+ * lugar («JDE 2026 · Etapa Regional · DRE Alajuela»). Cada torneo guarda una
+ * copia de su evento (`evento`: id, nombre, jde, fecha y las decisiones que
+ * tomó el árbitro en la sugerencia), así que los papeles se arman con lo que
+ * hay en el navegador, aunque se pidan días después:
+ *
+ *   - el acta del congresillo técnico (art. 33 y 34 de la normativa: lo que
+ *     se acuerda «debe quedar necesariamente por escrito en un Acta
+ *     Oficial»), con las decisiones y el orden de tableros de cada equipo;
+ *   - el informe oficial de participación y resultados, que la normativa
+ *     pide remitir a la Comisión Ejecutiva;
+ *   - los clasificados a la etapa siguiente (art. 66.1), y su lista en el
+ *     mismo formato de la inscripción, para subirla en la etapa siguiente.
+ *
+ * Funciones puras, sin DOM: arman el «documento neutral» de js/reporte-pdf.js
+ * y las filas del Excel; las usa js/pareo/pagina.js y las prueba
+ * herramientas/verificar-pareo-evento.js. Los papeles van en español: son
+ * documentos oficiales del MEP.
+ */
+(function (raiz) {
+  "use strict";
+
+  const enNode = typeof module !== "undefined" && module.exports;
+  const T = enNode ? require("./torneo.js") : raiz.PareoTorneo;
+  const E = enNode ? require("./equipos.js") : raiz.PareoEquipos;
+  const G = enNode ? require("./grupos.js") : raiz.PareoGrupos;
+
+  const SIGUIENTE = { institucional: "regional", regional: "interregional", interregional: "nacional" };
+  const NOMBRE_ETAPA = { institucional: "Institucional", regional: "Regional", interregional: "Interregional", nacional: "Nacional" };
+
+  // Cuántos clasifican de cada torneo a la etapa siguiente (art. 66.1):
+  // de la Institucional, dos (f y g); de la Regional, tres si la
+  // interregional cruza dos Direcciones Regionales y dos si cruza tres (i y
+  // j); de la Interregional, el primero (k).
+  function cupo(jde) {
+    if (!jde) return 0;
+    if (jde.etapa === "institucional") return 2;
+    if (jde.etapa === "interregional") return 1;
+    if (jde.etapa === "regional") {
+      const inter = G.JDE_INTERREGIONALES.find((x) => x.regiones.includes(jde.lugar));
+      return inter && inter.regiones.length >= 3 ? 2 : 3;
+    }
+    return 0;
+  }
+
+  const rondasCompletas = (t) => {
+    let k = 0;
+    while (k < t.rondas.length && T.rondaCompleta(t.rondas[k])) k++;
+    return k;
+  };
+  const totalRondas = (t) => (t.sistema === "todos" ? T.rondasTodos(t) : Number(t.rondasTotales) || 0);
+  const terminado = (t) => t.jugadores.length > 1 && rondasCompletas(t) >= totalRondas(t);
+  const clasificacionDe = (t) => E.clasificacion(Object.assign({}, t, { rondas: t.rondas.slice(0, rondasCompletas(t)) }), t.desempates);
+  const participante = (t, id) => t.jugadores.find((j) => j.id === id);
+  const puntosTexto = (x) => {
+    const n = Math.floor(x), m = x - n;
+    return (n || !m ? String(n) : "") + (Math.abs(m - 0.5) < 1e-9 ? "½" : "");
+  };
+
+  // Los que clasifican de un torneo: los primeros `cupo` de la clasificación
+  // (con las rondas completas), y si en el último lugar que clasifica hay un
+  // empate que los desempates no resolvieron, se avisa: lo decide el árbitro
+  // (un desempate rápido o un sorteo), nunca el orden de la lista.
+  function clasificados(t, n) {
+    // Sin ninguna ronda completa no hay clasificación: todos estarían
+    // «empatados» en cero.
+    const filas = rondasCompletas(t) ? clasificacionDe(t) : [];
+    const dentro = filas.slice(0, n);
+    const ultimo = dentro[dentro.length - 1];
+    const empate = !!ultimo && filas.length > n && filas[n].puesto === ultimo.puesto;
+    return { filas: dentro, empate, terminado: terminado(t), rondas: rondasCompletas(t), total: totalRondas(t) };
+  }
+
+  const fechaTexto = (iso) => {
+    const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(iso || ""));
+    const meses = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "setiembre", "octubre", "noviembre", "diciembre"];
+    return m ? Number(m[3]) + " de " + meses[Number(m[2]) - 1] + " de " + m[1] : "";
+  };
+  const sistemaTexto = (t) => (t.sistema === "todos" ? "todos contra todos" : "suizo de " + (Number(t.rondasTotales) || 0) + " rondas");
+  // Para las tablas, más corto: en una columna angosta lo largo se corta.
+  const sistemaCorto = (t) => (t.sistema === "todos" ? "Todos c. todos" : "Suizo, " + (Number(t.rondasTotales) || 0) + " rondas");
+  const nombreTorneo = (t) => t.grupo || t.nombre;
+  const linea = (s) => "______________________________   " + s;
+
+  // ---------- El acta del congresillo ----------
+  function acta(evento, torneos) {
+    const d = (evento && evento.decisiones) || {};
+    const primero = torneos[0] || {};
+    const b = [];
+    b.push({ tipo: "parrafo", texto: [
+      "Fecha: " + (fechaTexto(primero.fechaInicio) || fechaTexto(evento.creado)),
+      primero.ciudad ? "Sede: " + primero.ciudad : "",
+      primero.arbitro ? "Árbitro principal: " + primero.arbitro : "",
+      primero.arbitroAdjunto ? "Árbitro adjunto: " + primero.arbitroAdjunto : "",
+    ].filter(Boolean).join(" · ") });
+    b.push({ tipo: "parrafo", texto: "En el congresillo técnico de Ajedrez se acordó lo siguiente, según la Normativa de los Juegos Deportivos Estudiantiles " + (evento.jde ? evento.jde.anio : "") + "." });
+
+    b.push({ tipo: "titulo", texto: "1. Torneos" });
+    // El ritmo suele ser el mismo en todos: va una vez, no en una columna
+    // (en la tabla se cortaba).
+    const ritmos = [...new Set(torneos.map((t) => t.ritmo || "").filter(Boolean))];
+    if (ritmos.length) b.push({ tipo: "parrafo", texto: "Ritmo de juego: " + ritmos.join("; ") + "." });
+    b.push({ tipo: "tabla", encabezados: ["Torneo", "Particip.", "Sistema", "Desempates"], anchos: [3.4, 1, 1.6, 2],
+      filas: torneos.map((t) => [nombreTorneo(t), String(t.jugadores.length) + (E.esDeEquipos(t) ? " eq." : ""), sistemaCorto(t), (t.desempates || []).join(" ")]) });
+
+    const seccion = (titulo, items, vacio) => {
+      b.push({ tipo: "titulo", texto: titulo });
+      if (items.length) b.push({ tipo: "lista", items });
+      else b.push({ tipo: "nota", texto: vacio });
+    };
+    let n = 1;
+    seccion((++n) + ". Inscripciones repetidas", (d.repetidos || []).map((x) => x.nombre + " (" + x.institucion + "): aparece " + x.veces + " veces en la inscripción; se dejó una sola."), "No hubo.");
+    seccion((++n) + ". Inscritos en más de una modalidad (art. 66.1.h)", (d.dosModalidades || []).map((x) => x.nombre + " (" + x.institucion + "): " + x.inscripciones + ". " + (x.queda ? "Queda en " + x.queda + "." : "Sin decidir: queda en las dos.")), "No hubo.");
+    seccion((++n) + ". Mujeres de equipos que pasan al abierto (art. 66.1.g)", (d.pase || []).map((x) => x.institucion + ", categoría " + x.categoria + ": " + x.nombres + "."), "No hubo.");
+    seccion((++n) + ". Descartados por los topes por centro (art. 66.1.f y g)", (d.descartados || []).map((x) => x.nombre + " (" + x.institucion + ", " + x.grupo + ")."), "No hubo.");
+    seccion((++n) + ". Equipos con menos de 3 (art. 66.1.g)", (d.cortos || []).map((x) => x.institucion + ", " + x.grupo + ": " + x.cuantos + " (" + x.nombres + ")."), "No hubo.");
+    seccion((++n) + ". Categoría según el año de nacimiento (art. 17 y 18)", (d.categorias || []), "Todos en la categoría de su año de nacimiento.");
+    if ((d.variosOrigenes || []).length) seccion((++n) + ". Inscritos en más de una Dirección Regional", d.variosOrigenes.map((x) => x.nombre + " (" + x.institucion + "): viene en " + x.origenes + "."), "");
+    if ((d.hombresEnMujeres || []).length) seccion((++n) + ". Anotados como hombres en un torneo de mujeres", d.hombresEnMujeres, "");
+
+    const deEquipos = torneos.filter((t) => E.esDeEquipos(t));
+    if (deEquipos.length) {
+      b.push({ tipo: "titulo", texto: (++n) + ". Orden de tableros (art. 66.2.h)" });
+      // Un párrafo por equipo, con los nombres enteros: en una tabla de
+      // seis columnas se cortaban.
+      for (const t of deEquipos) {
+        b.push({ tipo: "subtitulo", texto: nombreTorneo(t) });
+        b.push({ tipo: "lista", items: T.ordenInicial(t).map((id) => {
+          const e = participante(t, id);
+          return e.nombre + ": " + e.integrantes.map((j, k) => (k < E.TABLEROS ? "Tablero " + (k + 1) : "Suplente") + ": " + j.nombre).join(" · ");
+        }) });
+      }
+    }
+
+    b.push({ tipo: "titulo", texto: "Firmas" });
+    b.push({ tipo: "parrafo", texto: linea("Árbitro principal" + (primero.arbitro ? ": " + primero.arbitro : "")) });
+    b.push({ tipo: "parrafo", texto: linea("Representante del Comité Organizador") });
+    b.push({ tipo: "parrafo", texto: linea("Representante de las delegaciones") });
+    return { titulo: "Acta del congresillo técnico — Ajedrez", subtitulo: evento.nombre, pie: "Pareo Integral · ajedrez-integral.com", bloques: b, fotos: [] };
+  }
+
+  // ---------- El informe oficial de participación y resultados ----------
+  function informe(evento, torneos) {
+    const n = cupo(evento.jde);
+    const siguiente = evento.jde ? NOMBRE_ETAPA[SIGUIENTE[evento.jde.etapa]] : "";
+    const primero = torneos[0] || {};
+    const b = [];
+    b.push({ tipo: "parrafo", texto: [
+      "Fecha: " + (fechaTexto(primero.fechaInicio) || fechaTexto(evento.creado)),
+      primero.ciudad ? "Sede: " + primero.ciudad : "",
+      primero.arbitro ? "Árbitro principal: " + primero.arbitro : "",
+    ].filter(Boolean).join(" · ") });
+
+    // La participación: cuántos estudiantes de cada centro, en total.
+    const porCentro = new Map();
+    let estudiantes = 0;
+    for (const t of torneos) {
+      const personas = E.esDeEquipos(t) ? t.jugadores.flatMap((e) => e.integrantes) : t.jugadores;
+      for (const p of personas) {
+        estudiantes++;
+        const c = String(p.institucion || "—").trim();
+        porCentro.set(c, (porCentro.get(c) || 0) + 1);
+      }
+    }
+    b.push({ tipo: "titulo", texto: "Participación" });
+    b.push({ tipo: "parrafo", texto: torneos.length + " torneos, " + estudiantes + " participaciones de estudiantes de " + porCentro.size + " centros educativos." });
+    b.push({ tipo: "tabla", encabezados: ["Centro educativo", "Estudiantes"], anchos: [4, 1],
+      filas: [...porCentro.entries()].sort((a, c) => c[1] - a[1] || a[0].localeCompare(c[0], "es")).map(([c, k]) => [c, String(k)]) });
+
+    b.push({ tipo: "titulo", texto: "Resultados" + (siguiente && n ? " y clasificados a la Etapa " + siguiente : "") });
+    for (const t of torneos) {
+      const cl = clasificados(t, Math.max(n, 3));
+      b.push({ tipo: "subtitulo", texto: nombreTorneo(t) });
+      b.push({ tipo: "nota", texto: sistemaTexto(t) + " · " + t.jugadores.length + (E.esDeEquipos(t) ? " equipos" : " jugadores") + " · " +
+        (cl.terminado ? "terminado" : "provisional: " + cl.rondas + " de " + cl.total + " rondas") });
+      if (!cl.filas.length) { b.push({ tipo: "nota", texto: "Sin rondas jugadas." }); continue; }
+      b.push({ tipo: "tabla", encabezados: ["Puesto", "Nombre", "Centro educativo", "Puntos", "Clasifica"], anchos: [0.8, 2.6, 2.4, 0.9, 1],
+        filas: cl.filas.map((f, i) => {
+          const p = participante(t, f.id);
+          return [String(f.puesto), p.nombre, p.institucion || "", puntosTexto(f.puntos), i < n ? "Sí" : ""];
+        }) });
+      if (cl.empate && n) b.push({ tipo: "nota", texto: "Empate en el último lugar que clasifica: lo resuelve el árbitro principal." });
+      const tableros = podio(t).tableros;
+      if (tableros.length) b.push({ tipo: "lista", items: tableros.map((x) => "Mejor tablero " + x.tablero + ": " +
+        (x.filas.length ? x.filas.map((f) => f.nombre + " (" + f.institucion + ", " + porcentajeTexto(f.porcentaje) + ")").join("; ") : "sin datos") + ".") });
+    }
+
+    b.push({ tipo: "titulo", texto: "Firmas" });
+    b.push({ tipo: "parrafo", texto: linea("Árbitro principal" + (primero.arbitro ? ": " + primero.arbitro : "")) });
+    b.push({ tipo: "parrafo", texto: linea("Comité Organizador") });
+    return { titulo: "Informe oficial de participación y resultados — Ajedrez", subtitulo: evento.nombre, pie: "Pareo Integral · ajedrez-integral.com", bloques: b, fotos: [] };
+  }
+
+  // ---------- Los clasificados, en el formato de la inscripción ----------
+  // Las mismas columnas que lee «Subir una lista» (js/pareo/pagina.js), más
+  // «Torneo» (Mujeres o Abierto), que la inscripción del MEP no trae: así la
+  // etapa siguiente sabe dónde juega cada una sin suponerlo.
+  // «Etapa» y «Lugar» dicen de dónde salió la lista: al subirla, la página
+  // ofrece armar la etapa que sigue (siguienteDe).
+  const ENCABEZADOS = ["Nombre", "Sexo", "FDN", "Nombre de Centro Educativo", "Dirección Regional", "Categoría", "Equipo/Ind", "Torneo", "Elo", "ID FIDE", "Puesto", "Etapa", "Lugar"];
+  function filasClasificados(evento, torneos) {
+    const n = cupo(evento.jde);
+    const region = evento.jde && evento.jde.etapa === "regional" ? evento.jde.lugar : "";
+    const etapa = evento.jde ? NOMBRE_ETAPA[evento.jde.etapa] || "" : "";
+    const lugar = lugarTexto(evento.jde);
+    const filas = [];
+    for (const t of torneos) {
+      const torneo = /Mujeres/.test(t.grupo || t.nombre) ? "Mujeres" : "Abierto";
+      const categoria = (/Categoría (\S+)/.exec(t.grupo || "") || [])[1] || "";
+      for (const f of clasificados(t, n).filas) {
+        const p = participante(t, f.id);
+        const personas = E.esDeEquipos(t) ? p.integrantes : [p];
+        for (const j of personas) {
+          filas.push([j.nombre, j.sexo === "w" ? "MUJER" : j.sexo === "m" ? "HOMBRE" : "", j.nacimiento || "", j.institucion || p.institucion || "",
+            j.region || region, j.categoria || categoria, E.esDeEquipos(t) ? "Equipo" : "Individual", torneo,
+            Number(j.elo) > 0 ? String(j.elo) : "", j.fideId || "", String(f.puesto), etapa, lugar]);
+        }
+      }
+    }
+    return filas;
+  }
+
+  // El lugar de una etapa, escrito: la Dirección Regional, la interregional
+  // con sus regiones o el centro educativo.
+  function lugarTexto(jde) {
+    if (!jde) return "";
+    if (jde.etapa === "regional") return jde.lugar ? "DRE " + jde.lugar : "";
+    if (jde.etapa === "interregional") {
+      const x = G.JDE_INTERREGIONALES.find((i) => i.numero === jde.lugar);
+      return x ? G.nombreInterregional(x) : "";
+    }
+    return String(jde.lugar || "").trim();
+  }
+
+  // De una lista de clasificados subida de nuevo: si todos vienen de la
+  // misma etapa, la que sigue (la Nacional no se arma acá: la organiza el
+  // MEP con otra normativa). null si la lista no dice de dónde viene o
+  // mezcla etapas.
+  function siguienteDe(etapas) {
+    const distintas = [...new Set(etapas.filter(Boolean))];
+    if (distintas.length !== 1 || etapas.some((e) => !e)) return null;
+    const siguiente = SIGUIENTE[distintas[0]];
+    return siguiente && G.JDE_ETAPAS[siguiente] ? { desde: distintas[0], etapa: siguiente } : null;
+  }
+
+  // ---------- La premiación ----------
+  const MEDALLA = { 1: "Oro", 2: "Plata", 3: "Bronce" };
+  const LUGAR = { 1: "Primer lugar", 2: "Segundo lugar", 3: "Tercer lugar" };
+
+  // Los tres primeros de un torneo (con los empates que los desempates no
+  // resolvieron, todos con su medalla) y, en uno por equipos, el mejor de
+  // cada tablero. Con las rondas completas: si no terminó, es provisional.
+  function podio(t) {
+    const k = rondasCompletas(t);
+    const filas = k ? clasificacionDe(t).filter((f) => f.puesto <= 3) : [];
+    const tableros = E.esDeEquipos(t) && k ? E.mejoresTableros(t, k).map((x) => ({ tablero: x.tablero, filas: x.filas.filter((f) => f.puesto === 1) })) : [];
+    return {
+      filas: filas.map((f) => Object.assign({ medalla: MEDALLA[f.puesto] }, f, { participante: participante(t, f.id) })),
+      tableros, terminado: terminado(t), rondas: k, total: totalRondas(t),
+    };
+  }
+
+  const porcentajeTexto = (x) => Math.round(x * 100) + " %";
+
+  function premiacion(evento, torneos) {
+    const b = [];
+    b.push({ tipo: "parrafo", texto: "Para leer en el acto de premiación, torneo por torneo: del tercer lugar al primero." });
+    for (const t of torneos) {
+      const p = podio(t);
+      b.push({ tipo: "subtitulo", texto: nombreTorneo(t) });
+      if (!p.filas.length) { b.push({ tipo: "nota", texto: "Sin rondas jugadas." }); continue; }
+      if (!p.terminado) b.push({ tipo: "nota", texto: "Provisional: " + p.rondas + " de " + p.total + " rondas." });
+      const items = p.filas.slice().reverse().map((f) => {
+        const x = f.participante;
+        const quien = E.esDeEquipos(t) ? x.nombre + " (" + x.integrantes.map((j) => j.nombre).join(", ") + ")" : x.nombre + " — " + (x.institucion || "—");
+        return f.medalla + ", " + LUGAR[f.puesto].toLowerCase() + ": " + quien + " · " + puntosTexto(f.puntos) + " puntos.";
+      });
+      b.push({ tipo: "lista", items });
+      if (p.filas.filter((f) => f.puesto === 1).length > 1) b.push({ tipo: "nota", texto: "Empate en el primer lugar que los desempates no resolvieron: lo decide el árbitro principal." });
+      if (p.tableros.length) {
+        b.push({ tipo: "lista", items: p.tableros.map((x) => "Mejor tablero " + x.tablero + ": " + (x.filas.length
+          ? x.filas.map((f) => f.nombre + " (" + f.institucion + ", " + puntosTexto(f.puntos) + " de " + f.jugadas + ", " + porcentajeTexto(f.porcentaje) + ")").join("; ")
+          : "nadie jugó ahí la mitad de las rondas") + ".") });
+      }
+    }
+    b.push({ tipo: "nota", texto: "Mejor tablero: el mejor porcentaje entre quienes jugaron en ese tablero al menos la mitad de las rondas, sin contar las partidas no jugadas." });
+    return { titulo: "Premiación — Ajedrez", subtitulo: evento.nombre, pie: "Pareo Integral · ajedrez-integral.com", bloques: b, fotos: [] };
+  }
+
+  // Un diploma por persona premiada: cada integrante de un equipo lleva el
+  // suyo, con el nombre del equipo.
+  function diplomas(evento, torneos) {
+    const out = [];
+    for (const t of torneos) {
+      const p = podio(t);
+      for (const f of p.filas) {
+        const x = f.participante;
+        const personas = E.esDeEquipos(t) ? x.integrantes : [x];
+        for (const j of personas) out.push({ nombre: j.nombre, institucion: j.institucion || x.institucion || "", lugar: LUGAR[f.puesto], torneo: nombreTorneo(t), evento: evento.nombre, equipo: E.esDeEquipos(t) ? x.nombre : "" });
+      }
+      for (const x of p.tableros) for (const f of x.filas) out.push({ nombre: f.nombre, institucion: f.institucion, lugar: "Mejor tablero " + x.tablero, torneo: nombreTorneo(t), evento: evento.nombre, equipo: f.institucion });
+    }
+    return out;
+  }
+
+  // Lo que dice cada diploma, en español (es un documento del MEP).
+  function textoDiploma(d) {
+    return {
+      encabezado: d.evento,
+      otorga: "Se otorga el presente reconocimiento a",
+      nombre: d.nombre,
+      centro: d.institucion ? "del centro educativo " + d.institucion : "",
+      // «Primer lugar» se obtiene; «Mejor tablero 1» se es.
+      motivo: (/^Mejor tablero/.test(d.lugar) ? "por ser el " : "por obtener el ") + d.lugar.charAt(0).toLowerCase() + d.lugar.slice(1) +
+        (d.equipo ? " con el equipo de " + d.equipo : "") + " en " + d.torneo + ".",
+    };
+  }
+
+  // ---------- Antes de la ronda 1 ----------
+  // Lo que quedó para revisar de la inscripción (decisiones.revisar, lo arma
+  // la página al crear el evento: { tipo, personas, vars }), solo lo de este
+  // torneo: lo que nombra a alguien que juega acá (en un equipo corto, a sus
+  // integrantes).
+  const clave = (s) => String(s || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase().replace(/\s+/g, " ").trim();
+  function pendientes(t) {
+    const todos = (t.evento && t.evento.decisiones && t.evento.decisiones.revisar) || [];
+    const personas = E.esDeEquipos(t) ? t.jugadores.flatMap((e) => e.integrantes) : t.jugadores;
+    const nombres = new Set(personas.map((j) => clave(j.nombre)));
+    return todos.filter((x) => (x.personas || []).some((n) => nombres.has(clave(n))));
+  }
+
+  // ---------- El respaldo de todo el evento ----------
+  // Un solo archivo con todos los torneos, para seguir en otra computadora.
+  const FORMATO_RESPALDO = "pareo-integral-evento";
+  function respaldo(evento, torneos) { return { formato: FORMATO_RESPALDO, version: 1, evento, torneos }; }
+  function esRespaldo(d) {
+    return !!d && d.formato === FORMATO_RESPALDO && Array.isArray(d.torneos) && d.torneos.length > 0 &&
+      d.torneos.every((x) => x && x.formato === 1 && Array.isArray(x.jugadores) && Array.isArray(x.rondas));
+  }
+
+  // ---------- Lo que se ve desde el celular: todo el evento ----------
+  // La última ronda y la clasificación de cada torneo, con los nombres ya
+  // puestos (el que mira no tiene el torneo).
+  function vistaTorneo(t) {
+    const nombre = (id) => (participante(t, id) || {}).nombre || "?";
+    const R = t.rondas[t.rondas.length - 1];
+    const k = rondasCompletas(t);
+    return {
+      nombre: nombreTorneo(t),
+      ronda: R ? { n: t.rondas.length, mesas: R.mesas.map((m, i) => ({ m: i + 1, b: nombre(m.b), n: m.n == null ? null : nombre(m.n), r: m.r || null })) } : null,
+      clasificacion: k ? clasificacionDe(t).map((f) => ({ p: f.puesto, n: nombre(f.id), pts: f.puntos })) : [],
+    };
+  }
+  function vistaEvento(evento, torneos) { return { v: 2, nombre: evento.nombre, torneos: torneos.map(vistaTorneo) }; }
+
+  const api = {
+    SIGUIENTE, NOMBRE_ETAPA, ENCABEZADOS, FORMATO_RESPALDO, cupo, clasificados, terminado, acta, informe, filasClasificados,
+    lugarTexto, siguienteDe, podio, premiacion, diplomas, textoDiploma, pendientes, respaldo, esRespaldo, vistaTorneo, vistaEvento,
+  };
+  if (enNode) module.exports = api;
+  else raiz.PareoEvento = api;
+})(typeof self !== "undefined" ? self : this);

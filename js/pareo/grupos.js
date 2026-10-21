@@ -40,6 +40,13 @@
 
   // «Equipo», «Equipos», «Team», «Por equipos» → "equipo"; «Individual»,
   // «Ind», «Individuales» → "individual".
+  // La etapa de la que viene una lista de clasificados (la columna «Etapa»
+  // que escribe js/pareo/evento.js): «Regional» → "regional".
+  function leerEtapa(v) {
+    const s = sinTildes(v).replace(/^etapa\s+/, "");
+    return ["institucional", "regional", "interregional"].find((e) => e === s) || "";
+  }
+
   function leerModalidad(v) {
     const s = sinTildes(v);
     if (/^(por )?equipos?$|^team(s)?$/.test(s)) return "equipo";
@@ -256,9 +263,10 @@
   // son los de FIDE para cada sistema (C.07), y se pueden cambiar después.
   const JDE_DESEMPATES_SUIZO = ["BH-C1", "BH", "SB", "DE", "WIN"];
   const JDE_DESEMPATES_TODOS = ["DE", "SB", "WIN", "KS"];
-  function configuracionJde(n, actual) {
+  function configuracionJde(n, actual, etapa) {
     const a = actual || {};
-    const sistema = sistemaSugerido(n) || a.sistema || "suizo";
+    // La Etapa Interregional es siempre todos contra todos (art. 66.2.c).
+    const sistema = etapa === "interregional" && n >= 2 ? "todos" : sistemaSugerido(n) || a.sistema || "suizo";
     return {
       sistema,
       rondasTotales: Math.max(Number(a.rondasTotales) || 0, JDE_RONDAS_SUIZO),
@@ -282,9 +290,17 @@
       return doc ? "doc:" + doc : "nom:" + sinTildes(j.nombre).replace(/\s+/g, " ") + "|" + (j.nacimiento || "");
     };
     const porPersona = new Map();
+    // De dónde viene cada persona: su Dirección Regional o, si no la trae,
+    // el archivo. En la Etapa Interregional se suben juntos los clasificados
+    // de varias regionales, y alguien que viene en dos es un error de una de
+    // ellas: se avisa (variosOrigenes), no se elige una sola en silencio.
+    const origenes = new Map();
     const unicos = [], repetidos = [];
     for (const j of lista) {
       const k = quien(j);
+      const o = direccionDe(j.region) || String(j.region || "").trim() || String(j.origen || "").trim();
+      if (!origenes.has(k)) origenes.set(k, new Set());
+      if (o) origenes.get(k).add(o);
       if (!porPersona.has(k)) porPersona.set(k, []);
       const suyas = porPersona.get(k);
       const igual = suyas.find((x) => x.modalidad === j.modalidad && String(x.categoria).trim().toUpperCase() === String(j.categoria).trim().toUpperCase());
@@ -292,13 +308,15 @@
       suyas.push(j);
       unicos.push(j);
     }
-    const dosModalidades = [];
-    for (const suyas of porPersona.values()) {
+    const dosModalidades = [], variosOrigenes = [];
+    for (const [k, suyas] of porPersona) {
       for (const j of suyas) if (j.veces > 1) repetidos.push({ jugador: j, veces: j.veces });
       if (suyas.length > 1) dosModalidades.push({ jugador: suyas[0], inscripciones: suyas.map((x) => ({ jugador: x, modalidad: x.modalidad, categoria: String(x.categoria || "").trim() })) });
+      const o = origenes.get(k);
+      if (o.size > 1) variosOrigenes.push({ jugador: suyas[0], origenes: [...o] });
     }
     for (const j of unicos) delete j.veces;
-    return { lista: unicos, repetidos, dosModalidades };
+    return { lista: unicos, repetidos, dosModalidades, variosOrigenes };
   }
 
   // Los equipos con menos de tres (art. 66.1.g: «un mínimo de tres
@@ -327,7 +345,50 @@
     return lista.filter((j) => torneoDe(j) === "w" && j.sexo === "m");
   }
 
+  // Las etapas, las 27 Direcciones Regionales de Educación y las 11
+  // interregionales de la Normativa de los JDE 2026 (art. 56, «Sistema de
+  // regionalización»), para que el nombre de cada torneo sea siempre el
+  // mismo, ajustado al lugar: «JDE 2026 · Etapa Regional · DRE Alajuela».
+  const JDE_ETAPAS = { institucional: "Institucional", regional: "Regional", interregional: "Interregional" };
+  const JDE_INTERREGIONALES = [
+    { numero: "I", regiones: ["Cañas", "Liberia"] },
+    { numero: "II", regiones: ["Nicoya", "Peninsular", "Santa Cruz"] },
+    { numero: "III", regiones: ["Alajuela", "Occidente"] },
+    { numero: "IV", regiones: ["Aguirre", "Puntarenas"] },
+    { numero: "V", regiones: ["Desamparados", "Puriscal", "San José Oeste"] },
+    { numero: "VI", regiones: ["Heredia", "San José Central", "San José Norte"] },
+    { numero: "VII", regiones: ["San Carlos", "Zona Norte-Norte"] },
+    { numero: "VIII", regiones: ["Guápiles", "Sarapiquí"] },
+    { numero: "IX", regiones: ["Limón", "Sulá"] },
+    { numero: "X", regiones: ["Coto", "Grande de Térraba", "Pérez Zeledón"] },
+    { numero: "XI", regiones: ["Cartago", "Los Santos", "Turrialba"] },
+  ];
+  const JDE_DIRECCIONES = JDE_INTERREGIONALES.flatMap((x) => x.regiones).sort((a, b) => a.localeCompare(b, "es"));
+  const nombreInterregional = (x) => "Interregional " + x.numero + " (" + x.regiones.join("-") + ")";
+
+  // La Dirección Regional que nombra un texto («Alajuela», «DRE ALAJUELA»,
+  // «Dirección Regional de Educación de Alajuela»), o "" si no es ninguna.
+  function direccionDe(texto) {
+    const t = sinTildes(texto).replace(/^(direccion regional( de educacion)?( de)?|dre)\s+/, "").trim();
+    return JDE_DIRECCIONES.find((d) => sinTildes(d) === t) || "";
+  }
+
+  // El nombre del evento: { anio, etapa, lugar } → «JDE 2026 · Etapa
+  // Regional · DRE Alajuela». En la Regional el lugar es la Dirección
+  // Regional; en la Interregional, su número (y se escriben sus regiones);
+  // en la Institucional, el centro educativo si se dio.
+  function nombreEventoJde(jde) {
+    const partes = ["JDE " + jde.anio, "Etapa " + (JDE_ETAPAS[jde.etapa] || "")];
+    if (jde.etapa === "regional" && jde.lugar) partes.push("DRE " + jde.lugar);
+    else if (jde.etapa === "interregional") {
+      const x = JDE_INTERREGIONALES.find((i) => i.numero === jde.lugar);
+      if (x) partes.push(nombreInterregional(x));
+    } else if (jde.lugar) partes.push(String(jde.lugar).trim());
+    return partes.join(" · ");
+  }
+
   const api = {
+    JDE_ETAPAS, JDE_INTERREGIONALES, JDE_DIRECCIONES, nombreInterregional, direccionDe, nombreEventoJde, leerEtapa,
     quitarRepetidos, equiposCortos, individualesDeMas, JDE_MAX_INDIVIDUAL, configuracionJde, hombresEnMujeres, leerTorneo,
     pasarMujeresAlAbierto, JDE_MIN_EQUIPO, equiposDeMas, JDE_MAX_EQUIPO,
     leerSexo, leerModalidad, ordenFechas, leerFecha, agrupar, sistemaSugerido, revisarCategorias, rangoCategoria,
