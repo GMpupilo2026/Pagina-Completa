@@ -304,33 +304,84 @@ function pintarListas(){
   }
   favs.forEach(f => ulF.appendChild(botonEjercicio(`${CATEGORY_LABEL[f.cat]} — ejercicio ${f.number}`, () => avisoMis(abrirEjercicio(f.cat, f.number)))));
 
-  const hechos = resueltosDeNivel(currentCategory);
-  document.getElementById('n-resueltos').textContent = hechos.length;
-  const ulR = document.getElementById('ul-resueltos');
-  ulR.textContent = '';
-  // Se pinta solo abierta: con el nivel entero son doscientos botones.
-  if(!document.getElementById('mis-resueltos').open) return;
-  if(!hechos.length){
-    const li = document.createElement('li');
-    li.textContent = 'Todavía no resolviste ninguno de este nivel.';
-    ulR.appendChild(li);
-  }
-  const f = leerFavoritos();
-  const lista = listaDeNivel(currentCategory);
-  hechos.forEach(n => {
-    const puz = puzzleForExercise(lista.find(e => e.number === n));
-    const li = botonEjercicio(`Ejercicio ${n}`, () => avisoMis(abrirEjercicio(currentCategory, n)));
-    if(puz && f[puz.id]){
-      const b = li.firstChild;
-      const est = document.createElement('span');
-      est.setAttribute('aria-hidden', 'true');
-      est.textContent = ' ★';
-      b.appendChild(est);
-      b.setAttribute('aria-label', `Ejercicio ${n}, favorito`);
-    }
-    ulR.appendChild(li);
-  });
+  pintarMapa();
 }
+/* El mapa del nivel: un botón por ejercicio, con su estado escrito (el color
+   no va solo). Una sola parada con Tab (roving tabindex) y flechas: con el
+   nivel entero son doscientos botones. Un ejercicio cerrado lleva
+   aria-disabled y no `disabled`, para que se alcance y diga por qué. */
+function pintarMapa(){
+  const ul = document.getElementById('mapa-4x4');
+  const lista = listaDeNivel(currentCategory);
+  const jugable = lista.length > 0 && !!puzzleForExercise(lista[0]);
+  document.getElementById('mapa-bloque').hidden = !jugable;
+  ul.textContent = '';
+  if(!jugable) return;
+  const f = leerFavoritos();
+  const actual = ejercicioActual();
+  const toca = lista[firstUnsolvedIndex(lista)];
+  let foco = null;
+  lista.forEach(ex => {
+    const puz = puzzleForExercise(ex);
+    if(!puz) return;
+    const hecho = isSolved(puz.id);
+    const abierto = isUnlocked(ex, lista);
+    const ahora = !!actual && actual.ex === ex;
+    const estado = ahora ? 'ahora' : hecho ? 'resuelto' : ex === toca ? 'toca' : 'cerrado';
+    const dicen = [`Ejercicio ${ex.number}`];
+    if(hecho) dicen.push('resuelto');
+    if(ahora) dicen.push('el que tienes en pantalla');
+    else if(estado === 'toca') dicen.push('el que te toca');
+    if(!abierto) dicen.push('todavía cerrado');
+    if(f[puz.id]) dicen.push('favorito');
+    const li = document.createElement('li');
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'mapa-celda';
+    b.dataset.estado = estado;
+    b.dataset.numero = String(ex.number);
+    b.tabIndex = -1;
+    b.setAttribute('aria-label', dicen.join(', '));
+    b.title = dicen.join(', ');
+    if(!abierto) b.setAttribute('aria-disabled', 'true');
+    if(ahora) b.setAttribute('aria-current', 'true');
+    const n = document.createElement('span');
+    n.textContent = String(ex.number);
+    const m = document.createElement('span');
+    m.className = 'marca';
+    m.setAttribute('aria-hidden', 'true');
+    m.textContent = (ahora ? '▶' : hecho ? '✓' : '') + (f[puz.id] ? '★' : '');
+    b.append(n, m);
+    b.addEventListener('click', () => avisoMis(abrirEjercicio(currentCategory, ex.number)));
+    li.appendChild(b);
+    ul.appendChild(li);
+    if(ahora || (!foco && ex === toca) || (!foco && !actual && !toca)) foco = b;
+  });
+  const botones = Array.from(ul.querySelectorAll('button'));
+  const tab = foco || botones[0];
+  if(tab) tab.tabIndex = 0;
+  // La lista se lleva al que se está haciendo, sin mover la página.
+  if(tab){ ul.scrollTop = Math.max(0, tab.offsetTop - ul.clientHeight / 2 + tab.offsetHeight / 2); }
+}
+document.getElementById('mapa-4x4').addEventListener('keydown', (e) => {
+  const botones = Array.from(e.currentTarget.querySelectorAll('button'));
+  const i = botones.indexOf(document.activeElement);
+  if(i < 0) return;
+  // Las columnas se miden: dependen del ancho de la pantalla.
+  const top0 = botones[0].offsetTop;
+  const columnas = Math.max(1, botones.findIndex(b => b.offsetTop > top0) === -1 ? botones.length : botones.findIndex(b => b.offsetTop > top0));
+  const paso = { ArrowRight: 1, ArrowLeft: -1, ArrowDown: columnas, ArrowUp: -columnas }[e.key];
+  let j = i;
+  if(paso) j = Math.min(botones.length - 1, Math.max(0, i + paso));
+  else if(e.key === 'Home') j = 0;
+  else if(e.key === 'End') j = botones.length - 1;
+  else return;
+  e.preventDefault();
+  botones[i].tabIndex = -1;
+  botones[j].tabIndex = 0;
+  botones[j].focus();
+});
+
 function avisoMis(texto){
   const el = document.getElementById('mis-4x4-aviso');
   if(!el) return;
@@ -404,7 +455,6 @@ document.getElementById('ir-form').addEventListener('submit', (e) => {
   if(!n){ avisoMis('Escribe el número del ejercicio.'); return; }
   avisoMis(abrirEjercicio(currentCategory, n));
 });
-document.getElementById('mis-resueltos').addEventListener('toggle', pintarListas);
 
 function renderGrid(){
   const grid = document.getElementById('grid');
