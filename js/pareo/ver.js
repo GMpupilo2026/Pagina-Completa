@@ -83,7 +83,27 @@ window.PareoVer = (function () {
 
   // La ronda y la clasificación de un torneo; `h` es el nivel de sus
   // títulos (h2 solo, h3 dentro de un evento).
-  function tablas(idioma, datos, h) {
+  // La ficha de un jugador en el enlace del evento: todas sus partidas del
+  // torneo, sus puntos, su puesto y sus desempates.
+  function ficha(idioma, x, nombre) {
+    const tx = (clave, vars) => X.t(idioma, clave, vars);
+    const rondas = (x.anteriores || []).concat(x.ronda ? [x.ronda] : []);
+    const filas = [];
+    for (const RR of rondas) {
+      const m = RR.mesas.find((y) => y.b === nombre || y.n === nombre);
+      if (!m) { filas.push(el("li", {}, tx("rondaN", { r: RR.n }) + ": " + tx("verFichaNoJugo"))); continue; }
+      const rival = m.b === nombre ? m.n : m.b;
+      filas.push(el("li", {}, tx("rondaN", { r: RR.n }) + ": " + (rival ? tx(m.b === nombre ? "verMioBlancas" : "verMioNegras", { x: rival }) : tx("cBye")) + (m.r && m.r !== "bye" ? " · " + tx("corto_" + m.r) : "")));
+    }
+    const f = (x.clasificacion || []).find((y) => y.n === nombre);
+    return el("section", { class: "rounded-xl border-2 border-accent-500 p-3 mb-4", "data-ficha": nombre },
+      el("h2", { class: "font-serif text-xl font-bold" }, nombre),
+      el("p", { class: "text-sm text-brand-600 dark:text-brand-300" }, x.nombre),
+      f ? el("p", { class: "text-sm mt-1 font-semibold" }, tx("verMioPuesto", { p: f.p, pts: puntosTexto(idioma, f.pts) }) + ((f.d || []).length ? " · " + f.d.map((y) => y.c + " " + puntosTexto(idioma, y.v)).join(" · ") : "")) : null,
+      el("ol", { class: "text-sm mt-2 space-y-1" }, filas));
+  }
+
+  function tablas(idioma, datos, h, alTocar) {
     const tx = (clave, vars) => X.t(idioma, clave, vars);
     const nodos = [];
     if (datos.ronda) {
@@ -106,7 +126,13 @@ window.PareoVer = (function () {
       nodos.push(el(h, { class: "font-serif text-xl font-bold mb-3" }, tx("fClasificacion")));
       const cuerpo = el("tbody");
       for (const f of datos.clasificacion) {
-        cuerpo.append(el("tr", {}, el("td", { class: "num" }, String(f.p)), el("td", { class: "font-semibold" }, f.n),
+        // En el enlace del evento, el nombre abre su ficha.
+        let celda = f.n;
+        if (alTocar) {
+          celda = el("button", { type: "button", class: "font-semibold underline underline-offset-2 text-left rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400", "data-jugador": f.n }, f.n);
+          celda.addEventListener("click", () => alTocar(f.n));
+        }
+        cuerpo.append(el("tr", {}, el("td", { class: "num" }, String(f.p)), el("td", { class: "font-semibold" }, celda),
           el("td", { class: "num" }, puntosTexto(idioma, f.pts))));
       }
       nodos.push(el("div", { class: "overflow-x-auto" },
@@ -200,6 +226,7 @@ window.PareoVer = (function () {
         el("div", { id: "pi-ver-mio", class: "mb-2", "aria-live": "polite" }),
         avisar,
         el("p", { id: "pi-ver-aviso", class: "text-sm font-semibold mt-2 mb-6", role: "status", "aria-live": "assertive" }),
+        el("div", { id: "pi-ver-ficha" }),
         el("div", { id: "pi-ver-torneos" }));
       cont.replaceChildren(caja);
     }
@@ -218,7 +245,12 @@ window.PareoVer = (function () {
       const anteriores = x.anteriores || [];
       const elegida = cont.__elegidas.get(x.nombre);
       const ronda = elegida ? anteriores.find((RR) => RR.n === elegida) || x.ronda : x.ronda;
-      const cuerpo = tablas(idioma, Object.assign({}, x, { ronda }), "h3");
+      const cuerpo = tablas(idioma, Object.assign({}, x, { ronda }), "h3", (nombre) => {
+        cont.__ficha = { torneo: x.nombre, nombre };
+        pintarEvento(cont, idioma, cont.__datos, abiertos);
+        const f = cont.querySelector("#pi-ver-ficha [data-ficha] h2");
+        if (f) { f.tabIndex = -1; f.focus(); }
+      });
       if (anteriores.length && x.ronda) {
         const sel = el("select", { class: "rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-800 text-brand-800 dark:text-white px-2 py-1 text-sm mb-3", "aria-label": tx("verRondaElegir") });
         for (const RR of anteriores.concat(x.ronda)) {
@@ -238,6 +270,14 @@ window.PareoVer = (function () {
         el("div", { class: "mt-3" }, cuerpo.length ? cuerpo : el("p", { class: "text-sm text-brand-600 dark:text-brand-300" }, tx("clasificadosSinRondas")))));
     }
     lista.replaceChildren(...nodos);
+    // La ficha abierta, con lo último que llegó.
+    const cajaFicha = caja.querySelector("#pi-ver-ficha");
+    const fx = cont.__ficha && (datos.torneos || []).find((x) => x.nombre === cont.__ficha.torneo);
+    if (fx) {
+      const cerrar = el("button", { type: "button", class: "border border-brand-300 dark:border-brand-600 font-semibold px-3 py-1 rounded-lg text-sm mb-6 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400" }, tx("verFichaCerrar"));
+      cerrar.addEventListener("click", () => { cont.__ficha = null; cajaFicha.replaceChildren(); });
+      cajaFicha.replaceChildren(ficha(idioma, fx, cont.__ficha.nombre), cerrar);
+    } else cajaFicha.replaceChildren();
     pintarMio(caja.querySelector("#pi-ver-mio"), idioma, datos, caja.querySelector("#pi-ver-buscar").value);
     avisarSiToca(cont, idioma, datos);
   }
@@ -306,9 +346,26 @@ window.PareoVer = (function () {
     setTimeout(() => { if (!llego) cont.replaceChildren(el("p", { class: "text-sm text-brand-600 dark:text-brand-300" }, tx("esperandoVivo"))); }, 8000);
   }
 
+  // El botón de idioma del enlace: guarda el elegido y vuelve a abrir la
+  // misma dirección (con su código), ya en el otro idioma.
+  function botonIdioma(idioma, cambiar) {
+    const b = el("button", { type: "button", id: "pi-ver-idioma", lang: idioma === "es" ? "en" : "es", class: "mb-4 border border-brand-300 dark:border-brand-600 text-brand-800 dark:text-white font-semibold px-3 py-1 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400" }, idioma === "es" ? "English" : "Español");
+    b.addEventListener("click", () => cambiar(idioma === "es" ? "en" : "es"));
+    return b;
+  }
+
+  // Sin internet: lo último que llegó queda en este celular, con su hora, y
+  // se muestra de entrada y cuando se cae la conexión.
+  const CLAVE_ULTIMO = "pareo_ver_ultimo_v1_";
+  function guardarUltimo(codigo, datos) { try { localStorage.setItem(CLAVE_ULTIMO + codigo, JSON.stringify({ hora: Date.now(), datos })); } catch (e) { /* sin espacio */ } }
+  function leerUltimo(codigo) { try { return JSON.parse(localStorage.getItem(CLAVE_ULTIMO + codigo)); } catch (e) { return null; } }
+  const horaCorta = (ms) => new Date(ms).toLocaleTimeString("es-CR", { hour: "numeric", minute: "2-digit", timeZone: "America/Costa_Rica" });
+
   async function iniciarEvento(cadena, idioma) {
     const [codigo, ...opciones] = String(cadena).split("&");
     const proyectar = opciones.includes("proyectar");
+    const aviso = document.getElementById("pi-ver-conexion");
+    const decirConexion = (texto) => { if (aviso) { aviso.textContent = texto; aviso.hidden = !texto; } };
     const cont = document.getElementById("pi-ver");
     const tx = (clave) => X.t(idioma, clave);
     cont.hidden = false;
@@ -323,9 +380,20 @@ window.PareoVer = (function () {
     const abiertos = new Set();
     const canal = window.sb.channel("pareo-evento-" + codigo);
     let ultimo = null, vuelta = 0;
+    const previo = leerUltimo(codigo);
+    if (previo && previo.datos) {
+      ultimo = previo.datos;
+      llego = true;
+      if (proyectar) pintarProyector(cont, idioma, ultimo, vuelta); else pintarEvento(cont, idioma, ultimo, abiertos);
+      decirConexion(X.t(idioma, "verUltimoDe", { h: horaCorta(previo.hora) }));
+    }
+    window.addEventListener("offline", () => { const u = leerUltimo(codigo); decirConexion(X.t(idioma, "verSinConexion", { h: u ? horaCorta(u.hora) : "—" })); });
+    window.addEventListener("online", () => { decirConexion(X.t(idioma, "verConectando")); canal.send({ type: "broadcast", event: "pedir", payload: {} }); });
     canal.on("broadcast", { event: "estado" }, (msg) => {
       llego = true;
       ultimo = msg.payload;
+      guardarUltimo(codigo, ultimo);
+      decirConexion("");
       if (proyectar) pintarProyector(cont, idioma, ultimo, vuelta);
       else pintarEvento(cont, idioma, ultimo, abiertos);
     });
@@ -353,27 +421,46 @@ window.PareoVer = (function () {
     catch (e) { cont.replaceChildren(el("p", { class: "text-sm text-red-700 dark:text-red-300" }, tx("errorEnVivoVer"))); return; }
     const canal = window.sb.channel("pareo-adjunto-" + codigo);
     const enviadas = new Set();
+    // Un selector de resultado (de una mesa o de un tablero), que se apaga al
+    // mandar hasta que el árbitro principal conteste.
+    const selector = (d, mesa, tablero, clave, etiqueta) => {
+      const sel = el("select", { id: "pi-adj-" + mesa + (tablero ? "-" + tablero : ""), class: "mt-2 rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-800 text-brand-800 dark:text-white px-3 py-2 text-base", "aria-label": etiqueta });
+      sel.append(el("option", { value: "" }, tx("resSin")));
+      for (const [v, k] of Object.entries(RESULTADOS)) sel.append(el("option", { value: v }, tx(k)));
+      const estadoMesa = el("p", { class: "text-sm mt-1", role: "status" }, enviadas.has(clave) ? tx("adjuntoEnviando") : "");
+      sel.addEventListener("change", () => {
+        if (!sel.value) return;
+        enviadas.add(clave);
+        sel.disabled = true;
+        estadoMesa.textContent = tx("adjuntoEnviando");
+        canal.send({ type: "broadcast", event: "resultado", payload: Object.assign({ ronda: d.ronda, mesa, r: sel.value }, tablero ? { tablero } : {}) });
+      });
+      return el("div", {}, sel, estadoMesa);
+    };
     canal.on("broadcast", { event: "estado" }, (msg) => {
       const d = msg.payload || {};
+      if (d.apagado) { cont.replaceChildren(el("p", { class: "text-base font-semibold" }, tx("adjuntoEnlaceApagado"))); canal.unsubscribe(); return; }
       const mesas = (d.mesas || []).filter((m) => m.m >= desde && m.m <= hasta);
       const lista = el("ul", { class: "space-y-3" });
       for (const m of mesas) {
         const li = el("li", { class: "rounded-xl border border-brand-200 dark:border-brand-700 p-3", "data-mesa": String(m.m) },
           el("p", { class: "font-semibold" }, tx("mesa") + " " + m.m + ": " + m.b + " – " + (m.n || tx("cBye"))));
         if (!m.n) { lista.append(li); continue; }
+        // En equipos, un selector por tablero.
+        if (m.tableros) {
+          for (const k of m.tableros) {
+            const clave = m.m + "-" + k.t;
+            const fila = el("div", { class: "mt-2", "data-tablero": String(k.t) },
+              el("p", { class: "text-sm" }, tx("tableroN", { t: k.t }) + ": " + (k.b || tx("nadie")) + " – " + (k.n || tx("nadie"))));
+            if (k.r || k.fijo) { enviadas.delete(clave); fila.append(el("p", { class: "text-sm" }, tx("adjuntoAnotada", { r: k.r ? tx("corto_" + k.r) : "—" }))); li.append(fila); continue; }
+            fila.append(selector(d, m.m, k.t, clave, tx("resultadoTablero", { t: k.t, b: k.b, n: k.n })));
+            li.append(fila);
+          }
+          lista.append(li);
+          continue;
+        }
         if (m.r) { enviadas.delete(m.m); li.append(el("p", { class: "text-sm mt-1" }, tx("adjuntoAnotada", { r: tx("corto_" + m.r) }))); lista.append(li); continue; }
-        const sel = el("select", { id: "pi-adj-" + m.m, class: "mt-2 rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-800 text-brand-800 dark:text-white px-3 py-2 text-base", "aria-label": tx("resultadoMesa", { m: m.m, b: m.b, n: m.n }) });
-        sel.append(el("option", { value: "" }, tx("resSin")));
-        for (const [v, k] of Object.entries(RESULTADOS)) sel.append(el("option", { value: v }, tx(k)));
-        const estadoMesa = el("p", { class: "text-sm mt-1", role: "status" }, enviadas.has(m.m) ? tx("adjuntoEnviando") : "");
-        sel.addEventListener("change", () => {
-          if (!sel.value) return;
-          enviadas.add(m.m);
-          sel.disabled = true;
-          estadoMesa.textContent = tx("adjuntoEnviando");
-          canal.send({ type: "broadcast", event: "resultado", payload: { ronda: d.ronda, mesa: m.m, r: sel.value } });
-        });
-        li.append(sel, estadoMesa);
+        li.append(selector(d, m.m, null, m.m, tx("resultadoMesa", { m: m.m, b: m.b, n: m.n })));
         lista.append(li);
       }
       cont.replaceChildren(
@@ -384,5 +471,5 @@ window.PareoVer = (function () {
     canal.subscribe((st) => { if (st === "SUBSCRIBED") canal.send({ type: "broadcast", event: "pedir", payload: {} }); });
   }
 
-  return { empaquetar, desempaquetar, cargarSupabase, iniciar, iniciarVivo, iniciarEvento, iniciarAdjunto, pintarEvento, pintarProyector, buscarJugador };
+  return { empaquetar, desempaquetar, cargarSupabase, iniciar, iniciarVivo, iniciarEvento, iniciarAdjunto, pintarEvento, pintarProyector, buscarJugador, botonIdioma };
 })();

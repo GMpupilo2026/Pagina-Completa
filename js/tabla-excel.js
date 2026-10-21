@@ -47,7 +47,9 @@
     const u16 = (v) => [v & 0xff, (v >>> 8) & 0xff];
     const u32 = (v) => [v & 0xff, (v >>> 8) & 0xff, (v >>> 16) & 0xff, (v >>> 24) & 0xff];
     for (const p of partes) {
-      const nombre = utf8(p.nombre), datos = utf8(p.texto), crc = crc32(datos);
+      // `bytes` (un PDF, por ejemplo) o `texto`: el paquete final de un evento de
+      // Pareo Integral mete los dos en el mismo .zip.
+      const nombre = utf8(p.nombre), datos = p.bytes || utf8(p.texto), crc = crc32(datos);
       // Bit 11: el nombre va en UTF-8. Método 0: guardado tal cual.
       const comun = [...u16(20), ...u16(0x0800), ...u16(0), ...u16(0), ...u16(0x21), ...u32(crc), ...u32(datos.length), ...u32(datos.length), ...u16(nombre.length), ...u16(0)];
       const local = Uint8Array.from([...u32(0x04034b50), ...comun]);
@@ -158,7 +160,7 @@
     return blob;
   }
 
-  const api = { armar, bajar, numero, _crc32: crc32 };
+  const api = { armar, bajar, numero, zip, _crc32: crc32 };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else raiz.TablaExcel = api;
 })(typeof self !== "undefined" ? self : this);

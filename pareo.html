@@ -92,6 +92,7 @@
                 <button type="button" id="pi-idioma" class="border border-brand-300 dark:border-brand-600 text-brand-800 dark:text-white font-semibold px-4 py-2 rounded-lg text-sm hover:bg-white dark:hover:bg-brand-800 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400" lang="en">English</button>
             </div>
 
+            <div id="pi-otra-pestana" class="rounded-xl border-2 border-red-700 p-4 mb-6 no-imprimir" role="alert" hidden></div>
             <noscript><p class="rounded-xl border-2 border-red-700 p-4 mb-6">Pareo Integral necesita JavaScript para emparejar.</p></noscript>
 
             <!-- El torneo abierto y los guardados en este navegador. -->
@@ -289,6 +290,7 @@
                         <button type="button" id="pi-borrar" class="border border-red-700 text-red-700 dark:border-red-400 dark:text-red-300 font-semibold px-4 py-2 rounded-lg text-sm hover:bg-red-50 dark:hover:bg-red-950 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400" data-t="borrarTorneo">Borrar este torneo</button>
                     </div>
                     <p class="text-sm text-brand-600 dark:text-brand-300 mt-3" data-t="trfAyuda">El TRF es el archivo que FIDE pide para el informe de Elo, y el que leen los demás programas de emparejamiento.</p>
+                    <div id="pi-historial" class="mt-5"></div>
                 </div>
                 <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5">
                     <h2 class="font-serif text-xl font-bold mb-3" data-t="abrir">Abrir un torneo</h2>
@@ -327,6 +329,7 @@
             </section>
         </div>
     </div>
+    <div id="pi-ver-barra" class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-6" hidden><p id="pi-ver-conexion" class="rounded-lg border-2 border-accent-500 px-3 py-2 text-sm font-semibold" role="status" hidden></p></div>
     <div id="pi-ver" class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-16" hidden></div>
     <div id="pi-plantilla" class="pi-plantilla"></div>
     <div id="pi-firmas" class="pi-firmas"></div>
@@ -353,6 +356,7 @@
     <script src="js/pareo/textos.js"></script>
     <script src="js/pareo/grupos.js"></script>
     <script src="js/pareo/evento.js"></script>
+    <script src="js/pareo/historial.js"></script>
     <script src="js/csv-excel.js"></script>
     <script src="js/tabla-excel.js"></script>
     <script src="js/reporte-excel.js"></script>

@@ -158,8 +158,8 @@ async function pruebaPagina(browser) {
   await page.fill(dialogo + ' [name="desde"]', "1");
   await page.fill(dialogo + ' [name="hasta"]', "2");
   await page.click(dialogo + " [data-avisos-aceptar]");
-  await page.waitForSelector("#pi-adjunto-url");
-  const url = await page.textContent("#pi-adjunto-url");
+  await page.waitForSelector(".pi-adjunto-url");
+  const url = await page.textContent(".pi-adjunto-url");
   ok(/#adjunto=[a-z0-9]{8}&m=1-2$/.test(url), "un enlace con el código y las mesas", url);
   const codigo = url.split("#adjunto=")[1].split("&")[0];
   const canal = "pareo-adjunto-" + codigo;
@@ -176,6 +176,18 @@ async function pruebaPagina(browser) {
   todos = await leerTodos(page);
   R = todos.find((x) => x.idLista === mujeres.idLista).rondas[0];
   igual("nunca pisa un resultado que ya está, ni acepta uno inválido o de otra ronda", [R.mesas[0].r, R.mesas[1].r], ["1-0", null]);
+  await llega({ ronda: 1, mesa: 3, r: "1-0" });
+  todos = await leerTodos(page);
+  igual("ni una mesa fuera de su rango (1-2)", todos.find((x) => x.idLista === mujeres.idLista).rondas[0].mesas[2].r, null);
+  // Apagar el enlace: avisa al celular y ya no acepta nada.
+  await page.click('#pi-adjunto-caja [data-apagar="' + codigo + '"]');
+  await page.waitForSelector('dialog[data-avisos="confirmar"][open]');
+  await page.click('dialog[data-avisos="confirmar"][open] [data-avisos-aceptar]');
+  await page.waitForFunction((c) => window.__enviados.some((x) => x.canal === c && x.payload && x.payload.apagado), canal);
+  ok(true, "apagar el enlace le avisa al celular del adjunto");
+  await llega({ ronda: 1, mesa: 2, r: "1-0" });
+  todos = await leerTodos(page);
+  igual("y ya no acepta resultados", todos.find((x) => x.idLista === mujeres.idLista).rondas[0].mesas[1].r, null);
 
   console.log("\n=== La ronda atrasada ===");
   await page.click("#pi-reloj-empezar");
@@ -194,7 +206,10 @@ async function pruebaPagina(browser) {
   await page.waitForSelector(dialogo);
   ok(/pasa de 1-0 a 0-1/.test(await page.textContent(dialogo)), "pide el motivo, diciendo de qué a qué", await page.textContent(dialogo));
   await page.click(dialogo + " [data-avisos-cancelar]");
+  // El select vuelve a su valor cuando la página termina de atender el diálogo.
+  await page.waitForFunction(() => !document.querySelector('dialog[data-avisos="formulario"][open]') && document.querySelector("#pi-ronda table select").value === "1-0", null, { timeout: 5000 }).catch(() => {});
   igual("al cancelar, el resultado no cambia", await page.$eval("#pi-ronda table select", (s) => s.value), "1-0");
+  igual("ni en lo guardado", (await leerTodos(page)).find((x) => x.idLista === mujeres.idLista).rondas[0].mesas[0].r, "1-0");
   await page.selectOption("#pi-ronda table select", "0-1");
   await page.waitForSelector(dialogo);
   await page.fill(dialogo + ' [name="motivo"]', "Las planillas firmadas dicen 0-1.");

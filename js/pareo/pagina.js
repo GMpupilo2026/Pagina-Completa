@@ -20,6 +20,7 @@
   const E = window.PareoEquipos;
   const V = window.PareoEvento;
   const X = window.PareoTextos;
+  const H = window.PareoHistorial;
   const motor = window.PareoMotor.enNavegador("js/pareo/motor-worker.js");
 
   const CLAVE_LISTA = "pareo_lista_v1";
@@ -62,7 +63,11 @@
   let idioma = leer(CLAVE_IDIOMA) === "en" ? "en" : "es";
   const tx = (clave, vars) => X.t(idioma, clave, vars);
 
-  const estado = { lista: leerJSON(CLAVE_LISTA, []), id: null, t: null, ficha: leer(CLAVE_FICHA) || "jugadores", ronda: null, filtroInstitucion: "", filtroJugador: "", eloPendientes: [], enVivo: false, canalVivo: null, sugerencia: null, eventoVivo: null, adjunto: null, marcados: new Set() };
+  const estado = { lista: leerJSON(CLAVE_LISTA, []), id: null, t: null, ficha: leer(CLAVE_FICHA) || "jugadores", ronda: null, filtroInstitucion: "", filtroJugador: "", eloPendientes: [], enVivo: false, canalVivo: null, sugerencia: null, eventoVivo: null, adjuntos: null, marcados: new Set(),
+    // El historial de cambios de cada torneo (solo en esta pestaña) y lo que
+    // se guardó la última vez, para saber qué cambió y para notar si otra
+    // pestaña lo cambió por debajo.
+    historial: new Map(), ultimoGuardado: null, deshaciendo: false, respaldoArchivo: null };
 
   // Al cambiar de torneo: cortar el canal del que se sale, para no seguir
   // mandando SU estado por la conexión que había quedado abierta.
@@ -89,7 +94,18 @@
 
   function guardar() {
     if (!estado.t) return;
-    if (!escribir(PREFIJO + estado.id, JSON.stringify(estado.t))) {
+    const texto = JSON.stringify(estado.t);
+    if (estado.ultimoGuardado && estado.ultimoGuardado !== texto && !estado.deshaciendo) {
+      const lista = estado.historial.get(estado.id) || [];
+      const cambios = H.describir(JSON.parse(estado.ultimoGuardado), estado.t);
+      if (cambios.length) {
+        lista.push({ hora: Date.now(), antes: estado.ultimoGuardado, cambios });
+        if (lista.length > TOPE_HISTORIAL) lista.shift();
+        estado.historial.set(estado.id, lista);
+      }
+    }
+    estado.ultimoGuardado = texto;
+    if (!escribir(PREFIJO + estado.id, texto)) {
       Avisos.avisar(tx("noGuarda"), { tipo: "error" });
     }
     const item = estado.lista.find((x) => x.id === estado.id);
@@ -100,8 +116,11 @@
     escribir("pareo_abierto_v1", estado.id);
     if (estado.enVivo) difundirEnVivo();
     if (estado.eventoVivo && estado.t.evento && estado.t.evento.id === estado.eventoVivo.id) difundirEvento();
-    if (estado.adjunto && estado.adjunto.idTorneo === estado.id) enviarAdjunto();
+    if (estado.adjuntos && estado.adjuntos.idTorneo === estado.id) enviarAdjuntos();
+    if (estado.respaldoArchivo && estado.t.evento && estado.t.evento.id === estado.respaldoArchivo.id) programarRespaldo();
+    avisarPestanas();
   }
+  const TOPE_HISTORIAL = 40;
 
   function abrir(id) {
     const t = leerJSON(PREFIJO + id, null);
@@ -109,6 +128,7 @@
     apagarEnVivo();
     estado.id = id;
     estado.t = T.nuevo(t);
+    estado.ultimoGuardado = JSON.stringify(estado.t);
     estado.ronda = null;
     estado.filtroInstitucion = "";
     estado.filtroJugador = "";
@@ -123,6 +143,7 @@
     apagarEnVivo();
     estado.id = nuevoId();
     estado.t = t || T.nuevo({ fechaInicio: window.HoraCR ? HoraCR.hoy() : "" });
+    estado.ultimoGuardado = null;
     estado.ronda = null;
     estado.filtroInstitucion = "";
     estado.filtroJugador = "";
@@ -1309,7 +1330,110 @@
     }
   }
 
+  // El historial de cambios de este torneo y «Deshacer el último cambio».
+  // Vive en esta pestaña: al recargar la página empieza de cero.
+  function pintarHistorial() {
+    const caja = $("pi-historial");
+    const lista = estado.historial.get(estado.id) || [];
+    caja.replaceChildren(el("h3", { class: "font-semibold", texto: tx("histTitulo") }),
+      el("p", { class: C.nota, texto: tx("histTexto") }));
+    if (!lista.length) { caja.append(el("p", { class: C.nota + " mt-1", texto: tx("histVacio") })); return; }
+    const b = el("button", { type: "button", id: "pi-deshacer", class: C.botonSec + " mt-2" }, tx("histDeshacer"));
+    b.addEventListener("click", deshacerUltimo);
+    caja.append(b, el("ol", { id: "pi-historial-lista", class: "mt-2 space-y-1 text-sm list-decimal pl-6" }, lista.slice().reverse().map((x) =>
+      el("li", { texto: horaCR(x.hora) + " · " + x.cambios.slice(0, 4).map((c) => tx(c.clave, c.vars)).join("; ") + (x.cambios.length > 4 ? " (+" + (x.cambios.length - 4) + ")" : "") }))));
+  }
+  async function deshacerUltimo() {
+    const lista = estado.historial.get(estado.id) || [];
+    const x = lista[lista.length - 1];
+    if (!x) return;
+    const ok = await Avisos.confirmar(tx("histConfirmar", { c: x.cambios.map((c) => tx(c.clave, c.vars)).join("; ") }), { aceptar: tx("histDeshacer") });
+    if (!ok || lista[lista.length - 1] !== x) return;
+    lista.pop();
+    estado.t = T.nuevo(JSON.parse(x.antes));
+    estado.deshaciendo = true;
+    guardar();
+    estado.deshaciendo = false;
+    pintarTodo();
+    Avisos.avisar(tx("histDeshecho"));
+  }
+
+  // ---------- Dos pestañas con el mismo torneo ----------
+  // Cada pestaña dice cuál torneo tiene abierto; si otra tiene el mismo, o
+  // si otra pestaña lo guardó por debajo (el evento «storage» llega solo a
+  // las demás), se avisa: lo que guarde esta puede pisar lo de la otra.
+  const canalPestanas = (() => { try { return new BroadcastChannel("pareo-pestanas"); } catch (e) { return null; } })();
+  const yo = "p" + Math.random().toString(36).slice(2);
+  function avisarPestanas() { if (canalPestanas && estado.id) canalPestanas.postMessage({ yo, id: estado.id }); }
+  function otraPestana(clave) {
+    const caja = $("pi-otra-pestana");
+    const recargar = el("button", { type: "button", id: "pi-otra-cargar", class: C.botonSec + " mt-2" }, tx("pestanaCargar"));
+    recargar.addEventListener("click", () => { if (abrir(estado.id)) { caja.hidden = true; pintarTodo(); } });
+    caja.replaceChildren(el("p", { class: "font-semibold", texto: tx(clave) }), recargar);
+    caja.hidden = false;
+  }
+  if (canalPestanas) canalPestanas.addEventListener("message", (e) => {
+    const d = e.data || {};
+    if (d.yo === yo || d.id !== estado.id) return;
+    otraPestana("pestanaMisma");
+    // Contestar una vez, para que la otra también se entere.
+    if (!d.respuesta) canalPestanas.postMessage({ yo, id: estado.id, respuesta: true });
+  });
+  window.addEventListener("storage", (e) => {
+    if (!estado.id || e.key !== PREFIJO + estado.id || e.newValue == null || e.newValue === estado.ultimoGuardado) return;
+    otraPestana("pestanaCambio");
+  });
+
+  // ---------- El respaldo automático del evento ----------
+  // Con un archivo elegido una vez (la API de archivos de Chrome y Edge), el
+  // respaldo del evento se escribe solo, unos segundos después de cada
+  // cambio. Sin esa API, se baja solo cada vez que se completa una ronda.
+  let temporizadorRespaldo = null;
+  function programarRespaldo() {
+    clearTimeout(temporizadorRespaldo);
+    temporizadorRespaldo = setTimeout(escribirRespaldo, 3000);
+  }
+  async function escribirRespaldo() {
+    const r = estado.respaldoArchivo;
+    if (!r) return;
+    const lista = torneosDelEvento(r.id);
+    if (!lista.length) return;
+    const texto = JSON.stringify(V.respaldo(lista[0].evento, lista), null, 1);
+    try {
+      if (r.archivo) {
+        const w = await r.archivo.createWritable();
+        await w.write(texto);
+        await w.close();
+      } else {
+        // Sin la API: solo cuando una ronda queda completa, y una vez por ronda.
+        const clave = lista.map((x) => x.rondas.filter((R) => T.rondaCompleta(R)).length).join(",");
+        if (clave === r.ultimaClave) return;
+        r.ultimaClave = clave;
+        bajar(window.PareoPDF.nombreArchivo(lista[0].evento.nombre, "respaldo").replace(/\.pdf$/, ".json"), texto, "application/json");
+      }
+      r.hora = Date.now();
+      const x = $("pi-respaldo-estado");
+      if (x) x.textContent = tx("respaldoAutoHecho", { h: horaCR(r.hora) });
+    } catch (e) {
+      Avisos.avisar(tx("respaldoAutoError", { e: e.message }), { tipo: "error" });
+    }
+  }
+  async function prenderRespaldo(ev) {
+    if (window.showSaveFilePicker) {
+      try {
+        const archivo = await window.showSaveFilePicker({ suggestedName: window.PareoPDF.nombreArchivo(ev.nombre, "respaldo").replace(/\.pdf$/, ".json"), types: [{ description: "JSON", accept: { "application/json": [".json"] } }] });
+        estado.respaldoArchivo = { id: ev.id, archivo };
+      } catch (e) { return; }
+    } else {
+      const lista = torneosDelEvento(ev.id);
+      estado.respaldoArchivo = { id: ev.id, archivo: null, ultimaClave: lista.map((x) => x.rondas.filter((R) => T.rondaCompleta(R)).length).join(",") };
+    }
+    await escribirRespaldo();
+    pintarEvento();
+  }
+
   function pintarEvento() {
+    pintarHistorial();
     $("pi-bajar-trf-equipos").hidden = !E.esDeEquipos(t());
     const caja = $("pi-evento");
     caja.replaceChildren();
@@ -1398,6 +1522,25 @@
         el("ul", { class: "list-disc pl-6 text-sm" }, conPendientes.map(([x, k]) => el("li", { texto: (x.grupo || x.nombre) + ": " + k })))));
     }
 
+    // El cierre: lo que falta, y el paquete final en un .zip.
+    const cierre = V.revisarCierre(ev, torneos);
+    const faltan = cierre.filter((x) => x.problemas.length);
+    const bCierre = el("button", { type: "button", id: "pi-evento-cierre", class: faltan.length ? C.botonSec : C.boton }, tx("cierreBajar"));
+    bCierre.addEventListener("click", async () => {
+      if (faltan.length) {
+        const ok = await Avisos.confirmar(tx("cierreIgual", { n: faltan.length }), { aceptar: tx("cierreBajarIgual") });
+        if (!ok) return;
+      }
+      bajarPaquete(ev, bCierre);
+    });
+    caja.append(el("h3", { class: "font-semibold mt-5", texto: tx("cierreTitulo") }),
+      el("p", { class: C.nota, texto: tx("cierreTexto") }),
+      faltan.length
+        ? el("ul", { id: "pi-cierre-faltan", class: "mt-2 space-y-1 text-sm list-disc pl-6" }, faltan.map((x) => el("li", {},
+          el("span", { class: "font-semibold", texto: x.torneo + ": " }), x.problemas.map((p) => tx(p.clave, p.vars)).join(" · "))))
+        : el("p", { id: "pi-cierre-listo", class: "text-sm font-semibold mt-2", texto: tx("cierreListo") }),
+      el("div", { class: "mt-2" }, bCierre));
+
     // El enlace en vivo de todo el evento: un solo QR para el público.
     const vivo = estado.eventoVivo && estado.eventoVivo.id === ev.id;
     const qr = el("div", { id: "pi-evento-qr", class: "mt-3" });
@@ -1421,8 +1564,17 @@
       bajar(window.PareoPDF.nombreArchivo(ev.nombre, "respaldo").replace(/\.pdf$/, ".json"), JSON.stringify(V.respaldo(ev, lista), null, 1), "application/json");
       Avisos.avisar(tx("eventoRespaldoListo", { n: lista.length }));
     });
+    const auto = estado.respaldoArchivo && estado.respaldoArchivo.id === ev.id;
+    const bAuto = el("button", { type: "button", id: "pi-respaldo-auto", class: C.botonSec, "aria-pressed": auto ? "true" : "false" },
+      tx(auto ? "respaldoAutoApagar" : (window.showSaveFilePicker ? "respaldoAutoPrender" : "respaldoAutoPrenderDescarga")));
+    bAuto.addEventListener("click", () => {
+      if (estado.respaldoArchivo && estado.respaldoArchivo.id === ev.id) { estado.respaldoArchivo = null; pintarEvento(); }
+      else prenderRespaldo(ev);
+    });
     caja.append(el("h3", { class: "font-semibold mt-5", texto: tx("eventoRespaldoTitulo") }),
-      el("p", { class: C.nota, texto: tx("eventoRespaldoTexto") }), el("div", { class: "mt-2" }, bRespaldo));
+      el("p", { class: C.nota, texto: tx("eventoRespaldoTexto") }), el("div", { class: "mt-2 flex flex-wrap gap-2" }, bRespaldo, bAuto),
+      el("p", { id: "pi-respaldo-estado", class: C.nota + " mt-1", role: "status",
+        texto: auto ? (estado.respaldoArchivo.hora ? tx("respaldoAutoHecho", { h: horaCR(estado.respaldoArchivo.hora) }) : tx(window.showSaveFilePicker ? "respaldoAutoActivo" : "respaldoAutoActivoDescarga")) : tx(window.showSaveFilePicker ? "respaldoAutoAyuda" : "respaldoAutoAyudaDescarga") }));
 
     if (!siguiente || !n) return;
     // Los clasificados: los primeros n de cada torneo (art. 66.1).
@@ -1460,6 +1612,32 @@
     caja.append(lista, bLista, el("p", { class: C.nota + " mt-2", texto: tx("clasificadosAyuda") }));
   }
   const CLAVE_HORARIO = "pareo_horario_v1_";
+
+  // El paquete final del evento: el acta, el informe y la premiación en
+  // PDF, los clasificados y las estadísticas en Excel y el respaldo, en un
+  // solo .zip (js/tabla-excel.js: zip).
+  async function bajarPaquete(ev, boton) {
+    boton.disabled = true;
+    try {
+      const lista = torneosDelEvento();
+      const pdf = async (doc) => new Uint8Array(await (await window.ReportePDF.generar(doc)).arrayBuffer());
+      const partes = [
+        { nombre: "acta-congresillo.pdf", bytes: await pdf(V.acta(ev, lista)) },
+        { nombre: "informe-oficial.pdf", bytes: await pdf(V.informe(ev, lista)) },
+        { nombre: "premiacion.pdf", bytes: await pdf(V.premiacion(ev, lista)) },
+        { nombre: "estadisticas.xlsx", bytes: window.TablaExcel.armar(V.estadisticas(ev, lista)) },
+        { nombre: "respaldo.json", texto: JSON.stringify(V.respaldo(ev, lista), null, 1) },
+      ];
+      const filas = V.filasClasificados(ev, lista);
+      if (filas.length) partes.splice(3, 0, { nombre: "clasificados.xlsx", bytes: window.TablaExcel.armar([{ nombre: "Clasificados", filas: [V.ENCABEZADOS].concat(filas) }]) });
+      bajar(window.PareoPDF.nombreArchivo(ev.nombre, "paquete-final").replace(/\.pdf$/, ".zip"), window.TablaExcel.zip(partes), "application/zip");
+      Avisos.avisar(tx("cierreBajado", { n: partes.length }));
+    } catch (e) {
+      Avisos.avisar(tx("noPdf", { e: e.message }), { tipo: "error" });
+    } finally {
+      boton.disabled = false;
+    }
+  }
 
   // El desempate rápido del corte: el formato y el orden en que quedaron.
   // Lo jugado fuera de Pareo Integral (un blitz, un Armagedón) se anota acá
@@ -1623,17 +1801,22 @@
     // misma búsqueda pero son personas distintas, y el bolsillo de palabras
     // los mezclaría. La función contesta en el mismo orden en que se le manda.
     const resultados = r.resultados || [];
-    let n = 0;
+    let n = 0, conId = 0;
     const pendientes = [];
     faltantes.forEach((j, i) => {
       const res = resultados[i];
-      if (res && res.estado === "encontrado" && Number(res.nacional) > 0) { j.elo = res.nacional; n++; }
+      if (res && res.estado === "encontrado" && Number(res.nacional) > 0) {
+        j.elo = res.nacional; n++;
+        // La lista nacional identifica a cada jugador por su ID FIDE: si no
+        // lo tenía, queda puesto (el TRF lo necesita para el Elo).
+        if (!j.fideId && res.fideId && /^\d{3,11}$/.test(String(res.fideId))) { j.fideId = String(res.fideId); conId++; }
+      }
       else pendientes.push({ id: j.id, nombre: j.nombre, estado: (res && res.estado) || "no_encontrado" });
     });
     if (n) guardar();
     estado.eloPendientes = pendientes;
     pintarJugadores();
-    Avisos.avisar(tx("eloNacionalResultado", { n: n, total: faltantes.length }));
+    Avisos.avisar(tx("eloNacionalResultado", { n: n, total: faltantes.length }) + (conId ? " " + tx("eloNacionalConId", { n: conId }) : ""));
     if (todosFaltantes.length > TOPE_BUSQUEDA_ELO) {
       Avisos.avisar(tx("eloNacionalTope", { tope: TOPE_BUSQUEDA_ELO }), { tipo: "info" });
     }
@@ -1793,7 +1976,8 @@
         el("button", { type: "button", class: C.botonSec, onclick: () => imprimirPlanillasFirma(r) }, tx("planillasFirma")),
         E.esDeEquipos(v) ? el("button", { type: "button", id: "pi-alineaciones", class: C.botonSec, onclick: () => imprimirAlineaciones(r) }, tx("alineacionesImprimir")) : null,
         el("button", { type: "button", class: C.botonSec, onclick: () => compartirLectura(r) }, tx("verDesdeElCelular")),
-        ultima && !E.esDeEquipos(v) ? el("button", { type: "button", id: "pi-adjunto", class: C.botonSec, onclick: () => enlaceAdjunto(r) }, tx("adjuntoBoton")) : null,
+        ultima ? el("button", { type: "button", id: "pi-adjunto", class: C.botonSec, onclick: () => enlaceAdjunto(r) }, tx("adjuntoBoton")) : null,
+        el("button", { type: "button", id: "pi-planillas-anotacion", class: C.botonSec, onclick: () => imprimirPlanillasAnotacion(r) }, tx("anotacionBoton")),
         ultima ? el("button", { type: "button", class: C.miniPeligro + " px-3 py-2", onclick: () => deshacerRonda(r) }, tx("deshacerRonda")) : null)));
     caja.append(el("p", { class: C.nota + " mb-3 no-imprimir", role: "status", texto: pendientes ? tx("faltanResultados", { n: pendientes }) : tx("rondaCompleta") }));
     if (!ultima) caja.append(el("p", { class: C.nota + " mb-3 no-imprimir", texto: tx("avisoCorregir") }));
@@ -1801,7 +1985,7 @@
     if (ultima || v.rondas[r].inicio) pintarReloj(caja, r);
     const cajaAdjunto = el("div", { id: "pi-adjunto-caja", class: "no-imprimir mb-4", hidden: true });
     caja.append(cajaAdjunto);
-    if (ultima && estado.adjunto && estado.adjunto.idTorneo === estado.id) mostrarAdjunto(cajaAdjunto);
+    if (ultima && (v.adjuntos || []).some((a) => a.activo)) { conectarAdjuntos(); mostrarAdjuntos(cajaAdjunto); }
     if (E.esDeEquipos(v)) pintarEncuentros(caja, r);
     else pintarMesasIndividuales(caja, r);
     pintarNoJuegan(caja, r);
@@ -1811,13 +1995,16 @@
   const horaCR = (ms) => (window.HoraCR ? HoraCR.hora(ms) : new Date(ms).toLocaleTimeString("es-CR", { hour: "numeric", minute: "2-digit", timeZone: "America/Costa_Rica" }));
 
   // ---------- Los árbitros adjuntos anotan desde el celular ----------
-  // Un enlace por adjunto con sus mesas (#adjunto=<código>&m=1-10): por el
-  // mismo canal de Supabase Realtime en modo Broadcast que el enlace en vivo,
-  // el adjunto pide la ronda («pedir») y manda cada resultado («resultado»).
-  // Esta pestaña, la del árbitro principal, es la que decide: solo acepta
-  // un resultado de la última ronda, de una mesa que existe y que todavía no
-  // tiene resultado —nunca pisa lo que ya está—, y lo marca «lo anotó el
-  // adjunto». Mientras esta pestaña esté abierta.
+  // Un enlace por adjunto, cada uno con su código y sus mesas
+  // (#adjunto=<código>&m=1-10), guardados en el torneo (`adjuntos`): si se
+  // pierde un celular, ese enlace se apaga sin tocar los demás. Por el mismo
+  // canal de Supabase Realtime en modo Broadcast que el enlace en vivo, el
+  // adjunto pide la ronda («pedir») y manda cada resultado («resultado»).
+  // Esta pestaña, la del árbitro principal, es la que decide: solo acepta un
+  // resultado de la última ronda, de una mesa de su rango, que todavía no lo
+  // tiene —nunca pisa lo que ya está— y de la lista; lo marca «lo anotó el
+  // adjunto». En equipos, tablero por tablero. Mientras esta pestaña esté
+  // abierta.
   const RESULTADOS_VALIDOS = new Set(["1-0", "=", "0-1", "+-", "-+", "--"]);
   async function enlaceAdjunto(r) {
     const v = t();
@@ -1827,73 +2014,130 @@
     if (!res || t() !== v) return;
     const desde = Math.max(1, Math.round(Number(res.desde)) || 1), hasta = Math.min(total, Math.round(Number(res.hasta)) || total);
     if (desde > hasta) { Avisos.avisar(tx("adjuntoRango"), { tipo: "error" }); return; }
-    if (!(await prenderAdjunto())) return;
-    estado.adjunto.rango = desde + "-" + hasta;
+    v.adjuntos = (v.adjuntos || []).concat({ codigo: nuevoCodigoVivo(), rango: desde + "-" + hasta, activo: true });
+    guardar();
+    await conectarAdjuntos();
     pintarRondas();
   }
-  async function prenderAdjunto() {
+  async function conectarAdjuntos() {
     const v = t();
-    if (estado.adjunto && estado.adjunto.idTorneo === estado.id) return true;
-    try { await PareoVer.cargarSupabase(); }
-    catch (e) { Avisos.avisar(tx("errorEnVivo", { e: e.message }), { tipo: "error" }); return false; }
-    apagarAdjunto();
-    if (!v.adjuntoCodigo) { v.adjuntoCodigo = nuevoCodigoVivo(); guardar(); }
-    const canal = window.sb.channel("pareo-adjunto-" + v.adjuntoCodigo);
-    estado.adjunto = { idTorneo: estado.id, codigo: v.adjuntoCodigo, canal, rango: "" };
-    canal.on("broadcast", { event: "pedir" }, () => enviarAdjunto());
-    canal.on("broadcast", { event: "resultado" }, (msg) => recibirDeAdjunto(msg.payload || {}));
-    canal.subscribe((st) => { if (st === "SUBSCRIBED") enviarAdjunto(); });
+    const activos = (v.adjuntos || []).filter((a) => a.activo);
+    if (!estado.adjuntos || estado.adjuntos.idTorneo !== estado.id) {
+      if (!activos.length) return true;
+      desconectarAdjuntos();
+      estado.adjuntos = { idTorneo: estado.id, canales: new Map() };
+    }
+    if (activos.length) {
+      try { await PareoVer.cargarSupabase(); }
+      catch (e) { Avisos.avisar(tx("errorEnVivo", { e: e.message }), { tipo: "error" }); return false; }
+    }
+    for (const a of activos) {
+      if (estado.adjuntos.canales.has(a.codigo)) continue;
+      const canal = window.sb.channel("pareo-adjunto-" + a.codigo);
+      canal.on("broadcast", { event: "pedir" }, () => enviarAdjunto(a.codigo));
+      canal.on("broadcast", { event: "resultado" }, (msg) => recibirDeAdjunto(a.codigo, msg.payload || {}));
+      canal.subscribe((st) => { if (st === "SUBSCRIBED") enviarAdjunto(a.codigo); });
+      estado.adjuntos.canales.set(a.codigo, canal);
+    }
+    // Los apagados: se les avisa y se corta su canal.
+    for (const [c, canal] of estado.adjuntos.canales) {
+      if (activos.some((a) => a.codigo === c)) continue;
+      canal.send({ type: "broadcast", event: "estado", payload: { apagado: true } });
+      canal.unsubscribe();
+      estado.adjuntos.canales.delete(c);
+    }
     return true;
   }
-  function apagarAdjunto() {
-    if (estado.adjunto) { estado.adjunto.canal.unsubscribe(); estado.adjunto = null; }
+  function desconectarAdjuntos() {
+    if (estado.adjuntos) for (const canal of estado.adjuntos.canales.values()) canal.unsubscribe();
+    estado.adjuntos = null;
   }
-  const torneoDelAdjunto = () => (estado.adjunto.idTorneo === estado.id ? t() : leerJSON(PREFIJO + estado.adjunto.idTorneo, null));
-  function enviarAdjunto() {
-    if (!estado.adjunto) return;
+  const torneoDelAdjunto = () => estado.adjuntos && (estado.adjuntos.idTorneo === estado.id ? t() : leerJSON(PREFIJO + estado.adjuntos.idTorneo, null));
+  const adjuntoActivo = (v, codigo) => (v.adjuntos || []).find((a) => a.codigo === codigo && a.activo);
+  function enviarAdjunto(codigo) {
     const v = torneoDelAdjunto();
-    if (!v || !v.rondas.length) return;
+    const canal = estado.adjuntos && estado.adjuntos.canales.get(codigo);
+    if (!v || !canal || !v.rondas.length) return;
     const R = v.rondas[v.rondas.length - 1];
     const nombre = (id) => (v.jugadores.find((j) => j.id === id) || {}).nombre || "?";
-    estado.adjunto.canal.send({ type: "broadcast", event: "estado", payload: {
+    const deEquipos = E.esDeEquipos(v);
+    const integrante = (idE, idJ) => { const e = v.jugadores.find((x) => x.id === idE); const j = e && idJ && e.integrantes.find((y) => y.id === idJ); return j ? j.nombre : null; };
+    canal.send({ type: "broadcast", event: "estado", payload: {
       nombre: v.nombre || "", ronda: v.rondas.length,
-      mesas: R.mesas.map((m, i) => ({ m: i + 1, b: nombre(m.b), n: m.n == null ? null : nombre(m.n), r: m.r || null })),
+      mesas: R.mesas.map((m, i) => {
+        const x = { m: i + 1, b: nombre(m.b), n: m.n == null ? null : nombre(m.n), r: m.r || null };
+        if (deEquipos && m.n != null) {
+          // Sin tocar lo guardado: una copia con la alineación de entrada.
+          const copia = m.alineacion ? m : E.prepararMesa(v, JSON.parse(JSON.stringify(m)));
+          x.tableros = E.tablerosDe(v, copia).map((k) => ({ t: k.k + 1, b: integrante(k.bBlancas ? m.b : m.n, k.blancas), n: integrante(k.bBlancas ? m.n : m.b, k.negras), r: k.r || null, fijo: k.fijo }));
+        }
+        return x;
+      }),
     } });
   }
-  function recibirDeAdjunto(p) {
+  function enviarAdjuntos() { if (estado.adjuntos) for (const c of estado.adjuntos.canales.keys()) enviarAdjunto(c); }
+  function recibirDeAdjunto(codigo, p) {
     const v = torneoDelAdjunto();
-    if (!v) return;
+    const a = v && adjuntoActivo(v, codigo);
+    if (!a) return;
+    const [desde, hasta] = a.rango.split("-").map(Number);
+    const mesa = Number(p.mesa);
     const R = v.rondas[v.rondas.length - 1];
-    const m = R && R.mesas[Number(p.mesa) - 1];
-    // Solo la última ronda, una mesa que existe, sin resultado, y un resultado válido.
-    if (!m || Number(p.ronda) !== v.rondas.length || m.n == null || m.r || !RESULTADOS_VALIDOS.has(p.r)) { enviarAdjunto(); return; }
-    m.r = p.r;
+    const m = R && R.mesas[mesa - 1];
+    const rechazar = () => enviarAdjunto(codigo);
+    // Solo la última ronda, una mesa de su rango con rival, un resultado válido.
+    if (!m || mesa < desde || mesa > hasta || Number(p.ronda) !== v.rondas.length || m.n == null || !RESULTADOS_VALIDOS.has(p.r)) return rechazar();
+    let texto;
+    if (E.esDeEquipos(v)) {
+      E.prepararMesa(v, m);
+      const k = Number(p.tablero) - 1;
+      const x = E.tablerosDe(v, m)[k];
+      if (!x || x.fijo || x.r || E.puntosDelEncuentro(v, m).incomparecencia) return rechazar();
+      m.partidas[k].r = p.r;
+      m.r = E.resultadoEncuentro(v, m);
+      texto = tx("adjuntoLlegoTablero", { m: mesa, t: k + 1, r: tx("corto_" + p.r) });
+    } else {
+      if (m.r) return rechazar();
+      m.r = p.r;
+      texto = tx("adjuntoLlego", { m: mesa, r: tx("corto_" + p.r) });
+    }
     m.porAdjunto = true;
     if (v === t()) { guardar(); if (estado.ficha === "rondas" && estado.ronda === v.rondas.length - 1) pintarRondas(); }
-    else escribir(PREFIJO + estado.adjunto.idTorneo, JSON.stringify(v));
-    Avisos.avisar(tx("adjuntoLlego", { m: p.mesa, r: tx("corto_" + p.r) }), { tipo: "info" });
-    enviarAdjunto();
+    else escribir(PREFIJO + estado.adjuntos.idTorneo, JSON.stringify(v));
+    Avisos.avisar(texto, { tipo: "info" });
+    enviarAdjunto(codigo);
   }
-  async function mostrarAdjunto(cont) {
-    const a = estado.adjunto;
-    if (!a.rango) { cont.hidden = true; return; }
-    const url = location.origin + location.pathname + "#adjunto=" + a.codigo + "&m=" + a.rango;
-    cont.hidden = false;
-    try {
-      await PareoQr.cargar();
+  async function mostrarAdjuntos(cont) {
+    const v = t();
+    const activos = (v.adjuntos || []).filter((a) => a.activo);
+    cont.hidden = !activos.length;
+    if (!activos.length) return;
+    try { await PareoQr.cargar(); } catch (e) { Avisos.avisar(tx("errorQr", { e: e.message }), { tipo: "error" }); return; }
+    const lista = el("div", { class: "grid sm:grid-cols-2 gap-3 mt-2" });
+    for (const a of activos) {
+      const url = location.origin + location.pathname + "#adjunto=" + a.codigo + "&m=" + a.rango;
       const copiar = el("button", { type: "button", class: C.mini }, tx("copiarEnlace"));
       copiar.addEventListener("click", async () => {
         try { await navigator.clipboard.writeText(url); Avisos.avisar(tx("enlaceCopiado")); }
         catch (e) { Avisos.avisar(tx("noCopia"), { tipo: "error" }); }
       });
-      cont.replaceChildren(el("div", { class: "rounded-xl border border-brand-200 dark:border-brand-700 p-3" },
-        el("h3", { class: "font-semibold", texto: tx("adjuntoListo", { r: a.rango }) }),
-        el("p", { class: C.nota, texto: tx("adjuntoAyuda") }),
-        el("div", { class: "w-40 bg-white p-2 rounded-lg mt-2" }, PareoQr.svg(url, tx("qrEtiqueta"))),
-        el("p", { id: "pi-adjunto-url", class: "text-xs break-all mt-2 font-mono", texto: url }), copiar));
-    } catch (e) {
-      Avisos.avisar(tx("errorQr", { e: e.message }), { tipo: "error" });
+      const apagar = el("button", { type: "button", class: C.miniPeligro, "data-apagar": a.codigo }, tx("adjuntoApagar"));
+      apagar.addEventListener("click", async () => {
+        const ok = await Avisos.confirmar(tx("adjuntoApagarConfirmar", { r: a.rango }), { aceptar: tx("adjuntoApagar"), peligro: true });
+        if (!ok) return;
+        a.activo = false;
+        guardar();
+        await conectarAdjuntos();
+        pintarRondas();
+        Avisos.avisar(tx("adjuntoApagado", { r: a.rango }));
+      });
+      lista.append(el("div", { class: "rounded-xl border border-brand-200 dark:border-brand-700 p-3", "data-adjunto": a.codigo },
+        el("h4", { class: "font-semibold", texto: tx("adjuntoListo", { r: a.rango }) }),
+        el("div", { class: "w-32 bg-white p-2 rounded-lg mt-2" }, PareoQr.svg(url, tx("qrEtiqueta"))),
+        el("p", { class: "pi-adjunto-url text-xs break-all mt-2 font-mono", texto: url }),
+        el("div", { class: "flex flex-wrap gap-2 mt-1" }, copiar, apagar)));
     }
+    cont.replaceChildren(el("p", { class: C.nota, texto: tx("adjuntoAyuda") }), lista);
   }
 
   // ---------- El reloj del retraso ----------
@@ -2012,6 +2256,8 @@
       el("span", { texto: horaCR(x.hora) + (x.mesa ? " · " + tx("mesa") + " " + x.mesa : "") + " · " + tx(TEXTO_INCIDENCIA[x.tipo] || TEXTO_INCIDENCIA.otra) + ": " + x.texto +
         (x.presenta ? " " + tx("apelacionPresenta", { p: x.presenta }) : "") + (x.tipo === "apelacion" ? " " + tx("apelacionResolucion", { r: x.resolucion || tx("apelacionPendiente") }) : "") }),
       x.tipo === "apelacion" ? el("button", { type: "button", class: C.mini, onclick: () => resolverApelacion(R, k) }, tx(x.resolucion ? "apelacionCambiar" : "apelacionResolver")) : null,
+      x.tipo === "sancion" && x.mesa && !E.esDeEquipos(t()) && R.mesas[x.mesa - 1] && R.mesas[x.mesa - 1].n
+        ? el("button", { type: "button", class: C.mini, "data-sancion": k, onclick: () => aplicarSancion(R, k) }, tx(x.aplicada ? "sancionCambiar" : "sancionAplicar")) : null,
       el("button", { type: "button", class: C.mini, onclick: () => { R.incidencias.splice(k, 1); guardar(); pintarRondas(); } }, tx("quitar")))));
     const mesa = el("select", { id: "pi-inc-mesa", class: C.campoChico, "aria-label": tx("mesa") },
       el("option", { value: "", texto: tx("incSinMesa") }), R.mesas.map((m, i) => el("option", { value: String(i + 1), texto: tx("mesa") + " " + (i + 1) })));
@@ -2041,6 +2287,23 @@
     });
     sec.append(lista, el("div", { class: "flex flex-wrap gap-2 mt-2" }, mesa, tipo), cajaPresenta, texto, anotar);
     caja.append(sec);
+  }
+
+  // Una sanción que cambia el resultado de su mesa (una partida perdida por
+  // el celular, por ejemplo): un clic, y la corrección queda anotada.
+  async function aplicarSancion(R, k) {
+    const x = R.incidencias[k];
+    const m = R.mesas[x.mesa - 1];
+    const r = await Avisos.formulario({ titulo: tx("sancionTitulo", { m: x.mesa }), texto: x.texto, aceptar: tx("sancionGuardar"), cancelar: tx("cancelar"),
+      campos: [{ nombre: "r", etiqueta: tx("sancionResultado", { b: nombreDe(m.b), n: nombreDe(m.n) }), tipo: "select", valor: x.aplicada || "-+",
+        opciones: RESULTADOS.filter(([val]) => val).map(([val, clave]) => [val, tx(clave)]) }] });
+    if (!r || !RESULTADOS_VALIDOS.has(r.r)) return;
+    const antes = m.r || null;
+    m.r = r.r;
+    x.aplicada = r.r;
+    anotarCorreccion(R, x.mesa - 1, antes, r.r, tx("sancionMotivo"));
+    guardar();
+    pintarRondas();
   }
 
   async function resolverApelacion(R, k) {
@@ -2268,6 +2531,47 @@
         hoja.append(el("p", { class: "pi-firma-linea" }, tx("firmaCapitan", { e: e.nombre })), el("p", { class: "pi-firma-linea" }, tx("alineacionHora")));
         cont.append(hoja);
       }
+    });
+    if (!cont.children.length) return;
+    document.body.classList.add("pi-imprimiendo-firmas");
+    window.print();
+  }
+
+  // Las planillas de anotación de la ronda: una por mesa (en equipos, una
+  // por tablero), con los nombres, la ronda y la mesa ya escritos y 60
+  // jugadas en dos columnas, como la planilla oficial.
+  function imprimirPlanillasAnotacion(r) {
+    const v = t();
+    const R = v.rondas[r];
+    const cont = $("pi-firmas");
+    cont.replaceChildren();
+    const hoja = (titulo, blancas, negras) => {
+      const tabla = el("table", { class: "pi-planilla-tabla" },
+        el("thead", {}, el("tr", {}, ["#", tx("blancas"), tx("negras"), "#", tx("blancas"), tx("negras")].map((x) => el("th", { scope: "col", texto: x })))),
+        el("tbody", {}, Array.from({ length: 30 }, (_, i) => el("tr", {},
+          el("td", { class: "pi-planilla-n", texto: i + 1 }), el("td"), el("td"),
+          el("td", { class: "pi-planilla-n", texto: i + 31 }), el("td"), el("td")))));
+      cont.append(el("div", { class: "pi-firma-mesa pi-planilla" },
+        el("h1", { class: "pi-firma-titulo", texto: (v.nombre || "") }),
+        el("p", { class: "pi-planilla-datos", texto: titulo + (v.fechaInicio ? " · " + v.fechaInicio : "") + (v.ritmo ? " · " + v.ritmo : "") }),
+        el("p", { class: "pi-planilla-datos" }, el("strong", { texto: tx("blancas") + ": " }), blancas),
+        el("p", { class: "pi-planilla-datos" }, el("strong", { texto: tx("negras") + ": " }), negras),
+        tabla,
+        el("p", { class: "pi-firma-resultado" }, tx("resultado") + ": ", el("span", { class: "pi-firma-blanco" })),
+        el("div", { class: "pi-diploma-firmas" },
+          el("p", { class: "pi-firma-linea", texto: tx("firmaDe", { n: blancas }) }),
+          el("p", { class: "pi-firma-linea", texto: tx("firmaDe", { n: negras }) }))));
+    };
+    R.mesas.forEach((m, i) => {
+      if (m.n === null) return;
+      if (E.esDeEquipos(v)) {
+        const copia = m.alineacion ? m : E.prepararMesa(v, JSON.parse(JSON.stringify(m)));
+        const de = (idE, idJ) => { const e = jugador(idE); const j = e && idJ && e.integrantes.find((y) => y.id === idJ); return j ? j.nombre + " (" + e.nombre + ")" : tx("nadie"); };
+        for (const x of E.tablerosDe(v, copia)) {
+          if (!x.blancas || !x.negras) continue;
+          hoja(tx("anotacionTituloTablero", { r: r + 1, m: i + 1, t: x.k + 1 }), de(x.bBlancas ? m.b : m.n, x.blancas), de(x.bBlancas ? m.n : m.b, x.negras));
+        }
+      } else hoja(tx("anotacionTitulo", { r: r + 1, m: i + 1 }), nombreDe(m.b), nombreDe(m.n));
     });
     if (!cont.children.length) return;
     document.body.classList.add("pi-imprimiendo-firmas");
@@ -2958,7 +3262,7 @@
       escribir(CLAVE_IDIOMA, idioma);
       pintarTodo();
     });
-    $("pi-lista").addEventListener("change", (e) => { if (abrir(e.target.value)) pintarTodo(); });
+    $("pi-lista").addEventListener("change", (e) => { if (abrir(e.target.value)) { $("pi-otra-pestana").hidden = true; pintarTodo(); avisarPestanas(); } });
     $("pi-nuevo").addEventListener("click", () => {
       crear();
       estado.ficha = "torneo";
@@ -3108,23 +3412,29 @@
     // El enlace de solo lectura (#ver= o #vivo=) no toca nada del torneo
     // guardado en este navegador: ni lo lee ni lo pisa. Es una página
     // distinta adentro de la misma página.
-    if (location.hash.startsWith("#ver=")) {
+    // Cada uno con su botón de idioma, que vuelve a abrir la misma dirección.
+    const modoVer = () => {
       $("pi-editor").hidden = true;
+      $("pi-ver-barra").hidden = false;
+      $("pi-ver-barra").prepend(PareoVer.botonIdioma(idioma, (n) => { escribir(CLAVE_IDIOMA, n); location.reload(); }));
+    };
+    if (location.hash.startsWith("#ver=")) {
+      modoVer();
       PareoVer.iniciar(location.hash.slice(5), idioma);
       return;
     }
     if (location.hash.startsWith("#adjunto=")) {
-      $("pi-editor").hidden = true;
+      modoVer();
       PareoVer.iniciarAdjunto(location.hash.slice(9), idioma);
       return;
     }
     if (location.hash.startsWith("#evento=")) {
-      $("pi-editor").hidden = true;
+      modoVer();
       PareoVer.iniciarEvento(location.hash.slice(8), idioma);
       return;
     }
     if (location.hash.startsWith("#vivo=")) {
-      $("pi-editor").hidden = true;
+      modoVer();
       PareoVer.iniciarVivo(location.hash.slice(6), idioma);
       return;
     }
@@ -3136,6 +3446,7 @@
     }
     enganchar();
     pintarTodo();
+    avisarPestanas();
   }
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", arrancar);

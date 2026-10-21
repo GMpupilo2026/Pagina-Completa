@@ -426,7 +426,9 @@
           const de = (idE, idJ) => { const e = participante(t, idE); const j = e && idJ && e.integrantes.find((y) => y.id === idJ); return j ? j.nombre : null; };
           return { t: x.k + 1, b: de(x.bBlancas ? m.b : m.n, x.blancas), n: de(x.bBlancas ? m.n : m.b, x.negras), r: x.r || null };
         }) } : {})) } : null,
-      clasificacion: k ? clasificacionDe(t).map((f) => ({ p: f.puesto, n: nombre(f.id), pts: f.puntos })) : [],
+      clasificacion: k ? clasificacionDe(t).map((f) => ({ p: f.puesto, n: nombre(f.id), pts: f.puntos,
+        // Los primeros desempates, para la ficha del jugador en el celular.
+        d: (t.desempates || []).slice(0, 3).map((c) => ({ c, v: Math.round((f.valores[c] || 0) * 100) / 100 })) })) : [],
     };
   }
   function vistaEvento(evento, torneos) { return { v: 2, nombre: evento.nombre, torneos: torneos.map(vistaTorneo) }; }
@@ -612,7 +614,27 @@
     };
   }
 
+  // ---------- El cierre del evento ----------
+  // Lo que falta antes de dar el evento por terminado, torneo por torneo
+  // ({ clave, vars } de js/pareo/textos.js): rondas sin jugar o sin
+  // resultado, un empate en el corte sin desempate y apelaciones sin
+  // resolver. Vacío: se puede cerrar.
+  function revisarCierre(evento, torneos) {
+    const n = cupo(evento.jde);
+    return torneos.map((t) => {
+      const problemas = [];
+      const k = rondasCompletas(t), total = totalRondas(t);
+      if (t.jugadores.length < 2) problemas.push({ clave: "cierreSinJugadores", vars: {} });
+      else if (k < total) problemas.push({ clave: "cierreRondas", vars: { r: k, t: total } });
+      if (n && clasificados(t, n).empate) problemas.push({ clave: "cierreEmpate", vars: {} });
+      const apelaciones = t.rondas.flatMap((R) => R.incidencias || []).filter((x) => x.tipo === "apelacion" && !x.resolucion).length;
+      if (apelaciones) problemas.push({ clave: "cierreApelaciones", vars: { n: apelaciones } });
+      return { torneo: nombreTorneo(t), problemas };
+    });
+  }
+
   const api = {
+    revisarCierre,
     aplicarDesempate, empatadosEnCorte, segundosIncremento, duracionRonda, horario, porDireccion, constancias, textoConstancia,
     medallero, estadisticas, compararEtapa, minutosBase, estadoRetraso, incidenciasDe, NOMBRE_INCIDENCIA,
     SIGUIENTE, NOMBRE_ETAPA, ENCABEZADOS, FORMATO_RESPALDO, cupo, clasificados, terminado, acta, informe, filasClasificados,

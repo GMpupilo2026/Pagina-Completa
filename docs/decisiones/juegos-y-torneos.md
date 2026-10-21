@@ -2826,6 +2826,69 @@ sitio en localhost:8777). Rompiendo a propósito que el adjunto no pise un
 resultado, que el desempate deje de valer sin empate, el motivo de una
 corrección o que no se elimine a quien ya jugó, salta.
 
+### Que nada se pierda y el cierre del evento
+
+Doce pedidos más del dueño del sitio.
+
+- **El respaldo automático del evento** (`prenderRespaldo()`, en la tarjeta
+  del evento): en Chrome y Edge se elige un archivo una vez (la API de
+  archivos, `showSaveFilePicker`) y el respaldo se escribe solo, 3 segundos
+  después de cada cambio. Sin esa API (Firefox, Safari), se baja solo cada
+  vez que se completa una ronda, una vez por ronda. **Mientras la pestaña
+  esté abierta**: el archivo elegido no sobrevive a recargar la página (hay
+  que volver a prenderlo), y la tarjeta lo dice.
+- **El historial de cambios** (`js/pareo/historial.js`, en Archivos): cada
+  `guardar()` compara lo que se guarda con lo último guardado y anota qué
+  cambió (resultados, tableros, alineaciones, incidencias, quién entra y
+  quién sale, una ronda emparejada o deshecha), sin texto armado (`{ clave,
+  vars }`). «Deshacer el último cambio» vuelve a la versión anterior entera.
+  Vive en esta pestaña (los últimos 40), no en el torneo guardado: al
+  recargar, empieza de cero. No dice **quién** cambió algo, porque Pareo
+  Integral no tiene cuentas.
+- **Dos pestañas con el mismo torneo**: cada pestaña dice cuál tiene abierto
+  por un `BroadcastChannel`, y si otra guarda el mismo torneo por debajo (el
+  evento `storage`, que llega solo a las demás), el aviso de arriba lo dice y
+  ofrece «Cargar lo último guardado». No bloquea nada.
+- **Los adjuntos en equipos y con su propio código**: cada enlace de adjunto
+  se guarda en el torneo (`adjuntos`: código, rango, prendido) y tiene su
+  canal; «Apagar este enlace» le avisa al celular (`apagado`) y corta solo
+  ese. En equipos, el adjunto ve cada tablero del encuentro y anota uno por
+  uno; un tablero sin rival o con resultado no se toca. El principal ahora
+  también hace cumplir el rango de mesas, no solo el celular. Al volver a la
+  ronda, los enlaces prendidos se reconectan solos.
+- **La ficha del jugador en el enlace del evento**: tocar un nombre de la
+  clasificación abre sus rondas, sus puntos, su puesto y sus primeros
+  desempates (`V.vistaTorneo()` manda `d`), con el foco en la ficha.
+- **El idioma del enlace**: un botón «English / Español» en todos los enlaces
+  (`#ver=`, `#vivo=`, `#evento=`, `#adjunto=`), que guarda el idioma y vuelve
+  a abrir la misma dirección.
+- **Sin conexión**: el enlace del evento guarda en el celular lo último que
+  llegó (`pareo_ver_ultimo_v1_<código>`), lo muestra de entrada mientras se
+  conecta y, si se cae la conexión, dice de qué hora es lo que se ve. Al
+  volver, pide el estado de nuevo.
+- **Una sanción con efecto**: una incidencia «Sanción» con mesa (en
+  individual) trae «Cambiar el resultado de la mesa», y la corrección queda
+  anotada con su motivo.
+- **Las planillas de anotación** (`imprimirPlanillasAnotacion()`): una por
+  mesa (en equipos, una por tablero), con el torneo, la ronda, la mesa, la
+  fecha, el ritmo, los dos nombres, 60 jugadas en dos columnas, el
+  resultado y las firmas.
+- **El cierre del evento** (`V.revisarCierre()`, «Bajar el paquete final»):
+  dice lo que falta en cada torneo (rondas, un empate en el corte sin
+  desempate, apelaciones sin resolver) y baja en un `.zip` el acta, el
+  informe, la premiación, los clasificados, las estadísticas y el respaldo.
+  Si falta algo, pregunta antes. El `.zip` sale de `TablaExcel.zip`, que ahora
+  acepta bytes (los PDF) además de texto: una sola copia.
+- **El ID FIDE desde la lista nacional**: la lista de ajedrezcostarica.com
+  identifica a cada jugador por su ID FIDE (no hay un número nacional
+  aparte), y la Edge Function ya lo devolvía; ahora, si el jugador no lo
+  tenía, se le pone al encontrar su Elo Nacional. No cambió la función.
+
+Al tocar esto, `node herramientas/verificar-pareo-cierre.js` (con el sitio en
+localhost:8777; la API de archivos y la búsqueda del Elo Nacional, con
+dobles). Rompiendo a propósito «Deshacer», el aviso de la otra pestaña, que
+el adjunto no pise un tablero o lo último guardado del enlace, salta.
+
 ### La barra de progreso al buscar el Elo Nacional
 
 Antes de esto, tocar «Buscar Elo Nacional de quien no tiene» con una lista
