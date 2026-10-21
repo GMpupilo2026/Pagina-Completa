@@ -111,14 +111,18 @@
                 { emoji: "🏛️", label: "Cursos", desc: "Tus cursos completos, con tu línea de progreso", descProfe: "Los cursos de la Academia y el temario de cada uno", href: "cursos/academia/index.html" },
                 { emoji: "🎞️", label: "Repasar mis clases", desc: "La partida de cada clase, jugada por jugada, con lo que comentó tu profe", descProfe: "Las partidas de tus clases, como las repasan tus alumnos", href: "repasar-clases.html" },
             ] },
-            { title: "Entrenamiento básico", plegable: true, tiles: [
+            /* `escalon`: en la computadora se abre solo el del nivel del alumno
+               (por su diagnóstico) y los otros dos arrancan plegados. Ver
+               «Abierto, solo el entrenamiento de tu nivel» en
+               docs/decisiones/paneles.md. */
+            { title: "Entrenamiento básico", plegable: true, escalon: "basico", tiles: [
                 { emoji: "🎯", label: "Coordenadas", desc: "Reconoce las casillas a toda velocidad", href: "entreno/coordenadas.html", soloAlumno: true },
                 { emoji: "📷", label: "Memoria", desc: "Mira una posición unos segundos y reconstrúyela", href: "entreno/memoria.html", soloAlumno: true },
                 { emoji: "♚", label: "Mates", desc: "Mate en 1, 2 o 3 jugadas", href: "entreno/mates.html", soloAlumno: true },
                 { emoji: "🏆", label: "Practicar", desc: "Series de mates y tácticas, con racha y estrellas", href: "entreno/practicas.html", soloAlumno: true },
                 { emoji: "🧩", label: "4×4", desc: "Ejercicios tácticos por nivel", href: "entreno/4x4.html", soloAlumno: true },
             ] },
-            { title: "Entrenamiento intermedio", plegable: true, tiles: [
+            { title: "Entrenamiento intermedio", plegable: true, escalon: "intermedio", cerrado: true, tiles: [
                 { emoji: "🗂️", label: "Ejercicios por tema", desc: "Clavadas, ataques dobles, mates, finales y táctica de ataque", href: "entreno/temas.html", soloAlumno: true },
                 { emoji: "♞", label: "Aperturas y celadas", desc: "Líneas para memorizar jugándolas, con repaso espaciado", href: "entreno/aperturas.html", soloAlumno: true },
                 /* La prueba de estilo va al lado de Aperturas y celadas: lo que
@@ -130,7 +134,7 @@
                 { emoji: "🔬", label: "Mis estudios", desc: "Tus líneas con variantes y comentarios, el motor para buscar mejoras y tu repertorio", href: "entreno/mis-estudios.html", soloAlumno: true },
                 { emoji: "📴", label: "Ejercicios sin internet", desc: "Guarda una tanda en el celular y resuélvela donde no hay señal", href: "entreno/sin-internet.html", soloAlumno: true },
             ] },
-            { title: "Entrenamiento avanzado", plegable: true, tiles: [
+            { title: "Entrenamiento avanzado", plegable: true, escalon: "avanzado", cerrado: true, tiles: [
                 { emoji: "👁️", label: "Visualización", desc: "Encuentra la línea sin mover ni una pieza", href: "entreno/visualizacion.html", soloAlumno: true },
                 { emoji: "🧭", label: "Precisión posicional", desc: "Sin táctica inmediata: elige el plan correcto a largo plazo", href: "entreno/precision-posicional.html", soloAlumno: true },
                 { emoji: "🏁", label: "Finales contra la máquina", desc: "Lucena, Philidor y los finales de libro, contra Stockfish", href: "entreno/finales.html", soloAlumno: true },
@@ -1298,6 +1302,12 @@
            resultado dentro de un grupo cerrado no se vería. Ver «Los grupos de
            entrenamiento se pliegan en el celular» en docs/decisiones/paneles.md. */
         const CLAVE_GRUPOS = "panel_grupos_abiertos_v1";
+        /* El escalón de entrenamiento que le toca al alumno («basico»,
+           «intermedio» o «avanzado»), sacado del nivel de su último
+           diagnóstico (abrirMiEscalon). Null mientras no se sepa. */
+        let miEscalon = null;
+        // Si salió de un diagnóstico de verdad: solo entonces se dice «tu nivel».
+        let nivelSabido = false;
         function gruposGuardados() {
             try { const o = JSON.parse(localStorage.getItem(CLAVE_GRUPOS) || "{}"); return o && typeof o === "object" ? o : {}; }
             catch (e) { return {}; }
@@ -1334,9 +1344,15 @@
             ultimo.className = "text-xs font-semibold text-brand-700 dark:text-brand-200";
             ultimo.hidden = true;
             ultimo.textContent = "· aquí está lo último que hiciste";
+            /* «tu nivel», al lado del grupo de entrenamiento que le toca. */
+            const suNivel = document.createElement("span");
+            suNivel.dataset.tuNivel = "1";
+            suNivel.className = "text-[11px] font-semibold px-2 py-0.5 rounded-full bg-brand-100 dark:bg-brand-800 text-brand-700 dark:text-brand-200";
+            suNivel.textContent = "tu nivel";
+            suNivel.hidden = !(group.escalon && group.escalon === miEscalon && nivelSabido);
             const cabeza = document.createElement("div");
             cabeza.className = "flex items-baseline flex-wrap gap-x-2 gap-y-1 mb-3";
-            cabeza.append(heading, cuenta, ultimo);
+            cabeza.append(heading, cuenta, suNivel, ultimo);
 
             const guardado = gruposGuardados()[group.title];
             const poner = (abierto) => {
@@ -1346,7 +1362,13 @@
                 tilesGrid.style.display = abierto || campoBusqueda.value.trim() ? "" : "none";
             };
             section.dataset.plegable = "1";
-            poner(guardado !== undefined ? !!guardado : !(enCelular() || group.cerrado));
+            if (group.escalon) section.dataset.escalon = group.escalon;
+            section._abrirPorNivel = () => {
+                suNivel.hidden = !nivelSabido || group.escalon !== miEscalon;
+                if (gruposGuardados()[group.title] === undefined && !enCelular()) poner(group.escalon === miEscalon);
+            };
+            const cerradoDeEntrada = group.escalon && miEscalon ? group.escalon !== miEscalon : group.cerrado;
+            poner(guardado !== undefined ? !!guardado : !(enCelular() || cerradoDeEntrada));
             boton.addEventListener("click", () => {
                 const abierto = section.dataset.abierto !== "1";
                 poner(abierto);
@@ -1681,6 +1703,42 @@
             const mins = Math.max(0, Math.round((new Date(endIso) - new Date(startIso)) / 60000));
             const h = Math.floor(mins / 60), m = mins % 60;
             return h > 0 ? `${h} h ${m} min` : `${m} min`;
+        }
+
+        /* ---------- Un profesor que también es alumno ----------
+           Ronaldo y Sebastián dan clase a los suyos y estudian con Oscar. Su
+           panel sigue siendo el de un profesor; esta tarjeta le suma la puerta
+           a la clase de su profesor —entra como un alumno más— y a sus tareas y
+           exámenes. Sale solo si mis_clases() trae alguien: la lista la da la
+           base (profesores_de), no el rol. Ver «Un profesor también puede ser
+           alumno de otro» en docs/decisiones/permisos-y-roles.md. */
+        async function cargarLadoAlumno() {
+            const { data, error } = await sb.rpc("mis_clases");
+            const clases = !error && Array.isArray(data) ? data : [];
+            const card = document.getElementById("lado-alumno-card");
+            card.hidden = !clases.length;
+            if (!clases.length) return;
+            const lista = document.getElementById("lado-alumno-lista");
+            lista.textContent = "";
+            clases.forEach((c) => {
+                const li = document.createElement("li");
+                li.className = "flex flex-wrap items-center justify-between gap-2 rounded-xl bg-brand-50 dark:bg-brand-950 px-3 py-2";
+                const quien = document.createElement("span");
+                quien.className = "text-sm text-brand-800 dark:text-white";
+                quien.textContent = c.profesor || "Tu profesor";
+                if (c.clase_abierta) {
+                    const abierta = document.createElement("span");
+                    abierta.className = "ml-2 text-xs font-semibold text-green-700 dark:text-green-400";
+                    abierta.textContent = "Clase abierta" + (c.titulo_clase ? " · " + c.titulo_clase : "");
+                    quien.appendChild(abierta);
+                }
+                const entrar = document.createElement("a");
+                entrar.href = "sesion.html?como_alumno=1&profe=" + encodeURIComponent(c.profesor_id);
+                entrar.className = "text-sm font-semibold text-accent-700 dark:text-accent-400 underline underline-offset-2 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400";
+                entrar.textContent = "Entrar a su clase como alumno";
+                li.append(quien, entrar);
+                lista.appendChild(li);
+            });
         }
 
         async function refreshSessionStatus() {
@@ -2047,9 +2105,21 @@
             favs.forEach((h) => { const li = chipDeTarjeta(h); if (li) lista.appendChild(li); });
             // style.display y no `hidden`: la clase `grid` de Tailwind le gana a ese atributo.
             lista.style.display = favs.length ? "" : "none";
-            document.getElementById("favoritas-vacio").hidden = !!favs.length;
+            /* Sin ninguna, un solo renglón: el título y la explicación ocupaban
+               un bloque entero para decir que ahí no hay nada. El botón dice
+               solo para qué es. Ver «El panel del alumno, cada cosa una vez». */
+            document.getElementById("favoritas-vacio").hidden = true;
+            document.getElementById("favoritas-titulo").hidden = !favs.length;
+            caja.classList.toggle("mb-8", !!favs.length);
+            caja.classList.toggle("mb-4", !favs.length);
             const boton = document.getElementById("favoritas-elegir");
-            boton.textContent = favs.length ? "Cambiar favoritas" : "Elegir favoritas";
+            if (favs.length) boton.textContent = "Cambiar favoritas";
+            else {
+                const ic = document.createElement("span");
+                ic.setAttribute("aria-hidden", "true");
+                ic.textContent = "⭐ ";
+                boton.replaceChildren(ic, "Elegir favoritas: las páginas que más usas, arriba del panel");
+            }
             if (!favoritasArmadas) { favoritasArmadas = true; boton.addEventListener("click", elegirFavoritas); }
             caja.hidden = false;
             if (filasDelMes) pintarLoQueMasUsas(filasDelMes);
@@ -2600,9 +2670,12 @@
             const hoy = r.stats.hoy_ejercicios || 0;
             const meta = window.Logros ? Logros.META_DIARIA : 5;
             const dias = (n) => (n === 1 ? "1 día" : n + " días");
+            /* Cuántos ejercicios le faltan hoy lo dice «Hoy te toca», con su
+               barra, justo abajo: el saludo dice solo la racha. Ver «El panel
+               del alumno, cada cosa una vez» en docs/decisiones/paneles.md. */
             document.getElementById("panel-subtitulo").textContent = racha
                 ? (hoy >= meta ? "Llevas " + dias(racha) + " seguidos entrenando, y hoy ya cuenta. 🔥"
-                               : "Llevas " + dias(racha) + " seguidos entrenando: hoy te faltan " + (meta - hoy) + " ejercicios para no cortarla.")
+                               : "Llevas " + dias(racha) + " seguidos entrenando. 🔥")
                 : "Hoy es buen día para empezar una racha: bastan " + meta + " ejercicios.";
         }
 
@@ -2721,6 +2794,26 @@
             }
         }
 
+        /* ---------- Abierto, solo el entrenamiento de tu nivel ----------
+           Con los tres grupos de entrenamiento abiertos, el panel del alumno
+           medía cuatro pantallas y media en la computadora. Ahora se abre el
+           de su nivel —el de su último diagnóstico— y los otros dos quedan
+           plegados, con su nombre y cuántos accesos tienen, a un clic. Sin
+           diagnóstico (o uno viejo, sin `nivel`), el básico. Lo que la persona
+           abrió o cerró a mano se respeta (panel_grupos_abiertos_v1), y en el
+           celular siguen todos plegados, como antes. Ver «Abierto, solo el
+           entrenamiento de tu nivel» en docs/decisiones/paneles.md. */
+        const ESCALON_DE_NIVEL = { principiante: "basico", basico: "basico", intermedio: "intermedio", avanzado: "avanzado", muy_avanzado: "avanzado" };
+        async function abrirMiEscalon() {
+            const { data, error } = await miDiagnostico();
+            if (error) return;
+            const mio = (data || []).find((f) => f.student_id === alumnoDelPanel());
+            const nivel = mio && mio.detalle && mio.detalle.nivel;
+            nivelSabido = !!ESCALON_DE_NIVEL[nivel];
+            miEscalon = ESCALON_DE_NIVEL[nivel] || "basico";
+            document.querySelectorAll("#tile-grid section[data-escalon]").forEach((s) => s._abrirPorNivel && s._abrirPorNivel());
+        }
+
         /* ---------- El diagnóstico que pidió el profe ----------
            El profe lo asigna como un renglón de una tarea (Tareas → «Diagnóstico
            de nivel»), y mientras ese renglón no esté cumplido la tarjeta del
@@ -2754,6 +2847,26 @@
             return { ...hallado, href };
         }
 
+        /* ---------- Cuántas tiene, en la tarjeta misma ----------
+           «Tareas» y «Exámenes» decían lo mismo con tres pendientes que con
+           ninguna: el número estaba solo en la franja de arriba, que habla de
+           UNA cosa. Ahora la tarjeta dice cuántas («3 pendientes», «1 por
+           hacer»), escrito y no con un color. Las cuentas son las mismas de la
+           franja (tareas_con_avance y examenes_con_nota). Ver «El panel del
+           alumno, cada cosa una vez» en docs/decisiones/paneles.md. */
+        function contarEnTarjeta(href, n, uno, varios) {
+            const grupo = TILE_GROUPS.find((g) => g.tiles.some((t) => t.href === href));
+            const tile = grupo && grupo.tiles.find((t) => t.href === href);
+            // El panel de los más pequeños lleva solo el nombre: la franja ya lo dice.
+            if (!tile || tile.disabled || grupo.grande) return;
+            tile.aviso = n ? n + " " + (n === 1 ? uno : varios) : undefined;
+            const viejo = document.querySelector('#tile-grid a[href="' + href + '"]');
+            if (!viejo) return;
+            const nuevo = renderTileCard(tile, !!grupo.destacado, !!grupo.compacto);
+            nuevo.dataset.buscar = viejo.dataset.buscar;
+            viejo.replaceWith(nuevo);
+        }
+
         async function cargarPendientes(rachaP, tallerP) {
             const [t, x] = await Promise.all([
                 sb.rpc("tareas_con_avance", { p_alumno: alumnoDelPanel(), p_pendientes: true, p_limite: 50 }),
@@ -2763,6 +2876,7 @@
             const diagnosticoPedido = marcarDiagnosticoPedido(tareas);
             estadoDelDiagnostico(diagnosticoPedido);
             estadoDelEstilo();
+            abrirMiEscalon();
             /* Si los exámenes no llegan se siguen mostrando las tareas: quedarse
                sin franja por la mitad que falló sería perder también la que sí
                se pudo leer. */
@@ -2781,6 +2895,8 @@
             // pendientes: ya no se pueden hacer, así que sumarlos al "tienes N
             // pendientes" le ofrecería algo que no va a poder abrir.
             const hacibles = tareas.length + porHacer.length + corriendo.length;
+            contarEnTarjeta("tareas.html", tareas.length, "pendiente", "pendientes");
+            contarEnTarjeta("examenes.html", porHacer.length + corriendo.length, "por hacer", "por hacer");
             /* Sin nada que vence, la franja NO se queda vacía: la ocupa el
                siguiente paso de quien todavía no arrancó (ver abajo). Lo que
                vence manda siempre —una fecha le gana a una sugerencia—, así que
@@ -4369,6 +4485,7 @@
                 if (!profile._persona) cargarCampanaDocente().catch((e) => console.error(e));
                 pintarAvisoAlumnos().catch((e) => console.error(e));
                 contarUsosDelPanel();
+                if (!profile.is_admin && !profile._persona) cargarLadoAlumno().catch((e) => console.error(e));
             } else {
                 document.getElementById("progreso-alumno").hidden = false;
                 document.getElementById("registro-clases").hidden = true;

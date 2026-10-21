@@ -149,6 +149,13 @@ out = {'source': 'Base abierta de ejercicios de Lichess (CC0), tabla "Ejercicios
 from sumar_tactica import sumar  # noqa: E402  (vive al lado, en esta misma carpeta)
 out = sumar(out, json.loads((HERE / 'tactica.json').read_text(encoding='utf-8')))
 
+# Y los finales difíciles (1800 a 2800), que la selección de arriba casi no
+# trae porque los ejercicios más jugados son los fáciles. Salen de
+# finales_dificiles.json, ya bajado y comprobado: no hace falta internet.
+import sumar_finales_dificiles as finales  # noqa: E402
+if finales.CACHE.exists():
+    out = finales.sumar(out, json.loads(finales.CACHE.read_text(encoding='utf-8')))
+
 txt = json.dumps(out, ensure_ascii=False, separators=(',', ':'))
 OUT.write_text(txt, encoding='utf-8')
 print(f'descartados al convertir: {bad}')

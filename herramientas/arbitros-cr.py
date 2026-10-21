@@ -164,6 +164,11 @@ def palabras(s):
     return [w for w in re.findall(r"[a-z]+", sin_tildes(html.unescape(s))) if w not in NO_ES_NOMBRE]
 
 
+# El nombre de pila escrito de otra forma en chess-results: Betzy Fallas
+# Marín figura como «Betsy Fallas Marin» y «AN Betsy Fallas».
+VARIANTES = {"betzy": ["betsy"]}
+
+
 def formas_del_nombre(nombre, ambiguo=False):
     """Las formas en que se escribe a alguien en una celda, como expresiones
     sobre las palabras sin tildes: «Apellido1 Apellido2, Nombre», «Nombre
@@ -172,6 +177,7 @@ def formas_del_nombre(nombre, ambiguo=False):
     a, n = palabras(ap), palabras(no)
     if not a or not n:
         return []
+    n = ["(?:" + "|".join([n[0]] + VARIANTES[n[0]]) + ")" if n[0] in VARIANTES else n[0]] + n[1:]
     # «Nombre Apellido» suelto, salvo que otro árbitro comparta nombre y
     # primer apellido (Stanley Gómez Huertas y Stanley Gómez Villalobos):
     # entonces pide también el segundo.

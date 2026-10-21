@@ -967,6 +967,7 @@
                 { emoji: "📧", texto: "Informes a la casa", seccion: "encargados-report" },
                 { emoji: "📓", texto: "Su cuaderno", href: "cuaderno.html?alumno=" + id },
                 { emoji: "🏆", texto: "Su libreta de torneos", href: "libreta-torneos.html?alumno=" + id },
+                { emoji: "🔬", texto: "Sus estudios", href: "entreno/mis-estudios.html?alumno=" + id },
             ].filter(Boolean);
             acciones.forEach((a) => {
                 const li = document.createElement("li");

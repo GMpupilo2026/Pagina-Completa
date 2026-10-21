@@ -2062,6 +2062,11 @@ async function pruebaProgresoAlumna(browser) {
     registro: document.getElementById("registro-clases").checkVisibility(),
     marcas: Array.from(document.querySelectorAll("[data-lo-ultimo]")).map((m) => m.closest("a").getAttribute("href")),
     placeholder: document.getElementById("buscar-panel-campo").placeholder,
+    metaHoy: (document.getElementById("hoy-meta-texto") || {}).textContent || "",
+    numerosSeVen: document.getElementById("entreno-puzzles").checkVisibility(),
+    numerosResumen: document.querySelector("#tus-numeros > summary").checkVisibility(),
+    tareasTarjeta: document.querySelector('#tile-grid a[href="tareas.html"]').textContent,
+    examenesTarjeta: document.querySelector('#tile-grid a[href="examenes.html"]').textContent,
   }));
   igual("a la alumna se le muestra su tarjeta", visto.alumno, true);
   igual("y no el panel del equipo docente", visto.profe, false);
@@ -2078,8 +2083,14 @@ async function pruebaProgresoAlumna(browser) {
 
   // El saludo: el nombre de pila y sin género; el subtítulo, su racha.
   igual("«¡Hola, Ana!», no «¡Bienvenido, Ana Rojas!»", visto.saludo, "¡Hola, Ana! 👋");
-  igual("el subtítulo dice su racha y cuánto le falta hoy", visto.subtitulo,
-    "Llevas 4 días seguidos entrenando: hoy te faltan " + (visto.meta - 2) + " ejercicios para no cortarla.");
+  /* Cada cosa una vez: el saludo dice la racha, y lo que falta hoy lo dice
+     «Hoy te toca» con su barra. Ver «El panel del alumno, cada cosa una vez». */
+  igual("el subtítulo dice su racha, y nada más", visto.subtitulo, "Llevas 4 días seguidos entrenando. 🔥");
+  igual("y «Hoy te toca» dice lo de hoy, sin repetir cuántos días lleva", visto.metaHoy,
+    "Hoy llevas 2 de " + visto.meta + " ejercicios para que el día cuente. No cortes tu racha.");
+  igual("los totales y la racha táctica van plegados bajo «Tus números»", [visto.numerosResumen, visto.numerosSeVen], [true, false]);
+  cierto("la tarjeta de Tareas dice cuántas tiene pendientes (" + visto.tareasTarjeta + ")", /3 pendientes$/.test(visto.tareasTarjeta));
+  cierto("y la de Exámenes, sin ninguno, no dice ningún número (" + visto.examenesTarjeta + ")", !/\d/.test(visto.examenesTarjeta));
   igual("el buscador le sugiere cosas que tiene (no «Cobros»)", visto.placeholder, "Mates, tareas, aperturas…");
   /* El registro de clases del profe, al final de todo: al alumno no le toca.
      Lo suyo es «Repasar mis clases». */
@@ -2958,10 +2969,40 @@ async function pruebaPlegables(browser) {
   igual("sin errores en consola", errores.join(" | ") || "ninguno", "ninguno");
   await ctx.close();
 
-  ({ page, ctx } = await panel(browser, [ALUMNA, PROFE], "u-ana", { viewport: { width: 1280, height: 900 } }, datosAlumna(false)));
+  /* En la computadora, de los tres escalones de entrenamiento se abre solo el
+     de su nivel (por su diagnóstico); los demás grupos, abiertos. Ver
+     «Abierto, solo el entrenamiento de tu nivel». */
+  const ESCALONES = ["Entrenamiento básico", "Entrenamiento intermedio", "Entrenamiento avanzado"];
+  const enCompu = { viewport: { width: 1280, height: 900 } };
+  const conNivel = (nivel) => Object.assign(datosAlumna(false), { rpc: Object.assign({}, datosAlumna(false).rpc,
+    { informes_diagnosticos_alumnos: [{ student_id: "u-ana", fecha: new Date(Date.now() - 40 * 86400000).toISOString(), detalle: { nivel: nivel, areas: {}, perfil: {} } }] }) });
+  const escalones = (page) => page.waitForFunction(() => window.__consultas.some((c) => c.tabla === "informes_diagnosticos_alumnos"), null, { timeout: 10000 })
+    .then(() => page.waitForTimeout(300)).catch(() => {})
+    .then(() => page.evaluate(() => Array.from(document.querySelectorAll("#tile-grid > section[data-escalon]")).map((s) => {
+      const n = s.querySelector("[data-tu-nivel]");
+      return [s.querySelector("h2").textContent, s.querySelector(".grid").checkVisibility(), !!(n && n.checkVisibility())];
+    })));
+  ({ page, ctx } = await panel(browser, [ALUMNA, PROFE], "u-ana", enCompu, datosAlumna(false)));
+  igual("en la computadora, sin diagnóstico: abierto el básico, sin decir «tu nivel»", await escalones(page),
+    [["Entrenamiento básico", true, false], ["Entrenamiento intermedio", false, false], ["Entrenamiento avanzado", false, false]]);
   e = await estado(page);
-  igual("en la computadora arrancan abiertos, que ahí sí caben",
-    e.filter((x) => PLEGABLES.includes(x.titulo)).every((x) => x.boton === "true" && x.grilla), true);
+  igual("y los demás grupos, abiertos, que ahí sí caben",
+    e.filter((x) => PLEGABLES.includes(x.titulo) && !ESCALONES.includes(x.titulo)).every((x) => x.boton === "true" && x.grilla), true);
+  await ctx.close();
+
+  ({ page, ctx } = await panel(browser, [ALUMNA, PROFE], "u-ana", enCompu, conNivel("intermedio")));
+  igual("con diagnóstico intermedio: abierto solo el intermedio, y dice «tu nivel»", await escalones(page),
+    [["Entrenamiento básico", false, false], ["Entrenamiento intermedio", true, true], ["Entrenamiento avanzado", false, false]]);
+  await page.click('#tile-grid h2 button:has-text("Entrenamiento avanzado")');
+  await page.reload({ waitUntil: "networkidle" });
+  await page.waitForSelector("#app:not(.hidden)");
+  igual("lo que abrió a mano se respeta al volver", await escalones(page),
+    [["Entrenamiento básico", false, false], ["Entrenamiento intermedio", true, true], ["Entrenamiento avanzado", true, false]]);
+  await ctx.close();
+
+  ({ page, ctx } = await panel(browser, [ALUMNA, PROFE], "u-ana", enCompu, conNivel("muy_avanzado")));
+  igual("«muy avanzado» abre el avanzado", await escalones(page),
+    [["Entrenamiento básico", false, false], ["Entrenamiento intermedio", false, false], ["Entrenamiento avanzado", true, true]]);
   await ctx.close();
 
   // A quien da clase también se le pliegan, menos la clase en vivo y «Tu cuenta».
@@ -3367,8 +3408,12 @@ async function pruebaTercera(browser) {
   console.log("\n=== Tus favoritas ===");
   let r = await panel(browser, [ALUMNA, PROFE], "u-ana", null, {});
   await r.page.waitForFunction(() => !document.getElementById("favoritas").hidden, null, { timeout: 10000 }).catch(() => {});
-  igual("sin favoritas, invita a elegirlas", await r.page.evaluate(() => [document.getElementById("favoritas-vacio").checkVisibility(), document.getElementById("favoritas-elegir").textContent]),
-    [true, "Elegir favoritas"]);
+  /* Sin ninguna, un solo renglón: ni título ni explicación aparte. */
+  igual("sin favoritas, un solo renglón que invita a elegirlas", await r.page.evaluate(() => [
+      document.getElementById("favoritas-vacio").checkVisibility(), document.getElementById("favoritas-titulo").checkVisibility(),
+      document.getElementById("favoritas-elegir").textContent, document.getElementById("favoritas").getBoundingClientRect().height < 40]),
+    [false, false, "⭐ Elegir favoritas: las páginas que más usas, arriba del panel", true]);
+  igual("y la estrella no se lee en voz alta", await r.page.evaluate(() => document.querySelector("#favoritas-elegir [aria-hidden=true]").textContent), "⭐ ");
   await r.page.click("#favoritas-elegir");
   igual("se eligen en una ventana modal, con casillas por grupo",
     await r.page.evaluate(() => { const d = document.querySelector("dialog[data-favoritas]"); return d && [d.matches(":modal"), d.querySelectorAll("fieldset").length > 3, !!d.querySelector('input[value="entreno/mates.html"]')]; }), [true, true, true]);
@@ -3381,6 +3426,7 @@ async function pruebaTercera(browser) {
     await r.page.evaluate(() => Array.from(document.querySelectorAll("#favoritas-lista a")).map((a) => a.getAttribute("href"))), ["entreno/mates.html", "juegos.html"]);
   igual("se ven de verdad, y el botón ahora dice «Cambiar»",
     await r.page.evaluate(() => [document.getElementById("favoritas-lista").checkVisibility(), document.getElementById("favoritas-elegir").textContent]), [true, "Cambiar favoritas"]);
+  igual("y con alguna, vuelve su título", await r.page.evaluate(() => document.getElementById("favoritas-titulo").checkVisibility()), true);
   igual("se guardan con la clave que viaja con la cuenta",
     await r.page.evaluate(() => localStorage.getItem("panel_favoritas_v1")), JSON.stringify(["entreno/mates.html", "juegos.html"]));
   await r.page.click("#favoritas-elegir");

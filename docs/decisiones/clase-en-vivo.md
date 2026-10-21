@@ -1522,6 +1522,26 @@ viva `sr-only`, como `#pensar-voz`).
   empieza la partida desde ella. La clase juega con el color que mueve en esa
   posición.
 
+### El plan de clase: «👁 Vista previa» en cada posición
+
+- Cada posición del plan trae **«👁 Vista previa»** (y arriba, «Ver todas las
+  posiciones»): la dibuja en el panel del profe, **sin mandarla a la clase**.
+  Antes, para saber cuál era una posición había que ponerla en el tablero de
+  todos con «Al tablero».
+- **Es el mismo mecanismo de Táctica, Archivos y Entrenamientos** (ver «Táctica
+  por tema: la vista previa y su botón»): el lote `vistaPreviaPlan`
+  (`crearVistaPreviaLote`, la preferencia en `localStorage`) y
+  `renderTacticsPreviewBoard()`, que dibuja el tablero con
+  `window.ExampleBoard` y dice de quién es la jugada. Una sola copia, no una
+  más. El lote dibuja la fila cuando entra en pantalla, no todas de golpe.
+- Una lección del plan no la lleva (no es una posición). Un plan sin
+  posiciones no muestra «Ver todas». Al cambiar de plan se suelta el lote
+  (`reiniciar()`), como al cambiar de tema en Táctica.
+- **Al tocarlo, correr `node herramientas/verificar-todo.js clase-plan-vista`**:
+  comprueba el botón cerrado y con su `aria-expanded`, que abrirla dibuje las 64
+  casillas con las piezas de ESA posición y diga quién juega, que no escriba en
+  `game_state` ni en `questions`, y el interruptor de todas.
+
 ### El control remoto
 
 `sesion.html?control=1`, en el celular del profe con su misma cuenta.
@@ -2051,6 +2071,191 @@ y la clase sigue en `clase-cuestionario`. Está probado que fallan de verdad:
 con una jugada ilegal, con la correcta siempre en la A, sin el filtro de
 nivel, perdiendo el nivel al poner la posición o copiando el listo antes de
 jugarlo, saltan.
+
+### Las prácticas de Formación Ajedrez en la clase
+
+En «Preguntar», debajo del cuestionario, «📝 Prácticas de Formación Ajedrez»
+(`js/clase-formacion.js`, `game_state.practica`): el profe elige la práctica de
+una sesión y se la manda a la clase. Cada alumno ve **las láminas de los
+ejercicios** debajo del tablero, las pasa hacia delante y hacia atrás a su ritmo
+(◀ ▶, los números o las flechas del teclado) y marca cada una como
+**completada**. El profe ve cuántas lleva cada uno, y cuando todos terminaron
+lo dice escrito («✅ Todos terminaron: 4 de 4 alumnos.»). Es para el taller de
+los asesores: los ejercicios se resolvían en salas de trabajo y el profe no veía
+quién iba por dónde.
+
+- **Qué es «una práctica»**: las láminas de la sesión que son de la práctica
+  —«Práctica · …» y «Ejercicio k de N» en las sesiones 2 a 6, de la misma
+  `diapositivas.json` que el profe proyecta; la Sesión 1 tiene su presentación
+  propia (ver «Las respuestas de la práctica»)—. Las saca
+  `herramientas/formacion-practicas.js` a `cursos/recursos/formacion-ajedrez/practicas.json`
+  (se genera: no se edita a mano). **Nunca entran las de respuestas, quiz, tarea
+  ni receso**: la lámina se le entrega al alumno entera y una respuesta ahí sería
+  adelantársela. A diferencia de la presentación de la clase, que le pide al
+  alumno solo la lámina que se muestra, acá el alumno tiene la práctica entera
+  a su ritmo, y por eso la lista tiene que ser exactamente lo que se puede ver.
+  Una lámina nueva con otro título (que no sea «Práctica», «Ejercicio k de N» ni
+  «Estación n:») no entra sola: hay que sumarla a `ES_PRACTICA` del generador.
+- **Qué se mandó va en la base** (`game_state.practica`: `{id, deck, titulo,
+  laminas: [n…]}`), por lo mismo que la presentación: quien entra tarde o
+  recarga ve la misma. Solo el profe la pone (`protect_game_state_teacher_columns`
+  se la devuelve a cualquier otro) y el CHECK `game_state_practica_forma`, envuelto
+  en `coalesce(…, false)`, rechaza otra forma. Como un CHECK no admite
+  subconsultas, las láminas se revisan con jsonpath (`jsonb_path_exists`), no
+  con `jsonb_array_elements`. Comprobado en la base: lámina 0, 501, decimal,
+  texto, lista vacía, `deck` con otra forma o sin `id` se rechazan.
+- **Lo que marcó cada alumno NO va en la base**: es de ese rato, como el
+  calentamiento. Lo guarda en su aparato (`clase_formacion_v1:<clase>:<id>`) y lo
+  anuncia en la presencia (`formacion`: `{id, h: [láminas hechas]}`); el profe lo
+  junta en `formacionVistos`, y quien se desconecta no se borra de la lista
+  («(se desconectó)»). Va por `anunciarPresencia()` con una espera al azar (0,3–2 s),
+  como el calentamiento: 30 alumnos marcando a la vez no anuncian en el mismo
+  segundo. Qué lámina está mirando cada uno **no** se anuncia: sería un anuncio
+  por cada ◀ ▶, y el tope de la presencia es de 4 en 31 s.
+- **`id` cambia con cada envío**: «Mandar de nuevo» empieza de cero, y lo marcado
+  en un envío no se cuela en el siguiente. Una marca de otro `id` no cuenta.
+- **Quién la ve para mandarla**: quien `puede_bajar('formacion-ajedrez', false)`,
+  igual que las presentaciones de ese curso (administración, quien lo compró o a
+  quien se lo compartieron, ver «La ficha Asesores»). Sin eso, el espacio no
+  aparece.
+- **El alumno la ve como lo que tiene que HACER**: en la vista limpia y en la
+  pantalla completa para todos le sale encima, como el calentamiento; el
+  proyector y el control remoto no la muestran (no tiene `proyector-se-ve`). El
+  texto de la lámina solo con el Modo Adaptado (`.formacion-texto`), por lo mismo
+  que el de la presentación. El estado de cada lámina va escrito (el número lleva
+  «✓» y su `aria-label` dice «completada»), no solo en el color.
+- **Al cerrar la clase se quita** con lo demás (`limpiarLoDeLaClase`).
+- **Aplicada a mano el 20/10** con `apply_migration`
+  (`20261020033100_game_state_practica.sql`): reemplaza la función ENTERA tal
+  como estaba en la base (la de `20261017173336`) con una línea más. El retrato
+  del esquema se puso al día con la columna nueva a mano, no volviéndolo a armar.
+
+#### Las respuestas de la práctica
+
+En cada lámina el alumno puede **contestar**, y queda el registro para
+analizarlo en clase y calificarlo después. Hay tres clases de pregunta
+(`practicas.json`, `laminas[].preguntas[]`):
+
+- **De opciones**: cada una con sus opciones; se guarda al elegir. Se corrige sola
+  (la correcta está en la base). Son las ocho posiciones de la Estación 2
+  («Jaque mate», «Ahogado», «Jaque, pero la partida sigue», «Posición muerta»,
+  «No hay jaque ni final»), cuatro por lámina, con la situación que dice el curso
+  y que se vuelve a calcular con chess.js al generar (si una posición cambia y
+  el curso dice otra cosa, el generador falla).
+- **De texto**: una caja para escribir la decisión y el artículo. **No se
+  califica** (no tiene una sola respuesta): se analiza en clase. Es lo de los
+  reclamos de la Estación 3 (el alumno siempre es la persona árbitra), los cuatro
+  casos del laboratorio de la Estación 4, uno por lámina, y cada «Ejercicio k de
+  N» de las sesiones 2 a 6.
+- **La planilla** del dictado (Estación 1, **lo primero de la práctica**: lámina 1): diez filas de blancas y negras. El
+  profe dicta en voz alta, sin mostrar el tablero, y todos anotan. La base la
+  compara con la partida dictada (7 jugadas, con capturas, un jaque y el mate:
+  el mate de Légal, comprobada con chess.js) jugada por jugada: sin espacios,
+  puntos ni mayúsculas (`C f3` vale por `Cf3`), el cero del enroque por la o, pero
+  **sin su x, su + o su # NO vale**: es justo lo que el dictado quiere ver. Sale
+  bien solo si todas están bien y no hay jugadas de más; el profe ve cuántas y
+  cuál falló.
+
+**El orden de la práctica de la Sesión 1** (pedido del dueño, 20/10): el dictado
+primero (lámina 1), las ocho posiciones (2 y 3), los tres reclamos (4 a 6) y los
+cuatro casos (7 a 10), con las estaciones renumeradas 1 a 4 en ese orden (las
+láminas de la presentación de la clase siguen con su numeración de salas). Como
+las claves van por número de lámina, el cambio se aplicó con la migración
+`practica_dictado_primero`: renumera las claves en dos pasos (la llave primaria no
+deja cruzar dos filas en un mismo UPDATE) y vuelve a sembrar las de esa práctica;
+se hizo con `practica_respuestas` vacía, porque una respuesta ya guardada habría
+quedado en la lámina equivocada. **Cambiar el orden de nuevo con respuestas
+guardadas pide mover también `practica_respuestas`.**
+
+**La presentación propia de la Sesión 1** (`presentaciones/practica-01/`, 10
+láminas): las láminas de sus estaciones eran para trabajar en salas y no traen
+la pregunta de cada posición ni el caso de cada reclamo. La arma el mismo
+generador (`formacion-practicas.js`) con el dibujador de las demás
+(`formacion-laminas.js`, tipos `tableros`, `filas` y `frase`): las posiciones y
+los casos salen del curso (`formacion-ajedrez.json`), no hay una segunda copia.
+Los títulos de los reclamos no dicen de qué se trata («Reclamo 1 de 3»): la
+persona árbitra no lo sabe de antemano. Está también en la lista de
+`PresentacionClase`, para que el profe pueda **proyectar la lámina de un caso
+mientras lo analizan**. No lleva `notas` a propósito: ese JSON lo baja todo
+alumno.
+
+- **La respuesta correcta NUNCA viaja en `practicas.json`** (lo baja todo
+  navegador con acceso a la Academia). Vive en `practica_claves`
+  (`deck, lamina, pregunta → tipo, clave, modelo`), que solo lee quien da clase
+  (RLS: `role = 'profesor'` o administración) y que siembra el generador:
+  `node herramientas/formacion-practicas.js --sql`, aplicado como migración
+  (el upsert pone al día). `modelo` es la respuesta modelo del curso, que el
+  profe ve junto a lo que contestó cada uno para analizarlo.
+- **Quien corrige es la base**, no el navegador del alumno:
+  `responder_practica(envio, deck, lamina, pregunta, respuesta)`
+  (`SECURITY DEFINER`) comprueba que la práctica sea la que **su profe tiene
+  ahora en la clase** (`es_mi_profesor(owner)` y `game_state.practica`), que la
+  lámina sea una de las suyas, que tenga el acceso vigente (`acceso_vigente()`,
+  como las demás tablas que escribe un alumno), la corrige con la clave y la
+  guarda (una fila por alumno, envío, lámina y pregunta: volver a contestar
+  reemplaza). **No devuelve la corrección**, y una respuesta vacía borra la
+  anterior. No mira el rol: también contesta quien da clase y a la vez estudia
+  con otra persona (`profesores_tambien_alumnos`).
+- **El alumno no lee `practica_respuestas`** (solo el profe de la clase y
+  administración): trae `correcta`, y con ella a la vista iría probando
+  opciones hasta acertar. Lo suyo lo pide con `mis_respuestas_practica(envio)`,
+  que no trae nota. Ninguna de las dos tablas tiene política de escritura ni
+  permiso de escritura: todo pasa por la función.
+- **Comprobado en la base, impersonando roles**: el profe pone la práctica; el
+  alumno contesta (la buena queda `correcta`, la mala no, y la planilla con una
+  jugada sin su x da 12 de 13); una lámina que no es de la práctica, otro
+  envío y alguien que no es de ese profe se rechazan; el alumno ve 0 filas de
+  `practica_respuestas` y de `practica_claves`, no puede insertar ni actualizar
+  directo (`permission denied`) ni quitar la práctica; el profe ve las 4 filas y
+  las 41 claves.
+- **Lo que ve el profe** («🗂️ Lo que contestaron», en el mismo desplegable):
+  la calificación de cada alumno (de las preguntas con respuesta única, cuántas
+  salieron bien y cuántas faltan), y por lámina cada pregunta con su
+  **respuesta modelo (solo suya)**, lo que eligió cada alumno con su marca
+  escrita («✓ bien» / «✗ mal»), cuántos eligieron cada opción, quién no contestó
+  y, en la planilla, qué jugada falló y cuál era (y la partida para dictar). Se
+  pone al día solo cuando la presencia dice que alguien contestó o marcó
+  (`r` = cuántas lleva contestadas; sin Realtime ni tabla nueva en la
+  publicación) y con «Actualizar». Lo que escribió una persona va por
+  `textContent`.
+- **Mostrar la respuesta a los alumnos** (cuando ya la analizaron en clase): en
+  «🗂️ Lo que contestaron», sobre cada lámina, «Mostrar la respuesta a los
+  alumnos» (y «Mostrar todas las respuestas»); el profe ve escrito si ya la ven.
+  La marca va en `game_state.practica.reveladas` (los números de lámina), la
+  misma columna que solo escribe el profe, y el CHECK la acepta opcional (hasta
+  40 números). El alumno recibe la respuesta de **esa lámina y de ninguna
+  otra** por `respuestas_reveladas_practica(envio)`: la correcta, la respuesta
+  modelo **con su artículo**, y cómo le fue a él («✓ Tu respuesta fue correcta»,
+  «✗ Tu respuesta no era esa», «No contestaste», o «Tu planilla: 12 de 13
+  jugadas bien»). Aparece sola, sin recargar, y se le dice en voz.
+  **Esa lámina ya no se contesta**: `responder_practica()` la rechaza («Tu
+  profe ya mostró la respuesta de esta lámina») y su pantalla la deja apagada:
+  con la respuesta a la vista se podría «contestar» copiándola, y el registro
+  dejaría de ser de lo que sabía antes. Antes de mostrarla no hay **ni una
+  palabra** de la respuesta en su pantalla (lo comprueba el verificador).
+  Comprobado en la base con roles: antes de mostrar la función devuelve 0
+  filas; una forma mala (lámina 0, un texto) se rechaza; el alumno no puede
+  mostrarlas él (el trigger se lo devuelve); alguien que no es de ese profe ve 0.
+  Migración `practica_reveladas`.
+- **Prácticas anteriores**: lo contestado queda guardado cuando el profe quita
+  la práctica o cierra la clase, y el selector «Práctica» lo ofrece después
+  (por título y fecha de Costa Rica), para calificar con calma.
+- **«Ver como alumno»** muestra las preguntas pero no manda nada a la base.
+- **Aplicadas a mano el 20/10** con `apply_migration`: `practica_respuestas`,
+  `practica_claves_formacion` y `practica_respuestas_sin_exigir_rol`. El
+  aplicador se quedaba colgado con `drop policy if exists`: la migración va con
+  `create policy` a secas. El retrato del esquema se puso al día agregando las
+  líneas nuevas (en su orden) y no volviéndolo a armar entero.
+
+Lo prueba `verificar-clase-formacion.js`: que `practicas.json` y la
+presentación propia estén al día y completos (cada lámina con su imagen, ninguna
+de respuestas), que **ninguna respuesta correcta viaje en `practicas.json`**, que
+cada pregunta tenga su clave sembrada, que el trigger y el CHECK la protejan, la
+parte pura (`FormacionPractica`: cómo se compara una jugada) y, en el navegador,
+el alumno (pasa, marca, contesta de las tres clases, recarga y sigue donde iba,
+anuncia lo que lleva, la falla de red se dice) y el profe (manda, ve quién falta,
+quién terminó, qué contestó cada uno, la respuesta modelo, la calificación; lo
+escrito por una persona no se interpreta como HTML, la quita).
 
 ### La participación pareja
 

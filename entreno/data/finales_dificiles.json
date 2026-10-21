@@ -1,0 +1,10963 @@
+{
+"005ws": {
+"fen": "8/8/4Kpp1/7p/3N2kP/8/8/8 b - - 3 62",
+"solution": [
+"g5",
+"hxg5",
+"fxg5",
+"Kd5",
+"h4",
+"Ke4",
+"h3",
+"Nf3",
+"Kg3"
+],
+"rating": 2465,
+"themes": [
+"crushing",
+"endgame",
+"knightEndgame",
+"master",
+"masterVsMaster",
+"quietMove",
+"veryLong"
+],
+"mate": false,
+"game": "https://lichess.org/LOwACSXb#123"
+},
+"008Sk": {
+"fen": "8/6pp/3Bp2k/p2pP2P/P3p1PK/8/r4b2/5R2 w - - 3 38",
+"solution": [
+"Rxf2",
+"g5+",
+"Kg3",
+"Rxf2",
+"Kxf2"
+],
+"rating": 1856,
+"themes": [
+"crushing",
+"endgame",
+"long"
+],
+"mate": false,
+"game": "https://lichess.org/rah6MiKa/black#74"
+},
+"00DZe": {
+"fen": "8/5k2/7p/p1P1bPpP/Pp2P3/1P1p1K2/5B2/8 b - - 2 47",
+"solution": [
+"g4+",
+"Ke3",
+"Bd4+",
+"Kxd3",
+"Bxf2"
+],
+"rating": 2360,
+"themes": [
+"bishopEndgame",
+"crushing",
+"deflection",
+"endgame",
+"long",
+"master",
+"skewer"
+],
+"mate": false,
+"game": "https://lichess.org/MVHl8Zy9#93"
+},
+"00WzB": {
+"fen": "8/8/8/P1K1p3/5k1p/5b2/5P2/5B2 b - - 4 46",
+"solution": [
+"Ba8",
+"Kd6",
+"e4",
+"Bg2",
+"Kg4",
+"a6",
+"h3",
+"Bh1",
+"e3",
+"Bxa8",
+"exf2",
+"Bf3+",
+"Kg3",
+"a7",
+"f1=Q",
+"a8=Q",
+"Qxf3"
+],
+"rating": 2711,
+"themes": [
+"advancedPawn",
+"bishopEndgame",
+"crushing",
+"endgame",
+"promotion",
+"quietMove",
+"veryLong"
+],
+"mate": false,
+"game": "https://lichess.org/VEqrGfJg#91"
+},
+"00dt1": {
+"fen": "Q7/8/3B4/2p5/1rkn4/K7/8/8 b - - 2 54",
+"solution": [
+"Nb5+",
+"Ka2",
+"Nc3+",
+"Ka1",
+"Rb1#"
+],
+"rating": 2077,
+"themes": [
+"arabianMate",
+"endgame",
+"exposedKing",
+"fork",
+"long",
+"master",
+"mateIn3"
+],
+"mate": true,
+"game": "https://lichess.org/AQkAsoMX#107"
+},
+"01kNt": {
+"fen": "1rr3k1/5p2/3p2p1/3PP3/1p5R/2p2P2/2Q3PP/6K1 b - - 1 32",
+"solution": [
+"b3",
+"Qc1",
+"b2",
+"Qh6",
+"b1=Q+",
+"Kf2",
+"Rb2+",
+"Kg3",
+"Qe1+",
+"Kh3",
+"Qxh4+"
+],
+"rating": 1815,
+"themes": [
+"advancedPawn",
+"crushing",
+"endgame",
+"promotion",
+"queenRookEndgame",
+"veryLong"
+],
+"mate": false,
+"game": "https://lichess.org/MKPmOKMd#63"
+},
+"01oWi": {
+"fen": "8/p7/8/1PP1p3/4K3/2b3k1/8/8 w - - 0 49",
+"solution": [
+"b6",
+"axb6",
+"c6"
+],
+"rating": 2133,
+"themes": [
+"bishopEndgame",
+"crushing",
+"endgame",
+"short"
+],
+"mate": false,
+"game": "https://lichess.org/pbHmn2fH/black#96"
+},
+"01zXk": {
+"fen": "6k1/8/4ppr1/2Q3P1/7P/8/r7/6K1 w - - 0 50",
+"solution": [
+"Qc8+",
+"Kh7",
+"Qb7+",
+"Kh8",
+"Qb1"
+],
+"rating": 2368,
+"themes": [
+"crushing",
+"endgame",
+"exposedKing",
+"long",
+"queenRookEndgame"
+],
+"mate": false,
+"game": "https://lichess.org/sWqqc3n6/black#98"
+},
+"026QC": {
+"fen": "8/R1r5/1p5p/1kq1pr2/1N1p4/P2P1p2/1PP4P/2K2Q2 w - - 1 37",
+"solution": [
+"a4+",
+"Kxb4",
+"Qe1+",
+"Qc3",
+"bxc3+"
+],
+"rating": 2156,
+"themes": [
+"crushing",
+"endgame",
+"long",
+"sacrifice"
+],
+"mate": false,
+"game": "https://lichess.org/AantwQbU/black#72"
+},
+"03kqY": {
+"fen": "8/2Q2ppk/4b2p/8/4PP2/2p3P1/4K2P/2r5 b - - 0 49",
+"solution": [
+"Bb3",
+"e5",
+"c2",
+"e6",
+"fxe6",
+"Qc3",
+"Rd1",
+"Qxb3",
+"c1=N+",
+"Kxd1",
+"Nxb3"
+],
+"rating": 2855,
+"themes": [
+"advancedPawn",
+"crushing",
+"endgame",
+"exposedKing",
+"fork",
+"promotion",
+"quietMove",
+"underPromotion",
+"veryLong"
+],
+"mate": false,
+"game": "https://lichess.org/W9OcpQ5I#97"
+},
+"03uRJ": {
+"fen": "3r1r2/p5k1/2p4R/1pp3K1/4p3/8/PPP5/7R w - - 0 28",
+"solution": [
+"Rg6+",
+"Kf7",
+"Rh7+",
+"Ke8",
+"Re6#"
+],
+"rating": 2215,
+"themes": [
+"endgame",
+"epauletteMate",
+"exposedKing",
+"long",
+"mateIn3",
+"rookEndgame"
+],
+"mate": true,
+"game": "https://lichess.org/a4P4aO95/black#54"
+},
+"03zgW": {
+"fen": "8/8/p5p1/2pk1p1p/5P1P/1PPK2P1/8/8 b - - 2 35",
+"solution": [
+"c4+",
+"bxc4+",
+"Kc5"
+],
+"rating": 2061,
+"themes": [
+"crushing",
+"endgame",
+"pawnEndgame",
+"short"
+],
+"mate": false,
+"game": "https://lichess.org/fHsuBtYt#69"
+},
+"04yi1": {
+"fen": "8/7k/5K2/4P3/6r1/R6p/8/8 b - - 1 51",
+"solution": [
+"Rg6+",
+"Kf7",
+"h2",
+"Rh3+",
+"Rh6",
+"Rxh2",
+"Rxh2",
+"e6",
+"Rf2+"
+],
+"rating": 2538,
+"themes": [
+"advancedPawn",
+"crushing",
+"endgame",
+"master",
+"rookEndgame",
+"veryLong"
+],
+"mate": false,
+"game": "https://lichess.org/PtwbtSfd#101"
+},
+"05CjS": {
+"fen": "8/p4pp1/7p/2k1P2P/r1p2P2/2K1P3/P2R1P2/8 b - - 1 37",
+"solution": [
+"Ra3+",
+"Kc2",
+"Rxa2+",
+"Kd1",
+"Rxd2+",
+"Kxd2",
+"Kd5"
+],
+"rating": 2834,
+"themes": [
+"crushing",
+"endgame",
+"exposedKing",
+"interference",
+"rookEndgame",
+"veryLong"
+],
+"mate": false,
+"game": "https://lichess.org/rDkTTb30#73"
+},
+"05VnQ": {
+"fen": "8/8/pp1p1k1p/2pP2p1/2P3P1/1P2K2P/P7/8 b - - 1 45",
+"solution": [
+"Ke5",
+"a3",
+"b5",
+"Kd3",
+"bxc4+"
+],
+"rating": 2390,
+"themes": [
+"crushing",
+"endgame",
+"long",
+"pawnEndgame",
+"zugzwang"
+],
+"mate": false,
+"game": "https://lichess.org/g1bw2R9j#89"
+},
+"062e9": {
+"fen": "8/4R1pp/5pk1/1p1b4/2p2PPP/8/2r2B2/6K1 w - - 0 38",
+"solution": [
+"f5+",
+"Kh6",
+"Be3+",
+"g5",
+"fxg6+",
+"Kxg6",
+"h5#"
+],
+"rating": 2012,
+"themes": [
+"attraction",
+"discoveredAttack",
+"discoveredCheck",
+"enPassant",
+"endgame",
+"mateIn4",
+"veryLong"
+],
+"mate": true,
+"game": "https://lichess.org/osvRxufn/black#74"
+},
+"06i6v": {
+"fen": "8/6kp/2p3p1/1q6/3P4/P1PK4/1Q6/8 w - - 1 42",
+"solution": [
+"Qxb5",
+"cxb5",
+"c4",
+"b4",
+"axb4"
+],
+"rating": 2245,
+"themes": [
+"crushing",
+"endgame",
+"long",
+"queenEndgame"
+],
+"mate": false,
+"game": "https://lichess.org/vCrloF3l/black#82"
+},
+"081MG": {
+"fen": "8/8/4p1kp/3pP1P1/3P3K/1n6/4N3/8 b - - 0 64",
+"solution": [
+"hxg5+",
+"Kg4",
+"Kh6"
+],
+"rating": 2112,
+"themes": [
+"advantage",
+"defensiveMove",
+"endgame",
+"knightEndgame",
+"short"
+],
+"mate": false,
+"game": "https://lichess.org/zJCw9QYE#127"
+},
+"093wA": {
+"fen": "8/7p/6p1/1p2k1PP/1p2P3/1P3K2/8/8 w - - 0 35",
+"solution": [
+"hxg6",
+"hxg6",
+"Ke3"
+],
+"rating": 1969,
+"themes": [
+"crushing",
+"defensiveMove",
+"endgame",
+"pawnEndgame",
+"short"
+],
+"mate": false,
+"game": "https://lichess.org/vKAw1rse/black#68"
+},
+"09NOE": {
+"fen": "8/4p2p/3k2p1/pK6/1p6/1P4PP/P1P5/8 b - - 1 37",
+"solution": [
+"Kd5",
+"Kxa5",
+"Kc5"
+],
+"rating": 2564,
+"themes": [
+"crushing",
+"defensiveMove",
+"endgame",
+"pawnEndgame",
+"short"
+],
+"mate": false,
+"game": "https://lichess.org/mw6bRAT9#73"
+},
+"09Npd": {
+"fen": "8/2k5/2P3p1/pP1Kp1P1/P4p2/5P2/8/b7 w - - 1 59",
+"solution": [
+"b6+",
+"Kxb6",
+"Kd6",
+"e4",
+"c7",
+"Be5+",
+"Kxe5",
+"Kxc7",
+"Kxe4"
+],
+"rating": 2068,
+"themes": [
+"advancedPawn",
+"bishopEndgame",
+"crushing",
+"endgame",
+"veryLong"
+],
+"mate": false,
+"game": "https://lichess.org/ytOuIXVO/black#116"
+},
+"0BIxi": {
+"fen": "8/6p1/3k4/5pPp/4K2P/8/8/8 w - - 0 45",
+"solution": [
+"Kxf5",
+"Ke7",
+"Kg6",
+"Kf8",
+"Kh7",
+"Kf7",
+"Kh8"
+],
+"rating": 2542,
+"themes": [
+"crushing",
+"endgame",
+"pawnEndgame",
+"veryLong"
+],
+"mate": false,
+"game": "https://lichess.org/Ree7Aggk/black#88"
+},
+"0BY7H": {
+"fen": "8/kp4R1/1p1P2p1/1P2K1r1/7p/8/8/8 w - - 5 48",
+"solution": [
+"Ke6",
+"h3",
+"d7",
+"h2",
+"d8=Q",
+"h1=Q",
+"Qxg5"
+],
+"rating": 2137,
+"themes": [
+"advancedPawn",
+"crushing",
+"defensiveMove",
+"endgame",
+"promotion",
+"rookEndgame",
+"veryLong"
+],
+"mate": false,
+"game": "https://lichess.org/cn1YMaL2/black#94"
+},
+"0BlI4": {
+"fen": "2R5/2p2p2/3p1kp1/2n4p/R4P2/P1p3P1/1P3K1P/8 b - - 0 40",
+"solution": [
+"cxb2",
+"Rb8",
+"Nxa4"
+],
+"rating": 1966,
+"themes": [
+"advancedPawn",
+"crushing",
+"endgame",
+"intermezzo",
+"short"
+],
+"mate": false,
+"game": "https://lichess.org/WQWcNOfL#79"
+},
+"0C79A": {
+"fen": "4k3/1R4p1/6Pp/3pK2P/3Pp3/5p2/5r2/8 w - - 2 47",
+"solution": [
+"Kd6",
+"Rc2",
+"Rb8+",
+"Rc8",
+"Rxc8#"
+],
+"rating": 2006,
+"themes": [
+"endgame",
+"exposedKing",
+"long",
+"mateIn3",
+"rookEndgame"
+],
+"mate": true,
+"game": "https://lichess.org/eyRa905P/black#92"
+},
+"0CMKk": {
+"fen": "8/4R2P/1p6/6P1/4p3/pk4K1/5P2/7r b - - 0 49",
+"solution": [
+"a2",
+"Ra7",
+"Rxh7",
+"Rxh7",
+"a1=Q"
+],
+"rating": 1755,
+"themes": [
+"advancedPawn",
+"crushing",
+"deflection",
+"endgame",
+"long",
+"promotion",
+"rookEndgame"
+],
+"mate": false,
+"game": "https://lichess.org/hwBR3VM9#97"
+},
+"0D5Ot": {
+"fen": "4b3/4P3/p7/8/1K6/1P6/P1k5/8 w - - 1 55",
+"solution": [
+"Ka5",
+"Kc3",
+"Kxa6"
+],
+"rating": 2382,
+"themes": [
+"bishopEndgame",
+"crushing",
+"endgame",
+"short"
+],
+"mate": false,
+"game": "https://lichess.org/xsX6dt0k/black#108"
+},
+"0DOIB": {
+"fen": "8/1q3p2/6kp/6p1/4Q3/4PPP1/6KP/8 b - - 2 40",
+"solution": [
+"Qxe4",
+"fxe4",
+"g4",
+"Kf1",
+"Kf6"
+],
+"rating": 2007,
+"themes": [
+"crushing",
+"defensiveMove",
+"endgame",
+"long",
+"queenEndgame",
+"quietMove"
+],
+"mate": false,
+"game": "https://lichess.org/R9mKQMcW#79"
+},
+"0DoNL": {
+"fen": "5k2/1R6/7p/4KP1r/8/8/8/8 w - - 0 54",
+"solution": [
+"Ke6",
+"Rh1",
+"Rb8+",
+"Kg7",
+"f6+",
+"Kg6",
+"Rg8+"
+],
+"rating": 2572,
+"themes": [
+"crushing",
+"endgame",
+"exposedKing",
+"master",
+"rookEndgame",
+"veryLong"
+],
+"mate": false,
+"game": "https://lichess.org/og09J5nD/black#106"
+},
+"0Dr4R": {
+"fen": "8/6p1/7p/5k1P/pK3P2/P4P2/8/8 b - - 1 53",
+"solution": [
+"g6",
+"hxg6",
+"Kxg6",
+"Kc3",
+"Kf5",
+"Kd2",
+"Kxf4",
+"Ke2",
+"Kg3",
+"Ke3",
+"h5"
+],
+"rating": 2568,
+"themes": [
+"crushing",
+"defensiveMove",
+"endgame",
+"pawnEndgame",
+"veryLong"
+],
+"mate": false,
+"game": "https://lichess.org/p94XJGfK#105"
+},
+"0EccL": {
+"fen": "8/1p4pp/p1k5/2p1Pp2/8/P3K1P1/1PP4P/8 w - - 2 33",
+"solution": [
+"Kf4",
+"g6",
+"Kg5",
+"Kd7",
+"Kf6"
+],
+"rating": 2149,
+"themes": [
+"crushing",
+"endgame",
+"long",
+"pawnEndgame"
+],
+"mate": false,
+"game": "https://lichess.org/2MgEypBC/black#64"
+},
+"0EytC": {
+"fen": "8/6p1/n3pp1p/1pk5/4PP2/1P1K3P/2N3P1/8 b - - 0 39",
+"solution": [
+"Nb4+",
+"Nxb4",
+"Kxb4",
+"Kc2",
+"Ka3",
+"Kc3",
+"e5"
+],
+"rating": 2707,
+"themes": [
+"crushing",
+"endgame",
+"knightEndgame",
+"veryLong"
+],
+"mate": false,
+"game": "https://lichess.org/KsuQrdTJ#77"
+},
+"0FHs1": {
+"fen": "8/8/3p4/3k2P1/3P3p/3KPp2/1P3P2/8 b - - 0 45",
+"solution": [
+"h3",
+"g6",
+"Ke6",
+"Ke4",
+"h2"
+],
+"rating": 1887,
+"themes": [
+"advancedPawn",
+"crushing",
+"endgame",
+"long",
+"pawnEndgame"
+],
+"mate": false,
+"game": "https://lichess.org/H86eSDVF#89"
+},
+"0FMIf": {
+"fen": "8/8/3p3k/B3b1pp/2P1P3/5K1P/8/8 w - - 3 51",
+"solution": [
+"Bc7",
+"Bf4",
+"h4"
+],
+"rating": 2420,
+"themes": [
+"bishopEndgame",
+"crushing",
+"endgame",
+"master",
+"short"
+],
+"mate": false,
+"game": "https://lichess.org/s262LrNT/black#100"
+},
+"0FTWk": {
+"fen": "8/5Qpk/5p2/5q1p/P2p4/1P4P1/5PKP/8 b - - 0 39",
+"solution": [
+"d3",
+"Qc4",
+"d2",
+"Qe2",
+"Qd5+"
+],
+"rating": 2165,
+"themes": [
+"advancedPawn",
+"crushing",
+"endgame",
+"long",
+"queenEndgame"
+],
+"mate": false,
+"game": "https://lichess.org/8yPrGnXR#77"
+},
+"0Ffy8": {
+"fen": "r7/5P1p/4K3/2k5/1p2p3/2p1P2P/4R3/8 w - - 1 51",
+"solution": [
+"Rg2",
+"Rf8",
+"Rg8",
+"Rxf7",
+"Rc8+",
+"Kb5",
+"Kxf7",
+"Ka4",
+"Ke6",
+"Kb3",
+"Kd5"
+],
+"rating": 2787,
+"themes": [
+"crushing",
+"endgame",
+"intermezzo",
+"quietMove",
+"rookEndgame",
+"veryLong"
+],
+"mate": false,
+"game": "https://lichess.org/S8jybvSU/black#100"
+},
+"0Fv1u": {
+"fen": "3r4/pp6/7k/6p1/4Q3/1P1p4/P4rPK/8 w - - 4 36",
+"solution": [
+"Qe6+",
+"Kh5",
+"Kh3"
+],
+"rating": 2067,
+"themes": [
+"advantage",
+"defensiveMove",
+"endgame",
+"queenRookEndgame",
+"short"
+],
+"mate": false,
+"game": "https://lichess.org/CBPGbbJb/black#70"
+},
+"0G6WJ": {
+"fen": "R7/P6k/4pp2/8/1KP3pp/8/5PP1/r7 b - - 0 45",
+"solution": [
+"h3",
+"gxh3",
+"gxh3",
+"Rd8",
+"h2",
+"a8=R",
+"Rxa8"
+],
+"rating": 1702,
+"themes": [
+"advancedPawn",
+"crushing",
+"endgame",
+"rookEndgame",
+"veryLong"
+],
+"mate": false,
+"game": "https://lichess.org/2vwRR2Yi#89"
+},
+"0Gal8": {
+"fen": "8/8/p1p1p3/4P3/P1PP1kpp/8/4KP1P/8 b - - 0 38",
+"solution": [
+"Ke4",
+"d5",
+"cxd5",
+"c5",
+"Kxe5"
+],
+"rating": 1725,
+"themes": [
+"crushing",
+"endgame",
+"long",
+"pawnEndgame"
+],
+"mate": false,
+"game": "https://lichess.org/SKeCZpsK#75"
+},
+"0GeiA": {
+"fen": "7Q/8/8/k4K2/8/8/1pr5/8 b - - 6 65",
+"solution": [
+"Rc5+",
+"Kf4",
+"b1=Q",
+"Qa8+",
+"Kb4",
+"Qb8+",
+"Rb5"
+],
+"rating": 1924,
+"themes": [
+"advancedPawn",
+"crushing",
+"endgame",
+"master",
+"promotion",
+"queenRookEndgame",
+"veryLong"
+],
+"mate": false,
+"game": "https://lichess.org/wcS4FueV#129"
+},
+"0GjEN": {
+"fen": "8/8/6k1/6P1/KP6/P7/8/2b5 w - - 1 50",
+"solution": [
+"b5",
+"Be3",
+"Ka5",
+"Kxg5",
+"b6",
+"Kf4",
+"Kb5"
+],
+"rating": 2699,
+"themes": [
+"bishopEndgame",
+"crushing",
+"defensiveMove",
+"endgame",
+"quietMove",
+"veryLong"
+],
+"mate": false,
+"game": "https://lichess.org/BIjoUlcN/black#98"
+},
+"0GvdU": {
+"fen": "8/3B4/1p6/p4p2/P2kp3/1P3pK1/8/8 b - - 3 71",
+"solution": [
+"Ke3",
+"Bxf5",
+"f2",
+"Bh3",
+"Ke2",
+"Bd7",
+"f1=N+",
+"Kf4",
+"Nd2"
+],
+"rating": 2744,
+"themes": [
+"advancedPawn",
+"bishopEndgame",
+"crushing",
+"endgame",
+"exposedKing",
+"master",
+"promotion",
+"underPromotion",
+"veryLong"
+],
+"mate": false,
+"game": "https://lichess.org/grHm1Zta#141"
+},
+"0HsUY": {
+"fen": "8/R7/P7/5pk1/4r1p1/3K2P1/8/8 w - - 4 52",
+"solution": [
+"Ra8",
+"Re7",
+"a7"
+],
+"rating": 2295,
+"themes": [
+"advancedPawn",
+"crushing",
+"endgame",
+"quietMove",
+"rookEndgame",
+"short"
+],
+"mate": false,
+"game": "https://lichess.org/s8eotChA/black#102"
+},
+"0IoSr": {
+"fen": "8/5pk1/8/1K4p1/P4q2/6Q1/8/8 w - - 2 44",
+"solution": [
+"Qxf4",
+"gxf4",
+"Kc4",
+"f3",
+"Kd3",
+"f2",
+"Ke2"
+],
+"rating": 1878,
+"themes": [
+"crushing",
+"endgame",
+"queenEndgame",
+"veryLong"
+],
+"mate": false,
+"game": "https://lichess.org/AfXaQ8IH/black#86"
+},
+"0J6Gj": {
+"fen": "3r2k1/pp3p1p/5P2/6R1/6P1/2P4P/PP2p2K/8 b - - 0 30",
+"solution": [
+"Kf8",
+"Re5",
+"Re8",
+"Rxe2",
+"Rxe2+"
+],
+"rating": 1979,
+"themes": [
+"crushing",
+"endgame",
+"long",
+"rookEndgame"
+],
+"mate": false,
+"game": "https://lichess.org/t5n6ZGyi#59"
+},
+"0Jol7": {
+"fen": "8/4k2N/4p3/pp1pP1p1/2pP2P1/P1PnK3/1P6/8 w - - 5 40",
+"solution": [
+"b4",
+"axb4",
+"axb4"
+],
+"rating": 2560,
+"themes": [
+"crushing",
+"endgame",
+"knightEndgame",
+"master",
+"masterVsMaster",
+"short"
+],
+"mate": false,
+"game": "https://lichess.org/BDNOMre2/black#78"
+},
+"0K4vt": {
+"fen": "2Q5/4b3/2r1r1pk/5p2/p3p3/8/1P3PPK/8 w - - 2 45",
+"solution": [
+"Qh8+",
+"Kg5",
+"g3",
+"Kg4",
+"Kg2",
+"f4",
+"Qh3+",
+"Kg5",
+"Qh4+",
+"Kf5",
+"Qxf4#"
+],
+"rating": 2359,
+"themes": [
+"endgame",
+"mateIn5",
+"quietMove",
+"swallowstailMate",
+"veryLong"
+],
+"mate": true,
+"game": "https://lichess.org/DQgwW8Hz/black#88"
+},
+"0Kk24": {
+"fen": "8/1R5P/4K1k1/8/5p1r/8/8/8 b - - 1 76",
+"solution": [
+"Rxh7",
+"Rb1",
+"Rh3",
+"Ke5",
+"Kg5"
+],
+"rating": 2773,
+"themes": [
+"crushing",
+"defensiveMove",
+"endgame",
+"long",
+"quietMove",
+"rookEndgame"
+],
+"mate": false,
+"game": "https://lichess.org/UIHcscq1#151"
+},
+"0L5uX": {
+"fen": "8/1p4p1/p7/1PP1k2p/5p2/3K1P1N/1P5n/8 w - - 1 45",
+"solution": [
+"c6",
+"Kd6",
+"cxb7",
+"Kc7",
+"bxa6"
+],
+"rating": 1874,
+"themes": [
+"advancedPawn",
+"crushing",
+"endgame",
+"knightEndgame",
+"long",
+"master"
+],
+"mate": false,
+"game": "https://lichess.org/xfHI71J9/black#88"
+},
+"0L9pX": {
+"fen": "8/5p1p/5Kp1/5p2/1k6/8/6PP/8 w - - 0 55",
+"solution": [
+"Kxf7",
+"Kc5",
+"Kg7",
+"g5",
+"Kf6"
+],
+"rating": 2259,
+"themes": [
+"crushing",
+"endgame",
+"long",
+"pawnEndgame"
+],
+"mate": false,
+"game": "https://lichess.org/ebBszLRd/black#108"
+},
+"0LEGe": {
+"fen": "8/8/2p1k3/p1P1P3/3P4/4PpRP/r7/6K1 b - - 1 36",
+"solution": [
+"Rg2+",
+"Rxg2",
+"fxg2",
+"h4",
+"a4",
+"Kxg2",
+"a3"
+],
+"rating": 1858,
+"themes": [
+"advancedPawn",
+"crushing",
+"endgame",
+"quietMove",
+"rookEndgame",
+"veryLong"
+],
+"mate": false,
+"game": "https://lichess.org/m7mDxRjj#71"
+},
+"0MoRj": {
+"fen": "5R1Q/1pk5/p1p5/8/1P2p1K1/8/5p2/3r4 b - - 0 45",
+"solution": [
+"Rg1+",
+"Kh3",
+"Rh1+",
+"Kg2",
+"f1=Q+",
+"Rxf1",
+"Rxh8"
+],
+"rating": 2261,
+"themes": [
+"advancedPawn",
+"crushing",
+"endgame",
+"promotion",
+"queenRookEndgame",
+"veryLong"
+],
+"mate": false,
+"game": "https://lichess.org/mPe4Weqm#89"
+},
+"0NEhU": {
+"fen": "8/8/pp4pp/2k5/P1P2P1P/3K4/8/8 b - - 4 40",
+"solution": [
+"h5",
+"Kc3",
+"a5"
+],
+"rating": 2381,
+"themes": [
+"crushing",
+"defensiveMove",
+"endgame",
+"pawnEndgame",
+"quietMove",
+"short",
+"zugzwang"
+],
+"mate": false,
+"game": "https://lichess.org/EJZ15TNI#79"
+},
+"0Ngid": {
+"fen": "6k1/8/p3q3/1pQ1n1B1/2Pp1P2/PP1P2P1/8/6K1 b - - 0 37",
+"solution": [
+"Nf3+",
+"Kf1",
+"Qe1+",
+"Kg2",
+"Qe2+",
+"Kh3",
+"Ng1+",
+"Kh4",
+"Qh2+",
+"Kg4",
+"Qh3#"
+],
+"rating": 2165,
+"themes": [
+"endgame",
+"exposedKing",
+"mateIn5",
+"veryLong"
+],
+"mate": true,
+"game": "https://lichess.org/BMbFUOiH#73"
+},
+"0NlWG": {
+"fen": "3R4/5k1p/4b1p1/2BP4/4n1PP/7K/5P2/r7 w - - 1 39",
+"solution": [
+"Rf8+",
+"Kg7",
+"dxe6"
+],
+"rating": 1831,
+"themes": [
+"crushing",
+"endgame",
+"short"
+],
+"mate": false,
+"game": "https://lichess.org/t6Qj7EEh/black#76"
+},
+"0OgkX": {
+"fen": "8/8/ppk2p1p/4p1p1/1PK1P1P1/5P2/P5P1/8 w - - 1 35",
+"solution": [
+"b5+",
+"axb5+",
+"Kb4",
+"Kd6",
+"Kxb5"
+],
+"rating": 2140,
+"themes": [
+"crushing",
+"endgame",
+"long",
+"pawnEndgame"
+],
+"mate": false,
+"game": "https://lichess.org/cwIOqvD9/black#68"
+},
+"0Pjkr": {
+"fen": "8/5p2/1R4p1/5k1p/5P2/4P2P/1p3PK1/1r6 w - - 28 77",
+"solution": [
+"Kf3",
+"Re1",
+"e4+",
+"Rxe4",
+"Rb5+"
+],
+"rating": 2249,
+"themes": [
+"crushing",
+"endgame",
+"long",
+"rookEndgame"
+],
+"mate": false,
+"game": "https://lichess.org/OdUGLS46/black#152"
+},
+"0QUg8": {
+"fen": "8/7p/8/p3R3/8/1p5P/q4kP1/4R2K w - - 0 49",
+"solution": [
+"Kh2",
+"Qc2",
+"R1e3",
+"Qd1",
+"Rf3+",
+"Qxf3",
+"gxf3",
+"a4",
+"Rb5"
+],
+"rating": 2715,
+"themes": [
+"crushing",
+"endgame",
+"queenRookEndgame",
+"veryLong"
+],
+"mate": false,
+"game": "https://lichess.org/FGdHzUG9/black#96"
+},
+"0Qfps": {
+"fen": "8/5p1p/1k2p1p1/8/3K4/5P1P/6P1/8 w - - 2 34",
+"solution": [
+"Ke5",
+"Kc5",
+"h4"
+],
+"rating": 2729,
+"themes": [
+"crushing",
+"defensiveMove",
+"endgame",
+"pawnEndgame",
+"short"
+],
+"mate": false,
+"game": "https://lichess.org/LyNif3td/black#66"
+},
+"0QwI5": {
+"fen": "8/8/8/4Qr1k/5rP1/7p/7P/5RK1 b - - 0 49",
+"solution": [
+"Rxg4+",
+"Kh1",
+"Rxe5",
+"Rf5+",
+"Rg5"
+],
+"rating": 2111,
+"themes": [
+"crushing",
+"endgame",
+"long",
+"queenRookEndgame"
+],
+"mate": false,
+"game": "https://lichess.org/SWwHjr8H#97"
+},
+"0TuD0": {
+"fen": "8/2k5/2q3p1/1p3p2/1K1Q3P/PP6/8/8 w - - 2 51",
+"solution": [
+"Qc5",
+"Kd7",
+"Qxb5",
+"Qxb5+",
+"Kxb5"
+],
+"rating": 2472,
+"themes": [
+"crushing",
+"endgame",
+"long",
+"queenEndgame",
+"zugzwang"
+],
+"mate": false,
+"game": "https://lichess.org/v74Zl0je/black#100"
+},
+"0UQuU": {
+"fen": "8/6pk/2Q3p1/8/P1P1p3/6KP/2q3P1/8 b - - 1 36",
+"solution": [
+"e3",
+"Qf3",
+"Qd2",
+"Qf4",
+"Qe1+",
+"Kh2",
+"e2"
+],
+"rating": 2701,
+"themes": [
+"advancedPawn",
+"crushing",
+"endgame",
+"queenEndgame",
+"veryLong"
+],
+"mate": false,
+"game": "https://lichess.org/LhXFZBB9#71"
+},
+"0UVTT": {
+"fen": "8/8/8/5p2/8/3KpBk1/3p2P1/8 b - - 3 61",
+"solution": [
+"Kf2",
+"Bh5",
+"f4"
+],
+"rating": 2185,
+"themes": [
+"bishopEndgame",
+"crushing",
+"defensiveMove",
+"endgame",
+"short"
+],
+"mate": false,
+"game": "https://lichess.org/lSAQ2cM4#121"
+},
+"0V8ro": {
+"fen": "4k3/6KR/5P2/8/8/5r1p/8/8 w - - 6 69",
+"solution": [
+"Rxh3",
+"Rxh3",
+"f7+",
+"Kd7",
+"f8=Q"
+],
+"rating": 2426,
+"themes": [
+"advancedPawn",
+"crushing",
+"deflection",
+"endgame",
+"exposedKing",
+"long",
+"promotion",
+"rookEndgame",
+"sacrifice"
+],
+"mate": false,
+"game": "https://lichess.org/p185R3FF/black#136"
+},
+"0VNg4": {
+"fen": "8/2P5/6p1/3Kpk1p/7P/6P1/8/q7 w - - 0 64",
+"solution": [
+"c8=Q+",
+"Kf6",
+"Qf8#"
+],
+"rating": 1990,
+"themes": [
+"advancedPawn",
+"endgame",
+"mateIn2",
+"promotion",
+"queenEndgame",
+"short"
+],
+"mate": true,
+"game": "https://lichess.org/vmw1XpV2/black#126"
+},
+"0VrLq": {
+"fen": "2r5/6p1/2P1k3/1P1p1p2/1K1P1P2/8/8/8 w - - 4 43",
+"solution": [
+"Kc5",
+"Ra8",
+"b6",
+"Ra5+",
+"Kb4",
+"Ra1",
+"b7",
+"Kd6",
+"b8=Q+"
+],
+"rating": 2417,
+"themes": [
+"advancedPawn",
+"crushing",
+"endgame",
+"promotion",
+"rookEndgame",
+"veryLong"
+],
+"mate": false,
+"game": "https://lichess.org/nvyPjybL/black#84"
+},
+"0VwPV": {
+"fen": "1Q1R4/8/4p3/K2p4/4k2p/4p3/8/2r5 b - - 2 56",
+"solution": [
+"Ra1+",
+"Kb4",
+"e2"
+],
+"rating": 2874,
+"themes": [
+"advancedPawn",
+"crushing",
+"endgame",
+"master",
+"queenRookEndgame",
+"short"
+],
+"mate": false,
+"game": "https://lichess.org/av8XMBhu#111"
+},
+"0WTB1": {
+"fen": "4Q3/8/1p3p2/p1pPpk1p/P1P4q/2P2P2/6P1/6K1 w - - 4 43",
+"solution": [
+"Qxh5+",
+"Qxh5",
+"g4+",
+"Qxg4+",
+"fxg4+"
+],
+"rating": 2630,
+"themes": [
+"crushing",
+"endgame",
+"fork",
+"long",
+"queenEndgame",
+"sacrifice"
+],
+"mate": false,
+"game": "https://lichess.org/14O6XiA0/black#84"
+},
+"0Wjip": {
+"fen": "8/5K2/8/8/p1Pk4/1p6/1P6/2B5 b - - 2 43",
+"solution": [
+"Kxc4",
+"Ke6",
+"Kd3",
+"Bf4",
+"a3",
+"Be5",
+"a2"
+],
+"rating": 2056,
+"themes": [
+"advancedPawn",
+"bishopEndgame",
+"crushing",
+"endgame",
+"veryLong"
+],
+"mate": false,
+"game": "https://lichess.org/48VPF1XU#85"
+},
+"0Wkjq": {
+"fen": "8/8/3p4/pkpP1K2/8/8/1N6/8 b - - 3 55",
+"solution": [
+"a4",
+"Nd3",
+"Kc4"
+],
+"rating": 2464,
+"themes": [
+"crushing",
+"endgame",
+"knightEndgame",
+"quietMove",
+"short"
+],
+"mate": false,
+"game": "https://lichess.org/2KR2a7oj#109"
+},
+"0XHd1": {
+"fen": "8/6p1/p6p/1p3p1k/1Pqp1Q2/P4P2/6P1/7K w - - 0 38",
+"solution": [
+"g4+",
+"Kh4",
+"gxf5+",
+"Kh5",
+"Qg4#"
+],
+"rating": 2387,
+"themes": [
+"discoveredAttack",
+"discoveredCheck",
+"endgame",
+"long",
+"mateIn3",
+"queenEndgame"
+],
+"mate": true,
+"game": "https://lichess.org/olNWXzk3/black#74"
+},
+"0XYhM": {
+"fen": "6k1/5p1p/1q2pPpP/p2pP3/1p1n3P/1P3Q2/P1RBN3/6K1 b - - 0 31",
+"solution": [
+"Nxf3+",
+"Kg2",
+"Qa6"
+],
+"rating": 2765,
+"themes": [
+"advantage",
+"discoveredCheck",
+"doubleCheck",
+"endgame",
+"hangingPiece",
+"short"
+],
+"mate": false,
+"game": "https://lichess.org/pyQITEXK#61"
+},
+"0XqV2": {
+"fen": "3r2rk/ppq2p1p/2p1p3/4Rp2/3P1Q2/2P4P/PP3PP1/4R1K1 b - - 6 23",
+"solution": [
+"f6",
+"Rxf5",
+"Qg7",
+"g3",
+"exf5"
+],
+"rating": 1830,
+"themes": [
+"advantage",
+"clearance",
+"endgame",
+"intermezzo",
+"long"
+],
+"mate": false,
+"game": "https://lichess.org/MNMYnEjm#45"
+},
+"0Xr1O": {
+"fen": "2R2r2/1P6/8/1K6/5k2/8/8/6q1 w - - 0 54",
+"solution": [
+"Rxf8+",
+"Ke3",
+"Re8+"
+],
+"rating": 2313,
+"themes": [
+"crushing",
+"endgame",
+"hangingPiece",
+"queenRookEndgame",
+"short"
+],
+"mate": false,
+"game": "https://lichess.org/AqacfMeU/black#106"
+},
+"0Y6Td": {
+"fen": "8/8/5p2/K5b1/P1B3P1/1P2p2k/8/8 b - - 0 48",
+"solution": [
+"Kxg4",
+"Be2+",
+"Kg3",
+"Kb5",
+"Kf2",
+"a5",
+"Kxe2"
+],
+"rating": 2454,
+"themes": [
+"advantage",
+"bishopEndgame",
+"endgame",
+"master",
+"veryLong"
+],
+"mate": false,
+"game": "https://lichess.org/ga4XYrwO#95"
+},
+"0YEZV": {
+"fen": "8/5p2/2Q4p/6k1/2PKp3/8/7P/1q6 w - - 2 42",
+"solution": [
+"Qb5+",
+"Qxb5",
+"cxb5",
+"e3",
+"Kxe3"
+],
+"rating": 2483,
+"themes": [
+"crushing",
+"endgame",
+"long",
+"queenEndgame"
+],
+"mate": false,
+"game": "https://lichess.org/KSvgrGZz/black#82"
+},
+"0Z0A3": {
+"fen": "8/7p/p5p1/3k1pP1/P2P1P1P/2BK4/1b6/8 b - - 4 40",
+"solution": [
+"Bc1",
+"Ba5",
+"Bxf4"
+],
+"rating": 2194,
+"themes": [
+"advantage",
+"bishopEndgame",
+"endgame",
+"master",
+"short"
+],
+"mate": false,
+"game": "https://lichess.org/WV95VABN#79"
+},
+"0Z6T4": {
+"fen": "8/5k2/3Kp3/3pPP2/2pP4/2P5/2n5/8 w - - 1 47",
+"solution": [
+"Kd7",
+"exf5",
+"e6+"
+],
+"rating": 2364,
+"themes": [
+"crushing",
+"endgame",
+"knightEndgame",
+"short"
+],
+"mate": false,
+"game": "https://lichess.org/MeN9Qllw/black#92"
+},
+"0ZBYK": {
+"fen": "6k1/6p1/1p5p/2p2P2/2P1p1PP/1P2Q3/2q5/5K2 b - - 0 56",
+"solution": [
+"Qd1+",
+"Kf2",
+"Qxg4"
+],
+"rating": 1784,
+"themes": [
+"crushing",
+"endgame",
+"master",
+"queenEndgame",
+"short"
+],
+"mate": false,
+"game": "https://lichess.org/XLUSrTDw#111"
+},
+"0ZaZc": {
+"fen": "8/1p1k4/4q3/8/6Q1/6PK/5P2/8 b - - 11 73",
+"solution": [
+"b5",
+"f4",
+"Qxg4+",
+"Kxg4",
+"b4",
+"Kf3",
+"b3"
+],
+"rating": 2161,
+"themes": [
+"crushing",
+"endgame",
+"queenEndgame",
+"quietMove",
+"veryLong"
+],
+"mate": false,
+"game": "https://lichess.org/I6SMWPk7#145"
+},
+"0aCWJ": {
+"fen": "8/8/3knp2/5p1p/3K1N1P/6P1/5P2/8 w - - 9 57",
+"solution": [
+"Nxe6",
+"Kxe6",
+"Ke3",
+"Ke5",
+"Kf3",
+"f4",
+"g4",
+"hxg4+",
+"Kxg4"
+],
+"rating": 2743,
+"themes": [
+"crushing",
+"endgame",
+"knightEndgame",
+"master",
+"veryLong",
+"zugzwang"
+],
+"mate": false,
+"game": "https://lichess.org/FhoMQX9m/black#112"
+},
+"0bD74": {
+"fen": "5k2/p4p2/1pq1p1p1/2p1P3/5PP1/2PQ3P/1P5K/8 w - - 1 38",
+"solution": [
+"Qd6+",
+"Qxd6",
+"exd6",
+"Ke8",
+"h4",
+"Kd7",
+"h5",
+"Kxd6",
+"h6"
+],
+"rating": 2336,
+"themes": [
+"crushing",
+"endgame",
+"queenEndgame",
+"quietMove",
+"veryLong"
+],
+"mate": false,
+"game": "https://lichess.org/gWLp9pYe/black#74"
+},
+"0bXN5": {
+"fen": "8/8/8/7p/8/6pk/8/5KB1 b - - 3 55",
+"solution": [
+"h4",
+"Bd4",
+"Kh2",
+"Be5",
+"Kh1"
+],
+"rating": 2168,
+"themes": [
+"bishopEndgame",
+"crushing",
+"defensiveMove",
+"endgame",
+"long",
+"quietMove",
+"zugzwang"
+],
+"mate": false,
+"game": "https://lichess.org/wHwd0Sun#109"
+},
+"0bXr4": {
+"fen": "1r6/pn1RBkp1/2p2p2/7p/8/5P2/P4P1P/6K1 w - - 1 25",
+"solution": [
+"Bc5+",
+"Ke6",
+"Re7+",
+"Kd5",
+"Bxa7",
+"Ra8",
+"Rxb7"
+],
+"rating": 2653,
+"themes": [
+"advantage",
+"discoveredAttack",
+"discoveredCheck",
+"endgame",
+"veryLong"
+],
+"mate": false,
+"game": "https://lichess.org/K5SyiYU3/black#48"
+},
+"0bZ72": {
+"fen": "8/8/p2PK3/P5k1/7p/5P2/1p5R/1r6 w - - 0 69",
+"solution": [
+"Re2",
+"h3",
+"d7",
+"Rd1",
+"Rxb2"
+],
+"rating": 2325,
+"themes": [
+"advancedPawn",
+"crushing",
+"endgame",
+"long",
+"rookEndgame"
+],
+"mate": false,
+"game": "https://lichess.org/gvNGRu91/black#136"
+},
+"0blcF": {
+"fen": "3k4/4RP2/1p2K3/p6r/P7/6P1/7P/8 b - - 0 39",
+"solution": [
+"Rh6+",
+"Kd5",
+"Kxe7",
+"f8=Q+",
+"Kxf8"
+],
+"rating": 1862,
+"themes": [
+"crushing",
+"deflection",
+"endgame",
+"long",
+"rookEndgame"
+],
+"mate": false,
+"game": "https://lichess.org/KroybNG3#77"
+},
+"0btvw": {
+"fen": "8/1p1k2p1/p1r2p1p/2R1p3/1PK1P3/5P1P/1P4P1/8 b - - 2 42",
+"solution": [
+"b5+",
+"Kd3",
+"Rxc5",
+"bxc5",
+"a5",
+"Kc3",
+"Kc7"
+],
+"rating": 2884,
+"themes": [
+"crushing",
+"defensiveMove",
+"deflection",
+"endgame",
+"quietMove",
+"rookEndgame",
+"veryLong"
+],
+"mate": false,
+"game": "https://lichess.org/BLJvypwE#83"
+},
+"0by1k": {
+"fen": "8/7p/2p1k1p1/p3P3/P3K3/1P4P1/8/8 w - - 0 41",
+"solution": [
+"b4",
+"axb4",
+"a5",
+"b3",
+"Kd3"
+],
+"rating": 2303,
+"themes": [
+"crushing",
+"defensiveMove",
+"endgame",
+"long",
+"pawnEndgame",
+"quietMove"
+],
+"mate": false,
+"game": "https://lichess.org/qykW6xQL/black#80"
+},
+"0cKaD": {
+"fen": "2kr3r/p1p5/2Q4p/2p1ppp1/4q2P/P5PN/5P2/1R4K1 w - - 0 25",
+"solution": [
+"Qe6+",
+"Rd7",
+"Qa6+",
+"Kd8",
+"Qf6+"
+],
+"rating": 2400,
+"themes": [
+"advantage",
+"endgame",
+"long",
+"queensideAttack"
+],
+"mate": false,
+"game": "https://lichess.org/vy3G8v67/black#48"
+},
+"0cb4d": {
+"fen": "8/R5pk/1p5p/4q3/3p2RP/P5PK/8/8 w - - 0 45",
+"solution": [
+"Raxg7+",
+"Qxg7",
+"Rxg7+",
+"Kxg7",
+"Kg4",
+"d3",
+"Kf3"
+],
+"rating": 2171,
+"themes": [
+"crushing",
+"defensiveMove",
+"endgame",
+"queenRookEndgame",
+"veryLong"
+],
+"mate": false,
+"game": "https://lichess.org/mRv6uzX3/black#88"
+},
+"0cvM3": {
+"fen": "8/pppb2kr/2n1ppp1/6P1/3PN3/2P1P3/P3KPP1/7R w - - 0 22",
+"solution": [
+"Rxh7+",
+"Kxh7",
+"Nxf6+",
+"Kg7",
+"Nxd7"
+],
+"rating": 1980,
+"themes": [
+"advantage",
+"attraction",
+"endgame",
+"fork",
+"long"
+],
+"mate": false,
+"game": "https://lichess.org/dL3lfHDA/black#42"
+},
+"0ddkd": {
+"fen": "8/8/p3k3/1p2p2P/nP2KpP1/P4P2/2P5/8 w - - 5 41",
+"solution": [
+"h6",
+"Kf6",
+"g5+",
+"Kg6",
+"Kxe5"
+],
+"rating": 2268,
+"themes": [
+"crushing",
+"deflection",
+"endgame",
+"knightEndgame",
+"long"
+],
+"mate": false,
+"game": "https://lichess.org/F9xW7Yhq/black#80"
+},
+"0eI76": {
+"fen": "8/8/4N3/2k2n2/1p3K1P/8/8/8 b - - 0 56",
+"solution": [
+"Kc4",
+"h5",
+"b3",
+"Kxf5",
+"b2"
+],
+"rating": 1905,
+"themes": [
+"advancedPawn",
+"crushing",
+"defensiveMove",
+"endgame",
+"knightEndgame",
+"long",
+"sacrifice"
+],
+"mate": false,
+"game": "https://lichess.org/7GRXc0dE#111"
+},
+"0eN0K": {
+"fen": "8/8/5pk1/pR5p/1P5P/2P2RPK/2q5/8 b - - 0 53",
+"solution": [
+"Qd1",
+"Kg2",
+"Qe2+",
+"Rf2",
+"Qxb5"
+],
+"rating": 2423,
+"themes": [
+"crushing",
+"endgame",
+"fork",
+"long",
+"queenRookEndgame"
+],
+"mate": false,
+"game": "https://lichess.org/naH2tt23#105"
+},
+"0eQwB": {
+"fen": "8/p6p/1p4p1/4R3/r1k2K2/4P1P1/5P1P/8 w - - 0 32",
+"solution": [
+"Re4+",
+"Kb5",
+"Rxa4",
+"Kxa4",
+"e4",
+"Kb5",
+"Kg5"
+],
+"rating": 2712,
+"themes": [
+"crushing",
+"endgame",
+"quietMove",
+"rookEndgame",
+"veryLong"
+],
+"mate": false,
+"game": "https://lichess.org/Gijeiatt/black#62"
+},
+"0euUa": {
+"fen": "8/p2k4/P3p3/1P1p1p2/N1nP1K1p/4PP2/8/8 w - - 3 37",
+"solution": [
+"b6",
+"Nxb6",
+"Nxb6+",
+"Kc7",
+"Na4"
+],
+"rating": 2050,
+"themes": [
+"crushing",
+"defensiveMove",
+"endgame",
+"knightEndgame",
+"long"
+],
+"mate": false,
+"game": "https://lichess.org/OXCTKi3D/black#72"
+},
+"0f3zy": {
+"fen": "6k1/1R4pp/4pn1r/3pN3/3P1P2/4P1K1/5r1P/4R3 b - - 8 40",
+"solution": [
+"Ne4+",
+"Kg4",
+"Rh4+",
+"Kxh4",
+"Rxh2+",
+"Kg4",
+"h5+",
+"Kf3",
+"Rf2#"
+],
+"rating": 2426,
+"themes": [
+"attraction",
+"endgame",
+"hookMate",
+"master",
+"mateIn5",
+"sacrifice",
+"veryLong"
+],
+"mate": true,
+"game": "https://lichess.org/I87IMS2T#79"
+},
+"0fTsF": {
+"fen": "2Q5/5p1p/6pk/8/3Q3P/PP4PK/3p4/4q3 b - - 0 44",
+"solution": [
+"Qh1+",
+"Kg4",
+"d1=Q+",
+"Qxd1",
+"f5+",
+"Qxf5",
+"gxf5+",
+"Kxf5",
+"Qxd1"
+],
+"rating": 2676,
+"themes": [
+"advancedPawn",
+"crushing",
+"endgame",
+"promotion",
+"queenEndgame",
+"veryLong"
+],
+"mate": false,
+"game": "https://lichess.org/R8L4iyrF#87"
+},
+"0fZpR": {
+"fen": "8/7p/2k1p1pP/p3P1P1/3PNn2/2K5/8/8 w - - 2 50",
+"solution": [
+"Nf6",
+"Ne2+",
+"Kc4",
+"a4",
+"Nxh7"
+],
+"rating": 2235,
+"themes": [
+"advantage",
+"defensiveMove",
+"endgame",
+"knightEndgame",
+"long",
+"master"
+],
+"mate": false,
+"game": "https://lichess.org/9hSESbJ0/black#98"
+},
+"0fwK1": {
+"fen": "8/8/p7/1P4Bp/1Pb4P/2Kp4/4k3/8 w - - 1 84",
+"solution": [
+"Kxc4",
+"d2",
+"Bxd2"
+],
+"rating": 1913,
+"themes": [
+"bishopEndgame",
+"crushing",
+"endgame",
+"hangingPiece",
+"master",
+"short"
+],
+"mate": false,
+"game": "https://lichess.org/iqanZzgl/black#166"
+},
+"0gfBl": {
+"fen": "8/8/5pk1/4p2p/2p1PPP1/2P3K1/8/8 w - - 0 41",
+"solution": [
+"fxe5",
+"fxe5",
+"Kh4",
+"hxg4",
+"Kxg4"
+],
+"rating": 2261,
+"themes": [
+"crushing",
+"endgame",
+"long",
+"master",
+"pawnEndgame",
+"zugzwang"
+],
+"mate": false,
+"game": "https://lichess.org/9YPW5pOY/black#80"
+},
+"0gyJ9": {
+"fen": "8/6k1/6pp/1p6/1Q6/P5P1/1q3P1K/8 b - - 1 43",
+"solution": [
+"Qxb4",
+"axb4",
+"Kf6",
+"Kh3",
+"Kf5",
+"f3",
+"g5",
+"g4+",
+"Kf4",
+"Kg2",
+"Ke3",
+"Kg3",
+"Ke2"
+],
+"rating": 2789,
+"themes": [
+"crushing",
+"endgame",
+"queenEndgame",
+"quietMove",
+"veryLong"
+],
+"mate": false,
+"game": "https://lichess.org/tOb3vW8V#85"
+},
+"0hGUB": {
+"fen": "5R2/2k1PK2/6pp/1p6/5q2/5p2/P7/8 w - - 1 52",
+"solution": [
+"Kg8",
+"Qc4+",
+"Kh7",
+"Kd6",
+"e8=Q"
+],
+"rating": 2279,
+"themes": [
+"advancedPawn",
+"crushing",
+"defensiveMove",
+"endgame",
+"long",
+"promotion",
+"queenRookEndgame"
+],
+"mate": false,
+"game": "https://lichess.org/1hJ5s1ED/black#102"
+},
+"0hdV3": {
+"fen": "4k1r1/p6r/2p1p3/8/3Pp3/2P1Q3/PP4p1/4R1K1 b - - 1 31",
+"solution": [
+"Rh1+",
+"Kf2",
+"Rxe1",
+"Qxe1",
+"g1=Q+",
+"Qxg1",
+"e3+",
+"Kxe3",
+"Rxg1"
+],
+"rating": 2652,
+"themes": [
+"advancedPawn",
+"crushing",
+"endgame",
+"exposedKing",
+"promotion",
+"queenRookEndgame",
+"veryLong"
+],
+"mate": false,
+"game": "https://lichess.org/gySRQ5c8#61"
+},
+"0ihz8": {
+"fen": "2Q5/8/8/8/4Pp2/8/3k1KP1/1q6 b - - 3 48",
+"solution": [
+"Qe1+",
+"Kf3",
+"Qg3#"
+],
+"rating": 1837,
+"themes": [
+"endgame",
+"mateIn2",
+"queenEndgame",
+"short"
+],
+"mate": true,
+"game": "https://lichess.org/FxDj3gyN#95"
+},
+"0jbFz": {
+"fen": "8/pBP3q1/1pR1b3/3k1p2/3P2p1/P2KP1P1/r7/8 w - - 0 31",
+"solution": [
+"Rxb6#"
+],
+"rating": 2526,
+"themes": [
+"discoveredAttack",
+"discoveredCheck",
+"endgame",
+"mateIn1",
+"morphysMate",
+"oneMove"
+],
+"mate": true,
+"game": "https://lichess.org/DF37L8Ax/black#60"
+},
+"0kTXQ": {
+"fen": "8/5pkp/1R6/5PPP/p7/1p6/4K3/2qr4 w - - 0 53",
+"solution": [
+"f6+",
+"Kh8",
+"Rb8+",
+"Qc8",
+"Rxc8+",
+"Rd8",
+"Rxd8#"
+],
+"rating": 1863,
+"themes": [
+"endgame",
+"mateIn4",
+"queenRookEndgame",
+"veryLong"
+],
+"mate": true,
+"game": "https://lichess.org/1hiLoRWT/black#104"
+},
+"0kXxf": {
+"fen": "8/8/4p1B1/5bKp/4kP1P/8/8/8 b - - 0 53",
+"solution": [
+"Bxg6",
+"Kxg6",
+"Kxf4",
+"Kxh5",
+"Kf5",
+"Kh6",
+"e5",
+"h5",
+"e4",
+"Kg7",
+"e3"
+],
+"rating": 2764,
+"themes": [
+"bishopEndgame",
+"crushing",
+"endgame",
+"quietMove",
+"veryLong"
+],
+"mate": false,
+"game": "https://lichess.org/vwR7vd93#105"
+},
+"0kfTy": {
+"fen": "6Q1/6q1/5pk1/5p1p/7P/6P1/5P1K/8 w - - 6 57",
+"solution": [
+"Qxg7+",
+"Kxg7",
+"Kg2",
+"f4",
+"Kf3",
+"fxg3",
+"Kxg3"
+],
+"rating": 2815,
+"themes": [
+"crushing",
+"endgame",
+"queenEndgame",
+"veryLong"
+],
+"mate": false,
+"game": "https://lichess.org/knwMqo8v/black#112"
+},
+"0lLtd": {
+"fen": "8/8/3k4/4pPpp/1pK3P1/8/7P/8 w - - 0 36",
+"solution": [
+"gxh5",
+"e4",
+"Kxb4"
+],
+"rating": 2376,
+"themes": [
+"crushing",
+"endgame",
+"master",
+"masterVsMaster",
+"pawnEndgame",
+"short",
+"superGM"
+],
+"mate": false,
+"game": "https://lichess.org/foglDRlf/black#70"
+},
+"0mf5n": {
+"fen": "8/8/8/5Kp1/5p2/8/4kPP1/8 w - - 0 49",
+"solution": [
+"f3",
+"Kf2",
+"Kxg5"
+],
+"rating": 1854,
+"themes": [
+"crushing",
+"endgame",
+"intermezzo",
+"pawnEndgame",
+"quietMove",
+"short"
+],
+"mate": false,
+"game": "https://lichess.org/k9XwVAmy/black#96"
+},
+"0nBoQ": {
+"fen": "8/6p1/4kp1p/1p2r2P/1P2RKP1/6P1/8/8 b - - 10 40",
+"solution": [
+"Kd5",
+"Rxe5+",
+"fxe5+"
+],
+"rating": 1910,
+"themes": [
+"crushing",
+"endgame",
+"rookEndgame",
+"short"
+],
+"mate": false,
+"game": "https://lichess.org/tUzU3kP7#79"
+},
+"0nHtB": {
+"fen": "6R1/7r/8/3kp3/8/R3p3/4KpP1/8 b - - 3 74",
+"solution": [
+"Rh1",
+"Rf8",
+"Re1+",
+"Kd3",
+"e4+"
+],
+"rating": 2343,
+"themes": [
+"crushing",
+"endgame",
+"exposedKing",
+"long",
+"master",
+"quietMove",
+"rookEndgame"
+],
+"mate": false,
+"game": "https://lichess.org/PuAbc2Js#147"
+},
+"0nT1f": {
+"fen": "8/1pp5/p4r2/3r1P1k/6p1/P3Q3/1P4KP/8 w - - 1 43",
+"solution": [
+"Qe8+",
+"Kh4",
+"Qh8+",
+"Kg5",
+"Qg8+",
+"Kf4",
+"Qxd5"
+],
+"rating": 1923,
+"themes": [
+"advantage",
+"endgame",
+"fork",
+"queenRookEndgame",
+"veryLong"
+],
+"mate": false,
+"game": "https://lichess.org/DTyktEsE/black#84"
+},
+"0oZWc": {
+"fen": "8/Pk6/8/3Kp3/5ppp/8/5PPP/8 b - - 2 46",
+"solution": [
+"g3",
+"a8=R",
+"Kxa8",
+"hxg3",
+"f3",
+"gxf3",
+"h3"
+],
+"rating": 1826,
+"themes": [
+"crushing",
+"endgame",
+"pawnEndgame",
+"veryLong"
+],
+"mate": false,
+"game": "https://lichess.org/Znjpg3dn#91"
+},
+"0pI7l": {
+"fen": "3k4/8/8/pp6/2P1p2p/P1K4P/2P3P1/8 b - - 1 31",
+"solution": [
+"b4+",
+"axb4",
+"a4"
+],
+"rating": 1950,
+"themes": [
+"crushing",
+"defensiveMove",
+"endgame",
+"pawnEndgame",
+"short"
+],
+"mate": false,
+"game": "https://lichess.org/Rp3giyCX#61"
+},
+"0qNwx": {
+"fen": "8/5ppk/7p/p5q1/K7/P3Q3/7P/8 w - - 14 49",
+"solution": [
+"Qxg5",
+"hxg5",
+"Kxa5",
+"g4",
+"Kb4",
+"f5",
+"Kc3",
+"f4",
+"Kd2",
+"Kg8",
+"a4",
+"Kf7",
+"a5"
+],
+"rating": 2564,
+"themes": [
+"crushing",
+"defensiveMove",
+"endgame",
+"queenEndgame",
+"quietMove",
+"veryLong"
+],
+"mate": false,
+"game": "https://lichess.org/wlzIWy2R/black#96"
+},
+"0qQKo": {
+"fen": "8/5kP1/5p2/6P1/2p2Q2/8/1q3P1K/8 b - - 0 52",
+"solution": [
+"Qe5",
+"Kg3",
+"c3",
+"gxf6",
+"Qxf4+",
+"Kxf4",
+"c2"
+],
+"rating": 2268,
+"themes": [
+"advancedPawn",
+"crushing",
+"endgame",
+"exposedKing",
+"pin",
+"queenEndgame",
+"veryLong"
+],
+"mate": false,
+"game": "https://lichess.org/ppt3WFVJ#103"
+},
+"0qTNV": {
+"fen": "8/6p1/R1P1k2p/P6P/3K2P1/2p1p3/8/8 b - - 0 50",
+"solution": [
+"e2",
+"c7+",
+"Kd7",
+"Rc6",
+"Kc8",
+"Re6",
+"c2",
+"Rxe2",
+"c1=Q"
+],
+"rating": 2191,
+"themes": [
+"advancedPawn",
+"advantage",
+"defensiveMove",
+"endgame",
+"master",
+"promotion",
+"rookEndgame",
+"veryLong"
+],
+"mate": false,
+"game": "https://lichess.org/F2Hy85PB#99"
+},
+"0qsTh": {
+"fen": "8/1p6/p3k2p/7P/4KBP1/1P6/8/2b5 b - - 7 47",
+"solution": [
+"Bxf4",
+"Kxf4",
+"Kf6",
+"g5+",
+"hxg5+"
+],
+"rating": 1846,
+"themes": [
+"bishopEndgame",
+"crushing",
+"endgame",
+"long"
+],
+"mate": false,
+"game": "https://lichess.org/u04lGyGp#93"
+},
+"0qzI4": {
+"fen": "8/2p3pp/2p5/2k5/ppP4P/1P1K1P2/n5P1/2N5 w - - 0 31",
+"solution": [
+"Nxa2",
+"axb3",
+"Nc1",
+"b2",
+"Nb3+"
+],
+"rating": 2396,
+"themes": [
+"crushing",
+"endgame",
+"knightEndgame",
+"long"
+],
+"mate": false,
+"game": "https://lichess.org/1w0TrSP1/black#60"
+},
+"0u4wI": {
+"fen": "8/8/4k3/p1p3p1/1PP1p3/P1K5/6P1/8 b - - 0 41",
+"solution": [
+"cxb4+",
+"axb4",
+"a4"
+],
+"rating": 2195,
+"themes": [
+"crushing",
+"defensiveMove",
+"endgame",
+"pawnEndgame",
+"short"
+],
+"mate": false,
+"game": "https://lichess.org/ainbaU2J#81"
+},
+"0uIKT": {
+"fen": "2Q5/8/8/2K5/3r1P2/3k4/8/8 b - - 0 82",
+"solution": [
+"Rc4+",
+"Kd5",
+"Rxc8",
+"f5",
+"Ke3"
+],
+"rating": 2316,
+"themes": [
+"crushing",
+"defensiveMove",
+"endgame",
+"long",
+"queenRookEndgame",
+"skewer"
+],
+"mate": false,
+"game": "https://lichess.org/ld0SW3QT#163"
+},
+"0uNsl": {
+"fen": "1KQ5/R7/6pp/8/5p2/6kP/2r5/8 b - - 0 53",
+"solution": [
+"Rxc8+",
+"Kxc8",
+"Kxh3",
+"Ra6",
+"g5"
+],
+"rating": 2599,
+"themes": [
+"crushing",
+"defensiveMove",
+"endgame",
+"long"
+],
+"mate": false,
+"game": "https://lichess.org/LCJ1iTQG#105"
+},
+"0ucAN": {
+"fen": "8/8/3kp2p/1p4p1/1P1P2P1/3K2P1/8/8 w - - 5 46",
+"solution": [
+"Ke4",
+"Ke7",
+"Ke5",
+"Kd7",
+"d5",
+"exd5",
+"Kxd5"
+],
+"rating": 2030,
+"themes": [
+"crushing",
+"endgame",
+"pawnEndgame",
+"veryLong",
+"zugzwang"
+],
+"mate": false,
+"game": "https://lichess.org/aLO8GlRJ/black#90"
+},
+"0up8u": {
+"fen": "8/8/1p5p/1P2k1pP/p1R1P1K1/P1P3P1/4r3/8 b - - 0 48",
+"solution": [
+"Rxe4+",
+"Rxe4+",
+"Kxe4",
+"c4",
+"Ke5",
+"c5",
+"bxc5",
+"Kf3",
+"Kd6",
+"Ke4",
+"Kc7"
+],
+"rating": 2684,
+"themes": [
+"crushing",
+"defensiveMove",
+"endgame",
+"rookEndgame",
+"veryLong",
+"zugzwang"
+],
+"mate": false,
+"game": "https://lichess.org/0uqfnvZE#95"
+},
+"0vPqI": {
+"fen": "8/2k4p/3p2pP/5p2/2q5/8/1P1R1PP1/2K5 w - - 4 40",
+"solution": [
+"Rc2",
+"Qc5",
+"b4",
+"Kd7",
+"bxc5"
+],
+"rating": 2126,
+"themes": [
+"crushing",
+"defensiveMove",
+"endgame",
+"long",
+"pin",
+"queenRookEndgame"
+],
+"mate": false,
+"game": "https://lichess.org/Pdk6sYwQ/black#78"
+},
+"0vpeP": {
+"fen": "8/p7/3k3p/3p2p1/1P1Pp1P1/P3K2P/8/8 b - - 0 37",
+"solution": [
+"a5",
+"b5",
+"a4"
+],
+"rating": 2347,
+"themes": [
+"crushing",
+"defensiveMove",
+"endgame",
+"pawnEndgame",
+"short"
+],
+"mate": false,
+"game": "https://lichess.org/hE5BVcT5#73"
+},
+"0xCrA": {
+"fen": "8/1R6/7P/5p2/8/2k3PK/1p2r3/8 b - - 1 52",
+"solution": [
+"Re6",
+"h7",
+"Rh6+",
+"Kg2",
+"Rxh7",
+"Rxh7",
+"b1=Q"
+],
+"rating": 2745,
+"themes": [
+"advancedPawn",
+"crushing",
+"deflection",
+"endgame",
+"promotion",
+"rookEndgame",
+"veryLong"
+],
+"mate": false,
+"game": "https://lichess.org/ytL8SCN5#103"
+},
+"0xYHW": {
+"fen": "8/8/PR2pk2/1P6/3Pp3/5p2/r4P2/6K1 b - - 1 44",
+"solution": [
+"Ra1+",
+"Kh2",
+"e3",
+"Kg3",
+"e2"
+],
+"rating": 1969,
+"themes": [
+"advancedPawn",
+"crushing",
+"endgame",
+"long",
+"rookEndgame"
+],
+"mate": false,
+"game": "https://lichess.org/f7RrUwAH#87"
+},
+"0xe7y": {
+"fen": "8/8/1p3p2/pP5p/1kBp1P2/1P4KP/8/8 b - - 6 45",
+"solution": [
+"a4",
+"bxa4",
+"Kxc4",
+"a5",
+"Kxb5"
+],
+"rating": 1774,
+"themes": [
+"bishopEndgame",
+"crushing",
+"deflection",
+"endgame",
+"long"
+],
+"mate": false,
+"game": "https://lichess.org/uyf3hiRK#89"
+},
+"0y9MU": {
+"fen": "8/2k2N2/2n1PKp1/7p/5n2/6P1/8/8 w - - 0 49",
+"solution": [
+"gxf4",
+"h4",
+"Ne5",
+"h3",
+"Nxc6",
+"h2",
+"e7",
+"h1=Q",
+"e8=Q"
+],
+"rating": 2710,
+"themes": [
+"advancedPawn",
+"advantage",
+"endgame",
+"hangingPiece",
+"knightEndgame",
+"promotion",
+"veryLong"
+],
+"mate": false,
+"game": "https://lichess.org/Yo20cHHe/black#96"
+},
+"0yAXY": {
+"fen": "1r6/8/8/5KP1/P6P/8/6k1/8 w - - 1 61",
+"solution": [
+"g6",
+"Kg3",
+"g7",
+"Kxh4",
+"Kg6",
+"Kg4",
+"a5"
+],
+"rating": 2753,
+"themes": [
+"advancedPawn",
+"crushing",
+"defensiveMove",
+"endgame",
+"rookEndgame",
+"veryLong"
+],
+"mate": false,
+"game": "https://lichess.org/19Li2miC/black#120"
+},
+"0ydHc": {
+"fen": "8/5p2/5p2/4pPp1/4K2P/1pk1N3/8/8 w - - 0 47",
+"solution": [
+"h5",
+"g4",
+"h6",
+"g3",
+"Kf3"
+],
+"rating": 2338,
+"themes": [
+"crushing",
+"endgame",
+"knightEndgame",
+"long",
+"master",
+"quietMove"
+],
+"mate": false,
+"game": "https://lichess.org/2dH3I90a/black#92"
+},
+"0zMKx": {
+"fen": "8/Q4p2/p5kP/1p2qpP1/4p3/PP6/1P6/1K6 w - - 2 38",
+"solution": [
+"Qa8",
+"Kxg5",
+"h7"
+],
+"rating": 2638,
+"themes": [
+"advancedPawn",
+"crushing",
+"endgame",
+"queenEndgame",
+"short"
+],
+"mate": false,
+"game": "https://lichess.org/10vn4EyI/black#74"
+},
+"0zmII": {
+"fen": "8/5p2/4p2p/p3PPp1/1k2P1P1/1P6/K6P/8 b - - 11 44",
+"solution": [
+"a4",
+"bxa4",
+"Kxa4",
+"Kb2",
+"Kb4",
+"f6",
+"Kc4",
+"Kc2",
+"Kd4"
+],
+"rating": 1974,
+"themes": [
+"crushing",
+"endgame",
+"pawnEndgame",
+"veryLong"
+],
+"mate": false,
+"game": "https://lichess.org/d0pRcJ8v#87"
+},
+"107ve": {
+"fen": "8/p1p4p/6p1/3k1pP1/2P3P1/1P1K1P2/1P6/8 b - - 0 29",
+"solution": [
+"Ke5",
+"Ke3",
+"fxg4",
+"fxg4",
+"a5"
+],
+"rating": 2695,
+"themes": [
+"crushing",
+"defensiveMove",
+"endgame",
+"long",
+"pawnEndgame"
+],
+"mate": false,
+"game": "https://lichess.org/r4iwOzbU#57"
+},
+"10ZGs": {
+"fen": "8/2k5/1b1p4/1bpPp1p1/4PpP1/r1BP1P2/4B3/2R1K3 b - - 33 63",
+"solution": [
+"Rxc3",
+"Rxc3",
+"Ba5",
+"Kd2",
+"Ba4"
+],
+"rating": 2353,
+"themes": [
+"crushing",
+"defensiveMove",
+"endgame",
+"long",
+"master",
+"masterVsMaster",
+"pin",
+"sacrifice",
+"superGM"
+],
+"mate": false,
+"game": "https://lichess.org/45COpeLu#125"
+},
+"10veM": {
+"fen": "8/p3Bp1p/7k/1p1KP1p1/6PP/8/3b4/8 w - - 0 44",
+"solution": [
+"Bf8+",
+"Kg6",
+"h5#"
+],
+"rating": 1884,
+"themes": [
+"bishopEndgame",
+"endgame",
+"mateIn2",
+"short"
+],
+"mate": true,
+"game": "https://lichess.org/dn72v3J8/black#86"
+},
+"114dQ": {
+"fen": "8/1Rb2p2/4nkp1/2N5/5PP1/2r1BK2/8/8 w - - 1 38",
+"solution": [
+"Ne4+",
+"Ke7",
+"Nxc3"
+],
+"rating": 1520,
+"themes": [
+"crushing",
+"endgame",
+"fork",
+"master",
+"short"
+],
+"mate": false,
+"game": "https://lichess.org/J0CFZhmR/black#74"
+},
+"11et6": {
+"fen": "8/pp2Q3/2p2p1p/3p4/1P1k2p1/P4pPq/1P3P2/6K1 w - - 18 45",
+"solution": [
+"Qe3+",
+"Kc4",
+"b3+",
+"Kb5",
+"Qc5+",
+"Ka6",
+"Qa5#"
+],
+"rating": 2123,
+"themes": [
+"endgame",
+"mateIn4",
+"queenEndgame",
+"veryLong"
+],
+"mate": true,
+"game": "https://lichess.org/LEqaKuWB/black#88"
+},
+"1236I": {
+"fen": "r7/pp2Q3/3p4/2p5/3P1r2/2P2k2/P1P5/7K w - - 6 36",
+"solution": [
+"Qxb7+",
+"Kf2",
+"Qg2+",
+"Ke3",
+"Qxa8"
+],
+"rating": 1949,
+"themes": [
+"advantage",
+"endgame",
+"fork",
+"long",
+"queenRookEndgame"
+],
+"mate": false,
+"game": "https://lichess.org/aT7YV8RU/black#70"
+},
+"12IfZ": {
+"fen": "8/5p2/8/1p1p1k1p/1P1P2p1/4KP1P/6P1/8 w - - 0 33",
+"solution": [
+"fxg4+",
+"hxg4",
+"h4",
+"g3",
+"Kf3"
+],
+"rating": 2030,
+"themes": [
+"crushing",
+"endgame",
+"long",
+"pawnEndgame",
+"quietMove"
+],
+"mate": false,
+"game": "https://lichess.org/DQOiO5bA/black#64"
+},
+"12cAu": {
+"fen": "8/3k3p/6p1/ppPK1p2/5P1P/P5P1/8/8 b - - 0 38",
+"solution": [
+"Kc7",
+"c6",
+"b4",
+"axb4",
+"axb4",
+"Kc4",
+"Kxc6",
+"Kxb4",
+"Kd5"
+],
+"rating": 2531,
+"themes": [
+"crushing",
+"defensiveMove",
+"endgame",
+"pawnEndgame",
+"veryLong"
+],
+"mate": false,
+"game": "https://lichess.org/Lx7iXtVW#75"
+},
+"14LOM": {
+"fen": "8/7r/R5KP/4k3/P7/5p2/8/8 b - - 1 42",
+"solution": [
+"Rxh6+",
+"Kxh6",
+"f2",
+"Ra8",
+"f1=Q"
+],
+"rating": 1992,
+"themes": [
+"advancedPawn",
+"crushing",
+"endgame",
+"long",
+"promotion",
+"rookEndgame",
+"sacrifice"
+],
+"mate": false,
+"game": "https://lichess.org/l5PxfLSm#83"
+},
+"14QJA": {
+"fen": "8/8/5p1p/4k3/1P1N2nP/6P1/4K3/8 b - - 0 45",
+"solution": [
+"Kxd4",
+"Kf3",
+"h5",
+"Kf4",
+"Nh6"
+],
+"rating": 2674,
+"themes": [
+"crushing",
+"defensiveMove",
+"endgame",
+"hangingPiece",
+"knightEndgame",
+"long",
+"quietMove"
+],
+"mate": false,
+"game": "https://lichess.org/A55mQnya#89"
+},
+"152DD": {
+"fen": "8/8/K1p3k1/P1Pp4/2nP4/4p3/8/4N3 b - - 3 49",
+"solution": [
+"Kf5",
+"Ka7",
+"Nxa5",
+"Kb6",
+"Nb3",
+"Kxc6",
+"Ke4",
+"Kd7",
+"Nxd4"
+],
+"rating": 2574,
+"themes": [
+"crushing",
+"endgame",
+"knightEndgame",
+"veryLong"
+],
+"mate": false,
+"game": "https://lichess.org/H6Rx41Fz#97"
+},
+"15dg6": {
+"fen": "8/7p/8/p2p1kp1/P2P4/4KP2/5P1P/8 b - - 0 38",
+"solution": [
+"h6",
+"h3",
+"h5",
+"f4",
+"gxf4+",
+"Kd3",
+"Kg5",
+"Ke2",
+"Kh4",
+"Kf3",
+"Kxh3"
+],
+"rating": 2558,
+"themes": [
+"crushing",
+"endgame",
+"pawnEndgame",
+"quietMove",
+"veryLong",
+"zugzwang"
+],
+"mate": false,
+"game": "https://lichess.org/ex9npMEX#75"
+},
+"15gb9": {
+"fen": "8/8/8/6KP/4B3/4p1P1/3kb1P1/8 b - - 4 50",
+"solution": [
+"Bxh5",
+"Kxh5",
+"e2"
+],
+"rating": 1915,
+"themes": [
+"advancedPawn",
+"bishopEndgame",
+"crushing",
+"endgame",
+"sacrifice",
+"short"
+],
+"mate": false,
+"game": "https://lichess.org/MfkGGL2j#99"
+},
+"167jX": {
+"fen": "8/8/p3k1KP/Pp1n4/1P6/2p1N3/8/8 w - - 1 60",
+"solution": [
+"h7",
+"Nxe3",
+"h8=Q"
+],
+"rating": 1966,
+"themes": [
+"advancedPawn",
+"crushing",
+"endgame",
+"knightEndgame",
+"promotion",
+"short"
+],
+"mate": false,
+"game": "https://lichess.org/0rAb2B9u/black#118"
+},
+"16dK0": {
+"fen": "7k/6p1/5p2/3Q3K/6P1/5P2/8/4q3 b - - 8 85",
+"solution": [
+"Qh1+",
+"Kg6",
+"Qh7+",
+"Kf7",
+"Qg8+",
+"Ke7",
+"Qxd5"
+],
+"rating": 1884,
+"themes": [
+"crushing",
+"endgame",
+"queenEndgame",
+"skewer",
+"veryLong"
+],
+"mate": false,
+"game": "https://lichess.org/2yw808zO#169"
+},
+"16jgc": {
+"fen": "3Q4/p7/P7/6p1/7P/6K1/4kP2/5q2 b - - 3 51",
+"solution": [
+"Qg1+",
+"Kh3",
+"g4#"
+],
+"rating": 2292,
+"themes": [
+"endgame",
+"mateIn2",
+"queenEndgame",
+"short"
+],
+"mate": true,
+"game": "https://lichess.org/dpGbh8qH#101"
+},
+"179g1": {
+"fen": "8/1p1k4/p2P2p1/4K2p/P5p1/8/5P1P/8 w - - 1 43",
+"solution": [
+"a5",
+"g5",
+"Kd5",
+"h4",
+"Ke5",
+"Kc6",
+"Ke6"
+],
+"rating": 2468,
+"themes": [
+"crushing",
+"defensiveMove",
+"endgame",
+"pawnEndgame",
+"quietMove",
+"veryLong"
+],
+"mate": false,
+"game": "https://lichess.org/qJ8oCdzx/black#84"
+},
+"17Ogg": {
+"fen": "8/p2b2p1/P1pk2P1/1P6/3K4/3B4/8/8 w - - 0 52",
+"solution": [
+"b6",
+"axb6",
+"a7",
+"c5+",
+"Ke3"
+],
+"rating": 1995,
+"themes": [
+"advancedPawn",
+"bishopEndgame",
+"crushing",
+"defensiveMove",
+"endgame",
+"long"
+],
+"mate": false,
+"game": "https://lichess.org/CN6af6j4/black#102"
+},
+"17ajk": {
+"fen": "8/6pk/2Q1p2p/8/P2p1PKP/3Pq3/1PP3P1/8 b - - 2 31",
+"solution": [
+"h5+",
+"Kxh5",
+"Qg3",
+"Qxe6",
+"g6+",
+"Qxg6+",
+"Qxg6#"
+],
+"rating": 2180,
+"themes": [
+"endgame",
+"mateIn4",
+"queenEndgame",
+"sacrifice",
+"veryLong"
+],
+"mate": true,
+"game": "https://lichess.org/78BWG3iZ#61"
+},
+"17kB3": {
+"fen": "6k1/4qpp1/1QP4p/8/8/4p1PP/7K/8 w - - 0 42",
+"solution": [
+"c7",
+"Qd7",
+"Qb7"
+],
+"rating": 2717,
+"themes": [
+"advancedPawn",
+"crushing",
+"defensiveMove",
+"endgame",
+"queenEndgame",
+"short"
+],
+"mate": false,
+"game": "https://lichess.org/OdeHXwUu/black#82"
+},
+"17zHs": {
+"fen": "rr6/p3p2k/3pNpp1/1pp5/2q1P3/5R2/P2Q2PP/6K1 w - - 0 27",
+"solution": [
+"Qh6+",
+"Kxh6",
+"Rh3#"
+],
+"rating": 1995,
+"themes": [
+"anastasiaMate",
+"attraction",
+"endgame",
+"mateIn2",
+"sacrifice",
+"short"
+],
+"mate": true,
+"game": "https://lichess.org/AmKlUkC1/black#52"
+},
+"18GW0": {
+"fen": "8/6pk/5p2/5q2/3P2pK/4Q1P1/7P/8 b - - 3 42",
+"solution": [
+"Qg6",
+"h3",
+"f5",
+"d5",
+"Kg8",
+"Qe6+",
+"Qxe6"
+],
+"rating": 2786,
+"themes": [
+"crushing",
+"endgame",
+"queenEndgame",
+"quietMove",
+"veryLong"
+],
+"mate": false,
+"game": "https://lichess.org/fO7sC5oB#83"
+},
+"18JxO": {
+"fen": "8/7p/8/1Q3PP1/3qp3/2k5/4K2P/8 b - - 0 44",
+"solution": [
+"Qd2+",
+"Kf1",
+"Qd3+",
+"Qxd3+",
+"exd3"
+],
+"rating": 2192,
+"themes": [
+"crushing",
+"endgame",
+"exposedKing",
+"long",
+"queenEndgame"
+],
+"mate": false,
+"game": "https://lichess.org/hnVk2raW#87"
+},
+"18Q85": {
+"fen": "8/8/2pPkp2/2P3pp/4p3/7P/5KP1/8 w - - 1 48",
+"solution": [
+"g4",
+"h4",
+"Ke3",
+"Kf7",
+"Kxe4"
+],
+"rating": 2257,
+"themes": [
+"crushing",
+"endgame",
+"long",
+"master",
+"masterVsMaster",
+"pawnEndgame"
+],
+"mate": false,
+"game": "https://lichess.org/gfnI0zK0/black#94"
+},
+"18Tu5": {
+"fen": "8/8/2k5/5KP1/2p2P2/R7/p6r/8 w - - 0 53",
+"solution": [
+"g6",
+"Rg2",
+"Kf6",
+"Kb5",
+"g7",
+"c3",
+"Rxa2",
+"Rxa2",
+"g8=Q"
+],
+"rating": 2070,
+"themes": [
+"advancedPawn",
+"crushing",
+"deflection",
+"endgame",
+"master",
+"promotion",
+"rookEndgame",
+"veryLong"
+],
+"mate": false,
+"game": "https://lichess.org/7kTuBhUG/black#104"
+},
+"19JFW": {
+"fen": "8/1P6/P1R5/8/1kP5/r7/2K4p/8 b - - 0 46",
+"solution": [
+"Ra2+",
+"Kd3",
+"h1=Q",
+"b8=Q+",
+"Ka3",
+"Qd6+",
+"Ka4"
+],
+"rating": 2620,
+"themes": [
+"advancedPawn",
+"advantage",
+"defensiveMove",
+"endgame",
+"promotion",
+"rookEndgame",
+"veryLong"
+],
+"mate": false,
+"game": "https://lichess.org/5ZRtSujq#91"
+},
+"19N3m": {
+"fen": "8/5b2/8/2k5/8/2pB4/5PP1/5K2 b - - 1 54",
+"solution": [
+"Bc4",
+"Ke2",
+"c2",
+"Bxc4",
+"c1=Q"
+],
+"rating": 2192,
+"themes": [
+"advancedPawn",
+"bishopEndgame",
+"crushing",
+"endgame",
+"long",
+"pin",
+"promotion"
+],
+"mate": false,
+"game": "https://lichess.org/TyCbOmah#107"
+},
+"19ayW": {
+"fen": "8/p1k2p1p/2p1p1p1/2PbP1P1/3KBP2/P7/6P1/8 b - - 2 32",
+"solution": [
+"Bxe4",
+"Kxe4",
+"Kb7",
+"Kd4",
+"Ka6",
+"Kc4",
+"Ka5",
+"Kb3",
+"Kb5"
+],
+"rating": 1991,
+"themes": [
+"bishopEndgame",
+"crushing",
+"endgame",
+"master",
+"veryLong"
+],
+"mate": false,
+"game": "https://lichess.org/MeeVEehh#63"
+},
+"19vpE": {
+"fen": "8/2p5/1pPp2p1/3Ppk2/PP6/2K2P1r/6R1/8 b - - 2 43",
+"solution": [
+"e4",
+"Kd4",
+"exf3"
+],
+"rating": 2516,
+"themes": [
+"crushing",
+"endgame",
+"pin",
+"rookEndgame",
+"short"
+],
+"mate": false,
+"game": "https://lichess.org/cmB7FLvh#85"
+},
+"1A4AJ": {
+"fen": "3b4/4k3/1p6/p1pK3B/P1P2pp1/1P5P/6P1/8 b - - 0 61",
+"solution": [
+"f3",
+"gxf3",
+"g3"
+],
+"rating": 1832,
+"themes": [
+"bishopEndgame",
+"crushing",
+"endgame",
+"short"
+],
+"mate": false,
+"game": "https://lichess.org/rw2KHrfq#121"
+},
+"1AJg1": {
+"fen": "8/2p5/2r2p2/6p1/1p2PkP1/1Pp2P2/2P2K2/4R3 w - - 4 40",
+"solution": [
+"e5",
+"f5",
+"e6"
+],
+"rating": 1809,
+"themes": [
+"crushing",
+"endgame",
+"rookEndgame",
+"short"
+],
+"mate": false,
+"game": "https://lichess.org/EjajtRvw/black#78"
+},
+"1AOP4": {
+"fen": "7r/1p3k2/p1p4r/5P2/3p4/1P1P1P2/P1P5/4RRK1 b - - 0 31",
+"solution": [
+"Rg8+",
+"Kf2",
+"Rh2#"
+],
+"rating": 1907,
+"themes": [
+"endgame",
+"epauletteMate",
+"mateIn2",
+"rookEndgame",
+"short"
+],
+"mate": true,
+"game": "https://lichess.org/IrFoGUdM#61"
+},
+"1AsDn": {
+"fen": "8/7Q/1kp5/1p2pp1P/p7/P4qP1/1PP2P1K/8 b - - 0 33",
+"solution": [
+"Qxf2+",
+"Kh3",
+"Qf3"
+],
+"rating": 2561,
+"themes": [
+"crushing",
+"endgame",
+"master",
+"queenEndgame",
+"short"
+],
+"mate": false,
+"game": "https://lichess.org/1v4md40w#65"
+},
+"1BKA5": {
+"fen": "3rr1k1/pp3p2/2p3PR/4Pp2/3P4/5P2/PP2q3/1K4R1 w - - 0 28",
+"solution": [
+"gxf7+",
+"Kf8",
+"Rh7",
+"Qd3+",
+"Ka1"
+],
+"rating": 2729,
+"themes": [
+"advancedPawn",
+"crushing",
+"discoveredCheck",
+"doubleCheck",
+"endgame",
+"long",
+"queenRookEndgame",
+"quietMove"
+],
+"mate": false,
+"game": "https://lichess.org/DG0k0HzM/black#54"
+},
+"1BNdW": {
+"fen": "8/4kp2/4Pp2/p6N/npp1P3/1P3PP1/5K2/8 w - - 0 41",
+"solution": [
+"bxa4",
+"b3",
+"Nf4",
+"b2",
+"Nd5+",
+"Kxe6",
+"Nc3"
+],
+"rating": 2116,
+"themes": [
+"crushing",
+"defensiveMove",
+"endgame",
+"hangingPiece",
+"knightEndgame",
+"quietMove",
+"veryLong"
+],
+"mate": false,
+"game": "https://lichess.org/HR58bNB1/black#80"
+},
+"1BdxB": {
+"fen": "4R3/q4pkp/3p2p1/4p3/4P3/8/PR3PPP/6K1 b - - 2 28",
+"solution": [
+"Qa4",
+"g3",
+"Qxe8"
+],
+"rating": 1850,
+"themes": [
+"crushing",
+"endgame",
+"queenRookEndgame",
+"short"
+],
+"mate": false,
+"game": "https://lichess.org/b0mAtRYi#55"
+},
+"1Bj0D": {
+"fen": "5B2/2p5/p7/1p1k4/4p1K1/P1PB4/8/8 b - - 0 32",
+"solution": [
+"exd3",
+"Kf3",
+"Kc4",
+"Bg7",
+"Kb3",
+"Ke3",
+"Kc2"
+],
+"rating": 1707,
+"themes": [
+"bishopEndgame",
+"crushing",
+"endgame",
+"veryLong"
+],
+"mate": false,
+"game": "https://lichess.org/2Nw5zk01#63"
+},
+"1Bl1P": {
+"fen": "8/5p2/3pk1p1/2p1P1Pp/p1Pq3P/P1Q5/2P2K2/8 w - - 1 39",
+"solution": [
+"Qxd4",
+"cxd4",
+"exd6",
+"Kxd6",
+"Ke2"
+],
+"rating": 1963,
+"themes": [
+"crushing",
+"defensiveMove",
+"endgame",
+"long",
+"queenEndgame"
+],
+"mate": false,
+"game": "https://lichess.org/QywfdRKU/black#76"
+},
+"1BmgN": {
+"fen": "8/8/7p/7k/2pq4/6R1/6P1/5R1K w - - 5 48",
+"solution": [
+"Rf5+",
+"Kh4",
+"Rg8",
+"Qd1+",
+"Kh2"
+],
+"rating": 2800,
+"themes": [
+"crushing",
+"endgame",
+"long",
+"queenRookEndgame",
+"quietMove"
+],
+"mate": false,
+"game": "https://lichess.org/V7eh9rPF/black#94"
+},
+"1Botb": {
+"fen": "8/4rp1p/p5k1/1p3R2/6PP/5R1K/PP6/4r3 w - - 3 40",
+"solution": [
+"Rg5+",
+"Kh6",
+"Rf6#"
+],
+"rating": 1712,
+"themes": [
+"endgame",
+"mateIn2",
+"rookEndgame",
+"short"
+],
+"mate": true,
+"game": "https://lichess.org/a0KRrHcW/black#78"
+},
+"1CQkm": {
+"fen": "8/2K4p/3Pk3/8/3n2P1/5P2/8/8 w - - 3 52",
+"solution": [
+"d7",
+"Ke5",
+"f4+",
+"Kxf4",
+"Kd6"
+],
+"rating": 2168,
+"themes": [
+"advancedPawn",
+"crushing",
+"defensiveMove",
+"endgame",
+"exposedKing",
+"knightEndgame",
+"long"
+],
+"mate": false,
+"game": "https://lichess.org/8YplZ14i/black#102"
+},
+"1CTnE": {
+"fen": "6R1/pp3pR1/2p1P2k/7p/6P1/2P4K/Pr1r3P/8 b - - 0 40",
+"solution": [
+"Rd3+",
+"Kh4",
+"Rxh2#"
+],
+"rating": 1949,
+"themes": [
+"deflection",
+"endgame",
+"mateIn2",
+"rookEndgame",
+"short"
+],
+"mate": true,
+"game": "https://lichess.org/7fuHzGqE#79"
+},
+"1CXJI": {
+"fen": "5R2/5kp1/7P/8/p2r3P/7K/4P3/8 b - - 0 45",
+"solution": [
+"Kxf8",
+"h7",
+"Rxh4+",
+"Kxh4",
+"g5+",
+"Kg3",
+"Kg7"
+],
+"rating": 2021,
+"themes": [
+"attraction",
+"crushing",
+"endgame",
+"hangingPiece",
+"master",
+"rookEndgame",
+"veryLong"
+],
+"mate": false,
+"game": "https://lichess.org/W9LnqCzy#89"
+},
+"1CcmY": {
+"fen": "8/4k3/1pp5/3nKP2/1P5P/P7/8/8 w - - 0 49",
+"solution": [
+"b5",
+"Nf6",
+"bxc6"
+],
+"rating": 2202,
+"themes": [
+"crushing",
+"endgame",
+"knightEndgame",
+"short"
+],
+"mate": false,
+"game": "https://lichess.org/iqvplJCn/black#96"
+},
+"1Co49": {
+"fen": "8/8/2k3p1/3p1p1p/pP1P1P1P/K5P1/2b1B3/8 w - - 2 56",
+"solution": [
+"Ba6",
+"Bb3",
+"Bc8"
+],
+"rating": 2459,
+"themes": [
+"bishopEndgame",
+"crushing",
+"endgame",
+"master",
+"quietMove",
+"short"
+],
+"mate": false,
+"game": "https://lichess.org/8XZNOlgd/black#110"
+},
+"1D10g": {
+"fen": "8/5p2/8/4Pkp1/P3R3/5KP1/7P/r7 b - - 2 42",
+"solution": [
+"g4+",
+"Rxg4",
+"Ra3+",
+"Kg2",
+"Kxg4"
+],
+"rating": 2221,
+"themes": [
+"crushing",
+"deflection",
+"endgame",
+"long",
+"rookEndgame"
+],
+"mate": false,
+"game": "https://lichess.org/4mAEl8o8#83"
+},
+"1DI0S": {
+"fen": "8/pb2bpp1/1p1ppk1p/1P1P4/P1K1PPP1/3B3P/7B/8 w - - 1 38",
+"solution": [
+"e5+",
+"dxe5",
+"g5+",
+"hxg5",
+"fxe5#"
+],
+"rating": 2614,
+"themes": [
+"bishopEndgame",
+"endgame",
+"long",
+"mateIn3"
+],
+"mate": true,
+"game": "https://lichess.org/7kDKHCzz/black#74"
+},
+"1DjQh": {
+"fen": "8/4k3/8/2n1P3/3N1K2/2p5/8/8 b - - 1 58",
+"solution": [
+"Ne6+",
+"Nxe6",
+"c2",
+"Nd4",
+"c1=Q+"
+],
+"rating": 2060,
+"themes": [
+"advancedPawn",
+"crushing",
+"endgame",
+"knightEndgame",
+"long",
+"promotion",
+"sacrifice"
+],
+"mate": false,
+"game": "https://lichess.org/3ZdRxUNT#115"
+},
+"1DtMe": {
+"fen": "5Q2/p7/1p4p1/2q3kp/8/7P/P5P1/5K2 w - - 4 42",
+"solution": [
+"h4+",
+"Kg4",
+"Qf3+",
+"Kxh4",
+"Qf4#"
+],
+"rating": 1777,
+"themes": [
+"endgame",
+"long",
+"mateIn3",
+"queenEndgame"
+],
+"mate": true,
+"game": "https://lichess.org/MHgXqLsI/black#82"
+},
+"1E8lq": {
+"fen": "8/R5pk/7p/8/8/p4R1P/1qP2PP1/6K1 b - - 1 31",
+"solution": [
+"Qb1+",
+"Kh2",
+"Qb8+",
+"Rg3",
+"Qxa7"
+],
+"rating": 1762,
+"themes": [
+"crushing",
+"endgame",
+"fork",
+"long",
+"queenRookEndgame"
+],
+"mate": false,
+"game": "https://lichess.org/xZzUnwf1#61"
+},
+"1EMFb": {
+"fen": "8/p4k2/Pp5B/6pP/2P1p1P1/b3P3/5K2/8 b - - 0 41",
+"solution": [
+"Be7",
+"Ke1",
+"Kg8",
+"Kd2",
+"Kh7",
+"Kc3",
+"Bf6+"
+],
+"rating": 2575,
+"themes": [
+"bishopEndgame",
+"crushing",
+"endgame",
+"quietMove",
+"veryLong"
+],
+"mate": false,
+"game": "https://lichess.org/OGp4f7aL#81"
+},
+"1EcG3": {
+"fen": "8/1p3kp1/7p/p1p2p2/P1P5/1P2KP2/5P1P/8 b - - 3 29",
+"solution": [
+"Kg6",
+"Kf4",
+"Kf6",
+"h4",
+"g5+",
+"hxg5+",
+"hxg5+",
+"Ke3",
+"Ke5",
+"f4+",
+"gxf4+"
+],
+"rating": 2715,
+"themes": [
+"crushing",
+"endgame",
+"pawnEndgame",
+"veryLong",
+"zugzwang"
+],
+"mate": false,
+"game": "https://lichess.org/AHJrjU5w#57"
+},
+"1EdPp": {
+"fen": "8/1p6/2p2kP1/2Pp3P/p1nN3K/8/8/8 w - - 1 51",
+"solution": [
+"Nf5",
+"d4",
+"g7"
+],
+"rating": 2034,
+"themes": [
+"advancedPawn",
+"crushing",
+"endgame",
+"knightEndgame",
+"quietMove",
+"short"
+],
+"mate": false,
+"game": "https://lichess.org/LJkidv0p/black#100"
+},
+"1ErU4": {
+"fen": "8/1k6/1q6/Rp1p4/1KP5/1P6/8/8 w - - 0 57",
+"solution": [
+"Rxb5",
+"Qxb5+",
+"Kxb5",
+"d4",
+"Kb4",
+"Kb6",
+"Ka3",
+"d3",
+"Kb2",
+"d2",
+"Kc2",
+"d1=R",
+"Kxd1"
+],
+"rating": 2440,
+"themes": [
+"crushing",
+"endgame",
+"pin",
+"queenRookEndgame",
+"veryLong"
+],
+"mate": false,
+"game": "https://lichess.org/MOadxODS/black#112"
+},
+"1FWXX": {
+"fen": "8/k1q2p1p/1p2p1p1/p3P3/1PPQ4/P6P/6P1/1K6 w - - 0 32",
+"solution": [
+"bxa5",
+"Qc5",
+"axb6+",
+"Kxb6",
+"Qd6+",
+"Qxd6",
+"exd6",
+"Kc6",
+"c5"
+],
+"rating": 2250,
+"themes": [
+"attraction",
+"crushing",
+"defensiveMove",
+"endgame",
+"master",
+"pin",
+"queenEndgame",
+"veryLong"
+],
+"mate": false,
+"game": "https://lichess.org/M1KenVtz/black#62"
+},
+"1Fcq6": {
+"fen": "8/3Q2pk/7p/1p2P2P/p1q2p2/8/5PPK/8 w - - 0 42",
+"solution": [
+"e6",
+"f3",
+"e7",
+"Qh4+",
+"Kg1"
+],
+"rating": 2398,
+"themes": [
+"advancedPawn",
+"crushing",
+"endgame",
+"long",
+"queenEndgame"
+],
+"mate": false,
+"game": "https://lichess.org/Umqs47zg/black#82"
+},
+"1FtOk": {
+"fen": "8/5p2/1p6/p1p2kP1/P1P4K/1P6/8/8 b - - 2 46",
+"solution": [
+"f6",
+"gxf6",
+"Kxf6",
+"Kg4",
+"Ke5",
+"Kf3",
+"Kd4"
+],
+"rating": 2037,
+"themes": [
+"crushing",
+"endgame",
+"pawnEndgame",
+"veryLong"
+],
+"mate": false,
+"game": "https://lichess.org/5DLb3sly#91"
+},
+"1G7Fx": {
+"fen": "4Q3/P2R1pk1/6p1/8/4P2K/6r1/8/2R3r1 b - - 4 54",
+"solution": [
+"g5+",
+"Kh5",
+"Rh3#"
+],
+"rating": 1968,
+"themes": [
+"endgame",
+"mateIn2",
+"queenRookEndgame",
+"short"
+],
+"mate": true,
+"game": "https://lichess.org/DigNV8tZ#107"
+},
+"1GUxH": {
+"fen": "8/8/2k3p1/p1p2p1p/2p1bP1P/P1P1K1P1/8/3B4 w - - 1 42",
+"solution": [
+"Ba4+",
+"Kd6",
+"Be8",
+"Ke7",
+"Bxg6"
+],
+"rating": 1841,
+"themes": [
+"bishopEndgame",
+"crushing",
+"endgame",
+"long"
+],
+"mate": false,
+"game": "https://lichess.org/RMsOO2kI/black#82"
+},
+"1GqkO": {
+"fen": "8/8/2k5/1p2p1p1/1PP1pP2/1K4P1/5P2/8 b - - 0 37",
+"solution": [
+"exf4",
+"gxf4",
+"e3",
+"cxb5+",
+"Kd7",
+"fxe3",
+"g4",
+"f5",
+"g3",
+"b6",
+"g2"
+],
+"rating": 2773,
+"themes": [
+"advancedPawn",
+"crushing",
+"endgame",
+"pawnEndgame",
+"quietMove",
+"sacrifice",
+"veryLong"
+],
+"mate": false,
+"game": "https://lichess.org/q8DWlltG#73"
+},
+"1H46B": {
+"fen": "8/5pp1/4k2p/ppp1P3/4K1P1/P1P4P/1P6/8 b - - 0 38",
+"solution": [
+"a4",
+"h4",
+"g6",
+"Kf4",
+"Kd5"
+],
+"rating": 2623,
+"themes": [
+"crushing",
+"endgame",
+"long",
+"pawnEndgame",
+"quietMove",
+"zugzwang"
+],
+"mate": false,
+"game": "https://lichess.org/a7nMH51G#75"
+},
+"1H6M0": {
+"fen": "5k2/2Q1q1p1/2p1p3/1pP3K1/1P1P4/5P2/8/8 w - - 3 43",
+"solution": [
+"Qxe7+",
+"Kxe7",
+"Kg6",
+"Kf8",
+"f4",
+"Kg8",
+"f5",
+"exf5",
+"d5",
+"Kf8",
+"dxc6"
+],
+"rating": 2554,
+"themes": [
+"crushing",
+"endgame",
+"queenEndgame",
+"quietMove",
+"veryLong",
+"zugzwang"
+],
+"mate": false,
+"game": "https://lichess.org/XDIHj7hM/black#84"
+},
+"1I1Hj": {
+"fen": "3r2k1/5p2/2R3pp/8/2P5/1P3BPb/P2r1P1P/R5K1 b - - 0 34",
+"solution": [
+"R8d3",
+"Bg4",
+"Bxg4"
+],
+"rating": 2049,
+"themes": [
+"advantage",
+"endgame",
+"short"
+],
+"mate": false,
+"game": "https://lichess.org/JlEyPhgy#67"
+},
+"1IGVk": {
+"fen": "8/1p2n3/1P2kpK1/P2p4/6PP/2P5/8/8 w - - 3 41",
+"solution": [
+"Kg7",
+"f5",
+"a6",
+"fxg4",
+"a7",
+"g3",
+"a8=Q",
+"g2",
+"Qa1"
+],
+"rating": 2557,
+"themes": [
+"advancedPawn",
+"crushing",
+"defensiveMove",
+"endgame",
+"knightEndgame",
+"promotion",
+"veryLong"
+],
+"mate": false,
+"game": "https://lichess.org/MJLvp1z1/black#80"
+},
+"1IKZh": {
+"fen": "8/2k4P/p2p4/1PpP4/K7/1P6/P6Q/2q5 b - - 0 55",
+"solution": [
+"axb5+",
+"Kxb5",
+"Qf1+",
+"Ka5",
+"Kb7",
+"Qxd6",
+"Qe1+",
+"Ka4",
+"Qb4#"
+],
+"rating": 2593,
+"themes": [
+"attraction",
+"endgame",
+"mateIn5",
+"queenEndgame",
+"veryLong"
+],
+"mate": true,
+"game": "https://lichess.org/M4Me1NGB#109"
+},
+"1IQv3": {
+"fen": "5k2/1pQ2p2/p4K1p/3P2p1/2P5/8/PP4PP/3q4 b - - 0 31",
+"solution": [
+"Qf1+",
+"Ke5",
+"Qf4#"
+],
+"rating": 2067,
+"themes": [
+"endgame",
+"mateIn2",
+"queenEndgame",
+"short"
+],
+"mate": true,
+"game": "https://lichess.org/cCYe2Afx#61"
+},
+"1IT3E": {
+"fen": "7k/2pR4/5p2/7p/1p6/3R2PK/5P1P/2q5 w - - 0 29",
+"solution": [
+"Re3",
+"Qf1+",
+"Kh4",
+"Qc4+",
+"f4"
+],
+"rating": 2183,
+"themes": [
+"crushing",
+"defensiveMove",
+"endgame",
+"long",
+"queenRookEndgame",
+"quietMove"
+],
+"mate": false,
+"game": "https://lichess.org/cO4gId9c/black#56"
+},
+"1J6fo": {
+"fen": "8/8/8/p1p1k3/1P2p1p1/4K1P1/8/8 w - - 0 41",
+"solution": [
+"bxa5",
+"Kd5",
+"a6",
+"Kc6",
+"Kxe4",
+"Kb6",
+"Kd5",
+"Kxa6",
+"Kxc5"
+],
+"rating": 2038,
+"themes": [
+"crushing",
+"endgame",
+"pawnEndgame",
+"veryLong"
+],
+"mate": false,
+"game": "https://lichess.org/5gPxu34d/black#80"
+},
+"1JKlZ": {
+"fen": "7k/8/1p2rrp1/p6p/4P2P/2Q3K1/2P3P1/8 w - - 1 36",
+"solution": [
+"Qc8+",
+"Kg7",
+"e5",
+"Kf7",
+"exf6"
+],
+"rating": 2386,
+"themes": [
+"crushing",
+"endgame",
+"long",
+"queenRookEndgame"
+],
+"mate": false,
+"game": "https://lichess.org/LU7jCcuS/black#70"
+},
+"1JVW7": {
+"fen": "b7/P7/5p1p/4kp2/8/4p1P1/4B2P/4K3 w - - 2 39",
+"solution": [
+"Bh5",
+"f4",
+"Ke2",
+"fxg3",
+"hxg3"
+],
+"rating": 2313,
+"themes": [
+"bishopEndgame",
+"crushing",
+"endgame",
+"long",
+"quietMove"
+],
+"mate": false,
+"game": "https://lichess.org/RlZiQp9t/black#76"
+},
+"1LK6V": {
+"fen": "8/8/p3p3/1p1k4/3P4/PPK5/8/8 b - - 1 47",
+"solution": [
+"Ke4",
+"a4",
+"Ke3",
+"axb5",
+"axb5",
+"b4",
+"Ke4"
+],
+"rating": 2503,
+"themes": [
+"crushing",
+"endgame",
+"pawnEndgame",
+"veryLong"
+],
+"mate": false,
+"game": "https://lichess.org/RE4GEcL2#93"
+},
+"1LvSg": {
+"fen": "8/1k6/4p3/pPKp1p2/P4Pp1/6P1/7P/8 w - - 7 40",
+"solution": [
+"b6",
+"d4",
+"Kxd4",
+"Kxb6",
+"Ke5",
+"Kc5",
+"Kxe6"
+],
+"rating": 1985,
+"themes": [
+"crushing",
+"endgame",
+"pawnEndgame",
+"veryLong",
+"zugzwang"
+],
+"mate": false,
+"game": "https://lichess.org/YbC5Epum/black#78"
+},
+"1MNIe": {
+"fen": "8/8/5Q2/6P1/8/3K4/pp3P2/k1r5 b - - 0 64",
+"solution": [
+"Kb1",
+"Qg6",
+"Rc2"
+],
+"rating": 2380,
+"themes": [
+"crushing",
+"endgame",
+"master",
+"queenRookEndgame",
+"short"
+],
+"mate": false,
+"game": "https://lichess.org/jzOHDXrO#127"
+},
+"1Nycr": {
+"fen": "8/5p1p/7k/2P1Q1p1/6K1/5P1P/8/1q6 b - - 3 40",
+"solution": [
+"f5+",
+"Kg3",
+"Qg1#"
+],
+"rating": 2035,
+"themes": [
+"endgame",
+"epauletteMate",
+"mateIn2",
+"queenEndgame",
+"short"
+],
+"mate": true,
+"game": "https://lichess.org/Gx7iXtOb#79"
+},
+"1O0Fw": {
+"fen": "7r/5R2/4R3/p3Ppk1/2p3pp/6PP/r4P2/6K1 w - - 2 32",
+"solution": [
+"f4+",
+"gxf3",
+"Rg7+",
+"Kh5",
+"g4+",
+"fxg4",
+"hxg4#"
+],
+"rating": 2440,
+"themes": [
+"endgame",
+"mateIn4",
+"rookEndgame",
+"veryLong"
+],
+"mate": true,
+"game": "https://lichess.org/GGXrf5ZB/black#62"
+},
+"1O1NM": {
+"fen": "8/2p2pk1/1p1p3p/p2PpP1P/P1P1P1p1/1KP3P1/8/8 w - - 0 59",
+"solution": [
+"c5",
+"dxc5",
+"Kc4",
+"Kf8",
+"Kb5",
+"Ke7",
+"Kc6",
+"Kd8",
+"f6",
+"c4",
+"d6",
+"cxd6",
+"Kxd6",
+"b5",
+"axb5",
+"a4",
+"b6",
+"Kc8",
+"Ke7",
+"a3",
+"Kxf7"
+],
+"rating": 2798,
+"themes": [
+"crushing",
+"endgame",
+"master",
+"pawnEndgame",
+"veryLong"
+],
+"mate": false,
+"game": "https://lichess.org/jKiXiif3/black#116"
+},
+"1O74P": {
+"fen": "8/8/1R1P4/8/6r1/3K4/pk6/8 b - - 1 64",
+"solution": [
+"Ka3",
+"Ra6+",
+"Ra4",
+"Rxa4+",
+"Kxa4",
+"Kc2",
+"a1=Q"
+],
+"rating": 1900,
+"themes": [
+"advancedPawn",
+"crushing",
+"defensiveMove",
+"endgame",
+"promotion",
+"rookEndgame",
+"veryLong"
+],
+"mate": false,
+"game": "https://lichess.org/NbZGPoBU#127"
+},
+"1ODv9": {
+"fen": "8/8/7p/6p1/3nk1P1/6KN/5P2/8 b - - 1 45",
+"solution": [
+"Ne2+",
+"Kg2",
+"Nf4+",
+"Nxf4",
+"gxf4",
+"Kh2",
+"Kf3",
+"Kg1",
+"Kxg4"
+],
+"rating": 2469,
+"themes": [
+"crushing",
+"endgame",
+"knightEndgame",
+"veryLong",
+"zugzwang"
+],
+"mate": false,
+"game": "https://lichess.org/6VtZZB8J#89"
+},
+"1OJX1": {
+"fen": "b7/P5p1/7p/1kp1p3/6B1/2P5/3K2PP/8 w - - 1 35",
+"solution": [
+"Ke3",
+"Kb6",
+"Bf3",
+"Bxf3",
+"Kxf3"
+],
+"rating": 2547,
+"themes": [
+"bishopEndgame",
+"crushing",
+"endgame",
+"long"
+],
+"mate": false,
+"game": "https://lichess.org/AY7vBg60/black#68"
+},
+"1OroC": {
+"fen": "8/2k3p1/5p2/1p1K2p1/p6P/P7/1P4P1/8 w - - 0 37",
+"solution": [
+"hxg5",
+"fxg5",
+"Kc5"
+],
+"rating": 2306,
+"themes": [
+"crushing",
+"endgame",
+"pawnEndgame",
+"short"
+],
+"mate": false,
+"game": "https://lichess.org/fLYSygZk/black#72"
+},
+"1QMv8": {
+"fen": "6k1/8/1p1pKP2/3P4/1P2P3/8/1r6/8 w - - 1 55",
+"solution": [
+"Ke7",
+"Rf2",
+"e5",
+"b5",
+"e6"
+],
+"rating": 2561,
+"themes": [
+"crushing",
+"endgame",
+"long",
+"rookEndgame"
+],
+"mate": false,
+"game": "https://lichess.org/pcY9eCoW/black#108"
+},
+"1R2aH": {
+"fen": "8/2b4p/1B1k2p1/P7/1pP1B3/5K1b/8/8 w - - 0 38",
+"solution": [
+"c5+",
+"Kd7",
+"a6"
+],
+"rating": 2069,
+"themes": [
+"advantage",
+"bishopEndgame",
+"endgame",
+"short"
+],
+"mate": false,
+"game": "https://lichess.org/jW7vAp3D/black#74"
+},
+"1RjCs": {
+"fen": "6k1/7p/6p1/1p2K3/p1ppP2P/P2P4/1PP3P1/8 b - - 1 32",
+"solution": [
+"b4",
+"axb4",
+"c3",
+"bxc3",
+"a3"
+],
+"rating": 2189,
+"themes": [
+"crushing",
+"endgame",
+"long",
+"master",
+"pawnEndgame",
+"sacrifice"
+],
+"mate": false,
+"game": "https://lichess.org/5heD6L8p#63"
+},
+"1Roux": {
+"fen": "2Rr2k1/5pp1/7p/p1Q5/1p1P2P1/P3P2P/KP3P2/7q b - - 1 36",
+"solution": [
+"b3+",
+"Kxb3",
+"Qb7+"
+],
+"rating": 1983,
+"themes": [
+"advantage",
+"attraction",
+"endgame",
+"short"
+],
+"mate": false,
+"game": "https://lichess.org/B1guCKWB#71"
+},
+"1S5uZ": {
+"fen": "8/1p3p1k/p3p2p/P2p4/1P1P1qrP/2PN3Q/4R3/7K b - - 1 40",
+"solution": [
+"Qf5",
+"Re3",
+"Qh5",
+"Qf3",
+"Qxh4+",
+"Qh3",
+"Qg5"
+],
+"rating": 2630,
+"themes": [
+"advantage",
+"endgame",
+"exposedKing",
+"master",
+"masterVsMaster",
+"superGM",
+"veryLong"
+],
+"mate": false,
+"game": "https://lichess.org/0HpsP7fy#79"
+},
+"1SXHs": {
+"fen": "8/1b6/4B3/1P4k1/6p1/7p/5P2/6K1 w - - 1 46",
+"solution": [
+"Bd7",
+"Kf4",
+"Bc6",
+"Bc8",
+"Kh2",
+"Be6",
+"b6"
+],
+"rating": 2637,
+"themes": [
+"bishopEndgame",
+"crushing",
+"endgame",
+"veryLong"
+],
+"mate": false,
+"game": "https://lichess.org/ULOkI8nI/black#90"
+},
+"1SwUd": {
+"fen": "8/8/8/7p/p2Np3/1k6/3K1P2/8 b - - 1 53",
+"solution": [
+"Kb2",
+"Nb5",
+"h4"
+],
+"rating": 2032,
+"themes": [
+"crushing",
+"defensiveMove",
+"endgame",
+"knightEndgame",
+"master",
+"short"
+],
+"mate": false,
+"game": "https://lichess.org/GxkGpFzF#105"
+},
+"1TlwM": {
+"fen": "5b2/5B2/p1Pk4/3P3P/4ppP1/7K/P7/8 b - g3 0 51",
+"solution": [
+"e3",
+"Kg2",
+"e2",
+"Kf2",
+"f3"
+],
+"rating": 2031,
+"themes": [
+"advancedPawn",
+"bishopEndgame",
+"crushing",
+"endgame",
+"long"
+],
+"mate": false,
+"game": "https://lichess.org/IrS0fPFl#101"
+},
+"1TmTO": {
+"fen": "8/R5pk/6pp/8/KQ3PP1/1pq4P/8/8 b - - 1 47",
+"solution": [
+"Qxb4+",
+"Kxb4",
+"b2",
+"Kc3",
+"b1=Q"
+],
+"rating": 1914,
+"themes": [
+"advancedPawn",
+"advantage",
+"endgame",
+"long",
+"promotion"
+],
+"mate": false,
+"game": "https://lichess.org/48Ynnagw#93"
+},
+"1UKoI": {
+"fen": "8/k7/P7/1KP3p1/5p2/5P2/7P/6n1 w - - 1 54",
+"solution": [
+"c6",
+"Nxf3",
+"c7",
+"Nd4+",
+"Ka4",
+"Kxa6",
+"c8=Q+"
+],
+"rating": 2456,
+"themes": [
+"advancedPawn",
+"crushing",
+"defensiveMove",
+"endgame",
+"knightEndgame",
+"promotion",
+"veryLong"
+],
+"mate": false,
+"game": "https://lichess.org/ChzVD1cq/black#106"
+},
+"1V3G4": {
+"fen": "8/5pk1/Q5p1/6KP/P2q2P1/1P6/8/8 b - - 2 41",
+"solution": [
+"Qe3+",
+"Kh4",
+"g5#"
+],
+"rating": 2286,
+"themes": [
+"endgame",
+"mateIn2",
+"queenEndgame",
+"short"
+],
+"mate": true,
+"game": "https://lichess.org/tWA9rpgN#81"
+},
+"1VOlx": {
+"fen": "8/1Pk5/2PNn3/7p/4p3/8/3K4/8 w - - 1 52",
+"solution": [
+"Ne8+",
+"Kb8",
+"Nf6"
+],
+"rating": 2437,
+"themes": [
+"crushing",
+"endgame",
+"knightEndgame",
+"short"
+],
+"mate": false,
+"game": "https://lichess.org/Xf7Y6DX3/black#102"
+},
+"1VQlE": {
+"fen": "8/1R6/3k1p1p/3p3B/p2P1R1P/PnP2K2/1P3P2/3r2r1 b - - 2 43",
+"solution": [
+"Rd3+",
+"Ke2",
+"Nc1#"
+],
+"rating": 2115,
+"themes": [
+"cornerMate",
+"endgame",
+"mateIn2",
+"short"
+],
+"mate": true,
+"game": "https://lichess.org/OGtEZYv7#85"
+},
+"1XWGS": {
+"fen": "8/8/8/N5pp/2Kp1k2/3P3P/5PP1/4n3 b - - 2 46",
+"solution": [
+"Nxg2",
+"Nb3",
+"h4",
+"Nxd4",
+"g4"
+],
+"rating": 2707,
+"themes": [
+"crushing",
+"endgame",
+"knightEndgame",
+"long",
+"quietMove"
+],
+"mate": false,
+"game": "https://lichess.org/qHxY0gPn#91"
+},
+"1Y123": {
+"fen": "8/6p1/4R2k/1q5p/3P4/4P3/7P/5R1K b - - 0 42",
+"solution": [
+"Kh7",
+"Rf4",
+"Qb1+",
+"Kg2",
+"Qa2+",
+"Kf3",
+"Qxe6"
+],
+"rating": 2543,
+"themes": [
+"crushing",
+"defensiveMove",
+"endgame",
+"fork",
+"queenRookEndgame",
+"veryLong"
+],
+"mate": false,
+"game": "https://lichess.org/NiVsEGUd#83"
+},
+"1Z4Rf": {
+"fen": "8/8/2k1K3/3NP3/1p1P4/8/2n2P2/8 b - - 0 58",
+"solution": [
+"Nxd4+",
+"Kf6",
+"Kxd5"
+],
+"rating": 1888,
+"themes": [
+"crushing",
+"deflection",
+"endgame",
+"knightEndgame",
+"short"
+],
+"mate": false,
+"game": "https://lichess.org/IT3wB9pG#115"
+},
+"1ZEUc": {
+"fen": "2r5/pp1Q1k2/1r6/8/3PP3/8/2p3PP/6K1 b - - 6 37",
+"solution": [
+"Kf6",
+"e5+",
+"Kg5",
+"Qxc8",
+"Rb1+",
+"Kf2",
+"c1=Q"
+],
+"rating": 2263,
+"themes": [
+"advancedPawn",
+"crushing",
+"defensiveMove",
+"endgame",
+"promotion",
+"queenRookEndgame",
+"sacrifice",
+"veryLong"
+],
+"mate": false,
+"game": "https://lichess.org/H1hHAVDg#73"
+},
+"1ZXqW": {
+"fen": "8/8/p7/3kp2p/PB2p1p1/bPK1PpP1/5P1P/8 b - - 3 35",
+"solution": [
+"Bc1",
+"Kc2",
+"Bxe3"
+],
+"rating": 1964,
+"themes": [
+"bishopEndgame",
+"crushing",
+"endgame",
+"short"
+],
+"mate": false,
+"game": "https://lichess.org/2g7Q8zY9#69"
+},
+"1Zuao": {
+"fen": "8/8/5n1P/8/1p1K1N2/8/1k6/8 w - - 0 52",
+"solution": [
+"Nd5",
+"Nh7",
+"Nxb4"
+],
+"rating": 1972,
+"themes": [
+"crushing",
+"endgame",
+"knightEndgame",
+"master",
+"masterVsMaster",
+"short",
+"superGM"
+],
+"mate": false,
+"game": "https://lichess.org/T0BBek4a/black#102"
+},
+"1a1jk": {
+"fen": "6k1/5p2/2P1p1pp/p3P3/q2p1P2/2Q5/5KP1/8 w - - 0 44",
+"solution": [
+"Qc1",
+"d3",
+"c7"
+],
+"rating": 2356,
+"themes": [
+"advancedPawn",
+"crushing",
+"endgame",
+"queenEndgame",
+"quietMove",
+"short"
+],
+"mate": false,
+"game": "https://lichess.org/X1s3GbDA/black#86"
+},
+"1avRB": {
+"fen": "8/8/6n1/5KP1/p2N2P1/2k5/8/8 b - - 1 44",
+"solution": [
+"Kxd4",
+"Kxg6",
+"a3",
+"Kf7",
+"a2",
+"g6",
+"a1=Q"
+],
+"rating": 1994,
+"themes": [
+"advancedPawn",
+"crushing",
+"endgame",
+"knightEndgame",
+"promotion",
+"veryLong"
+],
+"mate": false,
+"game": "https://lichess.org/EUNHKyYK#87"
+},
+"1ayWk": {
+"fen": "4N3/8/2p1k2P/pp6/8/4n3/6P1/5K2 w - - 1 48",
+"solution": [
+"Kg1",
+"Nc4",
+"h7"
+],
+"rating": 2386,
+"themes": [
+"advancedPawn",
+"crushing",
+"defensiveMove",
+"endgame",
+"knightEndgame",
+"short"
+],
+"mate": false,
+"game": "https://lichess.org/y62POIEy/black#94"
+},
+"1b9oF": {
+"fen": "8/8/2pk1PK1/1p6/3P4/1P3R1p/8/7r b - - 0 49",
+"solution": [
+"Rg1+",
+"Kf5",
+"h2",
+"f7",
+"Ke7"
+],
+"rating": 2037,
+"themes": [
+"advancedPawn",
+"crushing",
+"defensiveMove",
+"endgame",
+"long",
+"master",
+"rookEndgame"
+],
+"mate": false,
+"game": "https://lichess.org/te9Kt4jD#97"
+},
+"1bT01": {
+"fen": "8/8/8/3KP1kP/5nP1/8/8/8 w - - 5 49",
+"solution": [
+"Kd6",
+"Kxg4",
+"h6"
+],
+"rating": 1898,
+"themes": [
+"crushing",
+"defensiveMove",
+"endgame",
+"knightEndgame",
+"master",
+"short"
+],
+"mate": false,
+"game": "https://lichess.org/P7LKvGrV/black#96"
+},
+"1cN3U": {
+"fen": "8/6pk/6q1/p5Qp/P4p1P/5PP1/6K1/8 b - - 1 34",
+"solution": [
+"Qxg5",
+"hxg5",
+"Kg6",
+"gxf4",
+"Kf5"
+],
+"rating": 2422,
+"themes": [
+"crushing",
+"endgame",
+"long",
+"master",
+"queenEndgame"
+],
+"mate": false,
+"game": "https://lichess.org/eVh7ddJX#67"
+},
+"1dHM7": {
+"fen": "8/pp6/5Qp1/8/4p1k1/1P1r4/P2r2PK/7R b - - 0 39",
+"solution": [
+"Rh3+",
+"Kg1",
+"Rd1+",
+"Kf2",
+"e3+",
+"Ke2",
+"Rd2+",
+"Ke1",
+"Rxh1+"
+],
+"rating": 2186,
+"themes": [
+"crushing",
+"endgame",
+"pin",
+"queenRookEndgame",
+"veryLong"
+],
+"mate": false,
+"game": "https://lichess.org/nMyHwwSm#77"
+},
+"1duo2": {
+"fen": "8/2p5/p4p1p/1p1Pb1k1/1P1pK1P1/P6P/4BP2/8 w - - 7 35",
+"solution": [
+"f4+",
+"Bxf4",
+"h4+",
+"Kg6",
+"Kxf4"
+],
+"rating": 1921,
+"themes": [
+"bishopEndgame",
+"crushing",
+"deflection",
+"endgame",
+"fork",
+"long"
+],
+"mate": false,
+"game": "https://lichess.org/fHJwTXBk/black#68"
+},
+"1ehSV": {
+"fen": "8/P7/R7/1q6/6p1/4k3/6KP/8 w - - 4 63",
+"solution": [
+"Re6+",
+"Kd3",
+"a8=Q"
+],
+"rating": 2578,
+"themes": [
+"advancedPawn",
+"crushing",
+"endgame",
+"master",
+"promotion",
+"queenRookEndgame",
+"short"
+],
+"mate": false,
+"game": "https://lichess.org/E4pI92cw/black#124"
+},
+"1exqW": {
+"fen": "8/5p2/4pp2/3p4/2qP2kP/1pQ1P1P1/3K1P2/8 w - - 1 44",
+"solution": [
+"Qxc4",
+"dxc4",
+"e4",
+"e5",
+"d5"
+],
+"rating": 2339,
+"themes": [
+"crushing",
+"defensiveMove",
+"endgame",
+"long",
+"queenEndgame",
+"quietMove"
+],
+"mate": false,
+"game": "https://lichess.org/oZmGito3/black#86"
+},
+"1ezBM": {
+"fen": "4Q3/5p1k/1p2q3/p7/2PP2p1/1P4Pp/P7/6K1 w - - 0 40",
+"solution": [
+"Qxe6",
+"fxe6",
+"c5",
+"bxc5",
+"dxc5"
+],
+"rating": 1883,
+"themes": [
+"crushing",
+"endgame",
+"long",
+"master",
+"masterVsMaster",
+"queenEndgame"
+],
+"mate": false,
+"game": "https://lichess.org/mNotpedY/black#78"
+},
+"1f713": {
+"fen": "r4r2/2p1qpk1/p2p2pR/1p6/4PPP1/2P1B3/P1P1K1P1/7R w - - 3 25",
+"solution": [
+"Bd4+",
+"f6",
+"Rh7+",
+"Kg8",
+"Rxe7"
+],
+"rating": 2101,
+"themes": [
+"crushing",
+"endgame",
+"long",
+"skewer"
+],
+"mate": false,
+"game": "https://lichess.org/2rNi2LxY/black#48"
+},
+"1fYj0": {
+"fen": "8/8/pp3k2/2nPp2p/PK2P2P/8/3N4/8 w - - 0 41",
+"solution": [
+"a5",
+"Nd7",
+"axb6"
+],
+"rating": 1785,
+"themes": [
+"crushing",
+"endgame",
+"knightEndgame",
+"short"
+],
+"mate": false,
+"game": "https://lichess.org/54JrRfda/black#80"
+},
+"1glRg": {
+"fen": "8/8/8/P7/1pK2pkp/2b1B3/7P/8 w - - 0 50",
+"solution": [
+"Bxf4",
+"Kxf4",
+"a6"
+],
+"rating": 2136,
+"themes": [
+"bishopEndgame",
+"crushing",
+"endgame",
+"sacrifice",
+"short"
+],
+"mate": false,
+"game": "https://lichess.org/x5UHNbm7/black#98"
+},
+"1gp2Z": {
+"fen": "r2q2k1/3n1pp1/R1Q4p/8/2P1p3/4B3/1P3PPP/6K1 b - - 0 28",
+"solution": [
+"Nb8",
+"Qe8+",
+"Qxe8"
+],
+"rating": 1873,
+"themes": [
+"advantage",
+"endgame",
+"fork",
+"short"
+],
+"mate": false,
+"game": "https://lichess.org/78Z0SrlG#55"
+},
+"1h8Tp": {
+"fen": "8/2R3R1/5k2/3p4/3P2P1/8/1r3PK1/q7 w - - 8 60",
+"solution": [
+"Rcf7+",
+"Ke6",
+"g5",
+"Rxf2+",
+"Rxf2",
+"Qxd4",
+"Rf6+",
+"Qxf6",
+"gxf6"
+],
+"rating": 2680,
+"themes": [
+"crushing",
+"endgame",
+"exposedKing",
+"queenRookEndgame",
+"quietMove",
+"veryLong"
+],
+"mate": false,
+"game": "https://lichess.org/u4uLn7pg/black#118"
+},
+"1i5Sj": {
+"fen": "7k/5r2/p1pQ4/2PpP3/8/7r/4K3/8 w - - 0 48",
+"solution": [
+"e6",
+"Rff3",
+"e7"
+],
+"rating": 2457,
+"themes": [
+"advancedPawn",
+"advantage",
+"endgame",
+"queenRookEndgame",
+"short"
+],
+"mate": false,
+"game": "https://lichess.org/2N4D7qif/black#94"
+},
+"1iaoa": {
+"fen": "2k5/1ppq4/P4p1r/1P2p3/P2pP2p/3P1p1P/2Q2Pr1/R1R4K w - - 2 31",
+"solution": [
+"Qxc7+",
+"Qxc7",
+"a7"
+],
+"rating": 2463,
+"themes": [
+"advancedPawn",
+"crushing",
+"endgame",
+"pin",
+"queensideAttack",
+"sacrifice",
+"short"
+],
+"mate": false,
+"game": "https://lichess.org/sQOTBI2B/black#60"
+},
+"1jUnZ": {
+"fen": "2r2rk1/3qp2p/3p1p2/2p2p1Q/1p2P3/3P1R1P/2P3P1/5R1K w - - 0 26",
+"solution": [
+"Rg3+",
+"Kh8",
+"Qxh7+",
+"Kxh7",
+"Rf4",
+"Qe8",
+"Rh4+",
+"Qh5",
+"Rxh5#"
+],
+"rating": 2600,
+"themes": [
+"endgame",
+"kingsideAttack",
+"mateIn5",
+"sacrifice",
+"veryLong"
+],
+"mate": true,
+"game": "https://lichess.org/eVV2l00D/black#50"
+},
+"1k6id": {
+"fen": "6k1/3P2pp/8/3R4/r3RKP1/5P2/7q/8 w - - 0 36",
+"solution": [
+"Kf5",
+"Ra8",
+"Re8+",
+"Kf7",
+"Rxa8"
+],
+"rating": 1979,
+"themes": [
+"crushing",
+"defensiveMove",
+"endgame",
+"long",
+"queenRookEndgame"
+],
+"mate": false,
+"game": "https://lichess.org/M6chjomM/black#70"
+},
+"1kL6m": {
+"fen": "6k1/2p4p/3q1QpP/4p3/1Kp5/P7/1P6/8 w - - 2 40",
+"solution": [
+"Qxd6",
+"cxd6",
+"a4",
+"Kf7",
+"a5"
+],
+"rating": 2166,
+"themes": [
+"crushing",
+"defensiveMove",
+"endgame",
+"long",
+"queenEndgame",
+"quietMove"
+],
+"mate": false,
+"game": "https://lichess.org/8cRAkDzG/black#78"
+},
+"1lP46": {
+"fen": "8/8/8/6k1/5rp1/PR4K1/8/8 w - - 4 58",
+"solution": [
+"Rb5+",
+"Rf5",
+"a4",
+"Kg6",
+"Rxf5",
+"Kxf5",
+"a5"
+],
+"rating": 2209,
+"themes": [
+"crushing",
+"defensiveMove",
+"endgame",
+"quietMove",
+"rookEndgame",
+"veryLong"
+],
+"mate": false,
+"game": "https://lichess.org/vZAcrSQN/black#114"
+},
+"1lSoB": {
+"fen": "8/5ppk/4p2p/8/2Q2PK1/1P2q3/6PP/8 b - - 2 35",
+"solution": [
+"f5+",
+"Kh4",
+"Qf2+",
+"Kh3",
+"g5",
+"fxg5",
+"hxg5"
+],
+"rating": 2506,
+"themes": [
+"crushing",
+"endgame",
+"queenEndgame",
+"veryLong"
+],
+"mate": false,
+"game": "https://lichess.org/uDiW3eeE#69"
+},
+"1m1CJ": {
+"fen": "2r4k/5Q2/3r4/p7/1p2P3/8/4K1P1/8 w - - 3 42",
+"solution": [
+"Qh5+",
+"Kg7",
+"Qg4+"
+],
+"rating": 1898,
+"themes": [
+"crushing",
+"endgame",
+"master",
+"queenRookEndgame",
+"short"
+],
+"mate": false,
+"game": "https://lichess.org/RLdkTt9n/black#82"
+},
+"1mLmi": {
+"fen": "8/8/1r3K1k/4P3/5P2/7P/8/8 w - - 3 55",
+"solution": [
+"e6",
+"Kh7",
+"Kf7",
+"Rb5",
+"e7",
+"Rf5+",
+"Ke6",
+"Rxf4",
+"Kd5"
+],
+"rating": 2296,
+"themes": [
+"advancedPawn",
+"crushing",
+"defensiveMove",
+"endgame",
+"rookEndgame",
+"veryLong"
+],
+"mate": false,
+"game": "https://lichess.org/GMeAx68Y/black#108"
+},
+"1mP97": {
+"fen": "8/p7/1p3kp1/2pP1p1p/P1Qqp2P/1P2K1P1/5P2/8 w - - 4 40",
+"solution": [
+"Qxd4+",
+"cxd4+",
+"Kxd4",
+"a5",
+"Kc3"
+],
+"rating": 2891,
+"themes": [
+"crushing",
+"defensiveMove",
+"endgame",
+"long",
+"master",
+"queenEndgame"
+],
+"mate": false,
+"game": "https://lichess.org/QxwGCdxy/black#78"
+},
+"1ml9H": {
+"fen": "7q/p1Q5/1p3pk1/4P3/6K1/5PP1/P7/8 b - - 0 34",
+"solution": [
+"f5+",
+"Kf4",
+"Qh6#"
+],
+"rating": 1907,
+"themes": [
+"endgame",
+"mateIn2",
+"queenEndgame",
+"short"
+],
+"mate": true,
+"game": "https://lichess.org/qoX2QTRg#67"
+},
+"1nCie": {
+"fen": "6k1/p6p/8/1P1R1p2/5P2/8/4q3/2KR4 w - - 1 47",
+"solution": [
+"Rg1+",
+"Kf7",
+"Rxf5+",
+"Ke6",
+"Re5+",
+"Qxe5",
+"fxe5"
+],
+"rating": 2417,
+"themes": [
+"crushing",
+"endgame",
+"fork",
+"queenRookEndgame",
+"veryLong"
+],
+"mate": false,
+"game": "https://lichess.org/m4bXlzKR/black#92"
+},
+"1nLrq": {
+"fen": "3B4/8/1p6/pP1k4/P4p1p/5Pb1/4K3/8 w - - 2 61",
+"solution": [
+"Bxb6",
+"h3",
+"Kf1",
+"h2",
+"Kg2"
+],
+"rating": 2022,
+"themes": [
+"bishopEndgame",
+"crushing",
+"endgame",
+"long"
+],
+"mate": false,
+"game": "https://lichess.org/GV2a12xx/black#120"
+},
+"1oO84": {
+"fen": "8/8/8/2k2P2/2p1PP2/2P1K3/2b5/8 w - - 1 52",
+"solution": [
+"f6",
+"Kd6",
+"f5",
+"Kd7",
+"Kf4",
+"Ke8",
+"e5",
+"Kf7",
+"Kg5"
+],
+"rating": 2558,
+"themes": [
+"bishopEndgame",
+"crushing",
+"defensiveMove",
+"endgame",
+"master",
+"masterVsMaster",
+"quietMove",
+"veryLong"
+],
+"mate": false,
+"game": "https://lichess.org/CjP6pjFb/black#102"
+},
+"1oOKJ": {
+"fen": "8/8/8/5kp1/5r2/4K3/8/4Q3 b - - 3 59",
+"solution": [
+"Re4+",
+"Kd2",
+"Rxe1",
+"Kxe1",
+"Kg4"
+],
+"rating": 2146,
+"themes": [
+"crushing",
+"defensiveMove",
+"endgame",
+"long",
+"queenRookEndgame",
+"skewer"
+],
+"mate": false,
+"game": "https://lichess.org/QfjVDCCG#117"
+},
+"1oRdf": {
+"fen": "8/4k3/R7/8/6PP/p3r3/1r1R4/2K5 b - - 3 49",
+"solution": [
+"Re1+",
+"Rd1",
+"Rxd1+",
+"Kxd1",
+"a2"
+],
+"rating": 1853,
+"themes": [
+"advancedPawn",
+"crushing",
+"endgame",
+"exposedKing",
+"long",
+"rookEndgame"
+],
+"mate": false,
+"game": "https://lichess.org/Sx0XleNy#97"
+},
+"1oXd7": {
+"fen": "8/6pk/p5pp/1p5P/1P1Q4/q3PKP1/6P1/8 w - - 0 36",
+"solution": [
+"Qe4",
+"Qb3",
+"hxg6+"
+],
+"rating": 1964,
+"themes": [
+"crushing",
+"endgame",
+"pin",
+"queenEndgame",
+"short"
+],
+"mate": false,
+"game": "https://lichess.org/afrQs8OD/black#70"
+},
+"1ocL1": {
+"fen": "8/1p3p2/2pk2pp/p2p4/PP1P1PP1/2P2KP1/8/8 b - - 4 40",
+"solution": [
+"b5",
+"axb5",
+"a4"
+],
+"rating": 2191,
+"themes": [
+"crushing",
+"defensiveMove",
+"endgame",
+"pawnEndgame",
+"short"
+],
+"mate": false,
+"game": "https://lichess.org/2GGfVWDN#79"
+},
+"1pAjF": {
+"fen": "8/8/8/1p6/5P2/2k5/4K3/8 w - - 1 59",
+"solution": [
+"f5",
+"b4",
+"Kd1",
+"b3",
+"Kc1",
+"Kd4",
+"f6"
+],
+"rating": 2217,
+"themes": [
+"crushing",
+"endgame",
+"pawnEndgame",
+"quietMove",
+"veryLong"
+],
+"mate": false,
+"game": "https://lichess.org/HZIJB4q0/black#116"
+},
+"1pfE6": {
+"fen": "8/8/pR3R1p/5p1k/6p1/7P/1P2r1PK/r7 w - - 0 35",
+"solution": [
+"Rxf5+",
+"Kh4",
+"Rxh6#"
+],
+"rating": 2092,
+"themes": [
+"deflection",
+"discoveredAttack",
+"endgame",
+"mateIn2",
+"rookEndgame",
+"short"
+],
+"mate": true,
+"game": "https://lichess.org/wnHOTNSf/black#68"
+},
+"1pu5E": {
+"fen": "8/8/8/8/6Pp/5pk1/6P1/6K1 b - - 0 57",
+"solution": [
+"fxg2",
+"g5",
+"h3",
+"g6",
+"h2#"
+],
+"rating": 2007,
+"themes": [
+"advancedPawn",
+"endgame",
+"long",
+"master",
+"mateIn3",
+"pawnEndgame"
+],
+"mate": true,
+"game": "https://lichess.org/qyt2bedh#113"
+},
+"1pz9T": {
+"fen": "8/5pk1/2p1q2p/6pP/2P1Q1P1/4KP2/8/8 w - - 8 80",
+"solution": [
+"Qxe6",
+"fxe6",
+"Kd4"
+],
+"rating": 2022,
+"themes": [
+"crushing",
+"defensiveMove",
+"endgame",
+"master",
+"queenEndgame",
+"short"
+],
+"mate": false,
+"game": "https://lichess.org/2ZZVCOBh/black#158"
+},
+"1q7ZS": {
+"fen": "3b4/7p/2k1p3/1pB1Ppp1/PPpK1P2/6P1/7P/8 b - - 0 33",
+"solution": [
+"gxf4",
+"gxf4",
+"Bh4"
+],
+"rating": 2239,
+"themes": [
+"bishopEndgame",
+"clearance",
+"crushing",
+"defensiveMove",
+"endgame",
+"master",
+"short"
+],
+"mate": false,
+"game": "https://lichess.org/CITpHFpV#65"
+},
+"1qC2p": {
+"fen": "6k1/6p1/pp1QP2p/8/PP6/4P2P/r6r/4K3 w - - 1 40",
+"solution": [
+"Qb8+",
+"Kh7",
+"Qxh2",
+"Rxh2",
+"e7"
+],
+"rating": 2234,
+"themes": [
+"advancedPawn",
+"crushing",
+"endgame",
+"long",
+"queenRookEndgame",
+"sacrifice"
+],
+"mate": false,
+"game": "https://lichess.org/JDkkblkZ/black#78"
+},
+"1qncV": {
+"fen": "8/8/5R1p/4rp1k/6p1/5PPP/6K1/8 w - - 0 57",
+"solution": [
+"Rxf5+",
+"Rxf5",
+"hxg4+",
+"Kg6",
+"gxf5+"
+],
+"rating": 2195,
+"themes": [
+"attraction",
+"crushing",
+"endgame",
+"fork",
+"long",
+"rookEndgame",
+"sacrifice"
+],
+"mate": false,
+"game": "https://lichess.org/dNqK1dbj/black#112"
+},
+"1qtQY": {
+"fen": "8/5kpp/4p3/B7/ppp3P1/5p1P/PP3P2/6K1 b - - 1 35",
+"solution": [
+"c3",
+"bxc3",
+"b3",
+"axb3",
+"axb3"
+],
+"rating": 2150,
+"themes": [
+"bishopEndgame",
+"crushing",
+"endgame",
+"long"
+],
+"mate": false,
+"game": "https://lichess.org/sUmIeyxM#69"
+},
+"1r6Xb": {
+"fen": "8/8/5Pn1/4N1p1/3pK3/2k5/8/8 w - - 1 61",
+"solution": [
+"Nxg6",
+"d3",
+"Ne7",
+"d2",
+"Nd5+",
+"Kb3",
+"Ne3"
+],
+"rating": 2388,
+"themes": [
+"crushing",
+"defensiveMove",
+"endgame",
+"hangingPiece",
+"knightEndgame",
+"quietMove",
+"veryLong"
+],
+"mate": false,
+"game": "https://lichess.org/XJHhz9mJ/black#120"
+},
+"1rQBp": {
+"fen": "8/5p2/6p1/5P1n/4P1K1/7P/k7/8 w - - 0 53",
+"solution": [
+"e5",
+"Kb3",
+"Kg5",
+"Ng3",
+"e6",
+"fxe6",
+"fxg6"
+],
+"rating": 2741,
+"themes": [
+"crushing",
+"deflection",
+"endgame",
+"knightEndgame",
+"quietMove",
+"veryLong"
+],
+"mate": false,
+"game": "https://lichess.org/BofpPyP5/black#104"
+},
+"1rknq": {
+"fen": "6k1/6p1/7p/4PQpP/5q2/8/6PK/8 w - - 1 58",
+"solution": [
+"Qxf4",
+"gxf4",
+"Kh3",
+"Kf7",
+"Kg4",
+"g5",
+"hxg6+",
+"Kxg6",
+"Kxf4"
+],
+"rating": 1814,
+"themes": [
+"crushing",
+"enPassant",
+"endgame",
+"queenEndgame",
+"veryLong"
+],
+"mate": false,
+"game": "https://lichess.org/O96vbymh/black#114"
+},
+"1roCg": {
+"fen": "8/k4r2/1p3P2/p5P1/P2p4/P3p3/7P/5RK1 b - - 0 39",
+"solution": [
+"d3",
+"Rb1",
+"Rc7",
+"Kf1",
+"Rc2"
+],
+"rating": 2711,
+"themes": [
+"crushing",
+"endgame",
+"long",
+"quietMove",
+"rookEndgame"
+],
+"mate": false,
+"game": "https://lichess.org/X9FF1clz#77"
+},
+"1sc1S": {
+"fen": "8/8/p3p3/1p2k1pp/8/1P1K1PPP/P7/8 b - - 0 35",
+"solution": [
+"h4",
+"gxh4",
+"gxh4",
+"Ke3",
+"b4",
+"f4+",
+"Kf5",
+"Kf3",
+"a5",
+"Ke3",
+"e5",
+"fxe5",
+"Kxe5"
+],
+"rating": 2491,
+"themes": [
+"crushing",
+"endgame",
+"pawnEndgame",
+"quietMove",
+"veryLong",
+"zugzwang"
+],
+"mate": false,
+"game": "https://lichess.org/c3YCf58a#69"
+},
+"1seQh": {
+"fen": "q3r1k1/6pp/2p1p3/1pBp4/3Pn3/1PP1PQ2/6PP/5RK1 w - - 0 20",
+"solution": [
+"Qf7+",
+"Kh8",
+"Bf8",
+"Rxf8",
+"Qxf8+",
+"Qxf8",
+"Rxf8#"
+],
+"rating": 1870,
+"themes": [
+"backRankMate",
+"endgame",
+"mateIn4",
+"veryLong"
+],
+"mate": true,
+"game": "https://lichess.org/bh2EWieY/black#38"
+},
+"1skwo": {
+"fen": "8/1p2k3/p3P3/2pP2rp/2P5/P5p1/8/1K3R2 w - - 0 48",
+"solution": [
+"Rf7+",
+"Kd6",
+"Rd7+",
+"Ke5",
+"e7",
+"g2",
+"e8=Q+"
+],
+"rating": 1902,
+"themes": [
+"advancedPawn",
+"crushing",
+"endgame",
+"exposedKing",
+"promotion",
+"rookEndgame",
+"veryLong"
+],
+"mate": false,
+"game": "https://lichess.org/JUQ96Xw5/black#94"
+},
+"1tFac": {
+"fen": "8/5p1k/3P2pp/1p2q3/8/7P/2Q3P1/6K1 w - - 0 41",
+"solution": [
+"Qd1",
+"Qg5",
+"d7"
+],
+"rating": 2706,
+"themes": [
+"advancedPawn",
+"crushing",
+"endgame",
+"queenEndgame",
+"quietMove",
+"short"
+],
+"mate": false,
+"game": "https://lichess.org/AYWzRenx/black#80"
+},
+"1uAx4": {
+"fen": "8/8/3p4/1ppPpk1p/2P4P/1P1P1K2/8/8 b - - 0 40",
+"solution": [
+"b4",
+"Ke3",
+"Kg4",
+"Ke4",
+"Kxh4",
+"Kf5",
+"Kg3",
+"Ke6",
+"h4",
+"Kxd6",
+"h3"
+],
+"rating": 1672,
+"themes": [
+"crushing",
+"endgame",
+"pawnEndgame",
+"quietMove",
+"veryLong",
+"zugzwang"
+],
+"mate": false,
+"game": "https://lichess.org/5PremR8w#79"
+},
+"1uVhy": {
+"fen": "3n2k1/5p2/7P/pp2PPP1/8/8/1P4K1/8 w - - 1 40",
+"solution": [
+"g6",
+"fxg6",
+"e6",
+"Nf7",
+"e7",
+"Nd6",
+"f6"
+],
+"rating": 2751,
+"themes": [
+"advancedPawn",
+"crushing",
+"endgame",
+"knightEndgame",
+"veryLong"
+],
+"mate": false,
+"game": "https://lichess.org/cAiHyTfG/black#78"
+},
+"1udhU": {
+"fen": "5b2/1k6/3pBBpp/3P4/p2Pp3/6P1/3K3P/8 b - - 1 40",
+"solution": [
+"e3+",
+"Kxe3",
+"a3",
+"Kd2",
+"a2"
+],
+"rating": 2086,
+"themes": [
+"advancedPawn",
+"bishopEndgame",
+"crushing",
+"endgame",
+"long"
+],
+"mate": false,
+"game": "https://lichess.org/RFB1ayyz#79"
+},
+"1uqWM": {
+"fen": "b7/8/PP1k4/8/3K1P2/6p1/8/8 w - - 0 46",
+"solution": [
+"b7",
+"Bxb7",
+"axb7",
+"Kc7",
+"Ke3",
+"g2",
+"Kf2",
+"g1=R",
+"Kxg1"
+],
+"rating": 2003,
+"themes": [
+"advancedPawn",
+"bishopEndgame",
+"crushing",
+"endgame",
+"trappedPiece",
+"veryLong"
+],
+"mate": false,
+"game": "https://lichess.org/5sAnLEC7/black#90"
+},
+"1usec": {
+"fen": "8/8/2k3p1/p4p1p/1PK2P1P/6P1/8/8 b - - 0 51",
+"solution": [
+"axb4",
+"Kxb4",
+"Kd5"
+],
+"rating": 1927,
+"themes": [
+"crushing",
+"defensiveMove",
+"endgame",
+"master",
+"pawnEndgame",
+"short"
+],
+"mate": false,
+"game": "https://lichess.org/vruyClfl#101"
+},
+"1v9nP": {
+"fen": "8/6p1/p3k1p1/2p2pP1/P1Pp1B2/1P1PbP2/2K5/8 w - - 1 33",
+"solution": [
+"Bxe3",
+"dxe3",
+"f4",
+"e2",
+"Kd2",
+"e1=R",
+"Kxe1"
+],
+"rating": 2022,
+"themes": [
+"bishopEndgame",
+"crushing",
+"endgame",
+"quietMove",
+"veryLong"
+],
+"mate": false,
+"game": "https://lichess.org/0hb39rOR/black#64"
+},
+"1vI7e": {
+"fen": "8/4p3/2B5/K7/2P1Pkpp/8/7P/8 b - - 0 46",
+"solution": [
+"Ke5",
+"Bd7",
+"e6",
+"c5",
+"g3",
+"c6",
+"Kd6",
+"e5+",
+"Kc7",
+"hxg3",
+"hxg3",
+"Kb5",
+"g2"
+],
+"rating": 2464,
+"themes": [
+"advancedPawn",
+"bishopEndgame",
+"crushing",
+"defensiveMove",
+"endgame",
+"master",
+"quietMove",
+"veryLong"
+],
+"mate": false,
+"game": "https://lichess.org/pHvTwzWf#91"
+},
+"1vlXr": {
+"fen": "8/8/pp1k3p/2pP1Kp1/P1P5/6P1/6P1/8 b - - 1 29",
+"solution": [
+"b5",
+"axb5",
+"axb5",
+"cxb5",
+"Kxd5",
+"g4",
+"c4",
+"b6",
+"Kc6",
+"Ke4",
+"Kxb6",
+"Kd4",
+"Kb5",
+"Kc3",
+"Kc5"
+],
+"rating": 2332,
+"themes": [
+"crushing",
+"defensiveMove",
+"endgame",
+"pawnEndgame",
+"quietMove",
+"veryLong"
+],
+"mate": false,
+"game": "https://lichess.org/ky1MhOTC#57"
+},
+"1wy3o": {
+"fen": "5r2/p7/1p5Q/3p1kP1/3P4/8/PPK2p2/6r1 w - - 3 35",
+"solution": [
+"Qxf8+",
+"Kxg5",
+"Qxf2"
+],
+"rating": 1713,
+"themes": [
+"crushing",
+"endgame",
+"hangingPiece",
+"queenRookEndgame",
+"short",
+"skewer"
+],
+"mate": false,
+"game": "https://lichess.org/OJanOfRA/black#68"
+},
+"1xGUn": {
+"fen": "8/7N/p7/P7/2p5/2k5/8/4K3 b - - 0 49",
+"solution": [
+"Kb2",
+"Ng5",
+"c3",
+"Nf3",
+"c2"
+],
+"rating": 1810,
+"themes": [
+"advancedPawn",
+"crushing",
+"endgame",
+"knightEndgame",
+"long"
+],
+"mate": false,
+"game": "https://lichess.org/U5ZQN2aC#97"
+},
+"1xJoi": {
+"fen": "2kq4/pp5p/5Qp1/6K1/2P2PP1/7P/8/8 b - - 2 45",
+"solution": [
+"a5",
+"Qxd8+",
+"Kxd8",
+"Kh6",
+"a4"
+],
+"rating": 2390,
+"themes": [
+"crushing",
+"defensiveMove",
+"endgame",
+"long",
+"queenEndgame",
+"quietMove"
+],
+"mate": false,
+"game": "https://lichess.org/VD3SOaGP#89"
+},
+"1xiGl": {
+"fen": "8/8/8/p6p/P1pk1pp1/5P2/N3K2P/8 b - - 0 51",
+"solution": [
+"g3",
+"hxg3",
+"fxg3",
+"Kd2",
+"g2",
+"Nc3",
+"g1=N"
+],
+"rating": 2578,
+"themes": [
+"advancedPawn",
+"crushing",
+"endgame",
+"knightEndgame",
+"promotion",
+"underPromotion",
+"veryLong"
+],
+"mate": false,
+"game": "https://lichess.org/GiSkhLJi#101"
+},
+"1zgid": {
+"fen": "8/8/4pp2/5k1p/5P1P/6P1/2r1R3/5K2 b - - 1 45",
+"solution": [
+"Rxe2",
+"Kxe2",
+"Kg4",
+"Kf2",
+"Kh3"
+],
+"rating": 2286,
+"themes": [
+"crushing",
+"endgame",
+"long",
+"rookEndgame",
+"zugzwang"
+],
+"mate": false,
+"game": "https://lichess.org/NniKCSPq#89"
+},
+"20WMy": {
+"fen": "8/8/3p2k1/p1pP2pp/P1P1KP2/8/7P/8 b - - 0 38",
+"solution": [
+"g4",
+"f5+",
+"Kg5",
+"f6",
+"Kxf6"
+],
+"rating": 2033,
+"themes": [
+"crushing",
+"defensiveMove",
+"endgame",
+"long",
+"pawnEndgame",
+"quietMove",
+"zugzwang"
+],
+"mate": false,
+"game": "https://lichess.org/xFlhxjP6#75"
+},
+"20ilk": {
+"fen": "8/3k4/4p3/2KnP3/1N5p/8/7P/8 w - - 0 48",
+"solution": [
+"Nxd5",
+"exd5",
+"h3"
+],
+"rating": 2582,
+"themes": [
+"crushing",
+"defensiveMove",
+"endgame",
+"knightEndgame",
+"short"
+],
+"mate": false,
+"game": "https://lichess.org/f2MuvCrE/black#94"
+},
+"21aUK": {
+"fen": "8/2r5/4k1p1/pK3p1p/2R4P/1P3P2/5P2/8 b - - 5 39",
+"solution": [
+"Rxc4",
+"bxc4",
+"a4",
+"Kxa4",
+"g5",
+"hxg5",
+"h4"
+],
+"rating": 2798,
+"themes": [
+"crushing",
+"defensiveMove",
+"endgame",
+"quietMove",
+"rookEndgame",
+"sacrifice",
+"veryLong"
+],
+"mate": false,
+"game": "https://lichess.org/1PqJWxiO#77"
+},
+"221CS": {
+"fen": "8/8/1p5p/p2k2p1/P4PP1/4K2P/8/8 b - - 0 53",
+"solution": [
+"gxf4+",
+"Kxf4",
+"b5",
+"Ke3",
+"b4"
+],
+"rating": 2324,
+"themes": [
+"crushing",
+"defensiveMove",
+"endgame",
+"long",
+"pawnEndgame"
+],
+"mate": false,
+"game": "https://lichess.org/E6j2l34s#105"
+},
+"22Dih": {
+"fen": "8/8/2p2kp1/1pP1p2p/1P2K1PP/5P2/8/8 w - - 1 36",
+"solution": [
+"gxh5",
+"gxh5",
+"f4",
+"exf4",
+"Kxf4"
+],
+"rating": 1984,
+"themes": [
+"crushing",
+"endgame",
+"long",
+"pawnEndgame",
+"zugzwang"
+],
+"mate": false,
+"game": "https://lichess.org/xHYLPPBG/black#70"
+},
+"22MkQ": {
+"fen": "4b3/p6p/2p5/6PP/1p1P1p2/3B4/k6K/8 w - - 0 42",
+"solution": [
+"h6",
+"b3",
+"Bxh7"
+],
+"rating": 2778,
+"themes": [
+"bishopEndgame",
+"crushing",
+"endgame",
+"short"
+],
+"mate": false,
+"game": "https://lichess.org/qLCcRxAd/black#82"
+},
+"22bIB": {
+"fen": "6k1/1pp2pp1/2n3p1/8/r4Q2/2B4P/q1P2PP1/2K1R3 w - - 0 23",
+"solution": [
+"Re8+",
+"Kh7",
+"Rh8+",
+"Kxh8",
+"Qh6+",
+"Kg8",
+"Qxg7#"
+],
+"rating": 1971,
+"themes": [
+"attraction",
+"endgame",
+"mateIn4",
+"pin",
+"sacrifice",
+"veryLong"
+],
+"mate": true,
+"game": "https://lichess.org/29nStLU5/black#44"
+},
+"22lGp": {
+"fen": "8/5ppk/p1R4p/8/P2p4/1P4P1/2R2PKP/1q6 b - - 1 29",
+"solution": [
+"d3",
+"Rc1",
+"Qxb3",
+"Rd6",
+"Qa3",
+"Rcc6",
+"Qb4"
+],
+"rating": 2752,
+"themes": [
+"advantage",
+"endgame",
+"fork",
+"queenRookEndgame",
+"veryLong"
+],
+"mate": false,
+"game": "https://lichess.org/i2nvIXk4#57"
+},
+"22tGy": {
+"fen": "k1r5/pp6/3Q4/1P2PP2/8/2r4P/3p4/5K2 w - - 0 58",
+"solution": [
+"Ke2",
+"Rc1",
+"Kxd2"
+],
+"rating": 2334,
+"themes": [
+"crushing",
+"endgame",
+"queenRookEndgame",
+"short"
+],
+"mate": false,
+"game": "https://lichess.org/zVUNKDZT/black#114"
+},
+"23GIL": {
+"fen": "8/8/4p3/1k2Pnp1/1P1p2P1/1K6/Nn3P2/8 w - - 0 42",
+"solution": [
+"gxf5",
+"Nd3",
+"fxe6"
+],
+"rating": 2096,
+"themes": [
+"crushing",
+"endgame",
+"knightEndgame",
+"short"
+],
+"mate": false,
+"game": "https://lichess.org/xhI7ue1j/black#82"
+},
+"23KLt": {
+"fen": "8/5pk1/6b1/pp6/P1pP2P1/8/1P2BpP1/5K2 b - - 0 43",
+"solution": [
+"c3",
+"bxc3",
+"bxa4"
+],
+"rating": 2167,
+"themes": [
+"bishopEndgame",
+"crushing",
+"endgame",
+"master",
+"short"
+],
+"mate": false,
+"game": "https://lichess.org/oNhTe1IG#85"
+},
+"23mQX": {
+"fen": "8/8/6p1/5q1p/1Q6/3k1PK1/6P1/8 w - - 23 56",
+"solution": [
+"Qb1+",
+"Ke3",
+"Qxf5",
+"gxf5",
+"Kh3",
+"h4",
+"Kxh4"
+],
+"rating": 2769,
+"themes": [
+"crushing",
+"endgame",
+"queenEndgame",
+"veryLong",
+"zugzwang"
+],
+"mate": false,
+"game": "https://lichess.org/ThVUyk6j/black#110"
+},
+"23rnF": {
+"fen": "5k2/3b2p1/4p1Kp/3pP3/p2P2PP/P7/8/B7 b - - 2 60",
+"solution": [
+"Kg8",
+"g5",
+"Be8#"
+],
+"rating": 2004,
+"themes": [
+"bishopEndgame",
+"endgame",
+"mateIn2",
+"short"
+],
+"mate": true,
+"game": "https://lichess.org/5tLHqwYv#119"
+},
+"24gc6": {
+"fen": "8/8/7p/2pk1pp1/2pP4/2K1PPPP/8/8 b - - 1 42",
+"solution": [
+"cxd4+",
+"exd4",
+"h5"
+],
+"rating": 1866,
+"themes": [
+"crushing",
+"defensiveMove",
+"endgame",
+"pawnEndgame",
+"short"
+],
+"mate": false,
+"game": "https://lichess.org/5B6k2Yow#83"
+},
+"24wwc": {
+"fen": "8/5pk1/8/6Kp/2Q5/2P2qP1/8/8 b - - 0 48",
+"solution": [
+"f6+",
+"Kh4",
+"Qh1#"
+],
+"rating": 1887,
+"themes": [
+"endgame",
+"mateIn2",
+"queenEndgame",
+"short"
+],
+"mate": true,
+"game": "https://lichess.org/yGhpRR5i#95"
+},
+"2500Y": {
+"fen": "1r4k1/6pp/p5r1/R2p4/3P4/2PqP2P/6PK/Q4R2 b - - 0 29",
+"solution": [
+"Qe2",
+"Rg1",
+"Rb2",
+"Qxb2",
+"Qxb2"
+],
+"rating": 1905,
+"themes": [
+"crushing",
+"endgame",
+"long",
+"quietMove"
+],
+"mate": false,
+"game": "https://lichess.org/SoBpsIMP#57"
+},
+"25Aom": {
+"fen": "8/p3kp2/1p2p3/2p1P1p1/4BRP1/2P5/P1P1r3/5K2 b - - 1 26",
+"solution": [
+"Re3",
+"Rf2",
+"Rxe4"
+],
+"rating": 1976,
+"themes": [
+"advantage",
+"endgame",
+"short"
+],
+"mate": false,
+"game": "https://lichess.org/7KxHNO5S#51"
+},
+"26O7g": {
+"fen": "8/5p2/6k1/pp4P1/3Q2K1/P1P3P1/1P6/5q2 b - - 5 40",
+"solution": [
+"f5+",
+"gxf6",
+"Qf5+",
+"Kh4",
+"Qh5#"
+],
+"rating": 2074,
+"themes": [
+"endgame",
+"long",
+"master",
+"mateIn3",
+"queenEndgame"
+],
+"mate": true,
+"game": "https://lichess.org/5QkoHc5j#79"
+},
+"26mIQ": {
+"fen": "8/P7/7p/1P4p1/8/5pkP/2r5/R4K2 b - - 4 53",
+"solution": [
+"Rh2",
+"Ke1",
+"Rh1+",
+"Kd2",
+"Rxa1"
+],
+"rating": 1821,
+"themes": [
+"crushing",
+"endgame",
+"exposedKing",
+"long",
+"master",
+"rookEndgame",
+"skewer"
+],
+"mate": false,
+"game": "https://lichess.org/2cv1vFFE#105"
+},
+"26qQX": {
+"fen": "8/5p1k/2r3p1/7p/Pp5P/2p3P1/2Q2PK1/8 b - - 0 42",
+"solution": [
+"Rc7",
+"Qc1",
+"c2"
+],
+"rating": 2717,
+"themes": [
+"advancedPawn",
+"crushing",
+"endgame",
+"master",
+"queenRookEndgame",
+"quietMove",
+"short"
+],
+"mate": false,
+"game": "https://lichess.org/JBGZSMLe#83"
+},
+"28Cp8": {
+"fen": "8/8/8/4pkPK/5q2/8/5Q2/8 w - - 9 68",
+"solution": [
+"Qxf4+",
+"exf4",
+"g6",
+"Ke6",
+"Kh6",
+"Ke7",
+"g7",
+"Kf7",
+"Kh7"
+],
+"rating": 2144,
+"themes": [
+"advancedPawn",
+"crushing",
+"defensiveMove",
+"endgame",
+"queenEndgame",
+"veryLong"
+],
+"mate": false,
+"game": "https://lichess.org/e5hZisbh/black#134"
+},
+"28Tn1": {
+"fen": "8/1R4Rp/4p3/3p4/3P3k/1P2KP2/pq6/8 w - - 3 41",
+"solution": [
+"Rg4+",
+"Kh5",
+"Rxh7#"
+],
+"rating": 2052,
+"themes": [
+"discoveredAttack",
+"endgame",
+"mateIn2",
+"queenRookEndgame",
+"short"
+],
+"mate": true,
+"game": "https://lichess.org/jozgD4Y6/black#80"
+},
+"28wp1": {
+"fen": "8/8/2k1p1pp/1p2P2P/1P3KP1/8/8/8 b - - 0 41",
+"solution": [
+"gxh5",
+"gxh5",
+"Kd5"
+],
+"rating": 1893,
+"themes": [
+"crushing",
+"endgame",
+"pawnEndgame",
+"short"
+],
+"mate": false,
+"game": "https://lichess.org/I0TDR5fu#81"
+},
+"29JiL": {
+"fen": "8/4pp2/3p2p1/3P1PPp/p3P2P/P2k4/2p5/2K5 w - - 1 43",
+"solution": [
+"e5",
+"dxe5",
+"f6"
+],
+"rating": 1964,
+"themes": [
+"crushing",
+"endgame",
+"pawnEndgame",
+"short"
+],
+"mate": false,
+"game": "https://lichess.org/CwiZGZKL/black#84"
+},
+"29fPt": {
+"fen": "8/3r3k/5R2/p3pP1P/8/2P3K1/r7/1R6 b - - 0 43",
+"solution": [
+"Rd3+",
+"Kg4",
+"Ra4+",
+"Rb4",
+"axb4"
+],
+"rating": 2118,
+"themes": [
+"crushing",
+"endgame",
+"exposedKing",
+"long",
+"rookEndgame"
+],
+"mate": false,
+"game": "https://lichess.org/Q3o93h76#85"
+},
+"29iKl": {
+"fen": "4k3/8/2K1P1p1/1p4Bp/1bp3P1/7P/8/8 w - - 0 43",
+"solution": [
+"gxh5",
+"gxh5",
+"Kxb5",
+"Be7",
+"Bd2",
+"c3",
+"Bxc3"
+],
+"rating": 2719,
+"themes": [
+"bishopEndgame",
+"crushing",
+"endgame",
+"quietMove",
+"veryLong"
+],
+"mate": false,
+"game": "https://lichess.org/7c2KhRDG/black#84"
+},
+"2ADkh": {
+"fen": "8/8/8/5p2/P1Q1p1k1/1P2K3/1q6/8 w - - 0 57",
+"solution": [
+"Qe2+",
+"Qxe2+",
+"Kxe2",
+"f4",
+"a5",
+"f3+",
+"Kf1",
+"Kf4",
+"a6"
+],
+"rating": 2542,
+"themes": [
+"crushing",
+"endgame",
+"queenEndgame",
+"quietMove",
+"veryLong"
+],
+"mate": false,
+"game": "https://lichess.org/DTBDB9Sx/black#112"
+},
+"2BPpw": {
+"fen": "8/8/1r1P2k1/4p1p1/2p1Pp2/3r1P2/1PRR4/3K4 w - - 3 41",
+"solution": [
+"d7",
+"Rbd6",
+"Rxd3",
+"cxd3",
+"Rc6",
+"Rxc6",
+"d8=Q"
+],
+"rating": 1962,
+"themes": [
+"advancedPawn",
+"crushing",
+"deflection",
+"endgame",
+"master",
+"pin",
+"promotion",
+"rookEndgame",
+"veryLong"
+],
+"mate": false,
+"game": "https://lichess.org/AVxwOJBt/black#80"
+},
+"2CdiJ": {
+"fen": "7k/p1Q1nrqp/1p4p1/8/1P6/2PP2P1/P4P2/4R1K1 w - - 0 33",
+"solution": [
+"Rxe7",
+"Rxe7",
+"Qd8+",
+"Qg8",
+"Qxe7"
+],
+"rating": 2020,
+"themes": [
+"attraction",
+"crushing",
+"deflection",
+"endgame",
+"long",
+"sacrifice"
+],
+"mate": false,
+"game": "https://lichess.org/iiczFXaO/black#64"
+},
+"2CkMd": {
+"fen": "8/1pp5/p5K1/7p/3k4/1P5P/P5P1/8 b - - 0 39",
+"solution": [
+"h4",
+"Kh5",
+"c5",
+"Kxh4",
+"b5",
+"Kg3",
+"c4",
+"Kf2",
+"Kd3"
+],
+"rating": 2679,
+"themes": [
+"crushing",
+"defensiveMove",
+"endgame",
+"pawnEndgame",
+"quietMove",
+"veryLong"
+],
+"mate": false,
+"game": "https://lichess.org/dHhFrfEd#77"
+},
+"2CrvR": {
+"fen": "8/8/8/5p1p/4q1k1/2Q3P1/5P1K/8 w - - 13 75",
+"solution": [
+"f3+",
+"Qxf3",
+"Qg7#"
+],
+"rating": 1898,
+"themes": [
+"endgame",
+"fork",
+"mateIn2",
+"queenEndgame",
+"short"
+],
+"mate": true,
+"game": "https://lichess.org/QbuVwygZ/black#148"
+},
+"2DAL5": {
+"fen": "8/6kp/2K3p1/3p2P1/5p1P/4p3/2N5/8 b - - 1 52",
+"solution": [
+"e2",
+"Ne1",
+"d4"
+],
+"rating": 1784,
+"themes": [
+"advancedPawn",
+"crushing",
+"defensiveMove",
+"endgame",
+"knightEndgame",
+"short"
+],
+"mate": false,
+"game": "https://lichess.org/tGwHAuV2#103"
+},
+"2DBnU": {
+"fen": "1B6/6p1/p1k2p2/1p1p1P1P/Pb1P4/1P2K3/8/8 b - - 0 45",
+"solution": [
+"bxa4",
+"bxa4",
+"Kb6"
+],
+"rating": 2163,
+"themes": [
+"advantage",
+"bishopEndgame",
+"defensiveMove",
+"endgame",
+"short"
+],
+"mate": false,
+"game": "https://lichess.org/L42ipRJV#89"
+},
+"2DVZ9": {
+"fen": "8/5pk1/p5r1/1p1P4/1P6/P2RRP1P/2r3P1/6K1 b - - 8 47",
+"solution": [
+"Rcxg2+",
+"Kf1",
+"Rg1+",
+"Kf2",
+"R6g2#"
+],
+"rating": 1920,
+"themes": [
+"blindSwineMate",
+"endgame",
+"long",
+"mateIn3",
+"rookEndgame"
+],
+"mate": true,
+"game": "https://lichess.org/1HzaQ9eO#93"
+},
+"2DnE9": {
+"fen": "8/7p/3k2p1/1p4P1/1r1RK3/1P5P/8/8 b - - 0 53",
+"solution": [
+"Kc5",
+"Rxb4",
+"Kxb4"
+],
+"rating": 1944,
+"themes": [
+"crushing",
+"defensiveMove",
+"endgame",
+"master",
+"rookEndgame",
+"short"
+],
+"mate": false,
+"game": "https://lichess.org/mKoeEz6p#105"
+},
+"2Dvbe": {
+"fen": "8/8/5r2/p1kP1p2/1p1R1K2/1P6/P7/8 w - - 4 44",
+"solution": [
+"Ke5",
+"Rf8",
+"Rc4+",
+"Kb6",
+"d6"
+],
+"rating": 2147,
+"themes": [
+"crushing",
+"endgame",
+"long",
+"rookEndgame"
+],
+"mate": false,
+"game": "https://lichess.org/pOzXhLHW/black#86"
+},
+"2E7Vp": {
+"fen": "1rR2rk1/3P2pp/5p2/8/7P/1p6/5PP1/1R4K1 w - - 3 34",
+"solution": [
+"Rxb8",
+"Rxb8",
+"Rc1",
+"Rd8",
+"Rc8",
+"Kf7",
+"Rxd8"
+],
+"rating": 2607,
+"themes": [
+"crushing",
+"endgame",
+"pin",
+"quietMove",
+"rookEndgame",
+"veryLong"
+],
+"mate": false,
+"game": "https://lichess.org/0xjUpcM2/black#66"
+},
+"2EesF": {
+"fen": "6k1/1b4p1/p3p1n1/1p1pP2p/2pPp2r/P1P1N2P/BP4P1/5RK1 w - - 2 28",
+"solution": [
+"g3",
+"Rxh3",
+"Kg2",
+"Rxg3+",
+"Kxg3"
+],
+"rating": 1863,
+"themes": [
+"advantage",
+"endgame",
+"long",
+"trappedPiece"
+],
+"mate": false,
+"game": "https://lichess.org/7n0hprvd/black#54"
+},
+"2F6UO": {
+"fen": "4r1k1/1pp1r3/6pp/8/2Q5/8/PPP3PP/5K2 b - - 1 28",
+"solution": [
+"Rf7+",
+"Qxf7+",
+"Kxf7"
+],
+"rating": 1624,
+"themes": [
+"crushing",
+"endgame",
+"queenRookEndgame",
+"short"
+],
+"mate": false,
+"game": "https://lichess.org/X2uPwoF6#55"
+},
+"2FS2k": {
+"fen": "8/p5k1/6p1/2Pp1p2/3b1P2/B7/6K1/8 w - - 0 39",
+"solution": [
+"Bb2",
+"Bxb2",
+"c6",
+"Ba3",
+"c7",
+"Bd6",
+"c8=Q"
+],
+"rating": 2155,
+"themes": [
+"advancedPawn",
+"bishopEndgame",
+"crushing",
+"endgame",
+"pin",
+"promotion",
+"sacrifice",
+"veryLong"
+],
+"mate": false,
+"game": "https://lichess.org/6xwoxKdW/black#76"
+},
+"2FTZY": {
+"fen": "3k4/8/6RP/1p4p1/4P3/2q2P2/6PK/8 w - - 1 51",
+"solution": [
+"Rg8+",
+"Ke7",
+"h7"
+],
+"rating": 2186,
+"themes": [
+"advancedPawn",
+"crushing",
+"endgame",
+"master",
+"queenRookEndgame",
+"short"
+],
+"mate": false,
+"game": "https://lichess.org/ZvtuBcTS/black#100"
+},
+"2FnU8": {
+"fen": "8/8/8/p7/1p6/1k2K3/3N4/8 b - - 3 54",
+"solution": [
+"Kc2",
+"Nc4",
+"a4",
+"Kd4",
+"a3"
+],
+"rating": 2179,
+"themes": [
+"crushing",
+"defensiveMove",
+"endgame",
+"knightEndgame",
+"long",
+"quietMove"
+],
+"mate": false,
+"game": "https://lichess.org/s0rgiyN6#107"
+},
+"2HAHl": {
+"fen": "8/ppp4p/3p2p1/5r1k/3P3P/8/P3rPP1/2Q3K1 w - - 3 29",
+"solution": [
+"f3",
+"Rxg2+",
+"Kxg2"
+],
+"rating": 2288,
+"themes": [
+"advantage",
+"endgame",
+"queenRookEndgame",
+"quietMove",
+"short"
+],
+"mate": false,
+"game": "https://lichess.org/v7E5p1rD/black#56"
+},
+"2HN6t": {
+"fen": "8/3k4/8/1n1pK3/1NpP4/2P5/8/8 w - - 11 69",
+"solution": [
+"Nxd5",
+"Kc8",
+"Nb6+",
+"Kc7",
+"Na4"
+],
+"rating": 2525,
+"themes": [
+"crushing",
+"defensiveMove",
+"endgame",
+"exposedKing",
+"knightEndgame",
+"long"
+],
+"mate": false,
+"game": "https://lichess.org/Y1bOcRTX/black#136"
+},
+"2HXV7": {
+"fen": "8/7p/p3k1p1/1p1pbp2/2P2B2/1P1K4/P4PPP/8 w - - 1 32",
+"solution": [
+"Bxe5",
+"dxc4+",
+"Kd4",
+"cxb3",
+"axb3"
+],
+"rating": 2331,
+"themes": [
+"advantage",
+"bishopEndgame",
+"endgame",
+"long"
+],
+"mate": false,
+"game": "https://lichess.org/6MGc6Swd/black#62"
+},
+"2HuhK": {
+"fen": "8/5p2/4p3/PP1b2pk/8/2K5/2P5/8 w - - 0 42",
+"solution": [
+"a6",
+"g4",
+"b6",
+"g3",
+"b7"
+],
+"rating": 1906,
+"themes": [
+"advancedPawn",
+"bishopEndgame",
+"crushing",
+"endgame",
+"long"
+],
+"mate": false,
+"game": "https://lichess.org/nQm1fNh9/black#82"
+},
+"2IEvM": {
+"fen": "8/8/8/1K3p1p/P1pB1P2/6k1/8/8 b - - 0 59",
+"solution": [
+"h4",
+"a5",
+"h3",
+"Bg1",
+"c3",
+"a6",
+"c2",
+"a7",
+"c1=Q"
+],
+"rating": 2254,
+"themes": [
+"advancedPawn",
+"bishopEndgame",
+"crushing",
+"endgame",
+"promotion",
+"quietMove",
+"veryLong"
+],
+"mate": false,
+"game": "https://lichess.org/aOS32nvc#117"
+},
+"2IIep": {
+"fen": "8/p7/5p2/5kp1/P2R4/2P3KP/3r4/8 b - - 5 43",
+"solution": [
+"Rxd4",
+"cxd4",
+"Ke4",
+"Kg4",
+"a5",
+"d5",
+"Ke5"
+],
+"rating": 2708,
+"themes": [
+"crushing",
+"endgame",
+"quietMove",
+"rookEndgame",
+"veryLong",
+"zugzwang"
+],
+"mate": false,
+"game": "https://lichess.org/O1bMQqdA#85"
+},
+"2IZKR": {
+"fen": "5r2/3k4/3P4/2pRP1pp/ppP2Pp1/6P1/P7/2K5 w - - 0 37",
+"solution": [
+"f5",
+"Rxf5",
+"e6+",
+"Kxe6",
+"Rxf5"
+],
+"rating": 2250,
+"themes": [
+"crushing",
+"discoveredAttack",
+"endgame",
+"exposedKing",
+"long",
+"quietMove",
+"rookEndgame"
+],
+"mate": false,
+"game": "https://lichess.org/a4TmrrZz/black#72"
+},
+"2IkwF": {
+"fen": "3r3k/1RP3pp/p3p1n1/P3Pp2/8/1B3P2/2R2PKP/3r4 b - - 0 30",
+"solution": [
+"Nf4+",
+"Kg3",
+"Rg1+",
+"Kxf4",
+"g5+",
+"Ke3",
+"Re1+",
+"Re2",
+"f4+",
+"Ke4",
+"Rxe2#"
+],
+"rating": 2144,
+"themes": [
+"deflection",
+"endgame",
+"mateIn5",
+"sacrifice",
+"veryLong"
+],
+"mate": true,
+"game": "https://lichess.org/FobNuECJ#59"
+},
+"2J3mk": {
+"fen": "5n2/5k2/6p1/3pP1K1/3P2PP/P7/8/8 b - - 0 39",
+"solution": [
+"Ne6+",
+"Kh6",
+"Nxd4",
+"a4",
+"Ne6"
+],
+"rating": 2516,
+"themes": [
+"crushing",
+"defensiveMove",
+"endgame",
+"knightEndgame",
+"long"
+],
+"mate": false,
+"game": "https://lichess.org/sdHpCC4i#77"
+},
+"2JdPK": {
+"fen": "5k2/5p2/PK2r3/8/1P1P4/2P5/8/8 w - - 3 52",
+"solution": [
+"Ka5",
+"Re2",
+"b5",
+"Ra2+",
+"Kb6"
+],
+"rating": 2585,
+"themes": [
+"crushing",
+"endgame",
+"long",
+"rookEndgame"
+],
+"mate": false,
+"game": "https://lichess.org/Qdrbjq68/black#102"
+},
+"2Kpgr": {
+"fen": "5r1k/ppp3pp/8/3B4/1P1R1r2/P2Rp2P/5PP1/6K1 b - - 1 28",
+"solution": [
+"e2",
+"Rxf4",
+"e1=Q+"
+],
+"rating": 2037,
+"themes": [
+"advancedPawn",
+"crushing",
+"endgame",
+"promotion",
+"short"
+],
+"mate": false,
+"game": "https://lichess.org/UELIduQ9#55"
+},
+"2LYLR": {
+"fen": "5q2/p4Pk1/8/1pp3P1/3p2KP/1P6/P4R2/8 w - - 0 46",
+"solution": [
+"h5",
+"Kh7",
+"h6",
+"d3",
+"Kh5",
+"Qd6",
+"f8=Q"
+],
+"rating": 2456,
+"themes": [
+"advancedPawn",
+"crushing",
+"endgame",
+"promotion",
+"queenRookEndgame",
+"quietMove",
+"veryLong"
+],
+"mate": false,
+"game": "https://lichess.org/nr9lyZgy/black#90"
+},
+"2M9rg": {
+"fen": "8/3PKnk1/6p1/5p1p/7P/8/5N2/8 w - - 7 65",
+"solution": [
+"Nd3",
+"f4",
+"Nxf4",
+"Ne5",
+"Ne6+"
+],
+"rating": 2579,
+"themes": [
+"crushing",
+"endgame",
+"knightEndgame",
+"long",
+"quietMove"
+],
+"mate": false,
+"game": "https://lichess.org/T8hol1PY/black#128"
+},
+"2MSmg": {
+"fen": "3r2k1/p3pp1p/2Q3p1/2P4n/2P1p1q1/2P1B3/P4PPP/4R1K1 b - - 0 20",
+"solution": [
+"Qe2",
+"h4",
+"Qxe1+"
+],
+"rating": 2668,
+"themes": [
+"crushing",
+"endgame",
+"kingsideAttack",
+"short"
+],
+"mate": false,
+"game": "https://lichess.org/CK0Itgf0#39"
+},
+"2N00n": {
+"fen": "3R4/p4pk1/2p5/1p2P1pp/6r1/2Q4K/PP3r2/8 b - - 1 39",
+"solution": [
+"Rh4+",
+"Kg3",
+"Rfh2",
+"e6+",
+"f6"
+],
+"rating": 2369,
+"themes": [
+"crushing",
+"defensiveMove",
+"endgame",
+"long",
+"queenRookEndgame"
+],
+"mate": false,
+"game": "https://lichess.org/t2i7Cz28#77"
+},
+"2NV3W": {
+"fen": "8/4k3/4P1Qp/3P4/6PP/1p6/1P2q3/6K1 b - - 4 57",
+"solution": [
+"Qd1+",
+"Kf2",
+"Qc2+",
+"Qxc2",
+"bxc2"
+],
+"rating": 2129,
+"themes": [
+"advancedPawn",
+"crushing",
+"endgame",
+"exposedKing",
+"long",
+"master",
+"queenEndgame"
+],
+"mate": false,
+"game": "https://lichess.org/QmxzCkyo#113"
+},
+"2OOdc": {
+"fen": "8/2K5/2N2p2/8/4p3/5k2/8/8 b - - 0 70",
+"solution": [
+"e3",
+"Kd6",
+"Ke4"
+],
+"rating": 2285,
+"themes": [
+"crushing",
+"defensiveMove",
+"endgame",
+"knightEndgame",
+"master",
+"short"
+],
+"mate": false,
+"game": "https://lichess.org/sDmi3HFp#139"
+},
+"2OYdV": {
+"fen": "8/8/3k1ppp/Npp5/P1P2P2/7P/6P1/6K1 b - - 0 41",
+"solution": [
+"bxa4",
+"Kf2",
+"Kc7",
+"Ke3",
+"Kb6"
+],
+"rating": 1976,
+"themes": [
+"crushing",
+"endgame",
+"knightEndgame",
+"long"
+],
+"mate": false,
+"game": "https://lichess.org/SwBeUowY#81"
+},
+"2PWJM": {
+"fen": "8/8/1p1p1bp1/pP1P1bk1/P2PBp2/3K1PpP/6P1/2B5 b - - 4 39",
+"solution": [
+"Bxh3",
+"gxh3",
+"Bxd4",
+"h4+",
+"Kxh4",
+"Kxd4",
+"g2",
+"Bxf4",
+"g1=Q+"
+],
+"rating": 2793,
+"themes": [
+"advancedPawn",
+"bishopEndgame",
+"crushing",
+"endgame",
+"promotion",
+"sacrifice",
+"veryLong"
+],
+"mate": false,
+"game": "https://lichess.org/fvelXx0b#77"
+},
+"2Prnw": {
+"fen": "8/8/4kn1p/3p2p1/p1pP2N1/P1P2K1P/1P6/8 b - - 8 44",
+"solution": [
+"Nxg4",
+"Kxg4",
+"Kf6",
+"Kh5",
+"Kg7"
+],
+"rating": 2193,
+"themes": [
+"crushing",
+"defensiveMove",
+"endgame",
+"knightEndgame",
+"long"
+],
+"mate": false,
+"game": "https://lichess.org/AM4jAitV#87"
+},
+"2QA1K": {
+"fen": "8/4rpk1/1Q4p1/3K3p/p2P3P/1p4P1/8/8 b - - 7 43",
+"solution": [
+"Re2",
+"Kc4",
+"b2",
+"Kd3",
+"Rg2"
+],
+"rating": 2380,
+"themes": [
+"advancedPawn",
+"crushing",
+"endgame",
+"long",
+"queenRookEndgame",
+"quietMove"
+],
+"mate": false,
+"game": "https://lichess.org/MBUt1iKF#85"
+},
+"2R8d7": {
+"fen": "8/p6p/1p3p2/5Ppk/1P3K2/6PP/P7/8 w - - 0 38",
+"solution": [
+"Ke4",
+"b5",
+"Kd5"
+],
+"rating": 1936,
+"themes": [
+"crushing",
+"defensiveMove",
+"endgame",
+"pawnEndgame",
+"short"
+],
+"mate": false,
+"game": "https://lichess.org/JeSGWBGY/black#74"
+},
+"2RyZW": {
+"fen": "8/5kPR/p7/P7/rp2K2P/8/8/8 b - - 0 40",
+"solution": [
+"b3+",
+"Ke3",
+"Rb4",
+"Rh8",
+"Kxg7",
+"Rd8",
+"b2"
+],
+"rating": 2345,
+"themes": [
+"advancedPawn",
+"clearance",
+"crushing",
+"discoveredAttack",
+"discoveredCheck",
+"endgame",
+"rookEndgame",
+"veryLong"
+],
+"mate": false,
+"game": "https://lichess.org/SbW0DHe8#79"
+},
+"2Sv56": {
+"fen": "7R/4r3/p1pk1K2/1p1p4/3P4/2P5/PP6/8 w - - 6 49",
+"solution": [
+"Rd8+",
+"Rd7",
+"Rxd7+",
+"Kxd7",
+"b4"
+],
+"rating": 2431,
+"themes": [
+"crushing",
+"defensiveMove",
+"endgame",
+"long",
+"rookEndgame"
+],
+"mate": false,
+"game": "https://lichess.org/uOpfPCJF/black#96"
+},
+"2TCzI": {
+"fen": "8/8/1p3p2/1pp1k1p1/4P1P1/PPP2K2/8/8 b - - 0 38",
+"solution": [
+"b4",
+"cxb4",
+"cxb4",
+"axb4",
+"Kd4"
+],
+"rating": 1922,
+"themes": [
+"crushing",
+"endgame",
+"long",
+"pawnEndgame"
+],
+"mate": false,
+"game": "https://lichess.org/wZSrYu5s#75"
+},
+"2Te15": {
+"fen": "7k/1R6/5K2/5PP1/4P3/8/1p6/1r5q w - - 4 61",
+"solution": [
+"Rb8+",
+"Kh7",
+"g6+",
+"Kh6",
+"Rh8#"
+],
+"rating": 1995,
+"themes": [
+"endgame",
+"exposedKing",
+"long",
+"master",
+"mateIn3",
+"queenRookEndgame"
+],
+"mate": true,
+"game": "https://lichess.org/4iDIK4uW/black#120"
+},
+"2U8Qu": {
+"fen": "6k1/4Q1p1/p1B1b3/3p1p2/5P2/1KP4P/PP2q3/8 b - - 2 41",
+"solution": [
+"Qc4+",
+"Kc2",
+"Qxc6"
+],
+"rating": 2489,
+"themes": [
+"advantage",
+"endgame",
+"fork",
+"short"
+],
+"mate": false,
+"game": "https://lichess.org/KoXu3c3B#81"
+},
+"2UKsJ": {
+"fen": "6B1/7p/6p1/2k2pK1/pp6/5P2/P7/8 w - - 0 42",
+"solution": [
+"Bxh7",
+"b3",
+"axb3",
+"axb3",
+"Bxg6"
+],
+"rating": 2275,
+"themes": [
+"bishopEndgame",
+"crushing",
+"endgame",
+"long"
+],
+"mate": false,
+"game": "https://lichess.org/BG3B3AXB/black#82"
+},
+"2Um7n": {
+"fen": "8/8/7p/p2pK2P/Pk6/4P3/8/8 w - - 3 38",
+"solution": [
+"Kxd5",
+"Kxa4",
+"Kc4",
+"Ka3",
+"e4",
+"a4",
+"e5",
+"Kb2",
+"e6",
+"a3",
+"e7"
+],
+"rating": 2539,
+"themes": [
+"advancedPawn",
+"crushing",
+"endgame",
+"pawnEndgame",
+"quietMove",
+"veryLong"
+],
+"mate": false,
+"game": "https://lichess.org/wHwW5f4M/black#74"
+},
+"2VSEV": {
+"fen": "8/2k5/3p4/2pPp1p1/1p2P1P1/rP1KP3/p7/Q7 b - - 18 44",
+"solution": [
+"Rxb3+",
+"Kc4",
+"Ra3",
+"Kb5",
+"Ra8"
+],
+"rating": 2790,
+"themes": [
+"crushing",
+"defensiveMove",
+"endgame",
+"long",
+"queenRookEndgame"
+],
+"mate": false,
+"game": "https://lichess.org/EdtQTLF1#87"
+},
+"2WG8Q": {
+"fen": "2B5/2p2p2/3p1p2/3P1P2/2P1pk2/8/7K/8 b - - 3 65",
+"solution": [
+"Ke3",
+"Kg3",
+"Kd2",
+"Ba6",
+"e3"
+],
+"rating": 2492,
+"themes": [
+"bishopEndgame",
+"crushing",
+"endgame",
+"long"
+],
+"mate": false,
+"game": "https://lichess.org/HJcrMrYD#129"
+},
+"2Wb8s": {
+"fen": "8/7k/8/p2p1R2/2pPp1R1/p1P1q2P/1P4K1/8 b - - 4 50",
+"solution": [
+"Qf3+",
+"Rxf3",
+"exf3+",
+"Kxf3",
+"axb2",
+"Rg1",
+"a4",
+"Rb1",
+"a3"
+],
+"rating": 2588,
+"themes": [
+"advancedPawn",
+"crushing",
+"endgame",
+"queenRookEndgame",
+"quietMove",
+"sacrifice",
+"veryLong"
+],
+"mate": false,
+"game": "https://lichess.org/BGU5GRxm#99"
+},
+"2Wcjx": {
+"fen": "3Q4/1p6/p1p3pk/P4p2/1q1p4/6P1/5P2/6K1 w - - 0 45",
+"solution": [
+"Qh8+",
+"Kg5",
+"Qh4#"
+],
+"rating": 1585,
+"themes": [
+"endgame",
+"mateIn2",
+"queenEndgame",
+"short"
+],
+"mate": true,
+"game": "https://lichess.org/NMthMs1i/black#88"
+},
+"2Wldq": {
+"fen": "8/5p1k/7P/p5P1/5pK1/1P2bB2/8/8 w - - 1 50",
+"solution": [
+"Bd5",
+"Kg8",
+"g6"
+],
+"rating": 2766,
+"themes": [
+"bishopEndgame",
+"crushing",
+"endgame",
+"pin",
+"short"
+],
+"mate": false,
+"game": "https://lichess.org/SVoShVHK/black#98"
+},
+"2Wuer": {
+"fen": "4k3/3rP1p1/8/4RK2/1p6/6P1/8/8 b - - 1 48",
+"solution": [
+"Rb7",
+"Kg6",
+"b3",
+"Re1",
+"Rxe7"
+],
+"rating": 2468,
+"themes": [
+"crushing",
+"endgame",
+"long",
+"rookEndgame"
+],
+"mate": false,
+"game": "https://lichess.org/xXkqpZgg#95"
+},
+"2WvLt": {
+"fen": "8/8/1p3k1p/2p2pp1/P1P1q3/1P4P1/5P2/3Q2K1 w - - 5 43",
+"solution": [
+"Qd8+",
+"Qe7",
+"Qxb6+"
+],
+"rating": 2265,
+"themes": [
+"crushing",
+"endgame",
+"queenEndgame",
+"short"
+],
+"mate": false,
+"game": "https://lichess.org/CjqEMy7s/black#84"
+},
+"2XWcK": {
+"fen": "8/8/8/8/2P1N1pk/3K3n/8/8 b - - 1 60",
+"solution": [
+"Nf2+",
+"Nxf2",
+"g3",
+"Nd1",
+"g2"
+],
+"rating": 1743,
+"themes": [
+"advancedPawn",
+"crushing",
+"endgame",
+"knightEndgame",
+"long",
+"master",
+"sacrifice"
+],
+"mate": false,
+"game": "https://lichess.org/e266v4s3#119"
+},
+"2XlLf": {
+"fen": "8/1Q6/7p/8/7P/1k4P1/3p1P1K/2q5 b - - 6 46",
+"solution": [
+"Ka2",
+"Qd5+",
+"Ka1"
+],
+"rating": 2747,
+"themes": [
+"crushing",
+"defensiveMove",
+"endgame",
+"queenEndgame",
+"short"
+],
+"mate": false,
+"game": "https://lichess.org/0msb5myS#91"
+},
+"2Z8iE": {
+"fen": "8/8/3p4/1p1Pp3/1Pn5/3K1P1k/3N4/8 b - - 3 41",
+"solution": [
+"Nxd2",
+"Kxd2",
+"Kh4",
+"Ke3",
+"Kg5",
+"Ke4",
+"Kg6"
+],
+"rating": 2702,
+"themes": [
+"crushing",
+"defensiveMove",
+"endgame",
+"knightEndgame",
+"veryLong"
+],
+"mate": false,
+"game": "https://lichess.org/PHcDnXYs#81"
+},
+"2a7fG": {
+"fen": "8/2R3R1/3p1k2/7p/4q3/2P2p2/1K6/8 w - - 0 39",
+"solution": [
+"Rcf7+",
+"Ke5",
+"Re7+",
+"Kd5",
+"Rg5+"
+],
+"rating": 2175,
+"themes": [
+"crushing",
+"endgame",
+"exposedKing",
+"long",
+"queenRookEndgame"
+],
+"mate": false,
+"game": "https://lichess.org/erIbrzd2/black#76"
+},
+"2ai0j": {
+"fen": "8/1p3pp1/pP4p1/Pk6/3K1P2/6PP/8/8 w - - 1 39",
+"solution": [
+"Kd5",
+"Kxa5",
+"Kc5",
+"f6",
+"g4",
+"g5",
+"f5",
+"Ka4",
+"Kd6",
+"a5",
+"Kc7"
+],
+"rating": 2429,
+"themes": [
+"crushing",
+"endgame",
+"pawnEndgame",
+"quietMove",
+"veryLong",
+"zugzwang"
+],
+"mate": false,
+"game": "https://lichess.org/jCdEJy8A/black#76"
+},
+"2bB8T": {
+"fen": "8/k7/N7/K4p1p/1P1n4/6P1/8/8 b - - 0 49",
+"solution": [
+"f4",
+"gxf4",
+"h4",
+"Nc5",
+"Nb3+",
+"Nxb3",
+"h3"
+],
+"rating": 2390,
+"themes": [
+"advantage",
+"endgame",
+"knightEndgame",
+"quietMove",
+"sacrifice",
+"veryLong"
+],
+"mate": false,
+"game": "https://lichess.org/1rpteQif#97"
+},
+"2cPJE": {
+"fen": "8/4k3/1P2pp2/P1K2p2/5P2/6P1/r4P2/8 w - - 3 69",
+"solution": [
+"b7",
+"Rxa5+",
+"Kc4"
+],
+"rating": 2437,
+"themes": [
+"advancedPawn",
+"crushing",
+"defensiveMove",
+"endgame",
+"master",
+"rookEndgame",
+"short"
+],
+"mate": false,
+"game": "https://lichess.org/JAxxQ7Vp/black#136"
+},
+"2cnM8": {
+"fen": "6k1/ppp3p1/3p4/3Pn3/4N1QK/1q6/6PP/8 w - - 2 33",
+"solution": [
+"Nf6+",
+"Kf7",
+"Qe6+",
+"Kg6",
+"Ne4+",
+"Kh7",
+"Ng5+",
+"Kh8",
+"Qe8#"
+],
+"rating": 2603,
+"themes": [
+"discoveredAttack",
+"discoveredCheck",
+"endgame",
+"mateIn5",
+"pin",
+"veryLong"
+],
+"mate": true,
+"game": "https://lichess.org/mw8n1m34/black#64"
+},
+"2d2HK": {
+"fen": "8/8/4k1P1/7p/5K2/8/8/8 w - - 0 49",
+"solution": [
+"Kg5",
+"h4",
+"Kh6",
+"h3",
+"g7",
+"Kf7",
+"Kh7",
+"h2",
+"g8=Q+"
+],
+"rating": 2203,
+"themes": [
+"advancedPawn",
+"crushing",
+"endgame",
+"pawnEndgame",
+"promotion",
+"veryLong"
+],
+"mate": false,
+"game": "https://lichess.org/NEIATUb5/black#96"
+},
+"2dHeL": {
+"fen": "8/8/1p2pp1p/3k1p2/1P3P1P/2KBP1P1/8/5b2 b - - 2 40",
+"solution": [
+"Bxd3",
+"Kxd3",
+"h5"
+],
+"rating": 2298,
+"themes": [
+"advantage",
+"bishopEndgame",
+"defensiveMove",
+"endgame",
+"short"
+],
+"mate": false,
+"game": "https://lichess.org/pBXiWtQx#79"
+},
+"2drbE": {
+"fen": "5b2/7p/p5pP/5p2/2PB1P2/1k1K3P/8/8 w - - 4 42",
+"solution": [
+"c5",
+"Kb4",
+"c6",
+"Bd6",
+"Be5",
+"Kc5",
+"c7",
+"Bxc7",
+"Bxc7"
+],
+"rating": 1988,
+"themes": [
+"advancedPawn",
+"bishopEndgame",
+"crushing",
+"endgame",
+"master",
+"quietMove",
+"veryLong",
+"xRayAttack"
+],
+"mate": false,
+"game": "https://lichess.org/mTu3LqRu/black#82"
+},
+"2ehPR": {
+"fen": "8/8/pp6/8/P1P1p1p1/1Pk3P1/4K3/8 w - - 2 49",
+"solution": [
+"a5",
+"bxa5",
+"c5"
+],
+"rating": 1860,
+"themes": [
+"crushing",
+"defensiveMove",
+"endgame",
+"pawnEndgame",
+"short"
+],
+"mate": false,
+"game": "https://lichess.org/2Yz0TFqz/black#96"
+},
+"2euRn": {
+"fen": "7k/2p5/3p4/3PqQ2/8/6pK/6P1/8 w - - 2 42",
+"solution": [
+"Qxe5+",
+"dxe5",
+"Kxg3",
+"Kh7",
+"Kf3",
+"Kg6",
+"Ke4",
+"Kf6",
+"g3",
+"Kg6",
+"Kxe5"
+],
+"rating": 2527,
+"themes": [
+"crushing",
+"endgame",
+"queenEndgame",
+"quietMove",
+"veryLong",
+"zugzwang"
+],
+"mate": false,
+"game": "https://lichess.org/X0UN2SS8/black#82"
+},
+"2eyb1": {
+"fen": "r4k2/5p2/2p4r/1p2QP2/p3P3/2P4P/2P2P1K/8 b - - 0 34",
+"solution": [
+"a3",
+"Qf4",
+"Kg7",
+"Qg5+",
+"Kh7"
+],
+"rating": 2432,
+"themes": [
+"advantage",
+"defensiveMove",
+"endgame",
+"long",
+"master",
+"queenRookEndgame"
+],
+"mate": false,
+"game": "https://lichess.org/dSAok0oD#67"
+},
+"2f5cR": {
+"fen": "5Q2/6K1/1p6/p7/8/P1P3k1/5q2/8 b - - 0 51",
+"solution": [
+"Qxf8+",
+"Kxf8",
+"Kf4",
+"Ke7",
+"Ke5",
+"Kd7",
+"Kd5"
+],
+"rating": 2099,
+"themes": [
+"crushing",
+"defensiveMove",
+"endgame",
+"queenEndgame",
+"veryLong"
+],
+"mate": false,
+"game": "https://lichess.org/NrzJBB1k#101"
+},
+"2gKFs": {
+"fen": "3r2k1/3r1ppp/1p1Pp3/p3R3/PpP5/1P3P2/5P1P/3R2K1 w - - 3 27",
+"solution": [
+"Rb5",
+"Rc8",
+"Rxb6"
+],
+"rating": 2654,
+"themes": [
+"crushing",
+"endgame",
+"rookEndgame",
+"short"
+],
+"mate": false,
+"game": "https://lichess.org/MKWDKEB1/black#52"
+},
+"2gNwv": {
+"fen": "1r3r2/2p3k1/p3p1p1/1p3p2/7q/P4Q2/1PP5/2KR2R1 w - - 0 28",
+"solution": [
+"Rd7+",
+"Rf7",
+"Qc3+",
+"Kf8",
+"Rxf7+",
+"Kxf7",
+"Qxc7+",
+"Qe7",
+"Qxb8"
+],
+"rating": 2429,
+"themes": [
+"attraction",
+"crushing",
+"endgame",
+"fork",
+"veryLong"
+],
+"mate": false,
+"game": "https://lichess.org/4RbKUqaM/black#54"
+},
+"2gwVK": {
+"fen": "8/4kpp1/2K1p2p/bP2P3/P7/6P1/6P1/8 w - - 6 47",
+"solution": [
+"b6",
+"Kd8",
+"b7",
+"Bc7",
+"a5",
+"Bb8",
+"Kb6"
+],
+"rating": 2533,
+"themes": [
+"advancedPawn",
+"bishopEndgame",
+"crushing",
+"defensiveMove",
+"endgame",
+"quietMove",
+"veryLong"
+],
+"mate": false,
+"game": "https://lichess.org/L6APtUkF/black#92"
+},
+"2hLFI": {
+"fen": "8/pp3p2/8/3k1PPP/3n4/8/P7/6K1 w - - 0 44",
+"solution": [
+"g6",
+"fxg6",
+"h6",
+"Nxf5",
+"h7"
+],
+"rating": 2565,
+"themes": [
+"advancedPawn",
+"advantage",
+"endgame",
+"knightEndgame",
+"long",
+"sacrifice"
+],
+"mate": false,
+"game": "https://lichess.org/5tOeko92/black#86"
+},
+"2hW3A": {
+"fen": "8/pp2Np2/5K2/8/1P3Pk1/n7/2P5/8 w - - 0 40",
+"solution": [
+"f5",
+"Nxc2",
+"Kxf7",
+"Nxb4",
+"f6"
+],
+"rating": 2544,
+"themes": [
+"crushing",
+"endgame",
+"knightEndgame",
+"long",
+"quietMove"
+],
+"mate": false,
+"game": "https://lichess.org/Zz9npwR7/black#78"
+},
+"2hYQ8": {
+"fen": "6k1/p7/1p3Q1p/2p1P1P1/7K/6P1/P6P/5q2 b - - 0 36",
+"solution": [
+"Qxf6",
+"exf6",
+"c4",
+"gxh6",
+"c3",
+"Kh5",
+"c2",
+"Kg6",
+"c1=Q",
+"h7+",
+"Kh8"
+],
+"rating": 2273,
+"themes": [
+"advancedPawn",
+"crushing",
+"endgame",
+"promotion",
+"queenEndgame",
+"quietMove",
+"veryLong"
+],
+"mate": false,
+"game": "https://lichess.org/iCgd0P4P#71"
+},
+"2iH8Q": {
+"fen": "8/8/2k5/p7/N1pp4/1P6/4K3/8 b - - 0 52",
+"solution": [
+"cxb3",
+"Nb2",
+"Kb5",
+"Kd3",
+"a4"
+],
+"rating": 2487,
+"themes": [
+"crushing",
+"defensiveMove",
+"endgame",
+"knightEndgame",
+"long",
+"master",
+"masterVsMaster"
+],
+"mate": false,
+"game": "https://lichess.org/dMAriW6N#103"
+},
+"2imEe": {
+"fen": "8/6pk/7p/2Q5/2P5/3p1PKP/1r3r2/8 w - - 0 33",
+"solution": [
+"Qxf2",
+"Rxf2",
+"Kxf2",
+"d2",
+"Ke2",
+"d1=R",
+"Kxd1"
+],
+"rating": 1894,
+"themes": [
+"crushing",
+"endgame",
+"queenRookEndgame",
+"veryLong"
+],
+"mate": false,
+"game": "https://lichess.org/L6qy8R0d/black#64"
+},
+"2ittm": {
+"fen": "8/3q3k/5Kp1/8/4Q1pP/5P2/8/8 b - - 1 71",
+"solution": [
+"Qf5+",
+"Qxf5",
+"gxf5"
+],
+"rating": 1926,
+"themes": [
+"crushing",
+"endgame",
+"queenEndgame",
+"short"
+],
+"mate": false,
+"game": "https://lichess.org/5j10RCoq#141"
+},
+"2ivhd": {
+"fen": "8/p7/1p4k1/3p4/P4Pp1/2Q3Kp/1PP2r2/8 b - - 1 37",
+"solution": [
+"Rf3+",
+"Qxf3",
+"gxf3",
+"Kxh3",
+"Kf5",
+"Kg3",
+"Ke4"
+],
+"rating": 2280,
+"themes": [
+"crushing",
+"endgame",
+"fork",
+"queenRookEndgame",
+"veryLong"
+],
+"mate": false,
+"game": "https://lichess.org/t0tk017t#73"
+},
+"2jNHs": {
+"fen": "4Q3/8/5K2/1p1k4/p2P4/8/1P6/6q1 w - - 1 48",
+"solution": [
+"Qe6+",
+"Kxd4",
+"Qb6+",
+"Kd3",
+"Qxg1"
+],
+"rating": 2128,
+"themes": [
+"crushing",
+"endgame",
+"long",
+"master",
+"queenEndgame",
+"skewer"
+],
+"mate": false,
+"game": "https://lichess.org/hsopqQq9/black#94"
+},
+"2jxHg": {
+"fen": "8/p5k1/5q2/P3Q1pp/4pP2/7P/5PK1/8 b - - 0 44",
+"solution": [
+"Qxe5",
+"fxe5",
+"Kg6",
+"f3",
+"exf3+",
+"Kxf3",
+"Kf5",
+"a6",
+"Kxe5"
+],
+"rating": 2535,
+"themes": [
+"crushing",
+"endgame",
+"queenEndgame",
+"veryLong"
+],
+"mate": false,
+"game": "https://lichess.org/N5ieLlfp#87"
+},
+"2kV8V": {
+"fen": "8/p2n4/3P4/3K1k2/1PP4p/7P/8/8 w - - 3 46",
+"solution": [
+"c5",
+"a6",
+"Kc6",
+"Ke6",
+"Kb7"
+],
+"rating": 2792,
+"themes": [
+"crushing",
+"endgame",
+"knightEndgame",
+"long",
+"quietMove"
+],
+"mate": false,
+"game": "https://lichess.org/euyHMSks/black#90"
+},
+"2kypX": {
+"fen": "8/8/7p/5kp1/7P/2K3P1/3N1n2/8 b - - 0 55",
+"solution": [
+"Ne4+",
+"Kd3",
+"Nxd2",
+"Kxd2",
+"Kg4"
+],
+"rating": 2002,
+"themes": [
+"crushing",
+"endgame",
+"knightEndgame",
+"long"
+],
+"mate": false,
+"game": "https://lichess.org/tMdsaDS8#109"
+},
+"2lFTC": {
+"fen": "Q1K5/1R6/6pk/7p/5r1P/8/8/8 b - - 0 51",
+"solution": [
+"Rf8+",
+"Kd7",
+"Rxa8",
+"Rb4",
+"Ra6"
+],
+"rating": 2473,
+"themes": [
+"advantage",
+"defensiveMove",
+"endgame",
+"long",
+"queenRookEndgame",
+"skewer"
+],
+"mate": false,
+"game": "https://lichess.org/WcHYzVjs#101"
+},
+"2lISE": {
+"fen": "8/8/7p/5K1P/3k2P1/8/5n2/8 w - - 3 55",
+"solution": [
+"g5",
+"hxg5",
+"h6"
+],
+"rating": 1881,
+"themes": [
+"advantage",
+"endgame",
+"knightEndgame",
+"short"
+],
+"mate": false,
+"game": "https://lichess.org/2Qkk5oaf/black#108"
+},
+"2lNOQ": {
+"fen": "8/1bk2p2/B3p3/4P1pp/5P2/6PP/8/6K1 w - - 0 42",
+"solution": [
+"Bxb7",
+"Kxb7",
+"fxg5",
+"Kc6",
+"h4",
+"Kd5",
+"g4",
+"Kxe5",
+"gxh5"
+],
+"rating": 2472,
+"themes": [
+"bishopEndgame",
+"crushing",
+"endgame",
+"quietMove",
+"veryLong"
+],
+"mate": false,
+"game": "https://lichess.org/hGVz0AKQ/black#82"
+},
+"2lVXV": {
+"fen": "1r5k/1r5p/8/p4P2/8/P1P5/KP4Q1/8 b - - 2 45",
+"solution": [
+"Rxb2+",
+"Qxb2",
+"Rxb2+",
+"Kxb2",
+"Kg7",
+"c4",
+"Kf6",
+"c5",
+"Kxf5",
+"c6",
+"Ke6",
+"c7",
+"Kd7",
+"c8=Q+",
+"Kxc8"
+],
+"rating": 2533,
+"themes": [
+"crushing",
+"endgame",
+"fork",
+"queenRookEndgame",
+"veryLong"
+],
+"mate": false,
+"game": "https://lichess.org/tbxqC7p4#89"
+},
+"2lWdS": {
+"fen": "3R4/8/8/7K/4p3/3pk3/8/8 b - - 0 52",
+"solution": [
+"Kd2",
+"Ra8",
+"e3"
+],
+"rating": 2632,
+"themes": [
+"crushing",
+"endgame",
+"rookEndgame",
+"short"
+],
+"mate": false,
+"game": "https://lichess.org/diaC6MIe#103"
+},
+"2nDia": {
+"fen": "8/8/8/K1p5/P1kp2p1/8/4N1P1/8 b - - 0 46",
+"solution": [
+"d3",
+"Ng3",
+"Kb3",
+"Nf1",
+"c4",
+"Nd2+",
+"Kc3"
+],
+"rating": 2772,
+"themes": [
+"crushing",
+"defensiveMove",
+"endgame",
+"knightEndgame",
+"quietMove",
+"veryLong"
+],
+"mate": false,
+"game": "https://lichess.org/xmQ1Ggrm#91"
+},
+"2nNA4": {
+"fen": "1r6/1p1k4/2R5/3pPp2/PR1P1P2/2p2K1p/7P/8 b - - 0 38",
+"solution": [
+"bxc6",
+"Rxb8",
+"c2"
+],
+"rating": 1893,
+"themes": [
+"advancedPawn",
+"crushing",
+"endgame",
+"rookEndgame",
+"short"
+],
+"mate": false,
+"game": "https://lichess.org/eUmD4yQa#75"
+},
+"2nOSp": {
+"fen": "6k1/1pp2p2/1p4p1/4P2Q/1Pq4P/P7/3r3P/4N1RK b - - 0 33",
+"solution": [
+"Qf4",
+"Nf3",
+"Rd1",
+"Rxd1",
+"gxh5"
+],
+"rating": 2709,
+"themes": [
+"advantage",
+"endgame",
+"long"
+],
+"mate": false,
+"game": "https://lichess.org/8SdWHrbg#65"
+},
+"2nf9w": {
+"fen": "8/2p5/p1k3p1/2r2p2/7p/2R4P/PP3PP1/5K2 b - - 1 29",
+"solution": [
+"Rxc3",
+"bxc3",
+"Kb5",
+"Ke2",
+"Ka4"
+],
+"rating": 2275,
+"themes": [
+"crushing",
+"defensiveMove",
+"endgame",
+"long",
+"rookEndgame"
+],
+"mate": false,
+"game": "https://lichess.org/v79H64IA#57"
+},
+"2ng0K": {
+"fen": "2b5/2P3Kp/6p1/6P1/5k1P/8/8/8 w - - 7 59",
+"solution": [
+"Kxh7",
+"Bf5",
+"Kh6",
+"Ke5",
+"h5",
+"gxh5",
+"g6"
+],
+"rating": 2528,
+"themes": [
+"bishopEndgame",
+"crushing",
+"endgame",
+"veryLong"
+],
+"mate": false,
+"game": "https://lichess.org/YZSwOtFI/black#116"
+},
+"2ngdK": {
+"fen": "5k2/5p2/p1K1qQp1/1p2P2p/3P3P/5P2/8/8 w - - 9 47",
+"solution": [
+"Qxe6",
+"fxe6",
+"Kd7",
+"b4",
+"d5",
+"Kg7",
+"dxe6"
+],
+"rating": 2284,
+"themes": [
+"crushing",
+"endgame",
+"queenEndgame",
+"veryLong"
+],
+"mate": false,
+"game": "https://lichess.org/oW5OSBMz/black#92"
+},
+"2nj2d": {
+"fen": "8/8/8/ppp2k1p/8/1P2K1PP/P7/8 w - - 3 43",
+"solution": [
+"a4",
+"bxa4",
+"bxa4",
+"c4",
+"Kd4",
+"c3",
+"Kxc3"
+],
+"rating": 2665,
+"themes": [
+"crushing",
+"endgame",
+"pawnEndgame",
+"veryLong"
+],
+"mate": false,
+"game": "https://lichess.org/4qck7dlZ/black#84"
+},
+"2njWa": {
+"fen": "8/8/1p3k1p/2p2Pp1/pPPpK1P1/7P/P7/8 b - b3 0 33",
+"solution": [
+"cxb4",
+"Kxd4",
+"a3",
+"c5",
+"b3",
+"axb3",
+"a2"
+],
+"rating": 2596,
+"themes": [
+"advancedPawn",
+"crushing",
+"endgame",
+"pawnEndgame",
+"veryLong"
+],
+"mate": false,
+"game": "https://lichess.org/lq5QS2xJ#65"
+},
+"2oKcB": {
+"fen": "8/3k4/4p3/pPp1P1pp/3p1P1b/1B1P3P/6K1/8 w - - 0 36",
+"solution": [
+"Bxe6+",
+"Kxe6",
+"b6",
+"Kd7",
+"e6+"
+],
+"rating": 2611,
+"themes": [
+"bishopEndgame",
+"crushing",
+"endgame",
+"long",
+"sacrifice"
+],
+"mate": false,
+"game": "https://lichess.org/ghFXFpvJ/black#70"
+},
+"2p7N4": {
+"fen": "6k1/2q2ppp/2p5/p1P1r3/1rQ1p3/7P/P5P1/3R1RK1 w - - 2 30",
+"solution": [
+"Rd8+",
+"Qxd8",
+"Qxf7+",
+"Kh8",
+"Qf8+",
+"Qxf8",
+"Rxf8#"
+],
+"rating": 2061,
+"themes": [
+"backRankMate",
+"deflection",
+"endgame",
+"mateIn4",
+"sacrifice",
+"veryLong"
+],
+"mate": true,
+"game": "https://lichess.org/wqAfi42H/black#58"
+},
+"2pI72": {
+"fen": "8/p4R2/1k2p1pq/3p4/3P2p1/2PK1p2/PP6/5R2 w - - 2 40",
+"solution": [
+"Re1",
+"g5",
+"Re7",
+"e5",
+"R1xe5"
+],
+"rating": 2234,
+"themes": [
+"advantage",
+"endgame",
+"long",
+"queenRookEndgame"
+],
+"mate": false,
+"game": "https://lichess.org/uRCrVf77/black#78"
+},
+"2pZCx": {
+"fen": "8/6p1/2k2pP1/5K1p/1n1PP2P/8/8/8 w - - 0 49",
+"solution": [
+"Ke6",
+"Nc2",
+"d5+",
+"Kc5",
+"Kf7",
+"Ne3",
+"Kxg7"
+],
+"rating": 2256,
+"themes": [
+"crushing",
+"endgame",
+"exposedKing",
+"knightEndgame",
+"veryLong"
+],
+"mate": false,
+"game": "https://lichess.org/mERcbLDE/black#96"
+},
+"2puA7": {
+"fen": "8/7k/5p2/5Pp1/4K1np/1P1N4/P7/8 b - - 1 44",
+"solution": [
+"h3",
+"Kf3",
+"Ne5+",
+"Kg3",
+"Nxd3"
+],
+"rating": 2071,
+"themes": [
+"crushing",
+"endgame",
+"knightEndgame",
+"long"
+],
+"mate": false,
+"game": "https://lichess.org/b8bjZ34c#87"
+},
+"2qfRD": {
+"fen": "8/5B2/3b2pp/p3kp2/P6P/1P2K1P1/8/8 b - - 2 39",
+"solution": [
+"Kf6",
+"Bd5",
+"Bxg3"
+],
+"rating": 2322,
+"themes": [
+"bishopEndgame",
+"crushing",
+"discoveredAttack",
+"endgame",
+"short"
+],
+"mate": false,
+"game": "https://lichess.org/VBxmgp51#77"
+},
+"2qzI6": {
+"fen": "5qk1/5p1p/6pP/4Q1P1/8/8/6K1/8 w - - 1 61",
+"solution": [
+"Qf6",
+"Qa8+",
+"Kg1",
+"Kf8",
+"Qh8+",
+"Ke7",
+"Qxa8"
+],
+"rating": 2583,
+"themes": [
+"crushing",
+"defensiveMove",
+"endgame",
+"master",
+"queenEndgame",
+"skewer",
+"veryLong"
+],
+"mate": false,
+"game": "https://lichess.org/pLKx5Rrc/black#120"
+},
+"2s51I": {
+"fen": "8/8/2k3p1/6P1/2K2P2/1P2P3/4n3/8 w - - 3 45",
+"solution": [
+"f5",
+"Ng3",
+"fxg6"
+],
+"rating": 2569,
+"themes": [
+"crushing",
+"endgame",
+"knightEndgame",
+"short"
+],
+"mate": false,
+"game": "https://lichess.org/n4MuGV8q/black#88"
+},
+"2sAze": {
+"fen": "8/6p1/5p1p/3k4/5PPP/5K2/8/8 b - - 1 49",
+"solution": [
+"h5",
+"f5",
+"Ke5",
+"Kg3",
+"Ke4",
+"gxh5",
+"Kxf5",
+"Kf3",
+"Ke5"
+],
+"rating": 2789,
+"themes": [
+"crushing",
+"defensiveMove",
+"endgame",
+"pawnEndgame",
+"veryLong",
+"zugzwang"
+],
+"mate": false,
+"game": "https://lichess.org/2XZuuw69#97"
+},
+"2tEJZ": {
+"fen": "2Q4r/3K4/r6k/8/7P/P1P3R1/8/8 b - - 0 61",
+"solution": [
+"Ra7+",
+"Qc7",
+"Rh7+"
+],
+"rating": 1979,
+"themes": [
+"advantage",
+"endgame",
+"pin",
+"queenRookEndgame",
+"short"
+],
+"mate": false,
+"game": "https://lichess.org/33eP4dTj#121"
+},
+"2tV7c": {
+"fen": "8/8/8/3p4/1p1k4/2r4R/PKP5/8 w - - 1 52",
+"solution": [
+"Rxc3",
+"bxc3+",
+"Kb3",
+"Ke4",
+"Kxc3"
+],
+"rating": 2121,
+"themes": [
+"crushing",
+"endgame",
+"long",
+"master",
+"rookEndgame"
+],
+"mate": false,
+"game": "https://lichess.org/vDSapFQk/black#102"
+},
+"2tkue": {
+"fen": "8/2P2pk1/Q3p1p1/4P3/1P3P2/P3K2p/1q6/8 b - - 0 51",
+"solution": [
+"Qc1+",
+"Kf2",
+"Qxf4+"
+],
+"rating": 2738,
+"themes": [
+"crushing",
+"deflection",
+"endgame",
+"master",
+"masterVsMaster",
+"queenEndgame",
+"short",
+"skewer"
+],
+"mate": false,
+"game": "https://lichess.org/TRbYZRMZ#101"
+},
+"2u2T6": {
+"fen": "8/5p2/3P1Np1/6n1/7p/4K1k1/8/8 w - - 1 42",
+"solution": [
+"Ne4+",
+"Nxe4",
+"d7",
+"Nd6",
+"d8=Q"
+],
+"rating": 2185,
+"themes": [
+"advancedPawn",
+"crushing",
+"endgame",
+"knightEndgame",
+"long",
+"promotion",
+"sacrifice"
+],
+"mate": false,
+"game": "https://lichess.org/BOIHB9zq/black#82"
+},
+"2uDMx": {
+"fen": "8/8/2pk2b1/6p1/1P2B1P1/2PpK2P/r7/4R3 b - - 4 35",
+"solution": [
+"Bxe4",
+"Kxe4",
+"Re2+",
+"Kxd3",
+"Rxe1"
+],
+"rating": 1810,
+"themes": [
+"attraction",
+"crushing",
+"endgame",
+"exposedKing",
+"long"
+],
+"mate": false,
+"game": "https://lichess.org/deRoMO1p#69"
+},
+"2uUL7": {
+"fen": "3Q4/p1p3pk/1p5p/5p2/5K2/7r/PPP1r3/6R1 b - - 3 39",
+"solution": [
+"Rf2+",
+"Ke5",
+"Re3+",
+"Kd4",
+"Rd2+",
+"Kxe3",
+"Rxd8"
+],
+"rating": 2129,
+"themes": [
+"crushing",
+"endgame",
+"queenRookEndgame",
+"skewer",
+"veryLong"
+],
+"mate": false,
+"game": "https://lichess.org/sZo6GGwi#77"
+},
+"2uaJE": {
+"fen": "2Rr2k1/3Pqp2/4p3/p2p3p/Pp6/1P4P1/6KP/2R5 w - - 7 39",
+"solution": [
+"Rxd8+",
+"Kg7",
+"Rg8+",
+"Kxg8",
+"Rc8+",
+"Kg7",
+"d8=Q",
+"Qxd8",
+"Rxd8"
+],
+"rating": 2066,
+"themes": [
+"advancedPawn",
+"attraction",
+"crushing",
+"endgame",
+"promotion",
+"queenRookEndgame",
+"veryLong"
+],
+"mate": false,
+"game": "https://lichess.org/iltHKMzg/black#76"
+},
+"2uwFG": {
+"fen": "8/8/1p1k1N1p/1P2p1p1/n1K3P1/5P2/6P1/8 w - - 0 40",
+"solution": [
+"Ne4+",
+"Ke6",
+"Kb3"
+],
+"rating": 2341,
+"themes": [
+"crushing",
+"endgame",
+"knightEndgame",
+"master",
+"short"
+],
+"mate": false,
+"game": "https://lichess.org/nsZneeco/black#78"
+},
+"2v2Ft": {
+"fen": "8/2p1k3/3p4/3Pp3/PPP3Pp/4K3/8/8 b - - 1 47",
+"solution": [
+"h3",
+"Kf2",
+"e4"
+],
+"rating": 1975,
+"themes": [
+"crushing",
+"defensiveMove",
+"endgame",
+"pawnEndgame",
+"short"
+],
+"mate": false,
+"game": "https://lichess.org/tEN7hxxs#93"
+},
+"2v98a": {
+"fen": "8/8/6p1/2R1kp2/4p2P/5P2/3p1K2/8 b - - 1 61",
+"solution": [
+"Kd6",
+"Rc8",
+"Kd7",
+"Ke2",
+"exf3+",
+"Kxd2",
+"Kxc8"
+],
+"rating": 2616,
+"themes": [
+"crushing",
+"defensiveMove",
+"endgame",
+"rookEndgame",
+"veryLong"
+],
+"mate": false,
+"game": "https://lichess.org/KXaVUYKE#121"
+},
+"2vISV": {
+"fen": "8/3npK2/6P1/1Pk1p3/2p5/8/8/8 w - - 1 57",
+"solution": [
+"Kxe7",
+"Nb6",
+"g7",
+"c3",
+"g8=Q"
+],
+"rating": 1910,
+"themes": [
+"advancedPawn",
+"crushing",
+"endgame",
+"knightEndgame",
+"long",
+"master",
+"promotion"
+],
+"mate": false,
+"game": "https://lichess.org/5mTkiJTy/black#112"
+},
+"2vvLq": {
+"fen": "8/8/p1p1k3/8/1P3K1p/P4P2/8/8 w - - 4 41",
+"solution": [
+"Kg4",
+"Ke5",
+"a4"
+],
+"rating": 2533,
+"themes": [
+"crushing",
+"defensiveMove",
+"endgame",
+"pawnEndgame",
+"short"
+],
+"mate": false,
+"game": "https://lichess.org/WLwwAr1t/black#80"
+},
+"2w8RD": {
+"fen": "8/5p2/8/p1kpPP2/1p5p/3K3P/8/8 w - - 0 57",
+"solution": [
+"f6",
+"Kc6",
+"e6"
+],
+"rating": 2151,
+"themes": [
+"crushing",
+"endgame",
+"pawnEndgame",
+"short"
+],
+"mate": false,
+"game": "https://lichess.org/xra4U16o/black#112"
+},
+"2wjDa": {
+"fen": "8/3k4/1p1p1ppp/p1pK4/2P3PP/1P3P2/P7/8 w - - 0 30",
+"solution": [
+"h5",
+"g5",
+"a4"
+],
+"rating": 2739,
+"themes": [
+"crushing",
+"defensiveMove",
+"endgame",
+"pawnEndgame",
+"short",
+"zugzwang"
+],
+"mate": false,
+"game": "https://lichess.org/DMmZDuPN/black#58"
+},
+"2x04E": {
+"fen": "5Q2/p7/3P2k1/2pq3p/K5p1/6P1/P4P1P/8 b - - 22 51",
+"solution": [
+"Qc4+",
+"Ka5",
+"Qb4+",
+"Ka6",
+"Qb6#"
+],
+"rating": 1760,
+"themes": [
+"endgame",
+"long",
+"mateIn3",
+"queenEndgame"
+],
+"mate": true,
+"game": "https://lichess.org/rYIFHPDL#101"
+},
+"2xBt5": {
+"fen": "8/p7/1p2p3/1Pp1p1kp/P1P1Pp2/5PP1/6KP/8 w - - 0 37",
+"solution": [
+"Kh3",
+"Kg6",
+"Kh4",
+"Kh6",
+"g4",
+"hxg4",
+"Kxg4"
+],
+"rating": 2374,
+"themes": [
+"crushing",
+"endgame",
+"pawnEndgame",
+"veryLong",
+"zugzwang"
+],
+"mate": false,
+"game": "https://lichess.org/vH5sd03K/black#72"
+},
+"2xGik": {
+"fen": "8/2Pb4/8/8/1P3K1p/P6k/8/8 w - - 1 48",
+"solution": [
+"a4",
+"Kg2",
+"a5",
+"Kg1",
+"a6",
+"h3",
+"a7"
+],
+"rating": 2750,
+"themes": [
+"advancedPawn",
+"bishopEndgame",
+"crushing",
+"endgame",
+"quietMove",
+"veryLong"
+],
+"mate": false,
+"game": "https://lichess.org/NaIW8Oxu/black#94"
+},
+"2xklB": {
+"fen": "4Q3/6pk/7p/5p1P/3P4/p3PPK1/2q3P1/8 b - - 0 41",
+"solution": [
+"f4+",
+"Kxf4",
+"a2",
+"Qa8",
+"Qb1"
+],
+"rating": 2037,
+"themes": [
+"advancedPawn",
+"crushing",
+"defensiveMove",
+"endgame",
+"long",
+"queenEndgame"
+],
+"mate": false,
+"game": "https://lichess.org/Lgb0YekE#81"
+},
+"2zQJr": {
+"fen": "8/4k3/4P2p/2p1K3/pp1p4/P2P3P/1P6/8 w - - 0 46",
+"solution": [
+"Kd5",
+"c4",
+"Kxc4",
+"bxa3",
+"bxa3"
+],
+"rating": 2253,
+"themes": [
+"crushing",
+"endgame",
+"long",
+"master",
+"pawnEndgame"
+],
+"mate": false,
+"game": "https://lichess.org/gY1b5f8S/black#90"
+},
+"2zZnJ": {
+"fen": "8/4k2p/1p6/6p1/P3K3/1P5P/8/8 w - - 2 46",
+"solution": [
+"Kf5",
+"Kd6",
+"b4"
+],
+"rating": 2483,
+"themes": [
+"crushing",
+"defensiveMove",
+"endgame",
+"pawnEndgame",
+"short"
+],
+"mate": false,
+"game": "https://lichess.org/u8OV8QGj/black#90"
+},
+"2zdw5": {
+"fen": "3kB3/8/p3p3/1p1pKb2/1P1P4/2P5/P7/8 w - - 13 53",
+"solution": [
+"Bc6",
+"Ke7",
+"Bxd5"
+],
+"rating": 2287,
+"themes": [
+"bishopEndgame",
+"crushing",
+"endgame",
+"short"
+],
+"mate": false,
+"game": "https://lichess.org/pn76rybN/black#104"
+},
+"2zndX": {
+"fen": "8/8/8/4Q1pk/4KP1p/8/6r1/8 b - - 0 55",
+"solution": [
+"Re2+",
+"Kf5",
+"Rxe5+",
+"fxe5",
+"Kh6",
+"Kf6",
+"h3",
+"e6",
+"h2"
+],
+"rating": 2425,
+"themes": [
+"advancedPawn",
+"crushing",
+"endgame",
+"queenRookEndgame",
+"skewer",
+"veryLong"
+],
+"mate": false,
+"game": "https://lichess.org/azsbMCKY#109"
+},
+"2zz9G": {
+"fen": "8/8/8/1Pn5/8/P4k2/2P5/4K3 w - - 1 46",
+"solution": [
+"Kd2",
+"Ke4",
+"Kc3"
+],
+"rating": 2164,
+"themes": [
+"crushing",
+"defensiveMove",
+"endgame",
+"knightEndgame",
+"master",
+"short"
+],
+"mate": false,
+"game": "https://lichess.org/wMI4DgUk/black#90"
+},
+"308KK": {
+"fen": "8/2k2K2/6p1/PPn5/5P2/8/8/8 w - - 6 59",
+"solution": [
+"Kxg6",
+"Nb7",
+"b6+",
+"Kd6",
+"a6"
+],
+"rating": 2653,
+"themes": [
+"crushing",
+"endgame",
+"exposedKing",
+"knightEndgame",
+"long",
+"master"
+],
+"mate": false,
+"game": "https://lichess.org/ZMDMFhsC/black#116"
+},
+"30Omj": {
+"fen": "3b4/8/1p6/pP1PpP1k/P2pP3/5K1b/7B/7B b - - 0 79",
+"solution": [
+"Bg4+",
+"Kf2",
+"Bh4+",
+"Bg3",
+"d3"
+],
+"rating": 2504,
+"themes": [
+"bishopEndgame",
+"crushing",
+"endgame",
+"long",
+"master",
+"pin"
+],
+"mate": false,
+"game": "https://lichess.org/VhCPsEvm#157"
+},
+"30PcM": {
+"fen": "8/8/p2k4/2p2pp1/1P1Kp3/1P2P2P/8/8 w - - 0 44",
+"solution": [
+"bxc5+",
+"Kd7",
+"Ke5",
+"g4",
+"hxg4",
+"fxg4",
+"Kxe4",
+"a5",
+"Kf4"
+],
+"rating": 2413,
+"themes": [
+"crushing",
+"endgame",
+"pawnEndgame",
+"veryLong"
+],
+"mate": false,
+"game": "https://lichess.org/tyUR96bO/black#86"
+},
+"313eT": {
+"fen": "5k2/2p2ppp/p1PP4/5P2/PP6/Rr2K3/6P1/1r6 w - - 1 29",
+"solution": [
+"Rxb3",
+"Rxb3+",
+"Kd2",
+"cxd6",
+"c7",
+"Ke7",
+"c8=Q"
+],
+"rating": 2313,
+"themes": [
+"advancedPawn",
+"crushing",
+"endgame",
+"promotion",
+"rookEndgame",
+"veryLong"
+],
+"mate": false,
+"game": "https://lichess.org/r95VWoUq/black#56"
+},
+"31YU6": {
+"fen": "8/6k1/8/p2pP2Q/P2P4/1Pp2PK1/3q4/8 b - - 6 53",
+"solution": [
+"Qh6",
+"Qg4+",
+"Qg6"
+],
+"rating": 2352,
+"themes": [
+"crushing",
+"defensiveMove",
+"endgame",
+"queenEndgame",
+"short"
+],
+"mate": false,
+"game": "https://lichess.org/j6iR181q#105"
+},
+"32E9g": {
+"fen": "8/8/ppp4p/4k1p1/1P2P1P1/P2K3P/8/8 w - - 0 41",
+"solution": [
+"a4",
+"a5",
+"bxa5",
+"bxa5",
+"Ke3",
+"c5",
+"Kd3",
+"Kf4",
+"Kc4"
+],
+"rating": 2663,
+"themes": [
+"crushing",
+"endgame",
+"pawnEndgame",
+"quietMove",
+"veryLong"
+],
+"mate": false,
+"game": "https://lichess.org/JiKfBE2a/black#80"
+},
+"32kI1": {
+"fen": "8/5PR1/4p3/R5Pp/1P2k3/6rP/4r1P1/6K1 b - - 0 37",
+"solution": [
+"Rexg2+",
+"Kf1",
+"Rg1+",
+"Kf2",
+"R3g2#"
+],
+"rating": 2105,
+"themes": [
+"blindSwineMate",
+"endgame",
+"long",
+"master",
+"mateIn3",
+"rookEndgame"
+],
+"mate": true,
+"game": "https://lichess.org/pvy6mZxD#73"
+},
+"32pDC": {
+"fen": "8/5p1k/6p1/2qpp2p/1p5P/1P1KP1P1/P1Q2P2/8 b - - 1 40",
+"solution": [
+"Qb5+",
+"Kd2",
+"Qf1",
+"Qc7",
+"Qxf2+"
+],
+"rating": 2284,
+"themes": [
+"crushing",
+"endgame",
+"long",
+"queenEndgame"
+],
+"mate": false,
+"game": "https://lichess.org/ewUXcljN#79"
+},
+"3305O": {
+"fen": "8/1P6/3R4/7P/6K1/3r1P2/4k1P1/3q4 w - - 0 58",
+"solution": [
+"Re6+",
+"Kf2",
+"b8=Q",
+"Rd4+",
+"Kg5"
+],
+"rating": 2438,
+"themes": [
+"advancedPawn",
+"advantage",
+"defensiveMove",
+"endgame",
+"long",
+"promotion",
+"queenRookEndgame"
+],
+"mate": false,
+"game": "https://lichess.org/rFvbv62W/black#114"
+},
+"33h0j": {
+"fen": "8/8/8/p2Q1p1k/P3q2p/1P2PK2/8/8 w - - 3 50",
+"solution": [
+"Qxe4",
+"fxe4+",
+"Kf4",
+"Kg6",
+"Kg4"
+],
+"rating": 2158,
+"themes": [
+"crushing",
+"endgame",
+"long",
+"queenEndgame",
+"zugzwang"
+],
+"mate": false,
+"game": "https://lichess.org/gFJWDSQx/black#98"
+},
+"342eE": {
+"fen": "6k1/q4p1p/4p1p1/2RpP2P/P7/8/1K4P1/2R5 w - - 0 28",
+"solution": [
+"h6",
+"Qb8+",
+"Ka2",
+"Qf8",
+"Rc8"
+],
+"rating": 2237,
+"themes": [
+"crushing",
+"defensiveMove",
+"endgame",
+"long",
+"pin",
+"queenRookEndgame"
+],
+"mate": false,
+"game": "https://lichess.org/Gxlk5VqD/black#54"
+},
+"34F5y": {
+"fen": "8/8/p4r2/8/1P1pk1p1/P2R4/4K1P1/8 b - - 11 51",
+"solution": [
+"Rf2+",
+"Kxf2",
+"Kxd3",
+"a4",
+"Kc4",
+"b5",
+"axb5"
+],
+"rating": 2231,
+"themes": [
+"crushing",
+"deflection",
+"endgame",
+"rookEndgame",
+"veryLong"
+],
+"mate": false,
+"game": "https://lichess.org/dywikY8X#101"
+},
+"34WrN": {
+"fen": "5k2/8/1p2K3/p1b2Pp1/3p2P1/1P1B4/P7/8 w - - 3 48",
+"solution": [
+"Kf6",
+"Bb4",
+"Kxg5"
+],
+"rating": 2434,
+"themes": [
+"bishopEndgame",
+"crushing",
+"endgame",
+"master",
+"short"
+],
+"mate": false,
+"game": "https://lichess.org/pMc6gsbq/black#94"
+},
+"34kTV": {
+"fen": "2Q5/1p6/p5pk/4P2p/5P1K/6P1/Pq6/8 b - - 2 43",
+"solution": [
+"Qh2+",
+"Qh3",
+"Qxa2"
+],
+"rating": 2550,
+"themes": [
+"crushing",
+"endgame",
+"queenEndgame",
+"short"
+],
+"mate": false,
+"game": "https://lichess.org/1pI6DROV#85"
+},
+"34n6U": {
+"fen": "8/8/p1p4p/3pk1p1/2P2pP1/2K2P1P/PP6/8 w - - 0 35",
+"solution": [
+"b4",
+"Kd6",
+"Kd4",
+"dxc4",
+"Kxc4"
+],
+"rating": 2659,
+"themes": [
+"crushing",
+"endgame",
+"long",
+"pawnEndgame",
+"quietMove"
+],
+"mate": false,
+"game": "https://lichess.org/utr7IK1t/black#68"
+},
+"34u0F": {
+"fen": "8/5p2/4p3/p3K3/N5k1/8/8/8 b - - 3 49",
+"solution": [
+"f5",
+"Nc5",
+"f4",
+"Ke4",
+"f3",
+"Ke3",
+"Kg3",
+"Nxe6",
+"a4"
+],
+"rating": 2763,
+"themes": [
+"crushing",
+"defensiveMove",
+"endgame",
+"knightEndgame",
+"quietMove",
+"veryLong"
+],
+"mate": false,
+"game": "https://lichess.org/tOTZ5tyV#97"
+},
+"35DCm": {
+"fen": "8/6pp/p7/1p1k4/4p3/PPP1K1P1/7P/8 b - - 0 34",
+"solution": [
+"a5",
+"g4",
+"g5",
+"a4",
+"bxa4",
+"bxa4",
+"h6"
+],
+"rating": 2789,
+"themes": [
+"crushing",
+"defensiveMove",
+"endgame",
+"pawnEndgame",
+"quietMove",
+"veryLong"
+],
+"mate": false,
+"game": "https://lichess.org/scUmle3m#67"
+},
+"35P3M": {
+"fen": "8/4k3/6P1/pBp4r/P1P2K2/8/8/8 w - - 7 64",
+"solution": [
+"g7",
+"Rh4+",
+"Kg3",
+"Rh1",
+"Kg2"
+],
+"rating": 2418,
+"themes": [
+"advancedPawn",
+"crushing",
+"defensiveMove",
+"endgame",
+"long"
+],
+"mate": false,
+"game": "https://lichess.org/oTRZobKM/black#126"
+},
+"35XM6": {
+"fen": "3r4/8/p5pp/1p6/4KP1k/P2p4/1P3P2/3R4 w - - 0 34",
+"solution": [
+"Kf3",
+"d2",
+"Rh1#"
+],
+"rating": 1824,
+"themes": [
+"endgame",
+"mateIn2",
+"rookEndgame",
+"short"
+],
+"mate": true,
+"game": "https://lichess.org/9iet9b0w/black#66"
+},
+"35ji1": {
+"fen": "8/5p2/5p1p/4p2P/pPk1P1P1/2P5/4K2n/1N6 w - - 2 36",
+"solution": [
+"Na3+",
+"Kxc3",
+"b5"
+],
+"rating": 1807,
+"themes": [
+"crushing",
+"defensiveMove",
+"endgame",
+"knightEndgame",
+"short"
+],
+"mate": false,
+"game": "https://lichess.org/LbkJBa1G/black#70"
+},
+"37kWq": {
+"fen": "5k2/7p/5p2/5p1P/2K3p1/8/6B1/8 b - - 1 46",
+"solution": [
+"Kg7",
+"Bd5",
+"Kh6",
+"Kd3",
+"Kxh5",
+"Ke3",
+"Kg5"
+],
+"rating": 2560,
+"themes": [
+"bishopEndgame",
+"crushing",
+"defensiveMove",
+"endgame",
+"veryLong"
+],
+"mate": false,
+"game": "https://lichess.org/ClyKvffe#91"
+},
+"38GaG": {
+"fen": "7k/2p5/7p/3Qb1q1/8/1PP2pN1/2r4P/3R2K1 b - - 0 28",
+"solution": [
+"Qe3+",
+"Kh1",
+"Rxh2+",
+"Kxh2",
+"Qf2+",
+"Kh3",
+"Qxg3#"
+],
+"rating": 2321,
+"themes": [
+"attraction",
+"endgame",
+"mateIn4",
+"sacrifice",
+"veryLong"
+],
+"mate": true,
+"game": "https://lichess.org/9fnDiwUO#55"
+},
+"38Q3b": {
+"fen": "8/5p2/4p1pp/4P3/2k2PP1/2p1K3/2N5/8 b - - 0 33",
+"solution": [
+"Kb3",
+"Ne1",
+"Kb2",
+"f5",
+"c2",
+"Nd3+",
+"Kb1"
+],
+"rating": 2708,
+"themes": [
+"advancedPawn",
+"crushing",
+"defensiveMove",
+"endgame",
+"knightEndgame",
+"veryLong"
+],
+"mate": false,
+"game": "https://lichess.org/yOTRklUM#65"
+},
+"38pL1": {
+"fen": "1b6/1P4p1/2K3pp/8/1k3P2/4P1P1/8/8 w - - 1 54",
+"solution": [
+"e4",
+"g5",
+"e5",
+"gxf4",
+"gxf4",
+"h5",
+"e6",
+"h4",
+"e7"
+],
+"rating": 1963,
+"themes": [
+"advancedPawn",
+"bishopEndgame",
+"crushing",
+"endgame",
+"quietMove",
+"veryLong"
+],
+"mate": false,
+"game": "https://lichess.org/v9yARl4U/black#106"
+},
+"38vB7": {
+"fen": "8/8/1p1k2p1/p4p2/PP1KpP2/2P4P/8/8 b - - 0 40",
+"solution": [
+"b5",
+"axb5",
+"a4"
+],
+"rating": 2207,
+"themes": [
+"crushing",
+"defensiveMove",
+"endgame",
+"pawnEndgame",
+"short"
+],
+"mate": false,
+"game": "https://lichess.org/9DD4WeNV#79"
+},
+"38zGl": {
+"fen": "8/8/1p3K2/p1pPN3/P1Pk4/1P6/4p3/8 b - - 0 74",
+"solution": [
+"Ke4",
+"d6",
+"e1=Q"
+],
+"rating": 2071,
+"themes": [
+"advancedPawn",
+"crushing",
+"endgame",
+"knightEndgame",
+"master",
+"promotion",
+"short"
+],
+"mate": false,
+"game": "https://lichess.org/IOpWEjsa#147"
+},
+"39Od5": {
+"fen": "1rr5/k4KP1/pp4Q1/8/8/8/PP6/8 b - - 3 65",
+"solution": [
+"Rc7+",
+"Ke6",
+"Rc6+",
+"Kf5",
+"Rxg6",
+"Kxg6",
+"b5"
+],
+"rating": 2447,
+"themes": [
+"crushing",
+"defensiveMove",
+"endgame",
+"queenRookEndgame",
+"skewer",
+"veryLong"
+],
+"mate": false,
+"game": "https://lichess.org/DTZjrpb9#129"
+},
+"39a2V": {
+"fen": "8/1kp5/8/4p1Q1/5q2/7P/6PK/8 w - - 1 33",
+"solution": [
+"Qxf4",
+"exf4",
+"h4",
+"c5",
+"Kg1"
+],
+"rating": 2252,
+"themes": [
+"crushing",
+"defensiveMove",
+"endgame",
+"long",
+"queenEndgame",
+"quietMove"
+],
+"mate": false,
+"game": "https://lichess.org/ykt5ZMwF/black#64"
+},
+"3A08m": {
+"fen": "8/R4p2/6pk/7p/P3P3/5PKP/r4r2/2R5 b - - 0 30",
+"solution": [
+"g5",
+"Ra6+",
+"f6",
+"Rxf6+",
+"Kg7"
+],
+"rating": 2616,
+"themes": [
+"advantage",
+"defensiveMove",
+"endgame",
+"long",
+"quietMove",
+"rookEndgame"
+],
+"mate": false,
+"game": "https://lichess.org/8cB5m3u9#59"
+},
+"3BLqr": {
+"fen": "6k1/R3Qp2/4p1pp/1p6/6K1/3r4/2r2PPP/8 b - - 6 43",
+"solution": [
+"Rc4+",
+"f4",
+"f5+",
+"Kh4",
+"Rxf4+",
+"g4",
+"Rxg4#"
+],
+"rating": 1993,
+"themes": [
+"deflection",
+"endgame",
+"mateIn4",
+"queenRookEndgame",
+"veryLong"
+],
+"mate": true,
+"game": "https://lichess.org/VM7iTatJ#85"
+},
+"3Brhz": {
+"fen": "8/p4p1k/1p6/5P2/5r2/P4R1P/6PK/8 b - - 2 40",
+"solution": [
+"Rxf3",
+"gxf3",
+"b5",
+"Kg3",
+"a5",
+"Kf4",
+"a4",
+"Ke5",
+"b4",
+"axb4",
+"a3"
+],
+"rating": 2790,
+"themes": [
+"crushing",
+"endgame",
+"quietMove",
+"rookEndgame",
+"veryLong"
+],
+"mate": false,
+"game": "https://lichess.org/6YJv9xKM#79"
+},
+"3C5eE": {
+"fen": "6k1/4qp1p/6p1/1Q2P3/2P2P2/p6P/6P1/7K b - - 0 37",
+"solution": [
+"Qa7",
+"Qb1",
+"a2"
+],
+"rating": 2054,
+"themes": [
+"advancedPawn",
+"crushing",
+"endgame",
+"queenEndgame",
+"quietMove",
+"short"
+],
+"mate": false,
+"game": "https://lichess.org/XjXOcWDy#73"
+},
+"3C67O": {
+"fen": "4k3/2p5/1p1p4/3Pp3/b1P1P2p/pBP4P/5pP1/5K2 w - - 2 47",
+"solution": [
+"Bxa4+",
+"c6",
+"Bb3"
+],
+"rating": 2032,
+"themes": [
+"bishopEndgame",
+"crushing",
+"defensiveMove",
+"endgame",
+"hangingPiece",
+"short"
+],
+"mate": false,
+"game": "https://lichess.org/FoQ0H3OD/black#92"
+},
+"3COuM": {
+"fen": "8/6k1/6p1/5p2/5K1P/8/6P1/8 w - - 1 50",
+"solution": [
+"Kg5",
+"Kh7",
+"h5",
+"gxh5",
+"Kxh5"
+],
+"rating": 1999,
+"themes": [
+"crushing",
+"endgame",
+"long",
+"pawnEndgame",
+"zugzwang"
+],
+"mate": false,
+"game": "https://lichess.org/xk5ixNnH/black#98"
+},
+"3CxGe": {
+"fen": "8/8/4P3/2Nk1p1p/5P2/2n3P1/2P2K2/8 b - - 0 42",
+"solution": [
+"Kxc5",
+"e7",
+"Ne4+"
+],
+"rating": 1811,
+"themes": [
+"crushing",
+"endgame",
+"hangingPiece",
+"knightEndgame",
+"short"
+],
+"mate": false,
+"game": "https://lichess.org/piymw7jh#83"
+},
+"3DFCF": {
+"fen": "8/2p5/1pPp1pk1/1QqP2p1/P6p/5P1P/6PK/8 w - - 4 46",
+"solution": [
+"Qxc5",
+"bxc5",
+"Kg1",
+"Kf5",
+"a5",
+"Ke5",
+"a6",
+"Kxd5",
+"a7"
+],
+"rating": 2434,
+"themes": [
+"advancedPawn",
+"crushing",
+"endgame",
+"queenEndgame",
+"quietMove",
+"veryLong"
+],
+"mate": false,
+"game": "https://lichess.org/8fHeVERH/black#90"
+},
+"3ECss": {
+"fen": "7k/K7/8/1P1B4/8/1b4p1/8/8 w - - 2 44",
+"solution": [
+"Bg2",
+"Be6",
+"Kb7",
+"Bc4",
+"b6"
+],
+"rating": 2790,
+"themes": [
+"bishopEndgame",
+"crushing",
+"endgame",
+"long",
+"quietMove"
+],
+"mate": false,
+"game": "https://lichess.org/hNDJeCBs/black#86"
+},
+"3EOoj": {
+"fen": "8/8/5kp1/2PK4/1n3P2/1P6/8/8 w - - 9 47",
+"solution": [
+"Kd6",
+"Kf5",
+"c6",
+"Na6",
+"b4",
+"Nxb4",
+"c7"
+],
+"rating": 2150,
+"themes": [
+"advancedPawn",
+"crushing",
+"defensiveMove",
+"endgame",
+"knightEndgame",
+"quietMove",
+"veryLong"
+],
+"mate": false,
+"game": "https://lichess.org/kA0XciFA/black#92"
+},
+"3EaPM": {
+"fen": "8/4b1k1/2p1P1P1/1pp2K2/6P1/1P1P4/P7/8 w - - 1 53",
+"solution": [
+"a4",
+"c4",
+"dxc4",
+"bxc4",
+"bxc4"
+],
+"rating": 1888,
+"themes": [
+"bishopEndgame",
+"crushing",
+"endgame",
+"long"
+],
+"mate": false,
+"game": "https://lichess.org/YOAxo5ET/black#104"
+},
+"3F7Hg": {
+"fen": "8/1Q6/8/3p4/2k5/2P5/K1P5/1r3r2 w - - 4 57",
+"solution": [
+"Qc6#"
+],
+"rating": 1783,
+"themes": [
+"endgame",
+"mateIn1",
+"oneMove",
+"queenRookEndgame"
+],
+"mate": true,
+"game": "https://lichess.org/MbXyBngI/black#112"
+},
+"3FHAo": {
+"fen": "8/8/8/p1kp2p1/P1p2pPp/5P1P/2BK4/8 b - - 1 56",
+"solution": [
+"Kb4",
+"Bh7",
+"Kxa4",
+"Kc3",
+"Kb5",
+"Kd4",
+"Kb4"
+],
+"rating": 2756,
+"themes": [
+"bishopEndgame",
+"crushing",
+"defensiveMove",
+"endgame",
+"veryLong"
+],
+"mate": false,
+"game": "https://lichess.org/8mQ1FJQ3#111"
+},
+"3FZA3": {
+"fen": "8/8/7p/4k1pP/1p2P3/5p2/3N4/3K4 b - - 1 54",
+"solution": [
+"g4",
+"Ke1",
+"Kf4"
+],
+"rating": 2388,
+"themes": [
+"crushing",
+"endgame",
+"knightEndgame",
+"quietMove",
+"short"
+],
+"mate": false,
+"game": "https://lichess.org/Kxub2n2Z#107"
+},
+"3GCjN": {
+"fen": "6k1/5pp1/7p/P1Q5/2P1q3/3p2PP/6PK/8 b - - 0 34",
+"solution": [
+"d2",
+"Qc8+",
+"Kh7",
+"Qd7",
+"Qc2"
+],
+"rating": 2022,
+"themes": [
+"advancedPawn",
+"crushing",
+"endgame",
+"long",
+"queenEndgame"
+],
+"mate": false,
+"game": "https://lichess.org/V22YwTKO#67"
+},
+"3GJLJ": {
+"fen": "8/1p6/p2p1p2/3P1pp1/P1Pk1p2/1P3P1P/3K4/8 w - - 0 37",
+"solution": [
+"a5",
+"g4",
+"h4"
+],
+"rating": 2038,
+"themes": [
+"crushing",
+"defensiveMove",
+"endgame",
+"pawnEndgame",
+"quietMove",
+"short",
+"zugzwang"
+],
+"mate": false,
+"game": "https://lichess.org/OJoaOj3K/black#72"
+},
+"3HfhA": {
+"fen": "8/1K6/4P3/p4kP1/8/6Bp/8/8 b - - 0 70",
+"solution": [
+"Kxe6",
+"Kc6",
+"a4",
+"g6",
+"a3",
+"g7",
+"Kf7"
+],
+"rating": 1997,
+"themes": [
+"bishopEndgame",
+"crushing",
+"endgame",
+"quietMove",
+"veryLong"
+],
+"mate": false,
+"game": "https://lichess.org/54oM81CU#139"
+},
+"3I1BE": {
+"fen": "8/8/5p2/p3kp1p/P4PpP/3KP1P1/8/8 b - - 0 42",
+"solution": [
+"Kd5",
+"Kd2",
+"Kc4",
+"Kc2",
+"Kb4"
+],
+"rating": 1951,
+"themes": [
+"crushing",
+"defensiveMove",
+"endgame",
+"long",
+"pawnEndgame",
+"zugzwang"
+],
+"mate": false,
+"game": "https://lichess.org/cl11gwna#83"
+},
+"3JV0W": {
+"fen": "4r2k/1Q4p1/7p/5p1b/3q1P2/1B5P/PP3RP1/5K2 b - - 3 31",
+"solution": [
+"Re1+",
+"Kxe1",
+"Qe3+",
+"Kf1",
+"Qc1+",
+"Bd1",
+"Qxd1#"
+],
+"rating": 2355,
+"themes": [
+"attraction",
+"endgame",
+"master",
+"mateIn4",
+"sacrifice",
+"veryLong"
+],
+"mate": true,
+"game": "https://lichess.org/nmdpaKsf#61"
+},
+"3JW6C": {
+"fen": "8/8/8/p4pkp/P3p3/4P1PP/6K1/8 b - - 1 38",
+"solution": [
+"Kf6",
+"Kf2",
+"Ke5",
+"g4",
+"hxg4",
+"hxg4",
+"f4",
+"exf4+",
+"Kxf4"
+],
+"rating": 2707,
+"themes": [
+"crushing",
+"endgame",
+"pawnEndgame",
+"veryLong",
+"zugzwang"
+],
+"mate": false,
+"game": "https://lichess.org/LpoQJlZ1#75"
+},
+"3JZ6I": {
+"fen": "8/4R2P/7r/8/8/4p3/3k4/5K2 b - - 4 76",
+"solution": [
+"Rxh7",
+"Rxh7",
+"e2+",
+"Kg2",
+"e1=Q"
+],
+"rating": 2003,
+"themes": [
+"advancedPawn",
+"crushing",
+"deflection",
+"endgame",
+"exposedKing",
+"long",
+"master",
+"promotion",
+"rookEndgame",
+"sacrifice"
+],
+"mate": false,
+"game": "https://lichess.org/SZgLISF1#151"
+},
+"3JjbI": {
+"fen": "8/4b3/4k1p1/1pB5/pP2PP1p/P4K2/7P/8 b - - 1 33",
+"solution": [
+"Bxc5",
+"bxc5",
+"b4",
+"c6",
+"Kd6"
+],
+"rating": 2471,
+"themes": [
+"bishopEndgame",
+"crushing",
+"endgame",
+"long"
+],
+"mate": false,
+"game": "https://lichess.org/2LuXf8Dn#65"
+},
+"3JvWS": {
+"fen": "8/1p3k2/p3p2Q/P4pP1/2qP1P1K/4p3/8/8 w - - 3 42",
+"solution": [
+"g6+",
+"Ke7",
+"Qg7+"
+],
+"rating": 2533,
+"themes": [
+"crushing",
+"endgame",
+"queenEndgame",
+"short"
+],
+"mate": false,
+"game": "https://lichess.org/ajM4bcOv/black#82"
+},
+"3KdeG": {
+"fen": "1r6/8/8/8/3Kp2R/5k2/5P2/8 b - - 17 73",
+"solution": [
+"e3",
+"Rh3+",
+"Kxf2"
+],
+"rating": 2300,
+"themes": [
+"crushing",
+"endgame",
+"rookEndgame",
+"short"
+],
+"mate": false,
+"game": "https://lichess.org/MH5dmrI5#145"
+},
+"3L96G": {
+"fen": "8/4R3/8/p1K5/3p4/1b1k4/8/8 b - - 3 54",
+"solution": [
+"Kc3",
+"Kb6",
+"a4"
+],
+"rating": 2053,
+"themes": [
+"crushing",
+"defensiveMove",
+"endgame",
+"short"
+],
+"mate": false,
+"game": "https://lichess.org/kWoOVB4W#107"
+},
+"3La0T": {
+"fen": "8/8/4k3/p1p1P1pp/1p1pK3/PP4PP/2P5/8 w - - 0 38",
+"solution": [
+"a4",
+"g4",
+"h4"
+],
+"rating": 2039,
+"themes": [
+"crushing",
+"defensiveMove",
+"endgame",
+"pawnEndgame",
+"quietMove",
+"short",
+"zugzwang"
+],
+"mate": false,
+"game": "https://lichess.org/ul1c7XiZ/black#74"
+},
+"3MXK4": {
+"fen": "8/3k4/2p1p3/1p5p/2P1P2P/1P3KB1/8/4b3 b - - 3 42",
+"solution": [
+"Bxg3",
+"Kxg3",
+"bxc4",
+"bxc4",
+"e5"
+],
+"rating": 2512,
+"themes": [
+"bishopEndgame",
+"crushing",
+"defensiveMove",
+"endgame",
+"long"
+],
+"mate": false,
+"game": "https://lichess.org/jmY0qUky#83"
+},
+"3My0b": {
+"fen": "1R6/8/5p2/6k1/6r1/P1P4p/5P2/5K2 b - - 1 41",
+"solution": [
+"h2",
+"Rg8+",
+"Kf5",
+"Rxg4",
+"h1=Q+"
+],
+"rating": 2185,
+"themes": [
+"advancedPawn",
+"advantage",
+"defensiveMove",
+"endgame",
+"long",
+"master",
+"promotion",
+"rookEndgame"
+],
+"mate": false,
+"game": "https://lichess.org/PqDY2Eya#81"
+},
+"3NBfT": {
+"fen": "8/8/1p1p1n2/1P1N1p1p/2P2Pk1/4P3/7P/4K3 b - - 1 50",
+"solution": [
+"Nxd5",
+"cxd5",
+"Kf3",
+"Kd2",
+"Ke4"
+],
+"rating": 2227,
+"themes": [
+"advantage",
+"endgame",
+"knightEndgame",
+"long"
+],
+"mate": false,
+"game": "https://lichess.org/ajzumJgo#99"
+},
+"3NgPs": {
+"fen": "8/4r3/2p1p3/3p4/k4P2/ppQ4P/7K/8 b - - 1 53",
+"solution": [
+"b2",
+"Qc2+",
+"Kb4",
+"Qxc6",
+"Kb3",
+"Qb5+",
+"Ka2"
+],
+"rating": 2574,
+"themes": [
+"advancedPawn",
+"advantage",
+"defensiveMove",
+"endgame",
+"queenRookEndgame",
+"veryLong"
+],
+"mate": false,
+"game": "https://lichess.org/Q7ksQYZo#105"
+},
+"3O4ki": {
+"fen": "8/8/p7/2p2N2/2kp2Pp/7K/P7/8 b - - 1 44",
+"solution": [
+"d3",
+"Ne3+",
+"Kd4",
+"Nf1",
+"c4",
+"g5",
+"c3"
+],
+"rating": 2295,
+"themes": [
+"crushing",
+"defensiveMove",
+"endgame",
+"knightEndgame",
+"quietMove",
+"veryLong"
+],
+"mate": false,
+"game": "https://lichess.org/56NP64VC#87"
+},
+"3OIkf": {
+"fen": "8/pp6/8/P6P/1r4P1/3p1P2/2k5/R4K2 b - - 0 44",
+"solution": [
+"Rb1+",
+"Rxb1",
+"Kxb1",
+"Kf2",
+"d2"
+],
+"rating": 1901,
+"themes": [
+"advancedPawn",
+"crushing",
+"endgame",
+"long",
+"master",
+"rookEndgame"
+],
+"mate": false,
+"game": "https://lichess.org/nNv8ncVy#87"
+},
+"3OKQ7": {
+"fen": "8/p2P2kp/1p4p1/8/8/PP1R4/K1P4q/8 w - - 0 49",
+"solution": [
+"Kb1",
+"Qb8",
+"d8=Q",
+"Qxd8",
+"Rxd8"
+],
+"rating": 2218,
+"themes": [
+"advancedPawn",
+"crushing",
+"endgame",
+"long",
+"promotion",
+"queenRookEndgame"
+],
+"mate": false,
+"game": "https://lichess.org/EJjL9qNH/black#96"
+},
+"3OoQb": {
+"fen": "8/8/4k3/8/3Pp1p1/6K1/5P2/8 w - - 1 55",
+"solution": [
+"Kf4",
+"Kd5",
+"Ke3"
+],
+"rating": 1968,
+"themes": [
+"crushing",
+"endgame",
+"pawnEndgame",
+"short",
+"zugzwang"
+],
+"mate": false,
+"game": "https://lichess.org/RXtK8oN6/black#108"
+},
+"3OwAN": {
+"fen": "3rr1k1/1p3p1R/p1p3p1/4p3/7Q/1PPq4/1P1B1PPP/6K1 w - - 4 31",
+"solution": [
+"Rh8+",
+"Kg7",
+"Bh6+",
+"Kxh8",
+"Qf6+",
+"Kh7",
+"Qg7#"
+],
+"rating": 2419,
+"themes": [
+"endgame",
+"kingsideAttack",
+"mateIn4",
+"sacrifice",
+"veryLong"
+],
+"mate": true,
+"game": "https://lichess.org/bJWfeJj0/black#60"
+},
+"3PUYi": {
+"fen": "5k2/5p2/pp5N/2p1P2p/P1Pn1P2/1P4P1/8/5K2 b - - 0 37",
+"solution": [
+"Kg7",
+"Nxf7",
+"Kxf7"
+],
+"rating": 1916,
+"themes": [
+"crushing",
+"endgame",
+"knightEndgame",
+"short",
+"trappedPiece"
+],
+"mate": false,
+"game": "https://lichess.org/sDkm6OCL#73"
+},
+"3PjbQ": {
+"fen": "8/8/1K1k4/p1p1p3/2P1B3/PPb5/8/8 w - - 3 56",
+"solution": [
+"b4",
+"cxb4",
+"c5+",
+"Ke7",
+"c6"
+],
+"rating": 2379,
+"themes": [
+"bishopEndgame",
+"crushing",
+"endgame",
+"long",
+"master",
+"masterVsMaster"
+],
+"mate": false,
+"game": "https://lichess.org/Gscznqkw/black#110"
+},
+"3QB5I": {
+"fen": "8/Q1bk2pR/2pq1p2/8/4p3/5P1P/2P2P2/6K1 b - - 0 32",
+"solution": [
+"Qd1+",
+"Kg2",
+"exf3#"
+],
+"rating": 2308,
+"themes": [
+"endgame",
+"mateIn2",
+"short"
+],
+"mate": true,
+"game": "https://lichess.org/i9wQnv9r#63"
+},
+"3QEpK": {
+"fen": "4k3/b1p5/2K1P3/8/1P1P4/8/8/8 w - - 3 52",
+"solution": [
+"d5",
+"Kd8",
+"e7+",
+"Kxe7",
+"Kxc7",
+"Be3",
+"d6+",
+"Ke6",
+"d7",
+"Bg5",
+"b5",
+"Kd5",
+"b6"
+],
+"rating": 2450,
+"themes": [
+"advancedPawn",
+"bishopEndgame",
+"crushing",
+"deflection",
+"endgame",
+"quietMove",
+"veryLong"
+],
+"mate": false,
+"game": "https://lichess.org/I39KQtXs/black#102"
+},
+"3QQsK": {
+"fen": "8/8/4q2k/8/5RPP/8/6PK/8 w - - 1 59",
+"solution": [
+"Rf6+",
+"Qxf6",
+"g5+",
+"Qxg5",
+"hxg5+",
+"Kg6",
+"Kh3",
+"Kxg5",
+"Kg3"
+],
+"rating": 2099,
+"themes": [
+"crushing",
+"defensiveMove",
+"endgame",
+"exposedKing",
+"fork",
+"queenRookEndgame",
+"sacrifice",
+"veryLong",
+"zugzwang"
+],
+"mate": false,
+"game": "https://lichess.org/CExZ4ky9/black#116"
+},
+"3S8a4": {
+"fen": "8/8/5pk1/1q6/1p3Rp1/8/PR4P1/7K b - - 1 52",
+"solution": [
+"Qh5+",
+"Kg1",
+"g3"
+],
+"rating": 1962,
+"themes": [
+"crushing",
+"endgame",
+"master",
+"queenRookEndgame",
+"short"
+],
+"mate": false,
+"game": "https://lichess.org/epKonRyV#103"
+},
+"3SfTw": {
+"fen": "8/p7/1p4B1/1P4p1/P1pk2P1/3p4/3K2P1/8 b - - 6 54",
+"solution": [
+"c3+",
+"Kc1",
+"Ke3",
+"Bf7",
+"d2+",
+"Kd1",
+"c2+",
+"Kxc2",
+"Ke2",
+"Bc4+",
+"Ke1"
+],
+"rating": 2284,
+"themes": [
+"advancedPawn",
+"bishopEndgame",
+"crushing",
+"defensiveMove",
+"endgame",
+"exposedKing",
+"veryLong"
+],
+"mate": false,
+"game": "https://lichess.org/5MDX25Yh#107"
+},
+"3U5Hb": {
+"fen": "8/1pk5/6p1/PP3p2/1n1K3p/8/6P1/4N3 w - - 2 47",
+"solution": [
+"Kc4",
+"Na2",
+"Nd3"
+],
+"rating": 2162,
+"themes": [
+"crushing",
+"defensiveMove",
+"endgame",
+"knightEndgame",
+"master",
+"short"
+],
+"mate": false,
+"game": "https://lichess.org/F4veTP9N/black#92"
+},
+"3UAyu": {
+"fen": "8/8/8/5p2/3KPP2/8/p7/N1k5 b - - 0 59",
+"solution": [
+"Kb2",
+"e5",
+"Kxa1",
+"e6",
+"Kb1"
+],
+"rating": 2070,
+"themes": [
+"crushing",
+"endgame",
+"knightEndgame",
+"long",
+"trappedPiece"
+],
+"mate": false,
+"game": "https://lichess.org/NcXsnKQd#117"
+}
+}

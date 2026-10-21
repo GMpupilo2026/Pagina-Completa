@@ -87,9 +87,11 @@ window.HoyTeToca = (function () {
          quien tiene los avisos encendidos en el aparato, y casi nadie los tenía.
          Se ofrece acá, junto a la racha, y no al cargar: el navegador deja pedir
          el permiso una sola vez. Va DESPUÉS de la lista: arriba, en el celular,
-         empujaba lo que toca hacer hoy fuera de la pantalla. -->
-    <div id="hoy-avisos" class="mt-4 flex flex-wrap items-center gap-2" hidden>
-      <button type="button" id="hoy-avisos-si" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-3 py-1.5 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true">🔔 </span><span id="hoy-avisos-si-texto">Avísame si mi racha está en juego</span></button>
+         empujaba lo que toca hacer hoy fuera de la pantalla. Y es un enlace,
+         no un botón naranja: era lo más llamativo de la tarjeta, y lo que hay
+         que hacer hoy es entrenar, no encender un aviso. -->
+    <div id="hoy-avisos" class="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1" hidden>
+      <button type="button" id="hoy-avisos-si" class="text-left text-sm font-semibold text-brand-700 dark:text-brand-200 underline underline-offset-2 hover:text-accent-700 dark:hover:text-accent-400 rounded px-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true">🔔 </span><span id="hoy-avisos-si-texto">Avísame si mi racha está en juego</span></button>
       <button type="button" id="hoy-avisos-no" class="text-sm text-brand-500 dark:text-brand-300 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 rounded px-1">Ahora no</button>
     </div>
     <p id="hoy-avisos-msg" class="text-xs mt-2 text-brand-500 dark:text-brand-300" role="status" aria-live="polite"></p>`;
@@ -354,10 +356,16 @@ window.HoyTeToca = (function () {
     const hoy = r.stats.hoy_ejercicios || 0;
     const racha = r.stats.racha_actual || 0;
     const dias = (n) => n === 1 ? '1 día' : `${n} días`;
-    const texto = hoy >= meta
-      ? `✅ Hoy ya cuenta para tu racha: ${hoy} ejercicios. Llevas ${dias(racha)} seguidos 🔥`
-      : `Hoy llevas ${hoy} de ${meta} ejercicios para que el día cuente.`
-        + (racha ? ` Tu racha: ${dias(racha)} 🔥 — no la cortes.` : ' Con eso empiezas una racha.');
+    /* En el panel, cuántos días lleva ya lo dice el saludo de arriba: acá
+       solo lo de hoy. Ver «El panel del alumno, cada cosa una vez». */
+    const texto = op.enPanel
+      ? (hoy >= meta
+        ? `✅ Hoy ya cuenta para tu racha: ${hoy} ejercicios.`
+        : `Hoy llevas ${hoy} de ${meta} ejercicios para que el día cuente.` + (racha ? ' No cortes tu racha.' : ' Con eso empiezas una racha.'))
+      : (hoy >= meta
+        ? `✅ Hoy ya cuenta para tu racha: ${hoy} ejercicios. Llevas ${dias(racha)} seguidos 🔥`
+        : `Hoy llevas ${hoy} de ${meta} ejercicios para que el día cuente.`
+          + (racha ? ` Tu racha: ${dias(racha)} 🔥 — no la cortes.` : ' Con eso empiezas una racha.'));
     document.getElementById('hoy-meta-texto').textContent = texto;
     const barra = document.getElementById('hoy-meta-barra');
     barra.setAttribute('aria-valuemax', String(meta));
@@ -768,8 +776,11 @@ window.HoyTeToca = (function () {
     if (!caja || !window.TandaDiez) return;
     const pasos = cosas.slice(0, 3).map((c) => ({ href: c.href, texto: c.texto, icono: c.icono }));
     if (pasos.length < 2) pasos.push({ href: op.entreno + 'mates.html', texto: 'Mates', icono: '♚' });
+    /* «Sugerencia de hoy, por tu diagnóstico en mates: Mates en 1» se dice
+       «Mates en 1»: el porqué ya está escrito justo arriba, en su renglón. */
+    const corto = (t) => { const i = t.lastIndexOf(': '); return i >= 0 && /^Sugerencia/.test(t) ? t.slice(i + 2) : t; };
     document.getElementById('hoy-tanda-que').textContent =
-      'Con ' + pasos.map((p) => p.texto).join(', ').replace(/, ([^,]*)$/, ' y $1') + '. La barra de abajo te lleva al siguiente.';
+      'Con ' + pasos.map((p) => corto(p.texto)).join(', ').replace(/, ([^,]*)$/, ' y $1') + '. La barra de abajo te lleva al siguiente.';
     document.getElementById('hoy-tanda-boton').addEventListener('click', () => TandaDiez.empezar(pasos));
     caja.hidden = false;
   }

@@ -1409,8 +1409,8 @@ sus aperturas, busca mejoras con el motor y analiza sus partidas.
   vigente) y lo leen su profe, quien lo supervisa y administración solo si lo
   marcó «Que lo vea mi profe». El profe lo abre con
   `mis-estudios.html?alumno=<id>`, en solo lectura: puede recorrerlo,
-  analizarlo y bajarlo, no cambiarlo. Todavía no hay un enlace desde el
-  informe del alumno: la base ya lo permite.
+  analizarlo y bajarlo, no cambiarlo. Se llega desde «🔬 Sus estudios» en
+  «Con este alumno», arriba del informe del alumno (`informes.html?alumno=…`).
 - **No cuenta tiempo por sección** todavía: hacerlo pide una sección nueva en
   `js/tiempo-secciones.js` y en `informe-html.ts`, y volver a desplegar la
   función de los correos.
@@ -3756,6 +3756,40 @@ enroques de B saltan las 3 que corresponden.
 - Lo prueba `herramientas/verificar-dificultad-adaptable.js`, incluido el
   caso en que se nota buscar desde el principio (arrancó en 1400 y se traba).
 
+## Los finales difíciles (Ejercicios por tema)
+
+- `construir_temas.py` elige 100 por tema **entre los más jugados de Lichess**,
+  y los más jugados son los fáciles: «Final» terminaba en 1992, con apenas 3
+  por encima de 1800, y «Dama y torre» tenía 16 de 2000 para arriba. Al
+  alumno fuerte se le acababa el tema en una tarde, y el selector «desde 2000»
+  no tenía casi nada que darle.
+- `entreno/data/sumar_finales_dificiles.py` completa los siete temas de final
+  (`endgame`, `rookEndgame`, `bishopEndgame`, `pawnEndgame`, `knightEndgame`,
+  `queenEndgame`, `queenRookEndgame`) hasta **8 por tramo de 100 puntos entre
+  1800 y 2800**. Si el tramo ya los tiene, no suma: lo que había se queda como
+  estaba, y correrlo dos veces da lo mismo.
+- **Los candidatos salen de la tabla «Ejercicios Lichess»** con la consulta
+  escrita en la cabecera del script: los 8 más jugados de cada tramo, con
+  popularidad ≥ 85 y al menos 500 partidas. Un ejercicio difícil y poco jugado
+  puede tener la dificultad mal medida o una segunda solución que nadie
+  reportó.
+- **Cada uno se baja de `lichess.org/api/puzzle/<id>` y se reproduce con
+  python-chess desde la partida** (`--bajar`). La posición tiene que coincidir
+  con la de Lichess y cada jugada de la solución tiene que ser legal; si no, se
+  descarta. Lo bajado queda en `finales_dificiles.json` (se versiona, y
+  `.assetsignore` lo saca del despliegue), así que `construir_temas.py` lo suma
+  al final sin internet, igual que la táctica.
+- **Después hay que volver a armar `entreno/data/metas.json`** (`python3
+  herramientas/metas-indice.py`): guarda cuántos ejercicios tiene cada tema,
+  que es el tope de lo que pide una tarea, y `verificar-tareas.js` falla si
+  no coincide con `temas.json`.
+- **Y también `entreno/data/memoria.json`** (`node herramientas/memoria-generar.js`),
+  que saca sus posiciones de `temas.json`: `verificar-memoria.js` falla si no
+  es lo que arma el generador.
+- Los temas siguen ordenados por rating, así que las tandas «Fácil / Media /
+  Difícil» de la clase en vivo (`tacticsThemeBuckets()`, en tercios) y el
+  selector «desde» siguen funcionando sin tocar nada.
+
 ## El primer paso después del diagnóstico
 
 - En los datos, de 52 alumnos que hicieron el diagnóstico, 17 no volvieron a
@@ -3848,9 +3882,19 @@ completo, no dejaba volver a ninguno: quien quería repasar uno, o repetir el
 que le gustó, no tenía cómo. Ahora, debajo del ejercicio, **«Tus ejercicios»**:
 
 - **Cuántos llevas** en el nivel y cuál te toca.
-- **Volver a uno ya resuelto**: «Ir al ejercicio número», la lista plegada de
-  resueltos del nivel (se pinta solo abierta: con el nivel entero son
-  doscientos botones) y «Ir al que te toca». Lo que todavía no se abrió sigue
+- **El mapa del nivel, siempre a la vista** (`pintarMapa`, `#mapa-4x4`): un
+  botón por ejercicio, el número y su marca: **✓ resuelto** (relleno oscuro),
+  **▶ el de ahora** (dorado, borde grueso), borde grueso el que toca, ★ favorito
+  y, sin marca y en gris con borde punteado, el que todavía está cerrado. El
+  color nunca va solo: la marca está escrita y el `aria-label` dice el estado
+  («Ejercicio 2, resuelto, el que tienes en pantalla, favorito»). Los
+  contrastes se midieron (resuelto 14,6 y 13,3; cerrado 6,1 y 6,8; el de ahora
+  8). Es **una sola parada con Tab** (roving tabindex; con el nivel entero son
+  doscientos botones) y las flechas, Inicio y Fin mueven el foco. Uno cerrado
+  lleva `aria-disabled`, no `disabled`: se alcanza con Tab y al tocarlo dice
+  cuál toca. Reemplazó a la lista plegada «Resueltos de este nivel».
+- **Volver a uno ya resuelto**: tocarlo en el mapa, «Ir al ejercicio número» y
+  «Ir al que te toca». Lo que todavía no se abrió sigue
   cerrado (se abre al resolver el anterior, `isUnlocked`) y se dice cuál toca.
   `showCategory(cat, pedido)` abre ese índice aunque ya esté resuelto o el
   nivel entero lo esté; con el nivel completo la sección también está.
@@ -3869,8 +3913,9 @@ Los niveles de arriba (Fácil, Intermedio…) dicen cuál está elegido con
 `aria-pressed`: llevaban `aria-selected`, que fuera de un `tablist` el lector
 ignora.
 
-Lo mide `verificar-4x4-repaso.js` (con 3 resueltos, los favoritos, la cuenta
-ciega y el nivel completo). Probado que falla: si `showCategory` no abre el
+Lo mide `verificar-4x4-repaso.js` (con 3 resueltos, el mapa —sus 200 botones,
+las marcas, tocar uno resuelto y uno cerrado, las flechas—, los favoritos, la
+cuenta ciega y el nivel completo con sus 200 marcados). Probado que falla: si `showCategory` no abre el
 pedido y no se mira si está abierto, saltan dos.
 
 ## Aprende a jugar: las lecciones de Lichess

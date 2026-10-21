@@ -400,8 +400,8 @@ async function pruebaProfeMiraSuAlumno(browser) {
   igual("sus tareas, con SU id", con("tareas_con_avance").map((r) => JSON.parse(r.slice(r.indexOf("{"))).p_alumno), ["u-alu-b"]);
   igual("su progreso, con SU id", con("mi_entreno_resumen"), ['mi_entreno_resumen {"p_alumno":"u-alu-b"}']);
   igual("sin estado de la clase en vivo", g.sesion, false);
-  igual("la franja dice de quién es y qué ve de sus tareas",
-        /panel de Luis Pérez \(estudiante\)\. Su progreso y su informe son los suyos; de sus tareas y exámenes ves los que le pusiste tú/.test(g.barra || ""), true);
+  igual("la franja dice de quién es el panel",
+        /panel de Luis Pérez \(estudiante\)\. Sus tareas, su progreso y su informe son los suyos/.test(g.barra || ""), true);
   igual("y lo deja guiarlo: su informe y ponerle una tarea",
         await page.evaluate(() => Array.from(document.querySelectorAll("#modo-vista-barra a")).map((a) => a.textContent + " → " + a.getAttribute("href"))),
         ["📊 Su informe → informes.html?alumno=u-alu-b", "📋 Ponerle una tarea → tareas.html?alumno=u-alu-b"]);

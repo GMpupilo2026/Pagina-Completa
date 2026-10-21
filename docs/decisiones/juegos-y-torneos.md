@@ -3420,7 +3420,7 @@ no de AF.
   `(\d{5,9}) ([^0-9\n]+?) CRC (IA|FA|NA) (i )?(?:([A-D]) )?([A-Z]{2}-[A-D]|No|NA)`:
   salieron 148 de las 148 veces que aparece « CRC ».
 - **La fecha de la reunión del Consejo que aprobó el AF.** Ojo: la fecha
-  OFICIAL no es esa sino la del perfil de FIDE, de dos a cinco semanas
+  OFICIAL no es esa sino la del perfil de FIDE, de seis días a seis semanas
   después (ver «La fecha oficial del título: la del perfil de FIDE»). El
   perfil que se lee desde afuera solo traía el año, y además está cerrado. La dicen los **informes de la Comisión de
   Árbitros a cada reunión del Consejo de FIDE**
@@ -3613,7 +3613,7 @@ seminario de Luis, en orden).
 ## La categoría nacional: la lista de la Federación
 
 La lista oficial de FIDE dice si alguien es NA, pero no su categoría nacional.
-La Federación Central de Ajedrez la publica en
+La Federación Costarricense de Ajedrez la publica en
 `fcacostarica.com/lista-de-arbitros/`, una tabla con el FIDE ID, el nombre, la
 federación, el título, la categoría y la licencia. La categoría de un NA viene
 como «NAA», «NAB» o «NAC» (A, B o C); la de un FA o IA es la de FIDE (D, o A
@@ -3658,11 +3658,352 @@ para Carolina Muñoz). El dueño la pasó en octubre de 2026.
   - quién arbitró 3 o más torneos en los últimos dos años sin estar en ella.
   Que alguien no figure como árbitro en chess-results no prueba que no haya
   arbitrado: el organizador puede no haberlo anotado. La página lo dice.
-- **Lo que le falta a un AN para subir de categoría** no se hizo: hace falta
-  el reglamento de categorías de la Federación (cuántos torneos y de qué tipo
-  pide la A, la B y la C), y no está publicado en `fcacostarica.com` (se buscó
-  en octubre de 2026; solo aparecen las contrataciones, que piden la categoría
-  A o B para algunos cursos). Con el reglamento, sale de los mismos datos.
+- **Lo que le falta a un AN para subir de categoría**: ver «Para subir de
+  categoría», abajo. En `fcacostarica.com` el reglamento no está; lo pasó el
+  dueño.
+
+## Para subir de categoría
+
+El dueño pasó en octubre de 2026 el **Reglamento para Árbitros de la Federación
+Costarricense de Ajedrez** (el PDF inscrito en el Registro de Personas
+Jurídicas el 17/06/2025, documento 2025-331526-1). El nombre de la Federación
+es ese: la herramienta decía «Federación Central de Ajedrez» y se corrigió, y
+también los Programas de Estudio (`herramientas/programas-estudio/datos/`, 1.°
+a 11.°: se regeneraron los ocho Word que lo nombran y el .zip). El nombre viejo
+queda solo donde es un dato ajeno: las migraciones ya aplicadas y los nombres
+de torneos de chess-results.
+
+Lo que pide, en lo que toca a la herramienta:
+
+- **Las categorías** (art. 5): C, B y A son de la Federación; AF e IA, de FIDE.
+  Solo a la A le tramita el AF (art. 7).
+- **Para subir de C a B (art. 12) o de B a A (art. 14)**:
+  - un año con la categoría que tiene;
+  - un curso intermedio de 20 horas aprobado con 80 %, de menos de un año
+    (para la A, otro distinto del de la B y además uno de un programa de pareo
+    avalado por FIDE de 10 horas);
+  - **dos normas** posteriores a la categoría, firmadas por un árbitro con
+    licencia FIDE, en torneos de al menos 7 rondas, válidos para Elo nacional o
+    internacional y de modalidades o sistemas distintos.
+- **Una norma vale tres años** (art. 18) y la da el principal del torneo.
+- **Lo que puede hacer cada una**: la C es principal o adjunta solo en torneos
+  de Elo nacional, de cuarta o tercera división y hasta 30 jugadores (art. 11);
+  la B, hasta segunda división y 50 (art. 13); la A, todo, campeonatos
+  nacionales incluidos (art. 15).
+
+Cómo lo lleva la herramienta (`subirCategoria()` en `js/arbitros-cr.js`):
+
+- **En la ficha de un AN**, la tarjeta «Para subir de categoría». Cuenta como
+  posible norma un torneo de los últimos tres años, de 7 rondas o más, de FIDE
+  o con «Cálculo de elo» nacional o internacional, en que fue adjunto o árbitro
+  (no el principal). Firma el principal si es de la lista y FIDE lo tiene
+  activo; si el principal no es de la lista, si es él mismo o si está
+  inactivo, el torneo queda «para revisar». Dos normas sirven si la modalidad
+  (el ritmo: el de FIDE, el de la ficha de chess-results o el deducido del
+  control) o el sistema (solo el de FIDE: chess-results no lo da) son
+  distintos. Lo que no se ve —la fecha de la categoría, el año con ella, los
+  cursos y el informe escrito— lo dice como «Revisar».
+- **La A** dice que ya puede pedir el AF por la Federación; **un AN sin
+  categoría** en la lista, que no se sabe.
+- **«Más de lo que deja su categoría»**: desde el 17/06/2025 (cuándo lo aprobó
+  la Asamblea no se sabe; esa es la fecha del Registro), los torneos en Costa
+  Rica en que una C o B fue principal o adjunta y el torneo era de FIDE, tenía
+  Elo internacional o pasaba de 30 o 50 jugadores. La división de los
+  jugadores no se ve: no se mira.
+- **En la lista**, «Quiénes pueden subir de categoría»: los AN C o B con algo
+  para mirar, el más cerca primero.
+- `verificar-arbitros-cr.js` lo prueba con el reloj en diciembre de 2025: Luis
+  (B) sin normas, después con un blitz y un clásico firmados por Óscar (y uno
+  de 5 rondas que no cuenta), y dos torneos más allá de la B.
+
+## La categoría y los cursos de cada árbitro
+
+Lo que el reglamento pide y desde afuera no se ve (octubre de 2026, «Hacer
+todas»): desde cuándo tiene alguien su categoría y qué cursos llevó. Va en
+`arbitros_cr_formacion` (migración `20261018194338`): una fila por categoría
+(C, B o A, con la fecha en que se la dieron; un índice único no deja dos de la
+misma) o por curso (básico, intermedio, de programa de pareo o de
+actualización, con la fecha en que terminó, las horas y la nota en %).
+
+- **Quién la escribe.** Solo administración: es el registro oficial y nadie
+  con la licencia puede darse un curso. La leen quienes tienen la herramienta.
+  Comprobado en SQL: como `authenticated` sin ser admin, el `insert` choca con
+  la RLS; `anon` no tiene permiso ni para leer. No va en la bitácora de
+  auditoría: no reparte permisos, accesos ni dinero del sitio.
+- **En la ficha**, «Categoría y cursos en la Federación»: lo registrado, el
+  más nuevo primero, y para quien administra el formulario (con «Categoría»
+  pide la letra; con un curso, las horas y la nota) y «Quitar», que pide
+  confirmar.
+- **Con eso, «Para subir de categoría»** deja de pedir revisar lo que ya
+  sabe:
+  - las normas cuentan solo después de la fecha de la categoría;
+  - el año con la categoría dice «Cumple» o hasta cuándo «Falta»;
+  - los cursos suman las horas de los aprobados con 80 % o más de menos de un
+    año (sin la nota anotada cuentan, pero quedan para revisar). Para la A, el
+    intermedio tiene que ser posterior a la B: es la forma de saber que es
+    «distinto del de la B» (art. 14, b).
+  - Si el árbitro no tiene nada registrado, sigue diciendo «Revisar», no
+    «Falta»: que no esté anotado no quiere decir que no lo tenga.
+  - Cuando todo lo que se ve se cumple, dice «Puede pedirla». El informe
+    escrito de cada norma (art. 18) sigue como «Revisar», pero no lo frena.
+- **La actividad del art. 19** («Activo (curso)», «Activo (torneo)» o «Sin
+  actividad»): activo con 20 horas de cursos de actualización en dos años, o
+  con un torneo en Costa Rica válido para Elo arbitrado en dos años (el
+  artículo dice que arbitrarlo lo vuelve a activar). Sale en la ficha, en el
+  filtro «Federación» de la lista y en el Excel.
+
+## El filtro «Federación», el Excel y la norma para firmar
+
+- **El filtro «Federación»** de la lista: activos o sin actividad (art. 19) y
+  «Más de lo que deja su categoría». Van como filtro y como columnas del
+  Excel, no como columnas de la tabla: con sus 19, la tabla ya cabe justa en
+  una portátil.
+- **«Quiénes pueden subir de categoría» en Excel**, con lo que pide cada uno.
+- **«Norma (PDF)»** en cada torneo que podría ser norma: el informe escrito
+  favorable del art. 18, con el aspirante, el torneo y el principal ya
+  puestos, y el lugar para la firma, la fecha y si el desempeño fue
+  satisfactorio. El Apéndice A del reglamento, que debía traer el formato,
+  está en blanco en el PDF inscrito: este es uno propuesto, y el documento lo
+  dice.
+
+## La categoría sugerida
+
+Pedido del dueño (octubre de 2026): «sugerir qué categoría nacional debería
+tener cada árbitro». `categoriaSugerida()` en `js/arbitros-cr.js` la saca de sus
+torneos con las reglas del reglamento:
+
+- **Por sus normas** (arts. 12 y 14):
+  - un par de torneos que podrían ser norma, de modalidad o sistema
+    distintos, respalda la B;
+  - otro par, que empieza al menos un año después de completar el primero,
+    respalda la A (el año con la B).
+  - Se cuenta **toda su historia en Costa Rica**, no solo los tres años que
+    dura una norma: se mide lo que ya hizo, no lo que puede presentar hoy (eso
+    es «Para subir de categoría»).
+  - Torneo que podría ser norma: el mismo de «Para subir de categoría» (7
+    rondas o más, válido para Elo, de adjunto o árbitro, con un principal de la
+    lista activo en FIDE que no sea él).
+- **Por lo que ya hace** (arts. 11, 13 y 15):
+  - ser principal o adjunto en un torneo de FIDE, con Elo internacional o de
+    más de 50 jugadores es trabajo de A;
+  - en uno solo de Elo nacional de 31 a 50 jugadores, de B.
+  - No sube la sugerencia: hacer el trabajo no da la categoría. Se muestra al
+    lado, para que la Comisión vea quién arbitra por encima de lo que tiene.
+- **Nunca baja**: el reglamento no quita categorías. Si sus torneos no
+  respaldan la que tiene, lo dice y la deja.
+- **Un AF o un AI va en la A** (solo a la A le tramita la Federación el AF,
+  art. 7). La lista de la Federación de octubre de 2026 le da la C a Víctor
+  Francia, que es AF desde mayo de 2026: sale como «A».
+- **Los cursos no se ven**: la sugerencia los supone y la página lo dice.
+
+Dónde sale:
+- en la lista, «Categoría sugerida», solo los que no coinciden: primero a
+  quien le toca otra categoría y después a quien arbitra por encima;
+- en Excel, todos los que tienen título;
+- en la ficha, una línea en «Para subir de categoría»;
+- en el informe para la Junta.
+
+`verificar-arbitros-cr.js` lo prueba:
+- Juan (AN sin categoría): C;
+- Luis (B), con los torneos de la prueba: no baja aunque nada lo respalde,
+  pero ya fue adjunto en uno de FIDE;
+- con un par de normas en 2025 y otro un año después: A;
+- Ana (AF con la C en la lista): A.
+
+## La lista pública de árbitros
+
+`arbitros.html` (octubre de 2026): la lista de árbitros de la Federación, gratis
+y sin cuenta, para que organizadores y clubes vean a quién pueden contratar.
+
+- **De dónde sale.** De `arbitros_cr_publico()` (migración `20261018202246`),
+  una función `SECURITY DEFINER` con execute para `anon` a propósito, como
+  `cifras_academia()`. La página la llama con `fetch` y la clave pública, sin
+  cargar el cliente de Supabase (`js/arbitros-publico.js`).
+- **Qué devuelve, y solo eso.** Para cada uno de la lista de la Federación
+  (la `fca_leida` más nueva):
+  - nombre, título de FIDE, categoría nacional y si FIDE lo tiene activo;
+  - la fecha de su último torneo en Costa Rica válido para Elo como
+    principal, adjunto o árbitro.
+
+  Todo eso ya es público (las listas de la Federación y de FIDE y
+  chess-results). De los cursos, que no lo son, sale solo un sí o un no: si
+  tiene las 20 horas de actualización de los dos últimos años, sin horas,
+  notas ni fechas. Las tablas siguen cerradas a quien no tiene la licencia.
+- **No dice «sin actividad».** En la herramienta con licencia sí: allá lo lee
+  la Comisión. En público sería injusto mientras el registro de cursos esté
+  vacío (65 de los 118 arbitraron en los últimos dos años). Muestra la fecha
+  del último torneo y «No consta» en el curso, y aclara qué quiere decir.
+- **«Buscar árbitro para un torneo».** Con el Elo del torneo, la división de
+  los jugadores y cuántos son, dice qué categoría pide el reglamento como
+  principal o adjunto y deja solo a quien la tiene:
+  - desde la C, solo Elo nacional, cuarta o tercera división y hasta 30
+    jugadores (art. 11);
+  - la B, hasta segunda y 50 (art. 13);
+  - la A, el AF o el AI, para primera división, un campeonato nacional, más de
+    50 o Elo FIDE (art. 15). En un torneo de FIDE tiene que estar activo en
+    FIDE.
+  - Un torneo sin Elo no lo regula el reglamento: cualquiera.
+
+  Siempre recuerda que cualquier categoría puede trabajar como árbitro bajo la
+  supervisión de uno con licencia FIDE. Primero va quien arbitró hace poco, y
+  la casilla (marcada al entrar) deja fuera a quien no arbitró en dos años.
+- Está en la vitrina de herramientas como gratis (`js/herramientas-arbitraje.js`,
+  `id: "arbitros"`).
+- `verificar-arbitros-publico.js` la prueba con la llamada contestada por una
+  lista falsa y el reloj fijo: el orden, cada regla de categoría, la casilla,
+  el buscador, el error de la base y los 400 px.
+
+### La ficha pública de cada árbitro, con su QR
+
+Pedido del dueño en octubre de 2026. En `arbitros.html`, el nombre de cada
+árbitro abre su ficha. Antes enlazaba al perfil de FIDE, que ahora va
+dentro de la ficha.
+
+- **Lleva solo lo público**, lo mismo que la lista y salido de
+  `arbitros_cr_publico()`: ID FIDE, título, categoría nacional, si FIDE lo
+  tiene activo, el último torneo en Costa Rica (y si fue hace más de dos
+  años) y el curso de actualización. Agrega «Puede arbitrar», lo que
+  permite su categoría según el reglamento (arts. 11, 13 y 15); a un AF o
+  AI, también si puede en torneos de FIDE (activo). No suma nada de las
+  tablas con licencia.
+- **El número de la dirección abre la ficha** (`arbitros.html#ID FIDE`).
+  El QR y «Copiar el enlace» llevan a esa dirección, así que un
+  organizador la abre desde el celular. «Volver a la lista» saca el número
+  de la dirección y devuelve el foco al nombre.
+- **El QR sale de `js/qr-svg.js`**, que antes estaba copiado dentro de
+  `js/certificado.js`; el certificado ahora también lo usa (una sola copia).
+  `js/clase-qr.js` sigue con el suyo porque pinta la tarjeta del proyector
+  con otro margen y otro tamaño.
+- `verificar-arbitros-publico.js` lo prueba:
+  - los datos y «Puede arbitrar» de un AF inactivo y de una C;
+  - que el QR leído de vuelta lleva a la ficha;
+  - copiar el enlace, cerrar la ficha, abrir directo con `#3` y que quepa
+    a 400 px.
+
+  Se rompió codificando otro texto en el QR, y salta.
+
+## Las novedades y el arbitraje en números
+
+Dos secciones más en la lista de `arbitros-cr.html` (octubre de 2026), sin los
+filtros de arriba.
+
+- **«Novedades de los últimos 12 meses»** (`novedades()`):
+  - los títulos de FIDE, con la fecha del perfil o la del Consejo;
+  - quién junta las normas de torneo para pedir su siguiente título (la
+    fecha de la norma que completa las 3 o las 4);
+  - quién completa el par de normas que respalda la B o la A, si no la tiene;
+  - el primer torneo como árbitro en Costa Rica de alguien nuevo.
+
+  El informe para la Junta trae las del cuatrimestre.
+- **«El arbitraje del país en números»** (`numeros()`):
+  - hoy, los de la lista de la Federación por título y categoría y cuántos
+    están activos (art. 19);
+  - año por año, en Costa Rica y como principal, adjunto o árbitro:
+    - cuántos arbitraron, cuántos por primera vez y para cuántos fue su
+      último año hasta hoy (en los años recientes baja a medida que vuelven);
+    - los torneos y cuántos hizo cada uno en promedio;
+    - qué parte del trabajo hizo el 20 % que más arbitró;
+    - los títulos de FIDE del año, del año que dice el perfil; también salen
+      los años con un título y sin torneos.
+
+  Va en Excel y, los últimos cinco años, en el informe para la Junta.
+- En `verificar-arbitros-cr.js`:
+  - una novedad de hace 11 meses sale y una de hace 13 no;
+  - la tabla de años, con dos árbitros en 2024, mide la concentración (rota
+    al 60 %, salta).
+
+## La carga desde un Excel
+
+Para que `arbitros_cr_formacion` no quede vacía (octubre de 2026): en la lista de
+`arbitros-cr.html`, solo para quien administra, «Cargar categorías, cursos y
+correos desde un Excel» (`leerRegistro()` en `js/arbitros-cr.js`, el .xlsx lo
+abre `js/reporte-excel.js`, el mismo lector de Pareo Integral).
+
+- **Las columnas, como vengan.** Se buscan por su título en cualquier orden:
+  ID FIDE o Nombre, Qué, Categoría, Fecha, Horas, Nota, Detalle, Correo,
+  Autorizó y Avisos. La plantilla se baja de la misma sección.
+- **El árbitro, por su ID FIDE o por su nombre.** El nombre cuenta si tiene las
+  mismas palabras en cualquier orden («Luis Rojas Prueba» es «Rojas Prueba,
+  Luis»). Si dos calzan, no se adivina: pide el ID.
+- **Antes de registrar, fila por fila**, qué entra y por qué no entra lo otro:
+  - un ID que no está en la lista de FIDE o un nombre que no se reconoce;
+  - una categoría que no es A, B o C, o que ya estaba registrada;
+  - un curso sin horas o con una nota fuera de 0 a 100;
+  - un correo sin la columna «Autorizó».
+- **Registrar** guarda una por una lo que entra y deja escrito qué se registró
+  y qué no.
+- `verificar-arbitros-cr.js` sube un CSV de nueve filas y mira el motivo de cada
+  una que no entra.
+
+## El aviso por correo de lo que se vence
+
+A cada árbitro con correo registrado le llega, el día 1 de cada mes a las 8:07
+de Costa Rica, lo que se le vence en los próximos 90 días (migración
+`20261018205712`, Edge Function `arbitros-avisos`, tarea `avisos-arbitros`):
+
+- una norma de FIDE que deja de contar para su siguiente título (seis años): de
+  AF si no lo tiene, de AI si es AF, solo las posteriores a su AF;
+- el seminario de FIDE que deja de valer (cuatro años), si tiene alguna norma;
+- su actividad en la Federación (art. 19): dos años desde su último torneo en
+  Costa Rica válido para Elo o su último curso de actualización.
+
+Cómo funciona:
+
+- **Lo calcula la base**, en `arbitros_cr_por_vencer(p_dias)`. Las normas salen
+  de los estados de AF y AI que ya trae cada torneo. Solo la llaman quien
+  administra y la service role: comprobado en SQL, a otra cuenta la rechaza.
+- **El correo y la autorización**, en `arbitros_cr_contacto`: los ve y escribe
+  solo administración, que los registra en la ficha («Correo para los avisos»)
+  o desde el Excel. Cómo autorizó es obligatorio. La política de privacidad lo
+  dice (versión del 18/10/2026).
+- **Cada cosa se avisa una vez**: lo mandado queda en
+  `arbitros_cr_avisos_enviados` (clave primaria `fide_id, clave`), que se lee
+  pero no se escribe desde la web.
+- **La función** sigue el patrón de `alerta-base`:
+  - exige el secreto `tanda_arbitros_secreto` de la bóveda antes de leer
+    nada;
+  - no lee el cuerpo del pedido;
+  - le escribe a cada uno lo suyo en un correo, con `reply_to` a
+    info@ajedrez-integral.com;
+  - anota lo avisado solo si Resend lo aceptó.
+- **Para dejar de recibirlos** se responde el correo y administración apaga
+  «Mandarle los avisos». No hay enlace de baja: son pocos árbitros y el registro
+  lo lleva una persona.
+- **En la página**, «Avisos por correo» (solo administración): lo que se vence
+  en 90 días y qué pasa con cada uno: sale el día 1, no sale (sin correo o
+  avisos apagados) o ya se avisó.
+- **Probado** en la base: sin el secreto contesta 401; con el disparador,
+  «0 enviados» (todavía no hay correos registrados).
+- `verificar-arbitros-avisos.js` revisa sin red:
+  - el correo: escapa lo de la base, fechas en palabras y en orden, el
+    asunto, cómo dejar de recibirlos;
+  - la función: el secreto primero, salta lo avisado y a quien no tiene
+    correo;
+  - la migración: los permisos, el secreto y la tarea.
+
+  `verificar-arbitros-cr.js` revisa la página: lo que ve administración y lo
+  que no ve nadie más.
+
+## El informe cuatrimestral para la Junta Directiva
+
+El art. 3 le pide a la Comisión Técnica de Arbitraje un informe cuatrimestral a
+la Junta Directiva a más tardar el 15 de mayo, de setiembre y de enero. La
+lista lo arma en PDF para el cuatrimestre que se elija (de enero a abril, de
+mayo a agosto o de setiembre a diciembre, desde 2025; arranca en el último que
+ya terminó, que es el que toca entregar), sin los filtros de arriba:
+
+- los torneos en Costa Rica del cuatrimestre con algún árbitro de la lista,
+  con su Elo, rondas y principal;
+- quién arbitró y cuántas veces de principal;
+- la actividad del art. 19 de los de la lista de la Federación, con los que
+  están sin actividad;
+- quiénes pueden subir de categoría;
+- quién arbitró más de lo que deja su categoría en el cuatrimestre;
+- la lista de la Federación contra quién arbitra;
+- lo que vence en los próximos 12 meses.
+
+`verificar-arbitros-cr.js` lo baja con el reloj en diciembre de 2025 (arranca en
+mayo a agosto) y mira que estén los torneos de esos meses y no los de otros.
 
 ## La fecha oficial del título: la del perfil de FIDE
 
@@ -3700,15 +4041,109 @@ Comisión de Árbitros de 2023 a 2026, de todos los países.
 
     Ojo: esa semana arbitró también el A, el Sub-14 y el Blitz, en las
     mismas fechas, y solo puede usar uno (2.10).
-  - El desfase va de **dos a cinco semanas**.
+  - **Los otros nueve** (capturas del dueño, octubre de 2026), los FA a
+    los que les faltaba: Loría (Consejo 17/12/2023, perfil 05/01/2024),
+    Zeledón (29/07/2024 → 16/08/2024), Murillo Tsijli (29/07/2024 →
+    07/09/2024), Argüello (05/09/2024 → 19/09/2024; el perfil dice «95th
+    2024 FIDE Congress», que es la misma reunión de Budapest), Neeshmy Núñez
+    (10/11/2024 → 18/11/2024), Quesada (22/03/2025 → 02/05/2025), Torres
+    (22/03/2025 → 03/05/2025), Francia (02/04/2026 → 03/05/2026) y Pastor
+    (23/08/2026 → 29/08/2026). Con eso, todos los FA con Consejo conocido
+    tienen su fecha oficial. Lo que cambió: el Campeonato Nacional Femenino
+    2024 (02/02/2024) de Loría, como principal, pasó de «revisar» a valer
+    para AI; de los demás, los torneos de esos días no tenían norma de AI.
+  - El desfase va de **seis días a seis semanas** (Pastor, 6; Torres, 42):
+    los 60 días de «revisar» alcanzan.
+  - **Al subir de título, el perfil pierde las fechas del anterior.** El de
+    Stanley Gómez Huertas (captura del dueño, octubre de 2026) ya solo dice
+    «FIDE Arbiter (2019)» (Presidential Board del 7 y 8/9/2019, en Budapest)
+    y las fechas del AI: Consejo del 04/04/2023, «License level» del
+    25/04/2023 (`ia_perfil`) y «Licensed» del 01/05/2023. Por eso la fecha
+    del perfil de cada AF conviene copiarla antes de que suba a AI. Su norma
+    de AI más vieja, el PanAm Escolar de Medellín (del 12 al 17/11/2019),
+    es de 66 días después del Board: con el desfase de siempre, ya era AF.
+- **Las solicitudes de AI de todos los países, guardadas** (octubre de
+  2026): `herramientas/arbitros-cr/solicitudes-ia.py` las saca de 29
+  informes a `herramientas/datos/fide-solicitudes-ia.json`: los del
+  Presidential Board de 2019 (`2019Q1PBARBReport.pdf` a `2019Q3`), el del
+  Congreso de Abu Dabi de febrero de 2020 (`2020Q1EBARBReport.pdf`) y los
+  del Consejo de 2020Q2 a 2026Q3. El de 2023Q4 y el del Board de 2019Q4
+  no existen, el de 2020Q4 no trae solicitudes de título, y de antes de
+  2019 no hay informes con ese formato (los de 2016 a 2018 son actas,
+  anexos en fide.com, sin los torneos de cada solicitud). Son 1066
+  solicitudes y 165 rechazos (612 y 80 desde 2023). Para saber si alguien
+  mandó una norma entre su «License level» y su «Licensed» solo sirven los
+  que tuvieron un rechazo y ninguna aprobación (`siguen_af`, 46): al
+  aprobarle el AI a alguien, su perfil borra las fechas del AF.
+  - En los 65 rechazos de 2020 a 2022 tampoco hay ninguno por la licencia.
+    Los tres «before FA title» (Idiazabal, ESP, 2022Q2; Kikvidze, GEO, y
+    Avramidou, GRE, 2022Q3) son de torneos de uno a tres años antes del AF.
+- **Normas entre el «License level» y el «Licensed»: FIDE las cuenta.**
+  De los 39 de `siguen_af` se leyeron 35 perfiles en el Chrome del dueño
+  (`herramientas/datos/fide-perfiles-siguen-af.json`, #956 y #960). FIDE
+  no encuentra 3406369 ni 12600504, y devuelve vacíos 9963642 y 10651985.
+  **Doce** mandaron normas de torneos jugados entre su «License level» y
+  su «Licensed», y **en ningún rechazo FIDE habla de la licencia**. Que una
+  norma «contó» sale de la cuenta que da el rechazo («Only 3 norms»: las
+  que mandó menos las que nombra), no de una frase que lo diga:
+  - **Alberto Jesús López Rodríguez** (PER, 3802671; AF del 09/05/2017 al
+    «Licensed» del 24/02/2020), informe 2020Q2: **sus cinco normas** son de
+    ese espacio (2018 a 2020). «Only 3 norms (Cerrado Classico 1600 not IA
+    level; two 4.6d tournaments while only one norm is acceptable)»:
+    descontaron dos por otra razón, **las otras tres contaron**. Es el
+    antecedente más claro de Meza.
+  - **Magnus Aanstad** (NOR, 1507362; del 01/04/2014 al 14/03/2017), 2022Q2:
+    «Only 3 norms (Chess Olympiad Wom is too old norm, art. 5.3.1)».
+    Contaron el Campeonato de Noruega 2015 y Landsturneringen 2016, los dos
+    de ese espacio.
+  - **Divesh Sookdeo** (RSA, 14319047; del 21/09/2015 al 20/01/2020),
+    2022Q4: «Only 3 norms (RSA Open CC – not IA level)». Contaron el
+    African Youth y el African Lounge IM de 2016, de ese espacio.
+  - **Paul Kehinde Boyo** (NGR, 8501491; del 15/09/2016 al 09/12/2019),
+    2022Q4: «Only 3 norms (Cpan Chevron Challenge – not IA level)». Contó
+    la Zona 4.4 de Monrovia (del 22/04/2017). En 2023Q1 la volvió a mandar
+    y lo rechazaron por otra cosa; en 2023Q3 ya no la incluyó, quizá por
+    sus más de seis años.
+  - **Ernestina Barrientos Carmona** (MEX, 5120721; del 23/09/2015 al
+    20/11/2016), 2023Q3: «Only 3 norms… (Match Arbiter at Olympiad used
+    twice – art. 4.9.4)». Contó el Americas Women Continental de Manzanillo
+    (del 06/11/2016). No volvió a pedir el AI.
+  - Rechazados por otra cosa, con normas de ese espacio: los egipcios
+    Khatab, Abdel Aziz y Badr (2020Q3, nivel de los torneos, 4.6.c y
+    4.6.d), Hasan (SYR) y Mouini (MAR) (2021Q1, solicitud tardía), Almasalati
+    (LBA, 2020Q2, nivel de un torneo) y Michael C. Forster (ENG, 2023Q2,
+    «Missing and incomplete documents»).
+  - En varios el espacio fue de años, no de semanas (López Rodríguez, casi
+    tres; Boyo y Sookdeo, más de tres): FIDE no mira el «Licensed».
+- **La licencia que sí cuenta, y cuándo** (informes de 2016 a 2020):
+  - En 2016 la Comisión dejó escrito que «an arbiter must have been licensed
+    at the time of an event» para usarlo en una solicitud de título (Annex
+    22 de la Asamblea General de 2016, fide.com). Es tener licencia de
+    árbitro, la de AN alcanza: sin ella no se arbitra un torneo de FIDE.
+    No es el «Licensed» del título de AF.
+  - Al **pedir** el AI, la licencia tiene que ser ya de nivel AF: en 2019Q1
+    seis solicitudes quedaron «CONDITIONAL: Current level of license is NA»
+    (Bandur, Clayton, Alankar, García Contreras, Goosen y Khaydarov), y en
+    2020Q1 a Lynette Steyn (RSA) la rechazaron por «NA license level». Es
+    la licencia del día de la solicitud, no la de las fechas de los torneos.
 - **«Licensed» es otra cosa**: el pago anual de la licencia (B.06.1, 6.1).
-  En los 343 rechazos no hay ninguno de un FA o IA por esa fecha; los de
-  licencia son todos de antes del NA.
+  En los 343 rechazos de 2023 a 2026 no hay ninguno de un FA o IA por esa
+  fecha (los de licencia son todos de antes del NA), ni en los 65 de AI de
+  2020 a 2022.
 - **En la página**:
   - `af_perfil` (y `ia_perfil`) en `arbitros_cr_fide` (migración
     `20261016022547_arbitros_cr_fecha_del_perfil.sql`) es la fecha oficial.
-    Sale de «perfil» en cada aprobación del JSON y se copia a mano de una
-    captura, porque el perfil de FIDE no contesta a la base.
+    Sale de «perfil» en cada aprobación del JSON o, si no, del «License
+    level» de ese título en `herramientas/datos/arbitros-cr-perfiles-licencia.json`
+    (los 28 AF e IA, leídos en Chrome el 18/10/2026: el perfil de FIDE no
+    contesta ni a la base ni a la nube). `lista-fide.py` se detiene si las
+    dos fuentes dicen fechas distintas. Con eso tienen fecha oficial 19 AF y
+    8 IA, también los de antes de 2023 (Urbina, Miranda, Herrera, Rebeca y
+    Fabián Jiménez, Redondo, Amaya, Gustavo Murillo…). El perfil no trae la
+    del AF de quien ya es IA, ni la del AI de Joshebeth Núñez, que todavía
+    muestra la licencia de AF.
+  - **«Licensed» no es una demora en 2013-01-01**: es el día en que FIDE
+    empezó a cobrar la licencia, y lo tiene todo el que ya era AF o IA.
   - Con ella, una norma de AI cuenta si el torneo empezó **después**; si
     empezó antes, no cuenta; el mismo día, revisar.
   - Sin ella, se usa la fecha del Consejo:
@@ -3779,6 +4214,18 @@ leyeron convertidos a texto con r.jina.ai, como los informes.
   - La fecha límite: la norma más vieja vale **seis años** (5.3.1), y la
     solicitud va a más tardar **un año después del último evento** que
     lleva (5.3.3), seminario incluido.
+  - Los certificados por torneo (2.7, revisado contra B.06.1 de 2026 en
+    octubre de 2026): uno cada 25 jugadores, o dos en total en un todos
+    contra todos. Compiten por ellos los demás árbitros de la lista que
+    todavía no eran IA, sin el principal (que firma) ni el asistente (2.4.4).
+    Si con él son más que el tope, sale «Revisar»: no se sabe a quién se los
+    dieron. No se aplica como «Falta» porque un árbitro con título puede no
+    haber pedido el suyo.
+  - El seminario puede traer `evento`, el enlace a su página en el
+    calendario de la Comisión (arbiters.fide.com/news/event/…), y la ficha
+    lo enlaza. De ahí salió el día del 215 (Costa Rica, 9 al 12 de enero de
+    2026, examen el 12): el informe al Consejo solo daba el mes de Johanel
+    Álvarez.
   - Lo que no se ve desde afuera: los certificados y las firmas (no todas
     de la misma persona, 4.13.1), la edad (19 y 21) y las dos finales
     nacionales.
@@ -3804,6 +4251,32 @@ leyeron convertidos a texto con r.jina.ai, como los informes.
   - Un seminario que empezó en un mes y terminó en el siguiente (el 163,
     del 30/08 al 01/09) sale una vez, por su número, con el día en que
     terminó si lo dice la solicitud.
+  - **Los seminarios de AF desde 2010** (octubre de 2026, pedido del dueño):
+    se leyeron los 827 informes de seminarios de la Comisión
+    (`arbiters.fide.com/news/category/arb/education/seminars/reports`, seis
+    páginas). Cada informe trae la tabla de aprobados con su federación; los
+    de antes de 2018 traen solo el nombre, o una lista en el texto.
+    - Se piden con pg_net **directo a arbiters.fide.com**, de a 60: r.jina.ai
+      corta en 20 por minuto y FIDE no contesta la mitad si se le piden 140
+      juntos. El pedido sale cuando termina la transacción, así que pedir y
+      leer van en dos consultas.
+    - Del artículo (del `<h1>` a los botones de compartir) salen las filas
+      con «CRC» o «Costa Rica». Los que nombran a Costa Rica sin fila se
+      leyeron a mano: casi siempre son ticos que participaron y no
+      aprobaron, o la conferencista (Carolina Muñoz).
+    - **28 seminarios con aprobados de Costa Rica**: 24 entradas nuevas y
+      16 de las que ya estaban completadas con el día y el enlace
+      (`informe`); la ficha enlaza «informe del seminario». Los que traían
+      solo el nombre se cruzaron por nombre con la lista de árbitros de
+      FIDE: todos dieron una sola persona (Keilor/Keylor Miranda,
+      Gretell/Grettel Elizondo).
+    - Quedan fuera dos que no están en la lista de árbitros de FIDE, así que
+      no tienen perfil donde ponerlo: Betzy Fallas Marín (11.º, mujeres,
+      2011) y Mariel Pomares Iraheta (67.º, México, 2019).
+    - El 173.º (Panamá) se queda con el 01/02/2025 de la solicitud, aunque
+      el informe diga que terminó el 2.
+    - Los seminarios de AI y los cursos de actualización no están en esa
+      categoría: siguen saliendo solo de los informes al Consejo.
   - Va en dos columnas jsonb de `arbitros_cr_fide`, `solicitudes` y
     `seminarios` (migración `20261016014132_arbitros_cr_historial_y_sin_id.sql`).
     La fuente es el mismo JSON de la lista.
@@ -3989,6 +4462,123 @@ día y que no entra una predicción inventada.
 
 Rompí a propósito el filtro de las ya subidas, la firma y la regla del
 acierto; salta cada vez.
+
+## En memoria
+
+Un árbitro que falleció lleva junto a su nombre, en la lista y en su ficha
+de `arbitros-cr.html`, un lazo de luto con «En memoria» escrito: el dibujo
+no va solo, y el lector de pantalla lee el texto, no el lazo
+(`aria-hidden`). Lo pidió el dueño en octubre de 2026 por Betzy Fallas
+Marín (ID 6500986), que arbitró torneos de FIDE en el país y aprobó el
+seminario de AF de mujeres en 2011.
+
+- Va en su propia tabla, `arbitros_cr_memoria` (migración
+  `20261019015814`), y no en `arbitros_cr`: esa se borra y se vuelve a
+  llenar en cada carga, y la marca se perdería. La leen quienes tienen la
+  herramienta; la escribe solo administración (por ahora, en la base).
+- El lazo es un SVG propio en `currentColor`, así que se ve en los dos
+  temas con el color del texto.
+- `verificar-arbitros-cr.js` marca a Juan solo en su bloque y comprueba la
+  lista, la ficha y que nadie más lo lleve; se rompió devolviendo siempre
+  nada y salta.
+
+## Conferencistas, asistentes y seminarios de quien no está en la lista
+
+Pedido del dueño en octubre de 2026, después de leer los 827 informes de
+seminarios de AF (ver «Los seminarios de AF desde 2010»).
+
+- **Los seminarios de AI.** Los informes «NN.º IA Seminar – Report» (del
+  1.º, en marzo de 2024, al 28.º, en agosto de 2026) no están en la sección
+  de informes de seminarios sino en la de Educación
+  (`news/category/arb/education`). Se leyeron los 28. Tres ticos aprobaron:
+  Cristian Araya (1.º), Joshebeth Núñez (18.º) y Edgar Zeledón (25.º); los
+  tres ya estaban por los informes al Consejo. A Edgar le faltaba el día
+  (17/05/2026), y ahora su actividad cuenta desde ahí. Los tres llevan el
+  enlace `informe`.
+- **Los cursos de actualización no se publican.** Su sección
+  (`news/category/arb/education/refresher-courses`) tiene solo 8 anuncios
+  de alrededor de 2015, sin quién aprobó, y los informes al Consejo tampoco
+  lo dicen. Por eso la actividad (B.06.3) sigue siendo un piso, «por lo
+  menos hasta». La única fuente sería el portal de formación de FIDE
+  (arb-learn.fide.com), que pide cuenta.
+- **`arbitros_cr_seminario_roles`** (migración `20261019033231`) guarda lo
+  que no cabe en `arbitros_cr_fide.seminarios`, que solo tiene a quien está
+  en la lista de árbitros de FIDE y solo lo que aprobó:
+  - `conferencista`, `asistente` u `organizador`, con `detalle` («local»,
+    «técnico», «con Laurent Freyd (FRA)»…). Salen de las frases del
+    informe que nombran a alguien «(CRC)» como Lecturer, Assistant u
+    Organizer: Carolina Muñoz Solís fue conferencista de 8 seminarios (4 de
+    AI) y asistente de 3; Oscar Angulo, asistente local del 215.º, y
+    Stanley Gómez, organizador técnico del 53.º (2017). Se buscó también
+    por apellido, por si algún informe viejo no decía «(CRC)»: no apareció
+    ninguno más.
+  - `aprobo`, solo de quien no está en la lista de FIDE: Betzy Fallas Marín
+    (11.º, de mujeres, 2011). Mariel Pomares Iraheta (67.º, México, 2019)
+    no tiene ficha en la herramienta, así que su seminario no tiene dónde
+    ir.
+  - La leen quienes tienen la herramienta y la escribe administración.
+- En la ficha, el historial suma los seminarios de esa tabla y, debajo,
+  cada rol con su fecha, el detalle y el enlace al informe.
+- **Betzy en chess-results.** Figura como «Betsy Fallas Marin» y «AN Betsy
+  Fallas», y el nombre de pila no calzaba. `VARIANTES` en
+  `herramientas/arbitros-cr.py` acepta las formas de escribir un nombre
+  (`betzy` → `betsy`), y `verificar-arbitros-cr-fechas.py` lo prueba. Sus
+  dos torneos de 2016 (JDN, eliminatoria femenina U16) se agregaron a
+  `arbitros_cr_cr_cargos` a mano; el tercero no está en la tabla de
+  torneos. Las dos filas de `arbitros_cr_sin_id` se van en la próxima
+  carga: el `delete` desde aquí pide una confirmación que nadie da.
+- **«En memoria» desde la ficha.** Administración tiene un botón para
+  marcarlo o quitarlo, con su confirmación, debajo del correo de los
+  avisos.
+- `verificar-arbitros-cr.js` lo prueba: los roles de Óscar con su orden y
+  su enlace, el seminario de Juan (que no está en la lista de FIDE), y el
+  botón (no se ve sin ser de administración; marca y quita). Se rompió
+  dejando los roles vacíos y sin guardar la marca, y salta.
+
+## Para subir de categoría en FIDE
+
+En la ficha de cada IA, debajo de sus normas (pedido del dueño, octubre de
+2026, después de comparar la herramienta con B.06.3 vigente desde el 1 de
+julio de 2026). La actividad (artículo 2) ya estaba; las categorías, no.
+`subirCategoriaFide()` y `tarjetaCategoriaFide()` en `js/arbitros-cr.js`.
+
+- **Solo los IA suben**: los FA son categoría D siempre (1.2.2) y no llevan
+  la tarjeta. En octubre de 2026 el país tiene 18 FA y 10 IA: 1 en A y 9
+  en D.
+- **Lo que pide cada salto** (artículos 3 a 5): para C, un año con el AI;
+  para B, tres y dos años en la C; para A, cinco y dos en la B. Además estar
+  activo y, en los últimos cinco años, haber sido **principal o adjunto
+  principal** en dos torneos de la categoría a la que sube, o en uno de esa
+  y tres de la de abajo. Los torneos empiezan después de la última subida o
+  del título y no pueden haber ido en otra solicitud (7.3). La pide la
+  Federación con el IA3 (7.2).
+- **La categoría de un torneo** (`nivelFide`):
+  - D: el que daría norma de AI (1.3.4). Es `ai_estado` del torneo, que ya
+    estaba calculado; «revisar» queda para revisar.
+  - C: un continental de juveniles, escolares, sénior o aficionados, o un
+    internacional fuerte (9 rondas, más de 150 jugadores, 75 % con Elo y tres
+    federaciones; los 20 titulados no se cuentan porque la tabla no tiene
+    los títulos de los jugadores).
+  - B, un continental mayor, y A, un mundial mayor.
+  - De la C para arriba se reconocen **por el nombre o el tamaño** y
+    siempre quedan para revisar. Un todos contra todos fuerte se mide por el
+    promedio de Elo, que no se tiene.
+- **El estado** dice «Puede pedirla» solo con torneos seguros; «Revisar»
+  cuando alcanza contando los que hay que revisar, y «Le falta» si no.
+- Lo que no se sabe va escrito como «Revisar»: desde cuándo tiene su
+  categoría (la lista de FIDE no lo dice), la evaluación positiva, las
+  sanciones y, para B y A, cuándo fue la última subida. Si del AI solo se
+  sabe el año, se cuenta desde el 31 de diciembre de ese año.
+- `verificar-arbitros-cr.js` lo prueba con Óscar:
+  - con un AI del que solo se sabe el año, le falta el año y no tiene
+    torneos;
+  - con el AI desde junio de 2025, cada torneo trae su categoría y su
+    porqué; el de antes del AI y el de simple árbitro no cuentan;
+  - con tres de D y un panamericano juvenil, sale «Revisar»;
+  - un FA no lleva la tarjeta.
+
+  Lo rompí contando un continental juvenil como seguro y contando a quien
+  fue solo árbitro, y salta.
 
 ## Comparar dos árbitros y el ranking del año
 

@@ -109,6 +109,9 @@ window.__consultas = [];
       // El de la sesión 1 de «Formación Ajedrez» (admin.html#asesores).
       { id: "cq-fa1", titulo: "Formación Ajedrez · Sesión 1: reglas FIDE y Normativa JDE 2026", material: "formacion-ajedrez", listo: true,
         preguntas: Array.from({ length: 22 }, (_, i) => ({ texto: "P" + i })) },
+      // Y su tarea de nivel inicial, que no se confunde con el Kahoot.
+      { id: "cq-fa1t", titulo: "Formación Ajedrez · Tarea inicial de la Sesión 1: reglas y notación", material: "formacion-ajedrez", listo: true,
+        preguntas: Array.from({ length: 14 }, (_, i) => ({ texto: "T" + i })) },
     ],
     /* Cómo va la preparación de cada sesión (admin.html#asesores): la 1 ya
        está lista, con una nota. upsert escribe acá por (curso, sesion). */
@@ -817,6 +820,12 @@ async function pruebaAsesores(browser) {
     return a && [a.getAttribute("href"), a.textContent];
   }), ["tareas.html?material=cuestionario&recorte=cq-fa1&temporales=" + encodeURIComponent("Taller Formación Ajedrez del MEP"),
        "📨 Mandarlo como tarea a las 2 personas del taller"]);
+  igual("la tarea de nivel inicial de la sesión 1, aparte del Kahoot, también se manda", await page.evaluate(() =>
+    Array.from(document.querySelectorAll("#ase-lista article:nth-child(1) a")).filter((a) => /cq-fa1t/.test(a.getAttribute("href")))
+      .map((a) => [a.getAttribute("href"), a.textContent])),
+    [["cuestionarios.html?id=cq-fa1t", "📝 Tarea de nivel inicial (14 preguntas)"],
+     ["tareas.html?material=cuestionario&recorte=cq-fa1t&temporales=" + encodeURIComponent("Taller Formación Ajedrez del MEP"),
+      "📨 Mandarlo como tarea a las 2 personas del taller"]]);
   // El grupo: lo arma la base (asesores_tablero) para el taller abierto.
   igual("el grupo se pide a la base, para el taller abierto", await page.evaluate(() => window.__tablero),
     [{ p_detalle: "Taller Formación Ajedrez del MEP" }]);

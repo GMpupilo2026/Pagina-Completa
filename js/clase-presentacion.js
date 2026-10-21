@@ -43,6 +43,9 @@ window.PresentacionClase = (function () {
     // verificar-clase-presentacion.js). Las que sube cada profe vienen de la base.
     const LISTA = [
         { deck: "formacion-ajedrez/clase-01", titulo: "Formación Ajedrez · Clase 1: rol arbitral, reglas básicas y notación" },
+        // La práctica individual de la Sesión 1 (herramientas/formacion-practicas.js): la que se manda a la
+        // clase en «Preguntar» y que el profe también puede proyectar para analizar los casos.
+        { deck: "formacion-ajedrez/practica-01", titulo: "Formación Ajedrez · Sesión 1: la práctica (posiciones, dictado y reclamos)" },
         { deck: "formacion-ajedrez/clase-02", titulo: "Formación Ajedrez · Sesión 2: Reglas de competición" },
         { deck: "formacion-ajedrez/clase-03", titulo: "Formación Ajedrez · Sesión 3: Apéndices de las Leyes de Ajedrez, normativa JDE y sistemas de emparejamiento" },
         { deck: "formacion-ajedrez/clase-04", titulo: "Formación Ajedrez · Sesión 4: Uso, configuración y control del reloj de ajedrez" },

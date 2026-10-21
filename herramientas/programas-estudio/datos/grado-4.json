@@ -1039,7 +1039,7 @@
    "tema": "La planilla de torneo paso a paso",
    "ae": "1.2",
    "objetivo": "Llenar correctamente el encabezado y el cuerpo de una planilla.",
-   "foc": "Se muestra una planilla de un torneo real de la Federación Central de Ajedrez de Costa Rica (puede ser una copia) y se pregunta qué datos pide arriba.",
+   "foc": "Se muestra una planilla de un torneo real de la Federación Costarricense de Ajedrez de Costa Rica (puede ser una copia) y se pregunta qué datos pide arriba.",
    "exp": "Cada estudiante llena el encabezado: nombre, rival, fecha, ronda, color. Luego se juegan las primeras 12 jugadas de una partida en parejas, anotando cada jugada antes de mover la siguiente pieza. La persona docente camina por las mesas y señala errores sin corregirlos.",
    "con": "Se repasa la regla: se anota la jugada después de hacerla y no se usan las planillas para anotar ideas ni jugadas futuras.",
    "apl": "Las parejas intercambian planillas y revisan si coinciden jugada por jugada.",

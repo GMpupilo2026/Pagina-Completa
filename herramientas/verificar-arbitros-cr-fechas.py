@@ -73,6 +73,12 @@ for c in corregir:
 igual(f"las {len(corregir)} tienen clave, motivo y una fecha que se lee, con el fin el mismo día o después", malas, [])
 igual("ninguna clave repetida", len({c["clave"] for c in corregir}), len(corregir))
 
+print("\nEl nombre de pila escrito de otra forma (VARIANTES)")
+fs = ac.formas_del_nombre("Fallas Marin, Betzy")
+reconoce = lambda celda: any(f.search(" ".join(ac.palabras(celda))) for f in fs)
+igual("«Betsy Fallas Marin» y «AN Betsy Fallas» son Betzy Fallas Marín, y «Maria Fallas» no",
+      [reconoce("Betsy Fallas Marin"), reconoce("AN Betsy Fallas"), reconoce("Betzy Fallas"), reconoce("Maria Fallas")], [True, True, True, False])
+
 if fallos:
     print(f"\n✗ {fallos} comprobación(es) fallaron.")
     sys.exit(1)

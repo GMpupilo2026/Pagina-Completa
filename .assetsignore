@@ -84,3 +84,8 @@ js/diagnostico-items.js
 # Las imágenes para redes sociales (herramientas/imagenes-redes.js): se suben
 # a mano a Facebook e Instagram, ninguna página las pide.
 img/redes
+
+# La fuente de los finales difíciles de Ejercicios por tema: la lee
+# entreno/data/sumar_finales_dificiles.py al armar temas.json. Ninguna página
+# la pide; la página lee temas.json, que ya los trae.
+entreno/data/finales_dificiles.json

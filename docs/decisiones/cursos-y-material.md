@@ -1441,6 +1441,12 @@ para firmar. No se publica (está bajo `herramientas/`).
   pista (si el guion cambia y el Word no, la persona graba líneas viejas o
   corridas), y que la autorización traiga la parte de la persona menor. Se
   rompió a propósito (el Word del coro en lugar del de Tizón) y saltó.
+- **Para quien graba un solo cuento:** `audiolibro-grabar.js --libro
+  <slug> --salida <carpeta>` arma el Word de cada voz y la autorización solo
+  con ese cuento (la autorización, en singular: «del audiolibro del cuento…»),
+  en otra carpeta para no pisar los de la colección entera. La numeración y
+  los nombres de archivo son los mismos: cada línea sigue siendo su lugar en
+  la pista. El primero fue el de Peonita del libro 1, para una niña.
 - Al cambiar un cuento: `libro-ninos-pdf.js --solo-accesible` y después
   `audiolibro-grabar.js`. Si alguien ya grabó, ver qué líneas cambiaron
   antes de volver a mandarle el guion.
@@ -2414,6 +2420,21 @@ sesión**. Lo pinta `js/admin-asesores.js`.
   ritmo, el orden cambiado) y se cuidó que la correcta **no sea siempre la
   opción más larga**: en un Kahoot eso se aprende rápido y se contesta sin
   leer.
+- **Las tareas de nivel inicial** van en el mismo archivo, en `tareas` (hoy la
+  de la Sesión 1 y la de la 2: 14 y 12 preguntas): más simples que el Kahoot,
+  para mandar a la casa a quien recién empieza con el reglamento, y **ninguna
+  repite una pregunta del Kahoot** (`verificar-formacion.js` lo revisa). Se
+  llaman «Formación Ajedrez · Tarea inicial de la Sesión N: …», y la ficha las
+  encuentra por ese título junto al Kahoot de su sesión, con su «📨 Mandarlo
+  como tarea» (el Kahoot se busca por «· Sesión N:», que no la confunde).
+  Traen posiciones: las que son un final de partida se comprueban como las del
+  Kahoot (mate, jaque —la correcta empieza con «Jaque:»—, ahogado, tablas en el
+  acto); las que no, con su campo `comprobar`, que no va a la base: `legal` e
+  `ilegal` (jugadas que se pueden o no hacer, como el enroque por una casilla
+  atacada o la captura al paso), `sin_jugadas` (una pieza que no puede moverse:
+  el caballo clavado de pieza tocada) y `solo_rey` (el bando al que solo le
+  queda el rey, para la bandera que cae). Todas, del lado que juega y sin
+  jaque.
 - **El grupo**: una tabla con cada asesor (las cuentas temporales abiertas del
   taller), la última vez que entró, sus clases en la plataforma y la nota de
   la primera vez en el cuestionario de cada sesión, con cuántas veces lo hizo.
@@ -2444,6 +2465,15 @@ sesión**. Lo pinta `js/admin-asesores.js`.
   «📊 Presentación» de la clase en vivo, las presentaciones del curso: el panel
   pregunta `puede_bajar(curso, false)`, que dice que sí a administración, a quien
   lo compró y a quien se lo compartieron.
+
+- **Las prácticas, en la clase en vivo**: en «Preguntar», «📝 Prácticas de
+  Formación Ajedrez» manda a los alumnos las láminas de los ejercicios de una
+  sesión (sin las de respuestas), y cada uno las pasa a su ritmo y marca las que
+  terminó, y contesta (opciones, texto o la planilla de un dictado); el profe ve
+  quién va por dónde y qué contestó cada uno (ver «Las prácticas de Formación
+  Ajedrez en la clase» en `clase-en-vivo.md`). La lista sale de las mismas
+  presentaciones (`herramientas/formacion-practicas.js`); la Sesión 1 tiene la
+  suya (`presentaciones/practica-01/`, dibujada con `formacion-laminas.js`).
 
 El curso en sí **no** se esconde: se vende en la tienda y el proyecto Campeones
 Colegiales usa dos de sus lecciones. Lo que se reparte es el kit del taller

@@ -1967,6 +1967,7 @@ async function pruebaConEsteAlumno(browser) {
     "📧Informes a la casa → #encargados-report",
     "📓Su cuaderno → cuaderno.html?alumno=a-1",
     "🏆Su libreta de torneos → libreta-torneos.html?alumno=a-1",
+    "🔬Sus estudios → entreno/mis-estudios.html?alumno=a-1",
   ]);
   igual("el emoji no se lee", await r.page.evaluate(() =>
     [...document.querySelectorAll("#informe-acciones a > span")].every((s) => s.getAttribute("aria-hidden") === "true")), true);
@@ -1983,7 +1984,7 @@ async function pruebaConEsteAlumno(browser) {
   await r.page.waitForFunction(() => !document.getElementById("student-report").classList.contains("hidden"), null, { timeout: 10000 });
   v = await leer(r.page);
   igual("a quien administra (no da clase) no le ofrece poner tareas ni exámenes; su panel sí", v.enlaces.map((e) => e.split(" → ")[1].split("?")[0]),
-    ["clases.html", "#notas-report", "#encargados-report", "cuaderno.html", "libreta-torneos.html"]);
+    ["clases.html", "#notas-report", "#encargados-report", "cuaderno.html", "libreta-torneos.html", "entreno/mis-estudios.html"]);
   await r.page.close();
 }
 

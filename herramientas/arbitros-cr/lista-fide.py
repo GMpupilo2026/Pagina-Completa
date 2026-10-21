@@ -4,9 +4,11 @@
 desde herramientas/datos/arbitros-cr-lista-fide.json: los árbitros de Costa
 Rica de la lista oficial de FIDE, la fecha en que el Consejo de FIDE les
 aprobó el AF y el AI (y la fecha que dice su perfil de FIDE, la oficial, en
-«perfil» de cada aprobación cuando se conoce), y sus solicitudes de título y seminarios según los
+«perfil» de cada aprobación cuando se conoce, o si no, el «License level» del
+título en herramientas/datos/arbitros-cr-perfiles-licencia.json), y sus
+solicitudes de título y seminarios según los
 informes de la Comisión de Árbitros. Al final, la categoría nacional (A, B o
-C) de cada Árbitro Nacional, de la lista de la Federación Central de Ajedrez
+C) de cada Árbitro Nacional, de la lista de la Federación Costarricense de Ajedrez
 (herramientas/datos/arbitros-cr-lista-fca.json, migración
 20261016033536_arbitros_cr_categoria_nacional.sql).
 
@@ -27,6 +29,7 @@ POR_CARGA = 25
 RAIZ = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 DATOS = os.path.join(RAIZ, "herramientas", "datos", "arbitros-cr-lista-fide.json")
 FCA = os.path.join(RAIZ, "herramientas", "datos", "arbitros-cr-lista-fca.json")
+LICENCIA = os.path.join(RAIZ, "herramientas", "datos", "arbitros-cr-perfiles-licencia.json")
 # La categoría nacional de un NA, como la escribe la Federación.
 CATEGORIA_NACIONAL = {"NAA": "A", "NAB": "B", "NAC": "C"}
 
@@ -41,6 +44,19 @@ def sql(v):
     return "'" + str(v).replace("'", "''") + "'"
 
 
+def fechas_de_licencia():
+    """{fide_id: {"FA": fecha, "IA": fecha}}: la fecha del «License level» de
+    cada título en el perfil de FIDE (la misma que «perfil» en una
+    aprobación). El perfil solo la trae del título que tiene hoy: al subir a
+    AI, la del AF se pierde."""
+    with open(LICENCIA, encoding="utf-8") as f:
+        perfiles = json.load(f)
+    nombre = {"FIDE Arbiter": "FA", "International Arbiter": "IA"}
+    return {int(p["fide_id"]): {nombre[t["titulo"]]: t["license_fecha"] for t in p["titulos"]
+                                if t["titulo"] in nombre and t["license_fecha"]}
+            for p in perfiles}
+
+
 def main():
     with open(DATOS, encoding="utf-8") as f:
         d = json.load(f)
@@ -52,15 +68,22 @@ def main():
         sols.setdefault(x["fide_id"], []).append({k: v for k, v in x.items() if k != "fide_id"})
     for x in d.get("seminarios", []):
         sems.setdefault(x["fide_id"], []).append({k: v for k, v in x.items() if k != "fide_id"})
+    del_perfil = fechas_de_licencia()
     js = lambda v: sql(json.dumps(v, ensure_ascii=False, separators=(",", ":"))) + "::jsonb"
     filas = []
     for fid, nombre, titulo, inactivo, categoria, licencia in d["arbitros"]:
         af, ia = apro.get(fid, {}).get("FA"), apro.get(fid, {}).get("IA")
+        perfil = {}
+        for t, a in (("FA", af), ("IA", ia)):
+            de_aprobacion, de_licencia = a and a.get("perfil"), del_perfil.get(fid, {}).get(t)
+            if de_aprobacion and de_licencia and de_aprobacion != de_licencia:
+                raise SystemExit(f"{fid} {t}: la aprobación dice {de_aprobacion} y el perfil {de_licencia}")
+            perfil[t] = de_aprobacion or de_licencia
         filas.append("(" + ", ".join(sql(v) for v in (
             fid, nombre, titulo, inactivo, categoria, licencia,
             af and af["fecha"], af["consejo"] if af else "", ia and ia["fecha"], ia["consejo"] if ia else "", lista))
             + ", " + js(sols.get(fid, [])) + ", " + js(sems.get(fid, []))
-            + ", " + sql(af and af.get("perfil")) + ", " + sql(ia and ia.get("perfil")) + ")")
+            + ", " + sql(perfil["FA"]) + ", " + sql(perfil["IA"]) + ")")
     faltan = (set(apro) | set(sols) | set(sems)) - {f[0] for f in d["arbitros"]}
     if faltan:
         raise SystemExit(f"Aprobaciones, solicitudes o seminarios de quien no está en la lista: {sorted(faltan)}")

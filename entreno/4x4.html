@@ -150,6 +150,24 @@
   .mis-lista{margin:.4rem 0;}
   .mis-lista summary{cursor:pointer; color:var(--text); font-weight:600; padding:.35rem 0;}
   .mis-lista ul{display:flex; flex-wrap:wrap; gap:.4rem; list-style:none; margin:.5rem 0 0; padding:0;}
+  /* El mapa del nivel: un botón por ejercicio. El estado nunca va solo en el
+     color: el resuelto lleva ✓, el de ahora ▶, el favorito ★, y todos lo dicen
+     en su aria-label y su title. Contrastes medidos: resuelto 14,6 / 13,3,
+     cerrado 6,1 / 6,8, de ahora 8 (texto oscuro sobre dorado). */
+  :root{--mapa-cerrado:#486581;}
+  html.dark{--mapa-cerrado:#9fb3c8;}
+  .mapa-titulo{font-weight:600; color:var(--text); margin:.2rem 0 .3rem;}
+  .mapa-leyenda{color:var(--text-muted); font-size:.85rem; margin:0 0 .5rem; line-height:1.5;}
+  .mapa-4x4{position:relative; display:grid; grid-template-columns:repeat(auto-fill, minmax(2.9rem, 1fr)); gap:.35rem; list-style:none; margin:0 0 .8rem; padding:.2rem; max-height:17rem; overflow-y:auto;}
+  .mapa-4x4 li{margin:0; padding:0;}
+  .mapa-celda{width:100%; min-height:44px; padding:.2rem; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:0; line-height:1.1;
+    font-family:'Inter',sans-serif; font-size:.85rem; font-weight:600; cursor:pointer;
+    background:transparent; color:var(--mapa-cerrado); border:1px dashed var(--line); border-radius:6px;}
+  .mapa-celda .marca{font-size:.7rem; min-height:.8rem;}
+  .mapa-celda[data-estado="resuelto"]{background:var(--text); color:var(--bg-panel); border:1px solid var(--text);}
+  .mapa-celda[data-estado="toca"]{color:var(--text); border:2px solid var(--text);}
+  .mapa-celda[data-estado="ahora"]{background:var(--brass-bright); color:#102a43; border:3px solid var(--text);}
+  .mapa-celda[aria-disabled="true"]{cursor:not-allowed;}
 
   main{
     max-width:1180px;
@@ -629,13 +647,14 @@
         <button type="submit" class="bctrl">Ir</button>
       </form>
       <p id="mis-4x4-aviso" class="mis-aviso" role="status"></p>
+      <div id="mapa-bloque">
+        <h3 id="mapa-titulo" class="mapa-titulo">Los ejercicios de este nivel</h3>
+        <p class="mapa-leyenda"><span aria-hidden="true">✓</span> resuelto · <span aria-hidden="true">▶</span> el de ahora · borde grueso: el que te toca · <span aria-hidden="true">★</span> favorito · sin marca y en gris: todavía cerrado. Con las flechas te mueves; Enter abre.</p>
+        <ul id="mapa-4x4" class="mapa-4x4" aria-labelledby="mapa-titulo"></ul>
+      </div>
       <details id="mis-favoritos" class="mis-lista">
         <summary>Tus favoritos (<span id="n-favoritos">0</span>)</summary>
         <ul id="ul-favoritos"></ul>
-      </details>
-      <details id="mis-resueltos" class="mis-lista">
-        <summary>Resueltos de este nivel (<span id="n-resueltos">0</span>)</summary>
-        <ul id="ul-resueltos"></ul>
       </details>
     </section>
 

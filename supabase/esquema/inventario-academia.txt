@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20261018200653
+# al-dia-con: 20261020133504
 tabla  Ejercicios Lichess  rls=true
 tabla  _foto_rls_tmp  rls=false
 tabla  _pedidos_elo  rls=false
@@ -14,12 +14,17 @@ tabla  analisis_partidas_alumno  rls=true
 tabla  arbitraje_consulta_config  rls=true
 tabla  arbitrajes_publicos  rls=true
 tabla  arbitros_cr  rls=true
+tabla  arbitros_cr_avisos_enviados  rls=true
 tabla  arbitros_cr_cargos  rls=true
+tabla  arbitros_cr_contacto  rls=true
 tabla  arbitros_cr_cr  rls=true
 tabla  arbitros_cr_cr_cargos  rls=true
 tabla  arbitros_cr_cr_elo  rls=true
 tabla  arbitros_cr_fide  rls=true
+tabla  arbitros_cr_formacion  rls=true
+tabla  arbitros_cr_memoria  rls=true
 tabla  arbitros_cr_normas_revision  rls=true
+tabla  arbitros_cr_seminario_roles  rls=true
 tabla  arbitros_cr_sin_id  rls=true
 tabla  arbitros_cr_solicitudes_enviadas  rls=true
 tabla  arbitros_cr_torneos  rls=true
@@ -129,6 +134,8 @@ tabla  planes_cobro  rls=true
 tabla  planes_rival_alumno  rls=true
 tabla  plantillas_casa  rls=true
 tabla  platform_activity_log  rls=true
+tabla  practica_claves  rls=true
+tabla  practica_respuestas  rls=true
 tabla  practice_games  rls=true
 tabla  practice_intentos  rls=true
 tabla  practice_sessions  rls=true
@@ -286,9 +293,19 @@ columna  arbitros_cr.nombre  text
 columna  arbitros_cr.solo_chess_results  boolean
 columna  arbitros_cr.titulo  text
 columna  arbitros_cr.titulo_detalle  text
+columna  arbitros_cr_avisos_enviados.clave  text
+columna  arbitros_cr_avisos_enviados.enviado  timestamp with time zone
+columna  arbitros_cr_avisos_enviados.fide_id  integer
+columna  arbitros_cr_avisos_enviados.vence  date
 columna  arbitros_cr_cargos.cargo  text
 columna  arbitros_cr_cargos.fide_id  integer
 columna  arbitros_cr_cargos.torneo_id  integer
+columna  arbitros_cr_contacto.actualizada  timestamp with time zone
+columna  arbitros_cr_contacto.autorizo  text
+columna  arbitros_cr_contacto.avisos  boolean
+columna  arbitros_cr_contacto.correo  text
+columna  arbitros_cr_contacto.creada_por  uuid
+columna  arbitros_cr_contacto.fide_id  integer
 columna  arbitros_cr_cr.clave  integer
 columna  arbitros_cr_cr.control  text
 columna  arbitros_cr_cr.fide_torneo  integer
@@ -323,6 +340,20 @@ columna  arbitros_cr_fide.nombre  text
 columna  arbitros_cr_fide.seminarios  jsonb
 columna  arbitros_cr_fide.solicitudes  jsonb
 columna  arbitros_cr_fide.titulo  text
+columna  arbitros_cr_formacion.categoria  text
+columna  arbitros_cr_formacion.creada  timestamp with time zone
+columna  arbitros_cr_formacion.creada_por  uuid
+columna  arbitros_cr_formacion.detalle  text
+columna  arbitros_cr_formacion.fecha  date
+columna  arbitros_cr_formacion.fide_id  integer
+columna  arbitros_cr_formacion.horas  numeric(5,1)
+columna  arbitros_cr_formacion.id  uuid
+columna  arbitros_cr_formacion.nota  numeric(5,2)
+columna  arbitros_cr_formacion.tipo  text
+columna  arbitros_cr_memoria.creada  timestamp with time zone
+columna  arbitros_cr_memoria.creada_por  uuid
+columna  arbitros_cr_memoria.fide_id  integer
+columna  arbitros_cr_memoria.nota  text
 columna  arbitros_cr_normas_revision.archivo  text
 columna  arbitros_cr_normas_revision.cargo  text
 columna  arbitros_cr_normas_revision.creada  timestamp with time zone
@@ -336,6 +367,13 @@ columna  arbitros_cr_normas_revision.nombre_archivo  text
 columna  arbitros_cr_normas_revision.privacidad_aceptada_en  timestamp with time zone
 columna  arbitros_cr_normas_revision.privacidad_version  text
 columna  arbitros_cr_normas_revision.torneo_id  integer
+columna  arbitros_cr_seminario_roles.detalle  text
+columna  arbitros_cr_seminario_roles.fecha  date
+columna  arbitros_cr_seminario_roles.fide_id  integer
+columna  arbitros_cr_seminario_roles.informe  text
+columna  arbitros_cr_seminario_roles.rol  text
+columna  arbitros_cr_seminario_roles.seminario  text
+columna  arbitros_cr_seminario_roles.tipo  text
 columna  arbitros_cr_sin_id.claves  integer[]
 columna  arbitros_cr_sin_id.ids  text[]
 columna  arbitros_cr_sin_id.primero  date
@@ -924,6 +962,7 @@ columna  game_state.pensar  jsonb
 columna  game_state.pieces_hidden  boolean
 columna  game_state.planilla  jsonb
 columna  game_state.podio  jsonb
+columna  game_state.practica  jsonb
 columna  game_state.presentacion  jsonb
 columna  game_state.rival_id  uuid
 columna  game_state.shown_curso  text
@@ -1234,6 +1273,26 @@ columna  platform_activity_log.joined_at  timestamp with time zone
 columna  platform_activity_log.left_at  timestamp with time zone
 columna  platform_activity_log.pagina  text
 columna  platform_activity_log.student_id  uuid
+columna  practica_claves.clave  jsonb
+columna  practica_claves.deck  text
+columna  practica_claves.lamina  integer
+columna  practica_claves.modelo  text
+columna  practica_claves.pregunta  text
+columna  practica_claves.tipo  text
+columna  practica_respuestas.buenas  integer
+columna  practica_respuestas.correcta  boolean
+columna  practica_respuestas.created_at  timestamp with time zone
+columna  practica_respuestas.deck  text
+columna  practica_respuestas.envio  text
+columna  practica_respuestas.id  uuid
+columna  practica_respuestas.lamina  integer
+columna  practica_respuestas.owner_id  uuid
+columna  practica_respuestas.pregunta  text
+columna  practica_respuestas.respuesta  text
+columna  practica_respuestas.student_id  uuid
+columna  practica_respuestas.titulo  text
+columna  practica_respuestas.total  integer
+columna  practica_respuestas.updated_at  timestamp with time zone
 columna  practice_games.attempts  integer
 columna  practice_games.ayuda  jsonb
 columna  practice_games.created_at  timestamp with time zone
@@ -1845,6 +1904,8 @@ funcion  anular_certificado(p_codigo text)  definer  anon=false  auth=true
 funcion  anular_recibo(p_recibo uuid, p_anular boolean, p_motivo text)  definer  anon=false  auth=true
 funcion  arbitraje_consulta_config_guardar(p_modelo text, p_tope numeric)  definer  anon=false  auth=true
 funcion  arbitraje_consulta_frenar(p_ip text, p_correo text)  definer  anon=false  auth=false
+funcion  arbitros_cr_por_vencer(p_dias integer)  definer  anon=false  auth=true
+funcion  arbitros_cr_publico()  definer  anon=true  auth=true
 funcion  asesores_tablero(p_detalle text)  invoker  anon=false  auth=true
 funcion  asignar_grupo_proyecto(p_grupo uuid, p_profesor uuid)  definer  anon=false  auth=true
 funcion  avance_del_plan(p_alumno uuid, p_desde timestamp with time zone)  invoker  anon=false  auth=true
@@ -1919,6 +1980,7 @@ funcion  diagnostico_responder(p_sesion uuid, p_item text, p_respuesta jsonb)  d
 funcion  diagnostico_sesion_estado(p_sesion uuid)  definer  anon=true  auth=true
 funcion  diagnostico_terminar(p_sesion uuid)  definer  anon=true  auth=true
 funcion  diagnosticos_publicos_supervisor()  definer  anon=false  auth=false
+funcion  disparar_avisos_arbitros()  definer  anon=false  auth=false
 funcion  disparar_fin_de_partida()  definer  anon=false  auth=false
 funcion  disparar_informes_encargados()  definer  anon=false  auth=false
 funcion  disparar_recordatorios_cobro()  definer  anon=false  auth=false
@@ -2046,6 +2108,7 @@ funcion  interno.mis_retos_ejercicios()  definer  anon=false  auth=true
 funcion  interno.modalidad_de_la_ronda()  invoker  anon=false  auth=false
 funcion  interno.monto_rango(p_base date, p_meses integer, p_precio numeric, p_desde date, p_hasta date)  invoker  anon=false  auth=false
 funcion  interno.nombre_libre_de_subgrupo(p_profesor uuid, p_base text, p_excepto uuid)  definer  anon=false  auth=false
+funcion  interno.norma_jugada(p_jugada text)  invoker  anon=false  auth=false
 funcion  interno.otorgar_puntos(p_alumno uuid, p_cantidad integer, p_origen text, p_motivo text, p_referencia text, p_creado_por uuid)  definer  anon=false  auth=false
 funcion  interno.otorgar_puntos_de_clase()  definer  anon=false  auth=false
 funcion  interno.otorgar_puntos_de_entrenamiento()  definer  anon=false  auth=false
@@ -2057,6 +2120,7 @@ funcion  interno.practica_guardar_intento()  definer  anon=false  auth=false
 funcion  interno.prefijo_de_nombre(p_nombre text)  invoker  anon=false  auth=true
 funcion  interno.preguntas_visibles_para_mi_supervision()  definer  anon=false  auth=true
 funcion  interno.preparacion_sesiones_sello()  invoker  anon=false  auth=false
+funcion  interno.profesor_alumno_mio(p_id uuid)  definer  anon=false  auth=true
 funcion  interno.profesores_de(p_alumno uuid)  definer  anon=false  auth=true
 funcion  interno.profesores_que_coordino()  definer  anon=false  auth=true
 funcion  interno.profiles_foto_por_funcion()  definer  anon=false  auth=false
@@ -2129,6 +2193,7 @@ funcion  mis_clases()  invoker  anon=false  auth=true
 funcion  mis_clases_proximas(p_dias integer)  definer  anon=false  auth=true
 funcion  mis_funciones_coordinacion()  definer  anon=false  auth=true
 funcion  mis_premios(p_alumno uuid)  invoker  anon=false  auth=true
+funcion  mis_respuestas_practica(p_envio text)  definer  anon=false  auth=true
 funcion  mis_retos_de_ejercicios()  invoker  anon=false  auth=true
 funcion  mis_subgrupos()  invoker  anon=false  auth=true
 funcion  mis_supervisados()  definer  anon=false  auth=true
@@ -2158,6 +2223,7 @@ funcion  preguntas_que_costaron(p_dias integer)  invoker  anon=false  auth=true
 funcion  preguntas_que_le_costaron(p_alumno uuid, p_dias integer)  invoker  anon=false  auth=true
 funcion  premios_de_alumno(p_alumno uuid, p_desde timestamp with time zone, p_hasta timestamp with time zone)  definer  anon=false  auth=true
 funcion  profesores_del_coordinador(p_coordinador uuid)  definer  anon=false  auth=true
+funcion  profesores_que_estudian_conmigo()  invoker  anon=false  auth=true
 funcion  profile_teachers_suma_a_la_academia()  definer  anon=false  auth=false
 funcion  progreso_dias_y_racha(alumno uuid)  invoker  anon=true  auth=true
 funcion  protect_answer_grading()  definer  anon=false  auth=false
@@ -2224,8 +2290,10 @@ funcion  responder_encuesta_profesor(p_profesor uuid, p_explica integer, p_apren
 funcion  responder_examen(p_item uuid, p_respuesta jsonb, p_segundos integer)  definer  anon=false  auth=true
 funcion  responder_formulario(p_slug text, p_respuestas jsonb, p_version_privacidad text)  definer  anon=true  auth=true
 funcion  responder_justificacion(p_id uuid, p_estado text, p_respuesta text)  definer  anon=false  auth=true
+funcion  responder_practica(p_envio text, p_deck text, p_lamina integer, p_pregunta text, p_respuesta text)  definer  anon=false  auth=true
 funcion  respuesta_calificar_y_plazo()  definer  anon=false  auth=false
 funcion  respuesta_hora_de_la_base()  invoker  anon=false  auth=false
+funcion  respuestas_reveladas_practica(p_envio text)  definer  anon=false  auth=true
 funcion  respuestas_satisfaccion(p_desde date, p_hasta date, p_profesor uuid, p_solo_se_van boolean)  invoker  anon=false  auth=true
 funcion  resultados_de_la_pregunta(p_pregunta uuid)  definer  anon=false  auth=true
 funcion  resumen_de_la_clase(p_clase uuid)  invoker  anon=false  auth=true
@@ -2244,6 +2312,7 @@ funcion  se_caen_del_plan(p_dias integer)  invoker  anon=false  auth=true
 funcion  secreto_alerta_base()  definer  anon=false  auth=false
 funcion  secreto_aviso_diagnostico()  definer  anon=false  auth=false
 funcion  secreto_partida_robo()  definer  anon=false  auth=false
+funcion  secreto_tanda_arbitros()  definer  anon=false  auth=false
 funcion  secreto_tanda_cobros()  definer  anon=false  auth=false
 funcion  secreto_tanda_elo()  definer  anon=false  auth=false
 funcion  secreto_tanda_informes()  definer  anon=false  auth=false
@@ -2300,15 +2369,29 @@ politica  arbitrajes_publicos  arbitrajes_publicos_insert  INSERT
 politica  arbitrajes_publicos  arbitrajes_publicos_select  SELECT
 politica  arbitrajes_publicos  arbitrajes_publicos_update  UPDATE
 politica  arbitros_cr  arbitros_cr_con_herramienta  SELECT
+politica  arbitros_cr_avisos_enviados  arbitros_cr_avisos_enviados_admin  SELECT
 politica  arbitros_cr_cargos  arbitros_cr_cargos_con_herramienta  SELECT
+politica  arbitros_cr_contacto  arbitros_cr_contacto_admin  ALL
 politica  arbitros_cr_cr  arbitros_cr_cr_con_herramienta  SELECT
 politica  arbitros_cr_cr_cargos  arbitros_cr_cr_cargos_con_herramienta  SELECT
 politica  arbitros_cr_cr_elo  arbitros_cr_cr_elo_con_herramienta  SELECT
 politica  arbitros_cr_fide  arbitros_cr_fide_con_herramienta  SELECT
+politica  arbitros_cr_formacion  arbitros_cr_formacion_agregar  INSERT
+politica  arbitros_cr_formacion  arbitros_cr_formacion_borrar  DELETE
+politica  arbitros_cr_formacion  arbitros_cr_formacion_cambiar  UPDATE
+politica  arbitros_cr_formacion  arbitros_cr_formacion_ver  SELECT
+politica  arbitros_cr_memoria  arbitros_cr_memoria_agregar  INSERT
+politica  arbitros_cr_memoria  arbitros_cr_memoria_borrar  DELETE
+politica  arbitros_cr_memoria  arbitros_cr_memoria_cambiar  UPDATE
+politica  arbitros_cr_memoria  arbitros_cr_memoria_ver  SELECT
 politica  arbitros_cr_normas_revision  arbitros_cr_normas_revision_borrar  DELETE
 politica  arbitros_cr_normas_revision  arbitros_cr_normas_revision_cambiar  UPDATE
 politica  arbitros_cr_normas_revision  arbitros_cr_normas_revision_subir  INSERT
 politica  arbitros_cr_normas_revision  arbitros_cr_normas_revision_ver  SELECT
+politica  arbitros_cr_seminario_roles  arbitros_cr_seminario_roles_agregar  INSERT
+politica  arbitros_cr_seminario_roles  arbitros_cr_seminario_roles_borrar  DELETE
+politica  arbitros_cr_seminario_roles  arbitros_cr_seminario_roles_cambiar  UPDATE
+politica  arbitros_cr_seminario_roles  arbitros_cr_seminario_roles_ver  SELECT
 politica  arbitros_cr_sin_id  arbitros_cr_sin_id_con_herramienta  SELECT
 politica  arbitros_cr_solicitudes_enviadas  arbitros_cr_solicitudes_enviadas_borrar  DELETE
 politica  arbitros_cr_solicitudes_enviadas  arbitros_cr_solicitudes_enviadas_cambiar  UPDATE
@@ -2555,6 +2638,8 @@ politica  platform_activity_log  platform_activity_log_exige_acceso_upd  UPDATE 
 politica  platform_activity_log  platform_activity_log_insert_own  INSERT
 politica  platform_activity_log  platform_activity_log_select  SELECT
 politica  platform_activity_log  platform_activity_log_update_own  UPDATE
+politica  practica_claves  practica_claves_select  SELECT
+politica  practica_respuestas  practica_respuestas_select  SELECT
 politica  practice_games  practice_games_delete  DELETE
 politica  practice_games  practice_games_exige_acceso_ins  INSERT  restrictiva
 politica  practice_games  practice_games_exige_acceso_upd  UPDATE  restrictiva
@@ -2887,17 +2972,24 @@ indice  arbitrajes_publicos  arbitrajes_publicos_pendientes
 indice  arbitrajes_publicos  arbitrajes_publicos_pkey
 indice  arbitrajes_publicos  arbitrajes_publicos_revisado_por_fk
 indice  arbitros_cr  arbitros_cr_pkey
+indice  arbitros_cr_avisos_enviados  arbitros_cr_avisos_enviados_pkey
 indice  arbitros_cr_cargos  arbitros_cr_cargos_fide_id
 indice  arbitros_cr_cargos  arbitros_cr_cargos_pkey
+indice  arbitros_cr_contacto  arbitros_cr_contacto_pkey
 indice  arbitros_cr_cr  arbitros_cr_cr_fide_torneo
 indice  arbitros_cr_cr  arbitros_cr_cr_pkey
 indice  arbitros_cr_cr_cargos  arbitros_cr_cr_cargos_fide_id
 indice  arbitros_cr_cr_cargos  arbitros_cr_cr_cargos_pkey
 indice  arbitros_cr_cr_elo  arbitros_cr_cr_elo_pkey
 indice  arbitros_cr_fide  arbitros_cr_fide_pkey
+indice  arbitros_cr_formacion  arbitros_cr_formacion_fide_idx
+indice  arbitros_cr_formacion  arbitros_cr_formacion_pkey
+indice  arbitros_cr_formacion  arbitros_cr_formacion_una_categoria
+indice  arbitros_cr_memoria  arbitros_cr_memoria_pkey
 indice  arbitros_cr_normas_revision  arbitros_cr_normas_revision_creada_por_idx
 indice  arbitros_cr_normas_revision  arbitros_cr_normas_revision_pkey
 indice  arbitros_cr_normas_revision  arbitros_cr_normas_revision_una_por_torneo
+indice  arbitros_cr_seminario_roles  arbitros_cr_seminario_roles_pkey
 indice  arbitros_cr_sin_id  arbitros_cr_sin_id_pkey
 indice  arbitros_cr_solicitudes_enviadas  arbitros_cr_solicitudes_enviadas_creada_por_idx
 indice  arbitros_cr_solicitudes_enviadas  arbitros_cr_solicitudes_enviadas_pkey
@@ -3182,6 +3274,12 @@ indice  plantillas_casa  plantillas_casa_pkey
 indice  plantillas_casa  plantillas_casa_profesor_id_situacion_texto_key
 indice  platform_activity_log  platform_activity_log_pkey
 indice  platform_activity_log  platform_activity_log_student_idx
+indice  practica_claves  practica_claves_pkey
+indice  practica_respuestas  practica_respuestas_clave_idx
+indice  practica_respuestas  practica_respuestas_owner_idx
+indice  practica_respuestas  practica_respuestas_pkey
+indice  practica_respuestas  practica_respuestas_student_idx
+indice  practica_respuestas  practica_respuestas_una_por_pregunta
 indice  practice_games  practice_games_pkey
 indice  practice_games  practice_games_session_id_idx
 indice  practice_games  practice_games_session_id_student_id_key
@@ -3397,6 +3495,7 @@ realtime  variant_nodes
 cron  auditoria-purga  17 9 1 * *
 cron  avisar-fichas-faltantes  10 * * * *
 cron  avisar-rachas  5 0 * * *
+cron  avisos-arbitros  7 14 1 * *
 cron  cerrar-clases-inactivas  */10 * * * *
 cron  cobros-generar  30 11 * * *
 cron  cobros-recordatorios  30 12 * * *
@@ -3469,9 +3568,14 @@ grant  arbitrajes_publicos  authenticated  UPDATE
 grant  arbitros_cr  authenticated  REFERENCES
 grant  arbitros_cr  authenticated  SELECT
 grant  arbitros_cr  authenticated  TRIGGER
+grant  arbitros_cr_avisos_enviados  authenticated  SELECT
 grant  arbitros_cr_cargos  authenticated  REFERENCES
 grant  arbitros_cr_cargos  authenticated  SELECT
 grant  arbitros_cr_cargos  authenticated  TRIGGER
+grant  arbitros_cr_contacto  authenticated  DELETE
+grant  arbitros_cr_contacto  authenticated  INSERT
+grant  arbitros_cr_contacto  authenticated  SELECT
+grant  arbitros_cr_contacto  authenticated  UPDATE
 grant  arbitros_cr_cr  authenticated  REFERENCES
 grant  arbitros_cr_cr  authenticated  SELECT
 grant  arbitros_cr_cr  authenticated  TRIGGER
@@ -3482,10 +3586,22 @@ grant  arbitros_cr_cr_elo  authenticated  SELECT
 grant  arbitros_cr_fide  authenticated  REFERENCES
 grant  arbitros_cr_fide  authenticated  SELECT
 grant  arbitros_cr_fide  authenticated  TRIGGER
+grant  arbitros_cr_formacion  authenticated  DELETE
+grant  arbitros_cr_formacion  authenticated  INSERT
+grant  arbitros_cr_formacion  authenticated  SELECT
+grant  arbitros_cr_formacion  authenticated  UPDATE
+grant  arbitros_cr_memoria  authenticated  DELETE
+grant  arbitros_cr_memoria  authenticated  INSERT
+grant  arbitros_cr_memoria  authenticated  SELECT
+grant  arbitros_cr_memoria  authenticated  UPDATE
 grant  arbitros_cr_normas_revision  authenticated  DELETE
 grant  arbitros_cr_normas_revision  authenticated  INSERT
 grant  arbitros_cr_normas_revision  authenticated  SELECT
 grant  arbitros_cr_normas_revision  authenticated  UPDATE
+grant  arbitros_cr_seminario_roles  authenticated  DELETE
+grant  arbitros_cr_seminario_roles  authenticated  INSERT
+grant  arbitros_cr_seminario_roles  authenticated  SELECT
+grant  arbitros_cr_seminario_roles  authenticated  UPDATE
 grant  arbitros_cr_sin_id  authenticated  REFERENCES
 grant  arbitros_cr_sin_id  authenticated  SELECT
 grant  arbitros_cr_sin_id  authenticated  TRIGGER
@@ -4120,6 +4236,8 @@ grant  platform_activity_log  authenticated  SELECT
 grant  platform_activity_log  authenticated  TRIGGER
 grant  platform_activity_log  authenticated  TRUNCATE
 grant  platform_activity_log  authenticated  UPDATE
+grant  practica_claves  authenticated  SELECT
+grant  practica_respuestas  authenticated  SELECT
 grant  practice_games  anon  DELETE
 grant  practice_games  anon  INSERT
 grant  practice_games  anon  REFERENCES

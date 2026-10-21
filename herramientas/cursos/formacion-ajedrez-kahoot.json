@@ -4,7 +4,13 @@
     "Cada pregunta con la correcta aparte y sus distractores: el lugar de la correcta",
     "lo reparte herramientas/formacion-cuestionarios.js (parejo entre A, B, C y D).",
     "Son cuestionarios listos del material «formacion-ajedrez»: los usa quien tenga",
-    "el curso compartido (admin.html#asesores). Hay uno por sesión, de la 1 a la 7."
+    "el curso compartido (admin.html#asesores). Hay uno por sesión, de la 1 a la 7.",
+    "",
+    "«tareas» son las tareas de nivel inicial de algunas sesiones: preguntas más simples,",
+    "para mandar a la casa, que no repiten las del Kahoot. Se llaman «Formación Ajedrez ·",
+    "Tarea inicial de la Sesión N: …». «comprobar» dice qué revisa verificar-formacion.js",
+    "en una posición que no es un final de partida (jugadas legales o no, una pieza sin",
+    "jugadas, un bando que solo tiene el rey); no va a la base."
   ],
   "material": "formacion-ajedrez",
   "sesiones": [
@@ -1732,6 +1738,341 @@
           ],
           "tiempo": 20,
           "fuente": "Evaluación del curso"
+        }
+      ]
+    }
+  ],
+  "tareas": [
+    {
+      "sesion": 1,
+      "titulo": "Formación Ajedrez · Tarea inicial de la Sesión 1: reglas y notación",
+      "preguntas": [
+        {
+          "texto": "¿Qué pieza puede saltar por encima de las demás?",
+          "correcta": "El caballo",
+          "distractores": [
+            "El alfil",
+            "La dama",
+            "La torre"
+          ],
+          "tiempo": 60,
+          "fuente": "FIDE 3.6"
+        },
+        {
+          "texto": "Al armar el tablero, ¿de qué color es la casilla de la esquina derecha de cada jugador?",
+          "correcta": "Blanca",
+          "distractores": [
+            "Negra",
+            "Depende del color de las piezas",
+            "Da igual, no hay regla"
+          ],
+          "tiempo": 60,
+          "fuente": "FIDE 2.1"
+        },
+        {
+          "texto": "Al empezar la partida, ¿en qué casilla va la dama blanca?",
+          "correcta": "d1, una casilla de su color",
+          "distractores": [
+            "e1, la casilla central de la fila",
+            "c1, al lado del caballo",
+            "Donde quede libre, junto al rey"
+          ],
+          "tiempo": 60,
+          "fuente": "FIDE 2.3"
+        },
+        {
+          "texto": "Un peón llega a la última fila. ¿Qué pasa?",
+          "correcta": "Se cambia por dama, torre, alfil o caballo, a elección",
+          "distractores": [
+            "Solo puede ser una dama, la pieza más fuerte",
+            "Solo puede ser una pieza que el rival le haya capturado",
+            "Solo por una pieza que ya fue capturada en la partida"
+          ],
+          "tiempo": 60,
+          "fuente": "FIDE 3.7.5"
+        },
+        {
+          "texto": "¿Se puede enrocar estando en jaque?",
+          "correcta": "No",
+          "distractores": [
+            "Sí, si el rey nunca se movió",
+            "Sí, pero solo el enroque corto",
+            "Sí, si el rival lo acepta"
+          ],
+          "tiempo": 60,
+          "fuente": "FIDE 3.8.2.2"
+        },
+        {
+          "texto": "En la planilla, ¿qué significa «Ae2»?",
+          "correcta": "El alfil va a e2",
+          "distractores": [
+            "El caballo va a e2",
+            "Ahogado en e2",
+            "Un peón captura en e2"
+          ],
+          "tiempo": 60,
+          "fuente": "FIDE C.4"
+        },
+        {
+          "texto": "En la notación algebraica, ¿qué indica la «x»?",
+          "correcta": "Una captura",
+          "distractores": [
+            "Un jaque",
+            "Una jugada mala",
+            "Un enroque"
+          ],
+          "tiempo": 60,
+          "fuente": "FIDE C.9"
+        },
+        {
+          "texto": "Durante la partida, ¿puede la persona árbitra sugerirle una jugada a un estudiante?",
+          "correcta": "No, nunca",
+          "distractores": [
+            "Sí, si el estudiante se lo pide",
+            "Sí, en la categoría infantil",
+            "Solo en la última ronda"
+          ],
+          "tiempo": 60,
+          "fuente": "FIDE 12.6"
+        },
+        {
+          "texto": "Juegan las negras. ¿Cómo está la partida?",
+          "correcta": "Jaque mate: ganan las blancas",
+          "distractores": [
+            "Jaque: las negras pueden salir",
+            "Ahogado: tablas",
+            "La partida sigue: no hay jaque"
+          ],
+          "tiempo": 60,
+          "fuente": "FIDE 5.1.1",
+          "fen": "R5k1/5ppp/8/8/8/8/5PPP/6K1 b - - 0 1"
+        },
+        {
+          "texto": "Juegan las negras. ¿Cómo sigue la partida?",
+          "correcta": "Jaque: la partida sigue",
+          "distractores": [
+            "Jaque mate: ganan las blancas",
+            "Ahogado: tablas",
+            "Tablas en el acto: posición muerta"
+          ],
+          "tiempo": 60,
+          "fuente": "FIDE 3.9",
+          "fen": "4k3/8/8/8/8/8/8/4R1K1 b - - 0 1"
+        },
+        {
+          "texto": "Les toca a las negras. ¿Cómo termina la partida?",
+          "correcta": "Ahogado: tablas",
+          "distractores": [
+            "Jaque mate: ganan las blancas",
+            "Pierden las negras por no poder mover",
+            "La partida sigue"
+          ],
+          "tiempo": 60,
+          "fuente": "FIDE 5.2.1",
+          "fen": "7k/5Q2/6K1/8/8/8/8/8 b - - 0 1"
+        },
+        {
+          "texto": "Quedan rey y alfil contra rey. ¿Qué corresponde?",
+          "correcta": "Tablas en el acto: posición muerta",
+          "distractores": [
+            "Gana quien tiene el alfil, si le queda tiempo en el reloj",
+            "Tablas solo si alguien las reclama",
+            "La partida sigue 50 jugadas más"
+          ],
+          "tiempo": 60,
+          "fuente": "FIDE 5.2.2",
+          "fen": "8/8/3k4/8/8/2B5/8/4K3 w - - 0 1"
+        },
+        {
+          "texto": "Juegan las blancas. Las negras acaban de jugar su peón de d7 a d5. ¿Puede el peón de e5 capturarlo?",
+          "correcta": "Sí, al paso (exd6), pero solo en esta jugada",
+          "distractores": [
+            "No: el peón negro ya pasó de largo",
+            "Sí, al paso, en cualquier momento de la partida",
+            "Solo si el árbitro lo autoriza"
+          ],
+          "tiempo": 60,
+          "fuente": "FIDE 3.7.3",
+          "fen": "4k3/8/8/3pP3/8/8/8/4K3 w - d6 0 1",
+          "comprobar": {
+            "legal": [
+              "exd6"
+            ]
+          }
+        },
+        {
+          "texto": "Juegan las blancas. El rey y la torre de h1 no se han movido. ¿Pueden enrocar corto?",
+          "correcta": "No: el rey pasaría por f1, que ataca el alfil",
+          "distractores": [
+            "Sí: el rey no está en jaque",
+            "Sí: es la primera vez que enrocan",
+            "Sí, mientras la torre de h1 no esté atacada por nada"
+          ],
+          "tiempo": 60,
+          "fuente": "FIDE 3.8.2.2",
+          "fen": "4k3/8/8/8/2b5/8/8/4K2R w K - 0 1",
+          "comprobar": {
+            "ilegal": [
+              "O-O"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "sesion": 2,
+      "titulo": "Formación Ajedrez · Tarea inicial de la Sesión 2: reglas de competición",
+      "preguntas": [
+        {
+          "texto": "Durante la partida, un estudiante consulta sus notas de aperturas. ¿Qué corresponde?",
+          "correcta": "Está prohibido: ninguna nota ni consejo",
+          "distractores": [
+            "Se permite si son notas propias",
+            "Se permite en la categoría infantil",
+            "Se permite mientras no sea su turno"
+          ],
+          "tiempo": 60,
+          "fuente": "FIDE 11.3.1"
+        },
+        {
+          "texto": "Un estudiante roza sin querer una pieza al acomodarse la manga. ¿Debe moverla?",
+          "correcta": "No: solo obliga tocarla a propósito",
+          "distractores": [
+            "Sí: toda pieza tocada se mueve",
+            "Sí, si el rival lo vio y lo reclama",
+            "Solo si es su turno y no está en jaque"
+          ],
+          "tiempo": 60,
+          "fuente": "FIDE 4.3"
+        },
+        {
+          "texto": "¿En qué momento queda hecha la jugada de una pieza?",
+          "correcta": "Cuando la suelta en la casilla nueva",
+          "distractores": [
+            "Cuando presiona el reloj",
+            "Cuando el rival la ve",
+            "Cuando la anota en la planilla"
+          ],
+          "tiempo": 60,
+          "fuente": "FIDE 4.6"
+        },
+        {
+          "texto": "Al terminar la partida, ¿qué firman los dos jugadores?",
+          "correcta": "Las dos planillas, con el resultado",
+          "distractores": [
+            "Solo la planilla de quien ganó",
+            "Nada: el resultado lo anota el árbitro",
+            "Solo su propia planilla"
+          ],
+          "tiempo": 60,
+          "fuente": "FIDE 8.7"
+        },
+        {
+          "texto": "A un estudiante se le va a caer la bandera por distracción. ¿Le avisa la persona árbitra?",
+          "correcta": "No: no avisa banderas ni jugadas",
+          "distractores": [
+            "Sí, si es menor de edad o principiante",
+            "Sí, para cuidar la deportividad del torneo",
+            "Sí, pero solo una vez por partida"
+          ],
+          "tiempo": 60,
+          "fuente": "FIDE 12.6"
+        },
+        {
+          "texto": "Un espectador le señala a un estudiante que a su rival le cayó la bandera. ¿Qué hace la persona árbitra?",
+          "correcta": "Puede sacarlo de la sala: no debe intervenir",
+          "distractores": [
+            "Nada: solo dijo algo evidente",
+            "Da por perdida la partida del beneficiado",
+            "Manda a jugar la partida de nuevo"
+          ],
+          "tiempo": 60,
+          "fuente": "FIDE 12.7"
+        },
+        {
+          "texto": "Ante un reclamo, ¿qué es lo primero que hace la persona árbitra?",
+          "correcta": "Escuchar a los dos y comprobar los hechos",
+          "distractores": [
+            "Sancionar a quien parece tener la culpa",
+            "Dejar que los jugadores lo arreglen solos",
+            "Esperar a que termine la ronda para decidir"
+          ],
+          "tiempo": 60,
+          "fuente": "FIDE 12.2"
+        },
+        {
+          "texto": "El rival le habla y lo distrae durante la partida. ¿Qué hace el estudiante?",
+          "correcta": "Detiene el reloj y llama a la persona árbitra",
+          "distractores": [
+            "Le pide a su entrenador que vaya a hablar con el rival",
+            "Espera a terminar para reclamar",
+            "Le contesta para que se calle"
+          ],
+          "tiempo": 60,
+          "fuente": "FIDE 6.11.2 y 11.5"
+        },
+        {
+          "texto": "Un estudiante tiene un reclamo durante la ronda. ¿A quién se dirige?",
+          "correcta": "A la persona árbitra",
+          "distractores": [
+            "A su entrenador, que habla con el rival",
+            "Directamente al rival",
+            "A las familias que miran la partida"
+          ],
+          "tiempo": 60,
+          "fuente": "FIDE 12.2"
+        },
+        {
+          "texto": "Juegan las blancas. El estudiante toca a propósito su caballo de e2. ¿Qué corresponde?",
+          "correcta": "Mueve otra pieza: el caballo no tiene jugada legal",
+          "distractores": [
+            "Debe mover el caballo de todos modos, porque lo tocó",
+            "Pierde la partida por tocar",
+            "Debe mover el rey como castigo"
+          ],
+          "tiempo": 60,
+          "fuente": "FIDE 4.5",
+          "fen": "4k3/4r3/8/8/8/8/4N3/4K3 w - - 0 1",
+          "comprobar": {
+            "sin_jugadas": [
+              "e2"
+            ]
+          }
+        },
+        {
+          "texto": "Juegan las blancas. Toca el rey y la torre de h1 para enrocar corto, pero el alfil ataca f1. ¿Qué debe hacer?",
+          "correcta": "Otra jugada legal con el rey (el enroque largo vale)",
+          "distractores": [
+            "Mover la torre de h1",
+            "Cualquier jugada legal, con cualquiera de sus piezas",
+            "Nada: retira la mano y piensa de nuevo"
+          ],
+          "tiempo": 60,
+          "fuente": "FIDE 4.4.2",
+          "fen": "4k3/8/8/8/2b5/8/8/R3K2R w KQ - 0 1",
+          "comprobar": {
+            "ilegal": [
+              "O-O"
+            ],
+            "legal": [
+              "O-O-O"
+            ]
+          }
+        },
+        {
+          "texto": "Ritmo rápido. A las negras se les cae la bandera y a las blancas solo les queda el rey. ¿Resultado?",
+          "correcta": "Tablas: las blancas no pueden dar mate",
+          "distractores": [
+            "Ganan las blancas por tiempo, como en cualquier partida",
+            "Ganan las negras por material",
+            "Se agregan 2 minutos y sigue"
+          ],
+          "tiempo": 60,
+          "fuente": "FIDE 6.9",
+          "fen": "3qk3/8/8/8/8/8/8/4K3 b - - 0 1",
+          "comprobar": {
+            "solo_rey": "w"
+          }
         }
       ]
     }

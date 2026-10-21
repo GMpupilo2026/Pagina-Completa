@@ -149,6 +149,20 @@
                  ocupaba el lugar más visible de la página para avisarle de que
                  NO pasa nada, empujando hacia abajo lo que sí tiene que hacer.
                  El acceso a la sesión en vivo sigue estando en el grid. -->
+            <!-- Un profesor que también estudia con otro profesor: su lado de
+                 alumno (la clase de su profesor, sus tareas y sus exámenes),
+                 aparte de lo de dar clase. Lo pinta js/clases.js
+                 (cargarLadoAlumno) solo si de verdad tiene profesor. -->
+            <section id="lado-alumno-card" hidden aria-labelledby="lado-alumno-titulo" class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-8">
+                <h2 id="lado-alumno-titulo" class="font-serif text-lg font-bold text-brand-800 dark:text-white"><span aria-hidden="true">🎒</span> También eres alumno</h2>
+                <p class="text-sm text-brand-500 dark:text-brand-300 mt-0.5 mb-3">Sigues dando clase a los tuyos. Aquí entras a la clase de tu profesor como un alumno más.</p>
+                <ul id="lado-alumno-lista" class="grid gap-2"></ul>
+                <div class="flex flex-wrap gap-4 mt-3">
+                    <a href="tareas.html" class="text-sm font-semibold text-accent-700 dark:text-accent-400 underline underline-offset-2 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Mis tareas como alumno</a>
+                    <a href="examenes.html" class="text-sm font-semibold text-accent-700 dark:text-accent-400 underline underline-offset-2 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Mis exámenes como alumno</a>
+                </div>
+            </section>
+
             <div id="session-status-card" hidden class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-8">
                 <div id="session-status-open" class="hidden">
                     <div class="flex items-center justify-between flex-wrap gap-4">
@@ -272,7 +286,13 @@
                 <!-- Los totales de siempre, contados en la base (mi_entreno_resumen,
                      ver loadEntrenoProgress en js/clases.js). La racha de días no
                      va acá: ya la dice la meta del día, justo arriba. -->
-                <div class="grid grid-cols-3 gap-3 text-center mb-4 pt-4 border-t border-brand-100 dark:border-brand-800">
+                <!-- Plegados bajo «Tus números»: con la meta del día, lo que toca
+                     hoy y «Entrenar 10 minutos», la tarjeta tenía siete cosas a la
+                     vista. Lo de hoy se queda arriba; esto, a un clic. Ver «El
+                     panel del alumno, cada cosa una vez» en docs/decisiones/paneles.md. -->
+                <details id="tus-numeros" class="pt-3 border-t border-brand-100 dark:border-brand-800">
+                <summary class="flex items-center gap-2 cursor-pointer select-none text-sm font-semibold text-brand-700 dark:text-brand-200 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><svg aria-hidden="true" class="transition-transform [details[open]>summary_&]:rotate-90" width="12" height="12" viewBox="0 0 20 20" fill="currentColor"><path d="M7 4l7 6-7 6z"/></svg>Tus números y la racha táctica del grupo</summary>
+                <div class="grid grid-cols-3 gap-3 text-center mb-4 mt-3">
                     <a href="entreno/4x4.html" class="rounded-xl p-2 hover:bg-brand-50 dark:hover:bg-brand-800 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
                         <div class="text-2xl font-bold text-brand-800 dark:text-white" id="entreno-puzzles"><span aria-hidden="true">—</span><span class="sr-only">Todavía sin datos:</span></div>
                         <div class="text-xs text-brand-450 dark:text-brand-350 mt-1"><span aria-hidden="true">🧩 </span>Ejercicios 4×4</div>
@@ -291,6 +311,7 @@
                     <p class="flex-1 min-w-[200px] text-sm text-brand-500 dark:text-brand-300"><span class="font-semibold text-brand-800 dark:text-white" id="tactics-record-title">Racha táctica</span> <span aria-hidden="true">—</span><span class="sr-only">:</span> <span id="tactics-record-text">Cargando…</span></p>
                     <span class="text-sm font-semibold text-accent-700 dark:text-accent-400 whitespace-nowrap">Jugar →</span>
                 </a>
+                </details>
             </div>
 
 
@@ -302,7 +323,7 @@
                  (ni calendario, ni última clase, ni puntos), el bloque no se pinta (ajustarTusClases en
                  js/clases.js). -->
             <details id="tus-clases" hidden class="mb-8">
-                <summary class="flex items-center gap-2 cursor-pointer select-none font-serif text-lg font-bold text-brand-800 dark:text-white mb-3 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Tus clases <span class="font-sans text-xs font-normal text-brand-500 dark:text-brand-300">tu calendario, tu última clase y tus puntos del mes</span></summary>
+                <summary class="flex flex-wrap items-baseline gap-x-2 gap-y-1 cursor-pointer select-none font-serif text-lg font-bold text-brand-800 dark:text-white mb-3 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span class="inline-flex items-center gap-2 whitespace-nowrap"><svg aria-hidden="true" class="transition-transform [details[open]>summary_&]:rotate-90" width="14" height="14" viewBox="0 0 20 20" fill="currentColor"><path d="M7 4l7 6-7 6z"/></svg>Tus clases</span> <span class="font-sans text-xs font-normal text-brand-500 dark:text-brand-300">tu calendario, tu última clase y tus puntos del mes</span></summary>
                 <!-- «Agregar a mi calendario» (solo alumno con profe): sus clases de
                      cuatro semanas, sus tareas y sus exámenes en un .ics. Ver
                      botonCalendario en js/clases.js y js/calendario-ics.js. -->
@@ -477,7 +498,7 @@
             <section id="favoritas" hidden aria-labelledby="favoritas-titulo" class="mb-8">
                 <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
                     <h2 id="favoritas-titulo" class="font-serif text-lg font-bold text-brand-800 dark:text-white"><span aria-hidden="true">⭐ </span>Tus favoritas</h2>
-                    <button id="favoritas-elegir" type="button" class="text-sm font-semibold text-accent-700 dark:text-accent-400 underline underline-offset-2 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Elegir favoritas</button>
+                    <button id="favoritas-elegir" type="button" class="text-left text-sm font-semibold text-accent-700 dark:text-accent-400 underline underline-offset-2 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Elegir favoritas</button>
                 </div>
                 <p id="favoritas-vacio" class="text-sm text-brand-600 dark:text-brand-300">Fija aquí las páginas que más usas: salen primero, en el celular y en la computadora.</p>
                 <ul id="favoritas-lista" class="grid grid-cols-2 sm:grid-cols-4 gap-3" style="display:none"></ul>

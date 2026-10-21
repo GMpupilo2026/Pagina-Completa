@@ -97,5 +97,5 @@ colegio) necesita una ruta de nivelación; el repaso de la unidad 1 lo cubre.
 2. Análisis crítico de partidas de campeones (Kasparov, Anand, Kramnik, Carlsen)
 3. Psicología competitiva, manejo del tiempo y salud del jugador
 4. Enseñar ajedrez: tutoría a estudiantes de primaria (monitores)
-5. Ajedrez, ciudadanía y carrera: arbitraje, entrenamiento, la Federación Central de Ajedrez de Costa Rica, los Juegos Deportivos Nacionales
+5. Ajedrez, ciudadanía y carrera: arbitraje, entrenamiento, la Federación Costarricense de Ajedrez de Costa Rica, los Juegos Deportivos Nacionales
 6. Proyecto final: festival o torneo comunal y portafolio de egreso

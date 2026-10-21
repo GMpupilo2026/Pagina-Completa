@@ -133,6 +133,72 @@ sin pisarse.
   aparece igual para administradores; si una función nueva vive en otra
   página, `admin.html` la enlaza.
 
+### Un profesor también puede ser alumno de otro
+
+Ronaldo y Sebastián dan clase a los suyos y estudian con Oscar. **No se les
+cambia el rol: siguen siendo `profesor`, con todo su poder sobre sus alumnos, y
+además tienen profesor.** La verdad es la de siempre, `profile_teachers`
+(alumno, profesor): la tabla nunca pidió que el alumno tuviera `role = 'alumno'`
+(solo prohíbe ser profesor de uno mismo) y las políticas de todo lo que hace un
+alumno —tareas, exámenes, clase, chat…— preguntan por la relación
+(`profesores_de`/`alumnos_de`), no por el rol. Se comprobó: de las políticas
+solo `retos_ejercicios_insert` mira el rol del rival, y ninguna pide
+`<> 'profesor'`. Lo que se quedaba corto eran las **listas de alumnos de un
+profesor**, que filtraban `role = 'alumno'`: Ronaldo era alumno de Oscar en la
+base y no salía en nada de Oscar.
+
+- **`interno.profesor_alumno_mio(id)`** es lo que se le suma a `role =
+  'alumno'` en esas listas, con el mismo patrón de siempre: `(p.role = 'alumno'
+  or interno.profesor_alumno_mio(p.id))`. Un profesor que estudia sale en las
+  listas de **su profesor** (directo o por un equipo), en las de quien coordina
+  si está bajo su coordinación y en las de quien administra; **no** en las de
+  un tercero: Mora no ve en sus Informes a Ronaldo, que es alumno de Oscar y no
+  suyo. Comprobado impersonando roles en SQL (revertido): Oscar pasa de 66 a 67
+  alumnos y ve a Ronaldo en `informes_resumen_alumnos`; Mora, con 0; Ronaldo
+  conserva sus 86 y `mis_clases()` le trae la de Oscar.
+- La migración `profesores_tambien_alumnos` reescribe catorce funciones (las
+  de Informes, el panel del profesor, los avisos, «se caen del plan»…) sobre el
+  cuerpo que tienen en la base, y **falla si alguna ya no trae la línea**, en
+  vez de dejarla sin cambiar. Se tocaron a mano `mandar_plan_rival` (un
+  profesor puede mandarle el plan de un rival), `justificar_ausencia` (quien
+  estudia con alguien puede justificar) y `coord_set_profesores` (quien
+  coordina le puede asignar profesores a un profesor).
+- **Lo que NO cambió, a propósito**: `acceso_vigente()`/`acceso_resumen()` (el
+  corte de acceso es de los alumnos; a un profesor no se le corta), los
+  conteos de academias y del supervisor, el marcador del salón y los equipos
+  (`equipo_alumnos` sigue siendo de alumnos: un entrenador que a la vez fuera
+  alumno del mismo equipo se tendría de profesor a sí mismo), y «Panel de:»
+  (`panel_profesor_de`), que cuenta con la persona mirada, no con quien mira.
+  `profile_teachers_suma_a_la_academia` tampoco: un profesor que estudia no
+  entra solo a la academia de su profesor.
+- **Quien administra lo asigna** desde la ficha de la cuenta («Estudia con»,
+  `set_teachers`, que ahora acepta a un profesor). Antes `set_teachers` y
+  `assign_bulk` solo aceptaban alumnos; `assign_bulk` (el lote) sigue así. **Al
+  subir a un alumno a profesor, `admin-manage-users` ya no le borra sus
+  profesores** —lo hacía para que la fila no quedara colgada—, y `cambiar_rol`
+  nunca lo hizo. Por eso Juan José Picado y Profe Keisy ya estaban asignados a
+  Karina Rojas, y desde esta migración salen en sus Informes como alumnos.
+- **Las pantallas donde se elige a quién mandarle algo** (Tareas, Exámenes,
+  Proyecto, el plan de un rival, Juegos) piden `role = 'alumno'` y suman a los
+  profesores que estudian con `js/alumnos-mios.js`
+  (`profesores_que_estudian_conmigo()`, `SECURITY INVOKER`, así que pasa por la
+  RLS). Si la llamada falla, la lista queda como estaba.
+- **Su lado de alumno**: la tarjeta «También eres alumno» en su panel
+  (`cargarLadoAlumno()` de `js/clases.js`, solo si `mis_clases()` trae a
+  alguien) lleva a la clase de su profesor con `sesion.html?como_alumno=1&profe=<id>`;
+  Tareas y Exámenes le suman «Tus tareas / exámenes como alumno» debajo de lo de
+  dar clase. En la sesión, `como_alumno=1` lo vuelve alumno de esa clase
+  (`comoAlumnoDeOtro`): `isTeacher` en falso, presencia con `role: "alumno"`
+  —si no, no sale en «Alumnos conectados» de Oscar— y en el chat lo suyo se
+  pinta como de alumno (`sender_id <> student_id` decide qué es del profe, ya no
+  el rol). El parámetro se queda en la dirección para que el selector de clase,
+  que recarga, no lo devuelva a su propia clase. Quien administra no es alumno
+  de nadie: no ve nada de esto.
+
+**Al tocarlo, correr `node herramientas/verificar-todo.js profesor-alumno
+tareas examenes`.** Para probar la parte de la base, impersonar roles en SQL
+con una fila de `profile_teachers` dentro de una transacción que se revierte.
+
 ### Equipos: un alumno en varios a la vez, un equipo con cualquier cantidad de entrenadores
 
 **No es lo mismo que `profiles.grupo`.** Ese campo sigue exactamente como
@@ -913,17 +979,20 @@ podía mirar el panel de un estudiante con «Panel de:»; ahora también el prof
   INVOKER` o con su chequeo: lo que el profe lee lo decide la RLS que ya
   tenía sobre sus alumnos (`interno.alumnos_de`). Fuera quedan la clase en
   vivo, «Tus clases» y «Hoy te toca», que dirían lo de quien mira.
-- **La franja dice lo que no ve**: `tareas` y `examenes` le dejan leer a un
-  profe lo que él puso, no lo que le puso OTRO profe del mismo alumno. Por eso
-  a quien da clase la franja le dice «Su progreso y su informe son los suyos;
-  de sus tareas y exámenes ves los que le pusiste tú». Abrir esa lectura
-  (`alumno_id in (select interno.alumnos_de(...)) and disponible_desde <=
-  now()` en `tareas_select` y `examenes_select`; `examen_items` nunca, que
-  guarda la clave de las respuestas) es una migración aparte: se intentó
-  aplicar con este cambio y no se aprobó. Se comprobó antes que no cambiaría
-  ningún número del profe: `panel_profesor()`, `tareas.html`, `examenes.html`
-  y el calendario filtran por `p_profesor`, y las demás funciones que leen
-  esas tablas son `SECURITY DEFINER`.
+- **Ve también lo que le pusieron sus otros profes**: `tareas_select` y
+  `examenes_select` le dejan leer al profe lo que OTRO profe le puso a un
+  alumno suyo, `alumno_id in (select interno.alumnos_de(...)) and
+  disponible_desde <= now()` (migración
+  `20261018204456_profe_lee_tareas_y_examenes_de_sus_alumnos`, aplicada
+  desde el SQL Editor). Solo lo que el alumno ya ve, y solo leer: escribir
+  sigue siendo de quien la puso. `examen_items` no se abre, que guarda la
+  clave de las respuestas. Antes del cambio cada profe veía en ese panel solo
+  lo suyo y la franja tenía que decirlo. No cambia ningún número del profe:
+  `panel_profesor()`, `tareas.html`, `examenes.html` y el calendario filtran
+  por `p_profesor`, y las demás funciones que leen esas tablas son `SECURITY
+  DEFINER`. Comprobado impersonando a un profe con un alumno compartido: ve
+  las 5 tareas del otro profe (6 en el panel del alumno), ninguna de alumnos
+  ajenos, ninguna programada ajena y ninguna clave de examen ajena.
 - **Para guiarlo, desde la misma franja**: «📊 Su informe» (a quien administra
   también) y «📋 Ponerle una tarea» (solo a quien da clase), con su
   `?alumno=`. Al tocarlos se vuelve a la vista propia, porque la tarea se pone

@@ -607,6 +607,7 @@
       todos.push(...(data || []));
       if (!data || data.length < 1000) break;
     }
+    if (window.AlumnosMios) todos.splice(0, todos.length, ...(await AlumnosMios.sumarProfesores(sb, todos)));
     alumnosCargados = true;
     $("mandar-cargando").hidden = true;
     $("mandar-sin-alumnos").hidden = todos.length > 0;
