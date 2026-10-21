@@ -20,12 +20,14 @@
   const E = window.PareoEquipos;
   const V = window.PareoEvento;
   const X = window.PareoTextos;
+  const H = window.PareoHistorial;
   const motor = window.PareoMotor.enNavegador("js/pareo/motor-worker.js");
 
   const CLAVE_LISTA = "pareo_lista_v1";
   const CLAVE_IDIOMA = "pareo_idioma_v1";
   const CLAVE_FICHA = "pareo_ficha_v1";
   const PREFIJO = "pareo_torneo_v1_";
+  const CLAVE_MODO_JDE = "pareo_modo_jde_v1";
 
   const C = {
     campo: "w-full rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-800 text-brand-800 dark:text-white px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400",
@@ -62,7 +64,11 @@
   let idioma = leer(CLAVE_IDIOMA) === "en" ? "en" : "es";
   const tx = (clave, vars) => X.t(idioma, clave, vars);
 
-  const estado = { lista: leerJSON(CLAVE_LISTA, []), id: null, t: null, ficha: leer(CLAVE_FICHA) || "jugadores", ronda: null, filtroInstitucion: "", filtroJugador: "", eloPendientes: [], enVivo: false, canalVivo: null, sugerencia: null, eventoVivo: null };
+  const estado = { lista: leerJSON(CLAVE_LISTA, []), id: null, t: null, ficha: leer(CLAVE_FICHA) || "jugadores", ronda: null, filtroInstitucion: "", filtroJugador: "", eloPendientes: [], enVivo: false, canalVivo: null, sugerencia: null, eventoVivo: null, adjuntos: null, capitanes: null, verCapitanes: false, marcados: new Set(),
+    // El historial de cambios de cada torneo (solo en esta pestaña) y lo que
+    // se guardó la última vez, para saber qué cambió y para notar si otra
+    // pestaña lo cambió por debajo.
+    historial: new Map(), ultimoGuardado: null, deshaciendo: false, respaldoArchivo: null };
 
   // Al cambiar de torneo: cortar el canal del que se sale, para no seguir
   // mandando SU estado por la conexión que había quedado abierta.
@@ -89,7 +95,18 @@
 
   function guardar() {
     if (!estado.t) return;
-    if (!escribir(PREFIJO + estado.id, JSON.stringify(estado.t))) {
+    const texto = JSON.stringify(estado.t);
+    if (estado.ultimoGuardado && estado.ultimoGuardado !== texto && !estado.deshaciendo) {
+      const lista = estado.historial.get(estado.id) || [];
+      const cambios = H.describir(JSON.parse(estado.ultimoGuardado), estado.t);
+      if (cambios.length) {
+        lista.push({ hora: Date.now(), antes: estado.ultimoGuardado, cambios });
+        if (lista.length > TOPE_HISTORIAL) lista.shift();
+        estado.historial.set(estado.id, lista);
+      }
+    }
+    estado.ultimoGuardado = texto;
+    if (!escribir(PREFIJO + estado.id, texto)) {
       Avisos.avisar(tx("noGuarda"), { tipo: "error" });
     }
     const item = estado.lista.find((x) => x.id === estado.id);
@@ -100,7 +117,11 @@
     escribir("pareo_abierto_v1", estado.id);
     if (estado.enVivo) difundirEnVivo();
     if (estado.eventoVivo && estado.t.evento && estado.t.evento.id === estado.eventoVivo.id) difundirEvento();
+    if (estado.adjuntos && estado.adjuntos.idTorneo === estado.id) enviarAdjuntos();
+    if (estado.capitanes && estado.capitanes.idTorneo === estado.id) for (const c of estado.capitanes.canales.keys()) enviarCapitan(c);
+    if (estado.respaldoArchivo && estado.t.evento && estado.t.evento.id === estado.respaldoArchivo.id) programarRespaldo();
   }
+  const TOPE_HISTORIAL = 40;
 
   function abrir(id) {
     const t = leerJSON(PREFIJO + id, null);
@@ -108,10 +129,12 @@
     apagarEnVivo();
     estado.id = id;
     estado.t = T.nuevo(t);
+    estado.ultimoGuardado = JSON.stringify(estado.t);
     estado.ronda = null;
     estado.filtroInstitucion = "";
     estado.filtroJugador = "";
     estado.eloPendientes = [];
+    estado.marcados = new Set();
     estado.sugerencia = null;
     escribir("pareo_abierto_v1", id);
     return true;
@@ -121,10 +144,12 @@
     apagarEnVivo();
     estado.id = nuevoId();
     estado.t = t || T.nuevo({ fechaInicio: window.HoraCR ? HoraCR.hoy() : "" });
+    estado.ultimoGuardado = null;
     estado.ronda = null;
     estado.filtroInstitucion = "";
     estado.filtroJugador = "";
     estado.eloPendientes = [];
+    estado.marcados = new Set();
     estado.sugerencia = null;
     guardar();
   }
@@ -422,6 +447,7 @@
     $("pi-pegar-caja").hidden = deEquipos;
     $("pi-caja-elo-nacional").hidden = deEquipos;
     tabla.hidden = deEquipos;
+    $("pi-masivo").hidden = true;
     $("pi-equipos").hidden = !deEquipos;
     if (deEquipos) {
       $("pi-cuenta").textContent = v.jugadores.length;
@@ -446,7 +472,16 @@
     }) : orden;
     $("pi-sin-coincidencias").hidden = filtrado.length > 0;
     if (!filtrado.length) return;
+    // Marcar varios (o todos los que se ven) para eliminarlos de una vez.
+    for (const id of [...estado.marcados]) if (!jugador(id)) estado.marcados.delete(id);
+    const todosMarcados = filtrado.every((id) => estado.marcados.has(id));
+    pintarMasivo(filtrado);
     tabla.append(el("thead", {}, el("tr", {},
+      el("th", { scope: "col", class: "w-8" }, el("input", { type: "checkbox", id: "pi-marcar-todos", "aria-label": tx("marcarTodos"), checked: todosMarcados, onchange: (e) => {
+        for (const id of filtrado) { if (e.target.checked) estado.marcados.add(id); else estado.marcados.delete(id); }
+        pintarJugadores();
+        const x = $("pi-marcar-todos"); if (x) x.focus();
+      } })),
       el("th", { class: "num", scope: "col", texto: tx("nro") }), el("th", { scope: "col", texto: tx("nombre") }),
       el("th", { scope: "col", texto: tx("institucion") }), el("th", { scope: "col", texto: tx("categoria") }),
       el("th", { scope: "col", texto: tx("titulo") }), el("th", { class: "num", scope: "col", texto: "Elo" }),
@@ -459,7 +494,13 @@
     for (const id of filtrado) {
       const j = jugador(id);
       const retirado = j.retiradoDespuesDe != null;
+      const cid = "pi-marcar-" + id;
       cuerpo.append(el("tr", {},
+        el("td", {}, el("input", { type: "checkbox", id: cid, "aria-label": tx("marcarA", { n: j.nombre }), checked: estado.marcados.has(id), onchange: (e) => {
+          if (e.target.checked) estado.marcados.add(id); else estado.marcados.delete(id);
+          pintarJugadores();
+          const x = $(cid); if (x) x.focus();
+        } })),
         el("td", { class: "num", texto: num.get(id) }),
         el("td", { class: "font-semibold", texto: j.nombre }),
         el("td", { texto: j.institucion || "" }),
@@ -472,6 +513,7 @@
         el("td", { texto: retirado ? tx("retiradoDesde", { r: j.retiradoDespuesDe + 1 }) : tx("activo") }),
         el("td", { class: "whitespace-nowrap" },
           el("button", { type: "button", class: C.mini, "aria-label": tx("editarA", { n: j.nombre }), onclick: () => editarJugador(id) }, tx("editar")), " ",
+          v.evento && !v.rondas.length ? el("button", { type: "button", class: C.mini, "aria-label": tx("moverA", { n: j.nombre }), onclick: () => moverDeTorneo(id) }, tx("mover")) : null, " ",
           enUnaMesa.has(id) || v.rondas.length
             ? el("button", { type: "button", class: C.mini, "aria-label": tx(retirado ? "volverA" : "retirarA", { n: j.nombre }), onclick: () => retirar(id) }, tx(retirado ? "volver" : "retirar"))
             : el("button", { type: "button", class: C.miniPeligro, "aria-label": tx("eliminarA", { n: j.nombre }), onclick: () => eliminar(id) }, tx("eliminar"))
@@ -507,13 +549,41 @@
           el("span", { class: "font-mono text-xs font-bold w-24", texto: k < E.TABLEROS ? tx("tableroN", { t: k + 1 }) : tx("suplente") }),
           el("span", { class: "flex-1 min-w-[10rem]", texto: j.nombre + (Number(j.elo) > 0 ? " (" + j.elo + ")" : "") }),
           el("button", { type: "button", id: "pi-orden-" + id + "-" + k + "-sube", class: C.mini, disabled: fijo || k === 0, "aria-label": tx("subir", { n: j.nombre }), onclick: mover(-1) }, "↑"),
-          el("button", { type: "button", id: "pi-orden-" + id + "-" + k + "-baja", class: C.mini, disabled: fijo || k === e.integrantes.length - 1, "aria-label": tx("bajar", { n: j.nombre }), onclick: mover(1) }, "↓")));
+          el("button", { type: "button", id: "pi-orden-" + id + "-" + k + "-baja", class: C.mini, disabled: fijo || k === e.integrantes.length - 1, "aria-label": tx("bajar", { n: j.nombre }), onclick: mover(1) }, "↓"),
+          fijo ? null : el("button", { type: "button", id: "pi-reemplazar-" + id + "-" + k, class: C.mini, "aria-label": tx("reemplazarA", { n: j.nombre }), onclick: () => reemplazarIntegrante(id, k) }, tx("reemplazar"))));
       });
       caja.append(el("section", { class: "rounded-xl border border-brand-200 dark:border-brand-700 p-3", "data-equipo": id },
         el("h3", { class: "font-semibold", texto: num.get(id) + ". " + e.nombre }),
         el("p", { class: C.nota, texto: tx("equipoResumen", { n: e.integrantes.length, p: puntosTexto(T.puntos(v, id)), pt: puntosTexto(E.puntosTablero(v, id)), elo: e.elo || "—" }) }),
         ol));
     }
+  }
+
+  // Cambiar a un integrante antes de la ronda 1 (si la normativa y el
+  // congresillo lo permiten): por uno de los descartados de su centro o por
+  // alguien escrito a mano. Entra en el mismo lugar del orden de tableros y
+  // queda en el acta.
+  async function reemplazarIntegrante(idE, k) {
+    const v = t();
+    const e = jugador(idE);
+    const sale = e.integrantes[k];
+    const descartados = ((v.evento && v.evento.decisiones && v.evento.decisiones.descartados) || [])
+      .filter((x) => sinTildes(x.institucion) === sinTildes(e.institucion)).map((x) => x.nombre);
+    const campos = [];
+    if (descartados.length) campos.push({ nombre: "descartado", etiqueta: tx("reemplazoDescartado"), tipo: "select", valor: "", opciones: [["", tx("reemplazoOtro")]].concat(descartados.map((n) => [n, n])) });
+    campos.push({ nombre: "nombre", etiqueta: tx("reemplazoNombre"), valor: "", max: 33 });
+    const r = await Avisos.formulario({ titulo: tx("reemplazarA", { n: sale.nombre }), texto: tx("reemplazoTexto", { e: e.nombre }), aceptar: tx("reemplazar"), cancelar: tx("cancelar"), campos });
+    if (!r || t() !== v || v.rondas.length) return;
+    const nombre = String(r.descartado || r.nombre || "").trim().slice(0, 33);
+    if (!nombre) { Avisos.avisar(tx("faltaNombre"), { tipo: "error" }); return; }
+    e.integrantes[k] = { id: idJugador(), nombre, institucion: sale.institucion || e.institucion, sexo: sale.sexo, categoria: sale.categoria, region: sale.region, retiradoDespuesDe: null };
+    if (!e.integrantes[k].region) delete e.integrantes[k].region;
+    e.elo = E.eloDeEquipo(e.integrantes);
+    v.reemplazos = (v.reemplazos || []).concat({ equipo: e.nombre, sale: sale.nombre, entra: nombre });
+    guardar();
+    pintarEquipos();
+    Avisos.avisar(tx("reemplazado", { s: sale.nombre, e: nombre }));
+    const b = $("pi-reemplazar-" + idE + "-" + k); if (b) b.focus();
   }
 
   // El orden de tableros de cada equipo, una hoja por equipo, para que el
@@ -632,6 +702,9 @@
     // La etapa de la que viene una lista de clasificados (la escribe
     // js/pareo/evento.js): con ella se ofrece armar la etapa que sigue.
     etapa: "etapa", stage: "etapa",
+    // El puesto también lo trae solo una lista de clasificados (también las
+    // que se bajaron antes de que existiera la columna «Etapa»).
+    puesto: "puesto",
     // Solo para reconocer a la misma persona inscrita dos veces: no se
     // guarda en el torneo (soloJugador).
     "documento de identidad": "documento", documento: "documento", cedula: "documento",
@@ -686,13 +759,14 @@
       documento: String(celda(fila, "documento") || "").trim(),
       torneo: G.leerTorneo(celda(fila, "torneo")),
       etapaOrigen: G.leerEtapa(celda(fila, "etapa")),
+      deClasificados: mapa.puesto != null || mapa.etapa != null,
     })).filter((d) => d.nombre);
   }
 
   // Lo que se guarda del jugador: sin la modalidad ni la regional.
   // La Dirección Regional sí se guarda: la usa la lista de clasificados
   // para la etapa siguiente (js/pareo/evento.js).
-  const soloJugador = ({ modalidad, alAbierto, documento, torneo, origen, etapaOrigen, ...d }) => (d.region ? d : (delete d.region, d));
+  const soloJugador = ({ modalidad, alAbierto, documento, torneo, origen, etapaOrigen, deClasificados, ...d }) => (d.region ? d : (delete d.region, d));
 
   // Uno o varios archivos: en la Etapa Interregional llegan los
   // clasificados de cada Dirección Regional por separado (la lista que baja
@@ -716,10 +790,15 @@
       const archivo = todos[0];
       estadoEl.textContent = "";
       if (!leida.length) { Avisos.avisar(tx("archivoSinJugadores"), { tipo: "error" }); return; }
-      const limpia = G.quitarRepetidos(leida);
+      // La inscripción de una etapa subida junto con los clasificados de la
+      // anterior (los que traen «Etapa»): se comparan, y juega la inscripción.
+      const conEtapa = leida.filter((j) => j.deClasificados), sinEtapa = leida.filter((j) => !j.deClasificados);
+      const comparar = conEtapa.length > 0 && sinEtapa.length > 0;
+      const extra = { siguiente: V.siguienteDe((comparar ? conEtapa : leida).map((j) => j.etapaOrigen)), comparacion: comparar ? V.compararEtapa(sinEtapa, conEtapa) : null };
+      const limpia = G.quitarRepetidos(comparar ? sinEtapa : leida);
       const lista = limpia.lista;
       G.pasarMujeresAlAbierto(lista, true);
-      if (G.agrupar(lista).grupos.length > 1) { sugerirGrupos(lista, archivo.name, limpia); return; }
+      if (G.agrupar(lista).grupos.length > 1) { sugerirGrupos(lista, archivo.name, limpia, extra); return; }
       const sobran = limpia.repetidos.reduce((a, r) => a + r.veces - 1, 0);
       if (sobran) Avisos.avisar(tx("repetidasQuitadas", { n: sobran }), { tipo: "info" });
       agregarTodos(lista);
@@ -740,15 +819,15 @@
   // varias categorías, no se agrega a nadie todavía: se le muestra al árbitro
   // cómo quedaría partida, con cada grupo marcado (menos el que tiene un solo
   // jugador, que no alcanza para un torneo), y él decide.
-  function sugerirGrupos(lista, nombreArchivo, limpia) {
+  function sugerirGrupos(lista, nombreArchivo, limpia, extra) {
     const regiones = [...new Set(lista.map((j) => j.region).filter(Boolean))];
     const base = regiones.length === 1 ? tx("grupoRegional", { r: regiones[0] })
       : String(nombreArchivo || "").replace(/\.[^.]+$/, "").replace(/[_]+/g, " ").trim();
     // El año del torneo: el de su fecha de inicio, o el de hoy.
     const anio = Number(String(t().fechaInicio || "").slice(0, 4)) || Number((window.HoraCR ? HoraCR.hoy() : "").slice(0, 4)) || G.JDE_ANIO_NORMATIVA;
     // Una lista de clasificados (con su columna «Etapa») trae la etapa que sigue.
-    const siguiente = V.siguienteDe(lista.map((j) => j.etapaOrigen));
-    estado.sugerencia = { lista, base, anio, region: regiones, siguiente, pasarMujeres: true, grupos: [], elegidos: new Map(), abiertos: new Set(), limpia, dondeQueda: new Map(), configJde: true };
+    const siguiente = extra ? extra.siguiente : V.siguienteDe(lista.map((j) => j.etapaOrigen));
+    estado.sugerencia = { lista, base, anio, region: regiones, siguiente, comparacion: extra ? extra.comparacion : null, pasarMujeres: true, grupos: [], elegidos: new Map(), abiertos: new Set(), limpia, dondeQueda: new Map(), configJde: true };
     calcularSugerencia();
     pintarSugerencia();
     const caja = $("pi-sugerencia");
@@ -894,6 +973,23 @@
           tx("origenesCaso", { n: x.jugador.nombre, i: x.jugador.institucion || "—", o: x.origenes.join(" " + tx("y") + " ") })))));
   }
 
+  // La inscripción contra los clasificados de la etapa anterior: quién se
+  // inscribió sin haber clasificado (queda para revisar antes de la ronda 1)
+  // y quién clasificó y no viene.
+  function pintarComparacion(s) {
+    const c = s.comparacion;
+    if (!c) return null;
+    const persona = (j) => j.nombre + " (" + (j.institucion || "—") + ")";
+    const caja = el("div", { id: "pi-comparacion", class: "mt-4 pt-3 border-t border-brand-100 dark:border-brand-800" },
+      el("h4", { class: "font-semibold text-sm", texto: tx("compTitulo") }));
+    if (!c.noClasificaron.length && !c.faltan.length) { caja.append(el("p", { class: "text-sm mt-1", texto: tx("compIgual") })); return caja; }
+    if (c.noClasificaron.length) caja.append(el("p", { class: "text-sm mt-1", texto: tx("compNoClasificaron", { n: c.noClasificaron.length }) }),
+      el("ul", { id: "pi-comp-no", class: "mt-1 space-y-1 text-sm list-disc pl-5" }, c.noClasificaron.map((j) => el("li", {}, el("span", { class: "font-semibold", texto: tx("cortosAviso") + " " }), persona(j)))));
+    if (c.faltan.length) caja.append(el("p", { class: "text-sm mt-2", texto: tx("compFaltan", { n: c.faltan.length }) }),
+      el("ul", { id: "pi-comp-faltan", class: "mt-1 space-y-1 text-sm list-disc pl-5" }, c.faltan.map((j) => el("li", {}, el("span", { class: "font-semibold", texto: tx("cortosAviso") + " " }), persona(j)))));
+    return caja;
+  }
+
   // Elegir los cinco de cada equipo que se pasa: una casilla por integrante,
   // y con cinco marcados las demás no se pueden marcar.
   // Los mismos controles para los dos topes: los equipos de más de cinco y
@@ -1006,6 +1102,7 @@
       el("fieldset", {}, el("legend", { class: "sr-only", texto: tx("sugerenciaLeyenda") }), lista),
       pintarRepetidos(s),
       pintarVariosOrigenes(s),
+      pintarComparacion(s),
       pintarPaseAbierto(s),
       pintarEquiposDeMas(s),
       pintarIndividualesDeMas(s),
@@ -1163,6 +1260,10 @@
       categorias: r.noPermitidos.concat(r.permitidos).map(caso),
       hombresEnMujeres: (s.hombresEnMujeres || []).map((j) => j.nombre + " (" + (j.institucion || "—") + ")"),
       variosOrigenes: (limpia.variosOrigenes || []).map((x) => ({ nombre: x.jugador.nombre, institucion: x.jugador.institucion || "—", origenes: x.origenes.join(" y ") })),
+      comparacion: s.comparacion ? {
+        noClasificaron: s.comparacion.noClasificaron.map((j) => j.nombre + " (" + (j.institucion || "—") + ")"),
+        faltan: s.comparacion.faltan.map((j) => j.nombre + " (" + (j.institucion || "—") + ")"),
+      } : undefined,
       // Lo que el árbitro tiene que marcar como visto antes de emparejar la
       // ronda 1 de cada torneo (js/pareo/evento.js: pendientes). Sin texto
       // armado: se escribe en el idioma de la página al mostrarlo.
@@ -1173,12 +1274,13 @@
         r.noPermitidos.map((c) => ({ tipo: "categoria", motivo: c.motivo, personas: [c.jugador.nombre],
           vars: { n: c.jugador.nombre, i: c.jugador.institucion || "—", a: c.nace, p: c.propia, c: c.categoria, d: c.desde, k: c.cuantos, m: G.JDE_MAX_ASCENSOS } })),
         (s.hombresEnMujeres || []).map((j) => ({ tipo: "hombre", personas: [j.nombre], vars: { n: j.nombre, i: j.institucion || "—" } })),
+        (s.comparacion ? s.comparacion.noClasificaron : []).map((j) => ({ tipo: "noClasifico", personas: [j.nombre], vars: { n: j.nombre, i: j.institucion || "—" } })),
         (s.cortos || []).map((e) => ({ tipo: "corto", personas: e.integrantes.map((j) => j.nombre), vars: { i: e.institucion || "—", k: e.integrantes.length, m: G.JDE_MIN_EQUIPO } }))),
     };
   }
 
   // Lo que hay que revisar antes de la ronda 1, escrito.
-  const TEXTO_REVISAR = { dosModalidades: "revisarDosModalidades", origenes: "revisarOrigenes", hombre: "revisarHombre", corto: "revisarCorto" };
+  const TEXTO_REVISAR = { dosModalidades: "revisarDosModalidades", origenes: "revisarOrigenes", hombre: "revisarHombre", corto: "revisarCorto", noClasifico: "revisarNoClasifico" };
   const MOTIVO_CATEGORIA = { mayor: "catMayor", individual: "catIndividual", salto: "catSalto", tope: "catTope" };
   const textoRevisar = (x) => (x.tipo === "categoria" ? tx("catNoPermitido") + " " + tx(MOTIVO_CATEGORIA[x.motivo], x.vars) : tx(TEXTO_REVISAR[x.tipo], x.vars));
   const claveRevisar = (x) => x.tipo + "|" + x.personas.join(",");
@@ -1196,9 +1298,20 @@
   function torneosDelEvento(idEvento) {
     const id = idEvento || (t().evento && t().evento.id);
     if (!id) return [];
-    const otros = estado.lista.map((x) => (x.id === estado.id ? t() : leerJSON(PREFIJO + x.id, null)))
-      .filter((x) => x && x.evento && x.evento.id === id);
+    const otros = estado.lista.map((x) => {
+      const y = x.id === estado.id ? t() : leerJSON(PREFIJO + x.id, null);
+      if (y && !Object.prototype.hasOwnProperty.call(y, "__id")) Object.defineProperty(y, "__id", { value: x.id });
+      return y;
+    }).filter((x) => x && x.evento && x.evento.id === id);
     return otros.sort((a, b) => (a.ordenEnEvento || 0) - (b.ordenEnEvento || 0));
+  }
+
+  // Guardar un torneo del evento que puede no ser el abierto.
+  function guardarDelEvento(tor) {
+    if (tor === t() || tor.__id === estado.id) { guardar(); return true; }
+    const ok = escribir(PREFIJO + tor.__id, JSON.stringify(tor));
+    if (!ok) Avisos.avisar(tx("noGuarda"), { tipo: "error" });
+    return ok;
   }
 
   async function bajarDocumento(doc, sufijo, boton) {
@@ -1218,7 +1331,115 @@
     }
   }
 
+  // El historial de cambios de este torneo y «Deshacer el último cambio».
+  // Vive en esta pestaña: al recargar la página empieza de cero.
+  function pintarHistorial() {
+    const caja = $("pi-historial");
+    const lista = estado.historial.get(estado.id) || [];
+    caja.replaceChildren(el("h3", { class: "font-semibold", texto: tx("histTitulo") }),
+      el("p", { class: C.nota, texto: tx("histTexto") }));
+    if (!lista.length) { caja.append(el("p", { class: C.nota + " mt-1", texto: tx("histVacio") })); return; }
+    const b = el("button", { type: "button", id: "pi-deshacer", class: C.botonSec + " mt-2" }, tx("histDeshacer"));
+    b.addEventListener("click", deshacerUltimo);
+    caja.append(b, el("ol", { id: "pi-historial-lista", class: "mt-2 space-y-1 text-sm list-decimal pl-6" }, lista.slice().reverse().map((x) =>
+      el("li", { texto: horaCR(x.hora) + " · " + x.cambios.slice(0, 4).map((c) => tx(c.clave, c.vars)).join("; ") + (x.cambios.length > 4 ? " (+" + (x.cambios.length - 4) + ")" : "") }))));
+  }
+  async function deshacerUltimo() {
+    const lista = estado.historial.get(estado.id) || [];
+    const x = lista[lista.length - 1];
+    if (!x) return;
+    const ok = await Avisos.confirmar(tx("histConfirmar", { c: x.cambios.map((c) => tx(c.clave, c.vars)).join("; ") }), { aceptar: tx("histDeshacer") });
+    if (!ok || lista[lista.length - 1] !== x) return;
+    lista.pop();
+    estado.t = T.nuevo(JSON.parse(x.antes));
+    estado.deshaciendo = true;
+    guardar();
+    estado.deshaciendo = false;
+    pintarTodo();
+    Avisos.avisar(tx("histDeshecho"));
+  }
+
+  // ---------- Dos pestañas con el mismo torneo ----------
+  // Cada pestaña dice cuál torneo tiene abierto; si otra tiene el mismo, o
+  // si otra pestaña lo guardó por debajo (el evento «storage» llega solo a
+  // las demás), se avisa: lo que guarde esta puede pisar lo de la otra.
+  const canalPestanas = (() => { try { return new BroadcastChannel("pareo-pestanas"); } catch (e) { return null; } })();
+  const yo = "p" + Math.random().toString(36).slice(2);
+  function avisarPestanas() { if (canalPestanas && estado.id) canalPestanas.postMessage({ yo, id: estado.id }); }
+  function otraPestana(clave) {
+    const caja = $("pi-otra-pestana");
+    // «La otra guardó cambios» es más grave que «está abierta en otra»: no
+    // se tapa con el aviso más leve (los dos llegan en cualquier orden).
+    if (clave === "pestanaMisma" && !caja.hidden && caja.dataset.aviso === "pestanaCambio") return;
+    caja.dataset.aviso = clave;
+    const recargar = el("button", { type: "button", id: "pi-otra-cargar", class: C.botonSec + " mt-2" }, tx("pestanaCargar"));
+    recargar.addEventListener("click", () => { if (abrir(estado.id)) { caja.hidden = true; pintarTodo(); } });
+    caja.replaceChildren(el("p", { class: "font-semibold", texto: tx(clave) }), recargar);
+    caja.hidden = false;
+  }
+  if (canalPestanas) canalPestanas.addEventListener("message", (e) => {
+    const d = e.data || {};
+    if (d.yo === yo || d.id !== estado.id) return;
+    otraPestana("pestanaMisma");
+    // Contestar una vez, para que la otra también se entere.
+    if (!d.respuesta) canalPestanas.postMessage({ yo, id: estado.id, respuesta: true });
+  });
+  window.addEventListener("storage", (e) => {
+    if (!estado.id || e.key !== PREFIJO + estado.id || e.newValue == null || e.newValue === estado.ultimoGuardado) return;
+    otraPestana("pestanaCambio");
+  });
+
+  // ---------- El respaldo automático del evento ----------
+  // Con un archivo elegido una vez (la API de archivos de Chrome y Edge), el
+  // respaldo del evento se escribe solo, unos segundos después de cada
+  // cambio. Sin esa API, se baja solo cada vez que se completa una ronda.
+  let temporizadorRespaldo = null;
+  function programarRespaldo() {
+    clearTimeout(temporizadorRespaldo);
+    temporizadorRespaldo = setTimeout(escribirRespaldo, 3000);
+  }
+  async function escribirRespaldo() {
+    const r = estado.respaldoArchivo;
+    if (!r) return;
+    const lista = torneosDelEvento(r.id);
+    if (!lista.length) return;
+    const texto = JSON.stringify(V.respaldo(lista[0].evento, lista), null, 1);
+    try {
+      if (r.archivo) {
+        const w = await r.archivo.createWritable();
+        await w.write(texto);
+        await w.close();
+      } else {
+        // Sin la API: solo cuando una ronda queda completa, y una vez por ronda.
+        const clave = lista.map((x) => x.rondas.filter((R) => T.rondaCompleta(R)).length).join(",");
+        if (clave === r.ultimaClave) return;
+        r.ultimaClave = clave;
+        bajar(window.PareoPDF.nombreArchivo(lista[0].evento.nombre, "respaldo").replace(/\.pdf$/, ".json"), texto, "application/json");
+      }
+      r.hora = Date.now();
+      const x = $("pi-respaldo-estado");
+      if (x) x.textContent = tx("respaldoAutoHecho", { h: horaCR(r.hora) });
+    } catch (e) {
+      Avisos.avisar(tx("respaldoAutoError", { e: e.message }), { tipo: "error" });
+    }
+  }
+  async function prenderRespaldo(ev) {
+    if (window.showSaveFilePicker) {
+      try {
+        const archivo = await window.showSaveFilePicker({ suggestedName: window.PareoPDF.nombreArchivo(ev.nombre, "respaldo").replace(/\.pdf$/, ".json"), types: [{ description: "JSON", accept: { "application/json": [".json"] } }] });
+        estado.respaldoArchivo = { id: ev.id, archivo };
+      } catch (e) { return; }
+    } else {
+      const lista = torneosDelEvento(ev.id);
+      estado.respaldoArchivo = { id: ev.id, archivo: null, ultimaClave: lista.map((x) => x.rondas.filter((R) => T.rondaCompleta(R)).length).join(",") };
+    }
+    await escribirRespaldo();
+    pintarEvento();
+  }
+
   function pintarEvento() {
+    pintarHistorial();
+    $("pi-bajar-trf-equipos").hidden = !E.esDeEquipos(t());
     const caja = $("pi-evento");
     caja.replaceChildren();
     const ev = t().evento;
@@ -1240,9 +1461,63 @@
     bPremiacion.addEventListener("click", () => bajarDocumento(V.premiacion(ev, torneosDelEvento()), "premiacion", bPremiacion));
     const bDiplomas = el("button", { type: "button", id: "pi-evento-diplomas", class: C.botonSec }, tx("eventoDiplomas"));
     bDiplomas.addEventListener("click", () => imprimirDiplomas(V.diplomas(ev, torneosDelEvento())));
-    acciones.append(bActa, bInforme, bPremiacion, bDiplomas);
+    const bEstadisticas = el("button", { type: "button", id: "pi-evento-estadisticas", class: C.botonSec }, tx("eventoEstadisticas"));
+    bEstadisticas.addEventListener("click", () => {
+      window.TablaExcel.bajar(window.PareoPDF.nombreArchivo(ev.nombre, "estadisticas").replace(/\.pdf$/, ".xlsx"), V.estadisticas(ev, torneosDelEvento()));
+    });
+    const bConstancias = el("button", { type: "button", id: "pi-evento-constancias", class: C.botonSec }, tx("eventoConstancias"));
+    bConstancias.addEventListener("click", () => imprimirConstancias(V.constancias(ev, torneosDelEvento())));
+    acciones.append(bActa, bInforme, bPremiacion, bDiplomas, bConstancias, bEstadisticas);
     caja.append(acciones, el("p", { class: C.nota + " mt-2", texto: tx("eventoPapelesAyuda") }),
       el("p", { class: C.nota + " mt-1", texto: tx("eventoPremiacionAyuda") }));
+
+    // El medallero por centro educativo, con las medallas de todos los torneos.
+    const med = V.medallero(torneos);
+    if (med.length) {
+      caja.append(el("h3", { class: "font-semibold mt-5", texto: tx("medalleroTitulo") }),
+        el("p", { class: C.nota, texto: tx("medalleroTexto") }),
+        el("div", { class: "overflow-x-auto mt-2" }, el("table", { id: "pi-medallero", class: "pi-tabla" },
+          el("thead", {}, el("tr", {}, el("th", { class: "num", scope: "col", texto: tx("puesto") }), el("th", { scope: "col", texto: tx("institucion") }),
+            el("th", { class: "num", scope: "col", texto: tx("oro") }), el("th", { class: "num", scope: "col", texto: tx("plata") }),
+            el("th", { class: "num", scope: "col", texto: tx("bronce") }), el("th", { class: "num", scope: "col", texto: tx("total") }))),
+          el("tbody", {}, med.map((x, i) => el("tr", {}, el("td", { class: "num", texto: i + 1 }), el("td", { class: "font-semibold", texto: x.centro }),
+            el("td", { class: "num", texto: x.oro }), el("td", { class: "num", texto: x.plata }), el("td", { class: "num", texto: x.bronce }), el("td", { class: "num", texto: x.total })))))));
+    }
+
+    // Por Dirección Regional, cuando el evento junta varias (la Interregional).
+    const dres = V.porDireccion(torneos, n);
+    if (dres.length > 1) {
+      caja.append(el("h3", { class: "font-semibold mt-5", texto: tx("porDreTitulo") }),
+        el("div", { class: "overflow-x-auto mt-2" }, el("table", { id: "pi-por-dre", class: "pi-tabla" },
+          el("thead", {}, el("tr", {}, el("th", { scope: "col", texto: tx("porDreRegion") }), el("th", { class: "num", scope: "col", texto: tx("porDreEstudiantes") }),
+            el("th", { class: "num", scope: "col", texto: tx("oro") }), el("th", { class: "num", scope: "col", texto: tx("plata") }),
+            el("th", { class: "num", scope: "col", texto: tx("bronce") }), el("th", { class: "num", scope: "col", texto: tx("porDreClasifican") }))),
+          el("tbody", {}, dres.map((x) => el("tr", {}, el("td", { class: "font-semibold", texto: x.region }), el("td", { class: "num", texto: x.estudiantes }),
+            el("td", { class: "num", texto: x.oro }), el("td", { class: "num", texto: x.plata }), el("td", { class: "num", texto: x.bronce }), el("td", { class: "num", texto: x.clasifican })))))));
+    }
+
+    // El horario del día: la hora de cada ronda según el ritmo de cada torneo.
+    const inicio = el("input", { id: "pi-horario-inicio", type: "time", value: leer(CLAVE_HORARIO + ev.id) || "08:00", class: C.campoChico });
+    const descanso = el("input", { id: "pi-horario-descanso", type: "number", min: "0", max: "120", value: "10", inputmode: "numeric", class: C.campoChico + " w-20" });
+    const listaHorario = el("ul", { id: "pi-horario-lista", class: "mt-2 space-y-1 text-sm" });
+    const pintarHorario = () => {
+      escribir(CLAVE_HORARIO + ev.id, inicio.value);
+      listaHorario.replaceChildren(...V.horario(torneosDelEvento(), inicio.value, descanso.value).map((x) => el("li", {},
+        el("span", { class: "font-semibold", texto: x.torneo + ": " }),
+        x.dura ? x.rondas.map((rr) => tx("rondaN", { r: rr.n }) + " " + rr.hora).join(" · ") : tx("horarioSinRitmo"))));
+    };
+    inicio.addEventListener("change", pintarHorario);
+    descanso.addEventListener("change", pintarHorario);
+    const bHorario = el("button", { type: "button", id: "pi-horario-imprimir", class: C.botonSec }, tx("horarioImprimir"));
+    bHorario.addEventListener("click", () => imprimirHorario(ev, V.horario(torneosDelEvento(), inicio.value, descanso.value)));
+    caja.append(el("h3", { class: "font-semibold mt-5", texto: tx("horarioTitulo") }),
+      el("p", { class: C.nota, texto: tx("horarioTexto") }),
+      el("div", { class: "flex flex-wrap items-end gap-3 mt-2" },
+        el("label", { class: "text-sm" }, el("span", { class: "block font-semibold", texto: tx("horarioInicio") }), inicio),
+        el("label", { class: "text-sm" }, el("span", { class: "block font-semibold", texto: tx("horarioDescanso") }), descanso),
+        bHorario),
+      listaHorario);
+    pintarHorario();
 
     // Lo que falta revisar antes de la ronda 1, en todo el evento.
     const conPendientes = torneos.map((x) => [x, sinRevisar(x)]).filter(([, k]) => k > 0);
@@ -1251,6 +1526,57 @@
         el("p", { class: "text-sm font-semibold", texto: tx("cortosAviso") + " " + tx("eventoRevisar") }),
         el("ul", { class: "list-disc pl-6 text-sm" }, conPendientes.map(([x, k]) => el("li", { texto: (x.grupo || x.nombre) + ": " + k })))));
     }
+
+    // Para chess-results: el TRF de cada torneo, en un .zip. chess-results no
+    // recibe archivos directo: se abren en Swiss-Manager y se suben desde ahí.
+    const bChess = el("button", { type: "button", id: "pi-evento-chess", class: C.botonSec }, tx("chessBajar"));
+    bChess.addEventListener("click", () => {
+      const lista = torneosDelEvento();
+      const partes = [];
+      const faltan = [];
+      for (const x of lista) {
+        const k = x.rondas.filter((R) => T.rondaCompleta(R)).length;
+        const nombre = window.PareoPDF.nombreArchivo(x.grupo || x.nombre, "").replace(/-?\.pdf$/, "");
+        try {
+          partes.push({ nombre: nombre + ".trf", texto: T.aTrf(x, { hasta: k }) });
+          if (E.esDeEquipos(x)) partes.push({ nombre: nombre + "-equipos.trf", texto: E.aTrfEquipos(x, k) });
+        } catch (e) { faltan.push(x.grupo || x.nombre); }
+      }
+      if (!partes.length) { Avisos.avisar(tx("chessNada"), { tipo: "error" }); return; }
+      bajar(window.PareoPDF.nombreArchivo(ev.nombre, "chess-results").replace(/\.pdf$/, ".zip"), window.TablaExcel.zip(partes), "application/zip");
+      Avisos.avisar(tx("chessListo", { n: partes.length }) + (faltan.length ? " " + tx("chessFaltan", { t: faltan.join(", ") }) : ""));
+    });
+    caja.append(el("h3", { class: "font-semibold mt-5", texto: tx("chessTitulo") }),
+      el("p", { class: C.nota, texto: tx("chessTexto") }), el("div", { class: "mt-2" }, bChess));
+
+    // Comparado con el año anterior (los torneos de chess-results que ya
+    // tiene «Ajedrez estudiantil en Costa Rica»).
+    if (ev.jde && ev.jde.etapa !== "institucional") {
+      const cajaAnio = el("div", { id: "pi-anio-anterior", class: "mt-2" });
+      const bAnio = el("button", { type: "button", id: "pi-evento-anio", class: C.botonSec }, tx("anioBoton", { a: ev.jde.anio - 1 }));
+      bAnio.addEventListener("click", () => compararAnio(ev, cajaAnio, bAnio));
+      caja.append(el("h3", { class: "font-semibold mt-5", texto: tx("anioTitulo") }),
+        el("p", { class: C.nota, texto: tx("anioTexto") }), el("div", { class: "mt-2" }, bAnio), cajaAnio);
+    }
+
+    // El cierre: lo que falta, y el paquete final en un .zip.
+    const cierre = V.revisarCierre(ev, torneos);
+    const faltan = cierre.filter((x) => x.problemas.length);
+    const bCierre = el("button", { type: "button", id: "pi-evento-cierre", class: faltan.length ? C.botonSec : C.boton }, tx("cierreBajar"));
+    bCierre.addEventListener("click", async () => {
+      if (faltan.length) {
+        const ok = await Avisos.confirmar(tx("cierreIgual", { n: faltan.length }), { aceptar: tx("cierreBajarIgual") });
+        if (!ok) return;
+      }
+      bajarPaquete(ev, bCierre);
+    });
+    caja.append(el("h3", { class: "font-semibold mt-5", texto: tx("cierreTitulo") }),
+      el("p", { class: C.nota, texto: tx("cierreTexto") }),
+      faltan.length
+        ? el("ul", { id: "pi-cierre-faltan", class: "mt-2 space-y-1 text-sm list-disc pl-6" }, faltan.map((x) => el("li", {},
+          el("span", { class: "font-semibold", texto: x.torneo + ": " }), x.problemas.map((p) => tx(p.clave, p.vars)).join(" · "))))
+        : el("p", { id: "pi-cierre-listo", class: "text-sm font-semibold mt-2", texto: tx("cierreListo") }),
+      el("div", { class: "mt-2" }, bCierre));
 
     // El enlace en vivo de todo el evento: un solo QR para el público.
     const vivo = estado.eventoVivo && estado.eventoVivo.id === ev.id;
@@ -1275,8 +1601,17 @@
       bajar(window.PareoPDF.nombreArchivo(ev.nombre, "respaldo").replace(/\.pdf$/, ".json"), JSON.stringify(V.respaldo(ev, lista), null, 1), "application/json");
       Avisos.avisar(tx("eventoRespaldoListo", { n: lista.length }));
     });
+    const auto = estado.respaldoArchivo && estado.respaldoArchivo.id === ev.id;
+    const bAuto = el("button", { type: "button", id: "pi-respaldo-auto", class: C.botonSec, "aria-pressed": auto ? "true" : "false" },
+      tx(auto ? "respaldoAutoApagar" : (window.showSaveFilePicker ? "respaldoAutoPrender" : "respaldoAutoPrenderDescarga")));
+    bAuto.addEventListener("click", () => {
+      if (estado.respaldoArchivo && estado.respaldoArchivo.id === ev.id) { estado.respaldoArchivo = null; pintarEvento(); }
+      else prenderRespaldo(ev);
+    });
     caja.append(el("h3", { class: "font-semibold mt-5", texto: tx("eventoRespaldoTitulo") }),
-      el("p", { class: C.nota, texto: tx("eventoRespaldoTexto") }), el("div", { class: "mt-2" }, bRespaldo));
+      el("p", { class: C.nota, texto: tx("eventoRespaldoTexto") }), el("div", { class: "mt-2 flex flex-wrap gap-2" }, bRespaldo, bAuto),
+      el("p", { id: "pi-respaldo-estado", class: C.nota + " mt-1", role: "status",
+        texto: auto ? (estado.respaldoArchivo.hora ? tx("respaldoAutoHecho", { h: horaCR(estado.respaldoArchivo.hora) }) : tx(window.showSaveFilePicker ? "respaldoAutoActivo" : "respaldoAutoActivoDescarga")) : tx(window.showSaveFilePicker ? "respaldoAutoAyuda" : "respaldoAutoAyudaDescarga") }));
 
     if (!siguiente || !n) return;
     // Los clasificados: los primeros n de cada torneo (art. 66.1).
@@ -1294,6 +1629,14 @@
           return el("li", { texto: p.nombre + " (" + (p.institucion || "—") + ") · " + puntosTexto(f.puntos) });
         })));
         if (c.empate) sec.append(el("p", { class: "font-semibold" }, tx("cortosAviso") + " " + tx("clasificadosEmpate")));
+        const empatados = V.empatadosEnCorte(Object.assign({}, tor, { desempateCorte: null }), n);
+        if (empatados.length) {
+          const resuelto = c.filas.some((f) => f.porDesempate);
+          if (resuelto) sec.append(el("p", { class: "text-sm", texto: tx("desempateHecho", { f: tor.desempateCorte.formato || tx("desempateRapido") }) }));
+          const b = el("button", { type: "button", class: C.mini + " mt-1", "data-desempate": tor.__id }, tx(resuelto ? "desempateCambiar" : "desempateArmar"));
+          b.addEventListener("click", () => armarDesempate(tor, empatados, n));
+          sec.append(b);
+        }
       }
       lista.append(sec);
     }
@@ -1305,6 +1648,110 @@
     });
     caja.append(lista, bLista, el("p", { class: C.nota + " mt-2", texto: tx("clasificadosAyuda") }));
   }
+  const CLAVE_HORARIO = "pareo_horario_v1_";
+
+  async function compararAnio(ev, cont, boton) {
+    boton.disabled = true;
+    try {
+      const r = await fetch("data/ajedrez-estudiantil.json", { cache: "no-cache" });
+      if (!r.ok) throw new Error("HTTP " + r.status);
+      const c = V.compararAnioAnterior(ev, torneosDelEvento(), await r.json());
+      if (!c.torneosAntes) { cont.replaceChildren(el("p", { class: "text-sm mt-2", texto: tx("anioNada", { a: c.anio }) })); return; }
+      cont.replaceChildren(
+        el("p", { class: "text-sm mt-2 font-semibold", texto: tx("anioResumen", { a: c.anio, t: c.torneosAntes, x: c.totalAntes, y: c.totalAhora }) }),
+        el("div", { class: "overflow-x-auto mt-2" }, el("table", { id: "pi-anio-tabla", class: "pi-tabla" },
+          el("thead", {}, el("tr", {}, el("th", { scope: "col", texto: tx("anioGrupo") }), el("th", { class: "num", scope: "col", texto: String(c.anio) }), el("th", { class: "num", scope: "col", texto: String(c.anio + 1) }))),
+          el("tbody", {}, c.filas.map((f) => el("tr", {}, el("td", { texto: f.grupo }), el("td", { class: "num", texto: f.antes == null ? "—" : f.antes }), el("td", { class: "num", texto: f.ahora == null ? "—" : f.ahora })))))),
+        el("p", { class: C.nota + " mt-1", texto: tx("anioNota") }));
+    } catch (e) {
+      cont.replaceChildren(el("p", { class: "text-sm mt-2", texto: tx("anioError", { e: e.message }) }));
+    } finally {
+      boton.disabled = false;
+    }
+  }
+
+  // El paquete final del evento: el acta, el informe y la premiación en
+  // PDF, los clasificados y las estadísticas en Excel y el respaldo, en un
+  // solo .zip (js/tabla-excel.js: zip).
+  async function bajarPaquete(ev, boton) {
+    boton.disabled = true;
+    try {
+      const lista = torneosDelEvento();
+      const pdf = async (doc) => new Uint8Array(await (await window.ReportePDF.generar(doc)).arrayBuffer());
+      const partes = [
+        { nombre: "acta-congresillo.pdf", bytes: await pdf(V.acta(ev, lista)) },
+        { nombre: "informe-oficial.pdf", bytes: await pdf(V.informe(ev, lista)) },
+        { nombre: "premiacion.pdf", bytes: await pdf(V.premiacion(ev, lista)) },
+        { nombre: "estadisticas.xlsx", bytes: window.TablaExcel.armar(V.estadisticas(ev, lista)) },
+        { nombre: "respaldo.json", texto: JSON.stringify(V.respaldo(ev, lista), null, 1) },
+      ];
+      const filas = V.filasClasificados(ev, lista);
+      if (filas.length) partes.splice(3, 0, { nombre: "clasificados.xlsx", bytes: window.TablaExcel.armar([{ nombre: "Clasificados", filas: [V.ENCABEZADOS].concat(filas) }]) });
+      bajar(window.PareoPDF.nombreArchivo(ev.nombre, "paquete-final").replace(/\.pdf$/, ".zip"), window.TablaExcel.zip(partes), "application/zip");
+      Avisos.avisar(tx("cierreBajado", { n: partes.length }));
+    } catch (e) {
+      Avisos.avisar(tx("noPdf", { e: e.message }), { tipo: "error" });
+    } finally {
+      boton.disabled = false;
+    }
+  }
+
+  // El desempate rápido del corte: el formato y el orden en que quedaron.
+  // Lo jugado fuera de Pareo Integral (un blitz, un Armagedón) se anota acá
+  // y ordena a los empatados (V.aplicarDesempate).
+  async function armarDesempate(tor, empatados, n) {
+    const nombre = (id) => (tor.jugadores.find((j) => j.id === id) || {}).nombre || "?";
+    const opciones = empatados.map((id) => [id, nombre(id)]);
+    const previo = (tor.desempateCorte && tor.desempateCorte.orden) || empatados;
+    const campos = [{ nombre: "formato", etiqueta: tx("desempateFormato"), valor: (tor.desempateCorte && tor.desempateCorte.formato) || tx("desempateBlitz"), max: 60 }]
+      .concat(empatados.map((id, k) => ({ nombre: "p" + k, etiqueta: tx("desempatePuesto", { p: k + 1 }), tipo: "select", opciones, valor: previo[k] || id })));
+    const r = await Avisos.formulario({ titulo: tx("desempateTitulo", { t: tor.grupo || tor.nombre }), texto: tx("desempateTexto", { n }), aceptar: tx("desempateGuardar"), cancelar: tx("cancelar"), campos });
+    if (!r) return;
+    const orden = empatados.map((id, k) => r["p" + k]);
+    if (new Set(orden).size !== orden.length) { Avisos.avisar(tx("desempateRepetido"), { tipo: "error" }); return; }
+    tor.desempateCorte = { formato: String(r.formato || "").trim().slice(0, 60), orden };
+    if (!guardarDelEvento(tor)) return;
+    pintarEvento();
+    Avisos.avisar(tx("desempateListo"));
+  }
+
+  // El horario del día en una hoja, para la pared y las delegaciones.
+  function imprimirHorario(ev, horario) {
+    const cont = $("pi-firmas");
+    cont.replaceChildren();
+    const hoja = el("div", { class: "pi-firma-mesa" }, el("h1", { class: "pi-firma-titulo", texto: tx("horarioTitulo") + " — " + ev.nombre }));
+    for (const x of horario) {
+      hoja.append(el("p", { class: "pi-firma-jugador font-semibold", texto: x.torneo }),
+        el("p", { class: "pi-firma-resultado", texto: x.dura ? x.rondas.map((rr) => tx("rondaN", { r: rr.n }) + ": " + rr.hora).join("   ·   ") : tx("horarioSinRitmo") }));
+    }
+    cont.append(hoja);
+    document.body.classList.add("pi-imprimiendo-firmas");
+    window.print();
+  }
+
+  // Las constancias de participación: como los diplomas, una por hoja.
+  function imprimirConstancias(lista) {
+    if (!lista.length) { Avisos.avisar(tx("constanciasNadie"), { tipo: "error" }); return; }
+    const cont = $("pi-firmas");
+    cont.replaceChildren();
+    const primero = torneosDelEvento()[0] || {};
+    for (const c of lista) {
+      const x = V.textoConstancia(c);
+      cont.append(el("div", { class: "pi-diploma", lang: "es" },
+        el("p", { class: "pi-diploma-evento", texto: x.encabezado }),
+        el("p", { class: "pi-diploma-nombre", texto: x.titulo }),
+        el("p", { class: "pi-diploma-otorga", texto: x.otorga }),
+        el("p", { class: "pi-diploma-nombre", texto: x.nombre }),
+        x.centro ? el("p", { class: "pi-diploma-texto", texto: x.centro }) : null,
+        el("p", { class: "pi-diploma-texto", texto: x.motivo }),
+        el("div", { class: "pi-diploma-firmas" },
+          el("p", { class: "pi-firma-linea", texto: "Árbitro principal" + (primero.arbitro ? ": " + primero.arbitro : "") }),
+          el("p", { class: "pi-firma-linea", texto: "Comité Organizador" }))));
+    }
+    document.body.classList.add("pi-imprimiendo-firmas");
+    window.print();
+  }
+
   const TEXTO_ETAPA_SIGUIENTE = { regional: "etapaRegional", interregional: "etapaInterregionalNombre", nacional: "etapaNacional" };
 
   // Un diploma por hoja, apaisado (el texto, de js/pareo/evento.js: en
@@ -1369,7 +1816,8 @@
         catch (e) { Avisos.avisar(tx("noCopia"), { tipo: "error" }); }
       });
       cont.replaceChildren(el("div", { class: "w-48 bg-white p-2 rounded-lg" }, PareoQr.svg(url, tx("qrEtiqueta"))),
-        el("p", { id: "pi-evento-url", class: "text-xs break-all mt-2 font-mono", texto: url }), el("div", { class: "mt-1" }, copiar),
+        el("p", { id: "pi-evento-url", class: "text-xs break-all mt-2 font-mono", texto: url }), el("div", { class: "mt-1 flex flex-wrap gap-2" }, copiar,
+          el("a", { id: "pi-evento-proyectar", href: url + "&proyectar", target: "_blank", rel: "noopener", class: C.mini }, tx("eventoProyectar"))),
         el("p", { class: C.nota + " mt-1", texto: tx("eventoVivoActivo") }));
     } catch (e) {
       Avisos.avisar(tx("errorQr", { e: e.message }), { tipo: "error" });
@@ -1410,17 +1858,22 @@
     // misma búsqueda pero son personas distintas, y el bolsillo de palabras
     // los mezclaría. La función contesta en el mismo orden en que se le manda.
     const resultados = r.resultados || [];
-    let n = 0;
+    let n = 0, conId = 0;
     const pendientes = [];
     faltantes.forEach((j, i) => {
       const res = resultados[i];
-      if (res && res.estado === "encontrado" && Number(res.nacional) > 0) { j.elo = res.nacional; n++; }
+      if (res && res.estado === "encontrado" && Number(res.nacional) > 0) {
+        j.elo = res.nacional; n++;
+        // La lista nacional identifica a cada jugador por su ID FIDE: si no
+        // lo tenía, queda puesto (el TRF lo necesita para el Elo).
+        if (!j.fideId && res.fideId && /^\d{3,11}$/.test(String(res.fideId))) { j.fideId = String(res.fideId); conId++; }
+      }
       else pendientes.push({ id: j.id, nombre: j.nombre, estado: (res && res.estado) || "no_encontrado" });
     });
     if (n) guardar();
     estado.eloPendientes = pendientes;
     pintarJugadores();
-    Avisos.avisar(tx("eloNacionalResultado", { n: n, total: faltantes.length }));
+    Avisos.avisar(tx("eloNacionalResultado", { n: n, total: faltantes.length }) + (conId ? " " + tx("eloNacionalConId", { n: conId }) : ""));
     if (todosFaltantes.length > TOPE_BUSQUEDA_ELO) {
       Avisos.avisar(tx("eloNacionalTope", { tope: TOPE_BUSQUEDA_ELO }), { tipo: "info" });
     }
@@ -1449,6 +1902,65 @@
     Object.assign(j, d);
     guardar();
     pintarJugadores();
+  }
+
+  // La barra de los marcados: cuántos hay y «Eliminar los marcados». Quien
+  // ya jugó una ronda no se elimina (se retira, uno por uno): se dice cuántos
+  // quedan fuera y por qué.
+  function pintarMasivo(visibles) {
+    const barra = $("pi-masivo");
+    const v = t();
+    const n = estado.marcados.size;
+    barra.hidden = false;
+    barra.replaceChildren(
+      el("span", { id: "pi-masivo-cuenta", class: "text-sm", role: "status", texto: n ? tx("marcadosCuenta", { n }) : tx("marcadosNinguno") }),
+      el("button", { type: "button", id: "pi-marcar-visibles", class: C.mini, onclick: () => { for (const id of visibles) estado.marcados.add(id); pintarJugadores(); } },
+        tx(visibles.length === v.jugadores.length ? "marcarTodosBoton" : "marcarVisibles", { n: visibles.length })),
+      n ? el("button", { type: "button", id: "pi-desmarcar", class: C.mini, onclick: () => { estado.marcados.clear(); pintarJugadores(); } }, tx("desmarcar")) : null,
+      n ? el("button", { type: "button", id: "pi-eliminar-marcados", class: C.miniPeligro, onclick: eliminarMarcados }, tx("eliminarMarcados", { n })) : null);
+  }
+
+  async function eliminarMarcados() {
+    const v = t();
+    const enUnaMesa = new Set();
+    for (const R of v.rondas) for (const m of R.mesas) { enUnaMesa.add(m.b); if (m.n) enUnaMesa.add(m.n); }
+    const ids = [...estado.marcados].filter((id) => jugador(id));
+    const se = ids.filter((id) => !enUnaMesa.has(id));
+    const no = ids.length - se.length;
+    if (!se.length) { Avisos.avisar(tx("eliminarNingunoJugo"), { tipo: "error" }); return; }
+    const ok = await Avisos.confirmar(tx("confirmarEliminarMarcados", { n: se.length }) + (no ? " " + tx("eliminarQuedanFuera", { n: no }) : ""),
+      { aceptar: tx("eliminarMarcados", { n: se.length }), peligro: true });
+    if (!ok || t() !== v) return;
+    const fuera = new Set(se);
+    v.jugadores = v.jugadores.filter((j) => !fuera.has(j.id));
+    for (const id of se) estado.marcados.delete(id);
+    guardar();
+    pintarJugadores();
+    Avisos.avisar(tx("eliminadosMarcados", { n: se.length }));
+  }
+
+  // Pasar a alguien a otro torneo del mismo evento (lo decide el
+  // congresillo), antes de la ronda 1 de los dos. Queda en el acta.
+  async function moverDeTorneo(id) {
+    const v = t();
+    const j = jugador(id);
+    const destinos = estado.lista.filter((x) => x.id !== estado.id).map((x) => [x.id, leerJSON(PREFIJO + x.id, null)])
+      .filter(([, y]) => y && y.evento && v.evento && y.evento.id === v.evento.id && !E.esDeEquipos(y) && !y.rondas.length);
+    if (!destinos.length) { Avisos.avisar(tx("moverSinDestino"), { tipo: "error" }); return; }
+    const r = await Avisos.formulario({
+      titulo: tx("moverA", { n: j.nombre }), texto: tx("moverTexto"), aceptar: tx("moverSi"), cancelar: tx("cancelar"),
+      campos: [{ nombre: "destino", etiqueta: tx("moverDestino"), tipo: "select", valor: destinos[0][0], opciones: destinos.map(([idT, y]) => [idT, y.grupo || y.nombre]) }],
+    });
+    if (!r || t() !== v || v.rondas.length) return;
+    const destino = leerJSON(PREFIJO + r.destino, null);
+    if (!destino || destino.rondas.length) { Avisos.avisar(tx("moverSinDestino"), { tipo: "error" }); return; }
+    v.jugadores = v.jugadores.filter((x) => x.id !== id);
+    destino.jugadores.push(j);
+    destino.movimientos = (destino.movimientos || []).concat({ nombre: j.nombre, institucion: j.institucion || "", desde: v.grupo || v.nombre });
+    if (!escribir(PREFIJO + r.destino, JSON.stringify(destino))) { Avisos.avisar(tx("noGuarda"), { tipo: "error" }); return; }
+    guardar();
+    pintarJugadores();
+    Avisos.avisar(tx("movido", { n: j.nombre, t: destino.grupo || destino.nombre }));
   }
 
   async function retirar(id) {
@@ -1521,13 +2033,482 @@
         el("button", { type: "button", class: C.botonSec, onclick: () => imprimirPlanillasFirma(r) }, tx("planillasFirma")),
         E.esDeEquipos(v) ? el("button", { type: "button", id: "pi-alineaciones", class: C.botonSec, onclick: () => imprimirAlineaciones(r) }, tx("alineacionesImprimir")) : null,
         el("button", { type: "button", class: C.botonSec, onclick: () => compartirLectura(r) }, tx("verDesdeElCelular")),
+        ultima ? el("button", { type: "button", id: "pi-adjunto", class: C.botonSec, onclick: () => enlaceAdjunto(r) }, tx("adjuntoBoton")) : null,
+        el("button", { type: "button", id: "pi-planillas-anotacion", class: C.botonSec, onclick: () => imprimirPlanillasAnotacion(r) }, tx("anotacionBoton")),
+        el("button", { type: "button", id: "pi-imprimir-todo", class: C.botonSec, onclick: () => imprimirTodoDeRonda(r) }, tx("imprimirTodo")),
         ultima ? el("button", { type: "button", class: C.miniPeligro + " px-3 py-2", onclick: () => deshacerRonda(r) }, tx("deshacerRonda")) : null)));
     caja.append(el("p", { class: C.nota + " mb-3 no-imprimir", role: "status", texto: pendientes ? tx("faltanResultados", { n: pendientes }) : tx("rondaCompleta") }));
     if (!ultima) caja.append(el("p", { class: C.nota + " mb-3 no-imprimir", texto: tx("avisoCorregir") }));
 
+    // Buscar una mesa por el nombre de quien juega, y los atajos del teclado.
+    const buscarMesa = el("input", { id: "pi-buscar-mesa", type: "search", autocomplete: "off", class: C.campo, "aria-describedby": "pi-atajos-ayuda" });
+    caja.append(el("div", { class: "no-imprimir mb-3 max-w-md" },
+      el("label", { for: "pi-buscar-mesa", class: "block text-sm font-semibold mb-1", texto: tx("buscarMesa") }), buscarMesa,
+      el("p", { id: "pi-atajos-ayuda", class: C.nota + " mt-1", texto: tx("atajosAyuda") })));
+    buscarMesa.addEventListener("input", () => filtrarMesas(buscarMesa.value));
+    buscarMesa.addEventListener("keydown", (e) => {
+      if (e.key !== "Enter") return;
+      e.preventDefault();
+      const primero = [...document.querySelectorAll("#pi-ronda select[data-resultado]")].find((s) => s.checkVisibility());
+      if (primero) primero.focus();
+    });
+    if (ultima || v.rondas[r].inicio) pintarReloj(caja, r);
+    const cajaAdjunto = el("div", { id: "pi-adjunto-caja", class: "no-imprimir mb-4", hidden: true });
+    caja.append(cajaAdjunto);
+    if (ultima && (v.adjuntos || []).some((a) => a.activo)) { conectarAdjuntos(); mostrarAdjuntos(cajaAdjunto); }
     if (E.esDeEquipos(v)) pintarEncuentros(caja, r);
     else pintarMesasIndividuales(caja, r);
     pintarNoJuegan(caja, r);
+    pintarIncidencias(caja, r);
+    for (const s of caja.querySelectorAll("select[data-resultado]")) atajosResultado(s);
+  }
+
+  // Esconde las mesas en que no juega nadie con ese nombre (sin tildes ni
+  // mayúsculas). Cada mesa lleva sus nombres en data-nombres.
+  function filtrarMesas(texto) {
+    const q = normalizarBusqueda(texto).trim();
+    for (const fila of document.querySelectorAll("#pi-ronda [data-nombres]")) fila.hidden = !!q && !fila.dataset.nombres.includes(q);
+  }
+
+  // Los atajos de un resultado: 1 gana blancas, 0 gana negras, = (o 5)
+  // tablas; y salta solo al siguiente. En la ronda en juego no pide nada;
+  // en una cerrada, el diálogo del motivo sale igual (lo pide el cambio).
+  const ATAJOS = { "1": "1-0", "0": "0-1", "=": "=", "5": "=" };
+  function atajosResultado(sel) {
+    sel.addEventListener("keydown", (e) => {
+      const val = ATAJOS[e.key];
+      if (!val || e.altKey || e.ctrlKey || e.metaKey || ![...sel.options].some((o) => o.value === val)) return;
+      e.preventDefault();
+      const id = sel.id;
+      sel.value = val;
+      sel.dispatchEvent(new Event("change"));
+      // El cambio puede volver a pintar la ronda: el siguiente se busca de nuevo.
+      setTimeout(() => {
+        if (document.querySelector('dialog[open]')) return;
+        const todos = [...document.querySelectorAll("#pi-ronda select[data-resultado]")].filter((s) => s.checkVisibility());
+        const k = todos.findIndex((s) => s.id === id);
+        const siguiente = todos[k + 1];
+        if (siguiente) siguiente.focus();
+      }, 0);
+    });
+  }
+
+  const horaCR = (ms) => (window.HoraCR ? HoraCR.hora(ms) : new Date(ms).toLocaleTimeString("es-CR", { hour: "numeric", minute: "2-digit", timeZone: "America/Costa_Rica" }));
+
+  // ---------- Los árbitros adjuntos anotan desde el celular ----------
+  // Un enlace por adjunto, cada uno con su código y sus mesas
+  // (#adjunto=<código>&m=1-10), guardados en el torneo (`adjuntos`): si se
+  // pierde un celular, ese enlace se apaga sin tocar los demás. Por el mismo
+  // canal de Supabase Realtime en modo Broadcast que el enlace en vivo, el
+  // adjunto pide la ronda («pedir») y manda cada resultado («resultado»).
+  // Esta pestaña, la del árbitro principal, es la que decide: solo acepta un
+  // resultado de la última ronda, de una mesa de su rango, que todavía no lo
+  // tiene —nunca pisa lo que ya está— y de la lista; lo marca «lo anotó el
+  // adjunto». En equipos, tablero por tablero. Mientras esta pestaña esté
+  // abierta.
+  const RESULTADOS_VALIDOS = new Set(["1-0", "=", "0-1", "+-", "-+", "--"]);
+  async function enlaceAdjunto(r) {
+    const v = t();
+    const total = v.rondas[r].mesas.length;
+    const res = await Avisos.formulario({ titulo: tx("adjuntoTitulo"), texto: tx("adjuntoTexto"), aceptar: tx("adjuntoCrear"), cancelar: tx("cancelar"),
+      campos: [{ nombre: "desde", etiqueta: tx("adjuntoDesde"), valor: "1", inputmode: "numeric" }, { nombre: "hasta", etiqueta: tx("adjuntoHasta"), valor: String(total), inputmode: "numeric" }] });
+    if (!res || t() !== v) return;
+    const desde = Math.max(1, Math.round(Number(res.desde)) || 1), hasta = Math.min(total, Math.round(Number(res.hasta)) || total);
+    if (desde > hasta) { Avisos.avisar(tx("adjuntoRango"), { tipo: "error" }); return; }
+    v.adjuntos = (v.adjuntos || []).concat({ codigo: nuevoCodigoVivo(), rango: desde + "-" + hasta, activo: true });
+    guardar();
+    await conectarAdjuntos();
+    pintarRondas();
+  }
+  async function conectarAdjuntos() {
+    const v = t();
+    const activos = (v.adjuntos || []).filter((a) => a.activo);
+    if (!estado.adjuntos || estado.adjuntos.idTorneo !== estado.id) {
+      if (!activos.length) return true;
+      desconectarAdjuntos();
+      estado.adjuntos = { idTorneo: estado.id, canales: new Map() };
+    }
+    if (activos.length) {
+      try { await PareoVer.cargarSupabase(); }
+      catch (e) { Avisos.avisar(tx("errorEnVivo", { e: e.message }), { tipo: "error" }); return false; }
+    }
+    for (const a of activos) {
+      if (estado.adjuntos.canales.has(a.codigo)) continue;
+      const canal = window.sb.channel("pareo-adjunto-" + a.codigo);
+      canal.on("broadcast", { event: "pedir" }, () => enviarAdjunto(a.codigo));
+      canal.on("broadcast", { event: "resultado" }, (msg) => recibirDeAdjunto(a.codigo, msg.payload || {}));
+      canal.subscribe((st) => { if (st === "SUBSCRIBED") enviarAdjunto(a.codigo); });
+      estado.adjuntos.canales.set(a.codigo, canal);
+    }
+    // Los apagados: se les avisa y se corta su canal.
+    for (const [c, canal] of estado.adjuntos.canales) {
+      if (activos.some((a) => a.codigo === c)) continue;
+      canal.send({ type: "broadcast", event: "estado", payload: { apagado: true } });
+      canal.unsubscribe();
+      estado.adjuntos.canales.delete(c);
+    }
+    return true;
+  }
+  function desconectarAdjuntos() {
+    if (estado.adjuntos) for (const canal of estado.adjuntos.canales.values()) canal.unsubscribe();
+    estado.adjuntos = null;
+  }
+  const torneoDelAdjunto = () => estado.adjuntos && (estado.adjuntos.idTorneo === estado.id ? t() : leerJSON(PREFIJO + estado.adjuntos.idTorneo, null));
+  const adjuntoActivo = (v, codigo) => (v.adjuntos || []).find((a) => a.codigo === codigo && a.activo);
+  function enviarAdjunto(codigo) {
+    const v = torneoDelAdjunto();
+    const canal = estado.adjuntos && estado.adjuntos.canales.get(codigo);
+    if (!v || !canal || !v.rondas.length) return;
+    const R = v.rondas[v.rondas.length - 1];
+    const nombre = (id) => (v.jugadores.find((j) => j.id === id) || {}).nombre || "?";
+    const deEquipos = E.esDeEquipos(v);
+    const integrante = (idE, idJ) => { const e = v.jugadores.find((x) => x.id === idE); const j = e && idJ && e.integrantes.find((y) => y.id === idJ); return j ? j.nombre : null; };
+    canal.send({ type: "broadcast", event: "estado", payload: {
+      nombre: v.nombre || "", ronda: v.rondas.length,
+      mesas: R.mesas.map((m, i) => {
+        const x = { m: i + 1, b: nombre(m.b), n: m.n == null ? null : nombre(m.n), r: m.r || null };
+        if (deEquipos && m.n != null) {
+          // Sin tocar lo guardado: una copia con la alineación de entrada.
+          const copia = m.alineacion ? m : E.prepararMesa(v, JSON.parse(JSON.stringify(m)));
+          x.tableros = E.tablerosDe(v, copia).map((k) => ({ t: k.k + 1, b: integrante(k.bBlancas ? m.b : m.n, k.blancas), n: integrante(k.bBlancas ? m.n : m.b, k.negras), r: k.r || null, fijo: k.fijo }));
+        }
+        return x;
+      }),
+    } });
+  }
+  function enviarAdjuntos() { if (estado.adjuntos) for (const c of estado.adjuntos.canales.keys()) enviarAdjunto(c); }
+  function recibirDeAdjunto(codigo, p) {
+    const v = torneoDelAdjunto();
+    const a = v && adjuntoActivo(v, codigo);
+    if (!a) return;
+    const [desde, hasta] = a.rango.split("-").map(Number);
+    const mesa = Number(p.mesa);
+    const R = v.rondas[v.rondas.length - 1];
+    const m = R && R.mesas[mesa - 1];
+    const rechazar = () => enviarAdjunto(codigo);
+    // Solo la última ronda, una mesa de su rango con rival, un resultado válido.
+    if (!m || mesa < desde || mesa > hasta || Number(p.ronda) !== v.rondas.length || m.n == null || !RESULTADOS_VALIDOS.has(p.r)) return rechazar();
+    let texto;
+    if (E.esDeEquipos(v)) {
+      E.prepararMesa(v, m);
+      const k = Number(p.tablero) - 1;
+      const x = E.tablerosDe(v, m)[k];
+      if (!x || x.fijo || x.r || E.puntosDelEncuentro(v, m).incomparecencia) return rechazar();
+      m.partidas[k].r = p.r;
+      m.r = E.resultadoEncuentro(v, m);
+      texto = tx("adjuntoLlegoTablero", { m: mesa, t: k + 1, r: tx("corto_" + p.r) });
+    } else {
+      if (m.r) return rechazar();
+      m.r = p.r;
+      texto = tx("adjuntoLlego", { m: mesa, r: tx("corto_" + p.r) });
+    }
+    m.porAdjunto = true;
+    if (v === t()) { guardar(); if (estado.ficha === "rondas" && estado.ronda === v.rondas.length - 1) pintarRondas(); }
+    else escribir(PREFIJO + estado.adjuntos.idTorneo, JSON.stringify(v));
+    Avisos.avisar(texto, { tipo: "info" });
+    enviarAdjunto(codigo);
+  }
+  async function mostrarAdjuntos(cont) {
+    const v = t();
+    const activos = (v.adjuntos || []).filter((a) => a.activo);
+    cont.hidden = !activos.length;
+    if (!activos.length) return;
+    try { await PareoQr.cargar(); } catch (e) { Avisos.avisar(tx("errorQr", { e: e.message }), { tipo: "error" }); return; }
+    const lista = el("div", { class: "grid sm:grid-cols-2 gap-3 mt-2" });
+    for (const a of activos) {
+      const url = location.origin + location.pathname + "#adjunto=" + a.codigo + "&m=" + a.rango;
+      const copiar = el("button", { type: "button", class: C.mini }, tx("copiarEnlace"));
+      copiar.addEventListener("click", async () => {
+        try { await navigator.clipboard.writeText(url); Avisos.avisar(tx("enlaceCopiado")); }
+        catch (e) { Avisos.avisar(tx("noCopia"), { tipo: "error" }); }
+      });
+      const apagar = el("button", { type: "button", class: C.miniPeligro, "data-apagar": a.codigo }, tx("adjuntoApagar"));
+      apagar.addEventListener("click", async () => {
+        const ok = await Avisos.confirmar(tx("adjuntoApagarConfirmar", { r: a.rango }), { aceptar: tx("adjuntoApagar"), peligro: true });
+        if (!ok) return;
+        a.activo = false;
+        guardar();
+        await conectarAdjuntos();
+        pintarRondas();
+        Avisos.avisar(tx("adjuntoApagado", { r: a.rango }));
+      });
+      lista.append(el("div", { class: "rounded-xl border border-brand-200 dark:border-brand-700 p-3", "data-adjunto": a.codigo },
+        el("h4", { class: "font-semibold", texto: tx("adjuntoListo", { r: a.rango }) }),
+        el("div", { class: "w-32 bg-white p-2 rounded-lg mt-2" }, PareoQr.svg(url, tx("qrEtiqueta"))),
+        el("p", { class: "pi-adjunto-url text-xs break-all mt-2 font-mono", texto: url }),
+        el("div", { class: "flex flex-wrap gap-2 mt-1" }, copiar, apagar)));
+    }
+    cont.replaceChildren(el("p", { class: C.nota, texto: tx("adjuntoAyuda") }), lista);
+  }
+
+  // ---------- Los capitanes confirman la alineación desde su celular ----------
+  // Un enlace por equipo (#capitan=<código>), guardado en el torneo
+  // (`capitanes`: { idEquipo: código }). El capitán marca a los que juegan y
+  // lo manda; esta pestaña lo acepta solo en la última ronda, si su
+  // encuentro todavía no tiene ningún tablero anotado, y si todos son de su
+  // equipo (hasta 4, en el orden de tableros). Queda dicho en el encuentro.
+  function asegurarCapitanes() {
+    const v = t();
+    v.capitanes = v.capitanes || {};
+    for (const e of v.jugadores) if (!v.capitanes[e.id]) v.capitanes[e.id] = nuevoCodigoVivo();
+  }
+  async function conectarCapitanes() {
+    const v = t();
+    const codigos = Object.entries(v.capitanes || {});
+    if (!codigos.length) return true;
+    if (estado.capitanes && estado.capitanes.idTorneo !== estado.id) desconectarCapitanes();
+    if (!estado.capitanes) estado.capitanes = { idTorneo: estado.id, canales: new Map() };
+    try { await PareoVer.cargarSupabase(); }
+    catch (e) { Avisos.avisar(tx("errorEnVivo", { e: e.message }), { tipo: "error" }); return false; }
+    for (const [idE, codigo] of codigos) {
+      if (estado.capitanes.canales.has(codigo)) continue;
+      const canal = window.sb.channel("pareo-capitan-" + codigo);
+      canal.on("broadcast", { event: "pedir" }, () => enviarCapitan(codigo));
+      canal.on("broadcast", { event: "alineacion" }, (msg) => recibirDeCapitan(codigo, msg.payload || {}));
+      canal.subscribe((st) => { if (st === "SUBSCRIBED") enviarCapitan(codigo); });
+      estado.capitanes.canales.set(codigo, { canal, idE });
+    }
+    return true;
+  }
+  function desconectarCapitanes() {
+    if (estado.capitanes) for (const x of estado.capitanes.canales.values()) x.canal.unsubscribe();
+    estado.capitanes = null;
+  }
+  const torneoDeCapitanes = () => estado.capitanes && (estado.capitanes.idTorneo === estado.id ? t() : leerJSON(PREFIJO + estado.capitanes.idTorneo, null));
+  // El encuentro del equipo en la última ronda y de qué lado está.
+  function encuentroDe(v, idE) {
+    const R = v.rondas[v.rondas.length - 1];
+    const m = R && R.mesas.find((x) => x.b === idE || x.n === idE);
+    return m ? { m, lado: "bn"[m.b === idE ? 0 : 1] } : null;
+  }
+  function enviarCapitan(codigo) {
+    const v = torneoDeCapitanes();
+    const x = estado.capitanes && estado.capitanes.canales.get(codigo);
+    if (!v || !x) return;
+    const e = v.jugadores.find((y) => y.id === x.idE);
+    if (!e) return;
+    const enc = v.rondas.length ? encuentroDe(v, e.id) : null;
+    const m = enc && enc.m;
+    const rival = m && m.n != null ? (v.jugadores.find((y) => y.id === (enc.lado === "b" ? m.n : m.b)) || {}).nombre : null;
+    const alineacion = m && m.n != null ? ((m.alineacion && m.alineacion[enc.lado]) || E.alineacionPorOmision(v, e.id)) : [];
+    x.canal.send({ type: "broadcast", event: "estado", payload: {
+      nombre: v.nombre || "", equipo: e.nombre, ronda: v.rondas.length, rival,
+      integrantes: e.integrantes.map((j) => ({ id: j.id, nombre: j.nombre })), alineacion,
+      bloqueada: !m || m.n == null || (m.partidas || []).some((p) => p.r),
+      confirmada: (m && m.alineacionCapitan && m.alineacionCapitan[enc.lado]) || null,
+    } });
+  }
+  function recibirDeCapitan(codigo, p) {
+    const v = torneoDeCapitanes();
+    const x = estado.capitanes && estado.capitanes.canales.get(codigo);
+    if (!v || !x || Number(p.ronda) !== v.rondas.length) return enviarCapitan(codigo);
+    const e = v.jugadores.find((y) => y.id === x.idE);
+    const enc = e && encuentroDe(v, e.id);
+    if (!enc || enc.m.n == null || (enc.m.partidas || []).some((q) => q.r)) return enviarCapitan(codigo);
+    const ids = Array.isArray(p.alineacion) ? p.alineacion.map(String) : [];
+    const deEquipo = e.integrantes.map((j) => j.id);
+    if (ids.length > E.TABLEROS || new Set(ids).size !== ids.length || ids.some((id) => !deEquipo.includes(id))) return enviarCapitan(codigo);
+    E.prepararMesa(v, enc.m);
+    enc.m.alineacion[enc.lado] = deEquipo.filter((id) => ids.includes(id));
+    enc.m.alineacionCapitan = Object.assign({}, enc.m.alineacionCapitan, { [enc.lado]: Date.now() });
+    enc.m.r = E.resultadoEncuentro(v, enc.m);
+    if (v === t()) { guardar(); if (estado.ficha === "rondas") pintarRondas(); }
+    else escribir(PREFIJO + estado.capitanes.idTorneo, JSON.stringify(v));
+    Avisos.avisar(tx("capitanLlego", { e: e.nombre }), { tipo: "info" });
+    enviarCapitan(codigo);
+  }
+  async function mostrarCapitanes(cont, R) {
+    const v = t();
+    try { await PareoQr.cargar(); } catch (e) { Avisos.avisar(tx("errorQr", { e: e.message }), { tipo: "error" }); return; }
+    const enLaRonda = R.mesas.flatMap((m) => (m.n == null ? [] : [m.b, m.n]));
+    const lista = el("div", { class: "grid sm:grid-cols-2 lg:grid-cols-3 gap-3 mt-2" });
+    for (const idE of enLaRonda) {
+      const e = jugador(idE);
+      const codigo = (v.capitanes || {})[idE];
+      if (!e || !codigo) continue;
+      const url = location.origin + location.pathname + "#capitan=" + codigo;
+      lista.append(el("div", { class: "rounded-xl border border-brand-200 dark:border-brand-700 p-3", "data-capitan-equipo": idE },
+        el("h4", { class: "font-semibold", texto: e.nombre }),
+        el("div", { class: "w-28 bg-white p-2 rounded-lg mt-2" }, PareoQr.svg(url, tx("qrEtiqueta"))),
+        el("p", { class: "pi-capitan-url text-xs break-all mt-2 font-mono", texto: url })));
+    }
+    cont.replaceChildren(el("p", { class: C.nota, texto: tx("capitanesAyuda") }), lista);
+  }
+
+  // ---------- El reloj del retraso ----------
+  // Quien no está sentado al empezar la ronda se marca, y la página cuenta
+  // los minutos: en ajedrez pierde cuando su reloj cae a cero (art. 30), es
+  // decir, al pasar el tiempo base del ritmo (V.minutosBase). Se vuelve a
+  // pintar cada 20 segundos mientras la ronda esté en pantalla.
+  let relojIntervalo = null;
+  function pintarReloj(caja, r) {
+    const v = t();
+    const R = v.rondas[r];
+    if (relojIntervalo) { clearInterval(relojIntervalo); relojIntervalo = null; }
+    const base = V.minutosBase(v.ritmo);
+    const sec = el("section", { id: "pi-reloj", class: "no-imprimir mb-4 rounded-xl border border-brand-200 dark:border-brand-700 p-3", "aria-labelledby": "pi-reloj-titulo" },
+      el("h3", { id: "pi-reloj-titulo", class: "font-semibold", texto: tx("relojTitulo") }));
+    caja.append(sec);
+    if (!R.inicio) {
+      sec.append(el("p", { class: C.nota, texto: base ? tx("relojTexto", { m: base }) : tx("relojSinRitmo") }),
+        el("button", { type: "button", id: "pi-reloj-empezar", class: C.botonSec + " mt-2", onclick: () => {
+          R.inicio = Date.now(); guardar(); pintarRondas(); const x = $("pi-reloj-quien"); if (x) x.focus();
+        } }, tx("relojEmpezar")));
+      return;
+    }
+    R.tarde = R.tarde || {};
+    sec.append(el("p", { class: "text-sm", texto: tx("relojEmpezo", { h: horaCR(R.inicio) }) + " " + (base ? tx("relojTexto", { m: base }) : tx("relojSinRitmo")) }));
+    const enMesa = [];
+    R.mesas.forEach((m, i) => { if (m.n !== null) enMesa.push([m.b, i], [m.n, i]); });
+    const sel = el("select", { id: "pi-reloj-quien", class: C.campoChico, "aria-label": tx("relojQuien") },
+      el("option", { value: "", texto: tx("relojElegir") }),
+      enMesa.filter(([id]) => !R.tarde[id]).map(([id, i]) => el("option", { value: id, texto: tx("mesa") + " " + (i + 1) + ": " + nombreDe(id) })));
+    const agregar = el("button", { type: "button", id: "pi-reloj-agregar", class: C.mini }, tx("relojNoLlego"));
+    agregar.addEventListener("click", () => {
+      if (!sel.value) return;
+      R.tarde[sel.value] = { llego: null };
+      guardar(); pintarRondas();
+      const x = $("pi-reloj-quien"); if (x) x.focus();
+    });
+    sec.append(el("div", { class: "flex flex-wrap items-center gap-2 mt-2" }, sel, agregar));
+    const ul = el("ul", { id: "pi-reloj-lista", class: "mt-2 space-y-2 text-sm" });
+    // La ronda atrasada: pasó lo que dura con este ritmo y hay mesas jugando.
+    const dura = V.duracionRonda(v.ritmo);
+    const atrasada = el("p", { id: "pi-reloj-atrasada", class: "text-sm font-semibold mt-2", role: "status" });
+    const pintarLista = () => {
+      const lleva = Math.floor((Date.now() - R.inicio) / 60000);
+      const jugando = R.mesas.map((m, i) => (m.n !== null && !m.r ? i + 1 : 0)).filter(Boolean);
+      atrasada.textContent = dura && lleva > dura && jugando.length ? tx("cortosAviso") + " " + tx("relojAtrasada", { l: lleva, d: dura, m: jugando.join(", ") }) : "";
+      atrasada.hidden = !atrasada.textContent;
+      ul.replaceChildren();
+      for (const [id, x] of Object.entries(R.tarde)) {
+        const e = V.estadoRetraso(R, id, Date.now(), base);
+        const i = R.mesas.findIndex((m) => m.b === id || m.n === id);
+        const m = R.mesas[i];
+        const li = el("li", { class: "flex flex-wrap items-center gap-2", "data-reloj": id },
+          el("span", { class: "font-semibold", texto: nombreDe(id) }),
+          el("span", { texto: e.llego ? tx("relojLlegoTarde", { m: e.minutos }) : e.vencido ? tx("relojVencido", { m: e.minutos }) : base ? tx("relojLleva", { m: e.minutos, b: base }) : tx("relojLlevaSinBase", { m: e.minutos }) }));
+        if (!e.llego) li.append(el("button", { type: "button", class: C.mini, "aria-label": tx("relojLlegoA", { n: nombreDe(id) }), onclick: () => { x.llego = Date.now(); guardar(); pintarRondas(); } }, tx("relojLlego")));
+        if (e.vencido && m && !m.r) li.append(el("button", { type: "button", class: C.miniPeligro, onclick: () => anotarIncomparecencia(r, i, id) }, tx("relojAnotar")));
+        li.append(el("button", { type: "button", class: C.mini, "aria-label": tx("relojQuitarA", { n: nombreDe(id) }), onclick: () => { delete R.tarde[id]; guardar(); pintarRondas(); } }, tx("quitar")));
+        ul.append(li);
+      }
+    };
+    pintarLista();
+    sec.append(atrasada, ul);
+    if (Object.keys(R.tarde).length || R.mesas.some((m) => m.n !== null && !m.r)) {
+      relojIntervalo = setInterval(() => {
+        if (!document.body.contains(ul)) { clearInterval(relojIntervalo); relojIntervalo = null; return; }
+        pintarLista();
+      }, 20000);
+    }
+  }
+
+  // Su reloj cayó: pierde por incomparecencia. En equipos, el equipo entero
+  // (sin nadie presente pierde el encuentro). Queda anotado en las incidencias.
+  function anotarIncomparecencia(r, i, id) {
+    const v = t();
+    const R = v.rondas[r];
+    const m = R.mesas[i];
+    if (E.esDeEquipos(v)) { E.prepararMesa(v, m); m.alineacion[Object.keys(m.alineacion).find((k) => m[k] === id)] = []; m.r = E.resultadoEncuentro(v, m); }
+    else m.r = m.b === id ? "-+" : "+-";
+    R.incidencias = (R.incidencias || []).concat({ hora: Date.now(), mesa: i + 1, tipo: "decision", texto: tx("relojIncidencia", { n: nombreDe(id) }) });
+    guardar();
+    pintarRondas();
+    Avisos.avisar(tx("relojAnotado", { n: nombreDe(id) }));
+  }
+
+  // El motivo de una corrección (null si se cancela).
+  async function pedirMotivo(r, i, antes, despues, tablero) {
+    const corto = (x) => (x ? tx("corto_" + x) : tx("resSin"));
+    const res = await Avisos.formulario({
+      titulo: tx("correccionTitulo", { r: r + 1, m: i + 1 }) + (tablero ? " · " + tx("tableroN", { t: tablero }) : ""),
+      texto: tx("correccionTexto", { a: corto(antes), d: corto(despues) }),
+      aceptar: tx("correccionSi"), cancelar: tx("cancelar"),
+      campos: [{ nombre: "motivo", etiqueta: tx("correccionMotivo"), max: 300 }],
+    });
+    const motivo = res && String(res.motivo || "").trim();
+    if (res && !motivo) Avisos.avisar(tx("correccionFalta"), { tipo: "error" });
+    return motivo || null;
+  }
+  function anotarCorreccion(R, i, antes, despues, motivo, tablero) {
+    const corto = (x) => (x ? tx("corto_" + x) : tx("resSin"));
+    R.incidencias = (R.incidencias || []).concat({ hora: Date.now(), mesa: i + 1, tipo: "correccion",
+      texto: (tablero ? tx("tableroN", { t: tablero }) + ": " : "") + tx("correccionIncidencia", { a: corto(antes), d: corto(despues), m: motivo }) });
+  }
+
+  // ---------- Las incidencias de la ronda ----------
+  // Reclamos, sanciones y decisiones del árbitro, con su hora y su mesa: van
+  // al informe oficial (V.incidenciasDe).
+  const TEXTO_INCIDENCIA = { reclamo: "incReclamo", sancion: "incSancion", decision: "incDecision", apelacion: "incApelacion", correccion: "incCorreccion", otra: "incOtra" };
+  function pintarIncidencias(caja, r) {
+    const R = t().rondas[r];
+    const sec = el("section", { id: "pi-incidencias", class: "no-imprimir mt-6", "aria-labelledby": "pi-inc-titulo" },
+      el("h3", { id: "pi-inc-titulo", class: "font-semibold", texto: tx("incTitulo") }),
+      el("p", { class: C.nota, texto: tx("incTexto") }));
+    const lista = el("ul", { id: "pi-inc-lista", class: "mt-2 space-y-1 text-sm" });
+    (R.incidencias || []).forEach((x, k) => lista.append(el("li", { class: "flex flex-wrap items-start gap-2" },
+      el("span", { texto: horaCR(x.hora) + (x.mesa ? " · " + tx("mesa") + " " + x.mesa : "") + " · " + tx(TEXTO_INCIDENCIA[x.tipo] || TEXTO_INCIDENCIA.otra) + ": " + x.texto +
+        (x.presenta ? " " + tx("apelacionPresenta", { p: x.presenta }) : "") + (x.tipo === "apelacion" ? " " + tx("apelacionResolucion", { r: x.resolucion || tx("apelacionPendiente") }) : "") }),
+      x.tipo === "apelacion" ? el("button", { type: "button", class: C.mini, onclick: () => resolverApelacion(R, k) }, tx(x.resolucion ? "apelacionCambiar" : "apelacionResolver")) : null,
+      x.tipo === "sancion" && x.mesa && !E.esDeEquipos(t()) && R.mesas[x.mesa - 1] && R.mesas[x.mesa - 1].n
+        ? el("button", { type: "button", class: C.mini, "data-sancion": k, onclick: () => aplicarSancion(R, k) }, tx(x.aplicada ? "sancionCambiar" : "sancionAplicar")) : null,
+      el("button", { type: "button", class: C.mini, onclick: () => { R.incidencias.splice(k, 1); guardar(); pintarRondas(); } }, tx("quitar")))));
+    const mesa = el("select", { id: "pi-inc-mesa", class: C.campoChico, "aria-label": tx("mesa") },
+      el("option", { value: "", texto: tx("incSinMesa") }), R.mesas.map((m, i) => el("option", { value: String(i + 1), texto: tx("mesa") + " " + (i + 1) })));
+    const tipo = el("select", { id: "pi-inc-tipo", class: C.campoChico, "aria-label": tx("incTipo") },
+      Object.entries(TEXTO_INCIDENCIA).filter(([k]) => k !== "correccion").map(([k, c]) => el("option", { value: k, texto: tx(c) })));
+    // En una apelación, quién la presenta (la resolución del comité se
+    // anota después, en la lista).
+    const presenta = el("input", { id: "pi-inc-presenta", type: "text", maxlength: "80", class: C.campo + " mt-2", "aria-label": tx("apelacionQuien"), placeholder: tx("apelacionQuien") });
+    const cajaPresenta = el("div", { hidden: true }, presenta);
+    tipo.addEventListener("change", () => { cajaPresenta.hidden = tipo.value !== "apelacion"; });
+    const texto = el("textarea", { id: "pi-inc-texto", class: C.campo + " mt-2", rows: "2", maxlength: "500", "aria-label": tx("incQue") });
+    const anotar = el("button", { type: "button", id: "pi-inc-anotar", class: C.botonSec + " mt-2" }, tx("incAnotar"));
+    anotar.addEventListener("click", () => {
+      const q = texto.value.trim();
+      if (!q) { Avisos.avisar(tx("incFalta"), { tipo: "error" }); texto.focus(); return; }
+      const nueva = { hora: Date.now(), mesa: mesa.value ? Number(mesa.value) : null, tipo: tipo.value, texto: q.slice(0, 500) };
+      if (tipo.value === "apelacion") {
+        if (!presenta.value.trim()) { Avisos.avisar(tx("apelacionFaltaQuien"), { tipo: "error" }); presenta.focus(); return; }
+        nueva.presenta = presenta.value.trim().slice(0, 80);
+        nueva.resolucion = "";
+      }
+      R.incidencias = (R.incidencias || []).concat(nueva);
+      guardar();
+      pintarRondas();
+      const x = $("pi-inc-texto"); if (x) x.focus();
+      Avisos.avisar(tx("incAnotada"));
+    });
+    sec.append(lista, el("div", { class: "flex flex-wrap gap-2 mt-2" }, mesa, tipo), cajaPresenta, texto, anotar);
+    caja.append(sec);
+  }
+
+  // Una sanción que cambia el resultado de su mesa (una partida perdida por
+  // el celular, por ejemplo): un clic, y la corrección queda anotada.
+  async function aplicarSancion(R, k) {
+    const x = R.incidencias[k];
+    const m = R.mesas[x.mesa - 1];
+    const r = await Avisos.formulario({ titulo: tx("sancionTitulo", { m: x.mesa }), texto: x.texto, aceptar: tx("sancionGuardar"), cancelar: tx("cancelar"),
+      campos: [{ nombre: "r", etiqueta: tx("sancionResultado", { b: nombreDe(m.b), n: nombreDe(m.n) }), tipo: "select", valor: x.aplicada || "-+",
+        opciones: RESULTADOS.filter(([val]) => val).map(([val, clave]) => [val, tx(clave)]) }] });
+    if (!r || !RESULTADOS_VALIDOS.has(r.r)) return;
+    const antes = m.r || null;
+    m.r = r.r;
+    x.aplicada = r.r;
+    anotarCorreccion(R, x.mesa - 1, antes, r.r, tx("sancionMotivo"));
+    guardar();
+    pintarRondas();
+  }
+
+  async function resolverApelacion(R, k) {
+    const x = R.incidencias[k];
+    const r = await Avisos.formulario({ titulo: tx("apelacionResolver"), texto: x.texto, aceptar: tx("apelacionGuardar"), cancelar: tx("cancelar"),
+      campos: [{ nombre: "resolucion", etiqueta: tx("apelacionQueResolvio"), valor: x.resolucion || "", max: 300 }] });
+    if (!r) return;
+    x.resolucion = String(r.resolucion || "").trim().slice(0, 300);
+    guardar();
+    pintarRondas();
   }
 
   function pintarMesasIndividuales(caja, r) {
@@ -1550,10 +2531,17 @@
           el("td", { class: "text-center", colspan: 4, texto: tx("byePareo", { p: puntosTexto(v.puntos.bye) }) })));
         return;
       }
-      const sel = el("select", { class: C.campoChico, "aria-label": tx("resultadoMesa", { m: i + 1, b: nombreDe(m.b), n: nombreDe(m.n) }) });
+      const sel = el("select", { id: "pi-mesa-" + i, "data-resultado": "", class: C.campoChico, "aria-label": tx("resultadoMesa", { m: i + 1, b: nombreDe(m.b), n: nombreDe(m.n) }) });
       for (const [val, clave] of RESULTADOS) sel.append(el("option", { value: val, texto: tx(clave) }));
       sel.value = m.r || "";
-      sel.addEventListener("change", () => {
+      sel.addEventListener("change", async () => {
+        // Corregir una ronda ya cerrada (la siguiente ya se emparejó) pide
+        // el motivo, y queda en las incidencias.
+        if (r < v.rondas.length - 1 && m.r && sel.value !== m.r) {
+          const motivo = await pedirMotivo(r, i, m.r, sel.value || null);
+          if (!motivo) { sel.value = m.r || ""; return; }
+          anotarCorreccion(R, i, m.r, sel.value || null, motivo);
+        }
         m.r = sel.value || null;
         guardar();
         const quedan = R.mesas.filter((x) => x.n && !x.r).length;
@@ -1561,10 +2549,11 @@
         if (estadoTxt) estadoTxt.textContent = quedan ? tx("faltanResultados", { n: quedan }) : tx("rondaCompleta");
         if (!quedan) pintarRondasNav();
       });
-      cuerpo.append(el("tr", {},
+      cuerpo.append(el("tr", { "data-nombres": normalizarBusqueda(nombreDe(m.b) + " " + nombreDe(m.n)) },
         el("td", { class: "num", texto: i + 1 }), el("td", { class: "num", texto: num.get(m.b) }),
         el("td", { class: "font-semibold", texto: nombreDe(m.b) }), el("td", { class: "num", texto: puntosTexto(antes(m.b)) }),
-        el("td", { class: "text-center" }, sel, el("span", { class: "pi-solo-imprimir", texto: m.r ? tx("corto_" + m.r) : "" })),
+        el("td", { class: "text-center" }, sel, el("span", { class: "pi-solo-imprimir", texto: m.r ? tx("corto_" + m.r) : "" }),
+          m.porAdjunto ? el("span", { class: "block text-xs " + C.nota, texto: tx("adjuntoAnoto") }) : null),
         el("td", { class: "num", texto: puntosTexto(antes(m.n)) }), el("td", { class: "font-semibold", texto: nombreDe(m.n) }),
         el("td", { class: "num", texto: num.get(m.n) })));
     });
@@ -1625,6 +2614,19 @@
       el("li", {}, el("span", { class: "font-semibold", texto: tx("cortosAviso") + " " }), tx(TEXTO_ALINEACION[a.tipo], { e: a.nombre, n: a.presentes, k: a.pierde })))) : null);
     const generales = listaAvisos(avisos.filter((a) => a.mesa == null), "pi-alin-generales");
     if (generales) caja.append(generales);
+    // Los capitanes confirman la alineación desde su celular (la última ronda).
+    if (r === v.rondas.length - 1) {
+      const cajaCap = el("div", { id: "pi-capitanes-caja", class: "no-imprimir mb-4" });
+      const bCap = el("button", { type: "button", id: "pi-capitanes", class: C.botonSec, "aria-expanded": estado.verCapitanes ? "true" : "false" }, tx("capitanesBoton"));
+      bCap.addEventListener("click", async () => {
+        estado.verCapitanes = !estado.verCapitanes;
+        if (estado.verCapitanes) { asegurarCapitanes(); guardar(); await conectarCapitanes(); }
+        pintarRondas();
+      });
+      caja.append(el("div", { class: "no-imprimir mb-3" }, bCap), cajaCap);
+      if ((v.capitanes && Object.keys(v.capitanes).length)) conectarCapitanes();
+      if (estado.verCapitanes) mostrarCapitanes(cajaCap, R);
+    }
     R.mesas.forEach((m, i) => {
       if (m.n === null) {
         lista.append(el("p", { class: "rounded-xl border border-brand-200 dark:border-brand-700 p-3 text-sm" },
@@ -1634,7 +2636,8 @@
       }
       E.prepararMesa(v, m);
       const pe = E.puntosDelEncuentro(v, m);
-      const tarjeta = el("section", { class: "rounded-xl border border-brand-200 dark:border-brand-700 p-3", "aria-labelledby": "pi-enc-" + i + "-t" });
+      const nombresEnc = [nombreDe(m.b), nombreDe(m.n)].concat([m.b, m.n].flatMap((idE) => (jugador(idE) || { integrantes: [] }).integrantes.map((j) => j.nombre)));
+      const tarjeta = el("section", { class: "rounded-xl border border-brand-200 dark:border-brand-700 p-3", "aria-labelledby": "pi-enc-" + i + "-t", "data-nombres": normalizarBusqueda(nombresEnc.join(" ")) });
       tarjeta.append(el("h3", { id: "pi-enc-" + i + "-t", class: "font-semibold" },
         tx("mesa") + " " + (i + 1) + ": " + num.get(m.b) + ". " + nombreDe(m.b) + " (" + puntosTexto(antes(m.b)) + ") – " +
         num.get(m.n) + ". " + nombreDe(m.n) + " (" + puntosTexto(antes(m.n)) + ")"));
@@ -1653,6 +2656,8 @@
         const elegidos = m.alineacion[lado];
         const lleno = elegidos.length >= E.TABLEROS;
         const fs = el("fieldset", { class: "text-sm" }, el("legend", { class: "font-semibold", texto: tx("juegan", { e: e.nombre }) }));
+        const porCapitan = m.alineacionCapitan && m.alineacionCapitan[lado];
+        if (porCapitan) fs.append(el("p", { class: C.nota, "data-capitan": lado, texto: tx("capitanConfirmo", { h: horaCR(porCapitan) }) }));
         e.integrantes.forEach((j, k) => {
           const id = "pi-enc-" + i + "-" + lado + "-" + k;
           const si = elegidos.includes(j.id);
@@ -1683,10 +2688,19 @@
         if (x.fijo || pe.incomparecencia) celda = el("span", { class: "text-sm", texto: tx("corto_" + (pe.incomparecencia ? m.r : x.r)) + " · " + tx("incomparecencia") });
         else {
           const id = "pi-enc-" + i + "-t" + x.k;
-          const sel = el("select", { id, class: C.campoChico, "aria-label": tx("resultadoTablero", { t: x.k + 1, b: blancas, n: negras }) });
+          const sel = el("select", { id, "data-resultado": "", class: C.campoChico, "aria-label": tx("resultadoTablero", { t: x.k + 1, b: blancas, n: negras }) });
           for (const [val, clave] of RESULTADOS) sel.append(el("option", { value: val, texto: tx(clave) }));
           sel.value = x.r || "";
-          sel.addEventListener("change", () => { m.partidas[x.k].r = sel.value || null; alCambiarEncuentro(m, id); });
+          sel.addEventListener("change", async () => {
+            const antes = m.partidas[x.k].r;
+            if (r < v.rondas.length - 1 && antes && sel.value !== antes) {
+              const motivo = await pedirMotivo(r, i, antes, sel.value || null, x.k + 1);
+              if (!motivo) { sel.value = antes || ""; return; }
+              anotarCorreccion(R, i, antes, sel.value || null, motivo, x.k + 1);
+            }
+            m.partidas[x.k].r = sel.value || null;
+            alCambiarEncuentro(m, id);
+          });
           celda = el("span", {}, sel, el("span", { class: "pi-solo-imprimir", texto: x.r ? tx("corto_" + x.r) : "" }));
         }
         tableros.append(el("li", { class: "flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-brand-100 dark:border-brand-800 pt-2", "data-tablero": x.k + 1 },
@@ -1714,7 +2728,7 @@
     const R = v.rondas[r];
     const num = T.numeros(v);
     const cont = $("pi-firmas");
-    cont.replaceChildren();
+    empezarHoja(cont);
     R.mesas.forEach((m, i) => {
       if (m.n === null) return;
       for (const [id, rival] of [[m.b, m.n], [m.n, m.b]]) {
@@ -1730,8 +2744,47 @@
       }
     });
     if (!cont.children.length) return;
-    document.body.classList.add("pi-imprimiendo-firmas");
-    window.print();
+    imprimirCon("pi-imprimiendo-firmas");
+  }
+
+  // Las planillas de anotación de la ronda: una por mesa (en equipos, una
+  // por tablero), con los nombres, la ronda y la mesa ya escritos y 60
+  // jugadas en dos columnas, como la planilla oficial.
+  function imprimirPlanillasAnotacion(r) {
+    const v = t();
+    const R = v.rondas[r];
+    const cont = $("pi-firmas");
+    empezarHoja(cont);
+    const hoja = (titulo, blancas, negras) => {
+      const tabla = el("table", { class: "pi-planilla-tabla" },
+        el("thead", {}, el("tr", {}, ["#", tx("blancas"), tx("negras"), "#", tx("blancas"), tx("negras")].map((x) => el("th", { scope: "col", texto: x })))),
+        el("tbody", {}, Array.from({ length: 30 }, (_, i) => el("tr", {},
+          el("td", { class: "pi-planilla-n", texto: i + 1 }), el("td"), el("td"),
+          el("td", { class: "pi-planilla-n", texto: i + 31 }), el("td"), el("td")))));
+      cont.append(el("div", { class: "pi-firma-mesa pi-planilla" },
+        el("h1", { class: "pi-firma-titulo", texto: (v.nombre || "") }),
+        el("p", { class: "pi-planilla-datos", texto: titulo + (v.fechaInicio ? " · " + v.fechaInicio : "") + (v.ritmo ? " · " + v.ritmo : "") }),
+        el("p", { class: "pi-planilla-datos" }, el("strong", { texto: tx("blancas") + ": " }), blancas),
+        el("p", { class: "pi-planilla-datos" }, el("strong", { texto: tx("negras") + ": " }), negras),
+        tabla,
+        el("p", { class: "pi-firma-resultado" }, tx("resultado") + ": ", el("span", { class: "pi-firma-blanco" })),
+        el("div", { class: "pi-diploma-firmas" },
+          el("p", { class: "pi-firma-linea", texto: tx("firmaDe", { n: blancas }) }),
+          el("p", { class: "pi-firma-linea", texto: tx("firmaDe", { n: negras }) }))));
+    };
+    R.mesas.forEach((m, i) => {
+      if (m.n === null) return;
+      if (E.esDeEquipos(v)) {
+        const copia = m.alineacion ? m : E.prepararMesa(v, JSON.parse(JSON.stringify(m)));
+        const de = (idE, idJ) => { const e = jugador(idE); const j = e && idJ && e.integrantes.find((y) => y.id === idJ); return j ? j.nombre + " (" + e.nombre + ")" : tx("nadie"); };
+        for (const x of E.tablerosDe(v, copia)) {
+          if (!x.blancas || !x.negras) continue;
+          hoja(tx("anotacionTituloTablero", { r: r + 1, m: i + 1, t: x.k + 1 }), de(x.bBlancas ? m.b : m.n, x.blancas), de(x.bBlancas ? m.n : m.b, x.negras));
+        }
+      } else hoja(tx("anotacionTitulo", { r: r + 1, m: i + 1 }), nombreDe(m.b), nombreDe(m.n));
+    });
+    if (!cont.children.length) return;
+    imprimirCon("pi-imprimiendo-firmas");
   }
 
   // Cada cambio de un tablero o de una alineación vuelve a sacar el
@@ -1746,6 +2799,37 @@
     if (x) x.focus();
   }
 
+  // Imprimir varias cosas de una ronda en un solo trabajo de impresión: los
+  // armadores de cada hoja, mientras `juntando` está prendido, agregan en vez
+  // de vaciar su contenedor y no imprimen; «Todo para imprimir» los llama
+  // uno detrás de otro e imprime una vez.
+  const impresion = { juntando: false, clases: new Set() };
+  function empezarHoja(cont, ...nodos) {
+    if (impresion.juntando) cont.append(...nodos);
+    else cont.replaceChildren(...nodos);
+  }
+  function imprimirCon(clase) {
+    if (impresion.juntando) { impresion.clases.add(clase); return; }
+    document.body.classList.add(clase);
+    window.print();
+  }
+  function imprimirTodoDeRonda(r) {
+    $("pi-plantilla").replaceChildren();
+    $("pi-firmas").replaceChildren();
+    impresion.juntando = true;
+    impresion.clases.clear();
+    try {
+      imprimirPlantillaMesas(r);
+      if (E.esDeEquipos(t())) imprimirAlineaciones(r);
+      imprimirPlanillasFirma(r);
+      imprimirPlanillasAnotacion(r);
+    } finally {
+      impresion.juntando = false;
+    }
+    for (const c of impresion.clases) document.body.classList.add(c);
+    window.print();
+  }
+
   // Una hoja aparte para pegar en la pared antes de la ronda: mesa, blancas,
   // negras y un espacio en blanco para anotar el resultado a mano (nunca el
   // que ya está en la base: eso es justo lo que no se quiere acá). Separada
@@ -1756,7 +2840,7 @@
     const R = v.rondas[r];
     const num = T.numeros(v);
     const cont = $("pi-plantilla");
-    cont.replaceChildren(el("h1", { class: "pi-plantilla-titulo" },
+    empezarHoja(cont, el("h1", { class: "pi-plantilla-titulo" },
       tx("plantillaTitulo", { r: r + 1 }) + (v.nombre ? " — " + v.nombre : "")));
     const lista = el("div", { class: "pi-plantilla-lista" });
     R.mesas.forEach((m, i) => {
@@ -1775,8 +2859,7 @@
         el("span", { class: "pi-plantilla-resultado" })));
     });
     cont.append(lista);
-    document.body.classList.add("pi-imprimiendo-plantilla");
-    window.print();
+    imprimirCon("pi-imprimiendo-plantilla");
   }
 
   // Una hoja POR MESA (salto de página entre una y la siguiente) para que el
@@ -1788,7 +2871,7 @@
     const R = v.rondas[r];
     const num = T.numeros(v);
     const cont = $("pi-firmas");
-    cont.replaceChildren();
+    empezarHoja(cont);
     R.mesas.forEach((m, i) => {
       const hoja = el("div", { class: "pi-firma-mesa" },
         el("h1", { class: "pi-firma-titulo" }, tx("planillaFirmaTitulo", { r: r + 1, m: i + 1 }) + (v.nombre ? " — " + v.nombre : "")));
@@ -1825,8 +2908,7 @@
         el("p", { class: "pi-firma-linea" }, tx("firmaDe", { n: nombreDe(m.n) })));
       cont.append(hoja);
     });
-    document.body.classList.add("pi-imprimiendo-firmas");
-    window.print();
+    imprimirCon("pi-imprimiendo-firmas");
   }
 
   // El afterprint llega sea que se imprima o se cancele: ahí se limpia, una
@@ -1962,6 +3044,8 @@
     }
     // Lo que quedó de la inscripción para revisar (evento de los JDE): cada
     // punto se marca como visto, y hasta marcarlos todos no se empareja.
+    if (r === 0) pintarPasarLista(caja);
+    const ausentes = r === 0 ? noLlegaron(v) : [];
     let faltanRevisar = () => 0;
     const revisarEstado = el("p", { id: "pi-revisar-estado", class: "text-sm mt-2 font-semibold", role: "status" });
     if (r === 0) {
@@ -2017,6 +3101,8 @@
           noViene.setAttribute("aria-label", tx(marcado ? "deshacerNoVieneA" : "noVieneA", { n: j.nombre }));
         };
         s.addEventListener("change", () => { if (s.value) pedidas[id] = s.value; else delete pedidas[id]; actualizarNoViene(); });
+        // Quien no llegó al pasar lista queda de entrada como «no viene».
+        if (ausentes.includes(id)) { s.value = "Z"; pedidas[id] = "Z"; }
         noViene.addEventListener("click", () => { s.value = s.value === "Z" ? "" : "Z"; s.dispatchEvent(new Event("change")); });
         actualizarNoViene();
         ul.append(el("li", { class: "flex items-center justify-between gap-2" }, el("span", { class: "text-sm", texto: num.get(id) + ". " + j.nombre }), el("div", { class: "flex items-center gap-1" }, s, noViene)));
@@ -2033,6 +3119,20 @@
     actualizarRevision();
     boton.addEventListener("click", async () => {
       if (faltanRevisar()) { Avisos.avisar(revisarEstado.textContent, { tipo: "error" }); return; }
+      if (r === 0 && ausentes.length) {
+        const nombres = ausentes.map(nombreDe);
+        if (v.sistema === "todos") {
+          // En todos contra todos no hay «no viene» por ronda: o se sacan
+          // del torneo antes de sortear, o juegan todos.
+          const sacar = await Avisos.confirmar(tx("listaSacar", { n: ausentes.length, l: nombres.join(", ") }), { aceptar: tx("listaSacarSi"), cancelar: tx("listaConTodos") });
+          if (t() !== v || v.rondas.length) return;
+          if (sacar) {
+            v.jugadores = v.jugadores.filter((j) => !ausentes.includes(j.id));
+            v.noSePresentaron = (v.noSePresentaron || []).concat(nombres);
+            guardar();
+          }
+        } else v.noSePresentaron = nombres.filter((n, k) => pedidas[ausentes[k]] === "Z");
+      }
       boton.disabled = true;
       msg.textContent = tx("emparejando");
       try {
@@ -2050,6 +3150,42 @@
       }
     });
     caja.append(boton, msg);
+  }
+
+  // Pasar lista antes de la ronda 1: quién llegó. Se prende con la casilla;
+  // apagada, no cambia nada.
+  const noLlegaron = (v) => (v.pasarLista ? v.jugadores.filter((j) => !(v.asistencia || {})[j.id] && j.retiradoDespuesDe == null).map((j) => j.id) : []);
+  function pintarPasarLista(caja) {
+    const v = t();
+    const det = el("details", { id: "pi-asistencia", class: "mb-4 rounded-xl border border-brand-200 dark:border-brand-700 p-3", open: !!v.pasarLista });
+    det.append(el("summary", { class: "cursor-pointer font-semibold rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400", texto: tx("listaTitulo") }),
+      el("p", { class: C.nota + " mt-1", texto: tx("listaTexto") }),
+      el("label", { class: "flex items-start gap-2 text-sm mt-2" },
+        el("input", { type: "checkbox", id: "pi-asistencia-activar", class: "mt-1", checked: !!v.pasarLista, onchange: (e) => {
+          v.pasarLista = e.target.checked;
+          if (v.pasarLista && !v.asistencia) v.asistencia = {};
+          guardar(); pintarRondas();
+          const x = $("pi-asistencia-activar"); if (x) x.focus();
+        } }),
+        el("span", { class: "font-semibold", texto: tx("listaActivar") })));
+    if (v.pasarLista) {
+      const orden = T.ordenInicial(v);
+      det.append(el("p", { id: "pi-asistencia-cuenta", class: "text-sm mt-2", role: "status", texto: tx("listaCuenta", { n: orden.filter((id) => v.asistencia[id]).length, t: orden.length }) }),
+        el("button", { type: "button", id: "pi-asistencia-todos", class: C.mini + " mt-1", onclick: () => { for (const id of orden) v.asistencia[id] = true; guardar(); pintarRondas(); } }, tx("listaTodos")));
+      const ul = el("ul", { class: "mt-2 grid sm:grid-cols-2 gap-x-6 gap-y-1 text-sm" });
+      for (const id of orden) {
+        const cid = "pi-llego-" + id;
+        ul.append(el("li", { class: "flex items-start gap-2" },
+          el("input", { type: "checkbox", id: cid, class: "mt-1", checked: !!v.asistencia[id], onchange: (e) => {
+            if (e.target.checked) v.asistencia[id] = true; else delete v.asistencia[id];
+            guardar(); pintarRondas();
+            const x = $(cid); if (x) x.focus();
+          } }),
+          el("label", { for: cid, texto: nombreDe(id) })));
+      }
+      det.append(ul);
+    }
+    caja.append(det);
   }
 
   async function emparejar(r, pedidas) {
@@ -2071,7 +3207,13 @@
     if (t() !== v || v.rondas.length !== r) throw new Error(tx("yaEmparejada"));
     // En un torneo por equipos, cada encuentro trae su alineación (los cuatro
     // primeros del orden de tableros) y un resultado por tablero.
-    if (E.esDeEquipos(v)) for (const m of ronda.mesas) E.prepararMesa(v, m);
+    // Un equipo que ya de entrada no llega a dos (art. 66.2.f) pierde el
+    // encuentro al emparejar: el resultado queda puesto, no «falta».
+    if (E.esDeEquipos(v)) for (const m of ronda.mesas) {
+      if (m.n === null) continue;
+      E.prepararMesa(v, m);
+      if (E.puntosDelEncuentro(v, m).incomparecencia) m.r = E.resultadoEncuentro(v, m);
+    }
     v.rondas.push(ronda);
     guardar();
   }
@@ -2129,7 +3271,7 @@
         el("td", { texto: j.institucion || "" }),
         el("td", { texto: j.fed || "" }), el("td", { class: "num", texto: Number(j.elo) > 0 ? j.elo : "" }),
         el("td", { class: "num font-bold", texto: puntosTexto(f.puntos) }),
-        v.desempates.map((c) => el("td", { class: "num", texto: formatoNum(f.valores[c]) }))));
+        v.desempates.map((c) => el("td", { class: "num", texto: valorDesempate(c, f.valores[c]) }))));
     }
     tabla.append(cuerpo);
     const dl = $("pi-clas-leyenda");
@@ -2165,6 +3307,10 @@
           el("td", { class: "num", texto: f.jugadas }), el("td", { class: "num", texto: Math.round(f.porcentaje * 100) })))))));
     }
   }
+
+  // El desempate por tableros es un número armado (E.codificarTableros): se
+  // escribe tablero por tablero.
+  const valorDesempate = (c, x) => (c === "TB" ? E.textoTableros(x, t().tableros) : formatoNum(x));
 
   // ---------- Tabla cruzada ----------
   function pintarCruzada() {
@@ -2227,7 +3373,7 @@
       const j = jugador(f.id);
       return [String(f.puesto), String(num.get(f.id)), j.nombre + (j.titulo ? " (" + j.titulo + ")" : ""),
         j.institucion || "", j.fed || "", Number(j.elo) > 0 ? String(j.elo) : "", puntosTexto(f.puntos)]
-        .concat(v.desempates.map((c) => formatoNum(f.valores[c])));
+        .concat(v.desempates.map((c) => valorDesempate(c, f.valores[c])));
     });
     const notas = v.desempates.map((c) => {
       const info = E.catalogo(v).find((x) => x.codigo === c);
@@ -2364,7 +3510,7 @@
       escribir(CLAVE_IDIOMA, idioma);
       pintarTodo();
     });
-    $("pi-lista").addEventListener("change", (e) => { if (abrir(e.target.value)) pintarTodo(); });
+    $("pi-lista").addEventListener("change", (e) => { if (abrir(e.target.value)) { $("pi-otra-pestana").hidden = true; pintarTodo(); avisarPestanas(); } });
     $("pi-nuevo").addEventListener("click", () => {
       crear();
       estado.ficha = "torneo";
@@ -2381,6 +3527,11 @@
       irA(FICHAS[(i + k + FICHAS.length) % FICHAS.length], true);
     });
 
+    // «Solo lo de los JDE»: esconde el comprobador, el generador y los créditos.
+    const modoJde = $("pi-modo-jde");
+    modoJde.checked = leer(CLAVE_MODO_JDE) === "1";
+    document.body.classList.toggle("pi-modo-jde", modoJde.checked);
+    modoJde.addEventListener("change", () => { escribir(CLAVE_MODO_JDE, modoJde.checked ? "1" : "0"); document.body.classList.toggle("pi-modo-jde", modoJde.checked); });
     $("pi-form-torneo").addEventListener("change", alCambiarTorneo);
     $("pi-config-jde-aplicar").addEventListener("click", aplicarConfigJde);
     $("pi-form-torneo").addEventListener("submit", (e) => e.preventDefault());
@@ -2443,6 +3594,11 @@
     $("pi-bajar-trf").addEventListener("click", () => {
       try { bajar(nombreArchivo(".trf"), trfDelTorneo()); }
       catch (e) { Avisos.avisar(e.message, { tipo: "error" }); }
+    });
+    $("pi-bajar-trf-equipos").addEventListener("click", () => {
+      const k = rondasCompletas();
+      if (k < t().rondas.length) Avisos.avisar(tx("trfSoloCompletas", { r: k }), { tipo: "info" });
+      bajar(nombreArchivo("-equipos.trf"), E.aTrfEquipos(t(), k));
     });
     $("pi-bajar-json").addEventListener("click", () => bajar(nombreArchivo(".json"), JSON.stringify(t(), null, 1), "application/json"));
     $("pi-bajar-jugadores").addEventListener("click", () => {
@@ -2509,18 +3665,34 @@
     // El enlace de solo lectura (#ver= o #vivo=) no toca nada del torneo
     // guardado en este navegador: ni lo lee ni lo pisa. Es una página
     // distinta adentro de la misma página.
-    if (location.hash.startsWith("#ver=")) {
+    // Cada uno con su botón de idioma, que vuelve a abrir la misma dirección.
+    const modoVer = () => {
       $("pi-editor").hidden = true;
+      $("pi-ver-barra").hidden = false;
+      $("pi-ver-barra").prepend(PareoVer.botonIdioma(idioma, (n) => { escribir(CLAVE_IDIOMA, n); location.reload(); }));
+    };
+    if (location.hash.startsWith("#ver=")) {
+      modoVer();
       PareoVer.iniciar(location.hash.slice(5), idioma);
       return;
     }
+    if (location.hash.startsWith("#adjunto=")) {
+      modoVer();
+      PareoVer.iniciarAdjunto(location.hash.slice(9), idioma);
+      return;
+    }
+    if (location.hash.startsWith("#capitan=")) {
+      modoVer();
+      PareoVer.iniciarCapitan(location.hash.slice(9), idioma);
+      return;
+    }
     if (location.hash.startsWith("#evento=")) {
-      $("pi-editor").hidden = true;
+      modoVer();
       PareoVer.iniciarEvento(location.hash.slice(8), idioma);
       return;
     }
     if (location.hash.startsWith("#vivo=")) {
-      $("pi-editor").hidden = true;
+      modoVer();
       PareoVer.iniciarVivo(location.hash.slice(6), idioma);
       return;
     }
@@ -2532,6 +3704,7 @@
     }
     enganchar();
     pintarTodo();
+    avisarPestanas();
   }
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", arrancar);

@@ -2682,6 +2682,278 @@ Supabase). Rompiendo a propósito el conteo de las partidas no jugadas, el
 aviso de fuera de orden, el bloqueo de la ronda 1, la respuesta al que pide
 el estado o el aviso de dos regionales, salta.
 
+### La sala de juego de los JDE: retrasos, incidencias, lista, medallero y el público
+
+Diez pedidos más del dueño del sitio, para el día del torneo.
+
+- **El reloj del retraso** (`pintarReloj()`, arriba de la ronda en juego):
+  «Empezó la ronda» anota la hora, y quien no está sentado se marca con
+  «No ha llegado». La página cuenta los minutos (se vuelve a pintar cada 20
+  segundos) contra **el tiempo base del ritmo**, porque el art. 30 de la
+  normativa dice que en ajedrez el tiempo límite para presentarse «será
+  cuando el tiempo del reloj caiga a cero» (`V.minutosBase()`: «10 min + 2
+  s» → 10, «1 h 30 min» → 90; el incremento no cuenta). Sin ritmo escrito no
+  se declara vencido a nadie: lo dice y pide escribirlo. Vencido, «Anotar la
+  incomparecencia» pone el resultado de la mesa (en equipos, el equipo
+  entero sin nadie presente) y lo deja en las incidencias. Las horas, en
+  hora de Costa Rica.
+- **Las incidencias de cada ronda** (`R.incidencias`, `V.incidenciasDe()`):
+  reclamo, sanción, decisión del árbitro u otra, con su hora y su mesa (si
+  tiene). Van al informe oficial, torneo por torneo. Lo escrito entra por
+  `textContent`.
+- **Mover a otro torneo del evento** (`moverDeTorneo()`, botón «Mover» en
+  Jugadores): solo a un torneo individual del mismo evento, y solo si
+  ninguno de los dos empezó. El torneo al que llega guarda `movimientos`, y
+  el acta los trae («Cambios de torneo»).
+- **Reemplazar a un integrante** (`reemplazarIntegrante()`, antes de la
+  ronda 1): por uno de los descartados de su centro (de las decisiones del
+  evento) o por un nombre escrito a mano. Entra en el mismo lugar del orden
+  de tableros; `reemplazos` va al acta. La normativa no dice si se puede: lo
+  decide el congresillo, y la página solo lo anota.
+- **El medallero por centro educativo** (`V.medallero()`): en la tarjeta del
+  evento, en el informe y en la premiación. Un equipo cuenta **una** medalla
+  para su centro (no una por integrante), y los empates del podio, todos con
+  su medalla. Por oro, plata y bronce, como un medallero olímpico.
+- **La pantalla para proyectar** (`#evento=<código>&proyectar`, `pintarProyector()`):
+  el mismo canal en vivo del evento, un torneo a la vez en grande, y pasa
+  solo al siguiente cada 15 segundos. El enlace sale junto al QR del evento.
+- **Mi jugador** (el buscador del enlace del evento, `buscarJugador()`): con
+  tres letras del nombre, la mesa de la ronda de cada torneo, el tablero (en
+  equipos), el color, el rival, el resultado y cómo va. Para encontrar a una
+  integrante, `V.vistaTorneo()` manda en cada encuentro sus tableros con los
+  nombres. **Lo buscado no se borra al llegar un resultado**: el buscador se
+  arma una vez y solo se repintan los torneos y la respuesta.
+- **Pasar lista antes de la ronda 1** (`pintarPasarLista()`, en todo torneo,
+  no solo en los JDE): una casilla por jugador o equipo, apagada de entrada.
+  Prendida, en un suizo quien no llegó queda de entrada como «no viene» (se
+  puede cambiar), y en todos contra todos —donde no hay «no viene» por
+  ronda— se pregunta si sacarlos del torneo antes de sortear o emparejar con
+  todos. Quien no se presentó va al acta (`noSePresentaron`).
+- **Las estadísticas para el MEP** (`V.estadisticas()`, Excel): por torneo,
+  por categoría y modalidad, y por centro, con mujeres y hombres aparte.
+- **Comparar con la etapa anterior** (`V.compararEtapa()`): si al subir
+  varias listas unas son de clasificados (traen «Etapa» o «Puesto»: así
+  también se reconocen las que se bajaron antes de que existiera «Etapa»)
+  y otras no (la inscripción del MEP), se comparan **por nombre**, sin tildes ni mayúsculas (la fecha de
+  nacimiento viene escrita distinto en cada sistema), y **juega la
+  inscripción**. Quien se inscribió sin haber clasificado queda para revisar
+  antes de la ronda 1. Quien clasificó y no viene, solo se avisa, porque no
+  está en ningún torneo. Las dos listas van al acta.
+
+Al tocar esto, `node herramientas/verificar-pareo-jde-sala.js` (con el sitio en
+localhost:8777; el tiempo con `page.clock`, el canal en vivo con el doble de
+`herramientas/lib/pareo-pruebas.js`, que comparte con
+`verificar-pareo-jde-dia.js`). Rompiendo a propósito el momento en que cae el
+reloj, el medallero, el «no viene» de quien no llegó, la búsqueda que se pone
+al día o la comparación, salta.
+
+### El trabajo del árbitro en los JDE: adjuntos, desempates, correcciones y papeles
+
+Once pedidos más del dueño del sitio, y marcar varios jugadores para
+eliminarlos.
+
+- **El TRF de equipos** (`E.aTrfEquipos()`, «Bajar el TRF de equipos» en
+  Archivos, solo en un torneo por equipos): el TRF-16 de FIDE, con una línea
+  001 por integrante y sus partidas tablero por tablero (el rival es el
+  integrante del otro equipo), y una 013 por equipo con los números de sus
+  integrantes (`092 Team: …`). Un tablero sin rival va «0000 - +» (lo gana
+  quien estaba); un integrante que no jugó esa ronda, en blanco. Es otro
+  archivo que el TRF que lee el motor (los equipos como si fueran
+  jugadores), que no cambia. Los formatos de columna salen de
+  `T.formatoTrf`: una sola copia. **No está comparado con un programa avalado
+  por FIDE**: falta probarlo con el que use la Federación.
+- **El desempate del corte** (`armarDesempate()`, `V.aplicarDesempate()`):
+  con un empate en el último lugar que clasifica, «Anotar el desempate» pide
+  cómo se desempató (un blitz, un Armagedón: se juega fuera de Pareo
+  Integral) y el orden en que quedaron. Se guarda en `t.desempateCorte` y
+  ordena a esos jugadores en la clasificación del evento (clasificados,
+  podio, informe, que lo dice). **Solo vale mientras sigan empatados entre
+  ellos**: si una corrección deshace el empate, se ignora sola.
+- **Corregir una ronda cerrada pide el motivo** (`pedirMotivo()`): cambiar un
+  resultado de una ronda cuando la siguiente ya se emparejó (en individual o
+  en un tablero de equipos) abre un diálogo con el resultado de antes y el de
+  ahora; sin motivo no se corrige, y el motivo queda en las incidencias
+  («Corrección de un resultado»). En la ronda en juego se corrige libre,
+  como antes.
+- **Las apelaciones** son un tipo de incidencia con quién la presenta
+  (obligatorio) y la resolución del comité, que se anota después desde la
+  lista («Anotar la resolución»); el informe la trae, «pendiente» si no se
+  resolvió.
+- **Los árbitros adjuntos anotan desde el celular** (`#adjunto=<código>&m=1-10`,
+  `PareoVer.iniciarAdjunto()`): «Enlace para un árbitro adjunto» en la
+  última ronda de un torneo individual, con un rango de mesas. Por un canal de
+  Supabase Realtime en modo Broadcast, como el enlace en vivo (ver «El canal
+  en vivo»): el adjunto pide la ronda y manda cada resultado. **Decide la
+  pestaña del árbitro principal** (`recibirDeAdjunto()`): solo la última
+  ronda, una mesa que existe, sin resultado (nunca pisa uno que ya está) y un
+  resultado de la lista; lo marca «lo anotó el adjunto» (`m.porAdjunto`). Lo
+  que no acepta lo contesta con el estado de verdad, y el celular del adjunto
+  se pone al día. Todos los adjuntos de un torneo comparten el código: el
+  rango solo filtra lo que cada uno ve. **El riesgo aceptado** es el mismo
+  del canal en vivo (quien tenga el código puede anotar una mesa vacía), y
+  el árbitro principal ve cada resultado que llega. En equipos, todavía no.
+- **La ronda atrasada** (en el reloj de la ronda): `V.duracionRonda()` es el
+  tiempo de los dos jugadores más 40 jugadas de incremento, redondeado a 5
+  minutos; pasado eso, dice qué mesas siguen jugando.
+- **El horario del día** (en la tarjeta del evento, `V.horario()`): desde la
+  hora de inicio y el descanso entre rondas, la hora de cada ronda de cada
+  torneo según su ritmo, para imprimir. La hora de inicio se recuerda por
+  evento en el navegador.
+- **«Avisarme»** (en el buscador del enlace del evento): cuando llega una
+  ronda nueva donde juega quien se buscó, lo dice en la página (`aria-live`)
+  y, si la persona lo permitió, con una notificación del celular y una
+  vibración. Una vez por ronda. Mientras la página esté abierta (no hay
+  servidor que mande notificaciones con la página cerrada).
+- **Las rondas anteriores en el enlace del evento**: `V.vistaTorneo()` manda
+  también `anteriores` (sin los tableros), cada torneo trae un selector de
+  ronda que se queda en la elegida aunque llegue un resultado, y «Mi
+  jugador» dice lo que jugó antes.
+- **Por Dirección Regional** (`V.porDireccion()`): cuando el evento junta
+  varias (la Interregional), cuántos estudiantes trajo cada una, sus medallas
+  y cuántos clasifican, en la tarjeta del evento y en el informe.
+- **Las constancias de participación** (`V.constancias()`): una por
+  estudiante que jugó al menos una ronda, haya ganado o no, una por hoja como
+  los diplomas, en español.
+- **Marcar varios jugadores para eliminarlos** (`pintarMasivo()`,
+  `eliminarMarcados()`): una casilla por fila, la de arriba marca a todos
+  los que se ven (con el buscador, solo los que coinciden), y «Eliminar los
+  N marcados» pregunta antes. **Quien ya jugó una ronda no se elimina**
+  (rompería las rondas jugadas): se dice cuántos quedan fuera y se retiran
+  uno por uno, como siempre.
+
+Al tocar esto, `node herramientas/verificar-pareo-jde-arbitraje.js` (con el
+sitio en localhost:8777). Rompiendo a propósito que el adjunto no pise un
+resultado, que el desempate deje de valer sin empate, el motivo de una
+corrección o que no se elimine a quien ya jugó, salta.
+
+### Que nada se pierda y el cierre del evento
+
+Doce pedidos más del dueño del sitio.
+
+- **El respaldo automático del evento** (`prenderRespaldo()`, en la tarjeta
+  del evento): en Chrome y Edge se elige un archivo una vez (la API de
+  archivos, `showSaveFilePicker`) y el respaldo se escribe solo, 3 segundos
+  después de cada cambio. Sin esa API (Firefox, Safari), se baja solo cada
+  vez que se completa una ronda, una vez por ronda. **Mientras la pestaña
+  esté abierta**: el archivo elegido no sobrevive a recargar la página (hay
+  que volver a prenderlo), y la tarjeta lo dice.
+- **El historial de cambios** (`js/pareo/historial.js`, en Archivos): cada
+  `guardar()` compara lo que se guarda con lo último guardado y anota qué
+  cambió (resultados, tableros, alineaciones, incidencias, quién entra y
+  quién sale, una ronda emparejada o deshecha), sin texto armado (`{ clave,
+  vars }`). «Deshacer el último cambio» vuelve a la versión anterior entera.
+  Vive en esta pestaña (los últimos 40), no en el torneo guardado: al
+  recargar, empieza de cero. No dice **quién** cambió algo, porque Pareo
+  Integral no tiene cuentas.
+- **Dos pestañas con el mismo torneo**: cada pestaña dice cuál tiene abierto
+  al abrirlo, por un `BroadcastChannel`, y si otra guarda el mismo torneo por
+  debajo (el evento `storage`, que llega solo a las demás), el aviso de arriba
+  lo dice y ofrece «Cargar lo último guardado». No bloquea nada. Los dos
+  avisos llegan en cualquier orden: el de «guardó cambios» nunca se tapa con
+  el más leve de «está abierto» (el CI lo agarró: a veces el leve llegaba
+  después).
+- **Los adjuntos en equipos y con su propio código**: cada enlace de adjunto
+  se guarda en el torneo (`adjuntos`: código, rango, prendido) y tiene su
+  canal; «Apagar este enlace» le avisa al celular (`apagado`) y corta solo
+  ese. En equipos, el adjunto ve cada tablero del encuentro y anota uno por
+  uno; un tablero sin rival o con resultado no se toca. El principal ahora
+  también hace cumplir el rango de mesas, no solo el celular. Al volver a la
+  ronda, los enlaces prendidos se reconectan solos.
+- **La ficha del jugador en el enlace del evento**: tocar un nombre de la
+  clasificación abre sus rondas, sus puntos, su puesto y sus primeros
+  desempates (`V.vistaTorneo()` manda `d`), con el foco en la ficha.
+- **El idioma del enlace**: un botón «English / Español» en todos los enlaces
+  (`#ver=`, `#vivo=`, `#evento=`, `#adjunto=`), que guarda el idioma y vuelve
+  a abrir la misma dirección.
+- **Sin conexión**: el enlace del evento guarda en el celular lo último que
+  llegó (`pareo_ver_ultimo_v1_<código>`), lo muestra de entrada mientras se
+  conecta y, si se cae la conexión, dice de qué hora es lo que se ve. Al
+  volver, pide el estado de nuevo.
+- **Una sanción con efecto**: una incidencia «Sanción» con mesa (en
+  individual) trae «Cambiar el resultado de la mesa», y la corrección queda
+  anotada con su motivo.
+- **Las planillas de anotación** (`imprimirPlanillasAnotacion()`): una por
+  mesa (en equipos, una por tablero), con el torneo, la ronda, la mesa, la
+  fecha, el ritmo, los dos nombres, 60 jugadas en dos columnas, el
+  resultado y las firmas.
+- **El cierre del evento** (`V.revisarCierre()`, «Bajar el paquete final»):
+  dice lo que falta en cada torneo (rondas, un empate en el corte sin
+  desempate, apelaciones sin resolver) y baja en un `.zip` el acta, el
+  informe, la premiación, los clasificados, las estadísticas y el respaldo.
+  Si falta algo, pregunta antes. El `.zip` sale de `TablaExcel.zip`, que ahora
+  acepta bytes (los PDF) además de texto: una sola copia.
+- **El ID FIDE desde la lista nacional**: la lista de ajedrezcostarica.com
+  identifica a cada jugador por su ID FIDE (no hay un número nacional
+  aparte), y la Edge Function ya lo devolvía; ahora, si el jugador no lo
+  tenía, se le pone al encontrar su Elo Nacional. No cambió la función.
+
+Al tocar esto, `node herramientas/verificar-pareo-cierre.js` (con el sitio en
+localhost:8777; la API de archivos y la búsqueda del Elo Nacional, con
+dobles). Rompiendo a propósito «Deshacer», el aviso de la otra pestaña, que
+el adjunto no pise un tablero o lo último guardado del enlace, salta.
+
+### La ronda más rápida en la sala, y el evento de punta a punta
+
+Diez pedidos más, y antes un ensayo entero con la inscripción real de la
+regional de Alajuela (364 filas, 16 torneos, todas las rondas, todos los PDF y
+el paquete final, a 1280 y a 390 de ancho). El Excel real no va al
+repositorio: el ensayo se corrió fuera de él. Sacó un error de verdad: **un
+equipo con menos de 2 presentes** (uno de 1 integrante) perdía su encuentro
+por incomparecencia, pero el resultado no se ponía hasta que alguien tocara un
+tablero, y como no hay nada que anotar, la ronda quedaba en «Faltan 1
+resultados» para siempre. Ahora `emparejar()` pone el resultado de esos
+encuentros al emparejar. (Lo otro que pareció raro —un suizo de 10 equipos
+que no emparejaba la ronda 6— era del ensayo: con todo «1-0» todos los
+encuentros dan 2-2; con resultados al azar se jugaron las 7 en 5 de 5.)
+
+- **«Un día de los JDE, paso a paso»**: la sección 10 del manual
+  (`pareo-manual.html#es-jde` y `#en-jde`): antes, el congresillo, cada ronda
+  y el cierre, con el botón de cada cosa. De paso se corrigió la frase vieja
+  de que Pareo Integral no hace torneos por equipos.
+- **«Solo lo de los JDE»** (en Mis torneos): esconde el comprobador, el
+  generador al azar y los créditos (`.pi-no-jde`), que en los JDE no se usan.
+  Se recuerda en el navegador (`pareo_modo_jde_v1`). Es solo pantalla: no
+  cambia nada del torneo.
+- **Buscar una mesa por el nombre** (`#pi-buscar-mesa`): cada mesa (o
+  encuentro, con los nombres de sus integrantes) lleva `data-nombres` sin
+  tildes ni mayúsculas; Enter salta al primer resultado que se ve.
+- **Los atajos del resultado**: en un select de resultado, 1 gana blancas, 0
+  gana negras, = (o 5) tablas, y el foco salta solo a la mesa siguiente. En
+  una ronda cerrada el diálogo del motivo sale igual: el atajo no se lo salta.
+- **«Todo para imprimir»**: la plantilla de la pared, las hojas de alineación
+  (en equipos), las planillas para firmar y las de anotación, en una sola
+  impresión. Las funciones de cada hoja se juntan (`impresion.juntando`) en
+  vez de imprimir cada una por su lado; cada hoja empieza en página nueva.
+- **El desempate «Por tableros» (TB)**: en un torneo por equipos, los puntos
+  del tablero 1; a igual, los del 2, y así. Se guarda como un solo número en
+  base 100 de medios puntos (`E.codificarTableros`) para que se compare como
+  los demás, y se muestra tablero por tablero (`E.textoTableros`). En un
+  encuentro perdido por incomparecencia, el que vino suma 1 en cada tablero.
+  No va a la ficha del jugador del enlace del evento (ese número no se lee).
+- **Los capitanes confirman la alineación desde el celular**: un enlace y un
+  QR por equipo (`#capitan=<código>`, guardado en `capitanes` del torneo,
+  canal `pareo-capitan-<código>`). El capitán marca entre 2 y 4 y lo manda;
+  **lo decide la pestaña del árbitro principal**, no el celular: solo en la
+  última ronda, solo si el encuentro todavía no tiene ningún tablero anotado y
+  solo con integrantes de su equipo. Lo que no vale no entra y el celular
+  vuelve a recibir el estado. El encuentro dice «Confirmada por el capitán a
+  las …». El riesgo de un enlace pasado a quien no es aceptado como en los
+  adjuntos: el árbitro lo ve y lo cambia.
+- **El paquete para chess-results**: chess-results no recibe archivos directo
+  (se abren en Swiss-Manager y se suben desde ahí), así que se baja un `.zip`
+  con el TRF de cada torneo hasta la última ronda completa y, en los de
+  equipos, también el TRF de equipos.
+- **Comparado con el año anterior** (`V.compararAnioAnterior()`): los
+  torneos de la misma etapa y lugar del año anterior, de
+  `data/ajedrez-estudiantil.json`, por categoría, modalidad y rama, contra los
+  de este evento. Solo el ritmo clásico, y se cuentan participantes como allá
+  (jugadores en individual, equipos en equipos).
+
+Al tocar esto, `node herramientas/verificar-pareo-ronda.js` (con el sitio en
+localhost:8777; Realtime y el archivo del año anterior, con dobles). Rompiendo
+a propósito el resultado del encuentro sin presentes, la validación del
+capitán, el punto por tablero del que vino o el filtro de la búsqueda, salta.
+
 ### La barra de progreso al buscar el Elo Nacional
 
 Antes de esto, tocar «Buscar Elo Nacional de quien no tiene» con una lista

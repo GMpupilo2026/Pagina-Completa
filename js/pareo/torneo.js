@@ -399,6 +399,8 @@
   const api = {
     PUNTOS_FIDE, TITULOS, nuevo, ordenInicial, fijarNumeracion, sortearNumeracion, numeros, situacion, puntos, puntosHasta,
     rondaCompleta, participantes, berger, rondaTodos, rondasTodos, aTrf, leerPareo, deTrf,
+    // El formato de las columnas del TRF: lo usa también el TRF de equipos (js/pareo/equipos.js).
+    formatoTrf: { izq, der, decimal, fechaTrf },
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else raiz.PareoTorneo = api;

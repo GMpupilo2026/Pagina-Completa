@@ -97,6 +97,7 @@
                         <li><a href="#es-desempates">La clasificación y los desempates</a></li>
                         <li><a href="#es-archivos">Archivos, comprobador y generador</a></li>
                         <li><a href="#es-cli">La versión de línea de comandos</a></li>
+                        <li><a href="#es-jde">Un día de los JDE, paso a paso</a></li>
                         <li><a href="#es-limites">Con qué está hecho y qué falta</a></li>
                     </ol>
                 </nav>
@@ -196,12 +197,44 @@ node pareo.js --dutch -g -o azar.trf -s 2026
 node pareo.js standings torneo.trf --tiebreaks BH-C1,BH,SB --lang es</code></pre>
                 <p>El detalle está en el <code>LEEME.md</code> que trae el paquete.</p>
 
-                <h2 id="es-limites">10. Con qué está hecho y qué falta</h2>
+                <h2 id="es-jde">10. Un día de los JDE, paso a paso</h2>
+                <p>Para los Juegos Deportivos Estudiantiles del MEP, desde la inscripción hasta el paquete final. Arriba, «Solo lo de los JDE» esconde lo que ese día no se usa.</p>
+                <h3>Antes del torneo</h3>
+                <ol>
+                    <li>En <strong>Torneo</strong>, escribe la ciudad, las fechas, los árbitros y el <strong>ritmo</strong> (el reloj del retraso y el horario salen de ahí).</li>
+                    <li>En <strong>Jugadores</strong>, «Subir una lista»: el Excel de la inscripción del MEP. En la Interregional, súbelo junto con las listas de clasificados de cada Dirección Regional: Pareo Integral las compara y propone la etapa.</li>
+                    <li>Revisa la sugerencia: repetidos, quien está en dos modalidades (decides dónde juega), las mujeres que pasan al abierto, los equipos de más de cinco (eliges los cinco), los equipos cortos, las categorías y quien viene en dos listas. Con «Aplicar la configuración de los JDE» marcada, «Crear los torneos» pregunta la etapa y el lugar, y cada torneo queda con su nombre, su sistema y sus desempates.</li>
+                    <li>En <strong>Archivos</strong>, la tarjeta del evento: el <strong>horario del día</strong> para la pared, el <strong>respaldo automático</strong> y el <strong>enlace en vivo</strong> con su QR para el público (también la pantalla para proyectar).</li>
+                </ol>
+                <h3>El congresillo</h3>
+                <ol>
+                    <li>En cada torneo por equipos, el <strong>orden de tableros</strong> (↑ ↓) y, si hace falta, «Reemplazar» a un integrante. Imprime la hoja para que firme cada delegado.</li>
+                    <li>Si alguien cambia de torneo, «Mover» en Jugadores.</li>
+                    <li>Baja el <strong>acta del congresillo</strong>: trae todo lo decidido.</li>
+                </ol>
+                <h3>Cada ronda</h3>
+                <ol>
+                    <li>Antes de la ronda 1, en <strong>Rondas</strong>: <strong>pasar lista</strong> y marcar como vistos los puntos que quedaron de la inscripción. Hasta marcarlos, no se empareja.</li>
+                    <li>«Emparejar», y <strong>«Todo para imprimir»</strong>: el pareo para la pared, las planillas de firma, las de anotación y, en equipos, las hojas de alineación.</li>
+                    <li>«Empezó la ronda» y, si alguien no está sentado, «No ha llegado»: la página avisa cuando cae su reloj (art. 30) y anota la incomparecencia.</li>
+                    <li>Los resultados: con el teclado (1, 0 o = en cada mesa), con el buscador de mesa, o desde el celular de cada <strong>árbitro adjunto</strong> (un enlace por adjunto con sus mesas) y, en equipos, la alineación desde el celular de cada <strong>capitán</strong>.</li>
+                    <li>Los reclamos, las sanciones, las apelaciones y las correcciones van en <strong>Incidencias</strong>, y salen solas en el informe.</li>
+                </ol>
+                <h3>Al terminar</h3>
+                <ol>
+                    <li>Si hay un empate en el último lugar que clasifica, «Anotar el desempate».</li>
+                    <li>La <strong>premiación</strong>, los <strong>diplomas</strong> y las <strong>constancias de participación</strong>.</li>
+                    <li>«Cerrar el evento» dice lo que falta y baja el <strong>paquete final</strong>: acta, informe, premiación, clasificados, estadísticas para el MEP y respaldo. La lista de clasificados se sube tal cual en la etapa siguiente.</li>
+                    <li>Para chess-results, «Bajar los TRF del evento»: se abren en Swiss-Manager y se suben desde ahí.</li>
+                </ol>
+                <p>Todo queda en el navegador de esta computadora. El respaldo automático y el «Bajar el respaldo del evento» sirven para seguir en otra si esta falla.</p>
+
+                <h2 id="es-limites">11. Con qué está hecho y qué falta</h2>
                 <ul>
                     <li>Los emparejamientos los calcula <strong>bbpPairings</strong> (Jeremy Bierema, licencia Apache 2.0), el motor del Sistema Holandés que usan programas avalados por FIDE. Está compilado para correr en el navegador, sin cambios a su código.</li>
                     <li>Los desempates están traducidos de <strong>chesspairing</strong> (Gert Nutterts, licencia Apache 2.0) y comparados con él.</li>
                     <li>Con la misma semilla, el generador arma un torneo distinto del que arma el bbpPairings de escritorio, porque el azar de la librería de C++ es otro. Los emparejamientos sí son los mismos.</li>
-                    <li>Por ahora no hace torneos por equipos ni otros sistemas suizos (Burstein, Dubov, Lim).</li>
+                    <li>Los torneos por equipos se emparejan como si cada equipo fuera un jugador, con los puntos de encuentro, y el TRF de equipos sale aparte; ese TRF todavía no está comparado con un programa avalado. No hace otros sistemas suizos (Burstein, Dubov, Lim).</li>
                     <li><strong>Pareo Integral todavía no tiene el aval de FIDE.</strong></li>
                 </ul>
                 <p><a href="pareo.html" class="pm-volver">← Volver a Pareo Integral</a></p>
@@ -221,6 +254,7 @@ node pareo.js standings torneo.trf --tiebreaks BH-C1,BH,SB --lang es</code></pre
                         <li><a href="#en-tiebreaks">Standings and tie-breaks</a></li>
                         <li><a href="#en-files">Files, checker and generator</a></li>
                         <li><a href="#en-cli">The command-line version</a></li>
+                        <li><a href="#en-jde">A JDE day, step by step</a></li>
                         <li><a href="#en-limits">What it is built on, and what is missing</a></li>
                     </ol>
                 </nav>
@@ -320,12 +354,44 @@ node pareo.js --dutch -g -o random.trf -s 2026
 node pareo.js standings tournament.trf --tiebreaks BH-C1,BH,SB</code></pre>
                 <p>The details are in the <code>README.md</code> inside the package.</p>
 
-                <h2 id="en-limits">10. What it is built on, and what is missing</h2>
+                <h2 id="en-jde">10. A JDE day, step by step</h2>
+                <p>For the MEP school games (Juegos Deportivos Estudiantiles), from the registration to the final package. At the top, «JDE essentials only» hides what that day does not use.</p>
+                <h3>Before the tournament</h3>
+                <ol>
+                    <li>Under <strong>Tournament</strong>, enter the city, dates, arbiters and the <strong>time control</strong> (the late-arrival clock and the schedule come from it).</li>
+                    <li>Under <strong>Players</strong>, «Upload a list»: the MEP registration spreadsheet. At the Inter-regional stage, upload it together with each Regional Directorate's qualifier list: Pareo Integral compares them and suggests the stage.</li>
+                    <li>Review the suggestion: duplicates, players in two modes (you decide where they play), girls moved to the open section, teams with more than five (you choose the five), short teams, categories and anyone listed twice. With «Apply the JDE settings» ticked, «Create the tournaments» asks for the stage and place, and each tournament gets its name, system and tie-breaks.</li>
+                    <li>Under <strong>Files</strong>, the event card: the <strong>day schedule</strong> for the wall, the <strong>automatic backup</strong> and the <strong>live link</strong> with its QR for the public (and the projector screen).</li>
+                </ol>
+                <h3>The technical meeting</h3>
+                <ol>
+                    <li>In each team tournament, the <strong>board order</strong> (↑ ↓) and, if needed, «Replace» a member. Print the sheet for each delegate to sign.</li>
+                    <li>If someone changes tournament, «Move» under Players.</li>
+                    <li>Download the <strong>meeting minutes</strong>: they list everything decided.</li>
+                </ol>
+                <h3>Each round</h3>
+                <ol>
+                    <li>Before round 1, under <strong>Rounds</strong>: <strong>take attendance</strong> and tick the points left from the registration. Until they are ticked, pairing is blocked.</li>
+                    <li>«Pair», then <strong>«Print everything»</strong>: the wall pairings, the signature sheets, the scoresheets and, for teams, the line-up sheets.</li>
+                    <li>«The round has started» and, if someone is not seated, «Has not arrived»: the page warns when their clock runs out (art. 30) and records the forfeit.</li>
+                    <li>Results: by keyboard (1, 0 or = on each table), with the table search, or from each <strong>deputy arbiter</strong>'s phone (one link per deputy with their tables) and, for teams, the line-up from each <strong>captain</strong>'s phone.</li>
+                    <li>Claims, penalties, appeals and corrections go under <strong>Incidents</strong>, and appear in the report automatically.</li>
+                </ol>
+                <h3>At the end</h3>
+                <ol>
+                    <li>If there is a tie in the last qualifying place, «Record the play-off».</li>
+                    <li>The <strong>prize-giving</strong>, the <strong>certificates</strong> and the <strong>certificates of participation</strong>.</li>
+                    <li>«Close the event» lists what is missing and downloads the <strong>final package</strong>: minutes, report, prize-giving, qualifiers, MEP statistics and backup. The qualifier list is uploaded as it is at the next stage.</li>
+                    <li>For chess-results, «Download the event TRFs»: open them in Swiss-Manager and upload from there.</li>
+                </ol>
+                <p>Everything stays in this computer's browser. The automatic backup and «Download the event backup» let you carry on elsewhere if this one fails.</p>
+
+                <h2 id="en-limits">11. What it is built on, and what is missing</h2>
                 <ul>
                     <li>Pairings are computed by <strong>bbpPairings</strong> (Jeremy Bierema, Apache 2.0 licence), the Dutch System engine used by FIDE-endorsed programs. It is compiled to run in the browser, with no changes to its code.</li>
                     <li>Tie-breaks are translated from <strong>chesspairing</strong> (Gert Nutterts, Apache 2.0 licence) and cross-checked against it.</li>
                     <li>With the same seed, the generator builds a different tournament than the desktop bbpPairings, because the random number generator of the C++ library differs. The pairings themselves are identical.</li>
-                    <li>Team tournaments and other Swiss systems (Burstein, Dubov, Lim) are not supported yet.</li>
+                    <li>Team tournaments are paired as if each team were a player, with match points, and the team TRF is produced separately; that TRF has not yet been checked against an endorsed program. No other Swiss systems (Burstein, Dubov, Lim).</li>
                     <li><strong>Pareo Integral is not yet endorsed by FIDE.</strong></li>
                 </ul>
                 <p><a href="pareo.html" class="pm-volver">← Back to Pareo Integral</a></p>

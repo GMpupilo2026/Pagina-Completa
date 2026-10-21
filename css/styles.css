@@ -1777,6 +1777,18 @@ html.dark .comparar-serie-3 { background: #199e70; }
 .pi-firma-blanco { display: inline-block; width: 6rem; border-bottom: 1px solid #333; }
 .pi-firma-bye { font-style: italic; color: #666; }
 .pi-firma-linea { margin-top: 2.5rem; border-top: 1px solid #333; padding-top: 0.25rem; font-size: 0.95rem; color: #333; }
+/* Las planillas de anotación de una ronda (imprimirPlanillasAnotacion). */
+.pi-planilla-datos { font-size: 1rem; margin: 0.2rem 0; }
+.pi-planilla-tabla { width: 100%; border-collapse: collapse; margin-top: 0.8rem; font-size: 0.85rem; }
+.pi-planilla-tabla th, .pi-planilla-tabla td { border: 1px solid #333; height: 1.45rem; padding: 0 0.3rem; }
+.pi-planilla-tabla th { background: #eee; }
+.pi-planilla-n { width: 2rem; text-align: center; color: #333; }
+/* «Solo lo de los JDE» (pareo.html): esconde lo que un día de JDE no usa. */
+body.pi-modo-jde .pi-no-jde { display: none !important; }
+/* Imprimir todo de una ronda: la plantilla de la pared, en su propia hoja. */
+body.pi-imprimiendo-plantilla.pi-imprimiendo-firmas .pi-plantilla { break-after: page; }
+/* La pantalla para proyectar el evento (pareo.html#evento=…&proyectar). */
+.pi-proyector .pi-tabla { font-size: 1.35rem; }
 /* Los diplomas del evento (js/pareo/pagina.js: imprimirDiplomas): uno por
    hoja, apaisado, centrado. */
 @page diploma { size: letter landscape; margin: 1.5cm; }
