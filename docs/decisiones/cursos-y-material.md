@@ -2447,6 +2447,12 @@ sesión**. Lo pinta `js/admin-asesores.js`.
   le quedan a cada cuenta: lo pidió así el dueño. Comprobado impersonando
   roles: administración ve los 30; un asesor, solo su fila; `anon` no puede
   llamarla.
+  Después de las sesiones (S1 a S7, el Kahoot de cada una) van **las tareas
+  iniciales** (T1, T2…, solo las sesiones que la tienen), con la nota de la
+  primera vez que la contestó, y arriba cuántos la contestaron. No hace falta
+  nada en la base: `asesores_tablero()` ya junta los intentos por
+  cuestionario, y el de una tarea guarda el id de su cuestionario; antes la
+  nota existía y no se pintaba.
   Al final van **las grabaciones** (▶ I, ▶ II…, en orden de la sesión): cuánto
   vio cada uno de cada una aquí en la plataforma, sin contar lo que repitió ni
   lo que adelantó, en porcentaje y en tiempo («50 %» y debajo «1 h 36 min»;
