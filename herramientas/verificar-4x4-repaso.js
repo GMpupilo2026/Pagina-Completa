@@ -144,6 +144,35 @@ async function decir(page, t) {
   igual("sin errores en consola", errores.join(" | ") || "ninguno", "ninguno");
   await ctx.close();
 
+  /* El mapa sale en CADA nivel (no solo en Fácil): con dos resueltos, el mapa
+     trae todos los del nivel, marca los dos, señala el que toca y deja volver. */
+  console.log("\n=== El mapa, en los seis niveles ===");
+  for (const [clave, nivel, total] of [["facil", "FACIL", 200], ["intermedio", "INTERMEDIO", 200], ["avanzado", "AVANZADO", 200], ["especialista", "ESPECIALISTA", 200], ["maestro", "MAESTRO", 100], ["granmaestro", "GRANMAESTRO", 100]]) {
+    const idsN = await (async () => {
+      const r = await abrir(browser);
+      const v = await r.page.evaluate((k) => PUZZLES[k].slice().sort((a, b) => a.number - b.number).map((p) => p.id), clave);
+      await r.ctx.close();
+      return v;
+    })();
+    const dos = {}; idsN.slice(0, 2).forEach((i) => { dos[i] = true; });
+    ({ page, ctx, errores } = await abrir(browser, { entreno_solved: JSON.stringify(dos) }, "/entreno/4x4.html?nivel=" + nivel));
+    const m = await page.evaluate(() => ({
+      visible: document.getElementById("mapa-4x4").checkVisibility(),
+      botones: document.querySelectorAll("#mapa-4x4 button").length,
+      resueltos: document.querySelectorAll("#mapa-4x4 button[data-estado='resuelto']").length,
+      ahora: Array.from(document.querySelectorAll("#mapa-4x4 button[data-estado='ahora']")).map((b) => b.dataset.numero),
+      cerrados: document.querySelectorAll("#mapa-4x4 button[aria-disabled='true']").length,
+      marcas: Array.from(document.querySelectorAll("#mapa-4x4 .marca")).slice(0, 3).map((x) => x.textContent),
+    }));
+    igual(nivel + ": el mapa está a la vista con los " + total, [m.visible, m.botones], [true, total]);
+    igual(nivel + ": dos resueltos con ✓, el 3 es el de ahora y el resto está cerrado", [m.resueltos, m.ahora, m.cerrados, m.marcas], [2, ["3"], total - 3, ["✓", "✓", "▶"]]);
+    await page.click("#mapa-4x4 button[data-numero='1']");
+    await page.waitForTimeout(250);
+    cierto(nivel + ": tocar el 1 lo abre", /Ejercicio 1 de/.test(await texto(page, "#solo-progress-text")), await texto(page, "#solo-progress-text"));
+    igual(nivel + ": sin errores en consola", errores.join(" | ") || "ninguno", "ninguno");
+    await ctx.close();
+  }
+
   /* «?nivel=INTERMEDIO» (la clase en vivo y las tareas de un nivel): abre ese
      nivel, en el que le toca; antes abría siempre Fácil. */
   console.log("\n=== ?nivel= abre ese nivel ===");
