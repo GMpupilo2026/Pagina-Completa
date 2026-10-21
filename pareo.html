@@ -119,6 +119,10 @@
             <!-- ===== Torneo ===== -->
             <section id="pi-p-torneo" role="tabpanel" aria-labelledby="pi-f-torneo" class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5" hidden>
                 <h2 class="font-serif text-xl font-bold mb-4" data-t="datosTorneo">Datos del torneo</h2>
+                <div class="mb-4 rounded-xl border border-brand-200 dark:border-brand-700 p-4">
+                    <button type="button" id="pi-config-jde-aplicar" class="inline-block border border-brand-300 dark:border-brand-600 text-brand-800 dark:text-white font-semibold px-4 py-2 rounded-lg text-sm hover:bg-brand-50 dark:hover:bg-brand-800 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 disabled:opacity-50 disabled:cursor-not-allowed" data-t="configJdeBoton">Aplicar la configuración de los JDE</button>
+                    <p class="text-sm text-brand-600 dark:text-brand-300 mt-2" data-t="configJdeBotonAyuda">Deja el sistema según cuántos juegan (todos contra todos con 8 o menos, suizo de al menos 5 rondas con más), el ritmo mínimo de 10 min + 2 s si no tiene uno, 1 · ½ · 0 con el bye en 1 y los desempates de FIDE. Solo antes de la ronda 1.</p>
+                </div>
                 <form id="pi-form-torneo" class="grid sm:grid-cols-2 gap-4" novalidate>
                     <label class="sm:col-span-2"><span class="block text-sm font-semibold mb-1" data-t="nombreTorneo">Nombre del torneo</span><input name="nombre" class="w-full rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-800 text-brand-800 dark:text-white px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400" maxlength="120" autocomplete="off"></label>
                     <label><span class="block text-sm font-semibold mb-1" data-t="ciudad">Ciudad</span><input name="ciudad" class="w-full rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-800 text-brand-800 dark:text-white px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400" maxlength="60" autocomplete="off"></label>

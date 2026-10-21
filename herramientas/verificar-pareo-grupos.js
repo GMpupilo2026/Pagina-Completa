@@ -105,6 +105,18 @@ function pruebaHombresEnMujeres() {
   igual("la mujer que el archivo pone en el abierto no cuenta como «mujeres sin equipo»", pase.pasadas.length + pase.sinAbierto.length, 0);
 }
 
+function pruebaTopesYConfig() {
+  console.log("\n=== Dos por centro en individual y la configuración de los JDE ===");
+  const j = (sexo, institucion, modalidad) => ({ nombre: sexo + institucion, sexo, institucion, categoria: "C", modalidad });
+  const r = G.individualesDeMas([j("w", "X", "individual"), j("w", "X", "individual"), j("w", "X", "individual"), j("m", "X", "individual"), j("m", "X", "individual"), j("w", "X", "equipo"), j("w", "X", "equipo"), j("w", "X", "equipo")]);
+  igual("solo las tres mujeres de X en individual pasan el tope (los hombres son 2, los equipos no cuentan)", r.map((e) => e.torneo + e.integrantes.length), ["w3"]);
+  const c8 = G.configuracionJde(8, { rondasTotales: 3, ritmo: "" });
+  const c9 = G.configuracionJde(9, { rondasTotales: 7, ritmo: "15 min + 5 s" });
+  igual("8: todos contra todos con sus desempates; el ritmo mínimo si no tenía", [c8.sistema, c8.desempates.join(","), c8.ritmo], ["todos", "DE,SB,WIN,KS", "10 min + 2 s por jugada"]);
+  igual("9: suizo, se respetan 7 rondas y el ritmo que ya tenía", [c9.sistema, c9.rondasTotales, c9.ritmo, c9.desempates[0]], ["suizo", 7, "15 min + 5 s", "BH-C1"]);
+  igual("con menos de 5 rondas, sube a 5", c8.rondasTotales, 5);
+}
+
 function pruebaCortos() {
   console.log("\n=== Equipos con menos de 3 (art. 66.1.g) ===");
   const j = (sexo, institucion, categoria, modalidad, alAbierto) => ({ nombre: sexo + institucion, sexo, institucion, categoria, modalidad: modalidad || "equipo", alAbierto });
@@ -181,13 +193,15 @@ function excelJde() {
   const poner = (cuantos, sexo, cat, mod, fdn, institucion) => {
     for (let i = 0; i < cuantos; i++) {
       const f = Array.isArray(fdn) ? fdn[i] : fdn;
-      filas.push([String(n), "CÉDULA:", "100000" + n, `PRUEBA ${sexo === "MUJER" ? "ANA" : "LUIS"} ${cat}${mod[0]}${i}`, f, "COSTARRICENSE", sexo, "10", institucion || "ESCUELA DE PRUEBA " + (i % 2), "01", "Prueba", cat, "Colegio", mod, "01 Mar"]);
+      filas.push([String(n), "CÉDULA:", "100000" + n, `PRUEBA ${sexo === "MUJER" ? "ANA" : "LUIS"} ${cat}${mod[0]}${i}`, f, "COSTARRICENSE", sexo, "10", typeof institucion === "function" ? institucion(i) : institucion || "ESCUELA DE PRUEBA " + (i % 2), "01", "Prueba", cat, "Colegio", mod, "01 Mar"]);
       n++;
     }
   };
   poner(3, "HOMBRE", "A", "Individual", "1/4/2017");
   poner(1, "MUJER", "A", "Individual", "7/17/2015");
-  poner(10, "HOMBRE", "B", "Individual", ["3/2/2018", ...Array(9).fill("11/19/2014")]);
+  // De a dos por escuela: el tope de dos por centro en individual (art.
+  // 66.1.f) se prueba aparte, en pruebaTopeIndividual.
+  poner(10, "HOMBRE", "B", "Individual", ["3/2/2018", ...Array(9).fill("11/19/2014")], (i) => "ESCUELA DE PRUEBA " + Math.floor(i / 2));
   poner(4, "HOMBRE", "B", "Equipo", ["1/4/2017", "2/4/2017", "3/4/2017", "1/4/2014"], "ESCUELA DEL EQUIPO");
   poner(2, "MUJER", "B", "Equipo", "1/4/2017", "ESCUELA DE MUJERES");
   // Una sola mujer de equipos en un centro que presenta equipo abierto: no
@@ -240,6 +254,58 @@ function excelConTorneo() {
   for (let i = 0; i < 3; i++) filas.push(["PRUEBA HOMBRE " + i, "HOMBRE", "ESCUELA T", "B", "Equipo", "Abierto"]);
   filas.push(["PRUEBA MUJER EN ABIERTO", "MUJER", "ESCUELA T", "B", "Equipo", "Abierto"]);
   return Buffer.from(TablaExcel.armar([{ nombre: "Hoja1", filas }]));
+}
+
+// Tres mujeres del mismo centro en individual B (el tope es 2, art.
+// 66.1.f) y otra de otro centro; dos en el abierto.
+function excelConTope() {
+  const filas = [["Nombre", "Sexo", "Nombre de Centro Educativo", "Categoría", "Equipo/Ind"]];
+  for (let i = 0; i < 3; i++) filas.push(["PRUEBA TOPE " + i, "MUJER", "ESCUELA T", "B", "Individual"]);
+  filas.push(["PRUEBA OTRA", "MUJER", "ESCUELA U", "B", "Individual"]);
+  filas.push(["PRUEBA ABIERTO 0", "HOMBRE", "ESCUELA T", "B", "Individual"]);
+  filas.push(["PRUEBA ABIERTO 1", "HOMBRE", "ESCUELA U", "B", "Individual"]);
+  return Buffer.from(TablaExcel.armar([{ nombre: "Hoja1", filas }]));
+}
+
+async function pruebaTopeIndividual(browser) {
+  console.log("\n=== Individual: dos por centro (art. 66.1.f) y la configuración de los JDE ===");
+  let { ctx, page, errores } = await abrir(browser, true, excelConTope());
+  igual("el resumen del centro de más", (await page.textContent("#pi-individuales-de-mas summary")).trim(), "ESCUELA T, categoría B, Mujeres: 3 inscritos, 2 de 2 elegidos");
+  ok(/\(ahora: 1\)/.test(await page.textContent("#pi-individuales-de-mas")), "dice cuántas quedan descartadas");
+  await page.click("#pi-individuales-de-mas summary");
+  const cs = await page.$$eval("#pi-individuales-de-mas li", (l) => l.map((x) => [x.querySelector("input").checked, x.querySelector("input").disabled]));
+  igual("vienen marcadas las 2 primeras; con 2, la tercera no se puede marcar", cs, [[true, false], [true, false], [false, true]]);
+  // Cambiar: sale la primera, entra la tercera.
+  await page.click("#pi-ind-0-0");
+  await page.click("#pi-ind-0-2");
+  ok(await page.$eval("#pi-config-jde", (c) => c.checked), "la configuración de los JDE viene marcada");
+  await page.click("#pi-sugerencia-crear");
+  await page.waitForFunction(() => document.getElementById("pi-sugerencia").hidden);
+  let ts = await torneos(page);
+  const muj = ts.find((x) => /Mujeres$/.test(x.nombre));
+  igual("en el de mujeres quedan las elegidas y la de otro centro", muj.jugadores.map((j) => j.nombre).sort(), ["PRUEBA OTRA", "PRUEBA TOPE 1", "PRUEBA TOPE 2"]);
+  igual("con la configuración: todos contra todos, sus desempates, 1 · ½ · 0 y el bye en 1",
+    [muj.sistema, muj.desempates.join(","), JSON.stringify(muj.puntos), muj.ritmo], ["todos", "DE,SB,WIN,KS", JSON.stringify({ victoria: 1, tablas: 0.5, derrota: 0, bye: 1 }), "10 min + 2 s por jugada"]);
+  ok(!errores.length, "sin errores en la página", errores.join(" | "));
+  await ctx.close();
+
+  console.log("\n=== Sin la configuración, y el botón de la ficha Torneo ===");
+  ({ ctx, page, errores } = await abrir(browser, true, excelConTope()));
+  await page.click("#pi-config-jde");
+  await page.click("#pi-sugerencia-crear");
+  await page.waitForFunction(() => document.getElementById("pi-sugerencia").hidden);
+  ts = await torneos(page);
+  const abierto = ts.find((x) => /Abierto$/.test(x.nombre));
+  igual("sin marcar, copia los desempates y el ritmo del torneo abierto", [abierto.desempates.join(","), abierto.ritmo], ["BH-C1,BH,SB,DE,WIN", ""]);
+  await page.click('[data-ficha="torneo"]');
+  ok(!(await page.$eval("#pi-config-jde-aplicar", (b) => b.disabled)), "antes de la ronda 1, el botón se puede tocar");
+  await page.click("#pi-config-jde-aplicar");
+  const abiertoAhora = await page.evaluate(() => JSON.parse(localStorage.getItem("pareo_torneo_v1_" + localStorage.getItem("pareo_abierto_v1"))));
+  igual("el botón deja la configuración de los JDE en el torneo abierto", [abiertoAhora.sistema, abiertoAhora.desempates.join(","), abiertoAhora.ritmo],
+    [abiertoAhora.jugadores.length <= 8 ? "todos" : "suizo", abiertoAhora.jugadores.length <= 8 ? "DE,SB,WIN,KS" : "BH-C1,BH,SB,DE,WIN", "10 min + 2 s por jugada"]);
+  igual("y el formulario lo muestra", await page.$eval('#pi-form-torneo [name="ritmo"]', (i) => i.value), "10 min + 2 s por jugada");
+  ok(!errores.length, "sin errores en la página", errores.join(" | "));
+  await ctx.close();
 }
 
 async function pruebaTorneoEnArchivo(browser) {
@@ -438,8 +504,9 @@ async function pruebaPagina(browser) {
   pruebaRepetidos();
   pruebaCortos();
   pruebaHombresEnMujeres();
+  pruebaTopesYConfig();
   const browser = await chromium.launch({ executablePath: fs.existsSync(CHROME) ? CHROME : undefined });
-  try { await pruebaPagina(browser); await pruebaDosModalidades(browser); await pruebaTorneoEnArchivo(browser); }
+  try { await pruebaPagina(browser); await pruebaDosModalidades(browser); await pruebaTorneoEnArchivo(browser); await pruebaTopeIndividual(browser); }
   catch (e) { mal("la prueba de la página se cayó", e.stack); }
   finally { await browser.close(); }
   console.log(fallos ? `\n${fallos} fallo(s).` : "\nTodo bien.");

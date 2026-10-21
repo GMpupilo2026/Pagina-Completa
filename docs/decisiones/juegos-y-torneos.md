@@ -2355,6 +2355,31 @@ se juega aparte, y armar cada torneo a mano era copiar y pegar filas.
     queda donde dice el archivo y se avisa con «Aviso:», su nombre, su
     centro y el torneo: no se mueve, porque el error puede estar en el sexo
     o en el torneo.
+  - **Dos por centro en individual** (`individualesDeMas()`, art. 66.1.f:
+    «sólo podrán clasificar a la Etapa Regional dos personas estudiantes
+    mujeres y dos personas estudiantes en abierto»). Es el mismo control que
+    el de los equipos de más de cinco (`deMasPorCentro()` con otro tope, y
+    `pintarTopes()` en la página): mismo centro, categoría y torneo, vienen
+    marcados los dos primeros de la inscripción, con dos marcados no se
+    puede marcar otro, y el resto queda descartado de todo. En Alajuela 2026
+    son cuatro casos y seis descartados por omisión.
+  - **La configuración de los JDE** (`configuracionJde()`, art. 66.2 a
+    66.4). La casilla «Usar la configuración de los JDE», marcada de
+    entrada, le pone a cada torneo creado la suya según cuántos juegan: el
+    sistema sugerido, al menos cinco rondas en el suizo (si el abierto tenía
+    más, se respetan), el ritmo mínimo si el abierto no tiene uno (si tiene,
+    se respeta: la normativa dice «no podrá ser menor»), 1 · ½ · 0 con el
+    bye en 1, y desempates. La normativa no los fija (pide «al menos tres»
+    que establece el árbitro en el congresillo, «preferiblemente» los de la
+    Federación y FIDE), así que se toman los de FIDE para cada sistema:
+    Buchholz sin el peor, Buchholz, Sonneborn-Berger, encuentro directo y
+    victorias en el suizo; encuentro directo, Sonneborn-Berger, victorias y
+    Koya en el todos contra todos. El bye en 1 tampoco lo dice la normativa:
+    es el de FIDE (está en la propuesta de cambios). Sin marcar la casilla,
+    se copian del torneo abierto tal cual, como antes de esto.
+    El botón «Aplicar la configuración de los JDE» de la ficha Torneo hace
+    lo mismo con el torneo abierto, y solo antes de la ronda 1 (después, el
+    sistema y los puntos ya no se cambian).
   - **Un equipo de más de cinco: el árbitro elige los cinco**
     (`equiposDeMas()`, art. 66.1.g: «un máximo de cinco [...] cuatro
     personas estudiantes titulares y una persona estudiante suplente»;

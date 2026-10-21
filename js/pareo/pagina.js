@@ -231,7 +231,20 @@
       f.elements["p_" + k].disabled = v.rondas.length > 0;
     }
     f.elements.rondasTotales.min = Math.max(1, v.rondas.length);
+    $("pi-config-jde-aplicar").disabled = v.rondas.length > 0;
     pintarDesempates();
+  }
+
+  // «Aplicar la configuración de los JDE» al torneo abierto, antes de la
+  // ronda 1: con rondas jugadas el sistema, los puntos y el color ya no se
+  // cambian, así que el botón no hace nada (y lo dice).
+  function aplicarConfigJde() {
+    const v = t();
+    if (v.rondas.length) { Avisos.avisar(tx("configJdeConRondas"), { tipo: "error" }); return; }
+    Object.assign(v, G.configuracionJde(v.jugadores.length, v));
+    guardar();
+    pintarTorneo();
+    Avisos.avisar(tx("configJdeAplicada", { s: tx(v.sistema === "todos" ? "todos" : "suizo") }));
   }
 
   function alCambiarTorneo(e) {
@@ -573,7 +586,7 @@
       : String(nombreArchivo || "").replace(/\.[^.]+$/, "").replace(/[_]+/g, " ").trim();
     // El año del torneo: el de su fecha de inicio, o el de hoy.
     const anio = Number(String(t().fechaInicio || "").slice(0, 4)) || Number((window.HoraCR ? HoraCR.hoy() : "").slice(0, 4)) || G.JDE_ANIO_NORMATIVA;
-    estado.sugerencia = { lista, base, anio, pasarMujeres: true, grupos: [], elegidos: new Map(), abiertos: new Set(), limpia, dondeQueda: new Map() };
+    estado.sugerencia = { lista, base, anio, pasarMujeres: true, grupos: [], elegidos: new Map(), abiertos: new Set(), limpia, dondeQueda: new Map(), configJde: true };
     calcularSugerencia();
     pintarSugerencia();
     const caja = $("pi-sugerencia");
@@ -601,16 +614,18 @@
     // En cada equipo de más de cinco juegan los que eligió el árbitro (de
     // entrada, los cinco primeros de la inscripción); el resto queda
     // descartado y no entra a ningún torneo.
-    s.equipos = G.equiposDeMas(lista);
+    s.equipos = G.equiposDeMas(lista).map((e) => Object.assign(e, { maximo: G.JDE_MAX_EQUIPO, tipo: "eq" }));
+    s.individuales = G.individualesDeMas(lista).map((e) => Object.assign(e, { maximo: G.JDE_MAX_INDIVIDUAL, tipo: "ind" }));
     s.descartados = new Set();
     // La elección se guarda por equipo y por estado de la casilla del pase:
     // los integrantes de un equipo cambian al prenderla o apagarla, y al
     // volver, cada equipo queda como el árbitro lo había dejado. Si el
     // árbitro desmarca a alguien, el lugar queda libre para que elija.
-    for (const e of s.equipos) {
-      e.eleccion = e.clave + "|" + (s.pasarMujeres ? "pase" : "sin-pase");
+    // Lo mismo para el tope de dos por centro en individual (art. 66.1.f).
+    for (const e of s.equipos.concat(s.individuales)) {
+      e.eleccion = e.tipo + "|" + e.clave + "|" + (s.pasarMujeres ? "pase" : "sin-pase");
       const antes = s.elegidos.get(e.eleccion);
-      const elegidos = antes ? e.integrantes.filter((j) => antes.has(j)) : e.integrantes.slice(0, G.JDE_MAX_EQUIPO);
+      const elegidos = antes ? e.integrantes.filter((j) => antes.has(j)) : e.integrantes.slice(0, e.maximo);
       s.elegidos.set(e.eleccion, new Set(elegidos));
       for (const j of e.integrantes) if (!elegidos.includes(j)) s.descartados.add(j);
     }
@@ -700,22 +715,31 @@
 
   // Elegir los cinco de cada equipo que se pasa: una casilla por integrante,
   // y con cinco marcados las demás no se pueden marcar.
+  // Los mismos controles para los dos topes: los equipos de más de cinco y
+  // los centros con más de dos en un torneo individual.
   function pintarEquiposDeMas(s) {
-    if (!s.equipos.length) return null;
-    const caja = el("div", { id: "pi-equipos-de-mas", class: "mt-4 pt-3 border-t border-brand-100 dark:border-brand-800" });
+    return pintarTopes(s, s.equipos, { id: "pi-equipos-de-mas", casilla: "pi-eq-", titulo: "equiposTitulo", texto: "equiposTexto", resumen: "equiposResumen", maximo: G.JDE_MAX_EQUIPO });
+  }
+  function pintarIndividualesDeMas(s) {
+    return pintarTopes(s, s.individuales, { id: "pi-individuales-de-mas", casilla: "pi-ind-", titulo: "individualesTitulo", texto: "individualesTexto", resumen: "individualesResumen", maximo: G.JDE_MAX_INDIVIDUAL });
+  }
+  function pintarTopes(s, cuales, o) {
+    if (!cuales.length) return null;
+    const caja = el("div", { id: o.id, class: "mt-4 pt-3 border-t border-brand-100 dark:border-brand-800" });
+    const fuera = cuales.reduce((a, e) => a + e.integrantes.length - s.elegidos.get(e.eleccion).size, 0);
     caja.append(
-      el("h4", { class: "font-semibold text-sm", texto: tx("equiposTitulo", { m: G.JDE_MAX_EQUIPO }) }),
-      el("p", { class: "text-sm mt-1", texto: tx("equiposTexto", { m: G.JDE_MAX_EQUIPO, d: s.descartados.size }) }));
-    s.equipos.forEach((e, k) => {
+      el("h4", { class: "font-semibold text-sm", texto: tx(o.titulo, { m: o.maximo }) }),
+      el("p", { class: "text-sm mt-1", texto: tx(o.texto, { m: o.maximo, d: fuera }) }));
+    cuales.forEach((e, k) => {
       const elegidos = s.elegidos.get(e.eleccion);
-      const lleno = elegidos.size >= G.JDE_MAX_EQUIPO;
+      const lleno = elegidos.size >= o.maximo;
       const detalles = el("details", { class: "mt-2", "data-equipo": e.clave, open: s.abiertos.has(e.clave) });
       detalles.addEventListener("toggle", () => { if (detalles.open) s.abiertos.add(e.clave); else s.abiertos.delete(e.clave); });
       detalles.append(el("summary", { class: "cursor-pointer text-sm font-semibold rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400",
-        texto: tx("equiposResumen", { i: e.institucion || "—", c: e.categoria, t: tx(e.torneo === "w" ? "grupoMujeres" : "grupoAbierto"), n: e.integrantes.length, e: elegidos.size, m: G.JDE_MAX_EQUIPO }) }));
+        texto: tx(o.resumen, { i: e.institucion || "—", c: e.categoria, t: tx(e.torneo === "w" ? "grupoMujeres" : "grupoAbierto"), n: e.integrantes.length, e: elegidos.size, m: o.maximo }) }));
       const ul = el("ul", { class: "mt-1 space-y-1 text-sm pl-2" });
       e.integrantes.forEach((j, i) => {
-        const id = "pi-eq-" + k + "-" + i;
+        const id = o.casilla + k + "-" + i;
         const si = elegidos.has(j);
         ul.append(el("li", { class: "flex items-start gap-2" },
           el("input", { type: "checkbox", id, class: "mt-1", checked: si, disabled: !si && lleno, onchange: (ev) => {
@@ -799,6 +823,7 @@
       pintarRepetidos(s),
       pintarPaseAbierto(s),
       pintarEquiposDeMas(s),
+      pintarIndividualesDeMas(s),
       pintarHombresEnMujeres(s),
       pintarEquiposCortos(s),
       pintarRevisionCategorias(s.revision),
@@ -806,6 +831,9 @@
       hayEquipos ? el("p", { class: C.nota + " mt-2", texto: tx("sugerenciaEquipos") }) : null,
       el("p", { class: C.nota + " mt-2", texto: tx("sugerenciaNormativa", { r: G.JDE_RONDAS_SUIZO, ritmo: G.JDE_RITMO_MINIMO }) }),
       el("p", { class: C.nota + " mt-2", texto: tx("sugerenciaNombre", { b: t().nombre.trim() || s.base }) }),
+      el("label", { class: "flex items-start gap-2 text-sm mt-3" },
+        el("input", { type: "checkbox", id: "pi-config-jde", class: "mt-1", checked: s.configJde, onchange: (e) => { s.configJde = e.target.checked; } }),
+        el("span", {}, el("span", { class: "font-semibold", texto: tx("configJdeCasilla") }), " " + tx("configJdeAyuda", { r: G.JDE_RONDAS_SUIZO, ritmo: G.JDE_RITMO_MINIMO }))),
       el("div", { class: "flex flex-wrap gap-2 mt-3" },
         el("button", { type: "button", id: "pi-sugerencia-crear", class: C.boton, disabled: marcados === 0, onclick: crearTorneosDeGrupos, texto: tx("sugerenciaCrear", { n: marcados }) }),
         el("button", { type: "button", id: "pi-sugerencia-todos", class: C.botonSec, onclick: () => { const l = s.juegan; estado.sugerencia = null; pintarSugerencia(); agregarTodos(l); }, texto: tx("sugerenciaTodosAqui", { n: s.juegan.length }) }),
@@ -846,10 +874,13 @@
     if (!elegidos.length) return;
     const actual = t();
     const base = actual.nombre.trim() || s.base;
+    // Con la configuración de los JDE (la casilla, marcada de entrada), cada
+    // torneo lleva la suya según cuántos juegan; sin ella, copia las rondas,
+    // el ritmo, los puntos y los desempates del abierto tal cual.
     const comunes = {
       ciudad: actual.ciudad, federacion: actual.federacion, fechaInicio: actual.fechaInicio, fechaFin: actual.fechaFin,
-      arbitro: actual.arbitro, arbitroAdjunto: actual.arbitroAdjunto, ritmo: actual.ritmo.trim() || G.JDE_RITMO_MINIMO,
-      colorInicial: actual.colorInicial, baku: actual.baku, rondasTotales: Math.max(Number(actual.rondasTotales) || 0, G.JDE_RONDAS_SUIZO),
+      arbitro: actual.arbitro, arbitroAdjunto: actual.arbitroAdjunto, ritmo: actual.ritmo,
+      colorInicial: actual.colorInicial, baku: actual.baku, rondasTotales: actual.rondasTotales,
       puntos: Object.assign({}, actual.puntos), desempates: actual.desempates.slice(),
     };
     const reusar = !actual.jugadores.length && !actual.rondas.length;
@@ -859,6 +890,7 @@
       const datos = Object.assign({}, comunes, {
         nombre: (base ? base + " — " : "") + etiquetaGrupo(g),
         sistema: G.sistemaSugerido(g.jugadores.length) || "suizo",
+      }, s.configJde ? G.configuracionJde(g.jugadores.length, actual) : {}, {
         jugadores: g.jugadores.map((j) => Object.assign({ id: idJugador(), retiradoDespuesDe: null }, soloJugador(j))),
         rondas: [], numeracion: null,
       });
@@ -1620,6 +1652,7 @@
     });
 
     $("pi-form-torneo").addEventListener("change", alCambiarTorneo);
+    $("pi-config-jde-aplicar").addEventListener("click", aplicarConfigJde);
     $("pi-form-torneo").addEventListener("submit", (e) => e.preventDefault());
     $("pi-desempate-agregar").addEventListener("click", () => {
       const c = $("pi-desempate-nuevo").value;

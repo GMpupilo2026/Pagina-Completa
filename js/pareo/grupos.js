@@ -228,17 +228,44 @@
   // integrantes en el orden de la inscripción; quién juega lo elige el
   // árbitro en la página.
   const JDE_MAX_EQUIPO = 5;
-  function equiposDeMas(lista) {
+  // Y en individual, «sólo podrán clasificar a la Etapa Regional dos
+  // personas estudiantes mujeres y dos personas estudiantes en abierto» por
+  // centro (art. 66.1.f): el mismo centro, categoría y torneo, con dos como
+  // tope.
+  const JDE_MAX_INDIVIDUAL = 2;
+  const equiposDeMas = (lista) => deMasPorCentro(lista, "equipo", JDE_MAX_EQUIPO);
+  const individualesDeMas = (lista) => deMasPorCentro(lista, "individual", JDE_MAX_INDIVIDUAL);
+  function deMasPorCentro(lista, modalidad, maximo) {
     const porEquipo = new Map();
     for (const j of lista) {
-      if (j.modalidad !== "equipo") continue;
+      if (j.modalidad !== modalidad) continue;
       const categoria = String(j.categoria || "").trim();
       const clave = [String(j.institucion || "").trim().toUpperCase(), categoria.toUpperCase(), torneoDe(j)].join("|");
       if (!porEquipo.has(clave)) porEquipo.set(clave, { clave, institucion: j.institucion || "", categoria, torneo: torneoDe(j), integrantes: [] });
       porEquipo.get(clave).integrantes.push(j);
     }
-    return [...porEquipo.values()].filter((e) => e.integrantes.length > JDE_MAX_EQUIPO)
+    return [...porEquipo.values()].filter((e) => e.integrantes.length > maximo)
       .sort((a, b) => a.clave.localeCompare(b.clave, "es"));
+  }
+
+  // La configuración de los JDE para un torneo de n jugadores (art. 66.2 a
+  // 66.4, Etapa Regional): el sistema sugerido, al menos cinco rondas en el
+  // suizo, el ritmo mínimo si no tiene uno, 1 · ½ · 0 y el bye del pareo en
+  // 1, y desempates. La normativa pide «al menos tres» que fija el árbitro
+  // en el congresillo, «preferiblemente» los de la Federación y FIDE: estos
+  // son los de FIDE para cada sistema (C.07), y se pueden cambiar después.
+  const JDE_DESEMPATES_SUIZO = ["BH-C1", "BH", "SB", "DE", "WIN"];
+  const JDE_DESEMPATES_TODOS = ["DE", "SB", "WIN", "KS"];
+  function configuracionJde(n, actual) {
+    const a = actual || {};
+    const sistema = sistemaSugerido(n) || a.sistema || "suizo";
+    return {
+      sistema,
+      rondasTotales: Math.max(Number(a.rondasTotales) || 0, JDE_RONDAS_SUIZO),
+      ritmo: String(a.ritmo || "").trim() || JDE_RITMO_MINIMO,
+      puntos: { victoria: 1, tablas: 0.5, derrota: 0, bye: 1 },
+      desempates: (sistema === "todos" ? JDE_DESEMPATES_TODOS : JDE_DESEMPATES_SUIZO).slice(),
+    };
   }
 
   // La misma persona inscrita más de una vez. El reporte de los JDE trae
@@ -301,7 +328,7 @@
   }
 
   const api = {
-    quitarRepetidos, equiposCortos, hombresEnMujeres, leerTorneo,
+    quitarRepetidos, equiposCortos, individualesDeMas, JDE_MAX_INDIVIDUAL, configuracionJde, hombresEnMujeres, leerTorneo,
     pasarMujeresAlAbierto, JDE_MIN_EQUIPO, equiposDeMas, JDE_MAX_EQUIPO,
     leerSexo, leerModalidad, ordenFechas, leerFecha, agrupar, sistemaSugerido, revisarCategorias, rangoCategoria,
     JDE_MAX_TODOS, JDE_RONDAS_SUIZO, JDE_RITMO_MINIMO, JDE_ANIO_NORMATIVA, JDE_MAX_ASCENSOS,
