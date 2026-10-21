@@ -36,6 +36,7 @@
 
   const enNode = typeof module !== "undefined" && module.exports;
   const D = enNode ? require("./desempates.js") : raiz.PareoDesempates;
+  const T = enNode ? require("./torneo.js") : raiz.PareoTorneo;
 
   const TABLEROS = 4;
   const MAX_INTEGRANTES = 5;
@@ -286,7 +287,70 @@
     });
   }
 
+  // El TRF de un torneo por equipos, el que pide FIDE (TRF-16): una línea
+  // 001 por integrante con sus partidas tablero por tablero (el rival es el
+  // integrante del otro equipo) y una línea 013 por equipo con los números de
+  // sus integrantes. El TRF que usa el motor para emparejar es otro: el de
+  // los equipos como si fueran jugadores (T.aTrf). Las partidas no jugadas:
+  // un tablero sin rival es «+» con «0000» (la gana quien estaba), un
+  // integrante que no jugó esa ronda va en blanco.
+  function aTrfEquipos(t, hasta) {
+    const h = hasta == null ? t.rondas.length : hasta;
+    const { izq, der, decimal, fechaTrf } = T.formatoTrf;
+    const orden = T.ordenInicial(t);
+    const personas = [];
+    for (const id of orden) for (const j of equipo(t, id).integrantes) personas.push({ j, equipo: id });
+    const num = new Map(personas.map((x, i) => [x.j.id, i + 1]));
+    // Las partidas de cada integrante, por ronda.
+    const juegos = new Map(personas.map((x) => [x.j.id, []]));
+    const puntos = new Map(personas.map((x) => [x.j.id, 0]));
+    for (let r = 0; r < h; r++) {
+      for (const m of t.rondas[r].mesas) {
+        if (m.n === null || !m.alineacion) continue;
+        const inc = puntosDelEncuentro(t, m).incomparecencia;
+        for (const x of tablerosDe(t, m)) {
+          if (!x.r) continue;
+          const anotar = (id, rival, color, codigo, p) => { if (!id) return; juegos.get(id)[r] = (rival ? der(num.get(rival), 4) : "0000") + " " + color + " " + codigo; puntos.set(id, puntos.get(id) + p); };
+          const r1 = inc ? (puntosDelEncuentro(t, m).faltaB === x.bBlancas ? "-+" : "+-") : x.r;
+          const codigo = { "1-0": ["1", "0"], "0-1": ["0", "1"], "=": ["=", "="], "+-": ["+", "-"], "-+": ["-", "+"], "--": ["-", "-"] }[r1] || ["", ""];
+          const sinRival = !x.blancas || !x.negras || inc;
+          anotar(x.blancas, sinRival ? null : x.negras, sinRival ? "-" : "w", codigo[0], puntosBlancas(r1));
+          anotar(x.negras, sinRival ? null : x.blancas, sinRival ? "-" : "b", codigo[1], puntosNegras(r1));
+        }
+      }
+    }
+    const L = [];
+    const cab = (c, v) => { if (v !== "" && v != null) L.push(c + " " + v); };
+    cab("012", t.nombre);
+    cab("022", t.ciudad);
+    cab("032", t.federacion);
+    cab("042", fechaTrf(t.fechaInicio));
+    cab("052", fechaTrf(t.fechaFin));
+    cab("062", personas.length);
+    cab("072", personas.filter((x) => Number(x.j.elo) > 0).length);
+    cab("082", t.jugadores.length);
+    cab("092", t.sistema === "todos" ? "Team: Round-Robin" : "Team: Swiss-System");
+    cab("102", t.arbitro);
+    cab("112", t.arbitroAdjunto);
+    cab("122", t.ritmo);
+    cab("142", t.sistema === "todos" ? T.rondasTodos(t) : t.rondasTotales);
+    const lugar = new Map([...puntos.entries()].sort((a, b) => b[1] - a[1] || num.get(a[0]) - num.get(b[0])).map(([id], i) => [id, i + 1]));
+    for (const { j } of personas) {
+      let s = "001 " + der(num.get(j.id), 4) + " " + izq(j.sexo || "", 1) + der(j.titulo || "", 3) + " " +
+        izq(j.nombre, 33) + " " + der(Number(j.elo) > 0 ? j.elo : "", 4) + " " + izq(j.fed || "", 3) + " " +
+        der(j.fideId || "", 11) + " " + izq(fechaTrf(j.nacimiento), 10) + " " + der(decimal(puntos.get(j.id)), 4) + " " + der(lugar.get(j.id), 4);
+      for (let r = 0; r < h; r++) s += "  " + (juegos.get(j.id)[r] || "          ");
+      L.push(s.replace(/\s+$/, ""));
+    }
+    for (const id of orden) {
+      const e = equipo(t, id);
+      L.push(("013 " + izq(e.nombre, 32) + e.integrantes.map((j) => " " + der(num.get(j.id), 4)).join("")).replace(/\s+$/, ""));
+    }
+    return L.join("\r\n") + "\r\n";
+  }
+
   const api = {
+    aTrfEquipos,
     TABLEROS, MAX_INTEGRANTES, MIN_PRESENTES, PUNTOS_EQUIPOS, PT,
     esDeEquipos, armarEquipos, eloDeEquipo, alineacionPorOmision, prepararMesa, tablerosDe,
     puntosDelEncuentro, resultadoEncuentro, puntosTablero, catalogo, clasificacion, desempatesPara, moverIntegrante,

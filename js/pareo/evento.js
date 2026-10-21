@@ -53,7 +53,32 @@
   };
   const totalRondas = (t) => (t.sistema === "todos" ? T.rondasTodos(t) : Number(t.rondasTotales) || 0);
   const terminado = (t) => t.jugadores.length > 1 && rondasCompletas(t) >= totalRondas(t);
-  const clasificacionDe = (t) => E.clasificacion(Object.assign({}, t, { rondas: t.rondas.slice(0, rondasCompletas(t)) }), t.desempates);
+  const clasificacionDe = (t) => aplicarDesempate(t, E.clasificacion(Object.assign({}, t, { rondas: t.rondas.slice(0, rondasCompletas(t)) }), t.desempates));
+
+  // El desempate rápido que jugó el árbitro (un blitz, un Armagedón) para
+  // un empate que los desempates no resolvieron: `t.desempateCorte` = {
+  // formato, orden: [ids] }. Ordena a esos jugadores, y solo si siguen
+  // empatados entre ellos (si una ronda corregida deshizo el empate, el
+  // desempate ya no aplica y se ignora).
+  function aplicarDesempate(t, filas) {
+    const d = t.desempateCorte;
+    if (!d || !Array.isArray(d.orden) || d.orden.length < 2) return filas;
+    const pos = filas.map((f, i) => (d.orden.includes(f.id) ? i : -1)).filter((i) => i >= 0);
+    if (pos.length !== d.orden.length || new Set(pos.map((i) => filas[i].puesto)).size !== 1) return filas;
+    const base = filas[pos[0]].puesto;
+    const copia = filas.slice();
+    d.orden.forEach((id, k) => { copia[pos[k]] = Object.assign({}, filas.find((f) => f.id === id), { puesto: base + k, porDesempate: true }); });
+    return copia;
+  }
+
+  // Quiénes están empatados en el último lugar que clasifica (para armar el
+  // desempate), o [] si no hay empate en el corte.
+  function empatadosEnCorte(t, n) {
+    if (!rondasCompletas(t) || !n) return [];
+    const filas = clasificacionDe(t);
+    if (filas.length <= n || filas[n].puesto !== filas[n - 1].puesto) return [];
+    return filas.filter((f) => f.puesto === filas[n - 1].puesto).map((f) => f.id);
+  }
   const participante = (t, id) => t.jugadores.find((j) => j.id === id);
   const puntosTexto = (x) => {
     const n = Math.floor(x), m = x - n;
@@ -197,6 +222,8 @@
           return [String(f.puesto), p.nombre, p.institucion || "", puntosTexto(f.puntos), i < n ? "Sí" : ""];
         }) });
       if (cl.empate && n) b.push({ tipo: "nota", texto: "Empate en el último lugar que clasifica: lo resuelve el árbitro principal." });
+      if (t.desempateCorte && cl.filas.some((f) => f.porDesempate)) b.push({ tipo: "nota", texto: "Desempate del corte (" + (t.desempateCorte.formato || "desempate rápido") + "): " +
+        t.desempateCorte.orden.map((id, k) => (k + 1) + ". " + ((participante(t, id) || {}).nombre || "?")).join(", ") + "." });
       const tableros = podio(t).tableros;
       if (tableros.length) b.push({ tipo: "lista", items: tableros.map((x) => "Mejor tablero " + x.tablero + ": " +
         (x.filas.length ? x.filas.map((f) => f.nombre + " (" + f.institucion + ", " + porcentajeTexto(f.porcentaje) + ")").join("; ") : "sin datos") + ".") });
@@ -207,6 +234,13 @@
       b.push({ tipo: "titulo", texto: "Medallero por centro educativo" });
       b.push({ tipo: "tabla", encabezados: ["Centro educativo", "Oro", "Plata", "Bronce", "Total"], anchos: [4, 0.8, 0.8, 0.8, 0.8],
         filas: med.map((x) => [x.centro, String(x.oro), String(x.plata), String(x.bronce), String(x.total)]) });
+    }
+
+    const regiones = porDireccion(torneos, n);
+    if (regiones.length > 1) {
+      b.push({ tipo: "titulo", texto: "Por Dirección Regional" });
+      b.push({ tipo: "tabla", encabezados: ["Dirección Regional", "Estudiantes", "Oro", "Plata", "Bronce", "Clasifican"], anchos: [3, 1, 0.7, 0.7, 0.7, 1],
+        filas: regiones.map((x) => [x.region, String(x.estudiantes), String(x.oro), String(x.plata), String(x.bronce), String(x.clasifican)]) });
     }
 
     const inc = torneos.flatMap((t) => incidenciasDe(t).map((x) => nombreTorneo(t) + " · " + x));
@@ -380,8 +414,11 @@
     const nombre = (id) => (participante(t, id) || {}).nombre || "?";
     const R = t.rondas[t.rondas.length - 1];
     const k = rondasCompletas(t);
+    const mesasDe = (RR) => RR.mesas.map((m, i) => ({ m: i + 1, b: nombre(m.b), n: m.n == null ? null : nombre(m.n), r: m.r || null }));
     return {
       nombre: nombreTorneo(t),
+      // Las rondas anteriores, sin los tableros: para el historial.
+      anteriores: t.rondas.slice(0, -1).map((RR, k) => ({ n: k + 1, mesas: mesasDe(RR) })),
       ronda: R ? { n: t.rondas.length, mesas: R.mesas.map((m, i) => Object.assign({ m: i + 1, b: nombre(m.b), n: m.n == null ? null : nombre(m.n), r: m.r || null },
         // En equipos, cada tablero con quién juega con cada color: así quien
         // busca a una integrante encuentra su tablero.
@@ -492,7 +529,7 @@
   }
 
   // ---------- Las incidencias ----------
-  const NOMBRE_INCIDENCIA = { reclamo: "Reclamo", sancion: "Sanción", decision: "Decisión del árbitro", otra: "Otra" };
+  const NOMBRE_INCIDENCIA = { reclamo: "Reclamo", sancion: "Sanción", decision: "Decisión del árbitro", apelacion: "Apelación", correccion: "Corrección de un resultado", otra: "Otra" };
   const horaTexto = (ms) => {
     try { return new Date(ms).toLocaleTimeString("es-CR", { hour: "numeric", minute: "2-digit", timeZone: "America/Costa_Rica" }); }
     catch (e) { return ""; }
@@ -500,11 +537,83 @@
   function incidenciasDe(t) {
     const out = [];
     t.rondas.forEach((R, r) => (R.incidencias || []).forEach((x) => out.push("Ronda " + (r + 1) + (x.mesa ? ", mesa " + x.mesa : "") +
-      (x.hora ? ", " + horaTexto(x.hora) : "") + " · " + (NOMBRE_INCIDENCIA[x.tipo] || NOMBRE_INCIDENCIA.otra) + ": " + x.texto)));
+      (x.hora ? ", " + horaTexto(x.hora) : "") + " · " + (NOMBRE_INCIDENCIA[x.tipo] || NOMBRE_INCIDENCIA.otra) + ": " + x.texto +
+      (x.presenta ? " Presenta: " + x.presenta + "." : "") + (x.tipo === "apelacion" ? " Resolución: " + (x.resolucion || "pendiente") + "." : ""))));
     return out;
   }
 
+  // ---------- El horario del día ----------
+  // Cuánto dura una ronda con un ritmo: el tiempo base de los dos jugadores
+  // más el incremento de 40 jugadas para cada uno, redondeado a 5 minutos.
+  function segundosIncremento(ritmo) {
+    const m = /\+\s*(\d+)\s*(s|seg|segundos?|''|")?/i.exec(String(ritmo || ""));
+    return m ? Number(m[1]) : 0;
+  }
+  function duracionRonda(ritmo) {
+    const base = minutosBase(ritmo);
+    if (!base) return 0;
+    const min = 2 * base + (2 * 40 * segundosIncremento(ritmo)) / 60;
+    return Math.ceil(min / 5) * 5;
+  }
+  // Las horas de cada ronda de cada torneo: desde `inicio` («08:30»), una
+  // ronda detrás de otra con `descanso` minutos entre ellas.
+  function horario(torneos, inicio, descanso) {
+    const m = /^(\d{1,2}):(\d{2})$/.exec(String(inicio || "").trim());
+    if (!m) return [];
+    const desde = Number(m[1]) * 60 + Number(m[2]);
+    const hhmm = (x) => String(Math.floor(x / 60) % 24).padStart(2, "0") + ":" + String(x % 60).padStart(2, "0");
+    return torneos.map((t) => {
+      const dura = duracionRonda(t.ritmo);
+      const n = totalRondas(t);
+      const rondas = [];
+      for (let k = 0; k < n && dura; k++) rondas.push({ n: k + 1, hora: hhmm(desde + k * (dura + (Number(descanso) || 0))) });
+      return { torneo: nombreTorneo(t), dura, rondas };
+    });
+  }
+
+  // ---------- Por Dirección Regional ----------
+  // En la Interregional (o cuando la lista trae varias): cuántos estudiantes
+  // trajo cada Dirección Regional, sus medallas y cuántos clasifican.
+  function porDireccion(torneos, n) {
+    const mapa = new Map();
+    const de = (r) => {
+      const k = String(r || "—").trim() || "—";
+      if (!mapa.has(k)) mapa.set(k, { region: k, estudiantes: 0, oro: 0, plata: 0, bronce: 0, clasifican: 0 });
+      return mapa.get(k);
+    };
+    const regionDe = (t, p) => (E.esDeEquipos(t) ? (p.integrantes[0] || {}).region : p.region);
+    for (const t of torneos) {
+      for (const p of E.esDeEquipos(t) ? t.jugadores.flatMap((e) => e.integrantes) : t.jugadores) de(p.region).estudiantes++;
+      for (const f of podio(t).filas) de(regionDe(t, f.participante))[{ 1: "oro", 2: "plata", 3: "bronce" }[f.puesto]]++;
+      for (const f of clasificados(t, n).filas) de(regionDe(t, participante(t, f.id))).clasifican++;
+    }
+    return [...mapa.values()].sort((a, b) => b.oro - a.oro || b.plata - a.plata || b.bronce - a.bronce || a.region.localeCompare(b.region, "es"));
+  }
+
+  // ---------- Las constancias de participación ----------
+  // Una por estudiante que jugó, haya ganado o no (para su expediente).
+  function constancias(evento, torneos) {
+    const out = [];
+    for (const t of torneos) {
+      if (!t.rondas.length) continue;
+      const personas = E.esDeEquipos(t) ? t.jugadores.flatMap((e) => e.integrantes.map((j) => Object.assign({ equipo: e.nombre }, j))) : t.jugadores;
+      for (const j of personas) out.push({ nombre: j.nombre, institucion: j.institucion || "", torneo: nombreTorneo(t), evento: evento.nombre, equipo: j.equipo || "", fecha: t.fechaInicio || evento.creado || "" });
+    }
+    return out;
+  }
+  function textoConstancia(c) {
+    return {
+      encabezado: c.evento,
+      titulo: "Constancia de participación",
+      otorga: "Se hace constar que",
+      nombre: c.nombre,
+      centro: c.institucion ? "del centro educativo " + c.institucion : "",
+      motivo: "participó en " + c.torneo + (c.equipo ? ", con el equipo de " + c.equipo : "") + (fechaTexto(c.fecha) ? ", el " + fechaTexto(c.fecha) : "") + ".",
+    };
+  }
+
   const api = {
+    aplicarDesempate, empatadosEnCorte, segundosIncremento, duracionRonda, horario, porDireccion, constancias, textoConstancia,
     medallero, estadisticas, compararEtapa, minutosBase, estadoRetraso, incidenciasDe, NOMBRE_INCIDENCIA,
     SIGUIENTE, NOMBRE_ETAPA, ENCABEZADOS, FORMATO_RESPALDO, cupo, clasificados, terminado, acta, informe, filasClasificados,
     lugarTexto, siguienteDe, podio, premiacion, diplomas, textoDiploma, pendientes, respaldo, esRespaldo, vistaTorneo, vistaEvento,

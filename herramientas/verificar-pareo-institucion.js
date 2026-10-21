@@ -29,6 +29,7 @@
  * Uso:  python3 -m http.server 8777      (desde la raíz del sitio)
  *       node herramientas/verificar-pareo-institucion.js
  */
+// La tabla de inscritos empieza con la casilla para marcar (columna 0).
 const fs = require("fs");
 const path = require("path");
 const { chromium } = require("playwright");
@@ -123,7 +124,7 @@ async function pruebaSubirLista(browser) {
   // La tabla ordena por el criterio de numeración (Elo, título, nombre), no
   // por el orden de llegada: con los dos en 0, gana el orden alfabético.
   igual("los dos nombres, con su institución", await page.$$eval("#pi-tabla-jugadores tbody tr", (trs) =>
-    trs.map((tr) => [tr.children[1].textContent, tr.children[2].textContent])),
+    trs.map((tr) => [tr.children[2].textContent, tr.children[3].textContent])),
     [["Mora Ruiz, Luis", "Colegio de Prueba"], ["Pérez Solano, Ana", "Liceo de Prueba"]]);
   await ctx.close();
 
@@ -133,7 +134,7 @@ async function pruebaSubirLista(browser) {
   await page2.setInputFiles("#pi-subir-lista", { name: "lista.csv", mimeType: "text/csv", buffer: Buffer.from(csv, "utf8") });
   await page2.waitForFunction(() => document.getElementById("pi-cuenta").textContent === "1");
   igual("lee la cabecera por su etiqueta, no por su posición",
-    await page2.$$eval("#pi-tabla-jugadores tbody tr", (trs) => trs.map((tr) => [tr.children[1].textContent, tr.children[2].textContent, tr.children[5].textContent])),
+    await page2.$$eval("#pi-tabla-jugadores tbody tr", (trs) => trs.map((tr) => [tr.children[2].textContent, tr.children[3].textContent, tr.children[6].textContent])),
     [["García Vega, Pedro", "Liceo X", "1800"]]);
   await ctx2.close();
 
@@ -143,7 +144,7 @@ async function pruebaSubirLista(browser) {
   await page3.setInputFiles("#pi-subir-lista", { name: "lista2.csv", mimeType: "text/csv", buffer: Buffer.from(csv2, "utf8") });
   await page3.waitForFunction(() => document.getElementById("pi-cuenta").textContent === "1");
   igual("cae al orden Nombre; Institución; Elo",
-    await page3.$$eval("#pi-tabla-jugadores tbody tr", (trs) => trs.map((tr) => [tr.children[1].textContent, tr.children[2].textContent, tr.children[5].textContent])),
+    await page3.$$eval("#pi-tabla-jugadores tbody tr", (trs) => trs.map((tr) => [tr.children[2].textContent, tr.children[3].textContent, tr.children[6].textContent])),
     [["Jiménez Alfaro, Sofía", "Escuela Z", "1200"]]);
   await ctx3.close();
 }
@@ -203,7 +204,7 @@ async function pruebaEloNacional(browser) {
 
   ok(!!pedido && Array.isArray(pedido.nombres) && pedido.nombres.length === 2, "manda los dos nombres, nada más", JSON.stringify(pedido));
   igual("el primero queda con el Elo encontrado, por índice (no por bolsillo de nombre)",
-    await page.$$eval("#pi-tabla-jugadores tbody tr", (trs) => trs.map((tr) => tr.children[5].textContent)),
+    await page.$$eval("#pi-tabla-jugadores tbody tr", (trs) => trs.map((tr) => tr.children[6].textContent)),
     ["1550", ""]);
   ok(afuera.filter((u) => u.includes("pareo-elo-nacional")).length === 1, "una sola llamada afuera, y es esta", afuera.join(" | "));
   ok(afuera.filter((u) => !u.includes("pareo-elo-nacional")).length === 0, "y ninguna otra petición salió del sitio", afuera.join(" | "));
@@ -248,7 +249,7 @@ async function pruebaCategoria(browser) {
   }
   await page.waitForFunction(() => document.getElementById("pi-cuenta").textContent === "2");
   igual("la categoría queda en la tabla de jugadores",
-    await page.$$eval("#pi-tabla-jugadores tbody tr", (trs) => trs.map((tr) => tr.children[3].textContent).sort()),
+    await page.$$eval("#pi-tabla-jugadores tbody tr", (trs) => trs.map((tr) => tr.children[4].textContent).sort()),
     ["Sub-10", "Sub-12"]);
 
   await page.click('[data-ficha="clasificacion"]');

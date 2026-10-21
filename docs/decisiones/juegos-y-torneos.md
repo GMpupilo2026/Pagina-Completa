@@ -2747,6 +2747,85 @@ localhost:8777; el tiempo con `page.clock`, el canal en vivo con el doble de
 reloj, el medallero, el «no viene» de quien no llegó, la búsqueda que se pone
 al día o la comparación, salta.
 
+### El trabajo del árbitro en los JDE: adjuntos, desempates, correcciones y papeles
+
+Once pedidos más del dueño del sitio, y marcar varios jugadores para
+eliminarlos.
+
+- **El TRF de equipos** (`E.aTrfEquipos()`, «Bajar el TRF de equipos» en
+  Archivos, solo en un torneo por equipos): el TRF-16 de FIDE, con una línea
+  001 por integrante y sus partidas tablero por tablero (el rival es el
+  integrante del otro equipo), y una 013 por equipo con los números de sus
+  integrantes (`092 Team: …`). Un tablero sin rival va «0000 - +» (lo gana
+  quien estaba); un integrante que no jugó esa ronda, en blanco. Es otro
+  archivo que el TRF que lee el motor (los equipos como si fueran
+  jugadores), que no cambia. Los formatos de columna salen de
+  `T.formatoTrf`: una sola copia. **No está comparado con un programa avalado
+  por FIDE**: falta probarlo con el que use la Federación.
+- **El desempate del corte** (`armarDesempate()`, `V.aplicarDesempate()`):
+  con un empate en el último lugar que clasifica, «Anotar el desempate» pide
+  cómo se desempató (un blitz, un Armagedón: se juega fuera de Pareo
+  Integral) y el orden en que quedaron. Se guarda en `t.desempateCorte` y
+  ordena a esos jugadores en la clasificación del evento (clasificados,
+  podio, informe, que lo dice). **Solo vale mientras sigan empatados entre
+  ellos**: si una corrección deshace el empate, se ignora sola.
+- **Corregir una ronda cerrada pide el motivo** (`pedirMotivo()`): cambiar un
+  resultado de una ronda cuando la siguiente ya se emparejó (en individual o
+  en un tablero de equipos) abre un diálogo con el resultado de antes y el de
+  ahora; sin motivo no se corrige, y el motivo queda en las incidencias
+  («Corrección de un resultado»). En la ronda en juego se corrige libre,
+  como antes.
+- **Las apelaciones** son un tipo de incidencia con quién la presenta
+  (obligatorio) y la resolución del comité, que se anota después desde la
+  lista («Anotar la resolución»); el informe la trae, «pendiente» si no se
+  resolvió.
+- **Los árbitros adjuntos anotan desde el celular** (`#adjunto=<código>&m=1-10`,
+  `PareoVer.iniciarAdjunto()`): «Enlace para un árbitro adjunto» en la
+  última ronda de un torneo individual, con un rango de mesas. Por un canal de
+  Supabase Realtime en modo Broadcast, como el enlace en vivo (ver «El canal
+  en vivo»): el adjunto pide la ronda y manda cada resultado. **Decide la
+  pestaña del árbitro principal** (`recibirDeAdjunto()`): solo la última
+  ronda, una mesa que existe, sin resultado (nunca pisa uno que ya está) y un
+  resultado de la lista; lo marca «lo anotó el adjunto» (`m.porAdjunto`). Lo
+  que no acepta lo contesta con el estado de verdad, y el celular del adjunto
+  se pone al día. Todos los adjuntos de un torneo comparten el código: el
+  rango solo filtra lo que cada uno ve. **El riesgo aceptado** es el mismo
+  del canal en vivo (quien tenga el código puede anotar una mesa vacía), y
+  el árbitro principal ve cada resultado que llega. En equipos, todavía no.
+- **La ronda atrasada** (en el reloj de la ronda): `V.duracionRonda()` es el
+  tiempo de los dos jugadores más 40 jugadas de incremento, redondeado a 5
+  minutos; pasado eso, dice qué mesas siguen jugando.
+- **El horario del día** (en la tarjeta del evento, `V.horario()`): desde la
+  hora de inicio y el descanso entre rondas, la hora de cada ronda de cada
+  torneo según su ritmo, para imprimir. La hora de inicio se recuerda por
+  evento en el navegador.
+- **«Avisarme»** (en el buscador del enlace del evento): cuando llega una
+  ronda nueva donde juega quien se buscó, lo dice en la página (`aria-live`)
+  y, si la persona lo permitió, con una notificación del celular y una
+  vibración. Una vez por ronda. Mientras la página esté abierta (no hay
+  servidor que mande notificaciones con la página cerrada).
+- **Las rondas anteriores en el enlace del evento**: `V.vistaTorneo()` manda
+  también `anteriores` (sin los tableros), cada torneo trae un selector de
+  ronda que se queda en la elegida aunque llegue un resultado, y «Mi
+  jugador» dice lo que jugó antes.
+- **Por Dirección Regional** (`V.porDireccion()`): cuando el evento junta
+  varias (la Interregional), cuántos estudiantes trajo cada una, sus medallas
+  y cuántos clasifican, en la tarjeta del evento y en el informe.
+- **Las constancias de participación** (`V.constancias()`): una por
+  estudiante que jugó al menos una ronda, haya ganado o no, una por hoja como
+  los diplomas, en español.
+- **Marcar varios jugadores para eliminarlos** (`pintarMasivo()`,
+  `eliminarMarcados()`): una casilla por fila, la de arriba marca a todos
+  los que se ven (con el buscador, solo los que coinciden), y «Eliminar los
+  N marcados» pregunta antes. **Quien ya jugó una ronda no se elimina**
+  (rompería las rondas jugadas): se dice cuántos quedan fuera y se retiran
+  uno por uno, como siempre.
+
+Al tocar esto, `node herramientas/verificar-pareo-jde-arbitraje.js` (con el
+sitio en localhost:8777). Rompiendo a propósito que el adjunto no pise un
+resultado, que el desempate deje de valer sin empate, el motivo de una
+corrección o que no se elimine a quien ya jugó, salta.
+
 ### La barra de progreso al buscar el Elo Nacional
 
 Antes de esto, tocar «Buscar Elo Nacional de quien no tiene» con una lista

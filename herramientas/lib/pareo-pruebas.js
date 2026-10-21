@@ -70,4 +70,15 @@ async function jugarRondas(page, resultado) {
 }
 
 
-module.exports = { XLSX, dobleSupabase, abrirPagina, leerTodos, vis, anotar, jugarRondas };
+// Esperar a que lo guardado cumpla algo: después de cerrar un diálogo, la
+// página guarda un instante más tarde (leerlo enseguida es una carrera que
+// en el CI a veces se pierde). `cumple` recibe la lista de torneos.
+// (La condición va como texto: Playwright la evalúa por su cuenta, así que
+// la CSP de la página, que no deja `new Function`, no la frena.)
+async function esperarGuardado(page, cumple, arg) {
+  const lista = 'JSON.parse(localStorage.getItem("pareo_lista_v1") || "[]").map((x) => Object.assign({ idLista: x.id }, JSON.parse(localStorage.getItem("pareo_torneo_v1_" + x.id))))';
+  await page.waitForFunction("(" + cumple.toString() + ")(" + lista + ", " + JSON.stringify(arg) + ")");
+  return leerTodos(page);
+}
+
+module.exports = { XLSX, dobleSupabase, abrirPagina, leerTodos, vis, anotar, jugarRondas, esperarGuardado };

@@ -166,8 +166,7 @@ async function pruebaPagina(browser) {
   const destinos = await page.$$eval(dialogo + ' select[name="destino"] option', (o) => o.map((x) => x.textContent));
   igual("solo los torneos individuales del evento sin empezar", destinos, ["Individual · Abierto"]);
   await page.click(dialogo + " [data-avisos-aceptar]");
-  await page.waitForFunction(() => !document.querySelector('dialog[data-avisos="formulario"][open]'));
-  todos = await leerTodos(page);
+  todos = await P.esperarGuardado(page, (l, id) => l.find((x) => x.idLista === id).jugadores.some((j) => j.nombre === "PRUEBA CUATRO"), abierto.idLista);
   const ab = todos.find((x) => x.idLista === abierto.idLista);
   ok(!todos.find((x) => x.idLista === mujeres.idLista).jugadores.some((j) => j.nombre === "PRUEBA CUATRO") && ab.jugadores.some((j) => j.nombre === "PRUEBA CUATRO"), "sale de un torneo y entra al otro");
   igual("y queda anotado en el torneo al que llegó", ab.movimientos, [{ nombre: "PRUEBA CUATRO", institucion: "LICEO NORTE", desde: "Individual · Mujeres" }]);
@@ -179,8 +178,7 @@ async function pruebaPagina(browser) {
   await page.waitForSelector(dialogo);
   await page.fill(dialogo + ' [name="nombre"]', "PRUEBA NUEVA");
   await page.click(dialogo + " [data-avisos-aceptar]");
-  await page.waitForFunction(() => !document.querySelector('dialog[data-avisos="formulario"][open]'));
-  todos = await leerTodos(page);
+  todos = await P.esperarGuardado(page, (l, id) => (l.find((x) => x.idLista === id).reemplazos || []).length > 0, equipos.idLista);
   const teq = todos.find((x) => x.idLista === equipos.idLista);
   igual("entra en el mismo lugar del orden de tableros", teq.jugadores.find((e) => e.id === norte.id).integrantes.map((j) => j.nombre), ["PRUEBA NORTE 1", "PRUEBA NUEVA", "PRUEBA NORTE 3", "PRUEBA NORTE 4"]);
   igual("y queda anotado", teq.reemplazos, [{ equipo: "LICEO NORTE", sale: "PRUEBA NORTE 2", entra: "PRUEBA NUEVA" }]);
