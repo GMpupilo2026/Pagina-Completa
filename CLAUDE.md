@@ -219,7 +219,9 @@ puntos Elo»)
   vigente (ver «El candado de los cursos está en el servidor»). Un candado
   nuevo en el worker sin su línea ahí no existe.
 - Cada migración aplicada y cada Edge Function desplegada se guardan en
-  `supabase/` tal cual se aplicaron, se vuelve a armar el retrato del esquema
+  `supabase/` tal cual se aplicaron (los comentarios van ANTES de aplicar:
+  después el archivo no se toca; ver «El 21/10, otra vez: comentarios
+  agregados después de aplicar»), se vuelve a armar el retrato del esquema
   (`herramientas/inventario-esquema.sql` → `supabase/esquema/inventario-academia.txt`,
   con su `# al-dia-con:`) y se corre
   `node herramientas/verificar-punto-restauracion.js`. Las funciones se arman

@@ -1,7 +1,3 @@
--- responder_practica() ya no exige el rol «alumno»: basta con que quien contesta tenga a
--- ese profesor (es_mi_profesor). Así también contesta una persona que da clase y a la
--- vez estudia con otra (profesores_tambien_alumnos). El resto, igual.
-
 create or replace function public.responder_practica(
   p_envio text, p_deck text, p_lamina integer, p_pregunta text, p_respuesta text)
 returns jsonb
@@ -45,7 +41,6 @@ begin
     raise exception 'Esa pregunta no existe.' using errcode = '22023';
   end if;
 
-  -- Una respuesta vacía borra la que había.
   if btrim(p_respuesta) = '' or (v_clave.tipo = 'planilla' and p_respuesta in ('[]', '[""]')) then
     delete from public.practica_respuestas
      where envio = p_envio and student_id = yo and deck = p_deck and lamina = p_lamina and pregunta = p_pregunta;

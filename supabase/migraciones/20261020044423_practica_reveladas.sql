@@ -1,23 +1,3 @@
--- Mostrar a los alumnos la respuesta de la práctica (js/clase-formacion-respuestas.js).
---
--- Las respuestas modelo —con su artículo— viven en practica_claves y solo las lee
--- quien da clase. Cuando el profe termina de analizar una lámina con el grupo,
--- decide mostrarla: la marca en game_state.practica.reveladas (los números de
--- lámina), la misma columna que ya solo el profe escribe (el trigger se la
--- devuelve a cualquier otro). Desde ahí:
---
---  * respuestas_reveladas_practica(envio) le da a quien tiene a ese profe la
---    respuesta modelo de las láminas reveladas (y NADA de las demás), con cómo le
---    fue a él en cada pregunta que se corrige sola.
---  * responder_practica() ya no recibe respuestas de una lámina revelada: con la
---    respuesta a la vista se podría «contestar» copiándola, y el registro de lo
---    que cada uno sabía antes del análisis dejaría de valer.
---
--- El CHECK del campo (en coalesce(…, false): un CHECK que da NULL aprueba) sigue
--- pidiendo la forma de siempre y acepta `reveladas` opcional: una lista de hasta 40
--- números de lámina. (CASE: el orden de un AND no está garantizado y
--- jsonb_array_length sobre algo que no es un arreglo da error en vez de false.)
-
 alter table public.game_state drop constraint if exists game_state_practica_forma;
 alter table public.game_state add constraint game_state_practica_forma
   check (practica is null or coalesce(jsonb_typeof(practica) = 'object'
@@ -124,7 +104,6 @@ $$;
 revoke execute on function public.responder_practica(text, text, integer, text, text) from public, anon;
 grant execute on function public.responder_practica(text, text, integer, text, text) to authenticated;
 
--- Las respuestas que su profe mostró (y solo esas), con cómo le fue a quien pregunta.
 create or replace function public.respuestas_reveladas_practica(p_envio text)
 returns table (deck text, lamina integer, pregunta text, tipo text, opcion text, modelo text,
                respondio boolean, correcta boolean, buenas integer, total integer)

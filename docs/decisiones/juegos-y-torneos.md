@@ -6033,6 +6033,35 @@ la copa, los enfrentamientos y los podios con su país al lado.
   Va en la expresión de la UNED del normalizador, no en una corrección a
   mano, porque el catálogo lee el mismo nombre del podio.
 
+### Las tablas temporales de la carga universitaria
+
+La carga del 15/10/2026 dejó en `interno` seis cosas que no venían de ninguna
+migración: tres tablas (`uni_carga_tmp`, `uni_cat_tmp` y `uni_paginas_tmp`,
+unos 4,5 MB) con copias de las páginas de chess-results que se pidieron con
+pg_net, y tres funciones (`uni_tmp_equipos`, `uni_tmp_individual` y
+`uni_tmp_partidas`) que eran los archivos de `herramientas/jdn-comites/`
+adaptados para leer de esas copias. Se guardaron porque
+`net._http_response` se vacía sola a las horas, y la carga de jugadores y
+partidas se corrió de a tandas.
+
+El 21/10 se comprobó que **ya no hacían falta** y se borraron
+(`20261021051354_uni_borrar_temporales.sql`):
+
+- lo que cargaron está en `uni_resultados`, `uni_jugadores`, `uni_partidas`,
+  `uni_torneos` y `uni_clasificacion`, que son lo que leen las páginas;
+- nada las usaba: ninguna función, vista ni tarea de cron, ningún archivo del
+  repositorio. Solo `postgres` las podía leer. La última lectura fue el 15/10;
+- no estaban en el retrato del esquema (`inventario-academia.txt`), así que
+  una base restaurada nunca las habría tenido.
+
+**Volver a cargar no las necesita.** Los pasos están en la cabecera de
+`herramientas/universidades/cargar.sql` (y `catalogo.sql`, `clasificacion.sql`):
+pedir las páginas con pg_net y correr el archivo antes de que la respuesta
+se borre. Si una carga larga necesita guardar páginas, la tabla de paso va
+con un nombre que diga que es de paso y **se borra en la misma sesión**, con
+su migración. Una tabla de paso que se queda pasa a ser parte del esquema
+sin que nadie lo decida.
+
 ## Proyección JDN por comité
 
 `jdn-proyeccion.html` (`js/jdn-proyeccion.js`) es una herramienta de arbitraje

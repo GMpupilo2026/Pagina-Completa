@@ -401,6 +401,7 @@ columna  arbitros_cr_torneos.ciudad  text
 columna  arbitros_cr_torneos.con_elo  smallint
 columna  arbitros_cr_torneos.contados  smallint
 columna  arbitros_cr_torneos.federaciones  smallint
+columna  arbitros_cr_torneos.festival  jsonb
 columna  arbitros_cr_torneos.fin  date
 columna  arbitros_cr_torneos.id  integer
 columna  arbitros_cr_torneos.inicio  date
@@ -410,6 +411,8 @@ columna  arbitros_cr_torneos.pais  text
 columna  arbitros_cr_torneos.ritmo  text
 columna  arbitros_cr_torneos.rondas  smallint
 columna  arbitros_cr_torneos.sistema  text
+columna  arbitros_cr_torneos.titulados  smallint
+columna  arbitros_cr_torneos.titulados_feds  jsonb
 columna  arbitros_cr_torneos.valorado  text
 columna  archivos_pgn.carpeta  text
 columna  archivos_pgn.created_at  timestamp with time zone
