@@ -2682,6 +2682,71 @@ Supabase). Rompiendo a propósito el conteo de las partidas no jugadas, el
 aviso de fuera de orden, el bloqueo de la ronda 1, la respuesta al que pide
 el estado o el aviso de dos regionales, salta.
 
+### La sala de juego de los JDE: retrasos, incidencias, lista, medallero y el público
+
+Diez pedidos más del dueño del sitio, para el día del torneo.
+
+- **El reloj del retraso** (`pintarReloj()`, arriba de la ronda en juego):
+  «Empezó la ronda» anota la hora, y quien no está sentado se marca con
+  «No ha llegado». La página cuenta los minutos (se vuelve a pintar cada 20
+  segundos) contra **el tiempo base del ritmo**, porque el art. 30 de la
+  normativa dice que en ajedrez el tiempo límite para presentarse «será
+  cuando el tiempo del reloj caiga a cero» (`V.minutosBase()`: «10 min + 2
+  s» → 10, «1 h 30 min» → 90; el incremento no cuenta). Sin ritmo escrito no
+  se declara vencido a nadie: lo dice y pide escribirlo. Vencido, «Anotar la
+  incomparecencia» pone el resultado de la mesa (en equipos, el equipo
+  entero sin nadie presente) y lo deja en las incidencias. Las horas, en
+  hora de Costa Rica.
+- **Las incidencias de cada ronda** (`R.incidencias`, `V.incidenciasDe()`):
+  reclamo, sanción, decisión del árbitro u otra, con su hora y su mesa (si
+  tiene). Van al informe oficial, torneo por torneo. Lo escrito entra por
+  `textContent`.
+- **Mover a otro torneo del evento** (`moverDeTorneo()`, botón «Mover» en
+  Jugadores): solo a un torneo individual del mismo evento, y solo si
+  ninguno de los dos empezó. El torneo al que llega guarda `movimientos`, y
+  el acta los trae («Cambios de torneo»).
+- **Reemplazar a un integrante** (`reemplazarIntegrante()`, antes de la
+  ronda 1): por uno de los descartados de su centro (de las decisiones del
+  evento) o por un nombre escrito a mano. Entra en el mismo lugar del orden
+  de tableros; `reemplazos` va al acta. La normativa no dice si se puede: lo
+  decide el congresillo, y la página solo lo anota.
+- **El medallero por centro educativo** (`V.medallero()`): en la tarjeta del
+  evento, en el informe y en la premiación. Un equipo cuenta **una** medalla
+  para su centro (no una por integrante), y los empates del podio, todos con
+  su medalla. Por oro, plata y bronce, como un medallero olímpico.
+- **La pantalla para proyectar** (`#evento=<código>&proyectar`, `pintarProyector()`):
+  el mismo canal en vivo del evento, un torneo a la vez en grande, y pasa
+  solo al siguiente cada 15 segundos. El enlace sale junto al QR del evento.
+- **Mi jugador** (el buscador del enlace del evento, `buscarJugador()`): con
+  tres letras del nombre, la mesa de la ronda de cada torneo, el tablero (en
+  equipos), el color, el rival, el resultado y cómo va. Para encontrar a una
+  integrante, `V.vistaTorneo()` manda en cada encuentro sus tableros con los
+  nombres. **Lo buscado no se borra al llegar un resultado**: el buscador se
+  arma una vez y solo se repintan los torneos y la respuesta.
+- **Pasar lista antes de la ronda 1** (`pintarPasarLista()`, en todo torneo,
+  no solo en los JDE): una casilla por jugador o equipo, apagada de entrada.
+  Prendida, en un suizo quien no llegó queda de entrada como «no viene» (se
+  puede cambiar), y en todos contra todos —donde no hay «no viene» por
+  ronda— se pregunta si sacarlos del torneo antes de sortear o emparejar con
+  todos. Quien no se presentó va al acta (`noSePresentaron`).
+- **Las estadísticas para el MEP** (`V.estadisticas()`, Excel): por torneo,
+  por categoría y modalidad, y por centro, con mujeres y hombres aparte.
+- **Comparar con la etapa anterior** (`V.compararEtapa()`): si al subir
+  varias listas unas son de clasificados (traen «Etapa» o «Puesto»: así
+  también se reconocen las que se bajaron antes de que existiera «Etapa»)
+  y otras no (la inscripción del MEP), se comparan **por nombre**, sin tildes ni mayúsculas (la fecha de
+  nacimiento viene escrita distinto en cada sistema), y **juega la
+  inscripción**. Quien se inscribió sin haber clasificado queda para revisar
+  antes de la ronda 1. Quien clasificó y no viene, solo se avisa, porque no
+  está en ningún torneo. Las dos listas van al acta.
+
+Al tocar esto, `node herramientas/verificar-pareo-jde-sala.js` (con el sitio en
+localhost:8777; el tiempo con `page.clock`, el canal en vivo con el doble de
+`herramientas/lib/pareo-pruebas.js`, que comparte con
+`verificar-pareo-jde-dia.js`). Rompiendo a propósito el momento en que cae el
+reloj, el medallero, el «no viene» de quien no llegó, la búsqueda que se pone
+al día o la comparación, salta.
+
 ### La barra de progreso al buscar el Elo Nacional
 
 Antes de esto, tocar «Buscar Elo Nacional de quien no tiene» con una lista

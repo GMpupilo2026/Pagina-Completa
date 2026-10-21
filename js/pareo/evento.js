@@ -121,6 +121,20 @@
     if ((d.variosOrigenes || []).length) seccion((++n) + ". Inscritos en más de una Dirección Regional", d.variosOrigenes.map((x) => x.nombre + " (" + x.institucion + "): viene en " + x.origenes + "."), "");
     if ((d.hombresEnMujeres || []).length) seccion((++n) + ". Anotados como hombres en un torneo de mujeres", d.hombresEnMujeres, "");
 
+    // Lo que se cambió después de crear los torneos (en el congresillo):
+    // cada torneo guarda lo suyo.
+    const movimientos = torneos.flatMap((t) => (t.movimientos || []).map((x) => x.nombre + " (" + (x.institucion || "—") + "): de " + x.desde + " a " + nombreTorneo(t) + "."));
+    if (movimientos.length) seccion((++n) + ". Cambios de torneo", movimientos, "");
+    const reemplazos = torneos.flatMap((t) => (t.reemplazos || []).map((x) => x.equipo + ", " + nombreTorneo(t) + ": sale " + x.sale + " y entra " + x.entra + "."));
+    if (reemplazos.length) seccion((++n) + ". Reemplazos en los equipos", reemplazos, "");
+    const ausentes = torneos.flatMap((t) => (t.noSePresentaron || []).map((x) => x + " (" + nombreTorneo(t) + ")."));
+    if (ausentes.length) seccion((++n) + ". No se presentaron a la ronda 1", ausentes, "");
+    const comparacion = d.comparacion || { noClasificaron: [], faltan: [] };
+    if (comparacion.noClasificaron.length || comparacion.faltan.length) {
+      seccion((++n) + ". Inscritos que no venían en los clasificados de la etapa anterior", comparacion.noClasificaron.map((x) => x + "."), "No hubo.");
+      seccion((++n) + ". Clasificados de la etapa anterior que no vienen en la inscripción", comparacion.faltan.map((x) => x + "."), "No hubo.");
+    }
+
     const deEquipos = torneos.filter((t) => E.esDeEquipos(t));
     if (deEquipos.length) {
       b.push({ tipo: "titulo", texto: (++n) + ". Orden de tableros (art. 66.2.h)" });
@@ -187,6 +201,18 @@
       if (tableros.length) b.push({ tipo: "lista", items: tableros.map((x) => "Mejor tablero " + x.tablero + ": " +
         (x.filas.length ? x.filas.map((f) => f.nombre + " (" + f.institucion + ", " + porcentajeTexto(f.porcentaje) + ")").join("; ") : "sin datos") + ".") });
     }
+
+    const med = medallero(torneos);
+    if (med.length) {
+      b.push({ tipo: "titulo", texto: "Medallero por centro educativo" });
+      b.push({ tipo: "tabla", encabezados: ["Centro educativo", "Oro", "Plata", "Bronce", "Total"], anchos: [4, 0.8, 0.8, 0.8, 0.8],
+        filas: med.map((x) => [x.centro, String(x.oro), String(x.plata), String(x.bronce), String(x.total)]) });
+    }
+
+    const inc = torneos.flatMap((t) => incidenciasDe(t).map((x) => nombreTorneo(t) + " · " + x));
+    b.push({ tipo: "titulo", texto: "Incidencias" });
+    if (inc.length) b.push({ tipo: "lista", items: inc });
+    else b.push({ tipo: "nota", texto: "No se anotaron incidencias." });
 
     b.push({ tipo: "titulo", texto: "Firmas" });
     b.push({ tipo: "parrafo", texto: linea("Árbitro principal" + (primero.arbitro ? ": " + primero.arbitro : "")) });
@@ -286,6 +312,12 @@
           : "nadie jugó ahí la mitad de las rondas") + ".") });
       }
     }
+    const med = medallero(torneos);
+    if (med.length) {
+      b.push({ tipo: "titulo", texto: "Medallero por centro educativo" });
+      b.push({ tipo: "tabla", encabezados: ["Centro educativo", "Oro", "Plata", "Bronce", "Total"], anchos: [4, 0.8, 0.8, 0.8, 0.8],
+        filas: med.map((x) => [x.centro, String(x.oro), String(x.plata), String(x.bronce), String(x.total)]) });
+    }
     b.push({ tipo: "nota", texto: "Mejor tablero: el mejor porcentaje entre quienes jugaron en ese tablero al menos la mitad de las rondas, sin contar las partidas no jugadas." });
     return { titulo: "Premiación — Ajedrez", subtitulo: evento.nombre, pie: "Pareo Integral · ajedrez-integral.com", bloques: b, fotos: [] };
   }
@@ -350,13 +382,130 @@
     const k = rondasCompletas(t);
     return {
       nombre: nombreTorneo(t),
-      ronda: R ? { n: t.rondas.length, mesas: R.mesas.map((m, i) => ({ m: i + 1, b: nombre(m.b), n: m.n == null ? null : nombre(m.n), r: m.r || null })) } : null,
+      ronda: R ? { n: t.rondas.length, mesas: R.mesas.map((m, i) => Object.assign({ m: i + 1, b: nombre(m.b), n: m.n == null ? null : nombre(m.n), r: m.r || null },
+        // En equipos, cada tablero con quién juega con cada color: así quien
+        // busca a una integrante encuentra su tablero.
+        E.esDeEquipos(t) && m.n != null && m.alineacion ? { tableros: E.tablerosDe(t, m).map((x) => {
+          const de = (idE, idJ) => { const e = participante(t, idE); const j = e && idJ && e.integrantes.find((y) => y.id === idJ); return j ? j.nombre : null; };
+          return { t: x.k + 1, b: de(x.bBlancas ? m.b : m.n, x.blancas), n: de(x.bBlancas ? m.n : m.b, x.negras), r: x.r || null };
+        }) } : {})) } : null,
       clasificacion: k ? clasificacionDe(t).map((f) => ({ p: f.puesto, n: nombre(f.id), pts: f.puntos })) : [],
     };
   }
   function vistaEvento(evento, torneos) { return { v: 2, nombre: evento.nombre, torneos: torneos.map(vistaTorneo) }; }
 
+  // ---------- El medallero por centro educativo ----------
+  // Las medallas de todos los torneos del evento sumadas por centro: un
+  // equipo cuenta una medalla para su centro, no una por integrante. Por oro,
+  // después plata y después bronce, como un medallero olímpico.
+  function medallero(torneos) {
+    const porCentro = new Map();
+    for (const t of torneos) {
+      for (const f of podio(t).filas) {
+        const x = f.participante;
+        const centro = String((E.esDeEquipos(t) ? x.institucion || x.nombre : x.institucion) || "—").trim();
+        const k = clave(centro);
+        if (!porCentro.has(k)) porCentro.set(k, { centro, oro: 0, plata: 0, bronce: 0, total: 0 });
+        const c = porCentro.get(k);
+        c[{ 1: "oro", 2: "plata", 3: "bronce" }[f.puesto]]++;
+        c.total++;
+      }
+    }
+    return [...porCentro.values()].sort((a, b) => b.oro - a.oro || b.plata - a.plata || b.bronce - a.bronce || a.centro.localeCompare(b.centro, "es"));
+  }
+
+  // ---------- Las estadísticas para el MEP ----------
+  // Cuántas participaciones por torneo, por categoría y por centro, con
+  // mujeres y hombres aparte: las hojas del Excel (js/tabla-excel.js).
+  function estadisticas(evento, torneos) {
+    const sexo = (j) => (j.sexo === "w" ? "w" : j.sexo === "m" ? "m" : "");
+    const contar = (lista) => ({ w: lista.filter((j) => sexo(j) === "w").length, m: lista.filter((j) => sexo(j) === "m").length, total: lista.length });
+    const personasDe = (t) => (E.esDeEquipos(t) ? t.jugadores.flatMap((e) => e.integrantes.map((j) => Object.assign({ institucion: e.institucion }, j))) : t.jugadores);
+    const categoriaDe = (t, j) => String(j.categoria || (/Categoría (\S+)/.exec(t.grupo || "") || [])[1] || "—").trim();
+    const porTorneo = [["Torneo", "Modalidad", "Participantes", "Mujeres", "Hombres", "Total de estudiantes"]];
+    const cat = new Map(), centro = new Map();
+    for (const t of torneos) {
+      const personas = personasDe(t);
+      const c = contar(personas);
+      porTorneo.push([nombreTorneo(t), E.esDeEquipos(t) ? "Equipos" : "Individual", String(t.jugadores.length), String(c.w), String(c.m), String(c.total)]);
+      for (const j of personas) {
+        const kc = categoriaDe(t, j) + "|" + (E.esDeEquipos(t) ? "Equipos" : "Individual");
+        if (!cat.has(kc)) cat.set(kc, []);
+        cat.get(kc).push(j);
+        const ce = String(j.institucion || "—").trim();
+        if (!centro.has(clave(ce))) centro.set(clave(ce), { nombre: ce, personas: [] });
+        centro.get(clave(ce)).personas.push(j);
+      }
+    }
+    const porCategoria = [["Categoría", "Modalidad", "Mujeres", "Hombres", "Total"]].concat([...cat.entries()].sort((a, b) => a[0].localeCompare(b[0], "es")).map(([k, l]) => {
+      const [c, m] = k.split("|"); const x = contar(l);
+      return [c, m, String(x.w), String(x.m), String(x.total)];
+    }));
+    const porCentro = [["Centro educativo", "Mujeres", "Hombres", "Total"]].concat([...centro.values()].sort((a, b) => b.personas.length - a.personas.length || a.nombre.localeCompare(b.nombre, "es")).map((x) => {
+      const c = contar(x.personas);
+      return [x.nombre, String(c.w), String(c.m), String(c.total)];
+    }));
+    return [
+      { nombre: "Por torneo", filas: [[evento.nombre]].concat([[]], porTorneo) },
+      { nombre: "Por categoría", filas: porCategoria },
+      { nombre: "Por centro", filas: porCentro },
+    ];
+  }
+
+  // ---------- Comparar con la etapa anterior ----------
+  // La inscripción de una etapa contra los clasificados de la anterior: quién
+  // se inscribió sin haber clasificado y quién clasificó y no viene. Por
+  // nombre (sin tildes ni mayúsculas): la fecha de nacimiento a veces viene
+  // escrita distinto en cada sistema.
+  function compararEtapa(inscripcion, clasificados) {
+    const k = (j) => clave(j.nombre);
+    const enClasificados = new Set(clasificados.map(k));
+    const enInscripcion = new Set(inscripcion.map(k));
+    const unicos = (l) => [...new Map(l.map((j) => [k(j), j])).values()];
+    return {
+      noClasificaron: unicos(inscripcion.filter((j) => !enClasificados.has(k(j)))),
+      faltan: unicos(clasificados.filter((j) => !enInscripcion.has(k(j)))),
+    };
+  }
+
+  // ---------- El retraso ----------
+  // En ajedrez, quien no llega pierde cuando su reloj cae a cero (art. 30 de
+  // la normativa): el tiempo base del ritmo («10 min + 2 s» → 10).
+  function minutosBase(ritmo) {
+    // Lo de antes del «+» (el incremento no cuenta): «1 h 30 min», «90'», «10».
+    const base = String(ritmo || "").split("+")[0];
+    const num = (re) => { const m = re.exec(base); return m ? Number(m[1].replace(",", ".")) : null; };
+    const horas = num(/(\d+(?:[.,]\d+)?)\s*(?:h|horas?)\b/i);
+    const minutos = num(/(\d+)\s*(?:min|minutos?|')/i);
+    if (horas == null && minutos == null) { const x = num(/(\d+(?:[.,]\d+)?)/); return x == null ? 0 : Math.round(x); }
+    return Math.round((horas || 0) * 60 + (minutos || 0));
+  }
+
+  // Cómo va alguien que no había llegado al empezar la ronda: { minutos,
+  // llego, vencido }. `ahora` en milisegundos.
+  function estadoRetraso(R, id, ahora, base) {
+    const x = (R.tarde || {})[id];
+    if (!x || R.inicio == null) return null;
+    const fin = x.llego || ahora;
+    const minutos = Math.max(0, Math.floor((fin - R.inicio) / 60000));
+    return { minutos, llego: !!x.llego, vencido: !x.llego && base > 0 && minutos >= base };
+  }
+
+  // ---------- Las incidencias ----------
+  const NOMBRE_INCIDENCIA = { reclamo: "Reclamo", sancion: "Sanción", decision: "Decisión del árbitro", otra: "Otra" };
+  const horaTexto = (ms) => {
+    try { return new Date(ms).toLocaleTimeString("es-CR", { hour: "numeric", minute: "2-digit", timeZone: "America/Costa_Rica" }); }
+    catch (e) { return ""; }
+  };
+  function incidenciasDe(t) {
+    const out = [];
+    t.rondas.forEach((R, r) => (R.incidencias || []).forEach((x) => out.push("Ronda " + (r + 1) + (x.mesa ? ", mesa " + x.mesa : "") +
+      (x.hora ? ", " + horaTexto(x.hora) : "") + " · " + (NOMBRE_INCIDENCIA[x.tipo] || NOMBRE_INCIDENCIA.otra) + ": " + x.texto)));
+    return out;
+  }
+
   const api = {
+    medallero, estadisticas, compararEtapa, minutosBase, estadoRetraso, incidenciasDe, NOMBRE_INCIDENCIA,
     SIGUIENTE, NOMBRE_ETAPA, ENCABEZADOS, FORMATO_RESPALDO, cupo, clasificados, terminado, acta, informe, filasClasificados,
     lugarTexto, siguienteDe, podio, premiacion, diplomas, textoDiploma, pendientes, respaldo, esRespaldo, vistaTorneo, vistaEvento,
   };

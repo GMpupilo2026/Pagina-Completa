@@ -126,17 +126,71 @@ window.PareoVer = (function () {
       ...tablas(idioma, datos, "h2"));
   }
 
+  const normal = (s) => String(s || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+
+  // «Mi jugador»: dónde juega en la ronda de cada torneo (su mesa y, en
+  // equipos, su tablero), con qué color, contra quién y cómo va.
+  function buscarJugador(datos, q) {
+    const out = [];
+    for (const x of datos.torneos || []) {
+      const tiene = (n) => n && normal(n).includes(q);
+      const fila = (nombre) => (x.clasificacion || []).find((f) => f.n === nombre);
+      for (const m of (x.ronda && x.ronda.mesas) || []) {
+        if (tiene(m.b)) out.push({ torneo: x.nombre, nombre: m.b, ronda: x.ronda.n, mesa: m.m, color: "b", rival: m.n, r: m.r, fila: fila(m.b) });
+        if (tiene(m.n)) out.push({ torneo: x.nombre, nombre: m.n, ronda: x.ronda.n, mesa: m.m, color: "n", rival: m.b, r: m.r, fila: fila(m.n) });
+        for (const k of m.tableros || []) {
+          if (tiene(k.b)) out.push({ torneo: x.nombre, nombre: k.b, ronda: x.ronda.n, mesa: m.m, tablero: k.t, color: "b", rival: k.n, r: k.r });
+          if (tiene(k.n)) out.push({ torneo: x.nombre, nombre: k.n, ronda: x.ronda.n, mesa: m.m, tablero: k.t, color: "n", rival: k.b, r: k.r });
+        }
+      }
+    }
+    return out;
+  }
+
+  function pintarMio(caja, idioma, datos, texto) {
+    const tx = (clave, vars) => X.t(idioma, clave, vars);
+    const q = normal(texto).trim();
+    if (q.length < 3) { caja.replaceChildren(); return; }
+    const hallados = buscarJugador(datos, q);
+    if (!hallados.length) { caja.replaceChildren(el("p", { class: "text-sm" }, tx("verMioNada"))); return; }
+    caja.replaceChildren(el("ul", { class: "space-y-2" }, hallados.slice(0, 20).map((h) => {
+      // El resultado va escrito desde las blancas: «1-0» gana quien juega con blancas.
+      const partes = [tx("verMioRonda", { r: h.ronda, m: h.mesa }) + (h.tablero ? ", " + tx("tableroN", { t: h.tablero }) : ""),
+        tx(h.color === "b" ? "verMioBlancas" : "verMioNegras", { x: h.rival || tx("cBye") })];
+      if (h.r) partes.push(tx("resultado") + ": " + tx("corto_" + h.r));
+      if (h.fila) partes.push(tx("verMioPuesto", { p: h.fila.p, pts: puntosTexto(idioma, h.fila.pts) }));
+      return el("li", { class: "rounded-lg border border-brand-200 dark:border-brand-700 p-2 text-sm" },
+        el("p", { class: "font-semibold" }, h.nombre), el("p", { class: "text-brand-600 dark:text-brand-300" }, h.torneo), el("p", {}, partes.join(" · ")));
+    })));
+  }
+
   // Todo un evento: un desplegable por torneo, que queda abierto o cerrado
-  // como lo dejó quien mira aunque llegue un resultado nuevo.
+  // como lo dejó quien mira aunque llegue un resultado nuevo, y arriba el
+  // buscador de «Mi jugador», que no se borra al llegar un resultado.
   function pintarEvento(cont, idioma, datos, abiertos) {
     const tx = (clave, vars) => X.t(idioma, clave, vars);
-    for (const d of cont.querySelectorAll("details[data-torneo]")) {
+    let caja = cont.querySelector("[data-evento]");
+    if (!caja) {
+      const buscar = el("input", { id: "pi-ver-buscar", type: "search", autocomplete: "off", class: "w-full rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-800 text-brand-800 dark:text-white px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400" });
+      buscar.addEventListener("input", () => pintarMio(cont.querySelector("#pi-ver-mio"), idioma, cont.__datos, buscar.value));
+      caja = el("div", { "data-evento": "" },
+        el("h1", { id: "pi-ver-titulo", class: "font-serif text-2xl font-bold mb-1" }),
+        el("p", { id: "pi-ver-leyenda", class: "text-sm text-brand-600 dark:text-brand-300 mb-4" }),
+        el("label", { for: "pi-ver-buscar", class: "block text-sm font-semibold mb-1" }, tx("verBuscar")),
+        buscar,
+        el("p", { class: "text-xs text-brand-600 dark:text-brand-300 mt-1 mb-2" }, tx("verBuscarAyuda")),
+        el("div", { id: "pi-ver-mio", class: "mb-6", "aria-live": "polite" }),
+        el("div", { id: "pi-ver-torneos" }));
+      cont.replaceChildren(caja);
+    }
+    cont.__datos = datos;
+    caja.querySelector("#pi-ver-titulo").textContent = datos.nombre || "Pareo Integral";
+    caja.querySelector("#pi-ver-leyenda").textContent = tx("verEventoLeyenda", { n: (datos.torneos || []).length });
+    const lista = caja.querySelector("#pi-ver-torneos");
+    for (const d of lista.querySelectorAll("details[data-torneo]")) {
       if (d.open) abiertos.add(d.dataset.torneo); else abiertos.delete(d.dataset.torneo);
     }
-    const nodos = [
-      el("h1", { class: "font-serif text-2xl font-bold mb-1" }, datos.nombre || "Pareo Integral"),
-      el("p", { class: "text-sm text-brand-600 dark:text-brand-300 mb-6" }, tx("verEventoLeyenda", { n: (datos.torneos || []).length })),
-    ];
+    const nodos = [];
     for (const x of datos.torneos || []) {
       const resumen = x.nombre + (x.ronda ? " · " + tx("rondaN", { r: x.ronda.n }) : "");
       const cuerpo = tablas(idioma, x, "h3");
@@ -144,7 +198,24 @@ window.PareoVer = (function () {
         el("summary", { class: "cursor-pointer font-semibold rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400" }, resumen),
         el("div", { class: "mt-3" }, cuerpo.length ? cuerpo : el("p", { class: "text-sm text-brand-600 dark:text-brand-300" }, tx("clasificadosSinRondas")))));
     }
-    cont.replaceChildren(...nodos);
+    lista.replaceChildren(...nodos);
+    pintarMio(caja.querySelector("#pi-ver-mio"), idioma, datos, caja.querySelector("#pi-ver-buscar").value);
+  }
+
+  // La pantalla para proyectar en el salón: un torneo a la vez, en grande,
+  // y pasa sola al siguiente cada 15 segundos.
+  const CADA = 15000;
+  function pintarProyector(cont, idioma, datos, vuelta) {
+    const tx = (clave, vars) => X.t(idioma, clave, vars);
+    const torneos = (datos.torneos || []).filter((x) => x.ronda || (x.clasificacion && x.clasificacion.length));
+    if (!torneos.length) { cont.replaceChildren(el("p", { class: "text-2xl" }, datos.nombre || ""), el("p", { class: "text-xl mt-4" }, tx("clasificadosSinRondas"))); return; }
+    const i = vuelta % torneos.length;
+    const x = torneos[i];
+    cont.replaceChildren(el("div", { class: "pi-proyector" },
+      el("p", { class: "text-xl text-brand-600 dark:text-brand-300" }, datos.nombre || ""),
+      el("h1", { class: "font-serif text-4xl font-bold mb-1" }, x.nombre),
+      el("p", { class: "text-lg text-brand-600 dark:text-brand-300 mb-6" }, tx("verProyectorTorneo", { i: i + 1, n: torneos.length })),
+      el("div", { class: "grid lg:grid-cols-2 gap-8" }, ...tablas(idioma, x, "h2").reduce((a, n, k, l) => (k % 2 ? a : a.concat(el("div", {}, n, l[k + 1]))), []))));
   }
 
   async function iniciar(cadena, idioma) {
@@ -180,7 +251,9 @@ window.PareoVer = (function () {
     setTimeout(() => { if (!llego) cont.replaceChildren(el("p", { class: "text-sm text-brand-600 dark:text-brand-300" }, tx("esperandoVivo"))); }, 8000);
   }
 
-  async function iniciarEvento(codigo, idioma) {
+  async function iniciarEvento(cadena, idioma) {
+    const [codigo, ...opciones] = String(cadena).split("&");
+    const proyectar = opciones.includes("proyectar");
     const cont = document.getElementById("pi-ver");
     const tx = (clave) => X.t(idioma, clave);
     cont.hidden = false;
@@ -194,12 +267,19 @@ window.PareoVer = (function () {
     let llego = false;
     const abiertos = new Set();
     const canal = window.sb.channel("pareo-evento-" + codigo);
-    canal.on("broadcast", { event: "estado" }, (msg) => { llego = true; pintarEvento(cont, idioma, msg.payload, abiertos); });
+    let ultimo = null, vuelta = 0;
+    canal.on("broadcast", { event: "estado" }, (msg) => {
+      llego = true;
+      ultimo = msg.payload;
+      if (proyectar) pintarProyector(cont, idioma, ultimo, vuelta);
+      else pintarEvento(cont, idioma, ultimo, abiertos);
+    });
+    if (proyectar) setInterval(() => { if (ultimo) pintarProyector(cont, idioma, ultimo, ++vuelta); }, CADA);
     // Al entrar se pide el estado: quien organiza lo manda sin esperar al
     // próximo resultado.
     canal.subscribe((st) => { if (st === "SUBSCRIBED") canal.send({ type: "broadcast", event: "pedir", payload: {} }); });
     setTimeout(() => { if (!llego) cont.replaceChildren(el("p", { class: "text-sm text-brand-600 dark:text-brand-300" }, tx("esperandoVivo"))); }, 8000);
   }
 
-  return { empaquetar, desempaquetar, cargarSupabase, iniciar, iniciarVivo, iniciarEvento, pintarEvento };
+  return { empaquetar, desempaquetar, cargarSupabase, iniciar, iniciarVivo, iniciarEvento, pintarEvento, pintarProyector, buscarJugador };
 })();
