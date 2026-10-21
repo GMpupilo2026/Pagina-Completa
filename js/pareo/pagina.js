@@ -558,8 +558,10 @@
     const regiones = [...new Set(lista.map((j) => j.region).filter(Boolean))];
     const base = regiones.length === 1 ? tx("grupoRegional", { r: regiones[0] })
       : String(nombreArchivo || "").replace(/\.[^.]+$/, "").replace(/[_]+/g, " ").trim();
+    // El año del torneo: el de su fecha de inicio, o el de hoy.
+    const anio = Number(String(t().fechaInicio || "").slice(0, 4)) || Number((window.HoraCR ? HoraCR.hoy() : "").slice(0, 4)) || G.JDE_ANIO_NORMATIVA;
     estado.sugerencia = {
-      lista, dimensiones, base,
+      lista, dimensiones, base, revision: G.revisarCategorias(lista, anio),
       grupos: grupos.map((g) => Object.assign(g, { marcado: g.jugadores.length >= 2 })),
     };
     pintarSugerencia();
@@ -607,6 +609,7 @@
       el("h3", { id: "pi-sugerencia-titulo", class: "font-serif text-lg font-bold", texto: tx("sugerenciaTitulo", { n: s.grupos.length }) }),
       el("p", { class: "text-sm mt-1", texto: tx("sugerenciaTexto", { total: s.lista.length, d: unidas }) }),
       el("fieldset", {}, el("legend", { class: "sr-only", texto: tx("sugerenciaLeyenda") }), lista),
+      pintarRevisionCategorias(s.revision),
       porSexo ? el("p", { class: C.nota + " mt-2", texto: tx("sugerenciaAbierto") }) : null,
       hayEquipos ? el("p", { class: C.nota + " mt-2", texto: tx("sugerenciaEquipos") }) : null,
       el("p", { class: C.nota + " mt-2", texto: tx("sugerenciaNormativa", { r: G.JDE_RONDAS_SUIZO, ritmo: G.JDE_RITMO_MINIMO }) }),
@@ -615,6 +618,29 @@
         el("button", { type: "button", id: "pi-sugerencia-crear", class: C.boton, disabled: marcados === 0, onclick: crearTorneosDeGrupos, texto: tx("sugerenciaCrear", { n: marcados }) }),
         el("button", { type: "button", id: "pi-sugerencia-todos", class: C.botonSec, onclick: () => { const l = s.lista; estado.sugerencia = null; pintarSugerencia(); agregarTodos(l); }, texto: tx("sugerenciaTodosAqui", { n: s.lista.length }) }),
         el("button", { type: "button", id: "pi-sugerencia-descartar", class: C.botonSec, onclick: () => { estado.sugerencia = null; pintarSugerencia(); Avisos.avisar(tx("sugerenciaDescartada"), { tipo: "info" }); }, texto: tx("sugerenciaDescartar") })));
+  }
+
+  // Lo que dice la revisión de categoría por año (art. 17 y 18): cada caso
+  // escrito entero, con «Permitido» o «No permitido» al frente (el color de
+  // la lista nunca va solo).
+  function pintarRevisionCategorias(r) {
+    if (!r || (!r.revisados && !r.sinFecha.length)) return null;
+    const caja = el("div", { id: "pi-revision-categorias", class: "mt-4 pt-3 border-t border-brand-100 dark:border-brand-800" });
+    const enSuCategoria = r.revisados - r.permitidos.length - r.noPermitidos.length;
+    caja.append(
+      el("h4", { class: "font-semibold text-sm", texto: tx("catTitulo") }),
+      el("p", { class: "text-sm mt-1", texto: tx("catResumen", { n: r.revisados, ok: enSuCategoria, p: r.permitidos.length, x: r.noPermitidos.length }) }));
+    if (r.anio !== r.normativa) caja.append(el("p", { class: C.nota + " mt-1", texto: tx("catOtroAnio", { a: r.anio, b: r.normativa }) }));
+    const caso = (c) => {
+      const j = c.jugador;
+      const v = { n: j.nombre, i: j.institucion || "—", a: c.nace, p: c.propia, c: c.categoria, d: c.desde, k: c.cuantos, m: G.JDE_MAX_ASCENSOS };
+      const clave = c.motivo ? { mayor: "catMayor", individual: "catIndividual", salto: "catSalto", tope: "catTope" }[c.motivo] : "catPermitido";
+      return el("li", {}, el("span", { class: "font-semibold", texto: tx(c.motivo ? "catNoPermitido" : "catSiPermitido") + " " }), tx(clave, v));
+    };
+    if (r.noPermitidos.length) caja.append(el("ul", { id: "pi-cat-no", class: "mt-2 space-y-1 text-sm list-disc pl-5" }, r.noPermitidos.map(caso)));
+    if (r.permitidos.length) caja.append(el("ul", { id: "pi-cat-si", class: "mt-2 space-y-1 text-sm list-disc pl-5" }, r.permitidos.map(caso)));
+    if (r.sinFecha.length) caja.append(el("p", { class: C.nota + " mt-2", texto: tx("catSinFecha", { n: r.sinFecha.length }) }));
+    return caja;
   }
 
   // Un torneo por cada grupo marcado, con los datos del que está abierto

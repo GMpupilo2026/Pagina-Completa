@@ -45,6 +45,33 @@ const igual = (m, a, b) => {
 /* ==================================================================
    1. Las funciones puras
    ================================================================== */
+function pruebaCategorias() {
+  console.log("\n=== Categoría por año de nacimiento (art. 17 y 18) ===");
+  const j = (categoria, nacimiento, modalidad, institucion, sexo) => ({ nombre: "x", categoria, nacimiento, modalidad, institucion: institucion || "E", sexo: sexo || "m" });
+  const r = G.revisarCategorias([
+    j("B", "2014-05-01", "individual"),          // B: en su categoría
+    j("C", "2013-05-01", "individual"),          // C: 2013 es B o C (primaria o secundaria)
+    j("E", "2001-05-01", "individual"),          // E: sin límite de abajo
+    j("B", "2018-05-01", "equipo"),              // A sube a B por equipos: permitido
+    j("D", "2012-05-01", "equipo"),              // C sube a D: permitido
+    j("D", "2013-05-01", "equipo"),              // 2013 en D: el de C (secundaria) sube, permitido
+    j("C", "2017-05-01", "equipo"),              // A a C: no es un ascenso permitido
+    j("B", "2018-05-01", "individual"),          // en individual no se sube
+    j("A", "2015-05-01", "equipo"),              // B en A: no se baja
+    j("A", "", "individual"),                    // sin fecha
+    j("Sub-10", "2018-05-01", "individual"),     // no es una categoría de los JDE
+  ], 2026);
+  igual("revisa las que tienen categoría A–E y fecha", r.revisados, 9);
+  igual("tres ascensos permitidos, cada uno desde su categoría", r.permitidos.map((c) => c.propia + ">" + c.categoria + c.nace), ["A>B2018", "C>D2012", "C>D2013"]);
+  igual("los no permitidos, con su motivo", r.noPermitidos.map((c) => c.motivo), ["salto", "individual", "mayor"]);
+  igual("uno sin fecha", r.sinFecha.length, 1);
+  const tope = G.revisarCategorias([1, 2, 3, 4].map(() => j("B", "2018-01-01", "equipo", "Escuela X")).concat([j("B", "2018-01-01", "equipo", "Escuela Y")]), 2026);
+  igual("cuatro que suben en el mismo equipo: el tope es 3, ninguno queda permitido", [tope.noPermitidos.map((c) => c.motivo).join(","), tope.permitidos.length], ["tope,tope,tope,tope", 1]);
+  const mujeresYAbierto = G.revisarCategorias([1, 2, 3].map(() => j("B", "2018-01-01", "equipo", "Escuela X", "m")).concat([j("B", "2018-01-01", "equipo", "Escuela X", "w")]), 2026);
+  igual("el equipo de mujeres y el abierto cuentan aparte", mujeresYAbierto.permitidos.length, 4);
+  igual("otro año: los rangos se corren (2027, A es 2018–2021)", G.rangoCategoria("A", 2027), [2018, 2021]);
+}
+
 function pruebaFunciones() {
   console.log("\n=== Sexo, modalidad y fechas ===");
   igual("HOMBRE, Masculino, M y H son masculino", ["HOMBRE", "Masculino", "m", "H"].map(G.leerSexo), ["m", "m", "m", "m"]);
@@ -86,17 +113,23 @@ function excelJde() {
     ["No", "Tipo", "Documento de identidad", "Nombre", "FDN", "Nacionalidad", "Sexo", "Edad", "Nombre de Centro Educativo", "Circuito", "Dirección Regional", "Categoría", "Tipo de Dirección", "Equipo/Ind", "Fecha"],
   ];
   let n = 0;
-  const poner = (cuantos, sexo, cat, mod, fdn) => {
+  // Una fecha por jugador (o la misma para todos). Los casos de categoría
+  // (art. 17 y 18, normativa 2026): la de A nacida en 2015 es de B (no
+  // permitido: no se baja); uno de B individual nacido en 2018 es de A (no
+  // permitido: en individual no se sube); tres de B por equipos nacidos en
+  // 2017 y dos mujeres igual (permitidos: de A a B, hasta 3 por equipo).
+  const poner = (cuantos, sexo, cat, mod, fdn, institucion) => {
     for (let i = 0; i < cuantos; i++) {
-      filas.push([String(n), "CÉDULA:", "100000" + n, `PRUEBA ${sexo === "MUJER" ? "ANA" : "LUIS"} ${cat}${mod[0]}${i}`, fdn, "COSTARRICENSE", sexo, "10", "ESCUELA DE PRUEBA " + (i % 2), "01", "Prueba", cat, "Colegio", mod, "01 Mar"]);
+      const f = Array.isArray(fdn) ? fdn[i] : fdn;
+      filas.push([String(n), "CÉDULA:", "100000" + n, `PRUEBA ${sexo === "MUJER" ? "ANA" : "LUIS"} ${cat}${mod[0]}${i}`, f, "COSTARRICENSE", sexo, "10", institucion || "ESCUELA DE PRUEBA " + (i % 2), "01", "Prueba", cat, "Colegio", mod, "01 Mar"]);
       n++;
     }
   };
   poner(3, "HOMBRE", "A", "Individual", "1/4/2017");
   poner(1, "MUJER", "A", "Individual", "7/17/2015");
-  poner(10, "HOMBRE", "B", "Individual", "11/19/2011");
-  poner(4, "HOMBRE", "B", "Equipo", "1/4/2017");
-  poner(2, "MUJER", "B", "Equipo", "1/4/2017");
+  poner(10, "HOMBRE", "B", "Individual", ["3/2/2018", ...Array(9).fill("11/19/2014")]);
+  poner(4, "HOMBRE", "B", "Equipo", ["1/4/2017", "2/4/2017", "3/4/2017", "1/4/2014"], "ESCUELA DEL EQUIPO");
+  poner(2, "MUJER", "B", "Equipo", "1/4/2017", "ESCUELA DEL EQUIPO");
   return Buffer.from(TablaExcel.armar([{ nombre: "Sheet1", filas }]));
 }
 
@@ -128,7 +161,7 @@ async function pruebaPagina(browser) {
   igual("todavía nadie inscrito", await page.textContent("#pi-cuenta"), "0");
   igual("el título dice cuántos torneos", await page.textContent("#pi-sugerencia-titulo"), "Sugerencia: separar en 5 torneos");
   ok(/20 jugadores/.test(await page.textContent("#pi-sugerencia")), "cuenta a los 20 (las dos filas de título no son jugadores)");
-  const filas = await page.$$eval("#pi-sugerencia li", (lis) => lis.map((li) => [li.querySelector("label").textContent, li.querySelector("input").checked]));
+  const filas = await page.$$eval("#pi-sugerencia fieldset li", (lis) => lis.map((li) => [li.querySelector("label").textContent, li.querySelector("input").checked]));
   igual("los cinco grupos, en orden y con el de un jugador desmarcado", filas.map(([t, c]) => [t.split(" — ")[0], c]), [
     ["Individual · Categoría A · Abierto", true],
     ["Individual · Categoría A · Mujeres", false],
@@ -141,6 +174,16 @@ async function pruebaPagina(browser) {
   ok(/no equipos/.test(await page.textContent("#pi-sugerencia")), "avisa que Pareo Integral empareja jugadores, no equipos");
   ok(/en el abierto pueden jugar también mujeres/.test(await page.textContent("#pi-sugerencia")), "dice que en el abierto juegan también mujeres (art. 66)");
   ok(/art\. 66/.test(await page.textContent("#pi-sugerencia")), "dice de dónde sale el sistema sugerido");
+  console.log("\n=== Categoría por año de nacimiento ===");
+  ok(/Se revisaron 20 inscritos: 13 están en la categoría de su año de nacimiento, 5 suben de categoría como lo permite la normativa y 2 no están permitidos/.test(await page.textContent("#pi-revision-categorias")), "el resumen cuenta bien", await page.textContent("#pi-revision-categorias"));
+  const no = await page.$$eval("#pi-cat-no li", (l) => l.map((x) => x.textContent));
+  const si = await page.$$eval("#pi-cat-si li", (l) => l.map((x) => x.textContent));
+  igual("dos no permitidos y cinco permitidos", [no.length, si.length], [2, 5]);
+  ok(no.every((x) => x.startsWith("No permitido:")) && si.every((x) => x.startsWith("Permitido:")), "cada uno dice escrito si está permitido");
+  ok(no.some((x) => /nació en 2015 y la categoría A es para quienes nacieron desde 2017/.test(x)), "la de A nacida en 2015: no se baja de categoría");
+  ok(no.some((x) => /nació en 2018, es de la categoría A y está en la B individual/.test(x)), "el de B individual nacido en 2018: en individual no se sube");
+  ok(si.every((x) => /ESCUELA DEL EQUIPO/.test(x) && /sube a la B por equipos/.test(x)), "los de equipos nacidos en 2017: ascenso permitido de A a B");
+
   igual("el botón cuenta los marcados", await page.textContent("#pi-sugerencia-crear"), "Crear los 4 torneos marcados");
 
   console.log("\n=== En inglés ===");
@@ -180,7 +223,7 @@ async function pruebaPagina(browser) {
   ok(ts.every((x) => x.ritmo === "10 min + 2 s por jugada"), "sin ritmo en el abierto, cada uno lleva el mínimo de la normativa");
   ok(ts.every((x) => x.jugadores.every((j) => j.sexo === "m" || j.sexo === "w")), "todos llevan su sexo");
   ok(porNombre["Regional Prueba — Equipos · Categoría B · Mujeres"].jugadores.every((j) => j.sexo === "w"), "las mujeres quedaron en el de mujeres");
-  igual("la fecha 11/19/2011 se leyó como mes/día", b.jugadores[0].nacimiento, "2011-11-19");
+  ok(b.jugadores.some((j) => j.nacimiento === "2014-11-19"), "la fecha 11/19/2014 se leyó como mes/día");
   igual("el centro educativo es la institución", a.jugadores[0].institucion.startsWith("ESCUELA DE PRUEBA"), true);
   ok(ts.every((x) => x.jugadores.every((j) => !("modalidad" in j) && !("region" in j))), "ni la modalidad ni la regional se guardan en el jugador");
   ok(ts.every((x) => x.jugadores.every((j) => !/Report|Exported/.test(j.nombre))), "las filas de título no entraron como jugadores");
@@ -213,6 +256,7 @@ async function pruebaPagina(browser) {
 
 (async () => {
   pruebaFunciones();
+  pruebaCategorias();
   const browser = await chromium.launch({ executablePath: fs.existsSync(CHROME) ? CHROME : undefined });
   try { await pruebaPagina(browser); }
   catch (e) { mal("la prueba de la página se cayó", e.stack); }

@@ -109,7 +109,76 @@
     return n <= JDE_MAX_TODOS ? "todos" : "suizo";
   }
 
-  const api = { leerSexo, leerModalidad, ordenFechas, leerFecha, agrupar, sistemaSugerido, JDE_MAX_TODOS, JDE_RONDAS_SUIZO, JDE_RITMO_MINIMO };
+  // La categoría según el año de nacimiento: Normativa de los JDE 2026,
+  // art. 17 (A y B son de primaria, C, D y E de secundaria; por eso B y C se
+  // pisan en 2013 y 2014). Otro año, los mismos rangos corridos: se dice en
+  // la página que hay que confirmarlo con la normativa de ese año.
+  const JDE_ANIO_NORMATIVA = 2026;
+  const JDE_CATEGORIAS = { A: [2017, 2020], B: [2013, 2016], C: [2012, 2014], D: [2009, 2011], E: [null, 2008] };
+  // Art. 18: en las disciplinas individuales, subir de categoría solo se
+  // permite en los eventos por equipos, de A a B, de C a D y de D a E, y
+  // hasta tres por equipo.
+  const JDE_ASCENSOS = { A: "B", C: "D", D: "E" };
+  const JDE_MAX_ASCENSOS = 3;
+
+  function rangoCategoria(cat, anio) {
+    const r = JDE_CATEGORIAS[cat];
+    if (!r) return null;
+    const d = anio - JDE_ANIO_NORMATIVA;
+    return [r[0] == null ? null : r[0] + d, r[1] + d];
+  }
+  const dentro = (r, a) => (r[0] == null || a >= r[0]) && a <= r[1];
+
+  // Cada jugador con categoría A–E y fecha de nacimiento que NO cuadran.
+  // Devuelve los permitidos (ascensos válidos por equipos) y los no
+  // permitidos con su motivo: "individual" (en individual no se sube),
+  // "mayor" (nació antes de lo que permite la categoría), "salto" (un
+  // ascenso que no es A→B, C→D ni D→E) o "tope" (más de tres ascensos en
+  // el mismo equipo: el mismo centro educativo, categoría y torneo). Los que
+  // tienen categoría A–E pero no traen fecha van aparte: no se pueden revisar.
+  function revisarCategorias(lista, anio) {
+    const permitidos = [], noPermitidos = [], sinFecha = [];
+    let revisados = 0;
+    for (const j of lista) {
+      const cat = String(j.categoria || "").trim().toUpperCase();
+      const r = rangoCategoria(cat, anio);
+      if (!r) continue;
+      const nace = Number(String(j.nacimiento || "").slice(0, 4));
+      if (!nace) { sinFecha.push(j); continue; }
+      revisados++;
+      if (dentro(r, nace)) continue;
+      const propias = Object.keys(JDE_CATEGORIAS).filter((c) => dentro(rangoCategoria(c, anio), nace));
+      const caso = { jugador: j, categoria: cat, nace, propia: propias.join(" o "), desde: r[0], hasta: r[1] };
+      if (r[0] != null && nace < r[0]) noPermitidos.push(Object.assign(caso, { motivo: "mayor" }));
+      else if (j.modalidad !== "equipo") noPermitidos.push(Object.assign(caso, { motivo: "individual" }));
+      else if (propias.some((c) => JDE_ASCENSOS[c] === cat)) {
+        // Nacido en 2013 o 2014 es de B (primaria) o de C (secundaria): el
+        // que sube a la D es el de C, y se nombra esa.
+        caso.propia = propias.find((c) => JDE_ASCENSOS[c] === cat);
+        permitidos.push(caso);
+      }
+      else noPermitidos.push(Object.assign(caso, { motivo: "salto" }));
+    }
+    // El tope de tres, por equipo: si se pasa, ninguno de ese equipo queda
+    // como permitido (la lista no dice cuáles tres eligió el centro).
+    const porEquipo = new Map();
+    for (const c of permitidos) {
+      const k = [String(c.jugador.institucion || "").trim().toUpperCase(), c.categoria, c.jugador.sexo || ""].join("|");
+      if (!porEquipo.has(k)) porEquipo.set(k, []);
+      porEquipo.get(k).push(c);
+    }
+    const quedan = [];
+    for (const casos of porEquipo.values()) {
+      if (casos.length > JDE_MAX_ASCENSOS) for (const c of casos) noPermitidos.push(Object.assign(c, { motivo: "tope", cuantos: casos.length }));
+      else quedan.push(...casos);
+    }
+    return { anio, normativa: JDE_ANIO_NORMATIVA, revisados, permitidos: quedan, noPermitidos, sinFecha };
+  }
+
+  const api = {
+    leerSexo, leerModalidad, ordenFechas, leerFecha, agrupar, sistemaSugerido, revisarCategorias, rangoCategoria,
+    JDE_MAX_TODOS, JDE_RONDAS_SUIZO, JDE_RITMO_MINIMO, JDE_ANIO_NORMATIVA, JDE_MAX_ASCENSOS,
+  };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else raiz.PareoGrupos = api;
 })(typeof self !== "undefined" ? self : this);

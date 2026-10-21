@@ -2294,6 +2294,31 @@ se juega aparte, y armar cada torneo a mano era copiar y pegar filas.
   - Equipos de 3 a 5 por centro educativo, con el orden de tableros del
     congresillo: es un torneo por equipos que Pareo Integral no empareja
     (ver abajo).
+  - **La categoría por año de nacimiento** (art. 17 y 18, pedido después por
+    el dueño del sitio, «que avise si es permitido o si no lo es»):
+    `revisarCategorias()` mira a cada inscrito con categoría A–E y fecha, y
+    el panel dice, caso por caso y escrito al frente, **«Permitido:»** o
+    **«No permitido:»** y por qué. Solo avisa: nunca saca a nadie de la
+    lista, porque el árbitro puede saber algo que el Excel no dice.
+    - Los rangos son los del art. 17 de 2026 (A 2017–2020, B 2013–2016,
+      C 2012–2014, D 2009–2011, E hasta 2008). B y C se pisan en 2013 y
+      2014 porque A y B son de primaria y C, D y E de secundaria: con esos
+      años, cualquiera de las dos cuadra. Otro año se corren los rangos y la
+      página pide confirmarlos con la normativa de ese año.
+    - **Permitido**: subir por equipos de A a B, de C a D o de D a E
+      (art. 18), hasta tres por equipo. El equipo es el mismo centro
+      educativo, categoría y torneo (mujeres o abierto); si en un equipo
+      suben más de tres, ninguno queda como permitido, porque la lista no
+      dice cuáles tres eligió el centro. Al de 2013 que sube a la D se le
+      nombra la C, no «B o C»: la que sube es la de secundaria.
+    - **No permitido**: jugar en una categoría menor que la suya (`mayor`),
+      subir en individual (`individual`; el art. 18 lo permite solo «en los
+      eventos por equipos»), un ascenso que no es de los tres (`salto`) y el
+      tope de tres (`tope`).
+    - Quien no trae fecha se cuenta aparte: no se puede revisar. Una
+      categoría que no es A–E («Sub-10») no se revisa.
+    - En la inscripción de Alajuela 2026: de 364, 4 suben por equipos (los
+      4 permitidos) y ninguno está fuera de la normativa.
 - **Cada torneo copia los datos del abierto** (ciudad, fechas, árbitros,
   ritmo, rondas, puntos y desempates) y se llama como su grupo con la
   regional delante («Regional Alajuela — Equipos · Categoría B · Masculino»),
@@ -2318,8 +2343,11 @@ localhost:8777): las funciones puras sin navegador (sexo, modalidad, fechas,
 grupos) y, en la página, que la sugerencia salga sin agregar a nadie, el orden
 y las marcas de los grupos, el inglés, que «Crear» arme un torneo por grupo
 con su sistema, sus jugadores, la ciudad del abierto y sin las filas de
-título, y los caminos de «No separar» y «Descartar». Con la cabecera buscada
-solo en la primera fila, o con el grupo de uno marcado, salta.
+título, los caminos de «No separar» y «Descartar», y la revisión de categoría
+por año (cada motivo, el tope de tres por equipo y el equipo de mujeres
+aparte del abierto). Con la cabecera buscada solo en la primera fila, con el
+grupo de uno marcado, con el tope en 4 o con el ascenso permitido en
+individual, salta.
 
 ### La barra de progreso al buscar el Elo Nacional
 
