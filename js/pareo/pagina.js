@@ -16,6 +16,7 @@
 
   const T = window.PareoTorneo;
   const D = window.PareoDesempates;
+  const G = window.PareoGrupos;
   const X = window.PareoTextos;
   const motor = window.PareoMotor.enNavegador("js/pareo/motor-worker.js");
 
@@ -59,7 +60,7 @@
   let idioma = leer(CLAVE_IDIOMA) === "en" ? "en" : "es";
   const tx = (clave, vars) => X.t(idioma, clave, vars);
 
-  const estado = { lista: leerJSON(CLAVE_LISTA, []), id: null, t: null, ficha: leer(CLAVE_FICHA) || "jugadores", ronda: null, filtroInstitucion: "", filtroJugador: "", eloPendientes: [], enVivo: false, canalVivo: null };
+  const estado = { lista: leerJSON(CLAVE_LISTA, []), id: null, t: null, ficha: leer(CLAVE_FICHA) || "jugadores", ronda: null, filtroInstitucion: "", filtroJugador: "", eloPendientes: [], enVivo: false, canalVivo: null, sugerencia: null };
 
   // Al cambiar de torneo: cortar el canal del que se sale, para no seguir
   // mandando SU estado por la conexión que había quedado abierta.
@@ -108,6 +109,7 @@
     estado.filtroInstitucion = "";
     estado.filtroJugador = "";
     estado.eloPendientes = [];
+    estado.sugerencia = null;
     escribir("pareo_abierto_v1", id);
     return true;
   }
@@ -120,6 +122,7 @@
     estado.filtroInstitucion = "";
     estado.filtroJugador = "";
     estado.eloPendientes = [];
+    estado.sugerencia = null;
     guardar();
   }
 
@@ -331,6 +334,7 @@
     $("pi-orden-ayuda").textContent = tx(Array.isArray(v.numeracion) ? "ordenFijo" : "ordenAyuda");
     $("pi-buscar-jugador").value = estado.filtroJugador;
     pintarEloPendientes();
+    pintarSugerencia();
     if (!v.jugadores.length) { $("pi-sin-coincidencias").hidden = true; return; }
     const q = normalizarBusqueda(estado.filtroJugador);
     const filtrado = q ? orden.filter((id) => {
@@ -445,7 +449,10 @@
   // lista de opciones traducible, y esta no lo es.
   const SINONIMOS_COLUMNA = {
     nombre: "nombre", name: "nombre", jugador: "nombre", player: "nombre",
+    "nombre completo": "nombre",
     institucion: "institucion", colegio: "institucion", escuela: "institucion",
+    "centro educativo": "institucion", "nombre de centro educativo": "institucion",
+    "nombre del centro educativo": "institucion",
     club: "institucion", institution: "institucion", school: "institucion",
     elo: "elo", rating: "elo",
     titulo: "titulo", title: "titulo",
@@ -453,13 +460,25 @@
     fideid: "fideId", "fide id": "fideId", "id fide": "fideId",
     "codigo fide": "fideId", "fide code": "fideId",
     categoria: "categoria", category: "categoria", nivel: "categoria", division: "categoria",
+    // Lo que trae la inscripción de los JDE (y cualquier lista parecida):
+    // con estas tres se sugiere partirla en torneos (js/pareo/grupos.js).
+    sexo: "sexo", genero: "sexo", sex: "sexo", gender: "sexo", rama: "sexo",
+    fdn: "nacimiento", nacimiento: "nacimiento", "fecha de nacimiento": "nacimiento",
+    "date of birth": "nacimiento", "birth date": "nacimiento", birthday: "nacimiento",
+    "equipo/ind": "modalidad", "equipo / ind": "modalidad", "equipo/individual": "modalidad",
+    "equipo o individual": "modalidad", modalidad: "modalidad", "team/individual": "modalidad",
+    "direccion regional": "region", regional: "region",
+    // Solo para reconocer a la misma persona inscrita dos veces: no se
+    // guarda en el torneo (soloJugador).
+    "documento de identidad": "documento", documento: "documento", cedula: "documento",
+    identificacion: "documento",
   };
   const sinTildes = (s) => String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim();
 
-  // La primera fila es cabecera si reconoce al menos la columna "nombre"
-  // (con cualquiera de sus etiquetas); si no, se lee en ORDEN_LISTA y la
-  // primera fila es ya un jugador. Nunca se adivina a medias: o se reconoce
-  // el nombre, o se cae al orden fijo entero.
+  // Una fila es cabecera si reconoce al menos la columna "nombre" (con
+  // cualquiera de sus etiquetas); si no, se lee en ORDEN_LISTA y la primera
+  // fila es ya un jugador. Nunca se adivina a medias: o se reconoce el
+  // nombre, o se cae al orden fijo entero.
   function columnasDeLista(primeraFila) {
     const mapa = {};
     (primeraFila || []).forEach((celda, i) => {
@@ -469,12 +488,25 @@
     return mapa.nombre != null ? mapa : null;
   }
 
+  // La cabecera se busca en las primeras filas, no solo en la primera: el
+  // Excel de los JDE trae arriba el título del reporte y la fecha en que se
+  // exportó, y sin esto esas dos filas entraban como jugadores.
+  const FILAS_ANTES_DE_CABECERA = 10;
+
+  // Cada jugador, con la modalidad y la regional aparte: sirven para sugerir
+  // cómo partir la lista, pero no son datos del jugador en el torneo.
   function filasAJugadores(filas) {
     if (!filas || !filas.length) return [];
-    const conCabecera = columnasDeLista(filas[0]);
+    let fila0 = -1, conCabecera = null;
+    for (let i = 0; i < Math.min(filas.length, FILAS_ANTES_DE_CABECERA) && !conCabecera; i++) {
+      conCabecera = columnasDeLista(filas[i]);
+      if (conCabecera) fila0 = i;
+    }
     const mapa = conCabecera || Object.fromEntries(ORDEN_LISTA.map((campo, i) => [campo, i]));
-    const datos = conCabecera ? filas.slice(1) : filas;
-    return datos.map((fila) => datosJugador({
+    const datos = conCabecera ? filas.slice(fila0 + 1) : filas;
+    const celda = (fila, campo) => (mapa[campo] != null ? fila[mapa[campo]] : "");
+    const ordenFecha = G.ordenFechas(datos.map((fila) => celda(fila, "nacimiento")));
+    return datos.map((fila) => Object.assign(datosJugador({
       nombre: mapa.nombre != null ? fila[mapa.nombre] : "",
       institucion: mapa.institucion != null ? fila[mapa.institucion] : "",
       elo: mapa.elo != null ? fila[mapa.elo] : "",
@@ -482,8 +514,17 @@
       fed: mapa.fed != null ? fila[mapa.fed] : "",
       fideId: mapa.fideId != null ? fila[mapa.fideId] : "",
       categoria: mapa.categoria != null ? fila[mapa.categoria] : "",
+      sexo: G.leerSexo(celda(fila, "sexo")),
+      nacimiento: G.leerFecha(celda(fila, "nacimiento"), ordenFecha),
+    }), {
+      modalidad: G.leerModalidad(celda(fila, "modalidad")),
+      region: String(celda(fila, "region") || "").trim(),
+      documento: String(celda(fila, "documento") || "").trim(),
     })).filter((d) => d.nombre);
   }
+
+  // Lo que se guarda del jugador: sin la modalidad ni la regional.
+  const soloJugador = ({ modalidad, region, alAbierto, documento, ...d }) => d;
 
   async function subirLista(archivo) {
     const estadoEl = $("pi-subir-lista-estado");
@@ -496,15 +537,278 @@
       else if (nombreArch.endsWith(".doc")) { estadoEl.textContent = ""; Avisos.avisar(tx("archivoDocAntiguo"), { tipo: "error" }); return; }
       else filas = (await window.ReporteExcel.leer(archivo)).filas;
       estadoEl.textContent = "";
-      const lista = filasAJugadores(filas);
-      if (!lista.length) { Avisos.avisar(tx("archivoSinJugadores"), { tipo: "error" }); return; }
-      const n = agregarJugadores(lista);
-      if (n) Avisos.avisar(tx("agregados", { n }));
-      else Avisos.avisar(tx("nadaQueAgregar"), { tipo: "error" });
+      const leida = filasAJugadores(filas);
+      if (!leida.length) { Avisos.avisar(tx("archivoSinJugadores"), { tipo: "error" }); return; }
+      const limpia = G.quitarRepetidos(leida);
+      const lista = limpia.lista;
+      G.pasarMujeresAlAbierto(lista, true);
+      if (G.agrupar(lista).grupos.length > 1) { sugerirGrupos(lista, archivo.name, limpia); return; }
+      const sobran = limpia.repetidos.reduce((a, r) => a + r.veces - 1, 0);
+      if (sobran) Avisos.avisar(tx("repetidasQuitadas", { n: sobran }), { tipo: "info" });
+      agregarTodos(lista);
     } catch (err) {
       estadoEl.textContent = "";
       Avisos.avisar(tx("noAbre", { e: err.message }), { tipo: "error" });
     }
+  }
+
+  function agregarTodos(lista) {
+    const n = agregarJugadores(lista.map(soloJugador));
+    if (n) Avisos.avisar(tx("agregados", { n }));
+    else Avisos.avisar(tx("nadaQueAgregar"), { tipo: "error" });
+  }
+
+  // ---------- La sugerencia: un torneo por grupo ----------
+  // Cuando la lista trae a la vez a hombres y mujeres, equipos e individual o
+  // varias categorías, no se agrega a nadie todavía: se le muestra al árbitro
+  // cómo quedaría partida, con cada grupo marcado (menos el que tiene un solo
+  // jugador, que no alcanza para un torneo), y él decide.
+  function sugerirGrupos(lista, nombreArchivo, limpia) {
+    const regiones = [...new Set(lista.map((j) => j.region).filter(Boolean))];
+    const base = regiones.length === 1 ? tx("grupoRegional", { r: regiones[0] })
+      : String(nombreArchivo || "").replace(/\.[^.]+$/, "").replace(/[_]+/g, " ").trim();
+    // El año del torneo: el de su fecha de inicio, o el de hoy.
+    const anio = Number(String(t().fechaInicio || "").slice(0, 4)) || Number((window.HoraCR ? HoraCR.hoy() : "").slice(0, 4)) || G.JDE_ANIO_NORMATIVA;
+    estado.sugerencia = { lista, base, anio, pasarMujeres: true, grupos: [], elegidos: new Map(), abiertos: new Set(), limpia };
+    calcularSugerencia();
+    pintarSugerencia();
+    const caja = $("pi-sugerencia");
+    caja.scrollIntoView({ block: "nearest" });
+    caja.focus();
+  }
+
+  // Los grupos y la revisión de categorías salen de la lista con o sin el
+  // pase de mujeres al abierto, según la casilla. Un grupo que ya estaba
+  // conserva su marca; uno nuevo viene marcado si tiene al menos dos.
+  function calcularSugerencia() {
+    const s = estado.sugerencia;
+    s.pase = G.pasarMujeresAlAbierto(s.lista, s.pasarMujeres);
+    // En cada equipo de más de cinco juegan los que eligió el árbitro (de
+    // entrada, los cinco primeros de la inscripción); el resto queda
+    // descartado y no entra a ningún torneo.
+    s.equipos = G.equiposDeMas(s.lista);
+    s.descartados = new Set();
+    // La elección se guarda por equipo y por estado de la casilla del pase:
+    // los integrantes de un equipo cambian al prenderla o apagarla, y al
+    // volver, cada equipo queda como el árbitro lo había dejado. Si el
+    // árbitro desmarca a alguien, el lugar queda libre para que elija.
+    for (const e of s.equipos) {
+      e.eleccion = e.clave + "|" + (s.pasarMujeres ? "pase" : "sin-pase");
+      const antes = s.elegidos.get(e.eleccion);
+      const elegidos = antes ? e.integrantes.filter((j) => antes.has(j)) : e.integrantes.slice(0, G.JDE_MAX_EQUIPO);
+      s.elegidos.set(e.eleccion, new Set(elegidos));
+      for (const j of e.integrantes) if (!elegidos.includes(j)) s.descartados.add(j);
+    }
+    s.juegan = s.lista.filter((j) => !s.descartados.has(j));
+    const { dimensiones, grupos } = G.agrupar(s.juegan);
+    const antes = new Map(s.grupos.map((g) => [g.clave, g.marcado]));
+    s.dimensiones = dimensiones;
+    s.grupos = grupos.map((g) => Object.assign(g, { marcado: antes.has(g.clave) ? antes.get(g.clave) : g.jugadores.length >= 2 }));
+    s.revision = G.revisarCategorias(s.juegan, s.anio);
+  }
+
+  // Lo que se limpió de la lista antes de partirla: las inscripciones
+  // repetidas (se dejó una) y quien está en dos modalidades o categorías
+  // (art. 66.1.h: se avisa, decide el árbitro).
+  function pintarRepetidos(s) {
+    const { repetidos, dosModalidades } = s.limpia || { repetidos: [], dosModalidades: [] };
+    if (!repetidos.length && !dosModalidades.length) return null;
+    const caja = el("div", { id: "pi-repetidos", class: "mt-4 pt-3 border-t border-brand-100 dark:border-brand-800" });
+    caja.append(el("h4", { class: "font-semibold text-sm", texto: tx("repetidosTitulo") }));
+    if (repetidos.length) {
+      const sobran = repetidos.reduce((a, r) => a + r.veces - 1, 0);
+      caja.append(el("p", { class: "text-sm mt-1", texto: tx("repetidosTexto", { p: repetidos.length, n: sobran }) }),
+        el("details", { class: "mt-1" },
+          el("summary", { class: "cursor-pointer text-sm rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400", texto: tx("repetidosVer") }),
+          el("ul", { id: "pi-repetidos-lista", class: "mt-1 space-y-1 text-sm list-disc pl-5" }, repetidos.map((r) =>
+            el("li", { texto: tx("repetidosCaso", { n: r.jugador.nombre, i: r.jugador.institucion || "—", v: r.veces }) })))));
+    }
+    if (dosModalidades.length) {
+      const modo = (x) => tx(x.modalidad === "equipo" ? "grupoEquipos" : "grupoIndividual") + " " + x.categoria;
+      caja.append(el("p", { class: "text-sm mt-2", texto: tx("dosModalidadesTexto") }),
+        el("ul", { id: "pi-dos-modalidades", class: "mt-1 space-y-1 text-sm list-disc pl-5" }, dosModalidades.map((d) =>
+          el("li", { texto: tx("dosModalidadesCaso", { n: d.jugador.nombre, i: d.jugador.institucion || "—", m: d.inscripciones.map(modo).join(" y ") }) }))));
+    }
+    return caja;
+  }
+
+  // Elegir los cinco de cada equipo que se pasa: una casilla por integrante,
+  // y con cinco marcados las demás no se pueden marcar.
+  function pintarEquiposDeMas(s) {
+    if (!s.equipos.length) return null;
+    const caja = el("div", { id: "pi-equipos-de-mas", class: "mt-4 pt-3 border-t border-brand-100 dark:border-brand-800" });
+    caja.append(
+      el("h4", { class: "font-semibold text-sm", texto: tx("equiposTitulo", { m: G.JDE_MAX_EQUIPO }) }),
+      el("p", { class: "text-sm mt-1", texto: tx("equiposTexto", { m: G.JDE_MAX_EQUIPO, d: s.descartados.size }) }));
+    s.equipos.forEach((e, k) => {
+      const elegidos = s.elegidos.get(e.eleccion);
+      const lleno = elegidos.size >= G.JDE_MAX_EQUIPO;
+      const detalles = el("details", { class: "mt-2", "data-equipo": e.clave, open: s.abiertos.has(e.clave) });
+      detalles.addEventListener("toggle", () => { if (detalles.open) s.abiertos.add(e.clave); else s.abiertos.delete(e.clave); });
+      detalles.append(el("summary", { class: "cursor-pointer text-sm font-semibold rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400",
+        texto: tx("equiposResumen", { i: e.institucion || "—", c: e.categoria, t: tx(e.torneo === "w" ? "grupoMujeres" : "grupoAbierto"), n: e.integrantes.length, e: elegidos.size, m: G.JDE_MAX_EQUIPO }) }));
+      const ul = el("ul", { class: "mt-1 space-y-1 text-sm pl-2" });
+      e.integrantes.forEach((j, i) => {
+        const id = "pi-eq-" + k + "-" + i;
+        const si = elegidos.has(j);
+        ul.append(el("li", { class: "flex items-start gap-2" },
+          el("input", { type: "checkbox", id, class: "mt-1", checked: si, disabled: !si && lleno, onchange: (ev) => {
+            if (ev.target.checked) elegidos.add(j); else elegidos.delete(j);
+            calcularSugerencia(); pintarSugerencia(); $(id).focus();
+          } }),
+          el("label", { for: id, texto: j.nombre + (si ? "" : " — " + tx("equiposDescartado")) })));
+      });
+      detalles.append(ul);
+      caja.append(detalles);
+    });
+    return caja;
+  }
+
+  // Las mujeres de equipos que no alcanzan para un equipo propio (art.
+  // 66.1.g) y pasan al abierto de su centro, con la casilla para no hacerlo.
+  function pintarPaseAbierto(s) {
+    const { pasadas, sinAbierto } = s.pase;
+    if (!pasadas.length && !sinAbierto.length) return null;
+    const caja = el("div", { id: "pi-pase-abierto", class: "mt-4 pt-3 border-t border-brand-100 dark:border-brand-800" });
+    caja.append(el("h4", { class: "font-semibold text-sm", texto: tx("paseTitulo") }));
+    const nombres = (c) => c.mujeres.map((j) => j.nombre).join(", ");
+    if (pasadas.length) {
+      caja.append(
+        el("p", { class: "text-sm mt-1", texto: tx("paseTexto", { m: G.JDE_MIN_EQUIPO }) }),
+        el("label", { class: "flex items-start gap-2 text-sm mt-2" },
+          el("input", { type: "checkbox", id: "pi-pase-abierto-si", class: "mt-1", checked: s.pasarMujeres, onchange: (e) => {
+            s.pasarMujeres = e.target.checked; calcularSugerencia(); pintarSugerencia(); $("pi-pase-abierto-si").focus();
+          } }),
+          el("span", { class: "font-semibold", texto: tx("paseCasilla", { n: pasadas.reduce((a, c) => a + c.mujeres.length, 0) }) })),
+        el("ul", { id: "pi-pase-lista", class: "mt-2 space-y-1 text-sm list-disc pl-5" }, pasadas.map((c) =>
+          el("li", { texto: tx(c.mujeres.length === 1 ? "paseUna" : "paseDos", { i: c.institucion || "—", c: c.categoria, n: nombres(c), a: c.abierto, t: c.abierto + c.mujeres.length }) }))));
+    }
+    if (sinAbierto.length) {
+      caja.append(el("p", { class: C.nota + " mt-2", texto: tx("paseSinAbierto") }),
+        el("ul", { id: "pi-pase-sin", class: "mt-1 space-y-1 text-sm list-disc pl-5" }, sinAbierto.map((c) =>
+          el("li", { texto: tx("paseSinAbiertoCaso", { i: c.institucion || "—", c: c.categoria, n: nombres(c) }) }))));
+    }
+    return caja;
+  }
+
+  function etiquetaGrupo(g) {
+    const partes = [];
+    if (g.modalidad) partes.push(tx(g.modalidad === "equipo" ? "grupoEquipos" : "grupoIndividual"));
+    else if (estado.sugerencia.dimensiones.includes("modalidad")) partes.push(tx("grupoSinModalidad"));
+    if (g.categoria) partes.push(tx("grupoCategoria", { c: g.categoria }));
+    else if (estado.sugerencia.dimensiones.includes("categoria")) partes.push(tx("grupoSinCategoria"));
+    if (g.sexo) partes.push(tx(g.sexo === "w" ? "grupoMujeres" : "grupoAbierto"));
+    else if (estado.sugerencia.dimensiones.includes("sexo")) partes.push(tx("grupoSinSexo"));
+    return partes.join(" · ");
+  }
+
+  function pintarSugerencia() {
+    const caja = $("pi-sugerencia");
+    const s = estado.sugerencia;
+    caja.replaceChildren();
+    caja.hidden = !s;
+    if (!s) return;
+    const marcados = s.grupos.filter((g) => g.marcado).length;
+    const nombresDim = { modalidad: tx("dimensionModalidad"), categoria: tx("dimensionCategoria"), sexo: tx("dimensionSexo") };
+    const dims = s.dimensiones.map((d) => nombresDim[d]);
+    const unidas = dims.length > 1 ? dims.slice(0, -1).join(", ") + " " + tx("y") + " " + dims[dims.length - 1] : dims[0];
+    const lista = el("ul", { class: "mt-3 space-y-1 text-sm" });
+    s.grupos.forEach((g, i) => {
+      const n = g.jugadores.length;
+      const sistema = G.sistemaSugerido(n);
+      const id = "pi-sugerencia-g" + i;
+      lista.append(el("li", { class: "flex items-start gap-2" },
+        el("input", { type: "checkbox", id, class: "mt-1", checked: g.marcado, onchange: (e) => { g.marcado = e.target.checked; pintarSugerencia(); $(id).focus(); } }),
+        el("label", { for: id },
+          el("span", { class: "font-semibold", texto: etiquetaGrupo(g) }),
+          " — " + tx(n === 1 ? "grupoUnJugador" : "grupoJugadores", { n }),
+          el("span", { class: C.nota, texto: " · " + (sistema ? tx(sistema === "todos" ? "sugeridoTodos" : "sugeridoSuizo", { r: G.JDE_RONDAS_SUIZO }) : tx("grupoNoAlcanza")) }))));
+    });
+    const hayEquipos = s.grupos.some((g) => g.modalidad === "equipo");
+    const porSexo = s.dimensiones.includes("sexo");
+    caja.append(
+      el("h3", { id: "pi-sugerencia-titulo", class: "font-serif text-lg font-bold", texto: tx("sugerenciaTitulo", { n: s.grupos.length }) }),
+      el("p", { class: "text-sm mt-1", texto: tx("sugerenciaTexto", { total: s.juegan.length, d: unidas }) }),
+      el("fieldset", {}, el("legend", { class: "sr-only", texto: tx("sugerenciaLeyenda") }), lista),
+      pintarRepetidos(s),
+      pintarPaseAbierto(s),
+      pintarEquiposDeMas(s),
+      pintarRevisionCategorias(s.revision),
+      porSexo ? el("p", { class: C.nota + " mt-2", texto: tx("sugerenciaAbierto") }) : null,
+      hayEquipos ? el("p", { class: C.nota + " mt-2", texto: tx("sugerenciaEquipos") }) : null,
+      el("p", { class: C.nota + " mt-2", texto: tx("sugerenciaNormativa", { r: G.JDE_RONDAS_SUIZO, ritmo: G.JDE_RITMO_MINIMO }) }),
+      el("p", { class: C.nota + " mt-2", texto: tx("sugerenciaNombre", { b: t().nombre.trim() || s.base }) }),
+      el("div", { class: "flex flex-wrap gap-2 mt-3" },
+        el("button", { type: "button", id: "pi-sugerencia-crear", class: C.boton, disabled: marcados === 0, onclick: crearTorneosDeGrupos, texto: tx("sugerenciaCrear", { n: marcados }) }),
+        el("button", { type: "button", id: "pi-sugerencia-todos", class: C.botonSec, onclick: () => { const l = s.juegan; estado.sugerencia = null; pintarSugerencia(); agregarTodos(l); }, texto: tx("sugerenciaTodosAqui", { n: s.juegan.length }) }),
+        el("button", { type: "button", id: "pi-sugerencia-descartar", class: C.botonSec, onclick: () => { estado.sugerencia = null; pintarSugerencia(); Avisos.avisar(tx("sugerenciaDescartada"), { tipo: "info" }); }, texto: tx("sugerenciaDescartar") })));
+  }
+
+  // Lo que dice la revisión de categoría por año (art. 17 y 18): cada caso
+  // escrito entero, con «Permitido» o «No permitido» al frente (el color de
+  // la lista nunca va solo).
+  function pintarRevisionCategorias(r) {
+    if (!r || (!r.revisados && !r.sinFecha.length)) return null;
+    const caja = el("div", { id: "pi-revision-categorias", class: "mt-4 pt-3 border-t border-brand-100 dark:border-brand-800" });
+    const enSuCategoria = r.revisados - r.permitidos.length - r.noPermitidos.length;
+    caja.append(
+      el("h4", { class: "font-semibold text-sm", texto: tx("catTitulo") }),
+      el("p", { class: "text-sm mt-1", texto: tx("catResumen", { n: r.revisados, ok: enSuCategoria, p: r.permitidos.length, x: r.noPermitidos.length }) }));
+    if (r.anio !== r.normativa) caja.append(el("p", { class: C.nota + " mt-1", texto: tx("catOtroAnio", { a: r.anio, b: r.normativa }) }));
+    const caso = (c) => {
+      const j = c.jugador;
+      const v = { n: j.nombre, i: j.institucion || "—", a: c.nace, p: c.propia, c: c.categoria, d: c.desde, k: c.cuantos, m: G.JDE_MAX_ASCENSOS };
+      const clave = c.motivo ? { mayor: "catMayor", individual: "catIndividual", salto: "catSalto", tope: "catTope" }[c.motivo] : "catPermitido";
+      return el("li", {}, el("span", { class: "font-semibold", texto: tx(c.motivo ? "catNoPermitido" : "catSiPermitido") + " " }), tx(clave, v));
+    };
+    if (r.noPermitidos.length) caja.append(el("ul", { id: "pi-cat-no", class: "mt-2 space-y-1 text-sm list-disc pl-5" }, r.noPermitidos.map(caso)));
+    if (r.permitidos.length) caja.append(el("ul", { id: "pi-cat-si", class: "mt-2 space-y-1 text-sm list-disc pl-5" }, r.permitidos.map(caso)));
+    if (r.sinFecha.length) caja.append(el("p", { class: C.nota + " mt-2", texto: tx("catSinFecha", { n: r.sinFecha.length }) }));
+    return caja;
+  }
+
+  // Un torneo por cada grupo marcado, con los datos del que está abierto
+  // (ciudad, fechas, árbitros, ritmo, puntos, desempates) y el sistema
+  // sugerido por la normativa de los JDE: el suizo con al menos 5 rondas y,
+  // si el abierto no tiene ritmo, el mínimo que pide. Si el abierto está vacío —sin jugadores ni rondas— se usa para
+  // el primer grupo, en vez de dejar un torneo «(sin nombre)» de más.
+  function crearTorneosDeGrupos() {
+    const s = estado.sugerencia;
+    const elegidos = s.grupos.filter((g) => g.marcado);
+    if (!elegidos.length) return;
+    const actual = t();
+    const base = actual.nombre.trim() || s.base;
+    const comunes = {
+      ciudad: actual.ciudad, federacion: actual.federacion, fechaInicio: actual.fechaInicio, fechaFin: actual.fechaFin,
+      arbitro: actual.arbitro, arbitroAdjunto: actual.arbitroAdjunto, ritmo: actual.ritmo.trim() || G.JDE_RITMO_MINIMO,
+      colorInicial: actual.colorInicial, baku: actual.baku, rondasTotales: Math.max(Number(actual.rondasTotales) || 0, G.JDE_RONDAS_SUIZO),
+      puntos: Object.assign({}, actual.puntos), desempates: actual.desempates.slice(),
+    };
+    const reusar = !actual.jugadores.length && !actual.rondas.length;
+    apagarEnVivo();
+    const ids = [];
+    elegidos.forEach((g, i) => {
+      const datos = Object.assign({}, comunes, {
+        nombre: (base ? base + " — " : "") + etiquetaGrupo(g),
+        sistema: G.sistemaSugerido(g.jugadores.length) || "suizo",
+        jugadores: g.jugadores.map((j) => Object.assign({ id: idJugador(), retiradoDespuesDe: null }, soloJugador(j))),
+        rondas: [], numeracion: null,
+      });
+      if (i === 0 && reusar) estado.t = T.nuevo(Object.assign({}, actual, datos));
+      else { estado.id = nuevoId(); estado.t = T.nuevo(datos); }
+      guardar();
+      ids.push(estado.id);
+    });
+    // Se guardaron en el mismo milisegundo: «Mis torneos» (el más reciente
+    // arriba) los mostraría en cualquier orden. Quedan en el de la sugerencia.
+    const ahora = Date.now();
+    ids.forEach((id, i) => { const x = estado.lista.find((y) => y.id === id); if (x) x.actualizado = ahora - i; });
+    escribir(CLAVE_LISTA, JSON.stringify(estado.lista));
+    abrir(ids[0]);
+    estado.ficha = "jugadores";
+    escribir(CLAVE_FICHA, "jugadores");
+    pintarTodo();
+    Avisos.avisar(tx("torneosCreados", { n: ids.length }));
   }
 
   // El mismo bolsillo de palabras que usa la Edge Function, para emparejar

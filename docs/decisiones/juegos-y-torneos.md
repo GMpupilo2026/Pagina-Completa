@@ -2240,6 +2240,157 @@ avise sin bloquear el alta, y que el filtro de institución filtre de verdad
 tanto la Clasificación como la Tabla cruzada. Rompiendo a propósito el freno,
 la comparación de nombres o el filtro, salta.
 
+### Subir la inscripción de los JDE: un torneo por grupo, sugerido
+
+Lo pidió el dueño del sitio con el Excel que baja el sistema del MEP
+(«Report Generation – Juegos Deportivos Estudiantiles»): una regional entera
+en una sola hoja —364 inscritos en la de Alajuela 2026—, con hombres y
+mujeres, equipos e individual y las categorías A a E juntos. Cada combinación
+se juega aparte, y armar cada torneo a mano era copiar y pegar filas.
+
+- **La cabecera se busca en las primeras diez filas, no solo en la primera**
+  (`FILAS_ANTES_DE_CABECERA` en `js/pareo/pagina.js`). Ese Excel trae arriba
+  el título del reporte y la fecha en que se exportó; antes la cabecera no
+  se reconocía, se caía al orden fijo y **esas dos filas entraban como
+  jugadores** (y el resto con las columnas cambiadas). Sin error.
+- `SINONIMOS_COLUMNA` reconoce ahora «Nombre de Centro Educativo»
+  (institución), «Sexo», «FDN» (nacimiento), «Equipo/Ind» (modalidad) y
+  «Dirección Regional». La cédula, la nacionalidad y la edad no se leen: no
+  le hacen falta al torneo y no se guardan.
+- **Las fechas «7/17/2015» se deciden por columna**, no celda por celda
+  (`ordenFechas()` en `js/pareo/grupos.js`): si algún valor solo tiene
+  sentido como mes/día (un 17 no es un mes), toda la columna es mes/día; sin
+  pistas, día/mes, como se escribe acá. Celda por celda, el 1/4/2017 de una
+  lista mes/día se habría leído 1 de abril.
+- **Solo se separa por lo que cambia en el archivo** (`agrupar()`): si todos
+  son de individual, la modalidad no parte nada. Con un solo grupo, la lista
+  se agrega como siempre; con dos o más **no se agrega a nadie**: aparece
+  `#pi-sugerencia` con cada grupo («Individual · Categoría A · Mujeres — 6
+  jugadores · sugerido: todos contra todos») y el árbitro decide entre crear
+  los marcados, «No separar» (todos al torneo abierto, lo de antes) o
+  descartar. Nunca se crean torneos sin que lo confirme.
+- **El grupo de un solo jugador viene desmarcado**: no alcanza para un
+  torneo, y se dice así en vez de esconderlo (el árbitro puede marcarlo igual
+  o juntarlo a mano con otro).
+- **Lo que pide la Normativa de los JDE 2026, art. 66** (la mandó el dueño
+  del sitio; está en su Drive, no en el repositorio):
+  - Los torneos son **«Individual Mujeres» y «Abierto»**, no masculino y
+    femenino: en el abierto pueden jugar hombres y mujeres. El Excel trae el
+    sexo, no en cuál torneo se inscribió cada una, así que todas las mujeres
+    van al de mujeres, y el panel avisa que si alguna juega el abierto, se
+    mueve a mano.
+  - **Sistema en la Etapa Regional** (`sistemaSugerido()`,
+    `JDE_MAX_TODOS`, `JDE_RONDAS_SUIZO`): con más de ocho por modalidad,
+    suizo de no menos de cinco rondas (si el torneo abierto tenía menos, se
+    sube a 5); con ocho o menos, todos contra todos. La Interregional (todos
+    contra todos siempre) y la Nacional (suizo con más de 7, todos contra
+    todos con 6 o menos) tienen otras reglas, y por eso todo dice
+    «sugerido»: se cambia en «Torneo» antes de la ronda 1.
+  - **Ritmo**: no menos de 10 minutos con 2 segundos por jugada. Si el
+    torneo abierto no tiene ritmo, los nuevos llevan ese mínimo
+    (`JDE_RITMO_MINIMO`); si tiene uno, se respeta el del árbitro.
+  - Puntos 1, ½ y 0 (los de FIDE, que ya son los de omisión) y al menos
+    tres desempates (los de omisión son cinco): no hizo falta tocar nada.
+  - Equipos de 3 a 5 por centro educativo, con el orden de tableros del
+    congresillo: es un torneo por equipos que Pareo Integral no empareja
+    (ver abajo).
+  - **Una o dos mujeres de equipos pasan al abierto de su centro**
+    (`pasarMujeresAlAbierto()`, pedido por el dueño del sitio «por ahora»).
+    Un equipo es de 3 a 5 (art. 66.1.g): si en equipos un centro inscribió
+    solo una o dos mujeres en una categoría, no tienen equipo de mujeres; si
+    ese centro presenta equipo abierto en esa categoría, pasan a ese torneo
+    para que puedan jugar. El centro se reconoce por el texto del centro
+    educativo, sin tildes ni mayúsculas de diferencia. Viene con una casilla
+    marcada que lo deshace, y cada caso dice el centro, la categoría, a
+    quiénes pasa y con cuántos queda el abierto. Las que no tienen abierto
+    de su centro se avisan aparte y quedan en el de mujeres. Siguen
+    anotadas como mujeres (`sexo` "w", que va al TRF); la marca `alAbierto`
+    solo decide el grupo y no se guarda. El tope de tres ascensos se cuenta
+    en el equipo donde quedaron. En Alajuela 2026 son tres: una de Grecia
+    (categoría D) y dos de San Gerardo (A); la de Maurilio Soto (A) no
+    tiene abierto al cual pasar.
+  - **Las inscripciones repetidas se limpian antes de todo**
+    (`quitarRepetidos()`). El reporte de Alajuela 2026 traía a 17
+    estudiantes más de una vez (25 filas de más): la misma estudiante tres
+    veces en el mismo equipo, con otra fecha de inscripción. Sin limpiar,
+    un equipo de 4 parecía de 12. La persona se reconoce por su documento
+    de identidad (se lee solo para esto, en memoria: `soloJugador()` no lo
+    guarda ni va al TRF) y, si no lo trae, por su nombre y fecha de
+    nacimiento. La misma inscripción repetida (misma modalidad y
+    categoría) queda una sola vez, y el panel dice quiénes y cuántas
+    veces; la misma persona en dos modalidades o categorías (5 en
+    Alajuela) queda en las dos y se avisa: el art. 66.1.h permite una sola
+    modalidad, y cuál vale lo decide el árbitro.
+  - **Un equipo de más de cinco: el árbitro elige los cinco**
+    (`equiposDeMas()`, art. 66.1.g: «un máximo de cinco [...] cuatro
+    personas estudiantes titulares y una persona estudiante suplente»;
+    pedido por el dueño del sitio). El equipo es el mismo centro, categoría
+    y torneo (mujeres o abierto, ya con el pase). El panel muestra cada uno
+    con una casilla por integrante: vienen marcados los cinco primeros de la
+    inscripción y, con cinco marcados, las demás no se pueden marcar. Los
+    que no se marcan quedan descartados: no entran a ningún torneo (ni con
+    «No separar») y no cuentan en el total. La elección se guarda por
+    equipo y por estado de la casilla del pase, porque los integrantes
+    cambian al prenderla o apagarla; al volver, el equipo queda como estaba
+    (con una sola elección, apagar y prender el pase dejaba un lugar vacío o
+    descartaba a la que había pasado). En Alajuela 2026, ya sin repetidos,
+    son cuatro: Gredos San Diego A abierto, B abierto y B mujeres (10 cada
+    uno) y Saint John Baptist A abierto (8).
+  - **La categoría por año de nacimiento** (art. 17 y 18, pedido después por
+    el dueño del sitio, «que avise si es permitido o si no lo es»):
+    `revisarCategorias()` mira a cada inscrito con categoría A–E y fecha, y
+    el panel dice, caso por caso y escrito al frente, **«Permitido:»** o
+    **«No permitido:»** y por qué. Solo avisa: nunca saca a nadie de la
+    lista, porque el árbitro puede saber algo que el Excel no dice.
+    - Los rangos son los del art. 17 de 2026 (A 2017–2020, B 2013–2016,
+      C 2012–2014, D 2009–2011, E hasta 2008). B y C se pisan en 2013 y
+      2014 porque A y B son de primaria y C, D y E de secundaria: con esos
+      años, cualquiera de las dos cuadra. Otro año se corren los rangos y la
+      página pide confirmarlos con la normativa de ese año.
+    - **Permitido**: subir por equipos de A a B, de C a D o de D a E
+      (art. 18), hasta tres por equipo. El equipo es el mismo centro
+      educativo, categoría y torneo (mujeres o abierto); si en un equipo
+      suben más de tres, ninguno queda como permitido, porque la lista no
+      dice cuáles tres eligió el centro. Al de 2013 que sube a la D se le
+      nombra la C, no «B o C»: la que sube es la de secundaria.
+    - **No permitido**: jugar en una categoría menor que la suya (`mayor`),
+      subir en individual (`individual`; el art. 18 lo permite solo «en los
+      eventos por equipos»), un ascenso que no es de los tres (`salto`) y el
+      tope de tres (`tope`).
+    - Quien no trae fecha se cuenta aparte: no se puede revisar. Una
+      categoría que no es A–E («Sub-10») no se revisa.
+    - En la inscripción de Alajuela 2026: de 364, 4 suben por equipos (los
+      4 permitidos) y ninguno está fuera de la normativa.
+- **Cada torneo copia los datos del abierto** (ciudad, fechas, árbitros,
+  ritmo, rondas, puntos y desempates) y se llama como su grupo con la
+  regional delante («Regional Alajuela — Equipos · Categoría B · Masculino»),
+  o con el nombre del torneo abierto si ya tiene uno. Si el abierto está
+  vacío (sin jugadores ni rondas) se usa para el primer grupo, para no dejar
+  un «(sin nombre)» de más. En «Mis torneos» quedan en el orden de la
+  sugerencia (se guardan en el mismo milisegundo: se les corre la hora de a
+  uno para que el orden por «el más reciente» no los mezcle).
+- **Equipos**: Pareo Integral empareja jugadores, no equipos, y el panel lo
+  dice. El torneo de equipos queda con la lista de cada colegio (el centro
+  educativo es la institución, y la Clasificación ya se filtra por
+  institución) para que el árbitro arme los equipos.
+- La modalidad y la regional sirven para partir la lista y **no se guardan
+  en el jugador** (`soloJugador()`); el sexo y la fecha de nacimiento sí,
+  en los campos que ya tenía el jugador y que van al TRF.
+- El Excel real tiene cédulas de menores: **no va al repositorio**. El
+  verificador arma uno con las mismas columnas y nombres inventados
+  (`js/tabla-excel.js`).
+
+Al tocar esto, `node herramientas/verificar-pareo-grupos.js` (con el sitio en
+localhost:8777): las funciones puras sin navegador (sexo, modalidad, fechas,
+grupos) y, en la página, que la sugerencia salga sin agregar a nadie, el orden
+y las marcas de los grupos, el inglés, que «Crear» arme un torneo por grupo
+con su sistema, sus jugadores, la ciudad del abierto y sin las filas de
+título, los caminos de «No separar» y «Descartar», y la revisión de categoría
+por año (cada motivo, el tope de tres por equipo y el equipo de mujeres
+aparte del abierto). Con la cabecera buscada solo en la primera fila, con el
+grupo de uno marcado, con el tope en 4 o con el ascenso permitido en
+individual, salta.
+
 ### La barra de progreso al buscar el Elo Nacional
 
 Antes de esto, tocar «Buscar Elo Nacional de quien no tiene» con una lista
