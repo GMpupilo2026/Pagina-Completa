@@ -3882,9 +3882,19 @@ completo, no dejaba volver a ninguno: quien quería repasar uno, o repetir el
 que le gustó, no tenía cómo. Ahora, debajo del ejercicio, **«Tus ejercicios»**:
 
 - **Cuántos llevas** en el nivel y cuál te toca.
-- **Volver a uno ya resuelto**: «Ir al ejercicio número», la lista plegada de
-  resueltos del nivel (se pinta solo abierta: con el nivel entero son
-  doscientos botones) y «Ir al que te toca». Lo que todavía no se abrió sigue
+- **El mapa del nivel, siempre a la vista** (`pintarMapa`, `#mapa-4x4`): un
+  botón por ejercicio, el número y su marca: **✓ resuelto** (relleno oscuro),
+  **▶ el de ahora** (dorado, borde grueso), borde grueso el que toca, ★ favorito
+  y, sin marca y en gris con borde punteado, el que todavía está cerrado. El
+  color nunca va solo: la marca está escrita y el `aria-label` dice el estado
+  («Ejercicio 2, resuelto, el que tienes en pantalla, favorito»). Los
+  contrastes se midieron (resuelto 14,6 y 13,3; cerrado 6,1 y 6,8; el de ahora
+  8). Es **una sola parada con Tab** (roving tabindex; con el nivel entero son
+  doscientos botones) y las flechas, Inicio y Fin mueven el foco. Uno cerrado
+  lleva `aria-disabled`, no `disabled`: se alcanza con Tab y al tocarlo dice
+  cuál toca. Reemplazó a la lista plegada «Resueltos de este nivel».
+- **Volver a uno ya resuelto**: tocarlo en el mapa, «Ir al ejercicio número» y
+  «Ir al que te toca». Lo que todavía no se abrió sigue
   cerrado (se abre al resolver el anterior, `isUnlocked`) y se dice cuál toca.
   `showCategory(cat, pedido)` abre ese índice aunque ya esté resuelto o el
   nivel entero lo esté; con el nivel completo la sección también está.
@@ -3903,8 +3913,9 @@ Los niveles de arriba (Fácil, Intermedio…) dicen cuál está elegido con
 `aria-pressed`: llevaban `aria-selected`, que fuera de un `tablist` el lector
 ignora.
 
-Lo mide `verificar-4x4-repaso.js` (con 3 resueltos, los favoritos, la cuenta
-ciega y el nivel completo). Probado que falla: si `showCategory` no abre el
+Lo mide `verificar-4x4-repaso.js` (con 3 resueltos, el mapa —sus 200 botones,
+las marcas, tocar uno resuelto y uno cerrado, las flechas—, los favoritos, la
+cuenta ciega y el nivel completo con sus 200 marcados). Probado que falla: si `showCategory` no abre el
 pedido y no se mira si está abierto, saltan dos.
 
 ## Aprende a jugar: las lecciones de Lichess

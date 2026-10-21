@@ -97,10 +97,23 @@ async function decir(page, t) {
   await page.click("#mis-favoritos summary");
   await page.waitForTimeout(150);
   igual("la lista de favoritos, con el ratón", await page.evaluate(() => Array.from(document.querySelectorAll("#ul-favoritos button")).map((b) => b.textContent)), ["Fácil — ejercicio 2"]);
-  await page.click("#mis-resueltos summary");
-  await page.waitForTimeout(150);
-  igual("la de resueltos marca el favorito", await page.evaluate(() => Array.from(document.querySelectorAll("#ul-resueltos button")).map((b) => b.getAttribute("aria-label") || b.textContent)),
-    ["Ejercicio 1", "Ejercicio 2, favorito", "Ejercicio 3"]);
+  igual("el mapa marca resueltos, el de ahora y los cerrados, con su estado escrito", await page.evaluate(() =>
+    Array.from(document.querySelectorAll("#mapa-4x4 button")).slice(0, 5).map((b) => b.getAttribute("aria-label"))),
+    ["Ejercicio 1, resuelto", "Ejercicio 2, resuelto, el que tienes en pantalla, favorito", "Ejercicio 3, resuelto", "Ejercicio 4, el que te toca", "Ejercicio 5, todavía cerrado"]);
+  // Se mide lo que se VE: el mapa está a la vista, sin abrir nada, y el resuelto no depende solo del color.
+  cierto("el mapa está a la vista y trae los 200 del nivel", await page.evaluate(() => document.getElementById("mapa-4x4").checkVisibility() && document.querySelectorAll("#mapa-4x4 button").length === 200));
+  igual("el resuelto lleva ✓ escrito y el de ahora ▶", await page.evaluate(() => Array.from(document.querySelectorAll("#mapa-4x4 .marca")).slice(0, 4).map((m) => m.textContent)), ["✓", "▶★", "✓", ""]);
+  igual("una sola parada con Tab en el mapa", await page.evaluate(() => document.querySelectorAll("#mapa-4x4 button[tabindex='0']").length), 1);
+  await page.click("#mapa-4x4 button[data-numero='1']");
+  await page.waitForTimeout(300);
+  igual("tocar un resuelto del mapa lo abre", await texto(page, "#solo-progress-text"), "Fácil — Ejercicio 1 de 200");
+  await page.click("#mapa-4x4 button[data-numero='9']", { force: true }); // aria-disabled: Playwright lo cree apagado, un clic de verdad llega
+  await page.waitForTimeout(100);
+  cierto("tocar uno cerrado no lo abre y dice cuál toca", (await texto(page, "#solo-progress-text")) === "Fácil — Ejercicio 1 de 200" && /todavía no se abre.*El que te toca es el 4/.test(await texto(page, "#mis-4x4-aviso")));
+  await page.focus("#mapa-4x4 button[tabindex='0']");
+  await page.keyboard.press("ArrowRight");
+  igual("las flechas mueven el foco dentro del mapa", await page.evaluate(() => document.activeElement.dataset.numero), "2");
+  await decir(page, "ir al 2");
   igual("«favorito» otra vez lo quita", await decir(page, "favorito"), "Ejercicio 2 de Fácil quitado de tus favoritos.");
   igual("sin errores en consola", errores.join(" | ") || "ninguno", "ninguno");
   await ctx.close();
@@ -123,6 +136,7 @@ async function decir(page, t) {
   ({ page, ctx, errores } = await abrir(browser, { entreno_solved: JSON.stringify(todos) }));
   cierto("dice que lo completó y que puede volver", /puedes volver a cualquiera/.test(await texto(page, "#solo-complete-text")));
   cierto("«Tus ejercicios» sigue a la vista", await page.evaluate(() => document.getElementById("mis-4x4").checkVisibility()));
+  igual("con el nivel completo el mapa marca los 200 resueltos", await page.evaluate(() => document.querySelectorAll("#mapa-4x4 button[data-estado='resuelto']").length), 200);
   await page.fill("#ir-numero", "150");
   await page.click("#ir-form button[type=submit]");
   await page.waitForTimeout(300);
