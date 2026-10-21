@@ -287,7 +287,7 @@
     btn.disabled = false;
     const resultado = prueba.perfil();
     const recomendacion = A.recomendar(resultado, contexto);
-    mostrarResultado(resultado, recomendacion, "Guardando el resultado…");
+    mostrarResultado(resultado, recomendacion, "Guardando el resultado…", null, prueba.respuestas);
     const fila = { alumno_id: perfil.id, version: prueba.version, respuestas: prueba.respuestas, contexto,
       partidas: momentos.length ? momentos.slice(0, 300) : null, recomendacion };
     const { data, error } = await sb.from("estilo_pruebas").insert(fila).select("id, version, respuestas, contexto, partidas, recomendacion, created_at").maybeSingle();
@@ -308,15 +308,15 @@
 
   /* ---------------- El resultado ---------------- */
   /* `fecha`: la de la prueba (la de hoy si se acaba de hacer), para la ficha. */
-  function mostrarResultado(resultado, recomendacion, guardado, fecha) {
+  function mostrarResultado(resultado, recomendacion, guardado, fecha, respuestas) {
     irA("resultado-view", $("r-titulo"));
     $("r-guardado").textContent = guardado || "";
     const caja = $("r-perfil");
     caja.textContent = "";
-    EstiloTarjeta.pintarPerfil(caja, resultado, { tu: true });
+    EstiloTarjeta.pintarPerfil(caja, resultado, { tu: true, respuestas });
     const rec = $("r-recomendacion");
     rec.textContent = "";
-    EstiloTarjeta.pintarRecomendacion(rec, recomendacion, { tu: true, base: "../", repertorio: agregarAlRepertorio });
+    EstiloTarjeta.pintarRecomendacion(rec, recomendacion, { tu: true, base: "../", repertorio: agregarAlRepertorio, modelos: true });
     if (recomendacion) rec.appendChild(EstiloTarjeta.botonFicha({ created_at: fecha || new Date().toISOString(), recomendacion }, resultado,
       { nombre: perfil && perfil.full_name, tu: true }));
     anunciar("Listo. " + resultado.lista.map((e) => B.EJES[e].nombre + ": " + resultado[e].etiqueta.texto).join(". ") + ".");
@@ -341,7 +341,7 @@
     ver.type = "button";
     ver.className = "border border-brand-200 dark:border-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-4 py-2 rounded-lg text-sm hover:border-accent-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400";
     ver.textContent = "Ver el resultado completo";
-    ver.addEventListener("click", () => mostrarResultado(pf, ultima.recomendacion, "Prueba del " + HoraCR.fecha(ultima.created_at, { day: "numeric", month: "long", year: "numeric" }) + ".", ultima.created_at));
+    ver.addEventListener("click", () => mostrarResultado(pf, ultima.recomendacion, "Prueba del " + HoraCR.fecha(ultima.created_at, { day: "numeric", month: "long", year: "numeric" }) + ".", ultima.created_at, ultima.respuestas));
     botones.appendChild(ver);
     const seguimiento = document.createElement("div");
     seguimiento.className = "mt-3";
@@ -353,7 +353,7 @@
       seguir.setAttribute("data-estilo-seguir", "");
       seguir.addEventListener("click", async () => {
         seguir.disabled = true;
-        try { await EstiloTarjeta.seguir(seguimiento, { sb, alumnoId: perfil.id, recomendacion: ultima.recomendacion, desde: ultima.created_at, tu: true }); }
+        try { await EstiloTarjeta.seguir(seguimiento, { sb, alumnoId: perfil.id, pruebaId: ultima.id, recomendacion: ultima.recomendacion, desde: ultima.created_at, tu: true }); }
         catch (e) { seguimiento.textContent = "No se pudo: " + (e && e.message ? e.message : e); }
         seguir.disabled = false;
       });
@@ -395,6 +395,11 @@
     $("gate").classList.add("hidden");
     $("app").classList.remove("hidden");
     pintarPrevio();
+    // El aviso a su profe a las 5 partidas con la apertura: se cuenta solo,
+    // en segundo plano y una vez por día (EstiloTarjeta.contarEnSilencio).
+    if (ultima && ultima.recomendacion && cuentas) {
+      EstiloTarjeta.contarEnSilencio({ sb, alumnoId: perfil.id, pruebaId: ultima.id, recomendacion: ultima.recomendacion, desde: ultima.created_at }).catch(() => {});
+    }
   }
   init();
 })();

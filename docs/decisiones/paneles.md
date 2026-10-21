@@ -300,6 +300,8 @@ lista, y el resto se acomoda solo.
   lo que la RLS ya le deja leer, sin nada que guardar aparte. «Nuevo» es lo
   llegado desde la última vez que la abrió en este aparato
   (`panel_campana_vista_v1`); la primera vez, lo de la última semana.
+  También la prueba de estilo a los tres meses (ver «Los avisos de la prueba
+  de estilo» en entrenamiento.md), con la fecha del día en que se cumplieron.
 - **El panel del profe, con la misma mano.** Sus grupos se pliegan en el
   celular como los del alumno (menos la clase en vivo y «Tu cuenta», que va en
   tarjetas chicas), y arriba sale «Lo que más usas»: como lo que hace quien da
@@ -1851,6 +1853,10 @@ nombres cada una; abajo, la tabla del registro de clases abierta. Ahora mide
   el registro» (`aria-expanded`). Lo que deja abierto se recuerda en
   `panel_grupos_abiertos_v1`, como los grupos. Se sigue pidiendo igual: el
   resumen sale de la misma consulta.
+- **El alumno que ya jugó 5 partidas con su apertura recomendada**
+  (`estiloSeguimiento`, a vigilar, solo si tiene Informes): lleva a
+  `informes.html?tema=estilo` y se va con «Ya lo vi» o cuando mira «¿Cómo le
+  fue?». Ver «Los avisos de la prueba de estilo» en entrenamiento.md.
 - Lo prueban `pruebaUrgenteProfesora` (la campana, su número, lo de adentro,
   todo al día y sin supervisión), `pruebaSemanaProfesora` («Ver quiénes»),
   `pruebaPlegables` y `pruebaRegistro` (plegado, abrir y que se recuerde) en

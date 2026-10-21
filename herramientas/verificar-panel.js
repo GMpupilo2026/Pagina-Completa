@@ -213,6 +213,10 @@ window.__consultas = [];
     notas_alumno: DATOS.notas_alumno || [],
     // El horario de quien da clase (asistencia.html → «Tu horario»).
     horario_clases: DATOS.horario_clases || [],
+    // La prueba de estilo: su última fecha (a los tres meses, repetirla) y
+    // quién ya jugó 5 partidas con la apertura recomendada (la campana del profe).
+    estilo_pruebas: DATOS.estilo_pruebas || [],
+    estilo_seguimiento: DATOS.estilo_seguimiento || [],
   };
 
   window.sb = {
@@ -746,6 +750,13 @@ async function pruebaUrgenteProfesora(browser) {
       { id: "e-5", profesor_id: "u-profe", estado: "entregado", vence_at: enDias(-20), entregado_at: enDias(-30) },
       { id: "e-6", profesor_id: "u-profe", estado: "asignado", vence_at: enDias(3) },
     ],
+    /* La prueba de estilo: una alumna ya jugó 5 partidas con su apertura y
+       nadie lo miró; otra ya está vista, y otra todavía no llega. */
+    estilo_seguimiento: [
+      { alumno_id: "u-ana", listo_at: enDias(-1), revisado_at: null },
+      { alumno_id: "u-bea", listo_at: enDias(-9), revisado_at: enDias(-2) },
+      { alumno_id: "u-cata", listo_at: null, revisado_at: null },
+    ],
   });
   await listo(r.page);
   igual("ya no hay tarjeta «Lo urgente» en su panel",
@@ -755,15 +766,16 @@ async function pruebaUrgenteProfesora(browser) {
       const b = document.getElementById("campana");
       return [b.checkVisibility(), b.innerText.replace(/\s+/g, " ").trim(), b.getAttribute("aria-label"),
         b.getAttribute("aria-expanded"), document.getElementById("campana-panel").checkVisibility()];
-    }), [true, "🔔 Avisos 4", "Avisos: 4 cosas por mirar", "false", false]);
+    }), [true, "🔔 Avisos 5", "Avisos: 5 cosas por mirar", "false", false]);
   await r.page.click("#campana");
-  igual("al abrirla: sus justificaciones, el examen congelado, su informe y el entregado, cada uno a donde se resuelve",
+  igual("al abrirla: sus justificaciones, el examen congelado, su informe, el entregado y la apertura por revisar, cada uno a donde se resuelve",
     await r.page.evaluate(() => Array.from(document.querySelectorAll("#campana-profe-lista li")).filter((li) => li.checkVisibility())
       .map((li) => li.querySelector("a > span:nth-child(2)").innerText.replace(/\s+/g, " ").trim() + " → " + li.querySelector("a").getAttribute("href"))),
     ["URGENTE 2 justificaciones de ausencia por revisar → justificaciones.html",
      "URGENTE 1 examen congelado esperando tu decisión → examenes.html#puestos",
      "URGENTE Tu informe mensual de " + nombreMes + " sin enviar → informe-mensual.html",
-     "A VIGILAR 1 examen entregado esta semana → examenes.html#puestos"]);
+     "A VIGILAR 1 examen entregado esta semana → examenes.html#puestos",
+     "A VIGILAR 1 alumno ya jugó 5 partidas con la apertura que le recomendó su prueba de estilo → informes.html?tema=estilo"]);
   igual("y no la lista del alumno",
     await r.page.evaluate(() => [document.getElementById("campana-titulo").textContent, document.getElementById("campana-lista").checkVisibility()]),
     ["Tus avisos", false]);
@@ -3476,6 +3488,30 @@ async function pruebaTercera(browser) {
   r = await panel(browser, [ALUMNA, PROFE], "u-ana", null, {});
   await r.page.waitForTimeout(500);
   igual("sin nada, no hay campana", await r.page.evaluate(() => document.getElementById("campana").checkVisibility()), false);
+  await r.ctx.close();
+
+  /* La prueba de estilo, a los tres meses: la tarjeta dice «Toca repetirla»
+     y la campana lo avisa, con la fecha de ese día. Antes, nada. No se guarda
+     nada: sale de la fecha de su última prueba. */
+  console.log("\n=== La prueba de estilo, a los tres meses ===");
+  r = await panel(browser, [ALUMNA, PROFE], "u-ana", null, {
+    estilo_pruebas: [{ id: "p-1", alumno_id: "u-ana", created_at: dias(100) }, { id: "p-0", alumno_id: "u-ana", created_at: dias(300) }],
+  });
+  await r.page.waitForFunction(() => !document.getElementById("campana").hidden, null, { timeout: 10000 }).catch(() => {});
+  await r.page.click("#campana");
+  igual("a los cien días, la campana avisa que toca repetirla, con el día en que se cumplieron los tres meses",
+    await r.page.evaluate(() => Array.from(document.querySelectorAll("#campana-lista li")).map((li) => [li.querySelector("a") && li.querySelector("a").getAttribute("href"), li.textContent.replace(/Nuevo$/, "").trim()])),
+    [["entreno/estilo.html", "🎭Ya pasaron tres meses: repite la prueba de estilo" + await r.page.evaluate(() => new Intl.DateTimeFormat("es-CR", { timeZone: "America/Costa_Rica", weekday: "short", day: "numeric", month: "short" }).format(new Date(Date.now() - 10 * 864e5)))]]);
+  await r.page.waitForFunction(() => /Toca repetirla/.test((document.querySelector('#tile-grid a[href="entreno/estilo.html"]') || {}).textContent || ""), null, { timeout: 5000 }).catch(() => {});
+  igual("y la tarjeta de la prueba lo dice", await r.page.evaluate(() => /Toca repetirla: ya pasaron tres meses/.test((document.querySelector('#tile-grid a[href="entreno/estilo.html"]') || {}).textContent || "")), true);
+  igual("la fecha se pide sola: la última prueba, una fila, de SU panel",
+    await r.page.evaluate(() => window.__consultas.filter((c) => c.tabla === "estilo_pruebas").every((c) => c.eq.alumno_id === "u-ana" && c.limit === 1)), true);
+  igual("sin errores en la página", r.errores, []);
+  await r.ctx.close();
+  r = await panel(browser, [ALUMNA, PROFE], "u-ana", null, { estilo_pruebas: [{ id: "p-1", alumno_id: "u-ana", created_at: dias(40) }] });
+  await r.page.waitForTimeout(800);
+  igual("a los cuarenta días, nada: ni campana ni aviso en la tarjeta",
+    await r.page.evaluate(() => [document.getElementById("campana").checkVisibility(), /Toca repetirla/.test((document.querySelector('#tile-grid a[href="entreno/estilo.html"]') || {}).textContent || "")]), [false, false]);
   await r.ctx.close();
 
   console.log("\n=== La semana en barras ===");

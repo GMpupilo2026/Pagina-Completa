@@ -137,7 +137,7 @@ window.__funcion = [];
   if (DATOS.supabaseUrl) window.SUPABASE_URL = DATOS.supabaseUrl;
   function constructor(filas, etiqueta) {
     let desde = null, hasta = null, limite = null, unica = false;
-    let condiciones = [], dentro = [], nulos = [], orden = null, pendiente = null;
+    let condiciones = [], dentro = [], nulos = [], noNulos = [], orden = null, pendiente = null;
     // El doble FILTRA Y ORDENA de verdad. Uno que devolviera siempre la tabla
     // entera daría por buena una página que mezcla las filas de dos alumnos, y
     // uno que ignorara el orden daría por bueno un código que se quedara con la
@@ -150,6 +150,8 @@ window.__funcion = [];
       // .is(col, null): las que no tienen nada en col (un certificado vigente
       // es uno sin anulado_at). Filtra de verdad, como los demás.
       is(col, val) { if (val === null) nulos.push(col); return b; },
+      // .not(col, "is", null): las que SÍ tienen algo (lo que ya llegó a 5).
+      not(col, op, val) { if (op === "is" && val === null) noNulos.push(col); return b; },
       order(col, o) { orden = [col, !o || o.ascending !== false]; return b; },
       limit(n) { limite = n; return b; },
       range(a, z) { desde = a; hasta = z; return b; },
@@ -202,6 +204,7 @@ window.__funcion = [];
           condiciones.forEach(([c, v]) => { d = d.filter((f) => String(f[c]) === String(v)); });
           dentro.forEach(([c, vs]) => { d = d.filter((f) => vs.indexOf(String(f[c])) !== -1); });
           nulos.forEach((c) => { d = d.filter((f) => f[c] == null); });
+          noNulos.forEach((c) => { d = d.filter((f) => f[c] != null); });
           if (orden) {
             const [c, asc] = orden;
             d = d.slice().sort((x, y) => (x[c] < y[c] ? -1 : x[c] > y[c] ? 1 : 0) * (asc ? 1 : -1));
@@ -553,6 +556,12 @@ async function pruebaProfesor(browser) {
       analisis_partidas_alumno: [{ alumno_id: "a-1", lichess: "ana_123", chesscom: null, partidas: 22,
         analizado_at: "2026-10-01T15:00:00Z", analisis: ANALISIS_ANA }],
       estilo_pruebas: ESTILO,
+      /* Ana ya jugó 5 partidas con su apertura y nadie lo miró; Bruno
+         también, pero su profe ya lo vio; Carla no tiene prueba. */
+      estilo_seguimiento: [
+        { alumno_id: "a-1", prueba_id: "e-2", partidas: { blancas: 6, e4: 2 }, listo_at: "2026-10-10T15:00:00Z", revisado_at: null },
+        { alumno_id: "a-2", prueba_id: "e-b", partidas: { blancas: 5 }, listo_at: "2026-09-10T15:00:00Z", revisado_at: "2026-09-12T15:00:00Z" },
+      ],
       // Una opinión de su profe sobre OTRO alumno: no tiene que contar.
       estilo_opiniones: [{ alumno_id: "a-2", profesor_id: "prof-1", eje: "material", opinion: 1 }],
       plantillas_casa: [
@@ -1235,6 +1244,15 @@ async function pruebaProfesor(browser) {
     sin: (document.querySelector("#topic-report-body").textContent.match(/Sin la prueba: [^.]*\./) || [""])[0],
     salud: Object.fromEntries([...document.querySelectorAll("#topic-report-body [data-salud]")].map((li) => [li.dataset.salud, li.textContent])),
   }));
+  // Los que ya jugaron 5 partidas con su apertura y nadie miró cómo les fue.
+  const porRevisar = await page.evaluate(() => [...document.querySelectorAll("#topic-report-body [data-estilo-por-revisar] li")].map((li) => [li.dataset.alumno, li.textContent]));
+  igual("arriba, quién ya jugó 5 partidas con su apertura y nadie lo miró (Ana; Bruno ya está visto)",
+    porRevisar.map((x) => x[0] + ": " + /Ana Rojas/.test(x[1]) + " " + /6 partidas/.test(x[1])), ["a-1: true true"]);
+  await page.click('#topic-report-body [data-estilo-por-revisar] li[data-alumno="a-1"] button');
+  await page.waitForFunction(() => /ya no sale en la campana/.test(document.querySelector('#topic-report-body [data-estilo-por-revisar] li[data-alumno="a-1"] [role=status]').textContent), null, { timeout: 5000 });
+  igual("«Ya lo vi» lo marca como revisado, sobre ESA alumna (la hora y quién, los pone la base)",
+    await page.evaluate(() => window.__escrituras.filter((e) => /estilo_seguimiento/.test(e.etiqueta)).map((e) => [e.accion, JSON.stringify(e.donde), typeof e.fila.revisado_at])),
+    [["update", JSON.stringify([["alumno_id", "a-1"]]), "string"]]);
   igual("el estilo de cada uno, de su última prueba (Ana, con sus cuatro ejes)", clase.filas[0],
     "a-1: atacar al rey | sin definir | mantener las piezas | dar material por la iniciativa");
   igual("y quién no la hizo, con cómo pedírsela", clase.sin, "Sin la prueba: Carla Soto.");

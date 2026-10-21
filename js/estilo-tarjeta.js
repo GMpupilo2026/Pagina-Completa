@@ -12,11 +12,20 @@
  * ese día): es la que se sigue después.
  *
  *   EstiloTarjeta.cargar() → Promise        (los módulos que hacen falta, a pedido)
- *   EstiloTarjeta.pintarPerfil(caja, perfil, { tu, opinar })
- *   EstiloTarjeta.pintarRecomendacion(caja, rec, { tu, base, repertorio })
+ *   EstiloTarjeta.pintarPerfil(caja, perfil, { tu, opinar, respuestas })
+ *     `respuestas`: las de la prueba; debajo de cada eje, «Por qué»: las
+ *     posiciones de SU prueba que lo muestran (EstiloPerfil.ejemplos), cada
+ *     una escrita y en un tablero (js/visor-linea.js, a pedido).
+ *   EstiloTarjeta.pintarRecomendacion(caja, rec, { tu, base, repertorio, modelos })
+ *     `modelos`: «Ver una partida modelo» en cada apertura (js/estilo-modelos.js,
+ *     a pedido: una partida de maestros ganada con ella).
  *     `repertorio(op, color)` → Promise<texto>: el botón «Agregar a Mi
  *     repertorio» de cada apertura (solo en la página del alumno).
- *   EstiloTarjeta.seguir(caja, { sb, alumnoId, recomendacion, desde, tu })
+ *   EstiloTarjeta.seguir(caja, { sb, alumnoId, pruebaId, recomendacion, desde, tu })
+ *     y guarda la cuenta en estilo_seguimiento (el aviso a su profe a las 5
+ *     partidas; si mira el profe, queda visto).
+ *   EstiloTarjeta.contarEnSilencio({ sb, alumnoId, pruebaId, recomendacion, desde })
+ *     lo mismo sin pintar nada, una vez por día como mucho (al abrir la prueba).
  *   EstiloTarjeta.montarProfe(contenedor, { sb, alumnoId, nombre, yo, puedeEscribir })
  *   EstiloTarjeta.montarClase(contenedor, { sb, alumnos: [{ id, nombre }] })
  *   EstiloTarjeta.botonFicha(prueba, perfil, { nombre, tu }) → el botón que
@@ -78,11 +87,125 @@
   const lineaEs = (sec) => (window.PreparacionLineas ? PreparacionLineas.lineaEs(sec) : sec.join(" "));
 
   /* ---------------- El perfil ---------------- */
+  /* Un módulo más, a pedido (el visor de líneas, las partidas modelo): al
+     lado de este archivo, como los de MODULOS. */
+  const pedidos = {};
+  function cargarUno(nombre, global) {
+    if (window[global]) return Promise.resolve();
+    if (pedidos[nombre]) return pedidos[nombre];
+    const base = ESTE ? new URL("./", ESTE) : new URL("js/", document.baseURI);
+    pedidos[nombre] = new Promise((ok, mal) => {
+      const sc = document.createElement("script");
+      sc.src = new URL(nombre, base).href;
+      sc.onload = ok;
+      sc.onerror = () => { delete pedidos[nombre]; mal(new Error("no se pudo cargar " + nombre)); };
+      document.body.appendChild(sc);
+    });
+    return pedidos[nombre];
+  }
+
+  /* Un botón que abre (y cierra) un tablero para recorrer una línea
+     (js/visor-linea.js), debajo de él. `linea()` → { jugadas, desde,
+     orientacion, titulo, notas, en }, o una promesa de eso. */
+  function botonTablero(texto, linea, nombre) {
+    const d = el("div", "mt-2");
+    const b = el("button", "text-sm font-semibold text-brand-800 dark:text-white underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400", texto);
+    b.type = "button";
+    const id = "tablero-" + Math.random().toString(36).slice(2, 8);
+    b.setAttribute("aria-expanded", "false");
+    b.setAttribute("aria-controls", id);
+    const caja = el("div", "mt-2 max-w-sm hidden");
+    caja.id = id;
+    const st = el("p", SUB);
+    st.setAttribute("role", "status");
+    let visor = null;
+    b.addEventListener("click", async () => {
+      const abrir = caja.classList.contains("hidden");
+      caja.classList.toggle("hidden", !abrir);
+      b.setAttribute("aria-expanded", abrir ? "true" : "false");
+      if (!abrir || visor) return;
+      st.textContent = "Cargando el tablero…";
+      try {
+        await cargarUno("visor-linea.js", "VisorLinea");
+        const l = await linea();
+        visor = VisorLinea.montar(caja, { nombre: nombre || "Tablero" });
+        visor.cargar(l.jugadas, { desde: l.desde, orientacion: l.orientacion, titulo: l.titulo, notas: l.notas, en: l.en });
+        st.textContent = "";
+      } catch (e) {
+        st.textContent = "No se pudo abrir el tablero: " + (e && e.message ? e.message : e);
+      }
+    });
+    d.append(b, st, caja);
+    return d;
+  }
+
+  /* SAN en español (Cf3, Axb5): la de la preparación si está cargada. */
+  const sanEs = (san) => (window.PreparacionLineas && PreparacionLineas.sanEs ? PreparacionLineas.sanEs(san)
+    : String(san).replace(/^[NBRQK]/, (p) => ({ N: "C", B: "A", R: "T", Q: "D", K: "R" })[p]).replace(/=([NBRQ])/, (_, p) => "=" + ({ N: "C", B: "A", R: "T", Q: "D" })[p]));
+
+  /* «Por qué»: las posiciones de su prueba que muestran lo que dice el eje
+     (EstiloPerfil.ejemplos). Cada una, escrita («Elegiste Cxe5 —atacar al
+     rey— y no a4 —maniobrar—») y en un tablero que arranca en la posición y
+     sigue con la jugada que eligió y la línea del motor. */
+  function porQue(e, ejemplos, tu) {
+    const B = window.EstiloItems;
+    const lista = ejemplos && ejemplos[e];
+    if (!lista || !lista.length) return null;
+    const det = el("details", "mt-3");
+    det.setAttribute("data-estilo-por-que", e);
+    det.appendChild(el("summary", "text-sm font-semibold text-brand-800 dark:text-white cursor-pointer rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400",
+      tu ? "Por qué: lo que elegiste" : "Por qué: lo que eligió"));
+    lista.forEach((x, i) => {
+      const it = x.item;
+      const elegida = it[x.eleccion], otra = it[x.eleccion === "a" ? "b" : "a"];
+      const nombre = (polo) => B.EJES[e].polos[polo].toLowerCase();
+      const caja = el("div", "mt-2");
+      caja.setAttribute("data-ejemplo", it.id);
+      const juegan = it.fen.split(" ")[1] === "w" ? "las blancas" : "las negras";
+      caja.appendChild(el("p", TXT, "Posición " + (i + 1) + " (juegan " + juegan + "): " + (tu ? "elegiste " : "eligió ") + sanEs(elegida.san)
+        + " —" + nombre(x.polo) + "— y no " + sanEs(otra.san) + " —" + nombre(x.otroPolo) + "—. Para el motor valen casi lo mismo."));
+      caja.appendChild(botonTablero("Verla en el tablero", () => {
+        // La jugada elegida y la línea del motor que la sigue, en SAN.
+        const g = new Chess(it.fen);
+        const jugadas = [];
+        for (const u of elegida.linea || [elegida.uci]) {
+          const m = g.move({ from: u.slice(0, 2), to: u.slice(2, 4), promotion: u[4] });
+          if (!m) break;
+          jugadas.push(m.san);
+        }
+        return {
+          jugadas, desde: it.fen, orientacion: it.fen.split(" ")[1], en: 0,
+          titulo: (tu ? "Elegiste " : "Eligió ") + sanEs(elegida.san) + " (" + nombre(x.polo) + ")",
+          notas: [(tu ? "Tu jugada. " : "Su jugada. ") + "La otra era " + sanEs(otra.san) + " (" + nombre(x.otroPolo) + "). Lo que sigue es la línea del motor."],
+        };
+      }, "Tablero de la posición"));
+      det.appendChild(caja);
+    });
+    return det;
+  }
+
+  /* «Ver una partida modelo»: la de js/estilo-modelos.js para esa apertura. */
+  function botonModelo(op, color) {
+    return botonTablero("Ver una partida modelo", async () => {
+      await cargarUno("estilo-modelos.js", "EstiloModelos");
+      const m = window.EstiloModelos[op.id];
+      if (!m) throw new Error("esta apertura todavía no tiene partida modelo");
+      const res = { "1-0": "ganan las blancas", "0-1": "ganan las negras", "1/2-1/2": "tablas" }[m.resultado] || "";
+      return {
+        jugadas: m.jugadas, en: (op.jugadas || []).length,
+        orientacion: color === "b" ? "b" : "w",
+        titulo: m.blancas + " – " + m.negras + (m.evento ? " (" + m.evento + ")" : "") + (res ? ", " + res : ""),
+      };
+    }, "Tablero de la partida modelo");
+  }
+
   function pintarPerfil(caja, perfil, o) {
     const tu = !!(o && o.tu);
     const B = window.EstiloItems;
     const lista = el("div", "space-y-3");
     lista.setAttribute("data-estilo-perfil", "");
+    // `respuestas`: las de la prueba, para «Por qué» (las posiciones que lo muestran).
+    const ejemplos = o && o.respuestas ? EstiloPerfil.ejemplos(o.respuestas, perfil) : null;
     // Los ejes de SU prueba: una de la versión 1 no tiene el cuarto.
     for (const e of perfil.lista || EstiloPerfil.EJES) {
       const x = perfil[e];
@@ -111,6 +234,7 @@
       punto.style.left = pct(x.p) + "%";
       barra.append(franja, punto);
       fila.append(extremos, barra, el("p", SUB + " mt-2", EstiloPerfil.frase(e, x, tu)));
+      if (ejemplos) { const pq = porQue(e, ejemplos, tu); if (pq) fila.appendChild(pq); }
       if (o && o.opinar) fila.appendChild(botonesOpinion(e, o.opinar));
       lista.appendChild(fila);
     }
@@ -176,6 +300,7 @@
       a.href = o.base + "entreno/aperturas.html?linea=" + encodeURIComponent(op.id);
       d.appendChild(a);
     }
+    if (o && o.modelos) { const m = botonModelo(op, o.color); m.setAttribute("data-modelo", op.id); d.appendChild(m); }
     return d;
   }
   function pintarRecomendacion(caja, rec, o) {
@@ -189,8 +314,10 @@
       card.setAttribute("data-grupo", g);
       card.appendChild(el("p", "font-serif font-bold text-brand-800 dark:text-white", r.titulo));
       if (r.mantener) card.appendChild(el("p", TXT + " mt-1", tu ? "Sigue con la tuya: te queda casi igual de bien que la mejor, y cambiar de apertura cuesta meses." : "Que siga con la suya: le queda casi igual de bien que la mejor, y cambiar de apertura cuesta meses."));
-      card.appendChild(tarjetaOpcion(r.principal, r.mantener ? (tu ? "La tuya" : "La suya") : (tu ? "Te recomendamos" : "Le recomendamos"), o));
-      if (r.alternativa) card.appendChild(tarjetaOpcion(r.alternativa, "Otra opción", o));
+      // El color de quien la juega: el tablero de la partida modelo, desde su lado.
+      const oc = Object.assign({}, o, { color: g === "blancas" ? "w" : "b" });
+      card.appendChild(tarjetaOpcion(r.principal, r.mantener ? (tu ? "La tuya" : "La suya") : (tu ? "Te recomendamos" : "Le recomendamos"), oc));
+      if (r.alternativa) card.appendChild(tarjetaOpcion(r.alternativa, "Otra opción", oc));
       if (o && o.repertorio) card.appendChild(botonRepertorio(r.principal, g === "blancas" ? "w" : "b", o.repertorio));
       cont.appendChild(card);
     }
@@ -333,33 +460,70 @@
   }
 
   /* ---------------- El seguimiento ---------------- */
-  async function seguir(caja, o) {
-    caja.textContent = "";
-    const estado = el("p", SUB, "Buscando las cuentas de Lichess y Chess.com…");
-    estado.setAttribute("role", "status");
-    caja.appendChild(estado);
+  /* Cuántas partidas jugó con cada apertura recomendada desde la prueba: baja
+     sus partidas de Lichess y Chess.com (EstiloPartidas.seguimiento). null si
+     no tiene cuentas. */
+  async function contarSeguimiento(o, alAvanzar) {
     await cargar();
     const { data } = await o.sb.from("analisis_partidas_alumno").select("lichess, chesscom").eq("alumno_id", o.alumnoId).maybeSingle();
-    if (!data || !(data.lichess || data.chesscom)) {
-      estado.textContent = o.tu ? "Para seguirla hacen falta tus usuarios de Lichess o Chess.com: ponlos en Configuración." : "Para seguirla hacen falta sus usuarios de Lichess o Chess.com (Configuración, o «Sus aperturas» más arriba).";
-      return;
-    }
+    if (!data || !(data.lichess || data.chesscom)) return null;
     await AnalisisAlumno.cargarModulos();
     const D = window.PreparacionDescarga, A = window.PreparacionAnalisis;
     const cuentas = [["lichess", data.lichess], ["chesscom", data.chesscom]].filter(([, u]) => u);
     const principal = cuentas[0][1];
     let texto = "";
     for (const [sitio, usuario] of cuentas) {
-      const t = await D.descargar({ sitio, usuario, maximo: AnalisisAlumno.MAXIMO, alAvanzar: (n) => { estado.textContent = "Bajando partidas: " + n; } });
+      const t = await D.descargar({ sitio, usuario, maximo: AnalisisAlumno.MAXIMO, alAvanzar: (n) => alAvanzar && alAvanzar(n) });
       texto += (texto ? "\n\n" : "") + (usuario === principal ? t : D.unirCuentas(t, usuario, principal));
     }
-    const partidas = A.leerPgn(texto);
-    const s = EstiloPartidas.seguimiento(partidas, principal, o.recomendacion, String(o.desde).slice(0, 10));
+    return EstiloPartidas.seguimiento(A.leerPgn(texto), principal, o.recomendacion, String(o.desde).slice(0, 10));
+  }
+
+  /* La cuenta, guardada (public.estilo_seguimiento): de ahí sale el aviso a
+     su profe cuando alguna llega a 5. Si quien la mira es su profe
+     (`revisado`), el aviso queda visto: ya vio cómo le fue. La base decide
+     cuándo llegó a 5 y quién lo revisó. Si no se puede guardar, el resultado
+     igual se muestra. */
+  async function guardarSeguimiento(o, s, revisado) {
+    if (!o.pruebaId || !s) return;
+    const partidas = {};
+    for (const g of ["blancas", "e4", "d4"]) if (s[g]) partidas[g] = s[g].despues.n;
+    const fila = { alumno_id: o.alumnoId, prueba_id: o.pruebaId, partidas };
+    if (revisado) fila.revisado_at = new Date().toISOString();
+    try { await o.sb.from("estilo_seguimiento").upsert(fila, { onConflict: "alumno_id" }); } catch (e) { /* el aviso es un extra */ }
+  }
+
+  async function seguir(caja, o) {
+    caja.textContent = "";
+    const estado = el("p", SUB, "Buscando las cuentas de Lichess y Chess.com…");
+    estado.setAttribute("role", "status");
+    caja.appendChild(estado);
+    const s = await contarSeguimiento(o, (n) => { estado.textContent = "Bajando partidas: " + n; });
+    if (!s) {
+      estado.textContent = o.tu ? "Para seguirla hacen falta tus usuarios de Lichess o Chess.com: ponlos en Configuración." : "Para seguirla hacen falta sus usuarios de Lichess o Chess.com (Configuración, o «Sus aperturas» más arriba).";
+      return;
+    }
     estado.textContent = "";
     const ul = el("ul", "list-disc pl-5 space-y-1 " + TXT);
     ul.setAttribute("data-estilo-seguimiento", "");
     for (const g of ["blancas", "e4", "d4"]) if (s[g]) ul.appendChild(el("li", null, EstiloPartidas.fraseSeguimiento(s[g], o.tu)));
     caja.appendChild(ul);
+    await guardarSeguimiento(o, s, !o.tu);
+  }
+
+  /* Sin que nadie apriete nada: al abrir su prueba, el navegador del alumno
+     vuelve a contar, una vez por día como mucho, en segundo plano. Así el
+     aviso a su profe llega aunque nadie mire «¿Cómo me fue?». */
+  const CADA_CUANTO_CONTAR = 864e5;
+  async function contarEnSilencio(o) {
+    if (!o.pruebaId || !o.recomendacion) return false;
+    const { data, error } = await o.sb.from("estilo_seguimiento").select("prueba_id, updated_at").eq("alumno_id", o.alumnoId).maybeSingle();
+    if (error) return false;
+    if (data && data.prueba_id === o.pruebaId && Date.now() - Date.parse(data.updated_at) < CADA_CUANTO_CONTAR) return false;
+    const s = await contarSeguimiento(o);
+    if (!s) return false;
+    await guardarSeguimiento(o, s, false);
+    return true;
   }
 
   /* ---------------- Para el profe (Informes) ---------------- */
@@ -404,11 +568,11 @@
         if (st) st.textContent = "Guardado: ya cuenta en su perfil.";
       },
     } : null;
-    pintarPerfil(contenedor, perfil, { tu: false, opinar });
+    pintarPerfil(contenedor, perfil, { tu: false, opinar, respuestas: ultima.respuestas });
     if (ultima.recomendacion) contenedor.appendChild(botonFicha(ultima, perfil, { nombre: o.nombre, tu: false }));
     if (ultima.recomendacion) {
       contenedor.appendChild(el("h3", H3, "Lo que se le recomendó ese día"));
-      pintarRecomendacion(contenedor, ultima.recomendacion, { tu: false, base: "" });
+      pintarRecomendacion(contenedor, ultima.recomendacion, { tu: false, base: "", modelos: true });
       const caja = el("div", "mt-3");
       const btn = el("button", BOTON, "Ver cómo le fue desde entonces");
       btn.type = "button";
@@ -416,7 +580,7 @@
       const res = el("div", "mt-2");
       btn.addEventListener("click", async () => {
         btn.disabled = true;
-        try { await seguir(res, { sb: o.sb, alumnoId: o.alumnoId, recomendacion: ultima.recomendacion, desde: ultima.created_at, tu: false }); }
+        try { await seguir(res, { sb: o.sb, alumnoId: o.alumnoId, pruebaId: ultima.id, recomendacion: ultima.recomendacion, desde: ultima.created_at, tu: false }); }
         catch (e) { res.textContent = "No se pudo: " + (e && e.message ? e.message : e); }
         btn.disabled = false;
       });
@@ -724,6 +888,42 @@
     estado.textContent = "";
     const con = alumnos.filter((a) => ultima.has(a.id)).sort((a, b) => a.nombre.localeCompare(b.nombre, "es"));
     const sin = alumnos.filter((a) => !ultima.has(a.id)).map((a) => a.nombre).sort((a, b) => a.localeCompare(b, "es"));
+    // Los que ya jugaron 5 partidas con su apertura recomendada y nadie miró
+    // cómo les fue (el aviso de la campana se resuelve acá o en su informe).
+    const { data: listos } = await o.sb.from("estilo_seguimiento").select("alumno_id, partidas, listo_at")
+      .not("listo_at", "is", null).is("revisado_at", null).order("listo_at", { ascending: true }).range(0, 999);
+    const nombreDe = new Map(alumnos.map((a) => [a.id, a.nombre]));
+    const porRevisar = (listos || []).filter((f) => nombreDe.has(f.alumno_id));
+    if (porRevisar.length) {
+      const sec = el("div", "mb-4 bg-white dark:bg-brand-900 rounded-xl shadow-md p-4");
+      sec.setAttribute("data-estilo-por-revisar", "");
+      sec.appendChild(el("h3", H3.replace("mt-4", "mt-0"), "Ya jugaron 5 partidas con su apertura recomendada"));
+      sec.appendChild(el("p", SUB + " mb-2", "Mira cómo les fue en su informe («¿Cómo le fue?», en Sus aperturas) o márcalo como visto."));
+      const ul = el("ul", "space-y-2");
+      for (const f of porRevisar) {
+        const li = el("li", "flex flex-wrap items-center gap-2 " + TXT);
+        li.setAttribute("data-alumno", f.alumno_id);
+        const n = Math.max(...Object.values(f.partidas || {}).map(Number).filter((x) => x >= 0), 0);
+        li.appendChild(el("span", "font-semibold text-brand-800 dark:text-white", nombreDe.get(f.alumno_id)));
+        li.appendChild(el("span", SUB, n + " partidas con una de ellas"));
+        const a = el("a", ENLACE + " text-sm", "Ver su informe");
+        a.href = "informes.html?alumno=" + encodeURIComponent(f.alumno_id);
+        const b = el("button", "px-3 py-1 rounded-lg text-sm font-semibold border border-brand-300 dark:border-brand-600 text-brand-800 dark:text-brand-100 hover:bg-brand-50 dark:hover:bg-brand-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 disabled:opacity-60", "Ya lo vi");
+        b.type = "button";
+        const st = el("span", SUB);
+        st.setAttribute("role", "status");
+        b.addEventListener("click", async () => {
+          b.disabled = true;
+          const { error } = await o.sb.from("estilo_seguimiento").update({ revisado_at: new Date().toISOString() }).eq("alumno_id", f.alumno_id);
+          if (error) { st.textContent = "No se pudo: " + error.message; b.disabled = false; return; }
+          st.textContent = "Listo: ya no sale en la campana.";
+        });
+        li.append(a, b, st);
+        ul.appendChild(li);
+      }
+      sec.appendChild(ul);
+      contenedor.appendChild(sec);
+    }
     contenedor.appendChild(el("h3", H3.replace("mt-4", "mt-0"), "El estilo de cada uno"));
     if (con.length) {
       const envoltura = el("div", "overflow-x-auto");
@@ -778,6 +978,6 @@
     contenedor.appendChild(el("p", SUB + " mt-2", "Cuenta las pruebas que ves (las de tus alumnos; administración, todas)."));
   }
 
-  const api = { cargar, pintarPerfil, pintarRecomendacion, seguir, montarProfe, montarClase, botonFicha, frasesSalud, correlacion, lado, cuadrantes, parejas };
+  const api = { cargar, pintarPerfil, pintarRecomendacion, seguir, contarEnSilencio, montarProfe, montarClase, botonFicha, frasesSalud, correlacion, lado, cuadrantes, parejas };
   if (typeof window !== "undefined") window.EstiloTarjeta = api;
 })();

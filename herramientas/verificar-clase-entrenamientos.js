@@ -99,7 +99,7 @@ async function pruebaDelProfe(browser) {
   igual("la pestaña se llama Entrenamientos", (await page.textContent("#teacher-tab-tipos")).trim(), "🧠 Entrenamientos");
   const slugs = await page.$$eval("#entrenos-body [data-entreno]", (b) => b.map((x) => x.dataset.entreno));
   igual("están los que pidieron", ["mates", "aprender", "coordenadas", "desafios", "estudio", "aperturas", "4x4", "visualizacion",
-    "precision-posicional", "finales", "memoria", "tipos"].filter((x) => !slugs.includes(x)), []);
+    "precision-posicional", "finales", "memoria", "tipos", "estilo"].filter((x) => !slugs.includes(x)), []);
 
   /* Todos los ejercicios de todos los entrenamientos con lista: la posición
      la acepta el tablero de la clase y la solución se juega. */
@@ -127,7 +127,8 @@ async function pruebaDelProfe(browser) {
           for (const san of it.solucion) { if (!g2.move(san, { sloppy: true })) { out.malos.push(slug + "/" + it.id + ": " + san + " no se juega"); break; } }
           if (slug === "mates" && !g2.in_checkmate()) out.malos.push(slug + "/" + it.id + ": no termina en mate");
         }
-        if (it.opciones && !(it.correcta >= 0 && it.correcta < it.opciones.length)) out.malos.push(slug + "/" + it.id + ": la correcta no es una opción");
+        // Sin correcta solo lo que lo dice (`sinCorrecta`, los dilemas de estilo).
+        if (it.opciones && !(it.sinCorrecta ? it.correcta === null : it.correcta >= 0 && it.correcta < it.opciones.length)) out.malos.push(slug + "/" + it.id + ": la correcta no es una opción");
       }
     }
     return out;
@@ -320,6 +321,28 @@ async function pruebaDelProfe(browser) {
   await page.waitForFunction(() => (window.__rpcs || []).some((r) => r.n === "hacer_pregunta_de_opciones"), null, { timeout: 5000 });
   const rpc = await page.evaluate(() => window.__rpcs.filter((r) => r.n === "hacer_pregunta_de_opciones").slice(-1)[0].args);
   igual("Precisión: pregunta de opciones con su correcta", [rpc.p_prompt, rpc.p_opciones.length, rpc.p_correcta, rpc.p_fen], [pp.enunciado, 4, pp.correcta, pp.fen]);
+
+  /* Dilemas de estilo: la prueba de estilo es una vez y de cada uno, pero en
+     clase entran sus posiciones, con su propio nombre, como pregunta de
+     opciones SIN correcta (cada uno vota) y sin «Abrirlo a todos». */
+  await page.evaluate(() => { activateTeacherTab("tipos"); entrenosView = { slug: null, grupo: null, mostrar: 30 }; pintarEntrenos(); });
+  igual("la tarjeta se llama «Dilemas de estilo»", (await page.textContent('#entrenos-body [data-entreno="estilo"]')).includes("Dilemas de estilo"), true);
+  await page.click('#entrenos-body [data-entreno="estilo"]');
+  await page.waitForFunction(() => document.getElementById("entrenos-body").textContent.includes("Atacar o maniobrar"), null, { timeout: 10000 });
+  igual("sin «Abrirlo a todos en una ventana»", await page.$$eval("#entrenos-body button", (b) => b.some((x) => /Abrirlo a todos/.test(x.textContent))), false);
+  await page.evaluate(() => { entrenosView = { slug: "estilo", grupo: "material", mostrar: 30 }; pintarEntrenos(); });
+  await page.waitForSelector("#entrenos-body li");
+  const dil = await page.evaluate(() => window.EstiloItems.ITEMS.find((i) => i.eje === "material"));
+  const liDil = page.locator("#entrenos-body li").first();
+  await liDil.getByRole("button", { name: "Guion" }).click();
+  igual("el guion (solo del profe) dice qué representa cada jugada", /dar material por la iniciativa/.test(await liDil.textContent()) && /quedarse con el material/.test(await liDil.textContent()), true);
+  await liDil.getByRole("button", { name: "Preguntar" }).click();
+  await page.waitForFunction((n) => (window.__rpcs || []).filter((r) => r.n === "hacer_pregunta_de_opciones").length > n, 1, { timeout: 5000 });
+  const rd = await page.evaluate(() => window.__rpcs.filter((r) => r.n === "hacer_pregunta_de_opciones").slice(-1)[0].args);
+  igual("Dilema: dos opciones (sus jugadas, en español), sin correcta y en su posición",
+    [rd.p_opciones.length, rd.p_correcta, rd.p_fen, /No hay una correcta/.test(rd.p_prompt), rd.p_opciones.some((o) => /[NBRQK]/.test(o))],
+    [2, null, dil.fen, true, false]);
+  igual("y las opciones no dicen qué representa cada una (no tiran el voto)", rd.p_opciones.some((o) => /atacar|maniobrar|material|iniciativa|abrir|cerrar|cambiar|mantener/i.test(o)), false);
 
   // Habilidades: la cascada de siempre.
   await page.evaluate(() => { activateTeacherTab("tipos"); entrenosView = { slug: null, grupo: null, mostrar: 30 }; pintarEntrenos(); });

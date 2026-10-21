@@ -4468,7 +4468,148 @@ recomendada?» baja sus partidas y cuenta, de las que pasan por la posición
 propia de la apertura recomendada y con su color: antes de la fecha, después,
 y **el resto de sus partidas de esos meses** (si todo le va mejor, no es la
 apertura: es que mejoró). Con menos de 5 partidas después, lo dice y no saca
-conclusiones. No se guarda: se calcula cada vez.
+conclusiones. Lo que se dice no se guarda: se calcula cada vez. Lo único que
+se guarda es CUÁNTAS jugó con cada apertura, para el aviso a su profe (ver
+«Los avisos de la prueba de estilo»).
+
+### Por qué: sus propias jugadas
+
+El resultado eran porcentajes, y un porcentaje no convence a nadie de que
+«ataca». Debajo de cada eje, «Por qué: lo que elegiste» (plegado) trae una o
+dos posiciones de SU prueba que lo muestran, escritas («elegiste Txc8 —atacar
+al rey— y no a4 —maniobrar—. Para el motor valen casi lo mismo») y con
+«Verla en el tablero», que abre la posición en `js/visor-linea.js` con la
+jugada que eligió y la línea del motor que la sigue (la del banco, la misma
+con que se midió).
+
+- **Cuáles** (`EstiloPerfil.ejemplos`): con un lado (claro o tendencia), las
+  que eligió de ese lado; equilibrado o sin definir, una de cada lado si
+  eligió de los dos (las dos cosas que hizo), o las de uno si siempre eligió
+  lo mismo. Primero las que eligió más seguro, después las que más distinguen
+  (`a` de la calibración) y las que eligió más rápido; a igualdad, por id.
+  Nunca una de control (es repetida).
+- **El profe lo ve igual** en Informes, en tercera persona («eligió»).
+- No guarda nada: sale de las respuestas guardadas.
+
+### La partida modelo de cada apertura
+
+Al lado de cada apertura recomendada, «Ver una partida modelo»: una partida de
+maestros con esa apertura, **ganada por el bando que la juega**, para ver la
+idea funcionando. El tablero arranca donde termina la línea de la apertura y
+se recorre entera; mira desde el color de quien la juega.
+
+- **De dónde salen** (`herramientas/estilo-modelos.js`, que escribe
+  `js/estilo-modelos.js`): primero las partidas de maestros del repositorio
+  (`herramientas/lib/partidas-maestros.js`, que ahora devuelve también el
+  resultado y si la partida está completa); alcanzaron para 41 de las 64. Las
+  otras 23 (gambitos, sistemas de blancas y defensas que en esas partidas
+  casi no aparecen o no ganó su bando) salen de KingBase 2017, y esas
+  partidas se guardan enteras con sus etiquetas en
+  `herramientas/datos/estilo-modelos-kingbase.pgn`: el verificador las
+  compara sin bajar nada.
+- **Cuál**: la que llega a la posición de la apertura en las primeras 30
+  medias jugadas, de 30 medias jugadas o más (una
+  miniatura no muestra el plan) y ganada por su bando; si no hay, una de
+  tablas; nunca una perdida. Entre ellas, primero las del repositorio, después
+  la de largo más cerca de 70 medias jugadas, y a igualdad la de huella menor.
+- **La posición de la apertura, no antes de la media jugada 6**
+  (`aperturasModelo`): es la propia de la medición, pero esa puede ser muy
+  temprana. La del gambito danés es 1.e4 e5 2.d4 (ninguna otra línea del banco
+  la tiene), y con eso la primera vuelta eligió una apertura del centro
+  (3.Dxd4), que se veía perfecta y no era el danés. Para medir el carácter
+  basta; para mostrar «esta apertura» no. El verificador saltó en 24 de las 64
+  con la regla nueva.
+- **Solo hechos**: las jugadas, los nombres, el evento y el resultado. Ningún
+  comentario de los cursos sale de acá.
+- **KingBase, rápido**: leer cada partida con chess.js 0.10.3 tardaba más de
+  una hora por archivo. Como en `estilo-aperturas-kingbase.js`, se mira solo
+  la media jugada k en que se llega a la posición (las mismas jugadas de cada
+  color en sus primeras k, sin chess.js), y se para al tener 40 candidatas.
+- Lo comprueba `verificar-estilo-modelos.js`: que cada una esté jugada por
+  jugada en su fuente (con sus nombres y su resultado), que llegue a su
+  apertura, que la gane quien la juega y que ninguna de las 64 falte.
+
+### Los avisos de la prueba de estilo
+
+**A los tres meses, al alumno.** El estilo cambia: a los 90 días de su última
+prueba, la tarjeta «Tu estilo de juego» del panel dice «Toca repetirla: ya
+pasaron tres meses» y la campana lo avisa, con la fecha del día en que se
+cumplieron (así el «Nuevo» sale una vez y se ordena con lo demás). Como «Toca
+repetirlo» del diagnóstico, no se guarda nada: sale de la fecha de su última
+prueba (una fila). Si nunca la hizo o la base no contesta, no se dice nada.
+
+**A las 5 partidas, a su profe.** Cuando el alumno ya jugó 5 partidas con una
+de las aperturas que le recomendó su última prueba, la campana del profe dice
+«1 alumno ya jugó 5 partidas con la apertura que le recomendó su prueba de
+estilo» (a vigilar), y lleva a Informes, tema «Prueba de estilo», donde arriba
+están quiénes, con «Ver su informe» y «Ya lo vi».
+
+- **Lo que se guarda y por qué** (`public.estilo_seguimiento`, una fila por
+  alumno): las partidas están en Lichess y Chess.com, y la base no puede
+  contarlas sola. Se guarda la ÚLTIMA cuenta que hizo un navegador (cuántas
+  con cada apertura recomendada después de la prueba), como el análisis de sus
+  partidas. Meterlo en `analisis_partidas_alumno.analisis` no servía: su
+  trigger lo tomaría por un análisis nuevo (la hora y quién).
+- **Quién cuenta**: el navegador del alumno, al abrir su prueba, en segundo
+  plano y una vez por día como mucho (`EstiloTarjeta.contarEnSilencio`), y
+  cualquiera que apriete «¿Cómo me fue?» / «¿Cómo le fue?».
+- **Lo que decide la base** (su trigger): que la prueba sea del alumno;
+  `listo_at`, la primera vez que alguna llega a 5; y `revisado_at` /
+  `revisado_por`, que pone solo si quien guarda NO es el alumno (el aviso es
+  del profe). Si el profe mira «¿Cómo le fue?», queda visto. Con una prueba
+  nueva, la cuenta y el aviso empiezan de cero. No tiene `delete`.
+- **Quién la lee y la escribe**: el alumno, sus profes, quien lo supervisa (solo
+  leer) y administración, con las mismas reglas de la prueba. Comprobado
+  impersonando roles en SQL: el alumno no puede marcarla revisada, su profe
+  sí (y queda a su nombre), un tercero no la ve ni la cambia, una prueba ajena
+  se rechaza y una clave que no es blancas, e4 o d4 también.
+- El conteo de la campana es `estiloSeguimiento` en `js/pendientes.js`
+  (`listo_at` puesto, `revisado_at` vacío; la RLS acota a los suyos).
+- **El límite**: avisa solo si alguien contó. Un alumno que no vuelve a abrir
+  su prueba no avisa; bajar partidas desde la base (un cron con una Edge
+  Function) sería otra cosa, y hoy no hay nada parecido.
+
+### La muestra sin cuenta (`estilo-muestra.html`)
+
+Para quien todavía no tiene cuenta, enlazada desde la portada debajo del
+diagnóstico: doce posiciones, sin guardar nada, y al final hacia dónde se
+inclina y tres aperturas que podrían quedarle, con «Inscríbete» y «Ya tengo
+cuenta: hacer la completa».
+
+- **Las posiciones**: las tres más simples de cada eje entre las de la versión
+  corta (`EstiloMedidas.complejidad`, a igualdad por id), una de cada eje por
+  turno. Siempre las mismas.
+- **Lo que dice es lo que eligió, no una etiqueta**: con tres respuestas por
+  eje, la regla de la prueba (que todo el margen quede de un lado) nunca
+  alcanza —con 3 de 3 el margen va de 34 a 97 %—. Decir «sin definir» en
+  los cuatro ejes no sirve; decir «claramente» sería mentir. Dice «Te inclinas
+  a: atacar al rey (elegiste atacar en 3 de 3)» y que es una pista, no un
+  resultado.
+- **Las aperturas**: `EstiloAperturas.recomendar` como a quien empieza
+  (teoría de nivel 1), rápidas y poco estudio.
+- **No manda nada a ninguna parte**: no carga el cliente de la base, así que
+  no necesita consentimiento ni el freno de los envíos sin cuenta.
+- Se contesta con el ratón o escribiendo A o B (Modo Adaptado), con la jugada
+  escrita y dicha en cada botón. Lo comprueba `verificar-estilo-muestra.js`.
+
+### Dilemas de estilo en la clase
+
+En la clase en vivo, pestaña Entrenamientos, «🎭 Dilemas de estilo»: las
+posiciones de la prueba, por eje. «❓ Preguntar» pone la posición en el
+tablero de todos y lanza una pregunta de opciones con las dos jugadas y **sin
+correcta**, como el termómetro: cada uno vota la que jugaría y el profe ve el
+reparto (y se lo muestra a la clase si quiere). Sirve para abrir la charla de
+por qué las dos son buenas.
+
+- **Qué representa cada jugada va en el guion**, que ve solo el profe (con lo
+  que da Stockfish a cada una y de qué partida es): en las opciones irían
+  tirando el voto.
+- La prueba de estilo es «una vez» (`unaVez` en `js/material-plataforma.js`) y
+  no se da en clase; lo que entra es su adaptador, con su propio nombre
+  (`etiqueta`) y sin «Abrirlo a todos en una ventana» (`sinAbrir`): abrirles
+  la prueba en clase la haría contestar a medias y con el profe mirando.
+- No toca la base: es la misma `hacer_pregunta_de_opciones` con
+  `p_correcta: null`. Lo comprueba `verificar-clase-entrenamientos.js`.
 
 ### La calibración
 

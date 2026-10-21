@@ -35,7 +35,7 @@ window.EntrenosClase = (function () {
         mates: "♛", "aprende-a-jugar": "⭐", aprender: "🎓", desafios: "🏆", estudio: "📖", aperturas: "📚", "4x4": "🔲",
         visualizacion: "👁️", "precision-posicional": "🎯", finales: "🤖", memoria: "🧠", tipos: "🧩",
         coordenadas: "🧭", practicas: "✍️", sonar: "📡", "batalla-naval": "🚢", concentracion: "🃏",
-        ilumina: "💡", confites: "🍬",
+        ilumina: "💡", confites: "🍬", estilo: "🎭",
     };
     // Cuántos ejercicios se muestran de una vez en una lista (y «Mostrar más»).
     const POR_PAGINA = 30;
@@ -44,9 +44,14 @@ window.EntrenosClase = (function () {
        el orden de la lista. `conLista` dice si la clase sabe abrir sus
        ejercicios (tiene adaptador); las demás se mandan a abrir. */
     function tarjetas(herramientas, adaptadores) {
-        return (herramientas || []).filter((h) => h && h.slug && !QUEDA_AFUERA.has(h.slug) && !h.noSeElige && !h.unaVez)
-            .map((h) => ({ slug: h.slug, label: h.label, href: h.href, emoji: EMOJI[h.slug] || "🧩",
-                conLista: !!(adaptadores && adaptadores[h.slug]) }));
+        /* Lo que se hace una sola vez (la prueba de estilo) no se da en clase
+           tal cual; si la clase tiene algo propio para hacer con eso (un
+           adaptador, con su `etiqueta`), entra con ese nombre: «Dilemas de
+           estilo». */
+        const adaptador = (h) => adaptadores && adaptadores[h.slug];
+        return (herramientas || []).filter((h) => h && h.slug && !QUEDA_AFUERA.has(h.slug) && !h.noSeElige && (!h.unaVez || adaptador(h)))
+            .map((h) => ({ slug: h.slug, label: (adaptador(h) && adaptador(h).etiqueta) || h.label, href: h.href, emoji: EMOJI[h.slug] || "🧩",
+                conLista: !!adaptador(h) }));
     }
 
     /* El enlace que se le abre a cada alumno con «🪟 Abrirlo a todos en una ventana». No
@@ -227,6 +232,41 @@ const ADAPTADORES_ENTRENO = {
                     guion: ["La correcta: " + i.opciones[i.correcta], i.explica].filter(Boolean),
                 }));
                 return { id: a.id, emoji: a.emoji, titulo: a.nombre, desc: suyos.length + " posiciones", items: suyos, practica: { enlace: null } };
+            });
+        },
+    },
+    /* Los dilemas de la prueba de estilo: una posición con dos jugadas que
+       Stockfish valora casi igual y que son de carácter opuesto (atacar o
+       maniobrar, abrir o cerrar…). Se preguntan a la clase como pregunta de
+       opciones SIN correcta (como el termómetro): cada uno vota la que
+       jugaría y después se ve el reparto. Qué representa cada jugada va en el
+       guion, que ve solo el profe, para no tirar el voto. Ver «Dilemas de
+       estilo en la clase» en docs/decisiones/entrenamiento.md. */
+    estilo: {
+        etiqueta: "Dilemas de estilo",
+        sinAbrir: true,
+        corto: "¿Cuál jugarías?",
+        desc: "Dos jugadas igual de buenas y de carácter opuesto: la clase vota la que jugaría y se ve el reparto. No hay una correcta.",
+        async cargar() {
+            const B = await cargarScriptEntreno("js/estilo-items.js", "EstiloItems");
+            const es = (san) => (window.PreparacionLineas && PreparacionLineas.sanEs ? PreparacionLineas.sanEs(san)
+                : String(san).replace(/^[NBRQK]/, (p) => ({ N: "C", B: "A", R: "T", Q: "D", K: "R" })[p]).replace(/=([NBRQ])/, (_, p) => "=" + ({ N: "C", B: "A", R: "T", Q: "D" })[p]));
+            const cp = (v) => (v >= 0 ? "+" : "−") + (Math.abs(v) / 100).toFixed(2).replace(".", ",");
+            return Object.keys(B.EJES).map((eje) => {
+                const E = B.EJES[eje];
+                const items = B.ITEMS.filter((i) => i.eje === eje).map((i, k) => ({
+                    id: i.id,
+                    titulo: (k + 1) + ". Juegan las " + (i.fen.split(" ")[1] === "w" ? "blancas" : "negras") + ": " + es(i.a.san) + " o " + es(i.b.san),
+                    fen: i.fen,
+                    prompt: "¿Cuál jugarías? No hay una correcta: para el motor valen casi lo mismo.",
+                    opciones: [es(i.a.san), es(i.b.san)], correcta: null, sinCorrecta: true,
+                    guion: [
+                        "A, " + es(i.a.san) + ": " + E.polos[i.a.polo].toLowerCase() + " (Stockfish: " + cp(i.a.eval) + " para quien mueve).",
+                        "B, " + es(i.b.san) + ": " + E.polos[i.b.polo].toLowerCase() + " (Stockfish: " + cp(i.b.eval) + " para quien mueve).",
+                        "De " + i.fuente.blancas + " – " + i.fuente.negras + (i.fuente.evento ? ", " + i.fuente.evento : "") + ".",
+                    ],
+                }));
+                return { id: eje, titulo: E.nombre, desc: items.length + " posiciones", items, practica: { enlace: null } };
             });
         },
     },
@@ -426,7 +466,9 @@ function pintarEntrenos() {
     // Dentro de un grupo no se repite lo de arriba: el título del grupo basta.
     if (!entrenosView.grupo) {
         body.appendChild(tit);
-        body.appendChild(cajaQueLoAbran(t, null));
+        // `sinAbrir`: lo que no se abre a la clase (la prueba de estilo es una
+        // vez y de cada uno; en clase van sus dilemas, uno por uno).
+        if (!(ad && ad.sinAbrir)) body.appendChild(cajaQueLoAbran(t, null));
     }
     if (!ad) {
         // Las que se abren ya en un modo o un nivel (Coordenadas, 4×4): un botón por cada uno.
@@ -594,7 +636,8 @@ function filaDeEntreno(t, item) {
     }
     const fenPregunta = item.soloVer ? null : item.fenClave || item.fen;
     if (item.opciones && fenPregunta) {
-        acciones.appendChild(entrenoBoton("❓ Preguntar", () => preguntarDeOpcionesEntreno(item), false, "Una pregunta de opciones: la base la califica sola"));
+        acciones.appendChild(entrenoBoton("❓ Preguntar", () => preguntarDeOpcionesEntreno(item), false, item.sinCorrecta
+            ? "Una pregunta de opciones sin correcta: cada uno vota y se ve el reparto" : "Una pregunta de opciones: la base la califica sola"));
     } else if (item.solucion && fenPregunta) {
         acciones.appendChild(entrenoBoton("❓ Preguntar", () => preguntarEntreno(fenPregunta, item.solucion, item.prompt, item.elo), false, "Se transmite a todos como una pregunta nueva"));
         acciones.appendChild(entrenoBoton("🔥 Calentamiento", () => mandarCalentamiento(fenPregunta, item.solucion, (t.label + ": " + item.titulo).slice(0, 140)), false,

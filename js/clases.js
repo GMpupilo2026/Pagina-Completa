@@ -623,8 +623,9 @@
         }
         function clavesUrgenteDocente() {
             const tiene = tieneTarjeta;
-            return ["justificaciones", "examenesCongelados", "informePropio", "solicitudes", "examenesEntregados", "partidasTorneo", "morosos"].filter((c) =>
+            return ["justificaciones", "examenesCongelados", "informePropio", "solicitudes", "examenesEntregados", "partidasTorneo", "estiloSeguimiento", "morosos"].filter((c) =>
                 c === "informePropio" ? tiene("informe-mensual.html")
+                : c === "estiloSeguimiento" ? tiene("informes.html")
                 : c === "justificaciones" ? tiene("justificaciones.html")
                 : c === "examenesCongelados" || c === "examenesEntregados" ? tiene("examenes.html")
                 : c === "partidasTorneo" ? tiene("libreta-torneos.html")
@@ -2482,7 +2483,7 @@
             const hace30 = new Date(Date.now() - 30 * 86400000).toISOString();
             const ahora = new Date().toISOString();
             const pedir = (q) => q.then((r) => (r && !r.error && r.data) || []).catch(() => []);
-            const [tareas, examenes, retos, avisos, notas, regalos] = await Promise.all([
+            const [tareas, examenes, retos, avisos, notas, regalos, estilo] = await Promise.all([
                 pedir(sb.from("tareas").select("id, titulo, disponible_desde").eq("alumno_id", profile.id)
                     .gte("disponible_desde", hace30).lte("disponible_desde", ahora).order("disponible_desde", { ascending: false }).limit(5)),
                 pedir(sb.from("examenes").select("id, titulo, disponible_desde").eq("alumno_id", profile.id)
@@ -2496,6 +2497,8 @@
                 // Lo que le mandó un compañero con sus Puntos Ajedrez (ver
                 // «Retos, marcador, regalos y bromas» en docs/decisiones/puntos-y-premios.md).
                 pedir(sb.rpc("regalos_y_bromas_recientes", { p_desde: hace30 })),
+                // La prueba de estilo, a los tres meses (estiloParaRepetir).
+                estiloParaRepetir().catch(() => null),
             ]);
             const corto = (t) => { t = String(t || "").replace(/\s+/g, " ").trim(); return t.length > 90 ? t.slice(0, 89) + "…" : t; };
             const cosas = [].concat(
@@ -2509,6 +2512,7 @@
                     texto: x.de_nombre + (x.tipo === "broma" ? " te mandó una broma: " : " te regaló ") + corto(x.que) + (x.frase ? " — «" + corto(x.frase) + "»" : ""),
                     fecha: x.fecha, href: "puntos-tienda.html",
                 })),
+                estilo && estilo >= hace30 ? [{ icono: "🎭", texto: "Ya pasaron tres meses: repite la prueba de estilo", fecha: estilo, href: "entreno/estilo.html" }] : [],
             ).filter((c) => c.fecha).sort((a, b) => String(b.fecha).localeCompare(String(a.fecha))).slice(0, 10);
             if (!cosas.length) return;
             let vista = null;
@@ -2752,6 +2756,44 @@
             }
         }
 
+        /* ---------- La prueba de estilo, a los tres meses ----------
+           El estilo también cambia: a los tres meses de su última prueba, la
+           tarjeta dice «Toca repetirla» y la campana lo avisa (con la fecha
+           de ese día, así el «Nuevo» sale una vez). No se guarda nada: sale de
+           la fecha de su última prueba, que la RLS ya le deja leer. Si nunca
+           la hizo o la base no contesta, no se dice nada. Ver «El seguimiento,
+           a los meses» en docs/decisiones/entrenamiento.md. */
+        const DIAS_REPETIR_ESTILO = 90;
+        let miEstiloP = null;
+        function miUltimoEstilo() {
+            if (!miEstiloP) {
+                miEstiloP = Promise.resolve(sb.from("estilo_pruebas").select("created_at").eq("alumno_id", alumnoDelPanel())
+                    .order("created_at", { ascending: false }).limit(1))
+                    .then((r) => (r && !r.error && r.data && r.data[0] ? r.data[0].created_at : null)).catch(() => null);
+            }
+            return miEstiloP;
+        }
+        /* La fecha en que toca repetirla, si ya llegó; si no, null. */
+        async function estiloParaRepetir() {
+            const f = Date.parse((await miUltimoEstilo()) || "");
+            if (!f) return null;
+            const toca = f + DIAS_REPETIR_ESTILO * 86400000;
+            return Date.now() >= toca ? new Date(toca).toISOString() : null;
+        }
+        async function estadoDelEstilo() {
+            if (!(await estiloParaRepetir())) return;
+            const grupo = TILE_GROUPS.find((g) => g.tiles.some((t) => t.href === "entreno/estilo.html"));
+            const tile = grupo && grupo.tiles.find((t) => t.href === "entreno/estilo.html");
+            if (!tile) return;
+            tile.aviso = "Toca repetirla: ya pasaron tres meses";
+            const viejo = document.querySelector('#tile-grid a[href="entreno/estilo.html"]');
+            if (viejo) {
+                const nuevo = renderTileCard(tile, false);
+                nuevo.dataset.buscar = viejo.dataset.buscar;
+                viejo.replaceWith(nuevo);
+            }
+        }
+
         /* ---------- Abierto, solo el entrenamiento de tu nivel ----------
            Con los tres grupos de entrenamiento abiertos, el panel del alumno
            medía cuatro pantallas y media en la computadora. Ahora se abre el
@@ -2833,6 +2875,7 @@
             const tareas = (t.error ? [] : t.data) || [];
             const diagnosticoPedido = marcarDiagnosticoPedido(tareas);
             estadoDelDiagnostico(diagnosticoPedido);
+            estadoDelEstilo();
             abrirMiEscalon();
             /* Si los exámenes no llegan se siguen mostrando las tareas: quedarse
                sin franja por la mitad que falló sería perder también la que sí
