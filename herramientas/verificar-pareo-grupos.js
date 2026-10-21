@@ -93,6 +93,21 @@ function pruebaPase() {
   igual("sin aplicar, nadie queda marcado", lista.filter((x) => x.alAbierto).length, 0);
 }
 
+function pruebaRepetidos() {
+  console.log("\n=== Inscripciones repetidas (art. 66.1.h) ===");
+  const j = (nombre, documento, modalidad, categoria, nacimiento) => ({ nombre, documento, modalidad, categoria, nacimiento: nacimiento || "2014-01-01" });
+  const r = G.quitarRepetidos([
+    j("ANA", "1-0234-0567", "equipo", "B"), j("ANA", "102340567", "equipo", "B"), j("ANA", "102340567", "equipo", "B"), // la misma, tres veces
+    j("LUIS", "2", "individual", "C"), j("LUIS", "2", "equipo", "C"),                                                // dos modalidades
+    j("SARA", "", "individual", "A", "2018-02-02"), j("Sara", "", "individual", "A", "2018-02-02"),                 // sin documento: nombre y fecha
+    j("SARA", "", "individual", "A", "2019-03-03"),                                                                  // otra Sara (otra fecha)
+  ]);
+  igual("quedan una Ana, dos Luis y dos Saras", r.lista.map((x) => x.nombre + x.modalidad[0]), ["ANAe", "LUISi", "LUISe", "SARAi", "SARAi"]);
+  igual("las repetidas, con cuántas veces", r.repetidos.map((x) => x.jugador.nombre + x.veces), ["ANA3", "SARA2"]);
+  igual("Luis, en dos modalidades", r.dosModalidades.map((x) => x.jugador.nombre + ":" + x.inscripciones.map((i) => i.modalidad).join("+")), ["LUIS:individual+equipo"]);
+  ok(r.lista.every((x) => !("veces" in x)), "la cuenta no queda pegada al jugador");
+}
+
 function pruebaFunciones() {
   console.log("\n=== Sexo, modalidad y fechas ===");
   igual("HOMBRE, Masculino, M y H son masculino", ["HOMBRE", "Masculino", "m", "H"].map(G.leerSexo), ["m", "m", "m", "m"]);
@@ -154,6 +169,14 @@ function excelJde() {
   // Una sola mujer de equipos en un centro que presenta equipo abierto: no
   // alcanza para un equipo de mujeres (mínimo 3, art. 66.1.g) y pasa al abierto.
   poner(1, "MUJER", "B", "Equipo", "5/5/2014", "ESCUELA DEL EQUIPO");
+  // Y dos más del mismo equipo abierto: quedan 7 y el máximo es 5 (art.
+  // 66.1.g). Por omisión juegan los 5 primeros; estos dos, descartados.
+  filas.push(["90", "CÉDULA:", "1000090", "PRUEBA SEXTO DEL EQUIPO", "6/6/2014", "COSTARRICENSE", "HOMBRE", "12", "ESCUELA DEL EQUIPO", "01", "Prueba", "B", "Colegio", "Equipo", "01 Mar"]);
+  filas.push(["91", "CÉDULA:", "1000091", "PRUEBA SEPTIMO DEL EQUIPO", "7/7/2014", "COSTARRICENSE", "HOMBRE", "12", "ESCUELA DEL EQUIPO", "01", "Prueba", "B", "Colegio", "Equipo", "01 Mar"]);
+  // El reporte trae filas repetidas: el séptimo otra vez, con otra fecha de
+  // inscripción (se queda una sola), y el sexto también inscrito en
+  // individual (dos modalidades: se avisa, art. 66.1.h).
+  filas.push(["92", "CÉDULA:", "1000091", "PRUEBA SEPTIMO DEL EQUIPO", "7/7/2014", "COSTARRICENSE", "HOMBRE", "12", "ESCUELA DEL EQUIPO", "01", "Prueba", "B", "Colegio", "Equipo", "05 Aug"]);
   return Buffer.from(TablaExcel.armar([{ nombre: "Sheet1", filas }]));
 }
 
@@ -211,14 +234,38 @@ async function pruebaPagina(browser) {
   console.log("\n=== Mujeres de equipos que pasan al abierto ===");
   ok(await page.$eval("#pi-pase-abierto-si", (c) => c.checked), "la casilla viene marcada");
   const pase = await page.$$eval("#pi-pase-lista li", (l) => l.map((x) => x.textContent));
-  ok(pase.length === 1 && /ESCUELA DEL EQUIPO, categoría B: PRUEBA ANA BE0 pasa al equipo abierto, que queda con 5 \(tenía 4\)/.test(pase[0]), "la sola mujer de un centro con equipo abierto pasa al abierto", pase.join(" | "));
+  ok(pase.length === 1 && /ESCUELA DEL EQUIPO, categoría B: PRUEBA ANA BE0 pasa al equipo abierto, que queda con 7 \(tenía 6\)/.test(pase[0]), "la sola mujer de un centro con equipo abierto pasa al abierto", pase.join(" | "));
   const sin = await page.$$eval("#pi-pase-sin li", (l) => l.map((x) => x.textContent));
   ok(sin.length === 1 && /ESCUELA DE MUJERES, categoría B/.test(sin[0]), "las dos de un centro sin equipo abierto se avisan aparte", sin.join(" | "));
   const tam = async () => Object.fromEntries(await page.$$eval("#pi-sugerencia fieldset li", (l) => l.map((x) => [x.querySelector("label").textContent.split(" — ")[0], Number((/— (\d+) jugador/.exec(x.textContent) || [])[1])])));
   igual("con la casilla: el abierto de equipos B tiene 5 y el de mujeres 2", [(await tam())["Equipos · Categoría B · Abierto"], (await tam())["Equipos · Categoría B · Mujeres"]], [5, 2]);
   await page.click("#pi-pase-abierto-si");
-  igual("sin la casilla: vuelve al de mujeres (4 y 3)", [(await tam())["Equipos · Categoría B · Abierto"], (await tam())["Equipos · Categoría B · Mujeres"]], [4, 3]);
+  igual("sin la casilla: vuelve al de mujeres (el abierto, con 6 inscritos, sigue en 5; mujeres 3)", [(await tam())["Equipos · Categoría B · Abierto"], (await tam())["Equipos · Categoría B · Mujeres"]], [5, 3]);
   await page.click("#pi-pase-abierto-si");
+
+  console.log("\n=== Inscripciones repetidas ===");
+  ok(/1 estudiantes venían inscritos más de una vez en la misma modalidad y categoría \(1 filas de más\)/.test(await page.textContent("#pi-repetidos")), "la fila repetida se quita y se avisa", await page.textContent("#pi-repetidos"));
+  ok(/PRUEBA SEPTIMO DEL EQUIPO \(ESCUELA DEL EQUIPO\): 2 veces/.test(await page.textContent("#pi-repetidos-lista")), "dice quién y cuántas veces");
+
+  console.log("\n=== Equipos con más de 5: se eligen los 5 ===");
+  ok(/Equipos con más de 5 inscritos/.test(await page.textContent("#pi-equipos-de-mas")), "el panel avisa del equipo de más de 5");
+  igual("el resumen del equipo", (await page.textContent("#pi-equipos-de-mas summary")).trim(), "ESCUELA DEL EQUIPO, categoría B, Abierto: 7 inscritos, 5 de 5 elegidos");
+  ok(/\(ahora: 2\)/.test(await page.textContent("#pi-equipos-de-mas")), "dice cuántos quedan descartados");
+  await page.click("#pi-equipos-de-mas summary");
+  const casillas = () => page.$$eval("#pi-equipos-de-mas li", (l) => l.map((x) => [x.querySelector("label").textContent, x.querySelector("input").checked, x.querySelector("input").disabled]));
+  let cs = await casillas();
+  igual("vienen marcados los 5 primeros de la inscripción", cs.map((c) => c[1]), [true, true, true, true, true, false, false]);
+  ok(cs[5][2] && cs[6][2], "con 5 marcados, los otros no se pueden marcar");
+  ok(/SEXTO DEL EQUIPO — descartado/.test(cs[5][0]), "el que no juega dice «descartado»");
+  ok(/21 jugadores/.test(await page.textContent("#pi-sugerencia-titulo + p")), "los descartados no cuentan en el total");
+  // Cambiar: sale el primero, entra el séptimo.
+  await page.click("#pi-eq-0-0");
+  cs = await casillas();
+  ok(!cs[5][2] && !cs[6][2], "con 4 marcados, se puede marcar otro");
+  ok(await page.$eval("#pi-equipos-de-mas details", (d) => d.open), "el equipo sigue abierto después de cambiar");
+  await page.click("#pi-eq-0-6");
+  cs = await casillas();
+  igual("queda el séptimo en lugar del primero", cs.map((c) => c[1]), [false, true, true, true, true, false, true]);
 
   igual("el botón cuenta los marcados", await page.textContent("#pi-sugerencia-crear"), "Crear los 4 torneos marcados");
 
@@ -256,7 +303,10 @@ async function pruebaPagina(browser) {
   igual("cuántos en cada uno", ts.map((x) => x.jugadores.length).sort((x, y) => x - y), [2, 3, 5, 10]);
   const abiertoB = porNombre["Regional Prueba — Equipos · Categoría B · Abierto"];
   ok(abiertoB.jugadores.some((j) => j.sexo === "w" && /ANA/.test(j.nombre)), "la que pasó al abierto está ahí, y sigue anotada como mujer");
-  ok(ts.every((x) => x.jugadores.every((j) => !("alAbierto" in j))), "la marca del pase no se guarda en el jugador");
+  ok(ts.every((x) => x.jugadores.every((j) => !("alAbierto" in j) && !("documento" in j))), "ni la marca del pase ni el documento se guardan en el jugador");
+  const nombresB = abiertoB.jugadores.map((j) => j.nombre);
+  ok(nombresB.includes("PRUEBA SEPTIMO DEL EQUIPO") && !nombresB.includes("PRUEBA SEXTO DEL EQUIPO") && !nombresB.includes("PRUEBA LUIS BE0"), "el abierto B lleva a los 5 elegidos, no a los descartados", nombresB.join(", "));
+  ok(!ts.some((x) => x.jugadores.some((j) => j.nombre === "PRUEBA SEXTO DEL EQUIPO")), "el descartado no está en ningún torneo");
   igual("el de 3 es todos contra todos y el de 10, suizo", [a.sistema, b.sistema], ["todos", "suizo"]);
   ok(b.rondasTotales >= 5, "el suizo tiene al menos 5 rondas (art. 66)", b.rondasTotales);
   ok(ts.every((x) => x.ritmo === "10 min + 2 s por jugada"), "sin ritmo en el abierto, cada uno lleva el mínimo de la normativa");
@@ -297,6 +347,7 @@ async function pruebaPagina(browser) {
   pruebaFunciones();
   pruebaCategorias();
   pruebaPase();
+  pruebaRepetidos();
   const browser = await chromium.launch({ executablePath: fs.existsSync(CHROME) ? CHROME : undefined });
   try { await pruebaPagina(browser); }
   catch (e) { mal("la prueba de la página se cayó", e.stack); }

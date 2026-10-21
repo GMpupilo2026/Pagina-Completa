@@ -2309,6 +2309,33 @@ se juega aparte, y armar cada torneo a mano era copiar y pegar filas.
     en el equipo donde quedaron. En Alajuela 2026 son tres: una de Grecia
     (categoría D) y dos de San Gerardo (A); la de Maurilio Soto (A) no
     tiene abierto al cual pasar.
+  - **Las inscripciones repetidas se limpian antes de todo**
+    (`quitarRepetidos()`). El reporte de Alajuela 2026 traía a 17
+    estudiantes más de una vez (25 filas de más): la misma estudiante tres
+    veces en el mismo equipo, con otra fecha de inscripción. Sin limpiar,
+    un equipo de 4 parecía de 12. La persona se reconoce por su documento
+    de identidad (se lee solo para esto, en memoria: `soloJugador()` no lo
+    guarda ni va al TRF) y, si no lo trae, por su nombre y fecha de
+    nacimiento. La misma inscripción repetida (misma modalidad y
+    categoría) queda una sola vez, y el panel dice quiénes y cuántas
+    veces; la misma persona en dos modalidades o categorías (5 en
+    Alajuela) queda en las dos y se avisa: el art. 66.1.h permite una sola
+    modalidad, y cuál vale lo decide el árbitro.
+  - **Un equipo de más de cinco: el árbitro elige los cinco**
+    (`equiposDeMas()`, art. 66.1.g: «un máximo de cinco [...] cuatro
+    personas estudiantes titulares y una persona estudiante suplente»;
+    pedido por el dueño del sitio). El equipo es el mismo centro, categoría
+    y torneo (mujeres o abierto, ya con el pase). El panel muestra cada uno
+    con una casilla por integrante: vienen marcados los cinco primeros de la
+    inscripción y, con cinco marcados, las demás no se pueden marcar. Los
+    que no se marcan quedan descartados: no entran a ningún torneo (ni con
+    «No separar») y no cuentan en el total. La elección se guarda por
+    equipo y por estado de la casilla del pase, porque los integrantes
+    cambian al prenderla o apagarla; al volver, el equipo queda como estaba
+    (con una sola elección, apagar y prender el pase dejaba un lugar vacío o
+    descartaba a la que había pasado). En Alajuela 2026, ya sin repetidos,
+    son cuatro: Gredos San Diego A abierto, B abierto y B mujeres (10 cada
+    uno) y Saint John Baptist A abierto (8).
   - **La categoría por año de nacimiento** (art. 17 y 18, pedido después por
     el dueño del sitio, «que avise si es permitido o si no lo es»):
     `revisarCategorias()` mira a cada inscrito con categoría A–E y fecha, y

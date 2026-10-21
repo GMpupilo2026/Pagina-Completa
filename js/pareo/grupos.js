@@ -208,8 +208,62 @@
     return { pasadas, sinAbierto };
   }
 
+  // Los equipos con más de cinco inscritos (art. 66.1.g: «un máximo de
+  // cinco estudiantes por equipo, [...] cuatro titulares y una suplente»).
+  // Un equipo es el mismo centro educativo, categoría y torneo (mujeres o
+  // abierto, ya con el pase de arriba). Cada uno con su clave y sus
+  // integrantes en el orden de la inscripción; quién juega lo elige el
+  // árbitro en la página.
+  const JDE_MAX_EQUIPO = 5;
+  function equiposDeMas(lista) {
+    const porEquipo = new Map();
+    for (const j of lista) {
+      if (j.modalidad !== "equipo") continue;
+      const categoria = String(j.categoria || "").trim();
+      const clave = [String(j.institucion || "").trim().toUpperCase(), categoria.toUpperCase(), torneoDe(j)].join("|");
+      if (!porEquipo.has(clave)) porEquipo.set(clave, { clave, institucion: j.institucion || "", categoria, torneo: torneoDe(j), integrantes: [] });
+      porEquipo.get(clave).integrantes.push(j);
+    }
+    return [...porEquipo.values()].filter((e) => e.integrantes.length > JDE_MAX_EQUIPO)
+      .sort((a, b) => a.clave.localeCompare(b.clave, "es"));
+  }
+
+  // La misma persona inscrita más de una vez. El reporte de los JDE trae
+  // filas repetidas (la misma estudiante tres veces en el mismo equipo, con
+  // otra fecha de inscripción): se reconoce por su documento de identidad
+  // y, si no lo trae, por su nombre y fecha de nacimiento. La misma
+  // inscripción repetida (misma modalidad y categoría) se deja una sola vez;
+  // la misma persona en dos modalidades o categorías se deja como está y se
+  // avisa: el art. 66.1.h permite una sola modalidad, y cuál vale lo decide
+  // el árbitro.
+  function quitarRepetidos(lista) {
+    const quien = (j) => {
+      const doc = String(j.documento || "").toUpperCase().replace(/[^0-9A-Z]/g, "");
+      return doc ? "doc:" + doc : "nom:" + sinTildes(j.nombre).replace(/\s+/g, " ") + "|" + (j.nacimiento || "");
+    };
+    const porPersona = new Map();
+    const unicos = [], repetidos = [];
+    for (const j of lista) {
+      const k = quien(j);
+      if (!porPersona.has(k)) porPersona.set(k, []);
+      const suyas = porPersona.get(k);
+      const igual = suyas.find((x) => x.modalidad === j.modalidad && String(x.categoria).trim().toUpperCase() === String(j.categoria).trim().toUpperCase());
+      if (igual) { igual.veces = (igual.veces || 1) + 1; continue; }
+      suyas.push(j);
+      unicos.push(j);
+    }
+    const dosModalidades = [];
+    for (const suyas of porPersona.values()) {
+      for (const j of suyas) if (j.veces > 1) repetidos.push({ jugador: j, veces: j.veces });
+      if (suyas.length > 1) dosModalidades.push({ jugador: suyas[0], inscripciones: suyas.map((x) => ({ modalidad: x.modalidad, categoria: String(x.categoria || "").trim() })) });
+    }
+    for (const j of unicos) delete j.veces;
+    return { lista: unicos, repetidos, dosModalidades };
+  }
+
   const api = {
-    pasarMujeresAlAbierto, JDE_MIN_EQUIPO,
+    quitarRepetidos,
+    pasarMujeresAlAbierto, JDE_MIN_EQUIPO, equiposDeMas, JDE_MAX_EQUIPO,
     leerSexo, leerModalidad, ordenFechas, leerFecha, agrupar, sistemaSugerido, revisarCategorias, rangoCategoria,
     JDE_MAX_TODOS, JDE_RONDAS_SUIZO, JDE_RITMO_MINIMO, JDE_ANIO_NORMATIVA, JDE_MAX_ASCENSOS,
   };

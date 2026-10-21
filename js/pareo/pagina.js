@@ -468,6 +468,10 @@
     "equipo/ind": "modalidad", "equipo / ind": "modalidad", "equipo/individual": "modalidad",
     "equipo o individual": "modalidad", modalidad: "modalidad", "team/individual": "modalidad",
     "direccion regional": "region", regional: "region",
+    // Solo para reconocer a la misma persona inscrita dos veces: no se
+    // guarda en el torneo (soloJugador).
+    "documento de identidad": "documento", documento: "documento", cedula: "documento",
+    identificacion: "documento",
   };
   const sinTildes = (s) => String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim();
 
@@ -515,11 +519,12 @@
     }), {
       modalidad: G.leerModalidad(celda(fila, "modalidad")),
       region: String(celda(fila, "region") || "").trim(),
+      documento: String(celda(fila, "documento") || "").trim(),
     })).filter((d) => d.nombre);
   }
 
   // Lo que se guarda del jugador: sin la modalidad ni la regional.
-  const soloJugador = ({ modalidad, region, alAbierto, ...d }) => d;
+  const soloJugador = ({ modalidad, region, alAbierto, documento, ...d }) => d;
 
   async function subirLista(archivo) {
     const estadoEl = $("pi-subir-lista-estado");
@@ -532,10 +537,14 @@
       else if (nombreArch.endsWith(".doc")) { estadoEl.textContent = ""; Avisos.avisar(tx("archivoDocAntiguo"), { tipo: "error" }); return; }
       else filas = (await window.ReporteExcel.leer(archivo)).filas;
       estadoEl.textContent = "";
-      const lista = filasAJugadores(filas);
-      if (!lista.length) { Avisos.avisar(tx("archivoSinJugadores"), { tipo: "error" }); return; }
+      const leida = filasAJugadores(filas);
+      if (!leida.length) { Avisos.avisar(tx("archivoSinJugadores"), { tipo: "error" }); return; }
+      const limpia = G.quitarRepetidos(leida);
+      const lista = limpia.lista;
       G.pasarMujeresAlAbierto(lista, true);
-      if (G.agrupar(lista).grupos.length > 1) { sugerirGrupos(lista, archivo.name); return; }
+      if (G.agrupar(lista).grupos.length > 1) { sugerirGrupos(lista, archivo.name, limpia); return; }
+      const sobran = limpia.repetidos.reduce((a, r) => a + r.veces - 1, 0);
+      if (sobran) Avisos.avisar(tx("repetidasQuitadas", { n: sobran }), { tipo: "info" });
       agregarTodos(lista);
     } catch (err) {
       estadoEl.textContent = "";
@@ -554,13 +563,13 @@
   // varias categorías, no se agrega a nadie todavía: se le muestra al árbitro
   // cómo quedaría partida, con cada grupo marcado (menos el que tiene un solo
   // jugador, que no alcanza para un torneo), y él decide.
-  function sugerirGrupos(lista, nombreArchivo) {
+  function sugerirGrupos(lista, nombreArchivo, limpia) {
     const regiones = [...new Set(lista.map((j) => j.region).filter(Boolean))];
     const base = regiones.length === 1 ? tx("grupoRegional", { r: regiones[0] })
       : String(nombreArchivo || "").replace(/\.[^.]+$/, "").replace(/[_]+/g, " ").trim();
     // El año del torneo: el de su fecha de inicio, o el de hoy.
     const anio = Number(String(t().fechaInicio || "").slice(0, 4)) || Number((window.HoraCR ? HoraCR.hoy() : "").slice(0, 4)) || G.JDE_ANIO_NORMATIVA;
-    estado.sugerencia = { lista, base, anio, pasarMujeres: true, grupos: [] };
+    estado.sugerencia = { lista, base, anio, pasarMujeres: true, grupos: [], elegidos: new Map(), abiertos: new Set(), limpia };
     calcularSugerencia();
     pintarSugerencia();
     const caja = $("pi-sugerencia");
@@ -574,11 +583,85 @@
   function calcularSugerencia() {
     const s = estado.sugerencia;
     s.pase = G.pasarMujeresAlAbierto(s.lista, s.pasarMujeres);
-    const { dimensiones, grupos } = G.agrupar(s.lista);
+    // En cada equipo de más de cinco juegan los que eligió el árbitro (de
+    // entrada, los cinco primeros de la inscripción); el resto queda
+    // descartado y no entra a ningún torneo.
+    s.equipos = G.equiposDeMas(s.lista);
+    s.descartados = new Set();
+    // La elección se guarda por equipo y por estado de la casilla del pase:
+    // los integrantes de un equipo cambian al prenderla o apagarla, y al
+    // volver, cada equipo queda como el árbitro lo había dejado. Si el
+    // árbitro desmarca a alguien, el lugar queda libre para que elija.
+    for (const e of s.equipos) {
+      e.eleccion = e.clave + "|" + (s.pasarMujeres ? "pase" : "sin-pase");
+      const antes = s.elegidos.get(e.eleccion);
+      const elegidos = antes ? e.integrantes.filter((j) => antes.has(j)) : e.integrantes.slice(0, G.JDE_MAX_EQUIPO);
+      s.elegidos.set(e.eleccion, new Set(elegidos));
+      for (const j of e.integrantes) if (!elegidos.includes(j)) s.descartados.add(j);
+    }
+    s.juegan = s.lista.filter((j) => !s.descartados.has(j));
+    const { dimensiones, grupos } = G.agrupar(s.juegan);
     const antes = new Map(s.grupos.map((g) => [g.clave, g.marcado]));
     s.dimensiones = dimensiones;
     s.grupos = grupos.map((g) => Object.assign(g, { marcado: antes.has(g.clave) ? antes.get(g.clave) : g.jugadores.length >= 2 }));
-    s.revision = G.revisarCategorias(s.lista, s.anio);
+    s.revision = G.revisarCategorias(s.juegan, s.anio);
+  }
+
+  // Lo que se limpió de la lista antes de partirla: las inscripciones
+  // repetidas (se dejó una) y quien está en dos modalidades o categorías
+  // (art. 66.1.h: se avisa, decide el árbitro).
+  function pintarRepetidos(s) {
+    const { repetidos, dosModalidades } = s.limpia || { repetidos: [], dosModalidades: [] };
+    if (!repetidos.length && !dosModalidades.length) return null;
+    const caja = el("div", { id: "pi-repetidos", class: "mt-4 pt-3 border-t border-brand-100 dark:border-brand-800" });
+    caja.append(el("h4", { class: "font-semibold text-sm", texto: tx("repetidosTitulo") }));
+    if (repetidos.length) {
+      const sobran = repetidos.reduce((a, r) => a + r.veces - 1, 0);
+      caja.append(el("p", { class: "text-sm mt-1", texto: tx("repetidosTexto", { p: repetidos.length, n: sobran }) }),
+        el("details", { class: "mt-1" },
+          el("summary", { class: "cursor-pointer text-sm rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400", texto: tx("repetidosVer") }),
+          el("ul", { id: "pi-repetidos-lista", class: "mt-1 space-y-1 text-sm list-disc pl-5" }, repetidos.map((r) =>
+            el("li", { texto: tx("repetidosCaso", { n: r.jugador.nombre, i: r.jugador.institucion || "—", v: r.veces }) })))));
+    }
+    if (dosModalidades.length) {
+      const modo = (x) => tx(x.modalidad === "equipo" ? "grupoEquipos" : "grupoIndividual") + " " + x.categoria;
+      caja.append(el("p", { class: "text-sm mt-2", texto: tx("dosModalidadesTexto") }),
+        el("ul", { id: "pi-dos-modalidades", class: "mt-1 space-y-1 text-sm list-disc pl-5" }, dosModalidades.map((d) =>
+          el("li", { texto: tx("dosModalidadesCaso", { n: d.jugador.nombre, i: d.jugador.institucion || "—", m: d.inscripciones.map(modo).join(" y ") }) }))));
+    }
+    return caja;
+  }
+
+  // Elegir los cinco de cada equipo que se pasa: una casilla por integrante,
+  // y con cinco marcados las demás no se pueden marcar.
+  function pintarEquiposDeMas(s) {
+    if (!s.equipos.length) return null;
+    const caja = el("div", { id: "pi-equipos-de-mas", class: "mt-4 pt-3 border-t border-brand-100 dark:border-brand-800" });
+    caja.append(
+      el("h4", { class: "font-semibold text-sm", texto: tx("equiposTitulo", { m: G.JDE_MAX_EQUIPO }) }),
+      el("p", { class: "text-sm mt-1", texto: tx("equiposTexto", { m: G.JDE_MAX_EQUIPO, d: s.descartados.size }) }));
+    s.equipos.forEach((e, k) => {
+      const elegidos = s.elegidos.get(e.eleccion);
+      const lleno = elegidos.size >= G.JDE_MAX_EQUIPO;
+      const detalles = el("details", { class: "mt-2", "data-equipo": e.clave, open: s.abiertos.has(e.clave) });
+      detalles.addEventListener("toggle", () => { if (detalles.open) s.abiertos.add(e.clave); else s.abiertos.delete(e.clave); });
+      detalles.append(el("summary", { class: "cursor-pointer text-sm font-semibold rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400",
+        texto: tx("equiposResumen", { i: e.institucion || "—", c: e.categoria, t: tx(e.torneo === "w" ? "grupoMujeres" : "grupoAbierto"), n: e.integrantes.length, e: elegidos.size, m: G.JDE_MAX_EQUIPO }) }));
+      const ul = el("ul", { class: "mt-1 space-y-1 text-sm pl-2" });
+      e.integrantes.forEach((j, i) => {
+        const id = "pi-eq-" + k + "-" + i;
+        const si = elegidos.has(j);
+        ul.append(el("li", { class: "flex items-start gap-2" },
+          el("input", { type: "checkbox", id, class: "mt-1", checked: si, disabled: !si && lleno, onchange: (ev) => {
+            if (ev.target.checked) elegidos.add(j); else elegidos.delete(j);
+            calcularSugerencia(); pintarSugerencia(); $(id).focus();
+          } }),
+          el("label", { for: id, texto: j.nombre + (si ? "" : " — " + tx("equiposDescartado")) })));
+      });
+      detalles.append(ul);
+      caja.append(detalles);
+    });
+    return caja;
   }
 
   // Las mujeres de equipos que no alcanzan para un equipo propio (art.
@@ -645,9 +728,11 @@
     const porSexo = s.dimensiones.includes("sexo");
     caja.append(
       el("h3", { id: "pi-sugerencia-titulo", class: "font-serif text-lg font-bold", texto: tx("sugerenciaTitulo", { n: s.grupos.length }) }),
-      el("p", { class: "text-sm mt-1", texto: tx("sugerenciaTexto", { total: s.lista.length, d: unidas }) }),
+      el("p", { class: "text-sm mt-1", texto: tx("sugerenciaTexto", { total: s.juegan.length, d: unidas }) }),
       el("fieldset", {}, el("legend", { class: "sr-only", texto: tx("sugerenciaLeyenda") }), lista),
+      pintarRepetidos(s),
       pintarPaseAbierto(s),
+      pintarEquiposDeMas(s),
       pintarRevisionCategorias(s.revision),
       porSexo ? el("p", { class: C.nota + " mt-2", texto: tx("sugerenciaAbierto") }) : null,
       hayEquipos ? el("p", { class: C.nota + " mt-2", texto: tx("sugerenciaEquipos") }) : null,
@@ -655,7 +740,7 @@
       el("p", { class: C.nota + " mt-2", texto: tx("sugerenciaNombre", { b: t().nombre.trim() || s.base }) }),
       el("div", { class: "flex flex-wrap gap-2 mt-3" },
         el("button", { type: "button", id: "pi-sugerencia-crear", class: C.boton, disabled: marcados === 0, onclick: crearTorneosDeGrupos, texto: tx("sugerenciaCrear", { n: marcados }) }),
-        el("button", { type: "button", id: "pi-sugerencia-todos", class: C.botonSec, onclick: () => { const l = s.lista; estado.sugerencia = null; pintarSugerencia(); agregarTodos(l); }, texto: tx("sugerenciaTodosAqui", { n: s.lista.length }) }),
+        el("button", { type: "button", id: "pi-sugerencia-todos", class: C.botonSec, onclick: () => { const l = s.juegan; estado.sugerencia = null; pintarSugerencia(); agregarTodos(l); }, texto: tx("sugerenciaTodosAqui", { n: s.juegan.length }) }),
         el("button", { type: "button", id: "pi-sugerencia-descartar", class: C.botonSec, onclick: () => { estado.sugerencia = null; pintarSugerencia(); Avisos.avisar(tx("sugerenciaDescartada"), { tipo: "info" }); }, texto: tx("sugerenciaDescartar") })));
   }
 
