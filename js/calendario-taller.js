@@ -19,11 +19,12 @@
 
    Abajo van las grabaciones de las sesiones que ya pasaron (mis_grabaciones(),
    que pone el profe o quien administra con grabacion_clase_poner()), cada una
-   con su reproductor a pedido.
+   con su reproductor a pedido y cuánto lleva visto (grabaciones_vistas, que
+   se anota mientras la mira: ver «Cuánto vio cada uno»).
 
    Va aparte de js/clases.js para que se pueda probar sin la base: pintar()
-   recibe las filas tal cual las devuelven mis_clases_proximas() y
-   mis_grabaciones().
+   recibe las filas tal cual las devuelven mis_clases_proximas(),
+   mis_grabaciones() y grabaciones_vistas, y lo que vio lo entrega a `alVer`.
    Ver «El panel de taller» en docs/decisiones/paneles.md. */
 window.CalendarioTaller = (function () {
     "use strict";
@@ -157,8 +158,10 @@ window.CalendarioTaller = (function () {
        mis_clases_proximas() (ya ordenadas y sin las que terminaron);
        `alBajar` es lo que hace «Agregar a mi calendario»; `entrada`, si la
        clase está abierta (ver pintarEntrada); `grabaciones`, las filas de
-       mis_grabaciones() (ver pintarGrabaciones). */
-    function pintar(caja, sesiones, { ahora = new Date(), alBajar = null, entrada = null, grabaciones = null } = {}) {
+       mis_grabaciones() (ver pintarGrabaciones); `vistas`, las de
+       grabaciones_vistas de quien mira, y `alVer(g, tramos)`, lo que anota lo
+       que vio y devuelve el total (ver «Cuánto vio»). */
+    function pintar(caja, sesiones, { ahora = new Date(), alBajar = null, entrada = null, grabaciones = null, vistas = null, alVer = null } = {}) {
         caja.replaceChildren();
         const lista = (sesiones || []).filter((s) => s && s.inicio && s.fin && new Date(s.fin) > ahora);
 
@@ -197,7 +200,7 @@ window.CalendarioTaller = (function () {
             boton.addEventListener("click", () => alBajar(boton, estado));
             caja.append(boton, estado);
         }
-        pintarGrabaciones(caja, grabaciones, lista[0]);
+        pintarGrabaciones(caja, grabaciones, lista[0], vistas, alVer);
         caja.hidden = false;
         return lista.length;
     }
@@ -218,10 +221,7 @@ window.CalendarioTaller = (function () {
         const dos = (n) => String(n).padStart(2, "0");
         return h ? h + ":" + dos(m) + ":" + dos(s) : m + ":" + dos(s);
     }
-    function duracion(seg) {
-        const h = Math.floor(seg / 3600), m = Math.round((seg % 3600) / 60);
-        return h ? h + " h" + (m ? " " + m + " min" : "") : Math.max(1, m) + " min";
-    }
+    const duracion = (seg) => HoraCR.duracion(seg);
     // El número de la sesión, del final del título: «Sesión II» → «II».
     function numero(titulo) {
         const m = /(?:^|\s)([IVXLC]+|\d+)\s*$/.exec(titulo || "");
@@ -274,8 +274,46 @@ window.CalendarioTaller = (function () {
         if (g.tema) texto.appendChild(el("span", "block text-sm text-brand-700 dark:text-brand-200", g.tema));
         texto.appendChild(el("span", "mt-1 block text-xs text-brand-600 dark:text-brand-300", dia(g.inicio) + (seg ? " · " + duracion(seg) : "")));
         b.appendChild(texto);
+        ponerVisto(b, g);
         b.addEventListener("click", () => abrir(g, b));
         return b;
+    }
+
+    // «Viste 1 h 36 min (50 %)»: lo que lleva visto, sin contar lo repetido.
+    function textoVisto(g) {
+        const visto = Number(g.visto_seg) > 0 ? Number(g.visto_seg) : 0;
+        if (!visto) return "";
+        const total = Number(g.duracion_seg) > 0 ? Number(g.duracion_seg) : 0;
+        if (total && visto >= total * 0.95) return "✓ La viste completa";
+        const pct = total ? Math.round((100 * visto) / total) : 0;
+        return "Viste " + duracion(visto) + (pct >= 1 ? " (" + pct + " %)" : "");
+    }
+
+    /* En la tarjeta: el texto debajo del día y, como en YouTube, una barra al
+       pie de la miniatura. La barra es adorno: lo que dice va escrito. Se
+       repinta cuando la base devuelve el total nuevo, con la ventana todavía
+       abierta. */
+    function ponerVisto(b, g) {
+        if (!b) return;
+        const dicho = textoVisto(g);
+        let t = b.querySelector("[data-visto]"), barra = b.querySelector("[data-visto-barra]");
+        if (!dicho) { if (t) t.remove(); if (barra) barra.remove(); return; }
+        if (!t) {
+            t = el("span", "mt-1 block text-xs font-semibold text-brand-700 dark:text-brand-200");
+            t.dataset.visto = "";
+            b.lastElementChild.appendChild(t);
+        }
+        t.textContent = dicho;
+        const total = Number(g.duracion_seg) > 0 ? Number(g.duracion_seg) : 0;
+        if (!total) return;
+        if (!barra) {
+            barra = el("span", "absolute inset-x-0 bottom-0 block h-1.5 bg-white/30");
+            barra.dataset.vistoBarra = "";
+            barra.setAttribute("aria-hidden", "true");
+            barra.appendChild(el("span", "block h-full bg-accent-500"));
+            b.firstElementChild.appendChild(barra);
+        }
+        barra.firstElementChild.style.width = Math.min(100, (100 * Number(g.visto_seg)) / total).toFixed(1) + "%";
     }
 
     // La próxima sesión, en gris: todavía no tiene grabación. Apagada: sin
@@ -325,34 +363,159 @@ window.CalendarioTaller = (function () {
         cerrar.addEventListener("click", () => d.close());
         d.addEventListener("click", (e) => { if (e.target === d) d.close(); });
         d.addEventListener("close", () => {
+            parar();
             marco.replaceChildren();
             if (volverA && document.contains(volverA)) volverA.focus();
             volverA = null;
         });
+        window.addEventListener("message", alMensaje);
+        // Al irse de la página (o dejarla en el fondo) se manda lo que haya.
+        window.addEventListener("pagehide", () => mandar(medidor));
+        document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden") mandar(medidor); });
         cine = d;
         return d;
     }
 
-    function abrirCine(g, desde) {
+    /* Cuánto vio. Con enablejsapi=1, el reproductor de YouTube dice por
+       mensajes (postMessage) en qué segundo va y si está corriendo: es lo que
+       hace la librería de YouTube por dentro, sin cargar su código en la
+       página (la CSP no lo deja, y tendría la sesión al alcance). Se anotan
+       los TRAMOS del video que corrieron reproduciéndose —de una muestra a la
+       siguiente, si avanzó lo que da el reloj—, así que adelantar, volver
+       atrás y la pausa no suman. Se mandan a la base con `alVer` cada 30
+       segundos, al pausar, al cerrar y al salir de la página; la base los
+       junta con los de antes y devuelve el total. Si el reproductor no
+       contesta, no se anota nada y el video se ve igual. Lo que se mira en
+       YouTube aparte («Abrir en YouTube») no se cuenta. */
+    const YT = "https://www.youtube-nocookie.com";
+    const CADA = 30000, TERMINO = 0, CORRIENDO = 1, PAUSA = 2;
+    let medidor = null;
+
+    // Junta [a, b) a una lista de tramos ordenados y sin pisarse.
+    function sumarTramo(lista, a, b) {
+        if (!(b > a)) return lista;
+        const fuera = [];
+        let puesto = false;
+        for (const [x, y] of lista) {
+            if (y < a) fuera.push([x, y]);
+            else if (x > b) { if (!puesto) { fuera.push([a, b]); puesto = true; } fuera.push([x, y]); }
+            else { a = Math.min(a, x); b = Math.max(b, y); }
+        }
+        if (!puesto) fuera.push([a, b]);
+        return fuera;
+    }
+
+    function medir(g, iframe, tarjeta, alVer) {
+        parar();
+        const m = { g, iframe, tarjeta, alVer, tramos: [], estado: -1, velocidad: 1, previo: null, reloj: 0, oye: false, enviando: false };
+        medidor = m;
+        // Hasta que conteste, se le avisa que alguien escucha (como la librería).
+        let veces = 0;
+        const hola = () => {
+            if (medidor !== m || m.oye || ++veces > 40) return clearInterval(m.hola);
+            if (iframe.contentWindow) iframe.contentWindow.postMessage(JSON.stringify({ event: "listening", id: 1, channel: "widget" }), YT);
+        };
+        iframe.addEventListener("load", hola);
+        m.hola = setInterval(hola, 500);
+        if (alVer) m.envio = setInterval(() => mandar(m), CADA);
+    }
+
+    function alMensaje(e) {
+        const m = medidor;
+        if (!m || e.origin !== YT || e.source !== m.iframe.contentWindow) return;
+        let d = e.data;
+        if (typeof d === "string") { try { d = JSON.parse(d); } catch (_) { return; } }
+        if (!d || typeof d !== "object") return;
+        if (!m.oye) {
+            m.oye = true;
+            // Que avise también cuando corre o se detiene (como la librería, con addEventListener).
+            m.iframe.contentWindow.postMessage(JSON.stringify({ event: "command", func: "addEventListener", args: ["onStateChange"], id: 1, channel: "widget" }), YT);
+        }
+        if (d.event === "onStateChange" && typeof d.info === "number") cambiaEstado(m, d.info);
+        const info = d.info && typeof d.info === "object" ? d.info : null;
+        if (!info || (d.event !== "infoDelivery" && d.event !== "initialDelivery")) return;
+        if (typeof info.playbackRate === "number" && info.playbackRate > 0) m.velocidad = info.playbackRate;
+        if (typeof info.playerState === "number") cambiaEstado(m, info.playerState);
+        if (typeof info.currentTime === "number" && Number.isFinite(info.currentTime)) avanzar(m, info.currentTime);
+    }
+
+    /* Detenido (en pausa, terminado, cargando) se olvida la última muestra: lo
+       que se adelante con el video quieto no se cuenta, aunque haya pasado el
+       rato. Se manda al pausar y al terminar; al cargar, no (con una conexión
+       mala serían muchos envíos). */
+    function cambiaEstado(m, estado) {
+        if (estado === m.estado) return;
+        m.estado = estado;
+        if (estado === CORRIENDO) return;
+        m.previo = null;
+        if (estado === PAUSA || estado === TERMINO) mandar(m);
+    }
+
+    // Cuenta lo que corrió desde la muestra anterior si es lo que da el reloj
+    // (a la velocidad que va, con un margen): un salto más grande es que adelantó.
+    function avanzar(m, t) {
+        const ahora = performance.now();
+        if (m.estado !== CORRIENDO) { m.previo = null; return; }
+        if (m.previo != null) {
+            const corrio = t - m.previo;
+            const daElReloj = ((ahora - m.reloj) / 1000) * m.velocidad + 2;
+            if (corrio > 0 && corrio <= Math.max(3, daElReloj)) m.tramos = sumarTramo(m.tramos, Math.floor(m.previo), Math.ceil(t));
+        }
+        m.previo = t;
+        m.reloj = ahora;
+    }
+
+    async function mandar(m) {
+        if (!m || !m.alVer || m.enviando || !m.tramos.length) return;
+        const tramos = m.tramos.slice(0, 200);   // la base recibe hasta 200 de una vez
+        m.tramos = m.tramos.slice(200);
+        m.enviando = true;
+        try {
+            const total = await m.alVer(m.g, tramos);
+            if (Number.isFinite(total)) { m.g.visto_seg = total; ponerVisto(m.tarjeta, m.g); }
+        } catch (e) {
+            // Sin red se vuelven a juntar para la próxima; lo que la base rechazó, no.
+            if (!(e && e.descartar)) tramos.forEach(([a, b]) => { m.tramos = sumarTramo(m.tramos, a, b); });
+        } finally {
+            m.enviando = false;
+        }
+    }
+
+    function parar() {
+        const m = medidor;
+        if (!m) return;
+        clearInterval(m.hola);
+        clearInterval(m.envio);
+        medidor = null;
+        mandar(m);
+    }
+
+    function abrirCine(g, desde, alVer) {
         if (!ID_VIDEO.test(String(g.youtube_id || ""))) return;
         const d = armarCine();
         volverA = desde;
         d.querySelector("#grabacion-cine-titulo").textContent = (g.titulo || "Clase") + (g.tema ? " · " + g.tema : "");
         d.querySelector("#grabacion-cine-youtube").href = "https://youtu.be/" + encodeURIComponent(g.youtube_id);
         const video = document.createElement("iframe");
-        video.src = "https://www.youtube-nocookie.com/embed/" + encodeURIComponent(g.youtube_id) + "?rel=0&autoplay=1";
+        // `origin` es a quién le contesta el reproductor sus mensajes.
+        video.src = "https://www.youtube-nocookie.com/embed/" + encodeURIComponent(g.youtube_id) + "?rel=0&autoplay=1&enablejsapi=1"
+            + (location.origin && location.origin !== "null" ? "&origin=" + encodeURIComponent(location.origin) : "");
         video.title = "Grabación de la " + (g.titulo || "clase");
         video.className = "h-full w-full";
         video.allow = "accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture; fullscreen";
         video.allowFullscreen = true;
         video.referrerPolicy = "strict-origin-when-cross-origin";
+        medir(g, video, desde, alVer);
         d.querySelector("#grabacion-cine-video").replaceChildren(video);
         if (!d.open) d.showModal();
         d.querySelector("#grabacion-cine-cerrar").focus();
     }
 
-    function pintarGrabaciones(caja, grabaciones, proxima) {
-        const lista = (grabaciones || []).filter((g) => g && g.inicio && g.fin && ID_VIDEO.test(String(g.youtube_id || "")));
+    function pintarGrabaciones(caja, grabaciones, proxima, vistas, alVer) {
+        // Lo que ya vio va con su grabación (la fila de grabaciones_vistas de ese día).
+        const visto = new Map((vistas || []).filter(Boolean).map((v) => [v.horario_id + "|" + v.fecha, Number(v.visto_seg) || 0]));
+        const lista = (grabaciones || []).filter((g) => g && g.inicio && g.fin && ID_VIDEO.test(String(g.youtube_id || "")))
+            .map((g) => Object.assign({}, g, { visto_seg: visto.get(g.horario_id + "|" + g.fecha) || 0 }));
         if (!lista.length) return 0;
         const seccion = el("section", "mt-6");
         seccion.setAttribute("aria-labelledby", "grabaciones-taller-titulo");
@@ -367,7 +530,7 @@ window.CalendarioTaller = (function () {
         rejilla.setAttribute("role", "list");
         rejilla.setAttribute("aria-label", "Grabaciones");
         const item = (hijo) => { const li = el("div"); li.setAttribute("role", "listitem"); li.appendChild(hijo); return li; };
-        lista.forEach((g) => rejilla.appendChild(item(tarjetaGrabacion(g, abrirCine))));
+        lista.forEach((g) => rejilla.appendChild(item(tarjetaGrabacion(g, (x, b) => abrirCine(x, b, alVer)))));
         if (proxima) rejilla.appendChild(item(tarjetaProxima(proxima)));
         seccion.append(titulo, sub, rejilla);
         caja.appendChild(seccion);

@@ -11,9 +11,10 @@
  *   - sus archivos, su presentación (se mira acá mismo con VistaPrevia) y su
  *     cuestionario al estilo Kahoot, si ya está cargado;
  *   - el grupo: una tabla con cada asesor (las cuentas temporales abiertas
- *     del taller), la última vez que entró, sus clases en la plataforma y la
- *     nota de la primera vez en el cuestionario de cada sesión. La arma la
- *     base, asesores_tablero(): acá solo se pinta;
+ *     del taller), la última vez que entró, sus clases en la plataforma, la
+ *     nota de la primera vez en el cuestionario de cada sesión y cuánto vio
+ *     de cada grabación. La arma la base, asesores_tablero() y
+ *     asesores_grabaciones(): acá solo se pinta;
  *   - «Mandarlo como tarea a los asesores»: abre Tareas con ese cuestionario
  *     en el renglón y marcadas las cuentas temporales abiertas del taller
  *     (tareas.html?temporales=<detalle>), para que lo practiquen en su casa
@@ -41,7 +42,7 @@
   let estados = [];          // filas de preparacion_sesiones
   let cuestionarios = [];    // { id, titulo, preguntas }
   let talleres = [];         // [detalle, cuántas cuentas temporales abiertas]
-  let grupos = [];           // [detalle, filas de asesores_tablero()]
+  let grupos = [];           // [detalle, filas de asesores_tablero(), filas de asesores_grabaciones()]
   let pedido = null;
 
   function el(tag, clase, texto) {
@@ -73,9 +74,14 @@
     ((t && !t.error && t.data) || []).forEach((f) => cuenta.set(f.detalle, (cuenta.get(f.detalle) || 0) + 1));
     talleres = [...cuenta.entries()];
     grupos = await Promise.all(talleres.map(async ([detalle]) => {
-      const { data, error } = await sb.rpc("asesores_tablero", { p_detalle: detalle });
-      if (error) console.error(error);
-      return [detalle, error ? null : (data || [])];
+      // Lo de las grabaciones va aparte: si falla, la tabla sale sin esas columnas.
+      const [t, g] = await Promise.all([
+        sb.rpc("asesores_tablero", { p_detalle: detalle }),
+        sb.rpc("asesores_grabaciones", { p_detalle: detalle }).then((r) => r, (e) => ({ error: e })),
+      ]);
+      if (t.error) console.error(t.error);
+      if (g.error) console.error(g.error);
+      return [detalle, t.error ? null : (t.data || []), g.error ? null : (g.data || [])];
     }));
   }
 
@@ -256,10 +262,40 @@
     if (nota.veces > 1) td.appendChild(el("span", "block text-xs text-brand-500 dark:text-brand-300", nota.veces + " veces"));
   }
 
-  function tablaDelGrupo(filas, sesiones) {
+  /* Las grabaciones del taller, en orden, de las filas de asesores_grabaciones()
+     (una por persona y grabación): cada una con su título y su duración, y
+     cuánto vio cada persona. */
+  function grabacionesDe(filas) {
+    const porVideo = new Map();
+    (filas || []).forEach((f) => {
+      const clave = f.horario_id + "|" + f.fecha;
+      if (!porVideo.has(clave)) porVideo.set(clave, { clave, titulo: f.titulo || "Clase", inicio: f.inicio, duracion: Number(f.duracion_seg) || 0, vio: new Map() });
+      porVideo.get(clave).vio.set(f.persona_id, Number(f.visto_seg) || 0);
+    });
+    return [...porVideo.values()].sort((a, b) => new Date(a.inicio) - new Date(b.inicio));
+  }
+
+  // «50 %» y debajo «1 h 36 min»: lo que vio, sin contar lo repetido.
+  function celdaVisto(td, visto, duracion) {
+    if (!visto) {
+      td.appendChild(el("span", null, "—")).setAttribute("aria-hidden", "true");
+      td.appendChild(el("span", "sr-only", "No la vio"));
+      return;
+    }
+    if (duracion) {
+      const pct = Math.min(100, Math.round((100 * visto) / duracion));
+      td.textContent = (pct < 1 ? "<1" : pct) + " %";
+      td.appendChild(el("span", "block text-xs text-brand-500 dark:text-brand-300", HoraCR.duracion(visto)));
+    } else {
+      td.textContent = HoraCR.duracion(visto);
+    }
+  }
+
+  function tablaDelGrupo(filas, sesiones, videos) {
     const envoltura = el("div", "overflow-x-auto");
     const t = el("table", "min-w-full text-sm");
-    const cap = el("caption", "sr-only", "Cada asesor: la última vez que entró, sus clases y la nota de la primera vez en el cuestionario de cada sesión");
+    const cap = el("caption", "sr-only", "Cada asesor: la última vez que entró, sus clases, la nota de la primera vez en el cuestionario de cada sesión"
+      + (videos.length ? " y cuánto vio de cada grabación" : ""));
     t.appendChild(cap);
     const th = (texto, clase) => { const c = el("th", "px-2 py-2 font-semibold text-left " + (clase || ""), texto); c.scope = "col"; return c; };
     const cab = el("tr", "border-b border-brand-200 dark:border-brand-700 text-brand-600 dark:text-brand-200");
@@ -267,6 +303,12 @@
     sesiones.forEach((s) => {
       const c = th("S" + s.n, "text-center");
       c.setAttribute("aria-label", "Cuestionario de la sesión " + s.n);
+      cab.appendChild(c);
+    });
+    videos.forEach((v, i) => {
+      const n = /(?:^|\s)([IVXLC]+|\d+)\s*$/.exec(v.titulo);
+      const c = th("▶ " + (n ? n[1] : i + 1), "text-center whitespace-nowrap");
+      c.setAttribute("aria-label", "Grabación de la " + v.titulo + ": cuánto la vio");
       cab.appendChild(c);
     });
     t.appendChild(el("thead")).appendChild(cab);
@@ -282,6 +324,11 @@
       sesiones.forEach((s) => {
         const td = el("td", "px-2 py-2 text-center tabular-nums");
         celdaNota(td, s.q && (f.cuestionarios || {})[s.q.id]);
+        tr.appendChild(td);
+      });
+      videos.forEach((v) => {
+        const td = el("td", "px-2 py-2 text-center tabular-nums");
+        celdaVisto(td, v.vio.get(f.persona_id), v.duracion);
         tr.appendChild(td);
       });
       cuerpo.appendChild(tr);
@@ -300,7 +347,7 @@
       return;
     }
     const sesiones = datos.sesiones.map((s) => ({ n: s.n, q: cuestionarioDe(s.n) }));
-    grupos.forEach(([detalle, filas]) => {
+    grupos.forEach(([detalle, filas, vistas]) => {
       if (grupos.length > 1) cont.appendChild(el("h4", "font-semibold text-brand-800 dark:text-white mt-4 mb-1", detalle));
       if (!filas) {
         cont.appendChild(el("p", "text-sm font-semibold text-red-700 dark:text-red-300",
@@ -313,7 +360,16 @@
         entraron + " de " + filas.length + (filas.length === 1 ? " persona ya entró" : " personas ya entraron") + " a la plataforma"
         + (nunca ? "; " + nunca + (nunca === 1 ? " nunca ha entrado." : " nunca han entrado.") : ".")
         + " La nota es la de la primera vez que contestó el cuestionario de cada sesión."));
-      cont.appendChild(tablaDelGrupo(filas, sesiones));
+      const videos = grabacionesDe(vistas);
+      if (videos.length) {
+        cont.appendChild(el("p", "text-sm text-brand-700 dark:text-brand-200 mb-3",
+          "En las grabaciones (▶), cuánto vio cada uno aquí en la plataforma, sin contar lo que repitió ni lo que adelantó. "
+          + videos.map((v, i) => {
+            const n = [...v.vio.values()].filter((x) => x > 0).length;
+            return v.titulo + ": " + n + " de " + filas.length + (i ? "" : (n === 1 ? " empezó a verla" : " empezaron a verla"));
+          }).join("; ") + "."));
+      }
+      cont.appendChild(tablaDelGrupo(filas, sesiones, videos));
     });
   }
 

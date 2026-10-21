@@ -4281,6 +4281,113 @@ horario>', '<fecha>', '<enlace de YouTube>', '<tema>', <segundos>);`. La
 duración exacta la da `ffprobe` sobre el archivo. El video tiene que estar «No
 listado» (uno privado no se ve incrustado) y con «Permitir inserción».
 
+### Cuánto vio cada uno
+
+El dueño pidió saber cuánto vio cada asesor de cada grabación. Se mide **qué
+segundos del video corrieron delante de la persona**, no cuánto rato tuvo la
+página abierta: volver a ver un tramo no suma dos veces, adelantar no cuenta
+como visto y la pausa no cuenta nada. Lo ve quien administra en la ficha
+Asesores (ver «La ficha Asesores» en `cursos-y-material.md`) y cada asesor en
+su tarjeta, como en YouTube: una barra al pie de la miniatura y, escrito,
+«Viste 1 h 36 min (50 %)» o «✓ La viste completa» (desde el 95 %).
+
+**Cómo lo sabe la página.** Con `enablejsapi=1` y `origin=<el sitio>` en la
+dirección del reproductor, el de YouTube cuenta por mensajes (`postMessage`)
+en qué segundo va, si está corriendo y a qué velocidad: es lo que hace la
+librería de YouTube por dentro. **Su librería no se carga**: la CSP no la deja
+(`script-src` no tiene YouTube) y, cargada en la página, tendría la sesión al
+alcance. La página le dice «escucho» (`{"event":"listening"}`) hasta que
+contesta, le pide que avise también los cambios de estado
+(`addEventListener` de `onStateChange`, como la librería) y lee `infoDelivery`
+(`currentTime`, `playerState`, `playbackRate`). **No se pudo probar contra el
+YouTube de verdad** desde la sesión que lo hizo (la red del contenedor no
+llega a YouTube): la primera vez que alguien vea una grabación, mirar que
+aparezca su fila en `grabaciones_vistas`.
+
+- **Solo cree a los mensajes de ese reproductor**: `origin` igual a
+  `https://www.youtube-nocookie.com` y `source` igual a la ventana del
+  `<iframe>`. Cualquier otro (la página misma, otra pestaña) se descarta.
+- **Un tramo cuenta si avanzó lo que da el reloj**: de una muestra a la
+  siguiente, con el video corriendo, si el segundo avanzó más que cero y no
+  más que el tiempo que pasó por la velocidad (y 2 segundos de margen, con un
+  piso de 3). Un salto más grande es que adelantó. Lo anotado se redondea
+  hacia afuera (el segundo entero de cada punta), menos de 2 segundos por
+  tramo seguido.
+- **Se manda cada 30 segundos, al pausar, al terminar, al cerrar la ventana
+  y al irse de la página** (`pagehide`, o al dejarla en el fondo); al quedarse
+  cargando no, que con una conexión mala serían muchos envíos. Con el video
+  detenido (en pausa, terminado o cargando) se olvida la última muestra, para
+  que lo adelantado con el video quieto no cuente aunque haya pasado el rato.
+  Va con
+  `grabacion_vista_anotar()` (`anotarLoVisto` de `js/clases.js`). Si no hubo
+  red, lo que no se pudo mandar va en el envío siguiente; lo que la base
+  rechazó (22023, 42501) no se vuelve a mandar. Lo que se mira en YouTube
+  aparte («Abrir en YouTube») no se cuenta.
+- **Si el reproductor no contesta, no se anota nada** y el video se ve igual.
+  Si YouTube cambiara sus mensajes, se dejaría de medir sin romper nada.
+
+**La base** (migración `20261021164546_grabaciones_vistas`):
+
+- `grabaciones_vistas (horario_id, fecha, persona_id)`: `vistos` es un
+  `int4multirange` (los tramos `[desde, hasta)` en segundos del video), y
+  `visto_seg` una **columna generada** con su suma
+  (`interno.segundos_vistos()`): se deriva de la misma fila y no se puede
+  separar de ella. Se borra con la grabación y con la cuenta (`on delete
+  cascade`).
+- **La escribe `grabacion_vista_anotar(horario, fecha, tramos)`**, que pide que
+  la grabación sea de una clase de quien llama (la regla de
+  `mis_grabaciones()`, con `coalesce`) y que cada tramo sea `[desde, hasta]`
+  en segundos enteros (a lo sumo 200 por envío); lo que pase del final se
+  recorta, porque la duración anotada puede quedarse corta por segundos. Junta
+  los tramos con los de antes (la unión de rangos: lo repetido no suma) y
+  devuelve el total, leyéndolo de la tabla.
+- **No acepta más video del que da el tiempo para verlo**: lo nuevo de un
+  envío no puede pasar del doble de lo que pasó desde el anterior (2× es la
+  velocidad más alta de YouTube) más un minuto, y 2 minutos en el primero. Así
+  un «lo vi entero» desde la consola no entra de una vez. Quien deja el video
+  corriendo sin mirarlo sí suma: eso no lo distingue ninguna medición.
+- **La leen la persona, el profe de esa clase y quien administra**; la tabla
+  no tiene política de escritura. El panel pide las de quien mira
+  (`.eq("persona_id", …)`: el profe que también es alumno vería además las de
+  sus clases).
+- **`asesores_grabaciones(taller)`** arma, para la ficha Asesores, una fila por
+  persona del taller (sus cuentas temporales abiertas) y grabación de sus
+  clases, también las que no abrió (0). Es `SECURITY DEFINER` porque «sus
+  clases» es `interno.horarios_del_alumno()`; quien administra recibe todo y
+  cualquier otro solo lo suyo. Con los 31 del taller y dos grabaciones, 62
+  filas en ~49 ms.
+- No reparte permisos, accesos ni dinero: no lleva bitácora. La página de
+  privacidad lo dice en «Lo que haces en la plataforma» (versión 2026-10-21).
+
+Comprobado impersonando roles en SQL, en un bloque revertido: la asesora anota
+50 s con dos tramos que se pisan, 50 más, y repetir lo visto no suma; 300 s
+sin que pase el tiempo se rechazan, y 7000 s una hora después entran; lo que
+pasa del final se recorta (11 508 s); un decimal, un negativo, un número solo,
+un texto, 201 tramos y una fecha sin grabación dan 22023; un alumno de otra
+academia y quien administra no pueden anotar (42501), `anon` ni llama ni lee;
+escribir directo en la tabla da «permission denied»; cada asesora lee solo lo
+suyo, el profe de la clase y quien administra todo, otro alumno nada; y
+`asesores_grabaciones()` le da a quien administra las 62 filas y a la asesora
+solo sus dos.
+
+`verificar-panel-taller.js` lo prueba con un **reproductor falso** que
+contesta como el de YouTube: corre de 0 a 10 (con un rato cargando en el 6),
+adelanta a 600, corre a 620,
+pausa, sigue a 630, vuelve al principio y termina; mientras tanto la página se
+manda a sí misma mensajes «de YouTube» en el segundo 5000. Comprueba que se
+anote [0, 10) y [600, 630) (40 s), que no entre ni lo adelantado ni lo ajeno,
+que se mande al pausar, al terminar y al cerrar con el video corriendo (y no
+al cargar), que
+sin red se reintente y lo rechazado no, que la tarjeta diga lo suyo y no lo de
+otra persona (con la barra de adorno y el texto en el nombre del botón), que
+se repinte con el total que devuelve la base y «✓ La viste completa»; el
+contraste de «Viste…» es 10,41:1 en claro y 11,18:1 en oscuro.
+`verificar-admin.js` prueba las columnas de la ficha. Se rompieron a propósito
+seis cosas (creerle a cualquier mensaje, contar lo adelantado, perder lo que
+no se pudo mandar, pedir las vistas de todos, no mandar al cerrar y no pintar
+lo visto en la ficha) y saltaron todas; la de cerrar no saltaba hasta que se
+agregó el caso del video que sigue corriendo.
+
 ## `verificar-panel.js` no puede colgar la tanda del CI
 
 Es el verificador más largo de la tanda 2/4 (unos 200 s), y en el CI se quedó

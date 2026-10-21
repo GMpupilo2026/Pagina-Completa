@@ -72,5 +72,15 @@ window.HoraCR = (function () {
         return isNaN(d) ? "" : d.toLocaleString("sv-SE", { timeZone: ZONA }).slice(0, 16).replace(" ", "T");
     }
 
-    return { ZONA, momento, fecha, hora, fechaHora, dia, hoy, mes, sumarDias, desdeCampo, paraCampo };
+    /* Un rato, escrito: «45 s», «12 min», «3 h 12 min». Lo usan las
+       grabaciones del panel de taller (cuánto dura y cuánto vio) y la ficha
+       Asesores. */
+    function duracion(seg) {
+        seg = Math.max(0, Number(seg) || 0);
+        if (seg < 60) return Math.round(seg) + " s";
+        const h = Math.floor(seg / 3600), m = Math.round((seg % 3600) / 60);
+        return h ? h + " h" + (m ? " " + m + " min" : "") : m + " min";
+    }
+
+    return { ZONA, momento, fecha, hora, fechaHora, dia, hoy, mes, sumarDias, desdeCampo, paraCampo, duracion };
 })();
