@@ -1,10 +1,3 @@
--- El dictado pasa a ser lo primero de la práctica de la Sesión 1 (herramientas/formacion-practicas.js):
--- láminas 1 (dictado), 2 y 3 (las ocho posiciones), 4 a 6 (los reclamos) y 7 a 10 (los casos).
--- Antes: 1 y 2 posiciones, 3 dictado. Se renumeran las claves en dos pasos (la llave primaria
--- no admite que dos filas se crucen en el mismo UPDATE) y después se vuelven a sembrar las claves
--- de esta práctica, que dejan cada una igual a lo que arma el generador (las de las demás
--- sesiones no cambian). Nadie había contestado
--- todavía (practica_respuestas vacía): ninguna respuesta se pierde ni queda en otra lámina.
 update public.practica_claves set lamina = lamina + 100
  where deck = 'formacion-ajedrez/practica-01';
 update public.practica_claves set lamina = case

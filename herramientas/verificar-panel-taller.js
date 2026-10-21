@@ -19,6 +19,9 @@
  *  - La grabación de una sesión no sale, sale para quien no es de esa clase
  *    (el id del video no listado es la llave), carga YouTube aunque nadie la
  *    pida, o sigue sonando escondida después de cerrarla.
+ *  - Lo que vio de una grabación se cuenta mal: suma lo que adelantó o lo que
+ *    repitió, le cree a un mensaje que no es del reproductor, se pierde si no
+ *    había red, o se le muestra el avance de otra persona.
  *
  * Lo de la base se mira leyendo supabase/ (sin red ni base); se comprobó además
  * impersonando roles en SQL (ver «El panel de taller» y «Las grabaciones de
@@ -92,6 +95,26 @@ function pruebaBase() {
   cierto("y interno.horarios_del_alumno() no se le abre a nadie",
     /revoke\s+execute\s+on\s+function\s+interno\.horarios_del_alumno\(uuid\)\s+from\s+public,\s*anon,\s*authenticated/i.test(sql));
 
+  console.log("\n=== Cuánto vio cada uno (supabase/migraciones) ===");
+  cierto("grabaciones_vistas guarda los tramos vistos, y el total sale de ellos (columna generada)",
+    /create\s+table\s+public\.grabaciones_vistas[\s\S]{0,400}vistos\s+int4multirange\s+not\s+null[\s\S]{0,120}visto_seg\s+integer\s+not\s+null\s+generated\s+always\s+as\s+\(interno\.segundos_vistos\(vistos\)\)\s+stored/i.test(sql));
+  cierto("es de una grabación (se va con ella) y de una persona (se va con su cuenta)",
+    /create\s+table\s+public\.grabaciones_vistas[\s\S]{0,200}persona_id\s+uuid\s+not\s+null\s+references\s+public\.profiles\(id\)\s+on\s+delete\s+cascade[\s\S]{0,500}references\s+public\.grabaciones_clase\(horario_id,\s*fecha\)\s+on\s+delete\s+cascade/i.test(sql));
+  cierto("la tabla no tiene política de escritura: la escribe la función",
+    !/create\s+policy\s+\w+\s+on\s+public\.grabaciones_vistas\s+for\s+(insert|update|delete|all)/i.test(sql)
+    && /revoke\s+all\s+on\s+public\.grabaciones_vistas\s+from\s+public,\s*anon,\s*authenticated;\s*grant\s+select\s+on\s+public\.grabaciones_vistas\s+to\s+authenticated/i.test(sql));
+  cierto("la leen la persona, quien administra y el profe de la clase, con auth.uid() envuelto",
+    /create\s+policy\s+grabaciones_vistas_ver[\s\S]{0,120}persona_id\s*=\s*\(select\s+auth\.uid\(\)\)\s+or\s+\(select\s+public\.soy_admin\(\)\)\s+or\s+horario_id\s+in\s+\(select\s+h\.id\s+from\s+public\.horario_clases\s+h\s+where\s+h\.profesor_id\s*=\s*\(select\s+auth\.uid\(\)\)\)/i.test(sql));
+  cierto("grabacion_vista_anotar() solo anota en una clase de quien llama, con coalesce",
+    /function\s+public\.grabacion_vista_anotar[\s\S]{0,600}if\s+not\s+coalesce\(v_yo\s+is\s+not\s+null\s+and\s+p_horario\s+in\s+\(select\s+interno\.horarios_del_alumno\(v_yo\)\),\s*false\)/i.test(sql));
+  cierto("y no deja anotar más video del que da el tiempo para verlo",
+    /function\s+public\.grabacion_vista_anotar[\s\S]{0,3000}2\s*\*\s*extract\(epoch\s+from\s+\(now\(\)\s*-\s*v_ultima\)\)[\s\S]{0,300}más\s+video\s+del\s+que\s+da\s+el\s+tiempo/i.test(sql));
+  cierto("a las dos funciones nuevas se les quita el execute a public y anon",
+    /revoke\s+execute\s+on\s+function\s+public\.grabacion_vista_anotar\(uuid,\s*date,\s*jsonb\)\s+from\s+public,\s*anon/i.test(sql)
+    && /revoke\s+execute\s+on\s+function\s+public\.asesores_grabaciones\(text\)\s+from\s+public,\s*anon/i.test(sql));
+  cierto("asesores_grabaciones() le da todo a quien administra y a cualquier otro solo lo suyo, con coalesce",
+    /function\s+public\.asesores_grabaciones[\s\S]{0,900}coalesce\(public\.soy_admin\(\)\s+or\s+ct\.persona_id\s*=\s*\(select\s+auth\.uid\(\)\),\s*false\)/i.test(sql));
+
   console.log("\n=== Las páginas ===");
   const html = fs.readFileSync(path.join(RAIZ, "clases.html"), "utf8");
   const cal = html.search(/<section id="calendario-taller" hidden/);
@@ -115,7 +138,7 @@ window.__rpc = [];
 (function () {
   const CFG = ${JSON.stringify(cfg)};
   const TABLAS = CFG.tablas || {};
-  function b(filas, error) {
+  function b(filas, error, codigo) {
     let datos = Array.isArray(filas) ? filas.slice() : filas, unica = false;
     const q = {
       select() { return q; },
@@ -126,7 +149,7 @@ window.__rpc = [];
       range(a, z) { if (Array.isArray(datos)) datos = datos.slice(a, z + 1); return q; },
       maybeSingle() { unica = true; return q; }, single() { unica = true; return q; },
       then(res, rej) {
-        if (error) return Promise.resolve({ data: null, error: { message: error } }).then(res, rej);
+        if (error) return Promise.resolve({ data: null, error: { message: error, code: codigo || "" } }).then(res, rej);
         let d = datos;
         if (Array.isArray(d) && unica) d = d.length ? d[0] : null;
         return Promise.resolve({ data: d, error: null, count: Array.isArray(d) ? d.length : 0 }).then(res, rej);
@@ -145,6 +168,7 @@ window.__rpc = [];
     rpc: (n, args) => {
       window.__rpc.push({ n: n, args: args || null });
       if ((CFG.fallan || []).includes(n)) return b(null, "falló " + n);
+      if ((CFG.rechazan || {})[n]) return b(null, "rechazó " + n, CFG.rechazan[n]);
       const r = (CFG.rpc || {})[n];
       return b(r === undefined ? null : r);
     },
@@ -193,7 +217,7 @@ function sesiones() {
 }
 
 const YO = "u-asesor";
-function cfg({ taller = true, tareas = [], fallan = [], abierta = false, videollamada = null, grabaciones } = {}) {
+function cfg({ taller = true, tareas = [], fallan = [], abierta = false, videollamada = null, grabaciones, vistas, anotar, rechazan } = {}) {
   const c = {
     yo: YO,
     tablas: { profiles: [{ id: YO, full_name: "Asesora de prueba · Cartago", role: "alumno", is_admin: false, grupo: "MEP" }] },
@@ -208,6 +232,9 @@ function cfg({ taller = true, tareas = [], fallan = [], abierta = false, videoll
     fallan,
   };
   if (grabaciones) c.rpc.mis_grabaciones = grabaciones;
+  if (vistas) c.tablas.grabaciones_vistas = vistas;
+  if (anotar !== undefined) c.rpc.grabacion_vista_anotar = anotar;
+  if (rechazan) c.rechazan = rechazan;
   return c;
 }
 
@@ -356,7 +383,8 @@ async function pruebaGrabaciones(browser) {
   });
   igual("al tocarla se abre en grande, como ventana sobre la página", [cine.abierta, cine.modal, cine.nombrada], [true, true, "grabacion-cine-titulo"]);
   igual("con la sesión y su tema de título", cine.titulo, "<i>Sesión</i> II · Encuadre y reglas básicas");
-  igual("el reproductor es el de youtube-nocookie (el que deja la CSP) y arranca solo", cine.src, "https://www.youtube-nocookie.com/embed/" + VIDEO + "?rel=0&autoplay=1");
+  igual("el reproductor es el de youtube-nocookie (el que deja la CSP), arranca solo y le contesta a esta página", cine.src,
+    "https://www.youtube-nocookie.com/embed/" + VIDEO + "?rel=0&autoplay=1&enablejsapi=1&origin=" + encodeURIComponent(BASE));
   igual("con título para el lector de pantalla y pantalla completa", [cine.vtitulo, cine.completa], ["Grabación de la <i>Sesión</i> II", true]);
   igual("y se ve de verdad, grande", cine.seVe, true);
   igual("«Abrir en YouTube» va aparte, en otra pestaña", cine.afuera, ["https://youtu.be/" + VIDEO, "_blank", "noopener noreferrer"]);
@@ -415,8 +443,9 @@ async function pruebaGrabaciones(browser) {
 }
 
 /* Igual que abrir(), pero contesta lo de YouTube (el CI no sale a internet) y
-   anota cada pedido, para saber si se cargó sin que nadie lo pidiera. */
-async function abrirConYoutube(browser, c) {
+   anota cada pedido, para saber si se cargó sin que nadie lo pidiera. `cuerpo`
+   es la página del reproductor (por omisión, una que no dice nada). */
+async function abrirConYoutube(browser, c, cuerpo) {
   const ctx = await browser.newContext({ serviceWorkers: "block", viewport: { width: 1200, height: 900 } });
   const page = await ctx.newPage();
   page.__youtube = [];
@@ -425,12 +454,151 @@ async function abrirConYoutube(browser, c) {
   await page.route("**/cdn.jsdelivr.net/**", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: "" }));
   await page.route("**/fonts.googleapis.com/**", (r) => r.fulfill({ status: 200, contentType: "text/css", body: "" }));
   await page.route("**/fonts.gstatic.com/**", (r) => r.abort());
-  await page.route(/youtube/, (r) => { page.__youtube.push(r.request().url()); return r.fulfill({ status: 200, contentType: "text/html; charset=utf-8", body: "<body>video</body>" }); });
+  await page.route(/youtube/, (r) => { page.__youtube.push(r.request().url()); return r.fulfill({ status: 200, contentType: "text/html; charset=utf-8", body: cuerpo || "<body>video</body>" }); });
   await page.route("**/js/supabase-client.js", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: clienteFalso(c) }));
   await page.goto(BASE + "/clases.html", { waitUntil: "networkidle" });
   await page.waitForFunction(() => window.__rpc.some((r) => r.n === "mi_panel_taller"), null, { timeout: 15000 }).catch(() => {});
   await page.waitForTimeout(800);
   return { page, errores, cerrar: () => ctx.close() };
+}
+
+/* El reproductor falso: contesta como el de YouTube (enablejsapi=1). Cuando la
+   página dice que escucha, manda lo que va pasando: corre de 0 a 10 (con un
+   rato «cargando» en el 6, que no manda nada), ADELANTA
+   a 600 (no cuenta), corre a 620, pausa, sigue a 630, vuelve al principio y
+   repite de 0 a 5 (ya lo había visto) y termina. Visto de verdad: [0,10) y
+   [600,630), 40 segundos. */
+const reproductorQue = (guion) => `<body>video<script>
+var pasos = [{ playerState: -1, currentTime: 0, duration: 11520, playbackRate: 1 }];
+function corre(desde, hasta) { for (var x = desde; x <= hasta + 1e-9; x += 0.5) pasos.push({ playerState: 1, currentTime: x }); }
+${guion}
+var ya = false;
+window.__ordenes = [];
+addEventListener("message", function (e) {
+  var d; try { d = JSON.parse(e.data); } catch (x) { return; }
+  if (d && d.event === "command") window.__ordenes.push(d.func + ":" + (d.args || []).join(","));
+  if (!d || d.event !== "listening" || ya) return;
+  ya = true;
+  window.__escucha = e.origin;
+  var i = 0;
+  var t = setInterval(function () {
+    if (i >= pasos.length) { clearInterval(t); window.__fin = true; return; }
+    parent.postMessage(JSON.stringify({ event: i ? "infoDelivery" : "initialDelivery", id: d.id, channel: "widget", info: pasos[i++] }), "*");
+  }, 25);
+});
+</script></body>`;
+const REPRODUCTOR = reproductorQue(`
+corre(0, 6);
+pasos.push({ playerState: 3, currentTime: 6 });
+corre(6, 10);
+pasos.push({ playerState: 1, currentTime: 600 });
+corre(600, 620);
+pasos.push({ playerState: 2, currentTime: 620 });
+corre(620, 630);
+pasos.push({ playerState: 1, currentTime: 0 });
+corre(0, 5);
+pasos.push({ playerState: 0, currentTime: 5 });`);
+// Corre de 0 a 20 y sigue corriendo: nadie pausa, la ventana se cierra.
+const SIGUE_CORRIENDO = reproductorQue("corre(0, 20);");
+
+const reproductor = (page) => page.frames().find((f) => /youtube-nocookie/.test(f.url()));
+// Hasta que el reproductor falso mandó todo (o 15 segundos).
+async function esperarFin(page) {
+  for (let i = 0; i < 150; i++) {
+    const r = reproductor(page);
+    if (r && await r.evaluate(() => !!window.__fin).catch(() => false)) break;
+    await page.waitForTimeout(100);
+  }
+  await page.waitForTimeout(200);
+}
+
+async function pruebaLoVisto(browser) {
+  console.log("\n=== Cuánto vio de una grabación ===");
+  const ayer = diaCR(-DIA);
+  // La suya (la mitad) y, después, la de otra persona, que no tiene que salir.
+  const vistas = [{ persona_id: YO, horario_id: "h0", fecha: ayer, visto_seg: 5760 },
+    { persona_id: "u-otra", horario_id: "h0", fecha: ayer, visto_seg: 11520 }];
+  const { page, errores, cerrar } = await abrirConYoutube(browser, cfg({ grabaciones: grabaciones(), vistas, anotar: 5800 }), REPRODUCTOR);
+  const tarjeta = () => page.$eval("[data-grabacion]", (b) => {
+    const t = b.querySelector("[data-visto]"), barra = b.querySelector("[data-visto-barra]");
+    return { texto: t && t.checkVisibility() ? t.textContent : "no se ve", barra: barra && barra.checkVisibility() ? barra.firstElementChild.style.width : "no se ve",
+      adorno: barra && barra.getAttribute("aria-hidden") };
+  });
+  const antes = await tarjeta();
+  igual("la tarjeta dice cuánto lleva visto (lo suyo, no lo de otra persona)", antes.texto, "Viste 1 h 36 min (50 %)");
+  igual("con la barra al pie de la miniatura, de adorno", [antes.barra, antes.adorno], ["50%", "true"]);
+  igual("y el lector de pantalla lo oye con la tarjeta",
+    await page.getByRole("button", { name: /^Ver la grabación: .* · 3 h 12 min Viste 1 h 36 min \(50 %\)$/ }).count(), 1);
+  const claro = await page.evaluate(contrasteEnPagina, "[data-grabacion] [data-visto]");
+  await page.evaluate(() => document.documentElement.classList.add("dark"));
+  await page.waitForTimeout(600);
+  const oscuro = await page.evaluate(contrasteEnPagina, "[data-grabacion] [data-visto]");
+  await page.evaluate(() => document.documentElement.classList.remove("dark"));
+  await page.waitForTimeout(600);
+  cierto(`contraste de «Viste…» ≥ 4,5 en claro y en oscuro (${claro}, ${oscuro})`, claro >= 4.5 && oscuro >= 4.5);
+  if (process.env.CAPTURAS) await page.locator('section[aria-labelledby="grabaciones-taller-titulo"]').screenshot({ path: path.join(process.env.CAPTURAS, "panel-taller-visto.png") });
+
+  await page.click("[data-grabacion]");
+  // Mensajes que NO son del reproductor: de la página misma, como si fueran de YouTube.
+  await page.evaluate(async () => {
+    for (let t = 5000; t < 5010; t += 0.5) {
+      window.postMessage(JSON.stringify({ event: "infoDelivery", info: { playerState: 1, currentTime: t } }), "*");
+      await new Promise((r) => setTimeout(r, 25));
+    }
+  });
+  await esperarFin(page);
+  igual("el reproductor oyó a la página y le contesta a su dirección", await reproductor(page).evaluate(() => window.__escucha), BASE);
+  igual("y se le pide que avise cuando corre o se detiene", await reproductor(page).evaluate(() => window.__ordenes), ["addEventListener:onStateChange"]);
+  await page.waitForTimeout(200);
+  igual("con la ventana abierta, la tarjeta ya dice el total que devolvió la base", (await tarjeta()).texto, "Viste 1 h 37 min (50 %)");
+  await page.click("#grabacion-cine-cerrar");
+  await page.waitForTimeout(300);
+  const envios = await llamadas(page, "grabacion_vista_anotar");
+  const juntos = envios.reduce((acc, a) => acc.concat(a.p_tramos), []).sort((x, y) => x[0] - y[0] || x[1] - y[1]);
+  igual("se manda a la base la grabación de ese día", [...new Set(envios.map((a) => a.p_horario + " " + a.p_fecha))], ["h0 " + ayer]);
+  igual("lo visto, en tramos: ni lo que adelantó ni los mensajes ajenos", juntos.filter((t) => t[1] > 10), [[600, 620], [620, 630]]);
+  igual("lo que repitió va, pero dentro de lo ya visto (la base no lo suma dos veces)", juntos.filter((t) => t[1] <= 10), [[0, 5], [0, 10]]);
+  cierto("se manda al pausar y al terminar, sin esperar a cerrar", envios.length === 2, JSON.stringify(envios.map((a) => a.p_tramos)));
+  igual("al cerrar no queda reproductor ni nada por mandar", [await page.evaluate(() => document.querySelectorAll("iframe").length), envios.length], [0, 2]);
+  cierto("sin errores en la página", errores.length === 0, errores.join(" | "));
+  await cerrar();
+
+  console.log("\n=== Si cierra la ventana con el video corriendo ===");
+  const corriendo = await abrirConYoutube(browser, cfg({ grabaciones: grabaciones(), anotar: 20 }), SIGUE_CORRIENDO);
+  await corriendo.page.click("[data-grabacion]");
+  await esperarFin(corriendo.page);
+  const antesDeCerrar = (await llamadas(corriendo.page, "grabacion_vista_anotar")).length;
+  await corriendo.page.click("#grabacion-cine-cerrar");
+  await corriendo.page.waitForTimeout(300);
+  igual("lo que vio se manda al cerrar", [antesDeCerrar, (await llamadas(corriendo.page, "grabacion_vista_anotar")).map((a) => a.p_tramos)], [0, [[[0, 20]]]]);
+  igual("y la tarjeta lo dice", await corriendo.page.$eval("[data-grabacion] [data-visto]", (t) => t.textContent).catch(() => "no se ve"), "Viste 20 s");
+  await corriendo.cerrar();
+
+  console.log("\n=== Si no hay red al mandar lo visto ===");
+  const sinRed = await abrirConYoutube(browser, cfg({ grabaciones: grabaciones(), fallan: ["grabacion_vista_anotar"] }), REPRODUCTOR);
+  await sinRed.page.click("[data-grabacion]");
+  await esperarFin(sinRed.page);
+  await sinRed.page.click("#grabacion-cine-cerrar");
+  await sinRed.page.waitForTimeout(300);
+  const intentos = await llamadas(sinRed.page, "grabacion_vista_anotar");
+  igual("lo que no se pudo anotar va otra vez en el envío siguiente", intentos.length ? intentos[intentos.length - 1].p_tramos : "nada", [[0, 10], [600, 630]]);
+  igual("y la tarjeta no inventa un avance", await sinRed.page.$eval("[data-grabacion]", (b) => !b.querySelector("[data-visto]")), true);
+  await sinRed.cerrar();
+
+  console.log("\n=== Si la base rechaza lo que se le mandó ===");
+  const rechazo = await abrirConYoutube(browser, cfg({ grabaciones: grabaciones(), rechazan: { grabacion_vista_anotar: "22023" } }), REPRODUCTOR);
+  await rechazo.page.click("[data-grabacion]");
+  await esperarFin(rechazo.page);
+  await rechazo.page.click("#grabacion-cine-cerrar");
+  await rechazo.page.waitForTimeout(300);
+  const rech = await llamadas(rechazo.page, "grabacion_vista_anotar");
+  igual("no se vuelve a mandar: el segundo envío trae solo lo nuevo", rech.map((a) => a.p_tramos), [[[0, 10], [600, 620]], [[0, 5], [620, 630]]]);
+  await rechazo.cerrar();
+
+  console.log("\n=== La que vio completa ===");
+  const completa = await abrir(browser, cfg({ grabaciones: grabaciones(), vistas: [{ persona_id: YO, horario_id: "h0", fecha: ayer, visto_seg: 11000 }] }));
+  igual("dice que la vio completa", await completa.page.$eval("[data-grabacion] [data-visto]", (t) => t.textContent).catch(() => "no se ve"), "✓ La viste completa");
+  await completa.cerrar();
 }
 
 async function pruebaSinTaller(browser) {
@@ -503,6 +671,7 @@ async function pruebaTarjeta(browser) {
   try {
     await pruebaTaller(browser);
     await pruebaGrabaciones(browser);
+    await pruebaLoVisto(browser);
     await pruebaSinTaller(browser);
     await pruebaTarjeta(browser);
   } catch (e) {

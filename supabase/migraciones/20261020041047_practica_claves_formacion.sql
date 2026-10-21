@@ -1,7 +1,3 @@
--- Las claves de corrección de las prácticas de Formación Ajedrez (practica_claves):
--- la opción correcta de cada pregunta, la partida del dictado y la respuesta modelo que
--- ve quien da clase. Las arma herramientas/formacion-practicas.js --sql; cuando el curso
--- cambie, se vuelve a correr y se aplica como una migración nueva (el upsert las pone al día).
 insert into public.practica_claves (deck, lamina, pregunta, tipo, clave, modelo) values
   ('formacion-ajedrez/practica-01', 1, 'p1', 'opciones', '{"correcta":"mate"}'::jsonb, 'Jaque mate: el rey está en jaque y no tiene ninguna jugada legal. La partida terminó (art. 5.1).'),
   ('formacion-ajedrez/practica-01', 1, 'p2', 'opciones', '{"correcta":"ahogado"}'::jsonb, 'Ahogado: el rey no está en jaque y el bando que mueve no tiene ninguna jugada legal. Tablas (art. 5.2.1).'),

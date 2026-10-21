@@ -1,19 +1,3 @@
--- El reloj de Duelo Simultáneo. Ver «Duelo Simultáneo con reloj» en
--- docs/decisiones/juegos-y-torneos.md.
---
--- En el duelo los dos jugadores piensan a la vez: los dos relojes corren desde
--- que empieza la ronda (clock_updated_at) y cada uno se detiene cuando ese
--- jugador confirma su jugada (duelo_state.commit.<color>). Hasta ahora el
--- trigger leía el turno de la columna `fen`, que en el duelo se queda en la
--- posición de salida («w»): para la base el reloj de las negras no corría
--- nunca, y su bandera se habría rechazado siempre.
---
--- Cambia solo para variant = 'duelo':
---   (2) confirmar una jugada con el tiempo ya agotado se rechaza (la jugada
---       del duelo no cambia `fen`: es el commit lo que se mira).
---   (3) corre el reloj de cada uno mientras no confirmó; el de quien ya
---       confirmó está quieto, y nadie se lo puede bajar.
--- Todo lo demás queda como estaba.
 create or replace function public.proteger_reloj_de_partida()
  returns trigger
  language plpgsql

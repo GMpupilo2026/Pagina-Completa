@@ -1,22 +1,3 @@
--- La práctica de la clase (js/clase-practica.js): el profe le manda a la clase una
--- práctica de «Formación Ajedrez» —las láminas de sus ejercicios, que cada
--- alumno pasa a su ritmo, hacia delante y hacia atrás— y cada uno marca cuáles
--- ya terminó. null = ninguna. Va en la base y no en un broadcast por lo mismo
--- que la presentación: quien entra tarde o recarga ve la misma.
---
---   {id, deck, titulo, laminas: [n, n, …]}
---
--- `id` es lo que distingue una práctica de otra vuelta de la misma (lo que cada
--- alumno marcó vale solo para su id); `deck` es "<curso>/<clase>" y `laminas`
--- son los números de lámina de esa presentación. Qué hizo cada alumno NO va
--- acá: es de ese rato y viaja en la presencia, como lo del calentamiento.
---  * Solo el profe la pone (protect_game_state_teacher_columns se la devuelve
---    a cualquier otro).
---  * El CHECK va envuelto en coalesce(…, false): un CHECK que da NULL cuenta
---    como aprobado. Las láminas se revisan con jsonpath, porque un CHECK no
---    admite subconsultas y jsonb_array_elements es una.
--- Se reemplaza la función ENTERA tal como estaba en la base (la de
--- 20261017173336) con una línea más: lo demás no se toca.
 alter table public.game_state add column if not exists practica jsonb;
 alter table public.game_state drop constraint if exists game_state_practica_forma;
 alter table public.game_state add constraint game_state_practica_forma

@@ -1710,6 +1710,70 @@ mirar la huella que devuelve antes de darlo por bueno. Y al aplicar una
 migración, guardar el archivo **sin** el salto de línea final o sumárselo en
 la base: si no, el desfase vuelve.
 
+### El 21/10, otra vez: comentarios agregados después de aplicar
+
+Cuatro días después la huella volvía a no cuadrar, ahora con veintitrés
+migraciones:
+
+- **Doce tenían comentarios agregados después de aplicar**: torneos y duelo
+  (17-18/10), prácticas de Formación Ajedrez y profesores que también son
+  alumnos (20/10). No había ninguna corrección sin aplicar. Se comprobó línea
+  por línea: cada línea de lo aplicado está en el archivo, en el mismo orden,
+  y lo que sobra son solo comentarios y líneas vacías.
+- **Siete tenían el salto de línea final** que la base no.
+- **Tres estaban aplicadas y no estaban en el repositorio**:
+  `20261019042746_arbitros_cr_festivales`, `20261021044459_grabaciones_clase`
+  y `20261021051602_grabaciones_clase_tema_y_duracion`. Las dos de las
+  grabaciones se aplicaron esa misma noche desde otra sesión que todavía
+  no había subido su rama, la segunda mientras se hacía esta comparación.
+- **Una estaba en el repositorio y no anotada en la base**:
+  `20261018204456_profe_lee_tareas_y_examenes_de_sus_alumnos`. Se corrió en
+  el editor SQL (su propia cabecera lo dice), y las dos políticas en la base
+  son las del archivo.
+
+**Esta vez el arreglo fue al revés que el 17/10: el archivo quedó igual a lo
+aplicado**, como dice CLAUDE.md («tal cual se aplicó»). Si se reescribe el
+renglón de la base para que coincida con un archivo editado después, el
+renglón deja de decir lo que de verdad se corrió. Los comentarios que salieron
+de los archivos siguen en la historia de git (en `main` hasta `b873fa2`). Lo
+que explicaban ya está en las secciones de `docs/decisiones/` que ellos mismos
+citaban.
+
+**La regla: los comentarios de una migración van ANTES de aplicarla.** Una vez
+aplicada, el archivo no se toca. Lo que haga falta explicar después va en
+`docs/decisiones/`. Y una migración aplicada se sube a una rama apenas se
+aplica, no al terminar el resto del trabajo: mientras tanto el punto de
+restauración no cuadra para nadie.
+
+**Cómo encontrar la diferencia sin copiar el texto entero.** Se pide, por
+migración, el md5 corto de cada línea de lo aplicado:
+
+```sql
+select version, string_agg(left(md5(l), 8), ' ' order by n)
+from supabase_migrations.schema_migrations m,
+     lateral unnest(string_to_array(array_to_string(m.statements, E'\n\n'), E'\n'))
+       with ordinality as u(l, n)
+where version in ('…') group by version;
+```
+
+Se compara contra el md5 de cada línea del archivo (la subsecuencia común más
+larga). Si toda línea de la base está en el archivo, lo aplicado se rearma con
+las líneas del archivo, sin copiar texto a mano. Solo se bajan las líneas que
+falten. Al final, el md5 del archivo entero tiene que dar el de la base.
+
+**Lo que lleva `drop` se corrió en el editor SQL de Supabase**: anotar la del
+18/10 y borrar las tablas temporales de la carga universitaria (ver «Las
+tablas temporales de la carga universitaria» en `juegos-y-torneos.md`). Por
+`execute_sql` y `apply_migration` las dos se colgaron (la confirmación aparte
+de siempre). Se mandó un solo bloque `do`, todo o nada:
+
+- tiene el texto exacto de cada archivo, con `replace(…, E'\r', '')`;
+- se niega a seguir si el md5 no da el del archivo;
+- corre ese mismo texto con `execute`, que acepta varias sentencias;
+- y lo anota en `schema_migrations` con `on conflict do nothing`.
+
+Así lo que corre y lo que queda anotado son el mismo texto, byte a byte.
+
 ## Realtime escucha solo lo que la pantalla muestra
 
 Pregunta del dueño del sitio: «¿aguanta 10 mil usuarios?». Las páginas sí, porque
