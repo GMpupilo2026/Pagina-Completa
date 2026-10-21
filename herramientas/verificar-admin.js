@@ -258,6 +258,18 @@ window.__consultas = [];
           { persona_id: "u-ase2", nombre: '<img src=x onerror="window.__xss=1">Beto', clases: 0, ultima_vez: null, cuestionarios: {} },
         ], error: null });
       }
+      /* Cuánto vio cada uno de cada grabación del taller: una fila por
+         persona y video, también los que no vio. Ana vio la mitad de la I y
+         45 segundos de la II; Beto, nada. */
+      if (n === "asesores_grabaciones") {
+        window.__grabaciones = (window.__grabaciones || []).concat([args]);
+        const v = (persona_id, horario_id, fecha, titulo, duracion_seg, visto_seg) =>
+          ({ persona_id, horario_id, fecha, titulo, inicio: fecha + "T14:00:00Z", duracion_seg, visto_seg, ultima_vez: visto_seg ? fecha + "T20:00:00Z" : null });
+        return Promise.resolve({ data: args.p_detalle !== "Taller Formación Ajedrez del MEP" ? [] : [
+          v("u-ase1", "hs2", "2026-10-20", "Sesión II", 14518, 45), v("u-ase2", "hs2", "2026-10-20", "Sesión II", 14518, 0),
+          v("u-ase1", "hs1", "2026-10-12", "Sesión I", 11520, 5760), v("u-ase2", "hs1", "2026-10-12", "Sesión I", 11520, 0),
+        ], error: null });
+      }
       if (n === "activar_preparacion_rivales") {
         window.__activaciones = (window.__activaciones || []).concat([args]);
         return Promise.resolve({ data: !!(args && args.p_activa), error: null });
@@ -835,7 +847,17 @@ async function pruebaAsesores(browser) {
     Array.from(document.querySelectorAll("#ase-grupo tbody tr")).map((tr) => Array.from(tr.children).slice(0, 5).map((c) => c.textContent.replace(/\s+/g, " ").trim()))),
     [["Ana Asesora · Heredia", "9 oct, 11:24 a. m.", "2", "13/223 veces", "—No lo contestó"],
      ['<img src=x onerror="window.__xss=1">Beto', "Nunca entró", "0", "—No lo contestó", "—No lo contestó"]]);
-  igual("una columna por sesión", await page.evaluate(() => document.querySelectorAll("#ase-grupo thead th").length), 3 + 7);
+  igual("una columna por sesión y una por grabación", await page.evaluate(() => document.querySelectorAll("#ase-grupo thead th").length), 3 + 7 + 2);
+  igual("cuánto vio de cada grabación se pide a la base, por taller", await page.evaluate(() => window.__grabaciones),
+    [{ p_detalle: "Taller Formación Ajedrez del MEP" }]);
+  igual("las grabaciones, en orden de la sesión y con su nombre para el lector de pantalla", await page.evaluate(() =>
+    Array.from(document.querySelectorAll("#ase-grupo thead th")).slice(10).map((th) => [th.textContent, th.getAttribute("aria-label")])),
+    [["▶ I", "Grabación de la Sesión I: cuánto la vio"], ["▶ II", "Grabación de la Sesión II: cuánto la vio"]]);
+  igual("cuánto vio cada uno: el porcentaje y el tiempo, y lo que no vio lo dice escrito", await page.evaluate(() =>
+    Array.from(document.querySelectorAll("#ase-grupo tbody tr")).map((tr) => Array.from(tr.children).slice(10).map((c) => c.textContent.replace(/\s+/g, " ").trim()))),
+    [["50 %1 h 36 min", "<1 %45 s"], ["—No la vio", "—No la vio"]]);
+  igual("y arriba, cuántos empezaron a ver cada una", await page.evaluate(() => document.querySelectorAll("#ase-grupo > p")[1].textContent),
+    "En las grabaciones (▶), cuánto vio cada uno aquí en la plataforma, sin contar lo que repitió ni lo que adelantó. Sesión I: 1 de 2 empezó a verla; Sesión II: 1 de 2.");
   igual("el nombre ajeno no se ejecuta", await page.evaluate(() => !window.__xss), true);
   igual("sin cuestionario no hay nada que mandar", await page.evaluate(() =>
     !document.querySelector("#ase-lista article:nth-child(2) a[href^='tareas.html']")), true);

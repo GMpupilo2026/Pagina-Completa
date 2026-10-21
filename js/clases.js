@@ -1091,9 +1091,10 @@
             if (!(await tallerP)) return;
             document.getElementById("progreso-alumno").hidden = true;
             // Las grabaciones van aparte: si esa consulta falla, el calendario sale igual.
-            const [proximas, grabadas] = await Promise.all([
+            const [proximas, grabadas, vistas] = await Promise.all([
                 sb.rpc("mis_clases_proximas", { p_dias: 90 }).then((r) => r, () => ({})),
                 sb.rpc("mis_grabaciones").then((r) => r, () => ({})),
+                sb.from("grabaciones_vistas").select("horario_id, fecha, visto_seg").eq("persona_id", profile.id).range(0, 199).then((r) => r, () => ({})),
             ]);
             const sesiones = !proximas.error && Array.isArray(proximas.data) ? proximas.data : [];
             const grabaciones = !grabadas.error && Array.isArray(grabadas.data) ? grabadas.data : [];
@@ -1101,6 +1102,8 @@
                 alBajar: (boton, estado) => bajarCalendario(boton, estado, 90),
                 entrada: entradaTaller(),
                 grabaciones,
+                vistas: !vistas.error && Array.isArray(vistas.data) ? vistas.data : [],
+                alVer: anotarLoVisto,
             });
             if (!panelAdaptado && quedan) {
                 const s = sesiones.find((x) => new Date(x.fin) > new Date());
@@ -1109,6 +1112,16 @@
                     ? "Tu sesión es ahora, hasta las " + T.hora(s.fin)
                     : "Tu próxima sesión es el " + T.dia(s.inicio).toLowerCase() + " a las " + T.hora(s.inicio));
             }
+        }
+
+        /* Lo que vio de una grabación: la base lo junta con lo de antes y
+           devuelve el total. Lo que rechaza (22023, 42501) no se vuelve a
+           mandar; si no hubo red, se manda con lo que venga después. Ver
+           «Cuánto vio cada uno» en docs/decisiones/paneles.md. */
+        async function anotarLoVisto(g, tramos) {
+            const { data, error } = await sb.rpc("grabacion_vista_anotar", { p_horario: g.horario_id, p_fecha: g.fecha, p_tramos: tramos });
+            if (error) throw Object.assign(new Error(error.message || "No se pudo anotar"), { descartar: error.code === "22023" || error.code === "42501" });
+            return data;
         }
 
         /* Si se puede entrar a la clase desde el renglón de hoy del

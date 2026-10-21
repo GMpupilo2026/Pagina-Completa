@@ -2447,6 +2447,12 @@ sesión**. Lo pinta `js/admin-asesores.js`.
   le quedan a cada cuenta: lo pidió así el dueño. Comprobado impersonando
   roles: administración ve los 30; un asesor, solo su fila; `anon` no puede
   llamarla.
+  Al final van **las grabaciones** (▶ I, ▶ II…, en orden de la sesión): cuánto
+  vio cada uno de cada una aquí en la plataforma, sin contar lo que repitió ni
+  lo que adelantó, en porcentaje y en tiempo («50 %» y debajo «1 h 36 min»;
+  «No la vio» escrito), y arriba cuántos empezaron a ver cada una. Lo arma
+  `asesores_grabaciones(p_detalle)`; si falla, la tabla sale sin esas
+  columnas. Cómo se mide, en «Cuánto vio cada uno» de `paneles.md`.
 - **Practicar entre sesión y sesión**: cada sesión con cuestionario trae
   «📨 Mandarlo como tarea a las N personas del taller», que abre Tareas con
   ese cuestionario en el renglón y los asesores ya marcados
