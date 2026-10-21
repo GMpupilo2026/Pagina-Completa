@@ -1,27 +1,3 @@
--- Las respuestas de las prácticas de Formación Ajedrez en la clase en vivo
--- (js/clase-formacion.js, herramientas/formacion-practicas.js). Cada lámina de la
--- práctica que el profe mandó (game_state.practica) puede traer preguntas de
--- opciones, de texto o la planilla del dictado; el alumno contesta y queda el
--- registro, con su corrección, para analizarlo en clase y calificarlo después.
---
--- Dos tablas, que se escriben solo por funciones:
---
---  * practica_claves: lo que NO puede ver el alumno —la opción correcta, la
---    partida dictada y la respuesta modelo—. La siembra el generador
---    (herramientas/formacion-practicas.js --sql). Solo la lee quien da clase.
---  * practica_respuestas: una fila por alumno, práctica (`envio` = el `id` de
---    game_state.practica), lámina y pregunta. Solo la leen el profe de la clase
---    y administración. El alumno NO la lee: trae la corrección (`correcta`), y
---    con ella a la vista podría ir probando opciones hasta acertar. Sus propias
---    respuestas las pide con mis_respuestas_practica(), que no devuelve nota.
---
--- Quien corrige es la base, no el navegador del alumno: responder_practica()
--- compara con la clave y guarda `correcta` (y, en la planilla, cuántas jugadas
--- salieron bien). No devuelve la corrección: el análisis es en clase.
---
--- Comprobado con roles: ver «Las prácticas de Formación Ajedrez en la clase» en
--- docs/decisiones/clase-en-vivo.md.
-
 create table if not exists public.practica_claves (
   deck text not null check (deck ~ '^[a-z0-9-]{1,60}/[a-z0-9-]{1,40}$'),
   lamina integer not null check (lamina between 1 and 500),
@@ -30,7 +6,6 @@ create table if not exists public.practica_claves (
   clave jsonb,
   modelo text check (modelo is null or char_length(modelo) <= 4000),
   primary key (deck, lamina, pregunta),
-  -- Envuelto en coalesce(…, false): un CHECK que da NULL cuenta como aprobado.
   constraint practica_claves_forma check (coalesce(case tipo
     when 'opciones' then jsonb_typeof(clave) = 'object' and jsonb_typeof(clave->'correcta') = 'string'
     when 'planilla' then jsonb_typeof(clave) = 'array' and jsonb_array_length(clave) between 1 and 80
@@ -76,9 +51,6 @@ create policy practica_respuestas_select on public.practica_respuestas for selec
   using (owner_id = (select auth.uid())
          or coalesce((select mp.is_admin from public.my_profile() mp), false));
 
--- Una jugada escrita se compara sin espacios, puntos ni mayúsculas, y el cero
--- del enroque vale por la o: «cxe5», «Cxe5» y «C x e5» son la misma. Una jugada
--- sin su x, su + o su # NO es la misma: es lo que el dictado quiere ver.
 create or replace function interno.norma_jugada(p_jugada text)
 returns text
 language sql
@@ -118,8 +90,6 @@ begin
     raise exception 'La respuesta no tiene la forma esperada.' using errcode = '22023';
   end if;
 
-  -- Que esa práctica sea la que su profe tiene en la clase ahora, y la lámina,
-  -- una de las suyas.
   select g.owner_id, g.practica into v_owner, v_practica
     from public.game_state g
    where g.practica->>'id' = p_envio and public.es_mi_profesor(g.owner_id)
@@ -135,7 +105,6 @@ begin
     raise exception 'Esa pregunta no existe.' using errcode = '22023';
   end if;
 
-  -- Una respuesta vacía borra la que había.
   if btrim(p_respuesta) = '' or (v_clave.tipo = 'planilla' and p_respuesta in ('[]', '[""]')) then
     delete from public.practica_respuestas
      where envio = p_envio and student_id = yo and deck = p_deck and lamina = p_lamina and pregunta = p_pregunta;
@@ -175,8 +144,6 @@ $$;
 revoke execute on function public.responder_practica(text, text, integer, text, text) from public, anon;
 grant execute on function public.responder_practica(text, text, integer, text, text) to authenticated;
 
--- Lo que el alumno ya contestó de una práctica, para que al recargar siga igual.
--- Sin la corrección.
 create or replace function public.mis_respuestas_practica(p_envio text)
 returns table (deck text, lamina integer, pregunta text, respuesta text)
 language sql

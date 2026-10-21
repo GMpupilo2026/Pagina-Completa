@@ -1,19 +1,3 @@
--- En un torneo aleatorio, quien lo organiza elige qué modalidades entran al
--- sorteo. Ver «Las modalidades que entran al sorteo» en
--- docs/decisiones/juegos-y-torneos.md.
---
--- tournaments.modos_aleatorio: la lista elegida, o nulo = las once de a dos
--- (lo que ya hacían los torneos aleatorios creados antes). Solo en un torneo
--- aleatorio, solo modalidades de a dos y al menos dos: con una sola no hay
--- sorteo, y la regla de «nunca la misma dos rondas seguidas» necesita otra.
---
--- La cambia solo quien organiza (o administra), como el ritmo: los inscritos
--- también actualizan el torneo (torneo-sync.js lo cierra) y a ellos se les
--- revierte en silencio. Y un torneo terminado ya no la cambia.
---
--- La ronda la respeta en la base: en un aleatorio con lista, una ronda cuya
--- modalidad no está en la lista no se crea.
-
 alter table public.tournaments add column modos_aleatorio text[];
 alter table public.tournaments add constraint tournaments_modos_aleatorio_check
   check (modos_aleatorio is null or (

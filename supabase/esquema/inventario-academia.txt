@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20261020133504
+# al-dia-con: 20261021051602
 tabla  Ejercicios Lichess  rls=true
 tabla  _foto_rls_tmp  rls=false
 tabla  _pedidos_elo  rls=false
@@ -97,6 +97,7 @@ tabla  fourplayer_games  rls=true
 tabla  frases_regalo  rls=true
 tabla  game_rooms  rls=true
 tabla  game_state  rls=true
+tabla  grabaciones_clase  rls=true
 tabla  habilidad_resultados  rls=true
 tabla  horario_clases  rls=true
 tabla  ia_uso  rls=true
@@ -400,6 +401,7 @@ columna  arbitros_cr_torneos.ciudad  text
 columna  arbitros_cr_torneos.con_elo  smallint
 columna  arbitros_cr_torneos.contados  smallint
 columna  arbitros_cr_torneos.federaciones  smallint
+columna  arbitros_cr_torneos.festival  jsonb
 columna  arbitros_cr_torneos.fin  date
 columna  arbitros_cr_torneos.id  integer
 columna  arbitros_cr_torneos.inicio  date
@@ -409,6 +411,8 @@ columna  arbitros_cr_torneos.pais  text
 columna  arbitros_cr_torneos.ritmo  text
 columna  arbitros_cr_torneos.rondas  smallint
 columna  arbitros_cr_torneos.sistema  text
+columna  arbitros_cr_torneos.titulados  smallint
+columna  arbitros_cr_torneos.titulados_feds  jsonb
 columna  arbitros_cr_torneos.valorado  text
 columna  archivos_pgn.carpeta  text
 columna  archivos_pgn.created_at  timestamp with time zone
@@ -972,6 +976,13 @@ columna  game_state.tanda_calentamiento  jsonb
 columna  game_state.updated_at  timestamp with time zone
 columna  game_state.updated_by  uuid
 columna  game_state.vista  jsonb
+columna  grabaciones_clase.duracion_seg  integer
+columna  grabaciones_clase.fecha  date
+columna  grabaciones_clase.horario_id  uuid
+columna  grabaciones_clase.puesta_en  timestamp with time zone
+columna  grabaciones_clase.puesta_por  uuid
+columna  grabaciones_clase.tema  text
+columna  grabaciones_clase.youtube_id  text
 columna  habilidad_resultados.class_session_id  uuid
 columna  habilidad_resultados.created_at  timestamp with time zone
 columna  habilidad_resultados.dificultad  integer
@@ -2034,6 +2045,8 @@ funcion  funciones_coordinacion()  invoker  anon=true  auth=true
 funcion  funciones_coordinador_de(p_persona uuid)  definer  anon=false  auth=true
 funcion  generar_cobros(p_hasta date)  definer  anon=false  auth=true
 funcion  gente_de_mi_coordinacion()  definer  anon=false  auth=true
+funcion  grabacion_clase_poner(p_horario uuid, p_fecha date, p_video text, p_tema text, p_duracion_seg integer)  definer  anon=false  auth=true
+funcion  grabacion_clase_poner_apartada(p_horario uuid, p_fecha date, p_video text)  definer  anon=false  auth=false
 funcion  grupo_para_academia(p_grupo text)  definer  anon=false  auth=true
 funcion  grupos_de_mis_alumnos()  invoker  anon=false  auth=true
 funcion  guardar_clase_presencial(p_titulo text, p_inicio timestamp with time zone, p_minutos integer, p_notas text, p_alumnos uuid[], p_id uuid, p_tarde jsonb)  invoker  anon=false  auth=true
@@ -2097,6 +2110,7 @@ funcion  interno.estudio_al_guardar()  definer  anon=false  auth=false
 funcion  interno.frenar_envio_publico(p_tipo text, p_ambito text, p_correo text, p_ip text)  invoker  anon=false  auth=false
 funcion  interno.gente_de_mis_academias()  definer  anon=false  auth=true
 funcion  interno.habilidad_resultado_de_la_base()  definer  anon=false  auth=false
+funcion  interno.horarios_del_alumno(p_alumno uuid)  definer  anon=false  auth=false
 funcion  interno.jsonb_o_nulo(p text)  invoker  anon=false  auth=true
 funcion  interno.lecciones_hechas(p_alumno uuid, p_curso text)  definer  anon=false  auth=false
 funcion  interno.material_compartido_conmigo(p_producto text)  definer  anon=false  auth=true
@@ -2192,6 +2206,8 @@ funcion  mis_bromas()  invoker  anon=false  auth=true
 funcion  mis_clases()  invoker  anon=false  auth=true
 funcion  mis_clases_proximas(p_dias integer)  definer  anon=false  auth=true
 funcion  mis_funciones_coordinacion()  definer  anon=false  auth=true
+funcion  mis_grabaciones()  definer  anon=false  auth=true
+funcion  mis_grabaciones_apartada()  definer  anon=false  auth=false
 funcion  mis_premios(p_alumno uuid)  invoker  anon=false  auth=true
 funcion  mis_respuestas_practica(p_envio text)  definer  anon=false  auth=true
 funcion  mis_retos_de_ejercicios()  invoker  anon=false  auth=true
@@ -2566,6 +2582,7 @@ politica  game_state  game_state_insert  INSERT
 politica  game_state  game_state_select  SELECT
 politica  game_state  game_state_update  UPDATE
 politica  game_state  verificacion_en_dos_pasos  ALL  restrictiva
+politica  grabaciones_clase  grabaciones_clase_ver  SELECT
 politica  habilidad_resultados  habilidad_resultados_exige_acceso_ins  INSERT  restrictiva
 politica  habilidad_resultados  habilidad_resultados_inserta_alumno  INSERT
 politica  habilidad_resultados  habilidad_resultados_lee  SELECT
@@ -3176,6 +3193,8 @@ indice  game_state  game_state_owner_id_uidx
 indice  game_state  game_state_pkey
 indice  game_state  game_state_rival_id_idx
 indice  game_state  game_state_updated_by_fk
+indice  grabaciones_clase  grabaciones_clase_pkey
+indice  grabaciones_clase  grabaciones_clase_puesta_por_idx
 indice  habilidad_resultados  habilidad_resultados_alumno
 indice  habilidad_resultados  habilidad_resultados_class_session_id_student_id_ejercicio_key
 indice  habilidad_resultados  habilidad_resultados_pedido
@@ -4081,6 +4100,7 @@ grant  game_state  authenticated  SELECT
 grant  game_state  authenticated  TRIGGER
 grant  game_state  authenticated  TRUNCATE
 grant  game_state  authenticated  UPDATE
+grant  grabaciones_clase  authenticated  SELECT
 grant  habilidad_resultados  anon  DELETE
 grant  habilidad_resultados  anon  INSERT
 grant  habilidad_resultados  anon  REFERENCES
