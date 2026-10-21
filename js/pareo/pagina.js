@@ -616,6 +616,23 @@
     s.dimensiones = dimensiones;
     s.grupos = grupos.map((g) => Object.assign(g, { marcado: antes.has(g.clave) ? antes.get(g.clave) : g.jugadores.length >= 2 }));
     s.revision = G.revisarCategorias(s.juegan, s.anio);
+    s.cortos = G.equiposCortos(s.juegan);
+  }
+
+  // Los equipos que quedan con menos de tres, con quiénes son: se recalcula
+  // con cada decisión del árbitro (pase, los cinco, dónde queda quien estaba
+  // en dos modalidades).
+  function pintarEquiposCortos(s) {
+    if (!s.cortos || !s.cortos.length) return null;
+    return el("div", { id: "pi-equipos-cortos", class: "mt-4 pt-3 border-t border-brand-100 dark:border-brand-800" },
+      el("h4", { class: "font-semibold text-sm", texto: tx("cortosTitulo", { m: G.JDE_MIN_EQUIPO }) }),
+      el("p", { class: "text-sm mt-1", texto: tx("cortosTexto", { m: G.JDE_MIN_EQUIPO, n: s.cortos.length }) }),
+      el("ul", { id: "pi-cortos-lista", class: "mt-1 space-y-1 text-sm list-disc pl-5" }, s.cortos.map((e) =>
+        el("li", {}, el("span", { class: "font-semibold", texto: tx("cortosAviso") + " " }),
+          tx(e.integrantes.length === 1 ? "cortosUno" : "cortosVarios", {
+            i: e.institucion || "—", c: e.categoria, t: tx(e.torneo === "w" ? "grupoMujeres" : "grupoAbierto"),
+            k: e.integrantes.length, n: e.integrantes.map((j) => j.nombre).join(", "),
+          })))));
   }
 
   // Lo que se limpió de la lista antes de partirla: las inscripciones
@@ -764,6 +781,7 @@
       pintarRepetidos(s),
       pintarPaseAbierto(s),
       pintarEquiposDeMas(s),
+      pintarEquiposCortos(s),
       pintarRevisionCategorias(s.revision),
       porSexo ? el("p", { class: C.nota + " mt-2", texto: tx("sugerenciaAbierto") }) : null,
       hayEquipos ? el("p", { class: C.nota + " mt-2", texto: tx("sugerenciaEquipos") }) : null,

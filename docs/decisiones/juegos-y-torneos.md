@@ -2328,6 +2328,18 @@ se juega aparte, y armar cada torneo a mano era copiar y pegar filas.
     (`calcularSugerencia()`): el pase al abierto, los equipos de más de cinco
     y los grupos se arman sin ella, así que dejarlo en individual también lo
     saca de la cuenta de su equipo.
+  - **Un equipo con menos de tres se avisa** (`equiposCortos()`, art.
+    66.1.g: «un mínimo de tres personas estudiantes»; pedido por el dueño
+    del sitio). Se cuenta sobre la lista que de verdad juega, después de
+    todas las decisiones del árbitro (el pase al abierto, los cinco de un
+    equipo de más y la modalidad de quien estaba en dos), y se recalcula con
+    cada una: dejar a alguien en individual o desmarcar a dos de un equipo
+    hace aparecer el aviso al instante. Cada caso lleva «Aviso:» escrito al
+    frente, el centro, la categoría, el torneo y quiénes son. No saca a
+    nadie: el árbitro sabe si el centro completa el equipo el día del
+    torneo. En Alajuela 2026 son dos: Saint Josephine Bilingual School (B
+    abierto, 2) y Maurilio Soto Alfaro (A mujeres, la que no tenía abierto
+    al cual pasar).
   - **Un equipo de más de cinco: el árbitro elige los cinco**
     (`equiposDeMas()`, art. 66.1.g: «un máximo de cinco [...] cuatro
     personas estudiantes titulares y una persona estudiante suplente»;

@@ -261,8 +261,26 @@
     return { lista: unicos, repetidos, dosModalidades };
   }
 
+  // Los equipos con menos de tres (art. 66.1.g: «un mínimo de tres
+  // personas estudiantes»), sobre la lista que de verdad juega: ya con el
+  // pase al abierto, los descartados de un equipo de más de cinco y la
+  // modalidad elegida para quien estaba en dos. Solo se avisa: el árbitro
+  // sabe si el centro completa el equipo el día del torneo.
+  function equiposCortos(lista) {
+    const porEquipo = new Map();
+    for (const j of lista) {
+      if (j.modalidad !== "equipo") continue;
+      const categoria = String(j.categoria || "").trim();
+      const clave = [String(j.institucion || "").trim().toUpperCase(), categoria.toUpperCase(), torneoDe(j)].join("|");
+      if (!porEquipo.has(clave)) porEquipo.set(clave, { clave, institucion: j.institucion || "", categoria, torneo: torneoDe(j), integrantes: [] });
+      porEquipo.get(clave).integrantes.push(j);
+    }
+    return [...porEquipo.values()].filter((e) => e.integrantes.length < JDE_MIN_EQUIPO)
+      .sort((a, b) => a.clave.localeCompare(b.clave, "es"));
+  }
+
   const api = {
-    quitarRepetidos,
+    quitarRepetidos, equiposCortos,
     pasarMujeresAlAbierto, JDE_MIN_EQUIPO, equiposDeMas, JDE_MAX_EQUIPO,
     leerSexo, leerModalidad, ordenFechas, leerFecha, agrupar, sistemaSugerido, revisarCategorias, rangoCategoria,
     JDE_MAX_TODOS, JDE_RONDAS_SUIZO, JDE_RITMO_MINIMO, JDE_ANIO_NORMATIVA, JDE_MAX_ASCENSOS,

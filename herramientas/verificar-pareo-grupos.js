@@ -93,6 +93,18 @@ function pruebaPase() {
   igual("sin aplicar, nadie queda marcado", lista.filter((x) => x.alAbierto).length, 0);
 }
 
+function pruebaCortos() {
+  console.log("\n=== Equipos con menos de 3 (art. 66.1.g) ===");
+  const j = (sexo, institucion, categoria, modalidad, alAbierto) => ({ nombre: sexo + institucion, sexo, institucion, categoria, modalidad: modalidad || "equipo", alAbierto });
+  const r = G.equiposCortos([
+    j("m", "X", "A"), j("m", "X", "A"), j("m", "X", "A"),   // 3: está bien
+    j("w", "X", "A"), j("w", "X", "A"),                     // mujeres de X: 2, corto
+    j("m", "Y", "B"), j("w", "Y", "B", "equipo", true),     // la que pasó cuenta en el abierto: 2, corto
+    j("m", "Z", "B", "individual"),                         // individual: no es equipo
+  ]);
+  igual("los cortos: mujeres de X en A y el abierto de Y en B", r.map((e) => e.institucion + e.categoria + e.torneo + e.integrantes.length), ["XAw2", "YBm2"]);
+}
+
 function pruebaRepetidos() {
   console.log("\n=== Inscripciones repetidas (art. 66.1.h) ===");
   const j = (nombre, documento, modalidad, categoria, nacimiento) => ({ nombre, documento, modalidad, categoria, nacimiento: nacimiento || "2014-01-01" });
@@ -295,6 +307,18 @@ async function pruebaPagina(browser) {
   cs = await casillas();
   igual("queda el séptimo en lugar del primero", cs.map((c) => c[1]), [false, true, true, true, true, false, true]);
 
+  console.log("\n=== Equipos con menos de 3 ===");
+  const cortos = async () => page.$$eval("#pi-cortos-lista li", (l) => l.map((x) => x.textContent)).catch(() => []);
+  let cl = await cortos();
+  ok(cl.length === 1 && /^Aviso: ESCUELA DE MUJERES, categoría B, Mujeres: solo 2 \(PRUEBA ANA BE0, PRUEBA ANA BE1\)\.$/.test(cl[0]), "el equipo de 2 mujeres se avisa, con quiénes son", cl.join(" | "));
+  // Dejar el abierto del equipo en 2: salta el aviso; volver a 5: se va.
+  for (const i of [1, 2, 3]) await page.click("#pi-eq-0-" + i);
+  cl = await cortos();
+  ok(cl.some((x) => /ESCUELA DEL EQUIPO, categoría B, Abierto: solo 2/.test(x)), "al dejar el equipo abierto en 2 con las casillas, también avisa", cl.join(" | "));
+  for (const i of [1, 2, 3]) await page.click("#pi-eq-0-" + i);
+  cl = await cortos();
+  ok(!cl.some((x) => /ESCUELA DEL EQUIPO/.test(x)), "al volver a 5, ese aviso se va");
+
   igual("el botón cuenta los marcados", await page.textContent("#pi-sugerencia-crear"), "Crear los 4 torneos marcados");
 
   console.log("\n=== En inglés ===");
@@ -376,6 +400,7 @@ async function pruebaPagina(browser) {
   pruebaCategorias();
   pruebaPase();
   pruebaRepetidos();
+  pruebaCortos();
   const browser = await chromium.launch({ executablePath: fs.existsSync(CHROME) ? CHROME : undefined });
   try { await pruebaPagina(browser); await pruebaDosModalidades(browser); }
   catch (e) { mal("la prueba de la página se cayó", e.stack); }
