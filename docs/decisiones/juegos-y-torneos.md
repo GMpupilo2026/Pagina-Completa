@@ -2319,8 +2319,15 @@ se juega aparte, y armar cada torneo a mano era copiar y pegar filas.
     nacimiento. La misma inscripción repetida (misma modalidad y
     categoría) queda una sola vez, y el panel dice quiénes y cuántas
     veces; la misma persona en dos modalidades o categorías (5 en
-    Alajuela) queda en las dos y se avisa: el art. 66.1.h permite una sola
-    modalidad, y cuál vale lo decide el árbitro.
+    Alajuela) se le pregunta al árbitro dónde queda: el art. 66.1.h permite
+    una sola modalidad. Cada persona trae una opción por inscripción («Que
+    quede en Equipos D», «Que quede en Individual D») y «Todavía no decido
+    (queda en las dos)», que es como viene, para no sacar a nadie de un
+    torneo sin que el árbitro lo diga; el panel cuenta cuántos faltan por
+    decidir. La inscripción que no elige sale ANTES que todo lo demás
+    (`calcularSugerencia()`): el pase al abierto, los equipos de más de cinco
+    y los grupos se arman sin ella, así que dejarlo en individual también lo
+    saca de la cuenta de su equipo.
   - **Un equipo de más de cinco: el árbitro elige los cinco**
     (`equiposDeMas()`, art. 66.1.g: «un máximo de cinco [...] cuatro
     personas estudiantes titulares y una persona estudiante suplente»;

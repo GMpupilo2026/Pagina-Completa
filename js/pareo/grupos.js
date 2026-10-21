@@ -255,7 +255,7 @@
     const dosModalidades = [];
     for (const suyas of porPersona.values()) {
       for (const j of suyas) if (j.veces > 1) repetidos.push({ jugador: j, veces: j.veces });
-      if (suyas.length > 1) dosModalidades.push({ jugador: suyas[0], inscripciones: suyas.map((x) => ({ modalidad: x.modalidad, categoria: String(x.categoria || "").trim() })) });
+      if (suyas.length > 1) dosModalidades.push({ jugador: suyas[0], inscripciones: suyas.map((x) => ({ jugador: x, modalidad: x.modalidad, categoria: String(x.categoria || "").trim() })) });
     }
     for (const j of unicos) delete j.veces;
     return { lista: unicos, repetidos, dosModalidades };

@@ -569,7 +569,7 @@
       : String(nombreArchivo || "").replace(/\.[^.]+$/, "").replace(/[_]+/g, " ").trim();
     // El año del torneo: el de su fecha de inicio, o el de hoy.
     const anio = Number(String(t().fechaInicio || "").slice(0, 4)) || Number((window.HoraCR ? HoraCR.hoy() : "").slice(0, 4)) || G.JDE_ANIO_NORMATIVA;
-    estado.sugerencia = { lista, base, anio, pasarMujeres: true, grupos: [], elegidos: new Map(), abiertos: new Set(), limpia };
+    estado.sugerencia = { lista, base, anio, pasarMujeres: true, grupos: [], elegidos: new Map(), abiertos: new Set(), limpia, dondeQueda: new Map() };
     calcularSugerencia();
     pintarSugerencia();
     const caja = $("pi-sugerencia");
@@ -582,11 +582,22 @@
   // conserva su marca; uno nuevo viene marcado si tiene al menos dos.
   function calcularSugerencia() {
     const s = estado.sugerencia;
-    s.pase = G.pasarMujeresAlAbierto(s.lista, s.pasarMujeres);
+    // Quien está en dos modalidades o categorías (art. 66.1.h) queda en la
+    // que elija el árbitro; mientras no elija, en las dos. La inscripción que
+    // no elige sale antes de todo lo demás: el pase, los equipos y los grupos
+    // se arman sin ella.
+    const fuera = new Set();
+    ((s.limpia && s.limpia.dosModalidades) || []).forEach((d, k) => {
+      const elegida = s.dondeQueda.get(k);
+      if (elegida != null) d.inscripciones.forEach((x, i) => { if (i !== elegida) fuera.add(x.jugador); });
+    });
+    s.fueraPorModalidad = fuera;
+    const lista = s.lista.filter((j) => !fuera.has(j));
+    s.pase = G.pasarMujeresAlAbierto(lista, s.pasarMujeres);
     // En cada equipo de más de cinco juegan los que eligió el árbitro (de
     // entrada, los cinco primeros de la inscripción); el resto queda
     // descartado y no entra a ningún torneo.
-    s.equipos = G.equiposDeMas(s.lista);
+    s.equipos = G.equiposDeMas(lista);
     s.descartados = new Set();
     // La elección se guarda por equipo y por estado de la casilla del pase:
     // los integrantes de un equipo cambian al prenderla o apagarla, y al
@@ -599,7 +610,7 @@
       s.elegidos.set(e.eleccion, new Set(elegidos));
       for (const j of e.integrantes) if (!elegidos.includes(j)) s.descartados.add(j);
     }
-    s.juegan = s.lista.filter((j) => !s.descartados.has(j));
+    s.juegan = lista.filter((j) => !s.descartados.has(j));
     const { dimensiones, grupos } = G.agrupar(s.juegan);
     const antes = new Map(s.grupos.map((g) => [g.clave, g.marcado]));
     s.dimensiones = dimensiones;
@@ -624,10 +635,30 @@
             el("li", { texto: tx("repetidosCaso", { n: r.jugador.nombre, i: r.jugador.institucion || "—", v: r.veces }) })))));
     }
     if (dosModalidades.length) {
+      // Una pregunta por persona: en cuál de sus inscripciones queda, o
+      // «todavía no decido» (queda en las dos), que es como viene.
       const modo = (x) => tx(x.modalidad === "equipo" ? "grupoEquipos" : "grupoIndividual") + " " + x.categoria;
-      caja.append(el("p", { class: "text-sm mt-2", texto: tx("dosModalidadesTexto") }),
-        el("ul", { id: "pi-dos-modalidades", class: "mt-1 space-y-1 text-sm list-disc pl-5" }, dosModalidades.map((d) =>
-          el("li", { texto: tx("dosModalidadesCaso", { n: d.jugador.nombre, i: d.jugador.institucion || "—", m: d.inscripciones.map(modo).join(" y ") }) }))));
+      const sinDecidir = dosModalidades.filter((d, k) => !s.dondeQueda.has(k)).length;
+      caja.append(el("p", { class: "text-sm mt-2", texto: tx("dosModalidadesTexto", { n: sinDecidir }) }));
+      const lista = el("div", { id: "pi-dos-modalidades", class: "mt-1 space-y-2" });
+      dosModalidades.forEach((d, k) => {
+        const nombre = "pi-dm-" + k;
+        const elegida = s.dondeQueda.has(k) ? s.dondeQueda.get(k) : -1;
+        const opcion = (valor, texto) => {
+          const id = nombre + "-" + (valor < 0 ? "x" : valor);
+          return el("label", { class: "flex items-start gap-2 text-sm" },
+            el("input", { type: "radio", name: nombre, id, value: String(valor), class: "mt-1", checked: valor === elegida, onchange: () => {
+              if (valor < 0) s.dondeQueda.delete(k); else s.dondeQueda.set(k, valor);
+              calcularSugerencia(); pintarSugerencia(); $(id).focus();
+            } }),
+            el("span", { texto }));
+        };
+        lista.append(el("fieldset", { class: "border border-brand-100 dark:border-brand-800 rounded-lg px-3 py-2" },
+          el("legend", { class: "text-sm font-semibold px-1", texto: tx("dosModalidadesCaso", { n: d.jugador.nombre, i: d.jugador.institucion || "—", m: d.inscripciones.map(modo).join(" y ") }) }),
+          d.inscripciones.map((x, i) => opcion(i, tx("dosModalidadesDejar", { m: modo(x) }))),
+          opcion(-1, tx("dosModalidadesNoDecido"))));
+      });
+      caja.append(lista);
     }
     return caja;
   }

@@ -177,10 +177,15 @@ function excelJde() {
   // inscripción (se queda una sola), y el sexto también inscrito en
   // individual (dos modalidades: se avisa, art. 66.1.h).
   filas.push(["92", "CÉDULA:", "1000091", "PRUEBA SEPTIMO DEL EQUIPO", "7/7/2014", "COSTARRICENSE", "HOMBRE", "12", "ESCUELA DEL EQUIPO", "01", "Prueba", "B", "Colegio", "Equipo", "05 Aug"]);
+  // El sexto, también en individual B (la misma cédula): dos modalidades.
+  // El árbitro elige dónde queda (art. 66.1.h).
+  filas.push(["93", "CÉDULA:", "1000090", "PRUEBA SEXTO DEL EQUIPO", "6/6/2014", "COSTARRICENSE", "HOMBRE", "12", "ESCUELA DEL EQUIPO", "01", "Prueba", "B", "Colegio", "Individual", "05 Aug"]);
   return Buffer.from(TablaExcel.armar([{ nombre: "Sheet1", filas }]));
 }
 
-async function abrir(browser) {
+// Por omisión, el sexto (inscrito en equipos y en individual) queda en
+// equipos, como estaba antes de agregarle la fila de individual.
+async function abrir(browser, sinDecidir) {
   const ctx = await browser.newContext({ serviceWorkers: "block", viewport: { width: 1280, height: 1000 } });
   const page = await ctx.newPage();
   const errores = [];
@@ -193,6 +198,7 @@ async function abrir(browser) {
     name: "Ajedrez_Todos_Regional.xlsx", mimeType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", buffer: excelJde(),
   });
   await page.waitForFunction(() => document.getElementById("pi-sugerencia").checkVisibility());
+  if (!sinDecidir) await page.click("#pi-dm-0-0");
   return { ctx, page, errores };
 }
 
@@ -200,6 +206,28 @@ const torneos = (page) => page.evaluate(() => {
   const lista = JSON.parse(localStorage.getItem("pareo_lista_v1") || "[]");
   return lista.map((x) => JSON.parse(localStorage.getItem("pareo_torneo_v1_" + x.id)));
 });
+
+async function pruebaDosModalidades(browser) {
+  console.log("\n=== Dos modalidades: el árbitro elige dónde queda (art. 66.1.h) ===");
+  const { ctx, page, errores } = await abrir(browser, true);
+  const enIndividualB = async () => Number((/— (\d+) jugador/.exec(await page.$eval("#pi-sugerencia fieldset li:has-text('Individual · Categoría B · Abierto')", (x) => x.textContent)) || [])[1]);
+  ok(/PRUEBA SEXTO DEL EQUIPO \(ESCUELA DEL EQUIPO\): Equipos B y Individual B/.test(await page.textContent("#pi-dos-modalidades legend")), "dice quién y en qué dos modalidades");
+  ok(await page.$eval("#pi-dm-0-x", (r) => r.checked), "viene en «Todavía no decido»");
+  ok(/\(ahora: 1 sin decidir\)/.test(await page.textContent("#pi-repetidos")), "cuenta los que faltan por decidir");
+  igual("sin decidir, cuenta en individual B (10 + él)", await enIndividualB(), 11);
+  await page.click("#pi-dm-0-1");
+  igual("queda en individual: sigue ahí", await enIndividualB(), 11);
+  ok(!/SEXTO DEL EQUIPO/.test(await page.textContent("#pi-equipos-de-mas")), "y ya no está en el equipo");
+  await page.click("#pi-dm-0-0");
+  igual("queda en equipos: sale de individual B", await enIndividualB(), 10);
+  ok(/SEXTO DEL EQUIPO/.test(await page.textContent("#pi-equipos-de-mas")), "y vuelve al equipo");
+  ok(/\(ahora: 0 sin decidir\)/.test(await page.textContent("#pi-repetidos")), "ya no falta nadie por decidir");
+  ok(await page.$eval("#pi-dm-0-0", (r) => document.activeElement === r), "el foco se queda en la opción elegida");
+  await page.click("#pi-dm-0-x");
+  igual("«Todavía no decido»: vuelve a las dos", await enIndividualB(), 11);
+  ok(!errores.length, "sin errores en la página", errores.join(" | "));
+  await ctx.close();
+}
 
 async function pruebaPagina(browser) {
   console.log("\n=== La sugerencia sale y no agrega a nadie ===");
@@ -349,7 +377,7 @@ async function pruebaPagina(browser) {
   pruebaPase();
   pruebaRepetidos();
   const browser = await chromium.launch({ executablePath: fs.existsSync(CHROME) ? CHROME : undefined });
-  try { await pruebaPagina(browser); }
+  try { await pruebaPagina(browser); await pruebaDosModalidades(browser); }
   catch (e) { mal("la prueba de la página se cayó", e.stack); }
   finally { await browser.close(); }
   console.log(fallos ? `\n${fallos} fallo(s).` : "\nTodo bien.");
