@@ -280,10 +280,11 @@ async function pruebaPagina(browser) {
   await page.evaluate((v) => window.__llega("pareo-evento-prueba123", "estado", v), vista);
   await page.waitForSelector(".pi-proyector h1");
   const primero = await page.textContent(".pi-proyector h1");
-  igual("muestra un torneo a la vez", primero, vista.torneos[0].nombre);
+  // (Un torneo terminado sale con su premiación: «Premiación: <nombre>».)
+  ok(primero.endsWith(vista.torneos[0].nombre), "muestra un torneo a la vez", primero);
   await page.clock.fastForward(15000);
   await page.waitForFunction((n) => document.querySelector(".pi-proyector h1").textContent !== n, primero);
-  igual("y a los 15 segundos pasa al siguiente", await page.textContent(".pi-proyector h1"), vista.torneos[1].nombre);
+  ok((await page.textContent(".pi-proyector h1")).endsWith(vista.torneos[1].nombre), "y a los 15 segundos pasa al siguiente", await page.textContent(".pi-proyector h1"));
   ok(!errores.length, "sin errores en la página", errores.join(" | "));
   await ctx.close();
 

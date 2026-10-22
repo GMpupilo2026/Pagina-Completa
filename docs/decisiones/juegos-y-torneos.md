@@ -3317,6 +3317,66 @@ del navegador fijo para la hora de la próxima ronda). Rompiendo a propósito
 el salto entre plantillas, la mesa sola, el aviso del adjunto, la hora o los
 puntos de tablero, salta.
 
+### La sala del evento: mesas, gafetes, llamados, inscripción y premiación
+
+Siete mejoras más para un JDE con varias categorías en la misma sala.
+
+- **Las mesas de la sala**: cada torneo puede tener su rango de mesas físicas
+  (`t.mesaInicial`, la primera; «Numerar seguido» pone cada uno donde
+  terminó el anterior, según cuántas mesas necesita: la mitad de sus
+  jugadores, redondeada para arriba). La ronda, la plantilla de la pared,
+  las planillas, las alineaciones y el celular dicen la mesa de la sala
+  (`V.mesaFisica(t, i)`, y `f` en lo que va al celular). **Por dentro, la
+  mesa sigue siendo su posición en la ronda**: lo que manda un adjunto, la
+  incidencia, la corrección y el historial se siguen refiriendo a ella, y
+  así un evento a medias puede renumerarse sin romper nada.
+- **El plano de la sala**, para la entrada: cada categoría con sus mesas.
+- **Los gafetes** de todos los jugadores del evento (en equipos, de cada
+  integrante con su equipo): nombre, categoría, centro y un QR a «Mi
+  jugador», ocho por hoja carta. El código del enlace del evento se guarda
+  al imprimirlos, así el QR impreso días antes sirve cuando el evento se
+  ponga en vivo.
+- **Cuánto duró cada ronda**: al guardar se anota cuándo se emparejó
+  (`R.emparejada`, si todavía no tiene ningún resultado) y cuándo se anotó
+  la última mesa (`R.fin`; si se borra un resultado, se quita). Una ronda de
+  antes de esto no tiene hora de emparejar y no se le inventa el fin. La
+  tabla va en el panel del evento y en Excel; la duración se cuenta desde
+  el reloj o, sin reloj, desde que se emparejó.
+- **El llamado a la ronda en el proyector**: cuando una categoría empareja
+  una ronda nueva, el proyector deja de pasar torneos y muestra sus mesas
+  en grande 45 segundos (varias, una detrás de otra). «Leer en voz alta»
+  lo dice además con la voz del navegador; lo tiene que prender alguien en
+  esa computadora, porque el navegador no deja hablar sin que se toque
+  algo. Al entrar, lo que ya estaba emparejado no se anuncia.
+- **La premiación en el proyector**: un torneo terminado manda su podio
+  (`podio` en `vistaTorneo`) y el proyector, en su turno, muestra los tres
+  primeros con su centro (y los mejores tableros en equipos).
+- **La inscripción desde el celular**: un enlace (`#inscribir=<código>`, por
+  un canal de Broadcast como el de los adjuntos) para que el entrenador de
+  un centro mande a quien falta. Pide la casilla de consentimiento con la
+  política de privacidad (son datos de una persona). Lo que llega queda en
+  una lista del árbitro y **entra solo si lo acepta**, por la misma puerta
+  que cualquier inscripción (`agregarJugadores()`: con rondas jugadas, al
+  acta como tardía, y la revisión de la categoría por el año). Se descarta
+  lo que nombra un torneo que no es del evento y lo repetido; la lista se
+  guarda en el navegador del árbitro. Solo torneos individuales.
+
+- **La sugerencia de partir una inscripción, más fácil de leer** (pidió el
+  dueño del sitio con una foto): arriba, las cifras (jugadores, torneos
+  marcados, cuántos no alcanzan); los grupos, en una sección por modalidad
+  (Individual, Equipos) con una tarjeta por grupo: la categoría y el sexo en
+  grande, cuántos son a la derecha y el sistema debajo; la marcada con
+  borde lleno y la que no se crea, punteada (lo dice también su casilla).
+  La modalidad no se repite en cada tarjeta pero sigue en el texto para el
+  lector de pantalla, y el texto de cada una conserva «— N jugadores», que
+  es como lo leen las pruebas. La revisión de categoría por año ya no es
+  una lista de cientos de oraciones: va agrupada por motivo (art. 17, art.
+  18…), cada grupo plegable con cuántos son y el nombre en negrita.
+
+Al tocar esto, `node herramientas/verificar-pareo-sala-evento.js`. Rompiendo a
+propósito la mesa física, la casilla de consentimiento, el llamado, el fin de
+la ronda o el aceptar, salta.
+
 ### La barra de progreso al buscar el Elo Nacional
 
 Antes de esto, tocar «Buscar Elo Nacional de quien no tiene» con una lista
