@@ -150,7 +150,9 @@ async function pruebaPagina(browser) {
   await page.click("#pi-planillas-anotacion");
   const planillas = await page.$$eval("#pi-firmas .pi-planilla", (l) => l.map((x) => [x.textContent, x.querySelectorAll("tbody tr").length]));
   igual("una planilla por mesa, con 30 filas (60 jugadas)", planillas.map((x) => x[1]), [30, 30]);
-  ok(/Ronda 1 · Mesa 1/.test(planillas[0][0]) && /Blancas: PRUEBA/.test(planillas[0][0]) && /Negras: PRUEBA/.test(planillas[0][0]), "con la ronda, la mesa y los nombres", planillas[0][0].slice(0, 200));
+  const lados = await page.$$eval("#pi-firmas .pi-planilla:first-child .pi-pl-lado", (l) => l.map((x) => [...x.children].map((c) => c.textContent)));
+  ok(/Ronda 1 · Mesa 1/.test(planillas[0][0]) && lados.length === 2 && lados[0][0] === "Blancas" && /^PRUEBA/.test(lados[0][1]) && lados[1][0] === "Negras" && /^PRUEBA/.test(lados[1][1]),
+    "con la ronda, la mesa y los nombres", JSON.stringify(lados) + " " + planillas[0][0].slice(0, 200));
   await page.evaluate(() => window.dispatchEvent(new Event("afterprint")));
   ok(!errores.length, "sin errores en la página", errores.join(" | "));
   await ctx.close();
