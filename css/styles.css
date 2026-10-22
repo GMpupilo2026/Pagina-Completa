@@ -1787,6 +1787,11 @@ html.dark .comparar-serie-3 { background: #199e70; }
 body.pi-modo-jde .pi-no-jde { display: none !important; }
 /* Imprimir todo de una ronda: la plantilla de la pared, en su propia hoja. */
 body.pi-imprimiendo-plantilla.pi-imprimiendo-firmas .pi-plantilla { break-after: page; }
+/* El enlace del adjunto con «Letra grande», para anotar desde una tableta. */
+#pi-ver.pi-grande { font-size: 1.25rem; }
+#pi-ver.pi-grande h1 { font-size: 2.25rem; }
+#pi-ver.pi-grande li > p, #pi-ver.pi-grande [data-tablero] > p { font-size: 1.35rem; }
+#pi-ver.pi-grande select, #pi-ver.pi-grande .pi-adj-rapido { font-size: 1.4rem; padding: 0.85rem 1.4rem; min-width: 5rem; }
 /* La pantalla para proyectar el evento (pareo.html#evento=…&proyectar). */
 .pi-proyector .pi-tabla { font-size: 1.35rem; }
 /* Los diplomas del evento (js/pareo/pagina.js: imprimirDiplomas): uno por

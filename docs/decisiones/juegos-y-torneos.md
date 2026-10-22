@@ -2954,6 +2954,76 @@ localhost:8777; Realtime y el archivo del año anterior, con dobles). Rompiendo
 a propósito el resultado del encuentro sin presentes, la validación del
 capitán, el punto por tablero del que vino o el filtro de la búsqueda, salta.
 
+### Lo que salió del ensayo, la sala y el evento en más de una computadora
+
+Diez pedidos más del dueño del sitio.
+
+- **El singular** (`js/pareo/textos.js: t()`): si una clave tiene su versión
+  `…Uno` y `{n}` es 1, se usa esa («Falta 1 resultado», «Se agregó 1
+  jugador»). Una sola regla en `t()`, no un `n === 1 ? … : …` en cada
+  llamada. Las dos claves viejas que ya terminaban en «Uno» (`cortosUno`,
+  `revisarFaltaUno`) no chocan: su nombre sin «Uno» no existe.
+- **La propuesta de torneos, más corta**: con la inscripción real de
+  Alajuela medía 2705 px y ahora 2291 (a 1280). Los grupos van en dos
+  columnas, las preguntas de «dos modalidades» con sus opciones en una
+  línea, lo que se lee una sola vez («cómo se arman los torneos») plegado, y
+  arriba un índice «Para revisar abajo» que lleva el foco a cada parte. De
+  paso se arregló un «null» que se veía cuando la lista no traía de qué
+  etapa venía (`caja.append` nativo escribe `null`; ahora se filtra).
+- **Los resultados para confirmar** (`V.sorpresas()`, `#pi-confirmar`):
+  quien tiene 400 o más puntos de Elo menos le gana a su rival, o un
+  adjunto manda para una mesa ya anotada otro resultado
+  (`R.discrepancias`). **No se cambia nada solo y no bloquea emparejar**:
+  la sorpresa es posible, y lo del adjunto puede ser él el que se equivocó.
+  Se confirma con «Está bien así» (`R.confirmadas`, por mesa y resultado:
+  si el resultado cambia, vuelve a preguntar) o, en la última ronda,
+  «Poner» el del adjunto.
+- **El adjunto en una tableta**: «Letra grande» (se recuerda en ese
+  aparato) y los tres resultados de siempre como botones a un toque; los
+  raros siguen en el selector. Lo que se manda es lo mismo de antes.
+- **La cuenta regresiva**: el horario del día (inicio y descanso, que ahora
+  se guardan los dos) viaja en el enlace del evento solo si quien organiza
+  lo puso (`vistaEvento(…, horario)` → `horas`). El celular y el proyector
+  dicen «Ronda 2 a las 10:10 · faltan 25 min» con la hora de Costa Rica, y
+  se vuelve a pintar cada 30 segundos. Un torneo que ya va más adelante que
+  el horario no muestra nada (sería mentira).
+- **Varios eventos guardados**: la lista de torneos va agrupada por evento
+  (el evento se guarda en la lista, `pareo_lista_v1`; las listas viejas se
+  completan leyendo cada torneo una vez) y, con dos o más eventos, aparece
+  el filtro «Evento» (se recuerda). Al elegir otro evento se abre su último
+  torneo.
+- **Pasar el evento a otra computadora**: un código nuevo cada vez y un
+  canal Broadcast (`pareo-pasar-<código>`), como el enlace en vivo: la otra
+  abre `pareo.html#recibir=<código>` y pide; **esta pregunta antes de
+  mandar** (el evento trae nombres y fechas de nacimiento de menores) y lo
+  manda comprimido en partes de 60 000 caracteres. La que recibe limpia la
+  dirección y lo abre como un respaldo (si ya tenía ese evento, pregunta
+  antes de reemplazarlo). No se guarda en ningún servidor.
+- **El informe para la prensa** (`V.informePrensa()`): cuántos jugaron y de
+  cuántos centros, campeón y subcampeón de cada torneo («Campeona» en los
+  de mujeres), los mejores tableros y la edad más joven en un podio. Es un
+  texto para revisar y pegar, no un PDF.
+- **«Avisarme» de verdad en el celular**: Chrome en Android no deja
+  `new Notification()` (da error, y se tragaba callado): la notificación
+  sale por el service worker del sitio (`registration.showNotification`) y,
+  si no hay, como antes. A quién se sigue se guarda por código de evento
+  (`pareo_ver_seguir_v1_<código>`): al volver a abrir el enlace se sigue
+  avisando, y el botón pasa a «Dejar de avisarme de …». **Con la página
+  cerrada no avisa**: eso pide notificaciones push con un servidor que las
+  mande, y Pareo Integral no tiene uno.
+- **Sus JDE de años anteriores** en la ficha del jugador del enlace del
+  evento: con un botón, porque los datos pesan más de un megabyte
+  (`js/jde-datos.js`, los mismos de «Ajedrez estudiantil en Costa Rica»).
+  Quién es quién: el mismo nombre sin tildes, o el único cuyos nombres
+  están todos en el de la inscripción (o al revés), con tres o más; si
+  podrían ser dos, ninguno (`V.buscarEnHistorial()`).
+
+Al tocar esto, `node herramientas/verificar-pareo-sala.js` (con el sitio en
+localhost:8777; Realtime, el reloj y los datos de los JDE, con dobles).
+Rompiendo a propósito el singular, la diferencia del adjunto, el «no» al
+pasar el evento, lo que se recuerda de «Avisarme» o el horario en el
+enlace, salta.
+
 ### La barra de progreso al buscar el Elo Nacional
 
 Antes de esto, tocar «Buscar Elo Nacional de quien no tiene» con una lista

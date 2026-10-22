@@ -431,7 +431,16 @@
         d: (t.desempates || []).filter((c) => c !== "TB").slice(0, 3).map((c) => ({ c, v: Math.round((f.valores[c] || 0) * 100) / 100 })) })) : [],
     };
   }
-  function vistaEvento(evento, torneos) { return { v: 2, nombre: evento.nombre, torneos: torneos.map(vistaTorneo) }; }
+  // `horario` (opcional, de horario()): las horas de cada ronda, para la
+  // cuenta regresiva del enlace del evento y del proyector.
+  function vistaEvento(evento, torneos, horario) {
+    return { v: 2, nombre: evento.nombre, torneos: torneos.map((t, i) => {
+      const x = vistaTorneo(t);
+      const h = horario && horario[i];
+      if (h && h.rondas.length) x.horas = h.rondas.map((rr) => rr.hora);
+      return x;
+    }) };
+  }
 
   // ---------- El medallero por centro educativo ----------
   // Las medallas de todos los torneos del evento sumadas por centro: un
@@ -660,7 +669,104 @@
       totalAntes: filas.reduce((a, f) => a + (f.antes || 0), 0), totalAhora: filas.reduce((a, f) => a + (f.ahora || 0), 0) };
   }
 
+
+  // ---------- Los resultados que conviene confirmar ----------
+  // En una ronda: quien tiene 400 puntos de Elo (o más) por debajo le gana
+  // a su rival. No se rechaza nada: es una sorpresa posible, pero también
+  // el error más común al anotar (el resultado al revés).
+  const DIFERENCIA_SORPRESA = 400;
+  function sorpresas(t, r) {
+    const R = t.rondas[r];
+    if (!R || E.esDeEquipos(t)) return [];
+    const out = [];
+    R.mesas.forEach((m, i) => {
+      if (m.n == null || (m.r !== "1-0" && m.r !== "0-1")) return;
+      const b = participante(t, m.b), n = participante(t, m.n);
+      const eb = Number(b && b.elo) || 0, en = Number(n && n.elo) || 0;
+      if (!eb || !en) return;
+      const [gana, pierde, eg, ep] = m.r === "1-0" ? [b, n, eb, en] : [n, b, en, eb];
+      if (ep - eg >= DIFERENCIA_SORPRESA) out.push({ mesa: i, r: m.r, gana: gana.nombre, pierde: pierde.nombre, dif: ep - eg });
+    });
+    return out;
+  }
+
+  // ---------- La próxima ronda, con el horario del día ----------
+  // De las horas de un torneo («08:00», «10:10»…), la primera que todavía no
+  // pasó a `ahora` (minutos desde la medianoche, en hora de Costa Rica).
+  function proximaRonda(horas, ahora) {
+    for (let k = 0; k < (horas || []).length; k++) {
+      const m = /^(\d{1,2}):(\d{2})$/.exec(horas[k]);
+      if (!m) continue;
+      const min = Number(m[1]) * 60 + Number(m[2]);
+      if (min >= ahora) return { n: k + 1, hora: horas[k], faltan: min - ahora };
+    }
+    return null;
+  }
+
+  // ---------- El informe para la prensa ----------
+  // Un texto corto, para pegar en un comunicado o en redes: los campeones y
+  // subcampeones de cada torneo, los mejores tableros y un par de datos
+  // (cuántos jugaron, de cuántos centros, el más joven en un podio).
+  function edadEn(nacimiento, fecha) {
+    const a = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(nacimiento || "")), b = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(fecha || ""));
+    if (!a || !b) return null;
+    let e = Number(b[1]) - Number(a[1]);
+    if (b[2] + b[3] < a[2] + a[3]) e--;
+    return e;
+  }
+  function informePrensa(evento, torneos, hoy) {
+    const lineas = [];
+    const personas = torneos.flatMap((t) => (E.esDeEquipos(t) ? t.jugadores.flatMap((e) => e.integrantes) : t.jugadores));
+    const centros = new Set(personas.map((p) => clave(p.institucion)).filter(Boolean));
+    lineas.push(evento.nombre || "Torneo de ajedrez");
+    lineas.push("");
+    lineas.push(personas.length + " estudiantes de " + centros.size + " centros educativos jugaron " + torneos.length + " torneos.");
+    let joven = null;
+    for (const t of torneos) {
+      const p = podio(t);
+      if (!p.filas.length) continue;
+      lineas.push("");
+      lineas.push(nombreTorneo(t) + (p.terminado ? "" : " (provisional, " + p.rondas + " de " + p.total + " rondas)"));
+      for (const f of p.filas.filter((x) => x.puesto <= 2)) {
+        const x = f.participante;
+        // En un torneo de mujeres, «Campeona» (un equipo es «el campeón»).
+        const a = !E.esDeEquipos(t) && /Mujeres/.test(nombreTorneo(t)) ? "a" : "";
+        lineas.push((f.puesto === 1 ? "Campeón" : "Subcampeón").replace(/ón$/, a ? "ona" : "ón") + ": " + x.nombre + (E.esDeEquipos(t) ? "" : " (" + (x.institucion || "—") + ")") + ", " + puntosTexto(f.puntos) + " puntos.");
+      }
+      for (const x of p.tableros) if (x.filas.length) lineas.push("Mejor tablero " + x.tablero + ": " + x.filas.map((f) => f.nombre + " (" + f.institucion + ")").join(", ") + ".");
+      for (const f of p.filas) {
+        const gente = E.esDeEquipos(t) ? f.participante.integrantes : [f.participante];
+        for (const g of gente) {
+          const e = edadEn(g.nacimiento, hoy);
+          if (e != null && (!joven || e < joven.edad)) joven = { edad: e, nombre: g.nombre, torneo: nombreTorneo(t) };
+        }
+      }
+    }
+    if (joven) { lineas.push(""); lineas.push("La edad más joven en un podio: " + joven.nombre + ", con " + joven.edad + " años (" + joven.torneo + ")."); }
+    return lineas.join("\n");
+  }
+
+  // ---------- Su historial en los JDE de años anteriores ----------
+  // El jugador de data/ajedrez-estudiantil-jugadores.json (JdeDatos) que es
+  // esta persona: el mismo nombre sin tildes ni mayúsculas, o, si no, el
+  // único cuyos nombres están todos en el de la inscripción (o al revés),
+  // con al menos tres. Dos que podrían ser: ninguno (no se adivina).
+  function buscarEnHistorial(nombre, jugadores, normalizar) {
+    const k = normalizar(nombre);
+    const exacto = jugadores.find((j) => j.clave === k);
+    if (exacto) return exacto;
+    const mios = k.split(" ").filter(Boolean);
+    if (mios.length < 3) return null;
+    const dentro = (a, b) => a.every((x) => b.includes(x));
+    const posibles = jugadores.filter((j) => {
+      const suyos = j.clave.split(" ").filter(Boolean);
+      return suyos.length >= 3 && (dentro(suyos, mios) || dentro(mios, suyos));
+    });
+    return posibles.length === 1 ? posibles[0] : null;
+  }
+
   const api = {
+    sorpresas, proximaRonda, informePrensa, buscarEnHistorial, DIFERENCIA_SORPRESA,
     compararAnioAnterior,
     revisarCierre,
     aplicarDesempate, empatadosEnCorte, segundosIncremento, duracionRonda, horario, porDireccion, constancias, textoConstancia,
