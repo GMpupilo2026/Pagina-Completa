@@ -3238,6 +3238,41 @@ de verdad en el PDF que arma Chromium) y
 margen, la altura de los renglones, el envoltorio, lo abierto que se
 recuerda, el texto del bye o la nota de la clasificación, salta.
 
+### Archivar torneos y pasar de un torneo a otro del evento en el celular
+
+Dos pedidos del dueño del sitio: que los torneos terminados no estorben en la
+lista, y que desde el enlace en vivo se pueda ir a los otros torneos del JDE.
+
+- **«Archivar torneos»**, junto a «Nuevo torneo»: un panel con una casilla
+  por torneo, agrupados por evento, que dice cómo va cada uno (terminado,
+  sin empezar, «k de n rondas») y cuál está abierto. «Marcar los
+  terminados» y «Marcar todo el evento» marcan de una vez. Archivar **baja
+  primero** un archivo .json (el mismo formato del respaldo de un evento:
+  si son de un solo evento, es su respaldo; si se mezclan, lleva un evento
+  que solo sirve de rótulo) y **después** los quita del navegador; si se
+  archivó el abierto, se abre otro. Vuelven con «Abrir un TRF o una copia
+  .json». Lo archivado vive solo en ese archivo, y el aviso lo dice.
+- **Un arreglo que salió de esto**: abrir un respaldo reemplazaba a TODOS
+  los torneos de ese evento que hubiera en el navegador. Con un archivo de
+  archivados que trae solo algunos (el SUB-10 terminado), habría borrado al
+  SUB-12 que sigue en juego. Ahora solo cuenta como repetido el del mismo
+  evento y con el mismo nombre que uno del archivo.
+- **Los torneos vinculados en el celular**: el enlace en vivo de un torneo
+  de un evento muestra arriba «Este torneo es parte de … Los demás:» con un
+  enlace por torneo, que abre el enlace en vivo del evento con ese torneo
+  desplegado (`#evento=<código>&t=<torneo>`), y «Ver todo el evento». Para
+  que esos enlaces lleven a algo, poner en vivo un torneo de un evento pone
+  en vivo también el evento (si no había otro). Por el canal va el código
+  del evento, no la dirección, y el celular la arma solo si el código parece
+  un código: lo que llega por un canal público no va tal cual a un `href`.
+  En el enlace del evento, «Ir a un torneo» abre el que se elija y lleva el
+  foco hasta él. Como ir de un enlace a otro cambia solo el «#», las páginas
+  para ver se vuelven a cargar con `hashchange`.
+
+Al tocar esto, `node herramientas/verificar-pareo-archivar.js`. Rompiendo a
+propósito el nombre en los repetidos, «Marcar los terminados», el código
+del enlace o el evento en vivo junto con el torneo, salta.
+
 ### La barra de progreso al buscar el Elo Nacional
 
 Antes de esto, tocar «Buscar Elo Nacional de quien no tiene» con una lista

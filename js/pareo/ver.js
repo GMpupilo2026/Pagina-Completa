@@ -238,11 +238,29 @@ window.PareoVer = (function () {
     return nodos;
   }
 
+  // Los otros torneos del mismo evento (un JDE: cada categoría es un torneo):
+  // cada uno abre el enlace del evento en vivo con ese torneo desplegado.
+  // La dirección se arma acá con el código, que tiene que parecer un código:
+  // lo que llega por el canal no va tal cual a un href.
+  const CODIGO_VIVO = /^[a-z0-9]{4,16}$/;
+  const enlaceEvento = (codigo, torneo) => location.pathname + "#evento=" + codigo + (torneo ? "&t=" + encodeURIComponent(torneo) : "");
+  function otrosDelEvento(idioma, ev) {
+    if (!ev || typeof ev.codigo !== "string" || !CODIGO_VIVO.test(ev.codigo)) return null;
+    const tx = (clave, vars) => X.t(idioma, clave, vars);
+    const otros = (ev.torneos || []).filter((n) => typeof n === "string" && n !== ev.este);
+    const clase = "inline-block border border-brand-300 dark:border-brand-600 text-brand-800 dark:text-white font-semibold px-3 py-1 rounded-lg text-sm hover:bg-brand-50 dark:hover:bg-brand-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400";
+    return el("nav", { class: "mb-6 rounded-xl border border-brand-200 dark:border-brand-700 p-3", "aria-label": tx("verOtrosTorneos"), "data-otros-torneos": "" },
+      el("p", { class: "text-sm" }, tx("verParteDe", { e: String(ev.nombre || "") })),
+      otros.length ? el("ul", { class: "mt-2 flex flex-wrap gap-2" }, otros.map((n) => el("li", {}, el("a", { href: enlaceEvento(ev.codigo, n), class: clase }, n)))) : null,
+      el("a", { href: enlaceEvento(ev.codigo), class: "inline-block mt-2 text-sm font-semibold underline underline-offset-2 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400", "data-todo-evento": "" }, tx("verTodoElEvento")));
+  }
+
   function pintar(cont, idioma, datos, enVivo) {
     const tx = (clave, vars) => X.t(idioma, clave, vars);
     cont.replaceChildren(
       el("h1", { class: "font-serif text-2xl font-bold mb-1" }, datos.nombre || "Pareo Integral"),
       el("p", { class: "text-sm text-brand-600 dark:text-brand-300 mb-6" }, tx(enVivo ? "verEnVivoLeyenda" : "verFotoDelMomento")),
+      ...[otrosDelEvento(idioma, datos.evento)].filter(Boolean),
       ...tablas(idioma, datos, "h2"));
   }
 
@@ -385,7 +403,17 @@ window.PareoVer = (function () {
           proximaTexto(idioma, x) ? el("span", { class: "block text-sm font-normal text-brand-600 dark:text-brand-300", "data-proxima": "" }, proximaTexto(idioma, x)) : null),
         el("div", { class: "mt-3" }, cuerpo.length ? cuerpo : el("p", { class: "text-sm text-brand-600 dark:text-brand-300" }, tx("clasificadosSinRondas")))));
     }
-    lista.replaceChildren(...nodos);
+    // Ir directo a un torneo (en un JDE son muchas categorías): lo abre y
+    // lleva hasta él.
+    const torneos = datos.torneos || [];
+    const indice = torneos.length > 1 ? el("nav", { class: "mb-4", "aria-label": tx("verIrATorneo"), "data-indice-torneos": "" },
+      el("p", { class: "text-sm font-semibold mb-1" }, tx("verIrATorneo")),
+      el("ul", { class: "flex flex-wrap gap-2" }, torneos.map((x) => {
+        const b = el("button", { type: "button", class: "border border-brand-300 dark:border-brand-600 text-brand-800 dark:text-white font-semibold px-3 py-1 rounded-lg text-sm hover:bg-brand-50 dark:hover:bg-brand-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400", "data-ir-torneo": x.nombre }, x.nombre);
+        b.addEventListener("click", () => irATorneo(cont, x.nombre));
+        return el("li", {}, b);
+      }))) : null;
+    lista.replaceChildren(...[indice].filter(Boolean), ...nodos);
     // La ficha abierta, con lo último que llegó.
     const cajaFicha = caja.querySelector("#pi-ver-ficha");
     const fx = cont.__ficha && (datos.torneos || []).find((x) => x.nombre === cont.__ficha.torneo);
@@ -401,6 +429,17 @@ window.PareoVer = (function () {
   // «Mi centro»: el selector se rellena con cada estado que llega, sin
   // perder lo elegido (que se recuerda en el celular por código de evento).
   const CLAVE_CENTRO = "pareo_ver_centro_v1_";
+  // Abre el torneo en la lista del evento y lleva el foco hasta él.
+  function irATorneo(cont, nombre) {
+    const d = [...cont.querySelectorAll("details[data-torneo]")].find((x) => x.dataset.torneo === nombre);
+    if (!d) return false;
+    d.open = true;
+    d.scrollIntoView({ block: "start" });
+    const s = d.querySelector("summary");
+    if (s) s.focus({ preventScroll: true });
+    return true;
+  }
+
   function pintarCentro(cont, idioma, datos) {
     const tx = (clave, vars) => X.t(idioma, clave, vars);
     const sel = cont.querySelector("#pi-ver-centro");
@@ -571,6 +610,10 @@ window.PareoVer = (function () {
   async function iniciarEvento(cadena, idioma) {
     const [codigo, ...opciones] = String(cadena).split("&");
     const proyectar = opciones.includes("proyectar");
+    // «&t=<torneo>»: llegó desde el enlace de un torneo y abre ese.
+    let irA = null;
+    const t = opciones.find((x) => x.startsWith("t="));
+    if (t) { try { irA = decodeURIComponent(t.slice(2)); } catch (e) { irA = null; } }
     const aviso = document.getElementById("pi-ver-conexion");
     const decirConexion = (texto) => { if (aviso) { aviso.textContent = texto; aviso.hidden = !texto; } };
     const cont = document.getElementById("pi-ver");
@@ -585,6 +628,9 @@ window.PareoVer = (function () {
     }
     let llego = false;
     const abiertos = new Set();
+    if (irA) abiertos.add(irA);
+    // Llevar hasta el torneo pedido la primera vez que se pinta con él.
+    const llevar = () => { if (irA && !proyectar && irATorneo(cont, irA)) irA = null; };
     cont.__codigo = codigo;
     const canal = window.sb.channel("pareo-evento-" + codigo);
     let ultimo = null, vuelta = 0;
@@ -592,7 +638,7 @@ window.PareoVer = (function () {
     if (previo && previo.datos) {
       ultimo = previo.datos;
       llego = true;
-      if (proyectar) pintarProyector(cont, idioma, ultimo, vuelta); else pintarEvento(cont, idioma, ultimo, abiertos);
+      if (proyectar) pintarProyector(cont, idioma, ultimo, vuelta); else { pintarEvento(cont, idioma, ultimo, abiertos); llevar(); }
       decirConexion(X.t(idioma, "verUltimoDe", { h: horaCorta(previo.hora) }));
     }
     window.addEventListener("offline", () => { const u = leerUltimo(codigo); decirConexion(X.t(idioma, "verSinConexion", { h: u ? horaCorta(u.hora) : "—" })); });
@@ -605,7 +651,7 @@ window.PareoVer = (function () {
       guardarUltimo(codigo, ultimo);
       decirConexion("");
       if (proyectar) pintarProyector(cont, idioma, ultimo, vuelta);
-      else pintarEvento(cont, idioma, ultimo, abiertos);
+      else { pintarEvento(cont, idioma, ultimo, abiertos); llevar(); }
     });
     if (proyectar) setInterval(() => { if (ultimo) pintarProyector(cont, idioma, ultimo, ++vuelta); }, CADA);
     // La cuenta regresiva corre aunque no llegue nada nuevo.

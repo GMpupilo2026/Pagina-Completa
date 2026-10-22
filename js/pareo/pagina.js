@@ -226,6 +226,86 @@
     }
     return x.evento;
   }
+  // «Archivar torneos»: los que ya no hacen falta a la vista se bajan en un
+  // archivo (el mismo formato del respaldo de un evento, que se vuelve a
+  // abrir con «Abrir un TRF o una copia .json») y se quitan de la lista.
+  // Primero se baja y después se quita: nunca al revés.
+  const archivar = { marcados: new Set() };
+  function estadoParaArchivar(x) {
+    const y = x.id === estado.id ? t() : leerJSON(PREFIJO + x.id, null);
+    if (!y) return { y: null, texto: "" };
+    if (V.terminado(y)) return { y, terminado: true, texto: tx("archivarTerminado") };
+    if (!y.rondas.length) return { y, texto: tx("archivarSinEmpezar") };
+    return { y, texto: tx("archivarRondas", { k: V.rondasCompletas(y), n: V.totalRondas(y) }) };
+  }
+  function pintarArchivar() {
+    const caja = $("pi-archivar-caja");
+    if (caja.hidden) return;
+    const lista = estado.lista.slice().sort((a, b) => b.actualizado - a.actualizado);
+    const info = new Map(lista.map((x) => [x.id, estadoParaArchivar(x)]));
+    for (const id of [...archivar.marcados]) if (!info.has(id)) archivar.marcados.delete(id);
+    const grupos = new Map();
+    for (const x of lista) {
+      const e = eventoDeItem(x);
+      const k = e ? e.id : "";
+      if (!grupos.has(k)) grupos.set(k, { nombre: e ? e.nombre || tx("sinNombre") : tx("filtroSueltos"), xs: [] });
+      grupos.get(k).xs.push(x);
+    }
+    const hacer = el("button", { type: "button", id: "pi-archivar-hacer", class: C.boton }, tx("archivarHacer", { n: archivar.marcados.size }));
+    hacer.disabled = !archivar.marcados.size;
+    const alMarcar = () => { hacer.textContent = tx("archivarHacer", { n: archivar.marcados.size }); hacer.disabled = !archivar.marcados.size; };
+    const casillas = [];
+    const campos = [...grupos].map(([k, g]) => {
+      const todoEv = el("button", { type: "button", class: C.mini, "data-archivar-evento": k }, tx("archivarEvento"));
+      todoEv.addEventListener("click", () => { for (const x of g.xs) archivar.marcados.add(x.id); pintarArchivar(); });
+      return el("fieldset", { class: "mt-3" },
+        el("legend", { class: "font-semibold text-sm" }, g.nombre),
+        k ? el("div", { class: "mt-1" }, todoEv) : null,
+        el("ul", { class: "mt-1 space-y-1" }, g.xs.map((x) => {
+          const i = info.get(x.id);
+          const c = el("input", { type: "checkbox", id: "pi-archivar-" + x.id, value: x.id, "data-terminado": i.terminado ? "1" : "" });
+          c.checked = archivar.marcados.has(x.id);
+          c.addEventListener("change", () => { if (c.checked) archivar.marcados.add(x.id); else archivar.marcados.delete(x.id); alMarcar(); });
+          casillas.push(c);
+          return el("li", {}, el("label", { for: c.id, class: "flex items-start gap-2 text-sm" }, c,
+            el("span", {}, x.nombre || tx("sinNombre"), el("span", { class: C.nota, texto: " · " + [i.texto, x.id === estado.id ? tx("archivarAbierto") : ""].filter(Boolean).join(" · ") }))));
+        })));
+    });
+    const terminados = el("button", { type: "button", id: "pi-archivar-terminados", class: C.mini }, tx("archivarTerminados"));
+    terminados.addEventListener("click", () => { for (const [id, i] of info) if (i.terminado) archivar.marcados.add(id); pintarArchivar(); });
+    const ninguno = el("button", { type: "button", class: C.mini }, tx("archivarNinguno"));
+    ninguno.addEventListener("click", () => { archivar.marcados.clear(); pintarArchivar(); });
+    hacer.addEventListener("click", () => archivarMarcados(info));
+    caja.replaceChildren(el("p", { class: C.nota, texto: tx("archivarTexto") }),
+      el("div", { class: "mt-3 flex flex-wrap gap-2" }, terminados, ninguno), ...campos, el("div", { class: "mt-4" }, hacer));
+  }
+  async function archivarMarcados(info) {
+    const ids = listaOrdenada().filter((x) => archivar.marcados.has(x.id)).map((x) => x.id);
+    if (!ids.length) { Avisos.avisar(tx("archivarNada"), { tipo: "error" }); return; }
+    const ok = await Avisos.confirmar(tx("archivarConfirmar", { n: ids.length }), { aceptar: tx("archivarSi"), peligro: true });
+    if (!ok) return;
+    const torneos = ids.map((id) => info.get(id).y).filter(Boolean);
+    // Un solo evento: el archivo es su respaldo. Mezclados: un «evento» que
+    // solo sirve de rótulo (al abrirlo, cada torneo trae el suyo).
+    const eventos = new Set(torneos.map((y) => (y.evento ? y.evento.id : "")));
+    const uno = eventos.size === 1 && torneos[0].evento ? torneos[0].evento : null;
+    const ev = uno ? { id: uno.id, nombre: uno.nombre || "" } : { id: "archivo-" + Date.now(), nombre: tx("archivarNombre") };
+    const archivo = window.PareoPDF.nombreArchivo((uno ? ev.nombre : "torneos") + " " + (window.HoraCR ? HoraCR.hoy() : ""), "archivados").replace(/\.pdf$/, ".json");
+    bajar(archivo, JSON.stringify(V.respaldo(ev, torneos), null, 1), "application/json");
+    for (const id of ids) quitar(PREFIJO + id);
+    estado.lista = estado.lista.filter((x) => !ids.includes(x.id));
+    escribir(CLAVE_LISTA, JSON.stringify(estado.lista));
+    archivar.marcados.clear();
+    if (ids.includes(estado.id)) {
+      const otro = listaOrdenada()[0];
+      if (!otro || !abrir(otro.id)) crear();
+    }
+    pintarTodo();
+    pintarArchivar();
+    Avisos.avisar(tx("archivarListo", { n: ids.length, a: archivo }));
+  }
+  const listaOrdenada = () => estado.lista.slice().sort((a, b) => b.actualizado - a.actualizado);
+
   function pintarLista() {
     const s = $("pi-lista");
     s.replaceChildren();
@@ -259,6 +339,7 @@
       else s.append(...opciones);
     }
     s.value = estado.id;
+    pintarArchivar();
   }
   function cambiarFiltroEvento(valor) {
     escribir(CLAVE_FILTRO_EVENTO, valor);
@@ -3346,7 +3427,19 @@
       // juego, todavía no la suma, y quien mira lo tiene que saber.
       hasta: k,
       clasificacion: filas.map((f) => ({ p: f.puesto, n: jugador(f.id).nombre, pts: f.puntos })),
+      evento: enlacesDelEvento(v),
     };
+  }
+
+  // Los otros torneos del mismo evento, para pasar a ellos desde el celular:
+  // el enlace del evento en vivo (que tiene a todos) abierto en cada uno.
+  // Solo si el evento está en vivo desde esta pestaña: si no, el enlace
+  // llevaría a una página que espera y no le llega nada.
+  function enlacesDelEvento(v) {
+    if (!v.evento || !estado.eventoVivo || estado.eventoVivo.id !== v.evento.id) return undefined;
+    // Va el código, no la dirección: el celular la arma él (lo que llega por
+    // el canal no se pone tal cual en un enlace).
+    return { nombre: v.evento.nombre || "", codigo: estado.eventoVivo.codigo, este: V.nombreTorneo(v), torneos: torneosDelEvento(v.evento.id).map((y) => V.nombreTorneo(y)) };
   }
 
   // Un canal de Supabase Realtime en modo Broadcast: efímero, sin tabla y sin
@@ -3374,6 +3467,9 @@
       return false;
     }
     if (!v.liveCodigo) { v.liveCodigo = nuevoCodigoVivo(); guardar(); }
+    // Un torneo de un evento: el evento se pone en vivo también, así quien
+    // mira este torneo puede pasar a los demás (enlacesDelEvento).
+    if (v.evento && !estado.eventoVivo) await prenderEventoVivo(v.evento);
     estado.canalVivo = window.sb.channel("pareo-vivo-" + v.liveCodigo);
     estado.canalVivo.subscribe();
     estado.enVivo = true;
@@ -4044,7 +4140,11 @@
   // El respaldo de un evento: todos sus torneos de una vez. Si en este
   // navegador ya están (el mismo evento), se pregunta antes de reemplazarlos.
   async function abrirRespaldo(datos) {
-    const ya = estado.lista.filter((x) => { const y = leerJSON(PREFIJO + x.id, null); return y && y.evento && y.evento.id === datos.evento.id; });
+    // Repetidos: del mismo evento Y con el mismo nombre que uno del archivo.
+    // (Un archivo de torneos archivados trae solo algunos del evento: los que
+    // siguen en este navegador no se tocan.)
+    const nombres = new Set(datos.torneos.map((x) => x.nombre || ""));
+    const ya = estado.lista.filter((x) => { const y = leerJSON(PREFIJO + x.id, null); return y && y.evento && y.evento.id === datos.evento.id && nombres.has(y.nombre || ""); });
     if (ya.length) {
       const ok = await Avisos.confirmar(tx("respaldoReemplazar", { n: ya.length }), { aceptar: tx("respaldoReemplazarSi"), peligro: true });
       if (!ok) return;
@@ -4192,6 +4292,12 @@
       });
       CsvExcel.bajar(nombreArchivo("-jugadores.csv"), [tx("nombre"), tx("institucion"), "Elo", tx("titulo"), tx("fed"), tx("fideId"), tx("categoria")], filas);
     });
+    $("pi-archivar").addEventListener("click", () => {
+      const caja = $("pi-archivar-caja");
+      caja.hidden = !caja.hidden;
+      $("pi-archivar").setAttribute("aria-expanded", caja.hidden ? "false" : "true");
+      pintarArchivar();
+    });
     $("pi-borrar").addEventListener("click", async () => {
       const ok = await Avisos.confirmar(tx("confirmarBorrar", { n: t().nombre || tx("sinNombre") }), { aceptar: tx("borrarTorneo"), peligro: true });
       if (!ok) return;
@@ -4336,6 +4442,9 @@
       PareoVer.iniciarCapitan(location.hash.slice(9), idioma);
       return;
     }
+    // En las páginas para ver, pasar de un torneo a otro cambia solo el «#»:
+    // se vuelve a cargar para abrir lo que dice.
+    if (/^#(evento|vivo|ver)=/.test(location.hash)) window.addEventListener("hashchange", () => location.reload());
     if (location.hash.startsWith("#evento=")) {
       modoVer();
       PareoVer.iniciarEvento(location.hash.slice(8), idioma);
