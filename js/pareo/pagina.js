@@ -1993,7 +1993,7 @@
     // Las horas de cada ronda van solo si quien organiza puso el horario.
     const inicio = leer(CLAVE_HORARIO + x.id);
     const horario = inicio ? V.horario(lista, inicio, leer(CLAVE_HORARIO + x.id + "_descanso") || "10") : null;
-    x.canal.send({ type: "broadcast", event: "estado", payload: V.vistaEvento(lista[0].evento, lista, horario) });
+    PareoVer.paraMandar(V.vistaEvento(lista[0].evento, lista, horario)).then((payload) => x.canal.send({ type: "broadcast", event: "estado", payload }));
   }
   async function mostrarQrEvento(cont) {
     const url = location.origin + location.pathname + "#evento=" + estado.eventoVivo.codigo;
@@ -2083,6 +2083,8 @@
         { nombre: "fideId", etiqueta: tx("fideId"), valor: j.fideId || "", inputmode: "numeric", max: 11 },
         { nombre: "sexo", etiqueta: tx("sexo"), tipo: "select", valor: j.sexo || "", opciones: [["", "—"], ["m", tx("masculino")], ["w", tx("femenino")]] },
         { nombre: "nacimiento", etiqueta: tx("nacimientoFormato"), valor: j.nacimiento || "", max: 10 },
+        { nombre: "kFide", etiqueta: tx("eloKCampo"), tipo: "select", valor: j.kFide ? String(j.kFide) : "", ayuda: tx("eloKAyuda"),
+          opciones: [["", tx("eloKAuto")]].concat([40, 20, 10].map((n) => [String(n), String(n)])) },
         { nombre: "mesaFija", etiqueta: tx("mesaFija"), valor: j.mesaFija ? String(j.mesaFija) : "", inputmode: "numeric", max: 3, ayuda: tx("mesaFijaAyuda") },
       ],
     });
@@ -2091,6 +2093,7 @@
     if (!d.nombre) { Avisos.avisar(tx("faltaNombre"), { tipo: "error" }); return; }
     const mesa = Math.round(Number(String(r.mesaFija || "").trim()) || 0);
     d.mesaFija = mesa >= 1 && mesa <= 500 ? mesa : null;
+    d.kFide = ["40", "20", "10"].includes(r.kFide) ? Number(r.kFide) : null;
     Object.assign(j, d);
     guardar();
     pintarJugadores();
@@ -3238,7 +3241,8 @@
   function difundirEnVivo() {
     const v = t();
     if (!estado.enVivo || !estado.canalVivo || !v.rondas.length) return;
-    estado.canalVivo.send({ type: "broadcast", event: "estado", payload: datosLecturaActual(v.rondas.length - 1) });
+    const canal = estado.canalVivo;
+    PareoVer.paraMandar(datosLecturaActual(v.rondas.length - 1)).then((payload) => canal.send({ type: "broadcast", event: "estado", payload }));
   }
 
   async function activarEnVivo() {
@@ -3428,6 +3432,15 @@
       }
       boton.disabled = true;
       msg.textContent = tx("emparejando");
+      // Con muchos jugadores el Sistema Holandés tarda (crece con el cubo de
+      // cuántos son: 800 son unos 20 segundos): se dice y se cuenta.
+      const juegan = v.sistema === "todos" ? v.jugadores.length : T.participantes(v, r, pedidas).length;
+      const desde = Date.now();
+      // (El aviso se lee una vez; la cuenta de segundos va aparte, fuera de
+      // la región que lee el lector de pantalla, para no repetirlo cada segundo.)
+      const lleva = el("span", { id: "pi-emparejar-lleva", class: "block" });
+      if (juegan >= 250) { msg.textContent = tx("emparejandoMucho", { n: juegan, s: Math.max(5, Math.round(20 * Math.pow(juegan / 800, 3))) }); msg.after(lleva); }
+      const cuenta = juegan >= 250 ? setInterval(() => { lleva.textContent = tx("emparejandoLleva", { l: Math.round((Date.now() - desde) / 1000) }); }, 1000) : null;
       try {
         await emparejar(r, pedidas);
         estado.ronda = r;
@@ -3439,6 +3452,8 @@
         msg.textContent = "";
         Avisos.avisar(e.codigo === 1 ? tx("sinPareoPosible") : tx("errorMotor", { e: e.message }), { tipo: "error" });
       } finally {
+        if (cuenta) clearInterval(cuenta);
+        lleva.remove();
         boton.disabled = faltanRevisar() > 0;
       }
     });
@@ -3552,26 +3567,35 @@
     const tabla = $("pi-tabla-clas");
     tabla.replaceChildren();
     if (!v.jugadores.length) return;
+    // El Elo que gana o pierde cada uno (js/pareo/elo.js), si hay Elo.
+    const elos = conElo(v) ? PareoElo.calcular(v, k) : null;
+    const thElo = elos ? [["Rp", "eloRp"], ["K", "eloK"], ["±Elo", "eloCambio"]].map(([c, d]) => el("th", { class: "num", scope: "col" }, el("abbr", { title: tx(d), texto: c }))) : [];
     tabla.append(el("thead", {}, el("tr", {},
       el("th", { class: "num", scope: "col", texto: tx("puesto") }), el("th", { class: "num", scope: "col", texto: tx("nro") }),
       el("th", { scope: "col", texto: tx("nombre") }), el("th", { scope: "col", texto: tx("institucion") }),
       el("th", { scope: "col", texto: tx("fed") }), el("th", { class: "num", scope: "col", texto: "Elo" }),
       el("th", { class: "num", scope: "col", texto: tx("pts") }),
-      v.desempates.map((c) => el("th", { class: "num", scope: "col" }, el("abbr", { title: (E.catalogo(v).find((x) => x.codigo === c) || {})[idioma], texto: c }))))));
+      v.desempates.map((c) => el("th", { class: "num", scope: "col" }, el("abbr", { title: (E.catalogo(v).find((x) => x.codigo === c) || {})[idioma], texto: c }))), thElo)));
     const cuerpo = el("tbody");
     for (const f of filas) {
       const j = jugador(f.id);
-      cuerpo.append(el("tr", {},
+      const x = elos && elos.get(f.id);
+      cuerpo.append(el("tr", { "data-id": f.id },
         el("td", { class: "num", texto: f.puesto }), el("td", { class: "num", texto: num.get(f.id) }),
         el("td", { class: "font-semibold", texto: j.nombre + (j.titulo ? " (" + j.titulo + ")" : "") }),
         el("td", { texto: j.institucion || "" }),
         el("td", { texto: j.fed || "" }), el("td", { class: "num", texto: Number(j.elo) > 0 ? j.elo : "" }),
         el("td", { class: "num font-bold", texto: puntosTexto(f.puntos) }),
-        v.desempates.map((c) => el("td", { class: "num", texto: valorDesempate(c, f.valores[c]) }))));
+        v.desempates.map((c) => el("td", { class: "num", texto: valorDesempate(c, f.valores[c]) })),
+        elos ? celdasElo(x).map((c) => el("td", { class: "num", "data-elo": c[0], texto: c[1] })) : null));
     }
     tabla.append(cuerpo);
     const dl = $("pi-clas-leyenda");
     dl.replaceChildren();
+    if (elos) {
+      for (const [c, d] of [["Rp", "eloRp"], ["K", "eloK"], ["±Elo", "eloCambio"]]) dl.append(el("div", {}, el("dt", { class: "inline font-semibold", texto: c + ": " }), el("dd", { class: "inline", texto: tx(d) })));
+      dl.append(el("p", { class: C.nota + " mt-1", texto: tx("eloNota") }));
+    }
     for (const c of v.desempates) {
       const info = E.catalogo(v).find((x) => x.codigo === c);
       if (info) dl.append(el("div", {}, el("dt", { class: "inline font-semibold", texto: c + ": " }), el("dd", { class: "inline", texto: info[idioma] })));
@@ -3603,6 +3627,12 @@
           el("td", { class: "num", texto: f.jugadas }), el("td", { class: "num", texto: Math.round(f.porcentaje * 100) })))))));
     }
   }
+
+  // El Elo que gana o pierde cada uno: solo en individual y si alguien tiene Elo.
+  const conElo = (v) => !E.esDeEquipos(v) && v.jugadores.some((j) => Number(j.elo) > 0);
+  const celdasElo = (x) => (x && x.partidas
+    ? [["rp", String(x.rp)], ["k", String(x.k)], ["cambio", PareoElo.textoCambio(x.cambio, idioma)]]
+    : [["rp", ""], ["k", x && x.k ? String(x.k) : ""], ["cambio", ""]]);
 
   // El desempate por tableros es un número armado (E.codificarTableros): se
   // escribe tablero por tablero.
@@ -3662,19 +3692,20 @@
     const todasFilas = E.clasificacion(hasta(k), v.desempates);
     const filas = filasFiltradas(todasFilas);
     const num = T.numeros(v);
+    const elos = conElo(v) ? PareoElo.calcular(v, k) : null;
     const encabezados = [tx("puesto"), tx("nro"), tx("nombre"), tx("institucion"), tx("fed"), "Elo", tx("pts")]
-      .concat(v.desempates);
-    const anchos = [1, 1, 3, 2.2, 1, 1, 1].concat(v.desempates.map(() => 1));
+      .concat(v.desempates, elos ? ["Rp", "K", "+/-Elo"] : []);
+    const anchos = [1, 1, 3, 2.2, 1, 1, 1].concat(v.desempates.map(() => 1), elos ? [1, 0.7, 1] : []);
     const filasTabla = filas.map((f) => {
       const j = jugador(f.id);
       return [String(f.puesto), String(num.get(f.id)), j.nombre + (j.titulo ? " (" + j.titulo + ")" : ""),
         j.institucion || "", j.fed || "", Number(j.elo) > 0 ? String(j.elo) : "", puntosTexto(f.puntos)]
-        .concat(v.desempates.map((c) => valorDesempate(c, f.valores[c])));
+        .concat(v.desempates.map((c) => valorDesempate(c, f.valores[c])), elos ? celdasElo(elos.get(f.id)).map((c) => c[1]) : []);
     });
     const notas = v.desempates.map((c) => {
       const info = E.catalogo(v).find((x) => x.codigo === c);
       return info ? c + ": " + info[idioma] : c;
-    });
+    }).concat(elos ? ["Rp: " + tx("eloRp"), "K: " + tx("eloK"), "+/-Elo: " + tx("eloCambio"), tx("eloNota")] : []);
     return {
       titulo: k ? tx("clasificacionTras", { r: k }) : tx("fClasificacion"),
       subtitulo: subtituloPDF(), encabezados, anchos, filas: filasTabla, notas,
@@ -4095,6 +4126,70 @@
     });
   }
 
+  // ---------- Usarlo sin internet ----------
+  // El service worker del sitio va siempre a la red primero y, sin señal,
+  // sirve lo que encuentre guardado (sw.js). Pero solo guarda lo que pasó por
+  // él: el motor y su .wasm se piden recién al emparejar, y en la primera
+  // visita la página carga antes de que él exista. Así que la página guarda
+  // por su cuenta todo lo que necesita —ella misma con y sin .html, sus
+  // scripts y hojas, el motor, el QR, las letras y el manual— en la caché que
+  // no se borra al cambiar de versión (la misma de «Ejercicios sin internet»),
+  // y la renueva cada 6 horas con señal. Lo en vivo, el Elo Nacional y pasar
+  // el evento a otra computadora necesitan conexión: lo dice.
+  const CACHE_SIN_RED = "ajedrez-integral-sin-red";
+  const CLAVE_SIN_RED = "pareo_sin_red_v1";
+  const EXTRA_SIN_RED = ["js/pareo/motor-worker.js", "js/vendor/bbppairings/bbppairings.js", "js/vendor/bbppairings/bbppairings.wasm",
+    "js/vendor/qrcode.js", "pareo-manual.html", "js/pareo/manual.js", "img/favicon.svg", "manifest.json"];
+  function decirSinRed(clave, vars) {
+    const p = $("pi-sin-red");
+    if (!p) return;
+    p.hidden = false;
+    p.textContent = tx(clave, vars);
+  }
+  async function archivosSinRed() {
+    const urls = new Set();
+    document.querySelectorAll("script[src], link[rel='stylesheet'][href], img[src]").forEach((n) => {
+      const u = new URL(n.getAttribute("src") || n.getAttribute("href"), location.href);
+      if (u.origin === location.origin) urls.add(u.pathname);
+    });
+    for (const x of EXTRA_SIN_RED) urls.add(new URL(x, location.href).pathname);
+    // Las letras: las que nombra css/fuentes.css.
+    try {
+      const css = await (await fetch("css/fuentes.css", { cache: "no-store" })).text();
+      for (const m of css.matchAll(/url\(['"]?([^'")]+)['"]?\)/g)) urls.add(new URL(m[1], location.origin + "/css/").pathname);
+    } catch (e) { /* sin las letras, se ve con las del sistema */ }
+    return [...urls];
+  }
+  async function prepararSinRed() {
+    if (!window.caches || !("serviceWorker" in navigator)) { decirSinRed("sinRedNoSePuede"); return; }
+    if (navigator.onLine === false) {
+      const ya = Number(leer(CLAVE_SIN_RED)) || 0;
+      decirSinRed(ya ? "sinRedAhora" : "sinRedAhoraSinGuardar");
+      return;
+    }
+    const ultima = Number(leer(CLAVE_SIN_RED)) || 0;
+    if (Date.now() - ultima < 6 * 3600 * 1000 && await caches.has(CACHE_SIN_RED)) { decirSinRed("sinRedListo"); return; }
+    decirSinRed("sinRedGuardando");
+    try {
+      const cache = await caches.open(CACHE_SIN_RED);
+      let todo = true;
+      const guardar1 = async (ruta, nombres) => {
+        try {
+          const r = await fetch(ruta, { cache: "no-store" });
+          if (!r.ok) { todo = false; return; }
+          // Sin la marca de «redirigida»: una así no sirve para abrir una página.
+          const cuerpo = await r.blob();
+          for (const n of nombres) await cache.put(n, new Response(cuerpo, { status: 200, headers: r.headers }));
+        } catch (e) { todo = false; }
+      };
+      const base = location.pathname.replace(/\.html$/, "");
+      await guardar1(base + ".html", [base + ".html", base]);
+      await Promise.all((await archivosSinRed()).map((u) => guardar1(u, [u])));
+      if (todo) { escribir(CLAVE_SIN_RED, String(Date.now())); decirSinRed("sinRedListo"); }
+      else decirSinRed("sinRedIncompleto");
+    } catch (e) { decirSinRed("sinRedIncompleto"); }
+  }
+
   function arrancar() {
     // El enlace de solo lectura (#ver= o #vivo=) no toca nada del torneo
     // guardado en este navegador: ni lo lee ni lo pisa. Es una página
@@ -4145,6 +4240,10 @@
     pintarTodo();
     avisarPestanas();
     if (location.hash.startsWith("#recibir=")) recibirEvento(location.hash.slice(9));
+    // Después de pintar: que no compita con lo que se ve primero.
+    setTimeout(() => { prepararSinRed(); }, 1500);
+    window.addEventListener("offline", () => decirSinRed(leer(CLAVE_SIN_RED) ? "sinRedAhora" : "sinRedAhoraSinGuardar"));
+    window.addEventListener("online", () => prepararSinRed());
   }
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", arrancar);

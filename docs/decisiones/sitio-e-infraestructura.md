@@ -147,8 +147,11 @@ Lo que el service worker no toca nunca:
 **La única caché que sobrevive a un cambio de versión es la de «Ejercicios sin
 internet»** (`ajedrez-integral-sin-red`): la llena esa página con ella misma y
 sus scripts cuando el alumno guarda una tanda, y la renueva cada vez que se
-abre con señal. Sin red, `sw.js` busca una página también con el otro nombre
-(con o sin `.html`) y rearma una respuesta que llegó redirigida. Ver
+abre con señal. La usa también Pareo Integral (`pareo.html`), que se guarda
+ahí solo, con su motor, para emparejar sin conexión el día del torneo (ver
+«El Elo de cada jugador, sin internet y con un evento grande» en
+`juegos-y-torneos.md`). Sin red, `sw.js` busca una página también con el otro
+nombre (con o sin `.html`) y rearma una respuesta que llegó redirigida. Ver
 «Ejercicios sin internet» en `entrenamiento.md`.
 
 **`sw.js` y `manifest.json` llevan `Cache-Control: no-cache` en `_headers`.** Si

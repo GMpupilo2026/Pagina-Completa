@@ -3083,6 +3083,63 @@ localhost:8777; Realtime y el reloj, con dobles). Rompiendo a propósito la
 firma que no vale, la mesa fija, el aviso del mismo centro, la nota sin
 nombre o la caja de la nota que se rearma, salta.
 
+### El Elo de cada jugador, sin internet y con un evento grande
+
+Tres pedidos del dueño del sitio.
+
+- **El Elo que gana o pierde cada jugador** (`js/pareo/elo.js`): en la
+  clasificación y su PDF, tres columnas más (Rp, K y ±Elo) cuando el torneo
+  es individual y alguien tiene Elo. Con las reglas de FIDE (B.02, vigente
+  desde 2024): solo partidas jugadas entre dos jugadores con Elo (no las
+  incomparecencias ni los byes, ni contra quien no tiene Elo); más de 400
+  puntos de diferencia cuenta como 400; lo esperado sale de **la tabla
+  8.1.2 escrita tal cual** (sus cortes casi son los puntos medios de la
+  tabla 8.1, pero no en los empates: 25 da 0,53 y 392 da 0,92; la primera
+  versión los calculaba y el verificador lo agarró en 392); K = 40 con menos
+  de 18 años al terminar el año y menos de 2300, 10 desde 2400, 20 los
+  demás. El K 40 del jugador nuevo (menos de 30 partidas con Elo) no se
+  puede saber desde acá: se anota en «Editar». El rendimiento (Rp) es el
+  Elo medio de los rivales con Elo más la diferencia de la tabla 8.1 por su
+  porcentaje. **Es una cuenta del torneo, no el Elo oficial**, y la página
+  lo dice: lo publica FIDE o la federación con todos los torneos del
+  período, y se usa el Elo que tenga anotado cada uno (FIDE o Nacional).
+- **Sin internet**: el service worker del sitio va a la red primero y, sin
+  señal, sirve lo que tenga guardado; pero solo guarda lo que pasó por él, y
+  en la primera visita la página carga antes de que exista, y el motor (y
+  su `.wasm` de 430 KB) se pide recién al emparejar. Así que Pareo Integral
+  guarda por su cuenta lo que necesita —la página con y sin `.html`, sus
+  scripts, hojas e imágenes, el motor, el QR, las letras de
+  `css/fuentes.css` y el manual— en la caché que no se borra al cambiar de
+  versión (`ajedrez-integral-sin-red`, la de «Ejercicios sin internet»), un
+  segundo y medio después de abrir y cada 6 horas con señal. Arriba dice si
+  quedó «Listo para usar sin internet» y, sin conexión, qué sigue
+  funcionando y qué espera (lo en vivo, el Elo Nacional, pasar el evento).
+  Probado de verdad: se recarga sin red y empareja con el motor guardado.
+- **Un evento grande, ensayado con 800 jugadores** en un suizo de 9 rondas:
+  agregarlos, pintarlos, la clasificación, la tabla cruzada, los PDF, el
+  TRF y recargar tardan menos de un segundo cada uno; anotar un resultado,
+  unos 10 ms; lo guardado, 350 KB. Lo que se encontró:
+  - **Emparejar 800 jugadores en un solo torneo tarda 15-20 segundos**, y
+    no es la página: es el motor (bbpPairings, compilado con -O3), que crece
+    con el cubo de los jugadores (200 tardan 0,3 s; 400, 1,8 s). No hay
+    nada que acelerar sin cambiar de algoritmo. Corre en un Worker, así que
+    la página no se congela; ahora, con 250 o más, dice cuánto puede tardar
+    y cuenta los segundos (la cuenta va fuera de la región que lee el
+    lector de pantalla, para no repetirla cada segundo). En los JDE cada
+    categoría es un torneo aparte, así que esto casi no pasa.
+  - **El enlace en vivo de un evento de 800 pesa unos 360 KB**, y Supabase
+    Realtime corta un mensaje de más de 256 KB en el plan gratuito sin dar
+    ningún error: el celular se quedaba con lo último que le llegó. Ahora lo
+    que pasa de 180 KB va comprimido (`PareoVer.paraMandar()`, unos 30 KB) y
+    el celular lo descomprime (`alLlegar()`). Lo chico sigue yendo tal
+    cual, para que lo lea un celular viejo sin `DecompressionStream`.
+
+Al tocar esto, `node herramientas/verificar-pareo-elo.js` y
+`node herramientas/verificar-pareo-sin-red.js` (con el sitio en
+localhost:8777; el segundo deja correr el service worker, a diferencia de
+los demás). Rompiendo a propósito el guardado, el motor en la lista, la
+compresión, el tope de 400 o que solo cuenten las partidas jugadas, salta.
+
 ### La barra de progreso al buscar el Elo Nacional
 
 Antes de esto, tocar «Buscar Elo Nacional de quien no tiene» con una lista
