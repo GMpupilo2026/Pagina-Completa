@@ -194,7 +194,7 @@ async function pruebaPagina(browser) {
   igual("al desmarcar a una, cuenta 2 de 3", await page.textContent("#pi-asistencia-cuenta"), "Llegaron 2 de 3.");
   await page.click("#pi-emparejar");
   await page.waitForSelector(confirmar);
-  ok(/1 no llegaron: PRUEBA/.test(await page.textContent(confirmar)), "en todos contra todos pregunta si sacarla antes de sortear");
+  ok(/1 no llegó: PRUEBA/.test(await page.textContent(confirmar)), "en todos contra todos pregunta si sacarla antes de sortear");
   await page.click(confirmar + " [data-avisos-aceptar]");
   await page.waitForFunction(() => document.querySelector("#pi-ronda select"));
   todos = await leerTodos(page);

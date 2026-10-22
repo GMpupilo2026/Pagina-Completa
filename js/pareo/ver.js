@@ -96,11 +96,49 @@ window.PareoVer = (function () {
       filas.push(el("li", {}, tx("rondaN", { r: RR.n }) + ": " + (rival ? tx(m.b === nombre ? "verMioBlancas" : "verMioNegras", { x: rival }) : tx("cBye")) + (m.r && m.r !== "bye" ? " · " + tx("corto_" + m.r) : "")));
     }
     const f = (x.clasificacion || []).find((y) => y.n === nombre);
+    // Sus JDE de años anteriores (de «Ajedrez estudiantil en Costa Rica»):
+    // se bajan solo si se piden, porque pesan más de un megabyte.
+    const cajaHist = el("div", { "data-historial": "" });
+    const bHist = el("button", { type: "button", class: "mt-3 border border-brand-300 dark:border-brand-600 font-semibold px-3 py-1 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400", "data-ver-historial": "" }, tx("verHistorial"));
+    bHist.addEventListener("click", async () => {
+      bHist.disabled = true;
+      cajaHist.replaceChildren(el("p", { class: "text-sm mt-2", role: "status" }, tx("verHistorialCargando")));
+      try { cajaHist.replaceChildren(...(await historialJde(idioma, nombre))); }
+      catch (e) { cajaHist.replaceChildren(el("p", { class: "text-sm mt-2", role: "status" }, tx("verHistorialError"))); bHist.disabled = false; }
+    });
     return el("section", { class: "rounded-xl border-2 border-accent-500 p-3 mb-4", "data-ficha": nombre },
       el("h2", { class: "font-serif text-xl font-bold" }, nombre),
       el("p", { class: "text-sm text-brand-600 dark:text-brand-300" }, x.nombre),
       f ? el("p", { class: "text-sm mt-1 font-semibold" }, tx("verMioPuesto", { p: f.p, pts: puntosTexto(idioma, f.pts) }) + ((f.d || []).length ? " · " + f.d.map((y) => y.c + " " + puntosTexto(idioma, y.v)).join(" · ") : "")) : null,
-      el("ol", { class: "text-sm mt-2 space-y-1" }, filas));
+      el("ol", { class: "text-sm mt-2 space-y-1" }, filas), bHist, cajaHist);
+  }
+
+  let jdeDatos = null;
+  function cargarJdeDatos() {
+    if (!jdeDatos) {
+      jdeDatos = new Promise((ok, mal) => {
+        if (window.JdeDatos) { ok(); return; }
+        const sc = document.createElement("script");
+        sc.src = "js/jde-datos.js";
+        sc.onload = ok;
+        sc.onerror = () => mal(new Error("jde-datos.js"));
+        document.head.append(sc);
+      }).then(() => window.JdeDatos.cargar());
+      jdeDatos.catch(() => { jdeDatos = null; });
+    }
+    return jdeDatos;
+  }
+  async function historialJde(idioma, nombre) {
+    const tx = (clave, vars) => X.t(idioma, clave, vars);
+    const d = await cargarJdeDatos();
+    const j = PareoEvento.buscarEnHistorial(nombre, d.jugadores, window.JdeDatos.normalizar);
+    const part = j ? j.part.filter((p) => p.torneo.jde) : [];
+    if (!part.length) return [el("p", { class: "text-sm mt-2", role: "status" }, tx("verHistorialNada"))];
+    return [el("p", { class: "text-sm mt-2 font-semibold", role: "status" }, tx("verHistorialDe", { n: j.nombre })),
+      el("ul", { class: "text-sm mt-1 space-y-1 list-disc pl-5" }, part.map((p) => el("li", {},
+        [p.torneo.anio, p.torneo.etapa, p.torneo.categoria ? tx("verHistorialCategoria", { c: p.torneo.categoria }) : null, p.torneo.modalidad].filter(Boolean).join(" · ") + ": " +
+        (p.puesto ? tx("verHistorialPuesto", { p: p.puesto, d: p.torneo.de || "?" }) : tx("verHistorialJugo"))))),
+      el("p", { class: "text-xs mt-1 text-brand-600 dark:text-brand-300" }, tx("verHistorialNota"))];
   }
 
   function tablas(idioma, datos, h, alTocar) {
@@ -210,12 +248,20 @@ window.PareoVer = (function () {
       // una notificación del celular (si la deja) y el aviso en la página.
       const avisar = el("button", { id: "pi-ver-avisar", type: "button", class: "border border-brand-300 dark:border-brand-600 text-brand-800 dark:text-white font-semibold px-3 py-1 rounded-lg text-sm hover:bg-brand-50 dark:hover:bg-brand-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400" }, tx("verAvisar"));
       avisar.addEventListener("click", async () => {
+        // Si ya se sigue a alguien, el botón lo deja de seguir.
+        if (cont.__seguir) {
+          cont.__seguir = null;
+          guardarSeguir(cont.__codigo, null);
+          pintarAvisar(cont, idioma);
+          cont.querySelector("#pi-ver-aviso").textContent = tx("verAvisarParado");
+          return;
+        }
         const q = normal(buscar.value).trim();
         if (q.length < 3) { cont.querySelector("#pi-ver-aviso").textContent = tx("verAvisarFalta"); return; }
-        const rondas = new Map(buscarJugador(cont.__datos, q).map((h) => [h.torneo, h.ronda]));
-        cont.__seguir = { q, rondas };
-        try { if (window.Notification && Notification.permission === "default") await Notification.requestPermission(); } catch (e) { /* sin notificaciones */ }
+        seguir(cont, q, buscar.value.trim());
+        pintarAvisar(cont, idioma);
         cont.querySelector("#pi-ver-aviso").textContent = tx("verAvisarListo", { n: buscar.value.trim() });
+        try { if (window.Notification && Notification.permission === "default") await Notification.requestPermission(); } catch (e) { /* sin notificaciones */ }
       });
       caja = el("div", { "data-evento": "" },
         el("h1", { id: "pi-ver-titulo", class: "font-serif text-2xl font-bold mb-1" }),
@@ -231,6 +277,14 @@ window.PareoVer = (function () {
       cont.replaceChildren(caja);
     }
     cont.__datos = datos;
+    // Lo que se seguía la vez pasada en este celular.
+    if (!cont.__seguir && !cont.__seguirLeido) {
+      cont.__seguirLeido = true;
+      let x = null;
+      try { x = JSON.parse(localStorage.getItem(CLAVE_SEGUIR + cont.__codigo) || "null"); } catch (e) { /* nada guardado */ }
+      if (x && x.q) seguir(cont, x.q, x.texto || x.q);
+    }
+    pintarAvisar(cont, idioma);
     caja.querySelector("#pi-ver-titulo").textContent = datos.nombre || "Pareo Integral";
     caja.querySelector("#pi-ver-leyenda").textContent = tx("verEventoLeyenda", { n: (datos.torneos || []).length });
     const lista = caja.querySelector("#pi-ver-torneos");
@@ -266,7 +320,8 @@ window.PareoVer = (function () {
         cuerpo.unshift(sel);
       }
       nodos.push(el("details", { class: "mb-4 rounded-xl border border-brand-200 dark:border-brand-700 p-3", "data-torneo": x.nombre, open: abiertos.has(x.nombre) },
-        el("summary", { class: "cursor-pointer font-semibold rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400" }, resumen),
+        el("summary", { class: "cursor-pointer font-semibold rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400" }, resumen,
+          proximaTexto(idioma, x) ? el("span", { class: "block text-sm font-normal text-brand-600 dark:text-brand-300", "data-proxima": "" }, proximaTexto(idioma, x)) : null),
         el("div", { class: "mt-3" }, cuerpo.length ? cuerpo : el("p", { class: "text-sm text-brand-600 dark:text-brand-300" }, tx("clasificadosSinRondas")))));
     }
     lista.replaceChildren(...nodos);
@@ -282,6 +337,35 @@ window.PareoVer = (function () {
     avisarSiToca(cont, idioma, datos);
   }
 
+  // A quién se sigue con «Avisarme», guardado en el celular por código de
+  // evento: al volver a abrir el enlace se sigue avisando.
+  const CLAVE_SEGUIR = "pareo_ver_seguir_v1_";
+  function guardarSeguir(codigo, x) {
+    if (!codigo) return;
+    try { if (x) localStorage.setItem(CLAVE_SEGUIR + codigo, JSON.stringify(x)); else localStorage.removeItem(CLAVE_SEGUIR + codigo); } catch (e) { /* sin espacio */ }
+  }
+  function seguir(cont, q, texto) {
+    // Lo que ya salió no se avisa: solo las rondas que vengan.
+    cont.__seguir = { q, texto, rondas: new Map(buscarJugador(cont.__datos || {}, q).map((h) => [h.torneo, h.ronda])) };
+    guardarSeguir(cont.__codigo, { q, texto });
+  }
+  function pintarAvisar(cont, idioma) {
+    const b = cont.querySelector("#pi-ver-avisar");
+    if (!b) return;
+    b.textContent = X.t(idioma, cont.__seguir ? "verAvisarParar" : "verAvisar", { n: cont.__seguir ? cont.__seguir.texto : "" });
+    b.setAttribute("aria-pressed", cont.__seguir ? "true" : "false");
+  }
+  // La notificación: en Android, Chrome solo las deja salir por el service
+  // worker (new Notification() da error); en la computadora sirve cualquiera.
+  async function notificar(titulo, texto) {
+    if (!window.Notification || Notification.permission !== "granted") return;
+    try {
+      const reg = navigator.serviceWorker && (await Promise.race([navigator.serviceWorker.getRegistration(), new Promise((r) => setTimeout(r, 1000))]));
+      if (reg && reg.showNotification) { await reg.showNotification(titulo, { body: texto, tag: "pareo-ronda" }); return; }
+    } catch (e) { /* sin service worker: se prueba lo de siempre */ }
+    try { new Notification(titulo, { body: texto }); } catch (e) { /* sin notificaciones */ }
+  }
+
   function avisarSiToca(cont, idioma, datos) {
     const s = cont.__seguir;
     if (!s) return;
@@ -292,7 +376,7 @@ window.PareoVer = (function () {
       s.rondas.set(h.torneo, h.ronda);
       const texto = h.nombre + ": " + tx("verMioRonda", { r: h.ronda, m: h.mesa }) + ", " + tx(h.color === "b" ? "verMioBlancas" : "verMioNegras", { x: h.rival || tx("cBye") });
       cont.querySelector("#pi-ver-aviso").textContent = tx("verSalio") + " " + texto;
-      try { if (window.Notification && Notification.permission === "granted") new Notification(tx("verSalio"), { body: texto }); } catch (e) { /* sin notificaciones */ }
+      notificar(tx("verSalio"), texto);
       try { if (navigator.vibrate) navigator.vibrate(200); } catch (e) { /* sin vibración */ }
     }
   }
@@ -310,6 +394,7 @@ window.PareoVer = (function () {
       el("p", { class: "text-xl text-brand-600 dark:text-brand-300" }, datos.nombre || ""),
       el("h1", { class: "font-serif text-4xl font-bold mb-1" }, x.nombre),
       el("p", { class: "text-lg text-brand-600 dark:text-brand-300 mb-6" }, tx("verProyectorTorneo", { i: i + 1, n: torneos.length })),
+      proximaTexto(idioma, x) ? el("p", { class: "text-3xl font-bold mb-6", "data-proxima": "" }, proximaTexto(idioma, x)) : null,
       el("div", { class: "grid lg:grid-cols-2 gap-8" }, ...tablas(idioma, x, "h2").reduce((a, n, k, l) => (k % 2 ? a : a.concat(el("div", {}, n, l[k + 1]))), []))));
   }
 
@@ -359,6 +444,19 @@ window.PareoVer = (function () {
   const CLAVE_ULTIMO = "pareo_ver_ultimo_v1_";
   function guardarUltimo(codigo, datos) { try { localStorage.setItem(CLAVE_ULTIMO + codigo, JSON.stringify({ hora: Date.now(), datos })); } catch (e) { /* sin espacio */ } }
   function leerUltimo(codigo) { try { return JSON.parse(localStorage.getItem(CLAVE_ULTIMO + codigo)); } catch (e) { return null; } }
+  // La próxima ronda de un torneo del evento, con su cuenta regresiva (si
+  // quien organiza puso el horario del día). La hora es la de Costa Rica.
+  const minutosCR = () => {
+    const [h, m] = new Intl.DateTimeFormat("en-GB", { hour: "2-digit", minute: "2-digit", hour12: false, timeZone: "America/Costa_Rica" }).format(Date.now()).split(":").map(Number);
+    return (h % 24) * 60 + m;
+  };
+  function proximaTexto(idioma, x) {
+    if (!x.horas || !x.horas.length) return "";
+    const p = PareoEvento.proximaRonda(x.horas, minutosCR());
+    if (!p || (x.ronda && x.ronda.n > p.n)) return "";
+    const falta = p.faltan >= 60 ? Math.floor(p.faltan / 60) + " h " + (p.faltan % 60) + " min" : p.faltan + " min";
+    return X.t(idioma, p.faltan ? "verProxima" : "verProximaYa", { r: p.n, h: p.hora, f: falta });
+  }
   const horaCorta = (ms) => new Date(ms).toLocaleTimeString("es-CR", { hour: "numeric", minute: "2-digit", timeZone: "America/Costa_Rica" });
 
   async function iniciarEvento(cadena, idioma) {
@@ -378,6 +476,7 @@ window.PareoVer = (function () {
     }
     let llego = false;
     const abiertos = new Set();
+    cont.__codigo = codigo;
     const canal = window.sb.channel("pareo-evento-" + codigo);
     let ultimo = null, vuelta = 0;
     const previo = leerUltimo(codigo);
@@ -398,6 +497,8 @@ window.PareoVer = (function () {
       else pintarEvento(cont, idioma, ultimo, abiertos);
     });
     if (proyectar) setInterval(() => { if (ultimo) pintarProyector(cont, idioma, ultimo, ++vuelta); }, CADA);
+    // La cuenta regresiva corre aunque no llegue nada nuevo.
+    else setInterval(() => { if (ultimo) pintarEvento(cont, idioma, ultimo, abiertos); }, 30000);
     // Al entrar se pide el estado: quien organiza lo manda sin esperar al
     // próximo resultado.
     canal.subscribe((st) => { if (st === "SUBSCRIBED") canal.send({ type: "broadcast", event: "pedir", payload: {} }); });
@@ -408,6 +509,7 @@ window.PareoVer = (function () {
   // la ronda en juego, con un selector por mesa. Lo que manda lo acepta (o
   // no) la pestaña del árbitro principal, que contesta con el estado: una
   // mesa ya anotada se ve anotada y no se vuelve a tocar desde acá.
+  const CLAVE_GRANDE = "pareo_adjunto_grande_v1";
   const RESULTADOS = { "1-0": "res10", "=": "resTablas", "0-1": "res01", "+-": "resMasMenos", "-+": "resMenosMas", "--": "resMenosMenos" };
   async function iniciarAdjunto(cadena, idioma) {
     const tx = (clave, vars) => X.t(idioma, clave, vars);
@@ -421,6 +523,7 @@ window.PareoVer = (function () {
     catch (e) { cont.replaceChildren(el("p", { class: "text-sm text-red-700 dark:text-red-300" }, tx("errorEnVivoVer"))); return; }
     const canal = window.sb.channel("pareo-adjunto-" + codigo);
     const enviadas = new Set();
+    try { if (localStorage.getItem(CLAVE_GRANDE) === "1") cont.classList.add("pi-grande"); } catch (e) { /* sin almacenamiento */ }
     // Un selector de resultado (de una mesa o de un tablero), que se apaga al
     // mandar hasta que el árbitro principal conteste.
     const selector = (d, mesa, tablero, clave, etiqueta) => {
@@ -428,14 +531,23 @@ window.PareoVer = (function () {
       sel.append(el("option", { value: "" }, tx("resSin")));
       for (const [v, k] of Object.entries(RESULTADOS)) sel.append(el("option", { value: v }, tx(k)));
       const estadoMesa = el("p", { class: "text-sm mt-1", role: "status" }, enviadas.has(clave) ? tx("adjuntoEnviando") : "");
+      // Los tres resultados de siempre, a un toque (en una tableta, sin
+      // abrir la lista); los demás, en el selector.
+      const rapidos = el("div", { class: "flex flex-wrap gap-2 mt-2" });
+      for (const v of ["1-0", "=", "0-1"]) {
+        const b = el("button", { type: "button", class: "pi-adj-rapido border border-brand-300 dark:border-brand-600 font-semibold px-4 py-2 rounded-lg text-base focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400", "data-r": v, "aria-label": etiqueta + ": " + tx(RESULTADOS[v]) }, tx(RESULTADOS[v]));
+        b.addEventListener("click", () => { sel.value = v; sel.dispatchEvent(new Event("change")); });
+        rapidos.append(b);
+      }
       sel.addEventListener("change", () => {
         if (!sel.value) return;
         enviadas.add(clave);
         sel.disabled = true;
+        for (const b of rapidos.children) b.disabled = true;
         estadoMesa.textContent = tx("adjuntoEnviando");
         canal.send({ type: "broadcast", event: "resultado", payload: Object.assign({ ronda: d.ronda, mesa, r: sel.value }, tablero ? { tablero } : {}) });
       });
-      return el("div", {}, sel, estadoMesa);
+      return el("div", {}, rapidos, sel, estadoMesa);
     };
     canal.on("broadcast", { event: "estado" }, (msg) => {
       const d = msg.payload || {};
@@ -463,9 +575,18 @@ window.PareoVer = (function () {
         li.append(selector(d, m.m, null, m.m, tx("resultadoMesa", { m: m.m, b: m.b, n: m.n })));
         lista.append(li);
       }
+      // Letra grande, para anotar desde una tableta en la sala; se recuerda.
+      const grande = el("button", { type: "button", id: "pi-adj-grande", class: "border border-brand-300 dark:border-brand-600 font-semibold px-3 py-1 rounded-lg text-sm mb-4 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400", "aria-pressed": cont.classList.contains("pi-grande") ? "true" : "false" }, tx("adjuntoGrande"));
+      grande.addEventListener("click", () => {
+        const si = !cont.classList.contains("pi-grande");
+        cont.classList.toggle("pi-grande", si);
+        grande.setAttribute("aria-pressed", si ? "true" : "false");
+        try { localStorage.setItem(CLAVE_GRANDE, si ? "1" : "0"); } catch (e) { /* sin espacio */ }
+      });
       cont.replaceChildren(
         el("h1", { class: "font-serif text-2xl font-bold mb-1" }, d.nombre || "Pareo Integral"),
-        el("p", { class: "text-sm text-brand-600 dark:text-brand-300 mb-4" }, tx("adjuntoLeyenda", { r: d.ronda, a: desde, b: Math.min(hasta, (d.mesas || []).length) })),
+        el("p", { class: "text-sm text-brand-600 dark:text-brand-300 mb-2" }, tx("adjuntoLeyenda", { r: d.ronda, a: desde, b: Math.min(hasta, (d.mesas || []).length) })),
+        grande,
         mesas.length ? lista : el("p", { class: "text-sm" }, tx("adjuntoSinMesas")));
     });
     canal.subscribe((st) => { if (st === "SUBSCRIBED") canal.send({ type: "broadcast", event: "pedir", payload: {} }); });

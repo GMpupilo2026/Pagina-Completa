@@ -111,8 +111,10 @@
     }
     const item = estado.lista.find((x) => x.id === estado.id);
     const nombre = estado.t.nombre || "";
-    if (item) { item.nombre = nombre; item.actualizado = Date.now(); }
-    else estado.lista.push({ id: estado.id, nombre, actualizado: Date.now() });
+    // El evento va también en la lista, para separar los torneos de cada uno.
+    const ev = estado.t.evento ? { id: estado.t.evento.id, nombre: estado.t.evento.nombre || "" } : null;
+    if (item) { item.nombre = nombre; item.actualizado = Date.now(); item.evento = ev; }
+    else estado.lista.push({ id: estado.id, nombre, actualizado: Date.now(), evento: ev });
     escribir(CLAVE_LISTA, JSON.stringify(estado.lista));
     escribir("pareo_abierto_v1", estado.id);
     if (estado.enVivo) difundirEnVivo();
@@ -214,12 +216,60 @@
     if (foco) $("pi-f-" + f).focus();
   }
 
+  // Los torneos guardados, agrupados por evento (y los sueltos aparte), y
+  // el filtro de evento cuando hay más de uno guardado en el navegador.
+  const CLAVE_FILTRO_EVENTO = "pareo_filtro_evento_v1";
+  function eventoDeItem(x) {
+    if (x.evento === undefined) {
+      const y = x.id === estado.id ? t() : leerJSON(PREFIJO + x.id, null);
+      x.evento = y && y.evento ? { id: y.evento.id, nombre: y.evento.nombre || "" } : null;
+    }
+    return x.evento;
+  }
   function pintarLista() {
     const s = $("pi-lista");
     s.replaceChildren();
     const lista = estado.lista.slice().sort((a, b) => b.actualizado - a.actualizado);
-    for (const x of lista) s.append(el("option", { value: x.id, texto: x.nombre || tx("sinNombre") }));
+    const eventos = new Map();
+    for (const x of lista) { const e = eventoDeItem(x); if (e && !eventos.has(e.id)) eventos.set(e.id, e.nombre); }
+    // El filtro: «todos», un evento o los torneos sueltos.
+    const f = $("pi-evento-filtro");
+    let filtro = leer(CLAVE_FILTRO_EVENTO) || "";
+    if (filtro && filtro !== "-" && !eventos.has(filtro)) filtro = "";
+    f.replaceChildren(el("option", { value: "", texto: tx("filtroTodos") }),
+      ...[...eventos].map(([id, nombre]) => el("option", { value: id, texto: nombre || tx("sinNombre") })),
+      el("option", { value: "-", texto: tx("filtroSueltos") }));
+    f.value = filtro;
+    f.closest("label").hidden = eventos.size < 2;
+    const pasa = (x) => {
+      if (x.id === estado.id || !filtro) return true;
+      const e = eventoDeItem(x);
+      return filtro === "-" ? !e : !!e && e.id === filtro;
+    };
+    const grupos = new Map();
+    for (const x of lista.filter(pasa)) {
+      const e = eventoDeItem(x);
+      const k = e ? e.id : "";
+      if (!grupos.has(k)) grupos.set(k, []);
+      grupos.get(k).push(x);
+    }
+    for (const [k, xs] of grupos) {
+      const opciones = xs.map((x) => el("option", { value: x.id, texto: x.nombre || tx("sinNombre") }));
+      if (eventos.size) s.append(el("optgroup", { label: k ? eventos.get(k) || tx("sinNombre") : tx("filtroSueltos") }, opciones));
+      else s.append(...opciones);
+    }
     s.value = estado.id;
+  }
+  function cambiarFiltroEvento(valor) {
+    escribir(CLAVE_FILTRO_EVENTO, valor);
+    // Si el abierto no es del evento elegido, se abre el último de ese evento.
+    const e = eventoDeItem(estado.lista.find((x) => x.id === estado.id) || {});
+    const delFiltro = (x) => { const y = eventoDeItem(x); return valor === "-" ? !y : !!y && y.id === valor; };
+    if (valor && !delFiltro({ id: estado.id, evento: e })) {
+      const otro = estado.lista.filter(delFiltro).sort((a, b) => b.actualizado - a.actualizado)[0];
+      if (otro && abrir(otro.id)) { pintarTodo(); avisarPestanas(); return; }
+    }
+    pintarLista();
   }
 
   function pintarPanel() {
@@ -936,13 +986,13 @@
       const modo = (x) => tx(x.modalidad === "equipo" ? "grupoEquipos" : "grupoIndividual") + " " + x.categoria;
       const sinDecidir = dosModalidades.filter((d, k) => !s.dondeQueda.has(k)).length;
       caja.append(el("p", { class: "text-sm mt-2", texto: tx("dosModalidadesTexto", { n: sinDecidir }) }));
-      const lista = el("div", { id: "pi-dos-modalidades", class: "mt-1 space-y-2" });
+      const lista = el("div", { id: "pi-dos-modalidades", class: "mt-1 grid lg:grid-cols-2 gap-2" });
       dosModalidades.forEach((d, k) => {
         const nombre = "pi-dm-" + k;
         const elegida = s.dondeQueda.has(k) ? s.dondeQueda.get(k) : -1;
         const opcion = (valor, texto) => {
           const id = nombre + "-" + (valor < 0 ? "x" : valor);
-          return el("label", { class: "flex items-start gap-2 text-sm" },
+          return el("label", { class: "inline-flex items-start gap-2 text-sm" },
             el("input", { type: "radio", name: nombre, id, value: String(valor), class: "mt-1", checked: valor === elegida, onchange: () => {
               if (valor < 0) s.dondeQueda.delete(k); else s.dondeQueda.set(k, valor);
               calcularSugerencia(); pintarSugerencia(); $(id).focus();
@@ -951,8 +1001,9 @@
         };
         lista.append(el("fieldset", { class: "border border-brand-100 dark:border-brand-800 rounded-lg px-3 py-2" },
           el("legend", { class: "text-sm font-semibold px-1", texto: tx("dosModalidadesCaso", { n: d.jugador.nombre, i: d.jugador.institucion || "—", m: d.inscripciones.map(modo).join(" y ") }) }),
-          d.inscripciones.map((x, i) => opcion(i, tx("dosModalidadesDejar", { m: modo(x) }))),
-          opcion(-1, tx("dosModalidadesNoDecido"))));
+          el("div", { class: "flex flex-wrap gap-x-4 gap-y-1" },
+            d.inscripciones.map((x, i) => opcion(i, tx("dosModalidadesDejar", { m: modo(x) }))),
+            opcion(-1, tx("dosModalidadesNoDecido")))));
       });
       caja.append(lista);
     }
@@ -1079,7 +1130,7 @@
     const nombresDim = { modalidad: tx("dimensionModalidad"), categoria: tx("dimensionCategoria"), sexo: tx("dimensionSexo") };
     const dims = s.dimensiones.map((d) => nombresDim[d]);
     const unidas = dims.length > 1 ? dims.slice(0, -1).join(", ") + " " + tx("y") + " " + dims[dims.length - 1] : dims[0];
-    const lista = el("ul", { class: "mt-3 space-y-1 text-sm" });
+    const lista = el("ul", { class: "mt-3 grid sm:grid-cols-2 gap-x-6 gap-y-1 text-sm" });
     s.grupos.forEach((g, i) => {
       // En equipos se empareja por equipos: el sistema sale de cuántos hay.
       const nEquipos = g.modalidad === "equipo" ? equiposDelGrupo(g) : 0;
@@ -1095,31 +1146,38 @@
     });
     const hayEquipos = s.grupos.some((g) => g.modalidad === "equipo");
     const porSexo = s.dimensiones.includes("sexo");
-    caja.append(
+    // Lo que hay que revisar, abajo: un índice arriba para ir directo a
+    // cada parte (con una inscripción grande la propuesta es larga).
+    const partes = [pintarRepetidos(s), pintarVariosOrigenes(s), pintarComparacion(s), pintarPaseAbierto(s), pintarEquiposDeMas(s),
+      pintarIndividualesDeMas(s), pintarHombresEnMujeres(s), pintarEquiposCortos(s), pintarRevisionCategorias(s.revision)].filter(Boolean);
+    const indice = partes.length ? el("nav", { id: "pi-sugerencia-indice", class: "mt-2 text-sm", "aria-label": tx("sugerenciaIndice") },
+      el("span", { class: "font-semibold", texto: tx("sugerenciaIndice") + ": " }),
+      partes.map((x) => {
+        const h = x.querySelector("h4");
+        x.tabIndex = -1;
+        return el("button", { type: "button", class: C.mini + " mr-1 mb-1", "data-ir": x.id, onclick: () => { x.scrollIntoView({ block: "start" }); x.focus({ preventScroll: true }); } }, h ? h.textContent : x.id);
+      })) : null;
+    caja.append(...[
       el("h3", { id: "pi-sugerencia-titulo", class: "font-serif text-lg font-bold", texto: tx("sugerenciaTitulo", { n: s.grupos.length }) }),
       el("p", { class: "text-sm mt-1", texto: tx("sugerenciaTexto", { total: s.juegan.length, d: unidas }) }),
+      indice,
       s.siguiente ? el("p", { id: "pi-sugerencia-siguiente", class: "text-sm mt-2 font-semibold", texto: tx("sugerenciaSiguiente", { d: tx(TEXTO_ETAPA[s.siguiente.desde]), e: tx(TEXTO_ETAPA[s.siguiente.etapa]) }) }) : null,
       el("fieldset", {}, el("legend", { class: "sr-only", texto: tx("sugerenciaLeyenda") }), lista),
-      pintarRepetidos(s),
-      pintarVariosOrigenes(s),
-      pintarComparacion(s),
-      pintarPaseAbierto(s),
-      pintarEquiposDeMas(s),
-      pintarIndividualesDeMas(s),
-      pintarHombresEnMujeres(s),
-      pintarEquiposCortos(s),
-      pintarRevisionCategorias(s.revision),
-      porSexo ? el("p", { class: C.nota + " mt-2", texto: tx("sugerenciaAbierto") }) : null,
-      hayEquipos ? el("p", { class: C.nota + " mt-2", texto: tx("sugerenciaEquipos") }) : null,
-      el("p", { class: C.nota + " mt-2", texto: tx("sugerenciaNormativa", { r: G.JDE_RONDAS_SUIZO, ritmo: G.JDE_RITMO_MINIMO }) }),
-      el("p", { class: C.nota + " mt-2", texto: s.configJde ? tx("sugerenciaNombreJde") : tx("sugerenciaNombre", { b: t().nombre.trim() || s.base }) }),
+      ...partes,
+      // Cómo se arman: se lee una vez, así que va plegado.
+      el("details", { id: "pi-sugerencia-como", class: "mt-4" },
+        el("summary", { class: "cursor-pointer text-sm font-semibold rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400", texto: tx("sugerenciaComo") }),
+        porSexo ? el("p", { class: C.nota + " mt-2", texto: tx("sugerenciaAbierto") }) : null,
+        hayEquipos ? el("p", { class: C.nota + " mt-2", texto: tx("sugerenciaEquipos") }) : null,
+        el("p", { class: C.nota + " mt-2", texto: tx("sugerenciaNormativa", { r: G.JDE_RONDAS_SUIZO, ritmo: G.JDE_RITMO_MINIMO }) }),
+        el("p", { class: C.nota + " mt-2", texto: s.configJde ? tx("sugerenciaNombreJde") : tx("sugerenciaNombre", { b: t().nombre.trim() || s.base }) })),
       el("label", { class: "flex items-start gap-2 text-sm mt-3" },
         el("input", { type: "checkbox", id: "pi-config-jde", class: "mt-1", checked: s.configJde, onchange: (e) => { s.configJde = e.target.checked; pintarSugerencia(); $("pi-config-jde").focus(); } }),
         el("span", {}, el("span", { class: "font-semibold", texto: tx("configJdeCasilla") }), " " + tx("configJdeAyuda", { r: G.JDE_RONDAS_SUIZO, ritmo: G.JDE_RITMO_MINIMO }))),
       el("div", { class: "flex flex-wrap gap-2 mt-3" },
         el("button", { type: "button", id: "pi-sugerencia-crear", class: C.boton, disabled: marcados === 0, onclick: crearTorneosDeGrupos, texto: tx("sugerenciaCrear", { n: marcados }) }),
         el("button", { type: "button", id: "pi-sugerencia-todos", class: C.botonSec, onclick: () => { const l = s.juegan; estado.sugerencia = null; pintarSugerencia(); agregarTodos(l); }, texto: tx("sugerenciaTodosAqui", { n: s.juegan.length }) }),
-        el("button", { type: "button", id: "pi-sugerencia-descartar", class: C.botonSec, onclick: () => { estado.sugerencia = null; pintarSugerencia(); Avisos.avisar(tx("sugerenciaDescartada"), { tipo: "info" }); }, texto: tx("sugerenciaDescartar") })));
+        el("button", { type: "button", id: "pi-sugerencia-descartar", class: C.botonSec, onclick: () => { estado.sugerencia = null; pintarSugerencia(); Avisos.avisar(tx("sugerenciaDescartada"), { tipo: "info" }); }, texto: tx("sugerenciaDescartar") }))].flat().filter(Boolean));
   }
 
   // Lo que dice la revisión de categoría por año (art. 17 y 18): cada caso
@@ -1498,16 +1556,19 @@
 
     // El horario del día: la hora de cada ronda según el ritmo de cada torneo.
     const inicio = el("input", { id: "pi-horario-inicio", type: "time", value: leer(CLAVE_HORARIO + ev.id) || "08:00", class: C.campoChico });
-    const descanso = el("input", { id: "pi-horario-descanso", type: "number", min: "0", max: "120", value: "10", inputmode: "numeric", class: C.campoChico + " w-20" });
+    const descanso = el("input", { id: "pi-horario-descanso", type: "number", min: "0", max: "120", value: leer(CLAVE_HORARIO + ev.id + "_descanso") || "10", inputmode: "numeric", class: C.campoChico + " w-20" });
     const listaHorario = el("ul", { id: "pi-horario-lista", class: "mt-2 space-y-1 text-sm" });
     const pintarHorario = () => {
       escribir(CLAVE_HORARIO + ev.id, inicio.value);
+      escribir(CLAVE_HORARIO + ev.id + "_descanso", descanso.value);
       listaHorario.replaceChildren(...V.horario(torneosDelEvento(), inicio.value, descanso.value).map((x) => el("li", {},
         el("span", { class: "font-semibold", texto: x.torneo + ": " }),
         x.dura ? x.rondas.map((rr) => tx("rondaN", { r: rr.n }) + " " + rr.hora).join(" · ") : tx("horarioSinRitmo"))));
     };
-    inicio.addEventListener("change", pintarHorario);
-    descanso.addEventListener("change", pintarHorario);
+    // Al cambiarlo, el enlace del evento recibe las horas nuevas (la cuenta
+    // regresiva de la próxima ronda).
+    inicio.addEventListener("change", () => { pintarHorario(); difundirEvento(); });
+    descanso.addEventListener("change", () => { pintarHorario(); difundirEvento(); });
     const bHorario = el("button", { type: "button", id: "pi-horario-imprimir", class: C.botonSec }, tx("horarioImprimir"));
     bHorario.addEventListener("click", () => imprimirHorario(ev, V.horario(torneosDelEvento(), inicio.value, descanso.value)));
     caja.append(el("h3", { class: "font-semibold mt-5", texto: tx("horarioTitulo") }),
@@ -1608,6 +1669,38 @@
       if (estado.respaldoArchivo && estado.respaldoArchivo.id === ev.id) { estado.respaldoArchivo = null; pintarEvento(); }
       else prenderRespaldo(ev);
     });
+    // El informe para la prensa: un texto corto para pegar.
+    const cajaPrensa = el("div", { id: "pi-prensa-caja", class: "mt-2" });
+    const bPrensa = el("button", { type: "button", id: "pi-evento-prensa", class: C.botonSec }, tx("prensaArmar"));
+    bPrensa.addEventListener("click", () => {
+      const texto = V.informePrensa(ev, torneosDelEvento(), window.HoraCR.dia(Date.now()));
+      const area = el("textarea", { id: "pi-prensa-texto", rows: "12", readonly: true, class: C.campo + " font-mono text-xs mt-2", "aria-label": tx("prensaTitulo") });
+      area.value = texto;
+      const copiar = el("button", { type: "button", id: "pi-prensa-copiar", class: C.mini + " mt-2" }, tx("prensaCopiar"));
+      copiar.addEventListener("click", async () => {
+        try { await navigator.clipboard.writeText(area.value); Avisos.avisar(tx("prensaCopiado")); }
+        catch (e) { area.select(); Avisos.avisar(tx("noCopia"), { tipo: "error" }); }
+      });
+      cajaPrensa.replaceChildren(area, copiar);
+      area.focus();
+    });
+    caja.append(el("h3", { class: "font-semibold mt-5", texto: tx("prensaTitulo") }),
+      el("p", { class: C.nota, texto: tx("prensaTexto") }), el("div", { class: "mt-2" }, bPrensa), cajaPrensa);
+
+    // Pasar el evento a otra computadora, por el mismo canal que el enlace en
+    // vivo: la otra abre la dirección, lo pide y esta pregunta antes de mandarlo.
+    const pasando = estado.pasar && estado.pasar.id === ev.id;
+    const bPasar = el("button", { type: "button", id: "pi-evento-pasar", class: C.botonSec, "aria-pressed": pasando ? "true" : "false" }, tx(pasando ? "pasarApagar" : "pasarPrender"));
+    bPasar.addEventListener("click", async () => {
+      if (estado.pasar && estado.pasar.id === ev.id) apagarPasar(); else await prenderPasar(ev);
+      pintarEvento();
+      const b = $("pi-evento-pasar");
+      if (b) b.focus();
+    });
+    const cajaPasar = el("div", { id: "pi-pasar-caja", class: "mt-2" });
+    caja.append(el("h3", { class: "font-semibold mt-5", texto: tx("pasarTitulo") }),
+      el("p", { class: C.nota, texto: tx("pasarTexto") }), el("div", { class: "mt-2" }, bPasar), cajaPasar);
+    if (pasando) mostrarPasar(cajaPasar);
     caja.append(el("h3", { class: "font-semibold mt-5", texto: tx("eventoRespaldoTitulo") }),
       el("p", { class: C.nota, texto: tx("eventoRespaldoTexto") }), el("div", { class: "mt-2 flex flex-wrap gap-2" }, bRespaldo, bAuto),
       el("p", { id: "pi-respaldo-estado", class: C.nota + " mt-1", role: "status",
@@ -1804,7 +1897,10 @@
     if (!x) return;
     const lista = torneosDelEvento(x.id);
     if (!lista.length) return;
-    x.canal.send({ type: "broadcast", event: "estado", payload: V.vistaEvento(lista[0].evento, lista) });
+    // Las horas de cada ronda van solo si quien organiza puso el horario.
+    const inicio = leer(CLAVE_HORARIO + x.id);
+    const horario = inicio ? V.horario(lista, inicio, leer(CLAVE_HORARIO + x.id + "_descanso") || "10") : null;
+    x.canal.send({ type: "broadcast", event: "estado", payload: V.vistaEvento(lista[0].evento, lista, horario) });
   }
   async function mostrarQrEvento(cont) {
     const url = location.origin + location.pathname + "#evento=" + estado.eventoVivo.codigo;
@@ -2059,6 +2155,7 @@
     if (E.esDeEquipos(v)) pintarEncuentros(caja, r);
     else pintarMesasIndividuales(caja, r);
     pintarNoJuegan(caja, r);
+    pintarConfirmar(caja, r);
     pintarIncidencias(caja, r);
     for (const s of caja.querySelectorAll("select[data-resultado]")) atajosResultado(s);
   }
@@ -2193,11 +2290,13 @@
       E.prepararMesa(v, m);
       const k = Number(p.tablero) - 1;
       const x = E.tablerosDe(v, m)[k];
+      if (x && !x.fijo && x.r && x.r !== p.r) anotarDiscrepancia(v, R, { mesa, tablero: k + 1, r: p.r, ya: x.r });
       if (!x || x.fijo || x.r || E.puntosDelEncuentro(v, m).incomparecencia) return rechazar();
       m.partidas[k].r = p.r;
       m.r = E.resultadoEncuentro(v, m);
       texto = tx("adjuntoLlegoTablero", { m: mesa, t: k + 1, r: tx("corto_" + p.r) });
     } else {
+      if (m.r && m.r !== p.r) anotarDiscrepancia(v, R, { mesa, r: p.r, ya: m.r });
       if (m.r) return rechazar();
       m.r = p.r;
       texto = tx("adjuntoLlego", { m: mesa, r: tx("corto_" + p.r) });
@@ -2208,6 +2307,56 @@
     Avisos.avisar(texto, { tipo: "info" });
     enviarAdjunto(codigo);
   }
+  // Un adjunto mandó otro resultado para una mesa (o tablero) que ya estaba
+  // anotada: no se pisa, pero queda para que el principal lo confirme.
+  function anotarDiscrepancia(v, R, x) {
+    R.discrepancias = R.discrepancias || [];
+    if (R.discrepancias.some((y) => y.mesa === x.mesa && y.tablero === x.tablero && y.r === x.r && !y.resuelta)) return;
+    R.discrepancias.push(Object.assign({ hora: Date.now() }, x));
+    if (v === t()) { guardar(); if (estado.ficha === "rondas" && estado.ronda === v.rondas.length - 1) pintarRondas(); }
+    else escribir(PREFIJO + estado.adjuntos.idTorneo, JSON.stringify(v));
+    Avisos.avisar(tx("discrepanciaLlego", { m: x.mesa }), { tipo: "error" });
+  }
+
+  // ---------- Los resultados para confirmar ----------
+  // Las sorpresas de Elo (V.sorpresas) y lo que un adjunto anotó distinto.
+  // No bloquea nada: cada uno se confirma con un botón, o se cambia.
+  function pintarConfirmar(caja, r) {
+    const v = t();
+    const R = v.rondas[r];
+    const vistas = new Set(R.confirmadas || []);
+    const sorpresas = V.sorpresas(v, r).filter((x) => !vistas.has(x.mesa + "|" + x.r));
+    const discrepancias = (R.discrepancias || []).map((x, k) => Object.assign({ k }, x)).filter((x) => !x.resuelta);
+    if (!sorpresas.length && !discrepancias.length) return;
+    const lista = el("ul", { class: "mt-2 space-y-2 text-sm" });
+    for (const x of sorpresas) {
+      const bien = el("button", { type: "button", class: C.mini, "data-confirmar": String(x.mesa) }, tx("confirmarBien"));
+      bien.addEventListener("click", () => { R.confirmadas = (R.confirmadas || []).concat(x.mesa + "|" + x.r); guardar(); pintarRondas(); });
+      lista.append(el("li", { class: "flex flex-wrap items-center gap-2" },
+        el("span", {}, el("span", { class: "font-semibold", texto: tx("cortosAviso") + " " }),
+          tx("sorpresaTexto", { m: x.mesa + 1, g: x.gana, p: x.pierde, d: x.dif })), bien));
+    }
+    for (const x of discrepancias) {
+      const dejar = el("button", { type: "button", class: C.mini, "data-discrepancia": String(x.k) }, tx("discrepanciaDejar", { r: tx("corto_" + x.ya) }));
+      dejar.addEventListener("click", () => { R.discrepancias[x.k].resuelta = "dejar"; guardar(); pintarRondas(); });
+      const poner = el("button", { type: "button", class: C.mini, "data-poner": String(x.k) }, tx("discrepanciaPoner", { r: tx("corto_" + x.r) }));
+      poner.addEventListener("click", () => {
+        const m = R.mesas[x.mesa - 1];
+        if (x.tablero) { E.prepararMesa(v, m); m.partidas[x.tablero - 1].r = x.r; m.r = E.resultadoEncuentro(v, m); }
+        else m.r = x.r;
+        R.discrepancias[x.k].resuelta = "poner";
+        guardar(); pintarRondas();
+      });
+      lista.append(el("li", { class: "flex flex-wrap items-center gap-2" },
+        el("span", {}, el("span", { class: "font-semibold", texto: tx("cortosAviso") + " " }),
+          tx(x.tablero ? "discrepanciaTablero" : "discrepanciaTexto", { m: x.mesa, t: x.tablero, r: tx("corto_" + x.r), y: tx("corto_" + x.ya) })),
+        dejar, r === v.rondas.length - 1 ? poner : null));
+    }
+    caja.append(el("section", { id: "pi-confirmar", class: "no-imprimir mb-4 rounded-xl border-2 border-accent-500 p-3", "aria-labelledby": "pi-confirmar-titulo" },
+      el("h3", { id: "pi-confirmar-titulo", class: "font-semibold", texto: tx("confirmarTitulo") }),
+      el("p", { class: C.nota, texto: tx("confirmarTexto", { d: V.DIFERENCIA_SORPRESA }) }), lista));
+  }
+
   async function mostrarAdjuntos(cont) {
     const v = t();
     const activos = (v.adjuntos || []).filter((a) => a.activo);
@@ -3461,6 +3610,70 @@
     Avisos.avisar(tx("abierto", { n: nuevo.nombre || tx("sinNombre") }));
   }
 
+  // ---------- Pasar el evento a otra computadora ----------
+  // Un código nuevo cada vez y un canal de Supabase Realtime en modo
+  // Broadcast (pareo-pasar-<código>). La otra computadora abre
+  // pareo.html#recibir=<código> y pide; esta pregunta antes de mandar (el
+  // evento trae datos de estudiantes) y lo manda comprimido, en partes.
+  const PARTE = 60000;
+  async function prenderPasar(ev) {
+    try { await PareoVer.cargarSupabase(); }
+    catch (e) { Avisos.avisar(tx("errorEnVivo", { e: e.message }), { tipo: "error" }); return; }
+    const codigo = nuevoCodigoVivo();
+    const canal = window.sb.channel("pareo-pasar-" + codigo);
+    estado.pasar = { id: ev.id, codigo, canal, ocupado: false };
+    canal.on("broadcast", { event: "pedir" }, async () => {
+      const x = estado.pasar;
+      if (!x || x.canal !== canal || x.ocupado) return;
+      x.ocupado = true;
+      try {
+        const ok = await Avisos.confirmar(tx("pasarConfirmar", { e: ev.nombre || "" }), { aceptar: tx("pasarMandar") });
+        if (!ok) { canal.send({ type: "broadcast", event: "negado", payload: {} }); return; }
+        const texto = await PareoVer.empaquetar(V.respaldo(ev, torneosDelEvento(ev.id)));
+        const n = Math.ceil(texto.length / PARTE);
+        for (let i = 0; i < n; i++) await canal.send({ type: "broadcast", event: "parte", payload: { i, n, d: texto.slice(i * PARTE, (i + 1) * PARTE) } });
+        Avisos.avisar(tx("pasarMandado"));
+      } finally { x.ocupado = false; }
+    });
+    canal.subscribe();
+  }
+  function apagarPasar() {
+    if (estado.pasar) { estado.pasar.canal.unsubscribe(); estado.pasar = null; }
+  }
+  async function mostrarPasar(cont) {
+    const url = location.origin + location.pathname + "#recibir=" + estado.pasar.codigo;
+    try { await PareoQr.cargar(); } catch (e) { Avisos.avisar(tx("errorQr", { e: e.message }), { tipo: "error" }); return; }
+    cont.replaceChildren(el("div", { class: "flex flex-wrap items-start gap-4" },
+      el("div", { class: "w-32 bg-white p-2 rounded-lg" }, PareoQr.svg(url, tx("qrEtiqueta"))),
+      el("div", { class: "text-sm" }, el("p", { id: "pi-pasar-url", class: "break-all font-mono", texto: url }),
+        el("p", { class: C.nota + " mt-1", texto: tx("pasarAyuda") }))));
+  }
+  // La que recibe: pide, junta las partes y lo abre como un respaldo.
+  async function recibirEvento(codigo) {
+    history.replaceState(null, "", location.pathname + location.search);
+    try { await PareoVer.cargarSupabase(); }
+    catch (e) { Avisos.avisar(tx("errorEnVivo", { e: e.message }), { tipo: "error" }); return; }
+    const canal = window.sb.channel("pareo-pasar-" + String(codigo).replace(/[^a-z0-9]/g, ""));
+    const partes = [];
+    let listo = false;
+    Avisos.avisar(tx("pasarEsperando"), { tipo: "info" });
+    canal.on("broadcast", { event: "negado" }, () => { Avisos.avisar(tx("pasarNegado"), { tipo: "error" }); canal.unsubscribe(); });
+    canal.on("broadcast", { event: "parte" }, async (msg) => {
+      const p = msg.payload || {};
+      if (listo || !Number.isInteger(p.i) || !Number.isInteger(p.n) || p.n < 1 || p.n > 200 || typeof p.d !== "string") return;
+      partes[p.i] = p.d;
+      if (partes.filter((x) => typeof x === "string").length < p.n) return;
+      listo = true;
+      canal.unsubscribe();
+      try {
+        const datos = await PareoVer.desempaquetar(partes.slice(0, p.n).join(""));
+        if (!V.esRespaldo(datos)) throw new Error(tx("jsonNoEs"));
+        await abrirRespaldo(datos);
+      } catch (e) { Avisos.avisar(tx("noAbre", { e: e.message }), { tipo: "error" }); }
+    });
+    canal.subscribe((st) => { if (st === "SUBSCRIBED") canal.send({ type: "broadcast", event: "pedir", payload: {} }); });
+  }
+
   // El respaldo de un evento: todos sus torneos de una vez. Si en este
   // navegador ya están (el mismo evento), se pregunta antes de reemplazarlos.
   async function abrirRespaldo(datos) {
@@ -3510,6 +3723,7 @@
       escribir(CLAVE_IDIOMA, idioma);
       pintarTodo();
     });
+    $("pi-evento-filtro").addEventListener("change", (e) => cambiarFiltroEvento(e.target.value));
     $("pi-lista").addEventListener("change", (e) => { if (abrir(e.target.value)) { $("pi-otra-pestana").hidden = true; pintarTodo(); avisarPestanas(); } });
     $("pi-nuevo").addEventListener("click", () => {
       crear();
@@ -3705,6 +3919,7 @@
     enganchar();
     pintarTodo();
     avisarPestanas();
+    if (location.hash.startsWith("#recibir=")) recibirEvento(location.hash.slice(9));
   }
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", arrancar);
