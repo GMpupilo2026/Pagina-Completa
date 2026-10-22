@@ -212,6 +212,7 @@ window.PareoVer = (function () {
           cuerpo)));
     }
     if (datos.clasificacion && datos.clasificacion.length) {
+      const conPT = datos.clasificacion.some((f) => f.pt != null);
       nodos.push(el(h, { class: "font-serif text-xl font-bold mb-3" }, tx("fClasificacion")));
       // La ronda en juego todavía no suma: si no, todos en 0 parece un error.
       if (datos.hasta != null && datos.ronda && datos.hasta < datos.ronda.n) {
@@ -227,13 +228,23 @@ window.PareoVer = (function () {
           celda.addEventListener("click", () => alTocar(f.n));
         }
         cuerpo.append(el("tr", {}, el("td", { class: "num" }, String(f.p)), el("td", { class: "font-semibold" }, celda),
-          el("td", { class: "num" }, puntosTexto(idioma, f.pts))));
+          el("td", { class: "num" }, puntosTexto(idioma, f.pts)),
+          conPT ? el("td", { class: "num" }, f.pt == null ? "" : puntosTexto(idioma, f.pt)) : null));
       }
       nodos.push(el("div", { class: "overflow-x-auto" },
         el("table", { class: "pi-tabla" },
           el("thead", {}, el("tr", {}, el("th", { class: "num", scope: "col" }, tx("puesto")), el("th", { scope: "col" }, tx("nombre")),
-            el("th", { class: "num", scope: "col" }, tx("pts")))),
+            el("th", { class: "num", scope: "col" }, tx("pts")),
+            conPT ? el("th", { class: "num", scope: "col", title: tx("verPuntosTablero") }, tx("verPT")) : null)),
           cuerpo)));
+    }
+    // En equipos, los mejores de cada tablero hasta ahora.
+    if (datos.mejores && datos.mejores.length) {
+      nodos.push(el(h, { class: "font-serif text-xl font-bold mt-8 mb-3", "data-mejores": "" }, tx("verMejoresTableros")),
+        el("div", { class: "grid sm:grid-cols-2 gap-4" }, datos.mejores.map((x) => el("div", { class: "rounded-xl border border-brand-200 dark:border-brand-700 p-3" },
+          el("p", { class: "font-semibold" }, tx("tableroN", { t: x.t })),
+          el("ol", { class: "mt-1 space-y-1 text-sm" }, (x.filas || []).map((f) => el("li", {},
+            el("span", { class: "font-semibold" }, f.p + ". " + f.n), " · " + f.e + " · " + tx("verMejorPuntos", { p: puntosTexto(idioma, f.pts), j: f.j }))))))));
     }
     return nodos;
   }
@@ -279,11 +290,11 @@ window.PareoVer = (function () {
         return m ? { n: RR.n, rival: m.b === nombre ? m.n : m.b, color: m.b === nombre ? "b" : "n", r: m.r } : null;
       }).filter(Boolean);
       for (const m of (x.ronda && x.ronda.mesas) || []) {
-        if (tiene(m.b)) out.push({ torneo: x.nombre, nombre: m.b, ronda: x.ronda.n, mesa: m.m, color: "b", rival: m.n, r: m.r, fila: fila(m.b), antes: antes(m.b) });
-        if (tiene(m.n)) out.push({ torneo: x.nombre, nombre: m.n, ronda: x.ronda.n, mesa: m.m, color: "n", rival: m.b, r: m.r, fila: fila(m.n), antes: antes(m.n) });
+        if (tiene(m.b)) out.push({ torneo: x.nombre, nombre: m.b, ronda: x.ronda.n, mesa: m.m, color: "b", rival: m.n, r: m.r, fila: fila(m.b), antes: antes(m.b), horas: x.horas });
+        if (tiene(m.n)) out.push({ torneo: x.nombre, nombre: m.n, ronda: x.ronda.n, mesa: m.m, color: "n", rival: m.b, r: m.r, fila: fila(m.n), antes: antes(m.n), horas: x.horas });
         for (const k of m.tableros || []) {
-          if (tiene(k.b)) out.push({ torneo: x.nombre, nombre: k.b, ronda: x.ronda.n, mesa: m.m, tablero: k.t, color: "b", rival: k.n, r: k.r });
-          if (tiene(k.n)) out.push({ torneo: x.nombre, nombre: k.n, ronda: x.ronda.n, mesa: m.m, tablero: k.t, color: "n", rival: k.b, r: k.r });
+          if (tiene(k.b)) out.push({ torneo: x.nombre, nombre: k.b, ronda: x.ronda.n, mesa: m.m, tablero: k.t, color: "b", rival: k.n, r: k.r, horas: x.horas });
+          if (tiene(k.n)) out.push({ torneo: x.nombre, nombre: k.n, ronda: x.ronda.n, mesa: m.m, tablero: k.t, color: "n", rival: k.b, r: k.r, horas: x.horas });
         }
       }
     }
@@ -303,8 +314,11 @@ window.PareoVer = (function () {
       if (h.r && h.r !== "bye") partes.push(tx("resultado") + ": " + tx("corto_" + h.r));
       if (h.fila) partes.push(tx("verMioPuesto", { p: h.fila.p, pts: puntosTexto(idioma, h.fila.pts) }));
       const antes = (h.antes || []).map((a) => tx("rondaN", { r: a.n }) + ": " + (a.rival ? tx(a.color === "b" ? "verMioBlancas" : "verMioNegras", { x: a.rival }) : tx("cBye")) + (a.r && a.r !== "bye" ? " " + tx("corto_" + a.r) : ""));
+      // Cuándo es su próxima ronda, del horario que puso quien organiza.
+      const proxima = proximaTexto(idioma, { horas: h.horas, ronda: { n: h.ronda } });
       return el("li", { class: "rounded-lg border border-brand-200 dark:border-brand-700 p-2 text-sm" },
         el("p", { class: "font-semibold" }, h.nombre), el("p", { class: "text-brand-600 dark:text-brand-300" }, h.torneo), el("p", {}, partes.join(" · ")),
+        proxima ? el("p", { class: "font-semibold mt-1", "data-mio-proxima": "" }, proxima) : null,
         antes.length ? el("p", { class: "text-xs text-brand-600 dark:text-brand-300 mt-1" }, tx("verMioAntes") + " " + antes.join(" · ")) : null);
     })));
   }
@@ -353,6 +367,7 @@ window.PareoVer = (function () {
         el("div", { id: "pi-ver-ficha" }),
         el("div", { id: "pi-ver-torneos" }));
       cont.replaceChildren(caja);
+      if (cont.__q) buscar.value = cont.__q;
     }
     cont.__datos = datos;
     // Lo que se seguía la vez pasada en este celular.
@@ -614,9 +629,13 @@ window.PareoVer = (function () {
     let irA = null;
     const t = opciones.find((x) => x.startsWith("t="));
     if (t) { try { irA = decodeURIComponent(t.slice(2)); } catch (e) { irA = null; } }
+    // «&q=<nombre>»: el QR de una planilla de anotación; «Mi jugador» ya
+    // buscado con ese nombre.
+    const q = opciones.find((x) => x.startsWith("q="));
     const aviso = document.getElementById("pi-ver-conexion");
     const decirConexion = (texto) => { if (aviso) { aviso.textContent = texto; aviso.hidden = !texto; } };
     const cont = document.getElementById("pi-ver");
+    if (q) { try { cont.__q = decodeURIComponent(q.slice(2)).slice(0, 80); } catch (e) { cont.__q = null; } }
     const tx = (clave) => X.t(idioma, clave);
     cont.hidden = false;
     cont.replaceChildren(el("p", { class: "text-sm text-brand-600 dark:text-brand-300" }, tx("conectandoEnVivo")));
@@ -720,10 +739,19 @@ window.PareoVer = (function () {
       });
       return el("div", {}, rapidos, sel, estadoMesa);
     };
+    // Una ronda nueva: el celular vibra (si deja) y lo dice arriba hasta que
+    // el adjunto toque «Listo», para que no tenga que estar mirándolo.
+    let rondaVista = null;
+    let avisoRonda = "";
     canal.on("broadcast", { event: "estado" }, (msg) => {
       const d = msg.payload || {};
       if (d.apagado) { cont.replaceChildren(el("p", { class: "text-base font-semibold" }, tx("adjuntoEnlaceApagado"))); canal.unsubscribe(); return; }
       const mesas = (d.mesas || []).filter((m) => m.m >= desde && m.m <= hasta);
+      if (rondaVista !== null && d.ronda !== rondaVista && mesas.length) {
+        avisoRonda = tx("adjuntoRondaNueva", { r: d.ronda, m: mesas.map((m) => m.m).join(", ") });
+        try { if (navigator.vibrate) navigator.vibrate([250, 120, 250]); } catch (e) { /* sin vibración */ }
+      }
+      rondaVista = d.ronda;
       const lista = el("ul", { class: "space-y-3" });
       for (const m of mesas) {
         const li = el("li", { class: "rounded-xl border border-brand-200 dark:border-brand-700 p-3", "data-mesa": String(m.m) });
@@ -767,8 +795,15 @@ window.PareoVer = (function () {
         grande.setAttribute("aria-pressed", si ? "true" : "false");
         try { localStorage.setItem(CLAVE_GRANDE, si ? "1" : "0"); } catch (e) { /* sin espacio */ }
       });
+      let aviso = null;
+      if (avisoRonda) {
+        const listo = el("button", { type: "button", id: "pi-adj-aviso-listo", class: "ml-2 border border-current font-semibold px-3 py-1 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400" }, tx("adjuntoAvisoListo"));
+        listo.addEventListener("click", () => { avisoRonda = ""; const a = document.getElementById("pi-adj-aviso"); if (a) a.remove(); });
+        aviso = el("div", { id: "pi-adj-aviso", role: "alert", class: "mb-4 rounded-xl border-2 border-brand-800 dark:border-white bg-brand-50 dark:bg-brand-800 p-3 text-base font-semibold" }, avisoRonda, listo);
+      }
       cont.replaceChildren(
         el("h1", { class: "font-serif text-2xl font-bold mb-1" }, d.nombre || "Pareo Integral"),
+        ...[aviso].filter(Boolean),
         el("p", { class: "text-sm text-brand-600 dark:text-brand-300 mb-2" }, tx("adjuntoLeyenda", { r: d.ronda, a: desde, b: Math.min(hasta, (d.mesas || []).length) })),
         grande,
         mesas.length ? lista : el("p", { class: "text-sm" }, tx("adjuntoSinMesas")),
