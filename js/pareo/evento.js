@@ -429,6 +429,16 @@
   }
 
   // ---------- Lo que se ve desde el celular: todo el evento ----------
+  // En equipos, cada tablero de un encuentro con quién juega con cada color
+  // y su resultado: así quien busca a una integrante encuentra su tablero, y
+  // quien toca un equipo ve cómo va quedando tablero a tablero. Vacío si no
+  // es de equipos o el encuentro todavía no tiene alineación.
+  function tablerosVista(t, m) {
+    if (!E.esDeEquipos(t) || m.n == null || !m.alineacion) return {};
+    const de = (idE, idJ) => { const e = participante(t, idE); const j = e && idJ && e.integrantes.find((y) => y.id === idJ); return j ? j.nombre : null; };
+    return { tableros: E.tablerosDe(t, m).map((x) => ({ t: x.k + 1, b: de(x.bBlancas ? m.b : m.n, x.blancas), n: de(x.bBlancas ? m.n : m.b, x.negras), r: x.r || null })) };
+  }
+
   // La última ronda y la clasificación de cada torneo, con los nombres ya
   // puestos (el que mira no tiene el torneo).
   function vistaTorneo(t) {
@@ -441,12 +451,7 @@
       // Las rondas anteriores, sin los tableros: para el historial.
       anteriores: t.rondas.slice(0, -1).map((RR, k) => ({ n: k + 1, mesas: mesasDe(RR) })),
       ronda: R ? { n: t.rondas.length, inicio: R.inicio || null, mesas: R.mesas.map((m, i) => Object.assign({ m: i + 1, b: nombre(m.b), n: m.n == null ? null : nombre(m.n), r: m.r || null },
-        // En equipos, cada tablero con quién juega con cada color: así quien
-        // busca a una integrante encuentra su tablero.
-        E.esDeEquipos(t) && m.n != null && m.alineacion ? { tableros: E.tablerosDe(t, m).map((x) => {
-          const de = (idE, idJ) => { const e = participante(t, idE); const j = e && idJ && e.integrantes.find((y) => y.id === idJ); return j ? j.nombre : null; };
-          return { t: x.k + 1, b: de(x.bBlancas ? m.b : m.n, x.blancas), n: de(x.bBlancas ? m.n : m.b, x.negras), r: x.r || null };
-        }) } : {})) } : null,
+        tablerosVista(t, m))) } : null,
       clasificacion: k ? clasificacionDe(t).map((f) => ({ p: f.puesto, n: nombre(f.id), pts: f.puntos,
         // El centro educativo, para «Mi centro» en el celular.
         i: String((participante(t, f.id) || {}).institucion || "").trim(),
@@ -930,7 +935,7 @@
     aplicarDesempate, empatadosEnCorte, segundosIncremento, duracionRonda, horario, porDireccion, constancias, textoConstancia,
     medallero, estadisticas, compararEtapa, minutosBase, estadoRetraso, incidenciasDe, NOMBRE_INCIDENCIA,
     SIGUIENTE, NOMBRE_ETAPA, ENCABEZADOS, FORMATO_RESPALDO, cupo, clasificados, terminado, acta, informe, filasClasificados,
-    lugarTexto, siguienteDe, podio, premiacion, diplomas, textoDiploma, pendientes, respaldo, esRespaldo, vistaTorneo, vistaEvento,
+    lugarTexto, siguienteDe, podio, premiacion, diplomas, textoDiploma, pendientes, respaldo, esRespaldo, vistaTorneo, vistaEvento, tablerosVista,
   };
   if (enNode) module.exports = api;
   else raiz.PareoEvento = api;

@@ -1782,6 +1782,9 @@ html.dark .comparar-serie-3 { background: #199e70; }
 @media print {
   body.pi-imprimiendo-firmas [role="tabpanel"] { display: none !important; }
   body.pi-imprimiendo-firmas .pi-firmas { display: block !important; }
+  /* Lo de la pantalla queda vacío pero con su relleno: sin esto, la primera
+     planilla de anotación (otra @page) salía en la segunda hoja. */
+  body.pi-imprimiendo-firmas #pi-envoltorio, body.pi-imprimiendo-plantilla #pi-envoltorio { display: none !important; }
 }
 .pi-firma-mesa { break-after: page; padding: 2rem 0; color: #000; }
 .pi-firma-mesa:last-child { break-after: auto; }
@@ -1837,12 +1840,32 @@ html.dark .comparar-serie-3 { background: #199e70; }
 .pi-firma-blanco { display: inline-block; width: 6rem; border-bottom: 1px solid #333; }
 .pi-firma-bye { font-style: italic; color: #666; }
 .pi-firma-linea { margin-top: 2.5rem; border-top: 1px solid #333; padding-top: 0.25rem; font-size: 0.95rem; color: #333; }
-/* Las planillas de anotación de una ronda (imprimirPlanillasAnotacion). */
-.pi-planilla-datos { font-size: 1rem; margin: 0.2rem 0; }
-.pi-planilla-tabla { width: 100%; border-collapse: collapse; margin-top: 0.8rem; font-size: 0.85rem; }
-.pi-planilla-tabla th, .pi-planilla-tabla td { border: 1px solid #333; height: 1.45rem; padding: 0 0.3rem; }
-.pi-planilla-tabla th { background: #eee; }
-.pi-planilla-n { width: 2rem; text-align: center; color: #333; }
+/* Las planillas de anotación de una ronda (imprimirPlanillasAnotacion): una
+   hoja cada una, SIN los márgenes del navegador (con margen 0 no hay dónde
+   poner la dirección de la página ni «1/14»), y el margen lo pone la planilla
+   misma, el justo para que la impresora no corte. Las medidas suman menos que
+   una hoja carta (27,9 cm), la más baja de las dos que se usan: así nunca se
+   pasa a una segunda hoja (verificar-pareo-hojas.js lo mide en un PDF). */
+@page planilla { margin: 0; }
+.pi-firma-mesa.pi-planilla { page: planilla; break-after: page; box-sizing: border-box; padding: 0.6cm 0.8cm 0.45cm; margin: 0; }
+.pi-firma-mesa.pi-planilla:last-child { break-after: auto; }
+.pi-pl-cabeza { display: flex; flex-wrap: wrap; align-items: baseline; column-gap: 0.6rem; border-bottom: 2px solid #000; padding-bottom: 0.12cm; }
+.pi-pl-torneo { font-family: Merriweather, Georgia, serif; font-weight: 700; font-size: 12.5pt; line-height: 1.2; margin: 0; }
+.pi-pl-datos { font-size: 10pt; color: #222; margin: 0; }
+.pi-pl-jugadores { display: grid; grid-template-columns: 1fr 1fr; column-gap: 0.8cm; margin: 0.18cm 0 0.22cm; }
+.pi-pl-lado { display: flex; align-items: baseline; gap: 0.25cm; min-width: 0; border-bottom: 1px solid #555; padding-bottom: 0.05cm; }
+.pi-pl-nombre { font-size: 11.5pt; font-weight: 700; line-height: 1.2; overflow-wrap: anywhere; }
+.pi-planilla-tabla { width: 100%; border-collapse: collapse; table-layout: fixed; font-size: 9pt; }
+.pi-planilla-tabla th, .pi-planilla-tabla td { border: 1px solid #444; height: 0.68cm; padding: 0 0.15cm; box-sizing: border-box; }
+.pi-planilla-tabla th { height: 0.55cm; background: #e8e8e8; -webkit-print-color-adjust: exact; print-color-adjust: exact; font-size: 8.5pt; text-transform: uppercase; letter-spacing: 0.04em; }
+.pi-planilla-tabla tbody tr:nth-child(5n) td { border-bottom-width: 2px; border-bottom-color: #000; }
+.pi-pl-col-n { width: 0.85cm; }
+.pi-planilla-n { text-align: center; color: #333; font-variant-numeric: tabular-nums; }
+/* La raya gruesa entre las jugadas 1-30 y 31-60. */
+.pi-planilla-tabla .pi-pl-mitad { border-left: 2.5px solid #000; }
+.pi-pl-pie { margin-top: 0.25cm; }
+.pi-pl-pie .pi-ft-resultado { margin-top: 0; }
+.pi-pl-firmas { margin-top: 0.75cm; }
 /* «Solo lo de los JDE» (pareo.html): esconde lo que un día de JDE no usa. */
 body.pi-modo-jde .pi-no-jde { display: none !important; }
 /* Imprimir todo de una ronda: la plantilla de la pared, en su propia hoja. */

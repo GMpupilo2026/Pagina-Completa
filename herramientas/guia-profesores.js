@@ -68,7 +68,7 @@ function incrustar(relativo) {
   return "data:image/png;base64," + fs.readFileSync(path.join(RAIZ, relativo)).toString("base64");
 }
 const LOGO_CREMA = incrustar("img/logo-oscar-angulo.png");
-const LOGO_MARCA = incrustar("img/logo-oscar-angulo-marca.png");
+const LOGO_MARCA = incrustar(require("./lib/marca-agua").MARCA_AGUA);
 
 /* ---------- las capturas de pantalla ----------
    Las hace `herramientas/guia-capturas.js` y viven en `img/guia/<slug>.jpg`.

@@ -4,6 +4,10 @@
  * «AJEDREZ INTEGRAL» en Cinzel (la letra del sitio, fonts/), en el mismo
  * gris del dibujo y con fondo transparente. La pidió así el dueño del sitio.
  *
+ * Saca también la de los Word de los Programas de Estudio
+ * (herramientas/programas-estudio/marca.png): la mitad de grande y ya lavada
+ * (la imagen al 12,5 %), porque Word no le baja la opacidad a una imagen.
+ *
  * Uso:  node herramientas/marca-agua-ajedrez-integral.js
  */
 const fs = require("fs");
@@ -14,6 +18,7 @@ const RAIZ = path.join(__dirname, "..");
 const CHROME = process.env.CHROME_PATH || "/opt/pw-browsers/chromium-1194/chrome-linux/chrome";
 const ORIGEN = path.join(RAIZ, "img/logo-oscar-angulo-marca.png");
 const SALIDA = path.join(RAIZ, "img/marca-agua-ajedrez-integral.png");
+const SALIDA_WORD = path.join(RAIZ, "herramientas/programas-estudio/marca.png");
 const LETRA = path.join(RAIZ, "fonts/cinzel-700-latin.woff2");
 // Hasta dónde llega el dibujo (de ahí para abajo está la cinta del nombre).
 const CORTE = 470;
@@ -36,6 +41,12 @@ const ANCHO = 760;
   const ancho = await page.$eval("#nombre", (n) => n.getBoundingClientRect().width);
   if (ancho > ANCHO) throw new Error("el nombre no cabe: mide " + Math.round(ancho) + " px");
   await (await page.$("#marca")).screenshot({ path: SALIDA, omitBackground: true });
+  // La de Word: la misma, a la mitad y al 12,5 %.
+  const lavada = await browser.newPage({ viewport: { width: ANCHO, height: 700 }, deviceScaleFactor: 0.5 });
+  await lavada.setContent(await page.content());
+  await lavada.addStyleTag({ content: "#marca { opacity: 0.125; }" });
+  await lavada.evaluate(() => document.fonts.ready);
+  await (await lavada.$("#marca")).screenshot({ path: SALIDA_WORD, omitBackground: true });
   await browser.close();
-  console.log("Listo: " + path.relative(RAIZ, SALIDA) + " (" + Math.round(fs.statSync(SALIDA).size / 1024) + " KB)");
+  for (const f of [SALIDA, SALIDA_WORD]) console.log("Listo: " + path.relative(RAIZ, f) + " (" + Math.round(fs.statSync(f).size / 1024) + " KB)");
 })();

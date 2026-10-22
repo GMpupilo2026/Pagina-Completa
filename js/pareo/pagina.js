@@ -3131,28 +3131,35 @@
 
   // Las planillas de anotación de la ronda: una por mesa (en equipos, una
   // por tablero), con los nombres, la ronda y la mesa ya escritos y 60
-  // jugadas en dos columnas, como la planilla oficial.
+  // jugadas en dos columnas, como la planilla oficial. Cada una es UNA hoja
+  // sin los márgenes del navegador (@page planilla, en css/styles.css): así
+  // no sale la dirección ni el número de página y las 60 jugadas caben con
+  // renglones altos para escribir.
   function imprimirPlanillasAnotacion(r) {
     const v = t();
     const R = v.rondas[r];
     const cont = $("pi-firmas");
     empezarHoja(cont);
+    const lado = (color, nombre) => el("div", { class: "pi-pl-lado" },
+      el("span", { class: "pi-ft-color", texto: color }), el("span", { class: "pi-pl-nombre", texto: nombre }));
+    const firma = (texto) => el("div", { class: "pi-ft-firma" }, el("span", { class: "pi-ft-raya" }), el("span", { class: "pi-ft-quien", texto }));
     const hoja = (titulo, blancas, negras) => {
       const tabla = el("table", { class: "pi-planilla-tabla" },
-        el("thead", {}, el("tr", {}, ["#", tx("blancas"), tx("negras"), "#", tx("blancas"), tx("negras")].map((x) => el("th", { scope: "col", texto: x })))),
+        el("colgroup", {}, ["pi-pl-col-n", "", "", "pi-pl-col-n pi-pl-col-mitad", "", ""].map((c) => el("col", c ? { class: c } : {}))),
+        el("thead", {}, el("tr", {}, ["#", tx("blancas"), tx("negras"), "#", tx("blancas"), tx("negras")].map((x, k) => el("th", { scope: "col", class: k === 3 ? "pi-pl-mitad" : "", texto: x })))),
         el("tbody", {}, Array.from({ length: 30 }, (_, i) => el("tr", {},
           el("td", { class: "pi-planilla-n", texto: i + 1 }), el("td"), el("td"),
-          el("td", { class: "pi-planilla-n", texto: i + 31 }), el("td"), el("td")))));
+          el("td", { class: "pi-planilla-n pi-pl-mitad", texto: i + 31 }), el("td"), el("td")))));
       cont.append(el("div", { class: "pi-firma-mesa pi-planilla" },
-        el("h1", { class: "pi-firma-titulo", texto: (v.nombre || "") }),
-        el("p", { class: "pi-planilla-datos", texto: titulo + (v.fechaInicio ? " · " + v.fechaInicio : "") + (v.ritmo ? " · " + v.ritmo : "") }),
-        el("p", { class: "pi-planilla-datos" }, el("strong", { texto: tx("blancas") + ": " }), blancas),
-        el("p", { class: "pi-planilla-datos" }, el("strong", { texto: tx("negras") + ": " }), negras),
+        el("div", { class: "pi-pl-cabeza" },
+          el("h1", { class: "pi-pl-torneo", texto: v.nombre || "" }),
+          el("p", { class: "pi-pl-datos", texto: titulo + (v.fechaInicio ? " · " + v.fechaInicio : "") + (v.ritmo ? " · " + v.ritmo : "") })),
+        el("div", { class: "pi-pl-jugadores" }, lado(tx("blancas"), blancas), lado(tx("negras"), negras)),
         tabla,
-        el("p", { class: "pi-firma-resultado" }, tx("resultado") + ": ", el("span", { class: "pi-firma-blanco" })),
-        el("div", { class: "pi-diploma-firmas" },
-          el("p", { class: "pi-firma-linea", texto: tx("firmaDe", { n: blancas }) }),
-          el("p", { class: "pi-firma-linea", texto: tx("firmaDe", { n: negras }) }))));
+        el("div", { class: "pi-pl-pie" },
+          el("p", { class: "pi-ft-resultado" }, el("span", { class: "pi-ft-etiqueta", texto: tx("resultado") + ":" }),
+            el("span", { class: "pi-ft-casillas" }, ["1-0", "=", "0-1"].map((x) => el("span", { class: "pi-ft-casilla", texto: "☐ " + tx("corto_" + x) })))),
+          el("div", { class: "pi-ft-firmas pi-pl-firmas" }, firma(tx("firmaDe", { n: blancas })), firma(tx("firmaDe", { n: negras }))))));
     };
     R.mesas.forEach((m, i) => {
       if (m.n === null) return;
@@ -3334,7 +3341,10 @@
     return {
       v: 1,
       nombre: v.nombre || "",
-      ronda: { n: r + 1, mesas: R.mesas.map((m, i) => ({ m: i + 1, b: nombreDe(m.b), n: m.n == null ? null : nombreDe(m.n), r: m.r || null })) },
+      ronda: { n: r + 1, mesas: R.mesas.map((m, i) => Object.assign({ m: i + 1, b: nombreDe(m.b), n: m.n == null ? null : nombreDe(m.n), r: m.r || null }, V.tablerosVista(v, m))) },
+      // Las rondas terminadas que cuenta la clasificación: con la ronda en
+      // juego, todavía no la suma, y quien mira lo tiene que saber.
+      hasta: k,
       clasificacion: filas.map((f) => ({ p: f.puesto, n: jugador(f.id).nombre, pts: f.puntos })),
     };
   }

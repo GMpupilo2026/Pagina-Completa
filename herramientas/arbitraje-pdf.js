@@ -46,7 +46,7 @@ function incrustar(relativo) {
   return "data:image/png;base64," + datos.toString("base64");
 }
 const LOGO_CREMA = incrustar("img/logo-oscar-angulo.png");        // para la tapa oscura
-const LOGO_MARCA = incrustar("img/logo-oscar-angulo-marca.png");  // para la marca de agua
+const LOGO_MARCA = incrustar(require("./lib/marca-agua").MARCA_AGUA);  // para la marca de agua
 
 /* Quien firma el cuadernillo: va en la portada, en el pie de cada página y en
    los datos del archivo. */

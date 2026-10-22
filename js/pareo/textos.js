@@ -790,6 +790,11 @@
     cruzadaAyuda: ["En cada ronda: el número del rival, el color (b blancas, n negras) y el resultado. «+» y «−» son partidas no jugadas.", "For each round: the opponent's number, the colour (w white, b black) and the result. “+” and “−” are unplayed games."],
     rCorta: ["R{r}", "R{r}"],
     cBye: ["bye", "bye"],
+    verTablerosVer: ["Ver los tableros de este encuentro", "See the boards of this match"],
+    verTablerosLlevan: ["Tableros terminados: {k} de {n}.", "Boards finished: {k} of {n}."],
+    verTableroJugando: ["jugando", "playing"],
+    verClasifHasta: ["Con las rondas terminadas (hasta la {k}): la ronda {r} se suma cuando termine.", "With the finished rounds (up to {k}): round {r} is added when it ends."],
+    verClasifSinRondas: ["Todavía no termina ninguna ronda: la {r} se suma cuando termine.", "No round has finished yet: round {r} is added when it ends."],
 
     esteTorneo: ["Este torneo", "This tournament"],
     bajarTrf: ["Bajar el TRF para FIDE", "Download the FIDE TRF"],

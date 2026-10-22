@@ -2161,3 +2161,42 @@ no tenía nada que decir.
 `verificar-token-sesion.js` falla si un archivo de `js/` vuelve a mandar
 `session.access_token` o si una página usa el ayudante sin cargar
 `js/token-sesion.js` después del cliente.
+
+## La marca de agua de Ajedrez Integral en todos los documentos
+
+Pedido del dueño del sitio: «toda la documentación de todo con marca de agua
+de AJEDREZ INTEGRAL». Hasta acá, la marca de agua de los libros, cuadernillos,
+fichas, guías, materiales de los cursos, Programas de Estudio e informes era
+`img/logo-oscar-angulo-marca.png`: el dibujo del caballo con la cinta «Oscar
+Angulo Cubero». Ahora es `img/marca-agua-ajedrez-integral.png`: el mismo
+dibujo, sin la cinta y con «AJEDREZ INTEGRAL» en Cinzel debajo. La arma
+`herramientas/marca-agua-ajedrez-integral.js` (que saca también la de Word,
+`herramientas/programas-estudio/marca.png`: a la mitad y ya lavada al
+12,5 %, porque Word no le baja la opacidad a una imagen) y no se edita a
+mano.
+
+- **Una sola copia**: los generadores de `herramientas/` la toman de
+  `herramientas/lib/marca-agua.js` (`MARCA_AGUA`); las páginas, de
+  `js/marca-agua.js` (`MarcaAgua.preparar()`), que ahora cuenta la dirección
+  desde su propio archivo y no desde la página: sirve igual en `entreno/`.
+- **Un PDF que arma una página la lleva aunque no la pida**:
+  `ReportePDF.generar()` le pone la de Ajedrez Integral a todo documento que
+  no trae `marca` (si la página cargó `js/marca-agua.js`; por eso lo cargan
+  también `jdn-comites.html`, `universidades.html` y `arbitros-cr.html`). Quien
+  trae otra —el logo de una academia en el diagnóstico de un visitante— o
+  `null` a propósito, se queda con lo suyo. Sin conexión sale sin marca.
+- **Lo que no cambió, a propósito**: el logo junto al nombre de quien escribe
+  (el diploma de los cuentos de Peonita, la firma chica de cada carta de las
+  fichas) no es una marca de agua y sigue siendo el de siempre; el logo del
+  encabezado tampoco. Las versiones adaptadas (para lector de pantalla y baja
+  visión) siguen sin marca: una imagen detrás del texto le estorba a quien ve
+  poco. La ficha de los JDN es la plantilla del ICODER y no lleva marca.
+- **Todo se volvió a generar**: los libros (con sus tomos y volúmenes), las
+  fichas, la guía del profesor, los materiales de los cursos y los 89 Word de
+  los Programas de Estudio. La medalla del centro de la ficha de Estudio
+  impresa (`entreno/estudio.html`) también es la nueva.
+
+`node herramientas/verificar-marca-agua.js` (sin navegador) revisa que nadie
+vuelva a usar la vieja salvo los que lo dicen en `PERMITIDOS`, que los
+generadores tomen la copia única y que los libros publicados traigan la
+imagen nueva (la buscan por su tamaño, 760 × 564; la vieja mide 760 × 571).

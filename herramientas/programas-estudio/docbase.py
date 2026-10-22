@@ -94,7 +94,7 @@ def _anclar_marca(parrafo, ancho_cm, pagina_ancho, pagina_alto):
         f'<wp:positionH relativeFrom="page"><wp:posOffset>{x}</wp:posOffset></wp:positionH>'
         f'<wp:positionV relativeFrom="page"><wp:posOffset>{y}</wp:posOffset></wp:positionV>'
         f'<wp:extent cx="{cx}" cy="{cy}"/><wp:effectExtent l="0" t="0" r="0" b="0"/>'
-        f'<wp:wrapNone/><wp:docPr id="{docpr.get("id")}" name="Marca de agua" descr="Logo de {AUTOR}"/>'
+        f'<wp:wrapNone/><wp:docPr id="{docpr.get("id")}" name="Marca de agua" descr="Ajedrez Integral"/>'
         f'<wp:cNvGraphicFramePr/></wp:anchor>'
     )
     anchor.append(copy.deepcopy(graphic))

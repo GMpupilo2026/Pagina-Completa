@@ -155,6 +155,12 @@ window.PareoVer = (function () {
       el("p", { class: "text-xs mt-1 text-brand-600 dark:text-brand-300" }, tx("verHistorialNota"))];
   }
 
+  // Los encuentros abiertos (en equipos, tocar uno muestra sus tableros):
+  // se recuerdan aparte porque la vista se vuelve a pintar con cada novedad
+  // que llega, y lo abierto no se tiene que cerrar solo.
+  const encuentrosAbiertos = new Set();
+  const resultadoCorto = (tx, r) => (r && r !== "bye" ? tx("corto_" + r) : "");
+
   function tablas(idioma, datos, h, alTocar) {
     const tx = (clave, vars) => X.t(idioma, clave, vars);
     const nodos = [];
@@ -162,11 +168,42 @@ window.PareoVer = (function () {
       nodos.push(el(h, { class: "font-serif text-xl font-bold mb-3" }, tx("rondaN", { r: datos.ronda.n })));
       const cuerpo = el("tbody");
       for (const m of datos.ronda.mesas) {
+        const tableros = m.tableros && m.tableros.length ? m.tableros : null;
+        const clave = (datos.nombre || "") + "|" + datos.ronda.n + "|" + m.m;
+        let celdaB = m.b, celdaN = m.n;
+        let detalle = null;
+        if (tableros) {
+          const abierto = encuentrosAbiertos.has(clave);
+          const idDetalle = "pi-ver-tab-" + String(clave).replace(/[^A-Za-z0-9]+/g, "-");
+          const jugados = tableros.filter((k) => k.r).length;
+          const boton = (texto) => {
+            const b = el("button", { type: "button", class: "font-semibold underline underline-offset-2 text-left rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400",
+              "aria-expanded": abierto ? "true" : "false", "aria-controls": idDetalle, "data-encuentro": m.m, title: tx("verTablerosVer") }, texto);
+            b.addEventListener("click", () => {
+              if (encuentrosAbiertos.has(clave)) encuentrosAbiertos.delete(clave); else encuentrosAbiertos.add(clave);
+              const ahora = encuentrosAbiertos.has(clave);
+              const fila = document.getElementById(idDetalle);
+              if (fila) fila.hidden = !ahora;
+              for (const x of cuerpo.querySelectorAll('[aria-controls="' + idDetalle + '"]')) x.setAttribute("aria-expanded", ahora ? "true" : "false");
+            });
+            return b;
+          };
+          celdaB = boton(m.b);
+          celdaN = boton(m.n);
+          const lista = el("ol", { class: "space-y-1 text-sm" }, tableros.map((k) => el("li", { class: "flex flex-wrap gap-x-2", "data-tablero": k.t },
+            el("span", { class: "font-mono text-xs font-bold" }, tx("tableroN", { t: k.t })),
+            el("span", { class: "flex-1 min-w-[10rem]" }, (k.b || "—") + " (" + tx("blancas") + ") – " + (k.n || "—") + " (" + tx("negras") + ")"),
+            el("span", { class: "font-semibold" }, k.r ? tx("corto_" + k.r) : tx("verTableroJugando")))));
+          detalle = el("tr", { id: idDetalle, class: "pi-ver-tableros" }, el("td"), el("td", { colspan: "3" },
+            el("p", { class: "text-xs text-brand-600 dark:text-brand-300 mb-1" }, tx("verTablerosLlevan", { k: jugados, n: tableros.length })), lista));
+          detalle.hidden = !abierto;
+        }
         cuerpo.append(el("tr", {},
           el("td", { class: "num" }, String(m.m)),
-          el("td", { class: "font-semibold" }, m.b),
-          m.n ? el("td", {}, m.n) : el("td", { class: "italic" }, tx("cBye")),
-          el("td", { class: "text-center" }, m.r ? tx("corto_" + m.r) : "")));
+          el("td", { class: "font-semibold" }, celdaB),
+          m.n ? el("td", {}, celdaN) : el("td", { class: "italic" }, tx("cBye")),
+          el("td", { class: "text-center" }, resultadoCorto(tx, m.r))));
+        if (detalle) cuerpo.append(detalle);
       }
       nodos.push(el("div", { class: "overflow-x-auto mb-8" },
         el("table", { class: "pi-tabla" },
@@ -176,6 +213,11 @@ window.PareoVer = (function () {
     }
     if (datos.clasificacion && datos.clasificacion.length) {
       nodos.push(el(h, { class: "font-serif text-xl font-bold mb-3" }, tx("fClasificacion")));
+      // La ronda en juego todavía no suma: si no, todos en 0 parece un error.
+      if (datos.hasta != null && datos.ronda && datos.hasta < datos.ronda.n) {
+        nodos.push(el("p", { class: "text-sm text-brand-600 dark:text-brand-300 -mt-2 mb-3", "data-clasif-hasta": "" },
+          datos.hasta ? tx("verClasifHasta", { k: datos.hasta, r: datos.ronda.n }) : tx("verClasifSinRondas", { r: datos.ronda.n })));
+      }
       const cuerpo = el("tbody");
       for (const f of datos.clasificacion) {
         // En el enlace del evento, el nombre abre su ficha.
@@ -240,9 +282,9 @@ window.PareoVer = (function () {
       // El resultado va escrito desde las blancas: «1-0» gana quien juega con blancas.
       const partes = [tx("verMioRonda", { r: h.ronda, m: h.mesa }) + (h.tablero ? ", " + tx("tableroN", { t: h.tablero }) : ""),
         tx(h.color === "b" ? "verMioBlancas" : "verMioNegras", { x: h.rival || tx("cBye") })];
-      if (h.r) partes.push(tx("resultado") + ": " + tx("corto_" + h.r));
+      if (h.r && h.r !== "bye") partes.push(tx("resultado") + ": " + tx("corto_" + h.r));
       if (h.fila) partes.push(tx("verMioPuesto", { p: h.fila.p, pts: puntosTexto(idioma, h.fila.pts) }));
-      const antes = (h.antes || []).map((a) => tx("rondaN", { r: a.n }) + ": " + (a.rival ? tx(a.color === "b" ? "verMioBlancas" : "verMioNegras", { x: a.rival }) : tx("cBye")) + (a.r ? " " + tx("corto_" + a.r) : ""));
+      const antes = (h.antes || []).map((a) => tx("rondaN", { r: a.n }) + ": " + (a.rival ? tx(a.color === "b" ? "verMioBlancas" : "verMioNegras", { x: a.rival }) : tx("cBye")) + (a.r && a.r !== "bye" ? " " + tx("corto_" + a.r) : ""));
       return el("li", { class: "rounded-lg border border-brand-200 dark:border-brand-700 p-2 text-sm" },
         el("p", { class: "font-semibold" }, h.nombre), el("p", { class: "text-brand-600 dark:text-brand-300" }, h.torneo), el("p", {}, partes.join(" · ")),
         antes.length ? el("p", { class: "text-xs text-brand-600 dark:text-brand-300 mt-1" }, tx("verMioAntes") + " " + antes.join(" · ")) : null);

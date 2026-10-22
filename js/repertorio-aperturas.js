@@ -601,8 +601,7 @@
         } catch (e) { nombre = ""; }
         const fecha = new Date().toLocaleDateString("es-CR", { day: "numeric", month: "long", year: "numeric", timeZone: "America/Costa_Rica" });
         const doc = documentoPdf(lineas, { nombre, fecha, cuando: o.cuando });
-        // La marca de agua se pide con la dirección vista desde entreno/.
-        try { doc.marca = window.MarcaAgua ? await window.MarcaAgua.prepararDesde(new URL("../img/logo-oscar-angulo-marca.png", location.href).href) : null; } catch (e) { doc.marca = null; }
+        try { doc.marca = window.MarcaAgua ? await window.MarcaAgua.preparar() : null; } catch (e) { doc.marca = null; }
         const blob = await window.ReportePDF.generar(doc);
         const a = document.createElement("a");
         a.href = URL.createObjectURL(blob);

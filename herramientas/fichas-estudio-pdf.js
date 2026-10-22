@@ -82,6 +82,8 @@ const solo = process.argv.includes("--solo-cartas") ? "cartas" : process.argv.in
 const esc = (t) => String(t).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 const incrustar = (rel) => "data:image/png;base64," + fs.readFileSync(path.join(RAIZ, rel)).toString("base64");
 const SELLO = incrustar("img/logo-oscar-angulo-marca.png");
+// El sello grande de la presentación, el mismo de la marca de agua de todo el sitio.
+const MARCA = incrustar(require("./lib/marca-agua").MARCA_AGUA);
 const LOGO_CREMA = incrustar("img/logo-oscar-angulo.png");
 
 /* La posición que se imprime: el final de la línea (o la FEN de estudio con
@@ -194,7 +196,7 @@ function htmlPresentacion() {
       <li>Tapa los bloques y trata de decir qué dicen antes de leerlos.</li>
       <li>Cada ficha está también en la Academia, en Entrenamiento › Estudio, donde se recorre jugada a jugada y se practica contra la máquina.</li>
     </ul>
-    <img class="sello" src="${SELLO}" alt="">
+    <img class="sello" src="${MARCA}" alt="">
   </body></html>`;
 }
 
