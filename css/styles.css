@@ -1778,6 +1778,31 @@ html.dark .comparar-serie-3 { background: #199e70; }
 .pi-cat-sello { font-weight: 600; }
 .pi-sug-cifra { display: inline-block; border-radius: 999px; padding: 0.15rem 0.7rem; font-size: 0.85rem; background: rgb(var(--c-brand-100)); color: rgb(var(--c-brand-900)); }
 .dark .pi-sug-cifra { background: rgb(var(--c-brand-800)); color: #fff; }
+/* Lo que hay que revisar debajo de la sugerencia: cada tema en su tarjeta,
+   con el título más grande, para que no se lea como un solo bloque de texto. */
+.pi-revisar { margin-top: 1rem; border: 1px solid rgb(var(--c-brand-100)); border-left: 4px solid rgb(var(--c-accent-500)); border-radius: 0.75rem; padding: 0.75rem 0.9rem; background: rgb(var(--c-brand-50) / 0.35); }
+.dark .pi-revisar { border-color: rgb(var(--c-brand-800)); border-left-color: rgb(var(--c-accent-500)); background: rgb(var(--c-brand-900) / 0.4); }
+.pi-revisar-titulo { font-weight: 700; font-size: 1rem; }
+/* El estado escrito (no solo el color): «Ya resuelto», «Faltan 5 por decidir». */
+.pi-sello { display: inline-block; border-radius: 999px; padding: 0.05rem 0.6rem; font-size: 0.8rem; font-weight: 600; border: 1px solid; }
+.pi-sello-listo { background: rgb(var(--c-brand-100)); color: rgb(var(--c-brand-900)); border-color: rgb(var(--c-brand-300)); }
+.pi-sello-falta { background: rgb(var(--c-accent-100)); color: rgb(var(--c-brand-900)); border-color: rgb(var(--c-accent-500)); }
+.dark .pi-sello-listo { background: rgb(var(--c-brand-800)); color: #fff; border-color: rgb(var(--c-brand-600)); }
+.dark .pi-sello-falta { background: rgb(var(--c-brand-950)); color: #fff; border-color: rgb(var(--c-accent-500)); }
+/* Quien está en dos modalidades: una tarjeta por persona y las opciones como
+   botones; la elegida, con borde y letra más gruesa además del fondo. */
+.pi-dm-tarjeta { border: 1px dashed rgb(var(--c-accent-500)); border-radius: 0.6rem; padding: 0.55rem 0.75rem; background: rgb(255 255 255 / 0.6); min-width: 0; }
+.pi-dm-tarjeta.pi-dm-lista { border-style: solid; border-color: rgb(var(--c-brand-300)); }
+.dark .pi-dm-tarjeta { background: rgb(var(--c-brand-900) / 0.6); }
+.dark .pi-dm-tarjeta.pi-dm-lista { border-color: rgb(var(--c-brand-600)); }
+.pi-dm-pendiente { color: rgb(var(--c-brand-800)); }
+.dark .pi-dm-pendiente { color: rgb(var(--c-accent-300)); }
+.pi-dm-opcion { display: inline-flex; align-items: center; gap: 0.4rem; border: 1px solid rgb(var(--c-brand-200)); border-radius: 999px; padding: 0.2rem 0.7rem 0.2rem 0.55rem; font-size: 0.85rem; cursor: pointer; background: #fff; }
+.pi-dm-opcion:hover { border-color: rgb(var(--c-brand-400)); }
+.pi-dm-opcion:has(input:checked) { border: 2px solid rgb(var(--c-accent-500)); background: rgb(var(--c-accent-100)); font-weight: 700; padding: calc(0.2rem - 1px) calc(0.7rem - 1px) calc(0.2rem - 1px) calc(0.55rem - 1px); }
+.pi-dm-opcion:has(input:focus-visible) { outline: 2px solid rgb(var(--c-accent-400)); outline-offset: 2px; }
+.dark .pi-dm-opcion { background: rgb(var(--c-brand-800)); border-color: rgb(var(--c-brand-600)); }
+.dark .pi-dm-opcion:has(input:checked) { background: rgb(var(--c-brand-950)); border-color: rgb(var(--c-accent-500)); }
 /* El plano de la sala (qué mesas son de cada categoría), para la entrada. */
 .pi-plano-tabla { width: 100%; border-collapse: collapse; margin-top: 0.4cm; font-size: 14pt; }
 .pi-plano-tabla th { text-align: left; border-bottom: 2px solid #000; padding: 0.15cm 0.2cm; font-size: 10pt; text-transform: uppercase; letter-spacing: 0.04em; }

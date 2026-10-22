@@ -1104,8 +1104,8 @@
   function pintarHombresEnMujeres(s) {
     if (!s.hombresEnMujeres || !s.hombresEnMujeres.length) return null;
     const modo = (j) => tx(j.modalidad === "equipo" ? "grupoEquipos" : "grupoIndividual");
-    return el("div", { id: "pi-hombres-mujeres", class: "mt-4 pt-3 border-t border-brand-100 dark:border-brand-800" },
-      el("h4", { class: "font-semibold text-sm", texto: tx("hombresTitulo") }),
+    return el("div", { id: "pi-hombres-mujeres", class: "pi-revisar" },
+      el("h4", { class: "pi-revisar-titulo", texto: tx("hombresTitulo") }),
       el("p", { class: "text-sm mt-1", texto: tx("hombresTexto", { n: s.hombresEnMujeres.length }) }),
       el("ul", { id: "pi-hombres-lista", class: "mt-1 space-y-1 text-sm list-disc pl-5" }, s.hombresEnMujeres.map((j) =>
         el("li", {}, el("span", { class: "font-semibold", texto: tx("cortosAviso") + " " }),
@@ -1114,8 +1114,8 @@
 
   function pintarEquiposCortos(s) {
     if (!s.cortos || !s.cortos.length) return null;
-    return el("div", { id: "pi-equipos-cortos", class: "mt-4 pt-3 border-t border-brand-100 dark:border-brand-800" },
-      el("h4", { class: "font-semibold text-sm", texto: tx("cortosTitulo", { m: G.JDE_MIN_EQUIPO }) }),
+    return el("div", { id: "pi-equipos-cortos", class: "pi-revisar" },
+      el("h4", { class: "pi-revisar-titulo", texto: tx("cortosTitulo", { m: G.JDE_MIN_EQUIPO }) }),
       el("p", { class: "text-sm mt-1", texto: tx("cortosTexto", { m: G.JDE_MIN_EQUIPO, n: s.cortos.length }) }),
       el("ul", { id: "pi-cortos-lista", class: "mt-1 space-y-1 text-sm list-disc pl-5" }, s.cortos.map((e) =>
         el("li", {}, el("span", { class: "font-semibold", texto: tx("cortosAviso") + " " }),
@@ -1131,11 +1131,13 @@
   function pintarRepetidos(s) {
     const { repetidos, dosModalidades } = s.limpia || { repetidos: [], dosModalidades: [] };
     if (!repetidos.length && !dosModalidades.length) return null;
-    const caja = el("div", { id: "pi-repetidos", class: "mt-4 pt-3 border-t border-brand-100 dark:border-brand-800" });
-    caja.append(el("h4", { class: "font-semibold text-sm", texto: tx("repetidosTitulo") }));
+    const caja = el("div", { id: "pi-repetidos", class: "pi-revisar" });
+    caja.append(el("h4", { class: "pi-revisar-titulo", texto: tx("repetidosTitulo") }));
     if (repetidos.length) {
       const sobran = repetidos.reduce((a, r) => a + r.veces - 1, 0);
-      caja.append(el("p", { class: "text-sm mt-1", texto: tx("repetidosTexto", { p: repetidos.length, n: sobran }) }),
+      caja.append(el("p", { class: "text-sm mt-1" },
+        el("span", { class: "pi-sello pi-sello-listo mr-2", texto: "✓ " + tx("repetidosResuelto") }),
+        tx("repetidosTexto", { p: repetidos.length, n: sobran })),
         el("details", { class: "mt-1" },
           el("summary", { class: "cursor-pointer text-sm rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400", texto: tx("repetidosVer") }),
           el("ul", { id: "pi-repetidos-lista", class: "mt-1 space-y-1 text-sm list-disc pl-5" }, repetidos.map((r) =>
@@ -1143,26 +1145,38 @@
     }
     if (dosModalidades.length) {
       // Una pregunta por persona: en cuál de sus inscripciones queda, o
-      // «todavía no decido» (queda en las dos), que es como viene.
+      // «todavía no decido» (queda en las dos), que es como viene. Cada una
+      // en su tarjeta: el nombre arriba, el centro debajo y las opciones como
+      // botones; la tarjeta dice con letra (no solo con color) si ya se decidió.
       const modo = (x) => tx(x.modalidad === "equipo" ? "grupoEquipos" : "grupoIndividual") + " " + x.categoria;
       const sinDecidir = dosModalidades.filter((d, k) => !s.dondeQueda.has(k)).length;
-      caja.append(el("p", { class: "text-sm mt-2", texto: tx("dosModalidadesTexto", { n: sinDecidir }) }));
-      const lista = el("div", { id: "pi-dos-modalidades", class: "mt-1 grid lg:grid-cols-2 gap-2" });
+      caja.append(
+        el("h5", { class: "font-semibold text-sm mt-3", texto: tx("dosModalidadesSub") }),
+        el("p", { class: "text-sm mt-1" },
+          el("span", { id: "pi-dm-faltan", class: "pi-sello mr-2 " + (sinDecidir ? "pi-sello-falta" : "pi-sello-listo"),
+            texto: sinDecidir ? tx("dosModalidadesFaltan", { n: sinDecidir }) : "✓ " + tx("dosModalidadesListo") }),
+          tx("dosModalidadesTexto")));
+      const lista = el("div", { id: "pi-dos-modalidades", class: "mt-2 grid lg:grid-cols-2 gap-2" });
       dosModalidades.forEach((d, k) => {
         const nombre = "pi-dm-" + k;
         const elegida = s.dondeQueda.has(k) ? s.dondeQueda.get(k) : -1;
         const opcion = (valor, texto) => {
           const id = nombre + "-" + (valor < 0 ? "x" : valor);
-          return el("label", { class: "inline-flex items-start gap-2 text-sm" },
-            el("input", { type: "radio", name: nombre, id, value: String(valor), class: "mt-1", checked: valor === elegida, onchange: () => {
+          return el("label", { class: "pi-dm-opcion" },
+            el("input", { type: "radio", name: nombre, id, value: String(valor), checked: valor === elegida, onchange: () => {
               if (valor < 0) s.dondeQueda.delete(k); else s.dondeQueda.set(k, valor);
               calcularSugerencia(); pintarSugerencia(); $(id).focus();
             } }),
             el("span", { texto }));
         };
-        lista.append(el("fieldset", { class: "border border-brand-100 dark:border-brand-800 rounded-lg px-3 py-2" },
-          el("legend", { class: "text-sm font-semibold px-1", texto: tx("dosModalidadesCaso", { n: d.jugador.nombre, i: d.jugador.institucion || "—", m: d.inscripciones.map(modo).join(" y ") }) }),
-          el("div", { class: "flex flex-wrap gap-x-4 gap-y-1" },
+        const estado = elegida < 0 ? tx("dosModalidadesPendiente") : tx("dosModalidadesQueda", { m: modo(d.inscripciones[elegida]) });
+        lista.append(el("fieldset", { class: "pi-dm-tarjeta" + (elegida < 0 ? "" : " pi-dm-lista") },
+          el("legend", { class: "sr-only", texto: tx("dosModalidadesCaso", { n: d.jugador.nombre, i: d.jugador.institucion || "—", m: d.inscripciones.map(modo).join(" y ") }) }),
+          el("div", { "aria-hidden": "true" },
+            el("p", { class: "font-semibold text-sm leading-snug", texto: d.jugador.nombre }),
+            el("p", { class: "text-xs text-brand-600 dark:text-brand-300", texto: (d.jugador.institucion || "—") + " · " + d.inscripciones.map(modo).join(" y ") })),
+          el("p", { class: "text-xs font-semibold mt-1 " + (elegida < 0 ? "pi-dm-pendiente" : ""), texto: (elegida < 0 ? "⏳ " : "✓ ") + estado }),
+          el("div", { class: "flex flex-wrap gap-1.5 mt-2" },
             d.inscripciones.map((x, i) => opcion(i, tx("dosModalidadesDejar", { m: modo(x) }))),
             opcion(-1, tx("dosModalidadesNoDecido")))));
       });
@@ -1177,8 +1191,8 @@
   function pintarVariosOrigenes(s) {
     const varios = (s.limpia && s.limpia.variosOrigenes) || [];
     if (!varios.length) return null;
-    return el("div", { id: "pi-varios-origenes", class: "mt-4 pt-3 border-t border-brand-100 dark:border-brand-800" },
-      el("h4", { class: "font-semibold text-sm", texto: tx("origenesTitulo") }),
+    return el("div", { id: "pi-varios-origenes", class: "pi-revisar" },
+      el("h4", { class: "pi-revisar-titulo", texto: tx("origenesTitulo") }),
       el("p", { class: "text-sm mt-1", texto: tx("origenesTexto", { n: varios.length }) }),
       el("ul", { id: "pi-origenes-lista", class: "mt-1 space-y-1 text-sm list-disc pl-5" }, varios.map((x) =>
         el("li", {}, el("span", { class: "font-semibold", texto: tx("cortosAviso") + " " }),
@@ -1192,8 +1206,8 @@
     const c = s.comparacion;
     if (!c) return null;
     const persona = (j) => j.nombre + " (" + (j.institucion || "—") + ")";
-    const caja = el("div", { id: "pi-comparacion", class: "mt-4 pt-3 border-t border-brand-100 dark:border-brand-800" },
-      el("h4", { class: "font-semibold text-sm", texto: tx("compTitulo") }));
+    const caja = el("div", { id: "pi-comparacion", class: "pi-revisar" },
+      el("h4", { class: "pi-revisar-titulo", texto: tx("compTitulo") }));
     if (!c.noClasificaron.length && !c.faltan.length) { caja.append(el("p", { class: "text-sm mt-1", texto: tx("compIgual") })); return caja; }
     if (c.noClasificaron.length) caja.append(el("p", { class: "text-sm mt-1", texto: tx("compNoClasificaron", { n: c.noClasificaron.length }) }),
       el("ul", { id: "pi-comp-no", class: "mt-1 space-y-1 text-sm list-disc pl-5" }, c.noClasificaron.map((j) => el("li", {}, el("span", { class: "font-semibold", texto: tx("cortosAviso") + " " }), persona(j)))));
@@ -1214,10 +1228,10 @@
   }
   function pintarTopes(s, cuales, o) {
     if (!cuales.length) return null;
-    const caja = el("div", { id: o.id, class: "mt-4 pt-3 border-t border-brand-100 dark:border-brand-800" });
+    const caja = el("div", { id: o.id, class: "pi-revisar" });
     const fuera = cuales.reduce((a, e) => a + e.integrantes.length - s.elegidos.get(e.eleccion).size, 0);
     caja.append(
-      el("h4", { class: "font-semibold text-sm", texto: tx(o.titulo, { m: o.maximo }) }),
+      el("h4", { class: "pi-revisar-titulo", texto: tx(o.titulo, { m: o.maximo }) }),
       el("p", { class: "text-sm mt-1", texto: tx(o.texto, { m: o.maximo, d: fuera }) }));
     cuales.forEach((e, k) => {
       const elegidos = s.elegidos.get(e.eleccion);
@@ -1248,8 +1262,8 @@
   function pintarPaseAbierto(s) {
     const { pasadas, sinAbierto } = s.pase;
     if (!pasadas.length && !sinAbierto.length) return null;
-    const caja = el("div", { id: "pi-pase-abierto", class: "mt-4 pt-3 border-t border-brand-100 dark:border-brand-800" });
-    caja.append(el("h4", { class: "font-semibold text-sm", texto: tx("paseTitulo") }));
+    const caja = el("div", { id: "pi-pase-abierto", class: "pi-revisar" });
+    caja.append(el("h4", { class: "pi-revisar-titulo", texto: tx("paseTitulo") }));
     const nombres = (c) => c.mujeres.map((j) => j.nombre).join(", ");
     if (pasadas.length) {
       caja.append(
@@ -1379,10 +1393,10 @@
   // la lista nunca va solo).
   function pintarRevisionCategorias(r) {
     if (!r || (!r.revisados && !r.sinFecha.length)) return null;
-    const caja = el("div", { id: "pi-revision-categorias", class: "mt-4 pt-3 border-t border-brand-100 dark:border-brand-800" });
+    const caja = el("div", { id: "pi-revision-categorias", class: "pi-revisar" });
     const enSuCategoria = r.revisados - r.permitidos.length - r.noPermitidos.length;
     caja.append(
-      el("h4", { class: "font-semibold text-sm", texto: tx("catTitulo") }),
+      el("h4", { class: "pi-revisar-titulo", texto: tx("catTitulo") }),
       el("p", { class: "text-sm mt-1", texto: tx("catResumen", { n: r.revisados, ok: enSuCategoria, p: r.permitidos.length, x: r.noPermitidos.length }) }));
     if (r.anio !== r.normativa) caja.append(el("p", { class: C.nota + " mt-1", texto: tx("catOtroAnio", { a: r.anio, b: r.normativa }) }));
     // Cada caso, con «Permitido» o «No permitido» al frente y el nombre en

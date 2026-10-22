@@ -3372,6 +3372,14 @@ Siete mejoras más para un JDE con varias categorías en la misma sala.
   es como lo leen las pruebas. La revisión de categoría por año ya no es
   una lista de cientos de oraciones: va agrupada por motivo (art. 17, art.
   18…), cada grupo plegable con cuántos son y el nombre en negrita.
+  Debajo, cada tema que hay que revisar (repetidas, dos modalidades, pase al
+  abierto, topes, equipos cortos, categoría) va en su tarjeta con el título
+  más grande. Las inscripciones repetidas llevan el sello «Ya resuelto», y
+  quien está en dos modalidades tiene su tarjeta: el nombre, el centro y sus
+  dos inscripciones, el estado escrito («Sin decidir» o «Queda en…») y las
+  opciones como botones («Solo en Equipos B», «Todavía no decido»); arriba,
+  «Faltan N por decidir» o «Todos decididos». El estado nunca va solo en el
+  color, y el contraste se midió en claro y en oscuro (el peor, 7,8:1).
 
 Al tocar esto, `node herramientas/verificar-pareo-sala-evento.js`. Rompiendo a
 propósito la mesa física, la casilla de consentimiento, el llamado, el fin de
