@@ -2185,3 +2185,53 @@ body.pi-imprimiendo-plantilla.pi-imprimiendo-firmas .pi-plantilla { break-after:
 .arbol-gana { background: #0f3d1f; }
 .arbol-tablas { background: #7f7f7f; }
 .arbol-pierde { background: #f9d9d9; }
+/* La clasificación para la pared (imprimirClasificacionPared): una hoja A3
+   con letra grande, para leerla de pie a un metro y medio. La hora en que se
+   imprimió va arriba: una hoja vieja en la pared engaña. */
+@page pared { size: A3 portrait; margin: 1.2cm; }
+@media print {
+  body.pi-imprimiendo-pared [role="tabpanel"] { display: none !important; }
+  body.pi-imprimiendo-pared .pi-plantilla { display: block !important; }
+}
+/* (La página con nombre va en el body entero: si fuera solo en la hoja, lo
+   que haya antes en el documento, aunque no mida nada, abriría una primera
+   hoja carta en blanco.) */
+@media print { body.pi-imprimiendo-pared { page: pared; } }
+.pi-pared { color: #000; }
+.pi-pared-titulo { font-family: Merriweather, Georgia, serif; font-weight: 700; font-size: 30pt; line-height: 1.15; margin: 0; }
+.pi-pared-sub { font-size: 20pt; font-weight: 700; margin: 0.15cm 0 0; }
+.pi-pared-hora { font-size: 13pt; color: #222; margin: 0.1cm 0 0.4cm; }
+.pi-pared-tabla { width: 100%; border-collapse: collapse; font-size: 17pt; }
+.pi-pared-tabla th { text-align: left; font-size: 12pt; text-transform: uppercase; letter-spacing: 0.04em; border-bottom: 3px solid #000; padding: 0.12cm 0.2cm; }
+.pi-pared-tabla td { border-bottom: 1px solid #777; padding: 0.16cm 0.2cm; vertical-align: top; }
+.pi-pared-tabla .num { text-align: right; white-space: nowrap; }
+.pi-pared-tabla tr { break-inside: avoid; }
+.pi-pared-nombre { font-weight: 700; }
+.pi-pared-pts { font-weight: 700; font-size: 19pt; }
+/* El sorteo del congresillo en el proyector (abrirSorteo): a pantalla
+   completa, letra enorme y alto contraste; el número sorteado nunca va solo
+   en color: va escrito. */
+.pi-sorteo { position: fixed; inset: 0; z-index: 60; background: #102a43; color: #fff; overflow: auto; }
+.pi-sorteo[hidden] { display: none; }
+body.pi-sorteo-abierto { overflow: hidden; }
+.pi-sorteo-marco { max-width: 70rem; margin: 0 auto; padding: 4vh 4vw; min-height: 100%; box-sizing: border-box; display: flex; flex-direction: column; }
+.pi-sorteo-torneo { font-size: clamp(1rem, 2.4vw, 1.8rem); color: #f0f4f8; margin: 0; }
+.pi-sorteo-titulo { font-family: Merriweather, Georgia, serif; font-weight: 700; font-size: clamp(1.8rem, 5vw, 4rem); margin: 0.3rem 0 1.2rem; color: #fff; }
+.pi-sorteo-cuerpo { flex: 1; }
+.pi-sorteo-lista { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 22rem), 1fr)); gap: 0.6rem 1.6rem; font-size: clamp(1.1rem, 2.6vw, 2.1rem); }
+.pi-sorteo-lista li { display: flex; align-items: baseline; gap: 0.8rem; border-bottom: 1px solid rgb(255 255 255 / 0.25); padding: 0.3rem 0; }
+.pi-sorteo-num { display: inline-block; min-width: 2.4em; text-align: center; font-weight: 700; border-radius: 0.4rem; background: #f0b429; color: #102a43; padding: 0 0.3em; }
+.pi-sorteo-nuevo { animation: pi-sorteo-entra 0.5s ease-out; }
+@keyframes pi-sorteo-entra { from { opacity: 0; transform: translateY(0.6rem); } to { opacity: 1; transform: none; } }
+.pi-sorteo-color { font-size: clamp(1.6rem, 4.5vw, 3.6rem); font-weight: 700; line-height: 1.25; margin: 2rem 0; }
+.pi-sorteo-girando { font-size: clamp(4rem, 14vw, 10rem); text-align: center; animation: pi-sorteo-gira 0.45s linear infinite; }
+@keyframes pi-sorteo-gira { from { transform: rotateY(0); } to { transform: rotateY(360deg); } }
+.pi-sorteo-estado { font-size: clamp(1rem, 2.2vw, 1.6rem); min-height: 1.5em; margin: 1rem 0; }
+.pi-sorteo-botones { display: flex; flex-wrap: wrap; gap: 0.8rem; }
+.pi-sorteo-boton { font-size: clamp(1rem, 2.2vw, 1.5rem); font-weight: 700; padding: 0.6rem 1.6rem; border-radius: 0.6rem; background: #f0b429; color: #102a43; border: 2px solid #f0b429; cursor: pointer; }
+.pi-sorteo-boton:disabled { opacity: 0.5; cursor: not-allowed; }
+.pi-sorteo-sec { background: transparent; color: #fff; border-color: #fff; }
+.pi-sorteo-boton:focus-visible { outline: 4px solid #fff; outline-offset: 3px; }
+.pi-sorteo-sec:focus-visible { outline-color: #f0b429; }
+@media (prefers-reduced-motion: reduce) { .pi-sorteo-nuevo, .pi-sorteo-girando { animation: none; } }
+@media print { .pi-sorteo { display: none !important; } }

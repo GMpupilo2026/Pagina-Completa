@@ -27,6 +27,7 @@
   const T = enNode ? require("./torneo.js") : raiz.PareoTorneo;
   const E = enNode ? require("./equipos.js") : raiz.PareoEquipos;
   const G = enNode ? require("./grupos.js") : raiz.PareoGrupos;
+  const P = enNode ? require("./premios.js") : raiz.PareoPremios;
 
   const SIGUIENTE = { institucional: "regional", regional: "interregional", interregional: "nacional" };
   const NOMBRE_ETAPA = { institucional: "Institucional", regional: "Regional", interregional: "Interregional", nacional: "Nacional" };
@@ -179,6 +180,16 @@
         }) });
       }
     }
+
+    // Los sorteos hechos en el congresillo (en el proyector o con el botón):
+    // los números de salida o el color del n.º 1 en la ronda 1, con la hora.
+    const sorteos = torneos.filter((t) => t.sorteo && t.sorteo.hora).map((t) => {
+      const x = t.sorteo;
+      const nombre = (id) => (participante(t, id) || {}).nombre || "?";
+      if (x.tipo === "color") return nombreTorneo(t) + ", a las " + horaTexto(x.hora) + ": el n.º 1 (" + nombre(T.ordenInicial(t)[0]) + ") empieza con " + (x.color === "b" ? "negras" : "blancas") + " en la ronda 1.";
+      return nombreTorneo(t) + ", a las " + horaTexto(x.hora) + ": " + (x.orden || []).map((id, i) => (i + 1) + ". " + nombre(id)).join(", ") + ".";
+    });
+    if (sorteos.length) seccion((++n) + ". Sorteos", sorteos, "");
 
     const tardios = torneos.flatMap((t) => (t.tardios || []).map((x) => x.nombre + " (" + (x.institucion || "—") + "), " + nombreTorneo(t) + ": entró en la ronda " + x.ronda + "." + (x.aviso ? " " + x.aviso : "")));
     if (tardios.length) seccion((++n) + ". Inscripciones el día del torneo", tardios, "");
@@ -344,6 +355,13 @@
     };
   }
 
+  // Los premios especiales del torneo (js/pareo/premios.js), con la misma
+  // clasificación que el podio: nadie se lleva dos premios.
+  function especialesDe(t) {
+    if (E.esDeEquipos(t) || !(t.premiosEspeciales || []).length || !rondasCompletas(t)) return [];
+    return P.asignar(t, clasificacionDe(t), (id) => participante(t, id)).especiales;
+  }
+
   const porcentajeTexto = (x) => Math.round(x * 100) + " %";
 
   function premiacion(evento, torneos) {
@@ -361,6 +379,10 @@
       });
       b.push({ tipo: "lista", items });
       if (p.filas.filter((f) => f.puesto === 1).length > 1) b.push({ tipo: "nota", texto: "Empate en el primer lugar que los desempates no resolvieron: lo decide el árbitro principal." });
+      const esp = especialesDe(t);
+      if (esp.length) b.push({ tipo: "lista", items: esp.map((x) => "Premio especial, " + P.etiqueta(x.premio, "es") + ": " + (x.ganadores.length
+        ? x.ganadores.map((g) => { const j = participante(t, g.id) || {}; return (x.premio.cuantos > 1 ? g.lugar + ". " : "") + j.nombre + " — " + (j.institucion || "—") + " · " + puntosTexto(g.puntos) + " puntos"; }).join("; ")
+        : "desierto") + ".") });
       if (p.tableros.length) {
         b.push({ tipo: "lista", items: p.tableros.map((x) => "Mejor tablero " + x.tablero + ": " + (x.filas.length
           ? x.filas.map((f) => f.nombre + " (" + f.institucion + ", " + puntosTexto(f.puntos) + " de " + f.jugadas + ", " + porcentajeTexto(f.porcentaje) + ")").join("; ")
@@ -388,6 +410,10 @@
         const personas = E.esDeEquipos(t) ? x.integrantes : [x];
         for (const j of personas) out.push({ nombre: j.nombre, institucion: j.institucion || x.institucion || "", lugar: LUGAR[f.puesto], torneo: nombreTorneo(t), evento: evento.nombre, equipo: E.esDeEquipos(t) ? x.nombre : "" });
       }
+      for (const x of especialesDe(t)) for (const g of x.ganadores) {
+        const j = participante(t, g.id) || {};
+        out.push({ nombre: j.nombre, institucion: j.institucion || "", lugar: "Premio especial: " + P.etiqueta(x.premio, "es") + (x.premio.cuantos > 1 ? ", " + LUGAR[g.lugar].toLowerCase() : ""), torneo: nombreTorneo(t), evento: evento.nombre, equipo: "" });
+      }
       for (const x of p.tableros) for (const f of x.filas) out.push({ nombre: f.nombre, institucion: f.institucion, lugar: "Mejor tablero " + x.tablero, torneo: nombreTorneo(t), evento: evento.nombre, equipo: f.institucion });
     }
     return out;
@@ -401,7 +427,7 @@
       nombre: d.nombre,
       centro: d.institucion ? "del centro educativo " + d.institucion : "",
       // «Primer lugar» se obtiene; «Mejor tablero 1» se es.
-      motivo: (/^Mejor tablero/.test(d.lugar) ? "por ser el " : "por obtener el ") + d.lugar.charAt(0).toLowerCase() + d.lugar.slice(1) +
+      motivo: /^Premio especial: /.test(d.lugar) ? "por obtener el premio especial «" + d.lugar.slice(17) + "» en " + d.torneo + "." : (/^Mejor tablero/.test(d.lugar) ? "por ser el " : "por obtener el ") + d.lugar.charAt(0).toLowerCase() + d.lugar.slice(1) +
         (d.equipo ? " con el equipo de " + d.equipo : "") + " en " + d.torneo + ".",
     };
   }
@@ -995,7 +1021,7 @@
     aplicarDesempate, empatadosEnCorte, segundosIncremento, duracionRonda, horario, porDireccion, constancias, textoConstancia,
     medallero, estadisticas, compararEtapa, minutosBase, estadoRetraso, incidenciasDe, NOMBRE_INCIDENCIA,
     SIGUIENTE, NOMBRE_ETAPA, ENCABEZADOS, FORMATO_RESPALDO, cupo, clasificados, terminado, acta, informe, filasClasificados,
-    lugarTexto, siguienteDe, podio, premiacion, diplomas, textoDiploma, pendientes, respaldo, esRespaldo, vistaTorneo, vistaEvento, tablerosVista, mejoresVista, marcarTiempos, duraciones, mesaFisica, mesasQueNecesita, numerarSala, rondasCompletas, totalRondas, nombreTorneo,
+    lugarTexto, siguienteDe, podio, especialesDe, premiacion, diplomas, textoDiploma, pendientes, respaldo, esRespaldo, vistaTorneo, vistaEvento, tablerosVista, mejoresVista, marcarTiempos, duraciones, mesaFisica, mesasQueNecesita, numerarSala, rondasCompletas, totalRondas, nombreTorneo,
   };
   if (enNode) module.exports = api;
   else raiz.PareoEvento = api;

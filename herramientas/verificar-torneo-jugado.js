@@ -448,8 +448,13 @@ async function torneo(browser) {
     p.jugadas = (s.moves || []).length + (s.duelo_state ? (s.duelo_state.round || 1) - 1 : 0);
     p.resultado = s.result;
     p.relojes = [s.white_time_left, s.black_time_left];
-    // Lo que dicen las dos pantallas.
+    // Lo que dicen las dos pantallas. Se espera a que cada una diga el
+    // motivo (hasta 5 s): en Duelo, la pestaña que se entera después muestra
+    // un instante «Tablas.» antes de «Tablas por triple repetición.», y leerla
+    // a los 600 ms fijos fallaba a veces en el CI. Si el motivo no llega, la
+    // comprobación de abajo sigue fallando.
     await esperar(600);
+    for (const x of pestañas) await x.page.waitForFunction(() => /triple repetici/i.test((document.getElementById("status-banner") || {}).textContent || ""), null, { timeout: 5000 }).catch(() => {});
     p.pantallas = [];
     for (const x of pestañas) p.pantallas.push(await x.page.evaluate(() => document.getElementById("status-banner").textContent).catch(() => ""));
     // El resultado llega al cruce y la ronda se cierra sola.

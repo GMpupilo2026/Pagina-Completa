@@ -132,6 +132,9 @@ async function pruebaEnlaces(browser) {
   await org.page.click('#pi-ronda button:has-text("Ver desde el celular")');
   await org.page.check("#pi-ver-en-vivo");
   await org.page.waitForFunction(() => window.__enviados.some((x) => /^pareo-vivo-/.test(x.canal)));
+  // El evento se pone en vivo un instante después que el torneo: se le da
+  // hasta 5 s (leerlo enseguida fallaba a veces en el CI).
+  await org.page.waitForFunction(() => window.__enviados.some((x) => /^pareo-evento-/.test(x.canal)), null, { timeout: 5000 }).catch(() => {});
   const vivo = await org.page.evaluate(() => window.__enviados.filter((x) => /^pareo-vivo-/.test(x.canal)).pop().payload);
   ok(await org.page.evaluate(() => window.__enviados.some((x) => /^pareo-evento-/.test(x.canal))), "al poner en vivo un torneo de un evento, el evento también se pone en vivo");
   ok(vivo.evento && /^[a-z0-9]{8}$/.test(vivo.evento.codigo) && vivo.evento.este === "PRUEBA SUB-12", "el torneo manda el código del evento y cuál es él", JSON.stringify(vivo.evento));

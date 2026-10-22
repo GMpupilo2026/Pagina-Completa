@@ -98,6 +98,9 @@
     return a;
   }
 
+  // El color del n.º 1 en la ronda 1, a cara o sello.
+  const sortearColor = (azar) => ((azar || Math.random)() < 0.5 ? "w" : "b");
+
   function numeros(t) {
     const m = new Map();
     ordenInicial(t).forEach((id, i) => m.set(id, i + 1));
@@ -397,7 +400,7 @@
   }
 
   const api = {
-    PUNTOS_FIDE, TITULOS, nuevo, ordenInicial, fijarNumeracion, sortearNumeracion, numeros, situacion, puntos, puntosHasta,
+    PUNTOS_FIDE, TITULOS, nuevo, ordenInicial, fijarNumeracion, sortearNumeracion, sortearColor, numeros, situacion, puntos, puntosHasta,
     rondaCompleta, participantes, berger, rondaTodos, rondasTodos, aTrf, leerPareo, deTrf,
     // El formato de las columnas del TRF: lo usa también el TRF de equipos (js/pareo/equipos.js).
     formatoTrf: { izq, der, decimal, fechaTrf },

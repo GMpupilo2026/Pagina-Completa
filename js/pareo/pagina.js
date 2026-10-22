@@ -124,6 +124,7 @@
     if (estado.capitanes && estado.capitanes.idTorneo === estado.id) for (const c of estado.capitanes.canales.keys()) enviarCapitan(c);
     if (estado.respaldoArchivo && estado.t.evento && estado.t.evento.id === estado.respaldoArchivo.id) programarRespaldo();
     avisarRondaCompleta();
+    if (estado.t.publicado) programarPublicacion();
   }
   const TOPE_HISTORIAL = 40;
 
@@ -1720,6 +1721,7 @@
 
   function pintarEvento() {
     pintarHistorial();
+    pintarPublicar();
     $("pi-bajar-trf-equipos").hidden = !E.esDeEquipos(t());
     const caja = $("pi-evento");
     caja.replaceChildren();
@@ -2477,10 +2479,13 @@
         el("button", { type: "button", id: "pi-planillas-firma", class: C.botonSec, onclick: () => imprimirPlanillasFirma(r) }, tx("planillasFirma")),
         E.esDeEquipos(v) ? el("button", { type: "button", id: "pi-alineaciones", class: C.botonSec, onclick: () => imprimirAlineaciones(r) }, tx("alineacionesImprimir")) : null,
         el("button", { type: "button", class: C.botonSec, onclick: () => compartirLectura(r) }, tx("verDesdeElCelular")),
+        el("button", { type: "button", id: "pi-ronda-whatsapp", class: C.botonSec, "aria-expanded": "false", "aria-controls": "pi-ronda-compartir",
+          onclick: (e) => abrirCompartir($("pi-ronda-compartir"), e.currentTarget, PareoCompartir.textoRonda(t(), r, { idioma, enlace: enlaceVivoActual() })) }, tx("whatsappBoton")),
         ultima ? el("button", { type: "button", id: "pi-adjunto", class: C.botonSec, onclick: () => enlaceAdjunto(r) }, tx("adjuntoBoton")) : null,
         el("button", { type: "button", id: "pi-planillas-anotacion", class: C.botonSec, onclick: () => imprimirPlanillasAnotacion(r) }, tx("anotacionBoton")),
         el("button", { type: "button", id: "pi-imprimir-todo", class: C.botonSec, onclick: () => imprimirTodoDeRonda(r) }, tx("imprimirTodo")),
         ultima ? el("button", { type: "button", class: C.miniPeligro + " px-3 py-2", onclick: () => deshacerRonda(r) }, tx("deshacerRonda")) : null)));
+    caja.append(el("div", { id: "pi-ronda-compartir", class: "no-imprimir", hidden: true }));
     caja.append(el("p", { class: C.nota + " mb-3 no-imprimir", role: "status", texto: pendientes ? tx("faltanResultados", { n: pendientes }) : tx("rondaCompleta") }));
     if (!ultima) caja.append(el("p", { class: C.nota + " mb-3 no-imprimir", texto: tx("avisoCorregir") }));
 
@@ -2940,6 +2945,87 @@
     cont.replaceChildren(el("p", { class: C.nota, texto: tx("capitanesAyuda") }), lista);
   }
 
+  // ---------- El sorteo del congresillo, en el proyector ----------
+  // Los números de salida (todos contra todos) o el color del n.º 1 en la
+  // ronda 1 (suizo), sorteados a pantalla completa para que la sala lo vea:
+  // primero se barajan a la vista y después se anuncian uno por uno. Con
+  // «menos movimiento» del sistema sale todo de una vez. Queda anotado en el
+  // torneo (t.sorteo) y el acta del evento lo trae con la hora.
+  function anotarSorteo(v, tipo) {
+    v.sorteo = { tipo, hora: Date.now(), orden: tipo === "numeros" ? v.numeracion.slice() : undefined, color: tipo === "color" ? v.colorInicial : undefined };
+  }
+  let sorteoTimer = null;
+  function cerrarSorteo() {
+    const caja = $("pi-sorteo");
+    if (sorteoTimer) { clearTimeout(sorteoTimer); sorteoTimer = null; }
+    caja.hidden = true;
+    caja.replaceChildren();
+    document.body.classList.remove("pi-sorteo-abierto");
+    // Al salir de la pantalla completa el navegador suelta el foco: se
+    // devuelve al botón después de salir.
+    const volver = () => { const b = $(caja.dataset.volver || ""); if (b) b.focus(); };
+    if (document.fullscreenElement) document.exitFullscreen().then(volver, volver);
+    else volver();
+  }
+  function abrirSorteo(tipo) {
+    const v = t();
+    if (v.rondas.length) return;
+    const caja = $("pi-sorteo");
+    caja.dataset.volver = tipo === "color" ? "pi-sortear-color" : "pi-sortear-proyector";
+    const quieto = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const estadoTxt = el("p", { id: "pi-sorteo-estado", class: "pi-sorteo-estado", role: "status" });
+    const cuerpo = el("div", { class: "pi-sorteo-cuerpo" });
+    const sortear = el("button", { type: "button", id: "pi-sorteo-sortear", class: "pi-sorteo-boton" }, tx("sorteoSortear"));
+    const cerrar = el("button", { type: "button", id: "pi-sorteo-cerrar", class: "pi-sorteo-boton pi-sorteo-sec" }, tx("cerrar"));
+    cerrar.addEventListener("click", cerrarSorteo);
+    caja.replaceChildren(el("div", { class: "pi-sorteo-marco" },
+      el("p", { class: "pi-sorteo-torneo", texto: v.grupo || v.nombre || "" }),
+      el("h2", { id: "pi-sorteo-titulo", class: "pi-sorteo-titulo", texto: tx(tipo === "color" ? "sorteoTituloColor" : "sorteoTituloNumeros") }),
+      cuerpo, estadoTxt, el("div", { class: "pi-sorteo-botones" }, sortear, cerrar)));
+    caja.onkeydown = (e) => {
+      if (e.key === "Escape") { e.preventDefault(); cerrarSorteo(); return; }
+      if (e.key !== "Tab") return;
+      const f = [...caja.querySelectorAll("button:not([disabled])")];
+      if (!f.length) return;
+      if (e.shiftKey && document.activeElement === f[0]) { e.preventDefault(); f[f.length - 1].focus(); }
+      else if (!e.shiftKey && document.activeElement === f[f.length - 1]) { e.preventDefault(); f[0].focus(); }
+    };
+    // Antes de sortear: los nombres (o la pregunta del color).
+    if (tipo === "numeros") cuerpo.append(el("ol", { class: "pi-sorteo-lista" }, T.ordenInicial(v).map((id) => el("li", {}, el("span", { class: "pi-sorteo-num", texto: "?" }), el("span", { texto: nombreDe(id) })))));
+    else cuerpo.append(el("p", { class: "pi-sorteo-color", texto: tx("sorteoPreguntaColor", { n: nombreDe(T.ordenInicial(v)[0]) }) }));
+    sortear.addEventListener("click", () => {
+      sortear.disabled = true;
+      if (tipo === "color") {
+        v.colorInicial = T.sortearColor();
+        anotarSorteo(v, "color"); guardar();
+        const fin = () => {
+          cuerpo.replaceChildren(el("p", { class: "pi-sorteo-color pi-sorteo-resultado", texto: v.colorInicial === "b" ? tx("sorteoColorNegras", { n: nombreDe(T.ordenInicial(v)[0]) }) : tx("sorteoColorBlancas", { n: nombreDe(T.ordenInicial(v)[0]) }) }));
+          estadoTxt.textContent = tx("sorteoListo"); cerrar.focus(); pintarTorneo(); pintarRondas();
+        };
+        if (quieto) fin(); else { cuerpo.replaceChildren(el("p", { class: "pi-sorteo-color pi-sorteo-girando", "aria-hidden": "true", texto: "♔ ♚" })); sorteoTimer = setTimeout(fin, 1800); }
+        return;
+      }
+      T.sortearNumeracion(v); anotarSorteo(v, "numeros"); guardar();
+      const orden = v.numeracion.slice();
+      const ol = el("ol", { class: "pi-sorteo-lista" });
+      cuerpo.replaceChildren(ol);
+      let i = 0;
+      const uno = () => {
+        ol.append(el("li", { class: "pi-sorteo-nuevo" }, el("span", { class: "pi-sorteo-num", texto: String(i + 1) }), el("span", { texto: nombreDe(orden[i]) })));
+        estadoTxt.textContent = tx("sorteoUno", { n: i + 1, j: nombreDe(orden[i]) });
+        i++;
+        if (i < orden.length) sorteoTimer = setTimeout(uno, quieto ? 0 : 1200);
+        else { estadoTxt.textContent = tx("sorteoListo"); cerrar.focus(); pintarRondas(); }
+      };
+      if (quieto) { while (i < orden.length - 1) { ol.append(el("li", {}, el("span", { class: "pi-sorteo-num", texto: String(i + 1) }), el("span", { texto: nombreDe(orden[i]) }))); i++; } uno(); }
+      else uno();
+    });
+    caja.hidden = false;
+    document.body.classList.add("pi-sorteo-abierto");
+    if (caja.requestFullscreen) caja.requestFullscreen().catch(() => {});
+    sortear.focus();
+  }
+
   // ---------- El reloj del retraso ----------
   // Quien no está sentado al empezar la ronda se marca, y la página cuenta
   // los minutos: en ajedrez pierde cuando su reloj cae a cero (art. 30), es
@@ -2982,7 +3068,7 @@
     const atrasada = el("p", { id: "pi-reloj-atrasada", class: "text-sm font-semibold mt-2", role: "status" });
     const pintarLista = () => {
       const lleva = Math.floor((Date.now() - R.inicio) / 60000);
-      const jugando = R.mesas.map((m, i) => (m.n !== null && !m.r ? i + 1 : 0)).filter(Boolean);
+      const jugando = R.mesas.map((m, i) => (m.n !== null && !m.r ? V.mesaFisica(v, i) : 0)).filter(Boolean);
       atrasada.textContent = dura && lleva > dura && jugando.length ? tx("cortosAviso") + " " + tx("relojAtrasada", { l: lleva, d: dura, m: jugando.join(", ") }) : "";
       atrasada.hidden = !atrasada.textContent;
       ul.replaceChildren();
@@ -3802,7 +3888,7 @@
   // El afterprint llega sea que se imprima o se cancele: ahí se limpia, una
   // sola vez para toda la página (no hace falta re-engancharlo).
   window.addEventListener("afterprint", () => {
-    document.body.classList.remove("pi-imprimiendo-plantilla", "pi-imprimiendo-firmas");
+    document.body.classList.remove("pi-imprimiendo-plantilla", "pi-imprimiendo-firmas", "pi-imprimiendo-pared");
     const plantilla = $("pi-plantilla");
     if (plantilla) plantilla.replaceChildren();
     const firmas = $("pi-firmas");
@@ -3985,10 +4071,16 @@
         const lista = el("ol", { class: "list-decimal pl-6 mb-3 text-sm" });
         for (const id of T.ordenInicial(v)) lista.append(el("li", { texto: nombreDe(id) }));
         caja.append(el("h3", { class: "font-semibold", texto: tx("numerosSorteo") }), lista,
-          el("button", { type: "button", class: C.botonSec + " mb-4", onclick: () => { T.sortearNumeracion(v); guardar(); pintarRondas(); Avisos.avisar(tx("sorteados")); } }, tx("sortear")));
+          el("div", { class: "flex flex-wrap gap-2 mb-4" },
+            el("button", { type: "button", class: C.botonSec, onclick: () => { T.sortearNumeracion(v); anotarSorteo(v, "numeros"); guardar(); pintarRondas(); Avisos.avisar(tx("sorteados")); } }, tx("sortear")),
+            el("button", { type: "button", id: "pi-sortear-proyector", class: C.botonSec, onclick: () => abrirSorteo("numeros") }, tx("sorteoProyector"))));
       }
     } else {
       caja.append(el("p", { class: C.nota + " mb-3", texto: tx("byesAyuda") }));
+      // El color del n.º 1 en la ronda 1, sorteado a la vista de todos.
+      if (r === 0) caja.append(el("div", { class: "flex flex-wrap items-center gap-2 mb-3" },
+        el("span", { class: "text-sm", texto: tx("sorteoColorActual", { c: (v.colorInicial === "b" ? tx("negras") : tx("blancas")).toLowerCase() }) }),
+        el("button", { type: "button", id: "pi-sortear-color", class: C.mini, onclick: () => abrirSorteo("color") }, tx("sorteoColorBoton"))));
       const ul = el("ul", { class: "grid sm:grid-cols-2 gap-x-6 gap-y-1 mb-4" });
       const num = T.numeros(v);
       for (const id of T.ordenInicial(v)) {
@@ -4212,6 +4304,7 @@
       if (info) dl.append(el("div", {}, el("dt", { class: "inline font-semibold", texto: c + ": " }), el("dd", { class: "inline", texto: info[idioma] })));
     }
     pintarMejoresTableros(k);
+    pintarPremios(k);
   }
 
   // En un torneo por equipos, el mejor de cada tablero (como en las
@@ -4237,6 +4330,233 @@
           el("td", { texto: f.institucion }), el("td", { class: "num", texto: puntosTexto(f.puntos) }),
           el("td", { class: "num", texto: f.jugadas }), el("td", { class: "num", texto: Math.round(f.porcentaje * 100) })))))));
     }
+  }
+
+  // ---------- Publicar en «Torneos en Pareo Integral» ----------
+  // El torneo se publica sin cuenta (js/pareo/publicar.js) y queda con su
+  // clave (`t.publicado`): cada vez que se guarda, a los 30 segundos, se pone
+  // al día solo (con una sola llamada aunque se anoten diez resultados en ese
+  // rato). «Dejar de publicar» lo quita del espacio público.
+  const ESPERA_PUBLICAR = 30000;
+  const publicando = new Map();
+  function programarPublicacion() {
+    const id = estado.id;
+    if (publicando.has(id)) return;
+    publicando.set(id, setTimeout(() => { publicando.delete(id); actualizarPublicado(id); }, ESPERA_PUBLICAR));
+  }
+  async function actualizarPublicado(id, boton) {
+    const tor = id === estado.id ? t() : leerJSON(PREFIJO + id, null);
+    if (!tor || !tor.publicado) return;
+    if (boton) boton.disabled = true;
+    const r = await PareoPublicar.actualizar(tor);
+    if (boton) boton.disabled = false;
+    if (r.ok) {
+      tor.publicado.hora = Date.now();
+      escribir(PREFIJO + id, JSON.stringify(tor));
+      if (id === estado.id && estado.ficha === "archivos") pintarPublicar();
+      if (boton) Avisos.avisar(tx("publicarAlDia"));
+      return;
+    }
+    if (r.noExiste) {
+      delete tor.publicado;
+      escribir(PREFIJO + id, JSON.stringify(tor));
+      if (id === estado.id && estado.ficha === "archivos") pintarPublicar();
+    }
+    if (boton || r.noExiste) Avisos.avisar(r.error || tx("publicarSinRed"), { tipo: "error" });
+  }
+  async function publicarTorneos(lista, boton) {
+    boton.disabled = true;
+    let bien = 0;
+    let error = null;
+    for (const tor of lista) {
+      if (tor.publicado) { bien++; continue; }
+      const r = await PareoPublicar.crear(tor);
+      if (!r.ok) { error = r.error || tx("publicarSinRed"); break; }
+      tor.publicado = { id: r.id, clave: r.clave, hora: Date.now() };
+      if (tor === t() || tor.__id === estado.id) { estado.t.publicado = tor.publicado; guardar(); }
+      else guardarDelEvento(tor);
+      bien++;
+    }
+    boton.disabled = false;
+    pintarPublicar();
+    if (error) Avisos.avisar(error, { tipo: "error" });
+    else Avisos.avisar(lista.length > 1 ? tx("publicadosVarios", { n: bien }) : tx("publicadoUno"));
+    const x = $("pi-publicar-enlace"); if (x) x.focus();
+  }
+  function pintarPublicar() {
+    const caja = $("pi-publicar");
+    if (!caja) return;
+    const v = t();
+    caja.replaceChildren(
+      el("h2", { class: "font-serif text-xl font-bold mb-1", texto: tx("publicarTitulo") }),
+      el("p", { class: C.nota + " mb-3", texto: tx("publicarAyuda") }));
+    if (!v.jugadores.length) { caja.append(el("p", { class: C.nota, texto: tx("primeroJugadores") })); return; }
+    if (v.publicado) {
+      const url = PareoPublicar.enlace(v.publicado.id);
+      caja.append(
+        el("p", { class: "text-sm font-semibold", role: "status", texto: "✓ " + tx("publicadoEstado", { h: v.publicado.hora ? horaCR(v.publicado.hora) : "—" }) }),
+        el("p", { class: "text-sm mt-1 break-all" }, el("a", { id: "pi-publicar-enlace", href: url, target: "_blank", rel: "noopener", class: "underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400", texto: url })),
+        el("p", { class: C.nota + " mt-1", texto: tx("publicadoAyuda") }));
+      const ahora = el("button", { type: "button", id: "pi-publicar-ahora", class: C.botonSec }, tx("publicarAhora"));
+      ahora.addEventListener("click", () => actualizarPublicado(estado.id, ahora));
+      const quitarB = el("button", { type: "button", id: "pi-publicar-quitar", class: C.miniPeligro + " px-3 py-2" }, tx("publicarQuitar"));
+      quitarB.addEventListener("click", async () => {
+        if (!(await Avisos.confirmar(tx("publicarQuitarConfirma"), { aceptar: tx("publicarQuitar"), peligro: true }))) return;
+        quitarB.disabled = true;
+        const r = await PareoPublicar.borrar(v.publicado);
+        quitarB.disabled = false;
+        if (!r.ok) { Avisos.avisar(r.error || tx("publicarSinRed"), { tipo: "error" }); return; }
+        delete v.publicado;
+        guardar(); pintarPublicar();
+        Avisos.avisar(tx("publicarQuitado"));
+        const b = $("pi-publicar-permiso"); if (b) b.focus();
+      });
+      caja.append(el("div", { class: "mt-3 flex flex-wrap gap-2" }, ahora, quitarB));
+      return;
+    }
+    const permiso = el("input", { type: "checkbox", id: "pi-publicar-permiso", class: "mt-1" });
+    caja.append(el("div", { class: "flex items-start gap-2 text-sm" }, permiso,
+      el("label", { for: "pi-publicar-permiso" }, tx("publicarPermiso") + " ",
+        el("a", { href: "privacidad.html#torneos", target: "_blank", rel: "noopener", class: "underline underline-offset-2 hover:no-underline", texto: tx("politicaPrivacidad") }), ".")));
+    const sinPermiso = () => { if (permiso.checked) return false; Avisos.avisar(tx("publicarFaltaPermiso"), { tipo: "error" }); permiso.focus(); return true; };
+    const uno = el("button", { type: "button", id: "pi-publicar-uno", class: C.boton }, tx("publicarUno"));
+    uno.addEventListener("click", () => { if (!sinPermiso()) publicarTorneos([t()], uno); });
+    const fila = el("div", { class: "mt-3 flex flex-wrap gap-2" }, uno);
+    const delEvento = v.evento ? torneosDelEvento().filter((x) => x.jugadores.length) : [];
+    if (delEvento.length > 1) {
+      const todos = el("button", { type: "button", id: "pi-publicar-evento", class: C.botonSec }, tx("publicarEvento", { n: delEvento.length }));
+      todos.addEventListener("click", () => { if (!sinPermiso()) publicarTorneos(torneosDelEvento().filter((x) => x.jugadores.length), todos); });
+      fila.append(todos);
+    }
+    caja.append(fila);
+  }
+
+  // ---------- Los premios especiales ----------
+  // Además del podio: por franja de Elo, por categoría, la mejor mujer y el
+  // mejor sin Elo (js/pareo/premios.js). Nadie se lleva dos premios: el
+  // podio primero y después cada premio en el orden en que está anotado.
+  // Solo en individual (en equipos ya está el mejor de cada tablero).
+  function pintarPremios(k) {
+    const v = t();
+    const caja = $("pi-premios");
+    caja.replaceChildren();
+    if (E.esDeEquipos(v) || !v.jugadores.length) return;
+    const lista = (v.premiosEspeciales || []).map(PareoPremios.normalizar).filter(Boolean);
+    const sec = el("section", { class: "mt-6", "aria-labelledby": "pi-premios-titulo" },
+      el("h3", { id: "pi-premios-titulo", class: "font-serif text-lg font-bold mb-1", texto: tx("premiosTitulo") }),
+      el("p", { class: C.nota + " mb-2", texto: tx("premiosAyuda") }));
+    caja.append(sec);
+    if (lista.length) {
+      const filas = k ? V.aplicarDesempate(v, E.clasificacion(hasta(k), v.desempates)) : [];
+      const reparto = PareoPremios.asignar(Object.assign({}, v, { premiosEspeciales: lista }), filas, jugador);
+      if (k && k < V.totalRondas(v)) sec.append(el("p", { class: "text-sm font-semibold mb-2", texto: tx("premiosProvisional", { r: k, t: V.totalRondas(v) }) }));
+      const ul = el("ul", { id: "pi-premios-lista", class: "space-y-2" });
+      reparto.especiales.forEach((x, i) => {
+        const ganan = !k ? tx("premiosSinRondas")
+          : x.ganadores.length ? x.ganadores.map((g) => (x.premio.cuantos > 1 ? g.lugar + ". " : "") + nombreDe(g.id) + " (" + tx("puesto").toLowerCase() + " " + g.puesto + ", " + puntosTexto(g.puntos) + " " + tx("pts").toLowerCase() + ")").join(" · ")
+          : x.candidatos ? tx("premiosYaPremiados") : tx("premiosNadie");
+        ul.append(el("li", { class: "pi-revisar flex flex-wrap items-start justify-between gap-2", "data-premio": String(i) },
+          el("div", {},
+            el("p", { class: "font-semibold", texto: PareoPremios.etiqueta(x.premio, idioma) + (x.premio.cuantos > 1 ? " · " + tx("premiosCuantos", { n: x.premio.cuantos }) : "") }),
+            el("p", { class: "text-sm", "data-ganadores": "", texto: ganan })),
+          el("button", { type: "button", class: C.miniPeligro, "aria-label": tx("premiosQuitarA", { p: PareoPremios.etiqueta(x.premio, idioma) }), onclick: () => {
+            v.premiosEspeciales = lista.filter((_, j) => j !== i); guardar(); pintarClasificacion();
+            const b = $("pi-premio-tipo"); if (b) b.focus();
+          } }, tx("quitar"))));
+      });
+      sec.append(ul);
+    }
+    // Agregar uno: el tipo y lo que pide cada tipo (desde/hasta, la categoría).
+    const tipo = el("select", { id: "pi-premio-tipo", class: C.campoChico },
+      el("option", { value: "elo", texto: tx("premioTipoElo") }), el("option", { value: "categoria", texto: tx("premioTipoCategoria") }),
+      el("option", { value: "mujer", texto: tx("premioTipoMujer") }), el("option", { value: "sinElo", texto: tx("premioTipoSinElo") }));
+    const desde = el("input", { id: "pi-premio-desde", type: "number", min: "0", max: "3500", step: "1", inputmode: "numeric", class: C.campoChico + " w-24" });
+    const hastaElo = el("input", { id: "pi-premio-hasta", type: "number", min: "0", max: "3500", step: "1", inputmode: "numeric", class: C.campoChico + " w-24" });
+    const cats = PareoPremios.categorias(v);
+    const categoria = el("select", { id: "pi-premio-categoria", class: C.campoChico }, cats.map((c) => el("option", { value: c, texto: c })));
+    const cuantos = el("select", { id: "pi-premio-cuantos", class: C.campoChico }, [1, 2, 3].map((n) => el("option", { value: String(n), texto: String(n) })));
+    const campo = (id, texto, control) => el("label", { for: id, class: "flex flex-col text-sm" }, el("span", { class: "font-semibold", texto }), control);
+    const cElo = el("div", { class: "flex flex-wrap gap-2" }, campo("pi-premio-desde", tx("premioDesde"), desde), campo("pi-premio-hasta", tx("premioHasta"), hastaElo));
+    const cCat = cats.length ? campo("pi-premio-categoria", tx("premioTipoCategoria"), categoria) : el("p", { class: C.nota, texto: tx("premiosSinCategorias") });
+    const mostrar = () => { cElo.hidden = tipo.value !== "elo"; cCat.hidden = tipo.value !== "categoria"; };
+    tipo.addEventListener("change", mostrar);
+    const agregar = el("button", { type: "button", id: "pi-premio-agregar", class: C.botonSec }, tx("premiosAgregar"));
+    agregar.addEventListener("click", () => {
+      const p = PareoPremios.normalizar({ tipo: tipo.value, desde: desde.value, hasta: hastaElo.value, valor: tipo.value === "categoria" && cats.length ? categoria.value : "", cuantos: cuantos.value });
+      if (!p) { Avisos.avisar(tx(tipo.value === "elo" ? "premiosEloMal" : "premiosCategoriaMal"), { tipo: "error" }); return; }
+      v.premiosEspeciales = lista.concat([p]);
+      guardar(); pintarClasificacion();
+      Avisos.avisar(tx("premiosAgregado", { p: PareoPremios.etiqueta(p, idioma) }));
+      const b = $("pi-premio-tipo"); if (b) b.focus();
+    });
+    sec.append(el("div", { class: "mt-3 flex flex-wrap items-end gap-3" },
+      campo("pi-premio-tipo", tx("premioTipo"), tipo), cElo, cCat, campo("pi-premio-cuantos", tx("premioCuantosCampo"), cuantos), agregar));
+    mostrar();
+  }
+
+  // ---------- Compartir por WhatsApp ----------
+  // El texto armado (js/pareo/compartir.js) en un cuadro para revisarlo,
+  // con «Abrir WhatsApp» (wa.me: quien lo manda elige a quién) y «Copiar».
+  // Si el torneo está en vivo, el mensaje lleva el enlace.
+  function enlaceVivoActual() {
+    const v = t();
+    const base = location.origin + location.pathname;
+    if (estado.eventoVivo && v.evento && v.evento.id === estado.eventoVivo.id) return base + "#evento=" + estado.eventoVivo.codigo;
+    if (estado.enVivo && v.liveCodigo) return base + "#vivo=" + v.liveCodigo;
+    return "";
+  }
+  function abrirCompartir(caja, boton, texto) {
+    const abierto = !caja.hidden && caja.dataset.para === boton.id;
+    caja.replaceChildren();
+    for (const b of document.querySelectorAll("[aria-controls='" + caja.id + "']")) b.setAttribute("aria-expanded", "false");
+    if (abierto) { caja.hidden = true; return; }
+    caja.dataset.para = boton.id;
+    const area = el("textarea", { id: caja.id + "-texto", class: C.campo + " font-mono text-xs", rows: "10", readonly: true });
+    area.value = texto;
+    const copiar = el("button", { type: "button", class: C.botonSec }, tx("whatsappCopiar"));
+    copiar.addEventListener("click", async () => {
+      try { await navigator.clipboard.writeText(texto); Avisos.avisar(tx("whatsappCopiado")); }
+      catch (e) { area.focus(); area.select(); Avisos.avisar(tx("whatsappSeleccionado"), { tipo: "info" }); }
+    });
+    caja.append(el("div", { class: "pi-revisar mb-4" },
+      el("label", { for: area.id, class: "block text-sm font-semibold mb-1", texto: tx("whatsappTexto") }), area,
+      el("div", { class: "mt-2 flex flex-wrap gap-2" },
+        el("a", { href: PareoCompartir.enlaceWhatsapp(texto), target: "_blank", rel: "noopener", class: C.boton, "data-whatsapp": "" }, tx("whatsappAbrir")),
+        copiar)));
+    caja.hidden = false;
+    boton.setAttribute("aria-expanded", "true");
+    area.focus();
+  }
+
+  // ---------- La clasificación para la pared (A3) ----------
+  // Una hoja A3 con letra grande, para pegarla después de cada ronda: el
+  // puesto, el nombre, el centro, los puntos y los dos primeros desempates,
+  // con la ronda y la hora en que se imprimió (una hoja vieja en la pared
+  // engaña: la hora lo dice). @page pared en css/styles.css.
+  function imprimirClasificacionPared() {
+    const v = t();
+    const k = rondasCompletas();
+    if (!k) { Avisos.avisar(tx("paredSinRondas"), { tipo: "error" }); return; }
+    const filas = V.aplicarDesempate(v, E.clasificacion(hasta(k), v.desempates));
+    const des = (v.desempates || []).slice(0, 2);
+    const hoja = el("div", { class: "pi-pared" },
+      el("h1", { class: "pi-pared-titulo", texto: v.grupo || v.nombre || tx("fClasificacion") }),
+      el("p", { class: "pi-pared-sub", texto: tx("clasificacionTras", { r: k }) + (k < V.totalRondas(v) ? " · " + tx("paredDe", { t: V.totalRondas(v) }) : "") }),
+      el("p", { class: "pi-pared-hora", texto: tx("paredImpresa", { h: horaCR(Date.now()), f: window.HoraCR ? HoraCR.fecha(Date.now()) : new Date().toLocaleDateString("es-CR", { timeZone: "America/Costa_Rica" }) }) }),
+      el("table", { class: "pi-pared-tabla" },
+        el("thead", {}, el("tr", {},
+          el("th", { class: "num", scope: "col", texto: tx("puesto") }), el("th", { scope: "col", texto: tx("nombre") }),
+          el("th", { scope: "col", texto: E.esDeEquipos(v) ? tx("equipo") : tx("institucion") }), el("th", { class: "num", scope: "col", texto: tx("pts") }),
+          des.map((c) => el("th", { class: "num", scope: "col", texto: c })))),
+        el("tbody", {}, filas.map((f) => {
+          const j = jugador(f.id) || {};
+          return el("tr", {},
+            el("td", { class: "num", texto: f.puesto }), el("td", { class: "pi-pared-nombre", texto: j.nombre || "?" }),
+            el("td", { texto: E.esDeEquipos(v) ? "" : (j.institucion || "") }), el("td", { class: "num pi-pared-pts", texto: puntosTexto(f.puntos) }),
+            des.map((c) => el("td", { class: "num", texto: valorDesempate(c, f.valores[c]) })));
+        }))));
+    $("pi-plantilla").replaceChildren(hoja);
+    imprimirCon("pi-imprimiendo-pared");
   }
 
   // El Elo que gana o pierde cada uno: solo en individual y si alguien tiene Elo.
@@ -4671,6 +4991,12 @@
     $("pi-clas-institucion").addEventListener("change", (e) => { estado.filtroInstitucion = e.target.value; pintarClasificacion(); });
     $("pi-cruzada-institucion").addEventListener("change", (e) => { estado.filtroInstitucion = e.target.value; pintarCruzada(); });
     $("pi-clas-pdf").addEventListener("click", () => bajarPDF($("pi-clas-pdf"), datosClasificacionPDF, "clasificacion"));
+    $("pi-clas-pared").addEventListener("click", imprimirClasificacionPared);
+    $("pi-clas-whatsapp").addEventListener("click", () => {
+      const texto = PareoCompartir.textoClasificacion(t(), { idioma, enlace: enlaceVivoActual() });
+      if (!texto) { Avisos.avisar(tx("paredSinRondas"), { tipo: "error" }); return; }
+      abrirCompartir($("pi-clas-compartir"), $("pi-clas-whatsapp"), texto);
+    });
     $("pi-cruzada-pdf").addEventListener("click", () => bajarPDF($("pi-cruzada-pdf"), datosCruzadaPDF, "cruzada"));
 
     document.querySelectorAll(".pi-imprimir").forEach((b) => b.addEventListener("click", () => window.print()));

@@ -3385,6 +3385,131 @@ Al tocar esto, `node herramientas/verificar-pareo-sala-evento.js`. Rompiendo a
 propósito la mesa física, la casilla de consentimiento, el llamado, el fin de
 la ronda o el aceptar, salta.
 
+### Los premios especiales, WhatsApp, la hoja para la pared y el sorteo en el proyector
+
+Lo pidió el dueño del sitio, de una lista de propuestas. Dos de esas
+propuestas ya existían y no se volvieron a hacer: la aceleración Baku (la
+casilla «Aceleración Baku» de la ficha Torneo, que va al TRF como
+`FIDE_DUTCH_2026_BAKU`) y el aviso de la ronda atrasada (en el reloj del
+retraso). A ese aviso solo se le corrigió que nombraba la posición de la mesa
+(«mesas 2») en vez de su número en la sala (`V.mesaFisica`: «mesas 12»).
+
+- **Los premios especiales** (`js/pareo/premios.js`, sin DOM). Además del
+  podio, un torneo individual reparte premios por franja de Elo, por
+  categoría (el campo libre de cada jugador), a la mejor mujer y al mejor
+  sin Elo, de uno a tres por premio. Se anotan debajo de la Clasificación
+  (`t.premiosEspeciales`) y salen ahí, en la premiación del evento y en los
+  diplomas («por obtener el premio especial «Mejor mujer» en…»). La regla
+  es la de las bases de casi todos los torneos: **nadie se lleva dos
+  premios**. Primero el podio, con los mismos empatados que pone
+  `V.podio` (puestos 1 a 3, no «las tres primeras filas»: si no, quien
+  comparte el tercer puesto recibiría bronce y además un premio especial),
+  y después cada premio en el orden en que está anotado, al mejor
+  clasificado que todavía no tiene. Un premio vacío dice por qué: nadie
+  cumple la condición o quienes la cumplen ya tienen otro premio. En
+  equipos no hay: ya está el mejor de cada tablero.
+- **Compartir por WhatsApp** (`js/pareo/compartir.js`, sin DOM). En cada
+  ronda y en la Clasificación, «Compartir por WhatsApp» arma el mensaje
+  (el pareo con la mesa de la sala, los puntos de antes de la ronda como en
+  las listas de FIDE, los libres al final y el resultado si ya está; o la
+  clasificación con su primer desempate) y lo muestra para revisarlo, con
+  «Abrir WhatsApp» (`https://wa.me/?text=`: quien lo manda elige a quién,
+  en el celular o en la computadora) y «Copiar el texto». Si el torneo está
+  en vivo, el mensaje lleva el enlace. Los asteriscos de un nombre se
+  quitan: en WhatsApp abrirían una negrita.
+- **La clasificación para la pared** (A3). «Para la pared (A3)» imprime una
+  hoja A3 con letra grande: puesto, nombre, centro, puntos y los dos
+  primeros desempates, con la ronda y **la hora en que se imprimió** (una
+  hoja vieja en la pared engaña). La página con nombre `@page pared` va en
+  el `body` entero mientras se imprime: puesta solo en la hoja, lo que hay
+  antes en el documento, aunque no mida nada, abría una primera hoja carta
+  en blanco (se vio en el PDF: dos hojas, la primera de 612 × 792).
+- **El sorteo del congresillo en el proyector.** En la ronda 1, «Sortear en
+  el proyector» (los números de salida de un todos contra todos) y
+  «Sortear el color en el proyector» (el color del n.º 1 en un suizo; el
+  color se sortea con `T.sortearColor`). Se abre a pantalla completa, con
+  letra enorme y el número escrito (no solo el color de la ficha), anuncia
+  los números uno por uno y queda anotado en el torneo (`t.sorteo`, con la
+  hora); el acta del evento lo trae en «Sorteos». Con «menos movimiento»
+  del sistema sale todo de una vez. Es un diálogo de verdad: el foco queda
+  adentro, Escape lo cierra y el foco vuelve al botón (después de salir de
+  la pantalla completa: al salir, el navegador suelta el foco).
+
+**Descartado para siempre: que el jugador anote su resultado desde el
+celular** (escanear el QR de la mesa y marcar quién ganó). El dueño del
+sitio lo descartó y pidió que no se vuelva a proponer. El resultado lo
+anota el árbitro o un adjunto, como hasta ahora.
+
+Al tocar esto, `node herramientas/verificar-pareo-premios.js`. Rompiendo a
+propósito la regla de los dos premios, la mesa de la sala del mensaje, el
+tamaño A3, los sorteos del acta o la mesa de la ronda atrasada, salta.
+
+### Torneos en Pareo Integral: el espacio público
+
+Lo pidió el dueño del sitio: «un espacio público donde se vean todos los
+torneos, que elijan cuál quieren ver y ahí poder ver todas las rondas,
+filtros por jugador y rivales, tabla de posiciones». Es
+**`torneos-pareo.html`** (`js/torneos-pareo-pagina.js`), y los torneos los
+publica quien organiza desde Pareo Integral, en la ficha «Archivos y
+comprobador» («Publicar este torneo» o «Publicar los N torneos del evento»).
+
+- **Sin cuenta, con una clave por torneo.** Pareo Integral se usa sin
+  cuenta, así que publicar no puede depender de una sesión. La Edge
+  Function `pareo-publicar` (`verify_jwt` en false) crea la fila y le
+  devuelve a quien publica una clave secreta al azar; en la base se guarda
+  solo su sha256 (`clave_hash`). El navegador la guarda dentro del torneo
+  (`t.publicado = { id, clave, hora }`) y es lo único que deja ponerlo al
+  día o quitarlo. Quien tiene el archivo .json del torneo tiene también la
+  clave: es el mismo dueño. Antes de escribir pasa por el freno
+  `public.pareo_frenar()` (sobre `interno.envios_publicos`, como los demás
+  envíos sin cuenta): crear pesa más que actualizar.
+- **Qué se publica lo decide la función, no el navegador.** `limpiar()`
+  elige campo por campo: nombre, institución, Elo, título, federación,
+  categoría, rondas y resultados. Nunca la fecha de nacimiento, el sexo, el
+  ID FIDE, las firmas ni las notas del árbitro, aunque lleguen (se probó
+  mandándolos: no quedan). El navegador ya manda solo eso
+  (`PareoPublicar.datosPublicos`), pero no se le cree.
+- **La lectura es pública y la clave no se lee.** `public.pareo_publicados`
+  tiene RLS con lectura para todos, pero el permiso de SELECT es por
+  columna y no incluye `clave_hash`; nadie puede escribir desde afuera (solo
+  la función, con la clave de servicio). La página pide columnas con
+  nombre, nunca `*` (un `*` fallaría por la columna sin permiso).
+- **Con el consentimiento.** Publicar pide marcar «Tengo permiso para
+  publicar los nombres y los resultados de este torneo», con enlace a la
+  política de privacidad, que dice qué se ve y cómo pedir que se quite o se
+  abrevie un nombre (Ley 8968).
+- **Se pone al día solo.** Cada vez que se guarda el torneo, a los 30
+  segundos, una sola llamada aunque en ese rato se anoten diez resultados.
+  «Actualizar ahora» la manda en el momento y «Dejar de publicar» pregunta,
+  borra con la clave y la olvida.
+- **La página pública** lista los torneos (el más reciente primero, con un
+  buscador por nombre, evento o lugar; de mil en mil, por el corte de
+  PostgREST) y, al elegir uno (`#t=<id>`), muestra la clasificación (con
+  los mismos módulos de `js/pareo/`, así sale igual que en la computadora
+  del árbitro), las rondas con la mesa de la sala y un buscador de jugador,
+  y cada jugador con sus rivales: ronda por ronda, el rival, su Elo, el
+  color y lo que sacó. El torneo abierto se vuelve a leer cada minuto
+  mientras la pestaña está a la vista, sin perder el foco ni lo buscado.
+- **La ficha del jugador entre torneos.** Debajo de cada jugador, los otros
+  torneos publicados donde aparece el mismo nombre, con su puesto y sus
+  puntos, y el enlace a su ficha en ese torneo. La búsqueda es exacta
+  (`datos @> {"jugadores":[{"nombre": …}]}`): «PÉREZ» y «PEREZ» son dos
+  nombres. Se eligió así a propósito: unir por parecido juntaría a dos
+  personas distintas en un espacio público.
+- **Solo desde ajedrez-integral.com.** La función responde CORS solo a ese
+  origen, como `pareo-elo-nacional`: desde una vista previa de Cloudflare
+  publicar no funciona.
+
+Se probó de punta a punta contra la base real, con `pg_net` desde la misma
+base (el contenedor no llega a Supabase por HTTP): crear devolvió la clave,
+la fila guardó el hash de 64 caracteres y ningún dato de más, `anon` la leyó,
+borrar con una clave equivocada dio 403 y con la buena la quitó.
+
+Al tocar esto, `node herramientas/verificar-pareo-publicar.js`, con dobles
+de la función y de la tabla. Rompiendo a propósito lo que viaja (con la
+fecha de nacimiento), el permiso, la espera de 30 segundos, la mesa de la
+sala, las columnas pedidas (`*`) o la relectura, salta.
+
 ### La barra de progreso al buscar el Elo Nacional
 
 Antes de esto, tocar «Buscar Elo Nacional de quien no tiene» con una lista
