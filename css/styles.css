@@ -1751,13 +1751,27 @@ html.dark .comparar-serie-3 { background: #199e70; }
   body.pi-imprimiendo-plantilla [role="tabpanel"] { display: none !important; }
   body.pi-imprimiendo-plantilla .pi-plantilla { display: block !important; }
 }
-.pi-plantilla-titulo { font-family: Merriweather, Georgia, serif; font-weight: 700; font-size: 1.4rem; margin-bottom: 1rem; color: #000; }
-.pi-plantilla-mesa { display: flex; align-items: center; gap: 0.75rem; padding: 0.6rem 0; border-bottom: 1px solid #ccc; font-size: 1.15rem; color: #000; }
-.pi-plantilla-num { font-weight: 700; width: 2rem; text-align: right; flex-shrink: 0; }
-.pi-plantilla-jugador { flex: 1 1 auto; }
-.pi-plantilla-vs { color: #666; flex-shrink: 0; }
-.pi-plantilla-resultado { width: 6rem; height: 1.7rem; border: 1px solid #999; border-radius: 0.25rem; flex-shrink: 0; }
-.pi-plantilla-bye { font-style: italic; color: #666; margin-left: auto; }
+/* Una tabla de columnas fijas: mesa, blancas, guion, negras y la casilla del
+   resultado. Las dos de los jugadores miden lo mismo, así el guion cae siempre
+   en el mismo lugar y un nombre largo baja a otra línea sin correr nada. */
+.pi-plantilla { color: #000; width: 100%; box-sizing: border-box; }
+.pi-plantilla-titulo { font-family: Merriweather, Georgia, serif; font-weight: 700; font-size: 1.35rem; margin: 0 0 0.15rem; color: #000; }
+.pi-plantilla-torneo { font-size: 0.95rem; color: #333; margin: 0 0 0.9rem; }
+.pi-plantilla-lista { border-top: 2px solid #000; }
+.pi-plantilla-cab, .pi-plantilla-mesa { display: grid; grid-template-columns: 2.6rem minmax(0, 1fr) 1.4rem minmax(0, 1fr) 5.2rem; column-gap: 0.6rem; align-items: center; }
+.pi-plantilla-cab { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: #333; padding: 0.35rem 0; border-bottom: 1px solid #000; }
+.pi-plantilla-cab span:first-child { text-align: center; }
+.pi-plantilla-cab span:last-child { text-align: center; }
+.pi-plantilla-mesa { padding: 0.45rem 0; border-bottom: 1px solid #bbb; font-size: 1rem; line-height: 1.25; break-inside: avoid; }
+.pi-plantilla-mesa:nth-child(odd) { background: #f2f2f2; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+.pi-plantilla-num { font-weight: 700; font-size: 1.15rem; text-align: center; }
+.pi-plantilla-jugador { display: grid; grid-template-columns: 2.2rem minmax(0, 1fr) auto; column-gap: 0.25rem; align-items: baseline; }
+.pi-plantilla-nro { text-align: right; color: #444; font-variant-numeric: tabular-nums; }
+.pi-plantilla-nombre { font-weight: 600; overflow-wrap: anywhere; }
+.pi-plantilla-pts { color: #444; font-variant-numeric: tabular-nums; }
+.pi-plantilla-vs { color: #555; text-align: center; }
+.pi-plantilla-resultado { height: 1.7rem; border: 1.5px solid #555; border-radius: 0.25rem; box-sizing: border-box; }
+.pi-plantilla-mesa-bye .pi-plantilla-bye { grid-column: 3 / -1; font-style: italic; color: #444; text-align: right; padding-right: 0.3rem; }
 
 /* Las planillas de mesa para firmar (imprimirPlanillasFirma() en
    js/pareo/pagina.js): una hoja POR MESA, con salto de página entre una y la
@@ -1771,6 +1785,52 @@ html.dark .comparar-serie-3 { background: #199e70; }
 }
 .pi-firma-mesa { break-after: page; padding: 2rem 0; color: #000; }
 .pi-firma-mesa:last-child { break-after: auto; }
+/* Las planillas para firmar: tarjetas compactas, cuatro o más por hoja (no una
+   por hoja). Cada una con su borde y una línea punteada para cortar. */
+.pi-firma-mesa.pi-ft { break-after: auto; break-inside: avoid; padding: 0.45cm 0.6cm 0.4cm; margin-bottom: 0.4cm; border: 1.5px solid #333; border-radius: 0.2cm; position: relative; }
+.pi-firma-mesa.pi-ft::after { content: ""; position: absolute; left: -0.3cm; right: -0.3cm; bottom: -0.26cm; border-bottom: 1px dashed #999; }
+.pi-firma-mesa.pi-ft:last-child::after { display: none; }
+.pi-ft-cabeza { display: flex; align-items: baseline; gap: 0.6rem; border-bottom: 1px solid #333; padding-bottom: 0.2rem; margin-bottom: 0.35rem; }
+.pi-ft-mesa { font-family: Merriweather, Georgia, serif; font-weight: 700; font-size: 1.15rem; white-space: nowrap; }
+.pi-ft-torneo { font-size: 0.78rem; color: #333; line-height: 1.2; }
+.pi-ft-jugadores { display: grid; grid-template-columns: minmax(0, 1fr) 1.2rem minmax(0, 1fr); column-gap: 0.4rem; align-items: start; }
+.pi-ft-lado { display: flex; flex-direction: column; min-width: 0; }
+.pi-ft-color { font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #444; }
+.pi-ft-nombre { font-size: 0.98rem; font-weight: 600; line-height: 1.2; overflow-wrap: anywhere; }
+.pi-ft-vs { text-align: center; color: #555; padding-top: 0.7rem; }
+.pi-ft-bye { font-style: italic; color: #444; justify-content: flex-end; grid-column: 2 / -1; text-align: right; }
+.pi-ft-resultado { display: flex; align-items: center; gap: 0.7rem; margin-top: 0.4rem; font-size: 0.9rem; }
+.pi-ft-etiqueta { font-weight: 700; }
+.pi-ft-casillas { display: flex; gap: 1rem; }
+.pi-ft-casilla { white-space: nowrap; font-size: 0.95rem; }
+.pi-ft-anotado { font-weight: 700; font-size: 1.05rem; border: 1.5px solid #333; border-radius: 0.15cm; padding: 0 0.5rem; }
+.pi-ft-firmas { display: grid; grid-template-columns: 1fr 1fr; column-gap: 1.2cm; margin-top: 0.8cm; }
+.pi-ft-firma { display: flex; flex-direction: column; min-width: 0; }
+.pi-ft-raya { border-bottom: 1px solid #222; height: 0; }
+.pi-ft-quien { font-size: 0.72rem; color: #333; padding-top: 0.12rem; overflow-wrap: anywhere; }
+.pi-ft-tableros { margin-top: 0.3rem; font-size: 0.82rem; }
+.pi-ft-tablero { display: grid; grid-template-columns: 4.2rem minmax(0, 1fr) auto; column-gap: 0.4rem; align-items: center; padding: 0.1rem 0; border-bottom: 1px dotted #aaa; }
+.pi-ft-t { font-weight: 700; }
+.pi-ft-tablero .pi-ft-casillas { gap: 0.5rem; }
+.pi-ft-tablero .pi-ft-casilla { font-size: 0.8rem; }
+/* La marca de las incidencias de un jugador en el pareo (pareo.html): «i» por
+   jugada ilegal, «!» por irregularidad. Chica, junto al nombre, y se toca para
+   ver el detalle. Contraste medido: #7f1d1d sobre #fde8e8 da 8,5:1 y el blanco
+   sobre #7f1d1d, 10:1; la letra dice lo mismo que el color. */
+.pi-marca-inc { display: inline-block; min-width: 1.4em; padding: 0 0.3em; border-radius: 0.3em; border: 1px solid #7f1d1d; background: #fde8e8; color: #7f1d1d;
+  font: 700 0.8rem/1.35 ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: 0.06em; vertical-align: 0.1em; cursor: pointer; }
+.pi-marca-inc:focus-visible { outline: 2px solid #f0b429; outline-offset: 1px; }
+.dark .pi-marca-inc { background: #7f1d1d; color: #fff; border-color: #fca5a5; }
+.pi-inc-detalle { margin: 0.25rem 0 0.4rem; padding: 0.35rem 0.6rem; border-left: 3px solid #7f1d1d; background: rgba(127, 29, 29, 0.06); }
+/* La marca de agua de Ajedrez Integral (pareo.html): solo al imprimir, en
+   el centro de cada hoja (position: fixed se repite en todas las páginas),
+   encima pero casi transparente, para que ningún fondo gris la tape. */
+#pi-marca-agua { display: none; }
+@media print {
+  /* Los avisos que estén a la vista no salen en el papel (en todo el sitio). */
+  #avisos-zona { display: none !important; }
+  #pi-marca-agua { display: block !important; position: fixed; top: 50%; left: 50%; width: 11cm; height: auto; transform: translate(-50%, -50%); opacity: 0.07; z-index: 50; pointer-events: none; }
+}
 .pi-firma-titulo { font-family: Merriweather, Georgia, serif; font-weight: 700; font-size: 1.4rem; margin-bottom: 1.5rem; }
 .pi-firma-jugador { font-size: 1.2rem; margin-bottom: 0.5rem; }
 .pi-firma-resultado { font-size: 1.1rem; margin: 1rem 0 2rem; }

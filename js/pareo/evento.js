@@ -901,7 +901,28 @@
     return [...m.values()].sort((a, b) => a.localeCompare(b, "es"));
   }
 
+  // ---------- Las marcas de las incidencias en el pareo ----------
+  // Lo que se anotó contra un jugador en esta ronda (es decir, en esta
+  // partida): «i» por cada jugada ilegal (art. 7.5) y «!» por cada otra
+  // irregularidad. La segunda ilegal pierde la partida (art. 7.5.5): por eso
+  // se cuentan por ronda, no en todo el torneo. Las correcciones de un
+  // resultado y las apelaciones no marcan a nadie.
+  const NO_MARCA = new Set(["correccion", "apelacion"]);
+  function marcasIncidencias(R) {
+    const out = new Map();
+    for (const x of (R && R.incidencias) || []) {
+      if (!x.jugador || NO_MARCA.has(x.tipo)) continue;
+      const m = out.get(x.jugador) || { ilegales: 0, irregularidades: 0, items: [] };
+      if (x.articulo === "ilegal") m.ilegales++; else m.irregularidades++;
+      m.items.push(x);
+      out.set(x.jugador, m);
+    }
+    return out;
+  }
+  const textoMarca = (m) => (m ? "i".repeat(m.ilegales) + "!".repeat(m.irregularidades) : "");
+
   const api = {
+    marcasIncidencias, textoMarca,
     ARTICULOS, articuloTexto, revisarPareo, aplicarMesasFijas, certificadosArbitro, textoCertificadoArbitro, delCentro, centrosDeVista, CARGOS_FIRMA,
     sorpresas, proximaRonda, informePrensa, buscarEnHistorial, DIFERENCIA_SORPRESA,
     compararAnioAnterior,
