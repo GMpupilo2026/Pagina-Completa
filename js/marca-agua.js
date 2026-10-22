@@ -1,5 +1,7 @@
 /**
- * Ajedrez Integral — la marca de agua de Oscar Angulo Cubero, lista para un PDF.
+ * Ajedrez Integral — la marca de agua de Ajedrez Integral (el caballo con
+ * «AJEDREZ INTEGRAL» debajo, sin el nombre de Oscar), lista para un PDF. La
+ * misma de los libros y materiales que arma herramientas/ (lib/marca-agua.js).
  * También arma el logo de una academia (prepararDesde), para el PDF del
  * diagnóstico de un visitante que llegó por su enlace.
  *
@@ -15,7 +17,9 @@
 window.MarcaAgua = (function () {
   "use strict";
 
-  const URL_MARCA = "img/logo-oscar-angulo-marca.png";
+  /* Contada desde este archivo y no desde la página: así sirve igual en una
+     página de entreno/ o de la raíz. */
+  const URL_MARCA = new URL("../img/marca-agua-ajedrez-integral.png", (document.currentScript && document.currentScript.src) || document.baseURI).href;
   let promesa = null;
 
   async function armar(url) {
@@ -63,7 +67,7 @@ window.MarcaAgua = (function () {
   }
 
   /* Otro logo —el de una academia— listo igual para un PDF: cabecera y marca
-     de agua. Se guarda por dirección, igual que el de Oscar. */
+     de agua. Se guarda por dirección, igual que la de Ajedrez Integral. */
   const porDireccion = new Map();
   function prepararDesde(url) {
     if (!porDireccion.has(url)) {

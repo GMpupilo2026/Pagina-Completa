@@ -62,7 +62,9 @@ function incrustar(relativo, tipo) {
   return `data:${tipo || "image/png"};base64,` + fs.readFileSync(path.join(RAIZ, relativo)).toString("base64");
 }
 const LOGO = incrustar("img/logo-oscar-angulo.png");
-const LOGO_MARCA = incrustar("img/logo-oscar-angulo-marca.png");
+const LOGO_MARCA = incrustar(require("./lib/marca-agua").MARCA_AGUA);
+// El logo de quien escribe, junto a su nombre en el diploma (no es la marca de agua).
+const LOGO_AUTOR = incrustar("img/logo-oscar-angulo-marca.png");
 const FUENTES = `
   @font-face { font-family: "Quicksand"; font-weight: 700; src: url("${incrustar("fonts/quicksand-700-latin.woff2", "font/woff2")}") format("woff2"); }
   @font-face { font-family: "Comic Neue"; font-weight: 400; src: url("${incrustar("fonts/comic-neue-400-latin.woff2", "font/woff2")}") format("woff2"); }
@@ -482,7 +484,7 @@ ${L.CAPITULOS.map(capituloHTML).join("")}
   <p class="texto">${L.DIPLOMA.texto.map(esc).join("<br>")}</p>
   <div class="firmas"><div><strong>Fecha</strong></div><div><span class="firma-mano">${esc(L.DIPLOMA.firmaMano)}</span><strong>${esc(L.DIPLOMA.firma)}</strong></div></div>
   <div class="coleccion"><span class="coleccion-t">Mi colección:</span>${coleccion()}</div>
-  <div class="autoria"><img src="${LOGO_MARCA}" alt="">${esc(L.AUTOR)}</div>
+  <div class="autoria"><img src="${LOGO_AUTOR}" alt="">${esc(L.AUTOR)}</div>
 </section>
 ${soluciones()}
 </body></html>`;

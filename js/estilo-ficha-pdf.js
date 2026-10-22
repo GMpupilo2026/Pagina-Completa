@@ -4,8 +4,8 @@
  * Una hoja para imprimir o mandar a la casa: el estilo (los ejes de su prueba,
  * con su etiqueta y su margen ESCRITOS: el PDF se imprime en blanco y negro),
  * las tres aperturas que se le recomendaron con sus primeras jugadas en
- * notación española y el porqué, y cómo seguir. La marca de agua de Oscar
- * Angulo Cubero en todas las páginas, como el diagnóstico de un visitante.
+ * notación española y el porqué, y cómo seguir. La marca de agua de Ajedrez
+ * Integral en todas las páginas, como el diagnóstico de un visitante.
  *
  * NO cuenta nada por su cuenta: el perfil lo da EstiloPerfil.medir() con la
  * versión de la prueba (lo mismo que la pantalla), y la recomendación es la
@@ -26,7 +26,6 @@
   const G = typeof window !== "undefined" ? window : globalThis;
   const AUTOR = "Oscar Angulo Cubero";
   const PIE = AUTOR + " · Ajedrez Integral · ajedrez-integral.com";
-  const MARCA = "img/logo-oscar-angulo-marca.png";
 
   const pct = (x) => Math.round(100 * x);
   const texto = (s) => String(s == null ? "" : s).replace(/[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE0F}\u{200D}]/gu, "").replace(/\s{2,}/g, " ").trim();
@@ -107,11 +106,11 @@
   }
 
   /* Como la del diagnóstico de un visitante: sin la marca no sale (uno sin
-     marca que circula no se distingue de una copia). `raiz`: la dirección del
-     sitio, para encontrar el logo también desde entreno/. */
+     marca que circula no se distingue de una copia). js/marca-agua.js
+     encuentra la imagen también desde entreno/. */
   async function descargar(prueba, perfil, opciones) {
     const o = opciones || {};
-    const marca = await G.MarcaAgua.prepararDesde(new URL(MARCA, o.raiz || document.baseURI).href);
+    const marca = await G.MarcaAgua.preparar();
     const doc = documento(prueba, perfil, o);
     doc.marca = marca;
     const blob = await G.ReportePDF.generar(doc);

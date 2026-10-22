@@ -1,6 +1,6 @@
 """Los Programas de Estudio de Ajedrez de 1.° a 11.°, con la estructura de los
 programas del MEP, y el planeamiento de las 200 lecciones de cada año, en Word
-con la marca de agua de Oscar Angulo Cubero. Ver «Los programas de estudio de
+con la marca de agua de Ajedrez Integral. Ver «Los programas de estudio de
 Ajedrez» en docs/decisiones/cursos-y-material.md.
 
 El contenido está en datos/grado-N.json (datos/GUIA.md dice cómo se escribe y

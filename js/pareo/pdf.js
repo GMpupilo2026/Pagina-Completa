@@ -41,14 +41,12 @@
     return base + "-" + sufijo + ".pdf";
   }
 
-  // La de Ajedrez Integral (herramientas/marca-agua-ajedrez-integral.js), la
-  // misma que sale en las hojas impresas desde pareo.html.
-  const MARCA = "img/marca-agua-ajedrez-integral.png";
-  // La marca de agua, si se puede armar: si el logo no baja (sin conexión
+  // La marca de agua de Ajedrez Integral (js/marca-agua.js), la misma que
+  // sale en las hojas impresas desde pareo.html, si se puede armar: si el logo no baja (sin conexión
   // y sin haberlo guardado), el PDF sale igual, sin ella.
   async function conMarca(doc) {
     if (doc.marca || !raiz.MarcaAgua) return doc;
-    try { return Object.assign({}, doc, { marca: await raiz.MarcaAgua.prepararDesde(MARCA) }); }
+    try { return Object.assign({}, doc, { marca: await raiz.MarcaAgua.preparar() }); }
     catch (e) { return doc; }
   }
   async function generar(doc) { return raiz.ReportePDF.generar(await conMarca(doc)); }

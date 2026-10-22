@@ -23,7 +23,8 @@
  *    son nada—, y confundirlos se come justo esos signos sin avisar. Lo que
  *    no tiene dibujo (un emoji) se reemplaza en vez de desaparecer.
  *
- * La marca de agua se dibuja en TODAS las páginas, con el logo en escala de
+ * La marca de agua se dibuja en TODAS las páginas (la de Ajedrez Integral si
+ * el documento no trae otra: ver generar()), con el logo en escala de
  * grises y su canal alfa aparte (/SMask). Sin el alfa, la imagen taparía el
  * texto con un rectángulo blanco.
  *
@@ -284,6 +285,13 @@ window.ReportePDF = (function () {
   /* ------------------------------------------------------------ armado */
 
   async function generar(documento) {
+    /* Todo PDF del sitio sale con la marca de agua de Ajedrez Integral: quien
+       no la pide (documento.marca sin poner) la recibe igual, si la página
+       cargó js/marca-agua.js. Quien pone otra (el logo de una academia) o
+       null a propósito, se queda con lo suyo. Sin conexión, sale sin ella. */
+    if (documento.marca === undefined && window.MarcaAgua) {
+      try { documento = Object.assign({}, documento, { marca: await window.MarcaAgua.preparar() }); } catch (e) { /* sin marca */ }
+    }
     const doc = new Constructor();
     const recursos = { imagenes: {} };
     const lienzo = new Lienzo(doc, recursos);

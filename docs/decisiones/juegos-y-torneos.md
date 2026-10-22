@@ -3198,6 +3198,81 @@ las columnas, el corte entre tarjetas, la marca de agua, que las
 correcciones no marquen, la cuenta de ilegales o que el jugador sea de la
 mesa, salta.
 
+### La planilla de anotación en una hoja y los equipos mesa a mesa en el celular
+
+Dos pedidos del dueño del sitio, con fotos.
+
+- **La planilla de anotación en UNA hoja**: salía en dos (las jugadas 27-30
+  y 57-60 se pasaban a otra hoja: 7 mesas daban 14 hojas) y con la dirección
+  de la página y «1/14» que el navegador imprime en sus márgenes. Ahora cada
+  planilla es su propia página con nombre (`@page planilla { margin: 0 }`):
+  sin margen no hay dónde imprimir la dirección, y el margen lo pone la
+  planilla misma (0,6 a 0,8 cm, lo que la impresora no corta). La cabecera
+  va compacta (el torneo, la ronda y la mesa en dos renglones; Blancas y
+  Negras lado a lado), los renglones de las jugadas miden 0,68 cm (antes
+  0,61) con una raya más gruesa cada 5 y entre la 30 y la 31, y abajo las
+  casillas del resultado y las dos firmas. Todo suma 26,8 cm, menos que una
+  hoja carta (27,9), la más baja de las dos que se usan. **Una trampa**: el
+  contenedor de la pantalla (`#pi-envoltorio`) queda vacío al imprimir pero
+  con su relleno, y como es de la página por omisión, la primera planilla
+  salía en la segunda hoja con una en blanco antes; al imprimir hojas se
+  esconde.
+- **Tocar un equipo en el enlace del celular**: en un torneo por equipos,
+  la ronda decía solo el resultado del encuentro. Ahora cada equipo de un
+  encuentro es un botón que abre sus tableros (quién juega con cada color y
+  cómo va cada uno, «jugando» si todavía no termina, y cuántos van
+  terminados), con `aria-expanded`. Lo abierto se recuerda aparte, porque en
+  vivo la vista se pinta entera con cada novedad y si no se cerraría sola.
+  Los tableros los arma `tablerosVista()` en `js/pareo/evento.js`, una sola
+  copia para el enlace del torneo y el del evento.
+- **Dos arreglos que se vieron en la misma foto**: el bye decía «corto_bye»
+  (no hay texto corto para el bye: la columna de Negras ya dice «bye»), y la
+  clasificación con la ronda 1 en juego salía con todos primeros y 0 puntos,
+  que parece un error: la clasificación cuenta solo las rondas terminadas, y
+  ahora lo dice («Todavía no termina ninguna ronda: la 1 se suma cuando
+  termine»).
+
+Al tocar esto, `node herramientas/verificar-pareo-hojas.js` (cuenta las hojas
+de verdad en el PDF que arma Chromium) y
+`node herramientas/verificar-pareo-vivo-equipos.js`. Rompiendo a propósito el
+margen, la altura de los renglones, el envoltorio, lo abierto que se
+recuerda, el texto del bye o la nota de la clasificación, salta.
+
+### Archivar torneos y pasar de un torneo a otro del evento en el celular
+
+Dos pedidos del dueño del sitio: que los torneos terminados no estorben en la
+lista, y que desde el enlace en vivo se pueda ir a los otros torneos del JDE.
+
+- **«Archivar torneos»**, junto a «Nuevo torneo»: un panel con una casilla
+  por torneo, agrupados por evento, que dice cómo va cada uno (terminado,
+  sin empezar, «k de n rondas») y cuál está abierto. «Marcar los
+  terminados» y «Marcar todo el evento» marcan de una vez. Archivar **baja
+  primero** un archivo .json (el mismo formato del respaldo de un evento:
+  si son de un solo evento, es su respaldo; si se mezclan, lleva un evento
+  que solo sirve de rótulo) y **después** los quita del navegador; si se
+  archivó el abierto, se abre otro. Vuelven con «Abrir un TRF o una copia
+  .json». Lo archivado vive solo en ese archivo, y el aviso lo dice.
+- **Un arreglo que salió de esto**: abrir un respaldo reemplazaba a TODOS
+  los torneos de ese evento que hubiera en el navegador. Con un archivo de
+  archivados que trae solo algunos (el SUB-10 terminado), habría borrado al
+  SUB-12 que sigue en juego. Ahora solo cuenta como repetido el del mismo
+  evento y con el mismo nombre que uno del archivo.
+- **Los torneos vinculados en el celular**: el enlace en vivo de un torneo
+  de un evento muestra arriba «Este torneo es parte de … Los demás:» con un
+  enlace por torneo, que abre el enlace en vivo del evento con ese torneo
+  desplegado (`#evento=<código>&t=<torneo>`), y «Ver todo el evento». Para
+  que esos enlaces lleven a algo, poner en vivo un torneo de un evento pone
+  en vivo también el evento (si no había otro). Por el canal va el código
+  del evento, no la dirección, y el celular la arma solo si el código parece
+  un código: lo que llega por un canal público no va tal cual a un `href`.
+  En el enlace del evento, «Ir a un torneo» abre el que se elija y lleva el
+  foco hasta él. Como ir de un enlace a otro cambia solo el «#», las páginas
+  para ver se vuelven a cargar con `hashchange`.
+
+Al tocar esto, `node herramientas/verificar-pareo-archivar.js`. Rompiendo a
+propósito el nombre en los repetidos, «Marcar los terminados», el código
+del enlace o el evento en vivo junto con el torneo, salta.
+
 ### La barra de progreso al buscar el Elo Nacional
 
 Antes de esto, tocar «Buscar Elo Nacional de quien no tiene» con una lista

@@ -7,6 +7,10 @@
  *     misma columna en todas las filas, aunque un nombre ocupe dos líneas, y
  *     la casilla dentro de la hoja;
  *   - las planillas para firmar: al menos 4 por hoja carta;
+ *   - las planillas de anotación: cada una en UNA hoja carta (antes las
+ *     jugadas 27-30 y 57-60 se pasaban a otra), sin los márgenes del
+ *     navegador (que imprimen la dirección y «1/14») y sin una hoja en
+ *     blanco antes;
  *   - la marca de agua de Ajedrez Integral en todo lo impreso y en los PDF;
  *   - los avisos de la página no salen en el papel.
  *
@@ -74,6 +78,24 @@ async function prueba(browser) {
   ok(tarjetas.every((x) => x.corte !== "page"), "sin salto de hoja entre una y otra");
   const textos = await page.$$eval("#pi-firmas .pi-ft", (l) => l.map((x) => x.textContent));
   ok(/Mesa 1/.test(textos[0]) && /Blancas/.test(textos[0]) && /Negras/.test(textos[0]) && /☐ 1-0/.test(textos[0]) && /Firma de PRUEBA/.test(textos[0]), "cada una con la mesa, los colores, las casillas del resultado y las firmas", textos[0]);
+  await page.evaluate(() => window.dispatchEvent(new Event("afterprint")));
+
+  console.log("\n=== Las planillas de anotación ===");
+  // Esta hoja no tiene márgenes: mide lo que la hoja carta entera (21,6 cm).
+  await page.setViewportSize({ width: Math.round(21.59 * CM), height: 1000 });
+  await tocar(page, "Planillas de anotación");
+  const hojas = await page.$$eval("#pi-firmas .pi-planilla", (l) => l.length);
+  // (Se mide antes del PDF: al terminar de imprimir, la hoja se vacía.)
+  const alto = await page.$eval("#pi-firmas .pi-planilla", (x) => x.getBoundingClientRect().height);
+  ok(alto < 27.2 * CM, "la planilla mide menos que la hoja (" + (alto / CM).toFixed(1) + " cm de 27,9)");
+  const renglon = await page.$eval("#pi-firmas .pi-planilla tbody td", (x) => x.getBoundingClientRect().height);
+  ok(renglon >= 0.66 * CM, "con renglones altos para anotar (" + (renglon / CM).toFixed(2) + " cm)");
+  // El PDF que arma Chromium con la vista de impresión: las hojas de verdad.
+  const enPdf = await page.pdf({ format: "Letter", preferCSSPageSize: true, printBackground: true });
+  const paginas = (enPdf.toString("latin1").match(/\/Type\s*\/Page[^s]/g) || []).length;
+  ok(hojas === 4 && paginas === hojas, "una hoja carta por planilla, con las 60 jugadas (" + hojas + " planillas, " + paginas + " hojas)");
+  const sinMargen = await page.evaluate(() => [...document.styleSheets].some((h) => { try { return [...h.cssRules].some((r) => r instanceof CSSPageRule && r.selectorText === "planilla" && r.style.margin === "0px"); } catch (e) { return false; } }));
+  ok(sinMargen, "sin los márgenes del navegador (la dirección y el número de página no salen)");
   await page.evaluate(() => window.dispatchEvent(new Event("afterprint")));
   await page.emulateMedia({ media: "screen" });
   ok(!(await P.vis(page, "#pi-marca-agua")), "en pantalla, la marca de agua no se ve");

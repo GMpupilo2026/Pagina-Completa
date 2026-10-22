@@ -54,7 +54,7 @@ function incrustar(relativo) {
   return "data:image/png;base64," + fs.readFileSync(path.join(RAIZ, relativo)).toString("base64");
 }
 const LOGO_CREMA = incrustar("img/logo-oscar-angulo.png");
-const LOGO_MARCA = incrustar("img/logo-oscar-angulo-marca.png");
+const LOGO_MARCA = incrustar(require("./lib/marca-agua").MARCA_AGUA);
 
 const esc = (t) => String(t == null ? "" : t).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 const es = (san) => N.sanEspanol(san);

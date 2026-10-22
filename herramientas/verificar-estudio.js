@@ -353,7 +353,7 @@ function jugadasDe(F) {
         const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
         const dentro = Math.hypot(cx - (n.left + n.width / 2), cy - (n.top + n.height / 2)) < 12 && r.width < n.width;
         return img.checkVisibility() && img.complete && img.naturalWidth > 0
-          && /logo-oscar-angulo-marca\.png$/.test(img.src) && dentro
+          && /marca-agua-ajedrez-integral\.png$/.test(img.src) && dentro
           && !document.querySelector(".marca-agua")
           && getComputedStyle(document.querySelector("#nodo > *")).visibility === "hidden";
       }), "true");

@@ -20,7 +20,7 @@ const M = require("./curso-material.js");
 const { lecciones, posiciones, partidas } = require("./lib/leer-curso.js");
 
 const CHROME = process.env.CHROME_PATH || undefined;
-const LOGO_MARCA = path.join(RAIZ, "img", "logo-oscar-angulo-marca.png");
+const LOGO_MARCA = path.join(RAIZ, require("./lib/marca-agua").MARCA_AGUA);
 
 /* El catálogo da el título bonito de cada curso. */
 const CATALOGO = JSON.parse(fs.readFileSync(path.join(__dirname, "cursos", "catalogo.json"), "utf8"));
