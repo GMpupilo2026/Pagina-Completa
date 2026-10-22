@@ -125,3 +125,12 @@ llama Configuración al guardar el código FIDE), pregunta el permiso con el JWT
 de quien llama (`puedo_cambiar_fide_id()`). Con `verify_jwt` en true la tanda
 recibe un 401 y el Elo deja de leerse sin que nada falle a la vista. Ver «El
 Elo oficial, mes a mes» en `docs/decisiones/informes.md`.
+
+## `pareo-publicar` va con `verify_jwt` en **false**
+
+La llama Pareo Integral, que se usa sin cuenta, para publicar un torneo en
+«Torneos en Pareo Integral». El candado no es la sesión sino la clave secreta
+que recibe quien publica (acá solo se guarda su sha256), y antes de escribir
+pasa por el freno `pareo_frenar`. Con `verify_jwt` en true nadie podría
+publicar. Ver «Torneos en Pareo Integral: el espacio público» en
+`docs/decisiones/juegos-y-torneos.md`.
