@@ -1339,7 +1339,7 @@
     // cada parte (con una inscripción grande la propuesta es larga).
     const partes = [pintarRepetidos(s), pintarVariosOrigenes(s), pintarComparacion(s), pintarPaseAbierto(s), pintarEquiposDeMas(s),
       pintarIndividualesDeMas(s), pintarHombresEnMujeres(s), pintarEquiposCortos(s), pintarRevisionCategorias(s.revision)].filter(Boolean);
-    const indice = partes.length ? el("nav", { id: "pi-sugerencia-indice", class: "mt-3 text-sm rounded-lg bg-accent-50 dark:bg-brand-800 border border-accent-200 dark:border-brand-700 p-2", "aria-label": tx("sugerenciaIndice") },
+    const indice = partes.length ? el("nav", { id: "pi-sugerencia-indice", class: "mt-3 text-sm rounded-lg bg-accent-50 dark:bg-brand-800 border border-accent-300 dark:border-brand-700 p-2", "aria-label": tx("sugerenciaIndice") },
       el("span", { class: "font-semibold mr-1", texto: tx("sugerenciaIndice") + ":" }),
       partes.map((x) => {
         const h = x.querySelector("h4");
