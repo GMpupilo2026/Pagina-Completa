@@ -60,6 +60,20 @@ window.PareoVer = (function () {
     return b64urlDeBytes(new Uint8Array(await new Response(flujo).arrayBuffer()));
   }
 
+  // Lo que se manda por un canal en vivo: tal cual si es chico, comprimido
+  // si no. Supabase Realtime corta un mensaje de más de 256 KB (en el plan
+  // gratuito) sin avisar, y un evento de 800 jugadores con todas sus rondas
+  // pesa unos 360 KB (comprimido, unos 30). Lo chico no se comprime: así lo
+  // lee también un celular viejo sin DecompressionStream.
+  const LIMITE_VIVO = 180000;
+  async function paraMandar(datos) {
+    if (JSON.stringify(datos).length <= LIMITE_VIVO) return datos;
+    return { z: await empaquetar(datos) };
+  }
+  async function alLlegar(payload) {
+    return payload && typeof payload.z === "string" ? desempaquetar(payload.z) : payload;
+  }
+
   async function desempaquetar(cadena) {
     const flujo = new Blob([bytesDeB64url(cadena)]).stream().pipeThrough(new DecompressionStream("deflate"));
     return JSON.parse(new TextDecoder().decode(await new Response(flujo).arrayBuffer()));
@@ -474,7 +488,12 @@ window.PareoVer = (function () {
     }
     let llego = false;
     const canal = window.sb.channel("pareo-vivo-" + codigo);
-    canal.on("broadcast", { event: "estado" }, (msg) => { llego = true; pintar(cont, idioma, msg.payload, true); });
+    canal.on("broadcast", { event: "estado" }, async (msg) => {
+      let datos;
+      try { datos = await alLlegar(msg.payload); } catch (e) { return; }
+      llego = true;
+      pintar(cont, idioma, datos, true);
+    });
     canal.subscribe();
     setTimeout(() => { if (!llego) cont.replaceChildren(el("p", { class: "text-sm text-brand-600 dark:text-brand-300" }, tx("esperandoVivo"))); }, 8000);
   }
@@ -536,9 +555,11 @@ window.PareoVer = (function () {
     }
     window.addEventListener("offline", () => { const u = leerUltimo(codigo); decirConexion(X.t(idioma, "verSinConexion", { h: u ? horaCorta(u.hora) : "—" })); });
     window.addEventListener("online", () => { decirConexion(X.t(idioma, "verConectando")); canal.send({ type: "broadcast", event: "pedir", payload: {} }); });
-    canal.on("broadcast", { event: "estado" }, (msg) => {
+    canal.on("broadcast", { event: "estado" }, async (msg) => {
+      let datos;
+      try { datos = await alLlegar(msg.payload); } catch (e) { return; }
       llego = true;
-      ultimo = msg.payload;
+      ultimo = datos;
       guardarUltimo(codigo, ultimo);
       decirConexion("");
       if (proyectar) pintarProyector(cont, idioma, ultimo, vuelta);
@@ -792,5 +813,5 @@ window.PareoVer = (function () {
     canal.subscribe((st) => { if (st === "SUBSCRIBED") canal.send({ type: "broadcast", event: "pedir", payload: {} }); });
   }
 
-  return { iniciarFirma, padFirma, iniciarCapitan, empaquetar, desempaquetar, cargarSupabase, iniciar, iniciarVivo, iniciarEvento, iniciarAdjunto, pintarEvento, pintarProyector, buscarJugador, botonIdioma };
+  return { paraMandar, alLlegar, LIMITE_VIVO, iniciarFirma, padFirma, iniciarCapitan, empaquetar, desempaquetar, cargarSupabase, iniciar, iniciarVivo, iniciarEvento, iniciarAdjunto, pintarEvento, pintarProyector, buscarJugador, botonIdioma };
 })();
