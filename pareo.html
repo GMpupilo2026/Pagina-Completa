@@ -264,12 +264,16 @@
                         <label class="flex items-center gap-2 text-sm"><span class="font-semibold" data-t="filtrarInstitucion">Institución</span><select id="pi-clas-institucion" class="rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-800 text-brand-800 dark:text-white px-2 py-1 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"></select></label>
                         <button type="button" id="pi-clas-pdf" class="inline-block border border-brand-300 dark:border-brand-600 text-brand-800 dark:text-white font-semibold px-4 py-2 rounded-lg text-sm hover:bg-brand-50 dark:hover:bg-brand-800 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 disabled:opacity-50 disabled:cursor-not-allowed" data-t="bajarPdf">Bajar PDF</button>
                         <button type="button" class="inline-block border border-brand-300 dark:border-brand-600 text-brand-800 dark:text-white font-semibold px-4 py-2 rounded-lg text-sm hover:bg-brand-50 dark:hover:bg-brand-800 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 pi-imprimir" data-t="imprimir">Imprimir</button>
+                        <button type="button" id="pi-clas-pared" class="inline-block border border-brand-300 dark:border-brand-600 text-brand-800 dark:text-white font-semibold px-4 py-2 rounded-lg text-sm hover:bg-brand-50 dark:hover:bg-brand-800 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400" data-t="paredBoton">Para la pared (A3)</button>
+                        <button type="button" id="pi-clas-whatsapp" class="inline-block border border-brand-300 dark:border-brand-600 text-brand-800 dark:text-white font-semibold px-4 py-2 rounded-lg text-sm hover:bg-brand-50 dark:hover:bg-brand-800 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400" data-t="whatsappBoton" aria-expanded="false" aria-controls="pi-clas-compartir">Compartir por WhatsApp</button>
                     </div>
                 </div>
+                <div id="pi-clas-compartir" class="no-imprimir" hidden></div>
                 <p id="pi-clas-nota" class="text-sm text-brand-600 dark:text-brand-300 mb-3"></p>
                 <div class="overflow-x-auto"><table class="pi-tabla" id="pi-tabla-clas"></table></div>
                 <dl id="pi-clas-leyenda" class="text-xs text-brand-600 dark:text-brand-300 mt-3 grid sm:grid-cols-2 gap-x-6 gap-y-1"></dl>
                 <div id="pi-clas-tableros"></div>
+                <div id="pi-premios" class="no-imprimir"></div>
             </section>
 
             <!-- ===== Tabla cruzada ===== -->
@@ -344,6 +348,7 @@
     <div id="pi-ver" class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-16" hidden></div>
     <div id="pi-plantilla" class="pi-plantilla"></div>
     <div id="pi-firmas" class="pi-firmas"></div>
+    <div id="pi-sorteo" class="pi-sorteo" role="dialog" aria-modal="true" aria-labelledby="pi-sorteo-titulo" hidden></div>
     </main>
 
     <footer class="bg-brand-900 text-brand-300 pt-16 pb-8">
@@ -367,7 +372,9 @@
     <script src="js/pareo/motor.js"></script>
     <script src="js/pareo/textos.js"></script>
     <script src="js/pareo/grupos.js"></script>
+    <script src="js/pareo/premios.js"></script>
     <script src="js/pareo/evento.js"></script>
+    <script src="js/pareo/compartir.js"></script>
     <script src="js/pareo/historial.js"></script>
     <script src="js/csv-excel.js"></script>
     <script src="js/tabla-excel.js"></script>
