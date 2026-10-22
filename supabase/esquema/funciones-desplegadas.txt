@@ -36,3 +36,4 @@ reenviar-acceso                true         reenvia el acceso a una cuenta
 partida-fin                    false        el robo de puntos al perder una partida ganada (trigger de game_rooms, secreto de la boveda)
 jde-publicar                   false        Juegos Estudiantiles MEP, modo arbitro: publica un evento sin cuenta, con su propio freno (jde_frenar)
 pareo-elo-nacional              false        Pareo Integral busca el Elo Nacional de una lista de jugadores, sin cuenta (freno propio pareo_elo_frenar)
+pareo-publicar                  false        Torneos en Pareo Integral: publica un torneo sin cuenta, con su clave secreta y su freno (pareo_frenar)
