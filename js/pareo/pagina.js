@@ -552,7 +552,7 @@
           const x = $(cid); if (x) x.focus();
         } })),
         el("td", { class: "num", texto: num.get(id) }),
-        el("td", { class: "font-semibold", texto: j.nombre }),
+        el("td", { class: "font-semibold" }, j.nombre, j.mesaFija ? el("span", { class: "block text-xs font-normal", texto: tx("mesaFijaEn", { m: j.mesaFija }) }) : null),
         el("td", { texto: j.institucion || "" }),
         el("td", { texto: j.categoria || "" }),
         el("td", { texto: j.titulo || "" }),
@@ -708,6 +708,17 @@
       n++;
     }
     if (n) {
+      // En los JDE: la categoría según el año de nacimiento, y quien entra
+      // con rondas ya jugadas queda en el acta como inscripción tardía.
+      const nuevos = idsNuevos.map((id) => v.jugadores.find((j) => j.id === id));
+      const anio = v.evento && v.evento.jde && v.evento.jde.anio;
+      const rev = anio ? G.revisarCategorias(nuevos, anio) : null;
+      const malos = rev ? rev.noPermitidos : [];
+      for (const c of malos) Avisos.avisar(tx("tardioCategoria", { n: c.jugador.nombre, c: c.categoria, a: c.nace, p: c.propia || "—" }), { tipo: "error" });
+      if (v.rondas.length && v.evento) {
+        v.tardios = (v.tardios || []).concat(nuevos.map((j) => ({ nombre: j.nombre, institucion: j.institucion || "", ronda: v.rondas.length + 1, hora: Date.now(),
+          aviso: (malos.find((c) => c.jugador === j) ? "No está en la categoría de su año de nacimiento." : "") })));
+      }
       guardar();
       pintarJugadores();
       if (v.rondas.length) Avisos.avisar(tx("inscripcionTardia", { r: v.rondas.length }), { tipo: "info" });
@@ -1525,7 +1536,11 @@
     });
     const bConstancias = el("button", { type: "button", id: "pi-evento-constancias", class: C.botonSec }, tx("eventoConstancias"));
     bConstancias.addEventListener("click", () => imprimirConstancias(V.constancias(ev, torneosDelEvento())));
-    acciones.append(bActa, bInforme, bPremiacion, bDiplomas, bConstancias, bEstadisticas);
+    const bCertificados = el("button", { type: "button", id: "pi-evento-certificados", class: C.botonSec }, tx("eventoCertificados"));
+    bCertificados.addEventListener("click", () => imprimirCertificadosArbitro(V.certificadosArbitro(ev, torneosDelEvento())));
+    const bCartel = el("button", { type: "button", id: "pi-evento-cartel", class: C.botonSec }, tx("eventoCartel"));
+    bCartel.addEventListener("click", () => imprimirCartel(ev));
+    acciones.append(bActa, bInforme, bPremiacion, bDiplomas, bConstancias, bCertificados, bEstadisticas, bCartel);
     caja.append(acciones, el("p", { class: C.nota + " mt-2", texto: tx("eventoPapelesAyuda") }),
       el("p", { class: C.nota + " mt-1", texto: tx("eventoPremiacionAyuda") }));
 
@@ -1669,6 +1684,34 @@
       if (estado.respaldoArchivo && estado.respaldoArchivo.id === ev.id) { estado.respaldoArchivo = null; pintarEvento(); }
       else prenderRespaldo(ev);
     });
+    // Las firmas del acta: en esta pantalla (con el dedo o el mouse) o desde
+    // un celular, con su enlace. Van como imagen en el PDF del acta.
+    const firmas = ev.firmas || [];
+    const listaFirmas = el("ul", { id: "pi-firmas-lista", class: "mt-2 space-y-1 text-sm" }, firmas.map((f, k) => el("li", { class: "flex flex-wrap items-center gap-2" },
+      el("span", { texto: (V.CARGOS_FIRMA[f.cargo] || f.cargo) + ": " + f.nombre + " · " + horaCR(f.hora) }),
+      el("button", { type: "button", class: C.mini, "data-quitar-firma": String(k), onclick: () => { guardarFirmas(ev.id, firmas.filter((x, i) => i !== k)); pintarEvento(); } }, tx("quitar")))));
+    const bFirmar = el("button", { type: "button", id: "pi-firmar-aqui", class: C.botonSec }, tx("firmarAqui"));
+    bFirmar.addEventListener("click", async () => {
+      const f = await pedirFirma();
+      if (!f) return;
+      guardarFirmas(ev.id, (t().evento.firmas || []).concat(f));
+      pintarEvento();
+      Avisos.avisar(tx("firmaGuardada", { n: f.nombre }));
+    });
+    const firmando = estado.firmaCelular && estado.firmaCelular.id === ev.id;
+    const bCelular = el("button", { type: "button", id: "pi-firmar-celular", class: C.botonSec, "aria-pressed": firmando ? "true" : "false" }, tx(firmando ? "firmarCelularApagar" : "firmarCelular"));
+    bCelular.addEventListener("click", async () => {
+      if (estado.firmaCelular && estado.firmaCelular.id === ev.id) { estado.firmaCelular.canal.unsubscribe(); estado.firmaCelular = null; }
+      else await prenderFirmaCelular(ev);
+      pintarEvento();
+      const b = $("pi-firmar-celular"); if (b) b.focus();
+    });
+    const cajaFirmaCel = el("div", { id: "pi-firma-celular-caja", class: "mt-2" });
+    caja.append(el("h3", { class: "font-semibold mt-5", texto: tx("firmasTitulo") }),
+      el("p", { class: C.nota, texto: tx("firmasTexto") }), listaFirmas,
+      el("div", { class: "mt-2 flex flex-wrap gap-2" }, bFirmar, bCelular), cajaFirmaCel);
+    if (firmando) mostrarFirmaCelular(cajaFirmaCel);
+
     // El informe para la prensa: un texto corto para pegar.
     const cajaPrensa = el("div", { id: "pi-prensa-caja", class: "mt-2" });
     const bPrensa = el("button", { type: "button", id: "pi-evento-prensa", class: C.botonSec }, tx("prensaArmar"));
@@ -1845,6 +1888,56 @@
     window.print();
   }
 
+  // Los certificados de los árbitros: como las constancias, uno por hoja.
+  function imprimirCertificadosArbitro(lista) {
+    if (!lista.length) { Avisos.avisar(tx("certificadosNadie"), { tipo: "error" }); return; }
+    const cont = $("pi-firmas");
+    cont.replaceChildren();
+    for (const c of lista) {
+      const x = V.textoCertificadoArbitro(c);
+      cont.append(el("div", { class: "pi-diploma", lang: "es" },
+        el("p", { class: "pi-diploma-evento", texto: x.encabezado }),
+        el("p", { class: "pi-diploma-nombre", texto: x.titulo }),
+        el("p", { class: "pi-diploma-otorga", texto: x.otorga }),
+        el("p", { class: "pi-diploma-nombre", texto: x.nombre }),
+        el("p", { class: "pi-diploma-texto", texto: x.motivo }),
+        el("div", { class: "pi-diploma-firmas" },
+          el("p", { class: "pi-firma-linea", texto: "Comité Organizador" }),
+          el("p", { class: "pi-firma-linea", texto: "Comisión de Árbitros" }))));
+    }
+    document.body.classList.add("pi-imprimiendo-firmas");
+    window.print();
+  }
+
+  // El cartel para la entrada: el nombre del evento, el QR del enlace en
+  // vivo (lo prende si hace falta), el horario y los torneos.
+  async function imprimirCartel(ev) {
+    if (!(estado.eventoVivo && estado.eventoVivo.id === ev.id)) {
+      const ok = await Avisos.confirmar(tx("cartelPrender"), { aceptar: tx("eventoVivoPrender") });
+      if (!ok || !(await prenderEventoVivo(ev))) return;
+      pintarEvento();
+    }
+    try { await PareoQr.cargar(); } catch (e) { Avisos.avisar(tx("errorQr", { e: e.message }), { tipo: "error" }); return; }
+    const url = location.origin + location.pathname + "#evento=" + estado.eventoVivo.codigo;
+    const lista = torneosDelEvento(ev.id);
+    const inicio = leer(CLAVE_HORARIO + ev.id);
+    const horario = inicio ? V.horario(lista, inicio, leer(CLAVE_HORARIO + ev.id + "_descanso") || "10") : [];
+    const cont = $("pi-firmas");
+    cont.replaceChildren(el("div", { class: "pi-cartel", lang: "es" },
+      el("h1", { class: "pi-cartel-titulo", texto: ev.nombre || "" }),
+      el("p", { class: "pi-cartel-texto", texto: "Resultados, rondas y clasificación en vivo: escanea el código con el celular." }),
+      el("div", { class: "pi-cartel-qr" }, PareoQr.svg(url, tx("qrEtiqueta"))),
+      el("p", { class: "pi-cartel-url", texto: url }),
+      horario.some((x) => x.rondas.length) ? el("div", { class: "pi-cartel-horario" },
+        el("h2", { texto: "Horario" }),
+        el("ul", {}, horario.filter((x) => x.rondas.length).map((x) => el("li", { texto: x.torneo + ": " + x.rondas.map((rr) => "R" + rr.n + " " + rr.hora).join(" · ") })))) : null,
+      el("div", { class: "pi-cartel-torneos" },
+        el("h2", { texto: "Torneos" }),
+        el("ul", {}, lista.map((x) => el("li", { texto: (x.grupo || x.nombre) + " · " + x.jugadores.length + (E.esDeEquipos(x) ? " equipos" : " participantes") }))))));
+    document.body.classList.add("pi-imprimiendo-firmas");
+    window.print();
+  }
+
   const TEXTO_ETAPA_SIGUIENTE = { regional: "etapaRegional", interregional: "etapaInterregionalNombre", nacional: "etapaNacional" };
 
   // Un diploma por hoja, apaisado (el texto, de js/pareo/evento.js: en
@@ -1990,11 +2083,14 @@
         { nombre: "fideId", etiqueta: tx("fideId"), valor: j.fideId || "", inputmode: "numeric", max: 11 },
         { nombre: "sexo", etiqueta: tx("sexo"), tipo: "select", valor: j.sexo || "", opciones: [["", "—"], ["m", tx("masculino")], ["w", tx("femenino")]] },
         { nombre: "nacimiento", etiqueta: tx("nacimientoFormato"), valor: j.nacimiento || "", max: 10 },
+        { nombre: "mesaFija", etiqueta: tx("mesaFija"), valor: j.mesaFija ? String(j.mesaFija) : "", inputmode: "numeric", max: 3, ayuda: tx("mesaFijaAyuda") },
       ],
     });
     if (!r) return;
     const d = datosJugador(r);
     if (!d.nombre) { Avisos.avisar(tx("faltaNombre"), { tipo: "error" }); return; }
+    const mesa = Math.round(Number(String(r.mesaFija || "").trim()) || 0);
+    d.mesaFija = mesa >= 1 && mesa <= 500 ? mesa : null;
     Object.assign(j, d);
     guardar();
     pintarJugadores();
@@ -2155,6 +2251,7 @@
     if (E.esDeEquipos(v)) pintarEncuentros(caja, r);
     else pintarMesasIndividuales(caja, r);
     pintarNoJuegan(caja, r);
+    pintarRevisionPareo(caja, r);
     pintarConfirmar(caja, r);
     pintarIncidencias(caja, r);
     for (const s of caja.querySelectorAll("select[data-resultado]")) atajosResultado(s);
@@ -2234,6 +2331,7 @@
       const canal = window.sb.channel("pareo-adjunto-" + a.codigo);
       canal.on("broadcast", { event: "pedir" }, () => enviarAdjunto(a.codigo));
       canal.on("broadcast", { event: "resultado" }, (msg) => recibirDeAdjunto(a.codigo, msg.payload || {}));
+      canal.on("broadcast", { event: "nota" }, (msg) => recibirNotaDeAdjunto(a.codigo, msg.payload || {}));
       canal.subscribe((st) => { if (st === "SUBSCRIBED") enviarAdjunto(a.codigo); });
       estado.adjuntos.canales.set(a.codigo, canal);
     }
@@ -2307,6 +2405,25 @@
     Avisos.avisar(texto, { tipo: "info" });
     enviarAdjunto(codigo);
   }
+  // Una nota de un adjunto para el informe: va a las incidencias de la
+  // última ronda, con su nombre y, si la dice, la mesa (de su rango).
+  function recibirNotaDeAdjunto(codigo, p) {
+    const v = torneoDelAdjunto();
+    const a = v && adjuntoActivo(v, codigo);
+    const R = v && v.rondas[v.rondas.length - 1];
+    const texto = typeof p.texto === "string" ? p.texto.trim().slice(0, 500) : "";
+    const autor = typeof p.autor === "string" ? p.autor.trim().slice(0, 60) : "";
+    if (!a || !R || !texto || !autor) return;
+    const [desde, hasta] = a.rango.split("-").map(Number);
+    const mesa = Number(p.mesa);
+    R.incidencias = (R.incidencias || []).concat({ hora: Date.now(), tipo: "adjunto", autor, texto, mesa: mesa >= desde && mesa <= hasta && mesa <= R.mesas.length ? mesa : null });
+    if (v === t()) { guardar(); if (estado.ficha === "rondas" && estado.ronda === v.rondas.length - 1) pintarRondas(); }
+    else escribir(PREFIJO + estado.adjuntos.idTorneo, JSON.stringify(v));
+    Avisos.avisar(tx("notaAdjuntoLlego", { a: autor }), { tipo: "info" });
+    const canal = estado.adjuntos && estado.adjuntos.canales.get(codigo);
+    if (canal) canal.send({ type: "broadcast", event: "notaRecibida", payload: { hora: Date.now() } });
+  }
+
   // Un adjunto mandó otro resultado para una mesa (o tablero) que ya estaba
   // anotada: no se pisa, pero queda para que el principal lo confirme.
   function anotarDiscrepancia(v, R, x) {
@@ -2316,6 +2433,28 @@
     if (v === t()) { guardar(); if (estado.ficha === "rondas" && estado.ronda === v.rondas.length - 1) pintarRondas(); }
     else escribir(PREFIJO + estado.adjuntos.idTorneo, JSON.stringify(v));
     Avisos.avisar(tx("discrepanciaLlego", { m: x.mesa }), { tipo: "error" });
+  }
+
+  // ---------- Revisar el pareo antes de anunciarlo ----------
+  // Lo que conviene mirar en la última ronda emparejada, mientras no tenga
+  // resultados (V.revisarPareo). Si algo no gusta, «Deshacer el
+  // emparejamiento» y volver a emparejar; si está bien, «Visto».
+  function pintarRevisionPareo(caja, r) {
+    const v = t();
+    const R = v.rondas[r];
+    if (r !== v.rondas.length - 1 || R.pareoVisto || R.mesas.some((m) => m.n != null && m.r && !E.esDeEquipos(v) && m.r !== "+-" && m.r !== "-+" && m.r !== "--")) return;
+    const avisos = V.revisarPareo(v, r);
+    if (!avisos.length) return;
+    const texto = (x) => x.tipo === "centro" ? tx("pareoCentro", { m: x.mesa + 1, c: x.centro, b: x.b, n: x.n })
+      : x.tipo === "colores" ? tx("pareoColores", { m: x.mesa + 1, j: x.nombre, c: tx(x.color === "w" ? "blancas" : "negras") })
+      : tx("pareoPuntos", { m: x.mesa + 1, b: x.b, n: x.n, pb: puntosTexto(x.pb), pn: puntosTexto(x.pn) });
+    const visto = el("button", { type: "button", id: "pi-pareo-visto", class: C.mini }, tx("pareoVisto"));
+    visto.addEventListener("click", () => { R.pareoVisto = true; guardar(); pintarRondas(); });
+    caja.append(el("section", { id: "pi-revision-pareo", class: "no-imprimir mb-4 rounded-xl border-2 border-accent-500 p-3", "aria-labelledby": "pi-revision-pareo-titulo" },
+      el("h3", { id: "pi-revision-pareo-titulo", class: "font-semibold", texto: tx("pareoTitulo") }),
+      el("p", { class: C.nota, texto: tx("pareoTexto") }),
+      el("ul", { class: "mt-2 space-y-1 text-sm list-disc pl-5" }, avisos.map((x) => el("li", { texto: texto(x) }))),
+      el("div", { class: "mt-2" }, visto)));
   }
 
   // ---------- Los resultados para confirmar ----------
@@ -2589,7 +2728,7 @@
   // ---------- Las incidencias de la ronda ----------
   // Reclamos, sanciones y decisiones del árbitro, con su hora y su mesa: van
   // al informe oficial (V.incidenciasDe).
-  const TEXTO_INCIDENCIA = { reclamo: "incReclamo", sancion: "incSancion", decision: "incDecision", apelacion: "incApelacion", correccion: "incCorreccion", otra: "incOtra" };
+  const TEXTO_INCIDENCIA = { reclamo: "incReclamo", sancion: "incSancion", decision: "incDecision", apelacion: "incApelacion", correccion: "incCorreccion", adjunto: "incAdjunto", otra: "incOtra" };
   function pintarIncidencias(caja, r) {
     const R = t().rondas[r];
     const sec = el("section", { id: "pi-incidencias", class: "no-imprimir mt-6", "aria-labelledby": "pi-inc-titulo" },
@@ -2597,7 +2736,8 @@
       el("p", { class: C.nota, texto: tx("incTexto") }));
     const lista = el("ul", { id: "pi-inc-lista", class: "mt-2 space-y-1 text-sm" });
     (R.incidencias || []).forEach((x, k) => lista.append(el("li", { class: "flex flex-wrap items-start gap-2" },
-      el("span", { texto: horaCR(x.hora) + (x.mesa ? " · " + tx("mesa") + " " + x.mesa : "") + " · " + tx(TEXTO_INCIDENCIA[x.tipo] || TEXTO_INCIDENCIA.otra) + ": " + x.texto +
+      el("span", { texto: horaCR(x.hora) + (x.mesa ? " · " + tx("mesa") + " " + x.mesa : "") + " · " + tx(TEXTO_INCIDENCIA[x.tipo] || TEXTO_INCIDENCIA.otra) +
+        (x.articulo ? " (" + V.articuloTexto(x.articulo) + ")" : "") + (x.autor ? " · " + x.autor : "") + ": " + x.texto +
         (x.presenta ? " " + tx("apelacionPresenta", { p: x.presenta }) : "") + (x.tipo === "apelacion" ? " " + tx("apelacionResolucion", { r: x.resolucion || tx("apelacionPendiente") }) : "") }),
       x.tipo === "apelacion" ? el("button", { type: "button", class: C.mini, onclick: () => resolverApelacion(R, k) }, tx(x.resolucion ? "apelacionCambiar" : "apelacionResolver")) : null,
       x.tipo === "sancion" && x.mesa && !E.esDeEquipos(t()) && R.mesas[x.mesa - 1] && R.mesas[x.mesa - 1].n
@@ -2606,7 +2746,10 @@
     const mesa = el("select", { id: "pi-inc-mesa", class: C.campoChico, "aria-label": tx("mesa") },
       el("option", { value: "", texto: tx("incSinMesa") }), R.mesas.map((m, i) => el("option", { value: String(i + 1), texto: tx("mesa") + " " + (i + 1) })));
     const tipo = el("select", { id: "pi-inc-tipo", class: C.campoChico, "aria-label": tx("incTipo") },
-      Object.entries(TEXTO_INCIDENCIA).filter(([k]) => k !== "correccion").map(([k, c]) => el("option", { value: k, texto: tx(c) })));
+      Object.entries(TEXTO_INCIDENCIA).filter(([k]) => k !== "correccion" && k !== "adjunto").map(([k, c]) => el("option", { value: k, texto: tx(c) })));
+    // El artículo de las Leyes del Ajedrez, para que el informe lo lleve.
+    const articulo = el("select", { id: "pi-inc-articulo", class: C.campoChico, "aria-label": tx("incArticulo") },
+      el("option", { value: "", texto: tx("incSinArticulo") }), Object.keys(V.ARTICULOS).map((k) => el("option", { value: k, texto: V.articuloTexto(k) })));
     // En una apelación, quién la presenta (la resolución del comité se
     // anota después, en la lista).
     const presenta = el("input", { id: "pi-inc-presenta", type: "text", maxlength: "80", class: C.campo + " mt-2", "aria-label": tx("apelacionQuien"), placeholder: tx("apelacionQuien") });
@@ -2618,6 +2761,7 @@
       const q = texto.value.trim();
       if (!q) { Avisos.avisar(tx("incFalta"), { tipo: "error" }); texto.focus(); return; }
       const nueva = { hora: Date.now(), mesa: mesa.value ? Number(mesa.value) : null, tipo: tipo.value, texto: q.slice(0, 500) };
+      if (articulo.value) nueva.articulo = articulo.value;
       if (tipo.value === "apelacion") {
         if (!presenta.value.trim()) { Avisos.avisar(tx("apelacionFaltaQuien"), { tipo: "error" }); presenta.focus(); return; }
         nueva.presenta = presenta.value.trim().slice(0, 80);
@@ -2629,7 +2773,7 @@
       const x = $("pi-inc-texto"); if (x) x.focus();
       Avisos.avisar(tx("incAnotada"));
     });
-    sec.append(lista, el("div", { class: "flex flex-wrap gap-2 mt-2" }, mesa, tipo), cajaPresenta, texto, anotar);
+    sec.append(lista, el("div", { class: "flex flex-wrap gap-2 mt-2" }, mesa, tipo, articulo), cajaPresenta, texto, anotar);
     caja.append(sec);
   }
 
@@ -3363,8 +3507,11 @@
       E.prepararMesa(v, m);
       if (E.puntosDelEncuentro(v, m).incomparecencia) m.r = E.resultadoEncuentro(v, m);
     }
+    // Quien tiene mesa fija (una silla de ruedas…) queda en su mesa.
+    const movidas = V.aplicarMesasFijas(v, ronda);
     v.rondas.push(ronda);
     guardar();
+    if (movidas.length) Avisos.avisar(tx("mesasFijasAplicadas", { l: movidas.map((x) => x.nombre + " → " + tx("mesa") + " " + x.mesa).join(", ") }), { tipo: "info" });
   }
 
   async function deshacerRonda(r) {
@@ -3608,6 +3755,79 @@
     crear(nuevo);
     pintarTodo();
     Avisos.avisar(tx("abierto", { n: nuevo.nombre || tx("sinNombre") }));
+  }
+
+  // ---------- Las firmas del acta ----------
+  // Se guardan en el evento de cada torneo (todos llevan su copia).
+  function guardarFirmas(idEvento, firmas) {
+    for (const tor of torneosDelEvento(idEvento)) { tor.evento.firmas = firmas; guardarDelEvento(tor); }
+    if (t().evento && t().evento.id === idEvento) { t().evento.firmas = firmas; guardar(); }
+  }
+  // Una firma válida (de esta pantalla o de un celular).
+  function firmaValida(f) {
+    return !!f && Object.prototype.hasOwnProperty.call(V.CARGOS_FIRMA, f.cargo) && typeof f.nombre === "string" && f.nombre.trim() &&
+      typeof f.jpeg === "string" && f.jpeg.length < 300000 && /^[A-Za-z0-9+/=]+$/.test(f.jpeg) &&
+      Number.isInteger(f.ancho) && Number.isInteger(f.alto) && f.ancho > 0 && f.alto > 0 && f.ancho <= 2000 && f.alto <= 2000;
+  }
+  const limpiaFirma = (f) => ({ cargo: f.cargo, nombre: f.nombre.trim().slice(0, 80), jpeg: f.jpeg, ancho: f.ancho, alto: f.alto, hora: Date.now() });
+  // El diálogo para firmar en esta pantalla: quién firma, como qué, y el
+  // recuadro para la firma (PareoVer.padFirma).
+  function pedirFirma() {
+    return new Promise((listo) => {
+      const pad = PareoVer.padFirma(tx);
+      const cargo = el("select", { id: "pi-firma-cargo", class: C.campo }, Object.entries(V.CARGOS_FIRMA).map(([k, x]) => el("option", { value: k, texto: x })));
+      const nombre = el("input", { id: "pi-firma-nombre", type: "text", maxlength: "80", autocomplete: "off", class: C.campo });
+      const error = el("p", { class: "text-sm text-red-700 dark:text-red-300 mt-2", role: "alert" });
+      const guardarB = el("button", { type: "button", id: "pi-firma-guardar", class: C.boton }, tx("firmaGuardar"));
+      const cancelarB = el("button", { type: "button", class: C.botonSec }, tx("cancelar"));
+      const d = el("dialog", { id: "pi-firma-dialogo", class: "rounded-2xl p-5 max-w-lg w-full bg-white dark:bg-brand-900 text-brand-800 dark:text-white", "aria-labelledby": "pi-firma-dialogo-t" },
+        el("h2", { id: "pi-firma-dialogo-t", class: "font-serif text-xl font-bold mb-3", texto: tx("firmarAqui") }),
+        el("label", { for: "pi-firma-cargo", class: "block text-sm font-semibold mb-1", texto: tx("firmaCargo") }), cargo,
+        el("label", { for: "pi-firma-nombre", class: "block text-sm font-semibold mb-1 mt-3", texto: tx("firmaNombre") }), nombre,
+        el("p", { class: "block text-sm font-semibold mb-1 mt-3", texto: tx("firmaRecuadro") }), pad.nodo, error,
+        el("div", { class: "flex flex-wrap gap-2 mt-4" }, guardarB, cancelarB));
+      const cerrar = (x) => { d.close(); d.remove(); listo(x); };
+      cancelarB.addEventListener("click", () => cerrar(null));
+      d.addEventListener("cancel", (e) => { e.preventDefault(); cerrar(null); });
+      guardarB.addEventListener("click", () => {
+        if (!nombre.value.trim()) { error.textContent = tx("firmaFaltaNombre"); nombre.focus(); return; }
+        if (pad.vacio()) { error.textContent = tx("firmaFaltaFirma"); return; }
+        cerrar(limpiaFirma(Object.assign({ cargo: cargo.value, nombre: nombre.value }, pad.imagen())));
+      });
+      document.body.append(d);
+      d.showModal();
+      nombre.focus();
+    });
+  }
+  // Firmar desde un celular: el mismo patrón que pasar el evento (un canal
+  // con un código nuevo); lo que llega se pregunta antes de ir al acta.
+  async function prenderFirmaCelular(ev) {
+    try { await PareoVer.cargarSupabase(); }
+    catch (e) { Avisos.avisar(tx("errorEnVivo", { e: e.message }), { tipo: "error" }); return; }
+    const codigo = nuevoCodigoVivo();
+    const canal = window.sb.channel("pareo-firma-" + codigo);
+    estado.firmaCelular = { id: ev.id, codigo, canal };
+    const contestar = (evento, payload) => canal.send({ type: "broadcast", event: evento, payload: payload || {} });
+    canal.on("broadcast", { event: "pedir" }, () => contestar("estado", { evento: ev.nombre || "", cargos: V.CARGOS_FIRMA }));
+    canal.on("broadcast", { event: "firma" }, async (msg) => {
+      const f = msg.payload || {};
+      if (!firmaValida(f)) { contestar("negada"); return; }
+      const ok = await Avisos.confirmar(tx("firmaLlego", { n: f.nombre.trim().slice(0, 80), c: V.CARGOS_FIRMA[f.cargo] }), { aceptar: tx("firmaAgregar") });
+      if (!ok) { contestar("negada"); return; }
+      guardarFirmas(ev.id, (t().evento.firmas || []).concat(limpiaFirma(f)));
+      contestar("recibida");
+      if (estado.ficha === "archivos") pintarEvento();
+      Avisos.avisar(tx("firmaGuardada", { n: f.nombre.trim().slice(0, 80) }));
+    });
+    canal.subscribe();
+  }
+  async function mostrarFirmaCelular(cont) {
+    const url = location.origin + location.pathname + "#firma=" + estado.firmaCelular.codigo;
+    try { await PareoQr.cargar(); } catch (e) { Avisos.avisar(tx("errorQr", { e: e.message }), { tipo: "error" }); return; }
+    cont.replaceChildren(el("div", { class: "flex flex-wrap items-start gap-4" },
+      el("div", { class: "w-32 bg-white p-2 rounded-lg" }, PareoQr.svg(url, tx("qrEtiqueta"))),
+      el("div", { class: "text-sm" }, el("p", { id: "pi-firma-url", class: "break-all font-mono", texto: url }),
+        el("p", { class: C.nota + " mt-1", texto: tx("firmarCelularAyuda") }))));
   }
 
   // ---------- Pasar el evento a otra computadora ----------
@@ -3893,6 +4113,11 @@
     if (location.hash.startsWith("#adjunto=")) {
       modoVer();
       PareoVer.iniciarAdjunto(location.hash.slice(9), idioma);
+      return;
+    }
+    if (location.hash.startsWith("#firma=")) {
+      modoVer();
+      PareoVer.iniciarFirma(location.hash.slice(7), idioma);
       return;
     }
     if (location.hash.startsWith("#capitan=")) {

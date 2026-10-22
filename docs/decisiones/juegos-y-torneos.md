@@ -3024,6 +3024,65 @@ Rompiendo a propósito el singular, la diferencia del adjunto, el «no» al
 pasar el evento, lo que se recuerda de «Avisarme» o el horario en el
 enlace, salta.
 
+### El acta firmada, la sala y lo que ven las familias
+
+Diez pedidos más del dueño del sitio.
+
+- **El reloj de la ronda en el proyector**: con «Empezar la ronda» (el reloj
+  del retraso), el enlace del evento lleva `ronda.inicio`, y el proyector
+  dice desde cuándo se juega y qué mesas faltan por terminar.
+- **El artículo de las Leyes del Ajedrez en cada incidencia**
+  (`V.ARTICULOS`): pieza tocada (4.3), tiempo agotado (6.9), llegar tarde
+  (6.7), jugada ilegal (7.5), tablas por acuerdo (9.1), triple repetición
+  (9.2), 50 jugadas (9.3), tablas automáticas (9.6), aparato electrónico
+  (11.3.2), molestar al rival (11.5) y las sanciones (12.9), según las
+  Leyes vigentes desde 2023. El informe lo lleva al lado de cada incidencia.
+- **La mesa fija** (`mesaFija` en el jugador, `V.aplicarMesasFijas()`): para
+  una silla de ruedas o una necesidad especial. Después de emparejar, su
+  partida se cambia de lugar con la que estaba en ese número: **no cambia
+  con quién juega ni el color** (el pareo es el del motor). Si la mesa de
+  destino ya es fija de otro, no se le quita. En equipos no aplica.
+- **Revisar el pareo antes de anunciarlo** (`V.revisarPareo()`): dos del
+  mismo centro en una mesa, el mismo color tres rondas seguidas y, en un
+  suizo, más de un punto de diferencia. El Sistema Holandés no lo prohíbe
+  (los colores, solo en casos raros), así que **no se cambia nada solo**:
+  si algo no conviene, se deshace el emparejamiento y se vuelve a
+  emparejar. Se quita con «Visto», o solo, cuando la ronda tiene
+  resultados.
+- **Las firmas del acta**: en la pantalla (con el dedo o el mouse,
+  `PareoVer.padFirma()`) o desde un celular (`#firma=<código>`, canal
+  `pareo-firma-<código>`). La del celular **se pregunta antes de ir al
+  acta**, y lo que no tiene forma de firma (cargo desconocido, una imagen
+  rara o de más de 300 000 caracteres) se rechaza sin preguntar. Se guardan
+  en JPEG con fondo blanco (el PDF no lleva transparencia) en el evento de
+  cada torneo, y el acta las pone como imagen con el cargo, el nombre y la
+  hora. Las que faltan quedan con la línea para firmar a mano.
+- **La nota de un árbitro adjunto**: desde su enlace, con su nombre (se
+  recuerda en ese celular) y, si quiere, una de sus mesas. Llega a las
+  incidencias de la ronda como «Nota de un adjunto» y de ahí al informe
+  oficial. Lo escrito no se borra cuando llega un resultado nuevo (la
+  caja se arma una sola vez).
+- **La inscripción el mismo día**: agregar a alguien en un torneo de los JDE
+  revisa su categoría con su año de nacimiento (art. 17 y 18) y, si el
+  torneo ya tiene rondas, queda anotado en el acta, en «Inscripciones el
+  día del torneo», con la ronda en que entró. Si la normativa lo permite o
+  no, lo decide el comité: Pareo Integral no lo bloquea.
+- **El cartel para la entrada**: el nombre del evento, el QR del enlace en
+  vivo (si está apagado, pregunta antes de prenderlo), el horario si se
+  puso y los torneos, en una hoja.
+- **Los certificados de los árbitros** (`V.certificadosArbitro()`): uno por
+  persona que figura como árbitro principal o adjunto de algún torneo del
+  evento (los adjuntos separados por coma o punto y coma), con sus cargos y
+  rondas: sirve de respaldo para sus normas.
+- **«Mi centro» en el enlace del evento**: la clasificación de cada torneo
+  lleva el centro educativo (`i`), y el celular deja elegir uno y ver solo a
+  sus estudiantes en todos los torneos. Se recuerda en ese celular.
+
+Al tocar esto, `node herramientas/verificar-pareo-actas.js` (con el sitio en
+localhost:8777; Realtime y el reloj, con dobles). Rompiendo a propósito la
+firma que no vale, la mesa fija, el aviso del mismo centro, la nota sin
+nombre o la caja de la nota que se rearma, salta.
+
 ### La barra de progreso al buscar el Elo Nacional
 
 Antes de esto, tocar «Buscar Elo Nacional de quien no tiene» con una lista

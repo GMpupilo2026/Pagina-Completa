@@ -1792,6 +1792,15 @@ body.pi-imprimiendo-plantilla.pi-imprimiendo-firmas .pi-plantilla { break-after:
 #pi-ver.pi-grande h1 { font-size: 2.25rem; }
 #pi-ver.pi-grande li > p, #pi-ver.pi-grande [data-tablero] > p { font-size: 1.35rem; }
 #pi-ver.pi-grande select, #pi-ver.pi-grande .pi-adj-rapido { font-size: 1.4rem; padding: 0.85rem 1.4rem; min-width: 5rem; }
+/* El cartel del evento para la entrada (pareo.html, «Cartel para la entrada»). */
+.pi-cartel { color: #000; text-align: center; padding: 1cm 1.5cm; }
+.pi-cartel-titulo { font-size: 26pt; font-weight: 700; margin-bottom: 0.4cm; }
+.pi-cartel-texto { font-size: 15pt; margin-bottom: 0.5cm; }
+.pi-cartel-qr { width: 9cm; height: 9cm; margin: 0 auto 0.3cm; }
+.pi-cartel-qr svg { width: 100%; height: 100%; }
+.pi-cartel-url { font-family: monospace; font-size: 10pt; word-break: break-all; margin-bottom: 0.6cm; }
+.pi-cartel h2 { font-size: 15pt; font-weight: 700; margin: 0.4cm 0 0.15cm; }
+.pi-cartel ul { list-style: none; padding: 0; font-size: 12pt; line-height: 1.5; }
 /* La pantalla para proyectar el evento (pareo.html#evento=…&proyectar). */
 .pi-proyector .pi-tabla { font-size: 1.35rem; }
 /* Los diplomas del evento (js/pareo/pagina.js: imprimirDiplomas): uno por

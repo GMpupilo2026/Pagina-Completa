@@ -272,6 +272,10 @@ window.PareoVer = (function () {
         el("div", { id: "pi-ver-mio", class: "mb-2", "aria-live": "polite" }),
         avisar,
         el("p", { id: "pi-ver-aviso", class: "text-sm font-semibold mt-2 mb-6", role: "status", "aria-live": "assertive" }),
+        // «Mi centro»: los de un centro educativo en todos los torneos.
+        el("label", { for: "pi-ver-centro", class: "block text-sm font-semibold mb-1" }, tx("verCentro")),
+        el("select", { id: "pi-ver-centro", class: "w-full rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-800 text-brand-800 dark:text-white px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400" }),
+        el("div", { id: "pi-ver-centro-lista", class: "mt-2 mb-6", "aria-live": "polite" }),
         el("div", { id: "pi-ver-ficha" }),
         el("div", { id: "pi-ver-torneos" }));
       cont.replaceChildren(caja);
@@ -285,6 +289,7 @@ window.PareoVer = (function () {
       if (x && x.q) seguir(cont, x.q, x.texto || x.q);
     }
     pintarAvisar(cont, idioma);
+    pintarCentro(cont, idioma, datos);
     caja.querySelector("#pi-ver-titulo").textContent = datos.nombre || "Pareo Integral";
     caja.querySelector("#pi-ver-leyenda").textContent = tx("verEventoLeyenda", { n: (datos.torneos || []).length });
     const lista = caja.querySelector("#pi-ver-torneos");
@@ -337,6 +342,35 @@ window.PareoVer = (function () {
     avisarSiToca(cont, idioma, datos);
   }
 
+  // «Mi centro»: el selector se rellena con cada estado que llega, sin
+  // perder lo elegido (que se recuerda en el celular por código de evento).
+  const CLAVE_CENTRO = "pareo_ver_centro_v1_";
+  function pintarCentro(cont, idioma, datos) {
+    const tx = (clave, vars) => X.t(idioma, clave, vars);
+    const sel = cont.querySelector("#pi-ver-centro");
+    if (!sel) return;
+    if (!sel.dataset.listo) {
+      sel.dataset.listo = "1";
+      try { sel.dataset.elegido = localStorage.getItem(CLAVE_CENTRO + cont.__codigo) || ""; } catch (e) { /* sin almacenamiento */ }
+      sel.addEventListener("change", () => {
+        sel.dataset.elegido = sel.value;
+        try { localStorage.setItem(CLAVE_CENTRO + cont.__codigo, sel.value); } catch (e) { /* sin espacio */ }
+        pintarCentro(cont, idioma, cont.__datos);
+      });
+    }
+    const centros = PareoEvento.centrosDeVista(datos);
+    const elegido = sel.dataset.elegido || "";
+    sel.replaceChildren(el("option", { value: "" }, tx("verCentroNinguno")), ...centros.map((c) => el("option", { value: c }, c)));
+    sel.value = centros.includes(elegido) ? elegido : "";
+    const lista = cont.querySelector("#pi-ver-centro-lista");
+    if (!sel.value) { lista.replaceChildren(); return; }
+    const grupos = PareoEvento.delCentro(datos, sel.value);
+    lista.replaceChildren(grupos.length ? el("div", { class: "space-y-2" }, grupos.map((g) => el("section", { class: "rounded-lg border border-brand-200 dark:border-brand-700 p-2" },
+      el("h3", { class: "font-semibold text-sm" }, g.torneo),
+      el("ul", { class: "text-sm" }, g.filas.map((f) => el("li", {}, tx("verCentroFila", { p: f.p, n: f.n, pts: puntosTexto(idioma, f.pts) }))))))) :
+      el("p", { class: "text-sm" }, tx("verCentroNada")));
+  }
+
   // A quién se sigue con «Avisarme», guardado en el celular por código de
   // evento: al volver a abrir el enlace se sigue avisando.
   const CLAVE_SEGUIR = "pareo_ver_seguir_v1_";
@@ -384,6 +418,19 @@ window.PareoVer = (function () {
   // La pantalla para proyectar en el salón: un torneo a la vez, en grande,
   // y pasa sola al siguiente cada 15 segundos.
   const CADA = 15000;
+  // El reloj de la ronda en juego: desde cuándo se juega y qué mesas
+  // faltan por terminar (con «Empezar la ronda» del reloj del retraso).
+  function relojRonda(idioma, x) {
+    const R = x.ronda;
+    if (!R || !R.inicio) return null;
+    const tx = (clave, vars) => X.t(idioma, clave, vars);
+    const lleva = Math.max(0, Math.floor((Date.now() - R.inicio) / 60000));
+    const faltan = R.mesas.filter((m) => m.n && !m.r).map((m) => m.m);
+    return el("div", { class: "text-2xl mb-6", "data-reloj-ronda": "" },
+      el("p", { class: "font-bold" }, tx("verRelojRonda", { r: R.n, h: horaCorta(R.inicio), l: lleva >= 60 ? Math.floor(lleva / 60) + " h " + (lleva % 60) + " min" : lleva + " min" })),
+      el("p", {}, faltan.length ? tx("verRelojFaltan", { n: faltan.length, l: faltan.join(", ") }) : tx("verRelojTerminaron")));
+  }
+
   function pintarProyector(cont, idioma, datos, vuelta) {
     const tx = (clave, vars) => X.t(idioma, clave, vars);
     const torneos = (datos.torneos || []).filter((x) => x.ronda || (x.clasificacion && x.clasificacion.length));
@@ -395,6 +442,7 @@ window.PareoVer = (function () {
       el("h1", { class: "font-serif text-4xl font-bold mb-1" }, x.nombre),
       el("p", { class: "text-lg text-brand-600 dark:text-brand-300 mb-6" }, tx("verProyectorTorneo", { i: i + 1, n: torneos.length })),
       proximaTexto(idioma, x) ? el("p", { class: "text-3xl font-bold mb-6", "data-proxima": "" }, proximaTexto(idioma, x)) : null,
+      relojRonda(idioma, x),
       el("div", { class: "grid lg:grid-cols-2 gap-8" }, ...tablas(idioma, x, "h2").reduce((a, n, k, l) => (k % 2 ? a : a.concat(el("div", {}, n, l[k + 1]))), []))));
   }
 
@@ -510,6 +558,7 @@ window.PareoVer = (function () {
   // no) la pestaña del árbitro principal, que contesta con el estado: una
   // mesa ya anotada se ve anotada y no se vuelve a tocar desde acá.
   const CLAVE_GRANDE = "pareo_adjunto_grande_v1";
+  const CLAVE_AUTOR = "pareo_adjunto_autor_v1";
   const RESULTADOS = { "1-0": "res10", "=": "resTablas", "0-1": "res01", "+-": "resMasMenos", "-+": "resMenosMas", "--": "resMenosMenos" };
   async function iniciarAdjunto(cadena, idioma) {
     const tx = (clave, vars) => X.t(idioma, clave, vars);
@@ -587,8 +636,42 @@ window.PareoVer = (function () {
         el("h1", { class: "font-serif text-2xl font-bold mb-1" }, d.nombre || "Pareo Integral"),
         el("p", { class: "text-sm text-brand-600 dark:text-brand-300 mb-2" }, tx("adjuntoLeyenda", { r: d.ronda, a: desde, b: Math.min(hasta, (d.mesas || []).length) })),
         grande,
-        mesas.length ? lista : el("p", { class: "text-sm" }, tx("adjuntoSinMesas")));
+        mesas.length ? lista : el("p", { class: "text-sm" }, tx("adjuntoSinMesas")),
+        notaInforme(d, mesas));
     });
+    canal.on("broadcast", { event: "notaRecibida" }, () => {
+      const x = document.getElementById("pi-adj-nota-estado");
+      if (x) x.textContent = tx("adjuntoNotaRecibida");
+      const t = document.getElementById("pi-adj-nota");
+      if (t) t.value = "";
+    });
+    // La nota para el informe: se arma una vez y se queda (lo escrito no se
+    // pierde cuando llega un resultado nuevo).
+    let cajaNota = null;
+    function notaInforme(d, mesas) {
+      if (cajaNota) return cajaNota;
+      let autor = "";
+      try { autor = localStorage.getItem(CLAVE_AUTOR) || ""; } catch (e) { /* sin almacenamiento */ }
+      const nombre = el("input", { id: "pi-adj-autor", type: "text", maxlength: "60", autocomplete: "name", value: autor, class: "w-full rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-800 px-3 py-2 text-base" });
+      const mesa = el("select", { id: "pi-adj-nota-mesa", class: "rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-800 px-3 py-2 text-base", "aria-label": tx("mesa") },
+        el("option", { value: "" }, tx("incSinMesa")), mesas.map((m) => el("option", { value: String(m.m) }, tx("mesa") + " " + m.m)));
+      const texto = el("textarea", { id: "pi-adj-nota", rows: "3", maxlength: "500", class: "w-full rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-800 px-3 py-2 text-base mt-2", "aria-label": tx("adjuntoNotaQue") });
+      const estadoNota = el("p", { id: "pi-adj-nota-estado", class: "text-sm mt-1", role: "status" });
+      const mandar = el("button", { type: "button", id: "pi-adj-nota-mandar", class: "mt-2 border border-brand-300 dark:border-brand-600 font-semibold px-4 py-2 rounded-lg text-base focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400" }, tx("adjuntoNotaMandar"));
+      mandar.addEventListener("click", () => {
+        if (!nombre.value.trim()) { estadoNota.textContent = tx("adjuntoNotaFaltaNombre"); nombre.focus(); return; }
+        if (!texto.value.trim()) { estadoNota.textContent = tx("incFalta"); texto.focus(); return; }
+        try { localStorage.setItem(CLAVE_AUTOR, nombre.value.trim()); } catch (e) { /* sin espacio */ }
+        estadoNota.textContent = tx("adjuntoEnviando");
+        canal.send({ type: "broadcast", event: "nota", payload: { autor: nombre.value.trim(), texto: texto.value.trim(), mesa: mesa.value ? Number(mesa.value) : null } });
+      });
+      cajaNota = el("section", { class: "mt-6 rounded-xl border border-brand-200 dark:border-brand-700 p-3", "aria-labelledby": "pi-adj-nota-t" },
+        el("h2", { id: "pi-adj-nota-t", class: "font-semibold" }, tx("adjuntoNotaTitulo")),
+        el("p", { class: "text-sm text-brand-600 dark:text-brand-300 mb-2" }, tx("adjuntoNotaTexto")),
+        el("label", { for: "pi-adj-autor", class: "block text-sm font-semibold mb-1" }, tx("adjuntoNotaNombre")), nombre,
+        el("div", { class: "mt-2" }, mesa), texto, mandar, estadoNota);
+      return cajaNota;
+    }
     canal.subscribe((st) => { if (st === "SUBSCRIBED") canal.send({ type: "broadcast", event: "pedir", payload: {} }); });
   }
 
@@ -640,5 +723,74 @@ window.PareoVer = (function () {
     canal.subscribe((st) => { if (st === "SUBSCRIBED") canal.send({ type: "broadcast", event: "pedir", payload: {} }); });
   }
 
-  return { iniciarCapitan, empaquetar, desempaquetar, cargarSupabase, iniciar, iniciarVivo, iniciarEvento, iniciarAdjunto, pintarEvento, pintarProyector, buscarJugador, botonIdioma };
+  // El recuadro para firmar con el dedo o el mouse. imagen() da la firma en
+  // JPEG (fondo blanco: el PDF no lleva transparencia), en base64.
+  function padFirma(tx) {
+    const ANCHO = 600, ALTO = 200;
+    const lienzo = el("canvas", { width: String(ANCHO), height: String(ALTO), class: "pi-pad-firma w-full rounded-lg border-2 border-brand-300 dark:border-brand-600 bg-white touch-none", role: "img", "aria-label": tx("firmaRecuadro") });
+    const ctx = lienzo.getContext("2d");
+    const limpiar = () => { ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, ANCHO, ALTO); trazos = 0; };
+    let trazos = 0, dibujando = false;
+    limpiar();
+    ctx.strokeStyle = "#102a43"; ctx.lineWidth = 3; ctx.lineCap = "round"; ctx.lineJoin = "round";
+    const punto = (e) => { const r = lienzo.getBoundingClientRect(); return [(e.clientX - r.left) * ANCHO / r.width, (e.clientY - r.top) * ALTO / r.height]; };
+    lienzo.addEventListener("pointerdown", (e) => { dibujando = true; lienzo.setPointerCapture(e.pointerId); const [x, y] = punto(e); ctx.beginPath(); ctx.moveTo(x, y); });
+    lienzo.addEventListener("pointermove", (e) => { if (!dibujando) return; const [x, y] = punto(e); ctx.lineTo(x, y); ctx.stroke(); trazos++; });
+    const soltar = () => { dibujando = false; };
+    lienzo.addEventListener("pointerup", soltar);
+    lienzo.addEventListener("pointercancel", soltar);
+    const borrar = el("button", { type: "button", class: "mt-2 border border-brand-300 dark:border-brand-600 font-semibold px-3 py-1 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400" }, tx("firmaBorrar"));
+    borrar.addEventListener("click", () => { limpiar(); ctx.strokeStyle = "#102a43"; });
+    return {
+      nodo: el("div", {}, lienzo, borrar),
+      vacio: () => trazos < 3,
+      imagen: () => ({ jpeg: lienzo.toDataURL("image/jpeg", 0.85).split(",")[1], ancho: ANCHO, alto: ALTO }),
+    };
+  }
+
+  // La página para firmar el acta desde un celular (#firma=<código>): como
+  // qué firma, su nombre y la firma. La pestaña del árbitro pregunta antes
+  // de agregarla al acta y contesta si quedó.
+  async function iniciarFirma(codigo, idioma) {
+    const tx = (clave, vars) => X.t(idioma, clave, vars);
+    const cont = document.getElementById("pi-ver");
+    cont.hidden = false;
+    cont.replaceChildren(el("p", { class: "text-sm text-brand-600 dark:text-brand-300" }, tx("conectandoEnVivo")));
+    try { await cargarSupabase(); }
+    catch (e) { cont.replaceChildren(el("p", { class: "text-sm text-red-700 dark:text-red-300" }, tx("errorEnVivoVer"))); return; }
+    const canal = window.sb.channel("pareo-firma-" + String(codigo).replace(/[^a-z0-9]/g, ""));
+    const estadoTxt = el("p", { id: "pi-firma-estado", class: "text-base font-semibold mt-3", role: "status" });
+    let armado = false;
+    canal.on("broadcast", { event: "estado" }, (msg) => {
+      if (armado) return;
+      armado = true;
+      const d = msg.payload || {};
+      const cargo = el("select", { id: "pi-firma-cargo", class: "w-full rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-800 px-3 py-2 text-base" },
+        Object.entries(d.cargos || {}).map(([k, x]) => el("option", { value: k }, String(x))));
+      const nombre = el("input", { id: "pi-firma-nombre", type: "text", maxlength: "80", autocomplete: "name", class: "w-full rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-800 px-3 py-2 text-base" });
+      const pad = padFirma(tx);
+      const mandar = el("button", { type: "button", id: "pi-firma-mandar", class: "mt-4 bg-brand-800 hover:bg-brand-900 dark:bg-brand-700 text-white font-semibold px-4 py-2 rounded-lg text-base focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400" }, tx("firmaMandar"));
+      mandar.addEventListener("click", () => {
+        if (!nombre.value.trim()) { estadoTxt.textContent = tx("firmaFaltaNombre"); nombre.focus(); return; }
+        if (pad.vacio()) { estadoTxt.textContent = tx("firmaFaltaFirma"); return; }
+        mandar.disabled = true;
+        estadoTxt.textContent = tx("firmaMandando");
+        canal.send({ type: "broadcast", event: "firma", payload: Object.assign({ cargo: cargo.value, nombre: nombre.value.trim() }, pad.imagen()) });
+      });
+      cont.replaceChildren(
+        el("h1", { class: "font-serif text-2xl font-bold mb-1" }, tx("firmasTitulo")),
+        el("p", { class: "text-sm text-brand-600 dark:text-brand-300 mb-4" }, String(d.evento || "")),
+        el("label", { for: "pi-firma-cargo", class: "block text-sm font-semibold mb-1" }, tx("firmaCargo")), cargo,
+        el("label", { for: "pi-firma-nombre", class: "block text-sm font-semibold mb-1 mt-3" }, tx("firmaNombre")), nombre,
+        el("p", { class: "block text-sm font-semibold mb-1 mt-3" }, tx("firmaRecuadro")), pad.nodo, mandar, estadoTxt);
+    });
+    canal.on("broadcast", { event: "recibida" }, () => { estadoTxt.textContent = tx("firmaRecibida"); });
+    canal.on("broadcast", { event: "negada" }, () => {
+      estadoTxt.textContent = tx("firmaNegada");
+      const b = document.getElementById("pi-firma-mandar"); if (b) b.disabled = false;
+    });
+    canal.subscribe((st) => { if (st === "SUBSCRIBED") canal.send({ type: "broadcast", event: "pedir", payload: {} }); });
+  }
+
+  return { iniciarFirma, padFirma, iniciarCapitan, empaquetar, desempaquetar, cargarSupabase, iniciar, iniciarVivo, iniciarEvento, iniciarAdjunto, pintarEvento, pintarProyector, buscarJugador, botonIdioma };
 })();
