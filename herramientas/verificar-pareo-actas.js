@@ -307,7 +307,7 @@ async function pruebaCelulares(browser) {
   await page.selectOption("#pi-adj-nota-mesa", "1");
   await page.click("#pi-adj-nota-mandar");
   const mandada = await page.evaluate(() => window.__enviados.filter((x) => x.evento === "nota").pop());
-  igual("manda la nota con su nombre y su mesa", mandada && mandada.payload, { autor: "PRUEBA ADJUNTO", texto: "Reclamo de tablas por repetición.", mesa: 1 });
+  igual("manda la nota con su nombre y su mesa", mandada && mandada.payload, { autor: "PRUEBA ADJUNTO", texto: "Reclamo de tablas por repetición.", mesa: 1, lado: null, tipo: "reclamo", articulo: null });
   // Llega un resultado nuevo: lo escrito no se pierde.
   await page.fill("#pi-adj-nota", "Otra cosa");
   await page.evaluate((e) => window.__llega("pareo-adjunto-prueba888", "estado", e), estado);

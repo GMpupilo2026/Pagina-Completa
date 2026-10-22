@@ -3140,6 +3140,64 @@ localhost:8777; el segundo deja correr el service worker, a diferencia de
 los demás). Rompiendo a propósito el guardado, el motor en la lista, la
 compresión, el tope de 400 o que solo cuenten las partidas jugadas, salta.
 
+### Las hojas ordenadas, la marca de agua y las marcas de incidencias
+
+Cuatro pedidos del dueño del sitio, con fotos de cómo salían las hojas.
+
+- **La plantilla de la pared, en columnas**: antes cada mesa era una línea
+  de texto, y con un nombre de dos líneas el guion y la casilla del
+  resultado se corrían. Ahora es una cuadrícula (Mesa · Blancas · – ·
+  Negras · Resultado) con las columnas fijas, filas cebra (con
+  `print-color-adjust` para que la impresora no las quite) y, desde la
+  ronda 2, los puntos de cada uno entre paréntesis. Sigue sin el resultado
+  puesto: es para antes de la ronda.
+- **Las planillas para firmar, cuatro por hoja**: cada mesa es una tarjeta
+  con la mesa, la ronda y el torneo arriba, Blancas y Negras, las casillas
+  del resultado (o el resultado anotado, en negrita) y dos líneas de firma
+  con el nombre debajo; en equipos, los tableros y la firma de cada
+  capitán. Ya no hay un salto de hoja por mesa: las tarjetas se juntan
+  (`break-inside: avoid`) con una línea punteada para cortarlas. Cuatro
+  miden unos 22 cm, dentro de los ~25 que deja una hoja carta.
+- **La marca de agua de Ajedrez Integral en todo lo que sale**: en lo que
+  se imprime desde el navegador, `#pi-marca-agua` va `position: fixed` (así
+  se repite en cada hoja) al 7 % y solo en `@media print`; en los PDF,
+  `PareoPDF.generar()` le pone `doc.marca` con `MarcaAgua.prepararDesde()`
+  antes de `ReportePDF.generar()` (si la imagen no llega, sin conexión por
+  ejemplo, el PDF sale igual, sin marca). **Es una imagen propia, sin el
+  nombre de Oscar**, como la pidió el dueño: el dibujo de
+  `img/logo-oscar-angulo-marca.png` sin la cinta del nombre y «AJEDREZ
+  INTEGRAL» en Cinzel debajo; la arma `herramientas/marca-agua-ajedrez-integral.js`
+  y no se edita a mano. Solo la usa Pareo Integral: los informes del resto
+  del sitio siguen con la de siempre. Los avisos de la página (`#avisos-zona`)
+  tampoco salen en el papel: antes uno recién mostrado quedaba impreso.
+- **Las marcas de incidencias junto al nombre**: cada incidencia de la
+  ronda que tiene un jugador lo marca en el pareo, una «i» por cada jugada
+  ilegal y una «!» por cada otra irregularidad («ii!» son dos ilegales y
+  una irregularidad), para que el árbitro sepa de un vistazo quién pierde
+  con la próxima (art. 7.5.5: la segunda ilegal pierde). Las correcciones y
+  las apelaciones no marcan a nadie (`marcasIncidencias()` en
+  `js/pareo/evento.js`). Se cuentan por ronda, que es por partida. La marca
+  es un botón: al tocarlo se abre debajo de qué fue cada una (y, con una
+  ilegal, «con otra pierde»; con dos, «pierde la partida»), y cerrado no
+  ocupa más que las letras. Color (rojo oscuro sobre rosado, 8,5:1; 10:1 en
+  oscuro) y letra: el color nunca va solo. Para anotarle una incidencia a
+  alguien, el formulario pide ahora el jugador, de entre los dos de la
+  mesa elegida (o los de cada tablero, en equipos).
+- **El adjunto, desde el celular, anota lo mismo**: la mesa, el jugador
+  (de esa mesa), el tipo (reclamo, sanción, decisión u otra) y el artículo,
+  y ve las marcas en sus mesas. Al celular no le llegan los ids de los
+  jugadores: le llega una clave por lado («b», «n», o «t2b» en el tablero 2
+  de un encuentro) y la principal la vuelve a buscar en la mesa al
+  recibirla; una clave que no es de esa mesa, un tipo o un artículo que no
+  existen, se descartan y la nota entra igual, sin eso.
+
+Al tocar esto, `node herramientas/verificar-pareo-hojas.js` (mide las
+columnas y las tarjetas con la vista de impresión, y busca la marca en el
+PDF) y `node herramientas/verificar-pareo-marcas.js`. Rompiendo a propósito
+las columnas, el corte entre tarjetas, la marca de agua, que las
+correcciones no marquen, la cuenta de ilegales o que el jugador sea de la
+mesa, salta.
+
 ### La barra de progreso al buscar el Elo Nacional
 
 Antes de esto, tocar «Buscar Elo Nacional de quien no tiene» con una lista

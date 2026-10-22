@@ -581,6 +581,19 @@ window.PareoVer = (function () {
   const CLAVE_GRANDE = "pareo_adjunto_grande_v1";
   const CLAVE_AUTOR = "pareo_adjunto_autor_v1";
   const RESULTADOS = { "1-0": "res10", "=": "resTablas", "0-1": "res01", "+-": "resMasMenos", "-+": "resMenosMas", "--": "resMenosMenos" };
+  // La marca de las incidencias de un jugador (i, !) junto a su nombre: un
+  // botón chico que abre, debajo, de qué fue cada una.
+  function marcaCelular(tx, marca, nombre, cont) {
+    if (!marca || !marca.t) return null;
+    const det = el("div", { class: "pi-inc-detalle text-sm mt-1", hidden: true },
+      el("p", { class: "font-semibold" }, nombre + (marca.pierde ? " · " + tx("marcaPierde") : "")),
+      el("ul", { class: "list-disc pl-5" }, (marca.d || []).map((x) => el("li", {}, String(x)))));
+    const b = el("button", { type: "button", class: "pi-marca-inc", "data-marca": marca.t, "aria-expanded": "false", "aria-label": tx("marcaVerCorta", { n: nombre }) }, marca.t);
+    b.addEventListener("click", () => { det.hidden = !det.hidden; b.setAttribute("aria-expanded", det.hidden ? "false" : "true"); });
+    cont.append(det);
+    return b;
+  }
+
   async function iniciarAdjunto(cadena, idioma) {
     const tx = (clave, vars) => X.t(idioma, clave, vars);
     const [codigo, ...opciones] = String(cadena).split("&");
@@ -625,15 +638,28 @@ window.PareoVer = (function () {
       const mesas = (d.mesas || []).filter((m) => m.m >= desde && m.m <= hasta);
       const lista = el("ul", { class: "space-y-3" });
       for (const m of mesas) {
-        const li = el("li", { class: "rounded-xl border border-brand-200 dark:border-brand-700 p-3", "data-mesa": String(m.m) },
-          el("p", { class: "font-semibold" }, tx("mesa") + " " + m.m + ": " + m.b + " – " + (m.n || tx("cBye"))));
+        const li = el("li", { class: "rounded-xl border border-brand-200 dark:border-brand-700 p-3", "data-mesa": String(m.m) });
+        const dets = el("div");
+        const cab = el("p", { class: "font-semibold" }, tx("mesa") + " " + m.m + ": " + m.b);
+        const mb = marcaCelular(tx, m.mb, m.b, dets);
+        if (mb) cab.append(" ", mb);
+        cab.append(" – " + (m.n || tx("cBye")));
+        const mn = m.n ? marcaCelular(tx, m.mn, m.n, dets) : null;
+        if (mn) cab.append(" ", mn);
+        li.append(cab, dets);
         if (!m.n) { lista.append(li); continue; }
         // En equipos, un selector por tablero.
         if (m.tableros) {
           for (const k of m.tableros) {
             const clave = m.m + "-" + k.t;
-            const fila = el("div", { class: "mt-2", "data-tablero": String(k.t) },
-              el("p", { class: "text-sm" }, tx("tableroN", { t: k.t }) + ": " + (k.b || tx("nadie")) + " – " + (k.n || tx("nadie"))));
+            const detsT = el("div");
+            const pT = el("p", { class: "text-sm" }, tx("tableroN", { t: k.t }) + ": " + (k.b || tx("nadie")));
+            const tb = k.b ? marcaCelular(tx, k.mb, k.b, detsT) : null;
+            if (tb) pT.append(" ", tb);
+            pT.append(" – " + (k.n || tx("nadie")));
+            const tn = k.n ? marcaCelular(tx, k.mn, k.n, detsT) : null;
+            if (tn) pT.append(" ", tn);
+            const fila = el("div", { class: "mt-2", "data-tablero": String(k.t) }, pT, detsT);
             if (k.r || k.fijo) { enviadas.delete(clave); fila.append(el("p", { class: "text-sm" }, tx("adjuntoAnotada", { r: k.r ? tx("corto_" + k.r) : "—" }))); li.append(fila); continue; }
             fila.append(selector(d, m.m, k.t, clave, tx("resultadoTablero", { t: k.t, b: k.b, n: k.n })));
             li.append(fila);
@@ -669,13 +695,30 @@ window.PareoVer = (function () {
     // La nota para el informe: se arma una vez y se queda (lo escrito no se
     // pierde cuando llega un resultado nuevo).
     let cajaNota = null;
+    let mesasNota = [];
     function notaInforme(d, mesas) {
-      if (cajaNota) return cajaNota;
+      mesasNota = mesas;
+      if (cajaNota) { cajaNota.__llenarQuien(); return cajaNota; }
       let autor = "";
       try { autor = localStorage.getItem(CLAVE_AUTOR) || ""; } catch (e) { /* sin almacenamiento */ }
       const nombre = el("input", { id: "pi-adj-autor", type: "text", maxlength: "60", autocomplete: "name", value: autor, class: "w-full rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-800 px-3 py-2 text-base" });
       const mesa = el("select", { id: "pi-adj-nota-mesa", class: "rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-800 px-3 py-2 text-base", "aria-label": tx("mesa") },
         el("option", { value: "" }, tx("incSinMesa")), mesas.map((m) => el("option", { value: String(m.m) }, tx("mesa") + " " + m.m)));
+      // A quién va (de los que juegan esa mesa), el tipo y el artículo.
+      const quien = el("select", { id: "pi-adj-nota-jugador", class: "rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-800 px-3 py-2 text-base", "aria-label": tx("incJugador"), disabled: true });
+      const llenarQuien = () => {
+        const m = mesasNota.find((x) => String(x.m) === mesa.value);
+        const antes = quien.value;
+        quien.replaceChildren(el("option", { value: "" }, tx("incSinJugador")), ...((m && m.quien) || []).map((x) => el("option", { value: x.k }, x.e)));
+        quien.value = [...quien.options].some((o) => o.value === antes) ? antes : "";
+        quien.disabled = !(m && m.quien && m.quien.length);
+      };
+      mesa.addEventListener("change", llenarQuien);
+      const TIPOS = { reclamo: "incReclamo", sancion: "incSancion", decision: "incDecision", otra: "incOtra" };
+      const tipo = el("select", { id: "pi-adj-nota-tipo", class: "rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-800 px-3 py-2 text-base", "aria-label": tx("incTipo") },
+        Object.entries(TIPOS).map(([k, c]) => el("option", { value: k }, tx(c))));
+      const articulo = el("select", { id: "pi-adj-nota-articulo", class: "rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-800 px-3 py-2 text-base max-w-full", "aria-label": tx("incArticulo") },
+        el("option", { value: "" }, tx("incSinArticulo")), Object.keys(PareoEvento.ARTICULOS).map((k) => el("option", { value: k }, PareoEvento.articuloTexto(k))));
       const texto = el("textarea", { id: "pi-adj-nota", rows: "3", maxlength: "500", class: "w-full rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-800 px-3 py-2 text-base mt-2", "aria-label": tx("adjuntoNotaQue") });
       const estadoNota = el("p", { id: "pi-adj-nota-estado", class: "text-sm mt-1", role: "status" });
       const mandar = el("button", { type: "button", id: "pi-adj-nota-mandar", class: "mt-2 border border-brand-300 dark:border-brand-600 font-semibold px-4 py-2 rounded-lg text-base focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400" }, tx("adjuntoNotaMandar"));
@@ -684,13 +727,15 @@ window.PareoVer = (function () {
         if (!texto.value.trim()) { estadoNota.textContent = tx("incFalta"); texto.focus(); return; }
         try { localStorage.setItem(CLAVE_AUTOR, nombre.value.trim()); } catch (e) { /* sin espacio */ }
         estadoNota.textContent = tx("adjuntoEnviando");
-        canal.send({ type: "broadcast", event: "nota", payload: { autor: nombre.value.trim(), texto: texto.value.trim(), mesa: mesa.value ? Number(mesa.value) : null } });
+        canal.send({ type: "broadcast", event: "nota", payload: { autor: nombre.value.trim(), texto: texto.value.trim(), mesa: mesa.value ? Number(mesa.value) : null,
+          lado: quien.value || null, tipo: tipo.value, articulo: articulo.value || null } });
       });
       cajaNota = el("section", { class: "mt-6 rounded-xl border border-brand-200 dark:border-brand-700 p-3", "aria-labelledby": "pi-adj-nota-t" },
         el("h2", { id: "pi-adj-nota-t", class: "font-semibold" }, tx("adjuntoNotaTitulo")),
         el("p", { class: "text-sm text-brand-600 dark:text-brand-300 mb-2" }, tx("adjuntoNotaTexto")),
         el("label", { for: "pi-adj-autor", class: "block text-sm font-semibold mb-1" }, tx("adjuntoNotaNombre")), nombre,
-        el("div", { class: "mt-2" }, mesa), texto, mandar, estadoNota);
+        el("div", { class: "mt-2 flex flex-wrap gap-2" }, mesa, quien, tipo, articulo), texto, mandar, estadoNota);
+      cajaNota.__llenarQuien = llenarQuien;
       return cajaNota;
     }
     canal.subscribe((st) => { if (st === "SUBSCRIBED") canal.send({ type: "broadcast", event: "pedir", payload: {} }); });

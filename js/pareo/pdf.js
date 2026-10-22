@@ -5,8 +5,10 @@
  * para pegarlo en la pared, pero no para mandarlo por correo o adjuntarlo al
  * informe de un torneo. Esto arma el documento neutral que ya sabe dibujar
  * js/reporte-pdf.js (el mismo de los informes de actividades), sin agregar
- * ninguna librería — ver la cabecera de ese archivo. Sin marca de agua: Pareo
- * Integral no es de una academia en particular, es de quien organiza.
+ * ninguna librería — ver la cabecera de ese archivo. Con la marca de agua de
+ * Ajedrez Integral (el caballo y «AJEDREZ INTEGRAL», sin el nombre de Oscar),
+ * armada con js/marca-agua.js: la pidió el dueño del sitio en todas las hojas
+ * de Pareo Integral.
  *
  * El módulo no toca el DOM ni sabe de js/pareo/pagina.js: recibe encabezados,
  * anchos y filas ya armados (y ya en el idioma elegido), así que
@@ -16,6 +18,7 @@
  *     d = { titulo, subtitulo, encabezados, anchos, filas, notas }
  *   PareoPDF.nombreArchivo(nombreTorneo, sufijo) → "torneo-sufijo.pdf"
  *   PareoPDF.bajar(d, nombreArchivo) → lo arma y lo baja
+ *   PareoPDF.generar(doc) → el Blob de cualquier documento, con la marca
  */
 (function (raiz) {
   "use strict";
@@ -38,8 +41,20 @@
     return base + "-" + sufijo + ".pdf";
   }
 
+  // La de Ajedrez Integral (herramientas/marca-agua-ajedrez-integral.js), la
+  // misma que sale en las hojas impresas desde pareo.html.
+  const MARCA = "img/marca-agua-ajedrez-integral.png";
+  // La marca de agua, si se puede armar: si el logo no baja (sin conexión
+  // y sin haberlo guardado), el PDF sale igual, sin ella.
+  async function conMarca(doc) {
+    if (doc.marca || !raiz.MarcaAgua) return doc;
+    try { return Object.assign({}, doc, { marca: await raiz.MarcaAgua.prepararDesde(MARCA) }); }
+    catch (e) { return doc; }
+  }
+  async function generar(doc) { return raiz.ReportePDF.generar(await conMarca(doc)); }
+
   async function bajar(d, archivo) {
-    const blob = await raiz.ReportePDF.generar(documento(d));
+    const blob = await generar(documento(d));
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
@@ -51,7 +66,7 @@
     return { blob: blob, nombre: archivo };
   }
 
-  const api = { documento: documento, nombreArchivo: nombreArchivo, bajar: bajar };
+  const api = { documento: documento, nombreArchivo: nombreArchivo, bajar: bajar, generar: generar, conMarca: conMarca };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else raiz.PareoPDF = api;
 })(typeof self !== "undefined" ? self : this);

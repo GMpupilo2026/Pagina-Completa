@@ -19069,7 +19069,7 @@
   ]
  },
  "imagenes": {
-  "total": 855,
+  "total": 856,
   "grupos": [
    {
     "carpeta": "entreno/img/facil",
@@ -22779,6 +22779,12 @@
       "kb": 76
      },
      {
+      "ruta": "img/marca-agua-ajedrez-integral.png",
+      "titulo": "Marca agua ajedrez integral",
+      "tipo": "otro",
+      "kb": 44
+     },
+     {
       "ruta": "img/og-ajedrez-integral.jpg",
       "titulo": "Imagen para compartir en redes (vista previa de los enlaces)",
       "tipo": "otro",
@@ -24255,19 +24261,19 @@
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/practica-01/01.webp",
       "titulo": "01",
       "tipo": "otro",
-      "kb": 68
+      "kb": 63
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/practica-01/02.webp",
       "titulo": "02",
       "tipo": "otro",
-      "kb": 75
+      "kb": 68
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/practica-01/03.webp",
       "titulo": "03",
       "tipo": "otro",
-      "kb": 63
+      "kb": 75
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/practica-01/04.webp",

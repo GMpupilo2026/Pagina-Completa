@@ -1386,7 +1386,7 @@
   async function bajarDocumento(doc, sufijo, boton) {
     if (boton) boton.disabled = true;
     try {
-      const blob = await window.ReportePDF.generar(doc);
+      const blob = await window.PareoPDF.generar(doc);
       const url = URL.createObjectURL(blob);
       const a = el("a", { href: url, download: window.PareoPDF.nombreArchivo(doc.subtitulo, sufijo) });
       document.body.append(a);
@@ -1813,7 +1813,7 @@
     boton.disabled = true;
     try {
       const lista = torneosDelEvento();
-      const pdf = async (doc) => new Uint8Array(await (await window.ReportePDF.generar(doc)).arrayBuffer());
+      const pdf = async (doc) => new Uint8Array(await (await window.PareoPDF.generar(doc)).arrayBuffer());
       const partes = [
         { nombre: "acta-congresillo.pdf", bytes: await pdf(V.acta(ev, lista)) },
         { nombre: "informe-oficial.pdf", bytes: await pdf(V.informe(ev, lista)) },
@@ -2361,14 +2361,20 @@
     const nombre = (id) => (v.jugadores.find((j) => j.id === id) || {}).nombre || "?";
     const deEquipos = E.esDeEquipos(v);
     const integrante = (idE, idJ) => { const e = v.jugadores.find((x) => x.id === idE); const j = e && idJ && e.integrantes.find((y) => y.id === idJ); return j ? j.nombre : null; };
+    // Las marcas de las incidencias y su detalle, para que el adjunto también
+    // sepa quién ya tiene una ilegal; y a quién puede anotarle una.
+    const marcas = V.marcasIncidencias(R);
+    const marcaPara = (id) => { const mm = id && marcas.get(id); return mm ? { t: V.textoMarca(mm), d: mm.items.map(textoIncidencia), pierde: mm.ilegales >= 2 } : null; };
     canal.send({ type: "broadcast", event: "estado", payload: {
       nombre: v.nombre || "", ronda: v.rondas.length,
       mesas: R.mesas.map((m, i) => {
-        const x = { m: i + 1, b: nombre(m.b), n: m.n == null ? null : nombre(m.n), r: m.r || null };
+        const x = { m: i + 1, b: nombre(m.b), n: m.n == null ? null : nombre(m.n), r: m.r || null,
+          mb: marcaPara(m.b), mn: m.n == null ? null : marcaPara(m.n), quien: jugadoresDeMesa(v, m).map(([k, , etiqueta]) => ({ k, e: etiqueta })) };
         if (deEquipos && m.n != null) {
           // Sin tocar lo guardado: una copia con la alineación de entrada.
           const copia = m.alineacion ? m : E.prepararMesa(v, JSON.parse(JSON.stringify(m)));
-          x.tableros = E.tablerosDe(v, copia).map((k) => ({ t: k.k + 1, b: integrante(k.bBlancas ? m.b : m.n, k.blancas), n: integrante(k.bBlancas ? m.n : m.b, k.negras), r: k.r || null, fijo: k.fijo }));
+          x.tableros = E.tablerosDe(v, copia).map((k) => ({ t: k.k + 1, b: integrante(k.bBlancas ? m.b : m.n, k.blancas), n: integrante(k.bBlancas ? m.n : m.b, k.negras), r: k.r || null, fijo: k.fijo,
+            mb: marcaPara(k.blancas), mn: marcaPara(k.negras) }));
         }
         return x;
       }),
@@ -2419,7 +2425,15 @@
     if (!a || !R || !texto || !autor) return;
     const [desde, hasta] = a.rango.split("-").map(Number);
     const mesa = Number(p.mesa);
-    R.incidencias = (R.incidencias || []).concat({ hora: Date.now(), tipo: "adjunto", autor, texto, mesa: mesa >= desde && mesa <= hasta && mesa <= R.mesas.length ? mesa : null });
+    const enRango = mesa >= desde && mesa <= hasta && mesa <= R.mesas.length;
+    // El tipo y el artículo, solo de las listas; el jugador, solo de su mesa
+    // (por su lado: «b», «n», «t2b»… el celular no ve los ids).
+    const tipo = ["reclamo", "sancion", "decision", "otra"].includes(p.tipo) ? p.tipo : "adjunto";
+    const nueva = { hora: Date.now(), tipo, autor, texto, mesa: enRango ? mesa : null, porAdjunto: true };
+    if (Object.prototype.hasOwnProperty.call(V.ARTICULOS, p.articulo)) nueva.articulo = p.articulo;
+    const elegido = enRango && typeof p.lado === "string" ? jugadoresDeMesa(v, R.mesas[mesa - 1]).find(([k]) => k === p.lado) : null;
+    if (elegido) nueva.jugador = elegido[1];
+    R.incidencias = (R.incidencias || []).concat(nueva);
     if (v === t()) { guardar(); if (estado.ficha === "rondas" && estado.ronda === v.rondas.length - 1) pintarRondas(); }
     else escribir(PREFIJO + estado.adjuntos.idTorneo, JSON.stringify(v));
     Avisos.avisar(tx("notaAdjuntoLlego", { a: autor }), { tipo: "info" });
@@ -2436,6 +2450,56 @@
     if (v === t()) { guardar(); if (estado.ficha === "rondas" && estado.ronda === v.rondas.length - 1) pintarRondas(); }
     else escribir(PREFIJO + estado.adjuntos.idTorneo, JSON.stringify(v));
     Avisos.avisar(tx("discrepanciaLlego", { m: x.mesa }), { tipo: "error" });
+  }
+
+  // Quiénes juegan en una mesa, para elegir a quién va una incidencia: en
+  // individual, los dos; en equipos, cada integrante con su tablero. Con
+  // la clave corta que usa el celular del adjunto («b», «n», «t2b»…).
+  // El nombre de un jugador o de un integrante de un equipo, por su id.
+  function nombreDeQuien(id) {
+    const j = jugador(id);
+    if (j) return j.nombre;
+    for (const e of t().jugadores) { const y = (e.integrantes || []).find((z) => z.id === id); if (y) return y.nombre; }
+    return "?";
+  }
+  function jugadoresDeMesa(v, m) {
+    if (!m || m.n == null) return [];
+    if (!E.esDeEquipos(v)) return [["b", m.b, tx("blancas") + ": " + nombreDe(m.b)], ["n", m.n, tx("negras") + ": " + nombreDe(m.n)]];
+    const copia = m.alineacion ? m : E.prepararMesa(v, JSON.parse(JSON.stringify(m)));
+    const out = [];
+    for (const x of E.tablerosDe(v, copia)) {
+      const eb = x.bBlancas ? m.b : m.n, en = x.bBlancas ? m.n : m.b;
+      const nom = (idE, idJ) => ((jugador(idE) || { integrantes: [] }).integrantes.find((y) => y.id === idJ) || {}).nombre;
+      if (x.blancas) out.push(["t" + (x.k + 1) + "b", x.blancas, tx("tableroN", { t: x.k + 1 }) + " · " + tx("blancas") + ": " + nom(eb, x.blancas)]);
+      if (x.negras) out.push(["t" + (x.k + 1) + "n", x.negras, tx("tableroN", { t: x.k + 1 }) + " · " + tx("negras") + ": " + nom(en, x.negras)]);
+    }
+    return out;
+  }
+
+  // ---------- Las marcas de las incidencias junto a cada nombre ----------
+  // «i» por jugada ilegal y «!» por cada otra irregularidad de esta ronda
+  // (V.marcasIncidencias). La marca es un botón chico: al tocarlo se abre,
+  // debajo de la mesa, de qué fue cada una; así no estorba a la vista.
+  function textoIncidencia(x) {
+    return horaCR(x.hora) + " · " + tx(TEXTO_INCIDENCIA[x.tipo] || TEXTO_INCIDENCIA.otra) + (x.articulo ? " (" + V.articuloTexto(x.articulo) + ")" : "") +
+      (x.autor ? " · " + x.autor : "") + ": " + x.texto;
+  }
+  // Devuelve [la marca, su detalle] (o [null, null] si no tiene nada).
+  function marcaDe(marcas, id, nombre, alAbrir) {
+    const m = marcas.get(id);
+    if (!m) return [null, null];
+    const idDet = "pi-inc-det-" + id + "-" + Math.random().toString(36).slice(2, 7);
+    const det = el("div", { id: idDet, class: "pi-inc-detalle text-sm", hidden: true },
+      el("p", { class: "font-semibold", texto: nombre + (m.ilegales >= 2 ? " · " + tx("marcaPierde") : m.ilegales === 1 ? " · " + tx("marcaUnaIlegal") : "") }),
+      el("ul", { class: "list-disc pl-5" }, m.items.map((x) => el("li", { texto: textoIncidencia(x) }))));
+    const b = el("button", { type: "button", class: "pi-marca-inc", "data-marca": V.textoMarca(m), "aria-expanded": "false", "aria-controls": idDet,
+      title: tx("marcaVer", { n: nombre, i: m.ilegales, x: m.irregularidades }), "aria-label": tx("marcaVer", { n: nombre, i: m.ilegales, x: m.irregularidades }) }, V.textoMarca(m));
+    b.addEventListener("click", () => {
+      det.hidden = !det.hidden;
+      b.setAttribute("aria-expanded", det.hidden ? "false" : "true");
+      if (alAbrir) alAbrir();
+    });
+    return [b, det];
   }
 
   // ---------- Revisar el pareo antes de anunciarlo ----------
@@ -2740,7 +2804,7 @@
     const lista = el("ul", { id: "pi-inc-lista", class: "mt-2 space-y-1 text-sm" });
     (R.incidencias || []).forEach((x, k) => lista.append(el("li", { class: "flex flex-wrap items-start gap-2" },
       el("span", { texto: horaCR(x.hora) + (x.mesa ? " · " + tx("mesa") + " " + x.mesa : "") + " · " + tx(TEXTO_INCIDENCIA[x.tipo] || TEXTO_INCIDENCIA.otra) +
-        (x.articulo ? " (" + V.articuloTexto(x.articulo) + ")" : "") + (x.autor ? " · " + x.autor : "") + ": " + x.texto +
+        (x.articulo ? " (" + V.articuloTexto(x.articulo) + ")" : "") + (x.autor ? " · " + x.autor : "") + (x.jugador ? " · " + tx("incA", { n: nombreDeQuien(x.jugador) }) : "") + ": " + x.texto +
         (x.presenta ? " " + tx("apelacionPresenta", { p: x.presenta }) : "") + (x.tipo === "apelacion" ? " " + tx("apelacionResolucion", { r: x.resolucion || tx("apelacionPendiente") }) : "") }),
       x.tipo === "apelacion" ? el("button", { type: "button", class: C.mini, onclick: () => resolverApelacion(R, k) }, tx(x.resolucion ? "apelacionCambiar" : "apelacionResolver")) : null,
       x.tipo === "sancion" && x.mesa && !E.esDeEquipos(t()) && R.mesas[x.mesa - 1] && R.mesas[x.mesa - 1].n
@@ -2750,6 +2814,15 @@
       el("option", { value: "", texto: tx("incSinMesa") }), R.mesas.map((m, i) => el("option", { value: String(i + 1), texto: tx("mesa") + " " + (i + 1) })));
     const tipo = el("select", { id: "pi-inc-tipo", class: C.campoChico, "aria-label": tx("incTipo") },
       Object.entries(TEXTO_INCIDENCIA).filter(([k]) => k !== "correccion" && k !== "adjunto").map(([k, c]) => el("option", { value: k, texto: tx(c) })));
+    // A quién va (de los que juegan esa mesa): con él sale su marca en el pareo.
+    const quien = el("select", { id: "pi-inc-jugador", class: C.campoChico, "aria-label": tx("incJugador"), disabled: true });
+    const llenarQuien = () => {
+      const lista = mesa.value ? jugadoresDeMesa(t(), R.mesas[Number(mesa.value) - 1]) : [];
+      quien.replaceChildren(el("option", { value: "", texto: tx("incSinJugador") }), ...lista.map(([, id, etiqueta]) => el("option", { value: id, texto: etiqueta })));
+      quien.disabled = !lista.length;
+    };
+    mesa.addEventListener("change", llenarQuien);
+    llenarQuien();
     // El artículo de las Leyes del Ajedrez, para que el informe lo lleve.
     const articulo = el("select", { id: "pi-inc-articulo", class: C.campoChico, "aria-label": tx("incArticulo") },
       el("option", { value: "", texto: tx("incSinArticulo") }), Object.keys(V.ARTICULOS).map((k) => el("option", { value: k, texto: V.articuloTexto(k) })));
@@ -2765,6 +2838,7 @@
       if (!q) { Avisos.avisar(tx("incFalta"), { tipo: "error" }); texto.focus(); return; }
       const nueva = { hora: Date.now(), mesa: mesa.value ? Number(mesa.value) : null, tipo: tipo.value, texto: q.slice(0, 500) };
       if (articulo.value) nueva.articulo = articulo.value;
+      if (quien.value) nueva.jugador = quien.value;
       if (tipo.value === "apelacion") {
         if (!presenta.value.trim()) { Avisos.avisar(tx("apelacionFaltaQuien"), { tipo: "error" }); presenta.focus(); return; }
         nueva.presenta = presenta.value.trim().slice(0, 80);
@@ -2776,7 +2850,7 @@
       const x = $("pi-inc-texto"); if (x) x.focus();
       Avisos.avisar(tx("incAnotada"));
     });
-    sec.append(lista, el("div", { class: "flex flex-wrap gap-2 mt-2" }, mesa, tipo, articulo), cajaPresenta, texto, anotar);
+    sec.append(lista, el("div", { class: "flex flex-wrap gap-2 mt-2" }, mesa, quien, tipo, articulo), cajaPresenta, texto, anotar);
     caja.append(sec);
   }
 
@@ -2812,6 +2886,7 @@
     const R = v.rondas[r];
     const num = T.numeros(v);
     const antes = (id) => T.puntosHasta(v, id, r);
+    const marcas = V.marcasIncidencias(R);
     const tabla = el("table", { class: "pi-tabla" });
     tabla.append(el("thead", {}, el("tr", {},
       el("th", { class: "num", scope: "col", texto: tx("mesa") }),
@@ -2845,13 +2920,21 @@
         if (estadoTxt) estadoTxt.textContent = quedan ? tx("faltanResultados", { n: quedan }) : tx("rondaCompleta");
         if (!quedan) pintarRondasNav();
       });
+      // Las marcas de las incidencias de cada uno, y su detalle en una fila
+      // aparte que se abre al tocar la marca.
+      const filaDet = el("tr", { class: "pi-inc-fila", hidden: true });
+      const verDet = () => { filaDet.hidden = ![...filaDet.querySelectorAll(".pi-inc-detalle")].some((d) => !d.hidden); };
+      const [mb, db] = marcaDe(marcas, m.b, nombreDe(m.b), verDet);
+      const [mn, dn] = marcaDe(marcas, m.n, nombreDe(m.n), verDet);
+      filaDet.append(el("td", { colspan: 8 }, db, dn));
       cuerpo.append(el("tr", { "data-nombres": normalizarBusqueda(nombreDe(m.b) + " " + nombreDe(m.n)) },
         el("td", { class: "num", texto: i + 1 }), el("td", { class: "num", texto: num.get(m.b) }),
-        el("td", { class: "font-semibold", texto: nombreDe(m.b) }), el("td", { class: "num", texto: puntosTexto(antes(m.b)) }),
+        el("td", { class: "font-semibold" }, nombreDe(m.b), mb ? " " : null, mb), el("td", { class: "num", texto: puntosTexto(antes(m.b)) }),
         el("td", { class: "text-center" }, sel, el("span", { class: "pi-solo-imprimir", texto: m.r ? tx("corto_" + m.r) : "" }),
           m.porAdjunto ? el("span", { class: "block text-xs " + C.nota, texto: tx("adjuntoAnoto") }) : null),
-        el("td", { class: "num", texto: puntosTexto(antes(m.n)) }), el("td", { class: "font-semibold", texto: nombreDe(m.n) }),
+        el("td", { class: "num", texto: puntosTexto(antes(m.n)) }), el("td", { class: "font-semibold" }, nombreDe(m.n), mn ? " " : null, mn),
         el("td", { class: "num", texto: num.get(m.n) })));
+      if (mb || mn) cuerpo.append(filaDet);
     });
     tabla.append(cuerpo);
     caja.append(el("div", { class: "overflow-x-auto" }, tabla));
@@ -2897,6 +2980,7 @@
     const v = t();
     const R = v.rondas[r];
     const num = T.numeros(v);
+    const marcasEq = V.marcasIncidencias(R);
     const antes = (id) => T.puntosHasta(v, id, r);
     const nombreIntegrante = (idEquipo, idJ) => {
       const e = jugador(idEquipo);
@@ -2999,14 +3083,16 @@
           });
           celda = el("span", {}, sel, el("span", { class: "pi-solo-imprimir", texto: x.r ? tx("corto_" + x.r) : "" }));
         }
+        const [mBl, dBl] = x.blancas ? marcaDe(marcasEq, x.blancas, blancas) : [null, null];
+        const [mNe, dNe] = x.negras ? marcaDe(marcasEq, x.negras, negras) : [null, null];
         tableros.append(el("li", { class: "flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-brand-100 dark:border-brand-800 pt-2", "data-tablero": x.k + 1 },
           el("span", { class: "font-mono text-xs font-bold", texto: tx("tableroN", { t: x.k + 1 }) }),
           el("span", { class: "text-sm flex-1 min-w-[12rem]" },
-            el("span", { class: "font-semibold", title: nombreDe(equipoBlancas), texto: blancas }), " ",
+            el("span", { class: "font-semibold", title: nombreDe(equipoBlancas), texto: blancas }), mBl ? " " : null, mBl, " ",
             el("span", { class: C.nota, texto: "(" + tx("blancas") + ")" }), " – ",
-            el("span", { class: "font-semibold", title: nombreDe(equipoNegras), texto: negras }), " ",
+            el("span", { class: "font-semibold", title: nombreDe(equipoNegras), texto: negras }), mNe ? " " : null, mNe, " ",
             el("span", { class: C.nota, texto: "(" + tx("negras") + ")" })),
-          celda));
+          celda, dBl ? el("div", { class: "basis-full" }, dBl) : null, dNe ? el("div", { class: "basis-full" }, dNe) : null));
       }
       tarjeta.append(tableros);
       lista.append(tarjeta);
@@ -3136,22 +3222,33 @@
     const R = v.rondas[r];
     const num = T.numeros(v);
     const cont = $("pi-plantilla");
-    empezarHoja(cont, el("h1", { class: "pi-plantilla-titulo" },
-      tx("plantillaTitulo", { r: r + 1 }) + (v.nombre ? " — " + v.nombre : "")));
-    const lista = el("div", { class: "pi-plantilla-lista" });
+    // Una tabla de columnas fijas (mesa, blancas, negras, resultado): cada
+    // fila queda alineada aunque un nombre ocupe dos líneas, y la casilla
+    // del resultado nunca se sale de la hoja. Desde la ronda 2, los puntos
+    // de cada uno antes de la ronda, como en las listas de pareo de FIDE.
+    const jugadorCelda = (id) => el("span", { class: "pi-plantilla-jugador" },
+      el("span", { class: "pi-plantilla-nro", texto: num.get(id) + "." }),
+      el("span", { class: "pi-plantilla-nombre", texto: nombreDe(id) }),
+      r > 0 ? el("span", { class: "pi-plantilla-pts", texto: "(" + puntosTexto(T.puntosHasta(v, id, r)) + ")" }) : null);
+    empezarHoja(cont, el("h1", { class: "pi-plantilla-titulo" }, tx("plantillaTitulo", { r: r + 1 })),
+      v.nombre ? el("p", { class: "pi-plantilla-torneo", texto: v.nombre }) : []);
+    const lista = el("div", { class: "pi-plantilla-lista" },
+      el("div", { class: "pi-plantilla-cab", "aria-hidden": "true" },
+        el("span", { texto: tx("mesa") }), el("span", { texto: tx("blancas") }), el("span"),
+        el("span", { texto: tx("negras") }), el("span", { texto: tx("resultado") })));
     R.mesas.forEach((m, i) => {
       if (m.n === null) {
-        lista.append(el("div", { class: "pi-plantilla-mesa" },
+        lista.append(el("div", { class: "pi-plantilla-mesa pi-plantilla-mesa-bye" },
           el("span", { class: "pi-plantilla-num", texto: i + 1 }),
-          el("span", { class: "pi-plantilla-jugador", texto: num.get(m.b) + ". " + nombreDe(m.b) }),
+          jugadorCelda(m.b),
           el("span", { class: "pi-plantilla-bye", texto: tx("byePareo", { p: puntosTexto(v.puntos.bye) }) })));
         return;
       }
       lista.append(el("div", { class: "pi-plantilla-mesa" },
         el("span", { class: "pi-plantilla-num", texto: i + 1 }),
-        el("span", { class: "pi-plantilla-jugador", texto: num.get(m.b) + ". " + nombreDe(m.b) }),
+        jugadorCelda(m.b),
         el("span", { class: "pi-plantilla-vs" }, "–"),
-        el("span", { class: "pi-plantilla-jugador", texto: num.get(m.n) + ". " + nombreDe(m.n) }),
+        jugadorCelda(m.n),
         el("span", { class: "pi-plantilla-resultado" })));
     });
     cont.append(lista);
@@ -3168,12 +3265,24 @@
     const num = T.numeros(v);
     const cont = $("pi-firmas");
     empezarHoja(cont);
+    // Una tarjeta por mesa, cuatro (o más) por hoja: arriba la mesa y la
+    // ronda; los dos jugadores lado a lado con su color; el resultado ya
+    // anotado o tres casillas para marcarlo; y una línea para cada firma,
+    // debajo de su nombre. Se corta por la línea punteada.
+    const cabeza = (i) => el("div", { class: "pi-ft-cabeza" },
+      el("span", { class: "pi-ft-mesa", texto: tx("mesa") + " " + (i + 1) }),
+      el("span", { class: "pi-ft-torneo", texto: tx("rondaN", { r: r + 1 }) + (v.nombre ? " · " + v.nombre : "") }));
+    const lado = (color, id) => el("div", { class: "pi-ft-lado" },
+      el("span", { class: "pi-ft-color", texto: tx(color) }),
+      el("span", { class: "pi-ft-nombre", texto: num.get(id) + ". " + nombreDe(id) }));
+    const casillas = (rr) => (rr
+      ? el("span", { class: "pi-ft-anotado", texto: tx("corto_" + rr) })
+      : el("span", { class: "pi-ft-casillas" }, ["1-0", "=", "0-1"].map((x) => el("span", { class: "pi-ft-casilla", texto: "☐ " + tx("corto_" + x) }))));
+    const firma = (texto) => el("div", { class: "pi-ft-firma" }, el("span", { class: "pi-ft-raya" }), el("span", { class: "pi-ft-quien", texto }));
     R.mesas.forEach((m, i) => {
-      const hoja = el("div", { class: "pi-firma-mesa" },
-        el("h1", { class: "pi-firma-titulo" }, tx("planillaFirmaTitulo", { r: r + 1, m: i + 1 }) + (v.nombre ? " — " + v.nombre : "")));
+      const hoja = el("div", { class: "pi-firma-mesa pi-ft" }, cabeza(i));
       if (m.n === null) {
-        hoja.append(el("p", { class: "pi-firma-jugador" }, num.get(m.b) + ". " + nombreDe(m.b)),
-          el("p", { class: "pi-firma-bye", texto: tx("byePareo", { p: puntosTexto(v.puntos.bye) }) }));
+        hoja.append(el("div", { class: "pi-ft-jugadores" }, lado("blancas", m.b), el("div", { class: "pi-ft-lado pi-ft-bye", texto: tx("byePareo", { p: puntosTexto(v.puntos.bye) }) })));
         cont.append(hoja);
         return;
       }
@@ -3182,26 +3291,23 @@
         // su resultado (si ya está), y la firma de los dos capitanes.
         E.prepararMesa(v, m);
         const nombreDeJ = (idE, idJ) => { const j = idJ && jugador(idE).integrantes.find((x) => x.id === idJ); return j ? j.nombre : tx("nadie"); };
-        hoja.append(el("p", { class: "pi-firma-jugador" }, num.get(m.b) + ". " + nombreDe(m.b) + " – " + num.get(m.n) + ". " + nombreDe(m.n)));
+        hoja.append(el("div", { class: "pi-ft-jugadores" }, lado("blancas", m.b), lado("negras", m.n)));
+        const tabla = el("div", { class: "pi-ft-tableros" });
         for (const x of E.tablerosDe(v, m)) {
           const eb = x.bBlancas ? m.b : m.n, en = x.bBlancas ? m.n : m.b;
-          hoja.append(el("p", { class: "pi-firma-resultado" },
-            tx("tableroN", { t: x.k + 1 }) + ": " + nombreDeJ(eb, x.blancas) + " – " + nombreDeJ(en, x.negras) + "   ",
-            x.r ? el("span", { class: "font-semibold" }, tx("corto_" + x.r)) : el("span", { class: "pi-firma-blanco" })));
+          tabla.append(el("div", { class: "pi-ft-tablero" },
+            el("span", { class: "pi-ft-t", texto: tx("tableroN", { t: x.k + 1 }) }),
+            el("span", { texto: nombreDeJ(eb, x.blancas) + " – " + nombreDeJ(en, x.negras) }),
+            casillas(x.r)));
         }
-        hoja.append(el("p", { class: "pi-firma-linea" }, tx("firmaCapitan", { e: nombreDe(m.b) })),
-          el("p", { class: "pi-firma-linea" }, tx("firmaCapitan", { e: nombreDe(m.n) })));
+        hoja.append(tabla, el("div", { class: "pi-ft-firmas" }, firma(tx("firmaCapitan", { e: nombreDe(m.b) })), firma(tx("firmaCapitan", { e: nombreDe(m.n) }))));
         cont.append(hoja);
         return;
       }
       hoja.append(
-        el("p", { class: "pi-firma-jugador" }, num.get(m.b) + ". " + nombreDe(m.b)),
-        el("p", { class: "pi-firma-jugador" }, num.get(m.n) + ". " + nombreDe(m.n)),
-        el("p", { class: "pi-firma-resultado" },
-          tx("resultado") + ": ",
-          m.r ? el("span", { class: "font-semibold" }, tx("corto_" + m.r)) : el("span", { class: "pi-firma-blanco" })),
-        el("p", { class: "pi-firma-linea" }, tx("firmaDe", { n: nombreDe(m.b) })),
-        el("p", { class: "pi-firma-linea" }, tx("firmaDe", { n: nombreDe(m.n) })));
+        el("div", { class: "pi-ft-jugadores" }, lado("blancas", m.b), el("span", { class: "pi-ft-vs", texto: "–" }), lado("negras", m.n)),
+        el("div", { class: "pi-ft-resultado" }, el("span", { class: "pi-ft-etiqueta", texto: tx("resultado") + ":" }), casillas(m.r)),
+        el("div", { class: "pi-ft-firmas" }, firma(tx("firmaDe", { n: nombreDe(m.b) })), firma(tx("firmaDe", { n: nombreDe(m.n) }))));
       cont.append(hoja);
     });
     imprimirCon("pi-imprimiendo-firmas");
