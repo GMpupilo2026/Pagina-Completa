@@ -3444,6 +3444,72 @@ Al tocar esto, `node herramientas/verificar-pareo-premios.js`. Rompiendo a
 propósito la regla de los dos premios, la mesa de la sala del mensaje, el
 tamaño A3, los sorteos del acta o la mesa de la ronda atrasada, salta.
 
+### Torneos en Pareo Integral: el espacio público
+
+Lo pidió el dueño del sitio: «un espacio público donde se vean todos los
+torneos, que elijan cuál quieren ver y ahí poder ver todas las rondas,
+filtros por jugador y rivales, tabla de posiciones». Es
+**`torneos-pareo.html`** (`js/torneos-pareo-pagina.js`), y los torneos los
+publica quien organiza desde Pareo Integral, en la ficha «Archivos y
+comprobador» («Publicar este torneo» o «Publicar los N torneos del evento»).
+
+- **Sin cuenta, con una clave por torneo.** Pareo Integral se usa sin
+  cuenta, así que publicar no puede depender de una sesión. La Edge
+  Function `pareo-publicar` (`verify_jwt` en false) crea la fila y le
+  devuelve a quien publica una clave secreta al azar; en la base se guarda
+  solo su sha256 (`clave_hash`). El navegador la guarda dentro del torneo
+  (`t.publicado = { id, clave, hora }`) y es lo único que deja ponerlo al
+  día o quitarlo. Quien tiene el archivo .json del torneo tiene también la
+  clave: es el mismo dueño. Antes de escribir pasa por el freno
+  `public.pareo_frenar()` (sobre `interno.envios_publicos`, como los demás
+  envíos sin cuenta): crear pesa más que actualizar.
+- **Qué se publica lo decide la función, no el navegador.** `limpiar()`
+  elige campo por campo: nombre, institución, Elo, título, federación,
+  categoría, rondas y resultados. Nunca la fecha de nacimiento, el sexo, el
+  ID FIDE, las firmas ni las notas del árbitro, aunque lleguen (se probó
+  mandándolos: no quedan). El navegador ya manda solo eso
+  (`PareoPublicar.datosPublicos`), pero no se le cree.
+- **La lectura es pública y la clave no se lee.** `public.pareo_publicados`
+  tiene RLS con lectura para todos, pero el permiso de SELECT es por
+  columna y no incluye `clave_hash`; nadie puede escribir desde afuera (solo
+  la función, con la clave de servicio). La página pide columnas con
+  nombre, nunca `*` (un `*` fallaría por la columna sin permiso).
+- **Con el consentimiento.** Publicar pide marcar «Tengo permiso para
+  publicar los nombres y los resultados de este torneo», con enlace a la
+  política de privacidad, que dice qué se ve y cómo pedir que se quite o se
+  abrevie un nombre (Ley 8968).
+- **Se pone al día solo.** Cada vez que se guarda el torneo, a los 30
+  segundos, una sola llamada aunque en ese rato se anoten diez resultados.
+  «Actualizar ahora» la manda en el momento y «Dejar de publicar» pregunta,
+  borra con la clave y la olvida.
+- **La página pública** lista los torneos (el más reciente primero, con un
+  buscador por nombre, evento o lugar; de mil en mil, por el corte de
+  PostgREST) y, al elegir uno (`#t=<id>`), muestra la clasificación (con
+  los mismos módulos de `js/pareo/`, así sale igual que en la computadora
+  del árbitro), las rondas con la mesa de la sala y un buscador de jugador,
+  y cada jugador con sus rivales: ronda por ronda, el rival, su Elo, el
+  color y lo que sacó. El torneo abierto se vuelve a leer cada minuto
+  mientras la pestaña está a la vista, sin perder el foco ni lo buscado.
+- **La ficha del jugador entre torneos.** Debajo de cada jugador, los otros
+  torneos publicados donde aparece el mismo nombre, con su puesto y sus
+  puntos, y el enlace a su ficha en ese torneo. La búsqueda es exacta
+  (`datos @> {"jugadores":[{"nombre": …}]}`): «PÉREZ» y «PEREZ» son dos
+  nombres. Se eligió así a propósito: unir por parecido juntaría a dos
+  personas distintas en un espacio público.
+- **Solo desde ajedrez-integral.com.** La función responde CORS solo a ese
+  origen, como `pareo-elo-nacional`: desde una vista previa de Cloudflare
+  publicar no funciona.
+
+Se probó de punta a punta contra la base real, con `pg_net` desde la misma
+base (el contenedor no llega a Supabase por HTTP): crear devolvió la clave,
+la fila guardó el hash de 64 caracteres y ningún dato de más, `anon` la leyó,
+borrar con una clave equivocada dio 403 y con la buena la quitó.
+
+Al tocar esto, `node herramientas/verificar-pareo-publicar.js`, con dobles
+de la función y de la tabla. Rompiendo a propósito lo que viaja (con la
+fecha de nacimiento), el permiso, la espera de 30 segundos, la mesa de la
+sala, las columnas pedidas (`*`) o la relectura, salta.
+
 ### La barra de progreso al buscar el Elo Nacional
 
 Antes de esto, tocar «Buscar Elo Nacional de quien no tiene» con una lista

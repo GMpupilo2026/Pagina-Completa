@@ -124,6 +124,7 @@
     if (estado.capitanes && estado.capitanes.idTorneo === estado.id) for (const c of estado.capitanes.canales.keys()) enviarCapitan(c);
     if (estado.respaldoArchivo && estado.t.evento && estado.t.evento.id === estado.respaldoArchivo.id) programarRespaldo();
     avisarRondaCompleta();
+    if (estado.t.publicado) programarPublicacion();
   }
   const TOPE_HISTORIAL = 40;
 
@@ -1720,6 +1721,7 @@
 
   function pintarEvento() {
     pintarHistorial();
+    pintarPublicar();
     $("pi-bajar-trf-equipos").hidden = !E.esDeEquipos(t());
     const caja = $("pi-evento");
     caja.replaceChildren();
@@ -4328,6 +4330,105 @@
           el("td", { texto: f.institucion }), el("td", { class: "num", texto: puntosTexto(f.puntos) }),
           el("td", { class: "num", texto: f.jugadas }), el("td", { class: "num", texto: Math.round(f.porcentaje * 100) })))))));
     }
+  }
+
+  // ---------- Publicar en «Torneos en Pareo Integral» ----------
+  // El torneo se publica sin cuenta (js/pareo/publicar.js) y queda con su
+  // clave (`t.publicado`): cada vez que se guarda, a los 30 segundos, se pone
+  // al día solo (con una sola llamada aunque se anoten diez resultados en ese
+  // rato). «Dejar de publicar» lo quita del espacio público.
+  const ESPERA_PUBLICAR = 30000;
+  const publicando = new Map();
+  function programarPublicacion() {
+    const id = estado.id;
+    if (publicando.has(id)) return;
+    publicando.set(id, setTimeout(() => { publicando.delete(id); actualizarPublicado(id); }, ESPERA_PUBLICAR));
+  }
+  async function actualizarPublicado(id, boton) {
+    const tor = id === estado.id ? t() : leerJSON(PREFIJO + id, null);
+    if (!tor || !tor.publicado) return;
+    if (boton) boton.disabled = true;
+    const r = await PareoPublicar.actualizar(tor);
+    if (boton) boton.disabled = false;
+    if (r.ok) {
+      tor.publicado.hora = Date.now();
+      escribir(PREFIJO + id, JSON.stringify(tor));
+      if (id === estado.id && estado.ficha === "archivos") pintarPublicar();
+      if (boton) Avisos.avisar(tx("publicarAlDia"));
+      return;
+    }
+    if (r.noExiste) {
+      delete tor.publicado;
+      escribir(PREFIJO + id, JSON.stringify(tor));
+      if (id === estado.id && estado.ficha === "archivos") pintarPublicar();
+    }
+    if (boton || r.noExiste) Avisos.avisar(r.error || tx("publicarSinRed"), { tipo: "error" });
+  }
+  async function publicarTorneos(lista, boton) {
+    boton.disabled = true;
+    let bien = 0;
+    let error = null;
+    for (const tor of lista) {
+      if (tor.publicado) { bien++; continue; }
+      const r = await PareoPublicar.crear(tor);
+      if (!r.ok) { error = r.error || tx("publicarSinRed"); break; }
+      tor.publicado = { id: r.id, clave: r.clave, hora: Date.now() };
+      if (tor === t() || tor.__id === estado.id) { estado.t.publicado = tor.publicado; guardar(); }
+      else guardarDelEvento(tor);
+      bien++;
+    }
+    boton.disabled = false;
+    pintarPublicar();
+    if (error) Avisos.avisar(error, { tipo: "error" });
+    else Avisos.avisar(lista.length > 1 ? tx("publicadosVarios", { n: bien }) : tx("publicadoUno"));
+    const x = $("pi-publicar-enlace"); if (x) x.focus();
+  }
+  function pintarPublicar() {
+    const caja = $("pi-publicar");
+    if (!caja) return;
+    const v = t();
+    caja.replaceChildren(
+      el("h2", { class: "font-serif text-xl font-bold mb-1", texto: tx("publicarTitulo") }),
+      el("p", { class: C.nota + " mb-3", texto: tx("publicarAyuda") }));
+    if (!v.jugadores.length) { caja.append(el("p", { class: C.nota, texto: tx("primeroJugadores") })); return; }
+    if (v.publicado) {
+      const url = PareoPublicar.enlace(v.publicado.id);
+      caja.append(
+        el("p", { class: "text-sm font-semibold", role: "status", texto: "✓ " + tx("publicadoEstado", { h: v.publicado.hora ? horaCR(v.publicado.hora) : "—" }) }),
+        el("p", { class: "text-sm mt-1 break-all" }, el("a", { id: "pi-publicar-enlace", href: url, target: "_blank", rel: "noopener", class: "underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400", texto: url })),
+        el("p", { class: C.nota + " mt-1", texto: tx("publicadoAyuda") }));
+      const ahora = el("button", { type: "button", id: "pi-publicar-ahora", class: C.botonSec }, tx("publicarAhora"));
+      ahora.addEventListener("click", () => actualizarPublicado(estado.id, ahora));
+      const quitarB = el("button", { type: "button", id: "pi-publicar-quitar", class: C.miniPeligro + " px-3 py-2" }, tx("publicarQuitar"));
+      quitarB.addEventListener("click", async () => {
+        if (!(await Avisos.confirmar(tx("publicarQuitarConfirma"), { aceptar: tx("publicarQuitar"), peligro: true }))) return;
+        quitarB.disabled = true;
+        const r = await PareoPublicar.borrar(v.publicado);
+        quitarB.disabled = false;
+        if (!r.ok) { Avisos.avisar(r.error || tx("publicarSinRed"), { tipo: "error" }); return; }
+        delete v.publicado;
+        guardar(); pintarPublicar();
+        Avisos.avisar(tx("publicarQuitado"));
+        const b = $("pi-publicar-permiso"); if (b) b.focus();
+      });
+      caja.append(el("div", { class: "mt-3 flex flex-wrap gap-2" }, ahora, quitarB));
+      return;
+    }
+    const permiso = el("input", { type: "checkbox", id: "pi-publicar-permiso", class: "mt-1" });
+    caja.append(el("div", { class: "flex items-start gap-2 text-sm" }, permiso,
+      el("label", { for: "pi-publicar-permiso" }, tx("publicarPermiso") + " ",
+        el("a", { href: "privacidad.html#torneos", target: "_blank", rel: "noopener", class: "underline underline-offset-2 hover:no-underline", texto: tx("politicaPrivacidad") }), ".")));
+    const sinPermiso = () => { if (permiso.checked) return false; Avisos.avisar(tx("publicarFaltaPermiso"), { tipo: "error" }); permiso.focus(); return true; };
+    const uno = el("button", { type: "button", id: "pi-publicar-uno", class: C.boton }, tx("publicarUno"));
+    uno.addEventListener("click", () => { if (!sinPermiso()) publicarTorneos([t()], uno); });
+    const fila = el("div", { class: "mt-3 flex flex-wrap gap-2" }, uno);
+    const delEvento = v.evento ? torneosDelEvento().filter((x) => x.jugadores.length) : [];
+    if (delEvento.length > 1) {
+      const todos = el("button", { type: "button", id: "pi-publicar-evento", class: C.botonSec }, tx("publicarEvento", { n: delEvento.length }));
+      todos.addEventListener("click", () => { if (!sinPermiso()) publicarTorneos(torneosDelEvento().filter((x) => x.jugadores.length), todos); });
+      fila.append(todos);
+    }
+    caja.append(fila);
   }
 
   // ---------- Los premios especiales ----------
