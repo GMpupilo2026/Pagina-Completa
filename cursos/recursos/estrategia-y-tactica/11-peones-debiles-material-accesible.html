@@ -74,9 +74,33 @@
   <dd><strong>Para verlo:</strong> El método corto: qué material hay, cómo están los reyes, cómo es la estructura, qué pieza mía es la peor. La respuesta a la última pregunta suele ser el plan.</dd>
 </dl>
 
+<h2>3. Ejemplos del curso</h2>
+<div class="posicion">
+  <h3>Posición 1: Garry Kasparov – Evgeny Bareev, Sarajevo 2000. Juegan las blancas. El ataque se agotó y las negras tienen peones débiles en el flanco de dama. ¿Qué haces con las damas?</h3>
+  <p>Esta posición viene del curso Cambiar o no cambiar de la Academia.</p>
+  <p>Piezas blancas: rey en b1; dama en e1; torres en d1, h1; peones en a2, b2, c2, d4, f2, g2, h4.</p>
+  <p>Piezas negras: rey en f8; dama en f6; torres en a8, d8; peones en a5, c6, c7, e6, f7, g7, h6.</p>
+  <p>Juegan las blancas.</p>
+  
+  <p>La línea, jugada por jugada: 22. dama eva 5, dama captura eva 5, 23. david captura eva 5, torre david 5, 24. torre david eva 1, torre bella 8, 25. torre eva 2, rey eva 7, 26. cesar 3, felix 6, 27. eva captura felix 6 jaque, gustav captura felix 6</p>
+  <p>Resultado: Posición para jugar</p>
+  <p>22. dama eva 5 ofrece el cambio. Después de 22… dama captura eva 5, 23. david captura eva 5 las negras quedan con los peones de c6, c7 y a5 débiles, y las blancas activan rey y torres: 25. torre eva 2, 26. cesar 3, 28. rey cesar 2. El ataque ya no daba nada; el final, sí. (Stockfish 17 a profundidad 22: dama eva 5 es la que elige el motor (+0,1).)</p>
+  <p>Posición en notación FEN, por si la quieres cargar en un programa: r2r1k2/2p2pp1/2p1pq1p/p7/3P3P/8/PPP2PP1/1K1RQ2R w - - 0 22</p>
+</div>
+<div class="posicion">
+  <h3>Posición 2: ¿Hay motivos para atacar al rey: piezas cerca, peones débiles, líneas que se abren? Juegan las negras; el rival acaba de jugar torre captura cesar 8.</h3>
+  <p>Esta posición viene del curso Los cimientos del ajedrez de la Academia.</p>
+  <p>Piezas blancas: rey en g1; dama en d1; torres en c8, f1; alfil en b3; caballo en g3; peones en a4, b2, d3, f2, g2, h2.</p>
+  <p>Piezas negras: rey en g8; dama en d5; torre en f8; alfil en b7; caballo en f6; peones en a5, d4, e6, f7, g7, h7.</p>
+  <p>Juegan las negras.</p>
+  
+  <p>La línea, jugada por jugada: 23… dama captura gustav 2 jaque mate</p>
+  <p>Resultado: Ganan negras</p>
+  <p>23… dama captura gustav 2 jaque mate. El ataque funciona porque se dan sus condiciones: más atacantes que defensores y una línea por donde entrar. (Ejercicio 2mxoi de la base abierta de Lichess (CC0), rating 955. Stockfish 16 a profundidad 18: dama captura gustav 2 jaque mate es la mejor (mate en 1) y la segunda queda en -4,7.)</p>
+  <p>Posición en notación FEN, por si la quieres cargar en un programa: 2R2rk1/1b3ppp/4pn2/p2q4/P2p4/1B1P2N1/1P3PPP/3Q1RK1 b - - 0 23</p>
+</div>
 
-
-<h2>3. Ejercicios</h2>
+<h2>4. Ejercicios</h2>
 <ol>
   <li>relee el artículo &quot;Peones doblados&quot; y aplica la misma lógica de evaluación a peones aislados y retrasados.</li>
   <li>Arma la posición del ejemplo y juégala en las dos direcciones. Repítela hasta que la veas sin pensar.</li>
@@ -87,7 +111,7 @@
   <li>Toma cinco posiciones de partidas de maestros en la jugada 20, escribe tu plan, y compáralo con lo que pasó.</li>
 </ol>
 
-<h2>4. Preguntas con su respuesta</h2>
+<h2>5. Preguntas con su respuesta</h2>
 <p>Contesta en voz alta antes de seguir leyendo: la respuesta viene justo después de cada pregunta.</p>
 <ol>
   <li>
@@ -140,10 +164,11 @@
   </li>
 </ol>
 
-<h2>5. Fuentes</h2>
+<h2>6. Fuentes</h2>
 <ul>
   <li>Texto de la lección: curso «Estrategia y Táctica» de Ajedrez Integral, de Oscar Angulo Cubero.</li>
   <li>Conceptos, preguntas y ejercicios de este cuadernillo: material didáctico de Ajedrez Integral, de Oscar Angulo Cubero.</li>
+  <li>Posiciones: archivo de posiciones del propio curso, verificadas jugada por jugada con chess.js y evaluadas con el motor Stockfish que el sitio usa.</li>
 </ul>
 <h3>Para seguir leyendo</h3>
 <p>Obras de referencia sobre estos temas. Este material no reproduce texto de ellas: se listan como lectura recomendada, no como origen de lo que aquí se dice.</p>
