@@ -3209,8 +3209,8 @@ Dos pedidos del dueño del sitio, con fotos.
   sin margen no hay dónde imprimir la dirección, y el margen lo pone la
   planilla misma (0,6 a 0,8 cm, lo que la impresora no corta). La cabecera
   va compacta (el torneo, la ronda y la mesa en dos renglones; Blancas y
-  Negras lado a lado), los renglones de las jugadas miden 0,68 cm (antes
-  0,61) con una raya más gruesa cada 5 y entre la 30 y la 31, y abajo las
+  Negras lado a lado), los renglones de las jugadas miden 0,66 cm (antes
+  0,61; 0,68 hasta que llegó el QR de cada jugador) con una raya más gruesa cada 5 y entre la 30 y la 31, y abajo las
   casillas del resultado y las dos firmas. Todo suma 26,8 cm, menos que una
   hoja carta (27,9), la más baja de las dos que se usan. **Una trampa**: el
   contenedor de la pantalla (`#pi-envoltorio`) queda vacío al imprimir pero
@@ -3272,6 +3272,50 @@ lista, y que desde el enlace en vivo se pueda ir a los otros torneos del JDE.
 Al tocar esto, `node herramientas/verificar-pareo-archivar.js`. Rompiendo a
 propósito el nombre en los repetidos, «Marcar los terminados», el código
 del enlace o el evento en vivo junto con el torneo, salta.
+
+### Un día de JDE con muchas categorías
+
+Nueve mejoras que pidió el dueño del sitio de una vez («si todas»).
+
+- **Las plantillas de la pared de todas las categorías** («Archivos y
+  comprobador» del evento): la ronda en juego de cada torneo, una plantilla
+  por hoja (`.pi-plantilla-hoja + .pi-plantilla-hoja { break-before: page }`),
+  en un solo trabajo de impresión. `imprimirPlantillaMesas(r, deOtro)` saca
+  los nombres del torneo que recibe, no del abierto.
+- **Reimprimir una mesa**: debajo de las mesas, la planilla de anotación o la
+  de firmar de una sola. Va debajo y no junto a los botones de arriba a
+  propósito: los selects de resultado tienen que ser los primeros de
+  `#pi-ronda` (los busca así el teclado y también las pruebas, y un select
+  arriba rompía `verificar-pareo-jde-dia.js` sin dar ningún error).
+- **Un QR por jugador en la planilla de anotación**, solo con el evento en
+  vivo (sin él, llevaría a una página que espera): abre el enlace del evento
+  con `&q=<nombre>`, y «Mi jugador» ya viene buscado. Mide 1,6 cm, lo que
+  un celular lee sin acercarse de más; para que la planilla siga en una
+  hoja, los renglones bajaron a 0,66 cm (antes de esto, 0,61).
+- **La ronda lista para emparejar**: al anotarse la última mesa (y si quedan
+  rondas), un aviso que se queda 20 segundos y, si se prende «Sonido al
+  completar una ronda», dos notas cortas (el audio del navegador, nada que
+  bajar). En la lista de torneos, el listo dice «lista para la ronda N»
+  junto al nombre: con varias categorías a la vez se ve cuál puede seguir.
+- **Equipos en el celular**: la clasificación lleva los puntos de tablero
+  (PT, el primer desempate) y abajo los mejores de cada tablero hasta ahora
+  (`mejoresVista()`, los tres primeros).
+- **Archivar al cerrar el evento**: el paquete final ya trae el respaldo, así
+  que después de bajarlo se ofrece quitar el evento de la lista (sin bajar
+  otro archivo).
+- **La lista de lo archivado**: en el panel de «Archivar torneos», qué se
+  archivó, cuándo y en qué archivo, para saber cuál buscar. Solo nombres y
+  fechas: lo archivado no se guarda en el navegador. «Olvidar esta lista».
+- **El adjunto avisado**: cuando empieza una ronda nueva, su celular vibra
+  (si deja) y lo dice arriba con `role="alert"` hasta que toque «Listo»;
+  al entrar no avisa nada.
+- **La hora de la próxima ronda en «Mi jugador»**, del horario que puso quien
+  organiza.
+
+Al tocar esto, `node herramientas/verificar-pareo-dia-evento.js` (con el reloj
+del navegador fijo para la hora de la próxima ronda). Rompiendo a propósito
+el salto entre plantillas, la mesa sola, el aviso del adjunto, la hora o los
+puntos de tablero, salta.
 
 ### La barra de progreso al buscar el Elo Nacional
 

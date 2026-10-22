@@ -122,8 +122,48 @@
     if (estado.adjuntos && estado.adjuntos.idTorneo === estado.id) enviarAdjuntos();
     if (estado.capitanes && estado.capitanes.idTorneo === estado.id) for (const c of estado.capitanes.canales.keys()) enviarCapitan(c);
     if (estado.respaldoArchivo && estado.t.evento && estado.t.evento.id === estado.respaldoArchivo.id) programarRespaldo();
+    avisarRondaCompleta();
   }
   const TOPE_HISTORIAL = 40;
+
+  // «Ronda lista para emparejar»: al anotarse la última mesa de una ronda
+  // (y si quedan rondas), un aviso que se queda un rato y, si se pidió, un
+  // sonido. Una vez por ronda y torneo. En la lista de torneos, los que
+  // están listos lo dicen junto al nombre (listaParaEmparejar).
+  const CLAVE_SONIDO = "pareo_sonido_ronda_v1";
+  const avisadas = new Set();
+  function listaParaEmparejar(y) {
+    const n = y.rondas.length;
+    return n > 0 && T.rondaCompleta(y.rondas[n - 1]) && n < V.totalRondas(y) ? n + 1 : 0;
+  }
+  function avisarRondaCompleta() {
+    const v = t();
+    const sigue = listaParaEmparejar(v);
+    const clave = estado.id + "|" + v.rondas.length;
+    if (!sigue) { if (avisadas.delete(clave)) pintarLista(); return; }
+    if (avisadas.has(clave)) return;
+    avisadas.add(clave);
+    pintarLista();
+    Avisos.avisar(tx("rondaListaEmparejar", { r: sigue - 1, s: sigue, t: v.nombre || tx("sinNombre") }), { duracion: 20000 });
+    if (leer(CLAVE_SONIDO) === "1") sonar();
+  }
+  // Dos notas cortas, con el audio del navegador (nada que bajar).
+  function sonar() {
+    try {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      [[880, 0], [1320, 0.18]].forEach(([f, cuando]) => {
+        const o = ctx.createOscillator(), g = ctx.createGain();
+        o.frequency.value = f;
+        g.gain.setValueAtTime(0.0001, ctx.currentTime + cuando);
+        g.gain.exponentialRampToValueAtTime(0.25, ctx.currentTime + cuando + 0.02);
+        g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + cuando + 0.16);
+        o.connect(g).connect(ctx.destination);
+        o.start(ctx.currentTime + cuando);
+        o.stop(ctx.currentTime + cuando + 0.17);
+      });
+      setTimeout(() => ctx.close(), 600);
+    } catch (e) { /* sin audio */ }
+  }
 
   function abrir(id) {
     const t = leerJSON(PREFIJO + id, null);
@@ -276,8 +316,22 @@
     const ninguno = el("button", { type: "button", class: C.mini }, tx("archivarNinguno"));
     ninguno.addEventListener("click", () => { archivar.marcados.clear(); pintarArchivar(); });
     hacer.addEventListener("click", () => archivarMarcados(info));
+    // Lo que ya se archivó en este navegador (solo nombres y fechas).
+    const hechos = leerJSON(CLAVE_ARCHIVADOS, []);
+    let historial = null;
+    if (Array.isArray(hechos) && hechos.length) {
+      const olvidar = el("button", { type: "button", id: "pi-archivados-olvidar", class: C.mini }, tx("archivadosOlvidar"));
+      olvidar.addEventListener("click", () => { quitar(CLAVE_ARCHIVADOS); pintarArchivar(); });
+      historial = el("div", { id: "pi-archivados", class: "mt-6 border-t border-brand-200 dark:border-brand-700 pt-3" },
+        el("h3", { class: "font-semibold text-sm", texto: tx("archivadosTitulo") }),
+        el("ul", { class: "mt-1 space-y-2 text-sm" }, hechos.map((x) => el("li", {},
+          el("span", { class: "font-mono break-all", texto: String(x.archivo || "") }),
+          el("span", { class: C.nota, texto: " · " + (window.HoraCR ? HoraCR.dia(x.hora) + " " : "") + horaCR(x.hora) }),
+          el("span", { class: "block", texto: (x.evento ? x.evento + ": " : "") + (x.torneos || []).join(", ") })))),
+        el("div", { class: "mt-2" }, olvidar));
+    }
     caja.replaceChildren(el("p", { class: C.nota, texto: tx("archivarTexto") }),
-      el("div", { class: "mt-3 flex flex-wrap gap-2" }, terminados, ninguno), ...campos, el("div", { class: "mt-4" }, hacer));
+      el("div", { class: "mt-3 flex flex-wrap gap-2" }, terminados, ninguno), ...campos, el("div", { class: "mt-4" }, hacer), ...[historial].filter(Boolean));
   }
   async function archivarMarcados(info) {
     const ids = listaOrdenada().filter((x) => archivar.marcados.has(x.id)).map((x) => x.id);
@@ -292,9 +346,20 @@
     const ev = uno ? { id: uno.id, nombre: uno.nombre || "" } : { id: "archivo-" + Date.now(), nombre: tx("archivarNombre") };
     const archivo = window.PareoPDF.nombreArchivo((uno ? ev.nombre : "torneos") + " " + (window.HoraCR ? HoraCR.hoy() : ""), "archivados").replace(/\.pdf$/, ".json");
     bajar(archivo, JSON.stringify(V.respaldo(ev, torneos), null, 1), "application/json");
+    quitarArchivados(ids, archivo, torneos.map((y) => y.nombre || ""), ev.nombre);
+    Avisos.avisar(tx("archivarListo", { n: ids.length, a: archivo }));
+  }
+  // Quitar de la lista lo que ya quedó en un archivo, y anotar en cuál (la
+  // lista de lo archivado: qué, cuándo y con qué nombre de archivo, para
+  // saber cuál buscar mañana). Solo nombres y fechas: lo archivado no se
+  // guarda en el navegador.
+  const CLAVE_ARCHIVADOS = "pareo_archivados_v1";
+  function quitarArchivados(ids, archivo, nombres, evento) {
     for (const id of ids) quitar(PREFIJO + id);
     estado.lista = estado.lista.filter((x) => !ids.includes(x.id));
     escribir(CLAVE_LISTA, JSON.stringify(estado.lista));
+    const antes = leerJSON(CLAVE_ARCHIVADOS, []);
+    escribir(CLAVE_ARCHIVADOS, JSON.stringify([{ archivo, hora: Date.now(), evento: evento || "", torneos: nombres }].concat(Array.isArray(antes) ? antes : []).slice(0, 50)));
     archivar.marcados.clear();
     if (ids.includes(estado.id)) {
       const otro = listaOrdenada()[0];
@@ -302,7 +367,6 @@
     }
     pintarTodo();
     pintarArchivar();
-    Avisos.avisar(tx("archivarListo", { n: ids.length, a: archivo }));
   }
   const listaOrdenada = () => estado.lista.slice().sort((a, b) => b.actualizado - a.actualizado);
 
@@ -334,7 +398,11 @@
       grupos.get(k).push(x);
     }
     for (const [k, xs] of grupos) {
-      const opciones = xs.map((x) => el("option", { value: x.id, texto: x.nombre || tx("sinNombre") }));
+      const opciones = xs.map((x) => {
+        const y = x.id === estado.id ? t() : leerJSON(PREFIJO + x.id, null);
+        const sigue = y ? listaParaEmparejar(y) : 0;
+        return el("option", { value: x.id, texto: (x.nombre || tx("sinNombre")) + (sigue ? " — " + tx("listaParaEmparejar", { r: sigue }) : "") });
+      });
       if (eventos.size) s.append(el("optgroup", { label: k ? eventos.get(k) || tx("sinNombre") : tx("filtroSueltos") }, opciones));
       else s.append(...opciones);
     }
@@ -1825,6 +1893,12 @@
     caja.append(el("h3", { class: "font-semibold mt-5", texto: tx("pasarTitulo") }),
       el("p", { class: C.nota, texto: tx("pasarTexto") }), el("div", { class: "mt-2" }, bPasar), cajaPasar);
     if (pasando) mostrarPasar(cajaPasar);
+    // Las plantillas de la pared de la ronda en juego de TODAS las
+    // categorías, en un solo trabajo de impresión (una por hoja).
+    const bPlantillas = el("button", { type: "button", id: "pi-evento-plantillas", class: C.botonSec }, tx("eventoPlantillas"));
+    bPlantillas.addEventListener("click", () => imprimirPlantillasDelEvento());
+    caja.append(el("h3", { class: "font-semibold mt-5", texto: tx("eventoPlantillasTitulo") }),
+      el("p", { class: C.nota, texto: tx("eventoPlantillasTexto") }), el("div", { class: "mt-2" }, bPlantillas));
     caja.append(el("h3", { class: "font-semibold mt-5", texto: tx("eventoRespaldoTitulo") }),
       el("p", { class: C.nota, texto: tx("eventoRespaldoTexto") }), el("div", { class: "mt-2 flex flex-wrap gap-2" }, bRespaldo, bAuto),
       el("p", { id: "pi-respaldo-estado", class: C.nota + " mt-1", role: "status",
@@ -1904,8 +1978,15 @@
       ];
       const filas = V.filasClasificados(ev, lista);
       if (filas.length) partes.splice(3, 0, { nombre: "clasificados.xlsx", bytes: window.TablaExcel.armar([{ nombre: "Clasificados", filas: [V.ENCABEZADOS].concat(filas) }]) });
-      bajar(window.PareoPDF.nombreArchivo(ev.nombre, "paquete-final").replace(/\.pdf$/, ".zip"), window.TablaExcel.zip(partes), "application/zip");
+      const archivo = window.PareoPDF.nombreArchivo(ev.nombre, "paquete-final").replace(/\.pdf$/, ".zip");
+      bajar(archivo, window.TablaExcel.zip(partes), "application/zip");
       Avisos.avisar(tx("cierreBajado", { n: partes.length }));
+      // El paquete ya trae el respaldo: se ofrece sacar el evento de la lista.
+      const ok = await Avisos.confirmar(tx("cierreArchivar", { n: lista.length, a: archivo }), { aceptar: tx("cierreArchivarSi"), cancelar: tx("cierreArchivarNo") });
+      if (ok) {
+        quitarArchivados(lista.map((y) => y.__id).filter(Boolean), archivo, lista.map((y) => y.nombre || ""), ev.nombre);
+        Avisos.avisar(tx("cierreArchivado", { n: lista.length }));
+      }
     } catch (e) {
       Avisos.avisar(tx("noPdf", { e: e.message }), { tipo: "error" });
     } finally {
@@ -2296,6 +2377,23 @@
 
   const RESULTADOS = [["", "resSin"], ["1-0", "res10"], ["=", "resTablas"], ["0-1", "res01"], ["+-", "resMasMenos"], ["-+", "resMenosMas"], ["--", "resMenosMenos"]];
 
+  // «Reimprimir una mesa»: la planilla de anotación o la de firmar de una
+  // sola mesa (la que se rompió o se perdió), sin sacar toda la ronda. Va
+  // debajo de las mesas: sus selects de resultado son los primeros de la
+  // ronda (el teclado y las pruebas los buscan así).
+  function pintarReimprimirMesa(caja, r) {
+    const R = t().rondas[r];
+    const mesas = R.mesas.map((m, i) => [m, i]).filter(([m]) => m.n !== null);
+    if (!mesas.length) return;
+    const sel = el("select", { id: "pi-imprimir-mesa", class: C.campoChico, "aria-label": tx("reimprimirMesa") },
+      mesas.map(([, i]) => el("option", { value: String(i), texto: tx("mesa") + " " + (i + 1) })));
+    const una = () => Number(sel.value);
+    caja.append(el("div", { class: "no-imprimir mt-4 mb-4 flex flex-wrap items-center gap-2" },
+      el("span", { class: "text-sm font-semibold", texto: tx("reimprimirMesa") }), sel,
+      el("button", { type: "button", id: "pi-una-anotacion", class: C.mini, onclick: () => imprimirPlanillasAnotacion(r, una()) }, tx("reimprimirAnotacion")),
+      el("button", { type: "button", id: "pi-una-firma", class: C.mini, onclick: () => imprimirPlanillasFirma(r, una()) }, tx("reimprimirFirma"))));
+  }
+
   function pintarRondaJugada(caja, r) {
     const v = t();
     const R = v.rondas[r];
@@ -2306,7 +2404,7 @@
       el("div", { class: "flex flex-wrap gap-2 no-imprimir" },
         el("button", { type: "button", class: C.botonSec, onclick: () => window.print() }, tx("imprimir")),
         el("button", { type: "button", class: C.botonSec, onclick: () => imprimirPlantillaMesas(r) }, tx("plantillaMesas")),
-        el("button", { type: "button", class: C.botonSec, onclick: () => imprimirPlanillasFirma(r) }, tx("planillasFirma")),
+        el("button", { type: "button", id: "pi-planillas-firma", class: C.botonSec, onclick: () => imprimirPlanillasFirma(r) }, tx("planillasFirma")),
         E.esDeEquipos(v) ? el("button", { type: "button", id: "pi-alineaciones", class: C.botonSec, onclick: () => imprimirAlineaciones(r) }, tx("alineacionesImprimir")) : null,
         el("button", { type: "button", class: C.botonSec, onclick: () => compartirLectura(r) }, tx("verDesdeElCelular")),
         ultima ? el("button", { type: "button", id: "pi-adjunto", class: C.botonSec, onclick: () => enlaceAdjunto(r) }, tx("adjuntoBoton")) : null,
@@ -2334,6 +2432,7 @@
     if (ultima && (v.adjuntos || []).some((a) => a.activo)) { conectarAdjuntos(); mostrarAdjuntos(cajaAdjunto); }
     if (E.esDeEquipos(v)) pintarEncuentros(caja, r);
     else pintarMesasIndividuales(caja, r);
+    pintarReimprimirMesa(caja, r);
     pintarNoJuegan(caja, r);
     pintarRevisionPareo(caja, r);
     pintarConfirmar(caja, r);
@@ -3216,15 +3315,21 @@
   // sin los márgenes del navegador (@page planilla, en css/styles.css): así
   // no sale la dirección ni el número de página y las 60 jugadas caben con
   // renglones altos para escribir.
-  function imprimirPlanillasAnotacion(r) {
+  async function imprimirPlanillasAnotacion(r, solo) {
     const v = t();
     const R = v.rondas[r];
+    // Con el evento en vivo, un QR por jugador que abre «Mi jugador» en el
+    // enlace del evento ya con su nombre: la familia escanea la planilla.
+    let base = v.evento && estado.eventoVivo && estado.eventoVivo.id === v.evento.id
+      ? location.origin + location.pathname + "#evento=" + estado.eventoVivo.codigo + "&q=" : null;
+    if (base) { try { await PareoQr.cargar(); } catch (e) { base = null; } }
     const cont = $("pi-firmas");
     empezarHoja(cont);
-    const lado = (color, nombre) => el("div", { class: "pi-pl-lado" },
-      el("span", { class: "pi-ft-color", texto: color }), el("span", { class: "pi-pl-nombre", texto: nombre }));
+    const lado = (color, nombre, quien) => el("div", { class: "pi-pl-lado" },
+      el("span", { class: "pi-ft-color", texto: color }), el("span", { class: "pi-pl-nombre", texto: nombre }),
+      base && quien ? el("span", { class: "pi-pl-qr", title: tx("anotacionQr", { n: quien }) }, PareoQr.svg(base + encodeURIComponent(quien), tx("anotacionQr", { n: quien }))) : null);
     const firma = (texto) => el("div", { class: "pi-ft-firma" }, el("span", { class: "pi-ft-raya" }), el("span", { class: "pi-ft-quien", texto }));
-    const hoja = (titulo, blancas, negras) => {
+    const hoja = (titulo, blancas, negras, quienB, quienN) => {
       const tabla = el("table", { class: "pi-planilla-tabla" },
         el("colgroup", {}, ["pi-pl-col-n", "", "", "pi-pl-col-n pi-pl-col-mitad", "", ""].map((c) => el("col", c ? { class: c } : {}))),
         el("thead", {}, el("tr", {}, ["#", tx("blancas"), tx("negras"), "#", tx("blancas"), tx("negras")].map((x, k) => el("th", { scope: "col", class: k === 3 ? "pi-pl-mitad" : "", texto: x })))),
@@ -3235,7 +3340,7 @@
         el("div", { class: "pi-pl-cabeza" },
           el("h1", { class: "pi-pl-torneo", texto: v.nombre || "" }),
           el("p", { class: "pi-pl-datos", texto: titulo + (v.fechaInicio ? " · " + v.fechaInicio : "") + (v.ritmo ? " · " + v.ritmo : "") })),
-        el("div", { class: "pi-pl-jugadores" }, lado(tx("blancas"), blancas), lado(tx("negras"), negras)),
+        el("div", { class: "pi-pl-jugadores" }, lado(tx("blancas"), blancas, quienB), lado(tx("negras"), negras, quienN)),
         tabla,
         el("div", { class: "pi-pl-pie" },
           el("p", { class: "pi-ft-resultado" }, el("span", { class: "pi-ft-etiqueta", texto: tx("resultado") + ":" }),
@@ -3243,15 +3348,17 @@
           el("div", { class: "pi-ft-firmas pi-pl-firmas" }, firma(tx("firmaDe", { n: blancas })), firma(tx("firmaDe", { n: negras }))))));
     };
     R.mesas.forEach((m, i) => {
-      if (m.n === null) return;
+      if (m.n === null || (solo != null && i !== solo)) return;
       if (E.esDeEquipos(v)) {
         const copia = m.alineacion ? m : E.prepararMesa(v, JSON.parse(JSON.stringify(m)));
-        const de = (idE, idJ) => { const e = jugador(idE); const j = e && idJ && e.integrantes.find((y) => y.id === idJ); return j ? j.nombre + " (" + e.nombre + ")" : tx("nadie"); };
+        const quien = (idE, idJ) => { const e = jugador(idE); const j = e && idJ && e.integrantes.find((y) => y.id === idJ); return j ? j.nombre : null; };
+        const de = (idE, idJ) => { const q = quien(idE, idJ); return q ? q + " (" + nombreDe(idE) + ")" : tx("nadie"); };
         for (const x of E.tablerosDe(v, copia)) {
           if (!x.blancas || !x.negras) continue;
-          hoja(tx("anotacionTituloTablero", { r: r + 1, m: i + 1, t: x.k + 1 }), de(x.bBlancas ? m.b : m.n, x.blancas), de(x.bBlancas ? m.n : m.b, x.negras));
+          const eb = x.bBlancas ? m.b : m.n, en = x.bBlancas ? m.n : m.b;
+          hoja(tx("anotacionTituloTablero", { r: r + 1, m: i + 1, t: x.k + 1 }), de(eb, x.blancas), de(en, x.negras), quien(eb, x.blancas), quien(en, x.negras));
         }
-      } else hoja(tx("anotacionTitulo", { r: r + 1, m: i + 1 }), nombreDe(m.b), nombreDe(m.n));
+      } else hoja(tx("anotacionTitulo", { r: r + 1, m: i + 1 }), nombreDe(m.b), nombreDe(m.n), nombreDe(m.b), nombreDe(m.n));
     });
     if (!cont.children.length) return;
     imprimirCon("pi-imprimiendo-firmas");
@@ -3283,7 +3390,7 @@
     document.body.classList.add(clase);
     window.print();
   }
-  function imprimirTodoDeRonda(r) {
+  async function imprimirTodoDeRonda(r) {
     $("pi-plantilla").replaceChildren();
     $("pi-firmas").replaceChildren();
     impresion.juntando = true;
@@ -3292,7 +3399,7 @@
       imprimirPlantillaMesas(r);
       if (E.esDeEquipos(t())) imprimirAlineaciones(r);
       imprimirPlanillasFirma(r);
-      imprimirPlanillasAnotacion(r);
+      await imprimirPlanillasAnotacion(r);
     } finally {
       impresion.juntando = false;
     }
@@ -3305,11 +3412,13 @@
   // que ya está en la base: eso es justo lo que no se quiere acá). Separada
   // de la tabla de arriba, que es la que se imprime para el archivo de la
   // ronda ya jugada.
-  function imprimirPlantillaMesas(r) {
-    const v = t();
+  function imprimirPlantillaMesas(r, deOtro) {
+    const v = deOtro || t();
     const R = v.rondas[r];
     const num = T.numeros(v);
     const cont = $("pi-plantilla");
+    // (Con `deOtro`, la de otro torneo del evento: los nombres salen de él.)
+    const nombreDe = (id) => (v.jugadores.find((j) => j.id === id) || {}).nombre || "?";
     // Una tabla de columnas fijas (mesa, blancas, negras, resultado): cada
     // fila queda alineada aunque un nombre ocupe dos líneas, y la casilla
     // del resultado nunca se sale de la hoja. Desde la ronda 2, los puntos
@@ -3318,8 +3427,11 @@
       el("span", { class: "pi-plantilla-nro", texto: num.get(id) + "." }),
       el("span", { class: "pi-plantilla-nombre", texto: nombreDe(id) }),
       r > 0 ? el("span", { class: "pi-plantilla-pts", texto: "(" + puntosTexto(T.puntosHasta(v, id, r)) + ")" }) : null);
-    empezarHoja(cont, el("h1", { class: "pi-plantilla-titulo" }, tx("plantillaTitulo", { r: r + 1 })),
-      v.nombre ? el("p", { class: "pi-plantilla-torneo", texto: v.nombre }) : []);
+    // Cada plantilla es su hoja: con las de todas las categorías juntas,
+    // una por hoja (css: .pi-plantilla-hoja + .pi-plantilla-hoja).
+    const hoja = el("div", { class: "pi-plantilla-hoja" }, el("h1", { class: "pi-plantilla-titulo" }, tx("plantillaTitulo", { r: r + 1 })),
+      v.nombre ? el("p", { class: "pi-plantilla-torneo", texto: v.nombre }) : null);
+    empezarHoja(cont, hoja);
     const lista = el("div", { class: "pi-plantilla-lista" },
       el("div", { class: "pi-plantilla-cab", "aria-hidden": "true" },
         el("span", { texto: tx("mesa") }), el("span", { texto: tx("blancas") }), el("span"),
@@ -3339,15 +3451,32 @@
         jugadorCelda(m.n),
         el("span", { class: "pi-plantilla-resultado" })));
     });
-    cont.append(lista);
+    hoja.append(lista);
     imprimirCon("pi-imprimiendo-plantilla");
+  }
+
+  // La ronda en juego de cada torneo del evento (el que ya está emparejado):
+  // su plantilla, todas juntas, en el orden de la lista de torneos.
+  function imprimirPlantillasDelEvento() {
+    const lista = torneosDelEvento().filter((y) => y.rondas.length);
+    if (!lista.length) { Avisos.avisar(tx("eventoPlantillasNada"), { tipo: "error" }); return; }
+    $("pi-plantilla").replaceChildren();
+    impresion.juntando = true;
+    impresion.clases.clear();
+    try {
+      for (const y of lista) imprimirPlantillaMesas(y.rondas.length - 1, y);
+    } finally {
+      impresion.juntando = false;
+    }
+    document.body.classList.add("pi-imprimiendo-plantilla");
+    window.print();
   }
 
   // Una hoja POR MESA (salto de página entre una y la siguiente) para que el
   // árbitro la recoja firmada: a diferencia de la plantilla de la pared, esta
   // SÍ muestra el resultado ya anotado (si lo hay) — es para confirmarlo, no
   // para ocultarlo. Un bye no tiene con quién firmar: va sin líneas de firma.
-  function imprimirPlanillasFirma(r) {
+  function imprimirPlanillasFirma(r, solo) {
     const v = t();
     const R = v.rondas[r];
     const num = T.numeros(v);
@@ -3368,6 +3497,7 @@
       : el("span", { class: "pi-ft-casillas" }, ["1-0", "=", "0-1"].map((x) => el("span", { class: "pi-ft-casilla", texto: "☐ " + tx("corto_" + x) }))));
     const firma = (texto) => el("div", { class: "pi-ft-firma" }, el("span", { class: "pi-ft-raya" }), el("span", { class: "pi-ft-quien", texto }));
     R.mesas.forEach((m, i) => {
+      if (solo != null && i !== solo) return;
       const hoja = el("div", { class: "pi-firma-mesa pi-ft" }, cabeza(i));
       if (m.n === null) {
         hoja.append(el("div", { class: "pi-ft-jugadores" }, lado("blancas", m.b), el("div", { class: "pi-ft-lado pi-ft-bye", texto: tx("byePareo", { p: puntosTexto(v.puntos.bye) }) })));
@@ -3426,7 +3556,8 @@
       // Las rondas terminadas que cuenta la clasificación: con la ronda en
       // juego, todavía no la suma, y quien mira lo tiene que saber.
       hasta: k,
-      clasificacion: filas.map((f) => ({ p: f.puesto, n: jugador(f.id).nombre, pts: f.puntos })),
+      clasificacion: filas.map((f) => Object.assign({ p: f.puesto, n: jugador(f.id).nombre, pts: f.puntos }, E.esDeEquipos(v) ? { pt: E.puntosTablero(v, f.id, k) } : {})),
+      ...V.mejoresVista(v, k),
       evento: enlacesDelEvento(v),
     };
   }
@@ -4213,6 +4344,9 @@
     modoJde.checked = leer(CLAVE_MODO_JDE) === "1";
     document.body.classList.toggle("pi-modo-jde", modoJde.checked);
     modoJde.addEventListener("change", () => { escribir(CLAVE_MODO_JDE, modoJde.checked ? "1" : "0"); document.body.classList.toggle("pi-modo-jde", modoJde.checked); });
+    const sonido = $("pi-sonido-ronda");
+    sonido.checked = leer(CLAVE_SONIDO) === "1";
+    sonido.addEventListener("change", () => { escribir(CLAVE_SONIDO, sonido.checked ? "1" : "0"); if (sonido.checked) sonar(); });
     $("pi-form-torneo").addEventListener("change", alCambiarTorneo);
     $("pi-config-jde-aplicar").addEventListener("click", aplicarConfigJde);
     $("pi-form-torneo").addEventListener("submit", (e) => e.preventDefault());

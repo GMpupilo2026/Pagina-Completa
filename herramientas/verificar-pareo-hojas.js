@@ -89,7 +89,7 @@ async function prueba(browser) {
   const alto = await page.$eval("#pi-firmas .pi-planilla", (x) => x.getBoundingClientRect().height);
   ok(alto < 27.2 * CM, "la planilla mide menos que la hoja (" + (alto / CM).toFixed(1) + " cm de 27,9)");
   const renglon = await page.$eval("#pi-firmas .pi-planilla tbody td", (x) => x.getBoundingClientRect().height);
-  ok(renglon >= 0.66 * CM, "con renglones altos para anotar (" + (renglon / CM).toFixed(2) + " cm)");
+  ok(renglon >= 0.64 * CM, "con renglones altos para anotar (" + (renglon / CM).toFixed(2) + " cm)");
   // El PDF que arma Chromium con la vista de impresión: las hojas de verdad.
   const enPdf = await page.pdf({ format: "Letter", preferCSSPageSize: true, printBackground: true });
   const paginas = (enPdf.toString("latin1").match(/\/Type\s*\/Page[^s]/g) || []).length;

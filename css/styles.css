@@ -1755,6 +1755,8 @@ html.dark .comparar-serie-3 { background: #199e70; }
    resultado. Las dos de los jugadores miden lo mismo, así el guion cae siempre
    en el mismo lugar y un nombre largo baja a otra línea sin correr nada. */
 .pi-plantilla { color: #000; width: 100%; box-sizing: border-box; }
+/* Las de todas las categorías juntas: cada una en su hoja. */
+.pi-plantilla-hoja + .pi-plantilla-hoja { break-before: page; }
 .pi-plantilla-titulo { font-family: Merriweather, Georgia, serif; font-weight: 700; font-size: 1.35rem; margin: 0 0 0.15rem; color: #000; }
 .pi-plantilla-torneo { font-size: 0.95rem; color: #333; margin: 0 0 0.9rem; }
 .pi-plantilla-lista { border-top: 2px solid #000; }
@@ -1855,8 +1857,12 @@ html.dark .comparar-serie-3 { background: #199e70; }
 .pi-pl-jugadores { display: grid; grid-template-columns: 1fr 1fr; column-gap: 0.8cm; margin: 0.18cm 0 0.22cm; }
 .pi-pl-lado { display: flex; align-items: baseline; gap: 0.25cm; min-width: 0; border-bottom: 1px solid #555; padding-bottom: 0.05cm; }
 .pi-pl-nombre { font-size: 11.5pt; font-weight: 700; line-height: 1.2; overflow-wrap: anywhere; }
+/* El QR de cada jugador (con el evento en vivo): abre «Mi jugador» con su
+   nombre. 1,6 cm: lo que un celular lee sin acercarse de más. */
+.pi-pl-qr { margin-left: auto; flex: none; align-self: center; width: 1.6cm; height: 1.6cm; }
+.pi-pl-qr svg { width: 100%; height: 100%; display: block; }
 .pi-planilla-tabla { width: 100%; border-collapse: collapse; table-layout: fixed; font-size: 9pt; }
-.pi-planilla-tabla th, .pi-planilla-tabla td { border: 1px solid #444; height: 0.68cm; padding: 0 0.15cm; box-sizing: border-box; }
+.pi-planilla-tabla th, .pi-planilla-tabla td { border: 1px solid #444; height: 0.66cm; padding: 0 0.15cm; box-sizing: border-box; }
 .pi-planilla-tabla th { height: 0.55cm; background: #e8e8e8; -webkit-print-color-adjust: exact; print-color-adjust: exact; font-size: 8.5pt; text-transform: uppercase; letter-spacing: 0.04em; }
 .pi-planilla-tabla tbody tr:nth-child(5n) td { border-bottom-width: 2px; border-bottom-color: #000; }
 .pi-pl-col-n { width: 0.85cm; }

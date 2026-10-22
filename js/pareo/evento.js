@@ -456,8 +456,19 @@
         // El centro educativo, para «Mi centro» en el celular.
         i: String((participante(t, f.id) || {}).institucion || "").trim(),
         // Los primeros desempates, para la ficha del jugador en el celular.
-        d: (t.desempates || []).filter((c) => c !== "TB").slice(0, 3).map((c) => ({ c, v: Math.round((f.valores[c] || 0) * 100) / 100 })) })) : [],
+        d: (t.desempates || []).filter((c) => c !== "TB").slice(0, 3).map((c) => ({ c, v: Math.round((f.valores[c] || 0) * 100) / 100 })),
+        // En equipos, los puntos de tablero (el primer desempate).
+        ...(E.esDeEquipos(t) ? { pt: E.puntosTablero(t, f.id, k) } : {}) })) : [],
+      ...mejoresVista(t, k),
     };
+  }
+  // En equipos, los mejores de cada tablero hasta ahora (los tres primeros),
+  // para el celular: { mejores: [{ t, filas: [{ p, n, e, pts, j }] }] }.
+  function mejoresVista(t, k) {
+    if (!E.esDeEquipos(t) || !k) return {};
+    const mejores = E.mejoresTableros(t, k).filter((x) => x.filas.length).map((x) => ({ t: x.tablero,
+      filas: x.filas.filter((f) => f.puesto <= 3).slice(0, 5).map((f) => ({ p: f.puesto, n: f.nombre, e: f.institucion, pts: f.puntos, j: f.jugadas })) }));
+    return mejores.length ? { mejores } : {};
   }
   // `horario` (opcional, de horario()): las horas de cada ronda, para la
   // cuenta regresiva del enlace del evento y del proyector.
@@ -935,7 +946,7 @@
     aplicarDesempate, empatadosEnCorte, segundosIncremento, duracionRonda, horario, porDireccion, constancias, textoConstancia,
     medallero, estadisticas, compararEtapa, minutosBase, estadoRetraso, incidenciasDe, NOMBRE_INCIDENCIA,
     SIGUIENTE, NOMBRE_ETAPA, ENCABEZADOS, FORMATO_RESPALDO, cupo, clasificados, terminado, acta, informe, filasClasificados,
-    lugarTexto, siguienteDe, podio, premiacion, diplomas, textoDiploma, pendientes, respaldo, esRespaldo, vistaTorneo, vistaEvento, tablerosVista, rondasCompletas, totalRondas, nombreTorneo,
+    lugarTexto, siguienteDe, podio, premiacion, diplomas, textoDiploma, pendientes, respaldo, esRespaldo, vistaTorneo, vistaEvento, tablerosVista, mejoresVista, rondasCompletas, totalRondas, nombreTorneo,
   };
   if (enNode) module.exports = api;
   else raiz.PareoEvento = api;
