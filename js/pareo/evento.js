@@ -428,6 +428,53 @@
       d.torneos.every((x) => x && x.formato === 1 && Array.isArray(x.jugadores) && Array.isArray(x.rondas));
   }
 
+  // ---------- Cuánto duró cada ronda ----------
+  // R.emparejada (cuando se emparejó), R.inicio (cuando se echó a andar el
+  // reloj, si se usó) y R.fin (cuando se anotó la última mesa). Lo anota la
+  // página al guardar (marcarTiempos). La duración se cuenta desde que
+  // empezó el reloj o, sin reloj, desde que se emparejó.
+  function marcarTiempos(t, ahora) {
+    const n = t.rondas.length;
+    if (!n) return;
+    const R = t.rondas[n - 1];
+    const algunResultado = R.mesas.some((m) => m.n != null && m.r);
+    if (!R.emparejada && !algunResultado) R.emparejada = ahora;
+    const completa = T.rondaCompleta(R);
+    // (Sin la hora de emparejar, es una ronda de antes de esto: no se inventa su fin.)
+    if (completa && !R.fin && R.emparejada) R.fin = ahora;
+    else if (!completa && R.fin) delete R.fin;
+  }
+  function duraciones(torneos) {
+    const out = [];
+    for (const t of torneos) t.rondas.forEach((R, k) => {
+      const desde = R.inicio || R.emparejada || null;
+      out.push({ torneo: nombreTorneo(t), ronda: k + 1, emparejada: R.emparejada || null, inicio: R.inicio || null, fin: R.fin || null,
+        minutos: desde && R.fin ? Math.round((R.fin - desde) / 60000) : null });
+    });
+    return out;
+  }
+
+  // ---------- Las mesas de la sala ----------
+  // Con varias categorías en la misma sala, cada torneo tiene su rango de
+  // mesas físicas (t.mesaInicial: la primera): la mesa i (desde 0) de la
+  // ronda es la mesaInicial + i. Sin rango, la de siempre (1, 2, 3…). Solo
+  // cambia el número que se muestra e imprime: por dentro, cada mesa sigue
+  // siendo su posición en la ronda (lo que mandan los adjuntos, por ejemplo).
+  const mesaFisica = (t, i) => (Number(t.mesaInicial) > 1 ? Math.floor(Number(t.mesaInicial)) : 1) + i;
+  // Las mesas que necesita un torneo: la mitad de sus jugadores (o equipos),
+  // redondeada para arriba.
+  const mesasQueNecesita = (t) => Math.max(1, Math.ceil(t.jugadores.length / 2));
+  // Numerar toda la sala: cada torneo, en el orden de la lista, empieza
+  // donde terminó el anterior. Devuelve [{ torneo, desde, hasta }].
+  function numerarSala(torneos) {
+    let siguiente = 1;
+    return torneos.map((t) => {
+      const desde = siguiente;
+      siguiente += mesasQueNecesita(t);
+      return { t, desde, hasta: siguiente - 1 };
+    });
+  }
+
   // ---------- Lo que se ve desde el celular: todo el evento ----------
   // En equipos, cada tablero de un encuentro con quién juega con cada color
   // y su resultado: así quien busca a una integrante encuentra su tablero, y
@@ -450,7 +497,7 @@
       nombre: nombreTorneo(t),
       // Las rondas anteriores, sin los tableros: para el historial.
       anteriores: t.rondas.slice(0, -1).map((RR, k) => ({ n: k + 1, mesas: mesasDe(RR) })),
-      ronda: R ? { n: t.rondas.length, inicio: R.inicio || null, mesas: R.mesas.map((m, i) => Object.assign({ m: i + 1, b: nombre(m.b), n: m.n == null ? null : nombre(m.n), r: m.r || null },
+      ronda: R ? { n: t.rondas.length, inicio: R.inicio || null, mesas: R.mesas.map((m, i) => Object.assign({ m: i + 1, f: mesaFisica(t, i), b: nombre(m.b), n: m.n == null ? null : nombre(m.n), r: m.r || null },
         tablerosVista(t, m))) } : null,
       clasificacion: k ? clasificacionDe(t).map((f) => ({ p: f.puesto, n: nombre(f.id), pts: f.puntos,
         // El centro educativo, para «Mi centro» en el celular.
@@ -460,6 +507,8 @@
         // En equipos, los puntos de tablero (el primer desempate).
         ...(E.esDeEquipos(t) ? { pt: E.puntosTablero(t, f.id, k) } : {}) })) : [],
       ...mejoresVista(t, k),
+      // Terminado: el podio, para la pantalla de premiación del proyector.
+      ...(k && terminado(t) ? { terminado: true, podio: podio(t).filas.map((f) => ({ p: f.puesto, n: nombre(f.id), i: String((f.participante || {}).institucion || "").trim() })) } : {}),
     };
   }
   // En equipos, los mejores de cada tablero hasta ahora (los tres primeros),
@@ -946,7 +995,7 @@
     aplicarDesempate, empatadosEnCorte, segundosIncremento, duracionRonda, horario, porDireccion, constancias, textoConstancia,
     medallero, estadisticas, compararEtapa, minutosBase, estadoRetraso, incidenciasDe, NOMBRE_INCIDENCIA,
     SIGUIENTE, NOMBRE_ETAPA, ENCABEZADOS, FORMATO_RESPALDO, cupo, clasificados, terminado, acta, informe, filasClasificados,
-    lugarTexto, siguienteDe, podio, premiacion, diplomas, textoDiploma, pendientes, respaldo, esRespaldo, vistaTorneo, vistaEvento, tablerosVista, mejoresVista, rondasCompletas, totalRondas, nombreTorneo,
+    lugarTexto, siguienteDe, podio, premiacion, diplomas, textoDiploma, pendientes, respaldo, esRespaldo, vistaTorneo, vistaEvento, tablerosVista, mejoresVista, marcarTiempos, duraciones, mesaFisica, mesasQueNecesita, numerarSala, rondasCompletas, totalRondas, nombreTorneo,
   };
   if (enNode) module.exports = api;
   else raiz.PareoEvento = api;

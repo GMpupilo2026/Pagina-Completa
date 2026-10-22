@@ -378,7 +378,7 @@ async function pruebaDosModalidades(browser) {
   const enIndividualB = async () => Number((/— (\d+) jugador/.exec(await page.$eval("#pi-sugerencia fieldset li:has-text('Individual · Categoría B · Abierto')", (x) => x.textContent)) || [])[1]);
   ok(/PRUEBA SEXTO DEL EQUIPO \(ESCUELA DEL EQUIPO\): Equipos B y Individual B/.test(await page.textContent("#pi-dos-modalidades legend")), "dice quién y en qué dos modalidades");
   ok(await page.$eval("#pi-dm-0-x", (r) => r.checked), "viene en «Todavía no decido»");
-  ok(/\(ahora: 1 sin decidir\)/.test(await page.textContent("#pi-repetidos")), "cuenta los que faltan por decidir");
+  ok(/Falta 1 por decidir/.test(await page.textContent("#pi-dm-faltan")), "cuenta los que faltan por decidir");
   igual("sin decidir, cuenta en individual B (10 + él)", await enIndividualB(), 11);
   await page.click("#pi-dm-0-1");
   igual("queda en individual: sigue ahí", await enIndividualB(), 11);
@@ -386,7 +386,7 @@ async function pruebaDosModalidades(browser) {
   await page.click("#pi-dm-0-0");
   igual("queda en equipos: sale de individual B", await enIndividualB(), 10);
   ok(/SEXTO DEL EQUIPO/.test(await page.textContent("#pi-equipos-de-mas")), "y vuelve al equipo");
-  ok(/\(ahora: 0 sin decidir\)/.test(await page.textContent("#pi-repetidos")), "ya no falta nadie por decidir");
+  ok(/Todos decididos/.test(await page.textContent("#pi-dm-faltan")), "ya no falta nadie por decidir");
   ok(await page.$eval("#pi-dm-0-0", (r) => document.activeElement === r), "el foco se queda en la opción elegida");
   await page.click("#pi-dm-0-x");
   igual("«Todavía no decido»: vuelve a las dos", await enIndividualB(), 11);
