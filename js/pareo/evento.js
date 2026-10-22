@@ -111,6 +111,12 @@
   const linea = (s) => "______________________________   " + s;
 
   // ---------- El acta del congresillo ----------
+  // Quién firma el acta, en ese orden.
+  const CARGOS_FIRMA = { principal: "Árbitro principal", comite: "Representante del Comité Organizador", delegado: "Representante de las delegaciones" };
+  const deBase64 = (b64) => (typeof atob === "function"
+    ? Uint8Array.from(atob(b64), (c) => c.charCodeAt(0))
+    : Uint8Array.from(Buffer.from(b64, "base64")));
+
   function acta(evento, torneos) {
     const d = (evento && evento.decisiones) || {};
     const primero = torneos[0] || {};
@@ -174,11 +180,26 @@
       }
     }
 
+    const tardios = torneos.flatMap((t) => (t.tardios || []).map((x) => x.nombre + " (" + (x.institucion || "—") + "), " + nombreTorneo(t) + ": entró en la ronda " + x.ronda + "." + (x.aviso ? " " + x.aviso : "")));
+    if (tardios.length) seccion((++n) + ". Inscripciones el día del torneo", tardios, "");
+
+    // Las firmas: la que se hizo en la pantalla (evento.firmas) va como
+    // imagen, con el nombre y la hora; si no, la línea para firmar a mano.
     b.push({ tipo: "titulo", texto: "Firmas" });
-    b.push({ tipo: "parrafo", texto: linea("Árbitro principal" + (primero.arbitro ? ": " + primero.arbitro : "")) });
-    b.push({ tipo: "parrafo", texto: linea("Representante del Comité Organizador") });
-    b.push({ tipo: "parrafo", texto: linea("Representante de las delegaciones") });
-    return { titulo: "Acta del congresillo técnico — Ajedrez", subtitulo: evento.nombre, pie: "Pareo Integral · ajedrez-integral.com", bloques: b, fotos: [] };
+    const fotos = [];
+    for (const [cargo, etiqueta] of Object.entries(CARGOS_FIRMA)) {
+      const suyas = (evento.firmas || []).filter((f) => f.cargo === cargo && f.jpeg);
+      if (!suyas.length) {
+        b.push({ tipo: "parrafo", texto: linea(etiqueta + (cargo === "principal" && primero.arbitro ? ": " + primero.arbitro : "")) });
+        continue;
+      }
+      for (const f of suyas) {
+        const foto = { jpeg: deBase64(f.jpeg), ancho: f.ancho, alto: f.alto };
+        fotos.push(foto);
+        b.push({ tipo: "foto", foto, anchoMax: 180, pie: etiqueta + ": " + f.nombre + (f.hora ? " · firmó a las " + horaTexto(f.hora) : "") });
+      }
+    }
+    return { titulo: "Acta del congresillo técnico — Ajedrez", subtitulo: evento.nombre, pie: "Pareo Integral · ajedrez-integral.com", bloques: b, fotos };
   }
 
   // ---------- El informe oficial de participación y resultados ----------
@@ -419,7 +440,7 @@
       nombre: nombreTorneo(t),
       // Las rondas anteriores, sin los tableros: para el historial.
       anteriores: t.rondas.slice(0, -1).map((RR, k) => ({ n: k + 1, mesas: mesasDe(RR) })),
-      ronda: R ? { n: t.rondas.length, mesas: R.mesas.map((m, i) => Object.assign({ m: i + 1, b: nombre(m.b), n: m.n == null ? null : nombre(m.n), r: m.r || null },
+      ronda: R ? { n: t.rondas.length, inicio: R.inicio || null, mesas: R.mesas.map((m, i) => Object.assign({ m: i + 1, b: nombre(m.b), n: m.n == null ? null : nombre(m.n), r: m.r || null },
         // En equipos, cada tablero con quién juega con cada color: así quien
         // busca a una integrante encuentra su tablero.
         E.esDeEquipos(t) && m.n != null && m.alineacion ? { tableros: E.tablerosDe(t, m).map((x) => {
@@ -427,6 +448,8 @@
           return { t: x.k + 1, b: de(x.bBlancas ? m.b : m.n, x.blancas), n: de(x.bBlancas ? m.n : m.b, x.negras), r: x.r || null };
         }) } : {})) } : null,
       clasificacion: k ? clasificacionDe(t).map((f) => ({ p: f.puesto, n: nombre(f.id), pts: f.puntos,
+        // El centro educativo, para «Mi centro» en el celular.
+        i: String((participante(t, f.id) || {}).institucion || "").trim(),
         // Los primeros desempates, para la ficha del jugador en el celular.
         d: (t.desempates || []).filter((c) => c !== "TB").slice(0, 3).map((c) => ({ c, v: Math.round((f.valores[c] || 0) * 100) / 100 })) })) : [],
     };
@@ -540,7 +563,23 @@
   }
 
   // ---------- Las incidencias ----------
-  const NOMBRE_INCIDENCIA = { reclamo: "Reclamo", sancion: "Sanción", decision: "Decisión del árbitro", apelacion: "Apelación", correccion: "Corrección de un resultado", otra: "Otra" };
+  // Lo que más se reclama en una sala, con su artículo de las Leyes del
+  // Ajedrez de la FIDE (las vigentes desde 2023): el informe lo lleva al lado.
+  const ARTICULOS = {
+    tocar: ["4.3", "pieza tocada"],
+    bandera: ["6.9", "se le acabó el tiempo"],
+    tarde: ["6.7", "llegó tarde"],
+    ilegal: ["7.5", "jugada ilegal"],
+    acuerdo: ["9.1", "tablas por acuerdo"],
+    repeticion: ["9.2", "triple repetición"],
+    cincuenta: ["9.3", "regla de las 50 jugadas"],
+    automaticas: ["9.6", "tablas automáticas: quíntuple repetición o 75 jugadas"],
+    celular: ["11.3.2", "aparato electrónico en la sala"],
+    molestar: ["11.5", "molestar al rival"],
+    sancion: ["12.9", "sanción del árbitro"],
+  };
+  const articuloTexto = (k) => (ARTICULOS[k] ? "art. " + ARTICULOS[k][0] + ", " + ARTICULOS[k][1] : "");
+  const NOMBRE_INCIDENCIA = { reclamo: "Reclamo", sancion: "Sanción", decision: "Decisión del árbitro", apelacion: "Apelación", correccion: "Corrección de un resultado", adjunto: "Nota de un árbitro adjunto", otra: "Otra" };
   const horaTexto = (ms) => {
     try { return new Date(ms).toLocaleTimeString("es-CR", { hour: "numeric", minute: "2-digit", timeZone: "America/Costa_Rica" }); }
     catch (e) { return ""; }
@@ -548,7 +587,8 @@
   function incidenciasDe(t) {
     const out = [];
     t.rondas.forEach((R, r) => (R.incidencias || []).forEach((x) => out.push("Ronda " + (r + 1) + (x.mesa ? ", mesa " + x.mesa : "") +
-      (x.hora ? ", " + horaTexto(x.hora) : "") + " · " + (NOMBRE_INCIDENCIA[x.tipo] || NOMBRE_INCIDENCIA.otra) + ": " + x.texto +
+      (x.hora ? ", " + horaTexto(x.hora) : "") + " · " + (NOMBRE_INCIDENCIA[x.tipo] || NOMBRE_INCIDENCIA.otra) +
+      (ARTICULOS[x.articulo] ? " (" + articuloTexto(x.articulo) + ")" : "") + (x.autor ? " Lo anota " + x.autor + "." : "") + ": " + x.texto +
       (x.presenta ? " Presenta: " + x.presenta + "." : "") + (x.tipo === "apelacion" ? " Resolución: " + (x.resolucion || "pendiente") + "." : ""))));
     return out;
   }
@@ -765,7 +805,104 @@
     return posibles.length === 1 ? posibles[0] : null;
   }
 
+
+  // ---------- Revisar el pareo de una ronda ----------
+  // Lo que conviene mirar antes de anunciar una ronda (no lo prohíbe el
+  // Sistema Holandés, y nada se cambia solo): dos del mismo centro educativo
+  // en una mesa, alguien con el mismo color tres rondas seguidas, y una mesa
+  // con más de un punto de diferencia (en un suizo).
+  function revisarPareo(t, r) {
+    const R = t.rondas[r];
+    if (!R || E.esDeEquipos(t)) return [];
+    const out = [];
+    const color = (id, k) => (T.situacion(t, k, id) || {}).color;
+    R.mesas.forEach((m, i) => {
+      if (m.n == null) return;
+      const b = participante(t, m.b), n = participante(t, m.n);
+      const ib = clave(b && b.institucion), inn = clave(n && n.institucion);
+      if (ib && ib === inn) out.push({ tipo: "centro", mesa: i, centro: String(b.institucion).trim(), b: b.nombre, n: n.nombre });
+      for (const [id, x] of [[m.b, b], [m.n, n]]) {
+        if (r < 2) continue;
+        const c = [color(id, r - 2), color(id, r - 1), color(id, r)];
+        if (c[0] && c.every((y) => y === c[0])) out.push({ tipo: "colores", mesa: i, nombre: x.nombre, color: c[0] });
+      }
+      if (t.sistema !== "todos" && r > 0) {
+        const pb = T.puntosHasta(t, m.b, r), pn = T.puntosHasta(t, m.n, r);
+        if (Math.abs(pb - pn) > 1) out.push({ tipo: "puntos", mesa: i, b: b.nombre, n: n.nombre, pb, pn });
+      }
+    });
+    return out;
+  }
+
+  // ---------- La mesa fija ----------
+  // Quien necesita siempre la misma mesa (una silla de ruedas, una necesidad
+  // especial): después de emparejar, su mesa se cambia de lugar con la que
+  // está en ese número. No toca quién juega con quién ni los colores.
+  function aplicarMesasFijas(t, R) {
+    const movidas = [];
+    if (!R || E.esDeEquipos(t)) return movidas;
+    for (const j of t.jugadores) {
+      const k = Number(j.mesaFija) - 1;
+      if (!(k >= 0) || k >= R.mesas.length) continue;
+      const i = R.mesas.findIndex((m) => m.b === j.id || m.n === j.id);
+      if (i < 0 || i === k) continue;
+      // Si la mesa de destino ya es fija de otro, no se le quita.
+      const otro = R.mesas[k];
+      const fija = (id) => { const y = participante(t, id); return y && Number(y.mesaFija) === k + 1; };
+      if (fija(otro.b) || (otro.n != null && fija(otro.n))) continue;
+      [R.mesas[i], R.mesas[k]] = [R.mesas[k], R.mesas[i]];
+      movidas.push({ nombre: j.nombre, mesa: k + 1 });
+    }
+    return movidas;
+  }
+
+  // ---------- Los certificados de los árbitros ----------
+  // Uno por persona que arbitró algún torneo del evento, con sus cargos.
+  function certificadosArbitro(evento, torneos) {
+    const porNombre = new Map();
+    const sumar = (nombre, cargo, t) => {
+      const n = String(nombre || "").trim();
+      if (!n) return;
+      const k = clave(n);
+      if (!porNombre.has(k)) porNombre.set(k, { nombre: n, evento: evento.nombre, cargos: [], fecha: t.fechaInicio || evento.creado || "", rondas: 0 });
+      const x = porNombre.get(k);
+      x.cargos.push({ cargo, torneo: nombreTorneo(t), rondas: t.rondas.length });
+      x.rondas = Math.max(x.rondas, t.rondas.length);
+    };
+    for (const t of torneos) {
+      sumar(t.arbitro, "Árbitro principal", t);
+      for (const a of String(t.arbitroAdjunto || "").split(/[;,]/)) sumar(a, "Árbitro adjunto", t);
+    }
+    return [...porNombre.values()];
+  }
+  function textoCertificadoArbitro(c) {
+    const porCargo = new Map();
+    for (const x of c.cargos) { if (!porCargo.has(x.cargo)) porCargo.set(x.cargo, []); porCargo.get(x.cargo).push(x.torneo + " (" + x.rondas + " rondas)"); }
+    return {
+      encabezado: c.evento,
+      titulo: "Certificado de arbitraje",
+      otorga: "Se hace constar que",
+      nombre: c.nombre,
+      motivo: [...porCargo].map(([cargo, ts]) => "fue " + cargo.toLowerCase() + " de " + ts.join(", ")).join("; y ") + (fechaTexto(c.fecha) ? ", el " + fechaTexto(c.fecha) : "") + ".",
+    };
+  }
+
+  // ---------- Mi centro, en el enlace del evento ----------
+  // Los de un centro educativo en todos los torneos (de la vista del evento:
+  // la clasificación ya trae el centro de cada fila).
+  function delCentro(vista, centro) {
+    const k = clave(centro);
+    if (!k) return [];
+    return (vista.torneos || []).map((x) => ({ torneo: x.nombre, filas: (x.clasificacion || []).filter((f) => clave(f.i) === k) })).filter((x) => x.filas.length);
+  }
+  function centrosDeVista(vista) {
+    const m = new Map();
+    for (const x of vista.torneos || []) for (const f of x.clasificacion || []) if (f.i && !m.has(clave(f.i))) m.set(clave(f.i), f.i);
+    return [...m.values()].sort((a, b) => a.localeCompare(b, "es"));
+  }
+
   const api = {
+    ARTICULOS, articuloTexto, revisarPareo, aplicarMesasFijas, certificadosArbitro, textoCertificadoArbitro, delCentro, centrosDeVista, CARGOS_FIRMA,
     sorpresas, proximaRonda, informePrensa, buscarEnHistorial, DIFERENCIA_SORPRESA,
     compararAnioAnterior,
     revisarCierre,
