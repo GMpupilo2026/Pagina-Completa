@@ -56,13 +56,22 @@ const leerTodos = (page) => page.evaluate(() => JSON.parse(localStorage.getItem(
 const vis = (page, sel) => page.$eval(sel, (n) => n.checkVisibility()).catch(() => false);
 
 // La ronda en pantalla se vuelve a pintar con cada resultado (en equipos,
-// entera): cada select se busca de nuevo antes de tocarlo.
+// entera), y también cuando llega algo de afuera (un adjunto, el respaldo):
+// cada select se busca de nuevo antes de tocarlo, y si se repintó justo entre
+// buscarlo y tocarlo, se vuelve a buscar.
 async function anotar(page, resultado) {
   const n = await page.$$eval("#pi-ronda select", (l) => l.length);
   for (let i = 0; i < n; i++) {
-    const s = (await page.$$("#pi-ronda select"))[i];
-    if (!s) break;
-    if ((await s.$$eval("option", (o) => o.map((x) => x.value))).includes(resultado)) await s.selectOption(resultado);
+    for (let intento = 0; ; intento++) {
+      try {
+        const s = (await page.$$("#pi-ronda select"))[i];
+        if (!s) return;
+        if ((await s.$$eval("option", (o) => o.map((x) => x.value))).includes(resultado)) await s.selectOption(resultado, { timeout: 5000 });
+        break;
+      } catch (e) {
+        if (intento >= 4 || !/not attached|detached|Timeout/i.test(String(e))) throw e;
+      }
+    }
   }
 }
 
