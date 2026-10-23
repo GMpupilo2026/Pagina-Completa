@@ -262,7 +262,10 @@ async function pruebaPagina(browser) {
   await page.click('[data-ficha="rondas"]');
   const antes2 = await page.evaluate(() => window.__enviados.length);
   await page.selectOption("#pi-ronda select", "0-1");
-  ok(await page.evaluate((n) => window.__enviados.length > n, antes2), "cada resultado que se anota también sale");
+  // El envío sale un instante después de anotar: con el CI cargado, leerlo enseguida
+  // fallaba a veces. Si en 5 s no salió, sigue fallando.
+  const salio = await page.waitForFunction((n) => window.__enviados.length > n, antes2, { timeout: 5000 }).then(() => true, () => false);
+  ok(salio, "cada resultado que se anota también sale");
   await page.click('[data-ficha="archivos"]');
   ok(/Apagar/.test(await page.textContent("#pi-evento-vivo")), "el botón dice que está prendido");
 
