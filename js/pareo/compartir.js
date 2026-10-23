@@ -17,8 +17,8 @@
   const V = enNode ? require("./evento.js") : raiz.PareoEvento;
 
   const TEXTOS = {
-    es: { ronda: "Ronda", mesa: "Mesa", bye: "Libre", clasificacion: "Clasificación tras la ronda", pts: "pts", provisional: "provisional: faltan resultados", enVivo: "En vivo", pie: "Pareo Integral · ajedrez-integral.com" },
-    en: { ronda: "Round", mesa: "Board", bye: "Bye", clasificacion: "Standings after round", pts: "pts", provisional: "provisional: results missing", enVivo: "Live", pie: "Pareo Integral · ajedrez-integral.com" },
+    es: { ronda: "Ronda", mesa: "Mesa", mesas: "mesas", unaMesa: "mesa", bye: "Libre", clasificacion: "Clasificación tras la ronda", pts: "pts", provisional: "provisional: faltan resultados", enVivo: "En vivo", pie: "Pareo Integral · ajedrez-integral.com" },
+    en: { ronda: "Round", mesa: "Board", mesas: "boards", unaMesa: "board", bye: "Bye", clasificacion: "Standings after round", pts: "pts", provisional: "provisional: results missing", enVivo: "Live", pie: "Pareo Integral · ajedrez-integral.com" },
   };
   const RESULTADO = { "1-0": "1-0", "0-1": "0-1", "=": "½-½", "+-": "+ -", "-+": "- +", "--": "- -" };
 
@@ -30,6 +30,27 @@
   const limpio = (s) => String(s || "").replace(/[*_~`]/g, "").trim();
   const nombreTorneo = (t) => limpio(t.grupo || t.nombre);
 
+  // Un nombre escrito todo en mayúsculas (como vienen las inscripciones del
+  // MEP) se lee como un grito en el celular: pasa a mayúscula inicial, con
+  // «de», «la»… en minúscula y las siglas como están (sin vocales, como CTP,
+  // los números romanos y las de la lista). Un nombre que ya trae minúsculas
+  // no se toca: así lo escribió quien lo inscribió.
+  const SIGLAS = new Set(["IPEC", "CINDEA", "UNED", "CEDES", "SINEM", "UCR", "TEC", "UNA", "UTN", "MEP", "CCSS", "INA", "IEGB", "CNP", "ICE", "CTP"]);
+  const MENORES = new Set(["de", "del", "la", "las", "los", "el", "y", "e", "en", "para", "con"]);
+  function legible(s) {
+    const x = limpio(s);
+    if (/[a-zà-ÿ]/.test(x)) return x;
+    let primera = true;
+    return x.replace(/[A-ZÀ-ÞÑ0-9][A-ZÀ-ÞÑ0-9'.]*/g, (p) => {
+      const era = primera;
+      primera = false;
+      if (SIGLAS.has(p) || /^[IVXLC]+$/.test(p) && p.length <= 4 || !/[AEIOUÁÉÍÓÚÜ]/.test(p)) return p;
+      const min = p.toLocaleLowerCase("es");
+      if (!era && MENORES.has(min)) return min;
+      return min.charAt(0).toLocaleUpperCase("es") + min.slice(1);
+    });
+  }
+
   // El pareo de la ronda r (desde 0), mesa por mesa con su número en la sala.
   function textoRonda(t, r, opciones) {
     const o = opciones || {};
@@ -37,17 +58,21 @@
     const R = t.rondas[r];
     if (!R) return "";
     const deEquipos = E.esDeEquipos(t);
-    const nombre = (id) => limpio((t.jugadores.find((j) => j.id === id) || {}).nombre || "?");
+    const nombre = (id) => legible((t.jugadores.find((j) => j.id === id) || {}).nombre || "?");
     // Los puntos que llevaba cada uno antes de la ronda (en individual), como
     // en las listas de pareo de FIDE.
     const conPuntos = (id) => nombre(id) + (r > 0 && !deEquipos ? " (" + puntosTexto(T.puntosHasta(t, id, r)) + ")" : "");
-    const lineas = ["*" + (nombreTorneo(t) ? nombreTorneo(t) + " — " : "") + x.ronda + " " + (r + 1) + "*", ""];
+    // Una mesa por bloque: su número en negrita (con el resultado, si ya
+    // está) y cada uno en su línea, ⚪ con blancas y ⚫ con negras. En un
+    // celular, «A – B» en una sola línea se partía en cualquier lado.
+    const jugadas = R.mesas.filter((m) => m.n !== null).length;
+    const lineas = ["♟️ *" + (nombreTorneo(t) || x.ronda) + "*", "*" + x.ronda + " " + (r + 1) + "* · " + jugadas + " " + (jugadas === 1 ? x.unaMesa : x.mesas)];
     const libres = [];
     R.mesas.forEach((m, i) => {
       if (m.n === null) { libres.push(conPuntos(m.b)); return; }
-      lineas.push(x.mesa + " " + V.mesaFisica(t, i) + ": " + conPuntos(m.b) + " – " + conPuntos(m.n) + (m.r ? "  *" + RESULTADO[m.r] + "*" : ""));
+      lineas.push("", "*" + x.mesa + " " + V.mesaFisica(t, i) + "*" + (m.r ? " · *" + RESULTADO[m.r] + "*" : ""), "⚪ " + conPuntos(m.b), "⚫ " + conPuntos(m.n));
     });
-    for (const b of libres) lineas.push(x.bye + ": " + b);
+    if (libres.length) lineas.push("", "*" + x.bye + ":* " + libres.join(", "));
     return cerrar(lineas, o, x);
   }
 
@@ -60,8 +85,8 @@
     if (!k) return "";
     const filas = V.aplicarDesempate(t, E.clasificacion(Object.assign({}, t, { rondas: t.rondas.slice(0, k) }), t.desempates));
     const primero = (t.desempates || [])[0];
-    const nombre = (id) => limpio((t.jugadores.find((j) => j.id === id) || {}).nombre || "?");
-    const lineas = ["*" + (nombreTorneo(t) ? nombreTorneo(t) + " — " : "") + x.clasificacion + " " + k + "*"];
+    const nombre = (id) => legible((t.jugadores.find((j) => j.id === id) || {}).nombre || "?");
+    const lineas = ["🏆 *" + (nombreTorneo(t) || x.clasificacion) + "*", "*" + x.clasificacion + " " + k + "*"];
     if (k < t.rondas.length) lineas.push("(" + x.provisional + ")");
     lineas.push("");
     const lista = o.cuantos ? filas.slice(0, o.cuantos) : filas;
@@ -74,7 +99,7 @@
 
   function cerrar(lineas, o, x) {
     lineas.push("");
-    if (o.enlace) lineas.push(x.enVivo + ": " + o.enlace);
+    if (o.enlace) lineas.push("🔴 " + x.enVivo + ": " + o.enlace);
     lineas.push(x.pie);
     return lineas.join("\n");
   }
@@ -83,7 +108,7 @@
   // a quién). wa.me sirve en el celular y en la computadora.
   const enlaceWhatsapp = (texto) => "https://wa.me/?text=" + encodeURIComponent(texto);
 
-  const api = { textoRonda, textoClasificacion, enlaceWhatsapp };
+  const api = { textoRonda, textoClasificacion, enlaceWhatsapp, legible };
   if (enNode) module.exports = api;
   else raiz.PareoCompartir = api;
 })(typeof self !== "undefined" ? self : this);

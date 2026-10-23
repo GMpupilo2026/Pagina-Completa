@@ -91,14 +91,16 @@ function pruebaSinNavegador() {
   const u = torneo();
   u.rondas.push({ mesas: [{ b: "e", n: "a", r: null }, { b: "b", n: "c", r: "=" }, { b: "h", n: "d", r: null }, { b: "g", n: null, r: null }], ausencias: {} });
   const msg = CO.textoRonda(u, 1, {});
-  ok(/^\*PRUEBA ABIERTO — Ronda 2\*/.test(msg), "el título en negrita", msg.split("\n")[0]);
-  ok(/Mesa 11: PRUEBA EVA \(0\) – PRUEBA ANA \(1\)/.test(msg), "la mesa de la sala (11, no 1), los puntos de antes y el nombre sin asteriscos", msg);
-  ok(/Mesa 12: PRUEBA BETO \(0\) – PRUEBA CAROL \(1\)  \*½-½\*/.test(msg), "el resultado, si ya está", msg);
-  ok(/\nLibre: PRUEBA GABY \(0\)/.test(msg), "el libre al final", msg);
-  ok(!/\*EVA\*/.test(msg), "un asterisco en un nombre no abre una negrita");
+  ok(/^♟️ \*PRUEBA ABIERTO\*\n\*Ronda 2\* · 3 mesas\n/.test(msg), "el torneo y la ronda en negrita, con cuántas mesas", msg.split("\n").slice(0, 2).join(" | "));
+  ok(/\n\*Mesa 11\*\n⚪ Prueba Eva \(0\)\n⚫ Prueba Ana \(1\)\n/.test(msg), "una mesa por bloque: la de la sala (11, no 1), cada uno en su línea con su color y sus puntos de antes", msg);
+  ok(/\n\*Mesa 12\* · \*½-½\*\n⚪ Prueba Beto \(0\)\n⚫ Prueba Carol \(1\)/.test(msg), "el resultado junto a la mesa, si ya está", msg);
+  ok(/\n\*Libre:\* Prueba Gaby \(0\)\n/.test(msg), "el libre al final", msg);
+  ok(!/\*EVA\*/.test(msg) && !/\*Eva\*/.test(msg), "un asterisco en un nombre no abre una negrita");
+  igual("los nombres en mayúsculas se leen con mayúscula inicial; las siglas y lo escrito a mano quedan", ["CENTRO EDUCATIVO DE LA CRUZ", "CTP DE PURISCAL", "IPEC SANTA BÁRBARA", "LICEO SAN JOSÉ II", "Pérez Solís, Ana", "UNED"].map(CO.legible),
+    ["Centro Educativo de la Cruz", "CTP de Puriscal", "IPEC Santa Bárbara", "Liceo San José II", "Pérez Solís, Ana", "UNED"]);
   const clas = CO.textoClasificacion(u, { enlace: "https://ajedrez-integral.com/pareo.html#vivo=ABC" });
   ok(/Clasificación tras la ronda 1\*/.test(clas) && /\(provisional: faltan resultados\)/.test(clas), "la clasificación dice la ronda y que es provisional", clas);
-  ok(/\nEn vivo: https:\/\/ajedrez-integral\.com\/pareo\.html#vivo=ABC\n/.test(clas), "y lleva el enlace en vivo", clas);
+  ok(/\n🔴 En vivo: https:\/\/ajedrez-integral\.com\/pareo\.html#vivo=ABC\n/.test(clas), "y lleva el enlace en vivo", clas);
   const enlace = CO.enlaceWhatsapp(msg);
   ok(enlace.startsWith("https://wa.me/?text=") && decodeURIComponent(enlace.slice(20)) === msg, "el enlace a wa.me lleva todo el texto");
 
@@ -153,7 +155,7 @@ async function pruebaClasificacion(browser) {
   ok(await P.vis(page, "#pi-clas-compartir-texto"), "aparece el mensaje para revisar");
   igual("el botón dice que está abierto", await page.getAttribute("#pi-clas-whatsapp", "aria-expanded"), "true");
   const texto = await page.inputValue("#pi-clas-compartir-texto");
-  ok(/^\*PRUEBA ABIERTO — Clasificación tras la ronda 1\*/.test(texto), "es la clasificación", texto.slice(0, 80));
+  ok(/^🏆 \*PRUEBA ABIERTO\*\n\*Clasificación tras la ronda 1\*/.test(texto), "es la clasificación", texto.slice(0, 80));
   const href = await page.getAttribute("#pi-clas-compartir [data-whatsapp]", "href");
   ok(href === "https://wa.me/?text=" + encodeURIComponent(texto), "«Abrir WhatsApp» lleva ese texto");
   await page.click("#pi-clas-whatsapp");
@@ -161,7 +163,7 @@ async function pruebaClasificacion(browser) {
   await page.click('[data-ficha="rondas"]');
   await page.click("#pi-rondas-nav button >> nth=0");
   await page.click("#pi-ronda-whatsapp");
-  ok(/Mesa 11: PRUEBA ANA – PRUEBA EVA  \*1-0\*/.test(await page.inputValue("#pi-ronda-compartir-texto")), "y desde la ronda, el pareo con la mesa de la sala");
+  ok(/\*Mesa 11\* · \*1-0\*\n⚪ Prueba Ana\n⚫ Prueba Eva/.test(await page.inputValue("#pi-ronda-compartir-texto")), "y desde la ronda, el pareo con la mesa de la sala");
 
   console.log("\n=== La clasificación para la pared ===");
   await page.click('[data-ficha="clasificacion"]');

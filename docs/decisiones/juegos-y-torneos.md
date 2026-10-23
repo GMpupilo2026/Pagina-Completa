@@ -3385,6 +3385,52 @@ Al tocar esto, `node herramientas/verificar-pareo-sala-evento.js`. Rompiendo a
 propósito la mesa física, la casilla de consentimiento, el llamado, el fin de
 la ronda o el aceptar, salta.
 
+### Pareo Integral: los equipos el día del torneo, la Categoría Amistoso, el plazo de los capitanes y el mensaje de WhatsApp
+
+Lo pidió el dueño del sitio, en varios mensajes del mismo día.
+
+- **«Mover» también a un torneo por equipos.** Entra al equipo de su centro
+  si tiene cupo (`G.JDE_MAX_EQUIPO`, 5). Si está lleno, no se mueve: el aviso
+  dice que primero hay que sacar a alguien del equipo. Si su centro no tenía
+  equipo en ese torneo, se arma uno con él (y se avisa que necesita al menos
+  `G.JDE_MIN_EQUIPO`).
+- **La categoría, revisada al mover** (`revisarCategoriaDestino`, con
+  `G.revisarCategorias`): mayor de lo que permite (art. 17), subir en
+  individual, un salto que no es A→B, C→D ni D→E, y el tope de tres que
+  suben por equipo (art. 18). Lo que no se permite, no se mueve y lo dice;
+  un ascenso permitido se mueve y lo dice. Sin fecha de nacimiento o sin
+  «Categoría X» en el grupo del torneo, no se revisa.
+- **En un equipo, «Quitar» a quien no vino** (antes de la ronda 1): va al
+  acta («Bajas en los equipos», `t.bajasEquipo`); un equipo sin nadie sale
+  del torneo. Y **«Agregar un equipo que llegó»**: el centro y los
+  integrantes, uno por línea, en el orden de tableros; un centro que ya tiene
+  equipo no se repite, y con rondas jugadas entra desde la siguiente como
+  inscripción tardía.
+- **La Categoría Amistoso.** Al crear los torneos de la inscripción, los que
+  se quedan sin rivales (un grupo de uno, un equipo solo en su categoría)
+  juegan juntos un torneo individual «Categoría Amistoso», con los mismos
+  datos que los demás (casilla marcada de entrada). Lleva `amistoso: true`:
+  no clasifica (`V.clasificados`) ni suma al medallero.
+- **El plazo de los capitanes** (`t.plazoAlineacion`, minutos, en la ficha
+  Torneo de un torneo por equipos). La hora de la ronda sale del horario del
+  evento (Archivos, «Horario del día») y, sin él, de cuando se echó a andar
+  el reloj de la ronda (`inicioDeRonda`). Al capitán le llega el límite y su
+  celular cuenta cuánto le queda («Te quedan 12 min…»); al vencer se cierra.
+  Lo decide la pestaña del árbitro: lo que llega tarde no entra. Sin plazo o
+  sin hora, como antes: hasta que se anote el primer tablero.
+- **El enlace del capitán, por WhatsApp o por correo**, con un mensaje que
+  dice el equipo, la ronda y el torneo. El teléfono y el correo los pone
+  quien lo manda.
+- **El mensaje de WhatsApp de la ronda**, más fácil de leer en el celular
+  (el dueño mandó cómo se veía): una mesa por bloque, su número en negrita y
+  cada uno en su línea (⚪ blancas, ⚫ negras; el orden también lo dice). Los
+  nombres escritos todo en mayúsculas pasan a mayúscula inicial
+  (`PareoCompartir.legible`): «de», «la»… en minúscula, y las siglas (sin
+  vocales, números romanos y una lista: CTP, IPEC, UNED…) como están. Lo que
+  ya trae minúsculas no se toca.
+
+Lo comprueba `verificar-pareo-equipos-dia.js` (el mensaje, `verificar-pareo-premios.js`).
+
 ### Pareo Integral: el informe oficial completo, la premiación en tablas, la configuración de los JDE fija, la acreditación y no perder nada al cerrar
 
 Lo pidió el dueño del sitio de una vez (las propuestas 2, 3 y 4, más el

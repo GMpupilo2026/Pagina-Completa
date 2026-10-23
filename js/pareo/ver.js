@@ -979,15 +979,35 @@ window.PareoVer = (function () {
     catch (e) { cont.replaceChildren(el("p", { class: "text-sm text-red-700 dark:text-red-300" }, tx("errorEnVivoVer"))); return; }
     const canal = window.sb.channel("pareo-capitan-" + String(codigo).split("&")[0]);
     let enviado = false;
+    let cuentaCapitan = null;
     canal.on("broadcast", { event: "estado" }, (msg) => {
       const d = msg.payload || {};
       const nodos = [el("h1", { class: "font-serif text-2xl font-bold mb-1" }, d.equipo || ""),
         el("p", { class: "text-sm text-brand-600 dark:text-brand-300 mb-4" }, (d.nombre || "") + " · " + tx("rondaN", { r: d.ronda }) + (d.rival ? " · " + tx("capitanContra", { e: d.rival }) : ""))];
       if (d.confirmada) { enviado = false; nodos.push(el("p", { id: "pi-cap-confirmada", class: "font-semibold mb-3" }, tx("capitanConfirmada", { h: horaCorta(d.confirmada) }))); }
+      if (cuentaCapitan) { clearInterval(cuentaCapitan); cuentaCapitan = null; }
       if (d.bloqueada) {
-        nodos.push(el("p", { class: "text-sm" }, tx(d.rival ? "capitanBloqueada" : "capitanSinEncuentro")));
+        nodos.push(el("p", { id: d.vencido ? "pi-cap-vencido" : null, class: "text-sm" }, d.vencido ? tx("capitanVencido", { h: horaCorta(d.limite) }) : tx(d.rival ? "capitanBloqueada" : "capitanSinEncuentro")));
         cont.replaceChildren(...nodos);
         return;
+      }
+      // El plazo que puso el árbitro: cuánto le queda, contado acá cada 15
+      // segundos (al vencer se cierra solo; la pestaña del árbitro igual lo
+      // rechaza si llega tarde).
+      if (d.limite) {
+        const queda = el("p", { id: "pi-cap-queda", class: "font-semibold mb-3 rounded-lg border-2 border-accent-500 px-3 py-2", role: "status" });
+        const contar = () => {
+          const ms = d.limite - Date.now();
+          if (ms <= 0) {
+            clearInterval(cuentaCapitan); cuentaCapitan = null;
+            cont.replaceChildren(...nodos.slice(0, 2), el("p", { id: "pi-cap-vencido", class: "text-sm" }, tx("capitanVencido", { h: horaCorta(d.limite) })));
+            return;
+          }
+          queda.textContent = ms < 60000 ? tx("capitanQuedaPoco", { h: horaCorta(d.limite) }) : tx("capitanQueda", { m: Math.ceil(ms / 60000), h: horaCorta(d.limite) });
+        };
+        nodos.push(queda);
+        contar();
+        cuentaCapitan = setInterval(contar, 15000);
       }
       const marcados = new Set(d.alineacion || []);
       const lista = el("ul", { class: "space-y-2" });

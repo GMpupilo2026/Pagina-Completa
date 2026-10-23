@@ -91,6 +91,8 @@
   // empate que los desempates no resolvieron, se avisa: lo decide el árbitro
   // (un desempate rápido o un sorteo), nunca el orden de la lista.
   function clasificados(t, n) {
+    // La «Categoría Amistoso» (los que se quedaron sin rivales) no clasifica.
+    if (t.amistoso) n = 0;
     // Sin ninguna ronda completa no hay clasificación: todos estarían
     // «empatados» en cero.
     const filas = rondasCompletas(t) ? clasificacionDe(t) : [];
@@ -177,6 +179,8 @@
     if (movimientos.length) seccion((++n) + ". Cambios de torneo", movimientos, "");
     const reemplazos = torneos.flatMap((t) => (t.reemplazos || []).map((x) => x.equipo + ", " + nombreTorneo(t) + ": sale " + x.sale + " y entra " + x.entra + "."));
     if (reemplazos.length) seccion((++n) + ". Reemplazos en los equipos", reemplazos, "");
+    const bajas = torneos.flatMap((t) => (t.bajasEquipo || []).map((x) => x.equipo + ", " + nombreTorneo(t) + ": sale " + x.nombre + " (no se presentó)."));
+    if (bajas.length) seccion((++n) + ". Bajas en los equipos", bajas, "");
     const ausentes = torneos.flatMap((t) => (t.noSePresentaron || []).map((x) => x + " (" + nombreTorneo(t) + ")."));
     if (ausentes.length) seccion((++n) + ". No se presentaron a la ronda 1", ausentes, "");
     const comparacion = d.comparacion || { noClasificaron: [], faltan: [] };
@@ -692,7 +696,7 @@
   // después plata y después bronce, como un medallero olímpico.
   function medallero(torneos) {
     const porCentro = new Map();
-    for (const t of torneos) {
+    for (const t of torneos.filter((x) => !x.amistoso)) {
       for (const f of podio(t).filas) {
         const x = f.participante;
         const centro = String((E.esDeEquipos(t) ? x.institucion || x.nombre : x.institucion) || "—").trim();
