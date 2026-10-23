@@ -131,8 +131,17 @@ async function pruebaSubirLista(browser) {
   console.log("\n=== Subir una lista: .csv con la cabecera en otro orden ===");
   const { ctx: ctx2, page: page2 } = await abrir(browser);
   const csv = "Institución;Nombre;Elo\nLiceo X;García Vega, Pedro;1800\n";
+  // La lista se sube en la ficha Torneo, junto a los datos del torneo; desde
+  // Jugadores, un botón lleva ahí. Al subirla, se ve la lista que quedó.
+  await page2.click('[data-ficha="jugadores"]');
+  await page2.click("#pi-ir-subir-lista");
+  igual("«Súbela en la ficha Torneo» lleva a la caja, a la vista y con el foco en el archivo",
+    [await vis(page2, "#pi-p-torneo"), await vis(page2, "#pi-caja-subir-lista"), await page2.evaluate(() => document.activeElement.id)], [true, true, "pi-subir-lista"]);
+  ok(await page2.evaluate(() => document.getElementById("pi-p-torneo").contains(document.getElementById("pi-subir-lista"))
+    && document.getElementById("pi-subir-lista").compareDocumentPosition(document.getElementById("pi-form-torneo")) & Node.DOCUMENT_POSITION_FOLLOWING), "la caja está en la ficha Torneo, arriba de los datos");
   await page2.setInputFiles("#pi-subir-lista", { name: "lista.csv", mimeType: "text/csv", buffer: Buffer.from(csv, "utf8") });
   await page2.waitForFunction(() => document.getElementById("pi-cuenta").textContent === "1");
+  ok(await vis(page2, "#pi-p-jugadores"), "al subirla desde Torneo, pasa a Jugadores y se ve la lista");
   igual("lee la cabecera por su etiqueta, no por su posición",
     await page2.$$eval("#pi-tabla-jugadores tbody tr", (trs) => trs.map((tr) => [tr.children[2].textContent, tr.children[3].textContent, tr.children[6].textContent])),
     [["García Vega, Pedro", "Liceo X", "1800"]]);

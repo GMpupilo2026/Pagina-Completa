@@ -2235,3 +2235,18 @@ body.pi-sorteo-abierto { overflow: hidden; }
 .pi-sorteo-sec:focus-visible { outline-color: #f0b429; }
 @media (prefers-reduced-motion: reduce) { .pi-sorteo-nuevo, .pi-sorteo-girando { animation: none; } }
 @media print { .pi-sorteo { display: none !important; } }
+/* Las estadísticas de un torneo publicado (torneos-pareo.html): una barra
+   por resultado, siempre con el porcentaje escrito al lado (la barra sola no
+   dice nada a quien no ve el color). */
+.pi-est-barra { height: 0.6rem; border-radius: 999px; background: rgb(var(--c-brand-100)); overflow: hidden; margin-top: 0.2rem; }
+.dark .pi-est-barra { background: rgb(var(--c-brand-800)); }
+.pi-est-relleno { display: block; height: 100%; border-radius: 999px; }
+.pi-est-blancas { background: rgb(var(--c-brand-300)); }
+.pi-est-negras { background: rgb(var(--c-brand-800)); }
+.dark .pi-est-negras { background: rgb(var(--c-brand-950)); outline: 1px solid rgb(var(--c-brand-500)); }
+.pi-est-tablas { background: rgb(var(--c-accent-500)); }
+/* torneos-pareo.html: la fila de un jugador que sigo. La marca es la
+   franja y la estrella escrita (★, con «lo sigues» para el lector): el texto
+   no cambia de color, así que el contraste es el de siempre. */
+.pi-tabla tr.tp-seguido > td:first-child { box-shadow: inset 4px 0 0 rgb(var(--c-accent-500)); }
+.pi-tabla tr.tp-seguido > td { font-weight: 600; }

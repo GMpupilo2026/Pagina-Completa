@@ -331,6 +331,13 @@ async function pruebaTopeIndividual(browser) {
     [abiertoAhora.jugadores.length <= 8 ? "todos" : "suizo", abiertoAhora.jugadores.length <= 8 ? "DE,SB,WIN,KS" : "BH-C1,BH,SB,DE,WIN", "10 min + 2 s por jugada"]);
   igual("y el formulario lo muestra", await page.$eval('#pi-form-torneo [name="ritmo"]', (i) => i.value), "10 min + 2 s por jugada");
   igual("le pone el nombre del evento, con su grupo", abiertoAhora.nombre, "JDE 2026 · Etapa Regional · DRE Alajuela — Abierto");
+  // El nombre oficial de los JDE no se escribe a mano: el campo queda de solo
+  // lectura, lo dice a la vista, y ni forzando el cambio desde la consola se guarda.
+  igual("el nombre de los JDE no se puede escribir, y dice por qué", [await page.$eval('#pi-form-torneo [name="nombre"]', (i) => i.readOnly),
+    await page.$eval("#pi-nombre-jde", (x) => x.checkVisibility())], [true, true]);
+  await page.$eval('#pi-form-torneo [name="nombre"]', (i) => { i.value = "OTRO NOMBRE"; i.dispatchEvent(new Event("change", { bubbles: true })); });
+  igual("ni forzándolo se guarda otro, y el campo vuelve al oficial", [(await page.evaluate(() => JSON.parse(localStorage.getItem("pareo_torneo_v1_" + localStorage.getItem("pareo_abierto_v1"))))).nombre,
+    await page.$eval('#pi-form-torneo [name="nombre"]', (i) => i.value)], ["JDE 2026 · Etapa Regional · DRE Alajuela — Abierto", "JDE 2026 · Etapa Regional · DRE Alajuela — Abierto"]);
 
   console.log("\n=== La etapa, otra vez: cancelar, sin elegir, Interregional ===");
   const leerAbierto = () => page.evaluate(() => JSON.parse(localStorage.getItem("pareo_torneo_v1_" + localStorage.getItem("pareo_abierto_v1"))));

@@ -8,6 +8,17 @@
 //   { accion: "crear", torneo }              → { ok, id, clave }
 //   { accion: "actualizar", id, clave, torneo } → { ok }
 //   { accion: "borrar", id, clave }           → { ok }
+//   { accion: "inscribir", id, inscripcion, consentimiento } → { ok }
+//   { accion: "inscripciones", id, clave }    → { ok, inscripciones }
+//   { accion: "marcar", id, clave, ids, estado } → { ok }
+//
+// La inscripción antes del torneo: si quien organiza la abrió
+// (`torneo.inscripcion = { abierta, hasta }`), cualquiera manda la de un
+// estudiante desde torneos-pareo.html; queda en pareo_preinscripciones (que
+// no se lee desde afuera) hasta que el organizador la lee con su clave y la
+// acepta o la rechaza. Un torneo puede publicarse antes de tener jugadores,
+// como anuncio (`torneo.anuncio`: hora, contacto, texto). Ver «Torneos en
+// Pareo Integral: inscripción, anuncios, partidas y estadísticas».
 //
 // No hay sesión que comprobar: el candado es la clave secreta que recibe quien
 // publica (la guarda su navegador, dentro del torneo). Acá se guarda solo su
@@ -64,6 +75,7 @@ const fecha = (v: unknown) => (typeof v === "string" && /^\d{4}-\d{2}-\d{2}$/.te
 const lista = <T>(v: unknown, max: number, f: (x: unknown) => T | null): T[] =>
   (Array.isArray(v) ? v.slice(0, max).map(f).filter((x): x is T => x !== null) : []);
 const ids = (v: unknown, max: number) => lista(v, max, id);
+const codigo = (v: unknown) => (typeof v === "string" && /^[a-z0-9]{6,12}$/.test(v) ? v : undefined);
 const hora = (v: unknown) => (Number.isFinite(Number(v)) && Number(v) > 0 ? Math.floor(Number(v)) : undefined);
 
 function persona(v: unknown) {
@@ -85,6 +97,10 @@ function mesa(v: unknown) {
   if (v.n != null && m.n === null) return null;
   if (Array.isArray(v.partidas)) m.partidas = lista(v.partidas, 12, (p) => (esObj(p) ? { r: resultado(p.r) } : null));
   if (esObj(v.alineacion)) m.alineacion = { b: ids(v.alineacion.b, 12), n: ids(v.alineacion.n, 12) };
+  // La partida en PGN (la valida el navegador con chess.js al anotarla y al
+  // mostrarla): acá solo se acota el tamaño y se quitan los caracteres de control.
+  const pgn = typeof v.pgn === "string" ? v.pgn.replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/g, "").slice(0, 12000).trim() : "";
+  if (pgn) m.pgn = pgn;
   return m;
 }
 
@@ -117,6 +133,13 @@ function limpiar(v: unknown) {
     numeracion: Array.isArray(v.numeracion) ? ids(v.numeracion, 1000) : null,
     rondas: lista(v.rondas, 40, ronda),
     desempateCorte: esObj(v.desempateCorte) ? { formato: texto(v.desempateCorte.formato, 40), orden: ids(v.desempateCorte.orden, 100) } : undefined,
+    // El anuncio de un torneo que todavía no empieza (lo que se publica a
+    // propósito: la hora, el contacto de la organización y las bases).
+    anuncio: esObj(v.anuncio) ? { hora: /^\d{2}:\d{2}$/.test(String(v.anuncio.hora)) ? v.anuncio.hora : "", contacto: texto(v.anuncio.contacto, 120), texto: texto(v.anuncio.texto, 1500) } : undefined,
+    inscripcion: esObj(v.inscripcion) ? { abierta: v.inscripcion.abierta === true, hasta: fecha(v.inscripcion.hasta) } : undefined,
+    // Los códigos de los enlaces en vivo (ya van en sus QR): con ellos, un
+    // enlace en vivo que ya nadie transmite lleva al torneo publicado.
+    vivo: codigo(v.vivo), codigoEvento: codigo(v.codigoEvento),
   };
   return t.nombre || t.grupo ? t : null;
 }
@@ -149,7 +172,7 @@ Deno.serve(async (req) => {
   if (accion === "crear" || accion === "actualizar") {
     const t = limpiar(body.torneo);
     if (!t) return json({ ok: false, error: "El torneo llegó sin nombre o con una forma inválida." }, 400);
-    if (!t.jugadores.length) return json({ ok: false, error: "El torneo todavía no tiene jugadores." }, 400);
+    if (!t.jugadores.length && !t.anuncio) return json({ ok: false, error: "El torneo todavía no tiene jugadores." }, 400);
 
     if (accion === "actualizar") {
       const pid = texto(body.id, 40);
@@ -185,6 +208,59 @@ Deno.serve(async (req) => {
     const { error } = await admin.from("pareo_publicados").delete().eq("id", pid);
     if (error) return json({ ok: false, error: "No se pudo quitar. Intenta de nuevo." }, 502);
     return json({ ok: true, id: pid });
+  }
+
+  // ---------- La inscripción antes del torneo ----------
+  if (accion === "inscribir") {
+    const pid = texto(body.id, 40);
+    if (!/^[0-9a-f-]{36}$/.test(pid)) return json({ ok: false, error: "Ese torneo no existe." }, 400);
+    if (body.consentimiento !== true) return json({ ok: false, error: "Falta aceptar la política de privacidad." }, 400);
+    const x = esObj(body.inscripcion) ? body.inscripcion : {};
+    const fila = {
+      publicado_id: pid, nombre: texto(x.nombre, 100), institucion: texto(x.institucion, 100), categoria: texto(x.categoria, 30),
+      elo: Number(x.elo) > 0 ? Math.min(3500, Math.round(Number(x.elo))) : null,
+      fide_id: /^[0-9]{1,12}$/.test(texto(x.fideId, 12)) ? texto(x.fideId, 12) : "",
+      responsable: texto(x.responsable, 100), contacto: texto(x.contacto, 120), nota: texto(x.nota, 300),
+      consentimiento: new Date().toISOString(),
+    };
+    if (fila.nombre.length < 2) return json({ ok: false, error: "Escribe el nombre de quien juega." }, 400);
+    if (fila.responsable.length < 2 || fila.contacto.length < 5) return json({ ok: false, error: "Escribe quién inscribe y cómo contactarle (correo o teléfono)." }, 400);
+    const { data: pub } = await admin.from("pareo_publicados").select("datos").eq("id", pid).maybeSingle();
+    if (!pub) return json({ ok: false, error: "Ese torneo ya no está publicado." }, 404);
+    const ins = esObj(pub.datos) && esObj(pub.datos.inscripcion) ? pub.datos.inscripcion : null;
+    const hoy = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Costa_Rica" }).format(new Date());
+    if (!ins || ins.abierta !== true || (typeof ins.hasta === "string" && ins.hasta && ins.hasta < hoy)) {
+      return json({ ok: false, error: "La inscripción de este torneo está cerrada." }, 409);
+    }
+    const { data: freno, error: frenoError } = await admin.rpc("pareo_inscribir_frenar", { p_ip: ipDe(req), p_publicado: pid });
+    if (frenoError) return json({ ok: false, error: "No se pudo inscribir. Intenta de nuevo." }, 502);
+    if (freno) return json({ ok: false, error: freno }, 429);
+    const { error } = await admin.from("pareo_preinscripciones").insert(fila);
+    if (error) return json({ ok: false, error: "No se pudo inscribir. Revisa los datos e intenta de nuevo." }, 502);
+    return json({ ok: true });
+  }
+
+  if (accion === "inscripciones" || accion === "marcar") {
+    const pid = texto(body.id, 40);
+    const clave = texto(body.clave, 100);
+    if (!/^[0-9a-f-]{36}$/.test(pid) || !clave) return json({ ok: false, error: "Falta la clave de este torneo." }, 400);
+    const { data: fila } = await admin.from("pareo_publicados").select("clave_hash").eq("id", pid).maybeSingle();
+    if (!fila) return json({ ok: false, error: "Ese torneo ya no está publicado.", noExiste: true }, 404);
+    if (fila.clave_hash !== await sha256(clave)) return json({ ok: false, error: "La clave no es la de este torneo." }, 403);
+    if (accion === "inscripciones") {
+      const { data, error } = await admin.from("pareo_preinscripciones")
+        .select("id, nombre, institucion, categoria, elo, fide_id, responsable, contacto, nota, estado, creado")
+        .eq("publicado_id", pid).order("creado").range(0, 999);
+      if (error) return json({ ok: false, error: "No se pudieron leer las inscripciones." }, 502);
+      return json({ ok: true, inscripciones: data || [] });
+    }
+    const estado = texto(body.estado, 20);
+    if (!["aceptada", "rechazada", "pendiente"].includes(estado)) return json({ ok: false, error: "Estado inválido." }, 400);
+    const cuales = Array.isArray(body.ids) ? body.ids.filter((x) => typeof x === "string" && /^[0-9a-f-]{36}$/.test(x)).slice(0, 400) : [];
+    if (!cuales.length) return json({ ok: true });
+    const { error } = await admin.from("pareo_preinscripciones").update({ estado }).eq("publicado_id", pid).in("id", cuales);
+    if (error) return json({ ok: false, error: "No se pudo guardar. Intenta de nuevo." }, 502);
+    return json({ ok: true });
   }
 
   return json({ ok: false, error: "Acción desconocida." }, 400);
