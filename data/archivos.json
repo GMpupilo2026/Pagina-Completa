@@ -19075,7 +19075,7 @@
   ]
  },
  "imagenes": {
-  "total": 866,
+  "total": 867,
   "grupos": [
    {
     "carpeta": "entreno/img/facil",
@@ -24371,6 +24371,12 @@
       "titulo": "Centroamericano 2026: foto de Jean Quesada, árbitro de pareo",
       "tipo": "otro",
       "kb": 9
+     },
+     {
+      "ruta": "img/centroamericano-2026/mascota-asoma.png",
+      "titulo": "Centroamericano 2026: la cabeza del pizote de la portada, recortada para que se asome en una ficha",
+      "tipo": "otro",
+      "kb": 58
      },
      {
       "ruta": "img/centroamericano-2026/mascota-trofeo.png",

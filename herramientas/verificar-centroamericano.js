@@ -74,11 +74,15 @@ ok("las fotos de los tres contactos están en el sitio", fotos.length === 3 && f
 ok("cada contacto con su teléfono y su WhatsApp", (contacto.match(/href="tel:/g) || []).length === 3 && (contacto.match(/href="https:\/\/wa\.me\/506\d{8}"/g) || []).length === 3);
 // La cara de las bases: su hoja de estilos, la mascota, la bandera y los logos.
 ok("la página carga css/centroamericano.css y el cuerpo lleva la clase cac", html.includes('<link rel="stylesheet" href="css/centroamericano.css">') && /<body class="cac /.test(html));
-for (const img of ["mascota.jpg", "mascota-trofeo.png", "hojas.png", "bandera-cr.svg", "cca-logo.png"]) {
+for (const img of ["mascota.jpg", "mascota-trofeo.png", "mascota-asoma.png", "hojas.png", "bandera-cr.svg", "cca-logo.png"]) {
   ok("la imagen " + img + " existe y se usa", fs.existsSync(path.join(RAIZ, "img/centroamericano-2026", img)) && html.includes("img/centroamericano-2026/" + img));
 }
 ok("la mascota tiene su texto alternativo", /src="img\/centroamericano-2026\/mascota\.jpg"[^>]*alt="[^"]{20,}"/.test(html));
-ok("lo que solo adorna no lo lee el lector de pantalla", [...html.matchAll(/<img [^>]*(hojas\.png|bandera-cr\.svg|mascota-trofeo\.png)[^>]*>/g)].every((m) => /alt=""/.test(m[0]) && /aria-hidden="true"/.test(m[0])));
+// Los pizotes de más: uno se asoma en «Pedir un bye», otro festeja en «Resultados» y otro despide.
+ok("el pizote se asoma en «Pedir un bye»", /data-ventana="Pedir un bye"[^>]*cac-con-asoma[\s\S]*?mascota-asoma\.png[\s\S]*?<\/a>/.test(html));
+ok("el pizote del trofeo festeja en «Resultados en vivo»", /data-ventana="Resultados en vivo"[^>]*cac-con-festejo[\s\S]*?cac-festejo[\s\S]*?<\/a>/.test(html));
+ok("el pizote despide y lleva a los contactos", /<a href="#contacto" class="cac-despedida[\s\S]*?cac-despedida-foto[\s\S]*?Nos vemos en La Sabana/.test(html));
+ok("lo que solo adorna no lo lee el lector de pantalla", [...html.matchAll(/<img [^>]*(hojas\.png|bandera-cr\.svg|mascota-trofeo\.png|mascota-asoma\.png|cac-despedida-foto)[^>]*>/g)].every((m) => /alt=""/.test(m[0]) && /aria-hidden="true"/.test(m[0])));
 ok("la reserva con la organización está avisada", /penalidad de 200 USD/.test(html));
 
 // Lo que se abre en la ventana (js/ventana-enlace.js) tiene que estar en

@@ -8175,6 +8175,13 @@ Es una página estática, sin cuenta y sin base: nada se guarda.
   degradado. Lo que solo adorna lleva `alt=""` y `aria-hidden`; la mascota, su
   descripción. La mascota flota y la bandera se mece, pero con «menos
   movimiento» pedido en el sistema se quedan quietas.
+- **Tres pizotes más, pocos y con algo que hacer**: la cabeza del pizote se
+  asoma en «Pedir un bye» (`mascota-asoma.png`, recortada de `mascota.jpg`), el
+  del trofeo festeja en «Resultados en vivo» y el de la portada despide en un
+  globo que abre los contactos. Son los dos dibujos de las bases: **ninguna
+  pose de la mascota se inventa**; si la organización pasa otras ilustraciones,
+  van en su ficha. En el celular el que se asoma se achica y el «Abrir…» le
+  deja su lugar, para no tapar el texto.
 - **Las bases las sirve el propio sitio**, tal cual las publicó la FCA, en
   `documentos/centroamericano-2026/bases-cac-2026.pdf` (como la normativa de
   los JDE en `documentos/jde/`). Es un documento oficial ajeno: **no lleva la

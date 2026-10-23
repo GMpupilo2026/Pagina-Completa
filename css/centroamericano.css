@@ -179,3 +179,110 @@ a.cac-ficha:hover .cac-icono { animation: cac-saltito 0.5s ease; }
   .cac-flota, .cac-mece, a.cac-ficha:hover .cac-icono { animation: none; }
   a.cac-ficha:hover { transform: none; }
 }
+
+/* Más pizotes por la página, pocos y con algo que hacer: se asoma en «Pedir un
+ * bye», festeja con el trofeo en «Resultados» y despide antes del pie. Son los
+ * dos dibujos de las bases, recortados: ninguna pose se inventa. */
+.cac-con-asoma, .cac-con-festejo { overflow: hidden; }
+.cac-asoma {
+  position: absolute;
+  right: -0.3rem;
+  bottom: -0.6rem;
+  width: clamp(4rem, 11vw, 6.5rem);
+  height: auto;
+  pointer-events: none;
+  transform: translateY(45%) rotate(-8deg);
+  transition: transform 0.35s cubic-bezier(.34,1.56,.64,1);
+  animation: cac-asomarse 6s ease-in-out infinite;
+}
+a.cac-con-asoma:hover .cac-asoma,
+a.cac-con-asoma:focus-visible .cac-asoma { animation: none; transform: translateY(8%) rotate(-8deg); }
+@keyframes cac-asomarse {
+  0%, 70%, 100% { transform: translateY(45%) rotate(-8deg); }
+  78%, 90% { transform: translateY(8%) rotate(-8deg); }
+}
+.cac-con-asoma .cac-accion, .cac-con-asoma .cac-icono { position: relative; z-index: 1; }
+
+.cac-festejo {
+  position: absolute;
+  top: 0.6rem;
+  right: 0.6rem;
+  width: clamp(2.75rem, 7vw, 4rem);
+  pointer-events: none;
+}
+.cac-festejo img { width: 100%; height: auto; animation: cac-festejar 2.8s ease-in-out infinite; transform-origin: 50% 100%; }
+.cac-brillo {
+  position: absolute;
+  top: -0.3rem;
+  left: -0.5rem;
+  font-size: 1rem;
+  animation: cac-brillar 2.8s ease-in-out infinite;
+}
+@keyframes cac-festejar {
+  0%, 55%, 100% { transform: translateY(0) rotate(0); }
+  65% { transform: translateY(-7px) rotate(-6deg); }
+  75% { transform: translateY(0) rotate(4deg); }
+  85% { transform: translateY(-3px) rotate(0); }
+}
+@keyframes cac-brillar {
+  0%, 55%, 100% { opacity: 0; transform: scale(0.4); }
+  68% { opacity: 1; transform: scale(1.15); }
+  85% { opacity: 0; transform: scale(0.8); }
+}
+
+.cac-despedida-foto {
+  flex-shrink: 0;
+  width: clamp(5.5rem, 18vw, 8.5rem);
+  aspect-ratio: 1;
+  object-fit: cover;
+  object-position: 50% 8%;
+  border-radius: 9999px;
+  border: 5px solid #fff;
+  box-shadow: 0 10px 24px -10px rgb(64 71 143 / 0.6);
+  transform: scaleX(-1);
+  animation: cac-saludar 3.5s ease-in-out infinite;
+}
+@keyframes cac-saludar {
+  0%, 100% { transform: scaleX(-1) rotate(0); }
+  25% { transform: scaleX(-1) rotate(6deg); }
+  50% { transform: scaleX(-1) rotate(-3deg); }
+}
+.cac-globo {
+  position: relative;
+  flex: 1;
+  background: #fff;
+  color: var(--cac-morado-hondo);
+  border: 3px solid var(--cac-morado);
+  border-radius: 1.5rem;
+  padding: 0.9rem 1.1rem;
+  box-shadow: 0 6px 0 var(--cac-morado);
+}
+.cac-globo::before {
+  content: "";
+  position: absolute;
+  left: -0.75rem;
+  top: 50%;
+  width: 1.2rem;
+  height: 1.2rem;
+  background: #fff;
+  border-left: 3px solid var(--cac-morado);
+  border-bottom: 3px solid var(--cac-morado);
+  transform: translateY(-50%) rotate(45deg);
+}
+.cac-globo .cac-accion { color: var(--cac-morado); }
+.dark .cac-globo, .dark .cac-globo::before { background: rgb(var(--c-brand-900, 10 31 51)); }
+.dark .cac-globo { color: #fff; border-color: #b8bbf2; box-shadow: 0 6px 0 #b8bbf2; }
+.dark .cac-globo::before { border-color: #b8bbf2; }
+.dark .cac-globo .cac-accion { color: #b8bbf2; }
+a.cac-despedida:hover .cac-globo { transform: translateY(-2px); }
+
+@media (prefers-reduced-motion: reduce) {
+  .cac-asoma, .cac-festejo img, .cac-brillo, .cac-despedida-foto { animation: none; }
+  .cac-brillo { opacity: 0; }
+  .cac-asoma { transition: none; }
+}
+/* En el celular la ficha es angosta: el pizote se achica y el «Abrir…» le deja su lugar. */
+@media (max-width: 639px) {
+  .cac-asoma { width: 3.25rem; right: -0.2rem; }
+  .cac-con-asoma .cac-accion { padding-right: 2.6rem; }
+}
