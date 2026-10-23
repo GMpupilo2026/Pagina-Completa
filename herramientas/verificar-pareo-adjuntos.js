@@ -48,11 +48,15 @@ const ultimoEstado = (page, canal) => page.evaluate((c) => (window.__enviados.fi
 
 async function pruebaPrincipal(browser) {
   console.log("\n=== El enlace del adjunto lleva su nombre ===");
-  const { ctx, page, errores } = await P.abrirPagina(browser, BASE, "", sembrar(torneo()));
+  const { ctx, page, errores } = await P.abrirPagina(browser, BASE, "", async (p) => {
+    await p.addInitScript(() => { window.__sinAutoConfirmar = true; });
+    await sembrar(torneo())(p);
+  });
   await page.click('[data-ficha="rondas"]');
   await page.click("#pi-adjunto");
   await page.waitForSelector(dialogo);
   await page.click(dialogo + " [data-avisos-aceptar]");
+  await page.waitForFunction(() => /Escribe el nombre del árbitro adjunto/.test(document.body.textContent)).catch(() => {});
   ok(/Escribe el nombre del árbitro adjunto/.test(await page.textContent("body")) && !(await page.$(".pi-adjunto-url")), "sin nombre no se crea");
   await page.click("#pi-adjunto");
   await page.waitForSelector(dialogo);

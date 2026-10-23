@@ -3014,7 +3014,7 @@
       nombre: v.nombre || "", ronda: v.rondas.length,
       // Quién es él, quién es el principal, su chat y sus llamadas.
       arbitro: a.nombre || "", principal: v.arbitro || "",
-      chat: chatDe(v, codigo).slice(-30).map((x) => ({ hora: x.hora, de: x.de === "principal" ? "principal" : x.de === codigo ? "yo" : "otro", nombre: x.nombre, texto: x.texto })),
+      chat: chatDe(v, codigo).slice(-30).map((x) => ({ hora: x.hora, de: x.de === "principal" ? x.de : QUIEN_CHAT[x.de === codigo], nombre: x.nombre, texto: x.texto })),
       llamadas: (v.llamadas || []).filter((x) => x.codigo === codigo).slice(-5).map((x) => ({ hora: x.hora, mesa: x.mesa, atendida: x.atendida || null })),
       mesas: R.mesas.map((m, i) => {
         const x = { m: i + 1, f: V.mesaFisica(v, i), b: nombre(m.b), n: m.n == null ? null : nombre(m.n), r: m.r || null, mia: !!m.r && m.adjunto === codigo,
@@ -3075,6 +3075,7 @@
   // adjunto, y de cada adjunto al principal. Llegan por el mismo canal del
   // adjunto, con el estado (`enviarAdjunto`). Una llamada («Te necesitan en
   // la mesa X») queda en `llamadas` hasta que el principal toca «Voy».
+  const QUIEN_CHAT = { true: "yo", false: "otro" };
   const chatDe = (v, codigo) => (v.chat || []).filter((x) => x.para === "todos" || x.para === codigo || x.de === codigo);
   function guardarDelAdjunto(v) {
     if (v === t()) guardar();

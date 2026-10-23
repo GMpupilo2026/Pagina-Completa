@@ -60,6 +60,8 @@ const ok = (c, m, detalle) => (c ? bien(m) : mal(m + (detalle ? " — " + detall
   const browser = await chromium.launch({ executablePath: fs.existsSync(CHROME) ? CHROME : undefined });
   const ctx = await browser.newContext({ serviceWorkers: "block", acceptDownloads: true, viewport: { width: 1280, height: 900 } });
   const p = await ctx.newPage();
+  // Cambiar un resultado ya anotado pide confirmarlo: acá se acepta solo.
+  await p.addInitScript(require("./lib/pareo-pruebas").autoConfirmarCambios);
   const errores = [];
   const afuera = [];
   p.on("pageerror", (e) => errores.push(e.message));
@@ -429,6 +431,7 @@ const ok = (c, m, detalle) => (c ? bien(m) : mal(m + (detalle ? " — " + detall
         if (cb) cb({ payload: msg.payload });
       }, { nombre, msg }).catch(() => { /* la página del celular ya no está */ });
     });
+    await pOrg.addInitScript(require("./lib/pareo-pruebas").autoConfirmarCambios);
     await pOrg.addInitScript(() => {
       window.sb = { channel: (nombre) => ({ subscribe() { return this; }, unsubscribe() {}, send(msg) { window.__enviarAlCanal(nombre, msg); return Promise.resolve("ok"); } }) };
     });

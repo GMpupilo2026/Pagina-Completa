@@ -23,6 +23,20 @@ function dobleSupabase() {
   };
 }
 
+// La confirmación de «cambiar un resultado ya anotado» (la prueba
+// verificar-pareo-adjuntos.js, que pone window.__sinAutoConfirmar): en las
+// demás pruebas, que cambian resultados a propósito, se acepta sola.
+function autoConfirmarCambios() {
+  new MutationObserver(() => {
+    if (window.__sinAutoConfirmar) return;
+    const d = document.querySelector("dialog[data-avisos][open]");
+    if (d && !d.__aceptado && /¿Cambiar el resultado de la mesa/.test(d.textContent)) {
+      const b = d.querySelector("[data-avisos-aceptar]");
+      if (b) { d.__aceptado = true; b.click(); }
+    }
+  }).observe(document, { childList: true, subtree: true, attributes: true, attributeFilter: ["open"] });
+}
+
 async function abrirPagina(browser, BASE, hash, antes) {
   const ctx = await browser.newContext({ serviceWorkers: "block", acceptDownloads: true, viewport: { width: 1280, height: 1000 } });
   const page = await ctx.newPage();
@@ -31,6 +45,7 @@ async function abrirPagina(browser, BASE, hash, antes) {
   await page.route("**/fonts.googleapis.com/**", (r) => r.fulfill({ status: 200, contentType: "text/css", body: "" }));
   await page.route("**/fonts.gstatic.com/**", (r) => r.abort());
   await page.addInitScript(dobleSupabase);
+  await page.addInitScript(autoConfirmarCambios);
   if (antes) await antes(page);
   await page.goto(BASE + "/pareo.html" + (hash || ""), { waitUntil: "networkidle" });
   await page.evaluate(() => { window.print = () => {}; });
@@ -82,4 +97,4 @@ async function esperarGuardado(page, cumple, arg) {
   return leerTodos(page);
 }
 
-module.exports = { XLSX, dobleSupabase, abrirPagina, leerTodos, vis, anotar, jugarRondas, esperarGuardado };
+module.exports = { autoConfirmarCambios, XLSX, dobleSupabase, abrirPagina, leerTodos, vis, anotar, jugarRondas, esperarGuardado };
