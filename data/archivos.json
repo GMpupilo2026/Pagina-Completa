@@ -23,7 +23,7 @@
     "nombre": "Formación docente"
    }
   ],
-  "total": 890,
+  "total": 891,
   "material": [
    {
     "ruta": "material/cambiar-o-no-cambiar/cambiar-o-no-cambiar.pdf",
@@ -8149,6 +8149,12 @@
    }
   ],
   "sueltos": [
+   {
+    "ruta": "documentos/centroamericano-2026/bases-cac-2026.pdf",
+    "titulo": "Bases del XXI Festival Centroamericano y del Caribe de la Juventud, Costa Rica 2026",
+    "tipo": "otro",
+    "kb": 668
+   },
    {
     "ruta": "documentos/jde/normativa-pjde-2026.pdf",
     "titulo": "Normativa pjde 2026",

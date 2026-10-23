@@ -7706,3 +7706,41 @@ la institución de cada fila, no publica sin árbitro ni región— y
 `juegos-estudiantiles.html` —las cuatro fases siempre se ven, cada regional
 con su sección, la medalla del podio, la normativa del año—. Rompiendo a
 propósito la política de lectura pública, salta.
+
+## La página del Centroamericano 2026
+
+`centroamericano-2026.html` junta en fichas todo lo que buscan las familias,
+los delegados y los entrenadores en el XXI Festival Centroamericano y del
+Caribe de la Juventud (Costa Rica, del 1 al 8 de noviembre de 2026, en el
+Gimnasio Nacional de La Sabana): las bases, los hoteles, el bye, las partidas
+y los resultados en vivo, el grupo de WhatsApp, el correo y cómo llegar.
+Es una página estática, sin cuenta y sin base: nada se guarda.
+
+- **Las bases las sirve el propio sitio**, tal cual las publicó la FCA, en
+  `documentos/centroamericano-2026/bases-cac-2026.pdf` (como la normativa de
+  los JDE en `documentos/jde/`). Es un documento oficial ajeno: **no lleva la
+  marca de agua de Ajedrez Integral**, que es para lo que sale de nuestros
+  generadores. Los enlaces del grupo de WhatsApp, el correo y chess-results
+  salen del mismo PDF o los dio el dueño.
+- **El calendario, los precios del paquete y el reglamento se copian de las
+  bases**, no se resumen de memoria. Los días de la semana se comprobaron con
+  el calendario (el 1 de noviembre de 2026 es domingo).
+- **Las direcciones y los teléfonos de los hoteles no vienen en las bases.**
+  Salen de la ficha pública de cada hotel (la de IHG para el Holiday Inn) y de
+  directorios que coinciden entre sí. El que no se pudo confirmar —varios
+  directorios traían números de Estados Unidos que no son del hotel— dice «por
+  confirmar» en lugar de inventarse uno; el mapa busca al hotel por su nombre.
+  Las bases no dicen cuál de los Wyndham de San José es, así que ese queda sin
+  dirección hasta que la organización lo diga.
+- **Arriba de la lista va que la reserva se hace con la organización**: una
+  reserva directa con el hotel paga 200 USD de penalidad según las bases. Sin
+  ese aviso, un teléfono de hotel en la página invitaba justo a lo que cuesta.
+- **Una ficha sin enlace todavía dice «Pronto»** (el formulario del bye y la
+  transmisión de las partidas): sin `href`, con `tabindex="0"` y
+  `aria-disabled="true"`, como toda tarjeta apagada del sitio. Cuando llegue el
+  enlace se cambia el `<div>` por un `<a>` igual al de las otras fichas.
+
+`herramientas/verificar-centroamericano.js` lo revisa: que el PDF exista, que
+cada ficha tenga enlace o vaya apagada como corresponde, que lo que se abre en
+otra pestaña lleve `rel="noopener"`, que el calendario tenga las nueve rondas y
+que ningún teléfono aparezca sin estar en la lista de los confirmados.

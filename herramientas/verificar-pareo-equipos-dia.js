@@ -155,7 +155,11 @@ async function pruebaAmistoso(browser) {
 }
 
 // "HH:MM" en Costa Rica dentro de `min` minutos.
-const horaCR = (min) => new Intl.DateTimeFormat("en-GB", { hour: "2-digit", minute: "2-digit", hour12: false, timeZone: "America/Costa_Rica" }).format(new Date(Date.now() + min * 60000));
+// El horario guarda solo «HH:MM» de hoy: corrida cerca de la medianoche, «dentro
+// de 30 minutos» caía mañana a las 00:2x y la página lo leía como esta madrugada.
+// El reloj del navegador arranca a mediodía de hoy en Costa Rica, sea la hora que sea.
+const MEDIODIA = new Date(new Intl.DateTimeFormat("en-CA", { timeZone: "America/Costa_Rica" }).format(new Date()) + "T12:00:00-06:00").getTime();
+const horaCR = (desde, min) => new Intl.DateTimeFormat("en-GB", { hour: "2-digit", minute: "2-digit", hour12: false, timeZone: "America/Costa_Rica" }).format(new Date(desde + min * 60000));
 
 async function pruebaPlazo(browser) {
   console.log("\n=== El plazo de los capitanes ===");
@@ -165,9 +169,10 @@ async function pruebaPlazo(browser) {
   T.fijarNumeracion(eq);
   eq.rondas = [{ mesas: [{ b: eq.jugadores[0].id, n: eq.jugadores[1].id, r: null }], ausencias: {} }];
   const { ctx, page, errores } = await P.abrirPagina(browser, BASE, "", async (p) => {
+    await p.clock.setSystemTime(MEDIODIA);
     await sembrar([["eq", eq]], "eq")(p);
     // La ronda 1 empieza dentro de 30 minutos (el horario del evento).
-    await p.addInitScript((h) => { if (!localStorage.getItem("pareo_horario_v1_ev1")) localStorage.setItem("pareo_horario_v1_ev1", h); }, horaCR(30));
+    await p.addInitScript((h) => { if (!localStorage.getItem("pareo_horario_v1_ev1")) localStorage.setItem("pareo_horario_v1_ev1", h); }, horaCR(MEDIODIA, 30));
   });
   await page.click('[data-ficha="torneo"]');
   ok(/Sin plazo: hasta que se anote el primer tablero/.test(await page.textContent("#pi-plazo-alineacion")), "sin plazo, como antes");
@@ -182,11 +187,11 @@ async function pruebaPlazo(browser) {
   const canal = "pareo-capitan-" + url.split("#capitan=")[1];
   await page.waitForFunction((c) => window.__enviados.some((x) => x.canal === c && x.evento === "estado"), canal);
   const est = await page.evaluate((c) => window.__enviados.filter((x) => x.canal === c && x.evento === "estado").pop().payload, canal);
-  const faltan = (est.limite - Date.now()) / 60000;
+  const faltan = (est.limite - (await page.evaluate(() => Date.now()))) / 60000;
   ok(faltan > 18 && faltan <= 20.1 && !est.bloqueada, "al capitán le llega el plazo: 10 minutos antes de la ronda", JSON.stringify({ faltan, est }));
 
   // Ya pasó: la ronda empezó hace 5 minutos.
-  await page.evaluate((h) => localStorage.setItem("pareo_horario_v1_ev1", h), horaCR(-5));
+  await page.evaluate((h) => localStorage.setItem("pareo_horario_v1_ev1", h), horaCR(await page.evaluate(() => Date.now()), -5));
   await page.click('[data-ficha="torneo"]');
   await page.fill("#pi-plazo-min", "0");
   await page.press("#pi-plazo-min", "Tab");

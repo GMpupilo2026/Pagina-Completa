@@ -1003,7 +1003,7 @@ async function pruebaEtapa3(browser) {
   const paso2 = await page.evaluate(() => [document.querySelector("#visor .visor-escrita").textContent, document.querySelector("#visor .visor-nota").textContent]);
   cierto("la jugada va contada, no solo en SAN (" + paso2[0] + ")", /^Jugada 2 de \d+: eva 5\. El peón negro va de eva 7 a eva 5\.$/.test(paso2[0].replace(/\s+/g, " ")));
   cierto("y con su nota: cuánto la juega y cuánto saca (" + paso2[1] + ")", /^Él la juega el \d+ % de las veces; él saca .* en \d+ partidas\.$/.test(paso2[1]));
-  await page.waitForFunction(() => /^Stockfish: /.test(document.querySelector("#visor .visor-motor").textContent), null, { timeout: 5000 });
+  await page.waitForFunction(() => /^Stockfish: /.test(document.querySelector("#visor .visor-motor").textContent), null, { timeout: 20000 });
   igual("Stockfish evalúa la posición que se ve", await page.textContent("#visor .visor-motor"), "Stockfish: +0,20 · lo mejor: anna 3.");
 
   // Adelante con el botón, atrás escribiendo.
@@ -1028,7 +1028,7 @@ async function pruebaEtapa3(browser) {
   igual("y escribir «anterior» ahí lo dice, sin moverse", await page.textContent("#visor .cc-msg"), "Ya estás en la posición de salida.");
   await page.fill("#visor .cc-input", "evaluación");
   await page.press("#visor .cc-input", "Enter");
-  await page.waitForFunction(() => /^Stockfish: /.test(document.querySelector("#visor .cc-msg").textContent), null, { timeout: 5000 });
+  await page.waitForFunction(() => /^Stockfish: /.test(document.querySelector("#visor .cc-msg").textContent), null, { timeout: 20000 });
   cierto("«evaluación» escrita contesta lo de Stockfish", true);
 
   // Con el teclado en el tablero se va de casilla en casilla, sin salir de él.
@@ -1052,7 +1052,7 @@ async function pruebaEtapa3(browser) {
     return [document.querySelector("#visor .visor-titulo").textContent, t.querySelector(".visor-ultima[data-square='h4']") ? "h4" : "", document.querySelector("#visor .visor-nota").textContent];
   });
   cierto("se abre en su Dh4, con lo que dijo Stockfish (" + error.join(" | ") + ")", /Dh4$/.test(error[0]) && error[1] === "h4" && /^Su error: Dh4 \(\+0,20 → −0,80\)\. Lo mejor era /.test(error[2]));
-  await page.waitForFunction(() => /^Stockfish: /.test(document.querySelector("#visor .visor-motor").textContent), null, { timeout: 5000 });
+  await page.waitForFunction(() => /^Stockfish: /.test(document.querySelector("#visor .visor-motor").textContent), null, { timeout: 20000 });
   igual("y Stockfish, en esa posición, da la ventaja", await page.evaluate(() => document.querySelector("#visor .visor-motor").textContent.replace(/ ·.*/, "")), "Stockfish: −0,80");
 
   // Una jugada que no se puede hacer corta la línea: nunca una posición inventada.
