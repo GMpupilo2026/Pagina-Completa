@@ -41,7 +41,7 @@
     function sumarDias(iso, dias) {
         const d = new Date(iso + "T00:00:00Z");
         d.setUTCDate(d.getUTCDate() + dias);
-        return d.toISOString().slice(0, 10);
+        return d.toLocaleDateString("en-CA", { timeZone: "UTC" });
     }
     function lunesDe(iso) {
         const d = new Date(iso + "T00:00:00Z");
