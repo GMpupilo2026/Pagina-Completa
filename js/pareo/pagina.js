@@ -467,6 +467,9 @@
     f.elements.rondasTotales.min = Math.max(1, v.rondas.length);
     $("pi-config-jde-aplicar").disabled = v.rondas.length > 0;
     pintarDesempates();
+    // La sugerencia de un torneo por grupo vive en esta ficha (junto a «Subir
+    // la lista»): se vuelve a pintar con ella (el idioma, por ejemplo).
+    pintarSugerencia();
   }
 
   // «Aplicar la configuración de los JDE» al torneo abierto, antes de la
