@@ -3615,6 +3615,29 @@ en columnas.
 
 Lo comprueba `verificar-pareo-lista.js`.
 
+### Las pruebas no publican
+
+Con la publicación automática (ver «Torneos en Pareo Integral: todo torneo se
+publica solo»), cada corrida del CI abría Pareo Integral en localhost,
+emparejaba torneos de prueba y los **publicaba de verdad** en
+`pareo_publicados`. Los verificadores que prueban la publicación la
+reemplazan por un doble, pero los demás (sala, JDE, equipos, adjuntos…) no
+la tocaban. El 23/10 la lista pública tenía 306 torneos de prueba («PRUEBA
+SUB-10», «Mujeres · inter»…), y se borraron todos a pedido del dueño.
+
+- **El candado está en la función, no en las pruebas**: `pareo-publicar`
+  rechaza con 403 todo pedido cuyo `Origin` no sea
+  `https://ajedrez-integral.com`, antes de leer nada.
+  - El navegador siempre manda `Origin` en un POST a otro dominio.
+  - localhost, una vista previa de Cloudflare (`*.workers.dev`), Node y curl
+    no publican.
+  - Un verificador nuevo que se olvide del doble ya no ensucia nada.
+- La CORS sola no frenaba: Supabase contestaba el pedido igual.
+- `verificar-pareo-publicar.js` lee el código de la función y comprueba que
+  el candado siga ahí, antes de leer el cuerpo.
+- En la máquina y en el CI, la publicación falla callada (y se reintenta cada
+  minuto), como cuando no hay red: el resto de Pareo Integral no cambia.
+
 ### Torneos en Pareo Integral: válido para Elo, filtros, calendario y la tarjeta al compartir
 
 Lo pidió el dueño del sitio (la 1, la 3, la 5 y la 7 de una lista de propuestas).
