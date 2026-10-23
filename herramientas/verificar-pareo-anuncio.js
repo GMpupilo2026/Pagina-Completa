@@ -243,6 +243,7 @@ async function pruebaPublica(browser) {
   const errores = [];
   page.on("pageerror", (e) => errores.push(String(e)));
   await dobleTabla(page, filas);
+  await require("./lib/pareo-pruebas").dobleListaPareo(page, filas);
   const pedidos = await dobleFuncion(page, []);
   await page.goto(BASE + "/torneos-pareo.html", { waitUntil: "networkidle" });
   await page.waitForSelector("#tp-proximos li");

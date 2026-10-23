@@ -82,6 +82,7 @@ async function abrir(browser, hash, antes) {
   page.on("pageerror", (e) => errores.push(String(e)));
   if (antes) await antes(page);
   const pedidos = await dobleTabla(page);
+  await require("./lib/pareo-pruebas").dobleListaPareo(page, FILAS);
   await page.goto(BASE + "/torneos-pareo.html" + hash, { waitUntil: "networkidle" });
   return { ctx, page, errores, pedidos };
 }

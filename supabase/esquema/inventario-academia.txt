@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20261023010355
+# al-dia-con: 20261023152708
 tabla  Ejercicios Lichess  rls=true
 tabla  _foto_rls_tmp  rls=false
 tabla  _pedidos_elo  rls=false
@@ -127,8 +127,10 @@ tabla  notas_alumno  rls=true
 tabla  pagos  rls=true
 tabla  paquete_alumnos  rls=true
 tabla  paquetes_acceso  rls=true
+tabla  pareo_organizadores  rls=true
 tabla  pareo_preinscripciones  rls=true
 tabla  pareo_publicados  rls=true
+tabla  pareo_reportes  rls=true
 tabla  partidas_torneo  rls=true
 tabla  pizarras_cache  rls=true
 tabla  plan_compartidos  rls=true
@@ -1227,6 +1229,14 @@ columna  paquetes_acceso.precio_mensual  numeric(12,2)
 columna  paquetes_acceso.titular_id  uuid
 columna  paquetes_acceso.vigente_desde  date
 columna  paquetes_acceso.vigente_hasta  date
+columna  pareo_organizadores.actualizado  timestamp with time zone
+columna  pareo_organizadores.clave_hash  text
+columna  pareo_organizadores.creado  timestamp with time zone
+columna  pareo_organizadores.id  uuid
+columna  pareo_organizadores.logo  text
+columna  pareo_organizadores.nombre  text
+columna  pareo_organizadores.oculto  boolean
+columna  pareo_organizadores.verificado  boolean
 columna  pareo_preinscripciones.categoria  text
 columna  pareo_preinscripciones.consentimiento  timestamp with time zone
 columna  pareo_preinscripciones.contacto  text
@@ -1250,8 +1260,16 @@ columna  pareo_publicados.id  uuid
 columna  pareo_publicados.jugadores  smallint
 columna  pareo_publicados.lugar  text
 columna  pareo_publicados.nombre  text
+columna  pareo_publicados.oculto  boolean
+columna  pareo_publicados.organizador_id  uuid
 columna  pareo_publicados.rondas  smallint
 columna  pareo_publicados.rondas_total  smallint
+columna  pareo_reportes.creado  timestamp with time zone
+columna  pareo_reportes.detalle  text
+columna  pareo_reportes.estado  text
+columna  pareo_reportes.id  uuid
+columna  pareo_reportes.motivo  text
+columna  pareo_reportes.publicado_id  uuid
 columna  partidas_torneo.avisada_at  timestamp with time zone
 columna  partidas_torneo.color  text
 columna  partidas_torneo.comentarios  jsonb
@@ -2265,9 +2283,14 @@ funcion  paquete_borrar(p_id uuid)  definer  anon=false  auth=true
 funcion  paquete_guardar(p_id uuid, p_nombre text, p_titular uuid, p_academia uuid, p_cupos integer, p_desde date, p_hasta date, p_precio numeric, p_moneda text, p_notas text)  definer  anon=false  auth=true
 funcion  paquete_set_alumnos(p_id uuid, p_alumnos uuid[])  definer  anon=false  auth=true
 funcion  paquetes_con_uso()  invoker  anon=false  auth=true
+funcion  pareo_clave(p text)  invoker  anon=true  auth=true
 funcion  pareo_elo_frenar(p_ip text)  definer  anon=false  auth=false
 funcion  pareo_frenar(p_ip text, p_crear boolean)  definer  anon=false  auth=false
 funcion  pareo_inscribir_frenar(p_ip text, p_publicado uuid)  definer  anon=false  auth=false
+funcion  pareo_lista(p_parte text, p_desde integer, p_cuantos integer, p_buscar text, p_ritmo text, p_lugar text, p_elo text, p_abierta boolean, p_curso boolean, p_verificado boolean)  invoker  anon=true  auth=true
+funcion  pareo_lista_resumen()  invoker  anon=true  auth=true
+funcion  pareo_moderar(p_que text, p_id uuid)  definer  anon=false  auth=true
+funcion  pareo_reportar_frenar(p_ip text)  definer  anon=false  auth=false
 funcion  personas_con_dos_pasos()  definer  anon=false  auth=true
 funcion  personas_para_ver_como()  definer  anon=false  auth=true
 funcion  plan_compartido_conmigo(p_plan uuid)  definer  anon=true  auth=true
@@ -2668,7 +2691,9 @@ politica  pagos  pagos_coordinacion_escribe  INSERT
 politica  pagos  pagos_select  SELECT
 politica  paquete_alumnos  paquete_alumnos_select  SELECT
 politica  paquetes_acceso  paquetes_acceso_select  SELECT
+politica  pareo_organizadores  pareo_organizadores_lectura  SELECT
 politica  pareo_publicados  pareo_publicados_lectura_publica  SELECT
+politica  pareo_reportes  pareo_reportes_admin  SELECT
 politica  partidas_torneo  partidas_torneo_anota  INSERT
 politica  partidas_torneo  partidas_torneo_borra  DELETE
 politica  partidas_torneo  partidas_torneo_corrige  UPDATE
@@ -2962,6 +2987,8 @@ trigger  notas_alumno  notas_alumno_proteger
 trigger  pagos  auditar
 trigger  paquete_alumnos  auditar
 trigger  paquetes_acceso  auditar
+trigger  pareo_organizadores  auditar
+trigger  pareo_publicados  auditar_oculto
 trigger  planes_clase  planes_clase_proteger
 trigger  planes_cobro  auditar
 trigger  plantillas_casa  plantillas_casa_tope
@@ -3319,10 +3346,16 @@ indice  paquetes_acceso  paquetes_acceso_academia_idx
 indice  paquetes_acceso  paquetes_acceso_creado_por_fk
 indice  paquetes_acceso  paquetes_acceso_pkey
 indice  paquetes_acceso  paquetes_acceso_titular_idx
+indice  pareo_organizadores  pareo_organizadores_pkey
 indice  pareo_preinscripciones  pareo_preinscripciones_pkey
 indice  pareo_preinscripciones  pareo_preinscripciones_publicado_idx
 indice  pareo_publicados  pareo_publicados_actualizado_idx
+indice  pareo_publicados  pareo_publicados_fecha_idx
+indice  pareo_publicados  pareo_publicados_organizador_idx
 indice  pareo_publicados  pareo_publicados_pkey
+indice  pareo_reportes  pareo_reportes_estado_idx
+indice  pareo_reportes  pareo_reportes_pkey
+indice  pareo_reportes  pareo_reportes_publicado_idx
 indice  partidas_torneo  partidas_torneo_alumno
 indice  partidas_torneo  partidas_torneo_pkey
 indice  pizarras_cache  pizarras_cache_pkey
@@ -4251,6 +4284,7 @@ grant  paquetes_acceso  authenticated  REFERENCES
 grant  paquetes_acceso  authenticated  SELECT
 grant  paquetes_acceso  authenticated  TRIGGER
 grant  paquetes_acceso  authenticated  TRUNCATE
+grant  pareo_reportes  authenticated  SELECT
 grant  partidas_torneo  authenticated  DELETE
 grant  partidas_torneo  authenticated  INSERT
 grant  partidas_torneo  authenticated  SELECT

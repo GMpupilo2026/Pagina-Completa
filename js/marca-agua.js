@@ -3,7 +3,8 @@
  * «AJEDREZ INTEGRAL» debajo, sin el nombre de Oscar), lista para un PDF. La
  * misma de los libros y materiales que arma herramientas/ (lib/marca-agua.js).
  * También arma el logo de una academia (prepararDesde), para el PDF del
- * diagnóstico de un visitante que llegó por su enlace.
+ * diagnóstico de un visitante que llegó por su enlace, y el de quien organiza
+ * un torneo en Pareo Integral (prepararDesdeDatos), para sus PDF.
  *
  * El generador de PDF (`js/reporte-pdf.js`) necesita el logo partido en dos:
  * el dibujo en JPEG y su canal alfa aparte. Sin el alfa, la imagen taparía el
@@ -25,7 +26,9 @@ window.MarcaAgua = (function () {
   async function armar(url) {
     const respuesta = await fetch(url);
     if (!respuesta.ok) throw new Error("no se pudo bajar el logo (" + respuesta.status + ")");
-    const png = new Uint8Array(await respuesta.arrayBuffer());
+    return desdeBytes(new Uint8Array(await respuesta.arrayBuffer()));
+  }
+  async function desdeBytes(png) {
     /* La imagen se decodifica desde los bytes ya bajados (un blob:), no desde
        la dirección: el logo de una academia vive en Storage, otro origen, y
        leer sus píxeles desde ahí dejaría el lienzo «manchado» y sin alfa. */
@@ -76,5 +79,21 @@ window.MarcaAgua = (function () {
     return porDireccion.get(url);
   }
 
-  return { preparar: preparar, prepararDesde: prepararDesde, URL: URL_MARCA };
+  /* Un logo que ya está en la página como imagen en base64 (data:image/…):
+     el de quien organiza un torneo en Pareo Integral. Se lee sin fetch (la
+     CSP no deja pedir data:) y se arma igual. */
+  const porDatos = new Map();
+  function prepararDesdeDatos(datos) {
+    const m = /^data:image\/(png|jpeg|webp);base64,([A-Za-z0-9+/]+=*)$/.exec(String(datos || ""));
+    if (!m) return Promise.reject(new Error("no es una imagen en base64"));
+    if (!porDatos.has(datos)) {
+      const binario = atob(m[2]);
+      const bytes = new Uint8Array(binario.length);
+      for (let i = 0; i < binario.length; i++) bytes[i] = binario.charCodeAt(i);
+      porDatos.set(datos, desdeBytes(bytes).catch((e) => { porDatos.delete(datos); throw e; }));
+    }
+    return porDatos.get(datos);
+  }
+
+  return { preparar: preparar, prepararDesde: prepararDesde, prepararDesdeDatos: prepararDesdeDatos, URL: URL_MARCA };
 })();

@@ -2306,3 +2306,26 @@ body.pi-sorteo-abierto { overflow: hidden; }
   .tp-fila { grid-template-columns: 3.25rem minmax(0, 1fr) 1rem; column-gap: 0.6rem; padding: 0.75rem; }
   .tp-fecha-dia { font-size: 0.95rem; }
 }
+/* Pareo Integral: los rótulos de mesa (seis por hoja carta), con el número
+   grande y el QR que lleva al adjunto a esa mesa. Negro sobre blanco. */
+.pi-rotulos { display: grid; grid-template-columns: 1fr 1fr; gap: 0; color: #000; }
+.pi-rotulo { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 8.6cm; box-sizing: border-box; padding: 0.4cm; border: 1px dashed #888; break-inside: avoid; overflow: hidden; text-align: center; }
+.pi-rotulo-mesa { font-size: 12pt; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; margin: 0; }
+.pi-rotulo-n { font-family: Merriweather, Georgia, serif; font-size: 66pt; font-weight: 700; line-height: 1; margin: 0; }
+.pi-rotulo-cat { font-size: 10pt; margin: 0.1cm 0 0.2cm; overflow-wrap: anywhere; }
+.pi-rotulo-qr { width: 3cm; height: 3cm; }
+.pi-rotulo-qr svg { width: 100%; height: 100%; display: block; }
+.pi-rotulo-ayuda { font-size: 7.5pt; color: #333; margin: 0.15cm 0 0; }
+/* La mesa a la que llevó el QR (o «Ir a la mesa»): la franja y el borde
+   gruesos; el texto dice cuál es («Mesa 12.»). */
+.pi-adj-ir-mesa { border-width: 3px !important; border-color: rgb(var(--c-accent-500)) !important; }
+/* torneos-pareo.html: quién organiza, el sello «Verificado» (escrito, en una
+   píldora clara: brand-800 sobre accent-100, ~12:1, igual en modo oscuro) y
+   el logo de la organización (sobre blanco: un logo oscuro no se pierde). */
+.tp-org { display: inline-flex; align-items: center; gap: 0.35rem; font-size: 0.85rem; }
+a.tp-org { text-decoration: underline; text-underline-offset: 2px; border-radius: 0.25rem; }
+a.tp-org:hover { text-decoration: none; }
+a.tp-org:focus-visible { outline: none; box-shadow: 0 0 0 2px rgb(var(--c-accent-400)); }
+.tp-verificado { display: inline-flex; align-items: center; font-size: 0.72rem; font-weight: 700; padding: 0 0.45rem; border-radius: 999px; background: rgb(var(--c-accent-100)); color: rgb(var(--c-brand-800)); }
+.tp-org-logo { height: 3rem; width: auto; max-width: 8rem; object-fit: contain; background: #fff; border-radius: 0.5rem; padding: 0.2rem; border: 1px solid rgb(var(--c-brand-100)); }
+.tp-org-logo-grande { height: 5rem; max-width: 12rem; }
