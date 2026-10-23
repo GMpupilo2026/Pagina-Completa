@@ -258,11 +258,13 @@ async function pruebaPagina(browser) {
   igual("al prenderlo manda todo el evento por su canal", [enviado.canal, enviado.payload.torneos.length], ["pareo-evento-" + codigo, 2]);
   const antes = await page.evaluate(() => window.__enviados.length);
   await page.evaluate((c) => window.__llega("pareo-evento-" + c, "pedir", {}), codigo);
-  ok(await page.evaluate((n) => window.__enviados.length > n, antes), "y vuelve a mandarlo cuando alguien lo pide al entrar");
+  // Lo que se manda sale un instante después (con la máquina cargada, más): se espera, con tope.
+  const mandoDespues = (n) => page.waitForFunction((m) => window.__enviados.length > m, n, { timeout: 5000 }).then(() => true, () => false);
+  ok(await mandoDespues(antes), "y vuelve a mandarlo cuando alguien lo pide al entrar");
   await page.click('[data-ficha="rondas"]');
   const antes2 = await page.evaluate(() => window.__enviados.length);
   await page.selectOption("#pi-ronda select", "0-1");
-  ok(await page.evaluate((n) => window.__enviados.length > n, antes2), "cada resultado que se anota también sale");
+  ok(await mandoDespues(antes2), "cada resultado que se anota también sale");
   await page.click('[data-ficha="archivos"]');
   ok(/Apagar/.test(await page.textContent("#pi-evento-vivo")), "el botón dice que está prendido");
 
