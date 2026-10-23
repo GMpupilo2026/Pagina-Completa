@@ -164,7 +164,9 @@ async function pruebaPagina(browser) {
   await page.click('#pi-tabla-jugadores button[aria-label="Mover a PRUEBA CUATRO a otro torneo"]');
   await page.waitForSelector(dialogo);
   const destinos = await page.$$eval(dialogo + ' select[name="destino"] option', (o) => o.map((x) => x.textContent));
-  igual("solo los torneos individuales del evento sin empezar", destinos, ["Individual · Abierto"]);
+  // Los del evento sin empezar: individuales y, desde que «Mover» lleva a
+  // un equipo con cupo, también los de equipos (nunca el mismo torneo).
+  ok(destinos.includes("Individual · Abierto") && destinos.some((x) => /^Equipos/.test(x)) && !destinos.some((x) => /Mujeres/.test(x)), "los torneos del evento sin empezar, también los de equipos", destinos.join(" | "));
   await page.click(dialogo + " [data-avisos-aceptar]");
   todos = await P.esperarGuardado(page, (l, id) => l.find((x) => x.idLista === id).jugadores.some((j) => j.nombre === "PRUEBA CUATRO"), abierto.idLista);
   const ab = todos.find((x) => x.idLista === abierto.idLista);

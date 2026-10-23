@@ -2709,6 +2709,7 @@
   // JDE (G.revisarCategorias): por año de nacimiento (art. 17) y subir solo
   // en equipos, de A a B, de C a D o de D a E, hasta tres por equipo (art.
   // 18). Sin fecha de nacimiento o sin categoría en el torneo, no se revisa.
+  const MODALIDAD_DE = { true: "equipo", false: "individual" };
   const TEXTO_CATEGORIA_NO = { mayor: "categoriaNoMayor", individual: "categoriaNoIndividual", salto: "categoriaNoSalto", tope: "categoriaNoTope" };
   const categoriaDe = (y) => (/Categoría (\S+)/.exec(y.grupo || y.nombre || "") || [])[1] || "";
   const mismoCentro = (a, b) => String(a || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toUpperCase().trim() === String(b || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toUpperCase().trim();
@@ -2718,7 +2719,7 @@
     const anio = (destino.jde && destino.jde.anio) || Number(String(destino.fechaInicio || "").slice(0, 4)) || G.JDE_ANIO_NORMATIVA;
     const deEquipos = E.esDeEquipos(destino);
     // Todos «al abierto»: el tope se cuenta por equipo, sin separar por sexo.
-    const comoEn = (x) => Object.assign({}, x, { categoria: cat, modalidad: deEquipos ? "equipo" : "individual", institucion: equipo ? equipo.institucion : x.institucion, alAbierto: true });
+    const comoEn = (x) => Object.assign({}, x, { categoria: cat, modalidad: MODALIDAD_DE[deEquipos], institucion: equipo ? equipo.institucion : x.institucion, alAbierto: true });
     const yo = Object.assign(comoEn(j), { esteEs: true });
     const r = G.revisarCategorias((equipo ? equipo.integrantes.map(comoEn) : []).concat(yo), anio);
     const no = r.noPermitidos.find((c) => c.jugador.esteEs);
