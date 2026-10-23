@@ -165,6 +165,12 @@ async function pruebaAcreditacion(browser) {
   await page.click('[data-ficha="jugadores"]');
   await page.click("#pi-j-asistencia summary");
   await page.check("#pi-j-asistencia-activar");
+  // Pasar por Rondas con todos sin acreditar: marcarlos presentes después
+  // tiene que sacarlos de «no viene» (antes quedaba guardado y no se
+  // emparejaba a nadie).
+  await page.click('[data-ficha="rondas"]');
+  await page.waitForSelector("#pi-emparejar");
+  await page.click('[data-ficha="jugadores"]');
   await page.click("#pi-j-asistencia-todos");
   await page.uncheck("#pi-j-llego-f");
   await P.esperarGuardado(page, (l) => l[0].pasarLista && !l[0].asistencia.f && l[0].asistencia.a);

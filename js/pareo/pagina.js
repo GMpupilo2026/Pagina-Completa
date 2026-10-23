@@ -4330,10 +4330,13 @@
             if (sig) sig.focus();
           } }, tx("volver")))))));
     }
-    // Lo que se marca antes de emparejar (byes pedidos, «no viene») se guarda
-    // con el torneo: si se cierra la página antes de emparejar, no se pierde.
+    // Lo que el árbitro marca antes de emparejar (byes pedidos, «no viene»)
+    // se guarda con el torneo: si se cierra la página antes de emparejar, no
+    // se pierde. Lo que sale de la acreditación no: se recalcula cada vez
+    // (marcarlo presente después tiene que sacarlo de «no viene»).
     if (!v.pedidas || v.pedidas.r !== r) v.pedidas = { r, ausencias: {} };
-    const pedidas = v.pedidas.ausencias;
+    const elegidas = v.pedidas.ausencias;
+    const pedidas = Object.assign({}, elegidas);
     if (v.sistema === "todos") {
       caja.append(el("p", { class: C.nota + " mb-3", texto: tx("todosAyuda") }));
       if (r === 0) {
@@ -4369,7 +4372,11 @@
           noViene.textContent = tx(marcado ? "deshacerNoViene" : "noViene");
           noViene.setAttribute("aria-label", tx(marcado ? "deshacerNoVieneA" : "noVieneA", { n: j.nombre }));
         };
-        s.addEventListener("change", () => { if (s.value) pedidas[id] = s.value; else delete pedidas[id]; actualizarNoViene(); guardar(); });
+        s.addEventListener("change", () => {
+          if (s.value) { pedidas[id] = s.value; elegidas[id] = s.value; } else { delete pedidas[id]; delete elegidas[id]; }
+          actualizarNoViene();
+          guardar();
+        });
         if (pedidas[id]) s.value = pedidas[id];
         // Quien no llegó al pasar lista queda de entrada como «no viene».
         if (ausentes.includes(id)) { s.value = "Z"; pedidas[id] = "Z"; }
