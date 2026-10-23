@@ -127,10 +127,12 @@ tabla  notas_alumno  rls=true
 tabla  pagos  rls=true
 tabla  paquete_alumnos  rls=true
 tabla  paquetes_acceso  rls=true
+tabla  pareo_moderaciones  rls=true
 tabla  pareo_organizadores  rls=true
 tabla  pareo_preinscripciones  rls=true
 tabla  pareo_publicados  rls=true
 tabla  pareo_reportes  rls=true
+tabla  pareo_solicitudes_sello  rls=true
 tabla  partidas_torneo  rls=true
 tabla  pizarras_cache  rls=true
 tabla  plan_compartidos  rls=true
@@ -197,6 +199,7 @@ tabla  suscripciones  rls=true
 tabla  tanda_resultados  rls=true
 tabla  tarea_items  rls=true
 tabla  tareas  rls=true
+tabla  torneos_externos  rls=true
 tabla  tournament_pairings  rls=true
 tabla  tournament_registrations  rls=true
 tabla  tournament_rounds  rls=true
@@ -1229,13 +1232,27 @@ columna  paquetes_acceso.precio_mensual  numeric(12,2)
 columna  paquetes_acceso.titular_id  uuid
 columna  paquetes_acceso.vigente_desde  date
 columna  paquetes_acceso.vigente_hasta  date
+columna  pareo_moderaciones.cuando  timestamp with time zone
+columna  pareo_moderaciones.id  bigint
+columna  pareo_moderaciones.motivo  text
+columna  pareo_moderaciones.nombre  text
+columna  pareo_moderaciones.objeto_id  uuid
+columna  pareo_moderaciones.que  text
+columna  pareo_moderaciones.quien  uuid
 columna  pareo_organizadores.actualizado  timestamp with time zone
 columna  pareo_organizadores.clave_hash  text
+columna  pareo_organizadores.correo  text
+columna  pareo_organizadores.correo_confirmado  timestamp with time zone
+columna  pareo_organizadores.correo_consentimiento  timestamp with time zone
+columna  pareo_organizadores.correo_token_hash  text
+columna  pareo_organizadores.correo_token_vence  timestamp with time zone
 columna  pareo_organizadores.creado  timestamp with time zone
 columna  pareo_organizadores.id  uuid
 columna  pareo_organizadores.logo  text
 columna  pareo_organizadores.nombre  text
 columna  pareo_organizadores.oculto  boolean
+columna  pareo_organizadores.recuperar_token_hash  text
+columna  pareo_organizadores.recuperar_token_vence  timestamp with time zone
 columna  pareo_organizadores.verificado  boolean
 columna  pareo_preinscripciones.categoria  text
 columna  pareo_preinscripciones.consentimiento  timestamp with time zone
@@ -1270,6 +1287,16 @@ columna  pareo_reportes.estado  text
 columna  pareo_reportes.id  uuid
 columna  pareo_reportes.motivo  text
 columna  pareo_reportes.publicado_id  uuid
+columna  pareo_solicitudes_sello.consentimiento  timestamp with time zone
+columna  pareo_solicitudes_sello.contacto  text
+columna  pareo_solicitudes_sello.creado  timestamp with time zone
+columna  pareo_solicitudes_sello.estado  text
+columna  pareo_solicitudes_sello.id  uuid
+columna  pareo_solicitudes_sello.nota  text
+columna  pareo_solicitudes_sello.organizador_id  uuid
+columna  pareo_solicitudes_sello.quien  text
+columna  pareo_solicitudes_sello.representa  text
+columna  pareo_solicitudes_sello.resuelto  timestamp with time zone
 columna  partidas_torneo.avisada_at  timestamp with time zone
 columna  partidas_torneo.color  text
 columna  partidas_torneo.comentarios  jsonb
@@ -1799,6 +1826,26 @@ columna  tareas.material_tipo  text
 columna  tareas.profesor_id  uuid
 columna  tareas.titulo  text
 columna  tareas.vence_at  timestamp with time zone
+columna  torneos_externos.chess_results  text
+columna  torneos_externos.elo  text
+columna  torneos_externos.fin  timestamp with time zone
+columna  torneos_externos.formato  text
+columna  torneos_externos.fuente  text
+columna  torneos_externos.id_externo  integer
+columna  torneos_externos.incremento  smallint
+columna  torneos_externos.inicio  timestamp with time zone
+columna  torneos_externos.inscripcion_abierta  boolean
+columna  torneos_externos.lugar  text
+columna  torneos_externos.minutos  smallint
+columna  torneos_externos.modalidad  text
+columna  torneos_externos.moneda  text
+columna  torneos_externos.organizador  text
+columna  torneos_externos.precio  numeric(12,2)
+columna  torneos_externos.provincia  text
+columna  torneos_externos.ritmo  text
+columna  torneos_externos.titulo  text
+columna  torneos_externos.url  text
+columna  torneos_externos.visto  timestamp with time zone
 columna  tournament_pairings.advance_id  uuid
 columna  tournament_pairings.black_id  uuid
 columna  tournament_pairings.board_number  integer
@@ -2051,6 +2098,7 @@ funcion  disparar_informes_encargados()  definer  anon=false  auth=false
 funcion  disparar_recordatorios_cobro()  definer  anon=false  auth=false
 funcion  disparar_recordatorios_programados()  definer  anon=false  auth=false
 funcion  disparar_tanda_elo()  definer  anon=false  auth=false
+funcion  disparar_torneos_externos()  definer  anon=false  auth=false
 funcion  duelo_guardar(p_sala uuid, p_ronda integer, p_parte text, p_valor jsonb, p_tiempo numeric)  invoker  anon=false  auth=true
 funcion  elegir_academia_activa(p_academia uuid)  definer  anon=false  auth=true
 funcion  elegir_plan(p_id uuid, p_plan text, p_version_terminos text, p_version_privacidad text)  definer  anon=false  auth=true
@@ -2284,12 +2332,14 @@ funcion  paquete_guardar(p_id uuid, p_nombre text, p_titular uuid, p_academia uu
 funcion  paquete_set_alumnos(p_id uuid, p_alumnos uuid[])  definer  anon=false  auth=true
 funcion  paquetes_con_uso()  invoker  anon=false  auth=true
 funcion  pareo_clave(p text)  invoker  anon=true  auth=true
+funcion  pareo_correo_frenar(p_ip text, p_ambito text)  definer  anon=false  auth=false
 funcion  pareo_elo_frenar(p_ip text)  definer  anon=false  auth=false
 funcion  pareo_frenar(p_ip text, p_crear boolean)  definer  anon=false  auth=false
 funcion  pareo_inscribir_frenar(p_ip text, p_publicado uuid)  definer  anon=false  auth=false
 funcion  pareo_lista(p_parte text, p_desde integer, p_cuantos integer, p_buscar text, p_ritmo text, p_lugar text, p_elo text, p_abierta boolean, p_curso boolean, p_verificado boolean)  invoker  anon=true  auth=true
 funcion  pareo_lista_resumen()  invoker  anon=true  auth=true
 funcion  pareo_moderar(p_que text, p_id uuid)  definer  anon=false  auth=true
+funcion  pareo_moderar_con_motivo(p_que text, p_id uuid, p_motivo text)  definer  anon=false  auth=true
 funcion  pareo_reportar_frenar(p_ip text)  definer  anon=false  auth=false
 funcion  personas_con_dos_pasos()  definer  anon=false  auth=true
 funcion  personas_para_ver_como()  definer  anon=false  auth=true
@@ -2397,6 +2447,7 @@ funcion  secreto_tanda_cobros()  definer  anon=false  auth=false
 funcion  secreto_tanda_elo()  definer  anon=false  auth=false
 funcion  secreto_tanda_informes()  definer  anon=false  auth=false
 funcion  secreto_tanda_push()  definer  anon=false  auth=false
+funcion  secreto_torneos_externos()  definer  anon=false  auth=false
 funcion  seleccion_compartida(p_id uuid)  definer  anon=false  auth=true
 funcion  sesion_de_supervisado(p_sesion uuid)  definer  anon=false  auth=true
 funcion  set_cuentas_del_supervisor(p_supervisor uuid, p_cuentas uuid[])  definer  anon=false  auth=true
@@ -2692,9 +2743,11 @@ politica  pagos  pagos_coordinacion_escribe  INSERT
 politica  pagos  pagos_select  SELECT
 politica  paquete_alumnos  paquete_alumnos_select  SELECT
 politica  paquetes_acceso  paquetes_acceso_select  SELECT
+politica  pareo_moderaciones  pareo_moderaciones_admin  SELECT
 politica  pareo_organizadores  pareo_organizadores_lectura  SELECT
 politica  pareo_publicados  pareo_publicados_lectura_publica  SELECT
 politica  pareo_reportes  pareo_reportes_admin  SELECT
+politica  pareo_solicitudes_sello  pareo_solicitudes_sello_admin  SELECT
 politica  partidas_torneo  partidas_torneo_anota  INSERT
 politica  partidas_torneo  partidas_torneo_borra  DELETE
 politica  partidas_torneo  partidas_torneo_corrige  UPDATE
@@ -2879,6 +2932,7 @@ politica  tareas  tareas_delete  DELETE
 politica  tareas  tareas_insert  INSERT
 politica  tareas  tareas_select  SELECT
 politica  tareas  tareas_update  UPDATE
+politica  torneos_externos  torneos_externos_lectura  SELECT
 politica  tournament_pairings  tournament_pairings_insert  INSERT
 politica  tournament_pairings  tournament_pairings_select  SELECT
 politica  tournament_pairings  tournament_pairings_update  UPDATE
@@ -2990,6 +3044,7 @@ trigger  paquete_alumnos  auditar
 trigger  paquetes_acceso  auditar
 trigger  pareo_organizadores  auditar
 trigger  pareo_publicados  auditar_oculto
+trigger  pareo_solicitudes_sello  auditar
 trigger  planes_clase  planes_clase_proteger
 trigger  planes_cobro  auditar
 trigger  plantillas_casa  plantillas_casa_tope
@@ -3347,6 +3402,9 @@ indice  paquetes_acceso  paquetes_acceso_academia_idx
 indice  paquetes_acceso  paquetes_acceso_creado_por_fk
 indice  paquetes_acceso  paquetes_acceso_pkey
 indice  paquetes_acceso  paquetes_acceso_titular_idx
+indice  pareo_moderaciones  pareo_moderaciones_cuando_idx
+indice  pareo_moderaciones  pareo_moderaciones_pkey
+indice  pareo_organizadores  pareo_organizadores_correo_idx
 indice  pareo_organizadores  pareo_organizadores_pkey
 indice  pareo_preinscripciones  pareo_preinscripciones_pkey
 indice  pareo_preinscripciones  pareo_preinscripciones_publicado_idx
@@ -3357,6 +3415,9 @@ indice  pareo_publicados  pareo_publicados_pkey
 indice  pareo_reportes  pareo_reportes_estado_idx
 indice  pareo_reportes  pareo_reportes_pkey
 indice  pareo_reportes  pareo_reportes_publicado_idx
+indice  pareo_solicitudes_sello  pareo_solicitudes_sello_estado_idx
+indice  pareo_solicitudes_sello  pareo_solicitudes_sello_pkey
+indice  pareo_solicitudes_sello  pareo_solicitudes_sello_una_nueva
 indice  partidas_torneo  partidas_torneo_alumno
 indice  partidas_torneo  partidas_torneo_pkey
 indice  pizarras_cache  pizarras_cache_pkey
@@ -3518,6 +3579,8 @@ indice  tarea_items  tarea_items_tarea_idx
 indice  tareas  tareas_alumno_idx
 indice  tareas  tareas_pkey
 indice  tareas  tareas_profesor_idx
+indice  torneos_externos  torneos_externos_inicio_idx
+indice  torneos_externos  torneos_externos_pkey
 indice  tournament_pairings  tournament_pairings_advance_id_fk
 indice  tournament_pairings  tournament_pairings_black_id_fk
 indice  tournament_pairings  tournament_pairings_game_room_idx
@@ -3605,6 +3668,7 @@ cron  elo-fide-nacional  10 9 * * *
 cron  informes-a-encargados  0 * * * *
 cron  limpiar-invitados-de-clase  20 7 * * *
 cron  recordar-informes-mensuales  0 14 * * *
+cron  torneos-externos  13 11 * * *
 cron  vigilar-base  */5 * * * *
 grant  Ejercicios Lichess  anon  DELETE
 grant  Ejercicios Lichess  anon  INSERT
@@ -4285,7 +4349,9 @@ grant  paquetes_acceso  authenticated  REFERENCES
 grant  paquetes_acceso  authenticated  SELECT
 grant  paquetes_acceso  authenticated  TRIGGER
 grant  paquetes_acceso  authenticated  TRUNCATE
+grant  pareo_moderaciones  authenticated  SELECT
 grant  pareo_reportes  authenticated  SELECT
+grant  pareo_solicitudes_sello  authenticated  SELECT
 grant  partidas_torneo  authenticated  DELETE
 grant  partidas_torneo  authenticated  INSERT
 grant  partidas_torneo  authenticated  SELECT
@@ -4738,6 +4804,8 @@ grant  tareas  authenticated  SELECT
 grant  tareas  authenticated  TRIGGER
 grant  tareas  authenticated  TRUNCATE
 grant  tareas  authenticated  UPDATE
+grant  torneos_externos  anon  SELECT
+grant  torneos_externos  authenticated  SELECT
 grant  tournament_pairings  anon  DELETE
 grant  tournament_pairings  anon  INSERT
 grant  tournament_pairings  anon  REFERENCES

@@ -19075,7 +19075,7 @@
   ]
  },
  "imagenes": {
-  "total": 857,
+  "total": 860,
   "grupos": [
    {
     "carpeta": "entreno/img/facil",
@@ -22755,6 +22755,12 @@
       "kb": 5
      },
      {
+      "ruta": "img/fca-logo.png",
+      "titulo": "Logo de la Federación Costarricense de Ajedrez (de las bases del Centroamericano 2026)",
+      "tipo": "otro",
+      "kb": 31
+     },
+     {
       "ruta": "img/logo-completo-claro.png",
       "titulo": "Logo completo, para fondo claro",
       "tipo": "otro",
@@ -24328,6 +24334,25 @@
       "titulo": "10",
       "tipo": "otro",
       "kb": 47
+     }
+    ]
+   },
+   {
+    "carpeta": "img/centroamericano-2026",
+    "titulo": "Centroamericano 2026",
+    "grupo": "Carpetas",
+    "archivos": [
+     {
+      "ruta": "img/centroamericano-2026/carolina-munoz.jpg",
+      "titulo": "Centroamericano 2026: foto de Carolina Muñoz, árbitra principal",
+      "tipo": "otro",
+      "kb": 10
+     },
+     {
+      "ruta": "img/centroamericano-2026/vivian-viquez.jpg",
+      "titulo": "Centroamericano 2026: foto de Vivian Víquez Miranda, organizadora",
+      "tipo": "otro",
+      "kb": 10
      }
     ]
    }
