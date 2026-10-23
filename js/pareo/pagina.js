@@ -1028,6 +1028,8 @@
 
   function agregarTodos(lista) {
     const n = agregarJugadores(lista.map(soloJugador));
+    // Subida desde la ficha Torneo: se ve la lista que quedó.
+    if (n && estado.ficha !== "jugadores") irA("jugadores");
     if (n) Avisos.avisar(tx("agregados", { n }));
     else Avisos.avisar(tx("nadaQueAgregar"), { tipo: "error" });
   }
@@ -1047,6 +1049,8 @@
     const siguiente = extra ? extra.siguiente : V.siguienteDe(lista.map((j) => j.etapaOrigen));
     estado.sugerencia = { lista, base, anio, region: regiones, siguiente, comparacion: extra ? extra.comparacion : null, pasarMujeres: true, grupos: [], elegidos: new Map(), abiertos: new Set(), limpia, dondeQueda: new Map(), configJde: true };
     calcularSugerencia();
+    // La lista se sube en la ficha Torneo, y ahí sale la sugerencia.
+    if (estado.ficha !== "torneo") irA("torneo");
     pintarSugerencia();
     const caja = $("pi-sugerencia");
     caja.scrollIntoView({ block: "nearest" });
@@ -5127,6 +5131,11 @@
       const n = agregarJugadores(lista);
       if (n) { $("pi-pegar").value = ""; Avisos.avisar(tx("agregados", { n })); }
       else Avisos.avisar(tx("nadaQueAgregar"), { tipo: "error" });
+    });
+    $("pi-ir-subir-lista").addEventListener("click", () => {
+      irA("torneo");
+      $("pi-caja-subir-lista").scrollIntoView({ block: "nearest" });
+      $("pi-subir-lista").focus();
     });
     $("pi-subir-lista").addEventListener("change", (e) => {
       const fs = Array.from(e.target.files || []);
