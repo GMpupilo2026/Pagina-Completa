@@ -70,8 +70,15 @@ ok("no queda información desplegada fuera de las fichas", !/<section id="(conta
 const personas = [...contacto.matchAll(/<h3[^>]*>([^<]+)<\/h3>\s*<p[^>]*>([^<]+)<\/p>/g)].map((m) => m[1] + " — " + m[2]);
 ok("Contacta a la organización: árbitra principal, organizadora y árbitro de pareo", JSON.stringify(personas) === JSON.stringify(["Carolina Muñoz — Árbitra principal", "Vivian Víquez Miranda — Organizadora", "Jean Quesada — Árbitro de pareo"]), JSON.stringify(personas));
 const fotos = [...contacto.matchAll(/<img src="([^"]+)"[^>]*alt="Foto de ([^"]+)"/g)];
-ok("las fotos de Carolina y Vivian están en el sitio", fotos.length >= 2 && fotos.every(([, src]) => fs.existsSync(path.join(RAIZ, src))), fotos.map((f) => f[1]).join(", "));
+ok("las fotos de los tres contactos están en el sitio", fotos.length === 3 && fotos.every(([, src]) => fs.existsSync(path.join(RAIZ, src))), fotos.map((f) => f[1]).join(", "));
 ok("cada contacto con su teléfono y su WhatsApp", (contacto.match(/href="tel:/g) || []).length === 3 && (contacto.match(/href="https:\/\/wa\.me\/506\d{8}"/g) || []).length === 3);
+// La cara de las bases: su hoja de estilos, la mascota, la bandera y los logos.
+ok("la página carga css/centroamericano.css y el cuerpo lleva la clase cac", html.includes('<link rel="stylesheet" href="css/centroamericano.css">') && /<body class="cac /.test(html));
+for (const img of ["mascota.jpg", "mascota-trofeo.png", "hojas.png", "bandera-cr.svg", "cca-logo.png"]) {
+  ok("la imagen " + img + " existe y se usa", fs.existsSync(path.join(RAIZ, "img/centroamericano-2026", img)) && html.includes("img/centroamericano-2026/" + img));
+}
+ok("la mascota tiene su texto alternativo", /src="img\/centroamericano-2026\/mascota\.jpg"[^>]*alt="[^"]{20,}"/.test(html));
+ok("lo que solo adorna no lo lee el lector de pantalla", [...html.matchAll(/<img [^>]*(hojas\.png|bandera-cr\.svg|mascota-trofeo\.png)[^>]*>/g)].every((m) => /alt=""/.test(m[0]) && /aria-hidden="true"/.test(m[0])));
 ok("la reserva con la organización está avisada", /penalidad de 200 USD/.test(html));
 
 // Lo que se abre en la ventana (js/ventana-enlace.js) tiene que estar en
@@ -110,8 +117,14 @@ ok("la página carga js/ventana-enlace.js", html.includes('<script src="js/venta
 
     await p.click('#fichas a[href="#contacto"]');
     await p.waitForFunction(() => [...document.querySelectorAll("#contacto img")].every((i) => i.complete));
-    ok("las fotos de los contactos cargan", await p.$$eval("#contacto img", (is) => is.length >= 2 && is.every((i) => i.naturalWidth > 0 && i.checkVisibility())));
+    ok("las fotos de los contactos cargan", await p.$$eval("#contacto img", (is) => is.length === 3 && is.every((i) => i.naturalWidth > 0 && i.checkVisibility())));
     await p.keyboard.press("Escape");
+
+    const portada = await p.evaluate(() => {
+      const h = document.querySelector(".cac-portada"), m = document.querySelector(".cac-mascota");
+      return { fondo: getComputedStyle(h).backgroundImage, mascota: m.checkVisibility() && m.naturalWidth > 0 };
+    });
+    ok("la portada lleva el morado de las bases y se ve la mascota", /64, 71, 143/.test(portada.fondo) && portada.mascota, JSON.stringify(portada));
 
     // Los hoteles no se ven hasta tocar su ficha, y se abren encima.
     ok("los hoteles no se ven al entrar", !(await p.evaluate(() => document.getElementById("hoteles").checkVisibility())));

@@ -20,10 +20,11 @@
     <meta name="twitter:card" content="summary_large_image">
     <link rel="stylesheet" href="css/tailwind.css">
     <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/centroamericano.css">
     <!-- oscuro: inicio --><script>(function(){try{var t=localStorage.getItem('theme');if(t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme: dark)').matches))document.documentElement.classList.add('dark');}catch(e){}})();</script><!-- oscuro: fin -->
     <script src="js/adaptive-mode.js"></script>
 <!-- app: inicio --><meta name="theme-color" content="#102a43"><link rel="manifest" href="/manifest.json"><link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Ajedrez"><script src="js/errores.js"></script><script src="js/pwa.js" defer></script><script src="js/navegacion.js" defer></script><!-- app: fin --><!-- fuentes: inicio --><link rel="stylesheet" href="css/fuentes.css"><!-- fuentes: fin --><!-- tema: inicio --><script>(function(){try{var l=localStorage.getItem('plataforma_letra_v1');if(l&&/^[a-z]{2,24}$/.test(l)&&l!=='tema')document.documentElement.setAttribute('data-letra',l);var t=localStorage.getItem('plataforma_tema_v1');if(!t||!/^[a-z]{2,24}$/.test(t)||t==='clasico')return;document.documentElement.setAttribute('data-tema',t);var b=getComputedStyle(document.documentElement).getPropertyValue('--c-brand-800').trim();var m=document.querySelector('meta[name="theme-color"]');if(b&&m)m.setAttribute('content','rgb('+b.replace(/\s+/g,',')+')');}catch(e){}})();</script><!-- tema: fin --></head>
-<body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300">
+<body class="cac font-sans text-brand-800 dark:text-brand-100 transition-colors duration-300">
     <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:bg-accent-500 focus:text-brand-900 focus:font-semibold focus:px-4 focus:py-2 focus:rounded-lg">Saltar al contenido principal</a>
     <header id="header" class="sticky top-0 z-50 bg-brand-800 shadow-lg transition-all duration-300">
         <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-label="Navegación principal">
@@ -62,120 +63,139 @@
          da la organización. Una ficha sin enlace todavía va «Pronto»: sin href,
          pero con tabindex para que se alcance con Tab. Ver «La página del
          Centroamericano 2026» en docs/decisiones/juegos-y-torneos.md. -->
-    <section class="bg-brand-800 text-white">
-        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16">
-            <!-- El logo de la FCA, recortado de la portada de las bases oficiales
-                 (img/fca-logo.png): va sobre blanco, como en las bases. -->
-            <div class="flex flex-col-reverse md:flex-row md:items-center gap-6 md:gap-10">
-                <div class="flex-1">
-                    <p class="text-accent-400 font-semibold uppercase tracking-wide text-sm">XXI edición · Absoluto y Femenino</p>
-                    <h1 class="font-serif text-3xl md:text-5xl font-bold mt-2"><span aria-hidden="true">🏆 </span>Festival Centroamericano y del Caribe de la Juventud</h1>
-                    <p class="text-brand-100 text-lg md:text-xl mt-3">Costa Rica 2026</p>
+    <!-- La portada, con la cara de las bases (css/centroamericano.css): su morado,
+         la píldora roja, las hojas de monstera, la insignia de Costa Rica y el
+         pizote de la mascota, recortado tal cual de la portada de las bases. -->
+    <section class="cac-portada">
+        <img src="img/centroamericano-2026/hojas.png" alt="" aria-hidden="true" width="470" height="440" class="cac-hojas cac-hojas-ai">
+        <img src="img/centroamericano-2026/hojas.png" alt="" aria-hidden="true" width="470" height="440" class="cac-hojas cac-hojas-bd">
+        <div class="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-10 md:pt-14 md:pb-14">
+            <div class="grid md:grid-cols-[1.15fr_0.85fr] items-center gap-6 md:gap-10">
+                <div class="text-center md:text-left">
+                    <p><span class="cac-pildora text-base md:text-lg">XXI Campeonato</span></p>
+                    <h1 class="cac-titulo text-3xl sm:text-4xl md:text-5xl mt-4">Centroamericano y del Caribe de la Juventud<span class="block text-2xl sm:text-3xl md:text-4xl mt-2">Costa Rica 2026</span></h1>
+                    <p class="mt-5"><span class="cac-caja text-sm md:text-base">Absoluto<br>Femenino</span></p>
                 </div>
-                <figure class="shrink-0 self-center rounded-3xl bg-white p-5 md:p-6 shadow-xl">
-                    <img src="img/fca-logo.png" width="147" height="183" alt="Logo de la Federación Costarricense de Ajedrez (FCA)" class="h-32 md:h-44 w-auto">
-                    <figcaption class="mt-2 text-center text-xs font-semibold text-brand-800">Federación Costarricense<br>de Ajedrez</figcaption>
-                </figure>
+                <div class="relative mx-auto w-full max-w-[300px] md:max-w-[340px]">
+                    <img src="img/centroamericano-2026/mascota.jpg" width="600" height="848" alt="La mascota del campeonato: un pizote sonriente con la camiseta de la FCA, moviendo un caballo en el tablero" class="cac-mascota cac-flota">
+                    <img src="img/centroamericano-2026/bandera-cr.svg" width="120" height="132" alt="" aria-hidden="true" class="cac-bandera cac-mece">
+                </div>
             </div>
-            <dl class="mt-8 grid sm:grid-cols-3 gap-4">
-                <div class="rounded-2xl bg-brand-900 p-4"><dt class="text-brand-300 text-sm">Fechas</dt><dd class="font-semibold text-lg">Del 1 al 8 de noviembre de 2026</dd></div>
-                <div class="rounded-2xl bg-brand-900 p-4"><dt class="text-brand-300 text-sm">Sede</dt><dd class="font-semibold text-lg">Gimnasio Nacional, Parque Metropolitano La Sabana, San José</dd></div>
-                <div class="rounded-2xl bg-brand-900 p-4"><dt class="text-brand-300 text-sm">Organiza</dt><dd class="font-semibold text-lg">Federación Costarricense de Ajedrez (FCA) con la Confederación de Ajedrez de América (CCA)</dd></div>
+            <dl class="mt-8 grid sm:grid-cols-3 gap-3 sm:gap-4 text-left">
+                <div class="cac-dato"><dt><span aria-hidden="true">📅 </span>Fechas</dt><dd class="font-bold text-lg">Del 1 al 8 de noviembre de 2026</dd></div>
+                <div class="cac-dato"><dt><span aria-hidden="true">📍 </span>Sede</dt><dd class="font-bold text-lg">Gimnasio Nacional, Parque Metropolitano La Sabana, San José</dd></div>
+                <div class="cac-dato"><dt><span aria-hidden="true">♟️ </span>Ritmo</dt><dd class="font-bold text-lg">Suizo a 9 rondas, 90 minutos + 30 segundos por jugada</dd></div>
             </dl>
         </div>
     </section>
 
-    <section id="fichas" class="pt-12 pb-6 scroll-mt-24">
-        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-            <h2 class="font-serif text-2xl md:text-3xl font-bold text-brand-800 dark:text-white">Todo el torneo a un clic</h2>
+    <!-- Quien organiza, como en el pie de la portada de las bases: los logos de la
+         CCA y de la FCA recortados de ahí (img/centroamericano-2026/cca-logo.png,
+         img/fca-logo.png), sobre blanco. -->
+    <section class="cac-organiza" aria-label="Quién organiza">
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-wrap items-center justify-center gap-x-8 gap-y-3">
+            <strong class="text-sm font-extrabold uppercase tracking-wide">Organiza</strong>
+            <img src="img/centroamericano-2026/cca-logo.png" width="450" height="170" alt="Confederación de Ajedrez de América (CCA)" class="h-14 md:h-16 w-auto">
+            <img src="img/fca-logo.png" width="147" height="183" alt="Federación Costarricense de Ajedrez (FCA)" class="h-16 md:h-20 w-auto">
+        </div>
+    </section>
+
+    <section id="fichas" class="relative overflow-hidden pt-10 pb-14 scroll-mt-24">
+        <img src="img/centroamericano-2026/hojas.png" alt="" aria-hidden="true" width="470" height="440" class="cac-hojas cac-hojas-ad opacity-60 dark:opacity-30">
+        <img src="img/centroamericano-2026/hojas.png" alt="" aria-hidden="true" width="470" height="440" class="cac-hojas cac-hojas-bi opacity-60 dark:opacity-30">
+        <div class="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-end justify-between gap-4">
+                <h2 class="cac-seccion text-2xl md:text-3xl">Todo el torneo a un clic<span class="cac-seccion-raya" aria-hidden="true"></span></h2>
+                <img src="img/centroamericano-2026/mascota-trofeo.png" width="124" height="120" alt="" aria-hidden="true" class="w-20 sm:w-24 h-auto shrink-0 cac-mece">
+            </div>
             <p class="text-brand-600 dark:text-brand-300 mt-2 max-w-2xl">Toca la ficha de lo que buscas y se abre encima, sin salir de la página. Las que dicen «Pronto» se abren en cuanto la organización publique el enlace.</p>
             <ul class="mt-6 sm:mt-8 grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-5">
                 <li>
-                    <a href="documentos/centroamericano-2026/bases-cac-2026.pdf" target="_blank" rel="noopener" data-ventana="Bases del campeonato" class="h-full flex flex-col rounded-2xl bg-white dark:bg-brand-900 border border-brand-100 dark:border-brand-800 shadow-sm hover:shadow-lg hover:border-accent-400 transition p-4 sm:p-6 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
-                        <span class="text-2xl sm:text-3xl" aria-hidden="true">📄</span>
-                        <span class="mt-2 sm:mt-3 font-bold text-base sm:text-lg leading-snug text-brand-800 dark:text-white">Bases del campeonato</span>
+                    <a href="documentos/centroamericano-2026/bases-cac-2026.pdf" target="_blank" rel="noopener" data-ventana="Bases del campeonato" data-color="morado" class="cac-ficha h-full flex flex-col rounded-3xl bg-white dark:bg-brand-900 shadow-md p-4 sm:p-6 focus:outline-none focus-visible:ring-4 focus-visible:ring-[#ce1328]">
+                        <span class="cac-icono" aria-hidden="true">📄</span>
+                        <span class="mt-3 font-extrabold text-base sm:text-lg leading-snug text-brand-800 dark:text-white">Bases del campeonato</span>
                         <span class="hidden sm:block mt-1 text-sm text-brand-600 dark:text-brand-300 flex-1">Las bases oficiales completas: categorías, costos, pagos, reglamento, títulos y normas.</span>
-                        <span class="mt-auto pt-3 sm:pt-4 text-xs sm:text-sm font-semibold text-accent-700 dark:text-accent-400">Abrir el PDF →</span>
+                        <span class="mt-auto pt-3 sm:pt-4 text-xs sm:text-sm font-bold cac-accion">Abrir el PDF →</span>
                     </a>
                 </li>
                 <li>
-                    <a href="#hoteles" class="h-full flex flex-col rounded-2xl bg-white dark:bg-brand-900 border border-brand-100 dark:border-brand-800 shadow-sm hover:shadow-lg hover:border-accent-400 transition p-4 sm:p-6 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
-                        <span class="text-2xl sm:text-3xl" aria-hidden="true">🏨</span>
-                        <span class="mt-2 sm:mt-3 font-bold text-base sm:text-lg leading-snug text-brand-800 dark:text-white">Hoteles oficiales</span>
+                    <a href="#hoteles" data-color="verde" class="cac-ficha h-full flex flex-col rounded-3xl bg-white dark:bg-brand-900 shadow-md p-4 sm:p-6 focus:outline-none focus-visible:ring-4 focus-visible:ring-[#ce1328]">
+                        <span class="cac-icono" aria-hidden="true">🏨</span>
+                        <span class="mt-3 font-extrabold text-base sm:text-lg leading-snug text-brand-800 dark:text-white">Hoteles oficiales</span>
                         <span class="hidden sm:block mt-1 text-sm text-brand-600 dark:text-brand-300 flex-1">Los siete hoteles con su dirección, teléfono, mapa y el precio del paquete de cada uno.</span>
-                        <span class="mt-auto pt-3 sm:pt-4 text-xs sm:text-sm font-semibold text-accent-700 dark:text-accent-400">Ver los hoteles →</span>
+                        <span class="mt-auto pt-3 sm:pt-4 text-xs sm:text-sm font-bold cac-accion">Ver los hoteles →</span>
                     </a>
                 </li>
                 <li>
-                    <a href="https://forms.gle/b9jVrVPjsgN1h72HA" target="_blank" rel="noopener" data-ventana="Pedir un bye" class="h-full flex flex-col rounded-2xl bg-white dark:bg-brand-900 border border-brand-100 dark:border-brand-800 shadow-sm hover:shadow-lg hover:border-accent-400 transition p-4 sm:p-6 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
-                        <span class="text-2xl sm:text-3xl" aria-hidden="true">✋</span>
-                        <span class="mt-2 sm:mt-3 font-bold text-base sm:text-lg leading-snug text-brand-800 dark:text-white">Pedir un bye</span>
+                    <a href="https://forms.gle/b9jVrVPjsgN1h72HA" target="_blank" rel="noopener" data-ventana="Pedir un bye" data-color="rojo" class="cac-ficha h-full flex flex-col rounded-3xl bg-white dark:bg-brand-900 shadow-md p-4 sm:p-6 focus:outline-none focus-visible:ring-4 focus-visible:ring-[#ce1328]">
+                        <span class="cac-icono" aria-hidden="true">✋</span>
+                        <span class="mt-3 font-extrabold text-base sm:text-lg leading-snug text-brand-800 dark:text-white">Pedir un bye</span>
                         <span class="hidden sm:block mt-1 text-sm text-brand-600 dark:text-brand-300 flex-1">El formulario para pedir el bye de una ronda.</span>
-                        <span class="mt-auto pt-3 sm:pt-4 text-xs sm:text-sm font-semibold text-accent-700 dark:text-accent-400">Abrir el formulario →</span>
+                        <span class="mt-auto pt-3 sm:pt-4 text-xs sm:text-sm font-bold cac-accion">Abrir el formulario →</span>
                     </a>
                 </li>
                 <li>
-                    <div tabindex="0" aria-disabled="true" class="h-full flex flex-col rounded-2xl bg-brand-100 dark:bg-brand-900 border border-dashed border-brand-300 dark:border-brand-700 p-4 sm:p-6 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
-                        <span class="text-2xl sm:text-3xl" aria-hidden="true">📺</span>
-                        <span class="mt-2 sm:mt-3 font-bold text-base sm:text-lg leading-snug text-brand-800 dark:text-white">Partidas en vivo</span>
+                    <div tabindex="0" aria-disabled="true" data-color="azul" class="cac-ficha h-full flex flex-col rounded-3xl bg-white/70 dark:bg-brand-900/70 border-2 border-t-[6px] border-dashed border-brand-300 dark:border-brand-700 p-4 sm:p-6 focus:outline-none focus-visible:ring-4 focus-visible:ring-[#ce1328]">
+                        <span class="cac-icono" aria-hidden="true">📺</span>
+                        <span class="mt-3 font-extrabold text-base sm:text-lg leading-snug text-brand-800 dark:text-white">Partidas en vivo</span>
                         <span class="hidden sm:block mt-1 text-sm text-brand-600 dark:text-brand-300 flex-1">La transmisión de los tableros en directo, jugada a jugada.</span>
                         <span class="mt-auto pt-3 sm:pt-4 text-xs sm:text-sm font-semibold text-brand-600 dark:text-brand-300">Pronto<span class="hidden sm:inline">: la transmisión todavía no está publicada</span></span>
                     </div>
                 </li>
                 <li>
-                    <a href="https://s1.chess-results.com/tnr1494141.aspx?lan=2&amp;SNode=S0" target="_blank" rel="noopener" data-ventana="Resultados en vivo" class="h-full flex flex-col rounded-2xl bg-white dark:bg-brand-900 border border-brand-100 dark:border-brand-800 shadow-sm hover:shadow-lg hover:border-accent-400 transition p-4 sm:p-6 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
-                        <span class="text-2xl sm:text-3xl" aria-hidden="true">📊</span>
-                        <span class="mt-2 sm:mt-3 font-bold text-base sm:text-lg leading-snug text-brand-800 dark:text-white">Resultados en vivo</span>
+                    <a href="https://s1.chess-results.com/tnr1494141.aspx?lan=2&amp;SNode=S0" target="_blank" rel="noopener" data-ventana="Resultados en vivo" data-color="morado" class="cac-ficha h-full flex flex-col rounded-3xl bg-white dark:bg-brand-900 shadow-md p-4 sm:p-6 focus:outline-none focus-visible:ring-4 focus-visible:ring-[#ce1328]">
+                        <span class="cac-icono" aria-hidden="true">📊</span>
+                        <span class="mt-3 font-extrabold text-base sm:text-lg leading-snug text-brand-800 dark:text-white">Resultados en vivo</span>
                         <span class="hidden sm:block mt-1 text-sm text-brand-600 dark:text-brand-300 flex-1">Inscritos, emparejamientos, resultados y clasificación de cada ronda en chess-results.</span>
-                        <span class="mt-auto pt-3 sm:pt-4 text-xs sm:text-sm font-semibold text-accent-700 dark:text-accent-400">Abrir chess-results →</span>
+                        <span class="mt-auto pt-3 sm:pt-4 text-xs sm:text-sm font-bold cac-accion">Abrir chess-results →</span>
                     </a>
                 </li>
                 <li>
-                    <a href="https://chat.whatsapp.com/KCGKgz2rrjrKGhLa8lai9j" target="_blank" rel="noopener" class="h-full flex flex-col rounded-2xl bg-white dark:bg-brand-900 border border-brand-100 dark:border-brand-800 shadow-sm hover:shadow-lg hover:border-accent-400 transition p-4 sm:p-6 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
-                        <span class="text-2xl sm:text-3xl" aria-hidden="true">💬</span>
-                        <span class="mt-2 sm:mt-3 font-bold text-base sm:text-lg leading-snug text-brand-800 dark:text-white">Grupo de WhatsApp</span>
+                    <a href="https://chat.whatsapp.com/KCGKgz2rrjrKGhLa8lai9j" target="_blank" rel="noopener" data-color="verde" class="cac-ficha h-full flex flex-col rounded-3xl bg-white dark:bg-brand-900 shadow-md p-4 sm:p-6 focus:outline-none focus-visible:ring-4 focus-visible:ring-[#ce1328]">
+                        <span class="cac-icono" aria-hidden="true">💬</span>
+                        <span class="mt-3 font-extrabold text-base sm:text-lg leading-snug text-brand-800 dark:text-white">Grupo de WhatsApp</span>
                         <span class="hidden sm:block mt-1 text-sm text-brand-600 dark:text-brand-300 flex-1">El grupo oficial del torneo para la información general.</span>
-                        <span class="mt-auto pt-3 sm:pt-4 text-xs sm:text-sm font-semibold text-accent-700 dark:text-accent-400">Entrar al grupo →</span>
+                        <span class="mt-auto pt-3 sm:pt-4 text-xs sm:text-sm font-bold cac-accion">Entrar al grupo →</span>
                     </a>
                 </li>
                 <li>
-                    <a href="#calendario" class="h-full flex flex-col rounded-2xl bg-white dark:bg-brand-900 border border-brand-100 dark:border-brand-800 shadow-sm hover:shadow-lg hover:border-accent-400 transition p-4 sm:p-6 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
-                        <span class="text-2xl sm:text-3xl" aria-hidden="true">🗓️</span>
-                        <span class="mt-2 sm:mt-3 font-bold text-base sm:text-lg leading-snug text-brand-800 dark:text-white">Calendario de rondas</span>
+                    <a href="#calendario" data-color="naranja" class="cac-ficha h-full flex flex-col rounded-3xl bg-white dark:bg-brand-900 shadow-md p-4 sm:p-6 focus:outline-none focus-visible:ring-4 focus-visible:ring-[#ce1328]">
+                        <span class="cac-icono" aria-hidden="true">🗓️</span>
+                        <span class="mt-3 font-extrabold text-base sm:text-lg leading-snug text-brand-800 dark:text-white">Calendario de rondas</span>
                         <span class="hidden sm:block mt-1 text-sm text-brand-600 dark:text-brand-300 flex-1">El día y la hora de cada ronda, el Rapid, el Blitz, la inauguración y la clausura.</span>
-                        <span class="mt-auto pt-3 sm:pt-4 text-xs sm:text-sm font-semibold text-accent-700 dark:text-accent-400">Ver el calendario →</span>
+                        <span class="mt-auto pt-3 sm:pt-4 text-xs sm:text-sm font-bold cac-accion">Ver el calendario →</span>
                     </a>
                 </li>
                 <li>
-                    <a href="#reglamento" class="h-full flex flex-col rounded-2xl bg-white dark:bg-brand-900 border border-brand-100 dark:border-brand-800 shadow-sm hover:shadow-lg hover:border-accent-400 transition p-4 sm:p-6 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
-                        <span class="text-2xl sm:text-3xl" aria-hidden="true">📋</span>
-                        <span class="mt-2 sm:mt-3 font-bold text-base sm:text-lg leading-snug text-brand-800 dark:text-white">Reglamento</span>
+                    <a href="#reglamento" data-color="azul" class="cac-ficha h-full flex flex-col rounded-3xl bg-white dark:bg-brand-900 shadow-md p-4 sm:p-6 focus:outline-none focus-visible:ring-4 focus-visible:ring-[#ce1328]">
+                        <span class="cac-icono" aria-hidden="true">📋</span>
+                        <span class="mt-3 font-extrabold text-base sm:text-lg leading-snug text-brand-800 dark:text-white">Reglamento</span>
                         <span class="hidden sm:block mt-1 text-sm text-brand-600 dark:text-brand-300 flex-1">El sistema, el ritmo de juego, las categorías, los desempates y los premios.</span>
-                        <span class="mt-auto pt-3 sm:pt-4 text-xs sm:text-sm font-semibold text-accent-700 dark:text-accent-400">Ver el reglamento →</span>
+                        <span class="mt-auto pt-3 sm:pt-4 text-xs sm:text-sm font-bold cac-accion">Ver el reglamento →</span>
                     </a>
                 </li>
                 <li>
-                    <a href="mailto:torneos_internacionales_costarica@fcacostarica.com" class="h-full flex flex-col rounded-2xl bg-white dark:bg-brand-900 border border-brand-100 dark:border-brand-800 shadow-sm hover:shadow-lg hover:border-accent-400 transition p-4 sm:p-6 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
-                        <span class="text-2xl sm:text-3xl" aria-hidden="true">✉️</span>
-                        <span class="mt-2 sm:mt-3 font-bold text-base sm:text-lg leading-snug text-brand-800 dark:text-white">Correo de la organización</span>
+                    <a href="mailto:torneos_internacionales_costarica@fcacostarica.com" data-color="rojo" class="cac-ficha h-full flex flex-col rounded-3xl bg-white dark:bg-brand-900 shadow-md p-4 sm:p-6 focus:outline-none focus-visible:ring-4 focus-visible:ring-[#ce1328]">
+                        <span class="cac-icono" aria-hidden="true">✉️</span>
+                        <span class="mt-3 font-extrabold text-base sm:text-lg leading-snug text-brand-800 dark:text-white">Correo de la organización</span>
                         <span class="hidden sm:block mt-1 text-sm text-brand-600 dark:text-brand-300 flex-1 break-all">torneos_internacionales_costarica@fcacostarica.com</span>
-                        <span class="mt-auto pt-3 sm:pt-4 text-xs sm:text-sm font-semibold text-accent-700 dark:text-accent-400">Escribir un correo →</span>
+                        <span class="mt-auto pt-3 sm:pt-4 text-xs sm:text-sm font-bold cac-accion">Escribir un correo →</span>
                     </a>
                 </li>
                 <li>
-                    <a href="#contacto" class="h-full flex flex-col rounded-2xl bg-white dark:bg-brand-900 border border-brand-100 dark:border-brand-800 shadow-sm hover:shadow-lg hover:border-accent-400 transition p-4 sm:p-6 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
-                        <span class="text-2xl sm:text-3xl" aria-hidden="true">📞</span>
-                        <span class="mt-2 sm:mt-3 font-bold text-base sm:text-lg leading-snug text-brand-800 dark:text-white">Contacta a la organización</span>
+                    <a href="#contacto" data-color="morado" class="cac-ficha h-full flex flex-col rounded-3xl bg-white dark:bg-brand-900 shadow-md p-4 sm:p-6 focus:outline-none focus-visible:ring-4 focus-visible:ring-[#ce1328]">
+                        <span class="cac-icono" aria-hidden="true">📞</span>
+                        <span class="mt-3 font-extrabold text-base sm:text-lg leading-snug text-brand-800 dark:text-white">Contacta a la organización</span>
                         <span class="hidden sm:block mt-1 text-sm text-brand-600 dark:text-brand-300 flex-1">La árbitra principal, la organizadora y el árbitro de pareo, con su teléfono y su WhatsApp.</span>
-                        <span class="mt-auto pt-3 sm:pt-4 text-xs sm:text-sm font-semibold text-accent-700 dark:text-accent-400">Ver los contactos →</span>
+                        <span class="mt-auto pt-3 sm:pt-4 text-xs sm:text-sm font-bold cac-accion">Ver los contactos →</span>
                     </a>
                 </li>
                 <li>
-                    <a href="https://www.google.com/maps/search/?api=1&amp;query=Gimnasio+Nacional+La+Sabana+San+Jos%C3%A9+Costa+Rica" target="_blank" rel="noopener" class="h-full flex flex-col rounded-2xl bg-white dark:bg-brand-900 border border-brand-100 dark:border-brand-800 shadow-sm hover:shadow-lg hover:border-accent-400 transition p-4 sm:p-6 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
-                        <span class="text-2xl sm:text-3xl" aria-hidden="true">📍</span>
-                        <span class="mt-2 sm:mt-3 font-bold text-base sm:text-lg leading-snug text-brand-800 dark:text-white">Cómo llegar a la sala</span>
+                    <a href="https://www.google.com/maps/search/?api=1&amp;query=Gimnasio+Nacional+La+Sabana+San+Jos%C3%A9+Costa+Rica" target="_blank" rel="noopener" data-color="verde" class="cac-ficha h-full flex flex-col rounded-3xl bg-white dark:bg-brand-900 shadow-md p-4 sm:p-6 focus:outline-none focus-visible:ring-4 focus-visible:ring-[#ce1328]">
+                        <span class="cac-icono" aria-hidden="true">📍</span>
+                        <span class="mt-3 font-extrabold text-base sm:text-lg leading-snug text-brand-800 dark:text-white">Cómo llegar a la sala</span>
                         <span class="hidden sm:block mt-1 text-sm text-brand-600 dark:text-brand-300 flex-1">El Gimnasio Nacional, dentro del Parque Metropolitano La Sabana. Ahí también se sirven los almuerzos y las cenas.</span>
-                        <span class="mt-auto pt-3 sm:pt-4 text-xs sm:text-sm font-semibold text-accent-700 dark:text-accent-400">Abrir el mapa →</span>
+                        <span class="mt-auto pt-3 sm:pt-4 text-xs sm:text-sm font-bold cac-accion">Abrir el mapa →</span>
                     </a>
                 </li>
             </ul>
@@ -210,7 +230,7 @@
                     <a href="https://wa.me/50688200156" target="_blank" rel="noopener" class="mt-4 w-full bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2.5 rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2">WhatsApp<span class="sr-only"> de Vivian Víquez Miranda (se abre en otra pestaña)</span></a>
                 </li>
                 <li class="flex flex-col items-center text-center rounded-2xl bg-white dark:bg-brand-900 border border-brand-100 dark:border-brand-800 shadow-sm p-6">
-                    <div class="w-28 h-28 rounded-full bg-brand-800 text-white flex items-center justify-center font-serif text-3xl font-bold ring-4 ring-accent-400" aria-hidden="true" data-foto="jean">JQ</div>
+                    <img src="img/centroamericano-2026/jean-quesada.jpg" width="240" height="240" alt="Foto de Jean Quesada" class="w-28 h-28 rounded-full object-cover ring-4 ring-accent-400" data-foto="jean">
                     <h3 class="mt-4 font-bold text-lg text-brand-800 dark:text-white">Jean Quesada</h3>
                     <p class="text-sm font-semibold uppercase tracking-wide text-accent-700 dark:text-accent-400">Árbitro de pareo</p>
                     <p class="mt-3 text-sm text-brand-600 dark:text-brand-300"><a href="tel:+50661298565" class="font-semibold underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">+506 6129-8565</a></p>

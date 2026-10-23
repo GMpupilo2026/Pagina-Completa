@@ -19075,7 +19075,7 @@
   ]
  },
  "imagenes": {
-  "total": 860,
+  "total": 866,
   "grupos": [
    {
     "carpeta": "entreno/img/facil",
@@ -24343,10 +24343,46 @@
     "grupo": "Carpetas",
     "archivos": [
      {
+      "ruta": "img/centroamericano-2026/bandera-cr.svg",
+      "titulo": "Centroamericano 2026: la insignia de Costa Rica de la portada",
+      "tipo": "otro",
+      "kb": 1
+     },
+     {
       "ruta": "img/centroamericano-2026/carolina-munoz.jpg",
       "titulo": "Centroamericano 2026: foto de Carolina Muñoz, árbitra principal",
       "tipo": "otro",
       "kb": 10
+     },
+     {
+      "ruta": "img/centroamericano-2026/cca-logo.png",
+      "titulo": "Logo de la Confederación de Ajedrez de América (de las bases del Centroamericano 2026)",
+      "tipo": "otro",
+      "kb": 65
+     },
+     {
+      "ruta": "img/centroamericano-2026/hojas.png",
+      "titulo": "Centroamericano 2026: las hojas de monstera de las bases (sin fondo)",
+      "tipo": "otro",
+      "kb": 23
+     },
+     {
+      "ruta": "img/centroamericano-2026/jean-quesada.jpg",
+      "titulo": "Centroamericano 2026: foto de Jean Quesada, árbitro de pareo",
+      "tipo": "otro",
+      "kb": 9
+     },
+     {
+      "ruta": "img/centroamericano-2026/mascota-trofeo.png",
+      "titulo": "Centroamericano 2026: el pizote con el trofeo y la bandera, de las bases",
+      "tipo": "otro",
+      "kb": 33
+     },
+     {
+      "ruta": "img/centroamericano-2026/mascota.jpg",
+      "titulo": "Centroamericano 2026: la mascota, el pizote de la portada de las bases",
+      "tipo": "otro",
+      "kb": 71
      },
      {
       "ruta": "img/centroamericano-2026/vivian-viquez.jpg",
