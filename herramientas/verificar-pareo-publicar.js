@@ -86,14 +86,11 @@ async function pruebaPublicar(browser) {
   }, [["ta", A], ["tb", B]]);
   let pedidos;
   const { ctx, page, errores } = await P.abrirPagina(browser, BASE, "", async (p) => { await p.clock.install(); pedidos = await dobleFuncion(p); await sembrar(p); });
+  // Un torneo que ya empezó se publica solo (con el próximo cambio); acá,
+  // sin cambios todavía, Archivos lo dice y «Publicar ahora» no espera.
   await page.click('[data-ficha="archivos"]');
-  ok(await P.vis(page, "#pi-publicar-permiso"), "la ficha Archivos trae dónde publicar, con el permiso");
-  await page.click("#pi-publicar-uno");
-  igual("sin marcar el permiso no se manda nada", pedidos.length, 0);
-  igual("y el foco va a la casilla", await page.evaluate(() => document.activeElement.id), "pi-publicar-permiso");
-  ok(/Ver|Política de privacidad/.test(await page.textContent("#pi-publicar")) && await page.$('#pi-publicar a[href="privacidad.html#torneos"]'), "la casilla enlaza la política de privacidad");
-  await page.check("#pi-publicar-permiso");
-  await page.click("#pi-publicar-uno");
+  ok(/se publica solo/.test(await page.textContent("#pi-publicar")) && !(await page.$("#pi-publicar-permiso")), "un torneo empezado no pide permiso: se publica solo");
+  await page.click("#pi-publicar-reintentar");
   await page.waitForSelector("#pi-publicar-enlace");
   igual("se publica con «crear»", pedidos.map((x) => x.accion), ["crear"]);
   ok(!/nacimiento|fideId|"sexo"|firmas/.test(JSON.stringify(pedidos[0])), "y sin datos de más");
@@ -116,21 +113,15 @@ async function pruebaPublicar(browser) {
   await page.waitForFunction((n) => true, pedidos.length);
   ok(pedidos[pedidos.length - 1].accion === "actualizar", "«Actualizar ahora» lo manda en el momento");
 
-  console.log("\n=== Dejar de publicar ===");
-  await page.click("#pi-publicar-quitar");
-  await page.waitForSelector(dialogo);
-  await page.click(dialogo + " [data-avisos-aceptar]");
-  await page.waitForSelector("#pi-publicar-permiso");
-  igual("borra con la clave", [pedidos[pedidos.length - 1].accion, pedidos[pedidos.length - 1].clave], ["borrar", "clave-1"]);
-  await P.esperarGuardado(page, (l) => l.every((t) => !t.publicado));
-  bien("y el torneo la olvida");
+  console.log("\n=== Un torneo empezado no se quita ===");
+  ok(!(await page.$("#pi-publicar-quitar")), "no hay «Dejar de publicar»");
 
-  console.log("\n=== El evento entero de un clic ===");
-  await page.check("#pi-publicar-permiso");
-  ok(/Publicar los 2 torneos del evento/.test(await page.textContent("#pi-publicar-evento")), "ofrece publicar los dos torneos del evento");
-  await page.click("#pi-publicar-evento");
+  console.log("\n=== El otro torneo del evento, al anotar ===");
+  await page.selectOption("#pi-lista", "tb");
+  await page.click('[data-ficha="rondas"]');
+  await P.anotar(page, "1-0");
   const todos = await P.esperarGuardado(page, (l) => l.filter((t) => t.publicado).length === 2);
-  igual("los dos quedan publicados, cada uno con su clave", todos.map((t) => t.publicado.clave).sort(), ["clave-2", "clave-3"]);
+  igual("se publica solo con el primer cambio, con su clave", todos.map((t) => t.publicado.clave).sort(), ["clave-1", "clave-2"]);
   ok(!errores.length, "sin errores en la página", errores.join(" | "));
   await ctx.close();
 }

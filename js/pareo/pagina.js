@@ -127,6 +127,7 @@
     if (estado.respaldoArchivo && estado.t.evento && estado.t.evento.id === estado.respaldoArchivo.id) programarRespaldo();
     avisarRondaCompleta();
     if (estado.t.publicado) programarPublicacion();
+    else if (estado.t.rondas.length) publicarSolo(estado.id);
   }
   const TOPE_HISTORIAL = 40;
 
@@ -4603,6 +4604,7 @@
       }
       caja.append(ul);
     }
+    if (r === 0 && !v.publicado) caja.append(el("p", { id: "pi-publico-ronda1", class: C.nota + " mb-3", texto: tx("publicarSoloRonda1") }));
     const boton = el("button", { type: "button", id: "pi-emparejar", class: C.boton }, tx("emparejarRonda", { r: r + 1 }));
     const msg = el("p", { class: "mt-3 text-sm", role: "status", "aria-live": "polite" });
     function actualizarRevision() {
@@ -4882,6 +4884,29 @@
     }
     if (boton || r.noExiste) Avisos.avisar(r.error || tx("publicarSinRed"), { tipo: "error" });
   }
+  // Todo torneo se publica solo al emparejar la ronda 1 (lo decidió el dueño
+  // del sitio: «que se vean todos los torneos que hagan todos los
+  // árbitros», sin poder apagarlo). Sin internet, se vuelve a intentar con
+  // el próximo cambio, como mucho una vez por minuto. Lo dicen la ficha
+  // Torneo, la ronda 1 antes de emparejar, Archivos y la política de
+  // privacidad.
+  const publicandoSolo = new Set();
+  const reintentoSolo = new Map();
+  async function publicarSolo(id, ahora) {
+    if (publicandoSolo.has(id) || (!ahora && (reintentoSolo.get(id) || 0) > Date.now())) return;
+    const tor = id === estado.id ? t() : leerJSON(PREFIJO + id, null);
+    if (!tor || tor.publicado || !tor.rondas.length) return;
+    publicandoSolo.add(id);
+    const r = await PareoPublicar.crear(tor, extraPublicar(tor));
+    publicandoSolo.delete(id);
+    if (!r.ok) { reintentoSolo.set(id, Date.now() + 60000); if (ahora) Avisos.avisar(r.error || tx("publicarSinRed"), { tipo: "error" }); return; }
+    const actual = id === estado.id ? t() : leerJSON(PREFIJO + id, null);
+    if (!actual || actual.publicado) return;
+    actual.publicado = { id: r.id, clave: r.clave, hora: Date.now() };
+    escribir(PREFIJO + id, JSON.stringify(actual));
+    if (id === estado.id && estado.ficha === "archivos") pintarPublicar();
+  }
+
   async function publicarTorneos(lista, boton) {
     boton.disabled = true;
     let bien = 0;
@@ -5026,9 +5051,18 @@
         Avisos.avisar(tx("publicarQuitado"));
         const b = $("pi-publicar-permiso"); if (b) b.focus();
       });
-      caja.append(el("div", { class: "mt-3 flex flex-wrap gap-2" }, ahora, quitarB));
+      // Un torneo que ya empezó se publica siempre: no se quita.
+      caja.append(el("div", { class: "mt-3 flex flex-wrap gap-2" }, ahora, v.rondas.length ? null : quitarB));
       if (!v.rondas.length) caja.append(camposAnuncio(v));
       caja.append(cajaInscripcion(v));
+      return;
+    }
+    // Ya empezó y todavía no se pudo publicar (sin internet): se vuelve a
+    // intentar solo; «Publicar ahora» no espera.
+    if (v.rondas.length) {
+      const ya = el("button", { type: "button", id: "pi-publicar-reintentar", class: C.boton }, tx("publicarAhora"));
+      ya.addEventListener("click", () => publicarSolo(estado.id, true));
+      caja.append(el("p", { class: "text-sm font-semibold", role: "status", texto: tx("publicarSoloPendiente") }), el("div", { class: "mt-3" }, ya));
       return;
     }
     // Sin jugadores todavía: se publica como anuncio (con la fecha de la

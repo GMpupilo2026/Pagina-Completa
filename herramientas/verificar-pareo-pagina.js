@@ -64,7 +64,15 @@ const ok = (c, m, detalle) => (c ? bien(m) : mal(m + (detalle ? " — " + detall
   const afuera = [];
   p.on("pageerror", (e) => errores.push(e.message));
   p.on("console", (m) => { if (m.type() === "error") errores.push(m.text()); });
-  p.on("request", (r) => { if (!r.url().startsWith(BASE) && !r.url().startsWith("data:") && !r.url().startsWith("blob:")) afuera.push(r.url()); });
+  // Lo único que sale del sitio: la publicación en «Torneos en Pareo
+  // Integral», que es automática al emparejar la ronda 1 (con su doble).
+  const publica = [];
+  await p.route("**/functions/v1/pareo-publicar", (r) => r.fulfill({ status: 200, contentType: "application/json", headers: { "access-control-allow-origin": "*" },
+    body: JSON.stringify({ ok: true, id: "00000000-0000-4000-8000-000000000001", clave: "clave-1" }) }));
+  p.on("request", (r) => {
+    if (/\/functions\/v1\/pareo-publicar$/.test(r.url())) { publica.push(r.url()); return; }
+    if (!r.url().startsWith(BASE) && !r.url().startsWith("data:") && !r.url().startsWith("blob:")) afuera.push(r.url());
+  });
   const visible = (sel) => p.$eval(sel, (n) => n.checkVisibility()).catch(() => false);
   const ficha = (f) => p.click("#pi-f-" + f);
   const leerTorneo = () => p.evaluate(() => {
@@ -362,7 +370,7 @@ const ok = (c, m, detalle) => (c ? bien(m) : mal(m + (detalle ? " — " + detall
       ok(texto.includes("Reportes de prueba") && texto.includes("Ronda 1"), "trae el nombre del torneo y la ronda", texto.slice(0, 120));
       ok(/1-0/.test(texto) && /0-1/.test(texto), "con los resultados ya anotados", texto);
       ok(["Alfa, Uno", "Beta, Dos", "Gama, Tres", "Delta, Cuatro"].every((n) => texto.includes(n)), "y la clasificación de los cuatro");
-      ok(afuera.length === 0, "y sigue sin mandar nada a ningún servidor");
+      ok(afuera.length === 0, "y sigue sin mandar nada a ningún servidor (salvo la publicación)");
       const despues = await leerTorneo();
       ok(JSON.stringify(despues) === JSON.stringify(antes), "el modo lectura no toca el torneo guardado en este navegador");
     }
@@ -514,7 +522,8 @@ const ok = (c, m, detalle) => (c ? bien(m) : mal(m + (detalle ? " — " + detall
   }
 
   console.log("=== 9. Nada sale del sitio ===");
-  ok(!afuera.length, "ninguna petición a otro origen", afuera.slice(0, 3).join(" "));
+  ok(!afuera.length, "ninguna petición a otro origen, salvo la publicación en Torneos en Pareo Integral", afuera.slice(0, 3).join(" "));
+  ok(publica.length > 0, "y el torneo se publicó solo");
   ok(!errores.length, "sin errores en la consola", errores.slice(0, 3).join(" | "));
 
   await browser.close();

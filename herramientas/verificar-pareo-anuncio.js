@@ -146,6 +146,45 @@ async function pruebaAnuncio(browser) {
   await ctx.close();
 }
 
+async function pruebaSolo(browser) {
+  console.log("\n=== Todo torneo se publica solo al emparejar la ronda 1 ===");
+  const t = torneo("PRUEBA SOLO");
+  t.rondas = [];
+  let pedidos;
+  const { ctx, page, errores } = await P.abrirPagina(browser, BASE, "", async (p) => { pedidos = await dobleFuncion(p, []); await sembrar(t)(p); });
+  await page.click('[data-ficha="torneo"]');
+  ok(await P.vis(page, "#pi-publico-aviso") && /se publica en Torneos en Pareo Integral al emparejar la ronda 1/.test(await page.textContent("#pi-publico-aviso")), "la ficha Torneo lo dice, con el enlace a la política de privacidad");
+  await page.click('[data-ficha="rondas"]');
+  ok(/se publica solo en Torneos en Pareo Integral/.test(await page.textContent("#pi-publico-ronda1")), "y antes de emparejar la ronda 1");
+  igual("antes de la ronda 1 no se publica nada", pedidos.filter((x) => x.accion === "crear").length, 0);
+  await page.click("#pi-emparejar");
+  const [g] = await P.esperarGuardado(page, (l) => l[0].publicado && l[0].publicado.id);
+  const crear = pedidos.filter((x) => x.accion === "crear");
+  igual("al emparejarla, se publica solo, una vez y con la ronda", [crear.length, crear[0].torneo.rondas.length, g.publicado.clave], [1, 1, "clave-1"]);
+  await page.click('[data-ficha="archivos"]');
+  await page.waitForSelector("#pi-publicar-enlace");
+  ok(!(await page.$("#pi-publicar-quitar")), "y ya no se puede dejar de publicar");
+  ok(!errores.length, "sin errores en la página", errores.join(" | "));
+  await ctx.close();
+
+  console.log("\n=== Sin internet, lo vuelve a intentar ===");
+  const t2 = torneo("PRUEBA SIN RED");
+  const { ctx: ctx2, page: page2, errores: errores2 } = await P.abrirPagina(browser, BASE, "", async (p) => {
+    await p.route("**/functions/v1/pareo-publicar", (r) => r.abort());
+    await sembrar(t2)(p);
+  });
+  await page2.click('[data-ficha="archivos"]');
+  await page2.waitForSelector("#pi-publicar-reintentar");
+  ok(/todavía no se pudo \(sin internet\)/.test(await page2.textContent("#pi-publicar")), "dice que no se pudo y que se vuelve a intentar");
+  await page2.unroute("**/functions/v1/pareo-publicar");
+  const pedidos2 = await dobleFuncion(page2, []);
+  await page2.click("#pi-publicar-reintentar");
+  await P.esperarGuardado(page2, (l) => l[0].publicado && l[0].publicado.id);
+  igual("«Publicar ahora» lo publica sin esperar", pedidos2.filter((x) => x.accion === "crear").length, 1);
+  ok(!errores2.length, "sin errores en la página", errores2.join(" | "));
+  await ctx2.close();
+}
+
 async function pruebaPgn(browser) {
   console.log("\n=== La partida de una mesa, desde Pareo ===");
   const t = torneo("PRUEBA PGN");
@@ -281,6 +320,7 @@ async function pruebaEnVivo(browser) {
   const browser = await chromium.launch({ executablePath: CHROME });
   try {
     await pruebaAnuncio(browser);
+    await pruebaSolo(browser);
     await pruebaPgn(browser);
     await pruebaPublica(browser);
     await pruebaEnVivo(browser);

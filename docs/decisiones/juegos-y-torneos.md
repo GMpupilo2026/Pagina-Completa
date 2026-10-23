@@ -3385,6 +3385,31 @@ Al tocar esto, `node herramientas/verificar-pareo-sala-evento.js`. Rompiendo a
 propósito la mesa física, la casilla de consentimiento, el llamado, el fin de
 la ronda o el aceptar, salta.
 
+### Torneos en Pareo Integral: todo torneo se publica solo
+
+Lo decidió el dueño del sitio: «que se vean todos los torneos que hagan
+todos los árbitros», y entre publicarlos solos con la opción de apagarlo o
+sin ella, eligió **sin poder apagarlo** (se le dijo que es la opción con más
+riesgo legal, por los nombres de menores).
+
+- **Cuándo.** Al emparejar la ronda 1 (`publicarSolo`, desde `guardar()`), con
+  la misma Edge Function `pareo-publicar` de siempre; después se pone al día
+  sola con cada cambio (`programarPublicacion`). Antes de la ronda 1 sigue
+  como estaba: se puede publicar a mano como anuncio, con el permiso.
+- **Sin internet** se vuelve a intentar con el próximo cambio, como mucho una
+  vez por minuto (`reintentoSolo`), y Archivos lo dice con «Publicar ahora».
+  Si el torneo publicado ya no existe (lo borró alguien), se vuelve a
+  publicar solo.
+- **No se quita.** Un torneo que ya empezó no muestra «Dejar de publicar».
+- **Que nadie se lleve una sorpresa:** lo dicen la ficha Torneo (un aviso
+  fijo con el enlace a la política de privacidad), la ronda 1 antes de
+  emparejar, Archivos y `privacidad.html#torneos`. Lo que viaja es lo de
+  siempre (`PareoPublicar.datosPublicos`): nunca la fecha de nacimiento, el
+  sexo ni el ID FIDE. Quien quiera que se quite o se abrevie su nombre, lo
+  pide al correo de la política.
+
+Lo comprueba `verificar-pareo-anuncio.js`.
+
 ### Pareo Integral: los equipos el día del torneo, la Categoría Amistoso, el plazo de los capitanes y el mensaje de WhatsApp
 
 Lo pidió el dueño del sitio, en varios mensajes del mismo día.
