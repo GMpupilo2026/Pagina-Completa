@@ -122,6 +122,8 @@ function limpiar(v: unknown) {
     nombre: texto(v.nombre, 160), grupo: texto(v.grupo, 160), ciudad: texto(v.ciudad, 120),
     federacion: texto(v.federacion, 4), fechaInicio: fecha(v.fechaInicio), fechaFin: fecha(v.fechaFin),
     arbitro: texto(v.arbitro, 100), arbitroAdjunto: texto(v.arbitroAdjunto, 100), ritmo: texto(v.ritmo, 80),
+    // Si el torneo cambia el Elo de quien juega (lo dice la lista pública).
+    validoElo: ["fide", "nacional", "no"].includes(v.validoElo as string) ? v.validoElo as string : "",
     sistema: v.sistema === "todos" ? "todos" : "suizo", dobleVuelta: v.dobleVuelta === true,
     rondasTotales: Math.round(numero(v.rondasTotales, 0, 99)),
     tipo: v.tipo === "equipos" ? "equipos" : undefined, tableros: v.tipo === "equipos" ? Math.round(numero(v.tableros, 1, 12)) : undefined,

@@ -92,6 +92,7 @@ const TITULOS = {
   "img/logo-oscar-angulo.png": "Logo de Oscar Angulo",
   "img/logo-oscar-angulo-marca.png": "Logo de Oscar Angulo (marca de agua)",
   "img/og-ajedrez-integral.jpg": "Imagen para compartir en redes (vista previa de los enlaces)",
+  "img/og-torneos-pareo.jpg": "Imagen para compartir un torneo de Pareo Integral (vista previa)",
   "img/oscar-avatar.jpg": "Foto de Oscar Angulo",
   "img/oscar-avatar-160.jpg": "Foto de Oscar Angulo (pequeña)",
   "img/app/apple-touch-icon.png": "Ícono para iPhone y iPad",

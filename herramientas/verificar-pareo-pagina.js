@@ -113,6 +113,9 @@ const ok = (c, m, detalle) => (c ? bien(m) : mal(m + (detalle ? " — " + detall
   await p.dispatchEvent('#pi-form-torneo input[name="nombre"]', "change");
   await p.fill('#pi-form-torneo input[name="rondasTotales"]', "5");
   await p.dispatchEvent('#pi-form-torneo input[name="rondasTotales"]', "change");
+  await p.selectOption('#pi-form-torneo select[name="validoElo"]', "fide");
+  ok(await p.waitForFunction(() => Object.keys(localStorage).some((k) => k.startsWith("pareo_torneo_v1_") && JSON.parse(localStorage.getItem(k)).validoElo === "fide"), null, { timeout: 5000 }).then(() => true, () => false),
+    "«Válido para Elo» se guarda en el torneo");
   await ficha("rondas");
   {
     const resumen = await p.textContent("#pi-ronda");

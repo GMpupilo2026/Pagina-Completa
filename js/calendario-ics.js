@@ -15,6 +15,7 @@
  *   cortaría el campo.
  *
  *   CalendarioIcs.armar({ clases, tareas, examenes, ahora }) → el texto
+ *   CalendarioIcs.armarDias({ nombre, eventos })              → días enteros (un torneo)
  *   CalendarioIcs.bajar(texto, nombre)                       → lo descarga
  */
 (function () {
@@ -88,16 +89,14 @@
 
     const QUINCE_MIN = 15 * 60 * 1000;
 
-    function armar({ clases, tareas, examenes, ahora } = {}) {
-        ahora = ahora || new Date();
-        const stamp = sello(ahora);
-        const l = [
+    function cabecera(nombre) {
+        return [
             "BEGIN:VCALENDAR",
             "VERSION:2.0",
             "PRODID:-//Ajedrez Integral//Mi calendario//ES",
             "CALSCALE:GREGORIAN",
             "METHOD:PUBLISH",
-            "X-WR-CALNAME:Ajedrez Integral",
+            "X-WR-CALNAME:" + escapar(nombre || "Ajedrez Integral"),
             "X-WR-TIMEZONE:" + ZONA,
             "BEGIN:VTIMEZONE",
             "TZID:" + ZONA,
@@ -109,6 +108,12 @@
             "END:STANDARD",
             "END:VTIMEZONE",
         ];
+    }
+
+    function armar({ clases, tareas, examenes, ahora } = {}) {
+        ahora = ahora || new Date();
+        const stamp = sello(ahora);
+        const l = cabecera();
         let n = 0;
         for (const c of clases || []) {
             if (!c || !c.inicio || !c.fin) continue;
@@ -157,6 +162,43 @@
         return { texto: l.map(doblar).join("\r\n") + "\r\n", eventos: n };
     }
 
+    /* Eventos de días enteros, de un día de calendario («2026-10-22») a otro,
+       los dos incluidos: un torneo de tres días ocupa los tres en el
+       calendario, sin hora (la hora va en la descripción). El formato pide el
+       día SIGUIENTE al último como fin. Los días se suman en el calendario,
+       sin pasar por la zona de la computadora.
+
+         armarDias({ nombre, eventos: [{ uid, desde, hasta, resumen, lugar,
+                     descripcion, url, aviso }], ahora }) → { texto, eventos } */
+    const DIA = /^\d{4}-\d{2}-\d{2}$/;
+    function diaSiguiente(dia) {
+        const [y, m, d] = dia.split("-").map(Number);
+        const x = new Date(Date.UTC(y, m - 1, d + 1));
+        const dos = (n) => String(n).padStart(2, "0");
+        return x.getUTCFullYear() + "-" + dos(x.getUTCMonth() + 1) + "-" + dos(x.getUTCDate());
+    }
+    function armarDias({ nombre, eventos, ahora } = {}) {
+        const stamp = sello(ahora || new Date());
+        const l = cabecera(nombre);
+        let n = 0;
+        for (const e of eventos || []) {
+            if (!e || !DIA.test(e.desde || "")) continue;
+            const hasta = DIA.test(e.hasta || "") && e.hasta >= e.desde ? e.hasta : e.desde;
+            l.push("BEGIN:VEVENT", "UID:" + e.uid, "DTSTAMP:" + stamp,
+                "DTSTART;VALUE=DATE:" + e.desde.replace(/-/g, ""),
+                "DTEND;VALUE=DATE:" + diaSiguiente(hasta).replace(/-/g, ""),
+                "SUMMARY:" + escapar(e.resumen));
+            if (e.lugar) l.push("LOCATION:" + escapar(e.lugar));
+            if (e.descripcion) l.push("DESCRIPTION:" + escapar(e.descripcion));
+            if (e.url) l.push("URL:" + e.url);
+            if (e.aviso) l.push("BEGIN:VALARM", "ACTION:DISPLAY", "DESCRIPTION:" + escapar(e.resumen), "TRIGGER:" + e.aviso, "END:VALARM");
+            l.push("END:VEVENT");
+            n++;
+        }
+        l.push("END:VCALENDAR");
+        return { texto: l.map(doblar).join("\r\n") + "\r\n", eventos: n };
+    }
+
     function bajar(texto, nombre) {
         const url = URL.createObjectURL(new Blob([texto], { type: "text/calendar;charset=utf-8" }));
         const a = document.createElement("a");
@@ -168,7 +210,7 @@
         setTimeout(() => URL.revokeObjectURL(url), 1000);
     }
 
-    const api = { armar, bajar, horaLocal, escapar, doblar };
+    const api = { armar, armarDias, bajar, horaLocal, escapar, doblar };
     if (typeof window !== "undefined") window.CalendarioIcs = api;
     if (typeof module !== "undefined") module.exports = api;
 })();

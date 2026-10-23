@@ -59,6 +59,11 @@ function pruebaSinNavegador() {
   igual("sí van el nombre, el centro, el Elo y la categoría", Object.keys(d.jugadores[0]).sort(), ["categoria", "elo", "fed", "id", "institucion", "nombre", "retiradoDespuesDe", "titulo"]);
   igual("y el evento, solo con su nombre", d.evento, { nombre: "PRUEBA EVENTO" });
   igual("las rondas con sus resultados", d.rondas[0].mesas[0], { b: "TOa", n: "TOd", r: "1-0" });
+  const conElo = Object.assign(torneo("PRUEBA ELO", false), { validoElo: "nacional" });
+  igual("y si da Elo (la columna de la lista)", [PP.datosPublicos(conElo).validoElo, d.validoElo], ["nacional", ""]);
+  // La función vuelve a limpiar lo que llega: el campo tiene que estar en su lista.
+  const fn = require("fs").readFileSync(require("path").join(__dirname, "..", "supabase/functions/pareo-publicar/index.ts"), "utf8");
+  ok(/validoElo: \["fide", "nacional", "no"\]\.includes\(v\.validoElo/.test(fn), "la función pareo-publicar lo guarda (sin eso se pierde al publicar, callado)");
 }
 
 // El doble de la Edge Function: anota cada pedido y contesta como ella.

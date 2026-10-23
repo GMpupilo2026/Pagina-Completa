@@ -1,5 +1,8 @@
-/* Genera img/og-ajedrez-integral.png (1200×630), la imagen que se ve cuando
- * alguien pega un enlace del sitio en WhatsApp, Facebook o Telegram.
+/* Genera las imágenes (1200×630) que se ven cuando alguien pega un enlace del
+ * sitio en WhatsApp, Facebook o Telegram: img/og-ajedrez-integral.jpg (todo el
+ * sitio) e img/og-torneos-pareo.jpg (un torneo de Pareo Integral compartido
+ * con /t/<id>; ver «La tarjeta al compartir un torneo» en
+ * docs/decisiones/juegos-y-torneos.md). Las dos con el mismo dibujo.
  *
  * Se dibuja acá y no a mano para que salga siempre igual y con los colores de
  * la paleta: si cambian, se vuelve a correr.
@@ -13,7 +16,16 @@ const { chromium } = require("playwright");
 const RAIZ = path.join(__dirname, "..");
 // JPEG y no PNG: es un degradado, y en PNG el mismo dibujo pesa 490 KB contra
 // unos 70 en JPEG. WhatsApp y Telegram descartan las previsualizaciones pesadas.
-const SALIDA = path.join(RAIZ, "img", "og-ajedrez-integral.jpg");
+const IMAGENES = [
+    { archivo: "og-ajedrez-integral.jpg",
+      titulo: "Clases de ajedrez <em>en vivo</em>,<br>no solo videos",
+      texto: "Un profesor real que corrige cada jugada. Cursos, entrenamiento\n         interactivo y seguimiento del progreso.",
+      nota: "Escuelas, colegios y familias &middot; Costa Rica" },
+    { archivo: "og-torneos-pareo.jpg",
+      titulo: "Pareo Integral:<br>el torneo <em>en vivo</em>",
+      texto: "Las rondas, los resultados y la clasificación, ronda a ronda. Sin cuenta y gratis.",
+      nota: "Torneos de ajedrez &middot; Costa Rica" },
+];
 
 // Los mismos tokens que usa el sitio.
 const C = {
@@ -21,7 +33,7 @@ const C = {
     brand100: "#d9e2ec", brand300: "#9fb3c8", accent400: "#f0b429",
 };
 
-const HTML = `<!DOCTYPE html><html><head><meta charset="utf-8"><style>
+const html = ({ titulo, texto, nota }) => `<!DOCTYPE html><html><head><meta charset="utf-8"><style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body { width: 1200px; height: 630px; overflow: hidden;
          font-family: Georgia, 'Times New Roman', serif; }
@@ -60,14 +72,13 @@ const HTML = `<!DOCTYPE html><html><head><meta charset="utf-8"><style>
     <div class="contenido">
       <div class="marca"><span class="peon">&#9823;&#65039;</span>
         <span class="nombre">Ajedrez <em>Integral</em></span></div>
-      <h1>Clases de ajedrez <em>en vivo</em>,<br>no solo videos</h1>
-      <p>Un profesor real que corrige cada jugada. Cursos, entrenamiento
-         interactivo y seguimiento del progreso.</p>
+      <h1>${titulo}</h1>
+      <p>${texto}</p>
     </div>
     <div class="pie">
       <span class="sitio">ajedrez-integral.com</span>
       <span class="punto"></span>
-      <span class="nota">Escuelas, colegios y familias &middot; Costa Rica</span>
+      <span class="nota">${nota}</span>
     </div>
     <div class="barra"></div>
   </div>
@@ -78,10 +89,13 @@ const HTML = `<!DOCTYPE html><html><head><meta charset="utf-8"><style>
         executablePath: process.env.CHROME_PATH || undefined,
     });
     const pagina = await navegador.newPage({ viewport: { width: 1200, height: 630 } });
-    await pagina.setContent(HTML, { waitUntil: "load" });
-    await pagina.waitForTimeout(400);
-    await pagina.screenshot({ path: SALIDA, type: "jpeg", quality: 88 });
+    for (const img of IMAGENES) {
+        const salida = path.join(RAIZ, "img", img.archivo);
+        await pagina.setContent(html(img), { waitUntil: "load" });
+        await pagina.waitForTimeout(400);
+        await pagina.screenshot({ path: salida, type: "jpeg", quality: 88 });
+        const kb = Math.round(fs.statSync(salida).size / 1024);
+        console.log(`img/${img.archivo} listo — 1200×630, ${kb} KB`);
+    }
     await navegador.close();
-    const kb = Math.round(fs.statSync(SALIDA).size / 1024);
-    console.log(`img/og-ajedrez-integral.jpg listo — 1200×630, ${kb} KB`);
 })();

@@ -438,6 +438,9 @@
     pintarPanel();
   }
 
+  // Si el torneo cambia el Elo de quien juega: lo dice la lista pública.
+  const VALIDO_ELO = ["fide", "nacional", "no"];
+
   // ---------- Torneo ----------
   function pintarTorneo() {
     const f = $("pi-form-torneo");
@@ -445,6 +448,7 @@
     for (const k of ["nombre", "ciudad", "federacion", "fechaInicio", "fechaFin", "arbitro", "arbitroAdjunto", "ritmo", "rondasTotales", "colorInicial"]) {
       f.elements[k].value = v[k] == null ? "" : v[k];
     }
+    f.elements.validoElo.value = VALIDO_ELO.includes(v.validoElo) ? v.validoElo : "";
     // El nombre de un torneo de los JDE es el oficial del evento (etapa y
     // lugar, igual para todos): no se escribe a mano. Se corrige volviendo a
     // elegir la etapa con «Aplicar la configuración de los JDE».
@@ -681,6 +685,7 @@
       if (!(x >= 0 && x <= 9) || Math.round(x * 2) !== x * 2) { e.target.value = v.puntos[k]; return; }
       v.puntos[k] = x;
     } else if (n === "federacion") v.federacion = e.target.value.trim().toUpperCase();
+    else if (n === "validoElo") { if (e.target.value) v.validoElo = e.target.value; else delete v.validoElo; }
     else v[n] = e.target.value;
     guardar();
     if (n === "nombre") pintarLista();
@@ -1665,7 +1670,7 @@
     // el ritmo, los puntos y los desempates del abierto tal cual.
     const comunes = {
       ciudad: actual.ciudad, federacion: actual.federacion, fechaInicio: actual.fechaInicio, fechaFin: actual.fechaFin,
-      arbitro: actual.arbitro, arbitroAdjunto: actual.arbitroAdjunto, ritmo: actual.ritmo,
+      arbitro: actual.arbitro, arbitroAdjunto: actual.arbitroAdjunto, ritmo: actual.ritmo, validoElo: actual.validoElo,
       colorInicial: actual.colorInicial, baku: actual.baku, rondasTotales: actual.rondasTotales,
       puntos: Object.assign({}, actual.puntos), desempates: actual.desempates.slice(),
     };

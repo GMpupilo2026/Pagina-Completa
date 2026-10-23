@@ -80,6 +80,15 @@
                     <label for="tp-buscar" class="block text-sm font-semibold mb-1">Buscar un torneo</label>
                     <input id="tp-buscar" type="search" autocomplete="off" placeholder="Nombre, evento o lugar" class="w-full rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-900 text-brand-800 dark:text-white px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
                 </div>
+                <fieldset class="mb-4 flex flex-wrap items-end gap-x-4 gap-y-3" aria-describedby="tp-cuantos">
+                    <legend class="sr-only">Filtrar los torneos</legend>
+                    <label class="text-sm"><span class="block font-semibold mb-1">Ritmo</span><select id="tp-f-ritmo" class="rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-900 text-brand-800 dark:text-white px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><option value="">Todos</option><option>Clásico</option><option>Rápido</option><option>Relámpago</option></select></label>
+                    <label class="text-sm"><span class="block font-semibold mb-1">Lugar</span><select id="tp-f-lugar" class="rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-900 text-brand-800 dark:text-white px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 max-w-[14rem]"><option value="">Todos</option></select></label>
+                    <label class="text-sm"><span class="block font-semibold mb-1">Válido para Elo</span><select id="tp-f-elo" class="rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-900 text-brand-800 dark:text-white px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><option value="">Todos</option><option value="fide">FIDE</option><option value="nacional">Solo Nacional</option><option value="sin">Sin Elo</option></select></label>
+                    <label class="text-sm flex items-center gap-2 py-2"><input id="tp-f-abierta" type="checkbox" class="w-4 h-4 accent-brand-800"> Inscripción abierta</label>
+                    <label class="text-sm flex items-center gap-2 py-2"><input id="tp-f-curso" type="checkbox" class="w-4 h-4 accent-brand-800"> Solo en curso</label>
+                    <button id="tp-f-quitar" type="button" class="text-sm font-semibold underline underline-offset-2 hover:no-underline rounded py-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400" hidden>Quitar filtros</button>
+                </fieldset>
                 <p id="tp-cuantos" class="text-sm text-brand-600 dark:text-brand-300 mb-4" role="status">Cargando…</p>
                 <section id="tp-seguidos-caja" class="mb-8" aria-labelledby="tp-seguidos-titulo" hidden>
                     <h2 id="tp-seguidos-titulo" class="font-serif text-2xl font-bold text-brand-800 dark:text-white mb-1"><span aria-hidden="true">★ </span>Los jugadores que sigues</h2>
@@ -92,6 +101,7 @@
                     <div id="tp-proximos"></div>
                 </section>
                 <h2 class="font-serif text-2xl font-bold text-brand-800 dark:text-white mb-3">Resultados</h2>
+                <p id="tp-resultados-vacio" class="text-sm text-brand-600 dark:text-brand-300" hidden>Ningún torneo jugado coincide con lo que buscas.</p>
                 <div id="tp-lista"></div>
             </div>
             <div id="tp-contenido" hidden></div>
@@ -123,6 +133,9 @@
     <script src="js/pareo/evento.js"></script>
     <script src="js/pareo/elo.js"></script>
     <script src="js/pareo/publicar.js"></script>
+    <script src="js/pareo/compartir.js"></script>
+    <script src="js/calendario-ics.js"></script>
+    <script src="js/avisos.js"></script>
     <script src="js/pareo/partida.js"></script>
     <script src="js/vendor/chess.js"></script>
     <script src="js/blind-notation.js"></script>

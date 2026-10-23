@@ -2297,10 +2297,10 @@ body.pi-sorteo-abierto { overflow: hidden; }
 .tp-fila-evento-boton[aria-expanded="true"] .tp-flecha-abre { transform: rotate(90deg); }
 @media (min-width: 64rem) {
   .tp-fila { grid-template-columns: 4.5rem minmax(0, 1fr) auto 1.25rem; grid-template-areas: "fecha principal datos flecha"; }
-  .tp-datos { grid-template-columns: repeat(6, 6.25rem); }
+  .tp-datos { grid-template-columns: repeat(7, 5.9rem); }
   .tp-datos [data-col="inscripcion"] { grid-column: 1; }
   .tp-datos [data-col="participantes"] { grid-column: 2; }
-  .tp-datos [data-col="ritmo"] { grid-column: 5; }
+  .tp-datos [data-col="ritmo"] { grid-column: 6; }
 }
 @media (max-width: 30rem) {
   .tp-fila { grid-template-columns: 3.25rem minmax(0, 1fr) 1rem; column-gap: 0.6rem; padding: 0.75rem; }

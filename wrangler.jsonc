@@ -5,10 +5,11 @@
 	"assets": {
 		"directory": "./",
 		"binding": "ASSETS",
-		// El worker corre ANTES que los archivos solo en estas dos carpetas: es
-		// el candado del contenido de los cursos (ver worker.js). Sin esta
-		// línea Cloudflare sirve el archivo directo y el candado no existe,
-		// sin dar ningún error. Todo lo demás se sirve como siempre.
-		"run_worker_first": ["/cursos/protegido/*", "/cursos/recursos/*", "/material/*"]
+		// El worker corre ANTES que los archivos solo en estas carpetas: el
+		// candado del contenido de los cursos y el material, y /t/ (la tarjeta
+		// de un torneo de Pareo Integral para compartir; ver worker.js). Sin
+		// esta línea Cloudflare sirve el archivo directo (o un 404) y nada de
+		// eso existe, sin dar ningún error. Todo lo demás se sirve como siempre.
+		"run_worker_first": ["/cursos/protegido/*", "/cursos/recursos/*", "/material/*", "/t/*"]
 	}
 }
