@@ -74,11 +74,22 @@
                         <h1 class="font-serif text-3xl md:text-4xl font-bold text-brand-800 dark:text-white"><span aria-hidden="true">♟️ </span>Torneos en Pareo Integral</h1>
                         <p class="text-brand-600 dark:text-brand-300 mt-2 max-w-2xl">Los torneos que sus organizadores publicaron con Pareo Integral. Elige uno para ver todas sus rondas, la tabla de posiciones y a cada jugador con sus rivales.</p>
                     </div>
+                    <div class="flex flex-wrap gap-2 min-w-0">
+                    <a id="tp-ir-ranking" href="#ranking=1" class="shrink-0 border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-900 text-brand-800 dark:text-white font-bold px-5 py-2.5 rounded-lg whitespace-nowrap focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true">🏆 </span>Ranking del año</a>
                     <a href="pareo.html" class="shrink-0 bg-accent-500 hover:bg-accent-600 text-brand-900 font-bold px-5 py-2.5 rounded-lg transition-colors shadow-md whitespace-nowrap focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-800 focus-visible:ring-offset-2">Organizar un torneo →</a>
+                    </div>
                 </div>
-                <div class="mb-4 max-w-md">
-                    <label for="tp-buscar" class="block text-sm font-semibold mb-1">Buscar un torneo</label>
-                    <input id="tp-buscar" type="search" autocomplete="off" placeholder="Nombre, evento o lugar" class="w-full rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-900 text-brand-800 dark:text-white px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                <div class="mb-4 grid gap-4 md:grid-cols-2 max-w-3xl">
+                    <div class="min-w-0">
+                        <label for="tp-buscar" class="block text-sm font-semibold mb-1">Buscar un torneo</label>
+                        <input id="tp-buscar" type="search" autocomplete="off" placeholder="Nombre, evento o lugar" class="w-full rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-900 text-brand-800 dark:text-white px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                    </div>
+                    <div class="min-w-0">
+                        <label for="tp-buscar-jugador" class="block text-sm font-semibold mb-1">Buscar un jugador</label>
+                        <input id="tp-buscar-jugador" type="search" autocomplete="off" placeholder="Nombre y apellido, sin tildes si quieres" aria-describedby="tp-jugadores-estado" aria-controls="tp-jugadores" class="w-full rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-900 text-brand-800 dark:text-white px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                        <p id="tp-jugadores-estado" class="text-xs text-brand-600 dark:text-brand-300 mt-1" role="status">Escribe al menos tres letras.</p>
+                        <ul id="tp-jugadores" class="mt-2 space-y-2"></ul>
+                    </div>
                 </div>
                 <fieldset class="mb-4 flex flex-wrap items-end gap-x-4 gap-y-3" aria-describedby="tp-cuantos">
                     <legend class="sr-only">Filtrar los torneos</legend>
@@ -92,6 +103,14 @@
                 </fieldset>
                 <p id="tp-cuantos" class="text-sm text-brand-600 dark:text-brand-300 mb-4" role="status">Cargando…</p>
                 <div id="tp-suscribir" class="mb-6"></div>
+                <section id="tp-provincias" class="mb-6" aria-labelledby="tp-provincias-titulo" hidden>
+                    <h2 id="tp-provincias-titulo" class="text-sm font-semibold mb-2">Lo que viene, por provincia</h2>
+                    <div id="tp-provincias-lista" class="flex flex-wrap gap-2"></div>
+                </section>
+                <section id="tp-vivo-caja" class="mb-8" aria-labelledby="tp-vivo-titulo" hidden>
+                    <h2 id="tp-vivo-titulo" class="font-serif text-2xl font-bold text-brand-800 dark:text-white mb-3"><span aria-hidden="true">● </span>Se están jugando ahora</h2>
+                    <ul id="tp-vivo" class="tp-filas"></ul>
+                </section>
                 <section id="tp-seguidos-caja" class="mb-8" aria-labelledby="tp-seguidos-titulo" hidden>
                     <h2 id="tp-seguidos-titulo" class="font-serif text-2xl font-bold text-brand-800 dark:text-white mb-1"><span aria-hidden="true">★ </span>Los jugadores que sigues</h2>
                     <p class="text-sm text-brand-600 dark:text-brand-300 mb-3">Sus últimos torneos publicados, con su puesto y su mesa. Se guardan solo en este navegador; para seguir a alguien, ábrelo en un torneo y toca «Seguir».</p>
@@ -104,7 +123,7 @@
                 </section>
                 <section id="tp-externos-caja" class="mb-8" aria-labelledby="tp-externos-titulo" hidden>
                     <h2 id="tp-externos-titulo" class="font-serif text-2xl font-bold text-brand-800 dark:text-white mb-1">También en Costa Rica</h2>
-                    <p class="text-sm text-brand-600 dark:text-brand-300 mb-3">Los torneos que se anuncian en <a href="https://ajedrezcostarica.com/es/tournaments" target="_blank" rel="noopener" class="underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">ajedrezcostarica.com</a>, puestos al día una vez al día. La inscripción y los detalles están en su ficha de allá.</p>
+                    <p class="text-sm text-brand-600 dark:text-brand-300 mb-3">Los torneos que se anuncian en <a href="https://ajedrezcostarica.com/es/tournaments" target="_blank" rel="noopener" class="underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">ajedrezcostarica.com</a> y los que ya están cargados en <a href="https://chess-results.com/" target="_blank" rel="noopener" class="underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">chess-results</a>, puestos al día una vez al día y sin repetir. La inscripción y los detalles están en su ficha de allá.</p>
                     <div id="tp-externos"></div>
                     <button id="tp-externos-calendario" type="button" class="mt-4 px-4 py-2 rounded-lg text-sm font-semibold border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true">📅 </span><span>Agregar estos torneos a mi calendario</span></button>
                 </section>
@@ -145,6 +164,8 @@
     <script src="js/calendario-ics.js"></script>
     <script src="js/avisos.js"></script>
     <script src="js/pareo/partida.js"></script>
+    <script src="js/pareo/aperturas.js"></script>
+    <script src="js/tabla-imagen.js"></script>
     <script src="js/vendor/chess.js"></script>
     <script src="js/blind-notation.js"></script>
     <script src="js/tablero-accesible.js"></script>

@@ -120,8 +120,9 @@ async function igualLuego(page, m, f, b) {
   ok(/San José, CRC/.test(await page.textContent('[data-torneo="c1"] .tp-lugar')), "con el lugar y la federación");
 
   console.log("\n=== Los filtros ===");
-  const todos = () => page.$$eval("#tp-portada [data-torneo]", (l) => l.filter((a) => a.checkVisibility()).map((a) => a.dataset.torneo).sort());
-  igual("los lugares que hay, para elegir", await page.$$eval("#tp-f-lugar option", (l) => l.map((o) => o.textContent)), ["Todos", "Heredia", "San José"]);
+  // Sin «Se están jugando ahora», que repite arriba los que están en curso.
+  const todos = () => page.$$eval("#tp-portada [data-torneo]:not(#tp-vivo [data-torneo])", (l) => l.filter((a) => a.checkVisibility()).map((a) => a.dataset.torneo).sort());
+  igual("las provincias para elegir (los lugares escritos que son provincias no se repiten)", await page.$$eval("#tp-f-lugar option", (l) => l.map((o) => o.textContent)), ["Todos", "San José", "Alajuela", "Cartago", "Heredia", "Guanacaste", "Puntarenas", "Limón"]);
   ok(!(await page.isVisible("#tp-f-quitar")), "sin filtros, no hay «Quitar filtros»");
   await page.selectOption("#tp-f-ritmo", { label: "Rápido" });
   await igualLuego(page, "por ritmo (y el evento se abre solo)", todos, ["b1", "b2"]);
@@ -143,7 +144,7 @@ async function igualLuego(page, m, f, b) {
   await igualLuego(page, "solo en curso", todos, ["b1", "b2"]);
   igual("el conteo lo dice", await page.textContent("#tp-cuantos"), "2 de 6 torneos.");
   await page.click("#tp-f-quitar");
-  await igualLuego(page, "«Quitar filtros» los quita todos y lleva el foco al primero", async () => [await page.$$eval("#tp-portada [data-torneo]", (l) => l.length), await page.evaluate(() => document.activeElement.id)], [6, "tp-f-ritmo"]);
+  await igualLuego(page, "«Quitar filtros» los quita todos y lleva el foco al primero", async () => [await page.$$eval("#tp-portada [data-torneo]:not(#tp-vivo [data-torneo])", (l) => l.length), await page.evaluate(() => document.activeElement.id)], [6, "tp-f-ritmo"]);
   ok(!(await page.isVisible("#tp-f-quitar")), "y se esconde");
   // Que los eventos queden como estaban para lo que sigue.
   if (await page.getAttribute("[data-grupo] > button", "aria-expanded") === "true") await page.click("[data-grupo] > button");
@@ -168,7 +169,7 @@ async function igualLuego(page, m, f, b) {
   await page.fill("#tp-buscar", "festival");
   await igualLuego(page, "y si coinciden varios del evento, se abre solo", visibles, ["b1", "b2"]);
   await page.fill("#tp-buscar", "");
-  await igualLuego(page, "al borrarla vuelven todos", () => page.$$eval("#tp-portada [data-torneo]", (l) => l.length), 6);
+  await igualLuego(page, "al borrarla vuelven todos", () => page.$$eval("#tp-portada [data-torneo]:not(#tp-vivo [data-torneo])", (l) => l.length), 6);
   await page.click('[data-torneo="c1"]');
   ok(/#t=c1$/.test(page.url()), "una fila lleva a su torneo");
 
@@ -188,7 +189,7 @@ async function igualLuego(page, m, f, b) {
   igual("«Copiar el enlace» copia el corto", await page.evaluate(() => navigator.clipboard.readText()), "https://ajedrez-integral.com/t/d1");
 
   console.log("\n=== Lo que se pide ===");
-  ok(lista.filter((x) => x.fn === "lista").every((x) => x.p_cuantos === 50), "la lista se pide de 50 en 50");
+  ok(lista.filter((x) => x.fn === "lista" && !(x.p_curso && x.p_cuantos === 20)).every((x) => x.p_cuantos === 50), "la lista se pide de 50 en 50 (y «Se están jugando ahora», hasta 20)");
   ok(!pedidos.some((x) => !x.id), "nunca se baja la tabla de torneos entera (solo uno, por su id)", JSON.stringify(pedidos.slice(0, 5)));
   ok(!errores.length, "sin errores en la página", errores.join(" | "));
   await ctx.close();
@@ -203,7 +204,7 @@ async function igualLuego(page, m, f, b) {
   await igualLuego(mu.page, "«Ver más» trae los 10 que faltaban, sin repetir ninguno", async () => [await cuantasFilas(), new Set(await mu.page.$$eval("#tp-lista [data-torneo]", (l) => l.map((a) => a.dataset.torneo))).size], [60, 60]);
   ok(!(await mu.page.$("#tp-mas-resultados")), "y ya no hay «Ver más»");
   igual("el foco queda en el último torneo, no se pierde", await mu.page.evaluate(() => document.activeElement && document.activeElement.dataset.torneo ? "torneo" : document.activeElement.tagName), "torneo");
-  igual("el segundo pedido empieza donde terminó el primero", mu.lista.filter((x) => x.fn === "lista" && x.p_parte === "resultados").map((x) => x.p_desde), [0, 50]);
+  igual("el segundo pedido empieza donde terminó el primero", mu.lista.filter((x) => x.fn === "lista" && x.p_parte === "resultados" && !x.p_curso).map((x) => x.p_desde), [0, 50]);
   ok(!mu.errores.length, "sin errores en la página", mu.errores.join(" | "));
   await mu.ctx.close();
 

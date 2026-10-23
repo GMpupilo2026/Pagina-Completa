@@ -340,7 +340,11 @@ async function cargarWorker() {
     ];
     const afuera = [
       { id_externo: 901, titulo: "PRUEBA nocturno", inicio: "2026-11-02T03:00:00+00:00", fin: "2026-11-02T05:00:00+00:00", provincia: "San José", lugar: "Salón", elo: "ambos", organizador: "Club", url: "https://ajedrezcostarica.com/es/tournaments/901" },
+      { id_externo: 903, titulo: "PRUEBA ya publicado acá", inicio: "2026-11-01T15:00:00+00:00", fin: null, provincia: "", lugar: "", elo: "", organizador: "", url: "https://ajedrezcostarica.com/es/tournaments/903", repetido_de: ID },
       { id_externo: 902, titulo: "PRUEBA enlace raro", inicio: "2026-11-05T15:00:00+00:00", fin: null, provincia: "", lugar: "", elo: "", organizador: "", url: "https://otro.com/x" },
+      // De chess-results: solo el día (medianoche de Costa Rica), sin final.
+      { id_externo: 1234567, titulo: "PRUEBA de chess-results", inicio: "2026-11-03T06:00:00+00:00", fin: null, provincia: "Heredia", lugar: "Heredia", elo: "", organizador: "FCA", url: "https://chess-results.com/tnr1234567.aspx?lan=2", fuente: "chess-results" },
+      { id_externo: 904, titulo: "PRUEBA chess-results raro", inicio: "2026-11-04T06:00:00+00:00", fin: null, provincia: "", lugar: "", elo: "", organizador: "", url: "https://chess-results.com.otro.com/tnr904.aspx?lan=2", fuente: "chess-results" },
     ];
     let preguntas = [];
     const contesta = (u) => /pareo_organizadores/.test(u) ? new Response(JSON.stringify([{ nombre: "Club PRUEBA" }]), { status: 200 })
@@ -358,8 +362,8 @@ async function cargarWorker() {
     igual("pide solo los torneos desde hace un mes (no la tabla entera) y con tope", /pareo_publicados\?select=[^&]*&fecha=gte\.2026-09-22&order=fecha\.asc&limit=\d+$/.test(preguntas.find((u) => /pareo_publicados/.test(u)) || ""), true);
     igual("sin la columna entera de datos", /select=[^&]*\bdatos(,|&)/.test(preguntas.find((u) => /pareo_publicados/.test(u)) || ""), false);
     const uids = (t) => (t.match(/^UID:.*$/gm) || []).map((x) => x.slice(4));
-    igual("los que vienen (y el de hoy), con los mismos UID que «Agregar a mi calendario»; el terminado y el enlace raro no",
-      uids(r.texto).join(" "), "torneo-66666666-6666-4666-8666-666666666666@ajedrez-integral.com torneo-" + ID + "@ajedrez-integral.com ajedrezcostarica-901@ajedrez-integral.com");
+    igual("los que vienen (y el de hoy), con los mismos UID que «Agregar a mi calendario»; el terminado, el enlace raro y el que ya está publicado en Pareo Integral no",
+      uids(r.texto).join(" "), "torneo-66666666-6666-4666-8666-666666666666@ajedrez-integral.com torneo-" + ID + "@ajedrez-integral.com ajedrezcostarica-901@ajedrez-integral.com chess-results-1234567@ajedrez-integral.com");
     igual("el nocturno de afuera es del 1.° de noviembre (hora de Costa Rica)", /UID:ajedrezcostarica-901@[^]*?DTSTART;VALUE=DATE:20261101/.test(r.texto), true);
     igual("la app lo vuelve a leer sola", /REFRESH-INTERVAL;VALUE=DURATION:PT12H/.test(r.texto), true);
     // El mismo texto que arma js/calendario-ics.js con los mismos eventos: el
@@ -372,6 +376,8 @@ async function cargarWorker() {
         descripcion: "Festival PRUEBA. Empieza a las 08:30. Ritmo: 90 min + 30 s. Válido para Elo FIDE. Rondas y resultados: https://ajedrez-integral.com/t/" + ID, url: "https://ajedrez-integral.com/t/" + ID }),
       ev({ uid: "ajedrezcostarica-901@ajedrez-integral.com", desde: "2026-11-01", hasta: "2026-11-01", resumen: "PRUEBA nocturno", lugar: "Salón, San José",
         descripcion: "Organiza: Club. Válido para Elo FIDE y Nacional. Inscripción y detalles: https://ajedrezcostarica.com/es/tournaments/901", url: "https://ajedrezcostarica.com/es/tournaments/901" }),
+      ev({ uid: "chess-results-1234567@ajedrez-integral.com", desde: "2026-11-03", hasta: "2026-11-03", resumen: "PRUEBA de chess-results", lugar: "Heredia, Heredia",
+        descripcion: "Organiza: FCA. Inscripción y detalles: https://chess-results.com/tnr1234567.aspx?lan=2", url: "https://chess-results.com/tnr1234567.aspx?lan=2" }),
     ] }).texto;
     const sinSuscripcion = (t) => t.replace(/^(REFRESH-INTERVAL|X-PUBLISHED-TTL)[^\r\n]*\r\n/gm, "");
     igual("el texto es línea por línea el de js/calendario-ics.js (escapes, líneas dobladas, días enteros)", sinSuscripcion(r.texto) === esperado, true);

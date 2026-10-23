@@ -72,6 +72,14 @@ async function dobleTabla(page) {
     if (/vnd\.pgrst\.object/.test(route.request().headers().accept || "")) return filas[0] ? json(200, columnas(filas[0])) : json(406, { code: "PGRST116" });
     return json(200, filas.map(columnas));
   });
+  // public.pareo_torneos_de: por la huella o por el nombre sin tildes ni mayúsculas, del más reciente.
+  const clave = (x) => String(x || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase().replace(/\s+/g, " ").trim();
+  await page.route("**/rest/v1/rpc/pareo_torneos_de", (route) => {
+    const a = JSON.parse(route.request().postData() || "{}");
+    pedidos.push("rpc:" + JSON.stringify(a));
+    const filas = FILAS.filter((f) => f.datos.jugadores.some((j) => (a.p_ident && j.ident === a.p_ident) || clave(j.nombre) === clave(a.p_nombre)));
+    return route.fulfill({ status: 200, contentType: "application/json", headers: { "access-control-allow-origin": "*" }, body: JSON.stringify(filas) });
+  });
   return pedidos;
 }
 
@@ -171,8 +179,8 @@ async function pruebaFicha(browser) {
   const { ctx, page, errores, pedidos } = await abrir(browser, "#p=PRUEBA+E");
   await page.waitForSelector("#tp-ficha-tabla");
   igual("su nombre de título, con el foco", [await page.textContent("#tp-titulo"), await page.evaluate(() => document.activeElement.id)], ["PRUEBA E", "tp-titulo"]);
-  const pedido = pedidos.find((q) => /datos=cs\./.test(q)) || "";
-  ok(/order=fecha\.desc/.test(pedido) && /limit=100/.test(pedido) && /"nombre":"PRUEBA[ +]E"/.test(decodeURIComponent(pedido)), "los pide a la base por el nombre exacto, del más reciente, con tope", pedido);
+  const pedido = pedidos.find((q) => /^rpc:/.test(q)) || "";
+  ok(/"p_nombre":"PRUEBA E"/.test(pedido), "los pide a la base por su nombre (public.pareo_torneos_de)", pedido);
   igual("un torneo por fila, con su enlace a su ficha en ese torneo", await page.$$eval("#tp-ficha-tabla tbody tr", (l) => l.map((x) => x.querySelector("a").getAttribute("href"))),
     ["#t=" + ID1 + "&v=jugadores&j=e", "#t=" + ID2 + "&v=jugadores&j=e"]);
   const celdas = await page.$$eval("#tp-ficha-tabla tbody tr", (l) => l.map((x) => [...x.querySelectorAll("td")].map((td) => td.textContent)));

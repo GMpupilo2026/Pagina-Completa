@@ -55,12 +55,12 @@ async function abrir(browser, viewport, opciones) {
   await page.route("**/rest/v1/pareo_publicados**", (route) => route.fulfill({ status: 200, contentType: "application/json", headers: { "access-control-allow-origin": "*" }, body: "[]" }));
   await page.route("**/rest/v1/pareo_organizadores**", (route) => route.fulfill({ status: 200, contentType: "application/json", headers: { "access-control-allow-origin": "*" }, body: "[]" }));
   const pedidos = [];
-  await page.route("**/rest/v1/torneos_externos**", (route) => {
-    const u = new URL(route.request().url());
-    pedidos.push({ select: u.searchParams.get("select"), order: u.searchParams.get("order"), limit: u.searchParams.get("limit") });
+  // public.torneos_externos_lista(): ordenados por inicio y, cada uno, con el
+  // torneo de Pareo Integral que es el mismo (repetido_de), si lo hay.
+  await page.route("**/rest/v1/rpc/torneos_externos_lista**", (route) => {
+    pedidos.push({ metodo: route.request().method() });
     if (o.falla) return route.fulfill({ status: 500, contentType: "application/json", headers: { "access-control-allow-origin": "*" }, body: '{"message":"caída"}' });
-    // Como la base: lo que se pide, ordenado por inicio.
-    const filas = o.externos.slice().sort((a, b) => a.inicio.localeCompare(b.inicio)).map((f) => columnasPedidas(u.searchParams.get("select"), f));
+    const filas = o.externos.slice().sort((a, b) => a.inicio.localeCompare(b.inicio)).map((f) => { const x = Object.assign({ repetido_de: null }, f); delete x.visto; delete x.chess_results; return x; });
     return route.fulfill({ status: 200, contentType: "application/json", headers: { "access-control-allow-origin": "*" }, body: JSON.stringify(filas) });
   });
   await dobleListaPareo(page, PROPIO, { hoy: "2026-10-23" });
@@ -100,9 +100,7 @@ async function igualLuego(page, m, f, b) {
   igual("otro: relámpago, solo Nacional, gratis, por equipos", [d903.Ritmo, d903.Elo, d903.Costo, d903.Modalidad], ["Relámpago · 3 min + 2 s", "Nacional", "Gratis", "Por equipos"]);
   ok(/Organiza: Club PRUEBA/.test(await page.textContent('[data-externo="904"]')), "quién organiza");
   ok(await page.$('[data-externo="903"] img') === null && /<img src=x/.test(await page.textContent('[data-externo="903"] .tp-nombre')), "un nombre con HTML se pinta como texto");
-  const p = pedidos[0] || {};
-  ok(pedidos.length === 1 && /^inicio\.asc/.test(p.order || "") && Number(p.limit) > 0, "se pide una vez, ordenado y con tope", JSON.stringify(pedidos));
-  ok(!/visto|fuente|chess_results/.test(p.select || ""), "solo las columnas que se muestran", p.select);
+  ok(pedidos.length === 1, "se pide una vez (public.torneos_externos_lista, que ya los trae ordenados y con tope)", JSON.stringify(pedidos));
 
   igual("arriba, «Suscribirme al calendario de torneos» (el que arma el worker)",
     await page.getAttribute("#tp-suscribir-caja-abrir", "href"), "webcal://ajedrez-integral.com/calendario/torneos.ics");
@@ -139,6 +137,35 @@ async function igualLuego(page, m, f, b) {
   await page.uncheck("#tp-f-curso");
   ok(!errores.length, "sin errores en la consola", errores.join(" | "));
   await ctx.close();
+
+  console.log("\n=== Los de chess-results ===");
+  {
+    // Lo que su buscador muestra: el día (medianoche de Costa Rica), el lugar,
+    // quién organiza, inscritos y rondas. Nada de inscripción, Elo ni costo.
+    const cr = { fuente: "chess-results", id_externo: 1524022, titulo: "PRUEBA Recreativo de Cartago", inicio: "2026-11-07T06:00:00+00:00", fin: null, provincia: "Cartago",
+      lugar: "Polideportivo", ritmo: "", minutos: null, incremento: null, elo: "", precio: null, moneda: "", modalidad: "", formato: "", organizador: "ADAC",
+      inscripcion_abierta: false, url: "https://chess-results.com/tnr1524022.aspx?lan=2", rondas: 7, jugadores: 39 };
+    const r = await abrir(browser, { width: 1400, height: 900 }, { externos: EXTERNOS.concat([cr]) });
+    const fila = r.page.locator('[data-externo="1524022"]');
+    ok(await fila.evaluate((x) => x.checkVisibility()), "sale con los demás");
+    igual("en su lugar del orden, por el día", await visibles(r.page), [903, 1524022, 904, 901]);
+    igual("lleva a chess-results, en otra pestaña", await fila.getAttribute("href"), "https://chess-results.com/tnr1524022.aspx?lan=2");
+    const texto = await fila.textContent();
+    ok(/En chess-results/.test(texto) && /abre chess-results\.com en otra pestaña/.test(texto), "dice de dónde viene (también al lector de pantalla)", texto);
+    ok(/En ajedrezcostarica\.com/.test(await r.page.textContent('[data-externo="901"]')), "y los otros, de dónde vienen ellos");
+    const d = await r.page.$eval('[data-externo="1524022"]', (x) => Object.fromEntries([...x.querySelectorAll(".tp-dato")].map((e) => [e.querySelector(".tp-dato-etiqueta").textContent, e.querySelector(".tp-dato-valor").textContent])));
+    ok(d.Inscritos === "39 inscritos" && !("Inscripción" in d) && !/Cerrada|Abierta/.test(texto), "sus inscritos, y nunca «Cerrada»: chess-results no dice si la inscripción está abierta", JSON.stringify(d));
+    igual("las rondas", d.Modalidad, "7 rondas");
+    igual("el día en Costa Rica", (await r.page.textContent('[data-externo="1524022"] .tp-fecha .sr-only')).trim(), "7 de noviembre de 2026.");
+    await r.page.check("#tp-f-abierta");
+    await igualLuego(r.page, "con «inscripción abierta» no sale (no se sabe)", () => visibles(r.page), [901]);
+    await r.page.uncheck("#tp-f-abierta");
+    const [descarga] = await Promise.all([r.page.waitForEvent("download"), r.page.click("#tp-externos-calendario")]);
+    const ics = require("fs").readFileSync(await descarga.path(), "utf8");
+    ok(/UID:chess-results-1524022@ajedrez-integral\.com/.test(ics) && /DTSTART;VALUE=DATE:20261107/.test(ics), "al calendario, con su propio UID y su día");
+    ok(!r.errores.length, "sin errores en la consola", r.errores.join(" | "));
+    await r.ctx.close();
+  }
 
   console.log("\n=== Sin la tabla ===");
   {

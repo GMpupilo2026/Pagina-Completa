@@ -108,3 +108,34 @@ export function correoSelloAdmin(cabecera: string, s: { organizacion: string; qu
     ].filter(Boolean), { texto: "Revisar la solicitud", url }),
   };
 }
+
+/** Seguir a un jugador por correo: confirmar antes de mandarle nada. */
+export function correoSeguirConfirmar(cabecera: string, jugador: string, url: string): Correo {
+  return {
+    asunto: "Confirma los avisos de «" + linea(jugador) + "» en Pareo Integral",
+    html: cuerpo(cabecera, [
+      `Pediste que te avisemos por correo cuando <strong>${escapar(jugador)}</strong> juegue en un torneo publicado en Pareo Integral: su mesa y su rival en cada ronda, y su puesto al terminar.`,
+      "El enlace vale 48 horas.",
+    ], { texto: "Sí, quiero los avisos", url }, "Si no fuiste tú, ignora este correo: sin confirmarlo, no te vamos a escribir nada más."),
+  };
+}
+
+// El pie de cada aviso: cómo dejar de recibirlos, con un enlace propio.
+const pieBaja = (url: string) =>
+  `¿Ya no quieres estos avisos? <a href="${escapar(url)}" style="color:#486581">Dejar de recibirlos</a>. Pareo Integral, de Ajedrez Integral.`;
+
+/** El aviso de una ronda nueva (la línea la arma avisos.ts). */
+export function correoAvisoRonda(cabecera: string, jugador: string, texto: string, url: string, baja: string): Correo {
+  return {
+    asunto: linea(texto, 150),
+    html: cuerpo(cabecera, [escapar(texto)], { texto: "Ver el torneo", url }, pieBaja(baja)),
+  };
+}
+
+/** El aviso del final del torneo. */
+export function correoAvisoFin(cabecera: string, jugador: string, texto: string, url: string, baja: string): Correo {
+  return {
+    asunto: linea(texto, 150),
+    html: cuerpo(cabecera, [escapar(texto)], { texto: "Ver la clasificación", url }, pieBaja(baja)),
+  };
+}

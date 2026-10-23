@@ -136,7 +136,9 @@ function respuestaLista(filas, orgs, hoy, a) {
     const x = { id: f.id, nombre: f.nombre, evento: f.evento || "", lugar: f.lugar || "", fecha: f.fecha || null, rondas: f.rondas || 0, rondas_total: f.rondas_total || 0,
       jugadores: f.jugadores || 0, actualizado: f.actualizado, organizador_id: f.organizador_id || null, ritmo: d.ritmo == null ? null : d.ritmo, fin: d.fechaFin == null ? null : d.fechaFin,
       fed: d.federacion == null ? null : d.federacion, sistema: d.sistema == null ? null : d.sistema, tipo: d.tipo == null ? null : d.tipo, inscripcion: d.inscripcion || null,
-      elo: d.validoElo == null ? null : d.validoElo, ritmo_tipo: d.ritmoTipo || null };
+      elo: d.validoElo == null ? null : d.validoElo, ritmo_tipo: d.ritmoTipo || null,
+      // Como la base: la que eligió quien organiza (el doble no deduce del lugar).
+      provincia: d.provincia || "" };
     const proximo = !x.jugadores || (!!x.fecha && x.fecha > hoy);
     x.en_curso = !proximo && x.rondas_total > 0 && x.rondas < x.rondas_total && (x.fin || x.fecha || "") >= ayer;
     const inscribe = !!(x.inscripcion && x.inscripcion.abierta && (!x.inscripcion.hasta || x.inscripcion.hasta >= hoy));
@@ -146,7 +148,7 @@ function respuestaLista(filas, orgs, hoy, a) {
   const cuales = marcadas.filter((m) => m.proximo === (a.p_parte === "proximos")
     && (!q || clavePareo([m.x.nombre, m.x.evento, m.x.lugar].filter(Boolean).join(" ")).includes(q))
     && (!a.p_ritmo || m.x.ritmo_tipo === a.p_ritmo)
-    && (!a.p_lugar || m.x.lugar === a.p_lugar)
+    && (!a.p_lugar || m.x.lugar === a.p_lugar || m.x.provincia === a.p_lugar)
     && (!a.p_elo || (a.p_elo === "sin" ? !["fide", "nacional"].includes(m.x.elo || "") : m.x.elo === a.p_elo))
     && (!a.p_abierta || m.inscribe) && (!a.p_curso || m.x.en_curso)
     && (!a.p_verificado || orgs.some((o) => o.id === m.x.organizador_id && o.verificado && !o.oculto)));

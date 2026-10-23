@@ -165,9 +165,33 @@
         $("ap-historial").replaceChildren(tabla(["Cuándo", "Qué", "Sobre qué", "Por qué"], filas, "Todavía no se hizo nada desde acá."));
     }
 
+    // public.pareo_cifras(): la cuenta la hace la base (solo para
+    // administración) y acá solo se pinta. Los meses van escritos en una tabla.
+    const MESES = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "setiembre", "octubre", "noviembre", "diciembre"];
+    const mesTexto = (m) => { const [a, n] = String(m).split("-"); return (MESES[Number(n) - 1] || n) + " de " + a; };
+    async function pintarCifras() {
+        const { data: c, error } = await window.sb.rpc("pareo_cifras");
+        if (error || !c) { $("ap-cifras").replaceChildren(el("p", { class: "text-sm", role: "alert", texto: error ? error.message : "Sin datos." })); return; }
+        const ext = c.externos || {};
+        const datos = [
+            ["Torneos publicados", c.torneos], ["Torneos ocultos", c.ocultos], ["Jugadores distintos", c.jugadores],
+            ["Organizaciones", c.organizadores], ["Organizaciones activas (90 días)", c.organizadores_activos], ["Con el sello «Verificado»", c.verificados],
+            ["Suscripciones confirmadas", c.suscripciones], ["Sin confirmar todavía", c.suscripciones_sin_confirmar], ["Personas que siguen a alguien", c.seguidores], ["Aparatos con avisos en el celular", c.aparatos],
+            ["Avisos mandados (30 días)", c.avisos_30_dias], ["Reportes por revisar", c.reportes_nuevos], ["Piden el sello", c.sellos_pendientes],
+            ["De ajedrezcostarica.com", ext.ajedrezcostarica || 0], ["De chess-results", ext["chess-results"] || 0],
+        ];
+        $("ap-cifras").replaceChildren(
+            el("dl", { id: "ap-cifras-numeros", class: "grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 mb-4" }, datos.map(([k, v]) => el("div", { class: "rounded-xl border border-brand-200 dark:border-brand-700 p-3", "data-cifra": k },
+                el("dt", { class: "text-xs font-semibold text-brand-600 dark:text-brand-300", texto: k }), el("dd", { class: "text-xl font-bold", texto: String(v == null ? 0 : v) })))),
+            el("h3", { class: "font-semibold mb-1", texto: "Torneos por mes (los últimos 12)" }),
+            tabla(["Mes", "Torneos", "Jugadores"], (c.por_mes || []).slice().reverse().map((m) => el("tr", { "data-mes": m.mes },
+                el("td", { texto: mesTexto(m.mes) }), el("td", { class: "num", texto: String(m.torneos) }), el("td", { class: "num", texto: String(m.jugadores || 0) }))),
+                "Ningún torneo publicado en los últimos 12 meses."));
+    }
+
     async function pintarTodo() {
         try { await leerOrganizaciones(); } catch (e) { organizaciones = []; }
-        await Promise.all([pintarReportes(), pintarOcultos(), pintarSello(), pintarHistorial()]);
+        await Promise.all([pintarCifras(), pintarReportes(), pintarOcultos(), pintarSello(), pintarHistorial()]);
         pintarOrganizaciones();
     }
 
