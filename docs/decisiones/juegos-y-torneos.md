@@ -3385,6 +3385,36 @@ Al tocar esto, `node herramientas/verificar-pareo-sala-evento.js`. Rompiendo a
 propósito la mesa física, la casilla de consentimiento, el llamado, el fin de
 la ronda o el aceptar, salta.
 
+### Pareo Integral: quien pierde por incomparecencia queda fuera
+
+Lo pidió el dueño del sitio: «cuando un jugador pierde por incomparecencia,
+que automáticamente quede fuera de las siguientes rondas hasta que el
+árbitro lo vuelva a cambiar». Es la práctica de FIDE: quien no se presenta
+sin avisar se retira del torneo.
+
+- **Dónde.** `T.retirosPorIncomparecencia(t)` (js/pareo/torneo.js), lógica
+  pura, corre en cada `guardar()` de pareo.html y al llegar un resultado de
+  un adjunto. Mira solo la **última** ronda: «-+» saca a las blancas, «+-» a
+  las negras y «--» a los dos, desde la ronda siguiente
+  (`retiradoDespuesDe`), con el aviso en pantalla y, en Jugadores, «Fuera
+  desde la ronda N (no se presentó)».
+- **Automático no es lo mismo que a mano.** El retiro lleva `retiroAuto`
+  (la ronda desde la que no juega). Si el resultado se corrige antes de
+  emparejar la siguiente, el retiro automático se deshace solo; uno a mano
+  nunca. Si el árbitro lo devuelve con «Vuelve a jugar», queda `vuelveTras`
+  (la ronda de esa incomparecencia) y esa misma ya no lo vuelve a sacar; una
+  nueva, sí.
+- **Solo la última ronda.** Corregir una ronda vieja, con otras ya
+  emparejadas, no saca ni devuelve a nadie: el árbitro decide.
+- **Todos contra todos.** El calendario de Berger es fijo: el retirado no se
+  quita de la ronda, su partida sale ya perdida sin jugar al emparejarla
+  («-+», «+-», o «--» si faltan los dos). Vale también para el retiro a
+  mano, que antes seguía apareciendo como una partida por jugar.
+- **Equipos, no.** Ahí la incomparecencia es de un tablero o del encuentro,
+  no de una persona del torneo.
+
+Lo comprueba `verificar-pareo-incomparecencia.js`.
+
 ### Torneos en Pareo Integral: seguir a un jugador
 
 Lo pidió el dueño del sitio (la 5 de una lista de propuestas): que un papá,

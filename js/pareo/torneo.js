@@ -15,7 +15,9 @@
  *     puntos: { victoria, tablas, derrota, bye },     bye = el que asigna el pareo
  *     desempates: ["BH-C1", "BH", "SB", …]            ver js/pareo/desempates.js
  *     jugadores: [{ id, nombre, sexo, titulo, elo, fed, fideId, nacimiento,
- *                   retiradoDespuesDe }],
+ *                   retiradoDespuesDe, retiroAuto, vuelveTras }],
+ *       (retiroAuto y vuelveTras: el retiro por incomparecencia, ver
+ *       retirosPorIncomparecencia)
  *     numeracion: [id…]   los números de emparejamiento, fijos desde la ronda 1
  *     rondas: [{ mesas: [{ b, n, r }], ausencias: { id: "H" | "Z" | "F" } }] }
  *
@@ -154,6 +156,36 @@
       if (j.retiradoDespuesDe != null && ronda >= j.retiradoDespuesDe) return false;
       return !(ausencias && ausencias[id]);
     });
+  }
+
+  // Quien pierde por incomparecencia («+-», «-+» o «--») en la última ronda
+  // queda fuera de las que siguen (Leyes del Ajedrez, art. 6.7 y la práctica
+  // de FIDE: el que no se presenta sin avisar se retira), hasta que el árbitro
+  // lo vuelva a poner. Se marca `retiroAuto` (la ronda desde la que no juega)
+  // para distinguirlo de un retiro a mano: si el resultado se corrige, el
+  // retiro automático se deshace; y si el árbitro lo devuelve (`vuelveTras`,
+  // la ronda de la incomparecencia), esa misma no lo vuelve a sacar.
+  // Muta el torneo; devuelve { fuera: [id…], vuelven: [id…] }.
+  function retirosPorIncomparecencia(t) {
+    const fuera = [], vuelven = [];
+    const L = t.rondas.length - 1;
+    if (L < 0) return { fuera, vuelven };
+    const pierde = new Set();
+    for (const m of t.rondas[L].mesas) {
+      if (m.n == null) continue;
+      if (m.r === "-+" || m.r === "--") pierde.add(m.b);
+      if (m.r === "+-" || m.r === "--") pierde.add(m.n);
+    }
+    for (const j of t.jugadores) {
+      if (pierde.has(j.id)) {
+        if (j.retiradoDespuesDe == null && j.vuelveTras !== L) { j.retiradoDespuesDe = L + 1; j.retiroAuto = L + 1; fuera.push(j.id); }
+      } else if (j.retiroAuto === L + 1 && j.retiradoDespuesDe === L + 1) {
+        j.retiradoDespuesDe = null;
+        delete j.retiroAuto;
+        vuelven.push(j.id);
+      }
+    }
+    return { fuera, vuelven };
   }
 
   // ---------- Todos contra todos: las tablas de Berger (C.05, Anexo 1) ----------
@@ -401,7 +433,7 @@
 
   const api = {
     PUNTOS_FIDE, TITULOS, nuevo, ordenInicial, fijarNumeracion, sortearNumeracion, sortearColor, numeros, situacion, puntos, puntosHasta,
-    rondaCompleta, participantes, berger, rondaTodos, rondasTodos, aTrf, leerPareo, deTrf,
+    rondaCompleta, participantes, retirosPorIncomparecencia, berger, rondaTodos, rondasTodos, aTrf, leerPareo, deTrf,
     // El formato de las columnas del TRF: lo usa también el TRF de equipos (js/pareo/equipos.js).
     formatoTrf: { izq, der, decimal, fechaTrf },
   };

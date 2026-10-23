@@ -95,6 +95,7 @@
 
   function guardar() {
     if (!estado.t) return;
+    if (!estado.deshaciendo) avisarRetiros(estado.t, retirosAuto(estado.t));
     V.marcarTiempos(estado.t, Date.now());
     const texto = JSON.stringify(estado.t);
     if (estado.ultimoGuardado && estado.ultimoGuardado !== texto && !estado.deshaciendo) {
@@ -720,7 +721,7 @@
         el("td", { texto: j.fed || "" }),
         el("td", { texto: j.fideId || "" }),
         el("td", { class: "num", texto: puntosTexto(T.puntos(v, id)) }),
-        el("td", { texto: retirado ? tx("retiradoDesde", { r: j.retiradoDespuesDe + 1 }) : tx("activo") }),
+        el("td", { texto: retirado ? tx(j.retiroAuto != null ? "retiradoIncomparecencia" : "retiradoDesde", { r: j.retiradoDespuesDe + 1 }) : tx("activo") }),
         el("td", { class: "whitespace-nowrap" },
           el("button", { type: "button", class: C.mini, "aria-label": tx("editarA", { n: j.nombre }), onclick: () => editarJugador(id) }, tx("editar")), " ",
           v.evento && !v.rondas.length ? el("button", { type: "button", class: C.mini, "aria-label": tx("moverA", { n: j.nombre }), onclick: () => moverDeTorneo(id) }, tx("mover")) : null, " ",
@@ -1602,6 +1603,16 @@
   }
 
   // Guardar un torneo del evento que puede no ser el abierto.
+  // Quien pierde por incomparecencia queda fuera de las rondas que siguen
+  // hasta que el árbitro lo vuelva a poner (js/pareo/torneo.js). En un torneo
+  // por equipos no: ahí la incomparecencia es de un tablero o del encuentro.
+  const retirosAuto = (v) => (E.esDeEquipos(v) ? { fuera: [], vuelven: [] } : T.retirosPorIncomparecencia(v));
+  function avisarRetiros(v, x) {
+    const nombres = (ids) => ids.map((id) => (v.jugadores.find((j) => j.id === id) || {}).nombre || "?").join(", ");
+    if (x.fuera.length) Avisos.avisar(tx("incomparecenciaFuera", { n: nombres(x.fuera), r: v.rondas.length + 1 }), { tipo: "info" });
+    if (x.vuelven.length) Avisos.avisar(tx("incomparecenciaVuelve", { n: nombres(x.vuelven) }), { tipo: "info" });
+  }
+
   function guardarDelEvento(tor) {
     if (tor === t() || tor.__id === estado.id) { guardar(); return true; }
     const ok = escribir(PREFIJO + tor.__id, JSON.stringify(tor));
@@ -2410,6 +2421,8 @@
     const v = t();
     if (j.retiradoDespuesDe != null) {
       j.retiradoDespuesDe = null;
+      // Lo sacó una incomparecencia: esa misma ya no lo vuelve a sacar.
+      if (j.retiroAuto != null) { j.vuelveTras = j.retiroAuto - 1; delete j.retiroAuto; }
       guardar();
       pintarJugadores();
       Avisos.avisar(tx("vuelve", { n: j.nombre }));
@@ -2678,7 +2691,7 @@
     }
     m.porAdjunto = true;
     if (v === t()) { guardar(); if (estado.ficha === "rondas" && estado.ronda === v.rondas.length - 1) pintarRondas(); }
-    else escribir(PREFIJO + estado.adjuntos.idTorneo, JSON.stringify(v));
+    else { avisarRetiros(v, retirosAuto(v)); escribir(PREFIJO + estado.adjuntos.idTorneo, JSON.stringify(v)); }
     Avisos.avisar(texto, { tipo: "info" });
     enviarAdjunto(codigo);
   }
@@ -4263,6 +4276,14 @@
     if (v.sistema === "todos") {
       if (v.jugadores.length < 2) throw new Error(tx("pocosJugadores"));
       ronda = T.rondaTodos(v, r);
+      // En todos contra todos el calendario es fijo: el retirado no se saca
+      // de la ronda, pierde su partida sin jugarla (y si faltan los dos, «--»).
+      const fuera = (id) => { const j = v.jugadores.find((x) => x.id === id); return !!j && j.retiradoDespuesDe != null && r >= j.retiradoDespuesDe; };
+      if (!E.esDeEquipos(v)) for (const m of ronda.mesas) {
+        if (m.n == null) continue;
+        const fb = fuera(m.b), fn = fuera(m.n);
+        if (fb || fn) m.r = fb && fn ? "--" : fb ? "-+" : "+-";
+      }
     } else {
       const juegan = T.participantes(v, r, pedidas);
       if (juegan.length < 2) throw new Error(tx("pocosJugadores"));
