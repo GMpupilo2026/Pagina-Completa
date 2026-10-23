@@ -8542,8 +8542,11 @@ Es una página estática, sin cuenta y sin base: nada se guarda.
 - **Nueve fichas, tres por fila**: «Contacta a la organización» ya no es
   ficha, porque la abre la despedida del pizote al final, y el correo de la
   organización va dentro de esa ventana, debajo de las tres personas. En el
-  celular, de a dos, la última ficha («Cómo llegar») ocupa la fila entera para
-  que no quede una sola. Arriba, cada ficha lleva la bandera de Costa Rica
+  celular, de a dos, la última ficha ocupa la fila entera para que no quede
+  una sola. **Van ordenadas por lo que más se usa**, como pidió el dueño:
+  Bases, Pedir un bye, Resultados en vivo, Partidas en vivo y Calendario de
+  rondas; después Reglamento, Grupo de WhatsApp, Cómo llegar y, al final,
+  Hoteles oficiales (para cuando ya se está en el torneo, casi no se usa). Arriba, cada ficha lleva la bandera de Costa Rica
   (1-1-2-1-1, con sus colores oficiales) y una fila de casillas de tablero; el
   color de las bases queda en el ícono.
 - **Las bases las sirve el propio sitio**, tal cual las publicó la FCA, en
