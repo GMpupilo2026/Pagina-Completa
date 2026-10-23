@@ -61,9 +61,12 @@ function pruebaSinNavegador() {
   igual("las rondas con sus resultados", d.rondas[0].mesas[0], { b: "TOa", n: "TOd", r: "1-0" });
   const conElo = Object.assign(torneo("PRUEBA ELO", false), { validoElo: "nacional" });
   igual("y si da Elo (la columna de la lista)", [PP.datosPublicos(conElo).validoElo, d.validoElo], ["nacional", ""]);
+  igual("y el ritmo deducido del control, con el que filtra la lista (js/ritmo-control.js)",
+    [PP.datosPublicos(Object.assign(torneo("PRUEBA R1", false), { ritmo: "3 + 2" })).ritmoTipo, d.ritmoTipo, PP.datosPublicos(Object.assign(torneo("PRUEBA R2", false), { ritmo: "" })).ritmoTipo], ["blitz", "rapido", ""]);
   // La función vuelve a limpiar lo que llega: el campo tiene que estar en su lista.
   const fn = require("fs").readFileSync(require("path").join(__dirname, "..", "supabase/functions/pareo-publicar/index.ts"), "utf8");
   ok(/validoElo: \["fide", "nacional", "no"\]\.includes\(v\.validoElo/.test(fn), "la función pareo-publicar lo guarda (sin eso se pierde al publicar, callado)");
+  ok(/ritmoTipo: \["clasico", "rapido", "blitz"\]\.includes\(v\.ritmoTipo/.test(fn), "y el ritmo (sin eso, el filtro de ritmo de la lista no encuentra nada)");
   // Las pruebas abren Pareo Integral en localhost y la publicación es
   // automática: sin este candado cada corrida del CI llenaba la lista pública.
   ok(/req\.headers\.get\("origin"\) !== SITE_URL\) return json\(/.test(fn) && fn.indexOf('get("origin") !== SITE_URL') < fn.indexOf("await req.text()"),
@@ -179,13 +182,16 @@ async function pruebaPagina(browser) {
   page.on("pageerror", (e) => errores.push(String(e)));
   await page.clock.install();
   const pedidos = await dobleTabla(page, filas);
+  const deLaLista = await P.dobleListaPareo(page, filas);
   await page.goto(BASE + "/torneos-pareo.html", { waitUntil: "networkidle" });
   await page.waitForSelector("#tp-lista li");
   igual("la lista trae los dos, el más reciente primero", await page.$$eval("#tp-lista [data-torneo]", (l) => l.map((a) => a.dataset.torneo.slice(0, 1))), ["1", "2"]);
   igual("cada uno dice cómo va y cuántos son", await page.$eval("#tp-lista li", (li) => ["participantes", "rondas"].map((c) => li.querySelector('[data-col="' + c + '"] .tp-dato-valor').textContent)), ["6", "1/3"]);
   await page.fill("#tp-buscar", "sub-14");
-  igual("el buscador filtra (sin importar mayúsculas)", await page.$$eval("#tp-lista li", (l) => l.length), 1);
+  await page.waitForFunction(() => document.querySelectorAll("#tp-lista li").length === 1);
+  ok(deLaLista.some((x) => x.p_buscar === "sub-14"), "el buscador filtra (sin importar mayúsculas), en la base");
   await page.fill("#tp-buscar", "");
+  await page.waitForSelector('#tp-lista [data-torneo^="1"]');
   await page.click('#tp-lista [data-torneo^="1"]');
   await page.waitForSelector("#tp-tabla-clas");
   igual("abre en la clasificación, con el foco en el título", await page.evaluate(() => document.activeElement.id), "tp-titulo");

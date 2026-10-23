@@ -46,6 +46,9 @@ const VIGILADAS = [
   // Las licencias de las herramientas de arbitraje: quién recibió cuál, y
   // quién la anuló o le cambió el vencimiento.
   "licencias_herramientas",
+  // El sello «Organizador verificado» de Pareo Integral: lo da (o lo quita)
+  // solo administración, y ocultar un torneo o una organización también.
+  "pareo_organizadores",
 ];
 
 let fallos = 0;

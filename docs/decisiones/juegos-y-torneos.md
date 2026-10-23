@@ -3615,6 +3615,48 @@ en columnas.
 
 Lo comprueba `verificar-pareo-lista.js`.
 
+### Repetir un evento, el QR de cada mesa y el repaso antes de emparejar
+
+Lo pidió el dueño del sitio para que el día del torneo se trabaje más rápido.
+
+- **«Repetir este evento»** (ficha Archivos, en el evento) arma uno nuevo con
+  los mismos torneos. Cada torneo se copia **campo por campo**, de una lista
+  (`COPIA_REPETIR` en `js/pareo/pagina.js`): ritmo, sistema, rondas, puntos,
+  desempates, si da Elo, la mesa de la sala, el plazo de los capitanes y la
+  configuración de los JDE.
+  - Nunca se copia el torneo entero: lo que pasó ese día (jugadores, rondas,
+    fechas, actas, firmas, publicación, adjuntos, decisiones del congresillo)
+    no viaja, y lo que se agregue al torneo en el futuro tampoco, salvo que
+    se ponga en la lista.
+  - El horario del día (hora de inicio y descanso) pasa al evento nuevo.
+  - El año: en los JDE, `jde.anio` es el de hoy y los nombres se vuelven a
+    armar con `G.nombreEventoJde`. En los demás, el año viejo escrito en el
+    nombre se cambia por el nuevo.
+  - El evento viejo no se toca.
+- **«Rótulos de mesa con QR»** (en «Las mesas de la sala»): un rótulo por
+  mesa, seis por hoja, con el número grande (el de la sala, `V.mesaFisica`),
+  la categoría y un QR a `pareo.html#mesa=<n>`.
+  - El QR no lleva el código de ningún adjunto. Lo que sabe a qué adjunto
+    llevar es su celular: la página del adjunto guarda su enlace
+    (`pareo_adjunto_ultimo_v1`, 16 horas) y `#mesa=` lo abre con `&ir=<n>`.
+  - La mesa queda marcada (el borde grueso y «Mesa 12.» escrito), a la vista
+    y con el foco.
+  - Sin enlace guardado, dice que primero se abra el del principal.
+  - Lo mismo a mano: «Ir a la mesa» arriba de sus mesas.
+  - Lo anota el adjunto, nunca el jugador: no choca con lo descartado para
+    siempre.
+- **El repaso antes de emparejar**: si en la ronda anterior quedó una
+  sorpresa de Elo o una diferencia con un adjunto que nadie miró, o un nombre
+  está dos veces en la lista (sin importar mayúsculas, tildes ni espacios),
+  «Emparejar la ronda N» lo dice antes.
+  - Se elige «Revisar primero» o «Emparejar igual»: es un aviso, nunca
+    bloquea.
+  - Sin nada que revisar, empareja sin preguntar.
+  - En las pruebas, `autoConfirmarCambios` de `herramientas/lib/pareo-pruebas.js`
+    lo acepta solo, como el cambio de un resultado.
+
+Lo comprueba `verificar-pareo-repetir.js`.
+
 ### Las pruebas no publican
 
 Con la publicación automática (ver «Torneos en Pareo Integral: todo torneo se
@@ -3638,6 +3680,141 @@ SUB-10», «Mujeres · inter»…), y se borraron todos a pedido del dueño.
 - En la máquina y en el CI, la publicación falla callada (y se reintenta cada
   minuto), como cuando no hay red: el resto de Pareo Integral no cambia.
 
+### Torneos en Pareo Integral: la lista de 50 en 50
+
+Lo pidió el dueño del sitio (la 8 de una lista de propuestas). Antes la
+portada se bajaba la tabla entera, de mil en mil, y filtraba en el
+navegador. Con un año de torneos publicados eso son miles de filas en cada
+visita.
+
+- **La lista la arma la base**: `public.pareo_lista` hace la búsqueda, los
+  filtros, el orden y la página. Es `SECURITY INVOKER` y la llama anon, así
+  que la RLS de siempre se aplica: lo oculto no sale, y el sello se mira en
+  `pareo_organizadores` con su propia RLS.
+- **De 50 en 50 GRUPOS, no filas.** Los torneos de un mismo evento y un
+  mismo día van juntos en una fila que se despliega: una página que cortara
+  un evento por la mitad lo mostraría partido, con la mitad de sus
+  participantes.
+  - Los próximos (del más cercano) y los jugados (del más reciente) se piden
+    por separado, cada uno con su «Ver más», que dice cuántos van de
+    cuántos.
+  - Al traer más, el foco se queda en «Ver más» o, si ya no quedan, pasa al
+    último torneo.
+- **La búsqueda** compara sin tildes, en mayúsculas y con un espacio entre
+  palabras (`public.pareo_clave`, lo mismo que `clave()` de la página).
+  - Busca con `position`, no con `like`: un `%` o un `_` escrito no es un
+    comodín.
+  - Se manda 300 ms después de dejar de escribir, no con cada letra.
+  - Una respuesta que llega tarde, porque ya se pidió otra cosa, no se pinta.
+- **El ritmo** (clásico, rápido, relámpago) no se puede deducir en la base
+  sin copiar la cuenta de `js/ritmo-control.js`. Por eso lo deduce el
+  navegador al publicar y viaja en `datos.ritmoTipo`.
+  - La Edge Function lo vuelve a limpiar; sin esa línea, el filtro no
+    encontraría nada, sin ningún error (`verificar-pareo-publicar.js` lee el
+    código de la función).
+  - Cuando se hizo no había ningún torneo publicado (se habían borrado los de
+    prueba), así que no hubo filas viejas que rellenar.
+- **Lo que la portada necesita entero** (cuántos hay publicados y los
+  lugares, para el filtro) sale de `public.pareo_lista_resumen`.
+- Comprobado contra la base, con torneos de prueba en una transacción
+  deshecha:
+  - un evento no se parte entre páginas;
+  - lo oculto no cuenta;
+  - la búsqueda ignora tildes y espacios dobles, y `50%_` no encuentra nada;
+  - cada filtro deja lo que debe.
+- En los verificadores la llama un doble (`dobleListaPareo` en
+  `herramientas/lib/pareo-pruebas.js`) que filtra, agrupa y pagina igual
+  que la función.
+
+Lo comprueba `verificar-pareo-lista.js`:
+- los filtros y la búsqueda viajan en el pedido;
+- la búsqueda se manda una vez al dejar de escribir;
+- «Ver más» trae los que faltan sin repetir ninguno;
+- la tabla nunca se baja entera.
+
+### Torneos en Pareo Integral: el organizador y la moderación
+
+Lo pidió el dueño del sitio (la 4, la 5, la 6 y la 7 de una lista de
+propuestas), para que la lista pública se vea profesional y se pueda limpiar
+sin borrar nada.
+
+- **«Tu organización»** (ficha Archivos de `pareo.html`) es el nombre y el
+  logo de quien organiza. Es **sin cuenta**, como los torneos:
+  - La crea la Edge Function `pareo-publicar` (`accion: "organizador"`), que
+    devuelve una clave secreta. La guarda el navegador
+    (`pareo_organizador_v1`) y en la base queda solo su sha256
+    (`pareo_organizadores.clave_hash`, que ninguna columna pública deja leer).
+  - Con la clave se cambia el nombre o el logo, y cada torneo que se publica
+    o se pone al día desde ese navegador va con `organizador: { id, clave }`
+    y queda a su nombre (`pareo_publicados.organizador_id`). Al guardarla,
+    los torneos ya publicados se ponen al día en el momento.
+  - Para otra computadora, «Copiar el código» (`org:<id>:<clave>`) y «Ya
+    tengo una organización» para pegarlo.
+  - **Sin tocar el logo, el pedido NO lleva `logo`**: la función entiende
+    «sin `logo`» como dejar el que está y `logo: null` como quitarlo. Un
+    `logo: null` mandado por costumbre borraba el logo cada vez que se
+    cambiaba el nombre, sin ningún error.
+- **El logo va en la fila**, como imagen chica en base64 (`data:image/…`):
+  así no hace falta un bucket público ni otra vía de subida sin cuenta.
+  - Lo achica el navegador (`js/imagen-achicar.js`, la misma copia que el
+    logo de las academias), primero a 400 px y si pesa a 200.
+  - La función y la tabla vuelven a mirar el formato y el tope de 200 000
+    caracteres.
+  - La página pública solo pone en un `<img>` un texto que empiece con
+    `data:image/png|jpeg|webp;base64,` (`logoValido`).
+  - La lista nunca pide el logo, porque pesa: pide nombre y sello de todos
+    los organizadores de una vez (de cien en cien) y el logo solo en la
+    ficha de un torneo y en la página del organizador.
+- **En los PDF** (clasificación, tabla cruzada, acta, informe, premiación)
+  sale arriba el nombre y el logo de la organización (`cabecera` de
+  `js/reporte-pdf.js`, armada por `conOrganizacion`). La marca de agua sigue
+  siendo la de Ajedrez Integral.
+- **La página de cada organizador**, `torneos-pareo.html#o=<id>`: su logo,
+  su nombre, el sello y todos sus torneos publicados, por día. Los pide a la
+  base por su id; no filtra la lista entera.
+- **El sello «Verificado»** lo da solo quien administra: no se pide. Va a
+  federaciones, comités y organizadores de confianza.
+  - Va escrito («✓ Verificado»), no solo con un color.
+  - Sale en la lista, en la ficha y en su página.
+  - La lista se filtra con «Solo organizadores verificados».
+  - La función `pareo-publicar` nunca escribe `verificado`
+    (`verificar-pareo-organizador.js` lo revisa en su código).
+- **«Reportar este torneo»** (en la ficha de cada torneo) pide el motivo
+  (inapropiado, datos personales, falso o de prueba, un error, otra cosa) y
+  un detalle opcional.
+  - Va por la función (`accion: "reportar"`), con su freno
+    (`pareo_reportar_frenar`: 10 por conexión por hora, 300 en total).
+  - No guarda quién lo mandó.
+  - `pareo_reportes` la lee solo administración: anon no tiene ni el
+    `select`.
+- **`admin-pareo.html`** («Moderación de Pareo Integral», en
+  `js/paginas-admin.js`) muestra los reportes nuevos, las organizaciones y
+  los torneos ocultos.
+  - Todo lo escribe **una sola función**, `public.pareo_moderar(p_que,
+    p_id)`: verificar o quitar el sello, ocultar o mostrar una organización
+    o un torneo, y marcar revisado un reporte.
+  - Valida `coalesce(soy_admin(), false)` y devuelve la fila vuelta a leer.
+  - Ninguna de las tres tablas tiene política de escritura.
+- **Ocultar no borra.** Una fila con `oculto` deja de verse para todos menos
+  administración: la política de lectura es `not oculto or soy_admin()`.
+  Ocultar una organización esconde su página y su nombre en la lista; sus
+  torneos siguen, sin nombre.
+- **Queda anotado**: el sello y ocultar pasan por `interno.auditar()`
+  (`pareo_organizadores` está en `VIGILADAS` de `verificar-auditoria.js`, y
+  `pareo_publicados` lleva `auditar_oculto`).
+- Comprobado impersonando roles en SQL, en una transacción deshecha:
+  - anon no ve lo oculto;
+  - anon no puede leer `pareo_reportes` (sin permiso) ni llamar a
+    `pareo_moderar`;
+  - un usuario que no administra recibe «Solo administración…»;
+  - quien administra da el sello y queda una fila en la bitácora.
+
+Lo comprueba `verificar-pareo-organizador.js`: la organización en
+`pareo.html` (crear, cambiar sin `logo`, quitarlo, el código, el PDF y el
+torneo publicado a su nombre), la lista pública (nombre, sello, filtro, que
+nunca pida el logo ni la clave, texto ajeno), la ficha con el logo,
+«Reportar», la página del organizador y `admin-pareo.html`.
+
 ### Torneos en Pareo Integral: válido para Elo, filtros, calendario y la tarjeta al compartir
 
 Lo pidió el dueño del sitio (la 1, la 3, la 5 y la 7 de una lista de propuestas).
@@ -3657,8 +3834,8 @@ Lo pidió el dueño del sitio (la 1, la 3, la 5 y la 7 de una lista de propuesta
   - «Inscripción abierta» y «Solo en curso».
   
   Filtrando, los eventos se abren solos, como al buscar, y «Quitar filtros»
-  los quita todos. Todo se filtra en el navegador: la lista ya está entera
-  en la página.
+  los quita todos. Los filtros los aplica la base (ver «Torneos en Pareo
+  Integral: la lista de 50 en 50»).
 - **«Agregar a mi calendario»** está en la ficha de cada torneo que no
   terminó. Baja un `.ics` de días enteros, del primero al último incluidos
   (el formato pide el día siguiente como fin), con un aviso la víspera.
