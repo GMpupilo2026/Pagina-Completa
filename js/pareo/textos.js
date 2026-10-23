@@ -780,6 +780,13 @@
     atajosAyuda: ["En cada resultado: 1 gana blancas, 0 gana negras, = tablas; salta solo a la siguiente. Enter en el buscador va a la primera mesa que coincide.", "On each result: 1 White wins, 0 Black wins, = draw; it moves on to the next one. Enter in the search box goes to the first matching table."],
     // Los capitanes
     capitanesBoton: ["Enlaces de los capitanes", "Captain links"],
+    capitanMensaje: ["Capitán de {e}: con este enlace confirmas desde tu celular quiénes juegan por tu equipo en la ronda {r} de {t}. {u}", "Captain of {e}: with this link you confirm from your phone who plays for your team in round {r} of {t}. {u}"],
+    capitanAsunto: ["Alineación de {e} para la ronda {r}", "{e} line-up for round {r}"],
+    capitanWhatsapp: ["Mandar por WhatsApp", "Send by WhatsApp"],
+    capitanWhatsappA: ["Mandar por WhatsApp el enlace del capitán de {e}", "Send the {e} captain's link by WhatsApp"],
+    capitanCorreo: ["Mandar por correo", "Send by email"],
+    capitanCorreoA: ["Mandar por correo el enlace del capitán de {e}", "Send the {e} captain's link by email"],
+    capitanCopiarA: ["Copiar el mensaje para el capitán de {e}", "Copy the message for the {e} captain"],
     capitanesAyuda: ["Cada capitán abre el de su equipo en su celular, marca a los que juegan y lo confirma. Llega acá mientras esta pestaña esté abierta, y solo antes de anotar algún tablero de su encuentro.", "Each captain opens their team's link on their phone, ticks who plays and confirms. It arrives here while this tab stays open, and only before any board of their match is entered."],
     capitanConfirmo: ["Confirmada por el capitán a las {h}", "Confirmed by the captain at {h}"],
     capitanLlego: ["El capitán de {e} confirmó la alineación.", "The {e} captain confirmed the line-up."],

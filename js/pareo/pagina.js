@@ -3182,10 +3182,23 @@
       const codigo = (v.capitanes || {})[idE];
       if (!e || !codigo) continue;
       const url = location.origin + location.pathname + "#capitan=" + codigo;
+      // Mandárselo al capitán: por WhatsApp o por correo (el teléfono y el
+      // correo los pone quien lo manda; Pareo no los guarda), o copiarlo.
+      const mensaje = tx("capitanMensaje", { e: e.nombre, r: v.rondas.length, t: v.grupo || v.nombre || "", u: url });
+      const copiar = el("button", { type: "button", class: C.mini, "data-capitan-copiar": idE, "aria-label": tx("capitanCopiarA", { e: e.nombre }) }, tx("copiarEnlace"));
+      copiar.addEventListener("click", async () => {
+        try { await navigator.clipboard.writeText(mensaje); Avisos.avisar(tx("enlaceCopiado")); }
+        catch (err) { Avisos.avisar(tx("noCopia"), { tipo: "error" }); }
+      });
       lista.append(el("div", { class: "rounded-xl border border-brand-200 dark:border-brand-700 p-3", "data-capitan-equipo": idE },
         el("h4", { class: "font-semibold", texto: e.nombre }),
         el("div", { class: "w-28 bg-white p-2 rounded-lg mt-2" }, PareoQr.svg(url, tx("qrEtiqueta"))),
-        el("p", { class: "pi-capitan-url text-xs break-all mt-2 font-mono", texto: url })));
+        el("p", { class: "pi-capitan-url text-xs break-all mt-2 font-mono", texto: url }),
+        el("div", { class: "flex flex-wrap gap-2 mt-2" },
+          el("a", { href: PareoCompartir.enlaceWhatsapp(mensaje), target: "_blank", rel: "noopener", class: C.mini, "data-capitan-whatsapp": idE, "aria-label": tx("capitanWhatsappA", { e: e.nombre }) }, tx("capitanWhatsapp")),
+          el("a", { href: "mailto:?subject=" + encodeURIComponent(tx("capitanAsunto", { e: e.nombre, r: v.rondas.length })) + "&body=" + encodeURIComponent(mensaje),
+            class: C.mini, "data-capitan-correo": idE, "aria-label": tx("capitanCorreoA", { e: e.nombre }) }, tx("capitanCorreo")),
+          copiar)));
     }
     cont.replaceChildren(el("p", { class: C.nota, texto: tx("capitanesAyuda") }), lista);
   }

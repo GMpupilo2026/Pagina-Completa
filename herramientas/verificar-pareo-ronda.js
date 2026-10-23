@@ -179,6 +179,10 @@ async function pruebaEvento(browser) {
   const eqOtro = t.jugadores.find((e) => e.id === idE);
   const url = await page.textContent(`[data-capitan-equipo="${idE}"] .pi-capitan-url`);
   const codigo = url.split("#capitan=")[1];
+  // Mandárselo al capitán: WhatsApp y correo llevan el mensaje con su enlace.
+  const wa = decodeURIComponent((await page.getAttribute(`[data-capitan-whatsapp="${idE}"]`, "href")).split("text=")[1]);
+  const correo = await page.getAttribute(`[data-capitan-correo="${idE}"]`, "href");
+  ok(wa.includes(url) && wa.includes(eqOtro.nombre) && /^mailto:\?subject=/.test(correo) && decodeURIComponent(correo).includes(url), "el enlace del capitán se manda por WhatsApp o por correo, con su mensaje", wa + " | " + correo);
   const canal = "pareo-capitan-" + codigo;
   await page.waitForFunction((c) => window.__enviados.some((x) => x.canal === c && x.evento === "estado"), canal);
   const estado = await page.evaluate((c) => window.__enviados.filter((x) => x.canal === c && x.evento === "estado").pop().payload, canal);
