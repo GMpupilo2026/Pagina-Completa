@@ -442,6 +442,11 @@
     for (const k of ["nombre", "ciudad", "federacion", "fechaInicio", "fechaFin", "arbitro", "arbitroAdjunto", "ritmo", "rondasTotales", "colorInicial"]) {
       f.elements[k].value = v[k] == null ? "" : v[k];
     }
+    // El nombre de un torneo de los JDE es el oficial del evento (etapa y
+    // lugar, igual para todos): no se escribe a mano. Se corrige volviendo a
+    // elegir la etapa con «Aplicar la configuración de los JDE».
+    f.elements.nombre.readOnly = !!v.jde;
+    $("pi-nombre-jde").hidden = !v.jde;
     f.elements.baku.checked = !!v.baku;
     f.elements.dobleVuelta.checked = !!v.dobleVuelta;
     for (const r of f.querySelectorAll('input[name="sistema"]')) {
@@ -549,6 +554,7 @@
     const v = t();
     const n = e.target.name;
     if (!n) return;
+    if (n === "nombre" && v.jde) { e.target.value = v.nombre || ""; return; }
     if (n === "sistema") { if (v.rondas.length === 0) v.sistema = e.target.value; }
     else if (n === "baku" || n === "dobleVuelta") v[n] = e.target.checked;
     else if (n === "rondasTotales") {

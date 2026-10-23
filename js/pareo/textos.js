@@ -129,6 +129,7 @@
 
     datosTorneo: ["Datos del torneo", "Tournament details"],
     nombreTorneo: ["Nombre del torneo", "Tournament name"],
+    nombreJdeFijo: ["Es el nombre oficial de los JDE, igual para todos: lo ponen la etapa y el lugar. Para corregirlo, «Aplicar la configuración de los JDE» (antes de la ronda 1).", "It is the official JDE name, the same for everyone: the stage and place set it. To fix it, use “Apply the JDE settings” (before round 1)."],
     ciudad: ["Ciudad", "City"],
     federacion: ["Federación (código FIDE, p. ej. CRC)", "Federation (FIDE code, e.g. CRC)"],
     fechaInicio: ["Fecha de inicio", "Start date"],
