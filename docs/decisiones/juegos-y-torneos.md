@@ -8166,6 +8166,10 @@ Es una página estática, sin cuenta y sin base: nada se guarda.
   marca de agua de Ajedrez Integral**, que es para lo que sale de nuestros
   generadores. Los enlaces del grupo de WhatsApp, el correo y chess-results
   salen del mismo PDF o los dio el dueño.
+- **El logo de la FCA sale de la portada de las bases**, recortado tal cual
+  (`img/fca-logo.png`, 147 × 183): no se redibuja. Va en la cabecera, sobre una
+  tarjeta blanca como en las bases, con su nombre escrito debajo y su `alt`. Si
+  la Federación pasa uno en más resolución (PNG o SVG), se cambia ese archivo.
 - **El calendario, los precios del paquete y el reglamento se copian de las
   bases**, no se resumen de memoria. Los días de la semana se comprobaron con
   el calendario (el 1 de noviembre de 2026 es domingo).
@@ -8179,12 +8183,38 @@ Es una página estática, sin cuenta y sin base: nada se guarda.
 - **Arriba de la lista va que la reserva se hace con la organización**: una
   reserva directa con el hotel paga 200 USD de penalidad según las bases. Sin
   ese aviso, un teléfono de hotel en la página invitaba justo a lo que cuesta.
-- **Una ficha sin enlace todavía dice «Pronto»** (el formulario del bye y la
-  transmisión de las partidas): sin `href`, con `tabindex="0"` y
+- **Las bases, el bye y los resultados se abren encima, sin salir de la
+  página** (lo pidió el dueño): `js/ventana-enlace.js` toma todo
+  `<a data-ventana="Título">` y lo abre en un `<dialog>` con un marco, «Abrir en
+  otra pestaña» y «Cerrar» (Escape y el fondo también cierran; el foco vuelve a
+  la ficha). Sin JavaScript, o con Ctrl/⌘/Mayús, el enlace hace lo de siempre.
+  Lo que se abre ahí tiene que estar en `frame-src` de `_headers` (se sumaron
+  `forms.gle`, `docs.google.com` y chess-results) y el sitio de afuera tiene que
+  dejarse enmarcar, cosa que la página no puede saber: por eso «Abrir en otra
+  pestaña» va siempre. El formulario del bye es de la organización (Google
+  Forms) y la política de privacidad lo dice. WhatsApp, el correo y los mapas
+  siguen yéndose afuera: no se dejan mostrar dentro de otra página.
+- **Toda la información va en fichas, no desplegada** (lo pidió el dueño: quien
+  busca algo puntual no tiene que pasar por todo lo demás). El reglamento, el
+  calendario, los hoteles y los contactos son `<dialog class="ficha-dialogo">`
+  ya escritos en el HTML, cerrados hasta que se toca su ficha; cualquier enlace
+  a su `#id` (la ficha, el menú, el pie) los abre encima, y entrar con `#hoteles`
+  en la dirección también. En el celular las fichas van de dos en dos, sin la
+  descripción, para que quepan más.
+- **«Contacta a la organización»** lleva a `#contacto`: la árbitra principal,
+  la organizadora y el árbitro de pareo, cada uno con su cargo, su teléfono y su
+  WhatsApp. Los nombres completos salen del Comité organizador de las bases; los
+  teléfonos y las fotos, del dueño (`img/centroamericano-2026/`, recortadas a
+  la cara, 240 × 240). Quien no tiene foto todavía lleva sus iniciales en el
+  círculo (`data-foto`): no se pone una cara que no sea la de la persona.
+- **Una ficha sin enlace todavía dice «Pronto»** (hoy, la transmisión de las
+  partidas; el bye ya tiene su formulario): sin `href`, con `tabindex="0"` y
   `aria-disabled="true"`, como toda tarjeta apagada del sitio. Cuando llegue el
   enlace se cambia el `<div>` por un `<a>` igual al de las otras fichas.
 
 `herramientas/verificar-centroamericano.js` lo revisa: que el PDF exista, que
 cada ficha tenga enlace o vaya apagada como corresponde, que lo que se abre en
 otra pestaña lleve `rel="noopener"`, que el calendario tenga las nueve rondas y
-que ningún teléfono aparezca sin estar en la lista de los confirmados.
+que ningún teléfono aparezca sin estar en la lista de los confirmados, que cada
+enlace de la ventana esté permitido en `frame-src` y, en el navegador, que la
+ventana se abra encima sin cambiar de página y devuelva el foco al cerrar.

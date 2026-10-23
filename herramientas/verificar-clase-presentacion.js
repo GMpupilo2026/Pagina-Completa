@@ -843,7 +843,17 @@ async function pruebaPantallaCompletaTodos(browser) {
     return t !== "none" && r.height > r.width;
   });
   cierto("en el celular parado, la diapositiva se gira de lado (es ancha)", await girada());
-  cierto("y en el tablero pequeño cada pieza cabe en su casilla", await piezasCaben());
+  // Las piezas se miden un instante después de que aparece el tablero pequeño: con el
+  // CI cargado, leerlas enseguida fallaba a veces. Si en 3 s no caben, sigue fallando.
+  const caben = await page.waitForFunction(() => {
+    const m = document.getElementById("presentacion-mini");
+    const pz = [...m.querySelectorAll("[data-square] > span")];
+    return pz.length > 0 && pz.every((p) => {
+      const a = p.getBoundingClientRect(), c = p.parentElement.getBoundingClientRect();
+      return a.left >= c.left - 1 && a.right <= c.right + 1 && a.top >= c.top - 1 && a.bottom <= c.bottom + 1;
+    });
+  }, null, { timeout: 3000 }).then(() => true, () => false);
+  cierto("y en el tablero pequeño cada pieza cabe en su casilla", caben);
   cierto("el tablero pequeño no queda diminuto (más de 150 px)", await page.evaluate(() =>
     document.getElementById("presentacion-mini").getBoundingClientRect().width > 150));
   await page.setViewportSize({ width: 844, height: 390 });
