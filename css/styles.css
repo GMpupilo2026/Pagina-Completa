@@ -2245,3 +2245,8 @@ body.pi-sorteo-abierto { overflow: hidden; }
 .pi-est-negras { background: rgb(var(--c-brand-800)); }
 .dark .pi-est-negras { background: rgb(var(--c-brand-950)); outline: 1px solid rgb(var(--c-brand-500)); }
 .pi-est-tablas { background: rgb(var(--c-accent-500)); }
+/* torneos-pareo.html: la fila de un jugador que sigo. La marca es la
+   franja y la estrella escrita (★, con «lo sigues» para el lector): el texto
+   no cambia de color, así que el contraste es el de siempre. */
+.pi-tabla tr.tp-seguido > td:first-child { box-shadow: inset 4px 0 0 rgb(var(--c-accent-500)); }
+.pi-tabla tr.tp-seguido > td { font-weight: 600; }

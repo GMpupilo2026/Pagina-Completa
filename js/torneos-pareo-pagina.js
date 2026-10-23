@@ -19,6 +19,10 @@
      manda va a la Edge Function y lo ve solo quien organiza.
    - «Estadísticas»: blancas, negras y tablas, las sorpresas y los mejores
      rendimientos; y las partidas que el árbitro subió en PGN, en un tablero.
+   - «Seguir a un jugador»: sin cuenta, los nombres que se siguen quedan en
+     este navegador (localStorage) y nunca viajan; la página los pone arriba
+     en cada torneo donde juegan (su puesto y su mesa de la ronda) y en la
+     portada, con sus últimos torneos publicados.
 
    Ver «Torneos en Pareo Integral: el espacio público» y «Torneos en Pareo
    Integral: inscripción, anuncios, partidas y estadísticas» en
@@ -60,6 +64,33 @@
   // El día de hoy en Costa Rica (AAAA-MM-DD): para separar los próximos.
   const hoy = () => (window.HoraCR ? HoraCR.hoy() : new Intl.DateTimeFormat("en-CA", { timeZone: "America/Costa_Rica" }).format(new Date()));
   const clave = (s) => String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toUpperCase().replace(/\s+/g, " ").trim();
+
+  // ---------- Los jugadores que sigo ----------
+  // El nombre tal como lo escribió el árbitro: es el mismo criterio con que
+  // la ficha busca los otros torneos del jugador (la búsqueda es exacta).
+  const CLAVE_SEGUIDOS = "torneos-pareo.seguidos";
+  const MAX_SEGUIDOS = 30;
+  function seguidos() {
+    try {
+      const x = JSON.parse(localStorage.getItem(CLAVE_SEGUIDOS) || "[]");
+      return Array.isArray(x) ? x.filter((n) => typeof n === "string" && n).slice(0, MAX_SEGUIDOS) : [];
+    } catch (e) { return []; }
+  }
+  const sigo = (nombre) => seguidosAhora().includes(nombre);
+  // Devuelve si quedó seguido (false también si ya no cabe otro).
+  function alternarSeguir(nombre) {
+    const l = seguidosAhora();
+    const ya = l.includes(nombre);
+    if (!ya && l.length >= MAX_SEGUIDOS) return false;
+    const nueva = ya ? l.filter((n) => n !== nombre) : l.concat(nombre);
+    try { localStorage.setItem(CLAVE_SEGUIDOS, JSON.stringify(nueva)); } catch (e) { /* sin almacenamiento: dura lo que la pestaña */ }
+    memoriaSeguidos = nueva;
+    return !ya;
+  }
+  // Sin almacenamiento (ventana privada que lo bloquea), la lista vive en la pestaña.
+  let memoriaSeguidos = null;
+  const seguidosAhora = () => { const l = seguidos(); return l.length || !memoriaSeguidos ? l : memoriaSeguidos; };
+  const marcaSeguido = () => [el("span", { "aria-hidden": "true", class: "tp-estrella", texto: "★ " }), el("span", { class: "sr-only", texto: "(lo sigues) " })];
 
   // ---------- La ruta: #t=<id>&j=<id>&r=<n>&v=<vista> ----------
   function leerRuta() {
@@ -164,9 +195,10 @@
         el("th", { class: "num", scope: "col", texto: "Pts" }), des.map((c) => el("th", { class: "num", scope: "col", texto: c })))),
       el("tbody", {}, filas.map((f) => {
         const j = t.jugadores.find((x) => x.id === f.id) || {};
-        return el("tr", { "data-id": f.id },
+        const suyo = !E.esDeEquipos(t) && sigo(j.nombre);
+        return el("tr", { "data-id": f.id, class: suyo ? "tp-seguido" : null, "data-seguido": suyo ? "1" : null },
           el("td", { class: "num", texto: f.puesto }),
-          el("td", {}, el("a", { href: "#" + new URLSearchParams({ t: leerRuta().t, v: "jugadores", j: f.id }).toString(), class: C.enlace + " font-semibold", texto: j.nombre + (j.titulo ? " (" + j.titulo + ")" : "") })),
+          el("td", {}, suyo ? marcaSeguido() : null, el("a", { href: "#" + new URLSearchParams({ t: leerRuta().t, v: "jugadores", j: f.id }).toString(), class: C.enlace + " font-semibold", texto: j.nombre + (j.titulo ? " (" + j.titulo + ")" : "") })),
           el("td", { texto: E.esDeEquipos(t) ? "" : (j.institucion || "") }),
           el("td", { class: "num", texto: Number(j.elo) > 0 ? j.elo : "" }),
           el("td", { class: "num font-bold", texto: puntosTexto(f.puntos) }),
@@ -193,11 +225,13 @@
     const conPuntos = (id) => nombreDe(t, id) + (i > 0 && !deEquipos ? " (" + puntosTexto(T.puntosHasta(t, id, i)) + ")" : "");
     const tbody = el("tbody");
     R.mesas.forEach((m, k) => {
-      const fila = el("tr", { "data-mesa": String(V.mesaFisica(t, k)), "data-nombres": clave(nombreDe(t, m.b) + " " + (m.n ? nombreDe(t, m.n) : "")) },
+      const suya = !deEquipos && (sigo(nombreDe(t, m.b)) || (m.n != null && sigo(nombreDe(t, m.n))));
+      const fila = el("tr", { "data-mesa": String(V.mesaFisica(t, k)), "data-nombres": clave(nombreDe(t, m.b) + " " + (m.n ? nombreDe(t, m.n) : "")),
+        class: suya ? "tp-seguido" : null, "data-seguido": suya ? "1" : null },
         el("td", { class: "num", texto: V.mesaFisica(t, k) }),
-        el("td", { class: "font-semibold", texto: conPuntos(m.b) }),
+        el("td", { class: "font-semibold" }, sigo(nombreDe(t, m.b)) && !deEquipos ? marcaSeguido() : null, conPuntos(m.b)),
         el("td", { class: "num whitespace-nowrap", texto: m.n === null ? "Libre" : m.r ? RESULTADO[m.r] || m.r : "jugando" }),
-        el("td", { class: "font-semibold", texto: m.n === null ? "" : conPuntos(m.n) }),
+        el("td", { class: "font-semibold" }, m.n !== null && !deEquipos && sigo(nombreDe(t, m.n)) ? marcaSeguido() : null, m.n === null ? "" : conPuntos(m.n)),
         el("td", {}, m.pgn && m.n ? el("button", { type: "button", class: C.pestana + " bg-white dark:bg-brand-900 text-xs px-2 py-1", "data-ver-pgn": String(k),
           "aria-label": "Ver la partida de la mesa " + V.mesaFisica(t, k), onclick: () => verPartida(t, i, k) }, "Ver partida") : null));
       tbody.append(fila);
@@ -215,13 +249,19 @@
         el("th", { class: "num", scope: "col", texto: "Resultado" }), el("th", { scope: "col", texto: "Negras" }),
         el("th", { scope: "col" }, el("span", { class: "sr-only", texto: "Partida" })))), tbody);
     const nadie = el("p", { class: C.nota + " mt-2", role: "status", hidden: true, texto: "Nadie con ese nombre en esta ronda." });
-    buscar.addEventListener("input", () => {
+    // «Solo los que sigo»: aparece si alguno de los que sigues juega esta ronda.
+    const soloMios = el("input", { type: "checkbox", id: "tp-solo-mios" });
+    const filtrar = () => {
       const q = clave(buscar.value);
       let hay = 0;
-      for (const tr of tbody.children) { const si = !q || tr.dataset.nombres.includes(q); tr.hidden = !si; if (si) hay++; }
+      for (const tr of tbody.children) { const si = (!q || tr.dataset.nombres.includes(q)) && (!soloMios.checked || tr.dataset.seguido === "1"); tr.hidden = !si; if (si) hay++; }
       nadie.hidden = !!hay;
-    });
-    caja.append(el("div", { class: "overflow-x-auto" }, tabla), nadie, el("div", { id: "tp-partida", class: "mt-6", hidden: true }));
+    };
+    buscar.addEventListener("input", filtrar);
+    soloMios.addEventListener("change", filtrar);
+    const hayMios = [...tbody.children].some((tr) => tr.dataset.seguido === "1");
+    caja.append(hayMios ? el("div", { class: "flex items-center gap-2 text-sm mb-2" }, soloMios, el("label", { for: "tp-solo-mios", texto: "Solo las mesas de los jugadores que sigo" })) : null,
+      el("div", { class: "overflow-x-auto" }, tabla), nadie, el("div", { id: "tp-partida", class: "mt-6", hidden: true }));
     return caja;
   }
 
@@ -246,6 +286,54 @@
     $("tp-partida-titulo").focus();
   }
 
+  // El botón de la ficha: dice a quién y si ya lo sigues (aria-pressed).
+  function botonSeguir(nombre) {
+    const si = sigo(nombre);
+    const estado = el("span", { id: "tp-seguir-estado", class: "sr-only", role: "status" });
+    const b = el("button", { type: "button", id: "tp-seguir", "aria-pressed": si ? "true" : "false",
+      class: C.pestana + " mt-3 " + (si ? "bg-accent-500 text-brand-900" : "bg-white dark:bg-brand-900") },
+      el("span", { "aria-hidden": "true", texto: si ? "★ " : "☆ " }), si ? "Sigues a " + nombre + " · dejar de seguir" : "Seguir a " + nombre);
+    b.addEventListener("click", () => {
+      const antes = sigo(nombre);
+      const ahora = alternarSeguir(nombre);
+      if (!antes && !ahora) { estado.textContent = "Ya sigues a " + MAX_SEGUIDOS + " jugadores: deja de seguir a alguno para agregar otro."; return; }
+      mostrarTorneo(abierto.fila, leerRuta(), "tp-seguir");
+      $("tp-seguir-estado").textContent = ahora ? "Ahora sigues a " + nombre + ": sale arriba en cada torneo donde juegue." : "Dejaste de seguir a " + nombre + ".";
+    });
+    return el("div", {}, b, estado,
+      el("p", { class: "text-xs text-brand-600 dark:text-brand-300 mt-1", texto: "Se guarda solo en este navegador, sin cuenta." }));
+  }
+
+  // Cómo le va en este torneo a alguien que sigo: su puesto y su mesa de la
+  // última ronda emparejada (o lo que hizo en ella).
+  function resumenJugador(t, jid) {
+    const { k, filas } = clasificacion(t);
+    const f = filas.find((x) => x.id === jid);
+    const partes = [];
+    if (f) partes.push("Puesto " + f.puesto + " con " + puntosTexto(f.puntos) + (f.puntos === 1 ? " punto" : " puntos") + " tras la ronda " + k);
+    const r = t.rondas.length - 1;
+    if (r >= 0) {
+      const s = T.situacion(t, r, jid);
+      const mesa = t.rondas[r].mesas.findIndex((m) => m.b === jid || m.n === jid);
+      const color = s.color === "w" ? "blancas" : "negras";
+      if (s.tipo === "bye") partes.push("Ronda " + (r + 1) + ": libre");
+      else if (s.tipo === "ausente") partes.push("Ronda " + (r + 1) + ": no juega");
+      else partes.push("Ronda " + (r + 1) + ": mesa " + V.mesaFisica(t, mesa) + ", con " + color + " contra " + nombreDe(t, s.rival)
+        + (s.tipo === "pendiente" ? " (jugando)" : " (" + puntosTexto(s.puntos) + ")"));
+    }
+    return partes.join(" · ");
+  }
+  function cajaSeguidos(t) {
+    if (E.esDeEquipos(t)) return null;
+    const mios = t.jugadores.filter((j) => sigo(j.nombre));
+    if (!mios.length) return null;
+    return el("section", { id: "tp-mis-jugadores", class: C.tarjeta + " mb-5 border-l-4 border-accent-500", "aria-labelledby": "tp-mis-titulo" },
+      el("h2", { id: "tp-mis-titulo", class: "font-serif text-lg font-bold mb-2" }, el("span", { "aria-hidden": "true", texto: "★ " }), "Los jugadores que sigues"),
+      el("ul", { class: "space-y-2 text-sm" }, mios.map((j) => el("li", { "data-seguido": j.id },
+        el("a", { href: "#" + new URLSearchParams({ t: leerRuta().t, v: "jugadores", j: j.id }).toString(), class: C.enlace + " font-semibold", texto: j.nombre }),
+        el("span", { texto: " · " + (resumenJugador(t, j.id) || "Inscrito") })))));
+  }
+
   function vistaJugadores(t, jid, fila) {
     const caja = el("section", { class: C.tarjeta, "aria-labelledby": "tp-jug-titulo" });
     const orden = T.ordenInicial(t);
@@ -261,7 +349,8 @@
     caja.append(el("div", { id: "tp-ficha", class: "mt-4" },
       el("p", { class: "text-lg font-bold", texto: j.nombre + (j.titulo ? " (" + j.titulo + ")" : "") }),
       el("p", { class: C.nota, texto: [j.institucion, Number(j.elo) > 0 ? "Elo " + j.elo : "Sin Elo", j.categoria ? "Categoría " + j.categoria : ""].filter(Boolean).join(" · ") }),
-      suFila ? el("p", { class: "mt-1 font-semibold", texto: "Puesto " + suFila.puesto + " · " + puntosTexto(suFila.puntos) + " puntos" }) : null));
+      suFila ? el("p", { class: "mt-1 font-semibold", texto: "Puesto " + suFila.puesto + " · " + puntosTexto(suFila.puntos) + " puntos" }) : null,
+      E.esDeEquipos(t) ? null : botonSeguir(j.nombre)));
     const tbody = el("tbody");
     t.rondas.forEach((R, r) => {
       const s = T.situacion(t, r, jid);
@@ -437,6 +526,53 @@
     })));
   }
 
+  // En la portada: cada jugador que sigo con sus últimos torneos publicados
+  // (los tres más recientes, con su puesto y su mesa). Se buscan una vez por
+  // visita: escribir en el buscador de torneos no los vuelve a pedir.
+  const torneosDe = new Map();
+  async function buscarTorneosDe(nombre) {
+    if (!torneosDe.has(nombre)) {
+      torneosDe.set(nombre, (async () => {
+        const r = await window.sb.from("pareo_publicados").select(COLUMNAS + ",datos")
+          .contains("datos", { jugadores: [{ nombre }] }).order("actualizado", { ascending: false }).range(0, 2);
+        if (r.error) throw r.error;
+        return r.data || [];
+      })());
+      torneosDe.get(nombre).catch(() => torneosDe.delete(nombre));
+    }
+    return torneosDe.get(nombre);
+  }
+  async function pintarSeguidosPortada() {
+    const nombres = seguidosAhora();
+    const ul = $("tp-seguidos");
+    $("tp-seguidos-caja").hidden = !nombres.length;
+    if (!nombres.length) { ul.replaceChildren(); return; }
+    ul.replaceChildren(...nombres.map((nombre) => {
+      const dejar = el("button", { type: "button", class: C.pestana + " bg-white dark:bg-brand-900 text-xs px-2 py-1", "data-dejar": nombre, "aria-label": "Dejar de seguir a " + nombre }, "Dejar de seguir");
+      dejar.addEventListener("click", () => {
+        alternarSeguir(nombre);
+        pintarSeguidosPortada();
+        $("tp-seguidos-estado").textContent = "Dejaste de seguir a " + nombre + ".";
+        const otro = $("tp-seguidos").querySelector("[data-dejar]");
+        (otro || $("tp-buscar")).focus();
+      });
+      const torneos = el("ul", { class: "mt-1 space-y-1 text-sm" }, el("li", { class: C.nota, texto: "Buscando sus torneos…" }));
+      buscarTorneosDe(nombre).then((filas) => {
+        if (!filas.length) { torneos.replaceChildren(el("li", { class: C.nota, texto: "Todavía no aparece en ningún torneo publicado." })); return; }
+        torneos.replaceChildren(...filas.map((x) => {
+          const j = x.datos.jugadores.find((y) => y.nombre === nombre);
+          return el("li", { "data-torneo-de": x.id },
+            el("a", { href: "#" + new URLSearchParams({ t: x.id, v: "jugadores", j: j ? j.id : "" }).toString(), class: C.enlace + " font-semibold", texto: x.nombre }),
+            el("span", { texto: " · " + [fechaTexto(x.fecha), j ? resumenJugador(x.datos, j.id) : ""].filter(Boolean).join(" · ") }));
+        }));
+      }, () => torneos.replaceChildren(el("li", { class: C.nota, texto: "No se pudieron buscar sus torneos." })));
+      return el("li", { class: C.tarjeta, "data-sigo": nombre },
+        el("div", { class: "flex flex-wrap items-center justify-between gap-2" },
+          el("span", { class: "font-semibold text-brand-800 dark:text-white" }, el("span", { "aria-hidden": "true", texto: "★ " }), nombre), dejar),
+        torneos);
+    }));
+  }
+
   async function pintarTorneo(ruta, silencioso) {
     const caja = $("tp-contenido");
     $("tp-portada").hidden = true;
@@ -479,7 +615,7 @@
     if (silencioso && $("tp-i-form") && $("tp-i-form").contains(document.activeElement)) return;
     const previo = !t.rondas.length ? [tarjetaAnuncio(t), inscripcionAbierta(t) ? formularioInscripcion(t, fila) : null] : [];
     if (!t.jugadores.length) { caja.replaceChildren(cabecera(fila, t), ...previo.filter(Boolean)); if (!foco) $("tp-titulo").focus(); return; }
-    caja.replaceChildren(cabecera(fila, t), ...previo.filter(Boolean), pestanas(vista),
+    caja.replaceChildren(cabecera(fila, t), ...previo.filter(Boolean), ...[cajaSeguidos(t)].filter(Boolean), pestanas(vista),
       vista === "rondas" ? vistaRondas(t, ruta.r) : vista === "jugadores" ? vistaJugadores(t, jid, fila) : vista === "estadisticas" ? vistaEstadisticas(t) : vistaClasificacion(t));
     if (buscado && $("tp-buscar-mesa")) { $("tp-buscar-mesa").value = buscado; $("tp-buscar-mesa").dispatchEvent(new Event("input")); }
     if (foco && $(foco)) $(foco).focus();
@@ -497,6 +633,7 @@
         try { lista = await pedirLista(); } catch (e) { $("tp-cuantos").textContent = "No se pudo leer la lista. Revisa la conexión e intenta de nuevo."; return; }
       }
       pintarLista();
+      pintarSeguidosPortada();
       return;
     }
     await pintarTorneo(ruta, false);

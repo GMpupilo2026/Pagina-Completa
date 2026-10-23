@@ -81,6 +81,12 @@
                     <input id="tp-buscar" type="search" autocomplete="off" placeholder="Nombre, evento o lugar" class="w-full rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-900 text-brand-800 dark:text-white px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
                 </div>
                 <p id="tp-cuantos" class="text-sm text-brand-600 dark:text-brand-300 mb-4" role="status">Cargando…</p>
+                <section id="tp-seguidos-caja" class="mb-8" aria-labelledby="tp-seguidos-titulo" hidden>
+                    <h2 id="tp-seguidos-titulo" class="font-serif text-2xl font-bold text-brand-800 dark:text-white mb-1"><span aria-hidden="true">★ </span>Los jugadores que sigues</h2>
+                    <p class="text-sm text-brand-600 dark:text-brand-300 mb-3">Sus últimos torneos publicados, con su puesto y su mesa. Se guardan solo en este navegador; para seguir a alguien, ábrelo en un torneo y toca «Seguir».</p>
+                    <p id="tp-seguidos-estado" class="sr-only" role="status"></p>
+                    <ul id="tp-seguidos" class="grid sm:grid-cols-2 gap-4"></ul>
+                </section>
                 <section id="tp-proximos-caja" class="mb-8" aria-labelledby="tp-proximos-titulo" hidden>
                     <h2 id="tp-proximos-titulo" class="font-serif text-2xl font-bold text-brand-800 dark:text-white mb-3">Próximos torneos</h2>
                     <ul id="tp-proximos" class="grid sm:grid-cols-2 gap-4"></ul>

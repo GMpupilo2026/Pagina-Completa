@@ -3385,6 +3385,34 @@ Al tocar esto, `node herramientas/verificar-pareo-sala-evento.js`. Rompiendo a
 propósito la mesa física, la casilla de consentimiento, el llamado, el fin de
 la ronda o el aceptar, salta.
 
+### Torneos en Pareo Integral: seguir a un jugador
+
+Lo pidió el dueño del sitio (la 5 de una lista de propuestas): que un papá,
+sin cuenta, vea primero cómo le va a su hijo en cada torneo publicado.
+
+- **Sin cuenta y sin servidor nuevo.** Los nombres que se siguen viven en
+  `localStorage` (`torneos-pareo.seguidos`, hasta 30) y nunca viajan como
+  lista: no hay tabla de «quién sigue a quién», así que no hay dato personal
+  nuevo que guardar ni que declarar. Si el navegador bloquea el
+  almacenamiento, se sigue mientras dure la pestaña, sin error.
+- **Se sigue un NOMBRE, escrito igual.** Es el mismo criterio con que la
+  ficha busca «Otros torneos de…» (`datos @> {jugadores:[{nombre}]}`): los
+  ids de jugador cambian de un torneo a otro y no hay un id de persona entre
+  torneos. «PÉREZ» y «PEREZ» son dos personas para la búsqueda; se aceptó,
+  como en la ficha.
+- **Dónde sale arriba.** En cada torneo donde juega, la caja «Los jugadores
+  que sigues» (su puesto y su mesa de la última ronda, con el color, el rival
+  y lo que hizo); su fila de la clasificación y de la ronda lleva una franja
+  y la estrella **escrita** (★ y «lo sigues» para el lector), el texto no
+  cambia de color; y en la ronda, «Solo las mesas de los jugadores que
+  sigo». En la portada, cada seguido con sus tres torneos publicados más
+  recientes, buscados en la base una sola vez por visita (no al escribir en
+  el buscador ni al volver a la portada).
+- **Los de equipos no.** En un torneo por equipos los jugadores de la lista
+  son equipos: ahí no hay botón ni marca (como «Otros torneos de…»).
+
+Lo comprueba `verificar-pareo-seguir.js`.
+
 ### Torneos en Pareo Integral: inscripción, anuncios, partidas y estadísticas
 
 Lo pidió el dueño del sitio, de una lista de propuestas (las 1, 4, 5, 6 y 8).
