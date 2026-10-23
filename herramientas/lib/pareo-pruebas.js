@@ -25,12 +25,13 @@ function dobleSupabase() {
 
 // La confirmación de «cambiar un resultado ya anotado» (la prueba
 // verificar-pareo-adjuntos.js, que pone window.__sinAutoConfirmar): en las
-// demás pruebas, que cambian resultados a propósito, se acepta sola.
+// demás pruebas, que cambian resultados a propósito, se acepta sola. También
+// «Antes de emparejar la ronda…»: los datos de prueba traen sorpresas de Elo.
 function autoConfirmarCambios() {
   new MutationObserver(() => {
     if (window.__sinAutoConfirmar) return;
     const d = document.querySelector("dialog[data-avisos][open]");
-    if (d && !d.__aceptado && /¿Cambiar el resultado de la mesa/.test(d.textContent)) {
+    if (d && !d.__aceptado && /Cambiar el resultado de la mesa|Antes de emparejar la ronda/.test(d.textContent)) {
       const b = d.querySelector("[data-avisos-aceptar]");
       if (b) { d.__aceptado = true; b.click(); }
     }

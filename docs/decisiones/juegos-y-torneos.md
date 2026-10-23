@@ -3615,6 +3615,48 @@ en columnas.
 
 Lo comprueba `verificar-pareo-lista.js`.
 
+### Repetir un evento, el QR de cada mesa y el repaso antes de emparejar
+
+Lo pidió el dueño del sitio para que el día del torneo se trabaje más rápido.
+
+- **«Repetir este evento»** (ficha Archivos, en el evento) arma uno nuevo con
+  los mismos torneos. Cada torneo se copia **campo por campo**, de una lista
+  (`COPIA_REPETIR` en `js/pareo/pagina.js`): ritmo, sistema, rondas, puntos,
+  desempates, si da Elo, la mesa de la sala, el plazo de los capitanes y la
+  configuración de los JDE.
+  - Nunca se copia el torneo entero: lo que pasó ese día (jugadores, rondas,
+    fechas, actas, firmas, publicación, adjuntos, decisiones del congresillo)
+    no viaja, y lo que se agregue al torneo en el futuro tampoco, salvo que
+    se ponga en la lista.
+  - El horario del día (hora de inicio y descanso) pasa al evento nuevo.
+  - El año: en los JDE, `jde.anio` es el de hoy y los nombres se vuelven a
+    armar con `G.nombreEventoJde`. En los demás, el año viejo escrito en el
+    nombre se cambia por el nuevo.
+  - El evento viejo no se toca.
+- **«Rótulos de mesa con QR»** (en «Las mesas de la sala»): un rótulo por
+  mesa, seis por hoja, con el número grande (el de la sala, `V.mesaFisica`),
+  la categoría y un QR a `pareo.html#mesa=<n>`.
+  - El QR no lleva el código de ningún adjunto. Lo que sabe a qué adjunto
+    llevar es su celular: la página del adjunto guarda su enlace
+    (`pareo_adjunto_ultimo_v1`, 16 horas) y `#mesa=` lo abre con `&ir=<n>`.
+  - La mesa queda marcada (el borde grueso y «Mesa 12.» escrito), a la vista
+    y con el foco.
+  - Sin enlace guardado, dice que primero se abra el del principal.
+  - Lo mismo a mano: «Ir a la mesa» arriba de sus mesas.
+  - Lo anota el adjunto, nunca el jugador: no choca con lo descartado para
+    siempre.
+- **El repaso antes de emparejar**: si en la ronda anterior quedó una
+  sorpresa de Elo o una diferencia con un adjunto que nadie miró, o un nombre
+  está dos veces en la lista (sin importar mayúsculas, tildes ni espacios),
+  «Emparejar la ronda N» lo dice antes.
+  - Se elige «Revisar primero» o «Emparejar igual»: es un aviso, nunca
+    bloquea.
+  - Sin nada que revisar, empareja sin preguntar.
+  - En las pruebas, `autoConfirmarCambios` de `herramientas/lib/pareo-pruebas.js`
+    lo acepta solo, como el cambio de un resultado.
+
+Lo comprueba `verificar-pareo-repetir.js`.
+
 ### Las pruebas no publican
 
 Con la publicación automática (ver «Torneos en Pareo Integral: todo torneo se
