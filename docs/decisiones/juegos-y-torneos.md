@@ -8182,6 +8182,13 @@ Es una página estática, sin cuenta y sin base: nada se guarda.
   pose de la mascota se inventa**; si la organización pasa otras ilustraciones,
   van en su ficha. En el celular el que se asoma se achica y el «Abrir…» le
   deja su lugar, para no tapar el texto.
+- **Nueve fichas, tres por fila**: «Contacta a la organización» ya no es
+  ficha, porque la abre la despedida del pizote al final, y el correo de la
+  organización va dentro de esa ventana, debajo de las tres personas. En el
+  celular, de a dos, la última ficha («Cómo llegar») ocupa la fila entera para
+  que no quede una sola. Arriba, cada ficha lleva la bandera de Costa Rica
+  (1-1-2-1-1, con sus colores oficiales) y una fila de casillas de tablero; el
+  color de las bases queda en el ícono.
 - **Las bases las sirve el propio sitio**, tal cual las publicó la FCA, en
   `documentos/centroamericano-2026/bases-cac-2026.pdf` (como la normativa de
   los JDE en `documentos/jde/`). Es un documento oficial ajeno: **no lleva la

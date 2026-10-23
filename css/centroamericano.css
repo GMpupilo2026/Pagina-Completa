@@ -130,11 +130,40 @@
   background: linear-gradient(90deg, var(--cac-rojo) 0 33%, var(--cac-verde) 33% 66%, var(--cac-morado-2) 66%);
 }
 
-/* Las fichas: cada una con su color de las bases arriba y en su ícono. */
+/* Las fichas: arriba, la bandera de Costa Rica (azul, blanco, rojo, blanco,
+ * azul, 1-1-2-1-1) con un borde de ajedrez; el color de las bases va en el
+ * ícono. Sobre la ficha blanca el blanco de la bandera se funde y queda el
+ * dibujo de sus franjas; en oscuro se ve entera. */
 .cac-ficha {
   position: relative;
-  border-top: 6px solid var(--cac-color, var(--cac-morado));
+  overflow: hidden;
+  border-top-width: 0;
 }
+.cac-ficha::before,
+.cac-ficha::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  pointer-events: none;
+}
+.cac-ficha::before {
+  top: 0;
+  height: 20px;
+  background: linear-gradient(to bottom,
+    #002b7f 0 16.67%, #fff 16.67% 33.33%, #ce1126 33.33% 66.67%,
+    #fff 66.67% 83.33%, #002b7f 83.33% 100%);
+}
+/* Debajo de la bandera, una fila de casillas de tablero. */
+.cac-ficha::after {
+  top: 20px;
+  height: 8px;
+  opacity: 0.16;
+  background: repeating-linear-gradient(90deg, var(--cac-morado-hondo) 0 8px, transparent 8px 16px);
+}
+.dark .cac-ficha::after { opacity: 0.35; background: repeating-linear-gradient(90deg, #b8bbf2 0 8px, transparent 8px 16px); }
+.cac-ficha > .cac-icono:first-child { margin-top: 1rem; }
+.cac-ficha[aria-disabled="true"]::before { opacity: 0.45; }
 .cac-ficha[data-color="rojo"] { --cac-color: var(--cac-rojo); }
 .cac-ficha[data-color="verde"] { --cac-color: var(--cac-verde); }
 .cac-ficha[data-color="azul"] { --cac-color: var(--cac-azul); }

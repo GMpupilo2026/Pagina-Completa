@@ -41,7 +41,7 @@ console.log("1. El HTML");
 ok("el PDF de las bases existe", fs.existsSync(path.join(RAIZ, "documentos/centroamericano-2026/bases-cac-2026.pdf")));
 
 const fichas = (html.match(/<section id="fichas"[\s\S]*?<\/section>/) || [""])[0];
-const items = fichas.match(/<li>[\s\S]*?<\/li>/g) || [];
+const items = fichas.match(/<li[^>]*>[\s\S]*?<\/li>/g) || [];
 ok("hay fichas", items.length >= 5, items.length + " fichas");
 for (const li of items) {
   const titulo = (li.match(/font-bold text-lg[^>]*>([^<]+)</) || [, "?"])[1];
@@ -67,10 +67,11 @@ for (const [, id, cuerpo] of dialogos) {
   ok("y su título y su botón «Cerrar»", cuerpo.includes('id="' + id + '-titulo"') && /data-cerrar[^>]*>Cerrar</.test(cuerpo));
 }
 ok("no queda información desplegada fuera de las fichas", !/<section id="(contacto|reglamento|calendario|hoteles)"/.test(html));
-const personas = [...contacto.matchAll(/<h3[^>]*>([^<]+)<\/h3>\s*<p[^>]*>([^<]+)<\/p>/g)].map((m) => m[1] + " — " + m[2]);
+const personas = [...((contacto.match(/<ul[\s\S]*?<\/ul>/) || [""])[0]).matchAll(/<h3[^>]*>([^<]+)<\/h3>\s*<p[^>]*>([^<]+)<\/p>/g)].map((m) => m[1] + " — " + m[2]);
 ok("Contacta a la organización: árbitra principal, organizadora y árbitro de pareo", JSON.stringify(personas) === JSON.stringify(["Carolina Muñoz — Árbitra principal", "Vivian Víquez Miranda — Organizadora", "Jean Quesada — Árbitro de pareo"]), JSON.stringify(personas));
 const fotos = [...contacto.matchAll(/<img src="([^"]+)"[^>]*alt="Foto de ([^"]+)"/g)];
 ok("las fotos de los tres contactos están en el sitio", fotos.length === 3 && fotos.every(([, src]) => fs.existsSync(path.join(RAIZ, src))), fotos.map((f) => f[1]).join(", "));
+ok("el correo de la organización va en los contactos, no en una ficha aparte", contacto.includes('href="mailto:torneos_internacionales_costarica@fcacostarica.com"') && !/<li[^>]*>\s*<a href="mailto:/.test(fichas));
 ok("cada contacto con su teléfono y su WhatsApp", (contacto.match(/href="tel:/g) || []).length === 3 && (contacto.match(/href="https:\/\/wa\.me\/506\d{8}"/g) || []).length === 3);
 // La cara de las bases: su hoja de estilos, la mascota, la bandera y los logos.
 ok("la página carga css/centroamericano.css y el cuerpo lleva la clase cac", html.includes('<link rel="stylesheet" href="css/centroamericano.css">') && /<body class="cac /.test(html));
