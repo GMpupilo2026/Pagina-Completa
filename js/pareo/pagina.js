@@ -1945,16 +1945,30 @@
     return ok;
   }
 
+  // Los PDF de Pareo Integral llevan arriba el nombre y el logo de la
+  // organización de este navegador, si tiene (la marca de agua sigue siendo
+  // la de Ajedrez Integral). Si el logo no se puede armar, sale con el nombre.
+  async function conOrganizacion(doc) {
+    const o = organizacion();
+    if (!o || !o.nombre || doc.cabecera) return doc;
+    let logo = null;
+    if (o.logo && window.MarcaAgua && window.MarcaAgua.prepararDesdeDatos) {
+      try { logo = await window.MarcaAgua.prepararDesdeDatos(o.logo); } catch (e) { logo = null; }
+    }
+    return Object.assign({}, doc, { cabecera: { nombre: o.nombre, color: "#102a43", logo } });
+  }
+  function bajarBlob(blob, nombre) {
+    const url = URL.createObjectURL(blob);
+    const a = el("a", { href: url, download: nombre });
+    document.body.append(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 10000);
+  }
   async function bajarDocumento(doc, sufijo, boton) {
     if (boton) boton.disabled = true;
     try {
-      const blob = await window.PareoPDF.generar(doc);
-      const url = URL.createObjectURL(blob);
-      const a = el("a", { href: url, download: window.PareoPDF.nombreArchivo(doc.subtitulo, sufijo) });
-      document.body.append(a);
-      a.click();
-      a.remove();
-      setTimeout(() => URL.revokeObjectURL(url), 10000);
+      bajarBlob(await window.PareoPDF.generar(await conOrganizacion(doc)), window.PareoPDF.nombreArchivo(doc.subtitulo, sufijo));
     } catch (e) {
       Avisos.avisar(tx("noPdf", { e: e.message }), { tipo: "error" });
     } finally {
@@ -2100,6 +2114,7 @@
   function pintarEvento() {
     pintarHistorial();
     pintarPublicar();
+    pintarOrganizacion();
     $("pi-bajar-trf-equipos").hidden = !E.esDeEquipos(t());
     const caja = $("pi-evento");
     caja.replaceChildren();
@@ -5094,7 +5109,7 @@
   const publicando = new Map();
   // Lo que va con el torneo y no vive en él: el código del enlace en vivo de
   // su evento (en este navegador).
-  const extraPublicar = (tor) => ({ codigoEvento: tor.evento ? leer(CLAVE_VIVO_EVENTO + tor.evento.id) || "" : "" });
+  const extraPublicar = (tor) => ({ codigoEvento: tor.evento ? leer(CLAVE_VIVO_EVENTO + tor.evento.id) || "" : "", organizador: organizacion() || undefined });
   function programarPublicacion() {
     const id = estado.id;
     if (publicando.has(id)) return;
@@ -5258,6 +5273,116 @@
     });
     const todasB = pendientes.length > 1 ? el("button", { type: "button", id: "pi-insc-todas", class: C.boton + " mt-2", onclick: (e) => marcar(pendientes, "aceptada", e.currentTarget) }, tx("inscAceptarTodas", { n: pendientes.length })) : null;
     lista.replaceChildren(resumen, todasB, el("ul", { class: "mt-2 grid lg:grid-cols-2 gap-2" }, filas));
+  }
+
+  // ---------- Tu organización ----------
+  // El nombre y el logo de quien organiza, sin cuenta: se guardan en la base
+  // (pareo_organizadores, por la función pareo-publicar) con una clave que
+  // queda en este navegador, y cada torneo que se publica desde acá queda a
+  // su nombre. Salen en la lista pública, en su página de organizador y en
+  // los PDF. El sello «Organizador verificado» lo pone solo Ajedrez
+  // Integral. Ver «Torneos en Pareo Integral: el organizador y la
+  // moderación» en docs/decisiones/juegos-y-torneos.md.
+  const CLAVE_ORG = "pareo_organizador_v1";
+  function organizacion() {
+    const o = leerJSON(CLAVE_ORG, null);
+    return o && typeof o.id === "string" && typeof o.clave === "string" ? o : null;
+  }
+  // El código para usarla en otra computadora: el id y la clave juntos.
+  const codigoOrg = (o) => "org:" + o.id + ":" + o.clave;
+  const LOGO_MAX = 190000;
+  async function logoDeArchivo(archivo) {
+    if (!/^image\/(png|jpeg|webp)$/.test(archivo.type)) throw new Error(tx("orgLogoTipo"));
+    // Primero a 400 px; si aún pesa, a 200.
+    for (const lado of [400, 200]) {
+      const datos = await window.ImagenAchicar.comoDatos(await window.ImagenAchicar.logo(archivo, lado));
+      if (datos.length <= LOGO_MAX) return datos;
+    }
+    throw new Error(tx("orgLogoPesado"));
+  }
+  function pintarOrganizacion() {
+    const caja = $("pi-organizacion");
+    if (!caja) return;
+    const o = organizacion();
+    let logoNuevo; // undefined: no se tocó; null: quitarlo; texto: el nuevo
+    const nombre = el("input", { id: "pi-org-nombre", type: "text", maxlength: "120", autocomplete: "organization", class: C.campo + " w-full", value: (o && o.nombre) || "" });
+    const archivo = el("input", { id: "pi-org-logo", type: "file", accept: "image/png,image/jpeg,image/webp", class: "text-sm" });
+    const vista = el("img", { id: "pi-org-vista", alt: "", class: "h-16 w-auto max-w-[10rem] object-contain rounded bg-white border border-brand-200" });
+    const quitar = el("button", { type: "button", id: "pi-org-quitar-logo", class: C.mini }, tx("orgQuitarLogo"));
+    const estadoOrg = el("p", { id: "pi-org-estado", class: "text-sm mt-2", role: "status" });
+    const ponerVista = () => {
+      const src = logoNuevo === undefined ? (o && o.logo) : logoNuevo;
+      vista.hidden = !src; quitar.hidden = !src;
+      if (src) vista.src = src; else vista.removeAttribute("src");
+    };
+    archivo.addEventListener("change", async () => {
+      const f = archivo.files && archivo.files[0];
+      if (!f) return;
+      try { logoNuevo = await logoDeArchivo(f); ponerVista(); estadoOrg.textContent = tx("orgLogoListo"); }
+      catch (e) { archivo.value = ""; Avisos.avisar(e.message, { tipo: "error" }); }
+    });
+    quitar.addEventListener("click", () => { logoNuevo = null; archivo.value = ""; ponerVista(); estadoOrg.textContent = tx("orgLogoQuitado"); });
+    const guardarB = el("button", { type: "submit", id: "pi-org-guardar", class: C.boton }, tx(o ? "orgGuardar" : "orgCrear"));
+    const form = el("form", { id: "pi-org-form", class: "grid gap-3 sm:max-w-lg", novalidate: true },
+      el("label", { for: "pi-org-nombre", class: "text-sm font-semibold" }, tx("orgNombre"), nombre),
+      el("div", {}, el("label", { for: "pi-org-logo", class: "block text-sm font-semibold mb-1" }, tx("orgLogo")),
+        el("div", { class: "flex flex-wrap items-center gap-3" }, vista, archivo, quitar),
+        el("p", { class: C.nota + " mt-1", texto: tx("orgLogoAyuda") })),
+      el("div", {}, guardarB), estadoOrg);
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const n = nombre.value.trim();
+      if (n.length < 2) { Avisos.avisar(tx("orgFaltaNombre"), { tipo: "error" }); nombre.focus(); return; }
+      guardarB.disabled = true;
+      estadoOrg.textContent = tx("orgGuardando");
+      const pedido = { nombre: n };
+      if (o) Object.assign(pedido, { id: o.id, clave: o.clave });
+      if (logoNuevo !== undefined) pedido.logo = logoNuevo;
+      else if (!o) pedido.logo = null;
+      const r = await PareoPublicar.guardarOrganizador(pedido);
+      guardarB.disabled = false;
+      if (!r.ok) { estadoOrg.textContent = ""; Avisos.avisar(r.error || tx("publicarSinRed"), { tipo: "error" }); return; }
+      const nueva = { id: r.id, clave: o ? o.clave : r.clave, nombre: n, logo: logoNuevo === undefined ? (o && o.logo) || null : logoNuevo };
+      escribir(CLAVE_ORG, JSON.stringify(nueva));
+      // Los torneos ya publicados desde acá pasan a su nombre (y con su
+      // nombre nuevo) en la próxima puesta al día, que se pide ya.
+      for (const x of estado.lista) {
+        const y = x.id === estado.id ? t() : leerJSON(PREFIJO + x.id, null);
+        if (y && y.publicado) actualizarPublicado(x.id);
+      }
+      pintarOrganizacion();
+      Avisos.avisar(tx(o ? "orgGuardada" : "orgCreada", { n }));
+      const sig = $("pi-org-nombre"); if (sig) sig.focus();
+    });
+    caja.replaceChildren(
+      el("h2", { class: "font-serif text-xl font-bold mb-1", texto: tx("orgTitulo") }),
+      el("p", { class: C.nota + " mb-3", texto: tx("orgAyuda") }), form);
+    ponerVista();
+    if (o) {
+      const pagina = new URL("torneos-pareo.html#o=" + encodeURIComponent(o.id), location.href).href;
+      const copiar = el("button", { type: "button", id: "pi-org-copiar", class: C.botonSec }, tx("orgCopiarCodigo"));
+      copiar.addEventListener("click", async () => {
+        try { await navigator.clipboard.writeText(codigoOrg(o)); Avisos.avisar(tx("orgCodigoCopiado")); }
+        catch (e) { await Avisos.formulario({ titulo: tx("orgCopiarCodigo"), texto: tx("orgCodigoAMano"), aceptar: tx("cerrar"), campos: [{ nombre: "codigo", etiqueta: tx("orgCodigo"), valor: codigoOrg(o) }] }); }
+      });
+      caja.append(el("div", { class: "mt-4 flex flex-wrap items-center gap-3" },
+        el("a", { id: "pi-org-pagina", href: pagina, target: "_blank", rel: "noopener", class: "text-sm underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400" }, tx("orgVerPagina")),
+        copiar),
+        el("p", { class: C.nota + " mt-1", texto: tx("orgCodigoAyuda") }));
+    } else {
+      const usar = el("button", { type: "button", id: "pi-org-usar", class: C.botonSec + " mt-4" }, tx("orgUsarCodigo"));
+      usar.addEventListener("click", async () => {
+        const res = await Avisos.formulario({ titulo: tx("orgUsarCodigo"), texto: tx("orgUsarCodigoTexto"), aceptar: tx("orgUsar"), cancelar: tx("cancelar"),
+          campos: [{ nombre: "codigo", etiqueta: tx("orgCodigo"), valor: "", max: 200 }] });
+        if (!res) return;
+        const m = /^org:([0-9a-f-]{36}):([0-9a-f]{20,100})$/.exec(String(res.codigo || "").trim());
+        if (!m) { Avisos.avisar(tx("orgCodigoMalo"), { tipo: "error" }); return; }
+        escribir(CLAVE_ORG, JSON.stringify({ id: m[1], clave: m[2], nombre: "", logo: null }));
+        pintarOrganizacion();
+        Avisos.avisar(tx("orgCodigoUsado"));
+      });
+      caja.append(usar);
+    }
   }
 
   function pintarPublicar() {
@@ -5562,7 +5687,8 @@
     const original = boton.textContent;
     boton.textContent = tx("generandoPdf");
     try {
-      await window.PareoPDF.bajar(datosFn(), window.PareoPDF.nombreArchivo(v.nombre, sufijo));
+      const doc = await conOrganizacion(window.PareoPDF.documento(datosFn()));
+      bajarBlob(await window.PareoPDF.generar(doc), window.PareoPDF.nombreArchivo(v.nombre, sufijo));
     } catch (e) {
       Avisos.avisar(tx("errorPdf", { e: e.message }), { tipo: "error" });
     } finally {

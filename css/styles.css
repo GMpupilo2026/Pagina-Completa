@@ -2319,3 +2319,13 @@ body.pi-sorteo-abierto { overflow: hidden; }
 /* La mesa a la que llevó el QR (o «Ir a la mesa»): la franja y el borde
    gruesos; el texto dice cuál es («Mesa 12.»). */
 .pi-adj-ir-mesa { border-width: 3px !important; border-color: rgb(var(--c-accent-500)) !important; }
+/* torneos-pareo.html: quién organiza, el sello «Verificado» (escrito, en una
+   píldora clara: brand-800 sobre accent-100, ~12:1, igual en modo oscuro) y
+   el logo de la organización (sobre blanco: un logo oscuro no se pierde). */
+.tp-org { display: inline-flex; align-items: center; gap: 0.35rem; font-size: 0.85rem; }
+a.tp-org { text-decoration: underline; text-underline-offset: 2px; border-radius: 0.25rem; }
+a.tp-org:hover { text-decoration: none; }
+a.tp-org:focus-visible { outline: none; box-shadow: 0 0 0 2px rgb(var(--c-accent-400)); }
+.tp-verificado { display: inline-flex; align-items: center; font-size: 0.72rem; font-weight: 700; padding: 0 0.45rem; border-radius: 999px; background: rgb(var(--c-accent-100)); color: rgb(var(--c-brand-800)); }
+.tp-org-logo { height: 3rem; width: auto; max-width: 8rem; object-fit: contain; background: #fff; border-radius: 0.5rem; padding: 0.2rem; border: 1px solid rgb(var(--c-brand-100)); }
+.tp-org-logo-grande { height: 5rem; max-width: 12rem; }

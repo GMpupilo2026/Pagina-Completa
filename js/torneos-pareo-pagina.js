@@ -33,7 +33,7 @@
   const E = window.PareoEquipos;
   const V = window.PareoEvento;
   const $ = (id) => document.getElementById(id);
-  const COLUMNAS = "id,nombre,evento,lugar,fecha,rondas,rondas_total,jugadores,actualizado";
+  const COLUMNAS = "id,nombre,evento,lugar,fecha,rondas,rondas_total,jugadores,actualizado,organizador_id";
   const REFRESCO_MS = 60000;
 
   function el(tag, attrs, ...hijos) {
@@ -95,15 +95,55 @@
   // ---------- La ruta: #t=<id>&j=<id>&r=<n>&v=<vista> ----------
   function leerRuta() {
     const p = new URLSearchParams(location.hash.replace(/^#/, ""));
-    return { t: p.get("t") || "", j: p.get("j") || "", r: p.get("r") || "", v: p.get("v") || "", n: p.get("n") || "" };
+    return { t: p.get("t") || "", j: p.get("j") || "", r: p.get("r") || "", v: p.get("v") || "", n: p.get("n") || "", o: p.get("o") || "" };
   }
   function irA(cambios) {
     const r = Object.assign(leerRuta(), cambios);
     const p = new URLSearchParams();
-    for (const k of ["t", "v", "r", "j", "n"]) if (r[k]) p.set(k, r[k]);
+    for (const k of ["t", "v", "r", "j", "n", "o"]) if (r[k]) p.set(k, r[k]);
     const h = "#" + p.toString();
     if (location.hash !== h) location.hash = h; else pintar();
   }
+
+  // ---------- Los organizadores ----------
+  // El nombre y el sello de cada organización (pareo_organizadores, de
+  // lectura pública). Para la lista, sin el logo: pesa. Se piden de cien en
+  // cien y se guardan por id. Ver «Torneos en Pareo Integral: el organizador
+  // y la moderación» en docs/decisiones/juegos-y-torneos.md.
+  const organizadores = new Map();
+  async function cargarOrganizadores(ids) {
+    const faltan = [...new Set(ids.filter((id) => id && !organizadores.has(id)))];
+    for (let i = 0; i < faltan.length; i += 100) {
+      const { data, error } = await window.sb.from("pareo_organizadores").select("id,nombre,verificado").in("id", faltan.slice(i, i + 100));
+      if (error) return;
+      for (const o of data || []) organizadores.set(o.id, o);
+    }
+  }
+  const orgDe = (x) => (x && x.organizador_id && organizadores.get(x.organizador_id)) || null;
+  // Con el logo: para la ficha de un torneo y la página del organizador.
+  const conLogo = new Map();
+  async function organizadorCompleto(id) {
+    if (!id) return null;
+    if (!conLogo.has(id)) {
+      const { data, error } = await window.sb.from("pareo_organizadores").select("id,nombre,verificado,logo").eq("id", id).maybeSingle();
+      if (error) return null;
+      conLogo.set(id, data || null);
+      if (data) organizadores.set(id, { id: data.id, nombre: data.nombre, verificado: data.verificado });
+    }
+    return conLogo.get(id);
+  }
+  // Solo una imagen chica en base64 llega a un <img>: lo mismo que exige la tabla.
+  const logoValido = (x) => typeof x === "string" && /^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/]+=*$/.test(x);
+  function bloqueOrganizador(o, enlace) {
+    return el("div", { id: "tp-organizador", class: "flex items-center gap-3 mt-3" },
+      logoValido(o.logo) ? el("img", { src: o.logo, alt: "Logo de " + o.nombre, class: "tp-org-logo" }) : null,
+      el("p", { class: "text-sm" }, el("span", { class: "font-semibold", texto: "Organiza: " }), nombreOrg(o, enlace)));
+  }
+  // El sello, escrito (el color no va solo).
+  const sello = () => el("span", { class: "tp-verificado", title: "Organizador verificado por Ajedrez Integral" },
+    el("span", { "aria-hidden": "true", texto: "✓ " }), "Verificado");
+  const nombreOrg = (o, enlace) => el(enlace ? "a" : "span", Object.assign({ class: "tp-org" }, enlace ? { href: "#o=" + encodeURIComponent(o.id) } : {}),
+    el("span", { class: "sr-only", texto: "Organiza: " }), o.nombre, o.verificado ? sello() : null);
 
   // ---------- La lista ----------
   // Además de las columnas, unos pocos campos del torneo, leídos dentro de
@@ -176,7 +216,7 @@
         hijo ? el("span", { class: "tp-fecha", "aria-hidden": "true" }) : bloqueFecha(x.fecha, x.fin),
         el("span", { class: "tp-principal" },
           el("span", { class: "tp-nombre", texto: x.nombre }), sigue,
-          el("span", { class: "tp-lugar" }, hijo ? null : lugarDe(x), el("span", { class: "tp-estado " + est.clase, texto: est.texto }))),
+          el("span", { class: "tp-lugar" }, hijo ? null : lugarDe(x), el("span", { class: "tp-estado " + est.clase, texto: est.texto }), orgDe(x) ? nombreOrg(orgDe(x)) : null)),
         el("span", { class: "tp-datos" }, datosDe(x)),
         el("span", { class: "tp-flecha", "aria-hidden": "true", texto: "›" })));
   }
@@ -195,7 +235,7 @@
       bloqueFecha(x.fecha, fin),
       el("span", { class: "tp-principal" },
         el("span", { class: "tp-nombre", texto: x.evento }),
-        el("span", { class: "tp-lugar" }, lugarDe(x), el("span", { class: "tp-estado " + est.clase, texto: est.texto }))),
+        el("span", { class: "tp-lugar" }, lugarDe(x), el("span", { class: "tp-estado " + est.clase, texto: est.texto }), orgDe(x) ? nombreOrg(orgDe(x)) : null)),
       el("span", { class: "tp-datos" },
         dato("Torneos", String(torneos.length)),
         dato("Participantes", String(total), { "data-col": "participantes" }),
@@ -243,15 +283,16 @@
   function filtros() {
     const v = (id) => ($(id) ? $(id).value : "");
     const c = (id) => !!($(id) && $(id).checked);
-    return { ritmo: v("tp-f-ritmo"), lugar: v("tp-f-lugar"), elo: v("tp-f-elo"), abierta: c("tp-f-abierta"), curso: c("tp-f-curso") };
+    return { ritmo: v("tp-f-ritmo"), lugar: v("tp-f-lugar"), elo: v("tp-f-elo"), abierta: c("tp-f-abierta"), curso: c("tp-f-curso"), verificado: c("tp-f-verificado") };
   }
-  const hayFiltro = (f) => !!(f.ritmo || f.lugar || f.elo || f.abierta || f.curso);
+  const hayFiltro = (f) => !!(f.ritmo || f.lugar || f.elo || f.abierta || f.curso || f.verificado);
   function pasa(x, f) {
     if (f.ritmo && ritmoDe(x) !== f.ritmo) return false;
     if (f.lugar && (x.lugar || "") !== f.lugar) return false;
     if (f.elo === "sin" ? x.elo === "fide" || x.elo === "nacional" : f.elo && x.elo !== f.elo) return false;
     if (f.abierta && !inscribe(x)) return false;
     if (f.curso && !enCurso(x)) return false;
+    if (f.verificado && !(orgDe(x) && orgDe(x).verificado)) return false;
     return true;
   }
   // Los lugares que hay, para elegir uno (se vuelven a armar con la lista).
@@ -348,7 +389,27 @@
       cal.addEventListener("click", () => agregarAlCalendario(fila, t));
       hijos.push(cal);
     }
+    const reportarB = el("button", { type: "button", id: "tp-reportar", class: boton }, el("span", { "aria-hidden": "true", texto: "⚑" }), "Reportar este torneo");
+    reportarB.addEventListener("click", () => reportar(fila, reportarB));
+    hijos.push(reportarB);
     return el("div", { class: "flex flex-wrap gap-2 mt-3" }, hijos, estado);
+  }
+
+  // «Reportar este torneo»: sin cuenta, lo lee solo Ajedrez Integral, que lo
+  // revisa y, si hace falta, lo oculta de la lista (nunca se borra solo).
+  async function reportar(fila, boton) {
+    const res = await Avisos.formulario({ titulo: "Reportar este torneo", texto: "Cuéntanos qué está mal. Lo lee Ajedrez Integral, que lo revisa y, si hace falta, lo oculta de la lista. No se guarda quién lo mandó.",
+      aceptar: "Mandar el reporte", cancelar: "Cancelar", campos: [
+        { nombre: "motivo", etiqueta: "Qué pasa", tipo: "select", valor: "", opciones: [["", "Elige una opción"], ["inapropiado", "Tiene contenido inapropiado"], ["datos_personales", "Muestra datos personales que no debería"], ["falso", "Es falso o de prueba"], ["error", "Tiene un error (nombres, resultados…)"], ["otro", "Otra cosa"]] },
+        { nombre: "detalle", etiqueta: "Detalle (si quieres)", tipo: "textarea", valor: "", max: 500 }] });
+    if (!res) return;
+    if (!res.motivo) { Avisos.avisar("Elige qué pasa con el torneo para mandar el reporte.", { tipo: "error" }); return; }
+    boton.disabled = true;
+    const r = await window.PareoPublicar.reportar(fila.id, res.motivo, String(res.detalle || "").trim());
+    boton.disabled = false;
+    if (!r.ok) { Avisos.avisar(r.error || "No se pudo mandar. Revisa la conexión e intenta de nuevo.", { tipo: "error" }); return; }
+    Avisos.avisar("Gracias: el reporte llegó a Ajedrez Integral.");
+    boton.focus();
   }
 
   function cabecera(fila, t) {
@@ -360,6 +421,7 @@
       partes.length ? el("p", { class: "text-brand-600 dark:text-brand-300 mt-1", texto: partes.join(" · ") }) : null,
       el("p", { class: C.nota + " mt-1", texto: datos.join(" · ") }),
       el("p", { id: "tp-actualizado", class: "text-xs text-brand-600 dark:text-brand-300 mt-2", role: "status", texto: "Actualizado: " + (window.HoraCR ? HoraCR.fechaHora(fila.actualizado) : fila.actualizado) + " · se vuelve a leer cada minuto" }),
+      fila.organizador_id && conLogo.get(fila.organizador_id) ? bloqueOrganizador(conLogo.get(fila.organizador_id), true) : null,
       acciones(fila, t));
   }
 
@@ -783,6 +845,7 @@
       const a = $("tp-actualizado"); if (a) a.textContent = "Actualizado: " + (window.HoraCR ? HoraCR.fechaHora(fila.actualizado) : fila.actualizado) + " · se vuelve a leer cada minuto";
       return;
     }
+    if (fila.organizador_id) await organizadorCompleto(fila.organizador_id);
     abierto = { fila, t: fila.datos };
     mostrarTorneo(fila, ruta, silencioso && document.activeElement ? document.activeElement.id || "-" : "", silencioso);
   }
@@ -810,15 +873,61 @@
     else if (!foco) $("tp-titulo").focus();
   }
 
+  // ---------- La página de un organizador (#o=<id>) ----------
+  // Su logo, su nombre, el sello y todos sus torneos publicados, por día.
+  async function pintarOrganizador(id) {
+    const caja = $("tp-contenido");
+    $("tp-portada").hidden = true;
+    caja.hidden = false;
+    caja.replaceChildren(el("p", { class: C.nota, role: "status", texto: "Cargando…" }));
+    let o = null, torneos = [];
+    try {
+      o = await organizadorCompleto(id);
+      if (o) {
+        for (let desde = 0; ; desde += 1000) {
+          const { data, error } = await window.sb.from("pareo_publicados").select(COLUMNAS_LISTA).eq("organizador_id", id)
+            .order("fecha", { ascending: false }).range(desde, desde + 999);
+          if (error) throw error;
+          torneos.push(...(data || []));
+          if (!data || data.length < 1000) break;
+        }
+      }
+    } catch (e) {
+      caja.replaceChildren(el("p", { class: C.nota, role: "alert", texto: "No se pudo leer el organizador. Revisa la conexión e intenta de nuevo." }));
+      return;
+    }
+    if (!o) {
+      caja.replaceChildren(el("p", { class: "font-semibold", role: "alert", texto: "Este organizador ya no está en la lista." }), el("a", { href: "#", class: C.enlace, texto: "Ver todos los torneos" }));
+      return;
+    }
+    document.title = o.nombre + " — Torneos en Pareo Integral | Ajedrez Integral";
+    const proximos = torneos.filter(esProximo), jugados = torneos.filter((x) => !esProximo(x));
+    caja.replaceChildren(
+      el("a", { href: "#", class: C.enlace + " text-sm", texto: "← Todos los torneos" }),
+      el("div", { class: "flex flex-wrap items-center gap-4 mt-3 mb-6" },
+        logoValido(o.logo) ? el("img", { src: o.logo, alt: "Logo de " + o.nombre, class: "tp-org-logo tp-org-logo-grande" }) : null,
+        el("div", {},
+          el("h1", { id: "tp-titulo", tabindex: "-1", class: "font-serif text-3xl md:text-4xl font-bold text-brand-800 dark:text-white" }, o.nombre),
+          el("p", { class: "mt-1 flex flex-wrap items-center gap-2 text-sm" }, o.verificado ? sello() : null,
+            el("span", { id: "tp-org-cuantos", texto: torneos.length === 1 ? "1 torneo publicado" : torneos.length + " torneos publicados" })))),
+      proximos.length ? el("h2", { class: "font-serif text-2xl font-bold text-brand-800 dark:text-white mb-3", texto: "Próximos torneos" }) : null,
+      ...porDia(proximos, true, false),
+      jugados.length ? el("h2", { class: "font-serif text-2xl font-bold text-brand-800 dark:text-white mb-3", texto: "Resultados" }) : null,
+      el("div", { id: "tp-org-lista" }, porDia(jugados, false, false)));
+    $("tp-titulo").focus();
+  }
+
   async function pintar() {
     if (refresco) { clearInterval(refresco); refresco = null; }
     const ruta = leerRuta();
+    if (ruta.o && !ruta.t) { abierto = null; await pintarOrganizador(ruta.o); return; }
     if (!ruta.t) {
       abierto = null;
       document.title = "Torneos en Pareo Integral | Ajedrez Integral";
       if (!lista) {
         $("tp-cuantos").textContent = "Cargando…";
         try { lista = await pedirLista(); } catch (e) { $("tp-cuantos").textContent = "No se pudo leer la lista. Revisa la conexión e intenta de nuevo."; return; }
+        await cargarOrganizadores(lista.map((x) => x.organizador_id));
       }
       pintarLugares();
       pintarLista();
@@ -832,10 +941,10 @@
   }
 
   $("tp-buscar").addEventListener("input", pintarLista);
-  for (const id of ["tp-f-ritmo", "tp-f-lugar", "tp-f-elo", "tp-f-abierta", "tp-f-curso"]) $(id).addEventListener("change", pintarLista);
+  for (const id of ["tp-f-ritmo", "tp-f-lugar", "tp-f-elo", "tp-f-abierta", "tp-f-curso", "tp-f-verificado"]) $(id).addEventListener("change", pintarLista);
   $("tp-f-quitar").addEventListener("click", () => {
     for (const id of ["tp-f-ritmo", "tp-f-lugar", "tp-f-elo"]) $(id).value = "";
-    for (const id of ["tp-f-abierta", "tp-f-curso"]) $(id).checked = false;
+    for (const id of ["tp-f-abierta", "tp-f-curso", "tp-f-verificado"]) $(id).checked = false;
     pintarLista();
     $("tp-f-ritmo").focus();
   });

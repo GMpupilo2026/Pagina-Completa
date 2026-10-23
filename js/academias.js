@@ -547,30 +547,6 @@ document.getElementById("m-quitar-logo").addEventListener("click", () => {
     pintarVistaMarca();
 });
 
-/* Achica la imagen a 512 px del lado mayor y la saca en WebP (o PNG si el
-   navegador no sabe), conservando la transparencia. */
-function achicarLogo(archivo) {
-    return new Promise((resolve, reject) => {
-        const img = new Image();
-        const url = URL.createObjectURL(archivo);
-        img.onload = () => {
-            const lado = Math.max(img.naturalWidth, img.naturalHeight) || 1;
-            const k = Math.min(1, 512 / lado);
-            const cv = document.createElement("canvas");
-            cv.width = Math.max(1, Math.round(img.naturalWidth * k));
-            cv.height = Math.max(1, Math.round(img.naturalHeight * k));
-            cv.getContext("2d").drawImage(img, 0, 0, cv.width, cv.height);
-            URL.revokeObjectURL(url);
-            cv.toBlob((b) => {
-                if (b && b.type === "image/webp") return resolve(b);
-                cv.toBlob((p) => p ? resolve(p) : reject(new Error("No se pudo leer la imagen.")), "image/png");
-            }, "image/webp", 0.9);
-        };
-        img.onerror = () => { URL.revokeObjectURL(url); reject(new Error("Esa imagen no se pudo abrir.")); };
-        img.src = url;
-    });
-}
-
 document.getElementById("m-logo").addEventListener("change", async (e) => {
     const f = e.target.files && e.target.files[0];
     if (!f) return;
@@ -579,7 +555,7 @@ document.getElementById("m-logo").addEventListener("change", async (e) => {
         e.target.value = ""; return;
     }
     try {
-        const b = await achicarLogo(f);
+        const b = await ImagenAchicar.logo(f);
         if (b.size > 512 * 1024) { avisar("Aun achicado, el logo pesa más de medio mega. Prueba con uno más simple.", true); e.target.value = ""; return; }
         logoNuevo = b;
         quitarLogo = false;

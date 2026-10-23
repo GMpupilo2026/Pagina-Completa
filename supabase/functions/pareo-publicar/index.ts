@@ -11,6 +11,16 @@
 //   { accion: "inscribir", id, inscripcion, consentimiento } → { ok }
 //   { accion: "inscripciones", id, clave }    → { ok, inscripciones }
 //   { accion: "marcar", id, clave, ids, estado } → { ok }
+//   { accion: "organizador", nombre, logo?, id?, clave? } → { ok, id, clave? }
+//   { accion: "reportar", id, motivo, detalle } → { ok }
+//
+// La organización (pareo_organizadores): nombre y logo de quien organiza,
+// sin cuenta, con su propia clave. «crear» y «actualizar» aceptan además
+// `organizador: { id, clave }`, y el torneo queda a su nombre. El sello
+// «Organizador verificado» y ocultar los pone solo administración
+// (public.pareo_moderar), nunca esta función. «reportar» deja un reporte que
+// lee solo administración. Ver «Torneos en Pareo Integral: el organizador y
+// la moderación».
 //
 // La inscripción antes del torneo: si quien organiza la abrió
 // (`torneo.inscripcion = { abierta, hasta }`), cualquiera manda la de un
@@ -77,6 +87,21 @@ const lista = <T>(v: unknown, max: number, f: (x: unknown) => T | null): T[] =>
 const ids = (v: unknown, max: number) => lista(v, max, id);
 const codigo = (v: unknown) => (typeof v === "string" && /^[a-z0-9]{6,12}$/.test(v) ? v : undefined);
 const hora = (v: unknown) => (Number.isFinite(Number(v)) && Number(v) > 0 ? Math.floor(Number(v)) : undefined);
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
+// El logo, como lo achica el navegador: una imagen chica en base64. Lo mismo
+// que pide la tabla (que lo vuelve a revisar).
+const LOGO = /^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/]+=*$/;
+const MOTIVOS = new Set(["inapropiado", "datos_personales", "falso", "error", "otro"]);
+
+// La organización que manda el torneo, si su clave es la de ella: su id; si
+// no, null (el torneo se publica igual, sin organización).
+async function organizadorDe(v: unknown): Promise<string | null> {
+  if (!esObj(v)) return null;
+  const oid = texto(v.id, 40), clave = texto(v.clave, 100);
+  if (!UUID.test(oid) || !clave) return null;
+  const { data } = await admin.from("pareo_organizadores").select("clave_hash").eq("id", oid).maybeSingle();
+  return data && data.clave_hash === await sha256(clave) ? oid : null;
+}
 
 function persona(v: unknown) {
   if (!esObj(v) || !id(v.id)) return null;
@@ -193,7 +218,10 @@ Deno.serve(async (req) => {
       const { data: freno, error: frenoError } = await admin.rpc("pareo_frenar", { p_ip: ipDe(req), p_crear: false });
       if (frenoError) return json({ ok: false, error: "No se pudo actualizar. Intenta de nuevo." }, 502);
       if (freno) return json({ ok: false, error: freno }, 429);
-      const { error } = await admin.from("pareo_publicados").update({ ...columnas(t), datos: t, actualizado: new Date().toISOString() }).eq("id", pid);
+      const cambio: Obj = { ...columnas(t), datos: t, actualizado: new Date().toISOString() };
+      // Sin organización en el pedido, se queda la que tenía.
+      if (esObj(body.organizador)) { const oid = await organizadorDe(body.organizador); if (oid) cambio.organizador_id = oid; }
+      const { error } = await admin.from("pareo_publicados").update(cambio).eq("id", pid);
       if (error) return json({ ok: false, error: "No se pudo actualizar. Intenta de nuevo." }, 502);
       return json({ ok: true, id: pid });
     }
@@ -202,9 +230,59 @@ Deno.serve(async (req) => {
     if (frenoError) return json({ ok: false, error: "No se pudo publicar. Intenta de nuevo." }, 502);
     if (freno) return json({ ok: false, error: freno }, 429);
     const clave = claveNueva();
-    const { data, error } = await admin.from("pareo_publicados").insert({ ...columnas(t), datos: t, clave_hash: await sha256(clave) }).select("id").single();
+    const organizador_id = await organizadorDe(body.organizador);
+    const { data, error } = await admin.from("pareo_publicados").insert({ ...columnas(t), datos: t, clave_hash: await sha256(clave), organizador_id }).select("id").single();
     if (error || !data) return json({ ok: false, error: "No se pudo publicar. Intenta de nuevo." }, 502);
     return json({ ok: true, id: data.id, clave });
+  }
+
+  // ---------- La organización ----------
+  if (accion === "organizador") {
+    const nombre = texto(body.nombre, 120);
+    if (nombre.length < 2) return json({ ok: false, error: "Escribe el nombre de la organización." }, 400);
+    // logo: un texto (la imagen nueva), null (quitarla) o sin mandar (dejarla).
+    const cambiaLogo = Object.prototype.hasOwnProperty.call(body, "logo");
+    const logo = typeof body.logo === "string" ? body.logo : null;
+    if (logo && (!LOGO.test(logo) || logo.length > 200000)) return json({ ok: false, error: "El logo tiene que ser una imagen PNG, JPG o WebP chica." }, 400);
+    const oid = texto(body.id, 40);
+    if (oid) {
+      const clave = texto(body.clave, 100);
+      if (!UUID.test(oid) || !clave) return json({ ok: false, error: "Falta la clave de la organización." }, 400);
+      const { data: fila } = await admin.from("pareo_organizadores").select("clave_hash").eq("id", oid).maybeSingle();
+      if (!fila) return json({ ok: false, error: "Esa organización ya no existe.", noExiste: true }, 404);
+      if (fila.clave_hash !== await sha256(clave)) return json({ ok: false, error: "La clave no es la de esta organización." }, 403);
+      const { data: freno, error: frenoError } = await admin.rpc("pareo_frenar", { p_ip: ipDe(req), p_crear: false });
+      if (frenoError) return json({ ok: false, error: "No se pudo guardar. Intenta de nuevo." }, 502);
+      if (freno) return json({ ok: false, error: freno }, 429);
+      const cambio: Obj = { nombre, actualizado: new Date().toISOString() };
+      if (cambiaLogo) cambio.logo = logo;
+      const { error } = await admin.from("pareo_organizadores").update(cambio).eq("id", oid);
+      if (error) return json({ ok: false, error: "No se pudo guardar. Intenta de nuevo." }, 502);
+      return json({ ok: true, id: oid });
+    }
+    const { data: freno, error: frenoError } = await admin.rpc("pareo_frenar", { p_ip: ipDe(req), p_crear: true });
+    if (frenoError) return json({ ok: false, error: "No se pudo guardar. Intenta de nuevo." }, 502);
+    if (freno) return json({ ok: false, error: freno }, 429);
+    const clave = claveNueva();
+    const { data, error } = await admin.from("pareo_organizadores").insert({ nombre, logo, clave_hash: await sha256(clave) }).select("id").single();
+    if (error || !data) return json({ ok: false, error: "No se pudo guardar. Intenta de nuevo." }, 502);
+    return json({ ok: true, id: data.id, clave });
+  }
+
+  // ---------- Reportar un torneo ----------
+  if (accion === "reportar") {
+    const pid = texto(body.id, 40);
+    const motivo = texto(body.motivo, 30);
+    if (!UUID.test(pid)) return json({ ok: false, error: "Ese torneo no existe." }, 400);
+    if (!MOTIVOS.has(motivo)) return json({ ok: false, error: "Elige por qué lo reportas." }, 400);
+    const { data: pub } = await admin.from("pareo_publicados").select("id").eq("id", pid).maybeSingle();
+    if (!pub) return json({ ok: false, error: "Ese torneo ya no está publicado." }, 404);
+    const { data: freno, error: frenoError } = await admin.rpc("pareo_reportar_frenar", { p_ip: ipDe(req) });
+    if (frenoError) return json({ ok: false, error: "No se pudo mandar. Intenta de nuevo." }, 502);
+    if (freno) return json({ ok: false, error: freno }, 429);
+    const { error } = await admin.from("pareo_reportes").insert({ publicado_id: pid, motivo, detalle: texto(body.detalle, 500) });
+    if (error) return json({ ok: false, error: "No se pudo mandar. Intenta de nuevo." }, 502);
+    return json({ ok: true });
   }
 
   if (accion === "borrar") {

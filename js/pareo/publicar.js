@@ -78,8 +78,22 @@
     return datos && typeof datos === "object" ? datos : { ok: false, error: null };
   }
 
-  const crear = (t, extra) => llamar({ accion: "crear", torneo: datosPublicos(t, extra) });
-  const actualizar = (t, extra) => llamar({ accion: "actualizar", id: t.publicado.id, clave: t.publicado.clave, torneo: datosPublicos(t, extra) });
+  // `extra.organizador`: { id, clave } de la organización de este navegador
+  // (guardarOrganizador): el torneo queda a su nombre.
+  const conOrganizador = (cuerpo, extra) => (extra && extra.organizador && extra.organizador.id
+    ? Object.assign(cuerpo, { organizador: { id: extra.organizador.id, clave: extra.organizador.clave } }) : cuerpo);
+  const crear = (t, extra) => llamar(conOrganizador({ accion: "crear", torneo: datosPublicos(t, extra) }, extra));
+  const actualizar = (t, extra) => llamar(conOrganizador({ accion: "actualizar", id: t.publicado.id, clave: t.publicado.clave, torneo: datosPublicos(t, extra) }, extra));
+  // La organización: { nombre, logo } nueva, o con { id, clave } para
+  // cambiarla. `logo` en null la quita; sin `logo`, se queda la que tenía.
+  const guardarOrganizador = (o) => {
+    const cuerpo = { accion: "organizador", nombre: o.nombre };
+    if (o.id) Object.assign(cuerpo, { id: o.id, clave: o.clave });
+    if (o.logo !== undefined) cuerpo.logo = o.logo;
+    return llamar(cuerpo);
+  };
+  // «Reportar este torneo» (la página pública, sin clave).
+  const reportar = (id, motivo, detalle) => llamar({ accion: "reportar", id, motivo, detalle: detalle || "" });
   const borrar = (p) => llamar({ accion: "borrar", id: p.id, clave: p.clave });
   // La inscripción previa: mandarla (la página pública, sin clave), leerlas
   // y marcarlas (quien organiza, con la clave de su torneo).
@@ -89,7 +103,7 @@
   // La dirección pública de un torneo publicado (desde la página que llama).
   const enlace = (id) => new URL("torneos-pareo.html#t=" + encodeURIComponent(id), location.href).href;
 
-  const api = { datosPublicos, crear, actualizar, borrar, inscribir, inscripciones, marcar, enlace, URL_FUNCION };
+  const api = { datosPublicos, crear, actualizar, guardarOrganizador, reportar, borrar, inscribir, inscripciones, marcar, enlace, URL_FUNCION };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else raiz.PareoPublicar = api;
 })(typeof self !== "undefined" ? self : this);

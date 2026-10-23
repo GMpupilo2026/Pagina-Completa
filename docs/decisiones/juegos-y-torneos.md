@@ -3680,6 +3680,89 @@ SUB-10», «Mujeres · inter»…), y se borraron todos a pedido del dueño.
 - En la máquina y en el CI, la publicación falla callada (y se reintenta cada
   minuto), como cuando no hay red: el resto de Pareo Integral no cambia.
 
+### Torneos en Pareo Integral: el organizador y la moderación
+
+Lo pidió el dueño del sitio (la 4, la 5, la 6 y la 7 de una lista de
+propuestas), para que la lista pública se vea profesional y se pueda limpiar
+sin borrar nada.
+
+- **«Tu organización»** (ficha Archivos de `pareo.html`) es el nombre y el
+  logo de quien organiza. Es **sin cuenta**, como los torneos:
+  - La crea la Edge Function `pareo-publicar` (`accion: "organizador"`), que
+    devuelve una clave secreta. La guarda el navegador
+    (`pareo_organizador_v1`) y en la base queda solo su sha256
+    (`pareo_organizadores.clave_hash`, que ninguna columna pública deja leer).
+  - Con la clave se cambia el nombre o el logo, y cada torneo que se publica
+    o se pone al día desde ese navegador va con `organizador: { id, clave }`
+    y queda a su nombre (`pareo_publicados.organizador_id`). Al guardarla,
+    los torneos ya publicados se ponen al día en el momento.
+  - Para otra computadora, «Copiar el código» (`org:<id>:<clave>`) y «Ya
+    tengo una organización» para pegarlo.
+  - **Sin tocar el logo, el pedido NO lleva `logo`**: la función entiende
+    «sin `logo`» como dejar el que está y `logo: null` como quitarlo. Un
+    `logo: null` mandado por costumbre borraba el logo cada vez que se
+    cambiaba el nombre, sin ningún error.
+- **El logo va en la fila**, como imagen chica en base64 (`data:image/…`):
+  así no hace falta un bucket público ni otra vía de subida sin cuenta.
+  - Lo achica el navegador (`js/imagen-achicar.js`, la misma copia que el
+    logo de las academias), primero a 400 px y si pesa a 200.
+  - La función y la tabla vuelven a mirar el formato y el tope de 200 000
+    caracteres.
+  - La página pública solo pone en un `<img>` un texto que empiece con
+    `data:image/png|jpeg|webp;base64,` (`logoValido`).
+  - La lista nunca pide el logo, porque pesa: pide nombre y sello de todos
+    los organizadores de una vez (de cien en cien) y el logo solo en la
+    ficha de un torneo y en la página del organizador.
+- **En los PDF** (clasificación, tabla cruzada, acta, informe, premiación)
+  sale arriba el nombre y el logo de la organización (`cabecera` de
+  `js/reporte-pdf.js`, armada por `conOrganizacion`). La marca de agua sigue
+  siendo la de Ajedrez Integral.
+- **La página de cada organizador**, `torneos-pareo.html#o=<id>`: su logo,
+  su nombre, el sello y todos sus torneos publicados, por día. Los pide a la
+  base por su id; no filtra la lista entera.
+- **El sello «Verificado»** lo da solo quien administra: no se pide. Va a
+  federaciones, comités y organizadores de confianza.
+  - Va escrito («✓ Verificado»), no solo con un color.
+  - Sale en la lista, en la ficha y en su página.
+  - La lista se filtra con «Solo organizadores verificados».
+  - La función `pareo-publicar` nunca escribe `verificado`
+    (`verificar-pareo-organizador.js` lo revisa en su código).
+- **«Reportar este torneo»** (en la ficha de cada torneo) pide el motivo
+  (inapropiado, datos personales, falso o de prueba, un error, otra cosa) y
+  un detalle opcional.
+  - Va por la función (`accion: "reportar"`), con su freno
+    (`pareo_reportar_frenar`: 10 por conexión por hora, 300 en total).
+  - No guarda quién lo mandó.
+  - `pareo_reportes` la lee solo administración: anon no tiene ni el
+    `select`.
+- **`admin-pareo.html`** («Moderación de Pareo Integral», en
+  `js/paginas-admin.js`) muestra los reportes nuevos, las organizaciones y
+  los torneos ocultos.
+  - Todo lo escribe **una sola función**, `public.pareo_moderar(p_que,
+    p_id)`: verificar o quitar el sello, ocultar o mostrar una organización
+    o un torneo, y marcar revisado un reporte.
+  - Valida `coalesce(soy_admin(), false)` y devuelve la fila vuelta a leer.
+  - Ninguna de las tres tablas tiene política de escritura.
+- **Ocultar no borra.** Una fila con `oculto` deja de verse para todos menos
+  administración: la política de lectura es `not oculto or soy_admin()`.
+  Ocultar una organización esconde su página y su nombre en la lista; sus
+  torneos siguen, sin nombre.
+- **Queda anotado**: el sello y ocultar pasan por `interno.auditar()`
+  (`pareo_organizadores` está en `VIGILADAS` de `verificar-auditoria.js`, y
+  `pareo_publicados` lleva `auditar_oculto`).
+- Comprobado impersonando roles en SQL, en una transacción deshecha:
+  - anon no ve lo oculto;
+  - anon no puede leer `pareo_reportes` (sin permiso) ni llamar a
+    `pareo_moderar`;
+  - un usuario que no administra recibe «Solo administración…»;
+  - quien administra da el sello y queda una fila en la bitácora.
+
+Lo comprueba `verificar-pareo-organizador.js`: la organización en
+`pareo.html` (crear, cambiar sin `logo`, quitarlo, el código, el PDF y el
+torneo publicado a su nombre), la lista pública (nombre, sello, filtro, que
+nunca pida el logo ni la clave, texto ajeno), la ficha con el logo,
+«Reportar», la página del organizador y `admin-pareo.html`.
+
 ### Torneos en Pareo Integral: válido para Elo, filtros, calendario y la tarjeta al compartir
 
 Lo pidió el dueño del sitio (la 1, la 3, la 5 y la 7 de una lista de propuestas).
