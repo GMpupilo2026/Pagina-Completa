@@ -7773,6 +7773,13 @@ Es una página estática, sin cuenta y sin base: nada se guarda.
   pestaña» va siempre. El formulario del bye es de la organización (Google
   Forms) y la política de privacidad lo dice. WhatsApp, el correo y los mapas
   siguen yéndose afuera: no se dejan mostrar dentro de otra página.
+- **Toda la información va en fichas, no desplegada** (lo pidió el dueño: quien
+  busca algo puntual no tiene que pasar por todo lo demás). El reglamento, el
+  calendario, los hoteles y los contactos son `<dialog class="ficha-dialogo">`
+  ya escritos en el HTML, cerrados hasta que se toca su ficha; cualquier enlace
+  a su `#id` (la ficha, el menú, el pie) los abre encima, y entrar con `#hoteles`
+  en la dirección también. En el celular las fichas van de dos en dos, sin la
+  descripción, para que quepan más.
 - **«Contacta a la organización»** lleva a `#contacto`: la árbitra principal,
   la organizadora y el árbitro de pareo, cada uno con su cargo, su teléfono y su
   WhatsApp. Los nombres completos salen del Comité organizador de las bases; los

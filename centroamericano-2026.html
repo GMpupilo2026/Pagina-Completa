@@ -88,7 +88,7 @@
     <section id="fichas" class="pt-12 pb-6 scroll-mt-24">
         <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
             <h2 class="font-serif text-2xl md:text-3xl font-bold text-brand-800 dark:text-white">Todo el torneo a un clic</h2>
-            <p class="text-brand-600 dark:text-brand-300 mt-2 max-w-2xl">Cada ficha te lleva a su lugar. Las que dicen «Pronto» se abren en cuanto la organización publique el enlace.</p>
+            <p class="text-brand-600 dark:text-brand-300 mt-2 max-w-2xl">Toca la ficha de lo que buscas y se abre encima, sin salir de la página. Las que dicen «Pronto» se abren en cuanto la organización publique el enlace.</p>
             <ul class="mt-6 sm:mt-8 grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-5">
                 <li>
                     <a href="documentos/centroamericano-2026/bases-cac-2026.pdf" target="_blank" rel="noopener" data-ventana="Bases del campeonato" class="h-full flex flex-col rounded-2xl bg-white dark:bg-brand-900 border border-brand-100 dark:border-brand-800 shadow-sm hover:shadow-lg hover:border-accent-400 transition p-4 sm:p-6 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
@@ -147,6 +147,14 @@
                     </a>
                 </li>
                 <li>
+                    <a href="#reglamento" class="h-full flex flex-col rounded-2xl bg-white dark:bg-brand-900 border border-brand-100 dark:border-brand-800 shadow-sm hover:shadow-lg hover:border-accent-400 transition p-4 sm:p-6 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                        <span class="text-2xl sm:text-3xl" aria-hidden="true">📋</span>
+                        <span class="mt-2 sm:mt-3 font-bold text-base sm:text-lg leading-snug text-brand-800 dark:text-white">Reglamento</span>
+                        <span class="hidden sm:block mt-1 text-sm text-brand-600 dark:text-brand-300 flex-1">El sistema, el ritmo de juego, las categorías, los desempates y los premios.</span>
+                        <span class="mt-auto pt-3 sm:pt-4 text-xs sm:text-sm font-semibold text-accent-700 dark:text-accent-400">Ver el reglamento →</span>
+                    </a>
+                </li>
+                <li>
                     <a href="mailto:torneos_internacionales_costarica@fcacostarica.com" class="h-full flex flex-col rounded-2xl bg-white dark:bg-brand-900 border border-brand-100 dark:border-brand-800 shadow-sm hover:shadow-lg hover:border-accent-400 transition p-4 sm:p-6 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
                         <span class="text-2xl sm:text-3xl" aria-hidden="true">✉️</span>
                         <span class="mt-2 sm:mt-3 font-bold text-base sm:text-lg leading-snug text-brand-800 dark:text-white">Correo de la organización</span>
@@ -178,9 +186,12 @@
          las bases (Comité organizador) y de lo que dio el dueño; los teléfonos,
          del dueño. Mientras no haya foto, el círculo lleva las iniciales: no se
          pone una cara que no sea la de la persona. -->
-    <section id="contacto" class="py-6 scroll-mt-24">
-        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-            <h2 class="font-serif text-2xl md:text-3xl font-bold text-brand-800 dark:text-white"><span aria-hidden="true">📞 </span>Contacta a la organización</h2>
+    <dialog id="contacto" class="ficha-dialogo w-[calc(100%-1rem)] sm:w-[calc(100%-2rem)] max-w-5xl max-h-[90vh] rounded-2xl shadow-2xl p-0 bg-brand-50 dark:bg-brand-950 text-brand-800 dark:text-brand-100 backdrop:bg-black/60" aria-labelledby="contacto-titulo">
+        <div class="sticky top-0 z-10 flex items-center gap-3 px-4 sm:px-6 py-3 bg-white dark:bg-brand-900 border-b border-brand-100 dark:border-brand-800">
+            <h2 id="contacto-titulo" class="font-serif text-xl md:text-2xl font-bold text-brand-800 dark:text-white flex-1 min-w-0"><span aria-hidden="true">📞 </span>Contacta a la organización</h2>
+            <button type="button" data-cerrar class="shrink-0 bg-brand-800 hover:bg-brand-700 text-white font-semibold text-sm px-4 py-2 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2">Cerrar</button>
+        </div>
+        <div class="px-4 sm:px-6 pt-2 pb-6">
             <p class="text-brand-600 dark:text-brand-300 mt-2">Escríbeles por WhatsApp o llámalos directamente.</p>
             <ul class="mt-6 grid sm:grid-cols-3 gap-5">
                 <li class="flex flex-col items-center text-center rounded-2xl bg-white dark:bg-brand-900 border border-brand-100 dark:border-brand-800 shadow-sm p-6">
@@ -206,11 +217,14 @@
                 </li>
             </ul>
         </div>
-    </section>
+    </dialog>
 
-    <section class="py-6">
-        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-            <h2 class="font-serif text-2xl md:text-3xl font-bold text-brand-800 dark:text-white">Lo esencial del reglamento</h2>
+    <dialog id="reglamento" class="ficha-dialogo w-[calc(100%-1rem)] sm:w-[calc(100%-2rem)] max-w-5xl max-h-[90vh] rounded-2xl shadow-2xl p-0 bg-brand-50 dark:bg-brand-950 text-brand-800 dark:text-brand-100 backdrop:bg-black/60" aria-labelledby="reglamento-titulo">
+        <div class="sticky top-0 z-10 flex items-center gap-3 px-4 sm:px-6 py-3 bg-white dark:bg-brand-900 border-b border-brand-100 dark:border-brand-800">
+            <h2 id="reglamento-titulo" class="font-serif text-xl md:text-2xl font-bold text-brand-800 dark:text-white flex-1 min-w-0"><span aria-hidden="true">📋 </span>Lo esencial del reglamento</h2>
+            <button type="button" data-cerrar class="shrink-0 bg-brand-800 hover:bg-brand-700 text-white font-semibold text-sm px-4 py-2 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2">Cerrar</button>
+        </div>
+        <div class="px-4 sm:px-6 pt-2 pb-6">
             <div class="mt-6 grid sm:grid-cols-2 gap-5">
                 <div class="rounded-2xl bg-white dark:bg-brand-900 border border-brand-100 dark:border-brand-800 p-6">
                     <h3 class="font-bold text-brand-800 dark:text-white">Sistema y ritmo</h3>
@@ -241,11 +255,14 @@
                 </div>
             </div>
         </div>
-    </section>
+    </dialog>
 
-    <section id="calendario" class="py-6 scroll-mt-24">
-        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-            <h2 class="font-serif text-2xl md:text-3xl font-bold text-brand-800 dark:text-white"><span aria-hidden="true">🗓️ </span>Calendario</h2>
+    <dialog id="calendario" class="ficha-dialogo w-[calc(100%-1rem)] sm:w-[calc(100%-2rem)] max-w-5xl max-h-[90vh] rounded-2xl shadow-2xl p-0 bg-brand-50 dark:bg-brand-950 text-brand-800 dark:text-brand-100 backdrop:bg-black/60" aria-labelledby="calendario-titulo">
+        <div class="sticky top-0 z-10 flex items-center gap-3 px-4 sm:px-6 py-3 bg-white dark:bg-brand-900 border-b border-brand-100 dark:border-brand-800">
+            <h2 id="calendario-titulo" class="font-serif text-xl md:text-2xl font-bold text-brand-800 dark:text-white flex-1 min-w-0"><span aria-hidden="true">🗓️ </span>Calendario</h2>
+            <button type="button" data-cerrar class="shrink-0 bg-brand-800 hover:bg-brand-700 text-white font-semibold text-sm px-4 py-2 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2">Cerrar</button>
+        </div>
+        <div class="px-4 sm:px-6 pt-2 pb-6">
             <p class="text-brand-600 dark:text-brand-300 mt-2">Todas las horas son de Costa Rica. La reunión técnica es virtual, con el enlace que envía la organización.</p>
             <div class="mt-6 overflow-x-auto rounded-2xl border border-brand-100 dark:border-brand-800 bg-white dark:bg-brand-900">
                 <table class="w-full text-sm">
@@ -274,11 +291,14 @@
                 </table>
             </div>
         </div>
-    </section>
+    </dialog>
 
-    <section id="hoteles" class="py-6 pb-16 scroll-mt-24">
-        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-            <h2 class="font-serif text-2xl md:text-3xl font-bold text-brand-800 dark:text-white"><span aria-hidden="true">🏨 </span>Hoteles oficiales</h2>
+    <dialog id="hoteles" class="ficha-dialogo w-[calc(100%-1rem)] sm:w-[calc(100%-2rem)] max-w-5xl max-h-[90vh] rounded-2xl shadow-2xl p-0 bg-brand-50 dark:bg-brand-950 text-brand-800 dark:text-brand-100 backdrop:bg-black/60" aria-labelledby="hoteles-titulo">
+        <div class="sticky top-0 z-10 flex items-center gap-3 px-4 sm:px-6 py-3 bg-white dark:bg-brand-900 border-b border-brand-100 dark:border-brand-800">
+            <h2 id="hoteles-titulo" class="font-serif text-xl md:text-2xl font-bold text-brand-800 dark:text-white flex-1 min-w-0"><span aria-hidden="true">🏨 </span>Hoteles oficiales</h2>
+            <button type="button" data-cerrar class="shrink-0 bg-brand-800 hover:bg-brand-700 text-white font-semibold text-sm px-4 py-2 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2">Cerrar</button>
+        </div>
+        <div class="px-4 sm:px-6 pt-2 pb-6">
             <div class="mt-4 rounded-2xl border-l-4 border-accent-500 bg-white dark:bg-brand-900 p-5 text-sm">
                 <p class="font-bold text-brand-800 dark:text-white">La reserva se hace con la organización, no con el hotel.</p>
                 <p class="mt-1 text-brand-600 dark:text-brand-300">Según las bases, una reserva directa con el hotel no cuenta como hotel oficial y paga una penalidad de 200 USD por persona. Los teléfonos de abajo sirven para preguntar por el hotel o llegar; para reservar, escribe a <a href="mailto:torneos_internacionales_costarica@fcacostarica.com" class="text-accent-700 dark:text-accent-400 font-semibold underline underline-offset-2 hover:no-underline break-all">torneos_internacionales_costarica@fcacostarica.com</a>.</p>
@@ -352,7 +372,7 @@
                 </li>
             </ul>
         </div>
-    </section>
+    </dialog>
     </main>
 
     <footer class="bg-brand-900 text-brand-300 pt-16 pb-8">

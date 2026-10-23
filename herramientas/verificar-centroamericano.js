@@ -58,7 +58,15 @@ ok("lo que abre otra pestaña lleva rel=noopener", blancos.every((a) => /rel="no
 for (let r = 1; r <= 9; r++) ok("el calendario tiene la ronda " + r, html.includes(">Ronda " + r + "</th>"));
 const tels = [...html.matchAll(/href="tel:([^"]+)"/g)].map((m) => m[1]);
 ok("ningún teléfono sin confirmar", tels.every((t) => TELEFONOS.includes(t)), tels.filter((t) => !TELEFONOS.includes(t)).join(", "));
-const contacto = (html.match(/<section id="contacto"[\s\S]*?<\/section>/) || [""])[0];
+const contacto = (html.match(/<dialog id="contacto"[\s\S]*?<\/dialog>/) || [""])[0];
+// Toda la información va en fichas: cada ventana de la página tiene su ficha y su «Cerrar».
+const dialogos = [...html.matchAll(/<dialog id="([a-z-]+)" class="ficha-dialogo[^"]*" aria-labelledby="\1-titulo">([\s\S]*?)<\/dialog>/g)];
+ok("el reglamento, el calendario, los hoteles y los contactos van en ventanas", JSON.stringify(dialogos.map((m) => m[1]).sort()) === JSON.stringify(["calendario", "contacto", "hoteles", "reglamento"]), dialogos.map((m) => m[1]).join(", "));
+for (const [, id, cuerpo] of dialogos) {
+  ok("la ventana «" + id + "» tiene su ficha", fichas.includes('href="#' + id + '"'));
+  ok("y su título y su botón «Cerrar»", cuerpo.includes('id="' + id + '-titulo"') && /data-cerrar[^>]*>Cerrar</.test(cuerpo));
+}
+ok("no queda información desplegada fuera de las fichas", !/<section id="(contacto|reglamento|calendario|hoteles)"/.test(html));
 const personas = [...contacto.matchAll(/<h3[^>]*>([^<]+)<\/h3>\s*<p[^>]*>([^<]+)<\/p>/g)].map((m) => m[1] + " — " + m[2]);
 ok("Contacta a la organización: árbitra principal, organizadora y árbitro de pareo", JSON.stringify(personas) === JSON.stringify(["Carolina Muñoz — Árbitra principal", "Vivian Víquez Miranda — Organizadora", "Jean Quesada — Árbitro de pareo"]), JSON.stringify(personas));
 ok("cada contacto con su teléfono y su WhatsApp", (contacto.match(/href="tel:/g) || []).length === 3 && (contacto.match(/href="https:\/\/wa\.me\/506\d{8}"/g) || []).length === 3);
@@ -97,6 +105,19 @@ ok("la página carga js/ventana-enlace.js", html.includes('<script src="js/venta
       if (!alcanzada) await p.keyboard.press("Tab");
     }
     ok("una ficha apagada se alcanza con Tab", alcanzada);
+
+    // Los hoteles no se ven hasta tocar su ficha, y se abren encima.
+    ok("los hoteles no se ven al entrar", !(await p.evaluate(() => document.getElementById("hoteles").checkVisibility())));
+    await p.click('#fichas a[href="#hoteles"]');
+    await p.waitForFunction(() => document.getElementById("hoteles").open);
+    ok("al tocar su ficha se abren encima", await p.evaluate(() => document.getElementById("hoteles").checkVisibility() && document.activeElement.matches("#hoteles [data-cerrar]")));
+    await p.click("#hoteles [data-cerrar]");
+    ok("«Cerrar» la cierra y el foco vuelve a la ficha", await p.evaluate(() => !document.getElementById("hoteles").open && document.activeElement.getAttribute("href") === "#hoteles"));
+    const ctx2 = await nav.newContext({ viewport: { width: 375, height: 800 }, serviceWorkers: "block" });
+    const p2 = await ctx2.newPage();
+    await p2.goto(BASE + "/" + PAGINA + "#contacto", { waitUntil: "load" });
+    ok("entrar con «#contacto» en la dirección abre los contactos", await p2.evaluate(() => document.getElementById("contacto").open && document.getElementById("contacto").checkVisibility()));
+    await ctx2.close();
 
     // Las bases se abren encima, sin salir de la página.
     const antes = p.url();

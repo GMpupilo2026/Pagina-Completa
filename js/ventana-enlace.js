@@ -1,4 +1,5 @@
-/* Abre un enlace en una ventana encima de la página, sin salir de ella.
+/* Abre un enlace en una ventana encima de la página, sin salir de ella
+ * (y, más abajo, las ventanas ya escritas en la propia página).
  *
  * Un <a href="…" data-ventana="Título"> abre su dirección en un <dialog> con
  * un marco, en vez de otra pestaña. El <dialog> con showModal() ya encierra el
@@ -70,7 +71,47 @@
     return d;
   }
 
+  /* Las ventanas de la propia página: un <dialog class="ficha-dialogo" id="x">
+     ya escrito en el HTML (con su botón [data-cerrar]) se abre con cualquier
+     enlace a «#x» —la ficha, el menú o el pie— y al entrar con «#x» en la
+     dirección. Al cerrar, el foco vuelve a quien la abrió. */
+  let quienAbrio = null;
+  function dialogoDe(hash) {
+    if (!hash || hash.length < 2) return null;
+    const d = document.getElementById(decodeURIComponent(hash.slice(1)));
+    return d && d.matches("dialog.ficha-dialogo") ? d : null;
+  }
+  function abrirDialogo(d, desde) {
+    if (d.open) return;
+    quienAbrio = desde || null;
+    d.showModal();
+    d.scrollTop = 0;
+    const cerrar = d.querySelector("[data-cerrar]");
+    if (cerrar) cerrar.focus();
+  }
+  document.querySelectorAll("dialog.ficha-dialogo").forEach((d) => {
+    d.querySelectorAll("[data-cerrar]").forEach((b) => b.addEventListener("click", () => d.close()));
+    d.addEventListener("click", (ev) => { if (ev.target === d) d.close(); });
+    d.addEventListener("close", () => {
+      if (location.hash === "#" + d.id) history.replaceState(null, "", location.pathname + location.search);
+      if (quienAbrio && document.contains(quienAbrio)) quienAbrio.focus();
+      quienAbrio = null;
+    });
+  });
+  const alEntrar = dialogoDe(location.hash);
+  if (alEntrar && typeof alEntrar.showModal === "function") abrirDialogo(alEntrar, null);
+
   document.addEventListener("click", (ev) => {
+    const interno = ev.target.closest && ev.target.closest('a[href^="#"]');
+    if (interno && ev.button === 0 && !ev.defaultPrevented) {
+      const d = dialogoDe(interno.getAttribute("href"));
+      if (d && typeof d.showModal === "function") {
+        ev.preventDefault();
+        // Desde el menú del celular, que queda abierto detrás, igual se abre encima.
+        abrirDialogo(d, interno);
+        return;
+      }
+    }
     const a = ev.target.closest && ev.target.closest("a[data-ventana]");
     if (!a || ev.defaultPrevented || ev.button !== 0) return;
     if (ev.ctrlKey || ev.metaKey || ev.shiftKey || ev.altKey) return;
@@ -79,5 +120,5 @@
     abrir(a);
   });
 
-  window.VentanaEnlace = { abrir };
+  window.VentanaEnlace = { abrir, abrirDialogo };
 })();
