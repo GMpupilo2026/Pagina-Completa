@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 132" role="img" aria-label="Costa Rica">
+  <!-- La insignia de la portada de las bases: la bandera de Costa Rica en un
+       círculo (franjas 1-1-2-1-1) y «COSTA RICA» en arco encima. -->
+  <defs>
+    <clipPath id="circulo"><circle cx="60" cy="76" r="44"/></clipPath>
+    <path id="arco" d="M 14 64 A 46 46 0 0 1 106 64"/>
+  </defs>
+  <text font-family="Arial, Helvetica, sans-serif" font-size="15" font-weight="800" fill="#fff" letter-spacing="1.5">
+    <textPath href="#arco" startOffset="50%" text-anchor="middle">COSTA RICA</textPath>
+  </text>
+  <circle cx="60" cy="76" r="48" fill="#fff"/>
+  <g clip-path="url(#circulo)">
+    <rect x="0" y="32" width="120" height="88" fill="#fff"/>
+    <rect x="0" y="32" width="120" height="14.67" fill="#002b7f"/>
+    <rect x="0" y="61.33" width="120" height="29.33" fill="#ce1126"/>
+    <rect x="0" y="105.33" width="120" height="14.67" fill="#002b7f"/>
+  </g>
+</svg>

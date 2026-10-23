@@ -8160,6 +8160,35 @@ Gimnasio Nacional de La Sabana): las bases, los hoteles, el bye, las partidas
 y los resultados en vivo, el grupo de WhatsApp, el correo y cómo llegar.
 Es una página estática, sin cuenta y sin base: nada se guarda.
 
+- **La página lleva la cara de las bases** (lo pidió el dueño):
+  `css/centroamericano.css`, solo de esta página (el `body` lleva `cac`), con
+  el morado de la portada (#40478F a #5A5FA3), el rojo de la píldora (#CE1328),
+  el verde de las hojas (#1F774C), el azul de la camiseta y el naranja del
+  pizote, medidos de las bases y con el contraste de cada texto comprobado
+  (está anotado en la cabecera del CSS: el morado más claro de la portada,
+  #7273B3, no alcanza con texto blanco y el degradado no baja de #5A5FA3). Las
+  piezas salen recortadas tal cual de las bases, sin redibujarlas: la mascota
+  (el pizote que juega ajedrez), el pizote con el trofeo, las hojas de monstera
+  (sin el fondo blanco) y el logo de la CCA, en `img/centroamericano-2026/`.
+  La insignia de Costa Rica sí es un SVG propio (`bandera-cr.svg`, franjas
+  1-1-2-1-1), porque el recorte traía un morado que no calzaba con el
+  degradado. Lo que solo adorna lleva `alt=""` y `aria-hidden`; la mascota, su
+  descripción. La mascota flota y la bandera se mece, pero con «menos
+  movimiento» pedido en el sistema se quedan quietas.
+- **Tres pizotes más, pocos y con algo que hacer**: la cabeza del pizote se
+  asoma en «Pedir un bye» (`mascota-asoma.png`, recortada de `mascota.jpg`), el
+  del trofeo festeja en «Resultados en vivo» y el de la portada despide en un
+  globo que abre los contactos. Son los dos dibujos de las bases: **ninguna
+  pose de la mascota se inventa**; si la organización pasa otras ilustraciones,
+  van en su ficha. En el celular el que se asoma se achica y el «Abrir…» le
+  deja su lugar, para no tapar el texto.
+- **Nueve fichas, tres por fila**: «Contacta a la organización» ya no es
+  ficha, porque la abre la despedida del pizote al final, y el correo de la
+  organización va dentro de esa ventana, debajo de las tres personas. En el
+  celular, de a dos, la última ficha («Cómo llegar») ocupa la fila entera para
+  que no quede una sola. Arriba, cada ficha lleva la bandera de Costa Rica
+  (1-1-2-1-1, con sus colores oficiales) y una fila de casillas de tablero; el
+  color de las bases queda en el ícono.
 - **Las bases las sirve el propio sitio**, tal cual las publicó la FCA, en
   `documentos/centroamericano-2026/bases-cac-2026.pdf` (como la normativa de
   los JDE en `documentos/jde/`). Es un documento oficial ajeno: **no lleva la

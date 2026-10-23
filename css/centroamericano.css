@@ -1,0 +1,317 @@
+/* La página del Centroamericano 2026 (centroamericano-2026.html), con la cara
+ * de sus bases oficiales: el morado de la portada, el rojo de la píldora, el
+ * verde de las hojas de monstera y el pizote de la mascota.
+ *
+ * Los colores salen medidos de las bases, no a ojo, y cada texto se comprobó
+ * contra su fondo (WCAG AA): blanco sobre #40478F 8,35; sobre #5A5FA3 5,83
+ * (el degradado no baja de ahí: #7273B3, el tono más claro de la portada, da
+ * 4,36 y no alcanza); blanco sobre el rojo #CE1328 5,6; #40478F sobre blanco
+ * 8,35 y sobre el lavanda #F4F4FB 7,62; #1F774C sobre blanco 5,52; en oscuro,
+ * #B8BBF2 sobre brand-900 9,09. Ver «La página del Centroamericano 2026» en
+ * docs/decisiones/juegos-y-torneos.md.
+ */
+.cac {
+  --cac-morado: #40478f;
+  --cac-morado-2: #5a5fa3;
+  --cac-morado-hondo: #1e2453;
+  --cac-rojo: #ce1328;
+  --cac-verde: #1f774c;
+  --cac-azul: #1e4c8a;
+  --cac-naranja: #e0ab5b;
+  --cac-fondo: #f4f4fb;
+  --cac-acento: var(--cac-morado);
+  background-color: var(--cac-fondo);
+}
+.dark .cac {
+  --cac-fondo: rgb(var(--c-brand-950, 7 21 39));
+  --cac-acento: #b8bbf2;
+}
+
+/* La portada: el morado de las bases, con las hojas en las esquinas. */
+.cac-portada {
+  position: relative;
+  overflow: hidden;
+  color: #fff;
+  background: linear-gradient(165deg, var(--cac-morado) 0%, var(--cac-morado-2) 100%);
+}
+.cac-hojas {
+  position: absolute;
+  width: clamp(140px, 22vw, 300px);
+  height: auto;
+  pointer-events: none;
+  user-select: none;
+}
+.cac-hojas-ai { top: -6px; left: -6px; }
+.cac-hojas-ad { top: -6px; right: -6px; transform: scaleX(-1); }
+.cac-hojas-bi { bottom: -6px; left: -6px; transform: scaleY(-1); }
+.cac-hojas-bd { bottom: -6px; right: -6px; transform: scale(-1, -1); }
+.cac-portada .cac-hojas { opacity: 0.55; }
+
+.cac-pildora {
+  display: inline-block;
+  background: var(--cac-rojo);
+  color: #fff;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  border-radius: 0.6rem;
+  padding: 0.3rem 0.9rem;
+  box-shadow: 0 4px 0 rgb(0 0 0 / 0.18);
+}
+.cac-caja {
+  display: inline-block;
+  border: 3px solid #fff;
+  border-radius: 0.75rem;
+  padding: 0.3rem 0.8rem;
+  font-weight: 800;
+  line-height: 1.1;
+  text-transform: uppercase;
+  text-align: center;
+}
+.cac-titulo {
+  font-weight: 800;
+  text-transform: uppercase;
+  line-height: 1.08;
+  letter-spacing: 0.01em;
+  text-shadow: 0 3px 0 rgb(30 36 83 / 0.45);
+}
+
+/* La mascota, el pizote de las bases, sobre su mismo morado: el borde se funde. */
+.cac-mascota {
+  width: 100%;
+  max-width: 340px;
+  height: auto;
+  /* Los lados y el pie se funden con el morado: el recorte no deja un borde recto. */
+  -webkit-mask-image: linear-gradient(to right, transparent 0, #000 16%, #000 84%, transparent 100%), linear-gradient(to bottom, transparent 0, #000 8%, #000 72%, transparent 100%);
+  -webkit-mask-composite: source-in;
+  mask-image: linear-gradient(to right, transparent 0, #000 16%, #000 84%, transparent 100%), linear-gradient(to bottom, transparent 0, #000 8%, #000 72%, transparent 100%);
+  mask-composite: intersect;
+}
+.cac-bandera {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: clamp(72px, 9vw, 104px);
+  height: auto;
+  filter: drop-shadow(0 4px 6px rgb(0 0 0 / 0.25));
+}
+
+/* Los datos de arriba, sobre un morado hondo para que el blanco se lea. */
+.cac-dato {
+  background: rgb(30 36 83 / 0.72);
+  border: 1px solid rgb(255 255 255 / 0.18);
+  border-radius: 1.25rem;
+  padding: 1rem;
+  backdrop-filter: blur(2px);
+}
+.cac-dato dt { color: #dfe0f7; font-size: 0.875rem; }
+
+/* La franja de quien organiza, blanca como el pie de la portada de las bases. */
+.cac-organiza {
+  background: #fff;
+  color: var(--cac-morado-hondo);
+  border-bottom: 6px solid var(--cac-rojo);
+}
+.cac-organiza strong { color: var(--cac-morado); }
+
+/* Los títulos de sección: el morado de las bases, en mayúsculas gruesas. */
+.cac-seccion {
+  color: var(--cac-acento);
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.01em;
+}
+.cac-seccion-raya {
+  display: block;
+  width: 3.5rem;
+  height: 0.4rem;
+  margin-top: 0.4rem;
+  border-radius: 9999px;
+  background: linear-gradient(90deg, var(--cac-rojo) 0 33%, var(--cac-verde) 33% 66%, var(--cac-morado-2) 66%);
+}
+
+/* Las fichas: arriba, la bandera de Costa Rica (azul, blanco, rojo, blanco,
+ * azul, 1-1-2-1-1) con un borde de ajedrez; el color de las bases va en el
+ * ícono. Sobre la ficha blanca el blanco de la bandera se funde y queda el
+ * dibujo de sus franjas; en oscuro se ve entera. */
+.cac-ficha {
+  position: relative;
+  overflow: hidden;
+  border-top-width: 0;
+}
+.cac-ficha::before,
+.cac-ficha::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  pointer-events: none;
+}
+.cac-ficha::before {
+  top: 0;
+  height: 20px;
+  background: linear-gradient(to bottom,
+    #002b7f 0 16.67%, #fff 16.67% 33.33%, #ce1126 33.33% 66.67%,
+    #fff 66.67% 83.33%, #002b7f 83.33% 100%);
+}
+/* Debajo de la bandera, una fila de casillas de tablero. */
+.cac-ficha::after {
+  top: 20px;
+  height: 8px;
+  opacity: 0.16;
+  background: repeating-linear-gradient(90deg, var(--cac-morado-hondo) 0 8px, transparent 8px 16px);
+}
+.dark .cac-ficha::after { opacity: 0.35; background: repeating-linear-gradient(90deg, #b8bbf2 0 8px, transparent 8px 16px); }
+.cac-ficha > .cac-icono:first-child { margin-top: 1rem; }
+.cac-ficha[aria-disabled="true"]::before { opacity: 0.45; }
+.cac-ficha[data-color="rojo"] { --cac-color: var(--cac-rojo); }
+.cac-ficha[data-color="verde"] { --cac-color: var(--cac-verde); }
+.cac-ficha[data-color="azul"] { --cac-color: var(--cac-azul); }
+.cac-ficha[data-color="naranja"] { --cac-color: var(--cac-naranja); }
+.cac-icono {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 9999px;
+  font-size: 1.5rem;
+  background: color-mix(in srgb, var(--cac-color, var(--cac-morado)) 16%, #fff);
+}
+.dark .cac-icono { background: color-mix(in srgb, var(--cac-color, var(--cac-morado)) 30%, rgb(var(--c-brand-900, 10 31 51))); }
+.cac-accion { color: var(--cac-acento); }
+a.cac-ficha { transition: transform 0.2s ease, box-shadow 0.2s ease; }
+a.cac-ficha:hover { transform: translateY(-4px) rotate(-0.6deg); box-shadow: 0 14px 28px -12px rgb(64 71 143 / 0.45); }
+a.cac-ficha:hover .cac-icono { animation: cac-saltito 0.5s ease; }
+
+/* Las ventanas: la barra de arriba, morada como la portada. */
+.cac .ficha-dialogo > div:first-child,
+.cac .ventana-enlace > div > div:first-child {
+  background: var(--cac-morado);
+  border-bottom-color: var(--cac-morado-hondo);
+}
+.cac .ficha-dialogo > div:first-child h2,
+.cac .ventana-enlace > div > div:first-child h2,
+.cac .ventana-enlace > div > div:first-child a { color: #fff; }
+.cac .ficha-dialogo [data-cerrar],
+.cac .ventana-enlace > div > div:first-child button { background: #fff; color: var(--cac-morado); }
+.cac .ficha-dialogo [data-cerrar]:hover,
+.cac .ventana-enlace > div > div:first-child button:hover { background: #e8e9f8; }
+
+/* Lo que se mueve: la mascota respira, el ícono salta; nada si se pidió menos movimiento. */
+@keyframes cac-flotar { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+@keyframes cac-saltito { 0%, 100% { transform: translateY(0); } 40% { transform: translateY(-6px) scale(1.08); } }
+@keyframes cac-mecer { 0%, 100% { transform: rotate(0); } 50% { transform: rotate(-4deg); } }
+.cac-flota { animation: cac-flotar 4.5s ease-in-out infinite; }
+.cac-mece { animation: cac-mecer 3s ease-in-out infinite; transform-origin: 50% 90%; }
+@media (prefers-reduced-motion: reduce) {
+  .cac-flota, .cac-mece, a.cac-ficha:hover .cac-icono { animation: none; }
+  a.cac-ficha:hover { transform: none; }
+}
+
+/* Más pizotes por la página, pocos y con algo que hacer: se asoma en «Pedir un
+ * bye», festeja con el trofeo en «Resultados» y despide antes del pie. Son los
+ * dos dibujos de las bases, recortados: ninguna pose se inventa. */
+.cac-con-asoma, .cac-con-festejo { overflow: hidden; }
+.cac-asoma {
+  position: absolute;
+  right: -0.3rem;
+  bottom: -0.6rem;
+  width: clamp(4rem, 11vw, 6.5rem);
+  height: auto;
+  pointer-events: none;
+  transform: translateY(45%) rotate(-8deg);
+  transition: transform 0.35s cubic-bezier(.34,1.56,.64,1);
+  animation: cac-asomarse 6s ease-in-out infinite;
+}
+a.cac-con-asoma:hover .cac-asoma,
+a.cac-con-asoma:focus-visible .cac-asoma { animation: none; transform: translateY(8%) rotate(-8deg); }
+@keyframes cac-asomarse {
+  0%, 70%, 100% { transform: translateY(45%) rotate(-8deg); }
+  78%, 90% { transform: translateY(8%) rotate(-8deg); }
+}
+.cac-con-asoma .cac-accion, .cac-con-asoma .cac-icono { position: relative; z-index: 1; }
+
+.cac-festejo {
+  position: absolute;
+  top: 0.6rem;
+  right: 0.6rem;
+  width: clamp(2.75rem, 7vw, 4rem);
+  pointer-events: none;
+}
+.cac-festejo img { width: 100%; height: auto; animation: cac-festejar 2.8s ease-in-out infinite; transform-origin: 50% 100%; }
+.cac-brillo {
+  position: absolute;
+  top: -0.3rem;
+  left: -0.5rem;
+  font-size: 1rem;
+  animation: cac-brillar 2.8s ease-in-out infinite;
+}
+@keyframes cac-festejar {
+  0%, 55%, 100% { transform: translateY(0) rotate(0); }
+  65% { transform: translateY(-7px) rotate(-6deg); }
+  75% { transform: translateY(0) rotate(4deg); }
+  85% { transform: translateY(-3px) rotate(0); }
+}
+@keyframes cac-brillar {
+  0%, 55%, 100% { opacity: 0; transform: scale(0.4); }
+  68% { opacity: 1; transform: scale(1.15); }
+  85% { opacity: 0; transform: scale(0.8); }
+}
+
+.cac-despedida-foto {
+  flex-shrink: 0;
+  width: clamp(5.5rem, 18vw, 8.5rem);
+  aspect-ratio: 1;
+  object-fit: cover;
+  object-position: 50% 8%;
+  border-radius: 9999px;
+  border: 5px solid #fff;
+  box-shadow: 0 10px 24px -10px rgb(64 71 143 / 0.6);
+  transform: scaleX(-1);
+  animation: cac-saludar 3.5s ease-in-out infinite;
+}
+@keyframes cac-saludar {
+  0%, 100% { transform: scaleX(-1) rotate(0); }
+  25% { transform: scaleX(-1) rotate(6deg); }
+  50% { transform: scaleX(-1) rotate(-3deg); }
+}
+.cac-globo {
+  position: relative;
+  flex: 1;
+  background: #fff;
+  color: var(--cac-morado-hondo);
+  border: 3px solid var(--cac-morado);
+  border-radius: 1.5rem;
+  padding: 0.9rem 1.1rem;
+  box-shadow: 0 6px 0 var(--cac-morado);
+}
+.cac-globo::before {
+  content: "";
+  position: absolute;
+  left: -0.75rem;
+  top: 50%;
+  width: 1.2rem;
+  height: 1.2rem;
+  background: #fff;
+  border-left: 3px solid var(--cac-morado);
+  border-bottom: 3px solid var(--cac-morado);
+  transform: translateY(-50%) rotate(45deg);
+}
+.cac-globo .cac-accion { color: var(--cac-morado); }
+.dark .cac-globo, .dark .cac-globo::before { background: rgb(var(--c-brand-900, 10 31 51)); }
+.dark .cac-globo { color: #fff; border-color: #b8bbf2; box-shadow: 0 6px 0 #b8bbf2; }
+.dark .cac-globo::before { border-color: #b8bbf2; }
+.dark .cac-globo .cac-accion { color: #b8bbf2; }
+a.cac-despedida:hover .cac-globo { transform: translateY(-2px); }
+
+@media (prefers-reduced-motion: reduce) {
+  .cac-asoma, .cac-festejo img, .cac-brillo, .cac-despedida-foto { animation: none; }
+  .cac-brillo { opacity: 0; }
+  .cac-asoma { transition: none; }
+}
+/* En el celular la ficha es angosta: el pizote se achica y el «Abrir…» le deja su lugar. */
+@media (max-width: 639px) {
+  .cac-asoma { width: 3.25rem; right: -0.2rem; }
+  .cac-con-asoma .cac-accion { padding-right: 2.6rem; }
+}
