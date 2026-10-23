@@ -91,12 +91,21 @@
   const actualizar = (t, extra) => llamar(conOrganizador({ accion: "actualizar", id: t.publicado.id, clave: t.publicado.clave, torneo: datosPublicos(t, extra) }, extra));
   // La organización: { nombre, logo } nueva, o con { id, clave } para
   // cambiarla. `logo` en null la quita; sin `logo`, se queda la que tenía.
+  // `correo` en "" lo quita; un correo nuevo va con su `consentimiento`.
   const guardarOrganizador = (o) => {
     const cuerpo = { accion: "organizador", nombre: o.nombre };
     if (o.id) Object.assign(cuerpo, { id: o.id, clave: o.clave });
     if (o.logo !== undefined) cuerpo.logo = o.logo;
+    if (o.correo !== undefined) Object.assign(cuerpo, { correo: o.correo, consentimiento: !!o.consentimiento });
     return llamar(cuerpo);
   };
+  // Lo que la organización ve de sí misma: el sello, su correo (tapado) y si
+  // pidió el sello. Confirmar el correo, recuperarla y pedir el sello.
+  const estadoOrganizador = (o) => llamar({ accion: "organizador_estado", id: o.id, clave: o.clave });
+  const confirmarCorreo = (id, token) => llamar({ accion: "confirmar_correo", id, token });
+  const recuperarOrganizador = (correo) => llamar({ accion: "recuperar", correo });
+  const recuperarConfirmar = (id, token) => llamar({ accion: "recuperar_confirmar", id, token });
+  const pedirSello = (o, datos) => llamar(Object.assign({ accion: "pedir_sello", id: o.id, clave: o.clave, consentimiento: true }, datos));
   // «Reportar este torneo» (la página pública, sin clave).
   const reportar = (id, motivo, detalle) => llamar({ accion: "reportar", id, motivo, detalle: detalle || "" });
   const borrar = (p) => llamar({ accion: "borrar", id: p.id, clave: p.clave });
@@ -108,7 +117,7 @@
   // La dirección pública de un torneo publicado (desde la página que llama).
   const enlace = (id) => new URL("torneos-pareo.html#t=" + encodeURIComponent(id), location.href).href;
 
-  const api = { datosPublicos, crear, actualizar, guardarOrganizador, reportar, borrar, inscribir, inscripciones, marcar, enlace, URL_FUNCION };
+  const api = { datosPublicos, crear, actualizar, guardarOrganizador, estadoOrganizador, confirmarCorreo, recuperarOrganizador, recuperarConfirmar, pedirSello, reportar, borrar, inscribir, inscripciones, marcar, enlace, URL_FUNCION };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else raiz.PareoPublicar = api;
 })(typeof self !== "undefined" ? self : this);

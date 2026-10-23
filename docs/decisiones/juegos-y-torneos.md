@@ -3680,6 +3680,147 @@ SUB-10», «Mujeres · inter»…), y se borraron todos a pedido del dueño.
 - En la máquina y en el CI, la publicación falla callada (y se reintenta cada
   minuto), como cuando no hay red: el resto de Pareo Integral no cambia.
 
+### Torneos en Pareo Integral: el correo del organizador, el sello y el historial
+
+Lo pidió el dueño del sitio (la 1, la 2, la 3 y la 8 de una lista de
+propuestas): que quien organiza se entere de lo que pasa con sus torneos sin
+tener que entrar a mirar, que no pierda su organización si cambia de
+computadora, que pueda pedir el sello, y que la moderación deje constancia.
+
+- **El correo de la organización** («Tu organización», ficha Archivos) es
+  opcional.
+  - Guardarlo pide marcar el consentimiento con enlace a la política de
+    privacidad, y la función vuelve a exigirlo (`consentimiento`).
+  - **No se usa hasta confirmarlo**: le llega un enlace
+    (`pareo.html#org-correo=<id>.<token>`, 48 horas) y hasta que lo toca,
+    `correo_confirmado` queda nulo y no se le escribe nada más. Así nadie
+    llena el buzón de otro poniendo su dirección.
+  - No se publica: la lectura pública de `pareo_organizadores` va por
+    columnas y el correo no está en la lista. La organización lo ve tapado
+    («o•••@gmail.com», `organizador_estado`), con «Quitar el correo».
+- **Los avisos**, solo a un correo confirmado: cada inscripción en uno de sus
+  torneos (nombre, institución y categoría de quien se inscribe) y cada
+  reporte (con el motivo, nunca quién lo mandó). Un aviso que no sale nunca
+  deshace la inscripción ni el reporte (`mandar` no lanza).
+- **Recuperar la organización**: «Perdí mi organización» pide el correo y
+  manda un enlace por organización (`#org-recuperar=<id>.<token>`, una hora,
+  un solo uso).
+  - Al abrirlo, la organización queda en ese navegador con una **clave
+    nueva**: la anterior deja de servir, así que en otra computadora hay que
+    volver a pegar el código.
+  - La función contesta **lo mismo exista o no** el correo: no le dice a
+    nadie quién está registrado.
+- **Pedir el sello**: un formulario que se despliega (con `aria-expanded`):
+  quién lo pide, a quién representa, cómo contactarle y una nota, con su
+  consentimiento.
+  - Queda en `pareo_solicitudes_sello`, que lee solo administración. Hay una
+    sola pendiente por organización, con un índice único.
+  - Le llega un correo a administración, y la organización ve «lo está
+    revisando».
+- **Los frenos**: confirmar, recuperar y pedir el sello mandan correo sin
+  cuenta. Por eso llevan `pareo_correo_frenar`: 5 por conexión en una hora y
+  100 en total, por ámbito.
+- **A administración** le llega un correo con cada reporte y con cada pedido
+  del sello (a todo `is_admin`, como el aviso de la base saturada).
+- **`admin-pareo.html`** suma «Piden el sello» («Dar el sello» o
+  «Rechazar») y el **historial** (`pareo_moderaciones`): qué se hizo, sobre
+  qué, cuándo y por qué.
+  - Toda acción, menos marcar un reporte revisado, pide el motivo, que puede
+    ir vacío.
+  - La función es `pareo_moderar_con_motivo`. La vieja, `pareo_moderar`,
+    sigue para una pestaña abierta con la página anterior y llama a la
+    nueva sin motivo: una sola copia de lo que hace. Aprobar una solicitud
+    da el sello en la misma transacción.
+  - `pareo_solicitudes_sello` va en `VIGILADAS` de `verificar-auditoria.js`.
+- **Los textos de los correos** están en
+  `supabase/functions/pareo-publicar/correos.ts`, sin importar nada, para
+  probarlos con Node. La franja de arriba es la de siempre
+  (`_compartido/marca-correo.ts`, que `funciones-armar.js` le copia a
+  `pareo-publicar`).
+- Comprobado contra la base:
+  - haciéndose pasar por cada rol en una transacción deshecha: anon no lee
+    el correo ni las solicitudes ni llama a la moderación, y quien
+    administra aprueba y queda en el historial con su motivo;
+  - y, con `pg_net` desde la base, la función desplegada de punta a punta:
+    crear con correo (el de confirmación salió por Resend a
+    `delivered@resend.dev`, la dirección de pruebas de Resend), confirmar y
+    recuperar. La organización de prueba se borró después.
+
+Lo comprueban `verificar-pareo-correos.js` y `verificar-pareo-organizador.js`.
+- `verificar-pareo-correos.js` prueba los correos con Node: texto ajeno
+  escapado, asuntos sin saltos de línea, el botón solo a
+  ajedrez-integral.com. Lee además el código de la función: «recuperar» no
+  delata, el correo sale tapado y los avisos van solo a uno confirmado.
+- `verificar-pareo-organizador.js` prueba el navegador: el consentimiento,
+  el correo tapado, quitarlo, los dos enlaces del correo, recuperar, el
+  sello, y en `admin-pareo.html` el motivo, el historial y las solicitudes.
+
+### Torneos en Pareo Integral: los torneos de ajedrezcostarica.com
+
+El dueño pidió que en la portada se vieran también los torneos próximos que
+se anuncian en ajedrezcostarica.com (`/es/tournaments`), no solo los que se
+organizan con Pareo Integral. Salen en «También en Costa Rica», entre
+«Próximos torneos» y «Resultados».
+
+- **Quién los lee.** La Edge Function `torneos-externos`, una vez al día
+  (pg_cron `torneos-externos`, 5:13 de Costa Rica). Lee la portada de allá y
+  la ficha de cada torneo, con calma: una a la vez, medio segundo entre una
+  y otra, y como mucho 40. Escribe en `public.torneos_externos` con la
+  service role.
+  - Va con `verify_jwt` en false y exige el secreto
+    `torneos_externos_secreto` de la bóveda, como `arbitros-avisos`.
+  - El navegador no puede leerlos directo: la otra página no da permiso
+    (CORS) y además serían cien visitas por cada persona que abre la
+    portada.
+- **Cómo se leen.** Las dos páginas son de Next.js: lo que se ve viene como
+  JSON dentro de sus `<script>`, con las comillas escapadas.
+  `torneos-externos/leer.ts` quita las barras y lo lee con expresiones.
+  - La ficha se lee **dentro del bloque del torneo**
+    (`"tournament":{"id":"<n>","details":{` hasta `"registrationFull"`).
+    Antes vienen los textos de la interfaz, y el primer `"location"` de la
+    página es la palabra «Ubicación».
+  - Los números de la ficha se compararon con lo que la página muestra:
+    - ritmo: 1 bala, 2 blitz, 3 rápido, 4 clásico;
+    - Elo: 1 sin, 2 nacional, 3 FIDE, 4 FIDE y nacional;
+    - modalidad: 1 presencial, 2 en línea;
+    - formato: 1 individual, 2 equipos;
+    - region: la provincia, de 1 San José a 7 Limón.
+  - Si cambian su HTML, el lector devuelve null o una lista vacía, nunca un
+    torneo inventado. Con la portada vacía la función no toca nada (mejor la
+    lista de ayer) y contesta 502.
+- **Qué se guarda.** Solo lo que se muestra: nombre, fechas, lugar,
+  provincia, ritmo, Elo, costo, modalidad, quién organiza, si la inscripción
+  está abierta y el enlace a su ficha.
+  - La ficha de allá trae también los correos de quien organiza y las
+    instrucciones de pago. **Eso no se lee**, y la tabla no tiene dónde
+    guardarlo.
+  - Lo que terminó hace más de un día y lo que lleva una semana sin
+    aparecer en su portada (cancelado o quitado) se borra en la misma
+    pasada.
+- **Cómo se muestran.** Cada fila lleva a su ficha de allá, en otra pestaña
+  y diciéndolo: la inscripción es de ellos. Se piden todos de una vez (son
+  pocos) y se filtran en el navegador con los mismos filtros de la portada.
+  - Con un filtro que allá no existe (el lugar escrito igual, «Solo en
+    curso», el sello «Verificado») la parte se calla, en vez de mostrar
+    algo que no coincide.
+  - El día es el de Costa Rica (`HoraCR.dia`): un torneo de las 9 de la
+    noche es de ese día, aunque en UTC ya sea el siguiente.
+  - «Agregar estos torneos a mi calendario» baja un `.ics` con los que se
+    ven. El UID es fijo (`ajedrezcostarica-<n>@ajedrez-integral.com`), así
+    que bajarlo otra vez no los duplica.
+- **Por qué no va en `privacidad.html`.** No se le manda nada a
+  ajedrezcostarica.com, solo se lee lo que publica. Lo que se lee es el
+  anuncio público de un torneo, sin datos de ninguna persona.
+
+Lo comprueban dos verificadores:
+- `verificar-torneos-externos.js`: el lector, con páginas escritas con la
+  misma forma que las de verdad;
+- `verificar-torneos-externos-pagina.js`: la parte de la portada.
+
+Al aplicarlo se disparó una vez a mano (`select
+public.disparar_torneos_externos()`): leyó los 5 torneos que había allá el
+23/10/2026, con sus datos iguales a los de sus fichas.
+
 ### Torneos en Pareo Integral: la lista de 50 en 50
 
 Lo pidió el dueño del sitio (la 8 de una lista de propuestas). Antes la

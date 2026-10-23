@@ -371,8 +371,94 @@
     $("tp-cuantos").textContent = !resumen ? "" : !total ? "Todavía no hay torneos publicados."
       : !q && !hayFiltro(f) ? total + (total === 1 ? " torneo publicado." : " torneos publicados.")
       : cuantos + " de " + total + " torneos.";
+    pintarExternos();
     caja.hidden = true;
     $("tp-portada").hidden = false;
+  }
+
+  // ---------- También en Costa Rica (ajedrezcostarica.com) ----------
+  // Los torneos que se anuncian en ajedrezcostarica.com, leídos una vez al
+  // día por la Edge Function torneos-externos (public.torneos_externos). Son
+  // pocos: se piden de una vez y se filtran acá. Cada fila lleva a su ficha
+  // de allá, que es donde se inscribe. Ver «Torneos en Pareo Integral: los
+  // torneos de ajedrezcostarica.com» en docs/decisiones/juegos-y-torneos.md.
+  let externos = null;
+  let externosVisibles = []; // los que se ven ahora, para el calendario
+  const ELO_EXTERNO = { ambos: "FIDE", fide: "FIDE", nacional: "Nacional", no: "No" };
+  const ELO_EXTERNO_LARGO = { ambos: "Válido para Elo FIDE y Nacional", fide: "Válido para Elo FIDE", nacional: "Válido solo para Elo Nacional", no: "No varía el Elo" };
+  async function cargarExternos() {
+    if (externos) return;
+    try {
+      const { data, error } = await window.sb.from("torneos_externos")
+        .select("id_externo,titulo,inicio,fin,provincia,lugar,ritmo,minutos,incremento,elo,precio,moneda,modalidad,formato,organizador,inscripcion_abierta,url")
+        .order("inicio", { ascending: true }).limit(200);
+      if (error) throw error;
+      externos = data || [];
+    } catch (e) { externos = []; }
+  }
+  // El día en Costa Rica de cada punta, como los de Pareo Integral.
+  const diaExterno = (x) => ({ desde: x.inicio ? HoraCR.dia(x.inicio) : "", hasta: x.fin ? HoraCR.dia(x.fin) : "" });
+  function externosFiltrados() {
+    const f = filtros();
+    // Lo que allá no existe (el lugar escrito igual, «en curso», el sello de
+    // Pareo Integral) no se puede pedir: con esos filtros, la parte se calla.
+    if (f.lugar || f.curso || f.verificado) return [];
+    const q = clave($("tp-buscar") ? $("tp-buscar").value : "");
+    const hoyCR = hoy();
+    return (externos || []).filter((x) => {
+      const d = diaExterno(x);
+      if ((d.hasta || d.desde) && (d.hasta || d.desde) < hoyCR) return false;
+      if (f.ritmo && x.ritmo !== f.ritmo) return false;
+      if (f.elo === "fide" && !["fide", "ambos"].includes(x.elo)) return false;
+      if (f.elo === "nacional" && x.elo !== "nacional") return false;
+      if (f.elo === "sin" && x.elo !== "no") return false;
+      if (f.abierta && !x.inscripcion_abierta) return false;
+      if (q && !clave([x.titulo, x.lugar, x.provincia, x.organizador].join(" ")).includes(q)) return false;
+      return true;
+    });
+  }
+  const precioDe = (x) => (x.precio == null ? "" : !Number(x.precio) ? "Gratis"
+    : new Intl.NumberFormat("es-CR", { style: "currency", currency: x.moneda || "CRC", maximumFractionDigits: 0 }).format(Number(x.precio)));
+  function filaExterna(x) {
+    const d = diaExterno(x);
+    const ritmo = RITMO[x.ritmo] || (x.ritmo === "bala" ? "Bala" : "");
+    const tiempo = x.minutos != null ? x.minutos + " min" + (x.incremento ? " + " + x.incremento + " s" : "") : "";
+    return el("li", { class: "tp-item" },
+      el("a", { href: x.url, target: "_blank", rel: "noopener", class: "tp-fila", "data-externo": String(x.id_externo) },
+        bloqueFecha(d.desde, d.hasta),
+        el("span", { class: "tp-principal" },
+          el("span", { class: "tp-nombre", texto: x.titulo }),
+          el("span", { class: "tp-lugar" }, [x.lugar, x.provincia].filter(Boolean).join(", ") || null,
+            x.organizador ? el("span", { class: "tp-fila-evento", texto: "Organiza: " + x.organizador }) : null),
+          el("span", { class: "sr-only", texto: " (abre ajedrezcostarica.com en otra pestaña)" })),
+        el("span", { class: "tp-datos" },
+          dato("Inscripción", [el("span", { class: "tp-punto " + (x.inscripcion_abierta ? "tp-punto-si" : "tp-punto-no"), "aria-hidden": "true" }), x.inscripcion_abierta ? "Abierta" : "Cerrada"], { "data-col": "inscripcion" }),
+          dato("Elo", ELO_EXTERNO[x.elo] || "", { "data-col": "elo", title: ELO_EXTERNO_LARGO[x.elo] || null }),
+          dato("Ritmo", [ritmo, tiempo].filter(Boolean).join(" · "), { "data-col": "ritmo" }),
+          dato("Modalidad", { equipos: "Por equipos", individual: "Individual" }[x.formato] || "", { "data-col": "modalidad" }),
+          dato("Costo", precioDe(x), { "data-col": "costo" })),
+        el("span", { class: "tp-flecha", "aria-hidden": "true", texto: "↗" })));
+  }
+  // Todos los de la lista, de una vez, al calendario (días completos).
+  function externosAlCalendario(lista) {
+    const { texto } = CalendarioIcs.armarDias({ nombre: "Torneos de ajedrez en Costa Rica", eventos: lista.map((x) => {
+      const d = diaExterno(x);
+      return { uid: "ajedrezcostarica-" + x.id_externo + "@ajedrez-integral.com", desde: d.desde, hasta: d.hasta, resumen: x.titulo,
+        lugar: [x.lugar, x.provincia].filter(Boolean).join(", "),
+        descripcion: [x.organizador ? "Organiza: " + x.organizador + "." : "", ELO_EXTERNO_LARGO[x.elo] ? ELO_EXTERNO_LARGO[x.elo] + "." : "", "Inscripción y detalles: " + x.url].filter(Boolean).join(" "),
+        url: x.url, aviso: "-PT15H" };
+    }) });
+    CalendarioIcs.bajar(texto, "torneos-costa-rica.ics");
+  }
+  function pintarExternos() {
+    const caja = $("tp-externos-caja");
+    if (!caja) return;
+    const lista = externosFiltrados().sort((a, b) => String(a.inicio || "9").localeCompare(String(b.inicio || "9")));
+    caja.hidden = !lista.length;
+    if (!lista.length) { $("tp-externos").replaceChildren(); return; }
+    $("tp-externos").replaceChildren(el("ul", { class: "tp-filas" }, lista.map(filaExterna)));
+    externosVisibles = lista;
+    $("tp-externos-calendario").lastChild.textContent = lista.length === 1 ? "Agregar este torneo a mi calendario" : "Agregar estos " + lista.length + " torneos a mi calendario";
   }
 
   // ---------- Un torneo ----------
@@ -979,7 +1065,7 @@
           if (error) throw error;
           resumen = data || { total: 0, lugares: [] };
           pintarLugares();
-          await cargarLista();
+          await Promise.all([cargarLista(), cargarExternos()]);
         } catch (e) { resumen = null; $("tp-cuantos").textContent = "No se pudo leer la lista. Revisa la conexión e intenta de nuevo."; return; }
       }
       pintarLugares();
@@ -1001,6 +1087,7 @@
     recargar();
     $("tp-f-ritmo").focus();
   });
+  $("tp-externos-calendario").addEventListener("click", () => externosAlCalendario(externosVisibles));
   window.addEventListener("hashchange", pintar);
   pintar();
 })();

@@ -19,8 +19,16 @@
  *   - la ficha de un torneo con el logo, y la página del organizador (#o=)
  *     con todos sus torneos;
  *   - «Reportar este torneo» pide el motivo y manda id, motivo y detalle;
- *   - admin-pareo.html: solo quien administra; los reportes, el sello y
- *     ocultar pasan por public.pareo_moderar y el texto ajeno no se ejecuta.
+ *   - el correo de la organización: sin marcar el consentimiento no se manda;
+ *     se ve tapado y si falta confirmarlo; se quita; «Perdí mi organización»
+ *     pide el enlace por correo, y los enlaces del correo (#org-correo=,
+ *     #org-recuperar=) confirman el correo o dejan la clave nueva;
+ *   - pedir el sello: el formulario se despliega (aria-expanded), pide el
+ *     consentimiento y después dice que está en revisión;
+ *   - admin-pareo.html: solo quien administra; los reportes, el sello, quién
+ *     lo pide y ocultar pasan por public.pareo_moderar_con_motivo, con el
+ *     motivo que se escribe, quedan en el historial, y el texto ajeno no se
+ *     ejecuta.
  *
  * Lo que hace cumplir la BASE (anon no lee los reportes ni lo oculto, solo
  * administración llama a pareo_moderar y queda en la bitácora) se comprobó
@@ -75,6 +83,8 @@ function torneo(nombre) {
 }
 
 // El doble de la Edge Function: anota cada pedido y contesta como ella.
+// Lo que la función sabe de la organización de prueba (organizador_estado).
+const estadoOrg = { verificado: false, correo: null, correoConfirmado: false, selloPendiente: false };
 async function dobleFuncion(page) {
   const pedidos = [];
   let n = 0;
@@ -84,7 +94,14 @@ async function dobleFuncion(page) {
     pedidos.push(body);
     let r = { ok: true, id: body.id };
     if (body.accion === "crear") r = { ok: true, id: "00000000-0000-4000-8000-00000000000" + (++n), clave: "clave-" + n };
-    if (body.accion === "organizador") r = body.id ? { ok: true, id: body.id } : { ok: true, id: ORG_ID, clave: CLAVE };
+    if (body.accion === "organizador") {
+      if (typeof body.correo === "string") estadoOrg.correo = body.correo ? body.correo.replace(/^(.)[^@]*(@.*)$/, "$1•••$2") : null;
+      r = Object.assign(body.id ? { ok: true, id: body.id } : { ok: true, id: ORG_ID, clave: CLAVE }, { correoPendiente: body.correo ? true : null });
+    }
+    if (body.accion === "organizador_estado") r = Object.assign({ ok: true }, estadoOrg);
+    if (body.accion === "pedir_sello") { estadoOrg.selloPendiente = true; r = { ok: true }; }
+    if (body.accion === "confirmar_correo") { estadoOrg.correoConfirmado = true; r = { ok: true, nombre: "Club PRUEBA" }; }
+    if (body.accion === "recuperar_confirmar") r = { ok: true, id: body.id, clave: "c0ffee".repeat(6), nombre: "Club PRUEBA", logo: null };
     return route.fulfill({ status: 200, contentType: "application/json", headers: { "access-control-allow-origin": "*" }, body: JSON.stringify(r) });
   });
   return pedidos;
@@ -154,7 +171,9 @@ async function pruebaPareo(browser) {
   await page.evaluate(() => { const t = JSON.parse(localStorage.getItem("pareo_torneo_v1_ta")); delete t.publicado; localStorage.setItem("pareo_torneo_v1_ta", JSON.stringify(t)); });
   await page.reload({ waitUntil: "networkidle" });
   await page.click('[data-ficha="archivos"]');
-  await page.click("#pi-publicar-reintentar");
+  // Al volver a abrir lo reintenta solo: si ya se publicó, no hay botón.
+  await page.waitForSelector("#pi-publicar-reintentar, #pi-publicar-enlace");
+  if (await page.$("#pi-publicar-reintentar")) await page.click("#pi-publicar-reintentar").catch(() => {});
   await page.waitForSelector("#pi-publicar-enlace");
   const crear = pedidos.find((x) => x.accion === "crear");
   ok(crear && crear.organizador && crear.organizador.id === ORG_ID && crear.organizador.clave === CLAVE, "«crear» lleva el organizador con su clave");
@@ -186,6 +205,78 @@ async function pruebaPareo(browser) {
   await page.click("dialog[data-avisos][open] [data-avisos-aceptar]");
   await page.waitForSelector("#pi-org-copiar");
   igual("el bueno sí, con su id y su clave", await page.evaluate(() => { const o = JSON.parse(localStorage.getItem("pareo_organizador_v1")); return [o.id, o.clave]; }), [ORG_ID, CLAVE]);
+  ok(!errores.length, "sin errores en la página", errores.join(" | "));
+  await ctx.close();
+}
+
+async function pruebaCorreoYSello(browser) {
+  console.log("\n=== El correo de la organización ===");
+  let pedidos;
+  const { ctx, page, errores } = await P.abrirPagina(browser, BASE, "", async (p) => {
+    pedidos = await dobleFuncion(p);
+    // (Corre también en about:blank, donde no hay localStorage.)
+    await p.addInitScript((o) => { try { if (!localStorage.getItem("__sembrado")) { localStorage.setItem("__sembrado", "1"); localStorage.setItem("pareo_organizador_v1", JSON.stringify(o)); } } catch (e) { } },
+      { id: ORG_ID, clave: CLAVE, nombre: "Club PRUEBA", logo: null });
+  });
+  await page.click('[data-ficha="archivos"]');
+  await page.waitForSelector("#pi-org-sello-abrir");
+  ok(pedidos.some((x) => x.accion === "organizador_estado" && x.id === ORG_ID && x.clave === CLAVE), "pregunta a la función cómo está la organización, con su clave");
+  await page.fill("#pi-org-correo", "organiza@ejemplo.com");
+  await page.click("#pi-org-guardar");
+  const dijo = await page.waitForSelector('.avisos-mensaje[data-tipo="error"]', { timeout: 4000 }).then(() => true, () => false);
+  ok(dijo && !pedidos.some((x) => x.accion === "organizador" && x.correo), "sin marcar el consentimiento, el correo no se manda (y lo dice)");
+  await page.check("#pi-org-correo-permiso");
+  await page.click("#pi-org-guardar");
+  await page.waitForFunction(() => /Te mandamos un correo a organiza@ejemplo\.com/.test(document.body.textContent));
+  const g = pedidos.filter((x) => x.accion === "organizador").pop();
+  ok(g && g.correo === "organiza@ejemplo.com" && g.consentimiento === true && g.clave === CLAVE, "con el consentimiento, va el correo con la clave");
+  await page.waitForFunction(() => /o•••@ejemplo\.com · falta confirmarlo/.test(document.getElementById("pi-org-correo-estado").textContent));
+  bien("dice el correo tapado y que falta confirmarlo");
+  await page.click("#pi-org-correo-quitar");
+  await page.waitForFunction(() => /Ya no te vamos a escribir/.test(document.body.textContent));
+  ok(pedidos.filter((x) => x.accion === "organizador").pop().correo === "", "«Quitar el correo» lo manda vacío");
+
+  console.log("\n=== Pedir el sello ===");
+  await page.waitForSelector("#pi-org-sello-abrir");
+  ok(!(await P.vis(page, "#pi-org-sello-form")) && (await page.getAttribute("#pi-org-sello-abrir", "aria-expanded")) === "false", "el formulario empieza cerrado, y lo dice");
+  await page.click("#pi-org-sello-abrir");
+  ok(await P.vis(page, "#pi-org-sello-form") && (await page.getAttribute("#pi-org-sello-abrir", "aria-expanded")) === "true" && (await page.evaluate(() => document.activeElement.id)) === "pi-org-sello-quien",
+    "al tocarlo se abre, lo dice y el foco va al primer campo");
+  await page.fill("#pi-org-sello-quien", "PRUEBA Persona");
+  await page.fill("#pi-org-sello-representa", "Federación PRUEBA");
+  await page.fill("#pi-org-sello-contacto", "8888-0000");
+  await page.click("#pi-org-sello-mandar");
+  await page.waitForFunction(() => /marca la casilla/.test(document.body.textContent));
+  ok(!pedidos.some((x) => x.accion === "pedir_sello"), "sin el consentimiento no se manda");
+  await page.check("#pi-org-sello-permiso");
+  await page.click("#pi-org-sello-mandar");
+  await page.waitForSelector("#pi-org-sello-listo");
+  const ps = pedidos.find((x) => x.accion === "pedir_sello");
+  ok(ps && ps.quien === "PRUEBA Persona" && ps.representa === "Federación PRUEBA" && ps.contacto === "8888-0000" && ps.consentimiento === true && ps.clave === CLAVE, "manda quién, a quién representa, el contacto y la clave");
+  ok(/revisando/.test(await page.textContent("#pi-org-sello")) && (await page.evaluate(() => document.activeElement.id)) === "pi-org-sello-listo", "y dice que está en revisión, con el foco ahí");
+
+  console.log("\n=== Los enlaces del correo ===");
+  // El enlace del correo abre la página desde cero (no es un cambio de «#»).
+  await page.goto("about:blank");
+  await page.goto(BASE + "/pareo.html#org-correo=" + ORG_ID + "." + "ab".repeat(12), { waitUntil: "networkidle" });
+  await page.waitForFunction(() => /quedó confirmado/.test(document.body.textContent));
+  ok(pedidos.some((x) => x.accion === "confirmar_correo" && x.id === ORG_ID && x.token === "ab".repeat(12)), "#org-correo= confirma el correo con su token");
+  ok(!/org-correo/.test(page.url()), "y el token no se queda en la dirección");
+  await page.evaluate(() => localStorage.removeItem("pareo_organizador_v1"));
+  await page.goto("about:blank");
+  await page.goto(BASE + "/pareo.html#org-recuperar=" + ORG_ID + "." + "cd".repeat(12), { waitUntil: "networkidle" });
+  await page.waitForFunction(() => /Recuperaste/.test(document.body.textContent));
+  igual("#org-recuperar= deja la organización con su clave nueva", await page.evaluate(() => { const o = JSON.parse(localStorage.getItem("pareo_organizador_v1")); return [o.id, o.clave, o.nombre]; }), [ORG_ID, "c0ffee".repeat(6), "Club PRUEBA"]);
+
+  console.log("\n=== Perdí mi organización ===");
+  await page.evaluate(() => localStorage.removeItem("pareo_organizador_v1"));
+  await page.reload({ waitUntil: "networkidle" });
+  await page.click('[data-ficha="archivos"]');
+  await page.click("#pi-org-recuperar");
+  await page.fill("dialog[data-avisos][open] input", "organiza@ejemplo.com");
+  await page.click("dialog[data-avisos][open] [data-avisos-aceptar]");
+  await page.waitForFunction(() => /te llegó un enlace/.test(document.body.textContent));
+  ok(pedidos.some((x) => x.accion === "recuperar" && x.correo === "organiza@ejemplo.com"), "pide el enlace con el correo, y dice lo mismo exista o no");
   ok(!errores.length, "sin errores en la página", errores.join(" | "));
   await ctx.close();
 }
@@ -344,8 +435,9 @@ window.__rpc = [];
     from: tabla,
     rpc(n, args) {
       window.__rpc.push({ n, args });
-      if (n !== "pareo_moderar") return Promise.resolve({ data: null, error: null });
-      const { p_que, p_id } = args;
+      if (n !== "pareo_moderar_con_motivo") return Promise.resolve({ data: null, error: null });
+      const { p_que, p_id, p_motivo } = args;
+      D.pareo_moderaciones.unshift({ id: D.pareo_moderaciones.length + 1, que: p_que, nombre: "PRUEBA", motivo: p_motivo, cuando: "2026-10-23T16:00:00Z" });
       const org = D.pareo_organizadores.find((o) => o.id === p_id);
       const pub = D.pareo_publicados.find((t) => t.id === p_id);
       if (p_que === "verificar") org.verificado = true;
@@ -353,6 +445,7 @@ window.__rpc = [];
       if (p_que === "ocultar") pub.oculto = true;
       if (p_que === "mostrar") pub.oculto = false;
       if (p_que === "revisado") D.pareo_reportes.find((r) => r.id === p_id).estado = "revisado";
+      if (p_que === "aprobar_sello") { const s = D.pareo_solicitudes_sello.find((x) => x.id === p_id); s.estado = "aprobada"; D.pareo_organizadores.find((o) => o.id === s.organizador_id).verificado = true; }
       return Promise.resolve({ data: {}, error: null });
     },
   };
@@ -364,7 +457,9 @@ async function pruebaAdmin(browser) {
   const datos = {
     pareo_reportes: [{ id: "r-1", publicado_id: "t-1", motivo: "falso", detalle: '<img src=x onerror="window.__xss=1">es prueba', creado: "2026-10-23T15:00:00Z", estado: "nuevo" }],
     pareo_publicados: [{ id: "t-1", nombre: "PRUEBA TORNEO", oculto: false, fecha: "2026-10-20" }],
-    pareo_organizadores: [{ id: "o-1", nombre: "Club PRUEBA", logo: LOGO, verificado: false, oculto: false }],
+    pareo_organizadores: [{ id: "o-1", nombre: "Club PRUEBA", logo: LOGO, verificado: false, oculto: false }, { id: "o-2", nombre: "Comité PRUEBA", logo: null, verificado: false, oculto: false }],
+    pareo_solicitudes_sello: [{ id: "s-1", organizador_id: "o-2", quien: "PRUEBA Persona", representa: '<b>Comité</b>', contacto: "8888-0000", nota: "", creado: "2026-10-23T15:00:00Z", estado: "nueva" }],
+    pareo_moderaciones: [],
   };
   const abrir = async (yo) => {
     const ctx = await browser.newContext({ serviceWorkers: "block" });
@@ -388,16 +483,34 @@ async function pruebaAdmin(browser) {
   const rep = await page.$eval("#ap-reportes tr[data-reporte]", (tr) => tr.textContent);
   ok(/PRUEBA TORNEO/.test(rep) && /Falso o de prueba/.test(rep), "el reporte, con su torneo y el motivo escrito");
   ok(!(await page.evaluate(() => window.__xss)) && !(await page.$("#ap-reportes img[src='x']")), "el detalle que escribió alguien no se ejecuta");
+  const motivo = async (texto) => {
+    await page.waitForSelector('dialog[data-avisos="formulario"][open] textarea');
+    if (texto) await page.fill('dialog[data-avisos="formulario"][open] textarea', texto);
+    await page.click('dialog[data-avisos="formulario"][open] [data-avisos-aceptar]');
+  };
   await page.click('[data-ocultar="t-1"]');
+  await motivo("Era de prueba");
   await page.waitForSelector("#ap-ocultos tr[data-oculto='t-1']");
-  igual("«Ocultar el torneo» llama a pareo_moderar", await page.evaluate(() => window.__rpc.filter((r) => r.n === "pareo_moderar").map((r) => [r.n, r.args.p_que, r.args.p_id])), [["pareo_moderar", "ocultar", "t-1"]]);
+  igual("«Ocultar el torneo» pide el motivo y llama a pareo_moderar_con_motivo", await page.evaluate(() => window.__rpc.filter((r) => r.n === "pareo_moderar_con_motivo").map((r) => [r.args.p_que, r.args.p_id, r.args.p_motivo])), [["ocultar", "t-1", "Era de prueba"]]);
   bien("y pasa a «Torneos ocultos»");
+  ok(/Ocultó el torneo/.test(await page.textContent("#ap-historial")) && /Era de prueba/.test(await page.textContent("#ap-historial")), "el historial dice qué se hizo y por qué");
+
+  console.log("\n=== Piden el sello ===");
+  const sol = await page.$eval('#ap-sello tr[data-solicitud="s-1"]', (tr) => tr.textContent);
+  ok(/Comité PRUEBA/.test(sol) && /PRUEBA Persona/.test(sol) && /8888-0000/.test(sol), "la solicitud, con la organización, quién la pide y su contacto");
+  ok(!(await page.$("#ap-sello b")) && /<b>Comité<\/b>/.test(sol), "lo que escribió quien la pide se ve como texto");
+  await page.click('[data-aprobar="s-1"]');
+  await motivo("");
+  await page.waitForFunction(() => !document.querySelector('#ap-sello tr[data-solicitud="s-1"]'));
+  ok(await page.evaluate(() => window.__rpc.some((r) => r.n === "pareo_moderar_con_motivo" && r.args.p_que === "aprobar_sello" && r.args.p_id === "s-1")), "«Dar el sello» aprueba la solicitud");
+  ok(/✓ Verificado/.test(await page.$eval('#ap-organizaciones tr[data-org="o-2"]', (tr) => tr.textContent)), "y la organización queda con el sello");
   await page.click('[data-sello="o-1"]');
+  await motivo("");
   await page.waitForFunction(() => /Quitar el sello/.test(document.querySelector('[data-sello="o-1"]').textContent));
   ok(/✓ Verificado/.test(await page.$eval('#ap-organizaciones tr[data-org="o-1"]', (tr) => tr.textContent)), "«Dar el sello» lo deja escrito: «✓ Verificado»");
   await page.click('[data-revisado="r-1"]');
   await page.waitForFunction(() => !document.querySelector("#ap-reportes tr[data-reporte]"));
-  bien("un reporte revisado sale de la lista de nuevos");
+  bien("un reporte revisado sale de la lista de nuevos (sin pedir motivo)");
   await page.fill("#ap-org-buscar", "nadie");
   ok(/Ninguna organización coincide/.test(await page.textContent("#ap-organizaciones")), "el buscador de organizaciones filtra");
   ok(!errores.length, "sin errores en la página", errores.join(" | "));
@@ -409,7 +522,8 @@ function pruebaSinNavegador() {
   const fs = require("fs");
   const fn = fs.readFileSync(path.join(RAIZ, "supabase/functions/pareo-publicar/index.ts"), "utf8");
   ok(/accion === "organizador"/.test(fn) && /accion === "reportar"/.test(fn), "la función sabe crear organizaciones y recibir reportes");
-  ok(!/verificado/.test(fn.replace(/\/\/.*$/gm, "")), "la función nunca escribe el sello (lo pone solo administración)");
+  const codigo = fn.replace(/\/\/.*$/gm, "");
+  ok(!/verificado\s*:\s*(true|false)/.test(codigo) && !/\.(update|insert)\([^;]*verificado/.test(codigo), "la función nunca escribe el sello (lo pone solo administración)");
   const sql = fs.readFileSync(path.join(RAIZ, "supabase/migraciones/20261023145437_pareo_organizadores.sql"), "utf8");
   ok(/grant select \(id, nombre, logo, verificado, oculto, creado, actualizado\) on public\.pareo_organizadores/.test(sql), "la clave de la organización no se puede leer desde afuera");
   ok(/coalesce\(\(select public\.soy_admin\(\)\), false\)/.test(sql) && /revoke all on function public\.pareo_moderar\(text, uuid\) from public, anon/.test(sql), "pareo_moderar valida que sea administración (y anon no la llama)");
@@ -420,6 +534,7 @@ function pruebaSinNavegador() {
   const browser = await chromium.launch({ executablePath: CHROME });
   try {
     await pruebaPareo(browser);
+    await pruebaCorreoYSello(browser);
     await pruebaPublica(browser);
     await pruebaAdmin(browser);
   } finally {

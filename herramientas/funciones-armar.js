@@ -88,6 +88,13 @@ const FUNCIONES = {
   // cuenta (verify_jwt en false), con su propio freno (pareo_elo_frenar).
   // Su lector de ajedrezcostarica.com es compartido con elo-fide.
   "pareo-elo-nacional": ["ajedrezcostarica.ts"],
+  // «Torneos en Pareo Integral»: publicar, la organización, los reportes y
+  // sus correos (verify_jwt en false). Su correos.ts es suyo; la franja de
+  // arriba de los correos es la de siempre. Ver su cabecera.
+  "pareo-publicar": ["marca-correo.ts"],
+  // Los torneos próximos de ajedrezcostarica.com, una vez al día (pg_cron,
+  // con su secreto). Su leer.ts es suyo. Ver su cabecera.
+  "torneos-externos": [],
 };
 
 function armar(nombre) {
