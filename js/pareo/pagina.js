@@ -440,6 +440,9 @@
 
   // Si el torneo cambia el Elo de quien juega: lo dice la lista pública.
   const VALIDO_ELO = ["fide", "nacional", "no"];
+  // La provincia: la lista pública agrupa y filtra por ella (si no se dice,
+  // la base la deduce de la ciudad: public.pareo_provincia).
+  const PROVINCIAS = ["San José", "Alajuela", "Cartago", "Heredia", "Guanacaste", "Puntarenas", "Limón"];
 
   // ---------- Torneo ----------
   function pintarTorneo() {
@@ -449,6 +452,7 @@
       f.elements[k].value = v[k] == null ? "" : v[k];
     }
     f.elements.validoElo.value = VALIDO_ELO.includes(v.validoElo) ? v.validoElo : "";
+    f.elements.provincia.value = PROVINCIAS.includes(v.provincia) ? v.provincia : "";
     // El nombre de un torneo de los JDE es el oficial del evento (etapa y
     // lugar, igual para todos): no se escribe a mano. Se corrige volviendo a
     // elegir la etapa con «Aplicar la configuración de los JDE».
@@ -686,6 +690,7 @@
       v.puntos[k] = x;
     } else if (n === "federacion") v.federacion = e.target.value.trim().toUpperCase();
     else if (n === "validoElo") { if (e.target.value) v.validoElo = e.target.value; else delete v.validoElo; }
+    else if (n === "provincia") { if (PROVINCIAS.includes(e.target.value)) v.provincia = e.target.value; else delete v.provincia; }
     else v[n] = e.target.value;
     guardar();
     if (n === "nombre") pintarLista();
@@ -1669,7 +1674,7 @@
     // torneo lleva la suya según cuántos juegan; sin ella, copia las rondas,
     // el ritmo, los puntos y los desempates del abierto tal cual.
     const comunes = {
-      ciudad: actual.ciudad, federacion: actual.federacion, fechaInicio: actual.fechaInicio, fechaFin: actual.fechaFin,
+      ciudad: actual.ciudad, provincia: actual.provincia, federacion: actual.federacion, fechaInicio: actual.fechaInicio, fechaFin: actual.fechaFin,
       arbitro: actual.arbitro, arbitroAdjunto: actual.arbitroAdjunto, ritmo: actual.ritmo, validoElo: actual.validoElo,
       colorInicial: actual.colorInicial, baku: actual.baku, rondasTotales: actual.rondasTotales,
       puntos: Object.assign({}, actual.puntos), desempates: actual.desempates.slice(),
@@ -1723,7 +1728,7 @@
   // (actas, firmas, incidencias, publicación, enlaces). Se copia campo por
   // campo, nunca el torneo entero: lo que no está en esta lista no viaja.
   // Ver «Repetir un evento» en docs/decisiones/juegos-y-torneos.md.
-  const COPIA_REPETIR = ["grupo", "ciudad", "federacion", "arbitro", "arbitroAdjunto", "ritmo", "validoElo", "sistema", "dobleVuelta",
+  const COPIA_REPETIR = ["grupo", "ciudad", "provincia", "federacion", "arbitro", "arbitroAdjunto", "ritmo", "validoElo", "sistema", "dobleVuelta",
     "rondasTotales", "colorInicial", "baku", "tipo", "tableros", "amistoso", "ordenEnEvento", "mesaInicial", "configLibre", "plazoAlineacion"];
   // «Abierto 2025» → «Abierto 2026»: el año del evento viejo en el nombre.
   const conAnio = (texto, viejo, nuevo) => (viejo && viejo !== nuevo ? String(texto || "").replace(new RegExp("\\b" + viejo + "\\b", "g"), nuevo) : String(texto || ""));

@@ -340,6 +340,7 @@ async function cargarWorker() {
     ];
     const afuera = [
       { id_externo: 901, titulo: "PRUEBA nocturno", inicio: "2026-11-02T03:00:00+00:00", fin: "2026-11-02T05:00:00+00:00", provincia: "San José", lugar: "Salón", elo: "ambos", organizador: "Club", url: "https://ajedrezcostarica.com/es/tournaments/901" },
+      { id_externo: 903, titulo: "PRUEBA ya publicado acá", inicio: "2026-11-01T15:00:00+00:00", fin: null, provincia: "", lugar: "", elo: "", organizador: "", url: "https://ajedrezcostarica.com/es/tournaments/903", repetido_de: ID },
       { id_externo: 902, titulo: "PRUEBA enlace raro", inicio: "2026-11-05T15:00:00+00:00", fin: null, provincia: "", lugar: "", elo: "", organizador: "", url: "https://otro.com/x" },
     ];
     let preguntas = [];
@@ -358,7 +359,7 @@ async function cargarWorker() {
     igual("pide solo los torneos desde hace un mes (no la tabla entera) y con tope", /pareo_publicados\?select=[^&]*&fecha=gte\.2026-09-22&order=fecha\.asc&limit=\d+$/.test(preguntas.find((u) => /pareo_publicados/.test(u)) || ""), true);
     igual("sin la columna entera de datos", /select=[^&]*\bdatos(,|&)/.test(preguntas.find((u) => /pareo_publicados/.test(u)) || ""), false);
     const uids = (t) => (t.match(/^UID:.*$/gm) || []).map((x) => x.slice(4));
-    igual("los que vienen (y el de hoy), con los mismos UID que «Agregar a mi calendario»; el terminado y el enlace raro no",
+    igual("los que vienen (y el de hoy), con los mismos UID que «Agregar a mi calendario»; el terminado, el enlace raro y el que ya está publicado en Pareo Integral no",
       uids(r.texto).join(" "), "torneo-66666666-6666-4666-8666-666666666666@ajedrez-integral.com torneo-" + ID + "@ajedrez-integral.com ajedrezcostarica-901@ajedrez-integral.com");
     igual("el nocturno de afuera es del 1.° de noviembre (hora de Costa Rica)", /UID:ajedrezcostarica-901@[^]*?DTSTART;VALUE=DATE:20261101/.test(r.texto), true);
     igual("la app lo vuelve a leer sola", /REFRESH-INTERVAL;VALUE=DURATION:PT12H/.test(r.texto), true);

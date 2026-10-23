@@ -96,12 +96,13 @@
   // ---------- La ruta: #t=<id>&j=<id>&r=<n>&v=<vista> ----------
   function leerRuta() {
     const p = new URLSearchParams(location.hash.replace(/^#/, ""));
-    return { t: p.get("t") || "", j: p.get("j") || "", r: p.get("r") || "", v: p.get("v") || "", n: p.get("n") || "", o: p.get("o") || "", p: p.get("p") || "" };
+    return { t: p.get("t") || "", j: p.get("j") || "", r: p.get("r") || "", v: p.get("v") || "", n: p.get("n") || "", o: p.get("o") || "", p: p.get("p") || "",
+      i: p.get("i") || "", vs: p.get("vs") || "", vi: p.get("vi") || "", c: p.get("c") || "", ranking: p.get("ranking") || "" };
   }
   function irA(cambios) {
     const r = Object.assign(leerRuta(), cambios);
     const p = new URLSearchParams();
-    for (const k of ["t", "v", "r", "j", "n", "o", "p"]) if (r[k]) p.set(k, r[k]);
+    for (const k of ["t", "v", "r", "j", "n", "o", "p", "i", "vs", "vi", "c", "ranking"]) if (r[k]) p.set(k, r[k]);
     const h = "#" + p.toString();
     if (location.hash !== h) location.hash = h; else pintar();
   }
@@ -207,6 +208,7 @@
   }
   // Volver a pedir con lo que dicen la búsqueda y los filtros.
   async function recargar() {
+    pintarEnVivo();
     try { if (await cargarLista()) pintarLista(); }
     catch (e) { $("tp-cuantos").textContent = "No se pudo leer la lista. Revisa la conexión e intenta de nuevo."; }
   }
@@ -265,7 +267,8 @@
         hijo ? el("span", { class: "tp-fecha", "aria-hidden": "true" }) : bloqueFecha(x.fecha, x.fin),
         el("span", { class: "tp-principal" },
           el("span", { class: "tp-nombre", texto: x.nombre }), sigue,
-          el("span", { class: "tp-lugar" }, hijo ? null : lugarDe(x), el("span", { class: "tp-estado " + est.clase, texto: est.texto }), orgDe(x) ? nombreOrg(orgDe(x)) : null)),
+          el("span", { class: "tp-lugar" }, hijo ? null : lugarDe(x), el("span", { class: "tp-estado " + est.clase, texto: est.texto }), orgDe(x) ? nombreOrg(orgDe(x)) : null),
+          repetidos.has(x.id) ? el("span", { class: "tp-fila-evento", "data-tambien": "1", texto: "También anunciado en ajedrezcostarica.com" }) : null),
         el("span", { class: "tp-datos" }, datosDe(x)),
         el("span", { class: "tp-flecha", "aria-hidden": "true", texto: "›" })));
   }
@@ -337,13 +340,44 @@
   }
   const hayFiltro = (f) => !!(f.ritmo || f.lugar || f.elo || f.abierta || f.curso || f.verificado);
   // Los lugares que hay, para elegir uno (se vuelven a armar con la lista).
+  // Las siete provincias primero (la base las deduce del lugar si quien
+  // organiza no la eligió, public.pareo_provincia) y después cada lugar.
+  const PROVINCIAS = ["San José", "Alajuela", "Cartago", "Heredia", "Guanacaste", "Puntarenas", "Limón"];
   function pintarLugares() {
     const sel = $("tp-f-lugar");
     if (!sel) return;
     const elegido = sel.value;
-    const lugares = ((resumen && resumen.lugares) || []).slice().sort((a, b) => a.localeCompare(b, "es"));
-    sel.replaceChildren(el("option", { value: "", texto: "Todos" }), ...lugares.map((l) => el("option", { value: l, texto: l })));
-    sel.value = lugares.includes(elegido) ? elegido : "";
+    const lugares = ((resumen && resumen.lugares) || []).filter((l) => !PROVINCIAS.includes(l)).sort((a, b) => a.localeCompare(b, "es"));
+    sel.replaceChildren(el("option", { value: "", texto: "Todos" }),
+      el("optgroup", { label: "Provincia" }, PROVINCIAS.map((l) => el("option", { value: l, texto: l }))),
+      lugares.length ? el("optgroup", { label: "Lugar" }, lugares.map((l) => el("option", { value: l, texto: l }))) : null);
+    sel.value = PROVINCIAS.includes(elegido) || lugares.includes(elegido) ? elegido : "";
+    pintarProvincias();
+  }
+  // «Por provincia»: cuántos torneos vienen en cada una (los de Pareo
+  // Integral y los de ajedrezcostarica.com), con un botón que filtra.
+  function pintarProvincias() {
+    const caja = $("tp-provincias");
+    if (!caja) return;
+    const cuenta = Object.assign({}, (resumen && resumen.provincias) || {});
+    const hoyCR = hoy();
+    for (const x of externos || []) {
+      const d = diaExterno(x);
+      if (x.provincia && (d.hasta || d.desde) >= hoyCR) cuenta[x.provincia] = (cuenta[x.provincia] || 0) + 1;
+    }
+    const elegida = $("tp-f-lugar") ? $("tp-f-lugar").value : "";
+    const con = PROVINCIAS.filter((p) => cuenta[p]);
+    caja.hidden = !con.length;
+    $("tp-provincias-lista").replaceChildren(...con.map((p) => {
+      const b = el("button", { type: "button", "data-provincia": p, "aria-pressed": elegida === p ? "true" : "false",
+        class: C.pestana + " " + (elegida === p ? "bg-accent-500 text-brand-900" : "bg-white dark:bg-brand-900") },
+        p, el("span", { class: "font-normal", texto: " · " + cuenta[p] + (cuenta[p] === 1 ? " torneo" : " torneos") }));
+      b.addEventListener("click", () => {
+        $("tp-f-lugar").value = elegida === p ? "" : p;
+        recargar().then(() => { const otro = document.querySelector('#tp-provincias-lista [data-provincia="' + p + '"]'); if (otro) otro.focus(); });
+      });
+      return b;
+    }));
   }
 
   // «Ver más» al pie de una parte, mientras queden grupos sin traer.
@@ -386,14 +420,18 @@
   let externosVisibles = []; // los que se ven ahora, para el calendario
   const ELO_EXTERNO = { ambos: "FIDE", fide: "FIDE", nacional: "Nacional", no: "No" };
   const ELO_EXTERNO_LARGO = { ambos: "Válido para Elo FIDE y Nacional", fide: "Válido para Elo FIDE", nacional: "Válido solo para Elo Nacional", no: "No varía el Elo" };
+  // Vienen con `repetido_de`: el torneo de Pareo Integral que es el mismo
+  // (mismo día, mismo ritmo y nombre parecido, public.torneos_externos_lista).
+  // Ese no se muestra dos veces: su fila de Pareo Integral dice que también
+  // está anunciado allá, y su ficha lleva el enlace.
+  const repetidos = new Map(); // id del torneo de Pareo Integral → la ficha de allá
   async function cargarExternos() {
     if (externos) return;
     try {
-      const { data, error } = await window.sb.from("torneos_externos")
-        .select("id_externo,titulo,inicio,fin,provincia,lugar,ritmo,minutos,incremento,elo,precio,moneda,modalidad,formato,organizador,inscripcion_abierta,url")
-        .order("inicio", { ascending: true }).limit(200);
+      const { data, error } = await window.sb.rpc("torneos_externos_lista");
       if (error) throw error;
-      externos = data || [];
+      externos = (data || []).filter((x) => !x.repetido_de);
+      for (const x of data || []) if (x.repetido_de) repetidos.set(x.repetido_de, x.url);
     } catch (e) { externos = []; }
   }
   // El día en Costa Rica de cada punta, como los de Pareo Integral.
@@ -402,12 +440,15 @@
     const f = filtros();
     // Lo que allá no existe (el lugar escrito igual, «en curso», el sello de
     // Pareo Integral) no se puede pedir: con esos filtros, la parte se calla.
-    if (f.lugar || f.curso || f.verificado) return [];
+    // Una provincia sí: allá cada torneo dice la suya.
+    const porProvincia = PROVINCIAS.includes(f.lugar);
+    if ((f.lugar && !porProvincia) || f.curso || f.verificado) return [];
     const q = clave($("tp-buscar") ? $("tp-buscar").value : "");
     const hoyCR = hoy();
     return (externos || []).filter((x) => {
       const d = diaExterno(x);
       if ((d.hasta || d.desde) && (d.hasta || d.desde) < hoyCR) return false;
+      if (porProvincia && x.provincia !== f.lugar) return false;
       if (f.ritmo && x.ritmo !== f.ritmo) return false;
       if (f.elo === "fide" && !["fide", "ambos"].includes(x.elo)) return false;
       if (f.elo === "nacional" && x.elo !== "nacional") return false;
@@ -453,6 +494,7 @@
   function pintarExternos() {
     const caja = $("tp-externos-caja");
     if (!caja) return;
+    pintarProvincias();
     const lista = externosFiltrados().sort((a, b) => String(a.inicio || "9").localeCompare(String(b.inicio || "9")));
     caja.hidden = !lista.length;
     if (!lista.length) { $("tp-externos").replaceChildren(); return; }
@@ -545,6 +587,10 @@
     const reportarB = el("button", { type: "button", id: "tp-reportar", class: boton }, el("span", { "aria-hidden": "true", texto: "⚑" }), "Reportar este torneo");
     reportarB.addEventListener("click", () => reportar(fila, reportarB));
     hijos.push(reportarB);
+    if (repetidos.has(fila.id)) {
+      hijos.push(el("a", { id: "tp-tambien", href: repetidos.get(fila.id), target: "_blank", rel: "noopener", class: boton },
+        el("span", { "aria-hidden": "true", texto: "↗" }), "Su anuncio en ajedrezcostarica.com", el("span", { class: "sr-only", texto: " (se abre en otra pestaña)" })));
+    }
     const incrustar = el("button", { type: "button", id: "tp-incrustar", class: boton, "aria-expanded": incrustarAbierto ? "true" : "false", "aria-controls": "tp-incrustar-caja" },
       el("span", { "aria-hidden": "true", texto: "</>" }), "Ponerlo en tu página");
     const panel = cajaIncrustar(fila, t);
@@ -643,7 +689,7 @@
         return el("tr", { "data-id": f.id, class: suyo ? "tp-seguido" : null, "data-seguido": suyo ? "1" : null },
           el("td", { class: "num", texto: f.puesto }),
           el("td", {}, suyo ? marcaSeguido() : null, el("a", { href: "#" + new URLSearchParams({ t: leerRuta().t, v: "jugadores", j: f.id }).toString(), class: C.enlace + " font-semibold", texto: j.nombre + (j.titulo ? " (" + j.titulo + ")" : "") })),
-          el("td", { texto: E.esDeEquipos(t) ? "" : (j.institucion || "") }),
+          el("td", {}, E.esDeEquipos(t) || !j.institucion ? "" : enlaceColegio(j.institucion)),
           el("td", { class: "num", texto: Number(j.elo) > 0 ? j.elo : "" }),
           el("td", { class: "num font-bold", texto: puntosTexto(f.puntos) }),
           des.map((c) => el("td", { class: "num", texto: c === "TB" ? E.textoTableros(f.valores[c], t.tableros) : formato(f.valores[c]) })));
@@ -796,7 +842,8 @@
       el("p", { class: C.nota, texto: [j.institucion, Number(j.elo) > 0 ? "Elo " + j.elo : "Sin Elo", j.categoria ? "Categoría " + j.categoria : ""].filter(Boolean).join(" · ") }),
       suFila ? el("p", { class: "mt-1 font-semibold", texto: "Puesto " + suFila.puesto + " · " + puntosTexto(suFila.puntos) + " puntos" }) : null,
       E.esDeEquipos(t) ? null : botonSeguir(j.nombre),
-      E.esDeEquipos(t) ? null : el("p", { class: "mt-2" }, el("a", { id: "tp-ficha-todos", href: "#" + new URLSearchParams({ p: j.nombre }).toString(), class: C.enlace + " text-sm font-semibold", texto: "Su ficha en todos los torneos →" }))));
+      E.esDeEquipos(t) ? null : el("div", { class: "mt-2" }, cajaAvisoCorreo(j.nombre, j.ident || "")),
+      E.esDeEquipos(t) ? null : el("p", { class: "mt-2" }, el("a", { id: "tp-ficha-todos", href: "#" + new URLSearchParams(j.ident ? { p: j.nombre, i: j.ident } : { p: j.nombre }).toString(), class: C.enlace + " text-sm font-semibold", texto: "Su ficha en todos los torneos →" }))));
     const tbody = el("tbody");
     t.rondas.forEach((R, r) => {
       const s = T.situacion(t, r, jid);
@@ -1076,9 +1123,8 @@
   // (js/pareo/elo.js). Ver «La ficha de un jugador en todos sus torneos» en
   // docs/decisiones/juegos-y-torneos.md.
   const MAX_FICHA = 100;
-  function filaFicha(x, nombre) {
+  function filaFicha(x, j) {
     const t = x.datos;
-    const j = t.jugadores.find((y) => y.nombre === nombre);
     if (!j) return null;
     const { filas } = clasificacion(t);
     const f = filas.find((y) => y.id === j.id);
@@ -1093,31 +1139,69 @@
       puntos: f ? f.puntos : null, rondas: rondasCompletas(t), g, e, p, elo: Number(j.elo) || 0, rp: elo ? elo.rp : null, cambio: elo ? elo.cambio : null,
       institucion: j.institucion || "", categoria: j.categoria || "", titulo: j.titulo || "" };
   }
-  async function pintarFichaJugador(nombre) {
+  // ¿Quién es él en este torneo? Con huella (`i`), el de esa huella o, si no
+  // la tiene nadie, el del mismo nombre sin huella (pudo jugar sin su ID
+  // FIDE); nunca el del mismo nombre con OTRA huella: es otra persona. Sin
+  // huella, el del mismo nombre (sin tildes ni mayúsculas).
+  function elDe(t, nombre, ident) {
+    const k = clave(nombre);
+    if (ident) return t.jugadores.find((y) => y.ident === ident) || t.jugadores.find((y) => !y.ident && clave(y.nombre) === k) || null;
+    return t.jugadores.find((y) => clave(y.nombre) === k) || null;
+  }
+  // Las personas distintas con ese nombre: una por huella.
+  function homonimos(data, nombre) {
+    const k = clave(nombre), por = new Map();
+    for (const x of data) {
+      if (E.esDeEquipos(x.datos)) continue;
+      for (const y of x.datos.jugadores) {
+        if (clave(y.nombre) !== k || !y.ident) continue;
+        const h = por.get(y.ident) || { ident: y.ident, nombre: y.nombre, institucion: y.institucion || "", torneos: 0 };
+        h.torneos++;
+        por.set(y.ident, h);
+      }
+    }
+    return [...por.values()];
+  }
+  async function torneosDeJugador(nombre, ident) {
+    const { data, error } = await window.sb.rpc("pareo_torneos_de", { p_nombre: nombre, p_ident: ident || "" });
+    if (error) throw error;
+    return data || [];
+  }
+  async function pintarFichaJugador(ruta) {
+    const nombre = ruta.p;
     const caja = $("tp-contenido");
     $("tp-portada").hidden = true;
     caja.hidden = false;
     caja.replaceChildren(el("p", { class: C.nota, role: "status", texto: "Buscando sus torneos…" }));
     let data;
-    try {
-      const r = await window.sb.from("pareo_publicados").select(COLUMNAS + ",datos")
-        .contains("datos", { jugadores: [{ nombre }] }).order("fecha", { ascending: false }).range(0, MAX_FICHA - 1);
-      if (r.error) throw r.error;
-      data = r.data || [];
-    } catch (e) {
+    try { data = await torneosDeJugador(nombre, ruta.i); } catch (e) {
       caja.replaceChildren(el("p", { class: C.nota, role: "alert", texto: "No se pudieron buscar sus torneos. Revisa la conexión e intenta de nuevo." }));
       return;
     }
     if (leerRuta().p !== nombre) return;
-    const filas = data.filter((x) => !E.esDeEquipos(x.datos)).map((x) => filaFicha(x, nombre)).filter(Boolean);
     document.title = nombre + " — Torneos en Pareo Integral | Ajedrez Integral";
     const volver = el("a", { href: "#", class: C.enlace + " text-sm", texto: "← Todos los torneos" });
     const titulo = el("h1", { id: "tp-titulo", tabindex: "-1", class: "font-serif text-3xl md:text-4xl font-bold text-brand-800 dark:text-white mt-3", texto: nombre });
-    if (!filas.length) {
-      caja.replaceChildren(volver, titulo, el("p", { id: "tp-ficha-vacia", class: C.nota + " mt-3", role: "status", texto: "No aparece en ningún torneo individual publicado con ese nombre escrito así." }));
+    // Dos personas con el mismo nombre (dos huellas): se pregunta cuál, en vez
+    // de sumarlas.
+    const otros = ruta.i ? [] : homonimos(data, nombre);
+    if (otros.length > 1) {
+      caja.replaceChildren(volver, titulo,
+        el("p", { id: "tp-homonimos", class: "mt-3 font-semibold", role: "status", texto: "Hay " + otros.length + " personas distintas con este nombre (tienen distinto ID FIDE). ¿Cuál buscas?" }),
+        el("ul", { class: "mt-2 space-y-2" }, otros.map((h) => el("li", {},
+          el("a", { href: "#" + new URLSearchParams({ p: nombre, i: h.ident }).toString(), class: C.enlace + " font-semibold", "data-ident": h.ident, texto: h.nombre }),
+          el("span", { class: C.nota, texto: " · " + [h.institucion, h.torneos === 1 ? "1 torneo" : h.torneos + " torneos"].filter(Boolean).join(" · ") })))));
       titulo.focus();
       return;
     }
+    const elegidos = data.filter((x) => !E.esDeEquipos(x.datos)).map((x) => ({ x, j: elDe(x.datos, nombre, ruta.i) })).filter((y) => y.j);
+    const filas = elegidos.map(({ x, j }) => filaFicha(x, j)).filter(Boolean);
+    if (!filas.length) {
+      caja.replaceChildren(volver, titulo, el("p", { id: "tp-ficha-vacia", class: C.nota + " mt-3", role: "status", texto: "No aparece en ningún torneo individual publicado con ese nombre." }));
+      titulo.focus();
+      return;
+    }
+    const ident = ruta.i || (elegidos.find((y) => y.j.ident) || { j: {} }).j.ident || "";
     const ultimo = filas[0];
     const conElo = filas.filter((x) => x.elo).slice().reverse();
     const suma = (k) => filas.reduce((a, x) => a + x[k], 0);
@@ -1143,13 +1227,15 @@
     const copiar = el("button", { type: "button", id: "tp-ficha-copiar", class: C.pestana + " bg-white dark:bg-brand-900 inline-flex items-center gap-2" },
       el("span", { "aria-hidden": "true", texto: "🔗" }), "Copiar el enlace de su ficha");
     copiar.addEventListener("click", async () => {
-      const enlace = SITIO + "/torneos-pareo.html#" + new URLSearchParams({ p: nombre }).toString();
+      const enlace = SITIO + "/torneos-pareo.html#" + new URLSearchParams(ruta.i ? { p: nombre, i: ruta.i } : { p: nombre }).toString();
       try { await navigator.clipboard.writeText(enlace); Avisos.avisar("Enlace copiado."); }
       catch (e) { Avisos.avisar("No se pudo copiar. El enlace es " + enlace, { tipo: "error" }); }
     });
     caja.replaceChildren(volver, titulo,
-      el("p", { class: C.nota + " mt-1", texto: [ultimo.titulo, ultimo.institucion, ultimo.categoria ? "Categoría " + ultimo.categoria : ""].filter(Boolean).join(" · ") || "" }),
-      el("div", { class: "mt-3 flex flex-wrap items-start gap-3" }, botonSeguir(nombre), copiar),
+      el("p", { class: C.nota + " mt-1" }, [ultimo.titulo, ultimo.institucion ? enlaceColegio(ultimo.institucion) : null, ultimo.categoria ? "Categoría " + ultimo.categoria : ""]
+        .filter(Boolean).flatMap((x, i) => (i ? [" · ", x] : [x]))),
+      el("div", { class: "mt-3 flex flex-wrap items-start gap-3" }, botonSeguir(nombre), copiar, cajaAvisoCorreo(nombre, ident)),
+      cajaCaraACara(elegidos, nombre, ident, ruta),
       el("dl", { id: "tp-ficha-resumen", class: "mt-5 grid grid-cols-2 sm:grid-cols-3 gap-3" }, resumen.map(([k, v]) => el("div", { class: "rounded-2xl bg-white dark:bg-brand-900 shadow-md p-3" },
         el("dt", { class: "text-xs font-semibold text-brand-600 dark:text-brand-300", texto: k }), el("dd", { class: "text-lg font-bold", texto: v })))),
       el("h2", { class: "font-serif text-2xl font-bold text-brand-800 dark:text-white mt-6 mb-2", texto: "Torneo por torneo" }),
@@ -1158,9 +1244,252 @@
         el("thead", {}, el("tr", {}, ["Fecha", "Torneo", "Puesto", "Puntos", "Ganadas · tablas · perdidas", "Elo", "Rendimiento", "± Elo"].map((h, i) =>
           el("th", { scope: "col", class: i >= 2 ? "num" : null, texto: h })))),
         tbody)),
-      el("p", { class: "text-xs text-brand-600 dark:text-brand-300 mt-3", texto: "Los torneos individuales publicados con Pareo Integral donde aparece este nombre escrito igual. El Elo es el que tenía en cada torneo; el rendimiento y el ± Elo se calculan como FIDE, solo con las partidas contra rivales con Elo, y no son oficiales."
+      el("p", { class: "text-xs text-brand-600 dark:text-brand-300 mt-3", texto: "Los torneos individuales publicados con Pareo Integral donde aparece: con su ID FIDE (que no se publica: se reconoce por una huella) o, si no lo tiene, con este nombre (sin importar tildes ni mayúsculas). El Elo es el que tenía en cada torneo; el rendimiento y el ± Elo se calculan como FIDE, solo con las partidas contra rivales con Elo, y no son oficiales."
         + (data.length >= MAX_FICHA ? " Se muestran los " + MAX_FICHA + " más recientes." : "") }));
     titulo.focus();
+  }
+
+  // ---------- Cara a cara (#p=A&vs=B) ----------
+  // Las partidas entre dos jugadores en los torneos publicados donde jugaron
+  // los dos (de los de A, que ya están leídos). Los rivales para elegir son
+  // los que A tuvo enfrente alguna vez.
+  function rivalesDe(elegidos) {
+    const por = new Map();
+    for (const { x, j } of elegidos) {
+      const t = x.datos;
+      t.rondas.forEach((R, r) => {
+        const s = T.situacion(t, r, j.id);
+        if (s.tipo !== "partida" || !s.rival) return;
+        const y = t.jugadores.find((z) => z.id === s.rival);
+        if (!y) return;
+        const k = y.ident ? "i:" + y.ident : "n:" + clave(y.nombre);
+        if (!por.has(k)) por.set(k, { nombre: y.nombre, ident: y.ident || "", veces: 0 });
+        por.get(k).veces++;
+      });
+    }
+    return [...por.values()].sort((a, b) => b.veces - a.veces || a.nombre.localeCompare(b.nombre, "es"));
+  }
+  function partidasEntre(elegidos, vs, vi) {
+    const out = [];
+    for (const { x, j } of elegidos) {
+      const t = x.datos;
+      const b = elDe(t, vs, vi);
+      if (!b || b.id === j.id) continue;
+      t.rondas.forEach((R, r) => {
+        const s = T.situacion(t, r, j.id);
+        if (s.tipo !== "partida" || s.rival !== b.id) return;
+        out.push({ id: x.id, torneo: x.nombre, fecha: x.fecha || t.fechaInicio || "", ronda: r + 1, color: s.color === "w" ? "Blancas" : "Negras", codigo: s.codigo, jid: j.id });
+      });
+    }
+    return out;
+  }
+  function cajaCaraACara(elegidos, nombre, ident, ruta) {
+    const rivales = rivalesDe(elegidos);
+    const caja = el("section", { id: "tp-cara", class: C.tarjeta + " mt-5", "aria-labelledby": "tp-cara-titulo" },
+      el("h2", { id: "tp-cara-titulo", class: "font-serif text-xl font-bold mb-2", texto: "Cara a cara" }));
+    if (!rivales.length) { caja.append(el("p", { class: C.nota, texto: "Todavía no tiene partidas jugadas en torneos publicados." })); return caja; }
+    const sel = el("select", { id: "tp-cara-rival", class: C.campo }, el("option", { value: "", texto: "Elige un rival…" }),
+      rivales.map((v) => el("option", { value: JSON.stringify([v.nombre, v.ident]), selected: clave(v.nombre) === clave(ruta.vs) && (v.ident || "") === (ruta.vi || ""),
+        texto: v.nombre + (v.veces > 1 ? " (" + v.veces + " partidas)" : "") })));
+    sel.addEventListener("change", () => {
+      const [vs, vi] = sel.value ? JSON.parse(sel.value) : ["", ""];
+      irA({ vs, vi });
+    });
+    caja.append(el("label", { for: "tp-cara-rival", class: "flex flex-col text-sm max-w-md" }, el("span", { class: "font-semibold", texto: "Sus partidas contra" }), sel));
+    if (!ruta.vs) return caja;
+    const lista = partidasEntre(elegidos, ruta.vs, ruta.vi);
+    const g = lista.filter((x) => x.codigo === "1").length, e = lista.filter((x) => x.codigo === "=").length, p = lista.filter((x) => x.codigo === "0").length;
+    caja.append(el("p", { id: "tp-cara-marcador", class: "mt-3 text-lg font-bold", role: "status",
+      texto: !lista.length ? "No jugaron entre ellos en torneos publicados." : nombre + " " + g + " · tablas " + e + " · " + ruta.vs + " " + p }));
+    if (lista.length) {
+      const res = { "1": "Ganó " + nombre, "=": "Tablas", "0": "Ganó " + ruta.vs };
+      caja.append(el("div", { class: "overflow-x-auto mt-2" }, el("table", { id: "tp-cara-tabla", class: "pi-tabla" },
+        el("caption", { class: "sr-only", texto: "Las partidas entre " + nombre + " y " + ruta.vs }),
+        el("thead", {}, el("tr", {}, ["Fecha", "Torneo", "Ronda", "Color de " + nombre, "Resultado"].map((h) => el("th", { scope: "col", texto: h })))),
+        el("tbody", {}, lista.map((x) => el("tr", {},
+          el("td", { texto: fechaTexto(x.fecha) }),
+          el("td", {}, el("a", { href: "#" + new URLSearchParams({ t: x.id, v: "rondas", r: String(x.ronda) }).toString(), class: C.enlace, texto: x.torneo })),
+          el("td", { class: "num", texto: x.ronda }), el("td", { texto: x.color }), el("td", { texto: res[x.codigo] || "—" })))))));
+    }
+    return caja;
+  }
+
+  // ---------- Avisarme por correo ----------
+  // Quien sigue a un jugador deja su correo; la función le manda un enlace
+  // para confirmarlo y, desde entonces, un aviso cuando ese jugador juega una
+  // ronda nueva y cuando termina un torneo (pareo-publicar, avisos.ts).
+  function cajaAvisoCorreo(nombre, ident) {
+    const boton = el("button", { type: "button", id: "tp-aviso-abrir", "aria-expanded": "false", "aria-controls": "tp-aviso-form",
+      class: C.pestana + " bg-white dark:bg-brand-900 inline-flex items-center gap-2" }, el("span", { "aria-hidden": "true", texto: "✉" }), "Avisarme por correo");
+    const correo = el("input", { id: "tp-aviso-correo", type: "email", autocomplete: "email", maxlength: "200", required: true, class: C.campo + " w-full" });
+    const permiso = el("input", { id: "tp-aviso-permiso", type: "checkbox", class: "mt-1" });
+    const estado = el("p", { id: "tp-aviso-estado", class: "text-sm font-semibold mt-2", role: "status" });
+    const mandar = el("button", { type: "submit", id: "tp-aviso-mandar", class: "bg-accent-500 hover:bg-accent-600 text-brand-900 font-bold px-4 py-2 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-800 disabled:opacity-50" }, "Pedir los avisos");
+    const form = el("form", { id: "tp-aviso-form", class: C.tarjeta + " w-full mt-2", hidden: true, novalidate: true },
+      el("p", { class: "text-sm mb-2", texto: "Te escribimos cuando " + nombre + " juegue una ronda nueva en un torneo publicado (su mesa y su rival) y cuando termine el torneo. Primero te llega un correo para confirmar." }),
+      el("label", { for: "tp-aviso-correo", class: "block text-sm font-semibold mb-1", texto: "Tu correo" }), correo,
+      el("div", { class: "flex items-start gap-2 text-sm mt-3" }, permiso,
+        el("label", { for: "tp-aviso-permiso" }, "Acepto que se guarde mi correo solo para estos avisos, como dice la ",
+          el("a", { href: "privacidad.html#torneos", target: "_blank", rel: "noopener", class: C.enlace, texto: "Política de privacidad" }), ". Cada correo trae cómo dejar de recibirlos.")),
+      el("div", { class: "mt-3" }, mandar), estado);
+    boton.addEventListener("click", () => {
+      const abrir = form.hidden;
+      form.hidden = !abrir;
+      boton.setAttribute("aria-expanded", abrir ? "true" : "false");
+      if (abrir) correo.focus();
+    });
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const c = correo.value.trim();
+      if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(c)) { estado.textContent = "Ese correo no parece bien escrito."; correo.focus(); return; }
+      if (!permiso.checked) { estado.textContent = "Marca que aceptas la política de privacidad."; permiso.focus(); return; }
+      mandar.disabled = true;
+      estado.textContent = "Mandando…";
+      const r = await PareoPublicar.seguirCorreo(nombre, ident, c);
+      mandar.disabled = false;
+      estado.textContent = r.ok ? "✓ Listo: revisa tu correo y toca el enlace para confirmar los avisos." : (r.error || "No se pudo mandar. Revisa la conexión e intenta de nuevo.");
+    });
+    return el("div", { class: "w-full" }, boton, form);
+  }
+  // Los enlaces que llegan por correo: confirmar los avisos o dejarlos.
+  async function enlaceAvisos() {
+    const m = location.hash.match(/^#seguir-(ok|baja)=([0-9a-f-]{36})\.([0-9a-f]{20,100})$/);
+    if (!m) return false;
+    history.replaceState(null, "", location.pathname + location.search);
+    const r = m[1] === "ok" ? await PareoPublicar.seguirConfirmar(m[2], m[3]) : await PareoPublicar.seguirBaja(m[2], m[3]);
+    if (!r.ok) Avisos.avisar(r.error || "No se pudo. Revisa la conexión e intenta de nuevo.", { tipo: "error" });
+    else Avisos.avisar(m[1] === "ok" ? "✓ Avisos confirmados" + (r.nombre ? ": te vamos a escribir cuando " + r.nombre + " juegue." : ".") : "Listo: ya no te vamos a mandar esos avisos.");
+    return true;
+  }
+
+  // ---------- La ficha de un colegio o club (#c=<nombre>) ----------
+  // Sus jugadores, sus torneos, sus podios y su año a año, de los torneos
+  // individuales publicados (public.pareo_institucion, con el nombre escrito
+  // sin importar tildes ni mayúsculas).
+  const enlaceColegio = (nombre) => el("a", { href: "#" + new URLSearchParams({ c: nombre }).toString(), class: C.enlace, "data-colegio": nombre, texto: nombre });
+  async function pintarColegio(nombre) {
+    const caja = $("tp-contenido");
+    $("tp-portada").hidden = true;
+    caja.hidden = false;
+    caja.replaceChildren(el("p", { class: C.nota, role: "status", texto: "Cargando…" }));
+    let d;
+    try {
+      const r = await window.sb.rpc("pareo_institucion", { p_nombre: nombre });
+      if (r.error) throw r.error;
+      d = r.data;
+    } catch (e) {
+      caja.replaceChildren(el("p", { class: C.nota, role: "alert", texto: "No se pudo leer. Revisa la conexión e intenta de nuevo." }));
+      return;
+    }
+    if (leerRuta().c !== nombre) return;
+    const volver = el("a", { href: "#", class: C.enlace + " text-sm", texto: "← Todos los torneos" });
+    const titulo = el("h1", { id: "tp-titulo", tabindex: "-1", class: "font-serif text-3xl md:text-4xl font-bold text-brand-800 dark:text-white mt-3", texto: d ? d.nombre : nombre });
+    if (!d) {
+      caja.replaceChildren(volver, titulo, el("p", { id: "tp-colegio-vacio", class: C.nota + " mt-3", role: "status", texto: "No aparece en ningún torneo individual publicado." }));
+      titulo.focus();
+      return;
+    }
+    document.title = d.nombre + " — Torneos en Pareo Integral | Ajedrez Integral";
+    const fichaDe = (x) => "#" + new URLSearchParams(x.ident ? { p: x.nombre, i: x.ident } : { p: x.nombre }).toString();
+    const tabla = (id, titulo2, cabeza, filas) => el("div", { class: "overflow-x-auto" }, el("table", { id, class: "pi-tabla" },
+      el("caption", { class: "sr-only", texto: titulo2 }),
+      el("thead", {}, el("tr", {}, cabeza.map(([h, num]) => el("th", { scope: "col", class: num ? "num" : null, texto: h })))), el("tbody", {}, filas)));
+    const h2 = (texto) => el("h2", { class: "font-serif text-2xl font-bold text-brand-800 dark:text-white mt-6 mb-2", texto });
+    caja.replaceChildren(volver, titulo,
+      el("p", { id: "tp-colegio-resumen", class: C.nota + " mt-1", texto: [d.jugadores.length + (d.jugadores.length === 1 ? " jugador" : " jugadores"), d.torneos.length + (d.torneos.length === 1 ? " torneo" : " torneos"), d.podios.length + (d.podios.length === 1 ? " podio" : " podios")].join(" · ") }),
+      h2("Año a año"),
+      tabla("tp-colegio-anios", "Año a año", [["Año"], ["Torneos", 1], ["Jugadores", 1], ["Podios", 1]], d.anios.map((a) => el("tr", {},
+        el("td", { texto: a.anio }), el("td", { class: "num", texto: a.torneos }), el("td", { class: "num", texto: a.jugadores }), el("td", { class: "num", texto: a.podios })))),
+      h2("Sus jugadores"),
+      tabla("tp-colegio-jugadores", "Sus jugadores", [["Nombre"], ["Torneos", 1], ["Podios", 1], ["Mejor puesto", 1]], d.jugadores.map((x) => el("tr", {},
+        el("td", {}, el("a", { href: fichaDe(x), class: C.enlace + " font-semibold", texto: x.nombre })), el("td", { class: "num", texto: x.torneos }),
+        el("td", { class: "num", texto: x.podios }), el("td", { class: "num", texto: x.mejor || "—" })))),
+      d.podios.length ? h2("Podios") : null,
+      d.podios.length ? el("ul", { id: "tp-colegio-podios", class: "space-y-1 text-sm" }, d.podios.map((x) => el("li", {},
+        el("span", { class: "font-semibold", texto: ({ 1: "1.º", 2: "2.º", 3: "3.º" })[x.puesto] + " " }), x.nombre, " en ",
+        el("a", { href: "#" + new URLSearchParams({ t: x.id, v: "clasificacion" }).toString(), class: C.enlace, texto: x.torneo }), el("span", { class: C.nota, texto: " · " + fechaTexto(x.fecha) })))) : null,
+      h2("Sus torneos"),
+      tabla("tp-colegio-torneos", "Sus torneos", [["Fecha"], ["Torneo"], ["Sus jugadores", 1], ["Mejor puesto", 1]], d.torneos.map((x) => el("tr", {},
+        el("td", { texto: fechaTexto(x.fecha) }), el("td", {}, el("a", { href: "#" + new URLSearchParams({ t: x.id }).toString(), class: C.enlace, texto: x.nombre })),
+        el("td", { class: "num", texto: x.cuantos }), el("td", { class: "num", texto: x.mejor ? x.mejor + " de " + x.de : "—" })))),
+      el("p", { class: "text-xs text-brand-600 dark:text-brand-300 mt-3", texto: "De los torneos individuales publicados con Pareo Integral donde el colegio o club está escrito así (sin importar tildes ni mayúsculas)." }));
+    titulo.focus();
+  }
+
+  // ---------- El ranking del año (#ranking=1) ----------
+  // Lo arma la base con el resumen de cada jugador en cada torneo
+  // (public.pareo_ranking): un jugador es su huella del ID FIDE o, si no la
+  // tiene, su nombre.
+  const ranking = { anio: 0, orden: "torneos", categoria: "", institucion: "" };
+  const ORDEN_RANKING = [["torneos", "Más torneos"], ["podios", "Más podios"], ["rendimiento", "Mejor rendimiento"], ["elo", "Más Elo sumado"]];
+  async function pintarRanking(enfocar) {
+    const caja = $("tp-contenido");
+    $("tp-portada").hidden = true;
+    caja.hidden = false;
+    if (!ranking.anio) ranking.anio = Number(hoy().slice(0, 4));
+    if (!$("tp-ranking")) caja.replaceChildren(el("p", { class: C.nota, role: "status", texto: "Cargando…" }));
+    let d;
+    try {
+      const r = await window.sb.rpc("pareo_ranking", { p_anio: ranking.anio, p_orden: ranking.orden, p_categoria: ranking.categoria, p_institucion: ranking.institucion });
+      if (r.error) throw r.error;
+      d = r.data || { filas: [], anios: [], categorias: [] };
+    } catch (e) {
+      caja.replaceChildren(el("p", { class: C.nota, role: "alert", texto: "No se pudo leer el ranking. Revisa la conexión e intenta de nuevo." }));
+      return;
+    }
+    if (!leerRuta().ranking) return;
+    document.title = "Ranking del año — Torneos en Pareo Integral | Ajedrez Integral";
+    const sel = (id, etiqueta, opciones, valor, cambio) => {
+      const s2 = el("select", { id, class: C.campo }, opciones.map(([v, t]) => el("option", { value: String(v), selected: String(v) === String(valor), texto: t })));
+      s2.addEventListener("change", () => { cambio(s2.value); pintarRanking(id); });
+      return el("label", { class: "text-sm" }, el("span", { class: "block font-semibold mb-1", texto: etiqueta }), s2);
+    };
+    const anios = [...new Set([ranking.anio, ...(d.anios || [])])].filter(Boolean).sort((a, b) => b - a);
+    const colegio = el("input", { id: "tp-rk-colegio", type: "search", autocomplete: "off", value: ranking.institucion, class: C.campo });
+    let espera = null;
+    colegio.addEventListener("input", () => { clearTimeout(espera); espera = setTimeout(() => { ranking.institucion = colegio.value.trim(); pintarRanking("tp-rk-colegio"); }, 400); });
+    const cols = { torneos: "Torneos", podios: "Podios", rendimiento: "Rendimiento", elo: "± Elo" };
+    caja.replaceChildren(
+      el("a", { href: "#", class: C.enlace + " text-sm", texto: "← Todos los torneos" }),
+      el("h1", { id: "tp-titulo", tabindex: "-1", class: "font-serif text-3xl md:text-4xl font-bold text-brand-800 dark:text-white mt-3" }, el("span", { "aria-hidden": "true", texto: "🏆 " }), "Ranking del año"),
+      el("div", { id: "tp-ranking", class: "flex flex-wrap items-end gap-3 mt-4 mb-4" },
+        sel("tp-rk-anio", "Año", [[0, "Todos los años"], ...anios.map((a) => [a, String(a)])], ranking.anio, (v) => { ranking.anio = Number(v); }),
+        sel("tp-rk-orden", "Ordenar por", ORDEN_RANKING, ranking.orden, (v) => { ranking.orden = v; }),
+        sel("tp-rk-cat", "Categoría", [["", "Todas"], ...(d.categorias || []).map((c) => [c, c])], ranking.categoria, (v) => { ranking.categoria = v; }),
+        el("label", { class: "text-sm" }, el("span", { class: "block font-semibold mb-1", texto: "Colegio o club" }), colegio)),
+      el("p", { id: "tp-rk-cuantos", class: C.nota + " mb-2", role: "status", texto: d.filas.length ? (d.filas.length === 100 ? "Los primeros 100." : d.filas.length + (d.filas.length === 1 ? " jugador." : " jugadores.")) : "Nadie todavía con lo que elegiste." }),
+      d.filas.length ? el("div", { class: "overflow-x-auto" }, el("table", { id: "tp-rk-tabla", class: "pi-tabla" },
+        el("caption", { class: "sr-only", texto: "Ranking: " + ORDEN_RANKING.find(([v]) => v === ranking.orden)[1] }),
+        el("thead", {}, el("tr", {}, [["#", 1], ["Nombre"], ["Colegio o club"], ["Torneos", 1], ["Partidas", 1], ["Puntos", 1], ["Podios", 1], ["Rendimiento", 1], ["± Elo", 1]]
+          .map(([h, num]) => el("th", { scope: "col", class: (num ? "num" : "") + (cols[ranking.orden] === h ? " font-bold" : ""), texto: h })))),
+        el("tbody", {}, d.filas.map((x, i) => el("tr", { "data-persona": x.persona },
+          el("td", { class: "num", texto: i + 1 }),
+          el("td", {}, el("a", { href: "#" + new URLSearchParams(x.ident ? { p: x.nombre, i: x.ident } : { p: x.nombre }).toString(), class: C.enlace + " font-semibold", texto: x.nombre }),
+            x.categoria ? el("span", { class: "block text-xs text-brand-600 dark:text-brand-300", texto: x.categoria }) : null),
+          el("td", {}, x.institucion ? enlaceColegio(x.institucion) : ""),
+          el("td", { class: "num", texto: x.torneos }), el("td", { class: "num", texto: x.partidas }), el("td", { class: "num", texto: puntosTexto(Number(x.puntos)) }),
+          el("td", { class: "num", texto: x.podios }), el("td", { class: "num", texto: x.rp == null ? "—" : x.rp }),
+          el("td", { class: "num", texto: x.cambio == null ? "—" : PareoElo.textoCambio(Number(x.cambio)) })))))) : null,
+      el("p", { class: "text-xs text-brand-600 dark:text-brand-300 mt-3", texto: "De los torneos individuales publicados con Pareo Integral. El rendimiento es el promedio de sus torneos, pesado por las partidas contra rivales con Elo, y solo cuenta con 9 de esas partidas o más; el ± Elo es la suma de lo que daría FIDE en cada torneo. No es un ranking oficial." }));
+    // Al cambiar un filtro, el foco vuelve a ese control (la tabla se volvió a armar).
+    (enfocar && $(enfocar) || $("tp-titulo")).focus();
+  }
+
+  // ---------- Se están jugando ahora ----------
+  async function pintarEnVivo() {
+    const caja = $("tp-vivo-caja");
+    if (!caja) return;
+    const f = filtros(), q = $("tp-buscar") ? $("tp-buscar").value.trim() : "";
+    // Buscando o filtrando, la lista de abajo ya muestra lo que coincide.
+    if (q || hayFiltro(f)) { caja.hidden = true; return; }
+    try {
+      const { data, error } = await window.sb.rpc("pareo_lista", { p_parte: "resultados", p_desde: 0, p_cuantos: 20, p_curso: true });
+      if (error) throw error;
+      const filas = (data && data.filas) || [];
+      await cargarOrganizadores(filas.map((x) => x.organizador_id));
+      caja.hidden = !filas.length;
+      $("tp-vivo").replaceChildren(...filasDelDia(filas, false));
+    } catch (e) { caja.hidden = true; }
   }
 
   // ---------- La página de un organizador (#o=<id>) ----------
@@ -1224,7 +1553,10 @@
     if (refresco) { clearInterval(refresco); refresco = null; }
     const ruta = leerRuta();
     if (ruta.o && !ruta.t) { abierto = null; await pintarOrganizador(ruta.o); return; }
-    if (ruta.p && !ruta.t) { abierto = null; await pintarFichaJugador(ruta.p); return; }
+    await cargarExternos();
+    if (ruta.p && !ruta.t) { abierto = null; await pintarFichaJugador(ruta); return; }
+    if (ruta.c && !ruta.t) { abierto = null; await pintarColegio(ruta.c); return; }
+    if (ruta.ranking && !ruta.t) { abierto = null; await pintarRanking(); return; }
     if (!ruta.t) {
       abierto = null;
       document.title = "Torneos en Pareo Integral | Ajedrez Integral";
@@ -1235,12 +1567,13 @@
           if (error) throw error;
           resumen = data || { total: 0, lugares: [] };
           pintarLugares();
-          await Promise.all([cargarLista(), cargarExternos()]);
+          await cargarLista();
         } catch (e) { resumen = null; $("tp-cuantos").textContent = "No se pudo leer la lista. Revisa la conexión e intenta de nuevo."; return; }
       }
       pintarLugares();
       pintarLista();
       pintarSeguidosPortada();
+      pintarEnVivo();
       return;
     }
     await pintarTorneo(ruta, false);
@@ -1260,5 +1593,5 @@
   $("tp-externos-calendario").addEventListener("click", () => externosAlCalendario(externosVisibles));
   $("tp-suscribir").append(cajaSuscribir(null, "tp-suscribir-caja"));
   window.addEventListener("hashchange", pintar);
-  pintar();
+  enlaceAvisos().then(pintar);
 })();

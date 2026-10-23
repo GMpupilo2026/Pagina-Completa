@@ -14,8 +14,12 @@
  *
  * `datosPublicos(t)` elige campo por campo lo que viaja: nombres, centros,
  * Elo, título, federación, categoría, rondas, resultados y partidas (PGN),
- * el anuncio y si recibe inscripciones. Nunca la fecha de
- * nacimiento, el sexo, el ID FIDE, las firmas ni las notas del árbitro. La
+ * el anuncio, si recibe inscripciones y el resumen de cada jugador (su
+ * puesto, sus puntos y su rendimiento, que usan el ranking y la ficha del
+ * colegio). Nunca la fecha de nacimiento, el sexo, las firmas ni las notas
+ * del árbitro. El ID FIDE viaja solo a la función, que NO lo guarda: guarda
+ * una huella (`ident`) para reconocer al mismo jugador en otros torneos (ver
+ * «Torneos en Pareo Integral: el mismo jugador en todos sus torneos»). La
  * función vuelve a limpiar lo que llega (no se le cree al navegador).
  */
 (function (raiz) {
@@ -26,6 +30,8 @@
   const persona = (j) => {
     const x = { id: j.id, nombre: j.nombre, institucion: j.institucion || "", elo: Number(j.elo) || 0, titulo: j.titulo || "", fed: j.fed || "", categoria: j.categoria || "",
       retiradoDespuesDe: j.retiradoDespuesDe == null ? null : j.retiradoDespuesDe };
+    // Solo para la huella: la función lo cambia por `ident` y no lo guarda.
+    if (/^[0-9]{1,12}$/.test(String(j.fideId || "").trim())) x.fideId = String(j.fideId).trim();
     if (Array.isArray(j.integrantes)) x.integrantes = j.integrantes.map(persona);
     return x;
   };
@@ -42,12 +48,39 @@
   const Ritmo = raiz.RitmoControl || (typeof require === "function" ? require("../ritmo-control.js") : null);
   const ritmoTipo = (t) => (Ritmo && Ritmo.deducir(t.ritmo || "", t.nombre || "")) || "";
 
+  // El resumen de cada jugador tras las rondas completas: el puesto con los
+  // desempates del torneo, los puntos, las partidas jugadas (ganadas, tablas,
+  // perdidas) y, con Elo, el rendimiento y el ± Elo de FIDE. Lo calcula quien
+  // publica con los mismos módulos que la clasificación; el ranking y la
+  // ficha del colegio lo suman en la base. Solo torneos individuales.
+  const modulo = (nombre, archivo) => raiz[nombre] || (typeof require === "function" ? require(archivo) : null);
+  const PROVINCIAS = ["San José", "Alajuela", "Cartago", "Heredia", "Guanacaste", "Puntarenas", "Limón"];
+  function resumenJugadores(t) {
+    const T = modulo("PareoTorneo", "./torneo.js"), E = modulo("PareoEquipos", "./equipos.js"), V = modulo("PareoEvento", "./evento.js"), Elo = modulo("PareoElo", "./elo.js");
+    if (!T || !E || !V || t.tipo === "equipos") return [];
+    const k = V.rondasCompletas(t);
+    if (!k) return [];
+    const filas = V.aplicarDesempate(t, E.clasificacion(Object.assign({}, t, { rondas: t.rondas.slice(0, k) }), t.desempates));
+    const elo = Elo ? Elo.calcular(t, k) : new Map();
+    return filas.map((f) => {
+      let g = 0, e = 0, p = 0;
+      for (let r = 0; r < k; r++) {
+        const s = T.situacion(t, r, f.id);
+        if (s.tipo !== "partida") continue;
+        if (s.codigo === "1") g++; else if (s.codigo === "=") e++; else if (s.codigo === "0") p++;
+      }
+      const x = elo.get(f.id) || {};
+      return { id: f.id, puesto: f.puesto, puntos: f.puntos, rondas: k, g, e, p,
+        pe: x.partidas || 0, rp: x.rp == null ? null : x.rp, cambio: x.cambio == null ? null : x.cambio };
+    });
+  }
+
   // `extra.codigoEvento`: el código del enlace en vivo del evento (vive en el
   // navegador, no en el torneo).
   function datosPublicos(t, extra) {
     const e = extra || {};
     return {
-      nombre: t.nombre || "", grupo: t.grupo || "", ciudad: t.ciudad || "", federacion: t.federacion || "",
+      nombre: t.nombre || "", grupo: t.grupo || "", ciudad: t.ciudad || "", provincia: PROVINCIAS.includes(t.provincia) ? t.provincia : "", federacion: t.federacion || "",
       fechaInicio: t.fechaInicio || "", fechaFin: t.fechaFin || "", arbitro: t.arbitro || "", arbitroAdjunto: t.arbitroAdjunto || "", ritmo: t.ritmo || "", ritmoTipo: ritmoTipo(t), validoElo: t.validoElo || "",
       sistema: t.sistema, dobleVuelta: !!t.dobleVuelta, rondasTotales: t.rondasTotales, tipo: t.tipo, tableros: t.tableros,
       puntos: t.puntos, desempates: (t.desempates || []).slice(), mesaInicial: t.mesaInicial,
@@ -62,6 +95,7 @@
       // Los códigos de los enlaces en vivo: un enlace que ya nadie transmite
       // lleva desde ellos al torneo publicado (js/pareo/ver.js).
       vivo: t.liveCodigo || undefined, codigoEvento: e.codigoEvento || undefined,
+      resumen: resumenJugadores(t),
     };
   }
 
@@ -114,10 +148,15 @@
   const inscribir = (id, inscripcion) => llamar({ accion: "inscribir", id, inscripcion, consentimiento: true });
   const inscripciones = (p) => llamar({ accion: "inscripciones", id: p.id, clave: p.clave });
   const marcar = (p, ids, estado) => llamar({ accion: "marcar", id: p.id, clave: p.clave, ids, estado });
+  // Seguir a un jugador por correo (la página pública, sin cuenta): pedirlo,
+  // confirmarlo y darse de baja con los enlaces que llegan por correo.
+  const seguirCorreo = (nombre, ident, correo) => llamar({ accion: "seguir_correo", nombre, ident: ident || "", correo, consentimiento: true });
+  const seguirConfirmar = (id, token) => llamar({ accion: "seguir_confirmar", id, token });
+  const seguirBaja = (id, token) => llamar({ accion: "seguir_baja", id, token });
   // La dirección pública de un torneo publicado (desde la página que llama).
   const enlace = (id) => new URL("torneos-pareo.html#t=" + encodeURIComponent(id), location.href).href;
 
-  const api = { datosPublicos, crear, actualizar, guardarOrganizador, estadoOrganizador, confirmarCorreo, recuperarOrganizador, recuperarConfirmar, pedirSello, reportar, borrar, inscribir, inscripciones, marcar, enlace, URL_FUNCION };
+  const api = { datosPublicos, crear, actualizar, guardarOrganizador, estadoOrganizador, confirmarCorreo, recuperarOrganizador, recuperarConfirmar, pedirSello, reportar, borrar, inscribir, inscripciones, marcar, seguirCorreo, seguirConfirmar, seguirBaja, enlace, URL_FUNCION };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else raiz.PareoPublicar = api;
 })(typeof self !== "undefined" ? self : this);

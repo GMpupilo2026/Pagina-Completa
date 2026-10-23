@@ -55,12 +55,12 @@ async function abrir(browser, viewport, opciones) {
   await page.route("**/rest/v1/pareo_publicados**", (route) => route.fulfill({ status: 200, contentType: "application/json", headers: { "access-control-allow-origin": "*" }, body: "[]" }));
   await page.route("**/rest/v1/pareo_organizadores**", (route) => route.fulfill({ status: 200, contentType: "application/json", headers: { "access-control-allow-origin": "*" }, body: "[]" }));
   const pedidos = [];
-  await page.route("**/rest/v1/torneos_externos**", (route) => {
-    const u = new URL(route.request().url());
-    pedidos.push({ select: u.searchParams.get("select"), order: u.searchParams.get("order"), limit: u.searchParams.get("limit") });
+  // public.torneos_externos_lista(): ordenados por inicio y, cada uno, con el
+  // torneo de Pareo Integral que es el mismo (repetido_de), si lo hay.
+  await page.route("**/rest/v1/rpc/torneos_externos_lista**", (route) => {
+    pedidos.push({ metodo: route.request().method() });
     if (o.falla) return route.fulfill({ status: 500, contentType: "application/json", headers: { "access-control-allow-origin": "*" }, body: '{"message":"caída"}' });
-    // Como la base: lo que se pide, ordenado por inicio.
-    const filas = o.externos.slice().sort((a, b) => a.inicio.localeCompare(b.inicio)).map((f) => columnasPedidas(u.searchParams.get("select"), f));
+    const filas = o.externos.slice().sort((a, b) => a.inicio.localeCompare(b.inicio)).map((f) => { const x = Object.assign({ repetido_de: null }, f); delete x.fuente; delete x.visto; delete x.chess_results; return x; });
     return route.fulfill({ status: 200, contentType: "application/json", headers: { "access-control-allow-origin": "*" }, body: JSON.stringify(filas) });
   });
   await dobleListaPareo(page, PROPIO, { hoy: "2026-10-23" });
@@ -100,9 +100,7 @@ async function igualLuego(page, m, f, b) {
   igual("otro: relámpago, solo Nacional, gratis, por equipos", [d903.Ritmo, d903.Elo, d903.Costo, d903.Modalidad], ["Relámpago · 3 min + 2 s", "Nacional", "Gratis", "Por equipos"]);
   ok(/Organiza: Club PRUEBA/.test(await page.textContent('[data-externo="904"]')), "quién organiza");
   ok(await page.$('[data-externo="903"] img') === null && /<img src=x/.test(await page.textContent('[data-externo="903"] .tp-nombre')), "un nombre con HTML se pinta como texto");
-  const p = pedidos[0] || {};
-  ok(pedidos.length === 1 && /^inicio\.asc/.test(p.order || "") && Number(p.limit) > 0, "se pide una vez, ordenado y con tope", JSON.stringify(pedidos));
-  ok(!/visto|fuente|chess_results/.test(p.select || ""), "solo las columnas que se muestran", p.select);
+  ok(pedidos.length === 1, "se pide una vez (public.torneos_externos_lista, que ya los trae ordenados y con tope)", JSON.stringify(pedidos));
 
   igual("arriba, «Suscribirme al calendario de torneos» (el que arma el worker)",
     await page.getAttribute("#tp-suscribir-caja-abrir", "href"), "webcal://ajedrez-integral.com/calendario/torneos.ics");
