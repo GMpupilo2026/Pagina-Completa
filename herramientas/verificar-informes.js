@@ -213,7 +213,9 @@ window.__funcion = [];
           if (limite !== null) d = d.slice(0, limite);
           if (unica) d = d.length ? d[0] : null;
         }
-        return Promise.resolve({ data: d, error: null }).then(res, rej);
+        /* «count» como la base: cuántas filas quedaron tras los filtros (lo que
+           pide un select con count exact y head). */
+        return Promise.resolve({ data: d, count: Array.isArray(d) ? d.length : null, error: null }).then(res, rej);
       },
     };
     return b;
@@ -1944,7 +1946,8 @@ async function pruebaConEsteAlumno(browser) {
   console.log("\n=== «Con este alumno» ===");
   const datos = (perfil) => ({
     rpc: { informes_resumen_alumnos: [ANA, BRUNO, CARLA], informes_totales: { clases_cerradas: 0, preguntas: 0, partidas: 0 } },
-    tablas: { profiles: [perfil], training_plans: [], diagnosticos_publicos: [], arbitrajes_publicos: [] },
+    tablas: { profiles: [perfil], training_plans: [], diagnosticos_publicos: [], arbitrajes_publicos: [],
+              estudios: [{ id: "e-1", alumno_id: "a-1", compartido: true }, { id: "e-2", alumno_id: "a-2", compartido: false }] },
   });
   const leer = (page) => page.evaluate(() => {
     const nav = document.getElementById("informe-acciones");
@@ -1959,7 +1962,7 @@ async function pruebaConEsteAlumno(browser) {
   await r.page.waitForFunction(() => !document.getElementById("student-report").classList.contains("hidden"), null, { timeout: 10000 });
   let v = await leer(r.page);
   igual("al elegir un alumno, se ve", v.seVe, true);
-  igual("con sus atajos, cada uno con el alumno ya elegido", v.enlaces, [
+  igual("con sus atajos, cada uno con el alumno ya elegido", v.enlaces.filter((e) => !e.includes("Sus estudios")), [
     "👁Ver su panel → clases.html?ver_como=a-1",
     "📋Ponerle una tarea → tareas.html?alumno=a-1",
     "📝Ponerle un examen → examenes.html?alumno=a-1",
@@ -1967,7 +1970,6 @@ async function pruebaConEsteAlumno(browser) {
     "📧Informes a la casa → #encargados-report",
     "📓Su cuaderno → cuaderno.html?alumno=a-1",
     "🏆Su libreta de torneos → libreta-torneos.html?alumno=a-1",
-    "🔬Sus estudios → entreno/mis-estudios.html?alumno=a-1",
   ]);
   igual("el emoji no se lee", await r.page.evaluate(() =>
     [...document.querySelectorAll("#informe-acciones a > span")].every((s) => s.getAttribute("aria-hidden") === "true")), true);
@@ -1976,6 +1978,15 @@ async function pruebaConEsteAlumno(browser) {
     [document.getElementById("encargados-report").open, !!document.activeElement.closest("#encargados-report")]), [true, true]);
   igual("y no cambia de página", await r.page.evaluate(() => location.pathname + location.hash), "/informes.html");
   await r.page.selectOption("#student-filter", "");
+  await r.page.selectOption("#student-filter", "a-2");
+  await r.page.waitForFunction(() => document.getElementById("informe-acciones-lista").dataset.alumno === "a-2");
+  await r.page.waitForTimeout(500);
+  igual("sin estudios compartidos, no sale «Sus estudios»", (await leer(r.page)).enlaces.some((e) => e.includes("Sus estudios")), false);
+  await r.page.selectOption("#student-filter", "a-1");
+  await r.page.waitForFunction(() => document.querySelector("#informe-acciones a[href^='entreno/mis-estudios.html']"), null, { timeout: 10000 });
+  igual("con un estudio compartido, sale «Sus estudios» con su alumno", (await leer(r.page)).enlaces.filter((e) => e.includes("Sus estudios")),
+    ["🔬Sus estudios → entreno/mis-estudios.html?alumno=a-1"]);
+  await r.page.selectOption("#student-filter", "");
   igual("al volver al grupo, se va", (await leer(r.page)).seVe, false);
   igual("sin errores", r.errores.join(" | "), "");
   await r.page.close();
@@ -1983,8 +1994,8 @@ async function pruebaConEsteAlumno(browser) {
   r = await abrir(browser, datos({ id: "adm-1", role: "admin", is_admin: true, full_name: "Oscar", email: "o@x.cr" }), "adm-1", "/informes.html?alumno=a-1");
   await r.page.waitForFunction(() => !document.getElementById("student-report").classList.contains("hidden"), null, { timeout: 10000 });
   v = await leer(r.page);
-  igual("a quien administra (no da clase) no le ofrece poner tareas ni exámenes; su panel sí", v.enlaces.map((e) => e.split(" → ")[1].split("?")[0]),
-    ["clases.html", "#notas-report", "#encargados-report", "cuaderno.html", "libreta-torneos.html", "entreno/mis-estudios.html"]);
+  igual("a quien administra (no da clase) no le ofrece poner tareas ni exámenes; su panel sí", v.enlaces.filter((e) => !e.includes("Sus estudios")).map((e) => e.split(" → ")[1].split("?")[0]),
+    ["clases.html", "#notas-report", "#encargados-report", "cuaderno.html", "libreta-torneos.html"]);
   await r.page.close();
 }
 
