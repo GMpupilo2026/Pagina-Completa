@@ -104,6 +104,9 @@ async function igualLuego(page, m, f, b) {
   ok(pedidos.length === 1 && /^inicio\.asc/.test(p.order || "") && Number(p.limit) > 0, "se pide una vez, ordenado y con tope", JSON.stringify(pedidos));
   ok(!/visto|fuente|chess_results/.test(p.select || ""), "solo las columnas que se muestran", p.select);
 
+  igual("arriba, «Suscribirme al calendario de torneos» (el que arma el worker)",
+    await page.getAttribute("#tp-suscribir-caja-abrir", "href"), "webcal://ajedrez-integral.com/calendario/torneos.ics");
+
   console.log("\n=== Al calendario ===");
   igual("el botón dice cuántos agrega", (await page.textContent("#tp-externos-calendario")).trim(), "📅 Agregar estos 3 torneos a mi calendario");
   const [descarga] = await Promise.all([page.waitForEvent("download"), page.click("#tp-externos-calendario")]);

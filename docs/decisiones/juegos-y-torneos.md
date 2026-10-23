@@ -3821,6 +3821,109 @@ Al aplicarlo se disparó una vez a mano (`select
 public.disparar_torneos_externos()`): leyó los 5 torneos que había allá el
 23/10/2026, con sus datos iguales a los de sus fichas.
 
+### La tarjeta del organizador y el calendario para suscribirse
+
+Son dos rutas nuevas del worker, como `/t/<id>`, y las dos están en
+`run_worker_first` de `wrangler.jsonc`: una ruta del worker que no está ahí
+no existe, y no da ningún error.
+
+- **`/o/<id>`: la tarjeta del organizador.** Es el enlace para compartir su
+  página (`torneos-pareo.html#o=<id>`). WhatsApp no lee lo que va después
+  del «#», así que sin esto la vista previa sería la de la portada.
+  - La tarjeta dice su nombre, si tiene el sello y cuántos torneos publicó.
+    La cuenta se pide sola (`Prefer: count=exact`, con `Range: 0-0`), sin
+    bajarse los torneos.
+  - Comparte página mínima con la del torneo (`paginaTarjeta()`): sin
+    `<script>` y con su propia CSP.
+  - En la página del organizador, «Copiar el enlace de esta página» da esta
+    dirección.
+- **`/calendario/torneos.ics`: el calendario para suscribirse.** Trae los
+  próximos torneos de Torneos en Pareo Integral y los de
+  ajedrezcostarica.com. Con `?o=<id>` trae solo los de ese organizador, y
+  entonces sin los de afuera.
+  - La app del celular lo vuelve a leer sola: `REFRESH-INTERVAL` y
+    `X-PUBLISHED-TTL` de 12 horas, y `Cache-Control` de una hora.
+  - Son días enteros, con los mismos UID que «Agregar a mi calendario» de
+    cada torneo (`torneo-<id>@…`, `ajedrezcostarica-<n>@…`). Quien ya
+    había bajado un torneo no lo ve dos veces.
+  - Un torneo entra si su último día es hoy o después, en hora de Costa
+    Rica. Se piden los de hace un mes en adelante, con tope.
+  - Si Supabase no contesta, devuelve 503 con `Retry-After`, nunca un
+    calendario vacío: el vacío borraría los torneos de la app.
+  - **El texto lo arma igual que `js/calendario-ics.js` (`armarDias`).** El
+    worker no puede importar ese archivo, así que `verificar-worker.js`
+    compara las dos salidas línea por línea con los mismos eventos.
+    Cambiar uno sin el otro hace fallar el verificador.
+  - En la página, «Suscribirme al calendario de torneos» (portada) y
+    «Suscribirme a sus torneos» (organizador) abren la dirección `webcal:`.
+    «Copiar la dirección» da la de `https:`, que es la que pide Google
+    Calendar en «Desde URL».
+
+Los comprueban `verificar-worker.js`, `verificar-pareo-organizador.js` y
+`verificar-torneos-externos-pagina.js`.
+
+### La ficha de un jugador en todos sus torneos
+
+`torneos-pareo.html#p=<nombre>` muestra cada torneo individual publicado
+donde aparece ese nombre escrito igual. La búsqueda es la de «Otros torneos
+de…»: `datos @> {jugadores:[{nombre}]}`, del más reciente, hasta 100.
+
+- **Lo que muestra de cada torneo:** el puesto, los puntos, las ganadas,
+  tablas y perdidas (solo partidas jugadas) y el Elo que tenía.
+  - Con Elo, también el rendimiento y el ± Elo con las reglas de FIDE
+    (`PareoElo.calcular`, el mismo de la clasificación). No es oficial, y la
+    página lo dice.
+- **Arriba, el resumen:** torneos, partidas, el Elo de su primer torneo al
+  último y lo que suman sus torneos.
+  - Los números van escritos, no en un gráfico: así se leen igual con un
+    lector de pantalla.
+- **Los torneos por equipos no entran:** ahí el «jugador» de la
+  clasificación es el equipo.
+- **De dónde se llega:** desde la ficha del jugador en un torneo («Su ficha
+  en todos los torneos →»). Se puede seguir al jugador y copiar el enlace
+  de su ficha.
+
+Lo comprueba `verificar-pareo-seguir.js`.
+
+### La clasificación para incrustar en otra página
+
+Un club o una federación pega un `<iframe>` en su página y muestra la
+clasificación de su torneo, que se pone al día sola. El código lo da
+«Ponerlo en tu página» en la ficha del torneo, con un título escapado y
+`loading="lazy"`. Se puede elegir la clasificación o las mesas de la última
+ronda.
+
+- **La arma el worker, no es un archivo** (`/incrustar/<id>`, en
+  `run_worker_first`).
+  - Todo el sitio lleva `frame-ancestors 'self'` y `X-Frame-Options:
+    SAMEORIGIN` en `_headers`. Esta es la única página que otra puede
+    meter en un iframe.
+  - Con un archivo más habría que abrirle una excepción en `_headers`. Ahí
+    las reglas se suman, y una CSP de más deja la página bloqueada sin
+    ningún aviso.
+  - El worker le pone sus propias cabeceras: `frame-ancestors *`,
+    `script-src 'self'` y nada de `X-Frame-Options`.
+- **El torneo viaja dentro de la página** como `<script
+  type="application/json">`, que no se ejecuta, con «<» escapado.
+  - Así un nombre con `</script>` no corta el bloque.
+  - `js/pareo-incrustar.js` lo pinta con los mismos módulos de Pareo
+    Integral, así que la clasificación sale igual que en la computadora del
+    árbitro.
+  - No habla con ningún servidor: la página se vuelve a pedir sola cada
+    minuto (`meta refresh`), y el worker la guarda 30 segundos.
+- **Opciones en la dirección:**
+  - `?n=` dice cuántos puestos (10 si no se dice);
+  - `?ver=ronda` muestra las mesas (solo en torneos individuales);
+  - `?tema=oscuro` pone el fondo oscuro.
+- **Los colores se midieron contra su fondo:**
+  - en claro, 14,6:1 el texto y 6,1:1 las notas;
+  - en oscuro, 13,3:1 y 8,9:1.
+- **Sin torneo:** 404, y no se queda pidiendo. **Con Supabase caído:** 503,
+  y vuelve a intentar en un minuto.
+
+Lo comprueba `verificar-pareo-incrustar.js`: abre la página dentro del
+iframe de otro sitio y compara la clasificación con la de Pareo Integral.
+
 ### Torneos en Pareo Integral: la lista de 50 en 50
 
 Lo pidió el dueño del sitio (la 8 de una lista de propuestas). Antes la

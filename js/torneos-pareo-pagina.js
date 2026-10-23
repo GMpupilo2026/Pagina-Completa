@@ -96,12 +96,12 @@
   // ---------- La ruta: #t=<id>&j=<id>&r=<n>&v=<vista> ----------
   function leerRuta() {
     const p = new URLSearchParams(location.hash.replace(/^#/, ""));
-    return { t: p.get("t") || "", j: p.get("j") || "", r: p.get("r") || "", v: p.get("v") || "", n: p.get("n") || "", o: p.get("o") || "" };
+    return { t: p.get("t") || "", j: p.get("j") || "", r: p.get("r") || "", v: p.get("v") || "", n: p.get("n") || "", o: p.get("o") || "", p: p.get("p") || "" };
   }
   function irA(cambios) {
     const r = Object.assign(leerRuta(), cambios);
     const p = new URLSearchParams();
-    for (const k of ["t", "v", "r", "j", "n", "o"]) if (r[k]) p.set(k, r[k]);
+    for (const k of ["t", "v", "r", "j", "n", "o", "p"]) if (r[k]) p.set(k, r[k]);
     const h = "#" + p.toString();
     if (location.hash !== h) location.hash = h; else pintar();
   }
@@ -504,6 +504,25 @@
     }] });
     CalendarioIcs.bajar(texto, (clave(fila.nombre).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "torneo") + ".ics");
   }
+  // El calendario para suscribirse lo arma el worker
+  // (/calendario/torneos.ics, con ?o=<id> los de un organizador): la app
+  // del celular lo vuelve a leer sola. Ver «La tarjeta del organizador y el
+  // calendario para suscribirse» en docs/decisiones/juegos-y-torneos.md.
+  const direccionCalendario = (org) => SITIO + "/calendario/torneos.ics" + (org ? "?o=" + encodeURIComponent(org) : "");
+  function cajaSuscribir(org, id) {
+    const https = direccionCalendario(org);
+    const boton = C.pestana + " bg-white dark:bg-brand-900 inline-flex items-center gap-2";
+    const copiar = el("button", { type: "button", id: id + "-copiar", class: boton }, el("span", { "aria-hidden": "true", texto: "🔗" }), "Copiar la dirección");
+    copiar.addEventListener("click", async () => {
+      try { await navigator.clipboard.writeText(https); Avisos.avisar("Dirección del calendario copiada."); }
+      catch (e) { Avisos.avisar("No se pudo copiar. La dirección es " + https, { tipo: "error" }); }
+    });
+    return el("div", { id, class: "flex flex-wrap items-center gap-2" },
+      el("a", { id: id + "-abrir", href: https.replace(/^https:/, "webcal:"), class: boton },
+        el("span", { "aria-hidden": "true", texto: "📅 " }), org ? "Suscribirme a sus torneos" : "Suscribirme al calendario de torneos"),
+      copiar,
+      el("p", { class: C.nota + " w-full", texto: "Tu calendario lo vuelve a leer solo: los torneos nuevos aparecen sin hacer nada. En Google Calendar: «Otros calendarios», «Desde URL», y pega la dirección copiada." }));
+  }
   const terminado = (t) => t.rondasTotales > 0 && rondasCompletas(t) >= t.rondasTotales;
   function acciones(fila, t) {
     const boton = C.pestana + " bg-white dark:bg-brand-900 inline-flex items-center gap-2";
@@ -526,7 +545,48 @@
     const reportarB = el("button", { type: "button", id: "tp-reportar", class: boton }, el("span", { "aria-hidden": "true", texto: "⚑" }), "Reportar este torneo");
     reportarB.addEventListener("click", () => reportar(fila, reportarB));
     hijos.push(reportarB);
-    return el("div", { class: "flex flex-wrap gap-2 mt-3" }, hijos, estado);
+    const incrustar = el("button", { type: "button", id: "tp-incrustar", class: boton, "aria-expanded": incrustarAbierto ? "true" : "false", "aria-controls": "tp-incrustar-caja" },
+      el("span", { "aria-hidden": "true", texto: "</>" }), "Ponerlo en tu página");
+    const panel = cajaIncrustar(fila, t);
+    incrustar.addEventListener("click", () => {
+      incrustarAbierto = !incrustarAbierto;
+      incrustar.setAttribute("aria-expanded", incrustarAbierto ? "true" : "false");
+      panel.hidden = !incrustarAbierto;
+      if (incrustarAbierto) $("tp-incrustar-codigo").focus();
+    });
+    hijos.push(incrustar);
+    return el("div", {}, el("div", { class: "flex flex-wrap gap-2 mt-3" }, hijos, estado), panel);
+  }
+  // El código para incrustar la clasificación (o las mesas de la ronda) en la
+  // página de un club: un <iframe> a /incrustar/<id>, que arma el worker. Ver
+  // «La clasificación para incrustar en otra página» en
+  // docs/decisiones/juegos-y-torneos.md.
+  let incrustarAbierto = false;
+  let incrustarVer = "";
+  function codigoIncrustar(fila, ver) {
+    const src = SITIO + "/incrustar/" + encodeURIComponent(fila.id) + (ver ? "?ver=" + ver : "");
+    const titulo = (ver === "ronda" ? "Mesas de la ronda de " : "Clasificación de ") + fila.nombre;
+    return '<iframe src="' + src + '" title="' + titulo.replace(/[&"<>]/g, (c) => ({ "&": "&amp;", '"': "&quot;", "<": "&lt;", ">": "&gt;" })[c]) + '" width="100%" height="520" style="border:0" loading="lazy"></iframe>';
+  }
+  function cajaIncrustar(fila, t) {
+    const codigo = el("textarea", { id: "tp-incrustar-codigo", rows: "3", readonly: true, class: C.campo + " w-full font-mono text-xs" });
+    codigo.value = codigoIncrustar(fila, incrustarVer);
+    const opciones = E.esDeEquipos(t) ? null : el("fieldset", { class: "mb-2" },
+      el("legend", { class: "text-sm font-semibold mb-1", texto: "Qué mostrar" }),
+      [["", "La clasificación"], ["ronda", "Las mesas de la última ronda"]].map(([v, texto]) => {
+        const r = el("input", { type: "radio", name: "tp-incrustar-ver", id: "tp-incrustar-ver-" + (v || "clas"), value: v, checked: v === incrustarVer, class: "mr-1" });
+        r.addEventListener("change", () => { incrustarVer = v; codigo.value = codigoIncrustar(fila, v); });
+        return el("label", { class: "inline-flex items-center text-sm mr-4" }, r, texto);
+      }));
+    const copiar = el("button", { type: "button", id: "tp-incrustar-copiar", class: C.pestana + " bg-white dark:bg-brand-900 mt-2" }, "Copiar el código");
+    copiar.addEventListener("click", async () => {
+      try { await navigator.clipboard.writeText(codigo.value); Avisos.avisar("Código copiado: pégalo en tu página."); }
+      catch (e) { codigo.select(); Avisos.avisar("No se pudo copiar solo: el código quedó marcado, cópialo con Ctrl + C.", { tipo: "error" }); }
+    });
+    return el("div", { id: "tp-incrustar-caja", class: C.tarjeta + " mt-3", hidden: !incrustarAbierto },
+      el("p", { class: "text-sm mb-2", texto: "Pega este código en la página de tu club o tu federación: se ve la clasificación de este torneo y se pone al día sola cada minuto." }),
+      opciones,
+      el("label", { for: "tp-incrustar-codigo", class: "block text-sm font-semibold mb-1", texto: "Código para tu página" }), codigo, copiar);
   }
 
   // «Reportar este torneo»: sin cuenta, lo lee solo Ajedrez Integral, que lo
@@ -681,7 +741,8 @@
       const antes = sigo(nombre);
       const ahora = alternarSeguir(nombre);
       if (!antes && !ahora) { estado.textContent = "Ya sigues a " + MAX_SEGUIDOS + " jugadores: deja de seguir a alguno para agregar otro."; return; }
-      mostrarTorneo(abierto.fila, leerRuta(), "tp-seguir");
+      if (abierto) mostrarTorneo(abierto.fila, leerRuta(), "tp-seguir");
+      else { pintar().then(() => { const b2 = $("tp-seguir"); if (b2) b2.focus(); }); return; }
       $("tp-seguir-estado").textContent = ahora ? "Ahora sigues a " + nombre + ": sale arriba en cada torneo donde juegue." : "Dejaste de seguir a " + nombre + ".";
     });
     return el("div", {}, b, estado,
@@ -734,7 +795,8 @@
       el("p", { class: "text-lg font-bold", texto: j.nombre + (j.titulo ? " (" + j.titulo + ")" : "") }),
       el("p", { class: C.nota, texto: [j.institucion, Number(j.elo) > 0 ? "Elo " + j.elo : "Sin Elo", j.categoria ? "Categoría " + j.categoria : ""].filter(Boolean).join(" · ") }),
       suFila ? el("p", { class: "mt-1 font-semibold", texto: "Puesto " + suFila.puesto + " · " + puntosTexto(suFila.puntos) + " puntos" }) : null,
-      E.esDeEquipos(t) ? null : botonSeguir(j.nombre)));
+      E.esDeEquipos(t) ? null : botonSeguir(j.nombre),
+      E.esDeEquipos(t) ? null : el("p", { class: "mt-2" }, el("a", { id: "tp-ficha-todos", href: "#" + new URLSearchParams({ p: j.nombre }).toString(), class: C.enlace + " text-sm font-semibold", texto: "Su ficha en todos los torneos →" }))));
     const tbody = el("tbody");
     t.rondas.forEach((R, r) => {
       const s = T.situacion(t, r, jid);
@@ -1007,8 +1069,114 @@
     else if (!foco) $("tp-titulo").focus();
   }
 
+  // ---------- La ficha de un jugador en todos sus torneos (#p=<nombre>) ----------
+  // Cada torneo publicado donde aparece el nombre escrito igual (como «Otros
+  // torneos de…»): su puesto, sus puntos, sus partidas y, con Elo, su
+  // rendimiento y cuánto ganaría o perdería con las reglas de FIDE
+  // (js/pareo/elo.js). Ver «La ficha de un jugador en todos sus torneos» en
+  // docs/decisiones/juegos-y-torneos.md.
+  const MAX_FICHA = 100;
+  function filaFicha(x, nombre) {
+    const t = x.datos;
+    const j = t.jugadores.find((y) => y.nombre === nombre);
+    if (!j) return null;
+    const { filas } = clasificacion(t);
+    const f = filas.find((y) => y.id === j.id);
+    let g = 0, e = 0, p = 0;
+    t.rondas.forEach((R, r) => {
+      const s = T.situacion(t, r, j.id);
+      if (s.tipo !== "partida") return;
+      if (s.codigo === "1") g++; else if (s.codigo === "=") e++; else if (s.codigo === "0") p++;
+    });
+    const elo = window.PareoElo && rondasCompletas(t) ? PareoElo.calcular(t).get(j.id) : null;
+    return { id: x.id, torneo: x.nombre, evento: x.evento, fecha: x.fecha || t.fechaInicio || "", jid: j.id, puesto: f ? f.puesto : null, de: filas.length,
+      puntos: f ? f.puntos : null, rondas: rondasCompletas(t), g, e, p, elo: Number(j.elo) || 0, rp: elo ? elo.rp : null, cambio: elo ? elo.cambio : null,
+      institucion: j.institucion || "", categoria: j.categoria || "", titulo: j.titulo || "" };
+  }
+  async function pintarFichaJugador(nombre) {
+    const caja = $("tp-contenido");
+    $("tp-portada").hidden = true;
+    caja.hidden = false;
+    caja.replaceChildren(el("p", { class: C.nota, role: "status", texto: "Buscando sus torneos…" }));
+    let data;
+    try {
+      const r = await window.sb.from("pareo_publicados").select(COLUMNAS + ",datos")
+        .contains("datos", { jugadores: [{ nombre }] }).order("fecha", { ascending: false }).range(0, MAX_FICHA - 1);
+      if (r.error) throw r.error;
+      data = r.data || [];
+    } catch (e) {
+      caja.replaceChildren(el("p", { class: C.nota, role: "alert", texto: "No se pudieron buscar sus torneos. Revisa la conexión e intenta de nuevo." }));
+      return;
+    }
+    if (leerRuta().p !== nombre) return;
+    const filas = data.filter((x) => !E.esDeEquipos(x.datos)).map((x) => filaFicha(x, nombre)).filter(Boolean);
+    document.title = nombre + " — Torneos en Pareo Integral | Ajedrez Integral";
+    const volver = el("a", { href: "#", class: C.enlace + " text-sm", texto: "← Todos los torneos" });
+    const titulo = el("h1", { id: "tp-titulo", tabindex: "-1", class: "font-serif text-3xl md:text-4xl font-bold text-brand-800 dark:text-white mt-3", texto: nombre });
+    if (!filas.length) {
+      caja.replaceChildren(volver, titulo, el("p", { id: "tp-ficha-vacia", class: C.nota + " mt-3", role: "status", texto: "No aparece en ningún torneo individual publicado con ese nombre escrito así." }));
+      titulo.focus();
+      return;
+    }
+    const ultimo = filas[0];
+    const conElo = filas.filter((x) => x.elo).slice().reverse();
+    const suma = (k) => filas.reduce((a, x) => a + x[k], 0);
+    const cambios = filas.filter((x) => x.cambio != null);
+    const totalCambio = Math.round(cambios.reduce((a, x) => a + x.cambio, 0) * 10) / 10;
+    const resumen = [
+      ["Torneos", String(filas.length)],
+      ["Partidas", String(suma("g") + suma("e") + suma("p"))],
+      ["Ganadas, tablas y perdidas", suma("g") + " · " + suma("e") + " · " + suma("p")],
+      conElo.length ? ["Elo", conElo.length > 1 && conElo[0].elo !== conElo[conElo.length - 1].elo ? "De " + conElo[0].elo + " a " + conElo[conElo.length - 1].elo : String(conElo[conElo.length - 1].elo)] : null,
+      cambios.length ? ["Elo que suman sus torneos (cálculo de FIDE)", PareoElo.textoCambio(totalCambio)] : null,
+    ].filter(Boolean);
+    const tbody = el("tbody", {}, filas.map((x) => el("tr", { "data-ficha-torneo": x.id },
+      el("td", { texto: fechaTexto(x.fecha) }),
+      el("td", {}, el("a", { href: "#" + new URLSearchParams({ t: x.id, v: "jugadores", j: x.jid }).toString(), class: C.enlace + " font-semibold", texto: x.torneo }),
+        x.evento && x.evento !== x.torneo ? el("span", { class: "block text-xs text-brand-600 dark:text-brand-300", texto: x.evento }) : null),
+      el("td", { class: "num", texto: x.puesto ? x.puesto + " de " + x.de : "—" }),
+      el("td", { class: "num", texto: x.puntos == null ? "—" : puntosTexto(x.puntos) + (x.rondas ? " de " + x.rondas : "") }),
+      el("td", { class: "num", texto: x.g + " · " + x.e + " · " + x.p }),
+      el("td", { class: "num", texto: x.elo ? String(x.elo) : "—" }),
+      el("td", { class: "num", texto: x.rp == null ? "—" : String(x.rp) }),
+      el("td", { class: "num", texto: x.cambio == null ? "—" : PareoElo.textoCambio(x.cambio) }))));
+    const copiar = el("button", { type: "button", id: "tp-ficha-copiar", class: C.pestana + " bg-white dark:bg-brand-900 inline-flex items-center gap-2" },
+      el("span", { "aria-hidden": "true", texto: "🔗" }), "Copiar el enlace de su ficha");
+    copiar.addEventListener("click", async () => {
+      const enlace = SITIO + "/torneos-pareo.html#" + new URLSearchParams({ p: nombre }).toString();
+      try { await navigator.clipboard.writeText(enlace); Avisos.avisar("Enlace copiado."); }
+      catch (e) { Avisos.avisar("No se pudo copiar. El enlace es " + enlace, { tipo: "error" }); }
+    });
+    caja.replaceChildren(volver, titulo,
+      el("p", { class: C.nota + " mt-1", texto: [ultimo.titulo, ultimo.institucion, ultimo.categoria ? "Categoría " + ultimo.categoria : ""].filter(Boolean).join(" · ") || "" }),
+      el("div", { class: "mt-3 flex flex-wrap items-start gap-3" }, botonSeguir(nombre), copiar),
+      el("dl", { id: "tp-ficha-resumen", class: "mt-5 grid grid-cols-2 sm:grid-cols-3 gap-3" }, resumen.map(([k, v]) => el("div", { class: "rounded-2xl bg-white dark:bg-brand-900 shadow-md p-3" },
+        el("dt", { class: "text-xs font-semibold text-brand-600 dark:text-brand-300", texto: k }), el("dd", { class: "text-lg font-bold", texto: v })))),
+      el("h2", { class: "font-serif text-2xl font-bold text-brand-800 dark:text-white mt-6 mb-2", texto: "Torneo por torneo" }),
+      el("div", { class: "overflow-x-auto" }, el("table", { id: "tp-ficha-tabla", class: "pi-tabla" },
+        el("caption", { class: "sr-only", texto: "Los torneos de " + nombre + ", del más reciente al más viejo" }),
+        el("thead", {}, el("tr", {}, ["Fecha", "Torneo", "Puesto", "Puntos", "Ganadas · tablas · perdidas", "Elo", "Rendimiento", "± Elo"].map((h, i) =>
+          el("th", { scope: "col", class: i >= 2 ? "num" : null, texto: h })))),
+        tbody)),
+      el("p", { class: "text-xs text-brand-600 dark:text-brand-300 mt-3", texto: "Los torneos individuales publicados con Pareo Integral donde aparece este nombre escrito igual. El Elo es el que tenía en cada torneo; el rendimiento y el ± Elo se calculan como FIDE, solo con las partidas contra rivales con Elo, y no son oficiales."
+        + (data.length >= MAX_FICHA ? " Se muestran los " + MAX_FICHA + " más recientes." : "") }));
+    titulo.focus();
+  }
+
   // ---------- La página de un organizador (#o=<id>) ----------
   // Su logo, su nombre, el sello y todos sus torneos publicados, por día.
+  // Su enlace para compartir pasa por el worker (/o/<id>), como el de un
+  // torneo: la vista previa dice su nombre y no la portada.
+  function botonCompartirOrg(o) {
+    const enlace = SITIO + "/o/" + encodeURIComponent(o.id);
+    const b = el("button", { type: "button", id: "tp-org-compartir", class: C.pestana + " bg-white dark:bg-brand-900 inline-flex items-center gap-2" },
+      el("span", { "aria-hidden": "true", texto: "🔗" }), "Copiar el enlace de esta página");
+    b.addEventListener("click", async () => {
+      try { await navigator.clipboard.writeText(enlace); Avisos.avisar("Enlace copiado."); }
+      catch (e) { Avisos.avisar("No se pudo copiar. El enlace es " + enlace, { tipo: "error" }); }
+    });
+    return b;
+  }
   async function pintarOrganizador(id) {
     const caja = $("tp-contenido");
     $("tp-portada").hidden = true;
@@ -1044,6 +1212,7 @@
           el("h1", { id: "tp-titulo", tabindex: "-1", class: "font-serif text-3xl md:text-4xl font-bold text-brand-800 dark:text-white" }, o.nombre),
           el("p", { class: "mt-1 flex flex-wrap items-center gap-2 text-sm" }, o.verificado ? sello() : null,
             el("span", { id: "tp-org-cuantos", texto: torneos.length === 1 ? "1 torneo publicado" : torneos.length + " torneos publicados" })))),
+      el("div", { class: "mb-6 flex flex-wrap items-start gap-2" }, botonCompartirOrg(o), cajaSuscribir(o.id, "tp-org-suscribir")),
       proximos.length ? el("h2", { class: "font-serif text-2xl font-bold text-brand-800 dark:text-white mb-3", texto: "Próximos torneos" }) : null,
       ...porDia(proximos, true, false),
       jugados.length ? el("h2", { class: "font-serif text-2xl font-bold text-brand-800 dark:text-white mb-3", texto: "Resultados" }) : null,
@@ -1055,6 +1224,7 @@
     if (refresco) { clearInterval(refresco); refresco = null; }
     const ruta = leerRuta();
     if (ruta.o && !ruta.t) { abierto = null; await pintarOrganizador(ruta.o); return; }
+    if (ruta.p && !ruta.t) { abierto = null; await pintarFichaJugador(ruta.p); return; }
     if (!ruta.t) {
       abierto = null;
       document.title = "Torneos en Pareo Integral | Ajedrez Integral";
@@ -1088,6 +1258,7 @@
     $("tp-f-ritmo").focus();
   });
   $("tp-externos-calendario").addEventListener("click", () => externosAlCalendario(externosVisibles));
+  $("tp-suscribir").append(cajaSuscribir(null, "tp-suscribir-caja"));
   window.addEventListener("hashchange", pintar);
   pintar();
 })();

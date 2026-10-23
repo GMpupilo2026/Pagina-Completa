@@ -159,10 +159,50 @@ async function pruebaAlmacenamiento(browser) {
   }
 }
 
+// La ficha de un jugador en todos sus torneos (#p=<nombre>).
+async function pruebaFicha(browser) {
+  console.log("\n=== Su ficha en todos los torneos ===");
+  {
+    const { ctx, page } = await abrir(browser, "#t=" + ID1 + "&v=jugadores&j=e");
+    await page.waitForSelector("#tp-ficha-todos");
+    igual("la ficha del torneo enlaza a la de todos sus torneos", await page.getAttribute("#tp-ficha-todos", "href"), "#p=PRUEBA+E");
+    await ctx.close();
+  }
+  const { ctx, page, errores, pedidos } = await abrir(browser, "#p=PRUEBA+E");
+  await page.waitForSelector("#tp-ficha-tabla");
+  igual("su nombre de título, con el foco", [await page.textContent("#tp-titulo"), await page.evaluate(() => document.activeElement.id)], ["PRUEBA E", "tp-titulo"]);
+  const pedido = pedidos.find((q) => /datos=cs\./.test(q)) || "";
+  ok(/order=fecha\.desc/.test(pedido) && /limit=100/.test(pedido) && /"nombre":"PRUEBA[ +]E"/.test(decodeURIComponent(pedido)), "los pide a la base por el nombre exacto, del más reciente, con tope", pedido);
+  igual("un torneo por fila, con su enlace a su ficha en ese torneo", await page.$$eval("#tp-ficha-tabla tbody tr", (l) => l.map((x) => x.querySelector("a").getAttribute("href"))),
+    ["#t=" + ID1 + "&v=jugadores&j=e", "#t=" + ID2 + "&v=jugadores&j=e"]);
+  const celdas = await page.$$eval("#tp-ficha-tabla tbody tr", (l) => l.map((x) => [...x.querySelectorAll("td")].map((td) => td.textContent)));
+  igual("puesto, puntos, ganadas · tablas · perdidas y el Elo que tenía en cada uno",
+    celdas.map((c) => [c[2], c[3], c[4], c[5]]), [["1 de 6", "1 de 1", "1 · 0 · 0", "1500"], ["3 de 6", "½ de 1", "0 · 1 · 0", "1700"]]);
+  ok(/^\+\d/.test(celdas[0][7]) && /^-\d/.test(celdas[1][7].replace("−", "-")), "el ± Elo con su signo: gana a uno de más Elo suma, empatar con uno de menos resta", JSON.stringify(celdas.map((c) => c[7])));
+  const resumen = await page.$$eval("#tp-ficha-resumen > div", (l) => Object.fromEntries(l.map((d) => [d.querySelector("dt").textContent, d.querySelector("dd").textContent])));
+  igual("el resumen: torneos, partidas, resultados y el Elo de su primer torneo al último",
+    [resumen.Torneos, resumen.Partidas, resumen["Ganadas, tablas y perdidas"], resumen.Elo], ["2", "2", "1 · 1 · 0", "De 1700 a 1500"]);
+  const num = (t) => Number(String(t).replace("−", "-").replace(",", "."));
+  ok(Math.abs(num(resumen["Elo que suman sus torneos (cálculo de FIDE)"]) - (num(celdas[0][7]) + num(celdas[1][7]))) < 0.11, "y lo que suman sus torneos es la suma de la columna", JSON.stringify(resumen));
+  await page.click("#tp-seguir");
+  await page.waitForSelector('#tp-seguir[aria-pressed="true"]');
+  ok(await page.evaluate((k) => localStorage.getItem(k), CLAVE) === '["PRUEBA E"]', "desde la ficha también se lo sigue");
+  await page.evaluate(() => { window.__copiado = []; navigator.clipboard.writeText = async (t) => { window.__copiado.push(t); }; });
+  await page.click("#tp-ficha-copiar");
+  igual("y se copia el enlace de su ficha", await page.evaluate(() => window.__copiado), ["https://ajedrez-integral.com/torneos-pareo.html#p=PRUEBA+E"]);
+  ok(!errores.length, "sin errores en la consola", errores.join(" | "));
+  await page.goto("about:blank");
+  await page.goto(BASE + "/torneos-pareo.html#p=NADIE+ASI", { waitUntil: "networkidle" });
+  await page.waitForSelector("#tp-ficha-vacia");
+  ok(/No aparece en ningún torneo/.test(await page.textContent("#tp-ficha-vacia")), "un nombre que no está lo dice, sin tabla vacía");
+  await ctx.close();
+}
+
 (async () => {
   const browser = await chromium.launch({ executablePath: CHROME });
   try {
     await pruebaSeguir(browser);
+    await pruebaFicha(browser);
     await pruebaAlmacenamiento(browser);
   } finally {
     await browser.close();

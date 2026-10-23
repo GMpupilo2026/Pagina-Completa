@@ -168,8 +168,12 @@ async function pruebaPareo(browser) {
   ok(quita && "logo" in quita && quita.logo === null, "manda `logo: null`");
 
   console.log("\n=== Un torneo nuevo se publica a su nombre ===");
+  // Fuera de pareo.html: al salir, la página guarda su estado (con
+  // `publicado`) y le ganaría al cambio. Se hace desde otro archivo del sitio.
+  const volverA = page.url();
+  await page.goto(BASE + "/manifest.json");
   await page.evaluate(() => { const t = JSON.parse(localStorage.getItem("pareo_torneo_v1_ta")); delete t.publicado; localStorage.setItem("pareo_torneo_v1_ta", JSON.stringify(t)); });
-  await page.reload({ waitUntil: "networkidle" });
+  await page.goto(volverA, { waitUntil: "networkidle" });
   await page.click('[data-ficha="archivos"]');
   // Al volver a abrir lo reintenta solo: si ya se publicó, no hay botón.
   await page.waitForSelector("#pi-publicar-reintentar, #pi-publicar-enlace");
@@ -399,6 +403,13 @@ async function pruebaPublica(browser) {
   igual("su nombre, el sello y cuántos torneos", [await page.textContent("#tp-titulo"), /Verificado/.test(await page.textContent("#tp-contenido")), await page.textContent("#tp-org-cuantos")], ["Federación PRUEBA", true, "1 torneo publicado"]);
   ok(/PRUEBA ABIERTO/.test(await page.textContent("#tp-contenido")) && !/PRUEBA CLUB|PRUEBA SUELTO/.test(await page.textContent("#tp-contenido")), "solo sus torneos");
   ok(pedidos.some((x) => x.tabla === "pub" && x.org === "eq." + VER), "los pide a la base por su id (no filtra la lista entera)");
+  igual("«Suscribirme a sus torneos» abre el calendario de ese organizador en la app",
+    await page.getAttribute("#tp-org-suscribir-abrir", "href"), "webcal://ajedrez-integral.com/calendario/torneos.ics?o=" + VER);
+  await page.evaluate(() => { window.__copiado = []; navigator.clipboard.writeText = async (t) => { window.__copiado.push(t); }; });
+  await page.click("#tp-org-suscribir-copiar");
+  await page.click("#tp-org-compartir");
+  igual("«Copiar la dirección» da la de https (la que pide Google Calendar) y compartir, la tarjeta /o/",
+    await page.evaluate(() => window.__copiado), ["https://ajedrez-integral.com/calendario/torneos.ics?o=" + VER, "https://ajedrez-integral.com/o/" + VER]);
   await page.goto(BASE + "/torneos-pareo.html#o=9999aaaa-0000-4000-8000-000000000009", { waitUntil: "networkidle" });
   await page.waitForFunction(() => /ya no está en la lista/.test(document.getElementById("tp-contenido").textContent));
   bien("un organizador oculto o que no existe lo dice");

@@ -6,10 +6,13 @@
 		"directory": "./",
 		"binding": "ASSETS",
 		// El worker corre ANTES que los archivos solo en estas carpetas: el
-		// candado del contenido de los cursos y el material, y /t/ (la tarjeta
-		// de un torneo de Pareo Integral para compartir; ver worker.js). Sin
+		// candado del contenido de los cursos y el material, /t/ y /o/ (la
+		// tarjeta de un torneo y la de un organizador de Pareo Integral para
+		// compartir) y el calendario de torneos para suscribirse
+		// (/calendario/torneos.ics) y la clasificación para incrustar en otra
+		// página (/incrustar/<id>; ver worker.js). Sin
 		// esta línea Cloudflare sirve el archivo directo (o un 404) y nada de
 		// eso existe, sin dar ningún error. Todo lo demás se sirve como siempre.
-		"run_worker_first": ["/cursos/protegido/*", "/cursos/recursos/*", "/material/*", "/t/*"]
+		"run_worker_first": ["/cursos/protegido/*", "/cursos/recursos/*", "/material/*", "/t/*", "/o/*", "/calendario/*", "/incrustar/*"]
 	}
 }
