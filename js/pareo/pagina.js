@@ -2883,8 +2883,12 @@
     });
     if (ultima || v.rondas[r].inicio) pintarReloj(caja, r);
     const cajaAdjunto = el("div", { id: "pi-adjunto-caja", class: "no-imprimir mb-4", hidden: true });
-    caja.append(cajaAdjunto);
+    // Las llamadas de los adjuntos y el chat con ellos.
+    const cajaLlamadas = el("section", { id: "pi-llamadas", class: "no-imprimir mb-4 rounded-xl border-2 border-accent-500 p-3", role: "region", "aria-labelledby": "pi-llamadas-titulo", hidden: true });
+    const cajaChat = el("section", { id: "pi-chat-adjuntos", class: "no-imprimir mb-4 rounded-xl border border-brand-200 dark:border-brand-700 p-3", hidden: true });
+    caja.append(cajaLlamadas, cajaAdjunto, cajaChat);
     if (ultima && (v.adjuntos || []).some((a) => a.activo)) { conectarAdjuntos(); mostrarAdjuntos(cajaAdjunto); }
+    if (ultima) { pintarLlamadas(); pintarChat(); }
     if (E.esDeEquipos(v)) pintarEncuentros(caja, r);
     else pintarMesasIndividuales(caja, r);
     pintarReimprimirMesa(caja, r);
@@ -2943,11 +2947,14 @@
     const v = t();
     const total = v.rondas[r].mesas.length;
     const res = await Avisos.formulario({ titulo: tx("adjuntoTitulo"), texto: tx("adjuntoTexto"), aceptar: tx("adjuntoCrear"), cancelar: tx("cancelar"),
-      campos: [{ nombre: "desde", etiqueta: tx("adjuntoDesde"), valor: "1", inputmode: "numeric" }, { nombre: "hasta", etiqueta: tx("adjuntoHasta"), valor: String(total), inputmode: "numeric" }] });
+      campos: [{ nombre: "arbitro", etiqueta: tx("adjuntoNombre"), valor: "", max: 60 },
+        { nombre: "desde", etiqueta: tx("adjuntoDesde"), valor: "1", inputmode: "numeric" }, { nombre: "hasta", etiqueta: tx("adjuntoHasta"), valor: String(total), inputmode: "numeric" }] });
     if (!res || t() !== v) return;
+    const arbitro = String(res.arbitro || "").trim().slice(0, 60);
+    if (!arbitro) { Avisos.avisar(tx("adjuntoFaltaNombre"), { tipo: "error" }); return; }
     const desde = Math.max(1, Math.round(Number(res.desde)) || 1), hasta = Math.min(total, Math.round(Number(res.hasta)) || total);
     if (desde > hasta) { Avisos.avisar(tx("adjuntoRango"), { tipo: "error" }); return; }
-    v.adjuntos = (v.adjuntos || []).concat({ codigo: nuevoCodigoVivo(), rango: desde + "-" + hasta, activo: true });
+    v.adjuntos = (v.adjuntos || []).concat({ codigo: nuevoCodigoVivo(), rango: desde + "-" + hasta, activo: true, nombre: arbitro });
     guardar();
     await conectarAdjuntos();
     pintarRondas();
@@ -2970,6 +2977,8 @@
       canal.on("broadcast", { event: "pedir" }, () => enviarAdjunto(a.codigo));
       canal.on("broadcast", { event: "resultado" }, (msg) => recibirDeAdjunto(a.codigo, msg.payload || {}));
       canal.on("broadcast", { event: "nota" }, (msg) => recibirNotaDeAdjunto(a.codigo, msg.payload || {}));
+      canal.on("broadcast", { event: "chat" }, (msg) => recibirChatDeAdjunto(a.codigo, msg.payload || {}));
+      canal.on("broadcast", { event: "llamada" }, (msg) => recibirLlamada(a.codigo, msg.payload || {}));
       canal.subscribe((st) => { if (st === "SUBSCRIBED") enviarAdjunto(a.codigo); });
       estado.adjuntos.canales.set(a.codigo, canal);
     }
@@ -3000,10 +3009,15 @@
     // sepa quién ya tiene una ilegal; y a quién puede anotarle una.
     const marcas = V.marcasIncidencias(R);
     const marcaPara = (id) => { const mm = id && marcas.get(id); return mm ? { t: V.textoMarca(mm), d: mm.items.map(textoIncidencia), pierde: mm.ilegales >= 2 } : null; };
+    const a = adjuntoActivo(v, codigo) || {};
     canal.send({ type: "broadcast", event: "estado", payload: {
       nombre: v.nombre || "", ronda: v.rondas.length,
+      // Quién es él, quién es el principal, su chat y sus llamadas.
+      arbitro: a.nombre || "", principal: v.arbitro || "",
+      chat: chatDe(v, codigo).slice(-30).map((x) => ({ hora: x.hora, de: x.de === "principal" ? "principal" : x.de === codigo ? "yo" : "otro", nombre: x.nombre, texto: x.texto })),
+      llamadas: (v.llamadas || []).filter((x) => x.codigo === codigo).slice(-5).map((x) => ({ hora: x.hora, mesa: x.mesa, atendida: x.atendida || null })),
       mesas: R.mesas.map((m, i) => {
-        const x = { m: i + 1, f: V.mesaFisica(v, i), b: nombre(m.b), n: m.n == null ? null : nombre(m.n), r: m.r || null,
+        const x = { m: i + 1, f: V.mesaFisica(v, i), b: nombre(m.b), n: m.n == null ? null : nombre(m.n), r: m.r || null, mia: !!m.r && m.adjunto === codigo,
           mb: marcaPara(m.b), mn: m.n == null ? null : marcaPara(m.n), quien: jugadoresDeMesa(v, m).map(([k, , etiqueta]) => ({ k, e: etiqueta })) };
         if (deEquipos && m.n != null) {
           // Sin tocar lo guardado: una copia con la alineación de entrada.
@@ -3038,17 +3052,112 @@
       m.r = E.resultadoEncuentro(v, m);
       texto = tx("adjuntoLlegoTablero", { m: mesa, t: k + 1, r: tx("corto_" + p.r) });
     } else {
-      if (m.r && m.r !== p.r) anotarDiscrepancia(v, R, { mesa, r: p.r, ya: m.r });
-      if (m.r) return rechazar();
+      // Corregir el que él mismo anotó (lo confirmó en su celular): sí, y
+      // queda la constancia en las incidencias. Lo que anotó otro, nunca se
+      // pisa: queda para que el principal lo confirme.
+      const suya = !!m.r && !!p.corrige && m.adjunto === codigo;
+      if (m.r && !suya) { if (m.r !== p.r) anotarDiscrepancia(v, R, { mesa, r: p.r, ya: m.r }); return rechazar(); }
+      if (suya && m.r === p.r) return rechazar();
+      const antes = m.r;
       m.r = p.r;
-      texto = tx("adjuntoLlego", { m: mesa, r: tx("corto_" + p.r) });
+      if (suya) anotarCorreccion(R, mesa - 1, antes, p.r, tx("correccionAdjunto", { n: a.nombre || "—" }));
+      texto = tx(suya ? "adjuntoCorrigio" : "adjuntoLlego", { m: mesa, r: tx("corto_" + p.r), n: a.nombre || "—" });
     }
-    m.porAdjunto = true;
+    m.porAdjunto = a.nombre || true;
+    m.adjunto = codigo;
     if (v === t()) { guardar(); if (estado.ficha === "rondas" && estado.ronda === v.rondas.length - 1) pintarRondas(); }
     else { avisarRetiros(v, retirosAuto(v)); escribir(PREFIJO + estado.adjuntos.idTorneo, JSON.stringify(v)); }
     Avisos.avisar(texto, { tipo: "info" });
     enviarAdjunto(codigo);
   }
+  // ---------- El chat con los adjuntos y sus llamadas ----------
+  // Los mensajes van con el torneo (`chat`, los últimos 300): a todos o a un
+  // adjunto, y de cada adjunto al principal. Llegan por el mismo canal del
+  // adjunto, con el estado (`enviarAdjunto`). Una llamada («Te necesitan en
+  // la mesa X») queda en `llamadas` hasta que el principal toca «Voy».
+  const chatDe = (v, codigo) => (v.chat || []).filter((x) => x.para === "todos" || x.para === codigo || x.de === codigo);
+  function guardarDelAdjunto(v) {
+    if (v === t()) guardar();
+    else { escribir(PREFIJO + estado.adjuntos.idTorneo, JSON.stringify(v)); enviarAdjuntos(); }
+  }
+  function agregarChat(v, x) { v.chat = (v.chat || []).concat(Object.assign({ hora: Date.now() }, x)).slice(-300); }
+  function recibirChatDeAdjunto(codigo, p) {
+    const v = torneoDelAdjunto();
+    const a = v && adjuntoActivo(v, codigo);
+    const texto = typeof p.texto === "string" ? p.texto.trim().slice(0, 300) : "";
+    if (!a || !texto) return;
+    agregarChat(v, { de: codigo, nombre: a.nombre || "", para: "principal", texto });
+    guardarDelAdjunto(v);
+    Avisos.avisar(tx("chatLlego", { n: a.nombre || a.rango, t: texto }), { tipo: "info" });
+    pintarChat();
+  }
+  function recibirLlamada(codigo, p) {
+    const v = torneoDelAdjunto();
+    const a = v && adjuntoActivo(v, codigo);
+    if (!a || !v.rondas.length) return;
+    const [desde, hasta] = a.rango.split("-").map(Number);
+    const mesa = Number(p.mesa);
+    if (!(mesa >= desde && mesa <= hasta)) return;
+    v.llamadas = (v.llamadas || []).concat({ id: nuevoId(), hora: Date.now(), codigo, nombre: a.nombre || "", mesa, ronda: v.rondas.length }).slice(-100);
+    guardarDelAdjunto(v);
+    Avisos.avisar(tx("llamadaLlego", { n: a.nombre || a.rango, m: V.mesaFisica(v, mesa - 1) }), { tipo: "error" });
+    pintarLlamadas();
+  }
+  // Las llamadas sin atender, arriba de la ronda, con «Voy» (que se lo dice
+  // al adjunto también por el chat).
+  function pintarLlamadas() {
+    const caja = $("pi-llamadas");
+    if (!caja) return;
+    const v = t();
+    const pendientes = (v.llamadas || []).filter((x) => !x.atendida);
+    caja.replaceChildren();
+    caja.hidden = !pendientes.length;
+    if (!pendientes.length) return;
+    caja.append(el("h3", { id: "pi-llamadas-titulo", class: "font-semibold" }, el("span", { "aria-hidden": "true", texto: "🔔 " }), tx("llamadasTitulo")),
+      el("ul", { class: "mt-2 space-y-2 text-sm" }, pendientes.map((x) => el("li", { class: "flex flex-wrap items-center gap-2", "data-llamada": x.id },
+        el("span", { class: "font-semibold", texto: tx("llamadaFila", { n: x.nombre || "—", m: V.mesaFisica(v, x.mesa - 1), h: horaCR(x.hora) }) }),
+        el("button", { type: "button", class: C.boton + " px-3 py-1", "data-voy": x.id, onclick: () => {
+          x.atendida = Date.now();
+          agregarChat(v, { de: "principal", nombre: v.arbitro || tx("principal"), para: x.codigo, texto: tx("voyMesa", { m: V.mesaFisica(v, x.mesa - 1) }) });
+          guardar();
+          pintarLlamadas();
+          pintarChat();
+        } }, tx("voy"))))));
+  }
+  // El chat del principal: a todos los adjuntos o a uno.
+  function pintarChat() {
+    const caja = $("pi-chat-adjuntos");
+    if (!caja) return;
+    const v = t();
+    const activos = (v.adjuntos || []).filter((a) => a.activo);
+    caja.hidden = !activos.length;
+    if (!activos.length) { caja.replaceChildren(); return; }
+    const nombreDe = (c) => ((v.adjuntos || []).find((a) => a.codigo === c) || {}).nombre || c;
+    const lista = el("ol", { id: "pi-chat-lista", class: "mt-2 space-y-1 text-sm max-h-64 overflow-y-auto", "aria-live": "polite" },
+      (v.chat || []).slice(-50).map((x) => el("li", { class: x.de === "principal" ? "pi-chat-mio" : "" },
+        el("span", { class: "text-xs " + C.nota, texto: horaCR(x.hora) + " · " }),
+        el("span", { class: "font-semibold", texto: (x.de === "principal" ? tx("chatYo") + (x.para === "todos" ? " → " + tx("chatTodos") : " → " + nombreDe(x.para)) : x.nombre || nombreDe(x.de)) + ": " }),
+        el("span", { texto: x.texto }))));
+    const para = el("select", { id: "pi-chat-para", class: C.campoChico, "aria-label": tx("chatPara") },
+      el("option", { value: "todos", texto: tx("chatTodos") }), activos.map((a) => el("option", { value: a.codigo, texto: a.nombre || a.rango })));
+    if (caja.__para) para.value = caja.__para;
+    para.addEventListener("change", () => { caja.__para = para.value; });
+    const texto = el("input", { id: "pi-chat-texto", type: "text", maxlength: "300", autocomplete: "off", class: C.campo, "aria-label": tx("chatEscribe") });
+    const mandar = el("button", { type: "submit", id: "pi-chat-mandar", class: C.botonSec }, tx("chatMandar"));
+    const form = el("form", { class: "mt-2 flex flex-wrap items-center gap-2" }, para, texto, mandar);
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const t2 = texto.value.trim().slice(0, 300);
+      if (!t2) return;
+      agregarChat(v, { de: "principal", nombre: v.arbitro || tx("principal"), para: para.value, texto: t2 });
+      guardar();
+      pintarChat();
+      const x = $("pi-chat-texto"); if (x) x.focus();
+    });
+    caja.replaceChildren(el("h3", { class: "font-semibold" }, tx("chatTitulo")), lista, form);
+    lista.scrollTop = lista.scrollHeight;
+  }
+
   // Una nota de un adjunto para el informe: va a las incidencias de la
   // última ronda, con su nombre y, si la dice, la mesa (de su rango).
   function recibirNotaDeAdjunto(codigo, p) {
@@ -3223,7 +3332,7 @@
         Avisos.avisar(tx("adjuntoApagado", { r: a.rango }));
       });
       lista.append(el("div", { class: "rounded-xl border border-brand-200 dark:border-brand-700 p-3", "data-adjunto": a.codigo },
-        el("h4", { class: "font-semibold", texto: tx("adjuntoListo", { r: a.rango }) }),
+        el("h4", { class: "font-semibold", texto: (a.nombre ? a.nombre + " · " : "") + tx("adjuntoListo", { r: a.rango }) }),
         el("div", { class: "w-32 bg-white p-2 rounded-lg mt-2" }, PareoQr.svg(url, tx("qrEtiqueta"))),
         el("p", { class: "pi-adjunto-url text-xs break-all mt-2 font-mono", texto: url }),
         el("div", { class: "flex flex-wrap gap-2 mt-1" }, copiar, apagar)));
@@ -3571,6 +3680,13 @@
     Avisos.avisar(tx("relojAnotado", { n: nombreDe(id) }));
   }
 
+  // ¿Cambiar un resultado que ya estaba anotado? (la ronda en juego).
+  function confirmarCambio(r, i, antes, despues, tablero) {
+    const corto = (x) => (x ? tx("corto_" + x) : tx("resSin"));
+    return Avisos.confirmar(tx("cambiarResultadoConfirma", { m: V.mesaFisica(t(), i), a: corto(antes), d: corto(despues) }) + (tablero ? " (" + tx("tableroN", { t: tablero }) + ")" : ""),
+      { aceptar: tx("cambiarResultadoSi"), cancelar: tx("cambiarResultadoNo") });
+  }
+
   // El motivo de una corrección (null si se cancela).
   async function pedirMotivo(r, i, antes, despues, tablero) {
     const corto = (x) => (x ? tx("corto_" + x) : tx("resSin"));
@@ -3710,6 +3826,11 @@
           const motivo = await pedirMotivo(r, i, m.r, sel.value || null);
           if (!motivo) { sel.value = m.r || ""; return; }
           anotarCorreccion(R, i, m.r, sel.value || null, motivo);
+        } else if (m.r && sel.value !== m.r) {
+          // En la ronda en juego: cambiar un resultado ya anotado (por un
+          // error al tocar) pide confirmarlo, y queda la constancia.
+          if (!(await confirmarCambio(r, i, m.r, sel.value || null))) { sel.value = m.r || ""; return; }
+          anotarCorreccion(R, i, m.r, sel.value || null, tx("correccionPrincipal"));
         }
         m.r = sel.value || null;
         guardar();
@@ -3729,7 +3850,7 @@
         el("td", { class: "num", texto: V.mesaFisica(v, i) }), el("td", { class: "num", texto: num.get(m.b) }),
         el("td", { class: "font-semibold" }, nombreDe(m.b), mb ? " " : null, mb), el("td", { class: "num", texto: puntosTexto(antes(m.b)) }),
         el("td", { class: "text-center" }, sel, el("span", { class: "pi-solo-imprimir", texto: m.r ? tx("corto_" + m.r) : "" }),
-          m.porAdjunto ? el("span", { class: "block text-xs " + C.nota, texto: tx("adjuntoAnoto") }) : null,
+          m.porAdjunto ? el("span", { class: "block text-xs " + C.nota, texto: typeof m.porAdjunto === "string" ? tx("adjuntoAnotoNombre", { n: m.porAdjunto }) : tx("adjuntoAnoto") }) : null,
           el("button", { type: "button", class: C.mini + " no-imprimir block mx-auto mt-1", "data-pgn": String(i), "aria-label": tx("pgnBotonA", { m: V.mesaFisica(v, i) }),
             onclick: (e) => editarPartida(r, i, e.currentTarget) }, (m.pgn ? "✓ " : "") + tx("pgnBoton"))),
         el("td", { class: "num", texto: puntosTexto(antes(m.n)) }), el("td", { class: "font-semibold" }, nombreDe(m.n), mn ? " " : null, mn),
@@ -3877,6 +3998,10 @@
               const motivo = await pedirMotivo(r, i, antes, sel.value || null, x.k + 1);
               if (!motivo) { sel.value = antes || ""; return; }
               anotarCorreccion(R, i, antes, sel.value || null, motivo, x.k + 1);
+            } else if (antes && sel.value !== antes) {
+              // En la ronda en juego: cambiar uno ya anotado pide confirmarlo y queda la constancia.
+              if (!(await confirmarCambio(r, i, antes, sel.value || null, x.k + 1))) { sel.value = antes || ""; return; }
+              anotarCorreccion(R, i, antes, sel.value || null, tx("correccionPrincipal"), x.k + 1);
             }
             m.partidas[x.k].r = sel.value || null;
             alCambiarEncuentro(m, id);

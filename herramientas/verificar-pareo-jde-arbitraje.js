@@ -155,6 +155,7 @@ async function pruebaPagina(browser) {
   console.log("\n=== El árbitro adjunto anota desde el celular ===");
   await page.click("#pi-adjunto");
   await page.waitForSelector(dialogo);
+  await page.fill(dialogo + ' [name="arbitro"]', "PRUEBA ADJUNTA");
   await page.fill(dialogo + ' [name="desde"]', "1");
   await page.fill(dialogo + ' [name="hasta"]', "2");
   await page.click(dialogo + " [data-avisos-aceptar]");

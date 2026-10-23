@@ -3385,6 +3385,36 @@ Al tocar esto, `node herramientas/verificar-pareo-sala-evento.js`. Rompiendo a
 propósito la mesa física, la casilla de consentimiento, el llamado, el fin de
 la ronda o el aceptar, salta.
 
+### Pareo Integral: los adjuntos con nombre, el chat, las llamadas y corregir con constancia
+
+Lo pidió el dueño del sitio (con una captura del formulario del enlace).
+
+- **El nombre del adjunto.** El enlace no se crea sin él (`a.nombre`). Sale
+  en su tarjeta, arriba de su celular («Árbitro adjunto: …», con el
+  principal) y en cada resultado que anotó («lo anotó …»: `m.porAdjunto`
+  guarda el nombre y `m.adjunto` su código).
+- **Corregir, con confirmación y constancia.**
+  - El principal: cambiar en la ronda en juego un resultado ya anotado
+    pregunta «¿Cambiar el resultado de la mesa 3 de 1-0 a 0-1?» («Sí,
+    cambiarlo» / «Dejarlo como estaba»), y el cambio queda en las
+    incidencias (tipo «correccion», que van al informe). En una ronda ya
+    cerrada sigue como antes: pide el motivo.
+  - El adjunto: desde su celular puede corregir **solo lo que anotó él**
+    («Corregir», elegir el nuevo y confirmarlo); queda la constancia con su
+    nombre. Lo que anotó otro (o el principal) sigue sin pisarse: queda como
+    discrepancia para que el principal decida. En equipos, por tablero, solo
+    corrige el principal.
+- **El chat.** Del principal a todos los adjuntos o a uno, y de cada adjunto
+  al principal (`t.chat`, los últimos 300, con la hora). Viaja por el mismo
+  canal del adjunto, con su estado: cada adjunto ve lo que es para todos,
+  para él y lo suyo.
+- **«Necesito al principal en esta mesa».** El adjunto elige la mesa (de su
+  rango) y avisa; al principal le sale un aviso y, arriba de la ronda, «Te
+  necesitan en una mesa» con «Voy», que la marca atendida y se lo dice al
+  adjunto por el chat («Voy para la mesa 2»). Su celular dice si ya va.
+
+Lo comprueba `verificar-pareo-adjuntos.js`.
+
 ### Torneos en Pareo Integral: todo torneo se publica solo
 
 Lo decidió el dueño del sitio: «que se vean todos los torneos que hagan

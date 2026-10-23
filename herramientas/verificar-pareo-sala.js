@@ -142,6 +142,7 @@ async function pruebaPagina(browser) {
   // Un adjunto manda otro resultado para la mesa 2.
   await page.click("#pi-adjunto");
   await page.waitForSelector(dialogo);
+  await page.fill(dialogo + ' [name="arbitro"]', "PRUEBA ADJUNTA");
   await page.click(dialogo + " [data-avisos-aceptar]");
   await page.waitForSelector(".pi-adjunto-url");
   const codigoAdj = (await page.textContent(".pi-adjunto-url")).split("#adjunto=")[1].split("&")[0];

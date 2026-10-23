@@ -841,6 +841,81 @@ window.PareoVer = (function () {
       });
       return el("div", {}, rapidos, sel, estadoMesa);
     };
+    // Corregir un resultado que anotó él: elegir el nuevo y confirmarlo.
+    const corregir = (d, m) => {
+      const caja = el("div", { class: "mt-2", "data-corregir": String(m.m) });
+      const abrir = el("button", { type: "button", class: "border border-brand-300 dark:border-brand-600 font-semibold px-3 py-1 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400", "aria-label": tx("adjuntoCorregirA", { m: m.f || m.m }) }, tx("adjuntoCorregir"));
+      abrir.addEventListener("click", () => {
+        const sel = el("select", { class: "rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-800 px-3 py-2 text-base", "aria-label": tx("adjuntoCorregirA", { m: m.f || m.m }) },
+          el("option", { value: "" }, tx("resSin")), Object.entries(RESULTADOS).filter(([v]) => v !== m.r).map(([v, k]) => el("option", { value: v }, tx(k))));
+        const pregunta = el("p", { class: "text-sm font-semibold mt-2", role: "status" });
+        const si = el("button", { type: "button", class: "mt-2 bg-brand-800 hover:bg-brand-900 dark:bg-brand-700 text-white font-semibold px-3 py-1 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400", disabled: true }, tx("cambiarResultadoSi"));
+        const no = el("button", { type: "button", class: "mt-2 ml-2 border border-brand-300 dark:border-brand-600 font-semibold px-3 py-1 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400" }, tx("cambiarResultadoNo"));
+        sel.addEventListener("change", () => {
+          si.disabled = !sel.value;
+          pregunta.textContent = sel.value ? tx("cambiarResultadoConfirma", { m: m.f || m.m, a: tx("corto_" + m.r), d: tx("corto_" + sel.value) }) : "";
+        });
+        si.addEventListener("click", () => {
+          if (!sel.value) return;
+          si.disabled = true;
+          pregunta.textContent = tx("adjuntoEnviando");
+          canal.send({ type: "broadcast", event: "resultado", payload: { ronda: d.ronda, mesa: m.m, r: sel.value, corrige: true } });
+        });
+        no.addEventListener("click", () => caja.replaceChildren(abrir));
+        caja.replaceChildren(sel, pregunta, el("div", {}, si, no));
+        sel.focus();
+      });
+      caja.append(abrir);
+      return caja;
+    };
+
+    // El chat con el principal y «Necesito al principal en la mesa…»: se
+    // arman una vez (lo escrito no se pierde al llegar un resultado) y se
+    // ponen al día con cada estado.
+    let cajaHablar = null;
+    function hablar(d, mesas) {
+      if (!cajaHablar) {
+        const mesaLlamar = el("select", { id: "pi-adj-llamar-mesa", class: "rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-800 px-3 py-2 text-base", "aria-label": tx("mesa") });
+        const llamar = el("button", { type: "button", id: "pi-adj-llamar", class: "bg-accent-500 hover:bg-accent-600 text-brand-900 font-bold px-4 py-2 rounded-lg text-base focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-800" }, tx("adjuntoLlamar"));
+        const estadoLlamada = el("p", { id: "pi-adj-llamar-estado", class: "text-sm mt-1", role: "status" });
+        llamar.addEventListener("click", () => {
+          if (!mesaLlamar.value) return;
+          canal.send({ type: "broadcast", event: "llamada", payload: { mesa: Number(mesaLlamar.value) } });
+          estadoLlamada.textContent = tx("adjuntoEnviando");
+        });
+        const lista = el("ol", { id: "pi-adj-chat-lista", class: "mt-2 space-y-1 text-sm max-h-64 overflow-y-auto", "aria-live": "polite" });
+        const texto = el("input", { id: "pi-adj-chat-texto", type: "text", maxlength: "300", autocomplete: "off", class: "flex-1 min-w-0 rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-800 px-3 py-2 text-base", "aria-label": tx("adjuntoChatEscribe") });
+        const mandar = el("button", { type: "submit", id: "pi-adj-chat-mandar", class: "border border-brand-300 dark:border-brand-600 font-semibold px-4 py-2 rounded-lg text-base focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400" }, tx("chatMandar"));
+        const form = el("form", { class: "mt-2 flex gap-2" }, texto, mandar);
+        form.addEventListener("submit", (e) => {
+          e.preventDefault();
+          const t = texto.value.trim().slice(0, 300);
+          if (!t) return;
+          canal.send({ type: "broadcast", event: "chat", payload: { texto: t } });
+          texto.value = "";
+        });
+        cajaHablar = el("div", {},
+          el("section", { class: "mt-6 rounded-xl border-2 border-accent-500 p-3", "aria-labelledby": "pi-adj-llamar-t" },
+            el("h2", { id: "pi-adj-llamar-t", class: "font-semibold" }, tx("adjuntoLlamarTitulo")),
+            el("div", { class: "mt-2 flex flex-wrap gap-2" }, mesaLlamar, llamar), estadoLlamada),
+          el("section", { class: "mt-6 rounded-xl border border-brand-200 dark:border-brand-700 p-3", "aria-labelledby": "pi-adj-chat-t" },
+            el("h2", { id: "pi-adj-chat-t", class: "font-semibold" }, tx("adjuntoChatTitulo")), lista, form));
+        cajaHablar.__poner = (d2, mesas2) => {
+          const antes = mesaLlamar.value;
+          mesaLlamar.replaceChildren(...mesas2.map((m) => el("option", { value: String(m.m) }, tx("mesa") + " " + (m.f || m.m))));
+          if ([...mesaLlamar.options].some((o) => o.value === antes)) mesaLlamar.value = antes;
+          const ultima = (d2.llamadas || []).slice(-1)[0];
+          estadoLlamada.textContent = !ultima ? "" : ultima.atendida ? tx("adjuntoLlamadaAtendida", { m: ultima.mesa }) : tx("adjuntoLlamadaAvisada", { m: ultima.mesa, h: horaCorta(ultima.hora) });
+          lista.replaceChildren(...(d2.chat || []).map((x) => el("li", {},
+            el("span", { class: "text-xs text-brand-600 dark:text-brand-300" }, horaCorta(x.hora) + " · "),
+            el("span", { class: "font-semibold" }, (x.de === "yo" ? tx("chatYo") : x.nombre || tx("principal")) + ": "), x.texto)));
+          lista.scrollTop = lista.scrollHeight;
+        };
+      }
+      cajaHablar.__poner(d, mesas);
+      return cajaHablar;
+    }
+
     // Una ronda nueva: el celular vibra (si deja) y lo dice arriba hasta que
     // el adjunto toque «Listo», para que no tenga que estar mirándolo.
     let rondaVista = null;
@@ -885,7 +960,15 @@ window.PareoVer = (function () {
           lista.append(li);
           continue;
         }
-        if (m.r) { enviadas.delete(m.m); li.append(el("p", { class: "text-sm mt-1" }, tx("adjuntoAnotada", { r: tx("corto_" + m.r) }))); lista.append(li); continue; }
+        if (m.r) {
+          enviadas.delete(m.m);
+          li.append(el("p", { class: "text-sm mt-1" }, tx("adjuntoAnotada", { r: tx("corto_" + m.r) })));
+          // Lo que anotó él mismo lo puede corregir, confirmándolo; queda la
+          // constancia en la computadora del principal.
+          if (m.mia) li.append(corregir(d, m));
+          lista.append(li);
+          continue;
+        }
         li.append(selector(d, m.m, null, m.m, tx("resultadoMesa", { m: m.f || m.m, b: m.b, n: m.n })));
         lista.append(li);
       }
@@ -905,10 +988,12 @@ window.PareoVer = (function () {
       }
       cont.replaceChildren(
         el("h1", { class: "font-serif text-2xl font-bold mb-1" }, d.nombre || "Pareo Integral"),
+        d.arbitro ? el("p", { id: "pi-adj-quien", class: "text-sm font-semibold mb-1" }, tx("adjuntoQuien", { n: d.arbitro }) + (d.principal ? " · " + tx("adjuntoPrincipal", { n: d.principal }) : "")) : null,
         ...[aviso].filter(Boolean),
         el("p", { class: "text-sm text-brand-600 dark:text-brand-300 mb-2" }, tx("adjuntoLeyenda", { r: d.ronda, a: desde, b: Math.min(hasta, (d.mesas || []).length) })),
         grande,
         mesas.length ? lista : el("p", { class: "text-sm" }, tx("adjuntoSinMesas")),
+        hablar(d, mesas),
         notaInforme(d, mesas));
     });
     canal.on("broadcast", { event: "notaRecibida" }, () => {
