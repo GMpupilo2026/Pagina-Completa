@@ -7783,8 +7783,9 @@ Es una página estática, sin cuenta y sin base: nada se guarda.
 - **«Contacta a la organización»** lleva a `#contacto`: la árbitra principal,
   la organizadora y el árbitro de pareo, cada uno con su cargo, su teléfono y su
   WhatsApp. Los nombres completos salen del Comité organizador de las bases; los
-  teléfonos, del dueño. Sin foto todavía, el círculo lleva las iniciales
-  (`data-foto`): no se pone una cara que no sea la de la persona.
+  teléfonos y las fotos, del dueño (`img/centroamericano-2026/`, recortadas a
+  la cara, 240 × 240). Quien no tiene foto todavía lleva sus iniciales en el
+  círculo (`data-foto`): no se pone una cara que no sea la de la persona.
 - **Una ficha sin enlace todavía dice «Pronto»** (hoy, la transmisión de las
   partidas; el bye ya tiene su formulario): sin `href`, con `tabindex="0"` y
   `aria-disabled="true"`, como toda tarjeta apagada del sitio. Cuando llegue el

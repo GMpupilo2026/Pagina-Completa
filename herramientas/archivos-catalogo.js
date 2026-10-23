@@ -87,6 +87,8 @@ const TITULOS = {
   "documentos/jdn/consentimiento-jdn-2027.docx": "Consentimiento informado JDN 2027 — atleta",
   "documentos/jdn/consentimiento-entrenador-jdn-2027.docx": "Consentimiento informado JDN 2027 — entrenador",
   "img/fca-logo.png": "Logo de la Federación Costarricense de Ajedrez (de las bases del Centroamericano 2026)",
+  "img/centroamericano-2026/carolina-munoz.jpg": "Centroamericano 2026: foto de Carolina Muñoz, árbitra principal",
+  "img/centroamericano-2026/vivian-viquez.jpg": "Centroamericano 2026: foto de Vivian Víquez Miranda, organizadora",
   "img/favicon.svg": "Ícono de la pestaña (favicon)",
   "img/logo-completo-claro.png": "Logo completo, para fondo claro",
   "img/logo-completo-oscuro.png": "Logo completo, para fondo oscuro",

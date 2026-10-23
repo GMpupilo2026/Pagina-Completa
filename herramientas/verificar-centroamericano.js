@@ -69,6 +69,8 @@ for (const [, id, cuerpo] of dialogos) {
 ok("no queda información desplegada fuera de las fichas", !/<section id="(contacto|reglamento|calendario|hoteles)"/.test(html));
 const personas = [...contacto.matchAll(/<h3[^>]*>([^<]+)<\/h3>\s*<p[^>]*>([^<]+)<\/p>/g)].map((m) => m[1] + " — " + m[2]);
 ok("Contacta a la organización: árbitra principal, organizadora y árbitro de pareo", JSON.stringify(personas) === JSON.stringify(["Carolina Muñoz — Árbitra principal", "Vivian Víquez Miranda — Organizadora", "Jean Quesada — Árbitro de pareo"]), JSON.stringify(personas));
+const fotos = [...contacto.matchAll(/<img src="([^"]+)"[^>]*alt="Foto de ([^"]+)"/g)];
+ok("las fotos de Carolina y Vivian están en el sitio", fotos.length >= 2 && fotos.every(([, src]) => fs.existsSync(path.join(RAIZ, src))), fotos.map((f) => f[1]).join(", "));
 ok("cada contacto con su teléfono y su WhatsApp", (contacto.match(/href="tel:/g) || []).length === 3 && (contacto.match(/href="https:\/\/wa\.me\/506\d{8}"/g) || []).length === 3);
 ok("la reserva con la organización está avisada", /penalidad de 200 USD/.test(html));
 
@@ -105,6 +107,11 @@ ok("la página carga js/ventana-enlace.js", html.includes('<script src="js/venta
       if (!alcanzada) await p.keyboard.press("Tab");
     }
     ok("una ficha apagada se alcanza con Tab", alcanzada);
+
+    await p.click('#fichas a[href="#contacto"]');
+    await p.waitForFunction(() => [...document.querySelectorAll("#contacto img")].every((i) => i.complete));
+    ok("las fotos de los contactos cargan", await p.$$eval("#contacto img", (is) => is.length >= 2 && is.every((i) => i.naturalWidth > 0 && i.checkVisibility())));
+    await p.keyboard.press("Escape");
 
     // Los hoteles no se ven hasta tocar su ficha, y se abren encima.
     ok("los hoteles no se ven al entrar", !(await p.evaluate(() => document.getElementById("hoteles").checkVisibility())));

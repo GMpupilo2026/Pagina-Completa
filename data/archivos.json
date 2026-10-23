@@ -19075,7 +19075,7 @@
   ]
  },
  "imagenes": {
-  "total": 858,
+  "total": 860,
   "grupos": [
    {
     "carpeta": "entreno/img/facil",
@@ -24334,6 +24334,25 @@
       "titulo": "10",
       "tipo": "otro",
       "kb": 47
+     }
+    ]
+   },
+   {
+    "carpeta": "img/centroamericano-2026",
+    "titulo": "Centroamericano 2026",
+    "grupo": "Carpetas",
+    "archivos": [
+     {
+      "ruta": "img/centroamericano-2026/carolina-munoz.jpg",
+      "titulo": "Centroamericano 2026: foto de Carolina Muñoz, árbitra principal",
+      "tipo": "otro",
+      "kb": 10
+     },
+     {
+      "ruta": "img/centroamericano-2026/vivian-viquez.jpg",
+      "titulo": "Centroamericano 2026: foto de Vivian Víquez Miranda, organizadora",
+      "tipo": "otro",
+      "kb": 10
      }
     ]
    }
