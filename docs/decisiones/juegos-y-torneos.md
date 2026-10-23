@@ -3821,6 +3821,179 @@ Al aplicarlo se disparó una vez a mano (`select
 public.disparar_torneos_externos()`): leyó los 5 torneos que había allá el
 23/10/2026, con sus datos iguales a los de sus fichas.
 
+### Torneos en Pareo Integral: los torneos de chess-results
+
+El dueño pidió que «También en Costa Rica» trajera además los torneos de
+Costa Rica que ya están cargados en chess-results, como hace
+ajedrezcostarica.com. Muchos torneos se cargan allá antes de jugarse y no se
+anuncian en ningún otro lado.
+
+- **Quién los lee.** La misma Edge Function `torneos-externos`, en la misma
+  pasada diaria. Hace una búsqueda en el buscador de chess-results
+  (`TurnierSuche.aspx`): Costa Rica, los 250 tocados más recientemente.
+  - Es la misma lectura que `herramientas/ajedrez-estudiantil-actualizar.py`
+    (el formulario ASP.NET con sus campos ocultos, mandado al MISMO servidor
+    s1, s2… que lo dio, con sus cookies) y la misma tabla `CRs2` leída por el
+    **nombre** de cada columna. El lector está en
+    `torneos-externos/chessresults.ts`, sin red, para probarlo con Node.
+  - Las redirecciones se siguen a mano (`redirect: "manual"`): si fetch las
+    sigue solo, se pierden las cookies que pone cada salto y el formulario
+    no busca nada.
+  - Desde `net.http_get` de la base chess-results contesta 400 (no parece un
+    navegador); desde Deno, con el agente de un navegador, contesta bien.
+    Por eso se probó desplegando la función, no desde SQL.
+- **Qué se guarda.** Solo los que empiezan de hoy en adelante (el día en
+  Costa Rica), y de cada uno lo que el buscador ya muestra a cualquiera:
+  nombre, día, lugar, quién organiza, rondas e inscritos. Va en la misma
+  tabla, con `fuente = 'chess-results'`.
+  - El buscador corta el nombre a 50 letras: de esos se lee el completo en
+    la página del torneo (`<h2>`), como mucho 20 por pasada y con medio
+    segundo entre una y otra.
+  - El día va como la medianoche de Costa Rica (06:00 UTC) y sin final: el
+    buscador no dice horas ni cuántos días dura.
+  - El ritmo sale del nombre solo si lo dice («Blitz», «Rápido», «Clásico»);
+    si no, queda vacío, nunca adivinado. La provincia la deduce la lista
+    del lugar, con `pareo_provincia()`.
+  - La dirección es siempre la pública, `https://chess-results.com/tnr<n>.aspx?lan=2`,
+    y la base no acepta otra (el check de `url` la arma con el mismo número).
+- **Cada fuente va por su lado.** Si una no contesta o cambió de forma (la
+  tabla sin alguna de sus columnas da null, no una lista vacía), sus filas se
+  quedan como estaban y la otra se pone al día igual. Lo de una fuente que
+  ese día falló no se borra por llevar una semana sin verse: se borraría
+  todo por un mal día de chess-results.
+- **Sin repetir.** `torneos_externos_lista()` no da un torneo de
+  chess-results que ajedrezcostarica.com ya anuncia: su ficha enlaza a ese
+  mismo `tnr<n>`, o es el mismo día con un nombre parecido
+  (`pareo_parecidos`). Gana el anuncio de allá porque dice más
+  (inscripción, costo, ritmo). Contra Pareo Integral vale lo de siempre:
+  `repetido_de`.
+- **Cómo se muestran.** En la misma lista, ordenados por día, con «En
+  chess-results» o «En ajedrezcostarica.com» debajo de cada nombre (y para
+  el lector de pantalla, qué página abre).
+  - chess-results no dice si la inscripción está abierta, así que esos
+    torneos **nunca dicen «Cerrada»**: en su lugar va cuántos inscritos
+    lleva, y con el filtro «Inscripción abierta» no salen (no se sabe).
+  - Al calendario van con su propio UID (`chess-results-<n>@…`), en la
+    portada y en `/calendario/torneos.ics`; el worker acepta solo las
+    direcciones de las dos fuentes.
+- **Por qué no va en `privacidad.html`.** Como con ajedrezcostarica.com: no
+  se le manda nada a chess-results, solo se lee lo que el buscador publica
+  de un torneo.
+
+Lo comprueban `verificar-torneos-externos.js` (el lector y la función),
+`verificar-torneos-externos-pagina.js` (la portada) y `verificar-worker.js`
+(el calendario). Al aplicarlo se disparó a mano: leyó 249 torneos de Costa
+Rica y guardó los 2 que empezaban el 24/10/2026, que ajedrezcostarica.com no
+anunciaba.
+
+### Torneos en Pareo Integral: buscar a un jugador, el medallero, las aperturas y las cifras
+
+Cinco cosas que el dueño pidió juntas, todas armadas con lo que ya está
+publicado. Las cuentas las hace la base
+(`20261023213000_pareo_buscar_medallero_cifras.sql`): la portada no se baja
+todos los torneos para sumar en el navegador.
+
+- **Buscar a un jugador desde la portada** («Buscar un jugador», al lado de
+  «Buscar un torneo»; `pareo_buscar_jugador()`).
+  - Cada palabra escrita tiene que estar al comienzo de una palabra del
+    nombre, sin tildes ni mayúsculas: «jose mora» encuentra a «José Pablo
+    Mora Solís». Lo escrito viaja tal cual y la base lo limpia
+    (`pareo_clave`).
+  - Una fila por persona (`pareo_resultados()`: la huella del ID FIDE o, si
+    no hay, el nombre), con su colegio, sus torneos, sus podios y el último,
+    escritos. Cada una lleva a SU ficha, con su huella.
+  - Dos personas distintas con el mismo nombre (distinto ID FIDE) se avisan
+    y salen por separado: nunca se juntan.
+  - Con menos de tres letras no se pregunta nada (tampoco la base busca). Lo
+    que se escribe rápido manda varias preguntas: una respuesta vieja no pisa
+    a la de lo último que se escribió.
+- **El medallero de colegios y clubes** (Ranking del año → «Colegios y
+  clubes», `#ranking=colegios`; `pareo_medallero()`). Oro, plata y bronce
+  son el 1.°, el 2.° y el 3.° de cada torneo individual, contados por la
+  institución que el jugador llevaba en ESE torneo (un colegio que cambia de
+  nombre no se lleva las medallas viejas del otro). El colegio es su nombre
+  sin tildes ni mayúsculas y se muestra como más veces lo escribieron
+  (`mode()`). Las medallas van escritas en el encabezado («Oros (1.°)»…):
+  el color nunca dice nada solo.
+- **Las aperturas** (`js/pareo/aperturas.js`), en tres lugares: la pestaña
+  Estadísticas de cada torneo, la ficha del jugador (con blancas y con
+  negras, desde SU lado: «Ganó», «Perdió») y el año (Ranking del año →
+  «Aperturas», `pareo_partidas_del_anio()`).
+  - **La apertura sale de las jugadas, nunca del encabezado del PGN**: se
+    busca la secuencia más larga de una lista de unas cien, con nombres de
+    acá. Lo que no está queda en su familia (lo más largo que sí está) o en
+    «Otras aperturas». Se lee con `PareoPartida`, así que valen las letras
+    en español y un PGN cortado.
+  - **Cada secuencia de la lista se comprueba con chess.js**
+    (`verificar-pareo-aperturas.js`): una mal escrita no reconocería a nadie
+    y no daría ningún error.
+  - Del año, la base da solo el comienzo de cada partida (400 caracteres, sin
+    encabezados ni comentarios), el resultado y nada de nombres, con tope de
+    5000.
+- **Las rachas y cómo viene** (en la ficha del jugador, calculado en la
+  página con sus torneos): la mejor racha sin perder, la de victorias, la de
+  ahora, su mejor torneo (el de mejor rendimiento o, sin rendimiento, el de
+  mejor puesto contado sobre cuántos jugaron) y la tendencia (el rendimiento
+  medio de sus 3 últimos torneos contra los 3 de antes, con 4 o más). Las
+  partidas van en orden de fecha y solo cuentan las jugadas (1, ½, 0): un
+  bye o una partida ganada sin jugar no son racha. Todo con números
+  escritos.
+- **Compartir como imagen**: el ranking, el medallero, las aperturas del año
+  y la ficha del jugador se bajan como PNG (horizontal o para el celular)
+  con `js/tabla-imagen.js`, **que ahora lleva la marca de agua de Ajedrez
+  Integral** (tenue y al centro) en todas sus imágenes, también las de los
+  resultados JDN y universitarios.
+- **Las cifras para quien administra** (`admin-pareo.html`, «Cómo va Torneos
+  en Pareo Integral»; `pareo_cifras()`): torneos por mes de los últimos 12,
+  organizaciones activas (90 días), jugadores distintos, suscripciones por
+  correo y aparatos con avisos, avisos de los últimos 30 días, reportes y
+  sellos pendientes y los torneos de afuera por fuente. Es `security
+  definer` (lee tablas que nadie de afuera lee) con
+  `coalesce(soy_admin(), false)` y sin `execute` para `anon`: solo números,
+  nunca un correo.
+
+Lo comprueban `verificar-pareo-aperturas.js` (sin navegador) y
+`verificar-pareo-buscar-medallero.js` (la portada, la ficha, el ranking, la
+imagen y las cifras).
+
+### Torneos en Pareo Integral: los avisos en el celular
+
+Los mismos avisos que por correo (su mesa en cada ronda y cómo terminó), como
+notificación en el aparato: «Avisarme en este celular», al lado de «Avisarme
+por correo» en la ficha del jugador y en su fila de un torneo.
+
+- **Sin cuenta y sin correo.** Se guarda lo que el navegador le da al sitio
+  para avisarle a ESE aparato (el endpoint y sus dos llaves) y a quién sigue
+  (su nombre sin tildes ni mayúsculas, o la huella de su ID FIDE), en
+  `pareo_suscripciones_push`. Ningún nombre de persona, ningún correo.
+- **Sin confirmación por correo**: el permiso lo da la persona en su propio
+  navegador, y nadie puede suscribir el aparato de otro. Al suscribirse sale
+  un primer aviso, «Listo: sigues a…», que además comprueba que llega: si el
+  servicio dice que esa dirección no existe, la suscripción no se queda.
+- **El permiso se pide solo al tocar el botón**: el navegador deja preguntar
+  una vez, y preguntar al abrir la página es la forma más rápida de que digan
+  que no para siempre (lo mismo que `js/notificaciones.js` en la Academia).
+- **La misma maquinaria que los avisos de la Academia**: las llaves VAPID
+  son las del sitio (las genera y guarda `notificar`) y `webpush.ts` pasó a
+  `_compartido/`, copiado por `funciones-armar.js` a `notificar` y a
+  `pareo-publicar`. Lo desplegado de `notificar` no cambió: es el mismo
+  archivo.
+- **La función solo le manda a los servicios de avisos de los navegadores**
+  (Google, Mozilla, Apple, Microsoft): un endpoint de otra dirección no se
+  acepta, para que nadie la use para mandarle pedidos a cualquier servidor.
+- **Cada aviso sale una vez**: se anota antes de mandarlo en
+  `pareo_avisos_push_enviados` (su clave única), como el correo. Un aparato
+  que el servicio ya no reconoce (404, 410) se borra solo. Como mucho 20
+  jugadores por aparato.
+- **La baja**: el mismo botón («Avisos en este celular: encendidos») manda
+  `seguir_push_baja` con la suscripción del navegador; el endpoint es largo y
+  secreto, y solo lo conoce ese navegador. Qué jugadores sigue ESTE aparato
+  se recuerda en el navegador solo para pintar el botón.
+- **Lo dice `privacidad.html`**, junto a los avisos por correo.
+
+Lo comprueba `verificar-pareo-seguir-push.js` (la función, la base y la
+página con un navegador de mentira).
+
 ### La tarjeta del organizador y el calendario para suscribirse
 
 Son dos rutas nuevas del worker, como `/t/<id>`, y las dos están en

@@ -77,6 +77,7 @@ import {
   correoSeguirConfirmar, correoSelloAdmin,
 } from "./correos.ts";
 import { esTorneoAviso, queAvisar, textoFin, textoRonda, type TorneoAviso } from "./avisos.ts";
+import { type LlavesVapid, mandar as mandarPush } from "./webpush.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -310,6 +311,8 @@ const TOPE_AVISOS = 300;
 async function avisarSeguidores(pid: string, antes: unknown, ahora: TorneoAviso) {
   const que = queAvisar(esTorneoAviso(antes) ? antes : null, ahora);
   if (!que.ronda && !que.fin) return;
+  // Los del celular, aparte: si uno falla, el otro sale igual.
+  enSegundoPlano(avisarPush(pid, que, ahora));
   const { data: subs } = await admin.rpc("pareo_suscriptores_de", { p_torneo: pid });
   let mandados = 0;
   for (const s of (subs ?? []) as { suscripcion: string; correo: string; jugador: string; nombre: string }[]) {
@@ -332,6 +335,51 @@ async function avisarSeguidores(pid: string, antes: unknown, ahora: TorneoAviso)
     }
   }
 }
+// ---------- los mismos avisos, en el celular (push) ----------
+// Las llaves VAPID son las de la Academia (las genera y guarda notificar: el
+// mismo par para todo el sitio). Sin llaves, no hay push: el correo sigue.
+// Un aparato que el servicio ya no reconoce (404, 410) se borra.
+const CONTACTO_PUSH = "mailto:info@ajedrezintegral.com";
+// Solo los servicios de avisos de los navegadores: la función no le manda
+// nada a otra dirección que alguien escriba.
+const SERVICIO_PUSH = /^https:\/\/(fcm\.googleapis\.com|updates\.push\.services\.mozilla\.com|[a-z0-9.-]+\.push\.apple\.com|[a-z0-9.-]+\.notify\.windows\.com|android\.googleapis\.com)\//;
+let llavesEnMemoria: LlavesVapid | null = null;
+async function llavesPush(): Promise<LlavesVapid | null> {
+  if (llavesEnMemoria) return llavesEnMemoria;
+  const { data } = await admin.rpc("push_llaves_leer");
+  const fila = Array.isArray(data) ? data[0] : data;
+  if (fila?.publica && fila?.privada) llavesEnMemoria = { publica: fila.publica, privada: fila.privada };
+  return llavesEnMemoria;
+}
+type SusPush = { suscripcion: string; endpoint: string; p256dh: string; auth: string; jugador: string; nombre: string };
+async function avisarPush(pid: string, que: { ronda: number | null; fin: boolean }, ahora: TorneoAviso) {
+  const llaves = await llavesPush();
+  if (!llaves) return;
+  const { data: subs } = await admin.rpc("pareo_suscriptores_push_de", { p_torneo: pid });
+  let mandados = 0;
+  for (const s of (subs ?? []) as SusPush[]) {
+    const eventos: ["ronda" | "fin", string][] = [];
+    if (que.ronda) eventos.push(["ronda", "r" + que.ronda]);
+    if (que.fin) eventos.push(["fin", "fin"]);
+    for (const [tipo, clave] of eventos) {
+      if (mandados >= TOPE_AVISOS) return;
+      const texto = tipo === "ronda" ? textoRonda(ahora, s.jugador, s.nombre, (que.ronda as number) - 1) : textoFin(ahora, s.jugador, s.nombre);
+      if (!texto) continue;
+      const { error } = await admin.from("pareo_avisos_push_enviados").insert({ suscripcion_id: s.suscripcion, torneo_id: pid, que: clave });
+      if (error) continue; // ya salió (23505) o no se pudo anotar: no se manda
+      const r = await mandarPush({ endpoint: s.endpoint, p256dh: s.p256dh, auth: s.auth }, {
+        titulo: tipo === "ronda" ? "Ronda " + que.ronda + ": " + s.nombre : "Terminó el torneo de " + s.nombre,
+        cuerpo: texto,
+        url: "/torneos-pareo.html#t=" + pid + (tipo === "ronda" ? "&v=jugadores&j=" + encodeURIComponent(s.jugador) : "&v=clasificacion"),
+        // Una por jugador y torneo: la ronda nueva reemplaza a la anterior.
+        etiqueta: "pareo-" + pid + "-" + s.jugador,
+      }, llaves, CONTACTO_PUSH);
+      if (!r.ok && r.caduca) await admin.from("pareo_suscripciones_push").delete().eq("endpoint", s.endpoint);
+      mandados++;
+    }
+  }
+}
+
 function enSegundoPlano(p: Promise<unknown>) {
   const seguro = p.catch((e) => console.error("avisos:", String(e)));
   // deno-lint-ignore no-explicit-any
@@ -644,6 +692,51 @@ Deno.serve(async (req) => {
     const { error } = await admin.from("pareo_suscripciones").update({ confirmada: true, token_hash: null, token_vence: null }).eq("id", sid);
     if (error) return json({ ok: false, error: "No se pudo confirmar. Intenta de nuevo." }, 502);
     return json({ ok: true, nombre: s.nombre });
+  }
+
+  // ---------- Seguir a un jugador en este aparato (push) ----------
+  // Sin confirmación por correo: el permiso lo da la persona en su
+  // navegador. El primer aviso, «Listo», comprueba que llega.
+  if (accion === "push_llave") {
+    const llaves = await llavesPush();
+    return llaves ? json({ ok: true, llave: llaves.publica }) : json({ ok: false, error: "Los avisos en el celular no están listos todavía." }, 503);
+  }
+  if (accion === "seguir_push") {
+    const nombre = texto(body.nombre, 100), ident = texto(body.ident, 40);
+    const sus = (body.suscripcion ?? {}) as Obj, claves = (sus.keys ?? {}) as Obj;
+    const endpoint = texto(sus.endpoint, 1000), p256dh = texto(claves.p256dh, 200), auth = texto(claves.auth, 100);
+    if (nombre.length < 2) return json({ ok: false, error: "Falta el nombre del jugador." }, 400);
+    if (ident && !/^[0-9a-f]{24}$/.test(ident)) return json({ ok: false, error: "Ese jugador no se reconoce." }, 400);
+    if (!SERVICIO_PUSH.test(endpoint) || !/^[A-Za-z0-9_-]{20,200}$/.test(p256dh) || !/^[A-Za-z0-9_-]{8,100}$/.test(auth)) {
+      return json({ ok: false, error: "Este navegador no dio una dirección de avisos válida." }, 400);
+    }
+    const llaves = await llavesPush();
+    if (!llaves) return json({ ok: false, error: "Los avisos en el celular no están listos todavía." }, 503);
+    const { data: freno, error: frenoError } = await admin.rpc("pareo_correo_frenar", { p_ip: ipDe(req), p_ambito: "seguir" });
+    if (frenoError) return json({ ok: false, error: "No se pudo guardar. Intenta de nuevo." }, 502);
+    if (freno) return json({ ok: false, error: freno }, 429);
+    const { data: r, error } = await admin.rpc("pareo_suscribir_push", { p_endpoint: endpoint, p_p256dh: p256dh, p_auth: auth, p_nombre: nombre, p_ident: ident });
+    if (error || r === "invalido") return json({ ok: false, error: "No se pudo guardar. Intenta de nuevo." }, 502);
+    if (r === "tope") return json({ ok: false, error: "En este aparato ya sigues a 20 jugadores: deja de seguir a alguno para agregar otro." }, 409);
+    const prueba = await mandarPush({ endpoint, p256dh, auth }, {
+      titulo: "Listo: sigues a " + nombre,
+      cuerpo: "Te vamos a avisar acá su mesa en cada ronda y cómo terminó cada torneo publicado en Pareo Integral.",
+      url: "/torneos-pareo.html#" + new URLSearchParams(ident ? { p: nombre, i: ident } : { p: nombre }).toString(),
+      etiqueta: "pareo-seguir",
+    }, llaves, CONTACTO_PUSH);
+    if (!prueba.ok && prueba.caduca) {
+      await admin.rpc("pareo_baja_push", { p_endpoint: endpoint, p_nombre: "", p_ident: "" });
+      return json({ ok: false, error: "Este navegador no aceptó el aviso de prueba. Revisa el permiso de notificaciones e intenta de nuevo." }, 400);
+    }
+    return json({ ok: true });
+  }
+  if (accion === "seguir_push_baja") {
+    const sus = (body.suscripcion ?? {}) as Obj;
+    const endpoint = texto(sus.endpoint ?? body.endpoint, 1000);
+    if (!SERVICIO_PUSH.test(endpoint)) return json({ ok: false, error: "Falta la dirección de este aparato." }, 400);
+    // Con nombre, deja de seguir a ese; sin nombre, a todos en este aparato.
+    await admin.rpc("pareo_baja_push", { p_endpoint: endpoint, p_nombre: texto(body.nombre, 100), p_ident: texto(body.ident, 40) });
+    return json({ ok: true });
   }
 
   return json({ ok: false, error: "Acción desconocida." }, 400);

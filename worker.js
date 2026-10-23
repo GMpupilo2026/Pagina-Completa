@@ -514,8 +514,11 @@ async function eventosCalendario(org, ahora) {
     if (x.repetido_de) continue;
     const desde = x.inicio ? diaCR(x.inicio) : "", hasta = x.fin ? diaCR(x.fin) : desde;
     if (!desde || hasta < hoy) continue;
-    if (!/^https:\/\/ajedrezcostarica\.com\/es\/tournaments\/\d+$/.test(x.url || "")) continue;
-    eventos.push({ uid: "ajedrezcostarica-" + x.id_externo + "@ajedrez-integral.com", desde, hasta, resumen: x.titulo,
+    // Solo direcciones de las dos fuentes, nunca otra que llegue en la fila.
+    const fuente = /^https:\/\/ajedrezcostarica\.com\/es\/tournaments\/\d+$/.test(x.url || "") ? "ajedrezcostarica"
+      : /^https:\/\/chess-results\.com\/tnr\d+\.aspx\?lan=2$/.test(x.url || "") ? "chess-results" : "";
+    if (!fuente) continue;
+    eventos.push({ uid: fuente + "-" + x.id_externo + "@ajedrez-integral.com", desde, hasta, resumen: x.titulo,
       lugar: [x.lugar, x.provincia].filter(Boolean).join(", "),
       descripcion: [x.organizador ? "Organiza: " + x.organizador + "." : "", ELO_LARGO_CAL[x.elo] ? ELO_LARGO_CAL[x.elo] + "." : "", "Inscripción y detalles: " + x.url].filter(Boolean).join(" "),
       url: x.url, aviso: "-PT15H" });

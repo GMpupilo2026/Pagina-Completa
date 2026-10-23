@@ -2185,6 +2185,12 @@ mano.
   también `jdn-comites.html`, `universidades.html` y `arbitros-cr.html`). Quien
   trae otra —el logo de una academia en el diagnóstico de un visitante— o
   `null` a propósito, se queda con lo suyo. Sin conexión sale sin marca.
+- **Las tablas que se bajan como imagen también la llevan**:
+  `TablaImagen.armar()` (`js/tabla-imagen.js`: los resultados JDN y
+  universitarios, y el ranking, el medallero, las aperturas y la ficha de un
+  jugador de «Torneos en Pareo Integral») dibuja el mismo
+  `img/marca-agua-ajedrez-integral.png` al centro, al 10 %: se ve, pero no
+  tapa ningún dato. Si el dibujo no carga, la imagen sale igual, sin ella.
 - **Lo que no cambió, a propósito**: el logo junto al nombre de quien escribe
   (el diploma de los cuentos de Peonita, la firma chica de cada carta de las
   fichas) no es una marca de agua y sigue siendo el de siempre; el logo del

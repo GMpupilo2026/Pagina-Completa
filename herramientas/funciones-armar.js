@@ -91,7 +91,10 @@ const FUNCIONES = {
   // «Torneos en Pareo Integral»: publicar, la organización, los reportes y
   // sus correos (verify_jwt en false). Su correos.ts es suyo; la franja de
   // arriba de los correos es la de siempre. Ver su cabecera.
-  "pareo-publicar": ["marca-correo.ts"],
+  // Los avisos push de quien sigue a un jugador usan el mismo cifrado que
+  // los de la Academia (notificar): una sola copia en _compartido.
+  "pareo-publicar": ["marca-correo.ts", "webpush.ts"],
+  "notificar": ["webpush.ts"],
   // Los torneos próximos de ajedrezcostarica.com, una vez al día (pg_cron,
   // con su secreto). Su leer.ts es suyo. Ver su cabecera.
   "torneos-externos": [],

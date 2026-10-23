@@ -153,10 +153,15 @@
   const seguirCorreo = (nombre, ident, correo) => llamar({ accion: "seguir_correo", nombre, ident: ident || "", correo, consentimiento: true });
   const seguirConfirmar = (id, token) => llamar({ accion: "seguir_confirmar", id, token });
   const seguirBaja = (id, token) => llamar({ accion: "seguir_baja", id, token });
+  // Los mismos avisos en este aparato (push): la llave pública del sitio, y
+  // seguir o dejar de seguir con la suscripción que da el navegador.
+  const pushLlave = () => llamar({ accion: "push_llave" });
+  const seguirPush = (nombre, ident, suscripcion) => llamar({ accion: "seguir_push", nombre, ident: ident || "", suscripcion });
+  const seguirPushBaja = (nombre, ident, suscripcion) => llamar({ accion: "seguir_push_baja", nombre, ident: ident || "", suscripcion });
   // La dirección pública de un torneo publicado (desde la página que llama).
   const enlace = (id) => new URL("torneos-pareo.html#t=" + encodeURIComponent(id), location.href).href;
 
-  const api = { datosPublicos, crear, actualizar, guardarOrganizador, estadoOrganizador, confirmarCorreo, recuperarOrganizador, recuperarConfirmar, pedirSello, reportar, borrar, inscribir, inscripciones, marcar, seguirCorreo, seguirConfirmar, seguirBaja, enlace, URL_FUNCION };
+  const api = { datosPublicos, crear, actualizar, guardarOrganizador, estadoOrganizador, confirmarCorreo, recuperarOrganizador, recuperarConfirmar, pedirSello, reportar, borrar, inscribir, inscripciones, marcar, seguirCorreo, seguirConfirmar, seguirBaja, pushLlave, seguirPush, seguirPushBaja, enlace, URL_FUNCION };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else raiz.PareoPublicar = api;
 })(typeof self !== "undefined" ? self : this);

@@ -1,5 +1,6 @@
-/* El lector de los torneos de ajedrezcostarica.com
- * (supabase/functions/torneos-externos/leer.ts), contra páginas escritas con
+/* Los lectores de los torneos de ajedrezcostarica.com
+ * (supabase/functions/torneos-externos/leer.ts) y del buscador de
+ * chess-results (chessresults.ts), contra páginas escritas con
  * la misma forma que las de verdad (23/10/2026): Next.js, con el JSON dentro
  * de los <script> y las comillas escapadas. Los datos son inventados.
  *
@@ -15,6 +16,14 @@
  *     instrucciones de pago que trae la ficha);
  *   - una página que cambió de forma da null o una lista vacía, nunca un
  *     torneo inventado; y la función, con la portada vacía, no toca nada.
+ *   - chess-results: las columnas se leen por su nombre (cambiadas de lugar
+ *     se leen igual; si falta una, null y no se toca nada), las fechas raras
+ *     no entran, el nombre cortado a 50 se reconoce, el ritmo sale del nombre
+ *     y la dirección es siempre la pública (sin s1, s2…);
+ *   - cada fuente va por su lado: si una falla, la otra se pone al día y lo
+ *     de la que falló no se borra por viejo;
+ *   - la lista no repite un torneo de chess-results que ajedrezcostarica.com
+ *     ya anuncia.
  *
  * Uso:  node herramientas/verificar-torneos-externos.js
  */
@@ -93,9 +102,49 @@ ok(o.otro === null, "un torneo que no está en la página da null");
 ok(o.rara === null, "una página que cambió de forma da null, no un torneo inventado");
 ok(o.sinTitulo === null, "sin nombre no hay torneo");
 
+// ---- chess-results ----
+// La tabla de su buscador (class="CRs2"): el encabezado en la primera fila
+// (CRg1b) y las columnas, a propósito, en otro orden que el de siempre.
+const filaCR = (clase, celdas, th) => `<tr class="${clase}">` + celdas.map((c) => `<${th ? "th" : "td"}>${c}</${th ? "th" : "td"}>`).join("") + "\n";
+const busqueda = (enc) => `<html><body><form><input type="hidden" name="__VIEWSTATE" id="__VIEWSTATE" value="VS1" /><input type="hidden" name="__EVENTVALIDATION" id="__EVENTVALIDATION" value="EV1" />
+<table class="CRs2">${filaCR("CRg1b", enc, true)}${filaCR("CRg2", ["1", "1524022", "<a href=\"tnr1524022.aspx\">PRUEBA Torneo Blitz &amp; Rápido de la Asociación de Cartag</a>", "2026/11/02", "ADAC", "Polideportivo, Cartago", "7", "39"])}${filaCR("CRg1", ["2", "1509398", "PRUEBA Abierto", "2026/12/05", "CRChess", "San Pedro, Montes de Oca", "", "100"])}${filaCR("CRg2", ["3", "77", "PRUEBA fecha rara", "pronto", "X", "Y", "5", "10"])}${filaCR("CRg1", ["4", "abc", "PRUEBA sin clave", "2026/12/06", "X", "Y", "5", "10"])}</table></form></body></html>`;
+const ENC = ["No.", "dbkey", "Torneo", "Del", "Organizador", "Lugar", "Rd.", "n"];
+const rc = spawnSync(process.execPath, ["--experimental-strip-types", "--no-warnings", "--input-type=module", "-e",
+  `import * as C from ${JSON.stringify(path.join(RAIZ, "supabase/functions/torneos-externos/chessresults.ts"))};
+   const [pagina, sinColumna] = JSON.parse(process.argv[1]);
+   const ocultos = C.camposOcultos(pagina);
+   process.stdout.write(JSON.stringify({
+     ocultos, form: C.formularioBusqueda(ocultos), filas: C.leerBusqueda(pagina), sinColumna: C.leerBusqueda(sinColumna), sinTabla: C.leerBusqueda("<html>cambió</html>"),
+     titulo: C.leerTitulo("<div><h2>PRUEBA Torneo Blitz &amp; Rápido de la Asociación de Cartago 2026</h2></div>"),
+     ritmos: ["Torneo Blitz", "Abierto Rápido", "Rapid Open", "Clásico de verano", "Bala nocturna", "Festival de divisiones", "Blitzkrieg"].map(C.ritmoDelTitulo),
+     cortado: [C.cortado("x".repeat(50)), C.cortado("Corto")], url: C.urlTorneo(1524022),
+   }));`, JSON.stringify([busqueda(ENC), busqueda(ENC.filter((x) => x !== "Lugar"))])], { encoding: "utf8" });
+if (rc.status !== 0) { console.log(rc.stderr); process.exit(1); }
+const q = JSON.parse(rc.stdout);
+console.log("\n=== chess-results ===");
+ok(q.ocultos.__VIEWSTATE === "VS1" && q.form.__EVENTVALIDATION === "EV1" && q.form["ctl00$P1$combo_land"] === "CRC" && q.form["ctl00$P1$combo_sort"] === "1", "devuelve los campos ocultos del formulario, con Costa Rica y los más recientes");
+igual("las columnas por su nombre, aunque cambien de lugar", (q.filas || []).map((f) => [f.id, f.titulo, f.inicio, f.organizador, f.lugar, f.rondas, f.jugadores]), [
+  [1524022, "PRUEBA Torneo Blitz & Rápido de la Asociación de Cartag", "2026-11-02", "ADAC", "Polideportivo, Cartago", 7, 39],
+  [1509398, "PRUEBA Abierto", "2026-12-05", "CRChess", "San Pedro, Montes de Oca", 0, 100]]);
+ok(q.sinColumna === null && q.sinTabla === null, "si falta una columna o la tabla, null (no una lista vacía ni un torneo inventado)");
+igual("el título completo de la página del torneo", q.titulo, "PRUEBA Torneo Blitz & Rápido de la Asociación de Cartago 2026");
+igual("el ritmo sale del nombre, solo si lo dice", q.ritmos, ["blitz", "rapido", "rapido", "clasico", "bala", "", ""]);
+igual("el nombre cortado a 50 se reconoce", q.cortado, [true, false]);
+igual("la dirección pública, sin el servidor", q.url, "https://chess-results.com/tnr1524022.aspx?lan=2");
+
 console.log("\n=== La función ===");
 const fn = fs.readFileSync(path.join(RAIZ, "supabase/functions/torneos-externos/index.ts"), "utf8");
-ok(/if \(!tarjetas\.length\) return json\(/.test(fn) && fn.indexOf("if (!tarjetas.length)") < fn.indexOf(".upsert("), "con la portada vacía no toca nada (mejor la lista de ayer)");
+ok(/if \(!tarjetas\.length\) return \{ ok: false/.test(fn) && fn.indexOf("if (!tarjetas.length)") < fn.indexOf(".upsert("), "con la portada vacía no toca nada (mejor la lista de ayer)");
+const deCR = fn.slice(fn.indexOf("async function deChessResults"), fn.indexOf("Deno.serve"));
+ok(/if \(!filas \|\| !filas\.length\) return \{ ok: false/.test(deCR) && deCR.indexOf("!filas.length") < deCR.indexOf(".upsert("), "con el buscador de chess-results cambiado, tampoco");
+ok(/f\.inicio >= hoy/.test(deCR) && /timeZone: "America\/Costa_Rica"/.test(deCR), "de chess-results, solo lo que empieza de hoy en adelante (el día en Costa Rica)");
+ok(/leidos < MAXIMO_TITULOS/.test(deCR) && /await dormir\(\d+\)/.test(deCR), "los títulos completos, con tope y con pausa");
+ok(/if \(r\.ok\) await admin\.from\("torneos_externos"\)\.delete\(\)\.eq\("fuente", fuente\)\.lt\("visto"/.test(fn), "lo de una fuente que hoy falló no se borra por viejo");
+ok(/redirect: "manual"/.test(fn) && /getSetCookie/.test(fn), "sigue las redirecciones a mano, con las cookies del formulario");
+const sqlCR = fs.readFileSync(path.join(RAIZ, "supabase/migraciones/20261023210000_torneos_chess_results.sql"), "utf8");
+ok(/fuente = 'chess-results' and url = 'https:\/\/chess-results\.com\/tnr' \|\| id_externo \|\| '\.aspx\?lan=2'/.test(sqlCR), "la base solo acepta la dirección pública de ese mismo torneo");
+ok(/e\.fuente <> 'chess-results'\s+or not exists \(select 1 from public\.torneos_externos a\s+where a\.fuente = 'ajedrezcostarica'/.test(sqlCR) && /a\.chess_results ~ \('\/tnr' \|\| e\.id_externo/.test(sqlCR) && /pareo_parecidos\(a\.titulo, e\.titulo\)/.test(sqlCR),
+  "la lista no repite uno que ajedrezcostarica.com ya anuncia (su enlace o el mismo día con nombre parecido)");
 ok(/jwt !== esperado\) return json\(/.test(fn), "solo la dispara la base, con su secreto");
 ok(/\.slice\(0, MAXIMO\)/.test(fn) && /await dormir\(\d+\)/.test(fn), "lee con calma: un tope de fichas y una pausa entre una y otra");
 const sql = fs.readFileSync(path.join(RAIZ, "supabase/migraciones/20261023175201_torneos_externos.sql"), "utf8");

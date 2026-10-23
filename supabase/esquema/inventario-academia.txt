@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20261023192512
+# al-dia-con: 20261023220000
 tabla  Ejercicios Lichess  rls=true
 tabla  _foto_rls_tmp  rls=false
 tabla  _pedidos_elo  rls=false
@@ -128,6 +128,7 @@ tabla  pagos  rls=true
 tabla  paquete_alumnos  rls=true
 tabla  paquetes_acceso  rls=true
 tabla  pareo_avisos_enviados  rls=true
+tabla  pareo_avisos_push_enviados  rls=true
 tabla  pareo_moderaciones  rls=true
 tabla  pareo_organizadores  rls=true
 tabla  pareo_preinscripciones  rls=true
@@ -135,6 +136,7 @@ tabla  pareo_publicados  rls=true
 tabla  pareo_reportes  rls=true
 tabla  pareo_solicitudes_sello  rls=true
 tabla  pareo_suscripciones  rls=true
+tabla  pareo_suscripciones_push  rls=true
 tabla  partidas_torneo  rls=true
 tabla  pizarras_cache  rls=true
 tabla  plan_compartidos  rls=true
@@ -1238,6 +1240,10 @@ columna  pareo_avisos_enviados.cuando  timestamp with time zone
 columna  pareo_avisos_enviados.que  text
 columna  pareo_avisos_enviados.suscripcion_id  uuid
 columna  pareo_avisos_enviados.torneo_id  uuid
+columna  pareo_avisos_push_enviados.cuando  timestamp with time zone
+columna  pareo_avisos_push_enviados.que  text
+columna  pareo_avisos_push_enviados.suscripcion_id  uuid
+columna  pareo_avisos_push_enviados.torneo_id  uuid
 columna  pareo_moderaciones.cuando  timestamp with time zone
 columna  pareo_moderaciones.id  bigint
 columna  pareo_moderaciones.motivo  text
@@ -1313,6 +1319,13 @@ columna  pareo_suscripciones.ident  text
 columna  pareo_suscripciones.nombre  text
 columna  pareo_suscripciones.token_hash  text
 columna  pareo_suscripciones.token_vence  timestamp with time zone
+columna  pareo_suscripciones_push.auth  text
+columna  pareo_suscripciones_push.clave  text
+columna  pareo_suscripciones_push.creado  timestamp with time zone
+columna  pareo_suscripciones_push.endpoint  text
+columna  pareo_suscripciones_push.id  uuid
+columna  pareo_suscripciones_push.ident  text
+columna  pareo_suscripciones_push.p256dh  text
 columna  partidas_torneo.avisada_at  timestamp with time zone
 columna  partidas_torneo.color  text
 columna  partidas_torneo.comentarios  jsonb
@@ -1851,6 +1864,7 @@ columna  torneos_externos.id_externo  integer
 columna  torneos_externos.incremento  smallint
 columna  torneos_externos.inicio  timestamp with time zone
 columna  torneos_externos.inscripcion_abierta  boolean
+columna  torneos_externos.jugadores  smallint
 columna  torneos_externos.lugar  text
 columna  torneos_externos.minutos  smallint
 columna  torneos_externos.modalidad  text
@@ -1859,6 +1873,7 @@ columna  torneos_externos.organizador  text
 columna  torneos_externos.precio  numeric(12,2)
 columna  torneos_externos.provincia  text
 columna  torneos_externos.ritmo  text
+columna  torneos_externos.rondas  smallint
 columna  torneos_externos.titulo  text
 columna  torneos_externos.url  text
 columna  torneos_externos.visto  timestamp with time zone
@@ -2347,6 +2362,9 @@ funcion  paquete_borrar(p_id uuid)  definer  anon=false  auth=true
 funcion  paquete_guardar(p_id uuid, p_nombre text, p_titular uuid, p_academia uuid, p_cupos integer, p_desde date, p_hasta date, p_precio numeric, p_moneda text, p_notas text)  definer  anon=false  auth=true
 funcion  paquete_set_alumnos(p_id uuid, p_alumnos uuid[])  definer  anon=false  auth=true
 funcion  paquetes_con_uso()  invoker  anon=false  auth=true
+funcion  pareo_baja_push(p_endpoint text, p_nombre text, p_ident text)  definer  anon=false  auth=false
+funcion  pareo_buscar_jugador(p_texto text)  invoker  anon=true  auth=true
+funcion  pareo_cifras()  definer  anon=false  auth=true
 funcion  pareo_clave(p text)  invoker  anon=true  auth=true
 funcion  pareo_correo_frenar(p_ip text, p_ambito text)  definer  anon=false  auth=false
 funcion  pareo_elo_frenar(p_ip text)  definer  anon=false  auth=false
@@ -2355,16 +2373,20 @@ funcion  pareo_inscribir_frenar(p_ip text, p_publicado uuid)  definer  anon=fals
 funcion  pareo_institucion(p_nombre text)  invoker  anon=true  auth=true
 funcion  pareo_lista(p_parte text, p_desde integer, p_cuantos integer, p_buscar text, p_ritmo text, p_lugar text, p_elo text, p_abierta boolean, p_curso boolean, p_verificado boolean)  invoker  anon=true  auth=true
 funcion  pareo_lista_resumen()  invoker  anon=true  auth=true
+funcion  pareo_medallero(p_anio integer)  invoker  anon=true  auth=true
 funcion  pareo_moderar(p_que text, p_id uuid)  definer  anon=false  auth=true
 funcion  pareo_moderar_con_motivo(p_que text, p_id uuid, p_motivo text)  definer  anon=false  auth=true
 funcion  pareo_palabras(p text)  invoker  anon=true  auth=true
 funcion  pareo_parecidos(a text, b text)  invoker  anon=true  auth=true
+funcion  pareo_partidas_del_anio(p_anio integer)  invoker  anon=true  auth=true
 funcion  pareo_provincia(p_lugar text)  invoker  anon=true  auth=true
 funcion  pareo_ranking(p_anio integer, p_orden text, p_categoria text, p_institucion text)  invoker  anon=true  auth=true
 funcion  pareo_reportar_frenar(p_ip text)  definer  anon=false  auth=false
 funcion  pareo_resultados()  invoker  anon=true  auth=true
 funcion  pareo_suscribir(p_correo text, p_nombre text, p_ident text, p_token_hash text, p_vence timestamp with time zone)  definer  anon=false  auth=false
+funcion  pareo_suscribir_push(p_endpoint text, p_p256dh text, p_auth text, p_nombre text, p_ident text)  definer  anon=false  auth=false
 funcion  pareo_suscriptores_de(p_torneo uuid)  definer  anon=false  auth=false
+funcion  pareo_suscriptores_push_de(p_torneo uuid)  definer  anon=false  auth=false
 funcion  pareo_torneos_de(p_nombre text, p_ident text)  invoker  anon=true  auth=true
 funcion  personas_con_dos_pasos()  definer  anon=false  auth=true
 funcion  personas_para_ver_como()  definer  anon=false  auth=true
@@ -3430,6 +3452,8 @@ indice  paquetes_acceso  paquetes_acceso_pkey
 indice  paquetes_acceso  paquetes_acceso_titular_idx
 indice  pareo_avisos_enviados  pareo_avisos_enviados_pkey
 indice  pareo_avisos_enviados  pareo_avisos_enviados_torneo_idx
+indice  pareo_avisos_push_enviados  pareo_avisos_push_enviados_pkey
+indice  pareo_avisos_push_enviados  pareo_avisos_push_enviados_torneo_idx
 indice  pareo_moderaciones  pareo_moderaciones_cuando_idx
 indice  pareo_moderaciones  pareo_moderaciones_pkey
 indice  pareo_organizadores  pareo_organizadores_correo_idx
@@ -3450,6 +3474,10 @@ indice  pareo_suscripciones  pareo_suscripciones_clave_idx
 indice  pareo_suscripciones  pareo_suscripciones_ident_idx
 indice  pareo_suscripciones  pareo_suscripciones_pkey
 indice  pareo_suscripciones  pareo_suscripciones_una
+indice  pareo_suscripciones_push  pareo_suscripciones_push_clave_idx
+indice  pareo_suscripciones_push  pareo_suscripciones_push_ident_idx
+indice  pareo_suscripciones_push  pareo_suscripciones_push_pkey
+indice  pareo_suscripciones_push  pareo_suscripciones_push_una
 indice  partidas_torneo  partidas_torneo_alumno
 indice  partidas_torneo  partidas_torneo_pkey
 indice  pizarras_cache  pizarras_cache_pkey
