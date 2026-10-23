@@ -19075,7 +19075,7 @@
   ]
  },
  "imagenes": {
-  "total": 857,
+  "total": 858,
   "grupos": [
    {
     "carpeta": "entreno/img/facil",
@@ -22753,6 +22753,12 @@
       "titulo": "Ícono de la pestaña (favicon)",
       "tipo": "otro",
       "kb": 5
+     },
+     {
+      "ruta": "img/fca-logo.png",
+      "titulo": "Logo de la Federación Costarricense de Ajedrez (de las bases del Centroamericano 2026)",
+      "tipo": "otro",
+      "kb": 31
      },
      {
       "ruta": "img/logo-completo-claro.png",

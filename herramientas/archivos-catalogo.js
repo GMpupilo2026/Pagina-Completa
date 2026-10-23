@@ -86,6 +86,7 @@ const TITULOS = {
   "documentos/centroamericano-2026/bases-cac-2026.pdf": "Bases del XXI Festival Centroamericano y del Caribe de la Juventud, Costa Rica 2026",
   "documentos/jdn/consentimiento-jdn-2027.docx": "Consentimiento informado JDN 2027 — atleta",
   "documentos/jdn/consentimiento-entrenador-jdn-2027.docx": "Consentimiento informado JDN 2027 — entrenador",
+  "img/fca-logo.png": "Logo de la Federación Costarricense de Ajedrez (de las bases del Centroamericano 2026)",
   "img/favicon.svg": "Ícono de la pestaña (favicon)",
   "img/logo-completo-claro.png": "Logo completo, para fondo claro",
   "img/logo-completo-oscuro.png": "Logo completo, para fondo oscuro",

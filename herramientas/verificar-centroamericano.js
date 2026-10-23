@@ -27,7 +27,9 @@ const html = fs.readFileSync(path.join(RAIZ, PAGINA), "utf8");
 
 // Los teléfonos que se confirmaron (ver «La página del Centroamericano 2026»).
 // Uno nuevo se agrega acá solo después de confirmarlo.
-const TELEFONOS = ["+50622321266", "+50621065100", "+50622961001"];
+const TELEFONOS = ["+50622321266", "+50621065100", "+50622961001",
+  // Los de «Contacta a la organización», que dio el dueño.
+  "+50689604707", "+50688200156", "+50661298565"];
 
 let fallos = 0;
 function ok(nombre, cond, detalle) {
@@ -56,7 +58,26 @@ ok("lo que abre otra pestaña lleva rel=noopener", blancos.every((a) => /rel="no
 for (let r = 1; r <= 9; r++) ok("el calendario tiene la ronda " + r, html.includes(">Ronda " + r + "</th>"));
 const tels = [...html.matchAll(/href="tel:([^"]+)"/g)].map((m) => m[1]);
 ok("ningún teléfono sin confirmar", tels.every((t) => TELEFONOS.includes(t)), tels.filter((t) => !TELEFONOS.includes(t)).join(", "));
+const contacto = (html.match(/<section id="contacto"[\s\S]*?<\/section>/) || [""])[0];
+const personas = [...contacto.matchAll(/<h3[^>]*>([^<]+)<\/h3>\s*<p[^>]*>([^<]+)<\/p>/g)].map((m) => m[1] + " — " + m[2]);
+ok("Contacta a la organización: árbitra principal, organizadora y árbitro de pareo", JSON.stringify(personas) === JSON.stringify(["Carolina Muñoz — Árbitra principal", "Vivian Víquez Miranda — Organizadora", "Jean Quesada — Árbitro de pareo"]), JSON.stringify(personas));
+ok("cada contacto con su teléfono y su WhatsApp", (contacto.match(/href="tel:/g) || []).length === 3 && (contacto.match(/href="https:\/\/wa\.me\/506\d{8}"/g) || []).length === 3);
 ok("la reserva con la organización está avisada", /penalidad de 200 USD/.test(html));
+
+// Lo que se abre en la ventana (js/ventana-enlace.js) tiene que estar en
+// frame-src: si no, la ventana sale en blanco sin dar ningún error.
+const frameSrc = ((fs.readFileSync(path.join(RAIZ, "_headers"), "utf8").match(/frame-src ([^;]+)/) || [])[1] || "").split(/\s+/);
+const permitido = (u) => frameSrc.some((f) => {
+  if (f === "'self'") return !/^https?:/.test(u);
+  const m = f.match(/^https:\/\/(\*\.)?(.+)$/);
+  if (!m || !/^https:/.test(u)) return false;
+  const host = new URL(u).hostname;
+  return m[1] ? host.endsWith("." + m[2]) : host === m[2];
+});
+const ventanas = [...html.matchAll(/<a href="([^"]+)"[^>]*data-ventana="([^"]+)"/g)].map((m) => [m[1].replace(/&amp;/g, "&"), m[2]]);
+ok("las bases, el bye y los resultados se abren en la ventana", ["Bases del campeonato", "Pedir un bye", "Resultados en vivo"].every((t) => ventanas.some(([, v]) => v === t)), JSON.stringify(ventanas));
+for (const [u, t] of ventanas) ok("«" + t + "» está permitido en frame-src", permitido(u), u);
+ok("la página carga js/ventana-enlace.js", html.includes('<script src="js/ventana-enlace.js"></script>'));
 
 (async () => {
   console.log("2. La página en un navegador");
@@ -76,6 +97,22 @@ ok("la reserva con la organización está avisada", /penalidad de 200 USD/.test(
       if (!alcanzada) await p.keyboard.press("Tab");
     }
     ok("una ficha apagada se alcanza con Tab", alcanzada);
+
+    // Las bases se abren encima, sin salir de la página.
+    const antes = p.url();
+    await p.click('#fichas a[data-ventana="Bases del campeonato"]');
+    await p.waitForSelector("dialog.ventana-enlace[open]");
+    const v = await p.evaluate(() => {
+      const d = document.querySelector("dialog.ventana-enlace");
+      const f = d.querySelector("iframe");
+      return { abierta: d.checkVisibility(), marco: f && f.checkVisibility(), src: f && f.getAttribute("src"), titulo: d.querySelector("h2").textContent, afuera: d.querySelector('a[target="_blank"]').getAttribute("href") };
+    });
+    ok("la ventana se abre encima, con el marco", v.abierta && v.marco && v.src === "documentos/centroamericano-2026/bases-cac-2026.pdf".replace(/^/, new URL(antes).origin + "/"), JSON.stringify(v));
+    ok("y no se sale de la página", p.url() === antes, p.url());
+    ok("trae su título y «Abrir en otra pestaña»", v.titulo === "Bases del campeonato" && /bases-cac-2026\.pdf$/.test(v.afuera), JSON.stringify(v));
+    await p.keyboard.press("Escape");
+    await p.waitForFunction(() => !document.querySelector("dialog.ventana-enlace"));
+    ok("con Escape se cierra y el foco vuelve a la ficha", await p.evaluate(() => document.activeElement && document.activeElement.dataset.ventana === "Bases del campeonato"));
   } finally {
     await nav.close();
   }
