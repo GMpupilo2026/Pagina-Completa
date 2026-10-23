@@ -5,13 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="img/favicon.svg">
     <title>Torneos en Pareo Integral | Ajedrez Integral</title>
-    <meta name="description" content="Todos los torneos que sus organizadores publicaron con Pareo Integral: las rondas, los resultados, la tabla de posiciones y cada jugador con sus rivales.">
+    <meta name="description" content="Los torneos que se vienen, con su inscripción, y los resultados de todos los publicados con Pareo Integral: rondas, partidas, tabla de posiciones, estadísticas y cada jugador con sus rivales.">
     <link rel="canonical" href="https://ajedrez-integral.com/torneos-pareo.html">
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="Ajedrez Integral">
     <meta property="og:locale" content="es_CR">
     <meta property="og:title" content="Torneos en Pareo Integral">
-    <meta property="og:description" content="Todos los torneos que sus organizadores publicaron con Pareo Integral: las rondas, los resultados, la tabla de posiciones y cada jugador con sus rivales.">
+    <meta property="og:description" content="Los torneos que se vienen, con su inscripción, y los resultados de todos los publicados con Pareo Integral: rondas, partidas, tabla de posiciones, estadísticas y cada jugador con sus rivales.">
     <meta property="og:url" content="https://ajedrez-integral.com/torneos-pareo.html">
     <meta property="og:image" content="https://ajedrez-integral.com/img/og-ajedrez-integral.jpg">
     <meta property="og:image:width" content="1200">
@@ -81,6 +81,17 @@
                     <input id="tp-buscar" type="search" autocomplete="off" placeholder="Nombre, evento o lugar" class="w-full rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-900 text-brand-800 dark:text-white px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
                 </div>
                 <p id="tp-cuantos" class="text-sm text-brand-600 dark:text-brand-300 mb-4" role="status">Cargando…</p>
+                <section id="tp-seguidos-caja" class="mb-8" aria-labelledby="tp-seguidos-titulo" hidden>
+                    <h2 id="tp-seguidos-titulo" class="font-serif text-2xl font-bold text-brand-800 dark:text-white mb-1"><span aria-hidden="true">★ </span>Los jugadores que sigues</h2>
+                    <p class="text-sm text-brand-600 dark:text-brand-300 mb-3">Sus últimos torneos publicados, con su puesto y su mesa. Se guardan solo en este navegador; para seguir a alguien, ábrelo en un torneo y toca «Seguir».</p>
+                    <p id="tp-seguidos-estado" class="sr-only" role="status"></p>
+                    <ul id="tp-seguidos" class="grid sm:grid-cols-2 gap-4"></ul>
+                </section>
+                <section id="tp-proximos-caja" class="mb-8" aria-labelledby="tp-proximos-titulo" hidden>
+                    <h2 id="tp-proximos-titulo" class="font-serif text-2xl font-bold text-brand-800 dark:text-white mb-3">Próximos torneos</h2>
+                    <ul id="tp-proximos" class="grid sm:grid-cols-2 gap-4"></ul>
+                </section>
+                <h2 class="font-serif text-2xl font-bold text-brand-800 dark:text-white mb-3">Resultados</h2>
                 <ul id="tp-lista" class="grid sm:grid-cols-2 gap-4"></ul>
             </div>
             <div id="tp-contenido" hidden></div>
@@ -109,6 +120,14 @@
     <script src="js/pareo/grupos.js"></script>
     <script src="js/pareo/premios.js"></script>
     <script src="js/pareo/evento.js"></script>
+    <script src="js/pareo/elo.js"></script>
+    <script src="js/pareo/publicar.js"></script>
+    <script src="js/pareo/partida.js"></script>
+    <script src="js/vendor/chess.js"></script>
+    <script src="js/blind-notation.js"></script>
+    <script src="js/tablero-accesible.js"></script>
+    <script src="js/comandos-tablero.js"></script>
+    <script src="js/visor-linea.js"></script>
     <script src="js/torneos-pareo-pagina.js"></script>
 </body>
 </html>

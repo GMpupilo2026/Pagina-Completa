@@ -13,7 +13,8 @@
  * liviano con la misma URL y la clave anónima (pública por diseño).
  *
  * `datosPublicos(t)` elige campo por campo lo que viaja: nombres, centros,
- * Elo, título, federación, categoría, rondas y resultados. Nunca la fecha de
+ * Elo, título, federación, categoría, rondas, resultados y partidas (PGN),
+ * el anuncio y si recibe inscripciones. Nunca la fecha de
  * nacimiento, el sexo, el ID FIDE, las firmas ni las notas del árbitro. La
  * función vuelve a limpiar lo que llega (no se le cree al navegador).
  */
@@ -32,10 +33,14 @@
     const x = { b: m.b, n: m.n == null ? null : m.n, r: m.r || null };
     if (Array.isArray(m.partidas)) x.partidas = m.partidas.map((p) => ({ r: (p && p.r) || null }));
     if (m.alineacion) x.alineacion = { b: (m.alineacion.b || []).slice(), n: (m.alineacion.n || []).slice() };
+    if (m.pgn) x.pgn = String(m.pgn);
     return x;
   };
 
-  function datosPublicos(t) {
+  // `extra.codigoEvento`: el código del enlace en vivo del evento (vive en el
+  // navegador, no en el torneo).
+  function datosPublicos(t, extra) {
+    const e = extra || {};
     return {
       nombre: t.nombre || "", grupo: t.grupo || "", ciudad: t.ciudad || "", federacion: t.federacion || "",
       fechaInicio: t.fechaInicio || "", fechaFin: t.fechaFin || "", arbitro: t.arbitro || "", arbitroAdjunto: t.arbitroAdjunto || "", ritmo: t.ritmo || "",
@@ -46,6 +51,12 @@
       numeracion: t.numeracion ? t.numeracion.slice() : null,
       rondas: (t.rondas || []).map((R) => ({ mesas: R.mesas.map(mesa), ausencias: Object.assign({}, R.ausencias || {}), inicio: R.inicio, fin: R.fin, emparejada: R.emparejada })),
       desempateCorte: t.desempateCorte ? { formato: t.desempateCorte.formato || "", orden: (t.desempateCorte.orden || []).slice() } : undefined,
+      // El anuncio (un torneo que todavía no empieza) y la inscripción previa.
+      anuncio: t.anuncio ? { hora: t.anuncio.hora || "", contacto: t.anuncio.contacto || "", texto: t.anuncio.texto || "" } : undefined,
+      inscripcion: t.inscripcion ? { abierta: !!t.inscripcion.abierta, hasta: t.inscripcion.hasta || "" } : undefined,
+      // Los códigos de los enlaces en vivo: un enlace que ya nadie transmite
+      // lleva desde ellos al torneo publicado (js/pareo/ver.js).
+      vivo: t.liveCodigo || undefined, codigoEvento: e.codigoEvento || undefined,
     };
   }
 
@@ -67,13 +78,18 @@
     return datos && typeof datos === "object" ? datos : { ok: false, error: null };
   }
 
-  const crear = (t) => llamar({ accion: "crear", torneo: datosPublicos(t) });
-  const actualizar = (t) => llamar({ accion: "actualizar", id: t.publicado.id, clave: t.publicado.clave, torneo: datosPublicos(t) });
+  const crear = (t, extra) => llamar({ accion: "crear", torneo: datosPublicos(t, extra) });
+  const actualizar = (t, extra) => llamar({ accion: "actualizar", id: t.publicado.id, clave: t.publicado.clave, torneo: datosPublicos(t, extra) });
   const borrar = (p) => llamar({ accion: "borrar", id: p.id, clave: p.clave });
+  // La inscripción previa: mandarla (la página pública, sin clave), leerlas
+  // y marcarlas (quien organiza, con la clave de su torneo).
+  const inscribir = (id, inscripcion) => llamar({ accion: "inscribir", id, inscripcion, consentimiento: true });
+  const inscripciones = (p) => llamar({ accion: "inscripciones", id: p.id, clave: p.clave });
+  const marcar = (p, ids, estado) => llamar({ accion: "marcar", id: p.id, clave: p.clave, ids, estado });
   // La dirección pública de un torneo publicado (desde la página que llama).
   const enlace = (id) => new URL("torneos-pareo.html#t=" + encodeURIComponent(id), location.href).href;
 
-  const api = { datosPublicos, crear, actualizar, borrar, enlace, URL_FUNCION };
+  const api = { datosPublicos, crear, actualizar, borrar, inscribir, inscripciones, marcar, enlace, URL_FUNCION };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else raiz.PareoPublicar = api;
 })(typeof self !== "undefined" ? self : this);

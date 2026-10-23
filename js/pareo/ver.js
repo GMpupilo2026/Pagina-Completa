@@ -266,12 +266,40 @@ window.PareoVer = (function () {
       el("a", { href: enlaceEvento(ev.codigo), class: "inline-block mt-2 text-sm font-semibold underline underline-offset-2 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400", "data-todo-evento": "" }, tx("verTodoElEvento")));
   }
 
+  // El torneo publicado en «Torneos en Pareo Integral»: ahí queda aunque
+  // quien organiza cierre su pestaña. El id llega en lo que manda la pestaña
+  // (texto ajeno): solo se usa si tiene forma de id.
+  const ID_PUBLICADO = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
+  function enlacePublicado(idioma, pub) {
+    if (!pub || !ID_PUBLICADO.test(pub)) return null;
+    return el("p", { class: "text-sm mb-4", "data-publicado": "" },
+      el("a", { href: "torneos-pareo.html#t=" + pub, class: "underline underline-offset-2 hover:no-underline font-semibold rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400" }, X.t(idioma, "verPublicado")));
+  }
+  // Un enlace en vivo que ya nadie transmite: si el torneo (o el evento) se
+  // publicó, se busca por su código y se ofrece ir a lo publicado.
+  async function buscarPublicados(campo, codigo) {
+    if (!window.sb || !/^[a-z0-9]{6,12}$/.test(codigo)) return [];
+    try {
+      const { data } = await window.sb.from("pareo_publicados").select("id,nombre").filter("datos->>" + campo, "eq", codigo).order("nombre").range(0, 99);
+      return (data || []).filter((x) => ID_PUBLICADO.test(x.id));
+    } catch (e) { return []; }
+  }
+  async function ofrecerPublicados(cont, idioma, campo, codigo, siguePendiente) {
+    const lista = await buscarPublicados(campo, codigo);
+    if (!lista.length || !siguePendiente()) return;
+    cont.replaceChildren(el("div", { "data-publicados": "" },
+      el("p", { class: "text-sm text-brand-600 dark:text-brand-300" }, X.t(idioma, "esperandoVivo")),
+      el("h2", { class: "font-serif text-xl font-bold mt-4 mb-2" }, X.t(idioma, "verQuedoPublicado")),
+      el("ul", { class: "space-y-2" }, lista.map((x) => el("li", {},
+        el("a", { href: "torneos-pareo.html#t=" + x.id, class: "underline underline-offset-2 hover:no-underline font-semibold rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400" }, x.nombre))))));
+  }
+
   function pintar(cont, idioma, datos, enVivo) {
     const tx = (clave, vars) => X.t(idioma, clave, vars);
     cont.replaceChildren(
       el("h1", { class: "font-serif text-2xl font-bold mb-1" }, datos.nombre || "Pareo Integral"),
       el("p", { class: "text-sm text-brand-600 dark:text-brand-300 mb-6" }, tx(enVivo ? "verEnVivoLeyenda" : "verFotoDelMomento")),
-      ...[otrosDelEvento(idioma, datos.evento)].filter(Boolean),
+      ...[enlacePublicado(idioma, datos.pub), otrosDelEvento(idioma, datos.evento)].filter(Boolean),
       ...tablas(idioma, datos, "h2"));
   }
 
@@ -416,7 +444,7 @@ window.PareoVer = (function () {
       nodos.push(el("details", { class: "mb-4 rounded-xl border border-brand-200 dark:border-brand-700 p-3", "data-torneo": x.nombre, open: abiertos.has(x.nombre) },
         el("summary", { class: "cursor-pointer font-semibold rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400" }, resumen,
           proximaTexto(idioma, x) ? el("span", { class: "block text-sm font-normal text-brand-600 dark:text-brand-300", "data-proxima": "" }, proximaTexto(idioma, x)) : null),
-        el("div", { class: "mt-3" }, cuerpo.length ? cuerpo : el("p", { class: "text-sm text-brand-600 dark:text-brand-300" }, tx("clasificadosSinRondas")))));
+        el("div", { class: "mt-3" }, enlacePublicado(idioma, x.pub), cuerpo.length ? cuerpo : el("p", { class: "text-sm text-brand-600 dark:text-brand-300" }, tx("clasificadosSinRondas")))));
     }
     // Ir directo a un torneo (en un JDE son muchas categorías): lo abre y
     // lleva hasta él.
@@ -657,7 +685,11 @@ window.PareoVer = (function () {
       pintar(cont, idioma, datos, true);
     });
     canal.subscribe();
-    setTimeout(() => { if (!llego) cont.replaceChildren(el("p", { class: "text-sm text-brand-600 dark:text-brand-300" }, tx("esperandoVivo"))); }, 8000);
+    setTimeout(() => {
+      if (llego) return;
+      cont.replaceChildren(el("p", { class: "text-sm text-brand-600 dark:text-brand-300" }, tx("esperandoVivo")));
+      ofrecerPublicados(cont, idioma, "vivo", codigo, () => !llego);
+    }, 8000);
   }
 
   // El botón de idioma del enlace: guarda el elegido y vuelve a abrir la
@@ -744,7 +776,11 @@ window.PareoVer = (function () {
     // Al entrar se pide el estado: quien organiza lo manda sin esperar al
     // próximo resultado.
     canal.subscribe((st) => { if (st === "SUBSCRIBED") canal.send({ type: "broadcast", event: "pedir", payload: {} }); });
-    setTimeout(() => { if (!llego) cont.replaceChildren(el("p", { class: "text-sm text-brand-600 dark:text-brand-300" }, tx("esperandoVivo"))); }, 8000);
+    setTimeout(() => {
+      if (llego) return;
+      cont.replaceChildren(el("p", { class: "text-sm text-brand-600 dark:text-brand-300" }, tx("esperandoVivo")));
+      ofrecerPublicados(cont, idioma, "codigoEvento", codigo, () => !llego);
+    }, 8000);
   }
 
   // La página del árbitro adjunto (#adjunto=<código>&m=1-10): sus mesas de
