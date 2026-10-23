@@ -3385,6 +3385,77 @@ Al tocar esto, `node herramientas/verificar-pareo-sala-evento.js`. Rompiendo a
 propósito la mesa física, la casilla de consentimiento, el llamado, el fin de
 la ronda o el aceptar, salta.
 
+### Torneos en Pareo Integral: inscripción, anuncios, partidas y estadísticas
+
+Lo pidió el dueño del sitio, de una lista de propuestas (las 1, 4, 5, 6 y 8).
+
+- **El enlace en vivo lleva a lo publicado.** El enlace en vivo (`#vivo=` y
+  `#evento=`) solo vive mientras quien organiza tiene su pestaña abierta; lo
+  publicado queda. Por eso lo que manda la pestaña lleva el id público del
+  torneo (`pub`, nunca la clave) y el celular muestra «Resultados que quedan
+  publicados…». Y el torneo publicado guarda los códigos de sus enlaces en
+  vivo (`datos.vivo`, `datos.codigoEvento`, que ya van en sus QR): un enlace
+  al que ya nadie transmite, a los 8 segundos, busca en
+  `pareo_publicados` por su código (`datos->>vivo=eq.<código>`, un filtro
+  que `anon` puede hacer porque `datos` es legible) y ofrece ir a lo
+  publicado. Así el QR de un gafete sigue sirviendo después del torneo. El
+  id que llega por el canal es texto ajeno: solo se pone en un enlace si
+  tiene forma de id.
+- **El anuncio de un torneo que se viene.** Sin jugadores todavía, Pareo
+  publica el torneo como anuncio (`t.anuncio`: la hora, el contacto de la
+  organización —se publica, lo dice el campo— y las bases), con la fecha, el
+  lugar y el ritmo de la ficha Torneo; la función lo acepta sin jugadores
+  solo si trae anuncio. En `torneos-pareo.html` sale en «Próximos torneos»
+  (sin jugadores, o con fecha más adelante que hoy, en hora de Costa Rica),
+  con «Próximamente» y sus datos; al empezar, es la misma página de
+  resultados.
+- **La inscripción antes del torneo.** Con el torneo publicado (o
+  anunciado), «Recibir inscripciones desde la página pública», hasta un
+  día. El formulario público pide lo de quien juega (nombre, centro,
+  categoría, Elo, ID FIDE), quién lo inscribe y su contacto, y la casilla
+  del consentimiento con la política de privacidad (también para menores:
+  quien inscribe dice ser su encargado o tener su permiso). Va a la Edge
+  Function (`inscribir`), que comprueba que la inscripción esté abierta y no
+  vencida, pasa por su propio freno (`pareo_inscribir_frenar`: 30 por
+  conexión en una hora, 400 por torneo, 2000 por hora en todo el espacio) y
+  la guarda en `public.pareo_preinscripciones`, que **nadie lee desde
+  afuera**: RLS sin políticas y sin permisos para `anon` ni `authenticated`.
+  Quien organiza las lee desde Pareo con la clave de su torneo
+  (`inscripciones`) y acepta o rechaza a cada una (`marcar`): **nadie entra
+  solo a la lista de jugadores**; aceptar la agrega con `agregarJugadores`,
+  como cualquier alta (y si el torneo ya empezó, queda como inscripción
+  tardía en el acta). Las inscripciones se borran con el torneo (`on delete
+  cascade`): «Dejar de publicar» se las lleva. La política de privacidad lo
+  dice.
+- **Las partidas en PGN.** En cada mesa de una ronda, «Partida (PGN)» abre
+  un cuadro para pegarla. `js/pareo/partida.js` la lee jugada por jugada con
+  chess.js (cargado solo la primera vez: Pareo no lo necesita para nada
+  más), acepta las letras de las piezas en español (R rey, D dama, T torre,
+  A alfil, C caballo; si la partida trae D, T, A o C, la «R» es el rey) y,
+  si algo no es legal, dice desde qué jugada revisar y no la guarda. Se
+  publica con el torneo (la función solo acota el tamaño a 12 000
+  caracteres) y en la página pública cada mesa con partida tiene «Ver
+  partida», en el tablero de `js/visor-linea.js` (el de la libreta de
+  torneos: se recorre con el teclado, el lector de pantalla y escribiendo).
+- **Estadísticas.** Una pestaña más en cada torneo publicado: cuántas
+  ganaron las blancas, las negras y cuántas tablas (solo partidas jugadas;
+  en equipos, tablero por tablero), con el porcentaje escrito al lado de
+  cada barra; las sorpresas (ganó el de menos Elo, con 100 o más de
+  diferencia y los dos con Elo) y los mejores rendimientos con la cuenta de
+  FIDE de `js/pareo/elo.js` (con al menos 3 partidas contra rivales con Elo,
+  o las rondas que haya).
+
+Se probó contra la base real con `pg_net`: crear un anuncio sin jugadores,
+inscribir (y que sin consentimiento lo rechace), leer las inscripciones con
+la clave y no con una equivocada, marcar una como aceptada, encontrar el
+torneo por el código de su enlace en vivo como `anon`, y borrarlo con sus
+inscripciones.
+
+Al tocar esto, `node herramientas/verificar-pareo-anuncio.js`. Rompiendo a
+propósito las letras en español, que una inscripción entre sola, el
+consentimiento, el id del enlace, los porcentajes, el código del evento o la
+búsqueda del enlace que ya nadie transmite, salta.
+
 ### Los premios especiales, WhatsApp, la hoja para la pared y el sorteo en el proyector
 
 Lo pidió el dueño del sitio, de una lista de propuestas. Dos de esas

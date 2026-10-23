@@ -521,6 +521,9 @@
     const mesasDe = (RR) => RR.mesas.map((m, i) => ({ m: i + 1, b: nombre(m.b), n: m.n == null ? null : nombre(m.n), r: m.r || null }));
     return {
       nombre: nombreTorneo(t),
+      // Si está publicado en «Torneos en Pareo Integral»: su id público (no
+      // la clave), para enlazarlo desde el celular.
+      pub: t.publicado && t.publicado.id ? t.publicado.id : undefined,
       // Las rondas anteriores, sin los tableros: para el historial.
       anteriores: t.rondas.slice(0, -1).map((RR, k) => ({ n: k + 1, mesas: mesasDe(RR) })),
       ronda: R ? { n: t.rondas.length, inicio: R.inicio || null, mesas: R.mesas.map((m, i) => Object.assign({ m: i + 1, f: mesaFisica(t, i), b: nombre(m.b), n: m.n == null ? null : nombre(m.n), r: m.r || null },

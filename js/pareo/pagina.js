@@ -3026,6 +3026,45 @@
     sortear.focus();
   }
 
+  // ---------- La partida de una mesa (PGN) ----------
+  // Se pega, se comprueba jugada por jugada con chess.js (js/pareo/partida.js,
+  // que acepta las letras en español) y se guarda en la mesa (`m.pgn`): sale
+  // en torneos-pareo.html si el torneo está publicado. chess.js se carga
+  // solo la primera vez que se usa (Pareo Integral no lo necesita para nada más).
+  let cargaChess = null;
+  function cargarChess() {
+    if (window.Chess) return Promise.resolve();
+    if (!cargaChess) cargaChess = new Promise((listo, fallo) => {
+      const sc = document.createElement("script");
+      sc.src = "js/vendor/chess.js";
+      sc.addEventListener("load", listo);
+      sc.addEventListener("error", () => { cargaChess = null; fallo(new Error("No cargó chess.js")); });
+      document.head.appendChild(sc);
+    });
+    return cargaChess;
+  }
+  async function editarPartida(r, i, boton) {
+    const v = t();
+    const m = v.rondas[r].mesas[i];
+    const mesa = V.mesaFisica(v, i);
+    const datos = await Avisos.formulario({ titulo: tx("pgnTitulo", { m: mesa }), texto: tx("pgnTexto"), aceptar: tx("pgnGuardar"),
+      campos: [{ nombre: "pgn", etiqueta: tx("pgnCampo"), tipo: "textarea", valor: m.pgn || "", max: 12000 }] });
+    if (!datos) return;
+    const texto = String(datos.pgn || "").trim();
+    if (!texto) {
+      if (m.pgn) { delete m.pgn; guardar(); pintarRondas(); Avisos.avisar(tx("pgnQuitada")); }
+      return;
+    }
+    try { await cargarChess(); } catch (e) { Avisos.avisar(tx("publicarSinRed"), { tipo: "error" }); return; }
+    const lectura = PareoPartida.leer(texto, window.Chess);
+    if (!lectura.ok) { Avisos.avisar(tx("pgnMala", { j: lectura.fallaEn || 1 }), { tipo: "error" }); return; }
+    m.pgn = texto;
+    guardar();
+    pintarRondas();
+    Avisos.avisar(tx("pgnGuardada", { j: Math.ceil(lectura.jugadas.length / 2) }));
+    const b = document.querySelector('#pi-ronda [data-pgn="' + i + '"]'); if (b) b.focus();
+  }
+
   // ---------- El reloj del retraso ----------
   // Quien no está sentado al empezar la ronda se marca, y la página cuenta
   // los minutos: en ajedrez pierde cuando su reloj cae a cero (art. 30), es
@@ -3267,7 +3306,9 @@
         el("td", { class: "num", texto: V.mesaFisica(v, i) }), el("td", { class: "num", texto: num.get(m.b) }),
         el("td", { class: "font-semibold" }, nombreDe(m.b), mb ? " " : null, mb), el("td", { class: "num", texto: puntosTexto(antes(m.b)) }),
         el("td", { class: "text-center" }, sel, el("span", { class: "pi-solo-imprimir", texto: m.r ? tx("corto_" + m.r) : "" }),
-          m.porAdjunto ? el("span", { class: "block text-xs " + C.nota, texto: tx("adjuntoAnoto") }) : null),
+          m.porAdjunto ? el("span", { class: "block text-xs " + C.nota, texto: tx("adjuntoAnoto") }) : null,
+          el("button", { type: "button", class: C.mini + " no-imprimir block mx-auto mt-1", "data-pgn": String(i), "aria-label": tx("pgnBotonA", { m: V.mesaFisica(v, i) }),
+            onclick: (e) => editarPartida(r, i, e.currentTarget) }, (m.pgn ? "✓ " : "") + tx("pgnBoton"))),
         el("td", { class: "num", texto: puntosTexto(antes(m.n)) }), el("td", { class: "font-semibold" }, nombreDe(m.n), mn ? " " : null, mn),
         el("td", { class: "num", texto: num.get(m.n) })));
       if (mb || mn) cuerpo.append(filaDet);
@@ -3913,6 +3954,7 @@
       clasificacion: filas.map((f) => Object.assign({ p: f.puesto, n: jugador(f.id).nombre, pts: f.puntos }, E.esDeEquipos(v) ? { pt: E.puntosTablero(v, f.id, k) } : {})),
       ...V.mejoresVista(v, k),
       evento: enlacesDelEvento(v),
+      pub: v.publicado && v.publicado.id ? v.publicado.id : undefined,
     };
   }
 
@@ -4336,9 +4378,15 @@
   // El torneo se publica sin cuenta (js/pareo/publicar.js) y queda con su
   // clave (`t.publicado`): cada vez que se guarda, a los 30 segundos, se pone
   // al día solo (con una sola llamada aunque se anoten diez resultados en ese
-  // rato). «Dejar de publicar» lo quita del espacio público.
+  // rato). «Dejar de publicar» lo quita del espacio público. Antes de tener
+  // jugadores se publica como anuncio (`t.anuncio`), y se puede abrir la
+  // inscripción previa (`t.inscripcion`): lo que llega se lee acá con la clave
+  // y entra a la lista solo si se acepta.
   const ESPERA_PUBLICAR = 30000;
   const publicando = new Map();
+  // Lo que va con el torneo y no vive en él: el código del enlace en vivo de
+  // su evento (en este navegador).
+  const extraPublicar = (tor) => ({ codigoEvento: tor.evento ? leer(CLAVE_VIVO_EVENTO + tor.evento.id) || "" : "" });
   function programarPublicacion() {
     const id = estado.id;
     if (publicando.has(id)) return;
@@ -4348,7 +4396,7 @@
     const tor = id === estado.id ? t() : leerJSON(PREFIJO + id, null);
     if (!tor || !tor.publicado) return;
     if (boton) boton.disabled = true;
-    const r = await PareoPublicar.actualizar(tor);
+    const r = await PareoPublicar.actualizar(tor, extraPublicar(tor));
     if (boton) boton.disabled = false;
     if (r.ok) {
       tor.publicado.hora = Date.now();
@@ -4370,7 +4418,7 @@
     let error = null;
     for (const tor of lista) {
       if (tor.publicado) { bien++; continue; }
-      const r = await PareoPublicar.crear(tor);
+      const r = await PareoPublicar.crear(tor, extraPublicar(tor));
       if (!r.ok) { error = r.error || tx("publicarSinRed"); break; }
       tor.publicado = { id: r.id, clave: r.clave, hora: Date.now() };
       if (tor === t() || tor.__id === estado.id) { estado.t.publicado = tor.publicado; guardar(); }
@@ -4383,6 +4431,104 @@
     else Avisos.avisar(lista.length > 1 ? tx("publicadosVarios", { n: bien }) : tx("publicadoUno"));
     const x = $("pi-publicar-enlace"); if (x) x.focus();
   }
+
+  // El anuncio: la hora, el contacto de la organización y las bases. Se
+  // guarda al escribir y, si ya está publicado, se pone al día solo.
+  function camposAnuncio(v) {
+    const an = v.anuncio || {};
+    const cambio = () => {
+      v.anuncio = { hora: $("pi-anuncio-hora").value, contacto: $("pi-anuncio-contacto").value.trim().slice(0, 120), texto: $("pi-anuncio-texto").value.trim().slice(0, 1500) };
+      guardar();
+    };
+    const campo = (id, etiqueta, control, ayuda) => el("div", {},
+      el("label", { for: id, class: "block text-sm font-semibold mb-1", texto: etiqueta }), control,
+      ayuda ? el("p", { class: C.nota + " mt-1", texto: ayuda }) : null);
+    const hora = el("input", { id: "pi-anuncio-hora", type: "time", class: C.campoChico, value: an.hora || "" });
+    const contacto = el("input", { id: "pi-anuncio-contacto", type: "text", maxlength: "120", autocomplete: "off", class: C.campo, value: an.contacto || "" });
+    const texto = el("textarea", { id: "pi-anuncio-texto", rows: "4", maxlength: "1500", class: C.campo });
+    texto.value = an.texto || "";
+    for (const x of [hora, contacto, texto]) x.addEventListener("change", cambio);
+    return el("fieldset", { class: "pi-revisar mt-3" },
+      el("legend", { class: "pi-revisar-titulo px-1", texto: tx("anuncioTitulo") }),
+      el("p", { class: C.nota + " mb-2", texto: v.fechaInicio ? tx("anuncioFecha", { f: window.HoraCR ? HoraCR.fecha(v.fechaInicio) : v.fechaInicio }) : tx("anuncioSinFecha") }),
+      el("div", { class: "grid sm:grid-cols-2 gap-3" },
+        campo("pi-anuncio-hora", tx("anuncioHora"), hora),
+        campo("pi-anuncio-contacto", tx("anuncioContacto"), contacto, tx("anuncioContactoAyuda"))),
+      el("div", { class: "mt-3" }, campo("pi-anuncio-texto", tx("anuncioTexto"), texto)));
+  }
+
+  // La inscripción previa: abrirla o cerrarla (con fecha límite) y leer lo
+  // que llegó. Aceptar uno lo agrega a la lista de jugadores como cualquier
+  // otro (agregarJugadores); rechazarlo solo lo marca.
+  function cajaInscripcion(v) {
+    const ins = v.inscripcion || {};
+    const abierta = el("input", { type: "checkbox", id: "pi-insc-abierta", class: "mt-1", checked: !!ins.abierta });
+    const hasta = el("input", { id: "pi-insc-hasta", type: "date", class: C.campoChico, value: ins.hasta || "" });
+    const cambio = () => {
+      v.inscripcion = { abierta: abierta.checked, hasta: hasta.value || "" };
+      guardar();
+      actualizarPublicado(estado.id);
+      Avisos.avisar(tx(abierta.checked ? "inscAbierta" : "inscCerrada"));
+    };
+    abierta.addEventListener("change", cambio);
+    hasta.addEventListener("change", cambio);
+    const ver = el("button", { type: "button", id: "pi-insc-ver", class: C.botonSec, "aria-expanded": "false", "aria-controls": "pi-insc-lista" }, tx("inscVer"));
+    const lista = el("div", { id: "pi-insc-lista", hidden: true });
+    ver.addEventListener("click", () => {
+      if (!lista.hidden) { lista.hidden = true; ver.setAttribute("aria-expanded", "false"); return; }
+      cargarInscripciones(lista, ver);
+    });
+    return el("fieldset", { class: "pi-revisar mt-3" },
+      el("legend", { class: "pi-revisar-titulo px-1", texto: tx("inscTitulo") }),
+      el("p", { class: C.nota + " mb-2", texto: tx("inscAyuda") }),
+      el("div", { class: "flex items-start gap-2 text-sm" }, abierta, el("label", { for: "pi-insc-abierta", texto: tx("inscAbrir") })),
+      el("div", { class: "mt-2 flex flex-wrap items-center gap-2 text-sm" }, el("label", { for: "pi-insc-hasta", class: "font-semibold", texto: tx("inscHasta") }), hasta),
+      el("div", { class: "mt-3" }, ver), lista);
+  }
+  async function cargarInscripciones(lista, ver) {
+    const v = t();
+    ver.disabled = true;
+    const r = await PareoPublicar.inscripciones(v.publicado);
+    ver.disabled = false;
+    if (!r.ok) { Avisos.avisar(r.error || tx("publicarSinRed"), { tipo: "error" }); return; }
+    pintarInscripciones(lista, r.inscripciones || []);
+    lista.hidden = false;
+    ver.setAttribute("aria-expanded", "true");
+  }
+  function pintarInscripciones(lista, todas) {
+    const v = t();
+    const pendientes = todas.filter((x) => x.estado === "pendiente");
+    const marcar = async (cuales, estadoNuevo, boton) => {
+      if (boton) boton.disabled = true;
+      if (estadoNuevo === "aceptada") {
+        agregarJugadores(cuales.map((x) => ({ nombre: x.nombre, institucion: x.institucion || "", categoria: x.categoria || "", elo: x.elo || 0, fideId: x.fide_id || "", titulo: "", fed: "" })));
+      }
+      const r = await PareoPublicar.marcar(v.publicado, cuales.map((x) => x.id), estadoNuevo);
+      if (!r.ok) { if (boton) boton.disabled = false; Avisos.avisar(r.error || tx("publicarSinRed"), { tipo: "error" }); return; }
+      for (const x of cuales) x.estado = estadoNuevo;
+      pintarInscripciones(lista, todas);
+      Avisos.avisar(tx(estadoNuevo === "aceptada" ? "inscAceptadas" : "inscRechazadas", { n: cuales.length }));
+      const b = $("pi-insc-ver"); if (b) b.focus();
+    };
+    const resumen = el("p", { id: "pi-insc-resumen", class: "text-sm font-semibold mt-3", role: "status",
+      texto: todas.length ? tx("inscResumen", { n: todas.length, p: pendientes.length }) : tx("inscNinguna") });
+    const filas = todas.map((x) => {
+      const yaEsta = v.jugadores.some((j) => (j.nombre || "").toUpperCase() === (x.nombre || "").toUpperCase());
+      const acciones = x.estado === "pendiente"
+        ? [el("button", { type: "button", class: C.mini, "data-aceptar": x.id, "aria-label": tx("inscAceptarA", { n: x.nombre }), onclick: (e) => marcar([x], "aceptada", e.currentTarget) }, tx("inscAceptar")),
+           el("button", { type: "button", class: C.miniPeligro, "data-rechazar": x.id, "aria-label": tx("inscRechazarA", { n: x.nombre }), onclick: (e) => marcar([x], "rechazada", e.currentTarget) }, tx("inscRechazar"))]
+        : [el("span", { class: "pi-sello " + (x.estado === "aceptada" ? "pi-sello-listo" : "pi-sello-falta"), texto: (x.estado === "aceptada" ? "✓ " : "✗ ") + tx(x.estado === "aceptada" ? "inscEstadoAceptada" : "inscEstadoRechazada") })];
+      return el("li", { class: "pi-dm-tarjeta", "data-insc": x.id },
+        el("p", { class: "font-semibold", texto: x.nombre + (yaEsta && x.estado === "pendiente" ? " · " + tx("inscYaEsta") : "") }),
+        el("p", { class: "text-xs", texto: [x.institucion, x.categoria, x.elo ? "Elo " + x.elo : "", x.fide_id ? "FIDE " + x.fide_id : ""].filter(Boolean).join(" · ") }),
+        el("p", { class: "text-xs mt-1", texto: tx("inscQuien", { r: x.responsable, c: x.contacto }) }),
+        x.nota ? el("p", { class: "text-xs mt-1 italic", texto: x.nota }) : null,
+        el("div", { class: "mt-2 flex flex-wrap gap-2" }, acciones));
+    });
+    const todasB = pendientes.length > 1 ? el("button", { type: "button", id: "pi-insc-todas", class: C.boton + " mt-2", onclick: (e) => marcar(pendientes, "aceptada", e.currentTarget) }, tx("inscAceptarTodas", { n: pendientes.length })) : null;
+    lista.replaceChildren(resumen, todasB, el("ul", { class: "mt-2 grid lg:grid-cols-2 gap-2" }, filas));
+  }
+
   function pintarPublicar() {
     const caja = $("pi-publicar");
     if (!caja) return;
@@ -4390,11 +4536,10 @@
     caja.replaceChildren(
       el("h2", { class: "font-serif text-xl font-bold mb-1", texto: tx("publicarTitulo") }),
       el("p", { class: C.nota + " mb-3", texto: tx("publicarAyuda") }));
-    if (!v.jugadores.length) { caja.append(el("p", { class: C.nota, texto: tx("primeroJugadores") })); return; }
     if (v.publicado) {
       const url = PareoPublicar.enlace(v.publicado.id);
       caja.append(
-        el("p", { class: "text-sm font-semibold", role: "status", texto: "✓ " + tx("publicadoEstado", { h: v.publicado.hora ? horaCR(v.publicado.hora) : "—" }) }),
+        el("p", { class: "text-sm font-semibold", role: "status", texto: "✓ " + tx(v.jugadores.length ? "publicadoEstado" : "publicadoAnuncio", { h: v.publicado.hora ? horaCR(v.publicado.hora) : "—" }) }),
         el("p", { class: "text-sm mt-1 break-all" }, el("a", { id: "pi-publicar-enlace", href: url, target: "_blank", rel: "noopener", class: "underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400", texto: url })),
         el("p", { class: C.nota + " mt-1", texto: tx("publicadoAyuda") }));
       const ahora = el("button", { type: "button", id: "pi-publicar-ahora", class: C.botonSec }, tx("publicarAhora"));
@@ -4412,15 +4557,26 @@
         const b = $("pi-publicar-permiso"); if (b) b.focus();
       });
       caja.append(el("div", { class: "mt-3 flex flex-wrap gap-2" }, ahora, quitarB));
+      if (!v.rondas.length) caja.append(camposAnuncio(v));
+      caja.append(cajaInscripcion(v));
       return;
     }
+    // Sin jugadores todavía: se publica como anuncio (con la fecha de la
+    // ficha Torneo), y la inscripción previa se abre después de publicarlo.
+    const anuncio = !v.jugadores.length;
+    if (anuncio) caja.append(el("p", { class: "text-sm mb-1", texto: tx("anuncioAyuda") }), camposAnuncio(v));
     const permiso = el("input", { type: "checkbox", id: "pi-publicar-permiso", class: "mt-1" });
-    caja.append(el("div", { class: "flex items-start gap-2 text-sm" }, permiso,
+    caja.append(el("div", { class: "flex items-start gap-2 text-sm mt-3" }, permiso,
       el("label", { for: "pi-publicar-permiso" }, tx("publicarPermiso") + " ",
         el("a", { href: "privacidad.html#torneos", target: "_blank", rel: "noopener", class: "underline underline-offset-2 hover:no-underline", texto: tx("politicaPrivacidad") }), ".")));
     const sinPermiso = () => { if (permiso.checked) return false; Avisos.avisar(tx("publicarFaltaPermiso"), { tipo: "error" }); permiso.focus(); return true; };
-    const uno = el("button", { type: "button", id: "pi-publicar-uno", class: C.boton }, tx("publicarUno"));
-    uno.addEventListener("click", () => { if (!sinPermiso()) publicarTorneos([t()], uno); });
+    const uno = el("button", { type: "button", id: "pi-publicar-uno", class: C.boton }, tx(anuncio ? "publicarAnuncio" : "publicarUno"));
+    uno.addEventListener("click", () => {
+      if (sinPermiso()) return;
+      if (anuncio && !t().fechaInicio) { Avisos.avisar(tx("anuncioSinFecha"), { tipo: "error" }); return; }
+      if (anuncio) t().anuncio = t().anuncio || { hora: "", contacto: "", texto: "" };
+      publicarTorneos([t()], uno);
+    });
     const fila = el("div", { class: "mt-3 flex flex-wrap gap-2" }, uno);
     const delEvento = v.evento ? torneosDelEvento().filter((x) => x.jugadores.length) : [];
     if (delEvento.length > 1) {

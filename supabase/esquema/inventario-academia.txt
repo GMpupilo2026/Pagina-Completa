@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20261022072928
+# al-dia-con: 20261023010355
 tabla  Ejercicios Lichess  rls=true
 tabla  _foto_rls_tmp  rls=false
 tabla  _pedidos_elo  rls=false
@@ -127,6 +127,7 @@ tabla  notas_alumno  rls=true
 tabla  pagos  rls=true
 tabla  paquete_alumnos  rls=true
 tabla  paquetes_acceso  rls=true
+tabla  pareo_preinscripciones  rls=true
 tabla  pareo_publicados  rls=true
 tabla  partidas_torneo  rls=true
 tabla  pizarras_cache  rls=true
@@ -1226,6 +1227,19 @@ columna  paquetes_acceso.precio_mensual  numeric(12,2)
 columna  paquetes_acceso.titular_id  uuid
 columna  paquetes_acceso.vigente_desde  date
 columna  paquetes_acceso.vigente_hasta  date
+columna  pareo_preinscripciones.categoria  text
+columna  pareo_preinscripciones.consentimiento  timestamp with time zone
+columna  pareo_preinscripciones.contacto  text
+columna  pareo_preinscripciones.creado  timestamp with time zone
+columna  pareo_preinscripciones.elo  smallint
+columna  pareo_preinscripciones.estado  text
+columna  pareo_preinscripciones.fide_id  text
+columna  pareo_preinscripciones.id  uuid
+columna  pareo_preinscripciones.institucion  text
+columna  pareo_preinscripciones.nombre  text
+columna  pareo_preinscripciones.nota  text
+columna  pareo_preinscripciones.publicado_id  uuid
+columna  pareo_preinscripciones.responsable  text
 columna  pareo_publicados.actualizado  timestamp with time zone
 columna  pareo_publicados.clave_hash  text
 columna  pareo_publicados.creado  timestamp with time zone
@@ -2253,6 +2267,7 @@ funcion  paquete_set_alumnos(p_id uuid, p_alumnos uuid[])  definer  anon=false  
 funcion  paquetes_con_uso()  invoker  anon=false  auth=true
 funcion  pareo_elo_frenar(p_ip text)  definer  anon=false  auth=false
 funcion  pareo_frenar(p_ip text, p_crear boolean)  definer  anon=false  auth=false
+funcion  pareo_inscribir_frenar(p_ip text, p_publicado uuid)  definer  anon=false  auth=false
 funcion  personas_con_dos_pasos()  definer  anon=false  auth=true
 funcion  personas_para_ver_como()  definer  anon=false  auth=true
 funcion  plan_compartido_conmigo(p_plan uuid)  definer  anon=true  auth=true
@@ -3304,6 +3319,8 @@ indice  paquetes_acceso  paquetes_acceso_academia_idx
 indice  paquetes_acceso  paquetes_acceso_creado_por_fk
 indice  paquetes_acceso  paquetes_acceso_pkey
 indice  paquetes_acceso  paquetes_acceso_titular_idx
+indice  pareo_preinscripciones  pareo_preinscripciones_pkey
+indice  pareo_preinscripciones  pareo_preinscripciones_publicado_idx
 indice  pareo_publicados  pareo_publicados_actualizado_idx
 indice  pareo_publicados  pareo_publicados_pkey
 indice  partidas_torneo  partidas_torneo_alumno
