@@ -49,6 +49,8 @@ const VIGILADAS = [
   // El sello «Organizador verificado» de Pareo Integral: lo da (o lo quita)
   // solo administración, y ocultar un torneo o una organización también.
   "pareo_organizadores",
+  // Pedir el sello: aprobar una solicitud le da el sello a la organización.
+  "pareo_solicitudes_sello",
 ];
 
 let fallos = 0;

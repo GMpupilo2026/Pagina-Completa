@@ -11,7 +11,12 @@
 //   { accion: "inscribir", id, inscripcion, consentimiento } → { ok }
 //   { accion: "inscripciones", id, clave }    → { ok, inscripciones }
 //   { accion: "marcar", id, clave, ids, estado } → { ok }
-//   { accion: "organizador", nombre, logo?, id?, clave? } → { ok, id, clave? }
+//   { accion: "organizador", nombre, logo?, correo?, consentimiento?, id?, clave? } → { ok, id, clave?, correoPendiente? }
+//   { accion: "organizador_estado", id, clave } → { ok, verificado, correo, correoConfirmado, selloPendiente }
+//   { accion: "confirmar_correo", id, token } → { ok }
+//   { accion: "recuperar", correo }            → { ok } (siempre: no dice si existe)
+//   { accion: "recuperar_confirmar", id, token } → { ok, id, clave, nombre, logo }
+//   { accion: "pedir_sello", id, clave, quien, representa, contacto, nota, consentimiento } → { ok }
 //   { accion: "reportar", id, motivo, detalle } → { ok }
 //
 // La organización (pareo_organizadores): nombre y logo de quien organiza,
@@ -21,6 +26,14 @@
 // (public.pareo_moderar), nunca esta función. «reportar» deja un reporte que
 // lee solo administración. Ver «Torneos en Pareo Integral: el organizador y
 // la moderación».
+//
+// El correo de la organización es opcional y no se usa hasta que quien
+// organiza toca el enlace que le llega (confirmar_correo). Con él se le avisa
+// de cada inscripción y de cada reporte, y recupera su organización si pierde
+// la clave (recuperar: un enlace de un solo uso, que deja una clave nueva).
+// Cada reporte y cada pedido del sello le llega también a administración. Los
+// textos están en correos.ts. Ver «Torneos en Pareo Integral: el correo del
+// organizador, el sello y el historial».
 //
 // La inscripción antes del torneo: si quien organiza la abrió
 // (`torneo.inscripcion = { abierta, hasta }`), cualquiera manda la de un
@@ -42,6 +55,10 @@
 // docs/decisiones/juegos-y-torneos.md.
 
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { cabeceraCorreo } from "./marca-correo.ts";
+import {
+  type Correo, correoConfirmar, correoInscripcion, correoRecuperar, correoReporteAdmin, correoReporteOrganizador, correoSelloAdmin,
+} from "./correos.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -67,6 +84,41 @@ function ipDe(req: Request): string | null {
 }
 
 const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
+
+// ---------- los correos ----------
+const DE = "Pareo Integral <informes@ajedrez-integral.com>";
+const CORREO = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
+const cabecera = (titulo: string) => cabeceraCorreo(null, titulo);
+// Nunca lanza ni frena lo que se estaba haciendo: un aviso que no sale no
+// deshace una inscripción ni un reporte.
+async function mandar(para: string[], c: Correo): Promise<boolean> {
+  const apiKey = Deno.env.get("RESEND_API_KEY");
+  const destino = [...new Set(para.map((x) => x.trim()).filter((x) => CORREO.test(x)))];
+  if (!apiKey || !destino.length) return false;
+  try {
+    const res = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ from: DE, to: destino, subject: c.asunto, html: c.html }),
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+async function correosAdmin(): Promise<string[]> {
+  const { data } = await admin.from("profiles").select("email").eq("is_admin", true);
+  return (data ?? []).map((a: { email: string | null }) => a.email ?? "");
+}
+// El correo confirmado de una organización (o null).
+async function correoDe(oid: string | null | undefined): Promise<string | null> {
+  if (!oid) return null;
+  const { data } = await admin.from("pareo_organizadores").select("correo, correo_confirmado").eq("id", oid).maybeSingle();
+  return data && data.correo && data.correo_confirmado ? data.correo : null;
+}
+// «o•••@gmail.com»: para que quien organiza reconozca cuál puso, sin mostrarlo entero.
+const tapado = (c: string | null) => (c ? c.replace(/^(.)[^@]*(@.*)$/, "$1•••$2") : null);
+const vence = (horas: number) => new Date(Date.now() + horas * 3600 * 1000).toISOString();
 
 // ---------- lo que se guarda del torneo ----------
 type Obj = Record<string, unknown>;
@@ -245,11 +297,33 @@ Deno.serve(async (req) => {
     const cambiaLogo = Object.prototype.hasOwnProperty.call(body, "logo");
     const logo = typeof body.logo === "string" ? body.logo : null;
     if (logo && (!LOGO.test(logo) || logo.length > 200000)) return json({ ok: false, error: "El logo tiene que ser una imagen PNG, JPG o WebP chica." }, 400);
+    // correo: un texto (el nuevo, con su consentimiento), "" (quitarlo) o sin
+    // mandar (dejarlo). El nuevo no se usa hasta confirmarlo.
+    const cambiaCorreo = typeof body.correo === "string";
+    const correo = cambiaCorreo ? texto(body.correo, 200).toLowerCase() : "";
+    if (correo && !CORREO.test(correo)) return json({ ok: false, error: "Ese correo no parece bien escrito." }, 400);
+    if (correo && body.consentimiento !== true) return json({ ok: false, error: "Falta aceptar la política de privacidad para guardar el correo." }, 400);
     const oid = texto(body.id, 40);
+    // Lo que se escribe del correo y el que hay que confirmar (si cambió).
+    const conCorreo = async (cambio: Obj, anterior: { correo: string | null; correo_confirmado: string | null } | null) => {
+      if (!cambiaCorreo) return null;
+      if (!correo) { Object.assign(cambio, { correo: null, correo_confirmado: null, correo_token_hash: null, correo_token_vence: null }); return null; }
+      if (anterior && anterior.correo === correo && anterior.correo_confirmado) return null;
+      const token = claveNueva();
+      Object.assign(cambio, { correo, correo_confirmado: null, correo_consentimiento: new Date().toISOString(), correo_token_hash: await sha256(token), correo_token_vence: vence(48) });
+      return token;
+    };
+    // null: no había nada que confirmar; true/false: si el correo salió.
+    const confirmar = async (id: string, nombreOrg: string, token: string | null) => {
+      if (!token) return null;
+      const { data: f } = await admin.rpc("pareo_correo_frenar", { p_ip: ipDe(req), p_ambito: "confirmar" });
+      if (f) return false;
+      return await mandar([correo], correoConfirmar(cabecera("Confirma tu correo"), nombreOrg, `${SITE_URL}/pareo.html#org-correo=${id}.${token}`));
+    };
     if (oid) {
       const clave = texto(body.clave, 100);
       if (!UUID.test(oid) || !clave) return json({ ok: false, error: "Falta la clave de la organización." }, 400);
-      const { data: fila } = await admin.from("pareo_organizadores").select("clave_hash").eq("id", oid).maybeSingle();
+      const { data: fila } = await admin.from("pareo_organizadores").select("clave_hash, correo, correo_confirmado").eq("id", oid).maybeSingle();
       if (!fila) return json({ ok: false, error: "Esa organización ya no existe.", noExiste: true }, 404);
       if (fila.clave_hash !== await sha256(clave)) return json({ ok: false, error: "La clave no es la de esta organización." }, 403);
       const { data: freno, error: frenoError } = await admin.rpc("pareo_frenar", { p_ip: ipDe(req), p_crear: false });
@@ -257,17 +331,91 @@ Deno.serve(async (req) => {
       if (freno) return json({ ok: false, error: freno }, 429);
       const cambio: Obj = { nombre, actualizado: new Date().toISOString() };
       if (cambiaLogo) cambio.logo = logo;
+      const token = await conCorreo(cambio, fila);
       const { error } = await admin.from("pareo_organizadores").update(cambio).eq("id", oid);
       if (error) return json({ ok: false, error: "No se pudo guardar. Intenta de nuevo." }, 502);
-      return json({ ok: true, id: oid });
+      return json({ ok: true, id: oid, correoPendiente: await confirmar(oid, nombre, token) });
     }
     const { data: freno, error: frenoError } = await admin.rpc("pareo_frenar", { p_ip: ipDe(req), p_crear: true });
     if (frenoError) return json({ ok: false, error: "No se pudo guardar. Intenta de nuevo." }, 502);
     if (freno) return json({ ok: false, error: freno }, 429);
     const clave = claveNueva();
-    const { data, error } = await admin.from("pareo_organizadores").insert({ nombre, logo, clave_hash: await sha256(clave) }).select("id").single();
+    const nueva: Obj = { nombre, logo, clave_hash: await sha256(clave) };
+    const token = await conCorreo(nueva, null);
+    const { data, error } = await admin.from("pareo_organizadores").insert(nueva).select("id").single();
     if (error || !data) return json({ ok: false, error: "No se pudo guardar. Intenta de nuevo." }, 502);
-    return json({ ok: true, id: data.id, clave });
+    return json({ ok: true, id: data.id, clave, correoPendiente: await confirmar(data.id, nombre, token) });
+  }
+
+  // ---------- Lo que la organización ve de sí misma (con su clave) ----------
+  if (accion === "organizador_estado" || accion === "pedir_sello") {
+    const oid = texto(body.id, 40), clave = texto(body.clave, 100);
+    if (!UUID.test(oid) || !clave) return json({ ok: false, error: "Falta la clave de la organización." }, 400);
+    const { data: o } = await admin.from("pareo_organizadores").select("nombre, clave_hash, verificado, correo, correo_confirmado").eq("id", oid).maybeSingle();
+    if (!o) return json({ ok: false, error: "Esa organización ya no existe.", noExiste: true }, 404);
+    if (o.clave_hash !== await sha256(clave)) return json({ ok: false, error: "La clave no es la de esta organización." }, 403);
+    const { data: pend } = await admin.from("pareo_solicitudes_sello").select("id").eq("organizador_id", oid).eq("estado", "nueva").maybeSingle();
+    if (accion === "organizador_estado") {
+      return json({ ok: true, verificado: o.verificado, correo: tapado(o.correo), correoConfirmado: !!o.correo_confirmado, selloPendiente: !!pend });
+    }
+    if (o.verificado) return json({ ok: false, error: "Tu organización ya tiene el sello." }, 409);
+    if (pend) return json({ ok: false, error: "Ya pediste el sello: Ajedrez Integral lo está revisando." }, 409);
+    if (body.consentimiento !== true) return json({ ok: false, error: "Falta aceptar la política de privacidad." }, 400);
+    const s = { quien: texto(body.quien, 120), representa: texto(body.representa, 200), contacto: texto(body.contacto, 160), nota: texto(body.nota, 800) };
+    if (s.quien.length < 2 || s.representa.length < 2 || s.contacto.length < 5) {
+      return json({ ok: false, error: "Escribe quién lo pide, a quién representa y cómo contactarte." }, 400);
+    }
+    const { data: freno, error: frenoError } = await admin.rpc("pareo_correo_frenar", { p_ip: ipDe(req), p_ambito: "sello" });
+    if (frenoError) return json({ ok: false, error: "No se pudo mandar. Intenta de nuevo." }, 502);
+    if (freno) return json({ ok: false, error: freno }, 429);
+    const { error } = await admin.from("pareo_solicitudes_sello").insert({ organizador_id: oid, ...s, consentimiento: new Date().toISOString() });
+    if (error) return json({ ok: false, error: error.code === "23505" ? "Ya pediste el sello: Ajedrez Integral lo está revisando." : "No se pudo mandar. Intenta de nuevo." }, error.code === "23505" ? 409 : 502);
+    await mandar(await correosAdmin(), correoSelloAdmin(cabecera("Piden el sello «Verificado»"), { organizacion: o.nombre, ...s }, `${SITE_URL}/admin-pareo.html`));
+    return json({ ok: true });
+  }
+
+  // ---------- Confirmar el correo y recuperar la organización ----------
+  if (accion === "confirmar_correo" || accion === "recuperar_confirmar") {
+    const oid = texto(body.id, 40), token = texto(body.token, 100);
+    if (!UUID.test(oid) || !/^[0-9a-f]{20,100}$/.test(token)) return json({ ok: false, error: "El enlace no está completo. Ábrelo otra vez desde el correo." }, 400);
+    const { data: o } = await admin.from("pareo_organizadores")
+      .select("nombre, logo, correo_token_hash, correo_token_vence, recuperar_token_hash, recuperar_token_vence").eq("id", oid).maybeSingle();
+    const h = await sha256(token);
+    const ahora = new Date().toISOString();
+    if (accion === "confirmar_correo") {
+      if (!o || o.correo_token_hash !== h || !o.correo_token_vence || o.correo_token_vence < ahora) {
+        return json({ ok: false, error: "Este enlace ya no sirve: venció o ya se usó. Vuelve a guardar tu correo en Pareo Integral para que te llegue otro." }, 410);
+      }
+      const { error } = await admin.from("pareo_organizadores").update({ correo_confirmado: ahora, correo_token_hash: null, correo_token_vence: null }).eq("id", oid);
+      if (error) return json({ ok: false, error: "No se pudo confirmar. Intenta de nuevo." }, 502);
+      return json({ ok: true, nombre: o.nombre });
+    }
+    if (!o || o.recuperar_token_hash !== h || !o.recuperar_token_vence || o.recuperar_token_vence < ahora) {
+      return json({ ok: false, error: "Este enlace ya no sirve: venció o ya se usó. Pide otro desde Pareo Integral." }, 410);
+    }
+    const clave = claveNueva();
+    const { error } = await admin.from("pareo_organizadores")
+      .update({ clave_hash: await sha256(clave), recuperar_token_hash: null, recuperar_token_vence: null, actualizado: ahora }).eq("id", oid);
+    if (error) return json({ ok: false, error: "No se pudo recuperar. Intenta de nuevo." }, 502);
+    return json({ ok: true, id: oid, clave, nombre: o.nombre, logo: o.logo });
+  }
+
+  if (accion === "recuperar") {
+    const correo = texto(body.correo, 200).toLowerCase();
+    if (!CORREO.test(correo)) return json({ ok: false, error: "Ese correo no parece bien escrito." }, 400);
+    const { data: freno, error: frenoError } = await admin.rpc("pareo_correo_frenar", { p_ip: ipDe(req), p_ambito: "recuperar" });
+    if (frenoError) return json({ ok: false, error: "No se pudo mandar. Intenta de nuevo." }, 502);
+    if (freno) return json({ ok: false, error: freno }, 429);
+    // Siempre la misma respuesta: no se le dice a nadie si un correo está registrado.
+    const { data: orgs } = await admin.from("pareo_organizadores").select("id, nombre").eq("correo", correo).not("correo_confirmado", "is", null).limit(5);
+    const cuales: { nombre: string; url: string }[] = [];
+    for (const o of orgs ?? []) {
+      const token = claveNueva();
+      const { error } = await admin.from("pareo_organizadores").update({ recuperar_token_hash: await sha256(token), recuperar_token_vence: vence(1) }).eq("id", o.id);
+      if (!error) cuales.push({ nombre: o.nombre, url: `${SITE_URL}/pareo.html#org-recuperar=${o.id}.${token}` });
+    }
+    if (cuales.length) await mandar([correo], correoRecuperar(cabecera("Recupera tu organización"), cuales));
+    return json({ ok: true });
   }
 
   // ---------- Reportar un torneo ----------
@@ -281,8 +429,15 @@ Deno.serve(async (req) => {
     const { data: freno, error: frenoError } = await admin.rpc("pareo_reportar_frenar", { p_ip: ipDe(req) });
     if (frenoError) return json({ ok: false, error: "No se pudo mandar. Intenta de nuevo." }, 502);
     if (freno) return json({ ok: false, error: freno }, 429);
-    const { error } = await admin.from("pareo_reportes").insert({ publicado_id: pid, motivo, detalle: texto(body.detalle, 500) });
+    const detalle = texto(body.detalle, 500);
+    const { error } = await admin.from("pareo_reportes").insert({ publicado_id: pid, motivo, detalle });
     if (error) return json({ ok: false, error: "No se pudo mandar. Intenta de nuevo." }, 502);
+    // El aviso a administración y a quien organiza (si confirmó su correo).
+    const { data: t } = await admin.from("pareo_publicados").select("nombre, organizador_id").eq("id", pid).maybeSingle();
+    const nombreT = (t && t.nombre) || "un torneo";
+    await mandar(await correosAdmin(), correoReporteAdmin(cabecera("Reportaron un torneo"), nombreT, motivo, detalle, `${SITE_URL}/admin-pareo.html`));
+    const suyo = await correoDe(t && t.organizador_id);
+    if (suyo) await mandar([suyo], correoReporteOrganizador(cabecera("Reportaron tu torneo"), nombreT, motivo, `${SITE_URL}/torneos-pareo.html#t=${pid}`));
     return json({ ok: true });
   }
 
@@ -313,7 +468,7 @@ Deno.serve(async (req) => {
     };
     if (fila.nombre.length < 2) return json({ ok: false, error: "Escribe el nombre de quien juega." }, 400);
     if (fila.responsable.length < 2 || fila.contacto.length < 5) return json({ ok: false, error: "Escribe quién inscribe y cómo contactarle (correo o teléfono)." }, 400);
-    const { data: pub } = await admin.from("pareo_publicados").select("datos").eq("id", pid).maybeSingle();
+    const { data: pub } = await admin.from("pareo_publicados").select("datos, nombre, organizador_id").eq("id", pid).maybeSingle();
     if (!pub) return json({ ok: false, error: "Ese torneo ya no está publicado." }, 404);
     const ins = esObj(pub.datos) && esObj(pub.datos.inscripcion) ? pub.datos.inscripcion : null;
     const hoy = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Costa_Rica" }).format(new Date());
@@ -325,6 +480,8 @@ Deno.serve(async (req) => {
     if (freno) return json({ ok: false, error: freno }, 429);
     const { error } = await admin.from("pareo_preinscripciones").insert(fila);
     if (error) return json({ ok: false, error: "No se pudo inscribir. Revisa los datos e intenta de nuevo." }, 502);
+    const suyo = await correoDe(pub.organizador_id);
+    if (suyo) await mandar([suyo], correoInscripcion(cabecera("Nueva inscripción"), pub.nombre, fila));
     return json({ ok: true });
   }
 

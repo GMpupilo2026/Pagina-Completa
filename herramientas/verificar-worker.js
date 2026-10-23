@@ -294,6 +294,98 @@ async function cargarWorker() {
     igual("lo que no es un id pasa a los archivos, sin preguntar", r3.aArchivos + " " + preguntas.length, "https://ajedrez-integral.com/t/no-es-un-id 0");
   }
 
+  console.log("\n=== La tarjeta de un organizador (/o/<id>) ===");
+  {
+    const wr = JSON.parse(fs.readFileSync(path.join(__dirname, "..", "wrangler.jsonc"), "utf8").replace(/^\s*\/\/.*$/gm, ""));
+    igual("wrangler.jsonc hace correr el worker en /o/ y /calendario/", ["/o/*", "/calendario/*"].every((x) => wr.assets.run_worker_first.includes(x)), true);
+    const ID = "22222222-2222-4222-8222-222222222222";
+    let preguntas = [];
+    const pedirCon = async (url, contesta) => {
+      preguntas = [];
+      globalThis.fetch = async (u, opciones) => { preguntas.push({ u: String(u), opciones }); return contesta(String(u), opciones); };
+      pedido = null;
+      const res = await worker.fetch(new Request(url), env);
+      return { estado: res.status, texto: await res.text(), cabeceras: res.headers, aArchivos: pedido };
+    };
+    const r = await pedirCon("https://ajedrez-integral.com/o/" + ID, (u) => /pareo_organizadores/.test(u)
+      ? new Response(JSON.stringify([{ nombre: "Club <PRUEBA>", verificado: true }]), { status: 200 })
+      : new Response("[]", { status: 206, headers: { "Content-Range": "0-0/12" } }));
+    const meta = (p) => (r.texto.match(new RegExp('<meta property="' + p + '" content="([^"]*)"')) || [])[1];
+    igual("contesta el worker", r.estado + "/" + r.aArchivos, "200/null");
+    igual("el título es el organizador (escapado)", meta("og:title"), "Club &lt;PRUEBA&gt;");
+    igual("la línea dice el sello y cuántos torneos publicó", meta("og:description"), "Organizador verificado · 12 torneos publicados · Sus próximos torneos y los resultados en Pareo Integral");
+    igual("su dirección propia", meta("og:url"), "https://ajedrez-integral.com/o/" + ID);
+    igual("y manda a su página", (r.texto.match(/http-equiv="refresh" content="0;url=([^"]*)"/) || [])[1], "/torneos-pareo.html#o=" + ID);
+    igual("la cuenta se pide sola, sin bajar los torneos", preguntas.some((q) => /pareo_publicados\?select=id&organizador_id=eq\./.test(q.u) && q.opciones.headers.Prefer === "count=exact"), true);
+    igual("sin <script> y con su CSP", !/<script/i.test(r.texto) && (r.cabeceras.get("content-security-policy") || "").includes("default-src 'none'"), true);
+    const r2 = await pedirCon("https://ajedrez-integral.com/o/" + ID, () => { throw new Error("caído"); });
+    igual("si Supabase no contesta, igual manda a su página", (r2.texto.match(/http-equiv="refresh" content="0;url=([^"]*)"/) || [])[1], "/torneos-pareo.html#o=" + ID);
+  }
+
+  console.log("\n=== El calendario para suscribirse (/calendario/torneos.ics) ===");
+  {
+    const CalendarioIcs = require("../js/calendario-ics.js");
+    const ID = "33333333-3333-4333-8333-333333333333";
+    const ORG = "44444444-4444-4444-8444-444444444444";
+    // Hoy, en la prueba: 23/10/2026 a las 8 de la noche de Costa Rica (ya es el 24 en UTC).
+    const AHORA = new Date("2026-10-24T02:00:00Z");
+    const RealDate = Date;
+    globalThis.Date = class extends RealDate { constructor(...a) { super(...(a.length ? a : [AHORA.getTime()])); } static now() { return AHORA.getTime(); } };
+    const propios = [
+      { id: ID, nombre: "Abierto PRUEBA, con coma; y punto y coma", evento: "Festival PRUEBA", lugar: "San José", fecha: "2026-11-01", fin: "2026-11-02", ciudad: "Heredia", elo: "fide", ritmo: "90 min + 30 s", hora: "08:30" },
+      // Terminó ayer: no va.
+      { id: "55555555-5555-4555-8555-555555555555", nombre: "PRUEBA terminado", fecha: "2026-10-20", fin: "2026-10-22", lugar: "", ciudad: "", elo: "", ritmo: "", hora: null },
+      // Hoy es su último día: va.
+      { id: "66666666-6666-4666-8666-666666666666", nombre: "PRUEBA de hoy", fecha: "2026-10-21", fin: "2026-10-23", lugar: "Cartago", ciudad: "", elo: "no", ritmo: "", hora: null },
+    ];
+    const afuera = [
+      { id_externo: 901, titulo: "PRUEBA nocturno", inicio: "2026-11-02T03:00:00+00:00", fin: "2026-11-02T05:00:00+00:00", provincia: "San José", lugar: "Salón", elo: "ambos", organizador: "Club", url: "https://ajedrezcostarica.com/es/tournaments/901" },
+      { id_externo: 902, titulo: "PRUEBA enlace raro", inicio: "2026-11-05T15:00:00+00:00", fin: null, provincia: "", lugar: "", elo: "", organizador: "", url: "https://otro.com/x" },
+    ];
+    let preguntas = [];
+    const contesta = (u) => /pareo_organizadores/.test(u) ? new Response(JSON.stringify([{ nombre: "Club PRUEBA" }]), { status: 200 })
+      : /torneos_externos/.test(u) ? new Response(JSON.stringify(afuera), { status: 200 })
+      : new Response(JSON.stringify(propios), { status: 200 });
+    const pedirCal = async (url, f) => {
+      preguntas = [];
+      globalThis.fetch = async (u, o) => { preguntas.push(String(u)); return (f || contesta)(String(u), o); };
+      pedido = null;
+      const res = await worker.fetch(new Request(url), env);
+      return { estado: res.status, texto: await res.text(), cabeceras: res.headers, aArchivos: pedido };
+    };
+    const r = await pedirCal("https://ajedrez-integral.com/calendario/torneos.ics");
+    igual("contesta el worker con un calendario", r.estado + " " + r.cabeceras.get("content-type") + " " + r.aArchivos, "200 text/calendar; charset=utf-8 null");
+    igual("pide solo los torneos desde hace un mes (no la tabla entera) y con tope", /pareo_publicados\?select=[^&]*&fecha=gte\.2026-09-22&order=fecha\.asc&limit=\d+$/.test(preguntas.find((u) => /pareo_publicados/.test(u)) || ""), true);
+    igual("sin la columna entera de datos", /select=[^&]*\bdatos(,|&)/.test(preguntas.find((u) => /pareo_publicados/.test(u)) || ""), false);
+    const uids = (t) => (t.match(/^UID:.*$/gm) || []).map((x) => x.slice(4));
+    igual("los que vienen (y el de hoy), con los mismos UID que «Agregar a mi calendario»; el terminado y el enlace raro no",
+      uids(r.texto).join(" "), "torneo-66666666-6666-4666-8666-666666666666@ajedrez-integral.com torneo-" + ID + "@ajedrez-integral.com ajedrezcostarica-901@ajedrez-integral.com");
+    igual("el nocturno de afuera es del 1.° de noviembre (hora de Costa Rica)", /UID:ajedrezcostarica-901@[^]*?DTSTART;VALUE=DATE:20261101/.test(r.texto), true);
+    igual("la app lo vuelve a leer sola", /REFRESH-INTERVAL;VALUE=DURATION:PT12H/.test(r.texto), true);
+    // El mismo texto que arma js/calendario-ics.js con los mismos eventos: el
+    // worker no puede importar ese archivo, así que se comparan las salidas.
+    const ev = (e) => Object.assign({ aviso: "-PT15H" }, e);
+    const esperado = CalendarioIcs.armarDias({ nombre: "Torneos de ajedrez en Costa Rica", ahora: AHORA, eventos: [
+      ev({ uid: "torneo-66666666-6666-4666-8666-666666666666@ajedrez-integral.com", desde: "2026-10-21", hasta: "2026-10-23", resumen: "PRUEBA de hoy", lugar: "Cartago",
+        descripcion: "No varía el Elo. Rondas y resultados: https://ajedrez-integral.com/t/66666666-6666-4666-8666-666666666666", url: "https://ajedrez-integral.com/t/66666666-6666-4666-8666-666666666666" }),
+      ev({ uid: "torneo-" + ID + "@ajedrez-integral.com", desde: "2026-11-01", hasta: "2026-11-02", resumen: propios[0].nombre, lugar: "Heredia",
+        descripcion: "Festival PRUEBA. Empieza a las 08:30. Ritmo: 90 min + 30 s. Válido para Elo FIDE. Rondas y resultados: https://ajedrez-integral.com/t/" + ID, url: "https://ajedrez-integral.com/t/" + ID }),
+      ev({ uid: "ajedrezcostarica-901@ajedrez-integral.com", desde: "2026-11-01", hasta: "2026-11-01", resumen: "PRUEBA nocturno", lugar: "Salón, San José",
+        descripcion: "Organiza: Club. Válido para Elo FIDE y Nacional. Inscripción y detalles: https://ajedrezcostarica.com/es/tournaments/901", url: "https://ajedrezcostarica.com/es/tournaments/901" }),
+    ] }).texto;
+    const sinSuscripcion = (t) => t.replace(/^(REFRESH-INTERVAL|X-PUBLISHED-TTL)[^\r\n]*\r\n/gm, "");
+    igual("el texto es línea por línea el de js/calendario-ics.js (escapes, líneas dobladas, días enteros)", sinSuscripcion(r.texto) === esperado, true);
+    if (sinSuscripcion(r.texto) !== esperado) console.log(sinSuscripcion(r.texto).split("\r\n").filter((l, i) => l !== esperado.split("\r\n")[i]).slice(0, 5));
+    const rO = await pedirCal("https://ajedrez-integral.com/calendario/torneos.ics?o=" + ORG);
+    igual("con ?o=, solo los de ese organizador y sin los de afuera", preguntas.some((u) => u.includes("organizador_id=eq." + ORG)) && !preguntas.some((u) => /torneos_externos/.test(u)), true);
+    igual("y con su nombre", /X-WR-CALNAME:Torneos de Club PRUEBA/.test(rO.texto), true);
+    const rX = await pedirCal("https://ajedrez-integral.com/calendario/torneos.ics?o=no-es-un-id");
+    igual("un ?o= que no es un id: 404 sin preguntar", rX.estado + " " + preguntas.length, "404 0");
+    const rC = await pedirCal("https://ajedrez-integral.com/calendario/torneos.ics", () => { throw new Error("caído"); });
+    igual("si Supabase no contesta, 503 (la app se queda con lo que tenía), nunca un calendario vacío", rC.estado, 503);
+    globalThis.Date = RealDate;
+  }
+
   console.log(fallos ? "\n" + fallos + " fallo(s)" : "\nTodo bien.");
   process.exit(fallos ? 1 : 0);
 })();

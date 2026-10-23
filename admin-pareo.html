@@ -37,13 +37,19 @@
              docs/decisiones/juegos-y-torneos.md. -->
         <div id="app" class="hidden">
             <h1 class="font-serif text-3xl sm:text-4xl font-bold text-brand-800 dark:text-white"><span aria-hidden="true">🛡️</span> Moderación de Torneos en Pareo Integral</h1>
-            <p class="text-brand-500 dark:text-brand-300 mt-1 mb-6">Los reportes que manda la gente, el sello «Organizador verificado» y los torneos ocultos. Ocultar no borra nada: el torneo deja de verse en la lista pública y se puede volver a mostrar.</p>
+            <p class="text-brand-500 dark:text-brand-300 mt-1 mb-6">Los reportes que manda la gente, el sello «Organizador verificado» (y quién lo pide), los torneos ocultos y el historial de lo que se hizo. Ocultar no borra nada: el torneo deja de verse en la lista pública y se puede volver a mostrar.</p>
             <p id="ap-estado" role="status" class="sr-only"></p>
 
             <section aria-labelledby="ap-rep-t" class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 mb-6">
                 <h2 id="ap-rep-t" class="font-serif text-xl font-bold mb-1">Reportes nuevos</h2>
                 <p class="text-sm text-brand-600 dark:text-brand-300 mb-3">Lo que reportó la gente desde la página de cada torneo. Revisa el torneo, ocúltalo si hace falta y marca el reporte como revisado.</p>
                 <div id="ap-reportes"></div>
+            </section>
+
+            <section aria-labelledby="ap-sello-t" class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 mb-6">
+                <h2 id="ap-sello-t" class="font-serif text-xl font-bold mb-1">Piden el sello</h2>
+                <p class="text-sm text-brand-600 dark:text-brand-300 mb-3">Organizaciones que pidieron el sello «Verificado» desde Pareo Integral, con quién lo pide y cómo contactarle. Aprobarla le da el sello.</p>
+                <div id="ap-sello"></div>
             </section>
 
             <section aria-labelledby="ap-org-t" class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 mb-6">
@@ -57,6 +63,12 @@
                 <h2 id="ap-ocu-t" class="font-serif text-xl font-bold mb-1">Torneos ocultos</h2>
                 <p class="text-sm text-brand-600 dark:text-brand-300 mb-3">No salen en la lista pública. «Mostrar» los vuelve a poner.</p>
                 <div id="ap-ocultos"></div>
+            </section>
+
+            <section aria-labelledby="ap-his-t" class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 mt-6">
+                <h2 id="ap-his-t" class="font-serif text-xl font-bold mb-1">Historial</h2>
+                <p class="text-sm text-brand-600 dark:text-brand-300 mb-3">Lo último que se hizo desde esta página: qué, sobre qué y por qué. No se cambia ni se borra.</p>
+                <div id="ap-historial"></div>
             </section>
         </div>
     </main>

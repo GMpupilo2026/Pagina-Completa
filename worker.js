@@ -136,6 +136,13 @@ export default {
     // ---- La tarjeta de un torneo de Pareo Integral (/t/<id>) ----
     const torneo = url.pathname.match(TORNEO);
     if (torneo) return tarjetaTorneo(torneo[1].toLowerCase());
+    // ---- La de un organizador (/o/<id>) y el calendario para suscribirse ----
+    const organizador = url.pathname.match(ORGANIZADOR);
+    if (organizador) return tarjetaOrganizador(organizador[1].toLowerCase());
+    if (url.pathname === CALENDARIO) return calendarioTorneos(url.searchParams.get("o"));
+    // ---- La clasificación para incrustar en otra página (/incrustar/<id>) ----
+    const incrustar = url.pathname.match(INCRUSTAR);
+    if (incrustar) return incrustarTorneo(incrustar[1].toLowerCase(), url.searchParams.get("tema") === "oscuro");
 
     if (!PROTEGIDO.test(url.pathname)) return env.ASSETS.fetch(request);
 
@@ -344,6 +351,13 @@ async function tarjetaTorneo(id) {
   }
   const titulo = x ? x.nombre + (x.evento && x.evento !== x.nombre ? " — " + x.evento : "") : "Torneos en Pareo Integral";
   const resumen = x ? resumenTorneo(x) : "Las rondas, los resultados y la clasificación de los torneos publicados con Pareo Integral.";
+  return paginaTarjeta({ titulo, resumen, destino, propia: SITIO + "/t/" + id, alt: "Pareo Integral: torneos de ajedrez en vivo. ajedrez-integral.com" });
+}
+
+// La página mínima que leen las vistas previas: el título, la línea, la
+// imagen de Pareo Integral, y de inmediato a la página de verdad. Sin
+// <script>: su CSP no lo dejaría.
+function paginaTarjeta({ titulo, resumen, destino, propia, alt }) {
   const t = escaparHtml(titulo), r = escaparHtml(resumen), d = escaparHtml(destino);
   const html = `<!DOCTYPE html>
 <html lang="es"><head><meta charset="UTF-8">
@@ -355,11 +369,11 @@ async function tarjetaTorneo(id) {
 <meta property="og:locale" content="es_CR">
 <meta property="og:title" content="${t}">
 <meta property="og:description" content="${r}">
-<meta property="og:url" content="${SITIO}/t/${id}">
+<meta property="og:url" content="${escaparHtml(propia)}">
 <meta property="og:image" content="${IMAGEN_TORNEO}">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="Pareo Integral: torneos de ajedrez en vivo. ajedrez-integral.com">
+<meta property="og:image:alt" content="${escaparHtml(alt)}">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="robots" content="noindex">
 <link rel="canonical" href="${SITIO}${d}">
@@ -374,6 +388,225 @@ async function tarjetaTorneo(id) {
       // Corto: lo que cambia es «Ronda 3 de 7».
       "Cache-Control": "public, max-age=300",
       "Content-Security-Policy": "default-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'",
+      "X-Content-Type-Options": "nosniff",
+      "Referrer-Policy": "strict-origin-when-cross-origin",
+      "Strict-Transport-Security": "max-age=31536000; includeSubDomains",
+    },
+  });
+}
+
+// ---- La tarjeta de un organizador (/o/<id>) ----
+//
+// Lo mismo que la de un torneo, para la página de quien organiza
+// (torneos-pareo.html#o=<id>): su nombre, si tiene el sello y cuántos torneos
+// publicó. Ver «La tarjeta del organizador y el calendario para suscribirse»
+// en docs/decisiones/juegos-y-torneos.md.
+const ORGANIZADOR = /^\/o\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\/?$/i;
+const LECTURA = { apikey: SUPABASE_ANON_KEY, Authorization: "Bearer " + SUPABASE_ANON_KEY, Accept: "application/json" };
+
+async function tarjetaOrganizador(id) {
+  const destino = "/torneos-pareo.html#o=" + id;
+  let o = null, cuantos = null;
+  try {
+    const [res, cuenta] = await Promise.all([
+      fetch(SUPABASE_URL + "/rest/v1/pareo_organizadores?select=nombre,verificado&id=eq." + id, { headers: LECTURA, signal: AbortSignal.timeout(3000) }),
+      // Solo la cuenta: «0-0/12» en Content-Range.
+      fetch(SUPABASE_URL + "/rest/v1/pareo_publicados?select=id&organizador_id=eq." + id, { headers: Object.assign({ Prefer: "count=exact", Range: "0-0" }, LECTURA), signal: AbortSignal.timeout(3000) }),
+    ]);
+    if (res.ok) o = (await res.json())[0] || null;
+    const total = /\/(\d+)$/.exec(cuenta.headers.get("content-range") || "");
+    if (total) cuantos = Number(total[1]);
+  } catch (e) {
+    console.error("organizador: Supabase no contestó", String(e));
+  }
+  const titulo = o ? o.nombre : "Torneos en Pareo Integral";
+  const resumen = o
+    ? [o.verificado ? "Organizador verificado" : "", cuantos == null ? "" : cuantos === 1 ? "1 torneo publicado" : cuantos + " torneos publicados", "Sus próximos torneos y los resultados en Pareo Integral"].filter(Boolean).join(" · ")
+    : "Las rondas, los resultados y la clasificación de los torneos publicados con Pareo Integral.";
+  return paginaTarjeta({ titulo, resumen, destino, propia: SITIO + "/o/" + id, alt: "Pareo Integral: torneos de ajedrez en vivo. ajedrez-integral.com" });
+}
+
+// ---- El calendario para suscribirse (/calendario/torneos.ics) ----
+//
+// Los próximos torneos de Torneos en Pareo Integral y los de
+// ajedrezcostarica.com, como un calendario al que la app del celular se
+// suscribe y vuelve a leer sola. Con ?o=<id>, solo los de ese organizador.
+// Son días enteros, igual que «Agregar a mi calendario» de cada torneo, con
+// los mismos UID: quien ya lo había agregado no lo ve dos veces. El texto lo
+// arma igual que js/calendario-ics.js (armarDias); verificar-worker.js
+// compara las dos salidas línea por línea, porque el worker no puede
+// importar ese archivo.
+const CALENDARIO = "/calendario/torneos.ics";
+const ZONA_CR = "America/Costa_Rica";
+const diaCR = (x) => new Intl.DateTimeFormat("en-CA", { timeZone: ZONA_CR }).format(x instanceof Date ? x : new Date(x));
+const ELO_LARGO_CAL = { fide: "Válido para Elo FIDE", ambos: "Válido para Elo FIDE y Nacional", nacional: "Válido solo para Elo Nacional", no: "No varía el Elo" };
+
+function icsEscapar(t) {
+  return String(t == null ? "" : t).replace(/\\/g, "\\\\").replace(/;/g, "\\;").replace(/,/g, "\\,").replace(/\r?\n/g, "\\n");
+}
+function icsDoblar(linea) {
+  const bytes = (x) => new TextEncoder().encode(x).length;
+  if (bytes(linea) <= 75) return linea;
+  const trozos = [];
+  let actual = "", limite = 75;
+  for (const ch of linea) {
+    if (bytes(actual + ch) > limite) { trozos.push(actual); actual = ""; limite = 74; }
+    actual += ch;
+  }
+  trozos.push(actual);
+  return trozos.join("\r\n ");
+}
+function diaSiguienteCal(dia) {
+  const [y, m, d] = dia.split("-").map(Number);
+  const x = new Date(Date.UTC(y, m - 1, d + 1));
+  const dos = (n) => String(n).padStart(2, "0");
+  return x.getUTCFullYear() + "-" + dos(x.getUTCMonth() + 1) + "-" + dos(x.getUTCDate());
+}
+const DIA_CAL = /^\d{4}-\d{2}-\d{2}$/;
+function armarCalendario(nombre, eventos, ahora) {
+  const stamp = (ahora || new Date()).toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
+  const l = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Ajedrez Integral//Mi calendario//ES", "CALSCALE:GREGORIAN", "METHOD:PUBLISH",
+    "X-WR-CALNAME:" + icsEscapar(nombre), "X-WR-TIMEZONE:" + ZONA_CR,
+    "BEGIN:VTIMEZONE", "TZID:" + ZONA_CR, "BEGIN:STANDARD", "DTSTART:19700101T000000", "TZOFFSETFROM:-0600", "TZOFFSETTO:-0600", "TZNAME:CST", "END:STANDARD", "END:VTIMEZONE",
+    // Que la app lo vuelva a leer dos veces al día.
+    "REFRESH-INTERVAL;VALUE=DURATION:PT12H", "X-PUBLISHED-TTL:PT12H"];
+  for (const e of eventos) {
+    if (!e || !DIA_CAL.test(e.desde || "")) continue;
+    const hasta = DIA_CAL.test(e.hasta || "") && e.hasta >= e.desde ? e.hasta : e.desde;
+    l.push("BEGIN:VEVENT", "UID:" + e.uid, "DTSTAMP:" + stamp,
+      "DTSTART;VALUE=DATE:" + e.desde.replace(/-/g, ""),
+      "DTEND;VALUE=DATE:" + diaSiguienteCal(hasta).replace(/-/g, ""),
+      "SUMMARY:" + icsEscapar(e.resumen));
+    if (e.lugar) l.push("LOCATION:" + icsEscapar(e.lugar));
+    if (e.descripcion) l.push("DESCRIPTION:" + icsEscapar(e.descripcion));
+    if (e.url) l.push("URL:" + e.url);
+    if (e.aviso) l.push("BEGIN:VALARM", "ACTION:DISPLAY", "DESCRIPTION:" + icsEscapar(e.resumen), "TRIGGER:" + e.aviso, "END:VALARM");
+    l.push("END:VEVENT");
+  }
+  l.push("END:VCALENDAR");
+  return l.map(icsDoblar).join("\r\n") + "\r\n";
+}
+
+// Los eventos, de las dos tablas públicas. Un torneo de Pareo Integral entra
+// si su último día es hoy o después; los de afuera, igual.
+async function eventosCalendario(org, ahora) {
+  const hoy = diaCR(ahora);
+  const hace = diaCR(new Date(ahora.getTime() - 31 * 86400000));
+  const propios = fetch(SUPABASE_URL + "/rest/v1/pareo_publicados?select=id,nombre,evento,lugar,fecha,fin:datos-%3E%3EfechaFin,ciudad:datos-%3E%3Eciudad,elo:datos-%3E%3EvalidoElo,ritmo:datos-%3E%3Eritmo,hora:datos-%3Eanuncio-%3E%3Ehora"
+    + "&fecha=gte." + hace + (org ? "&organizador_id=eq." + org : "") + "&order=fecha.asc&limit=500", { headers: LECTURA, signal: AbortSignal.timeout(5000) });
+  const afuera = org ? null : fetch(SUPABASE_URL + "/rest/v1/torneos_externos?select=id_externo,titulo,inicio,fin,provincia,lugar,elo,organizador,url&order=inicio.asc&limit=200", { headers: LECTURA, signal: AbortSignal.timeout(5000) });
+  const [a, b] = await Promise.all([propios, afuera]);
+  if (!a.ok || (b && !b.ok)) throw new Error("Supabase contestó " + a.status + (b ? "/" + b.status : ""));
+  const eventos = [];
+  for (const x of await a.json()) {
+    const hasta = DIA_CAL.test(x.fin || "") && x.fin >= x.fecha ? x.fin : x.fecha;
+    if (!DIA_CAL.test(x.fecha || "") || hasta < hoy) continue;
+    const enlace = SITIO + "/t/" + x.id;
+    eventos.push({ uid: "torneo-" + x.id + "@ajedrez-integral.com", desde: x.fecha, hasta: x.fin, resumen: x.nombre, lugar: x.ciudad || x.lugar || "",
+      descripcion: [x.evento && x.evento !== x.nombre ? x.evento + "." : "", x.hora ? "Empieza a las " + x.hora + "." : "", x.ritmo ? "Ritmo: " + x.ritmo + "." : "",
+        ELO_LARGO_CAL[x.elo] ? ELO_LARGO_CAL[x.elo] + "." : "", "Rondas y resultados: " + enlace].filter(Boolean).join(" "),
+      url: enlace, aviso: "-PT15H" });
+  }
+  if (b) for (const x of await b.json()) {
+    const desde = x.inicio ? diaCR(x.inicio) : "", hasta = x.fin ? diaCR(x.fin) : desde;
+    if (!desde || hasta < hoy) continue;
+    if (!/^https:\/\/ajedrezcostarica\.com\/es\/tournaments\/\d+$/.test(x.url || "")) continue;
+    eventos.push({ uid: "ajedrezcostarica-" + x.id_externo + "@ajedrez-integral.com", desde, hasta, resumen: x.titulo,
+      lugar: [x.lugar, x.provincia].filter(Boolean).join(", "),
+      descripcion: [x.organizador ? "Organiza: " + x.organizador + "." : "", ELO_LARGO_CAL[x.elo] ? ELO_LARGO_CAL[x.elo] + "." : "", "Inscripción y detalles: " + x.url].filter(Boolean).join(" "),
+      url: x.url, aviso: "-PT15H" });
+  }
+  return eventos.sort((p, q) => p.desde.localeCompare(q.desde));
+}
+
+async function calendarioTorneos(org) {
+  const ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  if (org != null && !ID.test(org)) return new Response("Ese organizador no existe.", { status: 404, headers: { "Content-Type": "text/plain; charset=utf-8" } });
+  const ahora = new Date();
+  let eventos, nombre = "Torneos de ajedrez en Costa Rica";
+  try {
+    eventos = await eventosCalendario(org ? org.toLowerCase() : null, ahora);
+    if (org) {
+      const r = await fetch(SUPABASE_URL + "/rest/v1/pareo_organizadores?select=nombre&id=eq." + org.toLowerCase(), { headers: LECTURA, signal: AbortSignal.timeout(3000) });
+      const o = r.ok ? (await r.json())[0] : null;
+      if (!o) return new Response("Ese organizador no existe.", { status: 404, headers: { "Content-Type": "text/plain; charset=utf-8" } });
+      nombre = "Torneos de " + o.nombre;
+    }
+  } catch (e) {
+    // La app se queda con lo que ya tenía y vuelve a intentar más tarde.
+    console.error("calendario: Supabase no contestó", String(e));
+    return new Response("No se pudo leer la lista de torneos. Intenta más tarde.", { status: 503, headers: { "Content-Type": "text/plain; charset=utf-8", "Retry-After": "3600" } });
+  }
+  return new Response(armarCalendario(nombre, eventos, ahora), {
+    status: 200,
+    headers: {
+      "Content-Type": "text/calendar; charset=utf-8",
+      "Content-Disposition": 'inline; filename="torneos.ics"',
+      "Cache-Control": "public, max-age=3600",
+      "X-Content-Type-Options": "nosniff",
+      "Strict-Transport-Security": "max-age=31536000; includeSubDomains",
+      "Access-Control-Allow-Origin": "*",
+    },
+  });
+}
+
+
+// ---- La clasificación para incrustar en otra página (/incrustar/<id>) ----
+//
+// Un club pega un <iframe> con esta dirección en su página y muestra la
+// clasificación de su torneo, que se pone al día sola. Es la ÚNICA página del
+// sitio que otra puede meter en un iframe: todas las demás llevan
+// frame-ancestors 'self' (_headers), y por eso la arma el worker con sus
+// propias cabeceras en vez de ser un archivo más. Trae el torneo ya leído
+// (JSON que no se ejecuta, con «<» escapado) y js/pareo-incrustar.js lo pinta
+// con los mismos módulos de Pareo Integral. Se vuelve a pedir cada minuto
+// (meta refresh). Ver «La clasificación para incrustar en otra página» en
+// docs/decisiones/juegos-y-torneos.md.
+const INCRUSTAR = /^\/incrustar\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\/?$/i;
+const SCRIPTS_INCRUSTAR = ["hora-cr.js", "ritmo-control.js", "pareo/torneo.js", "pareo/desempates.js", "pareo/equipos.js", "pareo/grupos.js", "pareo/premios.js", "pareo/evento.js", "pareo-incrustar.js"];
+// Los colores con su contraste medido (WCAG AA): texto 14,6:1 y notas 6,1:1
+// sobre blanco; en oscuro, 13,3:1 y 8,9:1 sobre #102a43.
+const ESTILO_INCRUSTAR = `
+:root{--fondo:#ffffff;--texto:#102a43;--nota:#486581;--linea:#d9e2ec}
+.oscuro{--fondo:#102a43;--texto:#f0f4f8;--nota:#bcccdc;--linea:#334e68}
+*{box-sizing:border-box}html,body{margin:0;background:var(--fondo);color:var(--texto);font-family:system-ui,-apple-system,"Segoe UI",Arial,sans-serif;font-size:15px;line-height:1.4}
+main{padding:12px}h1{font-size:1.15rem;margin:0}.sub,.nota,.pie,.inst{color:var(--nota);font-size:.85rem}.sub{margin:2px 0 10px}
+table{width:100%;border-collapse:collapse}caption{text-align:left;font-weight:700;margin-bottom:4px}
+th,td{padding:5px 6px;border-bottom:1px solid var(--linea);text-align:left;vertical-align:top}.num{text-align:right;white-space:nowrap}.fuerte{font-weight:700}
+.inst{display:block}a{color:var(--texto);text-decoration:underline;text-underline-offset:2px}a:focus-visible{outline:3px solid #f0b429;outline-offset:2px;border-radius:2px}
+.oculto{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}`;
+
+async function incrustarTorneo(id, oscuro) {
+  let x = null, fallo = false;
+  try {
+    const res = await fetch(SUPABASE_URL + "/rest/v1/pareo_publicados?select=id,nombre,evento,lugar,fecha,datos&id=eq." + id, { headers: LECTURA, signal: AbortSignal.timeout(4000) });
+    if (res.ok) x = (await res.json())[0] || null; else fallo = true;
+  } catch (e) {
+    fallo = true;
+    console.error("incrustar: Supabase no contestó", String(e));
+  }
+  const datos = x ? JSON.stringify(x).replace(/</g, "\\u003c") : "";
+  const mensaje = x ? "Cargando…" : fallo ? "No se pudo leer el torneo. Se vuelve a intentar en un minuto." : "Este torneo no está publicado en Pareo Integral.";
+  const html = `<!DOCTYPE html>
+<html lang="es"${oscuro ? ' class="oscuro"' : ""}><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>${escaparHtml(x ? x.nombre : "Pareo Integral")} | Pareo Integral</title>
+<meta name="robots" content="noindex">
+${x || fallo ? '<meta http-equiv="refresh" content="60">' : ""}
+<style>${ESTILO_INCRUSTAR}</style>
+</head><body>
+<main id="pi-inc" aria-live="polite"><p class="nota">${escaparHtml(mensaje)}</p></main>
+${x ? `<script type="application/json" id="pi-inc-datos">${datos}</script>
+${SCRIPTS_INCRUSTAR.map((f) => `<script src="/js/${f}"></script>`).join("\n")}` : ""}
+</body></html>`;
+  return new Response(html, {
+    status: x ? 200 : fallo ? 503 : 404,
+    headers: {
+      "Content-Type": "text/html; charset=utf-8",
+      "Cache-Control": "public, max-age=30",
+      // frame-ancestors *: cualquier página la puede mostrar en un iframe. Y
+      // nada de X-Frame-Options (si lo trajera, el navegador no la mostraría).
+      "Content-Security-Policy": "default-src 'none'; script-src 'self'; style-src 'unsafe-inline'; img-src 'self' data:; base-uri 'none'; form-action 'none'; frame-ancestors *",
       "X-Content-Type-Options": "nosniff",
       "Referrer-Policy": "strict-origin-when-cross-origin",
       "Strict-Transport-Security": "max-age=31536000; includeSubDomains",

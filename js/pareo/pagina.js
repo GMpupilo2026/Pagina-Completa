@@ -5323,11 +5323,21 @@
     });
     quitar.addEventListener("click", () => { logoNuevo = null; archivo.value = ""; ponerVista(); estadoOrg.textContent = tx("orgLogoQuitado"); });
     const guardarB = el("button", { type: "submit", id: "pi-org-guardar", class: C.boton }, tx(o ? "orgGuardar" : "orgCrear"));
+    // El correo: opcional, nunca se muestra entero (lo que hay lo dice
+    // #pi-org-correo-estado); escribir uno nuevo pide el consentimiento.
+    const correo = el("input", { id: "pi-org-correo", type: "email", maxlength: "200", autocomplete: "email", class: C.campo + " w-full", "aria-describedby": "pi-org-correo-ayuda" });
+    const permisoCorreo = el("input", { type: "checkbox", id: "pi-org-correo-permiso", class: "mt-1" });
     const form = el("form", { id: "pi-org-form", class: "grid gap-3 sm:max-w-lg", novalidate: true },
       el("label", { for: "pi-org-nombre", class: "text-sm font-semibold" }, tx("orgNombre"), nombre),
       el("div", {}, el("label", { for: "pi-org-logo", class: "block text-sm font-semibold mb-1" }, tx("orgLogo")),
         el("div", { class: "flex flex-wrap items-center gap-3" }, vista, archivo, quitar),
         el("p", { class: C.nota + " mt-1", texto: tx("orgLogoAyuda") })),
+      el("div", {}, el("label", { for: "pi-org-correo", class: "block text-sm font-semibold mb-1" }, tx("orgCorreo")), correo,
+        el("p", { id: "pi-org-correo-ayuda", class: C.nota + " mt-1", texto: tx("orgCorreoAyuda") }),
+        el("p", { id: "pi-org-correo-estado", class: "text-sm mt-1", role: "status" }),
+        el("div", { class: "flex items-start gap-2 text-sm mt-2" }, permisoCorreo,
+          el("label", { for: "pi-org-correo-permiso" }, tx("orgCorreoPermiso") + " ",
+            el("a", { href: "privacidad.html#torneos", target: "_blank", rel: "noopener", class: "underline underline-offset-2 hover:no-underline", texto: tx("politicaPrivacidad") }), "."))),
       el("div", {}, guardarB), estadoOrg);
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
@@ -5339,9 +5349,16 @@
       if (o) Object.assign(pedido, { id: o.id, clave: o.clave });
       if (logoNuevo !== undefined) pedido.logo = logoNuevo;
       else if (!o) pedido.logo = null;
+      const nuevoCorreo = correo.value.trim();
+      if (nuevoCorreo) {
+        if (!permisoCorreo.checked) { guardarB.disabled = false; estadoOrg.textContent = ""; Avisos.avisar(tx("orgCorreoFaltaPermiso"), { tipo: "error" }); permisoCorreo.focus(); return; }
+        Object.assign(pedido, { correo: nuevoCorreo, consentimiento: true });
+      }
       const r = await PareoPublicar.guardarOrganizador(pedido);
       guardarB.disabled = false;
       if (!r.ok) { estadoOrg.textContent = ""; Avisos.avisar(r.error || tx("publicarSinRed"), { tipo: "error" }); return; }
+      if (r.correoPendiente === true) Avisos.avisar(tx("orgCorreoEnviado", { c: nuevoCorreo }));
+      else if (r.correoPendiente === false) Avisos.avisar(tx("orgCorreoNoSalio"), { tipo: "error" });
       const nueva = { id: r.id, clave: o ? o.clave : r.clave, nombre: n, logo: logoNuevo === undefined ? (o && o.logo) || null : logoNuevo };
       escribir(CLAVE_ORG, JSON.stringify(nueva));
       // Los torneos ya publicados desde acá pasan a su nombre (y con su
@@ -5368,7 +5385,9 @@
       caja.append(el("div", { class: "mt-4 flex flex-wrap items-center gap-3" },
         el("a", { id: "pi-org-pagina", href: pagina, target: "_blank", rel: "noopener", class: "text-sm underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400" }, tx("orgVerPagina")),
         copiar),
-        el("p", { class: C.nota + " mt-1", texto: tx("orgCodigoAyuda") }));
+        el("p", { class: C.nota + " mt-1", texto: tx("orgCodigoAyuda") }),
+        el("div", { id: "pi-org-sello", class: "mt-4" }));
+      pintarEstadoOrganizacion(o);
     } else {
       const usar = el("button", { type: "button", id: "pi-org-usar", class: C.botonSec + " mt-4" }, tx("orgUsarCodigo"));
       usar.addEventListener("click", async () => {
@@ -5381,8 +5400,100 @@
         pintarOrganizacion();
         Avisos.avisar(tx("orgCodigoUsado"));
       });
-      caja.append(usar);
+      const recuperar = el("button", { type: "button", id: "pi-org-recuperar", class: C.botonSec + " mt-4" }, tx("orgRecuperar"));
+      recuperar.addEventListener("click", async () => {
+        const res = await Avisos.formulario({ titulo: tx("orgRecuperar"), texto: tx("orgRecuperarTexto"), aceptar: tx("orgRecuperarMandar"), cancelar: tx("cancelar"),
+          campos: [{ nombre: "correo", etiqueta: tx("orgCorreo"), valor: "", max: 200 }] });
+        if (!res || !String(res.correo || "").trim()) return;
+        recuperar.disabled = true;
+        const r = await PareoPublicar.recuperarOrganizador(String(res.correo).trim());
+        recuperar.disabled = false;
+        if (!r.ok) { Avisos.avisar(r.error || tx("publicarSinRed"), { tipo: "error" }); return; }
+        Avisos.avisar(tx("orgRecuperarEnviado"));
+      });
+      caja.append(el("div", { class: "flex flex-wrap gap-2" }, usar, recuperar));
     }
+  }
+
+  // Lo que la organización ve de sí misma (con su clave, de la función): su
+  // correo tapado y si está confirmado, y el sello o cómo pedirlo.
+  async function pintarEstadoOrganizacion(o) {
+    const r = await PareoPublicar.estadoOrganizador(o);
+    const caja = $("pi-org-sello"), correoEstado = $("pi-org-correo-estado");
+    if (!caja || !r.ok) return;
+    if (correoEstado) {
+      correoEstado.replaceChildren();
+      if (r.correo) {
+        const quitarC = el("button", { type: "button", id: "pi-org-correo-quitar", class: C.mini + " ml-2" }, tx("orgCorreoQuitar"));
+        quitarC.addEventListener("click", async () => {
+          const n = ($("pi-org-nombre").value || o.nombre || "").trim();
+          const q = await PareoPublicar.guardarOrganizador({ id: o.id, clave: o.clave, nombre: n.length >= 2 ? n : o.nombre, correo: "" });
+          if (!q.ok) { Avisos.avisar(q.error || tx("publicarSinRed"), { tipo: "error" }); return; }
+          Avisos.avisar(tx("orgCorreoQuitado"));
+          pintarEstadoOrganizacion(o);
+        });
+        correoEstado.append(tx(r.correoConfirmado ? "orgCorreoConfirmado" : "orgCorreoPendiente", { c: r.correo }), quitarC);
+      }
+    }
+    if (r.verificado) { caja.replaceChildren(el("p", { class: "text-sm font-semibold", texto: tx("orgSelloTiene") })); return; }
+    if (r.selloPendiente) { caja.replaceChildren(el("p", { class: "text-sm", texto: tx("orgSelloPendiente") })); return; }
+    const abrirB = el("button", { type: "button", id: "pi-org-sello-abrir", class: C.botonSec, "aria-expanded": "false", "aria-controls": "pi-org-sello-form" }, tx("orgSello"));
+    const campo = (id, etiqueta, max, tipo) => el("label", { for: id, class: "text-sm font-semibold" }, etiqueta,
+      tipo === "textarea"
+        ? el("textarea", { id, maxlength: String(max), rows: "3", class: C.campo + " w-full font-normal" })
+        : el("input", { id, maxlength: String(max), type: "text", class: C.campo + " w-full font-normal" }));
+    const permiso = el("input", { type: "checkbox", id: "pi-org-sello-permiso", class: "mt-1" });
+    const mandarB = el("button", { type: "submit", id: "pi-org-sello-mandar", class: C.boton }, tx("orgSelloMandar"));
+    const form = el("form", { id: "pi-org-sello-form", class: "grid gap-3 sm:max-w-lg mt-3", novalidate: true, hidden: true },
+      el("p", { class: C.nota, texto: tx("orgSelloAyuda") }),
+      campo("pi-org-sello-quien", tx("orgSelloQuien"), 120), campo("pi-org-sello-representa", tx("orgSelloRepresenta"), 200),
+      campo("pi-org-sello-contacto", tx("orgSelloContacto"), 160), campo("pi-org-sello-nota", tx("orgSelloNota"), 800, "textarea"),
+      el("div", { class: "flex items-start gap-2 text-sm" }, permiso,
+        el("label", { for: "pi-org-sello-permiso" }, tx("orgSelloPermiso") + " ",
+          el("a", { href: "privacidad.html#torneos", target: "_blank", rel: "noopener", class: "underline underline-offset-2 hover:no-underline", texto: tx("politicaPrivacidad") }), ".")),
+      el("div", {}, mandarB));
+    abrirB.addEventListener("click", () => {
+      const abierto = abrirB.getAttribute("aria-expanded") === "true";
+      abrirB.setAttribute("aria-expanded", abierto ? "false" : "true");
+      form.hidden = abierto;
+      if (!abierto) $("pi-org-sello-quien").focus();
+    });
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const v = (id) => $(id).value.trim();
+      const datos = { quien: v("pi-org-sello-quien"), representa: v("pi-org-sello-representa"), contacto: v("pi-org-sello-contacto"), nota: v("pi-org-sello-nota") };
+      if (datos.quien.length < 2 || datos.representa.length < 2 || datos.contacto.length < 5) { Avisos.avisar(tx("orgSelloFalta"), { tipo: "error" }); return; }
+      if (!permiso.checked) { Avisos.avisar(tx("orgSelloFaltaPermiso"), { tipo: "error" }); permiso.focus(); return; }
+      mandarB.disabled = true;
+      const q = await PareoPublicar.pedirSello(o, datos);
+      mandarB.disabled = false;
+      if (!q.ok) { Avisos.avisar(q.error || tx("publicarSinRed"), { tipo: "error" }); return; }
+      Avisos.avisar(tx("orgSelloEnviado"));
+      caja.replaceChildren(el("p", { class: "text-sm", tabindex: "-1", id: "pi-org-sello-listo", texto: tx("orgSelloPendiente") }));
+      $("pi-org-sello-listo").focus();
+    });
+    caja.replaceChildren(abrirB, form);
+  }
+
+  // Los enlaces de los correos: confirmar el correo de la organización
+  // (#org-correo=<id>.<token>) y recuperarla en este navegador
+  // (#org-recuperar=<id>.<token>, que deja una clave nueva).
+  async function enlaceOrganizacion(hash) {
+    const m = /^#org-(correo|recuperar)=([0-9a-f-]{36})\.([0-9a-f]{20,100})$/.exec(hash);
+    history.replaceState(null, "", location.pathname + location.search);
+    if (!m) return;
+    if (m[1] === "correo") {
+      const r = await PareoPublicar.confirmarCorreo(m[2], m[3]);
+      if (!r.ok) { Avisos.avisar(r.error || tx("publicarSinRed"), { tipo: "error", duracion: 0 }); return; }
+      Avisos.avisar(tx("orgCorreoConfirmadoAviso", { n: r.nombre || "" }));
+    } else {
+      const r = await PareoPublicar.recuperarConfirmar(m[2], m[3]);
+      if (!r.ok) { Avisos.avisar(r.error || tx("publicarSinRed"), { tipo: "error", duracion: 0 }); return; }
+      escribir(CLAVE_ORG, JSON.stringify({ id: r.id, clave: r.clave, nombre: r.nombre || "", logo: r.logo || null }));
+      Avisos.avisar(tx("orgRecuperada", { n: r.nombre || "" }), { duracion: 0 });
+    }
+    irA("archivos");
+    pintarOrganizacion();
   }
 
   function pintarPublicar() {
@@ -6220,6 +6331,7 @@
     restaurarBorrador();
     avisarPestanas();
     if (location.hash.startsWith("#recibir=")) recibirEvento(location.hash.slice(9));
+    if (/^#org-(correo|recuperar)=/.test(location.hash)) enlaceOrganizacion(location.hash);
     // Después de pintar: que no compita con lo que se ve primero.
     setTimeout(() => { prepararSinRed(); }, 1500);
     window.addEventListener("offline", () => decirSinRed(leer(CLAVE_SIN_RED) ? "sinRedAhora" : "sinRedAhoraSinGuardar"));

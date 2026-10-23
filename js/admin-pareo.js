@@ -1,11 +1,13 @@
 /* La moderación de «Torneos en Pareo Integral» (admin-pareo.html).
  *
  * Lo que la gente reporta desde la página de cada torneo (pareo_reportes),
- * el sello «Organizador verificado» y ocultar o mostrar una organización o
- * un torneo. Todo lo escribe una sola función de la base,
- * public.pareo_moderar, que valida que sea quien administra y deja la
- * bitácora: acá solo se pinta y se llama. Ocultar no borra: deja de verse en
- * la lista pública (la RLS lo esconde a todos menos a administración).
+ * quién pide el sello (pareo_solicitudes_sello), el sello «Organizador
+ * verificado», ocultar o mostrar una organización o un torneo y el historial
+ * (pareo_moderaciones). Todo lo escribe una sola función de la base,
+ * public.pareo_moderar_con_motivo, que valida que sea quien administra, deja
+ * la bitácora y anota el motivo: acá solo se pinta y se llama. Ocultar no
+ * borra: deja de verse en la lista pública (la RLS lo esconde a todos menos
+ * a administración).
  *
  * Ver «Torneos en Pareo Integral: el organizador y la moderación» en
  * docs/decisiones/juegos-y-torneos.md.
@@ -41,9 +43,22 @@
             el("tbody", {}, filas)))
         : el("p", { class: "text-sm text-brand-600 dark:text-brand-300", texto: vacio }));
 
+    // Qué dice el historial de cada acción.
+    const ACCION = {
+        verificar: "Dio el sello", quitar_sello: "Quitó el sello", ocultar_org: "Ocultó la organización", mostrar_org: "Mostró la organización",
+        ocultar: "Ocultó el torneo", mostrar: "Mostró el torneo", revisado: "Revisó un reporte", aprobar_sello: "Aprobó el sello", rechazar_sello: "Rechazó el sello",
+    };
+    // Todo pide el motivo (puede ir vacío), menos marcar un reporte revisado.
     async function moderar(que, id, boton, hecho) {
+        let motivo = "";
+        if (que !== "revisado") {
+            const r = await Avisos.formulario({ titulo: ACCION[que], texto: "Queda en el historial. Si es algo que se repite, sirve saber por qué.",
+                aceptar: ACCION[que], cancelar: "Cancelar", campos: [{ nombre: "motivo", etiqueta: "Por qué (si quieres)", tipo: "textarea", valor: "", max: 500 }] });
+            if (!r) return;
+            motivo = String(r.motivo || "").trim();
+        }
         boton.disabled = true;
-        const { error } = await window.sb.rpc("pareo_moderar", { p_que: que, p_id: id });
+        const { error } = await window.sb.rpc("pareo_moderar_con_motivo", { p_que: que, p_id: id, p_motivo: motivo });
         boton.disabled = false;
         if (error) { Avisos.avisar("No se pudo: " + error.message, { tipo: "error" }); return; }
         $("ap-estado").textContent = hecho;
@@ -116,9 +131,43 @@
         $("ap-ocultos").replaceChildren(tabla(["Torneo", "Fecha", ""], filas, "No hay torneos ocultos."));
     }
 
+    async function pintarSello() {
+        const { data, error } = await window.sb.from("pareo_solicitudes_sello").select("id,organizador_id,quien,representa,contacto,nota,creado")
+            .eq("estado", "nueva").order("creado", { ascending: true }).range(0, 199);
+        if (error) { $("ap-sello").replaceChildren(el("p", { class: "text-sm", role: "alert", texto: "No se pudieron leer las solicitudes: " + error.message })); return; }
+        const nombre = (id) => (organizaciones.find((o) => o.id === id) || {}).nombre || "(organización)";
+        const filas = (data || []).map((s) => {
+            const si = el("button", { type: "button", class: BOTON, "data-aprobar": s.id }, "Dar el sello");
+            si.addEventListener("click", () => moderar("aprobar_sello", s.id, si, "«" + nombre(s.organizador_id) + "» tiene el sello «Verificado»."));
+            const no = el("button", { type: "button", class: BOTON, "data-rechazar": s.id }, "Rechazar");
+            no.addEventListener("click", () => moderar("rechazar_sello", s.id, no, "Solicitud rechazada."));
+            return el("tr", { "data-solicitud": s.id },
+                el("td", { class: "whitespace-nowrap", texto: fecha(s.creado) }),
+                el("td", {}, el("a", { href: "torneos-pareo.html#o=" + encodeURIComponent(s.organizador_id), target: "_blank", rel: "noopener", class: ENLACE + " font-semibold" }, nombre(s.organizador_id),
+                    el("span", { class: "sr-only", texto: " (se abre en otra pestaña)" }))),
+                el("td", {}, el("span", { class: "block", texto: s.quien }), el("span", { class: "block text-xs", texto: s.representa })),
+                el("td", { texto: s.contacto }),
+                el("td", { class: "max-w-xs", texto: s.nota || "—" }),
+                el("td", {}, el("div", { class: "flex flex-wrap gap-2" }, si, no)));
+        });
+        $("ap-sello").replaceChildren(tabla(["Cuándo", "Organización", "Quién la pide", "Contacto", "Nota", ""], filas, "Nadie está pidiendo el sello."));
+    }
+
+    async function pintarHistorial() {
+        const { data, error } = await window.sb.from("pareo_moderaciones").select("id,que,nombre,motivo,cuando")
+            .order("cuando", { ascending: false }).range(0, 99);
+        if (error) { $("ap-historial").replaceChildren(el("p", { class: "text-sm", role: "alert", texto: error.message })); return; }
+        const filas = (data || []).map((h) => el("tr", { "data-historial": h.id },
+            el("td", { class: "whitespace-nowrap", texto: fecha(h.cuando) }),
+            el("td", { texto: ACCION[h.que] || h.que }),
+            el("td", { texto: h.nombre || "—" }),
+            el("td", { class: "max-w-xs", texto: h.motivo || "—" })));
+        $("ap-historial").replaceChildren(tabla(["Cuándo", "Qué", "Sobre qué", "Por qué"], filas, "Todavía no se hizo nada desde acá."));
+    }
+
     async function pintarTodo() {
         try { await leerOrganizaciones(); } catch (e) { organizaciones = []; }
-        await Promise.all([pintarReportes(), pintarOcultos()]);
+        await Promise.all([pintarReportes(), pintarOcultos(), pintarSello(), pintarHistorial()]);
         pintarOrganizaciones();
     }
 
