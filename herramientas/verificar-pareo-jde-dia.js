@@ -122,9 +122,10 @@ function pruebaSinNavegador() {
   igual("el oro para ALFA; los otros tres empatados en el segundo lugar, los tres con plata", p.filas.map((f) => f.medalla), ["Oro", "Plata", "Plata", "Plata"]);
   igual("el mejor del tablero 1, en el podio", p.tableros[0].filas.map((f) => f.nombre), ["PRUEBA ALFA 1"]);
   const texto = JSON.stringify(V.premiacion(evento, [t]).bloques);
-  ok(/Oro, primer lugar: LICEO ALFA \(PRUEBA ALFA 1, PRUEBA ALFA 2/.test(texto), "la premiación nombra al equipo y a sus integrantes", texto.slice(0, 300));
+  // (En tablas: medalla, lugar, equipo, integrantes, puntos; el mejor tablero en la suya.)
+  ok(/\["Oro","Primer lugar","LICEO ALFA","PRUEBA ALFA 1, PRUEBA ALFA 2/.test(texto), "la premiación nombra al equipo y a sus integrantes", texto.slice(0, 300));
   ok(texto.indexOf("Plata") < texto.indexOf("Oro"), "del tercer lugar al primero, como se lee en el acto");
-  ok(/Mejor tablero 1: PRUEBA ALFA 1 \(LICEO ALFA, 3 de 3, 100 %\)/.test(texto), "y el mejor de cada tablero");
+  ok(/\["Tablero 1","PRUEBA ALFA 1","LICEO ALFA","3 de 3","100 %"\]/.test(texto), "y el mejor de cada tablero");
   const dip = V.diplomas(evento, [t]);
   const deAlfa1 = dip.filter((d) => d.nombre === "PRUEBA ALFA 1").map((d) => d.lugar);
   igual("PRUEBA ALFA 1 lleva dos diplomas: primer lugar y mejor tablero 1", deAlfa1, ["Primer lugar", "Mejor tablero 1"]);

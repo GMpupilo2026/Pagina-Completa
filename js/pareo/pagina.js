@@ -96,6 +96,7 @@
   function guardar() {
     if (!estado.t) return;
     if (!estado.deshaciendo) avisarRetiros(estado.t, retirosAuto(estado.t));
+    pedirAlmacenamientoFijo();
     V.marcarTiempos(estado.t, Date.now());
     const texto = JSON.stringify(estado.t);
     if (estado.ultimoGuardado && estado.ultimoGuardado !== texto && !estado.deshaciendo) {
@@ -126,6 +127,7 @@
     if (estado.respaldoArchivo && estado.t.evento && estado.t.evento.id === estado.respaldoArchivo.id) programarRespaldo();
     avisarRondaCompleta();
     if (estado.t.publicado) programarPublicacion();
+    else if (estado.t.rondas.length) publicarSolo(estado.id);
   }
   const TOPE_HISTORIAL = 40;
 
@@ -467,10 +469,116 @@
     }
     f.elements.rondasTotales.min = Math.max(1, v.rondas.length);
     $("pi-config-jde-aplicar").disabled = v.rondas.length > 0;
+    // Con la configuración de los JDE puesta, el ritmo, el sistema, los
+    // puntos y los desempates quedan fijos: se cambian con un motivo, que va
+    // al acta (V.cambiosDeConfiguracion).
+    const fija = configFija(v);
+    f.elements.ritmo.readOnly = fija;
+    if (fija) {
+      for (const r of f.querySelectorAll('input[name="sistema"]')) r.disabled = true;
+      for (const k of ["victoria", "tablas", "derrota", "bye"]) f.elements["p_" + k].disabled = true;
+    }
+    pintarConfigFija(v);
+    pintarVivoTorneo();
+    pintarPlazoAlineacion(v);
     pintarDesempates();
     // La sugerencia de un torneo por grupo vive en esta ficha (junto a «Subir
     // la lista»): se vuelve a pintar con ella (el idioma, por ejemplo).
     pintarSugerencia();
+  }
+
+  // El enlace en vivo, también en la ficha Torneo (lo pidió el dueño del
+  // sitio): el del evento si el torneo es de uno, si no el de este torneo.
+  // Los mismos canales que en Archivos y en Rondas, no otros.
+  function pintarVivoTorneo() {
+    const v = t();
+    const caja = $("pi-torneo-vivo");
+    caja.replaceChildren();
+    const qr = el("div", { id: "pi-tv-qr", class: "mt-3" });
+    const ev = v.evento;
+    const vivo = ev ? !!(estado.eventoVivo && estado.eventoVivo.id === ev.id) : !!estado.enVivo;
+    const b = el("button", { type: "button", id: "pi-tv-boton", class: vivo ? C.botonSec : C.boton, "aria-pressed": vivo ? "true" : "false" },
+      tx(vivo ? "eventoVivoApagar" : ev ? "eventoVivoPrender" : "vivoTorneoPrender"));
+    b.addEventListener("click", async () => {
+      if (ev) {
+        if (vivo) apagarEventoVivo(); else if (!(await prenderEventoVivo(ev))) return;
+      } else if (vivo) { $("pi-ver-en-vivo").checked = false; desactivarEnVivo(); }
+      else { $("pi-ver-en-vivo").checked = true; if (!(await activarEnVivo())) return; }
+      pintarVivoTorneo();
+      $("pi-tv-boton").focus();
+    });
+    caja.append(el("h3", { class: "font-semibold", texto: tx(ev ? "eventoVivoTitulo" : "vivoTorneoTitulo") }),
+      el("p", { class: C.nota + " mt-1", texto: tx(ev ? "eventoVivoTexto" : "vivoTorneoTexto") }), el("div", { class: "mt-2" }, b), qr);
+    if (!vivo) return;
+    if (ev) { mostrarQrEvento(qr, "pi-tv"); return; }
+    const url = location.origin + location.pathname + "#vivo=" + v.liveCodigo;
+    PareoQr.cargar().then(() => {
+      const copiar = el("button", { type: "button", class: C.mini }, tx("copiarEnlace"));
+      copiar.addEventListener("click", async () => {
+        try { await navigator.clipboard.writeText(url); Avisos.avisar(tx("enlaceCopiado")); }
+        catch (e) { Avisos.avisar(tx("noCopia"), { tipo: "error" }); }
+      });
+      qr.replaceChildren(el("div", { class: "w-48 bg-white p-2 rounded-lg" }, PareoQr.svg(url, tx("qrEtiqueta"))),
+        el("p", { id: "pi-tv-url", class: "text-xs break-all mt-2 font-mono", texto: url }), el("div", { class: "mt-1" }, copiar));
+    }).catch((e) => Avisos.avisar(tx("errorQr", { e: e.message }), { tipo: "error" }));
+  }
+
+  // En un torneo por equipos: cuántos minutos antes de la ronda pueden los
+  // capitanes cambiar la alineación desde su celular (limiteAlineacion).
+  function pintarPlazoAlineacion(v) {
+    const caja = $("pi-plazo-alineacion");
+    caja.replaceChildren();
+    caja.hidden = !E.esDeEquipos(v);
+    if (caja.hidden) return;
+    const campo = el("input", { id: "pi-plazo-min", type: "number", min: "0", max: "180", step: "5", inputmode: "numeric", class: C.campo + " w-28", value: v.plazoAlineacion == null ? "" : String(v.plazoAlineacion) });
+    campo.addEventListener("change", () => {
+      const n = Math.round(Number(campo.value));
+      if (campo.value === "") delete v.plazoAlineacion;
+      else if (n >= 0 && n <= 180) v.plazoAlineacion = n;
+      else { campo.value = v.plazoAlineacion == null ? "" : String(v.plazoAlineacion); return; }
+      guardar();
+      pintarPlazoAlineacion(v);
+      $("pi-plazo-min").focus();
+    });
+    const limite = limiteAlineacion(v);
+    caja.append(el("h3", { class: "font-semibold" }, tx("plazoTitulo")),
+      el("label", { for: "pi-plazo-min", class: "flex flex-wrap items-center gap-2 text-sm mt-2" }, el("span", { texto: tx("plazoAntes") }), campo, el("span", { texto: tx("plazoMinutos") })),
+      el("p", { class: C.nota + " mt-1", texto: tx("plazoAyuda") }),
+      el("p", { id: "pi-plazo-estado", class: "text-sm font-semibold mt-1", role: "status",
+        texto: v.plazoAlineacion == null ? tx("plazoSin") : limite ? tx("plazoHasta", { h: horaCR(limite), r: v.rondas.length }) : tx("plazoSinHora") }));
+  }
+
+  const configFija = (v) => !!v.jde && !v.configLibre;
+  function pintarConfigFija(v) {
+    const caja = $("pi-config-fija");
+    caja.replaceChildren();
+    caja.hidden = !v.jde;
+    if (!v.jde) return;
+    const fija = configFija(v);
+    const b = el("button", { type: "button", id: "pi-config-cambiar", class: C.mini }, tx(fija ? "configCambiar" : "configFijar"));
+    b.addEventListener("click", () => (fija ? cambiarConfigJde() : fijarConfigJde()));
+    caja.append(el("p", { class: "text-sm" }, el("span", { class: "font-semibold", texto: tx(fija ? "configFijaTitulo" : "configLibreTitulo") + " " }), tx(fija ? "configFijaTexto" : "configLibreTexto")),
+      el("div", { class: "mt-2" }, b));
+  }
+  async function cambiarConfigJde() {
+    const v = t();
+    const r = await Avisos.formulario({ titulo: tx("configCambiarTitulo"), texto: tx("configCambiarTexto"), aceptar: tx("configCambiarSi"), cancelar: tx("cancelar"),
+      campos: [{ nombre: "motivo", etiqueta: tx("configMotivo"), max: 300 }] });
+    if (!r || t() !== v) return;
+    const motivo = String(r.motivo || "").trim();
+    if (motivo.length < 3) { Avisos.avisar(tx("configMotivoFalta"), { tipo: "error" }); return; }
+    v.cambiosConfig = (v.cambiosConfig || []).concat({ hora: Date.now(), motivo, antes: V.configuracionDe(v) });
+    v.configLibre = true;
+    guardar();
+    pintarTorneo();
+    Avisos.avisar(tx("configCambioAnotado"));
+    $("pi-form-torneo").elements.ritmo.focus();
+  }
+  function fijarConfigJde() {
+    delete t().configLibre;
+    guardar();
+    pintarTorneo();
+    $("pi-config-cambiar").focus();
   }
 
   // «Aplicar la configuración de los JDE» al torneo abierto, antes de la
@@ -548,6 +656,7 @@
     // grupo la primera vez; las siguientes, solo cambia el evento.
     if (v.grupo == null) v.grupo = v.jde ? "" : String(v.nombre || "").trim();
     Object.assign(v, configuracionPara(v.jugadores.length, v, E.esDeEquipos(v), jde.etapa), { jde, nombre: nombreConGrupo(jde, v.grupo) });
+    delete v.configLibre;
     guardar();
     pintarTorneo();
     pintarLista();
@@ -559,6 +668,7 @@
     const n = e.target.name;
     if (!n) return;
     if (n === "nombre" && v.jde) { e.target.value = v.nombre || ""; return; }
+    if (configFija(v) && (n === "ritmo" || n === "sistema" || n.startsWith("p_"))) { pintarTorneo(); return; }
     if (n === "sistema") { if (v.rondas.length === 0) v.sistema = e.target.value; }
     else if (n === "baku" || n === "dobleVuelta") v[n] = e.target.checked;
     else if (n === "rondasTotales") {
@@ -581,6 +691,7 @@
     const ol = $("pi-desempates");
     ol.replaceChildren();
     const lista = t().desempates;
+    const fija = configFija(t());
     lista.forEach((c, i) => {
       const info = E.catalogo(t()).find((x) => x.codigo === c);
       if (!info) return;
@@ -596,16 +707,17 @@
         el("span", { class: "font-mono text-xs font-bold w-6 text-right", texto: (i + 1) + "." }),
         el("span", { class: "flex-1 min-w-[10rem]" }, el("span", { class: "font-semibold", texto: info[idioma] }), " ",
           el("span", { class: "text-xs text-brand-600 dark:text-brand-300", texto: "(" + c + ")" })),
-        el("button", { type: "button", class: C.mini + " pi-sube", disabled: i === 0, "aria-label": tx("subir", { n: info[idioma] }), onclick: mover(-1) }, "↑"),
-        el("button", { type: "button", class: C.mini + " pi-baja", disabled: i === lista.length - 1, "aria-label": tx("bajar", { n: info[idioma] }), onclick: mover(1) }, "↓"),
-        el("button", { type: "button", class: C.miniPeligro, "aria-label": tx("quitarDesempate", { n: info[idioma] }), onclick: () => { lista.splice(i, 1); guardar(); pintarDesempates(); $("pi-desempate-nuevo").focus(); } }, tx("quitar"))
+        el("button", { type: "button", class: C.mini + " pi-sube", disabled: fija || i === 0, "aria-label": tx("subir", { n: info[idioma] }), onclick: mover(-1) }, "↑"),
+        el("button", { type: "button", class: C.mini + " pi-baja", disabled: fija || i === lista.length - 1, "aria-label": tx("bajar", { n: info[idioma] }), onclick: mover(1) }, "↓"),
+        el("button", { type: "button", class: C.miniPeligro, disabled: fija, "aria-label": tx("quitarDesempate", { n: info[idioma] }), onclick: () => { lista.splice(i, 1); guardar(); pintarDesempates(); $("pi-desempate-nuevo").focus(); } }, tx("quitar"))
       ));
     });
     if (!lista.length) ol.append(el("li", { class: C.nota + " italic", texto: tx("sinDesempates") }));
     const s = $("pi-desempate-nuevo");
     s.replaceChildren();
     for (const x of E.catalogo(t())) if (!lista.includes(x.codigo)) s.append(el("option", { value: x.codigo, texto: x[idioma] + " (" + x.codigo + ")" }));
-    $("pi-desempate-agregar").disabled = !s.options.length;
+    s.disabled = fija;
+    $("pi-desempate-agregar").disabled = fija || !s.options.length;
   }
 
   // ---------- Jugadores ----------
@@ -650,6 +762,11 @@
     const orden = T.ordenInicial(v);
     const tabla = $("pi-tabla-jugadores");
     tabla.replaceChildren();
+    // La acreditación, en la lista de inscritos (antes de emparejar también
+    // está en Rondas). En equipos no: se acredita el equipo en la sala.
+    const acred = $("pi-acreditacion");
+    acred.replaceChildren();
+    if (!E.esDeEquipos(v) && v.jugadores.length) pintarPasarLista(acred, pintarJugadores, "pi-j");
     // En un torneo por equipos no se agrega gente a mano ni se busca el Elo
     // Nacional de un equipo: los equipos salen de la inscripción.
     const deEquipos = E.esDeEquipos(v);
@@ -741,6 +858,7 @@
     const num = T.numeros(v);
     const caja = $("pi-equipos");
     caja.replaceChildren();
+    caja.append(formularioEquipo());
     if (!v.jugadores.length) return;
     const fijo = v.rondas.length > 0;
     caja.append(el("div", { class: "flex flex-wrap gap-2" },
@@ -761,7 +879,8 @@
           el("span", { class: "flex-1 min-w-[10rem]", texto: j.nombre + (Number(j.elo) > 0 ? " (" + j.elo + ")" : "") }),
           el("button", { type: "button", id: "pi-orden-" + id + "-" + k + "-sube", class: C.mini, disabled: fijo || k === 0, "aria-label": tx("subir", { n: j.nombre }), onclick: mover(-1) }, "↑"),
           el("button", { type: "button", id: "pi-orden-" + id + "-" + k + "-baja", class: C.mini, disabled: fijo || k === e.integrantes.length - 1, "aria-label": tx("bajar", { n: j.nombre }), onclick: mover(1) }, "↓"),
-          fijo ? null : el("button", { type: "button", id: "pi-reemplazar-" + id + "-" + k, class: C.mini, "aria-label": tx("reemplazarA", { n: j.nombre }), onclick: () => reemplazarIntegrante(id, k) }, tx("reemplazar"))));
+          fijo ? null : el("button", { type: "button", id: "pi-reemplazar-" + id + "-" + k, class: C.mini, "aria-label": tx("reemplazarA", { n: j.nombre }), onclick: () => reemplazarIntegrante(id, k) }, tx("reemplazar")),
+          fijo ? null : el("button", { type: "button", id: "pi-quitar-" + id + "-" + k, class: C.miniPeligro, "aria-label": tx("quitarIntegranteA", { n: j.nombre, e: e.nombre }), onclick: () => quitarIntegrante(id, k) }, tx("quitar"))));
       });
       caja.append(el("section", { class: "rounded-xl border border-brand-200 dark:border-brand-700 p-3", "data-equipo": id },
         el("h3", { class: "font-semibold", texto: num.get(id) + ". " + e.nombre }),
@@ -795,6 +914,63 @@
     pintarEquipos();
     Avisos.avisar(tx("reemplazado", { s: sale.nombre, e: nombre }));
     const b = $("pi-reemplazar-" + idE + "-" + k); if (b) b.focus();
+  }
+
+  // Sacar a un integrante que no vino (antes de la ronda 1): queda en el
+  // acta. Un equipo que se queda sin nadie sale del torneo.
+  async function quitarIntegrante(idE, k) {
+    const v = t();
+    const e = jugador(idE);
+    const sale = e.integrantes[k];
+    const ok = await Avisos.confirmar(tx("quitarIntegranteTexto", { n: sale.nombre, e: e.nombre, q: e.integrantes.length - 1, m: G.JDE_MIN_EQUIPO }), { aceptar: tx("quitarIntegranteSi"), peligro: true });
+    if (!ok || t() !== v || v.rondas.length) return;
+    e.integrantes.splice(k, 1);
+    v.bajasEquipo = (v.bajasEquipo || []).concat({ equipo: e.nombre, nombre: sale.nombre });
+    if (!e.integrantes.length) v.jugadores = v.jugadores.filter((x) => x.id !== idE);
+    else e.elo = E.eloDeEquipo(e.integrantes);
+    guardar();
+    pintarJugadores();
+    Avisos.avisar(tx("integranteQuitado", { n: sale.nombre, e: e.nombre }));
+    const b = $("pi-quitar-" + idE + "-" + Math.min(k, e.integrantes.length - 1)) || $("pi-eq-nuevo-centro");
+    if (b) b.focus();
+  }
+
+  // Un equipo que llegó y no estaba en la lista: su centro y sus
+  // integrantes (uno por línea, en el orden de tableros). Con rondas ya
+  // jugadas entra desde la siguiente y queda en el acta como inscripción
+  // tardía, como un jugador.
+  function formularioEquipo() {
+    const centro = el("input", { id: "pi-eq-nuevo-centro", class: C.campo + " w-full", maxlength: "80", autocomplete: "off" });
+    const lista = el("textarea", { id: "pi-eq-nuevo-integrantes", rows: "5", class: C.campo + " w-full font-mono text-xs" });
+    const boton = el("button", { type: "button", id: "pi-eq-nuevo-agregar", class: C.botonSec + " mt-2" }, tx("equipoNuevoAgregar"));
+    boton.addEventListener("click", () => {
+      const v = t();
+      const inst = centro.value.trim();
+      const nombres = lista.value.split(/\r?\n/).map((l) => l.split(/\t|;/).map((x) => x.trim())).filter((x) => x[0]);
+      if (!inst) { Avisos.avisar(tx("equipoNuevoFaltaCentro"), { tipo: "error" }); centro.focus(); return; }
+      if (!nombres.length) { Avisos.avisar(tx("equipoNuevoFaltan"), { tipo: "error" }); lista.focus(); return; }
+      if (nombres.length > G.JDE_MAX_EQUIPO) { Avisos.avisar(tx("equipoNuevoDeMas", { n: G.JDE_MAX_EQUIPO }), { tipo: "error" }); return; }
+      if (v.jugadores.some((x) => mismoCentro(x.institucion || x.nombre, inst))) { Avisos.avisar(tx("equipoNuevoYaEsta", { i: inst }), { tipo: "error" }); return; }
+      const integrantes = nombres.map(([nombre, elo]) => ({ id: idJugador(), nombre: nombre.slice(0, 33), institucion: inst, elo: Number(elo) > 0 ? Number(elo) : 0, retiradoDespuesDe: null }));
+      const eq = E.armarEquipos(integrantes, idJugador)[0];
+      eq.categoria = categoriaDe(v);
+      v.jugadores.push(eq);
+      if (v.rondas.length) v.tardios = (v.tardios || []).concat({ nombre: eq.nombre, institucion: inst, ronda: v.rondas.length + 1, hora: Date.now(), aviso: "" });
+      guardar();
+      pintarJugadores();
+      Avisos.avisar(tx("equipoNuevoListo", { i: inst, n: integrantes.length }) + (integrantes.length < G.JDE_MIN_EQUIPO ? " " + tx("equipoNuevoCorto", { m: G.JDE_MIN_EQUIPO }) : "") +
+        (v.rondas.length ? " " + tx("inscripcionTardia", { r: v.rondas.length }) : ""));
+      const x = $("pi-eq-nuevo-centro"); if (x) x.focus();
+    });
+    // Queda abierto al volver a pintar (para agregar otro seguido).
+    const det = el("details", { id: "pi-eq-nuevo", class: "rounded-xl border border-brand-200 dark:border-brand-700 p-3", open: !!estado.equipoNuevoAbierto });
+    det.addEventListener("toggle", () => { estado.equipoNuevoAbierto = det.open; });
+    det.append(
+      el("summary", { class: "cursor-pointer font-semibold rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400", texto: tx("equipoNuevoTitulo") }),
+      el("p", { class: C.nota + " mt-1", texto: tx("equipoNuevoTexto") }),
+      el("label", { for: "pi-eq-nuevo-centro", class: "block text-sm font-semibold mt-2 mb-1", texto: tx("institucion") }), centro,
+      el("label", { for: "pi-eq-nuevo-integrantes", class: "block text-sm font-semibold mt-2 mb-1", texto: tx("equipoNuevoIntegrantes") }), lista, boton);
+    return det;
   }
 
   // El orden de tableros de cada equipo, una hoja por equipo, para que el
@@ -1051,7 +1227,7 @@
     const anio = Number(String(t().fechaInicio || "").slice(0, 4)) || Number((window.HoraCR ? HoraCR.hoy() : "").slice(0, 4)) || G.JDE_ANIO_NORMATIVA;
     // Una lista de clasificados (con su columna «Etapa») trae la etapa que sigue.
     const siguiente = extra ? extra.siguiente : V.siguienteDe(lista.map((j) => j.etapaOrigen));
-    estado.sugerencia = { lista, base, anio, region: regiones, siguiente, comparacion: extra ? extra.comparacion : null, pasarMujeres: true, grupos: [], elegidos: new Map(), abiertos: new Set(), limpia, dondeQueda: new Map(), configJde: true };
+    estado.sugerencia = { lista, base, anio, region: regiones, siguiente, comparacion: extra ? extra.comparacion : null, pasarMujeres: true, grupos: [], elegidos: new Map(), abiertos: new Set(), limpia, dondeQueda: new Map(), configJde: true, amistoso: true };
     calcularSugerencia();
     // La lista se sube en la ficha Torneo, y ahí sale la sugerencia.
     if (estado.ficha !== "torneo") irA("torneo");
@@ -1397,6 +1573,9 @@
       el("label", { class: "flex items-start gap-2 text-sm mt-3" },
         el("input", { type: "checkbox", id: "pi-config-jde", class: "mt-1", checked: s.configJde, onchange: (e) => { s.configJde = e.target.checked; pintarSugerencia(); $("pi-config-jde").focus(); } }),
         el("span", {}, el("span", { class: "font-semibold", texto: tx("configJdeCasilla") }), " " + tx("configJdeAyuda", { r: G.JDE_RONDAS_SUIZO, ritmo: G.JDE_RITMO_MINIMO }))),
+      sinRivales(s).length >= 2 ? el("label", { class: "flex items-start gap-2 text-sm mt-3" },
+        el("input", { type: "checkbox", id: "pi-amistoso", class: "mt-1", checked: s.amistoso, onchange: (e) => { s.amistoso = e.target.checked; pintarSugerencia(); $("pi-amistoso").focus(); } }),
+        el("span", {}, el("span", { class: "font-semibold", texto: tx("amistosoCasilla", { n: sinRivales(s).length }) }), " " + tx("amistosoAyuda"))) : null,
       el("div", { class: "flex flex-wrap gap-2 mt-3" },
         el("button", { type: "button", id: "pi-sugerencia-crear", class: C.boton, disabled: marcados === 0, onclick: crearTorneosDeGrupos, texto: tx("sugerenciaCrear", { n: marcados }) }),
         el("button", { type: "button", id: "pi-sugerencia-todos", class: C.botonSec, onclick: () => { const l = s.juegan; estado.sugerencia = null; pintarSugerencia(); agregarTodos(l); }, texto: tx("sugerenciaTodosAqui", { n: s.juegan.length }) }),
@@ -1446,9 +1625,17 @@
   // sugerido por la normativa de los JDE: el suizo con al menos 5 rondas y,
   // si el abierto no tiene ritmo, el mínimo que pide. Si el abierto está vacío —sin jugadores ni rondas— se usa para
   // el primer grupo, en vez de dejar un torneo «(sin nombre)» de más.
+  // Los que se quedan sin torneo por falta de rivales (un grupo de uno, o
+  // un solo equipo en su categoría): juegan juntos un torneo individual,
+  // «Categoría Amistoso», para no irse a la casa sin jugar. No clasifica ni
+  // suma medallas al medallero (V.clasificados, V.medallero).
+  const sinRivales = (s) => s.grupos.filter((g) => !g.marcado && !G.sistemaSugerido(participantesDelGrupo(g))).flatMap((g) => g.jugadores);
+
   async function crearTorneosDeGrupos() {
     const s = estado.sugerencia;
     const elegidos = s.grupos.filter((g) => g.marcado);
+    const amistosos = s.amistoso ? sinRivales(s) : [];
+    if (amistosos.length >= 2) elegidos.push({ modalidad: "individual", jugadores: amistosos, amistoso: true });
     if (!elegidos.length) return;
     const actual = t();
     // Con la configuración de los JDE, primero la etapa y el lugar: el
@@ -1493,7 +1680,7 @@
       const deEquipos = g.modalidad === "equipo";
       const participantes = deEquipos ? E.armarEquipos(jugadores, idJugador) : jugadores;
       const n = participantes.length;
-      const grupo = etiquetaGrupo(g);
+      const grupo = g.amistoso ? tx("amistosoGrupo") : etiquetaGrupo(g);
       const datos = Object.assign({}, comunes, {
         nombre: jde ? nombreConGrupo(jde, grupo) : (base ? base + " — " : "") + grupo,
         grupo, jde: jde || undefined, evento, ordenEnEvento: i,
@@ -1505,6 +1692,7 @@
         rondas: [], numeracion: null,
       });
       if (!deEquipos) { delete datos.tipo; delete datos.tableros; }
+      if (g.amistoso) datos.amistoso = true;
       if (!jde) delete datos.jde;
       if (i === 0 && reusar) estado.t = T.nuevo(Object.assign({}, actual, datos));
       else { estado.id = nuevoId(); estado.t = T.nuevo(datos); }
@@ -1611,6 +1799,88 @@
     const nombres = (ids) => ids.map((id) => (v.jugadores.find((j) => j.id === id) || {}).nombre || "?").join(", ");
     if (x.fuera.length) Avisos.avisar(tx("incomparecenciaFuera", { n: nombres(x.fuera), r: v.rondas.length + 1 }), { tipo: "info" });
     if (x.vuelven.length) Avisos.avisar(tx("incomparecenciaVuelve", { n: nombres(x.vuelven) }), { tipo: "info" });
+  }
+
+  // ---------- Que cerrar la página por accidente no borre nada ----------
+  // Todo cambio ya se guarda al momento en el navegador (guardar). Lo que
+  // quedaba fuera: lo escrito en un campo sin salir de él, el jugador o la
+  // lista a medio escribir, lo marcado antes de emparejar (v.pedidas) y el
+  // archivo del respaldo automático. Y que el navegador no borre los datos
+  // por falta de espacio: se le pide guardarlos para siempre (persist).
+  function pedirAlmacenamientoFijo() {
+    if (estado.persistencia || !navigator.storage || !navigator.storage.persist) return;
+    estado.persistencia = true;
+    navigator.storage.persist().catch(() => {});
+  }
+  // Lo escrito en los datos del torneo se guarda mientras se escribe (no
+  // solo al salir del campo).
+  let temporizadorCampo = null, campoPendiente = null;
+  function alEscribirTorneo(e) {
+    const x = e.target;
+    if (!x.name || x.type === "number" || x.type === "radio" || x.type === "checkbox" || x.tagName === "SELECT" || x.readOnly) return;
+    clearTimeout(temporizadorCampo);
+    campoPendiente = x;
+    temporizadorCampo = setTimeout(guardarCampoPendiente, 500);
+  }
+  function guardarCampoPendiente() {
+    clearTimeout(temporizadorCampo);
+    temporizadorCampo = null;
+    const x = campoPendiente;
+    campoPendiente = null;
+    if (x && x.isConnected) alCambiarTorneo({ target: x });
+  }
+  // El jugador y la lista a medio escribir: un borrador por torneo.
+  const CLAVE_BORRADOR = "pareo_borrador_v1";
+  function guardarBorrador() {
+    const d = {};
+    for (const x of $("pi-form-jugador").elements) if (x.name && x.value) d[x.name] = x.value;
+    const pegar = $("pi-pegar").value;
+    if (!Object.keys(d).length && !pegar.trim()) { escribir(CLAVE_BORRADOR, ""); return; }
+    escribir(CLAVE_BORRADOR, JSON.stringify({ id: estado.id, jugador: d, pegar }));
+  }
+  function restaurarBorrador() {
+    const b = leerJSON(CLAVE_BORRADOR, null);
+    if (!b || b.id !== estado.id) return;
+    const f = $("pi-form-jugador");
+    for (const [k, val] of Object.entries(b.jugador || {})) if (f.elements[k]) f.elements[k].value = val;
+    if (b.pegar) { $("pi-pegar").value = b.pegar; $("pi-pegar-caja").open = true; }
+    Avisos.avisar(tx("borradorRecuperado"), { tipo: "info" });
+  }
+  // Al cerrar o esconder la pestaña: lo que estaba por guardarse, ya.
+  function guardarAlSalir() {
+    if (campoPendiente) guardarCampoPendiente();
+    guardarBorrador();
+  }
+
+  // El archivo del respaldo automático se recuerda (IndexedDB guarda el
+  // permiso de Chrome y Edge): al volver a abrir, un clic lo retoma.
+  const BD_RESPALDO = "pareo-respaldo";
+  function bdRespaldo(modo, fn) {
+    return new Promise((ok, mal) => {
+      if (!window.indexedDB) { ok(null); return; }
+      const pedido = indexedDB.open(BD_RESPALDO, 1);
+      pedido.onupgradeneeded = () => pedido.result.createObjectStore("archivos");
+      pedido.onerror = () => mal(pedido.error);
+      pedido.onsuccess = () => {
+        try {
+          const tx2 = pedido.result.transaction("archivos", modo);
+          const r = fn(tx2.objectStore("archivos"));
+          tx2.oncomplete = () => ok(r && "result" in r ? r.result : null);
+          tx2.onerror = () => mal(tx2.error);
+        } catch (e) { mal(e); } // (un archivo que no se puede guardar: no se recuerda)
+      };
+    });
+  }
+  const recordarArchivoRespaldo = (id, archivo) => bdRespaldo("readwrite", (s) => (archivo ? s.put(archivo, id) : s.delete(id))).catch(() => null);
+  const archivoRecordado = (id) => bdRespaldo("readonly", (s) => s.get(id)).catch(() => null);
+  async function retomarRespaldo(ev, archivo) {
+    try {
+      if ((await archivo.requestPermission({ mode: "readwrite" })) !== "granted") return;
+    } catch (e) { return; }
+    estado.respaldoArchivo = { id: ev.id, archivo };
+    await escribirRespaldo();
+    pintarEvento();
+    Avisos.avisar(tx("respaldoRetomado", { a: archivo.name }));
   }
 
   function guardarDelEvento(tor) {
@@ -1734,6 +2004,7 @@
       try {
         const archivo = await window.showSaveFilePicker({ suggestedName: window.PareoPDF.nombreArchivo(ev.nombre, "respaldo").replace(/\.pdf$/, ".json"), types: [{ description: "JSON", accept: { "application/json": [".json"] } }] });
         estado.respaldoArchivo = { id: ev.id, archivo };
+        recordarArchivoRespaldo(ev.id, archivo);
       } catch (e) { return; }
     } else {
       const lista = torneosDelEvento(ev.id);
@@ -1741,6 +2012,34 @@
     }
     await escribirRespaldo();
     pintarEvento();
+  }
+
+  // Las ausencias y las incomparecencias de los torneos del evento
+  // (V.ausenciasDe), con si justificó: lo anota el árbitro y va al informe
+  // oficial. Se guarda en cada torneo (`justificaciones`, por «ronda|id»).
+  const TEXTO_AUSENCIA = { incomparecencia: "ausTipoIncomparecencia", noViene: "ausTipoNoViene", sinAcreditar: "ausTipoSinAcreditar", bye: "ausTipoBye", sacado: "ausTipoSacado" };
+  function pintarAusencias(caja, torneos) {
+    const aus = torneos.flatMap((tor) => V.ausenciasDe(tor).map((x) => ({ tor, x })));
+    if (!aus.length) return;
+    const filas = aus.map(({ tor, x }, k) => {
+      const sel = el("select", { id: "pi-aus-" + k, class: C.campoChico, "data-ausencia": x.clave, "aria-label": tx("ausJustificoA", { n: x.nombre, r: x.ronda }) },
+        el("option", { value: "", texto: tx("ausSinDecidir") }), el("option", { value: "si", texto: tx("ausSi") }), el("option", { value: "no", texto: tx("ausNo") }));
+      sel.value = x.justificada === true ? "si" : x.justificada === false ? "no" : "";
+      sel.addEventListener("change", () => {
+        tor.justificaciones = Object.assign({}, tor.justificaciones);
+        if (sel.value) tor.justificaciones[x.clave] = sel.value === "si";
+        else delete tor.justificaciones[x.clave];
+        guardarDelEvento(tor);
+      });
+      const siguio = x.fuera ? tx("ausFuera", { r: x.ronda + 1 }) : x.volvio ? tx("ausVolvio") : "";
+      return el("tr", {}, el("td", { texto: V.nombreTorneo(tor) }), el("td", { class: "num", texto: x.ronda }),
+        el("td", { class: "font-semibold", texto: x.nombre }), el("td", { texto: tx(TEXTO_AUSENCIA[x.tipo]) + (siguio ? " · " + siguio : "") }), el("td", {}, sel));
+    });
+    caja.append(el("h3", { class: "font-semibold mt-5", texto: tx("ausTitulo") }), el("p", { class: C.nota, texto: tx("ausTexto") }),
+      el("div", { class: "overflow-x-auto mt-2" }, el("table", { id: "pi-ausencias", class: "pi-tabla" },
+        el("thead", {}, el("tr", {}, el("th", { scope: "col", texto: tx("ausTorneo") }), el("th", { class: "num", scope: "col", texto: tx("ausRonda") }),
+          el("th", { scope: "col", texto: tx("nombre") }), el("th", { scope: "col", texto: tx("ausQuePaso") }), el("th", { scope: "col", texto: tx("ausJustifico") }))),
+        el("tbody", {}, filas))));
   }
 
   function pintarEvento() {
@@ -1781,6 +2080,7 @@
     acciones.append(bActa, bInforme, bPremiacion, bDiplomas, bConstancias, bCertificados, bEstadisticas, bCartel);
     caja.append(acciones, el("p", { class: C.nota + " mt-2", texto: tx("eventoPapelesAyuda") }),
       el("p", { class: C.nota + " mt-1", texto: tx("eventoPremiacionAyuda") }));
+    pintarAusencias(caja, torneos);
 
     // El medallero por centro educativo, con las medallas de todos los torneos.
     const med = V.medallero(torneos);
@@ -1919,8 +2219,17 @@
     const bAuto = el("button", { type: "button", id: "pi-respaldo-auto", class: C.botonSec, "aria-pressed": auto ? "true" : "false" },
       tx(auto ? "respaldoAutoApagar" : (window.showSaveFilePicker ? "respaldoAutoPrender" : "respaldoAutoPrenderDescarga")));
     bAuto.addEventListener("click", () => {
-      if (estado.respaldoArchivo && estado.respaldoArchivo.id === ev.id) { estado.respaldoArchivo = null; pintarEvento(); }
+      if (estado.respaldoArchivo && estado.respaldoArchivo.id === ev.id) { estado.respaldoArchivo = null; recordarArchivoRespaldo(ev.id, null); pintarEvento(); }
       else prenderRespaldo(ev);
+    });
+    // Se cerró la página con el respaldo prendido: un clic lo retoma en el
+    // mismo archivo (el navegador pide el permiso otra vez).
+    const bRetomar = el("button", { type: "button", id: "pi-respaldo-retomar", class: C.boton, hidden: true });
+    if (!auto && window.showSaveFilePicker) archivoRecordado(ev.id).then((archivo) => {
+      if (!archivo || !bRetomar.isConnected || estado.respaldoArchivo) return;
+      bRetomar.textContent = tx("respaldoRetomar", { a: archivo.name });
+      bRetomar.hidden = false;
+      bRetomar.onclick = () => retomarRespaldo(ev, archivo);
     });
     // Las firmas del acta: en esta pantalla (con el dedo o el mouse) o desde
     // un celular, con su enlace. Van como imagen en el PDF del acta.
@@ -1996,7 +2305,7 @@
     caja.append(el("h3", { class: "font-semibold mt-5", texto: tx("eventoPlantillasTitulo") }),
       el("p", { class: C.nota, texto: tx("eventoPlantillasTexto") }), el("div", { class: "mt-2" }, bPlantillas));
     caja.append(el("h3", { class: "font-semibold mt-5", texto: tx("eventoRespaldoTitulo") }),
-      el("p", { class: C.nota, texto: tx("eventoRespaldoTexto") }), el("div", { class: "mt-2 flex flex-wrap gap-2" }, bRespaldo, bAuto),
+      el("p", { class: C.nota, texto: tx("eventoRespaldoTexto") }), el("div", { class: "mt-2 flex flex-wrap gap-2" }, bRetomar, bRespaldo, bAuto),
       el("p", { id: "pi-respaldo-estado", class: C.nota + " mt-1", role: "status",
         texto: auto ? (estado.respaldoArchivo.hora ? tx("respaldoAutoHecho", { h: horaCR(estado.respaldoArchivo.hora) }) : tx(window.showSaveFilePicker ? "respaldoAutoActivo" : "respaldoAutoActivoDescarga")) : tx(window.showSaveFilePicker ? "respaldoAutoAyuda" : "respaldoAutoAyudaDescarga") }));
 
@@ -2253,7 +2562,10 @@
     const horario = inicio ? V.horario(lista, inicio, leer(CLAVE_HORARIO + x.id + "_descanso") || "10") : null;
     PareoVer.paraMandar(V.vistaEvento(lista[0].evento, lista, horario)).then((payload) => x.canal.send({ type: "broadcast", event: "estado", payload }));
   }
-  async function mostrarQrEvento(cont) {
+  // `pre`: el prefijo de los ids (la ficha Archivos y la ficha Torneo lo
+  // muestran a la vez en la página).
+  async function mostrarQrEvento(cont, pre) {
+    pre = pre || "pi-evento";
     const url = location.origin + location.pathname + "#evento=" + estado.eventoVivo.codigo;
     try {
       await PareoQr.cargar();
@@ -2263,8 +2575,8 @@
         catch (e) { Avisos.avisar(tx("noCopia"), { tipo: "error" }); }
       });
       cont.replaceChildren(el("div", { class: "w-48 bg-white p-2 rounded-lg" }, PareoQr.svg(url, tx("qrEtiqueta"))),
-        el("p", { id: "pi-evento-url", class: "text-xs break-all mt-2 font-mono", texto: url }), el("div", { class: "mt-1 flex flex-wrap gap-2" }, copiar,
-          el("a", { id: "pi-evento-proyectar", href: url + "&proyectar", target: "_blank", rel: "noopener", class: C.mini }, tx("eventoProyectar"))),
+        el("p", { id: pre + "-url", class: "text-xs break-all mt-2 font-mono", texto: url }), el("div", { class: "mt-1 flex flex-wrap gap-2" }, copiar,
+          el("a", { id: pre + "-proyectar", href: url + "&proyectar", target: "_blank", rel: "noopener", class: C.mini }, tx("eventoProyectar"))),
         el("p", { class: C.nota + " mt-1", texto: tx("eventoVivoActivo") }));
     } catch (e) {
       Avisos.avisar(tx("errorQr", { e: e.message }), { tipo: "error" });
@@ -2394,11 +2706,36 @@
 
   // Pasar a alguien a otro torneo del mismo evento (lo decide el
   // congresillo), antes de la ronda 1 de los dos. Queda en el acta.
+  // ¿Puede jugar en la categoría del torneo al que va? La Normativa de los
+  // JDE (G.revisarCategorias): por año de nacimiento (art. 17) y subir solo
+  // en equipos, de A a B, de C a D o de D a E, hasta tres por equipo (art.
+  // 18). Sin fecha de nacimiento o sin categoría en el torneo, no se revisa.
+  const MODALIDAD_DE = { true: "equipo", false: "individual" };
+  const TEXTO_CATEGORIA_NO = { mayor: "categoriaNoMayor", individual: "categoriaNoIndividual", salto: "categoriaNoSalto", tope: "categoriaNoTope" };
+  const categoriaDe = (y) => (/Categoría (\S+)/.exec(y.grupo || y.nombre || "") || [])[1] || "";
+  const mismoCentro = (a, b) => String(a || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toUpperCase().trim() === String(b || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toUpperCase().trim();
+  function revisarCategoriaDestino(j, destino, equipo) {
+    const cat = categoriaDe(destino);
+    if (!cat || !j.nacimiento) return { ok: true };
+    const anio = (destino.jde && destino.jde.anio) || Number(String(destino.fechaInicio || "").slice(0, 4)) || G.JDE_ANIO_NORMATIVA;
+    const deEquipos = E.esDeEquipos(destino);
+    // Todos «al abierto»: el tope se cuenta por equipo, sin separar por sexo.
+    const comoEn = (x) => Object.assign({}, x, { categoria: cat, modalidad: MODALIDAD_DE[deEquipos], institucion: equipo ? equipo.institucion : x.institucion, alAbierto: true });
+    const yo = Object.assign(comoEn(j), { esteEs: true });
+    const r = G.revisarCategorias((equipo ? equipo.integrantes.map(comoEn) : []).concat(yo), anio);
+    const no = r.noPermitidos.find((c) => c.jugador.esteEs);
+    if (no) return { ok: false, texto: tx(TEXTO_CATEGORIA_NO[no.motivo], { n: j.nombre, a: no.nace, c: cat, p: no.propia || "—", i: equipo ? equipo.nombre : j.institucion || "—", x: (no.cuantos || 1) - 1 }) };
+    const sube = r.permitidos.find((c) => c.jugador.esteEs);
+    return { ok: true, texto: sube ? tx("categoriaSube", { n: j.nombre, p: sube.propia, c: cat }) : "" };
+  }
+
   async function moverDeTorneo(id) {
     const v = t();
     const j = jugador(id);
+    // A otro torneo del mismo evento que no empezó: individual o por equipos
+    // (entra al equipo de su centro, si tiene cupo).
     const destinos = estado.lista.filter((x) => x.id !== estado.id).map((x) => [x.id, leerJSON(PREFIJO + x.id, null)])
-      .filter(([, y]) => y && y.evento && v.evento && y.evento.id === v.evento.id && !E.esDeEquipos(y) && !y.rondas.length);
+      .filter(([, y]) => y && y.evento && v.evento && y.evento.id === v.evento.id && !y.rondas.length);
     if (!destinos.length) { Avisos.avisar(tx("moverSinDestino"), { tipo: "error" }); return; }
     const r = await Avisos.formulario({
       titulo: tx("moverA", { n: j.nombre }), texto: tx("moverTexto"), aceptar: tx("moverSi"), cancelar: tx("cancelar"),
@@ -2407,23 +2744,40 @@
     if (!r || t() !== v || v.rondas.length) return;
     const destino = leerJSON(PREFIJO + r.destino, null);
     if (!destino || destino.rondas.length) { Avisos.avisar(tx("moverSinDestino"), { tipo: "error" }); return; }
+    const deEquipos = E.esDeEquipos(destino);
+    const equipo = deEquipos ? destino.jugadores.find((e) => mismoCentro(e.institucion || e.nombre, j.institucion)) : null;
+    // El equipo de su centro, lleno: primero hay que sacar a alguien.
+    if (equipo && equipo.integrantes.length >= G.JDE_MAX_EQUIPO) {
+      Avisos.avisar(tx("moverEquipoLleno", { i: equipo.nombre, n: G.JDE_MAX_EQUIPO }), { tipo: "error" });
+      return;
+    }
+    const cat = revisarCategoriaDestino(j, destino, equipo);
+    if (!cat.ok) { Avisos.avisar(cat.texto, { tipo: "error" }); return; }
     v.jugadores = v.jugadores.filter((x) => x.id !== id);
-    destino.jugadores.push(j);
+    if (!deEquipos) destino.jugadores.push(j);
+    else if (equipo) { equipo.integrantes.push(Object.assign({}, j, { id: idJugador() })); equipo.elo = E.eloDeEquipo(equipo.integrantes); }
+    else destino.jugadores.push(E.armarEquipos([Object.assign({}, j, { id: idJugador() })], idJugador)[0]);
     destino.movimientos = (destino.movimientos || []).concat({ nombre: j.nombre, institucion: j.institucion || "", desde: v.grupo || v.nombre });
     if (!escribir(PREFIJO + r.destino, JSON.stringify(destino))) { Avisos.avisar(tx("noGuarda"), { tipo: "error" }); return; }
     guardar();
     pintarJugadores();
-    Avisos.avisar(tx("movido", { n: j.nombre, t: destino.grupo || destino.nombre }));
+    Avisos.avisar(tx("movido", { n: j.nombre, t: destino.grupo || destino.nombre }) + (cat.texto ? " " + cat.texto : "") +
+      (deEquipos && !equipo ? " " + tx("moverEquipoNuevo", { i: j.institucion || "—", m: G.JDE_MIN_EQUIPO }) : ""));
+  }
+
+  // Vuelve a los emparejamientos. Si lo sacó una incomparecencia, esa misma
+  // ya no lo vuelve a sacar (T.retirosPorIncomparecencia).
+  function devolverAlTorneo(j) {
+    j.retiradoDespuesDe = null;
+    if (j.retiroAuto != null) { j.vuelveTras = j.retiroAuto - 1; delete j.retiroAuto; }
+    guardar();
   }
 
   async function retirar(id) {
     const j = jugador(id);
     const v = t();
     if (j.retiradoDespuesDe != null) {
-      j.retiradoDespuesDe = null;
-      // Lo sacó una incomparecencia: esa misma ya no lo vuelve a sacar.
-      if (j.retiroAuto != null) { j.vuelveTras = j.retiroAuto - 1; delete j.retiroAuto; }
-      guardar();
+      devolverAlTorneo(j);
       pintarJugadores();
       Avisos.avisar(tx("vuelve", { n: j.nombre }));
       return;
@@ -2529,8 +2883,12 @@
     });
     if (ultima || v.rondas[r].inicio) pintarReloj(caja, r);
     const cajaAdjunto = el("div", { id: "pi-adjunto-caja", class: "no-imprimir mb-4", hidden: true });
-    caja.append(cajaAdjunto);
+    // Las llamadas de los adjuntos y el chat con ellos.
+    const cajaLlamadas = el("section", { id: "pi-llamadas", class: "no-imprimir mb-4 rounded-xl border-2 border-accent-500 p-3", role: "region", "aria-labelledby": "pi-llamadas-titulo", hidden: true });
+    const cajaChat = el("section", { id: "pi-chat-adjuntos", class: "no-imprimir mb-4 rounded-xl border border-brand-200 dark:border-brand-700 p-3", hidden: true });
+    caja.append(cajaLlamadas, cajaAdjunto, cajaChat);
     if (ultima && (v.adjuntos || []).some((a) => a.activo)) { conectarAdjuntos(); mostrarAdjuntos(cajaAdjunto); }
+    if (ultima) { pintarLlamadas(); pintarChat(); }
     if (E.esDeEquipos(v)) pintarEncuentros(caja, r);
     else pintarMesasIndividuales(caja, r);
     pintarReimprimirMesa(caja, r);
@@ -2589,11 +2947,14 @@
     const v = t();
     const total = v.rondas[r].mesas.length;
     const res = await Avisos.formulario({ titulo: tx("adjuntoTitulo"), texto: tx("adjuntoTexto"), aceptar: tx("adjuntoCrear"), cancelar: tx("cancelar"),
-      campos: [{ nombre: "desde", etiqueta: tx("adjuntoDesde"), valor: "1", inputmode: "numeric" }, { nombre: "hasta", etiqueta: tx("adjuntoHasta"), valor: String(total), inputmode: "numeric" }] });
+      campos: [{ nombre: "arbitro", etiqueta: tx("adjuntoNombre"), valor: "", max: 60 },
+        { nombre: "desde", etiqueta: tx("adjuntoDesde"), valor: "1", inputmode: "numeric" }, { nombre: "hasta", etiqueta: tx("adjuntoHasta"), valor: String(total), inputmode: "numeric" }] });
     if (!res || t() !== v) return;
+    const arbitro = String(res.arbitro || "").trim().slice(0, 60);
+    if (!arbitro) { Avisos.avisar(tx("adjuntoFaltaNombre"), { tipo: "error" }); return; }
     const desde = Math.max(1, Math.round(Number(res.desde)) || 1), hasta = Math.min(total, Math.round(Number(res.hasta)) || total);
     if (desde > hasta) { Avisos.avisar(tx("adjuntoRango"), { tipo: "error" }); return; }
-    v.adjuntos = (v.adjuntos || []).concat({ codigo: nuevoCodigoVivo(), rango: desde + "-" + hasta, activo: true });
+    v.adjuntos = (v.adjuntos || []).concat({ codigo: nuevoCodigoVivo(), rango: desde + "-" + hasta, activo: true, nombre: arbitro });
     guardar();
     await conectarAdjuntos();
     pintarRondas();
@@ -2616,6 +2977,8 @@
       canal.on("broadcast", { event: "pedir" }, () => enviarAdjunto(a.codigo));
       canal.on("broadcast", { event: "resultado" }, (msg) => recibirDeAdjunto(a.codigo, msg.payload || {}));
       canal.on("broadcast", { event: "nota" }, (msg) => recibirNotaDeAdjunto(a.codigo, msg.payload || {}));
+      canal.on("broadcast", { event: "chat" }, (msg) => recibirChatDeAdjunto(a.codigo, msg.payload || {}));
+      canal.on("broadcast", { event: "llamada" }, (msg) => recibirLlamada(a.codigo, msg.payload || {}));
       canal.subscribe((st) => { if (st === "SUBSCRIBED") enviarAdjunto(a.codigo); });
       estado.adjuntos.canales.set(a.codigo, canal);
     }
@@ -2646,10 +3009,15 @@
     // sepa quién ya tiene una ilegal; y a quién puede anotarle una.
     const marcas = V.marcasIncidencias(R);
     const marcaPara = (id) => { const mm = id && marcas.get(id); return mm ? { t: V.textoMarca(mm), d: mm.items.map(textoIncidencia), pierde: mm.ilegales >= 2 } : null; };
+    const a = adjuntoActivo(v, codigo) || {};
     canal.send({ type: "broadcast", event: "estado", payload: {
       nombre: v.nombre || "", ronda: v.rondas.length,
+      // Quién es él, quién es el principal, su chat y sus llamadas.
+      arbitro: a.nombre || "", principal: v.arbitro || "",
+      chat: chatDe(v, codigo).slice(-30).map((x) => ({ hora: x.hora, de: x.de === "principal" ? x.de : QUIEN_CHAT[x.de === codigo], nombre: x.nombre, texto: x.texto })),
+      llamadas: (v.llamadas || []).filter((x) => x.codigo === codigo).slice(-5).map((x) => ({ hora: x.hora, mesa: x.mesa, atendida: x.atendida || null })),
       mesas: R.mesas.map((m, i) => {
-        const x = { m: i + 1, f: V.mesaFisica(v, i), b: nombre(m.b), n: m.n == null ? null : nombre(m.n), r: m.r || null,
+        const x = { m: i + 1, f: V.mesaFisica(v, i), b: nombre(m.b), n: m.n == null ? null : nombre(m.n), r: m.r || null, mia: !!m.r && m.adjunto === codigo,
           mb: marcaPara(m.b), mn: m.n == null ? null : marcaPara(m.n), quien: jugadoresDeMesa(v, m).map(([k, , etiqueta]) => ({ k, e: etiqueta })) };
         if (deEquipos && m.n != null) {
           // Sin tocar lo guardado: una copia con la alineación de entrada.
@@ -2684,17 +3052,113 @@
       m.r = E.resultadoEncuentro(v, m);
       texto = tx("adjuntoLlegoTablero", { m: mesa, t: k + 1, r: tx("corto_" + p.r) });
     } else {
-      if (m.r && m.r !== p.r) anotarDiscrepancia(v, R, { mesa, r: p.r, ya: m.r });
-      if (m.r) return rechazar();
+      // Corregir el que él mismo anotó (lo confirmó en su celular): sí, y
+      // queda la constancia en las incidencias. Lo que anotó otro, nunca se
+      // pisa: queda para que el principal lo confirme.
+      const suya = !!m.r && !!p.corrige && m.adjunto === codigo;
+      if (m.r && !suya) { if (m.r !== p.r) anotarDiscrepancia(v, R, { mesa, r: p.r, ya: m.r }); return rechazar(); }
+      if (suya && m.r === p.r) return rechazar();
+      const antes = m.r;
       m.r = p.r;
-      texto = tx("adjuntoLlego", { m: mesa, r: tx("corto_" + p.r) });
+      if (suya) anotarCorreccion(R, mesa - 1, antes, p.r, tx("correccionAdjunto", { n: a.nombre || "—" }));
+      texto = tx(suya ? "adjuntoCorrigio" : "adjuntoLlego", { m: mesa, r: tx("corto_" + p.r), n: a.nombre || "—" });
     }
-    m.porAdjunto = true;
+    m.porAdjunto = a.nombre || true;
+    m.adjunto = codigo;
     if (v === t()) { guardar(); if (estado.ficha === "rondas" && estado.ronda === v.rondas.length - 1) pintarRondas(); }
     else { avisarRetiros(v, retirosAuto(v)); escribir(PREFIJO + estado.adjuntos.idTorneo, JSON.stringify(v)); }
     Avisos.avisar(texto, { tipo: "info" });
     enviarAdjunto(codigo);
   }
+  // ---------- El chat con los adjuntos y sus llamadas ----------
+  // Los mensajes van con el torneo (`chat`, los últimos 300): a todos o a un
+  // adjunto, y de cada adjunto al principal. Llegan por el mismo canal del
+  // adjunto, con el estado (`enviarAdjunto`). Una llamada («Te necesitan en
+  // la mesa X») queda en `llamadas` hasta que el principal toca «Voy».
+  const QUIEN_CHAT = { true: "yo", false: "otro" };
+  const chatDe = (v, codigo) => (v.chat || []).filter((x) => x.para === "todos" || x.para === codigo || x.de === codigo);
+  function guardarDelAdjunto(v) {
+    if (v === t()) guardar();
+    else { escribir(PREFIJO + estado.adjuntos.idTorneo, JSON.stringify(v)); enviarAdjuntos(); }
+  }
+  function agregarChat(v, x) { v.chat = (v.chat || []).concat(Object.assign({ hora: Date.now() }, x)).slice(-300); }
+  function recibirChatDeAdjunto(codigo, p) {
+    const v = torneoDelAdjunto();
+    const a = v && adjuntoActivo(v, codigo);
+    const texto = typeof p.texto === "string" ? p.texto.trim().slice(0, 300) : "";
+    if (!a || !texto) return;
+    agregarChat(v, { de: codigo, nombre: a.nombre || "", para: "principal", texto });
+    guardarDelAdjunto(v);
+    Avisos.avisar(tx("chatLlego", { n: a.nombre || a.rango, t: texto }), { tipo: "info" });
+    pintarChat();
+  }
+  function recibirLlamada(codigo, p) {
+    const v = torneoDelAdjunto();
+    const a = v && adjuntoActivo(v, codigo);
+    if (!a || !v.rondas.length) return;
+    const [desde, hasta] = a.rango.split("-").map(Number);
+    const mesa = Number(p.mesa);
+    if (!(mesa >= desde && mesa <= hasta)) return;
+    v.llamadas = (v.llamadas || []).concat({ id: nuevoId(), hora: Date.now(), codigo, nombre: a.nombre || "", mesa, ronda: v.rondas.length }).slice(-100);
+    guardarDelAdjunto(v);
+    Avisos.avisar(tx("llamadaLlego", { n: a.nombre || a.rango, m: V.mesaFisica(v, mesa - 1) }), { tipo: "error" });
+    pintarLlamadas();
+  }
+  // Las llamadas sin atender, arriba de la ronda, con «Voy» (que se lo dice
+  // al adjunto también por el chat).
+  function pintarLlamadas() {
+    const caja = $("pi-llamadas");
+    if (!caja) return;
+    const v = t();
+    const pendientes = (v.llamadas || []).filter((x) => !x.atendida);
+    caja.replaceChildren();
+    caja.hidden = !pendientes.length;
+    if (!pendientes.length) return;
+    caja.append(el("h3", { id: "pi-llamadas-titulo", class: "font-semibold" }, el("span", { "aria-hidden": "true", texto: "🔔 " }), tx("llamadasTitulo")),
+      el("ul", { class: "mt-2 space-y-2 text-sm" }, pendientes.map((x) => el("li", { class: "flex flex-wrap items-center gap-2", "data-llamada": x.id },
+        el("span", { class: "font-semibold", texto: tx("llamadaFila", { n: x.nombre || "—", m: V.mesaFisica(v, x.mesa - 1), h: horaCR(x.hora) }) }),
+        el("button", { type: "button", class: C.boton + " px-3 py-1", "data-voy": x.id, onclick: () => {
+          x.atendida = Date.now();
+          agregarChat(v, { de: "principal", nombre: v.arbitro || tx("principal"), para: x.codigo, texto: tx("voyMesa", { m: V.mesaFisica(v, x.mesa - 1) }) });
+          guardar();
+          pintarLlamadas();
+          pintarChat();
+        } }, tx("voy"))))));
+  }
+  // El chat del principal: a todos los adjuntos o a uno.
+  function pintarChat() {
+    const caja = $("pi-chat-adjuntos");
+    if (!caja) return;
+    const v = t();
+    const activos = (v.adjuntos || []).filter((a) => a.activo);
+    caja.hidden = !activos.length;
+    if (!activos.length) { caja.replaceChildren(); return; }
+    const nombreDe = (c) => ((v.adjuntos || []).find((a) => a.codigo === c) || {}).nombre || c;
+    const lista = el("ol", { id: "pi-chat-lista", class: "mt-2 space-y-1 text-sm max-h-64 overflow-y-auto", "aria-live": "polite" },
+      (v.chat || []).slice(-50).map((x) => el("li", { class: x.de === "principal" ? "pi-chat-mio" : "" },
+        el("span", { class: "text-xs " + C.nota, texto: horaCR(x.hora) + " · " }),
+        el("span", { class: "font-semibold", texto: (x.de === "principal" ? tx("chatYo") + (x.para === "todos" ? " → " + tx("chatTodos") : " → " + nombreDe(x.para)) : x.nombre || nombreDe(x.de)) + ": " }),
+        el("span", { texto: x.texto }))));
+    const para = el("select", { id: "pi-chat-para", class: C.campoChico, "aria-label": tx("chatPara") },
+      el("option", { value: "todos", texto: tx("chatTodos") }), activos.map((a) => el("option", { value: a.codigo, texto: a.nombre || a.rango })));
+    if (caja.__para) para.value = caja.__para;
+    para.addEventListener("change", () => { caja.__para = para.value; });
+    const texto = el("input", { id: "pi-chat-texto", type: "text", maxlength: "300", autocomplete: "off", class: C.campo, "aria-label": tx("chatEscribe") });
+    const mandar = el("button", { type: "submit", id: "pi-chat-mandar", class: C.botonSec }, tx("chatMandar"));
+    const form = el("form", { class: "mt-2 flex flex-wrap items-center gap-2" }, para, texto, mandar);
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const t2 = texto.value.trim().slice(0, 300);
+      if (!t2) return;
+      agregarChat(v, { de: "principal", nombre: v.arbitro || tx("principal"), para: para.value, texto: t2 });
+      guardar();
+      pintarChat();
+      const x = $("pi-chat-texto"); if (x) x.focus();
+    });
+    caja.replaceChildren(el("h3", { class: "font-semibold" }, tx("chatTitulo")), lista, form);
+    lista.scrollTop = lista.scrollHeight;
+  }
+
   // Una nota de un adjunto para el informe: va a las incidencias de la
   // última ronda, con su nombre y, si la dice, la mesa (de su rango).
   function recibirNotaDeAdjunto(codigo, p) {
@@ -2869,7 +3333,7 @@
         Avisos.avisar(tx("adjuntoApagado", { r: a.rango }));
       });
       lista.append(el("div", { class: "rounded-xl border border-brand-200 dark:border-brand-700 p-3", "data-adjunto": a.codigo },
-        el("h4", { class: "font-semibold", texto: tx("adjuntoListo", { r: a.rango }) }),
+        el("h4", { class: "font-semibold", texto: (a.nombre ? a.nombre + " · " : "") + tx("adjuntoListo", { r: a.rango }) }),
         el("div", { class: "w-32 bg-white p-2 rounded-lg mt-2" }, PareoQr.svg(url, tx("qrEtiqueta"))),
         el("p", { class: "pi-adjunto-url text-xs break-all mt-2 font-mono", texto: url }),
         el("div", { class: "flex flex-wrap gap-2 mt-1" }, copiar, apagar)));
@@ -2917,6 +3381,30 @@
     const m = R && R.mesas.find((x) => x.b === idE || x.n === idE);
     return m ? { m, lado: "bn"[m.b === idE ? 0 : 1] } : null;
   }
+  // Hasta cuándo cambian los capitanes la alineación (lo elige el árbitro en
+  // la ficha Torneo: `v.plazoAlineacion`, minutos antes de la ronda). La hora
+  // de la ronda sale del horario del evento (Archivos, «Horario del día») y,
+  // sin él, de cuando se echó a andar el reloj de la ronda. Sin plazo o sin
+  // hora: hasta que se anote el primer tablero, como antes. En milisegundos.
+  function inicioDeRonda(v, r) {
+    const ev = v.evento;
+    const inicio = ev ? leer(CLAVE_HORARIO + ev.id) : "";
+    if (inicio) {
+      const h = (V.horario([v], inicio, leer(CLAVE_HORARIO + ev.id + "_descanso") || "10")[0] || { rondas: [] }).rondas[r];
+      const dia = window.HoraCR ? HoraCR.hoy() : new Intl.DateTimeFormat("en-CA", { timeZone: "America/Costa_Rica" }).format(new Date());
+      // Costa Rica no cambia de hora: siempre UTC−6.
+      if (h) return Date.parse(dia + "T" + h.hora.padStart(5, "0") + ":00-06:00");
+    }
+    const R = v.rondas[r];
+    return R && R.inicio ? R.inicio : null;
+  }
+  function limiteAlineacion(v) {
+    const min = Number(v.plazoAlineacion);
+    if (!(min >= 0) || v.plazoAlineacion == null || v.plazoAlineacion === "" || !v.rondas.length) return null;
+    const base = inicioDeRonda(v, v.rondas.length - 1);
+    return base ? base - min * 60000 : null;
+  }
+
   function enviarCapitan(codigo) {
     const v = torneoDeCapitanes();
     const x = estado.capitanes && estado.capitanes.canales.get(codigo);
@@ -2927,10 +3415,13 @@
     const m = enc && enc.m;
     const rival = m && m.n != null ? (v.jugadores.find((y) => y.id === (enc.lado === "b" ? m.n : m.b)) || {}).nombre : null;
     const alineacion = m && m.n != null ? ((m.alineacion && m.alineacion[enc.lado]) || E.alineacionPorOmision(v, e.id)) : [];
+    const limite = limiteAlineacion(v);
+    const vencido = !!limite && Date.now() > limite;
     x.canal.send({ type: "broadcast", event: "estado", payload: {
       nombre: v.nombre || "", equipo: e.nombre, ronda: v.rondas.length, rival,
       integrantes: e.integrantes.map((j) => ({ id: j.id, nombre: j.nombre })), alineacion,
-      bloqueada: !m || m.n == null || (m.partidas || []).some((p) => p.r),
+      limite, vencido,
+      bloqueada: !m || m.n == null || vencido || (m.partidas || []).some((p) => p.r),
       confirmada: (m && m.alineacionCapitan && m.alineacionCapitan[enc.lado]) || null,
     } });
   }
@@ -2938,6 +3429,9 @@
     const v = torneoDeCapitanes();
     const x = estado.capitanes && estado.capitanes.canales.get(codigo);
     if (!v || !x || Number(p.ronda) !== v.rondas.length) return enviarCapitan(codigo);
+    // Pasado el plazo, ya no (lo decide esta pestaña, no el celular).
+    const limite = limiteAlineacion(v);
+    if (limite && Date.now() > limite) return enviarCapitan(codigo);
     const e = v.jugadores.find((y) => y.id === x.idE);
     const enc = e && encuentroDe(v, e.id);
     if (!enc || enc.m.n == null || (enc.m.partidas || []).some((q) => q.r)) return enviarCapitan(codigo);
@@ -2963,10 +3457,23 @@
       const codigo = (v.capitanes || {})[idE];
       if (!e || !codigo) continue;
       const url = location.origin + location.pathname + "#capitan=" + codigo;
+      // Mandárselo al capitán: por WhatsApp o por correo (el teléfono y el
+      // correo los pone quien lo manda; Pareo no los guarda), o copiarlo.
+      const mensaje = tx("capitanMensaje", { e: e.nombre, r: v.rondas.length, t: v.grupo || v.nombre || "", u: url });
+      const copiar = el("button", { type: "button", class: C.mini, "data-capitan-copiar": idE, "aria-label": tx("capitanCopiarA", { e: e.nombre }) }, tx("copiarEnlace"));
+      copiar.addEventListener("click", async () => {
+        try { await navigator.clipboard.writeText(mensaje); Avisos.avisar(tx("enlaceCopiado")); }
+        catch (err) { Avisos.avisar(tx("noCopia"), { tipo: "error" }); }
+      });
       lista.append(el("div", { class: "rounded-xl border border-brand-200 dark:border-brand-700 p-3", "data-capitan-equipo": idE },
         el("h4", { class: "font-semibold", texto: e.nombre }),
         el("div", { class: "w-28 bg-white p-2 rounded-lg mt-2" }, PareoQr.svg(url, tx("qrEtiqueta"))),
-        el("p", { class: "pi-capitan-url text-xs break-all mt-2 font-mono", texto: url })));
+        el("p", { class: "pi-capitan-url text-xs break-all mt-2 font-mono", texto: url }),
+        el("div", { class: "flex flex-wrap gap-2 mt-2" },
+          el("a", { href: PareoCompartir.enlaceWhatsapp(mensaje), target: "_blank", rel: "noopener", class: C.mini, "data-capitan-whatsapp": idE, "aria-label": tx("capitanWhatsappA", { e: e.nombre }) }, tx("capitanWhatsapp")),
+          el("a", { href: "mailto:?subject=" + encodeURIComponent(tx("capitanAsunto", { e: e.nombre, r: v.rondas.length })) + "&body=" + encodeURIComponent(mensaje),
+            class: C.mini, "data-capitan-correo": idE, "aria-label": tx("capitanCorreoA", { e: e.nombre }) }, tx("capitanCorreo")),
+          copiar)));
     }
     cont.replaceChildren(el("p", { class: C.nota, texto: tx("capitanesAyuda") }), lista);
   }
@@ -3174,6 +3681,13 @@
     Avisos.avisar(tx("relojAnotado", { n: nombreDe(id) }));
   }
 
+  // ¿Cambiar un resultado que ya estaba anotado? (la ronda en juego).
+  function confirmarCambio(r, i, antes, despues, tablero) {
+    const corto = (x) => (x ? tx("corto_" + x) : tx("resSin"));
+    return Avisos.confirmar(tx("cambiarResultadoConfirma", { m: V.mesaFisica(t(), i), a: corto(antes), d: corto(despues) }) + (tablero ? " (" + tx("tableroN", { t: tablero }) + ")" : ""),
+      { aceptar: tx("cambiarResultadoSi"), cancelar: tx("cambiarResultadoNo") });
+  }
+
   // El motivo de una corrección (null si se cancela).
   async function pedirMotivo(r, i, antes, despues, tablero) {
     const corto = (x) => (x ? tx("corto_" + x) : tx("resSin"));
@@ -3313,6 +3827,11 @@
           const motivo = await pedirMotivo(r, i, m.r, sel.value || null);
           if (!motivo) { sel.value = m.r || ""; return; }
           anotarCorreccion(R, i, m.r, sel.value || null, motivo);
+        } else if (m.r && sel.value !== m.r) {
+          // En la ronda en juego: cambiar un resultado ya anotado (por un
+          // error al tocar) pide confirmarlo, y queda la constancia.
+          if (!(await confirmarCambio(r, i, m.r, sel.value || null))) { sel.value = m.r || ""; return; }
+          anotarCorreccion(R, i, m.r, sel.value || null, tx("correccionPrincipal"));
         }
         m.r = sel.value || null;
         guardar();
@@ -3332,7 +3851,7 @@
         el("td", { class: "num", texto: V.mesaFisica(v, i) }), el("td", { class: "num", texto: num.get(m.b) }),
         el("td", { class: "font-semibold" }, nombreDe(m.b), mb ? " " : null, mb), el("td", { class: "num", texto: puntosTexto(antes(m.b)) }),
         el("td", { class: "text-center" }, sel, el("span", { class: "pi-solo-imprimir", texto: m.r ? tx("corto_" + m.r) : "" }),
-          m.porAdjunto ? el("span", { class: "block text-xs " + C.nota, texto: tx("adjuntoAnoto") }) : null,
+          m.porAdjunto ? el("span", { class: "block text-xs " + C.nota, texto: typeof m.porAdjunto === "string" ? tx("adjuntoAnotoNombre", { n: m.porAdjunto }) : tx("adjuntoAnoto") }) : null,
           el("button", { type: "button", class: C.mini + " no-imprimir block mx-auto mt-1", "data-pgn": String(i), "aria-label": tx("pgnBotonA", { m: V.mesaFisica(v, i) }),
             onclick: (e) => editarPartida(r, i, e.currentTarget) }, (m.pgn ? "✓ " : "") + tx("pgnBoton"))),
         el("td", { class: "num", texto: puntosTexto(antes(m.n)) }), el("td", { class: "font-semibold" }, nombreDe(m.n), mn ? " " : null, mn),
@@ -3480,6 +3999,10 @@
               const motivo = await pedirMotivo(r, i, antes, sel.value || null, x.k + 1);
               if (!motivo) { sel.value = antes || ""; return; }
               anotarCorreccion(R, i, antes, sel.value || null, motivo, x.k + 1);
+            } else if (antes && sel.value !== antes) {
+              // En la ronda en juego: cambiar uno ya anotado pide confirmarlo y queda la constancia.
+              if (!(await confirmarCambio(r, i, antes, sel.value || null, x.k + 1))) { sel.value = antes || ""; return; }
+              anotarCorreccion(R, i, antes, sel.value || null, tx("correccionPrincipal"), x.k + 1);
             }
             m.partidas[x.k].r = sel.value || null;
             alCambiarEncuentro(m, id);
@@ -4106,8 +4629,10 @@
     }
     // Lo que quedó de la inscripción para revisar (evento de los JDE): cada
     // punto se marca como visto, y hasta marcarlos todos no se empareja.
-    if (r === 0) pintarPasarLista(caja);
-    const ausentes = r === 0 ? noLlegaron(v) : [];
+    if (r === 0 || (v.pasarLista && v.sistema !== "todos")) pintarPasarLista(caja, pintarRondas);
+    // En un suizo, quien no se acreditó no se empareja en ninguna ronda; en
+    // todos contra todos, se decide antes de sortear la ronda 1.
+    const ausentes = r === 0 || v.sistema !== "todos" ? noLlegaron(v) : [];
     let faltanRevisar = () => 0;
     const revisarEstado = el("p", { id: "pi-revisar-estado", class: "text-sm mt-2 font-semibold", role: "status" });
     if (r === 0) {
@@ -4132,7 +4657,30 @@
           el("p", { class: "text-sm mt-1", texto: tx("revisarTexto") }), ul, revisarEstado));
       }
     }
-    const pedidas = {};
+    // Quienes quedaron fuera de esta ronda por perder por incomparecencia en
+    // la anterior (T.retirosPorIncomparecencia): por si alguno llegó y avisó,
+    // se devuelve con un clic, antes de emparejar.
+    const fueraPorIncomparecencia = r > 0 ? v.jugadores.filter((j) => j.retiroAuto === r && j.retiradoDespuesDe === r) : [];
+    if (fueraPorIncomparecencia.length) {
+      caja.append(el("section", { id: "pi-fuera-incomparecencia", class: "mb-4 rounded-xl border-2 border-accent-500 p-3", "aria-labelledby": "pi-fuera-titulo" },
+        el("h3", { id: "pi-fuera-titulo", class: "font-semibold", texto: tx("fueraTitulo", { r: r + 1 }) }),
+        el("p", { class: "text-sm mt-1", texto: tx("fueraTexto") }),
+        el("ul", { class: "mt-2 space-y-1 text-sm" }, fueraPorIncomparecencia.map((j) => el("li", { class: "flex flex-wrap items-center gap-2" },
+          el("span", { class: "font-semibold", texto: j.nombre + (j.institucion ? " (" + j.institucion + ")" : "") }),
+          el("button", { type: "button", class: C.mini, "data-devolver": j.id, "aria-label": tx("volverA", { n: j.nombre }), onclick: () => {
+            devolverAlTorneo(j);
+            pintarRondas();
+            const sig = document.querySelector("#pi-fuera-incomparecencia [data-devolver]") || $("pi-emparejar");
+            if (sig) sig.focus();
+          } }, tx("volver")))))));
+    }
+    // Lo que el árbitro marca antes de emparejar (byes pedidos, «no viene»)
+    // se guarda con el torneo: si se cierra la página antes de emparejar, no
+    // se pierde. Lo que sale de la acreditación no: se recalcula cada vez
+    // (marcarlo presente después tiene que sacarlo de «no viene»).
+    if (!v.pedidas || v.pedidas.r !== r) v.pedidas = { r, ausencias: {} };
+    const elegidas = v.pedidas.ausencias;
+    const pedidas = Object.assign({}, elegidas);
     if (v.sistema === "todos") {
       caja.append(el("p", { class: C.nota + " mb-3", texto: tx("todosAyuda") }));
       if (r === 0) {
@@ -4168,7 +4716,12 @@
           noViene.textContent = tx(marcado ? "deshacerNoViene" : "noViene");
           noViene.setAttribute("aria-label", tx(marcado ? "deshacerNoVieneA" : "noVieneA", { n: j.nombre }));
         };
-        s.addEventListener("change", () => { if (s.value) pedidas[id] = s.value; else delete pedidas[id]; actualizarNoViene(); });
+        s.addEventListener("change", () => {
+          if (s.value) { pedidas[id] = s.value; elegidas[id] = s.value; } else { delete pedidas[id]; delete elegidas[id]; }
+          actualizarNoViene();
+          guardar();
+        });
+        if (pedidas[id]) s.value = pedidas[id];
         // Quien no llegó al pasar lista queda de entrada como «no viene».
         if (ausentes.includes(id)) { s.value = "Z"; pedidas[id] = "Z"; }
         noViene.addEventListener("click", () => { s.value = s.value === "Z" ? "" : "Z"; s.dispatchEvent(new Event("change")); });
@@ -4177,6 +4730,7 @@
       }
       caja.append(ul);
     }
+    if (r === 0 && !v.publicado) caja.append(el("p", { id: "pi-publico-ronda1", class: C.nota + " mb-3", texto: tx("publicarSoloRonda1") }));
     const boton = el("button", { type: "button", id: "pi-emparejar", class: C.boton }, tx("emparejarRonda", { r: r + 1 }));
     const msg = el("p", { class: "mt-3 text-sm", role: "status", "aria-live": "polite" });
     function actualizarRevision() {
@@ -4214,6 +4768,10 @@
       const cuenta = juegan >= 250 ? setInterval(() => { lleva.textContent = tx("emparejandoLleva", { l: Math.round((Date.now() - desde) / 1000) }); }, 1000) : null;
       try {
         await emparejar(r, pedidas);
+        // Quienes quedaron fuera por no estar acreditados (van así al informe).
+        const R0 = v.rondas[r];
+        const sinAcreditar = R0 && R0.ausencias ? ausentes.filter((id) => R0.ausencias[id] === "Z") : [];
+        if (sinAcreditar.length) { R0.sinAcreditar = sinAcreditar; guardar(); }
         estado.ronda = r;
         pintarRondas();
         Avisos.avisar(tx("rondaLista", { r: r + 1 }));
@@ -4234,30 +4792,35 @@
   // Pasar lista antes de la ronda 1: quién llegó. Se prende con la casilla;
   // apagada, no cambia nada.
   const noLlegaron = (v) => (v.pasarLista ? v.jugadores.filter((j) => !(v.asistencia || {})[j.id] && j.retiradoDespuesDe == null).map((j) => j.id) : []);
-  function pintarPasarLista(caja) {
+  // La acreditación (pasar lista): en la ficha Jugadores y antes de
+  // emparejar cada ronda. Quien no está marcado presente no se empareja en
+  // ninguna ronda (en un suizo, queda como «no viene») hasta que el árbitro
+  // lo marque. `repintar`: la ficha donde está.
+  function pintarPasarLista(caja, repintar, pre) {
+    pre = pre || "pi";
     const v = t();
-    const det = el("details", { id: "pi-asistencia", class: "mb-4 rounded-xl border border-brand-200 dark:border-brand-700 p-3", open: !!v.pasarLista });
+    const det = el("details", { id: pre + "-asistencia", class: "mb-4 rounded-xl border border-brand-200 dark:border-brand-700 p-3", open: !!v.pasarLista });
     det.append(el("summary", { class: "cursor-pointer font-semibold rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400", texto: tx("listaTitulo") }),
       el("p", { class: C.nota + " mt-1", texto: tx("listaTexto") }),
       el("label", { class: "flex items-start gap-2 text-sm mt-2" },
-        el("input", { type: "checkbox", id: "pi-asistencia-activar", class: "mt-1", checked: !!v.pasarLista, onchange: (e) => {
+        el("input", { type: "checkbox", id: pre + "-asistencia-activar", class: "mt-1", checked: !!v.pasarLista, onchange: (e) => {
           v.pasarLista = e.target.checked;
           if (v.pasarLista && !v.asistencia) v.asistencia = {};
-          guardar(); pintarRondas();
-          const x = $("pi-asistencia-activar"); if (x) x.focus();
+          guardar(); repintar();
+          const x = $(pre + "-asistencia-activar"); if (x) x.focus();
         } }),
         el("span", { class: "font-semibold", texto: tx("listaActivar") })));
     if (v.pasarLista) {
       const orden = T.ordenInicial(v);
-      det.append(el("p", { id: "pi-asistencia-cuenta", class: "text-sm mt-2", role: "status", texto: tx("listaCuenta", { n: orden.filter((id) => v.asistencia[id]).length, t: orden.length }) }),
-        el("button", { type: "button", id: "pi-asistencia-todos", class: C.mini + " mt-1", onclick: () => { for (const id of orden) v.asistencia[id] = true; guardar(); pintarRondas(); } }, tx("listaTodos")));
+      det.append(el("p", { id: pre + "-asistencia-cuenta", class: "text-sm mt-2", role: "status", texto: tx("listaCuenta", { n: orden.filter((id) => v.asistencia[id]).length, t: orden.length }) }),
+        el("button", { type: "button", id: pre + "-asistencia-todos", class: C.mini + " mt-1", onclick: () => { for (const id of orden) v.asistencia[id] = true; guardar(); repintar(); } }, tx("listaTodos")));
       const ul = el("ul", { class: "mt-2 grid sm:grid-cols-2 gap-x-6 gap-y-1 text-sm" });
       for (const id of orden) {
-        const cid = "pi-llego-" + id;
+        const cid = pre + "-llego-" + id;
         ul.append(el("li", { class: "flex items-start gap-2" },
           el("input", { type: "checkbox", id: cid, class: "mt-1", checked: !!v.asistencia[id], onchange: (e) => {
             if (e.target.checked) v.asistencia[id] = true; else delete v.asistencia[id];
-            guardar(); pintarRondas();
+            guardar(); repintar();
             const x = $(cid); if (x) x.focus();
           } }),
           el("label", { for: cid, texto: nombreDe(id) })));
@@ -4304,6 +4867,7 @@
     // Quien tiene mesa fija (una silla de ruedas…) queda en su mesa.
     const movidas = V.aplicarMesasFijas(v, ronda);
     v.rondas.push(ronda);
+    delete v.pedidas;
     guardar();
     if (movidas.length) Avisos.avisar(tx("mesasFijasAplicadas", { l: movidas.map((x) => x.nombre + " → " + tx("mesa") + " " + x.mesa).join(", ") }), { tipo: "info" });
   }
@@ -4446,6 +5010,29 @@
     }
     if (boton || r.noExiste) Avisos.avisar(r.error || tx("publicarSinRed"), { tipo: "error" });
   }
+  // Todo torneo se publica solo al emparejar la ronda 1 (lo decidió el dueño
+  // del sitio: «que se vean todos los torneos que hagan todos los
+  // árbitros», sin poder apagarlo). Sin internet, se vuelve a intentar con
+  // el próximo cambio, como mucho una vez por minuto. Lo dicen la ficha
+  // Torneo, la ronda 1 antes de emparejar, Archivos y la política de
+  // privacidad.
+  const publicandoSolo = new Set();
+  const reintentoSolo = new Map();
+  async function publicarSolo(id, ahora) {
+    if (publicandoSolo.has(id) || (!ahora && (reintentoSolo.get(id) || 0) > Date.now())) return;
+    const tor = id === estado.id ? t() : leerJSON(PREFIJO + id, null);
+    if (!tor || tor.publicado || !tor.rondas.length) return;
+    publicandoSolo.add(id);
+    const r = await PareoPublicar.crear(tor, extraPublicar(tor));
+    publicandoSolo.delete(id);
+    if (!r.ok) { reintentoSolo.set(id, Date.now() + 60000); if (ahora) Avisos.avisar(r.error || tx("publicarSinRed"), { tipo: "error" }); return; }
+    const actual = id === estado.id ? t() : leerJSON(PREFIJO + id, null);
+    if (!actual || actual.publicado) return;
+    actual.publicado = { id: r.id, clave: r.clave, hora: Date.now() };
+    escribir(PREFIJO + id, JSON.stringify(actual));
+    if (id === estado.id && estado.ficha === "archivos") pintarPublicar();
+  }
+
   async function publicarTorneos(lista, boton) {
     boton.disabled = true;
     let bien = 0;
@@ -4590,9 +5177,18 @@
         Avisos.avisar(tx("publicarQuitado"));
         const b = $("pi-publicar-permiso"); if (b) b.focus();
       });
-      caja.append(el("div", { class: "mt-3 flex flex-wrap gap-2" }, ahora, quitarB));
+      // Un torneo que ya empezó se publica siempre: no se quita.
+      caja.append(el("div", { class: "mt-3 flex flex-wrap gap-2" }, ahora, v.rondas.length ? null : quitarB));
       if (!v.rondas.length) caja.append(camposAnuncio(v));
       caja.append(cajaInscripcion(v));
+      return;
+    }
+    // Ya empezó y todavía no se pudo publicar (sin internet): se vuelve a
+    // intentar solo; «Publicar ahora» no espera.
+    if (v.rondas.length) {
+      const ya = el("button", { type: "button", id: "pi-publicar-reintentar", class: C.boton }, tx("publicarAhora"));
+      ya.addEventListener("click", () => publicarSolo(estado.id, true));
+      caja.append(el("p", { class: "text-sm font-semibold", role: "status", texto: tx("publicarSoloPendiente") }), el("div", { class: "mt-3" }, ya));
       return;
     }
     // Sin jugadores todavía: se publica como anuncio (con la fecha de la
@@ -4760,6 +5356,8 @@
   const valorDesempate = (c, x) => (c === "TB" ? E.textoTableros(x, t().tableros) : formatoNum(x));
 
   // ---------- Tabla cruzada ----------
+  // Cada casilla la escribe V.celdaCruzada (la misma del informe oficial).
+  const letraCruzada = () => (idioma === "en" ? { w: "w", b: "b", bye: tx("cBye") } : { w: "b", b: "n", bye: tx("cBye") });
   function pintarCruzada() {
     const v = t();
     pintarSelectInstitucion($("pi-cruzada-institucion"));
@@ -4777,22 +5375,11 @@
       Array.from({ length: R }, (_, r) => el("th", { class: "text-center", scope: "col", texto: tx("rCorta", { r: r + 1 }) })),
       el("th", { class: "num", scope: "col", texto: tx("pts") }))));
     const cuerpo = el("tbody");
-    const letra = idioma === "en" ? { w: "w", b: "b" } : { w: "b", b: "n" };
+    const letra = letraCruzada();
     for (const f of filas) {
       const j = jugador(f.id);
       const celdas = [];
-      for (let r = 0; r < R; r++) {
-        const s = T.situacion(v, r, f.id);
-        let texto;
-        if (s.tipo === "bye") texto = tx("cBye") + " " + puntosTexto(s.puntos);
-        else if (s.tipo === "ausente") texto = (s.codigo === "Z" ? "—" : tx("cBye")) + (s.puntos ? " " + puntosTexto(s.puntos) : "");
-        else if (s.tipo === "pendiente") texto = num.get(s.rival) + letra[s.color] + " *";
-        else {
-          const sim = s.codigo === "=" ? "½" : s.codigo === "-" ? "−" : s.codigo;
-          texto = num.get(s.rival) + letra[s.color] + " " + sim;
-        }
-        celdas.push(el("td", { class: "text-center whitespace-nowrap", texto }));
-      }
+      for (let r = 0; r < R; r++) celdas.push(el("td", { class: "text-center whitespace-nowrap", texto: V.celdaCruzada(v, r, f.id, num, letra, false) }));
       cuerpo.append(el("tr", {},
         el("td", { class: "num", texto: f.puesto }), el("td", { class: "num", texto: num.get(f.id) }),
         el("td", { class: "font-semibold", texto: j.nombre }), el("td", { class: "num", texto: Number(j.elo) > 0 ? j.elo : "" }),
@@ -4844,22 +5431,14 @@
     const filas = filasFiltradas(todasFilas);
     const num = T.numeros(v);
     const R = v.rondas.length;
-    const letra = idioma === "en" ? { w: "w", b: "b" } : { w: "b", b: "n" };
+    const letra = letraCruzada();
     const encabezados = [tx("puesto"), tx("nro"), tx("nombre"), "Elo"]
       .concat(Array.from({ length: R }, (_, r) => tx("rCorta", { r: r + 1 }))).concat([tx("pts")]);
     const anchos = [1, 1, 3, 1].concat(Array.from({ length: R }, () => 1)).concat([1]);
     const filasTabla = filas.map((f) => {
       const j = jugador(f.id);
       const celdas = [];
-      for (let r = 0; r < R; r++) {
-        const s = T.situacion(v, r, f.id);
-        let texto;
-        if (s.tipo === "bye") texto = tx("cBye") + " " + puntosTexto(s.puntos);
-        else if (s.tipo === "ausente") texto = (s.codigo === "Z" ? "-" : tx("cBye")) + (s.puntos ? " " + puntosTexto(s.puntos) : "");
-        else if (s.tipo === "pendiente") texto = num.get(s.rival) + letra[s.color] + " *";
-        else texto = num.get(s.rival) + letra[s.color] + " " + (s.codigo === "=" ? "1/2" : s.codigo);
-        celdas.push(texto);
-      }
+      for (let r = 0; r < R; r++) celdas.push(V.celdaCruzada(v, r, f.id, num, letra, true));
       return [String(f.puesto), String(num.get(f.id)), j.nombre, Number(j.elo) > 0 ? String(j.elo) : ""]
         .concat(celdas).concat([puntosTexto(T.puntos(v, f.id))]);
     });
@@ -5130,13 +5709,18 @@
     $("pi-form-torneo").addEventListener("submit", (e) => e.preventDefault());
     $("pi-desempate-agregar").addEventListener("click", () => {
       const c = $("pi-desempate-nuevo").value;
-      if (!c) return;
+      if (!c || configFija(t())) return;
       t().desempates.push(c);
       guardar();
       pintarDesempates();
       $("pi-desempate-nuevo").focus();
     });
 
+    $("pi-form-torneo").addEventListener("input", alEscribirTorneo);
+    $("pi-form-jugador").addEventListener("input", guardarBorrador);
+    $("pi-pegar").addEventListener("input", guardarBorrador);
+    window.addEventListener("pagehide", guardarAlSalir);
+    document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden") guardarAlSalir(); });
     $("pi-form-jugador").addEventListener("submit", (e) => {
       e.preventDefault();
       const f = e.target;
@@ -5144,6 +5728,7 @@
       if (!d.nombre) { Avisos.avisar(tx("faltaNombre"), { tipo: "error" }); f.elements.nombre.focus(); return; }
       agregarJugadores([d]);
       f.reset();
+      guardarBorrador();
       f.elements.nombre.focus();
     });
     $("pi-pegar-agregar").addEventListener("click", () => {
@@ -5153,7 +5738,7 @@
         return datosJugador({ nombre, institucion, elo, titulo, fed, fideId, categoria });
       });
       const n = agregarJugadores(lista);
-      if (n) { $("pi-pegar").value = ""; Avisos.avisar(tx("agregados", { n })); }
+      if (n) { $("pi-pegar").value = ""; guardarBorrador(); Avisos.avisar(tx("agregados", { n })); }
       else Avisos.avisar(tx("nadaQueAgregar"), { tipo: "error" });
     });
     $("pi-ir-subir-lista").addEventListener("click", () => {
@@ -5391,6 +5976,7 @@
     }
     enganchar();
     pintarTodo();
+    restaurarBorrador();
     avisarPestanas();
     if (location.hash.startsWith("#recibir=")) recibirEvento(location.hash.slice(9));
     // Después de pintar: que no compita con lo que se ve primero.

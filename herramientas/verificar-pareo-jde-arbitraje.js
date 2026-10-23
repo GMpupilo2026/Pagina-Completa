@@ -155,6 +155,7 @@ async function pruebaPagina(browser) {
   console.log("\n=== El árbitro adjunto anota desde el celular ===");
   await page.click("#pi-adjunto");
   await page.waitForSelector(dialogo);
+  await page.fill(dialogo + ' [name="arbitro"]', "PRUEBA ADJUNTA");
   await page.fill(dialogo + ' [name="desde"]', "1");
   await page.fill(dialogo + ' [name="hasta"]', "2");
   await page.click(dialogo + " [data-avisos-aceptar]");
@@ -168,7 +169,7 @@ async function pruebaPagina(browser) {
   await llega({ ronda: 1, mesa: 1, r: "1-0" });
   todos = await leerTodos(page);
   let R = todos.find((x) => x.idLista === mujeres.idLista).rondas[0];
-  igual("un resultado del adjunto entra a su mesa, marcado", [R.mesas[0].r, R.mesas[0].porAdjunto], ["1-0", true]);
+  igual("un resultado del adjunto entra a su mesa, marcado", [R.mesas[0].r, !!R.mesas[0].porAdjunto], ["1-0", true]);
   ok(/lo anotó el adjunto/.test(await page.textContent("#pi-ronda")), "y la ronda lo dice");
   await llega({ ronda: 1, mesa: 1, r: "0-1" });
   await llega({ ronda: 1, mesa: 2, r: "gana" });

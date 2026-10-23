@@ -106,12 +106,16 @@
   }
 
   // ---------- La lista ----------
+  // Además de las columnas, unos pocos campos del torneo, leídos dentro de
+  // `datos` por la base (PostgREST): bajarse cada torneo entero para la lista
+  // sería pesado.
+  const COLUMNAS_LISTA = COLUMNAS + ",ritmo:datos->>ritmo,fin:datos->>fechaFin,fed:datos->>federacion,sistema:datos->>sistema,tipo:datos->>tipo,inscripcion:datos->inscripcion";
   let lista = null;
   async function pedirLista() {
     // PostgREST corta a mil filas sin avisar: se piden de mil en mil.
     const filas = [];
     for (let desde = 0; ; desde += 1000) {
-      const { data, error } = await window.sb.from("pareo_publicados").select(COLUMNAS)
+      const { data, error } = await window.sb.from("pareo_publicados").select(COLUMNAS_LISTA)
         .order("actualizado", { ascending: false }).range(desde, desde + 999);
       if (error) throw error;
       filas.push(...(data || []));
@@ -121,25 +125,125 @@
   }
   // Próximo: todavía sin jugadores (un anuncio) o con fecha más adelante.
   const esProximo = (x) => !x.jugadores || (x.fecha && x.fecha > hoy());
-  function tarjetaLista(x) {
-    const partes = [x.evento, x.lugar, fechaTexto(x.fecha)].filter(Boolean);
-    const avance = esProximo(x) ? (x.jugadores ? x.jugadores + " inscritos" : "Anuncio") : x.rondas_total ? "Ronda " + x.rondas + " de " + x.rondas_total : x.rondas + " rondas";
-    return el("li", {},
-      el("a", { href: "#t=" + encodeURIComponent(x.id), class: "block " + C.tarjeta + " hover:ring-2 hover:ring-accent-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400", "data-torneo": x.id },
-        el("span", { class: "block font-semibold text-brand-800 dark:text-white", texto: x.nombre }),
-        partes.length ? el("span", { class: "block " + C.nota + " mt-1", texto: partes.join(" · ") }) : null,
-        el("span", { class: "block text-sm mt-2", texto: esProximo(x) ? avance : avance + " · " + x.jugadores + " participantes" }),
-        el("span", { class: "block text-xs text-brand-600 dark:text-brand-300 mt-1", texto: "Actualizado: " + (window.HoraCR ? HoraCR.fechaHora(x.actualizado) : x.actualizado) })));
+  // En curso: ya empezó, le faltan rondas y no pasó de su último día.
+  const enCurso = (x) => !esProximo(x) && x.rondas_total > 0 && x.rondas < x.rondas_total && (x.fin || x.fecha || "") >= HoraCR.sumarDias(hoy(), -1);
+  const inscribe = (x) => !!(x.inscripcion && x.inscripcion.abierta && (!x.inscripcion.hasta || x.inscripcion.hasta >= hoy()));
+  const RITMO = { clasico: "Clásico", rapido: "Rápido", blitz: "Relámpago" };
+  const ritmoDe = (x) => RITMO[window.RitmoControl ? RitmoControl.deducir(x.ritmo || "", x.nombre) : ""] || "";
+  const SISTEMA = { suizo: "Suizo", todos: "Todos contra todos" };
+  const MODALIDAD = { equipos: "Por equipos", individual: "Individual" };
+  const lugarDe = (x) => [x.lugar, x.fed].filter(Boolean).join(", ");
+  function estadoDe(x) {
+    if (esProximo(x)) return { texto: "Próximo", clase: "tp-estado-proximo" };
+    if (enCurso(x)) return { texto: "En curso", clase: "tp-estado-curso" };
+    return { texto: "Terminado", clase: "tp-estado-fin" };
+  }
+
+  // La fecha de la fila: «23–25 / OCT», o «23 OCT / 11 DIC» si cambia de mes.
+  function bloqueFecha(desde, hasta) {
+    if (!desde) return el("span", { class: "tp-fecha", "aria-hidden": "true" }, el("span", { class: "tp-fecha-dia", texto: "—" }));
+    const dia = (f) => HoraCR.fecha(f, { day: "numeric" });
+    const mes = (f) => HoraCR.fecha(f, { month: "short" }).replace(".", "").toUpperCase();
+    const fin = hasta && hasta > desde ? hasta : "";
+    const leer = HoraCR.fecha(desde) + (fin ? " al " + HoraCR.fecha(fin) : "");
+    const cuerpo = !fin || fin.slice(0, 7) === desde.slice(0, 7)
+      ? [el("span", { class: "tp-fecha-dia", texto: dia(desde) + (fin ? "–" + dia(fin) : "") }), el("span", { class: "tp-fecha-mes", texto: mes(desde) })]
+      : [el("span", { class: "tp-fecha-par", texto: dia(desde) + " " + mes(desde) }), el("span", { class: "tp-fecha-par", texto: dia(fin) + " " + mes(fin) })];
+    return el("span", { class: "tp-fecha" }, el("span", { class: "sr-only", texto: leer + ". " }), el("span", { "aria-hidden": "true", class: "contents" }, cuerpo));
+  }
+  // Un dato con su etiqueta escrita arriba (el color nunca va solo).
+  const dato = (etiqueta, valor, extra) => el("span", Object.assign({ class: "tp-dato" }, extra || {}),
+    el("span", { class: "tp-dato-etiqueta", texto: etiqueta }), el("span", { class: "tp-dato-valor" }, valor || "—"));
+  function datosDe(x) {
+    const rondas = !x.rondas_total ? (x.rondas ? String(x.rondas) : "—") : esProximo(x) ? String(x.rondas_total) : x.rondas + "/" + x.rondas_total;
+    const abierta = inscribe(x);
+    return [
+      dato("Inscripción", [el("span", { class: "tp-punto " + (abierta ? "tp-punto-si" : "tp-punto-no"), "aria-hidden": "true" }), abierta ? "Abierta" : "Cerrada"], { "data-col": "inscripcion" }),
+      dato("Participantes", String(x.jugadores || 0), { "data-col": "participantes" }),
+      dato("Rondas", rondas, { "data-col": "rondas" }),
+      dato("Sistema", SISTEMA[x.sistema] || "", { "data-col": "sistema" }),
+      dato("Ritmo", ritmoDe(x), { "data-col": "ritmo", title: x.ritmo || null }),
+      dato("Modalidad", MODALIDAD[x.tipo] || MODALIDAD.individual, { "data-col": "modalidad" }),
+    ];
+  }
+  function filaTorneo(x, hijo) {
+    const est = estadoDe(x);
+    const sigue = !hijo && x.evento ? el("span", { class: "tp-fila-evento", texto: x.evento }) : null;
+    return el("li", { class: "tp-item" },
+      el("a", { href: "#t=" + encodeURIComponent(x.id), class: "tp-fila" + (hijo ? " tp-fila-hijo" : ""), "data-torneo": x.id },
+        hijo ? el("span", { class: "tp-fecha", "aria-hidden": "true" }) : bloqueFecha(x.fecha, x.fin),
+        el("span", { class: "tp-principal" },
+          el("span", { class: "tp-nombre", texto: x.nombre }), sigue,
+          el("span", { class: "tp-lugar" }, hijo ? null : lugarDe(x), el("span", { class: "tp-estado " + est.clase, texto: est.texto }))),
+        el("span", { class: "tp-datos" }, datosDe(x)),
+        el("span", { class: "tp-flecha", "aria-hidden": "true", texto: "›" })));
+  }
+  // Un evento con varios torneos: una fila que se despliega.
+  const desplegados = new Set();
+  function filaEvento(clave, torneos, abrir) {
+    const x = torneos[0];
+    const id = "tp-ev-" + clave.replace(/[^a-z0-9]+/gi, "-").slice(0, 60);
+    const abierto = abrir || desplegados.has(clave);
+    const fin = torneos.map((t) => t.fin || t.fecha || "").sort().pop();
+    const total = torneos.reduce((s, t) => s + (t.jugadores || 0), 0);
+    const ritmos = [...new Set(torneos.map(ritmoDe).filter(Boolean))];
+    const hijos = el("ul", { id, class: "tp-hijos", hidden: !abierto }, torneos.map((t) => filaTorneo(t, true)));
+    const est = torneos.some(enCurso) ? estadoDe(torneos.find(enCurso)) : estadoDe(x);
+    const boton = el("button", { type: "button", class: "tp-fila tp-fila-evento-boton", "aria-expanded": abierto ? "true" : "false", "aria-controls": id, "data-evento": clave },
+      bloqueFecha(x.fecha, fin),
+      el("span", { class: "tp-principal" },
+        el("span", { class: "tp-nombre", texto: x.evento }),
+        el("span", { class: "tp-lugar" }, lugarDe(x), el("span", { class: "tp-estado " + est.clase, texto: est.texto }))),
+      el("span", { class: "tp-datos" },
+        dato("Torneos", String(torneos.length)),
+        dato("Participantes", String(total), { "data-col": "participantes" }),
+        dato("Ritmo", ritmos.join(" · "), { "data-col": "ritmo" })),
+      el("span", { class: "tp-flecha tp-flecha-abre", "aria-hidden": "true", texto: "›" }));
+    boton.addEventListener("click", () => {
+      const ya = boton.getAttribute("aria-expanded") === "true";
+      boton.setAttribute("aria-expanded", ya ? "false" : "true");
+      hijos.hidden = ya;
+      if (ya) desplegados.delete(clave); else desplegados.add(clave);
+    });
+    return el("li", { class: "tp-item tp-grupo", "data-grupo": clave }, boton, hijos);
+  }
+  // Los torneos de un día, con los de un mismo evento juntos.
+  function filasDelDia(torneos, abrir) {
+    const porEvento = new Map();
+    for (const x of torneos) {
+      const k = x.evento ? x.evento + "|" + (x.fecha || "") : "\u0000" + x.id;
+      if (!porEvento.has(k)) porEvento.set(k, []);
+      porEvento.get(k).push(x);
+    }
+    return [...porEvento].map(([k, l]) => (l.length > 1 ? filaEvento(k, l.sort((a, b) => a.nombre.localeCompare(b.nombre, "es")), abrir) : filaTorneo(l[0], false)));
+  }
+  // Por día, con su encabezado («Jueves, 22 de octubre de 2026»). Dentro del
+  // día, primero lo que se está jugando y después por nombre.
+  function porDia(torneos, ascendente, abrir) {
+    const dias = new Map();
+    for (const x of torneos) {
+      const d = x.fecha || "";
+      if (!dias.has(d)) dias.set(d, []);
+      dias.get(d).push(x);
+    }
+    const orden = [...dias.keys()].sort((a, b) => (!a ? 1 : !b ? -1 : ascendente ? a.localeCompare(b) : b.localeCompare(a)));
+    return orden.map((d) => {
+      const l = dias.get(d).sort((a, b) => (enCurso(b) - enCurso(a)) || String(a.evento || a.nombre).localeCompare(String(b.evento || b.nombre), "es"));
+      const titulo = d ? HoraCR.fecha(d, { weekday: "long", day: "numeric", month: "long", year: "numeric" }) : "Sin fecha";
+      return el("section", { class: "tp-dia", "data-dia": d },
+        el("h3", { class: "tp-dia-titulo", texto: titulo.charAt(0).toUpperCase() + titulo.slice(1) }),
+        el("ul", { class: "tp-filas" }, filasDelDia(l, abrir)));
+    });
   }
   function pintarLista() {
     const caja = $("tp-contenido");
     const q = clave($("tp-buscar") ? $("tp-buscar").value : "");
     const cuales = (lista || []).filter((x) => !q || clave([x.nombre, x.evento, x.lugar].join(" ")).includes(q));
-    const ul = $("tp-lista");
-    // Los próximos, primero el más cercano; los demás, el más reciente primero.
-    const proximos = cuales.filter(esProximo).sort((a, b) => String(a.fecha || "9999").localeCompare(String(b.fecha || "9999")));
-    ul.replaceChildren(...cuales.filter((x) => !esProximo(x)).map(tarjetaLista));
-    $("tp-proximos").replaceChildren(...proximos.map(tarjetaLista));
+    // Los próximos, primero el día más cercano; los demás, el más reciente
+    // primero. Buscando, los eventos se abren para que se vea qué coincidió.
+    $("tp-lista").replaceChildren(...porDia(cuales.filter((x) => !esProximo(x)), false, !!q));
+    const proximos = cuales.filter(esProximo);
+    $("tp-proximos").replaceChildren(...porDia(proximos, true, !!q));
     $("tp-proximos-caja").hidden = !proximos.length;
     $("tp-cuantos").textContent = !lista ? "" : !lista.length ? "Todavía no hay torneos publicados."
       : cuales.length === lista.length ? lista.length + (lista.length === 1 ? " torneo publicado." : " torneos publicados.")

@@ -86,14 +86,11 @@ async function pruebaPublicar(browser) {
   }, [["ta", A], ["tb", B]]);
   let pedidos;
   const { ctx, page, errores } = await P.abrirPagina(browser, BASE, "", async (p) => { await p.clock.install(); pedidos = await dobleFuncion(p); await sembrar(p); });
+  // Un torneo que ya empezó se publica solo (con el próximo cambio); acá,
+  // sin cambios todavía, Archivos lo dice y «Publicar ahora» no espera.
   await page.click('[data-ficha="archivos"]');
-  ok(await P.vis(page, "#pi-publicar-permiso"), "la ficha Archivos trae dónde publicar, con el permiso");
-  await page.click("#pi-publicar-uno");
-  igual("sin marcar el permiso no se manda nada", pedidos.length, 0);
-  igual("y el foco va a la casilla", await page.evaluate(() => document.activeElement.id), "pi-publicar-permiso");
-  ok(/Ver|Política de privacidad/.test(await page.textContent("#pi-publicar")) && await page.$('#pi-publicar a[href="privacidad.html#torneos"]'), "la casilla enlaza la política de privacidad");
-  await page.check("#pi-publicar-permiso");
-  await page.click("#pi-publicar-uno");
+  ok(/se publica solo/.test(await page.textContent("#pi-publicar")) && !(await page.$("#pi-publicar-permiso")), "un torneo empezado no pide permiso: se publica solo");
+  await page.click("#pi-publicar-reintentar");
   await page.waitForSelector("#pi-publicar-enlace");
   igual("se publica con «crear»", pedidos.map((x) => x.accion), ["crear"]);
   ok(!/nacimiento|fideId|"sexo"|firmas/.test(JSON.stringify(pedidos[0])), "y sin datos de más");
@@ -116,21 +113,15 @@ async function pruebaPublicar(browser) {
   await page.waitForFunction((n) => true, pedidos.length);
   ok(pedidos[pedidos.length - 1].accion === "actualizar", "«Actualizar ahora» lo manda en el momento");
 
-  console.log("\n=== Dejar de publicar ===");
-  await page.click("#pi-publicar-quitar");
-  await page.waitForSelector(dialogo);
-  await page.click(dialogo + " [data-avisos-aceptar]");
-  await page.waitForSelector("#pi-publicar-permiso");
-  igual("borra con la clave", [pedidos[pedidos.length - 1].accion, pedidos[pedidos.length - 1].clave], ["borrar", "clave-1"]);
-  await P.esperarGuardado(page, (l) => l.every((t) => !t.publicado));
-  bien("y el torneo la olvida");
+  console.log("\n=== Un torneo empezado no se quita ===");
+  ok(!(await page.$("#pi-publicar-quitar")), "no hay «Dejar de publicar»");
 
-  console.log("\n=== El evento entero de un clic ===");
-  await page.check("#pi-publicar-permiso");
-  ok(/Publicar los 2 torneos del evento/.test(await page.textContent("#pi-publicar-evento")), "ofrece publicar los dos torneos del evento");
-  await page.click("#pi-publicar-evento");
+  console.log("\n=== El otro torneo del evento, al anotar ===");
+  await page.selectOption("#pi-lista", "tb");
+  await page.click('[data-ficha="rondas"]');
+  await P.anotar(page, "1-0");
   const todos = await P.esperarGuardado(page, (l) => l.filter((t) => t.publicado).length === 2);
-  igual("los dos quedan publicados, cada uno con su clave", todos.map((t) => t.publicado.clave).sort(), ["clave-2", "clave-3"]);
+  igual("se publica solo con el primer cambio, con su clave", todos.map((t) => t.publicado.clave).sort(), ["clave-1", "clave-2"]);
   ok(!errores.length, "sin errores en la página", errores.join(" | "));
   await ctx.close();
 }
@@ -143,7 +134,7 @@ async function dobleTabla(page, filas) {
     const u = new URL(route.request().url());
     const sel = u.searchParams.get("select") || "";
     pedidos.push({ select: sel, id: u.searchParams.get("id"), datos: u.searchParams.get("datos") });
-    const columnas = (f) => Object.fromEntries(Object.entries(f).filter(([k]) => sel.split(",").includes(k)));
+    const columnas = (f) => require("./lib/pareo-pruebas").columnasPedidas(sel, f);
     const json = (status, x) => route.fulfill({ status, contentType: "application/json", headers: { "access-control-allow-origin": "*" }, body: JSON.stringify(x) });
     const id = u.searchParams.get("id");
     if (id && id.startsWith("eq.")) {
@@ -182,7 +173,7 @@ async function pruebaPagina(browser) {
   await page.goto(BASE + "/torneos-pareo.html", { waitUntil: "networkidle" });
   await page.waitForSelector("#tp-lista li");
   igual("la lista trae los dos, el más reciente primero", await page.$$eval("#tp-lista [data-torneo]", (l) => l.map((a) => a.dataset.torneo.slice(0, 1))), ["1", "2"]);
-  ok(/Ronda 1 de 3 · 6 participantes/.test(await page.textContent("#tp-lista li")), "cada uno dice cómo va y cuántos son");
+  igual("cada uno dice cómo va y cuántos son", await page.$eval("#tp-lista li", (li) => ["participantes", "rondas"].map((c) => li.querySelector('[data-col="' + c + '"] .tp-dato-valor').textContent)), ["6", "1/3"]);
   await page.fill("#tp-buscar", "sub-14");
   igual("el buscador filtra (sin importar mayúsculas)", await page.$$eval("#tp-lista li", (l) => l.length), 1);
   await page.fill("#tp-buscar", "");

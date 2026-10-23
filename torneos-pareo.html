@@ -67,7 +67,7 @@
          «Torneos en Pareo Integral: el espacio público» en
          docs/decisiones/juegos-y-torneos.md. -->
     <div class="pt-10 pb-16">
-        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
             <div id="tp-portada">
                 <div class="mb-8 flex flex-wrap items-start justify-between gap-4">
                     <div>
@@ -89,10 +89,10 @@
                 </section>
                 <section id="tp-proximos-caja" class="mb-8" aria-labelledby="tp-proximos-titulo" hidden>
                     <h2 id="tp-proximos-titulo" class="font-serif text-2xl font-bold text-brand-800 dark:text-white mb-3">Próximos torneos</h2>
-                    <ul id="tp-proximos" class="grid sm:grid-cols-2 gap-4"></ul>
+                    <div id="tp-proximos"></div>
                 </section>
                 <h2 class="font-serif text-2xl font-bold text-brand-800 dark:text-white mb-3">Resultados</h2>
-                <ul id="tp-lista" class="grid sm:grid-cols-2 gap-4"></ul>
+                <div id="tp-lista"></div>
             </div>
             <div id="tp-contenido" hidden></div>
         </div>
@@ -114,6 +114,7 @@
     <script src="js/supabase-client.js"></script>
     <script src="js/main.js"></script>
     <script src="js/hora-cr.js"></script>
+    <script src="js/ritmo-control.js"></script>
     <script src="js/pareo/torneo.js"></script>
     <script src="js/pareo/desempates.js"></script>
     <script src="js/pareo/equipos.js"></script>
