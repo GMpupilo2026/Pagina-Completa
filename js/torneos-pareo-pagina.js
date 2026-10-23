@@ -390,6 +390,10 @@
     return b;
   }
   function pintarLista() {
+    // Una lista que llega tarde (un filtro, «Ver más») no pinta la portada
+    // encima de un torneo, una ficha o el ranking que se abrió mientras tanto.
+    const ruta = leerRuta();
+    if (ruta.t || ruta.o || ruta.p || ruta.c || ruta.ranking) return;
     const caja = $("tp-contenido");
     const q = $("tp-buscar") ? $("tp-buscar").value.trim() : "";
     const f = filtros();
