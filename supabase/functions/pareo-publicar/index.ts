@@ -165,6 +165,13 @@ function columnas(t: NonNullable<ReturnType<typeof limpiar>>) {
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   if (req.method !== "POST") return json({ ok: false, error: "Método no permitido" }, 405);
+  // Solo desde el sitio. Las pruebas del CI abren Pareo Integral en
+  // localhost y, con la publicación automática, cada corrida dejaba decenas
+  // de torneos de prueba en la lista pública (el 23/10 hubo que borrar 169).
+  // El navegador siempre manda Origin en un POST a otro dominio; Node y curl
+  // no lo mandan. Ver «Las pruebas no publican» en
+  // docs/decisiones/juegos-y-torneos.md.
+  if (req.headers.get("origin") !== SITE_URL) return json({ ok: false, error: "Solo se publica desde ajedrez-integral.com." }, 403);
   const crudo = await req.text();
   if (crudo.length > 3_000_000) return json({ ok: false, error: "El torneo es demasiado grande para publicarlo." }, 413);
   let body: Obj;

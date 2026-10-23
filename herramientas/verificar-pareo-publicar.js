@@ -64,6 +64,10 @@ function pruebaSinNavegador() {
   // La función vuelve a limpiar lo que llega: el campo tiene que estar en su lista.
   const fn = require("fs").readFileSync(require("path").join(__dirname, "..", "supabase/functions/pareo-publicar/index.ts"), "utf8");
   ok(/validoElo: \["fide", "nacional", "no"\]\.includes\(v\.validoElo/.test(fn), "la función pareo-publicar lo guarda (sin eso se pierde al publicar, callado)");
+  // Las pruebas abren Pareo Integral en localhost y la publicación es
+  // automática: sin este candado cada corrida del CI llenaba la lista pública.
+  ok(/req\.headers\.get\("origin"\) !== SITE_URL\) return json\(/.test(fn) && fn.indexOf('get("origin") !== SITE_URL') < fn.indexOf("await req.text()"),
+    "la función solo publica lo que llega desde ajedrez-integral.com (antes de leer nada)");
 }
 
 // El doble de la Edge Function: anota cada pedido y contesta como ella.
