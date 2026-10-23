@@ -478,10 +478,47 @@
       for (const k of ["victoria", "tablas", "derrota", "bye"]) f.elements["p_" + k].disabled = true;
     }
     pintarConfigFija(v);
+    pintarVivoTorneo();
     pintarDesempates();
     // La sugerencia de un torneo por grupo vive en esta ficha (junto a «Subir
     // la lista»): se vuelve a pintar con ella (el idioma, por ejemplo).
     pintarSugerencia();
+  }
+
+  // El enlace en vivo, también en la ficha Torneo (lo pidió el dueño del
+  // sitio): el del evento si el torneo es de uno, si no el de este torneo.
+  // Los mismos canales que en Archivos y en Rondas, no otros.
+  function pintarVivoTorneo() {
+    const v = t();
+    const caja = $("pi-torneo-vivo");
+    caja.replaceChildren();
+    const qr = el("div", { id: "pi-tv-qr", class: "mt-3" });
+    const ev = v.evento;
+    const vivo = ev ? !!(estado.eventoVivo && estado.eventoVivo.id === ev.id) : !!estado.enVivo;
+    const b = el("button", { type: "button", id: "pi-tv-boton", class: vivo ? C.botonSec : C.boton, "aria-pressed": vivo ? "true" : "false" },
+      tx(vivo ? "eventoVivoApagar" : ev ? "eventoVivoPrender" : "vivoTorneoPrender"));
+    b.addEventListener("click", async () => {
+      if (ev) {
+        if (vivo) apagarEventoVivo(); else if (!(await prenderEventoVivo(ev))) return;
+      } else if (vivo) { $("pi-ver-en-vivo").checked = false; desactivarEnVivo(); }
+      else { $("pi-ver-en-vivo").checked = true; if (!(await activarEnVivo())) return; }
+      pintarVivoTorneo();
+      $("pi-tv-boton").focus();
+    });
+    caja.append(el("h3", { class: "font-semibold", texto: tx(ev ? "eventoVivoTitulo" : "vivoTorneoTitulo") }),
+      el("p", { class: C.nota + " mt-1", texto: tx(ev ? "eventoVivoTexto" : "vivoTorneoTexto") }), el("div", { class: "mt-2" }, b), qr);
+    if (!vivo) return;
+    if (ev) { mostrarQrEvento(qr, "pi-tv"); return; }
+    const url = location.origin + location.pathname + "#vivo=" + v.liveCodigo;
+    PareoQr.cargar().then(() => {
+      const copiar = el("button", { type: "button", class: C.mini }, tx("copiarEnlace"));
+      copiar.addEventListener("click", async () => {
+        try { await navigator.clipboard.writeText(url); Avisos.avisar(tx("enlaceCopiado")); }
+        catch (e) { Avisos.avisar(tx("noCopia"), { tipo: "error" }); }
+      });
+      qr.replaceChildren(el("div", { class: "w-48 bg-white p-2 rounded-lg" }, PareoQr.svg(url, tx("qrEtiqueta"))),
+        el("p", { id: "pi-tv-url", class: "text-xs break-all mt-2 font-mono", texto: url }), el("div", { class: "mt-1" }, copiar));
+    }).catch((e) => Avisos.avisar(tx("errorQr", { e: e.message }), { tipo: "error" }));
   }
 
   const configFija = (v) => !!v.jde && !v.configLibre;
@@ -2427,7 +2464,10 @@
     const horario = inicio ? V.horario(lista, inicio, leer(CLAVE_HORARIO + x.id + "_descanso") || "10") : null;
     PareoVer.paraMandar(V.vistaEvento(lista[0].evento, lista, horario)).then((payload) => x.canal.send({ type: "broadcast", event: "estado", payload }));
   }
-  async function mostrarQrEvento(cont) {
+  // `pre`: el prefijo de los ids (la ficha Archivos y la ficha Torneo lo
+  // muestran a la vez en la página).
+  async function mostrarQrEvento(cont, pre) {
+    pre = pre || "pi-evento";
     const url = location.origin + location.pathname + "#evento=" + estado.eventoVivo.codigo;
     try {
       await PareoQr.cargar();
@@ -2437,8 +2477,8 @@
         catch (e) { Avisos.avisar(tx("noCopia"), { tipo: "error" }); }
       });
       cont.replaceChildren(el("div", { class: "w-48 bg-white p-2 rounded-lg" }, PareoQr.svg(url, tx("qrEtiqueta"))),
-        el("p", { id: "pi-evento-url", class: "text-xs break-all mt-2 font-mono", texto: url }), el("div", { class: "mt-1 flex flex-wrap gap-2" }, copiar,
-          el("a", { id: "pi-evento-proyectar", href: url + "&proyectar", target: "_blank", rel: "noopener", class: C.mini }, tx("eventoProyectar"))),
+        el("p", { id: pre + "-url", class: "text-xs break-all mt-2 font-mono", texto: url }), el("div", { class: "mt-1 flex flex-wrap gap-2" }, copiar,
+          el("a", { id: pre + "-proyectar", href: url + "&proyectar", target: "_blank", rel: "noopener", class: C.mini }, tx("eventoProyectar"))),
         el("p", { class: C.nota + " mt-1", texto: tx("eventoVivoActivo") }));
     } catch (e) {
       Avisos.avisar(tx("errorQr", { e: e.message }), { tipo: "error" });

@@ -3443,6 +3443,13 @@ que alguien cierre por accidente la página»).
   espacio. Lo que no se puede evitar: borrar los datos del navegador o
   usar una ventana privada. Para eso está el respaldo en un archivo.
 
+- **El enlace en vivo, también en la ficha Torneo** (lo pidió el dueño
+  del sitio: «que el enlace en vivo salga también en la ficha Torneo»). Si
+  el torneo es de un evento, el del evento (el mismo de Archivos); si no, el
+  de ese torneo (el mismo de «Ver desde el celular», en Rondas, y su casilla
+  queda marcada). Son los mismos canales, no otros; los ids llevan
+  `pi-tv-…` porque las fichas están todas en la página a la vez.
+
 Lo comprueba `verificar-pareo-informe.js`.
 
 ### Pareo Integral: quien pierde por incomparecencia queda fuera

@@ -210,6 +210,26 @@ async function pruebaAusencias(browser) {
   await ctx.close();
 }
 
+async function pruebaVivo(browser) {
+  console.log("\n=== El enlace en vivo, en la ficha Torneo ===");
+  for (const conEvento of [false, true]) {
+    const t = T.nuevo({ nombre: "PRUEBA VIVO", jugadores: ["a", "b"].map((id) => ({ id, nombre: "PRUEBA " + id, retiradoDespuesDe: null })) });
+    if (conEvento) t.evento = { id: "ev-vivo", nombre: "PRUEBA EVENTO" };
+    const { ctx, page, errores } = await P.abrirPagina(browser, BASE, "", sembrar(t));
+    await page.click('[data-ficha="torneo"]');
+    ok(await P.vis(page, "#pi-tv-boton"), (conEvento ? "en un evento" : "en un torneo suelto") + ", el botón está en la ficha Torneo");
+    await page.click("#pi-tv-boton");
+    await page.waitForSelector("#pi-tv-url");
+    const url = await page.textContent("#pi-tv-url");
+    ok(conEvento ? /pareo\.html#evento=[a-z0-9]+$/.test(url) : /pareo\.html#vivo=[a-z0-9]+$/.test(url), "y da el enlace " + (conEvento ? "de todo el evento" : "de este torneo") + ", con su QR", url);
+    ok(await P.vis(page, "#pi-tv-qr svg"), "se ve el código QR");
+    igual("el botón dice que está prendido", await page.getAttribute("#pi-tv-boton", "aria-pressed"), "true");
+    if (!conEvento) ok(await page.isChecked("#pi-ver-en-vivo"), "y es el mismo de «Ver desde el celular», en Rondas");
+    ok(!errores.length, "sin errores en la página", errores.join(" | "));
+    await ctx.close();
+  }
+}
+
 async function pruebaCerrar(browser) {
   console.log("\n=== Cerrar la página sin querer ===");
   const t = T.nuevo({ nombre: "PRUEBA CERRAR", jugadores: [] });
@@ -241,6 +261,7 @@ async function pruebaCerrar(browser) {
     await pruebaAcreditacion(browser);
     await pruebaAusencias(browser);
     await pruebaCerrar(browser);
+    await pruebaVivo(browser);
   } finally {
     await browser.close();
   }
