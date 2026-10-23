@@ -133,6 +133,10 @@ export default {
     // viaje de más a quien entra y Google lo cuenta como salto extra.
     if (corregida) return Response.redirect(url.toString(), 301);
 
+    // ---- La tarjeta de un torneo de Pareo Integral (/t/<id>) ----
+    const torneo = url.pathname.match(TORNEO);
+    if (torneo) return tarjetaTorneo(torneo[1].toLowerCase());
+
     if (!PROTEGIDO.test(url.pathname)) return env.ASSETS.fetch(request);
 
     // ---- El contenido de los cursos ----
@@ -288,4 +292,91 @@ a:focus-visible{outline:3px solid #a85a0d;outline-offset:2px}
 </style></head>
 <body><main>${cuerpo}</main></body></html>`;
   return new Response(html, { status: estado, headers: { ...cabeceras, "Content-Type": "text/html; charset=utf-8" } });
+}
+
+// ---- La tarjeta de un torneo de Pareo Integral ----
+//
+// Quien comparte un torneo publicado por WhatsApp (o en las redes) manda
+// /t/<id>. WhatsApp y las redes no leen lo que va después del «#», así que el
+// enlace de siempre (torneos-pareo.html#t=…) mostraba la vista previa de la
+// portada. Acá se arma una página mínima con el nombre del torneo, sus fechas,
+// el lugar y cómo va (lo que lee la vista previa), y se manda a la página de
+// verdad. La tabla es de lectura pública: se pregunta con la clave pública,
+// como el navegador. Si Supabase no contesta, igual se manda al torneo, con la
+// tarjeta de la portada. Ver «La tarjeta al compartir un torneo» en
+// docs/decisiones/juegos-y-torneos.md.
+const TORNEO = /^\/t\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\/?$/i;
+const SITIO = "https://ajedrez-integral.com";
+const IMAGEN_TORNEO = SITIO + "/img/og-torneos-pareo.jpg";
+const ELO_TEXTO = { fide: "Válido para Elo FIDE", nacional: "Válido para Elo Nacional", no: "No varía el Elo" };
+
+const escaparHtml = (t) => String(t == null ? "" : t).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+
+// «22 de octubre de 2026»: un día de calendario, leído al mediodía de Costa Rica.
+function diaTexto(dia, conAnio) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(dia || "")) return "";
+  return new Date(dia + "T12:00:00-06:00").toLocaleDateString("es-CR", Object.assign({ timeZone: "America/Costa_Rica", day: "numeric", month: "long" }, conAnio ? { year: "numeric" } : {}));
+}
+
+// La línea de la vista previa: las fechas, el lugar, cómo va y si da Elo.
+function resumenTorneo(x) {
+  const fin = x.fin && x.fin > x.fecha ? x.fin : "";
+  // «Del 22 al 24 de octubre de 2026»; si cambia de mes, los dos meses.
+  const mismoMes = fin && fin.slice(0, 7) === x.fecha.slice(0, 7);
+  const desde = mismoMes ? String(Number(x.fecha.slice(8))) : diaTexto(x.fecha, fin && fin.slice(0, 4) !== x.fecha.slice(0, 4));
+  const fechas = !x.fecha ? "" : fin ? "Del " + desde + " al " + diaTexto(fin, true) : diaTexto(x.fecha, true);
+  const como = !x.jugadores ? "Próximamente" : !x.rondas ? x.jugadores + " inscritos"
+    : "Ronda " + x.rondas + (x.rondas_total ? " de " + x.rondas_total : "") + " · " + x.jugadores + " participantes";
+  return [fechas, x.lugar, como, ELO_TEXTO[x.elo], x.ritmo].filter(Boolean).join(" · ");
+}
+
+async function tarjetaTorneo(id) {
+  const destino = "/torneos-pareo.html#t=" + id;
+  let x = null;
+  try {
+    const res = await fetch(SUPABASE_URL + "/rest/v1/pareo_publicados?select=nombre,evento,lugar,fecha,rondas,rondas_total,jugadores,fin:datos-%3E%3EfechaFin,ritmo:datos-%3E%3Eritmo,elo:datos-%3E%3EvalidoElo&id=eq." + id, {
+      headers: { apikey: SUPABASE_ANON_KEY, Authorization: "Bearer " + SUPABASE_ANON_KEY, Accept: "application/json" },
+      signal: AbortSignal.timeout(3000),
+    });
+    if (res.ok) x = (await res.json())[0] || null;
+  } catch (e) {
+    console.error("torneo: Supabase no contestó", String(e));
+  }
+  const titulo = x ? x.nombre + (x.evento && x.evento !== x.nombre ? " — " + x.evento : "") : "Torneos en Pareo Integral";
+  const resumen = x ? resumenTorneo(x) : "Las rondas, los resultados y la clasificación de los torneos publicados con Pareo Integral.";
+  const t = escaparHtml(titulo), r = escaparHtml(resumen), d = escaparHtml(destino);
+  const html = `<!DOCTYPE html>
+<html lang="es"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>${t} | Pareo Integral</title>
+<meta name="description" content="${r}">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Ajedrez Integral · Pareo Integral">
+<meta property="og:locale" content="es_CR">
+<meta property="og:title" content="${t}">
+<meta property="og:description" content="${r}">
+<meta property="og:url" content="${SITIO}/t/${id}">
+<meta property="og:image" content="${IMAGEN_TORNEO}">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Pareo Integral: torneos de ajedrez en vivo. ajedrez-integral.com">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="robots" content="noindex">
+<link rel="canonical" href="${SITIO}${d}">
+<meta http-equiv="refresh" content="0;url=${d}">
+</head><body>
+<p><a href="${d}">Ver ${t}</a></p>
+</body></html>`;
+  return new Response(html, {
+    status: 200,
+    headers: {
+      "Content-Type": "text/html; charset=utf-8",
+      // Corto: lo que cambia es «Ronda 3 de 7».
+      "Cache-Control": "public, max-age=300",
+      "Content-Security-Policy": "default-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'",
+      "X-Content-Type-Options": "nosniff",
+      "Referrer-Policy": "strict-origin-when-cross-origin",
+      "Strict-Transport-Security": "max-age=31536000; includeSubDomains",
+    },
+  });
 }

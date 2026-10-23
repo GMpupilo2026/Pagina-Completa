@@ -109,7 +109,7 @@
   // Además de las columnas, unos pocos campos del torneo, leídos dentro de
   // `datos` por la base (PostgREST): bajarse cada torneo entero para la lista
   // sería pesado.
-  const COLUMNAS_LISTA = COLUMNAS + ",ritmo:datos->>ritmo,fin:datos->>fechaFin,fed:datos->>federacion,sistema:datos->>sistema,tipo:datos->>tipo,inscripcion:datos->inscripcion";
+  const COLUMNAS_LISTA = COLUMNAS + ",ritmo:datos->>ritmo,fin:datos->>fechaFin,fed:datos->>federacion,sistema:datos->>sistema,tipo:datos->>tipo,inscripcion:datos->inscripcion,elo:datos->>validoElo";
   let lista = null;
   async function pedirLista() {
     // PostgREST corta a mil filas sin avisar: se piden de mil en mil.
@@ -132,6 +132,7 @@
   const ritmoDe = (x) => RITMO[window.RitmoControl ? RitmoControl.deducir(x.ritmo || "", x.nombre) : ""] || "";
   const SISTEMA = { suizo: "Suizo", todos: "Todos contra todos" };
   const MODALIDAD = { equipos: "Por equipos", individual: "Individual" };
+  const ELO = { fide: "FIDE", nacional: "Nacional", no: "No" };
   const lugarDe = (x) => [x.lugar, x.fed].filter(Boolean).join(", ");
   function estadoDe(x) {
     if (esProximo(x)) return { texto: "Próximo", clase: "tp-estado-proximo" };
@@ -161,6 +162,7 @@
       dato("Inscripción", [el("span", { class: "tp-punto " + (abierta ? "tp-punto-si" : "tp-punto-no"), "aria-hidden": "true" }), abierta ? "Abierta" : "Cerrada"], { "data-col": "inscripcion" }),
       dato("Participantes", String(x.jugadores || 0), { "data-col": "participantes" }),
       dato("Rondas", rondas, { "data-col": "rondas" }),
+      dato("Elo", ELO[x.elo] || "", { "data-col": "elo", title: { fide: "Válido para Elo FIDE y Nacional", nacional: "Válido solo para Elo Nacional", no: "No varía el Elo" }[x.elo] || null }),
       dato("Sistema", SISTEMA[x.sistema] || "", { "data-col": "sistema" }),
       dato("Ritmo", ritmoDe(x), { "data-col": "ritmo", title: x.ritmo || null }),
       dato("Modalidad", MODALIDAD[x.tipo] || MODALIDAD.individual, { "data-col": "modalidad" }),
@@ -235,15 +237,47 @@
         el("ul", { class: "tp-filas" }, filasDelDia(l, abrir)));
     });
   }
+  // ---------- Los filtros ----------
+  // Lo que pide cada uno, leído de los controles. «ritmo» compara con lo que
+  // se muestra (Clásico, Rápido, Relámpago); «lugar», el lugar escrito igual.
+  function filtros() {
+    const v = (id) => ($(id) ? $(id).value : "");
+    const c = (id) => !!($(id) && $(id).checked);
+    return { ritmo: v("tp-f-ritmo"), lugar: v("tp-f-lugar"), elo: v("tp-f-elo"), abierta: c("tp-f-abierta"), curso: c("tp-f-curso") };
+  }
+  const hayFiltro = (f) => !!(f.ritmo || f.lugar || f.elo || f.abierta || f.curso);
+  function pasa(x, f) {
+    if (f.ritmo && ritmoDe(x) !== f.ritmo) return false;
+    if (f.lugar && (x.lugar || "") !== f.lugar) return false;
+    if (f.elo === "sin" ? x.elo === "fide" || x.elo === "nacional" : f.elo && x.elo !== f.elo) return false;
+    if (f.abierta && !inscribe(x)) return false;
+    if (f.curso && !enCurso(x)) return false;
+    return true;
+  }
+  // Los lugares que hay, para elegir uno (se vuelven a armar con la lista).
+  function pintarLugares() {
+    const sel = $("tp-f-lugar");
+    if (!sel) return;
+    const elegido = sel.value;
+    const lugares = [...new Set((lista || []).map((x) => x.lugar || "").filter(Boolean))].sort((a, b) => a.localeCompare(b, "es"));
+    sel.replaceChildren(el("option", { value: "", texto: "Todos" }), ...lugares.map((l) => el("option", { value: l, texto: l })));
+    sel.value = lugares.includes(elegido) ? elegido : "";
+  }
+
   function pintarLista() {
     const caja = $("tp-contenido");
     const q = clave($("tp-buscar") ? $("tp-buscar").value : "");
-    const cuales = (lista || []).filter((x) => !q || clave([x.nombre, x.evento, x.lugar].join(" ")).includes(q));
+    const f = filtros();
+    const cuales = (lista || []).filter((x) => (!q || clave([x.nombre, x.evento, x.lugar].join(" ")).includes(q)) && pasa(x, f));
     // Los próximos, primero el día más cercano; los demás, el más reciente
-    // primero. Buscando, los eventos se abren para que se vea qué coincidió.
-    $("tp-lista").replaceChildren(...porDia(cuales.filter((x) => !esProximo(x)), false, !!q));
+    // primero. Buscando o filtrando, los eventos se abren para que se vea qué
+    // coincidió.
+    const abrir = !!q || hayFiltro(f);
+    $("tp-lista").replaceChildren(...porDia(cuales.filter((x) => !esProximo(x)), false, abrir));
     const proximos = cuales.filter(esProximo);
-    $("tp-proximos").replaceChildren(...porDia(proximos, true, !!q));
+    $("tp-proximos").replaceChildren(...porDia(proximos, true, abrir));
+    if ($("tp-f-quitar")) $("tp-f-quitar").hidden = !hayFiltro(f);
+    if ($("tp-resultados-vacio")) $("tp-resultados-vacio").hidden = !(lista && lista.length && (q || hayFiltro(f)) && !cuales.some((x) => !esProximo(x)));
     $("tp-proximos-caja").hidden = !proximos.length;
     $("tp-cuantos").textContent = !lista ? "" : !lista.length ? "Todavía no hay torneos publicados."
       : cuales.length === lista.length ? lista.length + (lista.length === 1 ? " torneo publicado." : " torneos publicados.")
@@ -268,15 +302,65 @@
     return { k, filas: V.aplicarDesempate(t, E.clasificacion(Object.assign({}, t, { rondas: t.rondas.slice(0, k) }), t.desempates)) };
   }
 
+  // ---------- Compartir y el calendario ----------
+  // El enlace para compartir pasa por el worker (/t/<id>): WhatsApp y las
+  // redes no leen lo que va después del «#», así que la vista previa de
+  // torneos-pareo.html#t=… sería la de la portada. El worker contesta con el
+  // nombre, la fecha y cómo va el torneo, y manda acá. Ver «La tarjeta al
+  // compartir un torneo» en docs/decisiones/juegos-y-torneos.md.
+  const SITIO = "https://ajedrez-integral.com";
+  const enlaceCompartir = (id) => SITIO + "/t/" + encodeURIComponent(id);
+  const ELO_LARGO = { fide: "Válido para Elo FIDE", nacional: "Válido para Elo Nacional", no: "No varía el Elo" };
+  function textoCompartir(fila, t) {
+    const fechas = [fechaTexto(t.fechaInicio), fechaTexto(t.fechaFin)].filter(Boolean).join(" al ");
+    const como = !t.rondas.length ? (t.jugadores.length ? t.jugadores.length + " inscritos" : "")
+      : "Ronda " + rondasCompletas(t) + (t.rondasTotales ? " de " + t.rondasTotales : "") + " · " + t.jugadores.length + " participantes";
+    return ["♟️ *" + fila.nombre + "*", [fechas, t.ciudad].filter(Boolean).join(" · "), como, enlaceCompartir(fila.id)].filter(Boolean).join("\n");
+  }
+  // El torneo entero en el calendario (días completos; la hora va escrita).
+  function agregarAlCalendario(fila, t) {
+    const an = t.anuncio || {};
+    const descripcion = [an.hora ? "Empieza a las " + an.hora + "." : "", t.ritmo ? "Ritmo: " + t.ritmo + "." : "",
+      ELO_LARGO[t.validoElo] ? ELO_LARGO[t.validoElo] + "." : "", an.contacto ? "Contacto: " + an.contacto + "." : "",
+      "Rondas y resultados: " + enlaceCompartir(fila.id)].filter(Boolean).join(" ");
+    const { texto } = CalendarioIcs.armarDias({ nombre: fila.nombre, eventos: [{
+      uid: "torneo-" + fila.id + "@ajedrez-integral.com", desde: t.fechaInicio || fila.fecha, hasta: t.fechaFin,
+      resumen: fila.nombre, lugar: t.ciudad, descripcion, url: enlaceCompartir(fila.id), aviso: "-PT15H",
+    }] });
+    CalendarioIcs.bajar(texto, (clave(fila.nombre).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "torneo") + ".ics");
+  }
+  const terminado = (t) => t.rondasTotales > 0 && rondasCompletas(t) >= t.rondasTotales;
+  function acciones(fila, t) {
+    const boton = C.pestana + " bg-white dark:bg-brand-900 inline-flex items-center gap-2";
+    const estado = el("span", { id: "tp-compartir-estado", class: "sr-only", role: "status" });
+    const copiar = el("button", { type: "button", id: "tp-copiar", class: boton }, el("span", { "aria-hidden": "true", texto: "🔗" }), "Copiar el enlace");
+    copiar.addEventListener("click", async () => {
+      try { await navigator.clipboard.writeText(enlaceCompartir(fila.id)); estado.textContent = "Enlace copiado."; Avisos.avisar("Enlace copiado."); }
+      catch (e) { Avisos.avisar("No se pudo copiar. El enlace es " + enlaceCompartir(fila.id), { tipo: "error" }); }
+    });
+    const hijos = [
+      el("a", { id: "tp-whatsapp", href: window.PareoCompartir.enlaceWhatsapp(textoCompartir(fila, t)), target: "_blank", rel: "noopener", class: boton },
+        el("span", { "aria-hidden": "true", texto: "💬" }), "Compartir por WhatsApp", el("span", { class: "sr-only", texto: " (se abre en otra pestaña)" })),
+      copiar,
+    ];
+    if ((t.fechaInicio || fila.fecha) && !terminado(t)) {
+      const cal = el("button", { type: "button", id: "tp-calendario", class: boton }, el("span", { "aria-hidden": "true", texto: "📅" }), "Agregar a mi calendario");
+      cal.addEventListener("click", () => agregarAlCalendario(fila, t));
+      hijos.push(cal);
+    }
+    return el("div", { class: "flex flex-wrap gap-2 mt-3" }, hijos, estado);
+  }
+
   function cabecera(fila, t) {
     const partes = [t.evento && t.evento.nombre, t.ciudad, [fechaTexto(t.fechaInicio), fechaTexto(t.fechaFin)].filter(Boolean).join(" al ")].filter(Boolean);
-    const datos = [t.sistema === "todos" ? "Todos contra todos" : "Suizo de " + (t.rondasTotales || "?") + " rondas", t.ritmo, t.arbitro ? "Árbitro: " + t.arbitro : ""].filter(Boolean);
+    const datos = [t.sistema === "todos" ? "Todos contra todos" : "Suizo de " + (t.rondasTotales || "?") + " rondas", t.ritmo, ELO_LARGO[t.validoElo] || "", t.arbitro ? "Árbitro: " + t.arbitro : ""].filter(Boolean);
     return el("div", { class: "mb-6" },
       el("a", { href: "#", class: C.enlace + " text-sm", texto: "← Todos los torneos" }),
       el("h1", { id: "tp-titulo", class: "font-serif text-3xl md:text-4xl font-bold text-brand-800 dark:text-white mt-3", tabindex: "-1", texto: fila.nombre }),
       partes.length ? el("p", { class: "text-brand-600 dark:text-brand-300 mt-1", texto: partes.join(" · ") }) : null,
       el("p", { class: C.nota + " mt-1", texto: datos.join(" · ") }),
-      el("p", { id: "tp-actualizado", class: "text-xs text-brand-600 dark:text-brand-300 mt-2", role: "status", texto: "Actualizado: " + (window.HoraCR ? HoraCR.fechaHora(fila.actualizado) : fila.actualizado) + " · se vuelve a leer cada minuto" }));
+      el("p", { id: "tp-actualizado", class: "text-xs text-brand-600 dark:text-brand-300 mt-2", role: "status", texto: "Actualizado: " + (window.HoraCR ? HoraCR.fechaHora(fila.actualizado) : fila.actualizado) + " · se vuelve a leer cada minuto" }),
+      acciones(fila, t));
   }
 
   function pestanas(actual) {
@@ -736,6 +820,7 @@
         $("tp-cuantos").textContent = "Cargando…";
         try { lista = await pedirLista(); } catch (e) { $("tp-cuantos").textContent = "No se pudo leer la lista. Revisa la conexión e intenta de nuevo."; return; }
       }
+      pintarLugares();
       pintarLista();
       pintarSeguidosPortada();
       return;
@@ -747,6 +832,13 @@
   }
 
   $("tp-buscar").addEventListener("input", pintarLista);
+  for (const id of ["tp-f-ritmo", "tp-f-lugar", "tp-f-elo", "tp-f-abierta", "tp-f-curso"]) $(id).addEventListener("change", pintarLista);
+  $("tp-f-quitar").addEventListener("click", () => {
+    for (const id of ["tp-f-ritmo", "tp-f-lugar", "tp-f-elo"]) $(id).value = "";
+    for (const id of ["tp-f-abierta", "tp-f-curso"]) $(id).checked = false;
+    pintarLista();
+    $("tp-f-ritmo").focus();
+  });
   window.addEventListener("hashchange", pintar);
   pintar();
 })();

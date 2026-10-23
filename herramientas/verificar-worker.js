@@ -263,6 +263,37 @@ async function cargarWorker() {
     igual("la dirección vieja de un recurso redirige antes del candado", r.estado, 301);
   }
 
+  console.log("\n=== La tarjeta de un torneo de Pareo Integral (/t/<id>) ===");
+  {
+    const wr = JSON.parse(fs.readFileSync(path.join(__dirname, "..", "wrangler.jsonc"), "utf8").replace(/^\s*\/\/.*$/gm, ""));
+    igual("wrangler.jsonc hace correr el worker en /t/ (sin esa línea la dirección da 404)", wr.assets.run_worker_first.includes("/t/*"), true);
+    const ID = "11111111-1111-4111-8111-111111111111";
+    let preguntas = [];
+    const tarjeta = async (url, contesta) => {
+      preguntas = [];
+      globalThis.fetch = async (u, opciones) => { preguntas.push({ u: String(u), opciones }); return contesta(); };
+      pedido = null;
+      const res = await worker.fetch(new Request(url), env);
+      return { estado: res.status, html: await res.text(), cabeceras: res.headers, aArchivos: pedido };
+    };
+    const fila = { nombre: "Abierto <de> Prueba", evento: "Festival", lugar: "San José", fecha: "2026-10-22", fin: "2026-10-24", rondas: 3, rondas_total: 7, jugadores: 55, elo: "fide", ritmo: "90 min + 30 s" };
+    const r = await tarjeta("https://ajedrez-integral.com/t/" + ID, () => new Response(JSON.stringify([fila]), { status: 200 }));
+    igual("contesta el worker, no los archivos", r.estado + "/" + r.aArchivos, "200/null");
+    igual("pregunta a la tabla pública por ese id, solo unas columnas", /pareo_publicados\?select=nombre,.*&id=eq\.11111111-/.test(preguntas[0] && preguntas[0].u) && !/select=[^&]*\bdatos(,|&|$)/.test(preguntas[0].u), true);
+    const meta = (p) => (r.html.match(new RegExp('<meta property="' + p + '" content="([^"]*)"')) || [])[1];
+    igual("el título de la vista previa es el torneo (escapado)", meta("og:title"), "Abierto &lt;de&gt; Prueba — Festival");
+    igual("y la línea dice fechas, lugar, cómo va, si da Elo y el ritmo", meta("og:description"),
+      "Del 22 al 24 de octubre de 2026 · San José · Ronda 3 de 7 · 55 participantes · Válido para Elo FIDE · 90 min + 30 s");
+    igual("con la imagen de Pareo Integral", meta("og:image"), "https://ajedrez-integral.com/img/og-torneos-pareo.jpg");
+    igual("y manda a la página del torneo", (r.html.match(/http-equiv="refresh" content="0;url=([^"]*)"/) || [])[1], "/torneos-pareo.html#t=" + ID);
+    igual("con sus propias cabeceras de seguridad", !!(r.cabeceras.get("content-security-policy") || "").includes("default-src 'none'"), true);
+    igual("ningún <script> (la CSP no lo dejaría)", /<script/i.test(r.html), false);
+    const r2 = await tarjeta("https://ajedrez-integral.com/t/" + ID, () => { throw new Error("caído"); });
+    igual("si Supabase no contesta, igual manda al torneo", (r2.html.match(/http-equiv="refresh" content="0;url=([^"]*)"/) || [])[1] + " " + r2.estado, "/torneos-pareo.html#t=" + ID + " 200");
+    const r3 = await tarjeta("https://ajedrez-integral.com/t/no-es-un-id", () => new Response("[]"));
+    igual("lo que no es un id pasa a los archivos, sin preguntar", r3.aArchivos + " " + preguntas.length, "https://ajedrez-integral.com/t/no-es-un-id 0");
+  }
+
   console.log(fallos ? "\n" + fallos + " fallo(s)" : "\nTodo bien.");
   process.exit(fallos ? 1 : 0);
 })();

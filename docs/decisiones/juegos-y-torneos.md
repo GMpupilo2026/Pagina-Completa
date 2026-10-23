@@ -3615,6 +3615,56 @@ en columnas.
 
 Lo comprueba `verificar-pareo-lista.js`.
 
+### Torneos en Pareo Integral: válido para Elo, filtros, calendario y la tarjeta al compartir
+
+Lo pidió el dueño del sitio (la 1, la 3, la 5 y la 7 de una lista de propuestas).
+
+- **«Válido para Elo»** es un campo de la ficha Torneo (`t.validoElo`): FIDE (y
+  Nacional), solo Nacional, No, o sin decir. Es la columna «Var. Elo» de la
+  imagen que mandó. Viaja en `datosPublicos` y la función `pareo-publicar` lo
+  vuelve a limpiar en su lista. **Sin esa línea en la función, el campo se
+  pierde al publicar sin dar ningún error**: `verificar-pareo-publicar.js`
+  lee el código de la función y lo comprueba. En la lista sale como la
+  columna «Elo» y en la ficha del torneo, escrito entero.
+- **Los filtros de la lista**:
+  - ritmo (el mismo Clásico/Rápido/Relámpago que se muestra);
+  - lugar (los que hay, escritos igual);
+  - Elo: FIDE, solo Nacional, o «Sin Elo», que junta los que no dan Elo y
+    los que no lo dijeron;
+  - «Inscripción abierta» y «Solo en curso».
+  
+  Filtrando, los eventos se abren solos, como al buscar, y «Quitar filtros»
+  los quita todos. Todo se filtra en el navegador: la lista ya está entera
+  en la página.
+- **«Agregar a mi calendario»** está en la ficha de cada torneo que no
+  terminó. Baja un `.ics` de días enteros, del primero al último incluidos
+  (el formato pide el día siguiente como fin), con un aviso la víspera.
+  - La hora del anuncio, el ritmo, si da Elo y el contacto van en la
+    descripción.
+  - Sale de `CalendarioIcs.armarDias` (`js/calendario-ics.js`), la misma
+    copia que el calendario del alumno, sin pasar por la zona de la
+    computadora.
+- **La tarjeta al compartir un torneo.** WhatsApp y las redes no leen lo que
+  va después del «#». Por eso el enlace de siempre (`torneos-pareo.html#t=…`)
+  mostraba la vista previa de la portada, igual para todos los torneos.
+  - Ahora se comparte `/t/<id>`: lo contesta el worker (`/t/*` en
+    `run_worker_first`). La página mínima trae el nombre del torneo, las
+    fechas, el lugar, cómo va («Ronda 3 de 7 · 55 participantes»), si da Elo
+    y el ritmo, y la imagen `img/og-torneos-pareo.jpg`.
+  - Después manda a la página de verdad con un `meta refresh`, porque la CSP
+    no deja scripts.
+  - Pregunta a la tabla pública con la clave pública, como el navegador.
+  - Si Supabase no contesta, igual manda al torneo, con la tarjeta general.
+  - La guarda Cloudflare 5 minutos, porque lo que cambia es la ronda.
+  - La imagen sale de `herramientas/og-imagen.js`, el mismo dibujo que la del
+    sitio.
+- **En la ficha del torneo**: «Compartir por WhatsApp» (el nombre, las fechas,
+  cómo va y el enlace corto), «Copiar el enlace» y el calendario.
+
+Lo comprueban `verificar-pareo-lista.js`, `verificar-worker.js` (la tarjeta,
+sus cabeceras, que el id se valide y que funcione con Supabase caído) y
+`verificar-pareo-publicar.js`.
+
 ### Torneos en Pareo Integral: seguir a un jugador
 
 Lo pidió el dueño del sitio (la 5 de una lista de propuestas): que un papá,
