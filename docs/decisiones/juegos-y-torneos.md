@@ -3385,6 +3385,66 @@ Al tocar esto, `node herramientas/verificar-pareo-sala-evento.js`. Rompiendo a
 propósito la mesa física, la casilla de consentimiento, el llamado, el fin de
 la ronda o el aceptar, salta.
 
+### Pareo Integral: el informe oficial completo, la premiación en tablas, la configuración de los JDE fija, la acreditación y no perder nada al cerrar
+
+Lo pidió el dueño del sitio de una vez (las propuestas 2, 3 y 4, más el
+informe, la premiación, la acreditación y «qué podemos resolver en caso de
+que alguien cierre por accidente la página»).
+
+- **El informe oficial** (`V.informe`) trae ahora, por torneo, la
+  **clasificación entera** con sus desempates y la columna «Clasifica» (antes
+  solo los primeros) y el **cuadro cruzado de enfrentamientos** (cada ronda
+  con el número de salida del rival, el color y el resultado). Y para todo el
+  evento, los **clasificados** a la etapa siguiente y las **ausencias e
+  incomparecencias** con si justificó.
+  - La casilla del cuadro cruzado es una sola, `V.celdaCruzada`: la usan
+    la ficha Tabla cruzada, su PDF y el informe.
+  - `js/reporte-pdf.js` no parte las celdas, las corta con «...»: los
+    anchos de cada tabla están medidos mirando el PDF, con encabezados
+    cortos («Pto.», «Pts.», «Centro») para que entren cinco desempates.
+- **Las ausencias** (`V.ausenciasDe`) salen solas de las rondas: quien perdió
+  por incomparecencia, quien el árbitro marcó «no viene», quien no se
+  acreditó y quien pidió bye (avisó: cuenta como justificado). Si justificó lo
+  anota el árbitro en la ficha Archivos (`t.justificaciones`, por
+  «ronda|id»); sin anotar queda «Sin decidir». Las incomparecencias van al
+  informe, no al acta: el acta es del congresillo, antes de jugar.
+- **La premiación** va en tablas (medalla, lugar, nombre, centro, puntos;
+  los premios especiales y los mejores tableros en las suyas), del tercer
+  lugar al primero, como se leen en el acto.
+- **La configuración de los JDE, fija.** Con «Aplicar la configuración de los
+  JDE» puesta, el ritmo, el sistema, los puntos y los desempates no se tocan
+  (también si se fuerza desde la consola). Para cambiarlos se pide un
+  motivo, que va al acta con la hora, lo de antes y lo de después
+  (`t.cambiosConfig`, `V.cambiosDeConfiguracion`); «Volver a fijar la
+  configuración» la cierra otra vez. El número de rondas sigue libre (la
+  normativa pide «al menos cinco»).
+- **Antes de emparejar**, quien quedó fuera por perder por incomparecencia en
+  la ronda anterior sale en un aviso, con «Vuelve a jugar» al lado: por si
+  llegó o avisó.
+- **La acreditación** («Pasar asistencia») está en Jugadores y antes de
+  emparejar cada ronda (ids `pi-j-…` en Jugadores, para no repetir los de
+  Rondas: las dos fichas están en la página a la vez). En un suizo, quien no
+  está presente no se empareja en **ninguna** ronda (queda «no viene», y la
+  ronda lo anota en `sinAcreditar`) hasta que el árbitro lo marque. En todos
+  contra todos sigue la regla de antes: se decide antes de sortear la ronda 1.
+- **Cerrar la página sin querer.** Todo cambio ya se guardaba al momento en
+  el navegador. Lo que se perdía, y ya no:
+  - lo escrito en un campo de los datos del torneo sin salir de él (se
+    guarda mientras se escribe);
+  - el jugador o la lista a medio escribir (un borrador, que vuelve al abrir
+    con un aviso);
+  - lo marcado antes de emparejar, byes y «no viene» (`t.pedidas`, que se
+    borra al emparejar);
+  - el archivo del respaldo automático: se recuerda en IndexedDB y un clic
+    («Seguir el respaldo automático en…») lo retoma, porque el navegador
+    pide el permiso otra vez.
+  Además se le pide al navegador guardar los datos para siempre
+  (`navigator.storage.persist()`), para que no los borre por falta de
+  espacio. Lo que no se puede evitar: borrar los datos del navegador o
+  usar una ventana privada. Para eso está el respaldo en un archivo.
+
+Lo comprueba `verificar-pareo-informe.js`.
+
 ### Pareo Integral: quien pierde por incomparecencia queda fuera
 
 Lo pidió el dueño del sitio: «cuando un jugador pierde por incomparecencia,

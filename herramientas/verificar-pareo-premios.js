@@ -81,8 +81,9 @@ function pruebaSinNavegador() {
 
   console.log("\n=== En la premiación y los diplomas del evento ===");
   t.rondasTotales = 1;
-  const prem = V.premiacion({ nombre: "PRUEBA EVENTO" }, [t]).bloques.filter((b) => b.items).flatMap((b) => b.items);
-  ok(prem.some((x) => /^Premio especial, Mejor mujer: PRUEBA /.test(x)), "la premiación trae los premios especiales", prem.join(" | "));
+  // (En una tabla: premio, lugar, nombre, centro y puntos.)
+  const prem = V.premiacion({ nombre: "PRUEBA EVENTO" }, [t]).bloques.filter((b) => b.tipo === "tabla" && b.encabezados[0] === "Premio especial").flatMap((b) => b.filas);
+  ok(prem.some((x) => x[0] === "Mejor mujer" && /^PRUEBA /.test(x[2])), "la premiación trae los premios especiales", JSON.stringify(prem));
   const dip = V.diplomas({ nombre: "PRUEBA EVENTO" }, [t]).map((d) => V.textoDiploma(d).motivo);
   ok(dip.some((x) => /^por obtener el premio especial «Mejor mujer» en PRUEBA ABIERTO\.$/.test(x)), "y su diploma dice el premio", dip.join(" | "));
 

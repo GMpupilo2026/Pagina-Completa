@@ -96,6 +96,7 @@
   function guardar() {
     if (!estado.t) return;
     if (!estado.deshaciendo) avisarRetiros(estado.t, retirosAuto(estado.t));
+    pedirAlmacenamientoFijo();
     V.marcarTiempos(estado.t, Date.now());
     const texto = JSON.stringify(estado.t);
     if (estado.ultimoGuardado && estado.ultimoGuardado !== texto && !estado.deshaciendo) {
@@ -467,10 +468,53 @@
     }
     f.elements.rondasTotales.min = Math.max(1, v.rondas.length);
     $("pi-config-jde-aplicar").disabled = v.rondas.length > 0;
+    // Con la configuración de los JDE puesta, el ritmo, el sistema, los
+    // puntos y los desempates quedan fijos: se cambian con un motivo, que va
+    // al acta (V.cambiosDeConfiguracion).
+    const fija = configFija(v);
+    f.elements.ritmo.readOnly = fija;
+    if (fija) {
+      for (const r of f.querySelectorAll('input[name="sistema"]')) r.disabled = true;
+      for (const k of ["victoria", "tablas", "derrota", "bye"]) f.elements["p_" + k].disabled = true;
+    }
+    pintarConfigFija(v);
     pintarDesempates();
     // La sugerencia de un torneo por grupo vive en esta ficha (junto a «Subir
     // la lista»): se vuelve a pintar con ella (el idioma, por ejemplo).
     pintarSugerencia();
+  }
+
+  const configFija = (v) => !!v.jde && !v.configLibre;
+  function pintarConfigFija(v) {
+    const caja = $("pi-config-fija");
+    caja.replaceChildren();
+    caja.hidden = !v.jde;
+    if (!v.jde) return;
+    const fija = configFija(v);
+    const b = el("button", { type: "button", id: "pi-config-cambiar", class: C.mini }, tx(fija ? "configCambiar" : "configFijar"));
+    b.addEventListener("click", () => (fija ? cambiarConfigJde() : fijarConfigJde()));
+    caja.append(el("p", { class: "text-sm" }, el("span", { class: "font-semibold", texto: tx(fija ? "configFijaTitulo" : "configLibreTitulo") + " " }), tx(fija ? "configFijaTexto" : "configLibreTexto")),
+      el("div", { class: "mt-2" }, b));
+  }
+  async function cambiarConfigJde() {
+    const v = t();
+    const r = await Avisos.formulario({ titulo: tx("configCambiarTitulo"), texto: tx("configCambiarTexto"), aceptar: tx("configCambiarSi"), cancelar: tx("cancelar"),
+      campos: [{ nombre: "motivo", etiqueta: tx("configMotivo"), max: 300 }] });
+    if (!r || t() !== v) return;
+    const motivo = String(r.motivo || "").trim();
+    if (motivo.length < 3) { Avisos.avisar(tx("configMotivoFalta"), { tipo: "error" }); return; }
+    v.cambiosConfig = (v.cambiosConfig || []).concat({ hora: Date.now(), motivo, antes: V.configuracionDe(v) });
+    v.configLibre = true;
+    guardar();
+    pintarTorneo();
+    Avisos.avisar(tx("configCambioAnotado"));
+    $("pi-form-torneo").elements.ritmo.focus();
+  }
+  function fijarConfigJde() {
+    delete t().configLibre;
+    guardar();
+    pintarTorneo();
+    $("pi-config-cambiar").focus();
   }
 
   // «Aplicar la configuración de los JDE» al torneo abierto, antes de la
@@ -548,6 +592,7 @@
     // grupo la primera vez; las siguientes, solo cambia el evento.
     if (v.grupo == null) v.grupo = v.jde ? "" : String(v.nombre || "").trim();
     Object.assign(v, configuracionPara(v.jugadores.length, v, E.esDeEquipos(v), jde.etapa), { jde, nombre: nombreConGrupo(jde, v.grupo) });
+    delete v.configLibre;
     guardar();
     pintarTorneo();
     pintarLista();
@@ -559,6 +604,7 @@
     const n = e.target.name;
     if (!n) return;
     if (n === "nombre" && v.jde) { e.target.value = v.nombre || ""; return; }
+    if (configFija(v) && (n === "ritmo" || n === "sistema" || n.startsWith("p_"))) { pintarTorneo(); return; }
     if (n === "sistema") { if (v.rondas.length === 0) v.sistema = e.target.value; }
     else if (n === "baku" || n === "dobleVuelta") v[n] = e.target.checked;
     else if (n === "rondasTotales") {
@@ -581,6 +627,7 @@
     const ol = $("pi-desempates");
     ol.replaceChildren();
     const lista = t().desempates;
+    const fija = configFija(t());
     lista.forEach((c, i) => {
       const info = E.catalogo(t()).find((x) => x.codigo === c);
       if (!info) return;
@@ -596,16 +643,17 @@
         el("span", { class: "font-mono text-xs font-bold w-6 text-right", texto: (i + 1) + "." }),
         el("span", { class: "flex-1 min-w-[10rem]" }, el("span", { class: "font-semibold", texto: info[idioma] }), " ",
           el("span", { class: "text-xs text-brand-600 dark:text-brand-300", texto: "(" + c + ")" })),
-        el("button", { type: "button", class: C.mini + " pi-sube", disabled: i === 0, "aria-label": tx("subir", { n: info[idioma] }), onclick: mover(-1) }, "↑"),
-        el("button", { type: "button", class: C.mini + " pi-baja", disabled: i === lista.length - 1, "aria-label": tx("bajar", { n: info[idioma] }), onclick: mover(1) }, "↓"),
-        el("button", { type: "button", class: C.miniPeligro, "aria-label": tx("quitarDesempate", { n: info[idioma] }), onclick: () => { lista.splice(i, 1); guardar(); pintarDesempates(); $("pi-desempate-nuevo").focus(); } }, tx("quitar"))
+        el("button", { type: "button", class: C.mini + " pi-sube", disabled: fija || i === 0, "aria-label": tx("subir", { n: info[idioma] }), onclick: mover(-1) }, "↑"),
+        el("button", { type: "button", class: C.mini + " pi-baja", disabled: fija || i === lista.length - 1, "aria-label": tx("bajar", { n: info[idioma] }), onclick: mover(1) }, "↓"),
+        el("button", { type: "button", class: C.miniPeligro, disabled: fija, "aria-label": tx("quitarDesempate", { n: info[idioma] }), onclick: () => { lista.splice(i, 1); guardar(); pintarDesempates(); $("pi-desempate-nuevo").focus(); } }, tx("quitar"))
       ));
     });
     if (!lista.length) ol.append(el("li", { class: C.nota + " italic", texto: tx("sinDesempates") }));
     const s = $("pi-desempate-nuevo");
     s.replaceChildren();
     for (const x of E.catalogo(t())) if (!lista.includes(x.codigo)) s.append(el("option", { value: x.codigo, texto: x[idioma] + " (" + x.codigo + ")" }));
-    $("pi-desempate-agregar").disabled = !s.options.length;
+    s.disabled = fija;
+    $("pi-desempate-agregar").disabled = fija || !s.options.length;
   }
 
   // ---------- Jugadores ----------
@@ -650,6 +698,11 @@
     const orden = T.ordenInicial(v);
     const tabla = $("pi-tabla-jugadores");
     tabla.replaceChildren();
+    // La acreditación, en la lista de inscritos (antes de emparejar también
+    // está en Rondas). En equipos no: se acredita el equipo en la sala.
+    const acred = $("pi-acreditacion");
+    acred.replaceChildren();
+    if (!E.esDeEquipos(v) && v.jugadores.length) pintarPasarLista(acred, pintarJugadores, "pi-j");
     // En un torneo por equipos no se agrega gente a mano ni se busca el Elo
     // Nacional de un equipo: los equipos salen de la inscripción.
     const deEquipos = E.esDeEquipos(v);
@@ -1613,6 +1666,88 @@
     if (x.vuelven.length) Avisos.avisar(tx("incomparecenciaVuelve", { n: nombres(x.vuelven) }), { tipo: "info" });
   }
 
+  // ---------- Que cerrar la página por accidente no borre nada ----------
+  // Todo cambio ya se guarda al momento en el navegador (guardar). Lo que
+  // quedaba fuera: lo escrito en un campo sin salir de él, el jugador o la
+  // lista a medio escribir, lo marcado antes de emparejar (v.pedidas) y el
+  // archivo del respaldo automático. Y que el navegador no borre los datos
+  // por falta de espacio: se le pide guardarlos para siempre (persist).
+  function pedirAlmacenamientoFijo() {
+    if (estado.persistencia || !navigator.storage || !navigator.storage.persist) return;
+    estado.persistencia = true;
+    navigator.storage.persist().catch(() => {});
+  }
+  // Lo escrito en los datos del torneo se guarda mientras se escribe (no
+  // solo al salir del campo).
+  let temporizadorCampo = null, campoPendiente = null;
+  function alEscribirTorneo(e) {
+    const x = e.target;
+    if (!x.name || x.type === "number" || x.type === "radio" || x.type === "checkbox" || x.tagName === "SELECT" || x.readOnly) return;
+    clearTimeout(temporizadorCampo);
+    campoPendiente = x;
+    temporizadorCampo = setTimeout(guardarCampoPendiente, 500);
+  }
+  function guardarCampoPendiente() {
+    clearTimeout(temporizadorCampo);
+    temporizadorCampo = null;
+    const x = campoPendiente;
+    campoPendiente = null;
+    if (x && x.isConnected) alCambiarTorneo({ target: x });
+  }
+  // El jugador y la lista a medio escribir: un borrador por torneo.
+  const CLAVE_BORRADOR = "pareo_borrador_v1";
+  function guardarBorrador() {
+    const d = {};
+    for (const x of $("pi-form-jugador").elements) if (x.name && x.value) d[x.name] = x.value;
+    const pegar = $("pi-pegar").value;
+    if (!Object.keys(d).length && !pegar.trim()) { escribir(CLAVE_BORRADOR, ""); return; }
+    escribir(CLAVE_BORRADOR, JSON.stringify({ id: estado.id, jugador: d, pegar }));
+  }
+  function restaurarBorrador() {
+    const b = leerJSON(CLAVE_BORRADOR, null);
+    if (!b || b.id !== estado.id) return;
+    const f = $("pi-form-jugador");
+    for (const [k, val] of Object.entries(b.jugador || {})) if (f.elements[k]) f.elements[k].value = val;
+    if (b.pegar) { $("pi-pegar").value = b.pegar; $("pi-pegar-caja").open = true; }
+    Avisos.avisar(tx("borradorRecuperado"), { tipo: "info" });
+  }
+  // Al cerrar o esconder la pestaña: lo que estaba por guardarse, ya.
+  function guardarAlSalir() {
+    if (campoPendiente) guardarCampoPendiente();
+    guardarBorrador();
+  }
+
+  // El archivo del respaldo automático se recuerda (IndexedDB guarda el
+  // permiso de Chrome y Edge): al volver a abrir, un clic lo retoma.
+  const BD_RESPALDO = "pareo-respaldo";
+  function bdRespaldo(modo, fn) {
+    return new Promise((ok, mal) => {
+      if (!window.indexedDB) { ok(null); return; }
+      const pedido = indexedDB.open(BD_RESPALDO, 1);
+      pedido.onupgradeneeded = () => pedido.result.createObjectStore("archivos");
+      pedido.onerror = () => mal(pedido.error);
+      pedido.onsuccess = () => {
+        try {
+          const tx2 = pedido.result.transaction("archivos", modo);
+          const r = fn(tx2.objectStore("archivos"));
+          tx2.oncomplete = () => ok(r && "result" in r ? r.result : null);
+          tx2.onerror = () => mal(tx2.error);
+        } catch (e) { mal(e); } // (un archivo que no se puede guardar: no se recuerda)
+      };
+    });
+  }
+  const recordarArchivoRespaldo = (id, archivo) => bdRespaldo("readwrite", (s) => (archivo ? s.put(archivo, id) : s.delete(id))).catch(() => null);
+  const archivoRecordado = (id) => bdRespaldo("readonly", (s) => s.get(id)).catch(() => null);
+  async function retomarRespaldo(ev, archivo) {
+    try {
+      if ((await archivo.requestPermission({ mode: "readwrite" })) !== "granted") return;
+    } catch (e) { return; }
+    estado.respaldoArchivo = { id: ev.id, archivo };
+    await escribirRespaldo();
+    pintarEvento();
+    Avisos.avisar(tx("respaldoRetomado", { a: archivo.name }));
+  }
+
   function guardarDelEvento(tor) {
     if (tor === t() || tor.__id === estado.id) { guardar(); return true; }
     const ok = escribir(PREFIJO + tor.__id, JSON.stringify(tor));
@@ -1734,6 +1869,7 @@
       try {
         const archivo = await window.showSaveFilePicker({ suggestedName: window.PareoPDF.nombreArchivo(ev.nombre, "respaldo").replace(/\.pdf$/, ".json"), types: [{ description: "JSON", accept: { "application/json": [".json"] } }] });
         estado.respaldoArchivo = { id: ev.id, archivo };
+        recordarArchivoRespaldo(ev.id, archivo);
       } catch (e) { return; }
     } else {
       const lista = torneosDelEvento(ev.id);
@@ -1741,6 +1877,34 @@
     }
     await escribirRespaldo();
     pintarEvento();
+  }
+
+  // Las ausencias y las incomparecencias de los torneos del evento
+  // (V.ausenciasDe), con si justificó: lo anota el árbitro y va al informe
+  // oficial. Se guarda en cada torneo (`justificaciones`, por «ronda|id»).
+  const TEXTO_AUSENCIA = { incomparecencia: "ausTipoIncomparecencia", noViene: "ausTipoNoViene", sinAcreditar: "ausTipoSinAcreditar", bye: "ausTipoBye", sacado: "ausTipoSacado" };
+  function pintarAusencias(caja, torneos) {
+    const aus = torneos.flatMap((tor) => V.ausenciasDe(tor).map((x) => ({ tor, x })));
+    if (!aus.length) return;
+    const filas = aus.map(({ tor, x }, k) => {
+      const sel = el("select", { id: "pi-aus-" + k, class: C.campoChico, "data-ausencia": x.clave, "aria-label": tx("ausJustificoA", { n: x.nombre, r: x.ronda }) },
+        el("option", { value: "", texto: tx("ausSinDecidir") }), el("option", { value: "si", texto: tx("ausSi") }), el("option", { value: "no", texto: tx("ausNo") }));
+      sel.value = x.justificada === true ? "si" : x.justificada === false ? "no" : "";
+      sel.addEventListener("change", () => {
+        tor.justificaciones = Object.assign({}, tor.justificaciones);
+        if (sel.value) tor.justificaciones[x.clave] = sel.value === "si";
+        else delete tor.justificaciones[x.clave];
+        guardarDelEvento(tor);
+      });
+      const siguio = x.fuera ? tx("ausFuera", { r: x.ronda + 1 }) : x.volvio ? tx("ausVolvio") : "";
+      return el("tr", {}, el("td", { texto: V.nombreTorneo(tor) }), el("td", { class: "num", texto: x.ronda }),
+        el("td", { class: "font-semibold", texto: x.nombre }), el("td", { texto: tx(TEXTO_AUSENCIA[x.tipo]) + (siguio ? " · " + siguio : "") }), el("td", {}, sel));
+    });
+    caja.append(el("h3", { class: "font-semibold mt-5", texto: tx("ausTitulo") }), el("p", { class: C.nota, texto: tx("ausTexto") }),
+      el("div", { class: "overflow-x-auto mt-2" }, el("table", { id: "pi-ausencias", class: "pi-tabla" },
+        el("thead", {}, el("tr", {}, el("th", { scope: "col", texto: tx("ausTorneo") }), el("th", { class: "num", scope: "col", texto: tx("ausRonda") }),
+          el("th", { scope: "col", texto: tx("nombre") }), el("th", { scope: "col", texto: tx("ausQuePaso") }), el("th", { scope: "col", texto: tx("ausJustifico") }))),
+        el("tbody", {}, filas))));
   }
 
   function pintarEvento() {
@@ -1781,6 +1945,7 @@
     acciones.append(bActa, bInforme, bPremiacion, bDiplomas, bConstancias, bCertificados, bEstadisticas, bCartel);
     caja.append(acciones, el("p", { class: C.nota + " mt-2", texto: tx("eventoPapelesAyuda") }),
       el("p", { class: C.nota + " mt-1", texto: tx("eventoPremiacionAyuda") }));
+    pintarAusencias(caja, torneos);
 
     // El medallero por centro educativo, con las medallas de todos los torneos.
     const med = V.medallero(torneos);
@@ -1919,8 +2084,17 @@
     const bAuto = el("button", { type: "button", id: "pi-respaldo-auto", class: C.botonSec, "aria-pressed": auto ? "true" : "false" },
       tx(auto ? "respaldoAutoApagar" : (window.showSaveFilePicker ? "respaldoAutoPrender" : "respaldoAutoPrenderDescarga")));
     bAuto.addEventListener("click", () => {
-      if (estado.respaldoArchivo && estado.respaldoArchivo.id === ev.id) { estado.respaldoArchivo = null; pintarEvento(); }
+      if (estado.respaldoArchivo && estado.respaldoArchivo.id === ev.id) { estado.respaldoArchivo = null; recordarArchivoRespaldo(ev.id, null); pintarEvento(); }
       else prenderRespaldo(ev);
+    });
+    // Se cerró la página con el respaldo prendido: un clic lo retoma en el
+    // mismo archivo (el navegador pide el permiso otra vez).
+    const bRetomar = el("button", { type: "button", id: "pi-respaldo-retomar", class: C.boton, hidden: true });
+    if (!auto && window.showSaveFilePicker) archivoRecordado(ev.id).then((archivo) => {
+      if (!archivo || !bRetomar.isConnected || estado.respaldoArchivo) return;
+      bRetomar.textContent = tx("respaldoRetomar", { a: archivo.name });
+      bRetomar.hidden = false;
+      bRetomar.onclick = () => retomarRespaldo(ev, archivo);
     });
     // Las firmas del acta: en esta pantalla (con el dedo o el mouse) o desde
     // un celular, con su enlace. Van como imagen en el PDF del acta.
@@ -1996,7 +2170,7 @@
     caja.append(el("h3", { class: "font-semibold mt-5", texto: tx("eventoPlantillasTitulo") }),
       el("p", { class: C.nota, texto: tx("eventoPlantillasTexto") }), el("div", { class: "mt-2" }, bPlantillas));
     caja.append(el("h3", { class: "font-semibold mt-5", texto: tx("eventoRespaldoTitulo") }),
-      el("p", { class: C.nota, texto: tx("eventoRespaldoTexto") }), el("div", { class: "mt-2 flex flex-wrap gap-2" }, bRespaldo, bAuto),
+      el("p", { class: C.nota, texto: tx("eventoRespaldoTexto") }), el("div", { class: "mt-2 flex flex-wrap gap-2" }, bRetomar, bRespaldo, bAuto),
       el("p", { id: "pi-respaldo-estado", class: C.nota + " mt-1", role: "status",
         texto: auto ? (estado.respaldoArchivo.hora ? tx("respaldoAutoHecho", { h: horaCR(estado.respaldoArchivo.hora) }) : tx(window.showSaveFilePicker ? "respaldoAutoActivo" : "respaldoAutoActivoDescarga")) : tx(window.showSaveFilePicker ? "respaldoAutoAyuda" : "respaldoAutoAyudaDescarga") }));
 
@@ -2416,14 +2590,19 @@
     Avisos.avisar(tx("movido", { n: j.nombre, t: destino.grupo || destino.nombre }));
   }
 
+  // Vuelve a los emparejamientos. Si lo sacó una incomparecencia, esa misma
+  // ya no lo vuelve a sacar (T.retirosPorIncomparecencia).
+  function devolverAlTorneo(j) {
+    j.retiradoDespuesDe = null;
+    if (j.retiroAuto != null) { j.vuelveTras = j.retiroAuto - 1; delete j.retiroAuto; }
+    guardar();
+  }
+
   async function retirar(id) {
     const j = jugador(id);
     const v = t();
     if (j.retiradoDespuesDe != null) {
-      j.retiradoDespuesDe = null;
-      // Lo sacó una incomparecencia: esa misma ya no lo vuelve a sacar.
-      if (j.retiroAuto != null) { j.vuelveTras = j.retiroAuto - 1; delete j.retiroAuto; }
-      guardar();
+      devolverAlTorneo(j);
       pintarJugadores();
       Avisos.avisar(tx("vuelve", { n: j.nombre }));
       return;
@@ -4106,8 +4285,10 @@
     }
     // Lo que quedó de la inscripción para revisar (evento de los JDE): cada
     // punto se marca como visto, y hasta marcarlos todos no se empareja.
-    if (r === 0) pintarPasarLista(caja);
-    const ausentes = r === 0 ? noLlegaron(v) : [];
+    if (r === 0 || (v.pasarLista && v.sistema !== "todos")) pintarPasarLista(caja, pintarRondas);
+    // En un suizo, quien no se acreditó no se empareja en ninguna ronda; en
+    // todos contra todos, se decide antes de sortear la ronda 1.
+    const ausentes = r === 0 || v.sistema !== "todos" ? noLlegaron(v) : [];
     let faltanRevisar = () => 0;
     const revisarEstado = el("p", { id: "pi-revisar-estado", class: "text-sm mt-2 font-semibold", role: "status" });
     if (r === 0) {
@@ -4132,7 +4313,27 @@
           el("p", { class: "text-sm mt-1", texto: tx("revisarTexto") }), ul, revisarEstado));
       }
     }
-    const pedidas = {};
+    // Quienes quedaron fuera de esta ronda por perder por incomparecencia en
+    // la anterior (T.retirosPorIncomparecencia): por si alguno llegó y avisó,
+    // se devuelve con un clic, antes de emparejar.
+    const fueraPorIncomparecencia = r > 0 ? v.jugadores.filter((j) => j.retiroAuto === r && j.retiradoDespuesDe === r) : [];
+    if (fueraPorIncomparecencia.length) {
+      caja.append(el("section", { id: "pi-fuera-incomparecencia", class: "mb-4 rounded-xl border-2 border-accent-500 p-3", "aria-labelledby": "pi-fuera-titulo" },
+        el("h3", { id: "pi-fuera-titulo", class: "font-semibold", texto: tx("fueraTitulo", { r: r + 1 }) }),
+        el("p", { class: "text-sm mt-1", texto: tx("fueraTexto") }),
+        el("ul", { class: "mt-2 space-y-1 text-sm" }, fueraPorIncomparecencia.map((j) => el("li", { class: "flex flex-wrap items-center gap-2" },
+          el("span", { class: "font-semibold", texto: j.nombre + (j.institucion ? " (" + j.institucion + ")" : "") }),
+          el("button", { type: "button", class: C.mini, "data-devolver": j.id, "aria-label": tx("volverA", { n: j.nombre }), onclick: () => {
+            devolverAlTorneo(j);
+            pintarRondas();
+            const sig = document.querySelector("#pi-fuera-incomparecencia [data-devolver]") || $("pi-emparejar");
+            if (sig) sig.focus();
+          } }, tx("volver")))))));
+    }
+    // Lo que se marca antes de emparejar (byes pedidos, «no viene») se guarda
+    // con el torneo: si se cierra la página antes de emparejar, no se pierde.
+    if (!v.pedidas || v.pedidas.r !== r) v.pedidas = { r, ausencias: {} };
+    const pedidas = v.pedidas.ausencias;
     if (v.sistema === "todos") {
       caja.append(el("p", { class: C.nota + " mb-3", texto: tx("todosAyuda") }));
       if (r === 0) {
@@ -4168,7 +4369,8 @@
           noViene.textContent = tx(marcado ? "deshacerNoViene" : "noViene");
           noViene.setAttribute("aria-label", tx(marcado ? "deshacerNoVieneA" : "noVieneA", { n: j.nombre }));
         };
-        s.addEventListener("change", () => { if (s.value) pedidas[id] = s.value; else delete pedidas[id]; actualizarNoViene(); });
+        s.addEventListener("change", () => { if (s.value) pedidas[id] = s.value; else delete pedidas[id]; actualizarNoViene(); guardar(); });
+        if (pedidas[id]) s.value = pedidas[id];
         // Quien no llegó al pasar lista queda de entrada como «no viene».
         if (ausentes.includes(id)) { s.value = "Z"; pedidas[id] = "Z"; }
         noViene.addEventListener("click", () => { s.value = s.value === "Z" ? "" : "Z"; s.dispatchEvent(new Event("change")); });
@@ -4214,6 +4416,10 @@
       const cuenta = juegan >= 250 ? setInterval(() => { lleva.textContent = tx("emparejandoLleva", { l: Math.round((Date.now() - desde) / 1000) }); }, 1000) : null;
       try {
         await emparejar(r, pedidas);
+        // Quienes quedaron fuera por no estar acreditados (van así al informe).
+        const R0 = v.rondas[r];
+        const sinAcreditar = R0 && R0.ausencias ? ausentes.filter((id) => R0.ausencias[id] === "Z") : [];
+        if (sinAcreditar.length) { R0.sinAcreditar = sinAcreditar; guardar(); }
         estado.ronda = r;
         pintarRondas();
         Avisos.avisar(tx("rondaLista", { r: r + 1 }));
@@ -4234,30 +4440,35 @@
   // Pasar lista antes de la ronda 1: quién llegó. Se prende con la casilla;
   // apagada, no cambia nada.
   const noLlegaron = (v) => (v.pasarLista ? v.jugadores.filter((j) => !(v.asistencia || {})[j.id] && j.retiradoDespuesDe == null).map((j) => j.id) : []);
-  function pintarPasarLista(caja) {
+  // La acreditación (pasar lista): en la ficha Jugadores y antes de
+  // emparejar cada ronda. Quien no está marcado presente no se empareja en
+  // ninguna ronda (en un suizo, queda como «no viene») hasta que el árbitro
+  // lo marque. `repintar`: la ficha donde está.
+  function pintarPasarLista(caja, repintar, pre) {
+    pre = pre || "pi";
     const v = t();
-    const det = el("details", { id: "pi-asistencia", class: "mb-4 rounded-xl border border-brand-200 dark:border-brand-700 p-3", open: !!v.pasarLista });
+    const det = el("details", { id: pre + "-asistencia", class: "mb-4 rounded-xl border border-brand-200 dark:border-brand-700 p-3", open: !!v.pasarLista });
     det.append(el("summary", { class: "cursor-pointer font-semibold rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400", texto: tx("listaTitulo") }),
       el("p", { class: C.nota + " mt-1", texto: tx("listaTexto") }),
       el("label", { class: "flex items-start gap-2 text-sm mt-2" },
-        el("input", { type: "checkbox", id: "pi-asistencia-activar", class: "mt-1", checked: !!v.pasarLista, onchange: (e) => {
+        el("input", { type: "checkbox", id: pre + "-asistencia-activar", class: "mt-1", checked: !!v.pasarLista, onchange: (e) => {
           v.pasarLista = e.target.checked;
           if (v.pasarLista && !v.asistencia) v.asistencia = {};
-          guardar(); pintarRondas();
-          const x = $("pi-asistencia-activar"); if (x) x.focus();
+          guardar(); repintar();
+          const x = $(pre + "-asistencia-activar"); if (x) x.focus();
         } }),
         el("span", { class: "font-semibold", texto: tx("listaActivar") })));
     if (v.pasarLista) {
       const orden = T.ordenInicial(v);
-      det.append(el("p", { id: "pi-asistencia-cuenta", class: "text-sm mt-2", role: "status", texto: tx("listaCuenta", { n: orden.filter((id) => v.asistencia[id]).length, t: orden.length }) }),
-        el("button", { type: "button", id: "pi-asistencia-todos", class: C.mini + " mt-1", onclick: () => { for (const id of orden) v.asistencia[id] = true; guardar(); pintarRondas(); } }, tx("listaTodos")));
+      det.append(el("p", { id: pre + "-asistencia-cuenta", class: "text-sm mt-2", role: "status", texto: tx("listaCuenta", { n: orden.filter((id) => v.asistencia[id]).length, t: orden.length }) }),
+        el("button", { type: "button", id: pre + "-asistencia-todos", class: C.mini + " mt-1", onclick: () => { for (const id of orden) v.asistencia[id] = true; guardar(); repintar(); } }, tx("listaTodos")));
       const ul = el("ul", { class: "mt-2 grid sm:grid-cols-2 gap-x-6 gap-y-1 text-sm" });
       for (const id of orden) {
-        const cid = "pi-llego-" + id;
+        const cid = pre + "-llego-" + id;
         ul.append(el("li", { class: "flex items-start gap-2" },
           el("input", { type: "checkbox", id: cid, class: "mt-1", checked: !!v.asistencia[id], onchange: (e) => {
             if (e.target.checked) v.asistencia[id] = true; else delete v.asistencia[id];
-            guardar(); pintarRondas();
+            guardar(); repintar();
             const x = $(cid); if (x) x.focus();
           } }),
           el("label", { for: cid, texto: nombreDe(id) })));
@@ -4304,6 +4515,7 @@
     // Quien tiene mesa fija (una silla de ruedas…) queda en su mesa.
     const movidas = V.aplicarMesasFijas(v, ronda);
     v.rondas.push(ronda);
+    delete v.pedidas;
     guardar();
     if (movidas.length) Avisos.avisar(tx("mesasFijasAplicadas", { l: movidas.map((x) => x.nombre + " → " + tx("mesa") + " " + x.mesa).join(", ") }), { tipo: "info" });
   }
@@ -4760,6 +4972,8 @@
   const valorDesempate = (c, x) => (c === "TB" ? E.textoTableros(x, t().tableros) : formatoNum(x));
 
   // ---------- Tabla cruzada ----------
+  // Cada casilla la escribe V.celdaCruzada (la misma del informe oficial).
+  const letraCruzada = () => (idioma === "en" ? { w: "w", b: "b", bye: tx("cBye") } : { w: "b", b: "n", bye: tx("cBye") });
   function pintarCruzada() {
     const v = t();
     pintarSelectInstitucion($("pi-cruzada-institucion"));
@@ -4777,22 +4991,11 @@
       Array.from({ length: R }, (_, r) => el("th", { class: "text-center", scope: "col", texto: tx("rCorta", { r: r + 1 }) })),
       el("th", { class: "num", scope: "col", texto: tx("pts") }))));
     const cuerpo = el("tbody");
-    const letra = idioma === "en" ? { w: "w", b: "b" } : { w: "b", b: "n" };
+    const letra = letraCruzada();
     for (const f of filas) {
       const j = jugador(f.id);
       const celdas = [];
-      for (let r = 0; r < R; r++) {
-        const s = T.situacion(v, r, f.id);
-        let texto;
-        if (s.tipo === "bye") texto = tx("cBye") + " " + puntosTexto(s.puntos);
-        else if (s.tipo === "ausente") texto = (s.codigo === "Z" ? "—" : tx("cBye")) + (s.puntos ? " " + puntosTexto(s.puntos) : "");
-        else if (s.tipo === "pendiente") texto = num.get(s.rival) + letra[s.color] + " *";
-        else {
-          const sim = s.codigo === "=" ? "½" : s.codigo === "-" ? "−" : s.codigo;
-          texto = num.get(s.rival) + letra[s.color] + " " + sim;
-        }
-        celdas.push(el("td", { class: "text-center whitespace-nowrap", texto }));
-      }
+      for (let r = 0; r < R; r++) celdas.push(el("td", { class: "text-center whitespace-nowrap", texto: V.celdaCruzada(v, r, f.id, num, letra, false) }));
       cuerpo.append(el("tr", {},
         el("td", { class: "num", texto: f.puesto }), el("td", { class: "num", texto: num.get(f.id) }),
         el("td", { class: "font-semibold", texto: j.nombre }), el("td", { class: "num", texto: Number(j.elo) > 0 ? j.elo : "" }),
@@ -4844,22 +5047,14 @@
     const filas = filasFiltradas(todasFilas);
     const num = T.numeros(v);
     const R = v.rondas.length;
-    const letra = idioma === "en" ? { w: "w", b: "b" } : { w: "b", b: "n" };
+    const letra = letraCruzada();
     const encabezados = [tx("puesto"), tx("nro"), tx("nombre"), "Elo"]
       .concat(Array.from({ length: R }, (_, r) => tx("rCorta", { r: r + 1 }))).concat([tx("pts")]);
     const anchos = [1, 1, 3, 1].concat(Array.from({ length: R }, () => 1)).concat([1]);
     const filasTabla = filas.map((f) => {
       const j = jugador(f.id);
       const celdas = [];
-      for (let r = 0; r < R; r++) {
-        const s = T.situacion(v, r, f.id);
-        let texto;
-        if (s.tipo === "bye") texto = tx("cBye") + " " + puntosTexto(s.puntos);
-        else if (s.tipo === "ausente") texto = (s.codigo === "Z" ? "-" : tx("cBye")) + (s.puntos ? " " + puntosTexto(s.puntos) : "");
-        else if (s.tipo === "pendiente") texto = num.get(s.rival) + letra[s.color] + " *";
-        else texto = num.get(s.rival) + letra[s.color] + " " + (s.codigo === "=" ? "1/2" : s.codigo);
-        celdas.push(texto);
-      }
+      for (let r = 0; r < R; r++) celdas.push(V.celdaCruzada(v, r, f.id, num, letra, true));
       return [String(f.puesto), String(num.get(f.id)), j.nombre, Number(j.elo) > 0 ? String(j.elo) : ""]
         .concat(celdas).concat([puntosTexto(T.puntos(v, f.id))]);
     });
@@ -5130,13 +5325,18 @@
     $("pi-form-torneo").addEventListener("submit", (e) => e.preventDefault());
     $("pi-desempate-agregar").addEventListener("click", () => {
       const c = $("pi-desempate-nuevo").value;
-      if (!c) return;
+      if (!c || configFija(t())) return;
       t().desempates.push(c);
       guardar();
       pintarDesempates();
       $("pi-desempate-nuevo").focus();
     });
 
+    $("pi-form-torneo").addEventListener("input", alEscribirTorneo);
+    $("pi-form-jugador").addEventListener("input", guardarBorrador);
+    $("pi-pegar").addEventListener("input", guardarBorrador);
+    window.addEventListener("pagehide", guardarAlSalir);
+    document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden") guardarAlSalir(); });
     $("pi-form-jugador").addEventListener("submit", (e) => {
       e.preventDefault();
       const f = e.target;
@@ -5144,6 +5344,7 @@
       if (!d.nombre) { Avisos.avisar(tx("faltaNombre"), { tipo: "error" }); f.elements.nombre.focus(); return; }
       agregarJugadores([d]);
       f.reset();
+      guardarBorrador();
       f.elements.nombre.focus();
     });
     $("pi-pegar-agregar").addEventListener("click", () => {
@@ -5153,7 +5354,7 @@
         return datosJugador({ nombre, institucion, elo, titulo, fed, fideId, categoria });
       });
       const n = agregarJugadores(lista);
-      if (n) { $("pi-pegar").value = ""; Avisos.avisar(tx("agregados", { n })); }
+      if (n) { $("pi-pegar").value = ""; guardarBorrador(); Avisos.avisar(tx("agregados", { n })); }
       else Avisos.avisar(tx("nadaQueAgregar"), { tipo: "error" });
     });
     $("pi-ir-subir-lista").addEventListener("click", () => {
@@ -5391,6 +5592,7 @@
     }
     enganchar();
     pintarTodo();
+    restaurarBorrador();
     avisarPestanas();
     if (location.hash.startsWith("#recibir=")) recibirEvento(location.hash.slice(9));
     // Después de pintar: que no compita con lo que se ve primero.
