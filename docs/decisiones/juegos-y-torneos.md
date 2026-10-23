@@ -3385,6 +3385,174 @@ Al tocar esto, `node herramientas/verificar-pareo-sala-evento.js`. Rompiendo a
 propósito la mesa física, la casilla de consentimiento, el llamado, el fin de
 la ronda o el aceptar, salta.
 
+### Pareo Integral: los adjuntos con nombre, el chat, las llamadas y corregir con constancia
+
+Lo pidió el dueño del sitio (con una captura del formulario del enlace).
+
+- **El nombre del adjunto.** El enlace no se crea sin él (`a.nombre`). Sale
+  en su tarjeta, arriba de su celular («Árbitro adjunto: …», con el
+  principal) y en cada resultado que anotó («lo anotó …»: `m.porAdjunto`
+  guarda el nombre y `m.adjunto` su código).
+- **Corregir, con confirmación y constancia.**
+  - El principal: cambiar en la ronda en juego un resultado ya anotado
+    pregunta «¿Cambiar el resultado de la mesa 3 de 1-0 a 0-1?» («Sí,
+    cambiarlo» / «Dejarlo como estaba»), y el cambio queda en las
+    incidencias (tipo «correccion», que van al informe). En una ronda ya
+    cerrada sigue como antes: pide el motivo.
+  - El adjunto: desde su celular puede corregir **solo lo que anotó él**
+    («Corregir», elegir el nuevo y confirmarlo); queda la constancia con su
+    nombre. Lo que anotó otro (o el principal) sigue sin pisarse: queda como
+    discrepancia para que el principal decida. En equipos, por tablero, solo
+    corrige el principal.
+- **El chat.** Del principal a todos los adjuntos o a uno, y de cada adjunto
+  al principal (`t.chat`, los últimos 300, con la hora). Viaja por el mismo
+  canal del adjunto, con su estado: cada adjunto ve lo que es para todos,
+  para él y lo suyo.
+- **«Necesito al principal en esta mesa».** El adjunto elige la mesa (de su
+  rango) y avisa; al principal le sale un aviso y, arriba de la ronda, «Te
+  necesitan en una mesa» con «Voy», que la marca atendida y se lo dice al
+  adjunto por el chat («Voy para la mesa 2»). Su celular dice si ya va.
+
+Lo comprueba `verificar-pareo-adjuntos.js`.
+
+### Torneos en Pareo Integral: todo torneo se publica solo
+
+Lo decidió el dueño del sitio: «que se vean todos los torneos que hagan
+todos los árbitros», y entre publicarlos solos con la opción de apagarlo o
+sin ella, eligió **sin poder apagarlo** (se le dijo que es la opción con más
+riesgo legal, por los nombres de menores).
+
+- **Cuándo.** Al emparejar la ronda 1 (`publicarSolo`, desde `guardar()`), con
+  la misma Edge Function `pareo-publicar` de siempre; después se pone al día
+  sola con cada cambio (`programarPublicacion`). Antes de la ronda 1 sigue
+  como estaba: se puede publicar a mano como anuncio, con el permiso.
+- **Sin internet** se vuelve a intentar con el próximo cambio, como mucho una
+  vez por minuto (`reintentoSolo`), y Archivos lo dice con «Publicar ahora».
+  Si el torneo publicado ya no existe (lo borró alguien), se vuelve a
+  publicar solo.
+- **No se quita.** Un torneo que ya empezó no muestra «Dejar de publicar».
+- **Que nadie se lleve una sorpresa:** lo dicen la ficha Torneo (un aviso
+  fijo con el enlace a la política de privacidad), la ronda 1 antes de
+  emparejar, Archivos y `privacidad.html#torneos`. Lo que viaja es lo de
+  siempre (`PareoPublicar.datosPublicos`): nunca la fecha de nacimiento, el
+  sexo ni el ID FIDE. Quien quiera que se quite o se abrevie su nombre, lo
+  pide al correo de la política.
+
+Lo comprueba `verificar-pareo-anuncio.js`.
+
+### Pareo Integral: los equipos el día del torneo, la Categoría Amistoso, el plazo de los capitanes y el mensaje de WhatsApp
+
+Lo pidió el dueño del sitio, en varios mensajes del mismo día.
+
+- **«Mover» también a un torneo por equipos.** Entra al equipo de su centro
+  si tiene cupo (`G.JDE_MAX_EQUIPO`, 5). Si está lleno, no se mueve: el aviso
+  dice que primero hay que sacar a alguien del equipo. Si su centro no tenía
+  equipo en ese torneo, se arma uno con él (y se avisa que necesita al menos
+  `G.JDE_MIN_EQUIPO`).
+- **La categoría, revisada al mover** (`revisarCategoriaDestino`, con
+  `G.revisarCategorias`): mayor de lo que permite (art. 17), subir en
+  individual, un salto que no es A→B, C→D ni D→E, y el tope de tres que
+  suben por equipo (art. 18). Lo que no se permite, no se mueve y lo dice;
+  un ascenso permitido se mueve y lo dice. Sin fecha de nacimiento o sin
+  «Categoría X» en el grupo del torneo, no se revisa.
+- **En un equipo, «Quitar» a quien no vino** (antes de la ronda 1): va al
+  acta («Bajas en los equipos», `t.bajasEquipo`); un equipo sin nadie sale
+  del torneo. Y **«Agregar un equipo que llegó»**: el centro y los
+  integrantes, uno por línea, en el orden de tableros; un centro que ya tiene
+  equipo no se repite, y con rondas jugadas entra desde la siguiente como
+  inscripción tardía.
+- **La Categoría Amistoso.** Al crear los torneos de la inscripción, los que
+  se quedan sin rivales (un grupo de uno, un equipo solo en su categoría)
+  juegan juntos un torneo individual «Categoría Amistoso», con los mismos
+  datos que los demás (casilla marcada de entrada). Lleva `amistoso: true`:
+  no clasifica (`V.clasificados`) ni suma al medallero.
+- **El plazo de los capitanes** (`t.plazoAlineacion`, minutos, en la ficha
+  Torneo de un torneo por equipos). La hora de la ronda sale del horario del
+  evento (Archivos, «Horario del día») y, sin él, de cuando se echó a andar
+  el reloj de la ronda (`inicioDeRonda`). Al capitán le llega el límite y su
+  celular cuenta cuánto le queda («Te quedan 12 min…»); al vencer se cierra.
+  Lo decide la pestaña del árbitro: lo que llega tarde no entra. Sin plazo o
+  sin hora, como antes: hasta que se anote el primer tablero.
+- **El enlace del capitán, por WhatsApp o por correo**, con un mensaje que
+  dice el equipo, la ronda y el torneo. El teléfono y el correo los pone
+  quien lo manda.
+- **El mensaje de WhatsApp de la ronda**, más fácil de leer en el celular
+  (el dueño mandó cómo se veía): una mesa por bloque, su número en negrita y
+  cada uno en su línea (⚪ blancas, ⚫ negras; el orden también lo dice). Los
+  nombres escritos todo en mayúsculas pasan a mayúscula inicial
+  (`PareoCompartir.legible`): «de», «la»… en minúscula, y las siglas (sin
+  vocales, números romanos y una lista: CTP, IPEC, UNED…) como están. Lo que
+  ya trae minúsculas no se toca.
+
+Lo comprueba `verificar-pareo-equipos-dia.js` (el mensaje, `verificar-pareo-premios.js`).
+
+### Pareo Integral: el informe oficial completo, la premiación en tablas, la configuración de los JDE fija, la acreditación y no perder nada al cerrar
+
+Lo pidió el dueño del sitio de una vez (las propuestas 2, 3 y 4, más el
+informe, la premiación, la acreditación y «qué podemos resolver en caso de
+que alguien cierre por accidente la página»).
+
+- **El informe oficial** (`V.informe`) trae ahora, por torneo, la
+  **clasificación entera** con sus desempates y la columna «Clasifica» (antes
+  solo los primeros) y el **cuadro cruzado de enfrentamientos** (cada ronda
+  con el número de salida del rival, el color y el resultado). Y para todo el
+  evento, los **clasificados** a la etapa siguiente y las **ausencias e
+  incomparecencias** con si justificó.
+  - La casilla del cuadro cruzado es una sola, `V.celdaCruzada`: la usan
+    la ficha Tabla cruzada, su PDF y el informe.
+  - `js/reporte-pdf.js` no parte las celdas, las corta con «...»: los
+    anchos de cada tabla están medidos mirando el PDF, con encabezados
+    cortos («Pto.», «Pts.», «Centro») para que entren cinco desempates.
+- **Las ausencias** (`V.ausenciasDe`) salen solas de las rondas: quien perdió
+  por incomparecencia, quien el árbitro marcó «no viene», quien no se
+  acreditó y quien pidió bye (avisó: cuenta como justificado). Si justificó lo
+  anota el árbitro en la ficha Archivos (`t.justificaciones`, por
+  «ronda|id»); sin anotar queda «Sin decidir». Las incomparecencias van al
+  informe, no al acta: el acta es del congresillo, antes de jugar.
+- **La premiación** va en tablas (medalla, lugar, nombre, centro, puntos;
+  los premios especiales y los mejores tableros en las suyas), del tercer
+  lugar al primero, como se leen en el acto.
+- **La configuración de los JDE, fija.** Con «Aplicar la configuración de los
+  JDE» puesta, el ritmo, el sistema, los puntos y los desempates no se tocan
+  (también si se fuerza desde la consola). Para cambiarlos se pide un
+  motivo, que va al acta con la hora, lo de antes y lo de después
+  (`t.cambiosConfig`, `V.cambiosDeConfiguracion`); «Volver a fijar la
+  configuración» la cierra otra vez. El número de rondas sigue libre (la
+  normativa pide «al menos cinco»).
+- **Antes de emparejar**, quien quedó fuera por perder por incomparecencia en
+  la ronda anterior sale en un aviso, con «Vuelve a jugar» al lado: por si
+  llegó o avisó.
+- **La acreditación** («Pasar asistencia») está en Jugadores y antes de
+  emparejar cada ronda (ids `pi-j-…` en Jugadores, para no repetir los de
+  Rondas: las dos fichas están en la página a la vez). En un suizo, quien no
+  está presente no se empareja en **ninguna** ronda (queda «no viene», y la
+  ronda lo anota en `sinAcreditar`) hasta que el árbitro lo marque. En todos
+  contra todos sigue la regla de antes: se decide antes de sortear la ronda 1.
+- **Cerrar la página sin querer.** Todo cambio ya se guardaba al momento en
+  el navegador. Lo que se perdía, y ya no:
+  - lo escrito en un campo de los datos del torneo sin salir de él (se
+    guarda mientras se escribe);
+  - el jugador o la lista a medio escribir (un borrador, que vuelve al abrir
+    con un aviso);
+  - lo marcado antes de emparejar, byes y «no viene» (`t.pedidas`, que se
+    borra al emparejar);
+  - el archivo del respaldo automático: se recuerda en IndexedDB y un clic
+    («Seguir el respaldo automático en…») lo retoma, porque el navegador
+    pide el permiso otra vez.
+  Además se le pide al navegador guardar los datos para siempre
+  (`navigator.storage.persist()`), para que no los borre por falta de
+  espacio. Lo que no se puede evitar: borrar los datos del navegador o
+  usar una ventana privada. Para eso está el respaldo en un archivo.
+
+- **El enlace en vivo, también en la ficha Torneo** (lo pidió el dueño
+  del sitio: «que el enlace en vivo salga también en la ficha Torneo»). Si
+  el torneo es de un evento, el del evento (el mismo de Archivos); si no, el
+  de ese torneo (el mismo de «Ver desde el celular», en Rondas, y su casilla
+  queda marcada). Son los mismos canales, no otros; los ids llevan
+  `pi-tv-…` porque las fichas están todas en la página a la vez.
+
+Lo comprueba `verificar-pareo-informe.js`.
+
 ### Pareo Integral: quien pierde por incomparecencia queda fuera
 
 Lo pidió el dueño del sitio: «cuando un jugador pierde por incomparecencia,
@@ -3414,6 +3582,38 @@ sin avisar se retira del torneo.
   no de una persona del torneo.
 
 Lo comprueba `verificar-pareo-incomparecencia.js`.
+
+### Torneos en Pareo Integral: la lista, por día y en columnas
+
+Lo pidió el dueño del sitio con la imagen de un calendario de torneos: que la
+portada no sean tarjetas sueltas, sino filas ordenadas por día, con los datos
+en columnas.
+
+- **Por día, con su encabezado** («Jueves, 22 de octubre de 2026», en hora de
+  Costa Rica). Los resultados van del día más reciente al más viejo; los
+  próximos, del más cercano al más lejano. Dentro del día, primero lo que
+  se está jugando y después por nombre.
+- **Cada fila**: la fecha a la vista corta («22–24 / OCT», o «23 OCT / 11 DIC»
+  si cambia de mes) y entera para el lector; el nombre, el lugar con la
+  federación y el estado escrito (Próximo, En curso, Terminado); y seis datos
+  con su etiqueta arriba: inscripción (abierta o cerrada), participantes,
+  rondas (jugadas/total), sistema, ritmo y modalidad. El ritmo sale del texto
+  del control con `js/ritmo-control.js` (la cuenta de FIDE), no se pregunta.
+- **De la imagen se dejó afuera** «Var. Elo» y «Participación», porque Pareo
+  Integral no guarda esos datos. También las fotos de cada torneo.
+- **Un evento con varios torneos el mismo día es una fila que se despliega**:
+  suma a sus participantes y cuenta sus torneos. El botón dice si está
+  abierto (`aria-expanded`). Se queda abierto al volver a pintar la lista, y
+  al buscar se abre solo para que se vea qué coincidió.
+- **La lista no se baja cada torneo entero.** Pide sus columnas y unos pocos
+  campos de `datos` que lee la base (`ritmo:datos->>ritmo`, `fechaFin`,
+  `federacion`, `sistema`, `tipo`, `inscripcion`). Los dobles de los
+  verificadores contestan esos alias con `columnasPedidas` de
+  `herramientas/lib/pareo-pruebas.js`.
+- **En el celular**, los datos bajan debajo del nombre en dos columnas y nada
+  se sale de la pantalla.
+
+Lo comprueba `verificar-pareo-lista.js`.
 
 ### Torneos en Pareo Integral: seguir a un jugador
 

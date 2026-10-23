@@ -91,6 +91,8 @@
   // empate que los desempates no resolvieron, se avisa: lo decide el árbitro
   // (un desempate rápido o un sorteo), nunca el orden de la lista.
   function clasificados(t, n) {
+    // La «Categoría Amistoso» (los que se quedaron sin rivales) no clasifica.
+    if (t.amistoso) n = 0;
     // Sin ninguna ronda completa no hay clasificación: todos estarían
     // «empatados» en cero.
     const filas = rondasCompletas(t) ? clasificacionDe(t) : [];
@@ -110,6 +112,24 @@
   const sistemaCorto = (t) => (t.sistema === "todos" ? "Todos c. todos" : "Suizo, " + (Number(t.rondasTotales) || 0) + " rondas");
   const nombreTorneo = (t) => t.grupo || t.nombre;
   const linea = (s) => "______________________________   " + s;
+
+  // ---------- La configuración de un torneo, para el acta ----------
+  // Lo que fija «Aplicar la configuración de los JDE» y que después solo se
+  // cambia con un motivo (js/pareo/pagina.js): `t.cambiosConfig` = [{ hora,
+  // motivo, antes }], con lo que había antes de cada cambio.
+  function configuracionDe(t) {
+    return { ritmo: t.ritmo || "", sistema: t.sistema, rondasTotales: t.rondasTotales, puntos: Object.assign({}, t.puntos), desempates: (t.desempates || []).slice() };
+  }
+  function textoConfiguracion(c) {
+    const p = c.puntos || {};
+    return [c.ritmo ? "ritmo " + c.ritmo : "sin ritmo", c.sistema === "todos" ? "todos contra todos" : "suizo de " + (Number(c.rondasTotales) || 0) + " rondas",
+      "puntos " + [p.victoria, p.tablas, p.derrota].map(puntosTexto).join(" · ") + ", bye " + puntosTexto(p.bye || 0),
+      "desempates " + ((c.desempates || []).join(", ") || "ninguno")].join("; ");
+  }
+  function cambiosDeConfiguracion(torneos) {
+    return torneos.flatMap((t) => (t.cambiosConfig || []).map((x, i, l) => nombreTorneo(t) + ", a las " + horaTexto(x.hora) + ": «" + x.motivo + "». Antes: " +
+      textoConfiguracion(x.antes) + ". Después: " + textoConfiguracion(i + 1 < l.length ? l[i + 1].antes : configuracionDe(t)) + "."));
+  }
 
   // ---------- El acta del congresillo ----------
   // Quién firma el acta, en ese orden.
@@ -159,6 +179,8 @@
     if (movimientos.length) seccion((++n) + ". Cambios de torneo", movimientos, "");
     const reemplazos = torneos.flatMap((t) => (t.reemplazos || []).map((x) => x.equipo + ", " + nombreTorneo(t) + ": sale " + x.sale + " y entra " + x.entra + "."));
     if (reemplazos.length) seccion((++n) + ". Reemplazos en los equipos", reemplazos, "");
+    const bajas = torneos.flatMap((t) => (t.bajasEquipo || []).map((x) => x.equipo + ", " + nombreTorneo(t) + ": sale " + x.nombre + " (no se presentó)."));
+    if (bajas.length) seccion((++n) + ". Bajas en los equipos", bajas, "");
     const ausentes = torneos.flatMap((t) => (t.noSePresentaron || []).map((x) => x + " (" + nombreTorneo(t) + ")."));
     if (ausentes.length) seccion((++n) + ". No se presentaron a la ronda 1", ausentes, "");
     const comparacion = d.comparacion || { noClasificaron: [], faltan: [] };
@@ -191,6 +213,9 @@
     });
     if (sorteos.length) seccion((++n) + ". Sorteos", sorteos, "");
 
+    const cambios = cambiosDeConfiguracion(torneos);
+    if (cambios.length) seccion((++n) + ". Cambios a la configuración de los JDE", cambios, "");
+
     const tardios = torneos.flatMap((t) => (t.tardios || []).map((x) => x.nombre + " (" + (x.institucion || "—") + "), " + nombreTorneo(t) + ": entró en la ronda " + x.ronda + "." + (x.aviso ? " " + x.aviso : "")));
     if (tardios.length) seccion((++n) + ". Inscripciones el día del torneo", tardios, "");
 
@@ -212,6 +237,61 @@
     }
     return { titulo: "Acta del congresillo técnico — Ajedrez", subtitulo: evento.nombre, pie: "Pareo Integral · ajedrez-integral.com", bloques: b, fotos };
   }
+
+  // ---------- La tabla cruzada ----------
+  // Una casilla: el número del rival, el color y el resultado. La misma en
+  // la ficha Tabla cruzada, en su PDF y en el informe oficial. `letra` trae
+  // el color en el idioma ({ w, b, bye }); `ascii`, para el PDF: WinAnsi no
+  // tiene el signo menos «−» ni la raya «—», y se perderían sin avisar (el
+  // «½» sí lo tiene).
+  function celdaCruzada(t, r, id, num, letra, ascii) {
+    const s = T.situacion(t, r, id);
+    if (s.tipo === "bye") return letra.bye + " " + puntosTexto(s.puntos);
+    if (s.tipo === "ausente") return (s.codigo === "Z" ? (ascii ? "-" : "—") : letra.bye) + (s.puntos ? " " + puntosTexto(s.puntos) : "");
+    if (s.tipo === "pendiente") return num.get(s.rival) + letra[s.color] + " *";
+    const sim = s.codigo === "=" ? "½" : s.codigo === "-" && !ascii ? "−" : s.codigo;
+    return num.get(s.rival) + letra[s.color] + " " + sim;
+  }
+  const LETRA_ES = { w: "b", b: "n", bye: "Libre" };
+
+  // ---------- Ausencias e incomparecencias ----------
+  // Ronda por ronda, quién faltó: el que perdió por incomparecencia en su
+  // mesa («+-», «-+», «--»), el que el árbitro marcó «no viene» antes de
+  // emparejar (Z) y el que pidió bye (H o F: avisó). Si justificó lo anota
+  // el árbitro en la ficha Archivos (`t.justificaciones`, por «ronda|id»:
+  // true o false); sin anotar, el que avisó cuenta como justificado y los
+  // demás quedan «sin decidir». En todos contra todos, quien no se presentó
+  // a la ronda 1 se sacó del torneo: queda solo su nombre (noSePresentaron).
+  const TIPO_AUSENCIA = { incomparecencia: "Perdió por incomparecencia", noViene: "No se presentó", sinAcreditar: "No se acreditó", bye: "Pidió bye (avisó)", sacado: "No se presentó (sacado)" };
+  function ausenciasDe(t) {
+    const just = t.justificaciones || {};
+    const out = [];
+    const agregar = (r, id, tipo, nombre, institucion) => {
+      const clave = r + "|" + id;
+      const p = participante(t, id) || {};
+      const anotada = Object.prototype.hasOwnProperty.call(just, clave);
+      out.push({ ronda: r + 1, id, clave, tipo, nombre: nombre || p.nombre || "?", institucion: institucion != null ? institucion : p.institucion || "",
+        justificada: anotada ? !!just[clave] : tipo === "bye" ? true : null, anotada,
+        // Quedó fuera por esa incomparecencia (js/pareo/torneo.js) o el árbitro lo devolvió.
+        fuera: tipo === "incomparecencia" && p.retiroAuto === r + 1 && p.retiradoDespuesDe === r + 1,
+        volvio: tipo === "incomparecencia" && p.vuelveTras === r });
+    };
+    const enLista = new Set(t.jugadores.map((j) => j.nombre));
+    (t.noSePresentaron || []).filter((n) => !enLista.has(n)).forEach((n) => agregar(0, "nombre:" + n, "sacado", n, ""));
+    t.rondas.forEach((R, r) => {
+      for (const m of R.mesas) {
+        if (m.n == null) continue;
+        if (m.r === "-+" || m.r === "--") agregar(r, m.b, "incomparecencia");
+        if (m.r === "+-" || m.r === "--") agregar(r, m.n, "incomparecencia");
+      }
+      const sinAcreditar = new Set(R.sinAcreditar || []);
+      for (const [id, a] of Object.entries(R.ausencias || {})) agregar(r, id, a !== "Z" ? "bye" : sinAcreditar.has(id) ? "sinAcreditar" : "noViene");
+    });
+    return out;
+  }
+  const justificadaTexto = (x) => (x.justificada === true ? "Sí" : x.justificada === false ? "No" : "Sin decidir");
+
+  const numTexto = (x) => (x == null || Number.isNaN(Number(x)) ? "" : String(Math.round(Number(x) * 100) / 100).replace(".", ","));
 
   // ---------- El informe oficial de participación y resultados ----------
   function informe(evento, torneos) {
@@ -248,18 +328,67 @@
       b.push({ tipo: "nota", texto: sistemaTexto(t) + " · " + t.jugadores.length + (E.esDeEquipos(t) ? " equipos" : " jugadores") + " · " +
         (cl.terminado ? "terminado" : "provisional: " + cl.rondas + " de " + cl.total + " rondas") });
       if (!cl.filas.length) { b.push({ tipo: "nota", texto: "Sin rondas jugadas." }); continue; }
-      b.push({ tipo: "tabla", encabezados: ["Puesto", "Nombre", "Centro educativo", "Puntos", "Clasifica"], anchos: [0.8, 2.6, 2.4, 0.9, 1],
-        filas: cl.filas.map((f, i) => {
+      // La clasificación entera, con sus desempates (no solo los que clasifican).
+      const todas = clasificacionDe(t);
+      const des = t.desempates || [];
+      const dentro = new Set(cl.filas.slice(0, n).map((f) => f.id));
+      b.push({ tipo: "subtitulo", texto: "Clasificación tras la ronda " + cl.rondas });
+      // (El PDF no parte las celdas: lo largo se corta. Los anchos están
+      // medidos para que quepan los encabezados y cinco desempates.)
+      b.push({ tipo: "tabla", encabezados: ["Pto.", "Nombre", "Centro", "Pts."].concat(des, n ? ["Clasifica"] : []),
+        anchos: [0.7, 2.3, 1.9, 0.7].concat(des.map(() => 0.9), n ? [1.2] : []),
+        filas: todas.map((f) => {
           const p = participante(t, f.id);
-          return [String(f.puesto), p.nombre, p.institucion || "", puntosTexto(f.puntos), i < n ? "Sí" : ""];
+          return [String(f.puesto), p.nombre, E.esDeEquipos(t) ? "" : p.institucion || "", puntosTexto(f.puntos)]
+            .concat(des.map((c) => (c === "TB" ? E.textoTableros(f.valores[c], t.tableros) : numTexto(f.valores[c]))), n ? [dentro.has(f.id) ? "Sí" : ""] : []);
         }) });
+      if (des.length) b.push({ tipo: "nota", texto: "Desempates, en orden: " + des.join(", ") + "." });
       if (cl.empate && n) b.push({ tipo: "nota", texto: "Empate en el último lugar que clasifica: lo resuelve el árbitro principal." });
       if (t.desempateCorte && cl.filas.some((f) => f.porDesempate)) b.push({ tipo: "nota", texto: "Desempate del corte (" + (t.desempateCorte.formato || "desempate rápido") + "): " +
         t.desempateCorte.orden.map((id, k) => (k + 1) + ". " + ((participante(t, id) || {}).nombre || "?")).join(", ") + "." });
       const tableros = podio(t).tableros;
       if (tableros.length) b.push({ tipo: "lista", items: tableros.map((x) => "Mejor tablero " + x.tablero + ": " +
         (x.filas.length ? x.filas.map((f) => f.nombre + " (" + f.institucion + ", " + porcentajeTexto(f.porcentaje) + ")").join("; ") : "sin datos") + ".") });
+
+      // El cuadro cruzado de enfrentamientos: en el orden de la clasificación,
+      // cada ronda con el número de salida del rival, el color y el resultado.
+      const num = T.numeros(t);
+      b.push({ tipo: "subtitulo", texto: "Cuadro cruzado de enfrentamientos" });
+      b.push({ tipo: "tabla", encabezados: ["Puesto", "N.º", "Nombre"].concat(t.rondas.map((_, r) => "R" + (r + 1)), ["Puntos"]),
+        anchos: [0.7, 0.6, 2.4].concat(t.rondas.map(() => 0.9), [0.8]),
+        filas: todas.map((f) => [String(f.puesto), String(num.get(f.id)), participante(t, f.id).nombre]
+          .concat(t.rondas.map((_, r) => celdaCruzada(t, r, f.id, num, LETRA_ES, true)), [puntosTexto(T.puntos(t, f.id))])) });
+      b.push({ tipo: "nota", texto: "En cada ronda: el número de salida del rival, el color (b blancas, n negras) y el resultado. «+» y «-» son partidas no jugadas; «Libre», el bye." });
     }
+
+    // Los clasificados de todos los torneos, juntos.
+    if (siguiente && n) {
+      b.push({ tipo: "titulo", texto: "Clasificados a la Etapa " + siguiente });
+      for (const t of torneos) {
+        const filas = clasificados(t, n).filas.map((f) => {
+          const p = participante(t, f.id);
+          return [String(f.puesto), E.esDeEquipos(t) ? p.nombre + " (" + p.integrantes.map((j) => j.nombre).join(", ") + ")" : p.nombre, p.institucion || ""];
+        });
+        b.push({ tipo: "subtitulo", texto: nombreTorneo(t) });
+        if (filas.length) b.push({ tipo: "tabla", encabezados: ["Puesto", "Nombre", "Centro educativo"], anchos: [1, 3.6, 2.6], filas });
+        else b.push({ tipo: "nota", texto: "Todavía no hay rondas completas." });
+      }
+    }
+
+    // Las ausencias y las incomparecencias, con si justificó.
+    b.push({ tipo: "titulo", texto: "Ausencias e incomparecencias" });
+    let hubo = false;
+    for (const t of torneos) {
+      const aus = ausenciasDe(t);
+      if (!aus.length) continue;
+      hubo = true;
+      b.push({ tipo: "subtitulo", texto: nombreTorneo(t) });
+      b.push({ tipo: "tabla", encabezados: ["Ronda", "Nombre", "Centro", "Qué pasó", "Justificó", "Quedó fuera"], anchos: [0.9, 2.3, 1.4, 3, 1.3, 1.9],
+        filas: aus.map((x) => [String(x.ronda), x.nombre, x.institucion, TIPO_AUSENCIA[x.tipo], justificadaTexto(x),
+          x.fuera ? "Desde la ronda " + (x.ronda + 1) : x.volvio ? "No: volvió" : x.tipo === "sacado" ? "Del torneo" : ""]) });
+    }
+    if (hubo) b.push({ tipo: "nota", texto: "Quien pierde por incomparecencia queda fuera de las rondas siguientes, salvo que el árbitro lo devuelva. Si justificó, lo anota el árbitro; quien pidió bye avisó." });
+    else b.push({ tipo: "nota", texto: "No hubo ausencias ni incomparecencias." });
 
     const med = medallero(torneos);
     if (med.length) {
@@ -372,21 +501,23 @@
       b.push({ tipo: "subtitulo", texto: nombreTorneo(t) });
       if (!p.filas.length) { b.push({ tipo: "nota", texto: "Sin rondas jugadas." }); continue; }
       if (!p.terminado) b.push({ tipo: "nota", texto: "Provisional: " + p.rondas + " de " + p.total + " rondas." });
-      const items = p.filas.slice().reverse().map((f) => {
-        const x = f.participante;
-        const quien = E.esDeEquipos(t) ? x.nombre + " (" + x.integrantes.map((j) => j.nombre).join(", ") + ")" : x.nombre + " — " + (x.institucion || "—");
-        return f.medalla + ", " + LUGAR[f.puesto].toLowerCase() + ": " + quien + " · " + puntosTexto(f.puntos) + " puntos.";
-      });
-      b.push({ tipo: "lista", items });
+      // En tablas, del tercer lugar al primero (el orden en que se leen).
+      b.push({ tipo: "tabla", encabezados: ["Medalla", "Lugar", E.esDeEquipos(t) ? "Equipo" : "Nombre", E.esDeEquipos(t) ? "Integrantes" : "Centro educativo", "Puntos"], anchos: [0.9, 1.2, 2.6, 2.8, 0.8],
+        filas: p.filas.slice().reverse().map((f) => {
+          const x = f.participante;
+          return [f.medalla, LUGAR[f.puesto], x.nombre, E.esDeEquipos(t) ? x.integrantes.map((j) => j.nombre).join(", ") : x.institucion || "—", puntosTexto(f.puntos)];
+        }) });
       if (p.filas.filter((f) => f.puesto === 1).length > 1) b.push({ tipo: "nota", texto: "Empate en el primer lugar que los desempates no resolvieron: lo decide el árbitro principal." });
       const esp = especialesDe(t);
-      if (esp.length) b.push({ tipo: "lista", items: esp.map((x) => "Premio especial, " + P.etiqueta(x.premio, "es") + ": " + (x.ganadores.length
-        ? x.ganadores.map((g) => { const j = participante(t, g.id) || {}; return (x.premio.cuantos > 1 ? g.lugar + ". " : "") + j.nombre + " — " + (j.institucion || "—") + " · " + puntosTexto(g.puntos) + " puntos"; }).join("; ")
-        : "desierto") + ".") });
+      if (esp.length) b.push({ tipo: "tabla", encabezados: ["Premio especial", "Lugar", "Nombre", "Centro educativo", "Puntos"], anchos: [2, 0.8, 2.4, 2.3, 0.8],
+        filas: esp.flatMap((x) => (x.ganadores.length
+          ? x.ganadores.map((g) => { const j = participante(t, g.id) || {}; return [P.etiqueta(x.premio, "es"), String(g.lugar), j.nombre, j.institucion || "—", puntosTexto(g.puntos)]; })
+          : [[P.etiqueta(x.premio, "es"), "", "Desierto", "", ""]])) });
       if (p.tableros.length) {
-        b.push({ tipo: "lista", items: p.tableros.map((x) => "Mejor tablero " + x.tablero + ": " + (x.filas.length
-          ? x.filas.map((f) => f.nombre + " (" + f.institucion + ", " + puntosTexto(f.puntos) + " de " + f.jugadas + ", " + porcentajeTexto(f.porcentaje) + ")").join("; ")
-          : "nadie jugó ahí la mitad de las rondas") + ".") });
+        b.push({ tipo: "tabla", encabezados: ["Mejor tablero", "Nombre", "Centro educativo", "Puntos", "%"], anchos: [1.2, 2.6, 2.6, 1, 0.8],
+          filas: p.tableros.flatMap((x) => (x.filas.length
+            ? x.filas.map((f) => ["Tablero " + x.tablero, f.nombre, f.institucion, puntosTexto(f.puntos) + " de " + f.jugadas, porcentajeTexto(f.porcentaje)])
+            : [["Tablero " + x.tablero, "Nadie jugó ahí la mitad de las rondas", "", "", ""]])) });
       }
     }
     const med = medallero(torneos);
@@ -565,7 +696,7 @@
   // después plata y después bronce, como un medallero olímpico.
   function medallero(torneos) {
     const porCentro = new Map();
-    for (const t of torneos) {
+    for (const t of torneos.filter((x) => !x.amistoso)) {
       for (const f of podio(t).filas) {
         const x = f.participante;
         const centro = String((E.esDeEquipos(t) ? x.institucion || x.nombre : x.institucion) || "—").trim();
@@ -1018,6 +1149,8 @@
   const api = {
     marcasIncidencias, textoMarca,
     ARTICULOS, articuloTexto, revisarPareo, aplicarMesasFijas, certificadosArbitro, textoCertificadoArbitro, delCentro, centrosDeVista, CARGOS_FIRMA,
+    configuracionDe, textoConfiguracion, cambiosDeConfiguracion,
+    celdaCruzada, ausenciasDe, TIPO_AUSENCIA, justificadaTexto,
     sorpresas, proximaRonda, informePrensa, buscarEnHistorial, DIFERENCIA_SORPRESA,
     compararAnioAnterior,
     revisarCierre,

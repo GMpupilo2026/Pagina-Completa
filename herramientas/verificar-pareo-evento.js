@@ -115,8 +115,9 @@ function pruebaSinNavegador() {
   const ti = textoDe(inf);
   ok(/1 torneos, 4 participaciones de estudiantes de 2 centros educativos/.test(ti), "la participación, contada", ti.slice(0, 400));
   ok(/y clasificados a la Etapa Interregional/.test(ti), "dice a qué etapa clasifican");
-  const tabla = inf.bloques.find((x) => x.tipo === "tabla" && x.encabezados[0] === "Puesto");
-  igual("los tres primeros, con «Sí» en Clasifica (cupo 3)", tabla.filas.map((f) => f[4]), ["Sí", "Sí", "Sí"]);
+  const tabla = inf.bloques.find((x) => x.tipo === "tabla" && x.encabezados[0] === "Pto.");
+  // La clasificación entera (los cuatro), con «Clasifica» en la última columna.
+  igual("los tres primeros, con «Sí» en Clasifica (cupo 3)", tabla.filas.map((f) => f[f.length - 1]), ["Sí", "Sí", "Sí", ""]);
 
   console.log("\n=== La lista de clasificados ===");
   const filas = V.filasClasificados(evento, [t1, te]);

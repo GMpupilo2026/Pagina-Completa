@@ -23,6 +23,20 @@ function dobleSupabase() {
   };
 }
 
+// La confirmación de «cambiar un resultado ya anotado» (la prueba
+// verificar-pareo-adjuntos.js, que pone window.__sinAutoConfirmar): en las
+// demás pruebas, que cambian resultados a propósito, se acepta sola.
+function autoConfirmarCambios() {
+  new MutationObserver(() => {
+    if (window.__sinAutoConfirmar) return;
+    const d = document.querySelector("dialog[data-avisos][open]");
+    if (d && !d.__aceptado && /¿Cambiar el resultado de la mesa/.test(d.textContent)) {
+      const b = d.querySelector("[data-avisos-aceptar]");
+      if (b) { d.__aceptado = true; b.click(); }
+    }
+  }).observe(document, { childList: true, subtree: true, attributes: true, attributeFilter: ["open"] });
+}
+
 async function abrirPagina(browser, BASE, hash, antes) {
   const ctx = await browser.newContext({ serviceWorkers: "block", acceptDownloads: true, viewport: { width: 1280, height: 1000 } });
   const page = await ctx.newPage();
@@ -31,6 +45,7 @@ async function abrirPagina(browser, BASE, hash, antes) {
   await page.route("**/fonts.googleapis.com/**", (r) => r.fulfill({ status: 200, contentType: "text/css", body: "" }));
   await page.route("**/fonts.gstatic.com/**", (r) => r.abort());
   await page.addInitScript(dobleSupabase);
+  await page.addInitScript(autoConfirmarCambios);
   if (antes) await antes(page);
   await page.goto(BASE + "/pareo.html" + (hash || ""), { waitUntil: "networkidle" });
   await page.evaluate(() => { window.print = () => {}; });
@@ -41,13 +56,22 @@ const leerTodos = (page) => page.evaluate(() => JSON.parse(localStorage.getItem(
 const vis = (page, sel) => page.$eval(sel, (n) => n.checkVisibility()).catch(() => false);
 
 // La ronda en pantalla se vuelve a pintar con cada resultado (en equipos,
-// entera): cada select se busca de nuevo antes de tocarlo.
+// entera), y también cuando llega algo de afuera (un adjunto, el respaldo):
+// cada select se busca de nuevo antes de tocarlo, y si se repintó justo entre
+// buscarlo y tocarlo, se vuelve a buscar.
 async function anotar(page, resultado) {
   const n = await page.$$eval("#pi-ronda select", (l) => l.length);
   for (let i = 0; i < n; i++) {
-    const s = (await page.$$("#pi-ronda select"))[i];
-    if (!s) break;
-    if ((await s.$$eval("option", (o) => o.map((x) => x.value))).includes(resultado)) await s.selectOption(resultado);
+    for (let intento = 0; ; intento++) {
+      try {
+        const s = (await page.$$("#pi-ronda select"))[i];
+        if (!s) return;
+        if ((await s.$$eval("option", (o) => o.map((x) => x.value))).includes(resultado)) await s.selectOption(resultado, { timeout: 5000 });
+        break;
+      } catch (e) {
+        if (intento >= 4 || !/not attached|detached|Timeout/i.test(String(e))) throw e;
+      }
+    }
   }
 }
 
@@ -82,4 +106,19 @@ async function esperarGuardado(page, cumple, arg) {
   return leerTodos(page);
 }
 
-module.exports = { XLSX, dobleSupabase, abrirPagina, leerTodos, vis, anotar, jugarRondas, esperarGuardado };
+// Las columnas que pide un select de PostgREST a pareo_publicados, como las
+// contestaría la base: «id,nombre» y también «alias:datos->>campo» (texto) o
+// «alias:datos->campo» (JSON), que la lista usa para no bajarse cada torneo.
+function columnasPedidas(sel, fila) {
+  const out = {};
+  for (const parte of String(sel || "").split(",")) {
+    const m = parte.match(/^(\w+):(\w+)->(>?)(\w+)$/);
+    if (m) {
+      const v = fila[m[2]] ? fila[m[2]][m[4]] : undefined;
+      out[m[1]] = v == null ? null : m[3] ? (typeof v === "object" ? JSON.stringify(v) : String(v)) : v;
+    } else if (parte in fila) out[parte] = fila[parte];
+  }
+  return out;
+}
+
+module.exports = { columnasPedidas, autoConfirmarCambios, XLSX, dobleSupabase, abrirPagina, leerTodos, vis, anotar, jugarRondas, esperarGuardado };
