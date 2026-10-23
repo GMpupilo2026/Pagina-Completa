@@ -215,7 +215,7 @@ async function dobleTabla(page, filas) {
     const u = new URL(route.request().url());
     const sel = u.searchParams.get("select") || "";
     pedidos.push(u.search);
-    const columnas = (f) => Object.fromEntries(Object.entries(f).filter(([k]) => sel.split(",").includes(k)));
+    const columnas = (f) => require("./lib/pareo-pruebas").columnasPedidas(sel, f);
     const json = (status, x) => route.fulfill({ status, contentType: "application/json", headers: { "access-control-allow-origin": "*" }, body: JSON.stringify(x) });
     const id = u.searchParams.get("id");
     if (id && id.startsWith("eq.")) {

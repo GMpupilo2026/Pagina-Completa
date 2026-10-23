@@ -134,7 +134,7 @@ async function dobleTabla(page, filas) {
     const u = new URL(route.request().url());
     const sel = u.searchParams.get("select") || "";
     pedidos.push({ select: sel, id: u.searchParams.get("id"), datos: u.searchParams.get("datos") });
-    const columnas = (f) => Object.fromEntries(Object.entries(f).filter(([k]) => sel.split(",").includes(k)));
+    const columnas = (f) => require("./lib/pareo-pruebas").columnasPedidas(sel, f);
     const json = (status, x) => route.fulfill({ status, contentType: "application/json", headers: { "access-control-allow-origin": "*" }, body: JSON.stringify(x) });
     const id = u.searchParams.get("id");
     if (id && id.startsWith("eq.")) {
@@ -173,7 +173,7 @@ async function pruebaPagina(browser) {
   await page.goto(BASE + "/torneos-pareo.html", { waitUntil: "networkidle" });
   await page.waitForSelector("#tp-lista li");
   igual("la lista trae los dos, el más reciente primero", await page.$$eval("#tp-lista [data-torneo]", (l) => l.map((a) => a.dataset.torneo.slice(0, 1))), ["1", "2"]);
-  ok(/Ronda 1 de 3 · 6 participantes/.test(await page.textContent("#tp-lista li")), "cada uno dice cómo va y cuántos son");
+  igual("cada uno dice cómo va y cuántos son", await page.$eval("#tp-lista li", (li) => ["participantes", "rondas"].map((c) => li.querySelector('[data-col="' + c + '"] .tp-dato-valor').textContent)), ["6", "1/3"]);
   await page.fill("#tp-buscar", "sub-14");
   igual("el buscador filtra (sin importar mayúsculas)", await page.$$eval("#tp-lista li", (l) => l.length), 1);
   await page.fill("#tp-buscar", "");

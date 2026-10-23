@@ -97,4 +97,19 @@ async function esperarGuardado(page, cumple, arg) {
   return leerTodos(page);
 }
 
-module.exports = { autoConfirmarCambios, XLSX, dobleSupabase, abrirPagina, leerTodos, vis, anotar, jugarRondas, esperarGuardado };
+// Las columnas que pide un select de PostgREST a pareo_publicados, como las
+// contestaría la base: «id,nombre» y también «alias:datos->>campo» (texto) o
+// «alias:datos->campo» (JSON), que la lista usa para no bajarse cada torneo.
+function columnasPedidas(sel, fila) {
+  const out = {};
+  for (const parte of String(sel || "").split(",")) {
+    const m = parte.match(/^(\w+):(\w+)->(>?)(\w+)$/);
+    if (m) {
+      const v = fila[m[2]] ? fila[m[2]][m[4]] : undefined;
+      out[m[1]] = v == null ? null : m[3] ? (typeof v === "object" ? JSON.stringify(v) : String(v)) : v;
+    } else if (parte in fila) out[parte] = fila[parte];
+  }
+  return out;
+}
+
+module.exports = { columnasPedidas, autoConfirmarCambios, XLSX, dobleSupabase, abrirPagina, leerTodos, vis, anotar, jugarRondas, esperarGuardado };

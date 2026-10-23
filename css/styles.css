@@ -2250,3 +2250,59 @@ body.pi-sorteo-abierto { overflow: hidden; }
    no cambia de color, así que el contraste es el de siempre. */
 .pi-tabla tr.tp-seguido > td:first-child { box-shadow: inset 4px 0 0 rgb(var(--c-accent-500)); }
 .pi-tabla tr.tp-seguido > td { font-weight: 600; }
+/* torneos-pareo.html: la lista de torneos, por día, en filas con columnas
+   (fecha, nombre y lugar, y los datos con su etiqueta escrita arriba). Un
+   evento con varios torneos es una fila que se despliega. Los textos van en
+   los colores de siempre de la página; los puntos de color son adorno: el
+   dato va escrito al lado («Abierta», «En curso»). */
+.tp-dia { margin-bottom: 1.75rem; }
+.tp-dia-titulo { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: rgb(var(--c-brand-700)); margin: 0 0 0.5rem; }
+.dark .tp-dia-titulo { color: rgb(var(--c-brand-200)); }
+.tp-filas { border-radius: 1rem; overflow: hidden; background: #fff; box-shadow: 0 1px 3px rgb(0 0 0 / 0.12); }
+.dark .tp-filas { background: rgb(var(--c-brand-900)); }
+.tp-item + .tp-item, .tp-hijos > .tp-item { border-top: 1px solid rgb(var(--c-brand-100)); }
+.dark .tp-item + .tp-item, .dark .tp-hijos > .tp-item { border-top-color: rgb(var(--c-brand-700)); }
+.tp-fila { display: grid; grid-template-columns: 4.5rem minmax(0, 1fr) 1.25rem; grid-template-areas: "fecha principal flecha" "fecha datos flecha"; column-gap: 1rem; row-gap: 0.6rem; align-items: center;
+  width: 100%; padding: 0.85rem 1rem; text-align: left; color: inherit; text-decoration: none; background: transparent; border: 0; cursor: pointer; }
+.tp-fila:hover { background: rgb(var(--c-brand-50)); }
+.dark .tp-fila:hover { background: rgb(var(--c-brand-800)); }
+.tp-fila:focus { outline: none; }
+.tp-fila:focus-visible { box-shadow: inset 0 0 0 3px rgb(var(--c-accent-500)); }
+.tp-fila-hijo { background: rgb(var(--c-brand-50) / 0.6); }
+.dark .tp-fila-hijo { background: rgb(var(--c-brand-950) / 0.4); }
+.tp-fila-hijo .tp-nombre { font-weight: 600; font-size: 0.95rem; }
+.tp-fecha { grid-area: fecha; display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1.15; }
+.tp-fecha-dia { font-size: 1.35rem; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.tp-fecha-mes { font-size: 0.75rem; font-weight: 600; letter-spacing: 0.05em; }
+.tp-fecha-par { font-size: 0.85rem; font-weight: 600; white-space: nowrap; }
+.tp-principal { grid-area: principal; min-width: 0; display: flex; flex-direction: column; gap: 0.15rem; }
+.tp-nombre { font-weight: 700; font-size: 1.05rem; color: rgb(var(--c-brand-800)); overflow-wrap: anywhere; }
+.dark .tp-nombre { color: #fff; }
+.tp-fila-evento { font-size: 0.85rem; }
+.tp-lugar { font-size: 0.85rem; display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; }
+.tp-estado { display: inline-flex; align-items: center; gap: 0.3rem; font-size: 0.75rem; font-weight: 700; padding: 0.05rem 0.5rem; border-radius: 999px; border: 1px solid rgb(var(--c-brand-200)); }
+.dark .tp-estado { border-color: rgb(var(--c-brand-600)); }
+.tp-estado::before { content: ""; width: 0.5rem; height: 0.5rem; border-radius: 999px; background: rgb(var(--c-brand-300)); }
+.tp-estado-curso::before { background: #dc2626; }
+.tp-estado-proximo::before { background: rgb(var(--c-accent-500)); }
+.tp-datos { grid-area: datos; display: grid; grid-template-columns: repeat(auto-fill, minmax(6.5rem, 1fr)); gap: 0.5rem 0.75rem; }
+.tp-dato { display: flex; flex-direction: column; min-width: 0; }
+.tp-dato-etiqueta { font-size: 0.68rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: rgb(var(--c-brand-600)); }
+.dark .tp-dato-etiqueta { color: rgb(var(--c-brand-300)); }
+.tp-dato-valor { display: inline-flex; align-items: center; gap: 0.35rem; font-size: 0.9rem; font-weight: 600; line-height: 1.25; overflow-wrap: anywhere; }
+.tp-punto { flex: none; width: 0.6rem; height: 0.6rem; border-radius: 999px; }
+.tp-punto-si { background: #16a34a; }
+.tp-punto-no { background: rgb(var(--c-brand-300)); }
+.tp-flecha { grid-area: flecha; font-size: 1.5rem; line-height: 1; transition: transform 0.15s; }
+.tp-fila-evento-boton[aria-expanded="true"] .tp-flecha-abre { transform: rotate(90deg); }
+@media (min-width: 64rem) {
+  .tp-fila { grid-template-columns: 4.5rem minmax(0, 1fr) auto 1.25rem; grid-template-areas: "fecha principal datos flecha"; }
+  .tp-datos { grid-template-columns: repeat(6, 6.25rem); }
+  .tp-datos [data-col="inscripcion"] { grid-column: 1; }
+  .tp-datos [data-col="participantes"] { grid-column: 2; }
+  .tp-datos [data-col="ritmo"] { grid-column: 5; }
+}
+@media (max-width: 30rem) {
+  .tp-fila { grid-template-columns: 3.25rem minmax(0, 1fr) 1rem; column-gap: 0.6rem; padding: 0.75rem; }
+  .tp-fecha-dia { font-size: 0.95rem; }
+}

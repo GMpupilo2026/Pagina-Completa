@@ -3583,6 +3583,38 @@ sin avisar se retira del torneo.
 
 Lo comprueba `verificar-pareo-incomparecencia.js`.
 
+### Torneos en Pareo Integral: la lista, por día y en columnas
+
+Lo pidió el dueño del sitio con la imagen de un calendario de torneos: que la
+portada no sean tarjetas sueltas, sino filas ordenadas por día, con los datos
+en columnas.
+
+- **Por día, con su encabezado** («Jueves, 22 de octubre de 2026», en hora de
+  Costa Rica). Los resultados van del día más reciente al más viejo; los
+  próximos, del más cercano al más lejano. Dentro del día, primero lo que
+  se está jugando y después por nombre.
+- **Cada fila**: la fecha a la vista corta («22–24 / OCT», o «23 OCT / 11 DIC»
+  si cambia de mes) y entera para el lector; el nombre, el lugar con la
+  federación y el estado escrito (Próximo, En curso, Terminado); y seis datos
+  con su etiqueta arriba: inscripción (abierta o cerrada), participantes,
+  rondas (jugadas/total), sistema, ritmo y modalidad. El ritmo sale del texto
+  del control con `js/ritmo-control.js` (la cuenta de FIDE), no se pregunta.
+- **De la imagen se dejó afuera** «Var. Elo» y «Participación», porque Pareo
+  Integral no guarda esos datos. También las fotos de cada torneo.
+- **Un evento con varios torneos el mismo día es una fila que se despliega**:
+  suma a sus participantes y cuenta sus torneos. El botón dice si está
+  abierto (`aria-expanded`). Se queda abierto al volver a pintar la lista, y
+  al buscar se abre solo para que se vea qué coincidió.
+- **La lista no se baja cada torneo entero.** Pide sus columnas y unos pocos
+  campos de `datos` que lee la base (`ritmo:datos->>ritmo`, `fechaFin`,
+  `federacion`, `sistema`, `tipo`, `inscripcion`). Los dobles de los
+  verificadores contestan esos alias con `columnasPedidas` de
+  `herramientas/lib/pareo-pruebas.js`.
+- **En el celular**, los datos bajan debajo del nombre en dos columnas y nada
+  se sale de la pantalla.
+
+Lo comprueba `verificar-pareo-lista.js`.
+
 ### Torneos en Pareo Integral: seguir a un jugador
 
 Lo pidió el dueño del sitio (la 5 de una lista de propuestas): que un papá,
