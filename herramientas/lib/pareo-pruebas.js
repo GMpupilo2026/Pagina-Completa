@@ -122,4 +122,57 @@ function columnasPedidas(sel, fila) {
   return out;
 }
 
-module.exports = { columnasPedidas, autoConfirmarCambios, XLSX, dobleSupabase, abrirPagina, leerTodos, vis, anotar, jugarRondas, esperarGuardado };
+// El doble de public.pareo_lista y public.pareo_lista_resumen (la lista
+// pública de 50 en 50, supabase/migraciones/20261023152708_pareo_lista.sql):
+// filtra, agrupa y pagina como la función de la base, que se comprobó
+// aparte contra la base de verdad. `filas` como las guarda la base (con
+// `datos`); `orgs`, los organizadores (para «Solo verificados»); `hoy`, el
+// día de Costa Rica que tiene la página. Anota cada llamada en `pedidos`.
+const clavePareo = (s) => String(s || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase().replace(/\s+/g, " ").trim();
+function respuestaLista(filas, orgs, hoy, a) {
+  const ayer = new Date(Date.parse(hoy + "T12:00:00Z") - 86400000).toISOString().slice(0, 10);
+  const marcadas = filas.filter((f) => !f.oculto).map((f) => {
+    const d = f.datos || {};
+    const x = { id: f.id, nombre: f.nombre, evento: f.evento || "", lugar: f.lugar || "", fecha: f.fecha || null, rondas: f.rondas || 0, rondas_total: f.rondas_total || 0,
+      jugadores: f.jugadores || 0, actualizado: f.actualizado, organizador_id: f.organizador_id || null, ritmo: d.ritmo == null ? null : d.ritmo, fin: d.fechaFin == null ? null : d.fechaFin,
+      fed: d.federacion == null ? null : d.federacion, sistema: d.sistema == null ? null : d.sistema, tipo: d.tipo == null ? null : d.tipo, inscripcion: d.inscripcion || null,
+      elo: d.validoElo == null ? null : d.validoElo, ritmo_tipo: d.ritmoTipo || null };
+    const proximo = !x.jugadores || (!!x.fecha && x.fecha > hoy);
+    x.en_curso = !proximo && x.rondas_total > 0 && x.rondas < x.rondas_total && (x.fin || x.fecha || "") >= ayer;
+    const inscribe = !!(x.inscripcion && x.inscripcion.abierta && (!x.inscripcion.hasta || x.inscripcion.hasta >= hoy));
+    return { x, proximo, inscribe, grupo: x.evento ? x.evento + "|" + (x.fecha || "") : x.id };
+  });
+  const q = clavePareo(a.p_buscar);
+  const cuales = marcadas.filter((m) => m.proximo === (a.p_parte === "proximos")
+    && (!q || clavePareo([m.x.nombre, m.x.evento, m.x.lugar].filter(Boolean).join(" ")).includes(q))
+    && (!a.p_ritmo || m.x.ritmo_tipo === a.p_ritmo)
+    && (!a.p_lugar || m.x.lugar === a.p_lugar)
+    && (!a.p_elo || (a.p_elo === "sin" ? !["fide", "nacional"].includes(m.x.elo || "") : m.x.elo === a.p_elo))
+    && (!a.p_abierta || m.inscribe) && (!a.p_curso || m.x.en_curso)
+    && (!a.p_verificado || orgs.some((o) => o.id === m.x.organizador_id && o.verificado && !o.oculto)));
+  const grupos = new Map();
+  for (const m of cuales) if (!grupos.has(m.grupo) || (m.x.fecha || "") < (grupos.get(m.grupo) || "")) grupos.set(m.grupo, m.x.fecha);
+  const prox = a.p_parte === "proximos";
+  const orden = [...grupos].sort(([ga, fa], [gb, fb]) => (!fa && !fb ? 0 : !fa ? 1 : !fb ? -1 : prox ? fa.localeCompare(fb) : fb.localeCompare(fa)) || (ga < gb ? -1 : ga > gb ? 1 : 0));
+  const desde = Math.max(a.p_desde || 0, 0), cuantos = Math.min(Math.max(a.p_cuantos || 50, 1), 100);
+  const pagina = new Set(orden.slice(desde, desde + cuantos).map(([g]) => g));
+  return { filas: cuales.filter((m) => pagina.has(m.grupo)).map((m) => m.x), grupos: grupos.size, torneos: cuales.length };
+}
+async function dobleListaPareo(page, filas, opciones) {
+  const o = Object.assign({ orgs: [], hoy: new Intl.DateTimeFormat("en-CA", { timeZone: "America/Costa_Rica" }).format(new Date()) }, opciones);
+  const pedidos = [];
+  const json = (route, x) => route.fulfill({ status: 200, contentType: "application/json", headers: { "access-control-allow-origin": "*" }, body: JSON.stringify(x) });
+  await page.route("**/rest/v1/rpc/pareo_lista_resumen", (route) => {
+    pedidos.push({ fn: "resumen" });
+    const vis = filas.filter((f) => !f.oculto);
+    return json(route, { total: vis.length, lugares: [...new Set(vis.map((f) => f.lugar).filter(Boolean))].sort() });
+  });
+  await page.route("**/rest/v1/rpc/pareo_lista", (route) => {
+    const a = JSON.parse(route.request().postData() || "{}");
+    pedidos.push(Object.assign({ fn: "lista" }, a));
+    return json(route, respuestaLista(filas, o.orgs, o.hoy, a));
+  });
+  return pedidos;
+}
+
+module.exports = { dobleListaPareo, respuestaLista, columnasPedidas, autoConfirmarCambios, XLSX, dobleSupabase, abrirPagina, leerTodos, vis, anotar, jugarRondas, esperarGuardado };

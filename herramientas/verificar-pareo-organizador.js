@@ -254,6 +254,7 @@ async function pruebaPublica(browser) {
   await page.route("**/fonts.googleapis.com/**", (r) => r.fulfill({ status: 200, contentType: "text/css", body: "" }));
   await page.route("**/fonts.gstatic.com/**", (r) => r.abort());
   const pedidos = await dobleBase(page, filas, orgs);
+  await P.dobleListaPareo(page, filas, { orgs });
   let reportes = [];
   await page.route("**/functions/v1/pareo-publicar", async (route) => {
     if (route.request().method() === "OPTIONS") return route.fulfill({ status: 200, body: "ok" });
@@ -271,8 +272,10 @@ async function pruebaPublica(browser) {
   ok(pedidoLista.length && pedidoLista.every((x) => !/logo|clave/.test(x.select)), "la lista nunca pide el logo ni la clave de los organizadores", JSON.stringify(pedidoLista.map((x) => x.select)));
   ok(pedidoLista.length === 1 && /^in\./.test(pedidoLista[0].id), "los pide todos de una vez (no uno por fila)", JSON.stringify(pedidoLista));
   await page.check("#tp-f-verificado");
+  await page.waitForFunction(() => document.querySelectorAll("#tp-lista [data-torneo]").length === 1).catch(() => {});
   igual("«Solo organizadores verificados» deja solo el de la federación", await page.$$eval("#tp-lista [data-torneo]", (l) => l.map((a) => a.dataset.torneo.slice(0, 1))), ["1"]);
   await page.click("#tp-f-quitar");
+  await page.waitForFunction(() => document.querySelectorAll("#tp-lista [data-torneo]").length === 3).catch(() => {});
   igual("«Quitar los filtros» lo apaga", await page.$$eval("#tp-lista [data-torneo]", (l) => l.length), 3);
 
   console.log("\n=== La ficha del torneo ===");

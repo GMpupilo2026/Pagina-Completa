@@ -12,7 +12,9 @@
  *     aria-expanded, medido con lo que se VE; buscando, se abre sola;
  *   - el ritmo sale del control («90 min + 30 s» es clásico) y la inscripción
  *     abierta lo dice escrito;
- *   - la lista pide solo esos campos de `datos`, nunca el torneo entero;
+ *   - la lista la arma la base de 50 en 50 (public.pareo_lista, acá un doble
+ *     que filtra como ella): los filtros y la búsqueda viajan en el pedido,
+ *     «Ver más» trae los siguientes y nunca se baja la tabla entera;
  *   - en el celular nada se sale de la pantalla.
  *
  * Uso:  python3 -m http.server 8777      (desde la raíz del sitio)
@@ -20,7 +22,8 @@
  */
 const path = require("path");
 const { chromium } = require("playwright");
-const { columnasPedidas } = require("./lib/pareo-pruebas");
+const { columnasPedidas, dobleListaPareo } = require("./lib/pareo-pruebas");
+const RitmoControl = require("../js/ritmo-control.js");
 
 const CHROME = process.env.CHROME_PATH || "/opt/pw-browsers/chromium-1194/chrome-linux/chrome";
 const BASE = process.env.BASE_URL || process.env.BASE || "http://localhost:8777";
@@ -38,6 +41,8 @@ const igual = (m, a, b) => {
 const fila = (id, nombre, o) => {
   const f = Object.assign({ id, nombre, evento: "", lugar: "San José", fecha: "2026-10-20", rondas: 5, rondas_total: 5, jugadores: 10, actualizado: "2026-10-20T20:00:00Z" }, o);
   f.datos = Object.assign({ nombre, ritmo: "90 min + 30 s", fechaFin: "", federacion: "CRC", sistema: "suizo", tipo: "individual", jugadores: [], rondas: [] }, o && o.datos);
+  // Como lo manda pareo.html al publicar (js/pareo/publicar.js).
+  f.datos.ritmoTipo = RitmoControl.deducir(f.datos.ritmo, nombre) || "";
   return f;
 };
 const FILAS = [
@@ -51,12 +56,12 @@ const FILAS = [
   fila("d2", "PRUEBA PRÓXIMO CERCA", { fecha: "2026-11-01", rondas: 0, rondas_total: 6, jugadores: 4, datos: { ritmo: "", federacion: "CRC", sistema: "suizo", tipo: "individual" } }),
 ];
 
-async function dobleTabla(page) {
+async function dobleTabla(page, FILAS) {
   const pedidos = [];
   await page.route("**/rest/v1/pareo_publicados**", async (route) => {
     const u = new URL(route.request().url());
     const sel = u.searchParams.get("select") || "";
-    pedidos.push(sel);
+    pedidos.push({ select: sel, id: u.searchParams.get("id") });
     const id = u.searchParams.get("id");
     const filas = id && id.startsWith("eq.") ? FILAS.filter((f) => f.id === id.slice(3)) : FILAS;
     const objeto = /vnd\.pgrst\.object/.test(route.request().headers().accept || "");
@@ -66,21 +71,33 @@ async function dobleTabla(page) {
   return pedidos;
 }
 
-async function abrir(browser, viewport) {
+async function abrir(browser, viewport, filas) {
   const ctx = await browser.newContext({ serviceWorkers: "block", viewport, timezoneId: "Asia/Tokyo" });
   const page = await ctx.newPage();
   const errores = [];
   page.on("pageerror", (e) => errores.push(String(e) + " " + String(e.stack).slice(0, 300)));
   await page.clock.setFixedTime(new Date("2026-10-23T18:00:00Z"));
-  const pedidos = await dobleTabla(page);
+  const pedidos = await dobleTabla(page, filas || FILAS);
+  const lista = await dobleListaPareo(page, filas || FILAS, { hoy: "2026-10-23" });
   await page.goto(BASE + "/torneos-pareo.html", { waitUntil: "networkidle" });
   await page.waitForSelector("#tp-lista .tp-dia");
-  return { ctx, page, errores, pedidos };
+  return { ctx, page, errores, pedidos, lista };
+}
+// La lista se vuelve a pedir a la base con cada filtro (y la búsqueda, un
+// momento después de escribir): se espera a que se pinte lo esperado.
+async function igualLuego(page, m, f, b) {
+  let a;
+  for (let i = 0; i < 50; i++) {
+    a = await f();
+    if (JSON.stringify(a) === JSON.stringify(b)) break;
+    await page.waitForTimeout(100);
+  }
+  igual(m, a, b);
 }
 
 (async () => {
   const browser = await chromium.launch({ executablePath: CHROME });
-  const { ctx, page, errores, pedidos } = await abrir(browser, { width: 1400, height: 900 });
+  const { ctx, page, errores, pedidos, lista } = await abrir(browser, { width: 1400, height: 900 });
 
   console.log("\n=== Por día, del más reciente al más viejo ===");
   igual("los días de los resultados, con su encabezado (en hora de Costa Rica, aunque la computadora esté en otra zona)",
@@ -106,26 +123,27 @@ async function abrir(browser, viewport) {
   const todos = () => page.$$eval("#tp-portada [data-torneo]", (l) => l.filter((a) => a.checkVisibility()).map((a) => a.dataset.torneo).sort());
   igual("los lugares que hay, para elegir", await page.$$eval("#tp-f-lugar option", (l) => l.map((o) => o.textContent)), ["Todos", "Heredia", "San José"]);
   ok(!(await page.isVisible("#tp-f-quitar")), "sin filtros, no hay «Quitar filtros»");
-  await page.selectOption("#tp-f-ritmo", "Rápido");
-  igual("por ritmo (y el evento se abre solo)", await todos(), ["b1", "b2"]);
+  await page.selectOption("#tp-f-ritmo", { label: "Rápido" });
+  await igualLuego(page, "por ritmo (y el evento se abre solo)", todos, ["b1", "b2"]);
+  ok(lista.some((x) => x.fn === "lista" && x.p_ritmo === "rapido" && x.p_parte === "resultados"), "el filtro viaja a la base (p_ritmo: rapido)");
   await page.selectOption("#tp-f-ritmo", "");
   await page.selectOption("#tp-f-lugar", "Heredia");
-  igual("por lugar", await todos(), ["b1", "b2"]);
+  await igualLuego(page, "por lugar", todos, ["b1", "b2"]);
   await page.selectOption("#tp-f-lugar", "");
   await page.selectOption("#tp-f-elo", "sin");
-  igual("«Sin Elo»: los que no dan Elo y los que no lo dijeron", await todos(), ["a1", "d2"]);
+  await igualLuego(page, "«Sin Elo»: los que no dan Elo y los que no lo dijeron", todos, ["a1", "d2"]);
   await page.selectOption("#tp-f-elo", "fide");
-  igual("solo FIDE", await todos(), ["c1", "d1"]);
+  await igualLuego(page, "solo FIDE", todos, ["c1", "d1"]);
   await page.selectOption("#tp-f-elo", "");
   await page.check("#tp-f-abierta");
-  igual("solo con la inscripción abierta", await todos(), ["d1"]);
+  await igualLuego(page, "solo con la inscripción abierta", todos, ["d1"]);
   ok(/coincide/.test(await page.textContent("#tp-resultados-vacio")) && await page.isVisible("#tp-resultados-vacio"), "y dice que ningún jugado coincide");
   await page.uncheck("#tp-f-abierta");
   await page.check("#tp-f-curso");
-  igual("solo en curso", await todos(), ["b1", "b2"]);
+  await igualLuego(page, "solo en curso", todos, ["b1", "b2"]);
   igual("el conteo lo dice", await page.textContent("#tp-cuantos"), "2 de 6 torneos.");
   await page.click("#tp-f-quitar");
-  igual("«Quitar filtros» los quita todos y lleva el foco al primero", [await page.$$eval("#tp-portada [data-torneo]", (l) => l.length), await page.evaluate(() => document.activeElement.id)], [6, "tp-f-ritmo"]);
+  await igualLuego(page, "«Quitar filtros» los quita todos y lleva el foco al primero", async () => [await page.$$eval("#tp-portada [data-torneo]", (l) => l.length), await page.evaluate(() => document.activeElement.id)], [6, "tp-f-ritmo"]);
   ok(!(await page.isVisible("#tp-f-quitar")), "y se esconde");
   // Que los eventos queden como estaban para lo que sigue.
   if (await page.getAttribute("[data-grupo] > button", "aria-expanded") === "true") await page.click("[data-grupo] > button");
@@ -140,13 +158,17 @@ async function abrir(browser, viewport) {
   igual("cada torneo del evento con sus propios datos", await datos('[data-torneo="b2"]').then((d) => [d.Participantes, d.Rondas]), ["29", "3/7"]);
   await page.fill("#tp-buscar", "x");
   await page.fill("#tp-buscar", "");
+  await page.waitForTimeout(700);
   ok(await page.getAttribute(grupo, "aria-expanded") === "true", "se queda abierto al volver a pintar la lista");
   await page.click(grupo);
-  await page.fill("#tp-buscar", "sub-12");
-  igual("buscando, deja solo lo que coincide", await page.$$eval("#tp-lista [data-torneo]", (l) => l.filter((a) => a.checkVisibility()).map((a) => a.dataset.torneo)), ["b2"]);
+  const antesBuscar = lista.length;
+  await page.locator("#tp-buscar").pressSequentially("sub-12", { delay: 40 });
+  await igualLuego(page, "buscando, deja solo lo que coincide", () => page.$$eval("#tp-lista [data-torneo]", (l) => l.filter((a) => a.checkVisibility()).map((a) => a.dataset.torneo)), ["b2"]);
+  ok(lista.slice(antesBuscar).filter((x) => x.fn === "lista").every((x) => x.p_buscar === "sub-12"), "la búsqueda se manda una vez, cuando se deja de escribir", JSON.stringify(lista.slice(antesBuscar).map((x) => x.p_buscar)));
   await page.fill("#tp-buscar", "festival");
-  igual("y si coinciden varios del evento, se abre solo", await visibles(), ["b1", "b2"]);
+  await igualLuego(page, "y si coinciden varios del evento, se abre solo", visibles, ["b1", "b2"]);
   await page.fill("#tp-buscar", "");
+  await igualLuego(page, "al borrarla vuelven todos", () => page.$$eval("#tp-portada [data-torneo]", (l) => l.length), 6);
   await page.click('[data-torneo="c1"]');
   ok(/#t=c1$/.test(page.url()), "una fila lleva a su torneo");
 
@@ -166,10 +188,24 @@ async function abrir(browser, viewport) {
   igual("«Copiar el enlace» copia el corto", await page.evaluate(() => navigator.clipboard.readText()), "https://ajedrez-integral.com/t/d1");
 
   console.log("\n=== Lo que se pide ===");
-  const deLaLista = pedidos.filter((s) => /ritmo:datos->>ritmo/.test(s));
-  ok(deLaLista.length && deLaLista.every((s) => !/(^|,)datos($|,)/.test(s)), "la lista pide solo unos campos de `datos`, nunca el torneo entero", pedidos.join(" | "));
+  ok(lista.filter((x) => x.fn === "lista").every((x) => x.p_cuantos === 50), "la lista se pide de 50 en 50");
+  ok(!pedidos.some((x) => !x.id), "nunca se baja la tabla de torneos entera (solo uno, por su id)", JSON.stringify(pedidos.slice(0, 5)));
   ok(!errores.length, "sin errores en la página", errores.join(" | "));
   await ctx.close();
+
+  console.log("\n=== Ver más ===");
+  const muchos = Array.from({ length: 60 }, (_, i) => fila("m" + String(i).padStart(2, "0"), "PRUEBA MUCHOS " + i, { fecha: "2026-09-" + String(1 + (i % 28)).padStart(2, "0") }));
+  const mu = await abrir(browser, { width: 1400, height: 900 }, muchos);
+  const cuantasFilas = () => mu.page.$$eval("#tp-lista [data-torneo]", (l) => l.length);
+  igual("primero llegan 50, con «Ver más» y cuántos van", [await cuantasFilas(), (await mu.page.textContent("#tp-mas-resultados")).trim()], [50, "Ver más torneos · van 50 de 60"]);
+  igual("el más reciente primero", await mu.page.$eval("#tp-lista .tp-dia", (d) => d.dataset.dia), "2026-09-28");
+  await mu.page.click("#tp-mas-resultados");
+  await igualLuego(mu.page, "«Ver más» trae los 10 que faltaban, sin repetir ninguno", async () => [await cuantasFilas(), new Set(await mu.page.$$eval("#tp-lista [data-torneo]", (l) => l.map((a) => a.dataset.torneo))).size], [60, 60]);
+  ok(!(await mu.page.$("#tp-mas-resultados")), "y ya no hay «Ver más»");
+  igual("el foco queda en el último torneo, no se pierde", await mu.page.evaluate(() => document.activeElement && document.activeElement.dataset.torneo ? "torneo" : document.activeElement.tagName), "torneo");
+  igual("el segundo pedido empieza donde terminó el primero", mu.lista.filter((x) => x.fn === "lista" && x.p_parte === "resultados").map((x) => x.p_desde), [0, 50]);
+  ok(!mu.errores.length, "sin errores en la página", mu.errores.join(" | "));
+  await mu.ctx.close();
 
   console.log("\n=== En el celular ===");
   const cel = await abrir(browser, { width: 360, height: 760 });

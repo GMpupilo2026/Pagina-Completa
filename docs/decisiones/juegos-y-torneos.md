@@ -3680,6 +3680,58 @@ SUB-10», «Mujeres · inter»…), y se borraron todos a pedido del dueño.
 - En la máquina y en el CI, la publicación falla callada (y se reintenta cada
   minuto), como cuando no hay red: el resto de Pareo Integral no cambia.
 
+### Torneos en Pareo Integral: la lista de 50 en 50
+
+Lo pidió el dueño del sitio (la 8 de una lista de propuestas). Antes la
+portada se bajaba la tabla entera, de mil en mil, y filtraba en el
+navegador. Con un año de torneos publicados eso son miles de filas en cada
+visita.
+
+- **La lista la arma la base**: `public.pareo_lista` hace la búsqueda, los
+  filtros, el orden y la página. Es `SECURITY INVOKER` y la llama anon, así
+  que la RLS de siempre se aplica: lo oculto no sale, y el sello se mira en
+  `pareo_organizadores` con su propia RLS.
+- **De 50 en 50 GRUPOS, no filas.** Los torneos de un mismo evento y un
+  mismo día van juntos en una fila que se despliega: una página que cortara
+  un evento por la mitad lo mostraría partido, con la mitad de sus
+  participantes.
+  - Los próximos (del más cercano) y los jugados (del más reciente) se piden
+    por separado, cada uno con su «Ver más», que dice cuántos van de
+    cuántos.
+  - Al traer más, el foco se queda en «Ver más» o, si ya no quedan, pasa al
+    último torneo.
+- **La búsqueda** compara sin tildes, en mayúsculas y con un espacio entre
+  palabras (`public.pareo_clave`, lo mismo que `clave()` de la página).
+  - Busca con `position`, no con `like`: un `%` o un `_` escrito no es un
+    comodín.
+  - Se manda 300 ms después de dejar de escribir, no con cada letra.
+  - Una respuesta que llega tarde, porque ya se pidió otra cosa, no se pinta.
+- **El ritmo** (clásico, rápido, relámpago) no se puede deducir en la base
+  sin copiar la cuenta de `js/ritmo-control.js`. Por eso lo deduce el
+  navegador al publicar y viaja en `datos.ritmoTipo`.
+  - La Edge Function lo vuelve a limpiar; sin esa línea, el filtro no
+    encontraría nada, sin ningún error (`verificar-pareo-publicar.js` lee el
+    código de la función).
+  - Cuando se hizo no había ningún torneo publicado (se habían borrado los de
+    prueba), así que no hubo filas viejas que rellenar.
+- **Lo que la portada necesita entero** (cuántos hay publicados y los
+  lugares, para el filtro) sale de `public.pareo_lista_resumen`.
+- Comprobado contra la base, con torneos de prueba en una transacción
+  deshecha:
+  - un evento no se parte entre páginas;
+  - lo oculto no cuenta;
+  - la búsqueda ignora tildes y espacios dobles, y `50%_` no encuentra nada;
+  - cada filtro deja lo que debe.
+- En los verificadores la llama un doble (`dobleListaPareo` en
+  `herramientas/lib/pareo-pruebas.js`) que filtra, agrupa y pagina igual
+  que la función.
+
+Lo comprueba `verificar-pareo-lista.js`:
+- los filtros y la búsqueda viajan en el pedido;
+- la búsqueda se manda una vez al dejar de escribir;
+- «Ver más» trae los que faltan sin repetir ninguno;
+- la tabla nunca se baja entera.
+
 ### Torneos en Pareo Integral: el organizador y la moderación
 
 Lo pidió el dueño del sitio (la 4, la 5, la 6 y la 7 de una lista de
@@ -3782,8 +3834,8 @@ Lo pidió el dueño del sitio (la 1, la 3, la 5 y la 7 de una lista de propuesta
   - «Inscripción abierta» y «Solo en curso».
   
   Filtrando, los eventos se abren solos, como al buscar, y «Quitar filtros»
-  los quita todos. Todo se filtra en el navegador: la lista ya está entera
-  en la página.
+  los quita todos. Los filtros los aplica la base (ver «Torneos en Pareo
+  Integral: la lista de 50 en 50»).
 - **«Agregar a mi calendario»** está en la ficha de cada torneo que no
   terminó. Baja un `.ics` de días enteros, del primero al último incluidos
   (el formato pide el día siguiente como fin), con un aviso la víspera.

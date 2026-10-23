@@ -37,13 +37,18 @@
     return x;
   };
 
+  // El ritmo (clásico, rápido, relámpago) leído del control de tiempo, con la
+  // única copia de esa cuenta: la lista pública filtra por él en la base.
+  const Ritmo = raiz.RitmoControl || (typeof require === "function" ? require("../ritmo-control.js") : null);
+  const ritmoTipo = (t) => (Ritmo && Ritmo.deducir(t.ritmo || "", t.nombre || "")) || "";
+
   // `extra.codigoEvento`: el código del enlace en vivo del evento (vive en el
   // navegador, no en el torneo).
   function datosPublicos(t, extra) {
     const e = extra || {};
     return {
       nombre: t.nombre || "", grupo: t.grupo || "", ciudad: t.ciudad || "", federacion: t.federacion || "",
-      fechaInicio: t.fechaInicio || "", fechaFin: t.fechaFin || "", arbitro: t.arbitro || "", arbitroAdjunto: t.arbitroAdjunto || "", ritmo: t.ritmo || "", validoElo: t.validoElo || "",
+      fechaInicio: t.fechaInicio || "", fechaFin: t.fechaFin || "", arbitro: t.arbitro || "", arbitroAdjunto: t.arbitroAdjunto || "", ritmo: t.ritmo || "", ritmoTipo: ritmoTipo(t), validoElo: t.validoElo || "",
       sistema: t.sistema, dobleVuelta: !!t.dobleVuelta, rondasTotales: t.rondasTotales, tipo: t.tipo, tableros: t.tableros,
       puntos: t.puntos, desempates: (t.desempates || []).slice(), mesaInicial: t.mesaInicial,
       evento: t.evento ? { nombre: t.evento.nombre || "" } : null,

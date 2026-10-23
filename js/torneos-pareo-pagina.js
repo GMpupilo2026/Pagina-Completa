@@ -2,8 +2,9 @@
    público donde se ve todo torneo que su organizador publicó desde
    pareo.html (js/pareo/publicar.js → Edge Function pareo-publicar).
 
-   Lee public.pareo_publicados, que es de lectura pública: la lista con sus
-   columnas (sin abrir el JSON) y, al elegir uno, su `datos` (el torneo tal
+   Lee public.pareo_publicados, que es de lectura pública: la lista de 50 en
+   50 la arma la base con la búsqueda y los filtros (public.pareo_lista) y,
+   al elegir uno, se lee su `datos` (el torneo tal
    como lo limpió la función). La clasificación se calcula acá con los
    mismos módulos de Pareo Integral (js/pareo/), así sale igual que en la
    computadora del árbitro. La clave de cada torneo no se puede leer: su
@@ -150,26 +151,74 @@
   // `datos` por la base (PostgREST): bajarse cada torneo entero para la lista
   // sería pesado.
   const COLUMNAS_LISTA = COLUMNAS + ",ritmo:datos->>ritmo,fin:datos->>fechaFin,fed:datos->>federacion,sistema:datos->>sistema,tipo:datos->>tipo,inscripcion:datos->inscripcion,elo:datos->>validoElo";
-  let lista = null;
-  async function pedirLista() {
-    // PostgREST corta a mil filas sin avisar: se piden de mil en mil.
-    const filas = [];
-    for (let desde = 0; ; desde += 1000) {
-      const { data, error } = await window.sb.from("pareo_publicados").select(COLUMNAS_LISTA)
-        .order("actualizado", { ascending: false }).range(desde, desde + 999);
-      if (error) throw error;
-      filas.push(...(data || []));
-      if (!data || data.length < 1000) break;
-    }
-    return filas;
+  // ---------- La lista, de 50 en 50 ----------
+  // La arma la base (public.pareo_lista): la búsqueda, los filtros, el orden
+  // y de a 50 grupos (los torneos de un evento y un día van juntos y nunca
+  // se parten entre dos páginas). Los próximos y los jugados se piden por
+  // separado, cada uno con su «Ver más». Antes se bajaba la tabla entera y se
+  // filtraba acá. Ver «Torneos en Pareo Integral: la lista de 50 en 50» en
+  // docs/decisiones/juegos-y-torneos.md.
+  const POR_PAGINA = 50;
+  let resumen = null; // { total, lugares }: lo que la portada necesita entero
+  const partes = { proximos: null, resultados: null }; // { filas, grupos, torneos, desde }
+  let pedido = 0; // la respuesta que llega tarde (ya se pidió otra cosa) no se pinta
+  function argumentos(parte, desde) {
+    const f = filtros();
+    return { p_parte: parte, p_desde: desde, p_cuantos: POR_PAGINA, p_buscar: $("tp-buscar").value.trim(),
+      p_ritmo: f.ritmo, p_lugar: f.lugar, p_elo: f.elo, p_abierta: f.abierta, p_curso: f.curso, p_verificado: f.verificado };
   }
+  async function pedirParte(parte, desde) {
+    const { data, error } = await window.sb.rpc("pareo_lista", argumentos(parte, desde));
+    if (error) throw error;
+    return data || { filas: [], grupos: 0, torneos: 0 };
+  }
+  // La primera página de las dos partes. Devuelve false si mientras tanto
+  // se pidió otra cosa.
+  async function cargarLista() {
+    const yo = ++pedido;
+    const [p, r] = await Promise.all([pedirParte("proximos", 0), pedirParte("resultados", 0)]);
+    if (yo !== pedido) return false;
+    await cargarOrganizadores([...p.filas, ...r.filas].map((x) => x.organizador_id));
+    if (yo !== pedido) return false;
+    partes.proximos = Object.assign(p, { desde: POR_PAGINA });
+    partes.resultados = Object.assign(r, { desde: POR_PAGINA });
+    return true;
+  }
+  async function verMas(parte, boton) {
+    const yo = pedido, ya = partes[parte];
+    boton.disabled = true;
+    try {
+      const d = await pedirParte(parte, ya.desde);
+      await cargarOrganizadores(d.filas.map((x) => x.organizador_id));
+      if (yo !== pedido) return;
+      ya.filas.push(...d.filas);
+      Object.assign(ya, { grupos: d.grupos, torneos: d.torneos, desde: ya.desde + POR_PAGINA });
+      const antes = ya.filas.length - d.filas.length;
+      pintarLista();
+      // El foco sigue en «Ver más» si queda; si no, en el último torneo.
+      const otro = $("tp-mas-" + parte);
+      if (otro) otro.focus();
+      else { const l = $(parte === "proximos" ? "tp-proximos" : "tp-lista").querySelectorAll("a[data-torneo], button[data-evento]"); if (l.length) l[l.length - 1].focus(); }
+      $("tp-cuantos").textContent += " Se agregaron " + (ya.filas.length - antes) + ".";
+    } catch (e) {
+      boton.disabled = false;
+      Avisos.avisar("No se pudieron traer más torneos. Revisa la conexión e intenta de nuevo.", { tipo: "error" });
+    }
+  }
+  // Volver a pedir con lo que dicen la búsqueda y los filtros.
+  async function recargar() {
+    try { if (await cargarLista()) pintarLista(); }
+    catch (e) { $("tp-cuantos").textContent = "No se pudo leer la lista. Revisa la conexión e intenta de nuevo."; }
+  }
+  let esperaBuscar = null;
+  const buscarLuego = () => { clearTimeout(esperaBuscar); esperaBuscar = setTimeout(recargar, 300); };
   // Próximo: todavía sin jugadores (un anuncio) o con fecha más adelante.
   const esProximo = (x) => !x.jugadores || (x.fecha && x.fecha > hoy());
   // En curso: ya empezó, le faltan rondas y no pasó de su último día.
   const enCurso = (x) => !esProximo(x) && x.rondas_total > 0 && x.rondas < x.rondas_total && (x.fin || x.fecha || "") >= HoraCR.sumarDias(hoy(), -1);
   const inscribe = (x) => !!(x.inscripcion && x.inscripcion.abierta && (!x.inscripcion.hasta || x.inscripcion.hasta >= hoy()));
   const RITMO = { clasico: "Clásico", rapido: "Rápido", blitz: "Relámpago" };
-  const ritmoDe = (x) => RITMO[window.RitmoControl ? RitmoControl.deducir(x.ritmo || "", x.nombre) : ""] || "";
+  const ritmoDe = (x) => RITMO[x.ritmo_tipo || (window.RitmoControl ? RitmoControl.deducir(x.ritmo || "", x.nombre) : "")] || "";
   const SISTEMA = { suizo: "Suizo", todos: "Todos contra todos" };
   const MODALIDAD = { equipos: "Por equipos", individual: "Individual" };
   const ELO = { fide: "FIDE", nacional: "Nacional", no: "No" };
@@ -278,51 +327,50 @@
     });
   }
   // ---------- Los filtros ----------
-  // Lo que pide cada uno, leído de los controles. «ritmo» compara con lo que
-  // se muestra (Clásico, Rápido, Relámpago); «lugar», el lugar escrito igual.
+  // Lo que pide cada uno, leído de los controles; los aplica la base
+  // (public.pareo_lista). «ritmo» es clasico, rapido o blitz; «lugar», el
+  // lugar escrito igual.
   function filtros() {
     const v = (id) => ($(id) ? $(id).value : "");
     const c = (id) => !!($(id) && $(id).checked);
     return { ritmo: v("tp-f-ritmo"), lugar: v("tp-f-lugar"), elo: v("tp-f-elo"), abierta: c("tp-f-abierta"), curso: c("tp-f-curso"), verificado: c("tp-f-verificado") };
   }
   const hayFiltro = (f) => !!(f.ritmo || f.lugar || f.elo || f.abierta || f.curso || f.verificado);
-  function pasa(x, f) {
-    if (f.ritmo && ritmoDe(x) !== f.ritmo) return false;
-    if (f.lugar && (x.lugar || "") !== f.lugar) return false;
-    if (f.elo === "sin" ? x.elo === "fide" || x.elo === "nacional" : f.elo && x.elo !== f.elo) return false;
-    if (f.abierta && !inscribe(x)) return false;
-    if (f.curso && !enCurso(x)) return false;
-    if (f.verificado && !(orgDe(x) && orgDe(x).verificado)) return false;
-    return true;
-  }
   // Los lugares que hay, para elegir uno (se vuelven a armar con la lista).
   function pintarLugares() {
     const sel = $("tp-f-lugar");
     if (!sel) return;
     const elegido = sel.value;
-    const lugares = [...new Set((lista || []).map((x) => x.lugar || "").filter(Boolean))].sort((a, b) => a.localeCompare(b, "es"));
+    const lugares = ((resumen && resumen.lugares) || []).slice().sort((a, b) => a.localeCompare(b, "es"));
     sel.replaceChildren(el("option", { value: "", texto: "Todos" }), ...lugares.map((l) => el("option", { value: l, texto: l })));
     sel.value = lugares.includes(elegido) ? elegido : "";
   }
 
+  // «Ver más» al pie de una parte, mientras queden grupos sin traer.
+  function botonMas(parte) {
+    const p = partes[parte];
+    if (!p || p.desde >= p.grupos) return null;
+    const b = el("button", { type: "button", id: "tp-mas-" + parte, class: C.pestana + " bg-white dark:bg-brand-900 mt-4" },
+      "Ver más torneos", el("span", { class: "font-normal", texto: " · van " + p.filas.length + " de " + p.torneos }));
+    b.addEventListener("click", () => verMas(parte, b));
+    return b;
+  }
   function pintarLista() {
     const caja = $("tp-contenido");
-    const q = clave($("tp-buscar") ? $("tp-buscar").value : "");
+    const q = $("tp-buscar") ? $("tp-buscar").value.trim() : "";
     const f = filtros();
-    const cuales = (lista || []).filter((x) => (!q || clave([x.nombre, x.evento, x.lugar].join(" ")).includes(q)) && pasa(x, f));
-    // Los próximos, primero el día más cercano; los demás, el más reciente
-    // primero. Buscando o filtrando, los eventos se abren para que se vea qué
-    // coincidió.
+    const p = partes.proximos || { filas: [], torneos: 0 }, r = partes.resultados || { filas: [], torneos: 0 };
+    // Buscando o filtrando, los eventos se abren para que se vea qué coincidió.
     const abrir = !!q || hayFiltro(f);
-    $("tp-lista").replaceChildren(...porDia(cuales.filter((x) => !esProximo(x)), false, abrir));
-    const proximos = cuales.filter(esProximo);
-    $("tp-proximos").replaceChildren(...porDia(proximos, true, abrir));
+    $("tp-lista").replaceChildren(...porDia(r.filas, false, abrir), botonMas("resultados") || "");
+    $("tp-proximos").replaceChildren(...porDia(p.filas, true, abrir), botonMas("proximos") || "");
     if ($("tp-f-quitar")) $("tp-f-quitar").hidden = !hayFiltro(f);
-    if ($("tp-resultados-vacio")) $("tp-resultados-vacio").hidden = !(lista && lista.length && (q || hayFiltro(f)) && !cuales.some((x) => !esProximo(x)));
-    $("tp-proximos-caja").hidden = !proximos.length;
-    $("tp-cuantos").textContent = !lista ? "" : !lista.length ? "Todavía no hay torneos publicados."
-      : cuales.length === lista.length ? lista.length + (lista.length === 1 ? " torneo publicado." : " torneos publicados.")
-      : cuales.length + " de " + lista.length + " torneos.";
+    const total = resumen ? resumen.total : 0, cuantos = p.torneos + r.torneos;
+    if ($("tp-resultados-vacio")) $("tp-resultados-vacio").hidden = !(total && (q || hayFiltro(f)) && !r.torneos);
+    $("tp-proximos-caja").hidden = !p.filas.length;
+    $("tp-cuantos").textContent = !resumen ? "" : !total ? "Todavía no hay torneos publicados."
+      : !q && !hayFiltro(f) ? total + (total === 1 ? " torneo publicado." : " torneos publicados.")
+      : cuantos + " de " + total + " torneos.";
     caja.hidden = true;
     $("tp-portada").hidden = false;
   }
@@ -924,10 +972,15 @@
     if (!ruta.t) {
       abierto = null;
       document.title = "Torneos en Pareo Integral | Ajedrez Integral";
-      if (!lista) {
+      if (!resumen) {
         $("tp-cuantos").textContent = "Cargando…";
-        try { lista = await pedirLista(); } catch (e) { $("tp-cuantos").textContent = "No se pudo leer la lista. Revisa la conexión e intenta de nuevo."; return; }
-        await cargarOrganizadores(lista.map((x) => x.organizador_id));
+        try {
+          const { data, error } = await window.sb.rpc("pareo_lista_resumen");
+          if (error) throw error;
+          resumen = data || { total: 0, lugares: [] };
+          pintarLugares();
+          await cargarLista();
+        } catch (e) { resumen = null; $("tp-cuantos").textContent = "No se pudo leer la lista. Revisa la conexión e intenta de nuevo."; return; }
       }
       pintarLugares();
       pintarLista();
@@ -940,12 +993,12 @@
     }, REFRESCO_MS);
   }
 
-  $("tp-buscar").addEventListener("input", pintarLista);
-  for (const id of ["tp-f-ritmo", "tp-f-lugar", "tp-f-elo", "tp-f-abierta", "tp-f-curso", "tp-f-verificado"]) $(id).addEventListener("change", pintarLista);
+  $("tp-buscar").addEventListener("input", buscarLuego);
+  for (const id of ["tp-f-ritmo", "tp-f-lugar", "tp-f-elo", "tp-f-abierta", "tp-f-curso", "tp-f-verificado"]) $(id).addEventListener("change", recargar);
   $("tp-f-quitar").addEventListener("click", () => {
     for (const id of ["tp-f-ritmo", "tp-f-lugar", "tp-f-elo"]) $(id).value = "";
     for (const id of ["tp-f-abierta", "tp-f-curso", "tp-f-verificado"]) $(id).checked = false;
-    pintarLista();
+    recargar();
     $("tp-f-ritmo").focus();
   });
   window.addEventListener("hashchange", pintar);
