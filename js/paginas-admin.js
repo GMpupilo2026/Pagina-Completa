@@ -26,6 +26,7 @@
             { emoji: "🧑‍🏫", label: "Supervisión de profesores", desc: "Qué hizo cada profesor en el mes —clases, tareas, exámenes— y su informe mensual", href: "supervision.html", zona: "organizacion" },
             { emoji: "🧭", label: "Coordinación", desc: "Los profesores y sus alumnos: quién es quién, cómo entra y cómo se ordena", href: "coordinacion.html", zona: "organizacion" },
             { emoji: "📊", label: "Informes", desc: "El progreso de todos los alumnos, tema por tema, y los informes a la casa", href: "informes.html", zona: "informes" },
+            { emoji: "📋", label: "Cumplimiento · Ruta a la Beca", desc: "Quién cumplió el mínimo de la semana: horas, días, ejercicios, partidas y Meet. La revisión de cada lunes", href: "ruta-cumplimiento.html", zona: "informes" },
             { emoji: "🩺", label: "Justificaciones de ausencia", desc: "Por qué faltó cada alumno a clase, con sus documentos", href: "justificaciones.html", zona: "personas" },
             { emoji: "📈", label: "Tablero por academia", desc: "Clases, alumnos, informes, gasto de IA y cobros de cada academia", href: "tablero-academias.html", zona: "informes" },
             { emoji: "📄", label: "Reportes de actividades", desc: "El informe de lo que pasó en clase en un periodo, en Word y PDF", href: "reportes.html", zona: "informes" },
