@@ -83,6 +83,7 @@ const TITULOS = {
   "cursos/recursos/formacion-ajedrez/guia-rapida-arbitro-jde.pdf": "Guía rápida de la persona árbitra (JDE 2026)",
   "cursos/recursos/formacion-ajedrez/07-torneo-real-evaluacion-formularios.pdf": "Formularios y lista de cotejo del torneo",
   "instrucciones-adaptadas.pdf": "Instrucciones adaptadas (para quien ve poco o no ve)",
+  "documentos/centroamericano-2026/bases-cac-2026.pdf": "Bases del XXI Festival Centroamericano y del Caribe de la Juventud, Costa Rica 2026",
   "documentos/jdn/consentimiento-jdn-2027.docx": "Consentimiento informado JDN 2027 — atleta",
   "documentos/jdn/consentimiento-entrenador-jdn-2027.docx": "Consentimiento informado JDN 2027 — entrenador",
   "img/favicon.svg": "Ícono de la pestaña (favicon)",
