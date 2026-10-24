@@ -61,7 +61,24 @@
     return e;
   }
 
-  function enlaceAfuera(enlace, clase, nombreSala) {
+  // Una dirección del propio sitio (con el dominio o sin él) queda en la misma
+  // pestaña: nombrar ajedrez-integral.com no es irse.
+  function delSitio(url) {
+    let u;
+    try { u = new URL(url, location.href); } catch (e) { return null; }
+    if (u.origin !== location.origin && !/(^|\.)ajedrez-integral\.com$/.test(u.hostname)) return null;
+    return u.pathname + u.search + u.hash;
+  }
+
+  function enlaceAfuera(enlace, clase, nombreSala, portada) {
+    const destino = portada ? adentro(portada, enlace.url) : delSitio(enlace.url);
+    if (destino) {
+      const a = el("a", clase, enlace.texto);
+      a.href = destino;
+      a.appendChild(el("span", "sr-only", " de " + nombreSala));
+      a.appendChild(document.createTextNode(" →"));
+      return a;
+    }
     const a = el("a", clase, enlace.texto);
     a.href = enlace.url;
     a.target = "_blank";
@@ -75,9 +92,24 @@
   // (sus colores, su mascota) en vez de la blanca de siempre. El estilo vive
   // en la hoja de la página del torneo, que cargan torneos-en-vivo.html y
   // admin.html. Ver «La ficha del Centroamericano en Torneos».
+  //
+  // Sus botones nunca sacan a nadie del sitio: lo que es de afuera (los
+  // resultados en chess-results, las bases) lleva a la ficha de esa misma cosa
+  // en la página del torneo, que la abre encima (`#<id>` de un a[data-ventana],
+  // js/ventana-enlace.js); lo que no tiene ficha, a la página entera.
   const PORTADAS = {
-    "centroamericano-2026": { clase: "cac-sala", mascota: "/img/centroamericano-2026/mascota-trofeo.png" },
+    "centroamericano-2026": {
+      clase: "cac-sala", mascota: "/img/centroamericano-2026/mascota-trofeo.png",
+      pagina: "/centroamericano-2026.html",
+      fichas: [[/chess-results\.com\//i, "ficha-resultados"], [/bases-cac-2026\.pdf$/i, "ficha-bases"]],
+    },
   };
+
+  function adentro(portada, url) {
+    const ficha = portada.fichas.find(([patron]) => patron.test(String(url || "")));
+    if (ficha) return portada.pagina + "#" + ficha[1];
+    return delSitio(url) || portada.pagina;
+  }
 
   // La ficha, igual en la página pública y en la vista previa del editor (que
   // la pone dentro de una caja `inert`: se ve, pero no se sigue ni se enfoca).
@@ -108,10 +140,10 @@
       a.appendChild(el("span", "sr-only", " de " + sala.nombre));
       a.appendChild(document.createTextNode(" →"));
       li.appendChild(a);
-      enlaces.forEach((e) => li.appendChild(enlaceAfuera(e, CLASE_SECUNDARIO, sala.nombre)));
+      enlaces.forEach((e) => li.appendChild(enlaceAfuera(e, CLASE_SECUNDARIO, sala.nombre, portada)));
     } else {
       const caja = el("div", "grid grid-cols-1 " + (enlaces.length > 1 ? "sm:grid-cols-2 " : "") + "gap-3");
-      enlaces.forEach((e, i) => caja.appendChild(enlaceAfuera(e, CLASE_BOTON + (portada ? " cac-sala-boton" + (i === 0 ? " cac-sala-principal" : "") : ""), sala.nombre)));
+      enlaces.forEach((e, i) => caja.appendChild(enlaceAfuera(e, CLASE_BOTON + (portada ? " cac-sala-boton" + (i === 0 ? " cac-sala-principal" : "") : ""), sala.nombre, portada)));
       li.appendChild(caja);
     }
     return li;

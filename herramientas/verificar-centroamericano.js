@@ -225,7 +225,32 @@ ok("la página carga el cliente de Supabase antes que su código en vivo", html.
     ok("en Torneos, la ficha del Centroamericano lleva el morado de las bases y el pizote", /gradient/.test(fichaSala.cac.fondo) && fichaSala.cac.mascota, JSON.stringify(fichaSala.cac));
     ok("y sus botones: el primero rojo, el resto blancos", JSON.stringify(fichaSala.cac.botones) === JSON.stringify(["rgb(206, 19, 40)", "rgb(255, 255, 255)"]), JSON.stringify(fichaSala.cac.botones));
     ok("las demás salas siguen con su ficha de siempre", fichaSala.otra.fondo === "none" && !fichaSala.otra.mascota, JSON.stringify(fichaSala.otra));
+    // Ningún botón de la ficha del torneo saca a nadie del sitio: la página
+    // en la misma pestaña, y los resultados y las bases, a su ficha de la página.
+    const destinos = await p3.evaluate(() => [...document.querySelectorAll('li[data-sala="centroamericano-2026"] a')]
+      .map((a) => a.getAttribute("href") + (a.target ? " target=" + a.target : "")));
+    ok("en Torneos, ningún botón del Centroamericano se va del sitio",
+       JSON.stringify(destinos) === JSON.stringify(["/" + PAGINA, "/" + PAGINA + "#ficha-resultados"]), JSON.stringify(destinos));
+    const otraSala = await p3.evaluate(() => [...document.querySelectorAll('li[data-sala="utn"] a')].map((a) => a.target));
+    ok("las otras salas: el sitio en la misma pestaña, lo de afuera en otra", JSON.stringify(otraSala) === JSON.stringify(["", "_blank"]), JSON.stringify(otraSala));
     await ctx3.close();
+    for (const [id, titulo, src] of [["ficha-resultados", "Resultados en vivo", /chess-results\.com\/tnr1494141/], ["ficha-bases", "Bases del campeonato", /bases-cac-2026\.pdf$/]]) {
+      const c = await nav.newContext({ viewport: { width: 1280, height: 900 }, serviceWorkers: "block" });
+      const pg = await c.newPage();
+      await pg.route(/chess-results\.com/, (r) => r.fulfill({ status: 200, contentType: "text/html", body: "<p>cr</p>" }));
+      await pg.goto(BASE + "/" + PAGINA + "#" + id, { waitUntil: "load" });
+      const v = await pg.waitForFunction(() => {
+        const d = document.querySelector("dialog.ventana-enlace");
+        return d && d.open && { titulo: d.querySelector("h2").textContent, src: d.querySelector("iframe").src };
+      }, null, { timeout: 10000 }).then((h) => h.jsonValue()).catch(() => null);
+      ok("entrar con #" + id + " abre «" + titulo + "» encima", !!v && v.titulo === titulo && src.test(v.src), JSON.stringify(v));
+      if (v) {
+        await pg.keyboard.press("Escape");
+        await pg.waitForFunction(() => !document.querySelector("dialog.ventana-enlace"));
+        ok("y al cerrar se quita el #" + id, await pg.evaluate(() => location.hash === ""));
+      }
+      await c.close();
+    }
 
     // «Hoy en el torneo», con el reloj puesto en cada momento del festival.
     const hoyEn = async (momento, idioma) => {

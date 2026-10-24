@@ -8563,6 +8563,18 @@ Es una página estática, sin cuenta y sin base: nada se guarda.
   cargan también `torneos-en-vivo.html` y `admin.html` (la vista previa del
   editor es la misma ficha). Contraste: blanco sobre #5A5FA3 5,83, #40478F
   sobre blanco 8,35 y blanco sobre el rojo 5,6.
+- **Sus botones nunca sacan a nadie del sitio** (lo pidió el dueño). «Toda la
+  información» abre la página en la misma pestaña, y lo que es de afuera
+  —«Resultados en vivo» (chess-results) y las bases— lleva a SU ficha en la
+  página: `/centroamericano-2026.html#ficha-resultados` o `#ficha-bases`.
+  `js/ventana-enlace.js` abre encima la ficha `a[data-ventana]` que nombra el
+  `#` al entrar y lo quita al cerrar. La correspondencia está en `fichas` de
+  `PORTADAS` (por la dirección, así sigue valiendo aunque en
+  `admin.html#torneos` cambien el texto del botón); un enlace de afuera sin
+  ficha lleva a la página entera. En las demás salas, un enlace al propio
+  sitio también queda en la misma pestaña (nombrar ajedrez-integral.com no es
+  irse) y lo de afuera sigue en otra, con su ↗. Lo revisa
+  `verificar-centroamericano.js`.
 - **«Hoy en el torneo»**, entre quien organiza y las fichas, lo arma
   `js/centroamericano.js` con las horas del calendario: cada fila de
   `#calendario` lleva su `data-inicio` (hora de Costa Rica, que no tiene
