@@ -19,7 +19,12 @@ window.PuntosClase = (function () {
         { campo: "tablas", puntos: 15, texto: "práctica en tablas" },
         { campo: "partidas_ganadas", puntos: 30, texto: "partida ganada a un compañero" },
         { campo: "partidas_tablas", puntos: 15, texto: "partida en tablas con un compañero" },
+        /* Resta: en una práctica contra el motor llegó a tener más de 3 de
+           ventaja y no ganó (tablas, perdió, se rindió o se le cayó el reloj).
+           Una vez por ejercicio; lo cuenta la base (ventajas_perdidas). */
+        { campo: "ventajas_perdidas", puntos: -350, texto: "práctica con más de 3 de ventaja que no ganó" },
     ];
+    const conSigno = (n) => (n < 0 ? "−" + Math.abs(n) : "+" + n);
     const INTENTOS = [1, 0.6, 0.3];      // a la primera, al 2.º intento, del 3.º en adelante
     const PUESTOS = [0.5, 0.3, 0.15];    // lo que suma de más el 1.º, el 2.º y el 3.º en acertar
 
@@ -62,7 +67,7 @@ window.PuntosClase = (function () {
                 + (hp ? " (" + hp + " a la primera)" : "") + " (+" + fila.puntos_habilidades + ")");
         }
         REGLAS.filter((r) => Number(fila[r.campo]) > 0)
-            .forEach((r) => partes.push(fila[r.campo] + " × " + r.texto + " (+" + fila[r.campo] * r.puntos + ")"));
+            .forEach((r) => partes.push(fila[r.campo] + " × " + r.texto + " (" + conSigno(fila[r.campo] * r.puntos) + ")"));
         return partes.join(" · ");
     }
 
@@ -71,21 +76,25 @@ window.PuntosClase = (function () {
             + "el 1.º en acertar suma un 50 % más, el 2.º un 30 % y el 3.º un 15 % · "
             + "cada ejercicio del calentamiento bien, lo mismo según su nivel (en la competencia, también el 1.º, 2.º y 3.º en resolverlo) · "
             + "cada ejercicio de Habilidades que el profe manda a practicar, lo mismo según su dificultad: a la primera, todo; con un error o una pista, el 60 %; con más, el 30 % · "
-            + REGLAS.map((r) => r.texto + ": " + r.puntos + " puntos").join(" · ");
+            + REGLAS.map((r) => r.texto + ": " + (r.puntos < 0 ? "resta " + Math.abs(r.puntos) : r.puntos) + " puntos").join(" · ");
     }
 
     /* Junta a cada fila del resumen sus puntos de preguntas (puntos_de_la_clase /
        puntos_del_mes), los de los calentamientos (puntos_de_tandas /
        puntos_de_tandas_del_mes) y los de Habilidades (puntos_de_habilidades /
        puntos_de_habilidades_del_mes). Quien solo hizo el calentamiento o
-       Habilidades también aparece: no estaba en el resumen. */
-    function juntar(filas, puntosFilas, tandasFilas, habilidadesFilas) {
+       Habilidades también aparece: no estaba en el resumen. Las ventajas
+       perdidas (ventajas_perdidas / ventajas_perdidas_del_mes) son de
+       prácticas, y quien practicó ya está en el resumen. */
+    function juntar(filas, puntosFilas, tandasFilas, habilidadesFilas, ventajasFilas) {
+        const ven = new Map((ventajasFilas || []).map((v) => [v.student_id, Number(v.perdidas) || 0]));
         const por = new Map((puntosFilas || []).map((p) => [p.student_id, p]));
         const tan = new Map((tandasFilas || []).map((p) => [p.student_id, p]));
         const hab = new Map((habilidadesFilas || []).map((p) => [p.student_id, p]));
         const con = (f, p, t, h) => Object.assign({}, f, { puntos_preguntas: p.puntos_preguntas || 0, a_la_primera: p.a_la_primera || 0, primeros: p.primeros || 0,
             puntos_tandas: t.puntos || 0, tanda_bien: t.resueltos || 0, tanda_primeros: t.primeros || 0,
-            puntos_habilidades: h.puntos || 0, habilidad_bien: h.resueltos || 0, habilidad_a_la_primera: h.a_la_primera || 0 });
+            puntos_habilidades: h.puntos || 0, habilidad_bien: h.resueltos || 0, habilidad_a_la_primera: h.a_la_primera || 0,
+            ventajas_perdidas: ven.get(f.student_id) || 0 });
         const out = (filas || []).map((f) => con(f, por.get(f.student_id) || {}, tan.get(f.student_id) || {}, hab.get(f.student_id) || {}));
         const ya = new Set(out.map((f) => f.student_id));
         (tandasFilas || []).concat(habilidadesFilas || []).forEach((x) => {
@@ -111,12 +120,12 @@ window.PuntosClase = (function () {
 
     /* La foto del podio que ve la clase (game_state.podio). Sin nombres, cada
        alumno se reconoce por su id y los demás ven solo los puntos. Van todos
-       los que sumaron algo, para que cada uno sepa su puesto. */
+       los que sumaron o restaron algo, para que cada uno sepa su puesto. */
     function podioParaLaClase(filas, conNombres) {
         return {
             at: new Date().toISOString(),
             con_nombres: !!conNombres,
-            lineas: ranking(filas).filter((x) => x.puntos > 0).slice(0, 100)
+            lineas: ranking(filas).filter((x) => x.puntos !== 0).slice(0, 100)
                 .map((x) => ({ id: x.id, nombre: conNombres ? x.nombre : null, puntos: x.puntos, puesto: x.puesto })),
         };
     }
@@ -166,12 +175,13 @@ window.PuntosClase = (function () {
        profe pasa su id y ve a sus alumnos; el alumno pasa null y ve lo suyo. */
     async function cargarDelMes(sb, profesorId) {
         const args = { p_profesor: profesorId || null };
-        const [r, p, t, h] = await Promise.all([sb.rpc("resumen_del_mes", args), sb.rpc("puntos_del_mes", args), sb.rpc("puntos_de_tandas_del_mes", args),
-            sb.rpc("puntos_de_habilidades_del_mes", args)]);
+        const [r, p, t, h, v] = await Promise.all([sb.rpc("resumen_del_mes", args), sb.rpc("puntos_del_mes", args), sb.rpc("puntos_de_tandas_del_mes", args),
+            sb.rpc("puntos_de_habilidades_del_mes", args), sb.rpc("ventajas_perdidas_del_mes", args)]);
         if (p.error) console.error(p.error);
         if (t.error) console.error(t.error);
         if (h.error) console.error(h.error);
-        return { filas: juntar(r.data || [], p.data || [], t.data || [], h.data || []), error: r.error || p.error || t.error || h.error };
+        if (v.error) console.error(v.error);
+        return { filas: juntar(r.data || [], p.data || [], t.data || [], h.data || [], v.data || []), error: r.error || p.error || t.error || h.error };
     }
 
     function nombreDelMes() {
