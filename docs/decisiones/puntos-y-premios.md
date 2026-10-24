@@ -356,6 +356,46 @@ que las gallinas miden más de 60 px, que la capa no tapa los clics ni la lee
 el lector de pantalla, y que con «menos movimiento» solo queda el aviso. Con
 `FOTOS=<carpeta>` saca una foto de cada una a media animación, para mirarlas.
 
+## La semana sin entrenar: se pierde la mitad
+
+Pedido por el dueño del sitio el 24/10/2026: «después de una semana, quien
+no haya entrenado al menos 4 días pierde la mitad de sus puntos».
+Migración `20261024172538_puntos_semana_sin_entrenar.sql`.
+
+- **La semana** es de lunes a domingo en hora de Costa Rica, la misma de los
+  retos. **Un día cuenta** si tiene al menos un ejercicio en
+  `training_progress` (`interno.dias_entrenados()`). El reto «Cuatro días de
+  entrenamiento» pide 5 por día; aquí se eligió la vara más baja porque esto
+  es un castigo, no un premio. La clase en vivo no cuenta como entrenar.
+- **Lo cobra la base, no la página**: pg_cron
+  (`puntos-semana-sin-entrenar`, lunes 06:10 UTC = 00:10 en Costa Rica) corre
+  `interno.cobrar_semana_sin_entrenar()`, que anota `-floor(saldo / 2)` con
+  origen `semana_sin_entrenar` y referencia `semana:<lunes>`: correrla dos
+  veces no cobra dos veces. Lee el saldo con el mismo candado que los canjes
+  (`pg_advisory_xact_lock(hashtext('puntos:' || id))`). Si un lunes el cron no
+  corre, esa semana no se cobra (no se recupera sola); a mano:
+  `select * from interno.cobrar_semana_sin_entrenar('<lunes>')`.
+- **A quién**: solo `role = 'alumno'`, con al menos 2 puntos, y cuya cuenta
+  existía el lunes en que empezó la semana (a quien entró el jueves no se le
+  pueden pedir 4 días).
+- **Arranca la semana del lunes 26/10/2026** (primer cobro el lunes 2/11).
+  Cobrar una semana en la que nadie sabía de la regla sería una sorpresa, no
+  una regla, como se decidió con las tareas viejas. Antes de aplicarla se
+  midió con la semana del 12 al 18/10: de 150 alumnos con puntos, 136 no
+  llegaban a 4 días (unos 30.000 puntos). Ensayada en una transacción que se
+  deshizo: cobró a 129 (los demás tenían cuenta nueva o menos de 2 puntos),
+  ninguno con 4 días o más, y una segunda pasada no cobró nada.
+- No pasa por los puntos dobles (solo doblan lo positivo), y el marcador del
+  salón suma solo lo ganado: perder la mitad no mueve el marcador.
+- **Se avisa con tiempo**: `public.semana_de_entrenamiento()` le dice al
+  alumno cuántos días lleva, cuánto se juega (la mitad de su saldo de ahora)
+  y lo que perdió la semana pasada. La tarjeta del panel y la sección «Entrena
+  4 días cada semana» de la tienda lo escriben con el número («llevas 2 de 4
+  días… pierdes la mitad de tus puntos (50 puntos)»), y cuando ya no alcanzan
+  los días que le quedan a la semana, lo dicen. En el historial sale con su
+  motivo («Semana del 26/10: entrenaste 2 días de 4. Pierdes la mitad.»).
+  Lo comprueba `verificar-puntos.js` (prueba 12).
+
 ## Entrenamiento: según la dificultad, sin tope y una sola vez por ejercicio
 
 Pedido por el dueño del sitio (24/10/2026): quitar el tope de 40 puntos por

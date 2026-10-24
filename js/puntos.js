@@ -9,7 +9,10 @@
  * dobles por un tiempo, y adelantar una lección de un curso o un material de
  * la tienda sin pagar por él. También los retos de la semana (con su bono),
  * el marcador del salón (solo compañeros: mismo profe y misma academia) y
- * los regalos y bromas para un compañero (js/puntos-regalos.js).
+ * los regalos y bromas para un compañero (js/puntos-regalos.js). Y la regla
+ * de la semana: quien no entrena al menos 4 días de lunes a domingo pierde la
+ * mitad de sus puntos el lunes (lo cobra la base con pg_cron; aquí solo se
+ * avisa cuántos días lleva y cuánto se juega).
  *
  * Todo lo gana la BASE, nunca el navegador: cada evento (cerrar una clase,
  * registrar un ejercicio, entregar un examen) lo paga un trigger, y lo que se
@@ -57,7 +60,7 @@ window.Puntos = (function () {
     clase: "Clase en vivo", entrenamiento: "Entrenamiento", tarea: "Tarea completada",
     examen: "Examen entregado", racha: "Racha de días", reto_semanal: "Reto de la semana", canje: "Canjeado",
     regalo: "Regalo para un compañero", broma: "Broma para un compañero", partida: "Partida entre alumnos",
-    ajuste_manual: "Ajuste",
+    ajuste_manual: "Ajuste", semana_sin_entrenar: "Semana sin entrenar",
   };
 
   async function saldo(sb, alumnoId) {
@@ -219,6 +222,56 @@ window.Puntos = (function () {
     }
   }
 
+  /* Cuántos días entrenó esta semana, cuánto se juega y lo que perdió la
+     semana pasada. Ver «La semana sin entrenar: se pierde la mitad». */
+  async function semanaDeEntrenamiento(sb) {
+    try {
+      const { data, error } = await sb.rpc("semana_de_entrenamiento");
+      if (error) throw error;
+      return (Array.isArray(data) ? data[0] : data) || null;
+    } catch (e) {
+      console.warn("No se pudo cargar la semana de entrenamiento:", e && e.message ? e.message : e);
+      return null;
+    }
+  }
+
+  const ARRANQUE_SEMANA = "2026-10-26";
+  // Días de calendario de Costa Rica que le quedan a la semana, hoy incluido.
+  function diasQueQuedan(hasta) {
+    const hoy = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Costa_Rica" }).format(new Date());
+    const utc = (iso) => { const [a, m, d] = iso.split("-").map(Number); return Date.UTC(a, m - 1, d); };
+    return Math.round((utc(hasta) - utc(hoy)) / 86400000) + 1;
+  }
+
+  /* Los textos de la regla: { ahora, antes }, cada uno "" si no hay nada que
+     decir. El dato va escrito, nunca solo en un color. */
+  function textosSemana(s) {
+    const r = { ahora: "", antes: "" };
+    if (!s) return r;
+    if (s.perdidos_antes > 0) {
+      r.antes = "La semana pasada entrenaste " + s.dias_antes + (s.dias_antes === 1 ? " día" : " días") +
+        " de " + s.meta + ": perdiste " + texto(s.perdidos_antes) + ".";
+    }
+    if (!s.vigente) {
+      if (s.desde < ARRANQUE_SEMANA && s.en_juego > 0) {
+        r.ahora = "Desde el lunes 26 de octubre: si no entrenas al menos 4 días en la semana, el lunes siguiente pierdes la mitad de tus puntos.";
+      }
+      return r;
+    }
+    const faltan = s.meta - s.dias;
+    if (faltan <= 0) {
+      r.ahora = "✓ Esta semana ya entrenaste " + s.dias + " días: tus puntos están a salvo.";
+    } else if (s.en_juego <= 0) {
+      r.ahora = "Esta semana llevas " + s.dias + " de " + s.meta + " días entrenando.";
+    } else if (faltan > diasQueQuedan(s.hasta)) {
+      r.ahora = "Esta semana llevas " + s.dias + " de " + s.meta + " días entrenando y ya no alcanzan los días: el lunes pierdes la mitad de tus puntos (" + texto(s.en_juego) + ").";
+    } else {
+      r.ahora = "Esta semana llevas " + s.dias + " de " + s.meta + " días entrenando. Si no llegas a " + s.meta +
+        " antes del domingo, el lunes pierdes la mitad de tus puntos (" + texto(s.en_juego) + ").";
+    }
+    return r;
+  }
+
   const ICONO_PENDIENTE = { tarea: "📋", racha: "🔥", reto_semanal: "🎯" };
   function textoPendientes(filas) {
     return (filas || []).map((f) => (ICONO_PENDIENTE[f.que] || "💎") + " " + f.detalle + ": +" + fmt(f.ganados)).join(" · ");
@@ -291,10 +344,14 @@ window.Puntos = (function () {
     enlace.href = enlaceTienda || "puntos-tienda.html";
     enlace.className = "inline-block mt-2 text-xs font-semibold text-accent-700 dark:text-accent-300 hover:underline";
     enlace.textContent = "Ver la tienda de puntos →";
-    contenedor.append(h2, total, aviso, enlace);
+    const semanaP = document.createElement("p");
+    semanaP.className = "text-xs text-brand-700 dark:text-brand-200 mt-1";
+    semanaP.setAttribute("data-puntos-semana", "");
+    semanaP.hidden = true;
+    contenedor.append(h2, total, aviso, semanaP, enlace);
 
     const nuevos = await reclamarPendientes(sb);
-    const n = await saldo(sb, alumnoId);
+    const [n, semana] = await Promise.all([saldo(sb, alumnoId), semanaDeEntrenamiento(sb)]);
 
     if (n == null) {
       contenedor.hidden = false;
@@ -309,6 +366,9 @@ window.Puntos = (function () {
     contenedor.hidden = false;
     conAdorno(total, "💎", texto(n));
     aviso.textContent = textoPendientes(nuevos);
+    const t = textosSemana(semana);
+    semanaP.textContent = [t.antes, t.ahora].filter(Boolean).join(" ");
+    semanaP.hidden = !semanaP.textContent;
   }
 
   function boton(textoBoton, etiqueta, clases) {
@@ -444,6 +504,22 @@ window.Puntos = (function () {
     nuevosAviso.setAttribute("aria-live", "polite");
     nuevosAviso.setAttribute("data-puntos-nuevos", "");
 
+    const semanaSec = seccion("📅 Entrena 4 días cada semana", "De lunes a domingo. Cuenta cada día con al menos un ejercicio de Entrenamiento. Quien no llega a 4 días pierde el lunes la mitad de sus puntos.");
+    semanaSec.className = "mb-8";
+    semanaSec.id = "puntos-semana";
+    semanaSec.hidden = true;
+    const semanaBarra = document.createElement("progress");
+    semanaBarra.className = "mt-3 w-full h-2 accent-accent-500";
+    semanaBarra.max = 4;
+    semanaBarra.setAttribute("aria-label", "Días entrenados esta semana");
+    const semanaAhora = document.createElement("p");
+    semanaAhora.className = "text-sm font-semibold text-brand-700 dark:text-brand-200 mt-1";
+    semanaAhora.setAttribute("data-puntos-semana", "");
+    const semanaAntes = document.createElement("p");
+    semanaAntes.className = "text-sm text-brand-700 dark:text-brand-200 mt-1";
+    semanaAntes.setAttribute("data-puntos-semana-antes", "");
+    semanaSec.append(semanaBarra, semanaAhora, semanaAntes);
+
     const retosSec = seccion("🎯 Retos de esta semana", "De lunes a domingo. El bono se suma solo cuando cumples el reto.");
     retosSec.className = "mb-8";
     const retosLista = document.createElement("ul");
@@ -495,9 +571,20 @@ window.Puntos = (function () {
     bromasSec.className = "mt-10 pt-6 border-t border-brand-100 dark:border-brand-800";
     bromasSec.id = "puntos-bromas";
 
-    contenedor.append(cabecera, nuevosAviso, retosSec, marcSec, secciones, misP, bromasSec);
+    contenedor.append(cabecera, nuevosAviso, semanaSec, retosSec, marcSec, secciones, misP, bromasSec);
     if (window.PuntosRegalos) window.PuntosRegalos.montarAjustesBromas(bromasSec, { sb, alumnoId });
     else bromasSec.hidden = true;
+
+    function pintarSemana(semana) {
+      const t = textosSemana(semana);
+      semanaAhora.textContent = t.ahora;
+      semanaAntes.textContent = t.antes;
+      semanaAntes.hidden = !t.antes;
+      // La barra solo cuando la regla ya corre: antes no hay días que contar.
+      semanaBarra.hidden = !(semana && semana.vigente);
+      if (semana) semanaBarra.value = Math.min(semana.dias, semana.meta);
+      semanaSec.hidden = !(t.ahora || t.antes);
+    }
 
     let saldoActual = null;
     let catalogoActual = null;
@@ -694,13 +781,15 @@ window.Puntos = (function () {
     }
 
     async function recargar() {
-      const [s, cat, mios, retos, marc] = await Promise.all([
+      const [s, cat, mios, retos, marc, semana] = await Promise.all([
         saldo(sb, alumnoId),
         catalogoActual || catalogo(sb),
         misPremios(sb, alumnoId),
         retosDeLaSemana(sb),
         marcadorDelSalon(sb, periodo),
+        semanaDeEntrenamiento(sb),
       ]);
+      pintarSemana(semana);
       pintarRetos(retosLista, retos);
       pintarMarcador(marcLista, marc, periodo);
       saldoActual = s;
@@ -728,6 +817,7 @@ window.Puntos = (function () {
   return {
     saldo, historial, catalogo, misPremios, canjear, equipar, reclamarPendientes, retosDeLaSemana, marcadorDelSalon,
     tituloEquipado, marcoEquipado, dobleVigente, accesorioEquipado, accesoriosDe, decorarAvatar, texto, pintarHistorial,
+    semanaDeEntrenamiento, textosSemana,
     montarTarjetaPanel, montarTienda,
   };
 })();
