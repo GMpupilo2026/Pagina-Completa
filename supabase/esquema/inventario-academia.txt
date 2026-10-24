@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20261024193832
+# al-dia-con: 20261024200854
 tabla  Ejercicios Lichess  rls=true
 tabla  _foto_rls_tmp  rls=false
 tabla  _pedidos_elo  rls=false
@@ -111,6 +111,8 @@ tabla  interno.clase_espectadores_ip  rls=true
 tabla  interno.curso_lecciones  rls=false
 tabla  interno.envios_publicos  rls=true
 tabla  interno.lector_planilla_uso  rls=true
+tabla  interno.premio_tema_items  rls=true
+tabla  interno.premio_temas  rls=true
 tabla  interno.salud_base  rls=true
 tabla  jde_eventos  rls=true
 tabla  jdn_correcciones  rls=true
@@ -1088,6 +1090,13 @@ columna  interno.envios_publicos.tipo  text
 columna  interno.lector_planilla_uso.dia  date
 columna  interno.lector_planilla_uso.persona  uuid
 columna  interno.lector_planilla_uso.usos  integer
+columna  interno.premio_tema_items.grupo  text
+columna  interno.premio_tema_items.item  text
+columna  interno.premio_tema_items.tema  text
+columna  interno.premio_temas.grupo  text
+columna  interno.premio_temas.nombre  text
+columna  interno.premio_temas.tema  text
+columna  interno.premio_temas.total  integer
 columna  interno.salud_base.aviso_enviado  boolean
 columna  interno.salud_base.cron_fallidos  integer
 columna  interno.salud_base.lenta  boolean
@@ -2298,6 +2307,12 @@ funcion  interno.plantillas_casa_tope()  definer  anon=false  auth=false
 funcion  interno.practica_guardar_intento()  definer  anon=false  auth=false
 funcion  interno.prefijo_de_nombre(p_nombre text)  invoker  anon=false  auth=true
 funcion  interno.preguntas_visibles_para_mi_supervision()  definer  anon=false  auth=true
+funcion  interno.premiar_tema_terminado()  definer  anon=false  auth=false
+funcion  interno.premio_grupo(p_activity text)  invoker  anon=true  auth=true
+funcion  interno.premio_item(p_activity text, p_detail jsonb)  invoker  anon=true  auth=true
+funcion  interno.premio_temas_cargar(p_datos jsonb)  definer  anon=false  auth=false
+funcion  interno.premio_temas_cargar_respuesta(p_pedido bigint)  definer  anon=false  auth=false
+funcion  interno.premio_temas_pedir(p_url text)  definer  anon=false  auth=false
 funcion  interno.preparacion_sesiones_sello()  invoker  anon=false  auth=false
 funcion  interno.profesor_alumno_mio(p_id uuid)  definer  anon=false  auth=true
 funcion  interno.profesores_de(p_alumno uuid)  definer  anon=false  auth=true
@@ -2382,6 +2397,7 @@ funcion  mis_retos_de_ejercicios()  invoker  anon=false  auth=true
 funcion  mis_subgrupos()  invoker  anon=false  auth=true
 funcion  mis_supervisados()  definer  anon=false  auth=true
 funcion  mis_supervisores()  definer  anon=false  auth=true
+funcion  mis_temas_terminados(p_desde timestamp with time zone)  invoker  anon=false  auth=true
 funcion  my_profile()  definer  anon=false  auth=true
 funcion  nombres_de_jugadores(p_ids uuid[])  definer  anon=false  auth=true
 funcion  notas_alumno_clase_propia()  definer  anon=false  auth=false
@@ -3171,6 +3187,7 @@ trigger  tareas  tareas_protege_alumno
 trigger  tournament_rounds  tournament_rounds_modalidad
 trigger  tournaments  tournaments_proteger
 trigger  training_progress  otorgar_puntos_de_entrenamiento
+trigger  training_progress  premiar_tema_terminado
 trigger  training_progress  training_progress_hora
 trigger  training_progress  training_progress_valida_marca
 trigger  vision_personas  auditar
@@ -3440,6 +3457,9 @@ indice  interno.envios_publicos  envios_publicos_pkey
 indice  interno.envios_publicos  envios_publicos_tipo_ambito
 indice  interno.lector_planilla_uso  lector_planilla_uso_dia
 indice  interno.lector_planilla_uso  lector_planilla_uso_pkey
+indice  interno.premio_tema_items  premio_tema_items_item
+indice  interno.premio_tema_items  premio_tema_items_pkey
+indice  interno.premio_temas  premio_temas_pkey
 indice  interno.salud_base  salud_base_pkey
 indice  jde_eventos  jde_eventos_anio_fase_idx
 indice  jde_eventos  jde_eventos_pkey
