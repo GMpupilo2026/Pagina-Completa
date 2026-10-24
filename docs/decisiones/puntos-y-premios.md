@@ -545,6 +545,73 @@ el trigger `otorgar_puntos_de_entrenamiento()`: las páginas no cambian.
   fallido, 0, y logrado después, 5. Mirar «ya hecho» en el alumno con más
   filas tarda unos milisegundos.
 
+## Terminar un tema: el doble, hasta 500
+
+Pedido por el dueño del sitio el 24/10/2026: «cuando se termine un tema, dé
+el doble por premio por completarlo». Él mismo eligió el tope de 500 y que la
+base compruebe que cada ejercicio exista de verdad en el tema. Lo hacen
+`20261024200705_premio_temas.sql` y `20261024200854_premio_temas_cargar.sql`.
+
+- **Qué es un tema**: lo mismo que ya usan las tareas (`metas.json`): los 80
+  temas de Ejercicios por tema (también la «Mezcla equilibrada»), Mate en 1,
+  2 y 3, los seis niveles del 4×4, los Tipos, las categorías de Aprender y de
+  Practicar, y cada apertura de Aperturas y celadas con sus líneas. Un «tema»
+  de un solo ejercicio no cuenta. Las fichas de Estudio no escriben en
+  `training_progress`, así que no entran.
+- **Sus ejercicios, en la base**: `interno.premio_temas` (el total) e
+  `interno.premio_tema_items` (cada ejercicio). Los arma
+  `herramientas/premio-temas.py` en `entreno/data/premio-temas.json`, de las
+  mismas fuentes que `metas.json`. Son unos 160 KB: no caben en una migración
+  (habría que pasarlos enteros por la herramienta), así que la base se baja el
+  archivo publicado con pg_net y lo carga. Al cambiar el archivo, una vez
+  publicado, en el editor SQL:
+
+  ```sql
+  select interno.premio_temas_pedir('https://ajedrez-integral.com/entreno/data/premio-temas.json');
+  -- unos segundos después, con el número que devolvió:
+  select interno.premio_temas_cargar_respuesta(<número>);
+  ```
+
+  Solo agrega y pone al día los totales; no borra (un ejercicio que sale de
+  un tema se quita a mano). Al restaurar la base desde las migraciones, estas
+  dos líneas hacen falta otra vez: los datos no viven en ninguna migración.
+- **Cuándo paga**: un trigger aparte, `premiar_tema_terminado`, `after insert`
+  en `training_progress` (el que paga cada ejercicio no se tocó). Mira solo los
+  temas que contienen el ejercicio recién anotado y cuenta los ejercicios
+  distintos de ese tema que el alumno ya resolvió, **con cualquier tema
+  abierto**: en Ejercicios por tema un mismo ejercicio está en varios temas y
+  la página lo anota una sola vez, bajo el que estaba abierto. Contarlo solo
+  bajo su tema (como cuentan las tareas) dejaría temas imposibles de terminar.
+  Un intento fallido no cuenta (`entrenamiento_logrado()`).
+- **Cuánto**: el doble de lo que valen hoy sus ejercicios
+  (`entrenamiento_premio()`, la tabla de arriba), con un tope de 500. Mate en
+  2 vale 1434 × 3 × 2 = 8604 y paga 500; Las reglas de Aprender (5 × 1 × 2)
+  paga 10. No lo doblan los «puntos dobles»: el origen `tema` no está en la
+  lista de `otorgar_puntos()`, y si lo estuviera el tope dejaría de serlo.
+- **Una sola vez por alumno y tema**: la referencia `tema:<grupo>:<tema>` y el
+  índice único de `puntos_ajustes`.
+- **La trampa que queda**: un ejercicio inventado no cuenta (no está en la
+  lista), pero las listas son públicas (`temas.json`, `mates.json`… las baja
+  la página), así que alguien que sepa usar la consola puede anotarse los
+  ejercicios de verdad sin resolverlos. La base no puede saber si se resolvió
+  de verdad: lo dice el navegador. Pasa lo mismo con cada ejercicio desde
+  siempre; el premio lo hace valer más (hasta 500). Para cerrarlo haría falta
+  comprobar cada solución en el servidor, como la Edge Function `partida-fin`.
+- **El aviso**: `js/entreno-progress.js`, después de anotar un ejercicio,
+  pregunta `mis_temas_terminados()` y dice «🏆 ¡Terminaste el tema «…»!
+  Ganaste N Puntos Ajedrez de premio.» (`role="status"`), una vez: recuerda
+  en el aparato lo ya dicho, porque la hora del celular puede no ser la de la
+  base.
+- **Lo ya terminado antes**: el trigger solo mira ejercicios nuevos. Quien ya
+  tenía un tema completo cobra el premio la próxima vez que anote un
+  ejercicio de ese tema; si ya no le queda ninguno por hacer, no cobra.
+
+`verificar-premio-temas.js`: que `premio-temas.json` sea lo que hoy dan las
+fuentes, que cada tema tenga los mismos ejercicios que dice `metas.json`, que
+el trigger conozca cada grupo y que cada página siga anotando el id que lee
+`premio_item()`, y que el aviso salga una vez. Se rompió a propósito (un
+ejercicio menos en el archivo, el aviso sin llamar) y saltó.
+
 ## Entrenamiento, con puntos retroactivos (a diferencia de las tareas)
 
 `20261009005657_puntos_entrenamiento_retroactivo.sql` paga, una sola vez, los
