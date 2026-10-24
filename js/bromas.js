@@ -24,8 +24,9 @@
  *
  *   ovni      en Entrenamiento, la primera vez que hay un tablero con piezas:
  *             el ovni se lleva una pieza de verdad y la esconde un minuto.
- *             Hay que acordarse de cuál era; después la devuelve. Si la
- *             pieza se mueve o cambia el ejercicio antes, vuelve a verse.
+ *             Hay que acordarse de cuál era; después la devuelve. La pieza
+ *             sigue en juego: se puede mover, y sigue escondida en su casilla
+ *             nueva. Si se la comen o cambia el ejercicio, vuelve a verse.
  *
  * Quién puede recibir qué lo decide la base (mandar_broma): nunca a quien
  * tiene marcada su visión, ni a quien las apagó, bloqueó a quien manda o
@@ -337,38 +338,60 @@ window.Bromas = (function () {
       const elegida = piezasALaVista().sort(() => Math.random() - 0.5)[0];
       if (!elegida) return listo();
       vista(b.id);
-      const sq = elegida.casilla.getAttribute("data-square");
+      let sq = elegida.casilla.getAttribute("data-square");
       const tablero = elegida.casilla.parentElement;
       const marca = "o" + Math.random().toString(36).slice(2, 8);
       tablero.setAttribute("data-broma-ovni", marca);
       const sello = firma(elegida.pieza);
 
       // Se esconde con una regla y no tocando la pieza: los tableros se
-      // vuelven a pintar enteros en cada jugada, y la regla sobrevive.
+      // vuelven a pintar enteros en cada jugada, y la regla sobrevive. La
+      // pieza sigue en juego: se puede mover, solo que no se ve.
       const estilo = document.createElement("style");
       estilo.setAttribute("data-broma-ovni-estilo", "");
-      estilo.textContent = SEL_PIEZA.split(", ").map((s) => '[data-broma-ovni="' + marca + '"] > [data-square="' + sq + '"] ' + s).join(", ")
-        + " { visibility: hidden !important; }";
+      const esconderEn = (casilla) => {
+        sq = casilla;
+        estilo.textContent = SEL_PIEZA.split(", ").map((s) => '[data-broma-ovni="' + marca + '"] > [data-square="' + sq + '"] ' + s).join(", ")
+          + " { visibility: hidden !important; }";
+      };
+      esconderEn(sq);
       document.head.appendChild(estilo);
 
-      avisar("🛸", b.de_nombre + " mandó un ovni que se llevó una pieza de tu tablero. ¿Te acuerdas de cuál era? En 1 minuto te la devuelve.");
+      avisar("🛸", b.de_nombre + " mandó un ovni que se llevó una pieza de tu tablero. ¿Te acuerdas de cuál era? Sigue en juego y la puedes mover; en 1 minuto la vuelves a ver.");
 
-      let reloj = null;
+      // Qué hay en cada casilla, para seguir a la pieza cuando se mueve.
+      const mapa = () => {
+        const m = {};
+        tablero.querySelectorAll(":scope > [data-square]").forEach((c) => { m[c.getAttribute("data-square")] = firma(c.querySelector(SEL_PIEZA)); });
+        return m;
+      };
+      let antes = mapa();
+      let vigia = null;
       const devolver = (aviso) => {
         if (!estilo.isConnected) return;
         estilo.remove();
-        clearInterval(reloj);
+        if (vigia) vigia.disconnect();
         tablero.removeAttribute("data-broma-ovni");
         const n = elegida.nombre;
-        if (aviso) avisar("🛸", "El ovni te devolvió " + (n ? (/^(dama|torre)\b/i.test(n) ? "la " : "el ") + n : "la pieza") + " de " + sq + ".");
+        if (aviso) avisar("🛸", "El ovni te devolvió " + (n ? (/^(dama|torre)\b/i.test(n) ? "la " : "el ") + n : "la pieza") + ": está en " + sq + ".");
       };
-      // Si la pieza se movió, la comieron o cambió el ejercicio, ya no tiene
-      // sentido esconder lo que haya ahora en esa casilla.
-      reloj = setInterval(() => {
-        const c = document.querySelector('[data-broma-ovni="' + marca + '"] > [data-square="' + sq + '"]');
-        if (!c || firma(c.querySelector(SEL_PIEZA)) !== sello) devolver(false);
-      }, 500);
-      relojes.push(reloj);
+      /* Cada vez que el tablero se vuelve a pintar (antes de que se vea: un
+         MutationObserver corre antes del siguiente cuadro, así que la pieza
+         no parpadea). Si sigue en su casilla, nada. Si se movió, la casilla
+         que ahora la tiene y antes no es la nueva. Si se la comieron o cambió
+         el ejercicio (cambian muchas casillas de golpe), deja de esconderse. */
+      const revisarPieza = () => {
+        if (!tablero.isConnected) return devolver(false);
+        const ahora = mapa();
+        if (ahora[sq] === sello) { antes = ahora; return; }
+        const cambiaron = Object.keys(ahora).filter((k) => ahora[k] !== antes[k]);
+        const llego = cambiaron.filter((k) => ahora[k] === sello);
+        antes = ahora;
+        if (llego.length === 1 && cambiaron.length <= 6) esconderEn(llego[0]);
+        else devolver(false);
+      };
+      vigia = new MutationObserver(revisarPieza);
+      vigia.observe(tablero, { childList: true, subtree: true });
       setTimeout(() => devolver(true), ESCONDIDA_MS);
 
       if (quieto()) return listo();

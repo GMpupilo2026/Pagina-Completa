@@ -19,8 +19,9 @@
       medido, cada una se marca vista cuando empieza y la tienda las conoce
       todas por su nombre. Con «menos movimiento», solo el aviso.
    6. El ovni, en Entrenamiento: se lleva una pieza de verdad del tablero
-      (deja de verse esa y solo esa), aunque el tablero se vuelva a pintar,
-      y la devuelve al minuto con su aviso.
+      (deja de verse esa y solo esa), aunque el tablero se vuelva a pintar;
+      si se mueve, sigue escondida en su casilla nueva, y al minuto vuelve
+      con su aviso.
    4. En Entrenamiento: el arcoíris cambia de verdad el color de las casillas
       (le gana al estilo en línea de board-color-themes.js) y el patito avisa.
       El confeti no sale ahí (es del panel).
@@ -263,12 +264,27 @@ async function main() {
     await page.evaluate(() => { const t = document.querySelector("[data-broma-ovni]"); t.replaceChildren(...Array.from(t.children).map((c) => c.cloneNode(true))); });
     await page.clock.runFor(1000);
     ok(await aLaVista() === antes - 1, "al volver a pintar el tablero, la pieza que se llevó el ovni volvió a aparecer");
+    // La pieza sigue en juego: si se mueve, sigue escondida en su casilla nueva.
+    const movida = await page.evaluate(() => {
+      const t = document.querySelector("[data-broma-ovni]");
+      const sel = ".piece-white, .piece-black, .chess-piece-illustrated";
+      const casillas = Array.from(t.querySelectorAll(":scope > [data-square]"));
+      const desde = casillas.find((c) => { const p = c.querySelector(sel); return p && !p.checkVisibility({ visibilityProperty: true }); });
+      const hasta = casillas.find((c) => !c.querySelector(sel));
+      if (!desde || !hasta) return null;
+      hasta.appendChild(desde.querySelector(sel));
+      return hasta.getAttribute("data-square");
+    });
+    await page.clock.runFor(500);
+    ok(movida && await page.$eval(`[data-broma-ovni] > [data-square="${movida}"] :is(.piece-white, .piece-black, .chess-piece-illustrated)`,
+      (p) => !p.checkVisibility({ visibilityProperty: true })).catch(() => false), "al mover la pieza que se llevó el ovni, se volvió a ver");
+    ok(await aLaVista() === antes - 1, "al mover la pieza escondida, otra cosa cambió de lo que se ve");
     if (process.env.FOTOS) await page.screenshot({ path: process.env.FOTOS + "/ovni.png" });
     await page.clock.runFor(30000);
     ok(await aLaVista() === antes - 1, "la pieza tiene que seguir escondida a la mitad del minuto");
     await page.clock.runFor(30000);
     ok(await aLaVista() === antes, "al minuto el ovni no devolvió la pieza");
-    ok((await avisos(page)).some((x) => /El ovni te devolvió .+ de [a-h][1-8]\./.test(x)), "al devolverla no dice cuál era ni dónde: " + JSON.stringify(await avisos(page)));
+    ok((await avisos(page)).some((x) => new RegExp("El ovni te devolvió .+: está en " + movida + "\\.").test(x)), "al devolverla no dice cuál era ni dónde: " + JSON.stringify(await avisos(page)));
     await ctx.close();
   }
 

@@ -329,22 +329,26 @@ el aviso.
   (espera hasta 30 segundos a que cargue el ejercicio; si no aparece, queda
   sin ver para la próxima página). Baja sobre una pieza al azar —nunca un
   rey—, la copia sube por el rayo y la de verdad deja de verse **un minuto**:
-  hay que acordarse de cuál era. Al minuto vuelve, con un aviso que dice cuál
-  era y dónde. Se esconde con una regla de CSS sobre esa casilla de ese
-  tablero, no tocando la pieza, porque los tableros se vuelven a pintar
-  enteros en cada jugada y la regla sobrevive; y si la pieza se mueve, la
-  comen o cambia el ejercicio, se deja de esconder lo que haya ahí. La casilla
-  se sigue pudiendo tocar (la jugada se puede hacer de memoria), y el lector
-  de pantalla la sigue nombrando: el Modo Adaptado ya no recibe bromas. Si
-  cambia de página antes del minuto, en la nueva la pieza se ve.
+  hay que acordarse de cuál era. **La pieza sigue en juego** (lo aclaró el
+  dueño): se puede mover, solo que no se ve, y escondida sigue en su casilla
+  nueva. Al minuto vuelve, con un aviso que dice cuál era y dónde está. Se
+  esconde con una regla de CSS sobre una casilla de ese tablero, no tocando la
+  pieza, porque los tableros se vuelven a pintar enteros en cada jugada y la
+  regla sobrevive. Para seguirla, un `MutationObserver` mira el tablero cada
+  vez que se pinta (antes del siguiente cuadro, así que no parpadea): la
+  casilla que ahora tiene esa pieza y antes no, es la nueva. Si se la comen
+  o cambian muchas casillas de golpe (otro ejercicio), deja de esconderse.
+  La casilla se sigue pudiendo tocar (la jugada se hace de memoria), y el
+  lector de pantalla la sigue nombrando: el Modo Adaptado ya no recibe
+  bromas. Si cambia de página antes del minuto, en la nueva la pieza se ve.
 - **El cartel**, blanco sobre el azul de la marca (#ffffff sobre #102a43,
   14,7 a 1), con el borde dorado.
 
 `verificar-bromas.js` las revisa: que la base, `js/bromas.js` y la tienda
 (`NOMBRE_BROMA`) conozcan las diez, el contraste del cartel, que salen de a
 una y que la segunda espera a la primera, que el cartel dice quién la mandó,
-que el ovni esconde UNA pieza aunque el tablero se vuelva a pintar y la
-devuelve al minuto (con el reloj de Playwright, sin esperar de verdad),
+que el ovni esconde UNA pieza aunque el tablero se vuelva a pintar, que
+sigue escondida cuando se mueve, y la devuelve al minuto (con el reloj de Playwright, sin esperar de verdad),
 que las gallinas miden más de 60 px, que la capa no tapa los clics ni la lee
 el lector de pantalla, y que con «menos movimiento» solo queda el aviso. Con
 `FOTOS=<carpeta>` saca una foto de cada una a media animación, para mirarlas.
