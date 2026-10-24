@@ -51,8 +51,24 @@ window.PuntosRegalos = (function () {
     return data || [];
   }
 
+  /* Dónde puede caer cada broma (lo vuelve a decidir mandar_broma()). El
+     gorro de payaso es la foto: no se elige. Las que necesitan un tablero no
+     van al panel. */
+  const LUGARES = {
+    panel: "En su panel, la próxima vez que entre",
+    entreno: "En Entrenamiento, cuando esté haciendo un ejercicio",
+    clase: "En la clase en vivo, en un ejercicio (si el profe las encendió)",
+  };
+  function lugaresDe(tipo) {
+    if (tipo === "payaso") return [];
+    if (tipo === "patito" || tipo === "arcoiris" || tipo === "ovni") return ["entreno", "clase"];
+    return ["panel", "entreno", "clase"];
+  }
+
   /* Elegir a quién y con qué mensaje, y mandarlo. Un regalo lleva mensaje
-     opcional; el globo, frase obligatoria; las demás bromas, ninguna. */
+     opcional; el globo, frase obligatoria; las demás bromas, ninguna. Una
+     broma, además, dónde le cae y si suena (opciones.donde la deja fija:
+     desde la clase en vivo, «clase»). */
   async function regalar(opciones) {
     const { sb, alumnoId, premio } = opciones;
     const esBroma = premio.categoria === "broma";
@@ -81,6 +97,20 @@ window.PuntosRegalos = (function () {
         ayuda: "Los mensajes son de una lista, para que nadie reciba algo que no quiera leer.",
       });
     }
+    const tipo = premio.parametros && premio.parametros.tipo;
+    if (esBroma && !opciones.donde && lugaresDe(tipo).length) {
+      campos.push({
+        nombre: "donde", etiqueta: "¿Dónde le cae?", tipo: "select",
+        opciones: lugaresDe(tipo).map((l) => [l, LUGARES[l]]),
+        ayuda: "Queda programada: le sale cuando esté ahí. En un examen o un torneo, nunca.",
+      });
+    }
+    if (esBroma) {
+      campos.push({
+        nombre: "sonido", etiqueta: "¿Con sonido?", tipo: "select",
+        opciones: [["si", "Con sonido y efectos"], ["no", "Solo efectos, sin sonido"]],
+      });
+    }
     const costo = premio.costo_puntos + (premio.costo_puntos === 1 ? " punto" : " puntos");
     const r = await window.Avisos.formulario({
       titulo: (esBroma ? "Mandar " : "Regalar ") + premio.nombre,
@@ -92,13 +122,14 @@ window.PuntosRegalos = (function () {
     });
     if (!r || !r.para) return null;
     const args = esBroma
-      ? { p_premio_id: premio.id, p_para: r.para, p_frase: r.mensaje || null }
+      ? { p_premio_id: premio.id, p_para: r.para, p_frase: r.mensaje || null,
+          p_donde: opciones.donde || r.donde || null, p_con_sonido: r.sonido !== "no" }
       : { p_premio_id: premio.id, p_para: r.para, p_mensaje: r.mensaje || null };
     const { data, error } = await sb.rpc(esBroma ? "mandar_broma" : "regalar_premio", args);
     if (error) return { error: msg(error, esBroma ? "No se pudo mandar la broma." : "No se pudo hacer el regalo.") };
     const fila = Array.isArray(data) ? data[0] : data;
     const nombre = (gente.find((p) => p.id === r.para) || {}).full_name || "tu compañero";
-    return { saldo: fila ? fila.saldo_restante : null, para: nombre };
+    return { saldo: fila ? fila.saldo_restante : null, para: nombre, paraId: r.para };
   }
 
   /* «Bromas»: recibirlas o no, y bloquear a quien se pasó. Lo que guarda la

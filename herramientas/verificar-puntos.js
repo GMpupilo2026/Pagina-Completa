@@ -540,10 +540,16 @@ async function main() {
     await page.waitForFunction(() => document.querySelector("#tienda-puntos").textContent.includes("Le mandaste la broma a Beto Rojas"), null, { timeout: 5000 }).catch(() => {});
     ok((await page.textContent("#tienda-puntos")).includes("Le mandaste la broma a Beto Rojas"), "no confirma a quién se le mandó la broma");
 
-    // El confeti no lleva frase: el formulario solo pregunta a quién.
+    ok(llamada && llamada.args.p_donde === "panel" && llamada.args.p_con_sonido === true,
+      "mandar la broma no llevó el lugar y el sonido elegidos (por omisión: el panel, con sonido): " + JSON.stringify(llamada));
+
+    // El confeti no lleva frase: el formulario pregunta a quién, dónde le cae
+    // y si suena.
     await tarjeta(page, "Lluvia de confeti").locator("[data-regalar]").click();
     await page.locator("dialog[open]").waitFor({ timeout: 5000 });
-    ok(await page.locator("dialog[open] select").count() === 1, "el confeti no debería pedir frase");
+    const etiquetas = await page.$$eval("dialog[open] label", (l) => l.map((x) => x.textContent.trim()));
+    ok(!etiquetas.some((t) => /frase/i.test(t)), "el confeti no debería pedir frase: " + JSON.stringify(etiquetas));
+    ok(etiquetas.includes("¿Dónde le cae?") && etiquetas.includes("¿Con sonido?"), "la broma no pregunta dónde le cae ni si suena: " + JSON.stringify(etiquetas));
     await ctx.close();
   }
 

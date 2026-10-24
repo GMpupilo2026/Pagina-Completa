@@ -275,11 +275,15 @@ foto (un día; lo pinta `accesorios_de()`, así que también lo ve el profe en
   alguien (`bromas_bloquear`), desde la tienda;
 - el profe las apaga para toda su clase en Configuración
   (`bromas_en_mi_clase`); basta con que lo haga el profe de uno de los dos;
-- topes por día: una por pareja, 5 de quien manda, 3 de quien recibe.
+- topes por día: una por pareja, 5 de quien manda, 3 de quien recibe
+  (desde el 24/10/2026: 3, 10 y 10; ver «Dónde cae una broma y la clase en
+  vivo»).
 
 Y las de la página: `js/bromas.js` solo se carga en el panel, la tienda y
 Entrenamiento (`herramientas/academia-cabecera.py`), nunca en un examen, la
-clase en vivo, un torneo ni el diagnóstico; con Modo Adaptado o el panel para
+clase en vivo, un torneo ni el diagnóstico (la clase en vivo entró después,
+con el profe que las enciende: ver «Dónde cae una broma y la clase en
+vivo»); con Modo Adaptado o el panel para
 quien no ve no se pinta nada; con «menos movimiento» queda el aviso y nada se
 mueve. Los colores del arcoíris están medidos: cada par tiene la misma
 luminancia que el tablero de siempre, así que el contraste entre casillas y
@@ -351,10 +355,88 @@ el aviso.
 (`NOMBRE_BROMA`) conozcan las diez, el contraste del cartel, que salen de a
 una y que la segunda espera a la primera, que el cartel dice quién la mandó,
 que el ovni esconde UNA pieza aunque el tablero se vuelva a pintar, que
-sigue escondida cuando se mueve, y la devuelve al minuto (con el reloj de Playwright, sin esperar de verdad),
+sigue escondida cuando se mueve, y la devuelve al minuto (con el reloj de
+Playwright, sin esperar de verdad),
 que las gallinas miden más de 60 px, que la capa no tapa los clics ni la lee
 el lector de pantalla, y que con «menos movimiento» solo queda el aviso. Con
 `FOTOS=<carpeta>` saca una foto de cada una a media animación, para mirarlas.
+
+## Dónde cae una broma y la clase en vivo
+
+Pedido por el dueño del sitio el 24/10/2026: que quien manda la broma elija
+dónde le cae —en la clase, mientras entrena—, que quede programada para
+cuando la persona hace el ejercicio, que pueda ir con sonido, y que se pueda
+mandar en la clase mientras el compañero hace un ejercicio, para que le
+cueste concentrarse. Y de paso: al menos 10 por día y todo más caro. Lo hace
+`20261024193832_bromas_donde_y_clase.sql`.
+
+- **Esto da vuelta una regla de arriba** («nunca en la clase en vivo»). Se le
+  preguntó al dueño quién decide en la clase y en qué actividades, y eligió:
+  **el profe las enciende** para su clase (vienen apagadas) y valen **en
+  todo menos exámenes y torneos**, que siguen sin cargar `js/bromas.js`. En
+  la clase eso incluye la competencia, el calentamiento, el cuestionario y
+  la práctica con reloj, aunque den puntos: provocar que pierda es justo lo
+  que se pidió.
+- **`bromas.donde`** (`panel`, `entreno` o `clase`) lo elige quien la manda
+  en el mismo diálogo de siempre («¿Dónde le cae?», `js/puntos-regalos.js`).
+  El gorro de payaso no tiene lugar (es la foto); el patito, el arcoíris y el
+  ovni necesitan un tablero, así que no van al panel: lo valida
+  `mandar_broma()`. Las viejas quedaron con su lugar de antes.
+- **Programada**: `js/bromas.js` toma las que son para la página donde está
+  y las deja esperando (`pendientes`, revisadas cada segundo) hasta que
+  haya un ejercicio: en el panel, al entrar; en Entrenamiento, un tablero con
+  piezas a la vista; en la clase, las bromas encendidas y alguna caja de
+  actividad visible (`#question-card` —preguntas, ronda, cuestionario,
+  votación—, `#practice-card`, `#calentamiento-caja`, `#tanda-caja`,
+  `#formacion-tarjeta`, `#pensar-aviso-caja`). No hay en `sesion.js` una
+  señal común de «actividad abierta», así que se mira cuál de esas cajas se
+  ve (`checkVisibility()`). Se marca vista cuando SALE, no al llegar.
+- **El interruptor del profe** (`js/clase-bromas.js`, al final de «Alumnos
+  conectados»; no en la barra «Tu material», que tiene sus botones contados
+  en `verificar-sesion-orden.js`): `bromas_en_esta_clase()` escribe
+  `bromas_clase.hasta`, tres horas, o la hora de ahora para apagarlas. Se
+  apagan solas a su hora. Lo lee la página de quien recibe, por la RLS de
+  `bromas_clase` (sus profes): saltarse ese candado desde la consola solo le
+  hace la broma a uno mismo. Lo que de verdad protege a los demás sigue en
+  la base: `bromas_en_mi_clase` (el apagado de siempre, para todos sus
+  alumnos), la visión marcada, las preferencias y los bloqueos.
+- **Mandarla desde la clase**: con las bromas encendidas, el alumno tiene
+  «🎭 Mandar una broma» en su panel; elige la broma y luego el diálogo de
+  siempre, con el lugar ya puesto en «clase». Después avisa por el canal
+  `bromas-clase:<profe>` (broadcast) y la página del compañero vuelve a
+  preguntarle a la base (`mis_bromas`). Un aviso inventado no trae nada que
+  la base no tenga. Por si se pierde, cada minuto vuelve a preguntar
+  mientras las bromas estén encendidas.
+- **Sonido**: `bromas.con_sonido`, «Con sonido y efectos» o «Solo efectos».
+  Ahora todas suenan (notas de WebAudio, bajitas). En la clase sí suenan casi
+  siempre: el alumno ya tocó la página; al entrar al panel muchas veces el
+  navegador no deja.
+- **Topes**: 10 que manda cada uno y 10 que recibe por día; con el mismo
+  compañero, 3 (para que nadie se ensañe con uno solo).
+- **Precios**: el triple. De 60 (el globo) a 450 (el payaso gigante).
+- **Lo que no se borró**: `mandar_broma()` y `mis_bromas()` cambiaron de
+  firma, y borrarlas hacía que `apply_migration` pidiera una confirmación que
+  en la sesión web no llegó (dos veces, igual que en «Retos, marcador,
+  regalos y bromas»). Las viejas se renombraron (`mandar_broma_v1`,
+  `mis_bromas_v1`) y se les quitó el permiso: no las llama nadie. Por lo
+  mismo, apagar las bromas de la clase pone la hora de ahora en lugar de
+  borrar la fila.
+- **El pato invasor** cruza por encima del tablero (si hay uno), creciendo de
+  0,5 a 2,6 veces y cambiando de color (`hue-rotate` en el pato, no en su
+  globo, que conserva su contraste); en el centro del tablero se para, dice
+  «¡CUAC! ¿Esa era tu jugada?», sacude el tablero y pone un huevo del que
+  sale un pollito. Lo mueve Web Animations, con las posiciones del tablero.
+
+`verificar-bromas.js` lo revisa: que `sesion.html` carga `js/bromas.js`,
+`js/clase-bromas.js` y `js/puntos-regalos.js` (y examen, torneo y
+diagnóstico siguen sin bromas); que una broma «solo efectos» no intenta
+sonar y una «con sonido» sí; que una para Entrenamiento o la clase no sale
+en el panel ni se marca vista, y una para Entrenamiento sale con el
+ejercicio; y, en una página mínima servida en `/sesion.html`, que en la clase
+no sale con las bromas apagadas, ni encendidas sin una actividad abierta, y
+sí al abrirse una pregunta. Se rompió a propósito (el sonido, el candado de
+la clase) y saltó. `verificar-puntos.js` revisa que el diálogo pregunte dónde
+y si suena, y que la llamada los lleve.
 
 ## La semana sin entrenar: se pierde la mitad
 
@@ -462,6 +544,82 @@ el trigger `otorgar_puntos_de_entrenamiento()`: las páginas no cambian.
   uno Fácil nuevo, 1; dos filas iguales en un solo insert, 1; `finales100`
   fallido, 0, y logrado después, 5. Mirar «ya hecho» en el alumno con más
   filas tarda unos milisegundos.
+
+## Terminar un tema: el doble, hasta 500
+
+Pedido por el dueño del sitio el 24/10/2026: «cuando se termine un tema, dé
+el doble por premio por completarlo». Él mismo eligió el tope de 500 y que la
+base compruebe que cada ejercicio exista de verdad en el tema. Lo hacen
+`20261024200705_premio_temas.sql` y `20261024200854_premio_temas_cargar.sql`.
+
+- **Qué es un tema**: lo mismo que ya usan las tareas (`metas.json`): los 80
+  temas de Ejercicios por tema (también la «Mezcla equilibrada»), Mate en 1,
+  2 y 3, los seis niveles del 4×4, los Tipos, las categorías de Aprender y de
+  Practicar, y cada apertura de Aperturas y celadas con sus líneas. Un «tema»
+  de un solo ejercicio no cuenta. Las fichas de Estudio no escriben en
+  `training_progress`, así que no entran.
+- **Sus ejercicios, en la base**: `interno.premio_temas` (el total) e
+  `interno.premio_tema_items` (cada ejercicio). Los arma
+  `herramientas/premio-temas.py` en `entreno/data/premio-temas.json`, de las
+  mismas fuentes que `metas.json`. Son unos 160 KB: no caben en una migración
+  (habría que pasarlos enteros por la herramienta), así que la base se baja el
+  archivo publicado con pg_net y lo carga. Al cambiar el archivo, una vez
+  publicado, en el editor SQL:
+
+  ```sql
+  select interno.premio_temas_pedir('https://ajedrez-integral.com/entreno/data/premio-temas.json');
+  -- unos segundos después, con el número que devolvió:
+  select interno.premio_temas_cargar_respuesta(<número>);
+  ```
+
+  Solo agrega y pone al día los totales; no borra (un ejercicio que sale de
+  un tema se quita a mano). Al restaurar la base desde las migraciones, estas
+  dos líneas hacen falta otra vez: los datos no viven en ninguna migración.
+- **Cuándo paga**: un trigger aparte, `premiar_tema_terminado`, `after insert`
+  en `training_progress` (el que paga cada ejercicio no se tocó). Mira solo los
+  temas que contienen el ejercicio recién anotado y cuenta los ejercicios
+  distintos de ese tema que el alumno ya resolvió, **con cualquier tema
+  abierto**: en Ejercicios por tema un mismo ejercicio está en varios temas y
+  la página lo anota una sola vez, bajo el que estaba abierto. Contarlo solo
+  bajo su tema (como cuentan las tareas) dejaría temas imposibles de terminar.
+  Un intento fallido no cuenta (`entrenamiento_logrado()`).
+- **Cuánto**: el doble de lo que valen hoy sus ejercicios
+  (`entrenamiento_premio()`, la tabla de arriba), con un tope de 500. Mate en
+  2 vale 1434 × 3 × 2 = 8604 y paga 500; Las reglas de Aprender (5 × 1 × 2)
+  paga 10. No lo doblan los «puntos dobles»: el origen `tema` no está en la
+  lista de `otorgar_puntos()`, y si lo estuviera el tope dejaría de serlo.
+- **Una sola vez por alumno y tema**: la referencia `tema:<grupo>:<tema>` y el
+  índice único de `puntos_ajustes`.
+- **La trampa que queda**: un ejercicio inventado no cuenta (no está en la
+  lista), pero las listas son públicas (`temas.json`, `mates.json`… las baja
+  la página), así que alguien que sepa usar la consola puede anotarse los
+  ejercicios de verdad sin resolverlos. La base no puede saber si se resolvió
+  de verdad: lo dice el navegador. Pasa lo mismo con cada ejercicio desde
+  siempre; el premio lo hace valer más (hasta 500). Para cerrarlo haría falta
+  comprobar cada solución en el servidor, como la Edge Function `partida-fin`.
+- **El aviso**: `js/entreno-progress.js`, después de anotar un ejercicio,
+  pregunta `mis_temas_terminados()` y dice «🏆 ¡Terminaste el tema «…»!
+  Ganaste N Puntos Ajedrez de premio.» (`role="status"`), una vez: recuerda
+  en el aparato lo ya dicho, porque la hora del celular puede no ser la de la
+  base.
+- **Lo ya terminado antes**: el trigger solo mira ejercicios nuevos. Quien ya
+  tenía un tema completo cobra el premio la próxima vez que anote un
+  ejercicio de ese tema; si ya no le queda ninguno por hacer, no cobra.
+
+**Comprobado en la base el 24/10/2026**, con alumnos reales dentro de bloques
+que se deshacen solos (un `raise` al final): a uno que tenía 305 de los 306
+de Mate en 1, anotarle un ejercicio inventado no le pagó nada; el de verdad
+le pagó 500 una vez (306 × 1 × 2 = 612, tope 500), y repetir uno no volvió a
+pagar. A otro que ya tenía Las reglas completas de antes, la siguiente
+lección le pagó 10. Al cargar la lista por primera vez había unos 200 temas
+ya completos de antes (22 alumnos con «Ataque al enroque corto», 20 con
+«Cómo mueve cada pieza»…); esos cobran con su próximo ejercicio del tema.
+
+`verificar-premio-temas.js`: que `premio-temas.json` sea lo que hoy dan las
+fuentes, que cada tema tenga los mismos ejercicios que dice `metas.json`, que
+el trigger conozca cada grupo y que cada página siga anotando el id que lee
+`premio_item()`, y que el aviso salga una vez. Se rompió a propósito (un
+ejercicio menos en el archivo, el aviso sin llamar) y saltó.
 
 ## Entrenamiento, con puntos retroactivos (a diferencia de las tareas)
 
