@@ -256,7 +256,8 @@ window.__consultas = [];
       if (opciones && opciones.head) window.__consultas[window.__consultas.length - 1].head = true;
       return c;
     },
-    channel: () => ({ on() { return this; }, subscribe() { return this; }, track() { return Promise.resolve(); }, presenceState: () => ({}) }),
+    channel: () => ({ on() { return this; }, subscribe() { return this; }, track() { return Promise.resolve(); }, presenceState: () => ({}),
+      send(m) { (window.__mandados = window.__mandados || []).push(m); return Promise.resolve("ok"); } }),
     removeChannel: () => {},
   };
 })();
@@ -2258,6 +2259,34 @@ async function pruebaSemanaProfesora(browser) {
   await pruebaPrimerPasoProfesor(browser);
 }
 
+/* ---------- Las bromas de la clase, desde el panel ----------
+   El profe enciende o apaga las bromas de su clase en vivo sin entrar a
+   ella (js/clase-bromas.js, el mismo interruptor que «Alumnos conectados»),
+   y la clase se entera por su canal. Quien administra no da clase: a ella no
+   se le pinta. Ver «Dónde cae una broma y la clase en vivo». */
+async function pruebaBromasDeLaClase(browser) {
+  console.log("\n=== Las bromas de la clase, desde el panel del profe ===");
+  const HASTA = "2026-10-25T01:30:00Z";
+  let r = await panel(browser, [PROFE], "u-profe", null, { rpc: { bromas_en_esta_clase: HASTA } });
+  const boton = () => r.page.$eval("#bromas-clase-caja button", (b) => ({ texto: b.textContent, apretado: b.getAttribute("aria-pressed"), ve: b.checkVisibility() })).catch(() => null);
+  await r.page.waitForSelector("#bromas-clase-caja button", { timeout: 5000 }).catch(() => {});
+  let b = await boton();
+  igual("el profe ve el interruptor, apagado", b && b.ve && b.texto.includes("Bromas apagadas") && b.apretado, "false");
+  await r.page.click("#bromas-clase-caja button");
+  await r.page.waitForFunction(() => /encendidas/.test(document.querySelector("#bromas-clase-caja button").textContent), null, { timeout: 5000 }).catch(() => {});
+  const pedido = await r.page.evaluate(() => (window.__consultas.find((c) => c.tabla === "bromas_en_esta_clase") || {}).args);
+  igual("al tocarlo, las enciende en la base", JSON.stringify(pedido), JSON.stringify({ p_encender: true }));
+  b = await boton();
+  cierto("y dice hasta qué hora (" + (b && b.texto) + ")", b && /Bromas encendidas hasta las .+ · Apagar/.test(b.texto) && b.apretado === "true");
+  igual("y le avisa a la clase por su canal", await r.page.evaluate(() => (window.__mandados || []).some((m) => m.event === "estado")), true);
+  await r.ctx.close();
+
+  r = await panel(browser, [ADMIN], "u-admin");
+  igual("a quien administra no se le pinta (no da clase)",
+    await r.page.evaluate(() => document.getElementById("bromas-clase-caja").checkVisibility()), false);
+  await r.ctx.close();
+}
+
 /* ---------- Por dónde empezar, del lado del que da clase ----------
    Un entrenador nuevo abre el panel, ve cuatro números en cero y un directorio
    de accesos, y nada le dice cuál es el siguiente paso. En los datos se ve
@@ -3723,6 +3752,7 @@ function cierresConTope(browser) {
 }
 
 const PRUEBAS = [
+  pruebaBromasDeLaClase,
   pruebaAlumna,
   pruebaTareasAlumna,
   pruebaDiagnosticoPedido,

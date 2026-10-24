@@ -67,6 +67,7 @@
                     <div id="avatar" aria-hidden="true" class="w-14 h-14 rounded-full bg-gradient-to-br from-brand-600 to-brand-800 text-white flex items-center justify-center font-serif text-xl font-bold shrink-0"></div>
                     <div>
                         <h1 id="panel-titulo" tabindex="-1" class="font-serif text-2xl md:text-3xl font-bold text-brand-800 dark:text-white focus:outline-none">¡Hola, <span id="welcome-name">alumno</span>! <span aria-hidden="true">👋</span></h1>
+                        <p id="mi-adorno" hidden data-adorno class="text-sm font-semibold text-accent-700 dark:text-accent-300 mt-0.5"></p>
                         <p id="panel-subtitulo" class="text-brand-500 dark:text-brand-300 text-sm mt-0.5">Este es tu panel de Clases. Elige a dónde quieres ir.</p>
                     </div>
                 </div>
@@ -209,6 +210,14 @@
                     <!-- Su próxima clase, de su horario (asistencia.html → «Tu horario»).
                          Ver «Tu próxima clase, también para el profe». -->
                     <p id="profe-proxima" hidden class="mt-3 text-sm text-brand-700 dark:text-brand-200"></p>
+                </div>
+                <!-- Encender o apagar las bromas de la clase en vivo sin entrar a
+                     ella: el mismo interruptor que «Alumnos conectados»
+                     (js/clase-bromas.js). Solo para quien da clase. Ver «Dónde cae
+                     una broma y la clase en vivo» en puntos-y-premios.md. -->
+                <div id="bromas-clase-caja" hidden class="mt-4 pt-4 border-t border-brand-100 dark:border-brand-800">
+                    <p class="text-sm font-semibold text-brand-800 dark:text-white"><span aria-hidden="true">🎭</span> Bromas en tu clase en vivo</p>
+                    <p class="text-xs text-brand-500 dark:text-brand-300">Les caen a tus alumnos cuando están en un ejercicio de la clase (nunca en un examen ni en un torneo). Se apagan solas a las tres horas.</p>
                 </div>
             </div>
 
@@ -601,6 +610,7 @@
     <script src="js/recorrido-profe.js"></script>
     <script src="js/paginas-admin.js"></script>
     <script src="js/paginas-supervisor.js"></script>
+    <script src="js/clase-bromas.js"></script>
     <script src="js/clases.js"></script>
     <script src="js/fondo-region.js"></script>
 <!-- burbuja: inicio --><script src="js/burbuja-en-linea.js" defer></script><!-- burbuja: fin --><!-- juego-aviso: inicio --><script src="js/juego-aviso.js" defer></script><!-- juego-aviso: fin --><!-- aviso-profe: inicio --><script src="js/aviso-profe.js" defer></script><!-- aviso-profe: fin --><!-- tanda: inicio --><script src="js/tanda-diez.js" defer></script><!-- tanda: fin --><!-- bromas: inicio --><script src="js/bromas.js" defer></script><!-- bromas: fin --><!-- acceso: inicio --><script src="js/acceso-vigente.js" defer></script><!-- acceso: fin --><!-- marca: inicio --><script src="js/marca-academia.js" defer></script><!-- marca: fin --><!-- ayuda: inicio --><script src="js/ayuda-guia.js" defer></script><!-- ayuda: fin --></body>

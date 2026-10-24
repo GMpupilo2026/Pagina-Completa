@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20261024201351
+# al-dia-con: 20261024230921
 tabla  Ejercicios Lichess  rls=true
 tabla  _foto_rls_tmp  rls=false
 tabla  _pedidos_elo  rls=false
@@ -2283,11 +2283,13 @@ funcion  interno.estilo_pruebas_al_guardar()  definer  anon=false  auth=false
 funcion  interno.estilo_seguimiento_al_guardar()  definer  anon=false  auth=false
 funcion  interno.estilo_seguimiento_partidas_ok(p jsonb)  invoker  anon=false  auth=true
 funcion  interno.estudio_al_guardar()  definer  anon=false  auth=false
+funcion  interno.fin_de_puntos_dobles(p_alumno uuid, p_horas integer)  definer  anon=false  auth=false
 funcion  interno.frenar_envio_publico(p_tipo text, p_ambito text, p_correo text, p_ip text)  invoker  anon=false  auth=false
 funcion  interno.gente_de_mis_academias()  definer  anon=false  auth=true
 funcion  interno.habilidad_resultado_de_la_base()  definer  anon=false  auth=false
 funcion  interno.horarios_del_alumno(p_alumno uuid)  definer  anon=false  auth=false
 funcion  interno.jsonb_o_nulo(p text)  invoker  anon=false  auth=true
+funcion  interno.leccion_abierta(p_alumno uuid, p_curso text)  definer  anon=false  auth=false
 funcion  interno.lecciones_hechas(p_alumno uuid, p_curso text)  definer  anon=false  auth=false
 funcion  interno.material_compartido_conmigo(p_producto text)  definer  anon=false  auth=true
 funcion  interno.me_sacaron_de(p_clase uuid)  definer  anon=false  auth=true
