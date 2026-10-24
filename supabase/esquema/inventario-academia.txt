@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20261024173717
+# al-dia-con: 20261024200854
 tabla  Ejercicios Lichess  rls=true
 tabla  _foto_rls_tmp  rls=false
 tabla  _pedidos_elo  rls=false
@@ -39,6 +39,7 @@ tabla  avisos_racha  rls=true
 tabla  bromas  rls=true
 tabla  bromas_apagadas  rls=true
 tabla  bromas_bloqueos  rls=true
+tabla  bromas_clase  rls=true
 tabla  bromas_preferencias  rls=true
 tabla  certificados  rls=true
 tabla  clase_elegidos  rls=true
@@ -110,6 +111,8 @@ tabla  interno.clase_espectadores_ip  rls=true
 tabla  interno.curso_lecciones  rls=false
 tabla  interno.envios_publicos  rls=true
 tabla  interno.lector_planilla_uso  rls=true
+tabla  interno.premio_tema_items  rls=true
+tabla  interno.premio_temas  rls=true
 tabla  interno.salud_base  rls=true
 tabla  jde_eventos  rls=true
 tabla  jdn_correcciones  rls=true
@@ -473,8 +476,10 @@ columna  avisos_racha.faltan  integer
 columna  avisos_racha.fecha  date
 columna  avisos_racha.racha  integer
 columna  avisos_racha.student_id  uuid
+columna  bromas.con_sonido  boolean
 columna  bromas.created_at  timestamp with time zone
 columna  bromas.de_id  uuid
+columna  bromas.donde  text
 columna  bromas.frase  text
 columna  bromas.id  uuid
 columna  bromas.para_id  uuid
@@ -486,6 +491,9 @@ columna  bromas_apagadas.profesor_id  uuid
 columna  bromas_bloqueos.alumno_id  uuid
 columna  bromas_bloqueos.bloqueado_id  uuid
 columna  bromas_bloqueos.created_at  timestamp with time zone
+columna  bromas_clase.hasta  timestamp with time zone
+columna  bromas_clase.profesor_id  uuid
+columna  bromas_clase.updated_at  timestamp with time zone
 columna  bromas_preferencias.alumno_id  uuid
 columna  bromas_preferencias.no_recibir  boolean
 columna  bromas_preferencias.updated_at  timestamp with time zone
@@ -1082,6 +1090,13 @@ columna  interno.envios_publicos.tipo  text
 columna  interno.lector_planilla_uso.dia  date
 columna  interno.lector_planilla_uso.persona  uuid
 columna  interno.lector_planilla_uso.usos  integer
+columna  interno.premio_tema_items.grupo  text
+columna  interno.premio_tema_items.item  text
+columna  interno.premio_tema_items.tema  text
+columna  interno.premio_temas.grupo  text
+columna  interno.premio_temas.nombre  text
+columna  interno.premio_temas.tema  text
+columna  interno.premio_temas.total  integer
 columna  interno.salud_base.aviso_enviado  boolean
 columna  interno.salud_base.cron_fallidos  integer
 columna  interno.salud_base.lenta  boolean
@@ -2086,6 +2101,7 @@ funcion  bitacora_supervisada(p_alumno uuid)  definer  anon=false  auth=true
 funcion  broma_vista(p_id uuid)  definer  anon=false  auth=true
 funcion  bromas_bloquear(p_persona uuid, p_bloquear boolean)  definer  anon=false  auth=true
 funcion  bromas_configurar(p_no_recibir boolean)  definer  anon=false  auth=true
+funcion  bromas_en_esta_clase(p_encender boolean)  definer  anon=false  auth=true
 funcion  bromas_en_mi_clase(p_permitir boolean)  definer  anon=false  auth=true
 funcion  cambiar_rol(p_persona uuid, p_rol text)  definer  anon=false  auth=true
 funcion  canjear_licencia(p_codigo text)  definer  anon=false  auth=true
@@ -2291,6 +2307,12 @@ funcion  interno.plantillas_casa_tope()  definer  anon=false  auth=false
 funcion  interno.practica_guardar_intento()  definer  anon=false  auth=false
 funcion  interno.prefijo_de_nombre(p_nombre text)  invoker  anon=false  auth=true
 funcion  interno.preguntas_visibles_para_mi_supervision()  definer  anon=false  auth=true
+funcion  interno.premiar_tema_terminado()  definer  anon=false  auth=false
+funcion  interno.premio_grupo(p_activity text)  invoker  anon=true  auth=true
+funcion  interno.premio_item(p_activity text, p_detail jsonb)  invoker  anon=true  auth=true
+funcion  interno.premio_temas_cargar(p_datos jsonb)  definer  anon=false  auth=false
+funcion  interno.premio_temas_cargar_respuesta(p_pedido bigint)  definer  anon=false  auth=false
+funcion  interno.premio_temas_pedir(p_url text)  definer  anon=false  auth=false
 funcion  interno.preparacion_sesiones_sello()  invoker  anon=false  auth=false
 funcion  interno.profesor_alumno_mio(p_id uuid)  definer  anon=false  auth=true
 funcion  interno.profesores_de(p_alumno uuid)  definer  anon=false  auth=true
@@ -2335,7 +2357,8 @@ funcion  licencias_cambiar(p_id uuid, p_accion text, p_vence timestamp with time
 funcion  licencias_generar(p_herramienta text, p_cantidad integer, p_dias integer, p_nota text, p_persona uuid)  definer  anon=false  auth=true
 funcion  ligar_a_la_clase_abierta()  invoker  anon=false  auth=false
 funcion  logros_hitos(alumno uuid)  invoker  anon=false  auth=true
-funcion  mandar_broma(p_premio_id uuid, p_para uuid, p_frase text)  definer  anon=false  auth=true
+funcion  mandar_broma(p_premio_id uuid, p_para uuid, p_frase text, p_donde text, p_con_sonido boolean)  definer  anon=false  auth=true
+funcion  mandar_broma_v1(p_premio_id uuid, p_para uuid, p_frase text)  definer  anon=false  auth=false
 funcion  mandar_plan_rival(p_alumnos uuid[], p_rival text, p_lado text, p_plan jsonb, p_nota text, p_vence timestamp with time zone)  invoker  anon=false  auth=true
 funcion  marca_de_alumno(p_alumno uuid)  definer  anon=false  auth=false
 funcion  marca_de_diagnostico(p_id uuid)  definer  anon=false  auth=true
@@ -2362,6 +2385,7 @@ funcion  mis_academias_supervisadas()  definer  anon=false  auth=true
 funcion  mis_avisos_enviados(p_limite integer)  invoker  anon=false  auth=true
 funcion  mis_avisos_sin_leer()  definer  anon=false  auth=true
 funcion  mis_bromas()  invoker  anon=false  auth=true
+funcion  mis_bromas_v1()  invoker  anon=false  auth=false
 funcion  mis_clases()  invoker  anon=false  auth=true
 funcion  mis_clases_proximas(p_dias integer)  definer  anon=false  auth=true
 funcion  mis_funciones_coordinacion()  definer  anon=false  auth=true
@@ -2373,6 +2397,7 @@ funcion  mis_retos_de_ejercicios()  invoker  anon=false  auth=true
 funcion  mis_subgrupos()  invoker  anon=false  auth=true
 funcion  mis_supervisados()  definer  anon=false  auth=true
 funcion  mis_supervisores()  definer  anon=false  auth=true
+funcion  mis_temas_terminados(p_desde timestamp with time zone)  invoker  anon=false  auth=true
 funcion  my_profile()  definer  anon=false  auth=true
 funcion  nombres_de_jugadores(p_ids uuid[])  definer  anon=false  auth=true
 funcion  notas_alumno_clase_propia()  definer  anon=false  auth=false
@@ -2617,6 +2642,7 @@ politica  avisos_profesor  avisos_profesor_select  SELECT
 politica  bromas  bromas_ver  SELECT
 politica  bromas_apagadas  bromas_apagadas_ver  SELECT
 politica  bromas_bloqueos  bromas_bloqueos_ver  SELECT
+politica  bromas_clase  bromas_clase_ver  SELECT
 politica  bromas_preferencias  bromas_preferencias_ver  SELECT
 politica  certificados  certificados_lee  SELECT
 politica  clase_elegidos  clase_elegidos_insert  INSERT
@@ -3161,6 +3187,7 @@ trigger  tareas  tareas_protege_alumno
 trigger  tournament_rounds  tournament_rounds_modalidad
 trigger  tournaments  tournaments_proteger
 trigger  training_progress  otorgar_puntos_de_entrenamiento
+trigger  training_progress  premiar_tema_terminado
 trigger  training_progress  training_progress_hora
 trigger  training_progress  training_progress_valida_marca
 trigger  vision_personas  auditar
@@ -3233,6 +3260,7 @@ indice  bromas  bromas_para
 indice  bromas  bromas_pkey
 indice  bromas_apagadas  bromas_apagadas_pkey
 indice  bromas_bloqueos  bromas_bloqueos_pkey
+indice  bromas_clase  bromas_clase_pkey
 indice  bromas_preferencias  bromas_preferencias_pkey
 indice  certificados  certificados_academia_idx
 indice  certificados  certificados_anulado_por_idx
@@ -3429,6 +3457,9 @@ indice  interno.envios_publicos  envios_publicos_pkey
 indice  interno.envios_publicos  envios_publicos_tipo_ambito
 indice  interno.lector_planilla_uso  lector_planilla_uso_dia
 indice  interno.lector_planilla_uso  lector_planilla_uso_pkey
+indice  interno.premio_tema_items  premio_tema_items_item
+indice  interno.premio_tema_items  premio_tema_items_pkey
+indice  interno.premio_temas  premio_temas_pkey
 indice  interno.salud_base  salud_base_pkey
 indice  jde_eventos  jde_eventos_anio_fase_idx
 indice  jde_eventos  jde_eventos_pkey
@@ -3903,6 +3934,7 @@ grant  avisos_profesor  authenticated  TRIGGER
 grant  bromas  authenticated  SELECT
 grant  bromas_apagadas  authenticated  SELECT
 grant  bromas_bloqueos  authenticated  SELECT
+grant  bromas_clase  authenticated  SELECT
 grant  bromas_preferencias  authenticated  SELECT
 grant  certificados  authenticated  SELECT
 grant  clase_elegidos  authenticated  DELETE

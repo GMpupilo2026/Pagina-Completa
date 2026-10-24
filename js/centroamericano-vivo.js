@@ -112,6 +112,9 @@
       delegListo: (p) => "✓ Listo: te avisaremos cómo le fue a " + p + " en cuanto terminen sus partidas de cada ronda.",
       delegApagado: (p) => "Listo: ya no te avisamos el resumen de " + p + ".",
       imagenResumen: "Compartir imagen",
+      puestosTitulo: "Su puesto en la categoría después de cada ronda:",
+      puestoRonda: (r, p) => "R" + r + " " + p,
+      puestosNota: "Con los mismos puntos se comparte el puesto (por ejemplo, 3.º–5.º): el desempate lo decide al final del torneo.",
       locale: "es-CR",
     },
     en: {
@@ -182,6 +185,9 @@
       delegListo: (p) => "✓ Done: we'll let you know how " + p + " did as soon as its games of each round are over.",
       delegApagado: (p) => "Done: we no longer send you " + p + "'s summary.",
       imagenResumen: "Share image",
+      puestosTitulo: "Their place in the section after each round:",
+      puestoRonda: (r, p) => "R" + r + " " + p,
+      puestosNota: "Players on the same points share the place (for example, 3rd–5th): tiebreaks decide it at the end of the tournament.",
       locale: "en-US",
     },
   };
@@ -329,6 +335,43 @@
     const p = jugadas.reduce((a, o) => a + o.puntos, 0) / jugadas.length;
     return { rp: Math.round(ra + window.PareoDesempates.dpDeP(p)), ra: Math.round(ra), n: jugadas.length };
   }
+
+  // Los puntos de cada jugador de una categoría tras las primeras `hasta`
+  // rondas del cuadro cruzado (lo oficial: sin la ronda que solo está en el pareo).
+  function puntosTras(lista, hasta) {
+    return lista.map((j) => {
+      const r = Array.isArray(j.r) ? j.r : [];
+      let pts = 0;
+      for (let i = 0; i < hasta && i < r.length; i++) { const k = casilla(r[i]); if (k) pts += k.puntos; }
+      return pts;
+    });
+  }
+  // El puesto de un jugador en su categoría después de cada ronda, contando
+  // solo los puntos: con los mismos puntos se comparte el puesto (3.º–5.º),
+  // porque el desempate de cada ronda intermedia no lo publica chess-results.
+  function puestosDe(x) {
+    const lista = (x.torneo.jugadores || []).filter((j) => j.grupo === x.j.grupo);
+    const i = lista.indexOf(x.j);
+    const mias = Array.isArray(x.j.r) ? x.j.r : [];
+    const out = [];
+    if (i < 0) return out;
+    for (let k = 1; k <= mias.length; k++) {
+      if (!casilla(mias[k - 1])) continue;
+      const pts = puntosTras(lista, k);
+      const yo = pts[i];
+      const mejores = pts.filter((p, n) => n !== i && p > yo).length;
+      const iguales = pts.filter((p, n) => n !== i && p === yo).length;
+      out.push({ ronda: k, desde: mejores + 1, hasta: mejores + 1 + iguales, de: lista.length, puntos: yo });
+    }
+    return out;
+  }
+  // 3 → «3.º» / «3rd»; un puesto compartido, «3.º–5.º».
+  function ordinal(n, lang) {
+    if (lang !== "en") return n + ".º";
+    const d = n % 100;
+    return n + (d >= 11 && d <= 13 ? "th" : ["th", "st", "nd", "rd"][n % 10] || "th");
+  }
+  const puestoTexto = (p, lang) => ordinal(p.desde, lang) + (p.hasta > p.desde ? "–" + ordinal(p.hasta, lang) : "");
 
   // «ganó a FM Guevara Ruiz, Santiago Jose (ESA, 2252)» para una ronda.
   function rivalTexto(j) {
@@ -505,6 +548,14 @@
         caja.appendChild(ol);
         const rend = rendimiento(x);
         if (rend) caja.appendChild(el("p", "mt-2 text-sm font-semibold", tx.rendimiento(rend.rp, rend.n, rend.ra)));
+        const puestos = puestosDe(x);
+        if (puestos.length) {
+          const linea = el("p", "cac-puestos mt-2 text-sm");
+          linea.appendChild(el("span", "font-semibold", tx.puestosTitulo + " "));
+          linea.appendChild(document.createTextNode(puestos.map((p) => tx.puestoRonda(p.ronda, puestoTexto(p, idioma()))).join(" · ")));
+          caja.appendChild(linea);
+          if (puestos.some((p) => p.hasta > p.desde)) caja.appendChild(el("p", "mt-1 text-xs text-brand-600 dark:text-brand-300", tx.puestosNota));
+        }
       }
       li.appendChild(caja);
     }
@@ -980,6 +1031,7 @@
     datos: () => datos, deGuardado: () => deGuardado, pedir, jugadores, rondasDe, rendimiento, queHizo, rivalTexto,
     textos: t, idioma, categoria: (g) => t().categoria(g), ordenGrupo, pais: (f) => pais(f, idioma()), fmtPuntos, puntosNum,
     cuandoSeLeyo: () => cuandoSeLeyo(t()), plano, el, ZONA, progresoRonda, anunciar, puntosDeMesa,
+    puestosDe, puntosTras, puestoTexto: (p) => puestoTexto(p, idioma()), delegacionGuardada,
   };
 
   document.addEventListener("cac-idioma", () => { pintarTodo(); ponerAvisosAlDia(); if (dialogo && dialogo.open) pintarMedallero(); });

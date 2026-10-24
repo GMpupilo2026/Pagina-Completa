@@ -9,9 +9,10 @@
  *   dos), con la hora, cómo va la ronda y un QR a la página; con el torneo
  *   terminado, empieza por los podios. Para una pantalla en la sala.
  * - Las sorpresas (el de menos Elo que puntúa contra el de más) y los invictos (#sorpresas).
- * - La imagen para compartir a un jugador y la del resumen de una delegación
- *   (WhatsApp), con la marca de agua de Ajedrez Integral (js/tabla-imagen.js,
- *   la misma copia).
+ * - La imagen para compartir a un jugador (con su puesto ronda a ronda), la
+ *   del resumen de una delegación y «Así terminó el día» (los líderes, la
+ *   sorpresa del día y la delegación elegida), con la marca de agua de Ajedrez
+ *   Integral (js/tabla-imagen.js, la misma copia).
  *
  * Los datos, las rondas de cada jugador y los textos comunes salen de
  * window.CentroamericanoVivo: una sola copia. Todo lo de afuera (nombres) va
@@ -70,6 +71,20 @@
       proyPodios: "Los podios",
       imgResumenSub: "Centroamericano 2026 · Costa Rica",
       imgMas: (n) => "y " + n + " más",
+      imgPuestos: (lista) => "Puesto ronda a ronda: " + lista,
+      diaBoton: "Imagen del día para compartir",
+      diaTermino: "Así terminó el día", diaVa: "Así va el día",
+      diaFecha: (fecha, rondas) => fecha.charAt(0).toUpperCase() + fecha.slice(1).replace(",", "") + " · " + (rondas.length === 1 ? "ronda " + rondas[0] : "rondas " + rondas.join(" y ")),
+      diaLideres: "Los líderes de cada categoría",
+      diaLider: (cat, nombre, pts, mas) => cat + ": " + nombre + " · " + pts + (mas ? " (empatado con " + mas + (mas === 1 ? " más)" : " más)") : ""),
+      diaSorpresa: "La sorpresa del día",
+      diaSinSorpresa: "Hoy ganó siempre el de más Elo.",
+      diaDeleg: (pais, pts, de, g, e, p) => {
+        const cuenta = [[g, g === 1 ? " ganada" : " ganadas"], [e, " en tablas"], [p, p === 1 ? " perdida" : " perdidas"]].filter(([n]) => n).map(([n, s]) => n + s).join(", ");
+        return pais + " hoy: " + pts + " de " + de + " puntos" + (cuenta ? " (" + cuenta + ")" : "");
+      },
+      diaAntes: "La imagen del día sale cuando termine la ronda 1.",
+      diaTexto: (titulo) => titulo + " en el Centroamericano 2026:",
       locale: "es-CR",
     },
     en: {
@@ -110,6 +125,20 @@
       proyPodios: "The podiums",
       imgResumenSub: "Centroamericano 2026 · Costa Rica",
       imgMas: (n) => "and " + n + " more",
+      imgPuestos: (lista) => "Place round by round: " + lista,
+      diaBoton: "Today's image to share",
+      diaTermino: "How the day ended", diaVa: "How the day is going",
+      diaFecha: (fecha, rondas) => fecha + " · " + (rondas.length === 1 ? "round " + rondas[0] : "rounds " + rondas.join(" and ")),
+      diaLideres: "The leaders of each section",
+      diaLider: (cat, nombre, pts, mas) => cat + ": " + nombre + " · " + pts + (mas ? " (tied with " + mas + " more)" : ""),
+      diaSorpresa: "The upset of the day",
+      diaSinSorpresa: "Today the higher-rated player always won.",
+      diaDeleg: (pais, pts, de, g, e, p) => {
+        const cuenta = [[g, g === 1 ? " win" : " wins"], [e, e === 1 ? " draw" : " draws"], [p, p === 1 ? " loss" : " losses"]].filter(([n]) => n).map(([n, s]) => n + s).join(", ");
+        return pais + " today: " + pts + " of " + de + " points" + (cuenta ? " (" + cuenta + ")" : "");
+      },
+      diaAntes: "Today's image is ready once round 1 is over.",
+      diaTexto: (titulo) => titulo + " at the Centroamericano 2026:",
       locale: "en-US",
     },
   };
@@ -485,26 +514,37 @@
     ctx.fillStyle = "#40478f"; ctx.font = "700 40px " + letra;
     ctx.fillText([V.categoria(x.j.grupo), x.j.fed, x.j.elo ? "Elo " + x.j.elo : ""].filter(Boolean).join(" · "), 60, y + 10);
     y += 60;
-    // El recuadro de cómo va.
+    // El recuadro de cómo va (un poco más bajo si abajo va su puesto ronda a ronda).
+    const puestos = V.puestosDe(x);
+    const bajo = puestos.length > 0;
     ctx.fillStyle = "#f4f4fb";
-    const r = 36, cx = 60, cy = y, cw = 960, ch = 230;
+    const r = 36, cx = 60, cy = y, cw = 960, ch = bajo ? 200 : 220;
     ctx.beginPath(); ctx.moveTo(cx + r, cy); ctx.arcTo(cx + cw, cy, cx + cw, cy + ch, r); ctx.arcTo(cx + cw, cy + ch, cx, cy + ch, r);
     ctx.arcTo(cx, cy + ch, cx, cy, r); ctx.arcTo(cx, cy, cx + cw, cy, r); ctx.closePath(); ctx.fill();
     ctx.fillStyle = "#40478f"; ctx.fillRect(cx, cy + 30, 12, ch - 60);
     ctx.fillStyle = "#1e2453";
     const ronda = x.torneo.ronda || 0;
     ctx.font = "800 84px " + letra;
-    ctx.fillText(ronda && x.j._puestoGrupo ? tx.imgPuesto(x.j._puestoGrupo, x.j._deGrupo) : tx.imgInicial(x.j.no), cx + 50, cy + 110);
+    ctx.fillText(ronda && x.j._puestoGrupo ? tx.imgPuesto(x.j._puestoGrupo, x.j._deGrupo) : tx.imgInicial(x.j.no), cx + 50, cy + (bajo ? 100 : 110));
     ctx.font = "600 42px " + letra;
-    ctx.fillText(ronda ? tx.imgPuntos(x.j.puntos || "0", ronda) : tx.imgAntes, cx + 50, cy + 180);
-    y = cy + ch + 70;
-    // La última ronda (o la de hoy, si todavía no tiene resultado).
+    ctx.fillText(ronda ? tx.imgPuntos(x.j.puntos || "0", ronda) : tx.imgAntes, cx + 50, cy + (bajo ? 165 : 180));
+    y = cy + ch + (bajo ? 56 : 62);
+    // La última ronda (o la de hoy, si todavía no tiene resultado) y, abajo, su
+    // puesto después de cada ronda. Todo cabe antes de la dirección (y = 1010).
     const rondas = V.rondasDe(x);
     const ultima = rondas[rondas.length - 1];
     if (ultima) {
       const q = V.queHizo(ultima, V.textos());
-      ctx.fillStyle = "#1f2937"; ctx.font = "500 38px " + letra;
-      renglones(ctx, tx.imgRonda(ultima.ronda, q.que, q.rival), 960, 3).forEach((l) => { ctx.fillText(l, 60, y); y += 50; });
+      ctx.fillStyle = "#1f2937";
+      // Con la línea del puesto debajo, la ronda va un poco más chica.
+      const paso = puestos.length ? 46 : 50;
+      ctx.font = "500 " + (puestos.length ? 36 : 38) + "px " + letra;
+      renglones(ctx, tx.imgRonda(ultima.ronda, q.que, q.rival), 960, puestos.length ? (y + 2 * paso <= 940 ? 2 : 1) : 3).forEach((l) => { ctx.fillText(l, 60, y); y += paso; });
+    }
+    if (puestos.length && y <= 940) {
+      ctx.fillStyle = "#40478f"; ctx.font = "600 32px " + letra;
+      const texto = tx.imgPuestos(puestos.map((p) => V.puestoTexto(p)).join(" → "));
+      renglones(ctx, texto, 960, y <= 890 ? 2 : 1).forEach((l) => { ctx.fillText(l, 60, y + 4); y += 42; });
     }
     // Abajo: la dirección y la bandera.
     ctx.fillStyle = "#40478f"; ctx.font = "700 32px " + letra;
@@ -603,7 +643,152 @@
     }
   }
 
+  /* ---------------- «Así terminó el día» ---------------- */
+  // Las rondas del calendario de la página con su día (hora de Costa Rica):
+  // <tr data-ronda="N" data-inicio="AAAA-MM-DDTHH:MM">. Una sola copia de las horas.
+  function rondasDelCalendario() {
+    return [...document.querySelectorAll("#calendario tr[data-ronda][data-inicio]")]
+      .map((tr) => ({ ronda: Number(tr.dataset.ronda), dia: tr.dataset.inicio.slice(0, 10) }));
+  }
+  // La última ronda con todas sus partidas terminadas.
+  function rondaCerrada() {
+    const p = V.progresoRonda();
+    if (!p) return 0;
+    return p.hechas === p.total ? p.ronda : p.ronda - 1;
+  }
+  // Lo del día de la última ronda cerrada: sus rondas, los líderes de cada
+  // categoría después de ella, la sorpresa más grande y cómo le fue a la
+  // delegación elegida en este aparato.
+  function resumenDelDia() {
+    const R = rondaCerrada();
+    if (R < 1) return null;
+    const tx = T();
+    const cal = rondasDelCalendario();
+    const dia = (cal.find((c) => c.ronda === R) || {}).dia;
+    const rondas = dia ? cal.filter((c) => c.dia === dia && c.ronda <= R).map((c) => c.ronda).sort((a, b) => a - b) : [R];
+    const termino = !dia || !cal.some((c) => c.dia === dia && c.ronda > R);
+    const porGrupo = {};
+    V.jugadores().forEach((x) => { (porGrupo[x.j.grupo || "—"] = porGrupo[x.j.grupo || "—"] || []).push(x); });
+    const lideres = Object.keys(porGrupo).sort((a, b) => V.ordenGrupo(a) - V.ordenGrupo(b) || a.localeCompare(b)).map((g) => {
+      const lista = porGrupo[g];
+      const pts = V.puntosTras(lista.map((x) => x.j), R);
+      const max = Math.max(...pts);
+      const arriba = lista.filter((x, i) => pts[i] === max).sort((a, b) => a.j.puesto - b.j.puesto);
+      return tx.diaLider(V.categoria(g), nombreCompleto(arriba[0].j) + (arriba[0].j.fed ? " (" + arriba[0].j.fed + ")" : ""), tx.puntosCortos(V.fmtPuntos(max)), arriba.length - 1);
+    });
+    const s = sorpresas().find((y) => rondas.includes(y.o.ronda));
+    let delegacion = "";
+    const fed = V.delegacionGuardada();
+    if (fed) {
+      let pts = 0, de = 0, g = 0, e = 0, p = 0;
+      V.jugadores().filter((x) => x.j.fed === fed).forEach((x) => V.rondasDe(x).forEach((o) => {
+        if (!rondas.includes(o.ronda) || o.puntos === null) return;
+        de++; pts += o.puntos;
+        if (!o.bye) { if (o.puntos === 1) g++; else if (o.puntos === 0.5) e++; else p++; }
+      }));
+      if (de) delegacion = tx.diaDeleg(V.pais(fed), V.fmtPuntos(pts), de, g, e, p);
+    }
+    const fecha = dia ? new Date(dia + "T12:00:00-06:00").toLocaleDateString(tx.locale, { weekday: "long", day: "numeric", month: "long", timeZone: V.ZONA }) : "";
+    return {
+      titulo: termino ? tx.diaTermino : tx.diaVa,
+      fecha: fecha ? tx.diaFecha(fecha, rondas) : "",
+      lideres, sorpresa: s ? lineaSorpresa(s, tx) : "", delegacion, dia: dia || "ronda-" + R,
+    };
+  }
+
+  // 1080 de ancho y el alto que pidan las categorías. Los mismos colores
+  // medidos que las otras imágenes, y la marca de agua.
+  async function imagenDia(d) {
+    const tx = T();
+    if (document.fonts && document.fonts.ready) await document.fonts.ready;
+    const letra = getComputedStyle(document.body).fontFamily || "system-ui, sans-serif";
+    const medir = document.createElement("canvas").getContext("2d");
+    medir.font = "500 32px " + letra;
+    // Cada líder en hasta dos renglones: sus puntos no se cortan nunca.
+    const lideres = d.lideres.map((l) => renglones(medir, l, 930, 2));
+    const renglonesLideres = lideres.reduce((a, l) => a + l.length, 0);
+    medir.font = "500 34px " + letra;
+    const sorpresa = d.sorpresa ? renglones(medir, d.sorpresa, 960, 3) : [tx.diaSinSorpresa];
+    const deleg = d.delegacion ? renglones(medir, d.delegacion, 960, 2) : [];
+    const alto = Math.max(1080, 400 + 70 + renglonesLideres * 42 + lideres.length * 8 + 90 + sorpresa.length * 46 + (deleg.length ? 30 + deleg.length * 46 : 0) + 160);
+    const c = document.createElement("canvas");
+    c.width = 1080; c.height = alto;
+    const ctx = c.getContext("2d");
+    ctx.fillStyle = "#ffffff"; ctx.fillRect(0, 0, 1080, alto);
+    ctx.fillStyle = "#40478f"; ctx.fillRect(0, 0, 1080, 230);
+    ctx.fillStyle = "#ffffff";
+    ctx.font = "800 64px " + letra;
+    ctx.fillText(d.titulo, 60, 115);
+    ctx.font = "600 34px " + letra;
+    ctx.fillText(tx.imgResumenSub, 60, 175);
+    const mascota = await cargarImagen("img/centroamericano-2026/mascota.jpg");
+    if (mascota) {
+      ctx.save(); ctx.beginPath(); ctx.arc(950, 115, 90, 0, Math.PI * 2); ctx.closePath(); ctx.clip();
+      const lado = Math.min(mascota.width, mascota.height);
+      ctx.drawImage(mascota, (mascota.width - lado) / 2, (mascota.height - lado) / 2, lado, lado, 860, 25, 180, 180);
+      ctx.restore();
+      ctx.lineWidth = 6; ctx.strokeStyle = "#ffffff"; ctx.beginPath(); ctx.arc(950, 115, 90, 0, Math.PI * 2); ctx.stroke();
+    }
+    let y = 310;
+    if (d.fecha) { ctx.fillStyle = "#40478f"; ctx.font = "700 40px " + letra; ctx.fillText(renglones(ctx, d.fecha, 960, 1)[0], 60, y); }
+    y += 90;
+    ctx.fillStyle = "#1e2453"; ctx.font = "800 44px " + letra;
+    ctx.fillText(tx.diaLideres, 60, y);
+    y += 62;
+    ctx.fillStyle = "#1f2937"; ctx.font = "500 32px " + letra;
+    lideres.forEach((renglon) => {
+      renglon.forEach((l, i) => { ctx.fillText(l, i ? 90 : 60, y); y += 42; });
+      y += 8;
+    });
+    y += 40;
+    ctx.fillStyle = "#1e2453"; ctx.font = "800 44px " + letra;
+    ctx.fillText(tx.diaSorpresa, 60, y);
+    y += 58;
+    ctx.fillStyle = "#1f2937"; ctx.font = "500 34px " + letra;
+    sorpresa.forEach((l) => { ctx.fillText(l, 60, y); y += 46; });
+    if (deleg.length) {
+      y += 30;
+      ctx.fillStyle = "#40478f"; ctx.font = "700 34px " + letra;
+      deleg.forEach((l) => { ctx.fillText(l, 60, y); y += 46; });
+    }
+    ctx.fillStyle = "#40478f"; ctx.font = "700 32px " + letra;
+    ctx.fillText(URL_PAGINA, 60, alto - 70);
+    [["#1e4c8a", alto - 40], ["#ffffff", alto - 30], ["#ce1328", alto - 22], ["#ffffff", alto - 14], ["#1e4c8a", alto - 8]].forEach(([color, yy], i, arr) => {
+      ctx.fillStyle = color; ctx.fillRect(0, yy, 1080, (arr[i + 1] ? arr[i + 1][1] : alto) - yy);
+    });
+    if (window.TablaImagen && window.TablaImagen.marcar) await window.TablaImagen.marcar(c);
+    return new Promise((ok, mal) => c.toBlob((b) => (b ? ok(b) : mal(new Error("sin imagen"))), "image/png"));
+  }
+
+  async function compartirDia(boton) {
+    const estado = $("imagen-dia-estado");
+    if (boton) boton.disabled = true;
+    if (estado) estado.textContent = "";
+    try {
+      await V.pedir();
+      const d = resumenDelDia();
+      if (!d) { if (estado) estado.textContent = T().diaAntes; return; }
+      const blob = await imagenDia(d);
+      await compartirBlob(blob, "centroamericano-2026-" + d.dia + ".png", T().diaTexto(d.titulo) + " https://" + URL_PAGINA);
+    } catch (e) {
+      if (estado) estado.textContent = V.datos() ? T().imagenError : T().error;
+    } finally {
+      if (boton) boton.disabled = false;
+    }
+  }
+
   /* ---------------- arranque ---------------- */
+  const botonDia = $("imagen-dia");
+  if (botonDia) {
+    const rotular = () => {
+      const emoji = el("span", "", "📸 ");
+      emoji.setAttribute("aria-hidden", "true");
+      botonDia.replaceChildren(emoji, document.createTextNode(T().diaBoton));
+    };
+    rotular();
+    document.addEventListener("cac-idioma", rotular);
+    botonDia.addEventListener("click", () => compartirDia(botonDia));
+  }
   // Cada ventana se llena al abrirse (js/ventana-enlace.js las abre con su
   // enlace o con la dirección) y se pone al día con los datos nuevos.
   function alAbrir(id, pintar, alCerrar) {
@@ -650,5 +835,5 @@
   document.addEventListener("cac-datos", repintar);
   document.addEventListener("cac-idioma", repintar);
 
-  window.CentroamericanoTablas = { compartirJugador, imagenJugador, compartirResumen, imagenResumen };
+  window.CentroamericanoTablas = { compartirJugador, imagenJugador, compartirResumen, imagenResumen, resumenDelDia, imagenDia, compartirDia };
 })();
