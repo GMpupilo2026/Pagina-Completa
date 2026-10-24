@@ -1789,6 +1789,10 @@ html.dark .comparar-serie-3 { background: #199e70; }
 }
 
 /* El globo de «¡CUAC CUAC!» va pegado al pato. */
+/* El pato invasor: lo mueve js/bromas.js (Web Animations) por encima del
+   tablero; el huevo y el pollito, en el centro. */
+.broma-pato { position: absolute; left: 0; top: 0; line-height: 1; will-change: transform, filter; }
+.broma-huevo { position: absolute; line-height: 1; }
 .broma-cuac {
   position: absolute; left: -10%; top: -18%; white-space: nowrap;
   padding: 0.25em 0.6em; border-radius: 1em; background: #ffffff; color: #102a43; border: 3px solid #102a43;

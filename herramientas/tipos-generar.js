@@ -65,7 +65,7 @@ const PUZZLES = Object.keys(TEMAS.puzzles).sort((a, b) => hash(a) - hash(b)).map
    usan el motor: los demás bancos no se vuelven a analizar,
    así que ningún id cambia y nadie pierde sus estrellas. */
 const SOLO = process.argv.includes("--solo") ? process.argv[process.argv.indexOf("--solo") + 1] : null;
-const MOTORES = SOLO === "con-lo-justo" || SOLO === "construye" ? [] : Array.from({ length: Math.max(1, Math.min(4, require("os").cpus().length)) }, () => new Motor());
+const MOTORES = SOLO === "con-lo-justo" || SOLO === "construye" || SOLO === "conteo" ? [] : Array.from({ length: Math.max(1, Math.min(4, require("os").cpus().length)) }, () => new Motor());
 let libre = MOTORES.slice();
 const cola = [];
 function conMotor(fn) {
@@ -730,6 +730,203 @@ function generarIntercambios(reales) {
         partida: pz.game || null,
       });
     });
+  }
+  return out;
+}
+
+/* ---------- 9 bis. Conteo ----------
+ * Contar ataques y defensas para decidir si capturar (y, si te capturaron, si
+ * recapturar). Sin motor: lo que se promete es la cuenta de material de
+ * M.intercambio (js/tipos-reglas-mas.js), la misma que juega la página y que
+ * vuelve a correr el verificador. Catorce niveles:
+ *
+ *   una casilla, hondo cada vez más:
+ *     1 sin defensa (tocar la pieza)         2 contar atacantes y defensores
+ *     3 dos capturas   4 tres capturas   5 cuatro capturas   6 cinco o más
+ *     7 rayos X        8 clavadas
+ *   te capturaron:
+ *     9 recapturar (cadena corta)    10 recapturar en cadena larga
+ *   varias casillas a la vez (una sola gana):
+ *     11 dos casillas   12 tres a cinco   13 con una cadena larga
+ *     14 ¿hay alguna que gane? (puede que ninguna)
+ */
+const OBJETIVO_CONTEO = { 1: 60, 2: 60, 3: 60, 4: 60, 5: 60, 6: 30, 7: 60, 8: 60, 9: 60, 10: 40, 11: 60, 12: 60, 13: 40, 14: 60 };
+function generarConteo(reales) {
+  const pool = {};
+  for (let n = 1; n <= 14; n++) pool[n] = [];
+  const llena = (n) => pool[n].length >= OBJETIVO_CONTEO[n];
+  const usadasUna = new Set(), usadasMulti = new Set();
+  const piezaTxt = (tab, j) => R.NOMBRE[tab[j].t] + " en " + R.sq(j);
+  for (const { fen, pz } of barajar(reales, "conteo")) {
+    if (Object.values(OBJETIVO_CONTEO).every((_, i) => llena(i + 1))) break;
+    const g = new Chess(fen);
+    if (g.in_check()) continue;
+    const turno = fen.split(" ")[1];
+    const cs = M.capturas(Chess, fen);
+    if (cs) {
+      const tab = R.tablero(fen);
+      // 1. una sola pieza se puede comer gratis, y nadie la defiende
+      const gratis = cs.filter((c) => c.pasos === 1);
+      if (!llena(1) && gratis.length === 1 && gratis[0].x.defienden === 0) {
+        pool[1].push({ tipo: "toca", fen, casilla: gratis[0].casilla, cs });
+      }
+      // 2 a 8. una casilla
+      for (const c of barajar(cs, "una" + fen)) {
+        const x = c.x;
+        if (c.pasos < 2 || usadasUna.has(fen)) continue;
+        const llano = !x.rayos && !x.clavada;
+        let n = 0;
+        if (x.clavada) n = 8;
+        else if (x.rayos) n = 7;
+        else if (c.pasos === 2) n = 3;
+        else if (c.pasos === 3) n = 4;
+        else if (c.pasos === 4) n = 5;
+        else n = 6;
+        // contar: solo cadenas «limpias» donde el conteo directo es el de la cadena
+        if (llano && !x.rey && x.atacan + x.defienden >= 3 && !llena(2) && !usadasUna.has(fen + "c")) {
+          pool[2].push({ tipo: "cuenta", fen, casilla: c.casilla, x });
+          usadasUna.add(fen + "c");
+        }
+        if (!llena(n) && !usadasUna.has(fen)) {
+          pool[n].push({ tipo: "decide", fen, casilla: c.casilla, x });
+          usadasUna.add(fen);
+        }
+      }
+      // 11 a 14. varias casillas
+      if (cs.length >= 2 && cs.length <= 5 && !usadasMulti.has(fen)) {
+        const ganan = cs.filter((c) => c.valor > 0);
+        const hondo = Math.max(...cs.map((c) => c.pasos)) >= 4;
+        let n = 0;
+        if (ganan.length === 1) n = hondo ? 13 : cs.length === 2 ? 11 : 12;
+        if ((ganan.length <= 1) && !llena(14) && (ganan.length === 0 || pool[14].filter((e) => e.gana).length < pool[14].filter((e) => !e.gana).length + 6)) {
+          pool[14].push({ tipo: "elige", fen, cs, gana: ganan.length === 1 });
+          usadasMulti.add(fen);
+        } else if (n && !llena(n)) {
+          pool[n].push({ tipo: "elige", fen, cs, gana: true });
+          usadasMulti.add(fen);
+        }
+      }
+    }
+    // 9 y 10. te capturaron una pieza
+    if (!llena(9) || !llena(10)) {
+      for (const m of barajar(g.moves({ verbose: true }).filter((q) => q.captured && !q.promotion && !q.flags.includes("e")), "rec" + fen)) {
+        const q = new Chess(fen); q.move(m);
+        if (q.in_check() || q.game_over()) continue;
+        const r = M.recuperar(Chess, q.fen(), m.to, VALOR[m.captured]);
+        if (!r) continue;
+        const n = r.pasos.length >= 3 ? 10 : (!r.rayos && !r.clavada ? 9 : 0);
+        if (n && !llena(n) && !usadasUna.has("r" + q.fen())) {
+          usadasUna.add("r" + q.fen());
+          pool[n].push({ tipo: "recupera", fen: q.fen(), fenAntes: fen, m, casilla: m.to, perdida: VALOR[m.captured], r });
+          break;
+        }
+      }
+    }
+  }
+  const signo = (v) => (v > 0 ? "g" : v < 0 ? "p" : "i");
+  /* Que no sean todas «gana»: se reparten entre ganar, igualar y perder. */
+  const repartir = (lista, valor) => {
+    const grupos = { g: [], i: [], p: [] };
+    lista.forEach((e) => grupos[signo(valor(e))].push(e));
+    const out = [];
+    for (let k = 0; out.length < POR_NIVEL && k < 90; k++) {
+      const gr = ["g", "i", "p"][k % 3];
+      if (grupos[gr].length) out.push(grupos[gr].shift());
+    }
+    return out;
+  };
+  const numericas = (fen, v, extra) => {
+    const set = new Set([v]);
+    extra.concat([v + 2, v - 2, v + 3, v - 3, 0, v + 1, v - 1]).forEach((o) => { if (set.size < 4) set.add(o); });
+    return barajar([...set], "op" + fen).map(String);
+  };
+  const nombreDe = (tab, s) => R.NOMBRE[tab[R.idx(s)].t];
+  const out = [];
+  const nuevo = (n, e, campos) => out.push(Object.assign({ id: "cnt-" + n + "-" + hash(e.fen + (e.casilla || "")).toString(36), nivel: n, fen: e.fen }, campos));
+  for (let n = 1; n <= 14; n++) {
+    if (n === 1) {
+      barajar(pool[1], "p1").slice(0, POR_NIVEL).forEach((e) => {
+        const tab = R.tablero(e.fen), mueve = e.fen.split(" ")[1];
+        const c = e.cs.find((q) => q.casilla === e.casilla);
+        const otras = e.cs.filter((q) => q.casilla !== e.casilla).map((q) =>
+          "En " + q.casilla + " hay " + R.NOMBRE[q.pieza] + ": la atacan " + q.x.atacan + " y la defienden " + q.x.defienden + ".");
+        nuevo(1, e, {
+          tipo: "toca", casilla: e.casilla,
+          resumen: "Encontrar la pieza sin defensa",
+          respuesta: ["La " + R.NOMBRE[c.pieza] + " de " + e.casilla + " no la defiende nadie: " + R.sanEs(c.x.jugadas[0]) + " la gana gratis (" + c.valor + (c.valor === 1 ? " punto" : " puntos") + ")."].concat(otras),
+        });
+      });
+    } else if (n === 2) {
+      barajar(pool[2], "p2").slice(0, POR_NIVEL).forEach((e) => {
+        const tab = R.tablero(e.fen), ic = R.idx(e.casilla), mueve = e.fen.split(" ")[1];
+        const A = M.atacantes(tab, mueve, ic), D = M.atacantes(tab, R.otro(mueve), ic);
+        const a = e.x.atacan, d = e.x.defienden;
+        const cand = [[a - 1, d], [a + 1, d], [a, d - 1], [a, d + 1], [d, a], [a + 1, d + 1], [a - 1, d - 1]]
+          .filter(([p, q]) => p >= 0 && q >= 0 && !(p === a && q === d) && p + q > 0);
+        const ops = [[a, d]];
+        barajar(cand, "ops" + e.fen).forEach(([p, q]) => { if (ops.length < 4 && !ops.some((o) => o[0] === p && o[1] === q)) ops.push([p, q]); });
+        nuevo(2, e, {
+          tipo: "cuenta", casilla: e.casilla, atacan: a, defienden: d,
+          opciones: barajar(ops, "oc" + e.fen).map(([p, q]) => p + "-" + q),
+          resumen: "Contar en " + e.casilla + " (" + nombreDe(tab, e.casilla) + ")",
+          respuesta: ["Atacan " + a + " (" + A.map((j) => piezaTxt(tab, j)).join(", ") + ") y defienden " + d + " (" + D.map((j) => piezaTxt(tab, j)).join(", ") + ").",
+            "Cadena si se cambia todo: " + e.x.pasos.map((p) => R.sanEs(p.san)).join(" ") + "; " + M.textoIntercambio(e.x.valor, mueve) + "."],
+        });
+      });
+    } else if (n >= 3 && n <= 8) {
+      repartir(pool[n], (e) => e.x.valor).forEach((e) => {
+        const x = e.x, mueve = e.fen.split(" ")[1], tab = R.tablero(e.fen);
+        const todas = x.pasos.reduce((s2, p, i) => s2 + (i % 2 === 0 ? p.gana : -p.gana), 0);   // si nadie para
+        const modo = n <= 4 ? "clase" : "numero";
+        nuevo(n, e, {
+          tipo: "decide", casilla: e.casilla, modo, valor: x.valor, atacan: x.atacan, defienden: x.defienden,
+          opciones: modo === "clase" ? ["gana", "igual", "pierde"] : numericas(e.fen, x.valor, [todas]),
+          jugadas: x.jugadas, todas: x.pasos.map((p) => p.san), rayos: x.rayos, clavada: x.clavada,
+          resumen: "Conteo en " + e.casilla + " (" + nombreDe(tab, e.casilla) + "), " + x.pasos.length + " capturas",
+          respuesta: ["Atacan " + x.atacan + " y defienden " + x.defienden + (x.rayos ? " (una pieza entra desde atrás)" : "") + (x.clavada ? " (una pieza ataca pero está clavada y no puede capturar)" : "") + ".",
+            "Empiezan las " + COLOR_ES[mueve] + ": " + M.textoIntercambio(x.valor, mueve) + ".",
+            "Lo que conviene: " + x.jugadas.map(R.sanEs).join(" ") + (x.jugadas.length < x.pasos.length ? " y ahí se para." : "."),
+            "Si nadie parara: " + x.pasos.map((p) => R.sanEs(p.san)).join(" ") + "."],
+        });
+      });
+    } else if (n === 9 || n === 10) {
+      repartir(pool[n], (e) => e.r.neto).forEach((e) => {
+        const r = e.r, tab = R.tablero(e.fen), mueve = e.fen.split(" ")[1];
+        const todas = r.pasos.reduce((s2, p, i) => s2 + (i % 2 === 0 ? p.gana : -p.gana), 0) - r.perdida;
+        const modo = n === 9 ? "clase" : "numero";
+        nuevo(n, e, {
+          tipo: "recupera", casilla: e.casilla, modo, fenAntes: e.fenAntes, de: e.m.from, a: e.m.to, jugada: e.m.san,
+          capturada: e.m.captured, perdida: r.perdida, valor: r.valor, neto: r.neto, atacan: r.atacan, defienden: r.defienden,
+          opciones: modo === "clase" ? ["gana", "igual", "pierde"] : numericas(e.fen, r.neto, [-r.perdida, r.valor, todas]),
+          jugadas: r.jugadas, todas: r.pasos.map((p) => p.san), rayos: r.rayos, clavada: r.clavada,
+          resumen: "Recuperar en " + e.casilla + " (te capturaron " + (r.perdida === 1 ? "1 punto" : r.perdida + " puntos") + ")",
+          respuesta: ["Las " + COLOR_ES[R.otro(mueve)] + " capturaron con " + R.sanEs(e.m.san) + " y se llevaron " + r.perdida + (r.perdida === 1 ? " punto." : " puntos."),
+            "Si recapturas y cada bando sigue solo mientras le conviene: " + r.jugadas.map(R.sanEs).join(" ") + (r.jugadas.length < r.pasos.length ? " y ahí se para." : "."),
+            "Desde antes de esa captura el balance queda en " + (r.neto > 0 ? "+" + r.neto : r.neto === 0 ? "0 (recuperas justo lo perdido)" : String(r.neto)) + "."],
+        });
+      });
+    } else {
+      // 11 a 14: varias casillas
+      let lista = pool[n];
+      if (n === 14) {
+        const con = lista.filter((e) => e.gana), sin = lista.filter((e) => !e.gana);
+        lista = [];
+        for (let k = 0; lista.length < POR_NIVEL && (con.length || sin.length); k++) { const q = k % 2 ? con : sin; if (q.length) lista.push(q.shift()); }
+      } else lista = barajar(lista, "p" + n).slice(0, POR_NIVEL);
+      lista.forEach((e) => {
+        const mueve = e.fen.split(" ")[1];
+        const ganadora = e.cs.find((c) => c.valor > 0);
+        const casillas = e.cs.map((c) => c.casilla);
+        const opciones = barajar(casillas.concat(n === 14 ? ["ninguna"] : []), "ec" + e.fen);
+        nuevo(n, e, {
+          tipo: "elige", opciones, correcta: ganadora ? ganadora.casilla : "ninguna",
+          candidatas: e.cs.map((c) => ({ casilla: c.casilla, pieza: c.pieza, valor: c.valor, pasos: c.pasos })),
+          resumen: casillas.length + " casillas para capturar",
+          respuesta: [ganadora ? "Solo gana la captura en " + ganadora.casilla + " (" + R.NOMBRE[ganadora.pieza] + "): " + M.textoIntercambio(ganadora.valor, mueve) + "." : "Ninguna captura gana material: en todas, quien empieza queda igual o pierde."]
+            .concat(e.cs.map((c) => "En " + c.casilla + " (" + R.NOMBRE[c.pieza] + "), " + c.x.atacan + " contra " + c.x.defienden + ", " + c.pasos + (c.pasos === 1 ? " captura" : " capturas") + ": " + M.textoIntercambio(c.valor, mueve) + ".")),
+        });
+      });
+    }
   }
   return out;
 }
@@ -1526,8 +1723,17 @@ if (SOLO === "aguanta") {
   const c = datos.construye.reduce((m, x) => { m[x.nivel] = (m[x.nivel] || 0) + 1; return m; }, {});
   console.log("construye     ", JSON.stringify(c));
   process.exit(0);
+} else if (SOLO === "conteo") {
+  // Sin motor: la cuenta de material la hace chess.js (js/tipos-reglas-mas.js).
+  const datos = JSON.parse(fs.readFileSync(SALIDA, "utf8"));
+  console.log("Conteo (tarda unos minutos: recorre todas las posiciones)…");
+  datos.conteo = generarConteo(posicionesReales(30000));
+  fs.writeFileSync(SALIDA, JSON.stringify(datos) + "\n");
+  const c = datos.conteo.reduce((m, x) => { m[x.nivel] = (m[x.nivel] || 0) + 1; return m; }, {});
+  console.log("conteo        ", JSON.stringify(c));
+  process.exit(0);
 } else if (SOLO) {
-  if (SOLO !== "con-lo-justo") { console.error("--solo solo sabe rehacer «con-lo-justo», «construye», «aguanta», «remata», «tiempo», «tablas» o «ahogado»."); process.exit(2); }
+  if (SOLO !== "con-lo-justo") { console.error("--solo solo sabe rehacer «con-lo-justo», «construye», «conteo», «aguanta», «remata», «tiempo», «tablas» o «ahogado»."); process.exit(2); }
   const datos = JSON.parse(fs.readFileSync(SALIDA, "utf8"));
   console.log("Con lo justo (tablas de finales, tarda un par de minutos)…");
   datos["con-lo-justo"] = generarConLoJusto();
@@ -1559,6 +1765,8 @@ if (!SOLO) (async () => {
   const barrido = generarBarrido(reales);
   console.log("Intercambios…");
   const intercambios = generarIntercambios(reales);
+  console.log("Conteo…");
+  const conteo = generarConteo(posicionesReales(30000));
   console.log("Constrúyela tú…");
   const construye = generarConstruye(reales);
   console.log("Rey y peón…");
@@ -1582,7 +1790,7 @@ if (!SOLO) (async () => {
   const datos = {
     fuente: "Posiciones de partidas reales de la base abierta de Lichess (CC0) y de js/aperturas-lineas.js; finales sorteados con su distancia exacta al mate. Generado por herramientas/tipos-generar.js: no se edita a mano.",
     detective, amenaza, descarte, diferencias, balanza, fotografia, "con-lo-justo": conLoJusto,
-    barrido, intercambios, construye, peones, maestro, apertura, ruta, aguanta, remata, tiempo, tablas,
+    barrido, intercambios, conteo, construye, peones, maestro, apertura, ruta, aguanta, remata, tiempo, tablas,
   };
   fs.writeFileSync(SALIDA, JSON.stringify(datos) + "\n");
   const cuenta = (l) => l.reduce((m, x) => { m[x.nivel] = (m[x.nivel] || 0) + 1; return m; }, {});

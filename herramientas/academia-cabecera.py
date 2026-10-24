@@ -397,16 +397,17 @@ def poner_tanda(ruta, s):
             + TANDA_FIN + s[cierre:])
 
 
-# Las bromas entre compañeros (js/bromas.js): solo en el panel, la tienda de
-# puntos y las páginas de Entrenamiento. Nunca en un examen, en la clase en
-# vivo ni en un torneo, que es donde una broma molesta de verdad. Ver «Retos,
-# marcador, regalos y bromas» en docs/decisiones/puntos-y-premios.md.
+# Las bromas entre compañeros (js/bromas.js): en el panel, la tienda de
+# puntos, las páginas de Entrenamiento y la clase en vivo (ahí solo si el profe
+# las enciende, js/clase-bromas.js). Nunca en un examen ni en un torneo. Ver
+# «Dónde cae una broma y la clase en vivo» en docs/decisiones/puntos-y-premios.md.
 BROMAS_INICIO = "<!-- bromas: inicio -->"
 BROMAS_FIN = "<!-- bromas: fin -->"
 
 
 def lleva_bromas(ruta):
-    return ruta in ("clases.html", "puntos-tienda.html") or ruta.startswith("entreno/")
+    return (ruta in ("clases.html", "puntos-tienda.html", "sesion.html")
+            or (ruta.startswith("entreno/") and ruta != "entreno/diagnostico.html"))
 
 
 def poner_bromas(ruta, s):

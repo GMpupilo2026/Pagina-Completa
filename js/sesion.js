@@ -4484,7 +4484,7 @@
         const RPC_DE_LECTURA = new Set(["mis_clases", "premios_de_alumno", "trofeos_de", "resultados_de_la_pregunta",
             "nombres_de_jugadores", "alumnos_del_profesor", "resumen_de_la_clase", "salida_de_la_clase", "resumen_del_mes",
             "puntos_de_la_clase", "puntos_del_mes", "puntos_de_tandas", "puntos_de_tandas_del_mes",
-            "puntos_de_habilidades", "puntos_de_habilidades_del_mes"]);
+            "puntos_de_habilidades", "puntos_de_habilidades_del_mes", "ventajas_perdidas", "ventajas_perdidas_del_mes"]);
         function nadaQueMandar() {
             const p = Promise.resolve({ data: null, error: null });
             const cadena = new Proxy({}, { get: (_, k) => (k === "then" ? p.then.bind(p) : k === "catch" ? p.catch.bind(p) : () => cadena) });
@@ -5429,7 +5429,7 @@
         }
 
         // ---------- Tipos de entrenamiento (cascada tipo → nivel → ejercicio) ----------
-        // Los mismos diecinueve de entreno/tipos.html, con las mismas posiciones
+        // Los mismos veinte de entreno/tipos.html, con las mismas posiciones
         // (entreno/data/tipos.json) y el mismo catálogo (js/tipos-catalogo.js): el
         // profesor los jala a la clase sin salir de la sesión. Toda posición entra por
         // aplicarPosicionEnClase(), como Táctica y Archivos. Lo que es la RESPUESTA
@@ -7265,6 +7265,7 @@
             if (practicaAcc) practicaAcc.actualizar();
             if (practicaRecienAbierta) enfocarCuandoSeVea(document.getElementById("practice-titulo"));
             updatePracticeCardInteractivity();
+            evaluarPosicionDeSalida();
             // Recuperación automática: si al entrar (o recargar la página a mitad de una
             // partida) resulta que le toca mover al motor y no al alumno, es que se había
             // quedado esperando una respuesta que nunca llegó — se la vuelve a pedir sin
@@ -7279,6 +7280,7 @@
             const retryEngineBtn = document.getElementById("practice-retry-engine-btn");
             const intentosEl = document.getElementById("practice-intentos-alumno");
             if (intentosEl) intentosEl.textContent = practiceIntentosTexto();
+            pintarAvisoVentaja();
             if (!myPracticeGame || myPracticeGame.status !== "playing") {
                 if (practiceBoard) practiceBoard.setInteractive(false);
                 statusEl.textContent = myPracticeGame ? practiceStatusLabel(myPracticeGame.status) : "";
@@ -7318,7 +7320,37 @@
             const score = await PracticeEngine.evaluate(fen);
             if (!score || !myPracticeGame) return;
             if (myPracticeGame.id !== gameIdAtMove || myPracticeGame.attempts !== attemptsAtMove) return;
-            await savePracticeGameRow({ eval_cp: scoreToWhiteCp(score, turnAtEval) });
+            const cp = scoreToWhiteCp(score, turnAtEval);
+            await savePracticeGameRow({ eval_cp: cp });
+            // La mayor ventaja del intento la lleva la base (ventaja_max_cp); esta copia
+            // solo sirve para avisarle al alumno sin volver a pedir la fila.
+            const mia = myPracticeGame.student_color === "b" ? -cp : cp;
+            myPracticeGame.ventaja_max_cp = Math.max(myPracticeGame.ventaja_max_cp == null ? -Infinity : myPracticeGame.ventaja_max_cp, mia);
+            pintarAvisoVentaja();
+        }
+
+        /* La posición de salida también se evalúa: si el ejercicio arranca con más de 3
+           de ventaja y la primera jugada la tira, la ventaja ya estaba. Solo al empezar
+           un intento (sin jugadas y sin evaluación todavía). */
+        function evaluarPosicionDeSalida() {
+            if (!myPracticeGame || !latestPracticeSession || myPracticeGame.status !== "playing") return;
+            if ((myPracticeGame.moves || []).length || myPracticeGame.eval_cp != null) return;
+            updatePracticeGameEval(latestPracticeSession.fen, myPracticeGame.id, myPracticeGame.attempts || 1);
+        }
+
+        /* Perder una ventaja de más de 3 (sin ganar) resta 350 puntos de la clase,
+           una vez por ejercicio: lo cuenta la base (ventajas_perdidas). Se le dice
+           al alumno mientras la tiene, para que la cuide, y si la perdió. */
+        function pintarAvisoVentaja() {
+            const el = document.getElementById("practice-ventaja-aviso");
+            if (!el) return;
+            const g = myPracticeGame;
+            const tuvo = !!(g && g.ventaja_max_cp != null && g.ventaja_max_cp > 300);
+            el.textContent = !tuvo ? ""
+                : g.status === "playing" ? "Llegaste a tener más de 3 de ventaja: si no ganas, se te restan 350 puntos de la clase."
+                : g.status === "checkmate_win" ? ""
+                : "Tenías más de 3 de ventaja y no ganaste: se te restan 350 puntos de la clase (una vez por ejercicio).";
+            el.hidden = !el.textContent;
         }
 
         // true si la última consulta al motor se quedó sin jugada (timeout interno de
@@ -7455,11 +7487,12 @@
                 return;
             }
             // La base borra la ayuda al reintentar: era de la partida anterior.
-            myPracticeGame = Object.assign({}, myPracticeGame, { ayuda: null, pide_ayuda_at: null, respuesta: null });
+            myPracticeGame = Object.assign({}, myPracticeGame, { ayuda: null, pide_ayuda_at: null, respuesta: null, ventaja_max_cp: null });
             practiceBoard.loadMoves([], latestPracticeSession.fen);
             pintarAyudaAlumno();
             pintarPedidoAlumno();
             updatePracticeCardInteractivity();
+            evaluarPosicionDeSalida();
         }
 
         // ---------- La ayuda del profe, en la tarjeta del alumno ----------
@@ -7840,6 +7873,12 @@
             if (isTeacher) { await loadChatStudents(); } else { await loadChatMessages(); }
             subscribeChat();
             if (meSacaron) return;
+            // Las bromas entre compañeros: apagadas hasta que el profe las
+            // encienda (js/clase-bromas.js; lo que se ve, js/bromas.js).
+            if (window.ClaseBromas && !modoProyector && !modoControl && !vistaPrevia) {
+                ClaseBromas.montar({ sb, profe: boardOwnerId, yo: profile.id,
+                    esProfe: isTeacher && profile.role === "profesor", esAlumno: !isTeacher });
+            }
 
             document.getElementById("loading").classList.add("hidden");
             document.getElementById("app").classList.remove("hidden");

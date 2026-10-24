@@ -210,10 +210,10 @@ ok("la página carga el cliente de Supabase antes que su código en vivo", html.
     // La ficha de afuera, en Torneos, lleva la cara del torneo; las demás salas, la de siempre.
     const ctx3 = await nav.newContext({ viewport: { width: 1280, height: 900 }, serviceWorkers: "block" });
     const sala = (clave, nombre) => ({ id: clave, clave, nombre, descripcion: "", emoji: "🏆", tipo: "enlaces", lichess_id: null, enlaces: [{ url: "https://ajedrez-integral.com/" + PAGINA, texto: "Toda la información del torneo" }, { url: "https://s1.chess-results.com/x", texto: "Resultados en vivo" }], pizarras: null, video_url: null, quiniela: false, tema: "cine", visible: true, orden: 0 });
-    await ctx3.route(/supabase\.co\/rest\/v1\/salas_torneo/, (r) => r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify([sala("centroamericano-2026", "XXI Festival"), sala("utn", "Torneo UTN"), { ...sala("cenfotec", "Desafío Mentes Maestras"), tipo: "lichess", lichess_id: "s7NfNv6H", enlaces: [{ url: "https://s1.chess-results.com/y", texto: "Posiciones" }] }]) }));
+    await ctx3.route(/supabase\.co\/rest\/v1\/salas_torneo/, (r) => r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify([sala("centroamericano-2026", "XXI Festival"), sala("otra", "Otro torneo"), { ...sala("utn", "Torneo UTN 2026"), tipo: "lichess", lichess_id: "2zDqylwI" }, { ...sala("cenfotec", "Desafío Mentes Maestras"), tipo: "lichess", lichess_id: "s7NfNv6H", enlaces: [{ url: "https://s1.chess-results.com/y", texto: "Posiciones" }] }]) }));
     const p3 = await ctx3.newPage();
     await p3.goto(BASE + "/torneos-en-vivo.html", { waitUntil: "load" });
-    await p3.waitForSelector('#salas-lista li[data-sala="utn"]');
+    await p3.waitForSelector('#salas-lista li[data-sala="otra"]');
     const fichaSala = await p3.evaluate(() => {
       const mira = (li) => {
         const m = li.querySelector(".cac-sala-imagen");
@@ -221,8 +221,11 @@ ok("la página carga el cliente de Supabase antes que su código en vivo", html.
         return { fondo: getComputedStyle(li).backgroundImage, mascota: !!(m && m.checkVisibility() && m.complete && m.naturalWidth > 0 && m.getAttribute("aria-hidden") === "true" && m.alt === ""), botones };
       };
       const cft = document.querySelector('li[data-sala="cenfotec"]');
-      const logo = cft.querySelector(".cft-sala-imagen");
-      return { cac: mira(document.querySelector('li[data-sala="centroamericano-2026"]')), otra: mira(document.querySelector('li[data-sala="utn"]')),
+      const logo = cft.querySelector(".u-sala-imagen");
+      return { cac: mira(document.querySelector('li[data-sala="centroamericano-2026"]')), otra: mira(document.querySelector('li[data-sala="otra"]')),
+        utn: (() => { const u = document.querySelector('li[data-sala="utn"]'); const i = u.querySelector(".u-sala-imagen");
+          return { fondo: getComputedStyle(u).backgroundImage, logo: !!(i && i.checkVisibility() && i.complete && i.naturalWidth > 0 && i.alt === ""),
+            boton: [getComputedStyle(u.querySelector("a")).backgroundColor, getComputedStyle(u.querySelector("a")).color] }; })(),
         cft: { fondo: getComputedStyle(cft).backgroundImage, logo: !!(logo && logo.checkVisibility() && logo.complete && logo.naturalWidth > 0 && logo.getAttribute("aria-hidden") === "true" && logo.alt === ""),
           emoji: [...cft.querySelectorAll("p")].some((p) => p.textContent === "🏆"),
           botones: [...cft.querySelectorAll("a")].map((a) => [a.textContent.split(" de ")[0], getComputedStyle(a).backgroundColor, getComputedStyle(a).color]) } };
@@ -231,6 +234,8 @@ ok("la página carga el cliente de Supabase antes que su código en vivo", html.
     ok("y sus botones: el primero rojo, el resto blancos", JSON.stringify(fichaSala.cac.botones) === JSON.stringify(["rgb(206, 19, 40)", "rgb(255, 255, 255)"]), JSON.stringify(fichaSala.cac.botones));
     ok("la del Desafío Mentes Maestras lleva el azul de CENFOTEC y su logo, sin el emoji", /gradient/.test(fichaSala.cft.fondo) && /35, 48, 101/.test(fichaSala.cft.fondo) && fichaSala.cft.logo && !fichaSala.cft.emoji, JSON.stringify(fichaSala.cft));
     ok("y sus botones: «Entrar a la sala» celeste con letra oscura, los enlaces blancos", JSON.stringify(fichaSala.cft.botones) === JSON.stringify([["Entrar a la sala", "rgb(35, 172, 244)", "rgb(20, 28, 64)"], ["Posiciones", "rgb(255, 255, 255)", "rgb(35, 48, 101)"]]), JSON.stringify(fichaSala.cft.botones));
+    ok("la de la UTN lleva su azul, su logo y «Entrar a la sala» en el celeste de sus puntos con letra oscura", /25, 58, 112/.test(fichaSala.utn.fondo) && fichaSala.utn.logo
+      && JSON.stringify(fichaSala.utn.boton) === JSON.stringify(["rgb(191, 207, 232)", "rgb(15, 42, 85)"]), JSON.stringify(fichaSala.utn));
     ok("las demás salas siguen con su ficha de siempre", fichaSala.otra.fondo === "none" && !fichaSala.otra.mascota, JSON.stringify(fichaSala.otra));
     // Ningún botón de la ficha del torneo saca a nadie del sitio: la página
     // en la misma pestaña, y los resultados y las bases, a su ficha de la página.
@@ -238,7 +243,7 @@ ok("la página carga el cliente de Supabase antes que su código en vivo", html.
       .map((a) => a.getAttribute("href") + (a.target ? " target=" + a.target : "")));
     ok("en Torneos, ningún botón del Centroamericano se va del sitio",
        JSON.stringify(destinos) === JSON.stringify(["/" + PAGINA, "/" + PAGINA + "#ficha-resultados"]), JSON.stringify(destinos));
-    const otraSala = await p3.evaluate(() => [...document.querySelectorAll('li[data-sala="utn"] a')].map((a) => a.target));
+    const otraSala = await p3.evaluate(() => [...document.querySelectorAll('li[data-sala="otra"] a')].map((a) => a.target));
     ok("las otras salas: el sitio en la misma pestaña, lo de afuera en otra", JSON.stringify(otraSala) === JSON.stringify(["", "_blank"]), JSON.stringify(otraSala));
     await ctx3.close();
     for (const [id, titulo, src] of [["ficha-resultados", "Resultados en vivo", /chess-results\.com\/tnr1494141/], ["ficha-bases", "Bases del campeonato", /bases-cac-2026\.pdf$/]]) {
@@ -535,6 +540,26 @@ ok("la página carga el cliente de Supabase antes que su código en vivo", html.
     const diaEn = await p6.evaluate(() => ({ boton: document.getElementById("imagen-dia").textContent, d: window.CentroamericanoTablas.resumenDelDia() }));
     ok("y en inglés", /Today's image to share/.test(diaEn.boton) && diaEn.d.titulo === "How the day ended" && diaEn.d.fecha === "Tuesday, November 3 · round 3"
       && diaEn.d.delegacion === "Costa Rica (CRC) today: 1 of 2 points (1 win)", JSON.stringify(diaEn));
+    await p6.click("#cac-idioma");
+
+    // La hoja de la delegación en PDF: sus jugadores en la ronda emparejada, por categoría.
+    const hoja = await p6.evaluate(() => {
+      const d = window.CentroamericanoTablas.documentoDelegacion("CRC");
+      return { titulo: d.titulo, nota: d.bloques.find((b) => b.tipo === "nota").texto, tablas: d.bloques.filter((b) => b.tipo !== "nota").map((b) => b.tipo === "tabla" ? b.filas : b.texto) };
+    });
+    ok("y dice cuándo se leyó, sin puntos de más", /^Leído en chess-results: .*\d\S*\sa\.\sm\. Lo oficial es lo que publica el árbitro en chess-results\.$/.test(hoja.nota) && !/\.\./.test(hoja.nota), hoja.nota);
+    ok("la hoja de la delegación trae a cada uno con mesa, color, rival y resultado", hoja.titulo === "Costa Rica (CRC) · Ronda 4" && JSON.stringify(hoja.tablas) === JSON.stringify([
+      "2 jugadores · pareo de la ronda 4",
+      "Sub-8 Absoluto", [["—", "Muñoz Solís, José", "2", "—", "bye (descansa)", ""]],
+      "Sub-18 Absoluto", [["1", "WIM Mayorga Araya, Sofia", "3", "Blancas", "FM Guevara Ruiz, Santiago Jose (ESA, 2252)", ""]]]), JSON.stringify(hoja));
+    const [descPdf] = await Promise.all([p6.waitForEvent("download", { timeout: 15000 }), p6.click("#delegacion-pdf")]);
+    const pdf = fs.readFileSync(await descPdf.path()).toString("latin1");
+    ok("el botón baja el PDF con su nombre, los jugadores y la marca de agua", pdf.startsWith("%PDF-") && descPdf.suggestedFilename() === "centroamericano-2026-crc-ronda-4.pdf"
+      && pdf.includes("Mayorga Araya, Sofia") && pdf.includes("FM Guevara Ruiz, Santiago Jose \\(ESA, 2252\\)") && pdf.includes("/Marca Do")
+      && /Listo: la hoja se bajó/.test(await p6.textContent("#delegacion-lista .cac-hoja [role=status]")), descPdf.suggestedFilename());
+    await p6.click("#cac-idioma");
+    const hojaEn = await p6.evaluate(() => { const d = window.CentroamericanoTablas.documentoDelegacion("CRC"); return { t: d.titulo, p: d.pagina(1, 2), boton: document.getElementById("delegacion-pdf").textContent }; });
+    ok("y en inglés, también el número de página", hojaEn.t === "Costa Rica (CRC) · Round 4" && hojaEn.p === "Page 1 of 2" && /Delegation sheet to print/.test(hojaEn.boton), JSON.stringify(hojaEn));
     await p6.click("#cac-idioma");
     await p6.selectOption("#delegacion", "");
 

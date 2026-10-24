@@ -19081,7 +19081,7 @@
   ]
  },
  "imagenes": {
-  "total": 873,
+  "total": 874,
   "grupos": [
    {
     "carpeta": "entreno/img/facil",
@@ -24451,6 +24451,19 @@
       "titulo": "Icon 512",
       "tipo": "otro",
       "kb": 193
+     }
+    ]
+   },
+   {
+    "carpeta": "img/utn",
+    "titulo": "Utn",
+    "grupo": "Carpetas",
+    "archivos": [
+     {
+      "ruta": "img/utn/logo.png",
+      "titulo": "Logo",
+      "tipo": "otro",
+      "kb": 15
      }
     ]
    }
