@@ -8670,6 +8670,54 @@ Es una página estática, sin cuenta y sin base: nada se guarda.
   - El verificador no tiene un servicio de push: el doble concede el
     permiso, da una suscripción que dura entre recargas y anota lo que se le
     manda a la función.
+  - **Tres avisos, no uno** (lo pidió el dueño después): el recordatorio
+    30 minutos antes de cada ronda («La ronda 5 empieza a las 3:00 p. m.»,
+    con la mesa de cada seguido si el pareo ya salió), el pareo y el
+    **resultado** («Ronda 4: Mayorga Araya, Sofia ganó», con su puesto en la
+    categoría solo si la clasificación de chess-results ya está al día con
+    esa ronda: si no, diría el puesto de antes). Si cuando se revisa ya hay
+    resultado, el pareo de esa ronda no sale: solo el resultado. Los tres
+    van en `sala_avisos_push_enviados` con su `tipo`; el recordatorio es uno
+    por aparato y ronda (`tnr` '0', `no` 0).
+  - **La hora del recordatorio no se escribe dos veces**: la función lee el
+    `.ics` del calendario de la página (`CALENDARIOS` en
+    `sala-jugadores/index.ts`), que genera `herramientas/centroamericano-imagenes.js`
+    a partir de la tabla de `#calendario`; toma los eventos «Ronda N» y lo
+    guarda una hora. Como pg_cron pasa cada 5 minutos, el aviso sale entre
+    35 y 30 minutos antes.
+- **Las rondas de cada jugador, su rendimiento y compartirlo**: la función
+  lee también el cuadro cruzado por número inicial (`art=5`) y le pone a cada
+  jugador sus rondas en `r`, tal cual las escribe chess-results («5w1» = con el
+  5, blancas, ganó; «9b½»; «12w+» / «3b-», por incomparecencia; «-1», bye de un
+  punto; «-0», no jugó; vacía, sin jugar todavía; el formato se comprobó con
+  el UTN-CONARE 2026, 6 rondas). «Sus rondas» en cada tarjeta las muestra con
+  el color, lo que hizo y el rival, más la de hoy del pareo («juega contra»),
+  y el **rendimiento de FIDE** (promedio de los rivales + dp de la tabla
+  8.1b): solo las partidas jugadas contra rivales con Elo, sin byes ni
+  incomparecencias. La tabla dp es la de Pareo Integral
+  (`js/pareo/desempates.js`, `dpDeP`), que la página carga: una sola copia.
+  «Compartir» arma una imagen de 1080 × 1080 (el nombre, la categoría, el
+  puesto y los puntos, la última ronda, el pizote y la bandera) con la marca
+  de agua de `js/tabla-imagen.js` (`TablaImagen.marcar`, la misma copia), y
+  la manda con el menú de compartir del celular o, si no hay, la baja.
+- **El resumen de la ronda de Mi delegación**: arriba de la delegación
+  elegida, la última ronda con algún resultado contada («Ronda 3: 7 ganadas,
+  3 en tablas, 2 perdidas, 1 sin jugar») y «Copiar para WhatsApp» con cada
+  jugador y el enlace. «-0» cuenta como «sin jugar», no como bye: en
+  chess-results es que no se presentó o no estaba.
+- **La clasificación, la tabla por país y el pareo para proyectar**
+  (`js/centroamericano-tablas.js`, con los datos de `window.CentroamericanoVivo`):
+  - `#clasificacion`: cada categoría entera, con el puesto dentro de ella, los
+    puntos y el rendimiento, y un buscador.
+  - `#delegaciones`: por país, los puntos, los posibles (un punto por ronda
+    con resultado, también los byes), el porcentaje y lo que sumó en cada
+    ronda; ordenada por el porcentaje (si no, ganaría el país con más
+    jugadores). Antes de la ronda 1, cuántos jugadores trae cada uno.
+  - `#proyector`: toda la pantalla, letra grande, una categoría por pantalla
+    (12 mesas por página) que pasa sola cada 15 segundos, con la hora, «Pausa»
+    y «Pantalla completa»; se pone al día cada minuto. Para una TV en la sala:
+    se abre con `centroamericano-2026.html#proyector`. Blanco sobre #1E2453,
+    14,7 : 1.
 - **Agregar a mi calendario**:
   `documentos/centroamericano-2026/calendario-centroamericano-2026.ics`, con
   cada actividad de la tabla (en UTC, que cualquier calendario muestra en su

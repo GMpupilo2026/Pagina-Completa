@@ -88,7 +88,9 @@ avisar lo lee de `sala_suscripciones_push`: el pedido no trae destinatarios. Lo
 demás es público: «datos» solo lee los torneos de chess-results de una sala
 visible, y «seguir» pasa por `sala_avisos_frenar()` para un aparato nuevo. Con
 `verify_jwt` en true la base recibe un 401 y los avisos de ronda no salen, sin
-que nada falle a la vista. Ver «Seguir a mis jugadores y los avisos en el
+que nada falle a la vista. Para el recordatorio de cada ronda lee el `.ics` del
+calendario desde el sitio publicado (`CALENDARIOS`): si cambia de dirección, se
+cambia ahí. Ver «Seguir a mis jugadores y los avisos en el
 celular» en `docs/decisiones/juegos-y-torneos.md`.
 
 ## `prueba-gratis` va con `verify_jwt` en **true**, y solo para administración

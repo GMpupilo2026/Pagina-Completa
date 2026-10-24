@@ -63,7 +63,8 @@ ok("ningún teléfono sin confirmar", tels.every((t) => TELEFONOS.includes(t)), 
 const contacto = (html.match(/<dialog id="contacto"[\s\S]*?<\/dialog>/) || [""])[0];
 // Toda la información va en fichas: cada ventana de la página tiene su ficha y su «Cerrar».
 const dialogos = [...html.matchAll(/<dialog id="([a-z-]+)" class="ficha-dialogo[^"]*" aria-labelledby="\1-titulo">([\s\S]*?)<\/dialog>/g)];
-ok("el reglamento, el calendario, los hoteles, los contactos y el medallero van en ventanas", JSON.stringify(dialogos.map((m) => m[1]).sort()) === JSON.stringify(["calendario", "contacto", "hoteles", "medallero", "reglamento"]), dialogos.map((m) => m[1]).join(", "));
+ok("el reglamento, el calendario, los hoteles, los contactos, el medallero, la clasificación, los países y el proyector van en ventanas",
+  JSON.stringify(dialogos.map((m) => m[1]).sort()) === JSON.stringify(["calendario", "clasificacion", "contacto", "delegaciones", "hoteles", "medallero", "proyector", "reglamento"]), dialogos.map((m) => m[1]).join(", "));
 for (const [, id, cuerpo] of dialogos) {
   ok("la ventana «" + id + "» tiene su ficha", fichas.includes('href="#' + id + '"'));
   ok("y su título y su botón «Cerrar»", cuerpo.includes('id="' + id + '-titulo"') && /data-cerrar[^>]*>Cerrar</.test(cuerpo));
@@ -291,20 +292,21 @@ ok("la página carga el cliente de Supabase antes que su código en vivo", html.
     // «Busca a tu jugador» y el medallero, con un doble de la función (datos con la forma de sala-jugadores).
     const DATOS = { torneos: [{ tnr: "1494141", url: "x", leido_en: "2026-11-03T16:05:00Z", ronda: 3, rondas: 9,
       jugadores: [
-        { puesto: 1, no: 2, titulo: "WIM", nombre: "Mayorga Araya, Sofia", fed: "CRC", elo: 2215, grupo: "U18", puntos: "3" },
-        { puesto: 2, no: 1, titulo: "FM", nombre: "Guevara Ruiz, Santiago Jose", fed: "ESA", elo: 2252, grupo: "U18", puntos: "2½" },
+        { puesto: 1, no: 2, titulo: "WIM", nombre: "Mayorga Araya, Sofia", fed: "CRC", elo: 2215, grupo: "U18", puntos: "3", r: ["1w1", "3b1", "24w1"] },
+        { puesto: 2, no: 1, titulo: "FM", nombre: "Guevara Ruiz, Santiago Jose", fed: "ESA", elo: 2252, grupo: "U18", puntos: "2½", r: ["2b0", "50w1", "31b1"] },
         { puesto: 3, no: 3, titulo: "FM", nombre: "Ordonez Bonilla, Ricardo Andres", fed: "GUA", elo: 2145, grupo: "U18", puntos: "2" },
-        { puesto: 4, no: 4, titulo: "IM", nombre: "Castillo Beitia, Ashley Alexandra", fed: "PAN", elo: 2141, grupo: "U18F", puntos: "3" },
+        { puesto: 4, no: 4, titulo: "IM", nombre: "Castillo Beitia, Ashley Alexandra", fed: "PAN", elo: 2141, grupo: "U18F", puntos: "3", r: ["31w1", "24b0", "3w½"] },
         { puesto: 5, no: 24, titulo: "WFM", nombre: "Ferrer Naranjo, Liennys", fed: "CUB", elo: 1994, grupo: "U18F", puntos: "2" },
         { puesto: 6, no: 31, titulo: "WFM", nombre: "Wilson, Hannah", fed: "BAR", elo: 1920, grupo: "U18F", puntos: "1½" },
-        { puesto: 7, no: 50, titulo: "", nombre: "Muñoz Solís, José", fed: "CRC", elo: 0, grupo: "U08", puntos: "2" },
+        { puesto: 7, no: 50, titulo: "", nombre: "Muñoz Solís, José", fed: "CRC", elo: 0, grupo: "U08", puntos: "2", r: ["-1", "31b½", "-0"] },
       ],
       pareo: { ronda: 4, mesas: [
         { mesa: 1, blancas: { no: 2, titulo: "WIM", nombre: "Mayorga Araya, Sofia" }, negras: { no: 1, titulo: "FM", nombre: "Guevara Ruiz, Santiago Jose" }, resultado: "" },
         { mesa: 7, blancas: { no: 31, titulo: "WFM", nombre: "Wilson, Hannah" }, negras: { no: 4, titulo: "IM", nombre: "Castillo Beitia, Ashley Alexandra" }, resultado: "0 - 1" },
         { mesa: 40, blancas: { no: 50, titulo: "", nombre: "Muñoz Solís, José" }, negras: null, resultado: "bye" },
       ] } }] };
-    const ctx6 = await nav.newContext({ viewport: { width: 1280, height: 900 }, serviceWorkers: "block" });
+    const ctx6 = await nav.newContext({ viewport: { width: 1280, height: 900 }, serviceWorkers: "block", acceptDownloads: true });
+    await ctx6.grantPermissions(["clipboard-read", "clipboard-write"], { origin: BASE });
     await ctx6.addInitScript((d) => {
       window.__pedidos = [];
       window.__falla = localStorage.getItem("__falla") === "1";
@@ -434,6 +436,78 @@ ok("la página carga el cliente de Supabase antes que su código en vivo", html.
     ok("sin nadie a quien seguir, se da de baja y «Mis jugadores» se esconde", !sg.visible && !sg.guardado.length
       && await p6.evaluate(() => window.__pedidos.some((x) => x[1].accion === "baja" && x[1].suscripcion.endpoint === "https://fcm.googleapis.com/fcm/send/prueba") && localStorage.getItem("cac_avisos_v1") === null), JSON.stringify(sg));
     await p6.selectOption("#delegacion", "");
+
+    // Sus rondas: del cuadro cruzado y la de hoy del pareo, con el rendimiento de FIDE.
+    await buscar("mayorga");
+    await p6.click('#buscador-resultados [data-rondas="1494141-2"]');
+    const rondas = await p6.evaluate(() => {
+      const b = document.querySelector('#buscador-resultados [data-rondas="1494141-2"]');
+      const caja = document.getElementById(b.getAttribute("aria-controls"));
+      return { abierto: b.getAttribute("aria-expanded"), foco: document.activeElement === b, filas: caja ? [...caja.querySelectorAll("li")].map((l) => l.textContent) : [],
+        rend: caja ? caja.querySelector("p").textContent : "" };
+    });
+    ok("«Sus rondas» se abre, dice que está abierta y no pierde el foco", rondas.abierto === "true" && rondas.foco, JSON.stringify(rondas));
+    ok("cada ronda con su color, lo que hizo y el rival; la de hoy, «juega contra»", JSON.stringify(rondas.filas) === JSON.stringify([
+      "Ronda 1 · blancas · ganó a FM Guevara Ruiz, Santiago Jose (ESA, 2252)",
+      "Ronda 2 · negras · ganó a FM Ordonez Bonilla, Ricardo Andres (GUA, 2145)",
+      "Ronda 3 · blancas · ganó a WFM Ferrer Naranjo, Liennys (CUB, 1994)",
+      "Ronda 4 · blancas · juega contra FM Guevara Ruiz, Santiago Jose (ESA, 2252)"]), JSON.stringify(rondas.filas));
+    // 2252, 2145 y 1994: promedio 2130 (2130,3), con 3 de 3 → +800 (tabla 8.1b de FIDE).
+    ok("y su rendimiento según FIDE (promedio de los rivales + dp)", rondas.rend === "Rendimiento: 2930 en 3 partidas (sus rivales tienen 2130 de promedio).", rondas.rend);
+
+    // La imagen para compartir: un PNG de 1080 × 1080 con la marca de agua.
+    await p6.evaluate(() => { const m = window.TablaImagen.marcar; window.__marcas = 0; window.TablaImagen.marcar = (c) => { window.__marcas++; return m(c); }; });
+    const [descarga] = await Promise.all([p6.waitForEvent("download", { timeout: 15000 }), p6.click("#buscador-resultados .cac-jugador-boton:not([data-rondas])")]);
+    const png = fs.readFileSync(await descarga.path());
+    const anchoPng = png.readUInt32BE(16), altoPng = png.readUInt32BE(20);
+    ok("«Compartir» da una imagen de 1080 × 1080 con su nombre de archivo", png.slice(1, 4).toString() === "PNG" && anchoPng === 1080 && altoPng === 1080 && /^centroamericano-2026-mayorga-araya-sofia\.png$/.test(descarga.suggestedFilename()), anchoPng + "×" + altoPng + " " + descarga.suggestedFilename());
+    ok("y lleva la marca de agua de Ajedrez Integral", await p6.evaluate(() => window.__marcas === 1));
+
+    // El resumen de la ronda de una delegación, listo para WhatsApp.
+    await p6.selectOption("#delegacion", "CRC");
+    const resumen = await p6.evaluate(() => { const r = document.querySelector("#delegacion-lista .cac-resumen"); return r ? { texto: r.innerText.replace(/\s+/g, " "), copia: r.dataset.texto } : null; });
+    ok("Mi delegación trae el resumen de la última ronda con resultados («-0» es «sin jugar», no un bye)", resumen && /^Ronda 3: 1 ganada, 1 sin jugar\. 1 de 2 puntos posibles\./.test(resumen.texto), JSON.stringify(resumen));
+    await p6.click("#delegacion-lista .cac-resumen button");
+    const copiado = await p6.evaluate(() => navigator.clipboard.readText());
+    ok("«Copiar para WhatsApp» copia el resumen con cada jugador y el enlace", copiado.split("\n")[0] === "Costa Rica (CRC) — Ronda 3, Centroamericano 2026"
+      && copiado.includes("✅ Mayorga Araya, Sofia (Sub-18 Absoluto) ganó a WFM Ferrer Naranjo, Liennys (CUB, 1994)")
+      && copiado.includes("➖ Muñoz Solís, José (Sub-8 Absoluto) no jugó") && /https:\/\/ajedrez-integral\.com\/centroamericano-2026\.html$/.test(copiado), copiado);
+    await p6.selectOption("#delegacion", "");
+
+    // La clasificación completa de una categoría.
+    await p6.click('a[href="#clasificacion"]');
+    await p6.waitForFunction(() => document.querySelectorAll("#clasificacion-contenido tbody tr").length > 0);
+    await p6.selectOption("#clasificacion-categoria", "U18");
+    const clasif = await p6.evaluate(() => [...document.querySelectorAll("#clasificacion-contenido tbody tr")].map((tr) => [...tr.children].map((c) => c.textContent).join("|")));
+    ok("la clasificación completa, por categoría, con puntos y rendimiento", JSON.stringify(clasif) === JSON.stringify(["1|WIM Mayorga Araya, Sofia|CRC|2215|3|2930", "2|FM Guevara Ruiz, Santiago Jose|ESA|2252|2½|2068", "3|FM Ordonez Bonilla, Ricardo Andres|GUA|2145|2|—"]), JSON.stringify(clasif));
+    await p6.fill("#clasificacion-buscar", "guevara");
+    ok("y se puede buscar dentro de la tabla", await p6.evaluate(() => document.querySelectorAll("#clasificacion-contenido tbody tr").length === 1));
+    // Escape en el campo de búsqueda primero lo borra (así es el navegador): se cierra con «Cerrar».
+    await p6.click("#clasificacion [data-cerrar]");
+
+    // La tabla por país, ronda a ronda (con la ronda de hoy si ya tiene resultado).
+    await p6.click('a[href="#delegaciones"]');
+    await p6.waitForFunction(() => document.querySelectorAll("#delegaciones-contenido tbody tr").length > 0);
+    const paises = await p6.evaluate(() => [...document.querySelectorAll("#delegaciones-contenido tbody tr")].map((tr) => [...tr.children].map((c) => c.textContent).join("|")));
+    ok("la tabla por país: puntos, posibles, porcentaje y cada ronda, ordenada por porcentaje", JSON.stringify(paises.slice(0, 4)) === JSON.stringify([
+      "1|Costa Rica (CRC)|2|4½|6|75 %|2|1½|1|—", "2|El Salvador (ESA)|1|2|3|67 %|0|1|1|—", "3|Panamá (PAN)|1|2½|4|63 %|1|0|½|1", "4|Barbados (BAR)|1|0|1|0 %|—|—|—|0"]), JSON.stringify(paises));
+    await p6.keyboard.press("Escape");
+
+    // El pareo para proyectar: por categoría, con «Siguiente» y la pausa.
+    await p6.click('a[href="#proyector"]');
+    await p6.waitForFunction(() => /Ronda 4/.test(document.getElementById("proyector-titulo").textContent));
+    const proy = () => p6.evaluate(() => ({ titulo: document.getElementById("proyector-titulo").textContent,
+      filas: [...document.querySelectorAll("#proyector-contenido tbody tr")].map((tr) => [...tr.children].map((c) => c.textContent).join("|")),
+      grande: parseFloat(getComputedStyle(document.querySelector("#proyector-contenido table")).fontSize), visible: document.getElementById("proyector").checkVisibility() }));
+    let pr = await proy();
+    ok("el proyector empieza por la categoría menor, con el bye dicho", pr.visible && pr.titulo === "Ronda 4 · Sub-8 Absoluto" && JSON.stringify(pr.filas) === JSON.stringify(["40|Muñoz Solís, José (CRC)||bye (descansa)"]), JSON.stringify(pr));
+    ok("en letra grande (más de 20 px en una pantalla de 1280)", pr.grande > 20, String(pr.grande));
+    await p6.click("#proyector-siguiente");
+    pr = await proy();
+    ok("«Siguiente» pasa a la otra categoría, con la mesa y los dos jugadores", pr.titulo === "Ronda 4 · Sub-18 Absoluto" && pr.filas[0] === "1|WIM Mayorga Araya, Sofia (CRC)|–|FM Guevara Ruiz, Santiago Jose (ESA)", JSON.stringify(pr));
+    await p6.click("#proyector-pausa");
+    ok("y se puede poner en pausa (y lo dice)", await p6.evaluate(() => document.getElementById("proyector-pausa").getAttribute("aria-pressed") === "true" && document.getElementById("proyector-pausa").textContent === "Seguir"));
+    await p6.keyboard.press("Escape");
 
     // Sin señal: lo último que llegó, guardado en el aparato, con la hora en que se leyó.
     await p6.evaluate(() => localStorage.setItem("__falla", "1"));
