@@ -71,14 +71,34 @@
     return a;
   }
 
+  // Las salas con portada propia: la ficha se viste con la cara de su torneo
+  // (sus colores, su mascota) en vez de la blanca de siempre. El estilo vive
+  // en la hoja de la página del torneo, que cargan torneos-en-vivo.html y
+  // admin.html. Ver «La ficha del Centroamericano en Torneos».
+  const PORTADAS = {
+    "centroamericano-2026": { clase: "cac-sala", mascota: "/img/centroamericano-2026/mascota-trofeo.png" },
+  };
+
   // La ficha, igual en la página pública y en la vista previa del editor (que
   // la pone dentro de una caja `inert`: se ve, pero no se sigue ni se enfoca).
   function ficha(sala) {
-    const li = el("li", "bg-white dark:bg-brand-900 rounded-2xl shadow-md p-6 flex flex-col");
+    const portada = PORTADAS[sala.clave] || null;
+    const li = el("li", portada
+      ? portada.clase + " rounded-2xl shadow-md p-6 flex flex-col"
+      : "bg-white dark:bg-brand-900 rounded-2xl shadow-md p-6 flex flex-col");
     li.dataset.sala = sala.clave || "";
+    if (portada) {
+      const img = el("img", "cac-sala-mascota");
+      img.src = portada.mascota;
+      img.alt = "";
+      img.width = 124;
+      img.height = 120;
+      img.setAttribute("aria-hidden", "true");
+      li.appendChild(img);
+    }
     const emoji = el("p", "text-4xl mb-3", sala.emoji || "🏆");
     emoji.setAttribute("aria-hidden", "true");
-    li.appendChild(emoji);
+    if (!portada) li.appendChild(emoji);
     li.appendChild(el("h2", "font-serif text-xl font-bold text-brand-800 dark:text-white", sala.nombre || "Sin nombre"));
     li.appendChild(el("p", "text-brand-500 dark:text-brand-300 mt-2 mb-5 flex-1", sala.descripcion || ""));
     const enlaces = Array.isArray(sala.enlaces) ? sala.enlaces : [];
@@ -91,7 +111,7 @@
       enlaces.forEach((e) => li.appendChild(enlaceAfuera(e, CLASE_SECUNDARIO, sala.nombre)));
     } else {
       const caja = el("div", "grid grid-cols-1 " + (enlaces.length > 1 ? "sm:grid-cols-2 " : "") + "gap-3");
-      enlaces.forEach((e) => caja.appendChild(enlaceAfuera(e, CLASE_BOTON, sala.nombre)));
+      enlaces.forEach((e, i) => caja.appendChild(enlaceAfuera(e, CLASE_BOTON + (portada ? " cac-sala-boton" + (i === 0 ? " cac-sala-principal" : "") : ""), sala.nombre)));
       li.appendChild(caja);
     }
     return li;
