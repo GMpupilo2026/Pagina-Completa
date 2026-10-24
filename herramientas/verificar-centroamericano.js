@@ -486,6 +486,17 @@ ok("la página carga el cliente de Supabase antes que su código en vivo", html.
       "Ronda 4 · blancas · juega contra FM Guevara Ruiz, Santiago Jose (ESA, 2252)"]), JSON.stringify(rondas.filas));
     // 2252, 2145 y 1994: promedio 2130 (2130,3), con 3 de 3 → +800 (tabla 8.1b de FIDE).
     ok("y su rendimiento según FIDE (promedio de los rivales + dp)", rondas.rend === "Rendimiento: 2930 en 3 partidas (sus rivales tienen 2130 de promedio).", rondas.rend);
+    // Su puesto después de cada ronda, por puntos y del cuadro cruzado (la ronda 4 todavía no).
+    await buscar("guevara");
+    await p6.click('#buscador-resultados [data-rondas="1494141-1"]');
+    const puestos = await p6.evaluate(() => { const c = document.querySelector("#buscador-resultados .cac-jugador-rondas"); return { linea: c.querySelector(".cac-puestos").textContent, nota: c.textContent.includes("se comparte el puesto") }; });
+    ok("«Sus rondas» trae su puesto ronda a ronda; empatado en puntos, el puesto compartido", puestos.linea === "Su puesto en la categoría después de cada ronda: R1 2.º–3.º · R2 2.º · R3 2.º" && puestos.nota, JSON.stringify(puestos));
+    await p6.click("#cac-idioma");
+    const puestosEn = await p6.evaluate(() => document.querySelector("#buscador-resultados .cac-puestos").textContent);
+    ok("y en inglés, con sus ordinales", puestosEn === "Their place in the section after each round: R1 2nd–3rd · R2 2nd · R3 2nd", puestosEn);
+    await p6.click("#cac-idioma");
+    await p6.click('#buscador-resultados [data-rondas="1494141-1"]');
+    await buscar("mayorga");
 
     // La imagen para compartir: un PNG de 1080 × 1080 con la marca de agua.
     await p6.evaluate(() => { const m = window.TablaImagen.marcar; window.__marcas = 0; window.TablaImagen.marcar = (c) => { window.__marcas++; return m(c); }; });
@@ -504,6 +515,27 @@ ok("la página carga el cliente de Supabase antes que su código en vivo", html.
     ok("«Copiar para WhatsApp» copia el resumen con cada jugador y el enlace", copiado.split("\n")[0] === "Costa Rica (CRC) — Ronda 3, Centroamericano 2026"
       && copiado.includes("✅ Mayorga Araya, Sofia (Sub-18 Absoluto) ganó a WFM Ferrer Naranjo, Liennys (CUB, 1994)")
       && copiado.includes("➖ Muñoz Solís, José (Sub-8 Absoluto) no jugó") && /https:\/\/ajedrez-integral\.com\/centroamericano-2026\.html$/.test(copiado), copiado);
+
+    // «Así terminó el día»: la ronda 4 va por la mitad, así que el día cerrado es
+    // el de la ronda 3 (martes 3, la única de ese día en el calendario).
+    const dia = await p6.evaluate(() => window.CentroamericanoTablas.resumenDelDia());
+    ok("el día es el de la última ronda con todas sus partidas terminadas", dia && dia.titulo === "Así terminó el día" && dia.fecha === "Martes 3 de noviembre · ronda 3", JSON.stringify(dia));
+    ok("con el líder de cada categoría después de esa ronda (no del pareo a medias)", dia && JSON.stringify(dia.lideres) === JSON.stringify([
+      "Sub-8 Absoluto: Muñoz Solís, José (CRC) · 1½ puntos",
+      "Sub-18 Absoluto: WIM Mayorga Araya, Sofia (CRC) · 3 puntos",
+      "Sub-18 Femenino: IM Castillo Beitia, Ashley Alexandra (PAN) · 1½ puntos"]), JSON.stringify(dia && dia.lideres));
+    ok("la sorpresa del día y cómo le fue a la delegación elegida", dia && /^Ronda 3 · Sub-18 Femenino: IM Castillo Beitia.* hizo tablas con FM Ordonez Bonilla/.test(dia.sorpresa)
+      && dia.delegacion === "Costa Rica (CRC) hoy: 1 de 2 puntos (1 ganada)", JSON.stringify(dia));
+    await p6.evaluate(() => { window.__marcas = 0; });
+    const [descDia] = await Promise.all([p6.waitForEvent("download", { timeout: 15000 }), p6.click("#imagen-dia")]);
+    const pngDia = fs.readFileSync(await descDia.path());
+    ok("el botón baja la imagen del día, de 1080 de ancho, con la marca de agua", pngDia.slice(1, 4).toString() === "PNG" && pngDia.readUInt32BE(16) === 1080 && pngDia.readUInt32BE(20) >= 1080
+      && descDia.suggestedFilename() === "centroamericano-2026-2026-11-03.png" && await p6.evaluate(() => window.__marcas === 1), descDia.suggestedFilename());
+    await p6.click("#cac-idioma");
+    const diaEn = await p6.evaluate(() => ({ boton: document.getElementById("imagen-dia").textContent, d: window.CentroamericanoTablas.resumenDelDia() }));
+    ok("y en inglés", /Today's image to share/.test(diaEn.boton) && diaEn.d.titulo === "How the day ended" && diaEn.d.fecha === "Tuesday, November 3 · round 3"
+      && diaEn.d.delegacion === "Costa Rica (CRC) today: 1 of 2 points (1 win)", JSON.stringify(diaEn));
+    await p6.click("#cac-idioma");
     await p6.selectOption("#delegacion", "");
 
     // La clasificación completa de una categoría.
