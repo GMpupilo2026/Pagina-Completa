@@ -602,18 +602,25 @@ base compruebe que cada ejercicio exista de verdad en el tema. Lo hacen
   Ganaste N Puntos Ajedrez de premio.» (`role="status"`), una vez: recuerda
   en el aparato lo ya dicho, porque la hora del celular puede no ser la de la
   base.
-- **Lo ya terminado antes**: el trigger solo mira ejercicios nuevos. Quien ya
-  tenía un tema completo cobra el premio la próxima vez que anote un
-  ejercicio de ese tema; si ya no le queda ninguno por hacer, no cobra.
+- **Es a partir de hoy** (lo decidió el dueño del sitio):
+  `20261024212518_premio_temas_desde_hoy.sql`. Un tema que el alumno ya
+  tenía completo antes de que existiera el premio (24/10/2026, 2:07 p. m. en
+  Costa Rica) no paga nunca, ni con su próximo ejercicio; uno que estaba a
+  medias y se termina después, sí. Para cada ejercicio se mira la primera
+  vez que lo resolvió: si con lo de antes de esa hora ya estaba el tema
+  entero, no se paga. Con la primera versión, ese tema completo de antes
+  cobraba con el siguiente ejercicio que se anotara (en Aprender pasa al
+  repetir una lección); no llegó a pagarse ninguno.
 
 **Comprobado en la base el 24/10/2026**, con alumnos reales dentro de bloques
 que se deshacen solos (un `raise` al final): a uno que tenía 305 de los 306
 de Mate en 1, anotarle un ejercicio inventado no le pagó nada; el de verdad
 le pagó 500 una vez (306 × 1 × 2 = 612, tope 500), y repetir uno no volvió a
 pagar. A otro que ya tenía Las reglas completas de antes, la siguiente
-lección le pagó 10. Al cargar la lista por primera vez había unos 200 temas
-ya completos de antes (22 alumnos con «Ataque al enroque corto», 20 con
-«Cómo mueve cada pieza»…); esos cobran con su próximo ejercicio del tema.
+lección le pagó 10 (con la primera versión; con «a partir de hoy», ese mismo
+alumno ya no cobra: se comprobó igual, y el de Mate en 1 a medias sí). Al
+cargar la lista había unos 200 temas ya completos de antes (22 alumnos con
+«Ataque al enroque corto», 20 con «Cómo mueve cada pieza»…): no pagan.
 
 `verificar-premio-temas.js`: que `premio-temas.json` sea lo que hoy dan las
 fuentes, que cada tema tenga los mismos ejercicios que dice `metas.json`, que
