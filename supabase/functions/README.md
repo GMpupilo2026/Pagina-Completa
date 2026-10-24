@@ -79,6 +79,18 @@ correo y avisos encendidos en `arbitros_cr_contacto`) lo lee de la base con
 en `arbitros_cr_avisos_enviados` y no se repite. Ver «El aviso por correo de lo
 que se vence» en `docs/decisiones/juegos-y-torneos.md`.
 
+## `sala-jugadores` va con `verify_jwt` en **false**
+
+La llama `public.disparar_sala_avisos()` (pg_cron `sala-avisos`, cada cinco
+minutos del 1 al 8 de noviembre) con la acción «revisar», sin sesión de
+persona. A cambio exige el secreto `sala_avisos_secreto` de la bóveda, y a quién
+avisar lo lee de `sala_suscripciones_push`: el pedido no trae destinatarios. Lo
+demás es público: «datos» solo lee los torneos de chess-results de una sala
+visible, y «seguir» pasa por `sala_avisos_frenar()` para un aparato nuevo. Con
+`verify_jwt` en true la base recibe un 401 y los avisos de ronda no salen, sin
+que nada falle a la vista. Ver «Seguir a mis jugadores y los avisos en el
+celular» en `docs/decisiones/juegos-y-torneos.md`.
+
 ## `prueba-gratis` va con `verify_jwt` en **true**, y solo para administración
 
 La prueba gratis se pide por WhatsApp y la crea quien administra desde

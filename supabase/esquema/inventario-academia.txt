@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20261023220000
+# al-dia-con: 20261024144004
 tabla  Ejercicios Lichess  rls=true
 tabla  _foto_rls_tmp  rls=false
 tabla  _pedidos_elo  rls=false
@@ -190,6 +190,8 @@ tabla  respuestas_en_curso  rls=true
 tabla  retos_ejercicios  rls=true
 tabla  retos_ejercicios_respuestas  rls=true
 tabla  retos_semanales  rls=true
+tabla  sala_avisos_push_enviados  rls=true
+tabla  sala_suscripciones_push  rls=true
 tabla  salas_torneo  rls=true
 tabla  saved_games  rls=true
 tabla  seleccion_cache  rls=true
@@ -1736,6 +1738,20 @@ columna  retos_semanales.meta  integer
 columna  retos_semanales.metrica  text
 columna  retos_semanales.nombre  text
 columna  retos_semanales.orden  integer
+columna  sala_avisos_push_enviados.enviado  timestamp with time zone
+columna  sala_avisos_push_enviados.no  integer
+columna  sala_avisos_push_enviados.ronda  integer
+columna  sala_avisos_push_enviados.suscripcion_id  uuid
+columna  sala_avisos_push_enviados.tnr  text
+columna  sala_suscripciones_push.actualizada  timestamp with time zone
+columna  sala_suscripciones_push.auth  text
+columna  sala_suscripciones_push.creada  timestamp with time zone
+columna  sala_suscripciones_push.endpoint  text
+columna  sala_suscripciones_push.id  uuid
+columna  sala_suscripciones_push.idioma  text
+columna  sala_suscripciones_push.jugadores  jsonb
+columna  sala_suscripciones_push.p256dh  text
+columna  sala_suscripciones_push.sala  text
 columna  salas_torneo.clave  text
 columna  salas_torneo.created_at  timestamp with time zone
 columna  salas_torneo.descripcion  text
@@ -2128,6 +2144,7 @@ funcion  disparar_fin_de_partida()  definer  anon=false  auth=false
 funcion  disparar_informes_encargados()  definer  anon=false  auth=false
 funcion  disparar_recordatorios_cobro()  definer  anon=false  auth=false
 funcion  disparar_recordatorios_programados()  definer  anon=false  auth=false
+funcion  disparar_sala_avisos()  definer  anon=false  auth=false
 funcion  disparar_tanda_elo()  definer  anon=false  auth=false
 funcion  disparar_torneos_externos()  definer  anon=false  auth=false
 funcion  duelo_guardar(p_sala uuid, p_ronda integer, p_parte text, p_valor jsonb, p_tiempo numeric)  invoker  anon=false  auth=true
@@ -2481,7 +2498,9 @@ funcion  resumen_tareas_examenes(p_alumno uuid, p_desde timestamp with time zone
 funcion  retirar_justificacion(p_id uuid)  definer  anon=false  auth=true
 funcion  retos_de_la_semana()  definer  anon=false  auth=true
 funcion  revisar_informe_mensual(p_id uuid, p_comentario text)  definer  anon=false  auth=true
+funcion  ruta_cumplimiento(p_lunes date, p_grupo text, p_inicio date)  invoker  anon=false  auth=true
 funcion  sacar_de_la_clase(p_clase uuid, p_alumno uuid)  definer  anon=false  auth=true
+funcion  sala_avisos_frenar(p_ip text)  definer  anon=false  auth=false
 funcion  saldo_de_puntos(p_alumno uuid)  invoker  anon=false  auth=true
 funcion  salida_de_la_clase(p_clase uuid)  invoker  anon=false  auth=true
 funcion  se_caen_del_plan(p_dias integer)  invoker  anon=false  auth=true
@@ -2489,6 +2508,7 @@ funcion  secreto_alerta_base()  definer  anon=false  auth=false
 funcion  secreto_aviso_diagnostico()  definer  anon=false  auth=false
 funcion  secreto_pareo_identidad()  definer  anon=false  auth=false
 funcion  secreto_partida_robo()  definer  anon=false  auth=false
+funcion  secreto_sala_avisos()  definer  anon=false  auth=false
 funcion  secreto_tanda_arbitros()  definer  anon=false  auth=false
 funcion  secreto_tanda_cobros()  definer  anon=false  auth=false
 funcion  secreto_tanda_elo()  definer  anon=false  auth=false
@@ -3604,6 +3624,9 @@ indice  retos_ejercicios_respuestas  retos_ejercicios_respuestas_alumno
 indice  retos_ejercicios_respuestas  retos_ejercicios_respuestas_pkey
 indice  retos_semanales  retos_semanales_clave_key
 indice  retos_semanales  retos_semanales_pkey
+indice  sala_avisos_push_enviados  sala_avisos_push_enviados_pkey
+indice  sala_suscripciones_push  sala_suscripciones_push_pkey
+indice  sala_suscripciones_push  sala_suscripciones_push_sala_endpoint_key
 indice  salas_torneo  salas_torneo_clave_key
 indice  salas_torneo  salas_torneo_pkey
 indice  salas_torneo  salas_torneo_updated_by_fk
@@ -3728,6 +3751,8 @@ cron  elo-fide-nacional  10 9 * * *
 cron  informes-a-encargados  0 * * * *
 cron  limpiar-invitados-de-clase  20 7 * * *
 cron  recordar-informes-mensuales  0 14 * * *
+cron  sala-avisos  */5 * 1-8 11 *
+cron  sala-avisos-limpiar  17 9 * * *
 cron  torneos-externos  13 11 * * *
 cron  vigilar-base  */5 * * * *
 grant  Ejercicios Lichess  anon  DELETE

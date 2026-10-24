@@ -16,13 +16,27 @@
  *   js/centroamericano.js), con sus propios textos: lo de acá no pasa por el
  *   diccionario de js/centroamericano-en.js.
  *
- * Ver «Busca a tu jugador y el medallero» en docs/decisiones/juegos-y-torneos.md.
+ * Además:
+ * - «Mi delegación»: todos los jugadores de una federación, por categoría. El
+ *   país elegido queda en este aparato.
+ * - La estrella de cada jugador lo pone en «Mis jugadores», arriba del
+ *   buscador: se guarda en este aparato (sin cuenta), hasta 20.
+ * - «Avisarme en este celular»: la función sala-jugadores (acciones seguir y
+ *   baja) manda cada ronda como notificación. El permiso se pide solo al tocar
+ *   el botón; cada vez que cambia la lista o el idioma se le vuelve a mandar.
+ *
+ * Ver «Busca a tu jugador y el medallero», «Mi delegación» y «Seguir a mis
+ * jugadores y los avisos en el celular» en docs/decisiones/juegos-y-torneos.md.
  */
 (function () {
   "use strict";
 
   const SALA = "centroamericano-2026";
   const CLAVE_GUARDADO = "cac_jugadores_v1";
+  const CLAVE_SEGUIDOS = "cac_seguidos_v1";
+  const CLAVE_DELEGACION = "cac_delegacion_v1";
+  const CLAVE_AVISOS = "cac_avisos_v1";
+  const MAX_SEGUIDOS = 20;
   const REFRESCO_MS = 120000;
   const MAX_RESULTADOS = 8;
   const $ = (id) => document.getElementById(id);
@@ -53,6 +67,23 @@
       federacion: "Federación", oro: "Oro", plata: "Plata", bronce: "Bronce", total: "Total",
       medallasDe: "Medallas por federación",
       podios: "Los podios de cada categoría",
+      seguir: (n) => "Seguir a " + n,
+      dejar: (n) => "Dejar de seguir a " + n,
+      tope: "Ya sigues a " + MAX_SEGUIDOS + " jugadores: deja de seguir a alguno para agregar otro.",
+      cargandoSeguido: "Buscando sus datos en chess-results…",
+      noEsta: "Ya no aparece en la lista de chess-results.",
+      elegir: "Elige el país…",
+      deDelegacion: (n, pais) => (n === 1 ? "1 jugador de " : n + " jugadores de ") + pais + ".",
+      enCategoria: (n) => (n === 1 ? "1 jugador" : n + " jugadores"),
+      avisarme: "Avisarme en este celular",
+      avisosSi: "Avisos en este celular: encendidos",
+      pidiendoPermiso: "Pidiendo el permiso del navegador…",
+      sinPermiso: "Sin el permiso de notificaciones no se pueden mandar avisos a este celular. Se puede cambiar en la configuración del navegador.",
+      sinPreparar: "Este navegador no dejó preparar los avisos. Recarga la página e intenta de nuevo.",
+      avisosListos: "✓ Listo: te llegó un aviso de prueba. Te avisaremos aquí cada ronda de tus jugadores.",
+      avisosAlDia: "✓ Los avisos ya están al día con tu lista.",
+      avisosApagados: "Listo: este celular ya no recibe los avisos.",
+      avisosError: "No se pudieron preparar los avisos en este celular. Revisa la conexión e intenta de nuevo.",
       locale: "es-CR",
     },
     en: {
@@ -79,6 +110,23 @@
       federacion: "Federation", oro: "Gold", plata: "Silver", bronce: "Bronze", total: "Total",
       medallasDe: "Medals by federation",
       podios: "The podium of every section",
+      seguir: (n) => "Follow " + n,
+      dejar: (n) => "Unfollow " + n,
+      tope: "You already follow " + MAX_SEGUIDOS + " players: unfollow one to add another.",
+      cargandoSeguido: "Looking up their data on chess-results…",
+      noEsta: "No longer on the chess-results list.",
+      elegir: "Choose the country…",
+      deDelegacion: (n, pais) => (n === 1 ? "1 player from " : n + " players from ") + pais + ".",
+      enCategoria: (n) => (n === 1 ? "1 player" : n + " players"),
+      avisarme: "Notify me on this phone",
+      avisosSi: "Notifications on this phone: on",
+      pidiendoPermiso: "Asking the browser for permission…",
+      sinPermiso: "Without notification permission we can't notify this phone. You can change it in the browser settings.",
+      sinPreparar: "This browser couldn't set up notifications. Reload the page and try again.",
+      avisosListos: "✓ Done: you got a test notification. We'll notify you here every round of your players.",
+      avisosAlDia: "✓ Notifications are up to date with your list.",
+      avisosApagados: "Done: this phone no longer gets the notifications.",
+      avisosError: "We couldn't set up notifications on this phone. Check the connection and try again.",
       locale: "en-US",
     },
   };
@@ -92,6 +140,19 @@
     if (!m) return g || "";
     return lang === "en" ? "U" + m[1] + (m[2] ? " Girls" : " Open") : "Sub-" + m[1] + (m[2] ? " Femenino" : " Absoluto");
   }
+  // Las federaciones de la región (código de FIDE). La que no esté, con su código.
+  const PAISES = {
+    ARU: ["Aruba", "Aruba"], BAH: ["Bahamas", "Bahamas"], BAR: ["Barbados", "Barbados"], BER: ["Bermudas", "Bermuda"],
+    BIZ: ["Belice", "Belize"], CAY: ["Islas Caimán", "Cayman Islands"], COL: ["Colombia", "Colombia"], CRC: ["Costa Rica", "Costa Rica"],
+    CUB: ["Cuba", "Cuba"], CUR: ["Curazao", "Curaçao"], DOM: ["República Dominicana", "Dominican Republic"], ESA: ["El Salvador", "El Salvador"],
+    GRN: ["Granada", "Grenada"], GUA: ["Guatemala", "Guatemala"], GUY: ["Guyana", "Guyana"], HAI: ["Haití", "Haiti"],
+    HON: ["Honduras", "Honduras"], ISV: ["Islas Vírgenes de EE. UU.", "US Virgin Islands"], IVB: ["Islas Vírgenes Británicas", "British Virgin Islands"],
+    JAM: ["Jamaica", "Jamaica"], LCA: ["Santa Lucía", "Saint Lucia"], MEX: ["México", "Mexico"], NCA: ["Nicaragua", "Nicaragua"],
+    PAN: ["Panamá", "Panama"], PUR: ["Puerto Rico", "Puerto Rico"], SKN: ["San Cristóbal y Nieves", "Saint Kitts and Nevis"],
+    SUR: ["Surinam", "Suriname"], TTO: ["Trinidad y Tobago", "Trinidad and Tobago"], VEN: ["Venezuela", "Venezuela"],
+    VIN: ["San Vicente y las Granadinas", "Saint Vincent and the Grenadines"],
+  };
+  const pais = (f, lang) => (PAISES[f] ? PAISES[f][lang === "en" ? 1 : 0] + " (" + f + ")" : f);
   const ordenGrupo = (g) => { const m = String(g).match(/^U0?(\d+)(F?)$/i); return m ? Number(m[1]) * 2 + (m[2] ? 1 : 0) : 999; };
 
   // Sin tildes, sin mayúsculas y sin comas: «Muñoz, José» → «munoz jose».
@@ -169,18 +230,25 @@
     if (!datos) { estado.textContent = tx.cargando; return; }
     const palabras = q.split(" ");
     const hallados = jugadores().filter((x) => { const n = plano(x.j.nombre); return palabras.every((p) => n.includes(p)); });
-    const alguno = datos.torneos.find((tor) => tor.leido_en);
-    const cuando = alguno ? (deGuardado ? tx.guardado(hora(alguno.leido_en)) : tx.leido(hora(alguno.leido_en))) : "";
-    // «10:05 a. m.» ya trae su punto: no se le pone otro.
-    const decir = (s) => { estado.textContent = s.replace(/\.\./g, "."); };
-    if (!hallados.length) { decir(tx.nadie + (cuando ? " " + cuando : "")); return; }
-    decir(tx.cuantos(hallados.length, MAX_RESULTADOS) + (cuando ? " " + cuando : ""));
+    const cuando = cuandoSeLeyo(tx);
+    if (!hallados.length) { decir(estado, tx.nadie + cuando); return; }
+    decir(estado, tx.cuantos(hallados.length, MAX_RESULTADOS) + cuando);
     hallados.slice(0, MAX_RESULTADOS).forEach((x) => lista.appendChild(tarjeta(x, tx)));
   }
+
+  // « Leído en chess-results: …» (o «Sin conexión: …»), para el final de un estado.
+  function cuandoSeLeyo(tx) {
+    const alguno = datos && datos.torneos.find((tor) => tor.leido_en);
+    if (!alguno) return "";
+    return " " + (deGuardado ? tx.guardado(hora(alguno.leido_en)) : tx.leido(hora(alguno.leido_en)));
+  }
+  // «10:05 a. m.» ya trae su punto: no se le pone otro.
+  const decir = (nodo, s) => { nodo.textContent = s.replace(/\.\./g, "."); };
 
   function tarjeta(x, tx) {
     const { j } = x;
     const li = el("li", "cac-jugador");
+    li.appendChild(estrella({ tnr: x.torneo.tnr, no: j.no, nombre: j.nombre }, tx));
     const nombre = el("p", "cac-jugador-nombre", (j.titulo ? j.titulo + " " : "") + j.nombre + " ");
     if (j.fed) nombre.appendChild(el("span", "cac-fed", j.fed));
     li.appendChild(nombre);
@@ -209,10 +277,241 @@
     espera = setTimeout(() => {
       pintarBuscador();
       if (plano($("buscador-nombre").value).replace(/ /g, "").length >= 3) {
-        pedir().then(pintarBuscador, () => { $("buscador-estado").textContent = t().error; });
+        pedir().then(pintarTodo, () => { $("buscador-estado").textContent = t().error; });
       }
     }, 200);
   }
+
+  /* ---------------- Mis jugadores (la estrella) ---------------- */
+  // Cada seguido es { tnr, no, nombre }: el torneo de chess-results, su número
+  // inicial y su nombre, que es lo que dice el aviso.
+  const claveDe = (s) => s.tnr + "-" + s.no;
+  function seguidos() {
+    try {
+      const l = JSON.parse(localStorage.getItem(CLAVE_SEGUIDOS) || "[]");
+      return Array.isArray(l) ? l.filter((s) => s && /^\d{1,9}$/.test(String(s.tnr)) && Number.isInteger(s.no) && s.no > 0 && typeof s.nombre === "string").slice(0, MAX_SEGUIDOS) : [];
+    } catch (e) { return []; }
+  }
+  function guardarSeguidos(l) {
+    try { localStorage.setItem(CLAVE_SEGUIDOS, JSON.stringify(l)); } catch (e) { /* sin lugar: queda para esta visita */ }
+    alCambiarSeguidos();
+  }
+  const sigo = (s) => seguidos().some((x) => claveDe(x) === claveDe(s));
+
+  function estrella(s, tx) {
+    const si = sigo(s);
+    const b = el("button", "cac-estrella");
+    b.type = "button";
+    b.dataset.clave = claveDe(s);
+    b.setAttribute("aria-pressed", si ? "true" : "false");
+    b.setAttribute("aria-label", si ? tx.dejar(s.nombre) : tx.seguir(s.nombre));
+    b.title = si ? tx.dejar(s.nombre) : tx.seguir(s.nombre);
+    const ico = el("span", "", si ? "★" : "☆");
+    ico.setAttribute("aria-hidden", "true");
+    b.appendChild(ico);
+    b.addEventListener("click", () => {
+      const l = seguidos();
+      const k = claveDe(s);
+      const estado = $("seguidos-estado");
+      if (l.some((x) => claveDe(x) === k)) guardarSeguidos(l.filter((x) => claveDe(x) !== k));
+      else if (l.length >= MAX_SEGUIDOS) { if (estado) estado.textContent = t().tope; return; }
+      else guardarSeguidos(l.concat({ tnr: String(s.tnr), no: s.no, nombre: s.nombre }));
+      if (estado) estado.textContent = "";
+      // Al volver a pintar, el foco sigue en la misma estrella (o en la del
+      // buscador, si era la de «Mis jugadores» y ya no está).
+      const lista = b.closest("[id]");
+      pintarTodo();
+      const mismo = (lista && document.getElementById(lista.id) && document.getElementById(lista.id).querySelector('[data-clave="' + k + '"]'))
+        || document.querySelector('.cac-estrella[data-clave="' + k + '"]');
+      if (mismo) mismo.focus();
+    });
+    return b;
+  }
+
+  // El seguido entre los jugadores de chess-results. Si su número ya es de
+  // otra persona (el árbitro volvió a ordenar la lista antes de la ronda 1),
+  // se lo busca por su nombre y se corrige el número guardado.
+  function buscarSeguido(s, todos) {
+    const delTorneo = todos.filter((x) => String(x.torneo.tnr) === String(s.tnr));
+    const mismo = delTorneo.find((x) => x.j.no === s.no && plano(x.j.nombre) === plano(s.nombre));
+    if (mismo) return mismo;
+    const porNombre = delTorneo.filter((x) => plano(x.j.nombre) === plano(s.nombre));
+    return porNombre.length === 1 ? porNombre[0] : null;
+  }
+
+  function pintarSeguidos() {
+    const caja = $("seguidos"), lista = $("seguidos-lista");
+    if (!caja) return;
+    const tx = t();
+    const l = seguidos();
+    caja.hidden = !l.length;
+    lista.replaceChildren();
+    const todos = datos ? jugadores() : [];
+    let corregidos = false;
+    l.forEach((s) => {
+      const x = datos ? buscarSeguido(s, todos) : null;
+      if (x) {
+        if (x.j.no !== s.no) { s.no = x.j.no; corregidos = true; }
+        lista.appendChild(tarjeta(x, tx));
+        return;
+      }
+      const li = el("li", "cac-jugador");
+      li.appendChild(estrella(s, tx));
+      li.appendChild(el("p", "cac-jugador-nombre", s.nombre));
+      li.appendChild(el("p", "text-sm", datos ? tx.noEsta : tx.cargandoSeguido));
+      lista.appendChild(li);
+    });
+    if (corregidos) guardarSeguidos(l);
+    pintarAvisos();
+  }
+
+  /* ---------------- Mi delegación ---------------- */
+  function delegacionGuardada() {
+    try { return (localStorage.getItem(CLAVE_DELEGACION) || "").replace(/[^A-Z]/g, "").slice(0, 3); } catch (e) { return ""; }
+  }
+
+  function pintarDelegacion() {
+    const sel = $("delegacion"), estado = $("delegacion-estado"), caja = $("delegacion-lista");
+    if (!sel) return;
+    const tx = t();
+    const lang = idioma();
+    const elegida = sel.value || delegacionGuardada();
+    const todos = datos ? jugadores() : [];
+    // Los países que hay en la clasificación, por nombre.
+    const feds = [...new Set(todos.map((x) => x.j.fed).filter(Boolean))];
+    if (elegida && !feds.includes(elegida)) feds.push(elegida);
+    feds.sort((a, b) => pais(a, lang).localeCompare(pais(b, lang), tx.locale));
+    // Solo se rearma si cambió: rearmarla con la lista abierta la cierra.
+    const firma = lang + ":" + feds.join(",");
+    if (sel.dataset.firma !== firma) {
+      sel.dataset.firma = firma;
+      sel.replaceChildren(el("option", "", tx.elegir));
+      sel.firstChild.value = "";
+      feds.forEach((f) => { const o = el("option", "", pais(f, lang)); o.value = f; sel.appendChild(o); });
+    }
+    sel.value = elegida;
+    caja.replaceChildren();
+    if (!elegida) { estado.textContent = ""; return; }
+    if (!datos) { estado.textContent = tx.cargando; return; }
+    const suyos = todos.filter((x) => x.j.fed === elegida);
+    decir(estado, tx.deDelegacion(suyos.length, pais(elegida, lang)) + cuandoSeLeyo(tx));
+    const grupos = {};
+    suyos.forEach((x) => { (grupos[x.j.grupo || "—"] = grupos[x.j.grupo || "—"] || []).push(x); });
+    Object.keys(grupos).sort((a, b) => ordenGrupo(a) - ordenGrupo(b) || a.localeCompare(b)).forEach((g) => {
+      const sec = el("section", "cac-delegacion-grupo");
+      sec.appendChild(el("h4", "", tx.categoria(g) + " · " + tx.enCategoria(grupos[g].length)));
+      const ul = el("ul", "mt-2 grid gap-3");
+      ul.id = "delegacion-" + String(g).replace(/[^A-Za-z0-9]/g, "");
+      grupos[g].sort((a, b) => a.j.puesto - b.j.puesto).forEach((x) => ul.appendChild(tarjeta(x, tx)));
+      sec.appendChild(ul);
+      caja.appendChild(sec);
+    });
+  }
+
+  function alElegirDelegacion() {
+    const sel = $("delegacion");
+    try { if (sel.value) localStorage.setItem(CLAVE_DELEGACION, sel.value); else localStorage.removeItem(CLAVE_DELEGACION); } catch (e) {}
+    pintarDelegacion();
+    if (sel.value) pedir().then(pintarTodo, () => { $("delegacion-estado").textContent = t().error; });
+  }
+
+  function pintarTodo() { pintarSeguidos(); pintarBuscador(); pintarDelegacion(); }
+
+  /* ---------------- Avisarme en este celular ---------------- */
+  // Qué dice la función, también cuando contesta un error (lo trae el cuerpo).
+  async function llamar(body) {
+    if (!window.sb || !window.sb.functions) return { ok: false };
+    const { data, error } = await window.sb.functions.invoke("sala-jugadores", { body });
+    if (!error) return data || { ok: false };
+    try { return await error.context.json(); } catch (e) { return { ok: false }; }
+  }
+  const hayPush = () => "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
+  const avisosEncendidos = () => { try { return localStorage.getItem(CLAVE_AVISOS) === "1" && Notification.permission === "granted"; } catch (e) { return false; } };
+  const marcarAvisos = (si) => { try { if (si) localStorage.setItem(CLAVE_AVISOS, "1"); else localStorage.removeItem(CLAVE_AVISOS); } catch (e) {} };
+  const llaveBytes = (b64) => {
+    const s = (b64 + "=".repeat((4 - (b64.length % 4)) % 4)).replace(/-/g, "+").replace(/_/g, "/");
+    return Uint8Array.from(atob(s), (c) => c.charCodeAt(0));
+  };
+  // El service worker lo registra js/pwa.js; si no llega en 8 s, no hay.
+  const registro = () => Promise.race([navigator.serviceWorker.ready, new Promise((r) => setTimeout(() => r(null), 8000))]);
+  const paraMandar = () => seguidos().map((s) => ({ tnr: String(s.tnr), no: s.no, nombre: s.nombre }));
+
+  function pintarAvisos() {
+    const caja = $("avisos"), boton = $("avisos-boton");
+    if (!caja || !boton) return;
+    caja.hidden = !hayPush() || !seguidos().length;
+    const si = hayPush() && avisosEncendidos();
+    const tx = t();
+    boton.setAttribute("aria-pressed", si ? "true" : "false");
+    const ico = el("span", "", "🔔 ");
+    ico.setAttribute("aria-hidden", "true");
+    boton.replaceChildren(ico, document.createTextNode(si ? tx.avisosSi : tx.avisarme));
+  }
+
+  let ocupado = false;
+  async function alTocarAvisos() {
+    if (ocupado) return;
+    const boton = $("avisos-boton"), estado = $("avisos-estado");
+    const tx = t();
+    ocupado = true;
+    boton.disabled = true;
+    try {
+      if (avisosEncendidos()) {
+        const reg = await registro();
+        const sub = reg && (await reg.pushManager.getSubscription());
+        if (sub) await llamar({ accion: "baja", clave: SALA, suscripcion: sub.toJSON() });
+        marcarAvisos(false);
+        estado.textContent = tx.avisosApagados;
+        return;
+      }
+      estado.textContent = tx.pidiendoPermiso;
+      const permiso = await Notification.requestPermission();
+      if (permiso !== "granted") { estado.textContent = tx.sinPermiso; return; }
+      const reg = await registro();
+      if (!reg) { estado.textContent = tx.sinPreparar; return; }
+      const llave = await llamar({ accion: "push_llave" });
+      if (!llave.ok || !llave.llave) { estado.textContent = llave.error || tx.avisosError; return; }
+      const sub = (await reg.pushManager.getSubscription()) || (await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: llaveBytes(llave.llave) }));
+      const r = await llamar({ accion: "seguir", clave: SALA, suscripcion: sub.toJSON(), jugadores: paraMandar(), idioma: idioma() });
+      if (!r.ok) { estado.textContent = r.error || tx.avisosError; return; }
+      marcarAvisos(true);
+      estado.textContent = tx.avisosListos;
+    } catch (e) {
+      estado.textContent = tx.avisosError;
+    } finally {
+      ocupado = false;
+      boton.disabled = false;
+      pintarAvisos();
+    }
+  }
+
+  // Con los avisos encendidos, la función tiene que saber la lista nueva (o el
+  // idioma nuevo). Se espera un poco, por si se tocan varias estrellas seguidas.
+  let alDia = null;
+  function ponerAvisosAlDia() {
+    if (!hayPush() || !avisosEncendidos()) return;
+    clearTimeout(alDia);
+    alDia = setTimeout(async () => {
+      const estado = $("avisos-estado");
+      try {
+        const reg = await registro();
+        const sub = reg && (await reg.pushManager.getSubscription());
+        if (!sub) { marcarAvisos(false); pintarAvisos(); return; }
+        const lista = paraMandar();
+        if (!lista.length) {
+          await llamar({ accion: "baja", clave: SALA, suscripcion: sub.toJSON() });
+          marcarAvisos(false);
+          pintarAvisos();
+          return;
+        }
+        const r = await llamar({ accion: "seguir", clave: SALA, suscripcion: sub.toJSON(), jugadores: lista, idioma: idioma() });
+        if (estado) estado.textContent = r.ok ? t().avisosAlDia : (r.error || t().avisosError);
+      } catch (e) {
+        if (estado) estado.textContent = t().avisosError;
+      }
+    }, 1500);
+  }
+  function alCambiarSeguidos() { ponerAvisosAlDia(); }
 
   /* ---------------- el medallero ---------------- */
   function pintarMedallero() {
@@ -299,6 +598,21 @@
   const campo = $("buscador-nombre");
   if (campo) campo.addEventListener("input", alEscribir);
 
+  const sel = $("delegacion");
+  if (sel) {
+    sel.addEventListener("change", alElegirDelegacion);
+    // Los países salen de los datos: se piden al ir a elegir.
+    const cargar = () => { if (!datos || deGuardado) pedir().then(pintarDelegacion, () => {}); };
+    sel.addEventListener("focus", cargar);
+    sel.addEventListener("pointerdown", cargar);
+  }
+  const botonAvisos = $("avisos-boton");
+  if (botonAvisos) botonAvisos.addEventListener("click", alTocarAvisos);
+  pintarSeguidos();
+  pintarDelegacion();
+  // Quien ya sigue a alguien o eligió su país viene a ver eso: se pide de una vez.
+  if (seguidos().length || delegacionGuardada()) pedir().then(pintarTodo, () => pintarTodo());
+
   // El medallero se abre como las demás ventanas (js/ventana-enlace.js, con el
   // enlace #medallero o la dirección); cuando se abre, se llena.
   const dialogo = $("medallero");
@@ -307,11 +621,13 @@
     if (dialogo.open) abrirMedallero();
   }
 
-  document.addEventListener("cac-idioma", () => { pintarBuscador(); if (dialogo && dialogo.open) pintarMedallero(); });
+  document.addEventListener("cac-idioma", () => { pintarTodo(); ponerAvisosAlDia(); if (dialogo && dialogo.open) pintarMedallero(); });
 
-  // Mientras la página está a la vista y alguien ya buscó, se pone al día sola.
+  // Mientras la página está a la vista y alguien ya buscó (o sigue a alguien,
+  // o eligió su país), se pone al día sola.
   setInterval(() => {
-    if (document.hidden || !campo || plano(campo.value).length < 3) return;
-    pedir().then(pintarBuscador, () => {});
+    const busco = campo && plano(campo.value).length >= 3;
+    if (document.hidden || !(busco || seguidos().length || (sel && sel.value))) return;
+    pedir().then(pintarTodo, () => {});
   }, REFRESCO_MS);
 })();

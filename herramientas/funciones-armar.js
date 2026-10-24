@@ -56,6 +56,10 @@ const FUNCIONES = {
   "prueba-gratis": ["usuario-alumno.ts"],
   // La pizarra de la sala de cine: lee chess-results. Ver su cabecera.
   "pizarra-torneo": [],
+  // «Busca a tu jugador», el medallero y los avisos de ronda del
+  // Centroamericano (verify_jwt en false: la revisión la dispara pg_cron con
+  // el secreto). Ver su cabecera.
+  "sala-jugadores": ["webpush.ts"],
   // La calculadora de la selección CODICADER: lee un torneo entero de
   // chess-results, solo con licencia. Ver su cabecera.
   "seleccion-chess-results": [],

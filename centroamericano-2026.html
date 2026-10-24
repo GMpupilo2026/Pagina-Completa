@@ -135,11 +135,36 @@
                  ronda de hoy, de chess-results, por la Edge Function sala-jugadores.
                  Lo que arma va en #buscador-resultados, en el idioma de la página. -->
             <div id="buscador" class="cac-buscador mt-6 sm:mt-8">
+                <!-- «Mis jugadores»: los que se marcan con la estrella, guardados
+                     en este aparato (sin cuenta). Se esconde mientras no haya
+                     ninguno. «Avisarme en este celular» manda cada ronda como
+                     notificación (la función sala-jugadores, acciones seguir/baja). -->
+                <div id="seguidos" class="cac-seguidos mb-6" role="region" aria-labelledby="seguidos-titulo" hidden>
+                    <h3 id="seguidos-titulo" class="cac-buscador-titulo"><span aria-hidden="true">⭐ </span>Mis jugadores</h3>
+                    <ul id="seguidos-lista" class="mt-3 grid gap-3" data-no-traducir></ul>
+                    <p id="seguidos-estado" class="mt-2 text-sm font-semibold" role="status" aria-live="polite" data-no-traducir></p>
+                    <div id="avisos" class="mt-4" hidden>
+                        <button id="avisos-boton" type="button" class="cac-boton" aria-pressed="false" data-no-traducir></button>
+                        <p class="mt-2 text-xs text-brand-600 dark:text-brand-300">Te avisamos en este celular su mesa, su color y su rival en cuanto se publica cada ronda. No se guarda tu nombre ni tu correo: solo la dirección de avisos de este navegador, como dice la <a href="privacidad.html#torneos" target="_blank" rel="noopener" class="underline underline-offset-2 hover:no-underline">Política de privacidad</a>.</p>
+                        <p id="avisos-estado" class="mt-2 text-sm font-semibold" role="status" aria-live="polite" data-no-traducir></p>
+                    </div>
+                </div>
                 <label for="buscador-nombre" class="cac-buscador-titulo"><span aria-hidden="true">🔎 </span>Busca a tu jugador</label>
                 <p class="mt-1 text-sm sm:text-base text-brand-600 dark:text-brand-300">Escribe su nombre o su apellido: te decimos su mesa y su rival en la ronda de hoy, su categoría y cómo va.</p>
                 <input id="buscador-nombre" type="search" autocomplete="off" spellcheck="false" placeholder="Por ejemplo: Mayorga" class="cac-buscador-campo">
                 <p id="buscador-estado" class="mt-2 text-sm text-brand-600 dark:text-brand-300" role="status" aria-live="polite" data-no-traducir></p>
                 <ul id="buscador-resultados" class="mt-3 grid gap-3" data-no-traducir></ul>
+                <!-- «Mi delegación»: todos los jugadores de una federación, por
+                     categoría. Los países salen de la clasificación. -->
+                <div class="mt-6">
+                    <label for="delegacion" class="cac-buscador-titulo"><span aria-hidden="true">🌎 </span>Mi delegación</label>
+                    <p class="mt-1 text-sm sm:text-base text-brand-600 dark:text-brand-300">Elige tu país y mira a todos sus jugadores: mesa, color y rival en la ronda de hoy, y cómo va cada uno.</p>
+                    <select id="delegacion" class="cac-buscador-campo" data-no-traducir>
+                        <option value="">Elige el país…</option>
+                    </select>
+                    <p id="delegacion-estado" class="mt-2 text-sm text-brand-600 dark:text-brand-300" role="status" aria-live="polite" data-no-traducir></p>
+                    <div id="delegacion-lista" class="mt-3" data-no-traducir></div>
+                </div>
                 <p class="mt-3 flex flex-wrap gap-x-5 gap-y-2 text-sm font-bold">
                     <a href="#medallero" class="cac-accion underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ce1328]"><span aria-hidden="true">🥇 </span>Ver el medallero →</a>
                 </p>
