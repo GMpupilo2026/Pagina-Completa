@@ -1458,8 +1458,9 @@ function generarCasillas(reales) {
    Rey y peón, con la tabla exacta). Salen de las posiciones de los ejercicios
    y de su línea, y también de la posición que deja la segunda mejor jugada en
    esos mismos finales: es la que da las tablas y las derrotas, que en los
-   ejercicios (todos ganan) casi no hay. El resultado lo dice el motor a
-   profundidad 22 y 30, y las dos tienen que coincidir: gana con +4 o más (o
+   ejercicios (todos ganan) casi no hay. Una posición por ejercicio, y 1200
+   como mucho: a profundidad 30 eran 8000 y tardaba horas. El resultado lo
+   dice el motor a profundidad 18 y 26, y las dos tienen que coincidir: gana con +4 o más (o
    mate), tablas con 0,25 o menos. Lo del medio no entra. */
 async function generarAlcanza() {
   const cand = [], vistas = new Set();
@@ -1471,7 +1472,10 @@ async function generarAlcanza() {
     vistas.add(k);
     cand.push({ fen, pz, origen });
   };
-  posicionesDeLineas(N.soloReyesYPeones).forEach((x) => sumar(x.fen, x.pz, "partida"));
+  // una sola por ejercicio (la primera de su línea que ya es final de peones):
+  // las de una misma línea se parecen, y cada una cuesta un análisis hondo
+  const yaTiene = new Set();
+  posicionesDeLineas(N.soloReyesYPeones).forEach((x) => { if (!yaTiene.has(x.pz.id)) { const antes = cand.length; sumar(x.fen, x.pz, "partida"); if (cand.length > antes) yaTiene.add(x.pz.id); } });
   const base = cand.slice();
   await enParalelo(base, async (c) => {
     const r = await analizar(c.fen, 3, 16);
@@ -1481,10 +1485,11 @@ async function generarAlcanza() {
     });
   });
   const veredicto = (cp) => (cp >= 400 ? "gana" : cp <= -400 ? "pierde" : Math.abs(cp) <= 25 ? "tablas" : null);
-  const buenos = (await enParalelo(cand, async (c) => {
+  const lista = barajar(cand, "alcanza").slice(0, 1200);
+  const buenos = (await enParalelo(lista, async (c) => {
     const turno = c.fen.split(" ")[1];
-    const [a] = await analizar(c.fen, 1, 22);
-    const [b] = await analizar(c.fen, 1, 30);
+    const [a] = await analizar(c.fen, 1, 18);
+    const [b] = await analizar(c.fen, 1, 26);
     if (!a || !b) return null;
     const va = veredicto(cpDe(a)), vb = veredicto(cpDe(b));
     if (!va || va !== vb) return null;
@@ -1512,7 +1517,7 @@ async function generarAlcanza() {
         rating: x.c.pz.rating || null, partida: x.c.pz.game || null,
         resumen: "Juegan las " + COLOR_ES[turno] + " · " + R.tablero(x.c.fen).filter((q) => q && q.t === "p").length + " peones",
         respuesta: [
-          N.RESULTADO[x.res] + " (el motor: " + ev + ", a profundidad 22 y 30).",
+          N.RESULTADO[x.res] + " (el motor: " + ev + ", a profundidad 18 y 26).",
           "Peones pasados: blancas " + (p.w.join(", ") || "ninguno") + "; negras " + (p.b.join(", ") || "ninguno") + ".",
           "Cómo sigue: " + linea + ".",
         ],
@@ -1527,7 +1532,7 @@ async function generarAlcanza() {
    captura y recaptura, una o dos veces— que deja solo reyes y peones. Cada
    recaptura del rival es la que elige el motor (profundidad 16): si el rival
    no recapturaría, no es un cambio. El final que queda se juzga como en
-   ¿Alcanza el rey? (profundidad 22 y 30, que coincidan). Para que la decisión
+   ¿Alcanza el rey? (profundidad 18 y 26, que coincidan). Para que la decisión
    importe: si el final se gana, el cambio no puede ser peor que no cambiar
    por más de 0,5; si son tablas, sin cambiar había +1,5 o más; si se pierde,
    sin cambiar se aguantaba (−1 o más). */
@@ -1576,8 +1581,8 @@ async function generarLiquidar() {
     }
     const fenQ = g.fen();
     if (g.game_over()) return st("termina");
-    const [a] = await analizar(fenQ, 1, 22);
-    const [b] = await analizar(fenQ, 1, 30);
+    const [a] = await analizar(fenQ, 1, 18);
+    const [b] = await analizar(fenQ, 1, 26);
     if (!a || !b) return st("sin-motor");
     const va = veredicto(cpDe(a)), vb = veredicto(cpDe(b));
     if (!va || va !== vb) return st("dudoso");
@@ -1618,7 +1623,7 @@ async function generarLiquidar() {
         rating: x.c.pz.rating || null, partida: x.c.pz.game || null,
         resumen: "Juegan las " + COLOR_ES[x.yo] + " · " + cadenaEs,
         respuesta: [
-          N.VEREDICTO[x.vb] + " para las " + COLOR_ES[x.yo] + " (el motor, en el final: " + evQ + " a profundidad 22 y 30).",
+          N.VEREDICTO[x.vb] + " para las " + COLOR_ES[x.yo] + " (el motor, en el final: " + evQ + " a profundidad 18 y 26).",
           "Cómo sigue el final: " + lineaEs(x.fenQ, x.b.pv, 8) + ".",
           "Sin cambiar, lo mejor era " + R.sanEs(sanDeUci(x.c.fen, x.sin.uci)) + " (" + evSin + ")." + (x.vb === "gana" ? "" : " Cambiar le regala eso al rival."),
         ],

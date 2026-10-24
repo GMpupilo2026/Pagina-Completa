@@ -3737,8 +3737,10 @@ tocar los demás bancos.
   reloj (30, 30 y 40 s; el triple en Modo Adaptado). Bien en la mitad del
   tiempo, tres estrellas; bien, dos. El nivel lo ponen los peones pasados
   (`pasados()`): uno solo de un bando, uno de cada lado (carrera), ninguno.
-  Sin tablas para estos finales, el resultado es del motor: **profundidad 22 y
-  30, y las dos tienen que decir lo mismo**: gana con ±4 o mate, tablas con
+  Sin tablas para estos finales, el resultado es del motor: **profundidad 18 y
+  26, y las dos tienen que decir lo mismo** (a 22 y 30 eran unas 8000
+  posiciones y tardaba ocho horas; ahora es una por ejercicio, más las que
+  dejan sus errores, y 1200 como mucho): gana con ±4 o mate, tablas con
   0,25 o menos, lo del medio no entra. Los ejercicios de Lichess casi siempre
   ganan, así que las tablas y las derrotas salen de la posición que deja la
   **segunda o tercera mejor jugada** en esos mismos finales (es el error que
@@ -3750,7 +3752,7 @@ tocar los demás bancos.
   cadena de cambios —captura y recaptura, una o dos veces— que deja solo
   reyes y peones, y cada recaptura del rival tiene que ser la que elige el
   motor: si el rival no recapturaría, no es un cambio. El final se juzga como
-  en ¿Alcanza el rey? (22 y 30). Para que la decisión importe: si el final se
+  en ¿Alcanza el rey? (18 y 26). Para que la decisión importe: si el final se
   gana, cambiar no puede ser peor que la mejor jugada por más de 0,5; si son
   tablas, sin cambiar había +1,5 o más (cambiar regala la ventaja); si se
   pierde, sin cambiar se aguantaba. «Ver el final de peones en el tablero» lo
