@@ -23,7 +23,12 @@ window.PuntosRegalos = (function () {
   "use strict";
 
   const FECHA = new Intl.DateTimeFormat("es-CR", { timeZone: "America/Costa_Rica", day: "numeric", month: "short" });
-  const NOMBRE_BROMA = { payaso: "un gorro de payaso", patito: "un patito", arcoiris: "el tablero arcoíris", confeti: "confeti", globo: "un globo" };
+  const NOMBRE_BROMA = {
+    payaso: "un gorro de payaso", patito: "un patito", arcoiris: "el tablero arcoíris", confeti: "confeti", globo: "un globo",
+    gallinas: "una invasión de gallinas", papel: "un rollo de papel higiénico", meteorito: "un meteorito", payaso_gigante: "al payaso gigante",
+    pato_invasor: "un pato invasor", gato: "un gato descontrolado", quesos: "una lluvia de quesos", platanazo: "un platanazo",
+    ovni: "una abducción alienígena", sandia: "una sandía explosiva",
+  };
 
   function el(tag, clases, texto) {
     const n = document.createElement(tag);
