@@ -194,7 +194,10 @@ function pruebaCompilado() {
 function pruebaCabecera() {
   console.log("\n=== El script que aplica el tema está en el <head> de todas ===");
   const pwa = fs.readFileSync(path.join(__dirname, "pwa-cabecera.py"), "utf8");
-  const fuera = [...pwa.matchAll(/"([a-z0-9-]+\.html)"/g)].map((m) => m[1]);
+  // Solo el conjunto FUERA: el resto del archivo nombra páginas por otras
+  // razones (PROPIAS, las que se instalan como su propia app).
+  const bloqueFuera = (pwa.match(/^FUERA = \{[\s\S]*?\}/m) || [""])[0];
+  const fuera = [...bloqueFuera.matchAll(/"([a-z0-9-]+\.html)"/g)].map((m) => m[1]);
   const paginas = [];
   (function anda(dir) {
     for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
