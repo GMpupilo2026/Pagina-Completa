@@ -37,6 +37,9 @@
  *                        blanco. El color tiene que dar 4,5 contra el blanco:
  *                        lo mide quien arma el documento.
  * Sin ellas, el PDF sale como siempre (los reportes de actividades).
+ *
+ *   documento.pagina   → (n, total) => texto: el número de página en otro
+ *                        idioma («Page 1 of 2»). Sin él, «Página 1 de 2».
  */
 window.ReportePDF = (function () {
   "use strict";
@@ -375,7 +378,7 @@ window.ReportePDF = (function () {
       // El pie, en todas: quién lo hizo y en qué página va.
       contenido += "BT /FN 8 Tf 0.45 0.50 0.56 rg 1 0 0 1 " + MARGEN + " " + (MARGEN - 18) + " Tm (" +
         escapar(documento.pie || "") + ") Tj ET\n";
-      const num = "Página " + (i + 1) + " de " + total;
+      const num = documento.pagina ? documento.pagina(i + 1, total) : "Página " + (i + 1) + " de " + total;
       contenido += "BT /FN 8 Tf 0.45 0.50 0.56 rg 1 0 0 1 " +
         (A4.ancho - MARGEN - anchoDe(num, 8, false)).toFixed(2) + " " + (MARGEN - 18) + " Tm (" +
         escapar(num) + ") Tj ET\n";
