@@ -10,7 +10,9 @@
  *      pestaña lleva rel="noopener", el calendario trae las nueve rondas y
  *      ningún tel: sale de la lista de teléfonos confirmados.
  *   2. LA PÁGINA, en un navegador: las fichas se ven y en un celular no hay
- *      scroll de costado.
+ *      scroll de costado; «Hoy en el torneo» dice lo que toca en cada momento
+ *      del festival (con el reloj puesto); en inglés ningún texto se queda en
+ *      español y al volver queda igual; y la segunda vez abre sin internet.
  *
  *   python3 -m http.server 8777     (desde la raíz del sitio)
  *   node herramientas/verificar-centroamericano.js
@@ -103,6 +105,34 @@ ok("las bases, el bye y los resultados se abren en la ventana", ["Bases del camp
 for (const [u, t] of ventanas) ok("«" + t + "» está permitido en frame-src", permitido(u), u);
 ok("la página carga js/ventana-enlace.js", html.includes('<script src="js/ventana-enlace.js"></script>'));
 
+
+// Lo que se comparte: la imagen de WhatsApp (1200 × 630) y el cartel con QR,
+// los dos de herramientas/centroamericano-imagenes.js.
+function tamanoJpeg(buf) {
+  for (let i = 2; i < buf.length - 9;) {
+    if (buf[i] !== 0xff) return null;
+    const tipo = buf[i + 1], largo = buf.readUInt16BE(i + 2);
+    if (tipo >= 0xc0 && tipo <= 0xc3) return buf.readUInt16BE(i + 7) + "x" + buf.readUInt16BE(i + 5);
+    i += 2 + largo;
+  }
+  return null;
+}
+const og = (html.match(/<meta property="og:image" content="https:\/\/ajedrez-integral\.com\/([^"]+)">/) || [])[1];
+ok("al compartir, la imagen propia del torneo", og === "img/centroamericano-2026/compartir.jpg", og);
+ok("y mide 1200 × 630", og && fs.existsSync(path.join(RAIZ, og)) && tamanoJpeg(fs.readFileSync(path.join(RAIZ, og))) === "1200x630");
+const CARTEL = "documentos/centroamericano-2026/cartel-centroamericano-2026.pdf";
+ok("el cartel con QR existe y la página lo enlaza", fs.existsSync(path.join(RAIZ, CARTEL)) && html.includes('href="' + CARTEL + '"'));
+// Las horas del calendario: cada fila con su hora de Costa Rica, en orden, y la ronda 1 marcada.
+const horas = [...html.matchAll(/<tr data-inicio="(\d{4}-\d{2}-\d{2}T\d{2}:\d{2})" data-minutos="(\d+)"/g)].map((m) => m[1]);
+ok("cada actividad del calendario lleva su hora (16), en orden", horas.length === 16 && horas.every((h, i) => !i || h > horas[i - 1]), horas.join(" "));
+ok("la ronda 1 va marcada para la cuenta regresiva", /data-inicio="2026-11-02T09:30"[^>]*data-primera-ronda><th[^>]*>Ronda 1</.test(html));
+// Cómo llegar: cada hotel con dirección trae su ruta en Google Maps hasta el Gimnasio Nacional.
+const hotelesHtml = (html.match(/<dialog id="hoteles"[\s\S]*?<\/dialog>/) || [""])[0];
+const rutas = [...hotelesHtml.matchAll(/href="https:\/\/www\.google\.com\/maps\/dir\/\?api=1&amp;origin=[^"&]+&amp;destination=Gimnasio\+Nacional[^"]*"/g)].length;
+ok("los seis hoteles con dirección traen su ruta a la sala", rutas === 6, rutas + " rutas");
+ok("y la ruta en Waze, una vez", /href="https:\/\/waze\.com\/ul\?q=Gimnasio%20Nacional[^"]*navigate=yes"/.test(hotelesHtml));
+ok("la página carga su traducción y su código, en ese orden", html.indexOf('<script src="js/centroamericano-en.js"></script>') > 0 && html.indexOf('<script src="js/centroamericano-en.js"></script>') < html.indexOf('<script src="js/centroamericano.js"></script>'));
+
 (async () => {
   console.log("2. La página en un navegador");
   const nav = await chromium.launch({ executablePath: fs.existsSync(CHROME) ? CHROME : undefined });
@@ -181,6 +211,82 @@ ok("la página carga js/ventana-enlace.js", html.includes('<script src="js/venta
     ok("y sus botones: el primero rojo, el resto blancos", JSON.stringify(fichaSala.cac.botones) === JSON.stringify(["rgb(206, 19, 40)", "rgb(255, 255, 255)"]), JSON.stringify(fichaSala.cac.botones));
     ok("las demás salas siguen con su ficha de siempre", fichaSala.otra.fondo === "none" && !fichaSala.otra.mascota, JSON.stringify(fichaSala.otra));
     await ctx3.close();
+
+    // «Hoy en el torneo», con el reloj puesto en cada momento del festival.
+    const hoyEn = async (momento, idioma) => {
+      const c = await nav.newContext({ viewport: { width: 1280, height: 900 }, serviceWorkers: "block" });
+      const pg = await c.newPage();
+      await pg.clock.install({ time: new Date(momento) });
+      await pg.goto(BASE + "/" + PAGINA + (idioma ? "?lang=" + idioma : ""), { waitUntil: "load" });
+      const r = await pg.evaluate(() => ({ estado: document.getElementById("hoy").dataset.estado,
+        texto: ["hoy-etiqueta", "hoy-principal", "hoy-detalle"].map((id) => document.getElementById(id).textContent).join(" | ") }));
+      await c.close();
+      return r;
+    };
+    let h = await hoyEn("2026-10-24T10:00:00-06:00");
+    ok("antes del festival, la cuenta regresiva", h.estado === "antes" && /Faltan 8 días/.test(h.texto) && /ronda 1 se juega el lunes 2 de noviembre a las 9:30/.test(h.texto), h.texto);
+    h = await hoyEn("2026-11-02T10:15:00-06:00");
+    ok("durante una ronda, lo que se juega ahora y lo que sigue", h.estado === "durante" && /Ahora: Ronda 1/.test(h.texto) && /Después: Ronda 2, hoy a las 3:30/.test(h.texto), h.texto);
+    h = await hoyEn("2026-11-03T21:00:00-06:00");
+    ok("entre rondas, lo próximo con cuánto falta", /Lo próximo: Ronda 4/.test(h.texto) && /Mañana, miércoles 4 de noviembre, a las 9:00/.test(h.texto) && /faltan 12 h/.test(h.texto), h.texto);
+    h = await hoyEn("2026-11-08T13:00:00-06:00");
+    ok("después, el cierre", h.estado === "despues" && /terminó/.test(h.texto), h.texto);
+    h = await hoyEn("2026-11-02T10:15:00-06:00", "en");
+    ok("y en inglés", /Now: Round 1/.test(h.texto) && /Then: Round 2, today at 3:30/.test(h.texto), h.texto);
+
+    // El inglés: todo texto de la página tiene el suyo, y al volver queda igual que antes.
+    const ctx4 = await nav.newContext({ viewport: { width: 1280, height: 900 }, serviceWorkers: "block" });
+    const p4 = await ctx4.newPage();
+    // El aviso de «quedó guardada» llega un rato después de cargar: se espera, para comparar lo mismo.
+    const guardada = (pg) => pg.waitForFunction(() => !document.getElementById("hoy-sin-red").hidden, null, { timeout: 15000 }).catch(() => {});
+    await p4.goto(BASE + "/" + PAGINA, { waitUntil: "load" });
+    await guardada(p4);
+    const textoEs = await p4.evaluate(() => document.body.innerText);
+    await p4.click("#cac-idioma");
+    const en = await p4.evaluate(() => {
+      const valores = new Set(Object.values(window.CentroamericanoEN.textos));
+      const sinTraducir = [];
+      const w = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+      let n;
+      while ((n = w.nextNode())) {
+        if (n.parentElement.closest("script, style, [data-no-traducir]")) continue;
+        const t = n.nodeValue.replace(/\s+/g, " ").trim();
+        if (/[A-Za-zÁÉÍÓÚáéíóúñ]/.test(t) && !valores.has(t)) sinTraducir.push(t);
+      }
+      document.querySelectorAll("[alt], [aria-label], [title], [data-ventana]").forEach((e) => {
+        if (e.closest("[data-no-traducir]")) return;
+        ["alt", "aria-label", "title", "data-ventana"].forEach((a) => { const v = e.getAttribute(a); if (v && /[A-Za-z]/.test(v) && !valores.has(v)) sinTraducir.push(a + "=" + v); });
+      });
+      const b = document.getElementById("cac-idioma");
+      return { sinTraducir, lang: document.documentElement.lang, boton: b.textContent, titulo: document.title };
+    });
+    ok("en inglés, ningún texto se queda en español", en.sinTraducir.length === 0, JSON.stringify(en.sinTraducir.slice(0, 8)));
+    ok("y la página lo dice (lang=en, el título, el botón ofrece «Español»)", en.lang === "en" && /^Central American/.test(en.titulo) && /Español/.test(en.boton), JSON.stringify(en));
+    await p4.click('#fichas a[data-ventana="Championship regulations"]');
+    await p4.waitForSelector("dialog.ventana-enlace[open]");
+    ok("lo que se abre después también va en inglés", await p4.evaluate(() => { const d = document.querySelector("dialog.ventana-enlace"); return d.querySelector("h2").textContent === "Championship regulations" && /Close/.test(d.textContent) && /Open in a new tab/.test(d.textContent); }));
+    await p4.keyboard.press("Escape");
+    await p4.waitForFunction(() => !document.querySelector("dialog.ventana-enlace"));
+    await p4.reload({ waitUntil: "load" });
+    await guardada(p4);
+    ok("la elección se recuerda al volver", await p4.evaluate(() => document.documentElement.lang === "en"));
+    await p4.click("#cac-idioma");
+    ok("y al volver al español queda exactamente como estaba", (await p4.evaluate(() => document.body.innerText)) === textoEs && await p4.evaluate(() => document.documentElement.lang === "es"));
+    await ctx4.close();
+
+    // Sin internet: con el service worker de verdad, la segunda vez abre sin red.
+    const ctx5 = await nav.newContext({ viewport: { width: 390, height: 800 } });
+    const p5 = await ctx5.newPage();
+    await p5.goto(BASE + "/" + PAGINA, { waitUntil: "load" });
+    await p5.waitForFunction(() => !document.getElementById("hoy-sin-red").hidden, null, { timeout: 15000 }).catch(() => {});
+    ok("la página avisa que quedó guardada para abrir sin internet", await p5.evaluate(() => document.getElementById("hoy-sin-red").checkVisibility()));
+    await p5.evaluate(() => navigator.serviceWorker.ready);
+    await ctx5.setOffline(true);
+    await p5.reload({ waitUntil: "load" }).catch(() => {});
+    const sinRed = await p5.evaluate(() => ({ titulo: (document.querySelector("h1") || {}).textContent || "", fichas: document.querySelectorAll("#fichas .cac-ficha").length,
+      css: getComputedStyle(document.querySelector(".cac-portada") || document.body).backgroundImage })).catch((e) => ({ error: String(e) }));
+    ok("sin red, abre entera: el título, las fichas y su hoja de estilos", /Centroamericano/.test(sinRed.titulo) && sinRed.fichas === 9 && /gradient/.test(sinRed.css), JSON.stringify(sinRed));
+    await ctx5.close();
   } finally {
     await nav.close();
   }

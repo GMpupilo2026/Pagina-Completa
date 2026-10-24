@@ -90,7 +90,7 @@ function tamanos(pdf) {
   }
   return vistos;
 }
-const LIBROS = ["material/rompe-el-estancamiento/rompe-el-estancamiento.pdf", "material/guia-del-profesor", "material/peonita", "material/ponte-a-prueba", "material/mide-tu-fuerza"]
+const LIBROS = ["material/rompe-el-estancamiento/rompe-el-estancamiento.pdf", "documentos/centroamericano-2026/cartel-centroamericano-2026.pdf", "material/guia-del-profesor", "material/peonita", "material/ponte-a-prueba", "material/mide-tu-fuerza"]
   .flatMap((r) => (r.endsWith(".pdf") ? [r] : archivos(r, [".pdf"], false)))
   // La versión adaptada (para lector de pantalla y baja visión) va sin marca
   // a propósito: una imagen detrás del texto le estorba a quien ve poco.
