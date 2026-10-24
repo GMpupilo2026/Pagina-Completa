@@ -518,7 +518,7 @@ async function pruebaTipos(browser) {
   // Habilidades es una tarjeta de la pestaña Entrenamientos (js/clase-entrenamientos.js).
   await page.click('#entrenos-body [data-entreno="tipos"]', { timeout: 30000 });
   await page.waitForSelector("#tipos-body button", { timeout: 30000 });
-  igual("los diecinueve tipos", await page.$$eval("#tipos-body > div > button", (b) => b.length), 19);
+  igual("los veinticinco tipos", await page.$$eval("#tipos-body > div > button", (b) => b.length), 25);
 
   async function abrirNivel(nombreTipo, nivel) {
     // Preguntar y Practicar se van a su pestaña: se vuelve a la de Entrenamientos

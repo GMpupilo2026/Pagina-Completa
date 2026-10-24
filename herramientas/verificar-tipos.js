@@ -48,6 +48,14 @@
  *     del banco no está lejos (posición tranquila); cantidad y segundos son
  *     los del nivel.
  *
+ *   - Los tipos 20 a 25: el Mapa de casillas se recalcula con la regla; en
+ *     ¿Alcanza el rey? y ¿Cambio y paso…? el final es de solo reyes y peones
+ *     (la cadena de cambios, jugada, lleva a él), el resultado es el del
+ *     motor y hay de más de un resultado; la intermedia y la natural son
+ *     legales y la página acepta solo la buena; el defensor sobrecargado lo
+ *     vuelve a encontrar la regla con la línea; en la peor pieza la buena le
+ *     saca 0,5 a todas las demás y su mejor jugada es tranquila.
+ *
  * El motor no se vuelve a correr acá (en el CI no hay Stockfish): lo que dijo
  * se comprobó al generar, en herramientas/tipos-generar.js.
  *
@@ -585,6 +593,148 @@ DATOS.tiempo.forEach((x) => {
   ok("tiempo: se acabó el reloj, cero estrellas", M.estrellasTiempo(null) === 0);
   ok("tiempo: en Modo Adaptado, el triple", M.segundosTiempo(8, true) === 24 && M.segundosTiempo(8, false) === 8);
 }
+
+/* =====================================================================
+ * 20 a 25: las reglas de js/tipos-reglas-20.js, vueltas a correr.
+ * ===================================================================== */
+const N = require("../js/tipos-reglas-20.js");
+const cp = (ev, mate) => (ev === null || ev === undefined ? (mate > 0 ? 10000 : -10000) : ev);
+
+titulo("Mapa de casillas");
+{
+  const TIPO = { 1: "pieza", 2: "rey", 3: "rival", 4: "seguras" };
+  DATOS.casillas.forEach((x) => {
+    const g = legal(x.fen);
+    if (!g) return;
+    const yo = x.fen.split(" ")[1];
+    ok("nadie empieza en jaque (" + x.id + ")", !g.in_check());
+    ok("pide lo de su nivel (" + x.id + ")", x.pide.tipo === TIPO[x.nivel]);
+    if (x.pide.casilla) {
+      const p = R.tablero(x.fen)[R.idx(x.pide.casilla)];
+      ok("la pieza marcada es de quien corresponde (" + x.id + ")", p && ["n", "b", "r", "q"].includes(p.t) && p.c === (x.pide.tipo === "rival" ? R.otro(yo) : yo));
+    }
+    const r = N.mapaCasillas(Chess, x.fen, x.pide);
+    ok("las casillas son las que da la regla (" + x.id + ")", JSON.stringify(r) === JSON.stringify(x.respuestas), r.join(",") + " contra " + x.respuestas.join(","));
+    ok("hay casillas que marcar (" + x.id + ")", x.respuestas.length >= 2);
+    if (x.pide.tipo === "seguras") {
+      const destinos = new Set(g.moves({ square: x.pide.casilla, verbose: true }).map((m) => m.to));
+      ok("hay casillas adonde va pero atacadas, que descartar (" + x.id + ")", destinos.size - x.respuestas.length >= 2 && x.respuestas.every((s) => destinos.has(s)));
+    }
+    ok("trae la respuesta para el profesor (" + x.id + ")", Array.isArray(x.respuesta) && x.respuesta[0].includes(x.respuestas.join(", ")) && !!x.resumen);
+  });
+  // la regla, con casos a mano
+  ok("casillas: la torre de a1 ataca su columna y su fila hasta su propio rey, que queda defendido (13)", N.mapaCasillas(Chess, "4k3/8/8/8/8/8/8/R5K1 w - - 0 1", { tipo: "pieza", casilla: "a1" }).length === 7 + 6);
+  ok("casillas: el peón ataca en diagonal, no hacia adelante", [...N.ataquesDe(R.tablero("4k3/8/8/8/4P3/8/8/4K3 w - - 0 1"), R.idx("e4"))].map(R.sq).sort().join() === "d5,f5");
+  ok("casillas: si nada llega al rey, no hay casillas", N.mapaCasillas(Chess, "4k3/8/8/8/8/8/8/R3K3 w - - 0 1", { tipo: "rey" }).join() === "");
+  ok("casillas: la torre en la octava corta al rey en d8 y f8, también detrás del rey", N.mapaCasillas(Chess, "R3k3/8/8/8/8/8/8/4K3 w - - 0 1", { tipo: "rey" }).join() === "d8,f8");
+  const r = N.corregirCasillas(["a1", "b2"], ["a1", "b2"]);
+  ok("casillas: todas y ninguna de más, tres estrellas; una de más, menos", r.estrellas === 3 && N.corregirCasillas(["a1", "b2"], ["a1", "b2", "c3"]).estrellas < 3);
+}
+
+titulo("¿Alcanza el rey?");
+DATOS.alcanza.forEach((x) => {
+  const g = legal(x.fen);
+  if (!g) return;
+  ok("solo reyes y peones, y más de un peón (" + x.id + ")", N.soloReyesYPeones(x.fen) && R.tablero(x.fen).filter(Boolean).length >= 4);
+  ok("nadie empieza en jaque ni terminó (" + x.id + ")", !g.in_check() && !g.game_over());
+  ok("el nivel es el de sus peones pasados (" + x.id + ")", x.nivel === N.nivelAlcanza(x.fen) && JSON.stringify(x.pasados) === JSON.stringify(N.pasados(x.fen)));
+  ok("los segundos son los del nivel (" + x.id + ")", x.segundos === C.nivel("alcanza", x.nivel).segundos);
+  const v = x.eval;
+  const esperado = v === null ? null : v >= 400 ? "w" : v <= -400 ? "b" : Math.abs(v) <= 25 ? "d" : "?";
+  ok("el resultado es el del motor (" + x.id + ")", ["w", "d", "b"].includes(x.resultado) && (esperado === null ? x.resultado !== "d" : esperado === x.resultado), x.resultado + " con " + v);
+  ok("trae la respuesta para el profesor (" + x.id + ")", Array.isArray(x.respuesta) && x.respuesta[0].startsWith(N.RESULTADO[x.resultado]));
+});
+{
+  const cuenta = DATOS.alcanza.reduce((m, x) => { m[x.resultado] = (m[x.resultado] || 0) + 1; return m; }, {});
+  ok("alcanza: hay de los tres resultados (no se contesta siempre lo mismo)", cuenta.w > 0 && cuenta.d > 0 && cuenta.b > 0, JSON.stringify(cuenta));
+  ok("alcanza: bien y rápido, tres; bien, dos; mal o sin tiempo, cero",
+    N.estrellasAlcanza(true, 10, 30) === 3 && N.estrellasAlcanza(true, 20, 30) === 2 && N.estrellasAlcanza(false, 5, 30) === 0 && N.estrellasAlcanza(true, null, 30) === 0);
+  ok("alcanza: los peones pasados se cuentan bien", JSON.stringify(N.pasados("4k3/8/8/p7/8/8/1P5P/4K3 w - - 0 1")) === JSON.stringify({ w: ["h2"], b: [] }));
+}
+
+titulo("¿Cambio y paso al final de peones?");
+DATOS.liquidar.forEach((x) => {
+  const g = legal(x.fen);
+  if (!g) return;
+  ok("hay piezas: todavía no es un final de peones (" + x.id + ")", !N.soloReyesYPeones(x.fen) && !g.in_check());
+  ok("la cadena es de 2 o 4 capturas (" + x.id + ")", x.cadena.length === 2 || x.cadena.length === 4);
+  const f = N.finalDeLaCadena(Chess, x.fen, x.cadena);
+  ok("la cadena, jugada, deja ese final de solo reyes y peones (" + x.id + ")", f === x.fenFinal, f);
+  ok("y al final le toca al mismo bando (" + x.id + ")", f && f.split(" ")[1] === x.fen.split(" ")[1]);
+  const peones = (fen, c2) => R.tablero(fen).filter((p) => p && p.t === "p" && p.c === c2).length;
+  const iguales = f && peones(f, "w") === peones(f, "b");
+  ok("el nivel (" + x.id + ")", x.nivel === (iguales ? 3 : x.cadena.length === 2 ? 1 : 2));
+  const v = x.eval;
+  ok("el veredicto es el del motor (" + x.id + ")", (x.veredicto === "gana" && (v === null || v >= 400)) || (x.veredicto === "tablas" && v !== null && Math.abs(v) <= 25) || (x.veredicto === "pierde" && (v === null || v <= -400)), x.veredicto + " con " + v);
+  if (x.veredicto === "tablas") ok("tablas: sin cambiar había +1,5 o más (" + x.id + ")", x.evalSin === null || x.evalSin >= 150, x.evalSin);
+  if (x.veredicto === "pierde") ok("se pierde: sin cambiar se aguantaba (" + x.id + ")", x.evalSin === null || x.evalSin >= -100, x.evalSin);
+  ok("lo de sin cambiar es una jugada legal (" + x.id + ")", jugadaEsLegal(new Chess(x.fen), x.sinCambiar));
+  ok("trae la respuesta para el profesor (" + x.id + ")", Array.isArray(x.respuesta) && x.respuesta[0].startsWith(N.VEREDICTO[x.veredicto]));
+});
+{
+  const cuenta = DATOS.liquidar.reduce((m, x) => { m[x.veredicto] = (m[x.veredicto] || 0) + 1; return m; }, {});
+  ok("liquidar: no es siempre la misma respuesta", Object.keys(cuenta).length >= 2, JSON.stringify(cuenta));
+}
+
+titulo("La intermedia");
+DATOS.intermedia.forEach((x) => {
+  const g = legal(x.fen);
+  if (!g) return;
+  ok("no empieza en jaque (" + x.id + ")", !g.in_check());
+  const b = new Chess(x.fen).move(x.jugada), nat = new Chess(x.fen).move(x.natural);
+  ok("la intermedia y la natural son legales, y distintas (" + x.id + ")", !!b && !!nat && x.jugada !== x.natural && R.sanEs(x.jugada) === x.jugadaEs);
+  ok("la natural es una captura (" + x.id + ")", nat && !!nat.captured);
+  ok("la página acepta la intermedia y rechaza la natural (" + x.id + ")", N.intermediaAcertada(Chess, x, x.jugada).ok && !N.intermediaAcertada(Chess, x, x.natural).ok && N.intermediaAcertada(Chess, x, x.natural).natural);
+  const otras = g.moves().filter((s) => s !== x.jugada);
+  ok("cada otra jugada tiene cómo responde el rival (" + x.id + ")", otras.every((s) => x.refuta[s]), otras.filter((s) => !x.refuta[s]).join(","));
+  let malas = 0;
+  otras.forEach((s) => { const rf = x.refuta[s]; if (rf && rf.r) { const h = new Chess(x.fen); h.move(s); if (!jugadaEsLegal(h, rf.r)) malas++; } });
+  ok("y esas respuestas son legales (" + x.id + ")", malas === 0, malas);
+  ok("la intermedia gana: mate o +2 (" + x.id + ")", (x.mate !== null && x.mate > 0) || x.eval >= 200);
+  ok("y recapturar queda 1,5 o más atrás, sin ser absurdo (−4 o más) (" + x.id + ")", x.evalNatural !== null && x.evalNatural >= -400 && x.evalNatural <= cp(x.eval, x.mate) - 150, x.evalNatural);
+  ok("el nivel es el del rating (" + x.id + ")", x.nivel === (x.rating < 1500 ? 1 : x.rating < 1900 ? 2 : 3));
+});
+
+titulo("El defensor sobrecargado");
+DATOS.sobrecargado.forEach((x) => {
+  const g = legal(x.fen);
+  if (!g) return;
+  ok("no empieza en jaque (" + x.id + ")", !g.in_check());
+  const s = N.sobrecargado(Chess, x.fen, x.linea);
+  ok("la regla encuentra al mismo defensor con la línea (" + x.id + ")", !!s && s.defensor === x.defensor && JSON.stringify(s.cuida) === JSON.stringify(x.cuida));
+  const p = R.tablero(x.fen)[R.idx(x.defensor)];
+  ok("el defensor es del rival y no es el rey (" + x.id + ")", p && p.c !== x.fen.split(" ")[1] && p.t !== "k");
+  ok("la jugada es la primera de la línea, y legal (" + x.id + ")", x.jugada === x.linea[0] && !!new Chess(x.fen).move(x.jugada) && R.sanEs(x.jugada) === x.jugadaEs);
+  ok("gana: mate o +2 (" + x.id + ")", (x.mateEn !== null && x.mateEn > 0) || x.eval >= 200);
+  ok("el nivel (" + x.id + ")", x.nivel === (x.rating >= 1800 ? 3 : x.mate ? 2 : 1));
+});
+{
+  // a mano: la dama de e7 cuida h7 y f6; Txh7+ Dxh7 Dxf6+
+  const fen = "3r3k/1p2q2p/p4pQ1/8/8/7R/PP1p1PP1/6K1 w - - 0 37";
+  const s = N.sobrecargado(Chess, fen, ["Rxh7+", "Qxh7", "Qxf6+"]);
+  ok("sobrecargado: la dama de e7 cuida h7 y f6", s && s.defensor === "e7" && s.cuida.join() === "h7,f6");
+  ok("sobrecargado: si no captura el defensor, no es el patrón", !N.sobrecargado(Chess, fen, ["Rxh7+", "Kg8", "Qxf6"]));
+}
+
+titulo("La peor pieza");
+DATOS["peor-pieza"].forEach((x) => {
+  const g = legal(x.fen);
+  if (!g) return;
+  const yo = x.fen.split(" ")[1];
+  const t = R.tablero(x.fen);
+  ok("no empieza en jaque (" + x.id + ")", !g.in_check());
+  const suyas = t.map((p, i) => (p && p.c === yo && ["n", "b", "r", "q"].includes(p.t) && g.moves({ square: R.sq(i) }).length ? R.sq(i) : null)).filter(Boolean);
+  ok("están todas sus piezas con jugadas, y nada más (" + x.id + ")", JSON.stringify(Object.keys(x.porPieza).sort()) === JSON.stringify(suyas.sort()));
+  ok("la mejor de cada pieza es una jugada legal de esa pieza (" + x.id + ")", Object.keys(x.porPieza).every((s) => { const m = new Chess(x.fen).move(x.porPieza[s].san); return m && m.from === s; }));
+  const top = x.porPieza[x.pieza];
+  ok("la pieza buena le saca 0,5 o más a todas las demás (" + x.id + ")", !!top && Object.keys(x.porPieza).every((s) => s === x.pieza || x.porPieza[s].eval <= top.eval - N.PEOR.margen));
+  ok("su mejor jugada es tranquila: ni captura ni jaque (" + x.id + ")", !!top && !/x|\+/.test(top.san));
+  ok("las que valen son de esa pieza e incluyen la mejor (" + x.id + ")", x.buenas.includes(top.san) && x.buenas.every((s) => { const m = new Chess(x.fen).move(s); return m && m.from === x.pieza; }));
+  ok("el motor la daba entre −1,5 y +3 (" + x.id + ")", top.eval >= -150 && top.eval <= 300, top.eval);
+  const n = suyas.length <= 3 ? 1 : suyas.length <= 5 ? 2 : 3;
+  ok("el nivel es el de cuántas piezas hay para elegir (" + x.id + ")", x.nivel === n);
+});
+ok("peor pieza: sin errores, tres; uno, dos; más, una", N.estrellasPeorPieza(0, 0) === 3 && N.estrellasPeorPieza(1, 0) === 2 && N.estrellasPeorPieza(1, 2) === 1);
 
 /* Toda posición de Habilidades la tiene que aceptar el tablero de la clase
    (js/posicion-valida.js): la clase las pone con «Al tablero». Dos de

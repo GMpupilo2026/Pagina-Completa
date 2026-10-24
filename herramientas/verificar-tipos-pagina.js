@@ -1,9 +1,9 @@
 /* Comprueba entreno/tipos.html en un navegador de verdad: la ficha de los
- * Tipos de entrenamiento y los diecinueve juegos, JUGADOS de punta a punta.
+ * Tipos de entrenamiento y los veinticinco juegos, JUGADOS de punta a punta.
  *
  * Los bancos los comprueba herramientas/verificar-tipos.js sin navegador.
  * Esto es lo que solo se rompe mirando la pantalla:
- *   - sin sesión manda a iniciar sesión; con sesión, la ficha trae los diecinueve
+ *   - sin sesión manda a iniciar sesión; con sesión, la ficha trae los veinticinco
  *     tipos, cada uno con su encabezado y su enlace;
  *   - cada juego pinta LA posición de su ejercicio (se compara casilla por
  *     casilla contra la FEN del banco, no contra la página);
@@ -199,7 +199,7 @@ async function main() {
       // Las paradas de Tab de la tarjeta: antes eran dos (el título y «Empezar: …») al mismo lugar.
       paradas: [...li.querySelectorAll("a[href], button, input, [tabindex]")].filter((x) => x.tabIndex >= 0 && x.checkVisibility()).length,
     })));
-    ok("diecinueve fichas", fichas.length === 19, fichas.length);
+    ok("veinticinco fichas", fichas.length === 25, fichas.length);
     ok("cada una con su encabezado y su enlace", fichas.every((f) => f.titulo && /^#[a-z-]+$/.test(f.enlace) && f.visible), JSON.stringify(fichas));
     ok("cada tarjeta es UNA sola parada de Tab", fichas.every((f) => f.paradas === 1), JSON.stringify(fichas.map((f) => f.paradas)));
     ok("un solo h1", (await page.$$eval("#vista-fichas h1", (h) => h.length)) === 1);
@@ -825,6 +825,162 @@ window.PracticeEngine = {
     ok("en Modo Adaptado, el triple de tiempo", /Tienes 24 segundos \(el triple/.test(avisoAdaptado), avisoAdaptado);
     await page.clock.fastForward("00:10");
     ok("a los 10 segundos todavía se puede elegir", !(await page.$eval('#controles [role="group"] button', (b) => b.disabled)));
+    ok("sin errores en consola", !errores.length, errores.join(" | "));
+    await ctx.close();
+  }
+
+  /* ---------- Los tipos 20 a 25 ---------- */
+  async function escribirTexto(page, txt) { await page.fill("#jugada-input", txt); await page.press("#jugada-input", "Enter"); }
+
+  console.log("\n=== Mapa de casillas ===");
+  {
+    // tocando: todas las casillas, y tres estrellas
+    const item = DATOS.casillas.find((x) => x.nivel === 1);
+    const { page, ctx, errores } = await abrir(browser, true, "#casillas/1/" + item.id);
+    await page.waitForSelector("#vista-juego:not(.hidden) #jugada-input");
+    await mismaPosicion(page, item.fen, "pinta la posición del ejercicio");
+    for (const s of item.respuestas) await page.click('#tablero [data-square="' + s + '"]');
+    const marca = await page.$eval('#tablero [data-square="' + item.respuestas[0] + '"]', (c) => ({ signo: c.dataset.marca || "", nombre: c.getAttribute("aria-label") || "" }));
+    ok("la casilla marcada lleva su signo escrito y se dice", marca.signo === "•" && /marcada/.test(marca.nombre), JSON.stringify(marca));
+    await page.getByRole("button", { name: "Comprobar" }).click();
+    const t = await esperarEstado(page, /Todas|Acertaste/);
+    ok("todas: tres estrellas", /Todas/.test(t) && (await estrellas(page))["casillas:" + item.id] === 3, t);
+    await mismaPosicion(page, item.fen, "no se movió ninguna pieza");
+    ok("sin errores en consola", !errores.length, errores.join(" | "));
+    await ctx.close();
+  }
+  {
+    // escribiendo, con una de menos: menos de tres
+    const item = DATOS.casillas.find((x) => x.nivel === 4);
+    const { page, ctx, errores } = await abrir(browser, true, "#casillas/4/" + item.id);
+    await page.waitForSelector("#vista-juego:not(.hidden) #jugada-input");
+    await escribirTexto(page, item.respuestas.slice(1).join(" "));
+    await escribirTexto(page, "comprobar");
+    const t = await esperarEstado(page, /Acertaste/);
+    ok("escribiendo, con una que faltó: lo dice y no da tres", /Acertaste/.test(t) && ((await estrellas(page))["casillas:" + item.id] || 0) < 3, t);
+    const falto = await page.$eval('#tablero [data-square="' + item.respuestas[0] + '"]', (c) => c.dataset.marca || "");
+    ok("la que faltó queda marcada con «−»", falto === "−", falto);
+    ok("sin errores en consola", !errores.length, errores.join(" | "));
+    await ctx.close();
+  }
+
+  console.log("\n=== ¿Alcanza el rey? ===");
+  {
+    const item = DATOS.alcanza.find((x) => x.nivel === 1);
+    const { page, ctx, errores } = await abrir(browser, true, "#alcanza/1/" + item.id);
+    await page.waitForSelector('#vista-juego:not(.hidden) #controles [role="group"] button');
+    await mismaPosicion(page, item.fen, "pinta la posición del ejercicio");
+    ok("dice cuánto tiempo hay", /Tienes 30 segundos/.test(await esperarEstado(page, /Tienes/)));
+    const R20 = require("../js/tipos-reglas-20.js");
+    await page.locator('#controles [role="group"] button', { hasText: R20.RESULTADO[item.resultado] }).first().click();
+    const t = await esperarEstado(page, /Correcto/);
+    ok("bien y rápido: tres estrellas", /Correcto/.test(t) && (await estrellas(page))["alcanza:" + item.id] === 3, t);
+    ok("y ya no se puede volver a elegir", await page.$$eval('#controles [role="group"] button', (b) => b.every((x) => x.disabled)));
+    ok("sin errores en consola", !errores.length, errores.join(" | "));
+    await ctx.close();
+  }
+  {
+    // se acaba el reloj
+    const item = DATOS.alcanza.find((x) => x.nivel === 3);
+    const { page, ctx, errores } = await abrir(browser, true, "#alcanza/3/" + item.id, async (c) => { await c.clock.install(); });
+    await page.waitForSelector('#vista-juego:not(.hidden) #controles [role="group"] button');
+    await page.clock.fastForward("00:41");
+    const t = await esperarEstado(page, /acabó el tiempo/);
+    ok("a los 40 segundos se acaba el tiempo y no da estrellas", /Se acabó el tiempo/.test(t) && !(await estrellas(page))["alcanza:" + item.id], t);
+    ok("sin errores en consola", !errores.length, errores.join(" | "));
+    await ctx.close();
+  }
+  {
+    // Modo Adaptado: el triple, y se contesta escribiendo la letra
+    const item = DATOS.alcanza.find((x) => x.nivel === 2);
+    const { page, ctx, errores } = await abrir(browser, true, "#alcanza/2/" + item.id, async (c) => { await c.addInitScript(() => { localStorage.setItem("oscarBlindMode_v1", "1"); }); });
+    await page.waitForSelector("#vista-juego:not(.hidden) #jugada-input");
+    ok("en Modo Adaptado, el triple de tiempo", /Tienes 90 segundos \(el triple/.test(await esperarEstado(page, /Tienes/)));
+    await escribirTexto(page, "abc"["wdb".indexOf(item.resultado)]);
+    ok("escribiendo la letra de la opción buena: correcto", /Correcto/.test(await esperarEstado(page, /Correcto|incorrecta/)));
+    ok("sin errores en consola", !errores.length, errores.join(" | "));
+    await ctx.close();
+  }
+
+  console.log("\n=== ¿Cambio y paso al final de peones? ===");
+  {
+    const item = DATOS.liquidar[0];
+    const R20 = require("../js/tipos-reglas-20.js");
+    const { page, ctx, errores } = await abrir(browser, true, "#liquidar/" + item.nivel + "/" + item.id);
+    await page.waitForSelector('#vista-juego:not(.hidden) #controles [role="group"] button');
+    await mismaPosicion(page, item.fen, "pinta la posición del ejercicio");
+    ok("el enunciado dice la cadena de cambios", ((await page.textContent("#juego-enunciado")) || "").includes(item.cadenaEs));
+    await page.getByRole("button", { name: /Ver el final de peones/ }).click();
+    await mismaPosicion(page, item.fenFinal, "«Ver el final» pinta el final de peones");
+    const visto = await tableroVisto(page);
+    ok("en el final solo hay reyes y peones", Object.values(visto).every((n) => /rey|peón/.test(n)), JSON.stringify(visto));
+    await page.locator('#controles [role="group"] button', { hasText: R20.VEREDICTO[item.veredicto] }).first().click();
+    const t = await esperarEstado(page, /Correcto/);
+    ok("el veredicto bueno: tres estrellas", /Correcto/.test(t) && (await estrellas(page))["liquidar:" + item.id] === 3, t);
+    ok("explica la línea del final", ((await page.textContent("#explicacion")) || "").includes("Cómo sigue el final"));
+    ok("sin errores en consola", !errores.length, errores.join(" | "));
+    await ctx.close();
+  }
+
+  console.log("\n=== La intermedia ===");
+  {
+    const item = DATOS.intermedia[0];
+    const { page, ctx, errores } = await abrir(browser, true, "#intermedia/" + item.nivel + "/" + item.id);
+    await page.waitForSelector("#vista-juego:not(.hidden) #jugada-input");
+    await mismaPosicion(page, item.fen, "pinta la posición del ejercicio");
+    ok("dice cuál es la captura natural", ((await page.textContent("#juego-turno")) || "").includes(item.naturalEs));
+    await escribirTexto(page, item.naturalEs);
+    const t1 = await esperarEstado(page, /Recapturar/);
+    ok("recapturar en seguida: dice que no es lo mejor", /Recapturar en seguida no es lo mejor/.test(t1), t1);
+    await mismaPosicion(page, item.fen, "y el tablero vuelve a la posición");
+    await escribirTexto(page, item.jugadaEs);
+    const t2 = await esperarEstado(page, /intermedia/);
+    ok("la intermedia: correcta, con un error dos estrellas", /Esa es la intermedia/.test(t2) && (await estrellas(page))["intermedia:" + item.id] === 2, t2);
+    const g = new Chess(item.fen); g.move(item.jugada);
+    await mismaPosicion(page, g.fen(), "queda jugada en el tablero");
+    ok("sin errores en consola", !errores.length, errores.join(" | "));
+    await ctx.close();
+  }
+
+  console.log("\n=== El defensor sobrecargado ===");
+  {
+    const item = DATOS.sobrecargado[0];
+    const { page, ctx, errores } = await abrir(browser, true, "#sobrecargado/" + item.nivel + "/" + item.id);
+    await page.waitForSelector("#vista-juego:not(.hidden) #jugada-input");
+    await mismaPosicion(page, item.fen, "pinta la posición del ejercicio");
+    // una pieza propia no cuenta como error
+    const yo = item.fen.split(" ")[1];
+    const propia = R.tablero(item.fen).map((p, i) => (p && p.c === yo ? R.sq(i) : null)).filter(Boolean)[0];
+    await page.click('#tablero [data-square="' + propia + '"]');
+    ok("tocar una pieza propia: dice que busque una del rival", /es tuya/.test(await esperarEstado(page, /tuya/)));
+    await page.click('#tablero [data-square="' + item.defensor + '"]');
+    const t1 = await esperarEstado(page, /Eso es/);
+    ok("el defensor: correcto, y dice qué cuida", /Eso es/.test(t1) && t1.includes(item.cuida[0]) && t1.includes(item.cuida[1]), t1);
+    const marca = await page.$eval('#tablero [data-square="' + item.defensor + '"]', (c) => c.dataset.marca || "");
+    ok("queda marcado con «!»", marca === "!", marca);
+    await escribirTexto(page, item.jugadaEs);
+    const t2 = await esperarEstado(page, /no puede con las dos/);
+    ok("la jugada: tres estrellas", /no puede con las dos/.test(t2) && (await estrellas(page))["sobrecargado:" + item.id] === 3, t2);
+    ok("sin errores en consola", !errores.length, errores.join(" | "));
+    await ctx.close();
+  }
+
+  console.log("\n=== La peor pieza ===");
+  {
+    const item = DATOS["peor-pieza"].find((x) => x.nivel === 2) || DATOS["peor-pieza"][0];
+    const { page, ctx, errores } = await abrir(browser, true, "#peor-pieza/" + item.nivel + "/" + item.id);
+    await page.waitForSelector("#vista-juego:not(.hidden) #jugada-input");
+    await mismaPosicion(page, item.fen, "pinta la posición del ejercicio");
+    const otra = Object.keys(item.porPieza).find((s) => s !== item.pieza);
+    await escribirTexto(page, otra);
+    const t0 = await esperarEstado(page, /lo mejor que hay/);
+    ok("otra pieza: dice lo mejor que tiene esa y que hay algo mejor", t0.includes(R.sanEs(item.porPieza[otra].san)), t0);
+    await page.click('#tablero [data-square="' + item.pieza + '"]');
+    ok("la pieza buena: correcto", /Esa es/.test(await esperarEstado(page, /Esa es/)));
+    await escribirTexto(page, R.sanEs(item.porPieza[item.pieza].san));
+    const t2 = await esperarEstado(page, /Bien/);
+    ok("su mejor jugada: con un error, dos estrellas", /es la mejor/.test(t2) && (await estrellas(page))["peor-pieza:" + item.id] === 2, t2);
+    ok("explica cada pieza", ((await page.textContent("#explicacion")) || "").includes("Lo mejor con cada una de las otras"));
     ok("sin errores en consola", !errores.length, errores.join(" | "));
     await ctx.close();
   }

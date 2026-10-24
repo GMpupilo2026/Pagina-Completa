@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="../img/favicon.svg">
 <title>Habilidades — Entreno — Ajedrez Integral</title>
-<meta name="description" content="Diecinueve habilidades distintas, con niveles: el Detective, el Barrido, Aguanta, Remata la ventaja, Salva las tablas, Elige a tiempo, Tus propios errores, Constrúyela tú, Rey y peón, Adivina la jugada del maestro, la ruta segura y más.">
+<meta name="description" content="Veinticinco habilidades distintas, con niveles: el Detective, el Barrido, Aguanta, la intermedia, el defensor sobrecargado, la peor pieza, Remata la ventaja, Salva las tablas, Elige a tiempo, Tus propios errores, Constrúyela tú, Rey y peón, Adivina la jugada del maestro, la ruta segura y más.">
 <meta name="robots" content="noindex">
     <!-- Tailwind compilado: lo genera herramientas/css-construir.js.
          Antes venía del CDN, que baja ~400 KB de JavaScript y compila el CSS
@@ -36,6 +36,9 @@
     color:#102a43; background:rgba(255,255,255,.85); border-radius:3px; padding:1px 3px;}
   .tp-tablero .sq.m-bien{box-shadow:inset 0 0 0 3px #2f7a3d;}
   .tp-tablero .sq.m-mal{box-shadow:inset 0 0 0 3px #b3261e;}
+  /* Lo que el alumno marcó en el Mapa de casillas (antes de comprobar): el
+     borde del color de la selección y un «•» escrito. */
+  .tp-tablero .sq.m-marca{box-shadow:inset 0 0 0 4px rgb(var(--c-accent-500));}
   .tp-tablero.oculto .sq > span{visibility:hidden;}
   .tp-tablero:focus-within{outline:none;}
   .tp-tablero .sq:focus-visible{outline:3px solid rgb(var(--c-accent-500)); outline-offset:-3px; z-index:1;}
@@ -68,7 +71,7 @@
 </div>
 
 <!-- ===== MAIN APP =====
-     Tres vistas en la misma página, según el #: sin nada, las diecinueve fichas;
+     Tres vistas en la misma página, según el #: sin nada, las veinticinco fichas;
      #detective, los niveles de ese tipo; #detective/2, el juego del nivel 2.
      Así el botón «atrás» del navegador y el enlace que manda el profesor
      funcionan igual. Ver «Los Tipos de entrenamiento» en
@@ -80,7 +83,7 @@
     <section id="vista-fichas" aria-labelledby="titulo-fichas">
       <div class="text-center mb-8">
         <h1 id="titulo-fichas" class="font-serif text-3xl md:text-4xl font-bold text-brand-800 dark:text-white mb-2">Habilidades <span aria-hidden="true">🧠</span></h1>
-        <p class="text-brand-500 dark:text-brand-300 max-w-2xl mx-auto">Diecinueve formas distintas de entrenar, cada una con sus niveles. No son ejercicios de «encuentra la mejor jugada»: cada una entrena una habilidad que casi nunca se practica sola.</p>
+        <p class="text-brand-500 dark:text-brand-300 max-w-2xl mx-auto">Veinticinco formas distintas de entrenar, cada una con sus niveles. No son ejercicios de «encuentra la mejor jugada»: cada una entrena una habilidad que casi nunca se practica sola.</p>
       </div>
       <div id="repaso-tipos" class="hidden mb-6 rounded-2xl p-6 shadow-md bg-white dark:bg-brand-900"></div>
       <ul id="fichas" class="grid gap-5 md:grid-cols-2 list-none p-0 m-0"></ul>
@@ -176,8 +179,10 @@
 <script src="../js/tipos-catalogo.js"></script>
 <script src="../js/tipos-reglas.js"></script>
 <script src="../js/tipos-reglas-mas.js"></script>
+<script src="../js/tipos-reglas-20.js"></script>
 <script src="../js/entreno-tipos.js"></script>
 <script src="../js/planilla-ocr.js"></script>
 <script src="../js/entreno-tipos-mas.js"></script>
+<script src="../js/entreno-tipos-20.js"></script>
 <!-- burbuja: inicio --><script src="../js/burbuja-en-linea.js" defer></script><!-- burbuja: fin --><!-- juego-aviso: inicio --><script src="../js/juego-aviso.js" defer></script><!-- juego-aviso: fin --><!-- aviso-profe: inicio --><script src="../js/aviso-profe.js" defer></script><!-- aviso-profe: fin --><!-- tanda: inicio --><script src="../js/tanda-diez.js" defer></script><!-- tanda: fin --><!-- bromas: inicio --><script src="../js/bromas.js" defer></script><!-- bromas: fin --><!-- acceso: inicio --><script src="../js/acceso-vigente.js" defer></script><!-- acceso: fin --><!-- modo-vista: inicio --><script src="../js/modo-vista.js" defer></script><!-- modo-vista: fin --><!-- marca: inicio --><script src="../js/marca-academia.js" defer></script><!-- marca: fin --><!-- ayuda: inicio --><script src="../js/ayuda-guia.js" defer></script><!-- ayuda: fin --><!-- atajo: inicio --><script src="../js/atajo-buscar.js" data-arriba="../" defer></script><!-- atajo: fin --></body>
 </html>

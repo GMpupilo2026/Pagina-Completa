@@ -3000,7 +3000,7 @@ comprobando que la pista nunca marque segura una casilla con pieza).
 > código lo cita.
 
 `entreno/tipos.html` (grupo y tarjeta **"🧠 Tipos de entrenamiento"** del hub)
-es una ficha con diecinueve entrenamientos que no son «encuentra la mejor jugada»,
+es una ficha con veinticinco entrenamientos que no son «encuentra la mejor jugada»,
 cada uno con sus niveles: **El Detective** (¿qué jugada se acaba de hacer?,
 análisis retrógrado), **¿Qué quiere el rival?** (profilaxis: hacer la jugada
 que amenaza el rival), **Descarte** (tachar las candidatas que pierden),
@@ -3701,6 +3701,95 @@ están en `js/tipos-reglas-mas.js` (`juicioTablas`, `estrellasTablas`).
   navegador (ver Remata).
 - `node herramientas/tipos-generar.js --solo tablas` rehace solo este banco. En
   la clase en vivo trae «🎯 Practicar».
+
+### Los tipos 20 a 25
+
+Mapa de casillas, ¿Alcanza el rey?, ¿Cambio y paso al final de peones?, La
+intermedia, El defensor sobrecargado y La peor pieza. Los pidió el dueño de
+la Academia de una lista de ideas que no repetían ninguna de las diecinueve
+de antes. Sus reglas viven en `js/tipos-reglas-20.js` (y son, otra vez, la
+definición del ejercicio: el generador arma el banco con ellas y el
+verificador las vuelve a correr), y la página los juega en
+`js/entreno-tipos-20.js`, con las mismas piezas que los demás
+(`window.TiposUI`; las opciones de una sola respuesta, `U.opciones`, las
+expone `js/entreno-tipos-mas.js`). `node herramientas/tipos-generar.js --solo
+nuevos` rehace los seis (o `--solo casillas`, `--solo alcanza`… uno solo) sin
+tocar los demás bancos.
+
+- **Mapa de casillas no usa motor**: lo que ataca una pieza se cuenta. Cuatro
+  preguntas, una por nivel: lo que ataca una pieza propia; las casillas
+  vecinas del rey rival que atacan tus piezas; lo que ataca una pieza del
+  rival; y las casillas adonde tu pieza puede ir sin que el rival las ataque.
+  «Atacar» es lo de siempre: cuenta aunque haya una pieza encima (la propia
+  queda defendida), el peón ataca en diagonal y una pieza clavada sigue
+  atacando. Alrededor del rey se cuenta **sin el rey** (`M.atacadas(..., sin)`):
+  si una torre le da en la fila, la casilla de detrás también está cortada,
+  aunque la torre «se choque» con el rey. En «casillas seguras» se cuenta sin
+  la pieza que viaja (ella no tapa nada), como en la Ruta segura, y tiene que
+  haber al menos dos casillas adonde va pero atacadas, que descartar. Se
+  marcan tocando (otra vez, para quitar) o escribiendo «e4 f5» y «comprobar»;
+  la corrección es la del Barrido (todas y ninguna de más, tres estrellas), y
+  cada casilla lleva su signo escrito: • marcada, ✓ bien, ✗ sobraba, − faltó.
+- **¿Alcanza el rey? no repite a Rey y peón.** Allá el nivel 1 ya era la regla
+  del cuadrado con UN peón, contra la tabla exacta; acá son finales de solo
+  reyes y peones con más de un peón (4 piezas o más), y se decide rápido:
+  ganan las blancas, tablas o ganan las negras, una sola oportunidad y un
+  reloj (30, 30 y 40 s; el triple en Modo Adaptado). Bien en la mitad del
+  tiempo, tres estrellas; bien, dos. El nivel lo ponen los peones pasados
+  (`pasados()`): uno solo de un bando, uno de cada lado (carrera), ninguno.
+  Sin tablas para estos finales, el resultado es del motor: **profundidad 22 y
+  30, y las dos tienen que decir lo mismo**: gana con ±4 o mate, tablas con
+  0,25 o menos, lo del medio no entra. Los ejercicios de Lichess casi siempre
+  ganan, así que las tablas y las derrotas salen de la posición que deja la
+  **segunda o tercera mejor jugada** en esos mismos finales (es el error que
+  se comete en la partida); se elige un tercio de cada resultado para que
+  contestar siempre lo mismo no sirva, y el verificador exige que estén los
+  tres.
+- **¿Cambio y paso al final de peones? pregunta por el final, no por la
+  jugada.** En una posición de partida real con piezas (14 o menos), una
+  cadena de cambios —captura y recaptura, una o dos veces— que deja solo
+  reyes y peones, y cada recaptura del rival tiene que ser la que elige el
+  motor: si el rival no recapturaría, no es un cambio. El final se juzga como
+  en ¿Alcanza el rey? (22 y 30). Para que la decisión importe: si el final se
+  gana, cambiar no puede ser peor que la mejor jugada por más de 0,5; si son
+  tablas, sin cambiar había +1,5 o más (cambiar regala la ventaja); si se
+  pierde, sin cambiar se aguantaba. «Ver el final de peones en el tablero» lo
+  pinta (eso no delata nada: es justo lo que hay que juzgar). Nivel: un
+  cambio, dos cambios, o los mismos peones para los dos (lo decide dónde
+  están los reyes y los peones, no contarlos).
+- **La intermedia sale del tema «intermezzo» de Lichess.** La buena es la de
+  la solución, que el motor (profundidad 18) da como la mejor, gana (mate o
+  +2) y le saca 1,5 a la segunda. La «natural» es la **mejor captura para el
+  motor después de la buena**: la primera versión elegía la de más material
+  y casi siempre era una captura absurda de una pieza defendida. Recapturar
+  en seguida suele perder de verdad —es lo que enseña el ejercicio—, así que
+  la natural puede quedar en contra, pero no más de −4: eso no tienta a
+  nadie. Se juega como Aguanta: cada otra jugada legal tiene en `refuta` cómo
+  contesta el rival, y la natural tiene su aviso («Recapturar en seguida no es
+  lo mejor»). El nivel es el rating del ejercicio.
+- **El defensor sobrecargado se comprueba con la línea, sin opinión**
+  (`sobrecargado()`): la primera jugada (s1) va a una casilla; el defensor la
+  captura (r1, sin ser el rey); antes de s1 ese defensor atacaba la casilla de
+  la jugada siguiente (s2) y después de r1 ya no; y s2 captura o da mate. O
+  sea: cuidaba dos casillas, fue a una y dejó la otra. Lichess no tiene el
+  tema «sobrecarga» en este banco, así que se busca el patrón en TODAS las
+  líneas, en cada turno del que resuelve; el motor confirma que s1 es la mejor
+  y la única que gana. Dos pasos: la pieza (tocarla o escribir su casilla; una
+  pieza propia no cuenta como error) y la jugada. El banco guarda la `linea`
+  para que el verificador vuelva a encontrar al mismo defensor.
+- **La peor pieza es «la que más gana con moverse»**, medido: en una posición
+  tranquila (como Elige a tiempo: el final de un ejercicio y la mejor
+  respuesta del rival; entre −1,5 y +3, sin golpe), cada caballo, alfil, torre
+  y dama se analiza sola con todas sus jugadas (`searchmoves`, profundidad
+  16), y la buena le saca **0,5 o más a la mejor de las demás**, confirmado a
+  profundidad 20. Su mejor jugada no puede ser captura ni jaque (sería táctica,
+  no mejorar una pieza). Después de elegirla hay que moverla, y vale cualquiera
+  de sus jugadas a 0,3 o menos de la mejor (`buenas`). Al equivocarse de
+  pieza se dice lo mejor que tenía esa, para que se vea por qué no era.
+- **En la clase en vivo** entran solos (el panel recorre el catálogo, y cada
+  ejercicio trae su `resumen` y su `respuesta` para el profesor). La
+  intermedia y el sobrecargado traen además «❓ Preguntar»: los dos tienen una
+  sola jugada buena.
 
 **Al tocar los bancos, las reglas o la página, correr**:
 

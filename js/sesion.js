@@ -5429,7 +5429,7 @@
         }
 
         // ---------- Tipos de entrenamiento (cascada tipo → nivel → ejercicio) ----------
-        // Los mismos diecinueve de entreno/tipos.html, con las mismas posiciones
+        // Los mismos de entreno/tipos.html, con las mismas posiciones
         // (entreno/data/tipos.json) y el mismo catálogo (js/tipos-catalogo.js): el
         // profesor los jala a la clase sin salir de la sesión. Toda posición entra por
         // aplicarPosicionEnClase(), como Táctica y Archivos. Lo que es la RESPUESTA
@@ -5748,6 +5748,8 @@
                 if (t.id === "peones" && item.nivel === 4) acciones.appendChild(tiposBoton("🎯 Practicar", TIPOS_BTN_ACCION, () => tiposPracticar(item.fen), "Cada alumno lo juega contra el motor hasta coronar"));
                 if (t.id === "maestro") acciones.appendChild(tiposBoton("❓ Preguntar", TIPOS_BTN_ACCION, () => tiposPreguntar(tiposFen(item), "Pregunta abierta: ¿qué jugarías aquí? Después miren la jugada del maestro.", tiposDificultad(item)), "Abre la pregunta con la primera posición del tramo"));
                 if (t.id === "aguanta") acciones.appendChild(tiposBoton("❓ Preguntar", TIPOS_BTN_ACCION, () => tiposPreguntar(item.fen, "Pregunta abierta: solo una jugada aguanta. ¿Cuál?", tiposDificultad(item)), "Cada alumno busca la única defensa en su tablero"));
+                if (t.id === "intermedia") acciones.appendChild(tiposBoton("❓ Preguntar", TIPOS_BTN_ACCION, () => tiposPreguntar(item.fen, "Pregunta abierta: lo natural es " + item.naturalEs + ". ¿Hay algo mejor antes?", tiposDificultad(item)), "Cada alumno busca la jugada intermedia en su tablero"));
+                if (t.id === "sobrecargado") acciones.appendChild(tiposBoton("❓ Preguntar", TIPOS_BTN_ACCION, () => tiposPreguntar(item.fen, "Pregunta abierta: una pieza rival cuida dos cosas. ¿Qué jugada la sobrecarga?", tiposDificultad(item)), "Cada alumno busca la jugada que sobrecarga al defensor"));
                 if (t.id === "remata") acciones.appendChild(tiposBoton("🎯 Practicar", TIPOS_BTN_ACCION, () => tiposPracticar(item.fen), "Cada alumno juega la posición contra el motor para rematar la ventaja"));
                 if (t.id === "tablas") acciones.appendChild(tiposBoton("🎯 Practicar", TIPOS_BTN_ACCION, () => tiposPracticar(item.fen), "Cada alumno juega la posición contra el motor para salvar las tablas"));
                 if (t.id === "con-lo-justo") acciones.appendChild(tiposBoton("🎯 Practicar", TIPOS_BTN_ACCION, () => tiposPracticar(item.fen), "Cada alumno juega el final contra el motor"));
