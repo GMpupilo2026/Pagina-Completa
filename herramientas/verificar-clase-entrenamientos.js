@@ -348,7 +348,7 @@ async function pruebaDelProfe(browser) {
   await page.evaluate(() => { activateTeacherTab("tipos"); entrenosView = { slug: null, grupo: null, mostrar: 30 }; pintarEntrenos(); });
   await page.click('#entrenos-body [data-entreno="tipos"]');
   await page.waitForSelector("#tipos-body button");
-  igual("Habilidades abre sus diecinueve", await page.$$eval("#tipos-body > div > button", (b) => b.length), 19);
+  igual("Habilidades abre sus veinte", await page.$$eval("#tipos-body > div > button", (b) => b.length), 20);
 
   /* «Que lo practiquen solos»: en TODOS los tipos con lista (la mayoría no
      tiene «Preguntar»), el nivel entero o desde un ejercicio, y el profe ve
