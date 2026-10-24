@@ -8584,7 +8584,7 @@ Es una página estática, sin cuenta y sin base: nada se guarda.
   que pasó el dueño, sin redibujarlo, en blanco con transparencia
   (`img/cenfotec/logo.png`); como el título ya dice CENFOTEC, va con `alt=""`
   y `aria-hidden`. Es la misma maquinaria: su clave en `PORTADAS` de
-  `js/salas-torneo.js` y el estilo en `css/cenfotec.css`, que cargan
+  `js/salas-torneo.js` y el estilo en `css/universidades.css`, que cargan
   `torneos-en-vivo.html` y `admin.html`. Cada portada pone su `clase` y de
   ella salen `<clase>-imagen`, `<clase>-boton` y `<clase>-principal`; como
   esta sala es de Lichess, sus otros enlaces van de botón blanco (el enlace
@@ -8803,6 +8803,18 @@ Es una página estática, sin cuenta y sin base: nada se guarda.
   siguiente; con un empate va el primero de chess-results y «empatado con N
   más». Cada líder tiene hasta dos renglones: sus puntos no se cortan con
   «…». Lleva la marca de agua, como las otras imágenes.
+- **La hoja de la delegación en PDF** («Hoja de la delegación para
+  imprimir», arriba de la lista de Mi delegación): lo que el entrenador
+  lleva en la mano en la sala. Una tabla por categoría con la mesa, el
+  jugador, sus puntos, el color, el rival (con su federación y su Elo) y el
+  resultado de la ronda emparejada, y abajo cuándo se leyó chess-results y
+  que lo oficial es lo que publica el árbitro. La arma `js/reporte-pdf.js`
+  (la misma copia de los demás PDF del sitio), que le pone la marca de agua
+  con `js/marca-agua.js`; para el inglés se le sumó `documento.pagina` (el
+  número de página en otro idioma). **En una A4 de pie no caben más
+  columnas**: con el Elo propio y el puesto, el nombre del rival se cortaba
+  («Santiago Jos...»), y el rival es justo lo que se busca en la sala; el
+  verificador revisa que llegue entero.
 - **Pendiente: el plano de la sala** (en qué zona del Gimnasio Nacional queda
   cada mesa, junto a su pareo). Espera el croquis de la organización con
   cómo se acomodan las mesas.
@@ -8887,3 +8899,125 @@ otra pestaña lleve `rel="noopener"`, que el calendario tenga las nueve rondas y
 que ningún teléfono aparezca sin estar en la lista de los confirmados, que cada
 enlace de la ventana esté permitido en `frame-src` y, en el navegador, que la
 ventana se abra encima sin cambiar de página y devuelva el foco al cerrar.
+
+## Las páginas de los torneos universitarios
+
+Dos, con la misma maquinaria: `cenfotec-2026.html` (el Desafío Mentes
+Maestras) y `utn-2026.html` (el II Torneo Universitario UTN-CONARE; ver «La
+del UTN-CONARE», abajo). Lo que sigue se escribió para la primera.
+
+`cenfotec-2026.html` es, para el Desafío Mentes Maestras CENFOTEC 2026, lo
+mismo que la del Centroamericano (lo pidió el dueño: «dentro de la ficha,
+todo igual que en el festival»), con la cara de la Universidad CENFOTEC y
+con lo que sirve **después** del torneo, que ya se jugó (domingo 27 de
+setiembre de 2026, 7 rondas, 34 jugadores, chess-results tnr1503400): el
+podio, «Busca a tu jugador» con sus rondas y su rendimiento, «Mis
+jugadores», la clasificación final, el podio, la clasificación para
+proyectar y la imagen para compartir. Lo que solo sirve antes o durante
+(bases, bye, hoteles, calendario, avisos al celular, «Hoy en el torneo») no
+va: la página preguntó para qué era y el dueño eligió «Resultados del 2026».
+
+- **Una sola copia de cada pieza**: la página carga `css/centroamericano.css`
+  (el `body` lleva `cac cac-u cft`) y `css/universidades.css` le cambia las
+  variables (`--cac-morado` pasa al azul #233065, el «rojo» de las bases a #0A6AA8,
+  que aguanta letra blanca; el celeste #23ACF4 no) y lo que esa hoja tiene
+  con un color fijo (la bandera de las fichas, los lavandas del modo
+  oscuro). El buscador, el podio, la clasificación, el proyector y la imagen
+  son `js/centroamericano-vivo.js` y `js/centroamericano-tablas.js`, que leen
+  `window.TorneoPagina` (de `js/cenfotec.js`, que carga antes): la sala de
+  Torneos (`cenfotec`), el prefijo de lo guardado en el aparato (`cft_`), el
+  nombre, la dirección y la cara de la imagen (la banda azul con el logo
+  ancho, no el pizote redondo). Sin `TorneoPagina`, los módulos son los del
+  Centroamericano, igual que antes.
+- **Los resultados vienen de la misma función, `sala-jugadores`**: para eso
+  la sala `cenfotec` de `salas_torneo` lleva entre sus enlaces el de
+  chess-results (se agregó «Resultados en chess-results»; la función solo
+  lee los torneos que la sala enlaza). Ningún cambio en la función.
+- **El torneo terminado**: con el torneo cerrado, chess-results titula
+  «Clasificación final», sin número, y la función devuelve `ronda: 0`; su
+  página de pareo trae la última ronda con el rival sin número. Sin
+  arreglarlo, la página decía «Número inicial» en vez del puesto y «No
+  aparece en el pareo». `normalizar()` (en `js/centroamericano-vivo.js`)
+  deduce la ronda del cuadro cruzado (las casillas de «r»), marca el torneo
+  `terminado` y no usa ese pareo. La tarjeta dice «El torneo terminó, a 7
+  rondas» —no «jugó sus 7 rondas»: siete de los 34 no se presentaron a
+  ninguna («-0» en todas) y sus rondas dicen «no jugó»—, la clasificación
+  dice «Clasificación final» y el proyector (el de `main`, que con el torneo
+  terminado pasa los podios y la clasificación de cada grupo) no busca un
+  pareo. El grupo sin nombre de un torneo sin categorías se llama «General»
+  (`categoria("—")`), no «—». Le sirve también al Centroamericano cuando termine (el 8 de
+  noviembre su chess-results va a decir lo mismo).
+- **Un torneo sin categorías ni países**: el «Gr» viene vacío, así que el
+  selector de categoría de la clasificación se esconde solo y el puesto se
+  dice «Puesto 1 de 34», sin «en» una categoría; los 34 son de Costa Rica, así
+  que el podio no lleva la tabla de medallas por federación (`soloPodio`) ni
+  la página «Mi delegación» ni la tabla por país.
+- **Los datos del torneo salen de su ficha de chess-results** (fecha, sala,
+  ritmo, rondas, quién dirige y quién arbitra, con el nombre tal cual lo
+  escribe chess-results). **El contacto es solo el correo**
+  `ajedrez@ucenfotec.ac.cr`, el que publica la universidad en
+  `ucenfotec.ac.cr/ajedrez`: no hay un teléfono confirmado para este torneo y
+  no se pone uno que no sea.
+- **Las normas de `ucenfotec.ac.cr/ajedrez` no son de este torneo**: esa
+  página (la que pasó el dueño) es del Torneo FedeU-CENFOTEC del 23 de mayo de
+  2026, otro torneo, con sus normas específicas y su planilla. Por eso la
+  página no lleva una ficha de «Bases»: enlaza esa página como «El ajedrez en
+  CENFOTEC», que es lo que es. Si la organización pasa las bases del Desafío,
+  van en una ficha como la del Centroamericano.
+- **La ficha de Torneos** (`torneos-en-vivo.html`) ya tenía la cara de
+  CENFOTEC («La ficha del Desafío Mentes Maestras», arriba); su enlace a
+  esta página se agrega en `admin.html#torneos` como el primero de la sala.
+
+`herramientas/verificar-paginas-universitarias.js` lo revisa (las dos
+páginas) con un doble de la función que
+contesta como chess-results con el torneo terminado (ronda 0 y el pareo
+raro): la cara (el azul, la píldora celeste con letra oscura, la línea de las
+fichas), el podio, la tarjeta («El torneo terminó», nunca «pareo»), quien no se
+presentó, la clasificación final sin selector, el podio sin medallas, el
+proyector con la clasificación, la imagen con la banda azul y el logo, y que
+en el celular no haya scroll de costado.
+
+### La del UTN-CONARE
+
+`utn-2026.html` es la misma página para el II Torneo Universitario de
+Ajedrez UTN-CONARE 2026 (lo pidió el dueño: «hacer lo mismo para el torneo
+de la UTN»), con el azul y el logo de la Universidad Técnica Nacional:
+domingo 27 de setiembre de 2026, en el CFPTE de la UTN en Desamparados de
+Alajuela, 6 rondas a 15 minutos + 10 segundos.
+
+- **Una sola hoja para las universidades**: lo que era `css/cenfotec.css`
+  pasó a `css/universidades.css`. Cada universidad pone solo sus variables
+  (`--u-1`, `--u-celeste`, `--u-fuerte`…, en `.cft` / `.u-sala-cft` y `.utn`
+  / `.u-sala-utn`) y todo lo demás es común: la ficha de Torneos (`u-sala`,
+  con la clase de la universidad como `tema` en `PORTADAS` de
+  `js/salas-torneo.js`) y la página (`cac-u`). El contraste de cada una está
+  en la cabecera de la hoja; en la UTN el acento es el celeste de los puntos
+  de su logo (#BFCFE8), que solo lleva letra oscura (#0F2A55, 8,97).
+- **El logo** es el que pasó el dueño, recortado tal cual: el azul pasó a
+  blanco con transparencia y los puntos conservan su celeste
+  (`img/utn/logo.png`).
+- **Dos torneos, uno por rama**: en chess-results el femenino (tnr1498221, 10
+  jugadoras) y el masculino (tnr1498218, 26 jugadores) son torneos
+  separados, sin la columna «Gr». `grupos` en `js/utn.js` le pone a cada
+  jugador la rama de su torneo (por el número de torneo), y con eso el
+  puesto («Puesto 1 de 10 en Femenino»), el podio, la clasificación (con el
+  selector de la rama), el proyector («Clasificación · Femenino») y la
+  imagen van por rama. Sin eso, los 36 salían en una sola lista. La sala
+  `utn` de `salas_torneo` lleva ahora los dos enlaces de chess-results.
+- **«El podio» de arriba** salió de `js/cenfotec.js` a `js/torneo-podio.js`,
+  que es de las dos páginas: los tres primeros de cada grupo, con el nombre
+  del grupo solo si hay más de uno.
+- **Sin contacto**: no hay un correo ni un teléfono confirmados de la
+  organización de este torneo, así que no hay ficha de contacto; la
+  despedida lleva a los demás torneos. Seis fichas: las dos de chess-results
+  (se abren encima), las partidas, la clasificación, el podio y el proyector.
+- **La ficha de Torneos** de la sala `utn` lleva el azul, el logo y «Entrar a
+  la sala» en el celeste con letra oscura; lo revisa
+  `verificar-centroamericano.js` (que antes usaba la sala `utn` como ejemplo
+  de sala sin portada: ahora usa otra).
+- **Las fichas de las universidades no llevan `fichas`** en `PORTADAS` (la
+  regla de «ningún botón sale del sitio» del Centroamericano): su enlace
+  directo a Lichess no tiene una ficha en su página a la que llevar, y
+  `verificar-salas-torneo.js` cuenta con que se abra aparte. El enlace a su
+  página entra como el del Centroamericano: un enlace de la sala en
+  `admin.html#torneos`, que por ser del sitio se abre en la misma pestaña.

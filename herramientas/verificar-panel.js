@@ -411,7 +411,7 @@ async function pruebaAlumna(browser) {
   igual("Entrenamiento avanzado",
     grupo(grupos, "Entrenamiento avanzado").tiles.map((t) => t.enlace),
     ["entreno/visualizacion.html", "entreno/precision-posicional.html", "entreno/finales.html"]);
-  /* Una sola tarjeta y las diecinueve habilidades adentro: cada una con su
+  /* Una sola tarjeta y las veinte habilidades adentro: cada una con su
      tarjeta alargaba el panel el doble. */
   igual("Mejorar por habilidades: una sola tarjeta, «Habilidades»",
     grupo(grupos, "Mejorar por habilidades").tiles.map((t) => [t.etiqueta, t.enlace]),

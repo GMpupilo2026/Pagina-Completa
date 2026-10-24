@@ -1,5 +1,5 @@
 /* Las reglas de los Tipos de entrenamiento 8 a 14, sin DOM: el Barrido,
- * Intercambios, Constrúyela tú, la Ruta segura y Rey y peón. (Adivina la jugada
+ * Intercambios, Conteo, Constrúyela tú, la Ruta segura y Rey y peón. (Adivina la jugada
  * del maestro y ¿Qué apertura es? no necesitan reglas propias: se corrigen
  * comparando jugadas o nombres.)
  *
@@ -449,6 +449,92 @@
     return minimo >= TABLAS.firme ? 3 : 2;
   }
 
+  /* ===================================================================
+   * Conteo: contar ataques y defensas sobre las piezas en contacto para saber
+   * si capturar conviene, y, cuando te acaban de capturar, si recapturar.
+   *
+   * Es la cuenta de Intercambios (cada bando captura con su pieza más barata
+   * que pueda capturar legalmente y sigue solo mientras le conviene), pero
+   * preguntada de otra manera, y sobre una casilla o sobre varias:
+   *
+   *   colgadas    las piezas rivales que se pueden capturar sin que nadie
+   *               recapture;
+   *   conteo      cuántas piezas atacan una casilla y cuántas la defienden
+   *               (DIRECTO: una pieza detrás de otra no cuenta; por eso
+   *               «rayos» y «clavada» se descartan en los niveles de contar);
+   *   capturas    todas las casillas rivales capturables, cada una con el
+   *               resultado de su cadena (cada casilla se cuenta por
+   *               separado, como si fuera la única jugada);
+   *   recuperar   te acaban de capturar una pieza: cómo termina el material,
+   *               desde ANTES de esa captura, si recapturas.
+   *
+   * Sin coronaciones ni capturas al paso, que cambiarían el valor en medio.
+   * =================================================================== */
+  function conteoCasilla(Chess, fen, casilla) {
+    const x = intercambio(Chess, fen, casilla);
+    if (!x) return null;
+    const tab = R.tablero(fen), ic = R.idx(casilla);
+    const dueno = tab[ic].c, mueve = otro(dueno);
+    const A = atacantes(tab, mueve, ic), D = atacantes(tab, dueno, ic);
+    return Object.assign({}, x, {
+      atacan: A.length, defienden: D.length,
+      rey: A.concat(D).some((j) => tab[j].t === "k"),
+    });
+  }
+  /* Las casillas con una pieza rival (que no es el rey) que el bando que mueve
+     puede capturar, en el orden en que chess.js las genera. `null` si alguna
+     captura sería una coronación o al paso. */
+  function casillasCapturables(Chess, fen) {
+    const g = cargar(Chess, fen);
+    if (!g) return null;
+    const vistas = [];
+    let raro = false;
+    g.moves({ verbose: true }).forEach((m) => {
+      if (!m.captured) return;
+      if (m.promotion || m.flags.includes("e")) raro = true;
+      if (vistas.indexOf(m.to) < 0) vistas.push(m.to);
+    });
+    return raro ? null : vistas;
+  }
+  /* Las piezas que se pueden comer gratis: ninguna recaptura. `sinDefensa` es
+     que, además, nadie las defiende (ni una pieza clavada que no podría
+     recapturar): si no coinciden, la posición no sirve para preguntar «¿cuál
+     está sin defensa?». */
+  function colgadas(Chess, fen) {
+    const caps = casillasCapturables(Chess, fen);
+    if (!caps) return null;
+    const out = [];
+    caps.forEach((s) => {
+      const x = conteoCasilla(Chess, fen, s);
+      if (x && x.pasos.length === 1) out.push({ casilla: s, sinDefensa: x.defienden === 0, valor: x.valor });
+    });
+    return out;
+  }
+  /* Todas las casillas capturables con su cadena. `null` si no hay ninguna o si
+     alguna tiene una coronación o una captura al paso en medio. */
+  function capturas(Chess, fen) {
+    const caps = casillasCapturables(Chess, fen);
+    if (!caps || !caps.length) return null;
+    const out = [];
+    for (const s of caps) {
+      const x = conteoCasilla(Chess, fen, s);
+      if (!x || x.corona || x.alPaso) return null;
+      const p = R.tablero(fen)[R.idx(s)];
+      out.push({ casilla: s, pieza: p.t, valor: x.valor, pasos: x.pasos.length, x });
+    }
+    return out;
+  }
+  /* Te acaban de capturar `perdida` puntos en `casilla` y te toca: el balance
+     desde antes de esa captura, si recapturas y cada bando sigue solo mientras
+     le conviene. 0 es «recuperas justo lo que perdiste». */
+  function recuperar(Chess, fenDespues, casilla, perdida) {
+    const x = conteoCasilla(Chess, fenDespues, casilla);
+    if (!x || x.corona || x.alPaso) return null;
+    return Object.assign({}, x, { perdida, neto: x.valor - perdida });
+  }
+  /* «gana», «igual» o «pierde» según el signo. */
+  function claseDe(v) { return v > 0 ? "gana" : v < 0 ? "pierde" : "igual"; }
+
   const TiposReglasMas = {
     TABLAS, juicioTablas, estrellasTablas,
     TIEMPO, estrellasTiempo, segundosTiempo,
@@ -456,6 +542,7 @@
     aguantaAcertada, textoRefuta,
     VALOR, atacadas, atacantes, amenazados, barrido, corregirBarrido,
     intercambio, textoIntercambio,
+    conteoCasilla, casillasCapturables, colgadas, capturas, recuperar, claseDe,
     construye, solucionesConstruye, tieneMateEn1,
     rutaMinima, pasoValido, estrellasRuta,
     kpkIndice, kpkDesdeFen, kpkGana, bitsDeBase64, defensaKpk,

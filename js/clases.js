@@ -139,7 +139,7 @@
                 { emoji: "🧭", label: "Precisión posicional", desc: "Sin táctica inmediata: elige el plan correcto a largo plazo", href: "entreno/precision-posicional.html", soloAlumno: true },
                 { emoji: "🏁", label: "Finales contra la máquina", desc: "Lucena, Philidor y los finales de libro, contra Stockfish", href: "entreno/finales.html", soloAlumno: true },
             ] },
-            /* UNA tarjeta, y los diecinueve Tipos de entrenamiento adentro, en
+            /* UNA tarjeta, y los veinte Tipos de entrenamiento adentro, en
                su propia página (entreno/tipos.html). Estuvieron un día cada uno
                con su tarjeta en el panel y lo alargaban el doble: en el celular
                había que bajar un buen rato para llegar a «Jugar y competir».
