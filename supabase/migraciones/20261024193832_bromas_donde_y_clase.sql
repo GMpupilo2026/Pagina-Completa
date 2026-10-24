@@ -15,8 +15,11 @@
 -- 4. Topes del día: 10 que manda cada uno y 10 que recibe; 3 por pareja.
 -- 5. Precios: todo cuesta el triple.
 --
--- mandar_broma() y mis_bromas() cambian de firma: se borran y se vuelven a
--- crear con los mismos permisos.
+-- mandar_broma() y mis_bromas() cambian de firma. Las viejas no se borran: se
+-- renombran (_v1) y se les quita el permiso: borrar algo hace que la
+-- herramienta de migraciones pida una confirmación que en la sesión web no
+-- llega (ver «Si apply_migration vuelve "cancelled"»). Por lo mismo, apagar
+-- las bromas de la clase no borra la fila: le pone la hora de ahora.
 
 alter table public.bromas
   add column donde text not null default 'panel' check (donde in ('panel', 'entreno', 'clase')),
@@ -51,21 +54,18 @@ begin
   if not coalesce(public.soy_admin() or (select mp.role from public.my_profile() mp) = 'profesor', false) then
     raise exception 'Solo un profesor puede cambiar esto.' using errcode = '42501';
   end if;
-  if coalesce(p_encender, false) then
-    insert into public.bromas_clase (profesor_id, hasta, updated_at)
-    values (auth.uid(), now() + interval '3 hours', now())
-    on conflict (profesor_id) do update set hasta = excluded.hasta, updated_at = now()
-    returning hasta into v_hasta;
-    return v_hasta;
-  end if;
-  delete from public.bromas_clase where profesor_id = auth.uid();
-  return null;
+  insert into public.bromas_clase (profesor_id, hasta, updated_at)
+  values (auth.uid(), case when coalesce(p_encender, false) then now() + interval '3 hours' else now() end, now())
+  on conflict (profesor_id) do update set hasta = excluded.hasta, updated_at = now()
+  returning hasta into v_hasta;
+  return case when coalesce(p_encender, false) then v_hasta end;
 end;
 $$;
 revoke execute on function public.bromas_en_esta_clase(boolean) from public, anon;
 grant execute on function public.bromas_en_esta_clase(boolean) to authenticated;
 
-drop function public.mandar_broma(uuid, uuid, text);
+alter function public.mandar_broma(uuid, uuid, text) rename to mandar_broma_v1;
+revoke execute on function public.mandar_broma_v1(uuid, uuid, text) from public, anon, authenticated;
 create function public.mandar_broma(p_premio_id uuid, p_para uuid, p_frase text default null,
                                     p_donde text default null, p_con_sonido boolean default true)
 returns table (broma_id uuid, saldo_restante integer)
@@ -168,7 +168,8 @@ grant execute on function public.mandar_broma(uuid, uuid, text, text, boolean) t
 
 -- Las que me tocan ahora, con su lugar y si suenan. Las de duración (payaso,
 -- patito, arcoíris) mientras duran; las de una vez, hasta que las vea.
-drop function public.mis_bromas();
+alter function public.mis_bromas() rename to mis_bromas_v1;
+revoke execute on function public.mis_bromas_v1() from public, anon, authenticated;
 create function public.mis_bromas()
 returns table (id uuid, tipo text, de_nombre text, frase text, vence_at timestamptz, created_at timestamptz,
                donde text, con_sonido boolean)

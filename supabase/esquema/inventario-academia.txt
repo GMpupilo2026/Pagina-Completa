@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20261024163126
+# al-dia-con: 20261024193832
 tabla  Ejercicios Lichess  rls=true
 tabla  _foto_rls_tmp  rls=false
 tabla  _pedidos_elo  rls=false
@@ -39,6 +39,7 @@ tabla  avisos_racha  rls=true
 tabla  bromas  rls=true
 tabla  bromas_apagadas  rls=true
 tabla  bromas_bloqueos  rls=true
+tabla  bromas_clase  rls=true
 tabla  bromas_preferencias  rls=true
 tabla  certificados  rls=true
 tabla  clase_elegidos  rls=true
@@ -473,8 +474,10 @@ columna  avisos_racha.faltan  integer
 columna  avisos_racha.fecha  date
 columna  avisos_racha.racha  integer
 columna  avisos_racha.student_id  uuid
+columna  bromas.con_sonido  boolean
 columna  bromas.created_at  timestamp with time zone
 columna  bromas.de_id  uuid
+columna  bromas.donde  text
 columna  bromas.frase  text
 columna  bromas.id  uuid
 columna  bromas.para_id  uuid
@@ -486,6 +489,9 @@ columna  bromas_apagadas.profesor_id  uuid
 columna  bromas_bloqueos.alumno_id  uuid
 columna  bromas_bloqueos.bloqueado_id  uuid
 columna  bromas_bloqueos.created_at  timestamp with time zone
+columna  bromas_clase.hasta  timestamp with time zone
+columna  bromas_clase.profesor_id  uuid
+columna  bromas_clase.updated_at  timestamp with time zone
 columna  bromas_preferencias.alumno_id  uuid
 columna  bromas_preferencias.no_recibir  boolean
 columna  bromas_preferencias.updated_at  timestamp with time zone
@@ -2085,6 +2091,7 @@ funcion  bitacora_supervisada(p_alumno uuid)  definer  anon=false  auth=true
 funcion  broma_vista(p_id uuid)  definer  anon=false  auth=true
 funcion  bromas_bloquear(p_persona uuid, p_bloquear boolean)  definer  anon=false  auth=true
 funcion  bromas_configurar(p_no_recibir boolean)  definer  anon=false  auth=true
+funcion  bromas_en_esta_clase(p_encender boolean)  definer  anon=false  auth=true
 funcion  bromas_en_mi_clase(p_permitir boolean)  definer  anon=false  auth=true
 funcion  cambiar_rol(p_persona uuid, p_rol text)  definer  anon=false  auth=true
 funcion  canjear_licencia(p_codigo text)  definer  anon=false  auth=true
@@ -2329,7 +2336,8 @@ funcion  licencias_cambiar(p_id uuid, p_accion text, p_vence timestamp with time
 funcion  licencias_generar(p_herramienta text, p_cantidad integer, p_dias integer, p_nota text, p_persona uuid)  definer  anon=false  auth=true
 funcion  ligar_a_la_clase_abierta()  invoker  anon=false  auth=false
 funcion  logros_hitos(alumno uuid)  invoker  anon=false  auth=true
-funcion  mandar_broma(p_premio_id uuid, p_para uuid, p_frase text)  definer  anon=false  auth=true
+funcion  mandar_broma(p_premio_id uuid, p_para uuid, p_frase text, p_donde text, p_con_sonido boolean)  definer  anon=false  auth=true
+funcion  mandar_broma_v1(p_premio_id uuid, p_para uuid, p_frase text)  definer  anon=false  auth=false
 funcion  mandar_plan_rival(p_alumnos uuid[], p_rival text, p_lado text, p_plan jsonb, p_nota text, p_vence timestamp with time zone)  invoker  anon=false  auth=true
 funcion  marca_de_alumno(p_alumno uuid)  definer  anon=false  auth=false
 funcion  marca_de_diagnostico(p_id uuid)  definer  anon=false  auth=true
@@ -2356,6 +2364,7 @@ funcion  mis_academias_supervisadas()  definer  anon=false  auth=true
 funcion  mis_avisos_enviados(p_limite integer)  invoker  anon=false  auth=true
 funcion  mis_avisos_sin_leer()  definer  anon=false  auth=true
 funcion  mis_bromas()  invoker  anon=false  auth=true
+funcion  mis_bromas_v1()  invoker  anon=false  auth=false
 funcion  mis_clases()  invoker  anon=false  auth=true
 funcion  mis_clases_proximas(p_dias integer)  definer  anon=false  auth=true
 funcion  mis_funciones_coordinacion()  definer  anon=false  auth=true
@@ -2610,6 +2619,7 @@ politica  avisos_profesor  avisos_profesor_select  SELECT
 politica  bromas  bromas_ver  SELECT
 politica  bromas_apagadas  bromas_apagadas_ver  SELECT
 politica  bromas_bloqueos  bromas_bloqueos_ver  SELECT
+politica  bromas_clase  bromas_clase_ver  SELECT
 politica  bromas_preferencias  bromas_preferencias_ver  SELECT
 politica  certificados  certificados_lee  SELECT
 politica  clase_elegidos  clase_elegidos_insert  INSERT
@@ -3226,6 +3236,7 @@ indice  bromas  bromas_para
 indice  bromas  bromas_pkey
 indice  bromas_apagadas  bromas_apagadas_pkey
 indice  bromas_bloqueos  bromas_bloqueos_pkey
+indice  bromas_clase  bromas_clase_pkey
 indice  bromas_preferencias  bromas_preferencias_pkey
 indice  certificados  certificados_academia_idx
 indice  certificados  certificados_anulado_por_idx
@@ -3894,6 +3905,7 @@ grant  avisos_profesor  authenticated  TRIGGER
 grant  bromas  authenticated  SELECT
 grant  bromas_apagadas  authenticated  SELECT
 grant  bromas_bloqueos  authenticated  SELECT
+grant  bromas_clase  authenticated  SELECT
 grant  bromas_preferencias  authenticated  SELECT
 grant  certificados  authenticated  SELECT
 grant  clase_elegidos  authenticated  DELETE
