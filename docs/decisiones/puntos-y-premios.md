@@ -285,6 +285,70 @@ luminancia que el tablero de siempre, así que el contraste entre casillas y
 con las piezas no cambia, solo el tono. La animación le gana al estilo en
 línea que `board-color-themes.js` pone sobre `<html>`.
 
+## Las bromas grandes
+
+`20261024160609_bromas_grandes.sql` suma diez bromas a la tienda, pedidas por
+el dueño del sitio con su dibujo de referencia: «¡Invasión de gallinas!»,
+«Pantalla empapelada», «Meteorito troll», «Llegó el payaso», «Pato invasor»,
+«¡Gato descontrolado!», «¡Lluvia de quesos!», «¡Platanazo!», «¡Abducción
+alienígena!» y «¡Sandía explosiva!». Pidió tres cosas, y así quedaron:
+
+- **Más caras**, para que haya que hacer más ejercicios: de 80 a 150 puntos
+  (las cinco primeras cuestan de 20 a 60, y el entrenamiento paga a lo sumo
+  40 por día), así que cada una son de dos a cuatro días de práctica.
+- **Más tiempo en pantalla**: unos 12 segundos (el confeti dura 5).
+- **Grandes**: el dibujo principal ocupa hasta un tercio del ancho
+  (`clamp(8rem, 32vw, 18rem)`; el payaso, más) y el cartel con el nombre va
+  en letra grande. Los dibujos son emojis, como las cinco primeras: no pesan
+  nada y se ven en cualquier aparato.
+
+Todo lo demás es lo de las primeras: **son de una vez**, como el confeti
+(salen la próxima vez que entra a su panel, tienen una semana para verse y se
+marcan vistas), así que `mis_bromas()` y `mandar_broma()` no cambiaron —las
+reglas de quién puede recibir qué y los topes del día siguen siendo las
+mismas—; solo se ensanchó `bromas_tipo_check` y se agregaron las filas de
+`premios_catalogo`. Dicen quién la mandó dos veces: en el aviso (que es el que
+se anuncia, `role="status"`) y en el cartel de la capa (que es adorno,
+`aria-hidden`). Con Modo Adaptado no salen; con «menos movimiento» queda solo
+el aviso.
+
+- **De a una.** Si llegan varias juntas, salen una detrás de otra (`fila` en
+  `js/bromas.js`): diez escenas encimadas no se entienden. Por eso cada una se
+  marca vista cuando EMPIEZA, no al llegar: si se cierra la página a la mitad
+  de la fila, las que faltaban salen la próxima vez.
+- **Con sonido, bajito.** El payaso trae su musiquita (la «Entrada de los
+  gladiadores», de 1897, de dominio público) y el pato su «cuac»; también el
+  ovni, el meteorito y la sandía hacen un ruido. Son notas de WebAudio a poco
+  volumen, sin archivos. El navegador no deja sonar una página que nadie ha
+  tocado todavía, así que muchas veces no suenan: la broma se ve igual, el
+  sonido es un extra, nunca la broma.
+- **El ovni se lleva una pieza de verdad** (lo pidió el dueño después,
+  `20261024163126_broma_ovni_pieza.sql`, que solo cambia lo que dice la
+  tienda). Por eso es la única grande que no sale en el panel sino en
+  Entrenamiento, la primera vez que hay un tablero con piezas a la vista
+  (espera hasta 30 segundos a que cargue el ejercicio; si no aparece, queda
+  sin ver para la próxima página). Baja sobre una pieza al azar —nunca un
+  rey—, la copia sube por el rayo y la de verdad deja de verse **un minuto**:
+  hay que acordarse de cuál era. Al minuto vuelve, con un aviso que dice cuál
+  era y dónde. Se esconde con una regla de CSS sobre esa casilla de ese
+  tablero, no tocando la pieza, porque los tableros se vuelven a pintar
+  enteros en cada jugada y la regla sobrevive; y si la pieza se mueve, la
+  comen o cambia el ejercicio, se deja de esconder lo que haya ahí. La casilla
+  se sigue pudiendo tocar (la jugada se puede hacer de memoria), y el lector
+  de pantalla la sigue nombrando: el Modo Adaptado ya no recibe bromas. Si
+  cambia de página antes del minuto, en la nueva la pieza se ve.
+- **El cartel**, blanco sobre el azul de la marca (#ffffff sobre #102a43,
+  14,7 a 1), con el borde dorado.
+
+`verificar-bromas.js` las revisa: que la base, `js/bromas.js` y la tienda
+(`NOMBRE_BROMA`) conozcan las diez, el contraste del cartel, que salen de a
+una y que la segunda espera a la primera, que el cartel dice quién la mandó,
+que el ovni esconde UNA pieza aunque el tablero se vuelva a pintar y la
+devuelve al minuto (con el reloj de Playwright, sin esperar de verdad),
+que las gallinas miden más de 60 px, que la capa no tapa los clics ni la lee
+el lector de pantalla, y que con «menos movimiento» solo queda el aviso. Con
+`FOTOS=<carpeta>` saca una foto de cada una a media animación, para mirarlas.
+
 ## Entrenamiento, con puntos retroactivos (a diferencia de las tareas)
 
 `20261009005657_puntos_entrenamiento_retroactivo.sql` paga, una sola vez, los

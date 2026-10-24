@@ -1719,6 +1719,153 @@ html.dark .comparar-serie-3 { background: #199e70; }
   .broma-confeti, .broma-globo, .broma-patito { display: none; }
 }
 
+/* Las bromas grandes (gallinas, papel, meteorito, payaso gigante, pato
+   invasor, gato, quesos, platanazo, ovni y sandía): ocupan la pantalla unos
+   12 segundos. El cartel con el nombre de quien la mandó va en blanco sobre
+   el azul de la marca (#ffffff sobre #102a43: 14,7 a 1, medido en
+   herramientas/verificar-bromas.js). Con «menos movimiento» js/bromas.js no
+   pinta nada de esto: queda solo el aviso. */
+.broma-escena { position: absolute; inset: 0; animation: broma-desvanecer 12s linear forwards; }
+@keyframes broma-desvanecer { 0%, 90% { opacity: 1; } 100% { opacity: 0; } }
+.broma-grande { position: absolute; line-height: 1; font-size: clamp(8rem, 32vw, 18rem); }
+.broma-mediana { position: absolute; line-height: 1; font-size: clamp(4rem, 13vw, 8rem); }
+.broma-cartel {
+  position: absolute; left: 50%; bottom: 12%; transform: translateX(-50%);
+  max-width: min(90vw, 40rem); padding: 0.75rem 1.5rem; border-radius: 1rem;
+  background: #102a43; color: #ffffff; border: 4px solid #f0b429;
+  font-weight: 800; font-size: clamp(1.25rem, 4.5vw, 2.25rem); line-height: 1.2; text-align: center;
+  box-shadow: 0 10px 30px rgb(0 0 0 / 0.35);
+  opacity: 0; animation: broma-cartel 11s ease-out 0.8s forwards;
+}
+.broma-cartel-arriba { bottom: auto; top: 12%; }
+@keyframes broma-cartel {
+  0% { opacity: 0; transform: translateX(-50%) scale(0.4); }
+  6% { opacity: 1; transform: translateX(-50%) scale(1.12); }
+  10%, 100% { opacity: 1; transform: translateX(-50%) scale(1); }
+}
+.broma-saltito { display: inline-block; animation: broma-saltito 0.45s ease-in-out infinite alternate; }
+@keyframes broma-saltito { from { transform: translateY(0) rotate(-6deg); } to { transform: translateY(-18%) rotate(6deg); } }
+.broma-espejo { display: inline-block; transform: scaleX(-1); }
+
+/* De derecha a izquierda (gallinas, pato, platanazo). */
+.broma-cruza-izq { left: 100%; animation: broma-cruza-izq 9s linear forwards; }
+@keyframes broma-cruza-izq { to { transform: translateX(calc(-100vw - 100%)); } }
+
+/* El rollo de papel rueda y deja la pantalla empapelada detrás. */
+.broma-rollo { left: -40vw; top: 30%; animation: broma-rollo 3.2s linear forwards; }
+@keyframes broma-rollo { to { transform: translateX(150vw) rotate(1080deg); } }
+.broma-hoja {
+  position: absolute; left: 0; top: 0; bottom: 0; width: 0;
+  background: repeating-linear-gradient(90deg, rgb(255 255 255 / 0.82) 0 46px, rgb(226 232 240 / 0.82) 46px 50px);
+  animation: broma-hoja 3.2s linear forwards;
+}
+@keyframes broma-hoja { to { width: 100%; } }
+.broma-tira {
+  position: absolute; top: 0; width: 4.5rem; height: 0;
+  background: repeating-linear-gradient(180deg, #ffffff 0 56px, #e2e8f0 56px 59px);
+  box-shadow: 2px 0 6px rgb(0 0 0 / 0.15); animation: broma-tira 1.4s ease-out forwards;
+}
+@keyframes broma-tira { to { height: var(--largo, 70vh); } }
+
+/* El meteorito cae en diagonal, choca y sacude la pantalla. */
+.broma-meteoro { left: 100%; top: -40vh; animation: broma-meteoro 2.4s ease-in forwards; }
+@keyframes broma-meteoro { to { transform: translate(calc(-50vw - 50%), calc(90vh - 50%)) rotate(-20deg); } }
+.broma-choque { left: 50%; top: 50%; opacity: 0; transform: translate(-50%, -50%) scale(0.2); animation: broma-choque 2.4s ease-out 2.3s forwards; }
+@keyframes broma-choque { 0% { opacity: 1; transform: translate(-50%, -50%) scale(0.2); } 40% { opacity: 1; transform: translate(-50%, -50%) scale(1.4); } 100% { opacity: 0; transform: translate(-50%, -50%) scale(1.8); } }
+.broma-sacudir { animation: broma-sacudir 0.5s ease-in-out 2.4s 2; }
+@keyframes broma-sacudir { 25% { transform: translate(-12px, 8px); } 50% { transform: translate(10px, -10px); } 75% { transform: translate(-8px, -6px); } }
+
+/* El payaso aparece enorme y se mece. */
+.broma-payaso-cara { left: 50%; top: 42%; transform: translate(-50%, -50%) scale(0); animation: broma-payaso 11s ease-out forwards; font-size: clamp(10rem, 45vw, 24rem); }
+@keyframes broma-payaso {
+  0% { transform: translate(-50%, -50%) scale(0) rotate(-30deg); }
+  8% { transform: translate(-50%, -50%) scale(1.15) rotate(8deg); }
+  12% { transform: translate(-50%, -50%) scale(1) rotate(0); }
+  30% { transform: translate(-50%, -50%) scale(1.05) rotate(-6deg); }
+  50% { transform: translate(-50%, -50%) scale(1) rotate(6deg); }
+  70% { transform: translate(-50%, -50%) scale(1.05) rotate(-6deg); }
+  92% { transform: translate(-50%, -50%) scale(1) rotate(0); }
+  100% { transform: translate(-50%, -50%) scale(0) rotate(30deg); }
+}
+
+/* El globo de «¡CUAC CUAC!» va pegado al pato. */
+.broma-cuac {
+  position: absolute; left: -10%; top: -18%; white-space: nowrap;
+  padding: 0.25em 0.6em; border-radius: 1em; background: #ffffff; color: #102a43; border: 3px solid #102a43;
+  font-size: clamp(1.5rem, 5vw, 3rem); font-weight: 900; animation: broma-latido 0.6s ease-in-out infinite alternate;
+}
+@keyframes broma-latido { from { transform: scale(1) rotate(-4deg); } to { transform: scale(1.12) rotate(4deg); } }
+
+/* El gato va y vuelve; las cosas que tira caen. */
+.broma-gato { left: -40vw; top: 38%; animation: broma-gato 9s ease-in-out forwards; }
+@keyframes broma-gato {
+  0% { transform: translateX(0); }
+  45% { transform: translateX(150vw); }
+  50% { transform: translateX(150vw) scaleX(-1); }
+  95% { transform: translateX(0) scaleX(-1); }
+  100% { transform: translateX(0) scaleX(-1); opacity: 0; }
+}
+.broma-cae { top: -20vh; animation: broma-cae 1.6s cubic-bezier(.5, 0, 1, .5) forwards; }
+@keyframes broma-cae { to { transform: translateY(125vh) rotate(260deg); } }
+
+/* Los quesos caen y rebotan contra el borde de abajo. */
+.broma-queso { top: -25vh; animation: broma-rebote 4.5s linear forwards; }
+@keyframes broma-rebote {
+  0% { transform: translateY(0) rotate(0); animation-timing-function: ease-in; }
+  35% { transform: translateY(calc(100vh + 5vh)) rotate(160deg); animation-timing-function: ease-out; }
+  55% { transform: translateY(65vh) rotate(220deg); animation-timing-function: ease-in; }
+  72% { transform: translateY(calc(100vh + 5vh)) rotate(280deg); animation-timing-function: ease-out; }
+  84% { transform: translateY(88vh) rotate(310deg); animation-timing-function: ease-in; }
+  100% { transform: translateY(140vh) rotate(360deg); }
+}
+
+/* El banano gira mientras cruza. */
+.broma-gira { display: inline-block; animation: broma-gira 1.2s linear infinite; }
+@keyframes broma-gira { to { transform: rotate(-360deg); } }
+
+/* El rayo del ovni (js/bromas.js le pone la posición sobre la pieza). */
+.broma-rayo {
+  position: absolute; left: 50%; top: 22vh; bottom: 6vh; width: min(70vw, 34rem); transform: translateX(-50%);
+  clip-path: polygon(42% 0, 58% 0, 100% 100%, 0 100%);
+  background: linear-gradient(180deg, rgb(255 251 214 / 0.9), rgb(167 243 208 / 0.45));
+  opacity: 0; animation: broma-rayo 10s ease-in-out forwards;
+}
+@keyframes broma-rayo { 0%, 18% { opacity: 0; } 24%, 72% { opacity: 1; } 78%, 100% { opacity: 0; } }
+
+/* En Entrenamiento el ovni baja sobre una pieza de verdad (js/bromas.js le
+   pone la posición) y se la lleva: la copia sube por el rayo. */
+.broma-ovni-sobre { position: absolute; line-height: 1; transform: translate(-50%, -100%); animation: broma-ovni-sobre 10s ease-in-out forwards; }
+@keyframes broma-ovni-sobre {
+  0% { transform: translate(-50%, calc(-100% - 100vh)); }
+  18%, 78% { transform: translate(-50%, -100%); }
+  100% { transform: translate(calc(-50% + 100vw), calc(-100% - 60vh)) rotate(25deg); }
+}
+.broma-rayo-pieza { bottom: auto; }
+.broma-abducida { position: absolute; display: flex; align-items: center; justify-content: center; animation: broma-abducida 10s ease-in forwards; }
+@keyframes broma-abducida {
+  0%, 26% { transform: translateY(0) rotate(0); opacity: 1; }
+  70% { transform: translateY(var(--sube)) rotate(540deg) scale(0.5); opacity: 1; }
+  74%, 100% { transform: translateY(var(--sube)) scale(0.2); opacity: 0; }
+}
+
+/* La sandía cae, explota y los pedazos salen para todos lados. */
+.broma-sandia { left: 50%; top: -40vh; transform: translateX(-50%); animation: broma-sandia 2.6s ease-in forwards; }
+@keyframes broma-sandia {
+  0% { transform: translate(-50%, 0) rotate(0); }
+  80% { transform: translate(-50%, 75vh) rotate(200deg) scale(1); opacity: 1; }
+  100% { transform: translate(-50%, 75vh) rotate(220deg) scale(1.6); opacity: 0; }
+}
+.broma-trozo { left: 50%; top: 45%; opacity: 0; animation: broma-trozo 2.4s cubic-bezier(.2, .8, .4, 1) 2.5s forwards; }
+@keyframes broma-trozo {
+  0% { opacity: 1; transform: translate(-50%, -50%) scale(0.3); }
+  100% { opacity: 1; transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) rotate(var(--giro, 360deg)) scale(1); }
+}
+.broma-semilla { position: absolute; width: 0.9rem; height: 1.4rem; border-radius: 50%; background: #1e1e1e; }
+
+@media (prefers-reduced-motion: reduce) {
+  .broma-escena { display: none; }
+}
+
 /* ===== Pareo Integral (pareo.html) =====
    Las tablas de emparejamientos, clasificación y cruzada, y lo que sale en
    papel: solo la ficha abierta, sin encabezado, pie ni botones, y el
