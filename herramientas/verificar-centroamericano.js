@@ -210,20 +210,27 @@ ok("la página carga el cliente de Supabase antes que su código en vivo", html.
     // La ficha de afuera, en Torneos, lleva la cara del torneo; las demás salas, la de siempre.
     const ctx3 = await nav.newContext({ viewport: { width: 1280, height: 900 }, serviceWorkers: "block" });
     const sala = (clave, nombre) => ({ id: clave, clave, nombre, descripcion: "", emoji: "🏆", tipo: "enlaces", lichess_id: null, enlaces: [{ url: "https://ajedrez-integral.com/" + PAGINA, texto: "Toda la información del torneo" }, { url: "https://s1.chess-results.com/x", texto: "Resultados en vivo" }], pizarras: null, video_url: null, quiniela: false, tema: "cine", visible: true, orden: 0 });
-    await ctx3.route(/supabase\.co\/rest\/v1\/salas_torneo/, (r) => r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify([sala("centroamericano-2026", "XXI Festival"), sala("utn", "Torneo UTN")]) }));
+    await ctx3.route(/supabase\.co\/rest\/v1\/salas_torneo/, (r) => r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify([sala("centroamericano-2026", "XXI Festival"), sala("utn", "Torneo UTN"), { ...sala("cenfotec", "Desafío Mentes Maestras"), tipo: "lichess", lichess_id: "s7NfNv6H", enlaces: [{ url: "https://s1.chess-results.com/y", texto: "Posiciones" }] }]) }));
     const p3 = await ctx3.newPage();
     await p3.goto(BASE + "/torneos-en-vivo.html", { waitUntil: "load" });
     await p3.waitForSelector('#salas-lista li[data-sala="utn"]');
     const fichaSala = await p3.evaluate(() => {
       const mira = (li) => {
-        const m = li.querySelector(".cac-sala-mascota");
+        const m = li.querySelector(".cac-sala-imagen");
         const botones = [...li.querySelectorAll("a")].map((a) => getComputedStyle(a).backgroundColor);
         return { fondo: getComputedStyle(li).backgroundImage, mascota: !!(m && m.checkVisibility() && m.complete && m.naturalWidth > 0 && m.getAttribute("aria-hidden") === "true" && m.alt === ""), botones };
       };
-      return { cac: mira(document.querySelector('li[data-sala="centroamericano-2026"]')), otra: mira(document.querySelector('li[data-sala="utn"]')) };
+      const cft = document.querySelector('li[data-sala="cenfotec"]');
+      const logo = cft.querySelector(".cft-sala-imagen");
+      return { cac: mira(document.querySelector('li[data-sala="centroamericano-2026"]')), otra: mira(document.querySelector('li[data-sala="utn"]')),
+        cft: { fondo: getComputedStyle(cft).backgroundImage, logo: !!(logo && logo.checkVisibility() && logo.complete && logo.naturalWidth > 0 && logo.getAttribute("aria-hidden") === "true" && logo.alt === ""),
+          emoji: [...cft.querySelectorAll("p")].some((p) => p.textContent === "🏆"),
+          botones: [...cft.querySelectorAll("a")].map((a) => [a.textContent.split(" de ")[0], getComputedStyle(a).backgroundColor, getComputedStyle(a).color]) } };
     });
     ok("en Torneos, la ficha del Centroamericano lleva el morado de las bases y el pizote", /gradient/.test(fichaSala.cac.fondo) && fichaSala.cac.mascota, JSON.stringify(fichaSala.cac));
     ok("y sus botones: el primero rojo, el resto blancos", JSON.stringify(fichaSala.cac.botones) === JSON.stringify(["rgb(206, 19, 40)", "rgb(255, 255, 255)"]), JSON.stringify(fichaSala.cac.botones));
+    ok("la del Desafío Mentes Maestras lleva el azul de CENFOTEC y su logo, sin el emoji", /gradient/.test(fichaSala.cft.fondo) && /35, 48, 101/.test(fichaSala.cft.fondo) && fichaSala.cft.logo && !fichaSala.cft.emoji, JSON.stringify(fichaSala.cft));
+    ok("y sus botones: «Entrar a la sala» celeste con letra oscura, los enlaces blancos", JSON.stringify(fichaSala.cft.botones) === JSON.stringify([["Entrar a la sala", "rgb(35, 172, 244)", "rgb(20, 28, 64)"], ["Posiciones", "rgb(255, 255, 255)", "rgb(35, 48, 101)"]]), JSON.stringify(fichaSala.cft.botones));
     ok("las demás salas siguen con su ficha de siempre", fichaSala.otra.fondo === "none" && !fichaSala.otra.mascota, JSON.stringify(fichaSala.otra));
     await ctx3.close();
 

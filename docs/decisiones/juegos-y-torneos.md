@@ -8563,6 +8563,24 @@ Es una página estática, sin cuenta y sin base: nada se guarda.
   cargan también `torneos-en-vivo.html` y `admin.html` (la vista previa del
   editor es la misma ficha). Contraste: blanco sobre #5A5FA3 5,83, #40478F
   sobre blanco 8,35 y blanco sobre el rojo 5,6.
+- **La ficha del Desafío Mentes Maestras** (la sala `cenfotec`, de la
+  Universidad CENFOTEC) lleva lo mismo que la del Centroamericano pero con la
+  cara de la universidad (lo pidió el dueño): el azul de su imagen (#233065
+  arriba a #1C3F7F abajo) con una cuadrícula tenue de circuito, la línea y la
+  luz celeste (#23ACF4, el de su «×») arriba, su logo en lugar del emoji y
+  «Entrar a la sala» en celeste. El logo sale recortado tal cual de la imagen
+  que pasó el dueño, sin redibujarlo, en blanco con transparencia
+  (`img/cenfotec/logo.png`); como el título ya dice CENFOTEC, va con `alt=""`
+  y `aria-hidden`. Es la misma maquinaria: su clave en `PORTADAS` de
+  `js/salas-torneo.js` y el estilo en `css/cenfotec.css`, que cargan
+  `torneos-en-vivo.html` y `admin.html`. Cada portada pone su `clase` y de
+  ella salen `<clase>-imagen`, `<clase>-boton` y `<clase>-principal`; como
+  esta sala es de Lichess, sus otros enlaces van de botón blanco (el enlace
+  subrayado de siempre no se lee sobre el azul). Contraste: blanco sobre
+  #233065 12,48 y sobre #1C3F7F 10,16; #141C40 sobre el celeste 6,52 (el
+  celeste con letra blanca da 2,5: no se usa así); #233065 sobre blanco
+  12,48. La luz parpadea, pero con «menos movimiento» se queda quieta.
+  `verificar-centroamericano.js` lo revisa junto a la del Centroamericano.
 - **«Hoy en el torneo»**, entre quien organiza y las fichas, lo arma
   `js/centroamericano.js` con las horas del calendario: cada fila de
   `#calendario` lleva su `data-inicio` (hora de Costa Rica, que no tiene

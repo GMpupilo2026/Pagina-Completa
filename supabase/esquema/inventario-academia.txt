@@ -1753,6 +1753,7 @@ columna  sala_avisos_push_enviados.tnr  text
 columna  sala_suscripciones_push.actualizada  timestamp with time zone
 columna  sala_suscripciones_push.auth  text
 columna  sala_suscripciones_push.creada  timestamp with time zone
+columna  sala_suscripciones_push.delegacion  text
 columna  sala_suscripciones_push.endpoint  text
 columna  sala_suscripciones_push.id  uuid
 columna  sala_suscripciones_push.idioma  text
@@ -2250,6 +2251,7 @@ funcion  interno.cerrar_clases_inactivas(p_inactiva interval)  definer  anon=fal
 funcion  interno.clases_donde_aparezco(p_desde timestamp with time zone)  definer  anon=false  auth=true
 funcion  interno.clases_que_coordino()  definer  anon=false  auth=true
 funcion  interno.clases_que_superviso()  definer  anon=false  auth=true
+funcion  interno.cobrar_semana_sin_entrenar(p_lunes date)  definer  anon=false  auth=false
 funcion  interno.cobros_corrige_supervision()  definer  anon=false  auth=false
 funcion  interno.comparten_academia(p_a uuid, p_b uuid)  definer  anon=false  auth=true
 funcion  interno.coordinadores_de(p_persona uuid)  definer  anon=false  auth=false
@@ -2257,9 +2259,13 @@ funcion  interno.corrijo_cobros_de(p_alumno uuid)  definer  anon=false  auth=tru
 funcion  interno.cuaderno_al_cambiar()  invoker  anon=false  auth=false
 funcion  interno.cuaderno_tope()  definer  anon=false  auth=false
 funcion  interno.cuestionario_del_renglon(p_item uuid)  definer  anon=false  auth=false
+funcion  interno.dias_entrenados(p_alumno uuid, p_lunes date)  definer  anon=false  auth=false
 funcion  interno.emitir_cobros(p_hasta date, p_suscripcion uuid)  definer  anon=false  auth=false
 funcion  interno.emitir_recibo(p_alumno uuid, p_fecha date, p_metodo text, p_referencia text, p_nota text, p_emitido_por uuid)  definer  anon=false  auth=false
 funcion  interno.enlaces_de_sala_validos(p jsonb)  invoker  anon=true  auth=true
+funcion  interno.entrenamiento_clave(p_activity text, p_detail jsonb, p_creado timestamp with time zone)  invoker  anon=true  auth=true
+funcion  interno.entrenamiento_logrado(p_detail jsonb)  invoker  anon=true  auth=true
+funcion  interno.entrenamiento_premio(p_activity text, p_detail jsonb)  invoker  anon=false  auth=false
 funcion  interno.entreno_pedido_de_la_base()  definer  anon=false  auth=false
 funcion  interno.estilo_opiniones_al_guardar()  definer  anon=false  auth=false
 funcion  interno.estilo_pruebas_al_guardar()  definer  anon=false  auth=false
@@ -2526,6 +2532,7 @@ funcion  secreto_tanda_informes()  definer  anon=false  auth=false
 funcion  secreto_tanda_push()  definer  anon=false  auth=false
 funcion  secreto_torneos_externos()  definer  anon=false  auth=false
 funcion  seleccion_compartida(p_id uuid)  definer  anon=false  auth=true
+funcion  semana_de_entrenamiento()  definer  anon=false  auth=true
 funcion  sesion_de_supervisado(p_sesion uuid)  definer  anon=false  auth=true
 funcion  set_cuentas_del_supervisor(p_supervisor uuid, p_cuentas uuid[])  definer  anon=false  auth=true
 funcion  set_profesores_del_coordinador(p_coordinador uuid, p_profesores uuid[])  definer  anon=false  auth=true
@@ -3696,6 +3703,7 @@ indice  training_plans  training_plans_pkey
 indice  training_plans  training_plans_student_id_key
 indice  training_plans  training_plans_student_idx
 indice  training_plans  training_plans_teacher_id_fk
+indice  training_progress  training_progress_clave_puntos
 indice  training_progress  training_progress_pkey
 indice  training_progress  training_progress_sin_internet
 indice  training_progress  training_progress_student_idx
@@ -3762,6 +3770,7 @@ cron  cobros-recordatorios-programados  */5 * * * *
 cron  elo-fide-nacional  10 9 * * *
 cron  informes-a-encargados  0 * * * *
 cron  limpiar-invitados-de-clase  20 7 * * *
+cron  puntos-semana-sin-entrenar  10 6 * * 1
 cron  recordar-informes-mensuales  0 14 * * *
 cron  sala-avisos  */5 * 1-8 11 *
 cron  sala-avisos-limpiar  17 9 * * *
