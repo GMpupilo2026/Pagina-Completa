@@ -10,13 +10,14 @@
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="Ajedrez Integral">
     <meta property="og:locale" content="es_CR">
+    <meta property="og:locale:alternate" content="en_US">
     <meta property="og:title" content="Centroamericano y del Caribe de la Juventud 2026 — bases, hoteles y resultados">
     <meta property="og:description" content="Todo el XXI Festival Centroamericano y del Caribe de la Juventud, Costa Rica 2026, en un solo lugar: las bases, los hoteles, el bye, las partidas y los resultados en vivo.">
     <meta property="og:url" content="https://ajedrez-integral.com/centroamericano-2026.html">
-    <meta property="og:image" content="https://ajedrez-integral.com/img/og-ajedrez-integral.jpg">
+    <meta property="og:image" content="https://ajedrez-integral.com/img/centroamericano-2026/compartir.jpg">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
-    <meta property="og:image:alt" content="Ajedrez Integral — clases de ajedrez en vivo, no solo videos. ajedrez-integral.com">
+    <meta property="og:image:alt" content="El pizote de la mascota con el trofeo y la bandera de Costa Rica: XXI Festival Centroamericano y del Caribe de la Juventud, del 1 al 8 de noviembre de 2026, Gimnasio Nacional, La Sabana.">
     <meta name="twitter:card" content="summary_large_image">
     <link rel="stylesheet" href="css/tailwind.css">
     <link rel="stylesheet" href="css/styles.css">
@@ -37,6 +38,7 @@
                     <li><a href="#hoteles" class="hover:text-accent-400 transition-colors">Hoteles</a></li>
                 </ul>
                 <div class="flex items-center gap-2 sm:gap-3">
+                    <button id="cac-idioma" type="button" lang="en" aria-label="Read this page in English" data-no-traducir class="shrink-0 text-white text-sm font-bold h-9 px-2 sm:px-3 rounded-lg border border-white/40 hover:bg-brand-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800"><span class="sm:hidden" aria-hidden="true">EN</span><span class="hidden sm:inline">English</span></button>
                     <button id="theme-toggle" class="text-white text-lg w-9 h-9 flex items-center justify-center rounded-lg hover:bg-brand-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Cambiar a modo oscuro" title="Cambiar entre modo claro y oscuro">
                         <span id="theme-icon" aria-hidden="true">☀️</span>
                     </button>
@@ -100,6 +102,26 @@
         </div>
     </section>
 
+    <!-- «Hoy en el torneo»: lo arma js/centroamericano.js con las horas del
+         calendario (data-inicio de cada fila, hora de Costa Rica): la cuenta
+         regresiva antes del 1 de noviembre, lo que se juega ahora y lo que
+         sigue durante el festival, y el cierre después. Sin JavaScript queda
+         lo de abajo, que es cierto siempre. -->
+    <section id="hoy" class="pt-8" aria-labelledby="hoy-etiqueta" data-no-traducir>
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="cac-hoy">
+                <h2 id="hoy-etiqueta" class="cac-hoy-etiqueta">El festival</h2>
+                <p id="hoy-principal" class="cac-hoy-principal">Del domingo 1 al domingo 8 de noviembre de 2026</p>
+                <p id="hoy-detalle" class="cac-hoy-detalle">La ronda 1 se juega el lunes 2 de noviembre a las 9:30 a.m., hora de Costa Rica.</p>
+                <p class="mt-3 flex flex-wrap gap-x-5 gap-y-2 text-sm font-bold">
+                    <a href="#calendario" id="hoy-calendario" class="cac-accion underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ce1328]">Ver el calendario completo →</a>
+                    <a href="documentos/centroamericano-2026/calendario-centroamericano-2026.ics" download id="hoy-ics" class="cac-accion underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ce1328]"><span aria-hidden="true">📅 </span><span id="hoy-ics-texto">Agregar a mi calendario</span></a>
+                </p>
+                <p id="hoy-sin-red" class="cac-hoy-sin-red" hidden><span aria-hidden="true">📴 </span><span id="hoy-sin-red-texto">Esta página quedó guardada en este aparato: la puedes abrir aunque no haya internet en la sala.</span></p>
+            </div>
+        </div>
+    </section>
+
     <section id="fichas" class="relative overflow-hidden pt-10 pb-14 scroll-mt-24">
         <img src="img/centroamericano-2026/hojas.png" alt="" aria-hidden="true" width="470" height="440" class="cac-hojas cac-hojas-ad opacity-60 dark:opacity-30">
         <img src="img/centroamericano-2026/hojas.png" alt="" aria-hidden="true" width="470" height="440" class="cac-hojas cac-hojas-bi opacity-60 dark:opacity-30">
@@ -109,6 +131,19 @@
                 <img src="img/centroamericano-2026/mascota-trofeo.png" width="124" height="120" alt="" aria-hidden="true" class="w-20 sm:w-24 h-auto shrink-0 cac-mece">
             </div>
             <p class="text-brand-600 dark:text-brand-300 mt-2 max-w-2xl">Toca la ficha de lo que buscas y se abre encima, sin salir de la página. Las que dicen «Pronto» se abren en cuanto la organización publique el enlace.</p>
+            <!-- «Busca a tu jugador» (js/centroamericano-vivo.js): los jugadores y la
+                 ronda de hoy, de chess-results, por la Edge Function sala-jugadores.
+                 Lo que arma va en #buscador-resultados, en el idioma de la página. -->
+            <div id="buscador" class="cac-buscador mt-6 sm:mt-8">
+                <label for="buscador-nombre" class="cac-buscador-titulo"><span aria-hidden="true">🔎 </span>Busca a tu jugador</label>
+                <p class="mt-1 text-sm sm:text-base text-brand-600 dark:text-brand-300">Escribe su nombre o su apellido: te decimos su mesa y su rival en la ronda de hoy, su categoría y cómo va.</p>
+                <input id="buscador-nombre" type="search" autocomplete="off" spellcheck="false" placeholder="Por ejemplo: Mayorga" class="cac-buscador-campo">
+                <p id="buscador-estado" class="mt-2 text-sm text-brand-600 dark:text-brand-300" role="status" aria-live="polite" data-no-traducir></p>
+                <ul id="buscador-resultados" class="mt-3 grid gap-3" data-no-traducir></ul>
+                <p class="mt-3 flex flex-wrap gap-x-5 gap-y-2 text-sm font-bold">
+                    <a href="#medallero" class="cac-accion underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ce1328]"><span aria-hidden="true">🥇 </span>Ver el medallero →</a>
+                </p>
+            </div>
             <ul class="mt-6 sm:mt-8 grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-5">
                 <li>
                     <a href="documentos/centroamericano-2026/bases-cac-2026.pdf" target="_blank" rel="noopener" data-ventana="Bases del campeonato" data-color="morado" class="cac-ficha h-full flex flex-col rounded-3xl bg-white dark:bg-brand-900 shadow-md p-4 sm:p-6 focus:outline-none focus-visible:ring-4 focus-visible:ring-[#ce1328]">
@@ -287,6 +322,7 @@
         </div>
         <div class="px-4 sm:px-6 pt-2 pb-6">
             <p class="text-brand-600 dark:text-brand-300 mt-2">Todas las horas son de Costa Rica. La reunión técnica es virtual, con el enlace que envía la organización.</p>
+            <p class="mt-4"><a href="documentos/centroamericano-2026/calendario-centroamericano-2026.ics" download class="inline-block bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2.5 rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2"><span aria-hidden="true">📅 </span>Agregar a mi calendario</a> <span class="block sm:inline mt-2 sm:mt-0 sm:ml-2 text-sm text-brand-600 dark:text-brand-300">Las rondas, el Rapid, el Blitz y las ceremonias, con un aviso 30 minutos antes de cada ronda.</span></p>
             <div class="mt-6 overflow-x-auto rounded-2xl border border-brand-100 dark:border-brand-800 bg-white dark:bg-brand-900">
                 <table class="w-full text-sm">
                     <caption class="sr-only">Calendario del Festival Centroamericano 2026</caption>
@@ -294,24 +330,40 @@
                         <tr><th scope="col" class="text-left px-4 py-3">Actividad</th><th scope="col" class="text-left px-4 py-3">Día</th><th scope="col" class="text-left px-4 py-3">Hora</th></tr>
                     </thead>
                     <tbody class="divide-y divide-brand-100 dark:divide-brand-800">
-                        <tr><th scope="row" class="text-left font-semibold px-4 py-2">Llegada y acreditación (en los hoteles)</th><td class="px-4 py-2">Domingo 1 de noviembre</td><td class="px-4 py-2">3:00 p.m.</td></tr>
-                        <tr><th scope="row" class="text-left font-semibold px-4 py-2">Congresillo</th><td class="px-4 py-2">Domingo 1 de noviembre</td><td class="px-4 py-2">7:00 p.m.</td></tr>
-                        <tr><th scope="row" class="text-left font-semibold px-4 py-2">Inauguración</th><td class="px-4 py-2">Lunes 2 de noviembre</td><td class="px-4 py-2">9:00 a.m.</td></tr>
-                        <tr><th scope="row" class="text-left font-semibold px-4 py-2">Ronda 1</th><td class="px-4 py-2">Lunes 2 de noviembre</td><td class="px-4 py-2">9:30 a.m.</td></tr>
-                        <tr><th scope="row" class="text-left font-semibold px-4 py-2">Ronda 2</th><td class="px-4 py-2">Lunes 2 de noviembre</td><td class="px-4 py-2">3:30 p.m.</td></tr>
-                        <tr><th scope="row" class="text-left font-semibold px-4 py-2">Ronda 3</th><td class="px-4 py-2">Martes 3 de noviembre</td><td class="px-4 py-2">9:00 a.m.</td></tr>
-                        <tr><th scope="row" class="text-left font-semibold px-4 py-2">Torneo Rapid</th><td class="px-4 py-2">Martes 3 de noviembre</td><td class="px-4 py-2">3:00 p.m.</td></tr>
-                        <tr><th scope="row" class="text-left font-semibold px-4 py-2">Ronda 4</th><td class="px-4 py-2">Miércoles 4 de noviembre</td><td class="px-4 py-2">9:00 a.m.</td></tr>
-                        <tr><th scope="row" class="text-left font-semibold px-4 py-2">Ronda 5</th><td class="px-4 py-2">Miércoles 4 de noviembre</td><td class="px-4 py-2">3:00 p.m.</td></tr>
-                        <tr><th scope="row" class="text-left font-semibold px-4 py-2">Ronda 6</th><td class="px-4 py-2">Jueves 5 de noviembre</td><td class="px-4 py-2">9:00 a.m.</td></tr>
-                        <tr><th scope="row" class="text-left font-semibold px-4 py-2">Torneo Blitz</th><td class="px-4 py-2">Jueves 5 de noviembre</td><td class="px-4 py-2">3:00 p.m.</td></tr>
-                        <tr><th scope="row" class="text-left font-semibold px-4 py-2">Ronda 7</th><td class="px-4 py-2">Viernes 6 de noviembre</td><td class="px-4 py-2">9:00 a.m.</td></tr>
-                        <tr><th scope="row" class="text-left font-semibold px-4 py-2">Ronda 8</th><td class="px-4 py-2">Viernes 6 de noviembre</td><td class="px-4 py-2">3:00 p.m.</td></tr>
-                        <tr><th scope="row" class="text-left font-semibold px-4 py-2">Ronda 9</th><td class="px-4 py-2">Sábado 7 de noviembre</td><td class="px-4 py-2">9:00 a.m.</td></tr>
-                        <tr><th scope="row" class="text-left font-semibold px-4 py-2">Clausura</th><td class="px-4 py-2">Sábado 7 de noviembre</td><td class="px-4 py-2">5:00 p.m.</td></tr>
-                        <tr><th scope="row" class="text-left font-semibold px-4 py-2">Salida</th><td class="px-4 py-2">Domingo 8 de noviembre</td><td class="px-4 py-2">11:00 a.m.</td></tr>
+                        <tr data-inicio="2026-11-01T15:00" data-minutos="240"><th scope="row" class="text-left font-semibold px-4 py-2">Llegada y acreditación (en los hoteles)</th><td class="px-4 py-2">Domingo 1 de noviembre</td><td class="px-4 py-2">3:00 p.m.</td></tr>
+                        <tr data-inicio="2026-11-01T19:00" data-minutos="120"><th scope="row" class="text-left font-semibold px-4 py-2">Congresillo</th><td class="px-4 py-2">Domingo 1 de noviembre</td><td class="px-4 py-2">7:00 p.m.</td></tr>
+                        <tr data-inicio="2026-11-02T09:00" data-minutos="30"><th scope="row" class="text-left font-semibold px-4 py-2">Inauguración</th><td class="px-4 py-2">Lunes 2 de noviembre</td><td class="px-4 py-2">9:00 a.m.</td></tr>
+                        <tr data-inicio="2026-11-02T09:30" data-minutos="300" data-primera-ronda><th scope="row" class="text-left font-semibold px-4 py-2">Ronda 1</th><td class="px-4 py-2">Lunes 2 de noviembre</td><td class="px-4 py-2">9:30 a.m.</td></tr>
+                        <tr data-inicio="2026-11-02T15:30" data-minutos="300"><th scope="row" class="text-left font-semibold px-4 py-2">Ronda 2</th><td class="px-4 py-2">Lunes 2 de noviembre</td><td class="px-4 py-2">3:30 p.m.</td></tr>
+                        <tr data-inicio="2026-11-03T09:00" data-minutos="300"><th scope="row" class="text-left font-semibold px-4 py-2">Ronda 3</th><td class="px-4 py-2">Martes 3 de noviembre</td><td class="px-4 py-2">9:00 a.m.</td></tr>
+                        <tr data-inicio="2026-11-03T15:00" data-minutos="240"><th scope="row" class="text-left font-semibold px-4 py-2">Torneo Rapid</th><td class="px-4 py-2">Martes 3 de noviembre</td><td class="px-4 py-2">3:00 p.m.</td></tr>
+                        <tr data-inicio="2026-11-04T09:00" data-minutos="300"><th scope="row" class="text-left font-semibold px-4 py-2">Ronda 4</th><td class="px-4 py-2">Miércoles 4 de noviembre</td><td class="px-4 py-2">9:00 a.m.</td></tr>
+                        <tr data-inicio="2026-11-04T15:00" data-minutos="300"><th scope="row" class="text-left font-semibold px-4 py-2">Ronda 5</th><td class="px-4 py-2">Miércoles 4 de noviembre</td><td class="px-4 py-2">3:00 p.m.</td></tr>
+                        <tr data-inicio="2026-11-05T09:00" data-minutos="300"><th scope="row" class="text-left font-semibold px-4 py-2">Ronda 6</th><td class="px-4 py-2">Jueves 5 de noviembre</td><td class="px-4 py-2">9:00 a.m.</td></tr>
+                        <tr data-inicio="2026-11-05T15:00" data-minutos="240"><th scope="row" class="text-left font-semibold px-4 py-2">Torneo Blitz</th><td class="px-4 py-2">Jueves 5 de noviembre</td><td class="px-4 py-2">3:00 p.m.</td></tr>
+                        <tr data-inicio="2026-11-06T09:00" data-minutos="300"><th scope="row" class="text-left font-semibold px-4 py-2">Ronda 7</th><td class="px-4 py-2">Viernes 6 de noviembre</td><td class="px-4 py-2">9:00 a.m.</td></tr>
+                        <tr data-inicio="2026-11-06T15:00" data-minutos="300"><th scope="row" class="text-left font-semibold px-4 py-2">Ronda 8</th><td class="px-4 py-2">Viernes 6 de noviembre</td><td class="px-4 py-2">3:00 p.m.</td></tr>
+                        <tr data-inicio="2026-11-07T09:00" data-minutos="300"><th scope="row" class="text-left font-semibold px-4 py-2">Ronda 9</th><td class="px-4 py-2">Sábado 7 de noviembre</td><td class="px-4 py-2">9:00 a.m.</td></tr>
+                        <tr data-inicio="2026-11-07T17:00" data-minutos="120"><th scope="row" class="text-left font-semibold px-4 py-2">Clausura</th><td class="px-4 py-2">Sábado 7 de noviembre</td><td class="px-4 py-2">5:00 p.m.</td></tr>
+                        <tr data-inicio="2026-11-08T11:00" data-minutos="60"><th scope="row" class="text-left font-semibold px-4 py-2">Salida</th><td class="px-4 py-2">Domingo 8 de noviembre</td><td class="px-4 py-2">11:00 a.m.</td></tr>
                     </tbody>
                 </table>
+            </div>
+        </div>
+    </dialog>
+
+    <!-- El medallero: los tres primeros de cada categoría (el grupo «Gr» de
+         chess-results) y las medallas de cada federación. Lo arma
+         js/centroamericano-vivo.js; provisional hasta la última ronda. -->
+    <dialog id="medallero" class="ficha-dialogo w-[calc(100%-1rem)] sm:w-[calc(100%-2rem)] max-w-5xl max-h-[90vh] rounded-2xl shadow-2xl p-0 bg-brand-50 dark:bg-brand-950 text-brand-800 dark:text-brand-100 backdrop:bg-black/60" aria-labelledby="medallero-titulo">
+        <div class="sticky top-0 z-10 flex items-center gap-3 px-4 sm:px-6 py-3 bg-white dark:bg-brand-900 border-b border-brand-100 dark:border-brand-800">
+            <h2 id="medallero-titulo" class="font-serif text-xl md:text-2xl font-bold text-brand-800 dark:text-white flex-1 min-w-0"><span aria-hidden="true">🥇 </span>Medallero</h2>
+            <button type="button" data-cerrar class="shrink-0 bg-brand-800 hover:bg-brand-700 text-white font-semibold text-sm px-4 py-2 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2">Cerrar</button>
+        </div>
+        <div class="px-4 sm:px-6 pt-2 pb-6">
+            <p class="text-brand-600 dark:text-brand-300 mt-2">Los tres primeros de cada categoría y las medallas de cada federación, según la clasificación de chess-results.</p>
+            <div id="medallero-contenido" class="mt-4" data-no-traducir>
+                <p class="text-brand-600 dark:text-brand-300">Cargando…</p>
             </div>
         </div>
     </dialog>
@@ -326,6 +378,7 @@
                 <p class="font-bold text-brand-800 dark:text-white">La reserva se hace con la organización, no con el hotel.</p>
                 <p class="mt-1 text-brand-600 dark:text-brand-300">Según las bases, una reserva directa con el hotel no cuenta como hotel oficial y paga una penalidad de 200 USD por persona. Los teléfonos de abajo sirven para preguntar por el hotel o llegar; para reservar, escribe a <a href="mailto:torneos_internacionales_costarica@fcacostarica.com" class="text-accent-700 dark:text-accent-400 font-semibold underline underline-offset-2 hover:no-underline break-all">torneos_internacionales_costarica@fcacostarica.com</a>.</p>
                 <p class="mt-2 text-brand-600 dark:text-brand-300">El paquete incluye 7 noches, del 1 de noviembre (entrada a las 3:00 p.m.) al 8 de noviembre (salida a las 11:00 a.m. o a las 12:00 m.d.), y la alimentación desde la cena del 1 hasta el desayuno del 8. El desayuno se sirve en cada hotel; los almuerzos y las cenas, en el Gimnasio Nacional. Hay traslado hotel-sala-hotel desde los hoteles más lejanos, a unos 4 km.</p>
+                <p class="mt-2 text-brand-600 dark:text-brand-300">«Ruta a la sala» abre en Google Maps el camino de cada hotel al Gimnasio Nacional. Si ya estás en el hotel, también puedes <a href="https://waze.com/ul?q=Gimnasio%20Nacional%20La%20Sabana%20San%20Jos%C3%A9&amp;navigate=yes" target="_blank" rel="noopener" class="text-accent-700 dark:text-accent-400 font-semibold underline underline-offset-2 hover:no-underline">abrir la ruta en Waze<span class="sr-only"> (se abre en otra pestaña)</span></a>.</p>
             </div>
 
             <div class="mt-6 overflow-x-auto rounded-2xl border border-brand-100 dark:border-brand-800 bg-white dark:bg-brand-900">
@@ -356,37 +409,37 @@
                     <h3 class="font-bold text-lg text-brand-800 dark:text-white">Costa Rica Tennis Club</h3>
                     <p class="mt-2 text-sm text-brand-600 dark:text-brand-300"><span class="font-semibold">Dirección:</span> Sabana Sur, San José.</p>
                     <p class="mt-1 text-sm text-brand-600 dark:text-brand-300"><span class="font-semibold">Teléfono:</span> <a href="tel:+50622321266" class="text-accent-700 dark:text-accent-400 font-semibold underline underline-offset-2 hover:no-underline">+506 2232-1266</a></p>
-                    <a href="https://www.google.com/maps/search/?api=1&amp;query=Costa+Rica+Tennis+Club+Hotel+Sabana+Sur+San+Jos%C3%A9" target="_blank" rel="noopener" class="mt-3 inline-block text-sm font-semibold text-accent-700 dark:text-accent-400 underline underline-offset-2 hover:no-underline">Ver en el mapa →</a>
+                    <p class="mt-3 flex flex-wrap gap-x-5 gap-y-2 text-sm font-semibold"><a href="https://www.google.com/maps/dir/?api=1&amp;origin=Costa+Rica+Tennis+Club+Hotel+Sabana+Sur+San+Jos%C3%A9&amp;destination=Gimnasio+Nacional+La+Sabana+San+Jos%C3%A9+Costa+Rica" target="_blank" rel="noopener" class="text-accent-700 dark:text-accent-400 underline underline-offset-2 hover:no-underline">Ruta a la sala →<span class="sr-only"> desde Costa Rica Tennis Club (se abre en otra pestaña)</span></a><a href="https://www.google.com/maps/search/?api=1&amp;query=Costa+Rica+Tennis+Club+Hotel+Sabana+Sur+San+Jos%C3%A9" target="_blank" rel="noopener" class="text-accent-700 dark:text-accent-400 underline underline-offset-2 hover:no-underline">Ver en el mapa →<span class="sr-only"> Costa Rica Tennis Club (se abre en otra pestaña)</span></a></p>
                 </li>
                 <li class="rounded-2xl bg-white dark:bg-brand-900 border border-brand-100 dark:border-brand-800 p-6">
                     <h3 class="font-bold text-lg text-brand-800 dark:text-white">KC Hotel</h3>
                     <p class="mt-2 text-sm text-brand-600 dark:text-brand-300"><span class="font-semibold">Dirección:</span> Sabana Sur, Calle Morenos, al oeste de la Contraloría General de la República, San José.</p>
                     <p class="mt-1 text-sm text-brand-600 dark:text-brand-300"><span class="font-semibold">Teléfono:</span> por confirmar.</p>
-                    <a href="https://www.google.com/maps/search/?api=1&amp;query=KC+Hotel+Sabana+Sur+San+Jos%C3%A9+Costa+Rica" target="_blank" rel="noopener" class="mt-3 inline-block text-sm font-semibold text-accent-700 dark:text-accent-400 underline underline-offset-2 hover:no-underline">Ver en el mapa →</a>
+                    <p class="mt-3 flex flex-wrap gap-x-5 gap-y-2 text-sm font-semibold"><a href="https://www.google.com/maps/dir/?api=1&amp;origin=KC+Hotel+Sabana+Sur+San+Jos%C3%A9+Costa+Rica&amp;destination=Gimnasio+Nacional+La+Sabana+San+Jos%C3%A9+Costa+Rica" target="_blank" rel="noopener" class="text-accent-700 dark:text-accent-400 underline underline-offset-2 hover:no-underline">Ruta a la sala →<span class="sr-only"> desde KC Hotel (se abre en otra pestaña)</span></a><a href="https://www.google.com/maps/search/?api=1&amp;query=KC+Hotel+Sabana+Sur+San+Jos%C3%A9+Costa+Rica" target="_blank" rel="noopener" class="text-accent-700 dark:text-accent-400 underline underline-offset-2 hover:no-underline">Ver en el mapa →<span class="sr-only"> KC Hotel (se abre en otra pestaña)</span></a></p>
                 </li>
                 <li class="rounded-2xl bg-white dark:bg-brand-900 border border-brand-100 dark:border-brand-800 p-6">
                     <h3 class="font-bold text-lg text-brand-800 dark:text-white">Irazú Hotel and Studios</h3>
                     <p class="mt-2 text-sm text-brand-600 dark:text-brand-300"><span class="font-semibold">Dirección:</span> Autopista General Cañas, km 3, La Uruca, San José.</p>
                     <p class="mt-1 text-sm text-brand-600 dark:text-brand-300"><span class="font-semibold">Teléfono:</span> por confirmar.</p>
-                    <a href="https://www.google.com/maps/search/?api=1&amp;query=Iraz%C3%BA+Hotel+and+Studios+San+Jos%C3%A9+Costa+Rica" target="_blank" rel="noopener" class="mt-3 inline-block text-sm font-semibold text-accent-700 dark:text-accent-400 underline underline-offset-2 hover:no-underline">Ver en el mapa →</a>
+                    <p class="mt-3 flex flex-wrap gap-x-5 gap-y-2 text-sm font-semibold"><a href="https://www.google.com/maps/dir/?api=1&amp;origin=Iraz%C3%BA+Hotel+and+Studios+San+Jos%C3%A9+Costa+Rica&amp;destination=Gimnasio+Nacional+La+Sabana+San+Jos%C3%A9+Costa+Rica" target="_blank" rel="noopener" class="text-accent-700 dark:text-accent-400 underline underline-offset-2 hover:no-underline">Ruta a la sala →<span class="sr-only"> desde Irazú Hotel and Studios (se abre en otra pestaña)</span></a><a href="https://www.google.com/maps/search/?api=1&amp;query=Iraz%C3%BA+Hotel+and+Studios+San+Jos%C3%A9+Costa+Rica" target="_blank" rel="noopener" class="text-accent-700 dark:text-accent-400 underline underline-offset-2 hover:no-underline">Ver en el mapa →<span class="sr-only"> Irazú Hotel and Studios (se abre en otra pestaña)</span></a></p>
                 </li>
                 <li class="rounded-2xl bg-white dark:bg-brand-900 border border-brand-100 dark:border-brand-800 p-6">
                     <h3 class="font-bold text-lg text-brand-800 dark:text-white">Holiday Inn San José La Sabana (Plaza Irazú)</h3>
                     <p class="mt-2 text-sm text-brand-600 dark:text-brand-300"><span class="font-semibold">Dirección:</span> Autopista General Cañas, km 3, Plaza Irazú, San José.</p>
                     <p class="mt-1 text-sm text-brand-600 dark:text-brand-300"><span class="font-semibold">Teléfono:</span> <a href="tel:+50621065100" class="text-accent-700 dark:text-accent-400 font-semibold underline underline-offset-2 hover:no-underline">+506 2106-5100</a></p>
-                    <a href="https://www.google.com/maps/search/?api=1&amp;query=Holiday+Inn+San+Jos%C3%A9+La+Sabana+Plaza+Iraz%C3%BA" target="_blank" rel="noopener" class="mt-3 inline-block text-sm font-semibold text-accent-700 dark:text-accent-400 underline underline-offset-2 hover:no-underline">Ver en el mapa →</a>
+                    <p class="mt-3 flex flex-wrap gap-x-5 gap-y-2 text-sm font-semibold"><a href="https://www.google.com/maps/dir/?api=1&amp;origin=Holiday+Inn+San+Jos%C3%A9+La+Sabana+Plaza+Iraz%C3%BA&amp;destination=Gimnasio+Nacional+La+Sabana+San+Jos%C3%A9+Costa+Rica" target="_blank" rel="noopener" class="text-accent-700 dark:text-accent-400 underline underline-offset-2 hover:no-underline">Ruta a la sala →<span class="sr-only"> desde Holiday Inn San José La Sabana (se abre en otra pestaña)</span></a><a href="https://www.google.com/maps/search/?api=1&amp;query=Holiday+Inn+San+Jos%C3%A9+La+Sabana+Plaza+Iraz%C3%BA" target="_blank" rel="noopener" class="text-accent-700 dark:text-accent-400 underline underline-offset-2 hover:no-underline">Ver en el mapa →<span class="sr-only"> Holiday Inn San José La Sabana (se abre en otra pestaña)</span></a></p>
                 </li>
                 <li class="rounded-2xl bg-white dark:bg-brand-900 border border-brand-100 dark:border-brand-800 p-6">
                     <h3 class="font-bold text-lg text-brand-800 dark:text-white">Hotel Parque del Lago</h3>
                     <p class="mt-2 text-sm text-brand-600 dark:text-brand-300"><span class="font-semibold">Dirección:</span> Paseo Colón, avenida 2, entre calles 40 y 42, al este del Parque La Sabana, San José.</p>
                     <p class="mt-1 text-sm text-brand-600 dark:text-brand-300"><span class="font-semibold">Teléfono:</span> por confirmar.</p>
-                    <a href="https://www.google.com/maps/search/?api=1&amp;query=Parque+del+Lago+Boutique+Hotel+San+Jos%C3%A9+Costa+Rica" target="_blank" rel="noopener" class="mt-3 inline-block text-sm font-semibold text-accent-700 dark:text-accent-400 underline underline-offset-2 hover:no-underline">Ver en el mapa →</a>
+                    <p class="mt-3 flex flex-wrap gap-x-5 gap-y-2 text-sm font-semibold"><a href="https://www.google.com/maps/dir/?api=1&amp;origin=Parque+del+Lago+Boutique+Hotel+San+Jos%C3%A9+Costa+Rica&amp;destination=Gimnasio+Nacional+La+Sabana+San+Jos%C3%A9+Costa+Rica" target="_blank" rel="noopener" class="text-accent-700 dark:text-accent-400 underline underline-offset-2 hover:no-underline">Ruta a la sala →<span class="sr-only"> desde Hotel Parque del Lago (se abre en otra pestaña)</span></a><a href="https://www.google.com/maps/search/?api=1&amp;query=Parque+del+Lago+Boutique+Hotel+San+Jos%C3%A9+Costa+Rica" target="_blank" rel="noopener" class="text-accent-700 dark:text-accent-400 underline underline-offset-2 hover:no-underline">Ver en el mapa →<span class="sr-only"> Hotel Parque del Lago (se abre en otra pestaña)</span></a></p>
                 </li>
                 <li class="rounded-2xl bg-white dark:bg-brand-900 border border-brand-100 dark:border-brand-800 p-6">
                     <h3 class="font-bold text-lg text-brand-800 dark:text-white">Rincón del Valle Hotel &amp; Suites</h3>
                     <p class="mt-2 text-sm text-brand-600 dark:text-brand-300"><span class="font-semibold">Dirección:</span> Sabana Sur, 50 m al este y 50 m al sur del Colegio de Médicos, San José.</p>
                     <p class="mt-1 text-sm text-brand-600 dark:text-brand-300"><span class="font-semibold">Teléfono:</span> <a href="tel:+50622961001" class="text-accent-700 dark:text-accent-400 font-semibold underline underline-offset-2 hover:no-underline">+506 2296-1001</a></p>
-                    <a href="https://www.google.com/maps/search/?api=1&amp;query=Rinc%C3%B3n+del+Valle+Hotel+Suites+Sabana+Sur+San+Jos%C3%A9" target="_blank" rel="noopener" class="mt-3 inline-block text-sm font-semibold text-accent-700 dark:text-accent-400 underline underline-offset-2 hover:no-underline">Ver en el mapa →</a>
+                    <p class="mt-3 flex flex-wrap gap-x-5 gap-y-2 text-sm font-semibold"><a href="https://www.google.com/maps/dir/?api=1&amp;origin=Rinc%C3%B3n+del+Valle+Hotel+Suites+Sabana+Sur+San+Jos%C3%A9&amp;destination=Gimnasio+Nacional+La+Sabana+San+Jos%C3%A9+Costa+Rica" target="_blank" rel="noopener" class="text-accent-700 dark:text-accent-400 underline underline-offset-2 hover:no-underline">Ruta a la sala →<span class="sr-only"> desde Rincón del Valle Hotel &amp; Suites (se abre en otra pestaña)</span></a><a href="https://www.google.com/maps/search/?api=1&amp;query=Rinc%C3%B3n+del+Valle+Hotel+Suites+Sabana+Sur+San+Jos%C3%A9" target="_blank" rel="noopener" class="text-accent-700 dark:text-accent-400 underline underline-offset-2 hover:no-underline">Ver en el mapa →<span class="sr-only"> Rincón del Valle Hotel &amp; Suites (se abre en otra pestaña)</span></a></p>
                 </li>
                 <li class="rounded-2xl bg-white dark:bg-brand-900 border border-brand-100 dark:border-brand-800 p-6">
                     <h3 class="font-bold text-lg text-brand-800 dark:text-white">Wyndham</h3>
@@ -402,12 +455,17 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="grid md:grid-cols-2 gap-8 mb-12">
                 <div><a href="index.html" class="flex items-center gap-2 text-white mb-4"><img src="/img/logo-marca.png" alt="" width="78" height="48" class="h-9 w-auto shrink-0"><span class="font-serif text-lg font-bold">Ajedrez Integral</span></a><p class="text-sm text-brand-300">Plataforma educativa de ajedrez para escuelas, colegios y familias. Aprende, practica y compite.</p></div>
-                <div><h3 class="text-white font-semibold mb-4">Centroamericano 2026</h3><ul class="space-y-2 text-sm"><li><a href="documentos/centroamericano-2026/bases-cac-2026.pdf" target="_blank" rel="noopener" data-ventana="Bases del campeonato" class="hover:text-accent-400 transition-colors">Bases</a></li><li><a href="#calendario" class="hover:text-accent-400 transition-colors">Calendario</a></li><li><a href="#hoteles" class="hover:text-accent-400 transition-colors">Hoteles</a></li></ul></div>
+                <div><h3 class="text-white font-semibold mb-4">Centroamericano 2026</h3><ul class="space-y-2 text-sm"><li><a href="documentos/centroamericano-2026/bases-cac-2026.pdf" target="_blank" rel="noopener" data-ventana="Bases del campeonato" class="hover:text-accent-400 transition-colors">Bases</a></li><li><a href="#calendario" class="hover:text-accent-400 transition-colors">Calendario</a></li><li><a href="#hoteles" class="hover:text-accent-400 transition-colors">Hoteles</a></li><li><a href="documentos/centroamericano-2026/cartel-centroamericano-2026.pdf" target="_blank" rel="noopener" class="hover:text-accent-400 transition-colors">Cartel con código QR para imprimir (PDF)</a></li></ul></div>
             </div>
             <div class="border-t border-brand-700 pt-6 text-center text-sm text-brand-300"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p><!-- legal: inicio --><p class="mt-2"><a href="privacidad.html" class="underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Política de privacidad</a> <span aria-hidden="true">·</span> <a href="terminos.html" class="underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Términos y condiciones</a></p><!-- legal: fin --></div>
         </div>
     </footer>
     <script src="js/main.js"></script>
     <script src="js/ventana-enlace.js"></script>
+    <script src="js/vendor/supabase.js"></script>
+    <script src="js/supabase-client.js"></script>
+    <script src="js/centroamericano-en.js"></script>
+    <script src="js/centroamericano.js"></script>
+    <script src="js/centroamericano-vivo.js"></script>
 </body>
 </html>

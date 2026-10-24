@@ -1,0 +1,211 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Ajedrez Integral//Centroamericano 2026//ES
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+X-WR-CALNAME:Centroamericano 2026
+X-WR-TIMEZONE:America/Costa_Rica
+BEGIN:VEVENT
+UID:cac2026-llegada-y-acreditacion-en-los-hoteles@ajedrez-integral.com
+DTSTAMP:20261024T000000Z
+DTSTART:20261101T210000Z
+DTEND:20261102T010000Z
+SUMMARY:Llegada y acreditación (en los hoteles) · Arrival and accreditati
+ on — Centroamericano 2026
+LOCATION:Hoteles oficiales\, San José
+URL:https://ajedrez-integral.com/centroamericano-2026.html
+END:VEVENT
+BEGIN:VEVENT
+UID:cac2026-congresillo@ajedrez-integral.com
+DTSTAMP:20261024T000000Z
+DTSTART:20261102T010000Z
+DTEND:20261102T030000Z
+SUMMARY:Congresillo · Technical meeting — Centroamericano 2026
+LOCATION:Virtual (con el enlace que envía la organización)
+URL:https://ajedrez-integral.com/centroamericano-2026.html
+END:VEVENT
+BEGIN:VEVENT
+UID:cac2026-inauguracion@ajedrez-integral.com
+DTSTAMP:20261024T000000Z
+DTSTART:20261102T150000Z
+DTEND:20261102T153000Z
+SUMMARY:Inauguración · Opening ceremony — Centroamericano 2026
+LOCATION:Gimnasio Nacional\, Parque Metropolitano La Sabana\, San José\, C
+ osta Rica
+URL:https://ajedrez-integral.com/centroamericano-2026.html
+END:VEVENT
+BEGIN:VEVENT
+UID:cac2026-ronda-1@ajedrez-integral.com
+DTSTAMP:20261024T000000Z
+DTSTART:20261102T153000Z
+DTEND:20261102T203000Z
+SUMMARY:Ronda 1 · Round 1 — Centroamericano 2026
+LOCATION:Gimnasio Nacional\, Parque Metropolitano La Sabana\, San José\, C
+ osta Rica
+URL:https://ajedrez-integral.com/centroamericano-2026.html
+BEGIN:VALARM
+TRIGGER:-PT30M
+ACTION:DISPLAY
+DESCRIPTION:Ronda 1 en 30 minutos
+END:VALARM
+END:VEVENT
+BEGIN:VEVENT
+UID:cac2026-ronda-2@ajedrez-integral.com
+DTSTAMP:20261024T000000Z
+DTSTART:20261102T213000Z
+DTEND:20261103T023000Z
+SUMMARY:Ronda 2 · Round 2 — Centroamericano 2026
+LOCATION:Gimnasio Nacional\, Parque Metropolitano La Sabana\, San José\, C
+ osta Rica
+URL:https://ajedrez-integral.com/centroamericano-2026.html
+BEGIN:VALARM
+TRIGGER:-PT30M
+ACTION:DISPLAY
+DESCRIPTION:Ronda 2 en 30 minutos
+END:VALARM
+END:VEVENT
+BEGIN:VEVENT
+UID:cac2026-ronda-3@ajedrez-integral.com
+DTSTAMP:20261024T000000Z
+DTSTART:20261103T150000Z
+DTEND:20261103T200000Z
+SUMMARY:Ronda 3 · Round 3 — Centroamericano 2026
+LOCATION:Gimnasio Nacional\, Parque Metropolitano La Sabana\, San José\, C
+ osta Rica
+URL:https://ajedrez-integral.com/centroamericano-2026.html
+BEGIN:VALARM
+TRIGGER:-PT30M
+ACTION:DISPLAY
+DESCRIPTION:Ronda 3 en 30 minutos
+END:VALARM
+END:VEVENT
+BEGIN:VEVENT
+UID:cac2026-torneo-rapid@ajedrez-integral.com
+DTSTAMP:20261024T000000Z
+DTSTART:20261103T210000Z
+DTEND:20261104T010000Z
+SUMMARY:Torneo Rapid · Rapid tournament — Centroamericano 2026
+LOCATION:Gimnasio Nacional\, Parque Metropolitano La Sabana\, San José\, C
+ osta Rica
+URL:https://ajedrez-integral.com/centroamericano-2026.html
+END:VEVENT
+BEGIN:VEVENT
+UID:cac2026-ronda-4@ajedrez-integral.com
+DTSTAMP:20261024T000000Z
+DTSTART:20261104T150000Z
+DTEND:20261104T200000Z
+SUMMARY:Ronda 4 · Round 4 — Centroamericano 2026
+LOCATION:Gimnasio Nacional\, Parque Metropolitano La Sabana\, San José\, C
+ osta Rica
+URL:https://ajedrez-integral.com/centroamericano-2026.html
+BEGIN:VALARM
+TRIGGER:-PT30M
+ACTION:DISPLAY
+DESCRIPTION:Ronda 4 en 30 minutos
+END:VALARM
+END:VEVENT
+BEGIN:VEVENT
+UID:cac2026-ronda-5@ajedrez-integral.com
+DTSTAMP:20261024T000000Z
+DTSTART:20261104T210000Z
+DTEND:20261105T020000Z
+SUMMARY:Ronda 5 · Round 5 — Centroamericano 2026
+LOCATION:Gimnasio Nacional\, Parque Metropolitano La Sabana\, San José\, C
+ osta Rica
+URL:https://ajedrez-integral.com/centroamericano-2026.html
+BEGIN:VALARM
+TRIGGER:-PT30M
+ACTION:DISPLAY
+DESCRIPTION:Ronda 5 en 30 minutos
+END:VALARM
+END:VEVENT
+BEGIN:VEVENT
+UID:cac2026-ronda-6@ajedrez-integral.com
+DTSTAMP:20261024T000000Z
+DTSTART:20261105T150000Z
+DTEND:20261105T200000Z
+SUMMARY:Ronda 6 · Round 6 — Centroamericano 2026
+LOCATION:Gimnasio Nacional\, Parque Metropolitano La Sabana\, San José\, C
+ osta Rica
+URL:https://ajedrez-integral.com/centroamericano-2026.html
+BEGIN:VALARM
+TRIGGER:-PT30M
+ACTION:DISPLAY
+DESCRIPTION:Ronda 6 en 30 minutos
+END:VALARM
+END:VEVENT
+BEGIN:VEVENT
+UID:cac2026-torneo-blitz@ajedrez-integral.com
+DTSTAMP:20261024T000000Z
+DTSTART:20261105T210000Z
+DTEND:20261106T010000Z
+SUMMARY:Torneo Blitz · Blitz tournament — Centroamericano 2026
+LOCATION:Gimnasio Nacional\, Parque Metropolitano La Sabana\, San José\, C
+ osta Rica
+URL:https://ajedrez-integral.com/centroamericano-2026.html
+END:VEVENT
+BEGIN:VEVENT
+UID:cac2026-ronda-7@ajedrez-integral.com
+DTSTAMP:20261024T000000Z
+DTSTART:20261106T150000Z
+DTEND:20261106T200000Z
+SUMMARY:Ronda 7 · Round 7 — Centroamericano 2026
+LOCATION:Gimnasio Nacional\, Parque Metropolitano La Sabana\, San José\, C
+ osta Rica
+URL:https://ajedrez-integral.com/centroamericano-2026.html
+BEGIN:VALARM
+TRIGGER:-PT30M
+ACTION:DISPLAY
+DESCRIPTION:Ronda 7 en 30 minutos
+END:VALARM
+END:VEVENT
+BEGIN:VEVENT
+UID:cac2026-ronda-8@ajedrez-integral.com
+DTSTAMP:20261024T000000Z
+DTSTART:20261106T210000Z
+DTEND:20261107T020000Z
+SUMMARY:Ronda 8 · Round 8 — Centroamericano 2026
+LOCATION:Gimnasio Nacional\, Parque Metropolitano La Sabana\, San José\, C
+ osta Rica
+URL:https://ajedrez-integral.com/centroamericano-2026.html
+BEGIN:VALARM
+TRIGGER:-PT30M
+ACTION:DISPLAY
+DESCRIPTION:Ronda 8 en 30 minutos
+END:VALARM
+END:VEVENT
+BEGIN:VEVENT
+UID:cac2026-ronda-9@ajedrez-integral.com
+DTSTAMP:20261024T000000Z
+DTSTART:20261107T150000Z
+DTEND:20261107T200000Z
+SUMMARY:Ronda 9 · Round 9 — Centroamericano 2026
+LOCATION:Gimnasio Nacional\, Parque Metropolitano La Sabana\, San José\, C
+ osta Rica
+URL:https://ajedrez-integral.com/centroamericano-2026.html
+BEGIN:VALARM
+TRIGGER:-PT30M
+ACTION:DISPLAY
+DESCRIPTION:Ronda 9 en 30 minutos
+END:VALARM
+END:VEVENT
+BEGIN:VEVENT
+UID:cac2026-clausura@ajedrez-integral.com
+DTSTAMP:20261024T000000Z
+DTSTART:20261107T230000Z
+DTEND:20261108T010000Z
+SUMMARY:Clausura · Closing ceremony — Centroamericano 2026
+LOCATION:Gimnasio Nacional\, Parque Metropolitano La Sabana\, San José\, C
+ osta Rica
+URL:https://ajedrez-integral.com/centroamericano-2026.html
+END:VEVENT
+BEGIN:VEVENT
+UID:cac2026-salida@ajedrez-integral.com
+DTSTAMP:20261024T000000Z
+DTSTART:20261108T170000Z
+DTEND:20261108T180000Z
+SUMMARY:Salida · Departure — Centroamericano 2026
+LOCATION:Hoteles oficiales\, San José
+URL:https://ajedrez-integral.com/centroamericano-2026.html
+END:VEVENT
+END:VCALENDAR

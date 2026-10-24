@@ -8563,6 +8563,77 @@ Es una página estática, sin cuenta y sin base: nada se guarda.
   cargan también `torneos-en-vivo.html` y `admin.html` (la vista previa del
   editor es la misma ficha). Contraste: blanco sobre #5A5FA3 5,83, #40478F
   sobre blanco 8,35 y blanco sobre el rojo 5,6.
+- **«Hoy en el torneo»**, entre quien organiza y las fichas, lo arma
+  `js/centroamericano.js` con las horas del calendario: cada fila de
+  `#calendario` lleva su `data-inicio` (hora de Costa Rica, que no tiene
+  horario de verano: siempre UTC−6) y `data-minutos` (lo que dura: una ronda,
+  5 horas). Antes del 1 de noviembre, la cuenta regresiva y cuándo es la
+  ronda 1 (`data-primera-ronda`); durante, lo que se juega ahora y lo que
+  sigue, o lo próximo con cuánto falta; después, el cierre. Una sola copia de
+  las horas: la tabla. Sin JavaScript queda un texto que es cierto siempre.
+- **Sin internet**: la sala se llena y la señal falla. La página se guarda
+  entera en la caché `ajedrez-integral-sin-red` (la de «Ejercicios sin
+  internet», que `sw.js` no borra al cambiar de versión): ella con y sin
+  `.html`, todo lo que cargó del sitio (scripts, hojas, imágenes, fuentes) y
+  el PDF de las bases. Se vuelve a guardar cada vez que se abre con señal, y
+  la franja de hoy lo dice («quedó guardada en este aparato»). Sin esto, la
+  primera visita no quedaba: el service worker todavía no controlaba la
+  página y su copia sale recién de la segunda.
+- **En inglés**, con el botón «English» del encabezado («EN» en el celular),
+  para las delegaciones del Caribe de habla inglesa. Los textos van en
+  `js/centroamericano-en.js`, cada uno con el suyo; los que quedan igual (un
+  nombre, un hotel) también van, para que el verificador avise de cualquier
+  texto nuevo sin traducir. Se cambian los nodos de texto y `alt`,
+  `aria-label`, `title` y `data-ventana`, también lo que se arma después (la
+  ventana de las bases), y al volver al español queda exactamente como
+  estaba. La elección se recuerda en el aparato y `?lang=en` manda. **Sin
+  elección va en español, aunque el navegador esté en inglés**: tomarlo del
+  navegador cambiaba la página a quien tiene el celular en inglés, y también
+  a los verificadores, que corren en un Chromium en inglés.
+- **Cómo llegar desde cada hotel**: cada uno con dirección trae «Ruta a la
+  sala» (Google Maps, del hotel al Gimnasio Nacional) junto a «Ver en el
+  mapa», y la nota de arriba ofrece Waze una sola vez (Waze no deja elegir el
+  origen: sale desde donde se está). El Wyndham no lleva ruta: su dirección
+  sigue por confirmar.
+- **Lo que se comparte lo genera `herramientas/centroamericano-imagenes.js`**
+  y no se edita a mano: `img/centroamericano-2026/compartir.jpg` (la imagen
+  de 1200 × 630 de WhatsApp, `og:image`) y
+  `documentos/centroamericano-2026/cartel-centroamericano-2026.pdf` (tamaño
+  carta, con el QR a la página, la línea en inglés y la marca de agua de
+  Ajedrez Integral; está en `LIBROS` de `verificar-marca-agua.js`). El QR sale
+  de la misma librería del sitio (`js/vendor/qrcode.js`) y se comprobó
+  leyéndolo con jsQR. La imagen usa el pizote de la portada y no el del
+  trofeo: ese mide 124 px en las bases (no hay uno más grande) y salía
+  borroso.
+- **Busca a tu jugador y el medallero**: arriba de las fichas, un buscador
+  (nombre o apellido, sin tildes y en cualquier orden) que dice de cada
+  jugador su categoría, su puesto en ella, sus puntos y su mesa, color y rival
+  en la ronda emparejada más reciente, o si tiene bye; y la ventana
+  `#medallero`, con los tres primeros de cada categoría y las medallas de cada
+  federación (provisional hasta la última ronda). Lo arma
+  `js/centroamericano-vivo.js` con la Edge Function **`sala-jugadores`**, que
+  lee chess-results del lado del servidor (no manda CORS). **No es un proxy
+  abierto**: recibe la clave de la sala de Torneos (`centroamericano-2026`) y
+  lee solo los torneos de chess-results que esa sala tiene entre sus
+  enlaces, que se editan en `admin.html#torneos` (si la organización parte el
+  torneo en uno por categoría, basta con sumar los enlaces), y de cada uno
+  dos páginas fijas: la clasificación (`art=1`, con el «Gr» de cada jugador,
+  que es su categoría) y la ronda emparejada (`art=2`). Lo leído se guarda 90
+  segundos en `pizarras_cache`, como la pizarra de la sala de cine. El formato
+  de las dos páginas se comprobó con las reales, pedidas desde la base con
+  `pg_net`: la lista del Centroamericano (436 jugadores, ronda 0) y la ronda
+  1 del UTN-CONARE 2026, con su bye. Los datos se piden la primera vez que
+  alguien busca o abre el medallero, no a cada visita, y lo último que llegó
+  queda en el aparato: sin señal se muestra eso, con la hora en que se leyó.
+- **Agregar a mi calendario**:
+  `documentos/centroamericano-2026/calendario-centroamericano-2026.ics`, con
+  cada actividad de la tabla (en UTC, que cualquier calendario muestra en su
+  zona), un aviso 30 minutos antes de cada ronda, el nombre en los dos
+  idiomas, la llegada y la salida en los hoteles y el congresillo como
+  virtual. Lo genera `herramientas/centroamericano-imagenes.js` a partir de la
+  tabla, y el verificador compara hora por hora. Es un archivo y no algo que
+  arme el navegador porque el celular (también el iPhone) abre un `.ics` con
+  su calendario.
 - **Las bases las sirve el propio sitio**, tal cual las publicó la FCA, en
   `documentos/centroamericano-2026/bases-cac-2026.pdf` (como la normativa de
   los JDE en `documentos/jde/`). Es un documento oficial ajeno: **no lleva la
