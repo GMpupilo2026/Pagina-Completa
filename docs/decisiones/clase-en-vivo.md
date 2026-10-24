@@ -634,6 +634,56 @@ clase-mostrar`.** Está probado que falla de verdad: sin ordenar los intentos,
 mandando siempre el nombre o sin poner al día el intento en curso de la
 ventana, salta.
 
+### Practicar: perder una ventaja de más de 3 resta 350 puntos
+
+«Cada ejercicio de práctica que se coloque en la clase y que tengan ventaja de
+más de 3 puntos y la pierdan, bajarles 350 puntos de clase.» Un ejercicio
+ganado que se tira es justo lo que la práctica quiere corregir.
+
+- **La ventaja es la del motor**, la evaluación que ya se guardaba en cada
+  jugada para la barra del profe (`practice_games.eval_cp`, en centipeones
+  desde las blancas; un mate, ±100000). Más de 3 es **más de 300 desde el
+  lado del alumno**. No es el material: con un caballo de más y el rey
+  colgado no hay ventaja que perder.
+- **La mayor ventaja del intento la lleva la base** (migración
+  `practica_ventaja_perdida`): el trigger `practica_ventaja_maxima` (BEFORE
+  INSERT OR UPDATE, después de `practica_ayuda_proteger` por el orden
+  alfabético) se queda con la mayor de cada `eval_cp` que llega en
+  `ventaja_max_cp`; lo que mande el navegador en esa columna se pisa. Al
+  reintentar vuelve a empezar, y `practica_guardar_intento` la copia con el
+  intento que termina a `practice_intentos`.
+- **La posición de salida también se evalúa** (`evaluarPosicionDeSalida()`,
+  al abrir la práctica y al reintentar): antes la primera evaluación llegaba
+  después de la primera jugada, y quien tiraba la ventaja ahí no la había
+  tenido nunca.
+- **«La pierdan» es terminar el intento sin ganar**: tablas, mate en contra,
+  rendirse o quedarse sin tiempo. Si el profe cierra la ronda con la partida
+  en juego, no cuenta: la ventaja no se perdió.
+- **Una vez por ejercicio**: perderla en dos intentos de la misma ronda son
+  350, no 700. No se guarda la resta: la calculan `ventajas_perdidas(p_clase)`
+  y `ventajas_perdidas_del_mes(p_profesor)` (SECURITY INVOKER, con el filtro de
+  quién ve qué de los puntos de Habilidades), y la página la suma como una
+  regla más de `js/puntos-clase.js` (`REGLAS`, −350), con su signo en el
+  desglose («−700») y en la regla escrita («resta 350 puntos»). Quien queda en
+  negativo sigue en el podio con su puesto.
+- **Como lo demás de `REGLAS`, no entra en Puntos Ajedrez** al cerrar la clase
+  (ver «Qué fuentes de puntos se decidió cubrir» en `puntos-y-premios.md`):
+  las prácticas ganadas tampoco suman ahí, y restar solo lo malo sería injusto.
+- **El alumno lo ve escrito en su tarjeta** (`#practice-ventaja-aviso`):
+  mientras juega con más de 3, «si no ganas, se te restan 350 puntos»; si no
+  ganó, que se le restan.
+- La evaluación la calcula el navegador del alumno, como el resultado de la
+  partida: es la confianza que ya tenía toda la práctica contra el motor.
+
+Comprobado impersonando a una alumna en un bloque que se deshace solo:
+escribirse `ventaja_max_cp` no cambia nada; con +4,5 y después −0,2 queda en
+450; jugando no resta, en tablas sí (1); al reintentar vuelve a null y el
+intento guardado se lleva sus 450; perderla otra vez en la misma ronda sigue
+siendo 1.
+
+**Al tocar esto, correr `node herramientas/verificar-todo.js practica-ventaja`.**
+Está probado que falla de verdad: con otra resta que no sea 350, salta.
+
 ### Antes y después de la clase: el plan marcado, la tarea de repaso y «Tu última clase»
 
 La clase empezaba en «Mi plan» y terminaba en «Cerrar la clase», pero ninguno
@@ -1593,6 +1643,8 @@ valía 2 y cada contestada 1, fuera un mate en 1 o un mate en 3.
   - Lo demás, en la misma escala (una pregunta media son 25): turno de palabra
     bien 20, casi 10; práctica ganada al motor 30, tablas 15; partida ganada a
     un compañero 30, tablas 15.
+  - Y una resta: perder en una práctica una ventaja de más de 3, −350 (ver
+    «Practicar: perder una ventaja de más de 3 resta 350 puntos»).
 - **La dificultad va en la pregunta** (`questions.dificultad`, de 400 a 3000,
   CHECK): el rating del ejercicio de Táctica, de la ronda rápida, de
   Habilidades (o el de su nivel) y de cada entrenamiento (Mates: el de su
