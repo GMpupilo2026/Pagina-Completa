@@ -10,6 +10,12 @@
  *       Integral (herramientas/lib/marca-agua.js), como todo documento que sale
  *       del sitio.
  *
+ *   documentos/centroamericano-2026/calendario-centroamericano-2026.ics
+ *       «Agregar a mi calendario»: cada actividad del calendario de la página
+ *       (las filas con data-inicio de #calendario, en hora de Costa Rica), con
+ *       un aviso 30 minutos antes de cada ronda. Sale de la tabla: una sola
+ *       copia de las horas.
+ *
  * No se editan a mano: se vuelven a generar con este script. Las fechas, la
  * sede y el ritmo salen de las bases, igual que en la página.
  *
@@ -26,6 +32,60 @@ const URL_CORTA = "ajedrez-integral.com/centroamericano-2026";
 const IMAGEN = path.join(RAIZ, "img/centroamericano-2026/compartir.jpg");
 const CARTEL = path.join(RAIZ, "documentos/centroamericano-2026/cartel-centroamericano-2026.pdf");
 const MARCA = require("./lib/marca-agua").MARCA_AGUA;
+const ICS = path.join(RAIZ, "documentos/centroamericano-2026/calendario-centroamericano-2026.ics");
+const PAGINA = path.join(RAIZ, "centroamericano-2026.html");
+
+/* El calendario: una fila de la tabla, un evento. Las horas van en UTC (Costa
+   Rica es siempre UTC−6, sin horario de verano), así cualquier calendario las
+   muestra bien en la zona de quien lo abre. */
+function calendarioIcs() {
+  const html = fs.readFileSync(PAGINA, "utf8");
+  const filas = [...html.matchAll(/<tr data-inicio="(\d{4}-\d{2}-\d{2}T\d{2}:\d{2})" data-minutos="(\d+)"[^>]*><th[^>]*>([^<]+)<\/th>/g)];
+  if (filas.length < 10) throw new Error("el calendario de la página no trae sus horas");
+  const utc = (d) => d.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
+  const ingles = { "Llegada y acreditación (en los hoteles)": "Arrival and accreditation", "Congresillo": "Technical meeting",
+    "Inauguración": "Opening ceremony", "Torneo Rapid": "Rapid tournament", "Torneo Blitz": "Blitz tournament",
+    "Clausura": "Closing ceremony", "Salida": "Departure" };
+  const linea = (s) => s.replace(/([,;\\])/g, "\\$1");
+  const eventos = filas.map(([, inicio, minutos, nombre]) => {
+    nombre = nombre.replace(/&amp;/g, "&").trim();
+    const desde = new Date(inicio + ":00-06:00");
+    const hasta = new Date(desde.getTime() + Number(minutos) * 60000);
+    const en = /^Ronda (\d+)$/.test(nombre) ? nombre.replace("Ronda", "Round") : ingles[nombre];
+    // La llegada y la salida son en los hoteles; el congresillo (la reunión
+    // técnica) es virtual, con el enlace que manda la organización.
+    const lugar = /hoteles|^Salida$/.test(nombre) ? "Hoteles oficiales, San José"
+      : /^Congresillo$/.test(nombre) ? "Virtual (con el enlace que envía la organización)"
+      : "Gimnasio Nacional, Parque Metropolitano La Sabana, San José, Costa Rica";
+    const uid = "cac2026-" + nombre.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") + "@ajedrez-integral.com";
+    return [
+      "BEGIN:VEVENT",
+      "UID:" + uid,
+      "DTSTAMP:20261024T000000Z",
+      "DTSTART:" + utc(desde),
+      "DTEND:" + utc(hasta),
+      "SUMMARY:" + linea(nombre + (en ? " · " + en : "") + " — Centroamericano 2026"),
+      "LOCATION:" + linea(lugar),
+      "URL:" + URL_PAGINA,
+      ...(/^Ronda/.test(nombre) ? ["BEGIN:VALARM", "TRIGGER:-PT30M", "ACTION:DISPLAY", "DESCRIPTION:" + linea(nombre + " en 30 minutos"), "END:VALARM"] : []),
+      "END:VEVENT",
+    ].join("\r\n");
+  });
+  // Una línea de más de 75 bytes se parte, con un espacio al empezar la que sigue (RFC 5545).
+  const plegar = (l) => {
+    const partes = [];
+    let actual = "";
+    for (const c of l) {
+      if (Buffer.byteLength(actual + c) > (partes.length ? 74 : 75)) { partes.push(actual); actual = ""; }
+      actual += c;
+    }
+    partes.push(actual);
+    return partes.join("\r\n ");
+  };
+  return ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Ajedrez Integral//Centroamericano 2026//ES", "CALSCALE:GREGORIAN", "METHOD:PUBLISH",
+    "X-WR-CALNAME:Centroamericano 2026", "X-WR-TIMEZONE:America/Costa_Rica", ...eventos, "END:VCALENDAR"]
+    .join("\r\n").split("\r\n").map(plegar).join("\r\n") + "\r\n";
+}
 
 const archivo = (rel) => "file://" + path.join(RAIZ, rel);
 const FUENTES = `
@@ -151,6 +211,8 @@ function qrSvg(texto) {
 }
 
 (async () => {
+  fs.writeFileSync(ICS, calendarioIcs());
+  console.log("✓", path.relative(RAIZ, ICS));
   const navegador = await chromium.launch(process.env.CHROMIUM ? { executablePath: process.env.CHROMIUM } : {});
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "cac-"));
   try {

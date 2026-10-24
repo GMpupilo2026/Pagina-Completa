@@ -13,6 +13,7 @@ window.CentroamericanoEN = {
   franja: {
     calendario: "See the full schedule →",
     sinRed: "This page is saved on this device: you can open it even if there is no internet at the venue.",
+    ics: "Add to my calendar",
   },
   textos: {
     // El encabezado
@@ -91,6 +92,17 @@ window.CentroamericanoEN = {
     "¡Nos vemos en La Sabana!": "See you at La Sabana!",
     "¿Te quedó alguna duda? Aquí están los teléfonos y el correo de la organización.": "Any questions? Here are the phone numbers and the email of the organizers.",
     "Ver los contactos →": "See the contacts →",
+
+    // Busca a tu jugador y el medallero (lo que llega de chess-results lo pinta js/centroamericano-vivo.js)
+    "Busca a tu jugador": "Find your player",
+    "Escribe su nombre o su apellido: te decimos su mesa y su rival en la ronda de hoy, su categoría y cómo va.": "Type their first or last name: we'll tell you their board and opponent in today's round, their section and how they are doing.",
+    "Por ejemplo: Mayorga": "For example: Mayorga",
+    "Ver el medallero →": "See the medal table →",
+    "Medallero": "Medal table",
+    "Los tres primeros de cada categoría y las medallas de cada federación, según la clasificación de chess-results.": "The top three of every section and the medals of every federation, from the chess-results standings.",
+    "Cargando…": "Loading…",
+    "Agregar a mi calendario": "Add to my calendar",
+    "Las rondas, el Rapid, el Blitz y las ceremonias, con un aviso 30 minutos antes de cada ronda.": "The rounds, the Rapid, the Blitz and the ceremonies, with a reminder 30 minutes before every round.",
 
     // Las ventanas: lo común
     "Cerrar": "Close",

@@ -26,7 +26,7 @@
   const CACHE = "ajedrez-integral-sin-red";
   const CLAVE_IDIOMA = "cac_idioma_v1";
   const EN = (window.CentroamericanoEN && window.CentroamericanoEN.textos) || {};
-  const ATRIBUTOS = ["alt", "aria-label", "title", "data-ventana"];
+  const ATRIBUTOS = ["alt", "aria-label", "title", "data-ventana", "placeholder"];
   const $ = (id) => document.getElementById(id);
 
   let idioma = "es";
@@ -106,6 +106,8 @@
     }
     document.documentElement.lang = idioma;
     document.title = TITULO[idioma];
+    // Lo que se arma con datos (js/centroamericano-vivo.js) se vuelve a pintar en el idioma nuevo.
+    document.dispatchEvent(new CustomEvent("cac-idioma", { detail: idioma }));
     const boton = $("cac-idioma");
     if (boton) {
       // El botón dice el OTRO idioma, en ese idioma: «English» o «Español»
@@ -236,6 +238,7 @@
     if (fijo) {
       $("hoy-calendario").textContent = idioma === "en" ? fijo.calendario : "Ver el calendario completo →";
       $("hoy-sin-red-texto").textContent = idioma === "en" ? fijo.sinRed : "Esta página quedó guardada en este aparato: la puedes abrir aunque no haya internet en la sala.";
+      $("hoy-ics-texto").textContent = idioma === "en" ? fijo.ics : "Agregar a mi calendario";
     }
   }
 

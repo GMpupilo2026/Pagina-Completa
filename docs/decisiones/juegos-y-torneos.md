@@ -8605,6 +8605,35 @@ Es una página estática, sin cuenta y sin base: nada se guarda.
   leyéndolo con jsQR. La imagen usa el pizote de la portada y no el del
   trofeo: ese mide 124 px en las bases (no hay uno más grande) y salía
   borroso.
+- **Busca a tu jugador y el medallero**: arriba de las fichas, un buscador
+  (nombre o apellido, sin tildes y en cualquier orden) que dice de cada
+  jugador su categoría, su puesto en ella, sus puntos y su mesa, color y rival
+  en la ronda emparejada más reciente, o si tiene bye; y la ventana
+  `#medallero`, con los tres primeros de cada categoría y las medallas de cada
+  federación (provisional hasta la última ronda). Lo arma
+  `js/centroamericano-vivo.js` con la Edge Function **`sala-jugadores`**, que
+  lee chess-results del lado del servidor (no manda CORS). **No es un proxy
+  abierto**: recibe la clave de la sala de Torneos (`centroamericano-2026`) y
+  lee solo los torneos de chess-results que esa sala tiene entre sus
+  enlaces, que se editan en `admin.html#torneos` (si la organización parte el
+  torneo en uno por categoría, basta con sumar los enlaces), y de cada uno
+  dos páginas fijas: la clasificación (`art=1`, con el «Gr» de cada jugador,
+  que es su categoría) y la ronda emparejada (`art=2`). Lo leído se guarda 90
+  segundos en `pizarras_cache`, como la pizarra de la sala de cine. El formato
+  de las dos páginas se comprobó con las reales, pedidas desde la base con
+  `pg_net`: la lista del Centroamericano (436 jugadores, ronda 0) y la ronda
+  1 del UTN-CONARE 2026, con su bye. Los datos se piden la primera vez que
+  alguien busca o abre el medallero, no a cada visita, y lo último que llegó
+  queda en el aparato: sin señal se muestra eso, con la hora en que se leyó.
+- **Agregar a mi calendario**:
+  `documentos/centroamericano-2026/calendario-centroamericano-2026.ics`, con
+  cada actividad de la tabla (en UTC, que cualquier calendario muestra en su
+  zona), un aviso 30 minutos antes de cada ronda, el nombre en los dos
+  idiomas, la llegada y la salida en los hoteles y el congresillo como
+  virtual. Lo genera `herramientas/centroamericano-imagenes.js` a partir de la
+  tabla, y el verificador compara hora por hora. Es un archivo y no algo que
+  arme el navegador porque el celular (también el iPhone) abre un `.ics` con
+  su calendario.
 - **Las bases las sirve el propio sitio**, tal cual las publicó la FCA, en
   `documentos/centroamericano-2026/bases-cac-2026.pdf` (como la normativa de
   los JDE en `documentos/jde/`). Es un documento oficial ajeno: **no lleva la

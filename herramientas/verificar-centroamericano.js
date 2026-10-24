@@ -63,7 +63,7 @@ ok("ningún teléfono sin confirmar", tels.every((t) => TELEFONOS.includes(t)), 
 const contacto = (html.match(/<dialog id="contacto"[\s\S]*?<\/dialog>/) || [""])[0];
 // Toda la información va en fichas: cada ventana de la página tiene su ficha y su «Cerrar».
 const dialogos = [...html.matchAll(/<dialog id="([a-z-]+)" class="ficha-dialogo[^"]*" aria-labelledby="\1-titulo">([\s\S]*?)<\/dialog>/g)];
-ok("el reglamento, el calendario, los hoteles y los contactos van en ventanas", JSON.stringify(dialogos.map((m) => m[1]).sort()) === JSON.stringify(["calendario", "contacto", "hoteles", "reglamento"]), dialogos.map((m) => m[1]).join(", "));
+ok("el reglamento, el calendario, los hoteles, los contactos y el medallero van en ventanas", JSON.stringify(dialogos.map((m) => m[1]).sort()) === JSON.stringify(["calendario", "contacto", "hoteles", "medallero", "reglamento"]), dialogos.map((m) => m[1]).join(", "));
 for (const [, id, cuerpo] of dialogos) {
   ok("la ventana «" + id + "» tiene su ficha", fichas.includes('href="#' + id + '"'));
   ok("y su título y su botón «Cerrar»", cuerpo.includes('id="' + id + '-titulo"') && /data-cerrar[^>]*>Cerrar</.test(cuerpo));
@@ -132,6 +132,20 @@ const rutas = [...hotelesHtml.matchAll(/href="https:\/\/www\.google\.com\/maps\/
 ok("los seis hoteles con dirección traen su ruta a la sala", rutas === 6, rutas + " rutas");
 ok("y la ruta en Waze, una vez", /href="https:\/\/waze\.com\/ul\?q=Gimnasio%20Nacional[^"]*navigate=yes"/.test(hotelesHtml));
 ok("la página carga su traducción y su código, en ese orden", html.indexOf('<script src="js/centroamericano-en.js"></script>') > 0 && html.indexOf('<script src="js/centroamericano-en.js"></script>') < html.indexOf('<script src="js/centroamericano.js"></script>'));
+
+
+// «Agregar a mi calendario»: el .ics sale de la tabla, con las mismas horas.
+const ICS = "documentos/centroamericano-2026/calendario-centroamericano-2026.ics";
+const ics = fs.existsSync(path.join(RAIZ, ICS)) ? fs.readFileSync(path.join(RAIZ, ICS), "utf8") : "";
+const comienzos = [...ics.matchAll(/^DTSTART:(\d{8}T\d{6}Z)/gm)].map((m) => m[1]);
+const esperados = horas.map((h) => new Date(h + ":00-06:00").toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, ""));
+ok("el calendario .ics trae cada actividad a su hora (en UTC)", comienzos.length === 16 && JSON.stringify(comienzos) === JSON.stringify(esperados), comienzos.join(" "));
+ok("con un aviso 30 minutos antes de cada una de las 9 rondas", (ics.match(/TRIGGER:-PT30M/g) || []).length === 9);
+ok("con sus líneas partidas como pide el formato (75 bytes)", ics.length > 0 && ics.split("\r\n").every((l) => Buffer.byteLength(l) <= 75) && !/[^\r]\n/.test(ics));
+ok("y la página lo ofrece en la franja de hoy y en el calendario", (html.match(new RegExp('href="' + ICS + '" download', "g")) || []).length === 2);
+// «Busca a tu jugador» y el medallero, por la Edge Function sala-jugadores.
+ok("la función sala-jugadores está guardada en supabase/functions", fs.existsSync(path.join(RAIZ, "supabase/functions/sala-jugadores/index.ts")));
+ok("la página carga el cliente de Supabase antes que su código en vivo", html.indexOf('<script src="js/supabase-client.js"></script>') > 0 && html.indexOf('<script src="js/supabase-client.js"></script>') < html.indexOf('<script src="js/centroamericano-vivo.js"></script>'));
 
 (async () => {
   console.log("2. La página en un navegador");
@@ -273,6 +287,64 @@ ok("la página carga su traducción y su código, en ese orden", html.indexOf('<
     await p4.click("#cac-idioma");
     ok("y al volver al español queda exactamente como estaba", (await p4.evaluate(() => document.body.innerText)) === textoEs && await p4.evaluate(() => document.documentElement.lang === "es"));
     await ctx4.close();
+
+    // «Busca a tu jugador» y el medallero, con un doble de la función (datos con la forma de sala-jugadores).
+    const DATOS = { torneos: [{ tnr: "1494141", url: "x", leido_en: "2026-11-03T16:05:00Z", ronda: 3, rondas: 9,
+      jugadores: [
+        { puesto: 1, no: 2, titulo: "WIM", nombre: "Mayorga Araya, Sofia", fed: "CRC", elo: 2215, grupo: "U18", puntos: "3" },
+        { puesto: 2, no: 1, titulo: "FM", nombre: "Guevara Ruiz, Santiago Jose", fed: "ESA", elo: 2252, grupo: "U18", puntos: "2½" },
+        { puesto: 3, no: 3, titulo: "FM", nombre: "Ordonez Bonilla, Ricardo Andres", fed: "GUA", elo: 2145, grupo: "U18", puntos: "2" },
+        { puesto: 4, no: 4, titulo: "IM", nombre: "Castillo Beitia, Ashley Alexandra", fed: "PAN", elo: 2141, grupo: "U18F", puntos: "3" },
+        { puesto: 5, no: 24, titulo: "WFM", nombre: "Ferrer Naranjo, Liennys", fed: "CUB", elo: 1994, grupo: "U18F", puntos: "2" },
+        { puesto: 6, no: 31, titulo: "WFM", nombre: "Wilson, Hannah", fed: "BAR", elo: 1920, grupo: "U18F", puntos: "1½" },
+        { puesto: 7, no: 50, titulo: "", nombre: "Muñoz Solís, José", fed: "CRC", elo: 0, grupo: "U08", puntos: "2" },
+      ],
+      pareo: { ronda: 4, mesas: [
+        { mesa: 1, blancas: { no: 2, titulo: "WIM", nombre: "Mayorga Araya, Sofia" }, negras: { no: 1, titulo: "FM", nombre: "Guevara Ruiz, Santiago Jose" }, resultado: "" },
+        { mesa: 7, blancas: { no: 31, titulo: "WFM", nombre: "Wilson, Hannah" }, negras: { no: 4, titulo: "IM", nombre: "Castillo Beitia, Ashley Alexandra" }, resultado: "0 - 1" },
+        { mesa: 40, blancas: { no: 50, titulo: "", nombre: "Muñoz Solís, José" }, negras: null, resultado: "bye" },
+      ] } }] };
+    const ctx6 = await nav.newContext({ viewport: { width: 1280, height: 900 }, serviceWorkers: "block" });
+    await ctx6.addInitScript((d) => {
+      window.__pedidos = [];
+      window.__falla = localStorage.getItem("__falla") === "1";
+      window.sb = { functions: { invoke: async (nombre, op) => { window.__pedidos.push([nombre, op.body]); return window.__falla ? { data: null, error: new Error("sin red") } : { data: d, error: null }; } } };
+    }, DATOS);
+    const p6 = await ctx6.newPage();
+    await p6.goto(BASE + "/" + PAGINA, { waitUntil: "load" });
+    const buscar = async (q) => {
+      await p6.fill("#buscador-nombre", q);
+      await p6.waitForTimeout(450);
+      return p6.evaluate(() => ({ estado: document.getElementById("buscador-estado").textContent,
+        tarjetas: [...document.querySelectorAll("#buscador-resultados li")].map((l) => l.innerText.replace(/\s+/g, " ").trim()) }));
+    };
+    let r = await buscar("mayorga");
+    ok("buscar por el apellido da su mesa, su color y su rival", r.tarjetas.length === 1 && /Ronda 4 · Mesa 1 · Juega con blancas contra FM Guevara Ruiz, Santiago Jose \(ESA, 2252\)/.test(r.tarjetas[0]), JSON.stringify(r));
+    ok("y su categoría, su puesto en ella y sus puntos", /Sub-18 Absoluto · Elo 2215 · Puesto 1 de 3 en Sub-18 Absoluto · 3 puntos/.test(r.tarjetas[0]), r.tarjetas[0]);
+    ok("le pide a la función la sala del torneo, no una dirección", await p6.evaluate(() => JSON.stringify(window.__pedidos[0]) === JSON.stringify(["sala-jugadores", { clave: "centroamericano-2026" }])));
+    r = await buscar("munoz jose");
+    ok("sin tildes y en cualquier orden, y el bye se dice", r.tarjetas.length === 1 && /tiene bye/.test(r.tarjetas[0]), JSON.stringify(r));
+    r = await buscar("castillo");
+    ok("con el resultado si ya lo hay", /Juega con negras contra WFM Wilson, Hannah \(BAR, 1920\)/.test(r.tarjetas[0]) && /Resultado: 0 - 1/.test(r.tarjetas[0]), JSON.stringify(r));
+    r = await buscar("zzzz");
+    ok("y si no hay nadie, lo dice", !r.tarjetas.length && /No encontramos/.test(r.estado), r.estado);
+    await p6.click('a[href="#medallero"]');
+    await p6.waitForFunction(() => /Provisional/.test(document.getElementById("medallero-contenido").textContent));
+    const med = await p6.evaluate(() => ({ filas: [...document.querySelectorAll("#medallero-contenido tbody tr")].map((tr) => tr.innerText.replace(/\s+/g, " ").trim()),
+      podios: [...document.querySelectorAll("#medallero-contenido .cac-podio")].map((c) => c.innerText.replace(/\s+/g, " ").trim()) }));
+    ok("el medallero cuenta los tres primeros de cada categoría por federación", JSON.stringify(med.filas) === JSON.stringify(["CRC 2 0 0 2", "PAN 1 0 0 1", "CUB 0 1 0 1", "ESA 0 1 0 1", "BAR 0 0 1 1", "GUA 0 0 1 1"]), JSON.stringify(med.filas));
+    ok("y los podios van por categoría, de la menor a la mayor", med.podios.length === 3 && /^Sub-8 Absoluto/.test(med.podios[0]) && /^Sub-18 Femenino .*1\. IM Castillo/.test(med.podios[2]), JSON.stringify(med.podios));
+    await p6.keyboard.press("Escape");
+    await p6.click("#cac-idioma");
+    r = await buscar("mayorga");
+    ok("en inglés, el buscador también", /Round 4 · Board 1 · Plays white against/.test(r.tarjetas[0]) && /U18 Open · Rating 2215 · Place 1 of 3/.test(r.tarjetas[0]), JSON.stringify(r));
+    await p6.click("#cac-idioma");
+    // Sin señal: lo último que llegó, guardado en el aparato, con la hora en que se leyó.
+    await p6.evaluate(() => localStorage.setItem("__falla", "1"));
+    await p6.reload({ waitUntil: "load" });
+    r = await buscar("mayorga");
+    ok("sin señal, muestra lo último que llegó y lo dice", r.tarjetas.length === 1 && /Sin conexión/.test(r.estado), JSON.stringify(r));
+    await ctx6.close();
 
     // Sin internet: con el service worker de verdad, la segunda vez abre sin red.
     const ctx5 = await nav.newContext({ viewport: { width: 390, height: 800 } });
