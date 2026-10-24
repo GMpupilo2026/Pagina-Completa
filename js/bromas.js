@@ -264,11 +264,57 @@ window.Bromas = (function () {
     },
     pato_invasor: {
       aviso: (n) => n + " te mandó un pato invasor: ¡CUAC CUAC!", emoji: "🦆",
+      /* Cruza por encima del tablero (o por el medio de la pantalla si no
+         hay uno), creciendo y cambiando de color. En el centro del tablero se
+         para y hace su broma: lo sacude, pone un huevo y del huevo sale un
+         pollito. Después sigue, cada vez más grande. */
       pintar(e, n) {
-        const p = figura(e, "broma-grande broma-cruza-izq", null, { top: "22%", animationDuration: "10s" });
-        p.appendChild(el("span", "broma-saltito", "🦆"));
-        p.appendChild(el("span", "broma-cuac", "¡CUAC CUAC!"));
-        [600, 1100, 3600, 4100, 6600, 7100].forEach((ms) => sonarLuego(ms, [[520, 0.18]], "sawtooth"));
+        const t = tableroALaVista();
+        const zona = t ? t.rect : { left: innerWidth * 0.2, width: innerWidth * 0.6, top: innerHeight * 0.25, height: innerHeight * 0.5 };
+        const cx = zona.left + zona.width / 2;
+        const cy = zona.top + zona.height / 2;
+        const base = Math.max(56, Math.min(zona.width * 0.28, 150));
+        const p = figura(e, "broma-pato", null, { fontSize: base + "px" });
+        const cuerpo = el("span", "broma-saltito", "🦆");
+        const globo = el("span", "broma-cuac", "¡CUAC CUAC!");
+        // En proporción al pato (que crece), no a la pantalla.
+        Object.assign(globo.style, { fontSize: "0.2em", whiteSpace: "normal", width: "max-content", maxWidth: "7em", top: "-2em", left: "-0.2em", textAlign: "center" });
+        p.append(cuerpo, globo);
+        const paso = (x, escala, offset) => ({
+          transform: "translate(" + (x - base / 2) + "px, " + (cy - base / 2) + "px) scale(" + escala + ")", offset,
+        });
+        const DURA_PATO = 10500;
+        p.animate([paso(-base * 2, 0.5, 0), paso(cx, 1.3, 0.38), paso(cx, 1.6, 0.62), paso(innerWidth + base * 3, 2.6, 1)],
+          { duration: DURA_PATO, easing: "linear", fill: "forwards" });
+        // El color cambia en el pato, no en su globo (el texto del globo
+        // conserva su contraste medido).
+        cuerpo.style.display = "inline-block";
+        cuerpo.animate([0, 90, 180, 270, 360].map((g) => ({ filter: "hue-rotate(" + g + "deg) saturate(1.6)" })),
+          { duration: DURA_PATO, fill: "forwards" });
+
+        // La broma en el centro.
+        setTimeout(() => {
+          if (!p.isConnected) return;
+          globo.textContent = "¡CUAC! ¿Esa era tu jugada?";
+          cuerpo.animate([{ transform: "rotate(0)" }, { transform: "rotate(360deg)" }], { duration: 700 });
+          if (t && t.el) {
+            t.el.animate([{ transform: "translate(0,0)" }, { transform: "translate(-10px,6px) rotate(-1deg)" },
+              { transform: "translate(9px,-7px) rotate(1deg)" }, { transform: "translate(-6px,-4px)" }, { transform: "translate(0,0)" }],
+            { duration: 450, iterations: 3 });
+          }
+          const huevo = figura(e, "broma-huevo", "🥚", {
+            left: cx + "px", top: (cy + base * 0.35) + "px", fontSize: Math.round(base * 0.55) + "px",
+          });
+          huevo.animate([{ transform: "translate(-50%, -60%) scale(0.2)" }, { transform: "translate(-50%, 0) scale(1.1)" },
+            { transform: "translate(-50%, 0) rotate(-12deg)" }, { transform: "translate(-50%, 0) rotate(12deg)" },
+            { transform: "translate(-50%, 0) rotate(0)" }], { duration: 1400, fill: "forwards" });
+          setTimeout(() => { if (huevo.isConnected) huevo.textContent = "🐣"; sonar([[1400, 0.06], [1700, 0.08]], "sine"); }, 1600);
+        }, 4000);
+        setTimeout(() => { if (globo.isConnected) globo.textContent = "¡CUAC CUAC!"; }, 6600);
+
+        [400, 900, 2400, 2900].forEach((ms) => sonarLuego(ms, [[520, 0.18]], "sawtooth"));
+        [4000, 4300, 4600, 4900].forEach((ms) => sonarLuego(ms, [[420, 0.2]], "sawtooth"));
+        [7000, 7500, 9000, 9400].forEach((ms) => sonarLuego(ms, [[360, 0.22]], "sawtooth"));
         cartel(e, "Pato invasor, de parte de " + n);
       },
     },
@@ -346,6 +392,21 @@ window.Bromas = (function () {
       if (/^rey\b/i.test(nombre)) return null;
       return { casilla: c, pieza: p, rect: r, nombre };
     }).filter(Boolean);
+  }
+  // El tablero más grande que se ve ahora: el que tiene más casillas juntas.
+  function tableroALaVista() {
+    const padres = new Map();
+    document.querySelectorAll("[data-square]").forEach((c) => {
+      if (c.checkVisibility && c.checkVisibility()) padres.set(c.parentElement, (padres.get(c.parentElement) || 0) + 1);
+    });
+    let mejor = null;
+    padres.forEach((cuantas, padre) => {
+      if (cuantas < 16) return;
+      const r = padre.getBoundingClientRect();
+      if (r.bottom < 0 || r.top > innerHeight || r.width < 80) return;
+      if (!mejor || r.width * r.height > mejor.rect.width * mejor.rect.height) mejor = { el: padre, rect: r };
+    });
+    return mejor;
   }
   const firma = (p) => p ? p.className + "|" + p.innerHTML : "";
 
