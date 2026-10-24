@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20261024172944
+# al-dia-con: 20261024173717
 tabla  Ejercicios Lichess  rls=true
 tabla  _foto_rls_tmp  rls=false
 tabla  _pedidos_elo  rls=false
@@ -1747,6 +1747,7 @@ columna  sala_avisos_push_enviados.tnr  text
 columna  sala_suscripciones_push.actualizada  timestamp with time zone
 columna  sala_suscripciones_push.auth  text
 columna  sala_suscripciones_push.creada  timestamp with time zone
+columna  sala_suscripciones_push.delegacion  text
 columna  sala_suscripciones_push.endpoint  text
 columna  sala_suscripciones_push.id  uuid
 columna  sala_suscripciones_push.idioma  text

@@ -63,8 +63,8 @@ ok("ningún teléfono sin confirmar", tels.every((t) => TELEFONOS.includes(t)), 
 const contacto = (html.match(/<dialog id="contacto"[\s\S]*?<\/dialog>/) || [""])[0];
 // Toda la información va en fichas: cada ventana de la página tiene su ficha y su «Cerrar».
 const dialogos = [...html.matchAll(/<dialog id="([a-z-]+)" class="ficha-dialogo[^"]*" aria-labelledby="\1-titulo">([\s\S]*?)<\/dialog>/g)];
-ok("el reglamento, el calendario, los hoteles, los contactos, el medallero, la clasificación, los países y el proyector van en ventanas",
-  JSON.stringify(dialogos.map((m) => m[1]).sort()) === JSON.stringify(["calendario", "clasificacion", "contacto", "delegaciones", "hoteles", "medallero", "proyector", "reglamento"]), dialogos.map((m) => m[1]).join(", "));
+ok("el reglamento, el calendario, los hoteles, los contactos, el medallero, la clasificación, los países, las sorpresas y el proyector van en ventanas",
+  JSON.stringify(dialogos.map((m) => m[1]).sort()) === JSON.stringify(["calendario", "clasificacion", "contacto", "delegaciones", "hoteles", "medallero", "proyector", "reglamento", "sorpresas"]), dialogos.map((m) => m[1]).join(", "));
 for (const [, id, cuerpo] of dialogos) {
   ok("la ventana «" + id + "» tiene su ficha", fichas.includes('href="#' + id + '"'));
   ok("y su título y su botón «Cerrar»", cuerpo.includes('id="' + id + '-titulo"') && /data-cerrar[^>]*>Cerrar</.test(cuerpo));
@@ -232,7 +232,32 @@ ok("la página carga el cliente de Supabase antes que su código en vivo", html.
     ok("la del Desafío Mentes Maestras lleva el azul de CENFOTEC y su logo, sin el emoji", /gradient/.test(fichaSala.cft.fondo) && /35, 48, 101/.test(fichaSala.cft.fondo) && fichaSala.cft.logo && !fichaSala.cft.emoji, JSON.stringify(fichaSala.cft));
     ok("y sus botones: «Entrar a la sala» celeste con letra oscura, los enlaces blancos", JSON.stringify(fichaSala.cft.botones) === JSON.stringify([["Entrar a la sala", "rgb(35, 172, 244)", "rgb(20, 28, 64)"], ["Posiciones", "rgb(255, 255, 255)", "rgb(35, 48, 101)"]]), JSON.stringify(fichaSala.cft.botones));
     ok("las demás salas siguen con su ficha de siempre", fichaSala.otra.fondo === "none" && !fichaSala.otra.mascota, JSON.stringify(fichaSala.otra));
+    // Ningún botón de la ficha del torneo saca a nadie del sitio: la página
+    // en la misma pestaña, y los resultados y las bases, a su ficha de la página.
+    const destinos = await p3.evaluate(() => [...document.querySelectorAll('li[data-sala="centroamericano-2026"] a')]
+      .map((a) => a.getAttribute("href") + (a.target ? " target=" + a.target : "")));
+    ok("en Torneos, ningún botón del Centroamericano se va del sitio",
+       JSON.stringify(destinos) === JSON.stringify(["/" + PAGINA, "/" + PAGINA + "#ficha-resultados"]), JSON.stringify(destinos));
+    const otraSala = await p3.evaluate(() => [...document.querySelectorAll('li[data-sala="utn"] a')].map((a) => a.target));
+    ok("las otras salas: el sitio en la misma pestaña, lo de afuera en otra", JSON.stringify(otraSala) === JSON.stringify(["", "_blank"]), JSON.stringify(otraSala));
     await ctx3.close();
+    for (const [id, titulo, src] of [["ficha-resultados", "Resultados en vivo", /chess-results\.com\/tnr1494141/], ["ficha-bases", "Bases del campeonato", /bases-cac-2026\.pdf$/]]) {
+      const c = await nav.newContext({ viewport: { width: 1280, height: 900 }, serviceWorkers: "block" });
+      const pg = await c.newPage();
+      await pg.route(/chess-results\.com/, (r) => r.fulfill({ status: 200, contentType: "text/html", body: "<p>cr</p>" }));
+      await pg.goto(BASE + "/" + PAGINA + "#" + id, { waitUntil: "load" });
+      const v = await pg.waitForFunction(() => {
+        const d = document.querySelector("dialog.ventana-enlace");
+        return d && d.open && { titulo: d.querySelector("h2").textContent, src: d.querySelector("iframe").src };
+      }, null, { timeout: 10000 }).then((h) => h.jsonValue()).catch(() => null);
+      ok("entrar con #" + id + " abre «" + titulo + "» encima", !!v && v.titulo === titulo && src.test(v.src), JSON.stringify(v));
+      if (v) {
+        await pg.keyboard.press("Escape");
+        await pg.waitForFunction(() => !document.querySelector("dialog.ventana-enlace"));
+        ok("y al cerrar se quita el #" + id, await pg.evaluate(() => location.hash === ""));
+      }
+      await c.close();
+    }
 
     // «Hoy en el torneo», con el reloj puesto en cada momento del festival.
     const hoyEn = async (momento, idioma) => {
@@ -464,7 +489,7 @@ ok("la página carga el cliente de Supabase antes que su código en vivo", html.
 
     // La imagen para compartir: un PNG de 1080 × 1080 con la marca de agua.
     await p6.evaluate(() => { const m = window.TablaImagen.marcar; window.__marcas = 0; window.TablaImagen.marcar = (c) => { window.__marcas++; return m(c); }; });
-    const [descarga] = await Promise.all([p6.waitForEvent("download", { timeout: 15000 }), p6.click("#buscador-resultados .cac-jugador-boton:not([data-rondas])")]);
+    const [descarga] = await Promise.all([p6.waitForEvent("download", { timeout: 15000 }), p6.click('#buscador-resultados [data-accion="compartir"]')]);
     const png = fs.readFileSync(await descarga.path());
     const anchoPng = png.readUInt32BE(16), altoPng = png.readUInt32BE(20);
     ok("«Compartir» da una imagen de 1080 × 1080 con su nombre de archivo", png.slice(1, 4).toString() === "PNG" && anchoPng === 1080 && altoPng === 1080 && /^centroamericano-2026-mayorga-araya-sofia\.png$/.test(descarga.suggestedFilename()), anchoPng + "×" + altoPng + " " + descarga.suggestedFilename());
@@ -511,10 +536,81 @@ ok("la página carga el cliente de Supabase antes que su código en vivo", html.
     ok("en letra grande (más de 20 px en una pantalla de 1280)", pr.grande > 20, String(pr.grande));
     await p6.click("#proyector-siguiente");
     pr = await proy();
-    ok("«Siguiente» pasa a la otra categoría, con la mesa y los dos jugadores", pr.titulo === "Ronda 4 · Sub-18 Absoluto" && pr.filas[0] === "1|WIM Mayorga Araya, Sofia (CRC)|–|FM Guevara Ruiz, Santiago Jose (ESA)", JSON.stringify(pr));
+    ok("después del pareo de una categoría va su clasificación, con el rendimiento", pr.titulo === "Clasificación · Sub-8 Absoluto · tras la ronda 3" && JSON.stringify(pr.filas) === JSON.stringify(["1|Muñoz Solís, José (CRC)|2|1920"]), JSON.stringify(pr));
+    await p6.click("#proyector-siguiente");
+    pr = await proy();
+    ok("y luego la otra categoría, con la mesa y los dos jugadores", pr.titulo === "Ronda 4 · Sub-18 Absoluto" && pr.filas[0] === "1|WIM Mayorga Araya, Sofia (CRC)|–|FM Guevara Ruiz, Santiago Jose (ESA)", JSON.stringify(pr));
+    ok("el proyector dice cómo va la ronda y trae el QR a la página", await p6.evaluate(() => document.getElementById("proyector-progreso").textContent === "Ronda 4: 1 de 2 partidas terminadas."
+      && !!document.querySelector("#proyector-qr svg path") && document.querySelector(".cac-proyector-qr").checkVisibility()));
+    await p6.selectOption("#proyector-modo", "pareo");
+    const soloPareo = [];
+    for (let i = 0; i < 3; i++) { soloPareo.push((await proy()).titulo); await p6.click("#proyector-siguiente"); }
+    ok("«Solo el pareo» salta las clasificaciones (y se recuerda)", JSON.stringify(soloPareo) === JSON.stringify(["Ronda 4 · Sub-8 Absoluto", "Ronda 4 · Sub-18 Absoluto", "Ronda 4 · Sub-18 Femenino"])
+      && await p6.evaluate(() => localStorage.getItem("cac_proyector_modo_v1") === "pareo"), JSON.stringify(soloPareo));
+    await p6.selectOption("#proyector-modo", "clasif");
+    const soloClasif = [];
+    for (let i = 0; i < 3; i++) { soloClasif.push((await proy()).titulo); await p6.click("#proyector-siguiente"); }
+    ok("«Solo la clasificación» salta los pareos", soloClasif.every((x) => /^Clasificación · /.test(x)), JSON.stringify(soloClasif));
+    await p6.selectOption("#proyector-modo", "todo");
     await p6.click("#proyector-pausa");
     ok("y se puede poner en pausa (y lo dice)", await p6.evaluate(() => document.getElementById("proyector-pausa").getAttribute("aria-pressed") === "true" && document.getElementById("proyector-pausa").textContent === "Seguir"));
     await p6.keyboard.press("Escape");
+
+    // Cómo va la ronda, arriba del buscador.
+    ok("arriba del buscador, cómo va la ronda (escrito, con su barra)", await p6.evaluate(() => document.getElementById("ronda-progreso").checkVisibility()
+      && document.getElementById("ronda-progreso-texto").textContent === "Ronda 4: 1 de 2 partidas terminadas."
+      && document.querySelector("#ronda-progreso .cac-progreso-barra span").style.width === "50%"));
+
+    // Sorpresas e invictos.
+    await p6.click('a[href="#sorpresas"]');
+    await p6.waitForFunction(() => document.querySelectorAll("#sorpresas-contenido h3").length >= 3);
+    const sorp = await p6.evaluate(() => ({ titulos: [...document.querySelectorAll("#sorpresas-contenido h3")].map((h) => h.textContent),
+      listas: [...document.querySelectorAll("#sorpresas-contenido ol")].map((o) => [...o.children].map((l) => l.textContent)),
+      parrafos: [...document.querySelectorAll("#sorpresas-contenido > p")].map((p) => p.textContent),
+      invictos: [...document.querySelectorAll("#sorpresas-contenido .cac-podio")].map((c) => c.innerText.replace(/\s+/g, " ").trim()) }));
+    ok("las sorpresas de la última ronda (ninguna) y del torneo, de la más grande a la más chica", sorp.titulos[0] === "Las sorpresas de la ronda 4" && sorp.parrafos[0] === "Ninguna todavía: hasta ahora ganó siempre el de más Elo."
+      && JSON.stringify(sorp.listas[0]) === JSON.stringify(["Ronda 1 · Sub-18 Absoluto: WIM Mayorga Araya, Sofia (CRC, 2215) le ganó a FM Guevara Ruiz, Santiago Jose (ESA, 2252), 37 puntos de Elo más.",
+        "Ronda 3 · Sub-18 Femenino: IM Castillo Beitia, Ashley Alexandra (PAN, 2141) hizo tablas con FM Ordonez Bonilla, Ricardo Andres (GUA, 2145), 4 puntos de Elo más."]), JSON.stringify(sorp));
+    ok("y los invictos de cada categoría (un bye o una ronda sin jugar no cuentan como partida)", JSON.stringify(sorp.invictos) === JSON.stringify(["Sub-8 Absoluto Muñoz Solís, José (CRC) · 2 puntos", "Sub-18 Absoluto WIM Mayorga Araya, Sofia (CRC) · 3 puntos"]), JSON.stringify(sorp.invictos));
+    await p6.keyboard.press("Escape");
+
+    // El enlace directo a un jugador: se copia y abre su tarjeta, con sus rondas.
+    await buscar("mayorga");
+    await p6.click('#buscador-resultados [data-accion="enlace"]');
+    const enlaceCopiado = await p6.evaluate(() => navigator.clipboard.readText());
+    ok("«Copiar enlace» copia la dirección directa a ese jugador", /\/centroamericano-2026\.html#jugador=1494141-2-mayorga-araya-sofia$/.test(enlaceCopiado), enlaceCopiado);
+    await p6.fill("#buscador-nombre", "");
+    await p6.goto(BASE + "/" + PAGINA + "#jugador=1494141-2-mayorga-araya-sofia", { waitUntil: "load" });
+    await p6.reload({ waitUntil: "load" });
+    await p6.waitForFunction(() => document.querySelector('#buscador-resultados [data-rondas="1494141-2"]'), null, { timeout: 5000 }).catch(() => {});
+    const directo = await p6.evaluate(() => { const b = document.querySelector('#buscador-resultados [data-rondas="1494141-2"]');
+      return { campo: document.getElementById("buscador-nombre").value, abierta: b && b.getAttribute("aria-expanded"), foco: document.activeElement === b }; });
+    ok("el enlace abre su tarjeta con las rondas abiertas y el foco en ella", directo.campo === "Mayorga Araya, Sofia" && directo.abierta === "true" && directo.foco, JSON.stringify(directo));
+    await p6.evaluate(() => { location.hash = "#jugador=1494141-99-wilson-hannah"; });
+    await p6.waitForFunction(() => document.getElementById("buscador-nombre").value === "Wilson, Hannah", null, { timeout: 5000 }).catch(() => {});
+    ok("si el número cambió, lo encuentra por el nombre del enlace", await p6.evaluate(() => document.getElementById("buscador-nombre").value === "Wilson, Hannah"));
+    await p6.evaluate(() => { history.replaceState(null, "", location.pathname); });
+
+    // El resumen de la delegación como imagen.
+    await p6.selectOption("#delegacion", "CRC");
+    await p6.evaluate(() => { const m = window.TablaImagen.marcar; window.__marcas = 0; window.TablaImagen.marcar = (c) => { window.__marcas++; return m(c); }; });
+    const [descarga2] = await Promise.all([p6.waitForEvent("download", { timeout: 15000 }), p6.click("#delegacion-lista .cac-resumen .cac-jugador-boton")]);
+    const png2 = fs.readFileSync(await descarga2.path());
+    ok("el resumen de la delegación también sale como imagen, con la marca de agua", png2.slice(1, 4).toString() === "PNG" && png2.readUInt32BE(16) === 1080 && png2.readUInt32BE(20) >= 1080
+      && descarga2.suggestedFilename() === "centroamericano-2026-costa-rica-crc-ronda-3.png" && await p6.evaluate(() => window.__marcas === 1), descarga2.suggestedFilename());
+
+    // Seguir a toda la delegación: un aviso por ronda con su resumen.
+    await p6.evaluate(() => { window.__pedidos = []; });
+    ok("el botón de la delegación dice el país", await p6.evaluate(() => /Avisarme del resumen de Costa Rica \(CRC\) en cada ronda/.test(document.getElementById("delegacion-avisos").textContent)));
+    await p6.click("#delegacion-avisos");
+    await p6.waitForFunction(() => document.getElementById("delegacion-avisos").getAttribute("aria-pressed") === "true", null, { timeout: 5000 }).catch(() => {});
+    let pedDel = await p6.evaluate(() => window.__pedidos.map((x) => x[1]).filter((b) => b.accion === "seguir"));
+    ok("se suscribe con el país (y sin jugadores, si no sigue a nadie)", pedDel.length === 1 && pedDel[0].delegacion === "CRC" && Array.isArray(pedDel[0].jugadores) && pedDel[0].jugadores.length === 0, JSON.stringify(pedDel));
+    await p6.evaluate(() => { window.__pedidos = []; });
+    await p6.click("#delegacion-avisos");
+    await p6.waitForFunction(() => window.__pedidos.some((x) => x[1].accion === "baja"), null, { timeout: 5000 }).catch(() => {});
+    ok("tocarlo otra vez lo apaga (y sin nada que seguir, se da de baja)", await p6.evaluate(() => window.__pedidos.some((x) => x[1].accion === "baja") && document.getElementById("delegacion-avisos").getAttribute("aria-pressed") === "false"));
+    await p6.selectOption("#delegacion", "");
 
     // Sin señal: lo último que llegó, guardado en el aparato, con la hora en que se leyó.
     await p6.evaluate(() => localStorage.setItem("__falla", "1"));
@@ -522,6 +618,25 @@ ok("la página carga el cliente de Supabase antes que su código en vivo", html.
     r = await buscar("mayorga");
     ok("sin señal, muestra lo último que llegó y lo dice", r.tarjetas.length === 1 && /Sin conexión/.test(r.estado), JSON.stringify(r));
     await ctx6.close();
+
+    // Instalar en iPhone: Safari no avisa, así que se explica cómo, una vez.
+    const ctxIos = await nav.newContext({ viewport: { width: 390, height: 844 }, serviceWorkers: "block",
+      userAgent: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1" });
+    const pIos = await ctxIos.newPage();
+    await pIos.goto(BASE + "/" + PAGINA, { waitUntil: "load" });
+    ok("en iPhone explica cómo instalarla (y el botón de Android no sale)", await pIos.evaluate(() => document.getElementById("instalar-ios").checkVisibility() && !document.getElementById("instalar-app").checkVisibility()));
+    await pIos.click("[data-instalar-ios-no]");
+    await pIos.reload({ waitUntil: "load" });
+    ok("«Entendido» no lo vuelve a mostrar", await pIos.evaluate(() => !document.getElementById("instalar-ios").checkVisibility()));
+    await ctxIos.close();
+    const pNoIos = await (await nav.newContext({ serviceWorkers: "block" })).newPage();
+    await pNoIos.goto(BASE + "/" + PAGINA, { waitUntil: "load" });
+    ok("fuera del iPhone, la ayuda de iPhone no sale", await pNoIos.evaluate(() => !document.getElementById("instalar-ios").checkVisibility()));
+    ok("la página se instala como su propia app (su manifest y su ícono)", await pNoIos.evaluate(async () => {
+      const m = await (await fetch(document.querySelector('link[rel="manifest"]').href)).json();
+      return m.start_url === "/centroamericano-2026.html" && m.short_name === "Centroamericano" && /centroamericano-2026\/app\/apple-touch-icon\.png$/.test(document.querySelector('link[rel="apple-touch-icon"]').href);
+    }));
+    await pNoIos.context().close();
 
     // Sin internet: con el service worker de verdad, la segunda vez abre sin red.
     const ctx5 = await nav.newContext({ viewport: { width: 390, height: 800 } });

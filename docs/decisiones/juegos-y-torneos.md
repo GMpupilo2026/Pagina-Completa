@@ -8563,6 +8563,18 @@ Es una página estática, sin cuenta y sin base: nada se guarda.
   cargan también `torneos-en-vivo.html` y `admin.html` (la vista previa del
   editor es la misma ficha). Contraste: blanco sobre #5A5FA3 5,83, #40478F
   sobre blanco 8,35 y blanco sobre el rojo 5,6.
+- **Sus botones nunca sacan a nadie del sitio** (lo pidió el dueño). «Toda la
+  información» abre la página en la misma pestaña, y lo que es de afuera
+  —«Resultados en vivo» (chess-results) y las bases— lleva a SU ficha en la
+  página: `/centroamericano-2026.html#ficha-resultados` o `#ficha-bases`.
+  `js/ventana-enlace.js` abre encima la ficha `a[data-ventana]` que nombra el
+  `#` al entrar y lo quita al cerrar. La correspondencia está en `fichas` de
+  `PORTADAS` (por la dirección, así sigue valiendo aunque en
+  `admin.html#torneos` cambien el texto del botón); un enlace de afuera sin
+  ficha lleva a la página entera. En las demás salas, un enlace al propio
+  sitio también queda en la misma pestaña (nombrar ajedrez-integral.com no es
+  irse) y lo de afuera sigue en otra, con su ↗. Lo revisa
+  `verificar-centroamericano.js`.
 - **La ficha del Desafío Mentes Maestras** (la sala `cenfotec`, de la
   Universidad CENFOTEC) lleva lo mismo que la del Centroamericano pero con la
   cara de la universidad (lo pidió el dueño): el azul de su imagen (#233065
@@ -8736,6 +8748,53 @@ Es una página estática, sin cuenta y sin base: nada se guarda.
     y «Pantalla completa»; se pone al día cada minuto. Para una TV en la sala:
     se abre con `centroamericano-2026.html#proyector`. Blanco sobre #1E2453,
     14,7 : 1.
+- **Seguir a toda la delegación** (para jefes de delegación y entrenadores):
+  en «Mi delegación», «Avisarme del resumen de Costa Rica en cada ronda» pide
+  un solo aviso por ronda con el país entero («CRC · Ronda 4: 9 ganadas, 3 en
+  tablas, 2 perdidas, 1 bye: 10½ de 14 puntos en sus partidas»), que sale
+  cuando TODAS sus partidas de esa ronda tienen resultado
+  (`resumenDelegacion()` en la función). Es la misma suscripción del aparato:
+  `sala_suscripciones_push.delegacion` guarda solo el código de FIDE, y la
+  lista de jugadores puede quedar vacía si sigue a un país. Un país por
+  aparato; apagar los avisos apaga también el del país. El recordatorio de
+  la ronda le dice cuántos de su país juegan.
+- **El enlace directo a un jugador**: «Copiar enlace» en cada tarjeta da
+  `centroamericano-2026.html#jugador=<torneo>-<número>-<nombre>`; al abrirlo,
+  la página busca al jugador, abre sus rondas y le pone el foco. El nombre va
+  en el enlace para que se lea y para encontrarlo si el árbitro le cambió el
+  número antes de la ronda 1 (si hay dos con el mismo, no adivina).
+- **Cómo va la ronda**: «Ronda 4: 142 de 218 partidas terminadas», con su
+  barra, arriba del buscador y en el proyector (los byes no cuentan). Sale
+  de la ronda emparejada (`progresoRonda()`), así que aparece cuando la
+  página ya tiene los datos.
+- **Sorpresas e invictos** (`#sorpresas`): las partidas en que el de menos
+  Elo puntuó contra el de más (los dos con Elo y jugada en el tablero; unas
+  tablas pesan la mitad), de la última ronda y de todo el torneo, y quién no
+  ha perdido ninguna partida en cada categoría (un bye o un «-0» no son
+  partidas).
+- **El resumen de la delegación como imagen**: el mismo de «Copiar para
+  WhatsApp», en una imagen de 1080 de ancho (hasta 14 jugadores y «y N más»)
+  con la marca de agua, por `compartirBlob()`, que comparte también la del
+  jugador.
+- **El proyector**, además del pareo: la clasificación de cada categoría
+  después de su pareo (o solo uno de los dos: «Pareo y clasificación», «Solo
+  el pareo», «Solo la clasificación», guardado en ese aparato), cómo va la
+  ronda, un QR a la página en la esquina (`js/qr-svg.js`) y, con el torneo
+  terminado, los podios primero.
+- **Se instala como su propia app**: `manifest-centroamericano-2026.json`
+  (otro `id`, arranca en la página, el pizote como ícono) en lugar del de la
+  Academia, que arranca en `clases.html` y le pide cuenta. Lo pone
+  `herramientas/pwa-cabecera.py` (`PROPIAS`), y `verificar-pwa.js` lee esa
+  lista para revisar el manifest, los íconos y que la página lo declare. Los
+  íconos los genera `herramientas/centroamericano-imagenes.js` (el pizote en
+  un círculo blanco sobre el morado; el «maskable» con margen para que
+  Android no le corte la cara). El botón «Instalar» es el de `js/pwa.js` (solo
+  cuando el navegador deja, una vez); en iPhone, que no tiene ese aviso,
+  `js/centroamericano.js` explica «Compartir → Agregar a inicio» hasta que se
+  toca «Entendido». Instalada, los avisos pueden llegar también en iPhone.
+- **Rapid y Blitz**: cuando la organización los publique en chess-results,
+  basta con sumar sus enlaces a la sala en `admin.html#torneos`: el
+  buscador, los avisos, la clasificación y el proyector los toman solos.
 - **Agregar a mi calendario**:
   `documentos/centroamericano-2026/calendario-centroamericano-2026.ics`, con
   cada actividad de la tabla (en UTC, que cualquier calendario muestra en su

@@ -1,6 +1,7 @@
 /* El código QR dibujado en SVG con el DOM (nada de innerHTML), para las
    páginas que lo muestran: el certificado de un curso (js/certificado.js) y la
-   ficha pública de un árbitro (js/arbitros-publico.js). Necesita la librería
+   ficha pública de un árbitro (js/arbitros-publico.js) y el pareo para
+   proyectar del Centroamericano (js/centroamericano-tablas.js). Necesita la librería
    js/vendor/qrcode.js cargada antes.
 
    Lleva su margen blanco de 4 módulos, que es parte del código (sin él la

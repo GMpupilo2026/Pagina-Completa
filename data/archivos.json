@@ -19081,7 +19081,7 @@
   ]
  },
  "imagenes": {
-  "total": 869,
+  "total": 873,
   "grupos": [
    {
     "carpeta": "entreno/img/facil",
@@ -24420,6 +24420,37 @@
       "titulo": "Centroamericano 2026: foto de Vivian Víquez Miranda, organizadora",
       "tipo": "otro",
       "kb": 10
+     }
+    ]
+   },
+   {
+    "carpeta": "img/centroamericano-2026/app",
+    "titulo": "App",
+    "grupo": "Carpetas",
+    "archivos": [
+     {
+      "ruta": "img/centroamericano-2026/app/apple-touch-icon.png",
+      "titulo": "Apple touch icon",
+      "tipo": "otro",
+      "kb": 34
+     },
+     {
+      "ruta": "img/centroamericano-2026/app/icon-192.png",
+      "titulo": "Icon 192",
+      "tipo": "otro",
+      "kb": 39
+     },
+     {
+      "ruta": "img/centroamericano-2026/app/icon-512-maskable.png",
+      "titulo": "Icon 512 maskable",
+      "tipo": "otro",
+      "kb": 108
+     },
+     {
+      "ruta": "img/centroamericano-2026/app/icon-512.png",
+      "titulo": "Icon 512",
+      "tipo": "otro",
+      "kb": 193
      }
     ]
    }
