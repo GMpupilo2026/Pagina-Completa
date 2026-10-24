@@ -153,7 +153,7 @@ SIN_ACCESO = {"cobros.html", "configuracion.html"}
 ATRIBUCION_EXTRA = {
     "entreno/temas.html": " Ejercicios tomados de la base abierta de Lichess (licencia CC0).",
     "entreno/visualizacion.html": " Ejercicios tomados de la base abierta de Lichess (licencia CC0).",
-    "entreno/tipos.html": " Posiciones tomadas de la base abierta de Lichess (licencia CC0) y de partidas de maestros.",
+    "entreno/tipos.html": " Posiciones tomadas de la base abierta de Lichess (licencia CC0) y de partidas de maestros; las del nivel «El ahogado» de Salva las tablas están sorteadas y comprobadas con chess.js y Stockfish.",
     "entreno/memoria.html": " Posiciones tomadas de la base abierta de Lichess (licencia CC0).",
 }
 

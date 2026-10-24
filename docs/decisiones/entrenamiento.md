@@ -3748,6 +3748,69 @@ están en `js/tipos-reglas-mas.js` (`juicioTablas`, `estrellasTablas`).
 - `node herramientas/tipos-generar.js --solo tablas` rehace solo este banco. En
   la clase en vivo trae «🎯 Practicar».
 
+#### Nivel 3: El ahogado
+
+Una posición perdida en la que hay una jugada que **fuerza el ahogado**: el del
+rival (se queda sin jugadas legales y sin jaque) o el propio («te ahogan»:
+Dxe3+ Rxe3+ Tg3+ y las blancas no tienen jugada porque la torre y el alfil
+están clavados y el rey no tiene casillas). Lo pidió el dueño con un ejemplo de
+ese tipo; se contesta con una jugada, no contra el motor.
+
+- **No se juega contra el motor: lo corrige chess.js.** `ahogadoForzado` (en
+  `js/tipos-reglas-mas.js`, la misma función que corrige la página, arma el
+  banco y comprueba el verificador) dice qué jugadas del que mueve fuerzan el
+  ahogado en una o dos jugadas propias **contra todas las defensas**: cada
+  respuesta legal del rival tiene que terminar en ahogado enseguida o dejar otra
+  jugada que también lo fuerce. Mate y cualquier otra tabla (repetición,
+  material insuficiente) no cuentan: la promesa es el ahogado. Sirve **cualquier**
+  jugada que lo fuerce, no solo la del banco, y una que no sirve se corrige
+  diciendo qué responde el rival (`refutaAhogado`). Tras una jugada buena, la
+  página contesta por el rival con la defensa que más se resiste
+  (`defensaAhogado`) hasta el ahogado. Tres estrellas a la primera; con un error
+  o con pista, una; a la segunda jugada mala se rinde, enseña la solución y no da
+  estrellas (`estrellasAhogado`).
+- **Estar perdida lo dice el motor, y el verificador lo guarda**: el generador
+  pide que la mejor jugada que NO fuerza el ahogado dé −2,5 o peor (o mate en
+  contra) a profundidad 18, y que la que sí lo fuerza dé tablas (±0,3, sin mate).
+  Se guarda en `evalSin` y `verificar-tipos.js` exige `evalSin <= −250`. Sin eso,
+  ahogar al rival cuando se va ganando también «fuerza el ahogado» para chess.js
+  y el ejercicio mentiría. **Un fallo que costó un rato:** el generador miraba
+  `sin.mate === null && sin.score > −250`, y un mate A FAVOR (score enorme y
+  positivo, con `mate` distinto de null) se colaba como «perdida»; el
+  verificador lo habría atrapado en `evalSin`, pero el filtro ya no mira el
+  `mate`: basta el score.
+- **De dónde salen: ningún banco de Lichess trae uno.** Se buscó en las 7274
+  posiciones de «Ejercicios por tema» (la de partida y cada una de su solución),
+  en los finales difíciles, en Táctica y en los demás bancos de `tipos.json`:
+  ninguna de hasta 12 piezas con un ahogado forzado en dos jugadas que sirva, y
+  Lichess no tiene un tema «ahogado». La base completa de Lichess no se pudo
+  bajar de esta máquina. Por eso las posiciones salen de dos lados, las dos
+  comprobadas con chess.js y con Stockfish: la que aportó el dueño
+  (`AHOGADOS_APORTADOS` en el generador; de dónde la sacó, no se sabe) y las que
+  **sortea** `herramientas/ahogados-buscar.js` (de 4 a 8 piezas, al que mueve le
+  falta material; una poda deja pasar solo las jugadas que dejan al rival
+  con 6 respuestas o menos, y lo que sale se vuelve a comprobar sin poda). Es lo
+  mismo que se hizo con «Con lo justo»: nada se inventa, todo se verifica. Se
+  juntan pocas (de 1,6 millones de posiciones sorteadas, 50 tenían un ahogado
+  forzado y 11 pasaron el motor, más la del dueño: 12 en el nivel), y varias son
+  finales parecidos; la del dueño es la que vale por sí sola. Para sumar más: otra `--semilla`, y
+  `node herramientas/tipos-generar.js --solo ahogado`. Las semillas corridas:
+  1 (4 × 150 000) y 2 (4 × 250 000). **Después de rehacer el banco, correr
+  `python3 herramientas/metas-indice.py`**: Tareas ofrece cada tipo con su total
+  de `tipos.json` («Salva las tablas (55)») y `verificar-tareas.js` falla si el
+  número quedó viejo (pasó: decía 43 y el banco tenía 55). Lo mismo con
+  `python3 herramientas/premio-temas.py` (el premio por terminar un tema cuenta
+  los ejercicios de cada tipo; `verificar-premio-temas.js` lo exige) y, ya
+  publicado, las dos líneas de `interno.premio_temas_pedir` de «Terminar un tema»
+  en `puntos-y-premios.md`, que se corren a mano en la base.
+- **El nivel 3 pide 4 ejercicios, no 10** (`verificar-tipos.js`, como «Con lo
+  justo»): no hay de dónde sacar tantos sin inventarlos. `--solo tablas` rehace
+  los niveles 1 y 2 y **conserva** el 3; `--solo ahogado` rehace solo el 3.
+- **El pie de `entreno/tipos.html` lo dice**: «las del nivel "El ahogado" de
+  Salva las tablas están sorteadas y comprobadas con chess.js y Stockfish» (sale
+  de `herramientas/academia-cabecera.py`, no se edita en el HTML). Antes decía
+  solo «base abierta de Lichess y partidas de maestros», y estas no lo son.
+
 **Al tocar los bancos, las reglas o la página, correr**:
 
     node herramientas/tipos-generar.js          # solo si cambian los bancos (necesita Stockfish)

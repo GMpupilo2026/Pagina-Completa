@@ -61,7 +61,7 @@ const PUZZLES = Object.keys(TEMAS.puzzles).sort((a, b) => hash(a) - hash(b)).map
 /* `--solo con-lo-justo` rehace solo ese banco (no usa el motor: sale de las
    tablas de finales) y deja el resto de tipos.json como está. Así se puede
    ampliar sin Stockfish y sin tocar los demás. `--solo aguanta`, `--solo
-   remata`, `--solo tiempo` y `--solo tablas` hacen lo mismo con esos, que sí
+   remata`, `--solo tiempo`, `--solo tablas` y `--solo ahogado` (el nivel 3 de Salva las tablas) hacen lo mismo con esos, que sí
    usan el motor: los demás bancos no se vuelven a analizar,
    así que ningún id cambia y nadie pierde sus estrellas. */
 const SOLO = process.argv.includes("--solo") ? process.argv[process.argv.indexOf("--solo") + 1] : null;
@@ -1566,6 +1566,93 @@ async function generarTablas() {
   return out;
 }
 
+/* ---------- 19. Salva las tablas, nivel 3: El ahogado ----------
+   Posiciones perdidas donde hay UNA jugada (o dos) que fuerza el ahogado en una
+   o dos jugadas propias contra todas las defensas (`M.ahogadoForzado`, la
+   función con la que la página corrige y el verificador comprueba). Los bancos
+   de Lichess no traen ninguno (herramientas/ahogados-buscar.js cuenta por
+   qué), así que salen de dos fuentes, las dos comprobadas aquí:
+     - las que aporta el dueño de la Academia (AHOGADOS_APORTADOS: se verifican
+       igual que las demás; de dónde las sacó, no se sabe);
+     - las sorteadas por `node herramientas/ahogados-buscar.js`.
+   Entra la posición si, además de lo que comprueba chess.js: sin el ahogado el
+   motor la da por perdida (la mejor jugada que NO fuerza el ahogado, −2,5 o
+   peor a profundidad 18) y con él da tablas (entre −0,3 y +0,3, sin mate): el
+   ahogado tiene que ser lo único que salva. Y la jugada buena es única o hay
+   dos (una tercera ya es «cualquier cosa sirve»). */
+const AHOGADOS_APORTADOS = [
+  // Dxe3+! Rxe3+ Tg3+: la torre y el alfil dan jaque doble, el rey negro se mueve
+  // donde sea y las blancas no tienen jugada (la torre clavada por el alfil de
+  // c7, el alfil de h6 clavado por la torre de h7, el rey sin casillas).
+  { id: "aportado-1", fen: "4Q3/2b4r/7B/6R1/5k2/8/7K/5q2 w - - 0 1" },
+];
+const AHOGADOS_CACHE = path.join(__dirname, ".cache-ahogados.json");
+function lineaSanEs(fen, sans) {
+  const g = new Chess(fen);
+  let num = +fen.split(" ")[5] || 1;
+  const partes = [];
+  sans.forEach((san, i) => {
+    const blancas = g.turn() === "w";
+    const m = g.move(san);
+    if (!m) return;
+    if (blancas) partes.push(num + "." + R.sanEs(m.san));
+    else { partes.push(i === 0 ? num + "…" + R.sanEs(m.san) : R.sanEs(m.san)); num++; }
+  });
+  return partes.join(" ");
+}
+async function generarAhogado() {
+  const sorteadas = fs.existsSync(AHOGADOS_CACHE) ? JSON.parse(fs.readFileSync(AHOGADOS_CACHE, "utf8")) : [];
+  if (!sorteadas.length) console.log("  (no hay herramientas/.cache-ahogados.json: corre antes node herramientas/ahogados-buscar.js; solo entran las aportadas)");
+  const cand = AHOGADOS_APORTADOS.map((x) => Object.assign({ origen: "aportado" }, x)).concat(
+    sorteadas.map((x) => ({ id: "aho-" + hash(x.fen.split(" ").slice(0, 2).join(" ")).toString(36), fen: x.fen, origen: "sorteado" })));
+  const ST = {};
+  const st = (k) => { ST[k] = (ST[k] || 0) + 1; return null; };
+  const uci = (m) => m.from + m.to + (m.promotion || "");
+  const buenos = (await enParalelo(cand, async (c) => {
+    const g = new Chess();
+    if (!g.load(c.fen) || g.game_over()) return st("ilegal");
+    let n = 1, buenas = M.ahogadoForzado(Chess, c.fen, 1);
+    if (!buenas.length) { n = 2; buenas = M.ahogadoForzado(Chess, c.fen, 2); }
+    if (!buenas.length) return st("sin-ahogado");
+    if (buenas.length > 2) return st("muchas-buenas");
+    const legales = g.moves({ verbose: true });
+    const delAhogado = legales.filter((m) => buenas.includes(m.san));
+    const otras = legales.filter((m) => !buenas.includes(m.san));
+    if (!otras.length) return st("sin-alternativas");
+    const [sin] = await analizar(c.fen, 1, 18, otras.map(uci));
+    if (!sin) return st("sin-analisis");
+    if (sin.score > -250) return st("no-esta-perdida");   // un mate A FAVOR (score enorme y positivo) tampoco está perdida
+    const [con] = await analizar(c.fen, 1, 18, delAhogado.map(uci));
+    if (!con || con.mate !== null || Math.abs(con.score) > 30) return st("el-motor-no-lo-ve-tablas");
+    const linea = M.lineaAhogado(Chess, c.fen, n);
+    if (!linea) return st("sin-linea");
+    const f = new Chess(c.fen);
+    linea.forEach((m) => f.move(m));
+    if (!f.in_stalemate()) return st("la-linea-no-ahoga");
+    const yo = c.fen.split(" ")[1];
+    const quien = f.turn() === yo ? "propio" : "rival";
+    const numero = (cp) => (cp >= 10000 ? "mate" : cp <= -10000 ? "mate en contra" : R.numeroBalanza(cp / 100));
+    const lineaEsTxt = lineaSanEs(c.fen, linea);
+    return {
+      id: c.id, nivel: 3, fen: c.fen, ahogado: true, jugadas: n, correctas: buenas.slice().sort(), quien,
+      evalSin: sin.score, linea, lineaEs: lineaEsTxt, origen: c.origen, rating: null, partida: null, piezas: piezas(c.fen),
+      resumen: "Juegan las " + R.COLOR[yo] + " · ahogado en " + n + " · sin él, " + numero(sin.score),
+      respuesta: [
+        "El motor: sin el ahogado, " + numero(sin.score) + " para las " + R.COLOR[yo] + " (profundidad 18): la posición está perdida.",
+        "La solución: " + lineaEsTxt + ".",
+        quien === "propio"
+          ? "Al final, tu rey no tiene ninguna jugada legal y no está en jaque: te ahogan, y son tablas aunque falte material."
+          : "Al final, al rival no le queda ninguna jugada legal y su rey no está en jaque: son tablas aunque te falte material.",
+        "La idea: cuando todo está perdido, busca que el rival se quede sin jugadas, o que a ti no te queden (piezas clavadas, el rey sin casillas).",
+      ],
+    };
+  })).filter(Boolean);
+  console.log("  ahogado: " + cand.length + " candidatas; descartes " + JSON.stringify(ST) + "; entran " + buenos.length);
+  // las aportadas primero; luego las de una jugada, las de dos, y menos piezas antes
+  const orden = (x) => (x.origen === "aportado" ? 0 : 1);
+  return buenos.sort((a, b) => orden(a) - orden(b) || a.jugadas - b.jugadas || a.piezas - b.piezas || (a.id < b.id ? -1 : 1)).slice(0, POR_NIVEL * 2).map((x) => { delete x.piezas; return x; });
+}
+
 /* ---------- solo un banco ---------- */
 if (SOLO === "aguanta") {
   (async () => {
@@ -1607,7 +1694,19 @@ if (SOLO === "aguanta") {
   (async () => {
     const datos = JSON.parse(fs.readFileSync(SALIDA, "utf8"));
     console.log("Salva las tablas (motor)…");
-    datos.tablas = await generarTablas();
+    datos.tablas = (await generarTablas()).concat(datos.tablas.filter((x) => x.ahogado));
+    guardarCache();
+    MOTORES.forEach((m) => m.cerrar());
+    fs.writeFileSync(SALIDA, JSON.stringify(datos) + "\n");
+    const c = datos.tablas.reduce((m, x) => { m[x.nivel] = (m[x.nivel] || 0) + 1; return m; }, {});
+    console.log("tablas        ", JSON.stringify(c));
+    process.exit(0);
+  })().catch((e) => { console.error(e); process.exit(1); });
+} else if (SOLO === "ahogado") {
+  (async () => {
+    const datos = JSON.parse(fs.readFileSync(SALIDA, "utf8"));
+    console.log("Salva las tablas, nivel 3: El ahogado (motor)…");
+    datos.tablas = datos.tablas.filter((x) => !x.ahogado).concat(await generarAhogado());
     guardarCache();
     MOTORES.forEach((m) => m.cerrar());
     fs.writeFileSync(SALIDA, JSON.stringify(datos) + "\n");
@@ -1634,7 +1733,7 @@ if (SOLO === "aguanta") {
   console.log("conteo        ", JSON.stringify(c));
   process.exit(0);
 } else if (SOLO) {
-  if (SOLO !== "con-lo-justo") { console.error("--solo solo sabe rehacer «con-lo-justo», «construye», «conteo», «aguanta», «remata», «tiempo» o «tablas»."); process.exit(2); }
+  if (SOLO !== "con-lo-justo") { console.error("--solo solo sabe rehacer «con-lo-justo», «construye», «conteo», «aguanta», «remata», «tiempo», «tablas» o «ahogado»."); process.exit(2); }
   const datos = JSON.parse(fs.readFileSync(SALIDA, "utf8"));
   console.log("Con lo justo (tablas de finales, tarda un par de minutos)…");
   datos["con-lo-justo"] = generarConLoJusto();
@@ -1685,7 +1784,7 @@ if (!SOLO) (async () => {
   console.log("Elige a tiempo…");
   const tiempo = await generarTiempo();
   console.log("Salva las tablas…");
-  const tablas = await generarTablas();
+  const tablas = (await generarTablas()).concat(await generarAhogado());
   guardarCache();
   MOTORES.forEach((m) => m.cerrar());
   const datos = {
