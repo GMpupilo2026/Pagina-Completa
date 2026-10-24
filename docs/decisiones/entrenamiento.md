@@ -3756,9 +3756,11 @@ tocar los demás bancos.
   gana, cambiar no puede ser peor que la mejor jugada por más de 0,5; si son
   tablas, sin cambiar había +1,5 o más (cambiar regala la ventaja); si se
   pierde, sin cambiar se aguantaba. «Ver el final de peones en el tablero» lo
-  pinta (eso no delata nada: es justo lo que hay que juzgar). Nivel: un
-  cambio, dos cambios, o los mismos peones para los dos (lo decide dónde
-  están los reyes y los peones, no contarlos).
+  pinta (eso no delata nada: es justo lo que hay que juzgar). El nivel lo
+  ponen los peones del final: quien mueve queda con más, con menos o con los
+  mismos (ahí lo decide dónde están los reyes y los peones, no contarlos). Al
+  principio era «un cambio» o «dos cambios», pero las cadenas de dos cambios
+  que terminan en reyes y peones casi no aparecen (salían 3).
 - **La intermedia sale del tema «intermezzo» de Lichess.** La buena es la de
   la solución, que el motor (profundidad 18) da como la mejor, gana (mate o
   +2) y le saca 1,5 a la segunda. La «natural» es la **mejor captura para el
@@ -3781,7 +3783,10 @@ tocar los demás bancos.
   para que el verificador vuelva a encontrar al mismo defensor.
 - **La peor pieza es «la que más gana con moverse»**, medido: en una posición
   tranquila (como Elige a tiempo: el final de un ejercicio y la mejor
-  respuesta del rival; entre −1,5 y +3, sin golpe), cada caballo, alfil, torre
+  respuesta del rival; entre −1,5 y +3, sin golpe; y las líneas de apertura
+  del sitio desde la jugada 12, media jugada, porque al final de los
+  ejercicios el que resolvió casi siempre ya gana y el tablero lleno no
+  salía), cada caballo, alfil, torre
   y dama se analiza sola con todas sus jugadas (`searchmoves`, profundidad
   16), y la buena le saca **0,5 o más a la mejor de las demás**, confirmado a
   profundidad 20. Su mejor jugada no puede ser captura ni jaque (sería táctica,

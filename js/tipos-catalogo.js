@@ -288,8 +288,8 @@
       como: "Ves una posición de partida real y la cadena de cambios que deja solo reyes y peones. Di cómo es ese final para el bando que mueve: se gana, son tablas o se pierde. Lo comprobó el motor analizando el final a fondo, y la explicación dice qué pasaba si no cambiabas.",
       clase: "Pon la posición, juega los cambios en el tablero y que voten: ¿se gana, son tablas o se pierde? Después muestren la línea del motor.",
       niveles: [
-        { n: 1, titulo: "Un cambio", desc: "Una pieza por otra, y queda el final de peones." },
-        { n: 2, titulo: "Dos cambios", desc: "Salen dos piezas de cada lado antes de llegar al final." },
+        { n: 1, titulo: "Con peones de más", desc: "Después de los cambios te quedan más peones que al rival. ¿Alcanza?" },
+        { n: 2, titulo: "Con peones de menos", desc: "Te quedan menos peones: ¿se salva, o hasta se gana?" },
         { n: 3, titulo: "Peones iguales", desc: "Los dos quedan con los mismos peones: lo decide dónde están los reyes y los peones." },
       ],
     },
@@ -321,7 +321,7 @@
       id: "peor-pieza", emoji: "🐌", nombre: "La peor pieza",
       pregunta: "Sin táctica a la vista: ¿qué pieza mejorarías?",
       entrena: "El consejo más útil cuando no hay nada que hacer: buscar la pieza peor puesta y llevarla a un lugar mejor. Es pensar en planes, no en golpes.",
-      como: "Una posición tranquila de partida real. Primero elige la pieza que conviene mover: el motor analizó la mejor jugada de cada una, y esta le saca medio peón o más a todas las demás. Después muévela: vale cualquier jugada suya casi tan buena como la mejor.",
+      como: "Una posición tranquila, de partida real o de una línea de apertura. Primero elige la pieza que conviene mover: el motor analizó la mejor jugada de cada una, y esta le saca medio peón o más a todas las demás. Después muévela: vale cualquier jugada suya casi tan buena como la mejor.",
       clase: "Pon la posición y pregunta qué pieza está peor. Que cada alumno defienda la suya; después muestra lo que dice el motor de cada pieza.",
       niveles: [
         { n: 1, titulo: "Pocas piezas", desc: "Tres piezas o menos para elegir (sin contar rey ni peones)." },

@@ -662,8 +662,9 @@ DATOS.liquidar.forEach((x) => {
   ok("la cadena, jugada, deja ese final de solo reyes y peones (" + x.id + ")", f === x.fenFinal, f);
   ok("y al final le toca al mismo bando (" + x.id + ")", f && f.split(" ")[1] === x.fen.split(" ")[1]);
   const peones = (fen, c2) => R.tablero(fen).filter((p) => p && p.t === "p" && p.c === c2).length;
-  const iguales = f && peones(f, "w") === peones(f, "b");
-  ok("el nivel (" + x.id + ")", x.nivel === (iguales ? 3 : x.cadena.length === 2 ? 1 : 2));
+  const yo = x.fen.split(" ")[1];
+  const dif = f ? peones(f, yo) - peones(f, R.otro(yo)) : null;
+  ok("el nivel es el de los peones que le quedan (" + x.id + ")", x.nivel === (dif > 0 ? 1 : dif < 0 ? 2 : 3), dif);
   const v = x.eval;
   ok("el veredicto es el del motor (" + x.id + ")", (x.veredicto === "gana" && (v === null || v >= 400)) || (x.veredicto === "tablas" && v !== null && Math.abs(v) <= 25) || (x.veredicto === "pierde" && (v === null || v <= -400)), x.veredicto + " con " + v);
   if (x.veredicto === "tablas") ok("tablas: sin cambiar había +1,5 o más (" + x.id + ")", x.evalSin === null || x.evalSin >= 150, x.evalSin);

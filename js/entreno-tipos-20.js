@@ -21,6 +21,15 @@
   const piezaDicha = (pc) => R.NOMBRE[pc[1]] + " " + (pc[0] === "w" ? (femenina(pc[1]) ? "blanca" : "blanco") : (femenina(pc[1]) ? "negra" : "negro"));
   const laPieza = (pc, s) => (femenina(pc[1]) ? "la " : "el ") + piezaDicha(pc) + " de " + s;
   const CASILLA = /^[a-h][1-8]$/;
+  /* «a el» → «al»: «obliga al peón blanco de g2». */
+  const aLa = (texto) => ("a " + texto).replace(/^a el /, "al ");
+  /* Cuando se pide una casilla, el recuadro sugiere casillas y no jugadas;
+     al salir del ejercicio vuelve el de siempre. */
+  const SUGIERE_JUGADA = "Cf3, Dxh7+, 0-0";
+  function sugerir(texto) {
+    $("jugada-input").placeholder = texto;
+    U.alLimpiar(() => { $("jugada-input").placeholder = SUGIERE_JUGADA; });
+  }
   const plano = (t) => String(t || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[.!¡¿?]/g, "").trim();
   /* «e4», «Cb1», «caballo de b1», «la torre en h1»: la casilla que se nombra. */
   function casillaEscrita(txt) {
@@ -28,19 +37,21 @@
     const m = /([a-h][1-8])$/.exec(t);
     return m ? m[1] : null;
   }
-  /* El reloj de ¿Alcanza el rey? (y el triple en Modo Adaptado, como Elige a tiempo). */
+  /* El reloj de ¿Alcanza el rey? (y el triple en Modo Adaptado, como Elige a
+     tiempo). Cuenta con la hora, no con los disparos del intervalo: un
+     celular que frena la pestaña en segundo plano no regala segundos. */
   function reloj(total, alAcabar) {
-    let quedan = total;
+    let quedan = total, dicho = null;
     const cuenta = el("p", "text-3xl font-bold text-center text-brand-800 dark:text-white my-2 tabular-nums", "⏱ " + quedan + " s");
     cuenta.setAttribute("aria-hidden", "true");
     const inicio = Date.now();
     const mitad = Math.floor(total / 2);
     const id = setInterval(() => {
-      quedan--;
+      quedan = total - Math.floor((Date.now() - inicio) / 1000);
       cuenta.textContent = "⏱ " + Math.max(0, quedan) + " s";
-      if (quedan === mitad && mitad >= 10) estado("Quedan " + quedan + " segundos.");
-      if (quedan === 5) estado("Quedan 5 segundos.");
-      if (quedan <= 0) { clearInterval(id); alAcabar(); }
+      if (quedan <= 0) { clearInterval(id); alAcabar(); return; }
+      const aviso = quedan <= 5 ? 5 : quedan <= mitad && mitad >= 10 ? mitad : null;
+      if (aviso && aviso !== dicho) { dicho = aviso; estado("Quedan " + quedan + " segundos."); }
     }, 1000);
     U.alLimpiar(() => clearInterval(id));
     return { cuenta, parar: () => clearInterval(id), usados: () => Math.min(total, Math.round((Date.now() - inicio) / 1000)) };
@@ -123,6 +134,7 @@
         terminar(item, 0);
       },
     });
+    sugerir("e4 f5");
     U.pedirJugada("O escribe las casillas («e4 f5»), «quitar e4» para sacar una, y «comprobar»", (txt) => {
       if (hecho) return;
       const t = plano(txt);
@@ -316,7 +328,8 @@
     function aPaso2(texto) {
       paso = 2;
       mostrarDefensor();
-      $("juego-enunciado").textContent = "Ahora juega la jugada que obliga a " + laPieza(d.c + d.t, item.defensor) + " a elegir.";
+      $("juego-enunciado").textContent = "Ahora juega la jugada que obliga " + aLa(laPieza(d.c + d.t, item.defensor)) + " a elegir.";
+      $("jugada-input").placeholder = SUGIERE_JUGADA;
       U.pedirJugada("O escribe tu jugada (las " + COLOR[yo] + ")", escrita);
       estado(texto + " Cuida " + item.cuida[0] + " y " + item.cuida[1] + " (marcadas 1 y 2). Ahora juega la jugada que lo sobrecarga.");
       redibujar(null);
@@ -380,6 +393,7 @@
     $("controles").append(bPista, bVer);
     U.ponerAyudas({ pista: () => bPista.click(), solucion: () => bVer.click() });
     redibujar(null);
+    sugerir("e7");
     U.pedirJugada("O escribe la casilla de la pieza (por ejemplo, e7)", escrita);
   };
 
@@ -407,6 +421,7 @@
       paso = 2;
       marcas[item.pieza] = { cls: "m-bien", signo: "!", dicho: "la pieza que mejorar" };
       $("juego-enunciado").textContent = "Ahora mueve " + laPieza(p.c + p.t, item.pieza) + " a una casilla mejor.";
+      $("jugada-input").placeholder = SUGIERE_JUGADA;
       U.pedirJugada("O escribe tu jugada (las " + COLOR[yo] + ")", escrita);
       estado(texto + " Ahora muévela a una casilla mejor.");
       redibujar(null);
@@ -468,6 +483,7 @@
       solucion: () => bVer.click(),
     });
     redibujar(null);
+    sugerir("b1");
     U.pedirJugada("O escribe la casilla de la pieza (por ejemplo, b1)", escrita);
   };
 })();

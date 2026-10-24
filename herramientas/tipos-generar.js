@@ -1532,7 +1532,9 @@ async function generarAlcanza() {
    captura y recaptura, una o dos veces— que deja solo reyes y peones. Cada
    recaptura del rival es la que elige el motor (profundidad 16): si el rival
    no recapturaría, no es un cambio. El final que queda se juzga como en
-   ¿Alcanza el rey? (profundidad 18 y 26, que coincidan). Para que la decisión
+   ¿Alcanza el rey? (profundidad 18 y 26, que coincidan). El nivel lo ponen
+   los peones del final: quien mueve queda con más (1), con menos (2) o con
+   los mismos (3). Para que la decisión
    importe: si el final se gana, el cambio no puede ser peor que no cambiar
    por más de 0,5; si son tablas, sin cambiar había +1,5 o más; si se pierde,
    sin cambiar se aguantaba (−1 o más). */
@@ -1599,8 +1601,8 @@ async function generarLiquidar() {
     if (vb === "pierde" && vSin < -100) return st("pierde-igual");
     const peones = (fen, c2) => R.tablero(fen).filter((p) => p && p.t === "p" && p.c === c2).length;
     const yo = c.fen.split(" ")[1];
-    const iguales = peones(fenQ, "w") === peones(fenQ, "b");
-    const n = iguales ? 3 : c.cadena.length === 2 ? 1 : 2;
+    const dif = (peones(fenQ, yo) - peones(fenQ, R.otro(yo)));
+    const n = dif > 0 ? 1 : dif < 0 ? 2 : 3;
     return { c, fenQ, vb, b, sin, vSin, n, yo };
   })).filter(Boolean);
   console.log("  liquidar: " + cand.length + " candidatas; descartes " + JSON.stringify(ST));
@@ -1745,7 +1747,8 @@ async function generarSobrecargado() {
 
 /* ---------- 25. La peor pieza ----------
    Posiciones TRANQUILAS, como en Elige a tiempo: el final de un ejercicio y
-   la mejor respuesta del rival. Entra si nadie está en jaque, el motor da
+   la mejor respuesta del rival, y las líneas de apertura del sitio desde la
+   jugada 12 (media jugada). Entra si nadie está en jaque, el motor da
    entre −1,5 y +3 al que mueve, la mejor jugada no es captura ni jaque y la
    segunda está a menos de 0,6 (no hay un golpe). Después, pieza por pieza
    (caballos, alfiles, torres y dama), la mejor jugada de cada una analizada
@@ -1762,15 +1765,31 @@ async function generarPeorPieza() {
     cand.push({ pz, fenRival: g.fen() });
     if (cand.length >= 2500) break;
   }
+  /* Y las líneas de apertura del sitio (js/aperturas-lineas.js), de la
+     jugada 8 en adelante: posiciones tranquilas y con el tablero lleno, que
+     al final de los ejercicios casi no hay (ahí el que resolvió ya gana). */
+  const APERTURAS = require("../js/aperturas-lineas.js");
+  (APERTURAS.LINEAS || APERTURAS.lineas || APERTURAS).forEach((l) => {
+    if (l.tipo === "celada") return;
+    const g = new Chess();
+    l.jugadas.forEach((j, k) => {
+      if (!g.move(j)) return;
+      if (k + 1 >= 12 && !g.game_over() && !g.in_check()) cand.push({ pz: { id: "ap-" + l.id + "-" + (k + 1), game: null, rating: null }, fen: g.fen(), nombre: l.nombre });
+    });
+  });
   const vistas = new Set();
   const ST = {};
   const st = (k) => { ST[k] = (ST[k] || 0) + 1; return null; };
-  const buenos = (await enParalelo(cand, async ({ pz, fenRival }) => {
-    const [rr] = await analizar(fenRival, 1, 16);
-    if (!rr || rr.mate !== null) return st("mate");
-    const g = new Chess(fenRival);
-    const resp = g.move({ from: rr.uci.slice(0, 2), to: rr.uci.slice(2, 4), promotion: rr.uci[4] || undefined });
-    if (!resp || g.game_over() || g.in_check()) return st("jaque");
+  const buenos = (await enParalelo(cand, async ({ pz, fenRival, fen: fenDada, nombre }) => {
+    let g;
+    if (fenDada) g = new Chess(fenDada);
+    else {
+      const [rr] = await analizar(fenRival, 1, 16);
+      if (!rr || rr.mate !== null) return st("mate");
+      g = new Chess(fenRival);
+      const resp = g.move({ from: rr.uci.slice(0, 2), to: rr.uci.slice(2, 4), promotion: rr.uci[4] || undefined });
+      if (!resp || g.game_over() || g.in_check()) return st("jaque");
+    }
     const fen = g.fen();
     const k = fen.split(" ").slice(0, 2).join(" ");
     if (vistas.has(k)) return st("repetida");
@@ -1800,14 +1819,16 @@ async function generarPeorPieza() {
     if (!c1 || !c2 || cpDe(c1) - cpDe(c2) < N.PEOR.margen) return st("margen-20");
     if (/x|\+/.test(sanDeUci(fen, porPieza[mejor][0].uci))) return st("mejor-forzante");
     const top = cpDe(porPieza[mejor][0]);
+    if (top < -150 || top > 300) return st("fuera-16");                     // el rango, con la evaluación que se guarda
     const buenas = porPieza[mejor].filter((x) => x.mate === null && top - x.score <= N.PEOR.buena).map((x) => sanDeUci(fen, x.uci));
     const resumenPieza = {};
     suyas.forEach((s) => { const x = porPieza[s][0]; resumenPieza[s] = { san: sanDeUci(fen, x.uci), eval: x.score }; });
     const nPiezas = suyas.length;
     const n = nPiezas <= 3 ? 1 : nPiezas <= 5 ? 2 : 3;
-    return { pz, fen, yo, mejor, buenas, resumenPieza, n, linea: lineaEs(fen, porPieza[mejor][0].pv, 4) };
+    return { pz, fen, yo, mejor, buenas, resumenPieza, n, nombre: nombre || null, linea: lineaEs(fen, porPieza[mejor][0].pv, 4) };
   })).filter(Boolean);
   console.log("  peor-pieza: " + cand.length + " candidatas; descartes " + JSON.stringify(ST));
+  console.log("  peor-pieza: piezas para elegir " + JSON.stringify(buenos.reduce((m, x) => { const k = Object.keys(x.resumenPieza).length; m[k] = (m[k] || 0) + 1; return m; }, {})));
   const out = [];
   for (const n of [1, 2, 3]) {
     buenos.filter((x) => x.n === n).sort((a, b) => (a.pz.rating || 0) - (b.pz.rating || 0) || (a.pz.id < b.pz.id ? -1 : 1)).slice(0, POR_NIVEL_NUEVOS).forEach((x) => {
@@ -1817,8 +1838,8 @@ async function generarPeorPieza() {
       const yoSigno = (cp) => R.numeroBalanza(cp / 100);
       out.push({
         id: "peo-" + n + "-" + x.pz.id, nivel: n, fen: x.fen, pieza: x.mejor, buenas: x.buenas, porPieza: x.resumenPieza,
-        rating: x.pz.rating || null, partida: x.pz.game || null,
-        resumen: "Juegan las " + COLOR_ES[x.yo] + " · " + Object.keys(x.resumenPieza).length + " piezas para elegir",
+        rating: x.pz.rating || null, partida: x.pz.game || null, apertura: x.nombre,
+        resumen: "Juegan las " + COLOR_ES[x.yo] + " · " + Object.keys(x.resumenPieza).length + " piezas para elegir" + (x.nombre ? " · " + x.nombre : ""),
         respuesta: [
           "La pieza que mejorar: " + nombre(x.mejor) + ". Su mejor jugada: " + R.sanEs(x.resumenPieza[x.mejor].san) + " (" + yoSigno(x.resumenPieza[x.mejor].eval) + " para las " + COLOR_ES[x.yo] + "). Valen también: " + (x.buenas.filter((s) => s !== x.resumenPieza[x.mejor].san).map(R.sanEs).join(", ") || "ninguna otra") + ".",
           "Lo mejor con cada una de las otras: " + otras.map((s) => nombre(s) + ", " + R.sanEs(x.resumenPieza[s].san) + " (" + yoSigno(x.resumenPieza[s].eval) + ")").join("; ") + ".",
