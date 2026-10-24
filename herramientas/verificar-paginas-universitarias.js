@@ -177,19 +177,25 @@ for (const P of PAGINAS) {
       const medallero = await p.evaluate(() => ({ texto: document.getElementById("medallero-contenido").innerText,
         titulos: [...document.querySelectorAll("#medallero-contenido .cac-podio h3")].map((h) => h.textContent) }));
       ok("el podio no trae «Medallas por federación» (todos son de Costa Rica)", !/Medallas por federación/.test(medallero.texto) && /Final/.test(medallero.texto), medallero.texto);
-      ok("y su encabezado es " + (P.ramas ? "el de cada rama" : "«Clasificación general»") + ", no «—»", JSON.stringify(medallero.titulos) === JSON.stringify(P.ramas || ["Clasificación general"]), JSON.stringify(medallero.titulos));
+      ok("y su encabezado es " + (P.ramas ? "el de cada rama" : "«General»") + ", no «—»", JSON.stringify(medallero.titulos) === JSON.stringify(P.ramas || ["General"]), JSON.stringify(medallero.titulos));
       await p.keyboard.press("Escape");
 
-      // El proyector, con la clasificación final.
+      // El proyector: terminado, los podios y después la clasificación de cada
+      // grupo (nunca «el pareo todavía no está publicado»).
       await p.click('#fichas a.cac-ficha[href="#proyector"]');
-      await p.waitForFunction(() => document.querySelectorAll("#proyector-contenido tbody tr").length > 0, null, { timeout: 10000 }).catch(() => {});
-      const proy = await p.evaluate(() => ({ titulo: document.getElementById("proyector-titulo").textContent, filas: document.querySelectorAll("#proyector-contenido tbody tr").length,
-        barra: getComputedStyle(document.querySelector(".cac-proyector-barra")).backgroundColor }));
-      ok("el proyector pasa la clasificación final" + (P.ramas ? " de cada rama, con su nombre" : ""), proy.titulo === "Clasificación final" + (P.ramas ? " · " + P.ramas[0] : "") && proy.filas === 9, JSON.stringify(proy));
-      if (P.ramas) {
+      await p.waitForFunction(() => document.querySelector("#proyector-contenido section, #proyector-contenido tbody tr"), null, { timeout: 10000 }).catch(() => {});
+      const pantallas = [];
+      for (let i = 0; i < 1 + (P.ramas || [""]).length; i++) {
+        pantallas.push(await p.evaluate(() => ({ titulo: document.getElementById("proyector-titulo").textContent,
+          filas: document.querySelectorAll("#proyector-contenido tbody tr").length,
+          podios: [...document.querySelectorAll("#proyector-contenido section h3")].map((h) => h.textContent) })));
         await p.click("#proyector-siguiente");
-        ok("y «Siguiente» pasa a la otra rama", await p.evaluate((r) => document.getElementById("proyector-titulo").textContent === "Clasificación final · " + r, P.ramas[1]));
       }
+      const proy = { barra: await p.evaluate(() => getComputedStyle(document.querySelector(".cac-proyector-barra")).backgroundColor) };
+      const grupos = P.ramas || ["General"];
+      ok("el proyector pasa los podios" + (P.ramas ? " de las dos ramas" : ""), pantallas[0].titulo === "Los podios" && JSON.stringify(pantallas[0].podios) === JSON.stringify(grupos), JSON.stringify(pantallas[0]));
+      ok("y la clasificación final de " + (P.ramas ? "cada rama, con su nombre" : "todos, «General», no «—»"),
+        grupos.every((g, i) => pantallas[i + 1].titulo === "Clasificación · " + g + " · tras la ronda 3" && pantallas[i + 1].filas === 9), JSON.stringify(pantallas.slice(1)));
       ok("con la barra en el azul de la universidad", proy.barra === "rgb(" + P.azul + ")", proy.barra);
       await p.keyboard.press("Escape");
 

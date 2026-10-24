@@ -268,7 +268,28 @@
     } catch (e) { /* sin caché (navegación privada): la página igual funciona con señal */ }
   }
 
+  /* ---------------- instalar en iPhone ---------------- */
+  // Safari no avisa que la página se puede instalar (no tiene
+  // beforeinstallprompt, que en Android usa js/pwa.js): se explica cómo, una
+  // vez, hasta que se toca «Entendido». Instalada, los avisos pueden llegar.
+  const CLAVE_IOS = "cac_instalar_ios_v1";
+  function ofrecerIos() {
+    const caja = $("instalar-ios");
+    if (!caja) return;
+    const ios = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+    const instalada = window.navigator.standalone === true || (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches);
+    let visto = false;
+    try { visto = localStorage.getItem(CLAVE_IOS) === "1"; } catch (e) {}
+    if (!ios || instalada || visto) return;
+    caja.hidden = false;
+    caja.querySelector("[data-instalar-ios-no]").addEventListener("click", () => {
+      caja.hidden = true;
+      try { localStorage.setItem(CLAVE_IOS, "1"); } catch (e) {}
+    });
+  }
+
   /* ---------------- arranque ---------------- */
+  ofrecerIos();
   const boton = $("cac-idioma");
   if (boton) boton.addEventListener("click", () => ponerIdioma(idioma === "en" ? "es" : "en", true));
   ponerIdioma(idiomaInicial(), false);

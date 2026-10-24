@@ -61,7 +61,24 @@
     return e;
   }
 
-  function enlaceAfuera(enlace, clase, nombreSala) {
+  // Una dirección del propio sitio (con el dominio o sin él) queda en la misma
+  // pestaña: nombrar ajedrez-integral.com no es irse.
+  function delSitio(url) {
+    let u;
+    try { u = new URL(url, location.href); } catch (e) { return null; }
+    if (u.origin !== location.origin && !/(^|\.)ajedrez-integral\.com$/.test(u.hostname)) return null;
+    return u.pathname + u.search + u.hash;
+  }
+
+  function enlaceAfuera(enlace, clase, nombreSala, portada) {
+    const destino = portada && portada.fichas ? adentro(portada, enlace.url) : delSitio(enlace.url);
+    if (destino) {
+      const a = el("a", clase, enlace.texto);
+      a.href = destino;
+      a.appendChild(el("span", "sr-only", " de " + nombreSala));
+      a.appendChild(document.createTextNode(" →"));
+      return a;
+    }
     const a = el("a", clase, enlace.texto);
     a.href = enlace.url;
     a.target = "_blank";
@@ -78,13 +95,30 @@
   // Cada portada pone su `clase` en la ficha y de ella salen las demás:
   // `<clase>-imagen`, `<clase>-boton` y `<clase>-principal` (el primer botón).
   // `tema` es una clase más, con los colores (la de cada universidad).
+  //
+  // Con `pagina` y `fichas`, sus botones nunca sacan a nadie del sitio: lo que
+  // es de afuera (los resultados en chess-results, las bases) lleva a la ficha
+  // de esa misma cosa en la página del torneo, que la abre encima (`#<id>` de
+  // un a[data-ventana], js/ventana-enlace.js); lo que no tiene ficha, a la
+  // página entera.
   const PORTADAS = {
-    "centroamericano-2026": { clase: "cac-sala", imagen: "/img/centroamericano-2026/mascota-trofeo.png", ancho: 124, alto: 120 },
-    // Las universidades, con su azul y su logo (css/universidades.css). Ver
+    "centroamericano-2026": {
+      clase: "cac-sala", imagen: "/img/centroamericano-2026/mascota-trofeo.png", ancho: 124, alto: 120,
+      pagina: "/centroamericano-2026.html",
+      fichas: [[/chess-results\.com\//i, "ficha-resultados"], [/bases-cac-2026\.pdf$/i, "ficha-bases"]],
+    },
+    // Las universidades, con su azul y su logo (css/universidades.css). Sin
+    // `fichas`: su enlace directo a Lichess no tiene ficha en su página. Ver
     // «La ficha del Desafío Mentes Maestras».
     "cenfotec": { clase: "u-sala", tema: "u-sala-cft", imagen: "/img/cenfotec/logo.png", ancho: 566, alto: 256 },
     "utn": { clase: "u-sala", tema: "u-sala-utn", imagen: "/img/utn/logo.png", ancho: 410, alto: 313 },
   };
+
+  function adentro(portada, url) {
+    const ficha = portada.fichas.find(([patron]) => patron.test(String(url || "")));
+    if (ficha) return portada.pagina + "#" + ficha[1];
+    return delSitio(url) || portada.pagina;
+  }
 
   // La ficha, igual en la página pública y en la vista previa del editor (que
   // la pone dentro de una caja `inert`: se ve, pero no se sigue ni se enfoca).
@@ -117,10 +151,10 @@
       a.appendChild(document.createTextNode(" →"));
       li.appendChild(a);
       // Sobre el fondo de una portada, el enlace subrayado no se lee: va de botón.
-      enlaces.forEach((e) => li.appendChild(enlaceAfuera(e, portada ? boton(false) + " mt-3" : CLASE_SECUNDARIO, sala.nombre)));
+      enlaces.forEach((e) => li.appendChild(enlaceAfuera(e, portada ? boton(false) + " mt-3" : CLASE_SECUNDARIO, sala.nombre, portada)));
     } else {
       const caja = el("div", "grid grid-cols-1 " + (enlaces.length > 1 ? "sm:grid-cols-2 " : "") + "gap-3");
-      enlaces.forEach((e, i) => caja.appendChild(enlaceAfuera(e, boton(i === 0), sala.nombre)));
+      enlaces.forEach((e, i) => caja.appendChild(enlaceAfuera(e, boton(i === 0), sala.nombre, portada)));
       li.appendChild(caja);
     }
     return li;

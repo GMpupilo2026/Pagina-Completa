@@ -16,6 +16,13 @@
  *       un aviso 30 minutos antes de cada ronda. Sale de la tabla: una sola
  *       copia de las horas.
  *
+ *   img/centroamericano-2026/app/icon-192.png, icon-512.png,
+ *   icon-512-maskable.png y apple-touch-icon.png
+ *       Los íconos de la página instalada como app (manifest-centroamericano-2026.json):
+ *       el pizote en un círculo blanco sobre el morado de las bases. El
+ *       «maskable» deja el pizote dentro de la zona segura (el 80 % del medio),
+ *       porque Android lo recorta en círculo o en gota.
+ *
  * No se editan a mano: se vuelven a generar con este script. Las fechas, la
  * sede y el ritmo salen de las bases, igual que en la página.
  *
@@ -210,6 +217,17 @@ function qrSvg(texto) {
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${lado} ${lado}" shape-rendering="crispEdges" role="img" aria-label="Código QR a la página del Centroamericano 2026"><rect width="${lado}" height="${lado}" fill="#fff"/><path d="${d}" fill="#1e2453"/></svg>`;
 }
 
+// Los íconos de la app: [archivo, lado, cuánto ocupa el pizote].
+const APP = path.join(RAIZ, "img/centroamericano-2026/app");
+const ICONOS = [["icon-192.png", 192, 0.86], ["icon-512.png", 512, 0.86], ["icon-512-maskable.png", 512, 0.62], ["apple-touch-icon.png", 180, 0.86]];
+function htmlIcono(lado, parte) {
+  const d = Math.round(lado * parte), borde = Math.max(3, Math.round(lado * 0.025));
+  return `<!doctype html><html><head><meta charset="utf-8"><style>
+html,body{margin:0;width:${lado}px;height:${lado}px;background:#40478f;display:flex;align-items:center;justify-content:center;overflow:hidden}
+img{width:${d}px;height:${d}px;border-radius:50%;object-fit:cover;border:${borde}px solid #fff;box-sizing:border-box}
+</style></head><body><img src="${archivo("img/centroamericano-2026/mascota.jpg")}" alt=""></body></html>`;
+}
+
 (async () => {
   fs.writeFileSync(ICS, calendarioIcs());
   console.log("✓", path.relative(RAIZ, ICS));
@@ -229,6 +247,16 @@ function qrSvg(texto) {
     await pCartel.evaluate(() => document.fonts.ready);
     await pCartel.pdf({ path: CARTEL, format: "Letter", printBackground: true, margin: { top: 0, bottom: 0, left: 0, right: 0 } });
     console.log("✓", path.relative(RAIZ, CARTEL));
+
+    fs.mkdirSync(APP, { recursive: true });
+    for (const [nombre, lado, parte] of ICONOS) {
+      const pIcono = await navegador.newPage({ viewport: { width: lado, height: lado } });
+      fs.writeFileSync(path.join(tmp, "icono.html"), htmlIcono(lado, parte));
+      await pIcono.goto("file://" + path.join(tmp, "icono.html"), { waitUntil: "load" });
+      await pIcono.screenshot({ path: path.join(APP, nombre), type: "png" });
+      await pIcono.close();
+      console.log("✓", path.relative(RAIZ, path.join(APP, nombre)));
+    }
   } finally {
     await navegador.close();
     fs.rmSync(tmp, { recursive: true, force: true });

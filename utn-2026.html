@@ -239,8 +239,9 @@
         </div>
     </dialog>
 
-    <!-- La clasificación final de cada rama en letra grande, para una
-         pantalla: pasa sola de a 12 jugadores. Se abre con #proyector. -->
+    <!-- Para una pantalla: los podios y la clasificación final de cada rama
+         en letra grande, que pasan solos, y el QR de la página. El de
+         js/centroamericano-tablas.js. Se abre con #proyector. -->
     <dialog id="proyector" class="ficha-dialogo cac-proyector p-0 backdrop:bg-black" aria-labelledby="proyector-titulo">
         <div class="cac-proyector-barra">
             <h2 id="proyector-titulo" class="cac-proyector-titulo"></h2>
@@ -249,11 +250,16 @@
                 <button type="button" id="proyector-anterior" class="cac-proyector-boton"><span aria-hidden="true">◀ </span>Anterior</button>
                 <button type="button" id="proyector-pausa" class="cac-proyector-boton" aria-pressed="false"></button>
                 <button type="button" id="proyector-siguiente" class="cac-proyector-boton">Siguiente<span aria-hidden="true"> ▶</span></button>
+                <label class="cac-proyector-modo"><span class="sr-only">Qué mostrar</span>
+                    <select id="proyector-modo" class="cac-proyector-boton"></select>
+                </label>
                 <button type="button" id="proyector-completa" class="cac-proyector-boton">Pantalla completa</button>
                 <button type="button" data-cerrar class="cac-proyector-boton">Cerrar</button>
             </div>
         </div>
+        <p id="proyector-progreso" class="cac-proyector-progreso" hidden></p>
         <div id="proyector-contenido" class="cac-proyector-contenido" aria-live="off"></div>
+        <div class="cac-proyector-qr" aria-hidden="true"><div id="proyector-qr"></div><p>Ábrela en tu celular</p></div>
     </dialog>
     </main>
 
@@ -274,6 +280,8 @@
     <script src="js/pareo/torneo.js"></script>
     <script src="js/pareo/desempates.js"></script>
     <script src="js/tabla-imagen.js"></script>
+    <script src="js/vendor/qrcode.js"></script>
+    <script src="js/qr-svg.js"></script>
     <script src="js/centroamericano-vivo.js"></script>
     <script src="js/centroamericano-tablas.js"></script>
     <script src="js/torneo-podio.js"></script>
