@@ -4,10 +4,14 @@
  * - La clasificación completa de cada categoría (#clasificacion), con el
  *   rendimiento de cada jugador.
  * - La tabla por país (#delegaciones): puntos, porcentaje y ronda a ronda.
- * - El pareo para proyectar (#proyector): letra grande, pasa solo por las
- *   categorías cada 15 segundos, con la hora; para una pantalla en la sala.
- * - La imagen para compartir a un jugador (WhatsApp), con la marca de agua de
- *   Ajedrez Integral (js/tabla-imagen.js, la misma copia).
+ * - El pareo para proyectar (#proyector): letra grande, pasa solo por el pareo
+ *   y la clasificación de cada categoría cada 15 segundos (o solo uno de los
+ *   dos), con la hora, cómo va la ronda y un QR a la página; con el torneo
+ *   terminado, empieza por los podios. Para una pantalla en la sala.
+ * - Las sorpresas (el de menos Elo que puntúa contra el de más) y los invictos (#sorpresas).
+ * - La imagen para compartir a un jugador y la del resumen de una delegación
+ *   (WhatsApp), con la marca de agua de Ajedrez Integral (js/tabla-imagen.js,
+ *   la misma copia).
  *
  * Los datos, las rondas de cada jugador y los textos comunes salen de
  * window.CentroamericanoVivo: una sola copia. Todo lo de afuera (nombres) va
@@ -53,6 +57,19 @@
       compartirTexto: (n) => n + " en el Centroamericano 2026:",
       imagenLista: "Listo: la imagen se bajó a tu aparato.",
       imagenError: "No se pudo armar la imagen. Intenta de nuevo.",
+      sorpresa: (r, cat, yo, gano, rival, dif) => "Ronda " + r + " · " + cat + ": " + yo + (gano ? " le ganó a " : " hizo tablas con ") + rival + ", " + dif + " puntos de Elo más.",
+      sorpresasRonda: (r) => "Las sorpresas de la ronda " + r,
+      sorpresasTorneo: "Las sorpresas del torneo",
+      ningunaSorpresa: "Ninguna todavía: hasta ahora ganó siempre el de más Elo.",
+      sinSorpresas: "Las sorpresas aparecen cuando termine la ronda 1.",
+      invictos: "Invictos de cada categoría",
+      nadieInvicto: "Nadie va invicto.",
+      puntosCortos: (p) => p + (p === "1" ? " punto" : " puntos"),
+      modoTodo: "Pareo y clasificación", modoPareo: "Solo el pareo", modoClasif: "Solo la clasificación",
+      proyClasif: (r, cat, pag, de) => "Clasificación · " + cat + " · tras la ronda " + r + (de > 1 ? " · " + pag + "/" + de : ""),
+      proyPodios: "Los podios",
+      imgResumenSub: "Centroamericano 2026 · Costa Rica",
+      imgMas: (n) => "y " + n + " más",
       locale: "es-CR",
     },
     en: {
@@ -80,6 +97,19 @@
       compartirTexto: (n) => n + " at the Centroamericano 2026:",
       imagenLista: "Done: the image was saved to your device.",
       imagenError: "We couldn't make the image. Please try again.",
+      sorpresa: (r, cat, yo, gano, rival, dif) => "Round " + r + " · " + cat + ": " + yo + (gano ? " beat " : " drew with ") + rival + ", rated " + dif + " points higher.",
+      sorpresasRonda: (r) => "The upsets of round " + r,
+      sorpresasTorneo: "The upsets of the tournament",
+      ningunaSorpresa: "None yet: so far the higher-rated player always won.",
+      sinSorpresas: "Upsets show up once round 1 is over.",
+      invictos: "Unbeaten players in each section",
+      nadieInvicto: "Nobody is unbeaten.",
+      puntosCortos: (p) => p + (p === "1" ? " point" : " points"),
+      modoTodo: "Pairings and standings", modoPareo: "Pairings only", modoClasif: "Standings only",
+      proyClasif: (r, cat, pag, de) => "Standings · " + cat + " · after round " + r + (de > 1 ? " · " + pag + "/" + de : ""),
+      proyPodios: "The podiums",
+      imgResumenSub: "Centroamericano 2026 · Costa Rica",
+      imgMas: (n) => "and " + n + " more",
       locale: "en-US",
     },
   };
@@ -87,19 +117,7 @@
   const decir = (nodo, s) => { nodo.textContent = String(s).replace(/\.\./g, "."); };
   const nombreCompleto = (j) => (j.titulo ? j.titulo + " " : "") + j.nombre;
 
-  // Un aviso para el lector de pantalla (y nada en la pantalla).
-  function anunciar(texto) {
-    let r = $("cac-anuncio");
-    if (!r) {
-      r = el("p", "sr-only");
-      r.id = "cac-anuncio";
-      r.setAttribute("role", "status");
-      r.setAttribute("data-no-traducir", "");
-      document.body.appendChild(r);
-    }
-    r.textContent = "";
-    setTimeout(() => { r.textContent = texto; }, 50);
-  }
+  const anunciar = V.anunciar;
 
   // `iFila` es la columna que nombra la fila (el jugador, el país): va en <th scope="row">.
   function tabla(cabeceras, filas, numericas, iFila) {
@@ -199,29 +217,128 @@
     caja.appendChild(el("p", "mt-3 text-sm text-brand-600 dark:text-brand-300", tx.notaPaises));
   }
 
+  /* ---------------- sorpresas e invictos ---------------- */
+  // Una partida es sorpresa cuando el de menos Elo puntúa contra el de más (los
+  // dos con Elo, jugada en el tablero). Las tablas cuentan la mitad.
+  function sorpresas() {
+    const lista = [];
+    V.jugadores().forEach((x) => {
+      if (!x.j.elo) return;
+      V.rondasDe(x).forEach((o) => {
+        if (o.bye || o.incomparecencia || !o.puntos || !o.rival || !o.rival.elo || o.rival.elo <= x.j.elo) return;
+        const dif = o.rival.elo - x.j.elo;
+        lista.push({ x, o, dif, peso: dif * o.puntos });
+      });
+    });
+    return lista.sort((a, b) => b.peso - a.peso || b.dif - a.dif);
+  }
+  function invictos() {
+    const porGrupo = {};
+    V.jugadores().forEach((x) => {
+      const jugadas = V.rondasDe(x).filter((o) => !o.bye && o.puntos !== null);
+      if (!jugadas.length || jugadas.some((o) => o.puntos === 0)) return;
+      (porGrupo[x.j.grupo || "—"] = porGrupo[x.j.grupo || "—"] || []).push(x);
+    });
+    return porGrupo;
+  }
+  function lineaSorpresa(s, tx) {
+    const yo = nombreCompleto(s.x.j) + " (" + [s.x.j.fed, s.x.j.elo].filter(Boolean).join(", ") + ")";
+    const rival = nombreCompleto(s.o.rival) + " (" + [s.o.rival.fed, s.o.rival.elo].filter(Boolean).join(", ") + ")";
+    return tx.sorpresa(s.o.ronda, V.categoria(s.x.j.grupo), yo, s.o.puntos === 1, rival, s.dif);
+  }
+  function pintarSorpresas() {
+    const caja = $("sorpresas-contenido");
+    if (!caja) return;
+    const tx = T();
+    if (!V.datos()) { caja.replaceChildren(el("p", "", tx.cargando)); return; }
+    const todas = sorpresas();
+    caja.replaceChildren();
+    const ronda = Math.max(0, ...V.jugadores().flatMap((x) => V.rondasDe(x).filter((o) => o.puntos !== null).map((o) => o.ronda)));
+    if (!ronda) { caja.appendChild(el("p", "font-semibold", tx.sinSorpresas)); return; }
+    const seccion = (titulo, items, vacio) => {
+      caja.appendChild(el("h3", "mt-4 font-bold text-lg", titulo));
+      if (!items.length) { caja.appendChild(el("p", "mt-1", vacio)); return; }
+      const ol = el("ol", "cac-sorpresas mt-2");
+      items.forEach((s) => ol.appendChild(el("li", "", lineaSorpresa(s, tx))));
+      caja.appendChild(ol);
+    };
+    seccion(tx.sorpresasRonda(ronda), todas.filter((s) => s.o.ronda === ronda).slice(0, 8), tx.ningunaSorpresa);
+    seccion(tx.sorpresasTorneo, todas.slice(0, 8), tx.ningunaSorpresa);
+    const inv = invictos();
+    caja.appendChild(el("h3", "mt-6 font-bold text-lg", tx.invictos));
+    const grupos = Object.keys(inv).sort((a, b) => V.ordenGrupo(a) - V.ordenGrupo(b) || a.localeCompare(b));
+    if (!grupos.length) { caja.appendChild(el("p", "mt-1", tx.nadieInvicto)); return; }
+    const rejilla = el("div", "cac-podios mt-2");
+    grupos.forEach((g) => {
+      const c = el("section", "cac-podio");
+      c.appendChild(el("h4", "font-bold", V.categoria(g)));
+      const ul = el("ul", "mt-1 text-sm");
+      inv[g].sort((a, b) => a.j.puesto - b.j.puesto).forEach((x) => ul.appendChild(el("li", "", nombreCompleto(x.j) + (x.j.fed ? " (" + x.j.fed + ")" : "") + " · " + tx.puntosCortos(x.j.puntos || "0"))));
+      c.appendChild(ul);
+      rejilla.appendChild(c);
+    });
+    caja.appendChild(rejilla);
+  }
+
   /* ---------------- el pareo para proyectar ---------------- */
-  let paginas = [], pagina = 0, pausado = false, reloj = null, refresco = null;
+  // Tres modos: el pareo y la clasificación de cada categoría seguidos (el de
+  // siempre), solo el pareo o solo la clasificación. Con el torneo terminado,
+  // empieza por los podios. Lo elegido queda en este aparato (la pantalla de la sala).
+  const CLAVE_MODO = "cac_proyector_modo_v1";
+  const FILAS_CLASIF = 12;
+  let modo = (() => { try { const m = localStorage.getItem(CLAVE_MODO); return ["todo", "pareo", "clasif"].includes(m) ? m : "todo"; } catch (e) { return "todo"; } })();
+  let paginas = [], pagina = 0, pausado = false, reloj = null, refresco = null, segundos = 0;
 
   function armarPaginas() {
     const salida = [];
     const datos = V.datos();
     if (!datos) return salida;
+    const todos = V.jugadores();
+    const ronda = rondaActual();
+    const porGrupoJug = {};
+    todos.forEach((x) => { (porGrupoJug[x.j.grupo || "—"] = porGrupoJug[x.j.grupo || "—"] || []).push(x); });
+    const orden = (a, b) => V.ordenGrupo(a) - V.ordenGrupo(b) || a.localeCompare(b);
+    // Terminado: la clasificación ya es la de la última ronda.
+    if (datos.torneos.some((t) => t.rondas && t.ronda >= t.rondas)) {
+      const grupos = Object.keys(porGrupoJug).sort(orden);
+      const de = Math.ceil(grupos.length / 3);
+      for (let i = 0; i < de; i++) salida.push({ tipo: "podios", grupos: grupos.slice(i * 3, i * 3 + 3), porGrupo: porGrupoJug, pag: i + 1, de });
+    }
+    const pareoDe = {};
     datos.torneos.forEach((tor) => {
       const pareo = tor.pareo;
       if (!pareo || !pareo.ronda || !Array.isArray(pareo.mesas) || !pareo.mesas.length) return;
       const porNo = new Map((tor.jugadores || []).map((j) => [j.no, j]));
-      const porGrupo = {};
       pareo.mesas.slice().sort((a, b) => a.mesa - b.mesa).forEach((m) => {
         const g = (porNo.get(m.blancas.no) || {}).grupo || "—";
-        (porGrupo[g] = porGrupo[g] || []).push(m);
-      });
-      Object.keys(porGrupo).sort((a, b) => V.ordenGrupo(a) - V.ordenGrupo(b) || a.localeCompare(b)).forEach((g) => {
-        const mesas = porGrupo[g];
-        const de = Math.ceil(mesas.length / MESAS_POR_PAGINA);
-        for (let i = 0; i < de; i++) salida.push({ ronda: pareo.ronda, grupo: g, pag: i + 1, de, mesas: mesas.slice(i * MESAS_POR_PAGINA, (i + 1) * MESAS_POR_PAGINA), porNo });
+        (pareoDe[g] = pareoDe[g] || { ronda: pareo.ronda, porNo, mesas: [] }).mesas.push(m);
       });
     });
+    const grupos = [...new Set(Object.keys(pareoDe).concat(ronda ? Object.keys(porGrupoJug) : []))].sort(orden);
+    grupos.forEach((g) => {
+      const p = pareoDe[g];
+      if (p && modo !== "clasif") {
+        const de = Math.ceil(p.mesas.length / MESAS_POR_PAGINA);
+        for (let i = 0; i < de; i++) salida.push({ tipo: "pareo", ronda: p.ronda, grupo: g, pag: i + 1, de, mesas: p.mesas.slice(i * MESAS_POR_PAGINA, (i + 1) * MESAS_POR_PAGINA), porNo: p.porNo });
+      }
+      if (ronda && porGrupoJug[g] && modo !== "pareo") {
+        const lista = porGrupoJug[g].slice().sort((a, b) => a.j.puesto - b.j.puesto);
+        const de = Math.ceil(lista.length / FILAS_CLASIF);
+        for (let i = 0; i < de; i++) salida.push({ tipo: "clasif", ronda, grupo: g, pag: i + 1, de, desde: i * FILAS_CLASIF, filas: lista.slice(i * FILAS_CLASIF, (i + 1) * FILAS_CLASIF) });
+      }
+    });
     return salida;
+  }
+
+  function tablaProyector(cabeceras, filas, clases) {
+    const t = el("table", "cac-proyector-tabla");
+    const cab = el("tr");
+    cabeceras.forEach((c) => { const th = el("th", "", c); th.scope = "col"; cab.appendChild(th); });
+    const thead = el("thead"); thead.appendChild(cab);
+    const tbody = el("tbody");
+    filas.forEach((f) => { const tr = el("tr"); f.forEach((c, i) => tr.appendChild(el("td", clases[i] || "", c))); tbody.appendChild(tr); });
+    t.append(thead, tbody);
+    return t;
   }
 
   function pintarProyector() {
@@ -230,6 +347,15 @@
     const tx = T();
     $("proyector-pausa").textContent = pausado ? tx.seguir : tx.pausa;
     $("proyector-pausa").setAttribute("aria-pressed", pausado ? "true" : "false");
+    const sel = $("proyector-modo");
+    if (sel && sel.dataset.idioma !== V.idioma()) {
+      sel.dataset.idioma = V.idioma();
+      sel.replaceChildren(...[["todo", tx.modoTodo], ["pareo", tx.modoPareo], ["clasif", tx.modoClasif]].map(([v, t]) => { const o = el("option", "", t); o.value = v; return o; }));
+    }
+    if (sel) sel.value = modo;
+    const prog = V.progresoRonda(), linea = $("proyector-progreso");
+    linea.hidden = !prog;
+    if (prog) linea.textContent = prog.hechas === prog.total ? V.textos().rondaTerminada(prog.ronda) : V.textos().progreso(prog.ronda, prog.hechas, prog.total);
     if (!paginas.length) {
       titulo.textContent = "Centroamericano 2026";
       caja.replaceChildren(el("p", "cac-proyector-vacio", V.datos() ? tx.proySinPareo : tx.cargando));
@@ -237,23 +363,37 @@
     }
     if (pagina >= paginas.length) pagina = 0;
     const p = paginas[pagina];
-    titulo.textContent = tx.proyTitulo(p.ronda, V.categoria(p.grupo), p.pag, p.de);
-    const quien = (n) => { const j = n && p.porNo.get(n.no); return n ? nombreCompleto(n) + (j && j.fed ? " (" + j.fed + ")" : "") : ""; };
-    const t = el("table", "cac-proyector-tabla");
-    const cab = el("tr");
-    [tx.proyMesa, tx.proyBlancas, tx.proyResultado, tx.proyNegras].forEach((c) => { const th = el("th", "", c); th.scope = "col"; cab.appendChild(th); });
-    const thead = el("thead"); thead.appendChild(cab);
-    const tbody = el("tbody");
-    p.mesas.forEach((m) => {
-      const tr = el("tr");
-      tr.appendChild(el("td", "mesa", String(m.mesa)));
-      tr.appendChild(el("td", "", quien(m.blancas)));
-      tr.appendChild(el("td", "res", m.negras ? (/\d|½|\+/.test(m.resultado || "") ? m.resultado : "–") : ""));
-      tr.appendChild(el("td", "", m.negras ? quien(m.negras) : tx.proyBye));
-      tbody.appendChild(tr);
-    });
-    t.append(thead, tbody);
-    caja.replaceChildren(t);
+    const conFed = (j, n) => nombreCompleto(n || j) + (j && j.fed ? " (" + j.fed + ")" : "");
+    if (p.tipo === "pareo") {
+      titulo.textContent = tx.proyTitulo(p.ronda, V.categoria(p.grupo), p.pag, p.de);
+      const quien = (n) => (n ? conFed(p.porNo.get(n.no), n) : "");
+      caja.replaceChildren(tablaProyector([tx.proyMesa, tx.proyBlancas, tx.proyResultado, tx.proyNegras], p.mesas.map((m) => [
+        String(m.mesa), quien(m.blancas), m.negras ? (/\d|½|\+/.test(m.resultado || "") ? m.resultado : "–") : "", m.negras ? quien(m.negras) : tx.proyBye]), ["mesa", "", "res", ""]));
+    } else if (p.tipo === "clasif") {
+      titulo.textContent = tx.proyClasif(p.ronda, V.categoria(p.grupo), p.pag, p.de);
+      caja.replaceChildren(tablaProyector([tx.colPuesto, tx.colJugador, tx.colPuntos, tx.colRend], p.filas.map((x, i) => {
+        const r = V.rendimiento(x);
+        return [String(p.desde + i + 1), conFed(x.j), x.j.puntos || "0", r ? String(r.rp) : "—"];
+      }), ["mesa", "", "res", "res"]));
+    } else {
+      titulo.textContent = tx.proyPodios + (p.de > 1 ? " · " + p.pag + "/" + p.de : "");
+      const rejilla = el("div", "cac-proyector-podios");
+      p.grupos.forEach((g) => {
+        const c = el("section", "");
+        c.appendChild(el("h3", "", V.categoria(g)));
+        const ol = el("ol", "");
+        p.porGrupo[g].slice().sort((a, b) => a.j.puesto - b.j.puesto).slice(0, 3).forEach((x, i) => {
+          const li = el("li", "");
+          const m = el("span", "", ["🥇", "🥈", "🥉"][i] + " ");
+          m.setAttribute("aria-hidden", "true");
+          li.append(m, document.createTextNode((i + 1) + ". " + conFed(x.j) + " · " + tx.puntosCortos(x.j.puntos || "0")));
+          ol.appendChild(li);
+        });
+        c.appendChild(ol);
+        rejilla.appendChild(c);
+      });
+      caja.replaceChildren(rejilla);
+    }
   }
 
   function ponerReloj() {
@@ -262,6 +402,7 @@
   }
 
   function avanzar(paso) {
+    segundos = 0;
     if (!paginas.length) return;
     pagina = (pagina + paso + paginas.length) % paginas.length;
     pintarProyector();
@@ -271,8 +412,13 @@
     paginas = armarPaginas();
     pintarProyector();
     ponerReloj();
+    const qr = $("proyector-qr");
+    if (qr && !qr.firstChild && window.QrSvg) {
+      const svg = window.QrSvg.dibujar("https://" + URL_PAGINA, "QR");
+      if (svg) qr.appendChild(svg);
+    }
     clearInterval(reloj);
-    let segundos = 0;
+    segundos = 0;
     reloj = setInterval(() => {
       ponerReloj();
       if (pausado) return;
@@ -370,24 +516,86 @@
     return new Promise((ok, mal) => c.toBlob((b) => (b ? ok(b) : mal(new Error("sin imagen"))), "image/png"));
   }
 
+  // Lo manda con el menú de compartir del celular o, si no hay, lo baja.
+  async function compartirBlob(blob, nombre, texto) {
+    const archivo = new File([blob], nombre, { type: "image/png" });
+    if (navigator.canShare && navigator.canShare({ files: [archivo] })) {
+      try { await navigator.share({ files: [archivo], text: texto }); } catch (e) { if (e && e.name !== "AbortError") throw e; }
+      return;
+    }
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = nombre;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 10000);
+    anunciar(T().imagenLista);
+  }
+
+  // El resumen de la ronda de una delegación, para un estado o las redes: 1080
+  // de ancho y el alto que pidan sus jugadores (hasta 14, y «y N más»). Mismos
+  // colores medidos que la imagen de un jugador.
+  async function imagenResumen(d) {
+    const tx = T();
+    if (document.fonts && document.fonts.ready) await document.fonts.ready;
+    const letra = getComputedStyle(document.body).fontFamily || "system-ui, sans-serif";
+    const MAX = 14;
+    const lineas = d.lineas.slice(0, MAX);
+    const alto = Math.max(1080, 560 + lineas.length * 54 + (d.lineas.length > MAX ? 54 : 0) + 140);
+    const c = document.createElement("canvas");
+    c.width = 1080; c.height = alto;
+    const ctx = c.getContext("2d");
+    ctx.fillStyle = "#ffffff"; ctx.fillRect(0, 0, 1080, alto);
+    ctx.fillStyle = "#40478f"; ctx.fillRect(0, 0, 1080, 230);
+    ctx.fillStyle = "#ffffff";
+    ctx.font = "800 64px " + letra;
+    ctx.fillText(renglones(ctx, d.pais, 760, 1)[0], 60, 115);
+    ctx.font = "600 34px " + letra;
+    ctx.fillText(tx.imgResumenSub, 60, 175);
+    const mascota = await cargarImagen("img/centroamericano-2026/mascota.jpg");
+    if (mascota) {
+      ctx.save(); ctx.beginPath(); ctx.arc(950, 115, 90, 0, Math.PI * 2); ctx.closePath(); ctx.clip();
+      const lado = Math.min(mascota.width, mascota.height);
+      ctx.drawImage(mascota, (mascota.width - lado) / 2, (mascota.height - lado) / 2, lado, lado, 860, 25, 180, 180);
+      ctx.restore();
+      ctx.lineWidth = 6; ctx.strokeStyle = "#ffffff"; ctx.beginPath(); ctx.arc(950, 115, 90, 0, Math.PI * 2); ctx.stroke();
+    }
+    ctx.fillStyle = "#1e2453"; ctx.font = "800 52px " + letra;
+    let y = 320;
+    renglones(ctx, d.resumen, 960, 2).forEach((l) => { ctx.fillText(l, 60, y); y += 62; });
+    ctx.fillStyle = "#40478f"; ctx.font = "700 38px " + letra;
+    ctx.fillText(d.puntos, 60, y + 4);
+    y += 80;
+    ctx.fillStyle = "#1f2937"; ctx.font = "500 32px " + letra;
+    lineas.forEach((l) => { ctx.fillText(renglones(ctx, l, 960, 1)[0], 60, y); y += 54; });
+    if (d.lineas.length > MAX) { ctx.fillText(tx.imgMas(d.lineas.length - MAX), 60, y); y += 54; }
+    ctx.fillStyle = "#40478f"; ctx.font = "700 32px " + letra;
+    ctx.fillText(URL_PAGINA, 60, alto - 70);
+    [["#1e4c8a", alto - 40], ["#ffffff", alto - 30], ["#ce1328", alto - 22], ["#ffffff", alto - 14], ["#1e4c8a", alto - 8]].forEach(([color, yy], i, arr) => {
+      ctx.fillStyle = color; ctx.fillRect(0, yy, 1080, (arr[i + 1] ? arr[i + 1][1] : alto) - yy);
+    });
+    if (window.TablaImagen && window.TablaImagen.marcar) await window.TablaImagen.marcar(c);
+    return new Promise((ok, mal) => c.toBlob((b) => (b ? ok(b) : mal(new Error("sin imagen"))), "image/png"));
+  }
+
+  async function compartirResumen(d, boton) {
+    if (boton) boton.disabled = true;
+    try {
+      const blob = await imagenResumen(d);
+      await compartirBlob(blob, "centroamericano-2026-" + V.plano(d.pais).replace(/ /g, "-") + "-ronda-" + d.ronda + ".png", d.pais + " · " + d.resumen + " https://" + URL_PAGINA);
+    } catch (e) {
+      anunciar(T().imagenError);
+    } finally {
+      if (boton) boton.disabled = false;
+    }
+  }
+
   async function compartirJugador(x, boton) {
     const tx = T();
     if (boton) boton.disabled = true;
     try {
       const blob = await imagenJugador(x);
       const nombre = "centroamericano-2026-" + V.plano(x.j.nombre).replace(/ /g, "-") + ".png";
-      const archivo = new File([blob], nombre, { type: "image/png" });
-      const texto = tx.compartirTexto(x.j.nombre) + " https://" + URL_PAGINA;
-      if (navigator.canShare && navigator.canShare({ files: [archivo] })) {
-        try { await navigator.share({ files: [archivo], text: texto }); } catch (e) { if (e && e.name !== "AbortError") throw e; }
-        return;
-      }
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url; a.download = nombre;
-      document.body.appendChild(a); a.click(); a.remove();
-      setTimeout(() => URL.revokeObjectURL(url), 10000);
-      anunciar(tx.imagenLista);
+      await compartirBlob(blob, nombre, tx.compartirTexto(x.j.nombre) + " https://" + URL_PAGINA);
     } catch (e) {
       anunciar(tx.imagenError);
     } finally {
@@ -407,6 +615,7 @@
   }
   alAbrir("clasificacion", pintarClasificacion);
   alAbrir("delegaciones", pintarDelegaciones);
+  alAbrir("sorpresas", pintarSorpresas);
   const proy = $("proyector");
   if (proy) {
     new MutationObserver(() => { if (proy.open) abrirProyector(); else cerrarProyector(); }).observe(proy, { attributes: true, attributeFilter: ["open"] });
@@ -414,6 +623,11 @@
     $("proyector-anterior").addEventListener("click", () => avanzar(-1));
     $("proyector-siguiente").addEventListener("click", () => avanzar(1));
     $("proyector-pausa").addEventListener("click", () => { pausado = !pausado; pintarProyector(); });
+    $("proyector-modo").addEventListener("change", (e) => {
+      modo = e.target.value;
+      try { localStorage.setItem(CLAVE_MODO, modo); } catch (err) {}
+      paginas = armarPaginas(); pagina = 0; segundos = 0; pintarProyector();
+    });
     $("proyector-completa").addEventListener("click", () => {
       if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
       else if (proy.requestFullscreen) proy.requestFullscreen().catch(() => {});
@@ -430,10 +644,11 @@
   const repintar = () => {
     if ($("clasificacion") && $("clasificacion").open) pintarClasificacion();
     if ($("delegaciones") && $("delegaciones").open) pintarDelegaciones();
+    if ($("sorpresas") && $("sorpresas").open) pintarSorpresas();
     if (proy && proy.open) { paginas = armarPaginas(); pintarProyector(); }
   };
   document.addEventListener("cac-datos", repintar);
   document.addEventListener("cac-idioma", repintar);
 
-  window.CentroamericanoTablas = { compartirJugador, imagenJugador };
+  window.CentroamericanoTablas = { compartirJugador, imagenJugador, compartirResumen, imagenResumen };
 })();

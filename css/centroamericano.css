@@ -557,3 +557,34 @@ a.cac-despedida:hover .cac-globo { transform: translateY(-2px); }
 .cac-proyector-tabla .mesa { font-weight: 800; width: 3.5em; font-variant-numeric: tabular-nums; }
 .cac-proyector-tabla .res { width: 5em; text-align: center; font-weight: 800; }
 .cac-proyector-vacio { font-size: clamp(1.4rem, 3vw, 2.8rem); font-weight: 700; padding-top: 2rem; }
+
+/* Cómo va la ronda: el número va escrito; la barra solo lo acompaña. */
+.cac-progreso { padding: 0.8rem 1rem; border-radius: 1rem; background: var(--cac-fondo); border: 2px solid var(--cac-verde); }
+.cac-progreso[hidden] { display: none; }
+.cac-progreso-barra { margin-top: 0.5rem; height: 0.75rem; border-radius: 999px; background: #dfe0f7; overflow: hidden; }
+.cac-progreso-barra span { display: block; height: 100%; width: 0; background: var(--cac-verde); transition: width 0.4s; }
+.dark .cac-progreso { border-color: #9be0bb; }
+.dark .cac-progreso-barra { background: rgb(var(--c-brand-800, 36 59 83)); }
+.dark .cac-progreso-barra span { background: #9be0bb; }
+#delegacion-avisos-caja[hidden] { display: none; }
+
+/* Las sorpresas, numeradas. */
+.cac-sorpresas { padding-left: 1.4rem; list-style: decimal; }
+.cac-sorpresas li + li { margin-top: 0.4rem; }
+
+/* El proyector: cómo va la ronda, el modo, los podios y el QR en la esquina. */
+.cac-proyector-progreso { padding: 0.4rem 1.5rem; background: #2a3166; font-size: clamp(1rem, 1.8vw, 1.6rem); font-weight: 700; }
+.cac-proyector-progreso[hidden] { display: none; }
+.cac-proyector-modo select { appearance: auto; }
+.cac-proyector-podios { display: grid; gap: 1.5rem; grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr)); font-size: clamp(1.1rem, 2vw, 2rem); }
+.cac-proyector-podios h3 { font-weight: 800; font-size: 1.15em; color: #ffd66b; }
+.cac-proyector-podios li { margin-top: 0.4em; }
+.cac-proyector-qr { position: absolute; right: 1.25rem; bottom: 1.25rem; width: clamp(7rem, 12vw, 11rem); text-align: center; background: #fff; color: #1e2453; border-radius: 1rem; padding: 0.5rem; font-weight: 800; font-size: 0.85rem; }
+.cac-proyector-qr div { aspect-ratio: 1; }
+.cac-proyector[open] { position: fixed; }
+@media (max-width: 640px) { .cac-proyector-qr { display: none; } }
+
+/* «Instala el Centroamericano en tu celular» (y la ayuda para iPhone). */
+.cac-instalar { display: flex; flex-wrap: wrap; align-items: center; gap: 1rem; padding: 1rem 1.25rem; border-radius: 1.5rem; background: #fff; border: 3px solid var(--cac-morado); }
+.cac-instalar[hidden] { display: none; }
+.dark .cac-instalar { background: rgb(var(--c-brand-900, 10 31 51)); border-color: #b8bbf2; }
