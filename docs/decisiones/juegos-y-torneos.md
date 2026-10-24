@@ -8781,6 +8781,31 @@ Es una página estática, sin cuenta y sin base: nada se guarda.
   el pareo», «Solo la clasificación», guardado en ese aparato), cómo va la
   ronda, un QR a la página en la esquina (`js/qr-svg.js`) y, con el torneo
   terminado, los podios primero.
+- **Su puesto ronda a ronda** (en «Sus rondas» y en la imagen del jugador):
+  `puestosDe()` cuenta los puntos de cada jugador de su categoría tras cada
+  ronda del cuadro cruzado (la ronda que solo está en el pareo todavía no) y
+  da el puesto **por puntos**: con los mismos puntos el puesto se comparte
+  («2.º–3.º»), porque chess-results no publica el desempate de cada ronda
+  intermedia y ponerle uno inventado sería decir algo que no se sabe. La nota
+  de abajo lo explica cuando hay un puesto compartido. En la imagen va
+  debajo de la última ronda; para que quepa antes de la dirección, el
+  recuadro se achica un poco y la ronda va en 36 en lugar de 38.
+- **«Así terminó el día»** (el botón «Imagen del día para compartir», debajo
+  de los enlaces del buscador): una imagen de 1080 de ancho con los líderes
+  de cada categoría, la sorpresa más grande del día y, si en ese aparato hay
+  una delegación elegida, cómo le fue hoy. El día es el de la **última ronda
+  con todas sus partidas terminadas** (`rondaCerrada()`: con la ronda
+  emparejada a medias, la anterior), y sus rondas salen de la tabla del
+  calendario (`data-ronda` en cada fila, junto a su `data-inicio`: una sola
+  copia de las horas). Si ese día todavía tiene otra ronda por jugar, dice
+  «Así va el día». Los líderes son los de más puntos tras esa ronda, no los
+  de la clasificación de chess-results, que ya puede traer resultados de la
+  siguiente; con un empate va el primero de chess-results y «empatado con N
+  más». Cada líder tiene hasta dos renglones: sus puntos no se cortan con
+  «…». Lleva la marca de agua, como las otras imágenes.
+- **Pendiente: el plano de la sala** (en qué zona del Gimnasio Nacional queda
+  cada mesa, junto a su pareo). Espera el croquis de la organización con
+  cómo se acomodan las mesas.
 - **Se instala como su propia app**: `manifest-centroamericano-2026.json`
   (otro `id`, arranca en la página, el pizote como ícono) en lugar del de la
   Academia, que arranca en `clases.html` y le pide cuenta. Lo pone
