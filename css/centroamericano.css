@@ -451,3 +451,48 @@ a.cac-despedida:hover .cac-globo { transform: translateY(-2px); }
 .cac-podio h3 { font-weight: 800; color: var(--cac-acento); }
 .cac-podio ol { margin-top: 0.3rem; font-size: 0.9rem; }
 .cac-podio li { margin-top: 0.2rem; }
+
+/* La estrella de seguir, arriba a la derecha de cada jugador. Llena (★) o
+   vacía (☆): la forma dice el estado, no el color, y el lector oye
+   «Seguir a…»/«Dejar de seguir a…» con aria-pressed. */
+.cac-jugador { position: relative; }
+.cac-jugador-nombre { padding-right: 2.75rem; }
+.cac-estrella {
+  position: absolute;
+  top: 0.45rem;
+  right: 0.5rem;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 999px;
+  font-size: 1.6rem;
+  line-height: 1;
+  color: var(--cac-acento);
+  background: transparent;
+}
+.cac-estrella:hover { background: rgba(64, 71, 143, 0.1); }
+.cac-estrella:focus-visible { outline: 3px solid var(--cac-rojo); outline-offset: 1px; }
+
+/* «Mis jugadores»: arriba del buscador, separada por una raya. */
+.cac-seguidos { padding-bottom: 1.25rem; border-bottom: 2px dashed #dfe0f7; }
+.dark .cac-seguidos { border-bottom-color: rgb(var(--c-brand-700, 51 78 104)); }
+.cac-seguidos[hidden], #avisos[hidden] { display: none; }
+.cac-boton {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 2.75rem;
+  padding: 0.55rem 1.1rem;
+  border-radius: 999px;
+  font-weight: 800;
+  background: var(--cac-morado);
+  color: #fff;
+}
+.cac-boton[aria-pressed="true"] { background: var(--cac-verde); }
+.cac-boton:disabled { opacity: 0.7; }
+.cac-boton:focus-visible { outline: 3px solid var(--cac-rojo); outline-offset: 2px; }
+.dark .cac-boton { background: #b8bbf2; color: var(--cac-morado-hondo); }
+.dark .cac-boton[aria-pressed="true"] { background: #9be0bb; color: #0b2a1a; }
+
+/* «Mi delegación»: una sección por categoría. */
+.cac-delegacion-grupo + .cac-delegacion-grupo { margin-top: 1.1rem; }
+.cac-delegacion-grupo h4 { font-weight: 800; color: var(--cac-acento); }

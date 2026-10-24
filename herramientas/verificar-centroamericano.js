@@ -308,7 +308,27 @@ ok("la página carga el cliente de Supabase antes que su código en vivo", html.
     await ctx6.addInitScript((d) => {
       window.__pedidos = [];
       window.__falla = localStorage.getItem("__falla") === "1";
-      window.sb = { functions: { invoke: async (nombre, op) => { window.__pedidos.push([nombre, op.body]); return window.__falla ? { data: null, error: new Error("sin red") } : { data: d, error: null }; } } };
+      window.sb = { functions: { invoke: async (nombre, op) => {
+        window.__pedidos.push([nombre, op.body]);
+        if (window.__falla) return { data: null, error: new Error("sin red") };
+        const a = op.body && op.body.accion;
+        if (a === "push_llave") return { data: { ok: true, llave: "BAcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwc" }, error: null };
+        if (a === "seguir" || a === "baja") return { data: { ok: true }, error: null };
+        return { data: d, error: null };
+      } } };
+      // Los avisos sin un servicio de push de verdad: el permiso se concede y
+      // la suscripción la da este doble (el contexto bloquea el service worker).
+      let permiso = localStorage.getItem("__permiso") || "default";
+      Object.defineProperty(Notification, "permission", { get: () => permiso });
+      Notification.requestPermission = async () => { permiso = "granted"; localStorage.setItem("__permiso", permiso); return permiso; };
+      // La suscripción dura entre recargas, como la de verdad.
+      const SUB = { endpoint: "https://fcm.googleapis.com/fcm/send/prueba", keys: { p256dh: "BNcRdreALRFXTkOOUHK1EtK2wtaz5Ry4YfYCA_0QTpQtUbVlUls0VJXg7A8u-Ts1XbjhazAkj7I99e8QcYP7DkM", auth: "tBHItJI5svbpez7KI4CCXg" } };
+      let sub = localStorage.getItem("__sub") ? { toJSON: () => SUB } : null;
+      const reg = { pushManager: {
+        getSubscription: async () => sub,
+        subscribe: async (op) => { window.__llave = op.applicationServerKey.length; localStorage.setItem("__sub", "1"); sub = { toJSON: () => SUB }; return sub; },
+      } };
+      Object.defineProperty(navigator, "serviceWorker", { value: { ready: Promise.resolve(reg), register: async () => reg, controller: null, addEventListener() {} } });
     }, DATOS);
     const p6 = await ctx6.newPage();
     await p6.goto(BASE + "/" + PAGINA, { waitUntil: "load" });
@@ -339,6 +359,82 @@ ok("la página carga el cliente de Supabase antes que su código en vivo", html.
     r = await buscar("mayorga");
     ok("en inglés, el buscador también", /Round 4 · Board 1 · Plays white against/.test(r.tarjetas[0]) && /U18 Open · Rating 2215 · Place 1 of 3/.test(r.tarjetas[0]), JSON.stringify(r));
     await p6.click("#cac-idioma");
+
+    // Mis jugadores: la estrella lo pone arriba, guardado en el aparato.
+    const seguidosVis = () => p6.evaluate(() => ({ visible: document.getElementById("seguidos").checkVisibility(),
+      tarjetas: [...document.querySelectorAll("#seguidos-lista li")].map((l) => l.innerText.replace(/\s+/g, " ").trim()),
+      guardado: JSON.parse(localStorage.getItem("cac_seguidos_v1") || "[]"),
+      avisos: document.getElementById("avisos").checkVisibility(), boton: document.getElementById("avisos-boton").textContent,
+      pulsado: document.getElementById("avisos-boton").getAttribute("aria-pressed") }));
+    ok("sin nadie seguido, «Mis jugadores» no se ve", !(await seguidosVis()).visible);
+    await buscar("mayorga");
+    ok("la estrella dice a quién sigue (para el lector)", await p6.evaluate(() => { const b = document.querySelector("#buscador-resultados .cac-estrella"); return b.getAttribute("aria-label") === "Seguir a Mayorga Araya, Sofia" && b.getAttribute("aria-pressed") === "false"; }));
+    await p6.click("#buscador-resultados .cac-estrella");
+    let sg = await seguidosVis();
+    ok("al tocar la estrella sale arriba, en «Mis jugadores», con su mesa", sg.visible && sg.tarjetas.length === 1 && /Mesa 1 · Juega con blancas/.test(sg.tarjetas[0]), JSON.stringify(sg));
+    ok("y queda guardado en el aparato: el torneo, su número y su nombre", JSON.stringify(sg.guardado) === JSON.stringify([{ tnr: "1494141", no: 2, nombre: "Mayorga Araya, Sofia" }]), JSON.stringify(sg.guardado));
+    ok("el foco sigue en la estrella, que ahora dice «Dejar de seguir»", await p6.evaluate(() => { const b = document.activeElement; return b.classList.contains("cac-estrella") && b.closest("#buscador-resultados") && b.getAttribute("aria-pressed") === "true" && /^Dejar de seguir/.test(b.getAttribute("aria-label")); }));
+
+    // Avisarme en este celular: pide el permiso al tocar y manda la lista.
+    ok("el botón de avisos aparece, apagado", sg.avisos && /Avisarme en este celular/.test(sg.boton) && sg.pulsado === "false", JSON.stringify(sg));
+    ok("y el permiso no se pidió solo", await p6.evaluate(() => Notification.permission === "default"));
+    await p6.evaluate(() => { window.__pedidos = []; });
+    await p6.click("#avisos-boton");
+    await p6.waitForFunction(() => document.getElementById("avisos-boton").getAttribute("aria-pressed") === "true", null, { timeout: 5000 }).catch(() => {});
+    let ped = await p6.evaluate(() => window.__pedidos.map((x) => x[1]));
+    const seguir = ped.find((b) => b.accion === "seguir");
+    ok("pide la llave y se suscribe con ella", ped.some((b) => b.accion === "push_llave") && await p6.evaluate(() => window.__llave === 65), JSON.stringify(ped));
+    ok("manda la sala, la suscripción, el jugador y el idioma", seguir && seguir.clave === "centroamericano-2026" && seguir.idioma === "es"
+      && seguir.suscripcion.endpoint === "https://fcm.googleapis.com/fcm/send/prueba" && seguir.suscripcion.keys.auth
+      && JSON.stringify(seguir.jugadores) === JSON.stringify([{ tnr: "1494141", no: 2, nombre: "Mayorga Araya, Sofia" }]), JSON.stringify(seguir));
+    sg = await seguidosVis();
+    ok("y el botón dice que están encendidos", sg.pulsado === "true" && /encendidos/.test(sg.boton) && /aviso de prueba/.test(await p6.textContent("#avisos-estado")), JSON.stringify(sg));
+
+    // Mi delegación: los países de la clasificación; todos los suyos, por categoría.
+    const opciones = await p6.evaluate(() => [...document.querySelectorAll("#delegacion option")].map((o) => o.value + "=" + o.textContent));
+    ok("la lista de países sale de la clasificación, con su nombre", opciones[0] === "=Elige el país…" && opciones.includes("CRC=Costa Rica (CRC)") && opciones.includes("BAR=Barbados (BAR)") && opciones.length === 7, JSON.stringify(opciones));
+    await p6.selectOption("#delegacion", "CRC");
+    const deleg = () => p6.evaluate(() => ({ estado: document.getElementById("delegacion-estado").textContent,
+      grupos: [...document.querySelectorAll("#delegacion-lista section")].map((sec) => sec.innerText.replace(/\s+/g, " ").trim()) }));
+    let dl = await deleg();
+    ok("Mi delegación muestra a todos sus jugadores, de la categoría menor a la mayor", /^2 jugadores de Costa Rica \(CRC\)\./.test(dl.estado) && dl.grupos.length === 2
+      && /^Sub-8 Absoluto · 1 jugador ☆ Muñoz Solís, José .*tiene bye/.test(dl.grupos[0]) && /^Sub-18 Absoluto · 1 jugador ★ WIM Mayorga Araya, Sofia .*Mesa 1/.test(dl.grupos[1]), JSON.stringify(dl));
+    ok("con la estrella de cada uno (y la de quien ya sigue, encendida)", await p6.evaluate(() => document.querySelector('#delegacion-lista .cac-estrella[data-clave="1494141-2"]').getAttribute("aria-pressed") === "true"));
+
+    // Seguir a otro con los avisos encendidos: se le manda la lista entera.
+    await p6.evaluate(() => { window.__pedidos = []; });
+    await p6.click('#delegacion-lista .cac-estrella[data-clave="1494141-50"]');
+    await p6.waitForFunction(() => window.__pedidos.some((x) => x[1].accion === "seguir"), null, { timeout: 5000 }).catch(() => {});
+    ped = await p6.evaluate(() => window.__pedidos.map((x) => x[1]));
+    ok("al seguir a otro, la función recibe la lista entera (no solo el nuevo)", ped.length === 1 && JSON.stringify(ped[0].jugadores.map((j) => j.no)) === "[2,50]", JSON.stringify(ped));
+
+    // En inglés: el botón y la delegación.
+    await p6.evaluate(() => { window.__pedidos = []; });
+    await p6.click("#cac-idioma");
+    await p6.waitForFunction(() => window.__pedidos.some((x) => x[1].accion === "seguir"), null, { timeout: 5000 }).catch(() => {});
+    ok("en inglés, el botón, la delegación y los avisos cambian de idioma", await p6.evaluate(() => /Notifications on this phone: on/.test(document.getElementById("avisos-boton").textContent)
+      && /^2 players from Costa Rica \(CRC\)/.test(document.getElementById("delegacion-estado").textContent)
+      && window.__pedidos.some((x) => x[1].accion === "seguir" && x[1].idioma === "en")));
+    await p6.click("#cac-idioma");
+
+    // La delegación elegida y los seguidos se recuerdan; si chess-results le
+    // cambió el número a un seguido, se lo encuentra por su nombre.
+    await p6.evaluate(() => localStorage.setItem("cac_seguidos_v1", JSON.stringify([{ tnr: "1494141", no: 99, nombre: "Wilson, Hannah" }])));
+    await p6.reload({ waitUntil: "load" });
+    await p6.waitForFunction(() => document.querySelectorAll("#delegacion-lista section").length === 2, null, { timeout: 5000 }).catch(() => {});
+    ok("al volver, su país sigue elegido y ya se ve", await p6.evaluate(() => document.getElementById("delegacion").value === "CRC" && document.querySelectorAll("#delegacion-lista section").length === 2));
+    sg = await seguidosVis();
+    ok("un seguido al que le cambiaron el número se encuentra por su nombre", sg.tarjetas.length === 1 && /Mesa 7/.test(sg.tarjetas[0]) && sg.guardado[0].no === 31, JSON.stringify(sg));
+
+    // Dejar de seguir a todos con los avisos encendidos: se da de baja.
+    await p6.evaluate(() => { window.__pedidos = []; });
+    await p6.click("#seguidos-lista .cac-estrella");
+    await p6.waitForFunction(() => window.__pedidos.some((x) => x[1].accion === "baja"), null, { timeout: 5000 }).catch(() => {});
+    sg = await seguidosVis();
+    ok("sin nadie a quien seguir, se da de baja y «Mis jugadores» se esconde", !sg.visible && !sg.guardado.length
+      && await p6.evaluate(() => window.__pedidos.some((x) => x[1].accion === "baja" && x[1].suscripcion.endpoint === "https://fcm.googleapis.com/fcm/send/prueba") && localStorage.getItem("cac_avisos_v1") === null), JSON.stringify(sg));
+    await p6.selectOption("#delegacion", "");
+
     // Sin señal: lo último que llegó, guardado en el aparato, con la hora en que se leyó.
     await p6.evaluate(() => localStorage.setItem("__falla", "1"));
     await p6.reload({ waitUntil: "load" });

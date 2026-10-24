@@ -97,6 +97,11 @@ window.CentroamericanoEN = {
     "Busca a tu jugador": "Find your player",
     "Escribe su nombre o su apellido: te decimos su mesa y su rival en la ronda de hoy, su categoría y cómo va.": "Type their first or last name: we'll tell you their board and opponent in today's round, their section and how they are doing.",
     "Por ejemplo: Mayorga": "For example: Mayorga",
+    // Mis jugadores, los avisos en el celular y Mi delegación (lo de cada jugador lo pinta js/centroamericano-vivo.js)
+    "Mis jugadores": "My players",
+    "Te avisamos en este celular su mesa, su color y su rival en cuanto se publica cada ronda. No se guarda tu nombre ni tu correo: solo la dirección de avisos de este navegador, como dice la": "We'll notify this phone of their board, their color and their opponent as soon as each round is published. Your name and email are not stored: only this browser's notification address, as stated in the",
+    "Mi delegación": "My delegation",
+    "Elige tu país y mira a todos sus jugadores: mesa, color y rival en la ronda de hoy, y cómo va cada uno.": "Choose your country and see all its players: board, color and opponent in today's round, and how each one is doing.",
     "Ver el medallero →": "See the medal table →",
     "Medallero": "Medal table",
     "Los tres primeros de cada categoría y las medallas de cada federación, según la clasificación de chess-results.": "The top three of every section and the medals of every federation, from the chess-results standings.",

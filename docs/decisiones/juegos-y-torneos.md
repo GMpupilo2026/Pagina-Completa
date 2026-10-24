@@ -8625,6 +8625,51 @@ Es una página estática, sin cuenta y sin base: nada se guarda.
   1 del UTN-CONARE 2026, con su bye. Los datos se piden la primera vez que
   alguien busca o abre el medallero, no a cada visita, y lo último que llegó
   queda en el aparato: sin señal se muestra eso, con la hora en que se leyó.
+- **Mi delegación**: debajo del buscador, un `<select>` con los países que
+  hay en la clasificación (por su nombre, con el código de FIDE; los que no
+  están en `PAISES` de `js/centroamericano-vivo.js` salen con el código) y,
+  al elegir uno, todos sus jugadores por categoría, de la menor a la mayor,
+  con la misma tarjeta del buscador. El país queda en el aparato
+  (`cac_delegacion_v1`) y, al volver, los datos se piden de una vez. La lista
+  de países se rearma solo si cambió: rearmarla con el `<select>` abierto lo
+  cerraba en el celular.
+- **Seguir a mis jugadores y los avisos en el celular**: cada tarjeta lleva
+  una estrella (☆/★, con `aria-pressed` y «Seguir a…»/«Dejar de seguir a…»;
+  la forma dice el estado, no el color) que pone al jugador en «Mis
+  jugadores», arriba del buscador. Se guarda en el aparato, sin cuenta
+  (`cac_seguidos_v1`, como mucho 20): el número del torneo, el número inicial
+  y el nombre. **El número inicial puede cambiar** antes de la ronda 1, si el
+  árbitro vuelve a ordenar la lista: si ya es de otra persona, la página y la
+  función buscan al seguido por su nombre (sin tildes; si hay dos iguales, no
+  se adivina) y la página corrige el número guardado.
+  «Avisarme en este celular» manda una notificación con la mesa, el color y
+  el rival en cuanto chess-results publica cada ronda («Ronda 4: Mayorga
+  Araya, Sofia» / «Mesa 12, con blancas contra…»). Es la misma maquinaria de
+  push de Pareo Integral (`_compartido/webpush.ts`, las llaves de
+  `push_llaves_leer()`, el `sw.js` que ya muestra el aviso), con tablas
+  propias: `sala_suscripciones_push` (el endpoint, sus dos llaves, la sala, el
+  idioma y la lista) y `sala_avisos_push_enviados` (cada aviso se anota ANTES
+  de salir y su clave primaria impide que salga dos veces). Ni `anon` ni
+  `authenticated` tienen nada sobre ellas: solo las toca la función.
+  - El permiso se pide **solo al tocar el botón**. La función recibe la
+    lista ENTERA cada vez que cambia (como las `set_*`: mandar solo el nuevo
+    dejaba de seguir a los demás) y también al cambiar el idioma; con la
+    lista vacía, la página da de baja el aparato.
+  - **Un aparato nuevo** pasa por `sala_avisos_frenar()` (40 por hora por
+    conexión y 300 en total) y recibe un aviso de prueba; **uno que ya estaba**
+    (mismo endpoint y mismas llaves) solo cambia su lista, sin freno ni otra
+    prueba: si no, cada estrella mandaba una notificación. El tope por
+    conexión empezó en 10 y se subió a 40 antes de usarse: una delegación
+    entera sale a internet por el wifi del mismo hotel.
+  - Quién revisa: pg_cron `sala-avisos`, cada 5 minutos y solo del 1 al 8 de
+    noviembre (UTC), llama a «revisar» con el secreto `sala_avisos_secreto`
+    de la bóveda, como `torneos-externos`; sin suscripciones ni se llama. Por
+    eso la función va con `verify_jwt` en false.
+  - Se borran solas 30 días después del último cambio (pg_cron
+    `sala-avisos-limpiar`), como dice `privacidad.html#torneos`.
+  - El verificador no tiene un servicio de push: el doble concede el
+    permiso, da una suscripción que dura entre recargas y anota lo que se le
+    manda a la función.
 - **Agregar a mi calendario**:
   `documentos/centroamericano-2026/calendario-centroamericano-2026.ics`, con
   cada actividad de la tabla (en UTC, que cualquier calendario muestra en su

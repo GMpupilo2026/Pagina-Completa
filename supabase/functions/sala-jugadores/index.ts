@@ -31,9 +31,35 @@
 //     lugar de las negras. Las columnas se leen por posición relativa a
 //     «White» y «Black», que en ese encabezado van en <td> y no en <th>.
 //
-// verify_jwt en true: la llama la página pública con la clave anónima.
+// LOS AVISOS EN EL CELULAR (body.accion): «Avisarme en este celular» manda,
+// cuando chess-results publica una ronda, la mesa, el color y el rival de
+// cada jugador que sigue ese aparato. Ver «Seguir a mis jugadores y los
+// avisos en el celular» en docs/decisiones/juegos-y-torneos.md.
+//   - "push_llave"  → la llave pública VAPID (la del sitio, de notificar).
+//   - "seguir"      { clave, suscripcion, jugadores: [{tnr, no, nombre}], idioma }
+//                   → deja a ese aparato siguiendo EXACTAMENTE esa lista (como
+//                   las set_* de la base: para sumar, la página manda todos).
+//                   Sin cuenta: un aparato nuevo pasa por el freno de envíos
+//                   públicos y recibe un primer aviso que comprueba que llega;
+//                   uno que ya estaba (mismo endpoint y mismas llaves) solo
+//                   cambia su lista o su idioma, sin freno ni aviso de prueba.
+//                   Si chess-results le cambia el número inicial a un seguido
+//                   (antes de la ronda 1), «revisar» lo busca por su nombre.
+//   - "baja"        { clave, suscripcion } → deja de avisarle a ese aparato.
+//   - "revisar"     la llama pg_cron (disparar_sala_avisos) con el secreto de
+//                   la bóveda: lee cada sala con suscripciones y manda el aviso
+//                   de la ronda emparejada a quien no lo tenga. Cada aviso se
+//                   anota antes de salir (sala_avisos_push_enviados), así no
+//                   sale dos veces.
+// Solo se le manda a los servicios de avisos de los navegadores (Google,
+// Mozilla, Apple, Microsoft): un endpoint de otra dirección no se acepta.
+//
+// verify_jwt en FALSE: «revisar» la llama la base con el secreto, que no es un
+// JWT. Lo demás es público y de solo lectura, o pasa por el freno; la página
+// la llama igual que antes, con la clave anónima.
 
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { type LlavesVapid, mandar as mandarPush } from "./webpush.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -202,30 +228,117 @@ async function leer(admin: Admin, url: string, leerHtml: (h: string) => unknown)
   }
 }
 
-Deno.serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
-  if (req.method !== "POST") return json({ error: "Solo POST." }, 405);
+// ------------------------------------------------------------- los avisos
 
-  let clave = "";
-  try { clave = String((await req.json()).clave || ""); } catch { /* sin cuerpo */ }
-  if (!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(clave) || clave.length > 40) return json({ error: "Falta la clave de la sala." }, 400);
+const CONTACTO_PUSH = "mailto:info@ajedrezintegral.com";
+const SERVICIO_PUSH = /^https:\/\/(fcm\.googleapis\.com|updates\.push\.services\.mozilla\.com|[a-z0-9.-]+\.push\.apple\.com|[a-z0-9.-]+\.notify\.windows\.com|android\.googleapis\.com)\//;
+const TOPE_AVISOS = 2000;   // por vuelta de pg_cron
 
-  const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, { auth: { persistSession: false } });
+let llavesEnMemoria: LlavesVapid | null = null;
+async function llavesPush(admin: Admin): Promise<LlavesVapid | null> {
+  if (llavesEnMemoria) return llavesEnMemoria;
+  const { data } = await admin.rpc("push_llaves_leer");
+  const fila = Array.isArray(data) ? data[0] : data;
+  if (fila?.publica && fila?.privada) llavesEnMemoria = { publica: fila.publica, privada: fila.privada };
+  return llavesEnMemoria;
+}
+
+function ipDe(req: Request): string | null {
+  const ip = req.headers.get("cf-connecting-ip") ?? req.headers.get("x-real-ip") ??
+    (req.headers.get("x-forwarded-for") ?? "").split(",")[0];
+  return ip?.trim() || null;
+}
+
+const corto = (v: unknown, max: number) => String(v ?? "").trim().slice(0, max);
+
+// Sin tildes ni mayúsculas, para comparar nombres: «Muñoz, José» → «munoz jose».
+const plano = (s: string) => String(s || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+
+type Jug = { puesto: number; no: number; titulo: string; nombre: string; fed: string; elo: number; grupo: string; puntos: string };
+type Mesa = { mesa: number; blancas: { no: number; titulo: string; nombre: string }; negras: { no: number; titulo: string; nombre: string } | null; resultado: string };
+
+// Lo que dice el aviso de la ronda de un jugador, en su idioma.
+function textoRonda(idioma: string, ronda: number, no: number, mesas: Mesa[], porNo: Map<number, Jug>) {
+  const en = idioma === "en";
+  for (const m of mesas) {
+    const blancas = m.blancas.no === no, negras = !!m.negras && m.negras.no === no;
+    if (!blancas && !negras) continue;
+    if (!m.negras) return en ? "Round " + ronda + ": has a bye (rests)." : "Ronda " + ronda + ": tiene bye (descansa).";
+    const rival = blancas ? m.negras : m.blancas;
+    const r = porNo.get(rival.no);
+    const dato = r && (r.fed || r.elo) ? " (" + [r.fed, r.elo || ""].filter(Boolean).join(", ") + ")" : "";
+    const quien = (rival.titulo ? rival.titulo + " " : "") + rival.nombre + dato;
+    return en ? "Board " + m.mesa + ", with " + (blancas ? "white" : "black") + " against " + quien + "."
+      : "Mesa " + m.mesa + ", con " + (blancas ? "blancas" : "negras") + " contra " + quien + ".";
+  }
+  return null;
+}
+
+async function revisar(admin: Admin) {
+  const llaves = await llavesPush(admin);
+  if (!llaves) return { ok: false, error: "sin llaves" };
+  const { data: subs } = await admin.from("sala_suscripciones_push").select("id, sala, endpoint, p256dh, auth, idioma, jugadores");
+  if (!subs || !subs.length) return { ok: true, mandados: 0 };
+  let mandados = 0;
+  for (const sala of [...new Set(subs.map((x) => x.sala as string))]) {
+    const torneos = await datosDeSala(admin, sala);
+    if (!torneos) continue;
+    for (const t of torneos) {
+      const pareo = (t.pareo || { ronda: 0, mesas: [] }) as { ronda: number; mesas: Mesa[] };
+      if (!pareo.ronda || !pareo.mesas || !pareo.mesas.length) continue;
+      const lista = (t.jugadores || []) as Jug[];
+      const porNo = new Map(lista.map((j) => [j.no, j]));
+      for (const s of subs.filter((x) => x.sala === sala)) {
+        for (const j of (s.jugadores as { tnr: string; no: number; nombre: string }[])) {
+          if (mandados >= TOPE_AVISOS) return { ok: true, mandados, tope: true };
+          if (String(j.tnr) !== t.tnr) continue;
+          // Antes de la ronda 1 el árbitro puede volver a ordenar la lista y
+          // cambiar los números iniciales: si el número ya es de otra persona,
+          // se la busca por su nombre (y si hay dos con el mismo, no se avisa).
+          let no = Number(j.no);
+          const actual = porNo.get(no);
+          if (!actual || plano(actual.nombre) !== plano(j.nombre)) {
+            const mismos = lista.filter((x) => plano(x.nombre) === plano(j.nombre));
+            if (mismos.length !== 1) continue;
+            no = mismos[0].no;
+          }
+          const cuerpo = textoRonda(s.idioma as string, pareo.ronda, no, pareo.mesas, porNo);
+          if (!cuerpo) continue;
+          const { error } = await admin.from("sala_avisos_push_enviados").insert({ suscripcion_id: s.id, tnr: t.tnr, no, ronda: pareo.ronda });
+          if (error) continue; // ya salió (23505) o no se pudo anotar: no se manda
+          const nombre = (porNo.get(no) || { nombre: j.nombre }).nombre;
+          const r = await mandarPush({ endpoint: s.endpoint as string, p256dh: s.p256dh as string, auth: s.auth as string }, {
+            titulo: (s.idioma === "en" ? "Round " : "Ronda ") + pareo.ronda + ": " + nombre,
+            cuerpo,
+            url: "/centroamericano-2026.html#buscador",
+            // Una por jugador: la ronda nueva reemplaza a la anterior.
+            etiqueta: "sala-" + t.tnr + "-" + no,
+          }, llaves, CONTACTO_PUSH);
+          if (!r.ok && r.caduca) { await admin.from("sala_suscripciones_push").delete().eq("id", s.id); break; }
+          mandados++;
+        }
+      }
+    }
+  }
+  return { ok: true, mandados };
+}
+
+// ------------------------------------------------------------- la función
+
+// Los torneos de chess-results de una sala visible, leídos (o de la caché).
+async function datosDeSala(admin: Admin, clave: string) {
   const { data: sala, error } = await admin.from("salas_torneo").select("enlaces").eq("clave", clave).eq("visible", true).maybeSingle();
-  if (error) return json({ error: "No se pudo leer la sala." }, 500);
-  if (!sala) return json({ error: "Esa sala no existe o no está publicada." }, 404);
-
+  if (error || !sala) return null;
   const enlaces = Array.isArray(sala.enlaces) ? sala.enlaces : [];
   const vistos = new Set<string>();
   const torneos = enlaces.map((e: { url: string }) => torneoDe(e && e.url)).filter((t: { tnr: string } | null) => t && !vistos.has(t.tnr) && vistos.add(t.tnr)).slice(0, 15);
-
-  const salida = await Promise.all(torneos.map(async (t: { tnr: string; host: string }) => {
+  return await Promise.all(torneos.map(async (t: { tnr: string; host: string }) => {
     const base = "https://" + t.host + "/tnr" + t.tnr + ".aspx?lan=2&turdet=YES";
     const [clasif, ronda] = await Promise.all([
       leer(admin, base + "&art=1&zeilen=99999", leerClasificacion),
       leer(admin, base + "&art=2", leerRonda),
     ]);
-    if (!clasif) return { tnr: t.tnr, url: base + "&art=1", error: "No se pudo leer chess-results ahora mismo." };
+    if (!clasif) return { tnr: t.tnr, url: base + "&art=1", error: "No se pudo leer chess-results ahora mismo." } as Record<string, unknown> & { tnr: string };
     return {
       tnr: t.tnr,
       url: base + "&art=1",
@@ -233,8 +346,91 @@ Deno.serve(async (req) => {
       viejo: !!(clasif.viejo || (ronda && ronda.viejo)),
       ...(clasif.datos as object),
       pareo: ronda ? ronda.datos : null,
-    };
+    } as Record<string, unknown> & { tnr: string };
   }));
+}
 
-  return json({ torneos: salida });
+Deno.serve(async (req) => {
+  if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
+  if (req.method !== "POST") return json({ error: "Solo POST." }, 405);
+
+  let body: Record<string, unknown> = {};
+  try { body = await req.json(); } catch { /* sin cuerpo */ }
+  const accion = String(body.accion || "datos");
+  const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, { auth: { persistSession: false } });
+
+  if (accion === "revisar") {
+    const jwt = (req.headers.get("Authorization") ?? "").replace(/^Bearer\s+/i, "");
+    const { data: esperado } = await admin.rpc("secreto_sala_avisos");
+    if (!esperado || !jwt || jwt !== esperado) return json({ error: "Esto lo dispara solo la base." }, 401);
+    return json(await revisar(admin));
+  }
+  if (accion === "push_llave") {
+    const llaves = await llavesPush(admin);
+    return llaves ? json({ ok: true, llave: llaves.publica }) : json({ ok: false, error: "Los avisos en el celular no están listos todavía." }, 503);
+  }
+
+  const clave = String(body.clave || "");
+  if (!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(clave) || clave.length > 40) return json({ error: "Falta la clave de la sala." }, 400);
+
+  if (accion === "seguir" || accion === "baja") {
+    const sus = (body.suscripcion ?? {}) as Record<string, unknown>;
+    const claves = (sus.keys ?? {}) as Record<string, unknown>;
+    const endpoint = corto(sus.endpoint, 1000), p256dh = corto(claves.p256dh, 200), auth = corto(claves.auth, 100);
+    if (!SERVICIO_PUSH.test(endpoint)) return json({ ok: false, error: "Este navegador no dio una dirección de avisos válida." }, 400);
+    if (accion === "baja") {
+      await admin.from("sala_suscripciones_push").delete().eq("sala", clave).eq("endpoint", endpoint);
+      return json({ ok: true });
+    }
+    if (!/^[A-Za-z0-9_-]{20,200}$/.test(p256dh) || !/^[A-Za-z0-9_-]{8,100}$/.test(auth)) {
+      return json({ ok: false, error: "Este navegador no dio una dirección de avisos válida." }, 400);
+    }
+    const lista = Array.isArray(body.jugadores) ? body.jugadores as Record<string, unknown>[] : [];
+    const jugadores = lista.map((j) => ({ tnr: corto(j.tnr, 9), no: Number(j.no), nombre: corto(j.nombre, 100) }))
+      .filter((j) => /^[0-9]{1,9}$/.test(j.tnr) && Number.isInteger(j.no) && j.no > 0 && j.nombre.length >= 2);
+    if (!jugadores.length) return json({ ok: false, error: "Falta a quién seguir." }, 400);
+    if (jugadores.length > 20) return json({ ok: false, error: "En este aparato puedes seguir hasta 20 jugadores: deja de seguir a alguno." }, 409);
+    // Solo jugadores de los torneos de esta sala.
+    const { data: sala } = await admin.from("salas_torneo").select("enlaces").eq("clave", clave).eq("visible", true).maybeSingle();
+    const tnrs = new Set((Array.isArray(sala?.enlaces) ? sala!.enlaces : []).map((e: { url: string }) => torneoDe(e && e.url)?.tnr).filter(Boolean));
+    if (!jugadores.every((j) => tnrs.has(j.tnr))) return json({ ok: false, error: "Ese jugador no es de este torneo." }, 400);
+    const idioma = body.idioma === "en" ? "en" : "es";
+    const llaves = await llavesPush(admin);
+    if (!llaves) return json({ ok: false, error: "Los avisos en el celular no están listos todavía." }, 503);
+    // Un aparato que ya estaba solo cambia su lista o su idioma (la página la
+    // vuelve a mandar con cada estrella): ni pasa por el freno ni recibe otro
+    // aviso de prueba. Las llaves tienen que ser las mismas que dio al darse de alta.
+    const { data: yaEsta } = await admin.from("sala_suscripciones_push").select("id").eq("sala", clave).eq("endpoint", endpoint)
+      .eq("p256dh", p256dh).eq("auth", auth).maybeSingle();
+    if (yaEsta) {
+      const { error } = await admin.from("sala_suscripciones_push")
+        .update({ idioma, jugadores, actualizada: new Date().toISOString() }).eq("id", yaEsta.id);
+      return error ? json({ ok: false, error: "No se pudo guardar. Intenta de nuevo." }, 502) : json({ ok: true });
+    }
+    const { data: freno, error: frenoError } = await admin.rpc("sala_avisos_frenar", { p_ip: ipDe(req) });
+    if (frenoError) return json({ ok: false, error: "No se pudo guardar. Intenta de nuevo." }, 502);
+    if (freno) return json({ ok: false, error: freno }, 429);
+    const { error } = await admin.from("sala_suscripciones_push").upsert(
+      { sala: clave, endpoint, p256dh, auth, idioma, jugadores, actualizada: new Date().toISOString() },
+      { onConflict: "sala,endpoint" },
+    );
+    if (error) return json({ ok: false, error: "No se pudo guardar. Intenta de nuevo." }, 502);
+    const nombres = jugadores.map((j) => j.nombre).join(", ");
+    const prueba = await mandarPush({ endpoint, p256dh, auth }, {
+      titulo: idioma === "en" ? "Done: you follow " + nombres : "Listo: sigues a " + nombres,
+      cuerpo: idioma === "en" ? "We will let you know here their board and opponent as soon as each round is published."
+        : "Te vamos a avisar aquí su mesa y su rival en cuanto se publique cada ronda.",
+      url: "/centroamericano-2026.html#buscador",
+      etiqueta: "sala-seguir",
+    }, llaves, CONTACTO_PUSH);
+    if (!prueba.ok && prueba.caduca) {
+      await admin.from("sala_suscripciones_push").delete().eq("sala", clave).eq("endpoint", endpoint);
+      return json({ ok: false, error: "Este navegador no aceptó el aviso de prueba. Revisa el permiso de notificaciones e intenta de nuevo." }, 400);
+    }
+    return json({ ok: true });
+  }
+
+  const torneos = await datosDeSala(admin, clave);
+  if (!torneos) return json({ error: "Esa sala no existe o no está publicada." }, 404);
+  return json({ torneos });
 });
