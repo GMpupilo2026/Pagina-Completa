@@ -7840,6 +7840,12 @@
             if (isTeacher) { await loadChatStudents(); } else { await loadChatMessages(); }
             subscribeChat();
             if (meSacaron) return;
+            // Las bromas entre compañeros: apagadas hasta que el profe las
+            // encienda (js/clase-bromas.js; lo que se ve, js/bromas.js).
+            if (window.ClaseBromas && !modoProyector && !modoControl && !vistaPrevia) {
+                ClaseBromas.montar({ sb, profe: boardOwnerId, yo: profile.id,
+                    esProfe: isTeacher && profile.role === "profesor", esAlumno: !isTeacher });
+            }
 
             document.getElementById("loading").classList.add("hidden");
             document.getElementById("app").classList.remove("hidden");
