@@ -536,6 +536,26 @@ ok("la página carga el cliente de Supabase antes que su código en vivo", html.
     ok("y en inglés", /Today's image to share/.test(diaEn.boton) && diaEn.d.titulo === "How the day ended" && diaEn.d.fecha === "Tuesday, November 3 · round 3"
       && diaEn.d.delegacion === "Costa Rica (CRC) today: 1 of 2 points (1 win)", JSON.stringify(diaEn));
     await p6.click("#cac-idioma");
+
+    // La hoja de la delegación en PDF: sus jugadores en la ronda emparejada, por categoría.
+    const hoja = await p6.evaluate(() => {
+      const d = window.CentroamericanoTablas.documentoDelegacion("CRC");
+      return { titulo: d.titulo, nota: d.bloques.find((b) => b.tipo === "nota").texto, tablas: d.bloques.filter((b) => b.tipo !== "nota").map((b) => b.tipo === "tabla" ? b.filas : b.texto) };
+    });
+    ok("y dice cuándo se leyó, sin puntos de más", /^Leído en chess-results: .*\d\S*\sa\.\sm\. Lo oficial es lo que publica el árbitro en chess-results\.$/.test(hoja.nota) && !/\.\./.test(hoja.nota), hoja.nota);
+    ok("la hoja de la delegación trae a cada uno con mesa, color, rival y resultado", hoja.titulo === "Costa Rica (CRC) · Ronda 4" && JSON.stringify(hoja.tablas) === JSON.stringify([
+      "2 jugadores · pareo de la ronda 4",
+      "Sub-8 Absoluto", [["—", "Muñoz Solís, José", "2", "—", "bye (descansa)", ""]],
+      "Sub-18 Absoluto", [["1", "WIM Mayorga Araya, Sofia", "3", "Blancas", "FM Guevara Ruiz, Santiago Jose (ESA, 2252)", ""]]]), JSON.stringify(hoja));
+    const [descPdf] = await Promise.all([p6.waitForEvent("download", { timeout: 15000 }), p6.click("#delegacion-pdf")]);
+    const pdf = fs.readFileSync(await descPdf.path()).toString("latin1");
+    ok("el botón baja el PDF con su nombre, los jugadores y la marca de agua", pdf.startsWith("%PDF-") && descPdf.suggestedFilename() === "centroamericano-2026-crc-ronda-4.pdf"
+      && pdf.includes("Mayorga Araya, Sofia") && pdf.includes("FM Guevara Ruiz, Santiago Jose \\(ESA, 2252\\)") && pdf.includes("/Marca Do")
+      && /Listo: la hoja se bajó/.test(await p6.textContent("#delegacion-lista .cac-hoja [role=status]")), descPdf.suggestedFilename());
+    await p6.click("#cac-idioma");
+    const hojaEn = await p6.evaluate(() => { const d = window.CentroamericanoTablas.documentoDelegacion("CRC"); return { t: d.titulo, p: d.pagina(1, 2), boton: document.getElementById("delegacion-pdf").textContent }; });
+    ok("y en inglés, también el número de página", hojaEn.t === "Costa Rica (CRC) · Round 4" && hojaEn.p === "Page 1 of 2" && /Delegation sheet to print/.test(hojaEn.boton), JSON.stringify(hojaEn));
+    await p6.click("#cac-idioma");
     await p6.selectOption("#delegacion", "");
 
     // La clasificación completa de una categoría.

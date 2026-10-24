@@ -8803,6 +8803,18 @@ Es una página estática, sin cuenta y sin base: nada se guarda.
   siguiente; con un empate va el primero de chess-results y «empatado con N
   más». Cada líder tiene hasta dos renglones: sus puntos no se cortan con
   «…». Lleva la marca de agua, como las otras imágenes.
+- **La hoja de la delegación en PDF** («Hoja de la delegación para
+  imprimir», arriba de la lista de Mi delegación): lo que el entrenador
+  lleva en la mano en la sala. Una tabla por categoría con la mesa, el
+  jugador, sus puntos, el color, el rival (con su federación y su Elo) y el
+  resultado de la ronda emparejada, y abajo cuándo se leyó chess-results y
+  que lo oficial es lo que publica el árbitro. La arma `js/reporte-pdf.js`
+  (la misma copia de los demás PDF del sitio), que le pone la marca de agua
+  con `js/marca-agua.js`; para el inglés se le sumó `documento.pagina` (el
+  número de página en otro idioma). **En una A4 de pie no caben más
+  columnas**: con el Elo propio y el puesto, el nombre del rival se cortaba
+  («Santiago Jos...»), y el rival es justo lo que se busca en la sala; el
+  verificador revisa que llegue entero.
 - **Pendiente: el plano de la sala** (en qué zona del Gimnasio Nacional queda
   cada mesa, junto a su pareo). Espera el croquis de la organización con
   cómo se acomodan las mesas.

@@ -112,6 +112,7 @@
       delegListo: (p) => "✓ Listo: te avisaremos cómo le fue a " + p + " en cuanto terminen sus partidas de cada ronda.",
       delegApagado: (p) => "Listo: ya no te avisamos el resumen de " + p + ".",
       imagenResumen: "Compartir imagen",
+      hojaPdf: "Hoja de la delegación para imprimir (PDF)",
       puestosTitulo: "Su puesto en la categoría después de cada ronda:",
       puestoRonda: (r, p) => "R" + r + " " + p,
       puestosNota: "Con los mismos puntos se comparte el puesto (por ejemplo, 3.º–5.º): el desempate lo decide al final del torneo.",
@@ -185,6 +186,7 @@
       delegListo: (p) => "✓ Done: we'll let you know how " + p + " did as soon as its games of each round are over.",
       delegApagado: (p) => "Done: we no longer send you " + p + "'s summary.",
       imagenResumen: "Share image",
+      hojaPdf: "Delegation sheet to print (PDF)",
       puestosTitulo: "Their place in the section after each round:",
       puestoRonda: (r, p) => "R" + r + " " + p,
       puestosNota: "Players on the same points share the place (for example, 3rd–5th): tiebreaks decide it at the end of the tournament.",
@@ -686,6 +688,21 @@
     if (!datos) { estado.textContent = tx.cargando; return; }
     const suyos = todos.filter((x) => x.j.fed === elegida);
     decir(estado, tx.deDelegacion(suyos.length, pais(elegida, lang)) + cuandoSeLeyo(tx));
+    // La hoja para imprimir (la arma js/centroamericano-tablas.js, que carga después).
+    if (suyos.length) {
+      const hoja = el("div", "cac-hoja mb-3");
+      const boton = el("button", "cac-jugador-boton", "");
+      boton.type = "button";
+      boton.id = "delegacion-pdf";
+      const icono = el("span", "", "🖨️ ");
+      icono.setAttribute("aria-hidden", "true");
+      boton.append(icono, document.createTextNode(tx.hojaPdf));
+      const aviso = el("p", "mt-2 text-sm font-semibold");
+      aviso.setAttribute("role", "status");
+      boton.addEventListener("click", () => { if (window.CentroamericanoTablas) window.CentroamericanoTablas.hojaDelegacion(elegida, boton, aviso); });
+      hoja.append(boton, aviso);
+      caja.appendChild(hoja);
+    }
     const resumen = resumenDelegacion(suyos, tx, pais(elegida, lang));
     if (resumen) caja.appendChild(resumen);
     const grupos = {};

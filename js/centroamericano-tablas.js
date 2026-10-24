@@ -9,6 +9,8 @@
  *   dos), con la hora, cómo va la ronda y un QR a la página; con el torneo
  *   terminado, empieza por los podios. Para una pantalla en la sala.
  * - Las sorpresas (el de menos Elo que puntúa contra el de más) y los invictos (#sorpresas).
+ * - La hoja de la delegación en PDF: sus jugadores en la ronda, con mesa,
+ *   color y rival (js/reporte-pdf.js).
  * - La imagen para compartir a un jugador (con su puesto ronda a ronda), la
  *   del resumen de una delegación y «Así terminó el día» (los líderes, la
  *   sorpresa del día y la delegación elegida), con la marca de agua de Ajedrez
@@ -85,6 +87,16 @@
       },
       diaAntes: "La imagen del día sale cuando termine la ronda 1.",
       diaTexto: (titulo) => titulo + " en el Centroamericano 2026:",
+      pdfTitulo: (pais, r) => pais + (r ? " · Ronda " + r : " · Lista inicial"),
+      pdfSub: "XXI Festival Centroamericano y del Caribe de la Juventud · Costa Rica 2026 · Hoja de la delegación",
+      pdfResumen: (n, r) => (n === 1 ? "1 jugador" : n + " jugadores") + (r ? " · pareo de la ronda " + r : " · el pareo de la ronda 1 todavía no está publicado"),
+      pdfColPts: "Pts.", pdfColMesa: "Mesa", pdfColColor: "Color", pdfColRival: "Rival", pdfColRes: "Res.",
+      pdfNoAparece: "no aparece en el pareo",
+      pdfNota: (leido) => (leido ? leido + " " : "") + "Lo oficial es lo que publica el árbitro en chess-results.",
+      pdfPie: "Ajedrez Integral · ajedrez-integral.com/centroamericano-2026.html",
+      pdfPagina: (n, total) => "Página " + n + " de " + total,
+      pdfLista: "Listo: la hoja se bajó a tu aparato.",
+      pdfError: "No se pudo armar la hoja. Intenta de nuevo.",
       locale: "es-CR",
     },
     en: {
@@ -139,6 +151,16 @@
       },
       diaAntes: "Today's image is ready once round 1 is over.",
       diaTexto: (titulo) => titulo + " at the Centroamericano 2026:",
+      pdfTitulo: (pais, r) => pais + (r ? " · Round " + r : " · Starting list"),
+      pdfSub: "21st Central American and Caribbean Youth Festival · Costa Rica 2026 · Delegation sheet",
+      pdfResumen: (n, r) => (n === 1 ? "1 player" : n + " players") + (r ? " · pairings of round " + r : " · the pairings of round 1 are not published yet"),
+      pdfColPts: "Pts.", pdfColMesa: "Board", pdfColColor: "Color", pdfColRival: "Opponent", pdfColRes: "Res.",
+      pdfNoAparece: "not in the pairings",
+      pdfNota: (leido) => (leido ? leido + " " : "") + "The official pairings and results are the ones the arbiter publishes on chess-results.",
+      pdfPie: "Ajedrez Integral · ajedrez-integral.com/centroamericano-2026.html",
+      pdfPagina: (n, total) => "Page " + n + " of " + total,
+      pdfLista: "Done: the sheet was saved to your device.",
+      pdfError: "We couldn't make the sheet. Please try again.",
       locale: "en-US",
     },
   };
@@ -777,6 +799,65 @@
     }
   }
 
+  /* ---------------- la hoja de la delegación (PDF) ---------------- */
+  // Lo que el entrenador lleva en la mano en la sala: todos sus jugadores en la
+  // ronda emparejada, por categoría, con mesa, color, rival y resultado. Es el
+  // documento neutral de js/reporte-pdf.js (una sola copia), que le pone la
+  // marca de agua de Ajedrez Integral (js/marca-agua.js).
+  function documentoDelegacion(fed) {
+    const tx = T();
+    const suyos = V.jugadores().filter((x) => x.j.fed === fed);
+    const ronda = Math.max(0, ...suyos.map((x) => x.ronda || 0));
+    const porGrupo = {};
+    suyos.forEach((x) => { (porGrupo[x.j.grupo || "—"] = porGrupo[x.j.grupo || "—"] || []).push(x); });
+    const bloques = [{ tipo: "parrafo", texto: tx.pdfResumen(suyos.length, ronda) }];
+    Object.keys(porGrupo).sort((a, b) => V.ordenGrupo(a) - V.ordenGrupo(b) || a.localeCompare(b)).forEach((g) => {
+      bloques.push({ tipo: "titulo", texto: V.categoria(g) });
+      const filas = porGrupo[g].sort((a, b) => a.j.puesto - b.j.puesto).map((x) => {
+        const p = x.partida;
+        const jugo = x.torneo.ronda > 0;
+        let rival = tx.pdfNoAparece, mesa = "—", color = "—", res = "";
+        if (p && !p.rival) rival = tx.proyBye;
+        else if (p) {
+          mesa = String(p.mesa);
+          color = p.color === "blancas" ? tx.proyBlancas : tx.proyNegras;
+          rival = V.rivalTexto(x.rivalDe(p.rival.no) || p.rival);
+          res = /\d|½/.test(String(p.resultado || "")) ? String(p.resultado) : "";
+        }
+        return [mesa, nombreCompleto(x.j), jugo ? x.j.puntos || "0" : "—", color, rival, res];
+      });
+      // En una A4 de pie no caben más columnas sin cortar el nombre del rival,
+      // que es lo que el entrenador busca en la sala.
+      bloques.push({ tipo: "tabla", encabezados: [tx.pdfColMesa, tx.colJugador, tx.pdfColPts, tx.pdfColColor, tx.pdfColRival, tx.pdfColRes],
+        filas, anchos: [8, 26, 6, 10, 42, 8] });
+    });
+    const leido = V.cuandoSeLeyo().trim().replace(/\.+$/, ".");
+    bloques.push({ tipo: "nota", texto: tx.pdfNota(leido) });
+    return { titulo: tx.pdfTitulo(V.pais(fed), ronda), subtitulo: tx.pdfSub, autor: "Ajedrez Integral", color: "#40478f",
+      pie: tx.pdfPie, pagina: tx.pdfPagina, bloques, ronda };
+  }
+
+  async function hojaDelegacion(fed, boton, estado) {
+    const tx = T();
+    if (boton) boton.disabled = true;
+    if (estado) estado.textContent = "";
+    try {
+      await V.pedir();
+      const d = documentoDelegacion(fed);
+      const blob = await window.ReportePDF.generar(d);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url; a.download = "centroamericano-2026-" + fed.toLowerCase() + (d.ronda ? "-ronda-" + d.ronda : "") + ".pdf";
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 10000);
+      if (estado) estado.textContent = tx.pdfLista;
+    } catch (e) {
+      if (estado) estado.textContent = V.datos() ? tx.pdfError : tx.error;
+    } finally {
+      if (boton) boton.disabled = false;
+    }
+  }
+
   /* ---------------- arranque ---------------- */
   const botonDia = $("imagen-dia");
   if (botonDia) {
@@ -835,5 +916,5 @@
   document.addEventListener("cac-datos", repintar);
   document.addEventListener("cac-idioma", repintar);
 
-  window.CentroamericanoTablas = { compartirJugador, imagenJugador, compartirResumen, imagenResumen, resumenDelDia, imagenDia, compartirDia };
+  window.CentroamericanoTablas = { compartirJugador, imagenJugador, compartirResumen, imagenResumen, resumenDelDia, imagenDia, compartirDia, documentoDelegacion, hojaDelegacion };
 })();
