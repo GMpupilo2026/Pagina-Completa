@@ -48,6 +48,9 @@
 /manifest.json
   Cache-Control: no-cache
 
+/manifest-centroamericano-2026.json
+  Cache-Control: no-cache
+
 # Sin este tipo, el navegador baja las reglas y no las aplica: no da ningún error.
 /anticipar.json
   Content-Type: application/speculationrules+json

@@ -36,7 +36,7 @@
 // cada jugador que sigue ese aparato. Ver «Seguir a mis jugadores y los
 // avisos en el celular» en docs/decisiones/juegos-y-torneos.md.
 //   - "push_llave"  → la llave pública VAPID (la del sitio, de notificar).
-//   - "seguir"      { clave, suscripcion, jugadores: [{tnr, no, nombre}], idioma }
+//   - "seguir"      { clave, suscripcion, jugadores: [{tnr, no, nombre}], idioma, delegacion? }
 //                   → deja a ese aparato siguiendo EXACTAMENTE esa lista (como
 //                   las set_* de la base: para sumar, la página manda todos).
 //                   Sin cuenta: un aparato nuevo pasa por el freno de envíos
@@ -51,7 +51,9 @@
 //                   no lo tenga tres avisos: el recordatorio de la ronda que
 //                   empieza en 30 minutos (la hora sale del .ics de la página),
 //                   el pareo de cada seguido y, cuando chess-results lo anota,
-//                   su resultado con su puesto. Cada aviso se anota antes de
+//                   su resultado con su puesto; y a quien sigue un país
+//                   (delegacion, el código de FIDE), el resumen de la ronda
+//                   cuando terminan todas sus partidas. Cada aviso se anota antes de
 //                   salir (sala_avisos_push_enviados, con su tipo), así no sale
 //                   dos veces.
 // Solo se le manda a los servicios de avisos de los navegadores (Google,
@@ -390,12 +392,12 @@ async function rondasDelCalendario(sala: string) {
   }
 }
 
-type Suscrito = { id: string; sala: string; endpoint: string; p256dh: string; auth: string; idioma: string; jugadores: { tnr: string; no: number; nombre: string }[] };
+type Suscrito = { id: string; sala: string; endpoint: string; p256dh: string; auth: string; idioma: string; jugadores: { tnr: string; no: number; nombre: string }[]; delegacion: string | null };
 
 async function revisar(admin: Admin) {
   const llaves = await llavesPush(admin);
   if (!llaves) return { ok: false, error: "sin llaves" };
-  const { data } = await admin.from("sala_suscripciones_push").select("id, sala, endpoint, p256dh, auth, idioma, jugadores");
+  const { data } = await admin.from("sala_suscripciones_push").select("id, sala, endpoint, p256dh, auth, idioma, jugadores, delegacion");
   const subs = (data || []) as Suscrito[];
   if (!subs.length) return { ok: true, mandados: 0 };
   let mandados = 0;
@@ -448,6 +450,16 @@ async function revisar(admin: Admin) {
           lineas.push(!m.negras ? apellido + ": bye"
             : apellido + ": " + (en ? "board " : "mesa ") + m.mesa + ", " + (m.blancas.no === e.no ? (en ? "white" : "blancas") : (en ? "black" : "negras")));
         }
+        if (s.delegacion) {
+          // Cuántos de su país juegan esa ronda, si el pareo ya salió.
+          const n = torneos.reduce((acc, t) => {
+            const pareo = t.pareo as { ronda: number; mesas: Mesa[] } | null;
+            if (!pareo || pareo.ronda !== proxima.ronda) return acc;
+            const fed = new Set(((t.jugadores || []) as Jug[]).filter((x) => x.fed === s.delegacion).map((x) => x.no));
+            return acc + pareo.mesas.reduce((k, m) => k + (fed.has(m.blancas.no) ? 1 : 0) + (m.negras && fed.has(m.negras.no) ? 1 : 0), 0);
+          }, 0);
+          if (n) lineas.unshift(s.delegacion + ": " + n + (en ? (n === 1 ? " player" : " players") : (n === 1 ? " jugador" : " jugadores")));
+        }
         const hora = new Date(proxima.inicio).toLocaleTimeString(en ? "en-US" : "es-CR", { hour: "numeric", minute: "2-digit", timeZone: "America/Costa_Rica" });
         const cuerpo = lineas.length
           ? lineas.slice(0, 4).join(" · ") + (lineas.length > 4 ? (en ? " and " : " y ") + (lineas.length - 4) + (en ? " more." : " más.") : "")
@@ -485,8 +497,49 @@ async function revisar(admin: Admin) {
         });
       }
     }
+
+    // 4) El resumen de un país, cuando ya terminaron TODAS sus partidas de la ronda.
+    for (const s of deSala.filter((x) => x.delegacion)) {
+      for (const t of torneos) {
+        if (mandados >= TOPE_AVISOS) return { ok: true, mandados, tope: true };
+        const r = resumenDelegacion(s.idioma, s.delegacion!, t);
+        if (r) await avisar(s, "delegacion", t.tnr, 0, r.ronda, { titulo: r.titulo, cuerpo: r.cuerpo, etiqueta: "sala-delegacion-" + t.tnr });
+      }
+    }
   }
   return { ok: true, mandados };
+}
+
+// El resumen de la ronda emparejada para los jugadores de un país; null si a
+// alguno todavía le falta el resultado (o si ese país no juega en el torneo).
+const fmtPuntos = (n: number) => { const e = Math.floor(n), m = n - e >= 0.5; return e ? e + (m ? "½" : "") : (m ? "½" : "0"); };
+export function resumenDelegacion(idioma: string, fed: string, t: Record<string, unknown>) {
+  const pareo = t.pareo as { ronda: number; mesas: Mesa[] } | null;
+  if (!pareo || !pareo.ronda || !Array.isArray(pareo.mesas) || !pareo.mesas.length) return null;
+  const suyos = new Set(((t.jugadores || []) as Jug[]).filter((x) => x.fed === fed).map((x) => x.no));
+  let g = 0, e = 0, p = 0, b = 0, pts = 0;
+  for (const m of pareo.mesas) {
+    for (const [lado, blancas] of [[m.blancas, true], [m.negras, false]] as const) {
+      if (!lado || !suyos.has(lado.no)) continue;
+      if (!m.negras) { b++; continue; }
+      const x = puntosDe(m.resultado, blancas);
+      if (x === null) return null;
+      pts += x;
+      if (x === 1) g++; else if (x === 0.5) e++; else p++;
+    }
+  }
+  const jugadas = g + e + p;
+  if (!jugadas && !b) return null;
+  const en = idioma === "en";
+  const partes = en
+    ? [[g, g === 1 ? " win" : " wins"], [e, e === 1 ? " draw" : " draws"], [p, p === 1 ? " loss" : " losses"], [b, b === 1 ? " bye" : " byes"]]
+    : [[g, g === 1 ? " ganada" : " ganadas"], [e, " en tablas"], [p, p === 1 ? " perdida" : " perdidas"], [b, " bye"]];
+  const lista = (partes as [number, string][]).filter(([n]) => n).map(([n, x]) => n + x).join(", ");
+  return {
+    ronda: pareo.ronda,
+    titulo: fed + (en ? " · Round " : " · Ronda ") + pareo.ronda,
+    cuerpo: lista + (jugadas ? (en ? ": " + fmtPuntos(pts) + " of " + jugadas + " points in their games." : ": " + fmtPuntos(pts) + " de " + jugadas + " puntos en sus partidas.") : "."),
+  };
 }
 
 // ------------------------------------------------------------- la función
@@ -560,7 +613,8 @@ Deno.serve(async (req) => {
     const lista = Array.isArray(body.jugadores) ? body.jugadores as Record<string, unknown>[] : [];
     const jugadores = lista.map((j) => ({ tnr: corto(j.tnr, 9), no: Number(j.no), nombre: corto(j.nombre, 100) }))
       .filter((j) => /^[0-9]{1,9}$/.test(j.tnr) && Number.isInteger(j.no) && j.no > 0 && j.nombre.length >= 2);
-    if (!jugadores.length) return json({ ok: false, error: "Falta a quién seguir." }, 400);
+    const delegacion = /^[A-Z]{3}$/.test(String(body.delegacion || "")) ? String(body.delegacion) : null;
+    if (!jugadores.length && !delegacion) return json({ ok: false, error: "Falta a quién seguir." }, 400);
     if (jugadores.length > 20) return json({ ok: false, error: "En este aparato puedes seguir hasta 20 jugadores: deja de seguir a alguno." }, 409);
     // Solo jugadores de los torneos de esta sala.
     const { data: sala } = await admin.from("salas_torneo").select("enlaces").eq("clave", clave).eq("visible", true).maybeSingle();
@@ -576,18 +630,18 @@ Deno.serve(async (req) => {
       .eq("p256dh", p256dh).eq("auth", auth).maybeSingle();
     if (yaEsta) {
       const { error } = await admin.from("sala_suscripciones_push")
-        .update({ idioma, jugadores, actualizada: new Date().toISOString() }).eq("id", yaEsta.id);
+        .update({ idioma, jugadores, delegacion, actualizada: new Date().toISOString() }).eq("id", yaEsta.id);
       return error ? json({ ok: false, error: "No se pudo guardar. Intenta de nuevo." }, 502) : json({ ok: true });
     }
     const { data: freno, error: frenoError } = await admin.rpc("sala_avisos_frenar", { p_ip: ipDe(req) });
     if (frenoError) return json({ ok: false, error: "No se pudo guardar. Intenta de nuevo." }, 502);
     if (freno) return json({ ok: false, error: freno }, 429);
     const { error } = await admin.from("sala_suscripciones_push").upsert(
-      { sala: clave, endpoint, p256dh, auth, idioma, jugadores, actualizada: new Date().toISOString() },
+      { sala: clave, endpoint, p256dh, auth, idioma, jugadores, delegacion, actualizada: new Date().toISOString() },
       { onConflict: "sala,endpoint" },
     );
     if (error) return json({ ok: false, error: "No se pudo guardar. Intenta de nuevo." }, 502);
-    const nombres = jugadores.map((j) => j.nombre).join(", ");
+    const nombres = jugadores.map((j) => j.nombre).concat(delegacion ? [delegacion] : []).join(", ");
     const prueba = await mandarPush({ endpoint, p256dh, auth }, {
       titulo: idioma === "en" ? "Done: you follow " + nombres : "Listo: sigues a " + nombres,
       cuerpo: idioma === "en" ? "We will let you know here 30 minutes before each round, their board and opponent as soon as the pairings are out, and their result."

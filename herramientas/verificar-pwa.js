@@ -195,6 +195,35 @@ function servidorPropio() {
     else console.log(`  ✓ ${i.src} · ${real}`);
   });
 
+  console.log("\n=== Las páginas que se instalan como su propia app ===");
+  // La lista sale de PROPIAS en herramientas/pwa-cabecera.py: una sola copia.
+  const cabecera = fs.readFileSync(path.join(RAIZ, "herramientas/pwa-cabecera.py"), "utf8");
+  const propias = [...cabecera.matchAll(/"([\w./-]+\.html)":\s*\{\s*"manifest":\s*"([^"]+)",\s*"icono":\s*"([^"]+)"/g)];
+  igual("hay páginas con su propia app (o la lista no se pudo leer)", propias.length > 0, "true");
+  for (const [, pagina, href, icono] of propias) {
+    const archivoM = path.join(RAIZ, href.replace(/^\//, ""));
+    if (!fs.existsSync(archivoM)) { mal(pagina + ": no existe su manifest " + href); continue; }
+    const m = JSON.parse(fs.readFileSync(archivoM, "utf8"));
+    ["name", "short_name", "id", "start_url", "scope", "display", "theme_color", "background_color", "icons"]
+      .forEach((c) => { if (!m[c]) mal(href + ": le falta " + c); });
+    igual(pagina + ": arranca en su página", m.start_url, "/" + pagina);
+    igual(pagina + ": es otra app (su id no es el de la Academia)", m.id !== (manifest.id || manifest.start_url), "true");
+    igual(pagina + ": se abre como app", m.display, "standalone");
+    igual(pagina + ": trae 192, 512 y un maskable", m.icons.some((i) => i.sizes === "192x192") && m.icons.some((i) => i.sizes === "512x512")
+      && m.icons.some((i) => (i.purpose || "").includes("maskable")), "true");
+    m.icons.concat([{ src: icono, sizes: "180x180" }]).forEach((i) => {
+      const a = path.join(RAIZ, i.src.replace(/^\//, ""));
+      if (!fs.existsSync(a)) { mal("el icono no existe: " + i.src); return; }
+      const real = tamanoPng(a);
+      if (real !== i.sizes) mal(`${i.src} dice medir ${i.sizes} y mide ${real}`);
+      else console.log(`  ✓ ${i.src} · ${real}`);
+    });
+    const html = fs.readFileSync(path.join(RAIZ, pagina), "utf8");
+    igual(pagina + ": declara su manifest y su ícono de iPhone", html.includes('<link rel="manifest" href="' + href + '">') && html.includes('<link rel="apple-touch-icon" href="' + icono + '">'), "true");
+    const headers = fs.readFileSync(path.join(RAIZ, "_headers"), "utf8");
+    igual(href + " no se cachea (como manifest.json)", new RegExp("^" + href.replace(/[.]/g, "\\.") + "\\n  Cache-Control: no-cache", "m").test(headers), "true");
+  }
+
   console.log("\n=== Todas las páginas lo declaran ===");
   const paginas = [];
   (function recorrer(dir) {

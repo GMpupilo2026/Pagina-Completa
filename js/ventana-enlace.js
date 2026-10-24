@@ -101,6 +101,22 @@
   const alEntrar = dialogoDe(location.hash);
   if (alEntrar && typeof alEntrar.showModal === "function") abrirDialogo(alEntrar, null);
 
+  /* Entrar con «#x», si x es una ficha a[data-ventana], la abre encima: así
+     otra página del sitio lleva a «los resultados» sin mandar a nadie afuera
+     (la ficha del Centroamericano en Torneos, js/salas-torneo.js). Al cerrar
+     se quita el «#x» y el foco queda en la ficha. */
+  function fichaDe(hash) {
+    if (!hash || hash.length < 2) return null;
+    const a = document.getElementById(decodeURIComponent(hash.slice(1)));
+    return a && a.matches("a[data-ventana]") ? a : null;
+  }
+  const fichaAlEntrar = fichaDe(location.hash);
+  if (fichaAlEntrar && typeof HTMLDialogElement === "function") {
+    abrir(fichaAlEntrar).addEventListener("close", () => {
+      if (location.hash === "#" + fichaAlEntrar.id) history.replaceState(null, "", location.pathname + location.search);
+    });
+  }
+
   document.addEventListener("click", (ev) => {
     const interno = ev.target.closest && ev.target.closest('a[href^="#"]');
     if (interno && ev.button === 0 && !ev.defaultPrevented) {

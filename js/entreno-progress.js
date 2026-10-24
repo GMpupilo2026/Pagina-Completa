@@ -43,11 +43,58 @@ window.EntrenoProgress = (function () {
         console.error("No se pudo registrar el avance de Entrenamiento:", error);
         return { ok: false, motivo: "error", error };
       }
+      avisarTemaTerminado();
       return { ok: true };
     } catch (e) {
       console.error("No se pudo registrar el avance de Entrenamiento:", e);
       return { ok: false, motivo: "error", error: e };
     }
+  }
+
+  /* ¿Ese ejercicio terminó un tema? El premio (el doble de lo que valen sus
+     ejercicios, hasta 500) lo paga la base, con su trigger
+     premiar_tema_terminado; acá solo se dice, una vez. Se pregunta por lo de
+     los últimos minutos y se recuerda lo ya dicho en el aparato: la hora del
+     celular puede no ser la de la base. Ver «Terminar un tema: el doble,
+     hasta 500» en docs/decisiones/puntos-y-premios.md. */
+  const CLAVE_TEMAS = "temas_terminados_avisados_v1";
+  async function avisarTemaTerminado() {
+    try {
+      const desde = new Date(Date.now() - 10 * 60000).toISOString();
+      const { data, error } = await window.sb.rpc("mis_temas_terminados", { p_desde: desde });
+      if (error || !Array.isArray(data) || !data.length) return;
+      let dichos = [];
+      try { dichos = JSON.parse(localStorage.getItem(CLAVE_TEMAS) || "[]"); } catch (e) { /* sin almacenamiento */ }
+      data.forEach((t) => {
+        const k = t.nombre + "|" + t.created_at;
+        if (dichos.includes(k)) return;
+        dichos.push(k);
+        mostrarPremio("🏆", "¡Terminaste el tema «" + t.nombre + "»! Ganaste " + t.cantidad + " Puntos Ajedrez de premio.");
+      });
+      try { localStorage.setItem(CLAVE_TEMAS, JSON.stringify(dichos.slice(-50))); } catch (e) { /* sin almacenamiento */ }
+    } catch (e) { /* el premio ya está pagado; solo no se dice */ }
+  }
+  function mostrarPremio(emoji, texto) {
+    const caja = document.createElement("div");
+    caja.className = "fixed top-4 left-4 right-4 sm:left-auto sm:max-w-sm z-[95] flex items-start gap-3 rounded-xl shadow-lg px-4 py-3 bg-white dark:bg-brand-800 border-2 border-accent-500 text-sm font-semibold text-brand-800 dark:text-white";
+    caja.setAttribute("role", "status");
+    caja.setAttribute("data-tema-terminado", "");
+    const ic = document.createElement("span");
+    ic.className = "text-2xl leading-none";
+    ic.setAttribute("aria-hidden", "true");
+    ic.textContent = emoji;
+    const t = document.createElement("p");
+    t.className = "flex-1 min-w-0 break-words";
+    t.textContent = texto;
+    const x = document.createElement("button");
+    x.type = "button";
+    x.className = "shrink-0 rounded px-1 text-brand-600 dark:text-brand-300 hover:text-brand-800 dark:hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400";
+    x.textContent = "✕";
+    x.setAttribute("aria-label", "Cerrar el aviso del premio");
+    x.addEventListener("click", () => caja.remove());
+    caja.append(ic, t, x);
+    document.body.appendChild(caja);
+    setTimeout(() => caja.remove(), 12000);
   }
 
   /* Estrellas de una posición de Practicar o de Desafíos. Cuentan las pistas Y

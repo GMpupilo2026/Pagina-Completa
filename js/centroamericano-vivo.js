@@ -36,6 +36,7 @@
   const CLAVE_SEGUIDOS = "cac_seguidos_v1";
   const CLAVE_DELEGACION = "cac_delegacion_v1";
   const CLAVE_AVISOS = "cac_avisos_v1";
+  const CLAVE_AVISO_DELEG = "cac_aviso_delegacion_v1";
   const MAX_SEGUIDOS = 20;
   const REFRESCO_MS = 120000;
   const MAX_RESULTADOS = 8;
@@ -100,6 +101,20 @@
       noCopiado: "Tu navegador no dejó copiar. Mantén el dedo sobre el resumen para copiarlo.",
       whatsappTitulo: (pais, r) => pais + " — Ronda " + r + ", Centroamericano 2026",
       whatsappLinea: (nombre, cat, que, rival) => nombre + " (" + cat + ") " + que + (rival ? " " + rival : ""),
+      copiarEnlace: "Copiar enlace",
+      enlaceCopiado: (n) => "✓ Enlace de " + n + " copiado: mándalo por WhatsApp.",
+      enlaceNoCopiado: "Tu navegador no dejó copiar el enlace.",
+      noEncontrado: "No encontramos a ese jugador en chess-results. Búscalo por su nombre.",
+      progreso: (r, h, n) => "Ronda " + r + ": " + h + " de " + n + (n === 1 ? " partida terminada." : " partidas terminadas."),
+      rondaTerminada: (r) => "Ronda " + r + ": terminada. El pareo de la siguiente sale en cuanto lo publique el árbitro.",
+      delegNo: (p) => "Avisarme del resumen de " + p + " en cada ronda",
+      delegSi: (p) => "Resumen de " + p + " en este celular: encendido",
+      delegListo: (p) => "✓ Listo: te avisaremos cómo le fue a " + p + " en cuanto terminen sus partidas de cada ronda.",
+      delegApagado: (p) => "Listo: ya no te avisamos el resumen de " + p + ".",
+      imagenResumen: "Compartir imagen",
+      puestosTitulo: "Su puesto en la categoría después de cada ronda:",
+      puestoRonda: (r, p) => "R" + r + " " + p,
+      puestosNota: "Con los mismos puntos se comparte el puesto (por ejemplo, 3.º–5.º): el desempate lo decide al final del torneo.",
       locale: "es-CR",
     },
     en: {
@@ -159,6 +174,20 @@
       noCopiado: "Your browser didn't allow copying. Press and hold the summary to copy it.",
       whatsappTitulo: (pais, r) => pais + " — Round " + r + ", Centroamericano 2026",
       whatsappLinea: (nombre, cat, que, rival) => nombre + " (" + cat + ") " + que + (rival ? " " + rival : ""),
+      copiarEnlace: "Copy link",
+      enlaceCopiado: (n) => "✓ Link to " + n + " copied: send it on WhatsApp.",
+      enlaceNoCopiado: "Your browser didn't allow copying the link.",
+      noEncontrado: "We couldn't find that player on chess-results. Search by name.",
+      progreso: (r, h, n) => "Round " + r + ": " + h + " of " + n + (n === 1 ? " game finished." : " games finished."),
+      rondaTerminada: (r) => "Round " + r + ": finished. The next pairings come out as soon as the arbiter publishes them.",
+      delegNo: (p) => "Notify me of " + p + "'s summary every round",
+      delegSi: (p) => p + " summary on this phone: on",
+      delegListo: (p) => "✓ Done: we'll let you know how " + p + " did as soon as its games of each round are over.",
+      delegApagado: (p) => "Done: we no longer send you " + p + "'s summary.",
+      imagenResumen: "Share image",
+      puestosTitulo: "Their place in the section after each round:",
+      puestoRonda: (r, p) => "R" + r + " " + p,
+      puestosNota: "Players on the same points share the place (for example, 3rd–5th): tiebreaks decide it at the end of the tournament.",
       locale: "en-US",
     },
   };
@@ -307,6 +336,43 @@
     return { rp: Math.round(ra + window.PareoDesempates.dpDeP(p)), ra: Math.round(ra), n: jugadas.length };
   }
 
+  // Los puntos de cada jugador de una categoría tras las primeras `hasta`
+  // rondas del cuadro cruzado (lo oficial: sin la ronda que solo está en el pareo).
+  function puntosTras(lista, hasta) {
+    return lista.map((j) => {
+      const r = Array.isArray(j.r) ? j.r : [];
+      let pts = 0;
+      for (let i = 0; i < hasta && i < r.length; i++) { const k = casilla(r[i]); if (k) pts += k.puntos; }
+      return pts;
+    });
+  }
+  // El puesto de un jugador en su categoría después de cada ronda, contando
+  // solo los puntos: con los mismos puntos se comparte el puesto (3.º–5.º),
+  // porque el desempate de cada ronda intermedia no lo publica chess-results.
+  function puestosDe(x) {
+    const lista = (x.torneo.jugadores || []).filter((j) => j.grupo === x.j.grupo);
+    const i = lista.indexOf(x.j);
+    const mias = Array.isArray(x.j.r) ? x.j.r : [];
+    const out = [];
+    if (i < 0) return out;
+    for (let k = 1; k <= mias.length; k++) {
+      if (!casilla(mias[k - 1])) continue;
+      const pts = puntosTras(lista, k);
+      const yo = pts[i];
+      const mejores = pts.filter((p, n) => n !== i && p > yo).length;
+      const iguales = pts.filter((p, n) => n !== i && p === yo).length;
+      out.push({ ronda: k, desde: mejores + 1, hasta: mejores + 1 + iguales, de: lista.length, puntos: yo });
+    }
+    return out;
+  }
+  // 3 → «3.º» / «3rd»; un puesto compartido, «3.º–5.º».
+  function ordinal(n, lang) {
+    if (lang !== "en") return n + ".º";
+    const d = n % 100;
+    return n + (d >= 11 && d <= 13 ? "th" : ["th", "st", "nd", "rd"][n % 10] || "th");
+  }
+  const puestoTexto = (p, lang) => ordinal(p.desde, lang) + (p.hasta > p.desde ? "–" + ordinal(p.hasta, lang) : "");
+
   // «ganó a FM Guevara Ruiz, Santiago Jose (ESA, 2252)» para una ronda.
   function rivalTexto(j) {
     if (!j) return "";
@@ -318,6 +384,66 @@
       : o.puntos === 1 ? (o.incomparecencia ? tx.ganoInc : tx.gano)
       : o.puntos === 0.5 ? tx.tablas : (o.incomparecencia ? tx.perdioInc : tx.perdio);
     return { que, rival: rivalTexto(o.rival) };
+  }
+
+  // Cuántas partidas de la ronda emparejada ya tienen resultado (sin los byes).
+  function progresoRonda() {
+    let ronda = 0, total = 0, hechas = 0;
+    (datos ? datos.torneos : []).forEach((tor) => {
+      const p = tor.pareo;
+      if (!p || !p.ronda || !Array.isArray(p.mesas)) return;
+      ronda = Math.max(ronda, p.ronda);
+      p.mesas.forEach((m) => { if (!m.negras) return; total++; if (puntosDeMesa(m.resultado, true) !== null) hechas++; });
+    });
+    return ronda && total ? { ronda, total, hechas } : null;
+  }
+  function pintarProgreso() {
+    const caja = $("ronda-progreso");
+    if (!caja) return;
+    const p = progresoRonda();
+    caja.hidden = !p;
+    if (!p) return;
+    $("ronda-progreso-texto").textContent = p.hechas === p.total ? t().rondaTerminada(p.ronda) : t().progreso(p.ronda, p.hechas, p.total);
+    caja.querySelector(".cac-progreso-barra span").style.width = Math.round((100 * p.hechas) / p.total) + "%";
+  }
+
+  // Un aviso solo para el lector de pantalla (lo que pasó al tocar un botón).
+  function anunciar(texto) {
+    let r = $("cac-anuncio");
+    if (!r) {
+      r = el("p", "sr-only");
+      r.id = "cac-anuncio";
+      r.setAttribute("role", "status");
+      r.setAttribute("data-no-traducir", "");
+      document.body.appendChild(r);
+    }
+    r.textContent = "";
+    setTimeout(() => { r.textContent = texto; }, 50);
+  }
+
+  // El enlace directo a un jugador: #jugador=<torneo>-<número inicial>-<nombre>.
+  // El nombre va para que se lea y para encontrarlo si el árbitro le cambió el
+  // número antes de la ronda 1.
+  const slugDe = (n) => plano(n).replace(/ /g, "-");
+  const enlaceDe = (x) => location.origin + location.pathname + "#jugador=" + x.torneo.tnr + "-" + x.j.no + "-" + slugDe(x.j.nombre);
+  function abrirEnlaceJugador() {
+    const m = location.hash.match(/^#jugador=(\d{1,9})-(\d{1,5})(?:-([a-z0-9-]{0,120}))?$/);
+    if (!m) return;
+    const tx = t();
+    pedir().then(() => {
+      const todos = jugadores().filter((y) => String(y.torneo.tnr) === m[1]);
+      const slug = m[3] || "";
+      let x = todos.find((y) => y.j.no === Number(m[2]) && (!slug || slugDe(y.j.nombre) === slug));
+      if (!x && slug) { const c = todos.filter((y) => slugDe(y.j.nombre) === slug); if (c.length === 1) x = c[0]; }
+      if (!x) { $("buscador-estado").textContent = tx.noEncontrado; return; }
+      const clave = x.torneo.tnr + "-" + x.j.no;
+      $("buscador-nombre").value = x.j.nombre;
+      abiertas.add(clave);
+      pintarTodo();
+      $("buscador").scrollIntoView({ block: "start" });
+      const boton = $("buscador-resultados").querySelector('[data-rondas="' + clave + '"]');
+      if (boton) boton.focus({ preventScroll: true });
+    }, () => { $("buscador-estado").textContent = tx.error; });
   }
 
   const abiertas = new Set();
@@ -392,9 +518,18 @@
       if (mismo) mismo.focus();
     });
     acciones.appendChild(ver);
+    const enlace = el("button", "cac-jugador-boton", tx.copiarEnlace);
+    enlace.type = "button";
+    enlace.dataset.accion = "enlace";
+    enlace.addEventListener("click", async () => {
+      try { await navigator.clipboard.writeText(enlaceDe(x)); anunciar(t().enlaceCopiado(j.nombre)); enlace.textContent = "✓ " + t().copiarEnlace; }
+      catch (e) { anunciar(t().enlaceNoCopiado); }
+    });
+    acciones.appendChild(enlace);
     // La imagen la arma js/centroamericano-tablas.js, que carga después.
     const comp = el("button", "cac-jugador-boton", tx.compartir);
     comp.type = "button";
+    comp.dataset.accion = "compartir";
     comp.addEventListener("click", () => { if (window.CentroamericanoTablas) window.CentroamericanoTablas.compartirJugador(x, comp); });
     acciones.appendChild(comp);
     li.appendChild(acciones);
@@ -413,6 +548,14 @@
         caja.appendChild(ol);
         const rend = rendimiento(x);
         if (rend) caja.appendChild(el("p", "mt-2 text-sm font-semibold", tx.rendimiento(rend.rp, rend.n, rend.ra)));
+        const puestos = puestosDe(x);
+        if (puestos.length) {
+          const linea = el("p", "cac-puestos mt-2 text-sm");
+          linea.appendChild(el("span", "font-semibold", tx.puestosTitulo + " "));
+          linea.appendChild(document.createTextNode(puestos.map((p) => tx.puestoRonda(p.ronda, puestoTexto(p, idioma()))).join(" · ")));
+          caja.appendChild(linea);
+          if (puestos.some((p) => p.hasta > p.desde)) caja.appendChild(el("p", "mt-1 text-xs text-brand-600 dark:text-brand-300", tx.puestosNota));
+        }
       }
       li.appendChild(caja);
     }
@@ -590,7 +733,12 @@
       try { await navigator.clipboard.writeText(texto); aviso.textContent = t().copiado; }
       catch (err) { aviso.textContent = t().noCopiado; }
     });
-    caja.append(boton, aviso);
+    const imagen = el("button", "cac-jugador-boton mt-3 ml-2", tx.imagenResumen);
+    imagen.type = "button";
+    imagen.addEventListener("click", () => {
+      if (window.CentroamericanoTablas) window.CentroamericanoTablas.compartirResumen({ pais: nombrePais, ronda, resumen: tx.resumen(ronda, g, e, p, b, a), puntos: tx.resumenPuntos(pts, posibles), lineas }, imagen);
+    });
+    caja.append(boton, imagen, aviso);
     caja.dataset.texto = texto;
     return caja;
   }
@@ -599,10 +747,12 @@
     const sel = $("delegacion");
     try { if (sel.value) localStorage.setItem(CLAVE_DELEGACION, sel.value); else localStorage.removeItem(CLAVE_DELEGACION); } catch (e) {}
     pintarDelegacion();
+    pintarAvisoDelegacion();
+    $("delegacion-avisos-estado").textContent = "";
     if (sel.value) pedir().then(pintarTodo, () => { $("delegacion-estado").textContent = t().error; });
   }
 
-  function pintarTodo() { pintarSeguidos(); pintarBuscador(); pintarDelegacion(); }
+  function pintarTodo() { pintarProgreso(); pintarSeguidos(); pintarBuscador(); pintarDelegacion(); pintarAvisoDelegacion(); }
 
   /* ---------------- Avisarme en este celular ---------------- */
   // Qué dice la función, también cuando contesta un error (lo trae el cuerpo).
@@ -635,7 +785,31 @@
     boton.replaceChildren(ico, document.createTextNode(si ? tx.avisosSi : tx.avisarme));
   }
 
+  // El país del que este aparato pide el resumen de cada ronda, o "".
+  const delegAviso = () => { try { return (localStorage.getItem(CLAVE_AVISO_DELEG) || "").replace(/[^A-Z]/g, "").slice(0, 3); } catch (e) { return ""; } };
+  const marcarDeleg = (f) => { try { if (f) localStorage.setItem(CLAVE_AVISO_DELEG, f); else localStorage.removeItem(CLAVE_AVISO_DELEG); } catch (e) {} };
+  // Todo lo que sigue este aparato, junto: la función deja EXACTAMENTE eso.
+  const cuerpoSeguir = (sub) => ({ accion: "seguir", clave: SALA, suscripcion: sub.toJSON(), jugadores: paraMandar(), delegacion: delegAviso() || null, idioma: idioma() });
+
   let ocupado = false;
+  // Pide el permiso (solo cuando se toca un botón), se suscribe y le manda la lista a la función.
+  async function encenderAvisos(estado) {
+    const tx = t();
+    estado.textContent = tx.pidiendoPermiso;
+    const permiso = await Notification.requestPermission();
+    if (permiso !== "granted") { estado.textContent = tx.sinPermiso; return false; }
+    const reg = await registro();
+    if (!reg) { estado.textContent = tx.sinPreparar; return false; }
+    const llave = await llamar({ accion: "push_llave" });
+    if (!llave.ok || !llave.llave) { estado.textContent = llave.error || tx.avisosError; return false; }
+    const sub = (await reg.pushManager.getSubscription()) || (await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: llaveBytes(llave.llave) }));
+    const r = await llamar(cuerpoSeguir(sub));
+    if (!r.ok) { estado.textContent = r.error || tx.avisosError; return false; }
+    marcarAvisos(true);
+    estado.textContent = tx.avisosListos;
+    return true;
+  }
+
   async function alTocarAvisos() {
     if (ocupado) return;
     const boton = $("avisos-boton"), estado = $("avisos-estado");
@@ -644,36 +818,73 @@
     boton.disabled = true;
     try {
       if (avisosEncendidos()) {
+        // Apagar es para todo el aparato: sus jugadores y su delegación.
         const reg = await registro();
         const sub = reg && (await reg.pushManager.getSubscription());
         if (sub) await llamar({ accion: "baja", clave: SALA, suscripcion: sub.toJSON() });
         marcarAvisos(false);
+        marcarDeleg("");
         estado.textContent = tx.avisosApagados;
         return;
       }
-      estado.textContent = tx.pidiendoPermiso;
-      const permiso = await Notification.requestPermission();
-      if (permiso !== "granted") { estado.textContent = tx.sinPermiso; return; }
-      const reg = await registro();
-      if (!reg) { estado.textContent = tx.sinPreparar; return; }
-      const llave = await llamar({ accion: "push_llave" });
-      if (!llave.ok || !llave.llave) { estado.textContent = llave.error || tx.avisosError; return; }
-      const sub = (await reg.pushManager.getSubscription()) || (await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: llaveBytes(llave.llave) }));
-      const r = await llamar({ accion: "seguir", clave: SALA, suscripcion: sub.toJSON(), jugadores: paraMandar(), idioma: idioma() });
-      if (!r.ok) { estado.textContent = r.error || tx.avisosError; return; }
-      marcarAvisos(true);
-      estado.textContent = tx.avisosListos;
+      await encenderAvisos(estado);
     } catch (e) {
       estado.textContent = tx.avisosError;
     } finally {
       ocupado = false;
       boton.disabled = false;
       pintarAvisos();
+      pintarAvisoDelegacion();
+    }
+  }
+
+  // «Avisarme del resumen de Costa Rica en cada ronda»: un solo país por aparato.
+  function pintarAvisoDelegacion() {
+    const caja = $("delegacion-avisos-caja"), boton = $("delegacion-avisos"), sel = $("delegacion");
+    if (!caja || !boton || !sel) return;
+    caja.hidden = !hayPush() || !sel.value;
+    if (caja.hidden) return;
+    const si = avisosEncendidos() && delegAviso() === sel.value;
+    const nombre = pais(sel.value, idioma());
+    boton.setAttribute("aria-pressed", si ? "true" : "false");
+    const ico = el("span", "", "🔔 ");
+    ico.setAttribute("aria-hidden", "true");
+    boton.replaceChildren(ico, document.createTextNode(si ? t().delegSi(nombre) : t().delegNo(nombre)));
+  }
+  async function alTocarAvisoDelegacion() {
+    const sel = $("delegacion"), boton = $("delegacion-avisos"), estado = $("delegacion-avisos-estado");
+    const f = sel && sel.value;
+    if (!f || ocupado) return;
+    const tx = t(), nombre = pais(f, idioma());
+    ocupado = true;
+    boton.disabled = true;
+    try {
+      if (avisosEncendidos() && delegAviso() === f) {
+        marcarDeleg("");
+        ponerAvisosAlDia();
+        estado.textContent = tx.delegApagado(nombre);
+      } else if (avisosEncendidos()) {
+        marcarDeleg(f);
+        ponerAvisosAlDia();
+        estado.textContent = tx.delegListo(nombre);
+      } else {
+        const antes = delegAviso();
+        marcarDeleg(f);
+        if (await encenderAvisos(estado)) estado.textContent = tx.delegListo(nombre);
+        else marcarDeleg(antes);
+      }
+    } catch (e) {
+      estado.textContent = tx.avisosError;
+    } finally {
+      ocupado = false;
+      boton.disabled = false;
+      pintarAvisos();
+      pintarAvisoDelegacion();
     }
   }
 
   // Con los avisos encendidos, la función tiene que saber la lista nueva (o el
-  // idioma nuevo). Se espera un poco, por si se tocan varias estrellas seguidas.
+  // idioma o el país nuevo). Se espera un poco, por si se tocan varias estrellas seguidas.
   let alDia = null;
   function ponerAvisosAlDia() {
     if (!hayPush() || !avisosEncendidos()) return;
@@ -683,15 +894,15 @@
       try {
         const reg = await registro();
         const sub = reg && (await reg.pushManager.getSubscription());
-        if (!sub) { marcarAvisos(false); pintarAvisos(); return; }
-        const lista = paraMandar();
-        if (!lista.length) {
+        if (!sub) { marcarAvisos(false); pintarAvisos(); pintarAvisoDelegacion(); return; }
+        if (!paraMandar().length && !delegAviso()) {
           await llamar({ accion: "baja", clave: SALA, suscripcion: sub.toJSON() });
           marcarAvisos(false);
           pintarAvisos();
+          pintarAvisoDelegacion();
           return;
         }
-        const r = await llamar({ accion: "seguir", clave: SALA, suscripcion: sub.toJSON(), jugadores: lista, idioma: idioma() });
+        const r = await llamar(cuerpoSeguir(sub));
         if (estado) estado.textContent = r.ok ? t().avisosAlDia : (r.error || t().avisosError);
       } catch (e) {
         if (estado) estado.textContent = t().avisosError;
@@ -795,8 +1006,14 @@
   }
   const botonAvisos = $("avisos-boton");
   if (botonAvisos) botonAvisos.addEventListener("click", alTocarAvisos);
+  const botonDeleg = $("delegacion-avisos");
+  if (botonDeleg) botonDeleg.addEventListener("click", alTocarAvisoDelegacion);
+  window.addEventListener("hashchange", abrirEnlaceJugador);
   pintarSeguidos();
   pintarDelegacion();
+  pintarAvisoDelegacion();
+  pintarProgreso();
+  abrirEnlaceJugador();
   // Quien ya sigue a alguien o eligió su país viene a ver eso: se pide de una vez.
   if (seguidos().length || delegacionGuardada()) pedir().then(pintarTodo, () => pintarTodo());
 
@@ -813,7 +1030,8 @@
   window.CentroamericanoVivo = {
     datos: () => datos, deGuardado: () => deGuardado, pedir, jugadores, rondasDe, rendimiento, queHizo, rivalTexto,
     textos: t, idioma, categoria: (g) => t().categoria(g), ordenGrupo, pais: (f) => pais(f, idioma()), fmtPuntos, puntosNum,
-    cuandoSeLeyo: () => cuandoSeLeyo(t()), plano, el, ZONA,
+    cuandoSeLeyo: () => cuandoSeLeyo(t()), plano, el, ZONA, progresoRonda, anunciar, puntosDeMesa,
+    puestosDe, puntosTras, puestoTexto: (p) => puestoTexto(p, idioma()), delegacionGuardada,
   };
 
   document.addEventListener("cac-idioma", () => { pintarTodo(); ponerAvisosAlDia(); if (dialogo && dialogo.open) pintarMedallero(); });

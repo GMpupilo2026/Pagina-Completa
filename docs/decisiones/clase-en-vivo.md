@@ -4772,3 +4772,14 @@ se borra.
   ya está aplicado: no se vuelve a correr, y la carpeta se borra del PR. Su
   otro archivo, `practica_limite_de_intentos.sql`, lo reemplazó
   `20261017180000_practica_intentos_por_alumno.sql` (PR #905).
+
+## Las bromas en la clase: solo si el profe las enciende
+
+Desde el 24/10/2026 las bromas entre compañeros llegan también a la clase en
+vivo (antes, nunca): vienen apagadas, el profe las enciende con «🎭 Bromas
+apagadas · Encender» al final de «Alumnos conectados» (`js/clase-bromas.js`,
+tres horas o hasta que las apague), y cada alumno tiene entonces «Mandar una
+broma». Le cae al compañero cuando tiene abierta una actividad (pregunta,
+calentamiento, competencia, cuestionario, práctica, Formación, tiempo para
+pensar). El detalle, en «Dónde cae una broma y la clase en vivo» de
+`puntos-y-premios.md`.
