@@ -14,6 +14,7 @@
  *       → Promise<Blob> (image/png). `derecha` dice qué columnas van alineadas
  *       a la derecha (las de números). Las filas de más se cortan y se avisa.
  *   TablaImagen.bajar(datos, nombreArchivo) → la arma y la baja.
+ *   TablaImagen.marcar(canvas) → le pone la marca de agua a un lienzo propio.
  *
  * Lleva la marca de agua de Ajedrez Integral (img/marca-agua-ajedrez-integral.png,
  * la misma de los PDF), tenue y al centro, como todo documento que sale del
@@ -230,5 +231,14 @@
     return blob;
   }
 
-  raiz.TablaImagen = { armar, bajar, COLOR };
+  // La marca de agua sobre un lienzo que ya dibujó otro (la imagen de un
+  // jugador del Centroamericano, js/centroamericano-tablas.js): la misma copia,
+  // al centro y tenue. Devuelve si la pudo poner.
+  async function marcar(c) {
+    const img = await cargarMarca();
+    if (img) ponerMarca(c, img);
+    return !!img;
+  }
+
+  raiz.TablaImagen = { armar, bajar, marcar, COLOR };
 })(typeof self !== "undefined" ? self : this);
