@@ -8546,7 +8546,11 @@ Es una página estática, sin cuenta y sin base: nada se guarda.
   una sola. **Van ordenadas por lo que más se usa**, como pidió el dueño:
   Bases, Pedir un bye, Resultados en vivo, Partidas en vivo y Calendario de
   rondas; después Reglamento, Grupo de WhatsApp, Cómo llegar y, al final,
-  Hoteles oficiales (para cuando ya se está en el torneo, casi no se usa). Arriba, cada ficha lleva la bandera de Costa Rica
+  Hoteles oficiales (para cuando ya se está en el torneo, casi no se usa).
+- **El pie de página no lleva el contacto de Ajedrez Integral**: en esta
+  página quien pregunta es un jugador del torneo, y el único contacto que le
+  sirve es el de la organización (la despedida del pizote). El pie queda con
+  la marca, los enlaces del campeonato y lo legal. Arriba, cada ficha lleva la bandera de Costa Rica
   (1-1-2-1-1, con sus colores oficiales) y una fila de casillas de tablero; el
   color de las bases queda en el ícono.
 - **Las bases las sirve el propio sitio**, tal cual las publicó la FCA, en
