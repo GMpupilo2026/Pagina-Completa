@@ -19081,7 +19081,7 @@
   ]
  },
  "imagenes": {
-  "total": 872,
+  "total": 873,
   "grupos": [
    {
     "carpeta": "entreno/img/facil",
@@ -24340,6 +24340,19 @@
       "titulo": "10",
       "tipo": "otro",
       "kb": 47
+     }
+    ]
+   },
+   {
+    "carpeta": "img/cenfotec",
+    "titulo": "Cenfotec",
+    "grupo": "Carpetas",
+    "archivos": [
+     {
+      "ruta": "img/cenfotec/logo.png",
+      "titulo": "Logo",
+      "tipo": "otro",
+      "kb": 35
      }
     ]
    },

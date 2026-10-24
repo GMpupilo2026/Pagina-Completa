@@ -350,7 +350,7 @@ a.cac-despedida:hover .cac-globo { transform: translateY(-2px); }
 }
 .cac-sala h2 { color: #fff; padding-right: 5.5rem; text-shadow: 0 2px 0 rgb(30 36 83 / 0.45); }
 .cac-sala h2 + p { color: #fff; }
-.cac-sala-mascota {
+.cac-sala-imagen {
   position: absolute;
   top: 1.6rem;
   right: 0.9rem;
@@ -367,7 +367,7 @@ a.cac-despedida:hover .cac-globo { transform: translateY(-2px); }
 .cac-sala a.cac-sala-principal:hover { background: #b0101f; }
 .cac-sala a.cac-sala-boton:focus-visible { outline: 3px solid #fff; outline-offset: 2px; }
 @media (prefers-reduced-motion: reduce) {
-  .cac-sala-mascota { animation: none; }
+  .cac-sala-imagen { animation: none; }
 }
 
 /* «Hoy en el torneo» (js/centroamericano.js): una tarjeta blanca con el rojo de
