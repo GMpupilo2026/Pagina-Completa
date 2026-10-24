@@ -48,7 +48,7 @@
       antes: "Lista inicial: el torneo todavía no empieza.",
       despues: (r) => "Después de la ronda " + r + ".",
       final: (r) => "Clasificación final, después de la ronda " + r + ".",
-      proyFinal: (pag, de) => "Clasificación final" + (de > 1 ? " · " + pag + "/" + de : ""),
+      proyFinal: (cat, pag, de) => "Clasificación final" + (cat ? " · " + cat : "") + (de > 1 ? " · " + pag + "/" + de : ""),
       colPuesto: "Puesto", colJugador: "Jugador", colFed: "FED", colElo: "Elo", colPuntos: "Puntos", colRend: "Rend.",
       colPais: "País", colJugadores: "Jugadores", colDe: "De", colPorc: "%",
       colRonda: (r) => "R" + r,
@@ -78,7 +78,7 @@
       antes: "Starting list: the tournament hasn't started yet.",
       despues: (r) => "After round " + r + ".",
       final: (r) => "Final standings, after round " + r + ".",
-      proyFinal: (pag, de) => "Final standings" + (de > 1 ? " · " + pag + "/" + de : ""),
+      proyFinal: (cat, pag, de) => "Final standings" + (cat ? " · " + cat : "") + (de > 1 ? " · " + pag + "/" + de : ""),
       colPuesto: "Place", colJugador: "Player", colFed: "FED", colElo: "Rating", colPuntos: "Points", colRend: "Perf.",
       colPais: "Country", colJugadores: "Players", colDe: "Of", colPorc: "%",
       colRonda: (r) => "R" + r,
@@ -236,7 +236,8 @@
       if (tor.terminado && Array.isArray(tor.jugadores)) {
         const lista = V.jugadores().filter((x) => x.torneo === tor).sort((a, b) => a.j.puesto - b.j.puesto);
         const de = Math.ceil(lista.length / MESAS_POR_PAGINA);
-        for (let i = 0; i < de; i++) salida.push({ final: true, pag: i + 1, de, filas: lista.slice(i * MESAS_POR_PAGINA, (i + 1) * MESAS_POR_PAGINA) });
+        const grupo = lista.length ? lista[0].j.grupo || "" : "";
+        for (let i = 0; i < de; i++) salida.push({ final: true, grupo, pag: i + 1, de, filas: lista.slice(i * MESAS_POR_PAGINA, (i + 1) * MESAS_POR_PAGINA) });
         return;
       }
       const pareo = tor.pareo;
@@ -291,7 +292,7 @@
 
   // Una página de la clasificación final, con la misma letra grande del pareo.
   function pintarFinal(p, tx, titulo, caja) {
-    titulo.textContent = tx.proyFinal(p.pag, p.de);
+    titulo.textContent = tx.proyFinal(p.grupo ? V.categoria(p.grupo) : "", p.pag, p.de);
     const t = el("table", "cac-proyector-tabla");
     const cab = el("tr");
     [tx.colPuesto, tx.colJugador, tx.colPuntos, tx.colRend].forEach((c) => { const th = el("th", "", c); th.scope = "col"; cab.appendChild(th); });
@@ -386,8 +387,9 @@
       ctx.restore();
       ctx.lineWidth = 6; ctx.strokeStyle = "#ffffff"; ctx.beginPath(); ctx.arc(950, 125, 95, 0, Math.PI * 2); ctx.stroke();
     } else if (dibujo) {
-      // Un logo ancho, a la derecha de la banda y sin recortar.
-      const ancho = 330, alto = Math.round((ancho * dibujo.height) / dibujo.width);
+      // Un logo, a la derecha de la banda y sin recortar: hasta 330 de ancho
+      // y 190 de alto (el de la UTN es casi cuadrado).
+      const ancho = Math.round(Math.min(330, (190 * dibujo.width) / dibujo.height)), alto = Math.round((ancho * dibujo.height) / dibujo.width);
       ctx.drawImage(dibujo, 1080 - 60 - ancho, Math.round((250 - alto) / 2), ancho, alto);
     }
     // El nombre y su categoría.

@@ -8572,7 +8572,7 @@ Es una página estática, sin cuenta y sin base: nada se guarda.
   que pasó el dueño, sin redibujarlo, en blanco con transparencia
   (`img/cenfotec/logo.png`); como el título ya dice CENFOTEC, va con `alt=""`
   y `aria-hidden`. Es la misma maquinaria: su clave en `PORTADAS` de
-  `js/salas-torneo.js` y el estilo en `css/cenfotec.css`, que cargan
+  `js/salas-torneo.js` y el estilo en `css/universidades.css`, que cargan
   `torneos-en-vivo.html` y `admin.html`. Cada portada pone su `clase` y de
   ella salen `<clase>-imagen`, `<clase>-boton` y `<clase>-principal`; como
   esta sala es de Lichess, sus otros enlaces van de botón blanco (el enlace
@@ -8804,7 +8804,11 @@ que ningún teléfono aparezca sin estar en la lista de los confirmados, que cad
 enlace de la ventana esté permitido en `frame-src` y, en el navegador, que la
 ventana se abra encima sin cambiar de página y devuelva el foco al cerrar.
 
-## La página del Desafío Mentes Maestras
+## Las páginas de los torneos universitarios
+
+Dos, con la misma maquinaria: `cenfotec-2026.html` (el Desafío Mentes
+Maestras) y `utn-2026.html` (el II Torneo Universitario UTN-CONARE; ver «La
+del UTN-CONARE», abajo). Lo que sigue se escribió para la primera.
 
 `cenfotec-2026.html` es, para el Desafío Mentes Maestras CENFOTEC 2026, lo
 mismo que la del Centroamericano (lo pidió el dueño: «dentro de la ficha,
@@ -8818,8 +8822,8 @@ proyectar y la imagen para compartir. Lo que solo sirve antes o durante
 va: la página preguntó para qué era y el dueño eligió «Resultados del 2026».
 
 - **Una sola copia de cada pieza**: la página carga `css/centroamericano.css`
-  (el `body` lleva `cac cft`) y `css/cenfotec.css` le cambia las variables
-  (`--cac-morado` pasa al azul #233065, el «rojo» de las bases a #0A6AA8,
+  (el `body` lleva `cac cac-u cft`) y `css/universidades.css` le cambia las
+  variables (`--cac-morado` pasa al azul #233065, el «rojo» de las bases a #0A6AA8,
   que aguanta letra blanca; el celeste #23ACF4 no) y lo que esa hoja tiene
   con un color fijo (la bandera de las fichas, los lavandas del modo
   oscuro). El buscador, el podio, la clasificación, el proyector y la imagen
@@ -8866,10 +8870,50 @@ va: la página preguntó para qué era y el dueño eligió «Resultados del 2026
   CENFOTEC («La ficha del Desafío Mentes Maestras», arriba); su enlace a
   esta página se agrega en `admin.html#torneos` como el primero de la sala.
 
-`herramientas/verificar-cenfotec.js` lo revisa con un doble de la función que
+`herramientas/verificar-paginas-universitarias.js` lo revisa (las dos
+páginas) con un doble de la función que
 contesta como chess-results con el torneo terminado (ronda 0 y el pareo
 raro): la cara (el azul, la píldora celeste con letra oscura, la línea de las
 fichas), el podio, la tarjeta («El torneo terminó», nunca «pareo»), quien no se
 presentó, la clasificación final sin selector, el podio sin medallas, el
 proyector con la clasificación, la imagen con la banda azul y el logo, y que
 en el celular no haya scroll de costado.
+
+### La del UTN-CONARE
+
+`utn-2026.html` es la misma página para el II Torneo Universitario de
+Ajedrez UTN-CONARE 2026 (lo pidió el dueño: «hacer lo mismo para el torneo
+de la UTN»), con el azul y el logo de la Universidad Técnica Nacional:
+domingo 27 de setiembre de 2026, en el CFPTE de la UTN en Desamparados de
+Alajuela, 6 rondas a 15 minutos + 10 segundos.
+
+- **Una sola hoja para las universidades**: lo que era `css/cenfotec.css`
+  pasó a `css/universidades.css`. Cada universidad pone solo sus variables
+  (`--u-1`, `--u-celeste`, `--u-fuerte`…, en `.cft` / `.u-sala-cft` y `.utn`
+  / `.u-sala-utn`) y todo lo demás es común: la ficha de Torneos (`u-sala`,
+  con la clase de la universidad como `tema` en `PORTADAS` de
+  `js/salas-torneo.js`) y la página (`cac-u`). El contraste de cada una está
+  en la cabecera de la hoja; en la UTN el acento es el celeste de los puntos
+  de su logo (#BFCFE8), que solo lleva letra oscura (#0F2A55, 8,97).
+- **El logo** es el que pasó el dueño, recortado tal cual: el azul pasó a
+  blanco con transparencia y los puntos conservan su celeste
+  (`img/utn/logo.png`).
+- **Dos torneos, uno por rama**: en chess-results el femenino (tnr1498221, 10
+  jugadoras) y el masculino (tnr1498218, 26 jugadores) son torneos
+  separados, sin la columna «Gr». `grupos` en `js/utn.js` le pone a cada
+  jugador la rama de su torneo (por el número de torneo), y con eso el
+  puesto («Puesto 1 de 10 en Femenino»), el podio, la clasificación (con el
+  selector de la rama), el proyector («Clasificación final · Femenino») y la
+  imagen van por rama. Sin eso, los 36 salían en una sola lista. La sala
+  `utn` de `salas_torneo` lleva ahora los dos enlaces de chess-results.
+- **«El podio» de arriba** salió de `js/cenfotec.js` a `js/torneo-podio.js`,
+  que es de las dos páginas: los tres primeros de cada grupo, con el nombre
+  del grupo solo si hay más de uno.
+- **Sin contacto**: no hay un correo ni un teléfono confirmados de la
+  organización de este torneo, así que no hay ficha de contacto; la
+  despedida lleva a los demás torneos. Seis fichas: las dos de chess-results
+  (se abren encima), las partidas, la clasificación, el podio y el proyector.
+- **La ficha de Torneos** de la sala `utn` lleva el azul, el logo y «Entrar a
+  la sala» en el celeste con letra oscura; lo revisa
+  `verificar-centroamericano.js` (que antes usaba la sala `utn` como ejemplo
+  de sala sin portada: ahora usa otra).

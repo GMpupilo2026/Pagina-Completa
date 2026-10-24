@@ -19081,7 +19081,7 @@
   ]
  },
  "imagenes": {
-  "total": 869,
+  "total": 870,
   "grupos": [
    {
     "carpeta": "entreno/img/facil",
@@ -24420,6 +24420,19 @@
       "titulo": "Centroamericano 2026: foto de Vivian Víquez Miranda, organizadora",
       "tipo": "otro",
       "kb": 10
+     }
+    ]
+   },
+   {
+    "carpeta": "img/utn",
+    "titulo": "Utn",
+    "grupo": "Carpetas",
+    "archivos": [
+     {
+      "ruta": "img/utn/logo.png",
+      "titulo": "Logo",
+      "tipo": "otro",
+      "kb": 15
      }
     ]
    }

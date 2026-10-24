@@ -77,11 +77,13 @@
   // admin.html. Ver «La ficha del Centroamericano en Torneos».
   // Cada portada pone su `clase` en la ficha y de ella salen las demás:
   // `<clase>-imagen`, `<clase>-boton` y `<clase>-principal` (el primer botón).
+  // `tema` es una clase más, con los colores (la de cada universidad).
   const PORTADAS = {
     "centroamericano-2026": { clase: "cac-sala", imagen: "/img/centroamericano-2026/mascota-trofeo.png", ancho: 124, alto: 120 },
-    // El Desafío Mentes Maestras, con el azul y el logo de la Universidad
-    // CENFOTEC (css/cenfotec.css). Ver «La ficha del Desafío Mentes Maestras».
-    "cenfotec": { clase: "cft-sala", imagen: "/img/cenfotec/logo.png", ancho: 566, alto: 256 },
+    // Las universidades, con su azul y su logo (css/universidades.css). Ver
+    // «La ficha del Desafío Mentes Maestras».
+    "cenfotec": { clase: "u-sala", tema: "u-sala-cft", imagen: "/img/cenfotec/logo.png", ancho: 566, alto: 256 },
+    "utn": { clase: "u-sala", tema: "u-sala-utn", imagen: "/img/utn/logo.png", ancho: 410, alto: 313 },
   };
 
   // La ficha, igual en la página pública y en la vista previa del editor (que
@@ -89,7 +91,7 @@
   function ficha(sala) {
     const portada = PORTADAS[sala.clave] || null;
     const li = el("li", portada
-      ? portada.clase + " rounded-2xl shadow-md p-6 flex flex-col"
+      ? portada.clase + (portada.tema ? " " + portada.tema : "") + " rounded-2xl shadow-md p-6 flex flex-col"
       : "bg-white dark:bg-brand-900 rounded-2xl shadow-md p-6 flex flex-col");
     li.dataset.sala = sala.clave || "";
     if (portada) {

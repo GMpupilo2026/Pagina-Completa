@@ -26,9 +26,11 @@
  *   el botón; cada vez que cambia la lista o el idioma se le vuelve a mandar.
  *
  * Otra página de torneo usa este mismo módulo poniendo antes
- * window.TorneoPagina = { sala, guardado, soloPodio } (la de CENFOTEC, en
- * js/cenfotec.js): su sala de Torneos y el prefijo de lo que guarda en el
- * aparato. Sin eso, es la del Centroamericano.
+ * window.TorneoPagina = { sala, guardado, soloPodio, grupos } (las de las
+ * universidades, en js/cenfotec.js y js/utn.js): su sala de Torneos, el
+ * prefijo de lo que guarda en el aparato y, si cada torneo de chess-results
+ * es un grupo (Femenino y Masculino en la UTN), el nombre de cada uno por su
+ * número de torneo. Sin eso, es la del Centroamericano.
  *
  * Ver «Busca a tu jugador y el medallero», «Mi delegación» y «Seguir a mis
  * jugadores y los avisos en el celular» en docs/decisiones/juegos-y-torneos.md.
@@ -244,7 +246,11 @@
   function normalizar(d) {
     if (!d || !Array.isArray(d.torneos)) return d;
     d.torneos.forEach((tor) => {
-      if (!Array.isArray(tor.jugadores) || tor.ronda) return;
+      if (!Array.isArray(tor.jugadores)) return;
+      // Un torneo por grupo: el grupo es el del torneo, no la columna «Gr».
+      const grupo = CONFIG.grupos && CONFIG.grupos[tor.tnr];
+      if (grupo) tor.jugadores.forEach((j) => { if (!j.grupo) j.grupo = grupo; });
+      if (tor.ronda) return;
       const jugadas = Math.max(0, ...tor.jugadores.map((j) => (Array.isArray(j.r) ? j.r.filter(Boolean).length : 0)));
       if (!jugadas) return;
       tor.ronda = jugadas;
