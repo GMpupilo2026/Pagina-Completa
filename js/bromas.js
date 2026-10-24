@@ -1,42 +1,47 @@
 /* ===== Ajedrez Integral — Las bromas entre compañeros =====
  *
  * Lo que se ve de una broma que un compañero compró con sus Puntos Ajedrez
- * (puntos-tienda.html). Son inofensivas, visuales, se van solas y SIEMPRE
- * dicen quién las mandó:
+ * (puntos-tienda.html, o «Mandar una broma» en la clase en vivo). Se van
+ * solas y SIEMPRE dicen quién las mandó. Quien la manda elige DÓNDE le cae
+ * (bromas.donde: el panel, Entrenamiento o la clase en vivo) y si suena
+ * (bromas.con_sonido). Queda programada: sale cuando quien la recibe está ahí
+ * haciendo un ejercicio —en el panel, al entrar; en Entrenamiento, cuando
+ * hay un tablero con piezas; en la clase, cuando el profe las encendió
+ * (js/clase-bromas.js) y tiene una actividad abierta—.
  *
- *   confeti   la próxima vez que entra a su panel, cae confeti (una vez).
- *   globo     en el panel, un globo con una frase de la lista (una vez).
- *   patito    una hora: un patito cruza la pantalla de Entrenamiento de vez
- *             en cuando.
- *   arcoiris  una hora: las casillas de los tableros de Entrenamiento
- *             cambian de color (con el mismo contraste que el tablero de
- *             siempre: los colores están medidos en css/styles.css).
+ *   confeti   cae confeti (una vez).
+ *   globo     un globo con una frase de la lista (una vez).
+ *   patito    una hora: un patito cruza la pantalla de vez en cuando.
+ *   arcoiris  una hora: las casillas de los tableros cambian de color (con
+ *             el mismo contraste que el tablero de siempre: los colores
+ *             están medidos en css/styles.css).
  *   payaso    un día: un gorro de payaso sobre su foto. Ese no lo pinta este
  *             archivo: sale de accesorios_de() en la base, que lo ve también
  *             el profe en «Alumnos conectados». Acá solo se le avisa a quien
- *             lo tiene puesto.
+ *             lo tiene puesto, en el panel.
  *
  * Y las grandes, de una vez y de pantalla entera (unos 12 segundos, con el
  * nombre de quien la mandó en un cartel): gallinas, papel, meteorito,
  * payaso_gigante (con su musiquita), pato_invasor (con su «cuac»), gato,
- * quesos, platanazo y sandia, en el panel. Si llegan varias juntas salen una
- * detrás de otra, y cada una se marca vista cuando empieza, no antes.
+ * quesos, platanazo y sandia. Si llegan varias juntas salen una detrás de
+ * otra, y cada una se marca vista cuando empieza, no antes.
  *
- *   ovni      en Entrenamiento, la primera vez que hay un tablero con piezas:
- *             el ovni se lleva una pieza de verdad y la esconde un minuto.
- *             Hay que acordarse de cuál era; después la devuelve. La pieza
- *             sigue en juego: se puede mover, y sigue escondida en su casilla
- *             nueva. Si se la comen o cambia el ejercicio, vuelve a verse.
+ *   ovni      el ovni se lleva una pieza de verdad del tablero y la esconde
+ *             un minuto. Hay que acordarse de cuál era; después la devuelve.
+ *             La pieza sigue en juego: se puede mover, y sigue escondida en
+ *             su casilla nueva. Si se la comen o cambia el ejercicio, vuelve
+ *             a verse.
  *
  * Quién puede recibir qué lo decide la base (mandar_broma): nunca a quien
  * tiene marcada su visión, ni a quien las apagó, bloqueó a quien manda o
- * tiene un profe que las apagó en su clase. Esta página solo cuida dónde: la
- * pone herramientas/academia-cabecera.py en el panel, la tienda y las páginas
- * de Entrenamiento — nunca en un examen, en la clase en vivo ni en un torneo.
+ * tiene un profe que las apagó para sus alumnos. Esta página cuida dónde: la
+ * pone herramientas/academia-cabecera.py en el panel, la tienda, las páginas
+ * de Entrenamiento y la clase en vivo — nunca en un examen ni en un torneo.
  * Y cómo: con Modo Adaptado o el panel para quien no ve no se pinta nada, y
  * con «menos movimiento» del sistema no se mueve nada (queda el aviso).
  *
- * Ver «Retos, marcador, regalos y bromas» en docs/decisiones/puntos-y-premios.md.
+ * Ver «Dónde cae una broma y la clase en vivo» en
+ * docs/decisiones/puntos-y-premios.md.
  */
 window.Bromas = (function () {
   "use strict";
@@ -44,6 +49,13 @@ window.Bromas = (function () {
   const RUTA = location.pathname;
   const EN_ENTRENO = /\/entreno\//.test(RUTA);
   const EN_PANEL = /\/(clases|puntos-tienda)(\.html)?$/.test(RUTA);
+  const EN_CLASE = /\/sesion(\.html)?$/.test(RUTA);
+  const LUGAR = EN_PANEL ? "panel" : EN_ENTRENO ? "entreno" : EN_CLASE ? "clase" : null;
+  // Las cajas de cada actividad de la clase en vivo, del lado del alumno: una
+  // pregunta (también la ronda, el cuestionario y la votación), la práctica
+  // con reloj, el calentamiento, la tanda o competencia, Formación y el
+  // tiempo para pensar. No hay otra señal común (ver js/sesion.js).
+  const ACTIVIDADES_CLASE = "#question-card, #practice-card, #calentamiento-caja, #tanda-caja, #formacion-tarjeta, #pensar-aviso-caja";
   const CLAVE_VISTAS = "bromas_avisadas_v1";
   const HORA = new Intl.DateTimeFormat("es-CR", { timeZone: "America/Costa_Rica", hour: "numeric", minute: "2-digit" });
   const DIA_HORA = new Intl.DateTimeFormat("es-CR", { timeZone: "America/Costa_Rica", weekday: "long", hour: "numeric", minute: "2-digit" });
@@ -53,6 +65,10 @@ window.Bromas = (function () {
   const relojes = [];
   const DURA = 12000;
   let fila = Promise.resolve();
+  let conSonido = true;          // el de la broma que se está viendo
+  const tomadas = new Set();     // las que esta página ya programó
+  let pendientes = [];           // programadas, esperando un ejercicio
+  let latido = null;
 
   function apagadas() {
     const h = document.documentElement.classList;
@@ -119,6 +135,8 @@ window.Bromas = (function () {
   function confeti(b) {
     avisar("🎉", b.de_nombre + " te mandó una lluvia de confeti.");
     if (quieto()) return;
+    conSonido = b.con_sonido !== false;
+    sonar([[523, 0.12], [659, 0.12], [784, 0.12], [1047, 0.35]], "square");
     const c = capa();
     const figuras = ["🎉", "🎊", "✨", "⭐", "♟️"];
     for (let i = 0; i < 36; i++) {
@@ -134,6 +152,8 @@ window.Bromas = (function () {
   function globo(b) {
     avisar("🎈", b.de_nombre + " te mandó un globo: «" + (b.frase || "¡Hola!") + "»");
     if (quieto()) return;
+    conSonido = b.con_sonido !== false;
+    sonarLuego(5000, [[1200, 0.05], [200, 0.15]], "square");
     const c = capa();
     const g = el("span", "broma-globo", "🎈");
     g.style.left = (20 + Math.round(Math.random() * 60)) + "%";
@@ -165,6 +185,7 @@ window.Bromas = (function () {
      toque antes (lo normal al entrar a una página), no suena y ya: la broma
      se ve igual. */
   function sonar(notas, forma) {
+    if (!conSonido) return;
     try {
       const A = window.AudioContext || window.webkitAudioContext;
       if (!A) return;
@@ -201,6 +222,7 @@ window.Bromas = (function () {
           });
           g.appendChild(el("span", "broma-saltito", "🐔"));
         }
+        [300, 900, 1700, 2600, 3400, 4300, 5200, 6100].forEach((ms) => sonarLuego(ms, [[700, 0.06], [900, 0.06], [600, 0.12]], "square"));
         cartel(e, "¡Invasión de gallinas! Cortesía de " + n);
       },
     },
@@ -215,6 +237,7 @@ window.Bromas = (function () {
             transform: "rotate(" + azar(-6, 6).toFixed(1) + "deg)",
           }).style.setProperty("--largo", Math.round(azar(45, 90)) + "vh");
         }
+        sonarLuego(100, [[220, 0.5], [180, 0.5], [150, 0.6], [120, 0.8]], "sawtooth");
         cartel(e, n + " te empapeló la pantalla");
       },
     },
@@ -258,6 +281,9 @@ window.Bromas = (function () {
             left: (8 + i * 15 + azar(0, 6)).toFixed(1) + "%", animationDelay: (0.6 + i * 0.95).toFixed(2) + "s",
           });
         });
+        sonarLuego(300, [[750, 0.25], [600, 0.45]], "sawtooth");
+        [900, 1850, 2800, 3750, 4700, 5650].forEach((ms) => sonarLuego(ms, [[160, 0.12], [90, 0.2]], "square"));
+        sonarLuego(5000, [[800, 0.25], [650, 0.45]], "sawtooth");
         cartel(e, "¡Gato descontrolado! Lo soltó " + n, true);
       },
     },
@@ -270,6 +296,7 @@ window.Bromas = (function () {
             fontSize: "clamp(" + azar(3, 5).toFixed(1) + "rem, " + Math.round(azar(9, 15)) + "vw, " + azar(6, 9).toFixed(1) + "rem)",
           });
         }
+        [1500, 2400, 3300, 4200, 5100, 6000, 6900].forEach((ms) => sonarLuego(ms, [[300, 0.08], [600, 0.12]], "sine"));
         cartel(e, "¡Lluvia de quesos! Te la mandó " + n, true);
       },
     },
@@ -278,6 +305,7 @@ window.Bromas = (function () {
       pintar(e, n) {
         const p = figura(e, "broma-grande broma-cruza-izq", null, { top: "25%", animationDuration: "6s" });
         p.appendChild(el("span", "broma-gira", "🍌"));
+        sonarLuego(200, [[400, 0.2], [600, 0.2], [800, 0.2], [1000, 0.3], [500, 0.6]], "sine");
         cartel(e, "¡Te la hizo " + n + "!");
       },
     },
@@ -304,7 +332,7 @@ window.Bromas = (function () {
   };
   /* ===== El ovni: se lleva una pieza del tablero por un minuto ===== */
   const ESCONDIDA_MS = 60000;
-  const SEL_PIEZA = ".piece-white, .piece-black, .chess-piece-illustrated";
+  const SEL_PIEZA = ".piece-white, .piece-black, .chess-piece-illustrated, .theme-token";
 
   // Las piezas que se ven ahora, de cualquier tablero de la página (todos
   // marcan sus casillas con data-square). El rey no: sin rey no hay partida.
@@ -321,17 +349,7 @@ window.Bromas = (function () {
   }
   const firma = (p) => p ? p.className + "|" + p.innerHTML : "";
 
-  function ovni(b) {
-    let intentos = 0;
-    const buscar = () => {
-      const piezas = piezasALaVista();
-      // Sin tablero a la vista todavía: se espera un rato (el ejercicio carga
-      // después) y, si no aparece, queda para la próxima página.
-      if (!piezas.length) { if (++intentos < 30) setTimeout(buscar, 1000); return; }
-      fila = fila.then(() => abducir(b));
-    };
-    buscar();
-  }
+  function ovni(b) { fila = fila.then(() => abducir(b)); }
 
   function abducir(b) {
     return new Promise((listo) => {
@@ -395,6 +413,7 @@ window.Bromas = (function () {
       setTimeout(() => devolver(true), ESCONDIDA_MS);
 
       if (quieto()) return listo();
+      conSonido = b.con_sonido !== false;
       const r = elegida.rect;
       const cx = r.left + r.width / 2;
       const alto = Math.min(innerHeight * 0.18, 140);
@@ -426,6 +445,7 @@ window.Bromas = (function () {
       vista(b.id);
       avisar(g.emoji, g.aviso(b.de_nombre));
       if (quieto()) return listo();
+      conSonido = b.con_sonido !== false;
       const { c, e } = escena();
       e.setAttribute("data-broma-escena", b.tipo);
       g.pintar(e, b.de_nombre, c);
@@ -464,6 +484,51 @@ window.Bromas = (function () {
     setTimeout(() => document.documentElement.classList.remove("broma-arcoiris"), Math.max(0, quedaMs(b)));
   }
 
+  /* ===== Cuándo sale cada una =====
+     Quien la manda elige dónde (donde) y queda programada: sale cuando quien
+     la recibe está ahí haciendo un ejercicio. En el panel, al entrar. En
+     Entrenamiento, cuando hay un tablero con piezas a la vista. En la clase,
+     cuando el profe las encendió y hay una actividad abierta. */
+  const DE_SIEMPRE = { patito: "entreno", arcoiris: "entreno", ovni: "entreno" };
+  function lugarDe(b) { return b.donde || DE_SIEMPRE[b.tipo] || "panel"; }
+
+  function claseEncendida() { return !!(window.ClaseBromas && window.ClaseBromas.encendida()); }
+  function enEjercicio() {
+    if (LUGAR === "panel") return true;
+    if (LUGAR === "entreno") return piezasALaVista().length > 0;
+    if (LUGAR === "clase") {
+      return claseEncendida() && Array.from(document.querySelectorAll(ACTIVIDADES_CLASE))
+        .some((c) => c.checkVisibility && c.checkVisibility());
+    }
+    return false;
+  }
+
+  function disparar(b) {
+    if (b.tipo === "confeti") { confeti(b); vista(b.id); }
+    else if (b.tipo === "globo") { globo(b); vista(b.id); }
+    else if (b.tipo === "patito") { conSonido = b.con_sonido !== false; patito(b); }
+    else if (b.tipo === "arcoiris") arcoiris(b);
+    else if (b.tipo === "ovni") ovni(b);
+    else if (GRANDES[b.tipo]) grande(b);
+  }
+
+  function latir() {
+    if (latido || !pendientes.length) return;
+    latido = setInterval(() => {
+      if (!pendientes.length) { clearInterval(latido); latido = null; return; }
+      if (document.hidden || !enEjercicio()) return;
+      const ahora = pendientes;
+      pendientes = [];
+      ahora.forEach(disparar);
+    }, 1000);
+  }
+
+  // Si el profe apaga las bromas de la clase, el arcoíris se va ya.
+  function alCambiarLaClase() {
+    if (!claseEncendida()) document.documentElement.classList.remove("broma-arcoiris");
+    revisar();
+  }
+
   function payaso(b) {
     if (yaAvisada(b.id)) return;
     avisar("🤡", b.de_nombre + " te puso un gorro de payaso: lo ven tu profe y tus compañeros hasta el " + DIA_HORA.format(new Date(b.vence_at)) + ".");
@@ -483,18 +548,17 @@ window.Bromas = (function () {
       bromas = r.data;
     } catch (e) { return; }
     bromas.forEach((b) => {
-      if (EN_PANEL && b.tipo === "confeti") { confeti(b); vista(b.id); }
-      else if (EN_PANEL && b.tipo === "globo") { globo(b); vista(b.id); }
-      else if (EN_PANEL && b.tipo === "payaso") payaso(b);
-      else if (EN_PANEL && GRANDES[b.tipo]) grande(b);
-      else if (EN_ENTRENO && b.tipo === "patito") patito(b);
-      else if (EN_ENTRENO && b.tipo === "arcoiris") arcoiris(b);
-      else if (EN_ENTRENO && b.tipo === "ovni") ovni(b);
+      if (tomadas.has(b.id)) return;
+      if (b.tipo === "payaso") { if (EN_PANEL) { tomadas.add(b.id); payaso(b); } return; }
+      if (lugarDe(b) !== LUGAR) return;
+      tomadas.add(b.id);
+      pendientes.push(b);
     });
+    latir();
   }
 
   async function autoIniciar() {
-    if (!EN_PANEL && !EN_ENTRENO) return;
+    if (!LUGAR) return;
     const cliente = window.sb;
     if (!cliente || !cliente.auth || typeof cliente.rpc !== "function") return;
     try {
@@ -502,6 +566,11 @@ window.Bromas = (function () {
       if (!r || !r.data || !r.data.session) return;
     } catch (e) { return; }
     sb = cliente;
+    if (EN_CLASE) {
+      document.addEventListener("clase-bromas", alCambiarLaClase);
+      // Por si se perdió el aviso de una que le acaban de mandar.
+      setInterval(() => { if (claseEncendida()) revisar(); }, 60000);
+    }
     revisar();
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", autoIniciar);
