@@ -275,11 +275,15 @@ foto (un día; lo pinta `accesorios_de()`, así que también lo ve el profe en
   alguien (`bromas_bloquear`), desde la tienda;
 - el profe las apaga para toda su clase en Configuración
   (`bromas_en_mi_clase`); basta con que lo haga el profe de uno de los dos;
-- topes por día: una por pareja, 5 de quien manda, 3 de quien recibe.
+- topes por día: una por pareja, 5 de quien manda, 3 de quien recibe
+  (desde el 24/10/2026: 3, 10 y 10; ver «Dónde cae una broma y la clase en
+  vivo»).
 
 Y las de la página: `js/bromas.js` solo se carga en el panel, la tienda y
 Entrenamiento (`herramientas/academia-cabecera.py`), nunca en un examen, la
-clase en vivo, un torneo ni el diagnóstico; con Modo Adaptado o el panel para
+clase en vivo, un torneo ni el diagnóstico (la clase en vivo entró después,
+con el profe que las enciende: ver «Dónde cae una broma y la clase en
+vivo»); con Modo Adaptado o el panel para
 quien no ve no se pinta nada; con «menos movimiento» queda el aviso y nada se
 mueve. Los colores del arcoíris están medidos: cada par tiene la misma
 luminancia que el tablero de siempre, así que el contraste entre casillas y
@@ -351,10 +355,88 @@ el aviso.
 (`NOMBRE_BROMA`) conozcan las diez, el contraste del cartel, que salen de a
 una y que la segunda espera a la primera, que el cartel dice quién la mandó,
 que el ovni esconde UNA pieza aunque el tablero se vuelva a pintar, que
-sigue escondida cuando se mueve, y la devuelve al minuto (con el reloj de Playwright, sin esperar de verdad),
+sigue escondida cuando se mueve, y la devuelve al minuto (con el reloj de
+Playwright, sin esperar de verdad),
 que las gallinas miden más de 60 px, que la capa no tapa los clics ni la lee
 el lector de pantalla, y que con «menos movimiento» solo queda el aviso. Con
 `FOTOS=<carpeta>` saca una foto de cada una a media animación, para mirarlas.
+
+## Dónde cae una broma y la clase en vivo
+
+Pedido por el dueño del sitio el 24/10/2026: que quien manda la broma elija
+dónde le cae —en la clase, mientras entrena—, que quede programada para
+cuando la persona hace el ejercicio, que pueda ir con sonido, y que se pueda
+mandar en la clase mientras el compañero hace un ejercicio, para que le
+cueste concentrarse. Y de paso: al menos 10 por día y todo más caro. Lo hace
+`20261024193832_bromas_donde_y_clase.sql`.
+
+- **Esto da vuelta una regla de arriba** («nunca en la clase en vivo»). Se le
+  preguntó al dueño quién decide en la clase y en qué actividades, y eligió:
+  **el profe las enciende** para su clase (vienen apagadas) y valen **en
+  todo menos exámenes y torneos**, que siguen sin cargar `js/bromas.js`. En
+  la clase eso incluye la competencia, el calentamiento, el cuestionario y
+  la práctica con reloj, aunque den puntos: provocar que pierda es justo lo
+  que se pidió.
+- **`bromas.donde`** (`panel`, `entreno` o `clase`) lo elige quien la manda
+  en el mismo diálogo de siempre («¿Dónde le cae?», `js/puntos-regalos.js`).
+  El gorro de payaso no tiene lugar (es la foto); el patito, el arcoíris y el
+  ovni necesitan un tablero, así que no van al panel: lo valida
+  `mandar_broma()`. Las viejas quedaron con su lugar de antes.
+- **Programada**: `js/bromas.js` toma las que son para la página donde está
+  y las deja esperando (`pendientes`, revisadas cada segundo) hasta que
+  haya un ejercicio: en el panel, al entrar; en Entrenamiento, un tablero con
+  piezas a la vista; en la clase, las bromas encendidas y alguna caja de
+  actividad visible (`#question-card` —preguntas, ronda, cuestionario,
+  votación—, `#practice-card`, `#calentamiento-caja`, `#tanda-caja`,
+  `#formacion-tarjeta`, `#pensar-aviso-caja`). No hay en `sesion.js` una
+  señal común de «actividad abierta», así que se mira cuál de esas cajas se
+  ve (`checkVisibility()`). Se marca vista cuando SALE, no al llegar.
+- **El interruptor del profe** (`js/clase-bromas.js`, al final de «Alumnos
+  conectados»; no en la barra «Tu material», que tiene sus botones contados
+  en `verificar-sesion-orden.js`): `bromas_en_esta_clase()` escribe
+  `bromas_clase.hasta`, tres horas, o la hora de ahora para apagarlas. Se
+  apagan solas a su hora. Lo lee la página de quien recibe, por la RLS de
+  `bromas_clase` (sus profes): saltarse ese candado desde la consola solo le
+  hace la broma a uno mismo. Lo que de verdad protege a los demás sigue en
+  la base: `bromas_en_mi_clase` (el apagado de siempre, para todos sus
+  alumnos), la visión marcada, las preferencias y los bloqueos.
+- **Mandarla desde la clase**: con las bromas encendidas, el alumno tiene
+  «🎭 Mandar una broma» en su panel; elige la broma y luego el diálogo de
+  siempre, con el lugar ya puesto en «clase». Después avisa por el canal
+  `bromas-clase:<profe>` (broadcast) y la página del compañero vuelve a
+  preguntarle a la base (`mis_bromas`). Un aviso inventado no trae nada que
+  la base no tenga. Por si se pierde, cada minuto vuelve a preguntar
+  mientras las bromas estén encendidas.
+- **Sonido**: `bromas.con_sonido`, «Con sonido y efectos» o «Solo efectos».
+  Ahora todas suenan (notas de WebAudio, bajitas). En la clase sí suenan casi
+  siempre: el alumno ya tocó la página; al entrar al panel muchas veces el
+  navegador no deja.
+- **Topes**: 10 que manda cada uno y 10 que recibe por día; con el mismo
+  compañero, 3 (para que nadie se ensañe con uno solo).
+- **Precios**: el triple. De 60 (el globo) a 450 (el payaso gigante).
+- **Lo que no se borró**: `mandar_broma()` y `mis_bromas()` cambiaron de
+  firma, y borrarlas hacía que `apply_migration` pidiera una confirmación que
+  en la sesión web no llegó (dos veces, igual que en «Retos, marcador,
+  regalos y bromas»). Las viejas se renombraron (`mandar_broma_v1`,
+  `mis_bromas_v1`) y se les quitó el permiso: no las llama nadie. Por lo
+  mismo, apagar las bromas de la clase pone la hora de ahora en lugar de
+  borrar la fila.
+- **El pato invasor** cruza por encima del tablero (si hay uno), creciendo de
+  0,5 a 2,6 veces y cambiando de color (`hue-rotate` en el pato, no en su
+  globo, que conserva su contraste); en el centro del tablero se para, dice
+  «¡CUAC! ¿Esa era tu jugada?», sacude el tablero y pone un huevo del que
+  sale un pollito. Lo mueve Web Animations, con las posiciones del tablero.
+
+`verificar-bromas.js` lo revisa: que `sesion.html` carga `js/bromas.js`,
+`js/clase-bromas.js` y `js/puntos-regalos.js` (y examen, torneo y
+diagnóstico siguen sin bromas); que una broma «solo efectos» no intenta
+sonar y una «con sonido» sí; que una para Entrenamiento o la clase no sale
+en el panel ni se marca vista, y una para Entrenamiento sale con el
+ejercicio; y, en una página mínima servida en `/sesion.html`, que en la clase
+no sale con las bromas apagadas, ni encendidas sin una actividad abierta, y
+sí al abrirse una pregunta. Se rompió a propósito (el sonido, el candado de
+la clase) y saltó. `verificar-puntos.js` revisa que el diálogo pregunte dónde
+y si suena, y que la llamada los lleve.
 
 ## La semana sin entrenar: se pierde la mitad
 

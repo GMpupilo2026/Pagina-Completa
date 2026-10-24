@@ -1,7 +1,7 @@
 /* ===== Ajedrez Integral — Las bromas en la clase en vivo =====
  *
  * En la clase las bromas vienen APAGADAS: el profe las enciende para su clase
- * (tres horas, o hasta que las apague) con el botón de su barra. Mientras
+ * (tres horas, o hasta que las apague) con el botón de «Alumnos conectados». Mientras
  * están encendidas, cada alumno tiene «Mandar una broma» para un compañero, y
  * la broma le cae cuando está en un ejercicio (una pregunta, el calentamiento,
  * la competencia, el cuestionario, la práctica…). Lo que se ve lo pinta
@@ -106,7 +106,9 @@ window.ClaseBromas = (function () {
     if (!sb || !estado.profe || (!opciones.esProfe && !opciones.esAlumno)) return;
 
     if (estado.esProfe) {
-      const barra = document.getElementById("teacher-toolbar");
+      // En «Alumnos conectados»: es de la clase, no material del profe (la
+      // barra «Tu material» tiene sus botones contados, verificar-sesion-orden.js).
+      const barra = document.getElementById("students-panel");
       if (barra) {
         boton = el("button", BTN + " " + BTN_APAGADO);
         boton.type = "button";
