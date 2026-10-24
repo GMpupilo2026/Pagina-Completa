@@ -25,18 +25,27 @@
  *   baja) manda cada ronda como notificación. El permiso se pide solo al tocar
  *   el botón; cada vez que cambia la lista o el idioma se le vuelve a mandar.
  *
+ * Otra página de torneo usa este mismo módulo poniendo antes
+ * window.TorneoPagina = { sala, guardado, soloPodio, grupos } (las de las
+ * universidades, en js/cenfotec.js y js/utn.js): su sala de Torneos, el
+ * prefijo de lo que guarda en el aparato y, si cada torneo de chess-results
+ * es un grupo (Femenino y Masculino en la UTN), el nombre de cada uno por su
+ * número de torneo. Sin eso, es la del Centroamericano.
+ *
  * Ver «Busca a tu jugador y el medallero», «Mi delegación» y «Seguir a mis
  * jugadores y los avisos en el celular» en docs/decisiones/juegos-y-torneos.md.
  */
 (function () {
   "use strict";
 
-  const SALA = "centroamericano-2026";
-  const CLAVE_GUARDADO = "cac_jugadores_v1";
-  const CLAVE_SEGUIDOS = "cac_seguidos_v1";
-  const CLAVE_DELEGACION = "cac_delegacion_v1";
-  const CLAVE_AVISOS = "cac_avisos_v1";
-  const CLAVE_AVISO_DELEG = "cac_aviso_delegacion_v1";
+  const CONFIG = window.TorneoPagina || {};
+  const SALA = CONFIG.sala || "centroamericano-2026";
+  const PREFIJO = CONFIG.guardado || "cac";
+  const CLAVE_GUARDADO = PREFIJO + "_jugadores_v1";
+  const CLAVE_SEGUIDOS = PREFIJO + "_seguidos_v1";
+  const CLAVE_DELEGACION = PREFIJO + "_delegacion_v1";
+  const CLAVE_AVISOS = PREFIJO + "_avisos_v1";
+  const CLAVE_AVISO_DELEG = PREFIJO + "_aviso_delegacion_v1";
   const MAX_SEGUIDOS = 20;
   const REFRESCO_MS = 120000;
   const MAX_RESULTADOS = 8;
@@ -55,7 +64,7 @@
       categoria: (g) => categoria(g, "es"),
       inicial: (n) => "Número inicial " + n,
       elo: (e) => "Elo " + e,
-      puesto: (p, de, g) => "Puesto " + p + " de " + de + " en " + g,
+      puesto: (p, de, g) => "Puesto " + p + " de " + de + (g ? " en " + g : ""),
       puntos: (p) => p + (p === "1" ? " punto" : " puntos"),
       sinPareo: (r) => r ? "No aparece en el pareo de la ronda " + r + "." : "El pareo de la ronda 1 todavía no está publicado.",
       bye: (r) => "Ronda " + r + ": tiene bye (descansa).",
@@ -65,6 +74,7 @@
       medalleroAntes: "Los podios aparecen cuando termine la ronda 1.",
       provisional: (r, de) => "Provisional: así quedaría después de la ronda " + r + (de ? " de " + de : "") + ".",
       final: "Final: la clasificación después de la última ronda.",
+      termino: (r) => "El torneo terminó, a " + r + " rondas. Toca «Sus rondas» para ver cada una.",
       federacion: "Federación", oro: "Oro", plata: "Plata", bronce: "Bronce", total: "Total",
       medallasDe: "Medallas por federación",
       podios: "Los podios de cada categoría",
@@ -129,7 +139,7 @@
       categoria: (g) => categoria(g, "en"),
       inicial: (n) => "Starting number " + n,
       elo: (e) => "Rating " + e,
-      puesto: (p, de, g) => "Place " + p + " of " + de + " in " + g,
+      puesto: (p, de, g) => "Place " + p + " of " + de + (g ? " in " + g : ""),
       puntos: (p) => p + (p === "1" ? " point" : " points"),
       sinPareo: (r) => r ? "Not in the pairings of round " + r + "." : "The pairings of round 1 are not published yet.",
       bye: (r) => "Round " + r + ": has a bye (rests).",
@@ -139,6 +149,7 @@
       medalleroAntes: "The podiums show up once round 1 is over.",
       provisional: (r, de) => "Provisional: the standings after round " + r + (de ? " of " + de : "") + ".",
       final: "Final: the standings after the last round.",
+      termino: (r) => "The tournament is over, after " + r + " rounds. Tap “Their rounds” to see each one.",
       federacion: "Federation", oro: "Gold", plata: "Silver", bronce: "Bronze", total: "Total",
       medallasDe: "Medals by federation",
       podios: "The podium of every section",
@@ -199,6 +210,8 @@
 
   // «U18F» → «Sub-18 Femenino» / «U18 Girls»; «U08» → «Sub-8 Absoluto» / «U8 Open».
   function categoria(g, lang) {
+    // «—» es el grupo de un torneo sin categorías (el de CENFOTEC): todos juntos.
+    if (g === "—") return lang === "en" ? "Overall" : "General";
     const m = String(g || "").match(/^U0?(\d+)(F?)$/i);
     if (!m) return g || "";
     return lang === "en" ? "U" + m[1] + (m[2] ? " Girls" : " Open") : "Sub-" + m[1] + (m[2] ? " Femenino" : " Absoluto");
@@ -253,7 +266,30 @@
   let ultimoPedido = 0;
 
   function guardados() {
-    try { return JSON.parse(localStorage.getItem(CLAVE_GUARDADO) || "null"); } catch (e) { return null; }
+    try { return normalizar(JSON.parse(localStorage.getItem(CLAVE_GUARDADO) || "null")); } catch (e) { return null; }
+  }
+
+  // Con el torneo terminado, chess-results titula «Clasificación final», sin
+  // número de ronda, y su página de pareo trae la última ronda con otras
+  // columnas (el rival sin número). La ronda sale entonces del cuadro cruzado
+  // (las casillas jugadas de cada jugador), el torneo queda «terminado» y ese
+  // pareo no se usa: lo que pasó en cada ronda ya está en «r».
+  function normalizar(d) {
+    if (!d || !Array.isArray(d.torneos)) return d;
+    d.torneos.forEach((tor) => {
+      if (!Array.isArray(tor.jugadores)) return;
+      // Un torneo por grupo: el grupo es el del torneo, no la columna «Gr».
+      const grupo = CONFIG.grupos && CONFIG.grupos[tor.tnr];
+      if (grupo) tor.jugadores.forEach((j) => { if (!j.grupo) j.grupo = grupo; });
+      if (tor.ronda) return;
+      const jugadas = Math.max(0, ...tor.jugadores.map((j) => (Array.isArray(j.r) ? j.r.filter(Boolean).length : 0)));
+      if (!jugadas) return;
+      tor.ronda = jugadas;
+      tor.rondas = Math.max(tor.rondas || 0, jugadas);
+      tor.terminado = true;
+      tor.pareo = null;
+    });
+    return d;
   }
 
   function pedir() {
@@ -265,7 +301,7 @@
         if (!window.sb || !window.sb.functions) throw new Error("sin cliente");
         const { data, error } = await window.sb.functions.invoke("sala-jugadores", { body: { clave: SALA } });
         if (error || !data || !Array.isArray(data.torneos)) throw error || new Error("respuesta rara");
-        datos = { torneos: data.torneos, recibido: new Date().toISOString() };
+        datos = normalizar({ torneos: data.torneos, recibido: new Date().toISOString() });
         deGuardado = false;
         try { localStorage.setItem(CLAVE_GUARDADO, JSON.stringify(datos)); } catch (e) {}
         // Para lo que arma js/centroamericano-tablas.js con los mismos datos.
@@ -491,7 +527,8 @@
     else datosJ.push(tx.inicial(j.no));
     li.appendChild(el("p", "text-sm", datosJ.filter(Boolean).join(" · ")));
     let linea;
-    if (x.partida && !x.partida.rival) linea = tx.bye(x.ronda);
+    if (x.torneo.terminado) linea = tx.termino(x.torneo.ronda);
+    else if (x.partida && !x.partida.rival) linea = tx.bye(x.ronda);
     else if (x.partida) {
       const r = x.rivalDe(x.partida.rival.no) || {};
       const rival = (x.partida.rival.titulo ? x.partida.rival.titulo + " " : "") + x.partida.rival.nombre
@@ -954,30 +991,33 @@
       });
     });
 
-    caja.appendChild(el("h3", "mt-5 font-bold text-lg", tx.medallasDe));
-    const envoltura = el("div", "mt-2 overflow-x-auto rounded-2xl border border-brand-100 dark:border-brand-800 bg-white dark:bg-brand-900");
-    const tabla = el("table", "cac-medallas");
-    const cab = el("tr", "bg-brand-100 dark:bg-brand-800");
-    // El emoji de cada medalla va escondido para el lector: el nombre ya lo dice.
-    [["", tx.federacion], ["🥇 ", tx.oro], ["🥈 ", tx.plata], ["🥉 ", tx.bronce], ["", tx.total]].forEach(([e, c]) => {
-      const th = el("th"); th.scope = "col";
-      if (e) { const s = el("span", "", e); s.setAttribute("aria-hidden", "true"); th.appendChild(s); }
-      th.appendChild(document.createTextNode(c));
-      cab.appendChild(th);
-    });
-    const thead = el("thead"); thead.appendChild(cab); tabla.appendChild(thead);
-    const tbody = el("tbody", "divide-y divide-brand-100 dark:divide-brand-800");
-    Object.entries(medallas).sort((a, b) => b[1][0] - a[1][0] || b[1][1] - a[1][1] || b[1][2] - a[1][2] || a[0].localeCompare(b[0])).forEach(([f, m]) => {
-      const tr = el("tr");
-      const th = el("th", "font-semibold", f); th.scope = "row"; tr.appendChild(th);
-      m.concat(m[0] + m[1] + m[2]).forEach((n) => tr.appendChild(el("td", "", String(n))));
-      tbody.appendChild(tr);
-    });
-    tabla.appendChild(tbody);
-    envoltura.appendChild(tabla);
-    caja.appendChild(envoltura);
+    // Un torneo de un solo país (el de CENFOTEC) no lleva tabla de medallas.
+    if (!CONFIG.soloPodio) {
+      caja.appendChild(el("h3", "mt-5 font-bold text-lg", tx.medallasDe));
+      const envoltura = el("div", "mt-2 overflow-x-auto rounded-2xl border border-brand-100 dark:border-brand-800 bg-white dark:bg-brand-900");
+      const tabla = el("table", "cac-medallas");
+      const cab = el("tr", "bg-brand-100 dark:bg-brand-800");
+      // El emoji de cada medalla va escondido para el lector: el nombre ya lo dice.
+      [["", tx.federacion], ["🥇 ", tx.oro], ["🥈 ", tx.plata], ["🥉 ", tx.bronce], ["", tx.total]].forEach(([e, c]) => {
+        const th = el("th"); th.scope = "col";
+        if (e) { const s = el("span", "", e); s.setAttribute("aria-hidden", "true"); th.appendChild(s); }
+        th.appendChild(document.createTextNode(c));
+        cab.appendChild(th);
+      });
+      const thead = el("thead"); thead.appendChild(cab); tabla.appendChild(thead);
+      const tbody = el("tbody", "divide-y divide-brand-100 dark:divide-brand-800");
+      Object.entries(medallas).sort((a, b) => b[1][0] - a[1][0] || b[1][1] - a[1][1] || b[1][2] - a[1][2] || a[0].localeCompare(b[0])).forEach(([f, m]) => {
+        const tr = el("tr");
+        const th = el("th", "font-semibold", f); th.scope = "row"; tr.appendChild(th);
+        m.concat(m[0] + m[1] + m[2]).forEach((n) => tr.appendChild(el("td", "", String(n))));
+        tbody.appendChild(tr);
+      });
+      tabla.appendChild(tbody);
+      envoltura.appendChild(tabla);
+      caja.appendChild(envoltura);
+    }
 
-    caja.appendChild(el("h3", "mt-6 font-bold text-lg", tx.podios));
+    if (!CONFIG.soloPodio) caja.appendChild(el("h3", "mt-6 font-bold text-lg", tx.podios));
     const rejilla = el("div", "cac-podios mt-2");
     nombres.forEach((g) => {
       const c = el("section", "cac-podio");

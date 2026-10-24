@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="img/favicon.svg">
+    <title>Torneo Universitario UTN-CONARE 2026 — resultados y clasificación | Ajedrez Integral</title>
+    <meta name="description" content="El II Torneo Universitario de Ajedrez UTN-CONARE 2026, femenino y masculino: el podio de cada rama, la clasificación final, las rondas y el rendimiento de cada jugador y las partidas.">
+    <link rel="canonical" href="https://ajedrez-integral.com/utn-2026.html">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="Ajedrez Integral">
+    <meta property="og:locale" content="es_CR">
+    <meta property="og:title" content="Torneo Universitario UTN-CONARE 2026 — resultados y clasificación">
+    <meta property="og:description" content="El II Torneo Universitario de Ajedrez UTN-CONARE 2026, femenino y masculino: el podio de cada rama, la clasificación final, las rondas y el rendimiento de cada jugador y las partidas.">
+    <meta property="og:url" content="https://ajedrez-integral.com/utn-2026.html">
+    <meta property="og:image" content="https://ajedrez-integral.com/img/og-ajedrez-integral.jpg">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="Ajedrez Integral — clases de ajedrez en vivo, no solo videos. ajedrez-integral.com">
+    <meta name="twitter:card" content="summary_large_image">
+    <link rel="stylesheet" href="css/tailwind.css">
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/centroamericano.css">
+    <link rel="stylesheet" href="css/universidades.css">
+    <!-- oscuro: inicio --><script>(function(){try{var t=localStorage.getItem('theme');if(t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme: dark)').matches))document.documentElement.classList.add('dark');}catch(e){}})();</script><!-- oscuro: fin -->
+    <script src="js/adaptive-mode.js"></script>
+<!-- app: inicio --><meta name="theme-color" content="#102a43"><link rel="manifest" href="/manifest.json"><link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Ajedrez"><script src="js/errores.js"></script><script src="js/pwa.js" defer></script><script src="js/navegacion.js" defer></script><!-- app: fin --><!-- fuentes: inicio --><link rel="stylesheet" href="css/fuentes.css"><!-- fuentes: fin --><!-- tema: inicio --><script>(function(){try{var l=localStorage.getItem('plataforma_letra_v1');if(l&&/^[a-z]{2,24}$/.test(l)&&l!=='tema')document.documentElement.setAttribute('data-letra',l);var t=localStorage.getItem('plataforma_tema_v1');if(!t||!/^[a-z]{2,24}$/.test(t)||t==='clasico')return;document.documentElement.setAttribute('data-tema',t);var b=getComputedStyle(document.documentElement).getPropertyValue('--c-brand-800').trim();var m=document.querySelector('meta[name="theme-color"]');if(b&&m)m.setAttribute('content','rgb('+b.replace(/\s+/g,',')+')');}catch(e){}})();</script><!-- tema: fin --></head>
+<body class="cac cac-u utn font-sans text-brand-800 dark:text-brand-100 transition-colors duration-300">
+    <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:bg-accent-500 focus:text-brand-900 focus:font-semibold focus:px-4 focus:py-2 focus:rounded-lg">Saltar al contenido principal</a>
+    <header id="header" class="sticky top-0 z-50 bg-brand-800 shadow-lg transition-all duration-300">
+        <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-label="Navegación principal">
+            <div class="flex items-center justify-between min-h-[4rem] md:min-h-[5rem] py-2">
+                <a href="index.html" class="flex items-center gap-2 text-white"><img src="/img/logo-marca.png" alt="" width="78" height="48" class="h-10 md:h-12 w-auto shrink-0"><span class="font-serif text-xl md:text-2xl font-bold tracking-tight">Ajedrez <span class="text-accent-400">Integral</span></span></a>
+                <ul class="hidden lg:flex items-center gap-8 text-brand-100 font-medium">
+                    <li><a href="index.html" class="hover:text-accent-400 transition-colors">Inicio</a></li>
+                    <li><a href="#fichas" class="hover:text-accent-400 transition-colors">Fichas</a></li>
+                    <li><a href="#clasificacion" class="hover:text-accent-400 transition-colors">Clasificación</a></li>
+                    <li><a href="torneos-en-vivo.html" class="hover:text-accent-400 transition-colors">Torneos</a></li>
+                </ul>
+                <div class="flex items-center gap-2 sm:gap-3">
+                    <button id="theme-toggle" class="text-white text-lg w-9 h-9 flex items-center justify-center rounded-lg hover:bg-brand-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Cambiar a modo oscuro" title="Cambiar entre modo claro y oscuro">
+                        <span id="theme-icon" aria-hidden="true">☀️</span>
+                    </button>
+                    <button id="menu-toggle" class="lg:hidden text-white text-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Abrir menú" aria-expanded="false" aria-controls="mobile-menu">
+                        <svg id="icon-open" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+                        <svg id="icon-close" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                </div>
+            </div>
+        </nav>
+        <div id="mobile-menu" class="lg:hidden hidden bg-brand-800 border-t border-brand-700">
+            <ul class="px-4 py-4 space-y-3 text-brand-100 font-medium">
+                <li><a href="index.html" class="block py-2 hover:text-accent-400">Inicio</a></li>
+                <li><a href="#fichas" class="block py-2 hover:text-accent-400">Fichas</a></li>
+                <li><a href="#clasificacion" class="block py-2 hover:text-accent-400">Clasificación</a></li>
+                <li><a href="torneos-en-vivo.html" class="block py-2 hover:text-accent-400">Torneos</a></li>
+            </ul>
+        </div>
+    </header>
+    <main id="main-content">
+    <!-- La página del II Torneo Universitario de Ajedrez UTN-CONARE 2026: la
+         misma que la de CENFOTEC (css/centroamericano.css y
+         css/universidades.css; js/centroamericano-vivo.js, -tablas.js y
+         js/torneo-podio.js, configurados por js/utn.js), con la cara de la
+         Universidad Técnica Nacional. Son dos torneos en chess-results, uno
+         por rama (tnr1498221 el femenino, tnr1498218 el masculino); sus datos
+         (fecha, sala, ritmo, rondas, árbitros) salen de sus fichas. Ver «Las
+         páginas de los torneos universitarios» en
+         docs/decisiones/juegos-y-torneos.md. -->
+    <section class="cac-portada">
+        <div class="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-10 md:pt-14 md:pb-14">
+            <div class="grid md:grid-cols-[1.15fr_0.85fr] items-center gap-6 md:gap-10">
+                <div class="text-center md:text-left">
+                    <p><span class="cac-pildora text-base md:text-lg">Universidad Técnica Nacional · CONARE</span></p>
+                    <h1 class="cac-titulo text-3xl sm:text-4xl md:text-5xl mt-4">II Torneo Universitario de Ajedrez<span class="block text-2xl sm:text-3xl md:text-4xl mt-2">UTN-CONARE 2026</span></h1>
+                    <p class="mt-5"><span class="cac-caja text-sm md:text-base">Femenino<br>Masculino</span></p>
+                </div>
+                <div class="relative mx-auto w-full max-w-[300px] md:max-w-[340px]">
+                    <img src="img/utn/logo.png" width="410" height="313" alt="Universidad Técnica Nacional" class="u-logo">
+                </div>
+            </div>
+            <dl class="mt-8 grid sm:grid-cols-3 gap-3 sm:gap-4 text-left">
+                <div class="cac-dato"><dt><span aria-hidden="true">📅 </span>Fecha</dt><dd class="font-bold text-lg">Domingo 27 de setiembre de 2026</dd></div>
+                <div class="cac-dato"><dt><span aria-hidden="true">📍 </span>Sede</dt><dd class="font-bold text-lg">CFPTE de la Universidad Técnica Nacional, Desamparados de Alajuela</dd></div>
+                <div class="cac-dato"><dt><span aria-hidden="true">♟️ </span>Ritmo</dt><dd class="font-bold text-lg">6 rondas, 15 minutos + 10 segundos por jugada</dd></div>
+            </dl>
+        </div>
+    </section>
+
+    <!-- Quién organiza y quién arbitró, como lo dice la ficha de chess-results. -->
+    <section class="cac-organiza" aria-label="Quién organiza">
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-wrap items-center justify-center gap-x-8 gap-y-2 text-sm">
+            <p><strong class="font-extrabold uppercase tracking-wide">Organiza</strong> Universidad Técnica Nacional y CONARE</p>
+            <p><strong class="font-extrabold">Dirección del torneo:</strong> Marlin Porras Cubero</p>
+            <p><strong class="font-extrabold">Árbitra principal:</strong> Kristel Jimenez Salas</p>
+            <p><strong class="font-extrabold">Árbitros:</strong> Pamela Maria Porras Chavarria y Jose Alexis Rivera Gonzalez</p>
+        </div>
+    </section>
+
+    <!-- «El podio»: lo llena js/torneo-podio.js con la clasificación final de
+         chess-results. Sin JavaScript queda el enlace, que es cierto siempre. -->
+    <section id="podio" class="pt-8" aria-labelledby="podio-titulo">
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="cac-hoy">
+                <h2 id="podio-titulo" class="cac-hoy-etiqueta">El podio</h2>
+                <div id="podio-lista">
+                    <p class="u-podio-vacio">Buscando la clasificación final en chess-results…</p>
+                </div>
+                <p id="podio-estado" class="mt-3 text-sm text-brand-600 dark:text-brand-300" role="status" aria-live="polite"></p>
+                <p class="mt-3 flex flex-wrap gap-x-5 gap-y-2 text-sm font-bold">
+                    <a href="#clasificacion" class="cac-accion underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-[#2c5aa0]">Ver la clasificación completa →</a>
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <section id="fichas" class="relative overflow-hidden pt-10 pb-14 scroll-mt-24">
+        <div class="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+            <h2 class="cac-seccion text-2xl md:text-3xl">Todo el torneo a un clic<span class="cac-seccion-raya" aria-hidden="true"></span></h2>
+            <p class="text-brand-600 dark:text-brand-300 mt-2 max-w-2xl">Toca la ficha de lo que buscas y se abre encima, sin salir de la página.</p>
+            <!-- «Busca a tu jugador» (js/centroamericano-vivo.js): los jugadores y
+                 sus rondas, de chess-results, por la Edge Function sala-jugadores. -->
+            <div id="buscador" class="cac-buscador mt-6 sm:mt-8">
+                <!-- «Mis jugadores»: los que se marcan con la estrella, guardados
+                     en este aparato (sin cuenta). Se esconde mientras no haya
+                     ninguno. Sin avisos al celular: el torneo ya terminó. -->
+                <div id="seguidos" class="cac-seguidos mb-6" role="region" aria-labelledby="seguidos-titulo" hidden>
+                    <h3 id="seguidos-titulo" class="cac-buscador-titulo"><span aria-hidden="true">⭐ </span>Mis jugadores</h3>
+                    <ul id="seguidos-lista" class="mt-3 grid gap-3"></ul>
+                    <p id="seguidos-estado" class="mt-2 text-sm font-semibold" role="status" aria-live="polite"></p>
+                </div>
+                <label for="buscador-nombre" class="cac-buscador-titulo"><span aria-hidden="true">🔎 </span>Busca a tu jugador</label>
+                <p class="mt-1 text-sm sm:text-base text-brand-600 dark:text-brand-300">Escribe su nombre o su apellido: te decimos en qué puesto quedó en su rama, sus puntos, contra quién jugó cada ronda y su rendimiento.</p>
+                <input id="buscador-nombre" type="search" autocomplete="off" spellcheck="false" placeholder="Por ejemplo: Salazar" class="cac-buscador-campo">
+                <p id="buscador-estado" class="mt-2 text-sm text-brand-600 dark:text-brand-300" role="status" aria-live="polite"></p>
+                <ul id="buscador-resultados" class="mt-3 grid gap-3"></ul>
+                <p class="mt-3 flex flex-wrap gap-x-5 gap-y-2 text-sm font-bold">
+                    <a href="#medallero" class="cac-accion underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-[#2c5aa0]"><span aria-hidden="true">🥇 </span>Ver el podio →</a>
+                    <a href="#clasificacion" class="cac-accion underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-[#2c5aa0]"><span aria-hidden="true">📊 </span>Clasificación completa →</a>
+                    <a href="#proyector" class="cac-accion underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-[#2c5aa0]"><span aria-hidden="true">📺 </span>Clasificación para proyectar →</a>
+                </p>
+            </div>
+            <ul class="mt-6 sm:mt-8 grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-5">
+                <li>
+                    <a href="https://s1.chess-results.com/tnr1498221.aspx?lan=2" target="_blank" rel="noopener" data-ventana="Femenino en chess-results" data-color="morado" class="cac-ficha h-full flex flex-col rounded-3xl bg-white dark:bg-brand-900 shadow-md p-4 sm:p-6 focus:outline-none focus-visible:ring-4 focus-visible:ring-[#2c5aa0]">
+                        <span class="cac-icono" aria-hidden="true">♛</span>
+                        <span class="mt-3 font-extrabold text-base sm:text-lg leading-snug text-brand-800 dark:text-white">Femenino en chess-results</span>
+                        <span class="hidden sm:block mt-1 text-sm text-brand-600 dark:text-brand-300 flex-1">La ficha oficial de la rama femenina: inscritas, pareos, resultados y clasificación.</span>
+                        <span class="mt-auto pt-3 sm:pt-4 text-xs sm:text-sm font-bold cac-accion">Abrir chess-results →</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="https://s3.chess-results.com/tnr1498218.aspx?lan=2" target="_blank" rel="noopener" data-ventana="Masculino en chess-results" data-color="azul" class="cac-ficha h-full flex flex-col rounded-3xl bg-white dark:bg-brand-900 shadow-md p-4 sm:p-6 focus:outline-none focus-visible:ring-4 focus-visible:ring-[#2c5aa0]">
+                        <span class="cac-icono" aria-hidden="true">♚</span>
+                        <span class="mt-3 font-extrabold text-base sm:text-lg leading-snug text-brand-800 dark:text-white">Masculino en chess-results</span>
+                        <span class="hidden sm:block mt-1 text-sm text-brand-600 dark:text-brand-300 flex-1">La ficha oficial de la rama masculina: inscritos, pareos, resultados y clasificación.</span>
+                        <span class="mt-auto pt-3 sm:pt-4 text-xs sm:text-sm font-bold cac-accion">Abrir chess-results →</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="transmision.html?torneo=utn" data-color="rojo" class="cac-ficha h-full flex flex-col rounded-3xl bg-white dark:bg-brand-900 shadow-md p-4 sm:p-6 focus:outline-none focus-visible:ring-4 focus-visible:ring-[#2c5aa0]">
+                        <span class="cac-icono" aria-hidden="true">♟️</span>
+                        <span class="mt-3 font-extrabold text-base sm:text-lg leading-snug text-brand-800 dark:text-white">Las partidas</span>
+                        <span class="hidden sm:block mt-1 text-sm text-brand-600 dark:text-brand-300 flex-1">La sala de la transmisión de Lichess: cada tablero, jugada a jugada, con las posiciones de las dos ramas al lado.</span>
+                        <span class="mt-auto pt-3 sm:pt-4 text-xs sm:text-sm font-bold cac-accion">Entrar a la sala →</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#clasificacion" data-color="morado" class="cac-ficha h-full flex flex-col rounded-3xl bg-white dark:bg-brand-900 shadow-md p-4 sm:p-6 focus:outline-none focus-visible:ring-4 focus-visible:ring-[#2c5aa0]">
+                        <span class="cac-icono" aria-hidden="true">🏆</span>
+                        <span class="mt-3 font-extrabold text-base sm:text-lg leading-snug text-brand-800 dark:text-white">Clasificación final</span>
+                        <span class="hidden sm:block mt-1 text-sm text-brand-600 dark:text-brand-300 flex-1">Las 10 jugadoras y los 26 jugadores en su puesto, con los puntos y el rendimiento de cada uno.</span>
+                        <span class="mt-auto pt-3 sm:pt-4 text-xs sm:text-sm font-bold cac-accion">Ver la clasificación →</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#medallero" data-color="naranja" class="cac-ficha h-full flex flex-col rounded-3xl bg-white dark:bg-brand-900 shadow-md p-4 sm:p-6 focus:outline-none focus-visible:ring-4 focus-visible:ring-[#2c5aa0]">
+                        <span class="cac-icono" aria-hidden="true">🥇</span>
+                        <span class="mt-3 font-extrabold text-base sm:text-lg leading-snug text-brand-800 dark:text-white">El podio</span>
+                        <span class="hidden sm:block mt-1 text-sm text-brand-600 dark:text-brand-300 flex-1">Los tres primeros lugares de cada rama, con sus puntos.</span>
+                        <span class="mt-auto pt-3 sm:pt-4 text-xs sm:text-sm font-bold cac-accion">Ver el podio →</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#proyector" data-color="azul" class="cac-ficha h-full flex flex-col rounded-3xl bg-white dark:bg-brand-900 shadow-md p-4 sm:p-6 focus:outline-none focus-visible:ring-4 focus-visible:ring-[#2c5aa0]">
+                        <span class="cac-icono" aria-hidden="true">📺</span>
+                        <span class="mt-3 font-extrabold text-base sm:text-lg leading-snug text-brand-800 dark:text-white">Para proyectar</span>
+                        <span class="hidden sm:block mt-1 text-sm text-brand-600 dark:text-brand-300 flex-1">La clasificación final de cada rama en letra grande, para una pantalla o una premiación.</span>
+                        <span class="mt-auto pt-3 sm:pt-4 text-xs sm:text-sm font-bold cac-accion">Abrir en grande →</span>
+                    </a>
+                </li>
+            </ul>
+            <a href="torneos-en-vivo.html" class="cac-despedida mt-10 sm:mt-12 flex items-center gap-4 sm:gap-6 max-w-2xl mx-auto rounded-3xl focus:outline-none focus-visible:ring-4 focus-visible:ring-[#2c5aa0]">
+                <span class="u-despedida-logo" aria-hidden="true"><img src="img/utn/logo.png" width="410" height="313" alt=""></span>
+                <span class="cac-globo">
+                    <span class="block font-extrabold text-lg sm:text-xl">¡Gracias por jugar!</span>
+                    <span class="block mt-1 text-sm sm:text-base">¿Quieres ver más? Aquí están los demás torneos que se transmiten en Ajedrez Integral.</span>
+                    <span class="block mt-2 text-sm font-bold cac-accion">Ver los torneos →</span>
+                </span>
+            </a>
+        </div>
+    </section>
+
+    <!-- El podio: los tres primeros, según la clasificación de chess-results.
+         Lo arma js/centroamericano-vivo.js (soloPodio: sin tabla de medallas). -->
+    <dialog id="medallero" class="ficha-dialogo w-[calc(100%-1rem)] sm:w-[calc(100%-2rem)] max-w-3xl max-h-[90vh] rounded-2xl shadow-2xl p-0 bg-brand-50 dark:bg-brand-950 text-brand-800 dark:text-brand-100 backdrop:bg-black/60" aria-labelledby="medallero-titulo">
+        <div class="sticky top-0 z-10 flex items-center gap-3 px-4 sm:px-6 py-3 bg-white dark:bg-brand-900 border-b border-brand-100 dark:border-brand-800">
+            <h2 id="medallero-titulo" class="font-serif text-xl md:text-2xl font-bold text-brand-800 dark:text-white flex-1 min-w-0"><span aria-hidden="true">🥇 </span>El podio</h2>
+            <button type="button" data-cerrar class="shrink-0 bg-brand-800 hover:bg-brand-700 text-white font-semibold text-sm px-4 py-2 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2">Cerrar</button>
+        </div>
+        <div class="px-4 sm:px-6 pt-2 pb-6">
+            <p class="text-brand-600 dark:text-brand-300 mt-2">Los tres primeros lugares de cada rama, según la clasificación final de chess-results.</p>
+            <div id="medallero-contenido" class="mt-4">
+                <p class="text-brand-600 dark:text-brand-300">Cargando…</p>
+            </div>
+        </div>
+    </dialog>
+
+    <!-- La clasificación completa de cada rama, con el rendimiento de cada
+         jugador. La arma js/centroamericano-tablas.js; el selector elige la rama. -->
+    <dialog id="clasificacion" class="ficha-dialogo w-[calc(100%-1rem)] sm:w-[calc(100%-2rem)] max-w-5xl max-h-[90vh] rounded-2xl shadow-2xl p-0 bg-brand-50 dark:bg-brand-950 text-brand-800 dark:text-brand-100 backdrop:bg-black/60" aria-labelledby="clasificacion-titulo">
+        <div class="sticky top-0 z-10 flex items-center gap-3 px-4 sm:px-6 py-3 bg-white dark:bg-brand-900 border-b border-brand-100 dark:border-brand-800">
+            <h2 id="clasificacion-titulo" class="font-serif text-xl md:text-2xl font-bold text-brand-800 dark:text-white flex-1 min-w-0"><span aria-hidden="true">📊 </span>Clasificación final</h2>
+            <button type="button" data-cerrar class="shrink-0 bg-brand-800 hover:bg-brand-700 text-white font-semibold text-sm px-4 py-2 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2">Cerrar</button>
+        </div>
+        <div class="px-4 sm:px-6 pt-2 pb-6">
+            <p class="text-brand-600 dark:text-brand-300 mt-2">Cada rama entera, en el orden de chess-results, con los puntos y el rendimiento de cada uno.</p>
+            <div class="mt-4 grid gap-3 sm:grid-cols-2">
+                <label class="block text-sm font-bold">Rama
+                    <select id="clasificacion-categoria" class="cac-buscador-campo !mt-1"></select>
+                </label>
+                <label class="block text-sm font-bold">Buscar en la tabla
+                    <input id="clasificacion-buscar" type="search" autocomplete="off" spellcheck="false" class="cac-buscador-campo !mt-1">
+                </label>
+            </div>
+            <div id="clasificacion-contenido" class="mt-4">
+                <p class="text-brand-600 dark:text-brand-300">Cargando…</p>
+            </div>
+        </div>
+    </dialog>
+
+    <!-- Para una pantalla: los podios y la clasificación final de cada rama
+         en letra grande, que pasan solos, y el QR de la página. El de
+         js/centroamericano-tablas.js. Se abre con #proyector. -->
+    <dialog id="proyector" class="ficha-dialogo cac-proyector p-0 backdrop:bg-black" aria-labelledby="proyector-titulo">
+        <div class="cac-proyector-barra">
+            <h2 id="proyector-titulo" class="cac-proyector-titulo"></h2>
+            <p id="proyector-reloj" class="cac-proyector-reloj"></p>
+            <div class="cac-proyector-botones">
+                <button type="button" id="proyector-anterior" class="cac-proyector-boton"><span aria-hidden="true">◀ </span>Anterior</button>
+                <button type="button" id="proyector-pausa" class="cac-proyector-boton" aria-pressed="false"></button>
+                <button type="button" id="proyector-siguiente" class="cac-proyector-boton">Siguiente<span aria-hidden="true"> ▶</span></button>
+                <label class="cac-proyector-modo"><span class="sr-only">Qué mostrar</span>
+                    <select id="proyector-modo" class="cac-proyector-boton"></select>
+                </label>
+                <button type="button" id="proyector-completa" class="cac-proyector-boton">Pantalla completa</button>
+                <button type="button" data-cerrar class="cac-proyector-boton">Cerrar</button>
+            </div>
+        </div>
+        <p id="proyector-progreso" class="cac-proyector-progreso" hidden></p>
+        <div id="proyector-contenido" class="cac-proyector-contenido" aria-live="off"></div>
+        <div class="cac-proyector-qr" aria-hidden="true"><div id="proyector-qr"></div><p>Ábrela en tu celular</p></div>
+    </dialog>
+    </main>
+
+    <footer class="bg-brand-900 text-brand-300 pt-16 pb-8">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid md:grid-cols-2 gap-8 mb-12">
+                <div><a href="index.html" class="flex items-center gap-2 text-white mb-4"><img src="/img/logo-marca.png" alt="" width="78" height="48" class="h-9 w-auto shrink-0"><span class="font-serif text-lg font-bold">Ajedrez Integral</span></a><p class="text-sm text-brand-300">Plataforma educativa de ajedrez para escuelas, colegios y familias. Aprende, practica y compite.</p></div>
+                <div><h3 class="text-white font-semibold mb-4">Torneo UTN-CONARE 2026</h3><ul class="space-y-2 text-sm"><li><a href="#clasificacion" class="hover:text-accent-400 transition-colors">Clasificación final</a></li><li><a href="transmision.html?torneo=utn" class="hover:text-accent-400 transition-colors">Las partidas</a></li><li><a href="https://s1.chess-results.com/tnr1498221.aspx?lan=2" target="_blank" rel="noopener" data-ventana="Femenino en chess-results" class="hover:text-accent-400 transition-colors">Femenino en chess-results</a></li><li><a href="https://s3.chess-results.com/tnr1498218.aspx?lan=2" target="_blank" rel="noopener" data-ventana="Masculino en chess-results" class="hover:text-accent-400 transition-colors">Masculino en chess-results</a></li></ul></div>
+            </div>
+            <div class="border-t border-brand-700 pt-6 text-center text-sm text-brand-300"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p><!-- legal: inicio --><p class="mt-2"><a href="privacidad.html" class="underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Política de privacidad</a> <span aria-hidden="true">·</span> <a href="terminos.html" class="underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Términos y condiciones</a></p><!-- legal: fin --></div>
+        </div>
+    </footer>
+    <script src="js/main.js"></script>
+    <script src="js/ventana-enlace.js"></script>
+    <script src="js/vendor/supabase.js"></script>
+    <script src="js/supabase-client.js"></script>
+    <script src="js/utn.js"></script>
+    <script src="js/pareo/torneo.js"></script>
+    <script src="js/pareo/desempates.js"></script>
+    <script src="js/tabla-imagen.js"></script>
+    <script src="js/vendor/qrcode.js"></script>
+    <script src="js/qr-svg.js"></script>
+    <script src="js/centroamericano-vivo.js"></script>
+    <script src="js/centroamericano-tablas.js"></script>
+    <script src="js/torneo-podio.js"></script>
+</body>
+</html>

@@ -94,6 +94,7 @@
   // admin.html. Ver «La ficha del Centroamericano en Torneos».
   // Cada portada pone su `clase` en la ficha y de ella salen las demás:
   // `<clase>-imagen`, `<clase>-boton` y `<clase>-principal` (el primer botón).
+  // `tema` es una clase más, con los colores (la de cada universidad).
   //
   // Con `pagina` y `fichas`, sus botones nunca sacan a nadie del sitio: lo que
   // es de afuera (los resultados en chess-results, las bases) lleva a la ficha
@@ -106,9 +107,11 @@
       pagina: "/centroamericano-2026.html",
       fichas: [[/chess-results\.com\//i, "ficha-resultados"], [/bases-cac-2026\.pdf$/i, "ficha-bases"]],
     },
-    // El Desafío Mentes Maestras, con el azul y el logo de la Universidad
-    // CENFOTEC (css/cenfotec.css). Ver «La ficha del Desafío Mentes Maestras».
-    "cenfotec": { clase: "cft-sala", imagen: "/img/cenfotec/logo.png", ancho: 566, alto: 256 },
+    // Las universidades, con su azul y su logo (css/universidades.css). Sin
+    // `fichas`: su enlace directo a Lichess no tiene ficha en su página. Ver
+    // «La ficha del Desafío Mentes Maestras».
+    "cenfotec": { clase: "u-sala", tema: "u-sala-cft", imagen: "/img/cenfotec/logo.png", ancho: 566, alto: 256 },
+    "utn": { clase: "u-sala", tema: "u-sala-utn", imagen: "/img/utn/logo.png", ancho: 410, alto: 313 },
   };
 
   function adentro(portada, url) {
@@ -122,7 +125,7 @@
   function ficha(sala) {
     const portada = PORTADAS[sala.clave] || null;
     const li = el("li", portada
-      ? portada.clase + " rounded-2xl shadow-md p-6 flex flex-col"
+      ? portada.clase + (portada.tema ? " " + portada.tema : "") + " rounded-2xl shadow-md p-6 flex flex-col"
       : "bg-white dark:bg-brand-900 rounded-2xl shadow-md p-6 flex flex-col");
     li.dataset.sala = sala.clave || "";
     if (portada) {
