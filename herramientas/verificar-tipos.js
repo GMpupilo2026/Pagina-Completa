@@ -94,7 +94,9 @@ C.TIPOS.forEach((t) => {
   if (!items) return;
   t.niveles.forEach((n) => {
     const cuantos = items.filter((x) => x.nivel === n.n).length;
-    const minimo = t.id === "con-lo-justo" ? 4 : 10;
+    // El ahogado (nivel 3 de Salva las tablas) no se saca de Lichess: se sortea y
+    // se comprueba, y salen pocas (ver herramientas/ahogados-buscar.js).
+    const minimo = t.id === "con-lo-justo" || (t.id === "tablas" && n.ahogado) ? 4 : 10;
     ok(t.id + " nivel " + n.n + ": al menos " + minimo + " ejercicios", cuantos >= minimo, "tiene " + cuantos);
   });
   items.forEach((x) => {
@@ -538,7 +540,7 @@ DATOS.remata.forEach((x) => {
 }
 
 titulo("Salva las tablas");
-DATOS.tablas.forEach((x) => {
+DATOS.tablas.filter((x) => !x.ahogado).forEach((x) => {
   const g = legal(x.fen);
   if (!g) return;
   const yo = x.fen.split(" ")[1];
@@ -557,6 +559,58 @@ DATOS.tablas.forEach((x) => {
     M.juicioTablas(-100) === "firme" && M.juicioTablas(-200) === "duda" && M.juicioTablas(-300) === "perdida" && M.juicioTablas(null) === "sin-motor");
   ok("tablas: nunca bajó de −1,5: tres; pasó por la cuerda floja: dos; con pista: una",
     M.estrellasTablas(-100, false) === 3 && M.estrellasTablas(-200, false) === 2 && M.estrellasTablas(0, true) === 1);
+}
+
+titulo("Salva las tablas: El ahogado");
+{
+  const aho = DATOS.tablas.filter((x) => x.ahogado);
+  ok("el nivel 3 del catálogo es el del ahogado, y solo él", !!C.nivel("tablas", 3).ahogado && !C.nivel("tablas", 1).ahogado && !C.nivel("tablas", 2).ahogado);
+  ok("todo lo del nivel 3 es de ahogado y al revés", DATOS.tablas.every((x) => (x.nivel === 3) === !!x.ahogado));
+  aho.forEach((x) => {
+    const g = legal(x.fen);
+    if (!g) return;
+    const yo = x.fen.split(" ")[1];
+    ok("la partida no terminó (" + x.id + ")", !g.game_over());
+    ok("son una o dos jugadas propias (" + x.id + ")", x.jugadas === 1 || x.jugadas === 2, x.jugadas);
+    // La corrección de verdad: las jugadas que fuerzan el ahogado, con la misma función que usa la página.
+    const buenas = M.ahogadoForzado(Chess, x.fen, x.jugadas).sort();
+    ok("las jugadas buenas son las que fuerzan el ahogado, ni una más ni una menos (" + x.id + ")", JSON.stringify(buenas) === JSON.stringify(x.correctas), JSON.stringify(buenas) + " ≠ " + JSON.stringify(x.correctas));
+    ok("una o dos buenas (" + x.id + ")", x.correctas.length >= 1 && x.correctas.length <= 2);
+    // Los pasos son los justos: con una jugada menos no se fuerza.
+    ok("con una jugada menos no se fuerza: los pasos son los del ejercicio (" + x.id + ")", x.jugadas === 1 || M.ahogadoForzado(Chess, x.fen, x.jugadas - 1).length === 0);
+    // La línea de la solución se juega entera, es legal y termina en ahogado.
+    const f = new Chess(x.fen);
+    let legalTodo = true;
+    x.linea.forEach((san) => { if (!f.move(san)) legalTodo = false; });
+    ok("la línea es legal y termina en ahogado (" + x.id + ")", legalTodo && f.in_stalemate());
+    ok("la primera jugada de la línea es una de las buenas (" + x.id + ")", x.correctas.includes(x.linea[0]));
+    ok("dice a quién ahogan (" + x.id + ")", x.quien === (f.turn() === yo ? "propio" : "rival"));
+    const lineaEs = (() => {
+      const h = new Chess(x.fen); let num = +x.fen.split(" ")[5] || 1; const partes = [];
+      x.linea.forEach((san, i) => { const b = h.turn() === "w"; const m = h.move(san); if (b) partes.push(num + "." + R.sanEs(m.san)); else { partes.push(i === 0 ? num + "…" + R.sanEs(m.san) : R.sanEs(m.san)); num++; } });
+      return partes.join(" ");
+    })();
+    ok("la línea escrita en castellano es la de la línea (" + x.id + ")", x.lineaEs === lineaEs, x.lineaEs + " ≠ " + lineaEs);
+    ok("sin el ahogado estaba perdida: −2,5 o peor, o mate en contra (" + x.id + ")", typeof x.evalSin === "number" && x.evalSin <= -250, x.evalSin);
+    ok("trae la respuesta para el profesor (" + x.id + ")", Array.isArray(x.respuesta) && x.respuesta.length >= 3 && !!x.resumen);
+    // Una jugada que no fuerza el ahogado se corrige con la respuesta del rival que lo desbarata.
+    g.moves().filter((san) => !buenas.includes(san)).forEach((san) => {
+      const r = M.refutaAhogado(Chess, x.fen, san, x.jugadas);
+      if (!r) return;
+      const h = new Chess(x.fen);
+      h.move(san);
+      ok("la respuesta que desbarata «" + san + "» es legal y no deja ahogado (" + x.id + ")", !!h.move(r.san) && !h.in_stalemate(), r.san);
+    });
+  });
+  // Las reglas, a mano: una posición de dos jugadas y otra donde ahogar es un error.
+  const f2 = "4Q3/2b4r/7B/6R1/5k2/8/7K/5q2 w - - 0 1";
+  ok("el ahogado de dos jugadas: solo Dxe3+, y no en una", JSON.stringify(M.ahogadoForzado(Chess, f2, 2)) === '["Qe3+"]' && M.ahogadoForzado(Chess, f2, 1).length === 0);
+  ok("la defensa y la línea se arman con la misma regla", M.lineaAhogado(Chess, f2, 2).length === 4 && M.lineaAhogado(Chess, f2, 1) === null);
+  // La regla no mira quién va ganando (ahogar con una dama de más también «fuerza el ahogado»): que esté
+  // perdida sin él lo exige el generador con el motor, y el banco lo guarda en evalSin.
+  ok("la regla ahoga al rival aunque se vaya ganando", M.ahogadoForzado(Chess, "7k/8/5Q1K/8/8/8/8/8 w - - 0 1", 1).includes("Qf7"));
+  ok("estrellas del ahogado: sin errores tres; un error o pista, una; dos errores, ninguna",
+    M.estrellasAhogado(0, false) === 3 && M.estrellasAhogado(1, false) === 1 && M.estrellasAhogado(0, true) === 1 && M.estrellasAhogado(2, false) === 0);
 }
 
 titulo("Elige a tiempo");

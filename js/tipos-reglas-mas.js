@@ -449,8 +449,118 @@
     return minimo >= TABLAS.firme ? 3 : 2;
   }
 
+
+  /* =====================================================================
+   * El ahogado (nivel 3 de Salva las tablas): una posición perdida donde hay
+   * una jugada que FUERZA el ahogado, el del rival o el propio. «Forzar»
+   * quiere decir contra todas las defensas, no contra la que el motor eligió:
+   * quien mueve juega `m`; si el rival queda sin jugadas y sin jaque, ya está;
+   * si no, cada respuesta legal del rival tiene que terminar en ahogado
+   * enseguida (el propio: «te ahogan») o dejar otra jugada del alumno que
+   * también lo fuerce, hasta `tope` jugadas del alumno. Mate, y cualquier
+   * otra tabla (material insuficiente, repetición), no cuentan: la promesa de
+   * la posición es el ahogado, y si el rival tiene un mate o una defensa que
+   * lo evita, la jugada no sirve. Lo corre la página para corregir y el
+   * verificador para comprobar el banco: la misma función, en Node.
+   * ===================================================================== */
+  function ahogadoSiguiente(g, n) {
+    const buenas = [];
+    for (const m of g.moves()) {
+      g.move(m);
+      let ok;
+      if (g.in_stalemate()) ok = true;
+      else if (g.game_over()) ok = false;
+      else {
+        ok = true;
+        for (const r of g.moves()) {
+          g.move(r);
+          let sub;
+          if (g.in_stalemate()) sub = true;
+          else if (g.game_over() || n <= 1) sub = false;
+          else sub = ahogadoSiguiente(g, n - 1).length > 0;
+          g.undo();
+          if (!sub) { ok = false; break; }
+        }
+      }
+      g.undo();
+      if (ok) buenas.push(m);
+    }
+    return buenas;
+  }
+  /* Las jugadas (SAN) del que mueve que fuerzan el ahogado en `tope` jugadas
+     propias o menos; vacío si no hay. */
+  function ahogadoForzado(Chess, fen, tope) {
+    const g = cargar(Chess, fen);
+    return g && !g.game_over() ? ahogadoSiguiente(g, tope) : [];
+  }
+  /* ¿Cuántas jugadas propias le cuesta, desde `g`, al que mueve? 0 si ya está
+     ahogado; Infinity si no lo fuerza en `tope`. */
+  function costoAhogado(g, tope) {
+    if (g.in_stalemate()) return 0;
+    if (g.game_over()) return Infinity;
+    for (let n = 1; n <= tope; n++) if (ahogadoSiguiente(g, n).length) return n;
+    return Infinity;
+  }
+  /* La respuesta del rival a una jugada que fuerza el ahogado: la que más se
+     resiste (la que deja más jugadas por delante); a igualdad, la primera. Es
+     la que muestra la página y la que anota el generador. null si el rival
+     no tiene respuesta (ya lo ahogaron a él). */
+  function defensaAhogado(Chess, fen, tope) {
+    const g = cargar(Chess, fen);
+    if (!g || g.game_over()) return null;
+    let mejor = null, peor = -1;
+    for (const r of g.moves()) {
+      g.move(r);
+      const c = g.in_stalemate() ? 0 : costoAhogado(g, Math.max(1, tope - 1));
+      g.undo();
+      if (c > peor) { peor = c; mejor = r; }
+    }
+    return mejor;
+  }
+  /* Una respuesta del rival que desbarata una jugada que NO fuerza el ahogado
+     (para decir por qué no sirve); null si la jugada es mala por otra cosa. */
+  function refutaAhogado(Chess, fen, san, tope) {
+    const g = cargar(Chess, fen);
+    if (!g || !g.move(san)) return null;
+    if (g.in_stalemate()) return null;
+    for (const r of g.moves()) {
+      g.move(r);
+      const sirve = g.in_stalemate() || (!g.game_over() && tope > 1 && ahogadoSiguiente(g, tope - 1).length > 0);
+      const mate = g.in_checkmate();
+      g.undo();
+      if (!sirve) return { san: r, mate };
+    }
+    return null;
+  }
+  /* La línea completa de la solución, desde `fen`: la primera jugada buena, la
+     defensa que más se resiste, y así hasta el ahogado. */
+  function lineaAhogado(Chess, fen, tope) {
+    const g = cargar(Chess, fen);
+    const linea = [];
+    let resta = tope;
+    while (g && resta > 0 && !g.game_over()) {
+      const buenas = ahogadoSiguiente(g, resta);
+      if (!buenas.length) return null;
+      const m = buenas[0];
+      g.move(m); linea.push(m);
+      if (g.in_stalemate()) return linea;
+      const r = defensaAhogado(Chess, g.fen(), resta);
+      if (!r) return null;
+      g.move(r); linea.push(r);
+      if (g.in_stalemate()) return linea;
+      resta--;
+    }
+    return null;
+  }
+  /* Tres estrellas a la primera; con un error o con pista, una. */
+  function estrellasAhogado(errores, pista) {
+    if (pista) return 1;
+    return errores === 0 ? 3 : errores === 1 ? 1 : 0;
+  }
+
   const TiposReglasMas = {
     TABLAS, juicioTablas, estrellasTablas,
+    ahogadoForzado, defensaAhogado, refutaAhogado, lineaAhogado, estrellasAhogado,
     TIEMPO, estrellasTiempo, segundosTiempo,
     REMATA, cpDelAlumno, juicioRemata, estrellasRemata,
     aguantaAcertada, textoRefuta,

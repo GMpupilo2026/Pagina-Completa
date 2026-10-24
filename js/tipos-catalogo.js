@@ -249,11 +249,12 @@
       id: "tablas", emoji: "🤝", nombre: "Salva las tablas",
       pregunta: "Vas con menos material. ¿Lo puedes aguantar?",
       entrena: "Defender una posición inferior sin rendirse: buscar el jaque continuo, el ahogado, cambiar lo que sobra, armar una fortaleza. Muchas partidas perdidas se salvan aquí.",
-      como: "Empiezas con menos material, pero el motor dice que se puede aguantar. Juegas contra la máquina a toda su fuerza: lo logras si llegas a tablas (ahogado, repetición, 50 jugadas o material insuficiente) o si aguantas las jugadas del nivel sin que la posición se pierda (sin bajar de −2,5).",
+      como: "Empiezas con menos material, pero el motor dice que se puede aguantar. Juegas contra la máquina a toda su fuerza: lo logras si llegas a tablas (ahogado, repetición, 50 jugadas o material insuficiente) o si aguantas las jugadas del nivel sin que la posición se pierda (sin bajar de −2,5). En el nivel 3 no se juega contra el motor: la posición está perdida y hay una jugada que fuerza el ahogado (el del rival o el tuyo); hay que encontrarla.",
       clase: "Con «Practicar», cada alumno juega la posición contra el motor. Antes, pregunten qué recursos hay: ¿un jaque continuo? ¿un ahogado? ¿qué conviene cambiar?",
       niveles: [
         { n: 1, titulo: "Un peón menos", desc: "Te falta un peón, y la ventaja del rival crece si te descuidas. 10 jugadas.", jugadas: 10 },
         { n: 2, titulo: "Más de un peón", desc: "Te faltan dos puntos de material o más: hay que buscar los recursos. 12 jugadas.", jugadas: 12 },
+        { n: 3, titulo: "El ahogado", desc: "Estás perdido, pero una jugada fuerza el ahogado: el rival se queda sin jugadas legales, o te ahogan a ti, y son tablas. Búscala.", ahogado: true },
       ],
     },
   ];

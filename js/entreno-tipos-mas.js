@@ -715,8 +715,98 @@
       jugar({ from: m.from, to: m.to, promotion: m.promotion });
     });
   }
+  /* ---- Salva las tablas, nivel 3: El ahogado
+     No se juega contra el motor: la posición está perdida y hay una jugada que
+     fuerza el ahogado, el del rival o el propio. La corrige chess.js, con las
+     reglas de js/tipos-reglas-mas.js (ahogadoForzado): sirve CUALQUIER jugada
+     que lo fuerce contra todas las defensas, no solo la del banco, y si no
+     sirve se dice qué responde el rival. Tras una jugada buena, la página
+     contesta por el rival con la defensa que más se resiste. */
+  function ahogado(item) {
+    const yo = item.fen.split(" ")[1];
+    const juego = new Chess(item.fen);
+    let jugadas = 0, errores = 0, pista = false, hecho = false, ocupado = false, vivo = true;
+    U.alLimpiar(() => { vivo = false; });
+    const marcas = {};
+    const restan = () => item.jugadas - jugadas;
+    const redibujar = (ultima) => U.tablero(juego.fen(), { orientacion: yo, juego, ultima, marcas: Object.assign({}, marcas), clic: hecho || ocupado ? null : U.moverConClic(juego, jugar) });
+    function fin(texto, n) {
+      hecho = true; ocupado = false;
+      U.pedirJugada("", null);
+      bPista.disabled = true;
+      redibujar(tab.ultima);
+      estado(texto + (n ? " " + textoEstrellas(n) : ""));
+      explicar(item.respuesta);
+      terminar(item, n);
+    }
+    function ahogo() {
+      return juego.turn() === yo
+        ? "✓ ¡Ahogado! A tu rey no le queda ninguna jugada legal y no está en jaque: tablas. Te ahogaron, y lo forzaste tú."
+        : "✓ ¡Ahogado! Al rival no le queda ninguna jugada legal y su rey no está en jaque: tablas.";
+    }
+    function jugar(mov) {
+      if (hecho || ocupado) return;
+      const antes = juego.fen();
+      const m = juego.move(mov);
+      if (!m) { estado("Esa jugada no es legal."); return; }
+      const buenas = M.ahogadoForzado(Chess, antes, restan());
+      if (buenas.indexOf(m.san) < 0) {
+        const refuta = M.refutaAhogado(Chess, antes, m.san, restan());
+        juego.undo();
+        errores++;
+        const porque = refuta
+          ? " El rival contesta " + R.sanEs(refuta.san) + (refuta.mate ? " y da mate" : "") + " y el ahogado se escapa."
+          : " Con ella el rival no queda ahogado y la partida sigue perdida.";
+        if (errores >= 2) return fin("✗ " + R.sanEs(m.san) + " no fuerza el ahogado." + porque + " La solución: " + item.lineaEs + ".", 0);
+        redibujar(tab.ultima);
+        estado("✗ " + R.sanEs(m.san) + " no fuerza el ahogado." + porque + " Prueba otra.");
+        U.pedirJugada("O escribe tu jugada (las " + COLOR[yo] + ")", pedir);
+        return;
+      }
+      jugadas++;
+      delete marcas[Object.keys(marcas)[0]];
+      redibujar([m.from, m.to]);
+      if (juego.in_stalemate()) return fin(ahogo(), M.estrellasAhogado(errores, pista));
+      ocupado = true;
+      estado("Jugaste " + R.sanEs(m.san) + ". El rival no tiene salida: responde…");
+      const t = setTimeout(() => {
+        if (!vivo) return;
+        const r = M.defensaAhogado(Chess, juego.fen(), restan());
+        const rr = r ? juego.move(r) : null;
+        ocupado = false;
+        if (!rr) return fin("No se pudo continuar la línea: este intento no cuenta. Usa «Otra vez».", 0);
+        redibujar([rr.from, rr.to]);
+        if (juego.in_stalemate()) return fin(ahogo(), M.estrellasAhogado(errores, pista));
+        estado("El rival jugó " + R.sanEs(rr.san) + ". Te toca: queda un paso para el ahogado.");
+      }, 900);
+      U.alLimpiar(() => clearTimeout(t));
+    }
+    const pedir = (txt) => {
+      const m = U.jugadaEscrita(juego, txt);
+      if (!m) { U.noSePudo(txt); return; }
+      $("jugada-input").value = "";
+      jugar({ from: m.from, to: m.to, promotion: m.promotion });
+    };
+    $("juego-turno").textContent = "Juegas con las " + COLOR[yo] + ". Estás perdido, pero hay una jugada que salva la partida.";
+    $("juego-enunciado").textContent = "Encuentra la jugada que fuerza el ahogado" + (item.jugadas > 1 ? " (en " + item.jugadas + " jugadas tuyas)" : "") + ". Si juegas otra cosa, el motor te da " + numero(item.evalSin) + ".";
+    const bPista = boton("💡 Pista", BTN_SEGUNDO + " mt-1", () => {
+      if (hecho || ocupado || pista) return;
+      const primera = M.ahogadoForzado(Chess, juego.fen(), restan())[0];
+      if (!primera) return;
+      const mm = new Chess(juego.fen()).move(primera);
+      pista = true;
+      bPista.disabled = true;
+      marcas[mm.from] = { cls: "m-bien", signo: "?", dicho: "pista: esta pieza" };
+      estado("Pista: la jugada sale con " + articulo(mm.color + mm.piece) + piezaDicha(mm.color + mm.piece) + " de " + mm.from + ". Con pista, una estrella.");
+      redibujar(tab.ultima);
+    });
+    $("controles").appendChild(bPista);
+    if (U.adaptado()) U.leerPosicion(item.fen);
+    redibujar(null);
+    U.pedirJugada("O escribe tu jugada (las " + COLOR[yo] + ")", pedir);
+  }
   U.JUEGOS.remata = (item) => contraMotor(item, CONTRA_MOTOR.remata);
-  U.JUEGOS.tablas = (item) => contraMotor(item, CONTRA_MOTOR.tablas);
+  U.JUEGOS.tablas = (item) => (item.ahogado ? ahogado(item) : contraMotor(item, CONTRA_MOTOR.tablas));
 
   /* ================================================ 17. Elige a tiempo
      Varias candidatas razonables y un reloj. No hay «la única»: cuenta cuánto

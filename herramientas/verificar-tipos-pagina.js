@@ -757,6 +757,82 @@ window.PracticeEngine = {
       ok("sin errores en consola", !errores.length, errores.join(" | "));
       await ctx.close();
     }
+
+    console.log("\n=== Salva las tablas, nivel 3: El ahogado (sin motor: lo corrige chess.js) ===");
+    const aho = DATOS.tablas.find((x) => x.ahogado);
+    const buena1 = R.sanEs(aho.linea[0]);
+    // La mala que tienta: un jaque que no ahoga (si no hay, cualquiera que no sea la buena).
+    const mala1 = (() => { const g = new Chess(aho.fen); const malas = g.moves().filter((san) => !aho.correctas.includes(san)); return R.sanEs(malas.find((san) => /\+$/.test(san)) || malas[0]); })();
+    const escribir = async (page, txt) => { await page.fill("#jugada-input", txt); await page.press("#jugada-input", "Enter"); };
+    {
+      // la línea buena, escrita: el rival contesta solo y la partida queda ahogada
+      const { page, ctx, errores } = await abrir(browser, true, "#tablas/3/" + aho.id);
+      await page.waitForSelector("#vista-juego:not(.hidden) #jugada-input");
+      await mismaPosicion(page, aho.fen, "pinta la posición del ejercicio");
+      const enun = await page.textContent("#juego-enunciado");
+      ok("pide el ahogado, dice en cuántas jugadas y cuánto da el motor si se juega otra cosa", /fuerza el ahogado \(en 2 jugadas tuyas\).*mate en contra/.test(enun), enun);
+      ok("tiene su botón de pista", await page.isVisible("text=Pista"));
+      await escribir(page, buena1);
+      const t1 = await esperarEstado(page, /Te toca: queda un paso/);
+      ok("tras la jugada buena el rival contesta solo y falta un paso", /El rival jugó/.test(t1) && /queda un paso/.test(t1), t1);
+      // la posición de ahora es la de la línea, dos medias jugadas adelante
+      const f1 = new Chess(aho.fen); f1.move(aho.linea[0]); f1.move(aho.linea[1]);
+      const visto = await page.evaluate(() => TiposEntreno.fen());
+      ok("el rival contestó con la defensa que más se resiste (la de la línea)", visto.split(" ").slice(0, 2).join(" ") === f1.fen().split(" ").slice(0, 2).join(" "), visto);
+      await escribir(page, R.sanEs(aho.linea[2]));
+      const t2 = await esperarEstado(page, /Ahogado/);
+      ok("al terminar dice que es ahogado y son tablas", /¡Ahogado!/.test(t2) && /tablas/.test(t2), t2);
+      ok("dice a quién ahogaron (a las blancas: «A tu rey…»)", aho.quien !== "propio" || /A tu rey/.test(t2), t2);
+      ok("a la primera: tres estrellas", (await estrellas(page))["tablas:" + aho.id] === 3, JSON.stringify(await estrellas(page)));
+      ok("sin errores en consola", !errores.length, errores.join(" | "));
+      await ctx.close();
+    }
+    {
+      // una jugada que no sirve: se dice por qué, no termina, y la buena después da una estrella
+      const { page, ctx, errores } = await abrir(browser, true, "#tablas/3/" + aho.id);
+      await page.waitForSelector("#vista-juego:not(.hidden) #jugada-input");
+      await escribir(page, mala1);
+      const t = await esperarEstado(page, /no fuerza el ahogado/);
+      ok("una jugada que no fuerza el ahogado se corrige y dice qué responde el rival", /no fuerza el ahogado/.test(t) && /Prueba otra/.test(t) && /(El rival contesta|el rival no queda ahogado)/.test(t), t);
+      await mismaPosicion(page, aho.fen, "la jugada mala se deshace: el tablero vuelve a la posición");
+      await escribir(page, buena1);
+      await esperarEstado(page, /Te toca: queda un paso/);
+      await escribir(page, R.sanEs(aho.linea[2]));
+      await esperarEstado(page, /Ahogado/);
+      ok("con un error: una estrella", (await estrellas(page))["tablas:" + aho.id] === 1, JSON.stringify(await estrellas(page)));
+      ok("sin errores en consola", !errores.length, errores.join(" | "));
+      await ctx.close();
+    }
+    {
+      // dos jugadas malas: se rinde, enseña la solución y no da estrellas
+      const { page, ctx, errores } = await abrir(browser, true, "#tablas/3/" + aho.id);
+      await page.waitForSelector("#vista-juego:not(.hidden) #jugada-input");
+      const otra = (() => { const g = new Chess(aho.fen); return R.sanEs(g.moves().filter((san) => !aho.correctas.includes(san) && R.sanEs(san) !== mala1)[0]); })();
+      await escribir(page, mala1);
+      await esperarEstado(page, /Prueba otra/);
+      await escribir(page, otra);
+      const t = await esperarEstado(page, /La solución/);
+      ok("a la segunda jugada mala enseña la solución", t.includes("La solución: " + aho.lineaEs), t);
+      ok("y no da estrellas", !(await estrellas(page))["tablas:" + aho.id]);
+      ok("el tablero ya no deja jugar", !(await page.isVisible("#jugada-input")));
+      ok("sin errores en consola", !errores.length, errores.join(" | "));
+      await ctx.close();
+    }
+    {
+      // la pista marca la pieza y deja una estrella
+      const { page, ctx, errores } = await abrir(browser, true, "#tablas/3/" + aho.id);
+      await page.waitForSelector("#vista-juego:not(.hidden) #jugada-input");
+      await page.click("text=Pista");
+      const t = await estado(page);
+      ok("la pista dice con qué pieza se juega (la dama)", /con una dama blanca de e8/.test(t) || /dama.*e8/.test(t), t);
+      await escribir(page, buena1);
+      await esperarEstado(page, /Te toca: queda un paso/);
+      await escribir(page, R.sanEs(aho.linea[2]));
+      await esperarEstado(page, /Ahogado/);
+      ok("con pista: una estrella", (await estrellas(page))["tablas:" + aho.id] === 1, JSON.stringify(await estrellas(page)));
+      ok("sin errores en consola", !errores.length, errores.join(" | "));
+      await ctx.close();
+    }
   }
 
   console.log("\n=== Elige a tiempo ===");
