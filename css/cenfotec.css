@@ -64,3 +64,111 @@
 @media (prefers-reduced-motion: reduce) {
   .cft-sala::after { animation: none; opacity: 1; }
 }
+
+/* La página del Desafío Mentes Maestras (cenfotec-2026.html): la misma hoja
+ * del Centroamericano (css/centroamericano.css, el `body` lleva `cac cft`) con
+ * sus variables cambiadas por las de CENFOTEC, y encima lo que en esa hoja va
+ * con un color fijo (la bandera de las fichas, los lavandas del modo oscuro).
+ * Contraste medido contra el fondo real: blanco sobre #233065 12,48 y sobre
+ * #1C3F7F 10,16; blanco sobre #0A6AA8 5,77 (el «rojo» de las bases pasa a este
+ * azul: el celeste no lleva letra blanca); #0A6AA8 sobre blanco 5,77 y sobre
+ * #EEF6FD 5,28; #233065 sobre #EEF6FD 11,44; #141C40 sobre el celeste 6,52;
+ * en oscuro, #8FD3FA sobre brand-950 11,23 y sobre brand-900 10,24. */
+.cft {
+  --cac-morado: #233065;
+  --cac-morado-2: #1c3f7f;
+  --cac-morado-hondo: #141c40;
+  --cac-rojo: #0a6aa8;
+  --cac-verde: #23acf4;
+  --cac-azul: #1c3f7f;
+  --cac-naranja: #23acf4;
+  --cac-fondo: #eef6fd;
+  --cac-acento: var(--cac-rojo);
+}
+.dark .cft { --cac-acento: #8fd3fa; }
+
+/* La portada: el azul de la imagen de la universidad, con su cuadrícula. */
+.cft .cac-portada {
+  background:
+    linear-gradient(rgb(255 255 255 / 0.05) 1px, transparent 1px) 0 0 / 32px 32px,
+    linear-gradient(90deg, rgb(255 255 255 / 0.05) 1px, transparent 1px) 0 0 / 32px 32px,
+    linear-gradient(170deg, var(--cac-morado) 0%, var(--cac-morado-2) 100%);
+}
+.cft .cac-pildora { background: #23acf4; color: #141c40; }
+.cft .cac-titulo { text-shadow: 0 3px 0 rgb(20 28 64 / 0.5); }
+.cft-logo { display: block; width: 100%; height: auto; }
+.cft .cac-dato { background: rgb(20 28 64 / 0.6); }
+.cft .cac-dato dt { color: #dfe9fb; }
+.cft .cac-organiza { border-bottom-color: #23acf4; }
+.cft .cac-organiza strong { color: var(--cac-rojo); }
+
+/* Las fichas: en lugar de la bandera, la línea celeste y la pista de circuito. */
+.cft .cac-ficha::before {
+  height: 6px;
+  background: #23acf4;
+}
+.cft .cac-ficha::after {
+  top: 6px;
+  height: 8px;
+  opacity: 0.18;
+  background: repeating-linear-gradient(90deg, var(--cac-morado) 0 14px, transparent 14px 20px);
+}
+.dark .cft .cac-ficha::after { opacity: 0.4; background: repeating-linear-gradient(90deg, #8fd3fa 0 14px, transparent 14px 20px); }
+.cft .cac-ficha > .cac-icono:first-child { margin-top: 0.5rem; }
+.cft a.cac-ficha:hover { box-shadow: 0 14px 28px -12px rgb(35 48 101 / 0.45); }
+
+/* «El podio», arriba de las fichas: los tres primeros, el primero más grande. */
+.cft-podio {
+  display: grid;
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+}
+@media (min-width: 640px) {
+  .cft-podio { grid-template-columns: 1fr 1.15fr 1fr; align-items: end; }
+  .cft-podio-puesto[data-puesto="1"] { order: 2; }
+  .cft-podio-puesto[data-puesto="2"] { order: 1; }
+  .cft-podio-puesto[data-puesto="3"] { order: 3; }
+}
+.cft-podio-vacio { grid-column: 1 / -1; color: var(--cac-acento); font-weight: 700; }
+.cft-podio-puesto {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 0.15rem;
+  padding: 1rem 0.75rem;
+  border-radius: 1.25rem;
+  background: var(--cac-fondo);
+  border-top: 6px solid #23acf4;
+}
+.cft-podio-puesto[data-puesto="1"] { padding-top: 1.5rem; padding-bottom: 1.5rem; background: var(--cac-morado); color: #fff; }
+.dark .cft-podio-puesto { background: rgb(var(--c-brand-950, 7 21 39)); }
+.dark .cft-podio-puesto[data-puesto="1"] { background: var(--cac-morado-2); }
+.cft-podio-medalla { font-size: 2rem; line-height: 1; }
+.cft-podio-puesto[data-puesto="1"] .cft-podio-medalla { font-size: 2.6rem; }
+.cft-podio-lugar { font-size: 0.8rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; }
+.cft-podio-nombre { font-weight: 800; font-size: 1.1rem; line-height: 1.2; }
+.cft-podio-puesto[data-puesto="1"] .cft-podio-nombre { font-size: 1.3rem; }
+.cft-podio-puntos { font-size: 0.9rem; }
+
+/* La despedida: el logo en un círculo azul, donde el Centroamericano tiene al pizote. */
+.cft-despedida-logo {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: clamp(5.5rem, 18vw, 8.5rem);
+  aspect-ratio: 1;
+  border-radius: 9999px;
+  background: var(--cac-morado);
+  border: 5px solid #fff;
+  box-shadow: 0 10px 24px -10px rgb(35 48 101 / 0.6);
+}
+.cft-despedida-logo img { width: 78%; height: auto; }
+.dark .cft .cac-globo { border-color: #8fd3fa; box-shadow: 0 6px 0 #8fd3fa; }
+.dark .cft .cac-globo::before { border-color: #8fd3fa; }
+.dark .cft .cac-globo .cac-accion { color: #8fd3fa; }
+.dark .cft .cac-buscador { border-color: #8fd3fa; box-shadow: 0 6px 0 #8fd3fa; }
+.dark .cft .cac-buscador-campo { border-color: #8fd3fa; }
+.dark .cft .cac-jugador { border-left-color: #8fd3fa; }
+.cft .cac-proyector-barra { background: var(--cac-morado); }

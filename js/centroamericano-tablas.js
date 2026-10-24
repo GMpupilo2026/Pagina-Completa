@@ -13,6 +13,11 @@
  * window.CentroamericanoVivo: una sola copia. Todo lo de afuera (nombres) va
  * por textContent o al lienzo, nunca como HTML.
  *
+ * Otra página de torneo (la de CENFOTEC) pone en window.TorneoPagina el
+ * nombre, la dirección y la cara de su imagen para compartir; sin eso, es la
+ * del Centroamericano. Con el torneo terminado (ver normalizar() en
+ * js/centroamericano-vivo.js), el proyector pasa la clasificación final.
+ *
  * Ver «La clasificación, la tabla por país y el pareo para proyectar» en
  * docs/decisiones/juegos-y-torneos.md.
  */
@@ -25,7 +30,16 @@
   const el = V.el;
   const SEGUNDOS_PROYECTOR = 15;
   const MESAS_POR_PAGINA = 12;
-  const URL_PAGINA = "ajedrez-integral.com/centroamericano-2026.html";
+  const CONFIG = window.TorneoPagina || {};
+  const URL_PAGINA = CONFIG.url || "ajedrez-integral.com/centroamericano-2026.html";
+  const NOMBRE_CORTO = CONFIG.nombreCorto || "Centroamericano 2026";
+  // La cara de la imagen para compartir: la banda de arriba, su dibujo (redondo
+  // como el pizote o ancho como un logo) y las franjas de abajo.
+  const CARA = Object.assign({
+    banda: "#40478f", tinta: "#1e2453", acento: "#40478f", suave: "#f4f4fb",
+    dibujo: "img/centroamericano-2026/mascota.jpg", redondo: true, archivo: "centroamericano-2026",
+    franjas: [["#1e4c8a", 1040], ["#ffffff", 1050], ["#ce1328", 1058], ["#ffffff", 1066], ["#1e4c8a", 1072]],
+  }, CONFIG.imagen || {});
 
   const TEXTOS = {
     es: {
@@ -33,6 +47,8 @@
       error: "No pudimos leer chess-results ahora mismo. Vuelve a intentarlo en un rato.",
       antes: "Lista inicial: el torneo todavía no empieza.",
       despues: (r) => "Después de la ronda " + r + ".",
+      final: (r) => "Clasificación final, después de la ronda " + r + ".",
+      proyFinal: (pag, de) => "Clasificación final" + (de > 1 ? " · " + pag + "/" + de : ""),
       colPuesto: "Puesto", colJugador: "Jugador", colFed: "FED", colElo: "Elo", colPuntos: "Puntos", colRend: "Rend.",
       colPais: "País", colJugadores: "Jugadores", colDe: "De", colPorc: "%",
       colRonda: (r) => "R" + r,
@@ -47,6 +63,7 @@
       imgSub: "XXI Festival Centroamericano y del Caribe de la Juventud · Costa Rica",
       imgPuesto: (p, de) => "Puesto " + p + " de " + de,
       imgPuntos: (pts, r) => pts + (pts === "1" ? " punto" : " puntos") + " tras la ronda " + r,
+      imgFinal: (pts, r) => pts + (pts === "1" ? " punto" : " puntos") + " en " + r + " rondas",
       imgInicial: (n) => "Número inicial " + n,
       imgAntes: "El torneo empieza el 2 de noviembre",
       imgRonda: (r, que, rival) => "Ronda " + r + ": " + que + (rival ? " " + rival : ""),
@@ -60,6 +77,8 @@
       error: "We couldn't read chess-results right now. Please try again in a while.",
       antes: "Starting list: the tournament hasn't started yet.",
       despues: (r) => "After round " + r + ".",
+      final: (r) => "Final standings, after round " + r + ".",
+      proyFinal: (pag, de) => "Final standings" + (de > 1 ? " · " + pag + "/" + de : ""),
       colPuesto: "Place", colJugador: "Player", colFed: "FED", colElo: "Rating", colPuntos: "Points", colRend: "Perf.",
       colPais: "Country", colJugadores: "Players", colDe: "Of", colPorc: "%",
       colRonda: (r) => "R" + r,
@@ -74,6 +93,7 @@
       imgSub: "21st Central American and Caribbean Youth Festival · Costa Rica",
       imgPuesto: (p, de) => "Place " + p + " of " + de,
       imgPuntos: (pts, r) => pts + (pts === "1" ? " point" : " points") + " after round " + r,
+      imgFinal: (pts, r) => pts + (pts === "1" ? " point" : " points") + " in " + r + " rounds",
       imgInicial: (n) => "Starting number " + n,
       imgAntes: "The tournament starts on November 2",
       imgRonda: (r, que, rival) => "Round " + r + ": " + que + (rival ? " " + rival : ""),
@@ -124,6 +144,8 @@
   }
 
   const rondaActual = () => Math.max(0, ...((V.datos() || { torneos: [] }).torneos.map((t) => t.ronda || 0)));
+  const terminado = () => { const d = V.datos(); return !!(d && d.torneos.length && d.torneos.every((t) => t.terminado)); };
+  const comoVa = (r) => (terminado() ? T().final(r) : T().despues(r));
 
   /* ---------------- la clasificación completa ---------------- */
   let categoriaElegida = "";
@@ -138,6 +160,9 @@
     if (sel.dataset.firma !== firma) {
       sel.dataset.firma = firma;
       sel.replaceChildren(...grupos.map((g) => { const o = el("option", "", V.categoria(g)); o.value = g; return o; }));
+      // Con una sola categoría (un torneo sin grupos) no hay nada que elegir.
+      const etiqueta = sel.closest("label");
+      if (etiqueta) etiqueta.hidden = grupos.length < 2;
     }
     if (!grupos.includes(categoriaElegida)) categoriaElegida = grupos[0] || "";
     sel.value = categoriaElegida;
@@ -151,7 +176,7 @@
       filas.push([String(ronda ? i + 1 : "—"), nombreCompleto(x.j), x.j.fed || "", x.j.elo ? String(x.j.elo) : "—", ronda ? x.j.puntos || "0" : "—", rend ? String(rend.rp) : "—"]);
     });
     const estado = el("p", "font-semibold");
-    decir(estado, (ronda ? tx.despues(ronda) : tx.antes) + V.cuandoSeLeyo());
+    decir(estado, (ronda ? comoVa(ronda) : tx.antes) + V.cuandoSeLeyo());
     caja.replaceChildren(estado);
     if (!filas.length) { caja.appendChild(el("p", "mt-3", tx.nadie)); return; }
     caja.appendChild(tabla([tx.colPuesto, tx.colJugador, tx.colFed, tx.colElo, tx.colPuntos, tx.colRend], filas, [0, 3, 4, 5], 1));
@@ -185,7 +210,7 @@
       return;
     }
     const estado = el("p", "font-semibold");
-    decir(estado, tx.despues(rondaActual() || rondas) + V.cuandoSeLeyo());
+    decir(estado, comoVa(rondaActual() || rondas) + V.cuandoSeLeyo());
     caja.appendChild(estado);
     lista.sort((a, b) => (b.de ? b.puntos / b.de : 0) - (a.de ? a.puntos / a.de : 0) || b.puntos - a.puntos || a.f.localeCompare(b.f));
     const cab = ["#", tx.colPais, tx.colJugadores, tx.colPuntos, tx.colDe, tx.colPorc];
@@ -207,6 +232,13 @@
     const datos = V.datos();
     if (!datos) return salida;
     datos.torneos.forEach((tor) => {
+      // Terminado, no hay pareo que mostrar: pasa la clasificación final.
+      if (tor.terminado && Array.isArray(tor.jugadores)) {
+        const lista = V.jugadores().filter((x) => x.torneo === tor).sort((a, b) => a.j.puesto - b.j.puesto);
+        const de = Math.ceil(lista.length / MESAS_POR_PAGINA);
+        for (let i = 0; i < de; i++) salida.push({ final: true, pag: i + 1, de, filas: lista.slice(i * MESAS_POR_PAGINA, (i + 1) * MESAS_POR_PAGINA) });
+        return;
+      }
       const pareo = tor.pareo;
       if (!pareo || !pareo.ronda || !Array.isArray(pareo.mesas) || !pareo.mesas.length) return;
       const porNo = new Map((tor.jugadores || []).map((j) => [j.no, j]));
@@ -231,12 +263,13 @@
     $("proyector-pausa").textContent = pausado ? tx.seguir : tx.pausa;
     $("proyector-pausa").setAttribute("aria-pressed", pausado ? "true" : "false");
     if (!paginas.length) {
-      titulo.textContent = "Centroamericano 2026";
+      titulo.textContent = NOMBRE_CORTO;
       caja.replaceChildren(el("p", "cac-proyector-vacio", V.datos() ? tx.proySinPareo : tx.cargando));
       return;
     }
     if (pagina >= paginas.length) pagina = 0;
     const p = paginas[pagina];
+    if (p.final) { pintarFinal(p, tx, titulo, caja); return; }
     titulo.textContent = tx.proyTitulo(p.ronda, V.categoria(p.grupo), p.pag, p.de);
     const quien = (n) => { const j = n && p.porNo.get(n.no); return n ? nombreCompleto(n) + (j && j.fed ? " (" + j.fed + ")" : "") : ""; };
     const t = el("table", "cac-proyector-tabla");
@@ -250,6 +283,27 @@
       tr.appendChild(el("td", "", quien(m.blancas)));
       tr.appendChild(el("td", "res", m.negras ? (/\d|½|\+/.test(m.resultado || "") ? m.resultado : "–") : ""));
       tr.appendChild(el("td", "", m.negras ? quien(m.negras) : tx.proyBye));
+      tbody.appendChild(tr);
+    });
+    t.append(thead, tbody);
+    caja.replaceChildren(t);
+  }
+
+  // Una página de la clasificación final, con la misma letra grande del pareo.
+  function pintarFinal(p, tx, titulo, caja) {
+    titulo.textContent = tx.proyFinal(p.pag, p.de);
+    const t = el("table", "cac-proyector-tabla");
+    const cab = el("tr");
+    [tx.colPuesto, tx.colJugador, tx.colPuntos, tx.colRend].forEach((c) => { const th = el("th", "", c); th.scope = "col"; cab.appendChild(th); });
+    const thead = el("thead"); thead.appendChild(cab);
+    const tbody = el("tbody");
+    p.filas.forEach((x) => {
+      const tr = el("tr");
+      const rend = V.rendimiento(x);
+      tr.appendChild(el("td", "mesa", String(x.j.puesto)));
+      tr.appendChild(el("td", "", nombreCompleto(x.j)));
+      tr.appendChild(el("td", "res", x.j.puntos || "0"));
+      tr.appendChild(el("td", "res", rend ? String(rend.rp) : "—"));
       tbody.appendChild(tr);
     });
     t.append(thead, tbody);
@@ -317,40 +371,44 @@
     c.width = 1080; c.height = 1080;
     const ctx = c.getContext("2d");
     ctx.fillStyle = "#ffffff"; ctx.fillRect(0, 0, 1080, 1080);
-    // La banda de arriba, con el pizote.
-    ctx.fillStyle = "#40478f"; ctx.fillRect(0, 0, 1080, 250);
+    // La banda de arriba, con el pizote (o el logo de la página).
+    ctx.fillStyle = CARA.banda; ctx.fillRect(0, 0, 1080, 250);
     ctx.fillStyle = "#ffffff";
     ctx.font = "800 66px " + letra; ctx.textBaseline = "alphabetic";
-    ctx.fillText("Centroamericano 2026", 60, 120);
+    ctx.fillText(NOMBRE_CORTO, 60, 120);
     ctx.font = "500 28px " + letra;
-    renglones(ctx, tx.imgSub, 760, 2).forEach((l, i) => ctx.fillText(l, 60, 172 + i * 36));
-    const mascota = await cargarImagen("img/centroamericano-2026/mascota.jpg");
-    if (mascota) {
+    renglones(ctx, CONFIG.imgSub || tx.imgSub, CARA.redondo ? 760 : 600, 2).forEach((l, i) => ctx.fillText(l, 60, 172 + i * 36));
+    const dibujo = await cargarImagen(CARA.dibujo);
+    if (dibujo && CARA.redondo) {
       ctx.save(); ctx.beginPath(); ctx.arc(950, 125, 95, 0, Math.PI * 2); ctx.closePath(); ctx.clip();
-      const lado = Math.min(mascota.width, mascota.height);
-      ctx.drawImage(mascota, (mascota.width - lado) / 2, (mascota.height - lado) / 2, lado, lado, 855, 30, 190, 190);
+      const lado = Math.min(dibujo.width, dibujo.height);
+      ctx.drawImage(dibujo, (dibujo.width - lado) / 2, (dibujo.height - lado) / 2, lado, lado, 855, 30, 190, 190);
       ctx.restore();
       ctx.lineWidth = 6; ctx.strokeStyle = "#ffffff"; ctx.beginPath(); ctx.arc(950, 125, 95, 0, Math.PI * 2); ctx.stroke();
+    } else if (dibujo) {
+      // Un logo ancho, a la derecha de la banda y sin recortar.
+      const ancho = 330, alto = Math.round((ancho * dibujo.height) / dibujo.width);
+      ctx.drawImage(dibujo, 1080 - 60 - ancho, Math.round((250 - alto) / 2), ancho, alto);
     }
     // El nombre y su categoría.
-    ctx.fillStyle = "#1e2453"; ctx.font = "800 72px " + letra;
+    ctx.fillStyle = CARA.tinta; ctx.font = "800 72px " + letra;
     let y = 360;
     renglones(ctx, nombreCompleto(x.j), 960, 2).forEach((l) => { ctx.fillText(l, 60, y); y += 84; });
-    ctx.fillStyle = "#40478f"; ctx.font = "700 40px " + letra;
+    ctx.fillStyle = CARA.acento; ctx.font = "700 40px " + letra;
     ctx.fillText([V.categoria(x.j.grupo), x.j.fed, x.j.elo ? "Elo " + x.j.elo : ""].filter(Boolean).join(" · "), 60, y + 10);
     y += 60;
     // El recuadro de cómo va.
-    ctx.fillStyle = "#f4f4fb";
+    ctx.fillStyle = CARA.suave;
     const r = 36, cx = 60, cy = y, cw = 960, ch = 230;
     ctx.beginPath(); ctx.moveTo(cx + r, cy); ctx.arcTo(cx + cw, cy, cx + cw, cy + ch, r); ctx.arcTo(cx + cw, cy + ch, cx, cy + ch, r);
     ctx.arcTo(cx, cy + ch, cx, cy, r); ctx.arcTo(cx, cy, cx + cw, cy, r); ctx.closePath(); ctx.fill();
-    ctx.fillStyle = "#40478f"; ctx.fillRect(cx, cy + 30, 12, ch - 60);
-    ctx.fillStyle = "#1e2453";
+    ctx.fillStyle = CARA.acento; ctx.fillRect(cx, cy + 30, 12, ch - 60);
+    ctx.fillStyle = CARA.tinta;
     const ronda = x.torneo.ronda || 0;
     ctx.font = "800 84px " + letra;
     ctx.fillText(ronda && x.j._puestoGrupo ? tx.imgPuesto(x.j._puestoGrupo, x.j._deGrupo) : tx.imgInicial(x.j.no), cx + 50, cy + 110);
     ctx.font = "600 42px " + letra;
-    ctx.fillText(ronda ? tx.imgPuntos(x.j.puntos || "0", ronda) : tx.imgAntes, cx + 50, cy + 180);
+    ctx.fillText(ronda ? (x.torneo.terminado ? tx.imgFinal(x.j.puntos || "0", ronda) : tx.imgPuntos(x.j.puntos || "0", ronda)) : tx.imgAntes, cx + 50, cy + 180);
     y = cy + ch + 70;
     // La última ronda (o la de hoy, si todavía no tiene resultado).
     const rondas = V.rondasDe(x);
@@ -360,10 +418,10 @@
       ctx.fillStyle = "#1f2937"; ctx.font = "500 38px " + letra;
       renglones(ctx, tx.imgRonda(ultima.ronda, q.que, q.rival), 960, 3).forEach((l) => { ctx.fillText(l, 60, y); y += 50; });
     }
-    // Abajo: la dirección y la bandera.
-    ctx.fillStyle = "#40478f"; ctx.font = "700 32px " + letra;
+    // Abajo: la dirección y las franjas (la bandera, en el Centroamericano).
+    ctx.fillStyle = CARA.acento; ctx.font = "700 32px " + letra;
     ctx.fillText(URL_PAGINA, 60, 1010);
-    [["#1e4c8a", 1040], ["#ffffff", 1050], ["#ce1328", 1058], ["#ffffff", 1066], ["#1e4c8a", 1072]].forEach(([color, yy], i, arr) => {
+    CARA.franjas.forEach(([color, yy], i, arr) => {
       ctx.fillStyle = color; ctx.fillRect(0, yy, 1080, (arr[i + 1] ? arr[i + 1][1] : 1080) - yy);
     });
     if (window.TablaImagen && window.TablaImagen.marcar) await window.TablaImagen.marcar(c);
@@ -375,9 +433,9 @@
     if (boton) boton.disabled = true;
     try {
       const blob = await imagenJugador(x);
-      const nombre = "centroamericano-2026-" + V.plano(x.j.nombre).replace(/ /g, "-") + ".png";
+      const nombre = CARA.archivo + "-" + V.plano(x.j.nombre).replace(/ /g, "-") + ".png";
       const archivo = new File([blob], nombre, { type: "image/png" });
-      const texto = tx.compartirTexto(x.j.nombre) + " https://" + URL_PAGINA;
+      const texto = (CONFIG.compartirTexto ? CONFIG.compartirTexto(x.j.nombre) : tx.compartirTexto(x.j.nombre)) + " https://" + URL_PAGINA;
       if (navigator.canShare && navigator.canShare({ files: [archivo] })) {
         try { await navigator.share({ files: [archivo], text: texto }); } catch (e) { if (e && e.name !== "AbortError") throw e; }
         return;

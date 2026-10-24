@@ -8803,3 +8803,73 @@ otra pestaña lleve `rel="noopener"`, que el calendario tenga las nueve rondas y
 que ningún teléfono aparezca sin estar en la lista de los confirmados, que cada
 enlace de la ventana esté permitido en `frame-src` y, en el navegador, que la
 ventana se abra encima sin cambiar de página y devuelva el foco al cerrar.
+
+## La página del Desafío Mentes Maestras
+
+`cenfotec-2026.html` es, para el Desafío Mentes Maestras CENFOTEC 2026, lo
+mismo que la del Centroamericano (lo pidió el dueño: «dentro de la ficha,
+todo igual que en el festival»), con la cara de la Universidad CENFOTEC y
+con lo que sirve **después** del torneo, que ya se jugó (domingo 27 de
+setiembre de 2026, 7 rondas, 34 jugadores, chess-results tnr1503400): el
+podio, «Busca a tu jugador» con sus rondas y su rendimiento, «Mis
+jugadores», la clasificación final, el podio, la clasificación para
+proyectar y la imagen para compartir. Lo que solo sirve antes o durante
+(bases, bye, hoteles, calendario, avisos al celular, «Hoy en el torneo») no
+va: la página preguntó para qué era y el dueño eligió «Resultados del 2026».
+
+- **Una sola copia de cada pieza**: la página carga `css/centroamericano.css`
+  (el `body` lleva `cac cft`) y `css/cenfotec.css` le cambia las variables
+  (`--cac-morado` pasa al azul #233065, el «rojo» de las bases a #0A6AA8,
+  que aguanta letra blanca; el celeste #23ACF4 no) y lo que esa hoja tiene
+  con un color fijo (la bandera de las fichas, los lavandas del modo
+  oscuro). El buscador, el podio, la clasificación, el proyector y la imagen
+  son `js/centroamericano-vivo.js` y `js/centroamericano-tablas.js`, que leen
+  `window.TorneoPagina` (de `js/cenfotec.js`, que carga antes): la sala de
+  Torneos (`cenfotec`), el prefijo de lo guardado en el aparato (`cft_`), el
+  nombre, la dirección y la cara de la imagen (la banda azul con el logo
+  ancho, no el pizote redondo). Sin `TorneoPagina`, los módulos son los del
+  Centroamericano, igual que antes.
+- **Los resultados vienen de la misma función, `sala-jugadores`**: para eso
+  la sala `cenfotec` de `salas_torneo` lleva entre sus enlaces el de
+  chess-results (se agregó «Resultados en chess-results»; la función solo
+  lee los torneos que la sala enlaza). Ningún cambio en la función.
+- **El torneo terminado**: con el torneo cerrado, chess-results titula
+  «Clasificación final», sin número, y la función devuelve `ronda: 0`; su
+  página de pareo trae la última ronda con el rival sin número. Sin
+  arreglarlo, la página decía «Número inicial» en vez del puesto y «No
+  aparece en el pareo». `normalizar()` (en `js/centroamericano-vivo.js`)
+  deduce la ronda del cuadro cruzado (las casillas de «r»), marca el torneo
+  `terminado` y no usa ese pareo. La tarjeta dice «El torneo terminó, a 7
+  rondas» —no «jugó sus 7 rondas»: siete de los 34 no se presentaron a
+  ninguna («-0» en todas) y sus rondas dicen «no jugó»—, la clasificación
+  dice «Clasificación final» y el proyector pasa la clasificación de a 12 en
+  vez del pareo. Le sirve también al Centroamericano cuando termine (el 8 de
+  noviembre su chess-results va a decir lo mismo).
+- **Un torneo sin categorías ni países**: el «Gr» viene vacío, así que el
+  selector de categoría de la clasificación se esconde solo y el puesto se
+  dice «Puesto 1 de 34», sin «en» una categoría; los 34 son de Costa Rica, así
+  que el podio no lleva la tabla de medallas por federación (`soloPodio`) ni
+  la página «Mi delegación» ni la tabla por país.
+- **Los datos del torneo salen de su ficha de chess-results** (fecha, sala,
+  ritmo, rondas, quién dirige y quién arbitra, con el nombre tal cual lo
+  escribe chess-results). **El contacto es solo el correo**
+  `ajedrez@ucenfotec.ac.cr`, el que publica la universidad en
+  `ucenfotec.ac.cr/ajedrez`: no hay un teléfono confirmado para este torneo y
+  no se pone uno que no sea.
+- **Las normas de `ucenfotec.ac.cr/ajedrez` no son de este torneo**: esa
+  página (la que pasó el dueño) es del Torneo FedeU-CENFOTEC del 23 de mayo de
+  2026, otro torneo, con sus normas específicas y su planilla. Por eso la
+  página no lleva una ficha de «Bases»: enlaza esa página como «El ajedrez en
+  CENFOTEC», que es lo que es. Si la organización pasa las bases del Desafío,
+  van en una ficha como la del Centroamericano.
+- **La ficha de Torneos** (`torneos-en-vivo.html`) ya tenía la cara de
+  CENFOTEC («La ficha del Desafío Mentes Maestras», arriba); su enlace a
+  esta página se agrega en `admin.html#torneos` como el primero de la sala.
+
+`herramientas/verificar-cenfotec.js` lo revisa con un doble de la función que
+contesta como chess-results con el torneo terminado (ronda 0 y el pareo
+raro): la cara (el azul, la píldora celeste con letra oscura, la línea de las
+fichas), el podio, la tarjeta («El torneo terminó», nunca «pareo»), quien no se
+presentó, la clasificación final sin selector, el podio sin medallas, el
+proyector con la clasificación, la imagen con la banda azul y el logo, y que
+en el celular no haya scroll de costado.
