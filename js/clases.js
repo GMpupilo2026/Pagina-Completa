@@ -4200,6 +4200,14 @@
             isTeacher = profile.role === "profesor" || profile.is_admin === true;
             if (isTeacher) {
                 boardOwnerId = profile.id;
+                /* Encender o apagar las bromas de su clase en vivo desde acá.
+                   Solo quien da clase: quien administra no da clase, y con
+                   «Ver como» el panel es de otra persona. */
+                const cajaBromas = document.getElementById("bromas-clase-caja");
+                if (cajaBromas && window.ClaseBromas && profile.role === "profesor" && !profile._persona) {
+                    cajaBromas.hidden = false;
+                    ClaseBromas.montar({ sb, profe: profile.id, yo: profile.id, esProfe: true, caja: cajaBromas });
+                }
             } else if (profile._persona) {
                 /* El panel de un estudiante, mirado por quien administra: nada
                    de entrar a su clase (mis_clases() contestaría con las de

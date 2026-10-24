@@ -4726,7 +4726,8 @@ se borra.
 Desde el 24/10/2026 las bromas entre compañeros llegan también a la clase en
 vivo (antes, nunca): vienen apagadas, el profe las enciende con «🎭 Bromas
 apagadas · Encender» al final de «Alumnos conectados» (`js/clase-bromas.js`,
-tres horas o hasta que las apague), y cada alumno tiene entonces «Mandar una
+tres horas o hasta que las apague; también desde su panel, en la tarjeta
+de la clase), y cada alumno tiene entonces «Mandar una
 broma». Le cae al compañero cuando tiene abierta una actividad (pregunta,
 calentamiento, competencia, cuestionario, práctica, Formación, tiempo para
 pensar). El detalle, en «Dónde cae una broma y la clase en vivo» de

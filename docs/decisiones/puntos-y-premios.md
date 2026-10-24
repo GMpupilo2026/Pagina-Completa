@@ -395,7 +395,13 @@ cueste concentrarse. Y de paso: al menos 10 por día y todo más caro. Lo hace
   conectados»; no en la barra «Tu material», que tiene sus botones contados
   en `verificar-sesion-orden.js`): `bromas_en_esta_clase()` escribe
   `bromas_clase.hasta`, tres horas, o la hora de ahora para apagarlas. Se
-  apagan solas a su hora. Lo lee la página de quien recibe, por la RLS de
+  apagan solas a su hora. **También desde su panel** (`clases.html`, al pie
+  de la tarjeta de la clase: «🎭 Bromas en tu clase en vivo»), sin entrar a
+  la clase: el mismo `ClaseBromas.montar()` con la caja donde va el botón, que
+  además avisa por el canal de la clase para que quien está adentro se entere
+  ya. Solo para quien da clase (`role = 'profesor'`, y no con «Ver como»):
+  quien administra no da clase. Lo revisa `verificar-panel.js`
+  (`pruebaBromasDeLaClase`). Lo lee la página de quien recibe, por la RLS de
   `bromas_clase` (sus profes): saltarse ese candado desde la consola solo le
   hace la broma a uno mismo. Lo que de verdad protege a los demás sigue en
   la base: `bromas_en_mi_clase` (el apagado de siempre, para todos sus
