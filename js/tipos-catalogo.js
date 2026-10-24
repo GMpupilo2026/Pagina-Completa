@@ -256,6 +256,79 @@
         { n: 2, titulo: "Más de un peón", desc: "Te faltan dos puntos de material o más: hay que buscar los recursos. 12 jugadas.", jugadas: 12 },
       ],
     },
+    {
+      id: "casillas", emoji: "📍", nombre: "Mapa de casillas",
+      pregunta: "¿Qué casillas controla?",
+      entrena: "Ver el tablero como lo ven los jugadores fuertes: no solo dónde están las piezas, sino qué casillas dominan. De ahí salen los planes, las casillas de entrada y los mates.",
+      como: "Marca todas las casillas que se piden, tocándolas en el tablero o escribiéndolas («e4 f5 g6»). No se mueve nada. Una casilla atacada cuenta aunque haya una pieza encima: si es del rival, se la podría comer; si es propia, está defendida.",
+      clase: "Pon la posición y pide que cada alumno diga una casilla, hasta que no quede ninguna. Tú tienes la lista completa en «Respuesta».",
+      niveles: [
+        { n: 1, titulo: "Una pieza", desc: "Todas las casillas que ataca la pieza marcada." },
+        { n: 2, titulo: "Alrededor del rey", desc: "Las casillas vecinas del rey rival que atacan tus piezas: por donde ya no puede escapar." },
+        { n: 3, titulo: "La pieza del rival", desc: "Todas las casillas que ataca una pieza del rival: lo que tienes que vigilar." },
+        { n: 4, titulo: "Casillas seguras", desc: "Las casillas a las que tu pieza puede ir sin que el rival las ataque." },
+      ],
+    },
+    {
+      id: "alcanza", emoji: "🏃", nombre: "¿Alcanza el rey?",
+      pregunta: "Final de peones: ¿quién gana? Decide antes de que se acabe el reloj.",
+      entrena: "Juzgar un final de peones de un vistazo: la regla del cuadrado, la carrera de peones, la oposición y la ruptura. En una partida no hay tiempo para calcularlo todo.",
+      como: "Solo reyes y peones, de partidas reales. Elige: ganan las blancas, tablas o ganan las negras. Una sola oportunidad y un reloj; si contestas bien en la mitad del tiempo, tres estrellas. El resultado lo comprobó el motor analizando a fondo. En Modo Adaptado tienes el triple de tiempo.",
+      clase: "Pon la posición y cuenta los segundos en voz alta: que cada alumno levante la mano con su veredicto. Después juéguenla en el tablero para ver por qué.",
+      niveles: [
+        { n: 1, titulo: "Un peón que corre", desc: "Solo un bando tiene peón pasado: ¿lo alcanza el rey? 30 segundos.", segundos: 30 },
+        { n: 2, titulo: "Carrera", desc: "Los dos bandos tienen peón pasado: ¿quién corona primero, y sirve? 30 segundos.", segundos: 30 },
+        { n: 3, titulo: "Sin pasados", desc: "Todavía nadie tiene peón pasado: deciden la oposición y la ruptura. 40 segundos.", segundos: 40 },
+      ],
+    },
+    {
+      id: "liquidar", emoji: "🔀", nombre: "¿Cambio y paso al final de peones?",
+      pregunta: "Si cambias todo, ¿el final de peones se gana?",
+      entrena: "La decisión que más cuesta en los finales: cambiar las últimas piezas. Un final de peones no perdona, y antes de entrar hay que saber cómo termina.",
+      como: "Ves una posición de partida real y la cadena de cambios que deja solo reyes y peones. Di cómo es ese final para el bando que mueve: se gana, son tablas o se pierde. Lo comprobó el motor analizando el final a fondo, y la explicación dice qué pasaba si no cambiabas.",
+      clase: "Pon la posición, juega los cambios en el tablero y que voten: ¿se gana, son tablas o se pierde? Después muestren la línea del motor.",
+      niveles: [
+        { n: 1, titulo: "Con peones de más", desc: "Después de los cambios te quedan más peones que al rival. ¿Alcanza?" },
+        { n: 2, titulo: "Con peones de menos", desc: "Te quedan menos peones: ¿se salva, o hasta se gana?" },
+        { n: 3, titulo: "Peones iguales", desc: "Los dos quedan con los mismos peones: lo decide dónde están los reyes y los peones." },
+      ],
+    },
+    {
+      id: "intermedia", emoji: "⏸️", nombre: "La intermedia",
+      pregunta: "Lo natural es recuperar el material. ¿Hay algo mejor antes?",
+      entrena: "No recapturar en automático: antes de recuperar lo que se perdió, mirar si hay un jaque o una amenaza que gane más. La jugada intermedia sorprende incluso a jugadores fuertes.",
+      como: "El tablero te muestra la captura natural, la que recupera material. Pero hay una jugada mejor ANTES (comprobado con el motor: la segunda mejor queda un peón y medio o más atrás). Encuéntrala y juégala. Si recapturas, ves por qué no era lo mejor.",
+      clase: "Pon la posición y pregunta primero «¿qué recapturan?». Después, con «Preguntar», cada alumno busca la jugada intermedia en su tablero.",
+      niveles: [
+        { n: 1, titulo: "Primeros pasos", desc: "Ejercicios de partidas reales hasta 1500 de rating." },
+        { n: 2, titulo: "Más escondida", desc: "De 1500 a 1900: la intermedia ya no siempre es jaque." },
+        { n: 3, titulo: "De maestro", desc: "Más de 1900: líneas largas." },
+      ],
+    },
+    {
+      id: "sobrecargado", emoji: "🏋️", nombre: "El defensor sobrecargado",
+      pregunta: "¿Qué pieza rival cuida dos cosas a la vez?",
+      entrena: "Encontrar el punto débil de la defensa: una pieza que cuida dos casillas no puede cumplir con las dos. Primero se ve quién está sobrecargado; después se cobra.",
+      como: "Dos pasos. Primero toca (o escribe) la pieza rival que está cuidando dos cosas. Después juega la jugada que la obliga a elegir: si la toma, deja sin cuidar la otra. Se comprueba con la línea de la partida y con el motor.",
+      clase: "Pon la posición y pregunta: «¿qué pieza rival está haciendo dos trabajos?». Cuando la encuentren, con «Preguntar» buscan la jugada que la sobrecarga.",
+      niveles: [
+        { n: 1, titulo: "Cuida una pieza", desc: "El defensor cuida una pieza que se cae." },
+        { n: 2, titulo: "Cuida el mate", desc: "El defensor cuida la casilla del mate." },
+        { n: 3, titulo: "Más difícil", desc: "Ejercicios de partidas reales de más de 1800 de rating." },
+      ],
+    },
+    {
+      id: "peor-pieza", emoji: "🐌", nombre: "La peor pieza",
+      pregunta: "Sin táctica a la vista: ¿qué pieza mejorarías?",
+      entrena: "El consejo más útil cuando no hay nada que hacer: buscar la pieza peor puesta y llevarla a un lugar mejor. Es pensar en planes, no en golpes.",
+      como: "Una posición tranquila, de partida real o de una línea de apertura. Primero elige la pieza que conviene mover: el motor analizó la mejor jugada de cada una, y esta le saca medio peón o más a todas las demás. Después muévela: vale cualquier jugada suya casi tan buena como la mejor.",
+      clase: "Pon la posición y pregunta qué pieza está peor. Que cada alumno defienda la suya; después muestra lo que dice el motor de cada pieza.",
+      niveles: [
+        { n: 1, titulo: "Pocas piezas", desc: "Tres piezas o menos para elegir (sin contar rey ni peones)." },
+        { n: 2, titulo: "Medio juego", desc: "Cuatro o cinco piezas para elegir." },
+        { n: 3, titulo: "Tablero lleno", desc: "Seis piezas o más: hay que mirarlas todas." },
+      ],
+    },
   ];
 
   function tipo(id) { return TIPOS.find((t) => t.id === id) || null; }

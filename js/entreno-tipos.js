@@ -1,5 +1,6 @@
 /* El código de entreno/tipos.html: la ficha de los Tipos de entrenamiento y
- * los siete primeros juegos (los otros siete, en js/entreno-tipos-mas.js).
+ * los siete primeros juegos (del 8 al 19, en js/entreno-tipos-mas.js; del 20
+ * al 25, en js/entreno-tipos-20.js).
  *
  * Qué es cada tipo y sus niveles: js/tipos-catalogo.js. Las reglas (qué es
  * posible, cómo se corrige, cómo se defiende el rey): js/tipos-reglas.js. Las
@@ -1534,7 +1535,7 @@
   // Para los verificadores: qué posición está pintada ahora.
   window.TiposEntreno = { datos: () => DATOS, fen: () => tab.fen };
   /* Las piezas de la página que usan los juegos de js/entreno-tipos-mas.js
-     (tipos 8 a 14): el mismo tablero, los mismos avisos, las mismas estrellas. */
+     y js/entreno-tipos-20.js (tipos 8 a 25): el mismo tablero, los mismos avisos, las mismas estrellas. */
   window.TiposUI = {
     JUEGOS, PREPARAR, EXTRA, $, el, boton, estado, explicar, textoEstrellas, terminar,
     tablero, pintar, tab: () => tab, tableroFijo, leerPosicion, adaptado,

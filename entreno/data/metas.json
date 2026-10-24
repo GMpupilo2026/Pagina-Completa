@@ -3076,6 +3076,54 @@
    "actividades": [
     "tipos"
    ]
+  },
+  {
+   "clave": "casillas",
+   "label": "Mapa de casillas",
+   "total": 120,
+   "actividades": [
+    "tipos"
+   ]
+  },
+  {
+   "clave": "alcanza",
+   "label": "¿Alcanza el rey?",
+   "total": 90,
+   "actividades": [
+    "tipos"
+   ]
+  },
+  {
+   "clave": "liquidar",
+   "label": "¿Cambio y paso al final de peones?",
+   "total": 73,
+   "actividades": [
+    "tipos"
+   ]
+  },
+  {
+   "clave": "intermedia",
+   "label": "La intermedia",
+   "total": 107,
+   "actividades": [
+    "tipos"
+   ]
+  },
+  {
+   "clave": "sobrecargado",
+   "label": "El defensor sobrecargado",
+   "total": 90,
+   "actividades": [
+    "tipos"
+   ]
+  },
+  {
+   "clave": "peor-pieza",
+   "label": "La peor pieza",
+   "total": 71,
+   "actividades": [
+    "tipos"
+   ]
   }
  ]
 }

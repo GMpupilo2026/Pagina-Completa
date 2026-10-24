@@ -26,6 +26,7 @@
  *
  *   node herramientas/tipos-generar.js
  *   node herramientas/tipos-generar.js --solo construye   (sin motor: solo Constrúyela tú)
+ *   node herramientas/tipos-generar.js --solo nuevos      (los tipos 20 a 25; o uno: --solo intermedia)
  *
  * El análisis del motor se guarda en herramientas/.cache-tipos.json (fuera del
  * repositorio) para no repetirlo. entreno/data/tipos.json NO se edita a mano.
@@ -1369,8 +1370,509 @@ async function generarTablas() {
   return out;
 }
 
+/* =====================================================================
+ * 20 a 25: Mapa de casillas, ¿Alcanza el rey?, ¿Cambio y paso al final de
+ * peones?, La intermedia, El defensor sobrecargado y La peor pieza. Las
+ * reglas que deciden la respuesta son las de js/tipos-reglas-20.js.
+ * ===================================================================== */
+const N = require("../js/tipos-reglas-20.js");
+const POR_NIVEL_NUEVOS = 30;
+const MAYORES = ["n", "b", "r", "q"];
+/* Evaluación en centipeones desde el que mueve; un mate vale ±10 000. */
+const cpDe = (r) => (r.mate !== null && r.mate !== undefined ? (r.mate > 0 ? 10000 : -10000) : r.score);
+const cuantas = (l) => l.reduce((m, x) => { m[x.nivel] = (m[x.nivel] || 0) + 1; return m; }, {});
+/* Toda posición de cada ejercicio y de su línea, con el ejercicio del que salió. */
+function posicionesDeLineas(filtro) {
+  const out = [];
+  for (const pz of PUZZLES) {
+    const g = new Chess(pz.fen);
+    const lista = [{ fen: pz.fen, k: 0 }];
+    for (let k = 0; k < pz.solution.length; k++) { if (!g.move(pz.solution[k])) break; lista.push({ fen: g.fen(), k: k + 1 }); }
+    lista.forEach((x) => { if (!filtro || filtro(x.fen)) out.push({ fen: x.fen, k: x.k, pz }); });
+  }
+  return out;
+}
+
+/* ---------- 20. Mapa de casillas (sin motor) ---------- */
+const NIVELES_CASILLAS = {
+  1: { tipo: "pieza", total: [5, 13] },
+  2: { tipo: "rey", total: [2, 6] },
+  3: { tipo: "rival", total: [5, 13] },
+  4: { tipo: "seguras", total: [2, 8] },
+};
+function generarCasillas(reales) {
+  const out = [], usadas = new Set();
+  for (const n of [1, 2, 3, 4]) {
+    const cfg = NIVELES_CASILLAS[n];
+    let cuenta = 0;
+    for (const { fen, pz } of barajar(reales, "casillas" + n)) {
+      if (cuenta >= POR_NIVEL_NUEVOS) break;
+      if (usadas.has(fen)) continue;
+      const g = new Chess(fen);
+      if (g.in_check() || g.game_over()) continue;
+      const yo = g.turn();
+      const tab = R.tablero(fen);
+      let pide = null, resp = null;
+      if (cfg.tipo === "rey") {
+        resp = N.mapaCasillas(Chess, fen, { tipo: "rey" });
+        if (resp.length >= cfg.total[0] && resp.length <= cfg.total[1]) pide = { tipo: "rey" };
+      } else {
+        const color = cfg.tipo === "rival" ? R.otro(yo) : yo;
+        const piezasC = barajar(tab.map((p, i) => (p && p.c === color && MAYORES.includes(p.t) ? R.sq(i) : null)).filter(Boolean), fen + n);
+        for (const s of piezasC) {
+          const p = { tipo: cfg.tipo, casilla: s };
+          const r = N.mapaCasillas(Chess, fen, p);
+          if (r.length < cfg.total[0] || r.length > cfg.total[1]) continue;
+          if (cfg.tipo === "seguras") {
+            const destinos = new Set(g.moves({ square: s, verbose: true }).map((m) => m.to));
+            if (destinos.size - r.length < 2) continue;            // tiene que haber casillas que descartar
+          }
+          pide = p; resp = r; break;
+        }
+      }
+      if (!pide) continue;
+      usadas.add(fen); cuenta++;
+      const pc = pide.casilla ? tab[R.idx(pide.casilla)] : null;
+      const laPieza = pc ? (["q", "r"].includes(pc.t) ? "la " : "el ") + R.NOMBRE[pc.t] + " de " + pide.casilla : "";
+      const quien = pide.tipo === "rey" ? "rey de las " + COLOR_ES[R.otro(yo)] : R.NOMBRE[pc.t] + " de " + pide.casilla;
+      out.push({
+        id: "cas-" + n + "-" + hash(fen + JSON.stringify(pide)).toString(36), nivel: n, fen, pide, respuestas: resp,
+        resumen: "Juegan las " + COLOR_ES[yo] + " · " + quien + " · " + resp.length + " casillas",
+        respuesta: [
+          ({
+            pieza: "Lo que ataca " + laPieza,
+            rival: "Lo que ataca " + laPieza + " del rival",
+            rey: "Las casillas vecinas del rey de las " + COLOR_ES[R.otro(yo)] + " que atacan las " + COLOR_ES[yo],
+            seguras: "Las casillas seguras para " + laPieza,
+          })[pide.tipo] + ": " + resp.join(", ") + ".",
+        ],
+        partida: pz.game || null,
+      });
+    }
+  }
+  return out;
+}
+
+/* ---------- 21. ¿Alcanza el rey? ----------
+   Finales de solo reyes y peones (4 piezas o más: los de un solo peón son de
+   Rey y peón, con la tabla exacta). Salen de las posiciones de los ejercicios
+   y de su línea, y también de la posición que deja la segunda mejor jugada en
+   esos mismos finales: es la que da las tablas y las derrotas, que en los
+   ejercicios (todos ganan) casi no hay. Una posición por ejercicio, y 1200
+   como mucho: a profundidad 30 eran 8000 y tardaba horas. El resultado lo
+   dice el motor a profundidad 18 y 26, y las dos tienen que coincidir: gana con +4 o más (o
+   mate), tablas con 0,25 o menos. Lo del medio no entra. */
+async function generarAlcanza() {
+  const cand = [], vistas = new Set();
+  const sumar = (fen, pz, origen) => {
+    const k = fen.split(" ").slice(0, 2).join(" ");
+    if (vistas.has(k)) return;
+    const g = new Chess();
+    if (!g.load(fen) || g.in_check() || g.game_over() || !N.soloReyesYPeones(fen) || piezas(fen) < 4) return;
+    vistas.add(k);
+    cand.push({ fen, pz, origen });
+  };
+  // una sola por ejercicio (la primera de su línea que ya es final de peones):
+  // las de una misma línea se parecen, y cada una cuesta un análisis hondo
+  const yaTiene = new Set();
+  posicionesDeLineas(N.soloReyesYPeones).forEach((x) => { if (!yaTiene.has(x.pz.id)) { const antes = cand.length; sumar(x.fen, x.pz, "partida"); if (cand.length > antes) yaTiene.add(x.pz.id); } });
+  const base = cand.slice();
+  await enParalelo(base, async (c) => {
+    const r = await analizar(c.fen, 3, 16);
+    r.slice(1).forEach((x) => {
+      const g = new Chess(c.fen);
+      if (g.move({ from: x.uci.slice(0, 2), to: x.uci.slice(2, 4), promotion: x.uci[4] || undefined })) sumar(g.fen(), c.pz, "otra-jugada");
+    });
+  });
+  const veredicto = (cp) => (cp >= 400 ? "gana" : cp <= -400 ? "pierde" : Math.abs(cp) <= 25 ? "tablas" : null);
+  const lista = barajar(cand, "alcanza").slice(0, 1200);
+  const buenos = (await enParalelo(lista, async (c) => {
+    const turno = c.fen.split(" ")[1];
+    const [a] = await analizar(c.fen, 1, 18);
+    const [b] = await analizar(c.fen, 1, 26);
+    if (!a || !b) return null;
+    const va = veredicto(cpDe(a)), vb = veredicto(cpDe(b));
+    if (!va || va !== vb) return null;
+    const res = vb === "tablas" ? "d" : (vb === "gana") === (turno === "w") ? "w" : "b";
+    return { c, res, b, n: N.nivelAlcanza(c.fen) };
+  })).filter(Boolean);
+  const out = [];
+  for (const n of [1, 2, 3]) {
+    const seg = R_CATALOGO.nivel("alcanza", n).segundos;
+    // un tercio de cada resultado, si alcanza: si no, lo que haya
+    const porRes = { w: [], d: [], b: [] };
+    barajar(buenos.filter((x) => x.n === n), "alc" + n).forEach((x) => porRes[x.res].push(x));
+    const elegidos = [];
+    for (let i = 0; elegidos.length < POR_NIVEL_NUEVOS && i < 200; i++) {
+      for (const k of ["w", "d", "b"]) if (porRes[k][i] && elegidos.length < POR_NIVEL_NUEVOS) elegidos.push(porRes[k][i]);
+    }
+    barajar(elegidos, "orden" + n).forEach((x) => {
+      const turno = x.c.fen.split(" ")[1];
+      const linea = lineaEs(x.c.fen, x.b.pv, 8);
+      const ev = x.b.mate !== null ? (x.b.mate > 0 === (turno === "w") ? "mate a favor de las blancas" : "mate a favor de las negras") : R.numeroBalanza((turno === "w" ? 1 : -1) * x.b.score / 100);
+      const p = N.pasados(x.c.fen);
+      out.push({
+        id: "alc-" + n + "-" + hash(x.c.fen).toString(36), nivel: n, fen: x.c.fen, resultado: x.res, segundos: seg,
+        origen: x.c.origen, eval: x.b.mate !== null ? null : (turno === "w" ? 1 : -1) * x.b.score, pasados: p,
+        rating: x.c.pz.rating || null, partida: x.c.pz.game || null,
+        resumen: "Juegan las " + COLOR_ES[turno] + " · " + R.tablero(x.c.fen).filter((q) => q && q.t === "p").length + " peones",
+        respuesta: [
+          N.RESULTADO[x.res] + " (el motor: " + ev + ", a profundidad 18 y 26).",
+          "Peones pasados: blancas " + (p.w.join(", ") || "ninguno") + "; negras " + (p.b.join(", ") || "ninguno") + ".",
+          "Cómo sigue: " + linea + ".",
+        ],
+      });
+    });
+  }
+  return out;
+}
+
+/* ---------- 22. ¿Cambio y paso al final de peones? ----------
+   En una posición de partida real (con piezas), una cadena de cambios —
+   captura y recaptura, una o dos veces— que deja solo reyes y peones. Cada
+   recaptura del rival es la que elige el motor (profundidad 16): si el rival
+   no recapturaría, no es un cambio. El final que queda se juzga como en
+   ¿Alcanza el rey? (profundidad 18 y 26, que coincidan). El nivel lo ponen
+   los peones del final: quien mueve queda con más (1), con menos (2) o con
+   los mismos (3). Para que la decisión
+   importe: si el final se gana, el cambio no puede ser peor que no cambiar
+   por más de 0,5; si son tablas, sin cambiar había +1,5 o más; si se pierde,
+   sin cambiar se aguantaba (−1 o más). */
+async function generarLiquidar() {
+  const cand = [], vistas = new Set();
+  posicionesDeLineas((fen) => piezas(fen) <= 14 && !N.soloReyesYPeones(fen)).forEach(({ fen, pz }) => {
+    const k = fen.split(" ").slice(0, 2).join(" ");
+    if (vistas.has(k)) return;
+    const g = new Chess();
+    if (!g.load(fen) || g.in_check() || g.game_over()) return;
+    vistas.add(k);
+    // cadenas mecánicas de 2 o 4 capturas que terminan en reyes y peones
+    const cadenas = [];
+    g.moves({ verbose: true }).filter((m) => m.captured).forEach((x) => {
+      g.move(x);
+      g.moves({ verbose: true }).filter((m) => m.captured && m.to === x.to).forEach((r) => {
+        g.move(r);
+        if (N.soloReyesYPeones(g.fen())) cadenas.push([x.san, r.san]);
+        else if (!g.game_over()) g.moves({ verbose: true }).filter((m) => m.captured).forEach((x2) => {
+          g.move(x2);
+          g.moves({ verbose: true }).filter((m) => m.captured && m.to === x2.to).forEach((r2) => {
+            g.move(r2);
+            if (N.soloReyesYPeones(g.fen())) cadenas.push([x.san, r.san, x2.san, r2.san]);
+            g.undo();
+          });
+          g.undo();
+        });
+        g.undo();
+      });
+      g.undo();
+    });
+    if (cadenas.length) cand.push({ fen, pz, cadena: barajar(cadenas, fen)[0] });
+  });
+  const veredicto = (cp) => (cp >= 400 ? "gana" : cp <= -400 ? "pierde" : Math.abs(cp) <= 25 ? "tablas" : null);
+  const ST = {};
+  const st = (k) => { ST[k] = (ST[k] || 0) + 1; return null; };
+  const buenos = (await enParalelo(cand, async (c) => {
+    // las recapturas del rival tienen que ser las que juega el motor
+    const g = new Chess(c.fen);
+    for (let i = 0; i < c.cadena.length; i++) {
+      if (i % 2 === 1) {
+        const [r] = await analizar(g.fen(), 1, 16);
+        if (!r || sanDeUci(g.fen(), r.uci) !== c.cadena[i]) return st("no-recaptura");
+      }
+      g.move(c.cadena[i]);
+    }
+    const fenQ = g.fen();
+    if (g.game_over()) return st("termina");
+    const [a] = await analizar(fenQ, 1, 18);
+    const [b] = await analizar(fenQ, 1, 26);
+    if (!a || !b) return st("sin-motor");
+    const va = veredicto(cpDe(a)), vb = veredicto(cpDe(b));
+    if (!va || va !== vb) return st("dudoso");
+    // qué había sin cambiar: la mejor jugada que no es la primera captura
+    const r = await analizar(c.fen, 4, 18);
+    const primera = new Chess(c.fen).move(c.cadena[0]);
+    const sin = r.find((x) => x.uci !== primera.from + primera.to + (primera.promotion || ""));
+    const con = r.find((x) => x.uci === primera.from + primera.to + (primera.promotion || ""));
+    if (!sin) return st("sin-alternativa");
+    const vSin = cpDe(sin);
+    if (vb === "gana" && con && cpDe(con) < cpDe(r[0]) - 50 && r[0] !== con) return st("cambiar-no-es-bueno");
+    if (vb === "gana" && !con && vSin > 400) return st("cambiar-no-es-bueno");
+    if (vb === "tablas" && vSin < 150) return st("tablas-sin-alternativa");
+    if (vb === "pierde" && vSin < -100) return st("pierde-igual");
+    const peones = (fen, c2) => R.tablero(fen).filter((p) => p && p.t === "p" && p.c === c2).length;
+    const yo = c.fen.split(" ")[1];
+    const dif = (peones(fenQ, yo) - peones(fenQ, R.otro(yo)));
+    const n = dif > 0 ? 1 : dif < 0 ? 2 : 3;
+    return { c, fenQ, vb, b, sin, vSin, n, yo };
+  })).filter(Boolean);
+  console.log("  liquidar: " + cand.length + " candidatas; descartes " + JSON.stringify(ST));
+  const out = [];
+  for (const n of [1, 2, 3]) {
+    const porRes = { gana: [], tablas: [], pierde: [] };
+    barajar(buenos.filter((x) => x.n === n), "liq" + n).forEach((x) => porRes[x.vb].push(x));
+    const elegidos = [];
+    for (let i = 0; elegidos.length < POR_NIVEL_NUEVOS && i < 200; i++) {
+      for (const k of ["gana", "tablas", "pierde"]) if (porRes[k][i] && elegidos.length < POR_NIVEL_NUEVOS) elegidos.push(porRes[k][i]);
+    }
+    barajar(elegidos, "orden-liq" + n).forEach((x) => {
+      const cadenaEs = lineaEs(x.c.fen, (() => { const g = new Chess(x.c.fen); return x.c.cadena.map((s) => { const m = g.move(s); return m.from + m.to + (m.promotion || ""); }); })(), 4);
+      const evQ = x.b.mate !== null ? (x.b.mate > 0 ? "mate a favor" : "mate en contra") : R.numeroBalanza(x.b.score / 100);
+      const evSin = x.sin.mate !== null ? (x.sin.mate > 0 ? "mate a favor" : "mate en contra") : R.numeroBalanza(x.sin.score / 100);
+      out.push({
+        id: "liq-" + n + "-" + hash(x.c.fen + x.c.cadena.join()).toString(36), nivel: n, fen: x.c.fen, cadena: x.c.cadena, cadenaEs,
+        fenFinal: x.fenQ, veredicto: x.vb, eval: x.b.mate !== null ? null : x.b.score, evalSin: x.sin.mate !== null ? null : x.sin.score,
+        sinCambiar: R.sanEs(sanDeUci(x.c.fen, x.sin.uci)),
+        rating: x.c.pz.rating || null, partida: x.c.pz.game || null,
+        resumen: "Juegan las " + COLOR_ES[x.yo] + " · " + cadenaEs,
+        respuesta: [
+          N.VEREDICTO[x.vb] + " para las " + COLOR_ES[x.yo] + " (el motor, en el final: " + evQ + " a profundidad 18 y 26).",
+          "Cómo sigue el final: " + lineaEs(x.fenQ, x.b.pv, 8) + ".",
+          "Sin cambiar, lo mejor era " + R.sanEs(sanDeUci(x.c.fen, x.sin.uci)) + " (" + evSin + ")." + (x.vb === "gana" ? "" : " Cambiar le regala eso al rival."),
+        ],
+      });
+    });
+  }
+  return out;
+}
+
+/* ---------- 23. La intermedia ----------
+   Los ejercicios de Lichess con el tema «intermezzo». Entra si el motor
+   (profundidad 18) da como mejor la jugada del ejercicio, que gana (mate o
+   +2), y la segunda queda 1,5 peones o más atrás; y si hay una captura
+   «natural» (la mejor captura para el motor, después de la buena) que queda
+   1,5 o más atrás de la buena. Recapturar suele perder de verdad (es lo que
+   enseña el ejercicio), pero no más de 4: eso no tienta a nadie. Lo que pasa con cada otra
+   jugada legal (profundidad 12) va en `refuta`, como en Aguanta. */
+async function generarIntermedia() {
+  const pool = PUZZLES.filter((pz) => (pz.themes || []).includes("intermezzo") && typeof pz.rating === "number");
+  const ST = {};
+  const st = (k) => { ST[k] = (ST[k] || 0) + 1; return null; };
+  const buenos = (await enParalelo(pool, async (pz) => {
+    const g = new Chess(pz.fen);
+    if (g.in_check() || g.game_over()) return st("jaque");
+    const buena = new Chess(pz.fen).move(pz.solution[0]);
+    if (!buena) return st("ilegal");
+    const hondo = await analizar(pz.fen, 2, 18);
+    if (hondo.length < 2 || sanDeUci(pz.fen, hondo[0].uci) !== buena.san) return st("no-es-la-mejor");
+    const vb = cpDe(hondo[0]), v2 = cpDe(hondo[1]);
+    if (!(vb >= 200)) return st("no-gana");
+    if (v2 > vb - 150 || (hondo[1].mate !== null && hondo[1].mate > 0)) return st("no-es-unica");
+    const todas = await analizar(pz.fen, Math.min(60, g.moves().length), 12);
+    // lo natural: la captura que el motor ve mejor, después de la buena
+    const capturas = new Map(g.moves({ verbose: true }).filter((m) => m.captured && m.san !== buena.san).map((m) => [m.from + m.to + (m.promotion || ""), m]));
+    const primera = todas.find((x) => capturas.has(x.uci));
+    if (!primera) return st("sin-natural");
+    const nat = capturas.get(primera.uci);
+    const [cn] = await analizar(pz.fen, 1, 18, [primera.uci]);
+    if (!cn) return st("sin-natural");
+    const vn = cpDe(cn);
+    if (vn < -400) return st("natural-absurda");
+    if (vn > vb - 150) return st("natural-casi-igual");
+    const refuta = {};
+    todas.forEach((x) => {
+      const san = sanDeUci(pz.fen, x.uci);
+      if (san === buena.san) return;
+      const h = new Chess(pz.fen); h.move(san);
+      const r = x.pv[1] ? sanDeUci(h.fen(), x.pv[1]) : null;
+      refuta[san] = { r: r ? R.sanEs(r) : null, e: x.mate === null ? x.score : null, m: x.mate !== null ? -x.mate : null };
+    });
+    refuta[nat.san] = { r: cn.pv[1] ? R.sanEs(sanDeUci((() => { const h = new Chess(pz.fen); h.move(nat.san); return h.fen(); })(), cn.pv[1])) : null, e: cn.mate === null ? cn.score : null, m: cn.mate !== null ? -cn.mate : null };
+    const n = pz.rating < 1500 ? 1 : pz.rating < 1900 ? 2 : 3;
+    const yo = g.turn();
+    const evTxt = (x) => (x.mate !== null ? (x.mate > 0 ? "mate en " + x.mate : "recibe mate en " + (-x.mate)) : R.numeroBalanza(x.score / 100));
+    return {
+      id: "int-" + n + "-" + pz.id, nivel: n, fen: pz.fen, jugada: buena.san, jugadaEs: R.sanEs(buena.san),
+      natural: nat.san, naturalEs: R.sanEs(nat.san), eval: hondo[0].mate === null ? hondo[0].score : null, mate: hondo[0].mate,
+      evalNatural: cn.mate === null ? cn.score : null, refuta, rating: pz.rating, partida: pz.game || null,
+      resumen: "Juegan las " + COLOR_ES[yo] + " · lo natural: " + R.sanEs(nat.san) + " · ELO " + pz.rating,
+      respuesta: [
+        "La intermedia: " + R.sanEs(buena.san) + " (" + evTxt(hondo[0]) + " para las " + COLOR_ES[yo] + ").",
+        "La línea: " + lineaEs(pz.fen, hondo[0].pv, 5) + ".",
+        "Recapturar en seguida, " + R.sanEs(nat.san) + ", deja " + evTxt(cn) + ": " + lineaEs(pz.fen, cn.pv, 3) + ".",
+      ],
+    };
+  })).filter(Boolean);
+  console.log("  intermedia: " + pool.length + " candidatas; descartes " + JSON.stringify(ST));
+  return buenos.sort((a, b) => a.nivel - b.nivel || a.rating - b.rating || (a.id < b.id ? -1 : 1));
+}
+
+/* ---------- 24. El defensor sobrecargado ----------
+   Toda línea de ejercicio donde, en el turno del que resuelve, la jugada de
+   la solución es atrapada por un defensor que cuidaba OTRA casilla, y la
+   jugada siguiente entra ahí (N.sobrecargado lo comprueba con la línea).
+   Además el motor (profundidad 18) da esa jugada como la mejor, que gana, y
+   la segunda queda 1,5 peones o más atrás. */
+async function generarSobrecargado() {
+  const cand = [];
+  for (const pz of PUZZLES) {
+    if (typeof pz.rating !== "number") continue;
+    const g = new Chess(pz.fen);
+    for (let k = 0; k + 2 < pz.solution.length; k += 2) {
+      const fen = g.fen();
+      const s = N.sobrecargado(Chess, fen, pz.solution.slice(k, k + 3));
+      if (s && !new Chess(fen).in_check()) { cand.push({ pz, fen, s, linea: pz.solution.slice(k) }); break; }
+      if (!g.move(pz.solution[k]) || !g.move(pz.solution[k + 1])) break;
+    }
+  }
+  const ST = {};
+  const st = (k) => { ST[k] = (ST[k] || 0) + 1; return null; };
+  const buenos = (await enParalelo(cand, async (c) => {
+    const hondo = await analizar(c.fen, 2, 18);
+    if (hondo.length < 2 || sanDeUci(c.fen, hondo[0].uci) !== c.linea[0]) return st("no-es-la-mejor");
+    const vb = cpDe(hondo[0]), v2 = cpDe(hondo[1]);
+    if (!(vb >= 200)) return st("no-gana");
+    if (v2 > vb - 150 || (hondo[1].mate !== null && hondo[1].mate > 0)) return st("no-es-unica");
+    const n = c.pz.rating >= 1800 ? 3 : (c.s.mate || c.pz.mate) ? 2 : 1;
+    const yo = c.fen.split(" ")[1];
+    const pc = c.s.pieza;
+    const nombre = R.NOMBRE[pc[1]] + " de " + c.s.defensor;
+    const art = ["q", "r"].includes(pc[1]) ? "La " : "El ";
+    return {
+      id: "sob-" + n + "-" + c.pz.id, nivel: n, fen: c.fen, defensor: c.s.defensor, cuida: c.s.cuida,
+      jugada: c.linea[0], jugadaEs: R.sanEs(c.linea[0]), linea: c.linea.slice(0, 3), mate: c.s.mate || !!c.pz.mate,
+      eval: hondo[0].mate === null ? hondo[0].score : null, mateEn: hondo[0].mate, rating: c.pz.rating, partida: c.pz.game || null,
+      resumen: "Juegan las " + COLOR_ES[yo] + " · ELO " + c.pz.rating,
+      respuesta: [
+        art + nombre + " está sobrecargad" + (art === "La " ? "a" : "o") + ": cuida " + c.s.cuida[0] + " y " + c.s.cuida[1] + ".",
+        "La jugada que lo obliga a elegir: " + R.sanEs(c.linea[0]) + ".",
+        "La línea: " + lineaEs(c.fen, (() => { const g = new Chess(c.fen); return c.linea.map((s) => { const m = g.move(s); return m ? m.from + m.to + (m.promotion || "") : ""; }).filter(Boolean); })(), 6) + ".",
+      ],
+    };
+  })).filter(Boolean);
+  console.log("  sobrecargado: " + cand.length + " candidatas; descartes " + JSON.stringify(ST));
+  const out = [];
+  for (const n of [1, 2, 3]) out.push(...buenos.filter((x) => x.nivel === n).sort((a, b) => a.rating - b.rating || (a.id < b.id ? -1 : 1)).slice(0, POR_NIVEL_NUEVOS));
+  return out;
+}
+
+/* ---------- 25. La peor pieza ----------
+   Posiciones TRANQUILAS, como en Elige a tiempo: el final de un ejercicio y
+   la mejor respuesta del rival, y las líneas de apertura del sitio desde la
+   jugada 12 (media jugada). Entra si nadie está en jaque, el motor da
+   entre −1,5 y +3 al que mueve, la mejor jugada no es captura ni jaque y la
+   segunda está a menos de 0,6 (no hay un golpe). Después, pieza por pieza
+   (caballos, alfiles, torres y dama), la mejor jugada de cada una analizada
+   sola (profundidad 16, todas sus jugadas): la pieza buena le saca 0,5 o más
+   a la mejor de las demás, y eso se confirma a profundidad 20. */
+async function generarPeorPieza() {
+  const cand = [];
+  for (const pz of PUZZLES) {
+    if (pz.mate) continue;
+    const g = new Chess(pz.fen);
+    let ok = true;
+    for (const s of pz.solution) if (!g.move(s)) { ok = false; break; }
+    if (!ok || g.game_over() || piezas(g.fen()) < 10) continue;
+    cand.push({ pz, fenRival: g.fen() });
+    if (cand.length >= 2500) break;
+  }
+  /* Y las líneas de apertura del sitio (js/aperturas-lineas.js), de la
+     jugada 8 en adelante: posiciones tranquilas y con el tablero lleno, que
+     al final de los ejercicios casi no hay (ahí el que resolvió ya gana). */
+  const APERTURAS = require("../js/aperturas-lineas.js");
+  (APERTURAS.LINEAS || APERTURAS.lineas || APERTURAS).forEach((l) => {
+    if (l.tipo === "celada") return;
+    const g = new Chess();
+    l.jugadas.forEach((j, k) => {
+      if (!g.move(j)) return;
+      if (k + 1 >= 12 && !g.game_over() && !g.in_check()) cand.push({ pz: { id: "ap-" + l.id + "-" + (k + 1), game: null, rating: null }, fen: g.fen(), nombre: l.nombre });
+    });
+  });
+  const vistas = new Set();
+  const ST = {};
+  const st = (k) => { ST[k] = (ST[k] || 0) + 1; return null; };
+  const buenos = (await enParalelo(cand, async ({ pz, fenRival, fen: fenDada, nombre }) => {
+    let g;
+    if (fenDada) g = new Chess(fenDada);
+    else {
+      const [rr] = await analizar(fenRival, 1, 16);
+      if (!rr || rr.mate !== null) return st("mate");
+      g = new Chess(fenRival);
+      const resp = g.move({ from: rr.uci.slice(0, 2), to: rr.uci.slice(2, 4), promotion: rr.uci[4] || undefined });
+      if (!resp || g.game_over() || g.in_check()) return st("jaque");
+    }
+    const fen = g.fen();
+    const k = fen.split(" ").slice(0, 2).join(" ");
+    if (vistas.has(k)) return st("repetida");
+    vistas.add(k);
+    const r = await analizar(fen, 3, 14);
+    if (r.length < 2 || r[0].mate !== null || r[0].score < -150 || r[0].score > 300) return st("fuera");
+    if (r[1].mate !== null || r[1].score < r[0].score - 60) return st("hay-golpe");
+    if (/x|\+/.test(sanDeUci(fen, r[0].uci))) return st("mejor-forzante");
+    const yo = g.turn();
+    const tab = R.tablero(fen);
+    const suyas = tab.map((p, i) => (p && p.c === yo && MAYORES.includes(p.t) ? R.sq(i) : null)).filter(Boolean)
+      .filter((s) => g.moves({ square: s }).length);
+    if (suyas.length < 2) return st("pocas-piezas");
+    const porPieza = {};
+    for (const s of suyas) {
+      const movs = g.moves({ square: s, verbose: true }).map((m) => m.from + m.to + (m.promotion || ""));
+      const a = await analizar(fen, movs.length, 16, movs);
+      if (!a.length) return st("sin-analisis");
+      porPieza[s] = a;
+    }
+    const orden = suyas.slice().sort((a, b) => cpDe(porPieza[b][0]) - cpDe(porPieza[a][0]));
+    const mejor = orden[0], segunda = orden[1];
+    if (porPieza[mejor][0].mate !== null) return st("mate");
+    if (cpDe(porPieza[mejor][0]) - cpDe(porPieza[segunda][0]) < N.PEOR.margen) return st("margen-16");
+    const [c1] = await analizar(fen, 1, 20, [porPieza[mejor][0].uci]);
+    const [c2] = await analizar(fen, 1, 20, g.moves({ square: segunda, verbose: true }).map((m) => m.from + m.to + (m.promotion || "")));
+    if (!c1 || !c2 || cpDe(c1) - cpDe(c2) < N.PEOR.margen) return st("margen-20");
+    if (/x|\+/.test(sanDeUci(fen, porPieza[mejor][0].uci))) return st("mejor-forzante");
+    const top = cpDe(porPieza[mejor][0]);
+    if (top < -150 || top > 300) return st("fuera-16");                     // el rango, con la evaluación que se guarda
+    const buenas = porPieza[mejor].filter((x) => x.mate === null && top - x.score <= N.PEOR.buena).map((x) => sanDeUci(fen, x.uci));
+    const resumenPieza = {};
+    suyas.forEach((s) => { const x = porPieza[s][0]; resumenPieza[s] = { san: sanDeUci(fen, x.uci), eval: x.score }; });
+    const nPiezas = suyas.length;
+    const n = nPiezas <= 3 ? 1 : nPiezas <= 5 ? 2 : 3;
+    return { pz, fen, yo, mejor, buenas, resumenPieza, n, nombre: nombre || null, linea: lineaEs(fen, porPieza[mejor][0].pv, 4) };
+  })).filter(Boolean);
+  console.log("  peor-pieza: " + cand.length + " candidatas; descartes " + JSON.stringify(ST));
+  console.log("  peor-pieza: piezas para elegir " + JSON.stringify(buenos.reduce((m, x) => { const k = Object.keys(x.resumenPieza).length; m[k] = (m[k] || 0) + 1; return m; }, {})));
+  const out = [];
+  for (const n of [1, 2, 3]) {
+    buenos.filter((x) => x.n === n).sort((a, b) => (a.pz.rating || 0) - (b.pz.rating || 0) || (a.pz.id < b.pz.id ? -1 : 1)).slice(0, POR_NIVEL_NUEVOS).forEach((x) => {
+      const t = R.tablero(x.fen);
+      const nombre = (s) => R.NOMBRE[t[R.idx(s)].t] + " de " + s;
+      const otras = Object.keys(x.resumenPieza).filter((s) => s !== x.mejor).sort((a, b) => x.resumenPieza[b].eval - x.resumenPieza[a].eval);
+      const yoSigno = (cp) => R.numeroBalanza(cp / 100);
+      out.push({
+        id: "peo-" + n + "-" + x.pz.id, nivel: n, fen: x.fen, pieza: x.mejor, buenas: x.buenas, porPieza: x.resumenPieza,
+        rating: x.pz.rating || null, partida: x.pz.game || null, apertura: x.nombre,
+        resumen: "Juegan las " + COLOR_ES[x.yo] + " · " + Object.keys(x.resumenPieza).length + " piezas para elegir" + (x.nombre ? " · " + x.nombre : ""),
+        respuesta: [
+          "La pieza que mejorar: " + nombre(x.mejor) + ". Su mejor jugada: " + R.sanEs(x.resumenPieza[x.mejor].san) + " (" + yoSigno(x.resumenPieza[x.mejor].eval) + " para las " + COLOR_ES[x.yo] + "). Valen también: " + (x.buenas.filter((s) => s !== x.resumenPieza[x.mejor].san).map(R.sanEs).join(", ") || "ninguna otra") + ".",
+          "Lo mejor con cada una de las otras: " + otras.map((s) => nombre(s) + ", " + R.sanEs(x.resumenPieza[s].san) + " (" + yoSigno(x.resumenPieza[s].eval) + ")").join("; ") + ".",
+          "Cómo sigue: " + x.linea + ".",
+        ],
+      });
+    });
+  }
+  return out;
+}
+
+const NUEVOS = {
+  casillas: async () => generarCasillas(posicionesReales(3000)),
+  alcanza: generarAlcanza, liquidar: generarLiquidar, intermedia: generarIntermedia,
+  sobrecargado: generarSobrecargado, "peor-pieza": generarPeorPieza,
+};
+
 /* ---------- solo un banco ---------- */
-if (SOLO === "aguanta") {
+if (SOLO === "nuevos" || NUEVOS[SOLO]) {
+  (async () => {
+    const datos = JSON.parse(fs.readFileSync(SALIDA, "utf8"));
+    for (const k of Object.keys(NUEVOS)) {
+      if (SOLO !== "nuevos" && SOLO !== k) continue;
+      console.log(k + "…");
+      datos[k] = await NUEVOS[k]();
+      guardarCache();
+      console.log(k.padEnd(14), JSON.stringify(cuantas(datos[k])));
+    }
+    MOTORES.forEach((m) => m.cerrar());
+    fs.writeFileSync(SALIDA, JSON.stringify(datos) + "\n");
+    process.exit(0);
+  })().catch((e) => { console.error(e); process.exit(1); });
+} else if (SOLO === "aguanta") {
   (async () => {
     const datos = JSON.parse(fs.readFileSync(SALIDA, "utf8"));
     console.log("Aguanta (motor)…");
@@ -1428,7 +1930,7 @@ if (SOLO === "aguanta") {
   console.log("construye     ", JSON.stringify(c));
   process.exit(0);
 } else if (SOLO) {
-  if (SOLO !== "con-lo-justo") { console.error("--solo solo sabe rehacer «con-lo-justo», «construye», «aguanta», «remata», «tiempo» o «tablas»."); process.exit(2); }
+  if (SOLO !== "con-lo-justo") { console.error("--solo solo sabe rehacer «con-lo-justo», «construye», «aguanta», «remata», «tiempo», «tablas», «nuevos» o uno de los tipos 20 a 25 (" + Object.keys(NUEVOS).join(", ") + ")."); process.exit(2); }
   const datos = JSON.parse(fs.readFileSync(SALIDA, "utf8"));
   console.log("Con lo justo (tablas de finales, tarda un par de minutos)…");
   datos["con-lo-justo"] = generarConLoJusto();
@@ -1478,12 +1980,15 @@ if (!SOLO) (async () => {
   const tiempo = await generarTiempo();
   console.log("Salva las tablas…");
   const tablas = await generarTablas();
+  const nuevos = {};
+  for (const k of Object.keys(NUEVOS)) { console.log(k + "…"); nuevos[k] = await NUEVOS[k](); }
   guardarCache();
   MOTORES.forEach((m) => m.cerrar());
   const datos = {
     fuente: "Posiciones de partidas reales de la base abierta de Lichess (CC0) y de js/aperturas-lineas.js; finales sorteados con su distancia exacta al mate. Generado por herramientas/tipos-generar.js: no se edita a mano.",
     detective, amenaza, descarte, diferencias, balanza, fotografia, "con-lo-justo": conLoJusto,
     barrido, intercambios, construye, peones, maestro, apertura, ruta, aguanta, remata, tiempo, tablas,
+    ...nuevos,
   };
   fs.writeFileSync(SALIDA, JSON.stringify(datos) + "\n");
   const cuenta = (l) => l.reduce((m, x) => { m[x.nivel] = (m[x.nivel] || 0) + 1; return m; }, {});

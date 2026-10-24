@@ -87,6 +87,8 @@
     }
     delete $("jugada-form").dataset.propio;
   }
+  // Los tipos 20 a 25 (js/entreno-tipos-20.js) usan las mismas opciones.
+  U.opciones = opciones;
 
   /* ================================================ 8. El Barrido */
   const NOMBRE_CLASE = { jaques: "jaques", capturas: "capturas", amenazas: "amenazas" };
