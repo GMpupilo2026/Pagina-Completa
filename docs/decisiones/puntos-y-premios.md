@@ -606,6 +606,15 @@ base compruebe que cada ejercicio exista de verdad en el tema. Lo hacen
   tenía un tema completo cobra el premio la próxima vez que anote un
   ejercicio de ese tema; si ya no le queda ninguno por hacer, no cobra.
 
+**Comprobado en la base el 24/10/2026**, con alumnos reales dentro de bloques
+que se deshacen solos (un `raise` al final): a uno que tenía 305 de los 306
+de Mate en 1, anotarle un ejercicio inventado no le pagó nada; el de verdad
+le pagó 500 una vez (306 × 1 × 2 = 612, tope 500), y repetir uno no volvió a
+pagar. A otro que ya tenía Las reglas completas de antes, la siguiente
+lección le pagó 10. Al cargar la lista por primera vez había unos 200 temas
+ya completos de antes (22 alumnos con «Ataque al enroque corto», 20 con
+«Cómo mueve cada pieza»…); esos cobran con su próximo ejercicio del tema.
+
 `verificar-premio-temas.js`: que `premio-temas.json` sea lo que hoy dan las
 fuentes, que cada tema tenga los mismos ejercicios que dice `metas.json`, que
 el trigger conozca cada grupo y que cada página siga anotando el id que lee
