@@ -161,6 +161,26 @@ ok("la página carga js/ventana-enlace.js", html.includes('<script src="js/venta
     await p.keyboard.press("Escape");
     await p.waitForFunction(() => !document.querySelector("dialog.ventana-enlace"));
     ok("con Escape se cierra y el foco vuelve a la ficha", await p.evaluate(() => document.activeElement && document.activeElement.dataset.ventana === "Bases del campeonato"));
+
+    // La ficha de afuera, en Torneos, lleva la cara del torneo; las demás salas, la de siempre.
+    const ctx3 = await nav.newContext({ viewport: { width: 1280, height: 900 }, serviceWorkers: "block" });
+    const sala = (clave, nombre) => ({ id: clave, clave, nombre, descripcion: "", emoji: "🏆", tipo: "enlaces", lichess_id: null, enlaces: [{ url: "https://ajedrez-integral.com/" + PAGINA, texto: "Toda la información del torneo" }, { url: "https://s1.chess-results.com/x", texto: "Resultados en vivo" }], pizarras: null, video_url: null, quiniela: false, tema: "cine", visible: true, orden: 0 });
+    await ctx3.route(/supabase\.co\/rest\/v1\/salas_torneo/, (r) => r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify([sala("centroamericano-2026", "XXI Festival"), sala("utn", "Torneo UTN")]) }));
+    const p3 = await ctx3.newPage();
+    await p3.goto(BASE + "/torneos-en-vivo.html", { waitUntil: "load" });
+    await p3.waitForSelector('#salas-lista li[data-sala="utn"]');
+    const fichaSala = await p3.evaluate(() => {
+      const mira = (li) => {
+        const m = li.querySelector(".cac-sala-mascota");
+        const botones = [...li.querySelectorAll("a")].map((a) => getComputedStyle(a).backgroundColor);
+        return { fondo: getComputedStyle(li).backgroundImage, mascota: !!(m && m.checkVisibility() && m.complete && m.naturalWidth > 0 && m.getAttribute("aria-hidden") === "true" && m.alt === ""), botones };
+      };
+      return { cac: mira(document.querySelector('li[data-sala="centroamericano-2026"]')), otra: mira(document.querySelector('li[data-sala="utn"]')) };
+    });
+    ok("en Torneos, la ficha del Centroamericano lleva el morado de las bases y el pizote", /gradient/.test(fichaSala.cac.fondo) && fichaSala.cac.mascota, JSON.stringify(fichaSala.cac));
+    ok("y sus botones: el primero rojo, el resto blancos", JSON.stringify(fichaSala.cac.botones) === JSON.stringify(["rgb(206, 19, 40)", "rgb(255, 255, 255)"]), JSON.stringify(fichaSala.cac.botones));
+    ok("las demás salas siguen con su ficha de siempre", fichaSala.otra.fondo === "none" && !fichaSala.otra.mascota, JSON.stringify(fichaSala.otra));
+    await ctx3.close();
   } finally {
     await nav.close();
   }

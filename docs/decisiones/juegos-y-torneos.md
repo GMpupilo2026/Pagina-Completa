@@ -8546,13 +8546,23 @@ Es una página estática, sin cuenta y sin base: nada se guarda.
   una sola. **Van ordenadas por lo que más se usa**, como pidió el dueño:
   Bases, Pedir un bye, Resultados en vivo, Partidas en vivo y Calendario de
   rondas; después Reglamento, Grupo de WhatsApp, Cómo llegar y, al final,
-  Hoteles oficiales (para cuando ya se está en el torneo, casi no se usa).
+  Hoteles oficiales (para cuando ya se está en el torneo, casi no se usa). Arriba, cada ficha lleva la bandera de Costa Rica
+  (1-1-2-1-1, con sus colores oficiales) y una fila de casillas de tablero; el
+  color de las bases queda en el ícono.
 - **El pie de página no lleva el contacto de Ajedrez Integral**: en esta
   página quien pregunta es un jugador del torneo, y el único contacto que le
   sirve es el de la organización (la despedida del pizote). El pie queda con
-  la marca, los enlaces del campeonato y lo legal. Arriba, cada ficha lleva la bandera de Costa Rica
-  (1-1-2-1-1, con sus colores oficiales) y una fila de casillas de tablero; el
-  color de las bases queda en el ícono.
+  la marca, los enlaces del campeonato y lo legal.
+- **La ficha del Centroamericano en Torneos** (`torneos-en-vivo.html`) lleva
+  la misma cara que la página: el morado de las bases, la bandera arriba, el
+  pizote del trofeo y los botones blancos, el primero en rojo. La sala sigue
+  en `salas_torneo` como cualquier otra (sus textos y enlaces se editan en
+  `admin.html#torneos`); lo que la viste es su clave, `centroamericano-2026`,
+  en `PORTADAS` de `js/salas-torneo.js`, y el estilo va en
+  `css/centroamericano.css` (una sola copia de los colores), que por eso
+  cargan también `torneos-en-vivo.html` y `admin.html` (la vista previa del
+  editor es la misma ficha). Contraste: blanco sobre #5A5FA3 5,83, #40478F
+  sobre blanco 8,35 y blanco sobre el rojo 5,6.
 - **Las bases las sirve el propio sitio**, tal cual las publicó la FCA, en
   `documentos/centroamericano-2026/bases-cac-2026.pdf` (como la normativa de
   los JDE en `documentos/jde/`). Es un documento oficial ajeno: **no lleva la

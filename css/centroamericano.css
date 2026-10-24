@@ -315,3 +315,57 @@ a.cac-despedida:hover .cac-globo { transform: translateY(-2px); }
   .cac-asoma { width: 3.25rem; right: -0.2rem; }
   .cac-con-asoma .cac-accion { padding-right: 2.6rem; }
 }
+
+/* La ficha del Centroamericano en Torneos (torneos-en-vivo.html y la vista
+ * previa de admin.html#torneos): la misma cara de la página, en chico. La
+ * arma js/salas-torneo.js (PORTADAS). Mismos contrastes que arriba: blanco
+ * sobre #5A5FA3 5,83; #40478F sobre blanco 8,35; blanco sobre el rojo 5,6. */
+.cac-sala {
+  position: relative;
+  overflow: hidden;
+  color: #fff;
+  background: linear-gradient(165deg, #40478f 0%, #5a5fa3 100%);
+  padding-top: 2.25rem;
+}
+.cac-sala::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 14px;
+  background: linear-gradient(to bottom,
+    #002b7f 0 16.67%, #fff 16.67% 33.33%, #ce1126 33.33% 66.67%,
+    #fff 66.67% 83.33%, #002b7f 83.33% 100%);
+}
+.cac-sala::after {
+  content: "";
+  position: absolute;
+  top: 14px;
+  left: 0;
+  right: 0;
+  height: 7px;
+  opacity: 0.3;
+  background: repeating-linear-gradient(90deg, #fff 0 7px, transparent 7px 14px);
+}
+.cac-sala h2 { color: #fff; padding-right: 5.5rem; text-shadow: 0 2px 0 rgb(30 36 83 / 0.45); }
+.cac-sala h2 + p { color: #fff; }
+.cac-sala-mascota {
+  position: absolute;
+  top: 1.6rem;
+  right: 0.9rem;
+  width: 5rem;
+  height: auto;
+  pointer-events: none;
+  filter: drop-shadow(0 4px 6px rgb(0 0 0 / 0.25));
+  animation: cac-mecer 3s ease-in-out infinite;
+  transform-origin: 50% 90%;
+}
+.cac-sala a.cac-sala-boton { background: #fff; color: #40478f; font-weight: 700; box-shadow: 0 4px 0 rgb(30 36 83 / 0.35); }
+.cac-sala a.cac-sala-boton:hover { background: #e8e9f8; }
+.cac-sala a.cac-sala-principal { background: #ce1328; color: #fff; }
+.cac-sala a.cac-sala-principal:hover { background: #b0101f; }
+.cac-sala a.cac-sala-boton:focus-visible { outline: 3px solid #fff; outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) {
+  .cac-sala-mascota { animation: none; }
+}
