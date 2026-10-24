@@ -75,8 +75,13 @@
   // (sus colores, su mascota) en vez de la blanca de siempre. El estilo vive
   // en la hoja de la página del torneo, que cargan torneos-en-vivo.html y
   // admin.html. Ver «La ficha del Centroamericano en Torneos».
+  // Cada portada pone su `clase` en la ficha y de ella salen las demás:
+  // `<clase>-imagen`, `<clase>-boton` y `<clase>-principal` (el primer botón).
   const PORTADAS = {
-    "centroamericano-2026": { clase: "cac-sala", mascota: "/img/centroamericano-2026/mascota-trofeo.png" },
+    "centroamericano-2026": { clase: "cac-sala", imagen: "/img/centroamericano-2026/mascota-trofeo.png", ancho: 124, alto: 120 },
+    // El Desafío Mentes Maestras, con el azul y el logo de la Universidad
+    // CENFOTEC (css/cenfotec.css). Ver «La ficha del Desafío Mentes Maestras».
+    "cenfotec": { clase: "cft-sala", imagen: "/img/cenfotec/logo.png", ancho: 566, alto: 256 },
   };
 
   // La ficha, igual en la página pública y en la vista previa del editor (que
@@ -88,11 +93,11 @@
       : "bg-white dark:bg-brand-900 rounded-2xl shadow-md p-6 flex flex-col");
     li.dataset.sala = sala.clave || "";
     if (portada) {
-      const img = el("img", "cac-sala-mascota");
-      img.src = portada.mascota;
+      const img = el("img", portada.clase + "-imagen");
+      img.src = portada.imagen;
       img.alt = "";
-      img.width = 124;
-      img.height = 120;
+      img.width = portada.ancho;
+      img.height = portada.alto;
       img.setAttribute("aria-hidden", "true");
       li.appendChild(img);
     }
@@ -102,16 +107,18 @@
     li.appendChild(el("h2", "font-serif text-xl font-bold text-brand-800 dark:text-white", sala.nombre || "Sin nombre"));
     li.appendChild(el("p", "text-brand-500 dark:text-brand-300 mt-2 mb-5 flex-1", sala.descripcion || ""));
     const enlaces = Array.isArray(sala.enlaces) ? sala.enlaces : [];
+    const boton = (principal) => CLASE_BOTON + (portada ? " " + portada.clase + "-boton" + (principal ? " " + portada.clase + "-principal" : "") : "");
     if (sala.tipo === "lichess") {
-      const a = el("a", CLASE_BOTON, "Entrar a la sala");
+      const a = el("a", boton(true), "Entrar a la sala");
       a.href = "transmision.html?torneo=" + encodeURIComponent(sala.clave || "");
       a.appendChild(el("span", "sr-only", " de " + sala.nombre));
       a.appendChild(document.createTextNode(" →"));
       li.appendChild(a);
-      enlaces.forEach((e) => li.appendChild(enlaceAfuera(e, CLASE_SECUNDARIO, sala.nombre)));
+      // Sobre el fondo de una portada, el enlace subrayado no se lee: va de botón.
+      enlaces.forEach((e) => li.appendChild(enlaceAfuera(e, portada ? boton(false) + " mt-3" : CLASE_SECUNDARIO, sala.nombre)));
     } else {
       const caja = el("div", "grid grid-cols-1 " + (enlaces.length > 1 ? "sm:grid-cols-2 " : "") + "gap-3");
-      enlaces.forEach((e, i) => caja.appendChild(enlaceAfuera(e, CLASE_BOTON + (portada ? " cac-sala-boton" + (i === 0 ? " cac-sala-principal" : "") : ""), sala.nombre)));
+      enlaces.forEach((e, i) => caja.appendChild(enlaceAfuera(e, boton(i === 0), sala.nombre)));
       li.appendChild(caja);
     }
     return li;
