@@ -9015,9 +9015,25 @@ Alajuela, 6 rondas a 15 minutos + 10 segundos.
   la sala» en el celeste con letra oscura; lo revisa
   `verificar-centroamericano.js` (que antes usaba la sala `utn` como ejemplo
   de sala sin portada: ahora usa otra).
-- **Las fichas de las universidades no llevan `fichas`** en `PORTADAS` (la
-  regla de «ningún botón sale del sitio» del Centroamericano): su enlace
-  directo a Lichess no tiene una ficha en su página a la que llevar, y
-  `verificar-salas-torneo.js` cuenta con que se abra aparte. El enlace a su
-  página entra como el del Centroamericano: un enlace de la sala en
-  `admin.html#torneos`, que por ser del sitio se abre en la misma pestaña.
+- **Ningún botón saca a nadie de la página** (lo pidió el dueño: «que se abra
+  por encima la información pero nunca abandonar la página»). En las dos
+  páginas, todo lo de afuera y las otras páginas del sitio se abren encima
+  con `a[data-ventana]` (`js/ventana-enlace.js`): chess-results, la sala de
+  las partidas (`transmision.html`, del propio sitio, en el marco), el video
+  (YouTube con su dirección de `/embed/` en youtube-nocookie.com, que ya está
+  en `frame-src`) y «Más torneos». Solo el encabezado (Inicio, Torneos) y lo
+  legal del pie siguen siendo navegación del sitio. **`ucenfotec.ac.cr` no se
+  deja mostrar dentro de otra página** (`X-Frame-Options: SAMEORIGIN`,
+  comprobado con `pg_net`): encima saldría en blanco. Por eso «El ajedrez en
+  CENFOTEC» abre una ventana propia (`#ajedrez-cenfotec`) con lo que dice su
+  página —el Torneo FedeU-CENFOTEC 2026, copiado tal cual— y su sitio queda
+  como «Ver su página en otra pestaña», dentro de esa ventana: la nuestra
+  sigue abierta debajo.
+- **Las fichas de Torneos de las universidades** siguen la regla del
+  Centroamericano: con `pagina` y `fichas` en `PORTADAS`, chess-results lleva
+  a `#ficha-resultados` (CENFOTEC) o a `#ficha-femenino` / `#ficha-masculino`
+  (UTN), Lichess a `#ficha-partidas` y YouTube a `#ficha-video`, que la página
+  abre encima al entrar; lo que no tiene ficha (las transmisiones de idchess
+  de la UTN), a la página entera. Lo revisan `verificar-salas-torneo.js` y
+  `verificar-paginas-universitarias.js` (ningún enlace del contenido sin
+  `data-ventana`, y `#ficha-partidas` abre la sala encima).
