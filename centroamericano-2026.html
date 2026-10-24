@@ -167,6 +167,9 @@
                 </div>
                 <p class="mt-3 flex flex-wrap gap-x-5 gap-y-2 text-sm font-bold">
                     <a href="#medallero" class="cac-accion underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ce1328]"><span aria-hidden="true">🥇 </span>Ver el medallero →</a>
+                    <a href="#clasificacion" class="cac-accion underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ce1328]"><span aria-hidden="true">📊 </span>Clasificación completa →</a>
+                    <a href="#delegaciones" class="cac-accion underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ce1328]"><span aria-hidden="true">🌎 </span>Tabla por país →</a>
+                    <a href="#proyector" class="cac-accion underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ce1328]"><span aria-hidden="true">📺 </span>Pareo para proyectar →</a>
                 </p>
             </div>
             <ul class="mt-6 sm:mt-8 grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-5">
@@ -393,6 +396,60 @@
         </div>
     </dialog>
 
+    <!-- La clasificación completa de cada categoría, con el rendimiento de cada
+         jugador. La arma js/centroamericano-tablas.js. -->
+    <dialog id="clasificacion" class="ficha-dialogo w-[calc(100%-1rem)] sm:w-[calc(100%-2rem)] max-w-5xl max-h-[90vh] rounded-2xl shadow-2xl p-0 bg-brand-50 dark:bg-brand-950 text-brand-800 dark:text-brand-100 backdrop:bg-black/60" aria-labelledby="clasificacion-titulo">
+        <div class="sticky top-0 z-10 flex items-center gap-3 px-4 sm:px-6 py-3 bg-white dark:bg-brand-900 border-b border-brand-100 dark:border-brand-800">
+            <h2 id="clasificacion-titulo" class="font-serif text-xl md:text-2xl font-bold text-brand-800 dark:text-white flex-1 min-w-0"><span aria-hidden="true">📊 </span>Clasificación completa</h2>
+            <button type="button" data-cerrar class="shrink-0 bg-brand-800 hover:bg-brand-700 text-white font-semibold text-sm px-4 py-2 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2">Cerrar</button>
+        </div>
+        <div class="px-4 sm:px-6 pt-2 pb-6">
+            <p class="text-brand-600 dark:text-brand-300 mt-2">Cada categoría entera, en el orden de chess-results, con los puntos y el rendimiento de cada jugador.</p>
+            <div class="mt-4 grid gap-3 sm:grid-cols-2">
+                <label class="block text-sm font-bold">Categoría
+                    <select id="clasificacion-categoria" class="cac-buscador-campo !mt-1" data-no-traducir></select>
+                </label>
+                <label class="block text-sm font-bold">Buscar en la tabla
+                    <input id="clasificacion-buscar" type="search" autocomplete="off" spellcheck="false" class="cac-buscador-campo !mt-1">
+                </label>
+            </div>
+            <div id="clasificacion-contenido" class="mt-4" data-no-traducir>
+                <p class="text-brand-600 dark:text-brand-300">Cargando…</p>
+            </div>
+        </div>
+    </dialog>
+
+    <!-- Cómo va cada delegación: puntos, porcentaje y ronda a ronda. -->
+    <dialog id="delegaciones" class="ficha-dialogo w-[calc(100%-1rem)] sm:w-[calc(100%-2rem)] max-w-5xl max-h-[90vh] rounded-2xl shadow-2xl p-0 bg-brand-50 dark:bg-brand-950 text-brand-800 dark:text-brand-100 backdrop:bg-black/60" aria-labelledby="delegaciones-titulo">
+        <div class="sticky top-0 z-10 flex items-center gap-3 px-4 sm:px-6 py-3 bg-white dark:bg-brand-900 border-b border-brand-100 dark:border-brand-800">
+            <h2 id="delegaciones-titulo" class="font-serif text-xl md:text-2xl font-bold text-brand-800 dark:text-white flex-1 min-w-0"><span aria-hidden="true">🌎 </span>Tabla por país</h2>
+            <button type="button" data-cerrar class="shrink-0 bg-brand-800 hover:bg-brand-700 text-white font-semibold text-sm px-4 py-2 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2">Cerrar</button>
+        </div>
+        <div class="px-4 sm:px-6 pt-2 pb-6">
+            <p class="text-brand-600 dark:text-brand-300 mt-2">Los puntos de todos los jugadores de cada país, el porcentaje que llevan y lo que sumaron en cada ronda.</p>
+            <div id="delegaciones-contenido" class="mt-4" data-no-traducir>
+                <p class="text-brand-600 dark:text-brand-300">Cargando…</p>
+            </div>
+        </div>
+    </dialog>
+
+    <!-- El pareo en letra grande para una pantalla en la sala: pasa solo por
+         las categorías. Se abre con #proyector en la dirección. -->
+    <dialog id="proyector" class="ficha-dialogo cac-proyector p-0 backdrop:bg-black" aria-labelledby="proyector-titulo">
+        <div class="cac-proyector-barra">
+            <h2 id="proyector-titulo" class="cac-proyector-titulo" data-no-traducir></h2>
+            <p id="proyector-reloj" class="cac-proyector-reloj" data-no-traducir></p>
+            <div class="cac-proyector-botones">
+                <button type="button" id="proyector-anterior" class="cac-proyector-boton"><span aria-hidden="true">◀ </span>Anterior</button>
+                <button type="button" id="proyector-pausa" class="cac-proyector-boton" aria-pressed="false" data-no-traducir></button>
+                <button type="button" id="proyector-siguiente" class="cac-proyector-boton">Siguiente<span aria-hidden="true"> ▶</span></button>
+                <button type="button" id="proyector-completa" class="cac-proyector-boton">Pantalla completa</button>
+                <button type="button" data-cerrar class="cac-proyector-boton">Cerrar</button>
+            </div>
+        </div>
+        <div id="proyector-contenido" class="cac-proyector-contenido" aria-live="off" data-no-traducir></div>
+    </dialog>
+
     <dialog id="hoteles" class="ficha-dialogo w-[calc(100%-1rem)] sm:w-[calc(100%-2rem)] max-w-5xl max-h-[90vh] rounded-2xl shadow-2xl p-0 bg-brand-50 dark:bg-brand-950 text-brand-800 dark:text-brand-100 backdrop:bg-black/60" aria-labelledby="hoteles-titulo">
         <div class="sticky top-0 z-10 flex items-center gap-3 px-4 sm:px-6 py-3 bg-white dark:bg-brand-900 border-b border-brand-100 dark:border-brand-800">
             <h2 id="hoteles-titulo" class="font-serif text-xl md:text-2xl font-bold text-brand-800 dark:text-white flex-1 min-w-0"><span aria-hidden="true">🏨 </span>Hoteles oficiales</h2>
@@ -491,6 +548,10 @@
     <script src="js/supabase-client.js"></script>
     <script src="js/centroamericano-en.js"></script>
     <script src="js/centroamericano.js"></script>
+    <script src="js/pareo/torneo.js"></script>
+    <script src="js/pareo/desempates.js"></script>
+    <script src="js/tabla-imagen.js"></script>
     <script src="js/centroamericano-vivo.js"></script>
+    <script src="js/centroamericano-tablas.js"></script>
 </body>
 </html>

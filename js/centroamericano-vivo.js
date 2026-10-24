@@ -84,6 +84,22 @@
       avisosAlDia: "✓ Los avisos ya están al día con tu lista.",
       avisosApagados: "Listo: este celular ya no recibe los avisos.",
       avisosError: "No se pudieron preparar los avisos en este celular. Revisa la conexión e intenta de nuevo.",
+      susRondas: "Sus rondas", ocultarRondas: "Ocultar sus rondas",
+      compartir: "Compartir",
+      sinRondas: "Todavía no ha jugado ninguna ronda.",
+      rondaFila: (r, color, que, rival) => "Ronda " + r + (color ? " · " + color : "") + " · " + que + (rival ? " " + rival : ""),
+      gano: "ganó a", tablas: "tablas con", perdio: "perdió con", pendiente: "juega contra",
+      ganoInc: "ganó por incomparecencia a", perdioInc: "perdió por incomparecencia con",
+      byeFila: (pts) => pts > 0 ? "bye (" + fmtPuntos(pts) + (pts === 1 ? " punto)" : " puntos)") : "no jugó",
+      rendimiento: (rp, n, ra) => "Rendimiento: " + rp + " en " + n + (n === 1 ? " partida" : " partidas") + " (sus rivales tienen " + ra + " de promedio).",
+      resumen: (r, g, e, p, b, a) => "Ronda " + r + ": " + [[g, g === 1 ? " ganada" : " ganadas"], [e, " en tablas"], [p, p === 1 ? " perdida" : " perdidas"], [b, " bye"], [a, " sin jugar"]]
+        .filter(([n]) => n).map(([n, s]) => n + s).join(", ") + ".",
+      resumenPuntos: (pts, de) => fmtPuntos(pts) + " de " + de + " puntos posibles.",
+      copiarWhatsapp: "Copiar para WhatsApp",
+      copiado: "✓ Copiado: pégalo en el grupo.",
+      noCopiado: "Tu navegador no dejó copiar. Mantén el dedo sobre el resumen para copiarlo.",
+      whatsappTitulo: (pais, r) => pais + " — Ronda " + r + ", Centroamericano 2026",
+      whatsappLinea: (nombre, cat, que, rival) => nombre + " (" + cat + ") " + que + (rival ? " " + rival : ""),
       locale: "es-CR",
     },
     en: {
@@ -127,6 +143,22 @@
       avisosAlDia: "✓ Notifications are up to date with your list.",
       avisosApagados: "Done: this phone no longer gets the notifications.",
       avisosError: "We couldn't set up notifications on this phone. Check the connection and try again.",
+      susRondas: "Their rounds", ocultarRondas: "Hide their rounds",
+      compartir: "Share",
+      sinRondas: "No round played yet.",
+      rondaFila: (r, color, que, rival) => "Round " + r + (color ? " · " + color : "") + " · " + que + (rival ? " " + rival : ""),
+      gano: "beat", tablas: "drew with", perdio: "lost to", pendiente: "plays",
+      ganoInc: "won by forfeit against", perdioInc: "lost by forfeit to",
+      byeFila: (pts) => pts > 0 ? "bye (" + fmtPuntos(pts) + (pts === 1 ? " point)" : " points)") : "did not play",
+      rendimiento: (rp, n, ra) => "Performance: " + rp + " in " + n + (n === 1 ? " game" : " games") + " (opponents' average rating " + ra + ").",
+      resumen: (r, g, e, p, b, a) => "Round " + r + ": " + [[g, g === 1 ? " win" : " wins"], [e, e === 1 ? " draw" : " draws"], [p, p === 1 ? " loss" : " losses"], [b, b === 1 ? " bye" : " byes"], [a, " not played"]]
+        .filter(([n]) => n).map(([n, s]) => n + s).join(", ") + ".",
+      resumenPuntos: (pts, de) => fmtPuntos(pts) + " out of " + de + " possible points.",
+      copiarWhatsapp: "Copy for WhatsApp",
+      copiado: "✓ Copied: paste it in the group.",
+      noCopiado: "Your browser didn't allow copying. Press and hold the summary to copy it.",
+      whatsappTitulo: (pais, r) => pais + " — Round " + r + ", Centroamericano 2026",
+      whatsappLinea: (nombre, cat, que, rival) => nombre + " (" + cat + ") " + que + (rival ? " " + rival : ""),
       locale: "en-US",
     },
   };
@@ -158,6 +190,28 @@
   // Sin tildes, sin mayúsculas y sin comas: «Muñoz, José» → «munoz jose».
   const plano = (s) => String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z0-9 ]+/g, " ").replace(/\s+/g, " ").trim();
 
+  // 8.5 → «8½», 0.5 → «½», 3 → «3».
+  const fmtPuntos = (n) => { const e = Math.floor(n), m = n - e >= 0.5; return e ? e + (m ? "½" : "") : (m ? "½" : "0"); };
+  const puntosNum = (s) => { const m = String(s || "").match(/^(\d*)(½?)$/); return m ? (Number(m[1]) || 0) + (m[2] ? 0.5 : 0) : 0; };
+
+  // Una casilla del cuadro cruzado de chess-results: «5w1» (contra el 5, con
+  // blancas, ganó), «9b½», «12w+» / «3b-» (por incomparecencia), «-1» (bye de un
+  // punto), «-0» (no jugó). Vacía: esa ronda no se jugó todavía.
+  function casilla(texto) {
+    const m = String(texto || "").match(/^(\d+|-)([wbs]?)(1|0|½|\+|-|=)$/);
+    if (!m) return null;
+    const puntos = m[3] === "1" || m[3] === "+" ? 1 : m[3] === "½" || m[3] === "=" ? 0.5 : 0;
+    const rival = m[1] === "-" ? null : Number(m[1]);
+    return { rival, color: m[2] === "w" ? "blancas" : m[2] === "b" ? "negras" : null, puntos, incomparecencia: !!rival && (m[3] === "+" || m[3] === "-") };
+  }
+  // Lo que hizo un color en una mesa del pareo: «1 - 0» → 1; sin resultado, null.
+  function puntosDeMesa(resultado, blancas) {
+    const m = String(resultado || "").replace(/\s+/g, "").match(/^(1|0|½|\+|-)-(1|0|½|\+|-)$/);
+    if (!m) return null;
+    const v = (x) => (x === "1" || x === "+" ? 1 : x === "½" ? 0.5 : 0);
+    return blancas ? v(m[1]) : v(m[2]);
+  }
+
   const el = (tag, clase, texto) => { const e = document.createElement(tag); if (clase) e.className = clase; if (texto != null) e.textContent = texto; return e; };
   const hora = (iso) => new Date(iso).toLocaleTimeString(t().locale, { hour: "numeric", minute: "2-digit", day: "numeric", month: "short", timeZone: ZONA });
 
@@ -183,6 +237,8 @@
         datos = { torneos: data.torneos, recibido: new Date().toISOString() };
         deGuardado = false;
         try { localStorage.setItem(CLAVE_GUARDADO, JSON.stringify(datos)); } catch (e) {}
+        // Para lo que arma js/centroamericano-tablas.js con los mismos datos.
+        document.dispatchEvent(new Event("cac-datos"));
       } catch (e) {
         const g = guardados();
         if (g && !datos) { datos = g; deGuardado = true; }
@@ -217,6 +273,55 @@
     });
     return out;
   }
+
+  // Las rondas de un jugador, de la primera a la última jugada: del cuadro
+  // cruzado y, si la ronda del pareo todavía no está en él, del pareo (con su
+  // resultado si ya lo hay, o «pendiente»).
+  function rondasDe(x) {
+    const out = [];
+    const r = Array.isArray(x.j.r) ? x.j.r : [];
+    r.forEach((c, i) => {
+      const k = casilla(c);
+      if (k) out.push({ ronda: i + 1, rival: k.rival ? x.rivalDe(k.rival) || null : null, color: k.color, puntos: k.puntos, bye: !k.rival, incomparecencia: k.incomparecencia });
+    });
+    if (x.ronda && x.partida && !out.some((o) => o.ronda === x.ronda)) {
+      const p = x.partida;
+      if (!p.rival) out.push({ ronda: x.ronda, rival: null, color: null, puntos: null, bye: true });
+      else {
+        const pts = puntosDeMesa(p.resultado, p.color === "blancas");
+        out.push({ ronda: x.ronda, rival: x.rivalDe(p.rival.no) || { nombre: p.rival.nombre, titulo: p.rival.titulo }, color: p.color, puntos: pts, bye: false,
+          incomparecencia: /[+-]\s*-\s*[+-]/.test(String(p.resultado || "")) });
+      }
+    }
+    return out.sort((a, b) => a.ronda - b.ronda);
+  }
+
+  // El rendimiento de FIDE (Rp = promedio de los rivales + dp(p), tabla 8.1b,
+  // la misma copia que usa Pareo Integral en js/pareo/desempates.js): solo las
+  // partidas jugadas contra rivales con Elo; ni byes ni incomparecencias.
+  function rendimiento(x) {
+    const jugadas = rondasDe(x).filter((o) => !o.bye && !o.incomparecencia && o.puntos !== null && o.rival && o.rival.elo > 0);
+    if (!jugadas.length || !window.PareoDesempates) return null;
+    const ra = jugadas.reduce((a, o) => a + o.rival.elo, 0) / jugadas.length;
+    const p = jugadas.reduce((a, o) => a + o.puntos, 0) / jugadas.length;
+    return { rp: Math.round(ra + window.PareoDesempates.dpDeP(p)), ra: Math.round(ra), n: jugadas.length };
+  }
+
+  // «ganó a FM Guevara Ruiz, Santiago Jose (ESA, 2252)» para una ronda.
+  function rivalTexto(j) {
+    if (!j) return "";
+    return (j.titulo ? j.titulo + " " : "") + j.nombre + (j.fed || j.elo ? " (" + [j.fed, j.elo || ""].filter(Boolean).join(", ") + ")" : "");
+  }
+  function queHizo(o, tx) {
+    if (o.bye) return { que: o.puntos === null ? "bye" : tx.byeFila(o.puntos), rival: "" };
+    const que = o.puntos === null ? tx.pendiente
+      : o.puntos === 1 ? (o.incomparecencia ? tx.ganoInc : tx.gano)
+      : o.puntos === 0.5 ? tx.tablas : (o.incomparecencia ? tx.perdioInc : tx.perdio);
+    return { que, rival: rivalTexto(o.rival) };
+  }
+
+  const abiertas = new Set();
+  let contadorRondas = 0;
 
   /* ---------------- el buscador ---------------- */
   function pintarBuscador() {
@@ -268,6 +373,49 @@
     li.appendChild(el("p", "cac-jugador-ronda", linea));
     const res = x.partida && x.partida.resultado && x.partida.resultado !== "bye" && /\d|½/.test(x.partida.resultado) ? x.partida.resultado : "";
     if (res) li.appendChild(el("p", "text-sm", tx.resultado(res)));
+
+    // «Sus rondas» se abre dentro de la tarjeta, y queda abierta al repintar.
+    const clave = x.torneo.tnr + "-" + j.no;
+    const abierta = abiertas.has(clave);
+    const acciones = el("div", "cac-jugador-acciones");
+    const ver = el("button", "cac-jugador-boton", abierta ? tx.ocultarRondas : tx.susRondas);
+    ver.type = "button";
+    ver.setAttribute("aria-expanded", abierta ? "true" : "false");
+    const idLista = "rondas-" + (++contadorRondas);
+    ver.setAttribute("aria-controls", idLista);
+    ver.dataset.rondas = clave;
+    ver.addEventListener("click", () => {
+      if (abiertas.has(clave)) abiertas.delete(clave); else abiertas.add(clave);
+      const caja = ver.closest("[id]");
+      pintarTodo();
+      const mismo = caja && document.getElementById(caja.id) && document.getElementById(caja.id).querySelector('[data-rondas="' + clave + '"]');
+      if (mismo) mismo.focus();
+    });
+    acciones.appendChild(ver);
+    // La imagen la arma js/centroamericano-tablas.js, que carga después.
+    const comp = el("button", "cac-jugador-boton", tx.compartir);
+    comp.type = "button";
+    comp.addEventListener("click", () => { if (window.CentroamericanoTablas) window.CentroamericanoTablas.compartirJugador(x, comp); });
+    acciones.appendChild(comp);
+    li.appendChild(acciones);
+    if (abierta) {
+      const rondas = rondasDe(x);
+      const caja = el("div", "cac-jugador-rondas");
+      caja.id = idLista;
+      if (!rondas.length) caja.appendChild(el("p", "text-sm", tx.sinRondas));
+      else {
+        const ol = el("ol", "");
+        rondas.forEach((o) => {
+          const q = queHizo(o, tx);
+          const color = o.color ? (o.color === "blancas" ? tx.blancas : tx.negras) : "";
+          ol.appendChild(el("li", "", tx.rondaFila(o.ronda, color, q.que, q.rival)));
+        });
+        caja.appendChild(ol);
+        const rend = rendimiento(x);
+        if (rend) caja.appendChild(el("p", "mt-2 text-sm font-semibold", tx.rendimiento(rend.rp, rend.n, rend.ra)));
+      }
+      li.appendChild(caja);
+    }
     return li;
   }
 
@@ -395,6 +543,8 @@
     if (!datos) { estado.textContent = tx.cargando; return; }
     const suyos = todos.filter((x) => x.j.fed === elegida);
     decir(estado, tx.deDelegacion(suyos.length, pais(elegida, lang)) + cuandoSeLeyo(tx));
+    const resumen = resumenDelegacion(suyos, tx, pais(elegida, lang));
+    if (resumen) caja.appendChild(resumen);
     const grupos = {};
     suyos.forEach((x) => { (grupos[x.j.grupo || "—"] = grupos[x.j.grupo || "—"] || []).push(x); });
     Object.keys(grupos).sort((a, b) => ordenGrupo(a) - ordenGrupo(b) || a.localeCompare(b)).forEach((g) => {
@@ -406,6 +556,43 @@
       sec.appendChild(ul);
       caja.appendChild(sec);
     });
+  }
+
+  // La última ronda con algún resultado de la delegación, contada y lista
+  // para copiar al grupo de WhatsApp.
+  function resumenDelegacion(suyos, tx, nombrePais) {
+    let ronda = 0;
+    const deCada = suyos.map((x) => ({ x, rondas: rondasDe(x) }));
+    deCada.forEach((d) => d.rondas.forEach((o) => { if (o.puntos !== null && o.ronda > ronda) ronda = o.ronda; }));
+    if (!ronda) return null;
+    let g = 0, e = 0, p = 0, b = 0, a = 0, pts = 0, posibles = 0;
+    const lineas = [];
+    deCada.forEach(({ x, rondas }) => {
+      const o = rondas.find((r) => r.ronda === ronda);
+      if (!o || o.puntos === null) return;
+      posibles += 1; pts += o.puntos;
+      // «-0» en chess-results es que no jugó (no se presentó o no estaba): no es un bye.
+      if (o.bye) { if (o.puntos > 0) b++; else a++; } else if (o.puntos === 1) g++; else if (o.puntos === 0.5) e++; else p++;
+      const q = queHizo(o, tx);
+      const marca = o.bye ? (o.puntos > 0 ? "⏸️" : "➖") : o.puntos === 1 ? "✅" : o.puntos === 0.5 ? "🤝" : "❌";
+      lineas.push(marca + " " + tx.whatsappLinea(x.j.nombre, tx.categoria(x.j.grupo), q.que, q.rival));
+    });
+    const caja = el("div", "cac-resumen");
+    caja.appendChild(el("p", "font-bold", tx.resumen(ronda, g, e, p, b, a)));
+    caja.appendChild(el("p", "text-sm", tx.resumenPuntos(pts, posibles)));
+    const texto = [tx.whatsappTitulo(nombrePais, ronda), tx.resumen(ronda, g, e, p, b, a) + " " + tx.resumenPuntos(pts, posibles), ""]
+      .concat(lineas, ["", "https://ajedrez-integral.com/centroamericano-2026.html" + (idioma() === "en" ? "?lang=en" : "")]).join("\n");
+    const boton = el("button", "cac-boton mt-3", tx.copiarWhatsapp);
+    boton.type = "button";
+    const aviso = el("p", "mt-2 text-sm font-semibold");
+    aviso.setAttribute("role", "status");
+    boton.addEventListener("click", async () => {
+      try { await navigator.clipboard.writeText(texto); aviso.textContent = t().copiado; }
+      catch (err) { aviso.textContent = t().noCopiado; }
+    });
+    caja.append(boton, aviso);
+    caja.dataset.texto = texto;
+    return caja;
   }
 
   function alElegirDelegacion() {
@@ -620,6 +807,14 @@
     new MutationObserver(() => { if (dialogo.open) abrirMedallero(); }).observe(dialogo, { attributes: true, attributeFilter: ["open"] });
     if (dialogo.open) abrirMedallero();
   }
+
+  // Lo que usa js/centroamericano-tablas.js (la clasificación, la tabla por
+  // país, el proyector y la imagen para compartir): una sola copia de los datos.
+  window.CentroamericanoVivo = {
+    datos: () => datos, deGuardado: () => deGuardado, pedir, jugadores, rondasDe, rendimiento, queHizo, rivalTexto,
+    textos: t, idioma, categoria: (g) => t().categoria(g), ordenGrupo, pais: (f) => pais(f, idioma()), fmtPuntos, puntosNum,
+    cuandoSeLeyo: () => cuandoSeLeyo(t()), plano, el, ZONA,
+  };
 
   document.addEventListener("cac-idioma", () => { pintarTodo(); ponerAvisosAlDia(); if (dialogo && dialogo.open) pintarMedallero(); });
 
