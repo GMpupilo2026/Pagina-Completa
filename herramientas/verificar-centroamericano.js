@@ -71,6 +71,8 @@ const personas = [...((contacto.match(/<ul[\s\S]*?<\/ul>/) || [""])[0]).matchAll
 ok("Contacta a la organización: árbitra principal, organizadora y árbitro de pareo", JSON.stringify(personas) === JSON.stringify(["Carolina Muñoz — Árbitra principal", "Vivian Víquez Miranda — Organizadora", "Jean Quesada — Árbitro de pareo"]), JSON.stringify(personas));
 const fotos = [...contacto.matchAll(/<img src="([^"]+)"[^>]*alt="Foto de ([^"]+)"/g)];
 ok("las fotos de los tres contactos están en el sitio", fotos.length === 3 && fotos.every(([, src]) => fs.existsSync(path.join(RAIZ, src))), fotos.map((f) => f[1]).join(", "));
+const pie = (html.match(/<footer[\s\S]*?<\/footer>/) || [""])[0];
+ok("el pie de página no trae otro contacto que el de la organización", !/mailto:|wa\.me|tel:/.test(pie));
 ok("el correo de la organización va en los contactos, no en una ficha aparte", contacto.includes('href="mailto:torneos_internacionales_costarica@fcacostarica.com"') && !/<li[^>]*>\s*<a href="mailto:/.test(fichas));
 ok("cada contacto con su teléfono y su WhatsApp", (contacto.match(/href="tel:/g) || []).length === 3 && (contacto.match(/href="https:\/\/wa\.me\/506\d{8}"/g) || []).length === 3);
 // La cara de las bases: su hoja de estilos, la mascota, la bandera y los logos.
