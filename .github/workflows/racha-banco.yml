@@ -1,0 +1,72 @@
+# Arma el banco de la Racha táctica (herramientas/racha-banco-generar.js):
+# baja los candidatos de la tabla «Ejercicios Lichess» con la clave pública,
+# los pasa por Stockfish (un trabajo por tramo de jugadas, en paralelo) y deja
+# supabase/datos/racha-tactica-banco.json en la misma rama.
+#
+# Corre aparte porque tarda casi una hora y porque desde el contenedor de
+# Claude Code la base no se alcanza por la red. Se dispara a mano o al cambiar
+# el generador en una rama de trabajo.
+name: Banco de la Racha táctica
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ["claude/**"]
+    paths:
+      - herramientas/racha-banco-generar.js
+      - .github/workflows/racha-banco.yml
+
+permissions:
+  contents: read
+
+concurrency:
+  group: racha-banco-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  tramo:
+    name: Tramo de ${{ matrix.n }} jugadas
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    strategy:
+      fail-fast: false
+      matrix:
+        n: [1, 2, 3, 4, 5, 6, 7, 8]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: sudo apt-get update && sudo apt-get install -y stockfish
+      - run: STOCKFISH=/usr/games/stockfish node herramientas/racha-banco-generar.js --n ${{ matrix.n }} --salida parte-${{ matrix.n }}.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: parte-${{ matrix.n }}
+          path: parte-${{ matrix.n }}.json
+
+  unir:
+    name: Juntar y guardar en la rama
+    needs: tramo
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: parte-*
+          merge-multiple: true
+      - run: node herramientas/racha-banco-generar.js --unir parte-*.json
+      - run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898283+github-actions[bot]@users.noreply.github.com"
+          git add supabase/datos/racha-tactica-banco.json
+          git commit -m "Banco de la Racha táctica, generado por herramientas/racha-banco-generar.js"
+          git push
