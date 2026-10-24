@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20261024172538
+# al-dia-con: 20261024172944
 tabla  Ejercicios Lichess  rls=true
 tabla  _foto_rls_tmp  rls=false
 tabla  _pedidos_elo  rls=false
@@ -2255,6 +2255,9 @@ funcion  interno.dias_entrenados(p_alumno uuid, p_lunes date)  definer  anon=fal
 funcion  interno.emitir_cobros(p_hasta date, p_suscripcion uuid)  definer  anon=false  auth=false
 funcion  interno.emitir_recibo(p_alumno uuid, p_fecha date, p_metodo text, p_referencia text, p_nota text, p_emitido_por uuid)  definer  anon=false  auth=false
 funcion  interno.enlaces_de_sala_validos(p jsonb)  invoker  anon=true  auth=true
+funcion  interno.entrenamiento_clave(p_activity text, p_detail jsonb, p_creado timestamp with time zone)  invoker  anon=true  auth=true
+funcion  interno.entrenamiento_logrado(p_detail jsonb)  invoker  anon=true  auth=true
+funcion  interno.entrenamiento_premio(p_activity text, p_detail jsonb)  invoker  anon=false  auth=false
 funcion  interno.entreno_pedido_de_la_base()  definer  anon=false  auth=false
 funcion  interno.estilo_opiniones_al_guardar()  definer  anon=false  auth=false
 funcion  interno.estilo_pruebas_al_guardar()  definer  anon=false  auth=false
@@ -3688,6 +3691,7 @@ indice  training_plans  training_plans_pkey
 indice  training_plans  training_plans_student_id_key
 indice  training_plans  training_plans_student_idx
 indice  training_plans  training_plans_teacher_id_fk
+indice  training_progress  training_progress_clave_puntos
 indice  training_progress  training_progress_pkey
 indice  training_progress  training_progress_sin_internet
 indice  training_progress  training_progress_student_idx

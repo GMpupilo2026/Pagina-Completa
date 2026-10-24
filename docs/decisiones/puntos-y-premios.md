@@ -51,10 +51,11 @@ ajuste a mano futuro) pasan `referencia` con un valor nuevo cada vez
   en `game_state` (podio, equipos), que se limpia al cerrar la clase — para
   sumarlos de forma confiable haría falta guardarlos en una tabla aparte
   antes de la limpieza, que es un cambio más grande y se deja para otra vez.
-- **Entrenamiento**: 2 puntos por cada fila nueva de `training_progress`
-  (cualquier actividad), con un tope de 40 por día de Costa Rica — sin tope,
-  bastaría con repetir un ejercicio trivial en bucle para juntar puntos sin
-  aprender nada.
+- **Entrenamiento**: de 1 a 6 puntos por cada ejercicio NUEVO, según su
+  dificultad, sin tope por día; un ejercicio ya resuelto no vuelve a pagar
+  (ver «Entrenamiento: según la dificultad, sin tope y una sola vez por
+  ejercicio», abajo). Al principio eran 2 puntos por cada fila de
+  `training_progress`, con un tope de 40 por día de Costa Rica.
 - **Tareas**: 15 puntos por tarea completada. **Corregido después**: al
   principio lo pagaba un trigger sobre `tareas.estado`, pero esa columna
   quedó sin uso desde que una tarea se da por completada CALCULANDO sus
@@ -294,8 +295,10 @@ el dueño del sitio con su dibujo de referencia: «¡Invasión de gallinas!»,
 alienígena!» y «¡Sandía explosiva!». Pidió tres cosas, y así quedaron:
 
 - **Más caras**, para que haya que hacer más ejercicios: de 80 a 150 puntos
-  (las cinco primeras cuestan de 20 a 60, y el entrenamiento paga a lo sumo
-  40 por día), así que cada una son de dos a cuatro días de práctica.
+  (las cinco primeras cuestan de 20 a 60, y el entrenamiento pagaba
+  entonces a lo sumo 40 por día), así que cada una eran de dos a cuatro días
+  de práctica. Desde el 24/10/2026 el entrenamiento no tiene tope, pero cada
+  ejercicio paga una sola vez.
 - **Más tiempo en pantalla**: unos 12 segundos (el confeti dura 5).
 - **Grandes**: el dibujo principal ocupa hasta un tercio del ancho
   (`clamp(8rem, 32vw, 18rem)`; el payaso, más) y el cartel con el nombre va
@@ -392,6 +395,73 @@ Migración `20261024172538_puntos_semana_sin_entrenar.sql`.
   los días que le quedan a la semana, lo dicen. En el historial sale con su
   motivo («Semana del 26/10: entrenaste 2 días de 4. Pierdes la mitad.»).
   Lo comprueba `verificar-puntos.js` (prueba 12).
+
+## Entrenamiento: según la dificultad, sin tope y una sola vez por ejercicio
+
+Pedido por el dueño del sitio (24/10/2026): quitar el tope de 40 puntos por
+día, que lo sencillo pague menos que lo difícil, y que un ejercicio ya hecho
+no vuelva a pagar. Lo hacen `20261024172848_puntos_entrenamiento_por_dificultad.sql`
+y su arreglo `20261024172944_puntos_entrenamiento_filas_juntas.sql`, todo en
+el trigger `otorgar_puntos_de_entrenamiento()`: las páginas no cambian.
+
+- **El tope era el único freno contra repetir un ejercicio fácil en bucle.**
+  Al quitarlo, el freno pasa a ser la regla de «una sola vez»: sin ella, el
+  mismo mate en uno resuelto cien veces daba cien veces sus puntos.
+- **Qué es «el mismo ejercicio»** lo dice `interno.entrenamiento_clave()`:
+  la actividad y el id que ya trae el `detail` (`puzzle_id`, `lesson_id`,
+  `linea_id`, `final_id`, `nivel_id`, `set_id`; curso y lección en `curso`;
+  curso y diagrama en `finales100`; juego, nivel y ejercicio en
+  `concentracion`). Los juegos que no tienen ejercicios con id —Coordenadas,
+  Confites, Memoria, Sonar, Batalla naval, el diagnóstico, Precisión
+  posicional— se juegan una y otra vez por naturaleza: ahí «el mismo» es la
+  misma variante (nivel, modo, piezas) **el mismo día** de Costa Rica, así
+  que pagan una vez por día y variante. Sin eso, Confites en bucle era una
+  fuente infinita de puntos en cuanto se quitó el tope.
+- **Cuánto paga** lo dice `interno.entrenamiento_premio()`, con la dificultad
+  que ya guarda cada actividad (nada nuevo que mandar desde las páginas):
+
+  | Actividad | Puntos |
+  |---|---|
+  | 4×4 | Fácil 1, Intermedio 2, Avanzado 3, Especialista 4, Maestro 5, Gran Maestro 6 |
+  | Mates | mate en 1: 1, en 2: 3, en 3: 5 |
+  | Temas (rating de Lichess) | < 1000: 1, < 1300: 2, < 1600: 3, < 1900: 4, < 2200: 5, más: 6 |
+  | Tipos, Concentración, Sonar, Batalla naval | su nivel, de 1 a 5 |
+  | Memoria | hasta 4 piezas 1, hasta 6: 2, hasta 8: 3, más: 4 |
+  | Finales de un curso (`finales100`) | 3; en el nivel «max», 5 |
+  | Finales, lección de un curso | 3 |
+  | Diagnóstico | 5 (una vez por día) |
+  | Aprender, Ilumina, Coordenadas, Confites | 1 |
+  | Lo demás (Táctica, Aperturas, Practicar, Visualización…) | 2, lo mismo que antes |
+
+  Una actividad nueva entra sola con 2 puntos; si trae su dificultad, se
+  agrega su renglón en `entrenamiento_premio()`.
+- **«Ya hecho» mira TODO `training_progress`**, también lo de antes del
+  cambio: un ejercicio resuelto hace un mes no paga de nuevo, aunque en su
+  día el tope viejo lo dejara sin nada. Para que mirarlo no recorra las
+  miles de filas de un alumno hay un índice sobre la clave
+  (`training_progress_clave_puntos`); por eso `entrenamiento_clave()` es
+  `immutable` y `authenticated` la puede ejecutar (el alumno que inserta su
+  fila mantiene el índice). Es un cálculo puro: no lee ninguna tabla.
+- **Un intento fallido no cuenta**: `finales100` con `ok = false` y Batalla
+  naval con `gano = false` (`entrenamiento_logrado()`) no pagan ni cuentan
+  como hechos; al lograrlo después, paga.
+- **La referencia del ledger es `'entrenamiento:' || clave`** (antes,
+  `'entrenamiento:' || id de la fila`): el índice único de `puntos_ajustes`
+  impide pagar dos veces aunque dos filas del mismo ejercicio lleguen a la
+  vez. Las referencias viejas son un uuid y nunca chocan con las nuevas, que
+  empiezan por la actividad. Lo ya pagado no se tocó.
+- **Lo que falló callado en la primera versión**: «ya hecho» buscaba
+  cualquier OTRA fila con la misma clave. El trigger es `after insert` por
+  fila, y en un insert de varias filas a la vez (los ejercicios sin internet
+  suben juntos) cada fila ya ve a las demás: dos filas del mismo ejercicio
+  se veían una a la otra y ninguna pagaba. Ahora solo cuenta lo que vino
+  ANTES, `(created_at, id) < (new.created_at, new.id)`: la primera paga.
+- **Comprobado en la base** con un alumno real, dentro de un bloque que
+  termina en `raise exception` (todo se deshace): un 4×4 Gran Maestro nuevo
+  da 6; el mismo otra vez, 0; uno que ya había resuelto antes del cambio, 0;
+  uno Fácil nuevo, 1; dos filas iguales en un solo insert, 1; `finales100`
+  fallido, 0, y logrado después, 5. Mirar «ya hecho» en el alumno con más
+  filas tarda unos milisegundos.
 
 ## Entrenamiento, con puntos retroactivos (a diferencia de las tareas)
 
