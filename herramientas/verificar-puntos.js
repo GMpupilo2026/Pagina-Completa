@@ -32,6 +32,9 @@ const CATALOGO = [
   { id: "p-titulo", clave: "titulo_tactico", nombre: "Título: Táctico", descripcion: "Un título junto a tu nombre.",
     emoji: "⚔️", categoria: "cosmetico", tipo_efecto: "titulo", costo_puntos: 150,
     parametros: { texto: "⚔️ Táctico" }, limite_por_alumno: 1, activo: true, orden: 10 },
+  { id: "p-marco", clave: "marco_oro", nombre: "Marco de oro", descripcion: "Un marco dorado para tu foto.",
+    emoji: "🖼️", categoria: "cosmetico", tipo_efecto: "marco_perfil", costo_puntos: 700,
+    parametros: { clase: "marco-oro" }, limite_por_alumno: 1, activo: true, orden: 12 },
   { id: "p-doble", clave: "doble_puntos_dia", nombre: "Día de puntos dobles", descripcion: "24 horas al doble.",
     emoji: "✨", categoria: "entrenamiento", tipo_efecto: "doble_puntos", costo_puntos: 200,
     parametros: { horas: 24 }, limite_por_alumno: null, activo: true, orden: 70 },
@@ -561,6 +564,63 @@ async function main() {
     const { page, ctx } = await abrir(navegador, 10, [regalo]);
     await page.waitForSelector("[data-regalo-de]", { timeout: 5000 });
     ok((await page.textContent("[data-regalo-de]")) === "🎁 Regalo de Carla Mora: «¡Felicidades!»", "un regalo recibido no dice de quién ni su mensaje");
+    await ctx.close();
+  }
+
+  // ---------- 10 bis) los regalos, como colección; el título y el marco puestos ----------
+  // Lo que se compraba y no se veía en ningún lado: el título y el marco
+  // (Puntos.tituloEquipado/marcoEquipado existían, pero nadie los llamaba) y
+  // los regalos, sueltos entre los premios. Ver «Lo que se canjea tiene que
+  // notarse» en docs/decisiones/puntos-y-premios.md.
+  {
+    const hace = (min) => new Date(Date.now() - min * 60000).toISOString();
+    const propio = (id, premio, extra) => Object.assign({ id, premio_id: premio.id, clave: premio.clave, nombre: premio.nombre, emoji: premio.emoji,
+      categoria: premio.categoria, tipo_efecto: premio.tipo_efecto, parametros: premio.parametros, activo: true, vigente_hasta: null,
+      created_at: hace(5), regalo_de: null, regalo_de_nombre: null, mensaje: null }, extra || {});
+    const de = (id) => CATALOGO.find((p) => p.id === id);
+    const mios = [
+      propio("c-t", de("p-titulo")),
+      propio("c-m", de("p-marco")),
+      propio("c-e1", de("p-estrella"), { regalo_de: "u-carla", regalo_de_nombre: "Carla Mora" }),
+      propio("c-e2", de("p-estrella"), { regalo_de: "u-beto", regalo_de_nombre: "Beto Rojas", created_at: hace(9) }),
+    ];
+    const { page, ctx, errores } = await abrir(navegador, 10, mios);
+    await page.waitForSelector('#coleccion-regalos [data-coleccion="tarjeta_estrella"]', { timeout: 5000 });
+    const col = await page.$eval('#coleccion-regalos [data-coleccion="tarjeta_estrella"]', (li) => ({ texto: li.textContent, ve: li.checkVisibility() }));
+    ok(col.ve && col.texto.includes("Tienes 2") && col.texto.includes("De Carla Mora, Beto Rojas"),
+      "la colección no dice cuántas tarjetas de estrella tiene ni de quién: " + JSON.stringify(col));
+    ok((await page.textContent("#coleccion-regalos")).includes("Llevas 1 de 1"), "la colección no dice cuántas lleva de cuántas");
+    ok((await page.textContent("[data-adorno-aviso]")) === "En tu panel, junto a tu nombre: ⚔️ Táctico · Marco de oro",
+      "la tienda no dice el título y el marco que tiene puestos: " + await page.textContent("[data-adorno-aviso]"));
+
+    // En el panel: el renglón escrito y el anillo del marco, con su contraste
+    // medido contra el fondo de verdad (claro y oscuro).
+    for (const oscuro of [false, true]) {
+      // El <body> cambia de color con transition-colors: se mide al terminar.
+      await page.evaluate((o) => document.documentElement.classList.toggle("dark", o), oscuro);
+      await page.waitForTimeout(500);
+      const r = await page.evaluate(async ({ mios }) => {
+        const avatar = document.createElement("div");
+        avatar.className = "w-14 h-14 rounded-full";
+        const linea = document.createElement("p");
+        linea.hidden = true;
+        document.querySelector("main").prepend(avatar, linea);
+        window.Puntos.pintarTituloYMarco(mios, avatar, linea);
+        const sombra = getComputedStyle(avatar).boxShadow;
+        let el = avatar.parentElement, fondo = "rgba(0, 0, 0, 0)";
+        while (el && /rgba\(0, 0, 0, 0\)|transparent/.test(fondo)) { fondo = getComputedStyle(el).backgroundColor; el = el.parentElement; }
+        const out = { linea: linea.checkVisibility() ? linea.textContent : null, sombra, fondo };
+        avatar.remove(); linea.remove();
+        return out;
+      }, { mios, oscuro });
+      const rgb = (t) => (t.match(/rgba?\(([^)]+)\)/) || [, "0,0,0"])[1].split(",").slice(0, 3).map(Number);
+      const lum = (c) => { const v = c.map((x) => { x /= 255; return x <= 0.03928 ? x / 12.92 : ((x + 0.055) / 1.055) ** 2.4; }); return 0.2126 * v[0] + 0.7152 * v[1] + 0.0722 * v[2]; };
+      const a = lum(rgb(r.sombra)), b = lum(rgb(r.fondo));
+      const contraste = (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
+      ok(r.linea === "⚔️ Táctico · Marco de oro", "el panel no escribe el título y el marco puestos: " + JSON.stringify(r));
+      ok(/rgb/.test(r.sombra) && contraste >= 3, `el marco de oro no se ve contra el fondo (${oscuro ? "oscuro" : "claro"}): ${contraste.toFixed(2)} ` + JSON.stringify(r));
+    }
+    ok(errores.join(" | ") === "", "hubo errores en consola: " + errores.join(" | "));
     await ctx.close();
   }
 

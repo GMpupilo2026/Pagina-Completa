@@ -2480,3 +2480,12 @@ a.tp-org:focus-visible { outline: none; box-shadow: 0 0 0 2px rgb(var(--c-accent
 .tp-verificado { display: inline-flex; align-items: center; font-size: 0.72rem; font-weight: 700; padding: 0 0.45rem; border-radius: 999px; background: rgb(var(--c-accent-100)); color: rgb(var(--c-brand-800)); }
 .tp-org-logo { height: 3rem; width: auto; max-width: 8rem; object-fit: contain; background: #fff; border-radius: 0.5rem; padding: 0.2rem; border: 1px solid rgb(var(--c-brand-100)); }
 .tp-org-logo-grande { height: 5rem; max-width: 12rem; }
+
+/* Los marcos de perfil de la tienda de puntos: un anillo alrededor de la
+   foto. Cada color, medido: 3:1 o más contra el blanco, el fondo claro
+   (brand-50) y el oscuro (brand-950) — bronce 4,3 / 3,9 / 4,2; plata
+   3,9 / 3,5 / 4,7; oro 3,5 / 3,2 / 5,2. El nombre del marco va además
+   escrito al lado (js/puntos.js, pintarTituloYMarco). */
+.marco-bronce { box-shadow: 0 0 0 3px #b0682a; }
+.marco-plata { box-shadow: 0 0 0 3px #76828f; }
+.marco-oro { box-shadow: 0 0 0 3px #a8841c; }

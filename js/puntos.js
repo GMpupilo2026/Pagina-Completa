@@ -291,6 +291,30 @@ window.Puntos = (function () {
     propios.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
     return (propios[0].parametros && propios[0].parametros.clase) || null;
   }
+  /* El título y el marco puestos, en una caja de avatar (el marco, un anillo:
+     .marco-bronce/.marco-plata/.marco-oro de css/input.css, con el contraste
+     medido) y en un renglón que los dice escritos: el color nunca va solo.
+     Solo los ve quien los tiene, en su panel y en la tienda (la RLS de
+     premios_canjeados no se los deja ver a nadie más). */
+  const MARCOS = ["marco-bronce", "marco-plata", "marco-oro"];
+  function pintarTituloYMarco(premios, avatar, linea) {
+    const titulo = tituloEquipado(premios);
+    const marco = (premios || []).filter((p) => p.tipo_efecto === "marco_perfil" && p.activo)
+      .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0] || null;
+    const clase = marco && marco.parametros && MARCOS.includes(marco.parametros.clase) ? marco.parametros.clase : null;
+    if (avatar) {
+      avatar.classList.remove(...MARCOS);
+      if (clase) avatar.classList.add(clase);
+    }
+    if (linea) {
+      const partes = [];
+      if (titulo) partes.push(titulo);
+      if (marco) partes.push(marco.nombre);
+      linea.textContent = partes.join(" · ");
+      linea.hidden = !partes.length;
+    }
+    return { titulo, marco: marco ? marco.nombre : null };
+  }
   function dobleVigente(premios) {
     const ahora = Date.now();
     return (premios || []).some((p) => p.tipo_efecto === "doble_puntos" && p.vigente_hasta && new Date(p.vigente_hasta).getTime() > ahora);
@@ -563,15 +587,32 @@ window.Puntos = (function () {
     misTit.textContent = "Mis premios";
     const avatarAviso = document.createElement("p");
     avatarAviso.className = "text-xs text-brand-500 dark:text-brand-300 mt-0.5";
+    const adornoAviso = document.createElement("p");
+    adornoAviso.className = "text-xs text-brand-500 dark:text-brand-300 mt-0.5";
+    adornoAviso.setAttribute("data-adorno-aviso", "");
     const misLista = document.createElement("ul");
     misLista.className = "mt-3 space-y-2";
-    misP.append(misTit, avatarAviso, misLista);
+    misP.append(misTit, avatarAviso, adornoAviso, misLista);
+
+    // Los regalos que le mandaron sus compañeros, como una colección: las
+    // tarjetas del catálogo, cuántas tiene de cada una y de quién.
+    const colSec = document.createElement("section");
+    colSec.className = "mt-10 pt-6 border-t border-brand-100 dark:border-brand-800";
+    colSec.id = "coleccion-regalos";
+    const colTit = document.createElement("h3");
+    colTit.className = "text-lg font-bold text-brand-800 dark:text-white";
+    conAdorno(colTit, "🎁", "Tu colección de regalos");
+    const colAyuda = document.createElement("p");
+    colAyuda.className = "text-xs text-brand-500 dark:text-brand-300 mt-0.5";
+    const colLista = document.createElement("ul");
+    colLista.className = "mt-3 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3";
+    colSec.append(colTit, colAyuda, colLista);
 
     const bromasSec = document.createElement("section");
     bromasSec.className = "mt-10 pt-6 border-t border-brand-100 dark:border-brand-800";
     bromasSec.id = "puntos-bromas";
 
-    contenedor.append(cabecera, nuevosAviso, semanaSec, retosSec, marcSec, secciones, misP, bromasSec);
+    contenedor.append(cabecera, nuevosAviso, semanaSec, retosSec, marcSec, secciones, misP, colSec, bromasSec);
     if (window.PuntosRegalos) window.PuntosRegalos.montarAjustesBromas(bromasSec, { sb, alumnoId });
     else bromasSec.hidden = true;
 
@@ -780,6 +821,45 @@ window.Puntos = (function () {
       misPremiosActual.forEach((p) => misLista.appendChild(filaPremioPropio(p)));
     }
 
+    function pintarColeccion() {
+      colLista.replaceChildren();
+      const tarjetas = (catalogoActual || []).filter((p) => p.categoria === "regalo");
+      const recibidos = (misPremiosActual || []).filter((p) => p.categoria === "regalo" && p.regalo_de);
+      let distintas = 0;
+      tarjetas.forEach((t) => {
+        const mios = recibidos.filter((p) => p.premio_id === t.id);
+        if (mios.length) distintas += 1;
+        const li = document.createElement("li");
+        li.className = "rounded-xl border px-3 py-3 text-center " + (mios.length
+          ? "border-accent-400 bg-accent-50 dark:bg-brand-800 dark:border-accent-500"
+          : "border-dashed border-brand-200 dark:border-brand-700");
+        li.setAttribute("data-coleccion", t.clave);
+        const ic = document.createElement("p");
+        ic.className = "text-3xl" + (mios.length ? "" : " opacity-40");
+        ic.setAttribute("aria-hidden", "true");
+        ic.textContent = t.emoji;
+        const nom = document.createElement("p");
+        nom.className = "text-sm font-semibold text-brand-800 dark:text-white mt-1";
+        nom.textContent = t.nombre;
+        const cuantas = document.createElement("p");
+        cuantas.className = "text-xs text-brand-600 dark:text-brand-200";
+        cuantas.textContent = mios.length ? "Tienes " + mios.length : "Todavía no la tienes";
+        li.append(ic, nom, cuantas);
+        if (mios.length) {
+          const de = [...new Set(mios.map((p) => p.regalo_de_nombre || "un compañero"))];
+          const quien = document.createElement("p");
+          quien.className = "text-xs text-brand-500 dark:text-brand-300 mt-0.5 break-words";
+          quien.textContent = "De " + (de.length > 3 ? de.slice(0, 3).join(", ") + " y " + (de.length - 3) + " más" : de.join(", "));
+          li.appendChild(quien);
+        }
+        colLista.appendChild(li);
+      });
+      colAyuda.textContent = tarjetas.length
+        ? "Llevas " + distintas + " de " + tarjetas.length + ". Te las regalan tus compañeros desde esta tienda."
+        : "";
+      colSec.hidden = !tarjetas.length;
+    }
+
     async function recargar() {
       const [s, cat, mios, retos, marc, semana] = await Promise.all([
         saldo(sb, alumnoId),
@@ -801,8 +881,13 @@ window.Puntos = (function () {
       avatarAviso.textContent = accesorio
         ? "Así te ven en la clase en vivo: " + accesorio.emoji + " " + accesorio.nombre
         : "Todavía no tienes puesto ningún accesorio de avatar.";
+      const adorno = pintarTituloYMarco(mios, null, null);
+      adornoAviso.textContent = adorno.titulo || adorno.marco
+        ? "En tu panel, junto a tu nombre: " + [adorno.titulo, adorno.marco].filter(Boolean).join(" · ")
+        : "Todavía no tienes puesto ningún título ni marco.";
       pintarCatalogo();
       pintarMisPremios();
+      pintarColeccion();
     }
 
     // Primero se cobra lo pendiente: así los retos ya salen cumplidos y el
@@ -816,7 +901,7 @@ window.Puntos = (function () {
 
   return {
     saldo, historial, catalogo, misPremios, canjear, equipar, reclamarPendientes, retosDeLaSemana, marcadorDelSalon,
-    tituloEquipado, marcoEquipado, dobleVigente, accesorioEquipado, accesoriosDe, decorarAvatar, texto, pintarHistorial,
+    tituloEquipado, marcoEquipado, pintarTituloYMarco, dobleVigente, accesorioEquipado, accesoriosDe, decorarAvatar, texto, pintarHistorial,
     semanaDeEntrenamiento, textosSemana,
     montarTarjetaPanel, montarTienda,
   };

@@ -4532,6 +4532,12 @@
                     Promise.resolve(ResumenClase.pintarUltimaClaseDelAlumno(sb, document.getElementById("ultima-clase"), profile.id)).finally(ajustarTusClases),
                     Promise.resolve(PuntosClase.pintarDelMesDelAlumno(sb, document.getElementById("puntos-mes"))).finally(ajustarTusClases),
                     Promise.resolve(window.Puntos && Puntos.montarTarjetaPanel(document.getElementById("puntos-ajedrez"), { sb, alumnoId: profile.id })).finally(ajustarTusClases),
+                    /* El título y el marco que compró en la tienda de puntos,
+                       junto a su nombre: solo los ve él (puntos-y-premios.md,
+                       «Lo que se canjea tiene que notarse»). */
+                    Promise.resolve(window.Puntos && Puntos.misPremios(sb, profile.id)).then((mios) => {
+                        if (mios) Puntos.pintarTituloYMarco(mios, document.getElementById("avatar"), document.getElementById("mi-adorno"));
+                    }),
                 );
                 partes.push(
                     cargarPendientes(rachaP, tallerP),

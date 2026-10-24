@@ -124,6 +124,56 @@ trae un enlace por cada archivo del producto, sacados de
 el catálogo de premios sale con sus enlaces sin tocar `js/puntos.js`. Lo
 revisa la prueba «4 bis» de `verificar-puntos.js`.
 
+## Lo que se canjea tiene que notarse
+
+El 24/10/2026, revisando premio por premio si lo que se compra en la tienda
+se le aplica de verdad a quien lo compra, salieron cinco cosas que se
+cobraban y no daban lo que decían. Ninguna daba error: la tienda decía
+«¡Listo! Lo canjeaste» y los puntos bajaban.
+
+1. **«Adelanta una lección» no adelantaba nada.** `canjear_premio()` sumaba
+   la lección al desbloqueo manual que hubiera (0 si no había), sin mirar por
+   dónde iba el alumno: el primer canje «abría» la lección 1, que siempre
+   está abierta, y a quien ya iba por la 6 le habría abierto la 1. Ahora
+   cuenta desde la lección que ya tiene disponible
+   (`interno.leccion_abierta()`: la siguiente a la última que marcó como
+   estudiada —`js/curso-academia.js` anota su número en `detail.n`— o hasta
+   donde se la abrió su profe, lo que llegue más lejos) y le abre una más.
+2. **Los puntos dobles se pisaban.** Un día comprado con una semana
+   corriendo empezaba a contar desde ya y se terminaba adentro de la semana:
+   se pagaba y no daba nada. Ahora se suma al final del que está corriendo
+   (`interno.fin_de_puntos_dobles()`), también cuando se regala.
+3. **El título y el marco no se veían en ningún lado.** `tituloEquipado()` y
+   `marcoEquipado()` existían en `js/puntos.js`, pero nadie los llamaba. Ahora
+   `Puntos.pintarTituloYMarco()` los pone en el panel, debajo del «¡Hola!»
+   (`#mi-adorno`), y el marco como un anillo alrededor de la foto
+   (`.marco-bronce`/`.marco-plata`/`.marco-oro` en `css/styles.css`, cada
+   color medido: 3:1 o más contra el blanco, `brand-50` y `brand-950`); la
+   tienda dice cuáles tiene puestos. Siguen siendo privados: solo los ve
+   quien los tiene (la RLS no se los deja ver a nadie más; ver la sección de
+   abajo). El nombre del marco va escrito al lado: el color nunca va solo.
+4. **Poner uno no quitaba el otro.** Con dos títulos puestos se mostraba el
+   más nuevo, y al quitarlo volvía a aparecer el viejo sin que nadie lo
+   pidiera. Ahora `equipar_premio()` y `canjear_premio()` dejan puesto uno de
+   cada tipo (título, marco, accesorio).
+5. **Los regalos, sueltos.** Las tarjetas que mandan los compañeros
+   quedaban mezcladas con los premios. Ahora la tienda las junta en «Tu
+   colección de regalos»: todas las del catálogo, cuántas tiene de cada una,
+   de quién, y «Llevas 3 de 5»; las que le faltan, punteadas y dichas
+   («Todavía no la tienes»).
+
+Lo ya comprado se arregló en la misma migración
+(`20261024230921_tienda_lo_comprado_se_aplica.sql`): a cada alumno se le
+abrió una lección más por cada canje (ninguno había estudiado lecciones de
+esos cursos, así que la regla nueva da exactamente eso), el día de puntos
+dobles comprado con una semana corriendo se corrió al final de la semana, y
+de los cosméticos puestos de más quedó el más nuevo, que era el que ya se
+veía. Nadie quedó debiendo puntos ni hubo que devolver: se les dio lo que
+habían pagado. Probado en la base dentro de bloques que se deshacen (un día
+con otro corriendo termina al final del otro; el adelanto de un alumno sin
+avance abre la 2; poner un título quita el otro). Lo de la página lo revisa
+la prueba «10 bis» de `verificar-puntos.js`.
+
 ## Los accesorios de avatar: lo único que otros alumnos (no solo quien lo tiene) llegan a ver
 
 Los títulos y los marcos de perfil solo se ven en el panel y la tienda de
