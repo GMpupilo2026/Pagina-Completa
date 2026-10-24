@@ -23,7 +23,7 @@
     "nombre": "Formación docente"
    }
   ],
-  "total": 891,
+  "total": 892,
   "material": [
    {
     "ruta": "material/cambiar-o-no-cambiar/cambiar-o-no-cambiar.pdf",
@@ -8154,6 +8154,12 @@
     "titulo": "Bases del XXI Festival Centroamericano y del Caribe de la Juventud, Costa Rica 2026",
     "tipo": "otro",
     "kb": 668
+   },
+   {
+    "ruta": "documentos/centroamericano-2026/cartel-centroamericano-2026.pdf",
+    "titulo": "Centroamericano 2026: cartel con código QR a la página, para pegar en los hoteles y en la sala",
+    "tipo": "otro",
+    "kb": 499
    },
    {
     "ruta": "documentos/jde/normativa-pjde-2026.pdf",
@@ -19075,7 +19081,7 @@
   ]
  },
  "imagenes": {
-  "total": 867,
+  "total": 868,
   "grupos": [
    {
     "carpeta": "entreno/img/facil",
@@ -24359,6 +24365,12 @@
       "titulo": "Logo de la Confederación de Ajedrez de América (de las bases del Centroamericano 2026)",
       "tipo": "otro",
       "kb": 65
+     },
+     {
+      "ruta": "img/centroamericano-2026/compartir.jpg",
+      "titulo": "Centroamericano 2026: la imagen que se ve al compartir la página por WhatsApp",
+      "tipo": "otro",
+      "kb": 110
      },
      {
       "ruta": "img/centroamericano-2026/hojas.png",

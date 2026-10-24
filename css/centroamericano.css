@@ -369,3 +369,85 @@ a.cac-despedida:hover .cac-globo { transform: translateY(-2px); }
 @media (prefers-reduced-motion: reduce) {
   .cac-sala-mascota { animation: none; }
 }
+
+/* «Hoy en el torneo» (js/centroamericano.js): una tarjeta blanca con el rojo de
+ * la píldora a la izquierda (el pizote del trofeo ya está justo abajo, junto
+ * al título de las fichas: aquí sería el tercero seguido). Contraste: #40478F sobre
+ * blanco 8,35; #1E2453 sobre blanco 14,66; en oscuro, blanco y #B8BBF2 sobre
+ * brand-900. */
+.cac-hoy {
+  position: relative;
+  background: #fff;
+  border-left: 8px solid var(--cac-rojo);
+  border-radius: 1.5rem;
+  box-shadow: 0 10px 28px -14px rgb(64 71 143 / 0.5);
+  padding: 1.25rem 1.5rem;
+  color: var(--cac-morado-hondo);
+}
+.dark .cac-hoy { background: rgb(var(--c-brand-900, 10 31 51)); color: #fff; }
+.cac-hoy-etiqueta {
+  font-size: 0.8rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--cac-acento);
+}
+.cac-hoy-principal { margin-top: 0.25rem; font-size: clamp(1.35rem, 3.6vw, 2rem); font-weight: 800; line-height: 1.15; }
+.cac-hoy-detalle { margin-top: 0.4rem; }
+.cac-hoy-sin-red { margin-top: 0.75rem; font-size: 0.85rem; color: var(--cac-acento); }
+.cac-hoy-sin-red[hidden] { display: none; }
+
+/* «Busca a tu jugador»: blanca, con el morado de las bases en el borde. */
+.cac-buscador {
+  background: #fff;
+  border: 3px solid var(--cac-morado);
+  border-radius: 1.5rem;
+  padding: 1.1rem 1.25rem 1.25rem;
+  box-shadow: 0 6px 0 var(--cac-morado);
+}
+.dark .cac-buscador { background: rgb(var(--c-brand-900, 10 31 51)); border-color: #b8bbf2; box-shadow: 0 6px 0 #b8bbf2; }
+.cac-buscador-titulo { display: block; font-size: 1.25rem; font-weight: 800; color: var(--cac-acento); }
+.cac-buscador-campo {
+  margin-top: 0.75rem;
+  width: 100%;
+  font-size: 1.1rem;
+  padding: 0.7rem 0.9rem;
+  border: 2px solid var(--cac-morado-2);
+  border-radius: 0.8rem;
+  background: #fff;
+  color: var(--cac-morado-hondo);
+}
+.dark .cac-buscador-campo { background: rgb(var(--c-brand-950, 7 21 39)); color: #fff; border-color: #b8bbf2; }
+.cac-buscador-campo:focus { outline: 3px solid var(--cac-rojo); outline-offset: 2px; }
+.cac-jugador {
+  border: 1px solid #dfe0f7;
+  border-left: 6px solid var(--cac-morado);
+  border-radius: 1rem;
+  padding: 0.8rem 1rem;
+  background: var(--cac-fondo);
+}
+.dark .cac-jugador { border-color: rgb(var(--c-brand-700, 51 78 104)); border-left-color: #b8bbf2; background: rgb(var(--c-brand-950, 7 21 39)); }
+.cac-jugador-nombre { font-weight: 800; font-size: 1.05rem; }
+.cac-fed {
+  display: inline-block;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  padding: 0.05rem 0.4rem;
+  border-radius: 0.35rem;
+  background: var(--cac-morado);
+  color: #fff;
+  vertical-align: 0.1em;
+}
+.cac-jugador-ronda { margin-top: 0.4rem; font-weight: 700; }
+
+/* El medallero. */
+.cac-medallas { width: 100%; font-size: 0.9rem; }
+.cac-medallas th, .cac-medallas td { padding: 0.4rem 0.6rem; text-align: right; }
+.cac-medallas th:first-child, .cac-medallas td:first-child { text-align: left; }
+.cac-podios { display: grid; gap: 0.8rem; grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr)); }
+.cac-podio { background: #fff; border-radius: 1rem; border: 1px solid #dfe0f7; padding: 0.8rem 1rem; }
+.dark .cac-podio { background: rgb(var(--c-brand-900, 10 31 51)); border-color: rgb(var(--c-brand-700, 51 78 104)); }
+.cac-podio h3 { font-weight: 800; color: var(--cac-acento); }
+.cac-podio ol { margin-top: 0.3rem; font-size: 0.9rem; }
+.cac-podio li { margin-top: 0.2rem; }
