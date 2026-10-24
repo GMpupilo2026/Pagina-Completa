@@ -141,7 +141,7 @@
             </div>
             <ul class="mt-6 sm:mt-8 grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-5">
                 <li>
-                    <a href="https://s1.chess-results.com/tnr1503400.aspx?lan=2" target="_blank" rel="noopener" data-ventana="Resultados en chess-results" data-color="morado" class="cac-ficha h-full flex flex-col rounded-3xl bg-white dark:bg-brand-900 shadow-md p-4 sm:p-6 focus:outline-none focus-visible:ring-4 focus-visible:ring-[#23acf4]">
+                    <a href="https://s1.chess-results.com/tnr1503400.aspx?lan=2" id="ficha-resultados" target="_blank" rel="noopener" data-ventana="Resultados en chess-results" data-color="morado" class="cac-ficha h-full flex flex-col rounded-3xl bg-white dark:bg-brand-900 shadow-md p-4 sm:p-6 focus:outline-none focus-visible:ring-4 focus-visible:ring-[#23acf4]">
                         <span class="cac-icono" aria-hidden="true">📊</span>
                         <span class="mt-3 font-extrabold text-base sm:text-lg leading-snug text-brand-800 dark:text-white">Resultados en chess-results</span>
                         <span class="hidden sm:block mt-1 text-sm text-brand-600 dark:text-brand-300 flex-1">La ficha oficial del torneo: inscritos, pareos, resultados y clasificación de cada ronda.</span>
@@ -149,7 +149,7 @@
                     </a>
                 </li>
                 <li>
-                    <a href="transmision.html?torneo=cenfotec" data-color="azul" class="cac-ficha h-full flex flex-col rounded-3xl bg-white dark:bg-brand-900 shadow-md p-4 sm:p-6 focus:outline-none focus-visible:ring-4 focus-visible:ring-[#23acf4]">
+                    <a href="transmision.html?torneo=cenfotec" id="ficha-partidas" data-ventana="Las partidas" data-color="azul" class="cac-ficha h-full flex flex-col rounded-3xl bg-white dark:bg-brand-900 shadow-md p-4 sm:p-6 focus:outline-none focus-visible:ring-4 focus-visible:ring-[#23acf4]">
                         <span class="cac-icono" aria-hidden="true">♟️</span>
                         <span class="mt-3 font-extrabold text-base sm:text-lg leading-snug text-brand-800 dark:text-white">Las partidas</span>
                         <span class="hidden sm:block mt-1 text-sm text-brand-600 dark:text-brand-300 flex-1">La sala de la transmisión de Lichess: cada tablero, jugada a jugada, en la pantalla grande.</span>
@@ -157,11 +157,11 @@
                     </a>
                 </li>
                 <li>
-                    <a href="https://www.youtube.com/watch?v=QPOZrd7IFrg" target="_blank" rel="noopener" data-color="rojo" class="cac-ficha h-full flex flex-col rounded-3xl bg-white dark:bg-brand-900 shadow-md p-4 sm:p-6 focus:outline-none focus-visible:ring-4 focus-visible:ring-[#23acf4]">
+                    <a href="https://www.youtube-nocookie.com/embed/QPOZrd7IFrg" id="ficha-video" target="_blank" rel="noopener" data-ventana="El video de la transmisión" data-color="rojo" class="cac-ficha h-full flex flex-col rounded-3xl bg-white dark:bg-brand-900 shadow-md p-4 sm:p-6 focus:outline-none focus-visible:ring-4 focus-visible:ring-[#23acf4]">
                         <span class="cac-icono" aria-hidden="true">🎥</span>
                         <span class="mt-3 font-extrabold text-base sm:text-lg leading-snug text-brand-800 dark:text-white">El video de la transmisión</span>
                         <span class="hidden sm:block mt-1 text-sm text-brand-600 dark:text-brand-300 flex-1">La transmisión del torneo en YouTube, para volver a verla.</span>
-                        <span class="mt-auto pt-3 sm:pt-4 text-xs sm:text-sm font-bold cac-accion">Ver en YouTube →<span class="sr-only"> (se abre en otra pestaña)</span></span>
+                        <span class="mt-auto pt-3 sm:pt-4 text-xs sm:text-sm font-bold cac-accion">Ver el video →</span>
                     </a>
                 </li>
                 <li>
@@ -189,11 +189,11 @@
                     </a>
                 </li>
                 <li>
-                    <a href="https://ucenfotec.ac.cr/ajedrez/" target="_blank" rel="noopener" data-color="verde" class="cac-ficha h-full flex flex-col rounded-3xl bg-white dark:bg-brand-900 shadow-md p-4 sm:p-6 focus:outline-none focus-visible:ring-4 focus-visible:ring-[#23acf4]">
+                    <a href="#ajedrez-cenfotec" data-color="verde" class="cac-ficha h-full flex flex-col rounded-3xl bg-white dark:bg-brand-900 shadow-md p-4 sm:p-6 focus:outline-none focus-visible:ring-4 focus-visible:ring-[#23acf4]">
                         <span class="cac-icono" aria-hidden="true">🎓</span>
                         <span class="mt-3 font-extrabold text-base sm:text-lg leading-snug text-brand-800 dark:text-white">El ajedrez en CENFOTEC</span>
-                        <span class="hidden sm:block mt-1 text-sm text-brand-600 dark:text-brand-300 flex-1">La página de ajedrez de la universidad, con sus torneos y cómo inscribirse.</span>
-                        <span class="mt-auto pt-3 sm:pt-4 text-xs sm:text-sm font-bold cac-accion">Abrir su página →<span class="sr-only"> (se abre en otra pestaña)</span></span>
+                        <span class="hidden sm:block mt-1 text-sm text-brand-600 dark:text-brand-300 flex-1">El otro torneo de la universidad, el FedeU-CENFOTEC, y cómo se inscribe.</span>
+                        <span class="mt-auto pt-3 sm:pt-4 text-xs sm:text-sm font-bold cac-accion">Ver la información →</span>
                     </a>
                 </li>
                 <li>
@@ -205,7 +205,7 @@
                     </a>
                 </li>
                 <li class="col-span-2 lg:col-span-1">
-                    <a href="torneos-en-vivo.html" data-color="naranja" class="cac-ficha h-full flex flex-col rounded-3xl bg-white dark:bg-brand-900 shadow-md p-4 sm:p-6 focus:outline-none focus-visible:ring-4 focus-visible:ring-[#23acf4]">
+                    <a href="torneos-en-vivo.html" data-ventana="Más torneos" data-color="naranja" class="cac-ficha h-full flex flex-col rounded-3xl bg-white dark:bg-brand-900 shadow-md p-4 sm:p-6 focus:outline-none focus-visible:ring-4 focus-visible:ring-[#23acf4]">
                         <span class="cac-icono" aria-hidden="true">🏁</span>
                         <span class="mt-3 font-extrabold text-base sm:text-lg leading-snug text-brand-800 dark:text-white">Más torneos</span>
                         <span class="hidden sm:block mt-1 text-sm text-brand-600 dark:text-brand-300 flex-1">Los demás torneos que se transmiten en Ajedrez Integral.</span>
@@ -242,7 +242,29 @@
                 </div>
                 <a href="mailto:ajedrez@ucenfotec.ac.cr" class="shrink-0 text-center bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2.5 rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2">Escribir un correo</a>
             </div>
-            <p class="mt-4 text-sm text-brand-600 dark:text-brand-300">Los demás torneos de la universidad y cómo inscribirse están en <a href="https://ucenfotec.ac.cr/ajedrez/" target="_blank" rel="noopener" class="text-accent-700 dark:text-accent-400 font-semibold underline underline-offset-2 hover:no-underline">su página de ajedrez<span class="sr-only"> (se abre en otra pestaña)</span></a>.</p>
+            <p class="mt-4 text-sm text-brand-600 dark:text-brand-300">El otro torneo de la universidad y cómo se inscribe están en la ficha «El ajedrez en CENFOTEC».</p>
+        </div>
+    </dialog>
+
+    <!-- «El ajedrez en CENFOTEC»: ucenfotec.ac.cr no se deja mostrar dentro de
+         otra página (X-Frame-Options: SAMEORIGIN), así que lo que dice su
+         página de ajedrez va aquí, encima, copiado tal cual de ella (octubre de
+         2026). Su página queda para abrirla aparte, sin dejar esta. -->
+    <dialog id="ajedrez-cenfotec" class="ficha-dialogo w-[calc(100%-1rem)] sm:w-[calc(100%-2rem)] max-w-3xl max-h-[90vh] rounded-2xl shadow-2xl p-0 bg-brand-50 dark:bg-brand-950 text-brand-800 dark:text-brand-100 backdrop:bg-black/60" aria-labelledby="ajedrez-cenfotec-titulo">
+        <div class="sticky top-0 z-10 flex items-center gap-3 px-4 sm:px-6 py-3 bg-white dark:bg-brand-900 border-b border-brand-100 dark:border-brand-800">
+            <h2 id="ajedrez-cenfotec-titulo" class="font-serif text-xl md:text-2xl font-bold text-brand-800 dark:text-white flex-1 min-w-0"><span aria-hidden="true">🎓 </span>El ajedrez en CENFOTEC</h2>
+            <button type="button" data-cerrar class="shrink-0 bg-brand-800 hover:bg-brand-700 text-white font-semibold text-sm px-4 py-2 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2">Cerrar</button>
+        </div>
+        <div class="px-4 sm:px-6 pt-2 pb-6">
+            <p class="text-brand-600 dark:text-brand-300 mt-2">Además del Desafío Mentes Maestras, la universidad organiza con la Federación Deportiva Universitaria (FedeU) el <strong>Torneo Ajedrez FedeU-CENFOTEC</strong>: un torneo individual universitario, femenino y masculino. Esto es lo que publica su página para la edición 2026.</p>
+            <dl class="mt-5 grid sm:grid-cols-2 gap-4">
+                <div class="rounded-2xl bg-white dark:bg-brand-900 border border-brand-100 dark:border-brand-800 p-5"><dt class="text-sm font-bold text-brand-600 dark:text-brand-300">Fecha y horario</dt><dd class="mt-1 font-semibold">Sábado 23 de mayo de 2026, de 8:00 a.m. a 4:00 p.m.</dd></div>
+                <div class="rounded-2xl bg-white dark:bg-brand-900 border border-brand-100 dark:border-brand-800 p-5"><dt class="text-sm font-bold text-brand-600 dark:text-brand-300">Lugar</dt><dd class="mt-1 font-semibold">Auditorio de la Universidad CENFOTEC, Barrio Francisco Peralta, San José</dd></div>
+                <div class="rounded-2xl bg-white dark:bg-brand-900 border border-brand-100 dark:border-brand-800 p-5"><dt class="text-sm font-bold text-brand-600 dark:text-brand-300">Inscripción</dt><dd class="mt-1 font-semibold">₡5000 (no afiliados a FedeU) y ₡3000 (afiliados a FedeU). Cerraba el 15 de mayo a las 5:00 p.m.</dd></div>
+                <div class="rounded-2xl bg-white dark:bg-brand-900 border border-brand-100 dark:border-brand-800 p-5"><dt class="text-sm font-bold text-brand-600 dark:text-brand-300">Premios</dt><dd class="mt-1 font-semibold">En cada categoría (femenina y masculina): trofeo al primer lugar y medalla al segundo y al tercero</dd></div>
+            </dl>
+            <p class="mt-5 text-sm text-brand-600 dark:text-brand-300">La inscripción la hace la coordinación deportiva de cada universidad, a nombre de sus atletas, con la planilla y las normas específicas que publica la universidad. Las consultas van a <a href="mailto:ajedrez@ucenfotec.ac.cr" class="text-accent-700 dark:text-accent-400 font-semibold underline underline-offset-2 hover:no-underline">ajedrez@ucenfotec.ac.cr</a>.</p>
+            <p class="mt-4"><a href="https://ucenfotec.ac.cr/ajedrez/" target="_blank" rel="noopener" class="inline-block bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2.5 rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2">Ver su página en otra pestaña ↗<span class="sr-only"> (esta página queda abierta)</span></a></p>
         </div>
     </dialog>
 
@@ -314,7 +336,7 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="grid md:grid-cols-2 gap-8 mb-12">
                 <div><a href="index.html" class="flex items-center gap-2 text-white mb-4"><img src="/img/logo-marca.png" alt="" width="78" height="48" class="h-9 w-auto shrink-0"><span class="font-serif text-lg font-bold">Ajedrez Integral</span></a><p class="text-sm text-brand-300">Plataforma educativa de ajedrez para escuelas, colegios y familias. Aprende, practica y compite.</p></div>
-                <div><h3 class="text-white font-semibold mb-4">Desafío Mentes Maestras 2026</h3><ul class="space-y-2 text-sm"><li><a href="#clasificacion" class="hover:text-accent-400 transition-colors">Clasificación final</a></li><li><a href="transmision.html?torneo=cenfotec" class="hover:text-accent-400 transition-colors">Las partidas</a></li><li><a href="https://s1.chess-results.com/tnr1503400.aspx?lan=2" target="_blank" rel="noopener" data-ventana="Resultados en chess-results" class="hover:text-accent-400 transition-colors">chess-results</a></li></ul></div>
+                <div><h3 class="text-white font-semibold mb-4">Desafío Mentes Maestras 2026</h3><ul class="space-y-2 text-sm"><li><a href="#clasificacion" class="hover:text-accent-400 transition-colors">Clasificación final</a></li><li><a href="transmision.html?torneo=cenfotec" data-ventana="Las partidas" class="hover:text-accent-400 transition-colors">Las partidas</a></li><li><a href="https://s1.chess-results.com/tnr1503400.aspx?lan=2" target="_blank" rel="noopener" data-ventana="Resultados en chess-results" class="hover:text-accent-400 transition-colors">chess-results</a></li></ul></div>
             </div>
             <div class="border-t border-brand-700 pt-6 text-center text-sm text-brand-300"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p><!-- legal: inicio --><p class="mt-2"><a href="privacidad.html" class="underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Política de privacidad</a> <span aria-hidden="true">·</span> <a href="terminos.html" class="underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Términos y condiciones</a></p><!-- legal: fin --></div>
         </div>

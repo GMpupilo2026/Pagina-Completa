@@ -9,6 +9,9 @@
  *   1. EL HTML, leído: cada ficha lleva a algún lado, lo que abre otra pestaña
  *      lleva rel="noopener", lo que se abre encima está permitido en frame-src
  *      y no hay ningún teléfono (no hay uno confirmado para estos torneos).
+ *      Y ningún botón saca a nadie de la página: lo de afuera y las otras
+ *      páginas del sitio se abren encima (a[data-ventana]); solo una ventana
+ *      ya abierta encima ofrece abrir algo aparte, en otra pestaña.
  *   2. LA PÁGINA, en un navegador, con un doble de la función sala-jugadores
  *      que contesta como contesta chess-results con el torneo terminado: ronda
  *      0 (el título dice «Clasificación final», sin número) y un pareo con el
@@ -105,6 +108,16 @@ for (const P of PAGINAS) {
   const ventanas = [...html.matchAll(/<a\b[^>]*href="(https:[^"]+)"[^>]*data-ventana=/g)].map((m) => new URL(m[1].replace(/&amp;/g, "&")).hostname);
   ok("lo que se abre encima está permitido en frame-src", ventanas.length > 0 && ventanas.every((h) => csp.split(/\s+/).some((s) => s === "https://" + h || (s.startsWith("https://*.") && h.endsWith(s.slice(9))))), ventanas.join(", "));
   ok("las partidas van a la sala de cine de la sala «" + P.sala + "»", html.includes('href="transmision.html?torneo=' + P.sala + '"'));
+  // Ningún botón del contenido (de <main> y del pie del torneo) saca de la página:
+  // cada enlace es a una ventana de la página («#…»), se abre encima
+  // (data-ventana) o es un correo. Dentro de una ventana ya abierta encima sí
+  // puede haber «en otra pestaña»: la página sigue ahí, debajo.
+  const sinDialogos = html.replace(/<dialog\b[\s\S]*?<\/dialog>/g, "");
+  const contenido = sinDialogos.slice(sinDialogos.indexOf("<main"), sinDialogos.indexOf("</main>"))
+    + (sinDialogos.match(/<h3 class="text-white font-semibold mb-4">[^<]*<\/h3><ul[\s\S]*?<\/ul>/) || [""])[0];
+  const salen = [...contenido.matchAll(/<a\b[^>]*>/g)].map((m) => m[0])
+    .filter((a) => !/href="#/.test(a) && !/data-ventana=/.test(a) && !/href="mailto:/.test(a));
+  ok("ningún botón saca de la página: todo se abre encima o es una ventana de la página", salen.length === 0, salen.join(" "));
   const logo = (html.match(/<img src="(img\/[a-z]+\/logo\.png)"[^>]*class="u-logo"/) || [])[1];
   ok("el logo de la universidad existe", !!logo && fs.existsSync(path.join(RAIZ, logo)), logo);
 }
@@ -214,6 +227,15 @@ for (const P of PAGINAS) {
       });
       ok("la imagen para compartir lleva la banda azul de la universidad con su logo", img.tam.join("x") === "1080x1080" && img.banda === P.azul && img.blanco, JSON.stringify(img));
       ok("y abajo sus franjas, no la bandera", img.abajo === P.azul, JSON.stringify(img));
+      // Entrar con «#ficha-partidas» (lo que usan los botones de Torneos) abre
+      // la sala de las partidas encima, sin cambiar de página.
+      const p3 = await ctx.newPage();
+      await p3.goto(BASE + "/" + P.pagina + "#ficha-partidas", { waitUntil: "load" });
+      await p3.waitForSelector("dialog.ventana-enlace[open] iframe", { timeout: 10000 }).catch(() => {});
+      const encima = await p3.evaluate(() => { const d = document.querySelector("dialog.ventana-enlace[open]"); const f = d && d.querySelector("iframe");
+        return { abierta: !!(d && d.checkVisibility()), src: f ? f.getAttribute("src") : "", pagina: location.pathname }; });
+      ok("entrar con #ficha-partidas abre la sala de las partidas encima, en la misma página", encima.abierta && encima.src.endsWith("transmision.html?torneo=" + P.sala) && encima.pagina === "/" + P.pagina, JSON.stringify(encima));
+      await p3.close();
       ok("sin errores de JavaScript", !errores.length, errores.join(" | "));
       await ctx.close();
 

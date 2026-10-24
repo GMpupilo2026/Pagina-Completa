@@ -74,10 +74,14 @@ async function paginaPublica(browser) {
   await page.waitForSelector("#salas-lista:not(.hidden)");
   const f = await fichas(page);
   igual("una ficha por sala visible, en su orden (la oculta no)", f.map((x) => x.nombre), ["Desafío Mentes Maestras CENFOTEC 2026", "Torneo UTN 2026"]);
-  igual("la de Lichess entra a la sala de cine y ofrece Lichess aparte", f[0].enlaces, [
+  // Las dos son de universidades con página propia: ningún botón sale del
+  // sitio (ver «Las páginas de los torneos universitarios»). Lichess va a la
+  // ficha de las partidas de su página, que lo abre encima; lo que no tiene
+  // ficha, a la página entera.
+  igual("la de Lichess entra a la sala de cine y lleva Lichess a su ficha en la página, sin salir del sitio", f[0].enlaces, [
     ["Entrar a la sala de Desafío Mentes Maestras CENFOTEC 2026 →", "transmision.html?torneo=cenfotec", ""],
-    ["Verlo directo en Lichess de Desafío Mentes Maestras CENFOTEC 2026 (se abre en otra pestaña) ↗", "https://lichess.org/broadcast/desafio-mentes-maestras-cenfotec-2026/s7NfNv6H", "_blank"]]);
-  igual("la de enlaces lleva un botón por transmisión, que se abre aparte", f[1].enlaces.map((e) => [e[0].split(" de ")[0], e[2]]), [["Partida masculina", "_blank"], ["Partida femenina", "_blank"]]);
+    ["Verlo directo en Lichess de Desafío Mentes Maestras CENFOTEC 2026 →", "/cenfotec-2026.html#ficha-partidas", ""]]);
+  igual("la de enlaces lleva un botón por transmisión, a la página del torneo y sin salir del sitio", f[1].enlaces.map((e) => [e[0].split(" de ")[0], e[1], e[2]]), [["Partida masculina", "/utn-2026.html", ""], ["Partida femenina", "/utn-2026.html", ""]]);
   igual("la pantalla de carga se va", await page.$eval("#loading", (e) => e.checkVisibility()), false);
   igual("sin errores de JavaScript", errores, []);
   await ctx.close();

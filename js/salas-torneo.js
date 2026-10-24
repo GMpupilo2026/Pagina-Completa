@@ -107,11 +107,20 @@
       pagina: "/centroamericano-2026.html",
       fichas: [[/chess-results\.com\//i, "ficha-resultados"], [/bases-cac-2026\.pdf$/i, "ficha-bases"]],
     },
-    // Las universidades, con su azul y su logo (css/universidades.css). Sin
-    // `fichas`: su enlace directo a Lichess no tiene ficha en su página. Ver
-    // «La ficha del Desafío Mentes Maestras».
-    "cenfotec": { clase: "u-sala", tema: "u-sala-cft", imagen: "/img/cenfotec/logo.png", ancho: 566, alto: 256 },
-    "utn": { clase: "u-sala", tema: "u-sala-utn", imagen: "/img/utn/logo.png", ancho: 410, alto: 313 },
+    // Las universidades, con su azul y su logo (css/universidades.css). Lo
+    // de afuera (chess-results, el enlace directo a Lichess) lleva a su ficha
+    // en la página del torneo, que lo abre encima. Ver «Las páginas de los
+    // torneos universitarios».
+    "cenfotec": {
+      clase: "u-sala", tema: "u-sala-cft", imagen: "/img/cenfotec/logo.png", ancho: 566, alto: 256,
+      pagina: "/cenfotec-2026.html",
+      fichas: [[/chess-results\.com\//i, "ficha-resultados"], [/lichess\.org\//i, "ficha-partidas"], [/youtube\.com\/|youtu\.be\//i, "ficha-video"]],
+    },
+    "utn": {
+      clase: "u-sala", tema: "u-sala-utn", imagen: "/img/utn/logo.png", ancho: 410, alto: 313,
+      pagina: "/utn-2026.html",
+      fichas: [[/chess-results\.com\/tnr1498221\b/i, "ficha-femenino"], [/chess-results\.com\/tnr1498218\b/i, "ficha-masculino"], [/lichess\.org\//i, "ficha-partidas"]],
+    },
   };
 
   function adentro(portada, url) {
