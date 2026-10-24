@@ -3745,10 +3745,14 @@ ese tipo; se contesta con una jugada, no contra el motor.
   falta material; una poda deja pasar solo las jugadas que dejan al rival
   con 6 respuestas o menos, y lo que sale se vuelve a comprobar sin poda). Es lo
   mismo que se hizo con «Con lo justo»: nada se inventa, todo se verifica. Se
-  juntan pocas, y varias son finales parecidos; las del dueño son las que
-  valen por sí solas. Para sumar más: otra `--semilla`, y
+  juntan pocas (de 1,6 millones de posiciones sorteadas, 50 tenían un ahogado
+  forzado y 11 pasaron el motor, más la del dueño: 12 en el nivel), y varias son
+  finales parecidos; la del dueño es la que vale por sí sola. Para sumar más: otra `--semilla`, y
   `node herramientas/tipos-generar.js --solo ahogado`. Las semillas corridas:
-  1 (4 × 150 000) y 2 (4 × 250 000).
+  1 (4 × 150 000) y 2 (4 × 250 000). **Después de rehacer el banco, correr
+  `python3 herramientas/metas-indice.py`**: Tareas ofrece cada tipo con su total
+  de `tipos.json` («Salva las tablas (55)») y `verificar-tareas.js` falla si el
+  número quedó viejo (pasó: decía 43 y el banco tenía 55).
 - **El nivel 3 pide 4 ejercicios, no 10** (`verificar-tipos.js`, como «Con lo
   justo»): no hay de dónde sacar tantos sin inventarlos. `--solo tablas` rehace
   los niveles 1 y 2 y **conserva** el 3; `--solo ahogado` rehace solo el 3.

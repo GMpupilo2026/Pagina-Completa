@@ -797,8 +797,8 @@
       pista = true;
       bPista.disabled = true;
       marcas[mm.from] = { cls: "m-bien", signo: "?", dicho: "pista: esta pieza" };
-      estado("Pista: la jugada sale con " + articulo(mm.color + mm.piece) + piezaDicha(mm.color + mm.piece) + " de " + mm.from + ". Con pista, una estrella.");
       redibujar(tab.ultima);
+      estado("Pista: la jugada sale con " + articulo(mm.color + mm.piece) + piezaDicha(mm.color + mm.piece) + " de " + mm.from + ". Con pista, una estrella.");
     });
     $("controles").appendChild(bPista);
     if (U.adaptado()) U.leerPosicion(item.fen);

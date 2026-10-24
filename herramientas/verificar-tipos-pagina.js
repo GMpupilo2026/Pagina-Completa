@@ -823,7 +823,7 @@ window.PracticeEngine = {
       const { page, ctx, errores } = await abrir(browser, true, "#tablas/3/" + aho.id);
       await page.waitForSelector("#vista-juego:not(.hidden) #jugada-input");
       await page.click("text=Pista");
-      const t = await estado(page);
+      const t = await esperarEstado(page, /Pista:/);
       ok("la pista dice con qué pieza se juega (la dama)", /con una dama blanca de e8/.test(t) || /dama.*e8/.test(t), t);
       await escribir(page, buena1);
       await esperarEstado(page, /Te toca: queda un paso/);
