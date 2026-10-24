@@ -131,9 +131,15 @@
             return board.moves().length > 0 && board.game.turn() !== activePlayerColor;
         }
 
+        /* Al recorrer la partida hacia atrás «Deshacer» no se QUITA de la barra
+           (hidden): se queda ocupando su lugar y solo no se ve (invisible, que
+           además lo saca del Tab y del lector). Quitarlo reacomodaba la fila y
+           los botones de las ventanas saltaban de lugar con cada ◀. Ver «La barra
+           del tablero, de solo iconos» en docs/decisiones/clase-en-vivo.md. */
         function updateUndoButton() {
             const btn = document.getElementById("undo-move-btn");
-            btn.classList.toggle("hidden", !canUndoNow() || board.isViewingHistory());
+            btn.classList.toggle("hidden", !canUndoNow());
+            btn.classList.toggle("invisible", board.isViewingHistory());
         }
 
         // ---------- Pestañas del profesor (Mi plan/Táctica/Entrenamientos/Preguntar/Practicar) ----------

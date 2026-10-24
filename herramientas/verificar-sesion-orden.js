@@ -128,6 +128,28 @@ async function pruebaProfesor(browser) {
     document.getElementById("toggle-hide-btn").textContent), "👁️Mostrar las piezas a los alumnos");
   await page.click("#toggle-hide-btn");
 
+  /* Recorrer la partida hacia atrás no mueve la barra: «Deshacer» se esconde pero
+     sigue ocupando su lugar. Si se quitara (display none), la fila se reacomodaba
+     y los botones de las ventanas saltaban con cada ◀ (no da ningún error). */
+  const lugares = () => page.evaluate(() => [...document.querySelectorAll("#barra-tablero button")]
+    .filter((b) => b.id !== "undo-move-btn" && b.checkVisibility())
+    .map((b) => { // contra la barra: el scroll de la página no cuenta
+      const r = b.getBoundingClientRect(), barra = document.getElementById("barra-tablero").getBoundingClientRect();
+      return b.id + ":" + Math.round(r.left) + "," + Math.round(r.top - barra.top);
+    }).join(" "));
+  await page.click('[data-square="e2"]');
+  await page.click('[data-square="e4"]');
+  await page.click('[data-square="e7"]');
+  await page.click('[data-square="e5"]');
+  const antesDeIrAtras = await lugares();
+  igual("con la partida al día, «Deshacer» se ve", await page.evaluate(() =>
+    document.getElementById("undo-move-btn").checkVisibility({ visibilityProperty: true })), true);
+  await page.click("#move-nav-prev");
+  igual("viendo una jugada anterior, «Deshacer» no se ve (ni se alcanza con Tab)", await page.evaluate(() =>
+    document.getElementById("undo-move-btn").checkVisibility({ visibilityProperty: true })), false);
+  igual("y los demás botones de la barra no se movieron", await lugares(), antesDeIrAtras);
+  await page.click("#move-nav-last");
+
   console.log("-- Lo que toca el tablero va DEBAJO del tablero");
   igual("«El tablero» está en la columna del tablero, no en la de herramientas", await page.evaluate(() =>
     !!document.getElementById("toolbar-tablero").closest(".proyector-columna")

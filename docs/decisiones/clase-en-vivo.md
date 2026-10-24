@@ -214,6 +214,13 @@ ocupaban demasiado. Ahora son **una sola fila de botones de solo icono**
 - 44 px en el celular (para el dedo), 36 en la computadora; ◀ ▶ pasaron de 32 a
   36 para que la fila sea pareja. «👁️ Como alumno» pasó a 🎓, porque 👁️ es
   también el de «Mostrar las piezas».
+- **La barra no se mueve al recorrer la partida.** «↶ Deshacer» no se
+  muestra mientras se ve una jugada anterior, pero ya no se quita con
+  `hidden` (display none): se queda ocupando su lugar con `invisible`
+  (`visibility:hidden`, que también lo saca del Tab y del lector). Quitarlo
+  reacomodaba la fila con cada ◀ y los botones de las ventanas (proyector,
+  como alumno, control remoto) saltaban de sitio. `hidden` queda solo para
+  quien no puede deshacer nunca (`canUndoNow()`).
 - `verificar-sesion-orden.js` mide que el rótulo no se vea quieto y sí al pasar
   el ratón (cambiándolo a `:active`, salta), que sea el nombre accesible y que
   el grupo traiga sus cuatro botones en orden.
