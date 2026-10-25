@@ -963,32 +963,40 @@
   // #1E2453 sobre el tono del medio: 8,0 en el oro, 9,1 en la plata y 4,4 en el
   // bronce (letra grande: pide 3).
   const MEDALLAS = [["#fff3b0", "#e0b43a", "#8f6a10"], ["#ffffff", "#c4c6cc", "#6f727a"], ["#f6d0a8", "#c27a3e", "#6e3d1a"]];
-  // Una medalla de verdad: la cinta en V con los colores de la bandera, el
-  // disco con su brillo de metal, un anillo por dentro y el número en relieve.
+  // La medalla con su corona de laureles (la opción B que eligió el dueño): el
+  // disco con su brillo de metal, un anillo hundido, el número en relieve, dos
+  // ramas de laurel alrededor y una estrella del mismo metal arriba. Los
+  // laureles son adorno: ningún dato va encima de ellos.
+  const LAURELES = ["#7fbf6a", "#4e9a43"];
   function medalla(ctx, x, y, r, p, letra) {
     const [luz, color, borde] = MEDALLAS[p - 1];
-    // La cinta: dos tiras que bajan en V hasta el disco, en franjas azul,
-    // blanco, rojo, blanco y azul.
-    const franjas = ["#1e4c8a", "#ffffff", "#ce1328", "#ffffff", "#1e4c8a"], ancho = 13, arriba = y - r - 150, abajo = y - r * 0.55;
+    // Las dos ramas: ocho hojas por lado, de abajo hacia arriba.
     [-1, 1].forEach((lado) => {
-      franjas.forEach((f, k) => {
-        const x0 = x + lado * (r * 0.95) - lado * k * ancho, x1 = x + lado * (r * 0.05) - lado * k * ancho;
-        ctx.fillStyle = f; ctx.beginPath();
-        ctx.moveTo(x0, arriba); ctx.lineTo(x0 - lado * ancho, arriba); ctx.lineTo(x1 - lado * ancho, abajo); ctx.lineTo(x1, abajo);
-        ctx.closePath(); ctx.fill();
-      });
+      for (let i = 0; i < 8; i++) {
+        const a = Math.PI / 2 + lado * (0.35 + i * 0.32), rr = r * 1.39;
+        ctx.save(); ctx.translate(x + rr * Math.cos(a), y + rr * Math.sin(a)); ctx.rotate(a + lado * 1.2);
+        ctx.fillStyle = LAURELES[i % 2]; ctx.beginPath(); ctx.ellipse(0, 0, r * 0.28, r * 0.107, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.restore();
+      }
     });
     // La sombra y el disco con su brillo arriba a la izquierda.
-    ctx.fillStyle = "rgba(0, 0, 0, 0.22)"; ctx.beginPath(); ctx.arc(x + 6, y + 10, r, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = "rgba(0, 0, 0, 0.22)"; ctx.beginPath(); ctx.arc(x + 5, y + 8, r, 0, Math.PI * 2); ctx.fill();
     const g = ctx.createRadialGradient(x - r * 0.35, y - r * 0.4, r * 0.1, x, y, r);
     g.addColorStop(0, luz); g.addColorStop(0.55, color); g.addColorStop(1, borde);
     ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
-    ctx.lineWidth = 6; ctx.strokeStyle = borde; ctx.stroke();
+    ctx.lineWidth = 5; ctx.strokeStyle = borde; ctx.stroke();
     // El anillo de adentro, con el metal al revés (hundido).
     const g2 = ctx.createRadialGradient(x + r * 0.25, y + r * 0.3, r * 0.05, x, y, r * 0.74);
     g2.addColorStop(0, luz); g2.addColorStop(1, color);
     ctx.fillStyle = g2; ctx.beginPath(); ctx.arc(x, y, r * 0.74, 0, Math.PI * 2); ctx.fill();
     ctx.lineWidth = 4; ctx.strokeStyle = borde; ctx.stroke();
+    // La estrella de arriba, del mismo metal.
+    ctx.beginPath();
+    for (let i = 0; i < 10; i++) {
+      const a = -Math.PI / 2 + (i * Math.PI) / 5, rr = i % 2 ? r * 0.15 : r * 0.37;
+      ctx.lineTo(x + rr * Math.cos(a), y - r * 1.52 + rr * Math.sin(a));
+    }
+    ctx.closePath(); ctx.fillStyle = color; ctx.fill(); ctx.lineWidth = 3; ctx.strokeStyle = borde; ctx.stroke();
     // El número en relieve: una luz corrida hacia arriba y el número encima.
     ctx.textAlign = "center";
     ctx.font = "800 " + Math.round(r * 1.05) + "px " + letra;
@@ -1061,7 +1069,7 @@
     let tam = 120;
     const nombre = nombreAlDerecho(x.j).toUpperCase();
     ctx.font = "800 " + tam + "px " + letra;
-    while (ctx.measureText(nombre).width > (podio ? 1560 : 1800) && tam > 60) { tam -= 4; ctx.font = "800 " + tam + "px " + letra; }
+    while (ctx.measureText(nombre).width > (podio ? 1440 : 1800) && tam > 60) { tam -= 4; ctx.font = "800 " + tam + "px " + letra; }
     conSombra(() => ctx.fillText(nombre, cx, 945), 6);
     // La medalla a cada lado del nombre, con el número del puesto.
     if (podio) [cx - 930, cx + 930].forEach((mx) => medalla(ctx, mx, 930, 92, p, letra));
