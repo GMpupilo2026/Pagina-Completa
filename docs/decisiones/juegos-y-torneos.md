@@ -8576,6 +8576,18 @@ Es una página estática, sin cuenta y sin base: nada se guarda.
   sitio también queda en la misma pestaña (nombrar ajedrez-integral.com no es
   irse) y lo de afuera sigue en otra, con su ↗. Lo revisa
   `verificar-centroamericano.js`.
+- **En el celular, un PDF no va en el marco.** El dueño abrió las bases en su
+  Android y la ventana decía «Este contenido está bloqueado. Comunícate con el
+  propietario del sitio», aunque el PDF es del mismo sitio y
+  `frame-ancestors 'self'` lo deja: el visor de PDF del celular no se deja
+  meter en un marco (Safari, en el iPhone, muestra solo la primera página).
+  En la computadora sí funcionaba, y por eso ningún verificador lo vio.
+  Ahora `js/ventana-enlace.js` deja que un enlace a un `.pdf` abra su
+  pestaña (su `target="_blank"`) cuando el aparato es táctil
+  (`pointer: coarse`) o no tiene visor (`navigator.pdfViewerEnabled`), y al
+  entrar con `#ficha-bases` no abre nada: una pestaña nueva no se abre sin
+  que la persona toque. Lo demás (chess-results, el formulario del bye)
+  sigue abriéndose encima. El verificador lo prueba con un celular simulado.
 - **La ficha del Desafío Mentes Maestras** (la sala `cenfotec`, de la
   Universidad CENFOTEC) lleva lo mismo que la del Centroamericano pero con la
   cara de la universidad (lo pidió el dueño): el azul de su imagen (#233065
@@ -9091,6 +9103,50 @@ bajar todos los certificados de una delegación en un solo PDF.
   darlo por bueno rompí a propósito los números, la remontada, el inglés del
   aviso, el PDF de varias páginas y la regla de «suscrito antes», y cada uno
   saltó.
+
+### Sus rondas en mi calendario
+
+Lo pidió el dueño entre las mejoras («1»). Ya había un «Agregar a mi
+calendario» con todo el festival (el `.ics` que arma
+`herramientas/centroamericano-imagenes.js`); este es el de UN jugador, en su
+tarjeta del buscador.
+
+- Cada ronda de su torneo es un evento, a la hora de la fila de `#calendario`
+  (su `data-inicio`, en hora de Costa Rica, y `data-minutos`): la misma copia
+  de las horas que usa «Hoy en el torneo». Un torneo con menos rondas (un
+  Round Robin) trae solo las suyas.
+- En la descripción: su categoría y, en las jugadas, lo que hizo; en la
+  emparejada, su mesa, su color y su rival; en las que faltan, que vuelva a
+  bajar el calendario cuando salga el pareo.
+- El UID es fijo por torneo, jugador y ronda: bajarlo otra vez pone al día la
+  mesa en vez de duplicar las rondas (en los calendarios que respetan el UID).
+- Avisa 30 minutos antes de cada ronda. El formato lo arma
+  `js/calendario-ics.js` (`armarHoras`, nueva, al lado de `armar` y
+  `armarDias`): una sola copia del escape, el doblado de las líneas y la zona.
+- Lo revisa `verificar-centroamericano.js`: la hora en hora de Costa Rica, el
+  aviso, la mesa y el rival de la ronda emparejada. Rompí a propósito el aviso
+  y la mesa, y saltó.
+
+### El modo de prueba
+
+Lo pidió el dueño para probar la página con torneos ya separados por
+categoría antes del festival, sin que lo vea el público.
+
+- `centroamericano-2026.html?sala=<clave>` muestra la página con los torneos
+  de otra sala de `admin.html#torneos`: una **oculta**, por ejemplo
+  `centroamericano-prueba`, con los 12 torneos del festival de 2025 (uno por
+  categoría, la categoría en el texto de cada botón).
+- La función `sala-jugadores` lee una sala oculta solo con `prueba: true` y
+  si quien la pide administra: se pregunta `soy_admin()` con SU token, por
+  PostgREST, así que pasa por la verificación en dos pasos. A cualquier otro
+  le contesta 403 y la página lo explica.
+- Arriba va un aviso rojo, pegado, que dice qué sala se está viendo, con
+  «Salir del modo de prueba». Lo guardado va aparte (`cac_prueba_…`): no pisa
+  lo que el aparato tenía del festival. Los avisos al celular no se
+  encienden. Con la clave del festival, o una clave que no es de sala, no
+  hay modo de prueba.
+- Lo revisa `verificar-centroamericano.js`. Rompí a propósito el pedido en
+  modo de prueba y el freno de los avisos, y saltaron.
 
 ## Las páginas de los torneos universitarios
 

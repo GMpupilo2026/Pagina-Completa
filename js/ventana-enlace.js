@@ -111,7 +111,9 @@
     return a && a.matches("a[data-ventana]") ? a : null;
   }
   const fichaAlEntrar = fichaDe(location.hash);
-  if (fichaAlEntrar && typeof HTMLDialogElement === "function") {
+  // Un PDF en el celular no: no se vería (ver abajo), y una pestaña nueva no
+  // se puede abrir sin que la persona toque. Ahí queda la ficha para tocarla.
+  if (fichaAlEntrar && typeof HTMLDialogElement === "function" && !(esPdf(fichaAlEntrar) && !visorDePdfEnMarco())) {
     abrir(fichaAlEntrar).addEventListener("close", () => {
       if (location.hash === "#" + fichaAlEntrar.id) history.replaceState(null, "", location.pathname + location.search);
     });
@@ -132,9 +134,22 @@
     if (!a || ev.defaultPrevented || ev.button !== 0) return;
     if (ev.ctrlKey || ev.metaKey || ev.shiftKey || ev.altKey) return;
     if (typeof HTMLDialogElement !== "function") return;
+    // Un PDF dentro de un marco no se ve en el celular: Chrome en Android
+    // dice «Este contenido está bloqueado» y Safari muestra solo la primera
+    // página. Ahí el PDF se abre en su pestaña (su target="_blank"), donde el
+    // visor del aparato sí lo muestra entero.
+    if (esPdf(a) && !visorDePdfEnMarco()) return;
     ev.preventDefault();
     abrir(a);
   });
+
+  function esPdf(a) {
+    return /\.pdf$/i.test(a.pathname || "");
+  }
+  function visorDePdfEnMarco() {
+    if (navigator.pdfViewerEnabled === false) return false;
+    try { return !window.matchMedia("(pointer: coarse)").matches; } catch (e) { return true; }
+  }
 
   window.VentanaEnlace = { abrir, abrirDialogo };
 })();
