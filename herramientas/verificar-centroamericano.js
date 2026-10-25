@@ -674,7 +674,34 @@ ok("la página carga el cliente de Supabase antes que su código en vivo", html.
     await p6.reload({ waitUntil: "load" });
     r = await buscar("mayorga");
     ok("sin señal, muestra lo último que llegó y lo dice", r.tarjetas.length === 1 && /Sin conexión/.test(r.estado), JSON.stringify(r));
+    ok("mientras el torneo no termina, no hay diploma", await p6.evaluate(() => !document.querySelector('#buscador-resultados [data-accion^="diploma"]')));
     await ctx6.close();
+
+    // El diploma: con la clasificación final (chess-results ya no dice la ronda
+    // ni trae pareo, y normalizar() lo marca terminado), en imagen y en PDF.
+    const FINAL = JSON.parse(JSON.stringify(DATOS));
+    FINAL.torneos[0].ronda = 0; FINAL.torneos[0].pareo = null;
+    const ctxDip = await nav.newContext({ viewport: { width: 1280, height: 900 }, serviceWorkers: "block", acceptDownloads: true });
+    await ctxDip.addInitScript((d) => { window.sb = { functions: { invoke: async () => ({ data: d, error: null }) } }; }, FINAL);
+    const pDip = await ctxDip.newPage();
+    await pDip.goto(BASE + "/" + PAGINA, { waitUntil: "load" });
+    await pDip.fill("#buscador-nombre", "mayorga");
+    await pDip.waitForSelector('#buscador-resultados [data-accion="diploma-pdf"]', { timeout: 10000 }).catch(() => {});
+    const botonesDip = await pDip.evaluate(() => [...document.querySelectorAll('#buscador-resultados [data-accion^="diploma"]')].map((b) => b.textContent + (b.checkVisibility() ? "" : " (oculto)")));
+    ok("con el torneo terminado, cada tarjeta trae su diploma en PDF y en imagen", JSON.stringify(botonesDip) === JSON.stringify(["Diploma (PDF)", "Diploma (imagen)"]), JSON.stringify(botonesDip));
+    ok("el nombre va al derecho, con el título adelante", await pDip.evaluate(() => window.CentroamericanoTablas.nombreAlDerecho({ titulo: "WIM", nombre: "Mayorga Araya, Sofia" }) === "WIM Sofia Mayorga Araya"
+      && window.CentroamericanoTablas.nombreAlDerecho({ titulo: "", nombre: "Wilson Hannah" }) === "Wilson Hannah"));
+    await pDip.evaluate(() => { const m = window.TablaImagen.marcar; window.__marcas = 0; window.TablaImagen.marcar = (c) => { window.__marcas++; return m(c); }; });
+    const [dImg] = await Promise.all([pDip.waitForEvent("download", { timeout: 20000 }), pDip.click('#buscador-resultados [data-accion="diploma-imagen"]')]);
+    const pngDip = fs.readFileSync(await dImg.path());
+    ok("«Diploma (imagen)» da un A4 acostado (2339 × 1654) con la marca de agua", pngDip.slice(1, 4).toString() === "PNG" && pngDip.readUInt32BE(16) === 2339 && pngDip.readUInt32BE(20) === 1654
+      && dImg.suggestedFilename() === "centroamericano-2026-diploma-mayorga-araya-sofia.png" && await pDip.evaluate(() => window.__marcas === 1), dImg.suggestedFilename());
+    const [dPdf] = await Promise.all([pDip.waitForEvent("download", { timeout: 20000 }), pDip.click('#buscador-resultados [data-accion="diploma-pdf"]')]);
+    const pdfDip = fs.readFileSync(await dPdf.path()).toString("latin1");
+    ok("«Diploma (PDF)» da una página A4 acostada con la imagen de borde a borde", pdfDip.startsWith("%PDF-") && pdfDip.includes("/MediaBox [0 0 841.89 595.28]")
+      && pdfDip.includes("/DCTDecode") && pdfDip.includes("/Count 1") && pdfDip.includes("(Diploma · WIM Sofia Mayorga Araya)".replace("·", "\xb7"))
+      && dPdf.suggestedFilename() === "centroamericano-2026-diploma-mayorga-araya-sofia.pdf" && await pDip.evaluate(() => window.__marcas === 2), dPdf.suggestedFilename());
+    await ctxDip.close();
 
     // Instalar en iPhone: Safari no avisa, así que se explica cómo, una vez.
     const ctxIos = await nav.newContext({ viewport: { width: 390, height: 844 }, serviceWorkers: "block",

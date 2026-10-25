@@ -123,6 +123,7 @@
       delegApagado: (p) => "Listo: ya no te avisamos el resumen de " + p + ".",
       imagenResumen: "Compartir imagen",
       hojaPdf: "Hoja de la delegación para imprimir (PDF)",
+      diplomaPdf: "Diploma (PDF)", diplomaImagen: "Diploma (imagen)",
       puestosTitulo: "Su puesto en la categoría después de cada ronda:",
       puestoRonda: (r, p) => "R" + r + " " + p,
       puestosNota: "Con los mismos puntos se comparte el puesto (por ejemplo, 3.º–5.º): el desempate lo decide al final del torneo.",
@@ -198,6 +199,7 @@
       delegApagado: (p) => "Done: we no longer send you " + p + "'s summary.",
       imagenResumen: "Share image",
       hojaPdf: "Delegation sheet to print (PDF)",
+      diplomaPdf: "Certificate (PDF)", diplomaImagen: "Certificate (image)",
       puestosTitulo: "Their place in the section after each round:",
       puestoRonda: (r, p) => "R" + r + " " + p,
       puestosNota: "Players on the same points share the place (for example, 3rd–5th): tiebreaks decide it at the end of the tournament.",
@@ -571,6 +573,16 @@
     comp.dataset.accion = "compartir";
     comp.addEventListener("click", () => { if (window.CentroamericanoTablas) window.CentroamericanoTablas.compartirJugador(x, comp); });
     acciones.appendChild(comp);
+    // Con el torneo terminado, su diploma: en PDF para imprimir y en imagen.
+    if (x.torneo.terminado || (x.torneo.rondas > 0 && x.torneo.ronda >= x.torneo.rondas)) {
+      [["pdf", tx.diplomaPdf], ["imagen", tx.diplomaImagen]].forEach(([formato, texto]) => {
+        const b = el("button", "cac-jugador-boton", texto);
+        b.type = "button";
+        b.dataset.accion = "diploma-" + formato;
+        b.addEventListener("click", () => { if (window.CentroamericanoTablas) window.CentroamericanoTablas.descargarDiploma(x, formato, b); });
+        acciones.appendChild(b);
+      });
+    }
     li.appendChild(acciones);
     if (abierta) {
       const rondas = rondasDe(x);

@@ -9,6 +9,7 @@
  *   dos), con la hora, cómo va la ronda y un QR a la página; con el torneo
  *   terminado, empieza por los podios. Para una pantalla en la sala.
  * - Las sorpresas (el de menos Elo que puntúa contra el de más) y los invictos (#sorpresas).
+ * - El diploma de cada jugador al terminar el torneo, en imagen y en PDF.
  * - La hoja de la delegación en PDF: sus jugadores en la ronda, con mesa,
  *   color y rival (js/reporte-pdf.js).
  * - La imagen para compartir a un jugador (con su puesto ronda a ronda), la
@@ -112,6 +113,8 @@
       dipDetalle: (pts, rondas, p, de) => pts + (pts === "1" ? " punto" : " puntos") + (rondas ? " en " + rondas + " rondas" : "") + " · puesto " + p + " de " + de,
       dipLugar: "Gimnasio Nacional, La Sabana · San José, Costa Rica · del 1 al 8 de noviembre de 2026",
       dipPie: "Según la clasificación final publicada en chess-results",
+      dipListo: "Listo: el diploma se bajó a tu aparato.",
+      dipCompartir: (n) => "El diploma de " + n + " en el " + NOMBRE_CORTO + ":",
       pdfTitulo: (pais, r) => pais + (r ? " · Ronda " + r : " · Lista inicial"),
       pdfSub: "XXI Festival Centroamericano y del Caribe de la Juventud · Costa Rica 2026 · Hoja de la delegación",
       pdfResumen: (n, r) => (n === 1 ? "1 jugador" : n + " jugadores") + (r ? " · pareo de la ronda " + r : " · el pareo de la ronda 1 todavía no está publicado"),
@@ -186,6 +189,8 @@
       dipDetalle: (pts, rondas, p, de) => pts + (pts === "1" ? " point" : " points") + (rondas ? " in " + rondas + " rounds" : "") + " · place " + p + " of " + de,
       dipLugar: "National Gymnasium, La Sabana · San José, Costa Rica · November 1–8, 2026",
       dipPie: "According to the final standings published on chess-results",
+      dipListo: "Done: the certificate was saved to your device.",
+      dipCompartir: (n) => n + "'s certificate at the " + NOMBRE_CORTO + ":",
       pdfTitulo: (pais, r) => pais + (r ? " · Round " + r : " · Starting list"),
       pdfSub: "21st Central American and Caribbean Youth Festival · Costa Rica 2026 · Delegation sheet",
       pdfResumen: (n, r) => (n === 1 ? "1 player" : n + " players") + (r ? " · pairings of round " + r : " · the pairings of round 1 are not published yet"),
@@ -853,6 +858,13 @@
   // (letra grande: pide 3). El evento y el lugar los puede cambiar otra página
   // (window.TorneoPagina.diploma). Lleva la marca de agua de Ajedrez Integral.
   const MEDALLAS = ["#d4a72c", "#a8a9ad", "#b8733a"];
+  // chess-results escribe «Apellidos, Nombre»; en el diploma va al derecho,
+  // con el título adelante: «WIM Sofia Mayorga Araya».
+  function nombreAlDerecho(j) {
+    const partes = String(j.nombre || "").split(",").map((t) => t.trim()).filter(Boolean);
+    const nombre = partes.length === 2 ? partes[1] + " " + partes[0] : partes.join(" ");
+    return (j.titulo ? j.titulo + " " : "") + nombre;
+  }
   async function diploma(x) {
     const tx = T();
     const D = Object.assign({ evento: tx.dipEvento, lugar: tx.dipLugar }, CONFIG.diploma || {});
@@ -900,17 +912,48 @@
     // El nombre, en una línea: si no cabe, la letra se achica (nunca se corta).
     let tam = 112;
     ctx.font = "700 " + tam + "px " + serif;
-    while (ctx.measureText(nombreCompleto(x.j)).width > 1950 && tam > 60) { tam -= 4; ctx.font = "700 " + tam + "px " + serif; }
-    ctx.fillStyle = CARA.tinta; ctx.fillText(nombreCompleto(x.j), cx, 910);
+    const nombre = nombreAlDerecho(x.j);
+    while (ctx.measureText(nombre).width > 1950 && tam > 60) { tam -= 4; ctx.font = "700 " + tam + "px " + serif; }
+    ctx.fillStyle = CARA.tinta; ctx.fillText(nombre, cx, 910);
     if (x.j.fed) centrado(V.pais(x.j.fed), 990, "600 46px " + letra, CARA.acento);
     const cat = V.categoria(x.j.grupo);
     centrado(podio ? tx.dipPodio(p, cat) : tx.dipParticipa(cat), 1110, "600 54px " + letra, "#1f2937");
-    if (de) centrado(tx.dipDetalle(x.j.puntos || "0", x.torneo.rondas || 0, p, de), 1190, "500 42px " + letra, "#1f2937");
+    if (de) centrado(tx.dipDetalle(x.j.puntos || "0", x.torneo.ronda || x.torneo.rondas || 0, p, de), 1190, "500 42px " + letra, "#1f2937");
     centrado(D.lugar, 1360, "500 38px " + letra, "#1f2937");
     centrado(tx.dipPie + " · " + URL_PAGINA, 1450, "500 28px " + letra, CARA.acento);
     ctx.textAlign = "start";
     if (window.TablaImagen && window.TablaImagen.marcar) await window.TablaImagen.marcar(c);
     return c;
+  }
+
+  // El diploma en las dos formas: la imagen (para WhatsApp, con el menú de
+  // compartir del celular) y el PDF de una página para imprimir
+  // (ReportePDF.deImagen, la misma copia de los PDF del sitio).
+  async function descargarDiploma(x, formato, boton) {
+    const tx = T();
+    if (boton) boton.disabled = true;
+    try {
+      const c = await diploma(x);
+      const archivo = CARA.archivo + "-diploma-" + V.plano(x.j.nombre).replace(/ /g, "-");
+      if (formato === "pdf") {
+        const jpeg = await new Promise((ok, mal) => c.toBlob((b) => (b ? ok(b) : mal(new Error("sin imagen"))), "image/jpeg", 0.92));
+        const blob = window.ReportePDF.deImagen({ jpeg: new Uint8Array(await jpeg.arrayBuffer()), ancho: c.width, alto: c.height,
+          horizontal: true, titulo: tx.dipTitulo + " · " + nombreAlDerecho(x.j), autor: "Ajedrez Integral" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url; a.download = archivo + ".pdf";
+        document.body.appendChild(a); a.click(); a.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 10000);
+        anunciar(tx.dipListo);
+      } else {
+        const png = await new Promise((ok, mal) => c.toBlob((b) => (b ? ok(b) : mal(new Error("sin imagen"))), "image/png"));
+        await compartirBlob(png, archivo + ".png", tx.dipCompartir(nombreAlDerecho(x.j)) + " https://" + URL_PAGINA);
+      }
+    } catch (e) {
+      anunciar(tx.imagenError);
+    } finally {
+      if (boton) boton.disabled = false;
+    }
   }
 
   /* ---------------- la hoja de la delegación (PDF) ---------------- */
@@ -1030,5 +1073,5 @@
   document.addEventListener("cac-datos", repintar);
   document.addEventListener("cac-idioma", repintar);
 
-  window.CentroamericanoTablas = { compartirJugador, imagenJugador, compartirResumen, imagenResumen, resumenDelDia, imagenDia, compartirDia, documentoDelegacion, hojaDelegacion, diploma };
+  window.CentroamericanoTablas = { compartirJugador, imagenJugador, compartirResumen, imagenResumen, resumenDelDia, imagenDia, compartirDia, documentoDelegacion, hojaDelegacion, diploma, descargarDiploma, nombreAlDerecho };
 })();
