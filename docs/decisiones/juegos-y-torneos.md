@@ -8576,6 +8576,18 @@ Es una página estática, sin cuenta y sin base: nada se guarda.
   sitio también queda en la misma pestaña (nombrar ajedrez-integral.com no es
   irse) y lo de afuera sigue en otra, con su ↗. Lo revisa
   `verificar-centroamericano.js`.
+- **En el celular, un PDF no va en el marco.** El dueño abrió las bases en su
+  Android y la ventana decía «Este contenido está bloqueado. Comunícate con el
+  propietario del sitio», aunque el PDF es del mismo sitio y
+  `frame-ancestors 'self'` lo deja: el visor de PDF del celular no se deja
+  meter en un marco (Safari, en el iPhone, muestra solo la primera página).
+  En la computadora sí funcionaba, y por eso ningún verificador lo vio.
+  Ahora `js/ventana-enlace.js` deja que un enlace a un `.pdf` abra su
+  pestaña (su `target="_blank"`) cuando el aparato es táctil
+  (`pointer: coarse`) o no tiene visor (`navigator.pdfViewerEnabled`), y al
+  entrar con `#ficha-bases` no abre nada: una pestaña nueva no se abre sin
+  que la persona toque. Lo demás (chess-results, el formulario del bye)
+  sigue abriéndose encima. El verificador lo prueba con un celular simulado.
 - **La ficha del Desafío Mentes Maestras** (la sala `cenfotec`, de la
   Universidad CENFOTEC) lleva lo mismo que la del Centroamericano pero con la
   cara de la universidad (lo pidió el dueño): el azul de su imagen (#233065

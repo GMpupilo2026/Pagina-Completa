@@ -255,6 +255,25 @@ ok("la página carga el cliente de Supabase antes que su código en vivo", html.
     await p.waitForFunction(() => !document.querySelector("dialog.ventana-enlace"));
     ok("con Escape se cierra y el foco vuelve a la ficha", await p.evaluate(() => document.activeElement && document.activeElement.dataset.ventana === "Bases del campeonato"));
 
+    // En el celular, un PDF dentro del marco no se ve (Chrome en Android dice
+    // «Este contenido está bloqueado»): las bases se abren en su pestaña.
+    const ctxCel = await nav.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, serviceWorkers: "block" });
+    const pCel = await ctxCel.newPage();
+    await pCel.goto(BASE + "/" + PAGINA, { waitUntil: "load" });
+    const [pestana] = await Promise.all([ctxCel.waitForEvent("page", { timeout: 10000 }).catch(() => null), pCel.tap('#fichas a[data-ventana="Bases del campeonato"]')]);
+    ok("en el celular, las bases se abren en otra pestaña y no en el marco", !!pestana && /bases-cac-2026\.pdf$/.test(pestana.url() || (await pestana.waitForEvent("framenavigated").then((f) => f.url()).catch(() => "")))
+      && await pCel.evaluate(() => !document.querySelector("dialog.ventana-enlace")), pestana ? pestana.url() : "sin pestaña nueva");
+    // En una página nueva: cambiar solo el «#» no la vuelve a cargar.
+    const pCel2 = await ctxCel.newPage();
+    await pCel2.goto(BASE + "/" + PAGINA + "#ficha-bases", { waitUntil: "load" });
+    ok("y entrar con #ficha-bases no abre el marco vacío", await pCel2.evaluate(() => !document.querySelector("dialog.ventana-enlace")));
+    await pCel2.close();
+    // Lo que no es PDF (el formulario del bye) sí se sigue abriendo encima.
+    await pCel.route(/forms\.gle|docs\.google\.com/, (r) => r.fulfill({ status: 200, contentType: "text/html", body: "<p>form</p>" }));
+    await pCel.tap('a[data-ventana="Pedir un bye"]');
+    ok("lo que no es PDF se sigue abriendo encima en el celular", await pCel.waitForSelector("dialog.ventana-enlace[open]", { timeout: 5000 }).then(() => true).catch(() => false));
+    await ctxCel.close();
+
     // La ficha de afuera, en Torneos, lleva la cara del torneo; las demás salas, la de siempre.
     const ctx3 = await nav.newContext({ viewport: { width: 1280, height: 900 }, serviceWorkers: "block" });
     const sala = (clave, nombre) => ({ id: clave, clave, nombre, descripcion: "", emoji: "🏆", tipo: "enlaces", lichess_id: null, enlaces: [{ url: "https://ajedrez-integral.com/" + PAGINA, texto: "Toda la información del torneo" }, { url: "https://s1.chess-results.com/x", texto: "Resultados en vivo" }], pizarras: null, video_url: null, quiniela: false, tema: "cine", visible: true, orden: 0 });
