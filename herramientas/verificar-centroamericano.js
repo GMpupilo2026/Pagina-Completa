@@ -1046,6 +1046,48 @@ ok("la página carga el cliente de Supabase antes que su código en vivo", html.
       && /los 2 certificados se bajaron/.test(await pDip.textContent("#delegacion-lista .cac-hoja [role=status]")), dTodos.suggestedFilename());
     await ctxDip.close();
 
+    // El modo de prueba: ?sala=<clave> pide los torneos de esa sala con
+    // «prueba: true» (la función la lee solo si quien pide administra), lo
+    // dice arriba en rojo, guarda aparte y no enciende los avisos al celular.
+    const ctxPr = await nav.newContext({ viewport: { width: 1280, height: 900 }, serviceWorkers: "block" });
+    await ctxPr.addInitScript((d) => {
+      window.__pedidos = [];
+      window.sb = { functions: { invoke: async (nombre, op) => {
+        window.__pedidos.push(op.body);
+        return window.__negar ? { data: null, error: new Error("403") } : { data: d, error: null };
+      } } };
+      if (sessionStorage.getItem("negar") === "1") window.__negar = true;
+    }, DATOS);
+    const pPr = await ctxPr.newPage();
+    await pPr.goto(BASE + "/" + PAGINA + "?sala=centroamericano-prueba", { waitUntil: "load" });
+    await pPr.waitForFunction(() => window.__pedidos.length > 0, null, { timeout: 10000 }).catch(() => {});
+    const prb = await pPr.evaluate(() => {
+      const c = document.getElementById("cac-prueba");
+      const s = c && getComputedStyle(c);
+      return { visible: !!c && c.checkVisibility(), texto: c && c.textContent, fondo: s && s.backgroundColor, letra: s && s.color, salir: c && c.querySelector("a").getAttribute("href"),
+        pedido: window.__pedidos[0], propio: !!localStorage.getItem("cac_prueba_jugadores_v1"), real: !!localStorage.getItem("cac_jugadores_v1") };
+    });
+    ok("?sala= pide esa sala en modo de prueba, en cuanto se abre la página", JSON.stringify(prb.pedido) === JSON.stringify({ clave: "centroamericano-prueba", prueba: true }), JSON.stringify(prb.pedido));
+    ok("y lo dice arriba, en rojo con letra blanca, con un enlace para salir", prb.visible && /Modo de prueba: esta página muestra los torneos de la sala «centroamericano-prueba»/.test(prb.texto)
+      && prb.fondo === "rgb(206, 19, 40)" && prb.letra === "rgb(255, 255, 255)" && prb.salir === "/" + PAGINA, JSON.stringify(prb));
+    ok("lo de la prueba se guarda aparte: no pisa lo guardado del festival", prb.propio && !prb.real, JSON.stringify(prb));
+    // Con alguien seguido aparece «Avisarme en este celular»: en la prueba no se enciende.
+    await pPr.evaluate(() => localStorage.setItem("cac_prueba_seguidos_v1", JSON.stringify([{ tnr: "1494141", no: 2, nombre: "Mayorga Araya, Sofia" }])));
+    await pPr.reload({ waitUntil: "load" });
+    await pPr.click("#avisos-boton", { timeout: 5000 }).catch(() => {});
+    ok("en el modo de prueba los avisos al celular no se encienden", /los avisos al celular están apagados/.test(await pPr.textContent("#avisos-estado")));
+    // Sin permiso (la función contesta 403 a quien no administra): lo explica.
+    await pPr.evaluate(() => { sessionStorage.setItem("negar", "1"); localStorage.clear(); });
+    await pPr.reload({ waitUntil: "load" });
+    await pPr.waitForFunction(() => /revisa que exista/.test((document.getElementById("cac-prueba") || {}).textContent || ""), null, { timeout: 10000 }).catch(() => {});
+    ok("si la función no deja (no administra o la sala no existe), el aviso lo explica", /revisa que exista en administración \(Torneos\) y que entraste con tu cuenta de administración/.test(await pPr.textContent("#cac-prueba")));
+    // Sin ?sala=, o con la del festival, nada de eso.
+    await pPr.goto(BASE + "/" + PAGINA + "?sala=centroamericano-2026", { waitUntil: "load" });
+    ok("con la sala del festival (o sin ?sala=) no hay modo de prueba", await pPr.evaluate(() => !document.getElementById("cac-prueba")));
+    await pPr.goto(BASE + "/" + PAGINA + "?sala=" + encodeURIComponent("<script>"), { waitUntil: "load" });
+    ok("y una clave rara se ignora", await pPr.evaluate(() => !document.getElementById("cac-prueba")));
+    await ctxPr.close();
+
     // Instalar en iPhone: Safari no avisa, así que se explica cómo, una vez.
     const ctxIos = await nav.newContext({ viewport: { width: 390, height: 844 }, serviceWorkers: "block",
       userAgent: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1" });

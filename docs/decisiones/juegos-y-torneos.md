@@ -9127,6 +9127,27 @@ tarjeta del buscador.
   aviso, la mesa y el rival de la ronda emparejada. Rompí a propósito el aviso
   y la mesa, y saltó.
 
+### El modo de prueba
+
+Lo pidió el dueño para probar la página con torneos ya separados por
+categoría antes del festival, sin que lo vea el público.
+
+- `centroamericano-2026.html?sala=<clave>` muestra la página con los torneos
+  de otra sala de `admin.html#torneos`: una **oculta**, por ejemplo
+  `centroamericano-prueba`, con los 12 torneos del festival de 2025 (uno por
+  categoría, la categoría en el texto de cada botón).
+- La función `sala-jugadores` lee una sala oculta solo con `prueba: true` y
+  si quien la pide administra: se pregunta `soy_admin()` con SU token, por
+  PostgREST, así que pasa por la verificación en dos pasos. A cualquier otro
+  le contesta 403 y la página lo explica.
+- Arriba va un aviso rojo, pegado, que dice qué sala se está viendo, con
+  «Salir del modo de prueba». Lo guardado va aparte (`cac_prueba_…`): no pisa
+  lo que el aparato tenía del festival. Los avisos al celular no se
+  encienden. Con la clave del festival, o una clave que no es de sala, no
+  hay modo de prueba.
+- Lo revisa `verificar-centroamericano.js`. Rompí a propósito el pedido en
+  modo de prueba y el freno de los avisos, y saltaron.
+
 ## Las páginas de los torneos universitarios
 
 Dos, con la misma maquinaria: `cenfotec-2026.html` (el Desafío Mentes

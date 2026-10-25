@@ -39,8 +39,18 @@
   "use strict";
 
   const CONFIG = window.TorneoPagina || {};
-  const SALA = CONFIG.sala || "centroamericano-2026";
-  const PREFIJO = CONFIG.guardado || "cac";
+  // El modo de prueba: centroamericano-2026.html?sala=<clave> muestra la
+  // página con los torneos de otra sala (una oculta, con los torneos de una
+  // edición pasada). La función sala-jugadores la lee solo si quien la pide
+  // administra; lo guardado va aparte y los avisos al celular no se encienden.
+  // Ver «El modo de prueba» en docs/decisiones/juegos-y-torneos.md.
+  const PRUEBA = (() => {
+    if (CONFIG.sala) return "";
+    const s = new URLSearchParams(location.search).get("sala") || "";
+    return /^[a-z0-9]+(-[a-z0-9]+)*$/.test(s) && s.length <= 40 && s !== "centroamericano-2026" ? s : "";
+  })();
+  const SALA = CONFIG.sala || PRUEBA || "centroamericano-2026";
+  const PREFIJO = CONFIG.guardado || (PRUEBA ? "cac_prueba" : "cac");
   const CLAVE_GUARDADO = PREFIJO + "_jugadores_v1";
   const CLAVE_SEGUIDOS = PREFIJO + "_seguidos_v1";
   const CLAVE_DELEGACION = PREFIJO + "_delegacion_v1";
@@ -148,6 +158,10 @@
       calPendiente: "El pareo sale cuando lo publique el árbitro: vuelve a bajar el calendario para ver la mesa y el rival.",
       calLugar: "Gimnasio Nacional, Parque Metropolitano La Sabana, San José, Costa Rica",
       calNombre: (nombre) => "Rondas de " + nombre + " · Centroamericano 2026",
+      prueba: (sala) => "Modo de prueba: esta página muestra los torneos de la sala «" + sala + "», no los del festival. Solo funciona entrando con una cuenta de administración, y no lo ve nadie más.",
+      pruebaError: "No se pudo leer la sala de prueba: revisa que exista en administración (Torneos) y que entraste con tu cuenta de administración.",
+      pruebaSinAvisos: "En el modo de prueba los avisos al celular están apagados.",
+      pruebaSalir: "Salir del modo de prueba",
       locale: "es-CR",
     },
     en: {
@@ -245,6 +259,10 @@
       calPendiente: "The pairings come out when the arbiter publishes them: download the calendar again to see the board and the opponent.",
       calLugar: "Gimnasio Nacional, La Sabana Metropolitan Park, San José, Costa Rica",
       calNombre: (nombre) => nombre + "'s rounds · Centroamericano 2026",
+      prueba: (sala) => "Test mode: this page shows the tournaments of the room “" + sala + "”, not the festival's. It only works signed in with an admin account, and nobody else sees it.",
+      pruebaError: "We couldn't read the test room: check that it exists in admin (Tournaments) and that you're signed in with your admin account.",
+      pruebaSinAvisos: "Phone notifications are off in test mode.",
+      pruebaSalir: "Leave test mode",
       locale: "en-US",
     },
   };
@@ -353,14 +371,16 @@
     pidiendo = (async () => {
       try {
         if (!window.sb || !window.sb.functions) throw new Error("sin cliente");
-        const { data, error } = await window.sb.functions.invoke("sala-jugadores", { body: { clave: SALA } });
+        const { data, error } = await window.sb.functions.invoke("sala-jugadores", { body: PRUEBA ? { clave: SALA, prueba: true } : { clave: SALA } });
         if (error || !data || !Array.isArray(data.torneos)) throw error || new Error("respuesta rara");
         datos = normalizar({ torneos: data.torneos, recibido: new Date().toISOString() });
         deGuardado = false;
+        pruebaFallo = false;
         try { localStorage.setItem(CLAVE_GUARDADO, JSON.stringify(datos)); } catch (e) {}
         // Para lo que arma js/centroamericano-tablas.js con los mismos datos.
         document.dispatchEvent(new Event("cac-datos"));
       } catch (e) {
+        if (PRUEBA) { pruebaFallo = true; pintarPrueba(); }
         const g = guardados();
         if (g && !datos) { datos = g; deGuardado = true; }
         if (!datos) throw e;
@@ -1074,7 +1094,26 @@
     if (sel.value) pedir().then(pintarTodo, () => { $("delegacion-estado").textContent = t().error; });
   }
 
-  function pintarTodo() { pintarAnuncios(); pintarHoyCategorias(); pintarProgreso(); pintarSeguidos(); pintarBuscador(); pintarDelegacion(); pintarAvisoDelegacion(); }
+  // El aviso del modo de prueba, arriba de todo y en el idioma de la página.
+  let pruebaFallo = false;
+  function pintarPrueba() {
+    if (!PRUEBA) return;
+    const tx = t();
+    let caja = $("cac-prueba");
+    if (!caja) {
+      caja = el("div", "cac-prueba");
+      caja.id = "cac-prueba";
+      caja.setAttribute("role", "status");
+      caja.setAttribute("data-no-traducir", "");
+      const main = document.querySelector("main") || document.body;
+      main.insertBefore(caja, main.firstChild);
+    }
+    const salir = el("a", "cac-prueba-salir", tx.pruebaSalir);
+    salir.href = location.pathname;
+    caja.replaceChildren(el("p", "", tx.prueba(PRUEBA)), ...(pruebaFallo ? [el("p", "font-bold", tx.pruebaError)] : []), salir);
+  }
+
+  function pintarTodo() { pintarPrueba(); pintarAnuncios(); pintarHoyCategorias(); pintarProgreso(); pintarSeguidos(); pintarBuscador(); pintarDelegacion(); pintarAvisoDelegacion(); }
 
   /* ---------------- Avisarme en este celular ---------------- */
   // Qué dice la función, también cuando contesta un error (lo trae el cuerpo).
@@ -1136,6 +1175,7 @@
     if (ocupado) return;
     const boton = $("avisos-boton"), estado = $("avisos-estado");
     const tx = t();
+    if (PRUEBA) { estado.textContent = tx.pruebaSinAvisos; return; }
     ocupado = true;
     boton.disabled = true;
     try {
@@ -1178,6 +1218,7 @@
     const f = sel && sel.value;
     if (!f || ocupado) return;
     const tx = t(), nombre = pais(f, idioma());
+    if (PRUEBA) { estado.textContent = tx.pruebaSinAvisos; return; }
     ocupado = true;
     boton.disabled = true;
     try {
@@ -1354,6 +1395,9 @@
   pintarAvisoDelegacion();
   pintarProgreso();
   pintarHoyCategorias();
+  // En el modo de prueba se piden los datos de una vez: se vino a ver si todo anda.
+  pintarPrueba();
+  if (PRUEBA) pedir().then(pintarTodo, () => {});
   pedirAnuncios();
   setInterval(pedirAnuncios, 5 * 60000);
   document.addEventListener("visibilitychange", () => { if (!document.hidden) pedirAnuncios(); });
