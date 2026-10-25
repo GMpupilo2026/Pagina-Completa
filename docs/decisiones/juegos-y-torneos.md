@@ -8990,6 +8990,52 @@ sesión), con la forma que les da la función.
   (`--experimental-strip-types`, sin Deno) y la página con doce torneos de
   prueba más la lista general.
 
+
+### El Elo, los colores, cada categoría a su paso y el informe de la delegación
+
+Las pidió el dueño entre las mejoras del Centroamericano («2, 3, 4, 5, 8, 9»).
+Todo se arma con los mismos datos de `sala-jugadores`, sin pedir nada más a
+chess-results.
+
+- **El Elo FIDE que gana o pierde cada jugador** sale en «Sus rondas» con la
+  misma cuenta que Pareo Integral (`js/pareo/elo.js`: lo esperado de la tabla
+  8.1.2, el tope de 400 y su K). Una sola copia de las reglas de FIDE: la
+  página carga ese módulo, no lo repite. Cuentan solo las partidas jugadas
+  contra rivales con Elo (ni byes ni incomparecencias, ni la ronda sin
+  resultado).
+  - chess-results no publica la edad, así que se toma la menor posible de su
+    categoría (Sub-18 → 17 años). Por eso, debajo de 2300 el K es 40, aunque a
+    quien cumple 18 este año FIDE le pone 20.
+  - Lo dice la línea: «una cuenta de este torneo; lo oficial lo publica FIDE».
+- **Con blancas y con negras**: cuánto hizo con cada color, en «Sus rondas» y
+  para el país entero en el resumen de «Mi delegación».
+- **«A otro paso»** en «Hoy en el torneo»: con un torneo por categoría, la
+  línea nombra solo las categorías que no van con la mayoría (la que ya
+  terminó, como un Round Robin, y la que va en otra ronda). Si todas van
+  igual, no sale. Los datos no se piden en cada visita: se pintan con lo
+  guardado en el aparato y se piden durante el festival solo si lo guardado
+  ya dice que el torneo está partido.
+- **El proyector con una sola categoría**, para la pantalla de cada sala de
+  juego: se elige en el selector nuevo y queda en el aparato. Al hacerlo
+  salió un error de antes: pasaba los podios de TODAS las categorías en
+  cuanto terminaba un torneo cualquiera. Ahora pasa solo los de las
+  categorías que terminaron.
+- **El medallero por país ya existía.** Lo nuevo es que cada podio dice si es
+  final o hasta qué ronda va, y debajo de la tabla dice cuántas categorías ya
+  tienen su podio final.
+- **El informe de la delegación en PDF** (`documentoInforme()`), para la
+  federación:
+  - de cada jugador, su categoría, su puesto (con la medalla), sus puntos, su
+    rendimiento, su Elo y lo que hizo con cada color;
+  - del país, sus puntos, sus medallas, sus colores y la suma de su Elo.
+  Es provisional hasta que terminan todas las categorías donde juega el país
+  y lleva la marca de agua de `js/reporte-pdf.js`. El botón aparece en «Mi
+  delegación» cuando ya se jugó alguna ronda.
+- Lo revisa `verificar-centroamericano.js`, cada cuenta con su valor
+  calculado aparte (el Elo de una jugadora de prueba: 0,45 + 0,60 + 0,78 =
+  1,83 esperado y 40 × (3 − 1,83) = +46,8). Antes de darlo por bueno, rompí
+  a propósito cada pieza y cada una saltó.
+
 ## Las páginas de los torneos universitarios
 
 Dos, con la misma maquinaria: `cenfotec-2026.html` (el Desafío Mentes

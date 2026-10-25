@@ -540,6 +540,13 @@ ok("la página carga el cliente de Supabase antes que su código en vivo", html.
       "Ronda 4 · blancas · juega contra FM Guevara Ruiz, Santiago Jose (ESA, 2252)"]), JSON.stringify(rondas.filas));
     // 2252, 2145 y 1994: promedio 2130 (2130,3), con 3 de 3 → +800 (tabla 8.1b de FIDE).
     ok("y su rendimiento según FIDE (promedio de los rivales + dp)", rondas.rend === "Rendimiento: 2930 en 3 partidas (sus rivales tienen 2130 de promedio).", rondas.rend);
+    // Su Elo con las reglas de FIDE (js/pareo/elo.js): lo esperado de la tabla
+    // 8.1.2 contra 2252, 2145 y 1994 es 0,45 + 0,60 + 0,78 = 1,83, y con K 40
+    // (Sub-18 con menos de 2300), 40 × (3 − 1,83) = +46,8.
+    const extra = await p6.evaluate(() => { const c = document.querySelector("#buscador-resultados .cac-jugador-rondas");
+      return { elo: (c.querySelector(".cac-elo") || {}).textContent, colores: (c.querySelector(".cac-colores") || {}).textContent }; });
+    ok("«Sus rondas» trae el Elo FIDE que gana en el torneo, con las reglas de FIDE", extra.elo === "Elo FIDE: +46,8 en 3 partidas con rivales con Elo (K 40).", extra.elo);
+    ok("y lo que hizo con blancas y con negras (sin la ronda de hoy, que no tiene resultado)", extra.colores === "Con blancas: 2 de 2 · con negras: 1 de 1.", extra.colores);
     // Su puesto después de cada ronda, por puntos y del cuadro cruzado (la ronda 4 todavía no).
     await buscar("guevara");
     await p6.click('#buscador-resultados [data-rondas="1494141-1"]');
@@ -610,6 +617,23 @@ ok("la página carga el cliente de Supabase antes que su código en vivo", html.
     const hojaEn = await p6.evaluate(() => { const d = window.CentroamericanoTablas.documentoDelegacion("CRC"); return { t: d.titulo, p: d.pagina(1, 2), boton: document.getElementById("delegacion-pdf").textContent }; });
     ok("y en inglés, también el número de página", hojaEn.t === "Costa Rica (CRC) · Round 4" && hojaEn.p === "Page 1 of 2" && /Delegation sheet to print/.test(hojaEn.boton), JSON.stringify(hojaEn));
     await p6.click("#cac-idioma");
+    // Con cada color, el país entero: Mayorga 2 de 2 con blancas y 1 de 1 con
+    // negras; Muñoz ½ de 1 con negras (su bye y su «-0» no son partidas).
+    ok("el resumen de la delegación dice cómo le fue al país con cada color",
+       await p6.textContent("#delegacion-lista .cac-colores-pais") === "En el torneo, con blancas 2 de 2 y con negras 1½ de 2.", await p6.textContent("#delegacion-lista .cac-colores-pais"));
+    const inf = await p6.evaluate(() => { const d = window.CentroamericanoTablas.documentoInforme("CRC");
+      return { titulo: d.titulo, parrafos: d.bloques.filter((b) => b.tipo === "parrafo").map((b) => b.texto), filas: d.bloques.find((b) => b.tipo === "tabla").filas, final: d.final }; });
+    ok("el informe de la delegación: provisional, sus puntos, sus medallas, sus colores y su Elo",
+       inf.titulo === "Costa Rica (CRC) · Informe de la delegación" && !inf.final && JSON.stringify(inf.parrafos) === JSON.stringify([
+         "Provisional: así va después de la ronda 3.", "2 jugadores · 4½ de 6 puntos en sus partidas.", "Medallas (si terminara hoy): 2 de oro.",
+         "En el torneo, con blancas 2 de 2 y con negras 1½ de 2.", "Elo FIDE de la delegación: +46,8 entre 1 jugador con Elo (una cuenta de este torneo; lo oficial lo publica FIDE)."]), JSON.stringify(inf));
+    ok("y cada jugador con su categoría, puesto (y medalla), rendimiento, Elo y colores", JSON.stringify(inf.filas) === JSON.stringify([
+      ["Sub-8 Absoluto", "Muñoz Solís, José", "2", "1.º · oro", "1920", "—", "—", "½/1"],
+      ["Sub-18 Absoluto", "WIM Mayorga Araya, Sofia", "3", "1.º · oro", "2930", "+46,8", "2/2", "1/1"]]), JSON.stringify(inf.filas));
+    const [descInf] = await Promise.all([p6.waitForEvent("download", { timeout: 15000 }), p6.click("#delegacion-informe")]);
+    const pdfInf = fs.readFileSync(await descInf.path()).toString("latin1");
+    ok("el botón baja el informe en PDF, con la marca de agua", pdfInf.startsWith("%PDF-") && descInf.suggestedFilename() === "centroamericano-2026-crc-informe-ronda-3.pdf"
+      && pdfInf.includes("Mayorga Araya, Sofia") && pdfInf.includes("/Marca Do") && /Listo: el informe se bajó/.test(await p6.textContent("#delegacion-lista .cac-hoja [role=status]")), descInf.suggestedFilename());
     await p6.selectOption("#delegacion", "");
 
     // La clasificación completa de una categoría.
@@ -658,6 +682,16 @@ ok("la página carga el cliente de Supabase antes que su código en vivo", html.
     for (let i = 0; i < 3; i++) { soloClasif.push((await proy()).titulo); await p6.click("#proyector-siguiente"); }
     ok("«Solo la clasificación» salta los pareos", soloClasif.every((x) => /^Clasificación · /.test(x)), JSON.stringify(soloClasif));
     await p6.selectOption("#proyector-modo", "todo");
+    await p6.selectOption("#proyector-modo", "todo");
+    // Una sola categoría, para la pantalla de su sala.
+    ok("el proyector ofrece elegir la categoría (con todas las que hay)", await p6.evaluate(() => { const s = document.getElementById("proyector-categoria");
+      return s.checkVisibility() && JSON.stringify([...s.options].map((o) => o.textContent)) === JSON.stringify(["Todas las categorías", "Sub-8 Absoluto", "Sub-18 Absoluto", "Sub-18 Femenino"]); }));
+    await p6.selectOption("#proyector-categoria", "U18F");
+    const solaCat = [];
+    for (let i = 0; i < 3; i++) { solaCat.push((await proy()).titulo); await p6.click("#proyector-siguiente"); }
+    ok("con una categoría, solo pasa la suya: su pareo y su clasificación (y se recuerda)", solaCat.every((x) => /Sub-18 Femenino/.test(x)) && solaCat.some((x) => /^Ronda 4/.test(x)) && solaCat.some((x) => /^Clasificación/.test(x))
+      && await p6.evaluate(() => localStorage.getItem("cac_proyector_categoria_v1") === "U18F"), JSON.stringify(solaCat));
+    await p6.selectOption("#proyector-categoria", "");
     await p6.click("#proyector-pausa");
     ok("y se puede poner en pausa (y lo dice)", await p6.evaluate(() => document.getElementById("proyector-pausa").getAttribute("aria-pressed") === "true" && document.getElementById("proyector-pausa").textContent === "Seguir"));
     await p6.keyboard.press("Escape");
@@ -796,6 +830,9 @@ ok("la página carga el cliente de Supabase antes que su código en vivo", html.
       const seguida = await pd.evaluate(() => JSON.parse(localStorage.getItem("cac_seguidos_v1") || "[]"));
       ok("quien la seguía en la lista general pasa a seguirla en su categoría (torneo y número nuevos)",
          seguida.length === 1 && seguida[0].tnr === "1600012" && seguida[0].no === 1, JSON.stringify(seguida));
+      const hoyCat = await pd.evaluate(() => { const p = document.getElementById("hoy-categorias"); return { ve: p.checkVisibility(), texto: p.textContent }; });
+      ok("«Hoy en el torneo» dice qué categorías van a otro paso (solo esas)",
+         hoyCat.ve && hoyCat.texto === "A otro paso: Sub-8 Absoluto ya terminó sus 3 rondas · Sub-10 Absoluto va en la ronda 4.", JSON.stringify(hoyCat));
       const prog = await pd.evaluate(() => window.CentroamericanoVivo.progresoRonda());
       ok("la barra de la ronda cuenta solo las mesas de la ronda más alta (10 de las 12 categorías van en la 5)", !!prog && prog.ronda === 5 && prog.total === 10 && prog.hechas === 9, JSON.stringify(prog));
       ok("y la ronda cerrada espera a la categoría que va atrás, no al Round Robin que ya terminó", !!prog && prog.cerrada === 3, JSON.stringify(prog));
@@ -849,9 +886,28 @@ ok("la página carga el cliente de Supabase antes que su código en vivo", html.
       await pe.keyboard.press("Escape");
       await pe.click('a[href="#medallero"]');
       await pe.waitForFunction(() => /Provisional|Final/i.test(document.getElementById("medallero-contenido").textContent), null, { timeout: 5000 }).catch(() => {});
-      const medallero = await pe.evaluate(() => ({ estado: document.querySelector("#medallero-contenido > p").textContent, podios: document.querySelectorAll("#medallero-contenido .cac-podio").length }));
+      const medallero = await pe.evaluate(() => ({ estado: document.querySelector("#medallero-contenido > p").textContent, podios: document.querySelectorAll("#medallero-contenido .cac-podio").length,
+        listos: (document.querySelector("#medallero-contenido .cac-podios-listos") || {}).textContent,
+        cada: [...document.querySelectorAll("#medallero-contenido .cac-podio")].slice(0, 2).map((c) => c.querySelector("h3").textContent + " | " + c.querySelector(".cac-podio-estado").textContent) }));
       ok("el medallero sigue provisional mientras alguna categoría juega (el Sub-8 ya terminó), con sus 12 podios",
          /Provisional/.test(medallero.estado) && medallero.podios === 12, JSON.stringify(medallero));
+      ok("cada podio dice si ya es final o hasta qué ronda va, y cuántas categorías ya están definidas",
+         JSON.stringify(medallero.cada) === JSON.stringify(["Sub-8 Absoluto | Final", "Sub-8 Femenino | Provisional, tras la ronda 4"])
+         && medallero.listos === "1 de 12 categorías ya tiene su podio final; las medallas de las demás todavía pueden cambiar.", JSON.stringify(medallero));
+      // El proyector pasa los podios solo de las categorías que terminaron.
+      await pe.keyboard.press("Escape");
+      await pe.click('a[href="#proyector"]');
+      await pe.waitForFunction(() => document.getElementById("proyector").open && document.getElementById("proyector-categoria").options.length > 1, null, { timeout: 5000 }).catch(() => {});
+      const titulos = async (cat) => {
+        await pe.selectOption("#proyector-categoria", cat);
+        const out = [];
+        for (let i = 0; i < 3; i++) { out.push(await pe.textContent("#proyector-titulo") + " | " + (await pe.textContent("#proyector-contenido")).slice(0, 40)); await pe.click("#proyector-siguiente"); }
+        return out;
+      };
+      const enJuego = await titulos("U12F"), terminada = await titulos("U08");
+      ok("el proyector no pasa el podio de una categoría que sigue jugando", enJuego.every((x) => !/podio/i.test(x)), JSON.stringify(enJuego));
+      ok("y sí el de la que ya terminó", terminada.some((x) => /podio/i.test(x) && /Sub-8 Absoluto/.test(x)), JSON.stringify(terminada));
+      await pe.selectOption("#proyector-categoria", "");
       await ctx12.close();
     }
 

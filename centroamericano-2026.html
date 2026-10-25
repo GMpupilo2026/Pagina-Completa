@@ -113,6 +113,7 @@
                 <h2 id="hoy-etiqueta" class="cac-hoy-etiqueta">El festival</h2>
                 <p id="hoy-principal" class="cac-hoy-principal">Del domingo 1 al domingo 8 de noviembre de 2026</p>
                 <p id="hoy-detalle" class="cac-hoy-detalle">La ronda 1 se juega el lunes 2 de noviembre a las 9:30 a.m., hora de Costa Rica.</p>
+                <p id="hoy-categorias" class="cac-hoy-detalle" hidden></p>
                 <p class="mt-3 flex flex-wrap gap-x-5 gap-y-2 text-sm font-bold">
                     <a href="#calendario" id="hoy-calendario" class="cac-accion underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ce1328]">Ver el calendario completo →</a>
                     <a href="documentos/centroamericano-2026/calendario-centroamericano-2026.ics" download id="hoy-ics" class="cac-accion underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ce1328]"><span aria-hidden="true">📅 </span><span id="hoy-ics-texto">Agregar a mi calendario</span></a>
@@ -536,6 +537,9 @@
                 <label class="cac-proyector-modo"><span class="sr-only">Qué mostrar</span>
                     <select id="proyector-modo" class="cac-proyector-boton" data-no-traducir></select>
                 </label>
+                <label class="cac-proyector-modo"><span class="sr-only">Qué categoría</span>
+                    <select id="proyector-categoria" class="cac-proyector-boton" data-no-traducir></select>
+                </label>
                 <button type="button" id="proyector-completa" class="cac-proyector-boton">Pantalla completa</button>
                 <button type="button" data-cerrar class="cac-proyector-boton">Cerrar</button>
             </div>
@@ -645,6 +649,7 @@
     <script src="js/centroamericano.js"></script>
     <script src="js/pareo/torneo.js"></script>
     <script src="js/pareo/desempates.js"></script>
+    <script src="js/pareo/elo.js"></script>
     <script src="js/tabla-imagen.js"></script>
     <script src="js/vendor/qrcode.js"></script>
     <script src="js/qr-svg.js"></script>
