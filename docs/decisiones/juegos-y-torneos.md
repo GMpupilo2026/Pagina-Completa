@@ -8964,8 +8964,9 @@ sesión), con la forma que les da la función.
   ahí lee la página los datos), pero en la ficha todos llevarían al mismo
   lugar, así que `juntar()` (`js/salas-torneo.js`) los deja en un solo botón
   con el nombre de su ficha (el tercer dato de `fichas` en `PORTADAS`:
-  «Resultados en vivo») y lleva a `#resultados`. Los de la UTN llevan a
-  fichas distintas y no se juntan.
+  «Resultados en vivo») y lleva a `#resultados`. Solo se juntan los de una
+  ficha con nombre: las dos transmisiones de la UTN llevan a la misma página
+  y siguen siendo dos botones (lo revisa `verificar-salas-torneo.js`).
 - **Cada categoría va a su paso.** Las bases piden Round Robin si una
   categoría tiene 10 jugadores o menos, y entonces termina antes. La barra de
   la ronda cuenta solo las mesas de la ronda más alta emparejada; «Así terminó

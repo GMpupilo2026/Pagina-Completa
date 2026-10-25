@@ -127,17 +127,19 @@
 
   // Con un torneo por categoría, la sala tiene un enlace de chess-results por
   // cada una (de ahí lee la página los datos): en la ficha van todos al mismo
-  // lugar, así que se muestran como UN botón, con el nombre de su ficha
-  // (el tercer dato de `fichas`). Ver «Un torneo por categoría».
+  // lugar, así que se muestran como UN botón, con el nombre de su ficha (el
+  // tercer dato de `fichas`). Solo se juntan los de una ficha con nombre: dos
+  // transmisiones que llevan a la misma página (las de la UTN) siguen siendo
+  // dos botones. Ver «Un torneo por categoría».
   function juntar(enlaces, portada) {
     if (!portada || !portada.fichas) return enlaces;
     const donde = new Map();
     const out = [];
     enlaces.forEach((e) => {
-      const destino = adentro(portada, e && e.url);
-      if (!donde.has(destino)) { donde.set(destino, out.length); out.push(e); return; }
-      const f = portada.fichas.find(([patron]) => patron.test(String(e.url || "")));
-      if (f && f[2]) out[donde.get(destino)] = { ...out[donde.get(destino)], texto: f[2] };
+      const f = portada.fichas.find(([patron]) => patron.test(String((e && e.url) || "")));
+      if (!f || !f[2]) { out.push(e); return; }
+      if (!donde.has(f[1])) { donde.set(f[1], out.length); out.push(e); return; }
+      out[donde.get(f[1])] = { ...out[donde.get(f[1])], texto: f[2] };
     });
     return out;
   }
