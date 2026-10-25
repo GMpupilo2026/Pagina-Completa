@@ -10,7 +10,7 @@
  *   terminado, empieza por los podios. Para una pantalla en la sala.
  * - Las sorpresas (el de menos Elo que puntúa contra el de más) y los invictos (#sorpresas).
  * - Cara a cara (#cara-a-cara): dos jugadores lado a lado y su partida.
- * - El diploma de cada jugador al terminar el torneo, en imagen y en PDF.
+ * - El certificado de cada jugador al terminar el torneo, en imagen y en PDF.
  * - La hoja de la delegación en PDF: sus jugadores en la ronda, con mesa,
  *   color y rival (js/reporte-pdf.js).
  * - La imagen para compartir a un jugador (con su puesto ronda a ronda), la
@@ -90,10 +90,10 @@
       modoTodo: "Pareo y clasificación", modoPareo: "Solo el pareo", modoClasif: "Solo la clasificación", catTodas: "Todas las categorías",
       proyClasif: (r, cat, pag, de) => "Clasificación · " + cat + " · tras la ronda " + r + (de > 1 ? " · " + pag + "/" + de : ""),
       proyPodios: "Los podios",
-      dipTodos: "Todos los diplomas (PDF)",
-      dipArmando: (n, de) => "Armando los diplomas: " + n + " de " + de + "…",
-      dipTodosListo: (n) => "Listo: " + (n === 1 ? "el diploma se bajó" : "los " + n + " diplomas se bajaron") + " a tu aparato, una hoja por jugador.",
-      dipTodosTitulo: (pais) => "Diplomas · " + pais,
+      dipTodos: "Todos los certificados (PDF)",
+      dipArmando: (n, de) => "Armando los certificados: " + n + " de " + de + "…",
+      dipTodosListo: (n) => "Listo: " + (n === 1 ? "el certificado se bajó" : "los " + n + " certificados se bajaron") + " a tu aparato, una hoja por jugador.",
+      dipTodosTitulo: (pais) => "Certificados · " + pais,
       dipNinguno: "Todavía no terminó ninguna categoría donde juega este país.",
       numTitulo: "El festival en números",
       numEstado: (final, r) => (final ? "Cuando terminó el festival." : "Hasta la ronda " + r + ": se pone al día con cada ronda."),
@@ -135,15 +135,15 @@
       caraFilas: ["Categoría", "País", "Elo", "Puesto", "Puntos", "Rendimiento"],
       caraRonda: "Ronda",
       dipEvento: "XXI Festival Centroamericano y del Caribe de la Juventud",
-      dipTitulo: "Diploma",
+      dipTitulo: "Certificado",
       dipOtorga: "Se otorga a",
       dipPodio: (p, cat) => "por obtener el " + (p === 1 ? "1.er" : p === 3 ? "3.er" : p + ".º") + " lugar (" + ["oro", "plata", "bronce"][p - 1] + ") en la categoría " + cat,
       dipParticipa: (cat) => "por su participación en la categoría " + cat,
       dipDetalle: (pts, rondas, p, de) => pts + (pts === "1" ? " punto" : " puntos") + (rondas ? " en " + rondas + " rondas" : "") + " · puesto " + p + " de " + de,
       dipLugar: "Gimnasio Nacional, La Sabana · San José, Costa Rica · del 1 al 8 de noviembre de 2026",
       dipPie: "Según la clasificación final publicada en chess-results",
-      dipListo: "Listo: el diploma se bajó a tu aparato.",
-      dipCompartir: (n) => "El diploma de " + n + " en el " + NOMBRE_CORTO + ":",
+      dipListo: "Listo: el certificado se bajó a tu aparato.",
+      dipCompartir: (n) => "El certificado de " + n + " en el " + NOMBRE_CORTO + ":",
       pdfTitulo: (pais, r) => pais + (r ? " · Ronda " + r : " · Lista inicial"),
       pdfSub: "XXI Festival Centroamericano y del Caribe de la Juventud · Costa Rica 2026 · Hoja de la delegación",
       pdfResumen: (n, r) => (n === 1 ? "1 jugador" : n + " jugadores") + (r ? " · pareo de la ronda " + r : " · el pareo de la ronda 1 todavía no está publicado"),
@@ -1189,7 +1189,7 @@
     if (boton) boton.disabled = true;
     try {
       const c = await diploma(x);
-      const archivo = CARA.archivo + "-diploma-" + V.plano(x.j.nombre).replace(/ /g, "-");
+      const archivo = CARA.archivo + "-certificado-" + V.plano(x.j.nombre).replace(/ /g, "-");
       if (formato === "pdf") {
         const jpeg = await new Promise((ok, mal) => c.toBlob((b) => (b ? ok(b) : mal(new Error("sin imagen"))), "image/jpeg", 0.92));
         const blob = window.ReportePDF.deImagen({ jpeg: new Uint8Array(await jpeg.arrayBuffer()), ancho: c.width, alto: c.height,
@@ -1236,7 +1236,7 @@
       const blob = window.ReportePDF.deImagen({ paginas, horizontal: true, titulo: tx.dipTodosTitulo(V.pais(fed)), autor: "Ajedrez Integral" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
-      a.href = url; a.download = CARA.archivo + "-" + fed.toLowerCase() + "-diplomas.pdf";
+      a.href = url; a.download = CARA.archivo + "-" + fed.toLowerCase() + "-certificados.pdf";
       document.body.appendChild(a); a.click(); a.remove();
       setTimeout(() => URL.revokeObjectURL(url), 10000);
       if (estado) estado.textContent = tx.dipTodosListo(paginas.length);
