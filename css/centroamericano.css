@@ -397,6 +397,12 @@ a.cac-despedida:hover .cac-globo { transform: translateY(-2px); }
 .cac-hoy-sin-red { margin-top: 0.75rem; font-size: 0.85rem; color: var(--cac-acento); }
 .cac-hoy-sin-red[hidden] { display: none; }
 
+/* Los avisos de la organización: blanco sobre el rojo de las bases (5,6). */
+.cac-anuncios { display: grid; gap: 0.6rem; margin-bottom: 1rem; }
+.cac-anuncios[hidden] { display: none; }
+.cac-anuncio { background: var(--cac-rojo); color: #fff; border-radius: 1.25rem; padding: 0.9rem 1.25rem; font-size: 1.05rem; line-height: 1.4; box-shadow: 0 10px 24px -14px rgb(206 19 40 / 0.6); }
+.cac-anuncio strong { display: block; font-size: 0.8rem; letter-spacing: 0.06em; text-transform: uppercase; }
+
 /* «Busca a tu jugador»: blanca, con el morado de las bases en el borde. */
 .cac-buscador {
   background: #fff;
@@ -592,6 +598,14 @@ a.cac-despedida:hover .cac-globo { transform: translateY(-2px); }
 .dark .cac-categoria:focus-visible { outline-color: #fff; }
 .cac-categoria-sola { display: inline-block; margin-top: 0.9rem; padding-inline: 1.4rem; }
 .cac-otros { margin-top: 0.5rem; display: grid; gap: 0.5rem; }
+/* «El festival en números»: cuatro cifras grandes, de a dos en el celular.
+   #1E2453 sobre #EEF0FB: 12,9 (en la imagen, #40478F sobre #EEF0FB: 7,35). */
+.cac-numeros { margin-top: 0.9rem; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.6rem; }
+@media (min-width: 640px) { .cac-numeros { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+.cac-numero { background: #eef0fb; color: #1e2453; border-radius: 1rem; padding: 0.8rem 1rem; display: flex; flex-direction: column-reverse; }
+.dark .cac-numero { background: rgb(var(--c-brand-900, 10 31 51)); color: #fff; }
+.cac-numero dd { font-size: 2rem; font-weight: 800; line-height: 1.1; }
+.cac-numero dt { font-size: 0.85rem; font-weight: 700; }
 .cac-sorpresas { padding-left: 1.4rem; list-style: decimal; }
 .cac-sorpresas li + li { margin-top: 0.4rem; }
 

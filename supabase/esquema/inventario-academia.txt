@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20261024201351
+# al-dia-con: 20261025155846
 tabla  Ejercicios Lichess  rls=true
 tabla  _foto_rls_tmp  rls=false
 tabla  _pedidos_elo  rls=false
@@ -193,6 +193,7 @@ tabla  respuestas_en_curso  rls=true
 tabla  retos_ejercicios  rls=true
 tabla  retos_ejercicios_respuestas  rls=true
 tabla  retos_semanales  rls=true
+tabla  sala_anuncios  rls=true
 tabla  sala_avisos_push_enviados  rls=true
 tabla  sala_suscripciones_push  rls=true
 tabla  salas_torneo  rls=true
@@ -1755,6 +1756,14 @@ columna  retos_semanales.meta  integer
 columna  retos_semanales.metrica  text
 columna  retos_semanales.nombre  text
 columna  retos_semanales.orden  integer
+columna  sala_anuncios.creado  timestamp with time zone
+columna  sala_anuncios.creado_por  uuid
+columna  sala_anuncios.hasta  timestamp with time zone
+columna  sala_anuncios.id  bigint
+columna  sala_anuncios.quitado  timestamp with time zone
+columna  sala_anuncios.sala  text
+columna  sala_anuncios.texto  text
+columna  sala_anuncios.texto_en  text
 columna  sala_avisos_push_enviados.enviado  timestamp with time zone
 columna  sala_avisos_push_enviados.no  integer
 columna  sala_avisos_push_enviados.ronda  integer
@@ -2283,11 +2292,13 @@ funcion  interno.estilo_pruebas_al_guardar()  definer  anon=false  auth=false
 funcion  interno.estilo_seguimiento_al_guardar()  definer  anon=false  auth=false
 funcion  interno.estilo_seguimiento_partidas_ok(p jsonb)  invoker  anon=false  auth=true
 funcion  interno.estudio_al_guardar()  definer  anon=false  auth=false
+funcion  interno.fin_de_puntos_dobles(p_alumno uuid, p_horas integer)  definer  anon=false  auth=false
 funcion  interno.frenar_envio_publico(p_tipo text, p_ambito text, p_correo text, p_ip text)  invoker  anon=false  auth=false
 funcion  interno.gente_de_mis_academias()  definer  anon=false  auth=true
 funcion  interno.habilidad_resultado_de_la_base()  definer  anon=false  auth=false
 funcion  interno.horarios_del_alumno(p_alumno uuid)  definer  anon=false  auth=false
 funcion  interno.jsonb_o_nulo(p text)  invoker  anon=false  auth=true
+funcion  interno.leccion_abierta(p_alumno uuid, p_curso text)  definer  anon=false  auth=false
 funcion  interno.lecciones_hechas(p_alumno uuid, p_curso text)  definer  anon=false  auth=false
 funcion  interno.material_compartido_conmigo(p_producto text)  definer  anon=false  auth=true
 funcion  interno.me_sacaron_de(p_clase uuid)  definer  anon=false  auth=true
@@ -2535,6 +2546,8 @@ funcion  retos_de_la_semana()  definer  anon=false  auth=true
 funcion  revisar_informe_mensual(p_id uuid, p_comentario text)  definer  anon=false  auth=true
 funcion  ruta_cumplimiento(p_lunes date, p_grupo text, p_inicio date)  invoker  anon=false  auth=true
 funcion  sacar_de_la_clase(p_clase uuid, p_alumno uuid)  definer  anon=false  auth=true
+funcion  sala_anuncio_publicar(p_sala text, p_texto text, p_texto_en text, p_horas integer)  definer  anon=false  auth=true
+funcion  sala_anuncio_quitar(p_id bigint)  definer  anon=false  auth=true
 funcion  sala_avisos_frenar(p_ip text)  definer  anon=false  auth=false
 funcion  saldo_de_puntos(p_alumno uuid)  invoker  anon=false  auth=true
 funcion  salida_de_la_clase(p_clase uuid)  invoker  anon=false  auth=true
@@ -2998,6 +3011,7 @@ politica  retos_semanales  retos_semanales_delete  DELETE
 politica  retos_semanales  retos_semanales_insert  INSERT
 politica  retos_semanales  retos_semanales_select  SELECT
 politica  retos_semanales  retos_semanales_update  UPDATE
+politica  sala_anuncios  sala_anuncios_ver  SELECT
 politica  salas_torneo  salas_torneo_borrar  DELETE
 politica  salas_torneo  salas_torneo_crear  INSERT
 politica  salas_torneo  salas_torneo_editar  UPDATE
@@ -3669,6 +3683,8 @@ indice  retos_ejercicios_respuestas  retos_ejercicios_respuestas_alumno
 indice  retos_ejercicios_respuestas  retos_ejercicios_respuestas_pkey
 indice  retos_semanales  retos_semanales_clave_key
 indice  retos_semanales  retos_semanales_pkey
+indice  sala_anuncios  sala_anuncios_pkey
+indice  sala_anuncios  sala_anuncios_sala_creado
 indice  sala_avisos_push_enviados  sala_avisos_push_enviados_pkey
 indice  sala_suscripciones_push  sala_suscripciones_push_pkey
 indice  sala_suscripciones_push  sala_suscripciones_push_sala_endpoint_key

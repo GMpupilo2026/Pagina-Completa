@@ -267,6 +267,40 @@ async function editor(browser) {
   await ctx.close();
 }
 
+async function anuncios(browser) {
+  console.log("\n=== Los avisos de la organización ===");
+  const { page, ctx, errores } = await abrir(browser, "/admin.html#torneos", { salas: SALAS, admin: true });
+  await page.waitForFunction(() => document.querySelectorAll("#anuncio-sala option").length > 1);
+  igual("la lista ofrece solo las salas publicadas", await page.$$eval("#anuncio-sala option", (o) => o.map((x) => x.value)), ["", "cenfotec", "utn"]);
+  igual("y dice que no hay ninguno vigente", await page.textContent("#anuncios-admin"), "No hay avisos vigentes.");
+  // Sin texto no se manda.
+  await page.selectOption("#anuncio-sala", "utn");
+  await page.click("#anuncio-publicar");
+  igual("sin texto no se manda", [await page.textContent("#anuncio-estado"), (await escrituras(page)).filter((e) => e.op === "rpc").length], ["Escribe el aviso (al menos 3 letras).", 0]);
+  await page.fill("#anuncio-texto", "La ronda 6 se atrasa 30 minutos.");
+  await page.fill("#anuncio-texto-en", "Round 6 is delayed by 30 minutes.");
+  await page.selectOption("#anuncio-horas", "6");
+  await page.click("#anuncio-publicar");
+  await page.waitForFunction(() => /Listo/.test(document.getElementById("anuncio-estado").textContent));
+  igual("publicar pregunta antes, con un botón que dice lo que hace", (await page.evaluate(() => window.__avisos)).some((a) => a.includes("¿Publicar este aviso?") && a.includes("Publicar y avisar") && a.includes("6 horas")), true);
+  igual("y llama a la función de la base con la sala, los dos textos y las horas", (await escrituras(page)).filter((e) => e.op === "rpc").pop(),
+    { op: "rpc", nombre: "sala_anuncio_publicar", params: { p_sala: "utn", p_texto: "La ronda 6 se atrasa 30 minutos.", p_texto_en: "Round 6 is delayed by 30 minutes.", p_horas: 6 } });
+  await page.waitForFunction(() => document.querySelectorAll("#anuncios-admin button").length === 1);
+  igual("queda en la lista de los vigentes, con su botón para quitarlo", await page.$eval("#anuncios-admin li", (li) => [li.querySelector("p").textContent, li.querySelector("button").getAttribute("aria-label")]),
+    ["La ronda 6 se atrasa 30 minutos.", "Quitar el aviso «La ronda 6 se atrasa 30 minutos.»"]);
+  await page.click("#anuncios-admin button");
+  await page.waitForFunction(() => document.getElementById("anuncios-admin").textContent === "No hay avisos vigentes.");
+  igual("quitarlo pregunta y lo quita", [(await page.evaluate(() => window.__avisos)).some((a) => a.includes("¿Quitar este aviso?") && a.includes("Quitar el aviso")), await page.evaluate(() => window.__anuncios().length)], [true, 0]);
+  // Quien ya no administra: la base lo rechaza y la página lo dice.
+  await page.evaluate(() => window.__quitarAdmin());
+  await page.fill("#anuncio-texto", "Otro aviso");
+  await page.click("#anuncio-publicar");
+  await page.waitForFunction(() => /permiso/.test(document.getElementById("anuncio-estado").textContent));
+  igual("sin ser admin, no se publica y lo dice", [await page.textContent("#anuncio-estado"), await page.evaluate(() => window.__anuncios().length)], ["Tu cuenta no tiene permiso para publicar avisos.", 0]);
+  igual("sin errores de JavaScript", errores, []);
+  await ctx.close();
+}
+
 async function sinPermiso(browser) {
   console.log("\n=== Si la base no deja escribir, no dice «guardada» ===");
   // Quien administraba pierde el permiso con el panel abierto: el update no
@@ -289,6 +323,7 @@ async function sinPermiso(browser) {
   try {
     await paginaPublica(browser);
     await editor(browser);
+    await anuncios(browser);
     await sinPermiso(browser);
   } finally {
     await browser.close();

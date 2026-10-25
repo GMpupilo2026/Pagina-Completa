@@ -177,6 +177,8 @@ window.__consultas = [];
       is(col, val) { anotado.is = { [col]: val }; filas2 = filas2.filter((r) => (val === null ? r[col] == null : r[col] === val)); return b; },
       order() { return b; },
       range(a, z) { anotado.range = [a, z]; filas2 = filas2.slice(a, z + 1); return b; },
+      // Los avisos vigentes de las salas se piden con limit(50).
+      limit(n) { anotado.limit = n; filas2 = filas2.slice(0, n); return b; },
       single() { unica = true; return b; },
       maybeSingle() { unica = true; return b; },
       // Por la clave de preparacion_sesiones (curso, sesion), que es la única

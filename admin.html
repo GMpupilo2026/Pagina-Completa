@@ -501,6 +501,34 @@
                         <ul id="salas-admin" class="divide-y divide-brand-100 dark:divide-brand-800"></ul>
                         <p id="salas-admin-vacio" class="hidden text-sm text-brand-500 dark:text-brand-300">Todavía no hay ninguna sala. Crea la primera arriba, en «+ Nueva sala».</p>
                     </div>
+
+                    <!-- Los avisos de la organización de una sala (el Centroamericano):
+                         arriba en su página y al celular de quien activó los avisos.
+                         El código está en js/admin-sala-anuncios.js. -->
+                    <form id="anuncio-form" class="mt-6 bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6" novalidate aria-labelledby="anuncio-titulo">
+                        <h3 id="anuncio-titulo" class="font-serif text-lg font-bold text-brand-800 dark:text-white">Avisos de la organización</h3>
+                        <p class="text-sm text-brand-500 dark:text-brand-300 mt-1 mb-4">Sale arriba en la página del torneo y le llega al celular a quien activó «Avisarme en este celular» en esa sala. Por ejemplo: «La ronda 6 se atrasa 30 minutos».</p>
+                        <div class="grid gap-4 md:grid-cols-2">
+                            <label class="block text-sm font-semibold text-brand-700 dark:text-brand-200">Sala
+                                <select id="anuncio-sala" class="mt-1 w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none"><option value="">Cargando…</option></select>
+                            </label>
+                            <label class="block text-sm font-semibold text-brand-700 dark:text-brand-200">Se ve durante
+                                <select id="anuncio-horas" class="mt-1 w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none">
+                                    <option value="3">3 horas</option><option value="6">6 horas</option><option value="12">12 horas</option><option value="24" selected>24 horas</option><option value="48">2 días</option><option value="72">3 días</option>
+                                </select>
+                            </label>
+                            <label class="block md:col-span-2 text-sm font-semibold text-brand-700 dark:text-brand-200">El aviso, en español
+                                <textarea id="anuncio-texto" maxlength="280" rows="2" required class="mt-1 w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none"></textarea>
+                            </label>
+                            <label class="block md:col-span-2 text-sm font-semibold text-brand-700 dark:text-brand-200">En inglés (si no lo escribes, sale en español)
+                                <textarea id="anuncio-texto-en" maxlength="280" rows="2" class="mt-1 w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none"></textarea>
+                            </label>
+                        </div>
+                        <button type="submit" id="anuncio-publicar" class="mt-4 bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 disabled:opacity-50">Publicar el aviso</button>
+                        <p id="anuncio-estado" class="mt-3 text-sm font-semibold" role="status"></p>
+                        <h4 class="mt-5 text-sm font-bold text-brand-800 dark:text-white">Los que se ven ahora</h4>
+                        <ul id="anuncios-admin" class="divide-y divide-brand-100 dark:divide-brand-800"></ul>
+                    </form>
                 </section>
 
                 <!-- ===== Registro de cambios =====
@@ -721,6 +749,7 @@
     <script src="js/video-embebido.js"></script>
     <script src="js/escenarios-sala.js"></script>
     <script src="js/admin-salas-torneo.js"></script>
+    <script src="js/admin-sala-anuncios.js"></script>
     <script src="js/hora-cr.js"></script>
     <script src="js/admin-proyectos.js"></script>
     <script src="js/admin-preparacion.js"></script>

@@ -63,8 +63,8 @@ ok("ningún teléfono sin confirmar", tels.every((t) => TELEFONOS.includes(t)), 
 const contacto = (html.match(/<dialog id="contacto"[\s\S]*?<\/dialog>/) || [""])[0];
 // Toda la información va en fichas: cada ventana de la página tiene su ficha y su «Cerrar».
 const dialogos = [...html.matchAll(/<dialog id="([a-z-]+)" class="ficha-dialogo[^"]*" aria-labelledby="\1-titulo">([\s\S]*?)<\/dialog>/g)];
-ok("el reglamento, el calendario, los hoteles, los contactos, el medallero, la clasificación, los países, las sorpresas, el cara a cara, la elección de categoría y el proyector van en ventanas",
-  JSON.stringify(dialogos.map((m) => m[1]).sort()) === JSON.stringify(["calendario", "cara-a-cara", "clasificacion", "contacto", "delegaciones", "hoteles", "medallero", "proyector", "reglamento", "resultados", "sorpresas"]), dialogos.map((m) => m[1]).join(", "));
+ok("el reglamento, el calendario, los hoteles, los contactos, el medallero, la clasificación, los países, las sorpresas, el cara a cara, los números, la elección de categoría y el proyector van en ventanas",
+  JSON.stringify(dialogos.map((m) => m[1]).sort()) === JSON.stringify(["calendario", "cara-a-cara", "clasificacion", "contacto", "delegaciones", "hoteles", "medallero", "numeros", "proyector", "reglamento", "resultados", "sorpresas"]), dialogos.map((m) => m[1]).join(", "));
 for (const [, id, cuerpo] of dialogos) {
   // La elección de categoría la abre la ficha «Resultados en vivo», que sin
   // JavaScript sigue llevando a chess-results (js/centroamericano-tablas.js).
@@ -192,6 +192,8 @@ ok("la página carga el cliente de Supabase antes que su código en vivo", html.
   ok("la función manda un solo resumen por país y ronda (tnr «0»), no uno por torneo",
      /avisar\(s, "delegacion", "0", 0, r\.ronda/.test(fn) && !/for \(const t of torneos\)[\s\S]{0,200}resumenDelegacion/.test(fn));
   ok("y a cada jugador sin «Gr» le pone la categoría de su enlace", /grupo: j\.grupo \|\| t\.categoria/.test(fn));
+  ok("y manda cada aviso de la organización una vez a cada aparato que ya estaba suscrito, en su idioma",
+     /avisar\(s, "anuncio", "0", 0, Number\(a\.id\)/.test(fn) && /new Date\(s\.creada\)\.getTime\(\) > new Date\(a\.creado\)\.getTime\(\)/.test(fn) && /en && a\.texto_en \? a\.texto_en : a\.texto/.test(fn));
 }
 
 (async () => {
@@ -714,6 +716,39 @@ ok("la página carga el cliente de Supabase antes que su código en vivo", html.
     ok("y los invictos de cada categoría (un bye o una ronda sin jugar no cuentan como partida)", JSON.stringify(sorp.invictos) === JSON.stringify(["Sub-8 Absoluto Muñoz Solís, José (CRC) · 2 puntos", "Sub-18 Absoluto WIM Mayorga Araya, Sofia (CRC) · 3 puntos"]), JSON.stringify(sorp.invictos));
     await p6.keyboard.press("Escape");
 
+    // «El festival en números». Las partidas, contadas una vez desde las
+    // blancas: Mayorga 2 (ganó las 2), Guevara 1 (ganó), Castillo 2 (ganó y
+    // tablas) y Wilson 1 (perdió con blancas en la ronda 4): 6 partidas, 4 de
+    // las blancas, 1 en tablas, 1 de las negras.
+    await p6.click('a[href="#numeros"]');
+    await p6.waitForFunction(() => document.getElementById("numeros").open && document.querySelector("#numeros-contenido .cac-numeros"), null, { timeout: 5000 }).catch(() => {});
+    const num = await p6.evaluate(() => ({ cifras: [...document.querySelectorAll("#numeros-contenido .cac-numero")].map((d) => d.querySelector("dd").textContent + " " + d.querySelector("dt").textContent),
+      parrafos: [...document.querySelectorAll("#numeros-contenido > p")].map((p) => p.textContent) }));
+    ok("«El festival en números»: jugadores, países, categorías y partidas", JSON.stringify(num.cifras) === JSON.stringify(["7 jugadores", "6 países", "3 categorías", "6 partidas jugadas"]), JSON.stringify(num));
+    ok("y cómo les fue a las blancas, la sorpresa más grande y el país con más medallas", JSON.stringify(num.parrafos.slice(0, 5)) === JSON.stringify([
+      "Hasta la ronda 4: se pone al día con cada ronda.", "Ganaron las blancas el 67 % · tablas el 17 % · ganaron las negras el 17 %.",
+      "Ronda 1 · Sub-18 Absoluto: WIM Mayorga Araya, Sofia (CRC, 2215) le ganó a FM Guevara Ruiz, Santiago Jose (ESA, 2252), 37 puntos de Elo más.",
+      "Todavía ninguna.", "Costa Rica (CRC): 2 de oro (si terminara hoy)."]), JSON.stringify(num.parrafos));
+    // La mejor remontada, con los puestos de una jugadora puestos a mano: del
+    // 12.º tras la ronda 2 al 2.º (la subida más grande gana, aunque no sea la primera de la lista).
+    const remonta = await p6.evaluate(() => {
+      const V = window.CentroamericanoVivo, antes = V.puestosDe;
+      // El primero de la lista (Mayorga) sube 3; el segundo (Guevara), 10.
+      V.puestosDe = (x) => (x.j.no === 1 ? [{ ronda: 1, desde: 9, hasta: 9 }, { ronda: 2, desde: 12, hasta: 12 }, { ronda: 3, desde: 2, hasta: 2 }]
+        : x.j.no === 2 ? [{ ronda: 1, desde: 5, hasta: 5 }, { ronda: 2, desde: 2, hasta: 2 }] : []);
+      const r = window.CentroamericanoTablas.numerosDelFestival().remontada;
+      V.puestosDe = antes;
+      return r;
+    });
+    ok("la mejor remontada es la subida más grande desde su peor puesto", remonta === "FM Guevara Ruiz, Santiago Jose (ESA), Sub-18 Absoluto: del 12.º tras la ronda 2 al 2.º.", remonta);
+    // La marca ya la cuenta lo que se instaló para la imagen de la delegación: solo se pone en cero.
+    await p6.evaluate(() => { window.__marcas = 0; });
+    const [descNum] = await Promise.all([p6.waitForEvent("download", { timeout: 15000 }), p6.click("#numeros-imagen")]);
+    const pngNum = fs.readFileSync(await descNum.path());
+    ok("y se comparte como imagen, con la marca de agua", pngNum.slice(1, 4).toString() === "PNG" && pngNum.readUInt32BE(16) === 1080
+      && descNum.suggestedFilename() === "centroamericano-2026-en-numeros-ronda-4.png" && await p6.evaluate(() => window.__marcas === 1), descNum.suggestedFilename() + " " + pngNum.readUInt32BE(16) + " marcas " + await p6.evaluate(() => window.__marcas));
+    await p6.keyboard.press("Escape");
+
     // Cara a cara: dos jugadores lado a lado, con su partida y cada ronda.
     await p6.click('a[href="#cara-a-cara"]');
     await p6.waitForFunction(() => document.getElementById("cara-a-cara").open && document.querySelectorAll("#cara-lista option").length === 7);
@@ -815,13 +850,26 @@ ok("la página carga el cliente de Supabase antes que su código en vivo", html.
       ] };
       const ctx12 = await nav.newContext({ viewport: { width: 375, height: 800 }, serviceWorkers: "block" });
       await ctx12.addInitScript((d) => {
-        window.sb = { functions: { invoke: async () => ({ data: d, error: null }) } };
+        // Los avisos de la organización (sala_anuncios): la base da los vigentes.
+        window.__anunciosPedidos = [];
+        const anuncios = { select() { return this; }, eq(c, v) { window.__anunciosPedidos.push([c, v]); return this; }, order() { return this; }, limit() { return this; },
+          then(ok) { return Promise.resolve({ data: [{ id: 1, texto: "La ronda 6 se atrasa 30 minutos.", texto_en: "Round 6 is delayed by 30 minutes.", creado: "2026-11-04T15:00:00Z" }], error: null }).then(ok); } };
+        window.sb = { functions: { invoke: async () => ({ data: d, error: null }) }, from: (t) => (t === "sala_anuncios" ? anuncios : null) };
         // Alguien que seguía a una jugadora en la lista general, de antes de partir el torneo.
         if (!localStorage.getItem("cac_seguidos_v1")) localStorage.setItem("cac_seguidos_v1", JSON.stringify([{ tnr: "1494141", no: 7, nombre: "Mayorga Araya, Sofia" }]));
       }, DOCE);
       const pd = await ctx12.newPage();
       await pd.route(/chess-results\.com/, (rt) => rt.fulfill({ status: 200, contentType: "text/html", body: "<p>cr</p>" }));
       await pd.goto(BASE + "/" + PAGINA, { waitUntil: "load" });
+      await pd.waitForFunction(() => !document.getElementById("anuncios").hidden, null, { timeout: 5000 }).catch(() => {});
+      const aviso = await pd.evaluate(() => { const a = document.querySelector("#anuncios .cac-anuncio"); const cs = a && getComputedStyle(a);
+        return { ve: !!a && a.checkVisibility(), texto: a ? a.textContent : "", colores: cs ? [cs.backgroundColor, cs.color] : [], arriba: !!a && a.compareDocumentPosition(document.querySelector(".cac-hoy")) === Node.DOCUMENT_POSITION_FOLLOWING, pedido: window.__anunciosPedidos }; });
+      ok("el aviso de la organización sale arriba de «Hoy en el torneo», con su hora (pedido solo de esta sala)", aviso.ve && aviso.arriba
+        && aviso.texto.replace(/\s/g, " ") === "📢 Aviso de la organización · 4 nov, 9:00 a. m.La ronda 6 se atrasa 30 minutos." && JSON.stringify(aviso.pedido) === JSON.stringify([["sala", "centroamericano-2026"]]), JSON.stringify(aviso));
+      ok("en blanco sobre el rojo de las bases (5,6)", JSON.stringify(aviso.colores) === JSON.stringify(["rgb(206, 19, 40)", "rgb(255, 255, 255)"]), JSON.stringify(aviso.colores));
+      await pd.click("#cac-idioma");
+      ok("y en inglés, con su texto en inglés", /Notice from the organizers .*Round 6 is delayed by 30 minutes\.$/.test(await pd.textContent("#anuncios .cac-anuncio")), await pd.textContent("#anuncios .cac-anuncio"));
+      await pd.click("#cac-idioma");
       await pd.fill("#buscador-nombre", "mayorga");
       await pd.waitForTimeout(450);
       const encontrados = await pd.evaluate(() => [...document.querySelectorAll("#buscador-resultados li")].map((l) => l.innerText.replace(/\s+/g, " ").trim()));
@@ -945,6 +993,15 @@ ok("la página carga el cliente de Supabase antes que su código en vivo", html.
     ok("«Diploma (PDF)» da una página A4 acostada con la imagen de borde a borde", pdfDip.startsWith("%PDF-") && pdfDip.includes("/MediaBox [0 0 841.89 595.28]")
       && pdfDip.includes("/DCTDecode") && pdfDip.includes("/Count 1") && pdfDip.includes("(Diploma · WIM Sofia Mayorga Araya)".replace("·", "\xb7"))
       && dPdf.suggestedFilename() === "centroamericano-2026-diploma-mayorga-araya-sofia.pdf" && await pDip.evaluate(() => window.__marcas === 2), dPdf.suggestedFilename());
+    // Todos los diplomas de la delegación en un PDF: los dos de Costa Rica.
+    await pDip.selectOption("#delegacion", "CRC");
+    await pDip.waitForSelector("#delegacion-diplomas", { timeout: 10000 }).catch(() => {});
+    const [dTodos] = await Promise.all([pDip.waitForEvent("download", { timeout: 30000 }), pDip.click("#delegacion-diplomas")]);
+    const pdfTodos = fs.readFileSync(await dTodos.path()).toString("latin1");
+    ok("«Todos los diplomas» da un PDF con una hoja por jugador de la delegación, cada uno con su marca de agua",
+      pdfTodos.startsWith("%PDF-") && pdfTodos.includes("/Count 2") && (pdfTodos.match(/\/Subtype \/Image/g) || []).length === 2
+      && dTodos.suggestedFilename() === "centroamericano-2026-crc-diplomas.pdf" && await pDip.evaluate(() => window.__marcas === 4)
+      && /los 2 diplomas se bajaron/.test(await pDip.textContent("#delegacion-lista .cac-hoja [role=status]")), dTodos.suggestedFilename());
     await ctxDip.close();
 
     // Instalar en iPhone: Safari no avisa, así que se explica cómo, una vez.

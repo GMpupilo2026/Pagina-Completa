@@ -9036,6 +9036,59 @@ chess-results.
   1,83 esperado y 40 × (3 − 1,83) = +46,8). Antes de darlo por bueno, rompí
   a propósito cada pieza y cada una saltó.
 
+### Los avisos de la organización, el festival en números y todos los diplomas
+
+Las pidió el dueño entre las mejoras («5, 6 y 7»). La 7 era una «constancia
+de participación», pero eso ya existía: el diploma de cada jugador dice «por
+su participación» aunque no tenga medalla. En su lugar se hizo lo que faltaba:
+bajar todos los diplomas de una delegación en un solo PDF.
+
+- **Los avisos de la organización** («la ronda 6 se atrasa 30 minutos»):
+  - Se publican en `admin.html#torneos`, debajo de las salas: la sala, el
+    texto (y el inglés, si se quiere), cuántas horas dura (de 3 a 72). Antes
+    de mandarlo pregunta, porque sale a los celulares y eso no se deshace.
+  - Viven en `sala_anuncios`. Quien decide es la base: los escribe solo
+    `sala_anuncio_publicar()`, que pide `soy_admin()` (con su `coalesce`); la
+    tabla no tiene política de escritura y nadie puede insertar directo.
+    `anon` lee solo las columnas del aviso (no `creado_por`) y la política
+    deja ver solo los vigentes de salas publicadas. Lo comprobé impersonando
+    `anon`, una cuenta común y una de admin dentro de una transacción
+    revertida.
+  - El tope de 72 horas lo pone un `check` de la tabla, no la pantalla: un
+    aviso viejo olvidado no puede quedarse pegado en la página.
+  - En la página salen arriba de «Hoy en el torneo», en rojo con letra blanca
+    (5,6:1), los tres últimos, con su hora en hora de Costa Rica. Se piden cada
+    5 minutos, y al volver a la pestaña si pasó más de un minuto.
+  - **A los celulares** los manda la misma Edge Function de siempre,
+    `sala-jugadores`, antes de leer chess-results. Al publicar, la función de
+    la base llama a `disparar_sala_avisos()` para que no espere los 5 minutos
+    del cron. Cada aparato lo recibe una vez (`sala_avisos_push_enviados`
+    con tipo `anuncio`, el id del aviso en `ronda` y `no = 0`), en su idioma,
+    y solo si se suscribió ANTES del aviso: quien se suscribe a las 3 no tiene
+    por qué recibir el de las 9 de la mañana como si fuera nuevo.
+  - No llevan datos de personas: es un texto de la organización.
+- **El festival en números** (`#numeros`, enlazado desde «Hoy»):
+  - jugadores, países, categorías y partidas jugadas (cada partida se cuenta
+    una vez, desde las blancas);
+  - cuánto ganan las blancas, las negras y cuántas tablas;
+  - la mayor sorpresa (la misma cuenta de «Sorpresas», no otra);
+  - la mayor remontada: quién subió más puestos desde el peor que tuvo antes
+    de la última ronda, con un mínimo de 2. A igual subida, el que terminó
+    más arriba;
+  - el país con más oros (si terminara hoy, mientras no terminen todas);
+  - y una imagen de 1080 de ancho para compartir, con la marca de agua.
+- **Todos los diplomas de la delegación** en «Mi delegación»: el mismo
+  `diploma()` de cada jugador, uno por página. Para eso `ReportePDF.deImagen`
+  acepta ahora `paginas`, una lista de imágenes, y el resto de los que lo
+  llaman con una sola no cambian. Cada diploma lleva su marca de agua.
+- Lo revisan `verificar-salas-torneo.js` (la pantalla de admin, con el doble
+  que conoce las dos funciones) y `verificar-centroamericano.js` (el aviso en
+  la página y en inglés, la función que manda una vez y solo a quien estaba,
+  cada número contado aparte, la imagen y el PDF de dos páginas). Antes de
+  darlo por bueno rompí a propósito los números, la remontada, el inglés del
+  aviso, el PDF de varias páginas y la regla de «suscrito antes», y cada uno
+  saltó.
+
 ## Las páginas de los torneos universitarios
 
 Dos, con la misma maquinaria: `cenfotec-2026.html` (el Desafío Mentes
