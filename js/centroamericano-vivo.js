@@ -540,6 +540,11 @@
     li.appendChild(el("p", "cac-jugador-ronda", linea));
     const res = x.partida && x.partida.resultado && x.partida.resultado !== "bye" && /\d|½/.test(x.partida.resultado) ? x.partida.resultado : "";
     if (res) li.appendChild(el("p", "text-sm", tx.resultado(res)));
+    // En las páginas universitarias, cómo le fue en las ediciones anteriores
+    // (js/torneo-ediciones.js, que carga después: la primera tarjeta se pinta
+    // al escribir en el buscador, cuando ya está).
+    const antes = window.TorneoEdiciones && window.TorneoEdiciones.historial(j);
+    if (antes) li.appendChild(el("p", "cac-jugador-antes text-sm", antes));
 
     // «Sus rondas» se abre dentro de la tarjeta, y queda abierta al repintar.
     const clave = x.torneo.tnr + "-" + j.no;

@@ -23,6 +23,10 @@
  *      además, cada torneo de chess-results es una rama: el puesto, el podio,
  *      la clasificación y el proyector van por rama, no mezclados.
  *
+ * Y «Ediciones anteriores» (js/torneo-ediciones.js): los campeones de cada
+ * edición y quién volvió, con los datos de verdad de la edición anterior y la
+ * de ahora del doble; y en la tarjeta del buscador, cómo le fue antes.
+ *
  *   python3 -m http.server 8777     (desde la raíz del sitio)
  *   node herramientas/verificar-paginas-universitarias.js
  */
@@ -68,20 +72,30 @@ function torneo(tnr, nombres) {
     // Como lo lee la función con el torneo terminado: ronda 0 y el rival sin número.
     pareo: { ronda: 0, mesas: [{ mesa: 1, blancas: { no: 1, nombre: nombres[0], titulo: "" }, negras: { no: 0, nombre: nombres[3], titulo: "" }, resultado: "1 - 0" }] } } };
 }
-const A = torneo("1503400", ["Rojas Mora, Ana Lucia", "Vargas Solis, Bruno", "Castro Pena, Carla", "Diaz Ulate, Daniel",
-  "Esquivel Brenes, Elena", "Fallas Arce, Fabio", "Gamboa Rivas, Gabriela", "Herrera Quiros, Hugo", "Ibarra Loria, Ines"]);
-const FEM = torneo("1498221", ["Jara Mena, Julia", "Kopper Vega, Karla", "Leon Rojas, Laura", "Mena Solano, Maria",
+const A = torneo("1503400", ["Rojas Mora, Ana Lucia", "Vargas Solis, Bruno", "Hernandez Brenes, Keicy Pamela", "Diaz Ulate, Daniel",
+  "Esquivel Brenes, Elena", "Fallas Arce, Fabio", "Oconitrillo Rodriguez, Gerald", "Herrera Quiros, Hugo", "Ibarra Loria, Ines"]);
+const FEM = torneo("1498221", ["Jara Mena, Julia", "Diaz Charpentier, Kristel Melissa", "Leon Rojas, Laura", "Mena Solano, Maria",
   "Nunez Brenes, Nora", "Obando Ruiz, Olga", "Pineda Mora, Paula", "Quesada Lara, Rosa", "Salas Vindas, Sara"]);
-const MAS = torneo("1498218", ["Alfaro Mora, Andres", "Barquero Solis, Beto", "Calvo Pena, Carlos", "Duran Ulate, David",
+const MAS = torneo("1498218", ["Alfaro Mora, Andres", "Barquero Solis, Beto", "Cabezas Solano, David Alejandro", "Duran Ulate, David",
   "Elizondo Brenes, Eric", "Flores Arce, Felipe", "Garro Rivas, Gerardo", "Hidalgo Quiros, Hector", "Ivankovich Loria, Ivan"]);
 
 const PAGINAS = [
   { pagina: "cenfotec-2026.html", clase: "cft", sala: "cenfotec", azul: "35, 48, 101", celeste: "rgb(35, 172, 244)", tinta: "rgb(20, 28, 64)",
-    fichas: 9, datos: { torneos: [A.datos] }, ramas: null,
-    primero: A.orden[0].nombre, buscar: "rojas", ausente: "ibarra", puesto: "Puesto 1 de 9 · 2½ puntos", rival: "Esquivel Brenes, Elena" },
+    fichas: 10, datos: { torneos: [A.datos] }, ramas: null,
+    primero: A.orden[0].nombre, buscar: "rojas", ausente: "ibarra", puesto: "Puesto 1 de 9 · 2½ puntos", rival: "Esquivel Brenes, Elena",
+    // Los que vuelven de la edición 2025 (de verdad, en js/cenfotec.js): Keicy
+    // con su segundo nombre de más y Gerald con el apellido que chess-results
+    // escribió distinto (mismaPersona).
+    vuelve: { buscar: "keicy", antes: "En la edición 2025: 10.º de 42, con 4½ puntos." },
+    campeones: [["2025", "Ulloa Jimenez, Santiago", "6", "42"], ["2026", A.orden[0].nombre, "2½", "9"]],
+    volvieron: [["Oconitrillo Rodriguez, Gerald", "Hernandez Brenes, Keicy Pamela"]] },
   { pagina: "utn-2026.html", clase: "utn", sala: "utn", azul: "25, 58, 112", celeste: "rgb(191, 207, 232)", tinta: "rgb(15, 42, 85)",
-    fichas: 6, datos: { torneos: [FEM.datos, MAS.datos] }, ramas: ["Femenino", "Masculino"],
-    primero: FEM.orden[0].nombre, buscar: "jara", ausente: "salas vindas", puesto: "Puesto 1 de 9 en Femenino · 2½ puntos", rival: "Nunez Brenes, Nora" },
+    fichas: 7, datos: { torneos: [FEM.datos, MAS.datos] }, ramas: ["Femenino", "Masculino"],
+    primero: FEM.orden[0].nombre, buscar: "jara", ausente: "salas vindas", puesto: "Puesto 1 de 9 en Femenino · 2½ puntos", rival: "Nunez Brenes, Nora",
+    vuelve: { buscar: "charpentier", antes: "En la edición I (agosto 2026): 1.º de 15, con 5½ puntos." },
+    campeones: [["I (agosto 2026)", "Diaz Charpentier, Kristel Melissa", "5½", "15"], ["II (setiembre 2026)", FEM.orden[0].nombre, "2½", "9"],
+      ["I (agosto 2026)", "Cabezas Solano, David Alejandro", "5½", "23"], ["II (setiembre 2026)", MAS.orden[0].nombre, "2½", "9"]],
+    volvieron: [["Diaz Charpentier, Kristel Melissa"], ["Cabezas Solano, David Alejandro"]] },
 ];
 
 // 1. EL HTML
@@ -171,6 +185,34 @@ for (const P of PAGINAS) {
       await p.click("#buscador-resultados li [data-rondas]");
       const ausente = await p.evaluate(() => document.querySelector("#buscador-resultados li").innerText);
       ok("quien no se presentó a ninguna ronda no «jugó» nada: sus rondas dicen «no jugó»", (ausente.match(/no jugó/g) || []).length === 3 && !/Rendimiento/.test(ausente), ausente);
+
+      // Cómo le fue en la edición anterior, en su tarjeta.
+      await p.fill("#buscador-nombre", P.vuelve.buscar);
+      await p.waitForFunction((q) => new RegExp(q, "i").test((document.querySelector("#buscador-resultados li") || {}).innerText || ""), P.vuelve.buscar);
+      const vuelve = await p.evaluate(() => document.querySelector("#buscador-resultados li").innerText);
+      ok("la tarjeta de quien vuelve dice cómo le fue en la edición anterior", vuelve.includes(P.vuelve.antes), vuelve);
+      await p.fill("#buscador-nombre", P.buscar);
+      await p.waitForFunction((q) => new RegExp(q, "i").test((document.querySelector("#buscador-resultados li") || {}).innerText || ""), P.buscar);
+      ok("y la de quien no jugó antes no dice nada de eso", await p.evaluate(() => !/En la edición/.test(document.querySelector("#buscador-resultados li").innerText)));
+
+      // «Ediciones anteriores»: los campeones de cada una (la de ahora, de
+      // chess-results en vivo) y quién volvió, rama por rama.
+      await p.click('#fichas a.cac-ficha[href="#ediciones"]');
+      await p.waitForFunction(() => document.querySelectorAll("#ediciones-contenido table").length >= 2, null, { timeout: 10000 }).catch(() => {});
+      const ed = await p.evaluate(() => ({
+        abierto: document.getElementById("ediciones").open,
+        ramas: [...document.querySelectorAll("#ediciones-contenido .u-edicion-rama")].map((h) => h.textContent),
+        campeones: [...document.querySelectorAll("#ediciones-contenido .u-edicion-grupo")].flatMap((s) => [...s.querySelectorAll("table")[0].querySelectorAll("tbody tr")]
+          .map((tr) => [...tr.children].map((c) => c.textContent))),
+        volvieron: [...document.querySelectorAll("#ediciones-contenido .u-edicion-grupo")].map((s) => { const t = s.querySelectorAll("table")[1];
+          return t ? [...t.querySelectorAll("tbody tr")].map((tr) => tr.children[0].textContent) : []; }),
+        cambio: [...document.querySelectorAll("#ediciones-contenido .u-cambio")].map((c) => c.textContent),
+      }));
+      ok("«Ediciones anteriores» se abre encima" + (P.ramas ? ", una sección por rama" : ", sin título de rama"), ed.abierto && JSON.stringify(ed.ramas) === JSON.stringify(P.ramas || []), JSON.stringify(ed.ramas));
+      ok("con el campeón de cada edición, sus puntos y cuántos jugaron", JSON.stringify(ed.campeones) === JSON.stringify(P.campeones), JSON.stringify(ed.campeones));
+      ok("y quién volvió, por los apellidos y el primer nombre (y lo revisado a mano)", JSON.stringify(ed.volvieron) === JSON.stringify(P.volvieron), JSON.stringify(ed.volvieron));
+      ok("el cambio de puesto va escrito, no solo con la flecha", ed.cambio.length > 0 && ed.cambio.every((c) => /^[▲▼=] (Subió|Bajó) \d+ puestos?$|^= Mismo puesto$/.test(c)), JSON.stringify(ed.cambio));
+      await p.keyboard.press("Escape");
 
       // La clasificación final.
       await p.click('#fichas a.cac-ficha[href="#clasificacion"]');

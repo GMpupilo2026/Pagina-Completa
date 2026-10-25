@@ -195,6 +195,17 @@
 .u-podio-puesto[data-puesto="1"] .u-podio-nombre { font-size: 1.3rem; }
 .u-podio-puntos { font-size: 0.9rem; }
 
+/* «Ediciones anteriores» (js/torneo-ediciones.js): los campeones y quién
+ * volvió. Los títulos van con --cac-acento, el mismo de «El podio» (medido
+ * arriba sobre el fondo del recuadro); el cambio de puesto no lleva color:
+ * lo dicen la flecha y el texto. */
+.u-edicion-grupo + .u-edicion-grupo { margin-top: 2rem; padding-top: 1.5rem; border-top: 2px solid var(--u-celeste); }
+.u-edicion-rama { font-family: var(--font-serif, serif); font-size: 1.35rem; font-weight: 800; color: var(--cac-acento); }
+.u-edicion-titulo { margin-top: 1.25rem; margin-bottom: 0.5rem; font-weight: 800; color: var(--cac-acento); }
+.u-edicion-nota { margin: 0.5rem 0 0.75rem; font-size: 0.9rem; }
+.u-cambio { font-weight: 700; white-space: nowrap; }
+.cac-jugador-antes { font-style: italic; }
+
 /* La despedida: el logo en un círculo, donde el Centroamericano tiene al pizote. */
 .u-despedida-logo {
   flex-shrink: 0;

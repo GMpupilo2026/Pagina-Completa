@@ -9059,3 +9059,86 @@ Alajuela, 6 rondas a 15 minutos + 10 segundos.
   de la UTN), a la página entera. Lo revisan `verificar-salas-torneo.js` y
   `verificar-paginas-universitarias.js` (ningún enlace del contenido sin
   `data-ventana`, y `#ficha-partidas` abre la sala encima).
+
+### Las ediciones anteriores
+
+Cada página compara con la edición anterior (lo pidió el dueño: la mejora
+6, «comparar con la edición anterior»). En el Desafío es la de 2025
+(chess-results tnr1259931, 28 de setiembre de 2025, 42 jugadores). En la
+UTN es la primera, el Torneo CONARE 2026 del 16 de agosto: también de la UTN
+y en la misma sede, con el femenino (tnr1473963, 15) y el absoluto
+(tnr1473962, 23) separados, como en esta.
+
+- **Una ficha y un recuadro, «Ediciones anteriores»** (`#ediciones`,
+  `js/torneo-ediciones.js`). Por rama, trae dos cosas. Primero, el campeón
+  de cada edición, con sus puntos y cuántos jugaron. Después, «Quién volvió»:
+  los de esta edición que ya jugaron una anterior, con su puesto en cada una
+  («10.º de 42») y el cambio. El cambio va escrito («Subió 7 puestos»), con
+  la flecha de adorno y sin color. En la tarjeta del buscador, quien vuelve
+  lleva una línea más: «En la edición 2025: 10.º de 42, con 4½ puntos».
+- **Esta edición sale en vivo; las anteriores, guardadas.** Esta sale de
+  chess-results, de la misma `sala-jugadores` de siempre. Las anteriores
+  están en `TorneoPagina.ediciones` como `[puesto, nombre, puntos]`. Son
+  copia de la clasificación final de chess-results, tomada de
+  `uni_clasificacion` (CENFOTEC) y de `uni_resultados` (UTN) el 25/10/2026.
+  Esas tablas las lee solo quien tiene la licencia. Una página pública no las
+  puede pedir, pero lo que guardan es la clasificación pública de
+  chess-results. Por eso se copian a la configuración y no se piden.
+- **La misma persona de un año a otro** tiene los mismos apellidos y el mismo
+  primer nombre, sin tildes ni mayúsculas. Chess-results escribe a veces el
+  segundo nombre y a veces no («Keicy» y «Keicy Pamela»). A veces cambia una
+  letra del segundo («Naomi» y «Naomy»). Lo que esa regla no ve, un apellido
+  mal escrito, va revisado a mano en `mismaPersona`. En 2025 escribió
+  «Ocontrillo Rodriguez, Gerald» y en 2026 «Oconitrillo»: es la misma persona.
+  Si dos jugadores de una edición dan la misma clave, no se empareja
+  ninguno: mejor no decir nada que decir algo de otra persona.
+- **Lo revisa** `verificar-paginas-universitarias.js`, con los datos de
+  verdad de la edición anterior. Mira la línea de la tarjeta, los campeones
+  y quién volvió: con el segundo nombre de más y con `mismaPersona`; sin
+  ella, Gerald no aparece.
+
+## La plantilla de las páginas universitarias
+
+Las dos páginas salen de una plantilla (la mejora 7: «que el próximo torneo
+universitario no se arme a mano»). **Cada página tiene su configuración** en
+`herramientas/torneos-universitarios/<página>.js`, con todo lo que la hace
+ella: los textos, la portada, los datos de su ficha de chess-results, el
+logo, los colores de la imagen para compartir, las fichas, los recuadros
+propios (el contacto y «El ajedrez en CENFOTEC», con su HTML) y las
+ediciones anteriores. `node herramientas/torneo-universitario.js` escribe
+dos archivos: la página y su `js/<config>.js` (el `window.TorneoPagina`, que
+antes se escribía a mano). La primera vez reprodujo las dos páginas tal cual
+estaban, y las diferencias eran solo lo nuevo.
+
+- **No se editan a mano**: lo dicen la cabecera de cada página y de cada
+  `js/<config>.js`. `verificar-plantilla-universitaria.js` (sin navegador)
+  falla si una no es lo que sale de su configuración. También revisa lo que
+  la plantilla no puede ver sola:
+  - que el logo exista y mida lo que dice;
+  - que la sala tenga su portada en `PORTADAS` de `js/salas-torneo.js`, con
+    esa página, ese logo y las fichas a las que lleva;
+  - que las ediciones anteriores sean clasificaciones bien formadas: puestos
+    que no bajan, puntos de medio en medio que no suben, «Apellidos, Nombre»
+    y los mismos grupos que esta edición;
+  - que cada nombre de `mismaPersona` esté en una edición.
+- **Los bloques de los otros generadores no se pisan.** `pwa-cabecera.py`,
+  `tema-cabecera.py`, `fuentes-cabecera.py` y `legal-pie.py` ponen su
+  `<!-- x: inicio -->…<!-- x: fin -->`, cada uno donde le toca. La plantilla
+  toma esos bloques de la página que ya está, y también su orden al final del
+  `<head>`. Correr aquellos scripts después no deja la página «vieja». Se
+  comprobó corriéndolos todos sobre las dos.
+- **Lo que sale solo**: la ficha «Ediciones anteriores» y su recuadro, si
+  hay ediciones. La ficha va detrás de las del torneo y antes de las que
+  llevan a otra cosa (`despues`). Con un número impar de fichas, la última
+  ocupa la fila entera en el celular.
+- **Para el próximo torneo**: copiar la configuración de uno parecido y
+  cambiarle los datos, que salen de su ficha de chess-results y nunca se
+  inventan. Después:
+  1. poner el logo en `img/<universidad>/`;
+  2. poner sus colores, medidos, en `css/universidades.css` (`.x` y
+     `.u-sala-x`);
+  3. correr la plantilla;
+  4. agregar su portada en `PORTADAS`;
+  5. crear la sala en `admin.html#torneos`, con los enlaces de chess-results;
+  6. correr `sitemap.py` y `archivos-catalogo.js`;
+  7. sumarla a `PAGINAS` de `verificar-paginas-universitarias.js`.
