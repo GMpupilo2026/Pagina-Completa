@@ -956,11 +956,45 @@
   // mayúsculas con su sombra y la píldora roja con el evento. Al podio le dice
   // el lugar y la medalla (escrita, no solo el color del círculo). Contraste
   // medido: blanco sobre #40478F 8,35 y sobre #5A5FA3 5,83 (el más claro del
-  // degradado), blanco sobre el rojo #CE1328 5,6; el número sobre la medalla,
-  // #1E2453 sobre el oro 7,0, la plata 6,4 y el bronce 4,0 (letra grande: pide
-  // 3). El evento, el lugar, el dibujo y los colores los puede cambiar otra
+  // degradado), blanco sobre el rojo #CE1328 5,6; el número de la medalla,
+  // en medalla(). El evento, el lugar, el dibujo y los colores los puede cambiar otra
   // página (window.TorneoPagina.diploma). Lleva la marca de agua de Ajedrez Integral.
-  const MEDALLAS = ["#d4a72c", "#a8a9ad", "#b8733a"];
+  // Cada metal en tres tonos: el brillo, el color y el borde. El número va en
+  // #1E2453 sobre el tono del medio: 8,0 en el oro, 9,1 en la plata y 4,4 en el
+  // bronce (letra grande: pide 3).
+  const MEDALLAS = [["#fff3b0", "#e0b43a", "#8f6a10"], ["#ffffff", "#c4c6cc", "#6f727a"], ["#f6d0a8", "#c27a3e", "#6e3d1a"]];
+  // Una medalla de verdad: la cinta en V con los colores de la bandera, el
+  // disco con su brillo de metal, un anillo por dentro y el número en relieve.
+  function medalla(ctx, x, y, r, p, letra) {
+    const [luz, color, borde] = MEDALLAS[p - 1];
+    // La cinta: dos tiras que bajan en V hasta el disco, en franjas azul,
+    // blanco, rojo, blanco y azul.
+    const franjas = ["#1e4c8a", "#ffffff", "#ce1328", "#ffffff", "#1e4c8a"], ancho = 13, arriba = y - r - 150, abajo = y - r * 0.55;
+    [-1, 1].forEach((lado) => {
+      franjas.forEach((f, k) => {
+        const x0 = x + lado * (r * 0.95) - lado * k * ancho, x1 = x + lado * (r * 0.05) - lado * k * ancho;
+        ctx.fillStyle = f; ctx.beginPath();
+        ctx.moveTo(x0, arriba); ctx.lineTo(x0 - lado * ancho, arriba); ctx.lineTo(x1 - lado * ancho, abajo); ctx.lineTo(x1, abajo);
+        ctx.closePath(); ctx.fill();
+      });
+    });
+    // La sombra y el disco con su brillo arriba a la izquierda.
+    ctx.fillStyle = "rgba(0, 0, 0, 0.22)"; ctx.beginPath(); ctx.arc(x + 6, y + 10, r, 0, Math.PI * 2); ctx.fill();
+    const g = ctx.createRadialGradient(x - r * 0.35, y - r * 0.4, r * 0.1, x, y, r);
+    g.addColorStop(0, luz); g.addColorStop(0.55, color); g.addColorStop(1, borde);
+    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
+    ctx.lineWidth = 6; ctx.strokeStyle = borde; ctx.stroke();
+    // El anillo de adentro, con el metal al revés (hundido).
+    const g2 = ctx.createRadialGradient(x + r * 0.25, y + r * 0.3, r * 0.05, x, y, r * 0.74);
+    g2.addColorStop(0, luz); g2.addColorStop(1, color);
+    ctx.fillStyle = g2; ctx.beginPath(); ctx.arc(x, y, r * 0.74, 0, Math.PI * 2); ctx.fill();
+    ctx.lineWidth = 4; ctx.strokeStyle = borde; ctx.stroke();
+    // El número en relieve: una luz corrida hacia arriba y el número encima.
+    ctx.textAlign = "center";
+    ctx.font = "800 " + Math.round(r * 1.05) + "px " + letra;
+    ctx.fillStyle = "rgba(255, 255, 255, 0.7)"; ctx.fillText(String(p), x - 2, y + r * 0.36 - 3);
+    ctx.fillStyle = "#1e2453"; ctx.fillText(String(p), x, y + r * 0.36);
+  }
   // chess-results escribe «Apellidos, Nombre»; en el diploma va al derecho,
   // con el título adelante: «WIM Sofia Mayorga Araya».
   function nombreAlDerecho(j) {
@@ -1030,14 +1064,7 @@
     while (ctx.measureText(nombre).width > (podio ? 1560 : 1800) && tam > 60) { tam -= 4; ctx.font = "800 " + tam + "px " + letra; }
     conSombra(() => ctx.fillText(nombre, cx, 945), 6);
     // La medalla a cada lado del nombre, con el número del puesto.
-    if (podio) {
-      [cx - 930, cx + 930].forEach((mx) => {
-        ctx.fillStyle = "rgba(0, 0, 0, 0.18)"; ctx.beginPath(); ctx.arc(mx, 912, 90, 0, Math.PI * 2); ctx.fill();
-        ctx.fillStyle = MEDALLAS[p - 1]; ctx.beginPath(); ctx.arc(mx, 904, 90, 0, Math.PI * 2); ctx.fill();
-        ctx.lineWidth = 8; ctx.strokeStyle = "#ffffff"; ctx.stroke();
-        ctx.fillStyle = "#1e2453"; ctx.font = "800 104px " + letra; ctx.fillText(String(p), mx, 940);
-      });
-    }
+    if (podio) [cx - 930, cx + 930].forEach((mx) => medalla(ctx, mx, 930, 92, p, letra));
     if (x.j.fed) centrado(V.pais(x.j.fed).toUpperCase(), 1030, "700 46px " + letra);
     const cat = V.categoria(x.j.grupo);
     centrado(podio ? tx.dipPodio(p, cat) : tx.dipParticipa(cat), 1150, "700 54px " + letra, 1700, 3);
