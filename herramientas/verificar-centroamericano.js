@@ -588,6 +588,24 @@ ok("la página carga el cliente de Supabase antes que su código en vivo", html.
     ok("«Compartir» da una imagen de 1080 × 1080 con su nombre de archivo", png.slice(1, 4).toString() === "PNG" && anchoPng === 1080 && altoPng === 1080 && /^centroamericano-2026-mayorga-araya-sofia\.png$/.test(descarga.suggestedFilename()), anchoPng + "×" + altoPng + " " + descarga.suggestedFilename());
     ok("y lleva la marca de agua de Ajedrez Integral", await p6.evaluate(() => window.__marcas === 1));
 
+    // Sus rondas en el calendario del celular: un .ics con cada ronda de su
+    // torneo a la hora del calendario de la página (en hora de Costa Rica),
+    // lo que hizo en las jugadas, su mesa y rival en la emparejada, y el aviso
+    // 30 minutos antes. El UID fijo deja ponerlo al día bajándolo otra vez.
+    const [dIcs] = await Promise.all([p6.waitForEvent("download", { timeout: 15000 }), p6.click('#buscador-resultados [data-accion="calendario"]')]);
+    const ics = fs.readFileSync(await dIcs.path(), "utf8").replace(/\r\n /g, "");
+    const evs = ics.split("BEGIN:VEVENT").slice(1);
+    const deRonda = (n) => (evs.find((e) => e.includes("SUMMARY:Ronda " + n + " ·")) || "").replace(/\\,/g, ",");
+    const rondasTorneo = await p6.evaluate(() => window.CentroamericanoVivo.jugadores().find((y) => /Mayorga/.test(y.j.nombre)).torneo.rondas);
+    ok("«Sus rondas en mi calendario» baja un .ics con una ronda por evento, con su nombre de archivo",
+      dIcs.suggestedFilename() === "centroamericano-2026-rondas-mayorga-araya-sofia.ics" && evs.length === rondasTorneo && rondasTorneo > 0, dIcs.suggestedFilename() + " · " + evs.length + " de " + rondasTorneo);
+    ok("cada ronda a la hora del calendario, en hora de Costa Rica, con el aviso 30 minutos antes",
+      /DTSTART;TZID=America\/Costa_Rica:20261102T093000/.test(deRonda(1)) && /DTEND;TZID=America\/Costa_Rica:20261102T143000/.test(deRonda(1))
+      && evs.every((e) => /TRIGGER:-PT30M/.test(e)) && /UID:cac2026-1494141-\d+-r1@ajedrez-integral\.com/.test(deRonda(1)), deRonda(1));
+    ok("la jugada dice lo que hizo; la emparejada, su mesa, color y rival; la que falta, que se vuelva a bajar",
+      /ganó a FM Guevara Ruiz|ganó a/.test(deRonda(1)) && /Mesa \d+, con blancas contra FM Guevara Ruiz, Santiago Jose \(ESA, 2252\)/.test(deRonda(4))
+      && /vuelve a bajar el calendario/.test(deRonda(5)) && /SUMMARY:Ronda 4 · Sofia Mayorga Araya — Centroamericano 2026/.test(deRonda(4)), deRonda(4));
+
     // El resumen de la ronda de una delegación, listo para WhatsApp.
     await p6.selectOption("#delegacion", "CRC");
     const resumen = await p6.evaluate(() => { const r = document.querySelector("#delegacion-lista .cac-resumen"); return r ? { texto: r.innerText.replace(/\s+/g, " "), copia: r.dataset.texto } : null; });

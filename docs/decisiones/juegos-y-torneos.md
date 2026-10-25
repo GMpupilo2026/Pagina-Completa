@@ -9104,6 +9104,29 @@ bajar todos los certificados de una delegación en un solo PDF.
   aviso, el PDF de varias páginas y la regla de «suscrito antes», y cada uno
   saltó.
 
+### Sus rondas en mi calendario
+
+Lo pidió el dueño entre las mejoras («1»). Ya había un «Agregar a mi
+calendario» con todo el festival (el `.ics` que arma
+`herramientas/centroamericano-imagenes.js`); este es el de UN jugador, en su
+tarjeta del buscador.
+
+- Cada ronda de su torneo es un evento, a la hora de la fila de `#calendario`
+  (su `data-inicio`, en hora de Costa Rica, y `data-minutos`): la misma copia
+  de las horas que usa «Hoy en el torneo». Un torneo con menos rondas (un
+  Round Robin) trae solo las suyas.
+- En la descripción: su categoría y, en las jugadas, lo que hizo; en la
+  emparejada, su mesa, su color y su rival; en las que faltan, que vuelva a
+  bajar el calendario cuando salga el pareo.
+- El UID es fijo por torneo, jugador y ronda: bajarlo otra vez pone al día la
+  mesa en vez de duplicar las rondas (en los calendarios que respetan el UID).
+- Avisa 30 minutos antes de cada ronda. El formato lo arma
+  `js/calendario-ics.js` (`armarHoras`, nueva, al lado de `armar` y
+  `armarDias`): una sola copia del escape, el doblado de las líneas y la zona.
+- Lo revisa `verificar-centroamericano.js`: la hora en hora de Costa Rica, el
+  aviso, la mesa y el rival de la ronda emparejada. Rompí a propósito el aviso
+  y la mesa, y saltó.
+
 ## Las páginas de los torneos universitarios
 
 Dos, con la misma maquinaria: `cenfotec-2026.html` (el Desafío Mentes

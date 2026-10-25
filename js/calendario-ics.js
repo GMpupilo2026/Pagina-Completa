@@ -16,6 +16,7 @@
  *
  *   CalendarioIcs.armar({ clases, tareas, examenes, ahora }) → el texto
  *   CalendarioIcs.armarDias({ nombre, eventos })              → días enteros (un torneo)
+ *   CalendarioIcs.armarHoras({ nombre, eventos })             → eventos con hora (las rondas)
  *   CalendarioIcs.bajar(texto, nombre)                       → lo descarga
  */
 (function () {
@@ -199,6 +200,25 @@
         return { texto: l.map(doblar).join("\r\n") + "\r\n", eventos: n };
     }
 
+    /* Eventos con hora, cualquiera: las rondas de un jugador en un torneo
+       (centroamericano-2026.html). Cada uno con su UID fijo, así bajar el
+       archivo otra vez los pone al día en vez de duplicarlos.
+
+         armarHoras({ nombre, eventos: [{ uid, inicio, fin, resumen, lugar,
+                      descripcion, url, aviso }], ahora }) → { texto, eventos } */
+    function armarHoras({ nombre, eventos, ahora } = {}) {
+        const stamp = sello(ahora || new Date());
+        const l = cabecera(nombre);
+        let n = 0;
+        for (const e of eventos || []) {
+            if (!e || !e.uid || !e.inicio || !e.fin || isNaN(new Date(e.inicio)) || isNaN(new Date(e.fin))) continue;
+            evento(l, e, stamp);
+            n++;
+        }
+        l.push("END:VCALENDAR");
+        return { texto: l.map(doblar).join("\r\n") + "\r\n", eventos: n };
+    }
+
     function bajar(texto, nombre) {
         const url = URL.createObjectURL(new Blob([texto], { type: "text/calendar;charset=utf-8" }));
         const a = document.createElement("a");
@@ -210,7 +230,7 @@
         setTimeout(() => URL.revokeObjectURL(url), 1000);
     }
 
-    const api = { armar, armarDias, bajar, horaLocal, escapar, doblar };
+    const api = { armar, armarDias, armarHoras, bajar, horaLocal, escapar, doblar };
     if (typeof window !== "undefined") window.CalendarioIcs = api;
     if (typeof module !== "undefined") module.exports = api;
 })();

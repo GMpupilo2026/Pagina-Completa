@@ -138,6 +138,16 @@
       puestosTitulo: "Su puesto en la categoría después de cada ronda:",
       puestoRonda: (r, p) => "R" + r + " " + p,
       puestosNota: "Con los mismos puntos se comparte el puesto (por ejemplo, 3.º–5.º): el desempate lo decide al final del torneo.",
+      calendario: "📅 Sus rondas en mi calendario",
+      calendarioListo: (n) => "Listo: se bajaron sus " + n + " rondas. Ábrelo para agregarlas al calendario del celular; cada una avisa 30 minutos antes.",
+      calendarioSin: "El calendario de las rondas no está en esta página.",
+      calRonda: (r, nombre) => "Ronda " + r + " · " + nombre + " — Centroamericano 2026",
+      calCategoria: (cat) => "Categoría " + cat + ".",
+      calMesa: (m, color, rival) => "Mesa " + m + ", con " + color + " contra " + rival + ".",
+      calBye: "Tiene bye (descansa).",
+      calPendiente: "El pareo sale cuando lo publique el árbitro: vuelve a bajar el calendario para ver la mesa y el rival.",
+      calLugar: "Gimnasio Nacional, Parque Metropolitano La Sabana, San José, Costa Rica",
+      calNombre: (nombre) => "Rondas de " + nombre + " · Centroamericano 2026",
       locale: "es-CR",
     },
     en: {
@@ -225,6 +235,16 @@
       puestosTitulo: "Their place in the section after each round:",
       puestoRonda: (r, p) => "R" + r + " " + p,
       puestosNota: "Players on the same points share the place (for example, 3rd–5th): tiebreaks decide it at the end of the tournament.",
+      calendario: "📅 Their rounds in my calendar",
+      calendarioListo: (n) => "Done: their " + n + " rounds were downloaded. Open the file to add them to your phone's calendar; each one reminds you 30 minutes before.",
+      calendarioSin: "The round schedule isn't on this page.",
+      calRonda: (r, nombre) => "Round " + r + " · " + nombre + " — Centroamericano 2026",
+      calCategoria: (cat) => "Section " + cat + ".",
+      calMesa: (m, color, rival) => "Board " + m + ", with " + color + " against " + rival + ".",
+      calBye: "Has a bye (rests).",
+      calPendiente: "The pairings come out when the arbiter publishes them: download the calendar again to see the board and the opponent.",
+      calLugar: "Gimnasio Nacional, La Sabana Metropolitan Park, San José, Costa Rica",
+      calNombre: (nombre) => nombre + "'s rounds · Centroamericano 2026",
       locale: "en-US",
     },
   };
@@ -729,6 +749,15 @@
         acciones.appendChild(b);
       });
     }
+    // Sus rondas en el calendario del celular (solo en la página que trae el
+    // calendario de las rondas: la del Centroamericano).
+    if (document.querySelector("#calendario tr[data-ronda]") && window.CalendarioIcs) {
+      const cal = el("button", "cac-jugador-boton", tx.calendario);
+      cal.type = "button";
+      cal.dataset.accion = "calendario";
+      cal.addEventListener("click", () => bajarCalendario(x));
+      acciones.appendChild(cal);
+    }
     li.appendChild(acciones);
     if (abierta) {
       const rondas = rondasDe(x);
@@ -762,6 +791,53 @@
       li.appendChild(caja);
     }
     return li;
+  }
+
+  /* ---------------- sus rondas en el calendario ---------------- */
+  // Un .ics con cada ronda de su torneo, a la hora del calendario de la
+  // página (#calendario, data-inicio en hora de Costa Rica), con su mesa,
+  // color y rival en las ya emparejadas y un aviso 30 minutos antes. El UID
+  // es fijo por jugador y ronda: bajarlo otra vez pone al día la mesa en vez
+  // de duplicar las rondas. El formato lo arma js/calendario-ics.js.
+  function eventosDelCalendario(x) {
+    const tx = t();
+    const hasta = x.torneo.rondas || 0;
+    const nombre = nombreCorto(x.j);
+    const hechas = new Map(rondasDe(x).map((o) => [o.ronda, o]));
+    return [...document.querySelectorAll("#calendario tr[data-ronda]")].map((tr) => {
+      const r = Number(tr.dataset.ronda);
+      if (!r || (hasta && r > hasta)) return null;
+      const inicio = new Date(tr.dataset.inicio + ":00-06:00");   // Costa Rica no tiene horario de verano
+      if (isNaN(inicio)) return null;
+      const fin = new Date(inicio.getTime() + (Number(tr.dataset.minutos) || 300) * 60000);
+      const o = hechas.get(r);
+      const partes = [tx.calCategoria(tx.categoria(x.j.grupo))];
+      if (o && o.bye) partes.push(tx.calBye);
+      else if (o && o.rival) {
+        const mesa = x.partida && x.ronda === r ? x.partida.mesa : null;
+        const color = o.color === "blancas" ? tx.blancas : o.color === "negras" ? tx.negras : "";
+        partes.push(mesa ? tx.calMesa(mesa, color, rivalTexto(o.rival)) : tx.rondaFila(r, color, queHizo(o, tx).que, rivalTexto(o.rival)) + ".");
+      } else partes.push(tx.calPendiente);
+      partes.push(enlaceDe(x));
+      return {
+        uid: "cac2026-" + x.torneo.tnr + "-" + x.j.no + "-r" + r + "@ajedrez-integral.com",
+        inicio, fin, resumen: tx.calRonda(r, nombre), lugar: tx.calLugar,
+        descripcion: partes.join(" "), url: enlaceDe(x), aviso: "-PT30M",
+      };
+    }).filter(Boolean);
+  }
+  // «Sofia Mayorga Araya» (sin título): lo que cabe en el renglón del calendario.
+  function nombreCorto(j) {
+    const partes = String(j.nombre || "").split(",").map((s) => s.trim()).filter(Boolean);
+    return partes.length === 2 ? partes[1] + " " + partes[0] : partes.join(" ");
+  }
+  function bajarCalendario(x) {
+    const tx = t();
+    const eventos = eventosDelCalendario(x);
+    if (!eventos.length) { anunciar(tx.calendarioSin); return; }
+    const { texto, eventos: n } = window.CalendarioIcs.armarHoras({ nombre: tx.calNombre(nombreCorto(x.j)), eventos });
+    window.CalendarioIcs.bajar(texto, "centroamericano-2026-rondas-" + slugDe(x.j.nombre) + ".ics");
+    anunciar(tx.calendarioListo(n));
   }
 
   let espera = null;
@@ -1303,7 +1379,7 @@
     datos: () => datos, deGuardado: () => deGuardado, pedir, jugadores, rondasDe, rendimiento, queHizo, rivalTexto,
     textos: t, idioma, categoria: (g) => t().categoria(g), ordenGrupo, pais: (f) => pais(f, idioma()), fmtPuntos, puntosNum,
     cuandoSeLeyo: () => cuandoSeLeyo(t()), plano, el, ZONA, progresoRonda, anunciar, puntosDeMesa, eloDe, porColor, textoElo,
-    puestosDe, puntosTras, puestoTexto: (p) => puestoTexto(p, idioma()), delegacionGuardada,
+    puestosDe, puntosTras, puestoTexto: (p) => puestoTexto(p, idioma()), delegacionGuardada, eventosDelCalendario, nombreCorto, enlaceDe, slugDe,
   };
 
   document.addEventListener("cac-idioma", () => { pintarTodo(); ponerAvisosAlDia(); if (dialogo && dialogo.open) pintarMedallero(); });
