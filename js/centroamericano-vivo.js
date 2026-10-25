@@ -276,8 +276,18 @@
   // columnas (el rival sin número). La ronda sale entonces del cuadro cruzado
   // (las casillas jugadas de cada jugador), el torneo queda «terminado» y ese
   // pareo no se usa: lo que pasó en cada ronda ya está en «r».
+  //
+  // Con el torneo partido en uno por categoría (la función lee la categoría
+  // del texto de su enlace en la sala), los demás —la lista general, si quedó—
+  // pasan a «otros»: solo se muestran como enlace en «Resultados en vivo», sus
+  // jugadores ya están en el de su categoría y se contarían dos veces. La
+  // misma regla que deCategorias() en la función. Ver «Un torneo por categoría».
   function normalizar(d) {
     if (!d || !Array.isArray(d.torneos)) return d;
+    if (d.torneos.some((tor) => tor.categoria)) {
+      d.otros = (d.otros || []).concat(d.torneos.filter((tor) => !tor.categoria));
+      d.torneos = d.torneos.filter((tor) => tor.categoria);
+    }
     d.torneos.forEach((tor) => {
       if (!Array.isArray(tor.jugadores)) return;
       // Un torneo por grupo: el grupo es el del torneo, no la columna «Gr».
@@ -427,15 +437,26 @@
   }
 
   // Cuántas partidas de la ronda emparejada ya tienen resultado (sin los byes).
+  // Con un torneo por categoría, cada uno va a su paso: la barra es la de la
+  // ronda más alta emparejada (solo las mesas de esa ronda) y «cerrada» es la
+  // última ronda terminada en TODOS. Un torneo que va atrás la baja, salvo que
+  // ya haya jugado su última ronda (un Round Robin de pocos termina antes).
+  const sinTerminar = (p) => p.mesas.filter((m) => m.negras && puntosDeMesa(m.resultado, true) === null).length;
   function progresoRonda() {
-    let ronda = 0, total = 0, hechas = 0;
-    (datos ? datos.torneos : []).forEach((tor) => {
-      const p = tor.pareo;
-      if (!p || !p.ronda || !Array.isArray(p.mesas)) return;
-      ronda = Math.max(ronda, p.ronda);
-      p.mesas.forEach((m) => { if (!m.negras) return; total++; if (puntosDeMesa(m.resultado, true) !== null) hechas++; });
+    const activos = (datos ? datos.torneos : []).filter((tor) => tor.pareo && tor.pareo.ronda && Array.isArray(tor.pareo.mesas) && tor.pareo.mesas.length);
+    const ronda = Math.max(0, ...activos.map((tor) => tor.pareo.ronda));
+    let total = 0, hechas = 0;
+    activos.filter((tor) => tor.pareo.ronda === ronda).forEach((tor) => {
+      const jugadas = tor.pareo.mesas.filter((m) => m.negras).length;
+      total += jugadas;
+      hechas += jugadas - sinTerminar(tor.pareo);
     });
-    return ronda && total ? { ronda, total, hechas } : null;
+    if (!ronda || !total) return null;
+    let cerrada = hechas === total ? ronda : ronda - 1;
+    activos.filter((tor) => tor.pareo.ronda < ronda && !(tor.rondas && tor.pareo.ronda >= tor.rondas)).forEach((tor) => {
+      cerrada = Math.min(cerrada, sinTerminar(tor.pareo) ? tor.pareo.ronda - 1 : tor.pareo.ronda);
+    });
+    return { ronda, total, hechas, cerrada };
   }
   function pintarProgreso() {
     const caja = $("ronda-progreso");
@@ -471,9 +492,12 @@
     if (!m) return;
     const tx = t();
     pedir().then(() => {
-      const todos = jugadores().filter((y) => String(y.torneo.tnr) === m[1]);
+      // Un enlace de antes de partir el torneo: se busca en todos por el nombre.
+      const delTorneo = jugadores().filter((y) => String(y.torneo.tnr) === m[1]);
+      const todos = delTorneo.length ? delTorneo : jugadores();
       const slug = m[3] || "";
-      let x = todos.find((y) => y.j.no === Number(m[2]) && (!slug || slugDe(y.j.nombre) === slug));
+      // El número solo vale en su propio torneo: en otro es otra persona.
+      let x = delTorneo.find((y) => y.j.no === Number(m[2]) && (!slug || slugDe(y.j.nombre) === slug));
       if (!x && slug) { const c = todos.filter((y) => slugDe(y.j.nombre) === slug); if (c.length === 1) x = c[0]; }
       if (!x) { $("buscador-estado").textContent = tx.noEncontrado; return; }
       const clave = x.torneo.tnr + "-" + x.j.no;
@@ -677,9 +701,12 @@
 
   // El seguido entre los jugadores de chess-results. Si su número ya es de
   // otra persona (el árbitro volvió a ordenar la lista antes de la ronda 1),
-  // se lo busca por su nombre y se corrige el número guardado.
+  // se lo busca por su nombre y se corrige el número guardado. Si su torneo
+  // ya no está (se partió en uno por categoría), se lo busca por su nombre en
+  // todos y se corrige también el torneo.
   function buscarSeguido(s, todos) {
-    const delTorneo = todos.filter((x) => String(x.torneo.tnr) === String(s.tnr));
+    let delTorneo = todos.filter((x) => String(x.torneo.tnr) === String(s.tnr));
+    if (!delTorneo.length) delTorneo = todos;
     const mismo = delTorneo.find((x) => x.j.no === s.no && plano(x.j.nombre) === plano(s.nombre));
     if (mismo) return mismo;
     const porNombre = delTorneo.filter((x) => plano(x.j.nombre) === plano(s.nombre));
@@ -698,7 +725,7 @@
     l.forEach((s) => {
       const x = datos ? buscarSeguido(s, todos) : null;
       if (x) {
-        if (x.j.no !== s.no) { s.no = x.j.no; corregidos = true; }
+        if (x.j.no !== s.no || String(x.torneo.tnr) !== String(s.tnr)) { s.no = x.j.no; s.tnr = String(x.torneo.tnr); corregidos = true; }
         lista.appendChild(tarjeta(x, tx));
         return;
       }
@@ -993,7 +1020,9 @@
     const ronda = Math.max(0, ...torneos.map((tor) => tor.ronda || 0));
     const rondas = Math.max(0, ...torneos.map((tor) => tor.rondas || 0));
     if (!ronda) { caja.appendChild(el("p", "font-semibold", tx.medalleroAntes)); return; }
-    caja.appendChild(el("p", "font-semibold", rondas && ronda >= rondas ? tx.final : tx.provisional(ronda, rondas)));
+    // Final solo cuando terminaron todos (con uno por categoría, cada uno a su paso).
+    const todosTerminaron = torneos.every((tor) => tor.terminado || (tor.rondas && tor.ronda >= tor.rondas));
+    caja.appendChild(el("p", "font-semibold", todosTerminaron ? tx.final : tx.provisional(ronda, rondas)));
 
     // Los tres primeros de cada grupo, en el orden de la clasificación.
     const grupos = {};

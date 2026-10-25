@@ -105,7 +105,9 @@
     "centroamericano-2026": {
       clase: "cac-sala", imagen: "/img/centroamericano-2026/mascota-trofeo.png", ancho: 124, alto: 120,
       pagina: "/centroamericano-2026.html",
-      fichas: [[/chess-results\.com\//i, "ficha-resultados"], [/bases-cac-2026\.pdf$/i, "ficha-bases"]],
+      // chess-results lleva a la elección de categoría (un torneo por cada
+      // una): «#resultados», que la página abre encima.
+      fichas: [[/chess-results\.com\//i, "resultados", "Resultados en vivo"], [/bases-cac-2026\.pdf$/i, "ficha-bases"]],
     },
     // Las universidades, con su azul y su logo (css/universidades.css). Lo
     // de afuera (chess-results, el enlace directo a Lichess) lleva a su ficha
@@ -122,6 +124,25 @@
       fichas: [[/chess-results\.com\/tnr1498221\b/i, "ficha-femenino"], [/chess-results\.com\/tnr1498218\b/i, "ficha-masculino"], [/lichess\.org\//i, "ficha-partidas"]],
     },
   };
+
+  // Con un torneo por categoría, la sala tiene un enlace de chess-results por
+  // cada una (de ahí lee la página los datos): en la ficha van todos al mismo
+  // lugar, así que se muestran como UN botón, con el nombre de su ficha (el
+  // tercer dato de `fichas`). Solo se juntan los de una ficha con nombre: dos
+  // transmisiones que llevan a la misma página (las de la UTN) siguen siendo
+  // dos botones. Ver «Un torneo por categoría».
+  function juntar(enlaces, portada) {
+    if (!portada || !portada.fichas) return enlaces;
+    const donde = new Map();
+    const out = [];
+    enlaces.forEach((e) => {
+      const f = portada.fichas.find(([patron]) => patron.test(String((e && e.url) || "")));
+      if (!f || !f[2]) { out.push(e); return; }
+      if (!donde.has(f[1])) { donde.set(f[1], out.length); out.push(e); return; }
+      out[donde.get(f[1])] = { ...out[donde.get(f[1])], texto: f[2] };
+    });
+    return out;
+  }
 
   function adentro(portada, url) {
     const ficha = portada.fichas.find(([patron]) => patron.test(String(url || "")));
@@ -151,7 +172,7 @@
     if (!portada) li.appendChild(emoji);
     li.appendChild(el("h2", "font-serif text-xl font-bold text-brand-800 dark:text-white", sala.nombre || "Sin nombre"));
     li.appendChild(el("p", "text-brand-500 dark:text-brand-300 mt-2 mb-5 flex-1", sala.descripcion || ""));
-    const enlaces = Array.isArray(sala.enlaces) ? sala.enlaces : [];
+    const enlaces = juntar(Array.isArray(sala.enlaces) ? sala.enlaces : [], portada);
     const boton = (principal) => CLASE_BOTON + (portada ? " " + portada.clase + "-boton" + (principal ? " " + portada.clase + "-principal" : "") : "");
     if (sala.tipo === "lichess") {
       const a = el("a", boton(true), "Entrar a la sala");

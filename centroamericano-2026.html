@@ -511,6 +511,18 @@
         </div>
     </dialog>
 
+    <!-- «Resultados en vivo» con un torneo por categoría: la elige y su torneo
+         de chess-results se abre encima (js/centroamericano-tablas.js). -->
+    <dialog id="resultados" class="ficha-dialogo w-[calc(100%-1rem)] sm:w-[calc(100%-2rem)] max-w-2xl max-h-[90vh] rounded-2xl shadow-2xl p-0 bg-brand-50 dark:bg-brand-950 text-brand-800 dark:text-brand-100 backdrop:bg-black/60" aria-labelledby="resultados-titulo">
+        <div class="sticky top-0 z-10 flex items-center gap-3 px-4 sm:px-6 py-3 bg-white dark:bg-brand-900 border-b border-brand-100 dark:border-brand-800">
+            <h2 id="resultados-titulo" class="font-serif text-xl md:text-2xl font-bold text-brand-800 dark:text-white flex-1 min-w-0"><span aria-hidden="true">📊 </span>Resultados en vivo</h2>
+            <button type="button" data-cerrar class="shrink-0 bg-brand-800 hover:bg-brand-700 text-white font-semibold text-sm px-4 py-2 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2">Cerrar</button>
+        </div>
+        <div id="resultados-contenido" class="px-4 sm:px-6 pt-4 pb-6" data-no-traducir>
+            <p class="text-brand-600 dark:text-brand-300">Cargando…</p>
+        </div>
+    </dialog>
+
     <!-- El pareo en letra grande para una pantalla en la sala: pasa solo por
          las categorías. Se abre con #proyector en la dirección. -->
     <dialog id="proyector" class="ficha-dialogo cac-proyector p-0 backdrop:bg-black" aria-labelledby="proyector-titulo">

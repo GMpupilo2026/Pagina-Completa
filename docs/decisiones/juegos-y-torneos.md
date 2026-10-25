@@ -8566,7 +8566,8 @@ Es una página estática, sin cuenta y sin base: nada se guarda.
 - **Sus botones nunca sacan a nadie del sitio** (lo pidió el dueño). «Toda la
   información» abre la página en la misma pestaña, y lo que es de afuera
   —«Resultados en vivo» (chess-results) y las bases— lleva a SU ficha en la
-  página: `/centroamericano-2026.html#ficha-resultados` o `#ficha-bases`.
+  página: `/centroamericano-2026.html#resultados` (la elección de categoría,
+  ver «Un torneo por categoría») o `#ficha-bases`.
   `js/ventana-enlace.js` abre encima la ficha `a[data-ventana]` que nombra el
   `#` al entrar y lo quita al cerrar. La correspondencia está en `fichas` de
   `PORTADAS` (por la dirección, así sigue valiendo aunque en
@@ -8924,6 +8925,70 @@ otra pestaña lleve `rel="noopener"`, que el calendario tenga las nueve rondas y
 que ningún teléfono aparezca sin estar en la lista de los confirmados, que cada
 enlace de la ventana esté permitido en `frame-src` y, en el navegador, que la
 ventana se abra encima sin cambiar de página y devuelva el foco al cerrar.
+
+
+### Un torneo por categoría
+
+Para el festival, la organización parte el torneo de chess-results en doce:
+uno por categoría y rama (Sub-8 a Sub-18, Absoluto y Femenino), cada uno con
+su número. Antes era uno solo, y la categoría de cada jugador salía de su
+columna «Gr». Lo preguntó el dueño: «¿la página está lista para acoplar todo
+y que se vea ordenado? Que no sea mucha información por todo lado». Quedó
+probado con doce torneos de prueba (chess-results no se puede leer desde la
+sesión), con la forma que les da la función.
+
+- **La categoría la dice el texto del enlace**, no la columna «Gr», que un
+  torneo de una sola categoría ya no trae. Cada torneo se agrega en
+  `admin.html#torneos` como un enlace más de la sala `centroamericano-2026`,
+  con su categoría en el texto: «Sub-10 Femenino», «U10F» o «Resultados U10
+  Girls», cualquiera sirve. `codigoCategoria()`, en
+  `supabase/functions/sala-jugadores/torneos-sala.ts`, lo pasa al código de
+  chess-results (`U10F`), y la función se lo pone a cada jugador que no
+  traiga «Gr». **Un enlace sin categoría en el texto** (la lista general, el
+  Rapid) no se cuenta mientras haya alguno con categoría: sus jugadores ya
+  están en el suyo y saldrían dos veces en el buscador y en el medallero. La
+  misma regla está en `deCategorias()` (la función) y en `normalizar()`
+  (`js/centroamericano-vivo.js`); esos torneos quedan en `datos.otros`,
+  solo como enlace. La función lee hasta 15 torneos por sala: las doce
+  categorías del clásico caben, pero el Rapid y el Blitz por categoría (36)
+  irían en salas aparte.
+- **«Resultados en vivo» abre primero la elección**: un diálogo
+  (`#resultados`) con una fila por edad y Absoluto y Femenino lado a lado,
+  y cada botón abre su torneo encima, en la ventana de siempre, sin salir del
+  sitio. Al cerrarla se vuelve a la elección, con el foco en el botón. Una
+  categoría que todavía no publicaron deja su hueco, así la fila no se corre.
+  La ficha sigue apuntando a chess-results para quien no tiene JavaScript, y
+  con un solo torneo (como hasta ahora) lo abre directo, sin elegir nada.
+  Blanco sobre el morado de las bases: 8,35.
+- **En Torneos, un solo botón.** La sala tiene un enlace por categoría (de
+  ahí lee la página los datos), pero en la ficha todos llevarían al mismo
+  lugar, así que `juntar()` (`js/salas-torneo.js`) los deja en un solo botón
+  con el nombre de su ficha (el tercer dato de `fichas` en `PORTADAS`:
+  «Resultados en vivo») y lleva a `#resultados`. Solo se juntan los de una
+  ficha con nombre: las dos transmisiones de la UTN llevan a la misma página
+  y siguen siendo dos botones (lo revisa `verificar-salas-torneo.js`).
+- **Cada categoría va a su paso.** Las bases piden Round Robin si una
+  categoría tiene 10 jugadores o menos, y entonces termina antes. La barra de
+  la ronda cuenta solo las mesas de la ronda más alta emparejada; «Así terminó
+  el día» usa la ronda cerrada en TODAS (`progresoRonda().cerrada`): una
+  categoría que va atrás la baja, y una que ya jugó su última ronda no. El
+  medallero dice «final» cuando terminaron todas.
+- **Un aviso por país, no doce.** El resumen de la delegación juntaba cada
+  torneo por separado; con doce, un país con jugadores en todas las
+  categorías habría recibido doce avisos por ronda. Ahora
+  `resumenDelegacion()` junta todos los torneos de la sala y sale una vez por
+  ronda (con `tnr` «0» en `sala_avisos_push_enviados`), cuando terminaron
+  todas sus partidas. Una categoría que todavía no emparejó esa ronda lo hace
+  esperar, salvo que ya haya terminado.
+- **Quien seguía a un jugador en el torneo de antes no lo pierde.** Si su
+  torneo ya no está en la sala, la página lo busca por su nombre en todos y
+  corrige el torneo y el número guardados, y le vuelve a mandar la lista a la
+  función, que también lo busca por su nombre. Un enlace `#jugador=` de antes
+  lo encuentra por el nombre que lleva: su número solo vale en su propio
+  torneo, porque en otro es otra persona.
+- Lo revisa `verificar-centroamericano.js`: la parte de la función con node
+  (`--experimental-strip-types`, sin Deno) y la página con doce torneos de
+  prueba más la lista general.
 
 ## Las páginas de los torneos universitarios
 
