@@ -9,6 +9,8 @@
  *   dos), con la hora, cómo va la ronda y un QR a la página; con el torneo
  *   terminado, empieza por los podios. Para una pantalla en la sala.
  * - Las sorpresas (el de menos Elo que puntúa contra el de más) y los invictos (#sorpresas).
+ * - Cara a cara (#cara-a-cara): dos jugadores lado a lado y su partida.
+ * - El diploma de cada jugador al terminar el torneo, en imagen y en PDF.
  * - La hoja de la delegación en PDF: sus jugadores en la ronda, con mesa,
  *   color y rival (js/reporte-pdf.js).
  * - La imagen para compartir a un jugador (con su puesto ronda a ronda), la
@@ -104,6 +106,26 @@
       },
       diaAntes: "La imagen del día sale cuando termine la ronda 1.",
       diaTexto: (titulo) => titulo + " en el Centroamericano 2026:",
+      caraElige: "Escribe el apellido de cada uno y elígelo de la lista.",
+      caraMismo: "Elige dos jugadores distintos.",
+      caraVarios: (n) => "Hay " + n + " jugadores con ese nombre: elige uno de la lista.",
+      caraNadie: "No encontramos a nadie con ese nombre.",
+      caraDistintas: "Juegan en categorías distintas: no se pueden enfrentar en este torneo.",
+      caraNoJugaron: "Todavía no se han enfrentado.",
+      caraJugaron: (r, a, color, res, b) => "Se enfrentaron en la ronda " + r + ": " + a + " (con " + color + ") " + (res === 1 ? "le ganó a " + b : res === 0.5 ? "hizo tablas con " + b : "perdió con " + b) + ".",
+      caraJuegan: (r, a, color, b) => "Se enfrentan en la ronda " + r + ": " + a + " juega con " + color + " contra " + b + ".",
+      caraFilas: ["Categoría", "País", "Elo", "Puesto", "Puntos", "Rendimiento"],
+      caraRonda: "Ronda",
+      dipEvento: "XXI Festival Centroamericano y del Caribe de la Juventud",
+      dipTitulo: "Diploma",
+      dipOtorga: "Se otorga a",
+      dipPodio: (p, cat) => "por obtener el " + (p === 1 ? "1.er" : p === 3 ? "3.er" : p + ".º") + " lugar (" + ["oro", "plata", "bronce"][p - 1] + ") en la categoría " + cat,
+      dipParticipa: (cat) => "por su participación en la categoría " + cat,
+      dipDetalle: (pts, rondas, p, de) => pts + (pts === "1" ? " punto" : " puntos") + (rondas ? " en " + rondas + " rondas" : "") + " · puesto " + p + " de " + de,
+      dipLugar: "Gimnasio Nacional, La Sabana · San José, Costa Rica · del 1 al 8 de noviembre de 2026",
+      dipPie: "Según la clasificación final publicada en chess-results",
+      dipListo: "Listo: el diploma se bajó a tu aparato.",
+      dipCompartir: (n) => "El diploma de " + n + " en el " + NOMBRE_CORTO + ":",
       pdfTitulo: (pais, r) => pais + (r ? " · Ronda " + r : " · Lista inicial"),
       pdfSub: "XXI Festival Centroamericano y del Caribe de la Juventud · Costa Rica 2026 · Hoja de la delegación",
       pdfResumen: (n, r) => (n === 1 ? "1 jugador" : n + " jugadores") + (r ? " · pareo de la ronda " + r : " · el pareo de la ronda 1 todavía no está publicado"),
@@ -170,6 +192,26 @@
       },
       diaAntes: "Today's image is ready once round 1 is over.",
       diaTexto: (titulo) => titulo + " at the Centroamericano 2026:",
+      caraElige: "Type each one's last name and choose them from the list.",
+      caraMismo: "Choose two different players.",
+      caraVarios: (n) => n + " players match that name: choose one from the list.",
+      caraNadie: "We couldn't find anyone with that name.",
+      caraDistintas: "They play in different sections: they can't meet in this tournament.",
+      caraNoJugaron: "They haven't met yet.",
+      caraJugaron: (r, a, color, res, b) => "They met in round " + r + ": " + a + " (" + color + ") " + (res === 1 ? "beat " + b : res === 0.5 ? "drew with " + b : "lost to " + b) + ".",
+      caraJuegan: (r, a, color, b) => "They meet in round " + r + ": " + a + " plays " + color + " against " + b + ".",
+      caraFilas: ["Section", "Country", "Rating", "Place", "Points", "Performance"],
+      caraRonda: "Round",
+      dipEvento: "21st Central American and Caribbean Youth Festival",
+      dipTitulo: "Certificate",
+      dipOtorga: "Awarded to",
+      dipPodio: (p, cat) => "for " + ["1st", "2nd", "3rd"][p - 1] + " place (" + ["gold", "silver", "bronze"][p - 1] + ") in the " + cat + " section",
+      dipParticipa: (cat) => "for taking part in the " + cat + " section",
+      dipDetalle: (pts, rondas, p, de) => pts + (pts === "1" ? " point" : " points") + (rondas ? " in " + rondas + " rounds" : "") + " · place " + p + " of " + de,
+      dipLugar: "National Gymnasium, La Sabana · San José, Costa Rica · November 1–8, 2026",
+      dipPie: "According to the final standings published on chess-results",
+      dipListo: "Done: the certificate was saved to your device.",
+      dipCompartir: (n) => n + "'s certificate at the " + NOMBRE_CORTO + ":",
       pdfTitulo: (pais, r) => pais + (r ? " · Round " + r : " · Starting list"),
       pdfSub: "21st Central American and Caribbean Youth Festival · Costa Rica 2026 · Delegation sheet",
       pdfResumen: (n, r) => (n === 1 ? "1 player" : n + " players") + (r ? " · pairings of round " + r : " · the pairings of round 1 are not published yet"),
@@ -828,6 +870,191 @@
     }
   }
 
+  /* ---------------- cara a cara ---------------- */
+  // Dos jugadores lado a lado: sus datos, su partida si se enfrentaron y cada
+  // ronda con lo que hizo y su puesto después (por puntos, como en «Sus rondas»).
+  const etiqueta = (x) => nombreCompleto(x.j) + " · " + [x.j.fed, V.categoria(x.j.grupo)].filter(Boolean).join(" · ");
+  function elegido(campo, todos, tx) {
+    const q = campo.value.trim();
+    if (!q) return { x: null };
+    const exacto = todos.find((x) => etiqueta(x) === q);
+    if (exacto) return { x: exacto };
+    const palabras = V.plano(q).split(" ").filter(Boolean);
+    const hallados = todos.filter((x) => palabras.every((p) => V.plano(x.j.nombre).includes(p)));
+    if (hallados.length === 1) return { x: hallados[0] };
+    return { x: null, aviso: hallados.length ? tx.caraVarios(hallados.length) : tx.caraNadie };
+  }
+  function pintarCaraACara() {
+    const caja = $("cara-a-cara-contenido"), campoA = $("cara-a"), campoB = $("cara-b"), lista = $("cara-lista");
+    if (!caja) return;
+    const tx = T(), vx = V.textos();
+    if (!V.datos()) { caja.replaceChildren(el("p", "", tx.cargando)); return; }
+    const todos = V.jugadores();
+    const firma = V.idioma() + ":" + todos.length;
+    if (lista.dataset.firma !== firma) {
+      lista.dataset.firma = firma;
+      lista.replaceChildren(...todos.map((x) => { const o = document.createElement("option"); o.value = etiqueta(x); return o; }));
+    }
+    const a = elegido(campoA, todos, tx), b = elegido(campoB, todos, tx);
+    caja.replaceChildren();
+    if (!a.x || !b.x) { caja.appendChild(el("p", "font-semibold", a.aviso || b.aviso || tx.caraElige)); return; }
+    if (a.x.j === b.x.j) { caja.appendChild(el("p", "font-semibold", tx.caraMismo)); return; }
+    const jugo = (x) => x.torneo.ronda > 0;
+    // Dos fichas lado a lado (una debajo de la otra en el celular): una tabla
+    // de tres columnas obligaba a correrla de lado y no se comparaba nada.
+    const fichas = el("div", "cac-cara mt-2");
+    [a.x, b.x].forEach((x) => {
+      const rend = V.rendimiento(x);
+      const ficha = el("section", "cac-podio");
+      ficha.appendChild(el("h3", "", nombreCompleto(x.j)));
+      const dl = el("dl", "cac-cara-datos");
+      [[0, V.categoria(x.j.grupo)], [1, x.j.fed ? V.pais(x.j.fed) : "—"], [2, x.j.elo ? String(x.j.elo) : "—"],
+        [3, jugo(x) && x.j._puestoGrupo ? x.j._puestoGrupo + " / " + x.j._deGrupo : "—"], [4, jugo(x) ? x.j.puntos || "0" : "—"],
+        [5, rend ? String(rend.rp) : "—"]].forEach(([i, v]) => { dl.append(el("dt", "", tx.caraFilas[i]), el("dd", "", v)); });
+      ficha.appendChild(dl);
+      fichas.appendChild(ficha);
+    });
+    caja.appendChild(fichas);
+    // La partida entre los dos (si están en la misma categoría del mismo torneo).
+    const mismaCategoria = a.x.torneo === b.x.torneo && a.x.j.grupo === b.x.j.grupo;
+    const entreEllos = mismaCategoria ? V.rondasDe(a.x).find((o) => o.rival === b.x.j) : null;
+    const color = (o) => (o.color === "blancas" ? vx.blancas : o.color === "negras" ? vx.negras : "");
+    const frase = !mismaCategoria ? tx.caraDistintas : !entreEllos ? tx.caraNoJugaron
+      : entreEllos.puntos === null ? tx.caraJuegan(entreEllos.ronda, nombreCompleto(a.x.j), color(entreEllos), nombreCompleto(b.x.j))
+      : tx.caraJugaron(entreEllos.ronda, nombreCompleto(a.x.j), color(entreEllos), entreEllos.puntos, nombreCompleto(b.x.j));
+    caja.appendChild(el("p", "mt-4 font-bold", frase));
+    // Ronda a ronda: cada ronda con una línea por jugador (su apellido adelante).
+    const rondasA = V.rondasDe(a.x), rondasB = V.rondasDe(b.x);
+    const puestosA = V.puestosDe(a.x), puestosB = V.puestosDe(b.x);
+    const n = Math.max(0, ...rondasA.map((o) => o.ronda), ...rondasB.map((o) => o.ronda));
+    if (!n) return;
+    const linea = (x, rondas, puestos, r) => {
+      const o = rondas.find((y) => y.ronda === r);
+      const quien = String(x.j.nombre).split(",")[0] + ": ";
+      if (!o) return quien + "—";
+      const q = V.queHizo(o, vx);
+      const p = puestos.find((y) => y.ronda === r);
+      return quien + q.que + (q.rival ? " " + q.rival : "") + (p ? " · " + V.puestoTexto(p) : "");
+    };
+    const ol = el("ol", "cac-cara-rondas mt-3");
+    for (let r = 1; r <= n; r++) {
+      const li = el("li", "");
+      li.appendChild(el("p", "font-bold", tx.caraRonda + " " + r));
+      const ul = el("ul", "");
+      ul.append(el("li", "", linea(a.x, rondasA, puestosA, r)), el("li", "", linea(b.x, rondasB, puestosB, r)));
+      li.appendChild(ul);
+      ol.appendChild(li);
+    }
+    caja.appendChild(ol);
+  }
+
+  /* ---------------- el diploma ---------------- */
+  // Un A4 apaisado a 200 puntos por pulgada (2339 × 1654), con la clasificación
+  // final de chess-results: el puesto, los puntos y la categoría. Al podio le
+  // dice el lugar y la medalla (escrita, no solo el color del círculo). Colores
+  // medidos sobre el blanco: #1E2453 14,7, #40478F 8,35, #1F2937 14,7; el número
+  // sobre la medalla, #1E2453 sobre el oro 7,0, la plata 6,4 y el bronce 4,0
+  // (letra grande: pide 3). El evento y el lugar los puede cambiar otra página
+  // (window.TorneoPagina.diploma). Lleva la marca de agua de Ajedrez Integral.
+  const MEDALLAS = ["#d4a72c", "#a8a9ad", "#b8733a"];
+  // chess-results escribe «Apellidos, Nombre»; en el diploma va al derecho,
+  // con el título adelante: «WIM Sofia Mayorga Araya».
+  function nombreAlDerecho(j) {
+    const partes = String(j.nombre || "").split(",").map((t) => t.trim()).filter(Boolean);
+    const nombre = partes.length === 2 ? partes[1] + " " + partes[0] : partes.join(" ");
+    return (j.titulo ? j.titulo + " " : "") + nombre;
+  }
+  async function diploma(x) {
+    const tx = T();
+    const D = Object.assign({ evento: tx.dipEvento, lugar: tx.dipLugar }, CONFIG.diploma || {});
+    if (document.fonts && document.fonts.ready) await document.fonts.ready;
+    const letra = getComputedStyle(document.body).fontFamily || "system-ui, sans-serif";
+    const serif = "Merriweather, Georgia, serif";
+    const W = 2339, H = 1654, cx = W / 2;
+    const c = document.createElement("canvas");
+    c.width = W; c.height = H;
+    const ctx = c.getContext("2d");
+    ctx.fillStyle = "#ffffff"; ctx.fillRect(0, 0, W, H);
+    // El marco doble y la bandera arriba y abajo, por dentro.
+    ctx.strokeStyle = CARA.banda; ctx.lineWidth = 16; ctx.strokeRect(48, 48, W - 96, H - 96);
+    ctx.lineWidth = 3; ctx.strokeRect(84, 84, W - 168, H - 168);
+    const bandera = (y, sube) => [["#1e4c8a", 14], ["#ffffff", 8], ["#ce1328", 14], ["#ffffff", 8], ["#1e4c8a", 14]].reduce((yy, [color, alto]) => {
+      ctx.fillStyle = color; ctx.fillRect(100, sube ? yy - alto : yy, W - 200, alto); return sube ? yy - alto : yy + alto;
+    }, y);
+    bandera(100, false); bandera(H - 100, true);
+    ctx.textAlign = "center"; ctx.textBaseline = "alphabetic";
+    const centrado = (texto, y, fuente, color, ancho) => {
+      ctx.font = fuente; ctx.fillStyle = color;
+      let t = String(texto);
+      while (ctx.measureText(t).width > (ancho || 1950) && t.length > 4) t = t.slice(0, -2).replace(/\s*\S*$/, "") + "…";
+      ctx.fillText(t, cx, y);
+    };
+    // Arriba, el pizote del trofeo (o el dibujo de la página).
+    const dibujo = await cargarImagen(CONFIG.diploma && CONFIG.diploma.dibujo || "img/centroamericano-2026/mascota-trofeo.png");
+    if (dibujo) {
+      const alto = 250, ancho = Math.round((alto * dibujo.width) / dibujo.height);
+      ctx.drawImage(dibujo, cx - ancho / 2, 170, ancho, alto);
+    }
+    centrado(D.evento, 500, "600 50px " + letra, CARA.acento);
+    centrado(tx.dipTitulo, 660, "900 150px " + serif, CARA.tinta);
+    const p = x.j._puestoGrupo || x.j.puesto, de = x.j._deGrupo || 0;
+    const podio = p >= 1 && p <= 3;
+    // La medalla a cada lado del título, con el número del puesto.
+    if (podio) {
+      [cx - 620, cx + 620].forEach((mx) => {
+        ctx.fillStyle = MEDALLAS[p - 1]; ctx.beginPath(); ctx.arc(mx, 610, 95, 0, Math.PI * 2); ctx.fill();
+        ctx.lineWidth = 6; ctx.strokeStyle = CARA.tinta; ctx.stroke();
+        ctx.fillStyle = CARA.tinta; ctx.font = "900 110px " + serif; ctx.fillText(String(p), mx, 648);
+      });
+    }
+    centrado(tx.dipOtorga, 770, "500 44px " + letra, "#1f2937");
+    // El nombre, en una línea: si no cabe, la letra se achica (nunca se corta).
+    let tam = 112;
+    ctx.font = "700 " + tam + "px " + serif;
+    const nombre = nombreAlDerecho(x.j);
+    while (ctx.measureText(nombre).width > 1950 && tam > 60) { tam -= 4; ctx.font = "700 " + tam + "px " + serif; }
+    ctx.fillStyle = CARA.tinta; ctx.fillText(nombre, cx, 910);
+    if (x.j.fed) centrado(V.pais(x.j.fed), 990, "600 46px " + letra, CARA.acento);
+    const cat = V.categoria(x.j.grupo);
+    centrado(podio ? tx.dipPodio(p, cat) : tx.dipParticipa(cat), 1110, "600 54px " + letra, "#1f2937");
+    if (de) centrado(tx.dipDetalle(x.j.puntos || "0", x.torneo.ronda || x.torneo.rondas || 0, p, de), 1190, "500 42px " + letra, "#1f2937");
+    centrado(D.lugar, 1360, "500 38px " + letra, "#1f2937");
+    centrado(tx.dipPie + " · " + URL_PAGINA, 1450, "500 28px " + letra, CARA.acento);
+    ctx.textAlign = "start";
+    if (window.TablaImagen && window.TablaImagen.marcar) await window.TablaImagen.marcar(c);
+    return c;
+  }
+
+  // El diploma en las dos formas: la imagen (para WhatsApp, con el menú de
+  // compartir del celular) y el PDF de una página para imprimir
+  // (ReportePDF.deImagen, la misma copia de los PDF del sitio).
+  async function descargarDiploma(x, formato, boton) {
+    const tx = T();
+    if (boton) boton.disabled = true;
+    try {
+      const c = await diploma(x);
+      const archivo = CARA.archivo + "-diploma-" + V.plano(x.j.nombre).replace(/ /g, "-");
+      if (formato === "pdf") {
+        const jpeg = await new Promise((ok, mal) => c.toBlob((b) => (b ? ok(b) : mal(new Error("sin imagen"))), "image/jpeg", 0.92));
+        const blob = window.ReportePDF.deImagen({ jpeg: new Uint8Array(await jpeg.arrayBuffer()), ancho: c.width, alto: c.height,
+          horizontal: true, titulo: tx.dipTitulo + " · " + nombreAlDerecho(x.j), autor: "Ajedrez Integral" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url; a.download = archivo + ".pdf";
+        document.body.appendChild(a); a.click(); a.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 10000);
+        anunciar(tx.dipListo);
+      } else {
+        const png = await new Promise((ok, mal) => c.toBlob((b) => (b ? ok(b) : mal(new Error("sin imagen"))), "image/png"));
+        await compartirBlob(png, archivo + ".png", tx.dipCompartir(nombreAlDerecho(x.j)) + " https://" + URL_PAGINA);
+      }
+    } catch (e) {
+      anunciar(tx.imagenError);
+    } finally {
+      if (boton) boton.disabled = false;
+    }
+  }
+
   /* ---------------- la hoja de la delegación (PDF) ---------------- */
   // Lo que el entrenador lleva en la mano en la sala: todos sus jugadores en la
   // ronda emparejada, por categoría, con mesa, color, rival y resultado. Es el
@@ -911,6 +1138,8 @@
   alAbrir("clasificacion", pintarClasificacion);
   alAbrir("delegaciones", pintarDelegaciones);
   alAbrir("sorpresas", pintarSorpresas);
+  alAbrir("cara-a-cara", pintarCaraACara);
+  ["cara-a", "cara-b"].forEach((id) => { const c = $(id); if (c) c.addEventListener("input", pintarCaraACara); });
   const proy = $("proyector");
   if (proy) {
     new MutationObserver(() => { if (proy.open) abrirProyector(); else cerrarProyector(); }).observe(proy, { attributes: true, attributeFilter: ["open"] });
@@ -940,10 +1169,11 @@
     if ($("clasificacion") && $("clasificacion").open) pintarClasificacion();
     if ($("delegaciones") && $("delegaciones").open) pintarDelegaciones();
     if ($("sorpresas") && $("sorpresas").open) pintarSorpresas();
+    if ($("cara-a-cara") && $("cara-a-cara").open) pintarCaraACara();
     if (proy && proy.open) { paginas = armarPaginas(); pintarProyector(); }
   };
   document.addEventListener("cac-datos", repintar);
   document.addEventListener("cac-idioma", repintar);
 
-  window.CentroamericanoTablas = { compartirJugador, imagenJugador, compartirResumen, imagenResumen, resumenDelDia, imagenDia, compartirDia, documentoDelegacion, hojaDelegacion };
+  window.CentroamericanoTablas = { compartirJugador, imagenJugador, compartirResumen, imagenResumen, resumenDelDia, imagenDia, compartirDia, documentoDelegacion, hojaDelegacion, diploma, descargarDiploma, nombreAlDerecho };
 })();

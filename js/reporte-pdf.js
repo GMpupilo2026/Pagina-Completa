@@ -39,7 +39,10 @@
  * Sin ellas, el PDF sale como siempre (los reportes de actividades).
  *
  *   documento.pagina   → (n, total) => texto: el número de página en otro
- *                        idioma («Page 1 of 2»). Sin él, «Página 1 de 2».
+ *                        idioma («Page 1 of 2»). Sin él, «Página 1 de 2». *
+ * ReportePDF.deImagen({ jpeg, ancho, alto, horizontal, titulo, autor }) arma
+ * un PDF de una página con esa imagen de borde a borde (el diploma del
+ * Centroamericano): la imagen ya trae su marca de agua.
  */
 window.ReportePDF = (function () {
   "use strict";
@@ -485,5 +488,31 @@ window.ReportePDF = (function () {
     return [n >> 16 & 255, n >> 8 & 255, n & 255].map((v) => (v / 255).toFixed(3)).join(" ");
   }
 
-  return { generar: generar, _renglones: renglones, _aLatin1: aLatin1, _anchoDe: anchoDe, _aRgb: aRgb };
+  /* Una sola imagen como página entera (un diploma): A4 de pie o acostada, sin
+     márgenes, pie ni marca de agua aparte, porque la imagen ya trae la suya
+     (la dibuja quien la arma, con js/tabla-imagen.js). La imagen va en JPEG,
+     como las fotos de generar(). */
+  function deImagen(imagen) {
+    const doc = new Constructor();
+    const ancho = imagen.horizontal ? A4.alto : A4.ancho, alto = imagen.horizontal ? A4.ancho : A4.alto;
+    const foto = doc.nuevo({
+      diccionario: "<< /Type /XObject /Subtype /Image /Width " + imagen.ancho + " /Height " + imagen.alto +
+        " /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length " + imagen.jpeg.length + " >>",
+      flujo: imagen.jpeg,
+    });
+    const contenido = doc.nuevo({ diccionario: "<< /Length @@ >>",
+      flujo: bytesDeTexto("q " + ancho.toFixed(2) + " 0 0 " + alto.toFixed(2) + " 0 0 cm /Im1 Do Q\n") });
+    const paginasId = doc.nuevo(null);
+    const pagina = doc.nuevo({
+      diccionario: "<< /Type /Page /Parent " + paginasId + " 0 R /MediaBox [0 0 " + ancho + " " + alto + "]" +
+        " /Resources << /XObject << /Im1 " + foto + " 0 R >> >> /Contents " + contenido + " 0 R >>",
+    });
+    doc.objetos[paginasId] = { diccionario: "<< /Type /Pages /Count 1 /Kids [" + pagina + " 0 R] >>" };
+    const catalogo = doc.nuevo({ diccionario: "<< /Type /Catalog /Pages " + paginasId + " 0 R >>" });
+    const info = doc.nuevo({ diccionario: "<< /Title (" + escapar(imagen.titulo || "") + ") /Author (" +
+      escapar(imagen.autor || "") + ") /Creator (Ajedrez Integral) >>" });
+    return ensamblar(doc, catalogo, info);
+  }
+
+  return { generar: generar, deImagen: deImagen, _renglones: renglones, _aLatin1: aLatin1, _anchoDe: anchoDe, _aRgb: aRgb };
 })();

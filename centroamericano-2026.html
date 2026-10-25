@@ -202,6 +202,7 @@
                     <a href="#delegaciones" class="cac-accion underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ce1328]"><span aria-hidden="true">🌎 </span>Tabla por país →</a>
                     <a href="#proyector" class="cac-accion underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ce1328]"><span aria-hidden="true">📺 </span>Pareo para proyectar →</a>
                     <a href="#sorpresas" class="cac-accion underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ce1328]"><span aria-hidden="true">⚡ </span>Sorpresas e invictos →</a>
+                    <a href="#cara-a-cara" class="cac-accion underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ce1328]"><span aria-hidden="true">🆚 </span>Cara a cara →</a>
                 </p>
                 <!-- «Así terminó el día»: la imagen con los líderes de cada categoría, la
                      sorpresa del día y cómo le fue a la delegación elegida
@@ -481,6 +482,30 @@
         <div class="px-4 sm:px-6 pt-2 pb-6">
             <p class="text-brand-600 dark:text-brand-300 mt-2">Las partidas en que el de menos Elo le ganó (o le hizo tablas) al de más, y quién no ha perdido ninguna partida en cada categoría.</p>
             <div id="sorpresas-contenido" class="mt-4" data-no-traducir>
+                <p class="text-brand-600 dark:text-brand-300">Cargando…</p>
+            </div>
+        </div>
+    </dialog>
+
+    <!-- Cara a cara: dos jugadores lado a lado, ronda a ronda, y la partida
+         entre ellos si se enfrentaron (js/centroamericano-tablas.js). -->
+    <dialog id="cara-a-cara" class="ficha-dialogo w-[calc(100%-1rem)] sm:w-[calc(100%-2rem)] max-w-5xl max-h-[90vh] rounded-2xl shadow-2xl p-0 bg-brand-50 dark:bg-brand-950 text-brand-800 dark:text-brand-100 backdrop:bg-black/60" aria-labelledby="cara-a-cara-titulo">
+        <div class="sticky top-0 z-10 flex items-center gap-3 px-4 sm:px-6 py-3 bg-white dark:bg-brand-900 border-b border-brand-100 dark:border-brand-800">
+            <h2 id="cara-a-cara-titulo" class="font-serif text-xl md:text-2xl font-bold text-brand-800 dark:text-white flex-1 min-w-0"><span aria-hidden="true">🆚 </span>Cara a cara</h2>
+            <button type="button" data-cerrar class="shrink-0 bg-brand-800 hover:bg-brand-700 text-white font-semibold text-sm px-4 py-2 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2">Cerrar</button>
+        </div>
+        <div class="px-4 sm:px-6 pt-2 pb-6">
+            <p class="text-brand-600 dark:text-brand-300 mt-2">Elige dos jugadores y mira su torneo lado a lado, ronda a ronda, y la partida entre ellos si se enfrentaron.</p>
+            <div class="mt-4 grid gap-3 sm:grid-cols-2">
+                <label class="block text-sm font-bold">Primer jugador
+                    <input id="cara-a" type="search" list="cara-lista" autocomplete="off" spellcheck="false" placeholder="Escribe su apellido" class="cac-buscador-campo !mt-1">
+                </label>
+                <label class="block text-sm font-bold">Segundo jugador
+                    <input id="cara-b" type="search" list="cara-lista" autocomplete="off" spellcheck="false" placeholder="Escribe su apellido" class="cac-buscador-campo !mt-1">
+                </label>
+            </div>
+            <datalist id="cara-lista" data-no-traducir></datalist>
+            <div id="cara-a-cara-contenido" class="mt-4" role="status" aria-live="polite" data-no-traducir>
                 <p class="text-brand-600 dark:text-brand-300">Cargando…</p>
             </div>
         </div>

@@ -569,6 +569,16 @@ a.cac-despedida:hover .cac-globo { transform: translateY(-2px); }
 #delegacion-avisos-caja[hidden] { display: none; }
 
 /* Las sorpresas, numeradas. */
+/* Cara a cara: dos fichas lado a lado (una debajo de la otra en el celular) y
+   cada ronda con una línea por jugador. */
+.cac-cara { display: grid; gap: 0.8rem; }
+@media (min-width: 640px) { .cac-cara { grid-template-columns: 1fr 1fr; } }
+.cac-cara-datos { display: grid; grid-template-columns: auto 1fr; gap: 0.25rem 0.9rem; margin-top: 0.5rem; font-size: 0.95rem; }
+.cac-cara-datos dt { font-weight: 700; }
+.cac-cara-rondas > li { background: #fff; border-radius: 0.8rem; border: 1px solid #dfe0f7; padding: 0.6rem 0.9rem; }
+.dark .cac-cara-rondas > li { background: rgb(var(--c-brand-900, 10 31 51)); border-color: rgb(var(--c-brand-700, 51 78 104)); }
+.cac-cara-rondas > li + li { margin-top: 0.5rem; }
+.cac-cara-rondas ul { margin-top: 0.2rem; font-size: 0.92rem; }
 .cac-sorpresas { padding-left: 1.4rem; list-style: decimal; }
 .cac-sorpresas li + li { margin-top: 0.4rem; }
 

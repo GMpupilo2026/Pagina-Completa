@@ -8815,6 +8815,28 @@ Es una página estática, sin cuenta y sin base: nada se guarda.
   columnas**: con el Elo propio y el puesto, el nombre del rival se cortaba
   («Santiago Jos...»), y el rival es justo lo que se busca en la sala; el
   verificador revisa que llegue entero.
+- **El diploma de cada jugador**: con el torneo terminado (la clasificación
+  final de chess-results, `normalizar()` lo marca `terminado`), cada tarjeta
+  trae «Diploma (PDF)» y «Diploma (imagen)». Es un A4 acostado (2339 × 1654)
+  dibujado en un lienzo: el pizote del trofeo, la bandera arriba y abajo, el
+  nombre **al derecho** («WIM Sofia Mayorga Araya», chess-results lo escribe
+  «Apellidos, Nombre»), el país, el lugar con la medalla a los dos lados del
+  título si quedó en el podio (y escrito: «1.er lugar (oro)», el color nunca
+  va solo) o «por su participación», los puntos y el puesto, y la marca de
+  agua. **Sin firmas**, lo decidió el dueño: lo arma la página, no la
+  organización. La imagen va con el menú de compartir del celular; el PDF es
+  esa misma imagen en una página A4 acostada, con `ReportePDF.deImagen()`
+  (nuevo en `js/reporte-pdf.js`, la misma copia de los PDF del sitio). El
+  nombre largo achica la letra, nunca se corta. Otra página puede cambiar el
+  evento, el lugar y el dibujo con `window.TorneoPagina.diploma`.
+- **Cara a cara** (`#cara-a-cara`): se eligen dos jugadores (escribiendo el
+  apellido, con la lista de todos en un `<datalist>`; si el nombre da uno
+  solo, no hace falta elegirlo) y salen dos fichas lado a lado —una debajo de
+  la otra en el celular, porque una tabla de tres columnas obligaba a
+  correrla de lado— con su categoría, país, Elo, puesto, puntos y
+  rendimiento; la partida entre ellos (la primera vez que se enfrentaron, o
+  la de hoy si les toca) y cada ronda con una línea por jugador y su puesto
+  después. Si son de categorías distintas, lo dice: no se pueden enfrentar.
 - **Pendiente: el plano de la sala** (en qué zona del Gimnasio Nacional queda
   cada mesa, junto a su pareo). Espera el croquis de la organización con
   cómo se acomodan las mesas.

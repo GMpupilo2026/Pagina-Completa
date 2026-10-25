@@ -63,8 +63,8 @@ ok("ningún teléfono sin confirmar", tels.every((t) => TELEFONOS.includes(t)), 
 const contacto = (html.match(/<dialog id="contacto"[\s\S]*?<\/dialog>/) || [""])[0];
 // Toda la información va en fichas: cada ventana de la página tiene su ficha y su «Cerrar».
 const dialogos = [...html.matchAll(/<dialog id="([a-z-]+)" class="ficha-dialogo[^"]*" aria-labelledby="\1-titulo">([\s\S]*?)<\/dialog>/g)];
-ok("el reglamento, el calendario, los hoteles, los contactos, el medallero, la clasificación, los países, las sorpresas y el proyector van en ventanas",
-  JSON.stringify(dialogos.map((m) => m[1]).sort()) === JSON.stringify(["calendario", "clasificacion", "contacto", "delegaciones", "hoteles", "medallero", "proyector", "reglamento", "sorpresas"]), dialogos.map((m) => m[1]).join(", "));
+ok("el reglamento, el calendario, los hoteles, los contactos, el medallero, la clasificación, los países, las sorpresas, el cara a cara y el proyector van en ventanas",
+  JSON.stringify(dialogos.map((m) => m[1]).sort()) === JSON.stringify(["calendario", "cara-a-cara", "clasificacion", "contacto", "delegaciones", "hoteles", "medallero", "proyector", "reglamento", "sorpresas"]), dialogos.map((m) => m[1]).join(", "));
 for (const [, id, cuerpo] of dialogos) {
   ok("la ventana «" + id + "» tiene su ficha", fichas.includes('href="#' + id + '"'));
   ok("y su título y su botón «Cerrar»", cuerpo.includes('id="' + id + '-titulo"') && /data-cerrar[^>]*>Cerrar</.test(cuerpo));
@@ -631,6 +631,34 @@ ok("la página carga el cliente de Supabase antes que su código en vivo", html.
     ok("y los invictos de cada categoría (un bye o una ronda sin jugar no cuentan como partida)", JSON.stringify(sorp.invictos) === JSON.stringify(["Sub-8 Absoluto Muñoz Solís, José (CRC) · 2 puntos", "Sub-18 Absoluto WIM Mayorga Araya, Sofia (CRC) · 3 puntos"]), JSON.stringify(sorp.invictos));
     await p6.keyboard.press("Escape");
 
+    // Cara a cara: dos jugadores lado a lado, con su partida y cada ronda.
+    await p6.click('a[href="#cara-a-cara"]');
+    await p6.waitForFunction(() => document.getElementById("cara-a-cara").open && document.querySelectorAll("#cara-lista option").length === 7);
+    const cara = async (a, b) => {
+      await p6.fill("#cara-a", a); await p6.fill("#cara-b", b);
+      return p6.evaluate(() => ({ frase: [...document.querySelectorAll("#cara-a-cara-contenido > p")].map((p) => p.textContent).join(" | "),
+        fichas: [...document.querySelectorAll("#cara-a-cara-contenido .cac-cara section")].map((f) => [f.querySelector("h3").textContent, ...[...f.querySelectorAll("dt")].map((dt) => dt.textContent + "|" + dt.nextElementSibling.textContent)]),
+        rondas: [...document.querySelectorAll("#cara-a-cara-contenido .cac-cara-rondas > li")].map((li) => [...li.querySelectorAll("p, li")].map((x) => x.textContent)) }));
+    };
+    let cc = await cara("", "");
+    ok("sin elegir, dice cómo se usa", cc.frase === "Escribe el apellido de cada uno y elígelo de la lista." && !cc.fichas.length, JSON.stringify(cc));
+    cc = await cara("mayorga", "WIM Mayorga Araya, Sofia · CRC · Sub-18 Absoluto");
+    ok("el mismo dos veces, lo avisa", cc.frase === "Elige dos jugadores distintos.", JSON.stringify(cc));
+    cc = await cara("mayorga", "guevara");
+    ok("con dos de la misma categoría, sus datos lado a lado", JSON.stringify(cc.fichas) === JSON.stringify([
+      ["WIM Mayorga Araya, Sofia", "Categoría|Sub-18 Absoluto", "País|Costa Rica (CRC)", "Elo|2215", "Puesto|1 / 3", "Puntos|3", "Rendimiento|2930"],
+      ["FM Guevara Ruiz, Santiago Jose", "Categoría|Sub-18 Absoluto", "País|El Salvador (ESA)", "Elo|2252", "Puesto|2 / 3", "Puntos|2½", "Rendimiento|2068"]]), JSON.stringify(cc.fichas));
+    ok("la partida entre los dos (la primera vez que se enfrentaron)", cc.frase === "Se enfrentaron en la ronda 1: WIM Mayorga Araya, Sofia (con blancas) le ganó a FM Guevara Ruiz, Santiago Jose.", cc.frase);
+    ok("y cada ronda de los dos, con su puesto después", cc.rondas.length === 4 && JSON.stringify(cc.rondas[0]) === JSON.stringify(["Ronda 1",
+      "Mayorga Araya: ganó a FM Guevara Ruiz, Santiago Jose (ESA, 2252) · 1.º", "Guevara Ruiz: perdió con WIM Mayorga Araya, Sofia (CRC, 2215) · 2.º–3.º"])
+      && /^Mayorga Araya: juega contra FM Guevara/.test(cc.rondas[3][1]), JSON.stringify(cc.rondas));
+    ok("las dos fichas quedan una al lado de la otra en la computadora", await p6.evaluate(() => { const f = document.querySelectorAll("#cara-a-cara-contenido .cac-cara section"); return f.length === 2 && Math.abs(f[0].getBoundingClientRect().top - f[1].getBoundingClientRect().top) < 2 && f[1].getBoundingClientRect().right <= document.getElementById("cara-a-cara").getBoundingClientRect().right; }));
+    cc = await cara("mayorga", "castillo");
+    ok("de categorías distintas, dice que no se pueden enfrentar", /^Juegan en categorías distintas/.test(cc.frase), cc.frase);
+    cc = await cara("zzzz", "castillo");
+    ok("y si no hay nadie con ese nombre, lo dice", cc.frase === "No encontramos a nadie con ese nombre.", cc.frase);
+    await p6.click("#cara-a-cara [data-cerrar]");
+
     // El enlace directo a un jugador: se copia y abre su tarjeta, con sus rondas.
     await buscar("mayorga");
     await p6.click('#buscador-resultados [data-accion="enlace"]');
@@ -674,7 +702,34 @@ ok("la página carga el cliente de Supabase antes que su código en vivo", html.
     await p6.reload({ waitUntil: "load" });
     r = await buscar("mayorga");
     ok("sin señal, muestra lo último que llegó y lo dice", r.tarjetas.length === 1 && /Sin conexión/.test(r.estado), JSON.stringify(r));
+    ok("mientras el torneo no termina, no hay diploma", await p6.evaluate(() => !document.querySelector('#buscador-resultados [data-accion^="diploma"]')));
     await ctx6.close();
+
+    // El diploma: con la clasificación final (chess-results ya no dice la ronda
+    // ni trae pareo, y normalizar() lo marca terminado), en imagen y en PDF.
+    const FINAL = JSON.parse(JSON.stringify(DATOS));
+    FINAL.torneos[0].ronda = 0; FINAL.torneos[0].pareo = null;
+    const ctxDip = await nav.newContext({ viewport: { width: 1280, height: 900 }, serviceWorkers: "block", acceptDownloads: true });
+    await ctxDip.addInitScript((d) => { window.sb = { functions: { invoke: async () => ({ data: d, error: null }) } }; }, FINAL);
+    const pDip = await ctxDip.newPage();
+    await pDip.goto(BASE + "/" + PAGINA, { waitUntil: "load" });
+    await pDip.fill("#buscador-nombre", "mayorga");
+    await pDip.waitForSelector('#buscador-resultados [data-accion="diploma-pdf"]', { timeout: 10000 }).catch(() => {});
+    const botonesDip = await pDip.evaluate(() => [...document.querySelectorAll('#buscador-resultados [data-accion^="diploma"]')].map((b) => b.textContent + (b.checkVisibility() ? "" : " (oculto)")));
+    ok("con el torneo terminado, cada tarjeta trae su diploma en PDF y en imagen", JSON.stringify(botonesDip) === JSON.stringify(["Diploma (PDF)", "Diploma (imagen)"]), JSON.stringify(botonesDip));
+    ok("el nombre va al derecho, con el título adelante", await pDip.evaluate(() => window.CentroamericanoTablas.nombreAlDerecho({ titulo: "WIM", nombre: "Mayorga Araya, Sofia" }) === "WIM Sofia Mayorga Araya"
+      && window.CentroamericanoTablas.nombreAlDerecho({ titulo: "", nombre: "Wilson Hannah" }) === "Wilson Hannah"));
+    await pDip.evaluate(() => { const m = window.TablaImagen.marcar; window.__marcas = 0; window.TablaImagen.marcar = (c) => { window.__marcas++; return m(c); }; });
+    const [dImg] = await Promise.all([pDip.waitForEvent("download", { timeout: 20000 }), pDip.click('#buscador-resultados [data-accion="diploma-imagen"]')]);
+    const pngDip = fs.readFileSync(await dImg.path());
+    ok("«Diploma (imagen)» da un A4 acostado (2339 × 1654) con la marca de agua", pngDip.slice(1, 4).toString() === "PNG" && pngDip.readUInt32BE(16) === 2339 && pngDip.readUInt32BE(20) === 1654
+      && dImg.suggestedFilename() === "centroamericano-2026-diploma-mayorga-araya-sofia.png" && await pDip.evaluate(() => window.__marcas === 1), dImg.suggestedFilename());
+    const [dPdf] = await Promise.all([pDip.waitForEvent("download", { timeout: 20000 }), pDip.click('#buscador-resultados [data-accion="diploma-pdf"]')]);
+    const pdfDip = fs.readFileSync(await dPdf.path()).toString("latin1");
+    ok("«Diploma (PDF)» da una página A4 acostada con la imagen de borde a borde", pdfDip.startsWith("%PDF-") && pdfDip.includes("/MediaBox [0 0 841.89 595.28]")
+      && pdfDip.includes("/DCTDecode") && pdfDip.includes("/Count 1") && pdfDip.includes("(Diploma · WIM Sofia Mayorga Araya)".replace("·", "\xb7"))
+      && dPdf.suggestedFilename() === "centroamericano-2026-diploma-mayorga-araya-sofia.pdf" && await pDip.evaluate(() => window.__marcas === 2), dPdf.suggestedFilename());
+    await ctxDip.close();
 
     // Instalar en iPhone: Safari no avisa, así que se explica cómo, una vez.
     const ctxIos = await nav.newContext({ viewport: { width: 390, height: 844 }, serviceWorkers: "block",
