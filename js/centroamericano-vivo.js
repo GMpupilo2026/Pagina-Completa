@@ -78,6 +78,9 @@
       federacion: "Federación", oro: "Oro", plata: "Plata", bronce: "Bronce", total: "Total",
       medallasDe: "Medallas por federación",
       podios: "Los podios de cada categoría",
+      podioFinal: "Final",
+      podioProvisional: (r) => "Provisional, tras la ronda " + r,
+      podiosListos: (n, de) => (n === de ? "Las " + de + " categorías ya tienen su podio final." : n + " de " + de + " categorías ya " + (n === 1 ? "tiene" : "tienen") + " su podio final; las medallas de las demás todavía pueden cambiar."),
       seguir: (n) => "Seguir a " + n,
       dejar: (n) => "Dejar de seguir a " + n,
       tope: "Ya sigues a " + MAX_SEGUIDOS + " jugadores: deja de seguir a alguno para agregar otro.",
@@ -103,6 +106,13 @@
       ganoInc: "ganó por incomparecencia a", perdioInc: "perdió por incomparecencia con",
       byeFila: (pts) => pts > 0 ? "bye (" + fmtPuntos(pts) + (pts === 1 ? " punto)" : " puntos)") : "no jugó",
       rendimiento: (rp, n, ra) => "Rendimiento: " + rp + " en " + n + (n === 1 ? " partida" : " partidas") + " (sus rivales tienen " + ra + " de promedio).",
+      eloLinea: (cambio, n, k) => "Elo FIDE: " + cambio + " en " + n + (n === 1 ? " partida" : " partidas") + " con rivales con Elo (K " + k + ").",
+      eloNota: "El Elo es una cuenta de este torneo con las reglas de FIDE: lo oficial lo publica FIDE al cerrar el mes.",
+      hoyDistinto: (partes) => "A otro paso: " + partes.join(" · ") + ".",
+      hoyTermino: (cat, n) => cat + " ya terminó sus " + n + " rondas",
+      hoyRonda: (cat, r) => cat + " va en la ronda " + r,
+      colores: (c) => [c.blancas.n ? "Con blancas: " + fmtPuntos(c.blancas.pts) + " de " + c.blancas.n : "", c.negras.n ? (c.blancas.n ? "con" : "Con") + " negras: " + fmtPuntos(c.negras.pts) + " de " + c.negras.n : ""].filter(Boolean).join(" · ") + ".",
+      coloresPais: (c) => "En el torneo, " + [c.blancas.n ? "con blancas " + fmtPuntos(c.blancas.pts) + " de " + c.blancas.n : "", c.negras.n ? "con negras " + fmtPuntos(c.negras.pts) + " de " + c.negras.n : ""].filter(Boolean).join(" y ") + ".",
       resumen: (r, g, e, p, b, a) => "Ronda " + r + ": " + [[g, g === 1 ? " ganada" : " ganadas"], [e, " en tablas"], [p, p === 1 ? " perdida" : " perdidas"], [b, " bye"], [a, " sin jugar"]]
         .filter(([n]) => n).map(([n, s]) => n + s).join(", ") + ".",
       resumenPuntos: (pts, de) => fmtPuntos(pts) + " de " + de + " puntos posibles.",
@@ -154,6 +164,9 @@
       federacion: "Federation", oro: "Gold", plata: "Silver", bronce: "Bronze", total: "Total",
       medallasDe: "Medals by federation",
       podios: "The podium of every section",
+      podioFinal: "Final",
+      podioProvisional: (r) => "Provisional, after round " + r,
+      podiosListos: (n, de) => (n === de ? "All " + de + " sections have their final podium." : n + " of " + de + " sections have their final podium; the medals of the others can still change."),
       seguir: (n) => "Follow " + n,
       dejar: (n) => "Unfollow " + n,
       tope: "You already follow " + MAX_SEGUIDOS + " players: unfollow one to add another.",
@@ -179,6 +192,13 @@
       ganoInc: "won by forfeit against", perdioInc: "lost by forfeit to",
       byeFila: (pts) => pts > 0 ? "bye (" + fmtPuntos(pts) + (pts === 1 ? " point)" : " points)") : "did not play",
       rendimiento: (rp, n, ra) => "Performance: " + rp + " in " + n + (n === 1 ? " game" : " games") + " (opponents' average rating " + ra + ").",
+      eloLinea: (cambio, n, k) => "FIDE rating: " + cambio + " in " + n + (n === 1 ? " game" : " games") + " against rated opponents (K " + k + ").",
+      eloNota: "The rating change is this tournament's count under FIDE rules: FIDE publishes the official one when the month closes.",
+      hoyDistinto: (partes) => "At a different pace: " + partes.join(" · ") + ".",
+      hoyTermino: (cat, n) => cat + " already finished its " + n + " rounds",
+      hoyRonda: (cat, r) => cat + " is on round " + r,
+      colores: (c) => [c.blancas.n ? "With white: " + fmtPuntos(c.blancas.pts) + " of " + c.blancas.n : "", c.negras.n ? (c.blancas.n ? "with" : "With") + " black: " + fmtPuntos(c.negras.pts) + " of " + c.negras.n : ""].filter(Boolean).join(" · ") + ".",
+      coloresPais: (c) => "In the tournament, " + [c.blancas.n ? "with white " + fmtPuntos(c.blancas.pts) + " of " + c.blancas.n : "", c.negras.n ? "with black " + fmtPuntos(c.negras.pts) + " of " + c.negras.n : ""].filter(Boolean).join(" and ") + ".",
       resumen: (r, g, e, p, b, a) => "Round " + r + ": " + [[g, g === 1 ? " win" : " wins"], [e, e === 1 ? " draw" : " draws"], [p, p === 1 ? " loss" : " losses"], [b, b === 1 ? " bye" : " byes"], [a, " not played"]]
         .filter(([n]) => n).map(([n, s]) => n + s).join(", ") + ".",
       resumenPuntos: (pts, de) => fmtPuntos(pts) + " out of " + de + " possible points.",
@@ -386,6 +406,43 @@
     return { rp: Math.round(ra + window.PareoDesempates.dpDeP(p)), ra: Math.round(ra), n: jugadas.length };
   }
 
+  // El Elo que gana o pierde en el torneo, con las reglas de FIDE y la misma
+  // cuenta que Pareo Integral (js/pareo/elo.js: lo esperado de la tabla 8.1.2,
+  // el tope de 400 puntos y su K): solo las partidas jugadas contra rivales
+  // con Elo. chess-results no publica la edad: se toma la menor posible de su
+  // categoría (Sub-18 → 17 años), así que debajo de 2300 el K es 40; a quien
+  // cumple 18 este año FIDE le pone 20. Es una cuenta, no el Elo oficial.
+  const ANIO = 2026;
+  function eloDe(x) {
+    const E = window.PareoElo;
+    const elo = Number(x.j.elo) || 0;
+    if (!E || !elo) return null;
+    const edad = Number((String(x.j.grupo || "").match(/\d+/) || [])[0]) || 18;
+    const k = E.kDe({ elo, nacimiento: String(ANIO - edad + 1) }, ANIO);
+    let partidas = 0, puntos = 0, esperado = 0;
+    rondasDe(x).forEach((o) => {
+      if (o.bye || o.incomparecencia || o.puntos === null || !o.rival || !(o.rival.elo > 0)) return;
+      partidas++;
+      puntos += o.puntos;
+      esperado += E.esperado(Math.max(-E.TOPE, Math.min(E.TOPE, elo - o.rival.elo)));
+    });
+    if (!partidas) return null;
+    esperado = Math.round(esperado * 100) / 100;
+    return { elo, k, partidas, puntos, esperado, cambio: Math.round(k * (puntos - esperado) * 10) / 10 };
+  }
+  const textoElo = (n) => (window.PareoElo ? window.PareoElo.textoCambio(n, idioma()) : String(n));
+
+  // Cuánto hizo con blancas y cuánto con negras (solo partidas jugadas).
+  function porColor(rondas) {
+    const c = { blancas: { n: 0, pts: 0 }, negras: { n: 0, pts: 0 } };
+    rondas.forEach((o) => {
+      if (o.bye || o.incomparecencia || o.puntos === null || !c[o.color]) return;
+      c[o.color].n++;
+      c[o.color].pts += o.puntos;
+    });
+    return c;
+  }
+
   // Los puntos de cada jugador de una categoría tras las primeras `hasta`
   // rondas del cuadro cruzado (lo oficial: sin la ronda que solo está en el pareo).
   function puntosTras(lista, hasta) {
@@ -457,6 +514,31 @@
       cerrada = Math.min(cerrada, sinTerminar(tor.pareo) ? tor.pareo.ronda - 1 : tor.pareo.ronda);
     });
     return { ronda, total, hechas, cerrada };
+  }
+  // En «Hoy en el torneo», las categorías que van a otro paso que la
+  // mayoría (con un torneo por categoría): la que ya terminó (un Round Robin
+  // de pocos jugadores) y la que va en otra ronda. Si todas van igual, nada.
+  function categoriasDistintas() {
+    const tx = t();
+    const cats = (datos ? datos.torneos : []).filter((tor) => tor.categoria && Array.isArray(tor.jugadores) && tor.jugadores.length);
+    if (cats.length < 2) return [];
+    const termino = (tor) => tor.terminado || (tor.rondas && tor.ronda >= tor.rondas && !(tor.pareo && tor.pareo.ronda > tor.ronda));
+    const rondaDe = (tor) => (tor.pareo && tor.pareo.ronda) || tor.ronda || 0;
+    const enJuego = cats.filter((tor) => !termino(tor));
+    const cuantas = {};
+    enJuego.forEach((tor) => { const r = rondaDe(tor); cuantas[r] = (cuantas[r] || 0) + 1; });
+    const comun = Number(Object.keys(cuantas).sort((a, b) => cuantas[b] - cuantas[a] || b - a)[0] || 0);
+    return cats.slice().sort((a, b) => ordenGrupo(a.categoria) - ordenGrupo(b.categoria)).map((tor) => {
+      if (termino(tor)) return enJuego.length ? tx.hoyTermino(tx.categoria(tor.categoria), tor.rondas || tor.ronda) : "";
+      return rondaDe(tor) !== comun ? tx.hoyRonda(tx.categoria(tor.categoria), rondaDe(tor)) : "";
+    }).filter(Boolean);
+  }
+  function pintarHoyCategorias() {
+    const p = $("hoy-categorias");
+    if (!p) return;
+    const partes = categoriasDistintas();
+    p.hidden = !partes.length;
+    p.textContent = partes.length ? t().hoyDistinto(partes) : "";
   }
   function pintarProgreso() {
     const caja = $("ronda-progreso");
@@ -628,6 +710,11 @@
         caja.appendChild(ol);
         const rend = rendimiento(x);
         if (rend) caja.appendChild(el("p", "mt-2 text-sm font-semibold", tx.rendimiento(rend.rp, rend.n, rend.ra)));
+        const ex = eloDe(x);
+        if (ex) caja.appendChild(el("p", "cac-elo mt-1 text-sm", tx.eloLinea(textoElo(ex.cambio), ex.partidas, ex.k)));
+        const c = porColor(rondas);
+        if (c.blancas.n || c.negras.n) caja.appendChild(el("p", "cac-colores mt-1 text-sm", tx.colores(c)));
+        if (ex) caja.appendChild(el("p", "mt-1 text-xs text-brand-600 dark:text-brand-300", tx.eloNota));
         const puestos = puestosDe(x);
         if (puestos.length) {
           const linea = el("p", "cac-puestos mt-2 text-sm");
@@ -781,7 +868,19 @@
       const aviso = el("p", "mt-2 text-sm font-semibold");
       aviso.setAttribute("role", "status");
       boton.addEventListener("click", () => { if (window.CentroamericanoTablas) window.CentroamericanoTablas.hojaDelegacion(elegida, boton, aviso); });
-      hoja.append(boton, aviso);
+      hoja.append(boton);
+      // El informe para su federación, cuando ya se jugó alguna ronda.
+      if (suyos.some((x) => x.torneo.ronda > 0) && window.CentroamericanoTablas) {
+        const inf = el("button", "cac-jugador-boton ml-2", "");
+        inf.type = "button";
+        inf.id = "delegacion-informe";
+        const ico = el("span", "", "📄 ");
+        ico.setAttribute("aria-hidden", "true");
+        inf.append(ico, document.createTextNode(window.CentroamericanoTablas.textosTablas().infBoton));
+        inf.addEventListener("click", () => window.CentroamericanoTablas.informeDelegacion(elegida, inf, aviso));
+        hoja.append(inf);
+      }
+      hoja.append(aviso);
       caja.appendChild(hoja);
     }
     const resumen = resumenDelegacion(suyos, tx, pais(elegida, lang));
@@ -821,6 +920,9 @@
     const caja = el("div", "cac-resumen");
     caja.appendChild(el("p", "font-bold", tx.resumen(ronda, g, e, p, b, a)));
     caja.appendChild(el("p", "text-sm", tx.resumenPuntos(pts, posibles)));
+    // Con cada color, en todas sus rondas: la suma de todos sus jugadores.
+    const c = porColor(deCada.flatMap((d) => d.rondas));
+    if (c.blancas.n || c.negras.n) caja.appendChild(el("p", "cac-colores-pais text-sm", tx.coloresPais(c)));
     const texto = [tx.whatsappTitulo(nombrePais, ronda), tx.resumen(ronda, g, e, p, b, a) + " " + tx.resumenPuntos(pts, posibles), ""]
       .concat(lineas, ["", "https://ajedrez-integral.com/centroamericano-2026.html" + (idioma() === "en" ? "?lang=en" : "")]).join("\n");
     const boton = el("button", "cac-boton mt-3", tx.copiarWhatsapp);
@@ -850,7 +952,7 @@
     if (sel.value) pedir().then(pintarTodo, () => { $("delegacion-estado").textContent = t().error; });
   }
 
-  function pintarTodo() { pintarProgreso(); pintarSeguidos(); pintarBuscador(); pintarDelegacion(); pintarAvisoDelegacion(); }
+  function pintarTodo() { pintarHoyCategorias(); pintarProgreso(); pintarSeguidos(); pintarBuscador(); pintarDelegacion(); pintarAvisoDelegacion(); }
 
   /* ---------------- Avisarme en este celular ---------------- */
   // Qué dice la función, también cuando contesta un error (lo trae el cuerpo).
@@ -1024,9 +1126,18 @@
     const todosTerminaron = torneos.every((tor) => tor.terminado || (tor.rondas && tor.ronda >= tor.rondas));
     caja.appendChild(el("p", "font-semibold", todosTerminaron ? tx.final : tx.provisional(ronda, rondas)));
 
-    // Los tres primeros de cada grupo, en el orden de la clasificación.
-    const grupos = {};
-    torneos.forEach((tor) => tor.jugadores.forEach((j) => { (grupos[j.grupo || "—"] = grupos[j.grupo || "—"] || []).push(j); }));
+    // Los tres primeros de cada grupo, en el orden de la clasificación. Con
+    // un torneo por categoría, cada una termina a su paso: su podio dice si
+    // ya es final (su torneo jugó la última ronda) o hasta qué ronda va.
+    const grupos = {}, deGrupo = {};
+    torneos.forEach((tor) => tor.jugadores.forEach((j) => {
+      const g = j.grupo || "—";
+      (grupos[g] = grupos[g] || []).push(j);
+      (deGrupo[g] = deGrupo[g] || new Set()).add(tor);
+    }));
+    const terminoTor = (tor) => tor.terminado || (tor.rondas && tor.ronda >= tor.rondas);
+    const finalDe = (g) => [...deGrupo[g]].every(terminoTor);
+    const rondaDeGrupo = (g) => Math.max(0, ...[...deGrupo[g]].map((tor) => tor.ronda || 0));
     const nombres = Object.keys(grupos).sort((a, b) => ordenGrupo(a) - ordenGrupo(b) || a.localeCompare(b));
     const medallas = {};
     nombres.forEach((g) => {
@@ -1061,6 +1172,9 @@
       tabla.appendChild(tbody);
       envoltura.appendChild(tabla);
       caja.appendChild(envoltura);
+      if (!todosTerminaron && nombres.length > 1) {
+        caja.appendChild(el("p", "cac-podios-listos mt-2 text-sm", tx.podiosListos(nombres.filter(finalDe).length, nombres.length)));
+      }
     }
 
     if (!CONFIG.soloPodio) caja.appendChild(el("h3", "mt-6 font-bold text-lg", tx.podios));
@@ -1068,6 +1182,7 @@
     nombres.forEach((g) => {
       const c = el("section", "cac-podio");
       c.appendChild(el("h3", "", tx.categoria(g)));
+      if (!todosTerminaron) c.appendChild(el("p", "cac-podio-estado", finalDe(g) ? tx.podioFinal : tx.podioProvisional(rondaDeGrupo(g))));
       const ol = el("ol");
       grupos[g].slice(0, 3).forEach((j, i) => {
         const li = el("li");
@@ -1116,9 +1231,14 @@
   pintarDelegacion();
   pintarAvisoDelegacion();
   pintarProgreso();
+  pintarHoyCategorias();
   abrirEnlaceJugador();
   // Quien ya sigue a alguien o eligió su país viene a ver eso: se pide de una vez.
-  if (seguidos().length || delegacionGuardada()) pedir().then(pintarTodo, () => pintarTodo());
+  // Y durante el festival, con el torneo ya partido por categoría (lo dice lo
+  // guardado en este aparato), para poner al día «A otro paso» de Hoy.
+  const hoy = $("hoy");
+  const partido = deGuardado && datos && datos.torneos.some((tor) => tor.categoria);
+  if (seguidos().length || delegacionGuardada() || (partido && hoy && hoy.dataset.estado === "durante")) pedir().then(pintarTodo, () => pintarTodo());
 
   // El medallero se abre como las demás ventanas (js/ventana-enlace.js, con el
   // enlace #medallero o la dirección); cuando se abre, se llena.
@@ -1133,7 +1253,7 @@
   window.CentroamericanoVivo = {
     datos: () => datos, deGuardado: () => deGuardado, pedir, jugadores, rondasDe, rendimiento, queHizo, rivalTexto,
     textos: t, idioma, categoria: (g) => t().categoria(g), ordenGrupo, pais: (f) => pais(f, idioma()), fmtPuntos, puntosNum,
-    cuandoSeLeyo: () => cuandoSeLeyo(t()), plano, el, ZONA, progresoRonda, anunciar, puntosDeMesa,
+    cuandoSeLeyo: () => cuandoSeLeyo(t()), plano, el, ZONA, progresoRonda, anunciar, puntosDeMesa, eloDe, porColor, textoElo,
     puestosDe, puntosTras, puestoTexto: (p) => puestoTexto(p, idioma()), delegacionGuardada,
   };
 

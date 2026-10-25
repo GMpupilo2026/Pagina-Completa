@@ -87,7 +87,7 @@
       invictos: "Invictos de cada categoría",
       nadieInvicto: "Nadie va invicto.",
       puntosCortos: (p) => p + (p === "1" ? " punto" : " puntos"),
-      modoTodo: "Pareo y clasificación", modoPareo: "Solo el pareo", modoClasif: "Solo la clasificación",
+      modoTodo: "Pareo y clasificación", modoPareo: "Solo el pareo", modoClasif: "Solo la clasificación", catTodas: "Todas las categorías",
       proyClasif: (r, cat, pag, de) => "Clasificación · " + cat + " · tras la ronda " + r + (de > 1 ? " · " + pag + "/" + de : ""),
       proyPodios: "Los podios",
       imgResumenSub: "Centroamericano 2026 · Costa Rica",
@@ -136,6 +136,16 @@
       pdfPagina: (n, total) => "Página " + n + " de " + total,
       pdfLista: "Listo: la hoja se bajó a tu aparato.",
       pdfError: "No se pudo armar la hoja. Intenta de nuevo.",
+      infTitulo: (pais) => pais + " · Informe de la delegación",
+      infSub: "XXI Festival Centroamericano y del Caribe de la Juventud · Costa Rica 2026 · Informe para la federación",
+      infEstado: (final, r) => (final ? "Resultados finales del torneo." : "Provisional: así va después de la ronda " + r + "."),
+      infResumen: (n, pts, de) => (n === 1 ? "1 jugador" : n + " jugadores") + " · " + pts + " de " + de + " puntos en sus partidas.",
+      infMedallas: (o, p, b, final) => (o + p + b ? "Medallas" + (final ? "" : " (si terminara hoy)") + ": " + [o ? o + " de oro" : "", p ? p + " de plata" : "", b ? b + " de bronce" : ""].filter(Boolean).join(", ") + "." : "Sin medallas" + (final ? "." : " por ahora.")),
+      infElo: (suma, n) => "Elo FIDE de la delegación: " + suma + " entre " + (n === 1 ? "1 jugador" : n + " jugadores") + " con Elo (una cuenta de este torneo; lo oficial lo publica FIDE).",
+      infColCat: "Categoría", infColPuesto: "Puesto", infColRp: "Rend.", infColElo: "Elo", infColBlancas: "Blancas", infColNegras: "Negras",
+      infMedalla: ["oro", "plata", "bronce"],
+      infBoton: "Informe de la delegación (PDF)",
+      infLista: "Listo: el informe se bajó a tu aparato.",
       resElige: "Elige la categoría: su torneo de chess-results se abre aquí mismo, sin salir de la página.",
       resEdad: (n) => "Sub-" + n,
       resAbsoluto: "Absoluto",
@@ -182,7 +192,7 @@
       invictos: "Unbeaten players in each section",
       nadieInvicto: "Nobody is unbeaten.",
       puntosCortos: (p) => p + (p === "1" ? " point" : " points"),
-      modoTodo: "Pairings and standings", modoPareo: "Pairings only", modoClasif: "Standings only",
+      modoTodo: "Pairings and standings", modoPareo: "Pairings only", modoClasif: "Standings only", catTodas: "All sections",
       proyClasif: (r, cat, pag, de) => "Standings · " + cat + " · after round " + r + (de > 1 ? " · " + pag + "/" + de : ""),
       proyPodios: "The podiums",
       imgResumenSub: "Centroamericano 2026 · Costa Rica",
@@ -231,6 +241,16 @@
       pdfPagina: (n, total) => "Page " + n + " of " + total,
       pdfLista: "Done: the sheet was saved to your device.",
       pdfError: "We couldn't make the sheet. Please try again.",
+      infTitulo: (pais) => pais + " · Delegation report",
+      infSub: "21st Central American and Caribbean Youth Festival · Costa Rica 2026 · Report for the federation",
+      infEstado: (final, r) => (final ? "Final results of the tournament." : "Provisional: where it stands after round " + r + "."),
+      infResumen: (n, pts, de) => (n === 1 ? "1 player" : n + " players") + " · " + pts + " of " + de + " points in their games.",
+      infMedallas: (o, p, b, final) => (o + p + b ? "Medals" + (final ? "" : " (if it ended today)") + ": " + [o ? o + " gold" : "", p ? p + " silver" : "", b ? b + " bronze" : ""].filter(Boolean).join(", ") + "." : "No medals" + (final ? "." : " so far.")),
+      infElo: (suma, n) => "Delegation FIDE rating: " + suma + " across " + (n === 1 ? "1 rated player" : n + " rated players") + " (this tournament's count; FIDE publishes the official one).",
+      infColCat: "Section", infColPuesto: "Place", infColRp: "Perf.", infColElo: "Rating", infColBlancas: "White", infColNegras: "Black",
+      infMedalla: ["gold", "silver", "bronze"],
+      infBoton: "Delegation report (PDF)",
+      infLista: "Done: the report was saved to your device.",
       resElige: "Choose the category: its chess-results tournament opens right here, without leaving the page.",
       resEdad: (n) => "U" + n,
       resAbsoluto: "Open",
@@ -422,6 +442,10 @@
   const CLAVE_MODO = "cac_proyector_modo_v1";
   const FILAS_CLASIF = 12;
   let modo = (() => { try { const m = localStorage.getItem(CLAVE_MODO); return ["todo", "pareo", "clasif"].includes(m) ? m : "todo"; } catch (e) { return "todo"; } })();
+  // Una sola categoría, para la pantalla de su sala (con un torneo por
+  // categoría, cada sala tiene la suya). Vacía: todas, una tras otra.
+  const CLAVE_CAT = "cac_proyector_categoria_v1";
+  let catProyector = (() => { try { return (localStorage.getItem(CLAVE_CAT) || "").replace(/[^A-Za-z0-9]/g, "").slice(0, 6); } catch (e) { return ""; } })();
   let paginas = [], pagina = 0, pausado = false, reloj = null, refresco = null, segundos = 0;
 
   function armarPaginas() {
@@ -433,9 +457,15 @@
     const porGrupoJug = {};
     todos.forEach((x) => { (porGrupoJug[x.j.grupo || "—"] = porGrupoJug[x.j.grupo || "—"] || []).push(x); });
     const orden = (a, b) => V.ordenGrupo(a) - V.ordenGrupo(b) || a.localeCompare(b);
-    // Terminado: la clasificación ya es la de la última ronda.
-    if (datos.torneos.some((t) => t.rondas && t.ronda >= t.rondas)) {
-      const grupos = Object.keys(porGrupoJug).sort(orden);
+    // Con una categoría elegida (y que exista), solo esa.
+    const sola = catProyector && porGrupoJug[catProyector] ? catProyector : "";
+    if (sola) Object.keys(porGrupoJug).forEach((g) => { if (g !== sola) delete porGrupoJug[g]; });
+    // Terminado: la clasificación ya es la de la última ronda. Con un torneo
+    // por categoría, cada una a su paso: solo los podios de las que terminaron.
+    const termino = (t) => t.terminado || (t.rondas && t.ronda >= t.rondas);
+    const conPodio = Object.keys(porGrupoJug).filter((g) => porGrupoJug[g].every((x) => termino(x.torneo))).sort(orden);
+    if (conPodio.length) {
+      const grupos = conPodio;
       const de = Math.ceil(grupos.length / 3);
       for (let i = 0; i < de; i++) salida.push({ tipo: "podios", grupos: grupos.slice(i * 3, i * 3 + 3), porGrupo: porGrupoJug, pag: i + 1, de });
     }
@@ -446,6 +476,7 @@
       const porNo = new Map((tor.jugadores || []).map((j) => [j.no, j]));
       pareo.mesas.slice().sort((a, b) => a.mesa - b.mesa).forEach((m) => {
         const g = (porNo.get(m.blancas.no) || {}).grupo || "—";
+        if (sola && g !== sola) return;
         (pareoDe[g] = pareoDe[g] || { ronda: pareo.ronda, porNo, mesas: [] }).mesas.push(m);
       });
     });
@@ -488,6 +519,18 @@
       sel.replaceChildren(...[["todo", tx.modoTodo], ["pareo", tx.modoPareo], ["clasif", tx.modoClasif]].map(([v, t]) => { const o = el("option", "", t); o.value = v; return o; }));
     }
     if (sel) sel.value = modo;
+    // Las categorías que hay en los datos (se rearma si cambian o cambia el idioma).
+    const selCat = $("proyector-categoria");
+    if (selCat) {
+      const cats = [...new Set(V.jugadores().map((x) => x.j.grupo).filter((g) => g && g !== "—"))].sort((a, b) => V.ordenGrupo(a) - V.ordenGrupo(b) || a.localeCompare(b));
+      selCat.hidden = cats.length < 2;
+      const firma = V.idioma() + ":" + cats.join(",");
+      if (selCat.dataset.firma !== firma) {
+        selCat.dataset.firma = firma;
+        selCat.replaceChildren(...[["", tx.catTodas]].concat(cats.map((g) => [g, V.categoria(g)])).map(([v, t]) => { const o = el("option", "", t); o.value = v; return o; }));
+      }
+      selCat.value = cats.includes(catProyector) ? catProyector : "";
+    }
     const prog = V.progresoRonda(), linea = $("proyector-progreso");
     linea.hidden = !prog;
     if (prog) linea.textContent = prog.hechas === prog.total ? V.textos().rondaTerminada(prog.ronda) : V.textos().progreso(prog.ronda, prog.hechas, prog.total);
@@ -1170,6 +1213,74 @@
       pie: tx.pdfPie, pagina: tx.pdfPagina, bloques, ronda };
   }
 
+  // El informe de la delegación para su federación: cómo le fue a cada
+  // jugador (puesto en su categoría, puntos, rendimiento, Elo y lo que hizo
+  // con cada color) y el país entero (puntos, medallas, colores y Elo).
+  // Provisional hasta que terminan todas las categorías donde juega.
+  function documentoInforme(fed) {
+    const tx = T(), vx = V.textos();
+    const suyos = V.jugadores().filter((x) => x.j.fed === fed);
+    const termino = (tor) => tor.terminado || (tor.rondas && tor.ronda >= tor.rondas);
+    const final = suyos.length > 0 && suyos.every((x) => termino(x.torneo));
+    const ronda = Math.max(0, ...suyos.map((x) => x.torneo.ronda || 0));
+    let pts = 0, de = 0, sumaElo = 0, conElo = 0;
+    const medallas = [0, 0, 0];
+    const todas = [];
+    const porGrupo = {};
+    suyos.forEach((x) => { (porGrupo[x.j.grupo || "—"] = porGrupo[x.j.grupo || "—"] || []).push(x); });
+    const filas = [];
+    Object.keys(porGrupo).sort((a, b) => V.ordenGrupo(a) - V.ordenGrupo(b) || a.localeCompare(b)).forEach((g) => {
+      porGrupo[g].sort((a, b) => a.j.puesto - b.j.puesto).forEach((x) => {
+        const rondas = V.rondasDe(x);
+        todas.push(...rondas);
+        rondas.forEach((o) => { if (o.puntos !== null) { pts += o.puntos; de += 1; } });
+        const c = V.porColor(rondas), rend = V.rendimiento(x), elo = V.eloDe(x);
+        if (elo) { sumaElo += elo.cambio; conElo++; }
+        const lugar = x.torneo.ronda > 0 ? x.j._puestoGrupo : 0;
+        if (lugar >= 1 && lugar <= 3) medallas[lugar - 1]++;
+        filas.push([V.categoria(g), nombreCompleto(x.j), x.torneo.ronda > 0 ? x.j.puntos || "0" : "—",
+          lugar ? lugar + (V.idioma() === "en" ? "" : ".º") + (lugar <= 3 ? " · " + tx.infMedalla[lugar - 1] : "") : "—",
+          rend ? String(rend.rp) : "—", elo ? V.textoElo(elo.cambio) : "—",
+          c.blancas.n ? V.fmtPuntos(c.blancas.pts) + "/" + c.blancas.n : "—", c.negras.n ? V.fmtPuntos(c.negras.pts) + "/" + c.negras.n : "—"]);
+      });
+    });
+    const bloques = [
+      { tipo: "parrafo", texto: tx.infEstado(final, ronda) },
+      { tipo: "parrafo", texto: tx.infResumen(suyos.length, V.fmtPuntos(pts), de) },
+      { tipo: "parrafo", texto: tx.infMedallas(medallas[0], medallas[1], medallas[2], final) },
+    ];
+    const colores = V.porColor(todas);
+    if (colores.blancas.n || colores.negras.n) bloques.push({ tipo: "parrafo", texto: vx.coloresPais(colores) });
+    if (conElo) bloques.push({ tipo: "parrafo", texto: tx.infElo(V.textoElo(Math.round(sumaElo * 10) / 10), conElo) });
+    bloques.push({ tipo: "tabla", encabezados: [tx.infColCat, tx.colJugador, tx.pdfColPts, tx.infColPuesto, tx.infColRp, tx.infColElo, tx.infColBlancas, tx.infColNegras],
+      filas, anchos: [19, 27, 6, 11, 8, 8, 10, 11] });
+    const leido = V.cuandoSeLeyo().trim().replace(/\.+$/, ".");
+    bloques.push({ tipo: "nota", texto: tx.pdfNota(leido) });
+    return { titulo: tx.infTitulo(V.pais(fed)), subtitulo: tx.infSub, autor: "Ajedrez Integral", color: "#40478f",
+      pie: tx.pdfPie, pagina: tx.pdfPagina, bloques, final, ronda };
+  }
+
+  async function informeDelegacion(fed, boton, estado) {
+    const tx = T();
+    if (boton) boton.disabled = true;
+    if (estado) estado.textContent = "";
+    try {
+      await V.pedir();
+      const d = documentoInforme(fed);
+      const blob = await window.ReportePDF.generar(d);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url; a.download = "centroamericano-2026-" + fed.toLowerCase() + "-informe" + (d.final ? "-final" : "-ronda-" + d.ronda) + ".pdf";
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 10000);
+      if (estado) estado.textContent = tx.infLista;
+    } catch (e) {
+      if (estado) estado.textContent = V.datos() ? tx.pdfError : tx.error;
+    } finally {
+      if (boton) boton.disabled = false;
+    }
+  }
+
   async function hojaDelegacion(fed, boton, estado) {
     const tx = T();
     if (boton) boton.disabled = true;
@@ -1299,6 +1410,13 @@
       try { localStorage.setItem(CLAVE_MODO, modo); } catch (err) {}
       paginas = armarPaginas(); pagina = 0; segundos = 0; pintarProyector();
     });
+    // Las páginas universitarias (otra plantilla) no traen el de la categoría.
+    const selCat = $("proyector-categoria");
+    if (selCat) selCat.addEventListener("change", (e) => {
+      catProyector = e.target.value;
+      try { if (catProyector) localStorage.setItem(CLAVE_CAT, catProyector); else localStorage.removeItem(CLAVE_CAT); } catch (err) {}
+      paginas = armarPaginas(); pagina = 0; segundos = 0; pintarProyector();
+    });
     $("proyector-completa").addEventListener("click", () => {
       if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
       else if (proy.requestFullscreen) proy.requestFullscreen().catch(() => {});
@@ -1322,5 +1440,5 @@
   document.addEventListener("cac-datos", repintar);
   document.addEventListener("cac-idioma", repintar);
 
-  window.CentroamericanoTablas = { compartirJugador, imagenJugador, compartirResumen, imagenResumen, resumenDelDia, imagenDia, compartirDia, documentoDelegacion, hojaDelegacion, diploma, descargarDiploma, nombreAlDerecho };
+  window.CentroamericanoTablas = { compartirJugador, imagenJugador, compartirResumen, imagenResumen, resumenDelDia, imagenDia, compartirDia, documentoDelegacion, hojaDelegacion, documentoInforme, informeDelegacion, textosTablas: T, diploma, descargarDiploma, nombreAlDerecho };
 })();

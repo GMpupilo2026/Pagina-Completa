@@ -115,6 +115,7 @@ window.CentroamericanoEN = {
     "Siguiente": "Next",
     "Pantalla completa": "Full screen",
     "Qué mostrar": "What to show",
+    "Qué categoría": "Which section",
     "Instala el Centroamericano en tu celular": "Install the Centroamericano on your phone",
     "Queda con el ícono del pizote, abre a pantalla completa y funciona sin internet en la sala.": "It gets the coati icon, opens full screen and works without internet at the venue.",
     "Instalar": "Install",

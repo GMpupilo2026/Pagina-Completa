@@ -449,6 +449,7 @@ a.cac-despedida:hover .cac-globo { transform: translateY(-2px); }
 .cac-podio { background: #fff; border-radius: 1rem; border: 1px solid #dfe0f7; padding: 0.8rem 1rem; }
 .dark .cac-podio { background: rgb(var(--c-brand-900, 10 31 51)); border-color: rgb(var(--c-brand-700, 51 78 104)); }
 .cac-podio h3 { font-weight: 800; color: var(--cac-acento); }
+.cac-podio-estado { font-size: 0.8rem; font-weight: 700; }
 .cac-podio ol { margin-top: 0.3rem; font-size: 0.9rem; }
 .cac-podio li { margin-top: 0.2rem; }
 
