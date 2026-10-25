@@ -134,7 +134,7 @@
       delegApagado: (p) => "Listo: ya no te avisamos el resumen de " + p + ".",
       imagenResumen: "Compartir imagen",
       hojaPdf: "Hoja de la delegación para imprimir (PDF)",
-      diplomaPdf: "Diploma (PDF)", diplomaImagen: "Diploma (imagen)",
+      diplomaPdf: "Certificado (PDF)", diplomaImagen: "Certificado (imagen)",
       puestosTitulo: "Su puesto en la categoría después de cada ronda:",
       puestoRonda: (r, p) => "R" + r + " " + p,
       puestosNota: "Con los mismos puntos se comparte el puesto (por ejemplo, 3.º–5.º): el desempate lo decide al final del torneo.",

@@ -8816,9 +8816,12 @@ Es una página estática, sin cuenta y sin base: nada se guarda.
   columnas**: con el Elo propio y el puesto, el nombre del rival se cortaba
   («Santiago Jos...»), y el rival es justo lo que se busca en la sala; el
   verificador revisa que llegue entero.
-- **El diploma de cada jugador**: con el torneo terminado (la clasificación
+- **El certificado de cada jugador** (antes decía «Diploma»: el dueño pidió
+  que todo diga «certificado»; por dentro el código sigue llamándolo
+  `diploma()`, y el verificador revisa que en el lienzo no se escriba
+  «diploma»): con el torneo terminado (la clasificación
   final de chess-results, `normalizar()` lo marca `terminado`), cada tarjeta
-  trae «Diploma (PDF)» y «Diploma (imagen)». Es un A4 acostado (2339 × 1654)
+  trae «Certificado (PDF)» y «Certificado (imagen)». Es un A4 acostado (2339 × 1654)
   dibujado en un lienzo **con la cara de las bases** (lo pidió el dueño): el
   morado degradado de la portada, las hojas en las esquinas, la letra blanca
   en mayúsculas con su sombra y la píldora roja con el evento, como «XXI
@@ -9036,12 +9039,12 @@ chess-results.
   1,83 esperado y 40 × (3 − 1,83) = +46,8). Antes de darlo por bueno, rompí
   a propósito cada pieza y cada una saltó.
 
-### Los avisos de la organización, el festival en números y todos los diplomas
+### Los avisos de la organización, el festival en números y todos los certificados
 
 Las pidió el dueño entre las mejoras («5, 6 y 7»). La 7 era una «constancia
-de participación», pero eso ya existía: el diploma de cada jugador dice «por
+de participación», pero eso ya existía: el certificado de cada jugador dice «por
 su participación» aunque no tenga medalla. En su lugar se hizo lo que faltaba:
-bajar todos los diplomas de una delegación en un solo PDF.
+bajar todos los certificados de una delegación en un solo PDF.
 
 - **Los avisos de la organización** («la ronda 6 se atrasa 30 minutos»):
   - Se publican en `admin.html#torneos`, debajo de las salas: la sala, el
@@ -9077,10 +9080,10 @@ bajar todos los diplomas de una delegación en un solo PDF.
     más arriba;
   - el país con más oros (si terminara hoy, mientras no terminen todas);
   - y una imagen de 1080 de ancho para compartir, con la marca de agua.
-- **Todos los diplomas de la delegación** en «Mi delegación»: el mismo
+- **Todos los certificados de la delegación** en «Mi delegación»: el mismo
   `diploma()` de cada jugador, uno por página. Para eso `ReportePDF.deImagen`
   acepta ahora `paginas`, una lista de imágenes, y el resto de los que lo
-  llaman con una sola no cambian. Cada diploma lleva su marca de agua.
+  llaman con una sola no cambian. Cada certificado lleva su marca de agua.
 - Lo revisan `verificar-salas-torneo.js` (la pantalla de admin, con el doble
   que conoce las dos funciones) y `verificar-centroamericano.js` (el aviso en
   la página y en inglés, la función que manda una vez y solo a quien estaba,

@@ -820,7 +820,7 @@ ok("la página carga el cliente de Supabase antes que su código en vivo", html.
     await p6.reload({ waitUntil: "load" });
     r = await buscar("mayorga");
     ok("sin señal, muestra lo último que llegó y lo dice", r.tarjetas.length === 1 && /Sin conexión/.test(r.estado), JSON.stringify(r));
-    ok("mientras el torneo no termina, no hay diploma", await p6.evaluate(() => !document.querySelector('#buscador-resultados [data-accion^="diploma"]')));
+    ok("mientras el torneo no termina, no hay certificado", await p6.evaluate(() => !document.querySelector('#buscador-resultados [data-accion^="diploma"]')));
     // Con un solo torneo (todas las categorías juntas), la ficha lo abre directo, como siempre.
     await p6.route(/chess-results\.com/, (rt) => rt.fulfill({ status: 200, contentType: "text/html", body: "<p>cr</p>" }));
     await p6.click("#ficha-resultados");
@@ -970,38 +970,43 @@ ok("la página carga el cliente de Supabase antes que su código en vivo", html.
     await pDip.fill("#buscador-nombre", "mayorga");
     await pDip.waitForSelector('#buscador-resultados [data-accion="diploma-pdf"]', { timeout: 10000 }).catch(() => {});
     const botonesDip = await pDip.evaluate(() => [...document.querySelectorAll('#buscador-resultados [data-accion^="diploma"]')].map((b) => b.textContent + (b.checkVisibility() ? "" : " (oculto)")));
-    ok("con el torneo terminado, cada tarjeta trae su diploma en PDF y en imagen", JSON.stringify(botonesDip) === JSON.stringify(["Diploma (PDF)", "Diploma (imagen)"]), JSON.stringify(botonesDip));
+    ok("con el torneo terminado, cada tarjeta trae su certificado en PDF y en imagen", JSON.stringify(botonesDip) === JSON.stringify(["Certificado (PDF)", "Certificado (imagen)"]), JSON.stringify(botonesDip));
     ok("el nombre va al derecho, con el título adelante", await pDip.evaluate(() => window.CentroamericanoTablas.nombreAlDerecho({ titulo: "WIM", nombre: "Mayorga Araya, Sofia" }) === "WIM Sofia Mayorga Araya"
       && window.CentroamericanoTablas.nombreAlDerecho({ titulo: "", nombre: "Wilson Hannah" }) === "Wilson Hannah"));
     // Con la cara de las bases: el morado del fondo (arriba #40478F, abajo
     // #5A5FA3) y la píldora roja del evento, medidos en el lienzo.
     const colores = await pDip.evaluate(async () => {
       const V = window.CentroamericanoVivo;
+      // Lo que se escribe en el lienzo, para ver que dice «certificado».
+      const escrito = [], fill = CanvasRenderingContext2D.prototype.fillText;
+      CanvasRenderingContext2D.prototype.fillText = function (t, ...r) { escrito.push(String(t)); return fill.call(this, t, ...r); };
       const c = await window.CentroamericanoTablas.diploma(V.jugadores().find((y) => y.j.no === 2));
+      CanvasRenderingContext2D.prototype.fillText = fill;
       const px = (x, y) => Array.from(c.getContext("2d").getImageData(x, y, 1, 1).data.slice(0, 3));
-      return { arriba: px(1169, 40), abajo: px(1169, 1620), pildora: px(c.width / 2 - 700, 650) };
+      return { arriba: px(1169, 40), abajo: px(1169, 1620), pildora: px(c.width / 2 - 700, 650), escrito };
     });
     const cerca = (a, b) => a.every((v, i) => Math.abs(v - b[i]) <= 14);
-    ok("el diploma lleva el morado de las bases y la píldora roja del evento", cerca(colores.arriba, [64, 71, 143]) && cerca(colores.abajo, [90, 95, 163]) && cerca(colores.pildora, [206, 19, 40]), JSON.stringify(colores));
+    ok("el certificado lleva el morado de las bases y la píldora roja del evento", cerca(colores.arriba, [64, 71, 143]) && cerca(colores.abajo, [90, 95, 163]) && cerca(colores.pildora, [206, 19, 40]), JSON.stringify(colores));
+    ok("dice «CERTIFICADO» arriba y en ningún lado «diploma»", colores.escrito.includes("CERTIFICADO") && !colores.escrito.some((t) => /diploma/i.test(t)), JSON.stringify(colores.escrito));
     await pDip.evaluate(() => { const m = window.TablaImagen.marcar; window.__marcas = 0; window.TablaImagen.marcar = (c) => { window.__marcas++; return m(c); }; });
     const [dImg] = await Promise.all([pDip.waitForEvent("download", { timeout: 20000 }), pDip.click('#buscador-resultados [data-accion="diploma-imagen"]')]);
     const pngDip = fs.readFileSync(await dImg.path());
-    ok("«Diploma (imagen)» da un A4 acostado (2339 × 1654) con la marca de agua", pngDip.slice(1, 4).toString() === "PNG" && pngDip.readUInt32BE(16) === 2339 && pngDip.readUInt32BE(20) === 1654
-      && dImg.suggestedFilename() === "centroamericano-2026-diploma-mayorga-araya-sofia.png" && await pDip.evaluate(() => window.__marcas === 1), dImg.suggestedFilename());
+    ok("«Certificado (imagen)» da un A4 acostado (2339 × 1654) con la marca de agua", pngDip.slice(1, 4).toString() === "PNG" && pngDip.readUInt32BE(16) === 2339 && pngDip.readUInt32BE(20) === 1654
+      && dImg.suggestedFilename() === "centroamericano-2026-certificado-mayorga-araya-sofia.png" && await pDip.evaluate(() => window.__marcas === 1), dImg.suggestedFilename());
     const [dPdf] = await Promise.all([pDip.waitForEvent("download", { timeout: 20000 }), pDip.click('#buscador-resultados [data-accion="diploma-pdf"]')]);
     const pdfDip = fs.readFileSync(await dPdf.path()).toString("latin1");
-    ok("«Diploma (PDF)» da una página A4 acostada con la imagen de borde a borde", pdfDip.startsWith("%PDF-") && pdfDip.includes("/MediaBox [0 0 841.89 595.28]")
-      && pdfDip.includes("/DCTDecode") && pdfDip.includes("/Count 1") && pdfDip.includes("(Diploma · WIM Sofia Mayorga Araya)".replace("·", "\xb7"))
-      && dPdf.suggestedFilename() === "centroamericano-2026-diploma-mayorga-araya-sofia.pdf" && await pDip.evaluate(() => window.__marcas === 2), dPdf.suggestedFilename());
+    ok("«Certificado (PDF)» da una página A4 acostada con la imagen de borde a borde", pdfDip.startsWith("%PDF-") && pdfDip.includes("/MediaBox [0 0 841.89 595.28]")
+      && pdfDip.includes("/DCTDecode") && pdfDip.includes("/Count 1") && pdfDip.includes("(Certificado · WIM Sofia Mayorga Araya)".replace("·", "\xb7"))
+      && dPdf.suggestedFilename() === "centroamericano-2026-certificado-mayorga-araya-sofia.pdf" && await pDip.evaluate(() => window.__marcas === 2), dPdf.suggestedFilename());
     // Todos los diplomas de la delegación en un PDF: los dos de Costa Rica.
     await pDip.selectOption("#delegacion", "CRC");
     await pDip.waitForSelector("#delegacion-diplomas", { timeout: 10000 }).catch(() => {});
     const [dTodos] = await Promise.all([pDip.waitForEvent("download", { timeout: 30000 }), pDip.click("#delegacion-diplomas")]);
     const pdfTodos = fs.readFileSync(await dTodos.path()).toString("latin1");
-    ok("«Todos los diplomas» da un PDF con una hoja por jugador de la delegación, cada uno con su marca de agua",
+    ok("«Todos los certificados» da un PDF con una hoja por jugador de la delegación, cada uno con su marca de agua",
       pdfTodos.startsWith("%PDF-") && pdfTodos.includes("/Count 2") && (pdfTodos.match(/\/Subtype \/Image/g) || []).length === 2
-      && dTodos.suggestedFilename() === "centroamericano-2026-crc-diplomas.pdf" && await pDip.evaluate(() => window.__marcas === 4)
-      && /los 2 diplomas se bajaron/.test(await pDip.textContent("#delegacion-lista .cac-hoja [role=status]")), dTodos.suggestedFilename());
+      && dTodos.suggestedFilename() === "centroamericano-2026-crc-certificados.pdf" && await pDip.evaluate(() => window.__marcas === 4)
+      && /los 2 certificados se bajaron/.test(await pDip.textContent("#delegacion-lista .cac-hoja [role=status]")), dTodos.suggestedFilename());
     await ctxDip.close();
 
     // Instalar en iPhone: Safari no avisa, así que se explica cómo, una vez.
