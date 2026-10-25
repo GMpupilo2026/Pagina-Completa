@@ -55,7 +55,9 @@
 //                   el pareo de cada seguido y, cuando chess-results lo anota,
 //                   su resultado con su puesto; y a quien sigue un país
 //                   (delegacion, el código de FIDE), el resumen de la ronda
-//                   cuando terminan todas sus partidas. Cada aviso se anota antes de
+//                   cuando terminan todas sus partidas; y los avisos de la
+//                   organización (sala_anuncios), que también dispara
+//                   sala_anuncio_publicar() al publicarse. Cada aviso se anota antes de
 //                   salir (sala_avisos_push_enviados, con su tipo), así no sale
 //                   dos veces.
 // Solo se le manda a los servicios de avisos de los navegadores (Google,
@@ -383,12 +385,12 @@ async function rondasDelCalendario(sala: string) {
   }
 }
 
-type Suscrito = { id: string; sala: string; endpoint: string; p256dh: string; auth: string; idioma: string; jugadores: { tnr: string; no: number; nombre: string }[]; delegacion: string | null };
+type Suscrito = { id: string; sala: string; endpoint: string; p256dh: string; auth: string; idioma: string; jugadores: { tnr: string; no: number; nombre: string }[]; delegacion: string | null; creada: string };
 
 async function revisar(admin: Admin) {
   const llaves = await llavesPush(admin);
   if (!llaves) return { ok: false, error: "sin llaves" };
-  const { data } = await admin.from("sala_suscripciones_push").select("id, sala, endpoint, p256dh, auth, idioma, jugadores, delegacion");
+  const { data } = await admin.from("sala_suscripciones_push").select("id, sala, endpoint, p256dh, auth, idioma, jugadores, delegacion, creada");
   const subs = (data || []) as Suscrito[];
   if (!subs.length) return { ok: true, mandados: 0 };
   let mandados = 0;
@@ -405,9 +407,28 @@ async function revisar(admin: Admin) {
   }
 
   for (const sala of [...new Set(subs.map((x) => x.sala))]) {
+    const deSala = subs.filter((x) => x.sala === sala);
+
+    // 0) Los avisos de la organización (sala_anuncios, los publica quien
+    // administra): antes de leer chess-results, para que salgan ya. Una vez a
+    // cada aparato que ya estaba suscrito cuando se publicó, en su idioma.
+    const { data: anuncios } = await admin.from("sala_anuncios").select("id, texto, texto_en, creado")
+      .eq("sala", sala).is("quitado", null).gt("hasta", new Date().toISOString()).order("creado");
+    for (const a of (anuncios || []) as { id: number; texto: string; texto_en: string | null; creado: string }[]) {
+      for (const s of deSala) {
+        if (mandados >= TOPE_AVISOS) return { ok: true, mandados, tope: true };
+        if (new Date(s.creada).getTime() > new Date(a.creado).getTime()) continue;
+        const en = s.idioma === "en";
+        await avisar(s, "anuncio", "0", 0, Number(a.id), {
+          titulo: en ? "Notice from the organizers" : "Aviso de la organización",
+          cuerpo: en && a.texto_en ? a.texto_en : a.texto,
+          etiqueta: "sala-anuncio-" + a.id,
+        });
+      }
+    }
+
     const torneos = await datosDeSala(admin, sala);
     if (!torneos) continue;
-    const deSala = subs.filter((x) => x.sala === sala);
 
     // Cada seguido, en su torneo: su número de hoy (antes de la ronda 1 el
     // árbitro puede volver a ordenar la lista y cambiar los números: si el

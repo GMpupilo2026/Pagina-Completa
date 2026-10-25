@@ -108,6 +108,7 @@
       rendimiento: (rp, n, ra) => "Rendimiento: " + rp + " en " + n + (n === 1 ? " partida" : " partidas") + " (sus rivales tienen " + ra + " de promedio).",
       eloLinea: (cambio, n, k) => "Elo FIDE: " + cambio + " en " + n + (n === 1 ? " partida" : " partidas") + " con rivales con Elo (K " + k + ").",
       eloNota: "El Elo es una cuenta de este torneo con las reglas de FIDE: lo oficial lo publica FIDE al cerrar el mes.",
+      anuncioDe: (h) => "Aviso de la organización · " + h,
       hoyDistinto: (partes) => "A otro paso: " + partes.join(" · ") + ".",
       hoyTermino: (cat, n) => cat + " ya terminó sus " + n + " rondas",
       hoyRonda: (cat, r) => cat + " va en la ronda " + r,
@@ -194,6 +195,7 @@
       rendimiento: (rp, n, ra) => "Performance: " + rp + " in " + n + (n === 1 ? " game" : " games") + " (opponents' average rating " + ra + ").",
       eloLinea: (cambio, n, k) => "FIDE rating: " + cambio + " in " + n + (n === 1 ? " game" : " games") + " against rated opponents (K " + k + ").",
       eloNota: "The rating change is this tournament's count under FIDE rules: FIDE publishes the official one when the month closes.",
+      anuncioDe: (h) => "Notice from the organizers · " + h,
       hoyDistinto: (partes) => "At a different pace: " + partes.join(" · ") + ".",
       hoyTermino: (cat, n) => cat + " already finished its " + n + " rounds",
       hoyRonda: (cat, r) => cat + " is on round " + r,
@@ -515,6 +517,39 @@
     });
     return { ronda, total, hechas, cerrada };
   }
+  /* ---------------- los avisos de la organización ---------------- */
+  // Los publica quien administra (sala_anuncio_publicar(), admin.html#torneos)
+  // y van arriba de «Hoy en el torneo»; la base da solo los vigentes de una
+  // sala visible. Se piden al entrar y cada 5 minutos mientras la página está
+  // a la vista (los del celular los manda sala-jugadores). Ver «Los avisos de
+  // la organización» en docs/decisiones/juegos-y-torneos.md.
+  let anuncios = [], anunciosPedidos = 0;
+  async function pedirAnuncios() {
+    if (!$("anuncios") || !window.sb || typeof window.sb.from !== "function" || document.hidden) return;
+    if (Date.now() - anunciosPedidos < 60000) return;
+    anunciosPedidos = Date.now();
+    try {
+      const { data, error } = await window.sb.from("sala_anuncios").select("id, texto, texto_en, creado")
+        .eq("sala", SALA).order("creado", { ascending: false }).limit(3);
+      if (!error && Array.isArray(data)) { anuncios = data; pintarAnuncios(); }
+    } catch (e) { /* sin red: queda lo que había */ }
+  }
+  function pintarAnuncios() {
+    const caja = $("anuncios");
+    if (!caja) return;
+    const tx = t();
+    caja.hidden = !anuncios.length;
+    caja.replaceChildren(...anuncios.map((a) => {
+      const p = el("p", "cac-anuncio");
+      const cab = el("strong", "");
+      const ico = el("span", "", "📢 ");
+      ico.setAttribute("aria-hidden", "true");
+      cab.append(ico, document.createTextNode(tx.anuncioDe(hora(a.creado))));
+      p.append(cab, document.createTextNode(idioma() === "en" && a.texto_en ? a.texto_en : a.texto));
+      return p;
+    }));
+  }
+
   // En «Hoy en el torneo», las categorías que van a otro paso que la
   // mayoría (con un torneo por categoría): la que ya terminó (un Round Robin
   // de pocos jugadores) y la que va en otra ronda. Si todas van igual, nada.
@@ -880,6 +915,17 @@
         inf.addEventListener("click", () => window.CentroamericanoTablas.informeDelegacion(elegida, inf, aviso));
         hoja.append(inf);
       }
+      // Todos sus diplomas de una vez, cuando ya terminó alguna de sus categorías.
+      if (window.CentroamericanoTablas && window.CentroamericanoTablas.conDiploma(elegida).length) {
+        const dip = el("button", "cac-jugador-boton ml-2", "");
+        dip.type = "button";
+        dip.id = "delegacion-diplomas";
+        const ico = el("span", "", "🎓 ");
+        ico.setAttribute("aria-hidden", "true");
+        dip.append(ico, document.createTextNode(window.CentroamericanoTablas.textosTablas().dipTodos));
+        dip.addEventListener("click", () => window.CentroamericanoTablas.diplomasDelegacion(elegida, dip, aviso));
+        hoja.append(dip);
+      }
       hoja.append(aviso);
       caja.appendChild(hoja);
     }
@@ -952,7 +998,7 @@
     if (sel.value) pedir().then(pintarTodo, () => { $("delegacion-estado").textContent = t().error; });
   }
 
-  function pintarTodo() { pintarHoyCategorias(); pintarProgreso(); pintarSeguidos(); pintarBuscador(); pintarDelegacion(); pintarAvisoDelegacion(); }
+  function pintarTodo() { pintarAnuncios(); pintarHoyCategorias(); pintarProgreso(); pintarSeguidos(); pintarBuscador(); pintarDelegacion(); pintarAvisoDelegacion(); }
 
   /* ---------------- Avisarme en este celular ---------------- */
   // Qué dice la función, también cuando contesta un error (lo trae el cuerpo).
@@ -1232,6 +1278,9 @@
   pintarAvisoDelegacion();
   pintarProgreso();
   pintarHoyCategorias();
+  pedirAnuncios();
+  setInterval(pedirAnuncios, 5 * 60000);
+  document.addEventListener("visibilitychange", () => { if (!document.hidden) pedirAnuncios(); });
   abrirEnlaceJugador();
   // Quien ya sigue a alguien o eligió su país viene a ver eso: se pide de una vez.
   // Y durante el festival, con el torneo ya partido por categoría (lo dice lo

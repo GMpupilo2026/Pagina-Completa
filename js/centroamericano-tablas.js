@@ -90,6 +90,24 @@
       modoTodo: "Pareo y clasificación", modoPareo: "Solo el pareo", modoClasif: "Solo la clasificación", catTodas: "Todas las categorías",
       proyClasif: (r, cat, pag, de) => "Clasificación · " + cat + " · tras la ronda " + r + (de > 1 ? " · " + pag + "/" + de : ""),
       proyPodios: "Los podios",
+      dipTodos: "Todos los diplomas (PDF)",
+      dipArmando: (n, de) => "Armando los diplomas: " + n + " de " + de + "…",
+      dipTodosListo: (n) => "Listo: " + (n === 1 ? "el diploma se bajó" : "los " + n + " diplomas se bajaron") + " a tu aparato, una hoja por jugador.",
+      dipTodosTitulo: (pais) => "Diplomas · " + pais,
+      dipNinguno: "Todavía no terminó ninguna categoría donde juega este país.",
+      numTitulo: "El festival en números",
+      numEstado: (final, r) => (final ? "Cuando terminó el festival." : "Hasta la ronda " + r + ": se pone al día con cada ronda."),
+      numJugadores: "jugadores", numPaises: "países", numCategorias: "categorías", numPartidas: "partidas jugadas",
+      numColores: (b, t, n) => "Ganaron las blancas el " + b + " · tablas el " + t + " · ganaron las negras el " + n + ".",
+      numSorpresa: "La sorpresa más grande",
+      numRemontada: "La mejor remontada",
+      remontada: (quien, cat, peor, rPeor, final) => quien + ", " + cat + ": del " + peor + " tras la ronda " + rPeor + " al " + final + ".",
+      numMedallas: "El país con más medallas",
+      medallas: (pais, o, p, b, final) => pais + ": " + [o ? o + " de oro" : "", p ? p + " de plata" : "", b ? b + " de bronce" : ""].filter(Boolean).join(", ") + (final ? "." : " (si terminara hoy)."),
+      numNinguna: "Todavía ninguna.",
+      numAntes: "Todavía no se jugó ninguna ronda.",
+      numBoton: "Compartir como imagen",
+      numTexto: "El Centroamericano 2026 en números:",
       imgResumenSub: "Centroamericano 2026 · Costa Rica",
       imgMas: (n) => "y " + n + " más",
       imgPuestos: (lista) => "Puesto ronda a ronda: " + lista,
@@ -195,6 +213,24 @@
       modoTodo: "Pairings and standings", modoPareo: "Pairings only", modoClasif: "Standings only", catTodas: "All sections",
       proyClasif: (r, cat, pag, de) => "Standings · " + cat + " · after round " + r + (de > 1 ? " · " + pag + "/" + de : ""),
       proyPodios: "The podiums",
+      dipTodos: "All the certificates (PDF)",
+      dipArmando: (n, de) => "Making the certificates: " + n + " of " + de + "…",
+      dipTodosListo: (n) => "Done: " + (n === 1 ? "the certificate was" : "the " + n + " certificates were") + " saved to your device, one page per player.",
+      dipTodosTitulo: (pais) => "Certificates · " + pais,
+      dipNinguno: "None of this country's sections has finished yet.",
+      numTitulo: "The festival in numbers",
+      numEstado: (final, r) => (final ? "When the festival ended." : "Up to round " + r + ": it updates with every round."),
+      numJugadores: "players", numPaises: "countries", numCategorias: "sections", numPartidas: "games played",
+      numColores: (b, t, n) => "White won " + b + " · draws " + t + " · black won " + n + ".",
+      numSorpresa: "The biggest upset",
+      numRemontada: "The best comeback",
+      remontada: (quien, cat, peor, rPeor, final) => quien + ", " + cat + ": from " + peor + " after round " + rPeor + " to " + final + ".",
+      numMedallas: "The country with the most medals",
+      medallas: (pais, o, p, b, final) => pais + ": " + [o ? o + " gold" : "", p ? p + " silver" : "", b ? b + " bronze" : ""].filter(Boolean).join(", ") + (final ? "." : " (if it ended today)."),
+      numNinguna: "None yet.",
+      numAntes: "No round has been played yet.",
+      numBoton: "Share as an image",
+      numTexto: "The Centroamericano 2026 in numbers:",
       imgResumenSub: "Centroamericano 2026 · Costa Rica",
       imgMas: (n) => "and " + n + " more",
       imgPuestos: (lista) => "Place round by round: " + lista,
@@ -1175,6 +1211,42 @@
     }
   }
 
+  // Todos los diplomas de un país en un PDF, una hoja por jugador, para el
+  // jefe de la delegación: los de las categorías que ya terminaron, en el
+  // orden de «Mi delegación» (de la categoría menor a la mayor, por puesto).
+  // Cada uno es el mismo diploma(x) de arriba, con su marca de agua.
+  const terminoTorneo = (t) => t.terminado || (t.rondas && t.ronda >= t.rondas);
+  const conDiploma = (fed) => V.jugadores().filter((x) => x.j.fed === fed && terminoTorneo(x.torneo))
+    .sort((a, b) => V.ordenGrupo(a.j.grupo) - V.ordenGrupo(b.j.grupo) || a.j.puesto - b.j.puesto);
+  async function diplomasDelegacion(fed, boton, estado) {
+    const tx = T();
+    if (boton) boton.disabled = true;
+    if (estado) estado.textContent = "";
+    try {
+      await V.pedir();
+      const suyos = conDiploma(fed);
+      if (!suyos.length) { if (estado) estado.textContent = tx.dipNinguno; return; }
+      const paginas = [];
+      for (const x of suyos) {
+        if (estado) estado.textContent = tx.dipArmando(paginas.length + 1, suyos.length);
+        const c = await diploma(x);
+        const jpeg = await new Promise((ok, mal) => c.toBlob((b) => (b ? ok(b) : mal(new Error("sin imagen"))), "image/jpeg", 0.88));
+        paginas.push({ jpeg: new Uint8Array(await jpeg.arrayBuffer()), ancho: c.width, alto: c.height });
+      }
+      const blob = window.ReportePDF.deImagen({ paginas, horizontal: true, titulo: tx.dipTodosTitulo(V.pais(fed)), autor: "Ajedrez Integral" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url; a.download = CARA.archivo + "-" + fed.toLowerCase() + "-diplomas.pdf";
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 10000);
+      if (estado) estado.textContent = tx.dipTodosListo(paginas.length);
+    } catch (e) {
+      if (estado) estado.textContent = V.datos() ? tx.imagenError : tx.error;
+    } finally {
+      if (boton) boton.disabled = false;
+    }
+  }
+
   /* ---------------- la hoja de la delegación (PDF) ---------------- */
   // Lo que el entrenador lleva en la mano en la sala: todos sus jugadores en la
   // ronda emparejada, por categoría, con mesa, color, rival y resultado. Es el
@@ -1314,6 +1386,163 @@
     document.addEventListener("cac-idioma", rotular);
     botonDia.addEventListener("click", () => compartirDia(botonDia));
   }
+  /* ---------------- «El festival en números» ----------------
+     Para la prensa y el cierre: cuántos juegan, cuántas partidas, cómo les fue
+     a las blancas, la sorpresa más grande (la misma de «Sorpresas»), la mejor
+     remontada (de su peor puesto a su puesto de hoy, con el puesto por puntos
+     del cuadro cruzado, V.puestosDe) y el país con más medallas. Todo con los
+     datos que ya están: nada se pide aparte. Ver «El festival en números». */
+  const pct = (n, de) => (de ? Math.round((100 * n) / de) : 0).toLocaleString(T().locale) + " %";
+  function numerosDelFestival() {
+    const tx = T();
+    const todos = V.jugadores();
+    const ronda = Math.max(0, ...todos.flatMap((x) => V.rondasDe(x).filter((o) => o.puntos !== null).map((o) => o.ronda)));
+    if (!ronda) return null;
+    const termino = (t) => t.terminado || (t.rondas && t.ronda >= t.rondas);
+    const final = todos.length > 0 && todos.every((x) => termino(x.torneo));
+    // Cada partida una vez: desde las blancas.
+    let partidas = 0, blancas = 0, negras = 0, tablas = 0;
+    todos.forEach((x) => V.rondasDe(x).forEach((o) => {
+      if (o.bye || o.incomparecencia || o.puntos === null || o.color !== "blancas") return;
+      partidas++;
+      if (o.puntos === 1) blancas++; else if (o.puntos === 0.5) tablas++; else negras++;
+    }));
+    const s = sorpresas()[0];
+    // La mejor remontada: la mayor subida desde su peor puesto (antes de la
+    // última ronda) hasta el de hoy; empatados, el que quedó más arriba.
+    let mejor = null;
+    todos.forEach((x) => {
+      const ps = V.puestosDe(x);
+      if (ps.length < 2) return;
+      const ultimo = ps[ps.length - 1];
+      const peor = ps.slice(0, -1).reduce((a, p) => (p.desde > a.desde ? p : a));
+      const sube = peor.desde - ultimo.desde;
+      if (sube < 2) return;
+      if (!mejor || sube > mejor.sube || (sube === mejor.sube && ultimo.desde < mejor.ultimo.desde)) mejor = { x, peor, ultimo, sube };
+    });
+    // Las medallas: los tres primeros de cada categoría, por país.
+    const porGrupo = {};
+    todos.forEach((x) => { (porGrupo[x.j.grupo || "—"] = porGrupo[x.j.grupo || "—"] || []).push(x); });
+    const medallas = {};
+    Object.values(porGrupo).forEach((lista) => lista.slice().sort((a, b) => a.j.puesto - b.j.puesto).slice(0, 3).forEach((x, i) => {
+      const f = x.j.fed || "—";
+      (medallas[f] = medallas[f] || [0, 0, 0])[i]++;
+    }));
+    const top = Object.entries(medallas).sort((a, b) => b[1][0] - a[1][0] || b[1][1] - a[1][1] || b[1][2] - a[1][2] || a[0].localeCompare(b[0]))[0];
+    return {
+      ronda, final,
+      cifras: [[todos.length, tx.numJugadores], [new Set(todos.map((x) => x.j.fed).filter(Boolean)).size, tx.numPaises],
+        [new Set(todos.map((x) => x.j.grupo).filter(Boolean)).size, tx.numCategorias], [partidas, tx.numPartidas]],
+      colores: partidas ? tx.numColores(pct(blancas, partidas), pct(tablas, partidas), pct(negras, partidas)) : "",
+      sorpresa: s ? lineaSorpresa(s, tx) : tx.numNinguna,
+      remontada: mejor ? tx.remontada(nombreCompleto(mejor.x.j) + (mejor.x.j.fed ? " (" + mejor.x.j.fed + ")" : ""), V.categoria(mejor.x.j.grupo),
+        V.puestoTexto(mejor.peor), mejor.peor.ronda, V.puestoTexto(mejor.ultimo)) : tx.numNinguna,
+      medallas: top ? tx.medallas(V.pais(top[0]), top[1][0], top[1][1], top[1][2], final) : tx.numNinguna,
+    };
+  }
+  function pintarNumeros() {
+    const caja = $("numeros-contenido");
+    if (!caja) return;
+    const tx = T();
+    if (!V.datos()) { caja.replaceChildren(el("p", "", tx.cargando)); return; }
+    const n = numerosDelFestival();
+    caja.replaceChildren();
+    if (!n) { caja.appendChild(el("p", "font-semibold", tx.numAntes)); return; }
+    caja.appendChild(el("p", "text-sm text-brand-600 dark:text-brand-300", tx.numEstado(n.final, n.ronda)));
+    const cifras = el("dl", "cac-numeros");
+    n.cifras.forEach(([valor, que]) => {
+      const d = el("div", "cac-numero");
+      d.append(el("dt", "", que), el("dd", "", Number(valor).toLocaleString(tx.locale)));
+      cifras.appendChild(d);
+    });
+    caja.appendChild(cifras);
+    if (n.colores) caja.appendChild(el("p", "mt-3 font-semibold", n.colores));
+    [[tx.numSorpresa, n.sorpresa], [tx.numRemontada, n.remontada], [tx.numMedallas, n.medallas]].forEach(([t, v]) => {
+      caja.appendChild(el("h3", "mt-5 font-bold text-lg", t));
+      caja.appendChild(el("p", "mt-1", v));
+    });
+    const boton = el("button", "cac-boton mt-5", "");
+    boton.type = "button";
+    boton.id = "numeros-imagen";
+    const ico = el("span", "", "📸 ");
+    ico.setAttribute("aria-hidden", "true");
+    boton.append(ico, document.createTextNode(tx.numBoton));
+    const estado = el("p", "mt-2 text-sm font-semibold");
+    estado.setAttribute("role", "status");
+    boton.addEventListener("click", () => compartirNumeros(boton, estado));
+    caja.append(boton, estado);
+  }
+  async function imagenNumeros(n) {
+    const tx = T();
+    if (document.fonts && document.fonts.ready) await document.fonts.ready;
+    const letra = getComputedStyle(document.body).fontFamily || "system-ui, sans-serif";
+    const medir = document.createElement("canvas").getContext("2d");
+    medir.font = "500 32px " + letra;
+    const bloques = [[tx.numSorpresa, n.sorpresa], [tx.numRemontada, n.remontada], [tx.numMedallas, n.medallas]].map(([t, v]) => [t, renglones(medir, v, 960, 3)]);
+    const colores = n.colores ? renglones(medir, n.colores, 960, 2) : [];
+    const alto = 330 + 2 * 170 + colores.length * 44 + 40 + bloques.reduce((a, [, l]) => a + 70 + l.length * 42 + 30, 0) + 150;
+    const c = document.createElement("canvas");
+    c.width = 1080; c.height = alto;
+    const ctx = c.getContext("2d");
+    ctx.fillStyle = "#ffffff"; ctx.fillRect(0, 0, 1080, alto);
+    ctx.fillStyle = "#40478f"; ctx.fillRect(0, 0, 1080, 230);
+    ctx.fillStyle = "#ffffff";
+    ctx.font = "800 60px " + letra;
+    ctx.fillText(renglones(ctx, tx.numTitulo, 760, 1)[0], 60, 115);
+    ctx.font = "600 32px " + letra;
+    ctx.fillText(renglones(ctx, tx.imgResumenSub + " · " + tx.numEstado(n.final, n.ronda).split(":")[0], 760, 1)[0], 60, 175);
+    const mascota = await cargarImagen("img/centroamericano-2026/mascota.jpg");
+    if (mascota) {
+      ctx.save(); ctx.beginPath(); ctx.arc(950, 115, 90, 0, Math.PI * 2); ctx.closePath(); ctx.clip();
+      const lado = Math.min(mascota.width, mascota.height);
+      ctx.drawImage(mascota, (mascota.width - lado) / 2, (mascota.height - lado) / 2, lado, lado, 860, 25, 180, 180);
+      ctx.restore();
+      ctx.lineWidth = 6; ctx.strokeStyle = "#ffffff"; ctx.beginPath(); ctx.arc(950, 115, 90, 0, Math.PI * 2); ctx.stroke();
+    }
+    // Las cuatro cifras, de a dos.
+    n.cifras.forEach(([valor, que], i) => {
+      const x = 60 + (i % 2) * 490, y = 290 + Math.floor(i / 2) * 170;
+      ctx.fillStyle = "#eef0fb"; ctx.fillRect(x, y, 470, 150);
+      ctx.fillStyle = "#1e2453"; ctx.font = "800 72px " + letra;
+      ctx.fillText(Number(valor).toLocaleString(tx.locale), x + 30, y + 85);
+      ctx.fillStyle = "#40478f"; ctx.font = "700 30px " + letra;
+      ctx.fillText(que, x + 30, y + 128);
+    });
+    let y = 290 + 2 * 170 + 30;
+    ctx.fillStyle = "#1f2937"; ctx.font = "600 32px " + letra;
+    colores.forEach((l) => { ctx.fillText(l, 60, y); y += 44; });
+    y += 30;
+    bloques.forEach(([t, lineas]) => {
+      ctx.fillStyle = "#ce1328"; ctx.font = "800 38px " + letra;
+      ctx.fillText(t, 60, y); y += 52;
+      ctx.fillStyle = "#1f2937"; ctx.font = "500 32px " + letra;
+      lineas.forEach((l) => { ctx.fillText(l, 60, y); y += 42; });
+      y += 30;
+    });
+    ctx.fillStyle = "#40478f"; ctx.font = "700 32px " + letra;
+    ctx.fillText(URL_PAGINA, 60, alto - 70);
+    [["#1e4c8a", alto - 40], ["#ffffff", alto - 30], ["#ce1328", alto - 22], ["#ffffff", alto - 14], ["#1e4c8a", alto - 8]].forEach(([color, yy], i, arr) => {
+      ctx.fillStyle = color; ctx.fillRect(0, yy, 1080, (arr[i + 1] ? arr[i + 1][1] : alto) - yy);
+    });
+    if (window.TablaImagen && window.TablaImagen.marcar) await window.TablaImagen.marcar(c);
+    return new Promise((ok, mal) => c.toBlob((b) => (b ? ok(b) : mal(new Error("sin imagen"))), "image/png"));
+  }
+  async function compartirNumeros(boton, estado) {
+    if (boton) boton.disabled = true;
+    if (estado) estado.textContent = "";
+    try {
+      await V.pedir();
+      const n = numerosDelFestival();
+      if (!n) { if (estado) estado.textContent = T().numAntes; return; }
+      const blob = await imagenNumeros(n);
+      await compartirBlob(blob, "centroamericano-2026-en-numeros" + (n.final ? "" : "-ronda-" + n.ronda) + ".png", T().numTexto + " https://" + URL_PAGINA);
+    } catch (e) {
+      if (estado) estado.textContent = V.datos() ? T().imagenError : T().error;
+    } finally {
+      if (boton) boton.disabled = false;
+    }
+  }
+
   /* ---------------- «Resultados en vivo»: una categoría, un torneo ----------------
      Con el torneo partido en uno por categoría, la ficha abre primero esta
      ventana: cada edad en su fila, Absoluto y Femenino lado a lado, y cada
@@ -1397,6 +1626,7 @@
   alAbrir("sorpresas", pintarSorpresas);
   alAbrir("cara-a-cara", pintarCaraACara);
   alAbrir("resultados", pintarResultados);
+  alAbrir("numeros", pintarNumeros);
   ["cara-a", "cara-b"].forEach((id) => { const c = $(id); if (c) c.addEventListener("input", pintarCaraACara); });
   const proy = $("proyector");
   if (proy) {
@@ -1440,5 +1670,5 @@
   document.addEventListener("cac-datos", repintar);
   document.addEventListener("cac-idioma", repintar);
 
-  window.CentroamericanoTablas = { compartirJugador, imagenJugador, compartirResumen, imagenResumen, resumenDelDia, imagenDia, compartirDia, documentoDelegacion, hojaDelegacion, documentoInforme, informeDelegacion, textosTablas: T, diploma, descargarDiploma, nombreAlDerecho };
+  window.CentroamericanoTablas = { compartirJugador, imagenJugador, compartirResumen, imagenResumen, resumenDelDia, imagenDia, compartirDia, documentoDelegacion, hojaDelegacion, documentoInforme, informeDelegacion, numerosDelFestival, imagenNumeros, diplomasDelegacion, conDiploma, textosTablas: T, diploma, descargarDiploma, nombreAlDerecho };
 })();

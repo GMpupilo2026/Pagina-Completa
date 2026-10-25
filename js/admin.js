@@ -2700,6 +2700,8 @@
             // Las salas de torneos (js/admin-salas-torneo.js): no se espera, así
             // una Lichess lenta no demora el resto del panel.
             if (window.AdminSalasTorneo) AdminSalasTorneo.iniciar();
+            // Los avisos de la organización de una sala (js/admin-sala-anuncios.js).
+            if (window.AdminSalaAnuncios) AdminSalaAnuncios.iniciar();
             // A qué profesores se les activa la preparación de rivales
             // (js/admin-preparacion.js). Recibe la lista ya cargada.
             // Los proyectos (js/admin-proyectos.js): fichas por grupo y a quién

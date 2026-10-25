@@ -116,8 +116,8 @@ function dobleSalas(opciones) {
 
   function orden(a, b) { return (a.orden - b.orden) || a.nombre.localeCompare(b.nombre); }
 
-  function consulta(tabla) {
-    const q = { tabla, op: "select", filtros: [], unica: false, devolver: false, datos: null };
+  function consulta(tabla, params) {
+    const q = { tabla, op: "select", filtros: [], unica: false, devolver: false, datos: null, params: params || null };
     const b = {
       select() { if (q.op !== "select") q.devolver = true; return b; },
       insert(d) { q.op = "insert"; q.datos = d; return b; },
@@ -135,7 +135,35 @@ function dobleSalas(opciones) {
 
   function pasa(fila, filtros) { return filtros.every(([c, v]) => String(fila[c]) === String(v)); }
 
+  // Los avisos de la organización (sala_anuncios): los escriben solo las dos
+  // funciones, que validan que quien llama administra (como la base); se leen
+  // los vigentes de las salas visibles.
+  let ANUNCIOS = [], serieAnuncio = 1;
+  function resolverAnuncios(q) {
+    const p = q.params || {};
+    if (q.tabla === "rpc:sala_anuncio_publicar") {
+      if (!ADMIN) return error("42501", "Solo quien administra puede publicar avisos.");
+      const texto = String(p.p_texto || "").trim(), en = p.p_texto_en == null ? null : String(p.p_texto_en).trim();
+      if (texto.length < 3 || texto.length > 280 || (en !== null && (en.length < 3 || en.length > 280))) return error("23514", "check texto");
+      if (!(p.p_horas >= 1 && p.p_horas <= 72)) return error("22023", "El aviso dura de 1 a 72 horas.");
+      if (!salas.some((s) => s.clave === p.p_sala && s.visible)) return error("22023", "Esa sala no existe o no está publicada.");
+      const ahora = Date.now();
+      ANUNCIOS.push({ id: serieAnuncio, sala: p.p_sala, texto, texto_en: en || null, creado: new Date(ahora).toISOString(), hasta: new Date(ahora + p.p_horas * 3600000).toISOString() });
+      window.__escrituras.push({ op: "rpc", nombre: "sala_anuncio_publicar", params: p });
+      return { data: serieAnuncio++, error: null };
+    }
+    if (q.tabla === "rpc:sala_anuncio_quitar") {
+      if (!ADMIN) return error("42501", "Solo quien administra puede quitar avisos.");
+      ANUNCIOS = ANUNCIOS.filter((a) => a.id !== p.p_id);
+      window.__escrituras.push({ op: "rpc", nombre: "sala_anuncio_quitar", params: p });
+      return { data: null, error: null };
+    }
+    const filas = ANUNCIOS.filter((a) => salas.some((s) => s.clave === a.sala && s.visible) && pasa(a, q.filtros)).slice().reverse();
+    return { data: filas, error: null };
+  }
+
   function resolver(q) {
+    if (q.tabla === "sala_anuncios" || /^rpc:sala_anuncio_/.test(q.tabla)) return resolverAnuncios(q);
     if (q.tabla === "rpc:quiniela_tabla") {
       // SECURITY INVOKER con RLS de solo admin: sin admin, vacía.
       return { data: ADMIN && Q ? tablaQuiniela() : [], error: null };
@@ -181,6 +209,7 @@ function dobleSalas(opciones) {
   }
 
   window.__salas = () => salas;
+  window.__anuncios = () => ANUNCIOS;
   // Como si a la cuenta le quitaran la administración con el panel abierto:
   // la página sigue igual, pero la RLS ya no deja escribir.
   window.__quitarAdmin = () => { ADMIN = false; };
@@ -194,7 +223,7 @@ function dobleSalas(opciones) {
       signOut: () => Promise.resolve({}),
     },
     from: (t) => consulta(t),
-    rpc: (n) => consulta("rpc:" + n),
+    rpc: (n, params) => consulta("rpc:" + n, params),
     channel: () => ({ on() { return this; }, subscribe() { return this; } }),
     removeChannel: () => {},
     functions: {

@@ -109,6 +109,9 @@
          lo de abajo, que es cierto siempre. -->
     <section id="hoy" class="pt-8" aria-labelledby="hoy-etiqueta" data-no-traducir>
         <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+            <!-- Los avisos de la organización (sala_anuncios, los publica quien
+                 administra en admin.html#torneos): js/centroamericano-vivo.js. -->
+            <div id="anuncios" class="cac-anuncios" role="status" hidden></div>
             <div class="cac-hoy">
                 <h2 id="hoy-etiqueta" class="cac-hoy-etiqueta">El festival</h2>
                 <p id="hoy-principal" class="cac-hoy-principal">Del domingo 1 al domingo 8 de noviembre de 2026</p>
@@ -204,6 +207,7 @@
                     <a href="#proyector" class="cac-accion underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ce1328]"><span aria-hidden="true">📺 </span>Pareo para proyectar →</a>
                     <a href="#sorpresas" class="cac-accion underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ce1328]"><span aria-hidden="true">⚡ </span>Sorpresas e invictos →</a>
                     <a href="#cara-a-cara" class="cac-accion underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ce1328]"><span aria-hidden="true">🆚 </span>Cara a cara →</a>
+                    <a href="#numeros" class="cac-accion underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ce1328]"><span aria-hidden="true">📈 </span>El festival en números →</a>
                 </p>
                 <!-- «Así terminó el día»: la imagen con los líderes de cada categoría, la
                      sorpresa del día y cómo le fue a la delegación elegida
@@ -509,6 +513,17 @@
             <div id="cara-a-cara-contenido" class="mt-4" role="status" aria-live="polite" data-no-traducir>
                 <p class="text-brand-600 dark:text-brand-300">Cargando…</p>
             </div>
+        </div>
+    </dialog>
+
+    <!-- «El festival en números»: para la prensa y el cierre (js/centroamericano-tablas.js). -->
+    <dialog id="numeros" class="ficha-dialogo w-[calc(100%-1rem)] sm:w-[calc(100%-2rem)] max-w-3xl max-h-[90vh] rounded-2xl shadow-2xl p-0 bg-brand-50 dark:bg-brand-950 text-brand-800 dark:text-brand-100 backdrop:bg-black/60" aria-labelledby="numeros-titulo">
+        <div class="sticky top-0 z-10 flex items-center gap-3 px-4 sm:px-6 py-3 bg-white dark:bg-brand-900 border-b border-brand-100 dark:border-brand-800">
+            <h2 id="numeros-titulo" class="font-serif text-xl md:text-2xl font-bold text-brand-800 dark:text-white flex-1 min-w-0"><span aria-hidden="true">📈 </span>El festival en números</h2>
+            <button type="button" data-cerrar class="shrink-0 bg-brand-800 hover:bg-brand-700 text-white font-semibold text-sm px-4 py-2 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2">Cerrar</button>
+        </div>
+        <div id="numeros-contenido" class="px-4 sm:px-6 pt-4 pb-6" data-no-traducir>
+            <p class="text-brand-600 dark:text-brand-300">Cargando…</p>
         </div>
     </dialog>
 
