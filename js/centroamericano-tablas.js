@@ -136,6 +136,15 @@
       pdfPagina: (n, total) => "Página " + n + " de " + total,
       pdfLista: "Listo: la hoja se bajó a tu aparato.",
       pdfError: "No se pudo armar la hoja. Intenta de nuevo.",
+      resElige: "Elige la categoría: su torneo de chess-results se abre aquí mismo, sin salir de la página.",
+      resEdad: (n) => "Sub-" + n,
+      resAbsoluto: "Absoluto",
+      resFemenino: "Femenino",
+      resOtros: "Otros torneos",
+      resGeneral: "Lista general",
+      resUno: "Por ahora es un solo torneo con todas las categorías.",
+      resVer: "Ver los resultados",
+      resVentana: (c) => "Resultados · " + c,
       locale: "es-CR",
     },
     en: {
@@ -222,6 +231,15 @@
       pdfPagina: (n, total) => "Page " + n + " of " + total,
       pdfLista: "Done: the sheet was saved to your device.",
       pdfError: "We couldn't make the sheet. Please try again.",
+      resElige: "Choose the category: its chess-results tournament opens right here, without leaving the page.",
+      resEdad: (n) => "U" + n,
+      resAbsoluto: "Open",
+      resFemenino: "Girls",
+      resOtros: "Other tournaments",
+      resGeneral: "Overall list",
+      resUno: "For now it is a single tournament with every category.",
+      resVer: "See the results",
+      resVentana: (c) => "Results · " + c,
       locale: "en-US",
     },
   };
@@ -743,11 +761,10 @@
     return [...document.querySelectorAll("#calendario tr[data-ronda][data-inicio]")]
       .map((tr) => ({ ronda: Number(tr.dataset.ronda), dia: tr.dataset.inicio.slice(0, 10) }));
   }
-  // La última ronda con todas sus partidas terminadas.
+  // La última ronda con todas sus partidas terminadas, en todos los torneos.
   function rondaCerrada() {
     const p = V.progresoRonda();
-    if (!p) return 0;
-    return p.hechas === p.total ? p.ronda : p.ronda - 1;
+    return p ? p.cerrada : 0;
   }
   // Lo del día de la última ronda cerrada: sus rondas, los líderes de cada
   // categoría después de ella, la sorpresa más grande y cómo le fue a la
@@ -1186,6 +1203,75 @@
     document.addEventListener("cac-idioma", rotular);
     botonDia.addEventListener("click", () => compartirDia(botonDia));
   }
+  /* ---------------- «Resultados en vivo»: una categoría, un torneo ----------------
+     Con el torneo partido en uno por categoría, la ficha abre primero esta
+     ventana: cada edad en su fila, Absoluto y Femenino lado a lado, y cada
+     botón abre su torneo de chess-results encima (a[data-ventana]), sin salir
+     del sitio. Con un solo torneo, la ficha lo abre directo como siempre. Ver
+     «Un torneo por categoría» en docs/decisiones/juegos-y-torneos.md. */
+  // La portada del torneo en chess-results (la función manda la de la clasificación).
+  const portadaCR = (tor) => String(tor.url || "").replace(/&art=1$/, "");
+  const porCategoria = () => ((V.datos() || { torneos: [] }).torneos || []).filter((tor) => tor.categoria);
+  function botonTorneo(tor, texto, nombre) {
+    const a = el("a", "cac-categoria", texto);
+    a.href = portadaCR(tor);
+    a.target = "_blank";
+    a.rel = "noopener";
+    a.dataset.ventana = T().resVentana(nombre);
+    if (nombre !== texto) a.setAttribute("aria-label", nombre);
+    return a;
+  }
+  function pintarResultados() {
+    const caja = $("resultados-contenido");
+    if (!caja) return;
+    const tx = T(), d = V.datos();
+    if (!d) { caja.replaceChildren(el("p", "", tx.cargando)); return; }
+    caja.replaceChildren();
+    const cats = porCategoria();
+    if (!cats.length) {
+      caja.appendChild(el("p", "", tx.resUno));
+      (d.torneos || []).slice(0, 1).forEach((tor) => {
+        const a = botonTorneo(tor, tx.resVer, tx.resVer);
+        a.classList.add("cac-categoria-sola");
+        caja.appendChild(a);
+      });
+      return;
+    }
+    caja.appendChild(el("p", "", tx.resElige));
+    const edades = [...new Set(cats.map((tor) => Number(tor.categoria.match(/\d+/)[0])))].sort((a, b) => a - b);
+    const ul = el("ul", "cac-categorias");
+    edades.forEach((n) => {
+      const li = el("li");
+      li.appendChild(el("span", "cac-categoria-edad", tx.resEdad(n)));
+      [["", tx.resAbsoluto], ["F", tx.resFemenino]].forEach(([f, rama]) => {
+        const tor = cats.find((x) => x.categoria === "U" + String(n).padStart(2, "0") + f);
+        // Sin ese torneo (todavía no lo publicaron), un hueco: la fila no se corre.
+        li.appendChild(tor ? botonTorneo(tor, rama, V.categoria(tor.categoria)) : el("span", "cac-categoria-falta"));
+      });
+      ul.appendChild(li);
+    });
+    caja.appendChild(ul);
+    const otros = d.otros || [];
+    if (otros.length) {
+      caja.appendChild(el("h3", "mt-5 font-bold", tx.resOtros));
+      const ol = el("ul", "cac-otros");
+      otros.forEach((tor) => { const li = el("li"); const nombre = tor.texto || tx.resGeneral; li.appendChild(botonTorneo(tor, nombre, nombre)); ol.appendChild(li); });
+      caja.appendChild(ol);
+    }
+  }
+  // La ficha: con torneos por categoría (o sin saber todavía), la ventana de
+  // arriba; con uno solo, su enlace de siempre (js/ventana-enlace.js).
+  const fichaResultados = $("ficha-resultados"), dialogoResultados = $("resultados");
+  if (fichaResultados && dialogoResultados && window.VentanaEnlace) {
+    fichaResultados.addEventListener("click", (ev) => {
+      if (ev.button !== 0 || ev.ctrlKey || ev.metaKey || ev.shiftKey || ev.altKey) return;
+      const d = V.datos();
+      if (d && !porCategoria().length) return;
+      ev.preventDefault();
+      window.VentanaEnlace.abrirDialogo(dialogoResultados, fichaResultados);
+    });
+  }
+
   // Cada ventana se llena al abrirse (js/ventana-enlace.js las abre con su
   // enlace o con la dirección) y se pone al día con los datos nuevos.
   function alAbrir(id, pintar, alCerrar) {
@@ -1199,6 +1285,7 @@
   alAbrir("delegaciones", pintarDelegaciones);
   alAbrir("sorpresas", pintarSorpresas);
   alAbrir("cara-a-cara", pintarCaraACara);
+  alAbrir("resultados", pintarResultados);
   ["cara-a", "cara-b"].forEach((id) => { const c = $(id); if (c) c.addEventListener("input", pintarCaraACara); });
   const proy = $("proyector");
   if (proy) {

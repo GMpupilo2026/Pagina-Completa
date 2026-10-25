@@ -24,7 +24,9 @@
 //   - art=1 (tnr1494141, la lista del Centroamericano): <table class="CRs1">,
 //     encabezado «Rk. | No.Ini. | | Nombre | sexo | Gr | FED | Elo | Pts. |
 //     Des 1…» y «Clasificación después de la ronda N» en un <h2>. El grupo
-//     («Gr»: U08, U08F… U18F) es la categoría.
+//     («Gr»: U08, U08F… U18F) es la categoría. Con un torneo por categoría
+//     no hay «Gr»: la categoría la dice el texto del enlace de la sala
+//     («Sub-10 Femenino», codigoCategoria() en torneos-sala.ts).
 //   - art=2 (tnr1498221, UTN-CONARE 2026, ronda 1): encabezado «M. | No. | |
 //     (título) | White | Elo | Club/Ciudad | Pts. | Resultado | Pts. |
 //     (título) | Black | Elo | Club/Ciudad | | No.», y el bye con «bye» en
@@ -65,6 +67,7 @@
 
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { type LlavesVapid, mandar as mandarPush } from "./webpush.ts";
+import { codigoCategoria, deCategorias, type Jug, type Mesa, puntosDe, resumenDelegacion } from "./torneos-sala.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -282,9 +285,6 @@ const corto = (v: unknown, max: number) => String(v ?? "").trim().slice(0, max);
 // Sin tildes ni mayúsculas, para comparar nombres: «Muñoz, José» → «munoz jose».
 const plano = (s: string) => String(s || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
 
-type Jug = { puesto: number; no: number; titulo: string; nombre: string; fed: string; elo: number; grupo: string; puntos: string };
-type Mesa = { mesa: number; blancas: { no: number; titulo: string; nombre: string }; negras: { no: number; titulo: string; nombre: string } | null; resultado: string };
-
 // Lo que dice el aviso de la ronda de un jugador, en su idioma.
 function textoRonda(idioma: string, ronda: number, no: number, mesas: Mesa[], porNo: Map<number, Jug>) {
   const en = idioma === "en";
@@ -302,15 +302,6 @@ function textoRonda(idioma: string, ronda: number, no: number, mesas: Mesa[], po
   return null;
 }
 
-// Lo que hizo un color en una mesa: 1, ½ o 0; null si todavía no hay resultado.
-// chess-results escribe «1 - 0», «½ - ½», «0 - 1» y, por incomparecencia,
-// «+ - -» o «- - +».
-export function puntosDe(resultado: string, blancas: boolean): number | null {
-  const m = String(resultado || "").replace(/\s+/g, "").match(/^(1|0|½|\+|-)-(1|0|½|\+|-)$/);
-  if (!m) return null;
-  const v = (s: string) => (s === "1" || s === "+" ? 1 : s === "½" ? 0.5 : 0);
-  return blancas ? v(m[1]) : v(m[2]);
-}
 const puntosTexto = (p: string, en: boolean) => p + (en ? (p === "1" ? " point" : " points") : (p === "1" ? " punto" : " puntos"));
 
 // «U18F» → «Sub-18 Femenino» / «U18 Girls». La misma regla que la página
@@ -422,9 +413,14 @@ async function revisar(admin: Admin) {
     // árbitro puede volver a ordenar la lista y cambiar los números: si el
     // número ya es de otra persona, se la busca por su nombre, y si hay dos con
     // el mismo, no se avisa).
+    // Si su torneo ya no está en la sala (el Centroamericano se partió en un
+    // torneo por categoría), se lo busca por su nombre en todos.
     const enTorneo = (j: { tnr: string; no: number; nombre: string }) => {
       const t = torneos.find((x) => x.tnr === String(j.tnr));
-      if (!t) return null;
+      if (!t) {
+        const en = torneos.flatMap((x) => ((x.jugadores || []) as Jug[]).filter((y) => plano(y.nombre) === plano(j.nombre)).map((y) => ({ t: x, lista: (x.jugadores || []) as Jug[], no: y.no })));
+        return en.length === 1 ? en[0] : null;
+      }
       const lista = (t.jugadores || []) as Jug[];
       const actual = lista.find((x) => x.no === Number(j.no));
       if (actual && plano(actual.nombre) === plano(j.nombre)) return { t, lista, no: actual.no };
@@ -452,7 +448,7 @@ async function revisar(admin: Admin) {
         }
         if (s.delegacion) {
           // Cuántos de su país juegan esa ronda, si el pareo ya salió.
-          const n = torneos.reduce((acc, t) => {
+          const n = deCategorias(torneos).reduce((acc, t) => {
             const pareo = t.pareo as { ronda: number; mesas: Mesa[] } | null;
             if (!pareo || pareo.ronda !== proxima.ronda) return acc;
             const fed = new Set(((t.jugadores || []) as Jug[]).filter((x) => x.fed === s.delegacion).map((x) => x.no));
@@ -498,48 +494,15 @@ async function revisar(admin: Admin) {
       }
     }
 
-    // 4) El resumen de un país, cuando ya terminaron TODAS sus partidas de la ronda.
+    // 4) El resumen de un país, cuando ya terminaron TODAS sus partidas de la
+    // ronda, en todos los torneos de la sala juntos: uno por ronda (tnr «0»).
     for (const s of deSala.filter((x) => x.delegacion)) {
-      for (const t of torneos) {
-        if (mandados >= TOPE_AVISOS) return { ok: true, mandados, tope: true };
-        const r = resumenDelegacion(s.idioma, s.delegacion!, t);
-        if (r) await avisar(s, "delegacion", t.tnr, 0, r.ronda, { titulo: r.titulo, cuerpo: r.cuerpo, etiqueta: "sala-delegacion-" + t.tnr });
-      }
+      if (mandados >= TOPE_AVISOS) return { ok: true, mandados, tope: true };
+      const r = resumenDelegacion(s.idioma, s.delegacion!, deCategorias(torneos) as Parameters<typeof resumenDelegacion>[2]);
+      if (r) await avisar(s, "delegacion", "0", 0, r.ronda, { titulo: r.titulo, cuerpo: r.cuerpo, etiqueta: "sala-delegacion" });
     }
   }
   return { ok: true, mandados };
-}
-
-// El resumen de la ronda emparejada para los jugadores de un país; null si a
-// alguno todavía le falta el resultado (o si ese país no juega en el torneo).
-const fmtPuntos = (n: number) => { const e = Math.floor(n), m = n - e >= 0.5; return e ? e + (m ? "½" : "") : (m ? "½" : "0"); };
-export function resumenDelegacion(idioma: string, fed: string, t: Record<string, unknown>) {
-  const pareo = t.pareo as { ronda: number; mesas: Mesa[] } | null;
-  if (!pareo || !pareo.ronda || !Array.isArray(pareo.mesas) || !pareo.mesas.length) return null;
-  const suyos = new Set(((t.jugadores || []) as Jug[]).filter((x) => x.fed === fed).map((x) => x.no));
-  let g = 0, e = 0, p = 0, b = 0, pts = 0;
-  for (const m of pareo.mesas) {
-    for (const [lado, blancas] of [[m.blancas, true], [m.negras, false]] as const) {
-      if (!lado || !suyos.has(lado.no)) continue;
-      if (!m.negras) { b++; continue; }
-      const x = puntosDe(m.resultado, blancas);
-      if (x === null) return null;
-      pts += x;
-      if (x === 1) g++; else if (x === 0.5) e++; else p++;
-    }
-  }
-  const jugadas = g + e + p;
-  if (!jugadas && !b) return null;
-  const en = idioma === "en";
-  const partes = en
-    ? [[g, g === 1 ? " win" : " wins"], [e, e === 1 ? " draw" : " draws"], [p, p === 1 ? " loss" : " losses"], [b, b === 1 ? " bye" : " byes"]]
-    : [[g, g === 1 ? " ganada" : " ganadas"], [e, " en tablas"], [p, p === 1 ? " perdida" : " perdidas"], [b, " bye"]];
-  const lista = (partes as [number, string][]).filter(([n]) => n).map(([n, x]) => n + x).join(", ");
-  return {
-    ronda: pareo.ronda,
-    titulo: fed + (en ? " · Round " : " · Ronda ") + pareo.ronda,
-    cuerpo: lista + (jugadas ? (en ? ": " + fmtPuntos(pts) + " of " + jugadas + " points in their games." : ": " + fmtPuntos(pts) + " de " + jugadas + " puntos en sus partidas.") : "."),
-  };
 }
 
 // ------------------------------------------------------------- la función
@@ -550,8 +513,13 @@ async function datosDeSala(admin: Admin, clave: string) {
   if (error || !sala) return null;
   const enlaces = Array.isArray(sala.enlaces) ? sala.enlaces : [];
   const vistos = new Set<string>();
-  const torneos = enlaces.map((e: { url: string }) => torneoDe(e && e.url)).filter((t: { tnr: string } | null) => t && !vistos.has(t.tnr) && vistos.add(t.tnr)).slice(0, 15);
-  return await Promise.all(torneos.map(async (t: { tnr: string; host: string }) => {
+  // Con el texto del enlace: si dice una categoría («Sub-10 Femenino»), es la
+  // de todos los jugadores de ese torneo (un torneo por categoría).
+  const torneos = enlaces.map((e: { url: string; texto?: string }) => {
+    const t = torneoDe(e && e.url);
+    return t ? { ...t, texto: corto(e.texto, 80), categoria: codigoCategoria(e.texto || "") } : null;
+  }).filter((t: { tnr: string } | null) => t && !vistos.has(t.tnr) && vistos.add(t.tnr)).slice(0, 15);
+  return await Promise.all(torneos.map(async (t: { tnr: string; host: string; texto: string; categoria: string }) => {
     const base = "https://" + t.host + "/tnr" + t.tnr + ".aspx?lan=2&turdet=YES";
     const [clasif, ronda, cruzado] = await Promise.all([
       leer(admin, base + "&art=1&zeilen=99999", leerClasificacion),
@@ -562,9 +530,12 @@ async function datosDeSala(admin: Admin, clave: string) {
     // Las rondas de cada jugador (del cuadro cruzado) van con él, en «r».
     const cruce = ((cruzado?.datos as { cruce?: Record<string, string[]> } | undefined)?.cruce) || {};
     const datos = clasif.datos as { jugadores?: Jug[] };
-    const jugadores = (datos.jugadores || []).map((j) => (cruce[j.no] ? { ...j, r: cruce[j.no] } : j));
+    // La columna «Gr» manda; sin ella, la categoría del enlace.
+    const jugadores = (datos.jugadores || []).map((j) => ({ ...j, grupo: j.grupo || t.categoria, ...(cruce[j.no] ? { r: cruce[j.no] } : {}) }));
     return {
       tnr: t.tnr,
+      texto: t.texto,
+      categoria: t.categoria,
       url: base + "&art=1",
       leido_en: clasif.leido_en,
       viejo: !!(clasif.viejo || (ronda && ronda.viejo) || (cruzado && cruzado.viejo)),

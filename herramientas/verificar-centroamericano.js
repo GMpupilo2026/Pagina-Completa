@@ -63,10 +63,13 @@ ok("ningún teléfono sin confirmar", tels.every((t) => TELEFONOS.includes(t)), 
 const contacto = (html.match(/<dialog id="contacto"[\s\S]*?<\/dialog>/) || [""])[0];
 // Toda la información va en fichas: cada ventana de la página tiene su ficha y su «Cerrar».
 const dialogos = [...html.matchAll(/<dialog id="([a-z-]+)" class="ficha-dialogo[^"]*" aria-labelledby="\1-titulo">([\s\S]*?)<\/dialog>/g)];
-ok("el reglamento, el calendario, los hoteles, los contactos, el medallero, la clasificación, los países, las sorpresas, el cara a cara y el proyector van en ventanas",
-  JSON.stringify(dialogos.map((m) => m[1]).sort()) === JSON.stringify(["calendario", "cara-a-cara", "clasificacion", "contacto", "delegaciones", "hoteles", "medallero", "proyector", "reglamento", "sorpresas"]), dialogos.map((m) => m[1]).join(", "));
+ok("el reglamento, el calendario, los hoteles, los contactos, el medallero, la clasificación, los países, las sorpresas, el cara a cara, la elección de categoría y el proyector van en ventanas",
+  JSON.stringify(dialogos.map((m) => m[1]).sort()) === JSON.stringify(["calendario", "cara-a-cara", "clasificacion", "contacto", "delegaciones", "hoteles", "medallero", "proyector", "reglamento", "resultados", "sorpresas"]), dialogos.map((m) => m[1]).join(", "));
 for (const [, id, cuerpo] of dialogos) {
-  ok("la ventana «" + id + "» tiene su ficha", fichas.includes('href="#' + id + '"'));
+  // La elección de categoría la abre la ficha «Resultados en vivo», que sin
+  // JavaScript sigue llevando a chess-results (js/centroamericano-tablas.js).
+  if (id === "resultados") { ok("la ventana «resultados» la abre la ficha «Resultados en vivo»", fichas.includes('id="ficha-resultados"') && /\$\("ficha-resultados"\), dialogoResultados = \$\("resultados"\)/.test(fs.readFileSync(path.join(RAIZ, "js/centroamericano-tablas.js"), "utf8"))); }
+  else ok("la ventana «" + id + "» tiene su ficha", fichas.includes('href="#' + id + '"'));
   ok("y su título y su botón «Cerrar»", cuerpo.includes('id="' + id + '-titulo"') && /data-cerrar[^>]*>Cerrar</.test(cuerpo));
 }
 ok("no queda información desplegada fuera de las fichas", !/<section id="(contacto|reglamento|calendario|hoteles)"/.test(html));
@@ -148,6 +151,49 @@ ok("y la página lo ofrece en la franja de hoy y en el calendario", (html.match(
 ok("la función sala-jugadores está guardada en supabase/functions", fs.existsSync(path.join(RAIZ, "supabase/functions/sala-jugadores/index.ts")));
 ok("la página carga el cliente de Supabase antes que su código en vivo", html.indexOf('<script src="js/supabase-client.js"></script>') > 0 && html.indexOf('<script src="js/supabase-client.js"></script>') < html.indexOf('<script src="js/centroamericano-vivo.js"></script>'));
 
+// Un torneo por categoría: lo que arma la función (torneos-sala.ts), con node.
+{
+  const J = (no, fed) => ({ puesto: no, no, titulo: "", nombre: "J" + no, fed, elo: 0, grupo: "", puntos: "0" });
+  const mesa = (res) => ({ mesa: 1, blancas: { no: 1, titulo: "", nombre: "J1" }, negras: { no: 2, titulo: "", nombre: "J2" }, resultado: res });
+  const casos = {
+    // CRC juega en dos categorías (blancas en una, negras en la otra).
+    juntos: [{ tnr: "1", rondas: 9, categoria: "U10", jugadores: [J(1, "CRC"), J(2, "PAN")], pareo: { ronda: 3, mesas: [mesa("1 - 0")] } },
+             { tnr: "2", rondas: 9, categoria: "U10F", jugadores: [J(1, "PAN"), J(2, "CRC")], pareo: { ronda: 3, mesas: [mesa("½ - ½")] } }],
+    falta: [{ tnr: "1", rondas: 9, jugadores: [J(1, "CRC"), J(2, "PAN")], pareo: { ronda: 3, mesas: [mesa("1 - 0")] } },
+            { tnr: "2", rondas: 9, jugadores: [J(1, "PAN"), J(2, "CRC")], pareo: { ronda: 3, mesas: [mesa("")] } }],
+    atras: [{ tnr: "1", rondas: 9, jugadores: [J(1, "CRC"), J(2, "PAN")], pareo: { ronda: 3, mesas: [mesa("1 - 0")] } },
+            { tnr: "2", rondas: 9, jugadores: [J(1, "PAN"), J(2, "CRC")], pareo: { ronda: 2, mesas: [mesa("1 - 0")] } }],
+    // Un Round Robin de pocos ya jugó su última ronda (la 2): no hace esperar.
+    rr: [{ tnr: "1", rondas: 9, jugadores: [J(1, "CRC"), J(2, "PAN")], pareo: { ronda: 3, mesas: [mesa("1 - 0")] } },
+         { tnr: "2", rondas: 2, jugadores: [J(1, "PAN"), J(2, "CRC")], pareo: { ronda: 2, mesas: [mesa("1 - 0")] } }],
+  };
+  const textos = ["Sub-10 Femenino", "U08", "U10F", "Resultados U12 Girls", "Sub 8 Absoluto", "Sub-14 Niñas", "Lista general", "Rapid", "Toda la información del torneo"];
+  const r = require("child_process").spawnSync(process.execPath, ["--experimental-strip-types", "--no-warnings", "--input-type=module", "-e",
+    `import { codigoCategoria, deCategorias, resumenDelegacion } from ${JSON.stringify(path.join(RAIZ, "supabase/functions/sala-jugadores/torneos-sala.ts"))};
+     const [casos, textos] = JSON.parse(process.argv[1]);
+     const out = { codigos: textos.map(codigoCategoria), solo: deCategorias([{ tnr: "g" }, ...casos.juntos]).map((t) => t.tnr), sinCat: deCategorias(casos.falta).length };
+     for (const k of Object.keys(casos)) out[k] = resumenDelegacion("es", "CRC", casos[k]);
+     out.en = resumenDelegacion("en", "CRC", casos.juntos);
+     process.stdout.write(JSON.stringify(out));`, JSON.stringify([casos, textos])], { encoding: "utf8" });
+  const o = r.status === 0 ? JSON.parse(r.stdout) : null;
+  ok("la función se deja importar con node para probarla", !!o, r.stderr);
+  if (o) {
+    ok("la categoría sale del texto del enlace, con el código de chess-results",
+       JSON.stringify(o.codigos) === JSON.stringify(["U10F", "U08", "U10F", "U12F", "U08", "U14F", "", "", ""]), JSON.stringify(o.codigos));
+    ok("con torneos de categoría, los otros (la lista general) no se cuentan; sin ellos, todos", JSON.stringify(o.solo) === JSON.stringify(["1", "2"]) && o.sinCat === 2, JSON.stringify(o));
+    ok("el resumen de un país junta todas sus categorías en UN aviso por ronda",
+       !!o.juntos && o.juntos.ronda === 3 && o.juntos.titulo === "CRC · Ronda 3" && o.juntos.cuerpo === "1 ganada, 1 en tablas: 1½ de 2 puntos en sus partidas.", JSON.stringify(o.juntos));
+    ok("y en inglés", !!o.en && o.en.cuerpo === "1 win, 1 draw: 1½ of 2 points in their games.", JSON.stringify(o.en));
+    ok("no sale mientras falte una partida en cualquiera de sus categorías", o.falta === null, JSON.stringify(o.falta));
+    ok("ni mientras una categoría vaya atrás (todavía sin emparejar esa ronda)", o.atras === null, JSON.stringify(o.atras));
+    ok("salvo que esa ya haya terminado (un Round Robin de pocos)", !!o.rr && o.rr.cuerpo === "1 ganada: 1 de 1 puntos en sus partidas.", JSON.stringify(o.rr));
+  }
+  const fn = fs.readFileSync(path.join(RAIZ, "supabase/functions/sala-jugadores/index.ts"), "utf8");
+  ok("la función manda un solo resumen por país y ronda (tnr «0»), no uno por torneo",
+     /avisar\(s, "delegacion", "0", 0, r\.ronda/.test(fn) && !/for \(const t of torneos\)[\s\S]{0,200}resumenDelegacion/.test(fn));
+  ok("y a cada jugador sin «Gr» le pone la categoría de su enlace", /grupo: j\.grupo \|\| t\.categoria/.test(fn));
+}
+
 (async () => {
   console.log("2. La página en un navegador");
   const nav = await chromium.launch({ executablePath: fs.existsSync(CHROME) ? CHROME : undefined });
@@ -210,7 +256,10 @@ ok("la página carga el cliente de Supabase antes que su código en vivo", html.
     // La ficha de afuera, en Torneos, lleva la cara del torneo; las demás salas, la de siempre.
     const ctx3 = await nav.newContext({ viewport: { width: 1280, height: 900 }, serviceWorkers: "block" });
     const sala = (clave, nombre) => ({ id: clave, clave, nombre, descripcion: "", emoji: "🏆", tipo: "enlaces", lichess_id: null, enlaces: [{ url: "https://ajedrez-integral.com/" + PAGINA, texto: "Toda la información del torneo" }, { url: "https://s1.chess-results.com/x", texto: "Resultados en vivo" }], pizarras: null, video_url: null, quiniela: false, tema: "cine", visible: true, orden: 0 });
-    await ctx3.route(/supabase\.co\/rest\/v1\/salas_torneo/, (r) => r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify([sala("centroamericano-2026", "XXI Festival"), sala("otra", "Otro torneo"), { ...sala("utn", "Torneo UTN 2026"), tipo: "lichess", lichess_id: "2zDqylwI" }, { ...sala("cenfotec", "Desafío Mentes Maestras"), tipo: "lichess", lichess_id: "s7NfNv6H", enlaces: [{ url: "https://s1.chess-results.com/y", texto: "Posiciones" }] }]) }));
+    // El del Centroamericano, ya partido en un torneo por categoría: un enlace de chess-results por cada una.
+    const cac = { ...sala("centroamericano-2026", "XXI Festival"), enlaces: [{ url: "https://ajedrez-integral.com/" + PAGINA, texto: "Toda la información del torneo" },
+      { url: "https://s1.chess-results.com/tnr1494141.aspx", texto: "Resultados en vivo" }, { url: "https://s1.chess-results.com/tnr1600001.aspx", texto: "Sub-8 Absoluto" }, { url: "https://s1.chess-results.com/tnr1600002.aspx", texto: "Sub-8 Femenino" }] };
+    await ctx3.route(/supabase\.co\/rest\/v1\/salas_torneo/, (r) => r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify([cac, sala("otra", "Otro torneo"), { ...sala("utn", "Torneo UTN 2026"), tipo: "lichess", lichess_id: "2zDqylwI" }, { ...sala("cenfotec", "Desafío Mentes Maestras"), tipo: "lichess", lichess_id: "s7NfNv6H", enlaces: [{ url: "https://s1.chess-results.com/y", texto: "Posiciones" }] }]) }));
     const p3 = await ctx3.newPage();
     await p3.goto(BASE + "/torneos-en-vivo.html", { waitUntil: "load" });
     await p3.waitForSelector('#salas-lista li[data-sala="otra"]');
@@ -240,9 +289,9 @@ ok("la página carga el cliente de Supabase antes que su código en vivo", html.
     // Ningún botón de la ficha del torneo saca a nadie del sitio: la página
     // en la misma pestaña, y los resultados y las bases, a su ficha de la página.
     const destinos = await p3.evaluate(() => [...document.querySelectorAll('li[data-sala="centroamericano-2026"] a')]
-      .map((a) => a.getAttribute("href") + (a.target ? " target=" + a.target : "")));
-    ok("en Torneos, ningún botón del Centroamericano se va del sitio",
-       JSON.stringify(destinos) === JSON.stringify(["/" + PAGINA, "/" + PAGINA + "#ficha-resultados"]), JSON.stringify(destinos));
+      .map((a) => a.getAttribute("href") + (a.target ? " target=" + a.target : "") + " | " + a.textContent.split(" de ")[0]));
+    ok("en Torneos, ningún botón del Centroamericano se va del sitio, y los resultados de todas las categorías son UN botón",
+       JSON.stringify(destinos) === JSON.stringify(["/" + PAGINA + " | Toda la información del torneo", "/" + PAGINA + "#resultados | Resultados en vivo"]), JSON.stringify(destinos));
     const otraSala = await p3.evaluate(() => [...document.querySelectorAll('li[data-sala="otra"] a')].map((a) => a.target));
     ok("las otras salas: el sitio en la misma pestaña, lo de afuera en otra", JSON.stringify(otraSala) === JSON.stringify(["", "_blank"]), JSON.stringify(otraSala));
     await ctx3.close();
@@ -703,7 +752,108 @@ ok("la página carga el cliente de Supabase antes que su código en vivo", html.
     r = await buscar("mayorga");
     ok("sin señal, muestra lo último que llegó y lo dice", r.tarjetas.length === 1 && /Sin conexión/.test(r.estado), JSON.stringify(r));
     ok("mientras el torneo no termina, no hay diploma", await p6.evaluate(() => !document.querySelector('#buscador-resultados [data-accion^="diploma"]')));
+    // Con un solo torneo (todas las categorías juntas), la ficha lo abre directo, como siempre.
+    await p6.route(/chess-results\.com/, (rt) => rt.fulfill({ status: 200, contentType: "text/html", body: "<p>cr</p>" }));
+    await p6.click("#ficha-resultados");
+    const unoSolo = await p6.waitForFunction(() => { const d = document.querySelector("dialog.ventana-enlace"); return d && d.open && !document.getElementById("resultados").open && d.querySelector("iframe").src; }, null, { timeout: 5000 }).then((h) => h.jsonValue()).catch(() => null);
+    ok("con un solo torneo, «Resultados en vivo» lo abre directo, sin elegir categoría", !!unoSolo && /tnr1494141/.test(unoSolo), String(unoSolo));
+    await p6.keyboard.press("Escape");
     await ctx6.close();
+
+    // Un torneo por categoría: doce torneos de prueba con la forma que les da
+    // la función (la categoría del texto de su enlace), más la lista general.
+    // Cada uno a su paso: el Sub-8 es un Round Robin que ya terminó (3 rondas),
+    // el Sub-10 va atrás (ronda 4 sin terminar), los demás en la 5, y al
+    // Sub-12 le falta una partida.
+    {
+      const CATS = ["U08", "U08F", "U10", "U10F", "U12", "U12F", "U14", "U14F", "U16", "U16F", "U18", "U18F"];
+      const nombreCat = (c) => "Sub-" + Number(c.slice(1, 3)) + (c.endsWith("F") ? " Femenino" : " Absoluto");
+      const urlDe = (tnr) => "https://s1.chess-results.com/tnr" + tnr + ".aspx?lan=2&turdet=YES&art=1";
+      const mesaDe = (c, res) => ({ mesa: 1, blancas: { no: 1, titulo: "", nombre: "Primero " + c + ", Ana" }, negras: { no: 2, titulo: "", nombre: "Segundo " + c + ", Luis" }, resultado: res });
+      const DOCE = { torneos: [
+        { tnr: "1494141", url: urlDe(1494141), texto: "Lista general", categoria: "", leido_en: "2026-11-04T16:05:00Z", ronda: 0, rondas: 9,
+          jugadores: [{ puesto: 1, no: 7, titulo: "WIM", nombre: "Mayorga Araya, Sofia", fed: "CRC", elo: 2215, grupo: "U18F", puntos: "0" }], pareo: null },
+        ...CATS.map((c, i) => ({ tnr: String(1600001 + i), url: urlDe(1600001 + i), texto: nombreCat(c), categoria: c, leido_en: "2026-11-04T16:05:00Z",
+          ronda: c === "U08" ? 3 : 4, rondas: c === "U08" ? 3 : 9,
+          jugadores: [{ puesto: 1, no: 1, titulo: "", nombre: c === "U18F" ? "Mayorga Araya, Sofia" : "Primero " + c + ", Ana", fed: "CRC", elo: 0, grupo: c, puntos: "4" },
+                      { puesto: 2, no: 2, titulo: "", nombre: "Segundo " + c + ", Luis", fed: "PAN", elo: 0, grupo: c, puntos: "3" }],
+          pareo: c === "U08" ? { ronda: 3, mesas: [mesaDe(c, "1 - 0")] } : c === "U10" ? { ronda: 4, mesas: [mesaDe(c, "")] } : { ronda: 5, mesas: [mesaDe(c, c === "U12" ? "" : "1 - 0")] } })),
+      ] };
+      const ctx12 = await nav.newContext({ viewport: { width: 375, height: 800 }, serviceWorkers: "block" });
+      await ctx12.addInitScript((d) => {
+        window.sb = { functions: { invoke: async () => ({ data: d, error: null }) } };
+        // Alguien que seguía a una jugadora en la lista general, de antes de partir el torneo.
+        if (!localStorage.getItem("cac_seguidos_v1")) localStorage.setItem("cac_seguidos_v1", JSON.stringify([{ tnr: "1494141", no: 7, nombre: "Mayorga Araya, Sofia" }]));
+      }, DOCE);
+      const pd = await ctx12.newPage();
+      await pd.route(/chess-results\.com/, (rt) => rt.fulfill({ status: 200, contentType: "text/html", body: "<p>cr</p>" }));
+      await pd.goto(BASE + "/" + PAGINA, { waitUntil: "load" });
+      await pd.fill("#buscador-nombre", "mayorga");
+      await pd.waitForTimeout(450);
+      const encontrados = await pd.evaluate(() => [...document.querySelectorAll("#buscador-resultados li")].map((l) => l.innerText.replace(/\s+/g, " ").trim()));
+      ok("con un torneo por categoría, cada jugador sale UNA vez (la lista general no se cuenta)", encontrados.length === 1 && /Sub-18 Femenino/.test(encontrados[0]), JSON.stringify(encontrados));
+      await pd.waitForFunction(() => JSON.parse(localStorage.getItem("cac_seguidos_v1") || "[]")[0]?.tnr === "1600012", null, { timeout: 5000 }).catch(() => {});
+      const seguida = await pd.evaluate(() => JSON.parse(localStorage.getItem("cac_seguidos_v1") || "[]"));
+      ok("quien la seguía en la lista general pasa a seguirla en su categoría (torneo y número nuevos)",
+         seguida.length === 1 && seguida[0].tnr === "1600012" && seguida[0].no === 1, JSON.stringify(seguida));
+      const prog = await pd.evaluate(() => window.CentroamericanoVivo.progresoRonda());
+      ok("la barra de la ronda cuenta solo las mesas de la ronda más alta (10 de las 12 categorías van en la 5)", !!prog && prog.ronda === 5 && prog.total === 10 && prog.hechas === 9, JSON.stringify(prog));
+      ok("y la ronda cerrada espera a la categoría que va atrás, no al Round Robin que ya terminó", !!prog && prog.cerrada === 3, JSON.stringify(prog));
+
+      // La ficha «Resultados en vivo» abre la elección de categoría, no un torneo.
+      await pd.click("#ficha-resultados");
+      await pd.waitForFunction(() => document.getElementById("resultados").open && document.querySelector("#resultados .cac-categorias"), null, { timeout: 5000 }).catch(() => {});
+      const eleccion = await pd.evaluate(() => {
+        const d = document.getElementById("resultados");
+        const filas = [...d.querySelectorAll(".cac-categorias > li")].map((li) => [li.querySelector(".cac-categoria-edad").textContent,
+          ...[...li.querySelectorAll("a")].map((a) => a.textContent + "|" + a.getAttribute("aria-label") + "|" + (a.getAttribute("href").match(/tnr(\d+)/) || [])[1])]);
+        const b = d.querySelector(".cac-categoria"), cs = b ? getComputedStyle(b) : {};
+        return { abierta: d.checkVisibility(), ventana: !!document.querySelector("dialog.ventana-enlace"), filas,
+          otros: [...d.querySelectorAll(".cac-otros a")].map((a) => a.textContent), colores: [cs.backgroundColor, cs.color],
+          costado: d.scrollWidth - d.clientWidth, enPantalla: [...d.querySelectorAll(".cac-categoria")].every((a) => a.checkVisibility() && a.getBoundingClientRect().right <= window.innerWidth) };
+      });
+      const filasEsperadas = [8, 10, 12, 14, 16, 18].map((n, i) => ["Sub-" + n, "Absoluto|Sub-" + n + " Absoluto|" + (1600001 + 2 * i), "Femenino|Sub-" + n + " Femenino|" + (1600002 + 2 * i)]);
+      ok("«Resultados en vivo» abre la elección de categoría encima (no un torneo)", eleccion.abierta && !eleccion.ventana, JSON.stringify(eleccion));
+      ok("una fila por edad, Absoluto y Femenino lado a lado, cada uno con su torneo y su nombre entero para el lector",
+         JSON.stringify(eleccion.filas) === JSON.stringify(filasEsperadas), JSON.stringify(eleccion.filas));
+      ok("la lista general queda aparte, en «Otros torneos»", JSON.stringify(eleccion.otros) === JSON.stringify(["Lista general"]), JSON.stringify(eleccion.otros));
+      ok("blanco sobre el morado de las bases (8,35)", JSON.stringify(eleccion.colores) === JSON.stringify(["rgb(64, 71, 143)", "rgb(255, 255, 255)"]), JSON.stringify(eleccion.colores));
+      ok("en un celular cabe entero, sin scroll de costado", eleccion.costado <= 0 && eleccion.enPantalla, JSON.stringify(eleccion));
+      await pd.click('#resultados a[aria-label="Sub-10 Femenino"]', { timeout: 5000 }).catch(() => {});
+      const marco = await pd.waitForFunction(() => { const d = document.querySelector("dialog.ventana-enlace"); return d && d.open && { titulo: d.querySelector("h2").textContent, src: d.querySelector("iframe").src }; }, null, { timeout: 5000 }).then((h) => h.jsonValue()).catch(() => null);
+      ok("cada categoría abre su torneo de chess-results encima, sin salir del sitio",
+         !!marco && marco.titulo === "Resultados · Sub-10 Femenino" && /tnr1600004\.aspx\?lan=2&turdet=YES$/.test(marco.src) && new URL(pd.url()).pathname === "/" + PAGINA, JSON.stringify(marco));
+      await pd.keyboard.press("Escape");
+      await pd.waitForFunction(() => !document.querySelector("dialog.ventana-enlace"), null, { timeout: 5000 }).catch(() => {});
+      ok("al cerrarlo se vuelve a la elección, con el foco en su botón", await pd.evaluate(() => document.getElementById("resultados").open && document.activeElement && document.activeElement.getAttribute("aria-label") === "Sub-10 Femenino"));
+      // Una categoría que todavía no publicaron deja su hueco: la fila no se corre.
+      await pd.evaluate(() => { const d = window.CentroamericanoVivo.datos(); d.torneos = d.torneos.filter((t) => t.categoria !== "U16F"); document.getElementById("resultados").close(); });
+      await pd.click("#ficha-resultados");
+      await pd.waitForFunction(() => document.getElementById("resultados").open, null, { timeout: 5000 }).catch(() => {});
+      const hueco = await pd.evaluate(() => { const li = [...document.querySelectorAll("#resultados .cac-categorias > li")][4]; if (!li) return null; return [li.children.length, li.querySelectorAll("a").length, li.lastElementChild.className]; });
+      ok("una categoría sin torneo todavía deja su hueco en la fila", JSON.stringify(hueco) === JSON.stringify([3, 1, "cac-categoria-falta"]), JSON.stringify(hueco));
+      await pd.keyboard.press("Escape");
+      // En inglés.
+      await pd.click("#cac-idioma");
+      await pd.click("#ficha-resultados");
+      await pd.waitForFunction(() => document.getElementById("resultados").open, null, { timeout: 5000 }).catch(() => {});
+      ok("y en inglés", await pd.evaluate(() => { const li = document.querySelector("#resultados .cac-categorias > li"); return !!li && li.innerText.replace(/\s+/g, " ").trim() === "U8 Open Girls" && document.querySelector("#resultados h2").textContent.includes("Live results"); }),
+         await pd.evaluate(() => document.querySelector("#resultados").innerText.slice(0, 200)));
+      await pd.keyboard.press("Escape");
+      await pd.click("#cac-idioma");
+      // Desde Torneos se entra con «#resultados»: abre la elección ya llena.
+      const pe = await ctx12.newPage();
+      await pe.goto(BASE + "/" + PAGINA + "#resultados", { waitUntil: "load" });
+      ok("entrar con #resultados (el botón de Torneos) abre la elección de categoría", await pe.waitForFunction(() => document.getElementById("resultados").open && document.querySelectorAll("#resultados .cac-categorias a").length === 12, null, { timeout: 5000 }).then(() => true).catch(() => false));
+      // El medallero: final solo cuando terminaron TODOS.
+      await pe.keyboard.press("Escape");
+      await pe.click('a[href="#medallero"]');
+      await pe.waitForFunction(() => /Provisional|Final/i.test(document.getElementById("medallero-contenido").textContent), null, { timeout: 5000 }).catch(() => {});
+      const medallero = await pe.evaluate(() => ({ estado: document.querySelector("#medallero-contenido > p").textContent, podios: document.querySelectorAll("#medallero-contenido .cac-podio").length }));
+      ok("el medallero sigue provisional mientras alguna categoría juega (el Sub-8 ya terminó), con sus 12 podios",
+         /Provisional/.test(medallero.estado) && medallero.podios === 12, JSON.stringify(medallero));
+      await ctx12.close();
+    }
 
     // El diploma: con la clasificación final (chess-results ya no dice la ronda
     // ni trae pareo, y normalizar() lo marca terminado), en imagen y en PDF.
