@@ -8818,8 +8818,11 @@ Es una página estática, sin cuenta y sin base: nada se guarda.
 - **El diploma de cada jugador**: con el torneo terminado (la clasificación
   final de chess-results, `normalizar()` lo marca `terminado`), cada tarjeta
   trae «Diploma (PDF)» y «Diploma (imagen)». Es un A4 acostado (2339 × 1654)
-  dibujado en un lienzo: el pizote del trofeo, la bandera arriba y abajo, el
-  nombre **al derecho** («WIM Sofia Mayorga Araya», chess-results lo escribe
+  dibujado en un lienzo **con la cara de las bases** (lo pidió el dueño): el
+  morado degradado de la portada, las hojas en las esquinas, la letra blanca
+  en mayúsculas con su sombra y la píldora roja con el evento, como «XXI
+  CAMPEONATO» en las bases; el pizote del trofeo arriba, el nombre **al
+  derecho** («WIM Sofia Mayorga Araya», chess-results lo escribe
   «Apellidos, Nombre»), el país, el lugar con la medalla a los dos lados del
   título si quedó en el podio (y escrito: «1.er lugar (oro)», el color nunca
   va solo) o «por su participación», los puntos y el puesto, y la marca de
