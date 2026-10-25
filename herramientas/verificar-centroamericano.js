@@ -719,6 +719,16 @@ ok("la página carga el cliente de Supabase antes que su código en vivo", html.
     ok("con el torneo terminado, cada tarjeta trae su diploma en PDF y en imagen", JSON.stringify(botonesDip) === JSON.stringify(["Diploma (PDF)", "Diploma (imagen)"]), JSON.stringify(botonesDip));
     ok("el nombre va al derecho, con el título adelante", await pDip.evaluate(() => window.CentroamericanoTablas.nombreAlDerecho({ titulo: "WIM", nombre: "Mayorga Araya, Sofia" }) === "WIM Sofia Mayorga Araya"
       && window.CentroamericanoTablas.nombreAlDerecho({ titulo: "", nombre: "Wilson Hannah" }) === "Wilson Hannah"));
+    // Con la cara de las bases: el morado del fondo (arriba #40478F, abajo
+    // #5A5FA3) y la píldora roja del evento, medidos en el lienzo.
+    const colores = await pDip.evaluate(async () => {
+      const V = window.CentroamericanoVivo;
+      const c = await window.CentroamericanoTablas.diploma(V.jugadores().find((y) => y.j.no === 2));
+      const px = (x, y) => Array.from(c.getContext("2d").getImageData(x, y, 1, 1).data.slice(0, 3));
+      return { arriba: px(1169, 40), abajo: px(1169, 1620), pildora: px(c.width / 2 - 700, 650) };
+    });
+    const cerca = (a, b) => a.every((v, i) => Math.abs(v - b[i]) <= 14);
+    ok("el diploma lleva el morado de las bases y la píldora roja del evento", cerca(colores.arriba, [64, 71, 143]) && cerca(colores.abajo, [90, 95, 163]) && cerca(colores.pildora, [206, 19, 40]), JSON.stringify(colores));
     await pDip.evaluate(() => { const m = window.TablaImagen.marcar; window.__marcas = 0; window.TablaImagen.marcar = (c) => { window.__marcas++; return m(c); }; });
     const [dImg] = await Promise.all([pDip.waitForEvent("download", { timeout: 20000 }), pDip.click('#buscador-resultados [data-accion="diploma-imagen"]')]);
     const pngDip = fs.readFileSync(await dImg.path());

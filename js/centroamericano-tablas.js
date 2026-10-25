@@ -950,13 +950,59 @@
 
   /* ---------------- el diploma ---------------- */
   // Un A4 apaisado a 200 puntos por pulgada (2339 × 1654), con la clasificación
-  // final de chess-results: el puesto, los puntos y la categoría. Al podio le
-  // dice el lugar y la medalla (escrita, no solo el color del círculo). Colores
-  // medidos sobre el blanco: #1E2453 14,7, #40478F 8,35, #1F2937 14,7; el número
-  // sobre la medalla, #1E2453 sobre el oro 7,0, la plata 6,4 y el bronce 4,0
-  // (letra grande: pide 3). El evento y el lugar los puede cambiar otra página
-  // (window.TorneoPagina.diploma). Lleva la marca de agua de Ajedrez Integral.
-  const MEDALLAS = ["#d4a72c", "#a8a9ad", "#b8733a"];
+  // final de chess-results: el puesto, los puntos y la categoría. Con la cara
+  // de las bases (la misma de la portada de la página): el morado degradado
+  // (#40478F a #5A5FA3), las hojas en las esquinas, la letra blanca en
+  // mayúsculas con su sombra y la píldora roja con el evento. Al podio le dice
+  // el lugar y la medalla (escrita, no solo el color del círculo). Contraste
+  // medido: blanco sobre #40478F 8,35 y sobre #5A5FA3 5,83 (el más claro del
+  // degradado), blanco sobre el rojo #CE1328 5,6; el número de la medalla,
+  // en medalla(). El evento, el lugar, el dibujo y los colores los puede cambiar otra
+  // página (window.TorneoPagina.diploma). Lleva la marca de agua de Ajedrez Integral.
+  // Cada metal en tres tonos: el brillo, el color y el borde. El número va en
+  // #1E2453 sobre el tono del medio: 8,0 en el oro, 9,1 en la plata y 4,4 en el
+  // bronce (letra grande: pide 3).
+  const MEDALLAS = [["#fff3b0", "#e0b43a", "#8f6a10"], ["#ffffff", "#c4c6cc", "#6f727a"], ["#f6d0a8", "#c27a3e", "#6e3d1a"]];
+  // La medalla con su corona de laureles (la opción B que eligió el dueño): el
+  // disco con su brillo de metal, un anillo hundido, el número en relieve, dos
+  // ramas de laurel alrededor y una estrella del mismo metal arriba. Los
+  // laureles son adorno: ningún dato va encima de ellos.
+  const LAURELES = ["#7fbf6a", "#4e9a43"];
+  function medalla(ctx, x, y, r, p, letra) {
+    const [luz, color, borde] = MEDALLAS[p - 1];
+    // Las dos ramas: ocho hojas por lado, de abajo hacia arriba.
+    [-1, 1].forEach((lado) => {
+      for (let i = 0; i < 8; i++) {
+        const a = Math.PI / 2 + lado * (0.35 + i * 0.32), rr = r * 1.39;
+        ctx.save(); ctx.translate(x + rr * Math.cos(a), y + rr * Math.sin(a)); ctx.rotate(a + lado * 1.2);
+        ctx.fillStyle = LAURELES[i % 2]; ctx.beginPath(); ctx.ellipse(0, 0, r * 0.28, r * 0.107, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.restore();
+      }
+    });
+    // La sombra y el disco con su brillo arriba a la izquierda.
+    ctx.fillStyle = "rgba(0, 0, 0, 0.22)"; ctx.beginPath(); ctx.arc(x + 5, y + 8, r, 0, Math.PI * 2); ctx.fill();
+    const g = ctx.createRadialGradient(x - r * 0.35, y - r * 0.4, r * 0.1, x, y, r);
+    g.addColorStop(0, luz); g.addColorStop(0.55, color); g.addColorStop(1, borde);
+    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
+    ctx.lineWidth = 5; ctx.strokeStyle = borde; ctx.stroke();
+    // El anillo de adentro, con el metal al revés (hundido).
+    const g2 = ctx.createRadialGradient(x + r * 0.25, y + r * 0.3, r * 0.05, x, y, r * 0.74);
+    g2.addColorStop(0, luz); g2.addColorStop(1, color);
+    ctx.fillStyle = g2; ctx.beginPath(); ctx.arc(x, y, r * 0.74, 0, Math.PI * 2); ctx.fill();
+    ctx.lineWidth = 4; ctx.strokeStyle = borde; ctx.stroke();
+    // La estrella de arriba, del mismo metal.
+    ctx.beginPath();
+    for (let i = 0; i < 10; i++) {
+      const a = -Math.PI / 2 + (i * Math.PI) / 5, rr = i % 2 ? r * 0.15 : r * 0.37;
+      ctx.lineTo(x + rr * Math.cos(a), y - r * 1.52 + rr * Math.sin(a));
+    }
+    ctx.closePath(); ctx.fillStyle = color; ctx.fill(); ctx.lineWidth = 3; ctx.strokeStyle = borde; ctx.stroke();
+    // El número en relieve: una luz corrida hacia arriba y el número encima.
+    ctx.textAlign = "center";
+    ctx.font = "800 " + Math.round(r * 1.05) + "px " + letra;
+    ctx.fillStyle = "rgba(255, 255, 255, 0.7)"; ctx.fillText(String(p), x - 2, y + r * 0.36 - 3);
+    ctx.fillStyle = "#1e2453"; ctx.fillText(String(p), x, y + r * 0.36);
+  }
   // chess-results escribe «Apellidos, Nombre»; en el diploma va al derecho,
   // con el título adelante: «WIM Sofia Mayorga Araya».
   function nombreAlDerecho(j) {
@@ -966,64 +1012,78 @@
   }
   async function diploma(x) {
     const tx = T();
-    const D = Object.assign({ evento: tx.dipEvento, lugar: tx.dipLugar }, CONFIG.diploma || {});
+    const D = Object.assign({
+      evento: tx.dipEvento, lugar: tx.dipLugar, fondo: ["#40478f", "#5a5fa3"], pildora: "#ce1328",
+      dibujo: "img/centroamericano-2026/mascota-trofeo.png", hojas: "img/centroamericano-2026/hojas.png",
+    }, CONFIG.diploma || {});
     if (document.fonts && document.fonts.ready) await document.fonts.ready;
     const letra = getComputedStyle(document.body).fontFamily || "system-ui, sans-serif";
-    const serif = "Merriweather, Georgia, serif";
     const W = 2339, H = 1654, cx = W / 2;
     const c = document.createElement("canvas");
     c.width = W; c.height = H;
     const ctx = c.getContext("2d");
-    ctx.fillStyle = "#ffffff"; ctx.fillRect(0, 0, W, H);
-    // El marco doble y la bandera arriba y abajo, por dentro.
-    ctx.strokeStyle = CARA.banda; ctx.lineWidth = 16; ctx.strokeRect(48, 48, W - 96, H - 96);
-    ctx.lineWidth = 3; ctx.strokeRect(84, 84, W - 168, H - 168);
-    const bandera = (y, sube) => [["#1e4c8a", 14], ["#ffffff", 8], ["#ce1328", 14], ["#ffffff", 8], ["#1e4c8a", 14]].reduce((yy, [color, alto]) => {
-      ctx.fillStyle = color; ctx.fillRect(100, sube ? yy - alto : yy, W - 200, alto); return sube ? yy - alto : yy + alto;
-    }, y);
-    bandera(100, false); bandera(H - 100, true);
+    // El morado de las bases, en diagonal (165°, como la portada).
+    const fondo = ctx.createLinearGradient(W * 0.37, 0, W * 0.63, H);
+    fondo.addColorStop(0, D.fondo[0]); fondo.addColorStop(1, D.fondo[1]);
+    ctx.fillStyle = fondo; ctx.fillRect(0, 0, W, H);
+    // Las hojas en las cuatro esquinas, tenues como en la portada.
+    const hojas = D.hojas ? await cargarImagen(D.hojas) : null;
+    if (hojas) {
+      const ah = 560, alh = Math.round((ah * hojas.height) / hojas.width);
+      ctx.save(); ctx.globalAlpha = 0.55;
+      [[1, 1, 0, 0], [-1, 1, W, 0], [1, -1, 0, H], [-1, -1, W, H]].forEach(([sx, sy, tx0, ty0]) => {
+        ctx.save(); ctx.translate(tx0, ty0); ctx.scale(sx, sy); ctx.drawImage(hojas, -8, -8, ah, alh); ctx.restore();
+      });
+      ctx.restore();
+    }
     ctx.textAlign = "center"; ctx.textBaseline = "alphabetic";
-    const centrado = (texto, y, fuente, color, ancho) => {
-      ctx.font = fuente; ctx.fillStyle = color;
+    // Letra blanca con la sombra de las bases (#1E2453 al 45 %, corrida hacia abajo).
+    const conSombra = (pintar, corrida) => {
+      ctx.save(); ctx.fillStyle = "rgba(30, 36, 83, 0.45)"; ctx.translate(0, corrida); pintar(); ctx.restore();
+      ctx.fillStyle = "#ffffff"; pintar();
+    };
+    const centrado = (texto, y, fuente, ancho, corrida) => {
+      ctx.font = fuente;
       let t = String(texto);
-      while (ctx.measureText(t).width > (ancho || 1950) && t.length > 4) t = t.slice(0, -2).replace(/\s*\S*$/, "") + "…";
-      ctx.fillText(t, cx, y);
+      while (ctx.measureText(t).width > (ancho || 1700) && t.length > 4) t = t.slice(0, -2).replace(/\s*\S*$/, "") + "…";
+      conSombra(() => ctx.fillText(t, cx, y), corrida || 0);
     };
     // Arriba, el pizote del trofeo (o el dibujo de la página).
-    const dibujo = await cargarImagen(CONFIG.diploma && CONFIG.diploma.dibujo || "img/centroamericano-2026/mascota-trofeo.png");
+    const dibujo = D.dibujo ? await cargarImagen(D.dibujo) : null;
     if (dibujo) {
-      const alto = 250, ancho = Math.round((alto * dibujo.width) / dibujo.height);
-      ctx.drawImage(dibujo, cx - ancho / 2, 170, ancho, alto);
+      const alto = 300, ancho = Math.round((alto * dibujo.width) / dibujo.height);
+      ctx.drawImage(dibujo, cx - ancho / 2, 90, ancho, alto);
     }
-    centrado(D.evento, 500, "600 50px " + letra, CARA.acento);
-    centrado(tx.dipTitulo, 660, "900 150px " + serif, CARA.tinta);
+    centrado(tx.dipTitulo.toUpperCase(), 560, "800 150px " + letra, 1700, 7);
+    // La píldora roja con el nombre del evento, como «XXI CAMPEONATO» en las bases.
+    ctx.font = "800 44px " + letra;
+    const evento = D.evento.toUpperCase();
+    const anchoP = Math.min(1800, ctx.measureText(evento).width + 90);
+    ctx.fillStyle = "rgba(0, 0, 0, 0.18)"; ctx.beginPath(); ctx.roundRect(cx - anchoP / 2, 615, anchoP, 82, 22); ctx.fill();
+    ctx.fillStyle = D.pildora; ctx.beginPath(); ctx.roundRect(cx - anchoP / 2, 607, anchoP, 82, 22); ctx.fill();
+    ctx.fillStyle = "#ffffff"; ctx.fillText(evento, cx, 664);
     const p = x.j._puestoGrupo || x.j.puesto, de = x.j._deGrupo || 0;
     const podio = p >= 1 && p <= 3;
-    // La medalla a cada lado del título, con el número del puesto.
-    if (podio) {
-      [cx - 620, cx + 620].forEach((mx) => {
-        ctx.fillStyle = MEDALLAS[p - 1]; ctx.beginPath(); ctx.arc(mx, 610, 95, 0, Math.PI * 2); ctx.fill();
-        ctx.lineWidth = 6; ctx.strokeStyle = CARA.tinta; ctx.stroke();
-        ctx.fillStyle = CARA.tinta; ctx.font = "900 110px " + serif; ctx.fillText(String(p), mx, 648);
-      });
-    }
-    centrado(tx.dipOtorga, 770, "500 44px " + letra, "#1f2937");
+    centrado(tx.dipOtorga.toUpperCase(), 800, "700 44px " + letra);
     // El nombre, en una línea: si no cabe, la letra se achica (nunca se corta).
-    let tam = 112;
-    ctx.font = "700 " + tam + "px " + serif;
-    const nombre = nombreAlDerecho(x.j);
-    while (ctx.measureText(nombre).width > 1950 && tam > 60) { tam -= 4; ctx.font = "700 " + tam + "px " + serif; }
-    ctx.fillStyle = CARA.tinta; ctx.fillText(nombre, cx, 910);
-    if (x.j.fed) centrado(V.pais(x.j.fed), 990, "600 46px " + letra, CARA.acento);
+    let tam = 120;
+    const nombre = nombreAlDerecho(x.j).toUpperCase();
+    ctx.font = "800 " + tam + "px " + letra;
+    while (ctx.measureText(nombre).width > (podio ? 1440 : 1800) && tam > 60) { tam -= 4; ctx.font = "800 " + tam + "px " + letra; }
+    conSombra(() => ctx.fillText(nombre, cx, 945), 6);
+    // La medalla a cada lado del nombre, con el número del puesto.
+    if (podio) [cx - 930, cx + 930].forEach((mx) => medalla(ctx, mx, 930, 92, p, letra));
+    if (x.j.fed) centrado(V.pais(x.j.fed).toUpperCase(), 1030, "700 46px " + letra);
     const cat = V.categoria(x.j.grupo);
-    centrado(podio ? tx.dipPodio(p, cat) : tx.dipParticipa(cat), 1110, "600 54px " + letra, "#1f2937");
-    if (de) centrado(tx.dipDetalle(x.j.puntos || "0", x.torneo.ronda || x.torneo.rondas || 0, p, de), 1190, "500 42px " + letra, "#1f2937");
-    centrado(D.lugar, 1360, "500 38px " + letra, "#1f2937");
-    centrado(tx.dipPie + " · " + URL_PAGINA, 1450, "500 28px " + letra, CARA.acento);
+    centrado(podio ? tx.dipPodio(p, cat) : tx.dipParticipa(cat), 1150, "700 54px " + letra, 1700, 3);
+    if (de) centrado(tx.dipDetalle(x.j.puntos || "0", x.torneo.ronda || x.torneo.rondas || 0, p, de), 1230, "600 42px " + letra);
+    centrado(D.lugar, 1390, "600 34px " + letra, 1650);
+    centrado(tx.dipPie + " · " + URL_PAGINA, 1470, "500 28px " + letra, 1500);
     ctx.textAlign = "start";
     if (window.TablaImagen && window.TablaImagen.marcar) await window.TablaImagen.marcar(c);
     return c;
   }
+
 
   // El diploma en las dos formas: la imagen (para WhatsApp, con el menú de
   // compartir del celular) y el PDF de una página para imprimir
