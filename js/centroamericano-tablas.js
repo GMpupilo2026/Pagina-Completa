@@ -104,6 +104,14 @@
       },
       diaAntes: "La imagen del día sale cuando termine la ronda 1.",
       diaTexto: (titulo) => titulo + " en el Centroamericano 2026:",
+      dipEvento: "XXI Festival Centroamericano y del Caribe de la Juventud",
+      dipTitulo: "Diploma",
+      dipOtorga: "Se otorga a",
+      dipPodio: (p, cat) => "por obtener el " + (p === 1 ? "1.er" : p === 3 ? "3.er" : p + ".º") + " lugar (" + ["oro", "plata", "bronce"][p - 1] + ") en la categoría " + cat,
+      dipParticipa: (cat) => "por su participación en la categoría " + cat,
+      dipDetalle: (pts, rondas, p, de) => pts + (pts === "1" ? " punto" : " puntos") + (rondas ? " en " + rondas + " rondas" : "") + " · puesto " + p + " de " + de,
+      dipLugar: "Gimnasio Nacional, La Sabana · San José, Costa Rica · del 1 al 8 de noviembre de 2026",
+      dipPie: "Según la clasificación final publicada en chess-results",
       pdfTitulo: (pais, r) => pais + (r ? " · Ronda " + r : " · Lista inicial"),
       pdfSub: "XXI Festival Centroamericano y del Caribe de la Juventud · Costa Rica 2026 · Hoja de la delegación",
       pdfResumen: (n, r) => (n === 1 ? "1 jugador" : n + " jugadores") + (r ? " · pareo de la ronda " + r : " · el pareo de la ronda 1 todavía no está publicado"),
@@ -170,6 +178,14 @@
       },
       diaAntes: "Today's image is ready once round 1 is over.",
       diaTexto: (titulo) => titulo + " at the Centroamericano 2026:",
+      dipEvento: "21st Central American and Caribbean Youth Festival",
+      dipTitulo: "Certificate",
+      dipOtorga: "Awarded to",
+      dipPodio: (p, cat) => "for " + ["1st", "2nd", "3rd"][p - 1] + " place (" + ["gold", "silver", "bronze"][p - 1] + ") in the " + cat + " section",
+      dipParticipa: (cat) => "for taking part in the " + cat + " section",
+      dipDetalle: (pts, rondas, p, de) => pts + (pts === "1" ? " point" : " points") + (rondas ? " in " + rondas + " rounds" : "") + " · place " + p + " of " + de,
+      dipLugar: "National Gymnasium, La Sabana · San José, Costa Rica · November 1–8, 2026",
+      dipPie: "According to the final standings published on chess-results",
       pdfTitulo: (pais, r) => pais + (r ? " · Round " + r : " · Starting list"),
       pdfSub: "21st Central American and Caribbean Youth Festival · Costa Rica 2026 · Delegation sheet",
       pdfResumen: (n, r) => (n === 1 ? "1 player" : n + " players") + (r ? " · pairings of round " + r : " · the pairings of round 1 are not published yet"),
@@ -828,6 +844,75 @@
     }
   }
 
+  /* ---------------- el diploma ---------------- */
+  // Un A4 apaisado a 200 puntos por pulgada (2339 × 1654), con la clasificación
+  // final de chess-results: el puesto, los puntos y la categoría. Al podio le
+  // dice el lugar y la medalla (escrita, no solo el color del círculo). Colores
+  // medidos sobre el blanco: #1E2453 14,7, #40478F 8,35, #1F2937 14,7; el número
+  // sobre la medalla, #1E2453 sobre el oro 7,0, la plata 6,4 y el bronce 4,0
+  // (letra grande: pide 3). El evento y el lugar los puede cambiar otra página
+  // (window.TorneoPagina.diploma). Lleva la marca de agua de Ajedrez Integral.
+  const MEDALLAS = ["#d4a72c", "#a8a9ad", "#b8733a"];
+  async function diploma(x) {
+    const tx = T();
+    const D = Object.assign({ evento: tx.dipEvento, lugar: tx.dipLugar }, CONFIG.diploma || {});
+    if (document.fonts && document.fonts.ready) await document.fonts.ready;
+    const letra = getComputedStyle(document.body).fontFamily || "system-ui, sans-serif";
+    const serif = "Merriweather, Georgia, serif";
+    const W = 2339, H = 1654, cx = W / 2;
+    const c = document.createElement("canvas");
+    c.width = W; c.height = H;
+    const ctx = c.getContext("2d");
+    ctx.fillStyle = "#ffffff"; ctx.fillRect(0, 0, W, H);
+    // El marco doble y la bandera arriba y abajo, por dentro.
+    ctx.strokeStyle = CARA.banda; ctx.lineWidth = 16; ctx.strokeRect(48, 48, W - 96, H - 96);
+    ctx.lineWidth = 3; ctx.strokeRect(84, 84, W - 168, H - 168);
+    const bandera = (y, sube) => [["#1e4c8a", 14], ["#ffffff", 8], ["#ce1328", 14], ["#ffffff", 8], ["#1e4c8a", 14]].reduce((yy, [color, alto]) => {
+      ctx.fillStyle = color; ctx.fillRect(100, sube ? yy - alto : yy, W - 200, alto); return sube ? yy - alto : yy + alto;
+    }, y);
+    bandera(100, false); bandera(H - 100, true);
+    ctx.textAlign = "center"; ctx.textBaseline = "alphabetic";
+    const centrado = (texto, y, fuente, color, ancho) => {
+      ctx.font = fuente; ctx.fillStyle = color;
+      let t = String(texto);
+      while (ctx.measureText(t).width > (ancho || 1950) && t.length > 4) t = t.slice(0, -2).replace(/\s*\S*$/, "") + "…";
+      ctx.fillText(t, cx, y);
+    };
+    // Arriba, el pizote del trofeo (o el dibujo de la página).
+    const dibujo = await cargarImagen(CONFIG.diploma && CONFIG.diploma.dibujo || "img/centroamericano-2026/mascota-trofeo.png");
+    if (dibujo) {
+      const alto = 250, ancho = Math.round((alto * dibujo.width) / dibujo.height);
+      ctx.drawImage(dibujo, cx - ancho / 2, 170, ancho, alto);
+    }
+    centrado(D.evento, 500, "600 50px " + letra, CARA.acento);
+    centrado(tx.dipTitulo, 660, "900 150px " + serif, CARA.tinta);
+    const p = x.j._puestoGrupo || x.j.puesto, de = x.j._deGrupo || 0;
+    const podio = p >= 1 && p <= 3;
+    // La medalla a cada lado del título, con el número del puesto.
+    if (podio) {
+      [cx - 620, cx + 620].forEach((mx) => {
+        ctx.fillStyle = MEDALLAS[p - 1]; ctx.beginPath(); ctx.arc(mx, 610, 95, 0, Math.PI * 2); ctx.fill();
+        ctx.lineWidth = 6; ctx.strokeStyle = CARA.tinta; ctx.stroke();
+        ctx.fillStyle = CARA.tinta; ctx.font = "900 110px " + serif; ctx.fillText(String(p), mx, 648);
+      });
+    }
+    centrado(tx.dipOtorga, 770, "500 44px " + letra, "#1f2937");
+    // El nombre, en una línea: si no cabe, la letra se achica (nunca se corta).
+    let tam = 112;
+    ctx.font = "700 " + tam + "px " + serif;
+    while (ctx.measureText(nombreCompleto(x.j)).width > 1950 && tam > 60) { tam -= 4; ctx.font = "700 " + tam + "px " + serif; }
+    ctx.fillStyle = CARA.tinta; ctx.fillText(nombreCompleto(x.j), cx, 910);
+    if (x.j.fed) centrado(V.pais(x.j.fed), 990, "600 46px " + letra, CARA.acento);
+    const cat = V.categoria(x.j.grupo);
+    centrado(podio ? tx.dipPodio(p, cat) : tx.dipParticipa(cat), 1110, "600 54px " + letra, "#1f2937");
+    if (de) centrado(tx.dipDetalle(x.j.puntos || "0", x.torneo.rondas || 0, p, de), 1190, "500 42px " + letra, "#1f2937");
+    centrado(D.lugar, 1360, "500 38px " + letra, "#1f2937");
+    centrado(tx.dipPie + " · " + URL_PAGINA, 1450, "500 28px " + letra, CARA.acento);
+    ctx.textAlign = "start";
+    if (window.TablaImagen && window.TablaImagen.marcar) await window.TablaImagen.marcar(c);
+    return c;
+  }
+
   /* ---------------- la hoja de la delegación (PDF) ---------------- */
   // Lo que el entrenador lleva en la mano en la sala: todos sus jugadores en la
   // ronda emparejada, por categoría, con mesa, color, rival y resultado. Es el
@@ -945,5 +1030,5 @@
   document.addEventListener("cac-datos", repintar);
   document.addEventListener("cac-idioma", repintar);
 
-  window.CentroamericanoTablas = { compartirJugador, imagenJugador, compartirResumen, imagenResumen, resumenDelDia, imagenDia, compartirDia, documentoDelegacion, hojaDelegacion };
+  window.CentroamericanoTablas = { compartirJugador, imagenJugador, compartirResumen, imagenResumen, resumenDelDia, imagenDia, compartirDia, documentoDelegacion, hojaDelegacion, diploma };
 })();
