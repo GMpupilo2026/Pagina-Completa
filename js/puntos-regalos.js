@@ -12,9 +12,14 @@
  * Nada de texto libre: el mensaje se elige de una lista (frases_regalo),
  * porque muchos son menores de edad.
  *
+ * El profe también les manda bromas a sus alumnos (con profe: true): la
+ * lista es la de sus alumnos (alumnos_del_profesor) y no cuesta puntos; ver
+ * «Las bromas del profe».
+ *
  * Uso (lo llama js/puntos.js):
  *   const r = await PuntosRegalos.regalar({ sb, alumnoId, premio });
  *       // null si canceló; { saldo } o { error }
+ *   const r = await PuntosRegalos.regalar({ sb, alumnoId: profeId, premio, profe: true });
  *   PuntosRegalos.montarAjustesBromas(caja, { sb, alumnoId });
  *
  * Ver «Retos, marcador, regalos y bromas» en docs/decisiones/puntos-y-premios.md.
@@ -45,6 +50,12 @@ window.PuntosRegalos = (function () {
     return (data || []).filter((p) => p.id !== alumnoId);
   }
 
+  async function misAlumnos(sb, profeId) {
+    const { data, error } = await sb.rpc("alumnos_del_profesor", { p_profesor: profeId });
+    if (error) throw error;
+    return data || [];
+  }
+
   async function frases(sb, uso) {
     const { data, error } = await sb.from("frases_regalo").select("clave, texto, uso").eq("uso", uso).order("orden");
     if (error) throw error;
@@ -72,22 +83,23 @@ window.PuntosRegalos = (function () {
   async function regalar(opciones) {
     const { sb, alumnoId, premio } = opciones;
     const esBroma = premio.categoria === "broma";
+    const deProfe = esBroma && !!opciones.profe;
     const conFrase = !esBroma || (premio.parametros && premio.parametros.tipo === "globo");
     let gente, lista;
     try {
       [gente, lista] = await Promise.all([
-        companeros(sb, alumnoId),
+        deProfe ? misAlumnos(sb, alumnoId) : companeros(sb, alumnoId),
         conFrase ? frases(sb, esBroma ? "broma" : "regalo") : Promise.resolve([]),
       ]);
     } catch (e) {
-      return { error: "No se pudo cargar la lista de tus compañeros." };
+      return { error: deProfe ? "No se pudo cargar la lista de tus alumnos." : "No se pudo cargar la lista de tus compañeros." };
     }
     if (!gente.length) {
-      return { error: "Todavía no tienes compañeros de clase a quien mandarle algo." };
+      return { error: deProfe ? "Todavía no tienes alumnos a quien mandarle una broma." : "Todavía no tienes compañeros de clase a quien mandarle algo." };
     }
     const campos = [{
       nombre: "para", etiqueta: "¿Para quién?", tipo: "select",
-      opciones: gente.map((p) => [p.id, p.full_name || "Compañero sin nombre"]),
+      opciones: gente.map((p) => [p.id, p.full_name || (deProfe ? "Alumno sin nombre" : "Compañero sin nombre")]),
     }];
     if (conFrase) {
       const ops = lista.map((f) => [f.clave, f.texto]);
@@ -114,11 +126,13 @@ window.PuntosRegalos = (function () {
     const costo = premio.costo_puntos + (premio.costo_puntos === 1 ? " punto" : " puntos");
     const r = await window.Avisos.formulario({
       titulo: (esBroma ? "Mandar " : "Regalar ") + premio.nombre,
-      texto: esBroma
-        ? "Tu compañero va a ver que se la mandaste tú. Cuesta " + costo + "."
-        : "Le llega a tu compañero con tu nombre. Cuesta " + costo + ".",
+      texto: deProfe
+        ? "Tu alumno va a ver que se la mandaste tú. A ti no te cuesta puntos."
+        : esBroma
+          ? "Tu compañero va a ver que se la mandaste tú. Cuesta " + costo + "."
+          : "Le llega a tu compañero con tu nombre. Cuesta " + costo + ".",
       campos,
-      aceptar: (esBroma ? "Mandar la broma" : "Regalar") + " (" + costo + ")",
+      aceptar: deProfe ? "Mandar la broma" : (esBroma ? "Mandar la broma" : "Regalar") + " (" + costo + ")",
     });
     if (!r || !r.para) return null;
     const args = esBroma
@@ -128,7 +142,7 @@ window.PuntosRegalos = (function () {
     const { data, error } = await sb.rpc(esBroma ? "mandar_broma" : "regalar_premio", args);
     if (error) return { error: msg(error, esBroma ? "No se pudo mandar la broma." : "No se pudo hacer el regalo.") };
     const fila = Array.isArray(data) ? data[0] : data;
-    const nombre = (gente.find((p) => p.id === r.para) || {}).full_name || "tu compañero";
+    const nombre = (gente.find((p) => p.id === r.para) || {}).full_name || (deProfe ? "tu alumno" : "tu compañero");
     return { saldo: fila ? fila.saldo_restante : null, para: nombre, paraId: r.para };
   }
 
@@ -140,13 +154,13 @@ window.PuntosRegalos = (function () {
     contenedor.replaceChildren();
     const h = el("h3", "text-lg font-bold text-brand-800 dark:text-white", "Tus bromas");
     const ayuda = el("p", "text-xs text-brand-500 dark:text-brand-300 mt-0.5",
-      "Las bromas nunca te tocan en un examen, en la clase en vivo ni en un torneo, y siempre dicen quién las mandó.");
+      "Te las pueden mandar tus compañeros y tu profe. Nunca te tocan en un examen ni en un torneo (en la clase en vivo, solo si tu profe las enciende), y siempre dicen quién las mandó.");
     const fila = el("label", "mt-3 flex items-center gap-2 text-sm text-brand-800 dark:text-white");
     const casilla = el("input", "h-4 w-4 rounded border-brand-300 text-accent-600 focus:ring-accent-400");
     casilla.type = "checkbox";
     casilla.id = "bromas-recibir";
     casilla.disabled = true;
-    fila.append(casilla, document.createTextNode("Quiero recibir bromas de mis compañeros"));
+    fila.append(casilla, document.createTextNode("Quiero recibir bromas de mis compañeros y de mi profe"));
     const estado = el("p", "text-xs mt-1 min-h-[1rem] text-brand-500 dark:text-brand-300");
     estado.setAttribute("aria-live", "polite");
     const subt = el("h4", "mt-4 text-sm font-semibold text-brand-800 dark:text-white", "Las últimas que te mandaron");
@@ -158,7 +172,7 @@ window.PuntosRegalos = (function () {
       const { error } = await sb.rpc("bromas_configurar", { p_no_recibir: !casilla.checked });
       casilla.disabled = false;
       if (error) { casilla.checked = !casilla.checked; estado.textContent = "No se pudo guardar."; return; }
-      estado.textContent = casilla.checked ? "Listo: tus compañeros te pueden mandar bromas." : "Listo: ya nadie te puede mandar bromas.";
+      estado.textContent = casilla.checked ? "Listo: te pueden mandar bromas." : "Listo: ya nadie te puede mandar bromas.";
     });
 
     async function cargar() {

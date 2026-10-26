@@ -438,6 +438,58 @@ sí al abrirse una pregunta. Se rompió a propósito (el sonido, el candado de
 la clase) y saltó. `verificar-puntos.js` revisa que el diálogo pregunte dónde
 y si suena, y que la llamada los lleve.
 
+## Las bromas del profe
+
+Pedido por el dueño del sitio el 26/10/2026: «que el profe pueda mandar
+bromas a los alumnos». Lo hace `20261026230948_bromas_del_profe.sql`.
+
+- **La misma función, no otra.** `mandar_broma()` se volvió a escribir con
+  `create or replace` y la MISMA firma (cambiarla obliga a renombrar la vieja,
+  ver «Lo que no se borró»). Suma un camino: si quien la manda es profesor
+  de quien la recibe (`soy_profesor_de()`), no hace falta que sean
+  compañeros. Sale en la misma tabla `bromas`, así que quien la recibe la ve
+  igual que cualquier otra (`mis_bromas()`, la campana) y con el nombre del
+  profe.
+- **Gratis.** El profe no junta Puntos Ajedrez: su broma no se cobra ni
+  anota nada en `puntos_ajustes`, y `saldo_restante` vuelve nulo. Por eso
+  el diálogo del profe no muestra precios.
+- **Los mismos frenos de quien la recibe**, con el mismo mensaje que no
+  dice por qué: la visión marcada, «no quiero recibir bromas» y el bloqueo
+  (el alumno puede bloquear a su profe desde la tienda como a cualquiera; la
+  casilla dice ahora «de mis compañeros y de mi profe»).
+- **El apagado** (`bromas_apagadas`, en Configuración) es para las bromas
+  ENTRE sus alumnos: el del propio profe no lo frena a él. El de otro profe
+  del mismo alumno, sí: basta con que uno no quiera.
+- **Topes**: 3 por día al mismo alumno y 10 que recibe cada alumno (los de
+  siempre); lo que manda el profe en un día, 30, porque tiene una clase
+  entera.
+- **Quien administra no entra por aquí**: no da clase (ver «El panel de
+  quien administra no es el de un profesor»). Si quiere ver cómo se ve, lo
+  hace con «Ver como: profesor».
+- **Dónde**: en Configuración, en la caja «Bromas entre tus alumnos», el
+  botón «Mandarle una broma a un alumno» (elige cuál, a quién —de
+  `alumnos_del_profesor()`, no de `profiles`—, dónde le cae y si suena); y
+  en la clase en vivo, con las bromas encendidas, «Mandarle una broma a un
+  alumno» debajo del interruptor de «Alumnos conectados», que la deja en la
+  clase y avisa por el canal `bromas-clase:<profe>` como la de un alumno.
+  Las dos usan `PuntosRegalos.regalar({ …, profe: true })`: una sola copia
+  del diálogo.
+
+Se probó en la base impersonando roles (y deshaciendo): el profe la manda a
+su alumno sin que se le cobre nada, aun con su propio apagado puesto; el
+alumno la ve en `mis_bromas()`; un profe que no es suyo recibe «Solo se le
+pueden mandar bromas a un compañero de clase o a un alumno tuyo.»; la cuarta
+del día al mismo alumno se rechaza; con la visión marcada se rechaza; y entre
+compañeros sigue cobrando (75 puntos el confeti).
+
+`verificar-bromas-profe.js` revisa la página: que Configuración carga
+`js/puntos-regalos.js` y manda con `profe: true`; que la lista del profe sale
+de `alumnos_del_profesor` (y no lee `profiles`), sin precios, y la llamada
+lleva a quién, dónde y si suena; y que en la clase el botón del profe no se
+ve con las bromas apagadas, se ve al encenderlas, no ofrece el gorro de
+payaso y la manda a la clase. Se rompió a propósito (la lista, el botón
+siempre visible) y saltó.
+
 ## La semana sin entrenar: se pierde la mitad
 
 Pedido por el dueño del sitio el 24/10/2026: «después de una semana, quien
