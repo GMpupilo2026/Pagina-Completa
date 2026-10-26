@@ -1145,6 +1145,42 @@
                 if (r.error) { casilla.checked = !casilla.checked; estado.textContent = "No se pudo guardar."; return; }
                 estado.textContent = casilla.checked ? "Listo: tus alumnos se pueden mandar bromas." : "Listo: en tu clase ya no hay bromas.";
             });
+            pintarBromasProfe();
+        }
+
+        /* El profe también les manda bromas a sus alumnos: gratis, con su
+           nombre, y con los mismos frenos de quien la recibe (lo decide
+           mandar_broma()). Ver «Las bromas del profe» en
+           docs/decisiones/puntos-y-premios.md. */
+        function pintarBromasProfe() {
+            const btn = document.getElementById("bromas-profe-mandar");
+            const estado = document.getElementById("bromas-profe-estado");
+            if (!btn || !window.PuntosRegalos || profile.role !== "profesor") return;
+            btn.disabled = false;
+            btn.addEventListener("click", async () => {
+                btn.disabled = true;
+                estado.textContent = "";
+                try {
+                    const { data, error } = await sb.from("premios_catalogo").select("*")
+                        .eq("activo", true).eq("categoria", "broma").order("costo_puntos");
+                    if (error || !data || !data.length) { estado.textContent = "No se pudo cargar la lista de bromas."; return; }
+                    const r = await Avisos.formulario({
+                        titulo: "Mandarle una broma a un alumno",
+                        texto: "Le llega con tu nombre. A ti no te cuesta puntos.",
+                        campos: [{ nombre: "premio", etiqueta: "¿Cuál?", tipo: "select",
+                            opciones: data.map((p) => [p.id, p.nombre]) }],
+                        aceptar: "Elegir a quién",
+                    });
+                    if (!r || !r.premio) return;
+                    const premio = data.find((p) => p.id === r.premio);
+                    const res = await PuntosRegalos.regalar({ sb, alumnoId: profile.id, premio, profe: true });
+                    if (!res) return;
+                    if (res.error) { estado.textContent = res.error; return; }
+                    estado.textContent = "Listo: " + premio.nombre + " para " + res.para + ".";
+                } finally {
+                    btn.disabled = false;
+                }
+            });
         }
 
         /* ---------------- El panel para los más pequeños ----------------

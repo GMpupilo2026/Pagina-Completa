@@ -140,12 +140,16 @@
                  docs/decisiones/puntos-y-premios.md. -->
             <div id="bromas-clase" hidden class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-6">
                 <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1">Bromas entre tus alumnos <span aria-hidden="true">🃏</span></h2>
-                <p class="text-sm text-brand-500 dark:text-brand-300 mb-4">Con sus Puntos Ajedrez, tus alumnos se pueden mandar bromas inofensivas entre compañeros: confeti en el panel, un patito que cruza la pantalla de Entrenamiento, el tablero arcoíris por una hora. Nunca en un examen, en la clase en vivo ni en un torneo, y siempre con el nombre de quien la manda. Si prefieres que en tu clase no haya, apágalas aquí.</p>
+                <p class="text-sm text-brand-500 dark:text-brand-300 mb-4">Con sus Puntos Ajedrez, tus alumnos se pueden mandar bromas inofensivas entre compañeros: confeti en el panel, un patito que cruza la pantalla de Entrenamiento, el tablero arcoíris por una hora. Nunca en un examen ni en un torneo (en la clase en vivo, solo si las enciendes), y siempre con el nombre de quien la manda. Si prefieres que en tu clase no haya, apágalas aquí.</p>
                 <label class="flex items-center gap-2 text-sm text-brand-800 dark:text-white">
                     <input id="bromas-clase-permitir" type="checkbox" class="h-4 w-4 rounded border-brand-300 text-accent-600 focus:ring-accent-400" disabled>
                     Mis alumnos se pueden mandar bromas
                 </label>
                 <p id="bromas-clase-estado" class="text-xs mt-1 min-h-[1rem] text-brand-500 dark:text-brand-300" aria-live="polite"></p>
+                <h3 class="mt-4 text-sm font-semibold text-brand-800 dark:text-white">Tú también puedes mandarles una</h3>
+                <p class="text-sm text-brand-500 dark:text-brand-300 mt-1 mb-3">A tus alumnos, con tu nombre y sin que te cueste puntos. Eliges cuál y dónde le cae: en su panel, en Entrenamiento o en la clase en vivo.</p>
+                <button id="bromas-profe-mandar" type="button" disabled class="bg-accent-500 hover:bg-accent-400 text-brand-900 font-semibold px-4 py-2 rounded-lg transition-colors text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 disabled:opacity-60"><span aria-hidden="true">🎭</span> Mandarle una broma a un alumno</button>
+                <p id="bromas-profe-estado" class="text-xs mt-1 min-h-[1rem] text-brand-500 dark:text-brand-300" aria-live="polite"></p>
             </div>
 
             <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-6">
@@ -403,6 +407,7 @@
     <script src="js/videollamada.js"></script>
     <script src="js/main.js"></script>
     <script src="js/avisos.js"></script>
+    <script src="js/puntos-regalos.js"></script>
     <script src="js/legal-version.js"></script>
     <script src="js/foto-perfil.js"></script>
     <script src="js/configuracion.js"></script>
