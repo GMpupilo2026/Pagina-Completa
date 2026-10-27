@@ -1221,19 +1221,29 @@ y la usan la pantalla y el Excel: una sola cuenta.
   instrucciones traen las seis cosas de la semana; las que la plataforma no
   cuenta las revisa el profesor.
 - **El cupo y cómo se llena** (en la propuesta, «Cupo y cómo se elige»; el
-  formulario `ruta-a-la-beca` ya trae sus preguntas): 60 estudiantes en tres
-  grupos de 20, con tope de 5 por colegio, y si se inscriben más, un embudo de
-  compromiso: requisitos → sorteo con tope de 8 por colegio hasta 90 plazas →
+  formulario `ruta-a-la-beca` ya trae sus preguntas): 60 estudiantes en UN solo
+  grupo (no hay niveles ni grupos de clase), con tope de 5 por colegio, y si se
+  inscriben más, un embudo de compromiso: requisitos → sorteo con tope de 8 por colegio hasta 90 plazas →
   semana de prueba (diagnóstico, 5 h activas en 3 días, Meet de bienvenida) →
   lista final → suplencias hasta el 5 de abril. El puntaje de ingreso es 60
   puntos de constancia en la semana de prueba y 40 de las **notas de 2026**; el
-  **Elo del día de la matrícula no suma**: con el diagnóstico (que ya lo pesa
-  según su precisión) decide en cuál de tres niveles compite cada quien, y sirve
-  de referencia para revisar un primer diagnóstico sospechosamente bajo. El
+  **Elo del día de la matrícula no suma**: sirve de referencia para medir el
+  progreso y para revisar un primer diagnóstico sospechosamente bajo; no da ni
+  quita cupo. El
   estudiante se inscribe por su cuenta: el colegio no inscribe ni autoriza, solo
   es un dato para el tope. Los números (90, 8, 5 h, 3 días, 60/40) son una
   propuesta inicial; nada de esto lo calcula todavía la base: el sorteo y la
   lista final se arman a mano con las respuestas del formulario.
+- **La semana perdonada**: quien no llega al mínimo queda «en revisión» (sigue con
+  su acceso), tiene 48 horas desde el lunes para adjuntar documentación de peso
+  (dictamen médico, duelo o emergencia familiar, calendario de pruebas del
+  colegio, falla comprobada de la plataforma), y la coordinación decide en 3 días
+  hábiles. **Se perdona UNA sola semana en todo el programa**: un segundo fallo es
+  una salida aunque se documente, y sin documentación también. Hoy lo lleva una
+  persona: `ruta_cumplimiento()` dice quién no cumplió, pero la base no guarda
+  cuál semana se perdonó ni cuenta cuántas lleva cada quien (una tabla de
+  semanas perdonadas, con su índice único por estudiante, es lo que falta si se
+  quiere que lo haga cumplir la base).
 - Al tocar esto: `node herramientas/verificar-ruta-cumplimiento.js` (la semana
   anterior en hora de Costa Rica, el lunes de un miércoles, «Cumple/Falta»
   escrito, el nombre como texto, la fórmula del Excel, el alumno que no ve nada,
