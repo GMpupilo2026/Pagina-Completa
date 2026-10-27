@@ -20,6 +20,10 @@ herramientas/cuestionarios/
 # de edad. De git no se borra nada, así que ahí no entran ni una vez.
 respaldos/
 
+# Lo que se exporta para entrenar los modelos de herramientas/ia/: anónimo,
+# pero de alumnos. Lo revisa verificar-ia.js.
+herramientas/ia/datos/
+
 # El video promocional se regenera con herramientas/video-promo.js
 promo/
 .wrangler/
