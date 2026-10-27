@@ -1223,7 +1223,7 @@ y la usan la pantalla y el Excel: una sola cuenta.
 - **El cupo y cómo se llena** (en la propuesta, «Cupo y cómo se elige»; el
   formulario `ruta-a-la-beca` ya trae sus preguntas): 60 estudiantes en UN solo
   grupo (no hay niveles ni grupos de clase), con tope de 5 por colegio, y si se
-  inscriben más, un embudo de compromiso: requisitos → sorteo con tope de 8 por colegio hasta 90 plazas →
+  inscriben más, un embudo de compromiso: requisitos → preselección por las notas de 2026, con tope de 8 por colegio, hasta 90 plazas →
   semana de prueba (diagnóstico, 5 h activas en 3 días, Meet de bienvenida) →
   lista final → suplencias hasta el 5 de abril. El puntaje de ingreso es 60
   puntos de constancia en la semana de prueba y 40 de las **notas de 2026**; el
@@ -1232,8 +1232,10 @@ y la usan la pantalla y el Excel: una sola cuenta.
   quita cupo. El
   estudiante se inscribe por su cuenta: el colegio no inscribe ni autoriza, solo
   es un dato para el tope. Los números (90, 8, 5 h, 3 días, 60/40) son una
-  propuesta inicial; nada de esto lo calcula todavía la base: el sorteo y la
-  lista final se arman a mano con las respuestas del formulario.
+  propuesta inicial; nada de esto lo calcula todavía la base: la preselección y la
+  lista final se arman a mano con las respuestas del formulario. **No hay sorteos**:
+  los empates se resuelven por días activos, luego por el promedio de 2026 y al
+  final por la fecha y hora de inscripción.
 - **La semana perdonada**: quien no llega al mínimo queda «en revisión» (sigue con
   su acceso), tiene 48 horas desde el lunes para adjuntar documentación de peso
   (dictamen médico, duelo o emergencia familiar, calendario de pruebas del
