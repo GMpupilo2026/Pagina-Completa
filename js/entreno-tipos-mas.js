@@ -1,5 +1,5 @@
 /* Los Tipos de entrenamiento 8 a 19 de entreno/tipos.html: el Barrido,
- * Intercambios, Constrúyela tú, Rey y peón, Adivina la jugada del maestro,
+ * Intercambios, Conteo, Constrúyela tú, Rey y peón, Adivina la jugada del maestro,
  * ¿Qué apertura es?, la Ruta segura, Aguanta, Remata la ventaja, Elige a
  * tiempo, Tus propios errores y Salva las tablas.
  *
@@ -211,6 +211,192 @@
       explicar(item.respuesta);
       terminar(item, n);
     }, "cuenta las capturas en " + item.casilla + " por turnos, siempre con la pieza de menos valor, y cada bando para cuando ya no le conviene seguir. Peón 1, caballo y alfil 3, torre 5, dama 9.");
+  };
+
+  /* ================================================ Conteo */
+  const sinTildes = (t) => t.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[.!¡¿?]/g, "").trim();
+  const puntos = (n) => Math.abs(n) + (Math.abs(n) === 1 ? " punto" : " puntos");
+  const ETIQ_CLASE = {
+    decide: { gana: "Sí: capturo y gano material", igual: "Da igual: queda parejo", pierde: "No: perdería material" },
+    recupera: { gana: "Salgo ganando: recupero y algo más", igual: "Recupero justo lo que perdí", pierde: "Sigo con menos material" },
+  };
+  const ETIQ_NUMERO = {
+    decide: (n) => (n > 0 ? "+" + n + " (ganas " + puntos(n) + ")" : n < 0 ? "−" + (-n) + " (pierdes " + puntos(n) + ")" : "0 (queda parejo)"),
+    recupera: (n) => (n > 0 ? "+" + n + " (terminas con " + puntos(n) + " de más)" : n < 0 ? "−" + (-n) + " (sigues con " + puntos(n) + " de menos)" : "0 (recuperas justo lo perdido)"),
+  };
+  /* Lo que se escribe para contestar «conviene / no conviene» o un número. */
+  function leerVeredicto(txt, item) {
+    const t = sinTildes(txt);
+    if (item.modo === "clase") {
+      if (/^(si|si capturo|capturo|gano|ganas|gana|salgo ganando|gano material|ganas material)$/.test(t)) return "gana";
+      if (/^(igual|da igual|queda igual|parejo|queda parejo|empate|recupero|recupero justo|justo)$/.test(t)) return "igual";
+      if (/^(no|no capturo|no conviene|pierdo|pierdes|pierde|menos|sigo con menos)$/.test(t)) return "pierde";
+      return null;
+    }
+    let m;
+    if (/^(igual|0|cero|queda igual|parejo|empate)$/.test(t)) return "0";
+    if ((m = /^(?:\+|ganas?|gano|ganan)\s*(\d+)(?:\s*puntos?)?$/.exec(t))) return String(+m[1]);
+    if ((m = /^(?:-|−|pierdes?|pierdo|pierden)\s*(\d+)(?:\s*puntos?)?$/.exec(t))) return String(-m[1]);
+    if ((m = /^(\d+)$/.exec(t))) return String(+m[1]);
+    return null;
+  }
+  U.JUEGOS.conteo = function (item) {
+    const yo = item.fen.split(" ")[1];
+    const tabla = R.tablero(item.fen);
+    const pieza = item.casilla ? tabla[R.idx(item.casilla)] : null;
+    $("controles").appendChild(el("p", "text-sm text-brand-600 dark:text-brand-300 mb-3", "Cada bando captura con su pieza de menos valor y sigue solo mientras le conviene. Peón 1, caballo y alfil 3, torre 5, dama 9. Cada casilla se cuenta por separado."));
+
+    /* ---- 1. Sin defensa: se toca la pieza ---- */
+    if (item.tipo === "toca") {
+      let errores = 0, hecho = false;
+      const probar = (s) => {
+        if (hecho) return;
+        s = String(s || "").trim().toLowerCase();
+        if (!/^[a-h][1-8]$/.test(s)) { estado("Escribe una casilla, por ejemplo e5."); return; }
+        const p = tabla[R.idx(s)];
+        if (!p || p.c === yo) { estado("En " + s + " no hay una pieza rival. Toca una pieza de las " + COLOR[R.otro(yo)] + "."); return; }
+        if (s === item.casilla) {
+          hecho = true;
+          const n = errores === 0 ? 3 : errores === 1 ? 1 : 0;
+          tab.marcas[s] = { cls: "m-bien", signo: "✓", dicho: "sin defensa" };
+          tab.clic = null;
+          U.pintar();
+          U.pedirJugada("", null);
+          estado("✓ ¡Esa! " + (n ? textoEstrellas(n) : ""));
+          explicar(item.respuesta);
+          terminar(item, n);
+          return;
+        }
+        errores++;
+        tab.marcas[s] = { cls: "m-mal", signo: "✗", dicho: "tiene defensa o no se puede capturar gratis" };
+        U.pintar();
+        if (errores >= 2) {
+          hecho = true;
+          tab.marcas[item.casilla] = { cls: "m-bien", signo: "✓", dicho: "sin defensa" };
+          tab.clic = null;
+          U.pintar();
+          U.pedirJugada("", null);
+          estado("Era " + item.casilla + ". Cuenta como no resuelto.");
+          explicar(item.respuesta);
+          terminar(item, 0);
+        } else estado("✗ " + s + ": esa pieza tiene defensa o no se puede comer gratis. Cuenta los defensores. Te queda un intento.");
+      };
+      U.tablero(item.fen, { orientacion: yo, clic: probar });
+      $("juego-turno").textContent = "Juegan las " + COLOR[yo] + ".";
+      $("juego-enunciado").textContent = "Toca la pieza de las " + COLOR[R.otro(yo)] + " que puedes capturar gratis: la que nadie defiende.";
+      U.pedirJugada("O escribe la casilla (por ejemplo, e5)", (txt) => { $("jugada-input").value = ""; probar(txt); });
+      U.ponerAyudas({
+        pista: () => estado("Pista: cuenta, pieza por pieza, cuántas defienden a las que atacas. La que tenga cero defensores es la tuya."),
+        solucion: () => {
+          if (hecho) { estado("Este ya lo resolviste. " + U.textoSiguiente()); return; }
+          hecho = true;
+          tab.marcas[item.casilla] = { cls: "m-bien", signo: "✓", dicho: "sin defensa" };
+          tab.clic = null;
+          U.pintar();
+          U.pedirJugada("", null);
+          estado("La solución: " + item.casilla + ". Cuenta como no resuelto.");
+          explicar(item.respuesta);
+          terminar(item, 0);
+        },
+      });
+      return;
+    }
+
+    /* ---- 2. Cuenta: cuántos atacan y cuántos defienden ---- */
+    if (item.tipo === "cuenta") {
+      U.tablero(item.fen, { orientacion: yo, ultima: [item.casilla] });
+      $("juego-turno").textContent = "Juegan las " + COLOR[yo] + ". La casilla marcada es " + item.casilla + " (" + piezaDicha(pieza.c + pieza.t) + ").";
+      $("juego-enunciado").textContent = "En " + item.casilla + " hay " + R.NOMBRE[pieza.t] + " de las " + COLOR[pieza.c] + ". ¿Cuántas piezas la atacan (de las " + COLOR[yo] + ") y cuántas la defienden (de las " + COLOR[pieza.c] + ")?";
+      const etiqueta = (op) => { const [a, d] = op.split("-"); return "Atacan " + a + " y defienden " + d; };
+      $("jugada-form").dataset.propio = "1";
+      U.pedirJugada("O escribe los dos números (por ejemplo «2 1»: atacan 2 y defienden 1) o la letra de la opción", (txt) => {
+        if (window.CuadroComandos && CuadroComandos.opcionPedida(txt, item.opciones.length) !== null && U.responderConOpcion(txt)) return;
+        const nums = (txt.match(/\d+/g) || []).map(Number);
+        const op = nums.length === 2 ? nums[0] + "-" + nums[1] : null;
+        if (op && item.opciones.indexOf(op) >= 0) {
+          const b = Array.from($("controles").querySelectorAll("button[data-op]")).find((x) => x.dataset.op === op);
+          if (b && !b.disabled) { $("jugada-input").value = ""; b.click(); return; }
+          estado("Esa opción ya la probaste.");
+          return;
+        }
+        if (!U.responderConOpcion(txt)) estado("Escribe dos números, primero los que atacan y después los que defienden («2 1»), o la letra de la opción.");
+      });
+      opciones(item, item.opciones, etiqueta, (op) => op === item.atacan + "-" + item.defienden, (bien, n, sol) => {
+        estado((bien ? "✓ ¡Correcto! " : sol ? "La solución: " : "Respuesta incorrecta. Era: ") + etiqueta(item.atacan + "-" + item.defienden) + ". " + (n ? textoEstrellas(n) : sol ? "Cuenta como no resuelto." : ""));
+        explicar(item.respuesta);
+        terminar(item, n);
+      }, "Cuenta las piezas que miran la casilla " + item.casilla + ", las tuyas y las del rival. Una pieza detrás de otra todavía no cuenta.");
+      return;
+    }
+
+    /* ---- 3 a 8 y 9, 10: decidir con la cuenta ---- */
+    if (item.tipo === "decide" || item.tipo === "recupera") {
+      const recupera = item.tipo === "recupera";
+      const etiqueta = (op) => (item.modo === "clase" ? ETIQ_CLASE[item.tipo][op] : ETIQ_NUMERO[item.tipo](+op));
+      const buena = item.modo === "clase" ? M.claseDe(recupera ? item.neto : item.valor) : String(recupera ? item.neto : item.valor);
+      U.tablero(item.fen, { orientacion: yo, ultima: recupera ? [item.de, item.a] : [item.casilla] });
+      if (recupera) {
+        $("juego-turno").textContent = "Juegan las " + COLOR[yo] + ". Las " + COLOR[R.otro(yo)] + " acaban de capturar en " + item.casilla + " (" + R.sanEs(item.jugada) + ").";
+        $("juego-enunciado").textContent = "Te capturaron " + articulo("x" + item.capturada) + R.NOMBRE[item.capturada] + " (" + puntos(item.perdida) + "). Las " + COLOR[R.otro(yo)] + " ya están en " + item.casilla + ". Si recapturas allí y cada bando sigue solo mientras le conviene, ¿cómo queda el material respecto a antes de esa captura?";
+      } else {
+        $("juego-turno").textContent = "Juegan las " + COLOR[yo] + ". La casilla marcada es " + item.casilla + " (" + piezaDicha(pieza.c + pieza.t) + ").";
+        $("juego-enunciado").textContent = "¿Conviene capturar en " + item.casilla + "? Cuenta los ataques y las defensas y sigue la serie de capturas hasta el final.";
+      }
+      $("jugada-form").dataset.propio = "1";
+      U.pedirJugada(item.modo === "clase"
+        ? "O escribe tu respuesta («sí», «igual», «no») o la letra de la opción"
+        : "O escribe el número («+2», «-1», «0») o la letra de la opción", (txt) => {
+        if (window.CuadroComandos && CuadroComandos.opcionPedida(txt, item.opciones.length) !== null && U.responderConOpcion(txt)) return;
+        const op = leerVeredicto(txt, item);
+        if (op === null) { if (!U.responderConOpcion(txt)) estado("No entendí «" + txt + "». " + (item.modo === "clase" ? "Escribe «sí», «igual» o «no», o la letra de la opción." : "Escribe un número como «+2», «-1» o «0», o la letra de la opción.")); return; }
+        if (item.opciones.indexOf(op) < 0) { estado("«" + txt + "» no es una de las opciones: " + item.opciones.map((o) => (+o > 0 ? "+" + o : o)).join(", ") + "."); $("jugada-input").select(); return; }
+        const b = Array.from($("controles").querySelectorAll("button[data-op]")).find((x) => x.dataset.op === op);
+        if (!b || b.disabled) { estado("Esa opción ya la probaste."); return; }
+        $("jugada-input").value = "";
+        b.click();
+      });
+      opciones(item, item.opciones, etiqueta, (op) => op === buena, (bien, n, sol) => {
+        estado((bien ? "✓ ¡Correcto! " : sol ? "La solución: " : "Respuesta incorrecta. Era: ") + etiqueta(buena) + ". " + (n ? textoEstrellas(n) : sol ? "Cuenta como no resuelto." : ""));
+        explicar(item.respuesta);
+        terminar(item, n);
+      }, recupera
+        ? "Cuenta cuántas piezas pueden recapturar en " + item.casilla + " y cuántas defienden la pieza que capturó. Después, resta lo que ya te habían quitado."
+        : "Cuenta los atacantes y los defensores de " + item.casilla + ", y sigue las capturas de a una, siempre con la pieza más barata.");
+      return;
+    }
+
+    /* ---- 11 a 14: varias casillas, una sola gana ---- */
+    if (item.tipo === "elige") {
+      const nombre = (c) => { const q = item.candidatas.find((x) => x.casilla === c); return "Capturar en " + c + " (" + R.NOMBRE[q.pieza] + ")"; };
+      const etiqueta = (op) => (op === "ninguna" ? "Ninguna: ninguna de las capturas gana material" : nombre(op));
+      const letras = {};
+      item.opciones.forEach((op, k) => { if (op !== "ninguna") letras[op] = U.letraDe(k); });
+      const marcas = {};
+      Object.keys(letras).forEach((c) => { marcas[c] = { cls: "m-cand", signo: letras[c], dicho: "captura " + letras[c] }; });
+      U.tablero(item.fen, { orientacion: yo, ultima: item.candidatas.map((c) => c.casilla), marcas });
+      $("juego-turno").textContent = "Juegan las " + COLOR[yo] + ". Las casillas donde puedes capturar están marcadas con la letra de su opción.";
+      $("juego-enunciado").textContent = item.opciones.indexOf("ninguna") >= 0
+        ? "Cuenta los ataques y las defensas de cada casilla marcada. ¿Hay alguna captura que gane material?"
+        : "Cuenta los ataques y las defensas de cada casilla marcada. ¿En cuál de estas capturas ganas material?";
+      $("jugada-form").dataset.propio = "1";
+      U.pedirJugada("O escribe la casilla donde capturas (por ejemplo, e5), «ninguna», o la letra de la opción", (txt) => {
+        if (window.CuadroComandos && CuadroComandos.opcionPedida(txt, item.opciones.length) !== null && U.responderConOpcion(txt)) return;
+        const t = sinTildes(txt);
+        const op = /^(ninguna|ninguno|nada|no)$/.test(t) ? "ninguna" : (/^[a-h][1-8]$/.test(t) ? t : null);
+        if (op && item.opciones.indexOf(op) >= 0) {
+          const b = Array.from($("controles").querySelectorAll("button[data-op]")).find((x) => x.dataset.op === op);
+          if (b && !b.disabled) { $("jugada-input").value = ""; b.click(); return; }
+          estado("Esa opción ya la probaste.");
+          return;
+        }
+        if (!U.responderConOpcion(txt)) estado("«" + txt + "» no es una de las opciones. Escribe una casilla de las marcadas" + (item.opciones.indexOf("ninguna") >= 0 ? ", «ninguna»" : "") + " o la letra de la opción.");
+      });
+      opciones(item, item.opciones, etiqueta, (op) => op === item.correcta, (bien, n, sol) => {
+        estado((bien ? "✓ ¡Correcto! " : sol ? "La solución: " : "Respuesta incorrecta. Era: ") + etiqueta(item.correcta) + ". " + (n ? textoEstrellas(n) : sol ? "Cuenta como no resuelto." : ""));
+        explicar(item.respuesta);
+        terminar(item, n);
+      }, "Cuenta una casilla a la vez: atacantes contra defensores, y la serie de capturas con la pieza más barata primero.");
+    }
   };
 
   /* ================================================ 10. Constrúyela tú */
@@ -715,8 +901,98 @@
       jugar({ from: m.from, to: m.to, promotion: m.promotion });
     });
   }
+  /* ---- Salva las tablas, nivel 3: El ahogado
+     No se juega contra el motor: la posición está perdida y hay una jugada que
+     fuerza el ahogado, el del rival o el propio. La corrige chess.js, con las
+     reglas de js/tipos-reglas-mas.js (ahogadoForzado): sirve CUALQUIER jugada
+     que lo fuerce contra todas las defensas, no solo la del banco, y si no
+     sirve se dice qué responde el rival. Tras una jugada buena, la página
+     contesta por el rival con la defensa que más se resiste. */
+  function ahogado(item) {
+    const yo = item.fen.split(" ")[1];
+    const juego = new Chess(item.fen);
+    let jugadas = 0, errores = 0, pista = false, hecho = false, ocupado = false, vivo = true;
+    U.alLimpiar(() => { vivo = false; });
+    const marcas = {};
+    const restan = () => item.jugadas - jugadas;
+    const redibujar = (ultima) => U.tablero(juego.fen(), { orientacion: yo, juego, ultima, marcas: Object.assign({}, marcas), clic: hecho || ocupado ? null : U.moverConClic(juego, jugar) });
+    function fin(texto, n) {
+      hecho = true; ocupado = false;
+      U.pedirJugada("", null);
+      bPista.disabled = true;
+      redibujar(tab.ultima);
+      estado(texto + (n ? " " + textoEstrellas(n) : ""));
+      explicar(item.respuesta);
+      terminar(item, n);
+    }
+    function ahogo() {
+      return juego.turn() === yo
+        ? "✓ ¡Ahogado! A tu rey no le queda ninguna jugada legal y no está en jaque: tablas. Te ahogaron, y lo forzaste tú."
+        : "✓ ¡Ahogado! Al rival no le queda ninguna jugada legal y su rey no está en jaque: tablas.";
+    }
+    function jugar(mov) {
+      if (hecho || ocupado) return;
+      const antes = juego.fen();
+      const m = juego.move(mov);
+      if (!m) { estado("Esa jugada no es legal."); return; }
+      const buenas = M.ahogadoForzado(Chess, antes, restan());
+      if (buenas.indexOf(m.san) < 0) {
+        const refuta = M.refutaAhogado(Chess, antes, m.san, restan());
+        juego.undo();
+        errores++;
+        const porque = refuta
+          ? " El rival contesta " + R.sanEs(refuta.san) + (refuta.mate ? " y da mate" : "") + " y el ahogado se escapa."
+          : " Con ella el rival no queda ahogado y la partida sigue perdida.";
+        if (errores >= 2) return fin("✗ " + R.sanEs(m.san) + " no fuerza el ahogado." + porque + " La solución: " + item.lineaEs + ".", 0);
+        redibujar(tab.ultima);
+        estado("✗ " + R.sanEs(m.san) + " no fuerza el ahogado." + porque + " Prueba otra.");
+        U.pedirJugada("O escribe tu jugada (las " + COLOR[yo] + ")", pedir);
+        return;
+      }
+      jugadas++;
+      delete marcas[Object.keys(marcas)[0]];
+      redibujar([m.from, m.to]);
+      if (juego.in_stalemate()) return fin(ahogo(), M.estrellasAhogado(errores, pista));
+      ocupado = true;
+      estado("Jugaste " + R.sanEs(m.san) + ". El rival no tiene salida: responde…");
+      const t = setTimeout(() => {
+        if (!vivo) return;
+        const r = M.defensaAhogado(Chess, juego.fen(), restan());
+        const rr = r ? juego.move(r) : null;
+        ocupado = false;
+        if (!rr) return fin("No se pudo continuar la línea: este intento no cuenta. Usa «Otra vez».", 0);
+        redibujar([rr.from, rr.to]);
+        if (juego.in_stalemate()) return fin(ahogo(), M.estrellasAhogado(errores, pista));
+        estado("El rival jugó " + R.sanEs(rr.san) + ". Te toca: queda un paso para el ahogado.");
+      }, 900);
+      U.alLimpiar(() => clearTimeout(t));
+    }
+    const pedir = (txt) => {
+      const m = U.jugadaEscrita(juego, txt);
+      if (!m) { U.noSePudo(txt); return; }
+      $("jugada-input").value = "";
+      jugar({ from: m.from, to: m.to, promotion: m.promotion });
+    };
+    $("juego-turno").textContent = "Juegas con las " + COLOR[yo] + ". Estás perdido, pero hay una jugada que salva la partida.";
+    $("juego-enunciado").textContent = "Encuentra la jugada que fuerza el ahogado" + (item.jugadas > 1 ? " (en " + item.jugadas + " jugadas tuyas)" : "") + ". Si juegas otra cosa, el motor te da " + numero(item.evalSin) + ".";
+    const bPista = boton("💡 Pista", BTN_SEGUNDO + " mt-1", () => {
+      if (hecho || ocupado || pista) return;
+      const primera = M.ahogadoForzado(Chess, juego.fen(), restan())[0];
+      if (!primera) return;
+      const mm = new Chess(juego.fen()).move(primera);
+      pista = true;
+      bPista.disabled = true;
+      marcas[mm.from] = { cls: "m-bien", signo: "?", dicho: "pista: esta pieza" };
+      redibujar(tab.ultima);
+      estado("Pista: la jugada sale con " + articulo(mm.color + mm.piece) + piezaDicha(mm.color + mm.piece) + " de " + mm.from + ". Con pista, una estrella.");
+    });
+    $("controles").appendChild(bPista);
+    if (U.adaptado()) U.leerPosicion(item.fen);
+    redibujar(null);
+    U.pedirJugada("O escribe tu jugada (las " + COLOR[yo] + ")", pedir);
+  }
   U.JUEGOS.remata = (item) => contraMotor(item, CONTRA_MOTOR.remata);
-  U.JUEGOS.tablas = (item) => contraMotor(item, CONTRA_MOTOR.tablas);
+  U.JUEGOS.tablas = (item) => (item.ahogado ? ahogado(item) : contraMotor(item, CONTRA_MOTOR.tablas));
 
   /* ================================================ 17. Elige a tiempo
      Varias candidatas razonables y un reloj. No hay «la única»: cuenta cuánto

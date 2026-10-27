@@ -107,7 +107,11 @@ async function decir(page, t) {
   await page.click("#mapa-4x4 button[data-numero='1']");
   await page.waitForTimeout(300);
   igual("tocar un resuelto del mapa lo abre", await texto(page, "#solo-progress-text"), "Fácil — Ejercicio 1 de 200");
-  await page.click("#mapa-4x4 button[data-numero='9']", { force: true }); // aria-disabled: Playwright lo cree apagado, un clic de verdad llega
+  // El clic va al botón mismo, no a sus coordenadas: al abrir el 1 la página
+  // mueve el mapa para mostrarlo, y un clic por coordenadas (con `force`, sin
+  // esperar a que se quede quieto) a veces caía en otro ejercicio en el CI.
+  // Es un aria-disabled, no un disabled: el clic de verdad llega.
+  await page.$eval("#mapa-4x4 button[data-numero='9']", (b) => b.click());
   // Se espera el aviso, no un tiempo fijo: con 100 ms, en el CI a veces todavía no estaba.
   await page.waitForFunction(() => /El que te toca/.test((document.getElementById("mis-4x4-aviso") || {}).textContent || ""), null, { timeout: 5000 }).catch(() => {});
   cierto("tocar uno cerrado no lo abre y dice cuál toca", (await texto(page, "#solo-progress-text")) === "Fácil — Ejercicio 1 de 200" && /todavía no se abre.*El que te toca es el 4/.test(await texto(page, "#mis-4x4-aviso")));

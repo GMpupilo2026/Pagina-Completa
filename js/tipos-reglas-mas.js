@@ -1,5 +1,5 @@
 /* Las reglas de los Tipos de entrenamiento 8 a 14, sin DOM: el Barrido,
- * Intercambios, Constrúyela tú, la Ruta segura y Rey y peón. (Adivina la jugada
+ * Intercambios, Conteo, Constrúyela tú, la Ruta segura y Rey y peón. (Adivina la jugada
  * del maestro y ¿Qué apertura es? no necesitan reglas propias: se corrigen
  * comparando jugadas o nombres.)
  *
@@ -449,13 +449,210 @@
     return minimo >= TABLAS.firme ? 3 : 2;
   }
 
+
+  /* =====================================================================
+   * El ahogado (nivel 3 de Salva las tablas): una posición perdida donde hay
+   * una jugada que FUERZA el ahogado, el del rival o el propio. «Forzar»
+   * quiere decir contra todas las defensas, no contra la que el motor eligió:
+   * quien mueve juega `m`; si el rival queda sin jugadas y sin jaque, ya está;
+   * si no, cada respuesta legal del rival tiene que terminar en ahogado
+   * enseguida (el propio: «te ahogan») o dejar otra jugada del alumno que
+   * también lo fuerce, hasta `tope` jugadas del alumno. Mate, y cualquier
+   * otra tabla (material insuficiente, repetición), no cuentan: la promesa de
+   * la posición es el ahogado, y si el rival tiene un mate o una defensa que
+   * lo evita, la jugada no sirve. Lo corre la página para corregir y el
+   * verificador para comprobar el banco: la misma función, en Node.
+   * ===================================================================== */
+  function ahogadoSiguiente(g, n) {
+    const buenas = [];
+    for (const m of g.moves()) {
+      g.move(m);
+      let ok;
+      if (g.in_stalemate()) ok = true;
+      else if (g.game_over()) ok = false;
+      else {
+        ok = true;
+        for (const r of g.moves()) {
+          g.move(r);
+          let sub;
+          if (g.in_stalemate()) sub = true;
+          else if (g.game_over() || n <= 1) sub = false;
+          else sub = ahogadoSiguiente(g, n - 1).length > 0;
+          g.undo();
+          if (!sub) { ok = false; break; }
+        }
+      }
+      g.undo();
+      if (ok) buenas.push(m);
+    }
+    return buenas;
+  }
+  /* Las jugadas (SAN) del que mueve que fuerzan el ahogado en `tope` jugadas
+     propias o menos; vacío si no hay. */
+  function ahogadoForzado(Chess, fen, tope) {
+    const g = cargar(Chess, fen);
+    return g && !g.game_over() ? ahogadoSiguiente(g, tope) : [];
+  }
+  /* ¿Cuántas jugadas propias le cuesta, desde `g`, al que mueve? 0 si ya está
+     ahogado; Infinity si no lo fuerza en `tope`. */
+  function costoAhogado(g, tope) {
+    if (g.in_stalemate()) return 0;
+    if (g.game_over()) return Infinity;
+    for (let n = 1; n <= tope; n++) if (ahogadoSiguiente(g, n).length) return n;
+    return Infinity;
+  }
+  /* La respuesta del rival a una jugada que fuerza el ahogado: la que más se
+     resiste (la que deja más jugadas por delante); a igualdad, la primera. Es
+     la que muestra la página y la que anota el generador. null si el rival
+     no tiene respuesta (ya lo ahogaron a él). */
+  function defensaAhogado(Chess, fen, tope) {
+    const g = cargar(Chess, fen);
+    if (!g || g.game_over()) return null;
+    let mejor = null, peor = -1;
+    for (const r of g.moves()) {
+      g.move(r);
+      const c = g.in_stalemate() ? 0 : costoAhogado(g, Math.max(1, tope - 1));
+      g.undo();
+      if (c > peor) { peor = c; mejor = r; }
+    }
+    return mejor;
+  }
+  /* Una respuesta del rival que desbarata una jugada que NO fuerza el ahogado
+     (para decir por qué no sirve); null si la jugada es mala por otra cosa. */
+  function refutaAhogado(Chess, fen, san, tope) {
+    const g = cargar(Chess, fen);
+    if (!g || !g.move(san)) return null;
+    if (g.in_stalemate()) return null;
+    for (const r of g.moves()) {
+      g.move(r);
+      const sirve = g.in_stalemate() || (!g.game_over() && tope > 1 && ahogadoSiguiente(g, tope - 1).length > 0);
+      const mate = g.in_checkmate();
+      g.undo();
+      if (!sirve) return { san: r, mate };
+    }
+    return null;
+  }
+  /* La línea completa de la solución, desde `fen`: la primera jugada buena, la
+     defensa que más se resiste, y así hasta el ahogado. */
+  function lineaAhogado(Chess, fen, tope) {
+    const g = cargar(Chess, fen);
+    const linea = [];
+    let resta = tope;
+    while (g && resta > 0 && !g.game_over()) {
+      const buenas = ahogadoSiguiente(g, resta);
+      if (!buenas.length) return null;
+      const m = buenas[0];
+      g.move(m); linea.push(m);
+      if (g.in_stalemate()) return linea;
+      const r = defensaAhogado(Chess, g.fen(), resta);
+      if (!r) return null;
+      g.move(r); linea.push(r);
+      if (g.in_stalemate()) return linea;
+      resta--;
+    }
+    return null;
+  }
+  /* Tres estrellas a la primera; con un error o con pista, una. */
+  function estrellasAhogado(errores, pista) {
+    if (pista) return 1;
+    return errores === 0 ? 3 : errores === 1 ? 1 : 0;
+  }
+
+  /* ===================================================================
+   * Conteo: contar ataques y defensas sobre las piezas en contacto para saber
+   * si capturar conviene, y, cuando te acaban de capturar, si recapturar.
+   *
+   * Es la cuenta de Intercambios (cada bando captura con su pieza más barata
+   * que pueda capturar legalmente y sigue solo mientras le conviene), pero
+   * preguntada de otra manera, y sobre una casilla o sobre varias:
+   *
+   *   colgadas    las piezas rivales que se pueden capturar sin que nadie
+   *               recapture;
+   *   conteo      cuántas piezas atacan una casilla y cuántas la defienden
+   *               (DIRECTO: una pieza detrás de otra no cuenta; por eso
+   *               «rayos» y «clavada» se descartan en los niveles de contar);
+   *   capturas    todas las casillas rivales capturables, cada una con el
+   *               resultado de su cadena (cada casilla se cuenta por
+   *               separado, como si fuera la única jugada);
+   *   recuperar   te acaban de capturar una pieza: cómo termina el material,
+   *               desde ANTES de esa captura, si recapturas.
+   *
+   * Sin coronaciones ni capturas al paso, que cambiarían el valor en medio.
+   * =================================================================== */
+  function conteoCasilla(Chess, fen, casilla) {
+    const x = intercambio(Chess, fen, casilla);
+    if (!x) return null;
+    const tab = R.tablero(fen), ic = R.idx(casilla);
+    const dueno = tab[ic].c, mueve = otro(dueno);
+    const A = atacantes(tab, mueve, ic), D = atacantes(tab, dueno, ic);
+    return Object.assign({}, x, {
+      atacan: A.length, defienden: D.length,
+      rey: A.concat(D).some((j) => tab[j].t === "k"),
+    });
+  }
+  /* Las casillas con una pieza rival (que no es el rey) que el bando que mueve
+     puede capturar, en el orden en que chess.js las genera. `null` si alguna
+     captura sería una coronación o al paso. */
+  function casillasCapturables(Chess, fen) {
+    const g = cargar(Chess, fen);
+    if (!g) return null;
+    const vistas = [];
+    let raro = false;
+    g.moves({ verbose: true }).forEach((m) => {
+      if (!m.captured) return;
+      if (m.promotion || m.flags.includes("e")) raro = true;
+      if (vistas.indexOf(m.to) < 0) vistas.push(m.to);
+    });
+    return raro ? null : vistas;
+  }
+  /* Las piezas que se pueden comer gratis: ninguna recaptura. `sinDefensa` es
+     que, además, nadie las defiende (ni una pieza clavada que no podría
+     recapturar): si no coinciden, la posición no sirve para preguntar «¿cuál
+     está sin defensa?». */
+  function colgadas(Chess, fen) {
+    const caps = casillasCapturables(Chess, fen);
+    if (!caps) return null;
+    const out = [];
+    caps.forEach((s) => {
+      const x = conteoCasilla(Chess, fen, s);
+      if (x && x.pasos.length === 1) out.push({ casilla: s, sinDefensa: x.defienden === 0, valor: x.valor });
+    });
+    return out;
+  }
+  /* Todas las casillas capturables con su cadena. `null` si no hay ninguna o si
+     alguna tiene una coronación o una captura al paso en medio. */
+  function capturas(Chess, fen) {
+    const caps = casillasCapturables(Chess, fen);
+    if (!caps || !caps.length) return null;
+    const out = [];
+    for (const s of caps) {
+      const x = conteoCasilla(Chess, fen, s);
+      if (!x || x.corona || x.alPaso) return null;
+      const p = R.tablero(fen)[R.idx(s)];
+      out.push({ casilla: s, pieza: p.t, valor: x.valor, pasos: x.pasos.length, x });
+    }
+    return out;
+  }
+  /* Te acaban de capturar `perdida` puntos en `casilla` y te toca: el balance
+     desde antes de esa captura, si recapturas y cada bando sigue solo mientras
+     le conviene. 0 es «recuperas justo lo que perdiste». */
+  function recuperar(Chess, fenDespues, casilla, perdida) {
+    const x = conteoCasilla(Chess, fenDespues, casilla);
+    if (!x || x.corona || x.alPaso) return null;
+    return Object.assign({}, x, { perdida, neto: x.valor - perdida });
+  }
+  /* «gana», «igual» o «pierde» según el signo. */
+  function claseDe(v) { return v > 0 ? "gana" : v < 0 ? "pierde" : "igual"; }
+
   const TiposReglasMas = {
     TABLAS, juicioTablas, estrellasTablas,
+    ahogadoForzado, defensaAhogado, refutaAhogado, lineaAhogado, estrellasAhogado,
     TIEMPO, estrellasTiempo, segundosTiempo,
     REMATA, cpDelAlumno, juicioRemata, estrellasRemata,
     aguantaAcertada, textoRefuta,
     VALOR, atacadas, atacantes, amenazados, barrido, corregirBarrido,
     intercambio, textoIntercambio,
+    conteoCasilla, casillasCapturables, colgadas, capturas, recuperar, claseDe,
     construye, solucionesConstruye, tieneMateEn1,
     rutaMinima, pasoValido, estrellasRuta,
     kpkIndice, kpkDesdeFen, kpkGana, bitsDeBase64, defensaKpk,

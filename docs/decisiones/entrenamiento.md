@@ -3168,6 +3168,52 @@ de jugar lo hacen en `PREPARAR[tipo]`.
   la pieza que viaja, porque ella no tapa nada. El mínimo es el camino más
   corto exacto.
 
+### Conteo (entre Intercambios y Constrúyela tú)
+
+La técnica del conteo: antes de capturar, contar los ataques y las defensas
+sobre las piezas en contacto y seguir la serie de cambios hasta el final. El
+nombre y la idea (la pieza sin defensa y el conteo en varias casillas como
+subtipos) vienen del motivo «Recuento» de Chess Tempo, que el dueño señaló; no
+se pudo abrir su página desde el contenedor, así que los ejercicios no copian
+nada de ahí: son propios, de posiciones de Lichess.
+
+- **Es la cuenta de Intercambios, preguntada de otra manera.** Cada bando
+  captura con su pieza de menos valor que pueda capturar LEGALMENTE y sigue solo
+  mientras le conviene (`M.intercambio`). Lo nuevo vive en
+  `js/tipos-reglas-mas.js`: `conteoCasilla` (la cadena más cuántos atacan y
+  cuántos defienden, directo), `colgadas`, `capturas` (todas las casillas
+  capturables, cada una con su cadena) y `recuperar` (te capturaron: el balance
+  desde ANTES de esa captura). Sin motor: lo que se promete es una cuenta de
+  material, no un resultado de partida, y el verificador la vuelve a correr.
+- **Catorce niveles, que crecen en profundidad y en casillas.** Una casilla, de
+  menos a más capturas: 1 sin defensa (se toca la pieza), 2 contar atacantes y
+  defensores, 3 dos capturas, 4 tres, 5 cuatro, 6 cinco o más, 7 rayos X, 8
+  clavadas. Cuando te capturaron: 9 recapturar (serie corta, «gana / igual /
+  pierde») y 10 en cadena larga (el número exacto). Varias casillas, donde solo
+  una gana: 11 dos, 12 tres a cinco, 13 con una serie de cuatro capturas o más,
+  14 «¿alguna gana?», con «ninguna» como opción y como respuesta cierta la
+  mitad de las veces. **El número y el id de cada nivel no se cambian**: son la
+  clave del avance. Los niveles de «gana / igual / pierde» (3, 4, 9) pasan a
+  número desde el 5.
+- **«Sin defensa» exige que lo de regalo y lo sin defensa coincidan.** Una
+  pieza defendida por otra que está clavada se puede comer gratis, pero el
+  alumno la contaría como defendida; esa posición no entra. Y debe haber UNA
+  sola pieza de regalo. El nivel 2 descarta rayos X, clavadas y el rey de por
+  medio (un rey que «ataca» una casilla defendida no puede capturar), para que
+  contar sea contar y no adivinar.
+- **Varias casillas se cuentan una por una**, como si cada captura fuera la
+  única jugada; que capturar en una cambie lo que pasa en otra no se pregunta.
+  Las posiciones con una coronación o una captura al paso en medio no entran.
+- **El rótulo del panel de la clase no delata la respuesta** (`resumen`: «2
+  casillas para capturar», no «ninguna gana»); la respuesta va en `respuesta`.
+- **Se regenera con `node herramientas/tipos-generar.js --solo conteo`**, sin
+  motor y sin tocar los demás bancos: ningún id de otro tipo cambia y nadie
+  pierde sus estrellas. Recorre todas las posiciones (un par de minutos).
+  `verificar-tipos.js` comprueba cada ejercicio con las reglas y
+  `verificar-tipos-pagina.js` los juega de punta a punta, con botones y
+  escribiendo. El total de tipos subió a veinte en los verificadores que lo
+  cuentan (`verificar-clase-entrenamientos`, `verificar-sesion-curso`).
+
 ### El tipo 15: Aguanta
 
 Todo lo demás de Entrenamiento enseña a atacar; **Aguanta** enseña a
@@ -3701,6 +3747,69 @@ están en `js/tipos-reglas-mas.js` (`juicioTablas`, `estrellasTablas`).
   navegador (ver Remata).
 - `node herramientas/tipos-generar.js --solo tablas` rehace solo este banco. En
   la clase en vivo trae «🎯 Practicar».
+
+#### Nivel 3: El ahogado
+
+Una posición perdida en la que hay una jugada que **fuerza el ahogado**: el del
+rival (se queda sin jugadas legales y sin jaque) o el propio («te ahogan»:
+Dxe3+ Rxe3+ Tg3+ y las blancas no tienen jugada porque la torre y el alfil
+están clavados y el rey no tiene casillas). Lo pidió el dueño con un ejemplo de
+ese tipo; se contesta con una jugada, no contra el motor.
+
+- **No se juega contra el motor: lo corrige chess.js.** `ahogadoForzado` (en
+  `js/tipos-reglas-mas.js`, la misma función que corrige la página, arma el
+  banco y comprueba el verificador) dice qué jugadas del que mueve fuerzan el
+  ahogado en una o dos jugadas propias **contra todas las defensas**: cada
+  respuesta legal del rival tiene que terminar en ahogado enseguida o dejar otra
+  jugada que también lo fuerce. Mate y cualquier otra tabla (repetición,
+  material insuficiente) no cuentan: la promesa es el ahogado. Sirve **cualquier**
+  jugada que lo fuerce, no solo la del banco, y una que no sirve se corrige
+  diciendo qué responde el rival (`refutaAhogado`). Tras una jugada buena, la
+  página contesta por el rival con la defensa que más se resiste
+  (`defensaAhogado`) hasta el ahogado. Tres estrellas a la primera; con un error
+  o con pista, una; a la segunda jugada mala se rinde, enseña la solución y no da
+  estrellas (`estrellasAhogado`).
+- **Estar perdida lo dice el motor, y el verificador lo guarda**: el generador
+  pide que la mejor jugada que NO fuerza el ahogado dé −2,5 o peor (o mate en
+  contra) a profundidad 18, y que la que sí lo fuerza dé tablas (±0,3, sin mate).
+  Se guarda en `evalSin` y `verificar-tipos.js` exige `evalSin <= −250`. Sin eso,
+  ahogar al rival cuando se va ganando también «fuerza el ahogado» para chess.js
+  y el ejercicio mentiría. **Un fallo que costó un rato:** el generador miraba
+  `sin.mate === null && sin.score > −250`, y un mate A FAVOR (score enorme y
+  positivo, con `mate` distinto de null) se colaba como «perdida»; el
+  verificador lo habría atrapado en `evalSin`, pero el filtro ya no mira el
+  `mate`: basta el score.
+- **De dónde salen: ningún banco de Lichess trae uno.** Se buscó en las 7274
+  posiciones de «Ejercicios por tema» (la de partida y cada una de su solución),
+  en los finales difíciles, en Táctica y en los demás bancos de `tipos.json`:
+  ninguna de hasta 12 piezas con un ahogado forzado en dos jugadas que sirva, y
+  Lichess no tiene un tema «ahogado». La base completa de Lichess no se pudo
+  bajar de esta máquina. Por eso las posiciones salen de dos lados, las dos
+  comprobadas con chess.js y con Stockfish: la que aportó el dueño
+  (`AHOGADOS_APORTADOS` en el generador; de dónde la sacó, no se sabe) y las que
+  **sortea** `herramientas/ahogados-buscar.js` (de 4 a 8 piezas, al que mueve le
+  falta material; una poda deja pasar solo las jugadas que dejan al rival
+  con 6 respuestas o menos, y lo que sale se vuelve a comprobar sin poda). Es lo
+  mismo que se hizo con «Con lo justo»: nada se inventa, todo se verifica. Se
+  juntan pocas (de 1,6 millones de posiciones sorteadas, 50 tenían un ahogado
+  forzado y 11 pasaron el motor, más la del dueño: 12 en el nivel), y varias son
+  finales parecidos; la del dueño es la que vale por sí sola. Para sumar más: otra `--semilla`, y
+  `node herramientas/tipos-generar.js --solo ahogado`. Las semillas corridas:
+  1 (4 × 150 000) y 2 (4 × 250 000). **Después de rehacer el banco, correr
+  `python3 herramientas/metas-indice.py`**: Tareas ofrece cada tipo con su total
+  de `tipos.json` («Salva las tablas (55)») y `verificar-tareas.js` falla si el
+  número quedó viejo (pasó: decía 43 y el banco tenía 55). Lo mismo con
+  `python3 herramientas/premio-temas.py` (el premio por terminar un tema cuenta
+  los ejercicios de cada tipo; `verificar-premio-temas.js` lo exige) y, ya
+  publicado, las dos líneas de `interno.premio_temas_pedir` de «Terminar un tema»
+  en `puntos-y-premios.md`, que se corren a mano en la base.
+- **El nivel 3 pide 4 ejercicios, no 10** (`verificar-tipos.js`, como «Con lo
+  justo»): no hay de dónde sacar tantos sin inventarlos. `--solo tablas` rehace
+  los niveles 1 y 2 y **conserva** el 3; `--solo ahogado` rehace solo el 3.
+- **El pie de `entreno/tipos.html` lo dice**: «las del nivel "El ahogado" de
+  Salva las tablas están sorteadas y comprobadas con chess.js y Stockfish» (sale
+  de `herramientas/academia-cabecera.py`, no se edita en el HTML). Antes decía
+  solo «base abierta de Lichess y partidas de maestros», y estas no lo son.
 
 **Al tocar los bancos, las reglas o la página, correr**:
 

@@ -70,6 +70,7 @@ window.PlanEntrenamiento = (function () {
         { texto: 'Ficha: la pieza atrapada', href: 'entreno/estudio.html?ficha=pieza-atrapada' },
         { texto: 'Curso: Desequilibrios de material', href: 'cursos/desequilibrios-de-material.html' },
         { texto: 'Habilidades: Intercambios', href: 'entreno/tipos.html#intercambios' },
+        { texto: 'Habilidades: Conteo', href: 'entreno/tipos.html#conteo' },
         { texto: 'Habilidades: La balanza', href: 'entreno/tipos.html#balanza' },
       ],
     },

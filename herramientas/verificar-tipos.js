@@ -94,7 +94,9 @@ C.TIPOS.forEach((t) => {
   if (!items) return;
   t.niveles.forEach((n) => {
     const cuantos = items.filter((x) => x.nivel === n.n).length;
-    const minimo = t.id === "con-lo-justo" ? 4 : 10;
+    // El ahogado (nivel 3 de Salva las tablas) no se saca de Lichess: se sortea y
+    // se comprueba, y salen pocas (ver herramientas/ahogados-buscar.js).
+    const minimo = t.id === "con-lo-justo" || (t.id === "tablas" && n.ahogado) ? 4 : 10;
     ok(t.id + " nivel " + n.n + ": al menos " + minimo + " ejercicios", cuantos >= minimo, "tiene " + cuantos);
   });
   items.forEach((x) => {
@@ -364,6 +366,98 @@ DATOS.intercambios.forEach((x) => {
   ok("intercambio: un peón sin defensa se gana (+1)", s.rayos === false && s.valor === 1, JSON.stringify(s));
 }
 
+titulo("Conteo");
+{
+  const clase = (v) => (v > 0 ? "gana" : v < 0 ? "pierde" : "igual");
+  const PASOS = { 3: [2, 2], 4: [3, 3], 5: [4, 4], 6: [5, 99] };
+  const porNivel = {};
+  DATOS.conteo.forEach((x) => { (porNivel[x.nivel] = porNivel[x.nivel] || []).push(x); });
+  ok("Conteo trae sus 14 niveles", Object.keys(porNivel).length === 14, Object.keys(porNivel).join());
+  DATOS.conteo.forEach((x) => {
+    const id = " (" + x.id + ")";
+    if (x.tipo === "toca") {
+      const col = M.colgadas(Chess, x.fen);
+      ok("sin defensa: una sola pieza se come gratis y es la que dice" + id, col && col.length === 1 && col[0].casilla === x.casilla, JSON.stringify(col));
+      ok("sin defensa: nadie la defiende, ni una pieza clavada" + id, col && col[0] && col[0].sinDefensa);
+      return;
+    }
+    if (x.tipo === "cuenta") {
+      const r = M.conteoCasilla(Chess, x.fen, x.casilla);
+      ok("cuenta: atacan y defienden son los que dice" + id, r && r.atacan === x.atacan && r.defienden === x.defienden, r && r.atacan + "-" + r.defienden + " contra " + x.atacan + "-" + x.defienden);
+      ok("cuenta: sin rayos X, clavadas ni el rey de por medio" + id, r && !r.rayos && !r.clavada && !r.rey);
+      ok("cuenta: la respuesta está una sola vez entre las opciones" + id, x.opciones.filter((o) => o === x.atacan + "-" + x.defienden).length === 1, x.opciones.join());
+      ok("cuenta: cuatro opciones distintas" + id, x.opciones.length === 4 && new Set(x.opciones).size === 4);
+      return;
+    }
+    if (x.tipo === "decide") {
+      const r = M.conteoCasilla(Chess, x.fen, x.casilla);
+      ok("decide: el resultado es el que dice" + id, r && r.valor === x.valor, r && r.valor + " contra " + x.valor);
+      ok("decide: la línea que conviene" + id, r && JSON.stringify(r.jugadas) === JSON.stringify(x.jugadas));
+      ok("decide: sin coronaciones ni al paso" + id, r && !r.corona && !r.alPaso);
+      const n = r.clavada ? 8 : r.rayos ? 7 : r.pasos.length === 2 ? 3 : r.pasos.length === 3 ? 4 : r.pasos.length === 4 ? 5 : 6;
+      ok("decide: el nivel es el de su serie de capturas" + id, n === x.nivel, "da " + n);
+      const buena = x.modo === "clase" ? clase(x.valor) : String(x.valor);
+      ok("decide: el modo es el del nivel" + id, x.modo === (x.nivel <= 4 ? "clase" : "numero"));
+      ok("decide: la respuesta está una sola vez entre las opciones" + id, x.opciones.filter((o) => o === buena).length === 1, x.opciones.join());
+      ok("decide: sin opciones repetidas" + id, new Set(x.opciones).size === x.opciones.length);
+      return;
+    }
+    if (x.tipo === "recupera") {
+      const g = new Chess(x.fenAntes);
+      const m = g.move({ from: x.de, to: x.a });
+      ok("recupera: la captura se juega desde la posición de antes" + id, m && m.captured && m.san === x.jugada && g.fen() === x.fen, m && m.san);
+      const r = M.recuperar(Chess, x.fen, x.casilla, VALOR[m.captured]);
+      ok("recupera: lo perdido es lo que cuesta la pieza" + id, r && r.perdida === x.perdida, r && r.perdida + " contra " + x.perdida);
+      ok("recupera: la pieza que dice el ejercicio es la que se capturó" + id, m.captured === x.capturada);
+      ok("recupera: el balance es el que dice" + id, r && r.neto === x.neto && r.valor === x.valor, r && r.neto + " contra " + x.neto);
+      ok("recupera: el nivel es el de su serie de capturas" + id, x.nivel === (r.pasos.length >= 3 ? 10 : 9) && (x.nivel === 10 || (!r.rayos && !r.clavada)));
+      const buena = x.modo === "clase" ? clase(x.neto) : String(x.neto);
+      ok("recupera: el modo es el del nivel" + id, x.modo === (x.nivel === 9 ? "clase" : "numero"));
+      ok("recupera: la respuesta está una sola vez entre las opciones" + id, x.opciones.filter((o) => o === buena).length === 1, x.opciones.join());
+      ok("recupera: sin opciones repetidas" + id, new Set(x.opciones).size === x.opciones.length);
+      ok("recupera: el rey de quien recaptura no queda en jaque de entrada" + id, !new Chess(x.fen).in_check());
+      return;
+    }
+    if (x.tipo === "elige") {
+      const cs = M.capturas(Chess, x.fen);
+      ok("elige: las casillas son todas las que se pueden capturar" + id, cs && JSON.stringify(cs.map((c) => c.casilla).sort()) === JSON.stringify(x.candidatas.map((c) => c.casilla).sort()), cs && cs.map((c) => c.casilla).join());
+      const ganan = cs.filter((c) => c.valor > 0);
+      ok("elige: gana una sola (o ninguna en el último nivel)" + id, ganan.length === 1 || (ganan.length === 0 && x.nivel === 14), "ganan " + ganan.length);
+      const correcta = ganan.length ? ganan[0].casilla : "ninguna";
+      ok("elige: la correcta es la que dice" + id, correcta === x.correcta, correcta + " contra " + x.correcta);
+      ok("elige: la respuesta está una sola vez entre las opciones" + id, x.opciones.filter((o) => o === x.correcta).length === 1, x.opciones.join());
+      const esperadas = cs.map((c) => c.casilla).concat(x.nivel === 14 ? ["ninguna"] : []).sort();
+      ok("elige: las opciones son las casillas" + (x.nivel === 14 ? " y «ninguna»" : "") + id, JSON.stringify(x.opciones.slice().sort()) === JSON.stringify(esperadas), x.opciones.join());
+      cs.forEach((c) => {
+        const d = x.candidatas.find((q) => q.casilla === c.casilla);
+        ok("elige: el valor de " + c.casilla + " es el que dice" + id, d && d.valor === c.valor && d.pasos === c.pasos);
+      });
+      const hondo = Math.max.apply(null, cs.map((c) => c.pasos)) >= 4;
+      if (x.nivel === 11) ok("elige: el nivel 11 son dos casillas sin serie larga" + id, cs.length === 2 && !hondo);
+      if (x.nivel === 12) ok("elige: el nivel 12 son tres a cinco casillas sin serie larga" + id, cs.length >= 3 && cs.length <= 5 && !hondo);
+      if (x.nivel === 13) ok("elige: el nivel 13 trae una serie de cuatro capturas o más" + id, hondo);
+      ok("elige: el nivel declarado es de este tipo de ejercicio" + id, x.nivel >= 11);
+      return;
+    }
+    ok("tipo de ejercicio de Conteo conocido" + id, false, x.tipo);
+  });
+  // cada nivel pregunta lo suyo
+  const tipoDe = { 1: "toca", 2: "cuenta", 3: "decide", 4: "decide", 5: "decide", 6: "decide", 7: "decide", 8: "decide", 9: "recupera", 10: "recupera", 11: "elige", 12: "elige", 13: "elige", 14: "elige" };
+  Object.keys(tipoDe).forEach((n) => ok("Conteo nivel " + n + " solo trae ejercicios «" + tipoDe[n] + "»", (porNivel[n] || []).every((x) => x.tipo === tipoDe[n])));
+  // «gana», «igual» y «pierde» no están todos del mismo lado
+  [3, 4, 9].forEach((n) => ok("Conteo nivel " + n + ": no todas las respuestas son la misma", new Set((porNivel[n] || []).map((x) => (x.nivel === 9 ? clase(x.neto) : clase(x.valor)))).size >= 2));
+  ok("Conteo nivel 14: algunas veces ninguna gana y otras una sí", new Set(porNivel[14].map((x) => x.correcta === "ninguna")).size === 2);
+  // las reglas, con posiciones escritas a mano
+  const lib = M.colgadas(Chess, "4k3/8/8/4p3/8/8/4Q3/4K3 w - - 0 1");
+  ok("colgadas: un peón sin defensa se come gratis", lib && lib.length === 1 && lib[0].casilla === "e5" && lib[0].sinDefensa, JSON.stringify(lib));
+  const def = M.colgadas(Chess, "4k3/3p4/4p3/8/8/8/4Q3/4K3 w - - 0 1");
+  ok("colgadas: un peón defendido no está de regalo", def && !def.some((c) => c.casilla === "e6" && c.sinDefensa) , JSON.stringify(def));
+  const c1 = M.conteoCasilla(Chess, "4k3/8/3p4/4n3/8/5N2/8/4R1K1 w - - 0 1", "e5");
+  ok("conteo: un caballo atacado dos veces y defendido una", c1 && c1.atacan === 2 && c1.defienden === 1, c1 && c1.atacan + "-" + c1.defienden);
+  const rec = M.recuperar(Chess, "4k3/8/8/4n3/8/5N2/8/4R1K1 w - - 0 1", "e5", 3);
+  ok("recuperar: capturar gratis lo que acaban de capturar recupera lo perdido (0)", rec && rec.neto === 0, rec && rec.neto);
+}
+
 titulo("Constrúyela tú");
 DATOS.construye.forEach((x) => {
   const sol = M.solucionesConstruye(Chess, x);
@@ -538,7 +632,7 @@ DATOS.remata.forEach((x) => {
 }
 
 titulo("Salva las tablas");
-DATOS.tablas.forEach((x) => {
+DATOS.tablas.filter((x) => !x.ahogado).forEach((x) => {
   const g = legal(x.fen);
   if (!g) return;
   const yo = x.fen.split(" ")[1];
@@ -557,6 +651,58 @@ DATOS.tablas.forEach((x) => {
     M.juicioTablas(-100) === "firme" && M.juicioTablas(-200) === "duda" && M.juicioTablas(-300) === "perdida" && M.juicioTablas(null) === "sin-motor");
   ok("tablas: nunca bajó de −1,5: tres; pasó por la cuerda floja: dos; con pista: una",
     M.estrellasTablas(-100, false) === 3 && M.estrellasTablas(-200, false) === 2 && M.estrellasTablas(0, true) === 1);
+}
+
+titulo("Salva las tablas: El ahogado");
+{
+  const aho = DATOS.tablas.filter((x) => x.ahogado);
+  ok("el nivel 3 del catálogo es el del ahogado, y solo él", !!C.nivel("tablas", 3).ahogado && !C.nivel("tablas", 1).ahogado && !C.nivel("tablas", 2).ahogado);
+  ok("todo lo del nivel 3 es de ahogado y al revés", DATOS.tablas.every((x) => (x.nivel === 3) === !!x.ahogado));
+  aho.forEach((x) => {
+    const g = legal(x.fen);
+    if (!g) return;
+    const yo = x.fen.split(" ")[1];
+    ok("la partida no terminó (" + x.id + ")", !g.game_over());
+    ok("son una o dos jugadas propias (" + x.id + ")", x.jugadas === 1 || x.jugadas === 2, x.jugadas);
+    // La corrección de verdad: las jugadas que fuerzan el ahogado, con la misma función que usa la página.
+    const buenas = M.ahogadoForzado(Chess, x.fen, x.jugadas).sort();
+    ok("las jugadas buenas son las que fuerzan el ahogado, ni una más ni una menos (" + x.id + ")", JSON.stringify(buenas) === JSON.stringify(x.correctas), JSON.stringify(buenas) + " ≠ " + JSON.stringify(x.correctas));
+    ok("una o dos buenas (" + x.id + ")", x.correctas.length >= 1 && x.correctas.length <= 2);
+    // Los pasos son los justos: con una jugada menos no se fuerza.
+    ok("con una jugada menos no se fuerza: los pasos son los del ejercicio (" + x.id + ")", x.jugadas === 1 || M.ahogadoForzado(Chess, x.fen, x.jugadas - 1).length === 0);
+    // La línea de la solución se juega entera, es legal y termina en ahogado.
+    const f = new Chess(x.fen);
+    let legalTodo = true;
+    x.linea.forEach((san) => { if (!f.move(san)) legalTodo = false; });
+    ok("la línea es legal y termina en ahogado (" + x.id + ")", legalTodo && f.in_stalemate());
+    ok("la primera jugada de la línea es una de las buenas (" + x.id + ")", x.correctas.includes(x.linea[0]));
+    ok("dice a quién ahogan (" + x.id + ")", x.quien === (f.turn() === yo ? "propio" : "rival"));
+    const lineaEs = (() => {
+      const h = new Chess(x.fen); let num = +x.fen.split(" ")[5] || 1; const partes = [];
+      x.linea.forEach((san, i) => { const b = h.turn() === "w"; const m = h.move(san); if (b) partes.push(num + "." + R.sanEs(m.san)); else { partes.push(i === 0 ? num + "…" + R.sanEs(m.san) : R.sanEs(m.san)); num++; } });
+      return partes.join(" ");
+    })();
+    ok("la línea escrita en castellano es la de la línea (" + x.id + ")", x.lineaEs === lineaEs, x.lineaEs + " ≠ " + lineaEs);
+    ok("sin el ahogado estaba perdida: −2,5 o peor, o mate en contra (" + x.id + ")", typeof x.evalSin === "number" && x.evalSin <= -250, x.evalSin);
+    ok("trae la respuesta para el profesor (" + x.id + ")", Array.isArray(x.respuesta) && x.respuesta.length >= 3 && !!x.resumen);
+    // Una jugada que no fuerza el ahogado se corrige con la respuesta del rival que lo desbarata.
+    g.moves().filter((san) => !buenas.includes(san)).forEach((san) => {
+      const r = M.refutaAhogado(Chess, x.fen, san, x.jugadas);
+      if (!r) return;
+      const h = new Chess(x.fen);
+      h.move(san);
+      ok("la respuesta que desbarata «" + san + "» es legal y no deja ahogado (" + x.id + ")", !!h.move(r.san) && !h.in_stalemate(), r.san);
+    });
+  });
+  // Las reglas, a mano: una posición de dos jugadas y otra donde ahogar es un error.
+  const f2 = "4Q3/2b4r/7B/6R1/5k2/8/7K/5q2 w - - 0 1";
+  ok("el ahogado de dos jugadas: solo Dxe3+, y no en una", JSON.stringify(M.ahogadoForzado(Chess, f2, 2)) === '["Qe3+"]' && M.ahogadoForzado(Chess, f2, 1).length === 0);
+  ok("la defensa y la línea se arman con la misma regla", M.lineaAhogado(Chess, f2, 2).length === 4 && M.lineaAhogado(Chess, f2, 1) === null);
+  // La regla no mira quién va ganando (ahogar con una dama de más también «fuerza el ahogado»): que esté
+  // perdida sin él lo exige el generador con el motor, y el banco lo guarda en evalSin.
+  ok("la regla ahoga al rival aunque se vaya ganando", M.ahogadoForzado(Chess, "7k/8/5Q1K/8/8/8/8/8 w - - 0 1", 1).includes("Qf7"));
+  ok("estrellas del ahogado: sin errores tres; un error o pista, una; dos errores, ninguna",
+    M.estrellasAhogado(0, false) === 3 && M.estrellasAhogado(1, false) === 1 && M.estrellasAhogado(0, true) === 1 && M.estrellasAhogado(2, false) === 0);
 }
 
 titulo("Elige a tiempo");

@@ -494,7 +494,10 @@ async function eventosCalendario(org, ahora) {
   const hace = diaCR(new Date(ahora.getTime() - 31 * 86400000));
   const propios = fetch(SUPABASE_URL + "/rest/v1/pareo_publicados?select=id,nombre,evento,lugar,fecha,fin:datos-%3E%3EfechaFin,ciudad:datos-%3E%3Eciudad,elo:datos-%3E%3EvalidoElo,ritmo:datos-%3E%3Eritmo,hora:datos-%3Eanuncio-%3E%3Ehora"
     + "&fecha=gte." + hace + (org ? "&organizador_id=eq." + org : "") + "&order=fecha.asc&limit=500", { headers: LECTURA, signal: AbortSignal.timeout(5000) });
-  const afuera = org ? null : fetch(SUPABASE_URL + "/rest/v1/torneos_externos?select=id_externo,titulo,inicio,fin,provincia,lugar,elo,organizador,url&order=inicio.asc&limit=200", { headers: LECTURA, signal: AbortSignal.timeout(5000) });
+  // Los de afuera que ya están publicados en Pareo Integral (repetido_de) no
+  // van dos veces: public.torneos_externos_lista los marca.
+  const afuera = org ? null : fetch(SUPABASE_URL + "/rest/v1/rpc/torneos_externos_lista", {
+    method: "POST", headers: Object.assign({ "Content-Type": "application/json" }, LECTURA), body: "{}", signal: AbortSignal.timeout(5000) });
   const [a, b] = await Promise.all([propios, afuera]);
   if (!a.ok || (b && !b.ok)) throw new Error("Supabase contestó " + a.status + (b ? "/" + b.status : ""));
   const eventos = [];
@@ -508,10 +511,14 @@ async function eventosCalendario(org, ahora) {
       url: enlace, aviso: "-PT15H" });
   }
   if (b) for (const x of await b.json()) {
+    if (x.repetido_de) continue;
     const desde = x.inicio ? diaCR(x.inicio) : "", hasta = x.fin ? diaCR(x.fin) : desde;
     if (!desde || hasta < hoy) continue;
-    if (!/^https:\/\/ajedrezcostarica\.com\/es\/tournaments\/\d+$/.test(x.url || "")) continue;
-    eventos.push({ uid: "ajedrezcostarica-" + x.id_externo + "@ajedrez-integral.com", desde, hasta, resumen: x.titulo,
+    // Solo direcciones de las dos fuentes, nunca otra que llegue en la fila.
+    const fuente = /^https:\/\/ajedrezcostarica\.com\/es\/tournaments\/\d+$/.test(x.url || "") ? "ajedrezcostarica"
+      : /^https:\/\/chess-results\.com\/tnr\d+\.aspx\?lan=2$/.test(x.url || "") ? "chess-results" : "";
+    if (!fuente) continue;
+    eventos.push({ uid: fuente + "-" + x.id_externo + "@ajedrez-integral.com", desde, hasta, resumen: x.titulo,
       lugar: [x.lugar, x.provincia].filter(Boolean).join(", "),
       descripcion: [x.organizador ? "Organiza: " + x.organizador + "." : "", ELO_LARGO_CAL[x.elo] ? ELO_LARGO_CAL[x.elo] + "." : "", "Inscripción y detalles: " + x.url].filter(Boolean).join(" "),
       url: x.url, aviso: "-PT15H" });

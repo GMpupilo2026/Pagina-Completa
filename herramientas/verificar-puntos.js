@@ -153,6 +153,7 @@ window.__llamadas = [];
           { que: "reto_semanal", detalle: "Reto de la semana: Tareas al día", ganados: 30 },
         ], error: null });
       }
+      if (nombre === "semana_de_entrenamiento") return Promise.resolve({ data: ${JSON.stringify(extra.semana ? [extra.semana] : [])}, error: null });
       if (nombre === "retos_de_la_semana") return Promise.resolve({ data: RETOS, error: null });
       if (nombre === "marcador_del_salon") {
         const mes = args && args.p_periodo === "mes";
@@ -539,10 +540,16 @@ async function main() {
     await page.waitForFunction(() => document.querySelector("#tienda-puntos").textContent.includes("Le mandaste la broma a Beto Rojas"), null, { timeout: 5000 }).catch(() => {});
     ok((await page.textContent("#tienda-puntos")).includes("Le mandaste la broma a Beto Rojas"), "no confirma a quién se le mandó la broma");
 
-    // El confeti no lleva frase: el formulario solo pregunta a quién.
+    ok(llamada && llamada.args.p_donde === "panel" && llamada.args.p_con_sonido === true,
+      "mandar la broma no llevó el lugar y el sonido elegidos (por omisión: el panel, con sonido): " + JSON.stringify(llamada));
+
+    // El confeti no lleva frase: el formulario pregunta a quién, dónde le cae
+    // y si suena.
     await tarjeta(page, "Lluvia de confeti").locator("[data-regalar]").click();
     await page.locator("dialog[open]").waitFor({ timeout: 5000 });
-    ok(await page.locator("dialog[open] select").count() === 1, "el confeti no debería pedir frase");
+    const etiquetas = await page.$$eval("dialog[open] label", (l) => l.map((x) => x.textContent.trim()));
+    ok(!etiquetas.some((t) => /frase/i.test(t)), "el confeti no debería pedir frase: " + JSON.stringify(etiquetas));
+    ok(etiquetas.includes("¿Dónde le cae?") && etiquetas.includes("¿Con sonido?"), "la broma no pregunta dónde le cae ni si suena: " + JSON.stringify(etiquetas));
     await ctx.close();
   }
 
@@ -573,6 +580,64 @@ async function main() {
     ok(await page.evaluate(() => window.__llamadas.some((l) => l.rpc === "bromas_bloquear" && l.args.p_persona === "u-beto" && l.args.p_bloquear === true)),
       "«No más bromas de…» no bloqueó a quien la mandó");
     await ctx.close();
+  }
+
+  // ---------- 12) la semana sin entrenar: cuántos días lleva y cuánto se juega ----------
+  // Quien no entrena 4 días de lunes a domingo pierde el lunes la mitad de
+  // sus puntos (lo cobra la base). La página lo tiene que decir con tiempo,
+  // con el número escrito, no solo en la barra.
+  {
+    const hoyCR = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Costa_Rica" }).format(new Date());
+    const base = { meta: 4, desde: "2026-10-26", hasta: "2099-12-31", en_juego: 50, vigente: true, perdidos_antes: null, dias_antes: null };
+    const ver = async (semana) => {
+      const { page, ctx, errores } = await abrir(navegador, 100, [], true, { semana });
+      await page.waitForFunction(() => window.__llamadas.some((l) => l.rpc === "semana_de_entrenamiento"), null, { timeout: 5000 }).catch(() => {});
+      await page.waitForTimeout(200);
+      const r = await page.evaluate(() => {
+        const sec = document.getElementById("puntos-semana");
+        const barra = sec && sec.querySelector("progress");
+        return {
+          visible: !!sec && sec.checkVisibility(),
+          ahora: (document.querySelector("#puntos-semana [data-puntos-semana]") || {}).textContent || "",
+          antes: (document.querySelector("#puntos-semana [data-puntos-semana-antes]") || {}).textContent || "",
+          barra: barra && barra.checkVisibility() ? barra.value : null,
+        };
+      });
+      const panel = await page.evaluate(async () => {
+        const div = document.createElement("div");
+        document.body.appendChild(div);
+        await window.Puntos.montarTarjetaPanel(div, { sb: window.sb, alumnoId: "u-ana" });
+        const p = div.querySelector("[data-puntos-semana]");
+        return p && p.checkVisibility() ? p.textContent : "";
+      });
+      ok(errores.join(" | ") === "", "hubo errores en consola: " + errores.join(" | "));
+      await ctx.close();
+      return Object.assign(r, { panel });
+    };
+
+    let r = await ver(Object.assign({}, base, { dias: 2 }));
+    ok(r.visible && r.ahora === "Esta semana llevas 2 de 4 días entrenando. Si no llegas a 4 antes del domingo, el lunes pierdes la mitad de tus puntos (50 puntos).",
+      "con 2 días no avisa cuánto lleva y cuánto se juega: " + JSON.stringify(r));
+    ok(r.barra === 2, "la barra de la semana debería ir en 2: " + JSON.stringify(r));
+    ok(r.panel === r.ahora, "la tarjeta del panel no avisa lo de la semana: " + JSON.stringify(r.panel));
+
+    r = await ver(Object.assign({}, base, { dias: 1, hasta: hoyCR }));
+    ok(r.ahora.includes("ya no alcanzan los días") && r.ahora.includes("50 puntos"),
+      "el último día con 1 de 4 debería decir que ya no alcanza: " + JSON.stringify(r.ahora));
+
+    r = await ver(Object.assign({}, base, { dias: 5 }));
+    ok(r.ahora === "✓ Esta semana ya entrenaste 5 días: tus puntos están a salvo.", "con 5 días debería decir que está a salvo: " + JSON.stringify(r.ahora));
+
+    r = await ver(Object.assign({}, base, { dias: 4, perdidos_antes: 60, dias_antes: 1 }));
+    ok(r.antes === "La semana pasada entrenaste 1 día de 4: perdiste 60 puntos.", "no dice lo que perdió la semana pasada: " + JSON.stringify(r.antes));
+    ok(r.panel.includes("perdiste 60 puntos"), "la tarjeta del panel no dice lo que perdió la semana pasada: " + JSON.stringify(r.panel));
+
+    r = await ver(Object.assign({}, base, { dias: 0, desde: "2026-10-19", hasta: "2026-10-25", vigente: false }));
+    ok(r.visible && r.ahora.startsWith("Desde el lunes 26 de octubre") && r.barra === null,
+      "antes de que arranque la regla debería avisarla, sin barra: " + JSON.stringify(r));
+
+    r = await ver(null);
+    ok(!r.visible && r.panel === "", "sin datos de la semana (profe, cuenta nueva) no debería verse nada: " + JSON.stringify(r));
   }
 
   await navegador.close();

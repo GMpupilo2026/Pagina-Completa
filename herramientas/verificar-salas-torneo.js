@@ -74,10 +74,14 @@ async function paginaPublica(browser) {
   await page.waitForSelector("#salas-lista:not(.hidden)");
   const f = await fichas(page);
   igual("una ficha por sala visible, en su orden (la oculta no)", f.map((x) => x.nombre), ["Desafío Mentes Maestras CENFOTEC 2026", "Torneo UTN 2026"]);
-  igual("la de Lichess entra a la sala de cine y ofrece Lichess aparte", f[0].enlaces, [
+  // Las dos son de universidades con página propia: ningún botón sale del
+  // sitio (ver «Las páginas de los torneos universitarios»). Lichess va a la
+  // ficha de las partidas de su página, que lo abre encima; lo que no tiene
+  // ficha, a la página entera.
+  igual("la de Lichess entra a la sala de cine y lleva Lichess a su ficha en la página, sin salir del sitio", f[0].enlaces, [
     ["Entrar a la sala de Desafío Mentes Maestras CENFOTEC 2026 →", "transmision.html?torneo=cenfotec", ""],
-    ["Verlo directo en Lichess de Desafío Mentes Maestras CENFOTEC 2026 (se abre en otra pestaña) ↗", "https://lichess.org/broadcast/desafio-mentes-maestras-cenfotec-2026/s7NfNv6H", "_blank"]]);
-  igual("la de enlaces lleva un botón por transmisión, que se abre aparte", f[1].enlaces.map((e) => [e[0].split(" de ")[0], e[2]]), [["Partida masculina", "_blank"], ["Partida femenina", "_blank"]]);
+    ["Verlo directo en Lichess de Desafío Mentes Maestras CENFOTEC 2026 →", "/cenfotec-2026.html#ficha-partidas", ""]]);
+  igual("la de enlaces lleva un botón por transmisión, a la página del torneo y sin salir del sitio", f[1].enlaces.map((e) => [e[0].split(" de ")[0], e[1], e[2]]), [["Partida masculina", "/utn-2026.html", ""], ["Partida femenina", "/utn-2026.html", ""]]);
   igual("la pantalla de carga se va", await page.$eval("#loading", (e) => e.checkVisibility()), false);
   igual("sin errores de JavaScript", errores, []);
   await ctx.close();
@@ -263,6 +267,40 @@ async function editor(browser) {
   await ctx.close();
 }
 
+async function anuncios(browser) {
+  console.log("\n=== Los avisos de la organización ===");
+  const { page, ctx, errores } = await abrir(browser, "/admin.html#torneos", { salas: SALAS, admin: true });
+  await page.waitForFunction(() => document.querySelectorAll("#anuncio-sala option").length > 1);
+  igual("la lista ofrece solo las salas publicadas", await page.$$eval("#anuncio-sala option", (o) => o.map((x) => x.value)), ["", "cenfotec", "utn"]);
+  igual("y dice que no hay ninguno vigente", await page.textContent("#anuncios-admin"), "No hay avisos vigentes.");
+  // Sin texto no se manda.
+  await page.selectOption("#anuncio-sala", "utn");
+  await page.click("#anuncio-publicar");
+  igual("sin texto no se manda", [await page.textContent("#anuncio-estado"), (await escrituras(page)).filter((e) => e.op === "rpc").length], ["Escribe el aviso (al menos 3 letras).", 0]);
+  await page.fill("#anuncio-texto", "La ronda 6 se atrasa 30 minutos.");
+  await page.fill("#anuncio-texto-en", "Round 6 is delayed by 30 minutes.");
+  await page.selectOption("#anuncio-horas", "6");
+  await page.click("#anuncio-publicar");
+  await page.waitForFunction(() => /Listo/.test(document.getElementById("anuncio-estado").textContent));
+  igual("publicar pregunta antes, con un botón que dice lo que hace", (await page.evaluate(() => window.__avisos)).some((a) => a.includes("¿Publicar este aviso?") && a.includes("Publicar y avisar") && a.includes("6 horas")), true);
+  igual("y llama a la función de la base con la sala, los dos textos y las horas", (await escrituras(page)).filter((e) => e.op === "rpc").pop(),
+    { op: "rpc", nombre: "sala_anuncio_publicar", params: { p_sala: "utn", p_texto: "La ronda 6 se atrasa 30 minutos.", p_texto_en: "Round 6 is delayed by 30 minutes.", p_horas: 6 } });
+  await page.waitForFunction(() => document.querySelectorAll("#anuncios-admin button").length === 1);
+  igual("queda en la lista de los vigentes, con su botón para quitarlo", await page.$eval("#anuncios-admin li", (li) => [li.querySelector("p").textContent, li.querySelector("button").getAttribute("aria-label")]),
+    ["La ronda 6 se atrasa 30 minutos.", "Quitar el aviso «La ronda 6 se atrasa 30 minutos.»"]);
+  await page.click("#anuncios-admin button");
+  await page.waitForFunction(() => document.getElementById("anuncios-admin").textContent === "No hay avisos vigentes.");
+  igual("quitarlo pregunta y lo quita", [(await page.evaluate(() => window.__avisos)).some((a) => a.includes("¿Quitar este aviso?") && a.includes("Quitar el aviso")), await page.evaluate(() => window.__anuncios().length)], [true, 0]);
+  // Quien ya no administra: la base lo rechaza y la página lo dice.
+  await page.evaluate(() => window.__quitarAdmin());
+  await page.fill("#anuncio-texto", "Otro aviso");
+  await page.click("#anuncio-publicar");
+  await page.waitForFunction(() => /permiso/.test(document.getElementById("anuncio-estado").textContent));
+  igual("sin ser admin, no se publica y lo dice", [await page.textContent("#anuncio-estado"), await page.evaluate(() => window.__anuncios().length)], ["Tu cuenta no tiene permiso para publicar avisos.", 0]);
+  igual("sin errores de JavaScript", errores, []);
+  await ctx.close();
+}
+
 async function sinPermiso(browser) {
   console.log("\n=== Si la base no deja escribir, no dice «guardada» ===");
   // Quien administraba pierde el permiso con el panel abierto: el update no
@@ -285,6 +323,7 @@ async function sinPermiso(browser) {
   try {
     await paginaPublica(browser);
     await editor(browser);
+    await anuncios(browser);
     await sinPermiso(browser);
   } finally {
     await browser.close();

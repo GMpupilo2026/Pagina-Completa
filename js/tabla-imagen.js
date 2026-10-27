@@ -14,6 +14,12 @@
  *       → Promise<Blob> (image/png). `derecha` dice qué columnas van alineadas
  *       a la derecha (las de números). Las filas de más se cortan y se avisa.
  *   TablaImagen.bajar(datos, nombreArchivo) → la arma y la baja.
+ *   TablaImagen.marcar(canvas) → le pone la marca de agua a un lienzo propio.
+ *
+ * Lleva la marca de agua de Ajedrez Integral (img/marca-agua-ajedrez-integral.png,
+ * la misma de los PDF), tenue y al centro, como todo documento que sale del
+ * sitio. Si el dibujo no carga, la imagen sale igual, sin ella: una tabla sin
+ * marca es mejor que ninguna. `marca: false` la quita (solo para pruebas).
  */
 (function (raiz) {
   "use strict";
@@ -174,8 +180,41 @@
     return c;
   }
 
-  function armar(d) {
+  // Contada desde este archivo, como en js/marca-agua.js: sirve igual desde
+  // una página de la raíz o de una carpeta.
+  const URL_MARCA = (() => {
+    try { return new URL("../img/marca-agua-ajedrez-integral.png", (document.currentScript && document.currentScript.src) || document.baseURI).href; }
+    catch (e) { return "img/marca-agua-ajedrez-integral.png"; }
+  })();
+  let dibujoMarca = null;
+  function cargarMarca() {
+    if (!dibujoMarca) dibujoMarca = new Promise((ok) => {
+      const img = new Image();
+      img.onload = () => ok(img);
+      img.onerror = () => { dibujoMarca = null; ok(null); };
+      img.src = URL_MARCA;
+    });
+    return dibujoMarca;
+  }
+  // Al centro, de un tercio del ancho (sin pasarse del alto) y casi
+  // transparente: se ve, pero no tapa ningún dato.
+  function ponerMarca(c, img) {
+    const ctx = c.getContext("2d");
+    ctx.save();
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    const ancho = Math.min(c.width / 3, (c.height * 0.8 * img.width) / img.height);
+    const alto = (ancho * img.height) / img.width;
+    ctx.globalAlpha = 0.1;
+    ctx.drawImage(img, (c.width - ancho) / 2, (c.height - alto) / 2, ancho, alto);
+    ctx.restore();
+  }
+
+  async function armar(d) {
     const c = d.celular ? celular(d) : horizontal(d);
+    if (d.marca !== false) {
+      const img = await cargarMarca();
+      if (img) ponerMarca(c, img);
+    }
     return new Promise((ok, mal) => c.toBlob((b) => (b ? ok(b) : mal(new Error("No se pudo armar la imagen."))), "image/png"));
   }
 
@@ -192,5 +231,14 @@
     return blob;
   }
 
-  raiz.TablaImagen = { armar, bajar, COLOR };
+  // La marca de agua sobre un lienzo que ya dibujó otro (la imagen de un
+  // jugador del Centroamericano, js/centroamericano-tablas.js): la misma copia,
+  // al centro y tenue. Devuelve si la pudo poner.
+  async function marcar(c) {
+    const img = await cargarMarca();
+    if (img) ponerMarca(c, img);
+    return !!img;
+  }
+
+  raiz.TablaImagen = { armar, bajar, marcar, COLOR };
 })(typeof self !== "undefined" ? self : this);

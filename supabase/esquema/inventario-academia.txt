@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20261023194909
+# al-dia-con: 20261026230948
 tabla  Ejercicios Lichess  rls=true
 tabla  _foto_rls_tmp  rls=false
 tabla  _pedidos_elo  rls=false
@@ -39,6 +39,7 @@ tabla  avisos_racha  rls=true
 tabla  bromas  rls=true
 tabla  bromas_apagadas  rls=true
 tabla  bromas_bloqueos  rls=true
+tabla  bromas_clase  rls=true
 tabla  bromas_preferencias  rls=true
 tabla  certificados  rls=true
 tabla  clase_elegidos  rls=true
@@ -110,6 +111,8 @@ tabla  interno.clase_espectadores_ip  rls=true
 tabla  interno.curso_lecciones  rls=false
 tabla  interno.envios_publicos  rls=true
 tabla  interno.lector_planilla_uso  rls=true
+tabla  interno.premio_tema_items  rls=true
+tabla  interno.premio_temas  rls=true
 tabla  interno.salud_base  rls=true
 tabla  jde_eventos  rls=true
 tabla  jdn_correcciones  rls=true
@@ -127,12 +130,16 @@ tabla  notas_alumno  rls=true
 tabla  pagos  rls=true
 tabla  paquete_alumnos  rls=true
 tabla  paquetes_acceso  rls=true
+tabla  pareo_avisos_enviados  rls=true
+tabla  pareo_avisos_push_enviados  rls=true
 tabla  pareo_moderaciones  rls=true
 tabla  pareo_organizadores  rls=true
 tabla  pareo_preinscripciones  rls=true
 tabla  pareo_publicados  rls=true
 tabla  pareo_reportes  rls=true
 tabla  pareo_solicitudes_sello  rls=true
+tabla  pareo_suscripciones  rls=true
+tabla  pareo_suscripciones_push  rls=true
 tabla  partidas_torneo  rls=true
 tabla  pizarras_cache  rls=true
 tabla  plan_compartidos  rls=true
@@ -186,6 +193,9 @@ tabla  respuestas_en_curso  rls=true
 tabla  retos_ejercicios  rls=true
 tabla  retos_ejercicios_respuestas  rls=true
 tabla  retos_semanales  rls=true
+tabla  sala_anuncios  rls=true
+tabla  sala_avisos_push_enviados  rls=true
+tabla  sala_suscripciones_push  rls=true
 tabla  salas_torneo  rls=true
 tabla  saved_games  rls=true
 tabla  seleccion_cache  rls=true
@@ -467,8 +477,10 @@ columna  avisos_racha.faltan  integer
 columna  avisos_racha.fecha  date
 columna  avisos_racha.racha  integer
 columna  avisos_racha.student_id  uuid
+columna  bromas.con_sonido  boolean
 columna  bromas.created_at  timestamp with time zone
 columna  bromas.de_id  uuid
+columna  bromas.donde  text
 columna  bromas.frase  text
 columna  bromas.id  uuid
 columna  bromas.para_id  uuid
@@ -480,6 +492,9 @@ columna  bromas_apagadas.profesor_id  uuid
 columna  bromas_bloqueos.alumno_id  uuid
 columna  bromas_bloqueos.bloqueado_id  uuid
 columna  bromas_bloqueos.created_at  timestamp with time zone
+columna  bromas_clase.hasta  timestamp with time zone
+columna  bromas_clase.profesor_id  uuid
+columna  bromas_clase.updated_at  timestamp with time zone
 columna  bromas_preferencias.alumno_id  uuid
 columna  bromas_preferencias.no_recibir  boolean
 columna  bromas_preferencias.updated_at  timestamp with time zone
@@ -1076,6 +1091,13 @@ columna  interno.envios_publicos.tipo  text
 columna  interno.lector_planilla_uso.dia  date
 columna  interno.lector_planilla_uso.persona  uuid
 columna  interno.lector_planilla_uso.usos  integer
+columna  interno.premio_tema_items.grupo  text
+columna  interno.premio_tema_items.item  text
+columna  interno.premio_tema_items.tema  text
+columna  interno.premio_temas.grupo  text
+columna  interno.premio_temas.nombre  text
+columna  interno.premio_temas.tema  text
+columna  interno.premio_temas.total  integer
 columna  interno.salud_base.aviso_enviado  boolean
 columna  interno.salud_base.cron_fallidos  integer
 columna  interno.salud_base.lenta  boolean
@@ -1232,6 +1254,14 @@ columna  paquetes_acceso.precio_mensual  numeric(12,2)
 columna  paquetes_acceso.titular_id  uuid
 columna  paquetes_acceso.vigente_desde  date
 columna  paquetes_acceso.vigente_hasta  date
+columna  pareo_avisos_enviados.cuando  timestamp with time zone
+columna  pareo_avisos_enviados.que  text
+columna  pareo_avisos_enviados.suscripcion_id  uuid
+columna  pareo_avisos_enviados.torneo_id  uuid
+columna  pareo_avisos_push_enviados.cuando  timestamp with time zone
+columna  pareo_avisos_push_enviados.que  text
+columna  pareo_avisos_push_enviados.suscripcion_id  uuid
+columna  pareo_avisos_push_enviados.torneo_id  uuid
 columna  pareo_moderaciones.cuando  timestamp with time zone
 columna  pareo_moderaciones.id  bigint
 columna  pareo_moderaciones.motivo  text
@@ -1297,6 +1327,23 @@ columna  pareo_solicitudes_sello.organizador_id  uuid
 columna  pareo_solicitudes_sello.quien  text
 columna  pareo_solicitudes_sello.representa  text
 columna  pareo_solicitudes_sello.resuelto  timestamp with time zone
+columna  pareo_suscripciones.clave  text
+columna  pareo_suscripciones.confirmada  boolean
+columna  pareo_suscripciones.consentimiento  timestamp with time zone
+columna  pareo_suscripciones.correo  text
+columna  pareo_suscripciones.creado  timestamp with time zone
+columna  pareo_suscripciones.id  uuid
+columna  pareo_suscripciones.ident  text
+columna  pareo_suscripciones.nombre  text
+columna  pareo_suscripciones.token_hash  text
+columna  pareo_suscripciones.token_vence  timestamp with time zone
+columna  pareo_suscripciones_push.auth  text
+columna  pareo_suscripciones_push.clave  text
+columna  pareo_suscripciones_push.creado  timestamp with time zone
+columna  pareo_suscripciones_push.endpoint  text
+columna  pareo_suscripciones_push.id  uuid
+columna  pareo_suscripciones_push.ident  text
+columna  pareo_suscripciones_push.p256dh  text
 columna  partidas_torneo.avisada_at  timestamp with time zone
 columna  partidas_torneo.color  text
 columna  partidas_torneo.comentarios  jsonb
@@ -1400,6 +1447,7 @@ columna  practice_games.status  text
 columna  practice_games.student_color  text
 columna  practice_games.student_id  uuid
 columna  practice_games.updated_at  timestamp with time zone
+columna  practice_games.ventaja_max_cp  integer
 columna  practice_intentos.game_id  uuid
 columna  practice_intentos.id  bigint
 columna  practice_intentos.intento  integer
@@ -1408,6 +1456,7 @@ columna  practice_intentos.session_id  uuid
 columna  practice_intentos.status  text
 columna  practice_intentos.student_id  uuid
 columna  practice_intentos.terminado_at  timestamp with time zone
+columna  practice_intentos.ventaja_max_cp  integer
 columna  practice_sessions.class_session_id  uuid
 columna  practice_sessions.created_at  timestamp with time zone
 columna  practice_sessions.created_by  uuid
@@ -1707,6 +1756,30 @@ columna  retos_semanales.meta  integer
 columna  retos_semanales.metrica  text
 columna  retos_semanales.nombre  text
 columna  retos_semanales.orden  integer
+columna  sala_anuncios.creado  timestamp with time zone
+columna  sala_anuncios.creado_por  uuid
+columna  sala_anuncios.hasta  timestamp with time zone
+columna  sala_anuncios.id  bigint
+columna  sala_anuncios.quitado  timestamp with time zone
+columna  sala_anuncios.sala  text
+columna  sala_anuncios.texto  text
+columna  sala_anuncios.texto_en  text
+columna  sala_avisos_push_enviados.enviado  timestamp with time zone
+columna  sala_avisos_push_enviados.no  integer
+columna  sala_avisos_push_enviados.ronda  integer
+columna  sala_avisos_push_enviados.suscripcion_id  uuid
+columna  sala_avisos_push_enviados.tipo  text
+columna  sala_avisos_push_enviados.tnr  text
+columna  sala_suscripciones_push.actualizada  timestamp with time zone
+columna  sala_suscripciones_push.auth  text
+columna  sala_suscripciones_push.creada  timestamp with time zone
+columna  sala_suscripciones_push.delegacion  text
+columna  sala_suscripciones_push.endpoint  text
+columna  sala_suscripciones_push.id  uuid
+columna  sala_suscripciones_push.idioma  text
+columna  sala_suscripciones_push.jugadores  jsonb
+columna  sala_suscripciones_push.p256dh  text
+columna  sala_suscripciones_push.sala  text
 columna  salas_torneo.clave  text
 columna  salas_torneo.created_at  timestamp with time zone
 columna  salas_torneo.descripcion  text
@@ -1835,6 +1908,7 @@ columna  torneos_externos.id_externo  integer
 columna  torneos_externos.incremento  smallint
 columna  torneos_externos.inicio  timestamp with time zone
 columna  torneos_externos.inscripcion_abierta  boolean
+columna  torneos_externos.jugadores  smallint
 columna  torneos_externos.lugar  text
 columna  torneos_externos.minutos  smallint
 columna  torneos_externos.modalidad  text
@@ -1843,6 +1917,7 @@ columna  torneos_externos.organizador  text
 columna  torneos_externos.precio  numeric(12,2)
 columna  torneos_externos.provincia  text
 columna  torneos_externos.ritmo  text
+columna  torneos_externos.rondas  smallint
 columna  torneos_externos.titulo  text
 columna  torneos_externos.url  text
 columna  torneos_externos.visto  timestamp with time zone
@@ -2037,6 +2112,7 @@ funcion  bitacora_supervisada(p_alumno uuid)  definer  anon=false  auth=true
 funcion  broma_vista(p_id uuid)  definer  anon=false  auth=true
 funcion  bromas_bloquear(p_persona uuid, p_bloquear boolean)  definer  anon=false  auth=true
 funcion  bromas_configurar(p_no_recibir boolean)  definer  anon=false  auth=true
+funcion  bromas_en_esta_clase(p_encender boolean)  definer  anon=false  auth=true
 funcion  bromas_en_mi_clase(p_permitir boolean)  definer  anon=false  auth=true
 funcion  cambiar_rol(p_persona uuid, p_rol text)  definer  anon=false  auth=true
 funcion  canjear_licencia(p_codigo text)  definer  anon=false  auth=true
@@ -2097,6 +2173,7 @@ funcion  disparar_fin_de_partida()  definer  anon=false  auth=false
 funcion  disparar_informes_encargados()  definer  anon=false  auth=false
 funcion  disparar_recordatorios_cobro()  definer  anon=false  auth=false
 funcion  disparar_recordatorios_programados()  definer  anon=false  auth=false
+funcion  disparar_sala_avisos()  definer  anon=false  auth=false
 funcion  disparar_tanda_elo()  definer  anon=false  auth=false
 funcion  disparar_torneos_externos()  definer  anon=false  auth=false
 funcion  duelo_guardar(p_sala uuid, p_ronda integer, p_parte text, p_valor jsonb, p_tiempo numeric)  invoker  anon=false  auth=true
@@ -2194,6 +2271,7 @@ funcion  interno.cerrar_clases_inactivas(p_inactiva interval)  definer  anon=fal
 funcion  interno.clases_donde_aparezco(p_desde timestamp with time zone)  definer  anon=false  auth=true
 funcion  interno.clases_que_coordino()  definer  anon=false  auth=true
 funcion  interno.clases_que_superviso()  definer  anon=false  auth=true
+funcion  interno.cobrar_semana_sin_entrenar(p_lunes date)  definer  anon=false  auth=false
 funcion  interno.cobros_corrige_supervision()  definer  anon=false  auth=false
 funcion  interno.comparten_academia(p_a uuid, p_b uuid)  definer  anon=false  auth=true
 funcion  interno.coordinadores_de(p_persona uuid)  definer  anon=false  auth=false
@@ -2201,20 +2279,26 @@ funcion  interno.corrijo_cobros_de(p_alumno uuid)  definer  anon=false  auth=tru
 funcion  interno.cuaderno_al_cambiar()  invoker  anon=false  auth=false
 funcion  interno.cuaderno_tope()  definer  anon=false  auth=false
 funcion  interno.cuestionario_del_renglon(p_item uuid)  definer  anon=false  auth=false
+funcion  interno.dias_entrenados(p_alumno uuid, p_lunes date)  definer  anon=false  auth=false
 funcion  interno.emitir_cobros(p_hasta date, p_suscripcion uuid)  definer  anon=false  auth=false
 funcion  interno.emitir_recibo(p_alumno uuid, p_fecha date, p_metodo text, p_referencia text, p_nota text, p_emitido_por uuid)  definer  anon=false  auth=false
 funcion  interno.enlaces_de_sala_validos(p jsonb)  invoker  anon=true  auth=true
+funcion  interno.entrenamiento_clave(p_activity text, p_detail jsonb, p_creado timestamp with time zone)  invoker  anon=true  auth=true
+funcion  interno.entrenamiento_logrado(p_detail jsonb)  invoker  anon=true  auth=true
+funcion  interno.entrenamiento_premio(p_activity text, p_detail jsonb)  invoker  anon=false  auth=false
 funcion  interno.entreno_pedido_de_la_base()  definer  anon=false  auth=false
 funcion  interno.estilo_opiniones_al_guardar()  definer  anon=false  auth=false
 funcion  interno.estilo_pruebas_al_guardar()  definer  anon=false  auth=false
 funcion  interno.estilo_seguimiento_al_guardar()  definer  anon=false  auth=false
 funcion  interno.estilo_seguimiento_partidas_ok(p jsonb)  invoker  anon=false  auth=true
 funcion  interno.estudio_al_guardar()  definer  anon=false  auth=false
+funcion  interno.fin_de_puntos_dobles(p_alumno uuid, p_horas integer)  definer  anon=false  auth=false
 funcion  interno.frenar_envio_publico(p_tipo text, p_ambito text, p_correo text, p_ip text)  invoker  anon=false  auth=false
 funcion  interno.gente_de_mis_academias()  definer  anon=false  auth=true
 funcion  interno.habilidad_resultado_de_la_base()  definer  anon=false  auth=false
 funcion  interno.horarios_del_alumno(p_alumno uuid)  definer  anon=false  auth=false
 funcion  interno.jsonb_o_nulo(p text)  invoker  anon=false  auth=true
+funcion  interno.leccion_abierta(p_alumno uuid, p_curso text)  definer  anon=false  auth=false
 funcion  interno.lecciones_hechas(p_alumno uuid, p_curso text)  definer  anon=false  auth=false
 funcion  interno.material_compartido_conmigo(p_producto text)  definer  anon=false  auth=true
 funcion  interno.me_sacaron_de(p_clase uuid)  definer  anon=false  auth=true
@@ -2234,8 +2318,15 @@ funcion  interno.pagar(p_pagos jsonb, p_metodo text, p_referencia text, p_nota t
 funcion  interno.pizarras_de_sala_validas(p jsonb)  invoker  anon=true  auth=true
 funcion  interno.plantillas_casa_tope()  definer  anon=false  auth=false
 funcion  interno.practica_guardar_intento()  definer  anon=false  auth=false
+funcion  interno.practica_ventaja_maxima()  definer  anon=false  auth=false
 funcion  interno.prefijo_de_nombre(p_nombre text)  invoker  anon=false  auth=true
 funcion  interno.preguntas_visibles_para_mi_supervision()  definer  anon=false  auth=true
+funcion  interno.premiar_tema_terminado()  definer  anon=false  auth=false
+funcion  interno.premio_grupo(p_activity text)  invoker  anon=true  auth=true
+funcion  interno.premio_item(p_activity text, p_detail jsonb)  invoker  anon=true  auth=true
+funcion  interno.premio_temas_cargar(p_datos jsonb)  definer  anon=false  auth=false
+funcion  interno.premio_temas_cargar_respuesta(p_pedido bigint)  definer  anon=false  auth=false
+funcion  interno.premio_temas_pedir(p_url text)  definer  anon=false  auth=false
 funcion  interno.preparacion_sesiones_sello()  invoker  anon=false  auth=false
 funcion  interno.profesor_alumno_mio(p_id uuid)  definer  anon=false  auth=true
 funcion  interno.profesores_de(p_alumno uuid)  definer  anon=false  auth=true
@@ -2280,7 +2371,8 @@ funcion  licencias_cambiar(p_id uuid, p_accion text, p_vence timestamp with time
 funcion  licencias_generar(p_herramienta text, p_cantidad integer, p_dias integer, p_nota text, p_persona uuid)  definer  anon=false  auth=true
 funcion  ligar_a_la_clase_abierta()  invoker  anon=false  auth=false
 funcion  logros_hitos(alumno uuid)  invoker  anon=false  auth=true
-funcion  mandar_broma(p_premio_id uuid, p_para uuid, p_frase text)  definer  anon=false  auth=true
+funcion  mandar_broma(p_premio_id uuid, p_para uuid, p_frase text, p_donde text, p_con_sonido boolean)  definer  anon=false  auth=true
+funcion  mandar_broma_v1(p_premio_id uuid, p_para uuid, p_frase text)  definer  anon=false  auth=false
 funcion  mandar_plan_rival(p_alumnos uuid[], p_rival text, p_lado text, p_plan jsonb, p_nota text, p_vence timestamp with time zone)  invoker  anon=false  auth=true
 funcion  marca_de_alumno(p_alumno uuid)  definer  anon=false  auth=false
 funcion  marca_de_diagnostico(p_id uuid)  definer  anon=false  auth=true
@@ -2307,6 +2399,7 @@ funcion  mis_academias_supervisadas()  definer  anon=false  auth=true
 funcion  mis_avisos_enviados(p_limite integer)  invoker  anon=false  auth=true
 funcion  mis_avisos_sin_leer()  definer  anon=false  auth=true
 funcion  mis_bromas()  invoker  anon=false  auth=true
+funcion  mis_bromas_v1()  invoker  anon=false  auth=false
 funcion  mis_clases()  invoker  anon=false  auth=true
 funcion  mis_clases_proximas(p_dias integer)  definer  anon=false  auth=true
 funcion  mis_funciones_coordinacion()  definer  anon=false  auth=true
@@ -2318,6 +2411,7 @@ funcion  mis_retos_de_ejercicios()  invoker  anon=false  auth=true
 funcion  mis_subgrupos()  invoker  anon=false  auth=true
 funcion  mis_supervisados()  definer  anon=false  auth=true
 funcion  mis_supervisores()  definer  anon=false  auth=true
+funcion  mis_temas_terminados(p_desde timestamp with time zone)  invoker  anon=false  auth=true
 funcion  my_profile()  definer  anon=false  auth=true
 funcion  nombres_de_jugadores(p_ids uuid[])  definer  anon=false  auth=true
 funcion  notas_alumno_clase_propia()  definer  anon=false  auth=false
@@ -2331,16 +2425,32 @@ funcion  paquete_borrar(p_id uuid)  definer  anon=false  auth=true
 funcion  paquete_guardar(p_id uuid, p_nombre text, p_titular uuid, p_academia uuid, p_cupos integer, p_desde date, p_hasta date, p_precio numeric, p_moneda text, p_notas text)  definer  anon=false  auth=true
 funcion  paquete_set_alumnos(p_id uuid, p_alumnos uuid[])  definer  anon=false  auth=true
 funcion  paquetes_con_uso()  invoker  anon=false  auth=true
+funcion  pareo_baja_push(p_endpoint text, p_nombre text, p_ident text)  definer  anon=false  auth=false
+funcion  pareo_buscar_jugador(p_texto text)  invoker  anon=true  auth=true
+funcion  pareo_cifras()  definer  anon=false  auth=true
 funcion  pareo_clave(p text)  invoker  anon=true  auth=true
 funcion  pareo_correo_frenar(p_ip text, p_ambito text)  definer  anon=false  auth=false
 funcion  pareo_elo_frenar(p_ip text)  definer  anon=false  auth=false
 funcion  pareo_frenar(p_ip text, p_crear boolean)  definer  anon=false  auth=false
 funcion  pareo_inscribir_frenar(p_ip text, p_publicado uuid)  definer  anon=false  auth=false
+funcion  pareo_institucion(p_nombre text)  invoker  anon=true  auth=true
 funcion  pareo_lista(p_parte text, p_desde integer, p_cuantos integer, p_buscar text, p_ritmo text, p_lugar text, p_elo text, p_abierta boolean, p_curso boolean, p_verificado boolean)  invoker  anon=true  auth=true
 funcion  pareo_lista_resumen()  invoker  anon=true  auth=true
+funcion  pareo_medallero(p_anio integer)  invoker  anon=true  auth=true
 funcion  pareo_moderar(p_que text, p_id uuid)  definer  anon=false  auth=true
 funcion  pareo_moderar_con_motivo(p_que text, p_id uuid, p_motivo text)  definer  anon=false  auth=true
+funcion  pareo_palabras(p text)  invoker  anon=true  auth=true
+funcion  pareo_parecidos(a text, b text)  invoker  anon=true  auth=true
+funcion  pareo_partidas_del_anio(p_anio integer)  invoker  anon=true  auth=true
+funcion  pareo_provincia(p_lugar text)  invoker  anon=true  auth=true
+funcion  pareo_ranking(p_anio integer, p_orden text, p_categoria text, p_institucion text)  invoker  anon=true  auth=true
 funcion  pareo_reportar_frenar(p_ip text)  definer  anon=false  auth=false
+funcion  pareo_resultados()  invoker  anon=true  auth=true
+funcion  pareo_suscribir(p_correo text, p_nombre text, p_ident text, p_token_hash text, p_vence timestamp with time zone)  definer  anon=false  auth=false
+funcion  pareo_suscribir_push(p_endpoint text, p_p256dh text, p_auth text, p_nombre text, p_ident text)  definer  anon=false  auth=false
+funcion  pareo_suscriptores_de(p_torneo uuid)  definer  anon=false  auth=false
+funcion  pareo_suscriptores_push_de(p_torneo uuid)  definer  anon=false  auth=false
+funcion  pareo_torneos_de(p_nombre text, p_ident text)  invoker  anon=true  auth=true
 funcion  personas_con_dos_pasos()  definer  anon=false  auth=true
 funcion  personas_para_ver_como()  definer  anon=false  auth=true
 funcion  plan_compartido_conmigo(p_plan uuid)  definer  anon=true  auth=true
@@ -2436,12 +2546,17 @@ funcion  retos_de_la_semana()  definer  anon=false  auth=true
 funcion  revisar_informe_mensual(p_id uuid, p_comentario text)  definer  anon=false  auth=true
 funcion  ruta_cumplimiento(p_lunes date, p_grupo text, p_inicio date)  invoker  anon=false  auth=true
 funcion  sacar_de_la_clase(p_clase uuid, p_alumno uuid)  definer  anon=false  auth=true
+funcion  sala_anuncio_publicar(p_sala text, p_texto text, p_texto_en text, p_horas integer)  definer  anon=false  auth=true
+funcion  sala_anuncio_quitar(p_id bigint)  definer  anon=false  auth=true
+funcion  sala_avisos_frenar(p_ip text)  definer  anon=false  auth=false
 funcion  saldo_de_puntos(p_alumno uuid)  invoker  anon=false  auth=true
 funcion  salida_de_la_clase(p_clase uuid)  invoker  anon=false  auth=true
 funcion  se_caen_del_plan(p_dias integer)  invoker  anon=false  auth=true
 funcion  secreto_alerta_base()  definer  anon=false  auth=false
 funcion  secreto_aviso_diagnostico()  definer  anon=false  auth=false
+funcion  secreto_pareo_identidad()  definer  anon=false  auth=false
 funcion  secreto_partida_robo()  definer  anon=false  auth=false
+funcion  secreto_sala_avisos()  definer  anon=false  auth=false
 funcion  secreto_tanda_arbitros()  definer  anon=false  auth=false
 funcion  secreto_tanda_cobros()  definer  anon=false  auth=false
 funcion  secreto_tanda_elo()  definer  anon=false  auth=false
@@ -2449,6 +2564,7 @@ funcion  secreto_tanda_informes()  definer  anon=false  auth=false
 funcion  secreto_tanda_push()  definer  anon=false  auth=false
 funcion  secreto_torneos_externos()  definer  anon=false  auth=false
 funcion  seleccion_compartida(p_id uuid)  definer  anon=false  auth=true
+funcion  semana_de_entrenamiento()  definer  anon=false  auth=true
 funcion  sesion_de_supervisado(p_sesion uuid)  definer  anon=false  auth=true
 funcion  set_cuentas_del_supervisor(p_supervisor uuid, p_cuentas uuid[])  definer  anon=false  auth=true
 funcion  set_profesores_del_coordinador(p_coordinador uuid, p_profesores uuid[])  definer  anon=false  auth=true
@@ -2474,9 +2590,12 @@ funcion  tablero_academias(p_periodo date)  definer  anon=false  auth=true
 funcion  tareas_con_avance(p_alumno uuid, p_profesor uuid, p_pendientes boolean, p_limite integer)  invoker  anon=true  auth=true
 funcion  tengo_herramienta(p_herramienta text)  definer  anon=false  auth=true
 funcion  tiempo_por_seccion(p_alumno uuid, p_desde timestamp with time zone, p_hasta timestamp with time zone)  invoker  anon=false  auth=true
+funcion  torneos_externos_lista()  invoker  anon=true  auth=true
 funcion  trofeos_de(p_alumno uuid)  definer  anon=false  auth=true
 funcion  uuid_seguro(p_texto text)  invoker  anon=false  auth=true
 funcion  validar_marca_training_progress()  definer  anon=false  auth=false
+funcion  ventajas_perdidas(p_clase uuid)  invoker  anon=false  auth=true
+funcion  ventajas_perdidas_del_mes(p_profesor uuid)  invoker  anon=false  auth=true
 funcion  vigilar_base()  definer  anon=false  auth=false
 politica  Ejercicios Lichess  Ejercicios Lichess: lectura publica  SELECT
 politica  academia_ia  academia_ia_select  SELECT
@@ -2541,6 +2660,7 @@ politica  avisos_profesor  avisos_profesor_select  SELECT
 politica  bromas  bromas_ver  SELECT
 politica  bromas_apagadas  bromas_apagadas_ver  SELECT
 politica  bromas_bloqueos  bromas_bloqueos_ver  SELECT
+politica  bromas_clase  bromas_clase_ver  SELECT
 politica  bromas_preferencias  bromas_preferencias_ver  SELECT
 politica  certificados  certificados_lee  SELECT
 politica  clase_elegidos  clase_elegidos_insert  INSERT
@@ -2891,6 +3011,7 @@ politica  retos_semanales  retos_semanales_delete  DELETE
 politica  retos_semanales  retos_semanales_insert  INSERT
 politica  retos_semanales  retos_semanales_select  SELECT
 politica  retos_semanales  retos_semanales_update  UPDATE
+politica  sala_anuncios  sala_anuncios_ver  SELECT
 politica  salas_torneo  salas_torneo_borrar  DELETE
 politica  salas_torneo  salas_torneo_crear  INSERT
 politica  salas_torneo  salas_torneo_editar  UPDATE
@@ -3052,6 +3173,7 @@ trigger  platform_activity_log  platform_activity_log_protege_tiempos
 trigger  practice_games  practica_ayuda_proteger
 trigger  practice_games  practica_guardar_intento
 trigger  practice_games  practica_intentos_al_crear
+trigger  practice_games  practica_ventaja_maxima
 trigger  practice_sessions  practice_sessions_ligar_a_la_clase
 trigger  premios_canjeados  auditar
 trigger  preparacion_rivales_profesores  auditar
@@ -3085,6 +3207,7 @@ trigger  tareas  tareas_protege_alumno
 trigger  tournament_rounds  tournament_rounds_modalidad
 trigger  tournaments  tournaments_proteger
 trigger  training_progress  otorgar_puntos_de_entrenamiento
+trigger  training_progress  premiar_tema_terminado
 trigger  training_progress  training_progress_hora
 trigger  training_progress  training_progress_valida_marca
 trigger  vision_personas  auditar
@@ -3157,6 +3280,7 @@ indice  bromas  bromas_para
 indice  bromas  bromas_pkey
 indice  bromas_apagadas  bromas_apagadas_pkey
 indice  bromas_bloqueos  bromas_bloqueos_pkey
+indice  bromas_clase  bromas_clase_pkey
 indice  bromas_preferencias  bromas_preferencias_pkey
 indice  certificados  certificados_academia_idx
 indice  certificados  certificados_anulado_por_idx
@@ -3353,6 +3477,9 @@ indice  interno.envios_publicos  envios_publicos_pkey
 indice  interno.envios_publicos  envios_publicos_tipo_ambito
 indice  interno.lector_planilla_uso  lector_planilla_uso_dia
 indice  interno.lector_planilla_uso  lector_planilla_uso_pkey
+indice  interno.premio_tema_items  premio_tema_items_item
+indice  interno.premio_tema_items  premio_tema_items_pkey
+indice  interno.premio_temas  premio_temas_pkey
 indice  interno.salud_base  salud_base_pkey
 indice  jde_eventos  jde_eventos_anio_fase_idx
 indice  jde_eventos  jde_eventos_pkey
@@ -3402,6 +3529,10 @@ indice  paquetes_acceso  paquetes_acceso_academia_idx
 indice  paquetes_acceso  paquetes_acceso_creado_por_fk
 indice  paquetes_acceso  paquetes_acceso_pkey
 indice  paquetes_acceso  paquetes_acceso_titular_idx
+indice  pareo_avisos_enviados  pareo_avisos_enviados_pkey
+indice  pareo_avisos_enviados  pareo_avisos_enviados_torneo_idx
+indice  pareo_avisos_push_enviados  pareo_avisos_push_enviados_pkey
+indice  pareo_avisos_push_enviados  pareo_avisos_push_enviados_torneo_idx
 indice  pareo_moderaciones  pareo_moderaciones_cuando_idx
 indice  pareo_moderaciones  pareo_moderaciones_pkey
 indice  pareo_organizadores  pareo_organizadores_correo_idx
@@ -3418,6 +3549,14 @@ indice  pareo_reportes  pareo_reportes_publicado_idx
 indice  pareo_solicitudes_sello  pareo_solicitudes_sello_estado_idx
 indice  pareo_solicitudes_sello  pareo_solicitudes_sello_pkey
 indice  pareo_solicitudes_sello  pareo_solicitudes_sello_una_nueva
+indice  pareo_suscripciones  pareo_suscripciones_clave_idx
+indice  pareo_suscripciones  pareo_suscripciones_ident_idx
+indice  pareo_suscripciones  pareo_suscripciones_pkey
+indice  pareo_suscripciones  pareo_suscripciones_una
+indice  pareo_suscripciones_push  pareo_suscripciones_push_clave_idx
+indice  pareo_suscripciones_push  pareo_suscripciones_push_ident_idx
+indice  pareo_suscripciones_push  pareo_suscripciones_push_pkey
+indice  pareo_suscripciones_push  pareo_suscripciones_push_una
 indice  partidas_torneo  partidas_torneo_alumno
 indice  partidas_torneo  partidas_torneo_pkey
 indice  pizarras_cache  pizarras_cache_pkey
@@ -3544,6 +3683,11 @@ indice  retos_ejercicios_respuestas  retos_ejercicios_respuestas_alumno
 indice  retos_ejercicios_respuestas  retos_ejercicios_respuestas_pkey
 indice  retos_semanales  retos_semanales_clave_key
 indice  retos_semanales  retos_semanales_pkey
+indice  sala_anuncios  sala_anuncios_pkey
+indice  sala_anuncios  sala_anuncios_sala_creado
+indice  sala_avisos_push_enviados  sala_avisos_push_enviados_pkey
+indice  sala_suscripciones_push  sala_suscripciones_push_pkey
+indice  sala_suscripciones_push  sala_suscripciones_push_sala_endpoint_key
 indice  salas_torneo  salas_torneo_clave_key
 indice  salas_torneo  salas_torneo_pkey
 indice  salas_torneo  salas_torneo_updated_by_fk
@@ -3601,6 +3745,7 @@ indice  training_plans  training_plans_pkey
 indice  training_plans  training_plans_student_id_key
 indice  training_plans  training_plans_student_idx
 indice  training_plans  training_plans_teacher_id_fk
+indice  training_progress  training_progress_clave_puntos
 indice  training_progress  training_progress_pkey
 indice  training_progress  training_progress_sin_internet
 indice  training_progress  training_progress_student_idx
@@ -3667,7 +3812,10 @@ cron  cobros-recordatorios-programados  */5 * * * *
 cron  elo-fide-nacional  10 9 * * *
 cron  informes-a-encargados  0 * * * *
 cron  limpiar-invitados-de-clase  20 7 * * *
+cron  puntos-semana-sin-entrenar  10 6 * * 1
 cron  recordar-informes-mensuales  0 14 * * *
+cron  sala-avisos  */5 * 1-8 11 *
+cron  sala-avisos-limpiar  17 9 * * *
 cron  torneos-externos  13 11 * * *
 cron  vigilar-base  */5 * * * *
 grant  Ejercicios Lichess  anon  DELETE
@@ -3808,6 +3956,7 @@ grant  avisos_profesor  authenticated  TRIGGER
 grant  bromas  authenticated  SELECT
 grant  bromas_apagadas  authenticated  SELECT
 grant  bromas_bloqueos  authenticated  SELECT
+grant  bromas_clase  authenticated  SELECT
 grant  bromas_preferencias  authenticated  SELECT
 grant  certificados  authenticated  SELECT
 grant  clase_elegidos  authenticated  DELETE

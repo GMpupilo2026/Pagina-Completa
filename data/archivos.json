@@ -23,7 +23,7 @@
     "nombre": "Formación docente"
    }
   ],
-  "total": 891,
+  "total": 892,
   "material": [
    {
     "ruta": "material/cambiar-o-no-cambiar/cambiar-o-no-cambiar.pdf",
@@ -8154,6 +8154,12 @@
     "titulo": "Bases del XXI Festival Centroamericano y del Caribe de la Juventud, Costa Rica 2026",
     "tipo": "otro",
     "kb": 668
+   },
+   {
+    "ruta": "documentos/centroamericano-2026/cartel-centroamericano-2026.pdf",
+    "titulo": "Centroamericano 2026: cartel con código QR a la página, para pegar en los hoteles y en la sala",
+    "tipo": "otro",
+    "kb": 499
    },
    {
     "ruta": "documentos/jde/normativa-pjde-2026.pdf",
@@ -19075,7 +19081,7 @@
   ]
  },
  "imagenes": {
-  "total": 860,
+  "total": 874,
   "grupos": [
    {
     "carpeta": "entreno/img/facil",
@@ -24338,10 +24344,29 @@
     ]
    },
    {
+    "carpeta": "img/cenfotec",
+    "titulo": "Cenfotec",
+    "grupo": "Carpetas",
+    "archivos": [
+     {
+      "ruta": "img/cenfotec/logo.png",
+      "titulo": "Logo",
+      "tipo": "otro",
+      "kb": 35
+     }
+    ]
+   },
+   {
     "carpeta": "img/centroamericano-2026",
     "titulo": "Centroamericano 2026",
     "grupo": "Carpetas",
     "archivos": [
+     {
+      "ruta": "img/centroamericano-2026/bandera-cr.svg",
+      "titulo": "Centroamericano 2026: la insignia de Costa Rica de la portada",
+      "tipo": "otro",
+      "kb": 1
+     },
      {
       "ruta": "img/centroamericano-2026/carolina-munoz.jpg",
       "titulo": "Centroamericano 2026: foto de Carolina Muñoz, árbitra principal",
@@ -24349,10 +24374,96 @@
       "kb": 10
      },
      {
+      "ruta": "img/centroamericano-2026/cca-logo.png",
+      "titulo": "Logo de la Confederación de Ajedrez de América (de las bases del Centroamericano 2026)",
+      "tipo": "otro",
+      "kb": 65
+     },
+     {
+      "ruta": "img/centroamericano-2026/compartir.jpg",
+      "titulo": "Centroamericano 2026: la imagen que se ve al compartir la página por WhatsApp",
+      "tipo": "otro",
+      "kb": 110
+     },
+     {
+      "ruta": "img/centroamericano-2026/hojas.png",
+      "titulo": "Centroamericano 2026: las hojas de monstera de las bases (sin fondo)",
+      "tipo": "otro",
+      "kb": 23
+     },
+     {
+      "ruta": "img/centroamericano-2026/jean-quesada.jpg",
+      "titulo": "Centroamericano 2026: foto de Jean Quesada, árbitro de pareo",
+      "tipo": "otro",
+      "kb": 9
+     },
+     {
+      "ruta": "img/centroamericano-2026/mascota-asoma.png",
+      "titulo": "Centroamericano 2026: la cabeza del pizote de la portada, recortada para que se asome en una ficha",
+      "tipo": "otro",
+      "kb": 58
+     },
+     {
+      "ruta": "img/centroamericano-2026/mascota-trofeo.png",
+      "titulo": "Centroamericano 2026: el pizote con el trofeo y la bandera, de las bases",
+      "tipo": "otro",
+      "kb": 33
+     },
+     {
+      "ruta": "img/centroamericano-2026/mascota.jpg",
+      "titulo": "Centroamericano 2026: la mascota, el pizote de la portada de las bases",
+      "tipo": "otro",
+      "kb": 71
+     },
+     {
       "ruta": "img/centroamericano-2026/vivian-viquez.jpg",
       "titulo": "Centroamericano 2026: foto de Vivian Víquez Miranda, organizadora",
       "tipo": "otro",
       "kb": 10
+     }
+    ]
+   },
+   {
+    "carpeta": "img/centroamericano-2026/app",
+    "titulo": "App",
+    "grupo": "Carpetas",
+    "archivos": [
+     {
+      "ruta": "img/centroamericano-2026/app/apple-touch-icon.png",
+      "titulo": "Apple touch icon",
+      "tipo": "otro",
+      "kb": 34
+     },
+     {
+      "ruta": "img/centroamericano-2026/app/icon-192.png",
+      "titulo": "Icon 192",
+      "tipo": "otro",
+      "kb": 39
+     },
+     {
+      "ruta": "img/centroamericano-2026/app/icon-512-maskable.png",
+      "titulo": "Icon 512 maskable",
+      "tipo": "otro",
+      "kb": 108
+     },
+     {
+      "ruta": "img/centroamericano-2026/app/icon-512.png",
+      "titulo": "Icon 512",
+      "tipo": "otro",
+      "kb": 193
+     }
+    ]
+   },
+   {
+    "carpeta": "img/utn",
+    "titulo": "Utn",
+    "grupo": "Carpetas",
+    "archivos": [
+     {
+      "ruta": "img/utn/logo.png",
+      "titulo": "Logo",
+      "tipo": "otro",
+      "kb": 15
      }
     ]
    }

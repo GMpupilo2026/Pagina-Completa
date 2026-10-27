@@ -56,6 +56,10 @@ const FUNCIONES = {
   "prueba-gratis": ["usuario-alumno.ts"],
   // La pizarra de la sala de cine: lee chess-results. Ver su cabecera.
   "pizarra-torneo": [],
+  // «Busca a tu jugador», el medallero y los avisos de ronda del
+  // Centroamericano (verify_jwt en false: la revisión la dispara pg_cron con
+  // el secreto). Ver su cabecera.
+  "sala-jugadores": ["webpush.ts"],
   // La calculadora de la selección CODICADER: lee un torneo entero de
   // chess-results, solo con licencia. Ver su cabecera.
   "seleccion-chess-results": [],
@@ -91,7 +95,10 @@ const FUNCIONES = {
   // «Torneos en Pareo Integral»: publicar, la organización, los reportes y
   // sus correos (verify_jwt en false). Su correos.ts es suyo; la franja de
   // arriba de los correos es la de siempre. Ver su cabecera.
-  "pareo-publicar": ["marca-correo.ts"],
+  // Los avisos push de quien sigue a un jugador usan el mismo cifrado que
+  // los de la Academia (notificar): una sola copia en _compartido.
+  "pareo-publicar": ["marca-correo.ts", "webpush.ts"],
+  "notificar": ["webpush.ts"],
   // Los torneos próximos de ajedrezcostarica.com, una vez al día (pg_cron,
   // con su secreto). Su leer.ts es suyo. Ver su cabecera.
   "torneos-externos": [],

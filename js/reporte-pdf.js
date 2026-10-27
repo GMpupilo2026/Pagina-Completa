@@ -37,6 +37,14 @@
  *                        blanco. El color tiene que dar 4,5 contra el blanco:
  *                        lo mide quien arma el documento.
  * Sin ellas, el PDF sale como siempre (los reportes de actividades).
+ *
+ *   documento.pagina   → (n, total) => texto: el número de página en otro
+ *                        idioma («Page 1 of 2»). Sin él, «Página 1 de 2». *
+ * ReportePDF.deImagen({ jpeg, ancho, alto, horizontal, titulo, autor }) arma
+ * un PDF de una página con esa imagen de borde a borde (el diploma del
+ * Centroamericano): la imagen ya trae su marca de agua. Con
+ * { paginas: [{ jpeg, ancho, alto }, …], horizontal, titulo, autor }, una
+ * página por imagen (todos los diplomas de una delegación).
  */
 window.ReportePDF = (function () {
   "use strict";
@@ -375,7 +383,7 @@ window.ReportePDF = (function () {
       // El pie, en todas: quién lo hizo y en qué página va.
       contenido += "BT /FN 8 Tf 0.45 0.50 0.56 rg 1 0 0 1 " + MARGEN + " " + (MARGEN - 18) + " Tm (" +
         escapar(documento.pie || "") + ") Tj ET\n";
-      const num = "Página " + (i + 1) + " de " + total;
+      const num = documento.pagina ? documento.pagina(i + 1, total) : "Página " + (i + 1) + " de " + total;
       contenido += "BT /FN 8 Tf 0.45 0.50 0.56 rg 1 0 0 1 " +
         (A4.ancho - MARGEN - anchoDe(num, 8, false)).toFixed(2) + " " + (MARGEN - 18) + " Tm (" +
         escapar(num) + ") Tj ET\n";
@@ -482,5 +490,34 @@ window.ReportePDF = (function () {
     return [n >> 16 & 255, n >> 8 & 255, n & 255].map((v) => (v / 255).toFixed(3)).join(" ");
   }
 
-  return { generar: generar, _renglones: renglones, _aLatin1: aLatin1, _anchoDe: anchoDe, _aRgb: aRgb };
+  /* Una sola imagen como página entera (un diploma): A4 de pie o acostada, sin
+     márgenes, pie ni marca de agua aparte, porque la imagen ya trae la suya
+     (la dibuja quien la arma, con js/tabla-imagen.js). La imagen va en JPEG,
+     como las fotos de generar(). */
+  function deImagen(imagen) {
+    const doc = new Constructor();
+    const ancho = imagen.horizontal ? A4.alto : A4.ancho, alto = imagen.horizontal ? A4.ancho : A4.alto;
+    const lista = Array.isArray(imagen.paginas) && imagen.paginas.length ? imagen.paginas : [imagen];
+    const paginasId = doc.nuevo(null);
+    const hojas = lista.map((img) => {
+      const foto = doc.nuevo({
+        diccionario: "<< /Type /XObject /Subtype /Image /Width " + img.ancho + " /Height " + img.alto +
+          " /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length " + img.jpeg.length + " >>",
+        flujo: img.jpeg,
+      });
+      const contenido = doc.nuevo({ diccionario: "<< /Length @@ >>",
+        flujo: bytesDeTexto("q " + ancho.toFixed(2) + " 0 0 " + alto.toFixed(2) + " 0 0 cm /Im1 Do Q\n") });
+      return doc.nuevo({
+        diccionario: "<< /Type /Page /Parent " + paginasId + " 0 R /MediaBox [0 0 " + ancho + " " + alto + "]" +
+          " /Resources << /XObject << /Im1 " + foto + " 0 R >> >> /Contents " + contenido + " 0 R >>",
+      });
+    });
+    doc.objetos[paginasId] = { diccionario: "<< /Type /Pages /Count " + hojas.length + " /Kids [" + hojas.map((h) => h + " 0 R").join(" ") + "] >>" };
+    const catalogo = doc.nuevo({ diccionario: "<< /Type /Catalog /Pages " + paginasId + " 0 R >>" });
+    const info = doc.nuevo({ diccionario: "<< /Title (" + escapar(imagen.titulo || "") + ") /Author (" +
+      escapar(imagen.autor || "") + ") /Creator (Ajedrez Integral) >>" });
+    return ensamblar(doc, catalogo, info);
+  }
+
+  return { generar: generar, deImagen: deImagen, _renglones: renglones, _aLatin1: aLatin1, _anchoDe: anchoDe, _aRgb: aRgb };
 })();

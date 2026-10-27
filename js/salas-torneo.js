@@ -61,7 +61,24 @@
     return e;
   }
 
-  function enlaceAfuera(enlace, clase, nombreSala) {
+  // Una dirección del propio sitio (con el dominio o sin él) queda en la misma
+  // pestaña: nombrar ajedrez-integral.com no es irse.
+  function delSitio(url) {
+    let u;
+    try { u = new URL(url, location.href); } catch (e) { return null; }
+    if (u.origin !== location.origin && !/(^|\.)ajedrez-integral\.com$/.test(u.hostname)) return null;
+    return u.pathname + u.search + u.hash;
+  }
+
+  function enlaceAfuera(enlace, clase, nombreSala, portada) {
+    const destino = portada && portada.fichas ? adentro(portada, enlace.url) : delSitio(enlace.url);
+    if (destino) {
+      const a = el("a", clase, enlace.texto);
+      a.href = destino;
+      a.appendChild(el("span", "sr-only", " de " + nombreSala));
+      a.appendChild(document.createTextNode(" →"));
+      return a;
+    }
     const a = el("a", clase, enlace.texto);
     a.href = enlace.url;
     a.target = "_blank";
@@ -71,27 +88,103 @@
     return a;
   }
 
+  // Las salas con portada propia: la ficha se viste con la cara de su torneo
+  // (sus colores, su mascota) en vez de la blanca de siempre. El estilo vive
+  // en la hoja de la página del torneo, que cargan torneos-en-vivo.html y
+  // admin.html. Ver «La ficha del Centroamericano en Torneos».
+  // Cada portada pone su `clase` en la ficha y de ella salen las demás:
+  // `<clase>-imagen`, `<clase>-boton` y `<clase>-principal` (el primer botón).
+  // `tema` es una clase más, con los colores (la de cada universidad).
+  //
+  // Con `pagina` y `fichas`, sus botones nunca sacan a nadie del sitio: lo que
+  // es de afuera (los resultados en chess-results, las bases) lleva a la ficha
+  // de esa misma cosa en la página del torneo, que la abre encima (`#<id>` de
+  // un a[data-ventana], js/ventana-enlace.js); lo que no tiene ficha, a la
+  // página entera.
+  const PORTADAS = {
+    "centroamericano-2026": {
+      clase: "cac-sala", imagen: "/img/centroamericano-2026/mascota-trofeo.png", ancho: 124, alto: 120,
+      pagina: "/centroamericano-2026.html",
+      // chess-results lleva a la elección de categoría (un torneo por cada
+      // una): «#resultados», que la página abre encima.
+      fichas: [[/chess-results\.com\//i, "resultados", "Resultados en vivo"], [/bases-cac-2026\.pdf$/i, "ficha-bases"]],
+    },
+    // Las universidades, con su azul y su logo (css/universidades.css). Lo
+    // de afuera (chess-results, el enlace directo a Lichess) lleva a su ficha
+    // en la página del torneo, que lo abre encima. Ver «Las páginas de los
+    // torneos universitarios».
+    "cenfotec": {
+      clase: "u-sala", tema: "u-sala-cft", imagen: "/img/cenfotec/logo.png", ancho: 566, alto: 256,
+      pagina: "/cenfotec-2026.html",
+      fichas: [[/chess-results\.com\//i, "ficha-resultados"], [/lichess\.org\//i, "ficha-partidas"], [/youtube\.com\/|youtu\.be\//i, "ficha-video"]],
+    },
+    "utn": {
+      clase: "u-sala", tema: "u-sala-utn", imagen: "/img/utn/logo.png", ancho: 410, alto: 313,
+      pagina: "/utn-2026.html",
+      fichas: [[/chess-results\.com\/tnr1498221\b/i, "ficha-femenino"], [/chess-results\.com\/tnr1498218\b/i, "ficha-masculino"], [/lichess\.org\//i, "ficha-partidas"]],
+    },
+  };
+
+  // Con un torneo por categoría, la sala tiene un enlace de chess-results por
+  // cada una (de ahí lee la página los datos): en la ficha van todos al mismo
+  // lugar, así que se muestran como UN botón, con el nombre de su ficha (el
+  // tercer dato de `fichas`). Solo se juntan los de una ficha con nombre: dos
+  // transmisiones que llevan a la misma página (las de la UTN) siguen siendo
+  // dos botones. Ver «Un torneo por categoría».
+  function juntar(enlaces, portada) {
+    if (!portada || !portada.fichas) return enlaces;
+    const donde = new Map();
+    const out = [];
+    enlaces.forEach((e) => {
+      const f = portada.fichas.find(([patron]) => patron.test(String((e && e.url) || "")));
+      if (!f || !f[2]) { out.push(e); return; }
+      if (!donde.has(f[1])) { donde.set(f[1], out.length); out.push(e); return; }
+      out[donde.get(f[1])] = { ...out[donde.get(f[1])], texto: f[2] };
+    });
+    return out;
+  }
+
+  function adentro(portada, url) {
+    const ficha = portada.fichas.find(([patron]) => patron.test(String(url || "")));
+    if (ficha) return portada.pagina + "#" + ficha[1];
+    return delSitio(url) || portada.pagina;
+  }
+
   // La ficha, igual en la página pública y en la vista previa del editor (que
   // la pone dentro de una caja `inert`: se ve, pero no se sigue ni se enfoca).
   function ficha(sala) {
-    const li = el("li", "bg-white dark:bg-brand-900 rounded-2xl shadow-md p-6 flex flex-col");
+    const portada = PORTADAS[sala.clave] || null;
+    const li = el("li", portada
+      ? portada.clase + (portada.tema ? " " + portada.tema : "") + " rounded-2xl shadow-md p-6 flex flex-col"
+      : "bg-white dark:bg-brand-900 rounded-2xl shadow-md p-6 flex flex-col");
     li.dataset.sala = sala.clave || "";
+    if (portada) {
+      const img = el("img", portada.clase + "-imagen");
+      img.src = portada.imagen;
+      img.alt = "";
+      img.width = portada.ancho;
+      img.height = portada.alto;
+      img.setAttribute("aria-hidden", "true");
+      li.appendChild(img);
+    }
     const emoji = el("p", "text-4xl mb-3", sala.emoji || "🏆");
     emoji.setAttribute("aria-hidden", "true");
-    li.appendChild(emoji);
+    if (!portada) li.appendChild(emoji);
     li.appendChild(el("h2", "font-serif text-xl font-bold text-brand-800 dark:text-white", sala.nombre || "Sin nombre"));
     li.appendChild(el("p", "text-brand-500 dark:text-brand-300 mt-2 mb-5 flex-1", sala.descripcion || ""));
-    const enlaces = Array.isArray(sala.enlaces) ? sala.enlaces : [];
+    const enlaces = juntar(Array.isArray(sala.enlaces) ? sala.enlaces : [], portada);
+    const boton = (principal) => CLASE_BOTON + (portada ? " " + portada.clase + "-boton" + (principal ? " " + portada.clase + "-principal" : "") : "");
     if (sala.tipo === "lichess") {
-      const a = el("a", CLASE_BOTON, "Entrar a la sala");
+      const a = el("a", boton(true), "Entrar a la sala");
       a.href = "transmision.html?torneo=" + encodeURIComponent(sala.clave || "");
       a.appendChild(el("span", "sr-only", " de " + sala.nombre));
       a.appendChild(document.createTextNode(" →"));
       li.appendChild(a);
-      enlaces.forEach((e) => li.appendChild(enlaceAfuera(e, CLASE_SECUNDARIO, sala.nombre)));
+      // Sobre el fondo de una portada, el enlace subrayado no se lee: va de botón.
+      enlaces.forEach((e) => li.appendChild(enlaceAfuera(e, portada ? boton(false) + " mt-3" : CLASE_SECUNDARIO, sala.nombre, portada)));
     } else {
       const caja = el("div", "grid grid-cols-1 " + (enlaces.length > 1 ? "sm:grid-cols-2 " : "") + "gap-3");
-      enlaces.forEach((e) => caja.appendChild(enlaceAfuera(e, CLASE_BOTON, sala.nombre)));
+      enlaces.forEach((e, i) => caja.appendChild(enlaceAfuera(e, boton(i === 0), sala.nombre, portada)));
       li.appendChild(caja);
     }
     return li;

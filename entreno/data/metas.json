@@ -2998,6 +2998,14 @@
    ]
   },
   {
+   "clave": "conteo",
+   "label": "Conteo",
+   "total": 280,
+   "actividades": [
+    "tipos"
+   ]
+  },
+  {
    "clave": "construye",
    "label": "Constrúyela tú",
    "total": 100,
@@ -3072,7 +3080,7 @@
   {
    "clave": "tablas",
    "label": "Salva las tablas",
-   "total": 43,
+   "total": 55,
    "actividades": [
     "tipos"
    ]

@@ -10,20 +10,22 @@
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="Ajedrez Integral">
     <meta property="og:locale" content="es_CR">
+    <meta property="og:locale:alternate" content="en_US">
     <meta property="og:title" content="Centroamericano y del Caribe de la Juventud 2026 — bases, hoteles y resultados">
     <meta property="og:description" content="Todo el XXI Festival Centroamericano y del Caribe de la Juventud, Costa Rica 2026, en un solo lugar: las bases, los hoteles, el bye, las partidas y los resultados en vivo.">
     <meta property="og:url" content="https://ajedrez-integral.com/centroamericano-2026.html">
-    <meta property="og:image" content="https://ajedrez-integral.com/img/og-ajedrez-integral.jpg">
+    <meta property="og:image" content="https://ajedrez-integral.com/img/centroamericano-2026/compartir.jpg">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
-    <meta property="og:image:alt" content="Ajedrez Integral — clases de ajedrez en vivo, no solo videos. ajedrez-integral.com">
+    <meta property="og:image:alt" content="El pizote de la mascota con el trofeo y la bandera de Costa Rica: XXI Festival Centroamericano y del Caribe de la Juventud, del 1 al 8 de noviembre de 2026, Gimnasio Nacional, La Sabana.">
     <meta name="twitter:card" content="summary_large_image">
     <link rel="stylesheet" href="css/tailwind.css">
     <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/centroamericano.css">
     <!-- oscuro: inicio --><script>(function(){try{var t=localStorage.getItem('theme');if(t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme: dark)').matches))document.documentElement.classList.add('dark');}catch(e){}})();</script><!-- oscuro: fin -->
     <script src="js/adaptive-mode.js"></script>
-<!-- app: inicio --><meta name="theme-color" content="#102a43"><link rel="manifest" href="/manifest.json"><link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Ajedrez"><script src="js/errores.js"></script><script src="js/pwa.js" defer></script><script src="js/navegacion.js" defer></script><!-- app: fin --><!-- fuentes: inicio --><link rel="stylesheet" href="css/fuentes.css"><!-- fuentes: fin --><!-- tema: inicio --><script>(function(){try{var l=localStorage.getItem('plataforma_letra_v1');if(l&&/^[a-z]{2,24}$/.test(l)&&l!=='tema')document.documentElement.setAttribute('data-letra',l);var t=localStorage.getItem('plataforma_tema_v1');if(!t||!/^[a-z]{2,24}$/.test(t)||t==='clasico')return;document.documentElement.setAttribute('data-tema',t);var b=getComputedStyle(document.documentElement).getPropertyValue('--c-brand-800').trim();var m=document.querySelector('meta[name="theme-color"]');if(b&&m)m.setAttribute('content','rgb('+b.replace(/\s+/g,',')+')');}catch(e){}})();</script><!-- tema: fin --></head>
-<body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300">
+<!-- app: inicio --><meta name="theme-color" content="#102a43"><link rel="manifest" href="/manifest-centroamericano-2026.json"><link rel="apple-touch-icon" href="/img/centroamericano-2026/app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Centroamericano"><script src="js/errores.js"></script><script src="js/pwa.js" defer></script><script src="js/navegacion.js" defer></script><!-- app: fin --><!-- fuentes: inicio --><link rel="stylesheet" href="css/fuentes.css"><!-- fuentes: fin --><!-- tema: inicio --><script>(function(){try{var l=localStorage.getItem('plataforma_letra_v1');if(l&&/^[a-z]{2,24}$/.test(l)&&l!=='tema')document.documentElement.setAttribute('data-letra',l);var t=localStorage.getItem('plataforma_tema_v1');if(!t||!/^[a-z]{2,24}$/.test(t)||t==='clasico')return;document.documentElement.setAttribute('data-tema',t);var b=getComputedStyle(document.documentElement).getPropertyValue('--c-brand-800').trim();var m=document.querySelector('meta[name="theme-color"]');if(b&&m)m.setAttribute('content','rgb('+b.replace(/\s+/g,',')+')');}catch(e){}})();</script><!-- tema: fin --></head>
+<body class="cac font-sans text-brand-800 dark:text-brand-100 transition-colors duration-300">
     <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:bg-accent-500 focus:text-brand-900 focus:font-semibold focus:px-4 focus:py-2 focus:rounded-lg">Saltar al contenido principal</a>
     <header id="header" class="sticky top-0 z-50 bg-brand-800 shadow-lg transition-all duration-300">
         <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-label="Navegación principal">
@@ -36,6 +38,7 @@
                     <li><a href="#hoteles" class="hover:text-accent-400 transition-colors">Hoteles</a></li>
                 </ul>
                 <div class="flex items-center gap-2 sm:gap-3">
+                    <button id="cac-idioma" type="button" lang="en" aria-label="Read this page in English" data-no-traducir class="shrink-0 text-white text-sm font-bold h-9 px-2 sm:px-3 rounded-lg border border-white/40 hover:bg-brand-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800"><span class="sm:hidden" aria-hidden="true">EN</span><span class="hidden sm:inline">English</span></button>
                     <button id="theme-toggle" class="text-white text-lg w-9 h-9 flex items-center justify-center rounded-lg hover:bg-brand-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Cambiar a modo oscuro" title="Cambiar entre modo claro y oscuro">
                         <span id="theme-icon" aria-hidden="true">☀️</span>
                     </button>
@@ -62,123 +65,242 @@
          da la organización. Una ficha sin enlace todavía va «Pronto»: sin href,
          pero con tabindex para que se alcance con Tab. Ver «La página del
          Centroamericano 2026» en docs/decisiones/juegos-y-torneos.md. -->
-    <section class="bg-brand-800 text-white">
-        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16">
-            <!-- El logo de la FCA, recortado de la portada de las bases oficiales
-                 (img/fca-logo.png): va sobre blanco, como en las bases. -->
-            <div class="flex flex-col-reverse md:flex-row md:items-center gap-6 md:gap-10">
-                <div class="flex-1">
-                    <p class="text-accent-400 font-semibold uppercase tracking-wide text-sm">XXI edición · Absoluto y Femenino</p>
-                    <h1 class="font-serif text-3xl md:text-5xl font-bold mt-2"><span aria-hidden="true">🏆 </span>Festival Centroamericano y del Caribe de la Juventud</h1>
-                    <p class="text-brand-100 text-lg md:text-xl mt-3">Costa Rica 2026</p>
+    <!-- La portada, con la cara de las bases (css/centroamericano.css): su morado,
+         la píldora roja, las hojas de monstera, la insignia de Costa Rica y el
+         pizote de la mascota, recortado tal cual de la portada de las bases. -->
+    <section class="cac-portada">
+        <img src="img/centroamericano-2026/hojas.png" alt="" aria-hidden="true" width="470" height="440" class="cac-hojas cac-hojas-ai">
+        <img src="img/centroamericano-2026/hojas.png" alt="" aria-hidden="true" width="470" height="440" class="cac-hojas cac-hojas-bd">
+        <div class="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-10 md:pt-14 md:pb-14">
+            <div class="grid md:grid-cols-[1.15fr_0.85fr] items-center gap-6 md:gap-10">
+                <div class="text-center md:text-left">
+                    <p><span class="cac-pildora text-base md:text-lg">XXI Campeonato</span></p>
+                    <h1 class="cac-titulo text-3xl sm:text-4xl md:text-5xl mt-4">Centroamericano y del Caribe de la Juventud<span class="block text-2xl sm:text-3xl md:text-4xl mt-2">Costa Rica 2026</span></h1>
+                    <p class="mt-5"><span class="cac-caja text-sm md:text-base">Absoluto<br>Femenino</span></p>
                 </div>
-                <figure class="shrink-0 self-center rounded-3xl bg-white p-5 md:p-6 shadow-xl">
-                    <img src="img/fca-logo.png" width="147" height="183" alt="Logo de la Federación Costarricense de Ajedrez (FCA)" class="h-32 md:h-44 w-auto">
-                    <figcaption class="mt-2 text-center text-xs font-semibold text-brand-800">Federación Costarricense<br>de Ajedrez</figcaption>
-                </figure>
+                <div class="relative mx-auto w-full max-w-[300px] md:max-w-[340px]">
+                    <img src="img/centroamericano-2026/mascota.jpg" width="600" height="848" alt="La mascota del campeonato: un pizote sonriente con la camiseta de la FCA, moviendo un caballo en el tablero" class="cac-mascota cac-flota">
+                    <img src="img/centroamericano-2026/bandera-cr.svg" width="120" height="132" alt="" aria-hidden="true" class="cac-bandera cac-mece">
+                </div>
             </div>
-            <dl class="mt-8 grid sm:grid-cols-3 gap-4">
-                <div class="rounded-2xl bg-brand-900 p-4"><dt class="text-brand-300 text-sm">Fechas</dt><dd class="font-semibold text-lg">Del 1 al 8 de noviembre de 2026</dd></div>
-                <div class="rounded-2xl bg-brand-900 p-4"><dt class="text-brand-300 text-sm">Sede</dt><dd class="font-semibold text-lg">Gimnasio Nacional, Parque Metropolitano La Sabana, San José</dd></div>
-                <div class="rounded-2xl bg-brand-900 p-4"><dt class="text-brand-300 text-sm">Organiza</dt><dd class="font-semibold text-lg">Federación Costarricense de Ajedrez (FCA) con la Confederación de Ajedrez de América (CCA)</dd></div>
+            <dl class="mt-8 grid sm:grid-cols-3 gap-3 sm:gap-4 text-left">
+                <div class="cac-dato"><dt><span aria-hidden="true">📅 </span>Fechas</dt><dd class="font-bold text-lg">Del 1 al 8 de noviembre de 2026</dd></div>
+                <div class="cac-dato"><dt><span aria-hidden="true">📍 </span>Sede</dt><dd class="font-bold text-lg">Gimnasio Nacional, Parque Metropolitano La Sabana, San José</dd></div>
+                <div class="cac-dato"><dt><span aria-hidden="true">♟️ </span>Ritmo</dt><dd class="font-bold text-lg">Suizo a 9 rondas, 90 minutos + 30 segundos por jugada</dd></div>
             </dl>
         </div>
     </section>
 
-    <section id="fichas" class="pt-12 pb-6 scroll-mt-24">
+    <!-- Quien organiza, como en el pie de la portada de las bases: los logos de la
+         CCA y de la FCA recortados de ahí (img/centroamericano-2026/cca-logo.png,
+         img/fca-logo.png), sobre blanco. -->
+    <section class="cac-organiza" aria-label="Quién organiza">
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-wrap items-center justify-center gap-x-8 gap-y-3">
+            <strong class="text-sm font-extrabold uppercase tracking-wide">Organiza</strong>
+            <img src="img/centroamericano-2026/cca-logo.png" width="450" height="170" alt="Confederación de Ajedrez de América (CCA)" class="h-14 md:h-16 w-auto">
+            <img src="img/fca-logo.png" width="147" height="183" alt="Federación Costarricense de Ajedrez (FCA)" class="h-16 md:h-20 w-auto">
+        </div>
+    </section>
+
+    <!-- «Hoy en el torneo»: lo arma js/centroamericano.js con las horas del
+         calendario (data-inicio de cada fila, hora de Costa Rica): la cuenta
+         regresiva antes del 1 de noviembre, lo que se juega ahora y lo que
+         sigue durante el festival, y el cierre después. Sin JavaScript queda
+         lo de abajo, que es cierto siempre. -->
+    <section id="hoy" class="pt-8" aria-labelledby="hoy-etiqueta" data-no-traducir>
         <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-            <h2 class="font-serif text-2xl md:text-3xl font-bold text-brand-800 dark:text-white">Todo el torneo a un clic</h2>
+            <!-- Los avisos de la organización (sala_anuncios, los publica quien
+                 administra en admin.html#torneos): js/centroamericano-vivo.js. -->
+            <div id="anuncios" class="cac-anuncios" role="status" hidden></div>
+            <div class="cac-hoy">
+                <h2 id="hoy-etiqueta" class="cac-hoy-etiqueta">El festival</h2>
+                <p id="hoy-principal" class="cac-hoy-principal">Del domingo 1 al domingo 8 de noviembre de 2026</p>
+                <p id="hoy-detalle" class="cac-hoy-detalle">La ronda 1 se juega el lunes 2 de noviembre a las 9:30 a.m., hora de Costa Rica.</p>
+                <p id="hoy-categorias" class="cac-hoy-detalle" hidden></p>
+                <p class="mt-3 flex flex-wrap gap-x-5 gap-y-2 text-sm font-bold">
+                    <a href="#calendario" id="hoy-calendario" class="cac-accion underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ce1328]">Ver el calendario completo →</a>
+                    <a href="documentos/centroamericano-2026/calendario-centroamericano-2026.ics" download id="hoy-ics" class="cac-accion underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ce1328]"><span aria-hidden="true">📅 </span><span id="hoy-ics-texto">Agregar a mi calendario</span></a>
+                </p>
+                <p id="hoy-sin-red" class="cac-hoy-sin-red" hidden><span aria-hidden="true">📴 </span><span id="hoy-sin-red-texto">Esta página quedó guardada en este aparato: la puedes abrir aunque no haya internet en la sala.</span></p>
+            </div>
+        </div>
+    </section>
+
+    <section id="fichas" class="relative overflow-hidden pt-10 pb-14 scroll-mt-24">
+        <img src="img/centroamericano-2026/hojas.png" alt="" aria-hidden="true" width="470" height="440" class="cac-hojas cac-hojas-ad opacity-60 dark:opacity-30">
+        <img src="img/centroamericano-2026/hojas.png" alt="" aria-hidden="true" width="470" height="440" class="cac-hojas cac-hojas-bi opacity-60 dark:opacity-30">
+        <div class="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-end justify-between gap-4">
+                <h2 class="cac-seccion text-2xl md:text-3xl">Todo el torneo a un clic<span class="cac-seccion-raya" aria-hidden="true"></span></h2>
+                <img src="img/centroamericano-2026/mascota-trofeo.png" width="124" height="120" alt="" aria-hidden="true" class="w-20 sm:w-24 h-auto shrink-0 cac-mece">
+            </div>
             <p class="text-brand-600 dark:text-brand-300 mt-2 max-w-2xl">Toca la ficha de lo que buscas y se abre encima, sin salir de la página. Las que dicen «Pronto» se abren en cuanto la organización publique el enlace.</p>
+            <!-- «Busca a tu jugador» (js/centroamericano-vivo.js): los jugadores y la
+                 ronda de hoy, de chess-results, por la Edge Function sala-jugadores.
+                 Lo que arma va en #buscador-resultados, en el idioma de la página. -->
+            <!-- Instalar como app (js/pwa.js lo muestra solo si el navegador deja,
+                 una vez); en iPhone no hay botón: se explica cómo (js/centroamericano.js). -->
+            <div id="instalar-app" hidden class="cac-instalar mt-6">
+                <img src="img/centroamericano-2026/app/icon-192.png" alt="" width="56" height="56" class="rounded-2xl shrink-0">
+                <div class="flex-1 min-w-[12rem]">
+                    <p class="font-extrabold">Instala el Centroamericano en tu celular</p>
+                    <p class="text-sm">Queda con el ícono del pizote, abre a pantalla completa y funciona sin internet en la sala.</p>
+                </div>
+                <div class="flex gap-2">
+                    <button type="button" data-instalar class="cac-boton">Instalar</button>
+                    <button type="button" data-instalar-no class="cac-jugador-boton">Ahora no</button>
+                </div>
+            </div>
+            <div id="instalar-ios" hidden class="cac-instalar mt-6">
+                <img src="img/centroamericano-2026/app/icon-192.png" alt="" width="56" height="56" class="rounded-2xl shrink-0">
+                <div class="flex-1 min-w-[12rem]">
+                    <p class="font-extrabold">Instala el Centroamericano en tu iPhone</p>
+                    <p class="text-sm">Toca el botón Compartir de Safari y luego «Agregar a inicio». Queda con el ícono del pizote y los avisos de tus jugadores pueden llegar.</p>
+                </div>
+                <button type="button" data-instalar-ios-no class="cac-jugador-boton">Entendido</button>
+            </div>
+            <div id="buscador" class="cac-buscador mt-6 sm:mt-8">
+                <!-- «Mis jugadores»: los que se marcan con la estrella, guardados
+                     en este aparato (sin cuenta). Se esconde mientras no haya
+                     ninguno. «Avisarme en este celular» manda cada ronda como
+                     notificación (la función sala-jugadores, acciones seguir/baja). -->
+                <!-- Cómo va la ronda: cuántas partidas ya tienen resultado. -->
+                <div id="ronda-progreso" class="cac-progreso mb-6" hidden data-no-traducir>
+                    <p id="ronda-progreso-texto" class="font-bold" role="status"></p>
+                    <div class="cac-progreso-barra" aria-hidden="true"><span></span></div>
+                </div>
+                <div id="seguidos" class="cac-seguidos mb-6" role="region" aria-labelledby="seguidos-titulo" hidden>
+                    <h3 id="seguidos-titulo" class="cac-buscador-titulo"><span aria-hidden="true">⭐ </span>Mis jugadores</h3>
+                    <ul id="seguidos-lista" class="mt-3 grid gap-3" data-no-traducir></ul>
+                    <p id="seguidos-estado" class="mt-2 text-sm font-semibold" role="status" aria-live="polite" data-no-traducir></p>
+                    <div id="avisos" class="mt-4" hidden>
+                        <button id="avisos-boton" type="button" class="cac-boton" aria-pressed="false" data-no-traducir></button>
+                        <p class="mt-2 text-xs text-brand-600 dark:text-brand-300">Te avisamos en este celular su mesa, su color y su rival en cuanto se publica cada ronda. No se guarda tu nombre ni tu correo: solo la dirección de avisos de este navegador, como dice la <a href="privacidad.html#torneos" target="_blank" rel="noopener" class="underline underline-offset-2 hover:no-underline">Política de privacidad</a>.</p>
+                        <p id="avisos-estado" class="mt-2 text-sm font-semibold" role="status" aria-live="polite" data-no-traducir></p>
+                    </div>
+                </div>
+                <label for="buscador-nombre" class="cac-buscador-titulo"><span aria-hidden="true">🔎 </span>Busca a tu jugador</label>
+                <p class="mt-1 text-sm sm:text-base text-brand-600 dark:text-brand-300">Escribe su nombre o su apellido: te decimos su mesa y su rival en la ronda de hoy, su categoría y cómo va.</p>
+                <input id="buscador-nombre" type="search" autocomplete="off" spellcheck="false" placeholder="Por ejemplo: Angulo" class="cac-buscador-campo">
+                <p id="buscador-estado" class="mt-2 text-sm text-brand-600 dark:text-brand-300" role="status" aria-live="polite" data-no-traducir></p>
+                <ul id="buscador-resultados" class="mt-3 grid gap-3" data-no-traducir></ul>
+                <!-- «Mi delegación»: todos los jugadores de una federación, por
+                     categoría. Los países salen de la clasificación. -->
+                <div class="mt-6">
+                    <label for="delegacion" class="cac-buscador-titulo"><span aria-hidden="true">🌎 </span>Mi delegación</label>
+                    <p class="mt-1 text-sm sm:text-base text-brand-600 dark:text-brand-300">Elige tu país y mira a todos sus jugadores: mesa, color y rival en la ronda de hoy, y cómo va cada uno.</p>
+                    <select id="delegacion" class="cac-buscador-campo" data-no-traducir>
+                        <option value="">Elige el país…</option>
+                    </select>
+                    <p id="delegacion-estado" class="mt-2 text-sm text-brand-600 dark:text-brand-300" role="status" aria-live="polite" data-no-traducir></p>
+                    <div id="delegacion-avisos-caja" class="mt-3" hidden>
+                        <button id="delegacion-avisos" type="button" class="cac-boton" aria-pressed="false" data-no-traducir></button>
+                        <p class="mt-2 text-xs text-brand-600 dark:text-brand-300">Un aviso por ronda, cuando terminan las partidas de tu país. Solo se guarda la dirección de avisos de este navegador y el código del país, como dice la <a href="privacidad.html#torneos" target="_blank" rel="noopener" class="underline underline-offset-2 hover:no-underline">Política de privacidad</a>.</p>
+                        <p id="delegacion-avisos-estado" class="mt-2 text-sm font-semibold" role="status" aria-live="polite" data-no-traducir></p>
+                    </div>
+                    <div id="delegacion-lista" class="mt-3" data-no-traducir></div>
+                </div>
+                <p class="mt-3 flex flex-wrap gap-x-5 gap-y-2 text-sm font-bold">
+                    <a href="#medallero" class="cac-accion underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ce1328]"><span aria-hidden="true">🥇 </span>Ver el medallero →</a>
+                    <a href="#clasificacion" class="cac-accion underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ce1328]"><span aria-hidden="true">📊 </span>Clasificación completa →</a>
+                    <a href="#delegaciones" class="cac-accion underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ce1328]"><span aria-hidden="true">🌎 </span>Tabla por país →</a>
+                    <a href="#proyector" class="cac-accion underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ce1328]"><span aria-hidden="true">📺 </span>Pareo para proyectar →</a>
+                    <a href="#sorpresas" class="cac-accion underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ce1328]"><span aria-hidden="true">⚡ </span>Sorpresas e invictos →</a>
+                    <a href="#cara-a-cara" class="cac-accion underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ce1328]"><span aria-hidden="true">🆚 </span>Cara a cara →</a>
+                    <a href="#numeros" class="cac-accion underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ce1328]"><span aria-hidden="true">📈 </span>El festival en números →</a>
+                </p>
+                <!-- «Así terminó el día»: la imagen con los líderes de cada categoría, la
+                     sorpresa del día y cómo le fue a la delegación elegida
+                     (js/centroamericano-tablas.js). -->
+                <div class="mt-4">
+                    <button id="imagen-dia" type="button" class="cac-jugador-boton" data-no-traducir><span aria-hidden="true">📸 </span>Imagen del día para compartir</button>
+                    <p id="imagen-dia-estado" class="mt-2 text-sm font-semibold" role="status" aria-live="polite" data-no-traducir></p>
+                </div>
+            </div>
             <ul class="mt-6 sm:mt-8 grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-5">
                 <li>
-                    <a href="documentos/centroamericano-2026/bases-cac-2026.pdf" target="_blank" rel="noopener" data-ventana="Bases del campeonato" class="h-full flex flex-col rounded-2xl bg-white dark:bg-brand-900 border border-brand-100 dark:border-brand-800 shadow-sm hover:shadow-lg hover:border-accent-400 transition p-4 sm:p-6 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
-                        <span class="text-2xl sm:text-3xl" aria-hidden="true">📄</span>
-                        <span class="mt-2 sm:mt-3 font-bold text-base sm:text-lg leading-snug text-brand-800 dark:text-white">Bases del campeonato</span>
+                    <a href="documentos/centroamericano-2026/bases-cac-2026.pdf" id="ficha-bases" target="_blank" rel="noopener" data-ventana="Bases del campeonato" data-color="morado" class="cac-ficha h-full flex flex-col rounded-3xl bg-white dark:bg-brand-900 shadow-md p-4 sm:p-6 focus:outline-none focus-visible:ring-4 focus-visible:ring-[#ce1328]">
+                        <span class="cac-icono" aria-hidden="true">📄</span>
+                        <span class="mt-3 font-extrabold text-base sm:text-lg leading-snug text-brand-800 dark:text-white">Bases del campeonato</span>
                         <span class="hidden sm:block mt-1 text-sm text-brand-600 dark:text-brand-300 flex-1">Las bases oficiales completas: categorías, costos, pagos, reglamento, títulos y normas.</span>
-                        <span class="mt-auto pt-3 sm:pt-4 text-xs sm:text-sm font-semibold text-accent-700 dark:text-accent-400">Abrir el PDF →</span>
+                        <span class="mt-auto pt-3 sm:pt-4 text-xs sm:text-sm font-bold cac-accion">Abrir el PDF →</span>
                     </a>
                 </li>
                 <li>
-                    <a href="#hoteles" class="h-full flex flex-col rounded-2xl bg-white dark:bg-brand-900 border border-brand-100 dark:border-brand-800 shadow-sm hover:shadow-lg hover:border-accent-400 transition p-4 sm:p-6 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
-                        <span class="text-2xl sm:text-3xl" aria-hidden="true">🏨</span>
-                        <span class="mt-2 sm:mt-3 font-bold text-base sm:text-lg leading-snug text-brand-800 dark:text-white">Hoteles oficiales</span>
-                        <span class="hidden sm:block mt-1 text-sm text-brand-600 dark:text-brand-300 flex-1">Los siete hoteles con su dirección, teléfono, mapa y el precio del paquete de cada uno.</span>
-                        <span class="mt-auto pt-3 sm:pt-4 text-xs sm:text-sm font-semibold text-accent-700 dark:text-accent-400">Ver los hoteles →</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="https://forms.gle/b9jVrVPjsgN1h72HA" target="_blank" rel="noopener" data-ventana="Pedir un bye" class="h-full flex flex-col rounded-2xl bg-white dark:bg-brand-900 border border-brand-100 dark:border-brand-800 shadow-sm hover:shadow-lg hover:border-accent-400 transition p-4 sm:p-6 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
-                        <span class="text-2xl sm:text-3xl" aria-hidden="true">✋</span>
-                        <span class="mt-2 sm:mt-3 font-bold text-base sm:text-lg leading-snug text-brand-800 dark:text-white">Pedir un bye</span>
+                    <a href="https://forms.gle/b9jVrVPjsgN1h72HA" target="_blank" rel="noopener" data-ventana="Pedir un bye" data-color="rojo" class="cac-ficha cac-con-asoma h-full flex flex-col rounded-3xl bg-white dark:bg-brand-900 shadow-md p-4 sm:p-6 focus:outline-none focus-visible:ring-4 focus-visible:ring-[#ce1328]">
+                        <span class="cac-icono" aria-hidden="true">✋</span>
+                        <span class="mt-3 font-extrabold text-base sm:text-lg leading-snug text-brand-800 dark:text-white">Pedir un bye</span>
                         <span class="hidden sm:block mt-1 text-sm text-brand-600 dark:text-brand-300 flex-1">El formulario para pedir el bye de una ronda.</span>
-                        <span class="mt-auto pt-3 sm:pt-4 text-xs sm:text-sm font-semibold text-accent-700 dark:text-accent-400">Abrir el formulario →</span>
+                        <span class="mt-auto pt-3 sm:pt-4 text-xs sm:text-sm font-bold cac-accion">Abrir el formulario →</span>
+                        <img src="img/centroamericano-2026/mascota-asoma.png" width="227" height="207" alt="" aria-hidden="true" class="cac-asoma">
                     </a>
                 </li>
                 <li>
-                    <div tabindex="0" aria-disabled="true" class="h-full flex flex-col rounded-2xl bg-brand-100 dark:bg-brand-900 border border-dashed border-brand-300 dark:border-brand-700 p-4 sm:p-6 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
-                        <span class="text-2xl sm:text-3xl" aria-hidden="true">📺</span>
-                        <span class="mt-2 sm:mt-3 font-bold text-base sm:text-lg leading-snug text-brand-800 dark:text-white">Partidas en vivo</span>
+                    <a href="https://s1.chess-results.com/tnr1494141.aspx?lan=2&amp;SNode=S0" id="ficha-resultados" target="_blank" rel="noopener" data-ventana="Resultados en vivo" data-color="morado" class="cac-ficha cac-con-festejo h-full flex flex-col rounded-3xl bg-white dark:bg-brand-900 shadow-md p-4 sm:p-6 focus:outline-none focus-visible:ring-4 focus-visible:ring-[#ce1328]">
+                        <span class="cac-icono" aria-hidden="true">📊</span>
+                        <span class="cac-festejo" aria-hidden="true"><img src="img/centroamericano-2026/mascota-trofeo.png" width="124" height="120" alt="" aria-hidden="true"><span class="cac-brillo">✨</span></span>
+                        <span class="mt-3 font-extrabold text-base sm:text-lg leading-snug text-brand-800 dark:text-white">Resultados en vivo</span>
+                        <span class="hidden sm:block mt-1 text-sm text-brand-600 dark:text-brand-300 flex-1">Inscritos, emparejamientos, resultados y clasificación de cada ronda en chess-results.</span>
+                        <span class="mt-auto pt-3 sm:pt-4 text-xs sm:text-sm font-bold cac-accion">Abrir chess-results →</span>
+                    </a>
+                </li>
+                <li>
+                    <div tabindex="0" aria-disabled="true" data-color="azul" class="cac-ficha h-full flex flex-col rounded-3xl bg-white/70 dark:bg-brand-900/70 border-2 border-dashed border-brand-300 dark:border-brand-700 p-4 sm:p-6 focus:outline-none focus-visible:ring-4 focus-visible:ring-[#ce1328]">
+                        <span class="cac-icono" aria-hidden="true">📺</span>
+                        <span class="mt-3 font-extrabold text-base sm:text-lg leading-snug text-brand-800 dark:text-white">Partidas en vivo</span>
                         <span class="hidden sm:block mt-1 text-sm text-brand-600 dark:text-brand-300 flex-1">La transmisión de los tableros en directo, jugada a jugada.</span>
                         <span class="mt-auto pt-3 sm:pt-4 text-xs sm:text-sm font-semibold text-brand-600 dark:text-brand-300">Pronto<span class="hidden sm:inline">: la transmisión todavía no está publicada</span></span>
                     </div>
                 </li>
                 <li>
-                    <a href="https://s1.chess-results.com/tnr1494141.aspx?lan=2&amp;SNode=S0" target="_blank" rel="noopener" data-ventana="Resultados en vivo" class="h-full flex flex-col rounded-2xl bg-white dark:bg-brand-900 border border-brand-100 dark:border-brand-800 shadow-sm hover:shadow-lg hover:border-accent-400 transition p-4 sm:p-6 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
-                        <span class="text-2xl sm:text-3xl" aria-hidden="true">📊</span>
-                        <span class="mt-2 sm:mt-3 font-bold text-base sm:text-lg leading-snug text-brand-800 dark:text-white">Resultados en vivo</span>
-                        <span class="hidden sm:block mt-1 text-sm text-brand-600 dark:text-brand-300 flex-1">Inscritos, emparejamientos, resultados y clasificación de cada ronda en chess-results.</span>
-                        <span class="mt-auto pt-3 sm:pt-4 text-xs sm:text-sm font-semibold text-accent-700 dark:text-accent-400">Abrir chess-results →</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="https://chat.whatsapp.com/KCGKgz2rrjrKGhLa8lai9j" target="_blank" rel="noopener" class="h-full flex flex-col rounded-2xl bg-white dark:bg-brand-900 border border-brand-100 dark:border-brand-800 shadow-sm hover:shadow-lg hover:border-accent-400 transition p-4 sm:p-6 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
-                        <span class="text-2xl sm:text-3xl" aria-hidden="true">💬</span>
-                        <span class="mt-2 sm:mt-3 font-bold text-base sm:text-lg leading-snug text-brand-800 dark:text-white">Grupo de WhatsApp</span>
-                        <span class="hidden sm:block mt-1 text-sm text-brand-600 dark:text-brand-300 flex-1">El grupo oficial del torneo para la información general.</span>
-                        <span class="mt-auto pt-3 sm:pt-4 text-xs sm:text-sm font-semibold text-accent-700 dark:text-accent-400">Entrar al grupo →</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="#calendario" class="h-full flex flex-col rounded-2xl bg-white dark:bg-brand-900 border border-brand-100 dark:border-brand-800 shadow-sm hover:shadow-lg hover:border-accent-400 transition p-4 sm:p-6 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
-                        <span class="text-2xl sm:text-3xl" aria-hidden="true">🗓️</span>
-                        <span class="mt-2 sm:mt-3 font-bold text-base sm:text-lg leading-snug text-brand-800 dark:text-white">Calendario de rondas</span>
+                    <a href="#calendario" data-color="naranja" class="cac-ficha h-full flex flex-col rounded-3xl bg-white dark:bg-brand-900 shadow-md p-4 sm:p-6 focus:outline-none focus-visible:ring-4 focus-visible:ring-[#ce1328]">
+                        <span class="cac-icono" aria-hidden="true">🗓️</span>
+                        <span class="mt-3 font-extrabold text-base sm:text-lg leading-snug text-brand-800 dark:text-white">Calendario de rondas</span>
                         <span class="hidden sm:block mt-1 text-sm text-brand-600 dark:text-brand-300 flex-1">El día y la hora de cada ronda, el Rapid, el Blitz, la inauguración y la clausura.</span>
-                        <span class="mt-auto pt-3 sm:pt-4 text-xs sm:text-sm font-semibold text-accent-700 dark:text-accent-400">Ver el calendario →</span>
+                        <span class="mt-auto pt-3 sm:pt-4 text-xs sm:text-sm font-bold cac-accion">Ver el calendario →</span>
                     </a>
                 </li>
                 <li>
-                    <a href="#reglamento" class="h-full flex flex-col rounded-2xl bg-white dark:bg-brand-900 border border-brand-100 dark:border-brand-800 shadow-sm hover:shadow-lg hover:border-accent-400 transition p-4 sm:p-6 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
-                        <span class="text-2xl sm:text-3xl" aria-hidden="true">📋</span>
-                        <span class="mt-2 sm:mt-3 font-bold text-base sm:text-lg leading-snug text-brand-800 dark:text-white">Reglamento</span>
+                    <a href="#reglamento" data-color="azul" class="cac-ficha h-full flex flex-col rounded-3xl bg-white dark:bg-brand-900 shadow-md p-4 sm:p-6 focus:outline-none focus-visible:ring-4 focus-visible:ring-[#ce1328]">
+                        <span class="cac-icono" aria-hidden="true">📋</span>
+                        <span class="mt-3 font-extrabold text-base sm:text-lg leading-snug text-brand-800 dark:text-white">Reglamento</span>
                         <span class="hidden sm:block mt-1 text-sm text-brand-600 dark:text-brand-300 flex-1">El sistema, el ritmo de juego, las categorías, los desempates y los premios.</span>
-                        <span class="mt-auto pt-3 sm:pt-4 text-xs sm:text-sm font-semibold text-accent-700 dark:text-accent-400">Ver el reglamento →</span>
+                        <span class="mt-auto pt-3 sm:pt-4 text-xs sm:text-sm font-bold cac-accion">Ver el reglamento →</span>
                     </a>
                 </li>
                 <li>
-                    <a href="mailto:torneos_internacionales_costarica@fcacostarica.com" class="h-full flex flex-col rounded-2xl bg-white dark:bg-brand-900 border border-brand-100 dark:border-brand-800 shadow-sm hover:shadow-lg hover:border-accent-400 transition p-4 sm:p-6 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
-                        <span class="text-2xl sm:text-3xl" aria-hidden="true">✉️</span>
-                        <span class="mt-2 sm:mt-3 font-bold text-base sm:text-lg leading-snug text-brand-800 dark:text-white">Correo de la organización</span>
-                        <span class="hidden sm:block mt-1 text-sm text-brand-600 dark:text-brand-300 flex-1 break-all">torneos_internacionales_costarica@fcacostarica.com</span>
-                        <span class="mt-auto pt-3 sm:pt-4 text-xs sm:text-sm font-semibold text-accent-700 dark:text-accent-400">Escribir un correo →</span>
+                    <a href="https://chat.whatsapp.com/KCGKgz2rrjrKGhLa8lai9j" target="_blank" rel="noopener" data-color="verde" class="cac-ficha h-full flex flex-col rounded-3xl bg-white dark:bg-brand-900 shadow-md p-4 sm:p-6 focus:outline-none focus-visible:ring-4 focus-visible:ring-[#ce1328]">
+                        <span class="cac-icono" aria-hidden="true">💬</span>
+                        <span class="mt-3 font-extrabold text-base sm:text-lg leading-snug text-brand-800 dark:text-white">Grupo de WhatsApp</span>
+                        <span class="hidden sm:block mt-1 text-sm text-brand-600 dark:text-brand-300 flex-1">El grupo oficial del torneo para la información general.</span>
+                        <span class="mt-auto pt-3 sm:pt-4 text-xs sm:text-sm font-bold cac-accion">Entrar al grupo →</span>
                     </a>
                 </li>
                 <li>
-                    <a href="#contacto" class="h-full flex flex-col rounded-2xl bg-white dark:bg-brand-900 border border-brand-100 dark:border-brand-800 shadow-sm hover:shadow-lg hover:border-accent-400 transition p-4 sm:p-6 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
-                        <span class="text-2xl sm:text-3xl" aria-hidden="true">📞</span>
-                        <span class="mt-2 sm:mt-3 font-bold text-base sm:text-lg leading-snug text-brand-800 dark:text-white">Contacta a la organización</span>
-                        <span class="hidden sm:block mt-1 text-sm text-brand-600 dark:text-brand-300 flex-1">La árbitra principal, la organizadora y el árbitro de pareo, con su teléfono y su WhatsApp.</span>
-                        <span class="mt-auto pt-3 sm:pt-4 text-xs sm:text-sm font-semibold text-accent-700 dark:text-accent-400">Ver los contactos →</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="https://www.google.com/maps/search/?api=1&amp;query=Gimnasio+Nacional+La+Sabana+San+Jos%C3%A9+Costa+Rica" target="_blank" rel="noopener" class="h-full flex flex-col rounded-2xl bg-white dark:bg-brand-900 border border-brand-100 dark:border-brand-800 shadow-sm hover:shadow-lg hover:border-accent-400 transition p-4 sm:p-6 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
-                        <span class="text-2xl sm:text-3xl" aria-hidden="true">📍</span>
-                        <span class="mt-2 sm:mt-3 font-bold text-base sm:text-lg leading-snug text-brand-800 dark:text-white">Cómo llegar a la sala</span>
+                    <a href="https://www.google.com/maps/search/?api=1&amp;query=Gimnasio+Nacional+La+Sabana+San+Jos%C3%A9+Costa+Rica" target="_blank" rel="noopener" data-color="verde" class="cac-ficha h-full flex flex-col rounded-3xl bg-white dark:bg-brand-900 shadow-md p-4 sm:p-6 focus:outline-none focus-visible:ring-4 focus-visible:ring-[#ce1328]">
+                        <span class="cac-icono" aria-hidden="true">📍</span>
+                        <span class="mt-3 font-extrabold text-base sm:text-lg leading-snug text-brand-800 dark:text-white">Cómo llegar a la sala</span>
                         <span class="hidden sm:block mt-1 text-sm text-brand-600 dark:text-brand-300 flex-1">El Gimnasio Nacional, dentro del Parque Metropolitano La Sabana. Ahí también se sirven los almuerzos y las cenas.</span>
-                        <span class="mt-auto pt-3 sm:pt-4 text-xs sm:text-sm font-semibold text-accent-700 dark:text-accent-400">Abrir el mapa →</span>
+                        <span class="mt-auto pt-3 sm:pt-4 text-xs sm:text-sm font-bold cac-accion">Abrir el mapa →</span>
+                    </a>
+                </li>
+                <li class="col-span-2 lg:col-span-1">
+                    <a href="#hoteles" data-color="verde" class="cac-ficha h-full flex flex-col rounded-3xl bg-white dark:bg-brand-900 shadow-md p-4 sm:p-6 focus:outline-none focus-visible:ring-4 focus-visible:ring-[#ce1328]">
+                        <span class="cac-icono" aria-hidden="true">🏨</span>
+                        <span class="mt-3 font-extrabold text-base sm:text-lg leading-snug text-brand-800 dark:text-white">Hoteles oficiales</span>
+                        <span class="hidden sm:block mt-1 text-sm text-brand-600 dark:text-brand-300 flex-1">Los siete hoteles con su dirección, teléfono, mapa y el precio del paquete de cada uno.</span>
+                        <span class="mt-auto pt-3 sm:pt-4 text-xs sm:text-sm font-bold cac-accion">Ver los hoteles →</span>
                     </a>
                 </li>
             </ul>
+            <a href="#contacto" class="cac-despedida mt-10 sm:mt-12 flex items-center gap-4 sm:gap-6 max-w-2xl mx-auto rounded-3xl focus:outline-none focus-visible:ring-4 focus-visible:ring-[#ce1328]">
+                <img src="img/centroamericano-2026/mascota.jpg" width="600" height="848" alt="" aria-hidden="true" class="cac-despedida-foto">
+                <span class="cac-globo">
+                    <span class="block font-extrabold text-lg sm:text-xl">¡Nos vemos en La Sabana!</span>
+                    <span class="block mt-1 text-sm sm:text-base">¿Te quedó alguna duda? Aquí están los teléfonos y el correo de la organización.</span>
+                    <span class="block mt-2 text-sm font-bold cac-accion">Ver los contactos →</span>
+                </span>
+            </a>
         </div>
     </section>
 
@@ -193,7 +315,7 @@
             <button type="button" data-cerrar class="shrink-0 bg-brand-800 hover:bg-brand-700 text-white font-semibold text-sm px-4 py-2 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2">Cerrar</button>
         </div>
         <div class="px-4 sm:px-6 pt-2 pb-6">
-            <p class="text-brand-600 dark:text-brand-300 mt-2">Escríbeles por WhatsApp o llámalos directamente.</p>
+            <p class="text-brand-600 dark:text-brand-300 mt-2">Escríbeles por WhatsApp, llámalos directamente o manda un correo a la organización.</p>
             <ul class="mt-6 grid sm:grid-cols-3 gap-5">
                 <li class="flex flex-col items-center text-center rounded-2xl bg-white dark:bg-brand-900 border border-brand-100 dark:border-brand-800 shadow-sm p-6">
                     <img src="img/centroamericano-2026/carolina-munoz.jpg" width="240" height="240" alt="Foto de Carolina Muñoz" class="w-28 h-28 rounded-full object-cover ring-4 ring-accent-400" data-foto="carolina">
@@ -210,13 +332,21 @@
                     <a href="https://wa.me/50688200156" target="_blank" rel="noopener" class="mt-4 w-full bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2.5 rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2">WhatsApp<span class="sr-only"> de Vivian Víquez Miranda (se abre en otra pestaña)</span></a>
                 </li>
                 <li class="flex flex-col items-center text-center rounded-2xl bg-white dark:bg-brand-900 border border-brand-100 dark:border-brand-800 shadow-sm p-6">
-                    <div class="w-28 h-28 rounded-full bg-brand-800 text-white flex items-center justify-center font-serif text-3xl font-bold ring-4 ring-accent-400" aria-hidden="true" data-foto="jean">JQ</div>
+                    <img src="img/centroamericano-2026/jean-quesada.jpg" width="240" height="240" alt="Foto de Jean Quesada" class="w-28 h-28 rounded-full object-cover ring-4 ring-accent-400" data-foto="jean">
                     <h3 class="mt-4 font-bold text-lg text-brand-800 dark:text-white">Jean Quesada</h3>
                     <p class="text-sm font-semibold uppercase tracking-wide text-accent-700 dark:text-accent-400">Árbitro de pareo</p>
                     <p class="mt-3 text-sm text-brand-600 dark:text-brand-300"><a href="tel:+50661298565" class="font-semibold underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">+506 6129-8565</a></p>
                     <a href="https://wa.me/50661298565" target="_blank" rel="noopener" class="mt-4 w-full bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2.5 rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2">WhatsApp<span class="sr-only"> de Jean Quesada (se abre en otra pestaña)</span></a>
                 </li>
             </ul>
+            <div class="mt-5 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-5 rounded-2xl bg-white dark:bg-brand-900 border border-brand-100 dark:border-brand-800 shadow-sm p-5 sm:p-6">
+                <span class="cac-icono shrink-0" aria-hidden="true">✉️</span>
+                <div class="flex-1 min-w-0">
+                    <h3 class="font-bold text-lg text-brand-800 dark:text-white">Correo de la organización</h3>
+                    <p class="text-sm text-brand-600 dark:text-brand-300 break-all">torneos_internacionales_costarica@fcacostarica.com</p>
+                </div>
+                <a href="mailto:torneos_internacionales_costarica@fcacostarica.com" class="shrink-0 text-center bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2.5 rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2">Escribir un correo</a>
+            </div>
         </div>
     </dialog>
 
@@ -265,6 +395,7 @@
         </div>
         <div class="px-4 sm:px-6 pt-2 pb-6">
             <p class="text-brand-600 dark:text-brand-300 mt-2">Todas las horas son de Costa Rica. La reunión técnica es virtual, con el enlace que envía la organización.</p>
+            <p class="mt-4"><a href="documentos/centroamericano-2026/calendario-centroamericano-2026.ics" download class="inline-block bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2.5 rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2"><span aria-hidden="true">📅 </span>Agregar a mi calendario</a> <span class="block sm:inline mt-2 sm:mt-0 sm:ml-2 text-sm text-brand-600 dark:text-brand-300">Las rondas, el Rapid, el Blitz y las ceremonias, con un aviso 30 minutos antes de cada ronda.</span></p>
             <div class="mt-6 overflow-x-auto rounded-2xl border border-brand-100 dark:border-brand-800 bg-white dark:bg-brand-900">
                 <table class="w-full text-sm">
                     <caption class="sr-only">Calendario del Festival Centroamericano 2026</caption>
@@ -272,26 +403,165 @@
                         <tr><th scope="col" class="text-left px-4 py-3">Actividad</th><th scope="col" class="text-left px-4 py-3">Día</th><th scope="col" class="text-left px-4 py-3">Hora</th></tr>
                     </thead>
                     <tbody class="divide-y divide-brand-100 dark:divide-brand-800">
-                        <tr><th scope="row" class="text-left font-semibold px-4 py-2">Llegada y acreditación (en los hoteles)</th><td class="px-4 py-2">Domingo 1 de noviembre</td><td class="px-4 py-2">3:00 p.m.</td></tr>
-                        <tr><th scope="row" class="text-left font-semibold px-4 py-2">Congresillo</th><td class="px-4 py-2">Domingo 1 de noviembre</td><td class="px-4 py-2">7:00 p.m.</td></tr>
-                        <tr><th scope="row" class="text-left font-semibold px-4 py-2">Inauguración</th><td class="px-4 py-2">Lunes 2 de noviembre</td><td class="px-4 py-2">9:00 a.m.</td></tr>
-                        <tr><th scope="row" class="text-left font-semibold px-4 py-2">Ronda 1</th><td class="px-4 py-2">Lunes 2 de noviembre</td><td class="px-4 py-2">9:30 a.m.</td></tr>
-                        <tr><th scope="row" class="text-left font-semibold px-4 py-2">Ronda 2</th><td class="px-4 py-2">Lunes 2 de noviembre</td><td class="px-4 py-2">3:30 p.m.</td></tr>
-                        <tr><th scope="row" class="text-left font-semibold px-4 py-2">Ronda 3</th><td class="px-4 py-2">Martes 3 de noviembre</td><td class="px-4 py-2">9:00 a.m.</td></tr>
-                        <tr><th scope="row" class="text-left font-semibold px-4 py-2">Torneo Rapid</th><td class="px-4 py-2">Martes 3 de noviembre</td><td class="px-4 py-2">3:00 p.m.</td></tr>
-                        <tr><th scope="row" class="text-left font-semibold px-4 py-2">Ronda 4</th><td class="px-4 py-2">Miércoles 4 de noviembre</td><td class="px-4 py-2">9:00 a.m.</td></tr>
-                        <tr><th scope="row" class="text-left font-semibold px-4 py-2">Ronda 5</th><td class="px-4 py-2">Miércoles 4 de noviembre</td><td class="px-4 py-2">3:00 p.m.</td></tr>
-                        <tr><th scope="row" class="text-left font-semibold px-4 py-2">Ronda 6</th><td class="px-4 py-2">Jueves 5 de noviembre</td><td class="px-4 py-2">9:00 a.m.</td></tr>
-                        <tr><th scope="row" class="text-left font-semibold px-4 py-2">Torneo Blitz</th><td class="px-4 py-2">Jueves 5 de noviembre</td><td class="px-4 py-2">3:00 p.m.</td></tr>
-                        <tr><th scope="row" class="text-left font-semibold px-4 py-2">Ronda 7</th><td class="px-4 py-2">Viernes 6 de noviembre</td><td class="px-4 py-2">9:00 a.m.</td></tr>
-                        <tr><th scope="row" class="text-left font-semibold px-4 py-2">Ronda 8</th><td class="px-4 py-2">Viernes 6 de noviembre</td><td class="px-4 py-2">3:00 p.m.</td></tr>
-                        <tr><th scope="row" class="text-left font-semibold px-4 py-2">Ronda 9</th><td class="px-4 py-2">Sábado 7 de noviembre</td><td class="px-4 py-2">9:00 a.m.</td></tr>
-                        <tr><th scope="row" class="text-left font-semibold px-4 py-2">Clausura</th><td class="px-4 py-2">Sábado 7 de noviembre</td><td class="px-4 py-2">5:00 p.m.</td></tr>
-                        <tr><th scope="row" class="text-left font-semibold px-4 py-2">Salida</th><td class="px-4 py-2">Domingo 8 de noviembre</td><td class="px-4 py-2">11:00 a.m.</td></tr>
+                        <tr data-inicio="2026-11-01T15:00" data-minutos="240"><th scope="row" class="text-left font-semibold px-4 py-2">Llegada y acreditación (en los hoteles)</th><td class="px-4 py-2">Domingo 1 de noviembre</td><td class="px-4 py-2">3:00 p.m.</td></tr>
+                        <tr data-inicio="2026-11-01T19:00" data-minutos="120"><th scope="row" class="text-left font-semibold px-4 py-2">Congresillo</th><td class="px-4 py-2">Domingo 1 de noviembre</td><td class="px-4 py-2">7:00 p.m.</td></tr>
+                        <tr data-inicio="2026-11-02T09:00" data-minutos="30"><th scope="row" class="text-left font-semibold px-4 py-2">Inauguración</th><td class="px-4 py-2">Lunes 2 de noviembre</td><td class="px-4 py-2">9:00 a.m.</td></tr>
+                        <tr data-inicio="2026-11-02T09:30" data-minutos="300" data-ronda="1" data-primera-ronda><th scope="row" class="text-left font-semibold px-4 py-2">Ronda 1</th><td class="px-4 py-2">Lunes 2 de noviembre</td><td class="px-4 py-2">9:30 a.m.</td></tr>
+                        <tr data-inicio="2026-11-02T15:30" data-minutos="300" data-ronda="2"><th scope="row" class="text-left font-semibold px-4 py-2">Ronda 2</th><td class="px-4 py-2">Lunes 2 de noviembre</td><td class="px-4 py-2">3:30 p.m.</td></tr>
+                        <tr data-inicio="2026-11-03T09:00" data-minutos="300" data-ronda="3"><th scope="row" class="text-left font-semibold px-4 py-2">Ronda 3</th><td class="px-4 py-2">Martes 3 de noviembre</td><td class="px-4 py-2">9:00 a.m.</td></tr>
+                        <tr data-inicio="2026-11-03T15:00" data-minutos="240"><th scope="row" class="text-left font-semibold px-4 py-2">Torneo Rapid</th><td class="px-4 py-2">Martes 3 de noviembre</td><td class="px-4 py-2">3:00 p.m.</td></tr>
+                        <tr data-inicio="2026-11-04T09:00" data-minutos="300" data-ronda="4"><th scope="row" class="text-left font-semibold px-4 py-2">Ronda 4</th><td class="px-4 py-2">Miércoles 4 de noviembre</td><td class="px-4 py-2">9:00 a.m.</td></tr>
+                        <tr data-inicio="2026-11-04T15:00" data-minutos="300" data-ronda="5"><th scope="row" class="text-left font-semibold px-4 py-2">Ronda 5</th><td class="px-4 py-2">Miércoles 4 de noviembre</td><td class="px-4 py-2">3:00 p.m.</td></tr>
+                        <tr data-inicio="2026-11-05T09:00" data-minutos="300" data-ronda="6"><th scope="row" class="text-left font-semibold px-4 py-2">Ronda 6</th><td class="px-4 py-2">Jueves 5 de noviembre</td><td class="px-4 py-2">9:00 a.m.</td></tr>
+                        <tr data-inicio="2026-11-05T15:00" data-minutos="240"><th scope="row" class="text-left font-semibold px-4 py-2">Torneo Blitz</th><td class="px-4 py-2">Jueves 5 de noviembre</td><td class="px-4 py-2">3:00 p.m.</td></tr>
+                        <tr data-inicio="2026-11-06T09:00" data-minutos="300" data-ronda="7"><th scope="row" class="text-left font-semibold px-4 py-2">Ronda 7</th><td class="px-4 py-2">Viernes 6 de noviembre</td><td class="px-4 py-2">9:00 a.m.</td></tr>
+                        <tr data-inicio="2026-11-06T15:00" data-minutos="300" data-ronda="8"><th scope="row" class="text-left font-semibold px-4 py-2">Ronda 8</th><td class="px-4 py-2">Viernes 6 de noviembre</td><td class="px-4 py-2">3:00 p.m.</td></tr>
+                        <tr data-inicio="2026-11-07T09:00" data-minutos="300" data-ronda="9"><th scope="row" class="text-left font-semibold px-4 py-2">Ronda 9</th><td class="px-4 py-2">Sábado 7 de noviembre</td><td class="px-4 py-2">9:00 a.m.</td></tr>
+                        <tr data-inicio="2026-11-07T17:00" data-minutos="120"><th scope="row" class="text-left font-semibold px-4 py-2">Clausura</th><td class="px-4 py-2">Sábado 7 de noviembre</td><td class="px-4 py-2">5:00 p.m.</td></tr>
+                        <tr data-inicio="2026-11-08T11:00" data-minutos="60"><th scope="row" class="text-left font-semibold px-4 py-2">Salida</th><td class="px-4 py-2">Domingo 8 de noviembre</td><td class="px-4 py-2">11:00 a.m.</td></tr>
                     </tbody>
                 </table>
             </div>
         </div>
+    </dialog>
+
+    <!-- El medallero: los tres primeros de cada categoría (el grupo «Gr» de
+         chess-results) y las medallas de cada federación. Lo arma
+         js/centroamericano-vivo.js; provisional hasta la última ronda. -->
+    <dialog id="medallero" class="ficha-dialogo w-[calc(100%-1rem)] sm:w-[calc(100%-2rem)] max-w-5xl max-h-[90vh] rounded-2xl shadow-2xl p-0 bg-brand-50 dark:bg-brand-950 text-brand-800 dark:text-brand-100 backdrop:bg-black/60" aria-labelledby="medallero-titulo">
+        <div class="sticky top-0 z-10 flex items-center gap-3 px-4 sm:px-6 py-3 bg-white dark:bg-brand-900 border-b border-brand-100 dark:border-brand-800">
+            <h2 id="medallero-titulo" class="font-serif text-xl md:text-2xl font-bold text-brand-800 dark:text-white flex-1 min-w-0"><span aria-hidden="true">🥇 </span>Medallero</h2>
+            <button type="button" data-cerrar class="shrink-0 bg-brand-800 hover:bg-brand-700 text-white font-semibold text-sm px-4 py-2 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2">Cerrar</button>
+        </div>
+        <div class="px-4 sm:px-6 pt-2 pb-6">
+            <p class="text-brand-600 dark:text-brand-300 mt-2">Los tres primeros de cada categoría y las medallas de cada federación, según la clasificación de chess-results.</p>
+            <div id="medallero-contenido" class="mt-4" data-no-traducir>
+                <p class="text-brand-600 dark:text-brand-300">Cargando…</p>
+            </div>
+        </div>
+    </dialog>
+
+    <!-- La clasificación completa de cada categoría, con el rendimiento de cada
+         jugador. La arma js/centroamericano-tablas.js. -->
+    <dialog id="clasificacion" class="ficha-dialogo w-[calc(100%-1rem)] sm:w-[calc(100%-2rem)] max-w-5xl max-h-[90vh] rounded-2xl shadow-2xl p-0 bg-brand-50 dark:bg-brand-950 text-brand-800 dark:text-brand-100 backdrop:bg-black/60" aria-labelledby="clasificacion-titulo">
+        <div class="sticky top-0 z-10 flex items-center gap-3 px-4 sm:px-6 py-3 bg-white dark:bg-brand-900 border-b border-brand-100 dark:border-brand-800">
+            <h2 id="clasificacion-titulo" class="font-serif text-xl md:text-2xl font-bold text-brand-800 dark:text-white flex-1 min-w-0"><span aria-hidden="true">📊 </span>Clasificación completa</h2>
+            <button type="button" data-cerrar class="shrink-0 bg-brand-800 hover:bg-brand-700 text-white font-semibold text-sm px-4 py-2 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2">Cerrar</button>
+        </div>
+        <div class="px-4 sm:px-6 pt-2 pb-6">
+            <p class="text-brand-600 dark:text-brand-300 mt-2">Cada categoría entera, en el orden de chess-results, con los puntos y el rendimiento de cada jugador.</p>
+            <div class="mt-4 grid gap-3 sm:grid-cols-2">
+                <label class="block text-sm font-bold">Categoría
+                    <select id="clasificacion-categoria" class="cac-buscador-campo !mt-1" data-no-traducir></select>
+                </label>
+                <label class="block text-sm font-bold">Buscar en la tabla
+                    <input id="clasificacion-buscar" type="search" autocomplete="off" spellcheck="false" class="cac-buscador-campo !mt-1">
+                </label>
+            </div>
+            <div id="clasificacion-contenido" class="mt-4" data-no-traducir>
+                <p class="text-brand-600 dark:text-brand-300">Cargando…</p>
+            </div>
+        </div>
+    </dialog>
+
+    <!-- Cómo va cada delegación: puntos, porcentaje y ronda a ronda. -->
+    <dialog id="delegaciones" class="ficha-dialogo w-[calc(100%-1rem)] sm:w-[calc(100%-2rem)] max-w-5xl max-h-[90vh] rounded-2xl shadow-2xl p-0 bg-brand-50 dark:bg-brand-950 text-brand-800 dark:text-brand-100 backdrop:bg-black/60" aria-labelledby="delegaciones-titulo">
+        <div class="sticky top-0 z-10 flex items-center gap-3 px-4 sm:px-6 py-3 bg-white dark:bg-brand-900 border-b border-brand-100 dark:border-brand-800">
+            <h2 id="delegaciones-titulo" class="font-serif text-xl md:text-2xl font-bold text-brand-800 dark:text-white flex-1 min-w-0"><span aria-hidden="true">🌎 </span>Tabla por país</h2>
+            <button type="button" data-cerrar class="shrink-0 bg-brand-800 hover:bg-brand-700 text-white font-semibold text-sm px-4 py-2 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2">Cerrar</button>
+        </div>
+        <div class="px-4 sm:px-6 pt-2 pb-6">
+            <p class="text-brand-600 dark:text-brand-300 mt-2">Los puntos de todos los jugadores de cada país, el porcentaje que llevan y lo que sumaron en cada ronda.</p>
+            <div id="delegaciones-contenido" class="mt-4" data-no-traducir>
+                <p class="text-brand-600 dark:text-brand-300">Cargando…</p>
+            </div>
+        </div>
+    </dialog>
+
+    <!-- Las victorias (y tablas) con más diferencia de Elo, y quién va invicto. -->
+    <dialog id="sorpresas" class="ficha-dialogo w-[calc(100%-1rem)] sm:w-[calc(100%-2rem)] max-w-5xl max-h-[90vh] rounded-2xl shadow-2xl p-0 bg-brand-50 dark:bg-brand-950 text-brand-800 dark:text-brand-100 backdrop:bg-black/60" aria-labelledby="sorpresas-titulo">
+        <div class="sticky top-0 z-10 flex items-center gap-3 px-4 sm:px-6 py-3 bg-white dark:bg-brand-900 border-b border-brand-100 dark:border-brand-800">
+            <h2 id="sorpresas-titulo" class="font-serif text-xl md:text-2xl font-bold text-brand-800 dark:text-white flex-1 min-w-0"><span aria-hidden="true">⚡ </span>Sorpresas e invictos</h2>
+            <button type="button" data-cerrar class="shrink-0 bg-brand-800 hover:bg-brand-700 text-white font-semibold text-sm px-4 py-2 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2">Cerrar</button>
+        </div>
+        <div class="px-4 sm:px-6 pt-2 pb-6">
+            <p class="text-brand-600 dark:text-brand-300 mt-2">Las partidas en que el de menos Elo le ganó (o le hizo tablas) al de más, y quién no ha perdido ninguna partida en cada categoría.</p>
+            <div id="sorpresas-contenido" class="mt-4" data-no-traducir>
+                <p class="text-brand-600 dark:text-brand-300">Cargando…</p>
+            </div>
+        </div>
+    </dialog>
+
+    <!-- Cara a cara: dos jugadores lado a lado, ronda a ronda, y la partida
+         entre ellos si se enfrentaron (js/centroamericano-tablas.js). -->
+    <dialog id="cara-a-cara" class="ficha-dialogo w-[calc(100%-1rem)] sm:w-[calc(100%-2rem)] max-w-5xl max-h-[90vh] rounded-2xl shadow-2xl p-0 bg-brand-50 dark:bg-brand-950 text-brand-800 dark:text-brand-100 backdrop:bg-black/60" aria-labelledby="cara-a-cara-titulo">
+        <div class="sticky top-0 z-10 flex items-center gap-3 px-4 sm:px-6 py-3 bg-white dark:bg-brand-900 border-b border-brand-100 dark:border-brand-800">
+            <h2 id="cara-a-cara-titulo" class="font-serif text-xl md:text-2xl font-bold text-brand-800 dark:text-white flex-1 min-w-0"><span aria-hidden="true">🆚 </span>Cara a cara</h2>
+            <button type="button" data-cerrar class="shrink-0 bg-brand-800 hover:bg-brand-700 text-white font-semibold text-sm px-4 py-2 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2">Cerrar</button>
+        </div>
+        <div class="px-4 sm:px-6 pt-2 pb-6">
+            <p class="text-brand-600 dark:text-brand-300 mt-2">Elige dos jugadores y mira su torneo lado a lado, ronda a ronda, y la partida entre ellos si se enfrentaron.</p>
+            <div class="mt-4 grid gap-3 sm:grid-cols-2">
+                <label class="block text-sm font-bold">Primer jugador
+                    <input id="cara-a" type="search" list="cara-lista" autocomplete="off" spellcheck="false" placeholder="Escribe su apellido" class="cac-buscador-campo !mt-1">
+                </label>
+                <label class="block text-sm font-bold">Segundo jugador
+                    <input id="cara-b" type="search" list="cara-lista" autocomplete="off" spellcheck="false" placeholder="Escribe su apellido" class="cac-buscador-campo !mt-1">
+                </label>
+            </div>
+            <datalist id="cara-lista" data-no-traducir></datalist>
+            <div id="cara-a-cara-contenido" class="mt-4" role="status" aria-live="polite" data-no-traducir>
+                <p class="text-brand-600 dark:text-brand-300">Cargando…</p>
+            </div>
+        </div>
+    </dialog>
+
+    <!-- «El festival en números»: para la prensa y el cierre (js/centroamericano-tablas.js). -->
+    <dialog id="numeros" class="ficha-dialogo w-[calc(100%-1rem)] sm:w-[calc(100%-2rem)] max-w-3xl max-h-[90vh] rounded-2xl shadow-2xl p-0 bg-brand-50 dark:bg-brand-950 text-brand-800 dark:text-brand-100 backdrop:bg-black/60" aria-labelledby="numeros-titulo">
+        <div class="sticky top-0 z-10 flex items-center gap-3 px-4 sm:px-6 py-3 bg-white dark:bg-brand-900 border-b border-brand-100 dark:border-brand-800">
+            <h2 id="numeros-titulo" class="font-serif text-xl md:text-2xl font-bold text-brand-800 dark:text-white flex-1 min-w-0"><span aria-hidden="true">📈 </span>El festival en números</h2>
+            <button type="button" data-cerrar class="shrink-0 bg-brand-800 hover:bg-brand-700 text-white font-semibold text-sm px-4 py-2 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2">Cerrar</button>
+        </div>
+        <div id="numeros-contenido" class="px-4 sm:px-6 pt-4 pb-6" data-no-traducir>
+            <p class="text-brand-600 dark:text-brand-300">Cargando…</p>
+        </div>
+    </dialog>
+
+    <!-- «Resultados en vivo» con un torneo por categoría: la elige y su torneo
+         de chess-results se abre encima (js/centroamericano-tablas.js). -->
+    <dialog id="resultados" class="ficha-dialogo w-[calc(100%-1rem)] sm:w-[calc(100%-2rem)] max-w-2xl max-h-[90vh] rounded-2xl shadow-2xl p-0 bg-brand-50 dark:bg-brand-950 text-brand-800 dark:text-brand-100 backdrop:bg-black/60" aria-labelledby="resultados-titulo">
+        <div class="sticky top-0 z-10 flex items-center gap-3 px-4 sm:px-6 py-3 bg-white dark:bg-brand-900 border-b border-brand-100 dark:border-brand-800">
+            <h2 id="resultados-titulo" class="font-serif text-xl md:text-2xl font-bold text-brand-800 dark:text-white flex-1 min-w-0"><span aria-hidden="true">📊 </span>Resultados en vivo</h2>
+            <button type="button" data-cerrar class="shrink-0 bg-brand-800 hover:bg-brand-700 text-white font-semibold text-sm px-4 py-2 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2">Cerrar</button>
+        </div>
+        <div id="resultados-contenido" class="px-4 sm:px-6 pt-4 pb-6" data-no-traducir>
+            <p class="text-brand-600 dark:text-brand-300">Cargando…</p>
+        </div>
+    </dialog>
+
+    <!-- El pareo en letra grande para una pantalla en la sala: pasa solo por
+         las categorías. Se abre con #proyector en la dirección. -->
+    <dialog id="proyector" class="ficha-dialogo cac-proyector p-0 backdrop:bg-black" aria-labelledby="proyector-titulo">
+        <div class="cac-proyector-barra">
+            <h2 id="proyector-titulo" class="cac-proyector-titulo" data-no-traducir></h2>
+            <p id="proyector-reloj" class="cac-proyector-reloj" data-no-traducir></p>
+            <div class="cac-proyector-botones">
+                <button type="button" id="proyector-anterior" class="cac-proyector-boton"><span aria-hidden="true">◀ </span>Anterior</button>
+                <button type="button" id="proyector-pausa" class="cac-proyector-boton" aria-pressed="false" data-no-traducir></button>
+                <button type="button" id="proyector-siguiente" class="cac-proyector-boton">Siguiente<span aria-hidden="true"> ▶</span></button>
+                <label class="cac-proyector-modo"><span class="sr-only">Qué mostrar</span>
+                    <select id="proyector-modo" class="cac-proyector-boton" data-no-traducir></select>
+                </label>
+                <label class="cac-proyector-modo"><span class="sr-only">Qué categoría</span>
+                    <select id="proyector-categoria" class="cac-proyector-boton" data-no-traducir></select>
+                </label>
+                <button type="button" id="proyector-completa" class="cac-proyector-boton">Pantalla completa</button>
+                <button type="button" data-cerrar class="cac-proyector-boton">Cerrar</button>
+            </div>
+        </div>
+        <p id="proyector-progreso" class="cac-proyector-progreso" data-no-traducir hidden></p>
+        <div id="proyector-contenido" class="cac-proyector-contenido" aria-live="off" data-no-traducir></div>
+        <div class="cac-proyector-qr" aria-hidden="true"><div id="proyector-qr"></div><p>Ábrela en tu celular</p></div>
     </dialog>
 
     <dialog id="hoteles" class="ficha-dialogo w-[calc(100%-1rem)] sm:w-[calc(100%-2rem)] max-w-5xl max-h-[90vh] rounded-2xl shadow-2xl p-0 bg-brand-50 dark:bg-brand-950 text-brand-800 dark:text-brand-100 backdrop:bg-black/60" aria-labelledby="hoteles-titulo">
@@ -304,6 +574,7 @@
                 <p class="font-bold text-brand-800 dark:text-white">La reserva se hace con la organización, no con el hotel.</p>
                 <p class="mt-1 text-brand-600 dark:text-brand-300">Según las bases, una reserva directa con el hotel no cuenta como hotel oficial y paga una penalidad de 200 USD por persona. Los teléfonos de abajo sirven para preguntar por el hotel o llegar; para reservar, escribe a <a href="mailto:torneos_internacionales_costarica@fcacostarica.com" class="text-accent-700 dark:text-accent-400 font-semibold underline underline-offset-2 hover:no-underline break-all">torneos_internacionales_costarica@fcacostarica.com</a>.</p>
                 <p class="mt-2 text-brand-600 dark:text-brand-300">El paquete incluye 7 noches, del 1 de noviembre (entrada a las 3:00 p.m.) al 8 de noviembre (salida a las 11:00 a.m. o a las 12:00 m.d.), y la alimentación desde la cena del 1 hasta el desayuno del 8. El desayuno se sirve en cada hotel; los almuerzos y las cenas, en el Gimnasio Nacional. Hay traslado hotel-sala-hotel desde los hoteles más lejanos, a unos 4 km.</p>
+                <p class="mt-2 text-brand-600 dark:text-brand-300">«Ruta a la sala» abre en Google Maps el camino de cada hotel al Gimnasio Nacional. Si ya estás en el hotel, también puedes <a href="https://waze.com/ul?q=Gimnasio%20Nacional%20La%20Sabana%20San%20Jos%C3%A9&amp;navigate=yes" target="_blank" rel="noopener" class="text-accent-700 dark:text-accent-400 font-semibold underline underline-offset-2 hover:no-underline">abrir la ruta en Waze<span class="sr-only"> (se abre en otra pestaña)</span></a>.</p>
             </div>
 
             <div class="mt-6 overflow-x-auto rounded-2xl border border-brand-100 dark:border-brand-800 bg-white dark:bg-brand-900">
@@ -334,37 +605,37 @@
                     <h3 class="font-bold text-lg text-brand-800 dark:text-white">Costa Rica Tennis Club</h3>
                     <p class="mt-2 text-sm text-brand-600 dark:text-brand-300"><span class="font-semibold">Dirección:</span> Sabana Sur, San José.</p>
                     <p class="mt-1 text-sm text-brand-600 dark:text-brand-300"><span class="font-semibold">Teléfono:</span> <a href="tel:+50622321266" class="text-accent-700 dark:text-accent-400 font-semibold underline underline-offset-2 hover:no-underline">+506 2232-1266</a></p>
-                    <a href="https://www.google.com/maps/search/?api=1&amp;query=Costa+Rica+Tennis+Club+Hotel+Sabana+Sur+San+Jos%C3%A9" target="_blank" rel="noopener" class="mt-3 inline-block text-sm font-semibold text-accent-700 dark:text-accent-400 underline underline-offset-2 hover:no-underline">Ver en el mapa →</a>
+                    <p class="mt-3 flex flex-wrap gap-x-5 gap-y-2 text-sm font-semibold"><a href="https://www.google.com/maps/dir/?api=1&amp;origin=Costa+Rica+Tennis+Club+Hotel+Sabana+Sur+San+Jos%C3%A9&amp;destination=Gimnasio+Nacional+La+Sabana+San+Jos%C3%A9+Costa+Rica" target="_blank" rel="noopener" class="text-accent-700 dark:text-accent-400 underline underline-offset-2 hover:no-underline">Ruta a la sala →<span class="sr-only"> desde Costa Rica Tennis Club (se abre en otra pestaña)</span></a><a href="https://www.google.com/maps/search/?api=1&amp;query=Costa+Rica+Tennis+Club+Hotel+Sabana+Sur+San+Jos%C3%A9" target="_blank" rel="noopener" class="text-accent-700 dark:text-accent-400 underline underline-offset-2 hover:no-underline">Ver en el mapa →<span class="sr-only"> Costa Rica Tennis Club (se abre en otra pestaña)</span></a></p>
                 </li>
                 <li class="rounded-2xl bg-white dark:bg-brand-900 border border-brand-100 dark:border-brand-800 p-6">
                     <h3 class="font-bold text-lg text-brand-800 dark:text-white">KC Hotel</h3>
                     <p class="mt-2 text-sm text-brand-600 dark:text-brand-300"><span class="font-semibold">Dirección:</span> Sabana Sur, Calle Morenos, al oeste de la Contraloría General de la República, San José.</p>
                     <p class="mt-1 text-sm text-brand-600 dark:text-brand-300"><span class="font-semibold">Teléfono:</span> por confirmar.</p>
-                    <a href="https://www.google.com/maps/search/?api=1&amp;query=KC+Hotel+Sabana+Sur+San+Jos%C3%A9+Costa+Rica" target="_blank" rel="noopener" class="mt-3 inline-block text-sm font-semibold text-accent-700 dark:text-accent-400 underline underline-offset-2 hover:no-underline">Ver en el mapa →</a>
+                    <p class="mt-3 flex flex-wrap gap-x-5 gap-y-2 text-sm font-semibold"><a href="https://www.google.com/maps/dir/?api=1&amp;origin=KC+Hotel+Sabana+Sur+San+Jos%C3%A9+Costa+Rica&amp;destination=Gimnasio+Nacional+La+Sabana+San+Jos%C3%A9+Costa+Rica" target="_blank" rel="noopener" class="text-accent-700 dark:text-accent-400 underline underline-offset-2 hover:no-underline">Ruta a la sala →<span class="sr-only"> desde KC Hotel (se abre en otra pestaña)</span></a><a href="https://www.google.com/maps/search/?api=1&amp;query=KC+Hotel+Sabana+Sur+San+Jos%C3%A9+Costa+Rica" target="_blank" rel="noopener" class="text-accent-700 dark:text-accent-400 underline underline-offset-2 hover:no-underline">Ver en el mapa →<span class="sr-only"> KC Hotel (se abre en otra pestaña)</span></a></p>
                 </li>
                 <li class="rounded-2xl bg-white dark:bg-brand-900 border border-brand-100 dark:border-brand-800 p-6">
                     <h3 class="font-bold text-lg text-brand-800 dark:text-white">Irazú Hotel and Studios</h3>
                     <p class="mt-2 text-sm text-brand-600 dark:text-brand-300"><span class="font-semibold">Dirección:</span> Autopista General Cañas, km 3, La Uruca, San José.</p>
                     <p class="mt-1 text-sm text-brand-600 dark:text-brand-300"><span class="font-semibold">Teléfono:</span> por confirmar.</p>
-                    <a href="https://www.google.com/maps/search/?api=1&amp;query=Iraz%C3%BA+Hotel+and+Studios+San+Jos%C3%A9+Costa+Rica" target="_blank" rel="noopener" class="mt-3 inline-block text-sm font-semibold text-accent-700 dark:text-accent-400 underline underline-offset-2 hover:no-underline">Ver en el mapa →</a>
+                    <p class="mt-3 flex flex-wrap gap-x-5 gap-y-2 text-sm font-semibold"><a href="https://www.google.com/maps/dir/?api=1&amp;origin=Iraz%C3%BA+Hotel+and+Studios+San+Jos%C3%A9+Costa+Rica&amp;destination=Gimnasio+Nacional+La+Sabana+San+Jos%C3%A9+Costa+Rica" target="_blank" rel="noopener" class="text-accent-700 dark:text-accent-400 underline underline-offset-2 hover:no-underline">Ruta a la sala →<span class="sr-only"> desde Irazú Hotel and Studios (se abre en otra pestaña)</span></a><a href="https://www.google.com/maps/search/?api=1&amp;query=Iraz%C3%BA+Hotel+and+Studios+San+Jos%C3%A9+Costa+Rica" target="_blank" rel="noopener" class="text-accent-700 dark:text-accent-400 underline underline-offset-2 hover:no-underline">Ver en el mapa →<span class="sr-only"> Irazú Hotel and Studios (se abre en otra pestaña)</span></a></p>
                 </li>
                 <li class="rounded-2xl bg-white dark:bg-brand-900 border border-brand-100 dark:border-brand-800 p-6">
                     <h3 class="font-bold text-lg text-brand-800 dark:text-white">Holiday Inn San José La Sabana (Plaza Irazú)</h3>
                     <p class="mt-2 text-sm text-brand-600 dark:text-brand-300"><span class="font-semibold">Dirección:</span> Autopista General Cañas, km 3, Plaza Irazú, San José.</p>
                     <p class="mt-1 text-sm text-brand-600 dark:text-brand-300"><span class="font-semibold">Teléfono:</span> <a href="tel:+50621065100" class="text-accent-700 dark:text-accent-400 font-semibold underline underline-offset-2 hover:no-underline">+506 2106-5100</a></p>
-                    <a href="https://www.google.com/maps/search/?api=1&amp;query=Holiday+Inn+San+Jos%C3%A9+La+Sabana+Plaza+Iraz%C3%BA" target="_blank" rel="noopener" class="mt-3 inline-block text-sm font-semibold text-accent-700 dark:text-accent-400 underline underline-offset-2 hover:no-underline">Ver en el mapa →</a>
+                    <p class="mt-3 flex flex-wrap gap-x-5 gap-y-2 text-sm font-semibold"><a href="https://www.google.com/maps/dir/?api=1&amp;origin=Holiday+Inn+San+Jos%C3%A9+La+Sabana+Plaza+Iraz%C3%BA&amp;destination=Gimnasio+Nacional+La+Sabana+San+Jos%C3%A9+Costa+Rica" target="_blank" rel="noopener" class="text-accent-700 dark:text-accent-400 underline underline-offset-2 hover:no-underline">Ruta a la sala →<span class="sr-only"> desde Holiday Inn San José La Sabana (se abre en otra pestaña)</span></a><a href="https://www.google.com/maps/search/?api=1&amp;query=Holiday+Inn+San+Jos%C3%A9+La+Sabana+Plaza+Iraz%C3%BA" target="_blank" rel="noopener" class="text-accent-700 dark:text-accent-400 underline underline-offset-2 hover:no-underline">Ver en el mapa →<span class="sr-only"> Holiday Inn San José La Sabana (se abre en otra pestaña)</span></a></p>
                 </li>
                 <li class="rounded-2xl bg-white dark:bg-brand-900 border border-brand-100 dark:border-brand-800 p-6">
                     <h3 class="font-bold text-lg text-brand-800 dark:text-white">Hotel Parque del Lago</h3>
                     <p class="mt-2 text-sm text-brand-600 dark:text-brand-300"><span class="font-semibold">Dirección:</span> Paseo Colón, avenida 2, entre calles 40 y 42, al este del Parque La Sabana, San José.</p>
                     <p class="mt-1 text-sm text-brand-600 dark:text-brand-300"><span class="font-semibold">Teléfono:</span> por confirmar.</p>
-                    <a href="https://www.google.com/maps/search/?api=1&amp;query=Parque+del+Lago+Boutique+Hotel+San+Jos%C3%A9+Costa+Rica" target="_blank" rel="noopener" class="mt-3 inline-block text-sm font-semibold text-accent-700 dark:text-accent-400 underline underline-offset-2 hover:no-underline">Ver en el mapa →</a>
+                    <p class="mt-3 flex flex-wrap gap-x-5 gap-y-2 text-sm font-semibold"><a href="https://www.google.com/maps/dir/?api=1&amp;origin=Parque+del+Lago+Boutique+Hotel+San+Jos%C3%A9+Costa+Rica&amp;destination=Gimnasio+Nacional+La+Sabana+San+Jos%C3%A9+Costa+Rica" target="_blank" rel="noopener" class="text-accent-700 dark:text-accent-400 underline underline-offset-2 hover:no-underline">Ruta a la sala →<span class="sr-only"> desde Hotel Parque del Lago (se abre en otra pestaña)</span></a><a href="https://www.google.com/maps/search/?api=1&amp;query=Parque+del+Lago+Boutique+Hotel+San+Jos%C3%A9+Costa+Rica" target="_blank" rel="noopener" class="text-accent-700 dark:text-accent-400 underline underline-offset-2 hover:no-underline">Ver en el mapa →<span class="sr-only"> Hotel Parque del Lago (se abre en otra pestaña)</span></a></p>
                 </li>
                 <li class="rounded-2xl bg-white dark:bg-brand-900 border border-brand-100 dark:border-brand-800 p-6">
                     <h3 class="font-bold text-lg text-brand-800 dark:text-white">Rincón del Valle Hotel &amp; Suites</h3>
                     <p class="mt-2 text-sm text-brand-600 dark:text-brand-300"><span class="font-semibold">Dirección:</span> Sabana Sur, 50 m al este y 50 m al sur del Colegio de Médicos, San José.</p>
                     <p class="mt-1 text-sm text-brand-600 dark:text-brand-300"><span class="font-semibold">Teléfono:</span> <a href="tel:+50622961001" class="text-accent-700 dark:text-accent-400 font-semibold underline underline-offset-2 hover:no-underline">+506 2296-1001</a></p>
-                    <a href="https://www.google.com/maps/search/?api=1&amp;query=Rinc%C3%B3n+del+Valle+Hotel+Suites+Sabana+Sur+San+Jos%C3%A9" target="_blank" rel="noopener" class="mt-3 inline-block text-sm font-semibold text-accent-700 dark:text-accent-400 underline underline-offset-2 hover:no-underline">Ver en el mapa →</a>
+                    <p class="mt-3 flex flex-wrap gap-x-5 gap-y-2 text-sm font-semibold"><a href="https://www.google.com/maps/dir/?api=1&amp;origin=Rinc%C3%B3n+del+Valle+Hotel+Suites+Sabana+Sur+San+Jos%C3%A9&amp;destination=Gimnasio+Nacional+La+Sabana+San+Jos%C3%A9+Costa+Rica" target="_blank" rel="noopener" class="text-accent-700 dark:text-accent-400 underline underline-offset-2 hover:no-underline">Ruta a la sala →<span class="sr-only"> desde Rincón del Valle Hotel &amp; Suites (se abre en otra pestaña)</span></a><a href="https://www.google.com/maps/search/?api=1&amp;query=Rinc%C3%B3n+del+Valle+Hotel+Suites+Sabana+Sur+San+Jos%C3%A9" target="_blank" rel="noopener" class="text-accent-700 dark:text-accent-400 underline underline-offset-2 hover:no-underline">Ver en el mapa →<span class="sr-only"> Rincón del Valle Hotel &amp; Suites (se abre en otra pestaña)</span></a></p>
                 </li>
                 <li class="rounded-2xl bg-white dark:bg-brand-900 border border-brand-100 dark:border-brand-800 p-6">
                     <h3 class="font-bold text-lg text-brand-800 dark:text-white">Wyndham</h3>
@@ -378,15 +649,29 @@
 
     <footer class="bg-brand-900 text-brand-300 pt-16 pb-8">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="grid md:grid-cols-3 gap-8 mb-12">
+            <div class="grid md:grid-cols-2 gap-8 mb-12">
                 <div><a href="index.html" class="flex items-center gap-2 text-white mb-4"><img src="/img/logo-marca.png" alt="" width="78" height="48" class="h-9 w-auto shrink-0"><span class="font-serif text-lg font-bold">Ajedrez Integral</span></a><p class="text-sm text-brand-300">Plataforma educativa de ajedrez para escuelas, colegios y familias. Aprende, practica y compite.</p></div>
-                <div><h3 class="text-white font-semibold mb-4">Centroamericano 2026</h3><ul class="space-y-2 text-sm"><li><a href="documentos/centroamericano-2026/bases-cac-2026.pdf" target="_blank" rel="noopener" data-ventana="Bases del campeonato" class="hover:text-accent-400 transition-colors">Bases</a></li><li><a href="#calendario" class="hover:text-accent-400 transition-colors">Calendario</a></li><li><a href="#hoteles" class="hover:text-accent-400 transition-colors">Hoteles</a></li></ul></div>
-                <div><h3 class="text-white font-semibold mb-4">Contacto</h3><ul class="space-y-2 text-sm"><li><a href="mailto:info@ajedrez-integral.com" class="hover:text-accent-400 transition-colors">info@ajedrez-integral.com</a></li><li><a href="https://wa.me/50683092291" target="_blank" rel="noopener" class="hover:text-accent-400 transition-colors">+506 8309-2291 (WhatsApp)</a></li></ul></div>
+                <div><h3 class="text-white font-semibold mb-4">Centroamericano 2026</h3><ul class="space-y-2 text-sm"><li><a href="documentos/centroamericano-2026/bases-cac-2026.pdf" target="_blank" rel="noopener" data-ventana="Bases del campeonato" class="hover:text-accent-400 transition-colors">Bases</a></li><li><a href="#calendario" class="hover:text-accent-400 transition-colors">Calendario</a></li><li><a href="#hoteles" class="hover:text-accent-400 transition-colors">Hoteles</a></li><li><a href="documentos/centroamericano-2026/cartel-centroamericano-2026.pdf" target="_blank" rel="noopener" class="hover:text-accent-400 transition-colors">Cartel con código QR para imprimir (PDF)</a></li></ul></div>
             </div>
             <div class="border-t border-brand-700 pt-6 text-center text-sm text-brand-300"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p><!-- legal: inicio --><p class="mt-2"><a href="privacidad.html" class="underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Política de privacidad</a> <span aria-hidden="true">·</span> <a href="terminos.html" class="underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Términos y condiciones</a></p><!-- legal: fin --></div>
         </div>
     </footer>
     <script src="js/main.js"></script>
     <script src="js/ventana-enlace.js"></script>
+    <script src="js/vendor/supabase.js"></script>
+    <script src="js/supabase-client.js"></script>
+    <script src="js/centroamericano-en.js"></script>
+    <script src="js/centroamericano.js"></script>
+    <script src="js/pareo/torneo.js"></script>
+    <script src="js/pareo/desempates.js"></script>
+    <script src="js/pareo/elo.js"></script>
+    <script src="js/tabla-imagen.js"></script>
+    <script src="js/vendor/qrcode.js"></script>
+    <script src="js/qr-svg.js"></script>
+    <script src="js/reporte-pdf.js"></script>
+    <script src="js/marca-agua.js"></script>
+    <script src="js/calendario-ics.js"></script>
+    <script src="js/centroamericano-vivo.js"></script>
+    <script src="js/centroamericano-tablas.js"></script>
 </body>
 </html>

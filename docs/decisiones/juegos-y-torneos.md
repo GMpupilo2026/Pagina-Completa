@@ -3821,6 +3821,179 @@ Al aplicarlo se disparó una vez a mano (`select
 public.disparar_torneos_externos()`): leyó los 5 torneos que había allá el
 23/10/2026, con sus datos iguales a los de sus fichas.
 
+### Torneos en Pareo Integral: los torneos de chess-results
+
+El dueño pidió que «También en Costa Rica» trajera además los torneos de
+Costa Rica que ya están cargados en chess-results, como hace
+ajedrezcostarica.com. Muchos torneos se cargan allá antes de jugarse y no se
+anuncian en ningún otro lado.
+
+- **Quién los lee.** La misma Edge Function `torneos-externos`, en la misma
+  pasada diaria. Hace una búsqueda en el buscador de chess-results
+  (`TurnierSuche.aspx`): Costa Rica, los 250 tocados más recientemente.
+  - Es la misma lectura que `herramientas/ajedrez-estudiantil-actualizar.py`
+    (el formulario ASP.NET con sus campos ocultos, mandado al MISMO servidor
+    s1, s2… que lo dio, con sus cookies) y la misma tabla `CRs2` leída por el
+    **nombre** de cada columna. El lector está en
+    `torneos-externos/chessresults.ts`, sin red, para probarlo con Node.
+  - Las redirecciones se siguen a mano (`redirect: "manual"`): si fetch las
+    sigue solo, se pierden las cookies que pone cada salto y el formulario
+    no busca nada.
+  - Desde `net.http_get` de la base chess-results contesta 400 (no parece un
+    navegador); desde Deno, con el agente de un navegador, contesta bien.
+    Por eso se probó desplegando la función, no desde SQL.
+- **Qué se guarda.** Solo los que empiezan de hoy en adelante (el día en
+  Costa Rica), y de cada uno lo que el buscador ya muestra a cualquiera:
+  nombre, día, lugar, quién organiza, rondas e inscritos. Va en la misma
+  tabla, con `fuente = 'chess-results'`.
+  - El buscador corta el nombre a 50 letras: de esos se lee el completo en
+    la página del torneo (`<h2>`), como mucho 20 por pasada y con medio
+    segundo entre una y otra.
+  - El día va como la medianoche de Costa Rica (06:00 UTC) y sin final: el
+    buscador no dice horas ni cuántos días dura.
+  - El ritmo sale del nombre solo si lo dice («Blitz», «Rápido», «Clásico»);
+    si no, queda vacío, nunca adivinado. La provincia la deduce la lista
+    del lugar, con `pareo_provincia()`.
+  - La dirección es siempre la pública, `https://chess-results.com/tnr<n>.aspx?lan=2`,
+    y la base no acepta otra (el check de `url` la arma con el mismo número).
+- **Cada fuente va por su lado.** Si una no contesta o cambió de forma (la
+  tabla sin alguna de sus columnas da null, no una lista vacía), sus filas se
+  quedan como estaban y la otra se pone al día igual. Lo de una fuente que
+  ese día falló no se borra por llevar una semana sin verse: se borraría
+  todo por un mal día de chess-results.
+- **Sin repetir.** `torneos_externos_lista()` no da un torneo de
+  chess-results que ajedrezcostarica.com ya anuncia: su ficha enlaza a ese
+  mismo `tnr<n>`, o es el mismo día con un nombre parecido
+  (`pareo_parecidos`). Gana el anuncio de allá porque dice más
+  (inscripción, costo, ritmo). Contra Pareo Integral vale lo de siempre:
+  `repetido_de`.
+- **Cómo se muestran.** En la misma lista, ordenados por día, con «En
+  chess-results» o «En ajedrezcostarica.com» debajo de cada nombre (y para
+  el lector de pantalla, qué página abre).
+  - chess-results no dice si la inscripción está abierta, así que esos
+    torneos **nunca dicen «Cerrada»**: en su lugar va cuántos inscritos
+    lleva, y con el filtro «Inscripción abierta» no salen (no se sabe).
+  - Al calendario van con su propio UID (`chess-results-<n>@…`), en la
+    portada y en `/calendario/torneos.ics`; el worker acepta solo las
+    direcciones de las dos fuentes.
+- **Por qué no va en `privacidad.html`.** Como con ajedrezcostarica.com: no
+  se le manda nada a chess-results, solo se lee lo que el buscador publica
+  de un torneo.
+
+Lo comprueban `verificar-torneos-externos.js` (el lector y la función),
+`verificar-torneos-externos-pagina.js` (la portada) y `verificar-worker.js`
+(el calendario). Al aplicarlo se disparó a mano: leyó 249 torneos de Costa
+Rica y guardó los 2 que empezaban el 24/10/2026, que ajedrezcostarica.com no
+anunciaba.
+
+### Torneos en Pareo Integral: buscar a un jugador, el medallero, las aperturas y las cifras
+
+Cinco cosas que el dueño pidió juntas, todas armadas con lo que ya está
+publicado. Las cuentas las hace la base
+(`20261023213000_pareo_buscar_medallero_cifras.sql`): la portada no se baja
+todos los torneos para sumar en el navegador.
+
+- **Buscar a un jugador desde la portada** («Buscar un jugador», al lado de
+  «Buscar un torneo»; `pareo_buscar_jugador()`).
+  - Cada palabra escrita tiene que estar al comienzo de una palabra del
+    nombre, sin tildes ni mayúsculas: «jose mora» encuentra a «José Pablo
+    Mora Solís». Lo escrito viaja tal cual y la base lo limpia
+    (`pareo_clave`).
+  - Una fila por persona (`pareo_resultados()`: la huella del ID FIDE o, si
+    no hay, el nombre), con su colegio, sus torneos, sus podios y el último,
+    escritos. Cada una lleva a SU ficha, con su huella.
+  - Dos personas distintas con el mismo nombre (distinto ID FIDE) se avisan
+    y salen por separado: nunca se juntan.
+  - Con menos de tres letras no se pregunta nada (tampoco la base busca). Lo
+    que se escribe rápido manda varias preguntas: una respuesta vieja no pisa
+    a la de lo último que se escribió.
+- **El medallero de colegios y clubes** (Ranking del año → «Colegios y
+  clubes», `#ranking=colegios`; `pareo_medallero()`). Oro, plata y bronce
+  son el 1.°, el 2.° y el 3.° de cada torneo individual, contados por la
+  institución que el jugador llevaba en ESE torneo (un colegio que cambia de
+  nombre no se lleva las medallas viejas del otro). El colegio es su nombre
+  sin tildes ni mayúsculas y se muestra como más veces lo escribieron
+  (`mode()`). Las medallas van escritas en el encabezado («Oros (1.°)»…):
+  el color nunca dice nada solo.
+- **Las aperturas** (`js/pareo/aperturas.js`), en tres lugares: la pestaña
+  Estadísticas de cada torneo, la ficha del jugador (con blancas y con
+  negras, desde SU lado: «Ganó», «Perdió») y el año (Ranking del año →
+  «Aperturas», `pareo_partidas_del_anio()`).
+  - **La apertura sale de las jugadas, nunca del encabezado del PGN**: se
+    busca la secuencia más larga de una lista de unas cien, con nombres de
+    acá. Lo que no está queda en su familia (lo más largo que sí está) o en
+    «Otras aperturas». Se lee con `PareoPartida`, así que valen las letras
+    en español y un PGN cortado.
+  - **Cada secuencia de la lista se comprueba con chess.js**
+    (`verificar-pareo-aperturas.js`): una mal escrita no reconocería a nadie
+    y no daría ningún error.
+  - Del año, la base da solo el comienzo de cada partida (400 caracteres, sin
+    encabezados ni comentarios), el resultado y nada de nombres, con tope de
+    5000.
+- **Las rachas y cómo viene** (en la ficha del jugador, calculado en la
+  página con sus torneos): la mejor racha sin perder, la de victorias, la de
+  ahora, su mejor torneo (el de mejor rendimiento o, sin rendimiento, el de
+  mejor puesto contado sobre cuántos jugaron) y la tendencia (el rendimiento
+  medio de sus 3 últimos torneos contra los 3 de antes, con 4 o más). Las
+  partidas van en orden de fecha y solo cuentan las jugadas (1, ½, 0): un
+  bye o una partida ganada sin jugar no son racha. Todo con números
+  escritos.
+- **Compartir como imagen**: el ranking, el medallero, las aperturas del año
+  y la ficha del jugador se bajan como PNG (horizontal o para el celular)
+  con `js/tabla-imagen.js`, **que ahora lleva la marca de agua de Ajedrez
+  Integral** (tenue y al centro) en todas sus imágenes, también las de los
+  resultados JDN y universitarios.
+- **Las cifras para quien administra** (`admin-pareo.html`, «Cómo va Torneos
+  en Pareo Integral»; `pareo_cifras()`): torneos por mes de los últimos 12,
+  organizaciones activas (90 días), jugadores distintos, suscripciones por
+  correo y aparatos con avisos, avisos de los últimos 30 días, reportes y
+  sellos pendientes y los torneos de afuera por fuente. Es `security
+  definer` (lee tablas que nadie de afuera lee) con
+  `coalesce(soy_admin(), false)` y sin `execute` para `anon`: solo números,
+  nunca un correo.
+
+Lo comprueban `verificar-pareo-aperturas.js` (sin navegador) y
+`verificar-pareo-buscar-medallero.js` (la portada, la ficha, el ranking, la
+imagen y las cifras).
+
+### Torneos en Pareo Integral: los avisos en el celular
+
+Los mismos avisos que por correo (su mesa en cada ronda y cómo terminó), como
+notificación en el aparato: «Avisarme en este celular», al lado de «Avisarme
+por correo» en la ficha del jugador y en su fila de un torneo.
+
+- **Sin cuenta y sin correo.** Se guarda lo que el navegador le da al sitio
+  para avisarle a ESE aparato (el endpoint y sus dos llaves) y a quién sigue
+  (su nombre sin tildes ni mayúsculas, o la huella de su ID FIDE), en
+  `pareo_suscripciones_push`. Ningún nombre de persona, ningún correo.
+- **Sin confirmación por correo**: el permiso lo da la persona en su propio
+  navegador, y nadie puede suscribir el aparato de otro. Al suscribirse sale
+  un primer aviso, «Listo: sigues a…», que además comprueba que llega: si el
+  servicio dice que esa dirección no existe, la suscripción no se queda.
+- **El permiso se pide solo al tocar el botón**: el navegador deja preguntar
+  una vez, y preguntar al abrir la página es la forma más rápida de que digan
+  que no para siempre (lo mismo que `js/notificaciones.js` en la Academia).
+- **La misma maquinaria que los avisos de la Academia**: las llaves VAPID
+  son las del sitio (las genera y guarda `notificar`) y `webpush.ts` pasó a
+  `_compartido/`, copiado por `funciones-armar.js` a `notificar` y a
+  `pareo-publicar`. Lo desplegado de `notificar` no cambió: es el mismo
+  archivo.
+- **La función solo le manda a los servicios de avisos de los navegadores**
+  (Google, Mozilla, Apple, Microsoft): un endpoint de otra dirección no se
+  acepta, para que nadie la use para mandarle pedidos a cualquier servidor.
+- **Cada aviso sale una vez**: se anota antes de mandarlo en
+  `pareo_avisos_push_enviados` (su clave única), como el correo. Un aparato
+  que el servicio ya no reconoce (404, 410) se borra solo. Como mucho 20
+  jugadores por aparato.
+- **La baja**: el mismo botón («Avisos en este celular: encendidos») manda
+  `seguir_push_baja` con la suscripción del navegador; el endpoint es largo y
+  secreto, y solo lo conoce ese navegador. Qué jugadores sigue ESTE aparato
+  se recuerda en el navegador solo para pintar el botón.
+- **Lo dice `privacidad.html`**, junto a los avisos por correo.
+
+Lo comprueba `verificar-pareo-seguir-push.js` (la función, la base y la
+página con un navegador de mentira).
+
 ### La tarjeta del organizador y el calendario para suscribirse
 
 Son dos rutas nuevas del worker, como `/t/<id>`, y las dos están en
@@ -3923,6 +4096,190 @@ ronda.
 
 Lo comprueba `verificar-pareo-incrustar.js`: abre la página dentro del
 iframe de otro sitio y compara la clasificación con la de Pareo Integral.
+
+### Torneos en Pareo Integral: el mismo jugador en todos sus torneos
+
+La ficha del jugador (`#p=<nombre>`) buscaba su nombre escrito igual, así
+que «PÉREZ» y «Pérez» eran dos personas, y dos personas distintas con el
+mismo nombre se sumaban en una sola. Ahora reconoce a cada jugador por su ID
+FIDE cuando lo tiene y, si no, por su nombre sin tildes ni mayúsculas.
+
+- **El ID FIDE no se publica, como siempre se prometió** (`privacidad.html`
+  y los textos de Pareo Integral).
+  - Viaja solo a la función `pareo-publicar`, que lo cambia por una
+    **huella** (`ident`): un HMAC con el secreto `pareo_identidad_secreto`
+    de la bóveda, truncado a 24 caracteres hexadecimales.
+  - Lo borra **antes** de guardar el torneo (`ponerIdentidad()`).
+  - Sin el secreto no se puede saber qué ID hay detrás de una huella. Un
+    hash simple, sin secreto, se rompería probando los pocos millones de
+    IDs FIDE que existen.
+  - `verificar-pareo-publicar.js` revisa que la función borre el ID antes
+    de guardar.
+- **Quién es quién** (`elDe()` en `js/torneos-pareo-pagina.js`):
+  - Con huella en la dirección (`&i=`), un torneo cuenta si trae esa
+    huella, o el mismo nombre **sin** huella (pudo jugar sin su ID FIDE).
+    Nunca cuenta el mismo nombre con **otra** huella: es otra persona.
+  - Sin huella en la dirección, si el nombre aparece con dos huellas
+    distintas, la ficha pregunta cuál de las dos es en vez de sumarlas
+    (`#tp-homonimos`).
+- **La búsqueda la hace la base:** `public.pareo_torneos_de(nombre, ident)`
+  devuelve los torneos con esa huella o con ese nombre (`pareo_clave`),
+  hasta 100.
+- **Cara a cara.** En la ficha, «Sus partidas contra» ofrece los rivales
+  que el jugador tuvo enfrente. Al elegir uno (`&vs=…&vi=…`) aparecen el
+  marcador y cada partida, sacados de los torneos de la ficha, que ya están
+  leídos: no se pide nada más a la base.
+- **El resumen de cada jugador.** Al publicar, `PareoPublicar.datosPublicos`
+  manda con cada torneo `resumen`: puesto, puntos, ganadas, tablas y
+  perdidas, partidas contra rivales con Elo, rendimiento y ± Elo.
+  - Lo calcula con los mismos módulos de la clasificación, así que el
+    puesto es el de los desempates del torneo.
+  - La función lo limpia campo por campo (`filaResumen`).
+  - Es lo que suman el ranking y la ficha del colegio en la base, que no
+    sabe calcular desempates.
+
+Lo comprueban `verificar-pareo-publicar.js` (el resumen y la huella) y
+`verificar-pareo-jugadores.js` (las fichas, las dos personas con el mismo
+nombre y el cara a cara).
+
+### Torneos en Pareo Integral: un torneo, una sola vez
+
+Un torneo publicado en Pareo Integral que también se anuncia en
+ajedrezcostarica.com salía dos veces: en la portada y en el calendario.
+
+- `public.torneos_externos_lista()` devuelve los de afuera, cada uno con
+  `repetido_de`: el torneo de Pareo Integral que es el mismo, si lo hay. Es
+  el mismo si se cumplen las tres cosas:
+  - empieza el mismo día, en hora de Costa Rica;
+  - tiene el mismo ritmo, si los dos lo dicen;
+  - el nombre se parece (`pareo_parecidos`): comparten al menos dos
+    palabras, y una lista cabe en la otra o comparten al menos la mitad de
+    todas.
+- Las palabras no cuentan «torneo», «de», «ajedrez» ni las de menos de tres
+  letras, y cada una vale por sus primeras cinco letras.
+  - Así «Rápido» y «Rapid» son la misma palabra
+    (`20261023192512_pareo_palabras_raiz.sql`). Sin eso, «Torneo Rápido
+    Paquera 2026» y «Torneo Rapid Paquera 2026» no se juntaban.
+- El nombre solo no basta: «Rápido Guarqueño» y «Clásico Guarqueño» se
+  parecen, y los separan el día y el ritmo.
+- En la portada, el de afuera no sale en «También en Costa Rica». Su fila
+  de Pareo Integral dice «También anunciado en ajedrezcostarica.com», y su
+  ficha lleva el enlace al anuncio de allá.
+- El calendario para suscribirse del worker usa la misma función y salta
+  los repetidos.
+
+Lo comprueban `verificar-pareo-jugadores.js` y `verificar-worker.js`.
+
+### Torneos en Pareo Integral: el ranking del año y la ficha del colegio
+
+Los dos se arman en la base con el resumen de cada jugador en cada torneo
+individual: `public.pareo_resultados()`, `SECURITY INVOKER`, así que la RLS
+también esconde acá los torneos ocultos.
+
+- **La persona de cada fila** es su huella. Si no tiene, es la única huella
+  que tiene su nombre en algún torneo. Si su nombre tiene dos huellas, o
+  ninguna, es el nombre (`'n:…'`).
+- **El ranking** (`#ranking=1`, `public.pareo_ranking`) se filtra por año,
+  categoría y colegio, y se ordena de cuatro maneras:
+  - torneos jugados;
+  - podios;
+  - rendimiento: el promedio de sus torneos, pesado por las partidas contra
+    rivales con Elo, y solo con 9 de esas partidas o más, para que dos
+    partidas de suerte no encabecen la tabla;
+  - ± Elo sumado.
+  - Trae los primeros 100. La página dice que no es un ranking oficial.
+- **La ficha del colegio o club** (`#c=<nombre>`, `public.pareo_institucion`)
+  junta los torneos donde el nombre está escrito igual, sin importar tildes
+  ni mayúsculas. Muestra:
+  - sus jugadores, cada uno con enlace a su ficha (con la huella);
+  - sus torneos, con cuántos jugadores llevó y su mejor puesto;
+  - sus podios;
+  - su año a año.
+  - Se llega desde la institución en la clasificación de cada torneo, en la
+    ficha del jugador y en el ranking.
+- **Si la tabla crece mucho:** las dos recorren todos los torneos
+  publicados en cada pedido. Si llegan a ser miles y se pone lento, el
+  siguiente paso es guardar `pareo_resultados` en una tabla que se ponga al
+  día al publicar.
+
+Lo comprueba `verificar-pareo-jugadores.js`. Las funciones se probaron en la
+base con dos torneos de prueba, en una transacción que se deshizo. Se
+probaron tres cosas:
+- dos «Ana Pérez» con y sin huella quedaron como la misma persona;
+- el rendimiento pesado dio 1820, de 1900 en 3 partidas y 1700 en 2;
+- el colegio escrito «liceo de paquera» y «Liceo de Paquera» se juntó.
+
+### Torneos en Pareo Integral: en vivo y por provincia
+
+- **«Se están jugando ahora».** Arriba de la portada salen los torneos en
+  curso (`pareo_lista` con `p_curso`), con su ronda. Mientras se busca o se
+  filtra, se esconde: la lista de abajo ya muestra lo que coincide.
+- **La provincia de cada torneo:**
+  - la elige quien organiza en la ficha Torneo de Pareo Integral
+    (`datos.provincia`);
+  - si no la dijo, la base la deduce del lugar con
+    `public.pareo_provincia()`. Busca un trozo del lugar (entre comas,
+    puntos o paréntesis) que sea una provincia o uno de los 84 cantones, o
+    el nombre de una provincia en cualquier parte del texto;
+  - si salen dos provincias, o ninguna, no adivina.
+  - Los cantones se comparan con el trozo entero: «San Isidro de El
+    General» no es el cantón San Isidro de Heredia.
+- **«Lo que viene, por provincia»** cuenta los próximos torneos de cada
+  provincia, los de Pareo Integral (`pareo_lista_resumen().provincias`) y
+  los de afuera.
+  - Tocar una provincia la elige en el filtro «Lugar», que ahora ofrece las
+    siete provincias antes que los lugares escritos.
+  - `pareo_lista` filtra por provincia con el mismo `p_lugar`, sin cambiar
+    su firma.
+  - Los de afuera se filtran por la provincia que dice su ficha de allá.
+
+Lo comprueba `verificar-pareo-jugadores.js`.
+
+### Torneos en Pareo Integral: avisar por correo a quien sigue a un jugador
+
+«Seguir» vivía solo en el navegador. Ahora quien quiere deja su correo en la
+ficha del jugador («Avisarme por correo») y le llegan dos avisos:
+- cuando el jugador queda emparejado en una ronda nueva, con su mesa, su
+  color, su rival y el Elo del rival;
+- cuando termina el torneo, con su puesto.
+
+- **Con consentimiento y confirmación.** El formulario pide marcar la
+  política de privacidad.
+  - Antes de mandar nada, la función le escribe un enlace para confirmar
+    (`#seguir-ok=`, válido 48 horas).
+  - `seguir_correo` contesta lo mismo pase lo que pase: no dice quién sigue
+    a quién.
+  - Tiene su freno (`pareo_correo_frenar`, ámbito `'seguir'`) y un tope de
+    20 jugadores por correo.
+- **Quién recibe.** `public.pareo_suscripciones` no se lee desde afuera:
+  solo la función, con la service role. Una suscripción con huella sigue a
+  esa persona; sin huella, sigue al nombre.
+  `public.pareo_suscriptores_de(torneo)` dice quién sigue a alguien de ese
+  torneo.
+- **Cuándo sale cada aviso.** Lo calcula `pareo-publicar` al crear y al
+  poner al día un torneo, comparando con la versión que había
+  (`avisos.ts`):
+  - aviso de ronda solo cuando aparece una ronda emparejada nueva, no con
+    cada resultado;
+  - aviso de final solo la vez que el torneo se completa;
+  - nada en un torneo por equipos.
+- **Nunca dos veces.** Cada aviso se anota en `pareo_avisos_enviados`
+  **antes** de mandarlo. Su clave única (suscripción, torneo, ronda o fin)
+  hace que no salga dos veces aunque el árbitro ponga el torneo al día
+  muchas veces seguidas.
+  - Corre después de contestar (`EdgeRuntime.waitUntil`), con un tope de
+    300 por vez: un aviso lento no demora la publicación.
+- **Darse de baja.** Cada aviso trae su enlace (`#seguir-baja=`), firmado
+  con el mismo secreto de la huella (`hmac("baja:" + id)`): nadie da de
+  baja a otro cambiando el id.
+  - La baja borra la suscripción, y con ella sus avisos anotados.
+
+Lo comprueba `verificar-pareo-seguir-correo.js`:
+- con Node: cuándo hay aviso, sus textos y los correos escapados;
+- y leyendo el código: el orden «anotar, después mandar».
+
+`verificar-pareo-jugadores.js` prueba el formulario y el enlace de
+confirmación.
 
 ### Torneos en Pareo Integral: la lista de 50 en 50
 
@@ -8160,6 +8517,371 @@ Gimnasio Nacional de La Sabana): las bases, los hoteles, el bye, las partidas
 y los resultados en vivo, el grupo de WhatsApp, el correo y cómo llegar.
 Es una página estática, sin cuenta y sin base: nada se guarda.
 
+- **La página lleva la cara de las bases** (lo pidió el dueño):
+  `css/centroamericano.css`, solo de esta página (el `body` lleva `cac`), con
+  el morado de la portada (#40478F a #5A5FA3), el rojo de la píldora (#CE1328),
+  el verde de las hojas (#1F774C), el azul de la camiseta y el naranja del
+  pizote, medidos de las bases y con el contraste de cada texto comprobado
+  (está anotado en la cabecera del CSS: el morado más claro de la portada,
+  #7273B3, no alcanza con texto blanco y el degradado no baja de #5A5FA3). Las
+  piezas salen recortadas tal cual de las bases, sin redibujarlas: la mascota
+  (el pizote que juega ajedrez), el pizote con el trofeo, las hojas de monstera
+  (sin el fondo blanco) y el logo de la CCA, en `img/centroamericano-2026/`.
+  La insignia de Costa Rica sí es un SVG propio (`bandera-cr.svg`, franjas
+  1-1-2-1-1), porque el recorte traía un morado que no calzaba con el
+  degradado. Lo que solo adorna lleva `alt=""` y `aria-hidden`; la mascota, su
+  descripción. La mascota flota y la bandera se mece, pero con «menos
+  movimiento» pedido en el sistema se quedan quietas.
+- **Tres pizotes más, pocos y con algo que hacer**: la cabeza del pizote se
+  asoma en «Pedir un bye» (`mascota-asoma.png`, recortada de `mascota.jpg`), el
+  del trofeo festeja en «Resultados en vivo» y el de la portada despide en un
+  globo que abre los contactos. Son los dos dibujos de las bases: **ninguna
+  pose de la mascota se inventa**; si la organización pasa otras ilustraciones,
+  van en su ficha. En el celular el que se asoma se achica y el «Abrir…» le
+  deja su lugar, para no tapar el texto.
+- **Nueve fichas, tres por fila**: «Contacta a la organización» ya no es
+  ficha, porque la abre la despedida del pizote al final, y el correo de la
+  organización va dentro de esa ventana, debajo de las tres personas. En el
+  celular, de a dos, la última ficha ocupa la fila entera para que no quede
+  una sola. **Van ordenadas por lo que más se usa**, como pidió el dueño:
+  Bases, Pedir un bye, Resultados en vivo, Partidas en vivo y Calendario de
+  rondas; después Reglamento, Grupo de WhatsApp, Cómo llegar y, al final,
+  Hoteles oficiales (para cuando ya se está en el torneo, casi no se usa). Arriba, cada ficha lleva la bandera de Costa Rica
+  (1-1-2-1-1, con sus colores oficiales) y una fila de casillas de tablero; el
+  color de las bases queda en el ícono.
+- **El pie de página no lleva el contacto de Ajedrez Integral**: en esta
+  página quien pregunta es un jugador del torneo, y el único contacto que le
+  sirve es el de la organización (la despedida del pizote). El pie queda con
+  la marca, los enlaces del campeonato y lo legal.
+- **La ficha del Centroamericano en Torneos** (`torneos-en-vivo.html`) lleva
+  la misma cara que la página: el morado de las bases, la bandera arriba, el
+  pizote del trofeo y los botones blancos, el primero en rojo. La sala sigue
+  en `salas_torneo` como cualquier otra (sus textos y enlaces se editan en
+  `admin.html#torneos`); lo que la viste es su clave, `centroamericano-2026`,
+  en `PORTADAS` de `js/salas-torneo.js`, y el estilo va en
+  `css/centroamericano.css` (una sola copia de los colores), que por eso
+  cargan también `torneos-en-vivo.html` y `admin.html` (la vista previa del
+  editor es la misma ficha). Contraste: blanco sobre #5A5FA3 5,83, #40478F
+  sobre blanco 8,35 y blanco sobre el rojo 5,6.
+- **Sus botones nunca sacan a nadie del sitio** (lo pidió el dueño). «Toda la
+  información» abre la página en la misma pestaña, y lo que es de afuera
+  —«Resultados en vivo» (chess-results) y las bases— lleva a SU ficha en la
+  página: `/centroamericano-2026.html#resultados` (la elección de categoría,
+  ver «Un torneo por categoría») o `#ficha-bases`.
+  `js/ventana-enlace.js` abre encima la ficha `a[data-ventana]` que nombra el
+  `#` al entrar y lo quita al cerrar. La correspondencia está en `fichas` de
+  `PORTADAS` (por la dirección, así sigue valiendo aunque en
+  `admin.html#torneos` cambien el texto del botón); un enlace de afuera sin
+  ficha lleva a la página entera. En las demás salas, un enlace al propio
+  sitio también queda en la misma pestaña (nombrar ajedrez-integral.com no es
+  irse) y lo de afuera sigue en otra, con su ↗. Lo revisa
+  `verificar-centroamericano.js`.
+- **En el celular, un PDF no va en el marco.** El dueño abrió las bases en su
+  Android y la ventana decía «Este contenido está bloqueado. Comunícate con el
+  propietario del sitio», aunque el PDF es del mismo sitio y
+  `frame-ancestors 'self'` lo deja: el visor de PDF del celular no se deja
+  meter en un marco (Safari, en el iPhone, muestra solo la primera página).
+  En la computadora sí funcionaba, y por eso ningún verificador lo vio.
+  Ahora `js/ventana-enlace.js` deja que un enlace a un `.pdf` abra su
+  pestaña (su `target="_blank"`) cuando el aparato es táctil
+  (`pointer: coarse`) o no tiene visor (`navigator.pdfViewerEnabled`), y al
+  entrar con `#ficha-bases` no abre nada: una pestaña nueva no se abre sin
+  que la persona toque. Lo demás (chess-results, el formulario del bye)
+  sigue abriéndose encima. El verificador lo prueba con un celular simulado.
+- **La ficha del Desafío Mentes Maestras** (la sala `cenfotec`, de la
+  Universidad CENFOTEC) lleva lo mismo que la del Centroamericano pero con la
+  cara de la universidad (lo pidió el dueño): el azul de su imagen (#233065
+  arriba a #1C3F7F abajo) con una cuadrícula tenue de circuito, la línea y la
+  luz celeste (#23ACF4, el de su «×») arriba, su logo en lugar del emoji y
+  «Entrar a la sala» en celeste. El logo sale recortado tal cual de la imagen
+  que pasó el dueño, sin redibujarlo, en blanco con transparencia
+  (`img/cenfotec/logo.png`); como el título ya dice CENFOTEC, va con `alt=""`
+  y `aria-hidden`. Es la misma maquinaria: su clave en `PORTADAS` de
+  `js/salas-torneo.js` y el estilo en `css/universidades.css`, que cargan
+  `torneos-en-vivo.html` y `admin.html`. Cada portada pone su `clase` y de
+  ella salen `<clase>-imagen`, `<clase>-boton` y `<clase>-principal`; como
+  esta sala es de Lichess, sus otros enlaces van de botón blanco (el enlace
+  subrayado de siempre no se lee sobre el azul). Contraste: blanco sobre
+  #233065 12,48 y sobre #1C3F7F 10,16; #141C40 sobre el celeste 6,52 (el
+  celeste con letra blanca da 2,5: no se usa así); #233065 sobre blanco
+  12,48. La luz parpadea, pero con «menos movimiento» se queda quieta.
+  `verificar-centroamericano.js` lo revisa junto a la del Centroamericano.
+- **«Hoy en el torneo»**, entre quien organiza y las fichas, lo arma
+  `js/centroamericano.js` con las horas del calendario: cada fila de
+  `#calendario` lleva su `data-inicio` (hora de Costa Rica, que no tiene
+  horario de verano: siempre UTC−6) y `data-minutos` (lo que dura: una ronda,
+  5 horas). Antes del 1 de noviembre, la cuenta regresiva y cuándo es la
+  ronda 1 (`data-primera-ronda`); durante, lo que se juega ahora y lo que
+  sigue, o lo próximo con cuánto falta; después, el cierre. Una sola copia de
+  las horas: la tabla. Sin JavaScript queda un texto que es cierto siempre.
+- **Sin internet**: la sala se llena y la señal falla. La página se guarda
+  entera en la caché `ajedrez-integral-sin-red` (la de «Ejercicios sin
+  internet», que `sw.js` no borra al cambiar de versión): ella con y sin
+  `.html`, todo lo que cargó del sitio (scripts, hojas, imágenes, fuentes) y
+  el PDF de las bases. Se vuelve a guardar cada vez que se abre con señal, y
+  la franja de hoy lo dice («quedó guardada en este aparato»). Sin esto, la
+  primera visita no quedaba: el service worker todavía no controlaba la
+  página y su copia sale recién de la segunda.
+- **En inglés**, con el botón «English» del encabezado («EN» en el celular),
+  para las delegaciones del Caribe de habla inglesa. Los textos van en
+  `js/centroamericano-en.js`, cada uno con el suyo; los que quedan igual (un
+  nombre, un hotel) también van, para que el verificador avise de cualquier
+  texto nuevo sin traducir. Se cambian los nodos de texto y `alt`,
+  `aria-label`, `title` y `data-ventana`, también lo que se arma después (la
+  ventana de las bases), y al volver al español queda exactamente como
+  estaba. La elección se recuerda en el aparato y `?lang=en` manda. **Sin
+  elección va en español, aunque el navegador esté en inglés**: tomarlo del
+  navegador cambiaba la página a quien tiene el celular en inglés, y también
+  a los verificadores, que corren en un Chromium en inglés.
+- **Cómo llegar desde cada hotel**: cada uno con dirección trae «Ruta a la
+  sala» (Google Maps, del hotel al Gimnasio Nacional) junto a «Ver en el
+  mapa», y la nota de arriba ofrece Waze una sola vez (Waze no deja elegir el
+  origen: sale desde donde se está). El Wyndham no lleva ruta: su dirección
+  sigue por confirmar.
+- **Lo que se comparte lo genera `herramientas/centroamericano-imagenes.js`**
+  y no se edita a mano: `img/centroamericano-2026/compartir.jpg` (la imagen
+  de 1200 × 630 de WhatsApp, `og:image`) y
+  `documentos/centroamericano-2026/cartel-centroamericano-2026.pdf` (tamaño
+  carta, con el QR a la página, la línea en inglés y la marca de agua de
+  Ajedrez Integral; está en `LIBROS` de `verificar-marca-agua.js`). El QR sale
+  de la misma librería del sitio (`js/vendor/qrcode.js`) y se comprobó
+  leyéndolo con jsQR. La imagen usa el pizote de la portada y no el del
+  trofeo: ese mide 124 px en las bases (no hay uno más grande) y salía
+  borroso.
+- **Busca a tu jugador y el medallero**: arriba de las fichas, un buscador
+  (nombre o apellido, sin tildes y en cualquier orden) que dice de cada
+  jugador su categoría, su puesto en ella, sus puntos y su mesa, color y rival
+  en la ronda emparejada más reciente, o si tiene bye; y la ventana
+  `#medallero`, con los tres primeros de cada categoría y las medallas de cada
+  federación (provisional hasta la última ronda). Lo arma
+  `js/centroamericano-vivo.js` con la Edge Function **`sala-jugadores`**, que
+  lee chess-results del lado del servidor (no manda CORS). **No es un proxy
+  abierto**: recibe la clave de la sala de Torneos (`centroamericano-2026`) y
+  lee solo los torneos de chess-results que esa sala tiene entre sus
+  enlaces, que se editan en `admin.html#torneos` (si la organización parte el
+  torneo en uno por categoría, basta con sumar los enlaces), y de cada uno
+  dos páginas fijas: la clasificación (`art=1`, con el «Gr» de cada jugador,
+  que es su categoría) y la ronda emparejada (`art=2`). Lo leído se guarda 90
+  segundos en `pizarras_cache`, como la pizarra de la sala de cine. El formato
+  de las dos páginas se comprobó con las reales, pedidas desde la base con
+  `pg_net`: la lista del Centroamericano (436 jugadores, ronda 0) y la ronda
+  1 del UTN-CONARE 2026, con su bye. Los datos se piden la primera vez que
+  alguien busca o abre el medallero, no a cada visita, y lo último que llegó
+  queda en el aparato: sin señal se muestra eso, con la hora en que se leyó.
+- **Mi delegación**: debajo del buscador, un `<select>` con los países que
+  hay en la clasificación (por su nombre, con el código de FIDE; los que no
+  están en `PAISES` de `js/centroamericano-vivo.js` salen con el código) y,
+  al elegir uno, todos sus jugadores por categoría, de la menor a la mayor,
+  con la misma tarjeta del buscador. El país queda en el aparato
+  (`cac_delegacion_v1`) y, al volver, los datos se piden de una vez. La lista
+  de países se rearma solo si cambió: rearmarla con el `<select>` abierto lo
+  cerraba en el celular.
+- **Seguir a mis jugadores y los avisos en el celular**: cada tarjeta lleva
+  una estrella (☆/★, con `aria-pressed` y «Seguir a…»/«Dejar de seguir a…»;
+  la forma dice el estado, no el color) que pone al jugador en «Mis
+  jugadores», arriba del buscador. Se guarda en el aparato, sin cuenta
+  (`cac_seguidos_v1`, como mucho 20): el número del torneo, el número inicial
+  y el nombre. **El número inicial puede cambiar** antes de la ronda 1, si el
+  árbitro vuelve a ordenar la lista: si ya es de otra persona, la página y la
+  función buscan al seguido por su nombre (sin tildes; si hay dos iguales, no
+  se adivina) y la página corrige el número guardado.
+  «Avisarme en este celular» manda una notificación con la mesa, el color y
+  el rival en cuanto chess-results publica cada ronda («Ronda 4: Mayorga
+  Araya, Sofia» / «Mesa 12, con blancas contra…»). Es la misma maquinaria de
+  push de Pareo Integral (`_compartido/webpush.ts`, las llaves de
+  `push_llaves_leer()`, el `sw.js` que ya muestra el aviso), con tablas
+  propias: `sala_suscripciones_push` (el endpoint, sus dos llaves, la sala, el
+  idioma y la lista) y `sala_avisos_push_enviados` (cada aviso se anota ANTES
+  de salir y su clave primaria impide que salga dos veces). Ni `anon` ni
+  `authenticated` tienen nada sobre ellas: solo las toca la función.
+  - El permiso se pide **solo al tocar el botón**. La función recibe la
+    lista ENTERA cada vez que cambia (como las `set_*`: mandar solo el nuevo
+    dejaba de seguir a los demás) y también al cambiar el idioma; con la
+    lista vacía, la página da de baja el aparato.
+  - **Un aparato nuevo** pasa por `sala_avisos_frenar()` (40 por hora por
+    conexión y 300 en total) y recibe un aviso de prueba; **uno que ya estaba**
+    (mismo endpoint y mismas llaves) solo cambia su lista, sin freno ni otra
+    prueba: si no, cada estrella mandaba una notificación. El tope por
+    conexión empezó en 10 y se subió a 40 antes de usarse: una delegación
+    entera sale a internet por el wifi del mismo hotel.
+  - Quién revisa: pg_cron `sala-avisos`, cada 5 minutos y solo del 1 al 8 de
+    noviembre (UTC), llama a «revisar» con el secreto `sala_avisos_secreto`
+    de la bóveda, como `torneos-externos`; sin suscripciones ni se llama. Por
+    eso la función va con `verify_jwt` en false.
+  - Se borran solas 30 días después del último cambio (pg_cron
+    `sala-avisos-limpiar`), como dice `privacidad.html#torneos`.
+  - El verificador no tiene un servicio de push: el doble concede el
+    permiso, da una suscripción que dura entre recargas y anota lo que se le
+    manda a la función.
+  - **Tres avisos, no uno** (lo pidió el dueño después): el recordatorio
+    30 minutos antes de cada ronda («La ronda 5 empieza a las 3:00 p. m.»,
+    con la mesa de cada seguido si el pareo ya salió), el pareo y el
+    **resultado** («Ronda 4: Mayorga Araya, Sofia ganó», con su puesto en la
+    categoría solo si la clasificación de chess-results ya está al día con
+    esa ronda: si no, diría el puesto de antes). Si cuando se revisa ya hay
+    resultado, el pareo de esa ronda no sale: solo el resultado. Los tres
+    van en `sala_avisos_push_enviados` con su `tipo`; el recordatorio es uno
+    por aparato y ronda (`tnr` '0', `no` 0).
+  - **La hora del recordatorio no se escribe dos veces**: la función lee el
+    `.ics` del calendario de la página (`CALENDARIOS` en
+    `sala-jugadores/index.ts`), que genera `herramientas/centroamericano-imagenes.js`
+    a partir de la tabla de `#calendario`; toma los eventos «Ronda N» y lo
+    guarda una hora. Como pg_cron pasa cada 5 minutos, el aviso sale entre
+    35 y 30 minutos antes.
+- **Las rondas de cada jugador, su rendimiento y compartirlo**: la función
+  lee también el cuadro cruzado por número inicial (`art=5`) y le pone a cada
+  jugador sus rondas en `r`, tal cual las escribe chess-results («5w1» = con el
+  5, blancas, ganó; «9b½»; «12w+» / «3b-», por incomparecencia; «-1», bye de un
+  punto; «-0», no jugó; vacía, sin jugar todavía; el formato se comprobó con
+  el UTN-CONARE 2026, 6 rondas). «Sus rondas» en cada tarjeta las muestra con
+  el color, lo que hizo y el rival, más la de hoy del pareo («juega contra»),
+  y el **rendimiento de FIDE** (promedio de los rivales + dp de la tabla
+  8.1b): solo las partidas jugadas contra rivales con Elo, sin byes ni
+  incomparecencias. La tabla dp es la de Pareo Integral
+  (`js/pareo/desempates.js`, `dpDeP`), que la página carga: una sola copia.
+  «Compartir» arma una imagen de 1080 × 1080 (el nombre, la categoría, el
+  puesto y los puntos, la última ronda, el pizote y la bandera) con la marca
+  de agua de `js/tabla-imagen.js` (`TablaImagen.marcar`, la misma copia), y
+  la manda con el menú de compartir del celular o, si no hay, la baja.
+- **El resumen de la ronda de Mi delegación**: arriba de la delegación
+  elegida, la última ronda con algún resultado contada («Ronda 3: 7 ganadas,
+  3 en tablas, 2 perdidas, 1 sin jugar») y «Copiar para WhatsApp» con cada
+  jugador y el enlace. «-0» cuenta como «sin jugar», no como bye: en
+  chess-results es que no se presentó o no estaba.
+- **La clasificación, la tabla por país y el pareo para proyectar**
+  (`js/centroamericano-tablas.js`, con los datos de `window.CentroamericanoVivo`):
+  - `#clasificacion`: cada categoría entera, con el puesto dentro de ella, los
+    puntos y el rendimiento, y un buscador.
+  - `#delegaciones`: por país, los puntos, los posibles (un punto por ronda
+    con resultado, también los byes), el porcentaje y lo que sumó en cada
+    ronda; ordenada por el porcentaje (si no, ganaría el país con más
+    jugadores). Antes de la ronda 1, cuántos jugadores trae cada uno.
+  - `#proyector`: toda la pantalla, letra grande, una categoría por pantalla
+    (12 mesas por página) que pasa sola cada 15 segundos, con la hora, «Pausa»
+    y «Pantalla completa»; se pone al día cada minuto. Para una TV en la sala:
+    se abre con `centroamericano-2026.html#proyector`. Blanco sobre #1E2453,
+    14,7 : 1.
+- **Seguir a toda la delegación** (para jefes de delegación y entrenadores):
+  en «Mi delegación», «Avisarme del resumen de Costa Rica en cada ronda» pide
+  un solo aviso por ronda con el país entero («CRC · Ronda 4: 9 ganadas, 3 en
+  tablas, 2 perdidas, 1 bye: 10½ de 14 puntos en sus partidas»), que sale
+  cuando TODAS sus partidas de esa ronda tienen resultado
+  (`resumenDelegacion()` en la función). Es la misma suscripción del aparato:
+  `sala_suscripciones_push.delegacion` guarda solo el código de FIDE, y la
+  lista de jugadores puede quedar vacía si sigue a un país. Un país por
+  aparato; apagar los avisos apaga también el del país. El recordatorio de
+  la ronda le dice cuántos de su país juegan.
+- **El enlace directo a un jugador**: «Copiar enlace» en cada tarjeta da
+  `centroamericano-2026.html#jugador=<torneo>-<número>-<nombre>`; al abrirlo,
+  la página busca al jugador, abre sus rondas y le pone el foco. El nombre va
+  en el enlace para que se lea y para encontrarlo si el árbitro le cambió el
+  número antes de la ronda 1 (si hay dos con el mismo, no adivina).
+- **Cómo va la ronda**: «Ronda 4: 142 de 218 partidas terminadas», con su
+  barra, arriba del buscador y en el proyector (los byes no cuentan). Sale
+  de la ronda emparejada (`progresoRonda()`), así que aparece cuando la
+  página ya tiene los datos.
+- **Sorpresas e invictos** (`#sorpresas`): las partidas en que el de menos
+  Elo puntuó contra el de más (los dos con Elo y jugada en el tablero; unas
+  tablas pesan la mitad), de la última ronda y de todo el torneo, y quién no
+  ha perdido ninguna partida en cada categoría (un bye o un «-0» no son
+  partidas).
+- **El resumen de la delegación como imagen**: el mismo de «Copiar para
+  WhatsApp», en una imagen de 1080 de ancho (hasta 14 jugadores y «y N más»)
+  con la marca de agua, por `compartirBlob()`, que comparte también la del
+  jugador.
+- **El proyector**, además del pareo: la clasificación de cada categoría
+  después de su pareo (o solo uno de los dos: «Pareo y clasificación», «Solo
+  el pareo», «Solo la clasificación», guardado en ese aparato), cómo va la
+  ronda, un QR a la página en la esquina (`js/qr-svg.js`) y, con el torneo
+  terminado, los podios primero.
+- **Su puesto ronda a ronda** (en «Sus rondas» y en la imagen del jugador):
+  `puestosDe()` cuenta los puntos de cada jugador de su categoría tras cada
+  ronda del cuadro cruzado (la ronda que solo está en el pareo todavía no) y
+  da el puesto **por puntos**: con los mismos puntos el puesto se comparte
+  («2.º–3.º»), porque chess-results no publica el desempate de cada ronda
+  intermedia y ponerle uno inventado sería decir algo que no se sabe. La nota
+  de abajo lo explica cuando hay un puesto compartido. En la imagen va
+  debajo de la última ronda; para que quepa antes de la dirección, el
+  recuadro se achica un poco y la ronda va en 36 en lugar de 38.
+- **«Así terminó el día»** (el botón «Imagen del día para compartir», debajo
+  de los enlaces del buscador): una imagen de 1080 de ancho con los líderes
+  de cada categoría, la sorpresa más grande del día y, si en ese aparato hay
+  una delegación elegida, cómo le fue hoy. El día es el de la **última ronda
+  con todas sus partidas terminadas** (`rondaCerrada()`: con la ronda
+  emparejada a medias, la anterior), y sus rondas salen de la tabla del
+  calendario (`data-ronda` en cada fila, junto a su `data-inicio`: una sola
+  copia de las horas). Si ese día todavía tiene otra ronda por jugar, dice
+  «Así va el día». Los líderes son los de más puntos tras esa ronda, no los
+  de la clasificación de chess-results, que ya puede traer resultados de la
+  siguiente; con un empate va el primero de chess-results y «empatado con N
+  más». Cada líder tiene hasta dos renglones: sus puntos no se cortan con
+  «…». Lleva la marca de agua, como las otras imágenes.
+- **La hoja de la delegación en PDF** («Hoja de la delegación para
+  imprimir», arriba de la lista de Mi delegación): lo que el entrenador
+  lleva en la mano en la sala. Una tabla por categoría con la mesa, el
+  jugador, sus puntos, el color, el rival (con su federación y su Elo) y el
+  resultado de la ronda emparejada, y abajo cuándo se leyó chess-results y
+  que lo oficial es lo que publica el árbitro. La arma `js/reporte-pdf.js`
+  (la misma copia de los demás PDF del sitio), que le pone la marca de agua
+  con `js/marca-agua.js`; para el inglés se le sumó `documento.pagina` (el
+  número de página en otro idioma). **En una A4 de pie no caben más
+  columnas**: con el Elo propio y el puesto, el nombre del rival se cortaba
+  («Santiago Jos...»), y el rival es justo lo que se busca en la sala; el
+  verificador revisa que llegue entero.
+- **El certificado de cada jugador** (antes decía «Diploma»: el dueño pidió
+  que todo diga «certificado»; por dentro el código sigue llamándolo
+  `diploma()`, y el verificador revisa que en el lienzo no se escriba
+  «diploma»): con el torneo terminado (la clasificación
+  final de chess-results, `normalizar()` lo marca `terminado`), cada tarjeta
+  trae «Certificado (PDF)» y «Certificado (imagen)». Es un A4 acostado (2339 × 1654)
+  dibujado en un lienzo **con la cara de las bases** (lo pidió el dueño): el
+  morado degradado de la portada, las hojas en las esquinas, la letra blanca
+  en mayúsculas con su sombra y la píldora roja con el evento, como «XXI
+  CAMPEONATO» en las bases; el pizote del trofeo arriba, el nombre **al
+  derecho** («WIM Sofia Mayorga Araya», chess-results lo escribe
+  «Apellidos, Nombre»), el país, el lugar con la medalla a los dos lados del
+  título si quedó en el podio (y escrito: «1.er lugar (oro)», el color nunca
+  va solo) o «por su participación», los puntos y el puesto, y la marca de
+  agua. **Sin firmas**, lo decidió el dueño: lo arma la página, no la
+  organización. La imagen va con el menú de compartir del celular; el PDF es
+  esa misma imagen en una página A4 acostada, con `ReportePDF.deImagen()`
+  (nuevo en `js/reporte-pdf.js`, la misma copia de los PDF del sitio). El
+  nombre largo achica la letra, nunca se corta. Otra página puede cambiar el
+  evento, el lugar y el dibujo con `window.TorneoPagina.diploma`.
+- **Cara a cara** (`#cara-a-cara`): se eligen dos jugadores (escribiendo el
+  apellido, con la lista de todos en un `<datalist>`; si el nombre da uno
+  solo, no hace falta elegirlo) y salen dos fichas lado a lado —una debajo de
+  la otra en el celular, porque una tabla de tres columnas obligaba a
+  correrla de lado— con su categoría, país, Elo, puesto, puntos y
+  rendimiento; la partida entre ellos (la primera vez que se enfrentaron, o
+  la de hoy si les toca) y cada ronda con una línea por jugador y su puesto
+  después. Si son de categorías distintas, lo dice: no se pueden enfrentar.
+- **Pendiente: el plano de la sala** (en qué zona del Gimnasio Nacional queda
+  cada mesa, junto a su pareo). Espera el croquis de la organización con
+  cómo se acomodan las mesas.
+- **Se instala como su propia app**: `manifest-centroamericano-2026.json`
+  (otro `id`, arranca en la página, el pizote como ícono) en lugar del de la
+  Academia, que arranca en `clases.html` y le pide cuenta. Lo pone
+  `herramientas/pwa-cabecera.py` (`PROPIAS`), y `verificar-pwa.js` lee esa
+  lista para revisar el manifest, los íconos y que la página lo declare. Los
+  íconos los genera `herramientas/centroamericano-imagenes.js` (el pizote en
+  un círculo blanco sobre el morado; el «maskable» con margen para que
+  Android no le corte la cara). El botón «Instalar» es el de `js/pwa.js` (solo
+  cuando el navegador deja, una vez); en iPhone, que no tiene ese aviso,
+  `js/centroamericano.js` explica «Compartir → Agregar a inicio» hasta que se
+  toca «Entendido». Instalada, los avisos pueden llegar también en iPhone.
+- **Rapid y Blitz**: cuando la organización los publique en chess-results,
+  basta con sumar sus enlaces a la sala en `admin.html#torneos`: el
+  buscador, los avisos, la clasificación y el proyector los toman solos.
+- **Agregar a mi calendario**:
+  `documentos/centroamericano-2026/calendario-centroamericano-2026.ics`, con
+  cada actividad de la tabla (en UTC, que cualquier calendario muestra en su
+  zona), un aviso 30 minutos antes de cada ronda, el nombre en los dos
+  idiomas, la llegada y la salida en los hoteles y el congresillo como
+  virtual. Lo genera `herramientas/centroamericano-imagenes.js` a partir de la
+  tabla, y el verificador compara hora por hora. Es un archivo y no algo que
+  arme el navegador porque el celular (también el iPhone) abre un `.ics` con
+  su calendario.
 - **Las bases las sirve el propio sitio**, tal cual las publicó la FCA, en
   `documentos/centroamericano-2026/bases-cac-2026.pdf` (como la normativa de
   los JDE en `documentos/jde/`). Es un documento oficial ajeno: **no lleva la
@@ -8218,3 +8940,431 @@ otra pestaña lleve `rel="noopener"`, que el calendario tenga las nueve rondas y
 que ningún teléfono aparezca sin estar en la lista de los confirmados, que cada
 enlace de la ventana esté permitido en `frame-src` y, en el navegador, que la
 ventana se abra encima sin cambiar de página y devuelva el foco al cerrar.
+
+
+### Un torneo por categoría
+
+Para el festival, la organización parte el torneo de chess-results en doce:
+uno por categoría y rama (Sub-8 a Sub-18, Absoluto y Femenino), cada uno con
+su número. Antes era uno solo, y la categoría de cada jugador salía de su
+columna «Gr». Lo preguntó el dueño: «¿la página está lista para acoplar todo
+y que se vea ordenado? Que no sea mucha información por todo lado». Quedó
+probado con doce torneos de prueba (chess-results no se puede leer desde la
+sesión), con la forma que les da la función.
+
+- **La categoría la dice el texto del enlace**, no la columna «Gr», que un
+  torneo de una sola categoría ya no trae. Cada torneo se agrega en
+  `admin.html#torneos` como un enlace más de la sala `centroamericano-2026`,
+  con su categoría en el texto: «Sub-10 Femenino», «U10F» o «Resultados U10
+  Girls», cualquiera sirve. `codigoCategoria()`, en
+  `supabase/functions/sala-jugadores/torneos-sala.ts`, lo pasa al código de
+  chess-results (`U10F`), y la función se lo pone a cada jugador que no
+  traiga «Gr». **Un enlace sin categoría en el texto** (la lista general, el
+  Rapid) no se cuenta mientras haya alguno con categoría: sus jugadores ya
+  están en el suyo y saldrían dos veces en el buscador y en el medallero. La
+  misma regla está en `deCategorias()` (la función) y en `normalizar()`
+  (`js/centroamericano-vivo.js`); esos torneos quedan en `datos.otros`,
+  solo como enlace. La función lee hasta 15 torneos por sala: las doce
+  categorías del clásico caben, pero el Rapid y el Blitz por categoría (36)
+  irían en salas aparte.
+- **«Resultados en vivo» abre primero la elección**: un diálogo
+  (`#resultados`) con una fila por edad y Absoluto y Femenino lado a lado,
+  y cada botón abre su torneo encima, en la ventana de siempre, sin salir del
+  sitio. Al cerrarla se vuelve a la elección, con el foco en el botón. Una
+  categoría que todavía no publicaron deja su hueco, así la fila no se corre.
+  La ficha sigue apuntando a chess-results para quien no tiene JavaScript, y
+  con un solo torneo (como hasta ahora) lo abre directo, sin elegir nada.
+  Blanco sobre el morado de las bases: 8,35.
+- **En Torneos, un solo botón.** La sala tiene un enlace por categoría (de
+  ahí lee la página los datos), pero en la ficha todos llevarían al mismo
+  lugar, así que `juntar()` (`js/salas-torneo.js`) los deja en un solo botón
+  con el nombre de su ficha (el tercer dato de `fichas` en `PORTADAS`:
+  «Resultados en vivo») y lleva a `#resultados`. Solo se juntan los de una
+  ficha con nombre: las dos transmisiones de la UTN llevan a la misma página
+  y siguen siendo dos botones (lo revisa `verificar-salas-torneo.js`).
+- **Cada categoría va a su paso.** Las bases piden Round Robin si una
+  categoría tiene 10 jugadores o menos, y entonces termina antes. La barra de
+  la ronda cuenta solo las mesas de la ronda más alta emparejada; «Así terminó
+  el día» usa la ronda cerrada en TODAS (`progresoRonda().cerrada`): una
+  categoría que va atrás la baja, y una que ya jugó su última ronda no. El
+  medallero dice «final» cuando terminaron todas.
+- **Un aviso por país, no doce.** El resumen de la delegación juntaba cada
+  torneo por separado; con doce, un país con jugadores en todas las
+  categorías habría recibido doce avisos por ronda. Ahora
+  `resumenDelegacion()` junta todos los torneos de la sala y sale una vez por
+  ronda (con `tnr` «0» en `sala_avisos_push_enviados`), cuando terminaron
+  todas sus partidas. Una categoría que todavía no emparejó esa ronda lo hace
+  esperar, salvo que ya haya terminado.
+- **Quien seguía a un jugador en el torneo de antes no lo pierde.** Si su
+  torneo ya no está en la sala, la página lo busca por su nombre en todos y
+  corrige el torneo y el número guardados, y le vuelve a mandar la lista a la
+  función, que también lo busca por su nombre. Un enlace `#jugador=` de antes
+  lo encuentra por el nombre que lleva: su número solo vale en su propio
+  torneo, porque en otro es otra persona.
+- Lo revisa `verificar-centroamericano.js`: la parte de la función con node
+  (`--experimental-strip-types`, sin Deno) y la página con doce torneos de
+  prueba más la lista general.
+
+
+### El Elo, los colores, cada categoría a su paso y el informe de la delegación
+
+Las pidió el dueño entre las mejoras del Centroamericano («2, 3, 4, 5, 8, 9»).
+Todo se arma con los mismos datos de `sala-jugadores`, sin pedir nada más a
+chess-results.
+
+- **El Elo FIDE que gana o pierde cada jugador** sale en «Sus rondas» con la
+  misma cuenta que Pareo Integral (`js/pareo/elo.js`: lo esperado de la tabla
+  8.1.2, el tope de 400 y su K). Una sola copia de las reglas de FIDE: la
+  página carga ese módulo, no lo repite. Cuentan solo las partidas jugadas
+  contra rivales con Elo (ni byes ni incomparecencias, ni la ronda sin
+  resultado).
+  - chess-results no publica la edad, así que se toma la menor posible de su
+    categoría (Sub-18 → 17 años). Por eso, debajo de 2300 el K es 40, aunque a
+    quien cumple 18 este año FIDE le pone 20.
+  - Lo dice la línea: «una cuenta de este torneo; lo oficial lo publica FIDE».
+- **Con blancas y con negras**: cuánto hizo con cada color, en «Sus rondas» y
+  para el país entero en el resumen de «Mi delegación».
+- **«A otro paso»** en «Hoy en el torneo»: con un torneo por categoría, la
+  línea nombra solo las categorías que no van con la mayoría (la que ya
+  terminó, como un Round Robin, y la que va en otra ronda). Si todas van
+  igual, no sale. Los datos no se piden en cada visita: se pintan con lo
+  guardado en el aparato y se piden durante el festival solo si lo guardado
+  ya dice que el torneo está partido.
+- **El proyector con una sola categoría**, para la pantalla de cada sala de
+  juego: se elige en el selector nuevo y queda en el aparato. Al hacerlo
+  salió un error de antes: pasaba los podios de TODAS las categorías en
+  cuanto terminaba un torneo cualquiera. Ahora pasa solo los de las
+  categorías que terminaron.
+- **El medallero por país ya existía.** Lo nuevo es que cada podio dice si es
+  final o hasta qué ronda va, y debajo de la tabla dice cuántas categorías ya
+  tienen su podio final.
+- **El informe de la delegación en PDF** (`documentoInforme()`), para la
+  federación:
+  - de cada jugador, su categoría, su puesto (con la medalla), sus puntos, su
+    rendimiento, su Elo y lo que hizo con cada color;
+  - del país, sus puntos, sus medallas, sus colores y la suma de su Elo.
+  Es provisional hasta que terminan todas las categorías donde juega el país
+  y lleva la marca de agua de `js/reporte-pdf.js`. El botón aparece en «Mi
+  delegación» cuando ya se jugó alguna ronda.
+- Lo revisa `verificar-centroamericano.js`, cada cuenta con su valor
+  calculado aparte (el Elo de una jugadora de prueba: 0,45 + 0,60 + 0,78 =
+  1,83 esperado y 40 × (3 − 1,83) = +46,8). Antes de darlo por bueno, rompí
+  a propósito cada pieza y cada una saltó.
+
+### Los avisos de la organización, el festival en números y todos los certificados
+
+Las pidió el dueño entre las mejoras («5, 6 y 7»). La 7 era una «constancia
+de participación», pero eso ya existía: el certificado de cada jugador dice «por
+su participación» aunque no tenga medalla. En su lugar se hizo lo que faltaba:
+bajar todos los certificados de una delegación en un solo PDF.
+
+- **Los avisos de la organización** («la ronda 6 se atrasa 30 minutos»):
+  - Se publican en `admin.html#torneos`, debajo de las salas: la sala, el
+    texto (y el inglés, si se quiere), cuántas horas dura (de 3 a 72). Antes
+    de mandarlo pregunta, porque sale a los celulares y eso no se deshace.
+  - Viven en `sala_anuncios`. Quien decide es la base: los escribe solo
+    `sala_anuncio_publicar()`, que pide `soy_admin()` (con su `coalesce`); la
+    tabla no tiene política de escritura y nadie puede insertar directo.
+    `anon` lee solo las columnas del aviso (no `creado_por`) y la política
+    deja ver solo los vigentes de salas publicadas. Lo comprobé impersonando
+    `anon`, una cuenta común y una de admin dentro de una transacción
+    revertida.
+  - El tope de 72 horas lo pone un `check` de la tabla, no la pantalla: un
+    aviso viejo olvidado no puede quedarse pegado en la página.
+  - En la página salen arriba de «Hoy en el torneo», en rojo con letra blanca
+    (5,6:1), los tres últimos, con su hora en hora de Costa Rica. Se piden cada
+    5 minutos, y al volver a la pestaña si pasó más de un minuto.
+  - **A los celulares** los manda la misma Edge Function de siempre,
+    `sala-jugadores`, antes de leer chess-results. Al publicar, la función de
+    la base llama a `disparar_sala_avisos()` para que no espere los 5 minutos
+    del cron. Cada aparato lo recibe una vez (`sala_avisos_push_enviados`
+    con tipo `anuncio`, el id del aviso en `ronda` y `no = 0`), en su idioma,
+    y solo si se suscribió ANTES del aviso: quien se suscribe a las 3 no tiene
+    por qué recibir el de las 9 de la mañana como si fuera nuevo.
+  - No llevan datos de personas: es un texto de la organización.
+- **El festival en números** (`#numeros`, enlazado desde «Hoy»):
+  - jugadores, países, categorías y partidas jugadas (cada partida se cuenta
+    una vez, desde las blancas);
+  - cuánto ganan las blancas, las negras y cuántas tablas;
+  - la mayor sorpresa (la misma cuenta de «Sorpresas», no otra);
+  - la mayor remontada: quién subió más puestos desde el peor que tuvo antes
+    de la última ronda, con un mínimo de 2. A igual subida, el que terminó
+    más arriba;
+  - el país con más oros (si terminara hoy, mientras no terminen todas);
+  - y una imagen de 1080 de ancho para compartir, con la marca de agua.
+- **Todos los certificados de la delegación** en «Mi delegación»: el mismo
+  `diploma()` de cada jugador, uno por página. Para eso `ReportePDF.deImagen`
+  acepta ahora `paginas`, una lista de imágenes, y el resto de los que lo
+  llaman con una sola no cambian. Cada certificado lleva su marca de agua.
+- Lo revisan `verificar-salas-torneo.js` (la pantalla de admin, con el doble
+  que conoce las dos funciones) y `verificar-centroamericano.js` (el aviso en
+  la página y en inglés, la función que manda una vez y solo a quien estaba,
+  cada número contado aparte, la imagen y el PDF de dos páginas). Antes de
+  darlo por bueno rompí a propósito los números, la remontada, el inglés del
+  aviso, el PDF de varias páginas y la regla de «suscrito antes», y cada uno
+  saltó.
+
+### Sus rondas en mi calendario
+
+Lo pidió el dueño entre las mejoras («1»). Ya había un «Agregar a mi
+calendario» con todo el festival (el `.ics` que arma
+`herramientas/centroamericano-imagenes.js`); este es el de UN jugador, en su
+tarjeta del buscador.
+
+- Cada ronda de su torneo es un evento, a la hora de la fila de `#calendario`
+  (su `data-inicio`, en hora de Costa Rica, y `data-minutos`): la misma copia
+  de las horas que usa «Hoy en el torneo». Un torneo con menos rondas (un
+  Round Robin) trae solo las suyas.
+- En la descripción: su categoría y, en las jugadas, lo que hizo; en la
+  emparejada, su mesa, su color y su rival; en las que faltan, que vuelva a
+  bajar el calendario cuando salga el pareo.
+- El UID es fijo por torneo, jugador y ronda: bajarlo otra vez pone al día la
+  mesa en vez de duplicar las rondas (en los calendarios que respetan el UID).
+- Avisa 30 minutos antes de cada ronda. El formato lo arma
+  `js/calendario-ics.js` (`armarHoras`, nueva, al lado de `armar` y
+  `armarDias`): una sola copia del escape, el doblado de las líneas y la zona.
+- Lo revisa `verificar-centroamericano.js`: la hora en hora de Costa Rica, el
+  aviso, la mesa y el rival de la ronda emparejada. Rompí a propósito el aviso
+  y la mesa, y saltó.
+
+### El modo de prueba
+
+Lo pidió el dueño para probar la página con torneos ya separados por
+categoría antes del festival, sin que lo vea el público.
+
+- `centroamericano-2026.html?sala=<clave>` muestra la página con los torneos
+  de otra sala de `admin.html#torneos`: una **oculta**, por ejemplo
+  `centroamericano-prueba`, con los 12 torneos del festival de 2025 (uno por
+  categoría, la categoría en el texto de cada botón).
+- La función `sala-jugadores` lee una sala oculta solo con `prueba: true` y
+  si quien la pide administra: se pregunta `soy_admin()` con SU token, por
+  PostgREST, así que pasa por la verificación en dos pasos. A cualquier otro
+  le contesta 403 y la página lo explica.
+- Arriba va un aviso rojo, pegado, que dice qué sala se está viendo, con
+  «Salir del modo de prueba». Lo guardado va aparte (`cac_prueba_…`): no pisa
+  lo que el aparato tenía del festival. Los avisos al celular no se
+  encienden. Con la clave del festival, o una clave que no es de sala, no
+  hay modo de prueba.
+- Lo revisa `verificar-centroamericano.js`. Rompí a propósito el pedido en
+  modo de prueba y el freno de los avisos, y saltaron.
+
+## Las páginas de los torneos universitarios
+
+Dos, con la misma maquinaria: `cenfotec-2026.html` (el Desafío Mentes
+Maestras) y `utn-2026.html` (el II Torneo Universitario UTN-CONARE; ver «La
+del UTN-CONARE», abajo). Lo que sigue se escribió para la primera.
+
+`cenfotec-2026.html` es, para el Desafío Mentes Maestras CENFOTEC 2026, lo
+mismo que la del Centroamericano (lo pidió el dueño: «dentro de la ficha,
+todo igual que en el festival»), con la cara de la Universidad CENFOTEC y
+con lo que sirve **después** del torneo, que ya se jugó (domingo 27 de
+setiembre de 2026, 7 rondas, 34 jugadores, chess-results tnr1503400): el
+podio, «Busca a tu jugador» con sus rondas y su rendimiento, «Mis
+jugadores», la clasificación final, el podio, la clasificación para
+proyectar y la imagen para compartir. Lo que solo sirve antes o durante
+(bases, bye, hoteles, calendario, avisos al celular, «Hoy en el torneo») no
+va: la página preguntó para qué era y el dueño eligió «Resultados del 2026».
+
+- **Una sola copia de cada pieza**: la página carga `css/centroamericano.css`
+  (el `body` lleva `cac cac-u cft`) y `css/universidades.css` le cambia las
+  variables (`--cac-morado` pasa al azul #233065, el «rojo» de las bases a #0A6AA8,
+  que aguanta letra blanca; el celeste #23ACF4 no) y lo que esa hoja tiene
+  con un color fijo (la bandera de las fichas, los lavandas del modo
+  oscuro). El buscador, el podio, la clasificación, el proyector y la imagen
+  son `js/centroamericano-vivo.js` y `js/centroamericano-tablas.js`, que leen
+  `window.TorneoPagina` (de `js/cenfotec.js`, que carga antes): la sala de
+  Torneos (`cenfotec`), el prefijo de lo guardado en el aparato (`cft_`), el
+  nombre, la dirección y la cara de la imagen (la banda azul con el logo
+  ancho, no el pizote redondo). Sin `TorneoPagina`, los módulos son los del
+  Centroamericano, igual que antes.
+- **Los resultados vienen de la misma función, `sala-jugadores`**: para eso
+  la sala `cenfotec` de `salas_torneo` lleva entre sus enlaces el de
+  chess-results (se agregó «Resultados en chess-results»; la función solo
+  lee los torneos que la sala enlaza). Ningún cambio en la función.
+- **El torneo terminado**: con el torneo cerrado, chess-results titula
+  «Clasificación final», sin número, y la función devuelve `ronda: 0`; su
+  página de pareo trae la última ronda con el rival sin número. Sin
+  arreglarlo, la página decía «Número inicial» en vez del puesto y «No
+  aparece en el pareo». `normalizar()` (en `js/centroamericano-vivo.js`)
+  deduce la ronda del cuadro cruzado (las casillas de «r»), marca el torneo
+  `terminado` y no usa ese pareo. La tarjeta dice «El torneo terminó, a 7
+  rondas» —no «jugó sus 7 rondas»: siete de los 34 no se presentaron a
+  ninguna («-0» en todas) y sus rondas dicen «no jugó»—, la clasificación
+  dice «Clasificación final» y el proyector (el de `main`, que con el torneo
+  terminado pasa los podios y la clasificación de cada grupo) no busca un
+  pareo. El grupo sin nombre de un torneo sin categorías se llama «General»
+  (`categoria("—")`), no «—». Le sirve también al Centroamericano cuando termine (el 8 de
+  noviembre su chess-results va a decir lo mismo).
+- **Un torneo sin categorías ni países**: el «Gr» viene vacío, así que el
+  selector de categoría de la clasificación se esconde solo y el puesto se
+  dice «Puesto 1 de 34», sin «en» una categoría; los 34 son de Costa Rica, así
+  que el podio no lleva la tabla de medallas por federación (`soloPodio`) ni
+  la página «Mi delegación» ni la tabla por país.
+- **Los datos del torneo salen de su ficha de chess-results** (fecha, sala,
+  ritmo, rondas, quién dirige y quién arbitra, con el nombre tal cual lo
+  escribe chess-results). **El contacto es solo el correo**
+  `ajedrez@ucenfotec.ac.cr`, el que publica la universidad en
+  `ucenfotec.ac.cr/ajedrez`: no hay un teléfono confirmado para este torneo y
+  no se pone uno que no sea.
+- **Las normas de `ucenfotec.ac.cr/ajedrez` no son de este torneo**: esa
+  página (la que pasó el dueño) es del Torneo FedeU-CENFOTEC del 23 de mayo de
+  2026, otro torneo, con sus normas específicas y su planilla. Por eso la
+  página no lleva una ficha de «Bases»: enlaza esa página como «El ajedrez en
+  CENFOTEC», que es lo que es. Si la organización pasa las bases del Desafío,
+  van en una ficha como la del Centroamericano.
+- **La ficha de Torneos** (`torneos-en-vivo.html`) ya tenía la cara de
+  CENFOTEC («La ficha del Desafío Mentes Maestras», arriba); su enlace a
+  esta página se agrega en `admin.html#torneos` como el primero de la sala.
+
+`herramientas/verificar-paginas-universitarias.js` lo revisa (las dos
+páginas) con un doble de la función que
+contesta como chess-results con el torneo terminado (ronda 0 y el pareo
+raro): la cara (el azul, la píldora celeste con letra oscura, la línea de las
+fichas), el podio, la tarjeta («El torneo terminó», nunca «pareo»), quien no se
+presentó, la clasificación final sin selector, el podio sin medallas, el
+proyector con la clasificación, la imagen con la banda azul y el logo, y que
+en el celular no haya scroll de costado.
+
+### La del UTN-CONARE
+
+`utn-2026.html` es la misma página para el II Torneo Universitario de
+Ajedrez UTN-CONARE 2026 (lo pidió el dueño: «hacer lo mismo para el torneo
+de la UTN»), con el azul y el logo de la Universidad Técnica Nacional:
+domingo 27 de setiembre de 2026, en el CFPTE de la UTN en Desamparados de
+Alajuela, 6 rondas a 15 minutos + 10 segundos.
+
+- **Una sola hoja para las universidades**: lo que era `css/cenfotec.css`
+  pasó a `css/universidades.css`. Cada universidad pone solo sus variables
+  (`--u-1`, `--u-celeste`, `--u-fuerte`…, en `.cft` / `.u-sala-cft` y `.utn`
+  / `.u-sala-utn`) y todo lo demás es común: la ficha de Torneos (`u-sala`,
+  con la clase de la universidad como `tema` en `PORTADAS` de
+  `js/salas-torneo.js`) y la página (`cac-u`). El contraste de cada una está
+  en la cabecera de la hoja; en la UTN el acento es el celeste de los puntos
+  de su logo (#BFCFE8), que solo lleva letra oscura (#0F2A55, 8,97).
+- **El logo** es el que pasó el dueño, recortado tal cual: el azul pasó a
+  blanco con transparencia y los puntos conservan su celeste
+  (`img/utn/logo.png`).
+- **Dos torneos, uno por rama**: en chess-results el femenino (tnr1498221, 10
+  jugadoras) y el masculino (tnr1498218, 26 jugadores) son torneos
+  separados, sin la columna «Gr». `grupos` en `js/utn.js` le pone a cada
+  jugador la rama de su torneo (por el número de torneo), y con eso el
+  puesto («Puesto 1 de 10 en Femenino»), el podio, la clasificación (con el
+  selector de la rama), el proyector («Clasificación · Femenino») y la
+  imagen van por rama. Sin eso, los 36 salían en una sola lista. La sala
+  `utn` de `salas_torneo` lleva ahora los dos enlaces de chess-results.
+- **«El podio» de arriba** salió de `js/cenfotec.js` a `js/torneo-podio.js`,
+  que es de las dos páginas: los tres primeros de cada grupo, con el nombre
+  del grupo solo si hay más de uno.
+- **Sin contacto**: no hay un correo ni un teléfono confirmados de la
+  organización de este torneo, así que no hay ficha de contacto; la
+  despedida lleva a los demás torneos. Seis fichas: las dos de chess-results
+  (se abren encima), las partidas, la clasificación, el podio y el proyector.
+- **La ficha de Torneos** de la sala `utn` lleva el azul, el logo y «Entrar a
+  la sala» en el celeste con letra oscura; lo revisa
+  `verificar-centroamericano.js` (que antes usaba la sala `utn` como ejemplo
+  de sala sin portada: ahora usa otra).
+- **Ningún botón saca a nadie de la página** (lo pidió el dueño: «que se abra
+  por encima la información pero nunca abandonar la página»). En las dos
+  páginas, todo lo de afuera y las otras páginas del sitio se abren encima
+  con `a[data-ventana]` (`js/ventana-enlace.js`): chess-results, la sala de
+  las partidas (`transmision.html`, del propio sitio, en el marco), el video
+  (YouTube con su dirección de `/embed/` en youtube-nocookie.com, que ya está
+  en `frame-src`) y «Más torneos». Solo el encabezado (Inicio, Torneos) y lo
+  legal del pie siguen siendo navegación del sitio. **`ucenfotec.ac.cr` no se
+  deja mostrar dentro de otra página** (`X-Frame-Options: SAMEORIGIN`,
+  comprobado con `pg_net`): encima saldría en blanco. Por eso «El ajedrez en
+  CENFOTEC» abre una ventana propia (`#ajedrez-cenfotec`) con lo que dice su
+  página —el Torneo FedeU-CENFOTEC 2026, copiado tal cual— y su sitio queda
+  como «Ver su página en otra pestaña», dentro de esa ventana: la nuestra
+  sigue abierta debajo.
+- **Las fichas de Torneos de las universidades** siguen la regla del
+  Centroamericano: con `pagina` y `fichas` en `PORTADAS`, chess-results lleva
+  a `#ficha-resultados` (CENFOTEC) o a `#ficha-femenino` / `#ficha-masculino`
+  (UTN), Lichess a `#ficha-partidas` y YouTube a `#ficha-video`, que la página
+  abre encima al entrar; lo que no tiene ficha (las transmisiones de idchess
+  de la UTN), a la página entera. Lo revisan `verificar-salas-torneo.js` y
+  `verificar-paginas-universitarias.js` (ningún enlace del contenido sin
+  `data-ventana`, y `#ficha-partidas` abre la sala encima).
+
+### Las ediciones anteriores
+
+Cada página compara con la edición anterior (lo pidió el dueño: la mejora
+6, «comparar con la edición anterior»). En el Desafío es la de 2025
+(chess-results tnr1259931, 28 de setiembre de 2025, 42 jugadores). En la
+UTN es la primera, el Torneo CONARE 2026 del 16 de agosto: también de la UTN
+y en la misma sede, con el femenino (tnr1473963, 15) y el absoluto
+(tnr1473962, 23) separados, como en esta.
+
+- **Una ficha y un recuadro, «Ediciones anteriores»** (`#ediciones`,
+  `js/torneo-ediciones.js`). Por rama, trae dos cosas. Primero, el campeón
+  de cada edición, con sus puntos y cuántos jugaron. Después, «Quién volvió»:
+  los de esta edición que ya jugaron una anterior, con su puesto en cada una
+  («10.º de 42») y el cambio. El cambio va escrito («Subió 7 puestos»), con
+  la flecha de adorno y sin color. En la tarjeta del buscador, quien vuelve
+  lleva una línea más: «En la edición 2025: 10.º de 42, con 4½ puntos».
+- **Esta edición sale en vivo; las anteriores, guardadas.** Esta sale de
+  chess-results, de la misma `sala-jugadores` de siempre. Las anteriores
+  están en `TorneoPagina.ediciones` como `[puesto, nombre, puntos]`. Son
+  copia de la clasificación final de chess-results, tomada de
+  `uni_clasificacion` (CENFOTEC) y de `uni_resultados` (UTN) el 25/10/2026.
+  Esas tablas las lee solo quien tiene la licencia. Una página pública no las
+  puede pedir, pero lo que guardan es la clasificación pública de
+  chess-results. Por eso se copian a la configuración y no se piden.
+- **La misma persona de un año a otro** tiene los mismos apellidos y el mismo
+  primer nombre, sin tildes ni mayúsculas. Chess-results escribe a veces el
+  segundo nombre y a veces no («Keicy» y «Keicy Pamela»). A veces cambia una
+  letra del segundo («Naomi» y «Naomy»). Lo que esa regla no ve, un apellido
+  mal escrito, va revisado a mano en `mismaPersona`. En 2025 escribió
+  «Ocontrillo Rodriguez, Gerald» y en 2026 «Oconitrillo»: es la misma persona.
+  Si dos jugadores de una edición dan la misma clave, no se empareja
+  ninguno: mejor no decir nada que decir algo de otra persona.
+- **Lo revisa** `verificar-paginas-universitarias.js`, con los datos de
+  verdad de la edición anterior. Mira la línea de la tarjeta, los campeones
+  y quién volvió: con el segundo nombre de más y con `mismaPersona`; sin
+  ella, Gerald no aparece.
+
+## La plantilla de las páginas universitarias
+
+Las dos páginas salen de una plantilla (la mejora 7: «que el próximo torneo
+universitario no se arme a mano»). **Cada página tiene su configuración** en
+`herramientas/torneos-universitarios/<página>.js`, con todo lo que la hace
+ella: los textos, la portada, los datos de su ficha de chess-results, el
+logo, los colores de la imagen para compartir, las fichas, los recuadros
+propios (el contacto y «El ajedrez en CENFOTEC», con su HTML) y las
+ediciones anteriores. `node herramientas/torneo-universitario.js` escribe
+dos archivos: la página y su `js/<config>.js` (el `window.TorneoPagina`, que
+antes se escribía a mano). La primera vez reprodujo las dos páginas tal cual
+estaban, y las diferencias eran solo lo nuevo.
+
+- **No se editan a mano**: lo dicen la cabecera de cada página y de cada
+  `js/<config>.js`. `verificar-plantilla-universitaria.js` (sin navegador)
+  falla si una no es lo que sale de su configuración. También revisa lo que
+  la plantilla no puede ver sola:
+  - que el logo exista y mida lo que dice;
+  - que la sala tenga su portada en `PORTADAS` de `js/salas-torneo.js`, con
+    esa página, ese logo y las fichas a las que lleva;
+  - que las ediciones anteriores sean clasificaciones bien formadas: puestos
+    que no bajan, puntos de medio en medio que no suben, «Apellidos, Nombre»
+    y los mismos grupos que esta edición;
+  - que cada nombre de `mismaPersona` esté en una edición.
+- **Los bloques de los otros generadores no se pisan.** `pwa-cabecera.py`,
+  `tema-cabecera.py`, `fuentes-cabecera.py` y `legal-pie.py` ponen su
+  `<!-- x: inicio -->…<!-- x: fin -->`, cada uno donde le toca. La plantilla
+  toma esos bloques de la página que ya está, y también su orden al final del
+  `<head>`. Correr aquellos scripts después no deja la página «vieja». Se
+  comprobó corriéndolos todos sobre las dos.
+- **Lo que sale solo**: la ficha «Ediciones anteriores» y su recuadro, si
+  hay ediciones. La ficha va detrás de las del torneo y antes de las que
+  llevan a otra cosa (`despues`). Con un número impar de fichas, la última
+  ocupa la fila entera en el celular.
+- **Para el próximo torneo**: copiar la configuración de uno parecido y
+  cambiarle los datos, que salen de su ficha de chess-results y nunca se
+  inventan. Después:
+  1. poner el logo en `img/<universidad>/`;
+  2. poner sus colores, medidos, en `css/universidades.css` (`.x` y
+     `.u-sala-x`);
+  3. correr la plantilla;
+  4. agregar su portada en `PORTADAS`;
+  5. crear la sala en `admin.html#torneos`, con los enlaces de chess-results;
+  6. correr `sitemap.py` y `archivos-catalogo.js`;
+  7. sumarla a `PAGINAS` de `verificar-paginas-universitarias.js`.

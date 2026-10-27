@@ -90,19 +90,32 @@ def paginas():
     return salida
 
 
+# Las páginas que se instalan como SU PROPIA app (otro nombre, otro ícono y
+# arrancan en ellas): la del Centroamericano 2026, para las familias y las
+# delegaciones, que no tienen cuenta en la Academia. Lo demás del bloque es igual.
+PROPIAS = {
+    "centroamericano-2026.html": {
+        "manifest": "/manifest-centroamericano-2026.json",
+        "icono": "/img/centroamericano-2026/app/apple-touch-icon.png",
+        "titulo": "Centroamericano",
+    },
+}
+
+
 def bloque(ruta):
     """Las direcciones van absolutas: la misma cabecera sirve en la raíz y en
     cursos/academia/, sin tener que contar cuántos '../' hacen falta. Menos el
     script, que se pide relativo para no depender del dominio en local."""
     hondo = ruta.count("/")
     arriba = "../" * hondo
+    propia = PROPIAS.get(ruta, {})
     return (
         INICIO
         + '<meta name="theme-color" content="#102a43">'
-        + '<link rel="manifest" href="/manifest.json">'
-        + '<link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png">'
+        + f'<link rel="manifest" href="{propia.get("manifest", "/manifest.json")}">'
+        + f'<link rel="apple-touch-icon" href="{propia.get("icono", "/img/app/apple-touch-icon.png")}">'
         + '<meta name="apple-mobile-web-app-capable" content="yes">'
-        + '<meta name="apple-mobile-web-app-title" content="Ajedrez">'
+        + f'<meta name="apple-mobile-web-app-title" content="{propia.get("titulo", "Ajedrez")}">'
         + f'<script src="{arriba}js/errores.js"></script>'
         + f'<script src="{arriba}js/pwa.js" defer></script>'
         + f'<script src="{arriba}js/navegacion.js" defer></script>'

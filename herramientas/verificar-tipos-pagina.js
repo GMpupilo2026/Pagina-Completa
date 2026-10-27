@@ -1,9 +1,9 @@
 /* Comprueba entreno/tipos.html en un navegador de verdad: la ficha de los
- * Tipos de entrenamiento y los diecinueve juegos, JUGADOS de punta a punta.
+ * Tipos de entrenamiento y los veinte juegos, JUGADOS de punta a punta.
  *
  * Los bancos los comprueba herramientas/verificar-tipos.js sin navegador.
  * Esto es lo que solo se rompe mirando la pantalla:
- *   - sin sesión manda a iniciar sesión; con sesión, la ficha trae los diecinueve
+ *   - sin sesión manda a iniciar sesión; con sesión, la ficha trae los veinte
  *     tipos, cada uno con su encabezado y su enlace;
  *   - cada juego pinta LA posición de su ejercicio (se compara casilla por
  *     casilla contra la FEN del banco, no contra la página);
@@ -199,7 +199,7 @@ async function main() {
       // Las paradas de Tab de la tarjeta: antes eran dos (el título y «Empezar: …») al mismo lugar.
       paradas: [...li.querySelectorAll("a[href], button, input, [tabindex]")].filter((x) => x.tabIndex >= 0 && x.checkVisibility()).length,
     })));
-    ok("diecinueve fichas", fichas.length === 19, fichas.length);
+    ok("veinte fichas", fichas.length === 20, fichas.length);
     ok("cada una con su encabezado y su enlace", fichas.every((f) => f.titulo && /^#[a-z-]+$/.test(f.enlace) && f.visible), JSON.stringify(fichas));
     ok("cada tarjeta es UNA sola parada de Tab", fichas.every((f) => f.paradas === 1), JSON.stringify(fichas.map((f) => f.paradas)));
     ok("un solo h1", (await page.$$eval("#vista-fichas h1", (h) => h.length)) === 1);
@@ -754,6 +754,82 @@ window.PracticeEngine = {
       const t = await jugarHasta(page, tab1, /se perdió/);
       ok("si baja de −2,5, se perdió", /la posición se perdió/.test(t), t);
       ok("y no da estrellas", !(await estrellas(page))["tablas:" + tab1.id]);
+      ok("sin errores en consola", !errores.length, errores.join(" | "));
+      await ctx.close();
+    }
+
+    console.log("\n=== Salva las tablas, nivel 3: El ahogado (sin motor: lo corrige chess.js) ===");
+    const aho = DATOS.tablas.find((x) => x.ahogado);
+    const buena1 = R.sanEs(aho.linea[0]);
+    // La mala que tienta: un jaque que no ahoga (si no hay, cualquiera que no sea la buena).
+    const mala1 = (() => { const g = new Chess(aho.fen); const malas = g.moves().filter((san) => !aho.correctas.includes(san)); return R.sanEs(malas.find((san) => /\+$/.test(san)) || malas[0]); })();
+    const escribir = async (page, txt) => { await page.fill("#jugada-input", txt); await page.press("#jugada-input", "Enter"); };
+    {
+      // la línea buena, escrita: el rival contesta solo y la partida queda ahogada
+      const { page, ctx, errores } = await abrir(browser, true, "#tablas/3/" + aho.id);
+      await page.waitForSelector("#vista-juego:not(.hidden) #jugada-input");
+      await mismaPosicion(page, aho.fen, "pinta la posición del ejercicio");
+      const enun = await page.textContent("#juego-enunciado");
+      ok("pide el ahogado, dice en cuántas jugadas y cuánto da el motor si se juega otra cosa", /fuerza el ahogado \(en 2 jugadas tuyas\).*mate en contra/.test(enun), enun);
+      ok("tiene su botón de pista", await page.isVisible("text=Pista"));
+      await escribir(page, buena1);
+      const t1 = await esperarEstado(page, /Te toca: queda un paso/);
+      ok("tras la jugada buena el rival contesta solo y falta un paso", /El rival jugó/.test(t1) && /queda un paso/.test(t1), t1);
+      // la posición de ahora es la de la línea, dos medias jugadas adelante
+      const f1 = new Chess(aho.fen); f1.move(aho.linea[0]); f1.move(aho.linea[1]);
+      const visto = await page.evaluate(() => TiposEntreno.fen());
+      ok("el rival contestó con la defensa que más se resiste (la de la línea)", visto.split(" ").slice(0, 2).join(" ") === f1.fen().split(" ").slice(0, 2).join(" "), visto);
+      await escribir(page, R.sanEs(aho.linea[2]));
+      const t2 = await esperarEstado(page, /Ahogado/);
+      ok("al terminar dice que es ahogado y son tablas", /¡Ahogado!/.test(t2) && /tablas/.test(t2), t2);
+      ok("dice a quién ahogaron (a las blancas: «A tu rey…»)", aho.quien !== "propio" || /A tu rey/.test(t2), t2);
+      ok("a la primera: tres estrellas", (await estrellas(page))["tablas:" + aho.id] === 3, JSON.stringify(await estrellas(page)));
+      ok("sin errores en consola", !errores.length, errores.join(" | "));
+      await ctx.close();
+    }
+    {
+      // una jugada que no sirve: se dice por qué, no termina, y la buena después da una estrella
+      const { page, ctx, errores } = await abrir(browser, true, "#tablas/3/" + aho.id);
+      await page.waitForSelector("#vista-juego:not(.hidden) #jugada-input");
+      await escribir(page, mala1);
+      const t = await esperarEstado(page, /no fuerza el ahogado/);
+      ok("una jugada que no fuerza el ahogado se corrige y dice qué responde el rival", /no fuerza el ahogado/.test(t) && /Prueba otra/.test(t) && /(El rival contesta|el rival no queda ahogado)/.test(t), t);
+      await mismaPosicion(page, aho.fen, "la jugada mala se deshace: el tablero vuelve a la posición");
+      await escribir(page, buena1);
+      await esperarEstado(page, /Te toca: queda un paso/);
+      await escribir(page, R.sanEs(aho.linea[2]));
+      await esperarEstado(page, /Ahogado/);
+      ok("con un error: una estrella", (await estrellas(page))["tablas:" + aho.id] === 1, JSON.stringify(await estrellas(page)));
+      ok("sin errores en consola", !errores.length, errores.join(" | "));
+      await ctx.close();
+    }
+    {
+      // dos jugadas malas: se rinde, enseña la solución y no da estrellas
+      const { page, ctx, errores } = await abrir(browser, true, "#tablas/3/" + aho.id);
+      await page.waitForSelector("#vista-juego:not(.hidden) #jugada-input");
+      const otra = (() => { const g = new Chess(aho.fen); return R.sanEs(g.moves().filter((san) => !aho.correctas.includes(san) && R.sanEs(san) !== mala1)[0]); })();
+      await escribir(page, mala1);
+      await esperarEstado(page, /Prueba otra/);
+      await escribir(page, otra);
+      const t = await esperarEstado(page, /La solución/);
+      ok("a la segunda jugada mala enseña la solución", t.includes("La solución: " + aho.lineaEs), t);
+      ok("y no da estrellas", !(await estrellas(page))["tablas:" + aho.id]);
+      ok("el tablero ya no deja jugar", !(await page.isVisible("#jugada-input")));
+      ok("sin errores en consola", !errores.length, errores.join(" | "));
+      await ctx.close();
+    }
+    {
+      // la pista marca la pieza y deja una estrella
+      const { page, ctx, errores } = await abrir(browser, true, "#tablas/3/" + aho.id);
+      await page.waitForSelector("#vista-juego:not(.hidden) #jugada-input");
+      await page.click("text=Pista");
+      const t = await esperarEstado(page, /Pista:/);
+      ok("la pista dice con qué pieza se juega (la dama)", /con una dama blanca de e8/.test(t) || /dama.*e8/.test(t), t);
+      await escribir(page, buena1);
+      await esperarEstado(page, /Te toca: queda un paso/);
+      await escribir(page, R.sanEs(aho.linea[2]));
+      await esperarEstado(page, /Ahogado/);
+      ok("con pista: una estrella", (await estrellas(page))["tablas:" + aho.id] === 1, JSON.stringify(await estrellas(page)));
       ok("sin errores en consola", !errores.length, errores.join(" | "));
       await ctx.close();
     }
@@ -1436,6 +1512,146 @@ window.PreparacionMotor = {
     ok("nivel 1: «ganas», «pierdes» o «igual» escrito", /Correcto/.test(t), t);
     ok("sin errores en consola", !errores.length, errores.join(" | "));
     await ctx.close();
+  }
+
+  console.log("\n=== Conteo ===");
+  {
+    const clase = (v) => (v > 0 ? "gana" : v < 0 ? "pierde" : "igual");
+    const buenaDe = (x) => x.tipo === "cuenta" ? x.atacan + "-" + x.defienden
+      : x.tipo === "elige" ? x.correcta
+      : x.modo === "clase" ? clase(x.tipo === "recupera" ? x.neto : x.valor) : String(x.tipo === "recupera" ? x.neto : x.valor);
+    const dicho = (x) => {
+      if (x.tipo === "cuenta") return x.atacan + " " + x.defienden;
+      if (x.tipo === "elige") return x.correcta;
+      const v = x.tipo === "recupera" ? x.neto : x.valor;
+      if (x.modo === "clase") return v > 0 ? "si" : v < 0 ? "no" : "igual";
+      return v > 0 ? "+" + v : v < 0 ? "-" + (-v) : "0";
+    };
+    // Una por cada nivel: contestar con el botón da tres estrellas y queda guardado.
+    for (let n = 2; n <= 14; n++) {
+      const item = DATOS.conteo.find((x) => x.nivel === n);
+      const { page, ctx, errores } = await abrir(browser, true, "#conteo/" + n + "/" + item.id);
+      await page.waitForSelector("#vista-juego:not(.hidden) #controles button[data-op]");
+      await mismaPosicion(page, item.fen, "nivel " + n + ": pinta la posición");
+      const botones = await page.$$eval("#controles button[data-op]", (b) => b.length);
+      ok("nivel " + n + ": " + item.opciones.length + " opciones a la vista", botones === item.opciones.length, botones);
+      if (item.tipo === "recupera") {
+        const ult = await page.$$eval("#tablero .sq.ultima", (c) => c.map((x) => x.dataset.square).sort());
+        ok("nivel " + n + ": marca la captura que acaban de hacer", JSON.stringify(ult) === JSON.stringify([item.de, item.a].sort()), ult.join());
+      }
+      if (item.tipo === "elige") {
+        const marcas = await page.$$eval("#tablero .sq[data-marca]", (c) => c.map((x) => x.dataset.square + ":" + x.dataset.marca).sort());
+        ok("nivel " + n + ": cada casilla marcada lleva la letra de su opción", marcas.length === item.candidatas.length, marcas.join());
+        const letras = await page.$$eval("#controles button[data-op]", (b) => b.map((x) => x.dataset.op + ":" + (/Opción (\w)\./.exec(x.textContent) || [])[1]));
+        ok("nivel " + n + ": la letra del tablero es la del botón", item.candidatas.every((c) => marcas.indexOf(c.casilla + ":" + letras.find((l) => l.indexOf(c.casilla + ":") === 0).split(":")[1]) >= 0), marcas.join() + " / " + letras.join());
+      }
+      await page.locator('#controles button[data-op="' + buenaDe(item) + '"]').click();
+      const t = await esperarEstado(page, /Correcto/);
+      ok("nivel " + n + ": la respuesta buena da tres estrellas", /Correcto/.test(t) && (await estrellas(page))["conteo:" + item.id] === 3, t);
+      ok("nivel " + n + ": explica la cuenta", (await page.textContent("#explicacion")).length > 30);
+      ok("nivel " + n + ": sin errores en consola", !errores.length, errores.join(" | "));
+      await ctx.close();
+    }
+    // Una equivocada y después la buena: una estrella. Dos equivocadas: se dice cuál era y no cuenta.
+    {
+      const item = DATOS.conteo.find((x) => x.nivel === 5);
+      const mala = item.opciones.filter((o) => o !== buenaDe(item));
+      const { page, ctx } = await abrir(browser, true, "#conteo/5/" + item.id);
+      await page.waitForSelector("#controles button[data-op]");
+      await page.locator('#controles button[data-op="' + mala[0] + '"]').click();
+      ok("una equivocada no cuenta y deja intentar otra vez", /incorrecta/.test(await esperarEstado(page, /incorrecta/)) && !(await estrellas(page))["conteo:" + item.id]);
+      await page.locator('#controles button[data-op="' + buenaDe(item) + '"]').click();
+      await esperarEstado(page, /Correcto/);
+      ok("equivocarse una vez deja una estrella", (await estrellas(page))["conteo:" + item.id] === 1);
+      await ctx.close();
+    }
+    {
+      const item = DATOS.conteo.find((x) => x.nivel === 3);
+      const mala = item.opciones.filter((o) => o !== buenaDe(item));
+      const { page, ctx } = await abrir(browser, true, "#conteo/3/" + item.id);
+      await page.waitForSelector("#controles button[data-op]");
+      await page.locator('#controles button[data-op="' + mala[0] + '"]').click();
+      await page.locator('#controles button[data-op="' + mala[1] + '"]').click();
+      const t = await esperarEstado(page, /Era/);
+      ok("dos equivocadas dicen cuál era", /Era/.test(t), t);
+      ok("dos equivocadas no dejan estrellas", !((await estrellas(page))["conteo:" + item.id]));
+      await ctx.close();
+    }
+
+    // Escribiendo, como quien no ve: lo mismo que el botón.
+    for (const n of [2, 3, 5, 6, 9, 10, 11, 14]) {
+      const item = DATOS.conteo.filter((x) => x.nivel === n)[1];
+      const { page, ctx, errores } = await abrir(browser, true, "#conteo/" + n + "/" + item.id);
+      await page.waitForSelector("#vista-juego:not(.hidden) #controles button[data-op]");
+      await escribirR(page, dicho(item));
+      const t = await esperarEstado(page, /Correcto|Era/);
+      ok("nivel " + n + ": «" + dicho(item) + "» escrito cuenta como el botón", /Correcto/.test(t) && (await estrellas(page))["conteo:" + item.id] === 3, t);
+      ok("nivel " + n + ": escribiendo, sin errores en consola", !errores.length, errores.join(" | "));
+      await ctx.close();
+    }
+    {
+      const item = DATOS.conteo.find((x) => x.nivel === 14 && x.correcta === "ninguna");
+      const { page, ctx } = await abrir(browser, true, "#conteo/14/" + item.id);
+      await page.waitForSelector("#controles button[data-op]");
+      await escribirR(page, "ninguna");
+      const t = await esperarEstado(page, /Correcto|Era/);
+      ok("nivel 14: «ninguna» escrito cuando ninguna gana", /Correcto/.test(t) && (await estrellas(page))["conteo:" + item.id] === 3, t);
+      await ctx.close();
+    }
+
+    // Nivel 1: tocar la pieza.
+    {
+      const item = DATOS.conteo.find((x) => x.nivel === 1);
+      const { page, ctx, errores } = await abrir(browser, true, "#conteo/1/" + item.id);
+      await page.waitForSelector("#vista-juego:not(.hidden) #tablero button[data-square]");
+      await mismaPosicion(page, item.fen, "nivel 1: pinta la posición");
+      await page.click('#tablero [data-square="' + item.casilla + '"]');
+      const t = await esperarEstado(page, /Esa/);
+      ok("nivel 1: tocar la pieza sin defensa da tres estrellas", /Esa/.test(t) && (await estrellas(page))["conteo:" + item.id] === 3, t);
+      ok("nivel 1: la casilla queda marcada con ✓", (await page.getAttribute('#tablero [data-square="' + item.casilla + '"]', "data-marca")) === "✓");
+      ok("nivel 1: sin errores en consola", !errores.length, errores.join(" | "));
+      await ctx.close();
+    }
+    {
+      const item = DATOS.conteo.filter((x) => x.nivel === 1)[2];
+      const { page, ctx } = await abrir(browser, true, "#conteo/1/" + item.id);
+      await page.waitForSelector("#tablero button[data-square]");
+      await escribirR(page, item.casilla);
+      const t = await esperarEstado(page, /Esa/);
+      ok("nivel 1: escribir la casilla vale lo mismo", /Esa/.test(t) && (await estrellas(page))["conteo:" + item.id] === 3, t);
+      await ctx.close();
+    }
+    {
+      const item = DATOS.conteo.filter((x) => x.nivel === 1)[3];
+      const rival = R.tablero(item.fen).map((p, i) => (p && p.c !== item.fen.split(" ")[1] && R.sq(i) !== item.casilla ? R.sq(i) : null)).filter(Boolean);
+      const { page, ctx } = await abrir(browser, true, "#conteo/1/" + item.id);
+      await page.waitForSelector("#tablero button[data-square]");
+      await page.click('#tablero [data-square="' + rival[0] + '"]');
+      ok("nivel 1: una pieza con defensa no vale y deja otro intento", /Te queda un intento/.test(await esperarEstado(page, /Te queda un intento/)) && !(await estrellas(page))["conteo:" + item.id], await estado(page));
+      await page.click('#tablero [data-square="' + item.casilla + '"]');
+      await esperarEstado(page, /Esa/);
+      ok("nivel 1: acertar al segundo intento deja una estrella", (await estrellas(page))["conteo:" + item.id] === 1);
+      await ctx.close();
+    }
+    {
+      const item = DATOS.conteo.filter((x) => x.nivel === 1)[4];
+      const rival = R.tablero(item.fen).map((p, i) => (p && p.c !== item.fen.split(" ")[1] && R.sq(i) !== item.casilla ? R.sq(i) : null)).filter(Boolean);
+      const { page, ctx } = await abrir(browser, true, "#conteo/1/" + item.id);
+      await page.waitForSelector("#tablero button[data-square]");
+      await page.click('#tablero [data-square="' + rival[0] + '"]');
+      await page.click('#tablero [data-square="' + rival[1 % rival.length] + '"]');
+      const t = await esperarEstado(page, /Era/);
+      ok("nivel 1: dos fallos dicen cuál era y no dejan estrellas", new RegExp("Era " + item.casilla).test(t) && !((await estrellas(page))["conteo:" + item.id]), t);
+      await ctx.close();
+    }
+    {
+      const item = DATOS.conteo.find((x) => x.nivel === 1);
+      const { page, ctx } = await abrir(browser, true, "#conteo/1/" + item.id);
+      await page.waitForSelector("#tablero button[data-square]");
+      await escribirR(page, "pista");
+      ok("nivel 1: «pista» da la pista", /Pista/.test(await esperarEstado(page, /Pista/)));
+      await ctx.close();
+    }
   }
 
   console.log("\n=== Con la cuenta ciega, el foco vuelve al recuadro ===");

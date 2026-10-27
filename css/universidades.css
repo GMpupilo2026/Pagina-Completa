@@ -1,0 +1,229 @@
+/* La cara de las universidades: la ficha de su sala en Torneos y la página de
+ * su torneo. Una sola copia para todas; cada universidad pone solo sus
+ * colores (las variables --u-*, abajo), medidos de su logo, no a ojo.
+ *
+ * - Las fichas de Torneos las arma js/salas-torneo.js (PORTADAS): la ficha
+ *   lleva `u-sala` y la clase de su universidad (`u-sala-cft`, `u-sala-utn`).
+ *   Las cargan torneos-en-vivo.html y admin.html (la vista previa del editor
+ *   es la misma ficha).
+ * - Las páginas (cenfotec-2026.html, utn-2026.html) son la del
+ *   Centroamericano: su `body` lleva `cac cac-u` y la clase de la universidad
+ *   (`cft`, `utn`), y esta hoja le cambia las variables a
+ *   css/centroamericano.css y lo que ahí va con un color fijo.
+ *
+ * Contraste comprobado (WCAG AA) contra el fondo real de cada una:
+ * - CENFOTEC: blanco sobre #233065 12,48 y sobre #1C3F7F 10,16; #141C40 sobre
+ *   el celeste #23ACF4 6,52 (el celeste con letra blanca da 2,5: no se usa
+ *   así); blanco sobre #0A6AA8 5,77; #0A6AA8 sobre blanco 5,77 y sobre
+ *   #EEF6FD 5,28; #233065 sobre #EEF6FD 11,44; en oscuro, #8FD3FA sobre
+ *   brand-950 11,23 y sobre brand-900 10,24.
+ * - UTN: blanco sobre #193A70 11,17 y sobre #0F2A55 14,16; #0F2A55 sobre el
+ *   celeste de sus puntos #BFCFE8 8,97 (con letra blanca da 1,58: no);
+ *   blanco sobre #2C5AA0 6,82; #2C5AA0 sobre blanco 6,82 y sobre #F0F4FB
+ *   6,19; #193A70 sobre #F0F4FB 10,12; en oscuro, #BFCFE8 sobre brand-950
+ *   11,61 y sobre brand-900 10,59.
+ * La cuadrícula del fondo suma un 5 % de blanco: el blanco sigue por encima de 9.
+ * Ver «La ficha del Desafío Mentes Maestras» y «Las páginas de los torneos
+ * universitarios» en docs/decisiones/juegos-y-torneos.md. */
+
+/* Los colores de cada universidad. */
+.u-sala-cft, .cft {
+  --u-1: #233065;       /* el azul de arriba */
+  --u-2: #1c3f7f;       /* el de abajo del degradado */
+  --u-tinta: #141c40;   /* la letra sobre el celeste */
+  --u-celeste: #23acf4; /* el acento: la «×» de su imagen */
+  --u-celeste-2: #5cc3f7;
+  --u-luz: #cfeefd;
+  --u-suave: #e6f5fe;
+  --u-fondo: #eef6fd;
+  --u-fuerte: #0a6aa8;  /* el acento que sí lleva letra blanca */
+  --u-claro: #8fd3fa;   /* el acento en modo oscuro */
+}
+.u-sala-utn, .utn {
+  --u-1: #193a70;
+  --u-2: #0f2a55;
+  --u-tinta: #0f2a55;
+  --u-celeste: #bfcfe8; /* los puntos de su logo */
+  --u-celeste-2: #d6e1f2;
+  --u-luz: #eef3fb;
+  --u-suave: #e8eef8;
+  --u-fondo: #f0f4fb;
+  --u-fuerte: #2c5aa0;
+  --u-claro: #bfcfe8;
+}
+
+/* ------------------------------------------------------------------
+ * La ficha de la sala en Torneos.
+ * ------------------------------------------------------------------ */
+.u-sala {
+  position: relative;
+  overflow: hidden;
+  color: #fff;
+  background:
+    linear-gradient(rgb(255 255 255 / 0.05) 1px, transparent 1px) 0 0 / 28px 28px,
+    linear-gradient(90deg, rgb(255 255 255 / 0.05) 1px, transparent 1px) 0 0 / 28px 28px,
+    linear-gradient(170deg, var(--u-1) 0%, var(--u-2) 100%);
+  padding-top: 2rem;
+}
+/* La línea del acento arriba, como las pistas de circuito de la imagen. */
+.u-sala::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 6px;
+  background: var(--u-celeste);
+}
+/* Una luz arriba a la derecha. */
+.u-sala::after {
+  content: "";
+  position: absolute;
+  top: 1.1rem;
+  right: 1.2rem;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--u-luz);
+  box-shadow: 0 0 10px 4px color-mix(in srgb, var(--u-celeste) 70%, transparent);
+  animation: u-brillo 2.6s ease-in-out infinite;
+}
+@keyframes u-brillo {
+  0%, 100% { opacity: 0.45; }
+  50% { opacity: 1; }
+}
+/* El logo, tal cual el de la universidad (en blanco), en lugar del emoji. */
+.u-sala-imagen {
+  display: block;
+  width: 11rem;
+  max-width: 70%;
+  max-height: 6.5rem;
+  object-fit: contain;
+  object-position: left center;
+  margin-bottom: 1rem;
+  pointer-events: none;
+}
+.u-sala h2 { color: #fff; }
+.u-sala h2 + p { color: #fff; }
+.u-sala a.u-sala-boton { background: #fff; color: var(--u-1); font-weight: 700; box-shadow: 0 4px 0 rgb(0 0 0 / 0.3); }
+.u-sala a.u-sala-boton:hover { background: var(--u-suave); }
+.u-sala a.u-sala-principal { background: var(--u-celeste); color: var(--u-tinta); }
+.u-sala a.u-sala-principal:hover { background: var(--u-celeste-2); }
+.u-sala a.u-sala-boton:focus-visible { outline: 3px solid #fff; outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) {
+  .u-sala::after { animation: none; opacity: 1; }
+}
+
+/* ------------------------------------------------------------------
+ * La página del torneo: la del Centroamericano con estas variables.
+ * ------------------------------------------------------------------ */
+.cac-u {
+  --cac-morado: var(--u-1);
+  --cac-morado-2: var(--u-2);
+  --cac-morado-hondo: var(--u-tinta);
+  --cac-rojo: var(--u-fuerte);
+  --cac-verde: var(--u-celeste);
+  --cac-azul: var(--u-2);
+  --cac-naranja: var(--u-celeste);
+  --cac-fondo: var(--u-fondo);
+  --cac-acento: var(--u-fuerte);
+}
+.dark .cac-u { --cac-acento: var(--u-claro); }
+
+/* La portada: el azul de la universidad, con su cuadrícula. */
+.cac-u .cac-portada {
+  background:
+    linear-gradient(rgb(255 255 255 / 0.05) 1px, transparent 1px) 0 0 / 32px 32px,
+    linear-gradient(90deg, rgb(255 255 255 / 0.05) 1px, transparent 1px) 0 0 / 32px 32px,
+    linear-gradient(170deg, var(--cac-morado) 0%, var(--cac-morado-2) 100%);
+}
+.cac-u .cac-pildora { background: var(--u-celeste); color: var(--u-tinta); }
+.cac-u .cac-titulo { text-shadow: 0 3px 0 rgb(0 0 0 / 0.3); }
+/* El logo, entero y sin pasar de 12rem de alto (el de la UTN es casi cuadrado). */
+.u-logo { display: block; width: 100%; height: auto; max-height: 12rem; object-fit: contain; }
+.cac-u .cac-dato { background: rgb(0 0 0 / 0.28); }
+.cac-u .cac-dato dt { color: #dfe7f5; }
+.cac-u .cac-organiza { border-bottom-color: var(--u-celeste); }
+.cac-u .cac-organiza strong { color: var(--cac-rojo); }
+
+/* Las fichas: en lugar de la bandera, la línea del acento y la pista de circuito. */
+.cac-u .cac-ficha::before { height: 6px; background: var(--u-celeste); }
+.cac-u .cac-ficha::after {
+  top: 6px;
+  height: 8px;
+  opacity: 0.18;
+  background: repeating-linear-gradient(90deg, var(--cac-morado) 0 14px, transparent 14px 20px);
+}
+.dark .cac-u .cac-ficha::after { opacity: 0.4; background: repeating-linear-gradient(90deg, var(--u-claro) 0 14px, transparent 14px 20px); }
+.cac-u .cac-ficha > .cac-icono:first-child { margin-top: 0.5rem; }
+.cac-u a.cac-ficha:hover { box-shadow: 0 14px 28px -12px color-mix(in srgb, var(--u-1) 45%, transparent); }
+
+/* «El podio», arriba de las fichas (js/torneo-podio.js): los tres primeros
+ * de cada grupo, el primero en el medio y más grande. */
+.u-podio-grupo + .u-podio-grupo { margin-top: 1.25rem; }
+.u-podio-grupo h3 { font-weight: 800; color: var(--cac-acento); margin-top: 0.5rem; }
+.u-podio {
+  display: grid;
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+}
+@media (min-width: 640px) {
+  .u-podio { grid-template-columns: 1fr 1.15fr 1fr; align-items: end; }
+  .u-podio-puesto[data-puesto="1"] { order: 2; }
+  .u-podio-puesto[data-puesto="2"] { order: 1; }
+  .u-podio-puesto[data-puesto="3"] { order: 3; }
+}
+.u-podio-vacio { color: var(--cac-acento); font-weight: 700; }
+.u-podio-puesto {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 0.15rem;
+  padding: 1rem 0.75rem;
+  border-radius: 1.25rem;
+  background: var(--cac-fondo);
+  border-top: 6px solid var(--u-celeste);
+}
+.u-podio-puesto[data-puesto="1"] { padding-top: 1.5rem; padding-bottom: 1.5rem; background: var(--cac-morado); color: #fff; }
+.dark .u-podio-puesto { background: rgb(var(--c-brand-950, 7 21 39)); }
+.dark .u-podio-puesto[data-puesto="1"] { background: var(--cac-morado-2); }
+.u-podio-medalla { font-size: 2rem; line-height: 1; }
+.u-podio-puesto[data-puesto="1"] .u-podio-medalla { font-size: 2.6rem; }
+.u-podio-lugar { font-size: 0.8rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; }
+.u-podio-nombre { font-weight: 800; font-size: 1.1rem; line-height: 1.2; }
+.u-podio-puesto[data-puesto="1"] .u-podio-nombre { font-size: 1.3rem; }
+.u-podio-puntos { font-size: 0.9rem; }
+
+/* «Ediciones anteriores» (js/torneo-ediciones.js): los campeones y quién
+ * volvió. Los títulos van con --cac-acento, el mismo de «El podio» (medido
+ * arriba sobre el fondo del recuadro); el cambio de puesto no lleva color:
+ * lo dicen la flecha y el texto. */
+.u-edicion-grupo + .u-edicion-grupo { margin-top: 2rem; padding-top: 1.5rem; border-top: 2px solid var(--u-celeste); }
+.u-edicion-rama { font-family: var(--font-serif, serif); font-size: 1.35rem; font-weight: 800; color: var(--cac-acento); }
+.u-edicion-titulo { margin-top: 1.25rem; margin-bottom: 0.5rem; font-weight: 800; color: var(--cac-acento); }
+.u-edicion-nota { margin: 0.5rem 0 0.75rem; font-size: 0.9rem; }
+.u-cambio { font-weight: 700; white-space: nowrap; }
+.cac-jugador-antes { font-style: italic; }
+
+/* La despedida: el logo en un círculo, donde el Centroamericano tiene al pizote. */
+.u-despedida-logo {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: clamp(5.5rem, 18vw, 8.5rem);
+  aspect-ratio: 1;
+  border-radius: 9999px;
+  background: var(--cac-morado);
+  border: 5px solid #fff;
+  box-shadow: 0 10px 24px -10px color-mix(in srgb, var(--u-1) 60%, transparent);
+}
+.u-despedida-logo img { width: 78%; max-height: 70%; object-fit: contain; }
+.dark .cac-u .cac-globo { border-color: var(--u-claro); box-shadow: 0 6px 0 var(--u-claro); }
+.dark .cac-u .cac-globo::before { border-color: var(--u-claro); }
+.dark .cac-u .cac-globo .cac-accion { color: var(--u-claro); }
+.dark .cac-u .cac-buscador { border-color: var(--u-claro); box-shadow: 0 6px 0 var(--u-claro); }
+.dark .cac-u .cac-buscador-campo { border-color: var(--u-claro); }
+.dark .cac-u .cac-jugador { border-left-color: var(--u-claro); }
+.cac-u .cac-proyector-barra { background: var(--cac-morado); }

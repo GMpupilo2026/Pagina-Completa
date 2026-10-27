@@ -4,8 +4,11 @@
  * public.pareo_publicados, que acá se reemplazan por dobles).
  *
  * Lo que se prueba, porque se rompe sin dar ningún error:
- *   - lo que viaja al publicar NUNCA lleva la fecha de nacimiento, el sexo,
- *     el ID FIDE ni las firmas del evento;
+ *   - lo que viaja al publicar NUNCA lleva la fecha de nacimiento, el sexo
+ *     ni las firmas del evento; el ID FIDE va solo a la función, que lo
+ *     cambia por su huella y no lo guarda (se lee el código de la función);
+ *   - con cada jugador va su resumen (puesto, puntos, rendimiento), el mismo
+ *     de la clasificación;
  *   - sin marcar el permiso no se publica nada;
  *   - publicar guarda la clave en el torneo, y cada cambio se pone al día
  *     solo a los 30 segundos (una sola llamada aunque haya varios cambios);
@@ -55,8 +58,17 @@ function pruebaSinNavegador() {
   console.log("\n=== Lo que viaja al publicar ===");
   const d = PP.datosPublicos(torneo("PRUEBA ABIERTO", true));
   const texto = JSON.stringify(d);
-  ok(!/nacimiento|2014-03|fideId|99900|"sexo"|firmas|AAAA/.test(texto), "ni nacimiento, ni sexo, ni ID FIDE, ni firmas", texto.slice(0, 300));
-  igual("sí van el nombre, el centro, el Elo y la categoría", Object.keys(d.jugadores[0]).sort(), ["categoria", "elo", "fed", "id", "institucion", "nombre", "retiradoDespuesDe", "titulo"]);
+  ok(!/nacimiento|2014-03|"sexo"|firmas|AAAA/.test(texto), "ni nacimiento, ni sexo, ni firmas", texto.slice(0, 300));
+  igual("sí van el nombre, el centro, el Elo y la categoría (y el ID FIDE, solo para la huella)", Object.keys(d.jugadores[0]).sort(), ["categoria", "elo", "fed", "fideId", "id", "institucion", "nombre", "retiradoDespuesDe", "titulo"]);
+  // La clasificación tras la ronda 1 (la 2 no está completa): el resumen es el de ella.
+  const E = require("../js/pareo/equipos.js"), V = require("../js/pareo/evento.js");
+  const tR = torneo("PRUEBA ABIERTO", true);
+  const clas = V.aplicarDesempate(tR, E.clasificacion(Object.assign({}, tR, { rondas: tR.rondas.slice(0, 1) }), tR.desempates));
+  igual("con el resumen de cada jugador: el puesto y los puntos de la clasificación",
+    d.resumen.map((x) => [x.id, x.puesto, x.puntos, x.rondas]), clas.map((f) => [f.id, f.puesto, f.puntos, 1]));
+  const a = d.resumen.find((x) => x.id === "TOa");
+  igual("y sus partidas: ganadas, tablas, perdidas y el rendimiento con Elo", [a.g, a.e, a.p, a.pe, typeof a.rp, typeof a.cambio], [1, 0, 0, 1, "number", "number"]);
+  igual("un torneo sin rondas completas no lleva resumen", PP.datosPublicos(Object.assign(torneo("PRUEBA NADA", false), { rondas: [] })).resumen, []);
   igual("y el evento, solo con su nombre", d.evento, { nombre: "PRUEBA EVENTO" });
   igual("las rondas con sus resultados", d.rondas[0].mesas[0], { b: "TOa", n: "TOd", r: "1-0" });
   const conElo = Object.assign(torneo("PRUEBA ELO", false), { validoElo: "nacional" });
@@ -66,6 +78,10 @@ function pruebaSinNavegador() {
   // La función vuelve a limpiar lo que llega: el campo tiene que estar en su lista.
   const fn = require("fs").readFileSync(require("path").join(__dirname, "..", "supabase/functions/pareo-publicar/index.ts"), "utf8");
   ok(/validoElo: \["fide", "nacional", "no"\]\.includes\(v\.validoElo/.test(fn), "la función pareo-publicar lo guarda (sin eso se pierde al publicar, callado)");
+  ok(/resumen: lista\(v\.resumen, 1000, filaResumen\)/.test(fn) && /provincia: PROVINCIAS\.has/.test(fn), "y el resumen y la provincia (sin eso, el ranking y «Por provincia» quedan vacíos)");
+  // El ID FIDE: la función lo cambia por la huella y lo borra ANTES de guardar.
+  const borra = fn.indexOf("delete j.fideId"), pone = fn.indexOf("await ponerIdentidad(t.jugadores)"), guarda = fn.indexOf('from("pareo_publicados").insert(');
+  ok(borra > 0 && pone > 0 && pone < guarda && pone < fn.indexOf('from("pareo_publicados").update(cambio)'), "la función borra el ID FIDE (deja su huella) antes de guardar el torneo");
   ok(/ritmoTipo: \["clasico", "rapido", "blitz"\]\.includes\(v\.ritmoTipo/.test(fn), "y el ritmo (sin eso, el filtro de ritmo de la lista no encuentra nada)");
   // Las pruebas abren Pareo Integral en localhost y la publicación es
   // automática: sin este candado cada corrida del CI llenaba la lista pública.
@@ -105,7 +121,7 @@ async function pruebaPublicar(browser) {
   await page.click("#pi-publicar-reintentar");
   await page.waitForSelector("#pi-publicar-enlace");
   igual("se publica con «crear»", pedidos.map((x) => x.accion), ["crear"]);
-  ok(!/nacimiento|fideId|"sexo"|firmas/.test(JSON.stringify(pedidos[0])), "y sin datos de más");
+  ok(!/nacimiento|"sexo"|firmas/.test(JSON.stringify(pedidos[0])), "y sin datos de más");
   const [g] = (await P.esperarGuardado(page, (l) => l.some((t) => t.publicado))).filter((t) => t.publicado);
   igual("la clave queda en el torneo", [g.publicado.id.slice(-1), g.publicado.clave], ["1", "clave-1"]);
   ok(/torneos-pareo\.html#t=00000000-0000-4000-8000-000000000001$/.test(await page.getAttribute("#pi-publicar-enlace", "href")), "y se muestra su enlace público");

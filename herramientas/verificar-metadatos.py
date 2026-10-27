@@ -15,6 +15,12 @@ RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 os.chdir(RAIZ)
 SITIO = "https://ajedrez-integral.com"
 IMAGEN = SITIO + "/img/og-ajedrez-integral.jpg"
+# Las páginas con imagen propia al compartir (la de un torneo, que se manda por
+# WhatsApp): la genera su script y tiene que existir. Ver «La página del
+# Centroamericano 2026» en docs/decisiones/juegos-y-torneos.md.
+IMAGEN_PROPIA = {
+    "centroamericano-2026.html": "img/centroamericano-2026/compartir.jpg",
+}
 
 fallos = []
 def check(ok, mensaje):
@@ -48,7 +54,12 @@ for ruta in publicas:
     check(bool(d) and 70 <= len(d) <= 300, f"{ruta}: descripción presente y de largo razonable ({len(d) if d else 0})")
     check(bool(meta(t, "og:title", "property")) and bool(meta(t, "og:description", "property")),
           f"{ruta}: el enlace compartido lleva título y texto")
-    check(meta(t, "og:image", "property") == IMAGEN, f"{ruta}: lleva la imagen para compartir")
+    propia = IMAGEN_PROPIA.get(ruta)
+    if propia:
+        check(meta(t, "og:image", "property") == SITIO + "/" + propia and os.path.isfile(propia),
+              f"{ruta}: lleva su imagen propia para compartir, y existe")
+    else:
+        check(meta(t, "og:image", "property") == IMAGEN, f"{ruta}: lleva la imagen para compartir")
     check(meta(t, "twitter:card") == "summary_large_image", f"{ruta}: la tarjeta sale grande, no en miniatura")
     check(canonical(t) == esperada, f"{ruta}: canonical = {canonical(t)}")
     check(meta(t, "og:url", "property") == esperada, f"{ruta}: og:url igual al canonical")

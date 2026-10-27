@@ -51,10 +51,11 @@ ajuste a mano futuro) pasan `referencia` con un valor nuevo cada vez
   en `game_state` (podio, equipos), que se limpia al cerrar la clase — para
   sumarlos de forma confiable haría falta guardarlos en una tabla aparte
   antes de la limpieza, que es un cambio más grande y se deja para otra vez.
-- **Entrenamiento**: 2 puntos por cada fila nueva de `training_progress`
-  (cualquier actividad), con un tope de 40 por día de Costa Rica — sin tope,
-  bastaría con repetir un ejercicio trivial en bucle para juntar puntos sin
-  aprender nada.
+- **Entrenamiento**: de 1 a 6 puntos por cada ejercicio NUEVO, según su
+  dificultad, sin tope por día; un ejercicio ya resuelto no vuelve a pagar
+  (ver «Entrenamiento: según la dificultad, sin tope y una sola vez por
+  ejercicio», abajo). Al principio eran 2 puntos por cada fila de
+  `training_progress`, con un tope de 40 por día de Costa Rica.
 - **Tareas**: 15 puntos por tarea completada. **Corregido después**: al
   principio lo pagaba un trigger sobre `tareas.estado`, pero esa columna
   quedó sin uso desde que una tarea se da por completada CALCULANDO sus
@@ -274,16 +275,403 @@ foto (un día; lo pinta `accesorios_de()`, así que también lo ve el profe en
   alguien (`bromas_bloquear`), desde la tienda;
 - el profe las apaga para toda su clase en Configuración
   (`bromas_en_mi_clase`); basta con que lo haga el profe de uno de los dos;
-- topes por día: una por pareja, 5 de quien manda, 3 de quien recibe.
+- topes por día: una por pareja, 5 de quien manda, 3 de quien recibe
+  (desde el 24/10/2026: 3, 10 y 10; ver «Dónde cae una broma y la clase en
+  vivo»).
 
 Y las de la página: `js/bromas.js` solo se carga en el panel, la tienda y
 Entrenamiento (`herramientas/academia-cabecera.py`), nunca en un examen, la
-clase en vivo, un torneo ni el diagnóstico; con Modo Adaptado o el panel para
+clase en vivo, un torneo ni el diagnóstico (la clase en vivo entró después,
+con el profe que las enciende: ver «Dónde cae una broma y la clase en
+vivo»); con Modo Adaptado o el panel para
 quien no ve no se pinta nada; con «menos movimiento» queda el aviso y nada se
 mueve. Los colores del arcoíris están medidos: cada par tiene la misma
 luminancia que el tablero de siempre, así que el contraste entre casillas y
 con las piezas no cambia, solo el tono. La animación le gana al estilo en
 línea que `board-color-themes.js` pone sobre `<html>`.
+
+## Las bromas grandes
+
+`20261024160609_bromas_grandes.sql` suma diez bromas a la tienda, pedidas por
+el dueño del sitio con su dibujo de referencia: «¡Invasión de gallinas!»,
+«Pantalla empapelada», «Meteorito troll», «Llegó el payaso», «Pato invasor»,
+«¡Gato descontrolado!», «¡Lluvia de quesos!», «¡Platanazo!», «¡Abducción
+alienígena!» y «¡Sandía explosiva!». Pidió tres cosas, y así quedaron:
+
+- **Más caras**, para que haya que hacer más ejercicios: de 80 a 150 puntos
+  (las cinco primeras cuestan de 20 a 60, y el entrenamiento pagaba
+  entonces a lo sumo 40 por día), así que cada una eran de dos a cuatro días
+  de práctica. Desde el 24/10/2026 el entrenamiento no tiene tope, pero cada
+  ejercicio paga una sola vez.
+- **Más tiempo en pantalla**: unos 12 segundos (el confeti dura 5).
+- **Grandes**: el dibujo principal ocupa hasta un tercio del ancho
+  (`clamp(8rem, 32vw, 18rem)`; el payaso, más) y el cartel con el nombre va
+  en letra grande. Los dibujos son emojis, como las cinco primeras: no pesan
+  nada y se ven en cualquier aparato.
+
+Todo lo demás es lo de las primeras: **son de una vez**, como el confeti
+(salen la próxima vez que entra a su panel, tienen una semana para verse y se
+marcan vistas), así que `mis_bromas()` y `mandar_broma()` no cambiaron —las
+reglas de quién puede recibir qué y los topes del día siguen siendo las
+mismas—; solo se ensanchó `bromas_tipo_check` y se agregaron las filas de
+`premios_catalogo`. Dicen quién la mandó dos veces: en el aviso (que es el que
+se anuncia, `role="status"`) y en el cartel de la capa (que es adorno,
+`aria-hidden`). Con Modo Adaptado no salen; con «menos movimiento» queda solo
+el aviso.
+
+- **De a una.** Si llegan varias juntas, salen una detrás de otra (`fila` en
+  `js/bromas.js`): diez escenas encimadas no se entienden. Por eso cada una se
+  marca vista cuando EMPIEZA, no al llegar: si se cierra la página a la mitad
+  de la fila, las que faltaban salen la próxima vez.
+- **Con sonido, bajito.** El payaso trae su musiquita (la «Entrada de los
+  gladiadores», de 1897, de dominio público) y el pato su «cuac»; también el
+  ovni, el meteorito y la sandía hacen un ruido. Son notas de WebAudio a poco
+  volumen, sin archivos. El navegador no deja sonar una página que nadie ha
+  tocado todavía, así que muchas veces no suenan: la broma se ve igual, el
+  sonido es un extra, nunca la broma.
+- **El ovni se lleva una pieza de verdad** (lo pidió el dueño después,
+  `20261024163126_broma_ovni_pieza.sql`, que solo cambia lo que dice la
+  tienda). Por eso es la única grande que no sale en el panel sino en
+  Entrenamiento, la primera vez que hay un tablero con piezas a la vista
+  (espera hasta 30 segundos a que cargue el ejercicio; si no aparece, queda
+  sin ver para la próxima página). Baja sobre una pieza al azar —nunca un
+  rey—, la copia sube por el rayo y la de verdad deja de verse **un minuto**:
+  hay que acordarse de cuál era. **La pieza sigue en juego** (lo aclaró el
+  dueño): se puede mover, solo que no se ve, y escondida sigue en su casilla
+  nueva. Al minuto vuelve, con un aviso que dice cuál era y dónde está. Se
+  esconde con una regla de CSS sobre una casilla de ese tablero, no tocando la
+  pieza, porque los tableros se vuelven a pintar enteros en cada jugada y la
+  regla sobrevive. Para seguirla, un `MutationObserver` mira el tablero cada
+  vez que se pinta (antes del siguiente cuadro, así que no parpadea): la
+  casilla que ahora tiene esa pieza y antes no, es la nueva. Si se la comen
+  o cambian muchas casillas de golpe (otro ejercicio), deja de esconderse.
+  La casilla se sigue pudiendo tocar (la jugada se hace de memoria), y el
+  lector de pantalla la sigue nombrando: el Modo Adaptado ya no recibe
+  bromas. Si cambia de página antes del minuto, en la nueva la pieza se ve.
+- **El cartel**, blanco sobre el azul de la marca (#ffffff sobre #102a43,
+  14,7 a 1), con el borde dorado.
+
+`verificar-bromas.js` las revisa: que la base, `js/bromas.js` y la tienda
+(`NOMBRE_BROMA`) conozcan las diez, el contraste del cartel, que salen de a
+una y que la segunda espera a la primera, que el cartel dice quién la mandó,
+que el ovni esconde UNA pieza aunque el tablero se vuelva a pintar, que
+sigue escondida cuando se mueve, y la devuelve al minuto (con el reloj de
+Playwright, sin esperar de verdad),
+que las gallinas miden más de 60 px, que la capa no tapa los clics ni la lee
+el lector de pantalla, y que con «menos movimiento» solo queda el aviso. Con
+`FOTOS=<carpeta>` saca una foto de cada una a media animación, para mirarlas.
+
+## Dónde cae una broma y la clase en vivo
+
+Pedido por el dueño del sitio el 24/10/2026: que quien manda la broma elija
+dónde le cae —en la clase, mientras entrena—, que quede programada para
+cuando la persona hace el ejercicio, que pueda ir con sonido, y que se pueda
+mandar en la clase mientras el compañero hace un ejercicio, para que le
+cueste concentrarse. Y de paso: al menos 10 por día y todo más caro. Lo hace
+`20261024193832_bromas_donde_y_clase.sql`.
+
+- **Esto da vuelta una regla de arriba** («nunca en la clase en vivo»). Se le
+  preguntó al dueño quién decide en la clase y en qué actividades, y eligió:
+  **el profe las enciende** para su clase (vienen apagadas) y valen **en
+  todo menos exámenes y torneos**, que siguen sin cargar `js/bromas.js`. En
+  la clase eso incluye la competencia, el calentamiento, el cuestionario y
+  la práctica con reloj, aunque den puntos: provocar que pierda es justo lo
+  que se pidió.
+- **`bromas.donde`** (`panel`, `entreno` o `clase`) lo elige quien la manda
+  en el mismo diálogo de siempre («¿Dónde le cae?», `js/puntos-regalos.js`).
+  El gorro de payaso no tiene lugar (es la foto); el patito, el arcoíris y el
+  ovni necesitan un tablero, así que no van al panel: lo valida
+  `mandar_broma()`. Las viejas quedaron con su lugar de antes.
+- **Programada**: `js/bromas.js` toma las que son para la página donde está
+  y las deja esperando (`pendientes`, revisadas cada segundo) hasta que
+  haya un ejercicio: en el panel, al entrar; en Entrenamiento, un tablero con
+  piezas a la vista; en la clase, las bromas encendidas y alguna caja de
+  actividad visible (`#question-card` —preguntas, ronda, cuestionario,
+  votación—, `#practice-card`, `#calentamiento-caja`, `#tanda-caja`,
+  `#formacion-tarjeta`, `#pensar-aviso-caja`). No hay en `sesion.js` una
+  señal común de «actividad abierta», así que se mira cuál de esas cajas se
+  ve (`checkVisibility()`). Se marca vista cuando SALE, no al llegar.
+- **El interruptor del profe** (`js/clase-bromas.js`, al final de «Alumnos
+  conectados»; no en la barra «Tu material», que tiene sus botones contados
+  en `verificar-sesion-orden.js`): `bromas_en_esta_clase()` escribe
+  `bromas_clase.hasta`, tres horas, o la hora de ahora para apagarlas. Se
+  apagan solas a su hora. Lo lee la página de quien recibe, por la RLS de
+  `bromas_clase` (sus profes): saltarse ese candado desde la consola solo le
+  hace la broma a uno mismo. Lo que de verdad protege a los demás sigue en
+  la base: `bromas_en_mi_clase` (el apagado de siempre, para todos sus
+  alumnos), la visión marcada, las preferencias y los bloqueos.
+- **Mandarla desde la clase**: con las bromas encendidas, el alumno tiene
+  «🎭 Mandar una broma» en su panel; elige la broma y luego el diálogo de
+  siempre, con el lugar ya puesto en «clase». Después avisa por el canal
+  `bromas-clase:<profe>` (broadcast) y la página del compañero vuelve a
+  preguntarle a la base (`mis_bromas`). Un aviso inventado no trae nada que
+  la base no tenga. Por si se pierde, cada minuto vuelve a preguntar
+  mientras las bromas estén encendidas.
+- **Sonido**: `bromas.con_sonido`, «Con sonido y efectos» o «Solo efectos».
+  Ahora todas suenan (notas de WebAudio, bajitas). En la clase sí suenan casi
+  siempre: el alumno ya tocó la página; al entrar al panel muchas veces el
+  navegador no deja.
+- **Topes**: 10 que manda cada uno y 10 que recibe por día; con el mismo
+  compañero, 3 (para que nadie se ensañe con uno solo).
+- **Precios**: el triple. De 60 (el globo) a 450 (el payaso gigante).
+- **Lo que no se borró**: `mandar_broma()` y `mis_bromas()` cambiaron de
+  firma, y borrarlas hacía que `apply_migration` pidiera una confirmación que
+  en la sesión web no llegó (dos veces, igual que en «Retos, marcador,
+  regalos y bromas»). Las viejas se renombraron (`mandar_broma_v1`,
+  `mis_bromas_v1`) y se les quitó el permiso: no las llama nadie. Por lo
+  mismo, apagar las bromas de la clase pone la hora de ahora en lugar de
+  borrar la fila.
+- **El pato invasor** cruza por encima del tablero (si hay uno), creciendo de
+  0,5 a 2,6 veces y cambiando de color (`hue-rotate` en el pato, no en su
+  globo, que conserva su contraste); en el centro del tablero se para, dice
+  «¡CUAC! ¿Esa era tu jugada?», sacude el tablero y pone un huevo del que
+  sale un pollito. Lo mueve Web Animations, con las posiciones del tablero.
+
+`verificar-bromas.js` lo revisa: que `sesion.html` carga `js/bromas.js`,
+`js/clase-bromas.js` y `js/puntos-regalos.js` (y examen, torneo y
+diagnóstico siguen sin bromas); que una broma «solo efectos» no intenta
+sonar y una «con sonido» sí; que una para Entrenamiento o la clase no sale
+en el panel ni se marca vista, y una para Entrenamiento sale con el
+ejercicio; y, en una página mínima servida en `/sesion.html`, que en la clase
+no sale con las bromas apagadas, ni encendidas sin una actividad abierta, y
+sí al abrirse una pregunta. Se rompió a propósito (el sonido, el candado de
+la clase) y saltó. `verificar-puntos.js` revisa que el diálogo pregunte dónde
+y si suena, y que la llamada los lleve.
+
+## Las bromas del profe
+
+Pedido por el dueño del sitio el 26/10/2026: «que el profe pueda mandar
+bromas a los alumnos». Lo hace `20261026230948_bromas_del_profe.sql`.
+
+- **La misma función, no otra.** `mandar_broma()` se volvió a escribir con
+  `create or replace` y la MISMA firma (cambiarla obliga a renombrar la vieja,
+  ver «Lo que no se borró»). Suma un camino: si quien la manda es profesor
+  de quien la recibe (`soy_profesor_de()`), no hace falta que sean
+  compañeros. Sale en la misma tabla `bromas`, así que quien la recibe la ve
+  igual que cualquier otra (`mis_bromas()`, la campana) y con el nombre del
+  profe.
+- **Gratis.** El profe no junta Puntos Ajedrez: su broma no se cobra ni
+  anota nada en `puntos_ajustes`, y `saldo_restante` vuelve nulo. Por eso
+  el diálogo del profe no muestra precios.
+- **Los mismos frenos de quien la recibe**, con el mismo mensaje que no
+  dice por qué: la visión marcada, «no quiero recibir bromas» y el bloqueo
+  (el alumno puede bloquear a su profe desde la tienda como a cualquiera; la
+  casilla dice ahora «de mis compañeros y de mi profe»).
+- **El apagado** (`bromas_apagadas`, en Configuración) es para las bromas
+  ENTRE sus alumnos: el del propio profe no lo frena a él. El de otro profe
+  del mismo alumno, sí: basta con que uno no quiera.
+- **Topes**: 3 por día al mismo alumno y 10 que recibe cada alumno (los de
+  siempre); lo que manda el profe en un día, 30, porque tiene una clase
+  entera.
+- **Quien administra no entra por aquí**: no da clase (ver «El panel de
+  quien administra no es el de un profesor»). Si quiere ver cómo se ve, lo
+  hace con «Ver como: profesor».
+- **Dónde**: en Configuración, en la caja «Bromas entre tus alumnos», el
+  botón «Mandarle una broma a un alumno» (elige cuál, a quién —de
+  `alumnos_del_profesor()`, no de `profiles`—, dónde le cae y si suena); y
+  en la clase en vivo, con las bromas encendidas, «Mandarle una broma a un
+  alumno» debajo del interruptor de «Alumnos conectados», que la deja en la
+  clase y avisa por el canal `bromas-clase:<profe>` como la de un alumno.
+  Las dos usan `PuntosRegalos.regalar({ …, profe: true })`: una sola copia
+  del diálogo.
+
+Se probó en la base impersonando roles (y deshaciendo): el profe la manda a
+su alumno sin que se le cobre nada, aun con su propio apagado puesto; el
+alumno la ve en `mis_bromas()`; un profe que no es suyo recibe «Solo se le
+pueden mandar bromas a un compañero de clase o a un alumno tuyo.»; la cuarta
+del día al mismo alumno se rechaza; con la visión marcada se rechaza; y entre
+compañeros sigue cobrando (75 puntos el confeti).
+
+`verificar-bromas-profe.js` revisa la página: que Configuración carga
+`js/puntos-regalos.js` y manda con `profe: true`; que la lista del profe sale
+de `alumnos_del_profesor` (y no lee `profiles`), sin precios, y la llamada
+lleva a quién, dónde y si suena; y que en la clase el botón del profe no se
+ve con las bromas apagadas, se ve al encenderlas, no ofrece el gorro de
+payaso y la manda a la clase. Se rompió a propósito (la lista, el botón
+siempre visible) y saltó.
+
+## La semana sin entrenar: se pierde la mitad
+
+Pedido por el dueño del sitio el 24/10/2026: «después de una semana, quien
+no haya entrenado al menos 4 días pierde la mitad de sus puntos».
+Migración `20261024172538_puntos_semana_sin_entrenar.sql`.
+
+- **La semana** es de lunes a domingo en hora de Costa Rica, la misma de los
+  retos. **Un día cuenta** si tiene al menos un ejercicio en
+  `training_progress` (`interno.dias_entrenados()`). El reto «Cuatro días de
+  entrenamiento» pide 5 por día; aquí se eligió la vara más baja porque esto
+  es un castigo, no un premio. La clase en vivo no cuenta como entrenar.
+- **Lo cobra la base, no la página**: pg_cron
+  (`puntos-semana-sin-entrenar`, lunes 06:10 UTC = 00:10 en Costa Rica) corre
+  `interno.cobrar_semana_sin_entrenar()`, que anota `-floor(saldo / 2)` con
+  origen `semana_sin_entrenar` y referencia `semana:<lunes>`: correrla dos
+  veces no cobra dos veces. Lee el saldo con el mismo candado que los canjes
+  (`pg_advisory_xact_lock(hashtext('puntos:' || id))`). Si un lunes el cron no
+  corre, esa semana no se cobra (no se recupera sola); a mano:
+  `select * from interno.cobrar_semana_sin_entrenar('<lunes>')`.
+- **A quién**: solo `role = 'alumno'`, con al menos 2 puntos, y cuya cuenta
+  existía el lunes en que empezó la semana (a quien entró el jueves no se le
+  pueden pedir 4 días).
+- **Arranca la semana del lunes 26/10/2026** (primer cobro el lunes 2/11).
+  Cobrar una semana en la que nadie sabía de la regla sería una sorpresa, no
+  una regla, como se decidió con las tareas viejas. Antes de aplicarla se
+  midió con la semana del 12 al 18/10: de 150 alumnos con puntos, 136 no
+  llegaban a 4 días (unos 30.000 puntos). Ensayada en una transacción que se
+  deshizo: cobró a 129 (los demás tenían cuenta nueva o menos de 2 puntos),
+  ninguno con 4 días o más, y una segunda pasada no cobró nada.
+- No pasa por los puntos dobles (solo doblan lo positivo), y el marcador del
+  salón suma solo lo ganado: perder la mitad no mueve el marcador.
+- **Se avisa con tiempo**: `public.semana_de_entrenamiento()` le dice al
+  alumno cuántos días lleva, cuánto se juega (la mitad de su saldo de ahora)
+  y lo que perdió la semana pasada. La tarjeta del panel y la sección «Entrena
+  4 días cada semana» de la tienda lo escriben con el número («llevas 2 de 4
+  días… pierdes la mitad de tus puntos (50 puntos)»), y cuando ya no alcanzan
+  los días que le quedan a la semana, lo dicen. En el historial sale con su
+  motivo («Semana del 26/10: entrenaste 2 días de 4. Pierdes la mitad.»).
+  Lo comprueba `verificar-puntos.js` (prueba 12).
+
+## Entrenamiento: según la dificultad, sin tope y una sola vez por ejercicio
+
+Pedido por el dueño del sitio (24/10/2026): quitar el tope de 40 puntos por
+día, que lo sencillo pague menos que lo difícil, y que un ejercicio ya hecho
+no vuelva a pagar. Lo hacen `20261024172848_puntos_entrenamiento_por_dificultad.sql`
+y su arreglo `20261024172944_puntos_entrenamiento_filas_juntas.sql`, todo en
+el trigger `otorgar_puntos_de_entrenamiento()`: las páginas no cambian.
+
+- **El tope era el único freno contra repetir un ejercicio fácil en bucle.**
+  Al quitarlo, el freno pasa a ser la regla de «una sola vez»: sin ella, el
+  mismo mate en uno resuelto cien veces daba cien veces sus puntos.
+- **Qué es «el mismo ejercicio»** lo dice `interno.entrenamiento_clave()`:
+  la actividad y el id que ya trae el `detail` (`puzzle_id`, `lesson_id`,
+  `linea_id`, `final_id`, `nivel_id`, `set_id`; curso y lección en `curso`;
+  curso y diagrama en `finales100`; juego, nivel y ejercicio en
+  `concentracion`). Los juegos que no tienen ejercicios con id —Coordenadas,
+  Confites, Memoria, Sonar, Batalla naval, el diagnóstico, Precisión
+  posicional— se juegan una y otra vez por naturaleza: ahí «el mismo» es la
+  misma variante (nivel, modo, piezas) **el mismo día** de Costa Rica, así
+  que pagan una vez por día y variante. Sin eso, Confites en bucle era una
+  fuente infinita de puntos en cuanto se quitó el tope.
+- **Cuánto paga** lo dice `interno.entrenamiento_premio()`, con la dificultad
+  que ya guarda cada actividad (nada nuevo que mandar desde las páginas):
+
+  | Actividad | Puntos |
+  |---|---|
+  | 4×4 | Fácil 1, Intermedio 2, Avanzado 3, Especialista 4, Maestro 5, Gran Maestro 6 |
+  | Mates | mate en 1: 1, en 2: 3, en 3: 5 |
+  | Temas (rating de Lichess) | < 1000: 1, < 1300: 2, < 1600: 3, < 1900: 4, < 2200: 5, más: 6 |
+  | Tipos, Concentración, Sonar, Batalla naval | su nivel, de 1 a 5 |
+  | Memoria | hasta 4 piezas 1, hasta 6: 2, hasta 8: 3, más: 4 |
+  | Finales de un curso (`finales100`) | 3; en el nivel «max», 5 |
+  | Finales, lección de un curso | 3 |
+  | Diagnóstico | 5 (una vez por día) |
+  | Aprender, Ilumina, Coordenadas, Confites | 1 |
+  | Lo demás (Táctica, Aperturas, Practicar, Visualización…) | 2, lo mismo que antes |
+
+  Una actividad nueva entra sola con 2 puntos; si trae su dificultad, se
+  agrega su renglón en `entrenamiento_premio()`.
+- **«Ya hecho» mira TODO `training_progress`**, también lo de antes del
+  cambio: un ejercicio resuelto hace un mes no paga de nuevo, aunque en su
+  día el tope viejo lo dejara sin nada. Para que mirarlo no recorra las
+  miles de filas de un alumno hay un índice sobre la clave
+  (`training_progress_clave_puntos`); por eso `entrenamiento_clave()` es
+  `immutable` y `authenticated` la puede ejecutar (el alumno que inserta su
+  fila mantiene el índice). Es un cálculo puro: no lee ninguna tabla.
+- **Un intento fallido no cuenta**: `finales100` con `ok = false` y Batalla
+  naval con `gano = false` (`entrenamiento_logrado()`) no pagan ni cuentan
+  como hechos; al lograrlo después, paga.
+- **La referencia del ledger es `'entrenamiento:' || clave`** (antes,
+  `'entrenamiento:' || id de la fila`): el índice único de `puntos_ajustes`
+  impide pagar dos veces aunque dos filas del mismo ejercicio lleguen a la
+  vez. Las referencias viejas son un uuid y nunca chocan con las nuevas, que
+  empiezan por la actividad. Lo ya pagado no se tocó.
+- **Lo que falló callado en la primera versión**: «ya hecho» buscaba
+  cualquier OTRA fila con la misma clave. El trigger es `after insert` por
+  fila, y en un insert de varias filas a la vez (los ejercicios sin internet
+  suben juntos) cada fila ya ve a las demás: dos filas del mismo ejercicio
+  se veían una a la otra y ninguna pagaba. Ahora solo cuenta lo que vino
+  ANTES, `(created_at, id) < (new.created_at, new.id)`: la primera paga.
+- **Comprobado en la base** con un alumno real, dentro de un bloque que
+  termina en `raise exception` (todo se deshace): un 4×4 Gran Maestro nuevo
+  da 6; el mismo otra vez, 0; uno que ya había resuelto antes del cambio, 0;
+  uno Fácil nuevo, 1; dos filas iguales en un solo insert, 1; `finales100`
+  fallido, 0, y logrado después, 5. Mirar «ya hecho» en el alumno con más
+  filas tarda unos milisegundos.
+
+## Terminar un tema: el doble, hasta 500
+
+Pedido por el dueño del sitio el 24/10/2026: «cuando se termine un tema, dé
+el doble por premio por completarlo». Él mismo eligió el tope de 500 y que la
+base compruebe que cada ejercicio exista de verdad en el tema. Lo hacen
+`20261024200705_premio_temas.sql` y `20261024200854_premio_temas_cargar.sql`.
+
+- **Qué es un tema**: lo mismo que ya usan las tareas (`metas.json`): los 80
+  temas de Ejercicios por tema (también la «Mezcla equilibrada»), Mate en 1,
+  2 y 3, los seis niveles del 4×4, los Tipos, las categorías de Aprender y de
+  Practicar, y cada apertura de Aperturas y celadas con sus líneas. Un «tema»
+  de un solo ejercicio no cuenta. Las fichas de Estudio no escriben en
+  `training_progress`, así que no entran.
+- **Sus ejercicios, en la base**: `interno.premio_temas` (el total) e
+  `interno.premio_tema_items` (cada ejercicio). Los arma
+  `herramientas/premio-temas.py` en `entreno/data/premio-temas.json`, de las
+  mismas fuentes que `metas.json`. Son unos 160 KB: no caben en una migración
+  (habría que pasarlos enteros por la herramienta), así que la base se baja el
+  archivo publicado con pg_net y lo carga. Al cambiar el archivo, una vez
+  publicado, en el editor SQL:
+
+  ```sql
+  select interno.premio_temas_pedir('https://ajedrez-integral.com/entreno/data/premio-temas.json');
+  -- unos segundos después, con el número que devolvió:
+  select interno.premio_temas_cargar_respuesta(<número>);
+  ```
+
+  Solo agrega y pone al día los totales; no borra (un ejercicio que sale de
+  un tema se quita a mano). Al restaurar la base desde las migraciones, estas
+  dos líneas hacen falta otra vez: los datos no viven en ninguna migración.
+- **Cuándo paga**: un trigger aparte, `premiar_tema_terminado`, `after insert`
+  en `training_progress` (el que paga cada ejercicio no se tocó). Mira solo los
+  temas que contienen el ejercicio recién anotado y cuenta los ejercicios
+  distintos de ese tema que el alumno ya resolvió, **con cualquier tema
+  abierto**: en Ejercicios por tema un mismo ejercicio está en varios temas y
+  la página lo anota una sola vez, bajo el que estaba abierto. Contarlo solo
+  bajo su tema (como cuentan las tareas) dejaría temas imposibles de terminar.
+  Un intento fallido no cuenta (`entrenamiento_logrado()`).
+- **Cuánto**: el doble de lo que valen hoy sus ejercicios
+  (`entrenamiento_premio()`, la tabla de arriba), con un tope de 500. Mate en
+  2 vale 1434 × 3 × 2 = 8604 y paga 500; Las reglas de Aprender (5 × 1 × 2)
+  paga 10. No lo doblan los «puntos dobles»: el origen `tema` no está en la
+  lista de `otorgar_puntos()`, y si lo estuviera el tope dejaría de serlo.
+- **Una sola vez por alumno y tema**: la referencia `tema:<grupo>:<tema>` y el
+  índice único de `puntos_ajustes`.
+- **La trampa que queda**: un ejercicio inventado no cuenta (no está en la
+  lista), pero las listas son públicas (`temas.json`, `mates.json`… las baja
+  la página), así que alguien que sepa usar la consola puede anotarse los
+  ejercicios de verdad sin resolverlos. La base no puede saber si se resolvió
+  de verdad: lo dice el navegador. Pasa lo mismo con cada ejercicio desde
+  siempre; el premio lo hace valer más (hasta 500). Para cerrarlo haría falta
+  comprobar cada solución en el servidor, como la Edge Function `partida-fin`.
+- **El aviso**: `js/entreno-progress.js`, después de anotar un ejercicio,
+  pregunta `mis_temas_terminados()` y dice «🏆 ¡Terminaste el tema «…»!
+  Ganaste N Puntos Ajedrez de premio.» (`role="status"`), una vez: recuerda
+  en el aparato lo ya dicho, porque la hora del celular puede no ser la de la
+  base.
+- **Lo ya terminado antes**: el trigger solo mira ejercicios nuevos. Quien ya
+  tenía un tema completo cobra el premio la próxima vez que anote un
+  ejercicio de ese tema; si ya no le queda ninguno por hacer, no cobra.
+
+**Comprobado en la base el 24/10/2026**, con alumnos reales dentro de bloques
+que se deshacen solos (un `raise` al final): a uno que tenía 305 de los 306
+de Mate en 1, anotarle un ejercicio inventado no le pagó nada; el de verdad
+le pagó 500 una vez (306 × 1 × 2 = 612, tope 500), y repetir uno no volvió a
+pagar. A otro que ya tenía Las reglas completas de antes, la siguiente
+lección le pagó 10. Al cargar la lista por primera vez había unos 200 temas
+ya completos de antes (22 alumnos con «Ataque al enroque corto», 20 con
+«Cómo mueve cada pieza»…); esos cobran con su próximo ejercicio del tema.
+
+`verificar-premio-temas.js`: que `premio-temas.json` sea lo que hoy dan las
+fuentes, que cada tema tenga los mismos ejercicios que dice `metas.json`, que
+el trigger conozca cada grupo y que cada página siga anotando el id que lee
+`premio_item()`, y que el aviso salga una vez. Se rompió a propósito (un
+ejercicio menos en el archivo, el aviso sin llamar) y saltó.
 
 ## Entrenamiento, con puntos retroactivos (a diferencia de las tareas)
 

@@ -1,0 +1,634 @@
+/* La página del Centroamericano 2026 (centroamericano-2026.html), con la cara
+ * de sus bases oficiales: el morado de la portada, el rojo de la píldora, el
+ * verde de las hojas de monstera y el pizote de la mascota.
+ *
+ * Los colores salen medidos de las bases, no a ojo, y cada texto se comprobó
+ * contra su fondo (WCAG AA): blanco sobre #40478F 8,35; sobre #5A5FA3 5,83
+ * (el degradado no baja de ahí: #7273B3, el tono más claro de la portada, da
+ * 4,36 y no alcanza); blanco sobre el rojo #CE1328 5,6; #40478F sobre blanco
+ * 8,35 y sobre el lavanda #F4F4FB 7,62; #1F774C sobre blanco 5,52; en oscuro,
+ * #B8BBF2 sobre brand-900 9,09. Ver «La página del Centroamericano 2026» en
+ * docs/decisiones/juegos-y-torneos.md.
+ */
+.cac {
+  --cac-morado: #40478f;
+  --cac-morado-2: #5a5fa3;
+  --cac-morado-hondo: #1e2453;
+  --cac-rojo: #ce1328;
+  --cac-verde: #1f774c;
+  --cac-azul: #1e4c8a;
+  --cac-naranja: #e0ab5b;
+  --cac-fondo: #f4f4fb;
+  --cac-acento: var(--cac-morado);
+  background-color: var(--cac-fondo);
+}
+.dark .cac {
+  --cac-fondo: rgb(var(--c-brand-950, 7 21 39));
+  --cac-acento: #b8bbf2;
+}
+
+/* La portada: el morado de las bases, con las hojas en las esquinas. */
+.cac-portada {
+  position: relative;
+  overflow: hidden;
+  color: #fff;
+  background: linear-gradient(165deg, var(--cac-morado) 0%, var(--cac-morado-2) 100%);
+}
+.cac-hojas {
+  position: absolute;
+  width: clamp(140px, 22vw, 300px);
+  height: auto;
+  pointer-events: none;
+  user-select: none;
+}
+.cac-hojas-ai { top: -6px; left: -6px; }
+.cac-hojas-ad { top: -6px; right: -6px; transform: scaleX(-1); }
+.cac-hojas-bi { bottom: -6px; left: -6px; transform: scaleY(-1); }
+.cac-hojas-bd { bottom: -6px; right: -6px; transform: scale(-1, -1); }
+.cac-portada .cac-hojas { opacity: 0.55; }
+
+.cac-pildora {
+  display: inline-block;
+  background: var(--cac-rojo);
+  color: #fff;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  border-radius: 0.6rem;
+  padding: 0.3rem 0.9rem;
+  box-shadow: 0 4px 0 rgb(0 0 0 / 0.18);
+}
+.cac-caja {
+  display: inline-block;
+  border: 3px solid #fff;
+  border-radius: 0.75rem;
+  padding: 0.3rem 0.8rem;
+  font-weight: 800;
+  line-height: 1.1;
+  text-transform: uppercase;
+  text-align: center;
+}
+.cac-titulo {
+  font-weight: 800;
+  text-transform: uppercase;
+  line-height: 1.08;
+  letter-spacing: 0.01em;
+  text-shadow: 0 3px 0 rgb(30 36 83 / 0.45);
+}
+
+/* La mascota, el pizote de las bases, sobre su mismo morado: el borde se funde. */
+.cac-mascota {
+  width: 100%;
+  max-width: 340px;
+  height: auto;
+  /* Los lados y el pie se funden con el morado: el recorte no deja un borde recto. */
+  -webkit-mask-image: linear-gradient(to right, transparent 0, #000 16%, #000 84%, transparent 100%), linear-gradient(to bottom, transparent 0, #000 8%, #000 72%, transparent 100%);
+  -webkit-mask-composite: source-in;
+  mask-image: linear-gradient(to right, transparent 0, #000 16%, #000 84%, transparent 100%), linear-gradient(to bottom, transparent 0, #000 8%, #000 72%, transparent 100%);
+  mask-composite: intersect;
+}
+.cac-bandera {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: clamp(72px, 9vw, 104px);
+  height: auto;
+  filter: drop-shadow(0 4px 6px rgb(0 0 0 / 0.25));
+}
+
+/* Los datos de arriba, sobre un morado hondo para que el blanco se lea. */
+.cac-dato {
+  background: rgb(30 36 83 / 0.72);
+  border: 1px solid rgb(255 255 255 / 0.18);
+  border-radius: 1.25rem;
+  padding: 1rem;
+  backdrop-filter: blur(2px);
+}
+.cac-dato dt { color: #dfe0f7; font-size: 0.875rem; }
+
+/* La franja de quien organiza, blanca como el pie de la portada de las bases. */
+.cac-organiza {
+  background: #fff;
+  color: var(--cac-morado-hondo);
+  border-bottom: 6px solid var(--cac-rojo);
+}
+.cac-organiza strong { color: var(--cac-morado); }
+
+/* Los títulos de sección: el morado de las bases, en mayúsculas gruesas. */
+.cac-seccion {
+  color: var(--cac-acento);
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.01em;
+}
+.cac-seccion-raya {
+  display: block;
+  width: 3.5rem;
+  height: 0.4rem;
+  margin-top: 0.4rem;
+  border-radius: 9999px;
+  background: linear-gradient(90deg, var(--cac-rojo) 0 33%, var(--cac-verde) 33% 66%, var(--cac-morado-2) 66%);
+}
+
+/* Las fichas: arriba, la bandera de Costa Rica (azul, blanco, rojo, blanco,
+ * azul, 1-1-2-1-1) con un borde de ajedrez; el color de las bases va en el
+ * ícono. Sobre la ficha blanca el blanco de la bandera se funde y queda el
+ * dibujo de sus franjas; en oscuro se ve entera. */
+.cac-ficha {
+  position: relative;
+  overflow: hidden;
+  border-top-width: 0;
+}
+.cac-ficha::before,
+.cac-ficha::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  pointer-events: none;
+}
+.cac-ficha::before {
+  top: 0;
+  height: 20px;
+  background: linear-gradient(to bottom,
+    #002b7f 0 16.67%, #fff 16.67% 33.33%, #ce1126 33.33% 66.67%,
+    #fff 66.67% 83.33%, #002b7f 83.33% 100%);
+}
+/* Debajo de la bandera, una fila de casillas de tablero. */
+.cac-ficha::after {
+  top: 20px;
+  height: 8px;
+  opacity: 0.16;
+  background: repeating-linear-gradient(90deg, var(--cac-morado-hondo) 0 8px, transparent 8px 16px);
+}
+.dark .cac-ficha::after { opacity: 0.35; background: repeating-linear-gradient(90deg, #b8bbf2 0 8px, transparent 8px 16px); }
+.cac-ficha > .cac-icono:first-child { margin-top: 1rem; }
+.cac-ficha[aria-disabled="true"]::before { opacity: 0.45; }
+.cac-ficha[data-color="rojo"] { --cac-color: var(--cac-rojo); }
+.cac-ficha[data-color="verde"] { --cac-color: var(--cac-verde); }
+.cac-ficha[data-color="azul"] { --cac-color: var(--cac-azul); }
+.cac-ficha[data-color="naranja"] { --cac-color: var(--cac-naranja); }
+.cac-icono {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 9999px;
+  font-size: 1.5rem;
+  background: color-mix(in srgb, var(--cac-color, var(--cac-morado)) 16%, #fff);
+}
+.dark .cac-icono { background: color-mix(in srgb, var(--cac-color, var(--cac-morado)) 30%, rgb(var(--c-brand-900, 10 31 51))); }
+.cac-accion { color: var(--cac-acento); }
+a.cac-ficha { transition: transform 0.2s ease, box-shadow 0.2s ease; }
+a.cac-ficha:hover { transform: translateY(-4px) rotate(-0.6deg); box-shadow: 0 14px 28px -12px rgb(64 71 143 / 0.45); }
+a.cac-ficha:hover .cac-icono { animation: cac-saltito 0.5s ease; }
+
+/* Las ventanas: la barra de arriba, morada como la portada. */
+.cac .ficha-dialogo > div:first-child,
+.cac .ventana-enlace > div > div:first-child {
+  background: var(--cac-morado);
+  border-bottom-color: var(--cac-morado-hondo);
+}
+.cac .ficha-dialogo > div:first-child h2,
+.cac .ventana-enlace > div > div:first-child h2,
+.cac .ventana-enlace > div > div:first-child a { color: #fff; }
+.cac .ficha-dialogo [data-cerrar],
+.cac .ventana-enlace > div > div:first-child button { background: #fff; color: var(--cac-morado); }
+.cac .ficha-dialogo [data-cerrar]:hover,
+.cac .ventana-enlace > div > div:first-child button:hover { background: #e8e9f8; }
+
+/* Lo que se mueve: la mascota respira, el ícono salta; nada si se pidió menos movimiento. */
+@keyframes cac-flotar { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+@keyframes cac-saltito { 0%, 100% { transform: translateY(0); } 40% { transform: translateY(-6px) scale(1.08); } }
+@keyframes cac-mecer { 0%, 100% { transform: rotate(0); } 50% { transform: rotate(-4deg); } }
+.cac-flota { animation: cac-flotar 4.5s ease-in-out infinite; }
+.cac-mece { animation: cac-mecer 3s ease-in-out infinite; transform-origin: 50% 90%; }
+@media (prefers-reduced-motion: reduce) {
+  .cac-flota, .cac-mece, a.cac-ficha:hover .cac-icono { animation: none; }
+  a.cac-ficha:hover { transform: none; }
+}
+
+/* Más pizotes por la página, pocos y con algo que hacer: se asoma en «Pedir un
+ * bye», festeja con el trofeo en «Resultados» y despide antes del pie. Son los
+ * dos dibujos de las bases, recortados: ninguna pose se inventa. */
+.cac-con-asoma, .cac-con-festejo { overflow: hidden; }
+.cac-asoma {
+  position: absolute;
+  right: -0.3rem;
+  bottom: -0.6rem;
+  width: clamp(4rem, 11vw, 6.5rem);
+  height: auto;
+  pointer-events: none;
+  transform: translateY(45%) rotate(-8deg);
+  transition: transform 0.35s cubic-bezier(.34,1.56,.64,1);
+  animation: cac-asomarse 6s ease-in-out infinite;
+}
+a.cac-con-asoma:hover .cac-asoma,
+a.cac-con-asoma:focus-visible .cac-asoma { animation: none; transform: translateY(8%) rotate(-8deg); }
+@keyframes cac-asomarse {
+  0%, 70%, 100% { transform: translateY(45%) rotate(-8deg); }
+  78%, 90% { transform: translateY(8%) rotate(-8deg); }
+}
+.cac-con-asoma .cac-accion, .cac-con-asoma .cac-icono { position: relative; z-index: 1; }
+
+.cac-festejo {
+  position: absolute;
+  top: 0.6rem;
+  right: 0.6rem;
+  width: clamp(2.75rem, 7vw, 4rem);
+  pointer-events: none;
+}
+.cac-festejo img { width: 100%; height: auto; animation: cac-festejar 2.8s ease-in-out infinite; transform-origin: 50% 100%; }
+.cac-brillo {
+  position: absolute;
+  top: -0.3rem;
+  left: -0.5rem;
+  font-size: 1rem;
+  animation: cac-brillar 2.8s ease-in-out infinite;
+}
+@keyframes cac-festejar {
+  0%, 55%, 100% { transform: translateY(0) rotate(0); }
+  65% { transform: translateY(-7px) rotate(-6deg); }
+  75% { transform: translateY(0) rotate(4deg); }
+  85% { transform: translateY(-3px) rotate(0); }
+}
+@keyframes cac-brillar {
+  0%, 55%, 100% { opacity: 0; transform: scale(0.4); }
+  68% { opacity: 1; transform: scale(1.15); }
+  85% { opacity: 0; transform: scale(0.8); }
+}
+
+.cac-despedida-foto {
+  flex-shrink: 0;
+  width: clamp(5.5rem, 18vw, 8.5rem);
+  aspect-ratio: 1;
+  object-fit: cover;
+  object-position: 50% 8%;
+  border-radius: 9999px;
+  border: 5px solid #fff;
+  box-shadow: 0 10px 24px -10px rgb(64 71 143 / 0.6);
+  transform: scaleX(-1);
+  animation: cac-saludar 3.5s ease-in-out infinite;
+}
+@keyframes cac-saludar {
+  0%, 100% { transform: scaleX(-1) rotate(0); }
+  25% { transform: scaleX(-1) rotate(6deg); }
+  50% { transform: scaleX(-1) rotate(-3deg); }
+}
+.cac-globo {
+  position: relative;
+  flex: 1;
+  background: #fff;
+  color: var(--cac-morado-hondo);
+  border: 3px solid var(--cac-morado);
+  border-radius: 1.5rem;
+  padding: 0.9rem 1.1rem;
+  box-shadow: 0 6px 0 var(--cac-morado);
+}
+.cac-globo::before {
+  content: "";
+  position: absolute;
+  left: -0.75rem;
+  top: 50%;
+  width: 1.2rem;
+  height: 1.2rem;
+  background: #fff;
+  border-left: 3px solid var(--cac-morado);
+  border-bottom: 3px solid var(--cac-morado);
+  transform: translateY(-50%) rotate(45deg);
+}
+.cac-globo .cac-accion { color: var(--cac-morado); }
+.dark .cac-globo, .dark .cac-globo::before { background: rgb(var(--c-brand-900, 10 31 51)); }
+.dark .cac-globo { color: #fff; border-color: #b8bbf2; box-shadow: 0 6px 0 #b8bbf2; }
+.dark .cac-globo::before { border-color: #b8bbf2; }
+.dark .cac-globo .cac-accion { color: #b8bbf2; }
+a.cac-despedida:hover .cac-globo { transform: translateY(-2px); }
+
+@media (prefers-reduced-motion: reduce) {
+  .cac-asoma, .cac-festejo img, .cac-brillo, .cac-despedida-foto { animation: none; }
+  .cac-brillo { opacity: 0; }
+  .cac-asoma { transition: none; }
+}
+/* En el celular la ficha es angosta: el pizote se achica y el «Abrir…» le deja su lugar. */
+@media (max-width: 639px) {
+  .cac-asoma { width: 3.25rem; right: -0.2rem; }
+  .cac-con-asoma .cac-accion { padding-right: 2.6rem; }
+}
+
+/* La ficha del Centroamericano en Torneos (torneos-en-vivo.html y la vista
+ * previa de admin.html#torneos): la misma cara de la página, en chico. La
+ * arma js/salas-torneo.js (PORTADAS). Mismos contrastes que arriba: blanco
+ * sobre #5A5FA3 5,83; #40478F sobre blanco 8,35; blanco sobre el rojo 5,6. */
+.cac-sala {
+  position: relative;
+  overflow: hidden;
+  color: #fff;
+  background: linear-gradient(165deg, #40478f 0%, #5a5fa3 100%);
+  padding-top: 2.25rem;
+}
+.cac-sala::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 14px;
+  background: linear-gradient(to bottom,
+    #002b7f 0 16.67%, #fff 16.67% 33.33%, #ce1126 33.33% 66.67%,
+    #fff 66.67% 83.33%, #002b7f 83.33% 100%);
+}
+.cac-sala::after {
+  content: "";
+  position: absolute;
+  top: 14px;
+  left: 0;
+  right: 0;
+  height: 7px;
+  opacity: 0.3;
+  background: repeating-linear-gradient(90deg, #fff 0 7px, transparent 7px 14px);
+}
+.cac-sala h2 { color: #fff; padding-right: 5.5rem; text-shadow: 0 2px 0 rgb(30 36 83 / 0.45); }
+.cac-sala h2 + p { color: #fff; }
+.cac-sala-imagen {
+  position: absolute;
+  top: 1.6rem;
+  right: 0.9rem;
+  width: 5rem;
+  height: auto;
+  pointer-events: none;
+  filter: drop-shadow(0 4px 6px rgb(0 0 0 / 0.25));
+  animation: cac-mecer 3s ease-in-out infinite;
+  transform-origin: 50% 90%;
+}
+.cac-sala a.cac-sala-boton { background: #fff; color: #40478f; font-weight: 700; box-shadow: 0 4px 0 rgb(30 36 83 / 0.35); }
+.cac-sala a.cac-sala-boton:hover { background: #e8e9f8; }
+.cac-sala a.cac-sala-principal { background: #ce1328; color: #fff; }
+.cac-sala a.cac-sala-principal:hover { background: #b0101f; }
+.cac-sala a.cac-sala-boton:focus-visible { outline: 3px solid #fff; outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) {
+  .cac-sala-imagen { animation: none; }
+}
+
+/* «Hoy en el torneo» (js/centroamericano.js): una tarjeta blanca con el rojo de
+ * la píldora a la izquierda (el pizote del trofeo ya está justo abajo, junto
+ * al título de las fichas: aquí sería el tercero seguido). Contraste: #40478F sobre
+ * blanco 8,35; #1E2453 sobre blanco 14,66; en oscuro, blanco y #B8BBF2 sobre
+ * brand-900. */
+.cac-hoy {
+  position: relative;
+  background: #fff;
+  border-left: 8px solid var(--cac-rojo);
+  border-radius: 1.5rem;
+  box-shadow: 0 10px 28px -14px rgb(64 71 143 / 0.5);
+  padding: 1.25rem 1.5rem;
+  color: var(--cac-morado-hondo);
+}
+.dark .cac-hoy { background: rgb(var(--c-brand-900, 10 31 51)); color: #fff; }
+.cac-hoy-etiqueta {
+  font-size: 0.8rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--cac-acento);
+}
+.cac-hoy-principal { margin-top: 0.25rem; font-size: clamp(1.35rem, 3.6vw, 2rem); font-weight: 800; line-height: 1.15; }
+.cac-hoy-detalle { margin-top: 0.4rem; }
+.cac-hoy-sin-red { margin-top: 0.75rem; font-size: 0.85rem; color: var(--cac-acento); }
+.cac-hoy-sin-red[hidden] { display: none; }
+
+/* Los avisos de la organización: blanco sobre el rojo de las bases (5,6). */
+.cac-anuncios { display: grid; gap: 0.6rem; margin-bottom: 1rem; }
+.cac-anuncios[hidden] { display: none; }
+.cac-anuncio { background: var(--cac-rojo); color: #fff; border-radius: 1.25rem; padding: 0.9rem 1.25rem; font-size: 1.05rem; line-height: 1.4; box-shadow: 0 10px 24px -14px rgb(206 19 40 / 0.6); }
+.cac-anuncio strong { display: block; font-size: 0.8rem; letter-spacing: 0.06em; text-transform: uppercase; }
+/* El aviso del modo de prueba (?sala=…): el mismo rojo, de borde a borde y
+   pegado arriba, para que nadie confunda los datos de prueba con los del
+   festival. Blanco sobre #CE1328: 5,6. */
+.cac-prueba { position: sticky; top: 0; z-index: 60; background: var(--cac-rojo); color: #fff; padding: 0.75rem 1rem; text-align: center; font-size: 0.95rem; line-height: 1.4; }
+.cac-prueba p + p { margin-top: 0.25rem; }
+.cac-prueba-salir { display: inline-block; margin-top: 0.35rem; color: #fff; font-weight: 700; text-decoration: underline; text-underline-offset: 2px; border-radius: 0.25rem; }
+.cac-prueba-salir:focus-visible { outline: 3px solid #fff; outline-offset: 2px; }
+
+/* «Busca a tu jugador»: blanca, con el morado de las bases en el borde. */
+.cac-buscador {
+  background: #fff;
+  border: 3px solid var(--cac-morado);
+  border-radius: 1.5rem;
+  padding: 1.1rem 1.25rem 1.25rem;
+  box-shadow: 0 6px 0 var(--cac-morado);
+}
+.dark .cac-buscador { background: rgb(var(--c-brand-900, 10 31 51)); border-color: #b8bbf2; box-shadow: 0 6px 0 #b8bbf2; }
+.cac-buscador-titulo { display: block; font-size: 1.25rem; font-weight: 800; color: var(--cac-acento); }
+.cac-buscador-campo {
+  margin-top: 0.75rem;
+  width: 100%;
+  font-size: 1.1rem;
+  padding: 0.7rem 0.9rem;
+  border: 2px solid var(--cac-morado-2);
+  border-radius: 0.8rem;
+  background: #fff;
+  color: var(--cac-morado-hondo);
+}
+.dark .cac-buscador-campo { background: rgb(var(--c-brand-950, 7 21 39)); color: #fff; border-color: #b8bbf2; }
+.cac-buscador-campo:focus { outline: 3px solid var(--cac-rojo); outline-offset: 2px; }
+.cac-jugador {
+  border: 1px solid #dfe0f7;
+  border-left: 6px solid var(--cac-morado);
+  border-radius: 1rem;
+  padding: 0.8rem 1rem;
+  background: var(--cac-fondo);
+}
+.dark .cac-jugador { border-color: rgb(var(--c-brand-700, 51 78 104)); border-left-color: #b8bbf2; background: rgb(var(--c-brand-950, 7 21 39)); }
+.cac-jugador-nombre { font-weight: 800; font-size: 1.05rem; }
+.cac-fed {
+  display: inline-block;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  padding: 0.05rem 0.4rem;
+  border-radius: 0.35rem;
+  background: var(--cac-morado);
+  color: #fff;
+  vertical-align: 0.1em;
+}
+.cac-jugador-ronda { margin-top: 0.4rem; font-weight: 700; }
+
+/* El medallero. */
+.cac-medallas { width: 100%; font-size: 0.9rem; }
+.cac-medallas th, .cac-medallas td { padding: 0.4rem 0.6rem; text-align: right; }
+.cac-medallas th:first-child, .cac-medallas td:first-child { text-align: left; }
+.cac-podios { display: grid; gap: 0.8rem; grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr)); }
+.cac-podio { background: #fff; border-radius: 1rem; border: 1px solid #dfe0f7; padding: 0.8rem 1rem; }
+.dark .cac-podio { background: rgb(var(--c-brand-900, 10 31 51)); border-color: rgb(var(--c-brand-700, 51 78 104)); }
+.cac-podio h3 { font-weight: 800; color: var(--cac-acento); }
+.cac-podio-estado { font-size: 0.8rem; font-weight: 700; }
+.cac-podio ol { margin-top: 0.3rem; font-size: 0.9rem; }
+.cac-podio li { margin-top: 0.2rem; }
+
+/* La estrella de seguir, arriba a la derecha de cada jugador. Llena (★) o
+   vacía (☆): la forma dice el estado, no el color, y el lector oye
+   «Seguir a…»/«Dejar de seguir a…» con aria-pressed. */
+.cac-jugador { position: relative; }
+.cac-jugador-nombre { padding-right: 2.75rem; }
+.cac-estrella {
+  position: absolute;
+  top: 0.45rem;
+  right: 0.5rem;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 999px;
+  font-size: 1.6rem;
+  line-height: 1;
+  color: var(--cac-acento);
+  background: transparent;
+}
+.cac-estrella:hover { background: rgba(64, 71, 143, 0.1); }
+.cac-estrella:focus-visible { outline: 3px solid var(--cac-rojo); outline-offset: 1px; }
+
+/* «Mis jugadores»: arriba del buscador, separada por una raya. */
+.cac-seguidos { padding-bottom: 1.25rem; border-bottom: 2px dashed #dfe0f7; }
+.dark .cac-seguidos { border-bottom-color: rgb(var(--c-brand-700, 51 78 104)); }
+.cac-seguidos[hidden], #avisos[hidden] { display: none; }
+.cac-boton {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 2.75rem;
+  padding: 0.55rem 1.1rem;
+  border-radius: 999px;
+  font-weight: 800;
+  background: var(--cac-morado);
+  color: #fff;
+}
+.cac-boton[aria-pressed="true"] { background: var(--cac-verde); }
+.cac-boton:disabled { opacity: 0.7; }
+.cac-boton:focus-visible { outline: 3px solid var(--cac-rojo); outline-offset: 2px; }
+.dark .cac-boton { background: #b8bbf2; color: var(--cac-morado-hondo); }
+.dark .cac-boton[aria-pressed="true"] { background: #9be0bb; color: #0b2a1a; }
+
+/* «Mi delegación»: una sección por categoría. */
+.cac-delegacion-grupo + .cac-delegacion-grupo { margin-top: 1.1rem; }
+.cac-delegacion-grupo h4 { font-weight: 800; color: var(--cac-acento); }
+
+/* Los botones de cada jugador («Sus rondas», «Compartir») y lo que abren. */
+.cac-jugador-acciones { margin-top: 0.6rem; display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.cac-jugador-boton {
+  min-height: 2.5rem;
+  padding: 0.35rem 0.9rem;
+  border-radius: 999px;
+  border: 2px solid var(--cac-morado);
+  color: var(--cac-morado);
+  background: #fff;
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+.cac-jugador-boton[aria-expanded="true"] { background: var(--cac-morado); color: #fff; }
+.cac-jugador-boton:disabled { opacity: 0.7; }
+.cac-jugador-boton:focus-visible { outline: 3px solid var(--cac-rojo); outline-offset: 2px; }
+.dark .cac-jugador-boton { background: transparent; border-color: #b8bbf2; color: #b8bbf2; }
+.dark .cac-jugador-boton[aria-expanded="true"] { background: #b8bbf2; color: var(--cac-morado-hondo); }
+.cac-jugador-rondas { margin-top: 0.6rem; padding-top: 0.6rem; border-top: 1px dashed #c9cbee; font-size: 0.92rem; }
+.cac-jugador-rondas ol { list-style: none; padding: 0; margin: 0; }
+.cac-jugador-rondas li + li { margin-top: 0.25rem; }
+.dark .cac-jugador-rondas { border-top-color: rgb(var(--c-brand-700, 51 78 104)); }
+
+/* El resumen de la ronda de una delegación. */
+.cac-resumen { margin-bottom: 1rem; padding: 0.9rem 1rem; border-radius: 1rem; background: var(--cac-fondo); border: 2px solid var(--cac-morado); }
+.dark .cac-resumen { border-color: #b8bbf2; }
+
+/* Las tablas de la clasificación y de los países: se desliza de lado en el celular. */
+.cac-tabla-envoltura { overflow-x: auto; border-radius: 1rem; border: 1px solid #dfe0f7; background: #fff; }
+.dark .cac-tabla-envoltura { border-color: rgb(var(--c-brand-800, 36 59 83)); background: rgb(var(--c-brand-900, 10 31 51)); }
+.cac-tabla { width: 100%; font-size: 0.92rem; border-collapse: collapse; }
+.cac-tabla th, .cac-tabla td { padding: 0.45rem 0.6rem; text-align: left; white-space: nowrap; }
+.cac-tabla tbody th { font-weight: 600; white-space: normal; min-width: 12rem; }
+.cac-tabla .num { text-align: right; font-variant-numeric: tabular-nums; }
+.cac-tabla thead tr { background: #e6e7f8; }
+.cac-tabla tbody tr:nth-child(even) { background: #f7f7fd; }
+.dark .cac-tabla thead tr { background: rgb(var(--c-brand-800, 36 59 83)); }
+.dark .cac-tabla tbody tr:nth-child(even) { background: rgb(var(--c-brand-950, 7 21 39)); }
+
+/* El pareo para proyectar: toda la pantalla, letra grande y fondo oscuro.
+   Blanco sobre #1E2453 14,7 : 1; sobre la fila par #2A3166, 12,1 : 1; los títulos #E6E7F8, 12 : 1. */
+.cac-proyector {
+  width: 100vw; height: 100vh; max-width: none; max-height: none; margin: 0; inset: 0;
+  background: #1e2453; color: #fff; border: 0;
+}
+.cac-proyector[open] { display: flex; flex-direction: column; }
+.cac-proyector-barra { display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem 1.25rem; padding: 1rem 1.5rem; background: #40478f; }
+.cac-proyector-titulo { flex: 1 1 20rem; font-size: clamp(1.4rem, 3vw, 2.8rem); font-weight: 800; }
+.cac-proyector-reloj { font-size: clamp(1.2rem, 2.4vw, 2.2rem); font-weight: 700; font-variant-numeric: tabular-nums; }
+.cac-proyector-botones { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.cac-proyector-boton { min-height: 2.75rem; padding: 0.4rem 1rem; border-radius: 999px; background: #fff; color: #1e2453; font-weight: 800; }
+.cac-proyector-boton[aria-pressed="true"] { background: #ffd66b; }
+.cac-proyector-boton:focus-visible { outline: 4px solid #ffd66b; outline-offset: 2px; }
+.cac-proyector-contenido { flex: 1; overflow: auto; padding: 1rem 1.5rem 1.5rem; }
+.cac-proyector-tabla { width: 100%; border-collapse: collapse; font-size: clamp(1.1rem, 2.3vw, 2.3rem); }
+.cac-proyector-tabla th { text-align: left; font-size: 0.7em; letter-spacing: 0.04em; text-transform: uppercase; padding: 0.3em 0.5em; color: #e6e7f8; }
+.cac-proyector-tabla td { padding: 0.35em 0.5em; }
+.cac-proyector-tabla tbody tr:nth-child(even) { background: #2a3166; }
+.cac-proyector-tabla .mesa { font-weight: 800; width: 3.5em; font-variant-numeric: tabular-nums; }
+.cac-proyector-tabla .res { width: 5em; text-align: center; font-weight: 800; }
+.cac-proyector-vacio { font-size: clamp(1.4rem, 3vw, 2.8rem); font-weight: 700; padding-top: 2rem; }
+
+/* Cómo va la ronda: el número va escrito; la barra solo lo acompaña. */
+.cac-progreso { padding: 0.8rem 1rem; border-radius: 1rem; background: var(--cac-fondo); border: 2px solid var(--cac-verde); }
+.cac-progreso[hidden] { display: none; }
+.cac-progreso-barra { margin-top: 0.5rem; height: 0.75rem; border-radius: 999px; background: #dfe0f7; overflow: hidden; }
+.cac-progreso-barra span { display: block; height: 100%; width: 0; background: var(--cac-verde); transition: width 0.4s; }
+.dark .cac-progreso { border-color: #9be0bb; }
+.dark .cac-progreso-barra { background: rgb(var(--c-brand-800, 36 59 83)); }
+.dark .cac-progreso-barra span { background: #9be0bb; }
+#delegacion-avisos-caja[hidden] { display: none; }
+
+/* Las sorpresas, numeradas. */
+/* Cara a cara: dos fichas lado a lado (una debajo de la otra en el celular) y
+   cada ronda con una línea por jugador. */
+.cac-cara { display: grid; gap: 0.8rem; }
+@media (min-width: 640px) { .cac-cara { grid-template-columns: 1fr 1fr; } }
+.cac-cara-datos { display: grid; grid-template-columns: auto 1fr; gap: 0.25rem 0.9rem; margin-top: 0.5rem; font-size: 0.95rem; }
+.cac-cara-datos dt { font-weight: 700; }
+.cac-cara-rondas > li { background: #fff; border-radius: 0.8rem; border: 1px solid #dfe0f7; padding: 0.6rem 0.9rem; }
+.dark .cac-cara-rondas > li { background: rgb(var(--c-brand-900, 10 31 51)); border-color: rgb(var(--c-brand-700, 51 78 104)); }
+.cac-cara-rondas > li + li { margin-top: 0.5rem; }
+.cac-cara-rondas ul { margin-top: 0.2rem; font-size: 0.92rem; }
+/* «Resultados en vivo» con un torneo por categoría: una fila por edad, con
+   Absoluto y Femenino lado a lado. Blanco sobre el morado: 8,35. */
+.cac-categorias { margin-top: 0.9rem; display: grid; gap: 0.5rem; }
+.cac-categorias > li { display: grid; grid-template-columns: 4.6rem 1fr 1fr; gap: 0.5rem; align-items: center; }
+.cac-categoria-edad { font-weight: 800; font-size: 1.05rem; }
+.cac-categoria { display: block; text-align: center; background: var(--cac-morado); color: #fff; font-weight: 700; padding: 0.7rem 0.5rem; border-radius: 0.8rem; text-decoration: none; transition: background-color 0.15s; }
+.cac-categoria:hover { background: var(--cac-morado-hondo); }
+.cac-categoria:focus { outline: none; }
+.cac-categoria:focus-visible { outline: 3px solid var(--cac-rojo); outline-offset: 2px; }
+.dark .cac-categoria:focus-visible { outline-color: #fff; }
+.cac-categoria-sola { display: inline-block; margin-top: 0.9rem; padding-inline: 1.4rem; }
+.cac-otros { margin-top: 0.5rem; display: grid; gap: 0.5rem; }
+/* «El festival en números»: cuatro cifras grandes, de a dos en el celular.
+   #1E2453 sobre #EEF0FB: 12,9 (en la imagen, #40478F sobre #EEF0FB: 7,35). */
+.cac-numeros { margin-top: 0.9rem; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.6rem; }
+@media (min-width: 640px) { .cac-numeros { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+.cac-numero { background: #eef0fb; color: #1e2453; border-radius: 1rem; padding: 0.8rem 1rem; display: flex; flex-direction: column-reverse; }
+.dark .cac-numero { background: rgb(var(--c-brand-900, 10 31 51)); color: #fff; }
+.cac-numero dd { font-size: 2rem; font-weight: 800; line-height: 1.1; }
+.cac-numero dt { font-size: 0.85rem; font-weight: 700; }
+.cac-sorpresas { padding-left: 1.4rem; list-style: decimal; }
+.cac-sorpresas li + li { margin-top: 0.4rem; }
+
+/* El proyector: cómo va la ronda, el modo, los podios y el QR en la esquina. */
+.cac-proyector-progreso { padding: 0.4rem 1.5rem; background: #2a3166; font-size: clamp(1rem, 1.8vw, 1.6rem); font-weight: 700; }
+.cac-proyector-progreso[hidden] { display: none; }
+.cac-proyector-modo select { appearance: auto; }
+.cac-proyector-podios { display: grid; gap: 1.5rem; grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr)); font-size: clamp(1.1rem, 2vw, 2rem); }
+.cac-proyector-podios h3 { font-weight: 800; font-size: 1.15em; color: #ffd66b; }
+.cac-proyector-podios li { margin-top: 0.4em; }
+.cac-proyector-qr { position: absolute; right: 1.25rem; bottom: 1.25rem; width: clamp(7rem, 12vw, 11rem); text-align: center; background: #fff; color: #1e2453; border-radius: 1rem; padding: 0.5rem; font-weight: 800; font-size: 0.85rem; }
+.cac-proyector-qr div { aspect-ratio: 1; }
+.cac-proyector[open] { position: fixed; }
+@media (max-width: 640px) { .cac-proyector-qr { display: none; } }
+
+/* «Instala el Centroamericano en tu celular» (y la ayuda para iPhone). */
+.cac-instalar { display: flex; flex-wrap: wrap; align-items: center; gap: 1rem; padding: 1rem 1.25rem; border-radius: 1.5rem; background: #fff; border: 3px solid var(--cac-morado); }
+.cac-instalar[hidden] { display: none; }
+.dark .cac-instalar { background: rgb(var(--c-brand-900, 10 31 51)); border-color: #b8bbf2; }
