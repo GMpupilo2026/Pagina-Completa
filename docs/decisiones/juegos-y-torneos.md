@@ -9368,3 +9368,51 @@ estaban, y las diferencias eran solo lo nuevo.
   5. crear la sala en `admin.html#torneos`, con los enlaces de chess-results;
   6. correr `sitemap.py` y `archivos-catalogo.js`;
   7. sumarla a `PAGINAS` de `verificar-paginas-universitarias.js`.
+
+## La cámara que lee el tablero
+
+`camara-tablero.html` (`js/camara-tablero.js`) es una **prueba**, por ahora
+solo de quien administra: el celular encima de un tablero de verdad lee cada
+casilla y anota las jugadas. Sirve para medir qué tan bien se ven nuestros
+tableros con la luz real de un salón antes de invertir en entrenar un modelo o
+en transmitir. No guarda nada ni manda la imagen a ningún lado: todo pasa en
+el celular.
+
+- **No reconoce piezas: reconoce jugadas.** Distinguir un alfil de un peón
+  desde arriba, con sombras y reflejos, es caro y falla. De cada casilla solo
+  se pregunta si está vacía, con pieza blanca o con pieza negra, y chess.js
+  busca la jugada legal que explica el cambio (`buscarJugadas`). El enroque
+  (4 casillas) y la captura al paso (3) salen solos. Si se escapó una jugada,
+  prueba las parejas. Al coronar, la cámara solo ve «pieza blanca»: se anota
+  dama y se avisa.
+- **Lo que no explica ninguna jugada legal no se anota.** Se dice qué casillas
+  cambiaron y se espera. Ninguna posición se inventa.
+- **Las esquinas las marca la persona**, en orden a1, h1, h8, a8; después se
+  arrastran, o se mueven con el teclado (1 a 4 eligen, las flechas mueven).
+  Con las cuatro se resuelve la homografía a mano (ocho incógnitas, Gauss):
+  no hace falta bajar OpenCV. Cuatro esquinas que no forman un cuadrilátero
+  convexo no dan tablero.
+- **Calibrar es mirar la posición inicial**: las filas 3 a 6 enseñan cómo se
+  ve una casilla vacía de cada color, las 1 y 2 una pieza blanca y las 7 y 8
+  una negra. Por cada casilla se miden tres rasgos contra el fondo vacío de su
+  color: qué parte se aparta, cuánto borde tiene (una pieza blanca en casilla
+  blanca casi no cambia el color, pero sí el contorno) y el tono de lo que se
+  aparta. Si con lo aprendido no se leen al menos 48 de las 64 casillas de la
+  posición inicial, no se calibra: casi seguro la esquina 1 no es a1.
+- **La lectura se cree cuando se queda quieta**: 6 lecturas iguales seguidas,
+  una cada 200 ms. Mientras la mano está encima, cambia y no se anota.
+- **«Probar con una foto»**: otra foto del mismo tamaño conserva las esquinas,
+  la calibración y la partida, así que se puede probar una partida foto a
+  foto sin cámara en vivo. Así la prueba `verificar-camara-tablero.js`, con
+  tableros que dibuja el mismo navegador, inclinados y con ruido.
+- **La cámara está apagada en todo el sitio** (`Permissions-Policy:
+  camera=()` en `/*` de `_headers`). Esta página quita esa cabecera
+  (`! Permissions-Policy`) y pone la misma con `camera=(self)`, en las dos
+  rutas: con y sin `.html`. Solo agregar la nueva no sirve: Cloudflare junta
+  las dos con una coma y el `camera=()` sigue ahí. El verificador revisa que
+  ninguna otra ruta tenga la cámara.
+
+Lo que falta, si la prueba sale bien: encontrar el tablero solo, un modelo
+entrenado con fotos de nuestros tableros (las etiqueta el PGN de la partida),
+y transmitir las jugadas, no el video: a una transmisión de Lichess, que
+`transmision.html` ya sabe mostrar.

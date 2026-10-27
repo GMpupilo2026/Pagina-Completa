@@ -39,6 +39,19 @@
   Strict-Transport-Security: max-age=31536000; includeSubDomains
   Cross-Origin-Opener-Policy: same-origin
 
+# La cámara que lee el tablero (camara-tablero.html) es la ÚNICA página que
+# puede usar la cámara: la regla de /* la apaga en todo el sitio. Se quita esa
+# cabecera y se pone otra igual pero con camera=(self). Si solo se agregara la
+# nueva, Cloudflare juntaría las dos con una coma y quedaría camera=() también.
+# Va en las dos rutas: Cloudflare sirve la página sin el .html.
+/camara-tablero
+  ! Permissions-Policy
+  Permissions-Policy: geolocation=(), camera=(self), microphone=(), payment=(), usb=(), interest-cohort=()
+
+/camara-tablero.html
+  ! Permissions-Policy
+  Permissions-Policy: geolocation=(), camera=(self), microphone=(), payment=(), usb=(), interest-cohort=()
+
 # El service worker y el manifest NO se cachean. Si el navegador se queda con
 # un sw.js viejo, la app deja de actualizarse y no hay forma de avisarle a
 # nadie: sigue sirviendo lo de antes sin dar ningún error.
