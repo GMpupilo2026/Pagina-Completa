@@ -99,8 +99,12 @@
     <section class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12" aria-labelledby="t-lista">
         <span class="text-accent-700 dark:text-accent-400 font-semibold uppercase tracking-wide text-sm">Con licencia</span>
         <h2 id="t-lista" class="font-serif text-2xl md:text-3xl font-bold text-brand-800 dark:text-white mt-1">Las herramientas</h2>
-        <p class="text-brand-500 dark:text-brand-300 mt-1">Con candado cerrado, la herramienta todavía no está abierta para tu cuenta.</p>
-        <ul id="lista" class="mt-6 grid gap-6"></ul>
+        <p class="text-brand-500 dark:text-brand-300 mt-1">Ordenadas por tema: elige una ficha. Con candado cerrado, la herramienta todavía no está abierta para tu cuenta.</p>
+        <div id="temas" role="tablist" aria-label="Temas de las herramientas" class="mt-6 flex flex-wrap gap-2"></div>
+        <div id="panel-tema" role="tabpanel" tabindex="0" class="mt-6 rounded-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+            <p id="tema-resumen" class="text-brand-600 dark:text-brand-300"></p>
+            <ul id="lista" class="mt-4 grid gap-6"></ul>
+        </div>
     </section>
 
     <section class="bg-white dark:bg-brand-900 py-12" aria-labelledby="t-como">

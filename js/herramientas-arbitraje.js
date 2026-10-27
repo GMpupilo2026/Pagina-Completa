@@ -9,15 +9,26 @@
    `disponible: false` es una herramienta anunciada que todavía no se puede
    usar: sale en la vitrina como «Próximamente», sin enlace. `gratis: true` es
    una que no lleva licencia (Pareo Integral, pública y sin cuenta): sale
-   abierta para todos y no se ofrece en licencias.html. Ver «Herramientas
+   abierta para todos y no se ofrece en licencias.html. `tema` es la ficha
+   de la vitrina donde sale (uno de TEMAS); la lista se ordena por tema, y
+   dentro de cada uno queda en el orden en que está escrita. Ver «Herramientas
    de arbitraje» en docs/decisiones/juegos-y-torneos.md. */
 (function () {
     "use strict";
     if (window.HerramientasArbitraje) return;
 
+    /* Las fichas de la vitrina, en el orden en que salen. */
+    const TEMAS = [
+        { id: "arbitraje", emoji: "⚖️", nombre: "Arbitraje", resumen: "Para dirigir un torneo: emparejar, desempatar y encontrar a los árbitros del país, con sus torneos y sus normas." },
+        { id: "jde", emoji: "🏫", nombre: "JDE", largo: "Juegos Deportivos Estudiantiles", resumen: "Los Juegos Deportivos Estudiantiles del MEP: la participación año por año, cada estudiante y cada colegio, y la selección CODICADER." },
+        { id: "jdn", emoji: "🏆", nombre: "JDN", largo: "Juegos Deportivos Nacionales", resumen: "Los Juegos Deportivos Nacionales del ICODER: los resultados de cada comité de deportes y quién está inscrito para la próxima eliminatoria." },
+        { id: "universitarios", emoji: "🎓", nombre: "Universitarios", resumen: "Los torneos universitarios de Costa Rica y los JUDUCA, ordenados por universidad." },
+    ];
+
     const LISTA = [
         {
             id: "pareo",
+            tema: "arbitraje",
             emoji: "♟️",
             nombre: "Pareo Integral: emparejamientos con el Sistema Holandés de FIDE",
             corto: "Pareo Integral",
@@ -36,6 +47,7 @@
         },
         {
             id: "arbitros",
+            tema: "arbitraje",
             emoji: "🧑‍⚖️",
             nombre: "Árbitros de Costa Rica: la lista y a quién contratar",
             corto: "Lista de árbitros",
@@ -51,6 +63,7 @@
         },
         {
             id: "seleccion-codicader",
+            tema: "jde",
             emoji: "🏅",
             nombre: "Selección por parámetros (CODICADER y JDE)",
             corto: "Selección CODICADER",
@@ -68,6 +81,7 @@
         },
         {
             id: "jdn-comites",
+            tema: "jdn",
             emoji: "🏆",
             nombre: "Resultados JDN por comité",
             corto: "Resultados JDN",
@@ -83,6 +97,7 @@
         },
         {
             id: "universidades",
+            tema: "universitarios",
             emoji: "🎓",
             nombre: "Resultados universitarios por universidad",
             corto: "Resultados universitarios",
@@ -99,6 +114,7 @@
         },
         {
             id: "jdn-proyeccion",
+            tema: "jdn",
             emoji: "📋",
             nombre: "Proyección JDN por comité",
             corto: "Proyección JDN",
@@ -114,6 +130,7 @@
         },
         {
             id: "arbitros-cr",
+            tema: "arbitraje",
             emoji: "🧑‍⚖️",
             nombre: "Árbitros de Costa Rica",
             corto: "Árbitros de CR",
@@ -129,6 +146,7 @@
         },
         {
             id: "ajedrez-estudiantil",
+            tema: "jde",
             emoji: "📊",
             nombre: "Ajedrez estudiantil en Costa Rica",
             corto: "Ajedrez estudiantil",
@@ -145,6 +163,7 @@
         },
         {
             id: "historial-jugador",
+            tema: "jde",
             emoji: "👤",
             nombre: "Historial de un jugador en los juegos estudiantiles",
             corto: "Historial de un jugador",
@@ -161,6 +180,7 @@
         },
         {
             id: "estadisticas-colegios",
+            tema: "jde",
             emoji: "🏫",
             nombre: "Estadísticas por colegio y región",
             corto: "Estadísticas por colegio",
@@ -177,6 +197,7 @@
         },
         {
             id: "desempates",
+            tema: "arbitraje",
             emoji: "⚖️",
             nombre: "Desempates explicados",
             href: "desempates.html",
@@ -193,6 +214,7 @@
         },
         {
             id: "variacion-elo",
+            tema: "arbitraje",
             emoji: "📈",
             nombre: "Variación de Elo del torneo",
             disponible: false,
@@ -201,6 +223,7 @@
         },
         {
             id: "reclamos-tablas",
+            tema: "arbitraje",
             emoji: "🔁",
             nombre: "Reclamos de tablas desde el PGN",
             disponible: false,
@@ -209,6 +232,7 @@
         },
         {
             id: "acta-jde",
+            tema: "jde",
             emoji: "📝",
             nombre: "Acta e informe arbitral JDE",
             disponible: false,
@@ -217,6 +241,9 @@
         },
     ];
 
+    const ordenTema = new Map(TEMAS.map((t, i) => [t.id, i]));
+    LISTA.sort((a, b) => ordenTema.get(a.tema) - ordenTema.get(b.tema));
+
     const porId = new Map(LISTA.map((h) => [h.id, h]));
     function nombre(id) {
         if (id === "todas") return "Todas las herramientas";
@@ -224,5 +251,5 @@
         return h ? h.nombre : id;
     }
 
-    window.HerramientasArbitraje = { LISTA, porId, nombre };
+    window.HerramientasArbitraje = { TEMAS, LISTA, porId, nombre };
 })();

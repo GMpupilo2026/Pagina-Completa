@@ -6,14 +6,20 @@
    sesión, se pregunta a la base cuáles abre la cuenta (tengo_herramienta(),
    que a quien administra le dice que sí a todas) y se puede activar un código
    (canjear_licencia()). El candado de verdad está en la base y en la Edge
-   Function seleccion-chess-results: esto solo decide qué se pinta. Ver
-   «Herramientas de arbitraje» en docs/decisiones/juegos-y-torneos.md. */
+   Function seleccion-chess-results: esto solo decide qué se pinta.
+
+   Las herramientas van en fichas por tema (H.TEMAS: arbitraje, JDE, JDN,
+   universitarios). Todas se pintan en #lista y las de las otras fichas
+   quedan con `hidden`; la ficha elegida va en la dirección (#jde) para
+   mandar el enlace ya abierto en ella. Ver «Herramientas de arbitraje» en
+   docs/decisiones/juegos-y-torneos.md. */
 (function () {
     "use strict";
     const H = window.HerramientasArbitraje;
     const $ = (id) => document.getElementById(id);
     const abiertas = new Set();
     let conSesion = false;
+    let temaActivo = H.TEMAS[0].id;
 
     function el(tag, clase, texto) {
         const e = document.createElement(tag);
@@ -29,6 +35,8 @@
             const abierta = abiertas.has(h.id) || !!h.gratis;
             const li = el("li", "rounded-2xl bg-white dark:bg-brand-900 shadow-md p-6");
             li.dataset.herramienta = h.id;
+            li.dataset.tema = h.tema;
+            li.hidden = h.tema !== temaActivo;
             const fila = el("div", "flex flex-wrap items-start justify-between gap-3");
             const titulo = el("h3", "font-serif text-xl font-bold text-brand-800 dark:text-white");
             const emoji = el("span", "", h.emoji + " ");
@@ -71,6 +79,58 @@
             li.appendChild(acciones);
             ul.appendChild(li);
         });
+    }
+
+    function pintarTemas() {
+        const cont = $("temas");
+        cont.textContent = "";
+        H.TEMAS.forEach((t) => {
+            const activa = t.id === temaActivo;
+            const b = el("button", "font-semibold px-4 py-2 rounded-xl text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 " + (activa
+                ? "bg-accent-500 text-brand-900 shadow-md"
+                : "bg-white dark:bg-brand-900 text-brand-800 dark:text-white shadow-sm hover:bg-brand-100 dark:hover:bg-brand-800"));
+            b.type = "button";
+            b.id = "tab-" + t.id;
+            b.dataset.tema = t.id;
+            b.setAttribute("role", "tab");
+            b.setAttribute("aria-selected", activa ? "true" : "false");
+            b.setAttribute("aria-controls", "panel-tema");
+            b.tabIndex = activa ? 0 : -1;
+            if (t.largo) b.title = t.largo;
+            const emoji = el("span", "", t.emoji + " ");
+            emoji.setAttribute("aria-hidden", "true");
+            const cuantas = H.LISTA.filter((h) => h.tema === t.id).length;
+            b.append(emoji, t.nombre, el("span", "font-normal", " (" + cuantas + ")"));
+            b.addEventListener("click", () => elegirTema(t.id, true));
+            cont.appendChild(b);
+        });
+        const t = H.TEMAS.find((x) => x.id === temaActivo);
+        $("panel-tema").setAttribute("aria-labelledby", "tab-" + t.id);
+        $("tema-resumen").textContent = t.resumen;
+    }
+
+    function elegirTema(id, guardar) {
+        if (!H.TEMAS.some((t) => t.id === id)) return;
+        temaActivo = id;
+        pintarTemas();
+        $("lista").querySelectorAll(":scope > li").forEach((li) => { li.hidden = li.dataset.tema !== id; });
+        if (guardar) {
+            try { history.replaceState(null, "", "#" + id); } catch (e) { /* sin historial: queda la ficha igual */ }
+        }
+    }
+
+    // Flechas, Inicio y Fin entre las fichas, como pide el patrón de pestañas.
+    function teclasTemas(e) {
+        const ids = H.TEMAS.map((t) => t.id);
+        let i = ids.indexOf(temaActivo);
+        if (e.key === "ArrowRight") i = (i + 1) % ids.length;
+        else if (e.key === "ArrowLeft") i = (i - 1 + ids.length) % ids.length;
+        else if (e.key === "Home") i = 0;
+        else if (e.key === "End") i = ids.length - 1;
+        else return;
+        e.preventDefault();
+        elegirTema(ids[i], true);
+        $("tab-" + ids[i]).focus();
     }
 
     async function pintarMisLicencias() {
@@ -124,6 +184,11 @@
     }
 
     async function init() {
+        const deLaDireccion = location.hash.slice(1);
+        if (H.TEMAS.some((t) => t.id === deLaDireccion)) temaActivo = deLaDireccion;
+        pintarTemas();
+        $("temas").addEventListener("keydown", teclasTemas);
+        window.addEventListener("hashchange", () => elegirTema(location.hash.slice(1), false));
         pintarLista();
         $("form-activar").addEventListener("submit", activar);
         let sesion = null;

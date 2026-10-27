@@ -7284,6 +7284,17 @@ abierto para todos, sin sesión ni candado, con «Abrir» y «Manual de uso»; l
 vitrina no le pregunta `tengo_herramienta()` y `licencias.html` no lo ofrece
 (no hay licencia que vender de algo gratis).
 
+**La vitrina va en fichas por tema** (lo pidió el dueño: «que queden fichas por
+cada tema»): Arbitraje, JDE, JDN y Universitarios, en `TEMAS` del mismo
+`js/herramientas-arbitraje.js`. Cada herramienta lleva su `tema` y la lista se
+ordena por tema (también en `licencias.html`); una herramienta nueva sin
+`tema` no sale en ninguna ficha, así que se lo pone al agregarla, y un tema
+nuevo es una línea más en `TEMAS`. Todas se pintan en `#lista` y las de las
+otras fichas quedan con `hidden`; la ficha elegida va en la dirección
+(`herramientas-arbitraje.html#jde`) para mandar el enlace ya abierto en ella.
+Las fichas son pestañas de verdad (`role="tab"`, flechas, Inicio y Fin). Lo
+revisa `verificar-seleccion-pagina.js`, midiendo qué se ve.
+
 También son gratis el **historial de un jugador** y las **estadísticas por
 colegio y región** (ver «Historial del jugador y estadísticas por colegio»), y
 **«Ajedrez estudiantil en Costa Rica»**
