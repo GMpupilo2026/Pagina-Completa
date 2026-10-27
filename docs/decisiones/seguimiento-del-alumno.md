@@ -1167,6 +1167,91 @@ tercera cierre, que el alumno vea nota y áreas pero no las preguntas, y que el
 profesor sí las vea. Lo que hace cumplir la base se comprobó impersonando roles
 en SQL, como está dicho arriba.
 
+## Ruta a la Beca: la revisión de cada lunes
+
+`ruta-cumplimiento.html` (profesor, coordinación, supervisión y administración;
+un alumno ve que no es para él) dice, semana por semana, quién cumplió el mínimo
+de Ruta a la Beca (la propuesta a Cenfotec y `ruta-a-la-beca.html`: 10 horas de
+trabajo en 4 días, metas de ejercicios, partidas y el Meet). La cuenta la hace
+**`public.ruta_cumplimiento(p_lunes, p_grupo, p_inicio)`**, `SECURITY INVOKER`,
+y la usan la pantalla y el Excel: una sola cuenta.
+
+- **Quién entra**: los alumnos del grupo «Ruta a la Beca» (`profiles.grupo`,
+  sin mayúsculas ni espacios, como el mínimo de CENFO) que quien llama puede
+  ver **por `soy_profesor_de()` o `bajo_mi_coordinacion()`**. La primera
+  versión confiaba solo en la RLS de `profiles` y, con la sesión de una
+  alumna, devolvía a todo el grupo: los nombres ya eran visibles entre
+  compañeros, pero una tabla de cumplimiento que lista a quien no es tuyo no
+  debe existir. Probado impersonando: el profesor de ellos y administración ven
+  las 5 filas, una alumna y un profesor cualquiera ven 0, `anon` ni la ejecuta.
+- **La semana** va de lunes a domingo en hora de Costa Rica. `p_inicio` (lunes
+  15 de marzo de 2027) es parámetro para poder probarla con datos de hoy; la
+  semana siguiente a la 1 es la pausa de Semana Santa y **no devuelve filas**
+  (no hay mínimo), y de ahí se vuelve a contar. Las metas de Táctica y Cálculo
+  suben por fase (60/80/90/100 y 30/40/45/50).
+- **Los números salen de `tiempo_por_seccion()`** (la misma de Informes, con el
+  mínimo de CENFO incluido), sin la clase en vivo ni Logros: «10 horas de tiempo
+  activo» no puede incluir un Meet ni una página de medallas. Comprobado contra
+  esa función a mano: 172 + 3 + 1 minutos dan los 176 de la fila.
+- **Lo que la plataforma NO mide, y la tabla lo dice**: «1 partida propia
+  analizada», «la lección de la fase, completa» (solo se sabe cuántos minutos
+  estuvo en un curso) y «repaso en 4 días» (el Repaso del día no tiene una
+  actividad propia: reparte su trabajo entre las de siempre). Los revisa el
+  profesor. La decisión de quién sale la firma una persona, como dice la
+  propuesta.
+- **Finales va en MINUTOS (90), no en «2 finales ganados».** La propuesta
+  pedía 2 por semana durante 36 semanas, pero `entreno/finales.html` solo
+  deja una fila la **primera** vez que el alumno gana o salva un final
+  (`if (!yaEstaba)`) y el banco tiene 17: pasadas las primeras semanas no habría
+  nada que contar y la tabla le diría «no cumple» a quien practica finales a
+  diario, una salida injusta y sin ningún error. La columna se llama
+  `finales` y **trae minutos** (de Finales contra la máquina y de El mapa de los
+  finales): renombrarla obliga a borrar la función, y una operación destructiva
+  no se hizo por un nombre. Por lo mismo, las metas de ejercicios de Táctica
+  (7969 ejercicios en el banco) y de Cálculo no tienen ese problema.
+- **Las partidas** son las terminadas a 15 + 10 (`game_rooms`); contra el bot no
+  cuentan.
+- **La tarea de la semana** («📨 Mandar la tarea de esta semana») va con
+  `crear_tarea()` el lunes, con vencimiento el domingo a las 11:59 p. m. (-06:00
+  todo el año) y **a quien todavía no la tiene**: el título lleva la semana. Lleva
+  cuatro renglones de **minutos** (Táctica 180, Visualización 90, Finales 90,
+  Aperturas 30) porque una tarea de «cantidad» cuenta los ejercicios distintos
+  resueltos **desde siempre**: una meta semanal de 60 nacería cumplida. Los
+  minutos sí cuentan desde que se manda, por eso se manda el lunes. Las
+  instrucciones traen las seis cosas de la semana; las que la plataforma no
+  cuenta las revisa el profesor.
+- **El cupo y cómo se llena** (en la propuesta, «Cupo y cómo se elige»; el
+  formulario `ruta-a-la-beca` ya trae sus preguntas): 60 estudiantes en UN solo
+  grupo (no hay niveles ni grupos de clase), con tope de 5 por colegio, y si se
+  inscriben más, un embudo de compromiso: requisitos → preselección por las notas de 2026, con tope de 8 por colegio, hasta 90 plazas →
+  semana de prueba (diagnóstico, 5 h activas en 3 días, Meet de bienvenida) →
+  lista final → suplencias hasta el 5 de abril. El puntaje de ingreso es 60
+  puntos de constancia en la semana de prueba y 40 de las **notas de 2026**; el
+  **Elo del día de la matrícula no suma**: sirve de referencia para medir el
+  progreso y para revisar un primer diagnóstico sospechosamente bajo; no da ni
+  quita cupo. El
+  estudiante se inscribe por su cuenta: el colegio no inscribe ni autoriza, solo
+  es un dato para el tope. Los números (90, 8, 5 h, 3 días, 60/40) son una
+  propuesta inicial; nada de esto lo calcula todavía la base: la preselección y la
+  lista final se arman a mano con las respuestas del formulario. **No hay sorteos**:
+  los empates se resuelven por días activos, luego por el promedio de 2026 y al
+  final por la fecha y hora de inscripción.
+- **La semana perdonada**: quien no llega al mínimo queda «en revisión» (sigue con
+  su acceso), tiene 48 horas desde el lunes para adjuntar documentación de peso
+  (dictamen médico, duelo o emergencia familiar, calendario de pruebas del
+  colegio, falla comprobada de la plataforma), y la coordinación decide en 3 días
+  hábiles. **Se perdona UNA sola semana en todo el programa**: un segundo fallo es
+  una salida aunque se documente, y sin documentación también. Hoy lo lleva una
+  persona: `ruta_cumplimiento()` dice quién no cumplió, pero la base no guarda
+  cuál semana se perdonó ni cuenta cuántas lleva cada quien (una tabla de
+  semanas perdonadas, con su índice único por estudiante, es lo que falta si se
+  quiere que lo haga cumplir la base).
+- Al tocar esto: `node herramientas/verificar-ruta-cumplimiento.js` (la semana
+  anterior en hora de Costa Rica, el lunes de un miércoles, «Cumple/Falta»
+  escrito, el nombre como texto, la fórmula del Excel, el alumno que no ve nada,
+  la tarea que no se manda dos veces ni si se cancela). Lo que devuelve la base
+  se comprobó en SQL, impersonando roles.
+
 ## Las justificaciones de ausencia
 
 `justificaciones.html` (tarjeta **«🩺 Justificar una ausencia»** en «Tu

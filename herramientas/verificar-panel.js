@@ -918,7 +918,7 @@ async function pruebaAdmin(browser) {
      urgente»; lo que solo estaba allá vino para acá. */
   igual("Supervisión y coordinación, con lo suyo",
     grupos.find((g) => g.titulo === "Supervisión y coordinación").tiles.map((t) => t.enlace),
-    ["supervision.html", "coordinacion.html", "informes.html", "justificaciones.html", "tablero-academias.html", "reportes.html"]);
+    ["supervision.html", "coordinacion.html", "informes.html", "ruta-cumplimiento.html", "justificaciones.html", "tablero-academias.html", "reportes.html"]);
   igual("lo urgente NO se repite acá: está en Administración",
     await page.evaluate(() => !!document.getElementById("urgente-admin")), false);
   igual("Formularios: todos juntos, con la encuesta de satisfacción",
