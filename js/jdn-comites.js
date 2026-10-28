@@ -43,6 +43,22 @@
         { id: "2019-E", fase: "elim", titulo: "Eliminatoria 2019", detalle: "abril de 2019", ciclo: "2019-F" },
         { id: "2018-F", fase: "final", titulo: "Final 2018", detalle: "Ciudad Colón, julio de 2018", ciclo: "2018-F" },
         { id: "2018-E", fase: "elim", titulo: "Eliminatoria 2018", detalle: "Alajuela, abril de 2018", ciclo: "2018-F" },
+        /* 2011-2017: los mejores tableros de estas finales no son los de
+           chess-results, que no publicó la clasificación por tableros: los
+           calcula la base con la regla de 2018 (ver «Las finales y
+           eliminatorias de 2011 a 2017»). La final 2013 se jugó en 2014. */
+        { id: "2017-F", fase: "final", titulo: "Final 2017", detalle: "julio de 2017", ciclo: "2017-F" },
+        { id: "2017-E", fase: "elim", titulo: "Eliminatoria 2017", detalle: "abril de 2017", ciclo: "2017-F" },
+        { id: "2016-F", fase: "final", titulo: "Final 2016", detalle: "julio de 2016", ciclo: "2016-F" },
+        { id: "2016-E", fase: "elim", titulo: "Eliminatoria 2016", detalle: "abril de 2016", ciclo: "2016-F" },
+        { id: "2015-F", fase: "final", titulo: "Final 2015", detalle: "julio de 2015", ciclo: "2015-F" },
+        { id: "2015-E", fase: "elim", titulo: "Eliminatoria 2015", detalle: "abril de 2015", ciclo: "2015-F" },
+        { id: "2013-F", fase: "final", titulo: "Final 2013", detalle: "marzo de 2014", ciclo: "2013-F" },
+        { id: "2013-E", fase: "elim", titulo: "Eliminatoria 2013", detalle: "octubre de 2013", ciclo: "2013-F" },
+        { id: "2012-F", fase: "final", titulo: "Final 2012", detalle: "Desamparados, diciembre de 2012", ciclo: "2012-F" },
+        { id: "2012-E", fase: "elim", titulo: "Eliminatoria 2012", detalle: "noviembre de 2012", ciclo: "2012-F" },
+        { id: "2011-F", fase: "final", titulo: "Final 2011", detalle: "julio de 2011", ciclo: "2011-F" },
+        { id: "2011-E", fase: "elim", titulo: "Eliminatoria 2011", detalle: "junio de 2011", ciclo: "2011-F" },
     ];
     /* Las universitarias: cada una es un evento (JUNCOS, CONARE, FEDEU…),
        todas con medallas, sin eliminatoria ni ciclo. Van en el orden del
@@ -189,7 +205,7 @@
         const filas = [];
         for (let desde = 0; ; desde += 1000) {
             const { data, error } = await sb.from(TABLA + "tableros")
-                .select("edicion,codigo,tnr,tablero,orden,puesto,nombre,equipo,porcentaje,puntos")
+                .select("edicion,codigo,tnr,tablero,orden,puesto,nombre,equipo,porcentaje,puntos,calculado")
                 .order("edicion").order("codigo").order("tablero").order("orden")
                 .range(desde, desde + 999);
             if (error) return [];
@@ -244,7 +260,8 @@
             const k = f.edicion + f.codigo + "-" + f.tablero;
             const rk = f.puesto || previo[k] || 0; previo[k] = rk;
             tabs.push({ ed: f.edicion, cod: f.codigo, tnr: f.tnr, ...categoria(f.codigo), tablero: f.tablero, rk, nombre: f.nombre,
-                equipo: f.equipo.replace(/^C+DR\s+/i, ""), comite: comite(f.equipo, true), pct: Number(f.porcentaje), pts: Number(f.puntos), fase: "final" });
+                equipo: f.equipo.replace(/^C+DR\s+/i, ""), comite: comite(f.equipo, true), pct: Number(f.porcentaje), pts: Number(f.puntos), fase: "final",
+                calc: !!f.calculado });
             tamT[k] = (tamT[k] || 0) + 1;
         }
     }
@@ -675,9 +692,12 @@
         if (!de.length) return;
         const nums = [...new Set(de.map((r) => r.tablero))].sort((a, b) => a - b);
         const torneos = [...new Map(de.map((r) => [r.cod, r])).values()].sort(ordCat);
+        const calc = de.some((r) => r.calc);
         caja.append(el("h2", { id: "tableros-titulo", class: "font-serif text-xl font-bold text-brand-800 dark:text-white" }, "Mejores tableros · " + e.titulo),
             el("p", { class: "text-sm text-brand-500 dark:text-brand-300 mt-1" },
-                "El primero de cada tablero en cada torneo por equipos, según la clasificación por tableros de chess-results (porcentaje de puntos, con los desempates y el mínimo de partidas que fijó el árbitro de cada torneo)."
+                (calc
+                    ? "El primero de cada tablero en cada torneo por equipos. chess-results no publica la clasificación por tableros de esta final: está calculada acá con la regla de las finales 2018 (porcentaje, después puntos y rendimiento; al menos el 57 % de las rondas, el 42 % en la reserva), con los puntos y las partidas de la composición de cada equipo. No es el orden oficial."
+                    : "El primero de cada tablero en cada torneo por equipos, según la clasificación por tableros de chess-results (porcentaje de puntos, con los desempates y el mínimo de partidas que fijó el árbitro de cada torneo).")
                 + (nums.includes(5) ? " En esta final los equipos tenían una reserva." : "")));
         caja.append(tabla("Mejores tableros de " + e.titulo, ["Categoría", "Ritmo", ...nums.map(nomTablero), "Comprobar"], torneos.map((t) =>
             el("tr", { "data-torneo": t.cod }, td(t.cat + " " + t.rama), td(t.ritmo), ...nums.map((n) => {
@@ -685,7 +705,14 @@
                 return el("td", { class: TD.replace("whitespace-nowrap", "min-w-[10rem] align-top"), "data-tablero": n }, ...(mejores.length ? mejores.map((r) =>
                     el("span", { class: "block" }, el("span", { class: "font-semibold" }, r.nombre),
                         el("span", { class: "block text-xs text-brand-500 dark:text-brand-300" }, r.comite + " · " + pctTxt(r.pct)))) : ["—"]));
-            }), fuente(t.tnr, 81, "la clasificación por tableros de " + t.cat + " " + t.rama + " " + t.ritmo + " de " + e.titulo)))));
+            }), fuenteTablero(t, e)))));
+    }
+    /* Un tablero calculado (2011-2017) no tiene clasificación por tableros en
+       chess-results: se comprueba en la composición de los equipos, de donde
+       salen sus puntos y sus partidas. */
+    function fuenteTablero(r, e) {
+        const de = r.cat + " " + r.rama + " " + r.ritmo + " de " + e.titulo;
+        return r.calc ? fuente(r.tnr, 20, "la composición de los equipos de " + de) : fuente(r.tnr, 81, "la clasificación por tableros de " + de);
     }
 
     function cifra(n, texto) {
@@ -794,12 +821,14 @@
                 || (ORD_R[a.ritmo] || 0) - (ORD_R[b.ritmo] || 0) || a.equipo.localeCompare(b.equipo) || a.tablero - b.tablero);
             if (rt.length) {
                 sec.append(el("h4", { class: "font-semibold text-brand-800 dark:text-white mt-4" }, "Tableros de sus equipos"));
+                if (rt.some((r) => r.calc)) sec.append(el("p", { class: "text-sm text-brand-500 dark:text-brand-300" },
+                    "Calculados con la regla de las finales 2018: chess-results no publica la clasificación por tableros de esta final."));
                 const cab = ["Categoría", "Ritmo", "Equipo", "Tablero", "Jugador", { t: "Puesto en el tablero", num: 1 }, { t: "Porcentaje", num: 1 }, { t: "Puntos", num: 1 }, "Medalla", "Comprobar"];
                 sec.append(tabla("Tableros de los equipos de " + x.nombre + " en " + e.titulo, cab, rt.map((r) => el("tr", { "data-tablero-de": r.nombre },
                     td(r.cat + " " + r.rama), td(r.ritmo), td(r.equipo), td(nomTablero(r.tablero)), td(r.nombre),
                     td(r.rk + " de " + tamT[r.ed + r.cod + "-" + r.tablero], 1), td(pctTxt(r.pct), 1), td(fmt(r.pts), 1),
                     el("td", { class: TD }, medalla(r.rk)),
-                    fuente(r.tnr, 81, "la clasificación por tableros de " + r.cat + " " + r.rama + " " + r.ritmo + " de " + e.titulo)))));
+                    fuenteTablero(r, e)))));
             }
             ficha.append(sec);
         }
@@ -1326,6 +1355,8 @@
             : el("ul", { class: "mt-2 list-disc pl-6 text-sm text-brand-600 dark:text-brand-300 space-y-1" },
             el("li", {}, `${torneosSinTabla} eliminatorias por equipos no traen la tabla final: ahí el puesto es el orden por puntos de partida, sin el récord de matches.`),
             el("li", {}, "De la eliminatoria 2018 están solo U16 y U20, y el U20 Femenino por equipos de la Zona 1 está vacío en chess-results."),
+            el("li", {}, "De 2011 a 2017 faltan doce eliminatorias por equipos (seis de 2012, cuatro de 2013 y dos de 2016), que están en chess-results sin jugadores, y no hubo JDN en 2014 (la final 2013 se jugó en marzo de 2014). De la eliminatoria 2017 U20 Femenino por equipos de la Zona 2 chess-results no trae a San José."),
+            el("li", {}, "chess-results no publica la clasificación por tableros de las finales 2011 a 2017: sus mejores tableros están calculados con la regla de las finales 2018. Tampoco dice el ritmo de la final 2011: los cuatro torneos individuales que se jugaron en un día van como Rápido."),
             el("li", {}, "De la eliminatoria 2024 faltan dos torneos por equipos (Z1 y Z2 U12 Femenino)."),
             el("li", {}, "La final 2022-2023 no trae el comité de cada jugador: sale del mismo jugador en la eliminatoria 2022 («comité deducido»)."),
             el("li", {}, "Dos equipos de las clasificaciones no tienen integrantes: el «Descanso» de la eliminatoria 2018 (el bye) y San José B en el Blitz U20 Femenino de la final 2020-2021, que perdió todo sin jugar.")), "falta"));
@@ -1474,7 +1505,7 @@
         const tb = tabs.filter((r) => es(clave(r.nombre)));
         return [
             ...ind.filter((r) => es(r.clave)).map((r) => ({ r, nombre: r.nombre, que: "Individual", n: tam[r.ed + r.cod], tnr: r.tnr, art: 1, tablero: false })),
-            ...tb.map((r) => ({ r, nombre: r.nombre, que: nomTablero(r.tablero) + " · " + r.equipo, n: tamT[r.ed + r.cod + "-" + r.tablero], tnr: r.tnr, art: 81, tablero: true })),
+            ...tb.map((r) => ({ r, nombre: r.nombre, que: nomTablero(r.tablero) + " · " + r.equipo, n: tamT[r.ed + r.cod + "-" + r.tablero], tnr: r.tnr, art: r.calc ? 20 : 81, tablero: true })),
             ...jugs.filter((r) => r.equipo && es(r.clave) && !tb.some((t) => t.tnr === r.tnr && mismo(clave(t.nombre), r.clave)))
                 .map((r) => ({ r: { ...r, rk: r.eqRk }, nombre: r.nombre, que: "Equipo " + r.equipo + " · tablero " + (r.tablero || "—"), n: tam[r.ed + r.cod], tnr: r.tnr, art: 20, tablero: true, sinMedalla: true })),
         ];

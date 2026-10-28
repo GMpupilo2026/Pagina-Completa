@@ -107,7 +107,7 @@
             corto: "Resultados JDN",
             href: "jdn-comites.html",
             disponible: true,
-            resumen: "Todos los torneos de ajedrez de los Juegos Deportivos Nacionales que están en chess-results, eliminatorias y finales desde 2018, ordenados por comité de deportes.",
+            resumen: "Todos los torneos de ajedrez de los Juegos Deportivos Nacionales que están en chess-results, eliminatorias y finales desde 2011, ordenados por comité de deportes.",
             puntos: [
                 "El medallero de las finales, de todas juntas o de una edición, con individual y equipos.",
                 "La ficha de cada comité: sus jugadores y equipos edición por edición, con el puesto, los puntos y la medalla.",

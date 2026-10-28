@@ -150,8 +150,8 @@ function doble(tieneLicencia, opc) {
 window.SUPABASE_URL = "https://falso.supabase.co";
 window.SUPABASE_ANON_KEY = "anon-falsa";
 (function () {
-  const FILAS = ${JSON.stringify(FILAS)};
-  const TABLEROS = ${JSON.stringify(TABLEROS)};
+  const FILAS = ${JSON.stringify(FILAS.concat(o.filasExtra || []))};
+  const TABLEROS = ${JSON.stringify(TABLEROS.concat(o.tablerosExtra || []))};
   const JUGADORES = ${JSON.stringify(JUGADORES)};
   const PARTIDAS = ${JSON.stringify(PARTIDAS)};
   const CORRECCIONES = ${JSON.stringify(o.correcciones || [])};
@@ -668,6 +668,36 @@ const medallero = (p) => p.$$eval("#medallero tbody tr", (trs) => trs.map((t) =>
     await p.click("[data-calidad='corregidos'] button:text-is('Quitar')");
     await Promise.all([p.waitForNavigation(), p.click("dialog[open] button:text-is('Quitar la corrección')")]);
     igual("y la puede quitar", await p.evaluate(() => JSON.parse(sessionStorage.getItem("escrituras") || "[]")), [{ op: "delete", v: null, eq: ["id", 7] }]);
+    await ctx.close();
+
+    console.log("\n=== Los tableros calculados de 2011 a 2017 ===");
+    // chess-results no publica la clasificación por tableros de esas finales:
+    // la base la calcula (calculado = true) y la página lo dice.
+    const calc = [
+        { edicion: "2017-F", codigo: "C-U16-EF", tnr: 289611, tablero: 1, orden: 1, puesto: 1, nombre: "Orozco Centeno Melissa", equipo: "Escazu", porcentaje: 85.7, puntos: 6, calculado: true },
+        { edicion: "2017-F", codigo: "C-U16-EF", tnr: 289611, tablero: 1, orden: 2, puesto: 2, nombre: "Sandi Quiros Deborah", equipo: "Goicoechea", porcentaje: 71.4, puntos: 5, calculado: true },
+    ];
+    // Un resultado en cada edición de 2011 a 2017: la lista solo trae las que tienen datos.
+    const viejas = ["2017-F", "2017-E", "2016-F", "2016-E", "2015-F", "2015-E", "2013-F", "2013-E", "2012-F", "2012-E", "2011-F", "2011-E"].map((ed, i) => ({
+        edicion: ed, codigo: ed === "2017-F" ? "C-U16-EF" : ed.endsWith("F") ? "C-U16-IA" : ed === "2011-E" ? "-U16-IA" : "Z1-U16-IA",
+        tnr: ed === "2017-F" ? 289611 : 800000 + i, orden: 1, puesto: 1, nombre: ed === "2017-F" ? "Escazu" : "Prueba Vieja, Uno", comite: ed === "2017-F" ? "" : "Escazu",
+        record: ed === "2017-F" ? "6-0-1" : null, puntos: 5 }));
+    ({ ctx, p } = await abrir(browser, "jdn-comites.html", true, { tablerosExtra: calc, filasExtra: viejas }));
+    await p.waitForFunction(() => document.getElementById("app").checkVisibility());
+    igual("las ediciones de 2011 a 2017 están en la lista, con la final 2013 jugada en 2014",
+        [await p.$$eval("#edicion option", (o) => o.map((x) => x.value).filter((v) => v && v < "2018")),
+            await p.$eval("#edicion option[value='2013-F']", (o) => o.textContent)],
+        [["2017-F", "2017-E", "2016-F", "2016-E", "2015-F", "2015-E", "2013-F", "2013-E", "2012-F", "2012-E", "2011-F", "2011-E"], "Final 2013 · marzo de 2014"]);
+    await p.selectOption("#edicion", "2017-F");
+    await p.waitForFunction(() => document.getElementById("tableros").checkVisibility());
+    igual("una final de antes de 2018 dice que sus tableros están calculados y no son el orden oficial",
+        await p.$eval("#tableros p", (x) => /calculada acá con la regla de las finales 2018/.test(x.textContent) && /No es el orden oficial/.test(x.textContent)), true);
+    igual("y se comprueban en la composición de los equipos (chess-results no tiene su clasificación por tableros)",
+        await p.$eval("#tableros tr[data-torneo='C-U16-EF'] a", (a) => a.getAttribute("href")), "https://chess-results.com/tnr289611.aspx?lan=2&art=20&turdet=YES");
+    await p.selectOption("#edicion", "2026-F");
+    await p.waitForFunction(() => document.getElementById("tableros").checkVisibility());
+    igual("la final 2026 sigue con la clasificación de chess-results",
+        await p.$eval("#tableros p", (x) => /según la clasificación por tableros de chess-results/.test(x.textContent) && !/calculada/.test(x.textContent)), true);
     await ctx.close();
 
     await browser.close();

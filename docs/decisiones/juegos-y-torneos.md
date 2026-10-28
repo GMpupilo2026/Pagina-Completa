@@ -7623,10 +7623,13 @@ reclamos de tablas desde el PGN— no comparten nada de código con esta.
 ## Resultados JDN por comité
 
 `jdn-comites.html` es una de las herramientas con licencia (`id: "jdn-comites"`
-en `js/herramientas-arbitraje.js`). Junta los 289
+en `js/herramientas-arbitraje.js`). Junta los 438
 torneos de ajedrez de los Juegos Deportivos Nacionales que están en
-chess-results —eliminatorias 2018, 2019, 2021, 2022, 2024 y 2025; finales 2018,
-2019, 2020-2021, 2022-2023, 2024 y 2026— y los ordena **por comité de deportes**: lo pidió el
+chess-results —eliminatorias 2011, 2012, 2013, 2015, 2016, 2017, 2018, 2019,
+2021, 2022, 2024 y 2025; finales 2011, 2012, 2013 (jugada en 2014), 2015,
+2016, 2017, 2018, 2019, 2020-2021, 2022-2023, 2024 y 2026; las de antes de
+2018 se sumaron después, ver «Las finales y eliminatorias de 2011 a 2017»— y
+los ordena **por comité de deportes**: lo pidió el
 dueño («lo que importa es filtrar por resultados de todos los comités»). Arriba,
 el medallero de las finales (todas o una edición; suma individual, equipos y
 los tres primeros de cada tablero); al elegir un comité, su
@@ -8076,6 +8079,102 @@ lista de deducidos, una corrección que pasa a alguien de comité) y que solo
 quien administra ve «Corregir», guarda y quita. Rompiendo a propósito que un
 comité contra sí mismo cuente, que la corrección se aplique o que el Excel
 guarde números, salta.
+
+### Las finales y eliminatorias de 2011 a 2017
+
+El dueño pidió sumar a la herramienta lo que se había armado aparte en imágenes
+(«agrega toda esta información a herramientas»): las medallas de los JDN desde
+2011, los mejores tableros de antes de 2018 y los atletas de cada comité. Son
+149 torneos más (77 de finales y 72 de eliminatorias): 1631 filas en
+`jdn_resultados` (1059 individuales y 572 de equipos), 2527 integrantes de
+equipos y 1059 jugadores individuales en `jdn_jugadores`, 8529 partidas en
+`jdn_partidas` y 1449 filas calculadas en `jdn_tableros`.
+
+- **Las mismas tablas y los mismos cargadores**, no unos aparte: la página no
+  distingue un año de otro, salvo lo que el dato obliga (los tableros
+  calculados). `cargar.sql` aprendió los títulos viejos y **ahora borra solo
+  los torneos de su `src`**: antes reemplazaba la tabla entera, y como pg_net
+  borra sus respuestas a las pocas horas, cargar una edición vieja habría
+  exigido volver a pedir las 289 páginas de las demás.
+- **La edición sale del número de torneo**, como siempre: cada año se subió en
+  su bloque (52625-52647 la final 2011, 87238-87328 la 2012…). No hubo JDN en
+  2014: la final 2013 se jugó en marzo de 2014 y se llama «Final 2013».
+- **La categoría tenía otros nombres**: «Infantil», «Sub 16» o «U 16» es U16;
+  «Juvenil», «Sub 20» o «U19» es U20 (en 2016 se llamó U19, y para comparar
+  años va como U20). La eliminatoria 2011 fue una sola, sin zonas: su código
+  empieza con «-» y la página la llama «Zona única».
+- **Dos datos salen del número porque el título no lo dice.** La final 2011
+  tiene dos torneos individuales por categoría con los mismos jugadores y
+  ningún ritmo en el título; las rondas de la página dicen las mismas horas
+  (son la plantilla), pero los de 52625-52628 se cargaron con sus 7 rondas a
+  las 21:45 del primer día y los otros cuatro días después: los primeros van
+  como Rápido. Y el 218655 («Individual Infantil Sub16 Absoluto JDN 2016
+  Clasificatorio») es la Zona 1: sus comités (Pococí, Nandayure, Lepanto,
+  Talamanca, Esparza) son los de las otras Zona 1 de ese año.
+- **«Ranking inicial» no es una tabla final.** Sin tabla final, la página de
+  la tabla final de equipos (`art=46`) devuelve el orden por Elo antes de
+  jugar, con la misma tabla `CRs1`: el cargador lo tomaba como clasificación
+  y dejaba los puntos vacíos (cuatro eliminatorias de 2012 y 2017). Ahora esa
+  página cuenta como «sin tabla» y el orden sale de la página de resultados.
+  Ningún torneo de 2018 en adelante estaba en ese caso (ninguna fila sin
+  puntos).
+- **El título «NM».** Los torneos viejos traen «NM» (maestro nacional) en el
+  encabezado del detalle de cada jugador, y el cargador solo quitaba GM, IM,
+  FM y CM: Adrián Castro y Emanuel Vaglio quedaban sin partidas en siete
+  torneos, y ahí los puntos no daban la mitad de las partidas. Está en la
+  lista de títulos de `cargar-jugadores-equipos.sql` y `cargar-partidas.sql`.
+- **La tabla cruzada se reconoce por su título**, «Cuadro cruzado», y no por
+  el número de pedido par o impar: `cargar-jugadores-individual.sql` suponía
+  los pedidos alternados, y estos se pidieron en otro orden.
+- **Comprobado al cargar**: los 149 torneos con su edición y un código que la
+  página entiende; cada final individual de 8 suma 28 puntos y cada una por
+  equipos de 8, 112; en los 64 torneos por equipos y los 85 individuales los
+  puntos son exactamente la mitad de las partidas; cada jugador individual
+  está en el mismo orden que en la clasificación (0 nombres distintos), y las
+  partidas una por una dan las de cada jugador (0 diferencias). Diez torneos
+  no tienen partidas porque chess-results trae solo la composición (o, en la
+  eliminatoria 2013 U20 femenino de la Zona 2, nadie jugó).
+- **Lo que no está en chess-results**: doce eliminatorias por equipos (seis
+  de 2012, cuatro de 2013 y dos de 2016) están publicadas sin jugadores; dos
+  de 2012 (85331, 85332) quedaron en la ronda 0; tres desempates de 2011
+  (51090, 51091, 51094) no son la eliminatoria sino un desempate entre
+  empatados, y no se cuentan; San José falta en la eliminatoria 2017 U20
+  femenino por equipos de la Zona 2. La final 2010 (29705-29737) existe pero
+  no se cargó: el dueño no la pidió.
+
+#### Los mejores tableros calculados
+
+chess-results no publica la «Clasificación por tableros» (`art=81`) de las
+finales por equipos 2011-2017. El dueño pidió contarlos igual, con la regla de
+las finales 2018 («los desempates son los mismos todos los años»), y son
+medallas: se suman al medallero como las de 2018 en adelante.
+
+- **Los calcula la base**, con `herramientas/jdn-comites/cargar-tableros-calculados.sql`:
+  cada jugador en su tablero de la alineación; entra quien jugó al menos el
+  57 % de las rondas (42 % en la reserva, el 5), redondeado hacia arriba;
+  el orden es porcentaje, después puntos y después el rendimiento (el Elo
+  medio de sus rivales más la diferencia que da el porcentaje); si empatan en
+  las tres cosas, comparten el puesto.
+- **Las partidas son las de la composición, no las de `jdn_jugadores`**:
+  chess-results cuenta como partida la ganada o perdida por incomparecencia,
+  y `jdn_jugadores` solo las jugadas. La primera versión leía
+  `jdn_jugadores` y daba 632 medallas en lugar de 633: Kristel Jiménez
+  (reserva del U16 femenino blitz de 2015) tiene 3 de 3 en chess-results y 2
+  jugadas, y con 2 quedaba debajo del mínimo.
+- **Comprobado**: 44 torneos, 212 tableros y las mismas 633 medallas que el
+  cálculo mandado en imagen, persona por persona y puesto por puesto (la
+  única diferencia era un tabulador que chess-results trae dentro de un
+  nombre).
+- **La página dice que son calculados** (columna `calculado`, migración
+  `20261028183842`): «Mejores tableros» de esas finales explica la regla y
+  que no es el orden oficial, la ficha del comité lo avisa en «Tableros de
+  sus equipos», y «Comprobar» lleva a la composición de los equipos (`art=20`),
+  porque la clasificación por tableros no existe.
+
+`verificar-jdn-comites.js` prueba que las doce ediciones salen en la lista
+(con la final 2013 «marzo de 2014»), que una final calculada lo dice y enlaza a
+la composición, y que la de 2026 sigue con la de chess-results. Rompiendo a
+propósito el aviso o el enlace, salta.
 
 ## Resultados universitarios por universidad
 

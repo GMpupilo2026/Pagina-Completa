@@ -5,9 +5,10 @@
 -- Como cargar.sql, son dos pasos, porque pg_net contesta después:
 --
 -- 1) Pedir, de cada torneo individual, la tabla cruzada (art=4) y la
---    clasificación (art=1), en ese orden, una detrás de la otra: el pedido
---    impar es la tabla cruzada y el par la clasificación (los números de
---    pedido son seguidos; si el primero sale par, cambiar «% 2 = 1» abajo):
+--    clasificación (art=1). La tabla cruzada se reconoce por su título
+--    («Cuadro cruzado», que la clasificación no trae), así que los pedidos
+--    pueden ir en cualquier orden (antes se separaban por pedido par e
+--    impar, y pedidos en otro orden se habrían leído al revés):
 --
 --      select min(a4), max(a1) from (select
 --               net.http_get('https://s3.chess-results.com/tnr'||tnr||'.aspx?lan=2&art=4&turdet=YES&zeilen=99999', timeout_milliseconds := 60000) a4,
@@ -33,7 +34,7 @@
 --     jugadores con el resultado al revés.
 
 with pag as (
-  select r.id % 2 = 1 es4, substring(r.content from 'tnr(\d+)\.aspx')::int tnr,
+  select r.content like '%Cuadro cruzado%' es4, substring(r.content from 'tnr(\d+)\.aspx')::int tnr,
          split_part(substr(r.content, strpos(r.content, '<table class="CRs1"')), '</table>', 1) html
     from net._http_response r where r.id between :desde and :hasta and r.status_code = 200),
 filas as (
