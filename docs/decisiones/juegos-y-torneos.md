@@ -8795,6 +8795,43 @@ Pareo lo usa quien organiza una etapa; esta la usa quien inscribe a su colegio.
     actualiza textos. El Excel trae una hoja «Equipos» (titulares primero y la
     suplente al final) además de la «Inscripción» que lee Pareo.
 
+- **Ayuda para llenarla y para decidir** (lo pidió el dueño del sitio al preguntar
+  cómo mejorar la herramienta; son seis cosas):
+  - **«Para estar listo»**: una lista de tareas arriba de la revisión
+    (`pendientes()`: el centro, la regional, el correo, la jefatura, el cuerpo técnico,
+    «Faltan 2 fechas de nacimiento», un equipo al que le falta uno), cada una con un botón
+    «Ir» que enfoca el campo (`irA()`). Cada equipo trae su propia línea «Faltan: 2 sexos,
+    2 documentos» y «Ir al primero» (`faltantes()`). Los lugares vacíos de un equipo no
+    cuentan (`esLugarVacio()`). Lo que dice la Normativa sigue abajo, tal cual.
+  - **Menos tecleo**: «Traer de un borrador anterior (.json)» agrega a los estudiantes de
+    otra inscripción **sin reemplazar nada**, con su sexo, fecha y documento; los que jugaban
+    en un equipo vuelven a un equipo y, si el año cambió, la categoría se calcula de nuevo (y
+    se dice). Se descartó guardar «la inscripción anterior» en el navegador por detrás:
+    «Empezar de cero» promete borrar, y una copia escondida de datos de menores lo
+    contradiría; por eso es el archivo que la persona baja. Los nombres del banco para ese
+    centro salen en un `<datalist>` mientras se escribe, y quien jugó un torneo femenino trae
+    el sexo puesto (solo ese dato, que es el seguro). Un individual se **arrastra** a un
+    equipo por su agarradera «⠿ Arrastrar a un equipo» (la tarjeta no es arrastrable entera:
+    los campos de texto se seguirían pudiendo seleccionar); el selector «Pasar a este equipo»
+    sigue para teclado y celular, y el arrastre pasa por el mismo `agregarIntegrante()`, así
+    que los topes valen igual.
+  - **Ideas para completar los equipos** (`sugerencias()`): para un equipo de 1 o 2, de 3 o de
+    4 sin suplente, nombra a los individuales que **caben** (`cabeEnEquipo()` lo prueba en una
+    copia, con los mismos topes). Solo propone; nunca mueve a nadie. Y la sección de equipos
+    dice cuántos clasifican a la Interregional de su regional.
+  - **«Abrir en Pareo Integral»**: las filas del Excel pasan a `pareo.html#desde=inscripcion-jde`
+    por `localStorage` (`ij_para_pareo_v1`; las dos páginas son del mismo sitio), sin bajar
+    ni mandar nada. Pareo las lee **una vez**, las borra, vale diez minutos y entra por el
+    mismo camino de «Subir una lista» (`subirLista` acepta un objeto con `filas`), así que
+    propone los torneos por grupo igual.
+  - **Robustez**: con tres estudiantes o más y sin bajar el borrador en la última hora se
+    recuerda (solo se recuerda: `ij_descarga_v1`), y se probó con 60 estudiantes (8 equipos
+    y 20 individuales): menos de 150 ms por tecla.
+  - **El año**: la tabla de categorías de la página sale del año elegido, y con un año sin
+    Normativa dice que los rangos son los de 2026 corridos un año. El verificador fija los
+    rangos de `grupos.js` de 2026 (A 2017-2020, B 2013-2016, C 2012-2014, D 2009-2011, E
+    2008 o antes): **si alguien los cambia por una Normativa nueva, esa prueba salta** y
+    obliga a revisar esta página y sus textos, que repiten esos años.
 - **Lo que no hace, a propósito**: no verifica el puesto de quien clasificó a la
   Interregional o la Nacional (no tiene los resultados de la etapa anterior; eso
   lo hace Pareo con «Clasificados»), no sabe cuántos inscritos habrá por categoría
@@ -8805,7 +8842,7 @@ Pareo lo usa quien organiza una etapa; esta la usa quien inscribe a su colegio.
 `herramientas/verificar-inscripcion-jde.js` lo prueba: cada regla con un caso que
 la cumple y uno que no (las categorías de 2008 a 2021, el ascenso, la unión de
 centros, las etapas, los equipos, el cuerpo técnico, los documentos, la
-Interregional), **los topes al agregar** (el sexto integrante, el tercer equipo, el tercer individual, un hombre en Mujeres, la edad, el cuarto ascenso, centros unidos, una lista con «Equipo/Ind», que lo rechazado no deja rastro y que un borrador ya pasado no se amplía), el Excel contra Pareo, pegar una lista (con y sin títulos, fechas
+Interregional), **los topes al agregar** (el sexto integrante, el tercer equipo, el tercer individual, la lista de tareas y las ideas, el borrador anterior, el arrastre a un equipo, los nombres del banco, «Abrir en Pareo Integral» con una lista vencida, 60 estudiantes, los rangos del año, un hombre en Mujeres, la edad, el cuarto ascenso, centros unidos, una lista con «Equipo/Ind», que lo rechazado no deja rastro y que un borrador ya pasado no se amplía), el Excel contra Pareo, pegar una lista (con y sin títulos, fechas
 día/mes y mes/día, sexos y fechas que no se entienden quedan vacíos), un borrador
 adulterado, el generador del banco con datos inventados y el banco real al día, y
 en un navegador el combobox con teclado, traer y pegar estudiantes, la categoría

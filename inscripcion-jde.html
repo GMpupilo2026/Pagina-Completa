@@ -193,6 +193,7 @@
             <section aria-labelledby="ij-eq-t" class="ae-tarjeta">
                 <h2 id="ij-eq-t" class="ae-tarjeta-t font-serif">3. Equipos</h2>
                 <p class="ae-tarjeta-sub">Un equipo es de <strong>3 a 5 estudiantes</strong>: cuatro titulares y una suplente, de una sola categoría y de un solo torneo —«Mujeres» o «Abierto»—. Desde la Etapa Regional cada centro puede tener hasta <strong>dos equipos por categoría y torneo</strong>, y quien juega en un equipo no juega individual (art. 66.1). La herramienta <strong>no te deja pasarte de lo que permite la Normativa</strong>: lo que no cabe no se agrega, y te dice por qué.</p>
+                <p class="ij-ayuda" id="ij-eq-inter"></p>
                 <div class="ij-caja" role="group" aria-labelledby="ij-eq-nuevo-t">
                     <h3 class="font-semibold" id="ij-eq-nuevo-t">Agregar un equipo</h3>
                     <div class="grid gap-4 sm:grid-cols-2">
@@ -225,6 +226,20 @@
                     <button type="button" id="ij-est-mas" class="ae-boton">+ Agregar un estudiante</button>
                     <button type="button" id="ij-traer" class="ae-boton" aria-expanded="false" aria-controls="ij-traer-caja" disabled>Traer a los que jugaron antes con mi colegio</button>
                     <button type="button" id="ij-pegar" class="ae-boton" aria-expanded="false" aria-controls="ij-pegar-caja">Pegar o subir una lista</button>
+                    <label class="ae-boton cursor-pointer focus-within:outline focus-within:outline-[3px] focus-within:outline-offset-2">Traer de un borrador anterior (.json)
+                        <input type="file" id="ij-anterior-archivo" accept=".json,application/json" class="sr-only">
+                    </label>
+                </div>
+
+                <div id="ij-ant-caja" class="ij-caja" hidden>
+                    <h3 class="font-semibold" id="ij-ant-t">Estudiantes de un borrador anterior</h3>
+                    <p class="ij-ayuda" id="ij-ant-ayuda">Vienen con su sexo, fecha de nacimiento y documento; los que jugaban en un equipo vuelven a un equipo y la categoría se calcula de nuevo con el año de esta inscripción. Marca a quienes vuelven a jugar.</p>
+                    <div id="ij-ant-lista" class="ij-checks" role="group" aria-labelledby="ij-ant-t"></div>
+                    <div class="flex flex-wrap gap-3 mt-3">
+                        <button type="button" id="ij-ant-agregar" class="ae-boton ij-primario">Agregar los marcados</button>
+                        <button type="button" id="ij-ant-todos" class="ae-boton">Marcar todos</button>
+                        <button type="button" id="ij-ant-cerrar" class="ae-boton">Cerrar</button>
+                    </div>
                 </div>
 
                 <div id="ij-traer-caja" class="ij-caja" hidden>
@@ -258,7 +273,18 @@
             <section aria-labelledby="ij-rev-t" class="ae-tarjeta">
                 <h2 id="ij-rev-t" class="ae-tarjeta-t font-serif">5. Revisión con la Normativa</h2>
                 <p class="ae-tarjeta-sub" id="ij-rev-estado" role="status" aria-live="polite">Revisando…</p>
-                <ul id="ij-rev" class="grid gap-2 list-none p-0 m-0"></ul>
+                <div class="ij-caja" id="ij-pend-caja" role="group" aria-labelledby="ij-pend-t">
+                    <h3 class="font-semibold" id="ij-pend-t">Para estar listo</h3>
+                    <p class="ij-ayuda" id="ij-pend-estado" role="status" aria-live="polite"></p>
+                    <ul id="ij-pend" class="grid gap-2 list-none p-0 m-0"></ul>
+                </div>
+                <div class="ij-caja" id="ij-sug-caja" role="group" aria-labelledby="ij-sug-t" hidden>
+                    <h3 class="font-semibold" id="ij-sug-t">Ideas para completar tus equipos</h3>
+                    <p class="ij-ayuda">Son solo ideas: la herramienta no mueve a nadie sin que lo pidas.</p>
+                    <ul id="ij-sug" class="grid gap-2 list-disc pl-5 m-0"></ul>
+                </div>
+                <h3 class="font-semibold" id="ij-rev-t2">Lo que dice la Normativa</h3>
+                <ul id="ij-rev" class="grid gap-2 list-none p-0 m-0" aria-labelledby="ij-rev-t2"></ul>
             </section>
 
             <section aria-labelledby="ij-res-t" class="ae-tarjeta">
@@ -275,10 +301,11 @@
 
             <section aria-labelledby="ij-sal-t" class="ae-tarjeta">
                 <h2 id="ij-sal-t" class="ae-tarjeta-t font-serif">7. Descargar</h2>
-                <p class="ae-tarjeta-sub" id="ij-sal-ayuda">Cuando no queden errores, baja tu nómina. El Excel trae las mismas columnas del reporte del MEP: se abre en <a href="pareo.html" class="underline underline-offset-2 hover:no-underline">Pareo Integral</a> con «Subir una lista» y arma los torneos solo.</p>
+                <p class="ae-tarjeta-sub" id="ij-sal-ayuda">Cuando no queden errores, baja tu nómina. El Excel trae las mismas columnas del reporte del MEP: se abre en <a href="pareo.html" class="underline underline-offset-2 hover:no-underline">Pareo Integral</a> con «Subir una lista» y arma los torneos solo. «Abrir en Pareo Integral» hace lo mismo sin bajar nada: pasa la lista directo, desde este navegador.</p>
                 <div class="flex flex-wrap gap-3">
                     <button type="button" id="ij-excel" class="ae-boton ij-primario">Bajar el Excel (.xlsx)</button>
                     <button type="button" id="ij-pdf" class="ae-boton ij-primario">Bajar la nómina para firmar (PDF)</button>
+                    <button type="button" id="ij-pareo" class="ae-boton">Abrir en Pareo Integral</button>
                 </div>
                 <p class="ij-ayuda" id="ij-sal-estado" role="status" aria-live="polite"></p>
             </section>
