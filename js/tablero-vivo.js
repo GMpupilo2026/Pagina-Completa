@@ -47,6 +47,9 @@
         return lista.sort((a, b) => a.mesa - b.mesa);
     }
 
+    // Cómo va, con el resultado si ya terminó (el mate y el ahogado ya los dice comoVa).
+    const comoVa = (x) => P.comoVa(x.juego) + (x.resultado && !x.juego.in_checkmate() && !x.juego.in_stalemate() ? " " + P.textoResultado(x.resultado) : "");
+
     // Quien juega con cada color, del lado del tablero donde están sus piezas.
     function jugadores(nombres) {
         const linea = (color) => (color === "w" ? "Blancas: " : "Negras: ") + ((color === "w" ? nombres.blancas : nombres.negras) || "sin nombre");
@@ -64,7 +67,7 @@
         P.pintar($("tablero"), x.juego, { girado });
         jugadores(x);
         $("jugadas").textContent = P.jugadasTexto(x.juego) || "Todavía no se ha jugado nada.";
-        const texto = P.comoVa(x.juego);
+        const texto = comoVa(x);
         $("ultima").textContent = texto;
         // Al lector de pantalla, solo cuando cambia de verdad.
         if (texto !== ultimaDicha) { $("anuncio").textContent = texto; ultimaDicha = texto; }
@@ -93,7 +96,7 @@
             como.className = "text-xs text-brand-700 dark:text-brand-200 mt-2";
             if (x) {
                 P.pintar(tab, x.juego, { coordenadas: false });
-                como.textContent = P.comoVa(x.juego);
+                como.textContent = comoVa(x);
             } else {
                 P.pintar(tab, new window.Chess(), { coordenadas: false });
                 tab.classList.add("opacity-40");

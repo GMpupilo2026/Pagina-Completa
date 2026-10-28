@@ -2491,6 +2491,23 @@ a.tp-org:focus-visible { outline: none; box-shadow: 0 0 0 2px rgb(var(--c-accent
 .camara-compacta #burbuja-en-linea,
 .camara-compacta [data-solo-pagina] { display: none !important; }
 .camara-compacta main { padding-top: 0.75rem; padding-bottom: 0.75rem; }
+/* La hoja con el QR de cada mesa (camara-tablero.html, «Imprimir el QR de
+   cada mesa»): en la pantalla no se ve; al imprimirla sale sola, dos mesas
+   por fila, con la marca de agua de Ajedrez Integral al centro de cada hoja
+   (como en pareo.html: fija, casi transparente, encima de todo). */
+#hoja-qr, #hoja-qr-marca { display: none; }
+@media print {
+  body.imprimir-qr > *:not(#hoja-qr):not(#hoja-qr-marca) { display: none !important; }
+  body.imprimir-qr { background: #fff !important; }
+  body.imprimir-qr #hoja-qr { display: grid !important; grid-template-columns: 1fr 1fr; gap: 0.8cm; padding: 0.5cm; color: #000; }
+  body.imprimir-qr #hoja-qr-marca { display: block !important; position: fixed; top: 50%; left: 50%; width: 11cm; height: auto; transform: translate(-50%, -50%); opacity: 0.07; z-index: 50; pointer-events: none; }
+  .hoja-qr-mesa { break-inside: avoid; border: 1px dashed #555; border-radius: 0.3cm; padding: 0.5cm; text-align: center; }
+  .hoja-qr-numero { font-family: Merriweather, Georgia, serif; font-weight: 700; font-size: 26pt; margin: 0; }
+  .hoja-qr-torneo { font-size: 10pt; margin: 0.1cm 0 0.3cm; }
+  .hoja-qr-codigo { width: 6cm; height: 6cm; margin: 0 auto; }
+  .hoja-qr-codigo svg { width: 100%; height: 100%; }
+  .hoja-qr-ayuda { font-size: 9pt; margin: 0.3cm 0 0; }
+}
 
 
 /* ===== Los stickers del profe en la clase en vivo (js/clase-stickers.js) =====
