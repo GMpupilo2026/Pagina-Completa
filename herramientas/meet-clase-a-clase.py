@@ -9,7 +9,8 @@ Claude. El recorrido entero:
   2. Google Drive para computadora la baja a una carpeta de la computadora.
      Eso lo hace Drive solo (con la carpeta en «Duplicar archivos» queda
      siempre en el disco; en «Transmitir», se baja cuando este script la lee).
-  3. Este script vigila esa carpeta y, por cada grabación nueva:
+  3. Este script vigila esa carpeta (y sus subcarpetas) y, por cada
+     grabación nueva:
      - la transcribe AHÍ MISMO con Whisper (faster-whisper): el audio no se
        manda a ningún servicio;
      - deja la transcripción en <trabajo>/AAAA-MM/transcripciones/;
@@ -38,7 +39,9 @@ Usar:
         --grabaciones "G:/Mi unidad/Meet Recordings" \\
         --trabajo "G:/Mi unidad/Informe CCDR" --vigilar
 
-  --grabaciones  la carpeta donde Drive deja las grabaciones de Meet.
+  --grabaciones  la carpeta donde Drive deja las grabaciones de Meet: «Meet
+                 Recordings», o «Google Meet» en una cuenta en español. Mira
+                 también las subcarpetas.
   --trabajo      donde van las transcripciones y el informe en curso. Si está
                  dentro de Drive, Claude la lee al cerrar el mes.
   --vigilar      se queda corriendo y mira cada --cada minutos (5). Sin esto,
@@ -338,11 +341,22 @@ def armar_word(carpeta, clave_mes):
 
 # ------------------------------------------------------------ la vuelta
 
+def grabaciones_en(carpeta):
+    """Los archivos de la carpeta y de sus subcarpetas: hay quien ordena las
+    grabaciones de Meet en carpetas por grupo o por mes (a mano o con un Apps
+    Script), y una grabación movida no deja de ser la misma: lo ya hecho se
+    reconoce por el nombre y el tamaño, no por dónde está."""
+    for raiz, dirs, archivos in os.walk(carpeta):
+        dirs[:] = sorted(d for d in dirs if not d.startswith((".", "~")))
+        for a in sorted(archivos):
+            yield os.path.join(raiz, a)
+
+
 def una_vuelta(args, maquina_perezosa):
     hechas = leer_json(os.path.join(args.trabajo, "procesadas.json"), {})
     ahora = time.time()
-    for nombre in sorted(os.listdir(args.grabaciones)):
-        ruta = os.path.join(args.grabaciones, nombre)
+    for ruta in grabaciones_en(args.grabaciones):
+        nombre = os.path.basename(ruta)
         if (not nombre.lower().endswith(EXTENSIONES) or nombre.startswith((".", "~"))
                 or not os.path.isfile(ruta)):
             continue

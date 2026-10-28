@@ -2066,6 +2066,12 @@ tres cosas que ya existían:
   siguiente**: puede estar bajándose todavía, y transcribir medio archivo
   dejaría una sesión de 10 minutos que nadie corregiría. Lo ya hecho se anota
   en `procesadas.json` con el tamaño del archivo.
+- **Se miran también las subcarpetas.** En una cuenta en español la carpeta
+  se llama «Google Meet», no «Meet Recordings», y hay quien ordena las
+  grabaciones en subcarpetas (a mano o con un Apps Script). Una grabación que
+  se movió no se vuelve a transcribir: lo hecho se reconoce por el nombre y el
+  tamaño, no por la ruta. A `--grabaciones` no se le da «Mi unidad» entera:
+  cualquier audio o video de ahí entraría al informe como una clase.
 - **La fecha sale del nombre que pone Google** («Clase (2026-10-28 18:02
   GMT-6)», o con «/» que Drive cambia por «_» en el disco); si el nombre no la
   trae, de la fecha del archivo en hora de Costa Rica (un desfase fijo de −6:

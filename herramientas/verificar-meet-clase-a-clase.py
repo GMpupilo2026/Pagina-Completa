@@ -117,12 +117,20 @@ ses[0][4] = "9"
 datos["otros"] = [{"p": "Escrito a mano."}]
 with open(os.path.join(ene, "datos-2030-01.json"), "w", encoding="utf-8") as f:
     json.dump(datos, f, ensure_ascii=False)
-grabar(grab, "Clase CCDR (2030-01-14 18:00 GMT-6).mp4", ["Mate en dos.", "Otro mate en dos.", "Jaque mate."])
+# La nueva, dentro de una subcarpeta (quien las ordena por grupo o por mes).
+os.makedirs(os.path.join(grab, "Ordenadas", "Enero"))
+grabar(os.path.join(grab, "Ordenadas", "Enero"), "Clase CCDR (2030-01-14 18:00 GMT-6).mp4", ["Mate en dos.", "Otro mate en dos.", "Jaque mate."])
+# Y una ya hecha, movida a otra subcarpeta: no se vuelve a transcribir.
+os.rename(os.path.join(grab, "Clase CCDR (2030-01-28 18:02 GMT-6).mp4"),
+          os.path.join(grab, "Ordenadas", "Clase CCDR (2030-01-28 18:02 GMT-6).mp4"))
+antes = os.path.getmtime(os.path.join(ene, "transcripciones", "2030-01-28 18.02 Clase CCDR.txt"))
 correr(grab, trabajo)
 datos = leer(os.path.join(ene, "datos-2030-01.json"))
 ses = datos["lugar"]["sesiones"]
-ok("otra vuelta suma la nueva en su lugar y no repite las de antes",
+ok("otra vuelta suma la nueva (de una subcarpeta) en su lugar y no repite las de antes",
    [s[0] for s in ses] == ["Lun 07/01", "Lun 14/01", "Lun 28/01"], [s[0] for s in ses])
+ok("la que se movió a una subcarpeta no se vuelve a transcribir",
+   os.path.getmtime(os.path.join(ene, "transcripciones", "2030-01-28 18.02 Clase CCDR.txt")) == antes)
 ok("lo corregido a mano se queda", ses[0][4] == "9" and datos["otros"] == [{"p": "Escrito a mano."}], (ses[0][4], datos["otros"]))
 
 # El Word del mes, con lo pendiente resaltado.
