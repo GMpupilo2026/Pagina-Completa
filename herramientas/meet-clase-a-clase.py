@@ -260,7 +260,9 @@ def procesar(ruta, nombre, trabajo, args, maquina):
     fin = inicio + dt.timedelta(seconds=round(duracion))
     temas = temas_de(texto)
 
-    archivo_txt = f"{inicio:%Y-%m-%d %H.%M} {re.sub(r'[\\/:*?\"<>|]', '_', titulo)}.txt"
+    # Fuera de la f-string: antes de Python 3.12 no se puede «\» adentro.
+    limpio = re.sub(r'[\\/:*?"<>|]', "_", titulo)
+    archivo_txt = f"{inicio:%Y-%m-%d %H.%M} {limpio}.txt"
     with open(os.path.join(carpeta, "transcripciones", archivo_txt), "w", encoding="utf-8") as f:
         f.write(f"{titulo}\n{DIAS[inicio.weekday()]} {inicio:%d/%m/%Y}, {hora(inicio)} – {hora(fin)}"
                 f" ({round(duracion / 60)} min)\nGrabación: {nombre}\n\n"
