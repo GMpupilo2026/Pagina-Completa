@@ -28,6 +28,7 @@ y lo mismo para cada subcarpeta). Lo que suele traer:
 | Carpeta `Asistencia/`: un `.xlsx` de Google Meet por sesión | `read_file_content` (sale como texto). Solo los del mes del informe. |
 | Doc `Torneos Jugados`: enlaces de chess-results | `read_file_content`. |
 | Carpeta `Fotos/` | Ver el paso 4. |
+| Carpeta `AAAA-MM/` (de `herramientas/meet-clase-a-clase.py`): `datos-AAAA-MM.json`, `clase-a-clase.md` y `transcripciones/` | Si está, **se parte de ese JSON** en vez de empezar de cero: ya trae una fila de `lugar.sesiones` por cada grabación de Meet. Las filas no se borran; se completa la asistencia (que va en `pend`) con el `.xlsx` de esa fecha y se confirma el tema. `clase-a-clase.md` y las transcripciones sirven para el macrociclo y la forma deportiva. |
 
 ## 2. Las asistencias de Meet
 

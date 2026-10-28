@@ -2025,3 +2025,58 @@ en una carpeta de Drive. El paso a paso está en
 - **Asistencia: sin el cuerpo técnico y sin adivinar.** Un nombre de cuenta de
   Meet se junta con un atleta solo si la coincidencia es clara; las cuentas de
   familiares van aparte como «otras cuentas».
+
+### Las grabaciones de Meet, clase a clase
+
+Para no armar todo el último día del mes, cada sesión de Meet entra al informe
+el mismo día en que se grabó. `herramientas/meet-clase-a-clase.py` corre en la
+computadora del entrenador (no en el sitio ni en una sesión de Claude) y une
+tres cosas que ya existían:
+
+1. **Meet guarda la grabación en Drive** («Meet Recordings» de quien grabó).
+2. **Google Drive para computadora la baja** a una carpeta del disco. No hizo
+   falta escribir nada que hable con la API de Drive: ni credenciales, ni
+   OAuth, ni un token que se venza. Con la carpeta en «Duplicar archivos»
+   queda siempre en el disco; en «Transmitir», se baja cuando el script la lee.
+3. **El script vigila esa carpeta** y por cada grabación nueva deja la
+   transcripción, una fila en `lugar.sesiones` del JSON de
+   `herramientas/informe-ccdr.js`, el borrador del Word y `clase-a-clase.md`
+   (las sesiones del mes, sus horas y los temas).
+
+- **La transcripción es local, con Whisper (faster-whisper)**, por lo mismo que
+  en «La transcripción corre en la máquina de quien hace el informe»: son voces
+  de menores. La grabación ya está en el Drive de la cuenta que la grabó; lo
+  que se evita es sumar un proveedor más. La transcripción propia de Meet
+  (Google Docs) sería otra vía sin proveedor nuevo, pero depende del plan de
+  Workspace y del idioma que Meet reconozca; Whisper funciona con cualquiera.
+- **La carpeta de trabajo conviene dentro de Drive** (por ejemplo
+  `Mi unidad/Informe CCDR`): así, al cerrar el mes, la skill `informe-ccdr`
+  la lee con el conector igual que el resto. Las grabaciones NO se copian ahí
+  (serían el doble de espacio en Drive); `--copiar-a` es para una copia fuera.
+- **El script es dueño de una sola cosa en el JSON del mes: agregar filas.**
+  Una fila se identifica por fecha y horario; si ya estaba, no se repite ni se
+  pisa. El resto del archivo lo crea una vez, con todo en `pend`, y después no
+  lo toca: lo que se corrija a mano o lo que complete Claude se queda.
+- **Lo que no sale de un dato va en amarillo**, también dentro de una tabla
+  (por eso `tabla()` de `informe-ccdr.js` acepta trozos en una celda): la
+  asistencia, que la grabación no dice, y los temas, que se adivinan por las
+  palabras (un tema cuenta si se nombra 3 veces). El título de la reunión y el
+  horario sí son datos: salen del nombre del archivo y de la duración.
+- **Una grabación que cambió hace menos de dos minutos se deja para la vuelta
+  siguiente**: puede estar bajándose todavía, y transcribir medio archivo
+  dejaría una sesión de 10 minutos que nadie corregiría. Lo ya hecho se anota
+  en `procesadas.json` con el tamaño del archivo.
+- **La fecha sale del nombre que pone Google** («Clase (2026-10-28 18:02
+  GMT-6)», o con «/» que Drive cambia por «_» en el disco); si el nombre no la
+  trae, de la fecha del archivo en hora de Costa Rica (un desfase fijo de −6:
+  Costa Rica no cambia la hora y Windows no trae la base de zonas horarias).
+- `vad_filter=True` es por lo mismo que `no_repeat_ngram_size` en la página:
+  en un silencio largo Whisper repite la última frase.
+- **«av» va por debajo de la 16**: con la 19, faster-whisper 1.2 falla al abrir
+  el audio («unexpected keyword argument 'metadata_errors'»). El script lo
+  dice con esas palabras si pasa.
+
+`verificar-meet-clase-a-clase.py` lo comprueba con el motor falso
+(`MEET_MOTOR=falso`: el «audio» es un texto), sin bajar Whisper. Lo que no
+prueba es si Whisper entiende la clase: eso se mira con una grabación de
+verdad. El camino real se probó con el modelo `tiny` y un WAV.
