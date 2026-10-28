@@ -116,7 +116,7 @@
 
             <section aria-labelledby="ij-centro-t" class="ae-tarjeta">
                 <h2 id="ij-centro-t" class="ae-tarjeta-t font-serif">1. Tu delegación</h2>
-                <p class="ae-tarjeta-sub">El nombre del centro educativo se busca en el banco de colegios y escuelas que ya jugaron los JDE (leído de chess-results): al escogerlo, se propone su Dirección Regional. Si el tuyo no está, escríbelo completo.</p>
+                <p class="ae-tarjeta-sub">Marca tu Dirección Regional y si es escuela o colegio: se despliegan los centros educativos de esa regional y, al escoger el tuyo, el circuito se llena solo. La lista sale de los listados oficiales del MEP y de los centros que ya jugaron los JDE. Si el tuyo no está, escríbelo completo y elige el circuito.</p>
                 <div class="grid gap-4 md:grid-cols-2">
                     <div class="ij-campo">
                         <label for="ij-anio" class="ij-et">Año de los JDE</label>
@@ -127,25 +127,32 @@
                         <select id="ij-etapa" class="ae-control w-full"></select>
                         <p class="ij-ayuda" id="ij-etapa-ayuda"></p>
                     </div>
-                    <div class="ij-campo md:col-span-2 relative">
-                        <label for="ij-centro" class="ij-et">Centro educativo</label>
-                        <input id="ij-centro" type="text" class="ae-control w-full" maxlength="160" autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="ij-centro-lista" placeholder="Escribe parte del nombre: «liceo de paquera», «ctp santa elena»…">
-                        <ul id="ij-centro-lista" role="listbox" aria-label="Centros educativos del banco" class="ij-opciones" hidden></ul>
-                        <p class="ij-ayuda" id="ij-centro-ayuda" aria-live="polite">Cargando el banco de centros educativos…</p>
-                    </div>
                     <div class="ij-campo">
-                        <label for="ij-region" class="ij-et">Dirección Regional de Educación</label>
+                        <label for="ij-region" class="ij-et">1. Dirección Regional de Educación</label>
                         <select id="ij-region" class="ae-control w-full"></select>
                         <p class="ij-ayuda" id="ij-region-ayuda" aria-live="polite"></p>
                     </div>
-                    <div class="ij-campo">
-                        <label for="ij-tipo" class="ij-et">¿Escuela o colegio?</label>
-                        <select id="ij-tipo" class="ae-control w-full"></select>
-                        <p class="ij-ayuda">Decide la categoría de quien nació en 2013 o 2014: B si es de escuela, C si es de colegio.</p>
+                    <fieldset class="ij-campo ij-grupo">
+                        <legend class="ij-et">2. ¿Es una escuela o un colegio?</legend>
+                        <div class="flex flex-wrap gap-x-6 gap-y-2">
+                            <label class="ij-casilla"><input type="radio" name="ij-tipo" id="ij-tipo-primaria" value="primaria"> Escuela (primaria)</label>
+                            <label class="ij-casilla"><input type="radio" name="ij-tipo" id="ij-tipo-secundaria" value="secundaria"> Colegio (secundaria)</label>
+                        </div>
+                        <p class="ij-ayuda">También decide la categoría de quien nació en 2013 o 2014: B si es de escuela, C si es de colegio.</p>
+                    </fieldset>
+                    <div class="ij-campo md:col-span-2 relative">
+                        <label for="ij-centro" class="ij-et">3. Centro educativo</label>
+                        <div class="flex gap-2">
+                            <input id="ij-centro" type="text" class="ae-control w-full" maxlength="160" autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="ij-centro-lista" aria-describedby="ij-centro-ayuda" placeholder="Toca para ver la lista, o escribe parte del nombre">
+                            <button type="button" id="ij-centro-abrir" class="ae-boton shrink-0" aria-label="Ver la lista de centros educativos" aria-expanded="false" aria-controls="ij-centro-lista">▾</button>
+                        </div>
+                        <ul id="ij-centro-lista" role="listbox" aria-label="Centros educativos" class="ij-opciones" hidden></ul>
+                        <p class="ij-ayuda" id="ij-centro-ayuda" aria-live="polite">Cargando el banco de centros educativos…</p>
                     </div>
                     <div class="ij-campo">
-                        <label for="ij-circuito" class="ij-et">Circuito (opcional)</label>
-                        <input id="ij-circuito" type="text" class="ae-control w-full" maxlength="60" placeholder="Ej.: 03">
+                        <label for="ij-circuito" class="ij-et">Circuito</label>
+                        <select id="ij-circuito" class="ae-control w-full"></select>
+                        <p class="ij-ayuda" id="ij-circuito-ayuda" aria-live="polite">Se llena solo al escoger el centro. Si no sale, elígelo tú.</p>
                     </div>
                     <div class="ij-campo">
                         <label for="ij-telefono" class="ij-et">Teléfono de contacto (opcional)</label>
@@ -282,7 +289,7 @@
                         <li>Está prohibido pedir o cobrar dinero por la inscripción en cualquier etapa (art. 16).</li>
                     </ul>
                 </details>
-                <p>La categoría de otro año se calcula corriendo los rangos de la Normativa 2026; confírmala con la Normativa de ese año cuando el MEP la publique. ¿Ves un colegio mal escrito o con la región equivocada en el banco? Escríbenos a <a href="mailto:info@ajedrez-integral.com" class="underline underline-offset-2 hover:no-underline">info@ajedrez-integral.com</a>.</p>
+                <p>La categoría de otro año se calcula corriendo los rangos de la Normativa 2026; confírmala con la Normativa de ese año cuando el MEP la publique. El circuito sale de listados oficiales del MEP de entre 2018 y 2024, que no traen todos los centros y pueden estar desactualizados: revísalo y cámbialo si no es el tuyo. ¿Ves un colegio mal escrito o con la región equivocada en el banco? Escríbenos a <a href="mailto:info@ajedrez-integral.com" class="underline underline-offset-2 hover:no-underline">info@ajedrez-integral.com</a>.</p>
             </section>
         </div>
     </div>

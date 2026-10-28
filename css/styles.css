@@ -2597,3 +2597,8 @@ html.modo-proyector .clase-sticker-globo { font-size: 2rem; }
 .ij-detalles summary { cursor: pointer; font-weight: 600; color: rgb(var(--c-brand-800, 16 42 67)); }
 .dark .ij-detalles summary { color: #fff; }
 .ij-detalles summary:focus-visible { outline: 3px solid rgb(var(--c-accent-500, 222 145 29)); outline-offset: 2px; }
+.ij-grupo { border: 0; margin: 0; padding: 0; min-width: 0; }
+.ij-grupo legend { padding: 0; margin-bottom: 0.25rem; }
+.ij-opcion-nota { padding: 0.4rem 0.65rem; font-size: 0.8rem; color: rgb(var(--c-brand-600, 51 78 104)); }
+.dark .ij-opcion-nota { color: rgb(var(--c-brand-200, 188 204 220)); }
+.ij-opciones { max-height: 22rem; }
