@@ -8706,6 +8706,56 @@ Pareo lo usa quien organiza una etapa; esta la usa quien inscribe a su colegio.
   delegación y del centro y dice que **no reemplaza la Boleta de Inscripción
   Oficial** de la Plataforma de los JDE (art. 59.a): esa es la que vale. Con
   errores pendientes se puede bajar igual, pero antes se pregunta.
+- **Los equipos se inscriben completos y la herramienta no deja pasarse de lo
+  permitido** (lo pidió el dueño del sitio después de la segunda versión). El
+  modelo cambió (versión 2 del borrador): `estado.equipos` guarda cada equipo
+  (`{ id, categoria, torneo: "w"|"m", numero }`) y cada estudiante que juega en
+  uno lleva su `equipoId`; ya no hay «modalidad» ni «equipo 2» por persona. **La
+  categoría y el torneo de quien está en un equipo son los de su equipo**, y el
+  sexo de quien está en uno de Mujeres es mujer, fijo. Un borrador viejo se lee
+  (`normalizar()`): todos quedan como individuales, nunca se inventa un equipo.
+  - **Un tope se aplica al agregar, no solo se avisa.** `limites(estado)` devuelve
+    lo que la Normativa no deja pasar, cada violación con una **clave estable**, y
+    `intentar(estado, mutar)` hace el cambio y, si aparece una clave que antes no
+    estaba, lo **deshace** y devuelve los motivos. Los que cuenta: más de 5 en un
+    equipo (4 titulares y 1 suplente), una segunda suplente, más de 2 equipos por
+    categoría y torneo, más de 2 individuales por categoría y torneo (estos tres
+    desde la Etapa Regional: en la Institucional juega toda la población), un
+    hombre en el equipo de Mujeres, alguien que por su edad no puede jugar en esa
+    categoría (solo se sube A→B, C→D, D→E), más de 3 subidas por equipo (art. 18),
+    subir con centros unidos (art. 19.f), una categoría que la etapa no juega
+    (art. 53) y la misma persona dos veces (66.1.h).
+  - **Las claves de cantidad llevan la cantidad** (`ind-cupo:D|m:3`): así un
+    borrador que ya venía pasado no impide seguir trabajando, pero una más sí es
+    una violación nueva y se rechaza. Si las claves no llevaran la cantidad, un
+    borrador con tres individuales dejaría agregar un cuarto. Al deshacer,
+    `intentar()` **conserva la identidad de los objetos**: la pantalla tiene
+    cierres sobre cada estudiante y copiar de nuevo los dejaría apuntando a
+    objetos que ya no están en el estado.
+  - `crearEquipo()` (el primer número libre), `agregarIntegrante()` (el quinto de
+    un equipo sin suplente queda como suplente; uno que ya estaba como individual
+    puede pasar al equipo), `sacarDelEquipo()` y `agregarLista()` pasan todos por
+    `intentar()`. **Una lista pegada o un Excel con «Equipo/Ind»** (y, si quiere,
+    Categoría y Torneo) arma los equipos solo: los de equipo van a su categoría
+    —la de la lista o la de su fecha de nacimiento— y se crea un equipo y un
+    segundo cuando el primero se llena; lo que no cabe se **devuelve con su
+    motivo** y la página lo dice con nombre («No se agregaron 1 estudiante: Ind
+    Tres: …»). Quien puede ser de la B o la C sin saber si el centro es escuela o
+    colegio se rechaza con esa explicación: nunca se adivina.
+  - En pantalla: la sección «3. Equipos» crea un equipo con cuatro lugares de
+    titulares (torneo y categoría a elegir, solo las de la etapa); cada
+    integrante es una tarjeta (nombre, sexo, fecha, titular o suplente, documento).
+    **Los lugares sin llenar no cuentan en la revisión** (si contaran, cuatro
+    lugares vacíos llenarían la pantalla de errores): se dice «N lugares sin
+    llenar» y el equipo sin nadie lleno es un error en la Regional. Con cinco, el
+    botón «+ Integrante nuevo» queda con `aria-disabled` (no `disabled`, para que
+    se alcance con el teclado y diga por qué) y el resumen dice «completo: no caben
+    más»; si se toca igual, el sexto se rechaza con su motivo en un `role="status"`.
+    «Pasar a individual», «Quitar» (un integrante) y «Quitar el equipo» (con
+    confirmación) cambian la estructura y vuelven a pintar la lista; lo demás solo
+    actualiza textos. El Excel trae una hoja «Equipos» (titulares primero y la
+    suplente al final) además de la «Inscripción» que lee Pareo.
+
 - **Lo que no hace, a propósito**: no verifica el puesto de quien clasificó a la
   Interregional o la Nacional (no tiene los resultados de la etapa anterior; eso
   lo hace Pareo con «Clasificados»), no sabe cuántos inscritos habrá por categoría
@@ -8716,7 +8766,7 @@ Pareo lo usa quien organiza una etapa; esta la usa quien inscribe a su colegio.
 `herramientas/verificar-inscripcion-jde.js` lo prueba: cada regla con un caso que
 la cumple y uno que no (las categorías de 2008 a 2021, el ascenso, la unión de
 centros, las etapas, los equipos, el cuerpo técnico, los documentos, la
-Interregional), el Excel contra Pareo, pegar una lista (con y sin títulos, fechas
+Interregional), **los topes al agregar** (el sexto integrante, el tercer equipo, el tercer individual, un hombre en Mujeres, la edad, el cuarto ascenso, centros unidos, una lista con «Equipo/Ind», que lo rechazado no deja rastro y que un borrador ya pasado no se amplía), el Excel contra Pareo, pegar una lista (con y sin títulos, fechas
 día/mes y mes/día, sexos y fechas que no se entienden quedan vacíos), un borrador
 adulterado, el generador del banco con datos inventados y el banco real al día, y
 en un navegador el combobox con teclado, traer y pegar estudiantes, la categoría
@@ -8728,9 +8778,12 @@ regional, por nombre único en el país, sin juntar los ambiguos) y la lista
 según lo marcado (`centrosDe()`, `circuitosDe()`) también se prueban, y en el
 navegador el flujo completo: marcar regional y tipo, la lista, elegir un centro y
 ver el circuito, cambiarlo a mano, cambiar de regional, un centro sin circuito,
-el botón ▾ y el camino de escribir el nombre sin marcar nada. Rompiendo a
-propósito las categorías de la Interregional, el correo, el circuito automático o
-el borrado al cambiar de regional, salta.
+el botón ▾ y el camino de escribir el nombre sin marcar nada, y el de los equipos:
+crear, llenar hasta cinco, el botón apagado, el sexto y el tercer equipo
+rechazados, la fecha que no deja jugar y se deshace, quitar un equipo y que el
+borrador lo guarde. Rompiendo a propósito las categorías de la Interregional, el
+correo, el circuito automático, el borrado al cambiar de regional o el tope de 5,
+salta.
 
 ## La página del Centroamericano 2026
 

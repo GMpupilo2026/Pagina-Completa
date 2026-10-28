@@ -14,14 +14,26 @@
  * docs/decisiones/juegos-y-torneos.md.
  *
  * Una inscripción es:
- *   { anio, etapa,
+ *   { version, anio, etapa,
  *     centro:  { nombre, region, tipo, circuito, correo, telefono, privado,
  *                union: { activa, centros, matricula } },
  *     cuerpo:  [{ id, nombre, rol: "jefe"|"tecnico", sexo, funcionario, telefono }],
+ *     equipos: [{ id, categoria, torneo: "w"|"m", numero }],
  *     estudiantes: [{ id, nombre, sexo, nacimiento, categoria, modalidad,
- *                     torneo, equipo, suplente, docTipo, documento, apoyo }] }
- * `categoria` y `torneo` vacíos quieren decir «la que corresponde» (se
- * calculan); solo se guardan cuando la persona eligió otra.
+ *                     torneo, equipoId, suplente, docTipo, documento, apoyo }] }
+ * Un estudiante con `equipoId` juega en ese equipo: su categoría y su torneo son
+ * los del equipo (un equipo es de una categoría y de un torneo, «Mujeres» o
+ * «Abierto»). Sin `equipoId` es individual: su categoría sale de su fecha de
+ * nacimiento y `categoria` y `torneo` vacíos quieren decir «la que
+ * corresponde» (se calculan); solo se guardan cuando la persona eligió otra.
+ *
+ * LOS TOPES SE APLICAN AL AGREGAR, no solo se avisan después: `intentar()` hace
+ * un cambio y, si deja pasarse de lo que permite la Normativa (más de cinco en
+ * un equipo, más de dos equipos o dos individuales por categoría y torneo, un
+ * hombre en un equipo de Mujeres, alguien que por su edad no puede jugar en esa
+ * categoría…), lo deshace y dice por qué (`limites()`). La revisión
+ * (`revisar()`) sigue señalando todo lo que quede mal, también lo que venga de un
+ * borrador o de una lista pegada.
  */
 (function (raiz) {
   "use strict";
@@ -77,14 +89,19 @@
   }
   function estadoNuevo() {
     return {
-      version: 1, anio: G.JDE_ANIO_NORMATIVA, etapa: "regional",
+      version: 2, anio: G.JDE_ANIO_NORMATIVA, etapa: "regional",
       centro: { nombre: "", region: "", tipo: "", circuito: "", correo: "", telefono: "", privado: false, union: { activa: false, centros: "", matricula: "" } },
-      cuerpo: [], estudiantes: [],
+      cuerpo: [], equipos: [], estudiantes: [],
     };
   }
   function estudianteNuevo(datos) {
-    return Object.assign({ id: nuevoId("e"), nombre: "", sexo: "", nacimiento: "", categoria: "", modalidad: "individual", torneo: "", equipo: 1, suplente: false, docTipo: "cedula", documento: "", apoyo: false }, datos || {});
+    return Object.assign({ id: nuevoId("e"), nombre: "", sexo: "", nacimiento: "", categoria: "", modalidad: "individual", torneo: "", equipoId: "", suplente: false, docTipo: "cedula", documento: "", apoyo: false }, datos || {});
   }
+  function equipoNuevo(datos) {
+    return Object.assign({ id: nuevoId("q"), categoria: "", torneo: "m", numero: 1 }, datos || {});
+  }
+  const esDeEquipo = (e) => !!e.equipoId;
+  const equipoDe = (e, estado) => (e.equipoId ? (estado.equipos || []).find((t) => t.id === e.equipoId) || null : null);
   function personaNueva(datos) {
     return Object.assign({ id: nuevoId("p"), nombre: "", rol: "tecnico", sexo: "", funcionario: true, telefono: "" }, datos || {});
   }
@@ -113,13 +130,28 @@
       id: idLimpio(p.id, "p"), nombre: txt(p.nombre), rol: p.rol === "jefe" ? "jefe" : "tecnico",
       sexo: p.sexo === "m" || p.sexo === "w" ? p.sexo : "", funcionario: p.funcionario !== false, telefono: txt(p.telefono, 30),
     }));
-    e.estudiantes = (Array.isArray(crudo.estudiantes) ? crudo.estudiantes : []).slice(0, 400).map((s) => estudianteNuevo({
-      id: idLimpio(s.id, "e"), nombre: txt(s.nombre), sexo: s.sexo === "m" || s.sexo === "w" ? s.sexo : "",
-      nacimiento: anioDe(s.nacimiento) ? String(s.nacimiento) : "", categoria: TODAS.includes(s.categoria) ? s.categoria : "",
-      modalidad: s.modalidad === "equipo" ? "equipo" : "individual", torneo: s.torneo === "w" || s.torneo === "m" ? s.torneo : "",
-      equipo: Number(s.equipo) === 2 ? 2 : 1, suplente: !!s.suplente, docTipo: DOCUMENTOS.some((d) => d.id === s.docTipo) ? s.docTipo : "cedula",
-      documento: txt(s.documento, 30), apoyo: !!s.apoyo,
-    }));
+    // Los equipos: de una categoría y un torneo, con su número (hasta 9 del mismo centro), sin repetir.
+    const vistos = new Set();
+    e.equipos = (Array.isArray(crudo.equipos) ? crudo.equipos : []).slice(0, 60).map((t) => equipoNuevo({
+      id: idLimpio(t && t.id, "q"), categoria: t && TODAS.includes(t.categoria) ? t.categoria : "", torneo: t && t.torneo === "w" ? "w" : "m",
+      numero: t && Number.isInteger(t.numero) && t.numero >= 1 && t.numero <= 9 ? t.numero : 1,
+    })).filter((t) => {
+      const k = [t.categoria, t.torneo, t.numero].join("|");
+      if (!t.categoria || vistos.has(k)) return false;
+      vistos.add(k);
+      return true;
+    });
+    const hayEquipo = new Set(e.equipos.map((t) => t.id));
+    e.estudiantes = (Array.isArray(crudo.estudiantes) ? crudo.estudiantes : []).slice(0, 400).map((s) => {
+      const equipoId = typeof s.equipoId === "string" && hayEquipo.has(s.equipoId) ? s.equipoId : "";
+      return estudianteNuevo({
+        id: idLimpio(s.id, "e"), nombre: txt(s.nombre), sexo: s.sexo === "m" || s.sexo === "w" ? s.sexo : "",
+        nacimiento: anioDe(s.nacimiento) ? String(s.nacimiento) : "", categoria: TODAS.includes(s.categoria) ? s.categoria : "",
+        modalidad: equipoId ? "equipo" : "individual", torneo: s.torneo === "w" || s.torneo === "m" ? s.torneo : "", equipoId,
+        suplente: !!equipoId && !!s.suplente, docTipo: DOCUMENTOS.some((d) => d.id === s.docTipo) ? s.docTipo : "cedula",
+        documento: txt(s.documento, 30), apoyo: !!s.apoyo,
+      });
+    });
     return e;
   }
 
@@ -136,22 +168,35 @@
     }
     return { opciones, propia: "" };
   }
-  // Subir de categoría (art. 18): de A a B, de C a D y de D a E, solo en equipos.
+  // Las categorías que puede jugar un estudiante INDIVIDUAL: las que le tocan por
+  // su año de nacimiento (en individual no se sube de categoría, art. 18). Subir
+  // de categoría es cosa de un equipo: el equipo es de una categoría y quien nació
+  // en la de abajo puede jugar en él (`puedeJugarEn`).
   function categoriasPosibles(e, estado) {
     const { opciones, propia } = categoriaPropia(e, estado);
     const lista = opciones.slice();
-    if (e.modalidad === "equipo") {
-      for (const c of opciones) if (G.JDE_ASCENSOS[c] && !lista.includes(G.JDE_ASCENSOS[c])) lista.push(G.JDE_ASCENSOS[c]);
-    }
     if (e.categoria && !lista.includes(e.categoria)) lista.push(e.categoria);
     return { lista, propia, opciones };
   }
+  // La categoría en que juega: la de su equipo, o la suya si es individual.
   function categoriaEfectiva(e, estado) {
+    const t = equipoDe(e, estado);
+    if (t) return t.categoria;
     return TODAS.includes(e.categoria) ? e.categoria : categoriaPropia(e, estado).propia;
   }
+  // Quien nació en `opciones` puede jugar en la categoría `cat` de un equipo si
+  // es la suya o la siguiente (A→B, C→D, D→E; art. 18). Devuelve "propia",
+  // "sube" o "" (no puede).
+  function puedeJugarEn(opciones, cat) {
+    if (opciones.includes(cat)) return "propia";
+    if (opciones.some((c) => G.JDE_ASCENSOS[c] === cat)) return "sube";
+    return "";
+  }
   // El torneo de una mujer es el suyo (Mujeres) o el Abierto; el de un hombre,
-  // siempre el Abierto (art. 66.1.a y c).
-  function torneoEfectivo(e) {
+  // siempre el Abierto (art. 66.1.a y c). Quien juega en un equipo juega el de su equipo.
+  function torneoEfectivo(e, estado) {
+    const t = estado && equipoDe(e, estado);
+    if (t) return t.torneo;
     if (e.torneo === "w" || e.torneo === "m") return e.torneo;
     return e.sexo === "w" ? "w" : "m";
   }
@@ -173,7 +218,10 @@
     const E = estado;
     const c = E.centro;
     const etapa = ETAPAS.find((x) => x.id === E.etapa) || ETAPAS[1];
-    const lista = E.estudiantes;
+    // Los lugares de un equipo que todavía no se llenan (sin nombre, fecha ni documento) no cuentan:
+    // la pantalla los deja listos para escribir y no deben llenar la revisión de errores.
+    const vacio = (e) => !!e.equipoId && !unEspacio(e.nombre) && !e.nacimiento && !unEspacio(e.documento);
+    const lista = E.estudiantes.filter((e) => !vacio(e));
 
     // ---- la delegación
     if (!unEspacio(c.nombre)) h("error", "Falta el nombre del centro educativo.", "");
@@ -212,10 +260,10 @@
       const cat = categoriaEfectiva(e, E);
       if (cat && !etapa.categorias.includes(cat)) h("error", quien + ": la categoría " + cat + " no juega ajedrez en la Etapa " + etapa.nombre + " (allí solo juegan " + etapa.categorias.join(" y ") + ").", "art. 53", ids);
       if (!unEspacio(e.documento)) h("aviso", quien + ": falta el número de su documento de identificación (se presenta en físico el día de la acreditación).", "art. 59.b y e", ids);
-      if (e.modalidad === "individual" && e.suplente) h("aviso", quien + ": «suplente» solo se usa en equipos.", "art. 66.1.g", ids);
+      const equipo = equipoDe(e, E);
       jugadores.push({
-        id: e.id, nombre: unEspacio(e.nombre), institucion: unEspacio(c.nombre) + (e.modalidad === "equipo" && Number(e.equipo) === 2 ? " (equipo 2)" : ""),
-        categoria: cat, nacimiento: e.nacimiento, modalidad: e.modalidad, sexo: e.sexo, torneo: torneoEfectivo(e), documento: e.documento, suplente: !!e.suplente,
+        id: e.id, nombre: unEspacio(e.nombre), institucion: unEspacio(c.nombre) + (equipo && equipo.numero > 1 ? " (equipo " + equipo.numero + ")" : ""),
+        categoria: cat, nacimiento: e.nacimiento, modalidad: equipo ? "equipo" : "individual", sexo: e.sexo, torneo: torneoEfectivo(e, E), documento: e.documento, suplente: !!e.suplente,
       });
     }
 
@@ -271,10 +319,18 @@
     const equipos = armarEquipos(unicos);
     for (const q of equipos) {
       const suplentes = q.integrantes.filter((j) => j.suplente);
-      const nombreEq = "El equipo " + NOMBRE_TORNEO[q.torneo] + " de la categoría " + q.categoria + (q.numero === 2 ? " (equipo 2)" : "");
+      const nombreEq = "El equipo " + NOMBRE_TORNEO[q.torneo] + " de la categoría " + q.categoria + (q.numero > 1 ? " (equipo " + q.numero + ")" : "");
       if (suplentes.length > 1) h("error", nombreEq + " tiene " + suplentes.length + " suplentes marcadas y solo puede haber una.", "art. 66.1.g", idsDe(suplentes));
       else if (q.integrantes.length === 5 && !suplentes.length) h("aviso", nombreEq + " tiene cinco integrantes: marca cuál es la suplente (cuatro titulares y una suplente). El orden de los tableros se da en el Congresillo Técnico.", "art. 66.1.g y h", idsDe(q.integrantes));
       else if (q.integrantes.length <= MAX_TITULARES && suplentes.length) h("aviso", nombreEq + " tiene solo " + q.integrantes.length + " integrantes y una está marcada como suplente: con cuatro o menos todas son titulares.", "art. 66.1.g", idsDe(suplentes));
+    }
+
+    // Un equipo que se creó y todavía no tiene a nadie.
+    for (const t of E.equipos) {
+      if (E.estudiantes.some((e) => e.equipoId === t.id)) continue;
+      const texto = "El equipo " + NOMBRE_TORNEO[t.torneo] + " de la categoría " + t.categoria + (t.numero > 1 ? " (equipo " + t.numero + ")" : "") + " no tiene integrantes todavía: un equipo es de 3 a 5 estudiantes.";
+      if (E.etapa === "institucional") h("aviso", texto, "art. 66.1.g");
+      else h("error", texto, "art. 66.1.g");
     }
 
     // ---- el cuerpo técnico del mismo sexo (art. 60.e): sin excepciones
@@ -305,7 +361,8 @@
     for (const j of jugadores) {
       if (j.modalidad !== "equipo" || !j.categoria) continue;
       const torneo = j.alAbierto ? "m" : j.torneo;
-      const numero = /\(equipo 2\)$/.test(j.institucion) ? 2 : 1;
+      const m = /\(equipo (\d+)\)$/.exec(j.institucion);
+      const numero = m ? Number(m[1]) : 1;
       const k = [j.categoria, torneo, numero].join("|");
       if (!por.has(k)) por.set(k, { categoria: j.categoria, torneo, numero, integrantes: [] });
       por.get(k).integrantes.push(j);
@@ -320,8 +377,8 @@
       const cat = categoriaEfectiva(e, estado);
       const f = filas.find((x) => x.categoria === cat);
       if (!f) continue;
-      const t = torneoEfectivo(e);
-      if (e.modalidad === "equipo") f[t === "w" ? "eqMujeres" : "eqAbierto"] += 1;
+      const t = torneoEfectivo(e, estado);
+      if (esDeEquipo(e)) f[t === "w" ? "eqMujeres" : "eqAbierto"] += 1;
       else f[t === "w" ? "indMujeres" : "indAbierto"] += 1;
     }
     return filas.filter((f) => f.indMujeres || f.indAbierto || f.eqMujeres || f.eqAbierto);
@@ -336,12 +393,217 @@
   function filasExcel(estado) {
     const c = estado.centro;
     const nombreDoc = (id) => (DOCUMENTOS.find((d) => d.id === id) || {}).nombre || "";
-    return estado.estudiantes.filter((e) => unEspacio(e.nombre)).map((e) => [
-      unEspacio(e.nombre), e.sexo === "w" ? "MUJER" : e.sexo === "m" ? "HOMBRE" : "", e.nacimiento || "",
-      unEspacio(c.nombre) + (e.modalidad === "equipo" && Number(e.equipo) === 2 ? " (equipo 2)" : ""), c.region || "",
-      categoriaEfectiva(e, estado), e.modalidad === "equipo" ? "Equipo" : "Individual", NOMBRE_TORNEO[torneoEfectivo(e)],
-      unEspacio(e.documento), unEspacio(e.documento) ? nombreDoc(e.docTipo) : "", e.modalidad === "equipo" && e.suplente ? "Sí" : "", e.apoyo ? "Sí" : "",
-    ]);
+    return estado.estudiantes.filter((e) => unEspacio(e.nombre)).map((e) => {
+      const t = equipoDe(e, estado);
+      return [
+        unEspacio(e.nombre), e.sexo === "w" ? "MUJER" : e.sexo === "m" ? "HOMBRE" : "", e.nacimiento || "",
+        unEspacio(c.nombre) + (t && t.numero > 1 ? " (equipo " + t.numero + ")" : ""), c.region || "",
+        categoriaEfectiva(e, estado), t ? "Equipo" : "Individual", NOMBRE_TORNEO[torneoEfectivo(e, estado)],
+        unEspacio(e.documento), unEspacio(e.documento) ? nombreDoc(e.docTipo) : "", t && e.suplente ? "Sí" : "", e.apoyo ? "Sí" : "",
+      ];
+    });
+  }
+  // Los equipos, uno por uno, para la hoja «Equipos» del Excel: titulares primero y la suplente al final.
+  const ENCABEZADOS_EQUIPOS = ["Equipo", "N.°", "Nombre", "Condición", "Sexo", "FDN", "Documento de identidad"];
+  function filasEquipos(estado) {
+    const filas = [];
+    const ordenados = estado.equipos.slice().sort((a, b) => a.categoria.localeCompare(b.categoria) || (a.torneo === "w" ? -1 : 1) - (b.torneo === "w" ? -1 : 1) || a.numero - b.numero);
+    for (const t of ordenados) {
+      const miembros = estado.estudiantes.filter((e) => e.equipoId === t.id && unEspacio(e.nombre));
+      miembros.sort((a, b) => Number(!!a.suplente) - Number(!!b.suplente));
+      const nombre = "Equipo " + NOMBRE_TORNEO[t.torneo] + " · categoría " + t.categoria + (t.numero > 1 ? " · equipo " + t.numero : "");
+      miembros.forEach((e, i) => filas.push([nombre, String(i + 1), unEspacio(e.nombre), e.suplente ? "Suplente" : "Titular", e.sexo === "w" ? "MUJER" : e.sexo === "m" ? "HOMBRE" : "", e.nacimiento || "", unEspacio(e.documento)]));
+    }
+    return filas;
+  }
+
+  // ------------------------------------------- los topes, al agregar
+  // Lo que la Normativa NO deja pasar. Cada violación lleva una clave estable
+  // para poder decir cuáles son NUEVAS después de un cambio (una inscripción que
+  // ya venía pasada, de un borrador, no impide seguir trabajando; solo se impide
+  // pasarse más: las de cantidad llevan la cantidad en la clave, así que una más
+  // es una violación nueva). Los topes de cantidad por centro valen desde la Etapa Regional:
+  // en la Institucional puede participar toda la población y solo clasifican dos.
+  const TOPE_EQUIPO = 5;       // art. 66.1.g: cuatro titulares y una suplente
+  const TOPE_POR_GRUPO = 2;    // art. 66.1.f y g: dos individuales y dos equipos por categoría y torneo
+  const desde = (r) => (r[0] == null ? "nacidos en " + r[1] + " o antes" : "nacidos de " + r[0] + " a " + r[1]);
+  function limites(estado) {
+    const E = estado;
+    const etapa = ETAPAS.find((x) => x.id === E.etapa) || ETAPAS[1];
+    const conTope = E.etapa !== "institucional";
+    const v = [];
+    const nombreDe = (e) => unEspacio(e.nombre) || "El estudiante sin nombre";
+    const nombreEq = (t) => "El equipo " + NOMBRE_TORNEO[t.torneo] + " de la categoría " + t.categoria + (t.numero > 1 ? " (equipo " + t.numero + ")" : "");
+    const miembros = new Map(E.equipos.map((t) => [t.id, []]));
+    for (const e of E.estudiantes) if (e.equipoId && miembros.has(e.equipoId)) miembros.get(e.equipoId).push(e);
+
+    const gruposEq = new Map();
+    for (const t of E.equipos) {
+      const m = miembros.get(t.id);
+      if (!etapa.categorias.includes(t.categoria)) v.push({ clave: "eq-etapa:" + t.id, texto: "En la Etapa " + etapa.nombre + " solo juegan ajedrez las categorías " + etapa.categorias.join(" y ") + ": no se puede inscribir un equipo de la categoría " + t.categoria + " (art. 53)." });
+      if (m.length > TOPE_EQUIPO) v.push({ clave: "eq-lleno:" + t.id + ":" + m.length, texto: nombreEq(t) + " ya tiene " + TOPE_EQUIPO + " integrantes —cuatro titulares y una suplente— y no caben más (art. 66.1.g)." });
+      const suplentes = m.filter((e) => e.suplente).length;
+      if (suplentes > 1) v.push({ clave: "eq-suplente:" + t.id + ":" + suplentes, texto: nombreEq(t) + " solo puede tener una suplente: ya hay otra marcada (art. 66.1.g)." });
+      if (t.torneo === "w") for (const e of m) if (e.sexo === "m") v.push({ clave: "eq-hombre:" + e.id, texto: nombreDe(e) + " es hombre y no puede estar en un equipo de Mujeres: el equipo Abierto es para hombres y mujeres (art. 66.1.a y c)." });
+      let suben = 0;
+      for (const e of m) {
+        const ops = G.categoriasDeNacimiento(anioDe(e.nacimiento), E.anio);
+        if (!ops.length) continue; // sin fecha, o de ninguna categoría: lo dice la revisión
+        const puede = puedeJugarEn(ops, t.categoria);
+        if (puede === "sube") suben += 1;
+        else if (!puede) v.push({ clave: "eq-edad:" + e.id + ":" + t.id, texto: nombreDe(e) + " nació en " + anioDe(e.nacimiento) + " y no puede jugar en la categoría " + t.categoria + " (" + desde(G.rangoCategoria(t.categoria, E.anio)) + "): en un equipo solo se sube de categoría de A a B, de C a D y de D a E (art. 17 y 18)." });
+      }
+      if (suben > G.JDE_MAX_ASCENSOS) v.push({ clave: "eq-ascensos:" + t.id + ":" + suben, texto: nombreEq(t) + " ya tiene " + G.JDE_MAX_ASCENSOS + " estudiantes subidos de categoría y ese es el máximo por equipo (art. 18)." });
+      if (suben && E.centro.union.activa) v.push({ clave: "eq-union:" + t.id, texto: "Un centro que se une a otros no puede subir estudiantes de categoría (art. 19.f): " + nombreEq(t).toLowerCase() + " tiene a alguien de la categoría de abajo." });
+      const k = t.categoria + "|" + t.torneo;
+      if (!gruposEq.has(k)) gruposEq.set(k, []);
+      gruposEq.get(k).push(t);
+    }
+    for (const [k, lista] of gruposEq) {
+      const [cat, torneo] = k.split("|");
+      if (conTope && lista.length > TOPE_POR_GRUPO) v.push({ clave: "eq-cupo:" + k + ":" + lista.length, texto: "Ya hay " + TOPE_POR_GRUPO + " equipos " + NOMBRE_TORNEO[torneo] + " de la categoría " + cat + " y ese es el máximo por centro desde la Etapa Regional (art. 66.1.g)." });
+      if (new Set(lista.map((t) => t.numero)).size !== lista.length) v.push({ clave: "eq-numero:" + k, texto: "Dos equipos " + NOMBRE_TORNEO[torneo] + " de la categoría " + cat + " tienen el mismo número." });
+    }
+
+    const gruposInd = new Map();
+    for (const e of E.estudiantes) {
+      if (e.equipoId) continue;
+      const cat = categoriaEfectiva(e, E);
+      if (!cat) continue;
+      if (!etapa.categorias.includes(cat)) { v.push({ clave: "ind-etapa:" + e.id, texto: nombreDe(e) + " es de la categoría " + cat + " y en la Etapa " + etapa.nombre + " solo juegan ajedrez las categorías " + etapa.categorias.join(" y ") + " (art. 53)." }); continue; }
+      const k = cat + "|" + torneoEfectivo(e, E);
+      gruposInd.set(k, (gruposInd.get(k) || 0) + 1);
+    }
+    for (const [k, n] of gruposInd) {
+      const [cat, torneo] = k.split("|");
+      if (conTope && n > TOPE_POR_GRUPO) v.push({ clave: "ind-cupo:" + k + ":" + n, texto: "Ya hay " + TOPE_POR_GRUPO + " estudiantes individuales de la categoría " + cat + " en el torneo " + NOMBRE_TORNEO[torneo] + " y ese es el máximo por centro desde la Etapa Regional (art. 66.1.f). Si hay más, pueden jugar en un equipo." });
+    }
+
+    // La misma persona dos veces: una sola modalidad (art. 66.1.h).
+    const quien = new Map();
+    for (const e of E.estudiantes) {
+      const doc = String(e.documento || "").toUpperCase().replace(/[^0-9A-Z]/g, "");
+      const k = doc ? "doc:" + doc : unEspacio(e.nombre) && e.nacimiento ? "nom:" + sinTildes(e.nombre).replace(/\s+/g, " ") + "|" + e.nacimiento : "";
+      if (!k) continue;
+      if (!quien.has(k)) quien.set(k, []);
+      quien.get(k).push(e);
+    }
+    for (const [k, lista] of quien) if (lista.length > 1) v.push({ clave: "dup:" + k, texto: nombreDe(lista[0]) + " ya está inscrito: una persona estudiante participa en una sola modalidad, y una sola vez (art. 66.1.h)." });
+    return v;
+  }
+
+  // Hace un cambio y lo deshace si deja pasarse de lo permitido. `mutar` toca
+  // `estado.equipos` y `estado.estudiantes` y puede devolver algo (se entrega en
+  // `resultado`). Si vuelve atrás, los objetos que ya existían siguen siendo los
+  // mismos (la pantalla los tiene en sus cierres): solo se les devuelven los datos.
+  function intentar(estado, mutar) {
+    const antes = new Set(limites(estado).map((x) => x.clave));
+    const copia = JSON.stringify({ equipos: estado.equipos, estudiantes: estado.estudiantes });
+    const resultado = mutar();
+    const nuevas = limites(estado).filter((x) => !antes.has(x.clave));
+    if (!nuevas.length) return { ok: true, motivos: [], resultado };
+    const o = JSON.parse(copia);
+    for (const campo of ["equipos", "estudiantes"]) {
+      const actuales = new Map(estado[campo].map((x) => [x.id, x]));
+      estado[campo] = o[campo].map((viejo) => {
+        const x = actuales.get(viejo.id);
+        if (!x) return viejo;
+        for (const k of Object.keys(x)) delete x[k];
+        return Object.assign(x, viejo);
+      });
+    }
+    return { ok: false, motivos: nuevas.map((x) => x.texto), resultado: null };
+  }
+
+  // Un equipo nuevo de esa categoría y ese torneo, con el primer número libre.
+  function crearEquipo(estado, categoria, torneo) {
+    return intentar(estado, () => {
+      const usados = new Set(estado.equipos.filter((t) => t.categoria === categoria && t.torneo === torneo).map((t) => t.numero));
+      let numero = 1;
+      while (usados.has(numero)) numero += 1;
+      const t = equipoNuevo({ categoria, torneo, numero });
+      estado.equipos.push(t);
+      return t;
+    });
+  }
+  // Un integrante nuevo (o uno que ya estaba, `existente`, y pasa de individual al equipo).
+  // El quinto de un equipo sin suplente queda como suplente: cuatro titulares y una suplente.
+  function agregarIntegrante(estado, equipoId, datos, existente) {
+    return intentar(estado, () => {
+      const t = estado.equipos.find((x) => x.id === equipoId);
+      const ya = estado.estudiantes.filter((e) => e.equipoId === equipoId);
+      const e = existente || estudianteNuevo(datos);
+      if (t && t.torneo === "w" && !e.sexo) e.sexo = "w";
+      e.equipoId = equipoId;
+      e.modalidad = "equipo";
+      e.categoria = ""; e.torneo = "";
+      e.suplente = !!(datos && datos.suplente) || (ya.length === TOPE_EQUIPO - 1 && !ya.some((x) => x.suplente));
+      if (!estado.estudiantes.includes(e)) estado.estudiantes.push(e);
+      return e;
+    });
+  }
+  // Un integrante vuelve a ser individual.
+  function sacarDelEquipo(estado, estudianteId) {
+    return intentar(estado, () => {
+      const e = estado.estudiantes.find((x) => x.id === estudianteId);
+      if (e) { e.equipoId = ""; e.modalidad = "individual"; e.suplente = false; }
+      return e;
+    });
+  }
+  // Quitar un equipo con sus integrantes.
+  function quitarEquipo(estado, equipoId) {
+    estado.estudiantes = estado.estudiantes.filter((e) => e.equipoId !== equipoId);
+    estado.equipos = estado.equipos.filter((t) => t.id !== equipoId);
+  }
+  // Cuántos faltan o sobran para que el equipo sea de 3 a 5.
+  function estadoDelEquipo(estado, t) {
+    const m = estado.estudiantes.filter((e) => e.equipoId === t.id);
+    const n = m.length;
+    return { integrantes: n, titulares: m.filter((e) => !e.suplente).length, suplentes: m.filter((e) => e.suplente).length, faltan: Math.max(0, MIN_EQUIPO - n), caben: Math.max(0, TOPE_EQUIPO - n) };
+  }
+  const MIN_EQUIPO = 3;
+
+  // Agrega a todos los de una lista (de leerLista): los individuales como individuales y los
+  // «Equipo» a su equipo (categoría y torneo de la lista o, si no los dice, por su fecha de
+  // nacimiento y el Abierto), creando el equipo y un segundo cuando el primero se llena. Lo que
+  // no cabe se devuelve con su motivo: nunca se pasa de lo permitido.
+  function agregarLista(estado, estudiantes) {
+    const agregados = [], rechazados = [];
+    for (const s of estudiantes) {
+      const d = s.destino || {};
+      delete s.destino;
+      const quien = unEspacio(s.nombre) || "Un estudiante sin nombre";
+      if (!d.equipo) {
+        const r = intentar(estado, () => { estado.estudiantes.push(s); return s; });
+        (r.ok ? agregados : rechazados).push(r.ok ? s : { nombre: quien, motivo: r.motivos[0] });
+        continue;
+      }
+      const { propia, opciones } = categoriaPropia(s, estado);
+      const cat = d.categoria || propia;
+      if (!cat) { rechazados.push({ nombre: quien, motivo: opciones.length > 1 ? "nació en un año de la categoría " + opciones.join(" o ") + " (B es de escuela, C de colegio): marca si el centro es escuela o colegio, o ponle la categoría en la lista." : "no tiene fecha de nacimiento (o no cae en ninguna categoría): agrégalo al equipo a mano." }); continue; }
+      const torneo = d.torneo === "w" ? "w" : "m";
+      if (torneo === "w" && s.sexo === "m") { rechazados.push({ nombre: quien, motivo: "es hombre y la lista lo pone en el equipo de Mujeres." }); continue; }
+      let hecho = false, motivo = "";
+      const equipos = estado.equipos.filter((t) => t.categoria === cat && t.torneo === torneo).sort((a, b) => a.numero - b.numero);
+      for (const t of equipos) {
+        if (estadoDelEquipo(estado, t).caben === 0) continue;
+        const r = agregarIntegrante(estado, t.id, null, s);
+        if (r.ok) { hecho = true; break; }
+        motivo = r.motivos[0];
+      }
+      if (!hecho && (!equipos.length || equipos.every((t) => estadoDelEquipo(estado, t).caben === 0))) {
+        const nuevo = crearEquipo(estado, cat, torneo);
+        if (!nuevo.ok) motivo = nuevo.motivos[0];
+        else {
+          const r = agregarIntegrante(estado, nuevo.resultado.id, null, s);
+          if (r.ok) hecho = true;
+          else { motivo = r.motivos[0]; if (!estado.estudiantes.some((e) => e.equipoId === nuevo.resultado.id)) quitarEquipo(estado, nuevo.resultado.id); }
+        }
+      }
+      if (!hecho && !estado.estudiantes.includes(s)) rechazados.push({ nombre: quien, motivo: motivo || "no cabe en ningún equipo." });
+      else if (hecho) agregados.push(s);
+    }
+    return { agregados, rechazados };
   }
 
   // ---------------------------------------------------- pegar una lista
@@ -351,7 +613,7 @@
     sexo: "sexo", genero: "sexo", sex: "sexo",
     fdn: "nacimiento", nacimiento: "nacimiento", "fecha de nacimiento": "nacimiento", "fecha nacimiento": "nacimiento", "date of birth": "nacimiento",
     "equipo/ind": "modalidad", "equipo / ind": "modalidad", modalidad: "modalidad", "equipo/individual": "modalidad",
-    torneo: "torneo", rama: "torneo",
+    torneo: "torneo", rama: "torneo", categoria: "categoria", category: "categoria",
     documento: "documento", "documento de identidad": "documento", cedula: "documento", identificacion: "documento", "numero de documento": "documento",
   };
   const ORDEN_PEGADO = ["nombre", "sexo", "nacimiento", "documento"];
@@ -377,10 +639,14 @@
       if (!nombre) continue;
       const modalidad = G.leerModalidad(col(f, "modalidad"));
       const torneo = G.leerTorneo(col(f, "torneo"));
-      salida.push(estudianteNuevo({
+      const cat = String(col(f, "categoria")).trim().toUpperCase();
+      const e = estudianteNuevo({
         nombre, sexo: G.leerSexo(col(f, "sexo")), nacimiento: G.leerFecha(col(f, "nacimiento"), orden), documento: col(f, "documento").slice(0, 30),
-        modalidad: modalidad || "individual", torneo: torneo === "w" ? "w" : "",
-      }));
+        torneo: modalidad === "equipo" ? "" : torneo === "w" ? "w" : "",
+      });
+      // Adónde va: se queda aparte de la persona porque es de la lista, no suyo.
+      e.destino = { equipo: modalidad === "equipo", torneo: torneo === "w" ? "w" : "m", categoria: TODAS.includes(cat) ? cat : "" };
+      salida.push(e);
     }
     return salida;
   }
@@ -451,7 +717,7 @@
 
   const api = {
     ETAPAS, TODAS, NOMBRE_CATEGORIA, DOCUMENTOS, TIPOS_CENTRO, NOMBRE_TORNEO, ENCABEZADOS, MAX_UNION, MAX_EQUIPOS, MAX_TITULARES,
-    estadoNuevo, estudianteNuevo, personaNueva, normalizar, anioDe, categoriaPropia, categoriasPosibles, categoriaEfectiva, torneoEfectivo,
+    estadoNuevo, estudianteNuevo, equipoNuevo, personaNueva, normalizar, esDeEquipo, equipoDe, puedeJugarEn, limites, intentar, crearEquipo, agregarIntegrante, sacarDelEquipo, quitarEquipo, estadoDelEquipo, agregarLista, filasEquipos, ENCABEZADOS_EQUIPOS, TOPE_EQUIPO, TOPE_POR_GRUPO, MIN_EQUIPO, anioDe, categoriaPropia, categoriasPosibles, categoriaEfectiva, torneoEfectivo,
     interregionalDe, revisar, armarEquipos, resumen, filasExcel, leerLista, buscarCentros, centrosDe, circuitosDe, claveBusqueda,
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;

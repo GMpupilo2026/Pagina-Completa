@@ -190,9 +190,37 @@
                 </div>
             </section>
 
+            <section aria-labelledby="ij-eq-t" class="ae-tarjeta">
+                <h2 id="ij-eq-t" class="ae-tarjeta-t font-serif">3. Equipos</h2>
+                <p class="ae-tarjeta-sub">Un equipo es de <strong>3 a 5 estudiantes</strong>: cuatro titulares y una suplente, de una sola categoría y de un solo torneo —«Mujeres» o «Abierto»—. Desde la Etapa Regional cada centro puede tener hasta <strong>dos equipos por categoría y torneo</strong>, y quien juega en un equipo no juega individual (art. 66.1). La herramienta <strong>no te deja pasarte de lo que permite la Normativa</strong>: lo que no cabe no se agrega, y te dice por qué.</p>
+                <div class="ij-caja" role="group" aria-labelledby="ij-eq-nuevo-t">
+                    <h3 class="font-semibold" id="ij-eq-nuevo-t">Agregar un equipo</h3>
+                    <div class="grid gap-4 sm:grid-cols-2">
+                        <div class="ij-campo">
+                            <label for="ij-eq-torneo" class="ij-et">Torneo</label>
+                            <select id="ij-eq-torneo" class="ae-control w-full">
+                                <option value="m">Abierto (hombres y mujeres)</option>
+                                <option value="w">Mujeres (solo mujeres)</option>
+                            </select>
+                        </div>
+                        <div class="ij-campo">
+                            <label for="ij-eq-categoria" class="ij-et">Categoría del equipo</label>
+                            <select id="ij-eq-categoria" class="ae-control w-full"></select>
+                        </div>
+                    </div>
+                    <p class="ij-ayuda" id="ij-eq-ayuda">Se crea con cuatro lugares de titulares; la suplente se agrega después. Quien nació en la categoría de abajo puede subir a este equipo (A a B, C a D, D a E), hasta tres por equipo.</p>
+                    <div class="flex flex-wrap gap-3">
+                        <button type="button" id="ij-eq-crear" class="ae-boton ij-primario">Crear el equipo</button>
+                    </div>
+                    <p class="ij-ayuda" id="ij-eq-estado" role="status" aria-live="polite"></p>
+                </div>
+                <p id="ij-eq-vacio" class="ij-ayuda">Todavía no hay equipos. Crea el primero con el botón de arriba, o pega una lista con la columna «Equipo/Ind» más abajo.</p>
+                <div id="ij-equipos-lista" class="grid gap-4"></div>
+            </section>
+
             <section aria-labelledby="ij-est-t" class="ae-tarjeta">
-                <h2 id="ij-est-t" class="ae-tarjeta-t font-serif">3. Estudiantes</h2>
-                <p class="ae-tarjeta-sub">Cada estudiante juega en una sola modalidad (individual o equipo, art. 66.1.h). La categoría sale de su fecha de nacimiento (art. 17). Hombres y mujeres juegan el torneo Abierto; el torneo de Mujeres es solo para ellas (art. 66.1.a y c). Escribe «Apellidos Nombre», como en la cédula.</p>
+                <h2 id="ij-est-t" class="ae-tarjeta-t font-serif">4. Estudiantes individuales</h2>
+                <p class="ae-tarjeta-sub">Quienes juegan solos, sin equipo (una persona participa en una sola modalidad, art. 66.1.h). La categoría sale de su fecha de nacimiento (art. 17), y en individual no se sube de categoría. Desde la Etapa Regional solo pueden clasificar <strong>dos por categoría y torneo</strong> (art. 66.1.f): no se agrega una tercera. Hombres y mujeres juegan el torneo Abierto; el de Mujeres es solo para ellas. Escribe «Apellidos Nombre», como en la cédula.</p>
                 <div class="flex flex-wrap gap-3">
                     <button type="button" id="ij-est-mas" class="ae-boton">+ Agregar un estudiante</button>
                     <button type="button" id="ij-traer" class="ae-boton" aria-expanded="false" aria-controls="ij-traer-caja" disabled>Traer a los que jugaron antes con mi colegio</button>
@@ -211,7 +239,7 @@
 
                 <div id="ij-pegar-caja" class="ij-caja" hidden>
                     <h3 class="font-semibold" id="ij-pegar-t">Pegar una lista o subir un archivo</h3>
-                    <p class="ij-ayuda">Una fila por estudiante, con las columnas <strong>Nombre, Sexo, Fecha de nacimiento y Documento</strong> (puedes copiarlas de Excel). Si la primera fila trae los títulos —también «FDN», «Nombre de Centro Educativo» o «Equipo/Ind», como el reporte del MEP— se leen por su título, en cualquier orden. También sirve un archivo .xlsx o .csv.</p>
+                    <p class="ij-ayuda">Una fila por estudiante, con las columnas <strong>Nombre, Sexo, Fecha de nacimiento y Documento</strong> (puedes copiarlas de Excel). Con una columna <strong>Equipo/Ind</strong> («Equipo» o «Individual»), y opcionalmente Categoría y Torneo («Mujeres» o «Abierto»), los de equipo van a su equipo —que se crea solo, y un segundo cuando el primero se llena—. Si la primera fila trae los títulos —también «FDN», «Nombre de Centro Educativo» o «Equipo/Ind», como el reporte del MEP— se leen por su título, en cualquier orden. También sirve un archivo .xlsx o .csv.</p>
                     <label for="ij-pegar-texto" class="ij-et">Lista pegada</label>
                     <textarea id="ij-pegar-texto" rows="6" class="ae-control w-full" spellcheck="false" placeholder="Mora Vargas Ana Lucía&#9;Mujer&#9;12/05/2012&#9;1-2345-6789"></textarea>
                     <div class="flex flex-wrap gap-3 mt-3 items-center">
@@ -223,19 +251,19 @@
                     </div>
                 </div>
 
-                <p id="ij-est-vacio" class="ij-ayuda">Todavía no hay estudiantes. Agrega el primero, trae a los de otros años o pega una lista.</p>
+                <p id="ij-est-vacio" class="ij-ayuda">Todavía no hay estudiantes individuales. Agrega el primero, trae a los de otros años o pega una lista.</p>
                 <div id="ij-est" class="grid gap-4"></div>
             </section>
 
             <section aria-labelledby="ij-rev-t" class="ae-tarjeta">
-                <h2 id="ij-rev-t" class="ae-tarjeta-t font-serif">4. Revisión con la Normativa</h2>
+                <h2 id="ij-rev-t" class="ae-tarjeta-t font-serif">5. Revisión con la Normativa</h2>
                 <p class="ae-tarjeta-sub" id="ij-rev-estado" role="status" aria-live="polite">Revisando…</p>
                 <ul id="ij-rev" class="grid gap-2 list-none p-0 m-0"></ul>
             </section>
 
             <section aria-labelledby="ij-res-t" class="ae-tarjeta">
-                <h2 id="ij-res-t" class="ae-tarjeta-t font-serif">5. Tu delegación por torneo</h2>
-                <p class="ae-tarjeta-sub">Así queda repartida tu inscripción. Los torneos son «Mujeres» y «Abierto», individual y por equipos, en cada categoría.</p>
+                <h2 id="ij-res-t" class="ae-tarjeta-t font-serif">6. Tu delegación por torneo</h2>
+                <p class="ae-tarjeta-sub">Cuántos estudiantes hay en cada categoría y torneo, individual y por equipos (los equipos, con sus integrantes, están arriba).</p>
                 <div class="ae-tabla-caja">
                     <table class="ae-tabla" id="ij-res">
                         <caption class="sr-only">Estudiantes por categoría y torneo</caption>
@@ -243,11 +271,10 @@
                         <tbody></tbody>
                     </table>
                 </div>
-                <div id="ij-equipos" class="grid gap-3 md:grid-cols-2"></div>
             </section>
 
             <section aria-labelledby="ij-sal-t" class="ae-tarjeta">
-                <h2 id="ij-sal-t" class="ae-tarjeta-t font-serif">6. Descargar</h2>
+                <h2 id="ij-sal-t" class="ae-tarjeta-t font-serif">7. Descargar</h2>
                 <p class="ae-tarjeta-sub" id="ij-sal-ayuda">Cuando no queden errores, baja tu nómina. El Excel trae las mismas columnas del reporte del MEP: se abre en <a href="pareo.html" class="underline underline-offset-2 hover:no-underline">Pareo Integral</a> con «Subir una lista» y arma los torneos solo.</p>
                 <div class="flex flex-wrap gap-3">
                     <button type="button" id="ij-excel" class="ae-boton ij-primario">Bajar el Excel (.xlsx)</button>
