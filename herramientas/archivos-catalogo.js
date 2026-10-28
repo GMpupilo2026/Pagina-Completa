@@ -190,6 +190,7 @@ const CARPETAS = {
   "img/guia": ["Capturas de la guía del profesor", "El sitio"],
   "img": ["Logos, fotos y marca", "El sitio"],
   "img/app": ["Íconos de la app", "El sitio"],
+  "img/banderas": ["Banderas de los gafetes (flag-icons)", "El sitio"],
   "img/jdn": ["Ejemplos del formulario de los JDN", "El sitio"],
   ".": ["En la raíz del sitio", "Carpetas"],
 };

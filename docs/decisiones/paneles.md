@@ -4413,3 +4413,103 @@ Las únicas llamadas sin tope en esa zona son cerrar el contexto y
 Se rompieron a propósito los dos (un cierre que nunca termina y una prueba
 que nunca termina) y saltaron los dos. Una prueba nueva del panel va en
 `PRUEBAS`.
+
+## Creación de gafetes
+
+`gafetes.html` (solo quien administra; en `admin.html`, sección Contenido)
+arma los gafetes de un evento a partir de un Excel: se sube la lista, se
+arma el diseño mirando la vista previa, se **aprueba**, y con ese diseño se
+crean los PDF de todos. Nació de los gafetes del Centroamericano 2026, que
+se hicieron a mano con scripts (más de 1600, en 20 PDF) y dejaron claro qué
+pide la imprenta y qué se rompe callado.
+
+**Lo que pide la imprenta, y por qué el PDF es así.** El primer envío del
+Centroamericano volvió: la plantilla traía todo el diseño escondido detrás de
+máscaras, y en Illustrator cada gafete se abría con decenas de grupos
+(mascotas, banderas y fondos ocultos), pesado y sin forma de encontrar el
+gafete de verdad. El formato que la imprenta aprobó, y el único que sale de
+acá (`js/gafetes-pdf.js`, escrito a mano como `js/reporte-pdf.js`):
+
+- la página mide EXACTO lo del gafete (10 × 14 cm por omisión), sin marcas de
+  corte ni sangrado: la imprenta las pone ella;
+- el fondo es **una** imagen JPEG a **450 dpi** por página (todo lo que no es
+  letra: colores, logos, bandera, ilustración, el QR, la tabla sin sus
+  textos), puesta con un solo `Do`: sin máscaras, sin grupos, sin formas
+  anidadas;
+- las letras van **en curvas**: cada una como su contorno (opentype.js, en
+  `js/vendor/`), rellenado con `f`. El PDF no lleva ninguna fuente, así que no
+  hay nada que la imprenta tenga que instalar ni que se reemplace solo.
+
+Dos páginas con el mismo fondo (mismo rol, misma bandera, mismos íconos)
+apuntan a la misma imagen: un PDF de 500 gafetes de un país lleva unas
+pocas, no mil.
+
+**Una sola función dibuja la vista previa y el PDF** (`js/gafetes-dibujo.js`,
+`cara()`): devuelve el fondo (una función que pinta en un canvas que ya mide
+en milímetros) y los textos ya en curvas. La pantalla pinta los dos; el PDF
+pinta el fondo a 450 dpi y escribe los trazos. Lo que se aprueba mirando es lo
+que se imprime, por construcción: no hay dos dibujos que se puedan separar.
+
+**Los datos no salen de la computadora.** El Excel (`ReporteExcel.leer`, el
+mismo lector de los reportes) se lee en el navegador, el PDF se arma en el
+navegador y nada se guarda: ni en la base ni en el navegador. Son listas con
+nombres, FIDE ID y país de menores de edad; no hay ninguna razón para que
+viajen. Lo que sí queda guardado es el **diseño**, en IndexedDB (no
+localStorage: con los logos pasa de 5 MB), y se baja a un archivo `.json`
+que lleva todo adentro (logos, fuentes subidas) para usarlo con el Excel del
+año siguiente o en otra computadora.
+
+**Aprobar el diseño lo deja quieto.** Sin aprobar no se crea nada; aprobado,
+el formulario entero queda deshabilitado (`<fieldset disabled>`) y para
+tocarlo hay que «Cambiar el diseño», que pregunta. Así un Excel nuevo nunca
+sale con un diseño que alguien movió sin querer después de aprobarlo.
+
+**Las plantillas de texto.** Cada texto del gafete es una plantilla:
+`{Columna}` pone lo que dice esa columna en la fila (sin importar tildes ni
+mayúsculas del título), `{A|B}` la primera que tenga algo —el texto de lado
+del dorso es `{Atrás|Rol}`: lo de «Atrás» y, si está vacía, el rol, que es
+justo como venía el Excel de la organización del Centroamericano—, y
+`{C}` la columna C aunque la hoja no tenga títulos. **Si un dato falta, la
+línea entera no sale**: «FIDE ID: {FIDE ID}» sin FIDE no deja «FIDE ID:»
+colgando. En el código, `{n}` cuenta aparte por cada código: «{Federación}
+{n}» da CRC 01, CRC 02… y TTO 01; quien tiene algo en la columna de «sin
+código» (en el Centroamericano, las filas marcadas en rojo) no lleva y no
+gasta número. La fila de los títulos se busca sola (la primera con dos celdas
+escritas: las listas suelen traer un título arriba).
+
+**Las banderas.** Una lista de inscritos trae el código de la federación en
+FIDE, que no es el ISO de la bandera (CRC es «cr», ARU es «aw»): la tabla está
+en `js/gafetes-banderas.js`, una vez. También se reconoce el ISO de dos letras
+y el nombre del país en español o en inglés, con los nombres que el mismo
+navegador sabe decir (`Intl.DisplayNames`), sin una segunda lista. Los
+dibujos son los de flag-icons (MIT), copiados a `img/banderas/` por
+`herramientas/gafetes-banderas.js` —solo los de la tabla, byte a byte— y no
+se editan a mano. Lo que no se reconoce sale como texto y la vista previa lo
+avisa.
+
+**Las fuentes.** League Spartan (títulos) y Quicksand (texto), OFL, en
+`fonts/gafetes/` con sus licencias. Son TTF **estáticas en Bold**, sacadas de
+las variables de Google Fonts: opentype.js no lee WOFF2, y la instancia por
+omisión de esas variables es la más fina, así que las letras salían en
+«Thin» sin ningún error. Se pueden subir otras (TTF, OTF o WOFF) y viajan en
+el archivo del diseño.
+
+**Los colores se miden.** Cada valor de la columna que decide el color lleva
+el suyo, y al lado su contraste contra el blanco (la franja lleva letra
+blanca y el nombre va de ese color sobre blanco): menos de 4,5:1 sale en rojo
+y en los avisos de la vista previa.
+
+**El QR** lleva la mayor corrección de errores (H) porque en el centro va la
+placa negra con la marca de Ajedrez Integral en blanco: la placa mide el 26 %
+del lado y, con su borde, tapa un 10 % de los módulos (medido con la
+dirección del Centroamericano: 17 de 53 por lado), bien debajo del 30 % que
+aguanta. Módulos
+redondeados y unidos y marco negro, como el del Centroamericano.
+
+`verificar-gafetes.js` sube un Excel de verdad, recorre la vista previa
+(mide el píxel de la franja, no la clase), lee el QR con jsQR, crea el PDF y
+lo abre byte a byte: tamaño exacto, ninguna `/Font`, ni `/SMask` ni grupos,
+una imagen JPEG de 1772 × 2480 por página, fondos compartidos, el .zip por
+país, y que el diseño aprobado sobreviva a recargar la página y viaje en su
+archivo. Se rompieron a propósito la cuenta del código y el tamaño de la
+placa del QR, y saltaron los dos.

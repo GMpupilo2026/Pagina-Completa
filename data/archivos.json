@@ -19081,7 +19081,7 @@
   ]
  },
  "imagenes": {
-  "total": 874,
+  "total": 1075,
   "grupos": [
    {
     "carpeta": "entreno/img/facil",
@@ -22856,6 +22856,1219 @@
       "titulo": "Ícono de la app, 512 px",
       "tipo": "otro",
       "kb": 25
+     }
+    ]
+   },
+   {
+    "carpeta": "img/banderas",
+    "titulo": "Banderas de los gafetes (flag-icons)",
+    "grupo": "El sitio",
+    "archivos": [
+     {
+      "ruta": "img/banderas/ad.svg",
+      "titulo": "Ad",
+      "tipo": "otro",
+      "kb": 30
+     },
+     {
+      "ruta": "img/banderas/ae.svg",
+      "titulo": "Ae",
+      "tipo": "otro",
+      "kb": 1
+     },
+     {
+      "ruta": "img/banderas/af.svg",
+      "titulo": "Af",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "img/banderas/ag.svg",
+      "titulo": "Ag",
+      "tipo": "otro",
+      "kb": 1
+     },
+     {
+      "ruta": "img/banderas/al.svg",
+      "titulo": "Al",
+      "tipo": "otro",
+      "kb": 3
+     },
+     {
+      "ruta": "img/banderas/am.svg",
+      "titulo": "Am",
+      "tipo": "otro",
+      "kb": 1
+     },
+     {
+      "ruta": "img/banderas/ao.svg",
+      "titulo": "Ao",
+      "tipo": "otro",
+      "kb": 2
+     },
+     {
+      "ruta": "img/banderas/ar.svg",
+      "titulo": "Ar",
+      "tipo": "otro",
+      "kb": 3
+     },
+     {
+      "ruta": "img/banderas/at.svg",
+      "titulo": "At",
+      "tipo": "otro",
+      "kb": 1
+     },
+     {
+      "ruta": "img/banderas/au.svg",
+      "titulo": "Au",
+      "tipo": "otro",
+      "kb": 1
+     },
+     {
+      "ruta": "img/banderas/aw.svg",
+      "titulo": "Aw",
+      "tipo": "otro",
+      "kb": 9
+     },
+     {
+      "ruta": "img/banderas/az.svg",
+      "titulo": "Az",
+      "tipo": "otro",
+      "kb": 1
+     },
+     {
+      "ruta": "img/banderas/ba.svg",
+      "titulo": "Ba",
+      "tipo": "otro",
+      "kb": 1
+     },
+     {
+      "ruta": "img/banderas/bb.svg",
+      "titulo": "Bb",
+      "tipo": "otro",
+      "kb": 1
+     },
+     {
+      "ruta": "img/banderas/bd.svg",
+      "titulo": "Bd",
+      "tipo": "otro",
+      "kb": 1
+     },
+     {
+      "ruta": "img/banderas/be.svg",
+      "titulo": "Be",
+      "tipo": "otro",
+      "kb": 1
+     },
+     {
+      "ruta": "img/banderas/bf.svg",
+      "titulo": "Bf",
+      "tipo": "otro",
+      "kb": 1
+     },
+     {
+      "ruta": "img/banderas/bg.svg",
+      "titulo": "Bg",
+      "tipo": "otro",
+      "kb": 1
+     },
+     {
+      "ruta": "img/banderas/bh.svg",
+      "titulo": "Bh",
+      "tipo": "otro",
+      "kb": 1
+     },
+     {
+      "ruta": "img/banderas/bi.svg",
+      "titulo": "Bi",
+      "tipo": "otro",
+      "kb": 1
+     },
+     {
+      "ruta": "img/banderas/bm.svg",
+      "titulo": "Bm",
+      "tipo": "otro",
+      "kb": 22
+     },
+     {
+      "ruta": "img/banderas/bn.svg",
+      "titulo": "Bn",
+      "tipo": "otro",
+      "kb": 13
+     },
+     {
+      "ruta": "img/banderas/bo.svg",
+      "titulo": "Bo",
+      "tipo": "otro",
+      "kb": 100
+     },
+     {
+      "ruta": "img/banderas/br.svg",
+      "titulo": "Br",
+      "tipo": "otro",
+      "kb": 7
+     },
+     {
+      "ruta": "img/banderas/bs.svg",
+      "titulo": "Bs",
+      "tipo": "otro",
+      "kb": 1
+     },
+     {
+      "ruta": "img/banderas/bt.svg",
+      "titulo": "Bt",
+      "tipo": "otro",
+      "kb": 24
+     },
+     {
+      "ruta": "img/banderas/bw.svg",
+      "titulo": "Bw",
+      "tipo": "otro",
+      "kb": 1
+     },
+     {
+      "ruta": "img/banderas/by.svg",
+      "titulo": "By",
+      "tipo": "otro",
+      "kb": 2
+     },
+     {
+      "ruta": "img/banderas/bz.svg",
+      "titulo": "Bz",
+      "tipo": "otro",
+      "kb": 42
+     },
+     {
+      "ruta": "img/banderas/ca.svg",
+      "titulo": "Ca",
+      "tipo": "otro",
+      "kb": 1
+     },
+     {
+      "ruta": "img/banderas/cd.svg",
+      "titulo": "Cd",
+      "tipo": "otro",
+      "kb": 1
+     },
+     {
+      "ruta": "img/banderas/cf.svg",
+      "titulo": "Cf",
+      "tipo": "otro",
+      "kb": 1
+     },
+     {
+      "ruta": "img/banderas/ch.svg",
+      "titulo": "Ch",
+      "tipo": "otro",
+      "kb": 1
+     },
+     {
+      "ruta": "img/banderas/ci.svg",
+      "titulo": "Ci",
+      "tipo": "otro",
+      "kb": 1
+     },
+     {
+      "ruta": "img/banderas/cl.svg",
+      "titulo": "Cl",
+      "tipo": "otro",
+      "kb": 1
+     },
+     {
+      "ruta": "img/banderas/cm.svg",
+      "titulo": "Cm",
+      "tipo": "otro",
+      "kb": 1
+     },
+     {
+      "ruta": "img/banderas/cn.svg",
+      "titulo": "Cn",
+      "tipo": "otro",
+      "kb": 1
+     },
+     {
+      "ruta": "img/banderas/co.svg",
+      "titulo": "Co",
+      "tipo": "otro",
+      "kb": 1
+     },
+     {
+      "ruta": "img/banderas/cr.svg",
+      "titulo": "Cr",
+      "tipo": "otro",
+      "kb": 1
+     },
+     {
+      "ruta": "img/banderas/cu.svg",
+      "titulo": "Cu",
+      "tipo": "otro",
+      "kb": 1
+     },
+     {
+      "ruta": "img/banderas/cv.svg",
+      "titulo": "Cv",
+      "tipo": "otro",
+      "kb": 1
+     },
+     {
+      "ruta": "img/banderas/cw.svg",
+      "titulo": "Cw",
+      "tipo": "otro",
+      "kb": 1
+     },
+     {
+      "ruta": "img/banderas/cy.svg",
+      "titulo": "Cy",
+      "tipo": "otro",
+      "kb": 5
+     },
+     {
+      "ruta": "img/banderas/cz.svg",
+      "titulo": "Cz",
+      "tipo": "otro",
+      "kb": 1
+     },
+     {
+      "ruta": "img/banderas/de.svg",
+      "titulo": "De",
+      "tipo": "otro",
+      "kb": 1
+     },
+     {
+      "ruta": "img/banderas/dj.svg",
+      "titulo": "Dj",
+      "tipo": "otro",
+      "kb": 1
+     },
+     {
+      "ruta": "img/banderas/dk.svg",
+      "titulo": "Dk",
+      "tipo": "otro",
+      "kb": 1
+     },
+     {
+      "ruta": "img/banderas/dm.svg",
+      "titulo": "Dm",
+      "tipo": "otro",
+      "kb": 15
+     },
+     {
+      "ruta": "img/banderas/do.svg",
+      "titulo": "Do",
+      "tipo": "otro",
+      "kb": 39
+     },
+     {
+      "ruta": "img/banderas/dz.svg",
+      "titulo": "Dz",
+      "tipo": "otro",
+      "kb": 1
+     },
+     {
+      "ruta": "img/banderas/ec.svg",
+      "titulo": "Ec",
+      "tipo": "otro",
+      "kb": 28
+     },
+     {
+      "ruta": "img/banderas/ee.svg",
+      "titulo": "Ee",
+      "tipo": "otro",
+      "kb": 1
+     },
+     {
+      "ruta": "img/banderas/eg.svg",
+      "titulo": "Eg",
+      "tipo": "otro",
+      "kb": 9
+     },
+     {
+      "ruta": "img/banderas/er.svg",
+      "titulo": "Er",
+      "tipo": "otro",
+      "kb": 3
+     },
+     {
+      "ruta": "img/banderas/es.svg",
+      "titulo": "Es",
+      "tipo": "otro",
+      "kb": 79
+     },
+     {
+      "ruta": "img/banderas/et.svg",
+      "titulo": "Et",
+      "tipo": "otro",
+      "kb": 1
+     },
+     {
+      "ruta": "img/banderas/fi.svg",
+      "titulo": "Fi",
+      "tipo": "otro",
+      "kb": 1
+     },
+     {
+      "ruta": "img/banderas/fj.svg",
+      "titulo": "Fj",
+      "tipo": "otro",
+      "kb": 24
+     },
+     {
+      "ruta": "img/banderas/fo.svg",
+      "titulo": "Fo",
+      "tipo": "otro",
+      "kb": 1
+     },
+     {
+      "ruta": "img/banderas/fr.svg",
+      "titulo": "Fr",
+      "tipo": "otro",
+      "kb": 1
+     },
+     {
+      "ruta": "img/banderas/ga.svg",
+      "titulo": "Ga",
+      "tipo": "otro",
+      "kb": 1
+     },
+     {
+      "ruta": "img/banderas/gb-eng.svg",
+      "titulo": "Gb eng",
+      "tipo": "otro",
+      "kb": 1
+     },
+     {
+      "ruta": "img/banderas/gb-sct.svg",
+      "titulo": "Gb sct",
+      "tipo": "otro",
+      "kb": 1
+     },
+     {
+      "ruta": "img/banderas/gb-wls.svg",
+      "titulo": "Gb wls",
+      "tipo": "otro",
+      "kb": 9
+     },
+     {
+      "ruta": "img/banderas/gd.svg",
+      "titulo": "Gd",
+      "tipo": "otro",
+      "kb": 2
+     },
+     {
+      "ruta": "img/banderas/ge.svg",
+      "titulo": "Ge",
+      "tipo": "otro",
+      "kb": 1
+     },
+     {
+      "ruta": "img/banderas/gg.svg",
+      "titulo": "Gg",
+      "tipo": "otro",
+      "kb": 1
+     },
+     {
+      "ruta": "img/banderas/gh.svg",
+      "titulo": "Gh",
+      "tipo": "otro",
+      "kb": 1
+     },
+     {
+      "ruta": "img/banderas/gm.svg",
+      "titulo": "Gm",
+      "tipo": "otro",
+      "kb": 1
+     },
+     {
+      "ruta": "img/banderas/gq.svg",
+      "titulo": "Gq",
+      "tipo": "otro",
+      "kb": 5
+     },
+     {
+      "ruta": "img/banderas/gr.svg",
+      "titulo": "Gr",
+      "tipo": "otro",
+      "kb": 1
+     },
+     {
+      "ruta": "img/banderas/gt.svg",
+      "titulo": "Gt",
+      "tipo": "otro",
+      "kb": 31
+     },
+     {
+      "ruta": "img/banderas/gu.svg",
+      "titulo": "Gu",
+      "tipo": "otro",
+      "kb": 4
+     },
+     {
+      "ruta": "img/banderas/gy.svg",
+      "titulo": "Gy",
+      "tipo": "otro",
+      "kb": 1
+     },
+     {
+      "ruta": "img/banderas/hk.svg",
+      "titulo": "Hk",
+      "tipo": "otro",
+      "kb": 1
+     },
+     {
+      "ruta": "img/banderas/hn.svg",
+      "titulo": "Hn",
+      "tipo": "otro",
+      "kb": 1
+     },
+     {
+      "ruta": "img/banderas/hr.svg",
+      "titulo": "Hr",
+      "tipo": "otro",
+      "kb": 30
+     },
+     {
+      "ruta": "img/banderas/ht.svg",
+      "titulo": "Ht",
+      "tipo": "otro",
+      "kb": 13
+     },
+     {
+      "ruta": "img/banderas/hu.svg",
+      "titulo": "Hu",
+      "tipo": "otro",
+      "kb": 1
+     },
+     {
+      "ruta": "img/banderas/id.svg",
+      "titulo": "Id",
+      "tipo": "otro",
+      "kb": 1
+     },
+     {
+      "ruta": "img/banderas/ie.svg",
+      "titulo": "Ie",
+      "tipo": "otro",
+      "kb": 1
+     },
+     {
+      "ruta": "img/banderas/il.svg",
+      "titulo": "Il",
+      "tipo": "otro",
+      "kb": 1
+     },
+     {
+      "ruta": "img/banderas/im.svg",
+      "titulo": "Im",
+      "tipo": "otro",
+      "kb": 9
+     },
+     {
+      "ruta": "img/banderas/in.svg",
+      "titulo": "In",
+      "tipo": "otro",
+      "kb": 1
+     },
+     {
+      "ruta": "img/banderas/iq.svg",
+      "titulo": "Iq",
+      "tipo": "otro",
+      "kb": 1
+     },
+     {
+      "ruta": "img/banderas/ir.svg",
+      "titulo": "Ir",
+      "tipo": "otro",
+      "kb": 15
+     },
+     {
+      "ruta": "img/banderas/is.svg",
+      "titulo": "Is",
+      "tipo": "otro",
+      "kb": 1
+     },
+     {
+      "ruta": "img/banderas/it.svg",
+      "titulo": "It",
+      "tipo": "otro",
+      "kb": 1
+     },
+     {
+      "ruta": "img/banderas/je.svg",
+      "titulo": "Je",
+      "tipo": "otro",
+      "kb": 33
+     },
+     {
+      "ruta": "img/banderas/jm.svg",
+      "titulo": "Jm",
+      "tipo": "otro",
+      "kb": 1
+     },
+     {
+      "ruta": "img/banderas/jo.svg",
+      "titulo": "Jo",
+      "tipo": "otro",
+      "kb": 1
+     },
+     {
+      "ruta": "img/banderas/jp.svg",
+      "titulo": "Jp",
+      "tipo": "otro",
+      "kb": 1
+     },
+     {
+      "ruta": "img/banderas/ke.svg",
+      "titulo": "Ke",
+      "tipo": "otro",
+      "kb": 1
+     },
+     {
+      "ruta": "img/banderas/kg.svg",
+      "titulo": "Kg",
+      "tipo": "otro",
+      "kb": 5
+     },
+     {
+      "ruta": "img/banderas/kh.svg",
+      "titulo": "Kh",
+      "tipo": "otro",
+      "kb": 7
+     },
+     {
+      "ruta": "img/banderas/km.svg",
+      "titulo": "Km",
+      "tipo": "otro",
+      "kb": 1
+     },
+     {
+      "ruta": "img/banderas/kn.svg",
+      "titulo": "Kn",
+      "tipo": "otro",
+      "kb": 1
+     },
+     {
+      "ruta": "img/banderas/kr.svg",
+      "titulo": "Kr",
+      "tipo": "otro",
+      "kb": 1
+     },
+     {
+      "ruta": "img/banderas/kw.svg",
+      "titulo": "Kw",
+      "tipo": "otro",
+      "kb": 1
+     },
+     {
+      "ruta": "img/banderas/ky.svg",
+      "titulo": "Ky",
+      "tipo": "otro",
+      "kb": 23
+     },
+     {
+      "ruta": "img/banderas/kz.svg",
+      "titulo": "Kz",
+      "tipo": "otro",
+      "kb": 7
+     },
+     {
+      "ruta": "img/banderas/la.svg",
+      "titulo": "La",
+      "tipo": "otro",
+      "kb": 1
+     },
+     {
+      "ruta": "img/banderas/lb.svg",
+      "titulo": "Lb",
+      "tipo": "otro",
+      "kb": 3
+     },
+     {
+      "ruta": "img/banderas/lc.svg",
+      "titulo": "Lc",
+      "tipo": "otro",
+      "kb": 1
+     },
+     {
+      "ruta": "img/banderas/li.svg",
+      "titulo": "Li",
+      "tipo": "otro",
+      "kb": 7
+     },
+     {
+      "ruta": "img/banderas/lk.svg",
+      "titulo": "Lk",
+      "tipo": "otro",
+      "kb": 10
+     },
+     {
+      "ruta": "img/banderas/lr.svg",
+      "titulo": "Lr",
+      "tipo": "otro",
+      "kb": 1
+     },
+     {
+      "ruta": "img/banderas/ls.svg",
+      "titulo": "Ls",
+      "tipo": "otro",
+      "kb": 1
+     },
+     {
+      "ruta": "img/banderas/lt.svg",
+      "titulo": "Lt",
+      "tipo": "otro",
+      "kb": 1
+     },
+     {
+      "ruta": "img/banderas/lu.svg",
+      "titulo": "Lu",
+      "tipo": "otro",
+      "kb": 1
+     },
+     {
+      "ruta": "img/banderas/lv.svg",
+      "titulo": "Lv",
+      "tipo": "otro",
+      "kb": 1
+     },
+     {
+      "ruta": "img/banderas/ly.svg",
+      "titulo": "Ly",
+      "tipo": "otro",
+      "kb": 1
+     },
+     {
+      "ruta": "img/banderas/ma.svg",
+      "titulo": "Ma",
+      "tipo": "otro",
+      "kb": 1
+     },
+     {
+      "ruta": "img/banderas/mc.svg",
+      "titulo": "Mc",
+      "tipo": "otro",
+      "kb": 1
+     },
+     {
+      "ruta": "img/banderas/md.svg",
+      "titulo": "Md",
+      "tipo": "otro",
+      "kb": 11
+     },
+     {
+      "ruta": "img/banderas/me.svg",
+      "titulo": "Me",
+      "tipo": "otro",
+      "kb": 55
+     },
+     {
+      "ruta": "img/banderas/mg.svg",
+      "titulo": "Mg",
+      "tipo": "otro",
+      "kb": 1
+     },
+     {
+      "ruta": "img/banderas/mk.svg",
+      "titulo": "Mk",
+      "tipo": "otro",
+      "kb": 1
+     },
+     {
+      "ruta": "img/banderas/ml.svg",
+      "titulo": "Ml",
+      "tipo": "otro",
+      "kb": 1
+     },
+     {
+      "ruta": "img/banderas/mm.svg",
+      "titulo": "Mm",
+      "tipo": "otro",
+      "kb": 1
+     },
+     {
+      "ruta": "img/banderas/mn.svg",
+      "titulo": "Mn",
+      "tipo": "otro",
+      "kb": 1
+     },
+     {
+      "ruta": "img/banderas/mo.svg",
+      "titulo": "Mo",
+      "tipo": "otro",
+      "kb": 1
+     },
+     {
+      "ruta": "img/banderas/mr.svg",
+      "titulo": "Mr",
+      "tipo": "otro",
+      "kb": 1
+     },
+     {
+      "ruta": "img/banderas/mt.svg",
+      "titulo": "Mt",
+      "tipo": "otro",
+      "kb": 14
+     },
+     {
+      "ruta": "img/banderas/mu.svg",
+      "titulo": "Mu",
+      "tipo": "otro",
+      "kb": 1
+     },
+     {
+      "ruta": "img/banderas/mv.svg",
+      "titulo": "Mv",
+      "tipo": "otro",
+      "kb": 1
+     },
+     {
+      "ruta": "img/banderas/mw.svg",
+      "titulo": "Mw",
+      "tipo": "otro",
+      "kb": 3
+     },
+     {
+      "ruta": "img/banderas/mx.svg",
+      "titulo": "Mx",
+      "tipo": "otro",
+      "kb": 83
+     },
+     {
+      "ruta": "img/banderas/my.svg",
+      "titulo": "My",
+      "tipo": "otro",
+      "kb": 1
+     },
+     {
+      "ruta": "img/banderas/mz.svg",
+      "titulo": "Mz",
+      "tipo": "otro",
+      "kb": 3
+     },
+     {
+      "ruta": "img/banderas/na.svg",
+      "titulo": "Na",
+      "tipo": "otro",
+      "kb": 1
+     },
+     {
+      "ruta": "img/banderas/ne.svg",
+      "titulo": "Ne",
+      "tipo": "otro",
+      "kb": 1
+     },
+     {
+      "ruta": "img/banderas/ng.svg",
+      "titulo": "Ng",
+      "tipo": "otro",
+      "kb": 1
+     },
+     {
+      "ruta": "img/banderas/ni.svg",
+      "titulo": "Ni",
+      "tipo": "otro",
+      "kb": 17
+     },
+     {
+      "ruta": "img/banderas/nl.svg",
+      "titulo": "Nl",
+      "tipo": "otro",
+      "kb": 1
+     },
+     {
+      "ruta": "img/banderas/no.svg",
+      "titulo": "No",
+      "tipo": "otro",
+      "kb": 1
+     },
+     {
+      "ruta": "img/banderas/np.svg",
+      "titulo": "Np",
+      "tipo": "otro",
+      "kb": 1
+     },
+     {
+      "ruta": "img/banderas/nr.svg",
+      "titulo": "Nr",
+      "tipo": "otro",
+      "kb": 1
+     },
+     {
+      "ruta": "img/banderas/nz.svg",
+      "titulo": "Nz",
+      "tipo": "otro",
+      "kb": 2
+     },
+     {
+      "ruta": "img/banderas/om.svg",
+      "titulo": "Om",
+      "tipo": "otro",
+      "kb": 22
+     },
+     {
+      "ruta": "img/banderas/pa.svg",
+      "titulo": "Pa",
+      "tipo": "otro",
+      "kb": 1
+     },
+     {
+      "ruta": "img/banderas/pe.svg",
+      "titulo": "Pe",
+      "tipo": "otro",
+      "kb": 1
+     },
+     {
+      "ruta": "img/banderas/pg.svg",
+      "titulo": "Pg",
+      "tipo": "otro",
+      "kb": 2
+     },
+     {
+      "ruta": "img/banderas/ph.svg",
+      "titulo": "Ph",
+      "tipo": "otro",
+      "kb": 1
+     },
+     {
+      "ruta": "img/banderas/pk.svg",
+      "titulo": "Pk",
+      "tipo": "otro",
+      "kb": 1
+     },
+     {
+      "ruta": "img/banderas/pl.svg",
+      "titulo": "Pl",
+      "tipo": "otro",
+      "kb": 1
+     },
+     {
+      "ruta": "img/banderas/pr.svg",
+      "titulo": "Pr",
+      "tipo": "otro",
+      "kb": 1
+     },
+     {
+      "ruta": "img/banderas/ps.svg",
+      "titulo": "Ps",
+      "tipo": "otro",
+      "kb": 1
+     },
+     {
+      "ruta": "img/banderas/pt.svg",
+      "titulo": "Pt",
+      "tipo": "otro",
+      "kb": 8
+     },
+     {
+      "ruta": "img/banderas/pw.svg",
+      "titulo": "Pw",
+      "tipo": "otro",
+      "kb": 1
+     },
+     {
+      "ruta": "img/banderas/py.svg",
+      "titulo": "Py",
+      "tipo": "otro",
+      "kb": 16
+     },
+     {
+      "ruta": "img/banderas/qa.svg",
+      "titulo": "Qa",
+      "tipo": "otro",
+      "kb": 1
+     },
+     {
+      "ruta": "img/banderas/ro.svg",
+      "titulo": "Ro",
+      "tipo": "otro",
+      "kb": 1
+     },
+     {
+      "ruta": "img/banderas/rs.svg",
+      "titulo": "Rs",
+      "tipo": "otro",
+      "kb": 177
+     },
+     {
+      "ruta": "img/banderas/ru.svg",
+      "titulo": "Ru",
+      "tipo": "otro",
+      "kb": 1
+     },
+     {
+      "ruta": "img/banderas/rw.svg",
+      "titulo": "Rw",
+      "tipo": "otro",
+      "kb": 1
+     },
+     {
+      "ruta": "img/banderas/sa.svg",
+      "titulo": "Sa",
+      "tipo": "otro",
+      "kb": 10
+     },
+     {
+      "ruta": "img/banderas/sb.svg",
+      "titulo": "Sb",
+      "tipo": "otro",
+      "kb": 1
+     },
+     {
+      "ruta": "img/banderas/sc.svg",
+      "titulo": "Sc",
+      "tipo": "otro",
+      "kb": 1
+     },
+     {
+      "ruta": "img/banderas/sd.svg",
+      "titulo": "Sd",
+      "tipo": "otro",
+      "kb": 1
+     },
+     {
+      "ruta": "img/banderas/se.svg",
+      "titulo": "Se",
+      "tipo": "otro",
+      "kb": 1
+     },
+     {
+      "ruta": "img/banderas/sg.svg",
+      "titulo": "Sg",
+      "tipo": "otro",
+      "kb": 1
+     },
+     {
+      "ruta": "img/banderas/si.svg",
+      "titulo": "Si",
+      "tipo": "otro",
+      "kb": 2
+     },
+     {
+      "ruta": "img/banderas/sk.svg",
+      "titulo": "Sk",
+      "tipo": "otro",
+      "kb": 1
+     },
+     {
+      "ruta": "img/banderas/sl.svg",
+      "titulo": "Sl",
+      "tipo": "otro",
+      "kb": 1
+     },
+     {
+      "ruta": "img/banderas/sm.svg",
+      "titulo": "Sm",
+      "tipo": "otro",
+      "kb": 15
+     },
+     {
+      "ruta": "img/banderas/sn.svg",
+      "titulo": "Sn",
+      "tipo": "otro",
+      "kb": 1
+     },
+     {
+      "ruta": "img/banderas/so.svg",
+      "titulo": "So",
+      "tipo": "otro",
+      "kb": 1
+     },
+     {
+      "ruta": "img/banderas/sr.svg",
+      "titulo": "Sr",
+      "tipo": "otro",
+      "kb": 1
+     },
+     {
+      "ruta": "img/banderas/ss.svg",
+      "titulo": "Ss",
+      "tipo": "otro",
+      "kb": 1
+     },
+     {
+      "ruta": "img/banderas/st.svg",
+      "titulo": "St",
+      "tipo": "otro",
+      "kb": 1
+     },
+     {
+      "ruta": "img/banderas/sv.svg",
+      "titulo": "Sv",
+      "tipo": "otro",
+      "kb": 75
+     },
+     {
+      "ruta": "img/banderas/sy.svg",
+      "titulo": "Sy",
+      "tipo": "otro",
+      "kb": 1
+     },
+     {
+      "ruta": "img/banderas/sz.svg",
+      "titulo": "Sz",
+      "tipo": "otro",
+      "kb": 5
+     },
+     {
+      "ruta": "img/banderas/td.svg",
+      "titulo": "Td",
+      "tipo": "otro",
+      "kb": 1
+     },
+     {
+      "ruta": "img/banderas/tg.svg",
+      "titulo": "Tg",
+      "tipo": "otro",
+      "kb": 1
+     },
+     {
+      "ruta": "img/banderas/th.svg",
+      "titulo": "Th",
+      "tipo": "otro",
+      "kb": 1
+     },
+     {
+      "ruta": "img/banderas/tj.svg",
+      "titulo": "Tj",
+      "tipo": "otro",
+      "kb": 2
+     },
+     {
+      "ruta": "img/banderas/tl.svg",
+      "titulo": "Tl",
+      "tipo": "otro",
+      "kb": 1
+     },
+     {
+      "ruta": "img/banderas/tm.svg",
+      "titulo": "Tm",
+      "tipo": "otro",
+      "kb": 37
+     },
+     {
+      "ruta": "img/banderas/tn.svg",
+      "titulo": "Tn",
+      "tipo": "otro",
+      "kb": 1
+     },
+     {
+      "ruta": "img/banderas/tr.svg",
+      "titulo": "Tr",
+      "tipo": "otro",
+      "kb": 1
+     },
+     {
+      "ruta": "img/banderas/tt.svg",
+      "titulo": "Tt",
+      "tipo": "otro",
+      "kb": 1
+     },
+     {
+      "ruta": "img/banderas/tw.svg",
+      "titulo": "Tw",
+      "tipo": "otro",
+      "kb": 2
+     },
+     {
+      "ruta": "img/banderas/tz.svg",
+      "titulo": "Tz",
+      "tipo": "otro",
+      "kb": 1
+     },
+     {
+      "ruta": "img/banderas/ua.svg",
+      "titulo": "Ua",
+      "tipo": "otro",
+      "kb": 1
+     },
+     {
+      "ruta": "img/banderas/ug.svg",
+      "titulo": "Ug",
+      "tipo": "otro",
+      "kb": 4
+     },
+     {
+      "ruta": "img/banderas/us.svg",
+      "titulo": "Us",
+      "tipo": "otro",
+      "kb": 1
+     },
+     {
+      "ruta": "img/banderas/uy.svg",
+      "titulo": "Uy",
+      "tipo": "otro",
+      "kb": 2
+     },
+     {
+      "ruta": "img/banderas/uz.svg",
+      "titulo": "Uz",
+      "tipo": "otro",
+      "kb": 1
+     },
+     {
+      "ruta": "img/banderas/vc.svg",
+      "titulo": "Vc",
+      "tipo": "otro",
+      "kb": 1
+     },
+     {
+      "ruta": "img/banderas/ve.svg",
+      "titulo": "Ve",
+      "tipo": "otro",
+      "kb": 1
+     },
+     {
+      "ruta": "img/banderas/vg.svg",
+      "titulo": "Vg",
+      "tipo": "otro",
+      "kb": 10
+     },
+     {
+      "ruta": "img/banderas/vi.svg",
+      "titulo": "Vi",
+      "tipo": "otro",
+      "kb": 8
+     },
+     {
+      "ruta": "img/banderas/vn.svg",
+      "titulo": "Vn",
+      "tipo": "otro",
+      "kb": 1
+     },
+     {
+      "ruta": "img/banderas/vu.svg",
+      "titulo": "Vu",
+      "tipo": "otro",
+      "kb": 2
+     },
+     {
+      "ruta": "img/banderas/xk.svg",
+      "titulo": "Xk",
+      "tipo": "otro",
+      "kb": 8
+     },
+     {
+      "ruta": "img/banderas/ye.svg",
+      "titulo": "Ye",
+      "tipo": "otro",
+      "kb": 1
+     },
+     {
+      "ruta": "img/banderas/za.svg",
+      "titulo": "Za",
+      "tipo": "otro",
+      "kb": 1
+     },
+     {
+      "ruta": "img/banderas/zm.svg",
+      "titulo": "Zm",
+      "tipo": "otro",
+      "kb": 5
+     },
+     {
+      "ruta": "img/banderas/zw.svg",
+      "titulo": "Zw",
+      "tipo": "otro",
+      "kb": 6
      }
     ]
    },
