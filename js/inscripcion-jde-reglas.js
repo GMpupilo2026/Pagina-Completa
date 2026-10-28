@@ -101,6 +101,8 @@
     return Object.assign({ id: nuevoId("q"), categoria: "", torneo: "m", numero: 1 }, datos || {});
   }
   const esDeEquipo = (e) => !!e.equipoId;
+  // Un lugar de un equipo que todavía no se llena: sin nombre, fecha ni documento.
+  const esLugarVacio = (e) => !!e.equipoId && !unEspacio(e.nombre) && !e.nacimiento && !unEspacio(e.documento);
   const equipoDe = (e, estado) => (e.equipoId ? (estado.equipos || []).find((t) => t.id === e.equipoId) || null : null);
   function personaNueva(datos) {
     return Object.assign({ id: nuevoId("p"), nombre: "", rol: "tecnico", sexo: "", funcionario: true, telefono: "" }, datos || {});
@@ -220,8 +222,7 @@
     const etapa = ETAPAS.find((x) => x.id === E.etapa) || ETAPAS[1];
     // Los lugares de un equipo que todavía no se llenan (sin nombre, fecha ni documento) no cuentan:
     // la pantalla los deja listos para escribir y no deben llenar la revisión de errores.
-    const vacio = (e) => !!e.equipoId && !unEspacio(e.nombre) && !e.nacimiento && !unEspacio(e.documento);
-    const lista = E.estudiantes.filter((e) => !vacio(e));
+    const lista = E.estudiantes.filter((e) => !esLugarVacio(e));
 
     // ---- la delegación
     if (!unEspacio(c.nombre)) h("error", "Falta el nombre del centro educativo.", "");
@@ -606,6 +607,76 @@
     return { agregados, rechazados };
   }
 
+
+  // ------------------------------------------- lo que falta y lo que conviene
+  // Lo que le falta a un grupo de estudiantes, contado por campo: «3 fechas de
+  // nacimiento, 2 documentos». `campo` es el sufijo del control de la pantalla
+  // (n, s, f, d) para poder llevar a quien escribe al primero que falta.
+  const CAMPOS_FALTANTES = [
+    ["n", "nombre", "nombres", (e) => !unEspacio(e.nombre)],
+    ["s", "sexo", "sexos", (e) => !e.sexo],
+    ["f", "fecha de nacimiento", "fechas de nacimiento", (e) => !e.nacimiento],
+    ["d", "documento", "documentos", (e) => !unEspacio(e.documento)],
+  ];
+  function faltantes(estudiantes) {
+    const salida = [];
+    for (const [campo, uno, varios, falta] of CAMPOS_FALTANTES) {
+      const ids = estudiantes.filter((e) => !esLugarVacio(e) && falta(e)).map((e) => e.id);
+      if (ids.length) salida.push({ campo, n: ids.length, ids, texto: ids.length + " " + (ids.length === 1 ? uno : varios) });
+    }
+    return salida;
+  }
+
+  // La lista de tareas para dejar la inscripción lista: lo de la delegación y lo
+  // de cada estudiante, en el orden en que se llena. Cada una dice dónde está
+  // (`control`: el id de un control de la pantalla, o `campo` + `ids` para el de un
+  // estudiante, o `equipo` para el botón de agregar de un equipo).
+  function pendientes(estado) {
+    const E = estado, c = E.centro, salida = [];
+    const add = (clave, texto, extra) => salida.push(Object.assign({ clave, texto }, extra));
+    if (!unEspacio(c.nombre)) add("centro", "Escribe el nombre del centro educativo.", { control: "ij-centro" });
+    if (!c.region) add("region", "Elige la Dirección Regional.", { control: "ij-region" });
+    if (!unEspacio(c.correo)) add("correo", "Escribe el correo del MEP.", { control: "ij-correo" });
+    if (!E.cuerpo.some((p) => p.rol === "jefe" && unEspacio(p.nombre))) add("jefatura", "Falta la persona jefa de delegación.", { control: "ij-cuerpo" });
+    if (!E.cuerpo.some((p) => p.rol === "tecnico" && unEspacio(p.nombre))) add("tecnico", "Falta una persona de cuerpo técnico.", { control: "ij-cuerpo" });
+    const llenos = E.estudiantes.filter((e) => !esLugarVacio(e));
+    if (!llenos.length) add("estudiantes", "Agrega a los estudiantes: en un equipo o como individuales.", { control: "ij-eq-crear" });
+    for (const f of faltantes(E.estudiantes)) add("falta-" + f.campo, (f.n === 1 ? "Falta " : "Faltan ") + f.texto + ".", { campo: f.campo, ids: f.ids });
+    for (const t of E.equipos) {
+      const n = llenos.filter((e) => e.equipoId === t.id).length;
+      if (n < MIN_EQUIPO) add("eq-corto:" + t.id, "Al equipo " + NOMBRE_TORNEO[t.torneo] + " de la categoría " + t.categoria + (t.numero > 1 ? " (equipo " + t.numero + ")" : "") + " " + (n === MIN_EQUIPO - 1 ? "le falta 1 integrante" : "le faltan " + (MIN_EQUIPO - n) + " integrantes") + " para llegar al mínimo de " + MIN_EQUIPO + ".", { equipo: t.id });
+    }
+    return salida;
+  }
+
+  // ¿Cabe este estudiante (individual) en este equipo sin pasarse de nada? Se prueba en
+  // una copia: la inscripción de verdad no se toca.
+  function cabeEnEquipo(estado, estudiante, equipo) {
+    const copia = Object.assign({}, estado, { equipos: JSON.parse(JSON.stringify(estado.equipos)), estudiantes: JSON.parse(JSON.stringify(estado.estudiantes)) });
+    const e = copia.estudiantes.find((x) => x.id === estudiante.id);
+    return !!e && !e.equipoId && agregarIntegrante(copia, equipo.id, null, e).ok;
+  }
+
+  // Ideas para completar los equipos con quienes ya están como individuales. Solo
+  // propone: nunca mueve a nadie.
+  function sugerencias(estado) {
+    const salida = [];
+    const solos = estado.estudiantes.filter((e) => !e.equipoId && unEspacio(e.nombre));
+    const nombresQueCaben = (t) => solos.slice(0, 40).filter((e) => cabeEnEquipo(estado, e, t)).map((e) => unEspacio(e.nombre));
+    for (const t of estado.equipos) {
+      const miembros = estado.estudiantes.filter((e) => e.equipoId === t.id && !esLugarVacio(e));
+      const n = miembros.length;
+      if (!n || n >= TOPE_EQUIPO) continue;
+      const nombre = "El equipo " + NOMBRE_TORNEO[t.torneo] + " de la categoría " + t.categoria + (t.numero > 1 ? " (equipo " + t.numero + ")" : "");
+      const caben = nombresQueCaben(t);
+      const lista = caben.slice(0, 3).join(", ") + (caben.length > 3 ? " y " + (caben.length - 3) + " más" : "");
+      if (n < MIN_EQUIPO) salida.push(nombre + " tiene " + n + " y necesita " + MIN_EQUIPO + " para clasificar." + (caben.length ? " Podrían sumarse, de los individuales: " + lista + "." : " Ninguno de tus individuales cabe en él: agrega a alguien nuevo."));
+      else if (n === MIN_EQUIPO && caben.length) salida.push(nombre + " tiene 3: con " + lista + " llegaría a 4 titulares y quedaría con más margen si alguien falta el día del torneo.");
+      else if (n === 4 && !miembros.some((e) => e.suplente) && caben.length) salida.push(nombre + " tiene cuatro titulares y ninguna suplente: " + lista + " podría ser la suplente (art. 66.1.g).");
+    }
+    return salida;
+  }
+
   // ---------------------------------------------------- pegar una lista
   // Las etiquetas de columna que se reconocen al pegar o subir una lista.
   const COLUMNAS = {
@@ -717,7 +788,7 @@
 
   const api = {
     ETAPAS, TODAS, NOMBRE_CATEGORIA, DOCUMENTOS, TIPOS_CENTRO, NOMBRE_TORNEO, ENCABEZADOS, MAX_UNION, MAX_EQUIPOS, MAX_TITULARES,
-    estadoNuevo, estudianteNuevo, equipoNuevo, personaNueva, normalizar, esDeEquipo, equipoDe, puedeJugarEn, limites, intentar, crearEquipo, agregarIntegrante, sacarDelEquipo, quitarEquipo, estadoDelEquipo, agregarLista, filasEquipos, ENCABEZADOS_EQUIPOS, TOPE_EQUIPO, TOPE_POR_GRUPO, MIN_EQUIPO, anioDe, categoriaPropia, categoriasPosibles, categoriaEfectiva, torneoEfectivo,
+    estadoNuevo, estudianteNuevo, equipoNuevo, personaNueva, normalizar, esDeEquipo, esLugarVacio, faltantes, pendientes, cabeEnEquipo, sugerencias, equipoDe, puedeJugarEn, limites, intentar, crearEquipo, agregarIntegrante, sacarDelEquipo, quitarEquipo, estadoDelEquipo, agregarLista, filasEquipos, ENCABEZADOS_EQUIPOS, TOPE_EQUIPO, TOPE_POR_GRUPO, MIN_EQUIPO, anioDe, categoriaPropia, categoriasPosibles, categoriaEfectiva, torneoEfectivo,
     interregionalDe, revisar, armarEquipos, resumen, filasExcel, leerLista, buscarCentros, centrosDe, circuitosDe, claveBusqueda,
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
