@@ -47,30 +47,49 @@ const hace = (ms) => new Date(Date.now() - ms).toISOString();
 const stickers = (page) => page.evaluate(() =>
   window.__updates.filter((u) => u.tabla === "game_state" && "sticker" in u.campos).map((u) => u.campos.sticker));
 
+// Los dos módulos del repositorio, como los carga sesion.html: primero el avatar.
 function cargarModulo() {
   const w = {};
+  new Function("window", fs.readFileSync(path.join(RAIZ, "js", "avatar-profe-oscar.js"), "utf8"))(w);
   new Function("window", fs.readFileSync(path.join(RAIZ, "js", "clase-stickers.js"), "utf8"))(w);
-  return w.ClaseStickers;
+  return Object.assign(w.ClaseStickers, { avatar: w.AvatarProfeOscar });
 }
 
 function pruebaCatalogo() {
-  console.log("\n=== El catálogo y sus imágenes ===");
+  console.log("\n=== El avatar del profe Oscar: el catálogo, los originales y la página ===");
   const S = cargarModulo();
-  const ids = S.CATALOGO.map((s) => s.id);
-  const dir = path.join(RAIZ, "img", "profe-oscar");
-  const archivos = fs.readdirSync(dir).filter((f) => f.endsWith(".webp")).map((f) => f.replace(/\.webp$/, ""));
-  igual("cada dibujo tiene su imagen", ids.filter((id) => !archivos.includes(id)), []);
-  igual("cada imagen está en el catálogo", archivos.filter((a) => !ids.includes(a)), []);
+  const A = S.avatar;
+  const ids = A.LISTA.map((a) => a.id);
+  const enCarpeta = (dir, ext) => fs.readdirSync(dir).filter((f) => f.endsWith(ext)).map((f) => f.slice(0, -ext.length));
+  const web = enCarpeta(path.join(RAIZ, "img", "avatar-profe-oscar"), ".webp");
+  const originales = enCarpeta(path.join(RAIZ, "herramientas", "avatar-profe-oscar", "originales"), ".png");
+  igual("cada avatar tiene su original", ids.filter((id) => !originales.includes(id)), []);
+  igual("cada original está en el catálogo", originales.filter((o) => !ids.includes(o)), []);
+  igual("cada avatar tiene su versión para la página", ids.filter((id) => !web.includes(id)), []);
+  igual("ninguna versión para la página sin su avatar", web.filter((w) => !ids.includes(w)), []);
   igual("sin repetidos", ids.length === new Set(ids).size, true);
   igual("ids que acepta el CHECK de la base", ids.filter((id) => !/^[a-z0-9-]{1,40}$/.test(id)), []);
+  igual("todos con texto alternativo", A.LISTA.filter((a) => !a.alt || a.alt.length < 10).map((a) => a.id), []);
+  // La versión para la página sale de los originales con su alto (avatar-profe-oscar.py).
+  const py = fs.readFileSync(path.join(RAIZ, "herramientas", "avatar-profe-oscar.py"), "utf8");
+  igual("el generador usa el mismo alto que el catálogo", new RegExp("ALTO = " + A.ALTO + "\\b").test(py), true);
+  // Los originales no se publican.
+  igual("los originales están en .assetsignore", /^herramientas\/avatar-profe-oscar$/m.test(fs.readFileSync(path.join(RAIZ, ".assetsignore"), "utf8")), true);
+  // Livianas: la clase las baja en el celular.
+  const dir = path.join(RAIZ, "img", "avatar-profe-oscar");
+  igual("ninguna pasa de 60 KB", web.filter((a) => fs.statSync(path.join(dir, a + ".webp")).size > 60 * 1024), []);
+
+  console.log("\n=== Los stickers: los avatares con frase ===");
+  igual("los stickers son los avatares con frase", S.CATALOGO.map((s) => s.id), A.conFrase().map((a) => a.id));
+  igual("hay de sobra para elegir", S.CATALOGO.length >= 20, true);
   igual("frases dentro del tope", S.CATALOGO.filter((s) => !s.texto || s.texto.length > S.MAX_TEXTO).map((s) => s.id), []);
-  igual("todas con texto alternativo", S.CATALOGO.filter((s) => !s.alt || s.alt.length < 10).map((s) => s.id), []);
-  // Las imágenes livianas: la clase las baja en el celular.
-  const pesadas = archivos.filter((a) => fs.statSync(path.join(dir, a + ".webp")).size > 60 * 1024);
-  igual("ninguna pasa de 60 KB", pesadas, []);
+  igual("con la ruta de la página", S.ruta("muy-bien"), "img/avatar-profe-oscar/muy-bien.webp");
   const sql = fs.readdirSync(path.join(RAIZ, "supabase", "migraciones")).filter((f) => f.endsWith(".sql"))
     .map((f) => fs.readFileSync(path.join(RAIZ, "supabase", "migraciones", f), "utf8")).join("\n");
   igual("el CHECK de la base tiene el mismo tope de la frase", new RegExp("sticker->>'texto', ''\\)\\) <= " + S.MAX_TEXTO).test(sql), true);
+  const html = fs.readFileSync(path.join(RAIZ, "sesion.html"), "utf8");
+  igual("sesion.html carga el avatar antes que los stickers",
+    html.indexOf("js/avatar-profe-oscar.js") > 0 && html.indexOf("js/avatar-profe-oscar.js") < html.indexOf("js/clase-stickers.js"), true);
 }
 
 function pruebaVigente() {
@@ -130,7 +149,7 @@ async function pruebaAlumna(browser) {
   igual("se ve de verdad", await seVe(page, "#clase-sticker"), true);
   igual("con la frase", await page.textContent("#clase-sticker-texto"), "¡Muy bien!");
   igual("y el dibujo con su texto alternativo", [await page.getAttribute("#clase-sticker-img", "src"), (await page.getAttribute("#clase-sticker-img", "alt")).length > 10],
-    ["img/profe-oscar/muy-bien.webp", true]);
+    ["img/avatar-profe-oscar/muy-bien.webp", true]);
   igual("la imagen cargó", await page.evaluate(() => { const i = document.getElementById("clase-sticker-img"); return i.complete && i.naturalWidth > 0; }), true);
   igual("sin «Solo para» (es de toda la clase)", await seVe(page, "#clase-sticker-para"), false);
   igual("se le dice en voz", await page.textContent("#clase-sticker-voz"), "Tu profe te manda un sticker: ¡Muy bien!.");

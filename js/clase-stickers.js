@@ -15,41 +15,17 @@
  * Quien entra después no ve uno viejo: se muestra solo mientras tiene menos
  * de DURA milisegundos, con la hora de la base (js/reloj-servidor.js).
  *
- * Los dibujos están en img/profe-oscar/ (WebP de 480 px de alto, sin fondo).
+ * Los dibujos son los del avatar del profe Oscar (js/avatar-profe-oscar.js),
+ * los que tienen frase.
  * Ver «Los stickers del profe» en docs/decisiones/clase-en-vivo.md.
  */
 window.ClaseStickers = (function () {
   "use strict";
 
-  // id = nombre del archivo; texto = la frase sugerida; alt = lo que se ve.
-  const CATALOGO = [
-    { id: "muy-bien", texto: "¡Muy bien!", alt: "El profe Oscar guiñando un ojo, con los dos pulgares arriba" },
-    { id: "bien-hecho", texto: "¡Bien hecho!", alt: "El profe Oscar con el pulgar arriba" },
-    { id: "excelente", texto: "¡Excelente!", alt: "El profe Oscar saltando de alegría" },
-    { id: "lo-lograron", texto: "¡Todo el grupo lo logró!", alt: "El profe Oscar aplaudiendo entre confeti" },
-    { id: "felicidades", texto: "¡Felicidades!", alt: "El profe Oscar con una medalla y un diploma" },
-    { id: "campeones", texto: "¡Campeones!", alt: "El profe Oscar levantando un trofeo" },
-    { id: "wow", texto: "¡Wow!", alt: "El profe Oscar sorprendido, con las manos en la cara" },
-    { id: "tu-puedes", texto: "¡Tú puedes!", alt: "El profe Oscar con el puño adelante, dando ánimo" },
-    { id: "esfuerzate", texto: "¡Esfuérzate más!", alt: "El profe Oscar serio, con las manos en la cintura" },
-    { id: "casi", texto: "¡Casi! Faltó poquito", alt: "El profe Oscar haciendo «un poquito» con los dedos" },
-    { id: "esa-no-es", texto: "Esa no es…", alt: "El profe Oscar diciendo que no con el dedo" },
-    { id: "esa-vara", texto: "¿Y esa vara?", alt: "El profe Oscar extrañado, rascándose la cabeza" },
-    { id: "no-puede-ser", texto: "¡No puede ser!", alt: "El profe Oscar con la mano en la frente" },
-    { id: "mmm", texto: "Mmmm…", alt: "El profe Oscar pensativo, tocándose la barba" },
-    { id: "idea", texto: "¡Tengo una idea!", alt: "El profe Oscar pensando, con un bombillo encendido" },
-    { id: "atencion", texto: "¡Atención!", alt: "El profe Oscar con el dedo índice arriba" },
-    { id: "silencio", texto: "Silencio, a concentrarse", alt: "El profe Oscar pidiendo silencio con el dedo en la boca" },
-    { id: "tiempo", texto: "¡Se acaba el tiempo!", alt: "El profe Oscar mirando su reloj, apurado" },
-    { id: "te-toca", texto: "¡Te toca a ti!", alt: "El profe Oscar señalando al frente" },
-    { id: "dormidos", texto: "¿Se durmieron?", alt: "El profe Oscar bostezando" },
-    { id: "risa", texto: "¡Jajaja!", alt: "El profe Oscar riéndose a carcajadas" },
-    { id: "a-repasar", texto: "A repasar la teoría", alt: "El profe Oscar leyendo un libro de ajedrez" },
-    { id: "hola", texto: "¡Hola, grupo!", alt: "El profe Oscar saludando con la mano" },
-    { id: "bienvenidos", texto: "¡Bienvenidos a la clase!", alt: "El profe Oscar con los brazos abiertos" },
-    { id: "gracias", texto: "¡Gracias por la clase!", alt: "El profe Oscar haciendo un corazón con las manos" },
-    { id: "nos-vemos", texto: "¡Nos vemos la próxima clase!", alt: "El profe Oscar despidiéndose con la mochila al hombro" },
-  ];
+  /* Los dibujos con frase del avatar del profe Oscar (js/avatar-profe-oscar.js,
+     la lista de todo el sitio): id, la frase sugerida (texto) y lo que se ve (alt). */
+  const AVATAR = window.AvatarProfeOscar;
+  const CATALOGO = AVATAR ? AVATAR.conFrase().map((a) => ({ id: a.id, texto: a.frase, alt: a.alt })) : [];
   const DURA = 8000;          // cuánto se ve, en milisegundos
   const MAX_TEXTO = 120;      // lo mismo que el CHECK de la base
 
@@ -57,7 +33,7 @@ window.ClaseStickers = (function () {
   const BTN_CHICO = BTN + " text-xs font-semibold px-3 py-2 bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200";
   const BTN_FUERTE = BTN + " text-sm font-semibold px-4 py-2 bg-accent-500 hover:bg-accent-600 text-brand-900";
 
-  const ruta = (id) => "img/profe-oscar/" + id + ".webp";
+  const ruta = (id) => AVATAR.ruta(id);
   const porId = (id) => CATALOGO.find((s) => s.id === id) || null;
   const ahora = () => (window.RelojServidor ? window.RelojServidor.ahora() : Date.now());
 

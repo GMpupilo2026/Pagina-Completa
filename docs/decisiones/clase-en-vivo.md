@@ -4805,7 +4805,7 @@ próxima clase!»—, y que la frase se pueda cambiar.
 - **Dónde**: «😀 Mandar un sticker del profe», al final de «Alumnos
   conectados», al lado del interruptor de las bromas (la barra «Tu material»
   tiene sus botones contados, `verificar-sesion-orden.js`). Abre un diálogo
-  (`<dialog>` con `showModal()`, foco adentro, Esc cierra) con los 26 dibujos;
+  (`<dialog>` con `showModal()`, foco adentro, Esc cierra) con los dibujos;
   cada uno trae su frase sugerida, que el profe cambia si quiere, y «A quién»:
   toda la clase o un alumno conectado. Solo el profe (`role = 'profesor'`):
   quien administra no da clase.
@@ -4827,9 +4827,36 @@ próxima clase!»—, y que la frase se pueda cambiar.
   …»); el dibujo lleva su texto alternativo. En el proyector sale más grande
   (va suelto en el `<body>`, fuera de la lista blanca, que solo esconde lo de
   adentro de la clase).
-- **Los dibujos**: `img/profe-oscar/<id>.webp`, 480 px de alto, sin fondo
-  (≈ 20 KB cada uno). Salen de la mascota del profe Oscar hecha en Canva: las
-  caras con su lunar y la arruga entre las cejas, y el logo blanco de Ajedrez
-  Integral en la camisa. El catálogo (id, frase y texto alternativo) vive en
-  `js/clase-stickers.js`; uno nuevo es una imagen más y una línea más, y
-  `verificar-clase-stickers.js` exige que cada uno tenga las dos.
+- **Los dibujos** son los del avatar del profe Oscar que tienen frase (abajo):
+  hoy 33, entre ellos «¿Vas a jugar esa?» con cara burlona y «Tan vagabundo».
+
+### El avatar del profe Oscar
+
+Así se llama la caricatura del profe Oscar en todas sus poses y caras (42
+hoy), y el dueño pidió guardarla bien porque se va a usar en más cosas.
+Hecha en Canva a partir de sus fotos: la cara con su lunar en la mejilla, un
+poco arriba de la barba, y la arruga entre las cejas; camisa y pantalón
+negros, el reloj y las pulseras de colores; el logo blanco de Ajedrez
+Integral en la camisa (salvo de espalda, de lado o con la mochila).
+
+- **Los originales son la copia buena**:
+  `herramientas/avatar-profe-oscar/originales/<id>.png`, en alta resolución
+  (unos 1900 px de alto) y sin fondo. Están en `.assetsignore`: no se
+  publican, y de ellos sale todo lo demás. También quedan en el diseño de
+  Canva donde se hicieron.
+- **La lista, una sola**: `js/avatar-profe-oscar.js` (`AvatarProfeOscar`), con
+  el id, el texto alternativo y la frase que dice como sticker (`null` si no
+  es un sticker: de frente, de espalda, la cara, las escenas). Una página que
+  quiera el avatar lo toma de ahí.
+- **La versión para la página**: `img/avatar-profe-oscar/<id>.webp`, de 480 px
+  de alto (unos 20 KB), la genera `herramientas/avatar-profe-oscar.py` y no
+  se edita a mano. Uno nuevo: el PNG en `originales/`, su línea en la lista y
+  correr el script; `verificar-clase-stickers.js` exige que estén las tres
+  cosas.
+- **Los tableros**: el de «tablero-italiana» y el de la pantalla de
+  «clase-en-linea» son la Apertura Italiana de verdad (las piezas del sitio,
+  la posición comprobada con chess.js, puesta encima del dibujo). Los de
+  «jugando» y «ensenando» son de adorno, en perspectiva y sin una posición que
+  se lea: si alguno se usa donde importe la posición, se le pone una real.
+- **Las frases van de tú**, como el sitio: «¡Esfuérzate más!» y «¿Vas a jugar
+  esa?» (el profe las cambia al mandarlas si quiere decirlas de otra forma).
