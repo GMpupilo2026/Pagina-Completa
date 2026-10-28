@@ -607,10 +607,20 @@ todas, y el profe elige cuál mostrar a la clase.
   ver «La práctica no recarga la lista en cada jugada»). Cada alumno, con sus
   intentos del primero al último y cómo terminó cada uno.
 - **«📺 Mostrar»** usa la misma puerta que «Mostrar a la clase» de Preguntar,
-  ahora `mostrarJugadasALaClase()`: va como variante que mira el profe
-  (`game_state.vista`), la partida de la clase no se toca, y si el tablero ya
-  no tiene la posición de la práctica pregunta antes de reemplazarla. «Decir
-  de quién es al mostrarlo» arranca sin marcar, por lo mismo que allá.
+  `mostrarJugadasALaClase()`, pero **deja todas las jugadas del intento en la
+  PARTIDA de la clase** (`dejarJugadasEnLaPartida`: `game_state.moves`), no como
+  variante. Una variante se pierde al volver al final o al mover algo, y el
+  ejercicio ya terminó: lo que se quiere es revisarlo después, jugada a jugada,
+  con la lista de siempre. La clase arranca mirando la posición del ejercicio
+  (`vista` en esa jugada, con el nombre si el profe lo marcó) y el profe la
+  recorre con las flechas. Si la partida tenía más jugadas después de esa
+  posición, se reemplazan y se pregunta antes (y se borran sus comentarios y
+  variantes); pasar de un intento a otro no pregunta, porque lo que se
+  reemplaza es el intento anterior. Si el tablero ya no tiene la posición de la
+  práctica, pregunta antes de mandarla de nuevo. «Decir de quién es al
+  mostrarlo» arranca sin marcar, por lo mismo que allá. (La respuesta de un
+  alumno a una pregunta sigue yendo como variante: ver «Mostrar la respuesta de
+  un alumno a la clase».)
 
 - **Las jugadas van escritas**, numeradas y en algebraica española («1. Rf1
   Rf8 2. Re2»), debajo de cada intento: se lee dónde se equivocó sin tener que
@@ -631,8 +641,8 @@ todas, y el profe elige cuál mostrar a la clase.
 
 **Al tocar esto, correr `node herramientas/verificar-todo.js practica-intentos
 clase-mostrar`.** Está probado que falla de verdad: sin ordenar los intentos,
-mandando siempre el nombre o sin poner al día el intento en curso de la
-ventana, salta.
+mandando siempre el nombre, sin dejar las jugadas en la partida de la clase o
+sin poner al día el intento en curso de la ventana, salta.
 
 ### Practicar: perder una ventaja de más de 3 resta 350 puntos
 
