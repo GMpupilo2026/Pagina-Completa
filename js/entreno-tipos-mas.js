@@ -789,6 +789,7 @@
       bienAlFinal: (n, cp) => "✓ ¡Remataste! Después de " + n + " jugadas sigues en " + numero(cp) + ".",
       malAlFinal: (n, cp) => "✗ Llegaste a " + n + " jugadas, pero la ventaja bajó a " + numero(cp) + ": tiene que quedar en +3 o más.",
       duda: "ojo, la ventaja bajó de +3.",
+      pistaNoCuenta: true,
     },
     tablas: {
       juicio: (cp) => ({ firme: "bien", duda: "duda", perdida: "mal" })[M.juicioTablas(cp)] || "sin-motor",
@@ -887,7 +888,7 @@
       if (!uci) { estado("El motor no respondió: sin pista esta vez."); return; }
       const p = juego.get(uci.slice(0, 2));
       marcas[uci.slice(0, 2)] = { cls: "m-bien", signo: "?", dicho: "pista: esta pieza" };
-      estado("Pista: juega con " + piezaDicha(p.color + p.type) + " de " + uci.slice(0, 2) + ". Con pista, una estrella.");
+      estado("Pista: juega con " + piezaDicha(p.color + p.type) + " de " + uci.slice(0, 2) + ". Con pista, una estrella" + (cfg.pistaNoCuenta ? " y no suma a tus tareas." : "."));
       redibujar(tab.ultima);
     });
     $("controles").appendChild(bPista);

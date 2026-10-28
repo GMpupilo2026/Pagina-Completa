@@ -39,8 +39,18 @@
   "use strict";
 
   const CONFIG = window.TorneoPagina || {};
-  const SALA = CONFIG.sala || "centroamericano-2026";
-  const PREFIJO = CONFIG.guardado || "cac";
+  // El modo de prueba: centroamericano-2026.html?sala=<clave> muestra la
+  // página con los torneos de otra sala (una oculta, con los torneos de una
+  // edición pasada). La función sala-jugadores la lee solo si quien la pide
+  // administra; lo guardado va aparte y los avisos al celular no se encienden.
+  // Ver «El modo de prueba» en docs/decisiones/juegos-y-torneos.md.
+  const PRUEBA = (() => {
+    if (CONFIG.sala) return "";
+    const s = new URLSearchParams(location.search).get("sala") || "";
+    return /^[a-z0-9]+(-[a-z0-9]+)*$/.test(s) && s.length <= 40 && s !== "centroamericano-2026" ? s : "";
+  })();
+  const SALA = CONFIG.sala || PRUEBA || "centroamericano-2026";
+  const PREFIJO = CONFIG.guardado || (PRUEBA ? "cac_prueba" : "cac");
   const CLAVE_GUARDADO = PREFIJO + "_jugadores_v1";
   const CLAVE_SEGUIDOS = PREFIJO + "_seguidos_v1";
   const CLAVE_DELEGACION = PREFIJO + "_delegacion_v1";
@@ -138,6 +148,20 @@
       puestosTitulo: "Su puesto en la categoría después de cada ronda:",
       puestoRonda: (r, p) => "R" + r + " " + p,
       puestosNota: "Con los mismos puntos se comparte el puesto (por ejemplo, 3.º–5.º): el desempate lo decide al final del torneo.",
+      calendario: "📅 Sus rondas en mi calendario",
+      calendarioListo: (n) => "Listo: se bajaron sus " + n + " rondas. Ábrelo para agregarlas al calendario del celular; cada una avisa 30 minutos antes.",
+      calendarioSin: "El calendario de las rondas no está en esta página.",
+      calRonda: (r, nombre) => "Ronda " + r + " · " + nombre + " — Centroamericano 2026",
+      calCategoria: (cat) => "Categoría " + cat + ".",
+      calMesa: (m, color, rival) => "Mesa " + m + ", con " + color + " contra " + rival + ".",
+      calBye: "Tiene bye (descansa).",
+      calPendiente: "El pareo sale cuando lo publique el árbitro: vuelve a bajar el calendario para ver la mesa y el rival.",
+      calLugar: "Gimnasio Nacional, Parque Metropolitano La Sabana, San José, Costa Rica",
+      calNombre: (nombre) => "Rondas de " + nombre + " · Centroamericano 2026",
+      prueba: (sala) => "Modo de prueba: esta página muestra los torneos de la sala «" + sala + "», no los del festival. Solo funciona entrando con una cuenta de administración, y no lo ve nadie más.",
+      pruebaError: "No se pudo leer la sala de prueba: revisa que exista en administración (Torneos) y que entraste con tu cuenta de administración.",
+      pruebaSinAvisos: "En el modo de prueba los avisos al celular están apagados.",
+      pruebaSalir: "Salir del modo de prueba",
       locale: "es-CR",
     },
     en: {
@@ -225,6 +249,20 @@
       puestosTitulo: "Their place in the section after each round:",
       puestoRonda: (r, p) => "R" + r + " " + p,
       puestosNota: "Players on the same points share the place (for example, 3rd–5th): tiebreaks decide it at the end of the tournament.",
+      calendario: "📅 Their rounds in my calendar",
+      calendarioListo: (n) => "Done: their " + n + " rounds were downloaded. Open the file to add them to your phone's calendar; each one reminds you 30 minutes before.",
+      calendarioSin: "The round schedule isn't on this page.",
+      calRonda: (r, nombre) => "Round " + r + " · " + nombre + " — Centroamericano 2026",
+      calCategoria: (cat) => "Section " + cat + ".",
+      calMesa: (m, color, rival) => "Board " + m + ", with " + color + " against " + rival + ".",
+      calBye: "Has a bye (rests).",
+      calPendiente: "The pairings come out when the arbiter publishes them: download the calendar again to see the board and the opponent.",
+      calLugar: "Gimnasio Nacional, La Sabana Metropolitan Park, San José, Costa Rica",
+      calNombre: (nombre) => nombre + "'s rounds · Centroamericano 2026",
+      prueba: (sala) => "Test mode: this page shows the tournaments of the room “" + sala + "”, not the festival's. It only works signed in with an admin account, and nobody else sees it.",
+      pruebaError: "We couldn't read the test room: check that it exists in admin (Tournaments) and that you're signed in with your admin account.",
+      pruebaSinAvisos: "Phone notifications are off in test mode.",
+      pruebaSalir: "Leave test mode",
       locale: "en-US",
     },
   };
@@ -333,14 +371,16 @@
     pidiendo = (async () => {
       try {
         if (!window.sb || !window.sb.functions) throw new Error("sin cliente");
-        const { data, error } = await window.sb.functions.invoke("sala-jugadores", { body: { clave: SALA } });
+        const { data, error } = await window.sb.functions.invoke("sala-jugadores", { body: PRUEBA ? { clave: SALA, prueba: true } : { clave: SALA } });
         if (error || !data || !Array.isArray(data.torneos)) throw error || new Error("respuesta rara");
         datos = normalizar({ torneos: data.torneos, recibido: new Date().toISOString() });
         deGuardado = false;
+        pruebaFallo = false;
         try { localStorage.setItem(CLAVE_GUARDADO, JSON.stringify(datos)); } catch (e) {}
         // Para lo que arma js/centroamericano-tablas.js con los mismos datos.
         document.dispatchEvent(new Event("cac-datos"));
       } catch (e) {
+        if (PRUEBA) { pruebaFallo = true; pintarPrueba(); }
         const g = guardados();
         if (g && !datos) { datos = g; deGuardado = true; }
         if (!datos) throw e;
@@ -729,6 +769,15 @@
         acciones.appendChild(b);
       });
     }
+    // Sus rondas en el calendario del celular (solo en la página que trae el
+    // calendario de las rondas: la del Centroamericano).
+    if (document.querySelector("#calendario tr[data-ronda]") && window.CalendarioIcs) {
+      const cal = el("button", "cac-jugador-boton", tx.calendario);
+      cal.type = "button";
+      cal.dataset.accion = "calendario";
+      cal.addEventListener("click", () => bajarCalendario(x));
+      acciones.appendChild(cal);
+    }
     li.appendChild(acciones);
     if (abierta) {
       const rondas = rondasDe(x);
@@ -762,6 +811,53 @@
       li.appendChild(caja);
     }
     return li;
+  }
+
+  /* ---------------- sus rondas en el calendario ---------------- */
+  // Un .ics con cada ronda de su torneo, a la hora del calendario de la
+  // página (#calendario, data-inicio en hora de Costa Rica), con su mesa,
+  // color y rival en las ya emparejadas y un aviso 30 minutos antes. El UID
+  // es fijo por jugador y ronda: bajarlo otra vez pone al día la mesa en vez
+  // de duplicar las rondas. El formato lo arma js/calendario-ics.js.
+  function eventosDelCalendario(x) {
+    const tx = t();
+    const hasta = x.torneo.rondas || 0;
+    const nombre = nombreCorto(x.j);
+    const hechas = new Map(rondasDe(x).map((o) => [o.ronda, o]));
+    return [...document.querySelectorAll("#calendario tr[data-ronda]")].map((tr) => {
+      const r = Number(tr.dataset.ronda);
+      if (!r || (hasta && r > hasta)) return null;
+      const inicio = new Date(tr.dataset.inicio + ":00-06:00");   // Costa Rica no tiene horario de verano
+      if (isNaN(inicio)) return null;
+      const fin = new Date(inicio.getTime() + (Number(tr.dataset.minutos) || 300) * 60000);
+      const o = hechas.get(r);
+      const partes = [tx.calCategoria(tx.categoria(x.j.grupo))];
+      if (o && o.bye) partes.push(tx.calBye);
+      else if (o && o.rival) {
+        const mesa = x.partida && x.ronda === r ? x.partida.mesa : null;
+        const color = o.color === "blancas" ? tx.blancas : o.color === "negras" ? tx.negras : "";
+        partes.push(mesa ? tx.calMesa(mesa, color, rivalTexto(o.rival)) : tx.rondaFila(r, color, queHizo(o, tx).que, rivalTexto(o.rival)) + ".");
+      } else partes.push(tx.calPendiente);
+      partes.push(enlaceDe(x));
+      return {
+        uid: "cac2026-" + x.torneo.tnr + "-" + x.j.no + "-r" + r + "@ajedrez-integral.com",
+        inicio, fin, resumen: tx.calRonda(r, nombre), lugar: tx.calLugar,
+        descripcion: partes.join(" "), url: enlaceDe(x), aviso: "-PT30M",
+      };
+    }).filter(Boolean);
+  }
+  // «Sofia Mayorga Araya» (sin título): lo que cabe en el renglón del calendario.
+  function nombreCorto(j) {
+    const partes = String(j.nombre || "").split(",").map((s) => s.trim()).filter(Boolean);
+    return partes.length === 2 ? partes[1] + " " + partes[0] : partes.join(" ");
+  }
+  function bajarCalendario(x) {
+    const tx = t();
+    const eventos = eventosDelCalendario(x);
+    if (!eventos.length) { anunciar(tx.calendarioSin); return; }
+    const { texto, eventos: n } = window.CalendarioIcs.armarHoras({ nombre: tx.calNombre(nombreCorto(x.j)), eventos });
+    window.CalendarioIcs.bajar(texto, "centroamericano-2026-rondas-" + slugDe(x.j.nombre) + ".ics");
+    anunciar(tx.calendarioListo(n));
   }
 
   let espera = null;
@@ -998,7 +1094,26 @@
     if (sel.value) pedir().then(pintarTodo, () => { $("delegacion-estado").textContent = t().error; });
   }
 
-  function pintarTodo() { pintarAnuncios(); pintarHoyCategorias(); pintarProgreso(); pintarSeguidos(); pintarBuscador(); pintarDelegacion(); pintarAvisoDelegacion(); }
+  // El aviso del modo de prueba, arriba de todo y en el idioma de la página.
+  let pruebaFallo = false;
+  function pintarPrueba() {
+    if (!PRUEBA) return;
+    const tx = t();
+    let caja = $("cac-prueba");
+    if (!caja) {
+      caja = el("div", "cac-prueba");
+      caja.id = "cac-prueba";
+      caja.setAttribute("role", "status");
+      caja.setAttribute("data-no-traducir", "");
+      const main = document.querySelector("main") || document.body;
+      main.insertBefore(caja, main.firstChild);
+    }
+    const salir = el("a", "cac-prueba-salir", tx.pruebaSalir);
+    salir.href = location.pathname;
+    caja.replaceChildren(el("p", "", tx.prueba(PRUEBA)), ...(pruebaFallo ? [el("p", "font-bold", tx.pruebaError)] : []), salir);
+  }
+
+  function pintarTodo() { pintarPrueba(); pintarAnuncios(); pintarHoyCategorias(); pintarProgreso(); pintarSeguidos(); pintarBuscador(); pintarDelegacion(); pintarAvisoDelegacion(); }
 
   /* ---------------- Avisarme en este celular ---------------- */
   // Qué dice la función, también cuando contesta un error (lo trae el cuerpo).
@@ -1060,6 +1175,7 @@
     if (ocupado) return;
     const boton = $("avisos-boton"), estado = $("avisos-estado");
     const tx = t();
+    if (PRUEBA) { estado.textContent = tx.pruebaSinAvisos; return; }
     ocupado = true;
     boton.disabled = true;
     try {
@@ -1102,6 +1218,7 @@
     const f = sel && sel.value;
     if (!f || ocupado) return;
     const tx = t(), nombre = pais(f, idioma());
+    if (PRUEBA) { estado.textContent = tx.pruebaSinAvisos; return; }
     ocupado = true;
     boton.disabled = true;
     try {
@@ -1278,6 +1395,9 @@
   pintarAvisoDelegacion();
   pintarProgreso();
   pintarHoyCategorias();
+  // En el modo de prueba se piden los datos de una vez: se vino a ver si todo anda.
+  pintarPrueba();
+  if (PRUEBA) pedir().then(pintarTodo, () => {});
   pedirAnuncios();
   setInterval(pedirAnuncios, 5 * 60000);
   document.addEventListener("visibilitychange", () => { if (!document.hidden) pedirAnuncios(); });
@@ -1303,7 +1423,7 @@
     datos: () => datos, deGuardado: () => deGuardado, pedir, jugadores, rondasDe, rendimiento, queHizo, rivalTexto,
     textos: t, idioma, categoria: (g) => t().categoria(g), ordenGrupo, pais: (f) => pais(f, idioma()), fmtPuntos, puntosNum,
     cuandoSeLeyo: () => cuandoSeLeyo(t()), plano, el, ZONA, progresoRonda, anunciar, puntosDeMesa, eloDe, porColor, textoElo,
-    puestosDe, puntosTras, puestoTexto: (p) => puestoTexto(p, idioma()), delegacionGuardada,
+    puestosDe, puntosTras, puestoTexto: (p) => puestoTexto(p, idioma()), delegacionGuardada, eventosDelCalendario, nombreCorto, enlaceDe, slugDe,
   };
 
   document.addEventListener("cac-idioma", () => { pintarTodo(); ponerAvisosAlDia(); if (dialogo && dialogo.open) pintarMedallero(); });

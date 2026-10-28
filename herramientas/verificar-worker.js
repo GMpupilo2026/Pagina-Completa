@@ -100,6 +100,17 @@ async function cargarWorker() {
     igual("la dirección de Supabase es la misma que usa el sitio", URL_SB, valor(fuenteCliente, "SUPABASE_URL"));
     igual("la clave pública también", valor(fuenteWorker, "SUPABASE_ANON_KEY") === valor(fuenteCliente, "SUPABASE_ANON_KEY"), true);
     igual("y el nombre de la cookie", valor(fuenteWorker, "COOKIE"), (fuenteCliente.match(/var NOMBRE = "([^"]+)"/) || [])[1]);
+    // La cookie solo viaja a las carpetas de su Path: si el worker cuida una
+    // que el cliente no nombra, el candado deja afuera a quien sí tiene el
+    // acceso, sin ningún error (le pasó a material/: las fichas canjeadas).
+    // Se prueba con el propio PROTEGIDO del worker: cada carpeta que deja pasar
+    // tiene que caer bajo alguna ruta de la cookie.
+    const protegido = new Function("return " + fuenteWorker.match(/const PROTEGIDO = (\/.*\/);/)[1])();
+    const rutasCliente = ((fuenteCliente.match(/var RUTAS = \[([^\]]*)\]/) || [])[1] || "")
+      .split(",").map((r) => r.trim().replace(/"/g, "")).filter(Boolean);
+    const sinCookie = ["/cursos/protegido/x.html", "/cursos/recursos/x/y.pdf", "/material/x/y.pdf"]
+      .filter((u) => protegido.test(u) && !rutasCliente.some((r) => u.startsWith(r)));
+    igual("la cookie se escribe para cada carpeta que cuida el worker", sinCookie.join(", ") || "todas", "todas");
     // Sin run_worker_first, Cloudflare sirve el archivo sin pasar por el
     // worker: el candado está escrito pero no existe.
     const wr = JSON.parse(fs.readFileSync(path.join(raiz, "wrangler.jsonc"), "utf8").replace(/^\s*\/\/.*$/gm, ""));

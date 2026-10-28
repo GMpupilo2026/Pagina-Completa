@@ -33,8 +33,13 @@ Cuando la variable se perdió, dejó afuera a **todos**, incluido el profesor.
 **El de ahora no guarda nada en Cloudflare**:
 
 - `js/supabase-client.js` (`window.SesionCursos`) copia el token de acceso de
-  la sesión a la cookie `ai_sesion_cursos`, con `Path=/cursos/` y
-  `SameSite=Lax`: el navegador la manda solo ahí. Es el mismo token que ya está
+  la sesión a la cookie `ai_sesion_cursos`, con `SameSite=Lax` y **una copia
+  por carpeta que cuida el worker** (`Path=/cursos/` y `Path=/material/`, la
+  lista `RUTAS`): el navegador la manda solo ahí. Con solo `/cursos/`, todo lo
+  de `material/` (los libros y las fichas, comprados o canjeados por puntos)
+  contestaba «Hace falta iniciar sesión» a quien lo tenía pagado, y ningún
+  verificador lo vio porque ponían la cookie a mano; `verificar-worker.js` ahora
+  comprueba que cada carpeta de `PROTEGIDO` caiga bajo una ruta de la cookie. Es el mismo token que ya está
   en `localStorage`, así que no expone nada nuevo. Se escribe al cargar, en cada
   cambio de sesión y **justo antes de pedir un fragmento** (`curso-acceso.js`,
   `curso-academia.js` y `sesion.html` llaman a `SesionCursos.guardar()`), para

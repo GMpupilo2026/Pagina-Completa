@@ -607,10 +607,20 @@ todas, y el profe elige cuál mostrar a la clase.
   ver «La práctica no recarga la lista en cada jugada»). Cada alumno, con sus
   intentos del primero al último y cómo terminó cada uno.
 - **«📺 Mostrar»** usa la misma puerta que «Mostrar a la clase» de Preguntar,
-  ahora `mostrarJugadasALaClase()`: va como variante que mira el profe
-  (`game_state.vista`), la partida de la clase no se toca, y si el tablero ya
-  no tiene la posición de la práctica pregunta antes de reemplazarla. «Decir
-  de quién es al mostrarlo» arranca sin marcar, por lo mismo que allá.
+  `mostrarJugadasALaClase()`, pero **deja todas las jugadas del intento en la
+  PARTIDA de la clase** (`dejarJugadasEnLaPartida`: `game_state.moves`), no como
+  variante. Una variante se pierde al volver al final o al mover algo, y el
+  ejercicio ya terminó: lo que se quiere es revisarlo después, jugada a jugada,
+  con la lista de siempre. La clase arranca mirando la posición del ejercicio
+  (`vista` en esa jugada, con el nombre si el profe lo marcó) y el profe la
+  recorre con las flechas. Si la partida tenía más jugadas después de esa
+  posición, se reemplazan y se pregunta antes (y se borran sus comentarios y
+  variantes); pasar de un intento a otro no pregunta, porque lo que se
+  reemplaza es el intento anterior. Si el tablero ya no tiene la posición de la
+  práctica, pregunta antes de mandarla de nuevo. «Decir de quién es al
+  mostrarlo» arranca sin marcar, por lo mismo que allá. (La respuesta de un
+  alumno a una pregunta sigue yendo como variante: ver «Mostrar la respuesta de
+  un alumno a la clase».)
 
 - **Las jugadas van escritas**, numeradas y en algebraica española («1. Rf1
   Rf8 2. Re2»), debajo de cada intento: se lee dónde se equivocó sin tener que
@@ -631,8 +641,8 @@ todas, y el profe elige cuál mostrar a la clase.
 
 **Al tocar esto, correr `node herramientas/verificar-todo.js practica-intentos
 clase-mostrar`.** Está probado que falla de verdad: sin ordenar los intentos,
-mandando siempre el nombre o sin poner al día el intento en curso de la
-ventana, salta.
+mandando siempre el nombre, sin dejar las jugadas en la partida de la clase o
+sin poner al día el intento en curso de la ventana, salta.
 
 ### Practicar: perder una ventaja de más de 3 resta 350 puntos
 
@@ -4783,3 +4793,70 @@ broma». Le cae al compañero cuando tiene abierta una actividad (pregunta,
 calentamiento, competencia, cuestionario, práctica, Formación, tiempo para
 pensar). El detalle, en «Dónde cae una broma y la clase en vivo» de
 `puntos-y-premios.md`.
+
+## Los stickers del profe
+
+Pedido del dueño el 28/10/2026: que el profe pueda mandarle a la clase un
+dibujo del profe Oscar con una frase —enojado con «¡Esfuérzate más!», feliz
+con «¡Muy bien!», aplaudiendo porque todo el grupo lo logró, extrañado con
+«¿Y esa vara?», pensativo con «Mmmm…», despidiéndose con «¡Nos vemos la
+próxima clase!»—, y que la frase se pueda cambiar.
+
+- **Dónde**: «😀 Mandar un sticker del profe», al final de «Alumnos
+  conectados», al lado del interruptor de las bromas (la barra «Tu material»
+  tiene sus botones contados, `verificar-sesion-orden.js`). Abre un diálogo
+  (`<dialog>` con `showModal()`, foco adentro, Esc cierra) con los dibujos;
+  cada uno trae su frase sugerida, que el profe cambia si quiere, y «A quién»:
+  toda la clase o un alumno conectado. Solo el profe (`role = 'profesor'`):
+  quien administra no da clase.
+- **Cómo viaja**: `game_state.sticker = {id, texto, para, at}`, igual que el
+  tiempo para pensar. `protect_game_state_teacher_columns` se lo devuelve al
+  alumno (la función se reescribió entera, con todas las columnas que ya
+  protegía), la hora la cambia la base por la suya en cada sticker nuevo y la
+  forma la revisa el CHECK `game_state_sticker_forma` (id de letras y guiones,
+  frase hasta 120, `para` un uuid o nada). Comprobado impersonando el 28/10:
+  lo del profe queda con la hora de la base, lo del alumno se revierte y una
+  forma rara la rechaza el CHECK. Migración `20261028125408_game_state_sticker.sql`.
+- **Cuánto se ve**: 8 segundos desde la hora de la base (`js/reloj-servidor.js`),
+  abajo a la derecha, con su «×» para cerrarlo antes. Quien entra después no
+  ve uno viejo. Al cerrar la clase se limpia con lo demás.
+- **«Solo para» un alumno es privado en la pantalla, no en la base**: la fila
+  de `game_state` la lee toda la clase abierta. Sirve para animar a uno («¡Tú
+  puedes!»), no para decirle algo que el resto no pueda saber.
+- **Se dice en voz**: una región viva aparte («Tu profe te manda un sticker:
+  …»); el dibujo lleva su texto alternativo. En el proyector sale más grande
+  (va suelto en el `<body>`, fuera de la lista blanca, que solo esconde lo de
+  adentro de la clase).
+- **Los dibujos** son los del avatar del profe Oscar que tienen frase (abajo):
+  hoy 34, entre ellos «¿Vas a jugar esa?» con cara burlona, «Tan vagabundo» y «Pobrecillo» con cara triste.
+
+### El avatar del profe Oscar
+
+Así se llama la caricatura del profe Oscar en todas sus poses y caras (43
+hoy), y el dueño pidió guardarla bien porque se va a usar en más cosas.
+Hecha en Canva a partir de sus fotos: la cara con su lunar en la mejilla, un
+poco arriba de la barba, y la arruga entre las cejas; camisa y pantalón
+negros, el reloj y las pulseras de colores; el logo blanco de Ajedrez
+Integral en la camisa (salvo de espalda, de lado o con la mochila).
+
+- **Los originales son la copia buena**:
+  `herramientas/avatar-profe-oscar/originales/<id>.png`, en alta resolución
+  (unos 1900 px de alto) y sin fondo. Están en `.assetsignore`: no se
+  publican, y de ellos sale todo lo demás. También quedan en el diseño de
+  Canva donde se hicieron.
+- **La lista, una sola**: `js/avatar-profe-oscar.js` (`AvatarProfeOscar`), con
+  el id, el texto alternativo y la frase que dice como sticker (`null` si no
+  es un sticker: de frente, de espalda, la cara, las escenas). Una página que
+  quiera el avatar lo toma de ahí.
+- **La versión para la página**: `img/avatar-profe-oscar/<id>.webp`, de 480 px
+  de alto (unos 20 KB), la genera `herramientas/avatar-profe-oscar.py` y no
+  se edita a mano. Uno nuevo: el PNG en `originales/`, su línea en la lista y
+  correr el script; `verificar-clase-stickers.js` exige que estén las tres
+  cosas.
+- **Los tableros**: el de «tablero-italiana» y el de la pantalla de
+  «clase-en-linea» son la Apertura Italiana de verdad (las piezas del sitio,
+  la posición comprobada con chess.js, puesta encima del dibujo). Los de
+  «jugando» y «ensenando» son de adorno, en perspectiva y sin una posición que
+  se lea: si alguno se usa donde importe la posición, se le pone una real.
+- **Las frases van de tú**, como el sitio: «¡Esfuérzate más!» y «¿Vas a jugar
+  esa?» (el profe las cambia al mandarlas si quiere decirlas de otra forma).

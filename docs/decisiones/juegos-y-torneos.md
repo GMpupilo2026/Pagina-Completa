@@ -7284,6 +7284,56 @@ abierto para todos, sin sesión ni candado, con «Abrir» y «Manual de uso»; l
 vitrina no le pregunta `tengo_herramienta()` y `licencias.html` no lo ofrece
 (no hay licencia que vender de algo gratis).
 
+**La vitrina va en fichas por tema** (lo pidió el dueño: «que queden fichas por
+cada tema»): Arbitraje, JDE, JDN y Universitarios, en `TEMAS` del mismo
+`js/herramientas-arbitraje.js`. Cada herramienta lleva su `tema` y la lista se
+ordena por tema (también en `licencias.html`); una herramienta nueva sin
+`tema` no sale en ninguna ficha, así que se lo pone al agregarla, y un tema
+nuevo es una línea más en `TEMAS`. Todas se pintan en `#lista` y las de las
+otras fichas quedan con `hidden`; la ficha elegida va en la dirección
+(`herramientas-arbitraje.html#jde`) para mandar el enlace ya abierto en ella.
+Las fichas son pestañas de verdad (`role="tab"`, flechas, Inicio y Fin). Lo
+revisa `verificar-seleccion-pagina.js`, midiendo qué se ve.
+
+De tres maquetas (pestañas chicas arriba, portada de temas y menú al costado)
+el dueño eligió **la portada de temas**: arriba, una tarjeta grande por tema
+con su ícono, de qué se trata y cuántas herramientas trae (de dos en dos y sin
+el resumen en el celular, donde al tocar una se baja sola a sus herramientas),
+y debajo las herramientas de ese tema en tarjetas compactas, con su nombre
+corto (`corto`) y lo que hace detrás de un desplegable «Qué hace», cerrado:
+así se comparan de un vistazo sin una página larguísima.
+
+**De entrada no hay tema elegido** (lo pidió el dueño): debajo de las
+tarjetas no sale ninguna herramienta, sino el avatar del profe Oscar leyendo
+(«a-repasar», de `js/avatar-profe-oscar.js`; ver «El avatar del profe
+Oscar») con un globo que dice «¡Elige un tema!»
+(`#tema-invitacion`); al tocar un tema, Oscar se va y salen sus
+herramientas. Con el tema en la dirección (`#jde`), ese ya viene elegido.
+Sin ninguno elegido, ninguna pestaña está `aria-selected` y a la primera se
+llega con Tab. De paso: una herramienta que todavía no se puede usar dice
+«Próximamente» también para quien tiene todas (la licencia «todas» o quien
+administra); antes decía «Abierta para tu cuenta» y abajo «Todavía no se
+puede usar».
+
+**La ficha Universitarios trae también los torneos** (lo pidió el dueño):
+además de los resultados por universidad, el catálogo «Torneos universitarios
+de Costa Rica» y las páginas de cada torneo (`cenfotec-2026.html`,
+`utn-2026.html`, gratis porque son públicas). El catálogo no es una licencia
+aparte: se abre con la de `universidades` (ver «Torneos universitarios de
+Costa Rica»), así que lleva `licencia: "universidades"`: la vitrina le
+pregunta `tengo_herramienta('universidades')`, el botón pide esa licencia y
+`licencias.html` no lo ofrece solo. La página de un torneo nuevo que se arme
+con `herramientas/torneo-universitario.js` se agrega a la lista a mano, con
+`tema: "universitarios"` y `gratis: true`.
+
+**En Arbitraje, los torneos de ajedrezcostarica.com** (lo pidió el dueño): la
+tarjeta «Torneos de Costa Rica» lleva a `torneos-pareo.html#tambien`, la
+parte «También en Costa Rica» de «Torneos en Pareo Integral» (ver «Torneos en
+Pareo Integral: los torneos de ajedrezcostarica.com»). Esa parte se arma
+recién cuando llegan los datos, así que el navegador no tiene adónde bajar con
+el ancla: con `#tambien`, `js/torneos-pareo-pagina.js` baja a ella después de
+pintar la portada (`verificar-torneos-externos-pagina.js` lo revisa).
+
 También son gratis el **historial de un jugador** y las **estadísticas por
 colegio y región** (ver «Historial del jugador y estadísticas por colegio»), y
 **«Ajedrez estudiantil en Costa Rica»**
@@ -8508,6 +8558,233 @@ la institución de cada fila, no publica sin árbitro ni región— y
 con su sección, la medalla del podio, la normativa del año—. Rompiendo a
 propósito la política de lectura pública, salta.
 
+## La inscripción de los JDE
+
+`inscripcion-jde.html` es la herramienta gratuita (en la vitrina de
+`herramientas-arbitraje.html`, `gratis: true`, sin cuenta ni licencia) con la que
+el **docente de un centro educativo** prepara la inscripción de su ajedrez en los
+Juegos Deportivos Estudiantiles. Lo pidió el dueño del sitio: que se ajuste a la
+Normativa y que aproveche el banco de instituciones y regionales para que llenar
+los datos de los estudiantes cueste poco. Es el **otro lado** de Pareo Integral:
+Pareo lo usa quien organiza una etapa; esta la usa quien inscribe a su colegio.
+
+- **Todo pasa en el navegador y no se guarda en ningún servidor.** Son nombres,
+  fechas de nacimiento y documentos de menores. Se guardan solo en `localStorage`
+  (`ij_borrador_v1`, en `try/catch`: sin almacenamiento la página funciona igual y
+  lo dice) y en lo que la persona baja. Por eso no lleva casilla de consentimiento
+  (no se envía nada) ni entra en la lista de proveedores de `privacidad.html`, y
+  la página lo dice arriba con esas palabras. **Si algún día se le agrega un
+  envío, eso cambia**: casilla, `privacidad.html` y la Edge Function con su freno.
+  Un borrador que se abre (`.json`) pasa siempre por `normalizar()`: nunca se
+  confía en su forma, y los `id` se limpian porque enlazan etiquetas.
+- **Las reglas no se escribieron de nuevo**: las categorías por año de nacimiento
+  (art. 17), el ascenso (art. 18), los equipos de 3 a 5, el tope de dos
+  individuales, las mujeres que pasan al Abierto, las 27 Direcciones Regionales y
+  las 11 interregionales son las de `js/pareo/grupos.js`, que es lo que Pareo
+  Integral aplica después. Así lo que esta página acepta es lo que el emparejador
+  acepta. Lo único que se agregó ahí fue `categoriasDeNacimiento()` (y se
+  exportaron `JDE_CATEGORIAS` y `JDE_ASCENSOS`). Lo propio de la inscripción está
+  en `js/inscripcion-jde-reglas.js` (funciones puras, sin DOM) y lo que se ve en
+  `js/inscripcion-jde.js`.
+- **Qué revisa, artículo por artículo** (cada hallazgo lleva escrito «Error:»,
+  «Aviso:» o «Dato:» y el artículo; el color nunca va solo):
+  - Art. 17: la categoría sale de la fecha de nacimiento. Nacidos en 2013 y 2014
+    son de la B (escuela) o la C (colegio): lo decide «¿Escuela o colegio?» del
+    centro, y sin saberlo se pide elegir; **nunca se adivina**. Otro año que 2026
+    corre los rangos y avisa de confirmarlos con la Normativa de ese año.
+  - Art. 18: subir de categoría solo en equipos y solo A→B, C→D, D→E, hasta tres
+    por equipo; en individual es error.
+  - Art. 19: unir centros pide matrícula total (máximo 300) y no deja usar el
+    ascenso a la vez.
+  - Art. 53: **en la Interregional y la Nacional solo juegan las categorías B y D**
+    (en la Institucional y la Regional, A a E; la Circuital no tiene ajedrez). Lo
+    dice la tabla de participación, no el art. 66, y ningún otro lugar del sitio lo
+    comprobaba.
+  - Art. 59: el correo del MEP (error si falta; aviso si no es `@mep.go.cr` salvo
+    «Centro privado»); el documento de cada estudiante es un aviso y no un error,
+    porque se presenta en físico el día de la acreditación. Los ocho documentos
+    son los del art. 59.e.
+  - Art. 60: una jefatura de delegación y una persona de cuerpo técnico, y **al
+    menos una persona del mismo sexo** que el estudiantado, sin excepciones; quien
+    no es funcionario pide el oficio de autorización (59.d).
+  - Art. 66.1: una sola modalidad por persona (la misma persona se reconoce por su
+    documento o por nombre y fecha, con `quitarRepetidos()`); dos individuales por
+    categoría y torneo (error en la Regional; aviso en la Institucional, donde
+    juega toda la población y solo clasifican dos); equipos de 3 a 5 con una
+    suplente (error en la Regional, aviso en la Institucional); un hombre no juega
+    el torneo de Mujeres; hasta dos equipos por categoría y torneo.
+  - Art. 66.1.i y j: en qué interregional cae la Dirección Regional y cuántos
+    clasifican (3 si cruza dos Direcciones, 2 si cruza tres), como dato.
+- **El banco** (`data/jde-banco.json`, lo arma `herramientas/jde-banco.js`, no se
+  edita a mano) sale de lo que ya se leyó de chess-results para
+  `ajedrez-estudiantil.html`. Lo que se decidió y por qué:
+  - Entran las instituciones con algún torneo de los JDE (y, desde la segunda
+    versión, todos los centros de los listados del MEP; ver más abajo): chess-results
+    trae en «Club/Ciudad» países, secciones de un grupo («10-4») y nombres de
+    regiones, y el generador los descarta. El resto queda como está: **hay
+    colegios escritos de varias formas** («Cecilio Lindo», «Cecilio Liendo
+    Morales»), porque es lo que cada árbitro tecleó. Por eso el campo del colegio
+    es un combobox que busca por palabras (sin tildes, mayúsculas, orden ni «de»,
+    «la»…) **pero deja escribir cualquier nombre**: el banco propone, no obliga.
+  - La Dirección Regional de un colegio es la que más se repite en sus torneos,
+    y solo vale si es una de las 27 de la Normativa: chess-results también dice
+    «Esparza» o «Bagaces», que son circuitos. Sin región clara queda vacía y la
+    elige la persona.
+  - Los estudiantes son los de los JDE de los **últimos tres años** (los que
+    pueden volver a inscribirse); salen sin fecha de nacimiento ni documento, que
+    pone el docente. El sexo solo se guarda cuando es seguro: haber jugado un
+    torneo femenino (aunque el colegio esté escrito de dos formas, que se juntan).
+    Los nombres que pidieron salir ya no están en la fuente
+    (`herramientas/datos/ajedrez-estudiantil-excluidos.txt`).
+  - El flujo mensual «Ajedrez estudiantil» lo vuelve a armar y lo incluye en su
+    PR (`.github/workflows/ajedrez-estudiantil.yml`); el verificador comprueba que
+    lo publicado coincide con lo que se obtiene de `data/`, y falla si no.
+- **El centro se elige en cuatro pasos y el circuito se llena solo** (lo pidió el
+  dueño del sitio después de la primera versión): se marca la Dirección Regional,
+  se marca si es **escuela o colegio** (dos botones; ya no «no lo sé»), se toca el
+  campo del centro y se **despliegan los centros de esa regional y ese tipo**
+  (`centrosDe()`, en orden alfabético, con el circuito de cada uno; tope de 400 y
+  «Hay N más: escribe para filtrar»), y al escoger el tuyo se llenan solos el
+  **circuito**, la regional y el tipo. El campo es un combobox (flechas, Enter,
+  Escape, `aria-expanded`, `aria-activedescendant`) con un botón ▾ para abrir y
+  cerrar la lista, y sigue dejando **escribir cualquier nombre**: sin regional ni
+  tipo marcados no se despliegan los 5 000 del país, pero escribir «liceo de costa
+  rica» y Enter también llena regional, tipo y circuito (el camino de atrás).
+  - Si en la regional marcada no hay ninguno con lo escrito, se busca en todo el
+    país y la lista lo dice (el banco puede tener mal la regional de un colegio).
+  - **Cambiar la regional o el tipo quita el centro elegido del banco** si ya no
+    es de ahí, con su circuito; lo escrito a mano se respeta. Un circuito nunca se
+    deja de otro centro: si el listado no ubica al centro, el circuito queda
+    «por elegir» y la ayuda lo dice.
+  - El circuito es un selector con los de la regional (los del banco) y se puede
+    cambiar: una lista vieja puede estar equivocada, y el MEP es quien manda.
+  - «Escuela o colegio» es también lo que decide la categoría de los nacidos en
+    2013 y 2014 (art. 17): es la misma pregunta, ya no hay dos.
+- **De dónde sale el circuito: los listados oficiales del MEP en PDF**, porque
+  chess-results no lo trae y el MEP no publica un archivo abierto (el portal de
+  datos abiertos no responde desde acá). `herramientas/mep-centros-leer.py` lee
+  cuatro PDF —el anexo 5 del cartel de Fonatel en sutel.go.cr (3 350 centros, con
+  el nivel: escuelas diurnas, colegios, CINDEA, IPEC…), el listado del IMAS de los
+  paquetes escolares 2018 (3 193 escuelas) y los dos cortes del listado de
+  comedores en vacaciones del MEP, 2024 (casi 400)— y los junta **por código
+  presupuestario** en `herramientas/datos/mep-centros.csv`: 4 268 centros (3 699
+  escuelas y 569 colegios), las 27 regionales, circuito de dos cifras. Si un centro
+  está en varias listas manda la más nueva para la regional y el circuito (comedor
+  2024 > Fonatel > IMAS 2018; ~130 cambiaron de circuito entre listas) y la más
+  cuidada para el nombre. **Los PDF no están en el repositorio** (son de otras
+  instituciones): el script dice las direcciones y recibe la carpeta donde se
+  bajaron. **Ninguna lista trae todos los centros**: faltan sobre todo colegios
+  (no hay ningún listado único), y son de entre 2018 y 2024. Por eso la
+  herramienta propone y deja corregir, y la página lo dice abajo.
+- **Cómo `jde-banco.js` junta chess-results con el MEP** (el nombre de chess-results
+  lo escribió el árbitro; el del MEP es el oficial). Se comparan los «núcleos» de
+  los nombres (sin tildes, sin «escuela», «de», «la»; «C.T.P.» y «Colegio Técnico
+  Profesional» son «ctp»), **dentro de la regional**: el mismo núcleo y el mismo
+  tipo, o las palabras que distinguen al centro todas dentro del nombre del otro
+  si es el único candidato. Si la regional de chess-results no lo tiene (es la del
+  torneo que jugó, no la suya: el «C.T.P. de Osa» jugó en Pérez Zeledón y es de
+  Grande de Térraba) o no trae regional, vale solo si en todo el país hay **un**
+  centro con exactamente ese nombre. **Con dos o más no se junta**: hay cientos de
+  «Escuela Santa Elena» y juntar con la equivocada le pondría a alguien un
+  circuito que no es el suyo. Resultado: de los 1 535 nombres de chess-results, 728
+  se juntaron con un centro del MEP (con su circuito) y 807 quedaron aparte, sin
+  circuito (colegios privados, otros que no están en los listados, nombres muy
+  distintos), y los centros del MEP que nunca jugaron los JDE entran igual (la
+  escuela de un docente que no jugó nunca tiene que aparecer). Los estudiantes de
+  antes siguen al centro juntado.
+- **Los archivos**: el Excel trae las columnas del reporte del MEP (Nombre, Sexo,
+  FDN, Nombre de Centro Educativo, Dirección Regional, Categoría, Equipo/Ind,
+  Torneo, Documento de identidad…) y **Pareo Integral lo abre con «Subir una
+  lista»** y propone un torneo por grupo; el verificador comprueba que cada
+  columna esté en `SINONIMOS_COLUMNA` de Pareo y que los valores se lean con los
+  lectores de `grupos.js`. Las fechas van `AAAA-MM-DD` (sin ambigüedad día/mes).
+  Un **segundo equipo** del mismo centro se manda con el nombre «Centro (equipo 2)»
+  porque Pareo junta por nombre de institución. Un documento que es solo dígitos
+  `TablaExcel` lo guarda como número (pierde ceros a la izquierda): las cédulas no
+  los llevan. El PDF «nómina para firmar» sale con la marca de agua de Ajedrez
+  Integral (`ReportePDF.generar` la pone sola), deja las firmas de la jefatura de
+  delegación y del centro y dice que **no reemplaza la Boleta de Inscripción
+  Oficial** de la Plataforma de los JDE (art. 59.a): esa es la que vale. Con
+  errores pendientes se puede bajar igual, pero antes se pregunta.
+- **Los equipos se inscriben completos y la herramienta no deja pasarse de lo
+  permitido** (lo pidió el dueño del sitio después de la segunda versión). El
+  modelo cambió (versión 2 del borrador): `estado.equipos` guarda cada equipo
+  (`{ id, categoria, torneo: "w"|"m", numero }`) y cada estudiante que juega en
+  uno lleva su `equipoId`; ya no hay «modalidad» ni «equipo 2» por persona. **La
+  categoría y el torneo de quien está en un equipo son los de su equipo**, y el
+  sexo de quien está en uno de Mujeres es mujer, fijo. Un borrador viejo se lee
+  (`normalizar()`): todos quedan como individuales, nunca se inventa un equipo.
+  - **Un tope se aplica al agregar, no solo se avisa.** `limites(estado)` devuelve
+    lo que la Normativa no deja pasar, cada violación con una **clave estable**, y
+    `intentar(estado, mutar)` hace el cambio y, si aparece una clave que antes no
+    estaba, lo **deshace** y devuelve los motivos. Los que cuenta: más de 5 en un
+    equipo (4 titulares y 1 suplente), una segunda suplente, más de 2 equipos por
+    categoría y torneo, más de 2 individuales por categoría y torneo (estos tres
+    desde la Etapa Regional: en la Institucional juega toda la población), un
+    hombre en el equipo de Mujeres, alguien que por su edad no puede jugar en esa
+    categoría (solo se sube A→B, C→D, D→E), más de 3 subidas por equipo (art. 18),
+    subir con centros unidos (art. 19.f), una categoría que la etapa no juega
+    (art. 53) y la misma persona dos veces (66.1.h).
+  - **Las claves de cantidad llevan la cantidad** (`ind-cupo:D|m:3`): así un
+    borrador que ya venía pasado no impide seguir trabajando, pero una más sí es
+    una violación nueva y se rechaza. Si las claves no llevaran la cantidad, un
+    borrador con tres individuales dejaría agregar un cuarto. Al deshacer,
+    `intentar()` **conserva la identidad de los objetos**: la pantalla tiene
+    cierres sobre cada estudiante y copiar de nuevo los dejaría apuntando a
+    objetos que ya no están en el estado.
+  - `crearEquipo()` (el primer número libre), `agregarIntegrante()` (el quinto de
+    un equipo sin suplente queda como suplente; uno que ya estaba como individual
+    puede pasar al equipo), `sacarDelEquipo()` y `agregarLista()` pasan todos por
+    `intentar()`. **Una lista pegada o un Excel con «Equipo/Ind»** (y, si quiere,
+    Categoría y Torneo) arma los equipos solo: los de equipo van a su categoría
+    —la de la lista o la de su fecha de nacimiento— y se crea un equipo y un
+    segundo cuando el primero se llena; lo que no cabe se **devuelve con su
+    motivo** y la página lo dice con nombre («No se agregaron 1 estudiante: Ind
+    Tres: …»). Quien puede ser de la B o la C sin saber si el centro es escuela o
+    colegio se rechaza con esa explicación: nunca se adivina.
+  - En pantalla: la sección «3. Equipos» crea un equipo con cuatro lugares de
+    titulares (torneo y categoría a elegir, solo las de la etapa); cada
+    integrante es una tarjeta (nombre, sexo, fecha, titular o suplente, documento).
+    **Los lugares sin llenar no cuentan en la revisión** (si contaran, cuatro
+    lugares vacíos llenarían la pantalla de errores): se dice «N lugares sin
+    llenar» y el equipo sin nadie lleno es un error en la Regional. Con cinco, el
+    botón «+ Integrante nuevo» queda con `aria-disabled` (no `disabled`, para que
+    se alcance con el teclado y diga por qué) y el resumen dice «completo: no caben
+    más»; si se toca igual, el sexto se rechaza con su motivo en un `role="status"`.
+    «Pasar a individual», «Quitar» (un integrante) y «Quitar el equipo» (con
+    confirmación) cambian la estructura y vuelven a pintar la lista; lo demás solo
+    actualiza textos. El Excel trae una hoja «Equipos» (titulares primero y la
+    suplente al final) además de la «Inscripción» que lee Pareo.
+
+- **Lo que no hace, a propósito**: no verifica el puesto de quien clasificó a la
+  Interregional o la Nacional (no tiene los resultados de la etapa anterior; eso
+  lo hace Pareo con «Clasificados»), no sabe cuántos inscritos habrá por categoría
+  en la región (así que el sistema suizo o todos contra todos no se calcula acá,
+  solo se explica), y no lleva la delegación de una disciplina distinta del
+  ajedrez.
+
+`herramientas/verificar-inscripcion-jde.js` lo prueba: cada regla con un caso que
+la cumple y uno que no (las categorías de 2008 a 2021, el ascenso, la unión de
+centros, las etapas, los equipos, el cuerpo técnico, los documentos, la
+Interregional), **los topes al agregar** (el sexto integrante, el tercer equipo, el tercer individual, un hombre en Mujeres, la edad, el cuarto ascenso, centros unidos, una lista con «Equipo/Ind», que lo rechazado no deja rastro y que un borrador ya pasado no se amplía), el Excel contra Pareo, pegar una lista (con y sin títulos, fechas
+día/mes y mes/día, sexos y fechas que no se entienden quedan vacíos), un borrador
+adulterado, el generador del banco con datos inventados y el banco real al día, y
+en un navegador el combobox con teclado, traer y pegar estudiantes, la categoría
+y el torneo que cambian solos, el Excel y el PDF con lo escrito, guardar, bajar y
+abrir el borrador, un nombre con HTML, 400 px sin desplazamiento y el contraste de
+los hallazgos en claro y en oscuro (mínimo 4,5:1). El CSV del MEP (4 000 centros, las 27 regionales,
+código único, circuito de dos cifras), cómo se junta con chess-results (por
+regional, por nombre único en el país, sin juntar los ambiguos) y la lista
+según lo marcado (`centrosDe()`, `circuitosDe()`) también se prueban, y en el
+navegador el flujo completo: marcar regional y tipo, la lista, elegir un centro y
+ver el circuito, cambiarlo a mano, cambiar de regional, un centro sin circuito,
+el botón ▾ y el camino de escribir el nombre sin marcar nada, y el de los equipos:
+crear, llenar hasta cinco, el botón apagado, el sexto y el tercer equipo
+rechazados, la fecha que no deja jugar y se deshace, quitar un equipo y que el
+borrador lo guarde. Rompiendo a propósito las categorías de la Interregional, el
+correo, el circuito automático, el borrado al cambiar de regional o el tope de 5,
+salta.
+
 ## La página del Centroamericano 2026
 
 `centroamericano-2026.html` junta en fichas todo lo que buscan las familias,
@@ -8576,6 +8853,18 @@ Es una página estática, sin cuenta y sin base: nada se guarda.
   sitio también queda en la misma pestaña (nombrar ajedrez-integral.com no es
   irse) y lo de afuera sigue en otra, con su ↗. Lo revisa
   `verificar-centroamericano.js`.
+- **En el celular, un PDF no va en el marco.** El dueño abrió las bases en su
+  Android y la ventana decía «Este contenido está bloqueado. Comunícate con el
+  propietario del sitio», aunque el PDF es del mismo sitio y
+  `frame-ancestors 'self'` lo deja: el visor de PDF del celular no se deja
+  meter en un marco (Safari, en el iPhone, muestra solo la primera página).
+  En la computadora sí funcionaba, y por eso ningún verificador lo vio.
+  Ahora `js/ventana-enlace.js` deja que un enlace a un `.pdf` abra su
+  pestaña (su `target="_blank"`) cuando el aparato es táctil
+  (`pointer: coarse`) o no tiene visor (`navigator.pdfViewerEnabled`), y al
+  entrar con `#ficha-bases` no abre nada: una pestaña nueva no se abre sin
+  que la persona toque. Lo demás (chess-results, el formulario del bye)
+  sigue abriéndose encima. El verificador lo prueba con un celular simulado.
 - **La ficha del Desafío Mentes Maestras** (la sala `cenfotec`, de la
   Universidad CENFOTEC) lleva lo mismo que la del Centroamericano pero con la
   cara de la universidad (lo pidió el dueño): el azul de su imagen (#233065
@@ -9092,6 +9381,50 @@ bajar todos los certificados de una delegación en un solo PDF.
   aviso, el PDF de varias páginas y la regla de «suscrito antes», y cada uno
   saltó.
 
+### Sus rondas en mi calendario
+
+Lo pidió el dueño entre las mejoras («1»). Ya había un «Agregar a mi
+calendario» con todo el festival (el `.ics` que arma
+`herramientas/centroamericano-imagenes.js`); este es el de UN jugador, en su
+tarjeta del buscador.
+
+- Cada ronda de su torneo es un evento, a la hora de la fila de `#calendario`
+  (su `data-inicio`, en hora de Costa Rica, y `data-minutos`): la misma copia
+  de las horas que usa «Hoy en el torneo». Un torneo con menos rondas (un
+  Round Robin) trae solo las suyas.
+- En la descripción: su categoría y, en las jugadas, lo que hizo; en la
+  emparejada, su mesa, su color y su rival; en las que faltan, que vuelva a
+  bajar el calendario cuando salga el pareo.
+- El UID es fijo por torneo, jugador y ronda: bajarlo otra vez pone al día la
+  mesa en vez de duplicar las rondas (en los calendarios que respetan el UID).
+- Avisa 30 minutos antes de cada ronda. El formato lo arma
+  `js/calendario-ics.js` (`armarHoras`, nueva, al lado de `armar` y
+  `armarDias`): una sola copia del escape, el doblado de las líneas y la zona.
+- Lo revisa `verificar-centroamericano.js`: la hora en hora de Costa Rica, el
+  aviso, la mesa y el rival de la ronda emparejada. Rompí a propósito el aviso
+  y la mesa, y saltó.
+
+### El modo de prueba
+
+Lo pidió el dueño para probar la página con torneos ya separados por
+categoría antes del festival, sin que lo vea el público.
+
+- `centroamericano-2026.html?sala=<clave>` muestra la página con los torneos
+  de otra sala de `admin.html#torneos`: una **oculta**, por ejemplo
+  `centroamericano-prueba`, con los 12 torneos del festival de 2025 (uno por
+  categoría, la categoría en el texto de cada botón).
+- La función `sala-jugadores` lee una sala oculta solo con `prueba: true` y
+  si quien la pide administra: se pregunta `soy_admin()` con SU token, por
+  PostgREST, así que pasa por la verificación en dos pasos. A cualquier otro
+  le contesta 403 y la página lo explica.
+- Arriba va un aviso rojo, pegado, que dice qué sala se está viendo, con
+  «Salir del modo de prueba». Lo guardado va aparte (`cac_prueba_…`): no pisa
+  lo que el aparato tenía del festival. Los avisos al celular no se
+  encienden. Con la clave del festival, o una clave que no es de sala, no
+  hay modo de prueba.
+- Lo revisa `verificar-centroamericano.js`. Rompí a propósito el pedido en
+  modo de prueba y el freno de los avisos, y saltaron.
+
 ## Las páginas de los torneos universitarios
 
 Dos, con la misma maquinaria: `cenfotec-2026.html` (el Desafío Mentes
@@ -9312,3 +9645,217 @@ estaban, y las diferencias eran solo lo nuevo.
   5. crear la sala en `admin.html#torneos`, con los enlaces de chess-results;
   6. correr `sitemap.py` y `archivos-catalogo.js`;
   7. sumarla a `PAGINAS` de `verificar-paginas-universitarias.js`.
+
+## La cámara que lee el tablero
+
+`camara-tablero.html` (`js/camara-tablero.js`) es una **prueba**, por ahora
+solo de quien administra: el celular encima de un tablero de verdad lee cada
+casilla y anota las jugadas. Sirve para medir qué tan bien se ven nuestros
+tableros con la luz real de un salón antes de invertir en entrenar un modelo o
+en transmitir. No guarda nada ni manda la imagen a ningún lado: todo pasa en
+el celular.
+
+- **No reconoce piezas: reconoce jugadas.** Distinguir un alfil de un peón
+  desde arriba, con sombras y reflejos, es caro y falla. De cada casilla solo
+  se pregunta si está vacía, con pieza blanca o con pieza negra, y chess.js
+  busca la jugada legal que explica el cambio (`buscarJugadas`). El enroque
+  (4 casillas) y la captura al paso (3) salen solos. Si se escapó una jugada,
+  prueba las parejas. Al coronar, la cámara solo ve «pieza blanca»: se anota
+  dama y se avisa.
+- **Lo que no explica ninguna jugada legal no se anota.** Se dice qué casillas
+  cambiaron y se espera. Ninguna posición se inventa.
+- **El tablero se encuentra solo, o se marca a ojo** (`js/detectar-tablero.js`).
+  La medida es el patrón de ajedrez: a cada lado de cada línea entre casillas,
+  la clara tiene que ser la clara. Con eso, «Buscar el tablero» prueba
+  tableros de muchos tamaños, giros, achatados por la inclinación y en
+  trapecio (la cámara de lado ve el borde cercano más ancho), primero en una
+  imagen de 200 px y con pocos puntos, y ajusta los mejores en la grande. Y
+  cuatro esquinas tocadas a ojo, en cualquier orden, se corren solas a las
+  líneas al soltar la cuarta. Lo que se probó y falló:
+  - mirar lejos de la línea: los puntos caen sobre las piezas y el ajuste se
+    quedaba a 5-16 px. Los finos van entre la línea y la base de la pieza;
+  - mover las esquinas de a una: no puede correr el tablero entero sin
+    deformarlo. Se mueve también entero (correr, agrandar, girar);
+  - decidir si el tablero va una fila más allá con los puntos lejanos:
+    preferían el tablero montado sobre el borde. Se decide con los finos;
+  - sin trapecio, un tablero muy de lado no se encontraba.
+  Para decir «no hay tablero» no alcanza el puntaje (depende del contraste):
+  se pide además que el patrón sea parejo (`parejo` ≥ 0,92; los tableros de
+  prueba dan 1,00 y un piso de baldosas solo, 0,81). Las esquinas se marcan
+  con el dedo apretado y una lupa, o con el teclado (1 a 4 eligen, las
+  flechas mueven). Se lee de un lienzo aparte, sin la cuadrícula dibujada
+  encima: la cuadrícula amarilla son líneas, justo lo que se mide.
+- **Cuál esquina es a1 lo decide la calibración.** Prueba los cuatro giros y
+  se queda con el que ve la posición inicial. Media vuelta también la lee
+  perfecta (es simétrica en colores), así que además pide que las piezas de
+  las filas 1 y 2 sean las claras. Y el espejo (a con h) no se puede
+  distinguir mirando la posición inicial: lo fija la geometría. Vista desde
+  arriba, a1 → h1 → h8 → a8 gira siempre para el mismo lado en la imagen
+  (`ordenar`). Sin eso, e4 se anotaría d4.
+- **Calibrar es mirar la posición inicial**: las filas 3 a 6 enseñan cómo se
+  ve una casilla vacía de cada color, las 1 y 2 una pieza blanca y las 7 y 8
+  una negra. Por cada casilla se miden tres rasgos contra el fondo vacío de su
+  color: qué parte se aparta, cuánto borde tiene (una pieza blanca en casilla
+  blanca casi no cambia el color, pero sí el contorno) y el tono de lo que se
+  aparta. Si con lo aprendido no se leen al menos 48 de las 64 casillas de la
+  posición inicial, no se calibra: casi seguro la esquina 1 no es a1.
+- **La lectura se cree cuando se queda quieta**: 6 lecturas iguales seguidas,
+  una cada 200 ms. Mientras la mano está encima, cambia y no se anota.
+- **«Probar con una foto»**: otra foto del mismo tamaño conserva las esquinas,
+  la calibración y la partida, así que se puede probar una partida foto a
+  foto sin cámara en vivo. Así la prueba `verificar-camara-tablero.js`, con
+  tableros que dibuja el mismo navegador píxel a píxel: en perspectiva, con
+  margen blanco como los de vinilo, baldosas alrededor y ruido; de frente,
+  de lado, girado, chico, con las blancas a la izquierda y desde las negras.
+- **La cámara está apagada en todo el sitio** (`Permissions-Policy:
+  camera=()` en `/*` de `_headers`). Esta página quita esa cabecera
+  (`! Permissions-Policy`) y pone la misma con `camera=(self)`, en las dos
+  rutas: con y sin `.html`. Solo agregar la nueva no sirve: Cloudflare junta
+  las dos con una coma y el `camera=()` sigue ahí. El verificador revisa que
+  ninguna otra ruta tenga la cámara.
+
+- **La jugada más probable, no la exacta** (27/10, con el tablero de verdad:
+  «hice Cf3 y no la entendía»). Con la cámara de lado, la pieza alta tapa la
+  parte de atrás de la casilla siguiente y basta una casilla mal leída para
+  que ninguna jugada calce exacta. Dos arreglos:
+  - la rejilla de cada casilla se corre un 14 % hacia donde la casilla mira a
+    la cámara (abajo en la imagen), donde está la base de su pieza y no la
+    pieza de adelante;
+  - cada casilla leída trae su seguridad (`leerDetalle`), y cada jugada legal
+    cuesta lo que no calza, pesado por esa seguridad (`decidir`): una casilla
+    dudosa casi no pesa. Se anota la mejor si cuesta poco, le gana claro a la
+    segunda y explica más que «no pasó nada» (una sombra no inventa una
+    jugada). Si dos o tres explican parecido, se pregunta con botones; y
+    siempre se puede anotar a mano, en español, solo si es legal
+    (`ComandosTablero.jugadaEscrita`). Sin la seguridad, solo vale la exacta.
+- **La cámara se movió: se sigue la partida, no se empieza otra.**
+  `calibrar` aprende con cualquier posición conocida, no solo la inicial.
+  Si una lectura quieta cambia 10 casillas o más, se corren las esquinas a
+  las líneas y se calibra con la partida anotada; si así lee 56 o más, sigue
+  solo. Si no, «Buscar el tablero» (o las esquinas) y «Seguir con esta
+  partida». A igualdad de giros gana el que deja a1 más cerca del de antes:
+  la cámara se movió, el tablero no se dio vuelta. La partida se guarda en
+  el celular en cada jugada (`camara_partida_v1_<tablero>`) y al volver a
+  abrir la página se ofrece seguirla; si no estaba anotada, se pega su FEN o
+  su PGN («Empezar desde otra posición») y la numeración sigue la del FEN
+  («4. Ag5», no «1. Ag5»).
+- **Dos tableros con un celular, opcional y apagado por omisión** (lo pidió
+  el dueño: «siempre dando prioridad a que sea 1 para más confianza»). La
+  casilla «Leer también un segundo tablero» lo dice al lado: lo más confiable
+  es un celular por tablero. Encendida, cada tablero tiene sus esquinas, su
+  calibración, su partida y su transmisión con su propio código (unas
+  pestañas eligen a cuál se aplican los botones y cuál se muestra). La
+  imagen se trabaja a 960 de ancho en vez de 640, porque cada tablero ocupa
+  la mitad; las esquinas del primero se agrandan con ella y su calibración
+  sigue valiendo (mide luz, no tamaño). Al buscar el segundo, el primero se
+  tapa con gris parejo (`DetectarTablero.tapar`): si no, la búsqueda lo
+  vuelve a encontrar (rompiéndolo a propósito, los dos tableros anotan la
+  misma partida). Cada cuadrícula lleva su color y su número escrito. Más de
+  dos no: con cuatro, una casilla queda de 15 a 20 px y las piezas negras
+  sobre casillas oscuras se confunden.
+
+Con un tablero de vinilo de verdad, en el piso y con la cámara de lado, leyó
+64 de 64 y anotó las jugadas (27/10). Lo que falta: un modelo entrenado con
+fotos de nuestros tableros si con otra luz falla (las etiqueta el PGN de la
+partida), y la transmisión a Lichess para los torneos abiertos.
+
+## La partida en vivo desde la cámara
+
+La cámara manda la partida y `tablero-vivo.html` la muestra, sin cuenta
+(`js/partida-en-vivo.js` es lo que comparten las dos; `js/tablero-vivo.js`, la
+página de quien mira).
+
+- **Por un canal de Supabase Realtime en modo Broadcast, sin tabla**, igual
+  que «Actualizar sola (en vivo)» de Pareo Integral (ver «El canal en vivo»):
+  el nombre del canal (`tablero-vivo-<código>`) hace de contraseña, con un
+  código de 8 caracteres al azar sin 0/1/i/l/o. El código va en la dirección
+  después del `#`, que nunca llega al servidor. Quien tenga el enlace puede
+  mandar mensajes falsos al canal; para una partida que se muestra en público,
+  se acepta el riesgo como en Pareo.
+- **Se manda la partida, nunca la imagen**: el PGN entero en cada cambio (una
+  jugada, «Deshacer», calibrar) y los nombres, que son opcionales. Es poco y
+  así quien llega tarde o se reconecta no necesita historia: pide («pedir»,
+  al conectarse, al volver la red y al volver a la pestaña) y la cámara le
+  contesta con todo. La cámara solo escucha «pedir»: lo que pasa en el
+  tablero lo decide la cámara, nunca un mensaje del canal.
+- **Lo que llega se vuelve a jugar con chess.js** (`PartidaEnVivo.leer`): una
+  partida que no es legal no se pinta, y un mensaje más viejo que el último
+  (por su hora) no pisa lo nuevo. Los nombres son texto ajeno: `textContent`.
+- **El código se guarda en el celular** (`localStorage`): si la página se
+  recarga y se vuelve a transmitir, quien ya tenía el enlace no lo pierde.
+  «Usar un código nuevo» es la salida si se compartió de más.
+- Mientras la página de la cámara esté abierta; si se cierra, quien miraba se
+  queda con la última jugada, y quien abre el enlace ve «Esperando la
+  transmisión» a los 8 segundos (no una pantalla en blanco). Lo dice la
+  propia página.
+- El tablero de quien mira usa las piezas y los colores que eligió cada uno
+  (`PiezaPreferida`, `--sq-light`/`--sq-dark`), las coordenadas por fuera
+  (`js/coordenadas-tablero.js`), «Girar el tablero» con los nombres del lado
+  de sus piezas, y las jugadas en algebraica española. La última jugada se
+  dice también en texto, y al lector de pantalla cuando cambia.
+- La página de quien mira NO tiene la cámara: solo `camara-tablero` y
+  `camaras` la tienen en `_headers` (lo revisa el verificador).
+
+- **Un torneo de Pareo Integral, con una cámara por mesa** (lo pidió el
+  dueño: «si ponemos 20 cámaras, que cada una pase su partida»). La cámara
+  elige un torneo publicado (su enlace, o «Ver los torneos de estos días»:
+  los de hace tres días a mañana en hora de Costa Rica) y su MESA física,
+  numerada como en la sala (`PartidaEnVivo.mesaFisica`, la misma cuenta que
+  `PareoEvento.mesaFisica`, comparadas en el verificador porque ese módulo es
+  muy grande para cargarlo por una línea). La cámara queda fija en la mesa y
+  en cada ronda se sientan otros: los nombres salen del torneo publicado, de
+  la ronda en que se calibró la partida (la partida que se anota no cambia de
+  jugadores a la mitad), y cuando Pareo empareja la siguiente se avisa
+  (se vuelve a leer el torneo cada minuto, o con «Buscar ronda nueva»).
+  Todas las cámaras del torneo transmiten por UN canal, el código del
+  torneo (la primera lo crea; las otras lo escriben al elegir el torneo), y
+  cada mensaje dice su torneo, ronda y mesa. Quien mira abre
+  `tablero-vivo.html#<código>&t=<id del torneo>` y ve todas las mesas de la
+  ronda en una cuadrícula (también las que no tienen cámara, con su
+  nombre), y al tocar una, en grande; un mensaje de otro torneo se ignora.
+  Los torneos por equipos todavía no.
+- **Elegir la cámara**: una computadora puede tener varias cámaras USB. La
+  lista sale después del primer permiso (antes el navegador no da los
+  nombres) y la elegida se recuerda; si ya no está conectada, se abre la de
+  siempre. Lo prueba el verificador con las dos cámaras de mentira de
+  Chromium (`--use-fake-device-for-media-stream=device-count=2`).
+
+Lo prueba `verificar-camara-tablero.js` con dos navegadores y Node relevando
+los mensajes de uno a otro, como haría el canal: quien llega tarde recibe la
+partida entera, cada jugada y «Deshacer» llegan solos, lo viejo y lo ilegal
+no se pintan, «Dejar de transmitir» deja de mandar y volver a transmitir usa
+el mismo código, y un código malo o sin nadie transmitiendo se dice.
+
+### Varias cámaras en una computadora
+
+Lo pidió el dueño para no necesitar tantos celulares: una computadora con
+varias cámaras USB, cada una encima de su mesa. `camaras.html` (de quien
+administra; `js/camaras.js`) pone un cuadrito por cámara.
+
+- **Cada cuadrito es `camara-tablero.html` entera, en un iframe con
+  `?compacto=1&puesto=N`**: la misma página de siempre, sin una segunda copia
+  de la lectura, la calibración ni la transmisión. `compacto` le pone la clase
+  `camara-compacta` al cuerpo, que esconde el encabezado, las migas, el pie, la
+  burbuja y lo marcado `data-solo-pagina` (el título, la introducción, los
+  pasos y el segundo tablero: un tablero por cámara).
+- **Lo de cada cámara se guarda aparte por puesto** (las claves de
+  `localStorage` llevan `_pN`): su dispositivo, su mesa, su partida y su
+  código propio. El torneo y su código son de todas (`camara_torneo_v1`):
+  cuando un cuadrito elige el torneo, los demás lo toman solos por el evento
+  `storage`, y cada uno elige su mesa.
+- **La página de afuera también tiene la cámara permitida en `_headers`**, y
+  el iframe lleva `allow="camera"`: sin las dos cosas el navegador no le deja
+  la cámara a ningún cuadrito, sin dar error visible.
+- **La lectura corre con `setInterval`, no con `requestAnimationFrame`**: un
+  iframe que no se ve (más abajo en la página) no recibe cuadros de
+  animación y su mesa dejaría de leerse. El dibujo sí va con rAF.
+- Se agregan o quitan cuadritos de a uno (de 1 a 8, recordado), siempre el
+  último: los que ya están no se recargan, porque perderían la cámara abierta
+  y la calibración. Ocho es el tope práctico de una computadora (cada cámara
+  ocupa su ancho de banda USB y su lectura); para 20 mesas, tres o cuatro
+  computadoras, todas en el mismo torneo.
+
+Lo prueba `verificar-camara-tablero.js` con las dos cámaras de mentira de
+Chromium: dos cuadritos, cada uno con su cámara, el torneo elegido en uno que
+aparece en el otro con el mismo código, y cada uno en su mesa con sus
+jugadores; agregar y quitar sin recargar los que ya estaban.

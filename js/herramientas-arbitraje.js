@@ -9,15 +9,29 @@
    `disponible: false` es una herramienta anunciada que todavía no se puede
    usar: sale en la vitrina como «Próximamente», sin enlace. `gratis: true` es
    una que no lleva licencia (Pareo Integral, pública y sin cuenta): sale
-   abierta para todos y no se ofrece en licencias.html. Ver «Herramientas
+   abierta para todos y no se ofrece en licencias.html. `licencia` es la de
+   otra herramienta que también abre esta (el catálogo de torneos
+   universitarios va con la de «universidades»): la vitrina pregunta por esa
+   y licencias.html no la ofrece aparte. `tema` es la ficha
+   de la vitrina donde sale (uno de TEMAS); la lista se ordena por tema, y
+   dentro de cada uno queda en el orden en que está escrita. Ver «Herramientas
    de arbitraje» en docs/decisiones/juegos-y-torneos.md. */
 (function () {
     "use strict";
     if (window.HerramientasArbitraje) return;
 
+    /* Las fichas de la vitrina, en el orden en que salen. */
+    const TEMAS = [
+        { id: "arbitraje", emoji: "⚖️", nombre: "Arbitraje", resumen: "Para dirigir un torneo: emparejar, desempatar y encontrar a los árbitros del país, con sus torneos y sus normas." },
+        { id: "jde", emoji: "🏫", nombre: "JDE", largo: "Juegos Deportivos Estudiantiles", resumen: "Los Juegos Deportivos Estudiantiles del MEP: la participación año por año, cada estudiante y cada colegio, y la selección CODICADER." },
+        { id: "jdn", emoji: "🏆", nombre: "JDN", largo: "Juegos Deportivos Nacionales", resumen: "Los Juegos Deportivos Nacionales del ICODER: los resultados de cada comité de deportes y quién está inscrito para la próxima eliminatoria." },
+        { id: "universitarios", emoji: "🎓", nombre: "Universitarios", resumen: "Los torneos universitarios de Costa Rica: los resultados por universidad (también los JUDUCA), el catálogo de todos los torneos y la página de cada uno." },
+    ];
+
     const LISTA = [
         {
             id: "pareo",
+            tema: "arbitraje",
             emoji: "♟️",
             nombre: "Pareo Integral: emparejamientos con el Sistema Holandés de FIDE",
             corto: "Pareo Integral",
@@ -35,7 +49,25 @@
             ],
         },
         {
+            id: "torneos-costa-rica",
+            tema: "arbitraje",
+            emoji: "📅",
+            nombre: "Torneos de Costa Rica: los de ajedrezcostarica.com",
+            corto: "Torneos de Costa Rica",
+            href: "torneos-pareo.html#tambien",
+            disponible: true,
+            gratis: true,
+            resumen: "Los torneos que se anuncian en ajedrezcostarica.com y los que ya están cargados en chess-results, juntos en una lista, con la fecha, el ritmo, si valen para Elo y el enlace a su ficha para inscribirse. Gratis y sin cuenta.",
+            puntos: [
+                "Se pone al día sola una vez al día, sin repetir un torneo que está en las dos fuentes o que ya se publicó con Pareo Integral.",
+                "Cada torneo con su día en hora de Costa Rica, el ritmo con su tiempo, si es válido para Elo FIDE o Nacional y el costo.",
+                "Los mismos filtros que los torneos de Pareo Integral, y «Agregar a mi calendario» con todos los que se ven.",
+                "En la misma página, los torneos publicados con Pareo Integral: rondas, clasificación y cada jugador con sus rivales.",
+            ],
+        },
+        {
             id: "arbitros",
+            tema: "arbitraje",
             emoji: "🧑‍⚖️",
             nombre: "Árbitros de Costa Rica: la lista y a quién contratar",
             corto: "Lista de árbitros",
@@ -51,6 +83,7 @@
         },
         {
             id: "seleccion-codicader",
+            tema: "jde",
             emoji: "🏅",
             nombre: "Selección por parámetros (CODICADER y JDE)",
             corto: "Selección CODICADER",
@@ -68,6 +101,7 @@
         },
         {
             id: "jdn-comites",
+            tema: "jdn",
             emoji: "🏆",
             nombre: "Resultados JDN por comité",
             corto: "Resultados JDN",
@@ -83,6 +117,7 @@
         },
         {
             id: "universidades",
+            tema: "universitarios",
             emoji: "🎓",
             nombre: "Resultados universitarios por universidad",
             corto: "Resultados universitarios",
@@ -94,11 +129,53 @@
                 "La ficha de cada universidad: sus jugadores, sus equipos y quién jugó en cada uno, edición por edición, con el puesto, los puntos y la medalla.",
                 "El rendimiento contra el Elo, los enfrentamientos entre universidades, la copa de puntos por puesto y cada tabla en Excel, imagen o PDF.",
                 "Junta las sedes y las variantes de una misma universidad («ITCR», «TEC Alajuela») y deduce la de quien no la trae.",
-                "Con la misma licencia, «Torneos universitarios de Costa Rica»: el catálogo de todos los torneos universitarios, también los que organiza cada universidad (los Blitz del club de la UCR, el Desafío Mentes Maestras de CENFOTEC…), con su podio.",
+                "Con la misma licencia se abre «Torneos universitarios de Costa Rica», el catálogo de todos los torneos.",
             ],
         },
         {
+            id: "torneos-universitarios",
+            tema: "universitarios",
+            licencia: "universidades",
+            emoji: "📚",
+            nombre: "Torneos universitarios de Costa Rica",
+            corto: "Torneos universitarios",
+            href: "torneos-universitarios.html",
+            disponible: true,
+            resumen: "El catálogo de todos los torneos universitarios de ajedrez de Costa Rica que están en chess-results, los que se juegan entre universidades y los que organiza cada una, con su fecha, quién lo organizó, cuántos jugaron y su podio. Va con la licencia de «Resultados universitarios por universidad».",
+            puntos: [
+                "Más de 170 torneos: los JUNCOS, CONARE, FEDEU, FECUNDE y JUDUCA, y los de cada universidad (los Blitz del club de la UCR, el interno del TEC, el Desafío Mentes Maestras de CENFOTEC…).",
+                "Dice de qué tipo es cada uno: entre universidades o de una universidad, con su ritmo y el enlace a chess-results para comprobarlo.",
+                "La ficha de cada jugador con todos sus torneos universitarios, su clasificación, sus podios y su año a año.",
+                "Quién más ganó: los podios de los torneos individuales, jugador por jugador.",
+            ],
+        },
+        {
+            id: "cenfotec-2026",
+            tema: "universitarios",
+            emoji: "🧠",
+            nombre: "Desafío Mentes Maestras CENFOTEC 2026",
+            corto: "Mentes Maestras 2026",
+            href: "cenfotec-2026.html",
+            disponible: true,
+            gratis: true,
+            resumen: "El torneo de la Universidad CENFOTEC: el podio, la clasificación final, las rondas y el rendimiento de cada jugador, las partidas, el video de la transmisión y la comparación con la edición 2025.",
+            puntos: [],
+        },
+        {
+            id: "utn-2026",
+            tema: "universitarios",
+            emoji: "🏛️",
+            nombre: "Torneo Universitario UTN-CONARE 2026",
+            corto: "UTN-CONARE 2026",
+            href: "utn-2026.html",
+            disponible: true,
+            gratis: true,
+            resumen: "El II Torneo Universitario de Ajedrez UTN-CONARE, femenino y masculino: el podio de cada rama, la clasificación final, las rondas y el rendimiento de cada jugador, las partidas y la comparación con la primera edición.",
+            puntos: [],
+        },
+        {
             id: "jdn-proyeccion",
+            tema: "jdn",
             emoji: "📋",
             nombre: "Proyección JDN por comité",
             corto: "Proyección JDN",
@@ -114,9 +191,10 @@
         },
         {
             id: "arbitros-cr",
+            tema: "arbitraje",
             emoji: "🧑‍⚖️",
             nombre: "Árbitros de Costa Rica",
-            corto: "Árbitros de CR",
+            corto: "Árbitros de Costa Rica",
             href: "arbitros-cr.html",
             disponible: true,
             resumen: "Los torneos de cada árbitro de Costa Rica en FIDE y en chess-results, con su cargo, y cuáles de los de FIDE cumplen las condiciones de un torneo para una norma de Árbitro FIDE y de Árbitro Internacional según el reglamento vigente.",
@@ -129,6 +207,7 @@
         },
         {
             id: "ajedrez-estudiantil",
+            tema: "jde",
             emoji: "📊",
             nombre: "Ajedrez estudiantil en Costa Rica",
             corto: "Ajedrez estudiantil",
@@ -145,6 +224,7 @@
         },
         {
             id: "historial-jugador",
+            tema: "jde",
             emoji: "👤",
             nombre: "Historial de un jugador en los juegos estudiantiles",
             corto: "Historial de un jugador",
@@ -161,6 +241,7 @@
         },
         {
             id: "estadisticas-colegios",
+            tema: "jde",
             emoji: "🏫",
             nombre: "Estadísticas por colegio y región",
             corto: "Estadísticas por colegio",
@@ -176,7 +257,27 @@
             ],
         },
         {
+            id: "inscripcion-jde",
+            tema: "jde",
+            emoji: "📝",
+            nombre: "Inscripción de ajedrez para los JDE",
+            corto: "Inscripción JDE",
+            href: "inscripcion-jde.html",
+            disponible: true,
+            gratis: true,
+            resumen: "Prepara la inscripción de tu centro educativo en el torneo de ajedrez de los Juegos Deportivos Estudiantiles: escoges tu colegio del banco, la categoría sale de la fecha de nacimiento y todo se revisa contra la Normativa 2026 mientras llenas.",
+            puntos: [
+                "El colegio se busca en el banco de más de mil centros que ya jugaron los JDE, y propone su Dirección Regional (de las 27), su interregional y cuántos clasifican.",
+                "Trae a los estudiantes que jugaron antes con tu colegio, o pega una lista desde Excel: la herramienta pide solo lo que falta (fecha de nacimiento, sexo, documento).",
+                "Calcula la categoría A a E por el año de nacimiento (art. 17), el ascenso en equipos (art. 18), la unión de centros (art. 19) y las categorías que juegan en cada etapa (art. 53).",
+                "Revisa el art. 66: una sola modalidad por estudiante, dos individuales por categoría y torneo, equipos de 3 a 5 con su suplente, mujeres en el torneo de Mujeres o el Abierto.",
+                "Revisa también lo de los arts. 59 y 60: el correo del MEP, el documento de cada estudiante y la jefatura y el cuerpo técnico con una persona del mismo sexo.",
+                "Baja un Excel con las columnas del reporte del MEP, que Pareo Integral abre directo para armar los torneos, y la nómina en PDF para firmar. Nada sale de tu computadora.",
+            ],
+        },
+        {
             id: "desempates",
+            tema: "arbitraje",
             emoji: "⚖️",
             nombre: "Desempates explicados",
             href: "desempates.html",
@@ -193,6 +294,7 @@
         },
         {
             id: "variacion-elo",
+            tema: "arbitraje",
             emoji: "📈",
             nombre: "Variación de Elo del torneo",
             disponible: false,
@@ -201,6 +303,7 @@
         },
         {
             id: "reclamos-tablas",
+            tema: "arbitraje",
             emoji: "🔁",
             nombre: "Reclamos de tablas desde el PGN",
             disponible: false,
@@ -209,6 +312,7 @@
         },
         {
             id: "acta-jde",
+            tema: "jde",
             emoji: "📝",
             nombre: "Acta e informe arbitral JDE",
             disponible: false,
@@ -217,6 +321,9 @@
         },
     ];
 
+    const ordenTema = new Map(TEMAS.map((t, i) => [t.id, i]));
+    LISTA.sort((a, b) => ordenTema.get(a.tema) - ordenTema.get(b.tema));
+
     const porId = new Map(LISTA.map((h) => [h.id, h]));
     function nombre(id) {
         if (id === "todas") return "Todas las herramientas";
@@ -224,5 +331,5 @@
         return h ? h.nombre : id;
     }
 
-    window.HerramientasArbitraje = { LISTA, porId, nombre };
+    window.HerramientasArbitraje = { TEMAS, LISTA, porId, nombre };
 })();

@@ -797,7 +797,9 @@
     const completoAntes = nivelCompleto();
     avisarALaClase(partida.tipo, item, estrellas);
     anotarEstrellas(partida.tipo, item.id, estrellas);
-    if (estrellas >= 1) registrar(partida.tipo, item, estrellas);
+    // Un tipo con `pistaNoCuenta` (Remata la ventaja) solo cuenta sin pista: con ella da una estrella.
+    const t = C.tipo(partida.tipo);
+    if (estrellas >= (t && t.pistaNoCuenta ? 2 : 1)) registrar(partida.tipo, item, estrellas);
     const repaso = anotarRepaso(partida.tipo, item, estrellas);
     anotarUltimo();
     const e = estrellasDe(partida.tipo, item.id);

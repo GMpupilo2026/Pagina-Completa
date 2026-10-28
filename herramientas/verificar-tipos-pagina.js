@@ -701,6 +701,30 @@ window.PracticeEngine = {
       await ctx.close();
     }
     {
+      /* Con pista: una estrella, y NO cuenta para las tareas (training_progress).
+         Sin pista (tres estrellas) sí. Por eso, en el mismo ejercicio, primero
+         se juega con pista y después sin ella, y recién entonces se registra. */
+      const registros = (page) => page.evaluate(() => window.__escrituras.filter((e) => e.tabla === "training_progress").map((e) => [].concat(e.fila)[0].detail.puzzle_id));
+      const { page, ctx, errores } = await abrir(browser, true, "#remata/1/" + item.id, conMotor([]));
+      await page.waitForSelector("#vista-juego:not(.hidden) #jugada-input");
+      await page.click("text=Pista");
+      const aviso = await esperarEstado(page, /Pista:/);
+      ok("la pista avisa que no suma a las tareas", /no suma a tus tareas/.test(aviso), aviso);
+      const t = await jugarHasta(page, item, /Remataste/);
+      ok("con pista remata", /Remataste/.test(t), t);
+      ok("con pista: una estrella", (await estrellas(page))["remata:" + item.id] === 1, JSON.stringify(await estrellas(page)));
+      await page.waitForTimeout(500);
+      ok("con pista NO se registra en training_progress", (await registros(page)).length === 0, JSON.stringify(await registros(page)));
+      await page.click("#btn-otra-vez");
+      await page.waitForSelector("#vista-juego:not(.hidden) #jugada-input");
+      const t2 = await jugarHasta(page, item, /Remataste/);
+      ok("sin pista, el mismo ejercicio remata", /Remataste/.test(t2), t2);
+      await page.waitForFunction(() => window.__escrituras.some((e) => e.tabla === "training_progress"), null, { timeout: 5000 }).catch(() => {});
+      ok("y ahora sí se registra, una vez", JSON.stringify(await registros(page)) === JSON.stringify(["remata:" + item.id]), JSON.stringify(await registros(page)));
+      ok("sin errores en consola", !errores.length, errores.join(" | "));
+      await ctx.close();
+    }
+    {
       // a +0: se escapó a la primera
       const { page, ctx, errores } = await abrir(browser, true, "#remata/1/" + item.id, conMotor([], { type: "cp", value: 0 }));
       await page.waitForSelector("#vista-juego:not(.hidden) #jugada-input");

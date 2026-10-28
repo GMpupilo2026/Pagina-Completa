@@ -46,6 +46,8 @@ package-lock.json
 herramientas/*.js
 herramientas/*.py
 herramientas/*.sh
+herramientas/*.ps1
+herramientas/*.gs
 herramientas/*.mts
 herramientas/*.md
 herramientas/*.html
@@ -89,3 +91,7 @@ img/redes
 # entreno/data/sumar_finales_dificiles.py al armar temas.json. Ninguna página
 # la pide; la página lee temas.json, que ya los trae.
 entreno/data/finales_dificiles.json
+
+# Los originales del avatar del profe Oscar (en alta resolución): de ahí sale
+# img/avatar-profe-oscar/ con herramientas/avatar-profe-oscar.py.
+herramientas/avatar-profe-oscar

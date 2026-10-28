@@ -78,9 +78,11 @@ function anchos(pesos, total) {
   out[out.length - 1] += total - out.reduce((a, b) => a + b, 0);
   return out;
 }
+// Una celda es un texto o, como en los párrafos, trozos: así lo que hay que
+// confirmar (la asistencia que no se contó) sale en amarillo también en una tabla.
 function tabla(cols, encabezado, filas, o = {}) {
   const fila = (cs, enc) => new TableRow({ tableHeader: enc, children: cs.map((c, i) => celda(
-    [par([String(c ?? "")], { size: o.size || 19, bold: enc, after: 0, align: enc ? AlignmentType.CENTER : undefined })],
+    [par(c && typeof c === "object" ? c : [String(c ?? "")], { size: o.size || 19, bold: enc, after: 0, align: enc ? AlignmentType.CENTER : undefined })],
     cols[i], { fondo: enc ? GRIS : undefined, v: VerticalAlign.CENTER })) });
   return new Table({ width: { size: cols.reduce((a, b) => a + b, 0), type: WidthType.DXA }, columnWidths: cols,
     rows: [...(encabezado ? [fila(encabezado, true)] : []), ...filas.map(f => fila(f, false))] });

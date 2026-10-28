@@ -211,6 +211,10 @@ def archivos():
             # solo cada seis horas, así que un nombre nuevo con tilde
             # rompería el PR automático sin que nadie haya escrito nada.
             and f != os.path.join("data", "ajedrez-estudiantil-jugadores.json")
+            # El banco de la inscripción de los JDE (herramientas/jde-banco.js)
+            # sale de ese mismo archivo: los mismos nombres de colegios y de
+            # estudiantes, y se vuelve a armar con él cada mes.
+            and f != os.path.join("data", "jde-banco.json")
             # Lo mismo con los torneos de Costa Rica en chess-results de la
             # herramienta arbitros-cr (los nombres de los árbitros y de los
             # torneos tal cual: Solís, Zurquí…). No se publica: está en

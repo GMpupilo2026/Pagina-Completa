@@ -255,6 +255,25 @@ ok("la página carga el cliente de Supabase antes que su código en vivo", html.
     await p.waitForFunction(() => !document.querySelector("dialog.ventana-enlace"));
     ok("con Escape se cierra y el foco vuelve a la ficha", await p.evaluate(() => document.activeElement && document.activeElement.dataset.ventana === "Bases del campeonato"));
 
+    // En el celular, un PDF dentro del marco no se ve (Chrome en Android dice
+    // «Este contenido está bloqueado»): las bases se abren en su pestaña.
+    const ctxCel = await nav.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, serviceWorkers: "block" });
+    const pCel = await ctxCel.newPage();
+    await pCel.goto(BASE + "/" + PAGINA, { waitUntil: "load" });
+    const [pestana] = await Promise.all([ctxCel.waitForEvent("page", { timeout: 10000 }).catch(() => null), pCel.tap('#fichas a[data-ventana="Bases del campeonato"]')]);
+    ok("en el celular, las bases se abren en otra pestaña y no en el marco", !!pestana && /bases-cac-2026\.pdf$/.test(pestana.url() || (await pestana.waitForEvent("framenavigated").then((f) => f.url()).catch(() => "")))
+      && await pCel.evaluate(() => !document.querySelector("dialog.ventana-enlace")), pestana ? pestana.url() : "sin pestaña nueva");
+    // En una página nueva: cambiar solo el «#» no la vuelve a cargar.
+    const pCel2 = await ctxCel.newPage();
+    await pCel2.goto(BASE + "/" + PAGINA + "#ficha-bases", { waitUntil: "load" });
+    ok("y entrar con #ficha-bases no abre el marco vacío", await pCel2.evaluate(() => !document.querySelector("dialog.ventana-enlace")));
+    await pCel2.close();
+    // Lo que no es PDF (el formulario del bye) sí se sigue abriendo encima.
+    await pCel.route(/forms\.gle|docs\.google\.com/, (r) => r.fulfill({ status: 200, contentType: "text/html", body: "<p>form</p>" }));
+    await pCel.tap('a[data-ventana="Pedir un bye"]');
+    ok("lo que no es PDF se sigue abriendo encima en el celular", await pCel.waitForSelector("dialog.ventana-enlace[open]", { timeout: 5000 }).then(() => true).catch(() => false));
+    await ctxCel.close();
+
     // La ficha de afuera, en Torneos, lleva la cara del torneo; las demás salas, la de siempre.
     const ctx3 = await nav.newContext({ viewport: { width: 1280, height: 900 }, serviceWorkers: "block" });
     const sala = (clave, nombre) => ({ id: clave, clave, nombre, descripcion: "", emoji: "🏆", tipo: "enlaces", lichess_id: null, enlaces: [{ url: "https://ajedrez-integral.com/" + PAGINA, texto: "Toda la información del torneo" }, { url: "https://s1.chess-results.com/x", texto: "Resultados en vivo" }], pizarras: null, video_url: null, quiniela: false, tema: "cine", visible: true, orden: 0 });
@@ -568,6 +587,24 @@ ok("la página carga el cliente de Supabase antes que su código en vivo", html.
     const anchoPng = png.readUInt32BE(16), altoPng = png.readUInt32BE(20);
     ok("«Compartir» da una imagen de 1080 × 1080 con su nombre de archivo", png.slice(1, 4).toString() === "PNG" && anchoPng === 1080 && altoPng === 1080 && /^centroamericano-2026-mayorga-araya-sofia\.png$/.test(descarga.suggestedFilename()), anchoPng + "×" + altoPng + " " + descarga.suggestedFilename());
     ok("y lleva la marca de agua de Ajedrez Integral", await p6.evaluate(() => window.__marcas === 1));
+
+    // Sus rondas en el calendario del celular: un .ics con cada ronda de su
+    // torneo a la hora del calendario de la página (en hora de Costa Rica),
+    // lo que hizo en las jugadas, su mesa y rival en la emparejada, y el aviso
+    // 30 minutos antes. El UID fijo deja ponerlo al día bajándolo otra vez.
+    const [dIcs] = await Promise.all([p6.waitForEvent("download", { timeout: 15000 }), p6.click('#buscador-resultados [data-accion="calendario"]')]);
+    const ics = fs.readFileSync(await dIcs.path(), "utf8").replace(/\r\n /g, "");
+    const evs = ics.split("BEGIN:VEVENT").slice(1);
+    const deRonda = (n) => (evs.find((e) => e.includes("SUMMARY:Ronda " + n + " ·")) || "").replace(/\\,/g, ",");
+    const rondasTorneo = await p6.evaluate(() => window.CentroamericanoVivo.jugadores().find((y) => /Mayorga/.test(y.j.nombre)).torneo.rondas);
+    ok("«Sus rondas en mi calendario» baja un .ics con una ronda por evento, con su nombre de archivo",
+      dIcs.suggestedFilename() === "centroamericano-2026-rondas-mayorga-araya-sofia.ics" && evs.length === rondasTorneo && rondasTorneo > 0, dIcs.suggestedFilename() + " · " + evs.length + " de " + rondasTorneo);
+    ok("cada ronda a la hora del calendario, en hora de Costa Rica, con el aviso 30 minutos antes",
+      /DTSTART;TZID=America\/Costa_Rica:20261102T093000/.test(deRonda(1)) && /DTEND;TZID=America\/Costa_Rica:20261102T143000/.test(deRonda(1))
+      && evs.every((e) => /TRIGGER:-PT30M/.test(e)) && /UID:cac2026-1494141-\d+-r1@ajedrez-integral\.com/.test(deRonda(1)), deRonda(1));
+    ok("la jugada dice lo que hizo; la emparejada, su mesa, color y rival; la que falta, que se vuelva a bajar",
+      /ganó a FM Guevara Ruiz|ganó a/.test(deRonda(1)) && /Mesa \d+, con blancas contra FM Guevara Ruiz, Santiago Jose \(ESA, 2252\)/.test(deRonda(4))
+      && /vuelve a bajar el calendario/.test(deRonda(5)) && /SUMMARY:Ronda 4 · Sofia Mayorga Araya — Centroamericano 2026/.test(deRonda(4)), deRonda(4));
 
     // El resumen de la ronda de una delegación, listo para WhatsApp.
     await p6.selectOption("#delegacion", "CRC");
@@ -1008,6 +1045,48 @@ ok("la página carga el cliente de Supabase antes que su código en vivo", html.
       && dTodos.suggestedFilename() === "centroamericano-2026-crc-certificados.pdf" && await pDip.evaluate(() => window.__marcas === 4)
       && /los 2 certificados se bajaron/.test(await pDip.textContent("#delegacion-lista .cac-hoja [role=status]")), dTodos.suggestedFilename());
     await ctxDip.close();
+
+    // El modo de prueba: ?sala=<clave> pide los torneos de esa sala con
+    // «prueba: true» (la función la lee solo si quien pide administra), lo
+    // dice arriba en rojo, guarda aparte y no enciende los avisos al celular.
+    const ctxPr = await nav.newContext({ viewport: { width: 1280, height: 900 }, serviceWorkers: "block" });
+    await ctxPr.addInitScript((d) => {
+      window.__pedidos = [];
+      window.sb = { functions: { invoke: async (nombre, op) => {
+        window.__pedidos.push(op.body);
+        return window.__negar ? { data: null, error: new Error("403") } : { data: d, error: null };
+      } } };
+      if (sessionStorage.getItem("negar") === "1") window.__negar = true;
+    }, DATOS);
+    const pPr = await ctxPr.newPage();
+    await pPr.goto(BASE + "/" + PAGINA + "?sala=centroamericano-prueba", { waitUntil: "load" });
+    await pPr.waitForFunction(() => window.__pedidos.length > 0, null, { timeout: 10000 }).catch(() => {});
+    const prb = await pPr.evaluate(() => {
+      const c = document.getElementById("cac-prueba");
+      const s = c && getComputedStyle(c);
+      return { visible: !!c && c.checkVisibility(), texto: c && c.textContent, fondo: s && s.backgroundColor, letra: s && s.color, salir: c && c.querySelector("a").getAttribute("href"),
+        pedido: window.__pedidos[0], propio: !!localStorage.getItem("cac_prueba_jugadores_v1"), real: !!localStorage.getItem("cac_jugadores_v1") };
+    });
+    ok("?sala= pide esa sala en modo de prueba, en cuanto se abre la página", JSON.stringify(prb.pedido) === JSON.stringify({ clave: "centroamericano-prueba", prueba: true }), JSON.stringify(prb.pedido));
+    ok("y lo dice arriba, en rojo con letra blanca, con un enlace para salir", prb.visible && /Modo de prueba: esta página muestra los torneos de la sala «centroamericano-prueba»/.test(prb.texto)
+      && prb.fondo === "rgb(206, 19, 40)" && prb.letra === "rgb(255, 255, 255)" && prb.salir === "/" + PAGINA, JSON.stringify(prb));
+    ok("lo de la prueba se guarda aparte: no pisa lo guardado del festival", prb.propio && !prb.real, JSON.stringify(prb));
+    // Con alguien seguido aparece «Avisarme en este celular»: en la prueba no se enciende.
+    await pPr.evaluate(() => localStorage.setItem("cac_prueba_seguidos_v1", JSON.stringify([{ tnr: "1494141", no: 2, nombre: "Mayorga Araya, Sofia" }])));
+    await pPr.reload({ waitUntil: "load" });
+    await pPr.click("#avisos-boton", { timeout: 5000 }).catch(() => {});
+    ok("en el modo de prueba los avisos al celular no se encienden", /los avisos al celular están apagados/.test(await pPr.textContent("#avisos-estado")));
+    // Sin permiso (la función contesta 403 a quien no administra): lo explica.
+    await pPr.evaluate(() => { sessionStorage.setItem("negar", "1"); localStorage.clear(); });
+    await pPr.reload({ waitUntil: "load" });
+    await pPr.waitForFunction(() => /revisa que exista/.test((document.getElementById("cac-prueba") || {}).textContent || ""), null, { timeout: 10000 }).catch(() => {});
+    ok("si la función no deja (no administra o la sala no existe), el aviso lo explica", /revisa que exista en administración \(Torneos\) y que entraste con tu cuenta de administración/.test(await pPr.textContent("#cac-prueba")));
+    // Sin ?sala=, o con la del festival, nada de eso.
+    await pPr.goto(BASE + "/" + PAGINA + "?sala=centroamericano-2026", { waitUntil: "load" });
+    ok("con la sala del festival (o sin ?sala=) no hay modo de prueba", await pPr.evaluate(() => !document.getElementById("cac-prueba")));
+    await pPr.goto(BASE + "/" + PAGINA + "?sala=" + encodeURIComponent("<script>"), { waitUntil: "load" });
+    ok("y una clave rara se ignora", await pPr.evaluate(() => !document.getElementById("cac-prueba")));
+    await ctxPr.close();
 
     // Instalar en iPhone: Safari no avisa, así que se explica cómo, una vez.
     const ctxIos = await nav.newContext({ viewport: { width: 390, height: 844 }, serviceWorkers: "block",

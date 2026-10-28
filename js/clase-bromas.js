@@ -4,7 +4,9 @@
  * (tres horas, o hasta que las apague) con el botón de «Alumnos conectados». Mientras
  * están encendidas, cada alumno tiene «Mandar una broma» para un compañero, y
  * la broma le cae cuando está en un ejercicio (una pregunta, el calentamiento,
- * la competencia, el cuestionario, la práctica…). Lo que se ve lo pinta
+ * la competencia, el cuestionario, la práctica…). El profe también tiene el
+ * suyo, para mandársela a un alumno, gratis (ver «Las bromas del profe»).
+ * Lo que se ve lo pinta
  * js/bromas.js; acá solo está el interruptor, el botón y el aviso.
  *
  * El aviso «te llegó una» va por un canal de la clase (broadcast): solo hace
@@ -26,6 +28,7 @@ window.ClaseBromas = (function () {
   let canal = null;
   const estado = { profe: null, yo: null, hasta: null, esProfe: false };
   let boton = null;
+  let botonProfe = null;
 
   function el(tag, clases, texto) {
     const n = document.createElement(tag);
@@ -44,6 +47,7 @@ window.ClaseBromas = (function () {
         : "🎭 Bromas apagadas · Encender";
       boton.setAttribute("aria-pressed", si ? "true" : "false");
       boton.className = BTN + " " + (si ? BTN_ENCENDIDO : BTN_APAGADO);
+      if (botonProfe) botonProfe.hidden = !si;
     } else {
       boton.hidden = !si;
     }
@@ -78,18 +82,21 @@ window.ClaseBromas = (function () {
       .eq("activo", true).eq("categoria", "broma").order("costo_puntos");
     if (error || !data || !data.length) { window.Avisos.avisar("No se pudo cargar la lista de bromas."); return; }
     const deClase = data.filter((p) => !p.parametros || p.parametros.tipo !== "payaso");
+    const profe = estado.esProfe;
     const r = await window.Avisos.formulario({
-      titulo: "Mandar una broma",
-      texto: "Le cae a tu compañero cuando esté en un ejercicio de la clase. Cuesta tus Puntos Ajedrez.",
+      titulo: profe ? "Mandarle una broma a un alumno" : "Mandar una broma",
+      texto: profe
+        ? "Le cae a tu alumno cuando esté en un ejercicio de la clase, con tu nombre. A ti no te cuesta puntos."
+        : "Le cae a tu compañero cuando esté en un ejercicio de la clase. Cuesta tus Puntos Ajedrez.",
       campos: [{
         nombre: "premio", etiqueta: "¿Cuál?", tipo: "select",
-        opciones: deClase.map((p) => [p.id, p.nombre + " · " + p.costo_puntos + " puntos"]),
+        opciones: deClase.map((p) => [p.id, profe ? p.nombre : p.nombre + " · " + p.costo_puntos + " puntos"]),
       }],
       aceptar: "Elegir a quién",
     });
     if (!r || !r.premio) return;
     const premio = deClase.find((p) => p.id === r.premio);
-    const res = await window.PuntosRegalos.regalar({ sb, alumnoId: estado.yo, premio, donde: "clase" });
+    const res = await window.PuntosRegalos.regalar({ sb, alumnoId: estado.yo, premio, donde: "clase", profe });
     if (!res) return;
     if (res.error) { window.Avisos.avisar(res.error); return; }
     if (canal) canal.send({ type: "broadcast", event: "broma", payload: { para: res.paraId } });
@@ -116,6 +123,13 @@ window.ClaseBromas = (function () {
         boton.title = "Las bromas entre compañeros: les caen cuando están en un ejercicio. En exámenes y torneos, nunca.";
         boton.addEventListener("click", alternar);
         barra.appendChild(boton);
+        // Y el suyo, para mandársela a un alumno: solo con las bromas encendidas.
+        botonProfe = el("button", BTN + " " + BTN_ENCENDIDO, "🎭 Mandarle una broma a un alumno");
+        botonProfe.type = "button";
+        botonProfe.id = "clase-bromas-mandar-profe";
+        botonProfe.hidden = true;
+        botonProfe.addEventListener("click", mandar);
+        barra.appendChild(botonProfe);
       }
     } else {
       const panel = document.getElementById("student-panel");

@@ -402,6 +402,13 @@ a.cac-despedida:hover .cac-globo { transform: translateY(-2px); }
 .cac-anuncios[hidden] { display: none; }
 .cac-anuncio { background: var(--cac-rojo); color: #fff; border-radius: 1.25rem; padding: 0.9rem 1.25rem; font-size: 1.05rem; line-height: 1.4; box-shadow: 0 10px 24px -14px rgb(206 19 40 / 0.6); }
 .cac-anuncio strong { display: block; font-size: 0.8rem; letter-spacing: 0.06em; text-transform: uppercase; }
+/* El aviso del modo de prueba (?sala=…): el mismo rojo, de borde a borde y
+   pegado arriba, para que nadie confunda los datos de prueba con los del
+   festival. Blanco sobre #CE1328: 5,6. */
+.cac-prueba { position: sticky; top: 0; z-index: 60; background: var(--cac-rojo); color: #fff; padding: 0.75rem 1rem; text-align: center; font-size: 0.95rem; line-height: 1.4; }
+.cac-prueba p + p { margin-top: 0.25rem; }
+.cac-prueba-salir { display: inline-block; margin-top: 0.35rem; color: #fff; font-weight: 700; text-decoration: underline; text-underline-offset: 2px; border-radius: 0.25rem; }
+.cac-prueba-salir:focus-visible { outline: 3px solid #fff; outline-offset: 2px; }
 
 /* «Busca a tu jugador»: blanca, con el morado de las bases en el borde. */
 .cac-buscador {
