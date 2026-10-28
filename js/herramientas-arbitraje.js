@@ -49,6 +49,23 @@
             ],
         },
         {
+            id: "torneos-costa-rica",
+            tema: "arbitraje",
+            emoji: "📅",
+            nombre: "Torneos de Costa Rica: los de ajedrezcostarica.com",
+            corto: "Torneos de Costa Rica",
+            href: "torneos-pareo.html#tambien",
+            disponible: true,
+            gratis: true,
+            resumen: "Los torneos que se anuncian en ajedrezcostarica.com y los que ya están cargados en chess-results, juntos en una lista, con la fecha, el ritmo, si valen para Elo y el enlace a su ficha para inscribirse. Gratis y sin cuenta.",
+            puntos: [
+                "Se pone al día sola una vez al día, sin repetir un torneo que está en las dos fuentes o que ya se publicó con Pareo Integral.",
+                "Cada torneo con su día en hora de Costa Rica, el ritmo con su tiempo, si es válido para Elo FIDE o Nacional y el costo.",
+                "Los mismos filtros que los torneos de Pareo Integral, y «Agregar a mi calendario» con todos los que se ven.",
+                "En la misma página, los torneos publicados con Pareo Integral: rondas, clasificación y cada jugador con sus rivales.",
+            ],
+        },
+        {
             id: "arbitros",
             tema: "arbitraje",
             emoji: "🧑‍⚖️",

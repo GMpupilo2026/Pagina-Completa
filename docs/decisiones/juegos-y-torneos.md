@@ -7314,6 +7314,14 @@ pregunta `tengo_herramienta('universidades')`, el botón pide esa licencia y
 con `herramientas/torneo-universitario.js` se agrega a la lista a mano, con
 `tema: "universitarios"` y `gratis: true`.
 
+**En Arbitraje, los torneos de ajedrezcostarica.com** (lo pidió el dueño): la
+tarjeta «Torneos de Costa Rica» lleva a `torneos-pareo.html#tambien`, la
+parte «También en Costa Rica» de «Torneos en Pareo Integral» (ver «Torneos en
+Pareo Integral: los torneos de ajedrezcostarica.com»). Esa parte se arma
+recién cuando llegan los datos, así que el navegador no tiene adónde bajar con
+el ancla: con `#tambien`, `js/torneos-pareo-pagina.js` baja a ella después de
+pintar la portada (`verificar-torneos-externos-pagina.js` lo revisa).
+
 También son gratis el **historial de un jugador** y las **estadísticas por
 colegio y región** (ver «Historial del jugador y estadísticas por colegio»), y
 **«Ajedrez estudiantil en Costa Rica»**
