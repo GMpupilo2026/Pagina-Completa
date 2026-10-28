@@ -43,13 +43,14 @@ function igual(nombre, hallado, esperado) {
 
 /* ── El canal falso, relevado por Node ─────────────────────────────────── */
 const paginas = new Set();
+const sordas = new Set(); // las que no reciben (un mensaje que se pierde)
 let mandados = 0;
 const eventos = []; // todo lo que pasó por el canal: { nombre, event, payload }
 async function relevar(desde, nombre, msg) {
   mandados++;
   eventos.push({ nombre, event: msg.event, payload: msg.payload });
   for (const p of paginas) {
-    if (p === desde) continue; // Broadcast no le devuelve a quien manda
+    if (p === desde || sordas.has(p)) continue; // Broadcast no le devuelve a quien manda
     await p.evaluate(({ nombre, msg }) => {
       const oy = (window.__canales || {})[nombre];
       if (oy && oy[msg.event]) oy[msg.event]({ payload: msg.payload });
@@ -84,7 +85,8 @@ function cliente(yo) {
         eq: (c, v) => { filtros.push((x) => x[c] === v); return b; },
         gte: (c, v) => { filtros.push((x) => x[c] >= v); return b; },
         lte: (c, v) => { filtros.push((x) => x[c] <= v); return b; },
-        maybeSingle: () => Promise.resolve({ data: tabla === "pareo_publicados" ? filas()[0] || null : ${JSON.stringify(yo)}, error: null }),
+        maybeSingle: () => (tabla === "pareo_publicados" && window.__sinRed ? Promise.reject(new TypeError("Failed to fetch"))
+          : Promise.resolve({ data: tabla === "pareo_publicados" ? filas()[0] || null : ${JSON.stringify(yo)}, error: null })),
         then: (ok, ko) => Promise.resolve({ data: tabla === "pareo_publicados" ? filas() : [], error: null }).then(ok, ko),
       };
       return b;
@@ -529,6 +531,14 @@ async function esperarJugadas(p, n) {
   for (const san of ["e5", "Nf3"]) { jv.move(san); await foto(pc, jv.fen(), ESQ0); await esperarJugadas(pc, jv.history().length); }
   await pv.waitForFunction(() => document.getElementById("jugadas").textContent === "1. e4 e5 2. Cf3", null, { timeout: 8000 }).catch(() => {});
   igual("cada jugada nueva le llega sola a quien mira", await pv.textContent("#jugadas"), "1. e4 e5 2. Cf3");
+  {
+    const estados = eventos.filter((x) => x.event === "estado" && x.nombre === "tablero-vivo-" + codigo).map((x) => x.payload);
+    const conE5 = estados.find((x) => x.v === 2 && (x.san || []).includes("e5")), conCf3 = estados.find((x) => x.v === 2 && (x.san || []).includes("Nf3"));
+    igual("una jugada más viaja sola: solo lo nuevo, no la partida entera", [conE5 && [conE5.desde, conE5.san], conCf3 && [conCf3.desde, conCf3.san]], [[1, ["e5"]], [2, ["Nf3"]]]);
+    const entera = estados.filter((x) => x.v === 1).pop();
+    igual("y pesa menos de 200 bytes", !!conCf3 && JSON.stringify(conCf3).length < 200, true);
+    igual("la entera va cuando la piden (quien llega tarde)", !!entera && /1\. e4/.test(entera.pgn), true);
+  }
   // Repasar jugada a jugada.
   await pv.click("#ir-atras");
   igual("«◀» repasa la jugada anterior: el caballo todavía no está en f3", [/^Repasando: jugada 2 de 3, e5 \(pensó \d+:\d\d\)\.$/.test(await pv.textContent("#paso")),
@@ -579,6 +589,15 @@ async function esperarJugadas(p, n) {
   igual("al volver a transmitir, usa el mismo código (quien ya tiene el enlace no lo pierde)", await pc.textContent("#vivo-codigo"), codigo);
   await pv.waitForFunction(() => document.getElementById("jugadas").textContent === "1. e4 e5 2. Cf3", null, { timeout: 8000 }).catch(() => {});
   igual("y quien mira se pone al día", await pv.textContent("#jugadas"), "1. e4 e5 2. Cf3");
+  // Si a quien mira se le pierde un mensaje, lo nota en el siguiente, pide la partida y se pone al día.
+  sordas.add(pv);
+  jv.move("Nc6"); await foto(pc, jv.fen(), ESQ0); await esperarJugadas(pc, 4);
+  await new Promise((r) => setTimeout(r, 900)); // lo que se manda 600 ms después de la jugada, también perdido
+  sordas.delete(pv);
+  const antesHueco = eventos.length;
+  jv.move("Bc4"); await foto(pc, jv.fen(), ESQ0); await esperarJugadas(pc, 5);
+  await pv.waitForFunction(() => document.getElementById("jugadas").textContent === "1. e4 e5 2. Cf3 Cc6 3. Ac4", null, { timeout: 8000 }).catch(() => {});
+  igual("si se pierde un mensaje, quien mira pide la partida y se pone al día", [await pv.textContent("#jugadas"), eventos.slice(antesHueco).some((x) => x.event === "pedir")], ["1. e4 e5 2. Cf3 Cc6 3. Ac4", true]);
   await pc.click("#btn-vivo-nuevo");
   igual("«Usar un código nuevo» cambia el código", (await pc.textContent("#vivo-codigo")) !== codigo, true);
   igual("sin errores en la consola (cámara)", cam.errores, []);
@@ -671,6 +690,12 @@ async function esperarJugadas(p, n) {
     await pw.waitForFunction(() => /1\. d4/.test(document.querySelector('#mesas-lista button[data-mesa="6"]').textContent), null, { timeout: 8000 }).catch(() => {});
     igual("cada mesa trae su partida", await pw.$$eval("#mesas-lista button[data-mesa]", (b) => b.map((x) => x.querySelectorAll("p")[2].textContent)),
       ["Última jugada: 1. e4. Juegan las negras.", "Última jugada: 1. d4. Juegan las negras."]);
+    // Una jugada en la mesa 5 vuelve a armar solo su tarjeta: la de la mesa 6 sigue siendo la misma.
+    await pw.evaluate(() => { for (const b of document.querySelectorAll("#mesas-lista button[data-mesa]")) b.__marca = 1; });
+    ja.move("e5"); await foto(pa, ja.fen(), ESQ0); await esperarJugadas(pa, 2);
+    await pw.waitForFunction(() => /e5/.test(document.querySelector('#mesas-lista button[data-mesa="5"]').textContent), null, { timeout: 8000 }).catch(() => {});
+    igual("una jugada en una mesa repinta solo esa tarjeta, no todas las de la sala",
+      await pw.evaluate(() => ["5", "6"].map((m) => [/e5/.test(document.querySelector('#mesas-lista button[data-mesa="' + m + '"]').textContent), document.querySelector('#mesas-lista button[data-mesa="' + m + '"]').__marca || 0])), [[true, 0], [false, 1]]);
     igual("los nombres del torneo van como texto, sin ejecutar nada",
       await pw.evaluate(() => [document.querySelector('#mesas-lista button[data-mesa="6"]').textContent.includes('<img src=x onerror="window.__xss=1">Dani'), !!window.__xss, document.querySelectorAll("#mesas img").length]), [true, false, 0]);
     await pw.click('#mesas-lista button[data-mesa="6"]');
@@ -725,6 +750,7 @@ async function esperarJugadas(p, n) {
     // El QR de cada mesa: una tarjeta por mesa de la ronda, que abre la cámara en esa mesa.
     await pa.evaluate(() => { window.print = () => { window.__impreso = (window.__impreso || 0) + 1; }; });
     await pa.click("#btn-torneo-qr");
+    await pa.waitForFunction(() => window.__impreso, null, { timeout: 8000 }).catch(() => {});
     igual("«Imprimir el QR de cada mesa» arma una tarjeta por mesa y manda a imprimir",
       [await pa.$$eval("#hoja-qr .hoja-qr-numero", (x) => x.map((y) => y.textContent)), await pa.evaluate(() => window.__impreso), await pa.locator("#hoja-qr svg").count()], [["Mesa 5", "Mesa 6"], 1, 2]);
     igual("cada QR lleva el torneo, el código y su mesa (después del #)", (await pa.getAttribute("#hoja-qr .hoja-qr-mesa:nth-child(2)", "data-enlace")).endsWith("/camara-tablero.html#t=" + ID + "&c=" + codigoT + "&m=6&r=0"), true);
@@ -874,6 +900,10 @@ async function esperarJugadas(p, n) {
     await pg.waitForFunction((id) => localStorage.getItem("camara_dispositivo_v1") === id, opciones[1], { timeout: 8000 }).catch(() => {});
     igual("cambia a la otra y la recuerda", await pg.evaluate(() => localStorage.getItem("camara_dispositivo_v1")), opciones[1]);
     igual("y la imagen sigue llegando", await pg.evaluate(() => { const v = document.getElementById("video"); return !!v.srcObject && v.videoWidth > 0; }), true);
+    igual("le pide a la cámara lo justo: 10 imágenes por segundo y no más de 1280 de ancho", await pg.evaluate(() => {
+      const s = document.getElementById("video").srcObject.getVideoTracks()[0].getSettings();
+      return [s.frameRate <= 10.5, s.width <= 1280];
+    }), [true, true]);
     igual("sin errores en la consola", errores, []);
     await nav.close();
   }
@@ -960,6 +990,134 @@ async function esperarJugadas(p, n) {
       await pg.evaluate(() => [localStorage.getItem("camara_mesa_v1_p1_0"), localStorage.getItem("camara_mesa_v1_p2_0")])], ["Ana", "Carla", ["1", "2"]]);
     igual("sin errores en la consola", errores, []);
     await nav.close();
+  }
+
+  console.log("\nLa cámara gasta poco");
+  {
+    const espera = (ms) => new Promise((r) => setTimeout(r, ms));
+    const gasto = (pg) => pg.evaluate(() => window.gastoCamara());
+    // performance.now adelantable: para no esperar los 2 minutos de «Ahorrar batería» solo.
+    const reloj = { f: () => { const pn = performance.now.bind(performance); window.__adelanto = 0; performance.now = () => pn() + window.__adelanto; } };
+    const G = await abrir(browser, "camara-tablero.html", null, null, reloj);
+    const pg = G.page;
+    await pg.waitForSelector("#app:not(.hidden)");
+    const jg = new Chess();
+    await foto(pg, jg.fen(), ESQ0);
+    await esperarAviso(pg, /esquinas/);
+    await tocar(pg, aLienzo(ESQ0));
+    await pg.click("#btn-calibrar");
+    await esperarAviso(pg, /Calibrado/);
+    jg.move("e4"); await foto(pg, jg.fen(), ESQ0); await esperarJugadas(pg, 1);
+    const g0 = await gasto(pg);
+    igual("anota leyendo en su propio hilo (un Web Worker)", [await jugadasDe(pg), g0.hilo, g0.enHilo > 0], ["1. e4", true, true]);
+    // En esta foto el tablero ocupa media imagen; desde más arriba, menos.
+    const parte = g0.pixeles / g0.lecturas / (640 * 480);
+    igual("lee solo el pedazo donde está el tablero (" + Math.round(parte * 100) + " % de la imagen), no la imagen entera", parte < 0.6, true);
+    // Con el tablero quieto: el dibujo, 2 veces por segundo; la lectura, a 2 después de 10 s.
+    await espera(11000);
+    const g1 = await gasto(pg);
+    await espera(3000);
+    const g2 = await gasto(pg);
+    igual("ya calibrada, la imagen se dibuja 2 veces por segundo, no 60 (en 3 s: " + (g2.dibujos - g1.dibujos) + ")", g2.dibujos - g1.dibujos <= 9, true);
+    igual("con el tablero quieto, lee 2 veces por segundo y no 5 (en 3 s: " + (g2.lecturas - g1.lecturas) + ")", [g1.lento, g2.lecturas - g1.lecturas <= 8, g2.lecturas - g1.lecturas >= 4], [true, true, true]);
+    const t0 = Date.now();
+    jg.move("e5"); await foto(pg, jg.fen(), ESQ0); await esperarJugadas(pg, 2);
+    igual("y una jugada se anota igual, en menos de 4 s", [await jugadasDe(pg), Date.now() - t0 < 4000], ["1. e4 e5", true]);
+    igual("apenas algo cambia, vuelve a leer 5 veces por segundo", (await gasto(pg)).lento, false);
+
+    // «Ahorrar batería»: la pantalla en negro, sin dibujar, y sigue anotando.
+    await pg.click("#btn-ahorro");
+    const d0 = (await gasto(pg)).dibujos;
+    igual("«Ahorrar batería» deja la pantalla en negro con letra blanca, y dice cómo va",
+      await pg.evaluate(() => { const a = document.getElementById("ahorro"), c = getComputedStyle(a); return [a.checkVisibility(), c.backgroundColor, c.color, document.activeElement === a, document.getElementById("ahorro-estado").textContent]; }),
+      [true, "rgb(0, 0, 0)", "rgb(255, 255, 255)", true, "2 jugadas anotadas. Última jugada: 1… e5. Juegan las blancas."]);
+    jg.move("Nf3"); await foto(pg, jg.fen(), ESQ0); await esperarJugadas(pg, 3);
+    await espera(1500);
+    igual("con la pantalla en negro no dibuja, pero sigue anotando", [(await gasto(pg)).dibujos - d0, await jugadasDe(pg)], [0, "1. e4 e5 2. Cf3"]);
+    await pg.click("#ahorro");
+    igual("al tocar la pantalla vuelve la cámara", await pg.evaluate(() => [document.getElementById("ahorro").checkVisibility(), document.activeElement.id]), [false, "btn-ahorro"]);
+    // Si necesita a alguien, la pantalla negra se quita sola.
+    await pg.click("#btn-ahorro");
+    const rara = new Chess(jg.fen()); rara.remove("a2");
+    await foto(pg, rara.fen(), ESQ0);
+    await esperarAviso(pg, /No reconozco/);
+    await pg.waitForFunction(() => !document.getElementById("ahorro").checkVisibility(), null, { timeout: 4000 }).catch(() => {});
+    igual("si la cámara necesita a alguien (no reconoce algo), la pantalla negra se quita sola", await pg.evaluate(() => document.getElementById("ahorro").checkVisibility()), false);
+    await foto(pg, jg.fen(), ESQ0);
+
+    // Sin señal: sigue anotando, lo dice, y al volver manda la partida entera.
+    await pg.click("#btn-vivo");
+    const cod = (await pg.textContent("#vivo-codigo")).split(" ")[0];
+    await G.ctx.setOffline(true);
+    await pg.waitForFunction(() => document.getElementById("sin-red").checkVisibility(), null, { timeout: 5000 }).catch(() => {});
+    igual("sin señal, lo dice: la partida se sigue anotando y se manda al volver", await pg.evaluate(() => [document.getElementById("sin-red").checkVisibility(), window.estadoCamara().sinRed]), [true, true]);
+    jg.move("Nc6"); await foto(pg, jg.fen(), ESQ0); await esperarJugadas(pg, 4);
+    igual("y sigue anotando", await jugadasDe(pg), "1. e4 e5 2. Cf3 Cc6");
+    const antesRed = eventos.length;
+    await G.ctx.setOffline(false);
+    await pg.waitForFunction(() => !document.getElementById("sin-red").checkVisibility(), null, { timeout: 5000 }).catch(() => {});
+    const alVolver = eventos.slice(antesRed).find((x) => x.event === "estado" && x.nombre === "tablero-vivo-" + cod);
+    igual("al volver la señal, se quita el aviso y manda la partida entera", [await pg.evaluate(() => document.getElementById("sin-red").checkVisibility()), alVolver && alVolver.payload.v, alVolver && /Nc6/.test(alVolver.payload.pgn)], [false, 1, true]);
+    igual("sin errores en la consola", G.errores, []);
+    await cerrar(G);
+
+    // Sin OffscreenCanvas (un navegador viejo): lee en la página, igual de bien.
+    const H = await abrir(browser, "camara-tablero.html", null, null, { f: () => { delete window.OffscreenCanvas; } });
+    const ph = H.page;
+    await ph.waitForSelector("#app:not(.hidden)");
+    const jh = new Chess();
+    await foto(ph, jh.fen(), ESQ0);
+    await esperarAviso(ph, /esquinas/);
+    await tocar(ph, aLienzo(ESQ0));
+    await ph.click("#btn-calibrar");
+    await esperarAviso(ph, /Calibrado/);
+    jh.move("d4"); await foto(ph, jh.fen(), ESQ0); await esperarJugadas(ph, 1);
+    const gh = await gasto(ph);
+    igual("sin el hilo aparte, lee en la página (también solo el recorte)", [await jugadasDe(ph), gh.hilo, gh.enHilo, gh.pixeles / gh.lecturas < 0.6 * 640 * 480], ["1. d4", false, 0, true]);
+    igual("sin errores en la consola (sin hilo)", H.errores, []);
+    await cerrar(H);
+
+    // Modo mesa: sin el QR de ver (ni su librería), «Ahorrar batería» sola a
+    // los 2 minutos, y sin señal abre con el torneo guardado.
+    const IDM = "7c1d2e3f-4a5b-4c6d-8e7f-9a0b1c2d3e4f", codM = "mesa2345";
+    const torneoM = [{ id: IDM, nombre: "Relámpago de prueba", fecha: "2026-10-28", rondas: 1, oculto: false,
+      datos: { nombre: "Relámpago de prueba", tipo: "individual", jugadores: [{ id: "a", nombre: "Ana" }, { id: "b", nombre: "Beto" }], rondas: [{ mesas: [{ b: "a", n: "b" }] }] } }];
+    const M = await abrir(browser, "camara-tablero.html#t=" + IDM + "&c=" + codM + "&m=1&r=0", { sinSesion: true }, { width: 412, height: 900 },
+      { f: (d) => { window.__pareo = d; const pn = performance.now.bind(performance); window.__adelanto = 0; performance.now = () => pn() + window.__adelanto; }, arg: torneoM });
+    const pm = M.page;
+    await pm.waitForFunction(() => !document.getElementById("vivo-encendido").hidden, null, { timeout: 8000 }).catch(() => {});
+    igual("en modo mesa no se carga la librería del QR (57 KB que ese celular no usa)", await pm.evaluate(() => [typeof window.qrcode, document.querySelectorAll("#vivo-qr svg").length]), ["undefined", 0]);
+    const jm = new Chess();
+    await foto(pm, jm.fen(), ESQ0);
+    await esperarAviso(pm, /esquinas/);
+    await tocar(pm, aLienzo(ESQ0));
+    await pm.click("#btn-calibrar");
+    await esperarAviso(pm, /Calibrado/);
+    igual("recién calibrada, la pantalla sigue a la vista", await pm.evaluate(() => document.getElementById("ahorro").checkVisibility()), false);
+    await pm.evaluate(() => { window.__adelanto = 125000; });
+    await pm.waitForFunction(() => document.getElementById("ahorro").checkVisibility(), null, { timeout: 4000 }).catch(() => {});
+    igual("a los 2 minutos sin tocar nada, se pone sola en «Ahorrar batería», con la mesa arriba",
+      await pm.evaluate(() => [document.getElementById("ahorro").checkVisibility(), document.getElementById("ahorro-titulo").textContent]), [true, "Mesa 1 · transmitiendo"]);
+    igual("sin errores en la consola (modo mesa)", M.errores, []);
+    await cerrar(M);
+    // El mismo QR sin señal: el torneo leído antes se guardó en el celular.
+    const guardado = JSON.stringify(torneoM[0]);
+    const N2 = await abrir(browser, "camara-tablero.html#t=" + IDM + "&c=" + codM + "&m=1&r=0", { sinSesion: true }, { width: 412, height: 900 },
+      { f: (x) => { window.__sinRed = true; try { localStorage.setItem("camara_torneo_datos_v1", x); } catch (e) { /* nada */ } }, arg: guardado });
+    const pn2 = N2.page;
+    await pn2.waitForFunction(() => /Relámpago/.test(document.getElementById("mesa-titulo-qr").textContent), null, { timeout: 8000 }).catch(() => {});
+    igual("sin señal, el QR abre la mesa con el torneo guardado", await pn2.textContent("#mesa-titulo-qr"), "Mesa 1 · Relámpago de prueba");
+    await cerrar(N2);
+    // Y sin señal ni nada guardado: abre igual, y el torneo llega cuando vuelve.
+    const N3 = await abrir(browser, "camara-tablero.html#t=" + IDM + "&c=" + codM + "&m=1&r=0", { sinSesion: true }, { width: 412, height: 900 },
+      { f: (d) => { window.__sinRed = true; window.__pareo = d; }, arg: torneoM });
+    const pn3 = N3.page;
+    await pn3.waitForFunction(() => document.getElementById("app").checkVisibility(), null, { timeout: 8000 }).catch(() => {});
+    igual("sin señal ni torneo guardado, abre igual", await pn3.evaluate(() => [document.getElementById("app").checkVisibility(), document.getElementById("mesa-titulo-qr").textContent]), [true, "Mesa 1"]);
+    await pn3.evaluate(() => { window.__sinRed = false; window.dispatchEvent(new Event("online")); });
+    await pn3.waitForFunction(() => /Relámpago/.test(document.getElementById("mesa-titulo-qr").textContent), null, { timeout: 8000 }).catch(() => {});
+    igual("y cuando vuelve la señal, toma el torneo y transmite", [await pn3.textContent("#mesa-titulo-qr"), await pn3.evaluate(() => !document.getElementById("vivo-encendido").hidden)], ["Mesa 1 · Relámpago de prueba", true]);
+    await cerrar(N3);
   }
 
   console.log("\nSin cuenta y sin QR");

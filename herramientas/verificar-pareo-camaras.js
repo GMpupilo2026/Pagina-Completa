@@ -108,6 +108,29 @@ function torneo() {
   // El historial anota lo que describe PareoHistorial: una partida que llega no es un cambio para deshacer.
   igual("una jugada no ensucia el historial de cambios", await page.evaluate((a) => window.PareoHistorial.describir(JSON.parse(a), JSON.parse(localStorage.getItem("pareo_torneo_v1_tp"))), antesDeLaJugada), []);
 
+  console.log("\n=== Lo nuevo se pega a la partida que ya llegó ===");
+  // La cámara manda la entera una vez (con el id de su partida) y después solo lo nuevo.
+  await page.evaluate((c) => {
+    const j = new window.Chess(); ["e4", "e5", "Nf3"].forEach((x) => j.move(x));
+    window.__llega(c, "estado", window.PartidaEnVivo.estado(j, { blancas: "X", negras: "Y" }, { torneo: "0b9f3c2e-7a41-4d8e-9c55-1f2a3b4c5d6e", ronda: 1, mesa: 2 }, null, { tiempos: [5000, 12000, 83000], id: "k1-0" }));
+  }, CANAL);
+  const nuevo = (desde, jugadas) => page.evaluate(([c, desde, jugadas]) => {
+    const j = new window.Chess(); jugadas.forEach((x) => j.move(x));
+    const p = window.PartidaEnVivo.loNuevo("k1-0", j, desde, { torneo: "0b9f3c2e-7a41-4d8e-9c55-1f2a3b4c5d6e", ronda: 1, mesa: 2 }, null, { tiempos: jugadas.map(() => 7000) });
+    window.__llega(c, "estado", p);
+    return JSON.stringify(p).length;
+  }, [CANAL, desde, jugadas]);
+  const pesa = await nuevo(3, ["e4", "e5", "Nf3", "Nc6"]);
+  g = await P.esperarGuardado(page, (l) => /Nc6/.test(l[0].rondas[0].mesas[1].pgn || "")).then((l) => l[0]);
+  igual("solo la jugada nueva (" + pesa + " bytes) se pega a la partida de la mesa, con su tiempo",
+    /1\. e4 \{\[%emt 0:00:05\]\} e5 .*2\. Nf3 \{\[%emt 0:01:23\]\} Nc6 \{\[%emt 0:00:07\]\}/.test(g.rondas[0].mesas[1].pgn), true);
+  ok(pesa < 250, "y pesa poco", pesa);
+  await page.evaluate(() => { window.__enviados.length = 0; });
+  await nuevo(6, ["e4", "e5", "Nf3", "Nc6", "Bb5", "a6", "Ba4"]);
+  await page.waitForFunction((c) => window.__enviados.some((x) => x.canal === c && x.evento === "pedir"), CANAL, { timeout: 4000 }).catch(() => {});
+  igual("si no calza (se perdió un mensaje), no lo pega y le pide a esa mesa la partida entera",
+    [/Bb5/.test((await guardado()).rondas[0].mesas[1].pgn), await page.evaluate((c) => (window.__enviados.find((x) => x.canal === c && x.evento === "pedir") || {}).payload, CANAL)], [false, { mesa: 2 }]);
+
   console.log("\n=== Lo que no entra ===");
   await manda({ mesa: 3, jugadas: ["c4"] });
   await manda({ mesa: 2, jugadas: ["d4"], torneo: "5d6e0b9f-3c2e-4d8e-9c55-7a411f2a3b4c" });

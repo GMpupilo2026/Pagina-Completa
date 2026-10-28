@@ -105,8 +105,10 @@
                 <button id="btn-esquinas" type="button" disabled class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-4 py-2.5 rounded-lg text-sm disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Volver a marcar las esquinas</button>
                 <button id="btn-calibrar" type="button" disabled class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-4 py-2.5 rounded-lg text-sm disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Calibrar con la posición inicial</button>
                 <button id="btn-seguir" type="button" disabled class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-4 py-2.5 rounded-lg text-sm disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Seguir con esta partida</button>
+                <button id="btn-ahorro" type="button" disabled class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-4 py-2.5 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 disabled:opacity-50"><span aria-hidden="true">🔋</span> Ahorrar batería</button>
             </div>
 
+            <p id="sin-red" hidden role="status" class="mb-4 rounded-xl px-4 py-3 text-sm font-semibold bg-accent-100 text-brand-900">Sin conexión: la partida se sigue anotando en este celular y se manda sola cuando vuelva la señal. No cierres la página.</p>
             <p id="pantalla-encendida" hidden class="mb-4 text-xs text-brand-500 dark:text-brand-300">La pantalla se queda encendida mientras la cámara esté abierta: el celular no se apaga a mitad de la partida.</p>
             <div id="camara-elegir-caja" hidden class="mb-4">
                 <label for="camara-elegir" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 mb-1">Esta computadora tiene varias cámaras: ¿cuál uso?</label>
@@ -239,7 +241,7 @@
                         <div id="vivo-encendido" hidden class="mt-3">
                             <p class="text-sm font-semibold text-green-800 dark:text-green-200" role="status">● Transmitiendo · código <span id="vivo-codigo" class="font-mono"></span></p>
                             <a id="vivo-enlace" href="#" target="_blank" rel="noopener" class="block text-sm text-brand-700 dark:text-brand-200 underline underline-offset-2 break-all mt-1 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"></a>
-                            <div id="vivo-qr" class="w-40 h-40 mx-auto my-3 bg-white rounded-lg"></div>
+                            <div id="vivo-qr" data-no-mesa class="w-40 h-40 mx-auto my-3 bg-white rounded-lg"></div>
                             <div class="flex flex-wrap gap-2">
                                 <button id="btn-vivo-copiar" type="button" class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-3 py-2 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Copiar el enlace</button>
                                 <a id="vivo-whatsapp" href="#" target="_blank" rel="noopener" class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-3 py-2 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Compartir por WhatsApp</a>
@@ -254,6 +256,12 @@
         </div>
     </main>
     <!-- La hoja con el QR de cada mesa: solo sale al imprimirla (ver camara-tablero.js). -->
+    <!-- «Ahorrar batería»: la pantalla en negro (en una pantalla OLED, casi no gasta) y la cámara sigue leyendo y transmitiendo. -->
+    <button id="ahorro" type="button" class="hidden fixed inset-0 z-[200] w-full h-full bg-black text-white flex-col items-center justify-center gap-4 p-6 text-center focus:outline-none focus-visible:ring-4 focus-visible:ring-inset focus-visible:ring-white">
+        <span id="ahorro-titulo" class="font-serif text-3xl font-bold"></span>
+        <span id="ahorro-estado" class="text-xl" aria-live="polite"></span>
+        <span class="text-base">La cámara sigue leyendo y transmitiendo. Toca la pantalla para volver.</span>
+    </button>
     <div id="hoja-qr" aria-hidden="true"></div>
     <img id="hoja-qr-marca" src="img/marca-agua-ajedrez-integral.png" alt="" aria-hidden="true">
 
@@ -268,14 +276,13 @@
     <script src="js/vendor/supabase.js"></script>
     <script src="js/supabase-client.js"></script>
     <script src="js/vendor/chess.js"></script>
-    <script src="js/vendor/qrcode.js"></script>
-    <script src="js/qr-svg.js"></script>
     <script src="js/blind-notation.js"></script>
     <script src="js/comandos-tablero.js"></script>
     <script src="js/hora-cr.js"></script>
     <script src="js/partida-en-vivo.js"></script>
     <script src="js/detectar-tablero.js"></script>
     <script src="js/main.js"></script>
+    <script src="js/lector-tablero.js"></script>
     <script src="js/camara-tablero.js"></script>
 </body>
 </html>
