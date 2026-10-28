@@ -2604,6 +2604,17 @@ html.modo-proyector .clase-sticker-globo { font-size: 2rem; }
 .ij-equipo { border: 1px solid rgb(var(--c-brand-200, 188 204 220)); border-radius: 0.75rem; padding: 0.9rem; display: grid; gap: 0.35rem; align-content: start; }
 .dark .ij-equipo { border-color: rgb(var(--c-brand-700, 36 59 83)); }
 .ij-orden { margin: 0; padding-left: 1.25rem; font-size: 0.9rem; }
+.ij-equipo-tarjeta { border: 2px solid rgb(var(--c-brand-300, 159 179 200)); border-radius: 0.9rem; padding: 1rem; display: grid; gap: 0.75rem; }
+.dark .ij-equipo-tarjeta { border-color: rgb(var(--c-brand-600, 51 78 104)); }
+.ij-equipo-tarjeta[data-estado="error"] { border-color: #b91c1c; }
+.ij-equipo-tarjeta[data-estado="aviso"] { border-color: #b45309; }
+.dark .ij-equipo-tarjeta[data-estado="error"] { border-color: #f87171; }
+.dark .ij-equipo-tarjeta[data-estado="aviso"] { border-color: #fbbf24; }
+.ij-miembro { border: 1px solid rgb(var(--c-brand-200, 188 204 220)); border-radius: 0.75rem; padding: 0.75rem; display: grid; gap: 0.6rem; }
+.dark .ij-miembro { border-color: rgb(var(--c-brand-700, 36 59 83)); }
+.ij-miembro h4 { margin: 0; flex: 1 1 12rem; min-width: 0; overflow-wrap: anywhere; }
+.ij-apagado { background: transparent; color: rgb(var(--c-brand-700, 36 59 83)); border-style: dashed; cursor: not-allowed; }
+.dark .ij-apagado { background: transparent; color: rgb(var(--c-brand-100, 217 226 236)); border-color: rgb(var(--c-brand-300, 159 179 200)); }
 .ij-detalles { border: 1px solid rgb(var(--c-brand-200, 188 204 220)); border-radius: 0.75rem; padding: 0.6rem 0.9rem; background: #fff; }
 .dark .ij-detalles { background: rgb(var(--c-brand-900, 10 31 51)); border-color: rgb(var(--c-brand-700, 36 59 83)); }
 .ij-detalles summary { cursor: pointer; font-weight: 600; color: rgb(var(--c-brand-800, 16 42 67)); }
