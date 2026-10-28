@@ -68,7 +68,7 @@
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div class="lg:col-span-2 min-w-0">
                     <div class="bg-black rounded-2xl overflow-hidden">
-                        <canvas id="lienzo" tabindex="0" width="640" height="480" aria-label="La imagen de la cámara con las casillas leídas encima. Con el teclado: las teclas 1 a 4 eligen una esquina y las flechas la mueven; con Mayúscula, de a 10." class="block w-full h-auto touch-none focus:outline-none focus-visible:ring-4 focus-visible:ring-accent-400"></canvas>
+                        <canvas id="lienzo" tabindex="0" width="640" height="400" aria-label="La imagen de la cámara con las casillas leídas encima. Con el teclado: las teclas 1 a 4 eligen una esquina y las flechas la mueven; con Mayúscula, de a 10." class="block w-full h-auto touch-none focus:outline-none focus-visible:ring-4 focus-visible:ring-accent-400"></canvas>
                     </div>
                     <video id="video" playsinline muted class="hidden"></video>
                     <p class="text-xs text-brand-500 dark:text-brand-300 mt-2">Encima de cada casilla: <strong>·</strong> vacía, <strong>B</strong> pieza blanca, <strong>N</strong> pieza negra. Con borde rojo y una <strong>!</strong>, las que no coinciden con la posición que se espera.</p>
@@ -83,7 +83,8 @@
 
                     <section class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-4" aria-labelledby="t-tablero">
                         <h2 id="t-tablero" class="font-semibold text-brand-800 dark:text-white mb-2">La partida en digital<span id="t-tablero-cual"></span></h2>
-                        <div class="relative pl-5 pb-5 max-w-xs mx-auto"><div id="tablero" aria-hidden="true" class="grid grid-cols-8 grid-rows-8 aspect-square w-full rounded-lg overflow-hidden select-none"></div></div>
+                        <div class="relative pl-5 pb-5 max-w-sm mx-auto"><div id="tablero" aria-hidden="true" class="grid grid-cols-8 grid-rows-8 aspect-square w-full rounded-md overflow-hidden select-none ring-4 ring-brand-800 dark:ring-brand-600 shadow-lg"></div></div>
+                        <p id="como-va" class="text-sm font-semibold text-brand-800 dark:text-white text-center mt-1"></p>
                         <p class="text-xs text-brand-500 dark:text-brand-300 mt-2 break-all"><span class="font-semibold">FEN:</span> <span id="fen"></span></p>
                         <h3 class="font-semibold text-sm text-brand-800 dark:text-white mt-3">Jugadas</h3>
                         <p id="jugadas" class="text-sm text-brand-700 dark:text-brand-200 mt-1 min-h-[1.5rem]">Todavía ninguna.</p>

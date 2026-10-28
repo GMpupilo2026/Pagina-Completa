@@ -538,6 +538,7 @@
         const juego = T().juego;
         V.pintar($("tablero"), juego);
         $("fen").textContent = juego.fen();
+        $("como-va").textContent = V.comoVa(juego);
         const hist = juego.history();
         $("jugadas").textContent = V.jugadasTexto(juego) || "Todavía ninguna.";
         $("btn-deshacer").disabled = !hist.length;
@@ -666,6 +667,28 @@
         });
     }
 
+    /* Antes de abrir la cámara, el recuadro no queda negro: dice qué va ahí,
+     * con un tablero dibujado de muestra. */
+    function sinImagen() {
+        lienzo.width = 640; lienzo.height = 400;
+        ctx.fillStyle = "#102a43";
+        ctx.fillRect(0, 0, 640, 400);
+        const lado = 200, x0 = 220, y0 = 40, c = lado / 8;
+        for (let r = 0; r < 8; r++) for (let f = 0; f < 8; f++) {
+            ctx.fillStyle = (r + f) % 2 ? "rgba(255, 255, 255, 0.16)" : "rgba(255, 255, 255, 0.05)";
+            ctx.fillRect(x0 + f * c, y0 + r * c, c, c);
+        }
+        ctx.strokeStyle = "#facc15"; ctx.lineWidth = 2; ctx.setLineDash([8, 6]);
+        ctx.strokeRect(x0 - 6, y0 - 6, lado + 12, lado + 12);
+        ctx.setLineDash([]);
+        ctx.fillStyle = "#ffffff"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+        ctx.font = "bold 28px sans-serif";
+        ctx.fillText("Aquí aparece la imagen de la cámara", 320, 292);
+        ctx.font = "21px sans-serif";
+        ctx.fillText("Toca «Abrir la cámara» o «Probar con una foto»,", 320, 332);
+        ctx.fillText("con el celular encima del tablero.", 320, 362);
+    }
+
     function dibujar(ahora) {
         requestAnimationFrame(dibujar);
         if (!fuente) return;
@@ -733,6 +756,7 @@
         $("app").classList.remove("hidden");
         $("dos-tableros").checked = false;
         elegirTablero(0);
+        sinImagen();
         requestAnimationFrame(dibujar);
     }
     init();

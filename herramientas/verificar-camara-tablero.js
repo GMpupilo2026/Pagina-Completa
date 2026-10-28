@@ -217,6 +217,12 @@ async function esperarJugadas(p, n) {
   }), null);
   igual("la posición inicial se lee BBBBBBBB…NNNNNNNN", await p.evaluate(() => window.LectorTablero.esperada(new window.Chess())), "B".repeat(16) + ".".repeat(32) + "N".repeat(16));
 
+  igual("antes de abrir la cámara, el recuadro no queda negro: dice qué va ahí", await p.evaluate(() => {
+    const c = document.getElementById("lienzo"), d = c.getContext("2d").getImageData(5, 5, 1, 1).data;
+    return [c.width, c.height, d[0], d[1], d[2]];
+  }), [640, 400, 16, 42, 67]);
+  igual("el tablero digital dice cómo va la partida", await p.textContent("#como-va"), "La partida está en la posición inicial. Juegan las blancas.");
+
   console.log("\nEncontrar el tablero en la foto");
   const INICIAL = new Chess().fen();
   const medir = (esq, fondo, rough) => p.evaluate(async ([src, opc, rough]) => {
@@ -266,6 +272,7 @@ async function esperarJugadas(p, n) {
   }
   igual("anota la partida jugada frente a la cámara, en algebraica española", await jugadasDe(p), "1. e4 e5 2. Cf3 Cc6 3. Ac4 Cf6 4. O-O");
   igual("la posición digital es la de la partida", await p.textContent("#fen"), partida.fen());
+  igual("y debajo del tablero, la última jugada y a quién le toca", await p.textContent("#como-va"), "Última jugada: 4. O-O. Juegan las negras.");
   igual("y lee las 64 casillas como se esperan", await p.textContent("#acierto"), "64 de 64");
 
   // Una pieza que desaparece sin jugada: no se anota nada y se dice dónde.

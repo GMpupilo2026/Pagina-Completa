@@ -90,5 +90,18 @@
         return txt.trim();
     }
 
-    window.PartidaEnVivo = { nuevoCodigo, codigoValido, canal, enlace, estado, leer, pintar, jugadasTexto };
+    /* Cómo va: «Última jugada: 12. Cf3. Juegan las negras.», o el mate,
+     * el ahogado o el jaque. */
+    function comoVa(juego) {
+        const es = (x) => (window.ComandosTablero ? window.ComandosTablero.jugadaParaMostrar(x) : x);
+        const hist = juego.history(), n = hist.length;
+        let fin = "";
+        if (juego.in_checkmate()) fin = "Jaque mate.";
+        else if (juego.in_stalemate()) fin = "Tablas por ahogado.";
+        else if (juego.in_check()) fin = "Jaque.";
+        const ultima = n ? "Última jugada: " + Math.ceil(n / 2) + (n % 2 ? ". " : "… ") + es(hist[n - 1]) : "La partida está en la posición inicial";
+        return ultima + ". " + (fin || "Juegan " + (juego.turn() === "w" ? "las blancas" : "las negras") + ".");
+    }
+
+    window.PartidaEnVivo = { nuevoCodigo, codigoValido, canal, enlace, estado, leer, pintar, jugadasTexto, comoVa };
 })();

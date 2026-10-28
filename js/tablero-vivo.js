@@ -39,16 +39,7 @@
         P.pintar($("tablero"), juego, { girado });
         jugadores();
         $("jugadas").textContent = P.jugadasTexto(juego) || "Todavía no se ha jugado nada.";
-        const hist = juego.history();
-        const turno = juego.turn() === "w" ? "las blancas" : "las negras";
-        let fin = "";
-        if (juego.in_checkmate()) fin = "Jaque mate.";
-        else if (juego.in_stalemate()) fin = "Tablas por ahogado.";
-        else if (juego.in_check()) fin = "Jaque.";
-        const es = (x) => (window.ComandosTablero ? window.ComandosTablero.jugadaParaMostrar(x) : x);
-        const n = hist.length;
-        const ultima = n ? "Última jugada: " + Math.ceil(n / 2) + (n % 2 ? ". " : "… ") + es(hist[n - 1]) : "La partida está en la posición inicial";
-        const texto = ultima + ". " + (fin || "Juegan " + turno + ".");
+        const texto = P.comoVa(juego);
         $("ultima").textContent = texto;
         // Al lector de pantalla, solo cuando cambia de verdad.
         if (texto !== ultimaDicha) { $("anuncio").textContent = texto; ultimaDicha = texto; }
