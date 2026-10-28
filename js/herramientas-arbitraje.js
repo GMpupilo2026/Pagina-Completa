@@ -194,7 +194,7 @@
             tema: "arbitraje",
             emoji: "🧑‍⚖️",
             nombre: "Árbitros de Costa Rica",
-            corto: "Árbitros de CR",
+            corto: "Árbitros de Costa Rica",
             href: "arbitros-cr.html",
             disponible: true,
             resumen: "Los torneos de cada árbitro de Costa Rica en FIDE y en chess-results, con su cargo, y cuáles de los de FIDE cumplen las condiciones de un torneo para una norma de Árbitro FIDE y de Árbitro Internacional según el reglamento vigente.",
