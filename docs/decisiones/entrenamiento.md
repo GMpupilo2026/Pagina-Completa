@@ -4776,3 +4776,77 @@ Rompiéndolo a propósito saltaron: el tope de las partidas en 10, quitar el
 ensanche de los controles, medir una apertura quitando una jugada propia,
 editar a mano una medida y la calibración sin el paso de gradiente.
 
+
+## El profe Oscar, ayudante del alumno
+
+El avatar del profe Oscar (sus poses están en `js/avatar-profe-oscar.js`, ver
+«El avatar del profe Oscar» en clase-en-vivo.md) acompaña al alumno como
+entrenador y guía. Todo vive en **`js/profe-oscar.js`**, una sola copia, y
+sale en cuatro lugares:
+
+- **La franja del panel** (`#pendientes-aviso`, `pintarFranja` en
+  `js/clases.js`). Oscar es **la cara de la franja que ya existía**, no una
+  franja nueva: dos peleando por el primer lugar es el problema que el panel ya
+  tuvo con «Estado de la clase». Su dibujo reemplaza al emoji y cada caso trae
+  su pose (`pose`, al lado del `icono`): `tiempo` con una tarea vencida o un
+  examen con el reloj corriendo, `pobrecillo` con un examen perdido, `atencion`
+  con la próxima tarea, `a-repasar` con un examen por hacer, `idea` con el
+  diagnóstico pedido, `hola`/`te-toca`/`presentando` en el primer paso y
+  `tu-puedes` en la semana del plan. Solo en la rama del alumno
+  (`franjaDelAlumno`): las franjas de quien da clase no traen pose.
+- **«Hoy te toca»** (`js/hoy-te-toca.js`, en el panel y en el hub de
+  Entrenamiento): Oscar al lado del título, dando ánimo (`tu-puedes`) o
+  celebrando la meta del día cumplida (`excelente`). **Una sola cara a la
+  vez**: en el panel, si la franja ya lo tiene, acá no sale (y si la franja
+  llega después, se lo quita a «Hoy te toca»).
+- **Los ejercicios** (Temas, Mates, Practicar, Desafíos y lo que use
+  `EjercicioTablero.racha`/`.pistas`). `js/ejercicio-tablero.js` le avisa a
+  Oscar y lo baja la primera vez que hace falta, de su misma carpeta: así no
+  hay que sumarlo a cada página de ejercicios.
+  - **La pista la dice con la MISMA frase que la página** (la que va al aviso
+    y a la voz), sin el «Pista:». Oscar no inventa pistas: las pone en su
+    boca. La pose va con la etapa (`idea`, `mmm`, `te-toca`, y `a-repasar` con
+    la solución).
+  - **El globo va debajo de la fila de botones, nunca encima del tablero**, y
+    no es región viva: la página ya dijo la pista en su aviso, y repetirla
+    haría que el lector de pantalla la lea dos veces.
+  - **Se va con el ejercicio siguiente** (al reiniciar las pistas). Con una
+    excepción que costó: «Ver solución» juega la jugada en el acto, y la página
+    reinicia las pistas al jugarla; sin `aguantar`, el globo con la solución se
+    borraba en el mismo instante en que salía.
+  - **La racha se felicita a las 3, a las 5, a las 10 y de diez en diez**, y el
+    récord de la página cuando lo pasa (desde 5), **una vez por racha**: cada
+    acierto que sigue también lo pasa, y decirlo en cada uno es ruido.
+- **«Pregúntale al profe»** (solo el panel del alumno, y no mirando el de otra
+  persona ni en el panel adaptado). El título dice solo eso, a pedido del
+  dueño. Un chat que contesta con **enlaces de verdad**: busca en las tarjetas
+  del panel tal como están pintadas (las mismas `data-buscar` del buscador, con
+  sus palabras clave; una apagada no se ofrece) y en los temas, mates,
+  aperturas, habilidades y fichas de Estudio de `js/material-plataforma.js`,
+  con su `hrefRecorte` (la clavada lleva al tema, no a la lista de ochenta).
+  Esos recortes solo si el panel tiene Entrenamiento: a un panel de taller no
+  se le ofrece una página que no es suya.
+  - **No hay IA.** Las palabras que no dicen qué busca («quiero», «dónde»,
+    «mi», «profe»…) se descartan, y «finales» encuentra «final». Si no
+    encuentra nada, lo dice y sugiere palabras: nunca inventa un enlace.
+  - El botón va debajo del buscador y no flotando: abajo a la derecha está la
+    burbuja de conectados, y abajo a la izquierda la barra de «Entrenar 10
+    minutos» y las bromas. Abierto, es una ventana en esa esquina (en el
+    celular, una hoja que sube desde abajo), con Escape y el foco de vuelta al
+    botón.
+
+**Se apaga.** El alumno lo esconde desde «Pregúntale al profe» (`profe_oscar_v1`
+en localStorage: es una comodidad de quien mira, no un dato), y entonces la
+franja vuelve a su emoji y no hay globos; el chat sigue, que es por donde se
+vuelve a mostrar. Con la cuenta ciega (`modo-ciego`) no se pinta nunca: el sitio
+ya dice todo en voz y un dibujo no le suma nada. Las imágenes son adorno
+(`alt=""`): lo que dice va escrito al lado.
+
+**Al tocarlo, correr `node herramientas/verificar-todo.js profe-oscar panel`.**
+`verificar-profe-oscar.js` comprueba que toda pose usada (en el módulo y en la
+franja) esté en la lista y tenga su imagen, la pista en el globo con la frase
+de la página y debajo del tablero, la solución que no se borra, la racha y el
+récord una sola vez, que escondido o con la cuenta ciega no salga, y la
+búsqueda; `verificar-panel.js` (`pruebaProfeOscar`), la franja con su pose,
+una sola cara, el chat entero (enlaces que existen, «no encontré», Escape),
+esconder y volver a mostrar, y que a quien da clase no le sale nada.

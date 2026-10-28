@@ -95,6 +95,29 @@
 
   const COLUMNAS = ["a", "b", "c", "d", "e", "f", "g", "h"];
 
+  /* El profe Oscar (js/profe-oscar.js) dice en su globo la pista que la
+     página acaba de decir y felicita las rachas. Se baja la primera vez que
+     hace falta, de la misma carpeta que este archivo: así no hay que sumarlo
+     a cada página de ejercicios. Si no llega (sin internet), no pasa nada. */
+  const DIR = typeof document !== "undefined" && document.currentScript && document.currentScript.src
+    ? document.currentScript.src.replace(/ejercicio-tablero\.js(\?.*)?$/, "") : null;
+  let oscarPedido = null;
+  function oscar(que, d) {
+    if (typeof window === "undefined") return;
+    if (window.ProfeOscar) { ProfeOscar.recibir(que, d); return; }
+    if (que === "nuevo" || !DIR) return;
+    if (!oscarPedido) {
+      oscarPedido = new Promise((listo, falla) => {
+        const s = document.createElement("script");
+        s.src = DIR + "profe-oscar.js";
+        s.onload = listo;
+        s.onerror = falla;
+        document.head.appendChild(s);
+      });
+    }
+    oscarPedido.then(() => { if (window.ProfeOscar) ProfeOscar.recibir(que, d); }).catch(() => {});
+  }
+
   function racha(prefijo) {
     const CLAVE = prefijo + "_streak", MEJOR = prefijo + "_best";
     const leer = (k) => { try { return parseInt(localStorage.getItem(k) || "0", 10) || 0; } catch (e) { return 0; } };
@@ -109,12 +132,20 @@
       if (c) c.textContent = n;
       if (b) b.textContent = mejor;
     }
+    /* El récord se dice UNA vez por racha: al pasar la mejor, no en cada
+       acierto que sigue (cada uno también la pasa). */
+    let recordDicho = false;
     function bumpStreak() {
+      const antes = getBestStreak();
       setStreak(getStreak() + 1);
+      const n = getStreak();
+      const record = !recordDicho && antes > 0 && n > antes;
+      if (record) recordDicho = true;
+      oscar("racha", { racha: n, record });
       const bar = document.getElementById("streak-bar");
       if (bar) { bar.classList.remove("pulse"); void bar.offsetWidth; bar.classList.add("pulse"); }
     }
-    function resetStreak() { setStreak(0); }
+    function resetStreak() { setStreak(0); recordDicho = false; }
     return { getStreak, getBestStreak, setStreak, bumpStreak, resetStreak };
   }
 
@@ -204,12 +235,14 @@
       const siguiente = etapas[Math.min(n, etapas.length - 1)];
       b.textContent = siguiente === "solucion" ? "💡 Ver solución" : n === 0 ? "💡 Pista" : "💡 Otra pista";
     }
-    function reiniciar() { n = 0; marcas = {}; rotular(); }
+    function reiniciar() { n = 0; marcas = {}; rotular(); oscar("nuevo"); }
     function dar() {
       const etapas = o.etapas();
       const tipo = etapas[Math.min(n, etapas.length - 1)];
       const j = o.jugada();
       n += 1;
+      /* Lo que la página dice, también en el globo del profe Oscar. */
+      const decirLo = (t) => { o.decir(t); oscar("pista", { tipo, texto: t, boton: boton() }); };
       if (o.alDar) o.alDar(n, tipo);
       if (tipo === "solucion") {
         marcas = {};
@@ -219,22 +252,22 @@
            frase también va a `alResolver`, porque lo que la página dice
            enseguida («¡Jaque mate!») pisa este aviso: la página la antepone. */
         const frase = j ? fraseSolucion(j) : "";
-        if (frase) o.decir(frase);
+        if (frase) decirLo(frase);
         if (j && o.alResolver) o.alResolver(j, frase);
         rotular();
         return;
       }
       if (tipo === "texto") {
-        o.decir("Pista: " + (o.texto ? o.texto() : ""));
+        decirLo("Pista: " + (o.texto ? o.texto() : ""));
       } else if (j && tipo === "origen") {
         marcas = { [j.from]: { clase: "hint-from", estado: "pista: la pieza que se mueve" } };
         const h = hablada(j.from);
-        o.decir(h ? "Pista: mueve la pieza de " + h + "." : "Pista: fíjate en la pieza resaltada.");
+        decirLo(h ? "Pista: mueve la pieza de " + h + "." : "Pista: fíjate en la pieza resaltada.");
       } else if (j && tipo === "destino") {
         marcas = { [j.from]: { clase: "hint-from", estado: "pista: la pieza que se mueve" },
                    [j.to]: { clase: "hint-to", estado: "pista: la casilla adonde va" } };
         const h = hablada(j.to);
-        o.decir(h ? "Pista: la casilla de destino es " + h + "." : "Pista: la casilla marcada con el círculo es el destino.");
+        decirLo(h ? "Pista: la casilla de destino es " + h + "." : "Pista: la casilla marcada con el círculo es el destino.");
       }
       if (o.repintar) o.repintar();
       rotular();

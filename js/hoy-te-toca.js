@@ -355,6 +355,7 @@ window.HoyTeToca = (function () {
     const meta = Logros.META_DIARIA;
     const hoy = r.stats.hoy_ejercicios || 0;
     const racha = r.stats.racha_actual || 0;
+    op.metaCumplida = hoy >= meta;
     const dias = (n) => n === 1 ? '1 día' : `${n} días`;
     /* En el panel, cuántos días lleva ya lo dice el saludo de arriba: acá
        solo lo de hoy. Ver «El panel del alumno, cada cosa una vez». */
@@ -767,6 +768,11 @@ window.HoyTeToca = (function () {
     lista.hidden = !cosas.length;
     pintarTanda(cosas, op);
     caja.classList.toggle('hidden', !cosas.length && !conMeta);
+    /* El profe Oscar al lado del título: dando ánimo, o celebrando si la
+       meta del día ya se cumplió (js/profe-oscar.js). En el panel no sale si
+       ya está en la franja de arriba: una sola cara a la vez. */
+    caja.dataset.metaCumplida = op.metaCumplida ? '1' : '0';
+    if (window.ProfeOscar && !caja.classList.contains('hidden')) ProfeOscar.enHoy(caja);
   }
 
   /* «Entrenar 10 minutos»: las tres primeras cosas de hoy, o Mates si hoy
