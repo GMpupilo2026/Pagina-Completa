@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20261026230948
+# al-dia-con: 20261028001139
 tabla  Ejercicios Lichess  rls=true
 tabla  _foto_rls_tmp  rls=false
 tabla  _pedidos_elo  rls=false
@@ -2297,6 +2297,8 @@ funcion  interno.frenar_envio_publico(p_tipo text, p_ambito text, p_correo text,
 funcion  interno.gente_de_mis_academias()  definer  anon=false  auth=true
 funcion  interno.habilidad_resultado_de_la_base()  definer  anon=false  auth=false
 funcion  interno.horarios_del_alumno(p_alumno uuid)  definer  anon=false  auth=false
+funcion  interno.items_del_tema(p_grupo text, p_tema text)  definer  anon=false  auth=true
+funcion  interno.items_del_tema_conjunto(p_grupo text, p_tema text)  definer  anon=false  auth=true
 funcion  interno.jsonb_o_nulo(p text)  invoker  anon=false  auth=true
 funcion  interno.leccion_abierta(p_alumno uuid, p_curso text)  definer  anon=false  auth=false
 funcion  interno.lecciones_hechas(p_alumno uuid, p_curso text)  definer  anon=false  auth=false
