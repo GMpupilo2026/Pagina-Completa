@@ -1656,6 +1656,89 @@ async function franja(browser, tareas, examenes) {
   return { visto, errores };
 }
 
+/* El profe Oscar (js/profe-oscar.js) en el panel del alumno: es la cara de la
+   franja —con la pose de lo que dice, en lugar del emoji— y contesta en
+   «Pregúntale al profe» con enlaces de verdad. Lo que se rompe acá no da
+   error: un dibujo que se pinta dos veces, un enlace que no lleva a nada, un
+   «esconder» que deja la franja sin icono, o un chat que le sale a quien da
+   clase. Ver «El profe Oscar, ayudante del alumno» en entrenamiento.md. */
+async function pruebaProfeOscar(browser) {
+  console.log("\n=== El profe Oscar en el panel del alumno ===");
+  const leerFranja = (page) => page.evaluate(() => {
+    const img = document.querySelector("#pendientes-aviso img[data-profe-oscar]");
+    return { pose: img ? img.dataset.profeOscar : null, ve: !!(img && img.checkVisibility()),
+             alt: img ? img.getAttribute("alt") : null,
+             emoji: document.getElementById("pendientes-aviso-emoji").checkVisibility() };
+  });
+  const respuesta = async (page, texto) => {
+    const antes = await page.evaluate(() => document.getElementById("profe-pregunta-log").children.length);
+    await page.fill("#profe-pregunta-campo", texto);
+    await page.press("#profe-pregunta-campo", "Enter");
+    await page.waitForFunction((n) => document.getElementById("profe-pregunta-log").children.length >= n + 2, antes, { timeout: 10000 });
+    return page.evaluate(() => {
+      const ultimo = document.getElementById("profe-pregunta-log").lastElementChild;
+      return { texto: ultimo.querySelector("p").textContent, enlaces: Array.from(ultimo.querySelectorAll("a[href]")).map((a) => a.getAttribute("href")) };
+    });
+  };
+  {
+    const r = await panel(browser, [ALUMNA, PROFE], "u-ana", {}, datosAlumna(true));
+    const { page } = r;
+    await page.waitForSelector("#pendientes-aviso:not([hidden])", { timeout: 10000 });
+    igual("con una tarea vencida, la franja la dice Oscar mirando el reloj (y el emoji se va)",
+      await leerFranja(page), { pose: "tiempo", ve: true, alt: "", emoji: false });
+    await page.waitForTimeout(800);
+    igual("una sola cara de Oscar en el panel, aunque «Hoy te toca» también lo lleve",
+      await page.evaluate(() => document.querySelectorAll("img[data-profe-oscar]").length), 1);
+
+    const boton = "#profe-pregunta-boton";
+    igual("«Pregúntale al profe» se ve, cerrado", await page.evaluate((b) => {
+      const el = document.querySelector(b);
+      return el ? [el.checkVisibility(), el.getAttribute("aria-expanded"), el.textContent.trim(), document.getElementById("profe-pregunta").checkVisibility()] : null;
+    }, boton), [true, "false", "Pregúntale al profe", false]);
+    await page.click(boton);
+    igual("al abrirlo: se ve, dice que está abierto, el foco va al campo y el título es solo «Pregúntale al profe»",
+      await page.evaluate(() => [document.getElementById("profe-pregunta").checkVisibility(),
+        document.getElementById("profe-pregunta-boton").getAttribute("aria-expanded"),
+        document.activeElement.id, document.getElementById("profe-pregunta-titulo").textContent]),
+      [true, "true", "profe-pregunta-campo", "Pregúntale al profe"]);
+    igual("saluda por el nombre de pila", await page.evaluate(() => /¡Hola, Ana!/.test(document.getElementById("profe-pregunta-log").textContent)), true);
+
+    let a = await respuesta(page, "¿Dónde está mi tarea?");
+    igual("«¿Dónde está mi tarea?» lleva a Tareas", a.enlaces.includes("tareas.html"), true);
+    a = await respuesta(page, "quiero practicar la clavada");
+    igual("«la clavada» lleva al tema, no a la lista de ochenta", a.enlaces.some((h) => /^entreno\/temas\.html\?tema=/.test(h)), true);
+    const existen = await page.evaluate((hs) => Promise.all(hs.map((h) => fetch(h.split("?")[0]).then((x) => x.ok))), a.enlaces);
+    igual("y cada enlace que ofrece existe", existen.every(Boolean), true);
+    a = await respuesta(page, "zzyzx");
+    igual("si no encuentra nada, lo dice y no inventa enlaces", [/No encontré nada con «zzyzx»/.test(a.texto), a.enlaces.length], [true, 0]);
+    const antes = await page.evaluate(() => document.getElementById("profe-pregunta-log").children.length);
+    await page.click("#profe-pregunta button:text-is('Mates')");
+    await page.waitForFunction((n) => document.getElementById("profe-pregunta-log").children.length >= n + 2, antes, { timeout: 10000 });
+    igual("la idea «Mates» contesta con enlaces", await page.evaluate(() => document.getElementById("profe-pregunta-log").lastElementChild.querySelectorAll("a[href]").length > 0), true);
+
+    await page.keyboard.press("Escape");
+    igual("Escape lo cierra y el foco vuelve al botón", await page.evaluate(() => [document.getElementById("profe-pregunta").checkVisibility(), document.activeElement.id]),
+      [false, "profe-pregunta-boton"]);
+
+    await page.click(boton);
+    await page.click("#profe-pregunta-esconder");
+    igual("esconderlo devuelve el emoji a la franja y lo recuerda en el aparato",
+      [await leerFranja(page), await page.evaluate(() => localStorage.getItem("profe_oscar_v1"))],
+      [{ pose: null, ve: false, alt: null, emoji: true }, "oculto"]);
+    await page.click("#profe-pregunta-esconder");
+    igual("y mostrarlo otra vez lo vuelve a poner, con la misma pose", (await leerFranja(page)).pose, "tiempo");
+    igual("sin errores en la página", r.errores.length ? r.errores.join(" | ") : "ninguno", "ninguno");
+    await r.ctx.close();
+  }
+  {
+    const r = await panel(browser, [ALUMNA, PROFE], "u-profe", {});
+    igual("a quien da clase no le sale ni el chat ni Oscar en la franja",
+      await r.page.evaluate(() => [!!document.getElementById("profe-pregunta-boton"), document.querySelectorAll("img[data-profe-oscar]").length]),
+      [false, 0]);
+    await r.ctx.close();
+  }
+}
+
 /* Un examen asignado tiene reloj y UNA sola oportunidad, y el único aviso que
    sale es el push del momento en que se lo ponen: quien no lo vio no se entera
    nunca. Acá se comprueba que la franja lo diga, y sobre todo que NO lo trate
@@ -3729,6 +3812,7 @@ const PRUEBAS = [
   pruebaTareasAlumna,
   pruebaDiagnosticoPedido,
   pruebaExamenesEnLaFranja,
+  pruebaProfeOscar,
   pruebaPrimerPaso,
   pruebaFranjaDeClase,
   pruebaVideollamada,

@@ -2929,6 +2929,9 @@
                cosa. Es decorativo (`aria-hidden`), así que lo que dice va
                escrito igual. */
             let icono = "📋";
+            /* La pose del profe Oscar, que es la cara de la franja en el panel
+               del alumno (js/profe-oscar.js): va con la línea, como el icono. */
+            let pose = "atencion";
             const urgente = !!(corriendo.length || perdidos.length || vencidas.length || congelados.length);
 
             if (corriendo.length) {
@@ -2943,7 +2946,7 @@
                    del examen, que le dice la verdad. */
                 msg = `El examen «${e.titulo}» lo tienes a medias y el reloj corre. Entra a terminarlo.`;
                 destino = `examen.html?id=${encodeURIComponent(e.id)}`;   // directo a rendirlo, como el aviso al celular
-                cta = "Seguir el examen →"; icono = "⏰";
+                cta = "Seguir el examen →"; icono = "⏰"; pose = "tiempo";
             } else if (perdidos.length) {
                 const e = perdidos[0];
                 // Acá NO se dice "todavía puedes": no puede, y prometérselo es
@@ -2951,17 +2954,17 @@
                 msg = perdidos.length === 1
                     ? `Se te pasó la fecha del examen «${e.titulo}» y ya no se puede rendir. Habla con tu profe.`
                     : `Se te pasó la fecha de ${perdidos.length} exámenes y ya no se pueden rendir. Habla con tu profe.`;
-                destino = "examenes.html"; cta = "Ver tus exámenes →"; icono = "⏰";
+                destino = "examenes.html"; cta = "Ver tus exámenes →"; icono = "⏰"; pose = "pobrecillo";
             } else if (vencidas.length) {
                 // Una tarea vencida sí se sigue pudiendo hacer, y se dice.
                 msg = vencidas.length === 1
                     ? `Se te pasó la fecha de «${vencidas[0].titulo}». Todavía puedes hacerla.`
                     : `Se te pasó la fecha de ${vencidas.length} de ellas. Todavía puedes hacerlas.`;
-                icono = "⏰";
+                icono = "⏰"; pose = "tiempo";
             } else if (congelados.length) {
                 const e = congelados[0];
                 msg = `El examen «${e.titulo}» quedó congelado a la mitad. Tu profe tiene que volver a abrirlo.`;
-                destino = "examenes.html"; cta = "Ver tus exámenes →"; icono = "📝";
+                destino = "examenes.html"; cta = "Ver tus exámenes →"; icono = "📝"; pose = "mmm";
             } else {
                 /* Nada urgente: se nombra lo que vence antes, sea tarea o
                    examen. Un examen tiene reloj y una sola oportunidad, así que
@@ -2972,14 +2975,14 @@
                     msg = `El examen «${e0.titulo}» vence ${venceEnPalabras(e0.vence_at)}`
                         + ` · ${e0.preguntas} preguntas en ${e0.minutos} minutos.`;
                     destino = `examen.html?id=${encodeURIComponent(e0.id)}`;
-                    cta = "Empezar el examen →"; icono = "📝";
+                    cta = "Empezar el examen →"; icono = "📝"; pose = "a-repasar";
                 } else if (diagnosticoPedido && diagnosticoPedido.tarea.id === t0.id) {
                     /* Si lo más próximo es el diagnóstico que le pidió el
                        profe, la franja lo dice con su nombre y lo lleva
                        directo a la prueba, no a la lista de tareas. */
                     msg = `Tu profe te pidió el diagnóstico de nivel. Vence ${venceEnPalabras(t0.vence_at)}.`;
                     destino = diagnosticoPedido.href;
-                    cta = "Hacer el diagnóstico →"; icono = "🧭";
+                    cta = "Hacer el diagnóstico →"; icono = "🧭"; pose = "idea";
                 } else {
                     // Cuánto lleva de la más próxima: con renglones, "2 de 5"
                     // dice mucho más que el título solo.
@@ -2990,7 +2993,7 @@
 
             pintarFranja({
                 titulo: tituloPendientes(tareas.length, porHacer.length + corriendo.length),
-                texto: msg, destino, cta, icono, urgente,
+                texto: msg, destino, cta, icono, urgente, pose,
                 // El diagnóstico pedido ya tiene su tarjeta iluminada: acá, lo demás.
                 tareas: tareas.filter((t) => !(diagnosticoPedido && diagnosticoPedido.tarea.id === t.id)),
             });
@@ -3052,7 +3055,7 @@
             lista.hidden = !lista.children.length;
         }
 
-        function pintarFranja({ titulo: tit, texto: msg, destino, cta, icono, urgente, tareas }) {
+        function pintarFranja({ titulo: tit, texto: msg, destino, cta, icono, urgente, tareas, pose }) {
             pintarAvanceDeTareas(tareas, urgente);
             const caja = document.getElementById("pendientes-aviso");
             const titulo = document.getElementById("pendientes-aviso-titulo");
@@ -3082,6 +3085,18 @@
             titulo.textContent = tit;
             texto.textContent = msg;
             caja.hidden = false;
+            /* En el panel del alumno, la franja la dice el profe Oscar: su
+               dibujo en lugar del emoji, con la pose de lo que dice. Solo con
+               `pose` (las franjas del que da clase no la traen) y nunca en el
+               panel adaptado. Ver «El profe Oscar, ayudante del alumno». */
+            poseDeLaFranja = pose && conProfeOscar() ? pose : null;
+            if (window.ProfeOscar) ProfeOscar.enFranja(caja, document.getElementById("pendientes-aviso-emoji"), poseDeLaFranja);
+        }
+        let poseDeLaFranja = null;
+        // Lo enciende la rama del alumno de init(): la franja de quien da clase no lo lleva.
+        let franjaDelAlumno = false;
+        function conProfeOscar() {
+            return franjaDelAlumno && !!window.ProfeOscar && !panelAdaptado;
         }
 
         /* ---------- Por dónde empezar: el siguiente paso ----------
@@ -3145,7 +3160,7 @@
                         // nombres del plan puestos ("Ejercicios de final de
                         // peones") el verbo delante no se lee.
                         destino: paso.href, cta: `${paso.label} →`,
-                        icono: paso.emoji, urgente: false,
+                        icono: paso.emoji, urgente: false, pose: "presentando",
                     });
                 } else {
                     // Diagnóstico sin ningún hueco marcado: no se le inventa
@@ -3156,7 +3171,7 @@
                         titulo: "Por dónde empezar",
                         texto: "Ya sabes en qué nivel estás. Lo que falta es entrenar: una serie de mates y táctica es buen comienzo.",
                         destino: "entreno/practicas.html", cta: "Practicar →",
-                        icono: "🎯", urgente: false,
+                        icono: "🎯", urgente: false, pose: "tu-puedes",
                     });
                 }
                 return;
@@ -3171,7 +3186,7 @@
                     titulo: "Tienes el diagnóstico a medias",
                     texto: `Lo dejaste en la pregunta ${mio.a_medias_pregunta}. Terminarlo es lo que le dice a tu profe qué ponerte.`,
                     destino: "entreno/diagnostico.html", cta: "Seguir el diagnóstico →",
-                    icono: "🧭", urgente: false,
+                    icono: "🧭", urgente: false, pose: "te-toca",
                 });
                 return;
             }
@@ -3181,7 +3196,7 @@
                 titulo: "Empieza por acá",
                 texto: "El diagnóstico dice en qué estás bien y en qué no, y con eso tu profe sabe qué ponerte. No hay que estudiar nada antes.",
                 destino: "entreno/diagnostico.html", cta: "Hacer el diagnóstico →",
-                icono: "🧭", urgente: false,
+                icono: "🧭", urgente: false, pose: "hola",
             });
         }
 
@@ -3215,7 +3230,7 @@
                 titulo: `Tu plan · semana ${hoy.numero} de ${hoy.total}`,
                 texto: `Esta semana toca ${hoy.foco}${hoy.delProfesor ? ", en el plan que te compartió tu profe" : ""}.${avance}`,
                 destino: hoy.recurso.href, cta: `${hoy.recurso.texto} →`,
-                icono: "📅", urgente: false,
+                icono: "📅", urgente: false, pose: "tu-puedes",
             });
         }
 
@@ -4505,6 +4520,20 @@
             } else {
                 document.getElementById("progreso-alumno").hidden = false;
                 document.getElementById("registro-clases").hidden = true;
+                franjaDelAlumno = true;
+                /* «Pregúntale al profe»: el profe Oscar contesta con enlaces a
+                   las tarjetas de este panel y a los temas de Entrenamiento
+                   (js/profe-oscar.js). Mirando el panel de otra persona no:
+                   lo que encontraría es lo de quien mira. */
+                if (window.ProfeOscar && !panelAdaptado && !profile._persona) {
+                    ProfeOscar.montarPregunta(document.getElementById("buscar-panel"), {
+                        nombre: profile.full_name || "",
+                        alMostrar: () => {
+                            ProfeOscar.enFranja(document.getElementById("pendientes-aviso"), document.getElementById("pendientes-aviso-emoji"), poseDeLaFranja);
+                            ProfeOscar.enHoy(document.getElementById("hoy"));
+                        },
+                    });
+                }
                 /* La racha se pide UNA vez y la promesa se reparte: la usan
                    el número de "Tu progreso" y el primer paso, que necesita
                    saber si ya resolvió algo. Dos llamadas serían dos veces la
