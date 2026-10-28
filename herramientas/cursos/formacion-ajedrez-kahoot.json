@@ -682,15 +682,15 @@
           "fuente": "FIDE C.07"
         },
         {
-          "texto": "Se agotó la lista de desempates y siguen empatados. Si el reglamento no dice otra cosa:",
-          "correcta": "Se resuelve por sorteo",
+          "texto": "El primer lugar da el cupo a la etapa siguiente y dos jugadores empatan. ¿Qué se propone como primer desempate?",
+          "correcta": "Un desempate jugado: dos rápidas y, si hace falta, un armagedón",
           "distractores": [
-            "Se juega una partida relámpago",
-            "Comparten el puesto y el premio",
-            "Gana quien jugó más con negras"
+            "El Buchholz con corte 1",
+            "El número de victorias",
+            "El jugador con el rating más alto"
           ],
           "tiempo": 20,
-          "fuente": "FIDE C.07"
+          "fuente": "Propuesta del curso; las bases lo anuncian (FIDE C.07)"
         },
         {
           "texto": "¿Cuándo se dan a conocer los desempates de un torneo y su orden?",

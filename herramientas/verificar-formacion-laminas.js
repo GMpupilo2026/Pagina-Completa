@@ -19,6 +19,15 @@ const { huella, archivo } = require("./lib/formacion-huella");
 
 const RAIZ = path.join(__dirname, "..");
 const TOPE = 65, TOPE_TABLA = 90;
+// En un cuadro cruzado las casillas son datos (un resultado, «5n ½», un
+// puesto), no frases: se cuentan los encabezados, los nombres de los
+// jugadores, la nota y la clave, con el tope de una tabla.
+const CASILLA = /^(?:[\d¼½¾×—]+(?:[bn])?|libre)$/;
+function textoCruzado(d) {
+  const c = d.cuadro, jug = c.cab.indexOf("Jugador");
+  const celdas = c.filas.flatMap((f) => f.map((x, k) => (k === jug ? x : String(x).split(/\s+/).filter((w) => !CASILLA.test(w)).join(" "))));
+  return [d.k, d.nota, d.clave, c.cab.join(" ")].concat(celdas).join(" ");
+}
 const MARCA_TONOS = ["si", "no", "ojo", "info"];
 let fallas = 0;
 const cierto = (nombre, ok, detalle) => {
@@ -50,8 +59,8 @@ for (const clase of clases) {
   const largas = [], sinPos = [], sinImagen = [], tonos = [];
   datos.forEach((d, i) => {
     const n = i + 1, dia = diapos[i] || {};
-    const cuenta = palabras((dia.titulo || "") + " " + texto(d));
-    if (cuenta > (d.tipo === "tabla" ? TOPE_TABLA : TOPE)) largas.push(n + " (" + cuenta + ")");
+    const cuenta = palabras((dia.titulo || "") + " " + (d.tipo === "cruzado" ? textoCruzado(d) : texto(d)));
+    if (cuenta > (d.tipo === "tabla" || d.tipo === "cruzado" ? TOPE_TABLA : TOPE)) largas.push(n + " (" + cuenta + ")");
     const pide = [];
     if (d.tipo === "tablero") pide.push(d.pos);
     if (d.tipo === "tableros") d.items.forEach((x) => pide.push(x.pos));
@@ -61,7 +70,7 @@ for (const clase of clases) {
     if (!/^RIFF....WEBP$/s.test(cab)) sinImagen.push(n);
     JSON.stringify(d).replace(/"tono":"([^"]*)"/g, (_, t) => { if (!MARCA_TONOS.includes(t)) tonos.push(n + ":" + t); });
   });
-  cierto("ninguna lámina pasa de " + TOPE + " palabras (" + TOPE_TABLA + " una tabla)", !largas.length, largas.join(", "));
+  cierto("ninguna lámina pasa de " + TOPE + " palabras (" + TOPE_TABLA + " una tabla o un cuadro cruzado, sin contar sus resultados)", !largas.length, largas.join(", "));
   cierto("todo tablero pide una posición que la lámina tiene", !sinPos.length, sinPos.join(", "));
   cierto("cada lámina tiene su imagen WebP", !sinImagen.length, sinImagen.join(", "));
   cierto("los tonos son los que el generador conoce (cada uno con su palabra)", !tonos.length, tonos.join(", "));
