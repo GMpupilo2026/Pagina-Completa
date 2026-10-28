@@ -62,6 +62,22 @@ como resuelto. Son el mismo acto, no dos contadores que puedan separarse.
   contando desde que se asigna: un rato de práctica de antes no es hacer la
   tarea. Medido con datos reales al cambiarlo: de 199 renglones de cantidad,
   23 subieron, varios de 0 a cumplidos (0 → 15 de 10, 0 → 26 de 20).
+- **En Ejercicios por tema, un ejercicio cuenta para TODO tema que lo
+  contiene.** Un mismo ejercicio está en varios temas (28 de los 100 de
+  «Ventaja» están también en otros) y la página lo anota UNA vez
+  (`isSolved()` es por ejercicio), bajo el tema que estaba abierto. Contar
+  solo `detail->>'theme' = filtro_clave` dejaba tareas como «Ventaja · 98 de
+  100» con los 100 resueltos en pantalla, sin forma de completarlas; pasó de
+  verdad (alumnos con 94, 97 y 98). Para las actividades `temas` y `tactica`
+  con recorte, `tareas_con_avance()` cuenta por pertenencia, con la lista de
+  `interno.premio_tema_items` entregada por `interno.items_del_tema_conjunto()`
+  (la lista de un tema es pública, la baja `temas.json`; la función existe
+  porque `authenticated` no lee esas tablas). La lista entra como CONJUNTO y
+  se une por id; las migraciones `20261028000722` y `20261028001139`. Es la
+  misma razón por la que el premio de «tema terminado» cuenta con cualquier
+  tema abierto. `interno.items_del_tema()` (arreglo, de la primera migración)
+  quedó sin uso. Medido: 32 ms para el alumno con más tareas; la pasada de
+  todos a la vez ronda los 8-9 s, y eso ya era así antes (la rama de minutos).
 - **Los minutos se cuentan con `minutos_por_tramos()`**, la misma función que
   los informes: una tarea que dijera otro número que Informes sería peor que no
   tenerla.
