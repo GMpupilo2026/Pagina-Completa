@@ -1319,7 +1319,9 @@ async function pruebaRegistro(browser) {
   const mesesEsperados = [];
   clasesDeMentira().slice(0, 20).forEach((c) => {
     const d = new Date(c.started_at);
-    const t = d.toLocaleDateString("es-CR", { month: "long", year: "numeric", timeZone: "UTC" });
+    // El mes de una clase se cuenta en hora de Costa Rica, como lo hace la página: en UTC,
+    // una clase del 1.° a las 00:00 caía en el mes siguiente y el verificador fallaba según el día.
+    const t = d.toLocaleDateString("es-CR", { month: "long", year: "numeric", timeZone: "America/Costa_Rica" });
     const titulo = t.charAt(0).toUpperCase() + t.slice(1).replace(" de ", " de ");
     if (!mesesEsperados.includes(titulo)) mesesEsperados.push(titulo);
   });
