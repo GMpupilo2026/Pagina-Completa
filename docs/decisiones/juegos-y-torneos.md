@@ -9387,11 +9387,34 @@ el celular.
   dama y se avisa.
 - **Lo que no explica ninguna jugada legal no se anota.** Se dice qué casillas
   cambiaron y se espera. Ninguna posición se inventa.
-- **Las esquinas las marca la persona**, en orden a1, h1, h8, a8; después se
-  arrastran, o se mueven con el teclado (1 a 4 eligen, las flechas mueven).
-  Con las cuatro se resuelve la homografía a mano (ocho incógnitas, Gauss):
-  no hace falta bajar OpenCV. Cuatro esquinas que no forman un cuadrilátero
-  convexo no dan tablero.
+- **El tablero se encuentra solo, o se marca a ojo** (`js/detectar-tablero.js`).
+  La medida es el patrón de ajedrez: a cada lado de cada línea entre casillas,
+  la clara tiene que ser la clara. Con eso, «Buscar el tablero» prueba
+  tableros de muchos tamaños, giros, achatados por la inclinación y en
+  trapecio (la cámara de lado ve el borde cercano más ancho), primero en una
+  imagen de 200 px y con pocos puntos, y ajusta los mejores en la grande. Y
+  cuatro esquinas tocadas a ojo, en cualquier orden, se corren solas a las
+  líneas al soltar la cuarta. Lo que se probó y falló:
+  - mirar lejos de la línea: los puntos caen sobre las piezas y el ajuste se
+    quedaba a 5-16 px. Los finos van entre la línea y la base de la pieza;
+  - mover las esquinas de a una: no puede correr el tablero entero sin
+    deformarlo. Se mueve también entero (correr, agrandar, girar);
+  - decidir si el tablero va una fila más allá con los puntos lejanos:
+    preferían el tablero montado sobre el borde. Se decide con los finos;
+  - sin trapecio, un tablero muy de lado no se encontraba.
+  Para decir «no hay tablero» no alcanza el puntaje (depende del contraste):
+  se pide además que el patrón sea parejo (`parejo` ≥ 0,92; los tableros de
+  prueba dan 1,00 y un piso de baldosas solo, 0,81). Las esquinas se marcan
+  con el dedo apretado y una lupa, o con el teclado (1 a 4 eligen, las
+  flechas mueven). Se lee de un lienzo aparte, sin la cuadrícula dibujada
+  encima: la cuadrícula amarilla son líneas, justo lo que se mide.
+- **Cuál esquina es a1 lo decide la calibración.** Prueba los cuatro giros y
+  se queda con el que ve la posición inicial. Media vuelta también la lee
+  perfecta (es simétrica en colores), así que además pide que las piezas de
+  las filas 1 y 2 sean las claras. Y el espejo (a con h) no se puede
+  distinguir mirando la posición inicial: lo fija la geometría. Vista desde
+  arriba, a1 → h1 → h8 → a8 gira siempre para el mismo lado en la imagen
+  (`ordenar`). Sin eso, e4 se anotaría d4.
 - **Calibrar es mirar la posición inicial**: las filas 3 a 6 enseñan cómo se
   ve una casilla vacía de cada color, las 1 y 2 una pieza blanca y las 7 y 8
   una negra. Por cada casilla se miden tres rasgos contra el fondo vacío de su
@@ -9404,7 +9427,9 @@ el celular.
 - **«Probar con una foto»**: otra foto del mismo tamaño conserva las esquinas,
   la calibración y la partida, así que se puede probar una partida foto a
   foto sin cámara en vivo. Así la prueba `verificar-camara-tablero.js`, con
-  tableros que dibuja el mismo navegador, inclinados y con ruido.
+  tableros que dibuja el mismo navegador píxel a píxel: en perspectiva, con
+  margen blanco como los de vinilo, baldosas alrededor y ruido; de frente,
+  de lado, girado, chico, con las blancas a la izquierda y desde las negras.
 - **La cámara está apagada en todo el sitio** (`Permissions-Policy:
   camera=()` en `/*` de `_headers`). Esta página quita esa cabecera
   (`! Permissions-Policy`) y pone la misma con `camera=(self)`, en las dos
@@ -9412,7 +9437,65 @@ el celular.
   las dos con una coma y el `camera=()` sigue ahí. El verificador revisa que
   ninguna otra ruta tenga la cámara.
 
-Lo que falta, si la prueba sale bien: encontrar el tablero solo, un modelo
-entrenado con fotos de nuestros tableros (las etiqueta el PGN de la partida),
-y transmitir las jugadas, no el video: a una transmisión de Lichess, que
-`transmision.html` ya sabe mostrar.
+- **Dos tableros con un celular, opcional y apagado por omisión** (lo pidió
+  el dueño: «siempre dando prioridad a que sea 1 para más confianza»). La
+  casilla «Leer también un segundo tablero» lo dice al lado: lo más confiable
+  es un celular por tablero. Encendida, cada tablero tiene sus esquinas, su
+  calibración, su partida y su transmisión con su propio código (unas
+  pestañas eligen a cuál se aplican los botones y cuál se muestra). La
+  imagen se trabaja a 960 de ancho en vez de 640, porque cada tablero ocupa
+  la mitad; las esquinas del primero se agrandan con ella y su calibración
+  sigue valiendo (mide luz, no tamaño). Al buscar el segundo, el primero se
+  tapa con gris parejo (`DetectarTablero.tapar`): si no, la búsqueda lo
+  vuelve a encontrar (rompiéndolo a propósito, los dos tableros anotan la
+  misma partida). Cada cuadrícula lleva su color y su número escrito. Más de
+  dos no: con cuatro, una casilla queda de 15 a 20 px y las piezas negras
+  sobre casillas oscuras se confunden.
+
+Con un tablero de vinilo de verdad, en el piso y con la cámara de lado, leyó
+64 de 64 y anotó las jugadas (27/10). Lo que falta: un modelo entrenado con
+fotos de nuestros tableros si con otra luz falla (las etiqueta el PGN de la
+partida), y la transmisión a Lichess para los torneos abiertos.
+
+## La partida en vivo desde la cámara
+
+La cámara manda la partida y `tablero-vivo.html` la muestra, sin cuenta
+(`js/partida-en-vivo.js` es lo que comparten las dos; `js/tablero-vivo.js`, la
+página de quien mira).
+
+- **Por un canal de Supabase Realtime en modo Broadcast, sin tabla**, igual
+  que «Actualizar sola (en vivo)» de Pareo Integral (ver «El canal en vivo»):
+  el nombre del canal (`tablero-vivo-<código>`) hace de contraseña, con un
+  código de 8 caracteres al azar sin 0/1/i/l/o. El código va en la dirección
+  después del `#`, que nunca llega al servidor. Quien tenga el enlace puede
+  mandar mensajes falsos al canal; para una partida que se muestra en público,
+  se acepta el riesgo como en Pareo.
+- **Se manda la partida, nunca la imagen**: el PGN entero en cada cambio (una
+  jugada, «Deshacer», calibrar) y los nombres, que son opcionales. Es poco y
+  así quien llega tarde o se reconecta no necesita historia: pide («pedir»,
+  al conectarse, al volver la red y al volver a la pestaña) y la cámara le
+  contesta con todo. La cámara solo escucha «pedir»: lo que pasa en el
+  tablero lo decide la cámara, nunca un mensaje del canal.
+- **Lo que llega se vuelve a jugar con chess.js** (`PartidaEnVivo.leer`): una
+  partida que no es legal no se pinta, y un mensaje más viejo que el último
+  (por su hora) no pisa lo nuevo. Los nombres son texto ajeno: `textContent`.
+- **El código se guarda en el celular** (`localStorage`): si la página se
+  recarga y se vuelve a transmitir, quien ya tenía el enlace no lo pierde.
+  «Usar un código nuevo» es la salida si se compartió de más.
+- Mientras la página de la cámara esté abierta; si se cierra, quien miraba se
+  queda con la última jugada, y quien abre el enlace ve «Esperando la
+  transmisión» a los 8 segundos (no una pantalla en blanco). Lo dice la
+  propia página.
+- El tablero de quien mira usa las piezas y los colores que eligió cada uno
+  (`PiezaPreferida`, `--sq-light`/`--sq-dark`), las coordenadas por fuera
+  (`js/coordenadas-tablero.js`), «Girar el tablero» con los nombres del lado
+  de sus piezas, y las jugadas en algebraica española. La última jugada se
+  dice también en texto, y al lector de pantalla cuando cambia.
+- La página de quien mira NO tiene la cámara: solo `camara-tablero` la tiene
+  en `_headers` (lo revisa el verificador).
+
+Lo prueba `verificar-camara-tablero.js` con dos navegadores y Node relevando
+los mensajes de uno a otro, como haría el canal: quien llega tarde recibe la
+partida entera, cada jugada y «Deshacer» llegan solos, lo viejo y lo ilegal
+no se pintan, «Dejar de transmitir» deja de mandar y volver a transmitir usa
+el mismo código, y un código malo o sin nadie transmitiendo se dice.

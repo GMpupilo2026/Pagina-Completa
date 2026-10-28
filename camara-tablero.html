@@ -14,6 +14,11 @@
     <link rel="stylesheet" href="css/styles.css">
     <!-- oscuro: inicio --><script>(function(){try{var t=localStorage.getItem('theme');if(t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme: dark)').matches))document.documentElement.classList.add('dark');}catch(e){}})();</script><!-- oscuro: fin -->
     <script src="js/adaptive-mode.js"></script>
+    <!-- tablero: inicio -->
+    <script src="js/board-color-themes.js"></script>
+    <script src="js/piece-color-themes.js"></script>
+    <script src="js/piece-style-themes.js"></script>
+    <!-- tablero: fin -->
 
 
 <!-- app: inicio --><meta name="theme-color" content="#102a43"><link rel="manifest" href="/manifest.json"><link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Ajedrez"><script src="js/errores.js"></script><script src="js/pwa.js" defer></script><script src="js/navegacion.js" defer></script><!-- app: fin --><!-- fuentes: inicio --><link rel="stylesheet" href="css/fuentes.css"><!-- fuentes: fin --><!-- tema: inicio --><script>(function(){try{var l=localStorage.getItem('plataforma_letra_v1');if(l&&/^[a-z]{2,24}$/.test(l)&&l!=='tema')document.documentElement.setAttribute('data-letra',l);var t=localStorage.getItem('plataforma_tema_v1');if(!t||!/^[a-z]{2,24}$/.test(t)||t==='clasico')return;document.documentElement.setAttribute('data-tema',t);var b=getComputedStyle(document.documentElement).getPropertyValue('--c-brand-800').trim();var m=document.querySelector('meta[name="theme-color"]');if(b&&m)m.setAttribute('content','rgb('+b.replace(/\s+/g,',')+')');}catch(e){}})();</script><!-- tema: fin --></head>
@@ -36,29 +41,40 @@
 
             <ol class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6 text-sm">
                 <li class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-4"><p class="font-semibold text-brand-800 dark:text-white">1. La imagen</p><p class="text-brand-500 dark:text-brand-300 mt-1">Abre la cámara o, para probar sin tablero, elige una foto.</p></li>
-                <li class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-4"><p class="font-semibold text-brand-800 dark:text-white">2. Las esquinas</p><p class="text-brand-500 dark:text-brand-300 mt-1">Toca las cuatro esquinas del tablero en el orden que se pide. Después se pueden arrastrar.</p></li>
-                <li class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-4"><p class="font-semibold text-brand-800 dark:text-white">3. Calibrar</p><p class="text-brand-500 dark:text-brand-300 mt-1">Con las piezas en la posición inicial, toca «Calibrar». Desde ahí lee cada casilla y anota las jugadas.</p></li>
+                <li class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-4"><p class="font-semibold text-brand-800 dark:text-white">2. El tablero</p><p class="text-brand-500 dark:text-brand-300 mt-1">Toca «Buscar el tablero» o marca tú las cuatro esquinas, en cualquier orden: se ajustan solas a las líneas.</p></li>
+                <li class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-4"><p class="font-semibold text-brand-800 dark:text-white">3. Calibrar</p><p class="text-brand-500 dark:text-brand-300 mt-1">Con las piezas en la posición inicial, toca «Calibrar»: ahí descubre cuál esquina es a1. Desde entonces lee cada casilla y anota las jugadas.</p></li>
             </ol>
 
             <div class="flex flex-wrap gap-2 mb-4">
                 <button id="btn-camara" type="button" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2.5 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2">Abrir la cámara</button>
                 <label class="inline-flex items-center bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-4 py-2.5 rounded-lg text-sm cursor-pointer focus-within:ring-2 focus-within:ring-accent-400">Probar con una foto<input id="foto" type="file" accept="image/*" class="sr-only"></label>
+                <button id="btn-buscar" type="button" disabled class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-4 py-2.5 rounded-lg text-sm disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Buscar el tablero</button>
+                <button id="btn-ajustar" type="button" disabled class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-4 py-2.5 rounded-lg text-sm disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Ajustar las esquinas a las líneas</button>
                 <button id="btn-esquinas" type="button" disabled class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-4 py-2.5 rounded-lg text-sm disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Volver a marcar las esquinas</button>
                 <button id="btn-calibrar" type="button" disabled class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-4 py-2.5 rounded-lg text-sm disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Calibrar con la posición inicial</button>
+            </div>
+
+            <div class="mb-4 bg-white dark:bg-brand-900 rounded-2xl shadow-md px-4 py-3">
+                <label class="inline-flex items-center gap-2 text-sm font-semibold text-brand-800 dark:text-white cursor-pointer"><input id="dos-tableros" type="checkbox" class="w-4 h-4 accent-accent-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"> Leer también un segundo tablero (opcional)</label>
+                <p class="text-xs text-brand-500 dark:text-brand-300 mt-1">Lo más confiable es un celular por tablero. Úsalo solo si la cámara ve los dos tableros enteros, desde arriba: con dos, cada casilla se ve más chica.</p>
+                <div id="pestanas" hidden role="group" aria-label="Qué tablero se marca, se calibra y se muestra" class="flex flex-wrap gap-2 mt-3">
+                    <button type="button" data-tablero="0" aria-pressed="true" class="font-semibold px-4 py-2 rounded-lg text-sm border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-900 text-brand-800 dark:text-brand-100 aria-pressed:bg-accent-500 aria-pressed:border-accent-500 aria-pressed:text-brand-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true" class="inline-block w-3 h-3 rounded-sm bg-yellow-400 align-middle mr-1"></span>Tablero 1</button>
+                    <button type="button" data-tablero="1" aria-pressed="false" class="font-semibold px-4 py-2 rounded-lg text-sm border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-900 text-brand-800 dark:text-brand-100 aria-pressed:bg-accent-500 aria-pressed:border-accent-500 aria-pressed:text-brand-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true" class="inline-block w-3 h-3 rounded-sm bg-cyan-400 align-middle mr-1"></span>Tablero 2</button>
+                </div>
             </div>
 
             <p id="aviso" role="status" aria-live="polite" class="mb-4 rounded-xl px-4 py-3 text-sm bg-brand-100 text-brand-800 dark:bg-brand-800 dark:text-brand-100">Empieza por abrir la cámara o elegir una foto.</p>
 
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div class="lg:col-span-2">
+                <div class="lg:col-span-2 min-w-0">
                     <div class="bg-black rounded-2xl overflow-hidden">
-                        <canvas id="lienzo" tabindex="0" width="640" height="480" aria-label="La imagen de la cámara con las casillas leídas encima. Con el teclado: las teclas 1 a 4 eligen una esquina y las flechas la mueven." class="block w-full h-auto touch-none focus:outline-none focus-visible:ring-4 focus-visible:ring-accent-400"></canvas>
+                        <canvas id="lienzo" tabindex="0" width="640" height="400" aria-label="La imagen de la cámara con las casillas leídas encima. Con el teclado: las teclas 1 a 4 eligen una esquina y las flechas la mueven; con Mayúscula, de a 10." class="block w-full h-auto touch-none focus:outline-none focus-visible:ring-4 focus-visible:ring-accent-400"></canvas>
                     </div>
                     <video id="video" playsinline muted class="hidden"></video>
                     <p class="text-xs text-brand-500 dark:text-brand-300 mt-2">Encima de cada casilla: <strong>·</strong> vacía, <strong>B</strong> pieza blanca, <strong>N</strong> pieza negra. Con borde rojo y una <strong>!</strong>, las que no coinciden con la posición que se espera.</p>
                 </div>
 
-                <div class="space-y-4">
+                <div class="space-y-4 min-w-0">
                     <section class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-4" aria-labelledby="t-lectura">
                         <h2 id="t-lectura" class="font-semibold text-brand-800 dark:text-white">Qué tan bien lee</h2>
                         <p id="acierto" class="text-3xl font-bold text-brand-800 dark:text-white mt-1">—</p>
@@ -66,8 +82,9 @@
                     </section>
 
                     <section class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-4" aria-labelledby="t-tablero">
-                        <h2 id="t-tablero" class="font-semibold text-brand-800 dark:text-white mb-2">La partida en digital</h2>
-                        <div id="tablero" aria-hidden="true" class="grid grid-cols-8 aspect-square w-full max-w-xs mx-auto border border-brand-300 dark:border-brand-600"></div>
+                        <h2 id="t-tablero" class="font-semibold text-brand-800 dark:text-white mb-2">La partida en digital<span id="t-tablero-cual"></span></h2>
+                        <div class="relative pl-5 pb-5 max-w-sm mx-auto"><div id="tablero" aria-hidden="true" class="grid grid-cols-8 grid-rows-8 aspect-square w-full rounded-md overflow-hidden select-none ring-4 ring-brand-800 dark:ring-brand-600 shadow-lg"></div></div>
+                        <p id="como-va" class="text-sm font-semibold text-brand-800 dark:text-white text-center mt-1"></p>
                         <p class="text-xs text-brand-500 dark:text-brand-300 mt-2 break-all"><span class="font-semibold">FEN:</span> <span id="fen"></span></p>
                         <h3 class="font-semibold text-sm text-brand-800 dark:text-white mt-3">Jugadas</h3>
                         <p id="jugadas" class="text-sm text-brand-700 dark:text-brand-200 mt-1 min-h-[1.5rem]">Todavía ninguna.</p>
@@ -76,15 +93,51 @@
                             <button id="btn-copiar" type="button" disabled class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-3 py-2 rounded-lg text-sm disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Copiar el PGN</button>
                         </div>
                     </section>
+                    <section class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-4" aria-labelledby="t-vivo">
+                        <h2 id="t-vivo" class="font-semibold text-brand-800 dark:text-white"><span aria-hidden="true">📡</span> Transmitir en vivo</h2>
+                        <p class="text-xs text-brand-500 dark:text-brand-300 mt-1">Quien tenga el enlace ve la partida en su celular o en un proyector, sin cuenta. Se manda solo la partida, nunca la imagen.</p>
+                        <div class="grid grid-cols-2 gap-2 mt-3">
+                            <div><label for="vivo-blancas" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 mb-1">Blancas (opcional)</label><input id="vivo-blancas" type="text" maxlength="60" autocomplete="off" class="bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm w-full focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"></div>
+                            <div><label for="vivo-negras" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 mb-1">Negras (opcional)</label><input id="vivo-negras" type="text" maxlength="60" autocomplete="off" class="bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm w-full focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"></div>
+                        </div>
+                        <div id="vivo-apagado" class="mt-3">
+                            <button id="btn-vivo" type="button" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2.5 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2">Empezar a transmitir</button>
+                        </div>
+                        <div id="vivo-encendido" hidden class="mt-3">
+                            <p class="text-sm font-semibold text-green-800 dark:text-green-200" role="status">● Transmitiendo · código <span id="vivo-codigo" class="font-mono"></span></p>
+                            <a id="vivo-enlace" href="#" target="_blank" rel="noopener" class="block text-sm text-brand-700 dark:text-brand-200 underline underline-offset-2 break-all mt-1 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"></a>
+                            <div id="vivo-qr" class="w-40 h-40 mx-auto my-3 bg-white rounded-lg"></div>
+                            <div class="flex flex-wrap gap-2">
+                                <button id="btn-vivo-copiar" type="button" class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-3 py-2 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Copiar el enlace</button>
+                                <a id="vivo-whatsapp" href="#" target="_blank" rel="noopener" class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-3 py-2 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Compartir por WhatsApp</a>
+                                <button id="btn-vivo-nuevo" type="button" class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-3 py-2 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Usar un código nuevo</button>
+                                <button id="btn-vivo-parar" type="button" class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-3 py-2 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Dejar de transmitir</button>
+                            </div>
+                            <p class="text-xs text-brand-500 dark:text-brand-300 mt-2">Mientras esta página siga abierta. Si se cierra, quien ya miraba se queda con la última jugada; al volver a transmitir se usa el mismo código.</p>
+                        </div>
+                    </section>
                 </div>
             </div>
         </div>
     </main>
 
     <footer class="bg-brand-900 text-brand-300 py-8"><div class="max-w-7xl mx-auto px-4 text-center text-sm"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p><!-- legal: inicio --><p class="mt-2"><a href="privacidad.html" class="underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Política de privacidad</a> <span aria-hidden="true">·</span> <a href="terminos.html" class="underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Términos y condiciones</a></p><!-- legal: fin --></div></footer>
+    <!-- tablero-js: inicio -->
+    <script src="js/board-themes.js"></script>
+    <script src="js/chess-piece-svg.js"></script>
+    <script src="js/pieza-preferida.js"></script>
+    <script src="js/coordenadas-tablero.js"></script>
+    <script src="js/coronacion.js"></script>
+    <!-- tablero-js: fin -->
     <script src="js/vendor/supabase.js"></script>
     <script src="js/supabase-client.js"></script>
     <script src="js/vendor/chess.js"></script>
+    <script src="js/vendor/qrcode.js"></script>
+    <script src="js/qr-svg.js"></script>
+    <script src="js/blind-notation.js"></script>
+    <script src="js/comandos-tablero.js"></script>
+    <script src="js/partida-en-vivo.js"></script>
+    <script src="js/detectar-tablero.js"></script>
     <script src="js/camara-tablero.js"></script>
 <!-- burbuja: inicio --><script src="js/burbuja-en-linea.js" defer></script><!-- burbuja: fin --><!-- juego-aviso: inicio --><script src="js/juego-aviso.js" defer></script><!-- juego-aviso: fin --><!-- aviso-profe: inicio --><script src="js/aviso-profe.js" defer></script><!-- aviso-profe: fin --><!-- tanda: inicio --><script src="js/tanda-diez.js" defer></script><!-- tanda: fin --><!-- acceso: inicio --><script src="js/acceso-vigente.js" defer></script><!-- acceso: fin --><!-- modo-vista: inicio --><script src="js/modo-vista.js" defer></script><!-- modo-vista: fin --><!-- marca: inicio --><script src="js/marca-academia.js" defer></script><!-- marca: fin --><!-- atajo: inicio --><script src="js/atajo-buscar.js" data-arriba="" defer></script><!-- atajo: fin --></body>
 </html>
