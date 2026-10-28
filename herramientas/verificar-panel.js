@@ -1319,6 +1319,8 @@ async function pruebaRegistro(browser) {
   const mesesEsperados = [];
   clasesDeMentira().slice(0, 20).forEach((c) => {
     const d = new Date(c.started_at);
+    // En hora de Costa Rica, como la página: en UTC, una clase de las 00:33 del
+    // día 1 cae en el mes siguiente y la prueba falla según a qué hora corra.
     const t = d.toLocaleDateString("es-CR", { month: "long", year: "numeric", timeZone: "America/Costa_Rica" });
     const titulo = t.charAt(0).toUpperCase() + t.slice(1).replace(" de ", " de ");
     if (!mesesEsperados.includes(titulo)) mesesEsperados.push(titulo);

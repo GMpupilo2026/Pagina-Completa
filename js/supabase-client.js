@@ -42,17 +42,29 @@ if (!window.sb) {
 //     no depender del orden en que Supabase avisa de la renovación.
 window.SesionCursos = (function () {
   var NOMBRE = "ai_sesion_cursos";
+  // Una cookie por carpeta que cuida el worker (PROTEGIDO en worker.js): con
+  // un solo Path el navegador no la manda a la otra. Con solo /cursos/, todo lo
+  // de /material/ (los libros y las fichas que se compran o se canjean por
+  // puntos) contestaba «Hace falta iniciar sesión» a quien lo tenía pagado.
+  // verificar-worker.js comprueba que las dos listas no se separen.
+  var RUTAS = ["/cursos/", "/material/"];
   var seguro = location.protocol === "https:" ? "; Secure" : "";
   function borrar() {
-    try { document.cookie = NOMBRE + "=; Path=/cursos/; Max-Age=0; SameSite=Lax" + seguro; } catch (e) { }
+    try {
+      RUTAS.forEach(function (ruta) {
+        document.cookie = NOMBRE + "=; Path=" + ruta + "; Max-Age=0; SameSite=Lax" + seguro;
+      });
+    } catch (e) { }
   }
   function guardar(session) {
     try {
       if (!session || !session.access_token) return borrar();
       var quedan = Math.floor((session.expires_at || 0) - Date.now() / 1000);
       if (quedan <= 0) return borrar();
-      document.cookie = NOMBRE + "=" + session.access_token +
-        "; Path=/cursos/; Max-Age=" + quedan + "; SameSite=Lax" + seguro;
+      RUTAS.forEach(function (ruta) {
+        document.cookie = NOMBRE + "=" + session.access_token +
+          "; Path=" + ruta + "; Max-Age=" + quedan + "; SameSite=Lax" + seguro;
+      });
     } catch (e) { }
   }
   return { guardar: guardar, borrar: borrar };
