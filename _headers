@@ -39,12 +39,22 @@
   Strict-Transport-Security: max-age=31536000; includeSubDomains
   Cross-Origin-Opener-Policy: same-origin
 
-# La cámara que lee el tablero (camara-tablero.html) es la ÚNICA página que
-# puede usar la cámara: la regla de /* la apaga en todo el sitio. Se quita esa
+# La cámara que lee el tablero (camara-tablero.html) y la página que junta
+# varias en cuadritos (camaras.html: si la de afuera no tiene la cámara,
+# ningún cuadrito puede usarla) son las ÚNICAS páginas que pueden usar la
+# cámara: la regla de /* la apaga en todo el sitio. Se quita esa
 # cabecera y se pone otra igual pero con camera=(self). Si solo se agregara la
 # nueva, Cloudflare juntaría las dos con una coma y quedaría camera=() también.
 # Va en las dos rutas: Cloudflare sirve la página sin el .html.
 /camara-tablero
+  ! Permissions-Policy
+  Permissions-Policy: geolocation=(), camera=(self), microphone=(), payment=(), usb=(), interest-cohort=()
+
+/camaras
+  ! Permissions-Policy
+  Permissions-Policy: geolocation=(), camera=(self), microphone=(), payment=(), usb=(), interest-cohort=()
+
+/camaras.html
   ! Permissions-Policy
   Permissions-Policy: geolocation=(), camera=(self), microphone=(), payment=(), usb=(), interest-cohort=()
 

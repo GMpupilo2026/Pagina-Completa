@@ -386,14 +386,18 @@
   }
 
   // ------------------------------------------------------------ el banco
-  // Buscar un colegio en el banco sin importar tildes, mayúsculas ni el orden
-  // de las palabras («Esc.» y «Escuela», «CTP» y «C.T.P.» no se igualan solos:
-  // se buscan por lo que se escribe).
+  // Cada centro del banco: { nombre, region, tipo ("primaria", "secundaria" o ""),
+  // circuito, participaciones }. Buscar sin importar tildes, mayúsculas ni el
+  // orden de las palabras; «de», «la»… no cuentan: quien busca no siempre las
+  // escribe («Esc.» y «Escuela», «CTP» y «C.T.P.» no se igualan solos: se
+  // busca por lo que se escribe).
   const claveBusqueda = (s) => sinTildes(s).replace(/[^a-z0-9ñ ]/g, " ").replace(/\s+/g, " ").trim();
   const PALABRAS_VACIAS = new Set(["de", "del", "la", "las", "el", "los", "y"]);
+  function palabrasDe(texto) {
+    return claveBusqueda(texto).split(" ").filter((p) => p && !PALABRAS_VACIAS.has(p));
+  }
   function buscarCentros(banco, texto, maximo) {
-    // «de», «la»… no distinguen a un colegio de otro y quien busca no siempre las escribe.
-    const palabras = claveBusqueda(texto).split(" ").filter((p) => p && !PALABRAS_VACIAS.has(p));
+    const palabras = palabrasDe(texto);
     if (!palabras.length) return [];
     const salida = [];
     for (let i = 0; i < banco.length; i++) {
@@ -405,10 +409,50 @@
     return salida.sort((a, b) => a.peso - b.peso || a.centro.nombre.localeCompare(b.centro.nombre, "es")).slice(0, maximo || 8).map((x) => x.centro);
   }
 
+  // Los centros que se le ofrecen a quien inscribe, según lo que ya marcó: su
+  // Dirección Regional y si es escuela o colegio. Sin escribir nada salen todos
+  // los de esa regional y ese tipo, en orden alfabético; escribiendo, se filtran
+  // por las palabras. Un centro de tipo desconocido sale en los dos tipos, y uno
+  // sin regional conocida sale solo cuando se escribe algo (no se sabe a cuál
+  // pertenece). Si en su regional no hay ninguno con lo escrito, se busca en todo
+  // el país: el banco puede tener mal la regional de un colegio.
+  // Devuelve { centros, total, enTodoElPais }.
+  function centrosDe(banco, filtros, texto, maximo) {
+    const f = filtros || {};
+    const tope = maximo || 400;
+    const palabras = palabrasDe(texto);
+    const cumple = (c) => (!f.dre || c.region === f.dre || (!c.region && palabras.length > 0)) && (!f.tipo || !c.tipo || c.tipo === f.tipo);
+    const coincide = (c) => {
+      if (!palabras.length) return true;
+      const clave = c.clave || (c.clave = claveBusqueda(c.nombre));
+      return palabras.every((p) => clave.includes(p));
+    };
+    let lista = banco.filter((c) => cumple(c) && coincide(c));
+    let enTodoElPais = false;
+    if (!lista.length && palabras.length && (f.dre || f.tipo)) {
+      lista = banco.filter(coincide);
+      enTodoElPais = true;
+    }
+    if (palabras.length) {
+      lista.sort((a, b) => ((claveBusqueda(a.nombre).startsWith(palabras[0]) ? 0 : 1) - (claveBusqueda(b.nombre).startsWith(palabras[0]) ? 0 : 1)) || b.participaciones - a.participaciones || a.nombre.localeCompare(b.nombre, "es"));
+    } else {
+      lista.sort((a, b) => a.nombre.localeCompare(b.nombre, "es"));
+    }
+    return { centros: lista.slice(0, tope), total: lista.length, enTodoElPais };
+  }
+
+  // Los circuitos que hay en una Dirección Regional, para el selector: los del
+  // banco, y los que ya tenga escritos quien inscribe.
+  function circuitosDe(banco, dre) {
+    const set = new Set();
+    for (const c of banco) if (c.circuito && (!dre || c.region === dre)) set.add(c.circuito);
+    return [...set].sort((a, b) => Number(a) - Number(b) || a.localeCompare(b));
+  }
+
   const api = {
     ETAPAS, TODAS, NOMBRE_CATEGORIA, DOCUMENTOS, TIPOS_CENTRO, NOMBRE_TORNEO, ENCABEZADOS, MAX_UNION, MAX_EQUIPOS, MAX_TITULARES,
     estadoNuevo, estudianteNuevo, personaNueva, normalizar, anioDe, categoriaPropia, categoriasPosibles, categoriaEfectiva, torneoEfectivo,
-    interregionalDe, revisar, armarEquipos, resumen, filasExcel, leerLista, buscarCentros, claveBusqueda,
+    interregionalDe, revisar, armarEquipos, resumen, filasExcel, leerLista, buscarCentros, centrosDe, circuitosDe, claveBusqueda,
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else raiz.InscripcionJde = api;

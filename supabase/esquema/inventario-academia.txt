@@ -1,8 +1,9 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20261028001139
+# al-dia-con: 20261028125408
 tabla  Ejercicios Lichess  rls=true
 tabla  _foto_rls_tmp  rls=false
+tabla  _jdn_viejos_pedidos  rls=true
 tabla  _pedidos_elo  rls=false
 tabla  academia_ia  rls=true
 tabla  academia_miembros  rls=true
@@ -245,6 +246,9 @@ columna  _foto_rls_tmp.cuando  text
 columna  _foto_rls_tmp.persona  uuid
 columna  _foto_rls_tmp.qa  bigint
 columna  _foto_rls_tmp.tr  bigint
+columna  _jdn_viejos_pedidos.art  integer
+columna  _jdn_viejos_pedidos.pedido  bigint
+columna  _jdn_viejos_pedidos.tnr  integer
 columna  _pedidos_elo.id  bigint
 columna  _pedidos_elo.p  integer
 columna  academia_ia.academia_id  uuid
@@ -995,6 +999,7 @@ columna  game_state.rival_id  uuid
 columna  game_state.shown_curso  text
 columna  game_state.shown_leccion  integer
 columna  game_state.start_fen  text
+columna  game_state.sticker  jsonb
 columna  game_state.tanda_calentamiento  jsonb
 columna  game_state.updated_at  timestamp with time zone
 columna  game_state.updated_by  uuid
@@ -3834,6 +3839,20 @@ grant  Ejercicios Lichess  authenticated  SELECT
 grant  Ejercicios Lichess  authenticated  TRIGGER
 grant  Ejercicios Lichess  authenticated  TRUNCATE
 grant  Ejercicios Lichess  authenticated  UPDATE
+grant  _jdn_viejos_pedidos  anon  DELETE
+grant  _jdn_viejos_pedidos  anon  INSERT
+grant  _jdn_viejos_pedidos  anon  REFERENCES
+grant  _jdn_viejos_pedidos  anon  SELECT
+grant  _jdn_viejos_pedidos  anon  TRIGGER
+grant  _jdn_viejos_pedidos  anon  TRUNCATE
+grant  _jdn_viejos_pedidos  anon  UPDATE
+grant  _jdn_viejos_pedidos  authenticated  DELETE
+grant  _jdn_viejos_pedidos  authenticated  INSERT
+grant  _jdn_viejos_pedidos  authenticated  REFERENCES
+grant  _jdn_viejos_pedidos  authenticated  SELECT
+grant  _jdn_viejos_pedidos  authenticated  TRIGGER
+grant  _jdn_viejos_pedidos  authenticated  TRUNCATE
+grant  _jdn_viejos_pedidos  authenticated  UPDATE
 grant  academia_ia  authenticated  SELECT
 grant  academia_miembros  authenticated  REFERENCES
 grant  academia_miembros  authenticated  SELECT

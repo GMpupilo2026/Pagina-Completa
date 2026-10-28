@@ -7303,6 +7303,18 @@ y debajo las herramientas de ese tema en tarjetas compactas, con su nombre
 corto (`corto`) y lo que hace detrás de un desplegable «Qué hace», cerrado:
 así se comparan de un vistazo sin una página larguísima.
 
+**De entrada no hay tema elegido** (lo pidió el dueño): debajo de las
+tarjetas no sale ninguna herramienta, sino el avatar del profe Oscar leyendo
+(«a-repasar», de `js/avatar-profe-oscar.js`; ver «El avatar del profe
+Oscar») con un globo que dice «¡Elige un tema!»
+(`#tema-invitacion`); al tocar un tema, Oscar se va y salen sus
+herramientas. Con el tema en la dirección (`#jde`), ese ya viene elegido.
+Sin ninguno elegido, ninguna pestaña está `aria-selected` y a la primera se
+llega con Tab. De paso: una herramienta que todavía no se puede usar dice
+«Próximamente» también para quien tiene todas (la licencia «todas» o quien
+administra); antes decía «Abierta para tu cuenta» y abajo «Todavía no se
+puede usar».
+
 **La ficha Universitarios trae también los torneos** (lo pidió el dueño):
 además de los resultados por universidad, el catálogo «Torneos universitarios
 de Costa Rica» y las páginas de cada torneo (`cenfotec-2026.html`,
@@ -8606,7 +8618,8 @@ Pareo lo usa quien organiza una etapa; esta la usa quien inscribe a su colegio.
 - **El banco** (`data/jde-banco.json`, lo arma `herramientas/jde-banco.js`, no se
   edita a mano) sale de lo que ya se leyó de chess-results para
   `ajedrez-estudiantil.html`. Lo que se decidió y por qué:
-  - Entran solo las instituciones con algún torneo de los JDE: chess-results
+  - Entran las instituciones con algún torneo de los JDE (y, desde la segunda
+    versión, todos los centros de los listados del MEP; ver más abajo): chess-results
     trae en «Club/Ciudad» países, secciones de un grupo («10-4») y nombres de
     regiones, y el generador los descarta. El resto queda como está: **hay
     colegios escritos de varias formas** («Cecilio Lindo», «Cecilio Liendo
@@ -8616,7 +8629,7 @@ Pareo lo usa quien organiza una etapa; esta la usa quien inscribe a su colegio.
   - La Dirección Regional de un colegio es la que más se repite en sus torneos,
     y solo vale si es una de las 27 de la Normativa: chess-results también dice
     «Esparza» o «Bagaces», que son circuitos. Sin región clara queda vacía y la
-    elige la persona (1 146 de 1 535 centros la traen).
+    elige la persona.
   - Los estudiantes son los de los JDE de los **últimos tres años** (los que
     pueden volver a inscribirse); salen sin fecha de nacimiento ni documento, que
     pone el docente. El sexo solo se guarda cuando es seguro: haber jugado un
@@ -8626,6 +8639,59 @@ Pareo lo usa quien organiza una etapa; esta la usa quien inscribe a su colegio.
   - El flujo mensual «Ajedrez estudiantil» lo vuelve a armar y lo incluye en su
     PR (`.github/workflows/ajedrez-estudiantil.yml`); el verificador comprueba que
     lo publicado coincide con lo que se obtiene de `data/`, y falla si no.
+- **El centro se elige en cuatro pasos y el circuito se llena solo** (lo pidió el
+  dueño del sitio después de la primera versión): se marca la Dirección Regional,
+  se marca si es **escuela o colegio** (dos botones; ya no «no lo sé»), se toca el
+  campo del centro y se **despliegan los centros de esa regional y ese tipo**
+  (`centrosDe()`, en orden alfabético, con el circuito de cada uno; tope de 400 y
+  «Hay N más: escribe para filtrar»), y al escoger el tuyo se llenan solos el
+  **circuito**, la regional y el tipo. El campo es un combobox (flechas, Enter,
+  Escape, `aria-expanded`, `aria-activedescendant`) con un botón ▾ para abrir y
+  cerrar la lista, y sigue dejando **escribir cualquier nombre**: sin regional ni
+  tipo marcados no se despliegan los 5 000 del país, pero escribir «liceo de costa
+  rica» y Enter también llena regional, tipo y circuito (el camino de atrás).
+  - Si en la regional marcada no hay ninguno con lo escrito, se busca en todo el
+    país y la lista lo dice (el banco puede tener mal la regional de un colegio).
+  - **Cambiar la regional o el tipo quita el centro elegido del banco** si ya no
+    es de ahí, con su circuito; lo escrito a mano se respeta. Un circuito nunca se
+    deja de otro centro: si el listado no ubica al centro, el circuito queda
+    «por elegir» y la ayuda lo dice.
+  - El circuito es un selector con los de la regional (los del banco) y se puede
+    cambiar: una lista vieja puede estar equivocada, y el MEP es quien manda.
+  - «Escuela o colegio» es también lo que decide la categoría de los nacidos en
+    2013 y 2014 (art. 17): es la misma pregunta, ya no hay dos.
+- **De dónde sale el circuito: los listados oficiales del MEP en PDF**, porque
+  chess-results no lo trae y el MEP no publica un archivo abierto (el portal de
+  datos abiertos no responde desde acá). `herramientas/mep-centros-leer.py` lee
+  cuatro PDF —el anexo 5 del cartel de Fonatel en sutel.go.cr (3 350 centros, con
+  el nivel: escuelas diurnas, colegios, CINDEA, IPEC…), el listado del IMAS de los
+  paquetes escolares 2018 (3 193 escuelas) y los dos cortes del listado de
+  comedores en vacaciones del MEP, 2024 (casi 400)— y los junta **por código
+  presupuestario** en `herramientas/datos/mep-centros.csv`: 4 268 centros (3 699
+  escuelas y 569 colegios), las 27 regionales, circuito de dos cifras. Si un centro
+  está en varias listas manda la más nueva para la regional y el circuito (comedor
+  2024 > Fonatel > IMAS 2018; ~130 cambiaron de circuito entre listas) y la más
+  cuidada para el nombre. **Los PDF no están en el repositorio** (son de otras
+  instituciones): el script dice las direcciones y recibe la carpeta donde se
+  bajaron. **Ninguna lista trae todos los centros**: faltan sobre todo colegios
+  (no hay ningún listado único), y son de entre 2018 y 2024. Por eso la
+  herramienta propone y deja corregir, y la página lo dice abajo.
+- **Cómo `jde-banco.js` junta chess-results con el MEP** (el nombre de chess-results
+  lo escribió el árbitro; el del MEP es el oficial). Se comparan los «núcleos» de
+  los nombres (sin tildes, sin «escuela», «de», «la»; «C.T.P.» y «Colegio Técnico
+  Profesional» son «ctp»), **dentro de la regional**: el mismo núcleo y el mismo
+  tipo, o las palabras que distinguen al centro todas dentro del nombre del otro
+  si es el único candidato. Si la regional de chess-results no lo tiene (es la del
+  torneo que jugó, no la suya: el «C.T.P. de Osa» jugó en Pérez Zeledón y es de
+  Grande de Térraba) o no trae regional, vale solo si en todo el país hay **un**
+  centro con exactamente ese nombre. **Con dos o más no se junta**: hay cientos de
+  «Escuela Santa Elena» y juntar con la equivocada le pondría a alguien un
+  circuito que no es el suyo. Resultado: de los 1 535 nombres de chess-results, 728
+  se juntaron con un centro del MEP (con su circuito) y 807 quedaron aparte, sin
+  circuito (colegios privados, otros que no están en los listados, nombres muy
+  distintos), y los centros del MEP que nunca jugaron los JDE entran igual (la
+  escuela de un docente que no jugó nunca tiene que aparecer). Los estudiantes de
+  antes siguen al centro juntado.
 - **Los archivos**: el Excel trae las columnas del reporte del MEP (Nombre, Sexo,
   FDN, Nombre de Centro Educativo, Dirección Regional, Categoría, Equipo/Ind,
   Torneo, Documento de identidad…) y **Pareo Integral lo abre con «Subir una
@@ -8656,8 +8722,15 @@ adulterado, el generador del banco con datos inventados y el banco real al día,
 en un navegador el combobox con teclado, traer y pegar estudiantes, la categoría
 y el torneo que cambian solos, el Excel y el PDF con lo escrito, guardar, bajar y
 abrir el borrador, un nombre con HTML, 400 px sin desplazamiento y el contraste de
-los hallazgos en claro y en oscuro (mínimo 4,5:1). Rompiendo a propósito la regla
-de las categorías de la Interregional o la del correo, salta.
+los hallazgos en claro y en oscuro (mínimo 4,5:1). El CSV del MEP (4 000 centros, las 27 regionales,
+código único, circuito de dos cifras), cómo se junta con chess-results (por
+regional, por nombre único en el país, sin juntar los ambiguos) y la lista
+según lo marcado (`centrosDe()`, `circuitosDe()`) también se prueban, y en el
+navegador el flujo completo: marcar regional y tipo, la lista, elegir un centro y
+ver el circuito, cambiarlo a mano, cambiar de regional, un centro sin circuito,
+el botón ▾ y el camino de escribir el nombre sin marcar nada. Rompiendo a
+propósito las categorías de la Interregional, el correo, el circuito automático o
+el borrado al cambiar de regional, salta.
 
 ## La página del Centroamericano 2026
 
@@ -9667,11 +9740,69 @@ página de quien mira).
   (`js/coordenadas-tablero.js`), «Girar el tablero» con los nombres del lado
   de sus piezas, y las jugadas en algebraica española. La última jugada se
   dice también en texto, y al lector de pantalla cuando cambia.
-- La página de quien mira NO tiene la cámara: solo `camara-tablero` la tiene
-  en `_headers` (lo revisa el verificador).
+- La página de quien mira NO tiene la cámara: solo `camara-tablero` y
+  `camaras` la tienen en `_headers` (lo revisa el verificador).
+
+- **Un torneo de Pareo Integral, con una cámara por mesa** (lo pidió el
+  dueño: «si ponemos 20 cámaras, que cada una pase su partida»). La cámara
+  elige un torneo publicado (su enlace, o «Ver los torneos de estos días»:
+  los de hace tres días a mañana en hora de Costa Rica) y su MESA física,
+  numerada como en la sala (`PartidaEnVivo.mesaFisica`, la misma cuenta que
+  `PareoEvento.mesaFisica`, comparadas en el verificador porque ese módulo es
+  muy grande para cargarlo por una línea). La cámara queda fija en la mesa y
+  en cada ronda se sientan otros: los nombres salen del torneo publicado, de
+  la ronda en que se calibró la partida (la partida que se anota no cambia de
+  jugadores a la mitad), y cuando Pareo empareja la siguiente se avisa
+  (se vuelve a leer el torneo cada minuto, o con «Buscar ronda nueva»).
+  Todas las cámaras del torneo transmiten por UN canal, el código del
+  torneo (la primera lo crea; las otras lo escriben al elegir el torneo), y
+  cada mensaje dice su torneo, ronda y mesa. Quien mira abre
+  `tablero-vivo.html#<código>&t=<id del torneo>` y ve todas las mesas de la
+  ronda en una cuadrícula (también las que no tienen cámara, con su
+  nombre), y al tocar una, en grande; un mensaje de otro torneo se ignora.
+  Los torneos por equipos todavía no.
+- **Elegir la cámara**: una computadora puede tener varias cámaras USB. La
+  lista sale después del primer permiso (antes el navegador no da los
+  nombres) y la elegida se recuerda; si ya no está conectada, se abre la de
+  siempre. Lo prueba el verificador con las dos cámaras de mentira de
+  Chromium (`--use-fake-device-for-media-stream=device-count=2`).
 
 Lo prueba `verificar-camara-tablero.js` con dos navegadores y Node relevando
 los mensajes de uno a otro, como haría el canal: quien llega tarde recibe la
 partida entera, cada jugada y «Deshacer» llegan solos, lo viejo y lo ilegal
 no se pintan, «Dejar de transmitir» deja de mandar y volver a transmitir usa
 el mismo código, y un código malo o sin nadie transmitiendo se dice.
+
+### Varias cámaras en una computadora
+
+Lo pidió el dueño para no necesitar tantos celulares: una computadora con
+varias cámaras USB, cada una encima de su mesa. `camaras.html` (de quien
+administra; `js/camaras.js`) pone un cuadrito por cámara.
+
+- **Cada cuadrito es `camara-tablero.html` entera, en un iframe con
+  `?compacto=1&puesto=N`**: la misma página de siempre, sin una segunda copia
+  de la lectura, la calibración ni la transmisión. `compacto` le pone la clase
+  `camara-compacta` al cuerpo, que esconde el encabezado, las migas, el pie, la
+  burbuja y lo marcado `data-solo-pagina` (el título, la introducción, los
+  pasos y el segundo tablero: un tablero por cámara).
+- **Lo de cada cámara se guarda aparte por puesto** (las claves de
+  `localStorage` llevan `_pN`): su dispositivo, su mesa, su partida y su
+  código propio. El torneo y su código son de todas (`camara_torneo_v1`):
+  cuando un cuadrito elige el torneo, los demás lo toman solos por el evento
+  `storage`, y cada uno elige su mesa.
+- **La página de afuera también tiene la cámara permitida en `_headers`**, y
+  el iframe lleva `allow="camera"`: sin las dos cosas el navegador no le deja
+  la cámara a ningún cuadrito, sin dar error visible.
+- **La lectura corre con `setInterval`, no con `requestAnimationFrame`**: un
+  iframe que no se ve (más abajo en la página) no recibe cuadros de
+  animación y su mesa dejaría de leerse. El dibujo sí va con rAF.
+- Se agregan o quitan cuadritos de a uno (de 1 a 8, recordado), siempre el
+  último: los que ya están no se recargan, porque perderían la cámara abierta
+  y la calibración. Ocho es el tope práctico de una computadora (cada cámara
+  ocupa su ancho de banda USB y su lectura); para 20 mesas, tres o cuatro
+  computadoras, todas en el mismo torneo.
+
+Lo prueba `verificar-camara-tablero.js` con las dos cámaras de mentira de
+Chromium: dos cuadritos, cada uno con su cámara, el torneo elegido en uno que
+aparece en el otro con el mismo código, y cada uno en su mesa con sus
+jugadores; agregar y quitar sin recargar los que ya estaban.

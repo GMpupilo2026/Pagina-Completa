@@ -642,6 +642,7 @@
             pintarPresentacion(row.presentacion || null);
             pintarPlanilla(row.planilla || null);
             pintarFormacion(row.practica || null);
+            pintarSticker(row.sticker || null);
             if (isTeacher) cargarPracticasDeFormacion();
             updateTurnIndicator();
             updateAccessForRole();
@@ -1662,7 +1663,7 @@
 
         /* Lo que vive en game_state para ESTA clase no pasa a la siguiente: el
            mapa, el calentamiento, el podio, los equipos, el tiempo para pensar,
-           el turno y la presentación. Antes quedaban puestos, y la clase del día siguiente
+           el turno, la presentación y el sticker. Antes quedaban puestos, y la clase del día siguiente
            arrancaba con el podio de la anterior a la vista. La partida votada
            también termina. El tablero y su partida no se tocan: son lo que se
            repasa. */
@@ -1670,7 +1671,7 @@
             if (partidaClase) await terminarPartidaClase("La partida de la clase terminó al cerrar la clase.");
             if (ronda) await terminarRonda("La ronda rápida terminó al cerrar la clase.");
             if (cuestionarioEnJuego) await terminarCuestionario("El cuestionario terminó al cerrar la clase.");
-            const cambios = { encuesta: null, calentamiento: null, tanda_calentamiento: null, podio: null, equipos: null, pensar: null, elegido: null, presentacion: null, planilla: null, practica: null };
+            const cambios = { encuesta: null, calentamiento: null, tanda_calentamiento: null, podio: null, equipos: null, pensar: null, elegido: null, presentacion: null, planilla: null, practica: null, sticker: null };
             // Las flechas del mapa se van con él; las que dibujó el profe, no.
             if (encuestaActual) { cambios.arrows = []; cambios.circles = []; }
             const { error } = await sb.from("game_state").update(cambios).eq("id", myGameStateId);
@@ -1686,6 +1687,7 @@
             pintarPresentacion(null, true);
             pintarPlanilla(null, true);
             pintarFormacion(null);
+            pintarSticker(null);
         }
 
         /* Lo que aparece para toda la clase, dicho en voz para quien usa lector
@@ -4462,6 +4464,23 @@
                 mostrarPanelAlumnos();
                 elegirAlAzar();
             });
+        }
+
+        /* ---------- Los stickers del profe (game_state.sticker) ----------
+           El dibujo del profe Oscar con una frase, unos segundos encima de la
+           clase (js/clase-stickers.js). Solo lo pone el profe y la hora es la
+           de la base, como el tiempo para pensar. */
+        function pintarSticker(sticker) {
+            if (!window.ClaseStickers || modoControl) return;
+            ClaseStickers.mostrar(sticker, { esProfe: isTeacher, yo: profile.id, nombreDe: nombreDeConectado });
+        }
+
+        async function guardarSticker(sticker) {
+            const { data, error } = await sb.from("game_state").update({ sticker }).eq("id", myGameStateId).select("sticker").single();
+            if (error) { console.error(error); setStatus("No se pudo mandar el sticker: " + error.message); return false; }
+            pintarSticker(data && "sticker" in data ? data.sticker : sticker);
+            setStatus("😀 Sticker enviado" + (sticker.para ? " a " + nombreDeConectado(sticker.para) : " a toda la clase") + ".");
+            return true;
         }
 
         /* ---------- El modo proyector ----------
@@ -7918,6 +7937,14 @@
             if (window.ClaseBromas && !modoProyector && !modoControl && !vistaPrevia) {
                 ClaseBromas.montar({ sb, profe: boardOwnerId, yo: profile.id,
                     esProfe: isTeacher && profile.role === "profesor", esAlumno: !isTeacher });
+            }
+            // Los stickers del profe: el botón, en «Alumnos conectados».
+            if (window.ClaseStickers && isTeacher && profile.role === "profesor" && !modoProyector && !modoControl && !vistaPrevia) {
+                ClaseStickers.montarProfe({
+                    contenedor: document.getElementById("students-panel"),
+                    conectados: () => [...onlineStudents.keys()].map((id) => ({ id, nombre: nombreDeConectado(id) })),
+                    mandar: guardarSticker,
+                });
             }
 
             document.getElementById("loading").classList.add("hidden");

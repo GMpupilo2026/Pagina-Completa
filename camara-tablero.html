@@ -36,10 +36,10 @@
         </div>
 
         <div id="app" class="hidden">
-            <h1 class="font-serif text-3xl sm:text-4xl font-bold text-brand-800 dark:text-white"><span aria-hidden="true">📷</span> Cámara que lee el tablero <span class="text-base align-middle font-sans font-semibold bg-accent-100 text-brand-900 rounded-full px-3 py-1">Prueba</span></h1>
-            <p class="text-brand-500 dark:text-brand-300 mt-1 mb-6">Pon el celular encima del tablero, mirando hacia abajo, y sigue los pasos. Sirve para medir qué tan bien se ven nuestros tableros con la luz real del salón. No guarda nada ni manda la imagen a ningún lado: todo pasa en este celular.</p>
+            <h1 data-solo-pagina class="font-serif text-3xl sm:text-4xl font-bold text-brand-800 dark:text-white"><span aria-hidden="true">📷</span> Cámara que lee el tablero <span class="text-base align-middle font-sans font-semibold bg-accent-100 text-brand-900 rounded-full px-3 py-1">Prueba</span></h1>
+            <p data-solo-pagina class="text-brand-500 dark:text-brand-300 mt-1 mb-6">Pon el celular encima del tablero, mirando hacia abajo, y sigue los pasos. Sirve para medir qué tan bien se ven nuestros tableros con la luz real del salón. No guarda nada ni manda la imagen a ningún lado: todo pasa en este celular.</p>
 
-            <ol class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6 text-sm">
+            <ol data-solo-pagina class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6 text-sm">
                 <li class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-4"><p class="font-semibold text-brand-800 dark:text-white">1. La imagen</p><p class="text-brand-500 dark:text-brand-300 mt-1">Abre la cámara o, para probar sin tablero, elige una foto.</p></li>
                 <li class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-4"><p class="font-semibold text-brand-800 dark:text-white">2. El tablero</p><p class="text-brand-500 dark:text-brand-300 mt-1">Toca «Buscar el tablero» o marca tú las cuatro esquinas, en cualquier orden: se ajustan solas a las líneas.</p></li>
                 <li class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-4"><p class="font-semibold text-brand-800 dark:text-white">3. Calibrar</p><p class="text-brand-500 dark:text-brand-300 mt-1">Con las piezas en la posición inicial, toca «Calibrar»: ahí descubre cuál esquina es a1. Si se movió la cámara a media partida, «Seguir con esta partida» no pierde nada.</p></li>
@@ -55,7 +55,11 @@
                 <button id="btn-seguir" type="button" disabled class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-4 py-2.5 rounded-lg text-sm disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Seguir con esta partida</button>
             </div>
 
-            <div class="mb-4 bg-white dark:bg-brand-900 rounded-2xl shadow-md px-4 py-3">
+            <div id="camara-elegir-caja" hidden class="mb-4">
+                <label for="camara-elegir" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 mb-1">Esta computadora tiene varias cámaras: ¿cuál uso?</label>
+                <select id="camara-elegir" class="w-full sm:w-auto bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"></select>
+            </div>
+            <div data-solo-pagina class="mb-4 bg-white dark:bg-brand-900 rounded-2xl shadow-md px-4 py-3">
                 <label class="inline-flex items-center gap-2 text-sm font-semibold text-brand-800 dark:text-white cursor-pointer"><input id="dos-tableros" type="checkbox" class="w-4 h-4 accent-accent-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"> Leer también un segundo tablero (opcional)</label>
                 <p class="text-xs text-brand-500 dark:text-brand-300 mt-1">Lo más confiable es un celular por tablero. Úsalo solo si la cámara ve los dos tableros enteros, desde arriba: con dos, cada casilla se ve más chica.</p>
                 <div id="pestanas" hidden role="group" aria-label="Qué tablero se marca, se calibra y se muestra" class="flex flex-wrap gap-2 mt-3">
@@ -113,6 +117,36 @@
                             </form>
                         </details>
                     </section>
+                    <section class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-4" aria-labelledby="t-torneo">
+                        <h2 id="t-torneo" class="font-semibold text-brand-800 dark:text-white"><span aria-hidden="true">🏆</span> Partida de un torneo (opcional)</h2>
+                        <p class="text-xs text-brand-500 dark:text-brand-300 mt-1">De Torneos en Pareo Integral: cada cámara elige su mesa, los nombres de cada ronda salen solos y quien mira ve todas las mesas juntas.</p>
+                        <div id="torneo-elegir" class="mt-3 space-y-3">
+                            <div>
+                                <label for="torneo-codigo-unirse" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 mb-1">Si otra cámara ya transmite el torneo, su código (si no, déjalo vacío)</label>
+                                <input id="torneo-codigo-unirse" type="text" maxlength="8" autocomplete="off" autocapitalize="none" spellcheck="false" class="w-full font-mono bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                            </div>
+                            <div>
+                                <label for="torneo-enlace" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 mb-1">El enlace del torneo publicado</label>
+                                <div class="flex gap-2"><input id="torneo-enlace" type="url" autocomplete="off" placeholder="Pega el enlace del torneo" class="flex-1 min-w-0 bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><button id="btn-torneo" type="button" class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-3 py-2 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Usar</button></div>
+                            </div>
+                            <button id="btn-torneo-lista" type="button" class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-3 py-2 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Ver los torneos de estos días</button>
+                            <div id="torneo-lista" class="grid gap-2 text-sm text-brand-600 dark:text-brand-300"></div>
+                        </div>
+                        <div id="torneo-elegido" hidden class="mt-3 space-y-3">
+                            <p class="text-sm text-brand-800 dark:text-white"><span id="torneo-nombre" class="font-semibold"></span> · ronda <span id="torneo-ronda"></span></p>
+                            <div>
+                                <label for="torneo-mesa" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 mb-1">Esta cámara está en la mesa</label>
+                                <select id="torneo-mesa" class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"></select>
+                            </div>
+                            <div>
+                                <label for="torneo-codigo" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 mb-1">Código de transmisión del torneo (el mismo en todas las cámaras)</label>
+                                <input id="torneo-codigo" type="text" maxlength="8" autocomplete="off" autocapitalize="none" spellcheck="false" class="w-full font-mono bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                            </div>
+                            <button id="btn-torneo-ronda" type="button" class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-3 py-2 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Buscar ronda nueva</button>
+                            <button id="btn-torneo-quitar" type="button" class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-3 py-2 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Dejar el torneo</button>
+                        </div>
+                    </section>
+
                     <section class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-4" aria-labelledby="t-vivo">
                         <h2 id="t-vivo" class="font-semibold text-brand-800 dark:text-white"><span aria-hidden="true">📡</span> Transmitir en vivo</h2>
                         <p class="text-xs text-brand-500 dark:text-brand-300 mt-1">Quien tenga el enlace ve la partida en su celular o en un proyector, sin cuenta. Se manda solo la partida, nunca la imagen.</p>
@@ -156,6 +190,7 @@
     <script src="js/qr-svg.js"></script>
     <script src="js/blind-notation.js"></script>
     <script src="js/comandos-tablero.js"></script>
+    <script src="js/hora-cr.js"></script>
     <script src="js/partida-en-vivo.js"></script>
     <script src="js/detectar-tablero.js"></script>
     <script src="js/camara-tablero.js"></script>
