@@ -3314,6 +3314,15 @@ el juego en `js/entreno-tipos-mas.js`.
   eso **el banco arranca en +4 y la meta es +3** (un peón de margen para ese
   ruido), y el corte de «se escapó» está en +1,5: lo que se mide es que la
   ventaja no se derrumbe, no décimas.
+- **Con pista no cuenta para las tareas.** La pista deja una estrella, y en
+  los demás tipos una estrella ya registra el ejercicio en `training_progress`
+  (lo que cuentan las tareas, la meta del día y la racha). En Remata, no: el
+  catálogo lleva `pistaNoCuenta: true` y `terminar()` pide dos estrellas o más
+  para registrar. La estrella con pista sí se guarda (avance del tipo) y el
+  ejercicio entra en «Repasar fallados»; como `registrar()` anota el ejercicio
+  solo al registrarlo, resolverlo después sin pista lo cuenta una vez. Lo que
+  ya se había registrado con pista antes de este cambio sigue contando. Lo
+  prueba `verificar-tipos-pagina.js`.
 - `node herramientas/tipos-generar.js --solo remata` rehace solo este banco.
   En la clase en vivo trae «🎯 Practicar»: cada alumno la juega contra el
   motor en su tablero.
