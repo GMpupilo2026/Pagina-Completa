@@ -174,14 +174,20 @@ const visible = (p, sel) => p.$eval(sel, (e) => e.checkVisibility());
 
     // Las fichas por tema: se ve solo lo del tema elegido, medido en la pantalla.
     const vistas = () => v.$$eval("#lista > li", (l) => l.filter((x) => x.checkVisibility()).map((x) => x.dataset.herramienta));
-    igual("las fichas, en orden y con cuántas trae cada una",
-        await v.$$eval("#temas [role=tab]", (l) => l.map((b) => [b.dataset.tema, b.textContent.replace(/\s+/g, " ").trim(), b.getAttribute("aria-selected")])),
-        [["arbitraje", "⚖️ Arbitraje (6)", "true"], ["jde", "🏫 JDE (5)", "false"], ["jdn", "🏆 JDN (2)", "false"], ["universitarios", "🎓 Universitarios (1)", "false"]]);
+    igual("las tarjetas de tema, en orden y con cuántas herramientas trae cada una",
+        await v.$$eval("#temas [role=tab]", (l) => l.map((b) => [b.dataset.tema, b.querySelector(".font-serif").textContent, /^\d+ herramientas? →$/.test(b.lastChild.textContent) && b.lastChild.textContent.split(" ")[0], b.getAttribute("aria-selected")])),
+        [["arbitraje", "Arbitraje", "6", "true"], ["jde", "Juegos Deportivos Estudiantiles", "5", "false"], ["jdn", "Juegos Deportivos Nacionales", "2", "false"], ["universitarios", "Universitarios", "1", "false"]]);
+    igual("lo que hace cada herramienta va detrás de «Qué hace», cerrado",
+        await v.$eval("#lista li[data-herramienta='pareo'] details", (d) => [d.querySelector("summary").textContent, d.open, d.querySelector("ul").checkVisibility()]),
+        ["Qué hace (5)", false, false]);
+    await v.click("#lista li[data-herramienta='pareo'] summary");
+    igual("y se abre al tocarlo", await v.$eval("#lista li[data-herramienta='pareo'] details ul", (u) => u.checkVisibility()), true);
     igual("de entrada, solo las de arbitraje", await vistas(), ["pareo", "arbitros", "arbitros-cr", "desempates", "variacion-elo", "reclamos-tablas"]);
     await v.click("#tab-jdn");
     igual("en la ficha JDN, solo las de los JDN, y la dirección la recuerda",
         [await vistas(), await v.evaluate(() => location.hash), await v.$eval("#panel-tema", (d) => d.getAttribute("aria-labelledby"))],
         [["jdn-comites", "jdn-proyeccion"], "#jdn", "tab-jdn"]);
+    igual("y el título de la lista dice el tema", await v.$eval("#tema-titulo", (h) => h.textContent), "🏆 Juegos Deportivos Nacionales");
     await v.focus("#tab-jdn");
     await v.keyboard.press("ArrowRight");
     igual("con la flecha se pasa a la ficha siguiente",

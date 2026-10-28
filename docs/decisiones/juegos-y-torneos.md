@@ -7295,6 +7295,14 @@ otras fichas quedan con `hidden`; la ficha elegida va en la dirección
 Las fichas son pestañas de verdad (`role="tab"`, flechas, Inicio y Fin). Lo
 revisa `verificar-seleccion-pagina.js`, midiendo qué se ve.
 
+De tres maquetas (pestañas chicas arriba, portada de temas y menú al costado)
+el dueño eligió **la portada de temas**: arriba, una tarjeta grande por tema
+con su ícono, de qué se trata y cuántas herramientas trae (de dos en dos y sin
+el resumen en el celular, donde al tocar una se baja sola a sus herramientas),
+y debajo las herramientas de ese tema en tarjetas compactas, con su nombre
+corto (`corto`) y lo que hace detrás de un desplegable «Qué hace», cerrado:
+así se comparan de un vistazo sin una página larguísima.
+
 También son gratis el **historial de un jugador** y las **estadísticas por
 colegio y región** (ver «Historial del jugador y estadísticas por colegio»), y
 **«Ajedrez estudiantil en Costa Rica»**
