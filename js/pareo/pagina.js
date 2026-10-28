@@ -3201,8 +3201,9 @@
     if (estado.camaras) return true;
     const canal = window.sb.channel(window.PartidaEnVivo.canal(c));
     canal.on("broadcast", { event: "estado" }, (msg) => recibirDeCamara(msg.payload || {}));
+    canal.on("broadcast", { event: "alerta" }, (msg) => alertaDeCamara(msg.payload || {}));
     canal.subscribe((st) => { if (st === "SUBSCRIBED") canal.send({ type: "broadcast", event: "pedir", payload: {} }); });
-    estado.camaras = { idTorneo: estado.id, codigo: c, canal, mesas: new Map() };
+    estado.camaras = { idTorneo: estado.id, codigo: c, canal, mesas: new Map(), alertas: new Map() };
     return true;
   }
   function desconectarCamaras() {
@@ -3230,7 +3231,7 @@
     estado.camaras.mesas.set(d.mesa, Date.now());
     let cambio = false, repintar = false, aviso = null;
     // La partida: la de la cámara, salvo que la mesa tenga una escrita a mano.
-    const pgn = d.juego.history().length ? window.PartidaEnVivo.pgn(d.juego, d.resultado) : "";
+    const pgn = d.juego.history().length ? window.PartidaEnVivo.pgn(d.juego, d.resultado, d.tiempos) : "";
     if (pgn && (!m.pgn || m.pgnCamara) && m.pgn !== pgn) { m.pgn = pgn; m.pgnCamara = true; cambio = true; }
     // El resultado: para confirmar, nunca anotado solo.
     if (d.resultado) {
@@ -3258,6 +3259,23 @@
     }
     if (aviso) Avisos.avisar(aviso, { tipo: "info" });
   }
+  // La cámara ve algo que no sale de ninguna jugada legal: puede ser una
+  // jugada ilegal. Se avisa (sin las casillas: con retraso, eso sería pasar
+  // la jugada) y queda en la caja de las cámaras hasta que se marca «Visto».
+  // Una vez cada 30 segundos por mesa, como mucho.
+  function alertaDeCamara(p) {
+    const v = torneoDeCamaras();
+    if (!v || !v.publicado || !v.rondas.length || E.esDeEquipos(v) || p.torneo !== v.publicado.id || Number(p.ronda) !== v.rondas.length) return;
+    const mesa = Number(p.mesa);
+    const R = v.rondas[v.rondas.length - 1];
+    if (!R.mesas.some((x, k) => V.mesaFisica(v, k) === mesa)) return;
+    const antes = estado.camaras.alertas.get(mesa);
+    if (antes && Date.now() - antes < 30000) return;
+    estado.camaras.alertas.set(mesa, Date.now());
+    Avisos.avisar(tx("camaraAlerta", { m: mesa }), { tipo: "error" });
+    pintarCamaras();
+  }
+
   // Arriba de la ronda: con qué código se escucha y qué mesas mandan.
   function pintarCamaras() {
     const caja = $("pi-camaras-caja");
@@ -3268,10 +3286,14 @@
     if (!activas) { caja.replaceChildren(); return; }
     const mesas = estado.camaras && estado.camaras.idTorneo === estado.id ? [...estado.camaras.mesas.keys()].sort((a, b) => a - b) : [];
     const dejar = el("button", { type: "button", id: "pi-camaras-dejar", class: C.mini, onclick: dejarCamaras }, tx("camarasDejar"));
+    const alertas = estado.camaras && estado.camaras.idTorneo === estado.id ? [...estado.camaras.alertas.entries()].sort((a, b) => a[0] - b[0]) : [];
+    const listaAlertas = alertas.length ? el("ul", { id: "pi-camaras-alertas", class: "mt-2 space-y-1 text-sm" }, alertas.map(([m, h]) => el("li", { class: "flex flex-wrap items-center gap-2", "data-alerta": String(m) },
+      el("span", { class: "font-semibold", texto: tx("camaraAlertaFila", { m, h: horaCR(h) }) }),
+      el("button", { type: "button", class: C.mini, onclick: () => { estado.camaras.alertas.delete(m); pintarCamaras(); } }, tx("camaraAlertaVista"))))) : null;
     caja.replaceChildren(el("h3", { class: "font-semibold" }, el("span", { "aria-hidden": "true", texto: "🎥 " }), tx("camarasCajaTitulo")),
       el("p", { class: C.nota, texto: tx("camarasCajaTexto", { c: v.camaras.codigo }) }),
       el("p", { id: "pi-camaras-mesas", class: "text-sm mt-1", texto: mesas.length ? tx("camarasMesas", { m: mesas.join(", ") }) : tx("camarasNinguna") }),
-      el("div", { class: "mt-2" }, dejar));
+      listaAlertas, el("div", { class: "mt-2" }, dejar));
   }
 
   // ---------- El chat con los adjuntos y sus llamadas ----------

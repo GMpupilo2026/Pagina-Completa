@@ -84,17 +84,18 @@ function torneo() {
   const manda = (o) => page.evaluate(([c, o]) => {
     const j = new window.Chess();
     o.jugadas.forEach((x) => j.move(x));
-    const p = window.PartidaEnVivo.estado(j, { blancas: "X", negras: "Y" }, { torneo: o.torneo, ronda: o.ronda, mesa: o.mesa }, o.resultado);
+    const p = window.PartidaEnVivo.estado(j, { blancas: "X", negras: "Y" }, { torneo: o.torneo, ronda: o.ronda, mesa: o.mesa }, o.resultado, { tiempos: o.tiempos });
     window.__llega(c, "estado", p);
   }, [CANAL, Object.assign({ torneo: ID, ronda: 1, jugadas: [] }, o)]);
 
   console.log("\n=== La partida de cada mesa entra sola ===");
   await page.evaluate(() => { document.getElementById("pi-buscar-mesa").dataset.marca = "sigue"; document.getElementById("pi-buscar-mesa").focus(); });
   const antesDeLaJugada = await page.evaluate(() => localStorage.getItem("pareo_torneo_v1_tp"));
-  await manda({ mesa: 2, jugadas: ["e4", "e5", "Nf3"] });
-  let g = await P.esperarGuardado(page, (l) => /1\. e4 e5 2\. Nf3/.test(l[0].rondas[0].mesas[1].pgn || "")).then((l) => l[0]);
-  igual("la partida de la mesa 2 queda en la mesa, marcada como de la cámara", [/1\. e4 e5 2\. Nf3/.test(g.rondas[0].mesas[1].pgn), g.rondas[0].mesas[1].pgnCamara], [true, true]);
+  await manda({ mesa: 2, jugadas: ["e4", "e5", "Nf3"], tiempos: [5000, 12000, 83000] });
+  let g = await P.esperarGuardado(page, (l) => /1\. e4 .*e5 .*2\. Nf3/.test(l[0].rondas[0].mesas[1].pgn || "")).then((l) => l[0]);
+  igual("la partida de la mesa 2 queda en la mesa, marcada como de la cámara", [/1\. e4 .*e5 .*2\. Nf3/.test(g.rondas[0].mesas[1].pgn), g.rondas[0].mesas[1].pgnCamara], [true, true]);
   igual("sin anotar ningún resultado", g.rondas[0].mesas[1].r, null);
+  igual("con lo que pensó cada jugada, como lo escribe Lichess", /1\. e4 \{\[%emt 0:00:05\]\} e5 \{\[%emt 0:00:12\]\} 2\. Nf3 \{\[%emt 0:01:23\]\}/.test(g.rondas[0].mesas[1].pgn), true);
   igual("y sin volver a pintar la ronda: quien estaba escribiendo sigue ahí", await page.evaluate(() => [document.getElementById("pi-buscar-mesa").dataset.marca, document.activeElement && document.activeElement.id]), ["sigue", "pi-buscar-mesa"]);
   await page.waitForFunction(() => /Mesas con cámara: 2\./.test(document.getElementById("pi-camaras-mesas").textContent)).catch(() => {});
   igual("dice qué mesas tienen cámara", await page.textContent("#pi-camaras-mesas"), "Mesas con cámara: 2.");
@@ -103,7 +104,7 @@ function torneo() {
     const t = JSON.parse(localStorage.getItem("pareo_torneo_v1_tp"));
     return window.PareoPublicar.datosPublicos(t).rondas[0].mesas[1];
   });
-  igual("sale en el torneo publicado (sin la marca interna)", [/1\. e4 e5 2\. Nf3/.test(pub.pgn), "pgnCamara" in pub], [true, false]);
+  igual("sale en el torneo publicado (sin la marca interna)", [/1\. e4 .*e5 .*2\. Nf3/.test(pub.pgn), "pgnCamara" in pub], [true, false]);
   // El historial anota lo que describe PareoHistorial: una partida que llega no es un cambio para deshacer.
   igual("una jugada no ensucia el historial de cambios", await page.evaluate((a) => window.PareoHistorial.describir(JSON.parse(a), JSON.parse(localStorage.getItem("pareo_torneo_v1_tp"))), antesDeLaJugada), []);
 
@@ -116,7 +117,7 @@ function torneo() {
   await page.waitForTimeout(400);
   g = await guardado();
   igual("la partida escrita a mano no se pisa", g.rondas[0].mesas[2].pgn, "1. d4 d5");
-  ok(/1\. e4 e5 2\. Nf3/.test(g.rondas[0].mesas[1].pgn), "ni la de otro torneo, ni la de otra ronda, ni una ilegal cambian la mesa 2", g.rondas[0].mesas[1].pgn);
+  ok(/1\. e4 .*e5 .*2\. Nf3/.test(g.rondas[0].mesas[1].pgn), "ni la de otro torneo, ni la de otra ronda, ni una ilegal cambian la mesa 2", g.rondas[0].mesas[1].pgn);
 
   console.log("\n=== El resultado: para confirmar, nunca solo ===");
   await manda({ mesa: 2, jugadas: ["e4", "e5", "Nf3"], resultado: "1-0" });
@@ -149,13 +150,29 @@ function torneo() {
   g = await P.esperarGuardado(page, (l) => (l[0].rondas[0].deCamaras || []).every((x) => x.resuelta)).then((l) => l[0]);
   igual("«Descartar» lo quita sin anotar nada", g.rondas[0].mesas[2].r, null);
 
+  console.log("\n=== Una posible jugada ilegal ===");
+  const alerta = (o) => page.evaluate(([c, o]) => window.__llega(c, "alerta", o), [CANAL, Object.assign({ v: 1, torneo: ID, ronda: 1, t: Date.now() }, o)]);
+  await alerta({ mesa: 9 });
+  await alerta({ mesa: 2, torneo: "5d6e0b9f-3c2e-4d8e-9c55-7a411f2a3b4c" });
+  await page.waitForTimeout(300);
+  ok(!(await page.$("#pi-camaras-alertas")), "la de otro torneo o de una mesa que no está, no");
+  await alerta({ mesa: 3 });
+  await page.waitForSelector("#pi-camaras-alertas [data-alerta=\"3\"]");
+  ok(/Mesa 3: posible jugada ilegal/.test(await page.textContent("#pi-camaras-alertas")), "la de la mesa 3 le llega al árbitro, arriba de la ronda");
+  ok(/La cámara de la mesa 3 ve algo que no es una jugada legal/.test(await page.textContent("body")), "con un aviso");
+  await alerta({ mesa: 3 });
+  const avisosDe3 = () => page.evaluate(() => [...document.querySelectorAll(".avisos-mensaje")].filter((x) => /La cámara de la mesa 3 ve algo/.test(x.textContent)).length);
+  igual("la misma mesa otra vez enseguida no se repite (ni en la lista ni en los avisos)", [await page.locator("#pi-camaras-alertas li").count(), await avisosDe3()], [1, 1]);
+  await page.click("#pi-camaras-alertas [data-alerta=\"3\"] button");
+  ok(!(await page.$("#pi-camaras-alertas")), "«Visto» la quita");
+
   console.log("\n=== Dejar de recibir ===");
   await page.click("#pi-camaras-dejar");
   g = await P.esperarGuardado(page, (l) => l[0].camaras && l[0].camaras.activo === false).then((l) => l[0]);
   ok(!(await P.vis(page, "#pi-camaras-caja")), "la caja de las cámaras se va");
   await manda({ mesa: 2, jugadas: ["e4", "c5"] });
   await page.waitForTimeout(300);
-  ok(/1\. e4 e5 2\. Nf3/.test((await guardado()).rondas[0].mesas[1].pgn), "y ya no entra nada");
+  ok(/1\. e4 .*e5 .*2\. Nf3/.test((await guardado()).rondas[0].mesas[1].pgn), "y ya no entra nada");
 
   igual("sin errores en la consola", errores, []);
   await browser.close();

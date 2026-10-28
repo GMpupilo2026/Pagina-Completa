@@ -170,6 +170,17 @@
                             <div><label for="vivo-blancas" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 mb-1">Blancas (opcional)</label><input id="vivo-blancas" type="text" maxlength="60" autocomplete="off" class="bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm w-full focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"></div>
                             <div><label for="vivo-negras" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 mb-1">Negras (opcional)</label><input id="vivo-negras" type="text" maxlength="60" autocomplete="off" class="bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm w-full focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"></div>
                         </div>
+                        <div class="mt-3">
+                            <label for="vivo-retraso" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 mb-1">Retraso de la transmisión</label>
+                            <select id="vivo-retraso" aria-describedby="vivo-retraso-ayuda" class="w-full sm:w-auto bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                                <option value="0">Sin retraso</option>
+                                <option value="5">5 minutos</option>
+                                <option value="10">10 minutos</option>
+                                <option value="15">15 minutos</option>
+                                <option value="30">30 minutos</option>
+                            </select>
+                            <p id="vivo-retraso-ayuda" class="text-xs text-brand-500 dark:text-brand-300 mt-1">Contra la ayuda desde afuera: quien mira ve cada jugada ese tiempo después. Cuando la partida termina, la ve entera. En un torneo vale para todas sus cámaras.</p>
+                        </div>
                         <div id="vivo-apagado" class="mt-3">
                             <button id="btn-vivo" type="button" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2.5 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2">Empezar a transmitir</button>
                         </div>
