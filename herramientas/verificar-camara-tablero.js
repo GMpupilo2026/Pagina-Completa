@@ -307,6 +307,117 @@ async function esperarJugadas(p, n) {
     await cerrar(b);
   }
 
+  console.log("\nLa jugada dudosa: la más probable, o se pregunta");
+  {
+    const b = await abrir(browser, "camara-tablero.html");
+    const pb = b.page;
+    await pb.waitForSelector("#app:not(.hidden)");
+    // Lecturas armadas a mano, con la seguridad de cada casilla.
+    const decidir = (pgn, cambios, seguras) => pb.evaluate(([pgn, cambios, seguras]) => {
+      const L = window.LectorTablero, j = new window.Chess();
+      j.load_pgn(pgn);
+      const lec = L.esperada(j).split("");
+      const seg = new Float32Array(64).fill(0.9);
+      for (const [cas, letra, s] of cambios) {
+        const k = (Number(cas[1]) - 1) * 8 + "abcdefgh".indexOf(cas[0]);
+        lec[k] = letra; seg[k] = s;
+      }
+      return L.decidir(j, lec.join(""), seguras === false ? undefined : seg);
+    }, [pgn, cambios, seguras]);
+    // Cf3 con la pieza que «se ve un poco» en e3 y en f4 (dudosas): sin la
+    // seguridad no calzaba ninguna; con ella, se anota Cf3.
+    const cf3 = [["g1", ".", 0.9], ["f3", "B", 0.8], ["e3", "B", 0.1], ["f4", "B", 0.1]];
+    igual("sin la seguridad de cada casilla, Cf3 con e3 dudosa no se anotaba", await decidir("1. e4 e5", cf3, false), null);
+    igual("con ella, se anota Cf3 (e3 y f4 casi no pesan)", await decidir("1. e4 e5", cf3), { jugadas: ["Nf3"] });
+    const empate = await decidir("1. e4 e5", [["g1", ".", 0.9], ["f3", "B", 0.2], ["e2", "B", 0.2]]);
+    igual("si dos jugadas explican igual la lectura, pregunta cuál fue (Cf3 o Ce2)",
+      empate && empate.dudas && empate.dudas.map((x) => x.join()).sort(), ["Ne2", "Nf3"]);
+    igual("una sombra dudosa sin ninguna casilla vacía de más no inventa una jugada",
+      await decidir("1. e4 e5", [["h6", "N", 0.2]]), null);
+    igual("una jugada clara sigue saliendo igual", await decidir("1. e4 e5", [["g1", ".", 0.9], ["f3", "B", 0.9]]), { jugadas: ["Nf3"] });
+
+    // Anotar a mano: en español, y solo si es legal.
+    const j = new Chess();
+    await foto(pb, j.fen(), ESQ0);
+    await esperarAviso(pb, /esquinas/);
+    await tocar(pb, aLienzo(ESQ0));
+    await pb.click("#btn-calibrar");
+    await esperarAviso(pb, /Calibrado/);
+    await pb.fill("#jugada-mano", "Cf6");
+    await pb.click("#form-anotar button[type=submit]");
+    igual("una jugada que no es legal no se anota", [(await aviso(pb)).includes("no es una jugada legal"), await jugadasDe(pb)], [true, "Todavía ninguna."]);
+    await pb.fill("#jugada-mano", "e4");
+    await pb.click("#form-anotar button[type=submit]");
+    igual("una legal sí, escrita a mano", await jugadasDe(pb), "1. e4");
+    j.move("e4");
+    await foto(pb, j.fen(), ESQ0);
+    j.move("e5"); await foto(pb, j.fen(), ESQ0); await esperarJugadas(pb, 2);
+    igual("y la cámara sigue desde ahí", await jugadasDe(pb), "1. e4 e5");
+
+    // Un golpe chico a la cámara: todo se corre unos píxeles.
+    const CORRIDA = ESQ0.map(([x, y]) => [x + 30, y + 18]);
+    j.move("Nf3");
+    await foto(pb, j.fen(), CORRIDA);
+    await esperarAviso(pb, /cámara se movió/, 15000).catch(() => { /* lo dice la comprobación que sigue */ });
+    igual("si la cámara se corre un poco, vuelve a ubicar el tablero sola", await aviso(pb), "La cámara se movió: el tablero se volvió a ubicar y la partida sigue.");
+    await esperarJugadas(pb, 3);
+    j.move("Nc6"); await foto(pb, j.fen(), CORRIDA); await esperarJugadas(pb, 4);
+    igual("y sigue anotando sin perder nada", await jugadasDe(pb), "1. e4 e5 2. Cf3 Cc6");
+
+    // Un golpe grande: el tablero queda en otro lado de la foto.
+    const LEJOS = TABLEROS["visto de lado (un trapecio)"];
+    j.move("Bc4");
+    await foto(pb, j.fen(), LEJOS);
+    await esperarAviso(pb, /cámara se movió/, 15000);
+    igual("si se corre mucho, dice qué hacer sin perder lo anotado", (await aviso(pb)).startsWith("Parece que la cámara se movió"), true);
+    await pb.click("#btn-buscar");
+    await esperarAviso(pb, /Encontré|No encontré/, 60000);
+    await pb.click("#btn-seguir");
+    await esperarAviso(pb, /sigo con la partida|no se ve/);
+    igual("«Buscar el tablero» y «Seguir con esta partida» siguen con las mismas jugadas", [(await aviso(pb)).startsWith("Listo, sigo con la partida"), (await jugadasDe(pb)).startsWith("1. e4 e5 2. Cf3 Cc6")], [true, true]);
+    await esperarJugadas(pb, 5);
+    j.move("Nf6"); await foto(pb, j.fen(), LEJOS); await esperarJugadas(pb, 6);
+    igual("y las jugadas siguientes se anotan", await jugadasDe(pb), "1. e4 e5 2. Cf3 Cc6 3. Ac4 Cf6");
+
+    // La página se recarga: la partida estaba guardada en el celular.
+    await pb.reload({ waitUntil: "load" });
+    await pb.waitForSelector("#app:not(.hidden)");
+    igual("al volver a abrir la página, recupera la partida", [(await aviso(pb)).startsWith("Se recuperó la partida que estabas anotando (6 jugadas)"), await jugadasDe(pb)], [true, "1. e4 e5 2. Cf3 Cc6 3. Ac4 Cf6"]);
+    await foto(pb, j.fen(), LEJOS);
+    await esperarAviso(pb, /esquinas/);
+    await pb.click("#btn-buscar");
+    await esperarAviso(pb, /Encontré|No encontré/, 60000);
+    await pb.click("#btn-seguir");
+    await esperarAviso(pb, /sigo con la partida|no se ve/);
+    j.move("O-O"); await foto(pb, j.fen(), LEJOS); await esperarJugadas(pb, 7);
+    igual("y la sigue donde quedó", await jugadasDe(pb), "1. e4 e5 2. Cf3 Cc6 3. Ac4 Cf6 4. O-O");
+    igual("sin errores en la consola", b.errores, []);
+    await cerrar(b);
+
+    // Una partida que no estaba anotada: se pega su FEN.
+    const c = await abrir(browser, "camara-tablero.html");
+    const pc2 = c.page;
+    await pc2.waitForSelector("#app:not(.hidden)");
+    const k = new Chess(); ["d4", "d5", "c4", "e6", "Nc3", "Nf6"].forEach((x) => k.move(x));
+    await pc2.click("summary:has-text('Empezar desde otra posición')");
+    await pc2.fill("#posicion", "esto no es una posición");
+    await pc2.click("#form-posicion button[type=submit]");
+    igual("lo que no es un FEN ni un PGN se dice", (await aviso(pc2)).startsWith("No entiendo esa posición"), true);
+    await pc2.fill("#posicion", k.fen());
+    await pc2.click("#form-posicion button[type=submit]");
+    igual("con un FEN, el tablero digital queda en esa posición", await pc2.textContent("#fen"), k.fen());
+    await foto(pc2, k.fen(), ESQ0);
+    await esperarAviso(pc2, /esquinas/);
+    await tocar(pc2, aLienzo(ESQ0));
+    await pc2.click("#btn-seguir");
+    await esperarAviso(pc2, /sigo con la partida|no se ve/);
+    igual("calibra con esa posición y no con la inicial", (await aviso(pc2)).startsWith("Listo, sigo con la partida"), true);
+    k.move("Bg5"); await foto(pc2, k.fen(), ESQ0); await esperarJugadas(pc2, 1);
+    igual("y anota la jugada siguiente", await jugadasDe(pc2), "4. Ag5");
+    igual("sin errores en la consola", c.errores, []);
+    await cerrar(c);
+  }
+
   console.log("\nDos tableros con un celular (opcional)");
   {
     const IZQ = [[40, 520], [380, 535], [390, 195], [50, 180]], DER = [[430, 530], [770, 515], [760, 175], [420, 190]];
