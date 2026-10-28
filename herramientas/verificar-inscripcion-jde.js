@@ -30,6 +30,8 @@ const BASE = process.env.BASE_URL || "http://localhost:8777";
 const I = require("../js/inscripcion-jde-reglas.js");
 const G = require("../js/pareo/grupos.js");
 const banco = require("./jde-banco.js");
+const leerJson = (f) => JSON.parse(fs.readFileSync(path.join(RAIZ, f), "utf8"));
+const mepCsv = () => banco.leerCsv(fs.readFileSync(path.join(RAIZ, "herramientas/datos/mep-centros.csv"), "utf8"));
 
 let fallos = 0;
 function cierto(nombre, valor, detalle) {
@@ -272,6 +274,69 @@ function reglas() {
     cierto("los id repetidos se renuevan", dup.estudiantes[0].id !== dup.estudiantes[1].id);
   }
 
+
+  console.log("\nLos listados del MEP (herramientas/datos/mep-centros.csv):");
+  {
+    const mep = mepCsv();
+    cierto("hay más de 4 000 centros, con escuelas y colegios", mep.length > 4000 && mep.some((f) => f.tipo === "colegio") && mep.some((f) => f.tipo === "escuela"), String(mep.length));
+    cierto("cada uno trae código de cuatro cifras, nombre, regional y circuito de dos cifras", mep.every((f) => /^\d{4}$/.test(f.codigo) && f.nombre.trim() && f.dre && /^\d{2}$/.test(f.circuito)));
+    igual("el código no se repite", new Set(mep.map((f) => f.codigo)).size, mep.length);
+    const regionales = new Set(mep.map((f) => banco.dreDeMep(f.dre)));
+    cierto("están las 27 Direcciones Regionales, todas con el nombre de grupos.js", regionales.size === 27 && !regionales.has(""), JSON.stringify([...regionales].length));
+    cierto("un nombre con coma queda entero (CSV con comillas)", banco.leerCsv('a,b\n"Uno, dos",x\n')[0].a === "Uno, dos");
+    igual("la regional como la escribe el listado se convierte a la de Pareo", ["GRANDE DE TERRABA", "ZONA NORTE NORTE", "PEREZ ZELEDON", "CANAS", "NO EXISTE"].map(banco.dreDeMep), ["Grande de Térraba", "Zona Norte-Norte", "Pérez Zeledón", "Cañas", ""]);
+  }
+
+  console.log("\nJuntar chess-results con el MEP (circuito y tipo):");
+  {
+    const T = (clave, anio, etapa, region) => [clave, anio, etapa, "C", "x", anio + "-05-01", "x", region, 5, 5, "Individual", "Clásico", "Abierta"];
+    const torneos = { actualizado: "2026-10-01", columnas: ["clave", "anio", "etapa", "categoria", "nombre", "inicio", "lugar", "region", "jugadores", "rondas", "modalidad", "ritmo", "rama"],
+      torneos: [T(1, 2026, "Regional", "Cartago"), T(2, 2026, "Regional", "Heredia"), T(3, 2026, "Regional", "Pérez Zeledón")] };
+    const nombres = ["Liceo de Costa Rica", "Esc. Santa Elena", "C.T.P. de Osa", "Colegio Privado Nuevo", "Escuela Carlos Luis Valverde"];
+    const jug = { actualizado: "x", jugadores: [["Mora, Ana", "mora ana"]], instituciones: nombres.map((n) => [n, n.toLowerCase()]),
+      columnas_participaciones: ["clave", "jugador", "institucion", "puesto", "puntos", "elo", "snr"],
+      participaciones: [[1, 0, 0, 1, 4, null, 1], [1, 0, 1, 1, 4, null, 1], [3, 0, 2, 1, 4, null, 1], [2, 0, 3, 1, 4, null, 1], [1, 0, 4, 1, 4, null, 1]], columnas_equipos: [], equipos: [] };
+    const mep = [
+      { codigo: "3940", nombre: "LICEO DE COSTA RICA", dre: "SAN JOSE CENTRAL", circuito: "02", tipo: "colegio" },
+      { codigo: "0001", nombre: "SANTA ELENA", dre: "CARTAGO", circuito: "05", tipo: "escuela" },
+      { codigo: "0002", nombre: "SANTA ELENA", dre: "HEREDIA", circuito: "03", tipo: "escuela" },
+      { codigo: "4163", nombre: "C.T.P. DE OSA", dre: "GRANDE DE TERRABA", circuito: "04", tipo: "colegio" },
+      { codigo: "0003", nombre: "CARLOS LUIS VALVERDE VEGA", dre: "CARTAGO", circuito: "07", tipo: "escuela" },
+    ];
+    const b = banco.armar(torneos, jug, mep);
+    const fila = (n) => b.instituciones.find((x) => x[0] === n);
+    igual("un colegio de chess-results sin regional se junta por su nombre único y toma el circuito y el tipo (LICEO DE COSTA RICA)", [!!fila("LICEO DE COSTA RICA"), fila("LICEO DE COSTA RICA")[1], fila("LICEO DE COSTA RICA")[4], fila("LICEO DE COSTA RICA")[5]], [true, "San José Central", "c", "02"]);
+    cierto("el nombre de chess-results no queda aparte", !fila("Liceo de Costa Rica"));
+    igual("«Esc. Santa Elena» en Cartago se junta con la de Cartago, no con la de Heredia", [fila("SANTA ELENA") && b.instituciones.filter((x) => x[0] === "SANTA ELENA").map((x) => x[1] + x[5]).sort()], [["Cartago05", "Heredia03"]]);
+    igual("un colegio que jugó fuera de su regional se junta si su nombre es único en el país (C.T.P. de Osa jugó en Pérez Zeledón)", [fila("C.T.P. DE OSA")[1], fila("C.T.P. DE OSA")[5], b.instituciones.some((x) => x[0] === "C.T.P. de Osa")], ["Grande de Térraba", "04", false]);
+    igual("uno que no está en el MEP queda aparte, sin circuito y con su tipo por el nombre", [fila("Colegio Privado Nuevo")[5], fila("Colegio Privado Nuevo")[4]], ["", "c"]);
+    igual("las palabras que distinguen al centro, todas dentro del nombre del MEP, lo juntan si es el único («Escuela Carlos Luis Valverde» → «CARLOS LUIS VALVERDE VEGA»)", [!!fila("CARLOS LUIS VALVERDE VEGA"), fila("CARLOS LUIS VALVERDE VEGA")[2]], [true, 1]);
+    cierto("los centros del MEP que nadie jugó también están (la escuela de un docente que no jugó nunca)", b.instituciones.some((x) => x[0] === "SANTA ELENA" && x[2] === 0));
+    igual("los estudiantes siguen a su colegio juntado", b.estudiantes.map((e) => b.instituciones[e[1]][0]).sort(), ["C.T.P. DE OSA", "CARLOS LUIS VALVERDE VEGA", "Colegio Privado Nuevo", "LICEO DE COSTA RICA", "SANTA ELENA"].sort());
+  }
+
+  console.log("\nLa lista de centros según lo marcado:");
+  {
+    const real = leerJson("data/jde-banco.json");
+    const cs = real.instituciones.map((x, i) => ({ nombre: x[0], region: x[1], participaciones: x[2], tipo: x[4] === "e" ? "primaria" : x[4] === "c" ? "secundaria" : "", circuito: x[5], idx: i }));
+    const todos = I.centrosDe(cs, { dre: "San Carlos", tipo: "primaria" }, "", 10000);
+    cierto("regional y escuela: salen las de esa regional, todas escuelas o de tipo desconocido, en orden alfabético", todos.total > 100 && todos.centros.every((c) => c.region === "San Carlos" && c.tipo !== "secundaria") && todos.centros.every((c, i, a) => !i || a[i - 1].nombre.localeCompare(c.nombre, "es") <= 0), String(todos.total));
+    cierto("con colegio, solo los de colegio de esa regional", I.centrosDe(cs, { dre: "San Carlos", tipo: "secundaria" }, "", 10000).centros.every((c) => c.region === "San Carlos" && c.tipo !== "primaria"));
+    igual("el tope recorta la lista pero dice cuántos hay", [I.centrosDe(cs, { dre: "San Carlos", tipo: "primaria" }, "", 5).centros.length, I.centrosDe(cs, { dre: "San Carlos", tipo: "primaria" }, "", 5).total === todos.total], [5, true]);
+    const sinan = I.centrosDe(cs, { dre: "San Carlos", tipo: "primaria" }, "", 10000);
+    cierto("sin escribir ni marcar nada no hay lista", I.centrosDe(cs, {}, "", 10).total === cs.length, "(la página no la despliega)");
+    const f = I.centrosDe(cs, { dre: "Pérez Zeledón", tipo: "secundaria" }, "sinai", 10);
+    cierto("escribiendo se filtra dentro de la regional", f.centros.length > 0 && f.centros.every((c) => /sinai/i.test(c.nombre)) && !f.enTodoElPais);
+    const fuera = I.centrosDe(cs, { dre: "Pérez Zeledón", tipo: "secundaria" }, "liceo de costa rica", 10);
+    cierto("si en su regional no hay ninguno con lo escrito, se busca en todo el país y lo dice", fuera.enTodoElPais && fuera.centros.length > 0);
+    const inventado = [{ nombre: "Sin tipo", region: "Heredia", tipo: "", circuito: "", participaciones: 0 }, { nombre: "Sin regional", region: "", tipo: "primaria", circuito: "", participaciones: 3 }];
+    igual("uno de tipo desconocido sale en los dos tipos", [I.centrosDe(inventado, { dre: "Heredia", tipo: "primaria" }, "", 9).centros.length, I.centrosDe(inventado, { dre: "Heredia", tipo: "secundaria" }, "", 9).centros.length], [1, 1]);
+    igual("uno sin regional conocida solo sale cuando se escribe algo", [I.centrosDe(inventado, { dre: "Heredia" }, "", 9).centros.map((c) => c.nombre), I.centrosDe(inventado, { dre: "Heredia" }, "sin", 9).centros.map((c) => c.nombre).sort()], [["Sin tipo"], ["Sin regional", "Sin tipo"]]);
+    const circ = I.circuitosDe(cs, "Pérez Zeledón");
+    cierto("los circuitos de una regional salen del banco, ordenados como números", circ.length >= 3 && circ.every((c) => /^\d{2}$/.test(c)) && circ.every((c, i, a) => !i || Number(a[i - 1]) < Number(c)), JSON.stringify(circ));
+    void sinan;
+  }
+
   console.log("\nEl banco (herramientas/jde-banco.js):");
   {
     const T = (clave, anio, etapa, region, rama) => [clave, anio, etapa, "C", "x", anio + "-05-01", "x", region, 5, 5, "Individual", "Clásico", rama || "Abierta"];
@@ -289,8 +354,10 @@ function reglas() {
     cierto("el sexo solo se guarda si es seguro (un torneo femenino, aunque el colegio esté escrito de dos formas)", b.estudiantes.find((x) => x[0] === "Mora, Ana")[3] === "w" && b.estudiantes.filter((x) => x[0] === "Soto, Luis").every((x) => x[3] == null));
     const real = JSON.parse(fs.readFileSync(path.join(RAIZ, "data/jde-banco.json"), "utf8"));
     cierto("el banco que se publica tiene más de mil centros y cada región es una de las 27", real.instituciones.length > 1000 && real.instituciones.every((x) => !x[1] || G.JDE_DIRECCIONES.includes(x[1])));
-    cierto("y está al día con lo que hay en data/ajedrez-estudiantil-jugadores.json", JSON.stringify(banco.armar(JSON.parse(fs.readFileSync(path.join(RAIZ, "data/ajedrez-estudiantil.json"), "utf8")), JSON.parse(fs.readFileSync(path.join(RAIZ, "data/ajedrez-estudiantil-jugadores.json"), "utf8")))) === JSON.stringify(real), "vuelve a correr: node herramientas/jde-banco.js");
-    const cs = real.instituciones.map((x, i) => ({ nombre: x[0], region: x[1], participaciones: x[2], idx: i }));
+    const regenerado = banco.armar(leerJson("data/ajedrez-estudiantil.json"), leerJson("data/ajedrez-estudiantil-jugadores.json"), mepCsv());
+    delete regenerado._resumen;
+    cierto("y está al día con lo que hay en data/ y en herramientas/datos/mep-centros.csv", JSON.stringify(regenerado) === JSON.stringify(real), "vuelve a correr: node herramientas/jde-banco.js");
+    const cs = real.instituciones.map((x, i) => ({ nombre: x[0], region: x[1], participaciones: x[2], tipo: x[4] === "e" ? "primaria" : x[4] === "c" ? "secundaria" : "", circuito: x[5], idx: i }));
     const r = I.buscarCentros(cs, "ELENA santa ctp", 5);
     cierto("buscar sin mayúsculas ni orden de palabras", r.length > 0 && r.every((c) => /elena/i.test(c.nombre) && /santa/i.test(c.nombre)), JSON.stringify(r.map((c) => c.nombre)));
     igual("«de» y «la» no estorban", I.buscarCentros(cs, "ctp de la santa elena", 5).map((c) => c.nombre), r.map((c) => c.nombre));
@@ -309,7 +376,7 @@ async function navegador() {
     p.on("pageerror", (e) => errores.push(e.message));
     p.on("console", (m) => { if (m.type() === "error" && !/Failed to load resource/.test(m.text())) errores.push(m.text()); });
     await p.goto(BASE + "/inscripcion-jde.html");
-    await p.waitForFunction(() => /Banco de|No se pudo/.test(document.getElementById("ij-centro-ayuda").textContent));
+    await p.waitForFunction(() => !!document.documentElement.dataset.ijBanco);
     return { ctx, p, errores };
   }
   const visible = (p, sel) => p.$eval(sel, (e) => e.checkVisibility());
@@ -318,12 +385,12 @@ async function navegador() {
     const { ctx, p, errores } = await abrir();
     cierto("el banco carga", /Banco de [\d\s.,]+ centros/.test(await p.textContent("#ij-centro-ayuda")));
     await p.fill("#ij-centro", "liceo sinai");
-    cierto("al escribir sale la lista de centros, con su región", (await p.$$eval("#ij-centro-lista li", (l) => l.map((x) => x.textContent))).some((t) => /Liceo Sinai.*DRE Pérez Zeledón/.test(t)));
+    cierto("al escribir sale la lista de centros, con su región", (await p.$$eval("#ij-centro-lista li", (l) => l.map((x) => x.textContent))).some((t) => /Liceo Sinai.*DRE Pérez Zeledón/i.test(t)));
     igual("el campo es un combobox y avisa que está abierto", [await p.getAttribute("#ij-centro", "role"), await p.getAttribute("#ij-centro", "aria-expanded")], ["combobox", "true"]);
     await p.keyboard.press("ArrowDown");
     cierto("con la flecha se marca una opción (aria-activedescendant)", !!(await p.getAttribute("#ij-centro", "aria-activedescendant")));
     await p.keyboard.press("Enter");
-    igual("Enter elige el centro y propone su región", [await p.inputValue("#ij-centro"), await p.inputValue("#ij-region")], ["Liceo Sinai", "Pérez Zeledón"]);
+    igual("Enter elige el centro y propone su región, su tipo y su circuito", [(await p.inputValue("#ij-centro")).toUpperCase(), await p.inputValue("#ij-region"), await p.isChecked("#ij-tipo-secundaria"), await p.inputValue("#ij-circuito")], ["LICEO SINAI", "Pérez Zeledón", true, "01"]);
     cierto("dice a cuál interregional va y cuántos clasifican", /Interregional X.*2 personas clasifican/.test(await p.textContent("#ij-region-ayuda")));
     cierto("habilita traer a los estudiantes de antes", await p.$eval("#ij-traer", (b) => !b.disabled));
     await p.press("#ij-centro", "Escape");
@@ -356,10 +423,64 @@ async function navegador() {
   }
 
   {
+    // El flujo: regional → escuela o colegio → la lista de centros → el circuito se llena solo.
+    const { ctx, p, errores } = await abrir();
+    const real = leerJson("data/jde-banco.json");
+    const cs = real.instituciones.map((x, i) => ({ nombre: x[0], region: x[1], participaciones: x[2], tipo: x[4] === "e" ? "primaria" : x[4] === "c" ? "secundaria" : "", circuito: x[5], idx: i }));
+    cierto("al abrir, la ayuda dice qué marcar primero", /Primero marca tu Dirección Regional y si es escuela o colegio/.test(await p.textContent("#ij-centro-ayuda")));
+    cierto("sin regional ni tipo, tocar el campo no despliega los 5 000 centros", await (async () => { await p.click("#ij-centro"); return !(await visible(p, "#ij-centro-lista")); })());
+    await p.selectOption("#ij-region", "San Carlos");
+    await p.check("#ij-tipo-primaria");
+    const esperadas = I.centrosDe(cs, { dre: "San Carlos", tipo: "primaria" }, "", 400);
+    cierto("marcadas la regional y «escuela», la ayuda dice cuántas hay", new RegExp("Hay " + esperadas.total.toLocaleString("es-CR").replace(/\s/g, "\\s") + " escuelas de la regional San Carlos").test((await p.textContent("#ij-centro-ayuda")).replace(/\u00a0| /g, " ")), await p.textContent("#ij-centro-ayuda"));
+    await p.click("#ij-centro");
+    igual("tocar el campo despliega la lista de esa regional y ese tipo (con el tope)", [await visible(p, "#ij-centro-lista"), (await p.$$("#ij-centro-lista [role=option]")).length, await p.getAttribute("#ij-centro", "aria-expanded")], [true, esperadas.centros.length, "true"]);
+    cierto("cada opción dice su circuito", await p.$$eval("#ij-centro-lista [role=option]", (l) => l.every((x) => /Circuito \d\d|circuito sin identificar/.test(x.textContent))));
+    cierto("y si hay más de las que caben, lo avisa (si no, no)", /más: escribe parte del nombre/.test(await p.textContent("#ij-centro-lista")) === esperadas.total > esperadas.centros.length);
+    cierto("las opciones son solo de San Carlos (ninguna dice otra regional)", !(await p.$$eval("#ij-centro-lista [role=option]", (l) => l.some((x) => /DRE /.test(x.textContent)))));
+    const primera = esperadas.centros.find((c) => c.circuito);
+    await p.fill("#ij-centro", primera.nombre);
+    await p.click("#ij-centro-lista [role=option] >> nth=0");
+    igual("elegir un centro llena el circuito solo", [(await p.inputValue("#ij-centro")).toLowerCase(), await p.inputValue("#ij-circuito")], [primera.nombre.toLowerCase(), primera.circuito]);
+    cierto("y la ayuda del circuito dice de dónde sale", /según el listado del MEP/.test(await p.textContent("#ij-circuito-ayuda")));
+    igual("el selector del circuito trae los de esa regional", await p.$$eval("#ij-circuito option", (o) => o.slice(1).map((x) => x.value)), I.circuitosDe(cs, "San Carlos"));
+    const otro = I.circuitosDe(cs, "San Carlos").find((c) => c !== primera.circuito);
+    await p.selectOption("#ij-circuito", otro);
+    igual("el circuito se puede cambiar a mano y se queda", await p.inputValue("#ij-circuito"), otro);
+    await p.selectOption("#ij-region", "Heredia");
+    igual("cambiar de regional quita el centro que era de otra y su circuito", [await p.inputValue("#ij-centro"), await p.inputValue("#ij-circuito")], ["", ""]);
+    // Un centro sin circuito en el banco: el circuito queda por elegir, nunca el de otro centro.
+    const sin = cs.find((c) => !c.circuito && c.region && c.tipo === "secundaria" && c.participaciones > 3);
+    await p.selectOption("#ij-region", sin.region);
+    await p.check("#ij-tipo-secundaria");
+    await p.fill("#ij-centro", sin.nombre);
+    await p.keyboard.press("ArrowDown");
+    await p.keyboard.press("Enter");
+    igual("un centro que ningún listado ubica en un circuito deja el circuito por elegir", [await p.inputValue("#ij-centro"), await p.inputValue("#ij-circuito")], [sin.nombre, ""]);
+    cierto("y lo dice", /No sabemos el circuito de este centro: elígelo/.test(await p.textContent("#ij-circuito-ayuda")));
+    // El botón ▾ y el camino de atrás: escribir el nombre sin marcar nada lo llena todo.
+    await p.click("#ij-centro-abrir");
+    const abrio = await visible(p, "#ij-centro-lista");
+    await p.click("#ij-centro-abrir");
+    igual("el botón ▾ abre y cierra la lista (y lo dice con aria-expanded)", [abrio, await visible(p, "#ij-centro-lista"), await p.getAttribute("#ij-centro-abrir", "aria-expanded")], [true, false, "false"]);
+    await p.click("#ij-empezar");
+    await p.click(".avisos-dialogo button:has-text('Sí, borrar todo'), dialog button:has-text('Sí, borrar todo')");
+    await p.waitForFunction(() => document.getElementById("ij-region").value === "");
+    await p.fill("#ij-centro", "liceo de costa rica");
+    await p.keyboard.press("ArrowDown");
+    await p.keyboard.press("Enter");
+    const lcr = cs.find((c) => /^liceo de costa rica$/i.test(c.nombre));
+    igual("escribir el nombre sin marcar nada llena la regional, el tipo y el circuito", [await p.inputValue("#ij-region"), await p.isChecked("#ij-tipo-secundaria"), await p.inputValue("#ij-circuito")], [lcr.region, true, lcr.circuito]);
+    cierto("la regional y el circuito del Liceo de Costa Rica son los que dice el MEP (San José Central, circuito 02)", lcr.region === "San José Central" && lcr.circuito === "02");
+    await ctx.close();
+    igual("sin errores de JavaScript", errores, []);
+  }
+
+  {
     const { ctx, p, errores } = await abrir();
     await p.fill("#ij-centro", "Colegio Inventado");
     await p.selectOption("#ij-region", "Alajuela");
-    await p.selectOption("#ij-tipo", "secundaria");
+    await p.check("#ij-tipo-secundaria");
     await p.fill("#ij-correo", "docente@mep.go.cr");
     const personas = await p.$$("#ij-cuerpo .ij-persona");
     igual("arranca con una jefatura y un cuerpo técnico en blanco", personas.length, 2);
@@ -418,7 +539,7 @@ async function navegador() {
     const guardado = await p.evaluate(() => JSON.parse(localStorage.getItem("ij_borrador_v1")));
     igual("lo guardado tiene el centro y los dos estudiantes", [guardado.centro.nombre, guardado.estudiantes.length], ["Colegio Inventado", 2]);
     await p.reload();
-    await p.waitForFunction(() => /Banco de|No se pudo/.test(document.getElementById("ij-centro-ayuda").textContent));
+    await p.waitForFunction(() => !!document.documentElement.dataset.ijBanco);
     igual("al volver, todo sigue ahí", [await p.inputValue("#ij-centro"), await p.inputValue("#ij-region"), (await p.$$("#ij-est article")).length], ["Colegio Inventado", "Alajuela", 2]);
     const [descarga] = await Promise.all([p.waitForEvent("download"), p.click("#ij-bajar-borrador")]);
     const ruta = await descarga.path();

@@ -73,24 +73,32 @@
       const r = await fetch("data/jde-banco.json", { cache: "no-cache" });
       if (!r.ok) throw new Error(String(r.status));
       const d = await r.json();
-      banco.centros = d.instituciones.map((f, i) => ({ nombre: f[0], region: f[1] || "", participaciones: f[2] || 0, ultimo: f[3] || 0, idx: i }));
+      // [nombre, regional, torneos, último año, tipo («e» escuela, «c» colegio), circuito]
+      banco.centros = d.instituciones.map((f, i) => ({ nombre: f[0], region: f[1] || "", participaciones: f[2] || 0, ultimo: f[3] || 0, tipo: f[4] === "e" ? "primaria" : f[4] === "c" ? "secundaria" : "", circuito: f[5] || "", idx: i }));
       for (const f of d.estudiantes) {
         if (!banco.estudiantes.has(f[1])) banco.estudiantes.set(f[1], []);
         banco.estudiantes.get(f[1]).push({ nombre: f[0], ultimo: f[2], sexo: f[3] === "w" ? "w" : "" });
       }
       banco.listo = true;
+      document.documentElement.dataset.ijBanco = "listo";
       banco.actualizado = d.actualizado || "";
-      banco.ayuda = "Banco de " + banco.centros.length.toLocaleString("es-CR") + " centros educativos" + (banco.actualizado ? ", al día con chess-results al " + window.HoraCR.fecha(banco.actualizado) : "") + ". Si el tuyo no sale, escríbelo completo.";
+      banco.ayuda = "Banco de " + banco.centros.length.toLocaleString("es-CR") + " centros educativos (listados del MEP y torneos de chess-results" + (banco.actualizado ? ", al " + window.HoraCR.fecha(banco.actualizado) : "") + "). Si el tuyo no sale, escríbelo completo.";
       $("ij-centro-ayuda").textContent = banco.ayuda;
     } catch (e) {
-      $("ij-centro-ayuda").textContent = "No se pudo cargar el banco de centros educativos: escribe el nombre y elige la Dirección Regional a mano.";
+      document.documentElement.dataset.ijBanco = "error";
+      $("ij-centro-ayuda").textContent = "No se pudo cargar el banco de centros educativos: escribe el nombre y elige la Dirección Regional y el circuito a mano.";
     }
+    llenarCircuitos();
     actualizarCentro();
   }
+  // El centro del banco que se llama como lo escrito; si hay varios con el mismo
+  // nombre (hay cientos de «Escuela Santa Elena»), el de la regional marcada.
   function centroDelBanco() {
     if (!banco.listo) return null;
     const k = I.claveBusqueda(estado.centro.nombre);
-    return k ? banco.centros.find((c) => I.claveBusqueda(c.nombre) === k) || null : null;
+    if (!k) return null;
+    const iguales = banco.centros.filter((c) => I.claveBusqueda(c.nombre) === k);
+    return iguales.find((c) => c.region && c.region === estado.centro.region) || iguales[0] || null;
   }
 
   // ----------------------------------------------------------------- delegación
@@ -105,9 +113,9 @@
     llenarSelect($("ij-anio"), anios.concat(extra).map((a) => ({ valor: String(a), texto: a === extra ? a + " (aún sin Normativa publicada)" : String(a) })), String(estado.anio));
     llenarSelect($("ij-etapa"), I.ETAPAS.map((e) => ({ valor: e.id, texto: "Etapa " + e.nombre })), estado.etapa);
     llenarSelect($("ij-region"), [{ valor: "", texto: "— Elige tu Dirección Regional —" }].concat(G.JDE_DIRECCIONES.map((d) => ({ valor: d, texto: d }))), estado.centro.region);
-    llenarSelect($("ij-tipo"), I.TIPOS_CENTRO.map((t) => ({ valor: t.id, texto: t.nombre })), estado.centro.tipo);
+    for (const r of document.querySelectorAll('input[name="ij-tipo"]')) r.checked = r.value === estado.centro.tipo;
     $("ij-centro").value = estado.centro.nombre;
-    $("ij-circuito").value = estado.centro.circuito;
+    llenarCircuitos();
     $("ij-telefono").value = estado.centro.telefono;
     $("ij-correo").value = estado.centro.correo;
     $("ij-privado").checked = estado.centro.privado;
@@ -131,57 +139,118 @@
     const c = centroDelBanco();
     $("ij-traer").disabled = !(c && (banco.estudiantes.get(c.idx) || []).length);
     if (banco.listo) {
-      $("ij-centro-ayuda").textContent = c
-        ? "Está en el banco: " + plural(c.participaciones, "torneo", "torneos") + " de los JDE, el último en " + c.ultimo + "." + ($("ij-traer").disabled ? "" : " Puedes traer a sus estudiantes de otros años.")
-        : banco.ayuda;
+      const filtro = { dre: estado.centro.region, tipo: estado.centro.tipo };
+      let texto;
+      if (c) {
+        texto = "Está en el banco" + (c.participaciones ? ": " + plural(c.participaciones, "torneo", "torneos") + " de los JDE, el último en " + c.ultimo + "." : ".") + ($("ij-traer").disabled ? "" : " Puedes traer a sus estudiantes de otros años.");
+      } else if (filtro.dre && filtro.tipo) {
+        const n = I.centrosDe(banco.centros, filtro, "", 1).total;
+        texto = n ? "Hay " + n.toLocaleString("es-CR") + (filtro.tipo === "primaria" ? " escuelas" : " colegios") + " de la regional " + filtro.dre + " en el banco: toca el campo para ver la lista o escribe para filtrar. Si el tuyo no está, escríbelo completo." : "No hay " + (filtro.tipo === "primaria" ? "escuelas" : "colegios") + " de la regional " + filtro.dre + " en el banco: escribe el nombre completo.";
+      } else {
+        texto = "Primero marca tu Dirección Regional y si es escuela o colegio, y se despliega la lista. " + banco.ayuda;
+      }
+      $("ij-centro-ayuda").textContent = texto;
     }
+    const circ = estado.centro.circuito;
+    $("ij-circuito-ayuda").textContent = !c ? "Si tu centro no está en la lista, elige tu circuito." : c.circuito && circ === c.circuito ? "Circuito " + circ + " según el listado del MEP; puedes cambiarlo si no es." : c.circuito ? "El MEP lista este centro en el circuito " + c.circuito + "." : "No sabemos el circuito de este centro: elígelo.";
   }
 
-  // El nombre del centro se busca en el banco; al elegir uno se propone su región.
+  // Los circuitos de la regional marcada (los del banco) y el que ya tiene elegido.
+  function llenarCircuitos() {
+    const sel = $("ij-circuito");
+    let lista = banco.listo ? I.circuitosDe(banco.centros, estado.centro.region) : [];
+    if (!lista.length) lista = Array.from({ length: 14 }, (_, i) => String(i + 1).padStart(2, "0"));
+    if (estado.centro.circuito && !lista.includes(estado.centro.circuito)) lista = lista.concat(estado.centro.circuito);
+    llenarSelect(sel, [{ valor: "", texto: "— Elige el circuito —" }].concat(lista.map((c) => ({ valor: c, texto: "Circuito " + c }))), estado.centro.circuito);
+  }
+
+  // La lista de centros: con la regional y el tipo marcados salen todos los de
+  // esa regional; escribiendo, se filtran. Al elegir uno se llenan la regional,
+  // el tipo y el circuito.
   let opcionActiva = -1;
   let resultados = [];
   function cerrarLista() {
     $("ij-centro-lista").hidden = true;
     $("ij-centro").setAttribute("aria-expanded", "false");
+    $("ij-centro-abrir").setAttribute("aria-expanded", "false");
     $("ij-centro").removeAttribute("aria-activedescendant");
     opcionActiva = -1;
   }
+  const TOPE_LISTA = 400;
   function abrirLista() {
     const lista = $("ij-centro-lista");
     lista.textContent = "";
-    resultados = banco.listo ? I.buscarCentros(banco.centros, $("ij-centro").value, 8) : [];
+    const texto = $("ij-centro").value;
+    const filtro = { dre: estado.centro.region, tipo: estado.centro.tipo };
+    // Sin escribir y sin marcar nada serían los 5 000 del país: no se despliegan.
+    const hay = banco.listo && (texto.trim() || filtro.dre || filtro.tipo);
+    const r = hay ? I.centrosDe(banco.centros, filtro, texto, TOPE_LISTA) : { centros: [], total: 0, enTodoElPais: false };
+    resultados = r.centros;
     if (!resultados.length) { cerrarLista(); return; }
+    if (r.enTodoElPais) lista.append(el("li", { role: "presentation", clase: "ij-opcion-nota", texto: "Ninguno de tu regional se llama así: estos son de todo el país." }));
     resultados.forEach((c, i) => {
+      const partes = [];
+      if (!filtro.dre || r.enTodoElPais) partes.push(c.region ? "DRE " + c.region : "regional sin identificar");
+      partes.push(c.circuito ? "Circuito " + c.circuito : "circuito sin identificar");
+      if (!filtro.tipo && c.tipo) partes.push(c.tipo === "primaria" ? "escuela" : "colegio");
       const li = el("li", { id: "ij-centro-op-" + i, role: "option", clase: "ij-opcion", "aria-selected": "false" },
         el("span", { clase: "font-semibold", texto: c.nombre }),
-        el("span", { clase: "ij-opcion-sub", texto: c.region ? "DRE " + c.region : "Dirección Regional sin identificar" }));
+        el("span", { clase: "ij-opcion-sub", texto: partes.join(" · ") }));
       // mousedown y no click: el blur del campo cerraría la lista antes del click.
       li.addEventListener("mousedown", (ev) => { ev.preventDefault(); elegirCentro(c); });
       lista.append(li);
     });
+    if (r.total > resultados.length) lista.append(el("li", { role: "presentation", clase: "ij-opcion-nota", texto: "Hay " + (r.total - resultados.length).toLocaleString("es-CR") + " más: escribe parte del nombre para filtrar." }));
     lista.hidden = false;
     $("ij-centro").setAttribute("aria-expanded", "true");
+    $("ij-centro-abrir").setAttribute("aria-expanded", "true");
+    $("ij-centro-ayuda").textContent = (r.total > resultados.length ? "Se muestran " + resultados.length + " de " + r.total.toLocaleString("es-CR") + " centros" : plural(r.total, "centro", "centros")) + ". Usa las flechas y Enter para elegir uno.";
     marcarOpcion(-1);
   }
   function marcarOpcion(i) {
     opcionActiva = i;
-    [...$("ij-centro-lista").children].forEach((li, k) => li.setAttribute("aria-selected", String(k === i)));
-    if (i >= 0) $("ij-centro").setAttribute("aria-activedescendant", "ij-centro-op-" + i);
-    else $("ij-centro").removeAttribute("aria-activedescendant");
+    [...$("ij-centro-lista").querySelectorAll("[role=option]")].forEach((li, k) => li.setAttribute("aria-selected", String(k === i)));
+    if (i >= 0) {
+      $("ij-centro").setAttribute("aria-activedescendant", "ij-centro-op-" + i);
+      const op = $("ij-centro-op-" + i);
+      if (op && op.scrollIntoView) op.scrollIntoView({ block: "nearest" });
+    } else $("ij-centro").removeAttribute("aria-activedescendant");
   }
   function elegirCentro(c) {
     estado.centro.nombre = c.nombre;
     $("ij-centro").value = c.nombre;
     if (c.region) { estado.centro.region = c.region; $("ij-region").value = c.region; }
+    if (c.tipo) { estado.centro.tipo = c.tipo; for (const r of document.querySelectorAll('input[name="ij-tipo"]')) r.checked = r.value === c.tipo; }
+    // El circuito se llena solo; si el listado no lo trae, queda por elegir (nunca el de otro centro).
+    estado.centro.circuito = c.circuito || "";
+    llenarCircuitos();
     cerrarLista();
     cambio();
+  }
+  // Un centro que se eligió del banco y que ya no es de la regional o del tipo marcados se quita: lo escrito a mano se respeta.
+  function revisarCentroElegido() {
+    const c = centroDelBanco();
+    if (!c) return;
+    if ((c.region && estado.centro.region && c.region !== estado.centro.region) || (c.tipo && estado.centro.tipo && c.tipo !== estado.centro.tipo)) {
+      estado.centro.nombre = "";
+      estado.centro.circuito = "";
+      $("ij-centro").value = "";
+    }
   }
 
   function enlazarCentro() {
     const campo = $("ij-centro");
     campo.addEventListener("input", () => { estado.centro.nombre = campo.value; abrirLista(); cambio(); });
-    campo.addEventListener("focus", () => { if (campo.value) abrirLista(); });
+    campo.addEventListener("focus", abrirLista);
+    campo.addEventListener("click", () => { if ($("ij-centro-lista").hidden) abrirLista(); });
     campo.addEventListener("blur", cerrarLista);
+    // El botón ▾ abre y cierra la lista; mousedown para que el campo no pierda el foco antes.
+    $("ij-centro-abrir").addEventListener("mousedown", (ev) => ev.preventDefault());
+    $("ij-centro-abrir").addEventListener("click", () => {
+      if (!$("ij-centro-lista").hidden) { cerrarLista(); return; }
+      campo.focus();
+      abrirLista();
+    });
     campo.addEventListener("keydown", (ev) => {
       const abierta = !$("ij-centro-lista").hidden;
       if (ev.key === "ArrowDown") { ev.preventDefault(); if (!abierta) abrirLista(); else marcarOpcion((opcionActiva + 1) % resultados.length); }
@@ -191,9 +260,9 @@
     });
     $("ij-anio").addEventListener("change", (ev) => { estado.anio = Number(ev.target.value); cambio(); });
     $("ij-etapa").addEventListener("change", (ev) => { estado.etapa = ev.target.value; cambio(); });
-    $("ij-region").addEventListener("change", (ev) => { estado.centro.region = ev.target.value; cambio(); });
-    $("ij-tipo").addEventListener("change", (ev) => { estado.centro.tipo = ev.target.value; cambio(); });
-    $("ij-circuito").addEventListener("input", (ev) => { estado.centro.circuito = ev.target.value; cambio(); });
+    $("ij-region").addEventListener("change", (ev) => { estado.centro.region = ev.target.value; revisarCentroElegido(); llenarCircuitos(); cambio(); });
+    for (const r of document.querySelectorAll('input[name="ij-tipo"]')) r.addEventListener("change", () => { estado.centro.tipo = r.value; revisarCentroElegido(); llenarCircuitos(); cambio(); });
+    $("ij-circuito").addEventListener("change", (ev) => { estado.centro.circuito = ev.target.value; cambio(); });
     $("ij-telefono").addEventListener("input", (ev) => { estado.centro.telefono = ev.target.value; cambio(); });
     $("ij-correo").addEventListener("input", (ev) => { estado.centro.correo = ev.target.value; cambio(); });
     $("ij-privado").addEventListener("change", (ev) => { estado.centro.privado = ev.target.checked; cambio(); });
