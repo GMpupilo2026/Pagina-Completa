@@ -7303,6 +7303,25 @@ y debajo las herramientas de ese tema en tarjetas compactas, con su nombre
 corto (`corto`) y lo que hace detrás de un desplegable «Qué hace», cerrado:
 así se comparan de un vistazo sin una página larguísima.
 
+**La ficha Universitarios trae también los torneos** (lo pidió el dueño):
+además de los resultados por universidad, el catálogo «Torneos universitarios
+de Costa Rica» y las páginas de cada torneo (`cenfotec-2026.html`,
+`utn-2026.html`, gratis porque son públicas). El catálogo no es una licencia
+aparte: se abre con la de `universidades` (ver «Torneos universitarios de
+Costa Rica»), así que lleva `licencia: "universidades"`: la vitrina le
+pregunta `tengo_herramienta('universidades')`, el botón pide esa licencia y
+`licencias.html` no lo ofrece solo. La página de un torneo nuevo que se arme
+con `herramientas/torneo-universitario.js` se agrega a la lista a mano, con
+`tema: "universitarios"` y `gratis: true`.
+
+**En Arbitraje, los torneos de ajedrezcostarica.com** (lo pidió el dueño): la
+tarjeta «Torneos de Costa Rica» lleva a `torneos-pareo.html#tambien`, la
+parte «También en Costa Rica» de «Torneos en Pareo Integral» (ver «Torneos en
+Pareo Integral: los torneos de ajedrezcostarica.com»). Esa parte se arma
+recién cuando llegan los datos, así que el navegador no tiene adónde bajar con
+el ancla: con `#tambien`, `js/torneos-pareo-pagina.js` baja a ella después de
+pintar la portada (`verificar-torneos-externos-pagina.js` lo revisa).
+
 También son gratis el **historial de un jugador** y las **estadísticas por
 colegio y región** (ver «Historial del jugador y estadísticas por colegio»), y
 **«Ajedrez estudiantil en Costa Rica»**

@@ -64,7 +64,7 @@ async function abrir(browser, viewport, opciones) {
     return route.fulfill({ status: 200, contentType: "application/json", headers: { "access-control-allow-origin": "*" }, body: JSON.stringify(filas) });
   });
   await dobleListaPareo(page, PROPIO, { hoy: "2026-10-23" });
-  await page.goto(BASE + "/torneos-pareo.html", { waitUntil: "networkidle" });
+  await page.goto(BASE + "/torneos-pareo.html" + (o.hash || ""), { waitUntil: "networkidle" });
   await page.waitForSelector("#tp-lista .tp-dia");
   return { ctx, page, errores, pedidos };
 }
@@ -163,6 +163,15 @@ async function igualLuego(page, m, f, b) {
     const [descarga] = await Promise.all([r.page.waitForEvent("download"), r.page.click("#tp-externos-calendario")]);
     const ics = require("fs").readFileSync(await descarga.path(), "utf8");
     ok(/UID:chess-results-1524022@ajedrez-integral\.com/.test(ics) && /DTSTART;VALUE=DATE:20261107/.test(ics), "al calendario, con su propio UID y su día");
+    ok(!r.errores.length, "sin errores en la consola", r.errores.join(" | "));
+    await r.ctx.close();
+  }
+
+  console.log("\n=== Desde la vitrina de Herramientas (#tambien) ===");
+  {
+    // La tarjeta «Torneos de Costa Rica» de herramientas-arbitraje.html lleva acá.
+    const r = await abrir(browser, { width: 1400, height: 900 }, { hash: "#tambien" });
+    await igualLuego(r.page, "baja directo a «También en Costa Rica»", () => r.page.$eval("#tp-externos-caja", (c) => { const t = c.getBoundingClientRect().top; return t >= 0 && t < 200; }), true);
     ok(!r.errores.length, "sin errores en la consola", r.errores.join(" | "));
     await r.ctx.close();
   }
