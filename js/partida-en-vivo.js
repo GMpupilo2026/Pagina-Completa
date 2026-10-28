@@ -12,8 +12,11 @@
  *   PartidaEnVivo.codigoValido(c)
  *   PartidaEnVivo.canal(c)              → nombre del canal
  *   PartidaEnVivo.enlace(c)             → la dirección para mirarla
- *   PartidaEnVivo.estado(juego, nombres, donde, resultado) → lo que se manda
- *   PartidaEnVivo.leer(payload)         → { juego, blancas, negras, resultado } o null
+ *   PartidaEnVivo.estado(juego, nombres, donde, resultado, extra) → lo que se manda
+ *     (extra: { tiempos: ms de cada jugada, espera: ms desde la última, retraso: minutos })
+ *   PartidaEnVivo.leer(payload)         → { juego, blancas, negras, resultado, tiempos, espera, retraso } o null
+ *   PartidaEnVivo.hasta(juego, k)       → la partida con sus primeras k jugadas
+ *   PartidaEnVivo.reloj(ms)             → «1:23» o «1:02:03»
  *   PartidaEnVivo.resultadoSolo(juego)  → «1-0», «=» o «0-1» si el tablero ya lo dice (mate, ahogado)
  *   PartidaEnVivo.pgn(juego, resultado) → el PGN con su [Result]
  *   PartidaEnVivo.pintar(div, juego, { girado })
@@ -61,9 +64,26 @@
         return null;
     }
     /* El PGN con su resultado en la cabecera, sin tocar la partida que se
-     * sigue anotando. */
-    function pgn(juego, resultado) {
+     * sigue anotando. Con `tiempos` (ms de cada jugada), cada jugada lleva su
+     * tiempo como lo escriben Lichess y ChessBase: {[%emt 0:01:23]}. */
+    const emt = (ms) => { const x = Math.max(0, Math.round(ms / 1000)); return Math.floor(x / 3600) + ":" + String(Math.floor(x / 60) % 60).padStart(2, "0") + ":" + String(x % 60).padStart(2, "0"); };
+    function pgnConTiempos(juego, r, tiempos) {
+        const cab = Object.assign({}, juego.header());
+        if (r) cab.Result = RESULTADOS[r];
+        const ini = arranque(juego);
+        const partes = [];
+        juego.history().forEach((san, i) => {
+            if ((i + (ini.negras ? 1 : 0)) % 2 === 0 || i === 0) partes.push(numero(ini, i).replace("…", "..."));
+            partes.push(san);
+            if (Number.isFinite(tiempos[i])) partes.push("{[%emt " + emt(tiempos[i]) + "]}");
+        });
+        partes.push(r ? RESULTADOS[r] : "*");
+        const lineas = Object.entries(cab).map(([k, v]) => "[" + k + ' "' + String(v).replace(/["\\]/g, "") + '"]');
+        return (lineas.length ? lineas.join("\n") + "\n\n" : "") + partes.join(" ");
+    }
+    function pgn(juego, resultado, tiempos) {
         const r = resultadoValido(resultado);
+        if (Array.isArray(tiempos) && tiempos.some(Number.isFinite) && juego.history().length) return pgnConTiempos(juego, r, tiempos);
         // Sin jugadas, chess.js no vuelve a leer un PGN que es solo el resultado:
         // ahí el resultado viaja aparte (`resultado`) y basta.
         if (!r || !juego.history().length) return juego.pgn();
@@ -74,10 +94,15 @@
     }
 
     /* `donde`, en un torneo: { torneo, ronda, mesa }. */
-    function estado(juego, nombres, donde, resultado) {
+    function estado(juego, nombres, donde, resultado, extra) {
         const r = resultadoValido(resultado);
+        const x = extra || {};
         const p = { v: 1, pgn: pgn(juego, r), blancas: nombre(nombres && nombres.blancas), negras: nombre(nombres && nombres.negras), t: Date.now() };
         if (r) p.resultado = r;
+        const n = juego.history().length;
+        if (Array.isArray(x.tiempos)) p.tiempos = x.tiempos.slice(0, n).map((y) => (Number.isFinite(y) ? Math.max(0, Math.round(y)) : null));
+        if (Number.isFinite(x.espera)) p.espera = Math.max(0, Math.round(x.espera));
+        if (x.retraso) p.retraso = entero(x.retraso, 120);
         if (donde && torneoDe(donde.torneo) && entero(donde.mesa, 999)) {
             p.torneo = torneoDe(donde.torneo); p.mesa = donde.mesa; p.ronda = entero(donde.ronda, 99);
         }
@@ -111,6 +136,10 @@
         const juego = new window.Chess();
         if (p.pgn.trim() && !juego.load_pgn(p.pgn)) return null;
         const d = { juego, blancas: nombre(p.blancas), negras: nombre(p.negras), t: Number(p.t) || 0, resultado: resultadoValido(p.resultado) };
+        const n = juego.history().length;
+        d.tiempos = Array.isArray(p.tiempos) ? p.tiempos.slice(0, n).map((y) => (Number.isFinite(y) && y >= 0 ? y : null)) : [];
+        d.espera = Number.isFinite(p.espera) && p.espera >= 0 ? p.espera : null;
+        d.retraso = entero(p.retraso, 120);
         if (torneoDe(p.torneo) && entero(p.mesa, 999)) { d.torneo = torneoDe(p.torneo); d.mesa = p.mesa; d.ronda = entero(p.ronda, 99); }
         return d;
     }
@@ -189,9 +218,23 @@
         return ultima + ". " + (fin || "Juegan " + (juego.turn() === "w" ? "las blancas" : "las negras") + ".");
     }
 
+    /* La partida hasta su jugada k (0 = la posición de arranque). */
+    function hasta(juego, k) {
+        const j = new window.Chess();
+        j.load_pgn(juego.pgn());
+        const sobran = juego.history().length - k;
+        for (let i = 0; i < sobran; i++) j.undo();
+        return j;
+    }
+    /* Un tiempo, para leer: «0:45», «12:03», «1:02:03». */
+    function reloj(ms) {
+        const x = Math.max(0, Math.round(ms / 1000)), h = Math.floor(x / 3600), m = Math.floor(x / 60) % 60, s2 = String(x % 60).padStart(2, "0");
+        return h ? h + ":" + String(m).padStart(2, "0") + ":" + s2 : m + ":" + s2;
+    }
+
     /* «Terminó 1-0», para quien mira. */
     const TEXTO_RESULTADO = { "1-0": "Terminó: ganan las blancas (1-0).", "=": "Terminó en tablas (½-½).", "0-1": "Terminó: ganan las negras (0-1)." };
     const textoResultado = (r) => TEXTO_RESULTADO[r] || "";
 
-    window.PartidaEnVivo = { nuevoCodigo, codigoValido, canal, enlace, estado, leer, pintar, jugadasTexto, comoVa, torneoDe, mesaFisica, mesasDe, resultadoSolo, pgn, textoResultado };
+    window.PartidaEnVivo = { nuevoCodigo, codigoValido, canal, enlace, estado, leer, pintar, jugadasTexto, comoVa, torneoDe, mesaFisica, mesasDe, resultadoSolo, pgn, textoResultado, hasta, reloj };
 })();

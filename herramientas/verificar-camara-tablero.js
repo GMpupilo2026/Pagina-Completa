@@ -44,8 +44,10 @@ function igual(nombre, hallado, esperado) {
 /* ── El canal falso, relevado por Node ─────────────────────────────────── */
 const paginas = new Set();
 let mandados = 0;
+const eventos = []; // todo lo que pasó por el canal: { nombre, event, payload }
 async function relevar(desde, nombre, msg) {
   mandados++;
+  eventos.push({ nombre, event: msg.event, payload: msg.payload });
   for (const p of paginas) {
     if (p === desde) continue; // Broadcast no le devuelve a quien manda
     await p.evaluate(({ nombre, msg }) => {
@@ -519,12 +521,27 @@ async function esperarJugadas(p, n) {
     await pv.evaluate(() => [document.getElementById("jugador-abajo").textContent, document.getElementById("jugador-arriba").textContent, !!window.__xss, document.querySelectorAll("#visor img").length]),
     ['Blancas: <img src=x onerror="window.__xss=1">Ana', "Negras: Beto", false, 0]);
   igual("el tablero tiene sus 64 casillas y la pieza en e4", await pv.evaluate(() => document.querySelectorAll("#tablero > div").length), 64);
-  igual("dice la última jugada, también al lector de pantalla", await pv.textContent("#ultima"), "Última jugada: 1. e4. Juegan las negras.");
+  igual("dice la última jugada (y cuánto la pensó), también al lector de pantalla", /^Última jugada: 1\. e4\. Juegan las negras\. La pensó \d+:\d\d\.$/.test(await pv.textContent("#ultima")), true);
+  igual("y quién está pensando, con su reloj", /^Piensan las negras: \d+:\d\d$/.test(await pv.textContent("#reloj-turno")), true);
   igual("cabe en el celular sin correrse de lado", await pv.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
 
   for (const san of ["e5", "Nf3"]) { jv.move(san); await foto(pc, jv.fen(), ESQ0); await esperarJugadas(pc, jv.history().length); }
   await pv.waitForFunction(() => document.getElementById("jugadas").textContent === "1. e4 e5 2. Cf3", null, { timeout: 8000 }).catch(() => {});
   igual("cada jugada nueva le llega sola a quien mira", await pv.textContent("#jugadas"), "1. e4 e5 2. Cf3");
+  // Repasar jugada a jugada.
+  await pv.click("#ir-atras");
+  igual("«◀» repasa la jugada anterior: el caballo todavía no está en f3", [/^Repasando: jugada 2 de 3, e5 \(pensó \d+:\d\d\)\.$/.test(await pv.textContent("#paso")),
+    await pv.evaluate(() => !!document.querySelector('#tablero [data-square="f3"] span')), await pv.locator("#ir-vivo").isVisible()], [true, false, true]);
+  await pv.click("#ir-inicio");
+  igual("«⏮» va a la posición del principio", [await pv.textContent("#paso"), await pv.evaluate(() => !!document.querySelector('#tablero [data-square="e2"] span'))], ["Repasando: la posición del principio.", true]);
+  await pv.keyboard.press("End");
+  igual("y con el teclado (Fin) vuelve al vivo", [await pv.textContent("#paso"), await pv.locator("#ir-vivo").isVisible()], ["En vivo: la última jugada.", false]);
+  // La evaluación de Stockfish, si se pide.
+  await pv.check("#ver-motor");
+  await pv.waitForFunction(() => /^Stockfish: /.test(document.getElementById("evaluacion-texto").textContent), null, { timeout: 60000 }).catch(() => {});
+  igual("«Ver la evaluación de Stockfish» la muestra, con la barra", [/^Stockfish: (Igualado|[+−])/.test(await pv.textContent("#evaluacion-texto")), await pv.locator("#evaluacion").isVisible()], [true, true]);
+  await pv.uncheck("#ver-motor");
+  igual("y se apaga", await pv.locator("#evaluacion").isVisible(), false);
   await pc.click("#btn-deshacer");
   await pv.waitForFunction(() => document.getElementById("jugadas").textContent === "1. e4 e5", null, { timeout: 8000 }).catch(() => {});
   igual("y también «Deshacer»", await pv.textContent("#jugadas"), "1. e4 e5");
@@ -674,8 +691,26 @@ async function esperarJugadas(p, n) {
     igual("al calibrar la partida nueva, los nombres pasan a los de la ronda 2", [await pa.inputValue("#vivo-blancas"), await pa.inputValue("#vivo-negras")], ['<img src=x onerror="window.__xss=1">Dani', "Ana Mora"]);
     ja2.move("c4"); await foto(pa, ja2.fen(), ESQ0); await esperarJugadas(pa, 1);
     await pw.waitForFunction(() => /c4/.test(document.querySelector('#mesas-lista button[data-mesa="5"]').textContent), null, { timeout: 8000 }).catch(() => {});
+    // Proyectar en la sala.
+    await pw.click("#btn-proyectar");
+    igual("«Proyectar en la sala» pone las mesas en grande, en toda la pantalla", [await pw.evaluate(() => document.getElementById("mesas").classList.contains("proyector")),
+      await pw.getAttribute("#btn-proyectar", "aria-pressed"), await pw.textContent("#btn-proyectar-texto"), await pw.locator("#mesas-lista button[data-mesa]").count()], [true, "true", "Dejar de proyectar", 2]);
+    await pw.click("#btn-proyectar");
+    igual("y se deja", await pw.evaluate(() => document.getElementById("mesas").classList.contains("proyector")), false);
     igual("la partida nueva de la mesa 5 llega con los jugadores de la ronda 2",
       await pw.$eval('#mesas-lista button[data-mesa="5"]', (b) => b.querySelectorAll("p")[1].textContent), '<img src=x onerror="window.__xss=1">Dani – Ana Mora');
+
+    // Algo que no sale de ninguna jugada legal (una torre que salta su peón):
+    // se le avisa al árbitro, sin las casillas.
+    const ilegal = new Chess(ja2.fen());
+    ilegal.remove("a1"); ilegal.put({ type: "r", color: "w" }, "a5");
+    const antesAlerta = eventos.length;
+    await foto(pa, ilegal.fen(), ESQ0);
+    await esperarAviso(pa, /No reconozco/);
+    igual("una posible jugada ilegal se dice, y se le avisa al árbitro", (await aviso(pa)).includes("puede ser una jugada ilegal") && (await aviso(pa)).endsWith("Se le avisó al árbitro."), true);
+    const alerta = eventos.slice(antesAlerta).find((x) => x.event === "alerta");
+    igual("el aviso al árbitro dice el torneo, la ronda y la mesa, pero no las casillas", alerta && [alerta.payload.torneo, alerta.payload.ronda, alerta.payload.mesa, /a1|a5/.test(JSON.stringify(alerta.payload))], [ID, 2, 5, false]);
+    await foto(pa, ja2.fen(), ESQ0);
 
     // El resultado: lo marca quien maneja la cámara y le llega a quien mira.
     await pa.click('[data-resultado="1-0"]');
@@ -709,6 +744,35 @@ async function esperarJugadas(p, n) {
     igual("y el código ya no queda en la dirección", await pq.evaluate(() => location.hash), "");
     igual("sin errores en la consola (por el QR)", Q.errores, []);
     await cerrar(Q);
+  }
+
+  console.log("\nEl retraso de la transmisión");
+  {
+    const R = await abrir(browser, "camara-tablero.html");
+    const pr = R.page;
+    await pr.waitForSelector("#app:not(.hidden)");
+    for (const j of ["e4", "e5"]) { await pr.fill("#jugada-mano", j); await pr.click("#form-anotar button[type=submit]"); }
+    await pr.selectOption("#vivo-retraso", "5");
+    await pr.click("#btn-vivo");
+    const cod = (await pr.textContent("#vivo-codigo")).split(" ")[0];
+    igual("con retraso, lo dice junto al código", await pr.textContent("#vivo-codigo"), cod + " · con 5 minutos de retraso");
+    const RV = await abrir(browser, "tablero-vivo.html#" + cod);
+    const prv = RV.page;
+    await prv.waitForFunction(() => !document.getElementById("partida").hidden, null, { timeout: 8000 }).catch(() => {});
+    igual("quien mira todavía no ve las jugadas de hace menos de 5 minutos", [await prv.textContent("#jugadas"), await prv.textContent("#retraso-aviso")], ["Todavía no se ha jugado nada.", "Con 5 minutos de retraso"]);
+    // Pasan 6 minutos (el reloj de la cámara se adelanta): salen solas.
+    await pr.evaluate(() => { const real = Date.now; Date.now = () => real() + 6 * 60000; });
+    await prv.waitForFunction(() => document.getElementById("jugadas").textContent === "1. e4 e5", null, { timeout: 12000 }).catch(() => {});
+    igual("cuando cumplen su tiempo, salen solas", await prv.textContent("#jugadas"), "1. e4 e5");
+    await pr.fill("#jugada-mano", "Nf3"); await pr.click("#form-anotar button[type=submit]");
+    await prv.waitForTimeout(800);
+    igual("la jugada recién hecha todavía no", await prv.textContent("#jugadas"), "1. e4 e5");
+    await pr.click('[data-resultado="1-0"]');
+    await prv.waitForFunction(() => document.getElementById("jugadas").textContent === "1. e4 e5 2. Cf3", null, { timeout: 8000 }).catch(() => {});
+    igual("al terminar la partida, se ve entera", [await prv.textContent("#jugadas"), /Terminó: ganan las blancas/.test(await prv.textContent("#ultima"))], ["1. e4 e5 2. Cf3", true]);
+    igual("el retraso se recuerda", await pr.evaluate(() => localStorage.getItem("camara_retraso_v1")), "5");
+    igual("sin errores en la consola", [R.errores, RV.errores], [[], []]);
+    await cerrar(RV); await cerrar(R);
   }
 
   console.log("\nEl mate se marca solo");

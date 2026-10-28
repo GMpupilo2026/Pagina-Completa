@@ -2491,6 +2491,15 @@ a.tp-org:focus-visible { outline: none; box-shadow: 0 0 0 2px rgb(var(--c-accent
 .camara-compacta #burbuja-en-linea,
 .camara-compacta [data-solo-pagina] { display: none !important; }
 .camara-compacta main { padding-top: 0.75rem; padding-bottom: 0.75rem; }
+/* «Proyectar en la sala» (tablero-vivo.html): las mesas del torneo en
+   pantalla completa, de a 6, sobre el fondo oscuro del sitio. Las tarjetas
+   siguen siendo blancas con su texto de siempre: el contraste no cambia. */
+#mesas.proyector { position: fixed; inset: 0; z-index: 60; overflow: auto; margin: 0; padding: 1.5rem 2rem; background: rgb(var(--c-brand-950, 7 21 39)); }
+#mesas.proyector #torneo-titulo, #mesas.proyector #proyector-pagina { color: #fff; }
+#mesas.proyector #torneo-titulo { font-size: 2.25rem; }
+#mesas.proyector #mesas-lista { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1.5rem; }
+#mesas.proyector #mesas-lista button { font-size: 1.2rem; }
+#mesas.proyector #mesas-lista button p { font-size: 1.05rem; }
 /* La hoja con el QR de cada mesa (camara-tablero.html, «Imprimir el QR de
    cada mesa»): en la pantalla no se ve; al imprimirla sale sola, dos mesas
    por fila, con la marca de agua de Ajedrez Integral al centro de cada hoja

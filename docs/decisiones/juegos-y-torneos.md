@@ -9961,3 +9961,55 @@ con un doble del sonido) y `verificar-pareo-camaras.js` (Pareo con el doble
 de Realtime de `herramientas/lib/pareo-pruebas.js`: lo que entra, lo que no,
 el resultado para confirmar y que una jugada no repinta ni ensucia el
 historial). Rotos a propósito, saltan.
+
+### Quien mira y quien transmite: repasar, tiempos, jugada ilegal, proyector, motor y retraso
+
+El tercer pedido de mejoras del dueño («todas»). Lo de este paquete:
+
+- **La hora de cada jugada.** La cámara guarda la hora de cada jugada
+  (`horas`, y la de arranque, `inicio`; null si no se sabe, como en una
+  partida cargada a mano), también en el celular junto con la partida
+  (`camara_partida_v1_<n>_horas`). De ahí salen dos cosas:
+  - **El tiempo de cada jugada**: viaja en cada mensaje (`tiempos`, en ms) y
+    cuánto lleva pensando quien tiene el turno (`espera`). Quien mira ve «La
+    pensó 1:23» y «Piensan las negras: 3:12», con su propio reloj sumado a lo
+    que llevaba al llegar el mensaje (los relojes de los dos celulares no
+    tienen por qué coincidir). Pareo Integral guarda la partida con cada
+    tiempo como lo escriben Lichess y ChessBase, `{[%emt 0:01:23]}`
+    (`PartidaEnVivo.pgn(juego, resultado, tiempos)`, que arma el PGN a mano
+    porque chess.js 0.10.3 no escribe comentarios; chess.js y
+    `PareoPartida.leer` los leen sin problema).
+  - **El retraso de la transmisión**, que elige quien transmite: «Sin
+    retraso», 5, 10, 15 o 30 minutos. Se manda la partida con las jugadas
+    que ya cumplieron ese tiempo (`vistaVivo`), y cada 5 segundos se revisa
+    si salió otra. Como sale de la hora de cada jugada, vale también después
+    de recargar la página. **Cuando la partida termina, se manda entera**:
+    ya no hay a quién ayudar, y así el resultado y la partida le llegan al
+    árbitro de Pareo sin esperar. En un torneo es del torneo: todas sus
+    cámaras igual (va en `camara_torneo_v1` y pasa a los otros cuadritos).
+    Quien mira ve «Con 15 minutos de retraso».
+- **Repasar la partida** en `tablero-vivo.html`: «⏮ ◀ ▶ ⏭», también con las
+  flechas, Inicio y Fin; «Volver al vivo». Repasando, una jugada que llega no
+  lo saca de donde está (`paso`).
+- **Una posible jugada ilegal**: si lo que ve la cámara no sale de ninguna
+  jugada legal y no se movió la cámara, lo dice, y en un torneo le manda al
+  árbitro un aviso aparte (`alerta`: torneo, ronda y mesa, **nunca las
+  casillas**: con retraso, eso sería pasar la jugada). En Pareo sale como
+  aviso y queda en la caja de las cámaras con «Visto»; la misma mesa, una vez
+  cada 30 segundos como mucho. En la cámara, la mesa pasa a «Necesita ayuda»
+  en «Cómo van las cámaras».
+- **«Proyectar en la sala»** (con un torneo): todas las mesas en pantalla
+  completa, de a 6, rotando cada 15 segundos, sobre el fondo oscuro del
+  sitio. Si el navegador no deja la pantalla completa, igual se ve grande.
+- **La evaluación de Stockfish**, apagada por omisión: la casilla «Ver la
+  evaluación de Stockfish» carga `js/shared-engine.js` y
+  `js/preparacion-motor.js` (la misma evaluación de la preparación de
+  rivales; profundidad 14) y muestra la barra y el número, de la posición que
+  se está viendo (también repasando). La barra nunca va sola: el texto dice
+  quién está mejor o el mate.
+
+Lo prueban `verificar-camara-tablero.js` (repasar con botones y teclado, el
+tiempo y el reloj, Stockfish de verdad, el proyector, la jugada ilegal que
+llega al canal sin casillas y el retraso con el reloj de la cámara
+adelantado) y `verificar-pareo-camaras.js` (los `[%emt]` y las alertas).
+Rotos a propósito, saltan.
