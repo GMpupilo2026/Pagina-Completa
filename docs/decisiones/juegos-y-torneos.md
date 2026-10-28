@@ -7303,6 +7303,17 @@ y debajo las herramientas de ese tema en tarjetas compactas, con su nombre
 corto (`corto`) y lo que hace detrás de un desplegable «Qué hace», cerrado:
 así se comparan de un vistazo sin una página larguísima.
 
+**De entrada no hay tema elegido** (lo pidió el dueño): debajo de las
+tarjetas no sale ninguna herramienta, sino la foto de Oscar
+(`img/oscar-avatar-160.jpg`) con un globo que dice «¡Elige un tema!»
+(`#tema-invitacion`); al tocar un tema, Oscar se va y salen sus
+herramientas. Con el tema en la dirección (`#jde`), ese ya viene elegido.
+Sin ninguno elegido, ninguna pestaña está `aria-selected` y a la primera se
+llega con Tab. De paso: una herramienta que todavía no se puede usar dice
+«Próximamente» también para quien tiene todas (la licencia «todas» o quien
+administra); antes decía «Abierta para tu cuenta» y abajo «Todavía no se
+puede usar».
+
 **La ficha Universitarios trae también los torneos** (lo pidió el dueño):
 además de los resultados por universidad, el catálogo «Torneos universitarios
 de Costa Rica» y las páginas de cada torneo (`cenfotec-2026.html`,

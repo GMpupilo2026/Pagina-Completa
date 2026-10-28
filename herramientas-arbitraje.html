@@ -100,7 +100,17 @@
         <span class="text-accent-700 dark:text-accent-400 font-semibold uppercase tracking-wide text-sm">Las herramientas</span>
         <h2 id="t-lista" class="font-serif text-2xl md:text-3xl font-bold text-brand-800 dark:text-white mt-1">Elige un tema</h2>
         <div id="temas" role="tablist" aria-label="Temas de las herramientas" class="mt-6 grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4"></div>
-        <div id="panel-tema" role="tabpanel" tabindex="-1" class="mt-10 scroll-mt-24 focus:outline-none">
+        <!-- Sin tema elegido, debajo de las tarjetas solo está Oscar invitando a
+             elegir uno (js/herramientas-arbitraje-pagina.js). -->
+        <div id="tema-invitacion" class="mt-10" hidden><div class="flex items-center gap-4 sm:gap-5">
+            <img src="img/oscar-avatar-160.jpg" alt="El profe Oscar Angulo" width="80" height="80" class="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover shrink-0 shadow-md border-2 border-white dark:border-brand-700">
+            <div class="relative rounded-2xl bg-white dark:bg-brand-900 shadow-md px-5 py-4">
+                <span aria-hidden="true" class="absolute top-1/2 -left-2 -mt-2 w-4 h-4 rotate-45 bg-white dark:bg-brand-900"></span>
+                <p class="relative font-serif text-xl sm:text-2xl font-bold text-brand-800 dark:text-white">¡Elige un tema!</p>
+                <p class="relative mt-1 text-sm text-brand-600 dark:text-brand-300">Toca una de las tarjetas de arriba y te muestro sus herramientas.</p>
+            </div>
+        </div></div>
+        <div id="panel-tema" role="tabpanel" tabindex="-1" class="mt-10 scroll-mt-24 focus:outline-none" hidden>
             <h3 id="tema-titulo" class="font-serif text-xl md:text-2xl font-bold text-brand-800 dark:text-white"></h3>
             <p id="tema-resumen" class="mt-1 text-brand-600 dark:text-brand-300"></p>
             <p class="mt-1 text-sm text-brand-500 dark:text-brand-300">🆓 Gratis: se abre sin cuenta. 🔒 Con licencia: se abre para tu cuenta con un código.</p>
