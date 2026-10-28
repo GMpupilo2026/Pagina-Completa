@@ -720,6 +720,68 @@ async function esperarJugadas(p, n) {
     await nav.close();
   }
 
+  console.log("\nVarias cámaras en una computadora (camaras.html)");
+  {
+    const nav = await chromium.launch({ executablePath: fs.existsSync(CHROME) ? CHROME : undefined,
+      args: ["--use-fake-device-for-media-stream=device-count=2", "--use-fake-ui-for-media-stream"] });
+    const ctx = await nav.newContext({ serviceWorkers: "block", viewport: { width: 1600, height: 1400 }, permissions: ["camera"] });
+    const pg = await ctx.newPage();
+    const errores = [];
+    pg.on("pageerror", (e) => errores.push(String(e)));
+    await pg.exposeFunction("__aCanal", () => {});
+    await pg.route("**/js/supabase-client.js", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: cliente({ is_admin: true }) }));
+    await pg.goto(BASE + "/camaras.html", { waitUntil: "load" });
+    await pg.waitForSelector("#app:not(.hidden)");
+    const marcos = () => pg.$$eval("#puestos iframe", (f) => f.map((x) => x.getAttribute("src")));
+    igual("arranca con dos cámaras, cada una en su cuadrito", await marcos(), ["camara-tablero.html?compacto=1&puesto=1", "camara-tablero.html?compacto=1&puesto=2"]);
+    igual("cada cuadrito puede usar la cámara", await pg.$$eval("#puestos iframe", (f) => f.map((x) => x.getAttribute("allow"))), ["camera", "camera"]);
+    const cuadro = async (n) => {
+      const f = pg.frame({ url: new RegExp("puesto=" + n + "$") });
+      await f.waitForSelector("#app:not(.hidden)");
+      return f;
+    };
+    const f1 = await cuadro(1), f2 = await cuadro(2);
+    igual("en el cuadrito no se repiten el encabezado, las explicaciones ni el pie", await f1.evaluate(() => [
+      document.getElementById("header").checkVisibility(), document.querySelector("h1").checkVisibility(), document.querySelector("footer").checkVisibility(),
+      document.getElementById("lienzo").checkVisibility(), document.getElementById("btn-camara").checkVisibility()]), [false, false, false, true, true]);
+    await f1.evaluate(() => { window.__sigue = true; });
+    await pg.click("#btn-agregar");
+    igual("«Agregar una cámara» suma un cuadrito", (await marcos()).length, 3);
+    await pg.click("#btn-quitar");
+    igual("«Quitar una cámara» quita el último", (await marcos()).length, 2);
+    igual("y los que ya estaban no se recargan (no pierden su cámara ni su calibración)", await f1.evaluate(() => window.__sigue === true), true);
+
+    // Una cámara distinta en cada cuadrito, guardada aparte.
+    await f1.click("#btn-camara");
+    await f1.waitForFunction(() => /esquinas/.test(document.getElementById("aviso").textContent), null, { timeout: 8000 });
+    await f2.click("#btn-camara");
+    await f2.waitForFunction(() => !document.getElementById("camara-elegir-caja").hidden, null, { timeout: 8000 }).catch(() => {});
+    const ops = await f2.$$eval("#camara-elegir option", (o) => o.map((x) => x.value));
+    const otra = ops.find((x) => x !== (ops[0])) || ops[0];
+    await f2.selectOption("#camara-elegir", ops[1]);
+    await f2.waitForFunction((id) => localStorage.getItem("camara_dispositivo_v1_p2") === id, ops[1], { timeout: 8000 }).catch(() => {});
+    igual("cada cuadrito recuerda su propia cámara", await pg.evaluate(() => [localStorage.getItem("camara_dispositivo_v1_p1") !== localStorage.getItem("camara_dispositivo_v1_p2"), !!localStorage.getItem("camara_dispositivo_v1_p2")]), [true, true]);
+
+    // El torneo: se elige en uno y el otro lo toma solo; la mesa, cada uno la suya.
+    const hoy = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Costa_Rica" }).format(new Date());
+    const ID = "0b9f3c2e-7a41-4d8e-9c55-1f2a3b4c5d6e";
+    const datos = [{ id: ID, nombre: "Abierto de prueba", fecha: hoy, rondas: 1, oculto: false,
+      datos: { nombre: "Abierto de prueba", tipo: "individual", jugadores: [{ id: "a", nombre: "Ana" }, { id: "b", nombre: "Beto" }, { id: "c", nombre: "Carla" }, { id: "d", nombre: "Dani" }],
+        rondas: [{ mesas: [{ b: "a", n: "b" }, { b: "c", n: "d" }] }] } }];
+    for (const f of [f1, f2]) await f.evaluate((d) => { window.__pareo = d; }, datos);
+    await f1.fill("#torneo-enlace", ID);
+    await f1.click("#btn-torneo");
+    await f2.waitForFunction(() => !document.getElementById("torneo-elegido").hidden, null, { timeout: 8000 }).catch(() => {});
+    igual("el torneo elegido en una cámara le llega solo a la otra, con el mismo código",
+      [await f2.textContent("#torneo-nombre"), await f2.inputValue("#torneo-codigo") === await f1.inputValue("#torneo-codigo")], ["Abierto de prueba", true]);
+    await f1.selectOption("#torneo-mesa", "1");
+    await f2.selectOption("#torneo-mesa", "2");
+    igual("y cada una tiene su mesa, con sus jugadores", [await f1.inputValue("#vivo-blancas"), await f2.inputValue("#vivo-blancas"),
+      await pg.evaluate(() => [localStorage.getItem("camara_mesa_v1_p1_0"), localStorage.getItem("camara_mesa_v1_p2_0")])], ["Ana", "Carla", ["1", "2"]]);
+    igual("sin errores en la consola", errores, []);
+    await nav.close();
+  }
+
   console.log("\nQuien no administra");
   const n = await abrir(browser, "camara-tablero.html", { is_admin: false });
   await n.page.waitForSelector("#denegado:not(.hidden)");
@@ -742,7 +804,10 @@ async function esperarJugadas(p, n) {
     igual(r + " la deja encendida solo para el sitio", /camera=\(self\)/.test(pp(r)) && !/camera=\(\)/.test(pp(r)), true);
   }
   const conCamara = Object.keys(reglas).filter((r) => /camera=\((?!\))/.test(pp(r)));
-  igual("ninguna otra página tiene la cámara (tampoco la de mirar la partida)", conCamara, ["/camara-tablero", "/camara-tablero.html"]);
+  for (const r of ["/camaras", "/camaras.html"]) {
+    igual(r + " (la de los cuadritos) también la tiene: sin eso, ningún cuadrito podría usarla", /camera=\(self\)/.test(pp(r)) && (reglas[r] || []).includes("! Permissions-Policy"), true);
+  }
+  igual("ninguna otra página tiene la cámara (tampoco la de mirar la partida)", [...conCamara].sort(), ["/camara-tablero", "/camara-tablero.html", "/camaras", "/camaras.html"]);
 
   await browser.close();
   console.log(fallos ? `\n✗ ${fallos} comprobaciones fallaron.` : "\nLa cámara que lee el tablero y la partida en vivo están como se pidió.");

@@ -302,8 +302,16 @@
     const CADA_MS = 200;        // cada cuánto se lee el tablero
     const QUIETA = 6;           // lecturas iguales seguidas para fiarse (~1,2 s)
     const NOMBRE = ["a1", "h1", "h8", "a8"];
-    const GUARDADO = ["camara_vivo_codigo_v1", "camara_vivo_codigo_v1_2"];
-    const PARTIDA = "camara_partida_v1_"; // + el número del tablero
+    /* Varias cámaras en una computadora (camaras.html): cada una es esta
+     * misma página en un cuadrito, con «?puesto=N&compacto=1». Lo que es de
+     * cada cámara (su dispositivo, su mesa, su partida, su código) se guarda
+     * aparte por puesto; el torneo y su código, en cambio, se comparten. */
+    const parametros = new URLSearchParams(location.search);
+    const PUESTO = (parametros.get("puesto") || "").replace(/[^0-9]/g, "").slice(0, 2);
+    const delPuesto = (clave) => (PUESTO ? clave + "_p" + PUESTO : clave);
+    if (parametros.get("compacto") === "1") document.documentElement.classList.add("camara-compacta");
+    const GUARDADO = ["camara_vivo_codigo_v1", "camara_vivo_codigo_v1_2"].map(delPuesto);
+    const PARTIDA = delPuesto("camara_partida_v1") + "_"; // + el número del tablero
     const COLOR = ["rgba(250, 204, 21, 0.9)", "rgba(34, 211, 238, 0.9)"]; // amarillo y celeste; además se escribe el número
 
     const $ = (id) => document.getElementById(id);
@@ -383,7 +391,7 @@
      * computadora puede tener varias cámaras USB). Los nombres de las
      * cámaras el navegador solo los da después del primer permiso, así que
      * la lista se arma después de abrir una. La elegida se recuerda. */
-    const CAMARA = "camara_dispositivo_v1";
+    const CAMARA = delPuesto("camara_dispositivo_v1");
     async function abrirCamara(id) {
         if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
             avisar("Este navegador no deja usar la cámara desde la página. Prueba con Chrome o Safari al día.", "error");
@@ -788,7 +796,7 @@
      * otros. Los nombres salen del torneo publicado, de la ronda en que se
      * calibró la partida; cuando Pareo empareja la ronda siguiente, se avisa
      * para empezar la partida nueva. Se vuelve a leer el torneo cada minuto. */
-    const TORNEO = "camara_torneo_v1", MESA = "camara_mesa_v1_";
+    const TORNEO = "camara_torneo_v1", MESA = delPuesto("camara_mesa_v1") + "_";
     let torneo = null; // { id, nombre, datos, codigo }
     let relojTorneo = null;
 
@@ -930,7 +938,7 @@
     }
 
     function leerTableros(ahora) {
-        if (ahora - ultimaMirada < CADA_MS || !tableros.some((t) => t.h && t.cal)) return;
+        if (ahora - ultimaMirada < CADA_MS * 0.9 || !tableros.some((t) => t.h && t.cal)) return;
         ultimaMirada = ahora;
         const pix = cctx.getImageData(0, 0, limpio.width, limpio.height).data;
         for (const t of tableros) {
@@ -1016,12 +1024,20 @@
         ctx.fillText("con el celular encima del tablero.", 320, 362);
     }
 
-    function dibujar(ahora) {
+    /* Leer va con su propio reloj, no con el dibujo: el navegador deja de
+     * dibujar lo que no se ve (un cuadrito de camaras.html fuera de la
+     * pantalla), pero la partida se tiene que seguir anotando. */
+    setInterval(() => {
+        if (!fuente) return;
+        cctx.drawImage(fuente, 0, 0, limpio.width, limpio.height);
+        leerTableros(performance.now());
+    }, CADA_MS);
+
+    function dibujar() {
         requestAnimationFrame(dibujar);
         if (!fuente) return;
         cctx.drawImage(fuente, 0, 0, limpio.width, limpio.height);
         ctx.drawImage(limpio, 0, 0);
-        leerTableros(ahora);
         // El elegido, encima del otro.
         tableros.filter((t) => t !== T()).forEach(dibujarTablero);
         dibujarTablero(T());
@@ -1029,6 +1045,16 @@
     }
 
     $("btn-camara").addEventListener("click", () => abrirCamara());
+    /* El torneo lo elige una cámara y le llega a las demás de la misma
+     * computadora (otros cuadritos u otras pestañas): mismo torneo, mismo
+     * código; la mesa la elige cada una. */
+    window.addEventListener("storage", (e) => {
+        if (e.key !== TORNEO) return;
+        let nuevo = null;
+        try { nuevo = JSON.parse(e.newValue || "null"); } catch (x) { /* nada */ }
+        if (!nuevo) { if (torneo) dejarTorneo(); return; }
+        if (!torneo || torneo.id !== nuevo.id || torneo.codigo !== nuevo.codigo) usarTorneo(nuevo.id, nuevo.codigo);
+    });
     $("camara-elegir").addEventListener("change", (e) => abrirCamara(e.target.value));
     $("foto").addEventListener("change", (e) => usarFoto(e.target.files[0]));
     $("btn-buscar").addEventListener("click", buscarTablero);

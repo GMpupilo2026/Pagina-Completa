@@ -9535,8 +9535,8 @@ página de quien mira).
   (`js/coordenadas-tablero.js`), «Girar el tablero» con los nombres del lado
   de sus piezas, y las jugadas en algebraica española. La última jugada se
   dice también en texto, y al lector de pantalla cuando cambia.
-- La página de quien mira NO tiene la cámara: solo `camara-tablero` la tiene
-  en `_headers` (lo revisa el verificador).
+- La página de quien mira NO tiene la cámara: solo `camara-tablero` y
+  `camaras` la tienen en `_headers` (lo revisa el verificador).
 
 - **Un torneo de Pareo Integral, con una cámara por mesa** (lo pidió el
   dueño: «si ponemos 20 cámaras, que cada una pase su partida»). La cámara
@@ -9567,3 +9567,37 @@ los mensajes de uno a otro, como haría el canal: quien llega tarde recibe la
 partida entera, cada jugada y «Deshacer» llegan solos, lo viejo y lo ilegal
 no se pintan, «Dejar de transmitir» deja de mandar y volver a transmitir usa
 el mismo código, y un código malo o sin nadie transmitiendo se dice.
+
+### Varias cámaras en una computadora
+
+Lo pidió el dueño para no necesitar tantos celulares: una computadora con
+varias cámaras USB, cada una encima de su mesa. `camaras.html` (de quien
+administra; `js/camaras.js`) pone un cuadrito por cámara.
+
+- **Cada cuadrito es `camara-tablero.html` entera, en un iframe con
+  `?compacto=1&puesto=N`**: la misma página de siempre, sin una segunda copia
+  de la lectura, la calibración ni la transmisión. `compacto` le pone la clase
+  `camara-compacta` al cuerpo, que esconde el encabezado, las migas, el pie, la
+  burbuja y lo marcado `data-solo-pagina` (el título, la introducción, los
+  pasos y el segundo tablero: un tablero por cámara).
+- **Lo de cada cámara se guarda aparte por puesto** (las claves de
+  `localStorage` llevan `_pN`): su dispositivo, su mesa, su partida y su
+  código propio. El torneo y su código son de todas (`camara_torneo_v1`):
+  cuando un cuadrito elige el torneo, los demás lo toman solos por el evento
+  `storage`, y cada uno elige su mesa.
+- **La página de afuera también tiene la cámara permitida en `_headers`**, y
+  el iframe lleva `allow="camera"`: sin las dos cosas el navegador no le deja
+  la cámara a ningún cuadrito, sin dar error visible.
+- **La lectura corre con `setInterval`, no con `requestAnimationFrame`**: un
+  iframe que no se ve (más abajo en la página) no recibe cuadros de
+  animación y su mesa dejaría de leerse. El dibujo sí va con rAF.
+- Se agregan o quitan cuadritos de a uno (de 1 a 8, recordado), siempre el
+  último: los que ya están no se recargan, porque perderían la cámara abierta
+  y la calibración. Ocho es el tope práctico de una computadora (cada cámara
+  ocupa su ancho de banda USB y su lectura); para 20 mesas, tres o cuatro
+  computadoras, todas en el mismo torneo.
+
+Lo prueba `verificar-camara-tablero.js` con las dos cámaras de mentira de
+Chromium: dos cuadritos, cada uno con su cámara, el torneo elegido en uno que
+aparece en el otro con el mismo código, y cada uno en su mesa con sus
+jugadores; agregar y quitar sin recargar los que ya estaban.
