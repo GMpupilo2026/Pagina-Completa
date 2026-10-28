@@ -2492,6 +2492,56 @@ a.tp-org:focus-visible { outline: none; box-shadow: 0 0 0 2px rgb(var(--c-accent
 .camara-compacta [data-solo-pagina] { display: none !important; }
 .camara-compacta main { padding-top: 0.75rem; padding-bottom: 0.75rem; }
 
+
+/* ===== Los stickers del profe en la clase en vivo (js/clase-stickers.js) =====
+   El dibujo del profe Oscar con su frase, abajo a la derecha, encima de la
+   clase. Entra con un salto corto (nada con «reducir movimiento») y se va solo.
+   El globo: el texto de siempre (brand-800 sobre blanco, brand-50 sobre
+   brand-900), los mismos pares que ya pasan AA en todo el sitio. */
+.clase-sticker { position: fixed; right: 1rem; bottom: 1rem; z-index: 60; pointer-events: none; }
+.clase-sticker[hidden] { display: none; }
+/* Ancho fijo: el globo se parte en renglones dentro de él y nunca se sale de
+   la pantalla (con el ancho del dibujo, una frase larga se cortaba). */
+.clase-sticker-tarjeta { position: relative; display: flex; flex-direction: column; align-items: center; pointer-events: auto; width: min(18rem, calc(100vw - 2rem)); }
+.clase-sticker-img { display: block; height: min(40vh, 18rem); width: auto; filter: drop-shadow(0 6px 14px rgb(0 0 0 / 0.28)); }
+.clase-sticker-globo {
+  position: relative; margin-bottom: 0.5rem; padding: 0.6rem 0.9rem; border-radius: 1rem;
+  background: #ffffff; color: rgb(var(--c-brand-800, 16 42 67));
+  border: 3px solid rgb(var(--c-accent-500, 222 145 29));
+  font-weight: 800; font-size: 1.15rem; line-height: 1.3; text-align: center; overflow-wrap: anywhere;
+  box-shadow: 0 6px 18px rgb(0 0 0 / 0.18);
+}
+.clase-sticker-globo::after {
+  content: ""; position: absolute; left: 50%; bottom: -12px; transform: translateX(-50%);
+  border: 10px solid transparent; border-top-color: rgb(var(--c-accent-500, 222 145 29)); border-bottom: 0;
+}
+.dark .clase-sticker-globo { background: rgb(var(--c-brand-900, 10 31 51)); color: rgb(var(--c-brand-50, 240 244 248)); }
+.clase-sticker-globo[hidden] { display: none; }
+.clase-sticker-para { margin-top: 0.25rem; padding: 0.15rem 0.6rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 600; background: rgb(var(--c-brand-800, 16 42 67)); color: #ffffff; }
+.clase-sticker-para[hidden] { display: none; }
+.clase-sticker-cerrar {
+  /* Abajo a la izquierda, al lado del dibujo: arriba tapaba el globo. */
+  position: absolute; bottom: 0.25rem; left: 0; width: 2.75rem; height: 2.75rem; border-radius: 9999px;
+  background: rgb(var(--c-brand-800, 16 42 67)); color: #ffffff; font-size: 1.4rem; line-height: 1;
+  box-shadow: 0 2px 8px rgb(0 0 0 / 0.3);
+}
+.clase-sticker-cerrar:focus-visible { outline: 3px solid rgb(var(--c-accent-400, 240 180 41)); outline-offset: 2px; }
+.clase-sticker-entra .clase-sticker-tarjeta { animation: clase-sticker-salto 0.45s cubic-bezier(.2, 1.4, .4, 1); }
+@keyframes clase-sticker-salto { from { transform: translateY(40px) scale(0.6); opacity: 0; } to { transform: none; opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .clase-sticker-entra .clase-sticker-tarjeta { animation: none; } }
+@media (max-width: 640px) { .clase-sticker-img { height: min(30vh, 13rem); } .clase-sticker-globo { font-size: 1rem; } }
+html.modo-proyector .clase-sticker-tarjeta { width: min(30rem, calc(100vw - 2rem)); }
+html.modo-proyector .clase-sticker-img { height: 45vh; }
+html.modo-proyector .clase-sticker-globo { font-size: 2rem; }
+/* El diálogo para elegirlo: una grilla de dibujos con su frase debajo. */
+.clase-stickers-grilla { display: grid; grid-template-columns: repeat(auto-fill, minmax(6.25rem, 1fr)); gap: 0.5rem; max-height: min(55vh, 28rem); overflow-y: auto; padding: 0.25rem; }
+.clase-stickers-opcion { display: flex; flex-direction: column; align-items: center; gap: 0.25rem; padding: 0.4rem; border: 2px solid rgb(var(--c-brand-200, 188 204 220)); background: rgb(var(--c-brand-50, 240 244 248)); }
+.dark .clase-stickers-opcion { background: rgb(var(--c-brand-800, 16 42 67)); border-color: rgb(var(--c-brand-700, 36 59 83)); }
+.clase-stickers-opcion:hover { border-color: rgb(var(--c-accent-400, 240 180 41)); }
+.clase-stickers-opcion[aria-pressed="true"] { border-color: rgb(var(--c-accent-500, 222 145 29)); box-shadow: 0 0 0 3px rgb(var(--c-accent-400, 240 180 41) / 0.6); }
+.clase-stickers-opcion img { height: 5.5rem; width: auto; }
+.clase-stickers-frase { font-size: 0.72rem; font-weight: 600; line-height: 1.2; text-align: center; color: rgb(var(--c-brand-800, 16 42 67)); }
+.dark .clase-stickers-frase { color: rgb(var(--c-brand-50, 240 244 248)); }
 /* inscripcion-jde.html (la inscripción de ajedrez de los JDE): el formulario, la
    revisión y las tarjetas de estudiantes. Los colores de error, aviso y dato se
    midieron contra su fondo (texto ≥ 7:1, borde ≥ 3:1, en claro y en oscuro) y
@@ -2559,3 +2609,8 @@ a.tp-org:focus-visible { outline: none; box-shadow: 0 0 0 2px rgb(var(--c-accent
 .ij-detalles summary { cursor: pointer; font-weight: 600; color: rgb(var(--c-brand-800, 16 42 67)); }
 .dark .ij-detalles summary { color: #fff; }
 .ij-detalles summary:focus-visible { outline: 3px solid rgb(var(--c-accent-500, 222 145 29)); outline-offset: 2px; }
+.ij-grupo { border: 0; margin: 0; padding: 0; min-width: 0; }
+.ij-grupo legend { padding: 0; margin-bottom: 0.25rem; }
+.ij-opcion-nota { padding: 0.4rem 0.65rem; font-size: 0.8rem; color: rgb(var(--c-brand-600, 51 78 104)); }
+.dark .ij-opcion-nota { color: rgb(var(--c-brand-200, 188 204 220)); }
+.ij-opciones { max-height: 22rem; }

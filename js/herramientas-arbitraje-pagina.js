@@ -20,7 +20,9 @@
     const $ = (id) => document.getElementById(id);
     const abiertas = new Set();
     let conSesion = false;
-    let temaActivo = H.TEMAS[0].id;
+    // Ninguno de entrada: abajo sale Oscar pidiendo elegir uno (#tema-invitacion).
+    // Con #jde (o el que sea) en la dirección, ese ya viene elegido.
+    let temaActivo = null;
 
     function el(tag, clase, texto) {
         const e = document.createElement(tag);
@@ -33,7 +35,8 @@
         const ul = $("lista");
         ul.textContent = "";
         H.LISTA.forEach((h) => {
-            const abierta = abiertas.has(h.id) || !!h.gratis;
+            // Una que todavía no se puede usar no está «abierta» aunque la cuenta tenga todas.
+            const abierta = h.disponible && (abiertas.has(h.id) || !!h.gratis);
             const li = el("li", "rounded-2xl bg-white dark:bg-brand-900 shadow-md p-5 flex flex-col");
             li.dataset.herramienta = h.id;
             li.dataset.tema = h.tema;
@@ -73,7 +76,7 @@
                 }
             } else if (h.disponible) {
                 const a = el("a", "bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2 rounded-lg text-sm transition-colors", "Pedir una licencia");
-                a.href = "https://wa.me/50683092291?text=" + encodeURIComponent("Hola, quiero una licencia de «" + h.nombre + "».");
+                a.href = "https://wa.me/50683092291?text=" + encodeURIComponent("Hola, quiero una licencia de «" + H.nombre(h.licencia || h.id) + "».");
                 a.target = "_blank";
                 a.rel = "noopener";
                 const b = el("a", "font-semibold px-4 py-2 rounded-lg text-sm bg-brand-100 dark:bg-brand-800 hover:bg-brand-200 dark:hover:bg-brand-700", "Ya tengo un código");
@@ -104,7 +107,8 @@
             b.setAttribute("role", "tab");
             b.setAttribute("aria-selected", activa ? "true" : "false");
             b.setAttribute("aria-controls", "panel-tema");
-            b.tabIndex = activa ? 0 : -1;
+            // Sin ninguno elegido, al primero se llega con Tab.
+            b.tabIndex = activa || (!temaActivo && t === H.TEMAS[0]) ? 0 : -1;
             const emoji = el("span", "block text-3xl sm:text-4xl", t.emoji);
             emoji.setAttribute("aria-hidden", "true");
             const cuantas = H.LISTA.filter((h) => h.tema === t.id).length;
@@ -116,6 +120,9 @@
             cont.appendChild(b);
         });
         const t = H.TEMAS.find((x) => x.id === temaActivo);
+        $("tema-invitacion").hidden = !!t;
+        $("panel-tema").hidden = !t;
+        if (!t) return;
         $("panel-tema").setAttribute("aria-labelledby", "tab-" + t.id);
         const titulo = $("tema-titulo");
         titulo.textContent = "";
@@ -143,6 +150,7 @@
     function teclasTemas(e) {
         const ids = H.TEMAS.map((t) => t.id);
         let i = ids.indexOf(temaActivo);
+        if (i < 0 && e.key === "ArrowLeft") i = 0; // sin ninguno elegido, la flecha a la izquierda va al último
         if (e.key === "ArrowRight") i = (i + 1) % ids.length;
         else if (e.key === "ArrowLeft") i = (i - 1 + ids.length) % ids.length;
         else if (e.key === "Home") i = 0;
@@ -173,8 +181,9 @@
     async function revisarAbiertas() {
         abiertas.clear();
         // Las gratis no se le preguntan a la base: no tienen licencia.
+        // La que va con la licencia de otra (`licencia`) pregunta por esa.
         const conLicencia = H.LISTA.filter((h) => !h.gratis);
-        const respuestas = await Promise.all(conLicencia.map((h) => sb.rpc("tengo_herramienta", { p_herramienta: h.id })));
+        const respuestas = await Promise.all(conLicencia.map((h) => sb.rpc("tengo_herramienta", { p_herramienta: h.licencia || h.id })));
         respuestas.forEach((r, i) => { if (r.data === true) abiertas.add(conLicencia[i].id); });
     }
 

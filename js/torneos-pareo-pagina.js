@@ -1890,6 +1890,10 @@
       pintarLista();
       pintarSeguidosPortada();
       pintarEnVivo();
+      // Desde la vitrina de Herramientas se llega con #tambien: directo a
+      // «También en Costa Rica», que se arma recién ahora (antes el navegador
+      // no tenía adónde bajar).
+      if (location.hash === "#tambien" && !$("tp-externos-caja").hidden) $("tp-externos-caja").scrollIntoView({ block: "start" });
       return;
     }
     await pintarTorneo(ruta, false);
