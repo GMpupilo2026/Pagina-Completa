@@ -426,6 +426,8 @@ async function navegador() {
     igual("el borrador bajado se reconoce como de esta herramienta", [descarga.suggestedFilename(), contenido.formato, contenido.estudiantes.length], ["inscripcion-jde-2026-colegio-inventado.json", "inscripcion-jde", 2]);
     await p.click("#ij-empezar");
     await p.click(".avisos-dialogo button:has-text('Sí, borrar todo'), dialog button:has-text('Sí, borrar todo')");
+    // El borrado pasa cuando el aviso se resuelve, no en el clic: se espera a que ocurra.
+    await p.waitForFunction(() => document.getElementById("ij-centro").value === "" && document.querySelectorAll("#ij-est article").length === 0);
     igual("empezar de cero borra todo", [await p.inputValue("#ij-centro"), (await p.$$("#ij-est article")).length, await p.evaluate(() => (localStorage.getItem("ij_borrador_v1") === null ? 0 : JSON.parse(localStorage.getItem("ij_borrador_v1")).estudiantes.length))], ["", 0, 0]);
     await p.setInputFiles("#ij-abrir-borrador", ruta);
     await p.waitForFunction(() => document.querySelectorAll("#ij-est article").length === 2);
