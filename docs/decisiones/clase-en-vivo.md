@@ -4793,3 +4793,43 @@ broma». Le cae al compañero cuando tiene abierta una actividad (pregunta,
 calentamiento, competencia, cuestionario, práctica, Formación, tiempo para
 pensar). El detalle, en «Dónde cae una broma y la clase en vivo» de
 `puntos-y-premios.md`.
+
+## Los stickers del profe
+
+Pedido del dueño el 28/10/2026: que el profe pueda mandarle a la clase un
+dibujo del profe Oscar con una frase —enojado con «¡Esfuérzate más!», feliz
+con «¡Muy bien!», aplaudiendo porque todo el grupo lo logró, extrañado con
+«¿Y esa vara?», pensativo con «Mmmm…», despidiéndose con «¡Nos vemos la
+próxima clase!»—, y que la frase se pueda cambiar.
+
+- **Dónde**: «😀 Mandar un sticker del profe», al final de «Alumnos
+  conectados», al lado del interruptor de las bromas (la barra «Tu material»
+  tiene sus botones contados, `verificar-sesion-orden.js`). Abre un diálogo
+  (`<dialog>` con `showModal()`, foco adentro, Esc cierra) con los 26 dibujos;
+  cada uno trae su frase sugerida, que el profe cambia si quiere, y «A quién»:
+  toda la clase o un alumno conectado. Solo el profe (`role = 'profesor'`):
+  quien administra no da clase.
+- **Cómo viaja**: `game_state.sticker = {id, texto, para, at}`, igual que el
+  tiempo para pensar. `protect_game_state_teacher_columns` se lo devuelve al
+  alumno (la función se reescribió entera, con todas las columnas que ya
+  protegía), la hora la cambia la base por la suya en cada sticker nuevo y la
+  forma la revisa el CHECK `game_state_sticker_forma` (id de letras y guiones,
+  frase hasta 120, `para` un uuid o nada). Comprobado impersonando el 28/10:
+  lo del profe queda con la hora de la base, lo del alumno se revierte y una
+  forma rara la rechaza el CHECK. Migración `20261028125408_game_state_sticker.sql`.
+- **Cuánto se ve**: 8 segundos desde la hora de la base (`js/reloj-servidor.js`),
+  abajo a la derecha, con su «×» para cerrarlo antes. Quien entra después no
+  ve uno viejo. Al cerrar la clase se limpia con lo demás.
+- **«Solo para» un alumno es privado en la pantalla, no en la base**: la fila
+  de `game_state` la lee toda la clase abierta. Sirve para animar a uno («¡Tú
+  puedes!»), no para decirle algo que el resto no pueda saber.
+- **Se dice en voz**: una región viva aparte («Tu profe te manda un sticker:
+  …»); el dibujo lleva su texto alternativo. En el proyector sale más grande
+  (va suelto en el `<body>`, fuera de la lista blanca, que solo esconde lo de
+  adentro de la clase).
+- **Los dibujos**: `img/profe-oscar/<id>.webp`, 480 px de alto, sin fondo
+  (≈ 20 KB cada uno). Salen de la mascota del profe Oscar hecha en Canva: las
+  caras con su lunar y la arruga entre las cejas, y el logo blanco de Ajedrez
+  Integral en la camisa. El catálogo (id, frase y texto alternativo) vive en
+  `js/clase-stickers.js`; uno nuevo es una imagen más y una línea más, y
+  `verificar-clase-stickers.js` exige que cada uno tenga las dos.

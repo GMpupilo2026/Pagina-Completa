@@ -19081,7 +19081,7 @@
   ]
  },
  "imagenes": {
-  "total": 1076,
+  "total": 1102,
   "grupos": [
    {
     "carpeta": "entreno/img/facil",
@@ -24069,6 +24069,169 @@
       "titulo": "Zw",
       "tipo": "otro",
       "kb": 6
+     }
+    ]
+   },
+   {
+    "carpeta": "img/profe-oscar",
+    "titulo": "El profe Oscar: los stickers de la clase en vivo",
+    "grupo": "El sitio",
+    "archivos": [
+     {
+      "ruta": "img/profe-oscar/a-repasar.webp",
+      "titulo": "A repasar",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "img/profe-oscar/atencion.webp",
+      "titulo": "Atencion",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "img/profe-oscar/bien-hecho.webp",
+      "titulo": "Bien hecho",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "img/profe-oscar/bienvenidos.webp",
+      "titulo": "Bienvenidos",
+      "tipo": "otro",
+      "kb": 23
+     },
+     {
+      "ruta": "img/profe-oscar/campeones.webp",
+      "titulo": "Campeones",
+      "tipo": "otro",
+      "kb": 29
+     },
+     {
+      "ruta": "img/profe-oscar/casi.webp",
+      "titulo": "Casi",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "img/profe-oscar/dormidos.webp",
+      "titulo": "Dormidos",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "img/profe-oscar/esa-no-es.webp",
+      "titulo": "Esa no es",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "img/profe-oscar/esa-vara.webp",
+      "titulo": "Esa vara",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "img/profe-oscar/esfuerzate.webp",
+      "titulo": "Esfuerzate",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "img/profe-oscar/excelente.webp",
+      "titulo": "Excelente",
+      "tipo": "otro",
+      "kb": 32
+     },
+     {
+      "ruta": "img/profe-oscar/felicidades.webp",
+      "titulo": "Felicidades",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "img/profe-oscar/gracias.webp",
+      "titulo": "Gracias",
+      "tipo": "otro",
+      "kb": 24
+     },
+     {
+      "ruta": "img/profe-oscar/hola.webp",
+      "titulo": "Hola",
+      "tipo": "otro",
+      "kb": 22
+     },
+     {
+      "ruta": "img/profe-oscar/idea.webp",
+      "titulo": "Idea",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "img/profe-oscar/lo-lograron.webp",
+      "titulo": "Lo lograron",
+      "tipo": "otro",
+      "kb": 38
+     },
+     {
+      "ruta": "img/profe-oscar/mmm.webp",
+      "titulo": "Mmm",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "img/profe-oscar/muy-bien.webp",
+      "titulo": "Muy bien",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "img/profe-oscar/no-puede-ser.webp",
+      "titulo": "No puede ser",
+      "tipo": "otro",
+      "kb": 19
+     },
+     {
+      "ruta": "img/profe-oscar/nos-vemos.webp",
+      "titulo": "Nos vemos",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "img/profe-oscar/risa.webp",
+      "titulo": "Risa",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "img/profe-oscar/silencio.webp",
+      "titulo": "Silencio",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "img/profe-oscar/te-toca.webp",
+      "titulo": "Te toca",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "img/profe-oscar/tiempo.webp",
+      "titulo": "Tiempo",
+      "tipo": "otro",
+      "kb": 20
+     },
+     {
+      "ruta": "img/profe-oscar/tu-puedes.webp",
+      "titulo": "Tu puedes",
+      "tipo": "otro",
+      "kb": 21
+     },
+     {
+      "ruta": "img/profe-oscar/wow.webp",
+      "titulo": "Wow",
+      "tipo": "otro",
+      "kb": 20
      }
     ]
    },
