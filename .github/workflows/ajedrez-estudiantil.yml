@@ -11,7 +11,9 @@
 # ronda a ronda de los individuales de 2024 en adelante
 # (herramientas/ajedrez-estudiantil-partidas.py): contra quién jugó cada
 # estudiante, con qué color y el resultado, en la ficha de cada torneo del
-# historial. Lo que tiene pinta de
+# historial. Con todo eso arma el banco de colegios, regiones y estudiantes de
+# la inscripción de los JDE (herramientas/jde-banco.js, inscripcion-jde.html).
+# Lo que tiene pinta de
 # herramientas/datos/ajedrez-estudiantil-revisar.csv y el PR lo lista para
 # que alguien decida. Si cambió algo:
 #
@@ -73,6 +75,10 @@ jobs:
         if: steps.pendiente.outputs.abiertos == '0'
         run: python3 herramientas/ajedrez-estudiantil-partidas.py --maximo 100 --resumen "$RUNNER_TEMP/resumen.md"
 
+      - name: Armar el banco de la inscripción de los JDE
+        if: steps.pendiente.outputs.abiertos == '0'
+        run: node herramientas/jde-banco.js
+
       - name: Probar las reglas con lo nuevo
         if: steps.pendiente.outputs.abiertos == '0'
         run: |
@@ -92,7 +98,7 @@ jobs:
             herramientas/datos/ajedrez-estudiantil-leidos.csv data/ajedrez-estudiantil-jugadores.json \
             herramientas/datos/ajedrez-estudiantil-revisar.csv \
             herramientas/datos/ajedrez-estudiantil-partidas.csv herramientas/datos/ajedrez-estudiantil-partidas-leidas.csv \
-            data/ajedrez-estudiantil-partidas.json
+            data/ajedrez-estudiantil-partidas.json data/jde-banco.json
           git commit -q -m "Ajedrez estudiantil: lo nuevo de chess-results" -m "$(cat "$RUNNER_TEMP/resumen.md")"
           git push -q -u origin "$rama"
           titulo="Ajedrez estudiantil: lo nuevo de chess-results ($(date -u +%Y-%m-%d))"

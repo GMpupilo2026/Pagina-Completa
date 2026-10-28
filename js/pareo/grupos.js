@@ -153,6 +153,15 @@
   }
   const dentro = (r, a) => (r[0] == null || a >= r[0]) && a <= r[1];
 
+  // Las categorías a las que pertenece quien nació en `nace`, para los JDE de
+  // `anio`: una sola casi siempre, dos en 2013 y 2014 (B de primaria o C de
+  // secundaria; el centro educativo dice cuál) y ninguna si nació demasiado
+  // tarde. Lo usa la inscripción (js/inscripcion-jde-reglas.js).
+  function categoriasDeNacimiento(nace, anio) {
+    if (!Number.isFinite(Number(nace)) || !nace) return [];
+    return Object.keys(JDE_CATEGORIAS).filter((c) => dentro(rangoCategoria(c, anio), Number(nace)));
+  }
+
   // Cada jugador con categoría A–E y fecha de nacimiento que NO cuadran.
   // Devuelve los permitidos (ascensos válidos por equipos) y los no
   // permitidos con su motivo: "individual" (en individual no se sube),
@@ -392,6 +401,7 @@
     quitarRepetidos, equiposCortos, individualesDeMas, JDE_MAX_INDIVIDUAL, configuracionJde, hombresEnMujeres, leerTorneo,
     pasarMujeresAlAbierto, JDE_MIN_EQUIPO, equiposDeMas, JDE_MAX_EQUIPO,
     leerSexo, leerModalidad, ordenFechas, leerFecha, agrupar, sistemaSugerido, revisarCategorias, rangoCategoria,
+    categoriasDeNacimiento, JDE_CATEGORIAS, JDE_ASCENSOS,
     JDE_MAX_TODOS, JDE_RONDAS_SUIZO, JDE_RITMO_MINIMO, JDE_ANIO_NORMATIVA, JDE_MAX_ASCENSOS,
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
