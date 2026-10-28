@@ -789,6 +789,35 @@ async function esperarJugadas(p, n) {
     await cerrar(RV); await cerrar(R);
   }
 
+  console.log("\nEl retraso de la transmisión");
+  {
+    const R = await abrir(browser, "camara-tablero.html");
+    const pr = R.page;
+    await pr.waitForSelector("#app:not(.hidden)");
+    for (const j of ["e4", "e5"]) { await pr.fill("#jugada-mano", j); await pr.click("#form-anotar button[type=submit]"); }
+    await pr.selectOption("#vivo-retraso", "5");
+    await pr.click("#btn-vivo");
+    const cod = (await pr.textContent("#vivo-codigo")).split(" ")[0];
+    igual("con retraso, lo dice junto al código", await pr.textContent("#vivo-codigo"), cod + " · con 5 minutos de retraso");
+    const RV = await abrir(browser, "tablero-vivo.html#" + cod);
+    const prv = RV.page;
+    await prv.waitForFunction(() => !document.getElementById("partida").hidden, null, { timeout: 8000 }).catch(() => {});
+    igual("quien mira todavía no ve las jugadas de hace menos de 5 minutos", [await prv.textContent("#jugadas"), await prv.textContent("#retraso-aviso")], ["Todavía no se ha jugado nada.", "Con 5 minutos de retraso"]);
+    // Pasan 6 minutos (el reloj de la cámara se adelanta): salen solas.
+    await pr.evaluate(() => { const real = Date.now; Date.now = () => real() + 6 * 60000; });
+    await prv.waitForFunction(() => document.getElementById("jugadas").textContent === "1. e4 e5", null, { timeout: 12000 }).catch(() => {});
+    igual("cuando cumplen su tiempo, salen solas", await prv.textContent("#jugadas"), "1. e4 e5");
+    await pr.fill("#jugada-mano", "Nf3"); await pr.click("#form-anotar button[type=submit]");
+    await prv.waitForTimeout(800);
+    igual("la jugada recién hecha todavía no", await prv.textContent("#jugadas"), "1. e4 e5");
+    await pr.click('[data-resultado="1-0"]');
+    await prv.waitForFunction(() => document.getElementById("jugadas").textContent === "1. e4 e5 2. Cf3", null, { timeout: 8000 }).catch(() => {});
+    igual("al terminar la partida, se ve entera", [await prv.textContent("#jugadas"), /Terminó: ganan las blancas/.test(await prv.textContent("#ultima"))], ["1. e4 e5 2. Cf3", true]);
+    igual("el retraso se recuerda", await pr.evaluate(() => localStorage.getItem("camara_retraso_v1")), "5");
+    igual("sin errores en la consola", [R.errores, RV.errores], [[], []]);
+    await cerrar(RV); await cerrar(R);
+  }
+
   console.log("\nEl mate se marca solo");
   {
     const M = await abrir(browser, "camara-tablero.html");

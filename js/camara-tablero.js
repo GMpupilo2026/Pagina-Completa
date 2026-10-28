@@ -1356,6 +1356,7 @@
     function arrancar() {
         $("app").classList.remove("hidden");
         $("dos-tableros").checked = false;
+        try { elegirRetraso(Number(localStorage.getItem(RETRASO)) || 0, false); } catch (e) { /* sin almacenamiento */ }
         // La partida que se estaba anotando, si la página se cerró o se recargó.
         let guardada = null;
         try { guardada = localStorage.getItem(PARTIDA + 0); } catch (e) { /* sin almacenamiento */ }
