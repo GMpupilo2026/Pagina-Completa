@@ -1189,7 +1189,8 @@
       for (const archivo of todos) {
         const nombreArch = (archivo.name || "").toLowerCase();
         let filas;
-        if (nombreArch.endsWith(".docx")) filas = await window.ReporteTextos.filasDeDocx(archivo);
+        if (archivo.filas) filas = archivo.filas; // la lista que pasa la inscripción de los JDE: ya son filas
+        else if (nombreArch.endsWith(".docx")) filas = await window.ReporteTextos.filasDeDocx(archivo);
         else if (nombreArch.endsWith(".doc")) { estadoEl.textContent = ""; Avisos.avisar(tx("archivoDocAntiguo"), { tipo: "error" }); return; }
         else filas = (await window.ReporteExcel.leer(archivo)).filas;
         // El archivo de cada uno: si una persona viene en dos listas, se avisa.
@@ -1214,6 +1215,18 @@
       estadoEl.textContent = "";
       Avisos.avisar(tx("noAbre", { e: err.message }), { tipo: "error" });
     }
+  }
+
+  // «Abrir en Pareo Integral», de la inscripción de los JDE (inscripcion-jde.html): las filas
+  // de su Excel llegan por el almacenamiento del navegador, sin servidor. Se leen una vez, se
+  // borran y valen diez minutos; entran por el mismo camino que «Subir una lista».
+  function recogerDeInscripcion() {
+    let carga = null;
+    try { carga = JSON.parse(localStorage.getItem("ij_para_pareo_v1")); localStorage.removeItem("ij_para_pareo_v1"); } catch (e) { /* sin almacenamiento */ }
+    history.replaceState(null, "", location.pathname + location.search);
+    if (!carga || !Array.isArray(carga.filas) || Date.now() - Number(carga.hora) > 10 * 60 * 1000) { Avisos.avisar(tx("desdeInscripcionVacia"), { tipo: "error" }); return; }
+    if (estado.ficha !== "torneo") irA("torneo");
+    subirLista([{ name: String(carga.nombre || "inscripcion-jde.xlsx"), filas: carga.filas }]);
   }
 
   function agregarTodos(lista) {
@@ -6506,6 +6519,7 @@
     restaurarBorrador();
     avisarPestanas();
     if (location.hash.startsWith("#recibir=")) recibirEvento(location.hash.slice(9));
+    if (location.hash === "#desde=inscripcion-jde") recogerDeInscripcion();
     if (/^#org-(correo|recuperar)=/.test(location.hash)) enlaceOrganizacion(location.hash);
     // Después de pintar: que no compita con lo que se ve primero.
     setTimeout(() => { prepararSinRed(); }, 1500);
