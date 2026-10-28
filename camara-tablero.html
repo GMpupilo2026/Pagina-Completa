@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8"><!-- guardia: inicio --><script>(function(){try{if(window.sb||localStorage.getItem("sb-bgtijpimpcokxatxxbki-auth-token"))return;}catch(e){return;}try{window.stop()}catch(e){}var p=location.pathname.replace(/^\/+/,'');if(!p||/\/$/.test(p))p+='index.html';else if(!/\.html$/.test(p))p+='.html';location.replace('/login.html?next='+encodeURIComponent(p));})();</script><!-- guardia: fin -->
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="img/favicon.svg">
     <title>Cámara que lee el tablero (prueba) — Ajedrez Integral</title>
@@ -24,7 +24,55 @@
 <!-- app: inicio --><meta name="theme-color" content="#102a43"><link rel="manifest" href="/manifest.json"><link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Ajedrez"><script src="js/errores.js"></script><script src="js/pwa.js" defer></script><script src="js/navegacion.js" defer></script><!-- app: fin --><!-- fuentes: inicio --><link rel="stylesheet" href="css/fuentes.css"><!-- fuentes: fin --><!-- tema: inicio --><script>(function(){try{var l=localStorage.getItem('plataforma_letra_v1');if(l&&/^[a-z]{2,24}$/.test(l)&&l!=='tema')document.documentElement.setAttribute('data-letra',l);var t=localStorage.getItem('plataforma_tema_v1');if(!t||!/^[a-z]{2,24}$/.test(t)||t==='clasico')return;document.documentElement.setAttribute('data-tema',t);var b=getComputedStyle(document.documentElement).getPropertyValue('--c-brand-800').trim();var m=document.querySelector('meta[name="theme-color"]');if(b&&m)m.setAttribute('content','rgb('+b.replace(/\s+/g,',')+')');}catch(e){}})();</script><!-- tema: fin --></head>
 <body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300">
     <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:bg-accent-500 focus:text-brand-900 focus:font-semibold focus:px-4 focus:py-2 focus:rounded-lg">Saltar al contenido principal</a>
-    <header id="header" class="sticky top-0 z-50 bg-brand-800 shadow-lg transition-all duration-300"><nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-label="Academia"><div class="flex items-center justify-between min-h-[4rem] md:min-h-[5rem] py-2"><a id="marca-enlace" href="clases.html" class="flex items-center gap-2 text-white min-w-0"><img src="/img/logo-marca.png" alt="" width="78" height="48" class="h-10 md:h-12 w-auto shrink-0"><span class="font-serif text-xl md:text-2xl font-bold tracking-tight">Ajedrez <span class="text-accent-400">Integral</span></span><span class="sr-only"> — panel de la Academia</span></a><div class="flex items-center gap-2"><button id="theme-toggle" class="text-white text-lg w-9 h-9 flex items-center justify-center rounded-lg hover:bg-brand-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Cambiar a modo oscuro" title="Cambiar entre modo claro y oscuro"><span id="theme-icon" aria-hidden="true">☀️</span></button></div></div></nav></header><!-- migas: inicio --><div class="bg-brand-900"><nav id="migas" aria-label="Estás en" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 text-sm"><ol class="flex flex-wrap items-center gap-x-2 gap-y-1"><li class="flex items-center gap-2"><a href="clases.html" class="text-brand-200 underline underline-offset-2 hover:text-accent-400 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true">🏛️ </span>Academia</a></li><li class="flex items-center gap-2"><span aria-hidden="true" class="text-brand-400">›</span><a href="admin.html" class="text-brand-200 underline underline-offset-2 hover:text-accent-400 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Administración</a></li><li class="flex items-center gap-2"><span aria-hidden="true" class="text-brand-400">›</span><span aria-current="page" class="font-semibold text-white">Cámara que lee el tablero</span></li></ol></nav></div><!-- migas: fin -->
+    <header id="header" class="sticky top-0 z-50 bg-brand-800 shadow-lg">
+        <div class="hidden lg:block bg-brand-900 border-b border-brand-700/60">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-8 flex items-center justify-end gap-5 text-xs text-brand-300">
+                <a href="te-reto.html" class="hover:text-accent-400">🏆 ¡Te reto!</a>
+                <span class="text-brand-700" aria-hidden="true">&middot;</span>
+                <a href="tv.html" class="hover:text-accent-400">TV en vivo</a>
+                <span class="text-brand-700" aria-hidden="true">&middot;</span>
+                <a href="torneos-en-vivo.html" class="hover:text-accent-400">Torneos</a>
+                <span class="text-brand-700" aria-hidden="true">&middot;</span>
+                <a href="herramientas-arbitraje.html" class="hover:text-accent-400">Herramientas</a>
+            </div>
+        </div>
+        <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-label="Navegación principal">
+            <div class="flex items-center justify-between min-h-[4rem] md:min-h-[5rem] py-2">
+                <a href="index.html" class="flex items-center gap-2 text-white"><img src="/img/logo-marca.png" alt="" width="78" height="48" class="h-10 md:h-12 w-auto shrink-0"><span class="font-serif text-xl md:text-2xl font-bold">Ajedrez <span class="text-accent-400">Integral</span></span></a>
+                <ul class="hidden lg:flex items-center gap-8 text-brand-100 font-medium">
+                    <li><a href="index.html" class="hover:text-accent-400">Inicio</a></li>
+                    <li><a href="cursos.html" class="hover:text-accent-400">Cursos</a></li>
+                    <li><a href="articulos.html" class="hover:text-accent-400">Artículos</a></li>
+                    <li><a href="tablero.html" class="hover:text-accent-400">Jugar contra el profe</a></li>
+                    <li><a href="clases.html" class="hover:text-accent-400">Academia</a></li>
+                    <li><a href="precios.html" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2.5 rounded-lg">Inscríbete</a></li>
+                </ul>
+                <div class="flex items-center gap-2 sm:gap-3">
+                    <button id="theme-toggle" class="text-white text-lg w-9 h-9 flex items-center justify-center rounded-lg hover:bg-brand-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Cambiar a modo oscuro" title="Cambiar entre modo claro y oscuro">
+                        <span id="theme-icon" aria-hidden="true">☀️</span>
+                    </button>
+                    <button id="menu-toggle" class="lg:hidden text-white text-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Abrir menú" aria-expanded="false" aria-controls="mobile-menu">
+                    <svg id="icon-open" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+                    <svg id="icon-close" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+                </div>
+            </div>
+        </nav>
+        <div id="mobile-menu" class="lg:hidden hidden bg-brand-800 border-t border-brand-700">
+            <ul class="px-4 py-4 space-y-3 text-brand-100 font-medium">
+                <li><a href="index.html" class="block py-2 hover:text-accent-400">Inicio</a></li>
+                <li><a href="cursos.html" class="block py-2 hover:text-accent-400">Cursos</a></li>
+                <li><a href="articulos.html" class="block py-2 hover:text-accent-400">Artículos</a></li>
+                <li><a href="tablero.html" class="block py-2 hover:text-accent-400">Jugar contra el profe</a></li>
+                <li><a href="clases.html" class="block py-2 hover:text-accent-400">Academia</a></li>
+                <li><a href="te-reto.html" class="block py-2 hover:text-accent-400">🏆 ¡Te reto!</a></li>
+                <li><a href="tv.html" class="block py-2 hover:text-accent-400">TV en vivo</a></li>
+                <li><a href="torneos-en-vivo.html" class="block py-2 hover:text-accent-400">Torneos</a></li>
+                <li><a href="herramientas-arbitraje.html" class="block py-2 hover:text-accent-400">Herramientas</a></li>
+                <li><a href="precios.html" class="block py-2 bg-accent-500 text-brand-900 font-semibold px-4 rounded-lg text-center">Inscríbete</a></li>
+            </ul>
+        </div>
+    </header>
         <main id="main-content" class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div id="loading" role="status" class="min-h-[50vh] flex flex-col items-center justify-center gap-3 px-4 text-center text-brand-500 dark:text-brand-300"><span aria-hidden="true" class="w-8 h-8 rounded-full border-4 border-brand-200 dark:border-brand-700 border-t-accent-500 animate-spin motion-reduce:animate-none"></span><p class="text-sm">Comprobando tu sesión…</p></div>
 
@@ -36,6 +84,10 @@
         </div>
 
         <div id="app" class="hidden">
+            <div id="mesa-qr" hidden class="mb-4">
+                <h1 id="mesa-titulo-qr" class="font-serif text-2xl font-bold text-brand-800 dark:text-white"></h1>
+                <p id="mesa-ayuda-qr" class="text-sm text-brand-500 dark:text-brand-300 mt-1">Esta cámara transmite solo esta mesa, sin cuenta. Pon el celular encima del tablero, toca «Buscar el tablero» y, con las piezas en la posición inicial, «Calibrar con la posición inicial».</p>
+            </div>
             <h1 data-solo-pagina class="font-serif text-3xl sm:text-4xl font-bold text-brand-800 dark:text-white"><span aria-hidden="true">📷</span> Cámara que lee el tablero <span class="text-base align-middle font-sans font-semibold bg-accent-100 text-brand-900 rounded-full px-3 py-1">Prueba</span></h1>
             <p data-solo-pagina class="text-brand-500 dark:text-brand-300 mt-1 mb-6">Pon el celular encima del tablero, mirando hacia abajo, y sigue los pasos. Sirve para medir qué tan bien se ven nuestros tableros con la luz real del salón. No guarda nada ni manda la imagen a ningún lado: todo pasa en este celular.</p>
 
@@ -132,7 +184,7 @@
                     <section class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-4" aria-labelledby="t-torneo">
                         <h2 id="t-torneo" class="font-semibold text-brand-800 dark:text-white"><span aria-hidden="true">🏆</span> Partida de un torneo (opcional)</h2>
                         <p class="text-xs text-brand-500 dark:text-brand-300 mt-1">De Torneos en Pareo Integral: cada cámara elige su mesa, los nombres de cada ronda salen solos y quien mira ve todas las mesas juntas.</p>
-                        <div id="torneo-elegir" class="mt-3 space-y-3">
+                        <div id="torneo-elegir" data-no-mesa class="mt-3 space-y-3">
                             <div>
                                 <label for="torneo-codigo-unirse" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 mb-1">Si otra cámara ya transmite el torneo, su código (si no, déjalo vacío)</label>
                                 <input id="torneo-codigo-unirse" type="text" maxlength="8" autocomplete="off" autocapitalize="none" spellcheck="false" class="w-full font-mono bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
@@ -146,17 +198,17 @@
                         </div>
                         <div id="torneo-elegido" hidden class="mt-3 space-y-3">
                             <p class="text-sm text-brand-800 dark:text-white"><span id="torneo-nombre" class="font-semibold"></span> · ronda <span id="torneo-ronda"></span></p>
-                            <div>
+                            <div data-no-mesa>
                                 <label for="torneo-mesa" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 mb-1">Esta cámara está en la mesa</label>
                                 <select id="torneo-mesa" class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"></select>
                             </div>
-                            <div>
+                            <div data-no-mesa>
                                 <label for="torneo-codigo" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 mb-1">Código de transmisión del torneo (el mismo en todas las cámaras)</label>
                                 <input id="torneo-codigo" type="text" maxlength="8" autocomplete="off" autocapitalize="none" spellcheck="false" class="w-full font-mono bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
                             </div>
                             <button id="btn-torneo-ronda" type="button" class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-3 py-2 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Buscar ronda nueva</button>
-                            <button id="btn-torneo-quitar" type="button" class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-3 py-2 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Dejar el torneo</button>
-                            <div class="pt-1">
+                            <button id="btn-torneo-quitar" data-no-mesa type="button" class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-3 py-2 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Dejar el torneo</button>
+                            <div data-no-mesa class="pt-1">
                                 <button id="btn-torneo-qr" type="button" class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-3 py-2 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true">🖨️</span> Imprimir el QR de cada mesa</button>
                                 <p class="text-xs text-brand-500 dark:text-brand-300 mt-1">Una hoja con un QR por mesa: se escanea con el celular que va encima de esa mesa y la cámara se abre con el torneo, el código y la mesa puestos. Ese celular tiene que tener abierta tu cuenta.</p>
                             </div>
@@ -170,6 +222,17 @@
                             <div><label for="vivo-blancas" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 mb-1">Blancas (opcional)</label><input id="vivo-blancas" type="text" maxlength="60" autocomplete="off" class="bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm w-full focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"></div>
                             <div><label for="vivo-negras" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 mb-1">Negras (opcional)</label><input id="vivo-negras" type="text" maxlength="60" autocomplete="off" class="bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm w-full focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"></div>
                         </div>
+                        <div data-no-mesa class="mt-3">
+                            <label for="vivo-retraso" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 mb-1">Retraso de la transmisión</label>
+                            <select id="vivo-retraso" aria-describedby="vivo-retraso-ayuda" class="w-full sm:w-auto bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                                <option value="0">Sin retraso</option>
+                                <option value="5">5 minutos</option>
+                                <option value="10">10 minutos</option>
+                                <option value="15">15 minutos</option>
+                                <option value="30">30 minutos</option>
+                            </select>
+                            <p id="vivo-retraso-ayuda" class="text-xs text-brand-500 dark:text-brand-300 mt-1">Contra la ayuda desde afuera: quien mira ve cada jugada ese tiempo después. Cuando la partida termina, la ve entera. En un torneo vale para todas sus cámaras.</p>
+                        </div>
                         <div id="vivo-apagado" class="mt-3">
                             <button id="btn-vivo" type="button" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2.5 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2">Empezar a transmitir</button>
                         </div>
@@ -180,8 +243,8 @@
                             <div class="flex flex-wrap gap-2">
                                 <button id="btn-vivo-copiar" type="button" class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-3 py-2 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Copiar el enlace</button>
                                 <a id="vivo-whatsapp" href="#" target="_blank" rel="noopener" class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-3 py-2 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Compartir por WhatsApp</a>
-                                <button id="btn-vivo-nuevo" type="button" class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-3 py-2 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Usar un código nuevo</button>
-                                <button id="btn-vivo-parar" type="button" class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-3 py-2 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Dejar de transmitir</button>
+                                <button id="btn-vivo-nuevo" data-no-mesa type="button" class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-3 py-2 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Usar un código nuevo</button>
+                                <button id="btn-vivo-parar" data-no-mesa type="button" class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-3 py-2 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Dejar de transmitir</button>
                             </div>
                             <p class="text-xs text-brand-500 dark:text-brand-300 mt-2">Mientras esta página siga abierta. Si se cierra, quien ya miraba se queda con la última jugada; al volver a transmitir se usa el mismo código.</p>
                         </div>
@@ -212,6 +275,7 @@
     <script src="js/hora-cr.js"></script>
     <script src="js/partida-en-vivo.js"></script>
     <script src="js/detectar-tablero.js"></script>
+    <script src="js/main.js"></script>
     <script src="js/camara-tablero.js"></script>
-<!-- burbuja: inicio --><script src="js/burbuja-en-linea.js" defer></script><!-- burbuja: fin --><!-- juego-aviso: inicio --><script src="js/juego-aviso.js" defer></script><!-- juego-aviso: fin --><!-- aviso-profe: inicio --><script src="js/aviso-profe.js" defer></script><!-- aviso-profe: fin --><!-- tanda: inicio --><script src="js/tanda-diez.js" defer></script><!-- tanda: fin --><!-- acceso: inicio --><script src="js/acceso-vigente.js" defer></script><!-- acceso: fin --><!-- modo-vista: inicio --><script src="js/modo-vista.js" defer></script><!-- modo-vista: fin --><!-- marca: inicio --><script src="js/marca-academia.js" defer></script><!-- marca: fin --><!-- atajo: inicio --><script src="js/atajo-buscar.js" data-arriba="" defer></script><!-- atajo: fin --></body>
+</body>
 </html>

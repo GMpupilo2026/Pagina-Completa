@@ -330,6 +330,10 @@
             recientes: [], quieta: null, lectura: null, ajustada: false,
             vivo: null, nombres: { blancas: "", negras: "" },
             resultadoMano: null, // el que se marcó con los botones (abandono, tiempo, tablas)
+            // La hora de cada jugada (null si no se sabe: una partida cargada a
+            // mano) y la de arranque: el tiempo de cada jugada y el retraso de
+            // la transmisión salen de acá.
+            inicio: Date.now(), horas: [], horaResultado: null,
         };
     }
     let tableros = [nuevoTablero(0)];
@@ -347,6 +351,8 @@
     /* El resultado: el que dice el tablero (mate, ahogado) o, si no, el que se
      * marcó a mano. Una jugada nueva, «Deshacer» o una partida nueva lo borran. */
     const resultadoDe = (t) => V.resultadoSolo(t.juego) || t.resultadoMano;
+    // Cuánto tardó cada jugada, en ms (null si no se sabe).
+    const tiemposDe = (t) => t.horas.map((h, i) => { const antes = i ? t.horas[i - 1] : t.inicio; return h && antes ? h - antes : null; });
     const cual = (t) => (dos() ? "Tablero " + (t.i + 1) + ": " : "");
 
     let ultimoAviso = { texto: "", tipo: "" };
@@ -665,6 +671,7 @@
         }
         t.juego = new window.Chess();
         t.resultadoMano = null;
+        t.inicio = Date.now(); t.horas = []; t.horaResultado = null;
         if (torneo) { t.ronda = ultimaRonda(); pintarTorneo(); } // la partida nueva es de la ronda de ahora
         partidaCambio(t);
         avisar(cual(t) + "Calibrado: lee bien " + bien + " de 64 casillas en la posición inicial. Ya puedes jugar.", "bien");
@@ -702,14 +709,20 @@
     /* Lo que cambia la partida: se pinta, se transmite y se guarda en el
      * celular (si la página se recarga, se ofrece seguirla). */
     function partidaCambio(t) {
+        const r = resultadoDe(t);
+        if (r && !t.horaResultado) t.horaResultado = Date.now();
+        if (!r) t.horaResultado = null;
         if (t === T()) pintarPartida();
         enviarVivo(t);
-        try { localStorage.setItem(PARTIDA + t.i, V.pgn(t.juego, resultadoDe(t))); } catch (e) { /* sin almacenamiento */ }
+        try {
+            localStorage.setItem(PARTIDA + t.i, V.pgn(t.juego, r));
+            localStorage.setItem(PARTIDA + t.i + "_horas", JSON.stringify({ inicio: t.inicio, horas: t.horas }));
+        } catch (e) { /* sin almacenamiento */ }
     }
 
     function anotar(t, jugadas) {
         t.resultadoMano = null; // si se siguió jugando, no había terminado
-        jugadas.forEach((x) => t.juego.move(x));
+        jugadas.forEach((x) => { t.juego.move(x); t.horas.push(Date.now()); });
         t.recientes = [];
         $("dudas").hidden = true;
         partidaCambio(t);
@@ -745,7 +758,11 @@
             avisar(cual(t) + "Parece que la cámara se movió. Toca «Buscar el tablero» (o marca las esquinas) y después «Seguir con esta partida»: no se pierde nada de lo anotado.", "error");
             return;
         }
-        avisar(cual(t) + "No reconozco lo que cambió en " + cambiaron.join(", ") + ". Si fue una jugada, escríbela abajo; si es la luz o una pieza movida sin querer, déjala como estaba.", "error");
+        // Una o dos piezas en otro lugar sin que salga ninguna jugada legal:
+        // puede ser una jugada ilegal. En un torneo se le avisa al árbitro de
+        // Pareo Integral (sin decir qué casillas: eso sería pasar la jugada).
+        const alArbitro = alertarArbitro(t);
+        avisar(cual(t) + "No reconozco lo que cambió en " + cambiaron.join(", ") + ": puede ser una jugada ilegal o una pieza fuera de lugar. Si fue una jugada, escríbela abajo; si es la luz o una pieza movida sin querer, déjala como estaba." + (alArbitro ? " Se le avisó al árbitro." : ""), "error");
     }
 
     function pintarPartida() {
@@ -778,11 +795,52 @@
     }
     function guardarCodigo(t, c) { try { localStorage.setItem(GUARDADO[t.i], c); } catch (e) { /* sin almacenamiento: un código por visita */ } }
 
+    /* El retraso de la transmisión (lo elige quien transmite: nada, 5, 10,
+     * 15 o 30 minutos), contra la ayuda desde afuera: se manda la partida
+     * con las jugadas que tienen ya ese tiempo. Sale de la hora de cada
+     * jugada, así que vale también después de recargar la página. Cuando la
+     * partida termina, se manda entera: ya no hay a quién ayudar. */
+    let retraso = 0;
+    function vistaVivo(t) {
+        const r = resultadoDe(t), total = t.juego.history().length, ahora = Date.now();
+        let k = total, corte = ahora;
+        if (retraso && !r) {
+            corte = ahora - retraso * 60000;
+            k = 0;
+            while (k < total && !(t.horas[k] > corte)) k++; // sin hora: ya pasó hace rato
+        }
+        const base = k ? t.horas[k - 1] : t.inicio;
+        return { juego: k === total ? t.juego : V.hasta(t.juego, k), resultado: k === total ? r : null, n: k, espera: base ? corte - base : null };
+    }
     function enviarVivo(t) {
         if (!t.vivo) return;
         const canal = canales.get(t.vivo.codigo);
         if (!canal) return;
-        canal.send({ type: "broadcast", event: "estado", payload: V.estado(t.juego, nombresDe(t), dondeDe(t), resultadoDe(t)) });
+        const v = vistaVivo(t);
+        t.enviadas = v.n;
+        canal.send({ type: "broadcast", event: "estado", payload: V.estado(v.juego, nombresDe(t), dondeDe(t), v.resultado,
+            { tiempos: tiemposDe(t).slice(0, v.n), espera: v.espera, retraso }) });
+    }
+    // Con retraso, las jugadas van saliendo solas a medida que cumplen su tiempo.
+    setInterval(() => { if (retraso) for (const t of tableros) if (t.vivo && vistaVivo(t).n !== t.enviadas) enviarVivo(t); }, 5000);
+    function alertarArbitro(t) {
+        const canal = t.vivo && canales.get(t.vivo.codigo), donde = dondeDe(t);
+        if (!canal || !donde) return false;
+        canal.send({ type: "broadcast", event: "alerta", payload: { v: 1, torneo: donde.torneo, ronda: donde.ronda, mesa: donde.mesa, t: Date.now() } });
+        return true;
+    }
+    const RETRASO = delPuesto("camara_retraso_v1");
+    function elegirRetraso(min, guardar) {
+        retraso = [0, 5, 10, 15, 30].includes(min) ? min : 0;
+        $("vivo-retraso").value = String(retraso);
+        if (guardar) {
+            try {
+                if (torneo) { torneo.retraso = retraso; localStorage.setItem(TORNEO, JSON.stringify({ id: torneo.id, codigo: torneo.codigo, retraso })); }
+                else localStorage.setItem(RETRASO, String(retraso));
+            } catch (e) { /* sin almacenamiento */ }
+        }
+        for (const t of tableros) enviarVivo(t);
+        pintarVivo();
     }
 
     function empezarVivo(t, codigo) {
@@ -815,7 +873,7 @@
         const url = V.enlace(t.vivo.codigo, torneo && torneo.id);
         const a = $("vivo-enlace");
         a.href = url; a.textContent = url;
-        $("vivo-codigo").textContent = t.vivo.codigo + (torneo && t.mesa ? " · mesa " + t.mesa : "");
+        $("vivo-codigo").textContent = t.vivo.codigo + (torneo && t.mesa ? " · mesa " + t.mesa : "") + (retraso ? " · con " + retraso + " minutos de retraso" : "");
         $("vivo-whatsapp").href = "https://wa.me/?text=" + encodeURIComponent((torneo ? "Mira el torneo en vivo: " : "Mira la partida en vivo: ") + url);
         const qr = $("vivo-qr");
         qr.textContent = "";
@@ -858,7 +916,12 @@
             return;
         }
         torneo = { id: fila.id, nombre: fila.nombre || (fila.datos && fila.datos.nombre) || "Torneo", datos: fila.datos, codigo: V.codigoValido(codigo) ? codigo : V.nuevoCodigo() };
-        try { localStorage.setItem(TORNEO, JSON.stringify({ id: torneo.id, codigo: torneo.codigo })); } catch (e) { /* sin almacenamiento */ }
+        // El retraso es del torneo (todas sus cámaras igual): el que ya tenía, si es el mismo.
+        let antes = null;
+        try { antes = JSON.parse(localStorage.getItem(TORNEO) || "null"); } catch (e) { /* nada */ }
+        torneo.retraso = antes && antes.id === torneo.id && antes.retraso ? antes.retraso : retraso;
+        try { localStorage.setItem(TORNEO, JSON.stringify({ id: torneo.id, codigo: torneo.codigo, retraso: torneo.retraso })); } catch (e) { /* sin almacenamiento */ }
+        retraso = torneo.retraso; $("vivo-retraso").value = String(retraso);
         for (const t of tableros) {
             let m = null;
             try { m = Number(localStorage.getItem(MESA + t.i)) || null; } catch (e) { /* sin almacenamiento */ }
@@ -933,13 +996,14 @@
     /* Un QR por mesa, para pegarlo en la mesa: se escanea con el celular que
      * va encima y la cámara se abre con el torneo, el código y la mesa puestos
      * (y empieza a transmitir). Va después del # (no llega al servidor):
-     * «camara-tablero.html#t=<id del torneo>&c=<código>&m=<mesa>». La hoja
+     * «camara-tablero.html#t=<id del torneo>&c=<código>&m=<mesa>&r=<retraso>».
+     * Con el QR la cámara anda SIN CUENTA, en «modo mesa» (ver init). La hoja
      * sale solo al imprimir, con la marca de agua de Ajedrez Integral. */
-    const enlaceMesa = (n) => new URL("camara-tablero.html#t=" + torneo.id + "&c=" + torneo.codigo + "&m=" + n, location.href).href;
+    const enlaceMesa = (n) => new URL("camara-tablero.html#t=" + torneo.id + "&c=" + torneo.codigo + "&m=" + n + "&r=" + retraso, location.href).href;
     function deLaDireccion() {
         const x = new URLSearchParams(location.hash.replace(/^#/, ""));
-        const id = V.torneoDe(x.get("t")), c = (x.get("c") || "").toLowerCase(), m = Number(x.get("m"));
-        return id && V.codigoValido(c) && Number.isInteger(m) && m >= 1 && m <= 999 ? { id, codigo: c, mesa: m } : null;
+        const id = V.torneoDe(x.get("t")), c = (x.get("c") || "").toLowerCase(), m = Number(x.get("m")), r = Number(x.get("r")) || 0;
+        return id && V.codigoValido(c) && Number.isInteger(m) && m >= 1 && m <= 999 ? { id, codigo: c, mesa: m, retraso: r } : null;
     }
     function imprimirQr() {
         if (!torneo) return;
@@ -954,7 +1018,7 @@
             const svg = window.QrSvg && window.QrSvg.dibujar(enlaceMesa(m.mesa), "Código QR de la cámara de la mesa " + m.mesa);
             if (svg) qr.append(svg);
             tarjeta.append(el("p", "hoja-qr-numero", "Mesa " + m.mesa), el("p", "hoja-qr-torneo", torneo.nombre), qr,
-                el("p", "hoja-qr-ayuda", "Escanéalo con el celular que va encima de esta mesa (con la cuenta abierta): la cámara se abre en esta mesa y transmite."));
+                el("p", "hoja-qr-ayuda", "Escanéalo con el celular que va encima de esta mesa, sin cuenta: la cámara se abre en esta mesa y transmite."));
             hoja.append(tarjeta);
         }
         document.body.classList.add("imprimir-qr");
@@ -1118,6 +1182,7 @@
         try { nuevo = JSON.parse(e.newValue || "null"); } catch (x) { /* nada */ }
         if (!nuevo) { if (torneo) dejarTorneo(); return; }
         if (!torneo || torneo.id !== nuevo.id || torneo.codigo !== nuevo.codigo) usarTorneo(nuevo.id, nuevo.codigo);
+        else if ((nuevo.retraso || 0) !== retraso) { torneo.retraso = nuevo.retraso || 0; elegirRetraso(torneo.retraso, false); }
     });
     $("camara-elegir").addEventListener("change", (e) => abrirCamara(e.target.value));
     $("foto").addEventListener("change", (e) => usarFoto(e.target.files[0]));
@@ -1128,7 +1193,7 @@
     $("btn-seguir").addEventListener("click", seguirPartida);
     $("btn-deshacer").addEventListener("click", () => {
         const t = T();
-        t.juego.undo();
+        if (t.juego.undo()) t.horas.pop();
         t.resultadoMano = null;
         t.quieta = null; t.recientes = [];
         $("dudas").hidden = true;
@@ -1159,6 +1224,7 @@
         if (!bien) { avisar(cual(t) + "No entiendo esa posición: pega un FEN (como lo da Lichess) o las jugadas en PGN.", "error"); return; }
         t.juego = j;
         t.resultadoMano = null;
+        t.inicio = Date.now(); t.horas = j.history().map(() => null); t.horaResultado = null;
         $("dudas").hidden = true;
         partidaCambio(t);
         avisar(cual(t) + "Posición cargada. Pon las piezas así en el tablero y toca «Seguir con esta partida».", "bien");
@@ -1206,9 +1272,13 @@
         if (!torneo) return;
         if (!V.codigoValido(c)) { e.target.value = torneo.codigo; avisar("El código del torneo son 8 letras y números, como sale en la otra cámara.", "error"); return; }
         torneo.codigo = c;
-        try { localStorage.setItem(TORNEO, JSON.stringify({ id: torneo.id, codigo: c })); } catch (x) { /* sin almacenamiento */ }
+        try { localStorage.setItem(TORNEO, JSON.stringify({ id: torneo.id, codigo: c, retraso })); } catch (x) { /* sin almacenamiento */ }
         for (const t of tableros) if (t.vivo) empezarVivo(t, c);
         avisar("Código del torneo cambiado: todas las cámaras del torneo tienen que tener el mismo.", "bien");
+    });
+    $("vivo-retraso").addEventListener("change", (e) => {
+        elegirRetraso(Number(e.target.value), true);
+        avisar(retraso ? "Quien mira ve cada jugada " + retraso + " minutos después; al terminar la partida, la ve entera." : "Sin retraso: quien mira ve cada jugada al momento.", "bien");
     });
     $("btn-vivo-nuevo").addEventListener("click", () => empezarVivo(T(), V.nuevoCodigo()));
     $("btn-vivo-parar").addEventListener("click", () => pararVivo(T()));
@@ -1239,15 +1309,54 @@
         };
     };
 
+    /* Dos entradas. Con el QR de una mesa («modo mesa»), SIN CUENTA: la
+     * cámara transmite esa mesa de ese torneo y nada más; no elige torneo,
+     * mesa, código ni retraso (los trae el QR), y no lee ni escribe nada de
+     * la Academia: solo el torneo publicado, que es de lectura pública, y el
+     * canal de Broadcast, que también lo es. Sin QR, la herramienta entera
+     * es de quien administra (un control de producto: no hay datos detrás). */
     async function init() {
+        const qr = deLaDireccion();
+        if (qr) return modoMesa(qr);
         const { data } = await sb.auth.getSession();
         const session = data.session;
         if (!session) { location.href = "login.html?next=camara-tablero.html"; return; }
         const { data: perfil } = await sb.from("profiles").select("is_admin").eq("id", session.user.id).maybeSingle();
         $("loading").classList.add("hidden");
         if (!perfil || !perfil.is_admin) { $("denegado").classList.remove("hidden"); return; }
+        try { elegirRetraso(Number(localStorage.getItem(RETRASO)) || 0, false); } catch (e) { /* sin almacenamiento */ }
+        arrancar();
+        let guardado = null;
+        try { guardado = JSON.parse(localStorage.getItem(TORNEO) || "null"); } catch (e) { /* sin almacenamiento */ }
+        // El torneo que se estaba transmitiendo, con su código.
+        if (guardado && V.torneoDe(guardado.id)) usarTorneo(guardado.id, guardado.codigo);
+    }
+
+    // Llegó por el QR de una mesa: ese torneo, ese código y esa mesa, la
+    // cámara abierta y transmitiendo. El # se queda: al recargar, sigue en
+    // modo mesa.
+    async function modoMesa(qr) {
+        document.documentElement.classList.add("camara-compacta", "camara-mesa");
+        $("loading").classList.add("hidden");
+        arrancar();
+        $("mesa-qr").hidden = false;
+        $("mesa-titulo-qr").textContent = "Mesa " + qr.mesa;
+        try { localStorage.setItem(MESA + 0, String(qr.mesa)); } catch (e) { /* sin almacenamiento */ }
+        await usarTorneo(qr.id, qr.codigo);
+        if (!torneo) return;
+        elegirRetraso(qr.retraso, true);
+        $("mesa-titulo-qr").textContent = "Mesa " + qr.mesa + " · " + torneo.nombre;
+        pintarTorneo();
+        empezarVivo(T(), torneo.codigo);
+        await abrirCamara();
+        if (fuente) avisar("Mesa " + qr.mesa + " de " + torneo.nombre + ", transmitiendo. Toca «Buscar el tablero» y, con las piezas en la posición inicial, «Calibrar con la posición inicial».", "bien");
+    }
+
+    // Lo que es igual en las dos entradas: la app, la partida guardada y el dibujo.
+    function arrancar() {
         $("app").classList.remove("hidden");
         $("dos-tableros").checked = false;
+        try { elegirRetraso(Number(localStorage.getItem(RETRASO)) || 0, false); } catch (e) { /* sin almacenamiento */ }
         // La partida que se estaba anotando, si la página se cerró o se recargó.
         let guardada = null;
         try { guardada = localStorage.getItem(PARTIDA + 0); } catch (e) { /* sin almacenamiento */ }
@@ -1256,27 +1365,15 @@
             tableros[0].juego = j;
             const r = { "1-0": "1-0", "1/2-1/2": "=", "0-1": "0-1" }[(j.header() || {}).Result];
             if (r && !V.resultadoSolo(j)) tableros[0].resultadoMano = r;
+            let h = null;
+            try { h = JSON.parse(localStorage.getItem(PARTIDA + 0 + "_horas") || "null"); } catch (e) { /* nada */ }
+            const n = j.history().length;
+            tableros[0].horas = h && Array.isArray(h.horas) && h.horas.length === n ? h.horas : new Array(n).fill(null);
+            tableros[0].inicio = h && h.inicio || null;
             avisar("Se recuperó la partida que estabas anotando (" + j.history().length + " jugadas). Ubica el tablero y toca «Seguir con esta partida»; para empezar otra, «Calibrar con la posición inicial».", "bien");
         }
         elegirTablero(0);
         sinImagen();
-        // Llegó por el QR de una mesa: ese torneo, ese código y esa mesa, la
-        // cámara abierta y transmitiendo. Si no, el torneo que se estaba
-        // transmitiendo, con su código.
-        const qr = deLaDireccion();
-        let guardado = null;
-        try { guardado = JSON.parse(localStorage.getItem(TORNEO) || "null"); } catch (e) { /* sin almacenamiento */ }
-        if (qr) {
-            history.replaceState(null, "", location.pathname + location.search);
-            try { localStorage.setItem(MESA + 0, String(qr.mesa)); } catch (e) { /* sin almacenamiento */ }
-            await usarTorneo(qr.id, qr.codigo);
-            if (torneo) {
-                pintarTorneo();
-                empezarVivo(T(), torneo.codigo);
-                await abrirCamara();
-                if (fuente) avisar("Mesa " + qr.mesa + " de " + torneo.nombre + ", transmitiendo. Toca «Buscar el tablero» y, con las piezas en la posición inicial, «Calibrar con la posición inicial».", "bien");
-            }
-        } else if (guardado && V.torneoDe(guardado.id)) usarTorneo(guardado.id, guardado.codigo);
         requestAnimationFrame(dibujar);
     }
     init();
