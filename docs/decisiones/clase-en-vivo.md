@@ -4211,8 +4211,9 @@ en vez de copiarlo), el cuadernillo (una tabla que no se parte entre páginas) y
 la página del curso. Como la lámina lee del curso, lo leído entra en la huella
 (`lib/formacion-huella.js`): si cambia el cuadro, la imagen queda vieja y falla.
 Las filas de los empatados van en negrita y con fondo, y lo dice la clave: el
-color no va solo. Un cuadro cruzado es casi todo números, así que tiene su
-propio tope de palabras (140).
+color no va solo. En un cuadro cruzado las casillas son datos («5n ½», un
+puesto), no frases: `verificar-formacion-laminas.js` cuenta sus encabezados,
+los nombres, la nota y la clave, con el tope de una tabla (90).
 
 `node herramientas/verificar-formacion-desempates.js` arma cada torneo DESDE el
 cuadro (las casillas de cada ronda, la tabla de Berger) y recalcula todas las
