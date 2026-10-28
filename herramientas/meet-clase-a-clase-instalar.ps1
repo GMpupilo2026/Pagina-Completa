@@ -81,8 +81,10 @@ if (Get-Command npm -ErrorAction SilentlyContinue) {
 # ------------------------------------------------------------ 3. Las carpetas
 Paso "Carpetas"
 if (-not $Grabaciones) {
-  # Drive para computadora monta «Mi unidad» (o «My Drive») en una letra, casi siempre G:.
-  foreach ($letra in (Get-PSDrive -PSProvider FileSystem).Root) {
+  # En «Transmitir», Drive monta «Mi unidad» (o «My Drive») en una letra, casi
+  # siempre G:; en «Duplicar archivos», es una carpeta del usuario
+  # (C:\Users\<usuario>\Mi unidad). Se mira en las dos.
+  foreach ($letra in @($env:USERPROFILE) + (Get-PSDrive -PSProvider FileSystem).Root) {
     foreach ($unidad in @("Mi unidad", "My Drive")) {
       $c = Join-Path $letra (Join-Path $unidad "Meet Recordings")
       if (Test-Path $c) { $Grabaciones = $c; break }
@@ -95,6 +97,8 @@ if (-not $Grabaciones) {
   Write-Host "Ábrelo (https://www.google.com/drive/download/), entra con la cuenta que graba las clases y espera a que aparezca la unidad."
   $Grabaciones = Read-Host "O escribe aquí la ruta de la carpeta de las grabaciones"
 }
+# «Copiar como ruta de acceso» la copia entre comillas.
+$Grabaciones = $Grabaciones.Trim().Trim('"')
 if (-not (Test-Path $Grabaciones)) { Falla "No existe la carpeta: $Grabaciones" }
 if (-not $Trabajo) { $Trabajo = Join-Path (Split-Path $Grabaciones) "Informe CCDR" }
 New-Item -ItemType Directory -Force -Path $Trabajo | Out-Null

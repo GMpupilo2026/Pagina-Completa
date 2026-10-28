@@ -2090,6 +2090,12 @@ al entrar a Windows, con `pythonw` (sin ventana) y sin límite de tiempo.
 - **Al entrar a Windows, Drive tarda en montar su unidad.** Con `--vigilar`,
   el script espera a que aparezca la carpeta en vez de terminar: la tarea
   arrancaba antes que Drive y moría en el primer segundo.
+- **«Meet Recordings» se busca en las letras de unidad y en la carpeta del
+  usuario**: en «Transmitir», Drive monta «Mi unidad» en una letra (G:); en
+  «Duplicar archivos», que es lo que se recomienda, es
+  `C:\Users\<usuario>\Mi unidad`. Al principio solo miraba las letras, y en
+  la primera instalación de verdad no la encontró. La ruta escrita a mano se
+  acepta con comillas, porque así la copia «Copiar como ruta de acceso».
 - El instalador va con BOM: sin él, PowerShell 5 lo lee como ANSI y las tildes
   de los mensajes salen rotas. Python se busca por `py` y por la ruta que
   devuelve, porque el `python` de WindowsApps es un atajo a la Tienda.
