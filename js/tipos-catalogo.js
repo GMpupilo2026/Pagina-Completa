@@ -235,9 +235,11 @@
     },
     {
       id: "remata", emoji: "🏁", nombre: "Remata la ventaja",
+      // Con pista (una estrella) no cuenta para las tareas ni la meta: hay que rematar sin ayuda.
+      pistaNoCuenta: true,
       pregunta: "Vas ganando. ¿La puedes llevar a casa?",
       entrena: "Convertir una ventaja: simplificar, cambiar piezas, no apurarse y no dejarle contrajuego al rival. Muchas partidas ganadas se escapan aquí.",
-      como: "Empiezas con +4 o más (medido con el motor) en una posición de partida real y juegas contra la máquina a toda su fuerza. Lo logras si das mate o si, al cumplir las jugadas del nivel, sigues en +3 o más. Si la ventaja baja de +1,5, se te escapó.",
+      como: "Empiezas con +4 o más (medido con el motor) en una posición de partida real y juegas contra la máquina a toda su fuerza. Lo logras si das mate o si, al cumplir las jugadas del nivel, sigues en +3 o más. Si la ventaja baja de +1,5, se te escapó. Con pista no suma a tus tareas.",
       clase: "Con «Practicar», cada alumno juega la posición contra el motor en su tablero. Antes, pregunten en voz alta cuál es el plan: ¿cambiar piezas, atacar al rey, avanzar un peón pasado?",
       niveles: [
         { n: 1, titulo: "Material de sobra", desc: "Tienes una torre o más de ventaja. 8 jugadas.", jugadas: 8 },
