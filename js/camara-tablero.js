@@ -379,21 +379,55 @@
     const anchoFuente = () => (fuente instanceof HTMLImageElement ? fuente.naturalWidth : video.videoWidth || 640);
     const altoFuente = () => (fuente instanceof HTMLImageElement ? fuente.naturalHeight : video.videoHeight || 480);
 
-    async function abrirCamara() {
+    /* La cámara: la de atrás del celular por omisión, o la que se elija (una
+     * computadora puede tener varias cámaras USB). Los nombres de las
+     * cámaras el navegador solo los da después del primer permiso, así que
+     * la lista se arma después de abrir una. La elegida se recuerda. */
+    const CAMARA = "camara_dispositivo_v1";
+    async function abrirCamara(id) {
         if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
             avisar("Este navegador no deja usar la cámara desde la página. Prueba con Chrome o Safari al día.", "error");
             return;
         }
+        if (typeof id !== "string") { try { id = localStorage.getItem(CAMARA) || ""; } catch (e) { id = ""; } }
+        if (video.srcObject) { video.srcObject.getTracks().forEach((x) => x.stop()); video.srcObject = null; }
+        const pedir = (conId) => navigator.mediaDevices.getUserMedia({ audio: false, video: conId
+            ? { deviceId: { exact: conId }, width: { ideal: 1920 } }
+            : { facingMode: { ideal: "environment" }, width: { ideal: 1920 } } });
         try {
-            const flujo = await navigator.mediaDevices.getUserMedia({ audio: false, video: { facingMode: { ideal: "environment" }, width: { ideal: 1920 } } });
+            let flujo;
+            try { flujo = await pedir(id); } catch (e) {
+                if (!id || e.name === "NotAllowedError") throw e;
+                flujo = await pedir(""); // la que se recordaba ya no está conectada
+            }
             video.srcObject = flujo;
             await video.play();
-            nuevaFuente(video, video.videoWidth || 640, video.videoHeight || 480);
+            const pista = flujo.getVideoTracks()[0];
+            const usada = pista && pista.getSettings ? pista.getSettings().deviceId || "" : "";
+            try { if (usada) localStorage.setItem(CAMARA, usada); } catch (e) { /* sin almacenamiento */ }
+            const misma = fuente === video && lienzo.width && video.videoWidth && Math.abs(lienzo.height / lienzo.width - video.videoHeight / video.videoWidth) < 0.01;
+            if (!misma) nuevaFuente(video, video.videoWidth || 640, video.videoHeight || 480);
+            else fuente = video;
+            listarCamaras(usada);
         } catch (e) {
             avisar(e && e.name === "NotAllowedError"
                 ? "No se dio permiso para usar la cámara. Actívalo en los permisos del sitio y vuelve a tocar «Abrir la cámara»."
                 : "No se pudo abrir la cámara (" + (e && e.name || "error") + "). Si otra aplicación la está usando, ciérrala y vuelve a intentar.", "error");
         }
+    }
+    async function listarCamaras(usada) {
+        let todas = [];
+        try { todas = (await navigator.mediaDevices.enumerateDevices()).filter((d) => d.kind === "videoinput"); } catch (e) { /* sin lista */ }
+        const sel = $("camara-elegir");
+        sel.textContent = "";
+        todas.forEach((d, i) => {
+            const o = document.createElement("option");
+            o.value = d.deviceId;
+            o.textContent = d.label || "Cámara " + (i + 1);
+            sel.append(o);
+        });
+        sel.value = usada || "";
+        $("camara-elegir-caja").hidden = todas.length < 2;
     }
 
     function usarFoto(archivo) {
@@ -454,6 +488,7 @@
         $("vivo-negras").value = T().nombres.negras;
         pintarPartida();
         pintarVivo();
+        pintarTorneo();
         botones();
         $("acierto").textContent = T().lectura ? (64 - diferentes(T().lectura, esperada(T().juego)).length) + " de 64" : "—";
     }
@@ -597,6 +632,7 @@
             return;
         }
         t.juego = new window.Chess();
+        if (torneo) { t.ronda = ultimaRonda(); pintarTorneo(); } // la partida nueva es de la ronda de ahora
         partidaCambio(t);
         avisar(cual(t) + "Calibrado: lee bien " + bien + " de 64 casillas en la posición inicial. Ya puedes jugar.", "bien");
     }
@@ -690,10 +726,13 @@
     }
 
     /* ── Transmitir en vivo ─────────────────────────────────────────────
-     * Cada tablero con su código y su enlace. Solo manda: la partida entera
-     * cada vez que cambia, y a quien recién llega y la pide («pedir»). Nunca
-     * toma nada de lo que llega por el canal: lo que pasa en el tablero lo
-     * decide la cámara. */
+     * Cada tablero con su código y su enlace; en un torneo, todos con el
+     * código del torneo y su mesa. Solo manda: la partida entera cada vez que
+     * cambia, y a quien recién llega y la pide («pedir»). Nunca toma nada de
+     * lo que llega por el canal: lo que pasa en el tablero lo decide la
+     * cámara. Un canal por código (con dos tableros del mismo torneo, uno
+     * solo que contesta por los dos). */
+    const canales = new Map(); // código → canal
     function codigoGuardado(t) {
         try { const c = localStorage.getItem(GUARDADO[t.i]); return V.codigoValido(c) ? c : null; } catch (e) { return null; }
     }
@@ -701,37 +740,180 @@
 
     function enviarVivo(t) {
         if (!t.vivo) return;
-        t.vivo.canal.send({ type: "broadcast", event: "estado", payload: V.estado(t.juego, t.nombres) });
+        const canal = canales.get(t.vivo.codigo);
+        if (!canal) return;
+        canal.send({ type: "broadcast", event: "estado", payload: V.estado(t.juego, nombresDe(t), dondeDe(t)) });
     }
 
     function empezarVivo(t, codigo) {
         pararVivo(t);
-        const canal = window.sb.channel(V.canal(codigo));
-        canal.on("broadcast", { event: "pedir" }, () => enviarVivo(t));
-        canal.subscribe((st) => { if (st === "SUBSCRIBED") enviarVivo(t); });
-        t.vivo = { codigo, canal };
-        guardarCodigo(t, codigo);
+        t.vivo = { codigo };
+        if (!canales.has(codigo)) {
+            const canal = window.sb.channel(V.canal(codigo));
+            canal.on("broadcast", { event: "pedir" }, () => tableros.filter((o) => o.vivo && o.vivo.codigo === codigo).forEach(enviarVivo));
+            canal.subscribe((st) => { if (st === "SUBSCRIBED") tableros.filter((o) => o.vivo && o.vivo.codigo === codigo).forEach(enviarVivo); });
+            canales.set(codigo, canal);
+        } else enviarVivo(t);
+        if (!torneo) guardarCodigo(t, codigo);
         pintarVivo();
     }
     function pararVivo(t) {
-        if (t.vivo) { try { window.sb.removeChannel(t.vivo.canal); } catch (e) { /* ya cerrado */ } }
+        const codigo = t.vivo && t.vivo.codigo;
         t.vivo = null;
+        if (codigo && !tableros.some((o) => o.vivo && o.vivo.codigo === codigo)) {
+            try { window.sb.removeChannel(canales.get(codigo)); } catch (e) { /* ya cerrado */ }
+            canales.delete(codigo);
+        }
         pintarVivo();
     }
     function pintarVivo() {
         const t = T();
         $("vivo-apagado").hidden = !!t.vivo;
         $("vivo-encendido").hidden = !t.vivo;
+        $("btn-vivo-nuevo").hidden = !!torneo; // en un torneo, el código es el del torneo
         if (!t.vivo) return;
-        const url = V.enlace(t.vivo.codigo);
+        const url = V.enlace(t.vivo.codigo, torneo && torneo.id);
         const a = $("vivo-enlace");
         a.href = url; a.textContent = url;
-        $("vivo-codigo").textContent = t.vivo.codigo;
-        $("vivo-whatsapp").href = "https://wa.me/?text=" + encodeURIComponent("Mira la partida en vivo: " + url);
+        $("vivo-codigo").textContent = t.vivo.codigo + (torneo && t.mesa ? " · mesa " + t.mesa : "");
+        $("vivo-whatsapp").href = "https://wa.me/?text=" + encodeURIComponent((torneo ? "Mira el torneo en vivo: " : "Mira la partida en vivo: ") + url);
         const qr = $("vivo-qr");
         qr.textContent = "";
-        const svg = window.QrSvg && window.QrSvg.dibujar(url, "Código QR para ver la partida en vivo");
+        const svg = window.QrSvg && window.QrSvg.dibujar(url, torneo ? "Código QR para ver el torneo en vivo" : "Código QR para ver la partida en vivo");
         if (svg) qr.append(svg);
+    }
+
+    /* ── Un torneo de Pareo Integral ────────────────────────────────────
+     * La cámara queda fija en una MESA (física): en cada ronda se sientan
+     * otros. Los nombres salen del torneo publicado, de la ronda en que se
+     * calibró la partida; cuando Pareo empareja la ronda siguiente, se avisa
+     * para empezar la partida nueva. Se vuelve a leer el torneo cada minuto. */
+    const TORNEO = "camara_torneo_v1", MESA = "camara_mesa_v1_";
+    let torneo = null; // { id, nombre, datos, codigo }
+    let relojTorneo = null;
+
+    function nombresDe(t) {
+        if (torneo && t.mesa) {
+            const r = V.mesasDe(torneo.datos, t.ronda);
+            const m = r && r.mesas.find((x) => x.mesa === t.mesa);
+            if (m) return { blancas: m.blancas, negras: m.negras };
+        }
+        return t.nombres;
+    }
+    const dondeDe = (t) => (torneo && t.mesa ? { torneo: torneo.id, ronda: t.ronda || ultimaRonda(), mesa: t.mesa } : null);
+    const ultimaRonda = () => { const r = torneo && V.mesasDe(torneo.datos); return r ? r.ronda : null; };
+
+    async function leerTorneo(id) {
+        const { data, error } = await window.sb.from("pareo_publicados").select("id,nombre,datos").eq("id", id).maybeSingle();
+        if (error) throw error;
+        return data;
+    }
+
+    async function usarTorneo(id, codigo) {
+        let fila;
+        try { fila = await leerTorneo(id); } catch (e) { avisar("No se pudo leer el torneo. Revisa la conexión y vuelve a intentar.", "error"); return; }
+        if (!fila) { avisar("No encuentro ese torneo en Torneos en Pareo Integral. Revisa el enlace.", "error"); return; }
+        if (!V.mesasDe(fila.datos)) {
+            avisar(fila.datos && fila.datos.tipo === "equipos" ? "Los torneos por equipos todavía no se pueden transmitir desde la cámara." : "Ese torneo todavía no tiene ninguna ronda emparejada.", "error");
+            return;
+        }
+        torneo = { id: fila.id, nombre: fila.nombre || (fila.datos && fila.datos.nombre) || "Torneo", datos: fila.datos, codigo: V.codigoValido(codigo) ? codigo : V.nuevoCodigo() };
+        try { localStorage.setItem(TORNEO, JSON.stringify({ id: torneo.id, codigo: torneo.codigo })); } catch (e) { /* sin almacenamiento */ }
+        for (const t of tableros) {
+            let m = null;
+            try { m = Number(localStorage.getItem(MESA + t.i)) || null; } catch (e) { /* sin almacenamiento */ }
+            t.mesa = m; t.ronda = t.ronda || ultimaRonda();
+        }
+        pintarTorneo();
+        clearInterval(relojTorneo);
+        relojTorneo = setInterval(refrescarTorneo, 60000);
+        // Lo que ya se transmitía pasa al canal del torneo.
+        for (const t of tableros) if (t.vivo) empezarVivo(t, torneo.codigo);
+        avisar("Torneo elegido: " + torneo.nombre + ". Elige en qué mesa está esta cámara.", "bien");
+    }
+
+    async function refrescarTorneo() {
+        if (!torneo) return;
+        let fila;
+        try { fila = await leerTorneo(torneo.id); } catch (e) { return; /* se vuelve a intentar al minuto */ }
+        if (!fila || !V.mesasDe(fila.datos)) return;
+        const antes = ultimaRonda();
+        torneo.datos = fila.datos;
+        const ahora = ultimaRonda();
+        pintarTorneo();
+        if (ahora > antes) {
+            const t = T(), m = t.mesa && V.mesasDe(torneo.datos).mesas.find((x) => x.mesa === t.mesa);
+            avisar("Empezó la ronda " + ahora + (m ? ": en la mesa " + t.mesa + " juegan " + m.blancas + " y " + m.negras : "") + ". Pon las piezas en la posición inicial y toca «Calibrar con la posición inicial».", "bien");
+        }
+    }
+
+    function dejarTorneo() {
+        torneo = null;
+        clearInterval(relojTorneo);
+        try { localStorage.removeItem(TORNEO); } catch (e) { /* sin almacenamiento */ }
+        for (const t of tableros) { if (t.vivo) pararVivo(t); t.mesa = null; }
+        pintarTorneo();
+    }
+
+    function elegirMesa(n) {
+        const t = T();
+        t.mesa = n || null;
+        try { if (t.mesa) localStorage.setItem(MESA + t.i, String(t.mesa)); else localStorage.removeItem(MESA + t.i); } catch (e) { /* sin almacenamiento */ }
+        pintarTorneo(); // los nombres de esta mesa, en la ronda de la partida que se anota
+        enviarVivo(t);
+        pintarVivo();
+    }
+
+    function pintarTorneo() {
+        $("torneo-elegir").hidden = !!torneo;
+        $("torneo-elegido").hidden = !torneo;
+        const conTorneo = !!(torneo && T().mesa);
+        $("vivo-blancas").readOnly = conTorneo;
+        $("vivo-negras").readOnly = conTorneo;
+        if (!torneo) return;
+        $("torneo-nombre").textContent = torneo.nombre;
+        const r = V.mesasDe(torneo.datos);
+        $("torneo-ronda").textContent = String(r.ronda);
+        $("torneo-codigo").value = torneo.codigo;
+        const sel = $("torneo-mesa");
+        sel.textContent = "";
+        const vacia = document.createElement("option");
+        vacia.value = ""; vacia.textContent = "Elige la mesa…";
+        sel.append(vacia);
+        r.mesas.forEach((m) => {
+            const o = document.createElement("option");
+            o.value = String(m.mesa);
+            o.textContent = "Mesa " + m.mesa + ": " + m.blancas + " – " + m.negras;
+            sel.append(o);
+        });
+        sel.value = T().mesa ? String(T().mesa) : "";
+        if (T().mesa) { const nm = nombresDe(T()); $("vivo-blancas").value = nm.blancas || ""; $("vivo-negras").value = nm.negras || ""; }
+    }
+
+    /* Los torneos que se juegan estos días, para no tener que pegar el
+     * enlace: los publicados con fecha de hace tres días a mañana, en hora
+     * de Costa Rica. */
+    async function torneosDeEstosDias() {
+        const H = window.HoraCR, hoy = H.hoy();
+        const { data, error } = await window.sb.from("pareo_publicados").select("id,nombre,fecha,rondas")
+            .gte("fecha", H.sumarDias(hoy, -3)).lte("fecha", H.sumarDias(hoy, 1)).eq("oculto", false)
+            .order("fecha", { ascending: false }).range(0, 49);
+        if (error) return [];
+        return (data || []).filter((x) => x.rondas > 0);
+    }
+    async function pintarListaTorneos() {
+        const caja = $("torneo-lista");
+        caja.textContent = "";
+        const lista = await torneosDeEstosDias();
+        if (!lista.length) { caja.textContent = "No hay torneos con rondas emparejadas estos días: pega el enlace del torneo."; return; }
+        for (const x of lista) {
+            const b = document.createElement("button");
+            b.type = "button";
+            b.className = "text-left bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm text-brand-800 dark:text-brand-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400";
+            b.textContent = x.nombre + " · ronda " + x.rondas;
+            b.addEventListener("click", () => usarTorneo(x.id, $("torneo-codigo-unirse").value.trim().toLowerCase()));
+            caja.append(b);
+        }
     }
 
     /* ── Dibujar ──────────────────────────────────────────────────────── */
@@ -846,7 +1028,8 @@
         if (arrastre >= 0 && T().esquinas[arrastre]) lupa(T().esquinas[arrastre]);
     }
 
-    $("btn-camara").addEventListener("click", abrirCamara);
+    $("btn-camara").addEventListener("click", () => abrirCamara());
+    $("camara-elegir").addEventListener("change", (e) => abrirCamara(e.target.value));
     $("foto").addEventListener("change", (e) => usarFoto(e.target.files[0]));
     $("btn-buscar").addEventListener("click", buscarTablero);
     $("btn-ajustar").addEventListener("click", () => ajustarEsquinas(false));
@@ -902,7 +1085,31 @@
         elegirTablero(Number(b.dataset.tablero));
         pedirEsquina();
     }));
-    $("btn-vivo").addEventListener("click", () => empezarVivo(T(), codigoGuardado(T()) || V.nuevoCodigo()));
+    $("btn-vivo").addEventListener("click", () => empezarVivo(T(), torneo ? torneo.codigo : codigoGuardado(T()) || V.nuevoCodigo()));
+    $("btn-torneo").addEventListener("click", () => {
+        const id = V.torneoDe($("torneo-enlace").value);
+        if (!id) { avisar("Pega el enlace del torneo tal como sale en Torneos en Pareo Integral.", "error"); return; }
+        usarTorneo(id, $("torneo-codigo-unirse").value.trim().toLowerCase());
+    });
+    $("btn-torneo-lista").addEventListener("click", pintarListaTorneos);
+    // Sin esperar al minuto: apenas Pareo empareja la ronda siguiente.
+    $("btn-torneo-ronda").addEventListener("click", async () => {
+        const antes = ultimaRonda();
+        await refrescarTorneo();
+        if (ultimaRonda() === antes) avisar("Sigue la ronda " + antes + ": la siguiente todavía no está emparejada.");
+    });
+    $("btn-torneo-quitar").addEventListener("click", () => { dejarTorneo(); avisar("Esta cámara ya no transmite el torneo."); });
+    $("torneo-mesa").addEventListener("change", (e) => elegirMesa(Number(e.target.value) || null));
+    // Otra cámara del mismo torneo ya tiene un código: se usa ese.
+    $("torneo-codigo").addEventListener("change", (e) => {
+        const c = e.target.value.trim().toLowerCase();
+        if (!torneo) return;
+        if (!V.codigoValido(c)) { e.target.value = torneo.codigo; avisar("El código del torneo son 8 letras y números, como sale en la otra cámara.", "error"); return; }
+        torneo.codigo = c;
+        try { localStorage.setItem(TORNEO, JSON.stringify({ id: torneo.id, codigo: c })); } catch (x) { /* sin almacenamiento */ }
+        for (const t of tableros) if (t.vivo) empezarVivo(t, c);
+        avisar("Código del torneo cambiado: todas las cámaras del torneo tienen que tener el mismo.", "bien");
+    });
     $("btn-vivo-nuevo").addEventListener("click", () => empezarVivo(T(), V.nuevoCodigo()));
     $("btn-vivo-parar").addEventListener("click", () => pararVivo(T()));
     $("btn-vivo-copiar").addEventListener("click", async () => {
@@ -938,6 +1145,10 @@
         }
         elegirTablero(0);
         sinImagen();
+        // El torneo que se estaba transmitiendo, con su código.
+        let guardado = null;
+        try { guardado = JSON.parse(localStorage.getItem(TORNEO) || "null"); } catch (e) { /* sin almacenamiento */ }
+        if (guardado && V.torneoDe(guardado.id)) usarTorneo(guardado.id, guardado.codigo);
         requestAnimationFrame(dibujar);
     }
     init();

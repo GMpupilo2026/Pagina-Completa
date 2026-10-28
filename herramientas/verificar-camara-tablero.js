@@ -71,7 +71,21 @@ const CANAL = `
 function cliente(yo) {
   return `window.sb = {
     auth: { getSession: () => Promise.resolve({ data: { session: { user: { id: "u" }, access_token: "t" } } }), onAuthStateChange() { return { data: { subscription: { unsubscribe() {} } } }; } },
-    from() { const b = { select: () => b, eq: () => b, in: () => b, order: () => b, limit: () => b, maybeSingle: () => Promise.resolve({ data: ${JSON.stringify(yo)}, error: null }), then: (f) => Promise.resolve({ data: [], error: null }).then(f) }; return b; },
+    // profiles: quien mira. pareo_publicados: los torneos de window.__pareo,
+    // filtrados de verdad en el resolver (eq, gte, lte).
+    from(tabla) {
+      const filtros = [];
+      const filas = () => (window.__pareo || []).filter((x) => filtros.every((g) => g(x)));
+      const b = {
+        select: () => b, in: () => b, order: () => b, limit: () => b, range: () => b,
+        eq: (c, v) => { filtros.push((x) => x[c] === v); return b; },
+        gte: (c, v) => { filtros.push((x) => x[c] >= v); return b; },
+        lte: (c, v) => { filtros.push((x) => x[c] <= v); return b; },
+        maybeSingle: () => Promise.resolve({ data: tabla === "pareo_publicados" ? filas()[0] || null : ${JSON.stringify(yo)}, error: null }),
+        then: (ok, ko) => Promise.resolve({ data: tabla === "pareo_publicados" ? filas() : [], error: null }).then(ok, ko),
+      };
+      return b;
+    },
     rpc: () => Promise.resolve({ data: null, error: null }),
     ${CANAL}
   };`;
@@ -162,6 +176,8 @@ const TABLEROS = {
 };
 
 async function tocar(page, puntos) {
+  // A la vista entero y lejos del encabezado fijo: un toque fuera no llega.
+  await page.locator("#lienzo").evaluate((c) => c.scrollIntoView({ block: "center", behavior: "instant" }));
   const caja = await page.locator("#lienzo").boundingBox();
   const k = caja.width / 640;
   for (const [x, y] of puntos) await page.mouse.click(caja.x + x * k, caja.y + y * k);
@@ -551,6 +567,118 @@ async function esperarJugadas(p, n) {
   await cerrar(ver);
   await cerrar(cam);
 
+  console.log("\nUn torneo de Pareo Integral: cada cámara en su mesa, todas las mesas juntas");
+  {
+    // La mesa física: la misma cuenta que Pareo Integral (PareoEvento.mesaFisica).
+    const PE = require("../js/pareo/evento.js");
+    const pc0 = (await abrir(browser, "camara-tablero.html")).page;
+    const iguales = await pc0.evaluate((casos) => casos.map(([mi, k]) => window.PartidaEnVivo.mesaFisica({ mesaInicial: mi }, k)),
+      [[undefined, 0], [1, 3], [5, 0], [5, 2], [7.6, 1], ["12", 4]]);
+    igual("las mesas se numeran igual que en Pareo Integral", iguales,
+      [[undefined, 0], [1, 3], [5, 0], [5, 2], [7.6, 1], ["12", 4]].map(([mi, k]) => PE.mesaFisica({ mesaInicial: mi }, k)));
+    await cerrar({ page: pc0, ctx: pc0.context() });
+
+    const hoy = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Costa_Rica" }).format(new Date());
+    const ID = "0b9f3c2e-7a41-4d8e-9c55-1f2a3b4c5d6e";
+    const jugadores = [["j1", "Ana Mora"], ["j2", "Beto Solís"], ["j3", "Carla Ruiz"], ["j4", '<img src=x onerror="window.__xss=1">Dani'], ["j5", "Eva Rojas"]]
+      .map(([id, nombre]) => ({ id, nombre }));
+    const ronda1 = { mesas: [{ b: "j1", n: "j2" }, { b: "j3", n: "j4" }, { b: "j5", n: null }] };
+    const ronda2 = { mesas: [{ b: "j4", n: "j1" }, { b: "j2", n: "j3" }, { b: "j5", n: null }] };
+    const torneo = (rondas) => [{ id: ID, nombre: "Abierto de prueba", fecha: hoy, rondas: rondas.length, oculto: false,
+      datos: { nombre: "Abierto de prueba", tipo: "individual", mesaInicial: 5, jugadores, rondas } },
+      { id: "5d6e0b9f-3c2e-4d8e-9c55-7a411f2a3b4c", nombre: "Por equipos", fecha: hoy, rondas: 1, oculto: false,
+        datos: { nombre: "Por equipos", tipo: "equipos", jugadores: [], rondas: [ronda1] } }];
+    const conTorneo = async (pg, rondas) => pg.evaluate((d) => { window.__pareo = d; }, torneo(rondas));
+
+    // La cámara A, en la mesa 5 (la primera: el torneo arranca en la 5).
+    const A = await abrir(browser, "camara-tablero.html");
+    const pa = A.page;
+    await pa.waitForSelector("#app:not(.hidden)");
+    await conTorneo(pa, [ronda1]);
+    await pa.click("#btn-torneo-lista");
+    await pa.waitForSelector("#torneo-lista button");
+    igual("«Ver los torneos de estos días» los muestra", await pa.locator("#torneo-lista button").allTextContents(), ["Abierto de prueba · ronda 1", "Por equipos · ronda 1"]);
+    await pa.click("#torneo-lista button:has-text('Por equipos')");
+    igual("un torneo por equipos todavía no se puede", (await aviso(pa)).startsWith("Los torneos por equipos todavía no"), true);
+    await pa.fill("#torneo-enlace", "https://ajedrez-integral.com/torneos-pareo.html#t=" + ID);
+    await pa.click("#btn-torneo");
+    await pa.waitForFunction(() => !document.getElementById("torneo-elegido").hidden);
+    igual("con el enlace del torneo, dice su nombre y su ronda", [await pa.textContent("#torneo-nombre"), await pa.textContent("#torneo-ronda")], ["Abierto de prueba", "1"]);
+    igual("las mesas de la ronda, numeradas como en la sala y sin la de «libre»", await pa.locator("#torneo-mesa option").allTextContents(),
+      ["Elige la mesa…", "Mesa 5: Ana Mora – Beto Solís", 'Mesa 6: Carla Ruiz – <img src=x onerror="window.__xss=1">Dani']);
+    await pa.selectOption("#torneo-mesa", "5");
+    igual("al elegir la mesa, los nombres salen solos (y no se editan)", [await pa.inputValue("#vivo-blancas"), await pa.inputValue("#vivo-negras"), await pa.evaluate(() => document.getElementById("vivo-blancas").readOnly)], ["Ana Mora", "Beto Solís", true]);
+    const ja = new Chess();
+    await foto(pa, ja.fen(), ESQ0);
+    await esperarAviso(pa, /esquinas/);
+    await tocar(pa, aLienzo(ESQ0));
+    await pa.click("#btn-calibrar");
+    await esperarAviso(pa, /Calibrado/);
+    await pa.click("#btn-vivo");
+    const codigoT = await pa.inputValue("#torneo-codigo");
+    igual("transmite con el código del torneo, en su mesa", await pa.textContent("#vivo-codigo"), codigoT + " · mesa 5");
+    const enlaceT = await pa.getAttribute("#vivo-enlace", "href");
+    igual("el enlace lleva el código y el torneo", enlaceT.endsWith("/tablero-vivo.html#" + codigoT + "&t=" + ID), true);
+
+    // La cámara B, en otra computadora: se une con el código de la A.
+    const Bc = await abrir(browser, "camara-tablero.html");
+    const pbb = Bc.page;
+    await pbb.waitForSelector("#app:not(.hidden)");
+    await conTorneo(pbb, [ronda1]);
+    await pbb.fill("#torneo-codigo-unirse", codigoT);
+    await pbb.fill("#torneo-enlace", ID);
+    await pbb.click("#btn-torneo");
+    await pbb.waitForFunction(() => !document.getElementById("torneo-elegido").hidden);
+    igual("la otra cámara se une al mismo código", await pbb.inputValue("#torneo-codigo"), codigoT);
+    await pbb.selectOption("#torneo-mesa", "6");
+    const jb = new Chess();
+    await foto(pbb, jb.fen(), ESQ0);
+    await esperarAviso(pbb, /esquinas/);
+    await tocar(pbb, aLienzo(ESQ0));
+    await pbb.click("#btn-calibrar");
+    await esperarAviso(pbb, /Calibrado/);
+    await pbb.click("#btn-vivo");
+
+    // Quien mira: todas las mesas.
+    const W = await abrir(browser, "tablero-vivo.html#" + codigoT + "&t=" + ID, null, { width: 1280, height: 1000 });
+    const pw = W.page;
+    await pw.evaluate((d) => { window.__pareo = d; }, torneo([ronda1]));
+    await pw.evaluate(() => window.dispatchEvent(new HashChangeEvent("hashchange")));
+    await pw.waitForFunction(() => document.querySelectorAll("#mesas-lista button[data-mesa]").length === 2, null, { timeout: 8000 }).catch(() => {});
+    igual("quien mira ve las dos mesas del torneo", await pw.$$eval("#mesas-lista button[data-mesa]", (b) => b.map((x) => x.dataset.mesa)), ["5", "6"]);
+    igual("con el nombre del torneo arriba", await pw.textContent("#torneo-titulo"), "Abierto de prueba");
+    ja.move("e4"); await foto(pa, ja.fen(), ESQ0); await esperarJugadas(pa, 1);
+    jb.move("d4"); await foto(pbb, jb.fen(), ESQ0); await esperarJugadas(pbb, 1);
+    await pw.waitForFunction(() => /1\. d4/.test(document.querySelector('#mesas-lista button[data-mesa="6"]').textContent), null, { timeout: 8000 }).catch(() => {});
+    igual("cada mesa trae su partida", await pw.$$eval("#mesas-lista button[data-mesa]", (b) => b.map((x) => x.querySelectorAll("p")[2].textContent)),
+      ["Última jugada: 1. e4. Juegan las negras.", "Última jugada: 1. d4. Juegan las negras."]);
+    igual("los nombres del torneo van como texto, sin ejecutar nada",
+      await pw.evaluate(() => [document.querySelector('#mesas-lista button[data-mesa="6"]').textContent.includes('<img src=x onerror="window.__xss=1">Dani'), !!window.__xss, document.querySelectorAll("#mesas img").length]), [true, false, 0]);
+    await pw.click('#mesas-lista button[data-mesa="6"]');
+    igual("al tocar una mesa se ve en grande, con su número y su ronda", [await pw.textContent("#mesa-titulo"), await pw.textContent("#jugadas"), await pw.locator("#mesas").isVisible()], ["Mesa 6 · ronda 1", "1. d4", false]);
+    await pw.click("#volver");
+    igual("«Todas las mesas» vuelve a la cuadrícula", await pw.locator("#mesas").isVisible(), true);
+
+    // La ronda 2: la cámara A sigue en la mesa 5, ahora con otros jugadores.
+    await conTorneo(pa, [ronda1, ronda2]);
+    await pa.click("#btn-torneo-ronda");
+    await esperarAviso(pa, /ronda 2/);
+    igual("«Buscar ronda nueva» avisa quién juega ahora en su mesa", await aviso(pa),
+      'Empezó la ronda 2: en la mesa 5 juegan <img src=x onerror="window.__xss=1">Dani y Ana Mora. Pon las piezas en la posición inicial y toca «Calibrar con la posición inicial».');
+    igual("la partida que se estaba anotando sigue con los nombres de su ronda", [await pa.inputValue("#vivo-blancas"), await pa.inputValue("#vivo-negras")], ["Ana Mora", "Beto Solís"]);
+    const ja2 = new Chess();
+    await foto(pa, ja2.fen(), ESQ0);
+    await pa.click("#btn-calibrar");
+    await esperarAviso(pa, /Calibrado/);
+    igual("al calibrar la partida nueva, los nombres pasan a los de la ronda 2", [await pa.inputValue("#vivo-blancas"), await pa.inputValue("#vivo-negras")], ['<img src=x onerror="window.__xss=1">Dani', "Ana Mora"]);
+    ja2.move("c4"); await foto(pa, ja2.fen(), ESQ0); await esperarJugadas(pa, 1);
+    await pw.waitForFunction(() => /c4/.test(document.querySelector('#mesas-lista button[data-mesa="5"]').textContent), null, { timeout: 8000 }).catch(() => {});
+    igual("la partida nueva de la mesa 5 llega con los jugadores de la ronda 2",
+      await pw.$eval('#mesas-lista button[data-mesa="5"]', (b) => b.querySelectorAll("p")[1].textContent), '<img src=x onerror="window.__xss=1">Dani – Ana Mora');
+    igual("sin errores en la consola", [A.errores, Bc.errores, W.errores], [[], [], []]);
+    await cerrar(W); await cerrar(Bc); await cerrar(A);
+  }
+
   console.log("\nQuien mira sin código, con uno malo o sin nadie transmitiendo");
   const v2 = await abrir(browser, "tablero-vivo.html", null, { width: 390, height: 844 });
   igual("sin código, pide el código", await v2.page.locator("#pedir-codigo").isVisible(), true);
@@ -563,6 +691,34 @@ async function esperarJugadas(p, n) {
   igual("con un código al que nadie transmite, dice que está esperando (no una pantalla en blanco)", await v2.page.textContent("#conexion"), "Esperando la transmisión");
   igual("sin errores en la consola", v2.errores, []);
   await cerrar(v2);
+
+  console.log("\nLa cámara de verdad (las falsas de Chromium): elegir cuál");
+  {
+    // Un navegador aparte, con dos cámaras de mentira y el permiso ya dado.
+    const nav = await chromium.launch({ executablePath: fs.existsSync(CHROME) ? CHROME : undefined,
+      args: ["--use-fake-device-for-media-stream=device-count=2", "--use-fake-ui-for-media-stream"] });
+    const ctx = await nav.newContext({ serviceWorkers: "block", viewport: { width: 1280, height: 1400 }, permissions: ["camera"] });
+    const pg = await ctx.newPage();
+    const errores = [];
+    pg.on("pageerror", (e) => errores.push(String(e)));
+    await pg.exposeFunction("__aCanal", () => {});
+    await pg.route("**/js/supabase-client.js", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: cliente({ is_admin: true }) }));
+    await pg.goto(BASE + "/camara-tablero.html", { waitUntil: "load" });
+    await pg.waitForSelector("#app:not(.hidden)");
+    igual("antes de abrir la cámara no hay lista de cámaras", await pg.locator("#camara-elegir-caja").isVisible(), false);
+    await pg.click("#btn-camara");
+    await esperarAviso(pg, /esquinas/);
+    igual("abre la cámara y pide las esquinas", (await aviso(pg)).includes("esquinas"), true);
+    await pg.waitForFunction(() => !document.getElementById("camara-elegir-caja").hidden, null, { timeout: 8000 }).catch(() => {});
+    const opciones = await pg.$$eval("#camara-elegir option", (o) => o.map((x) => x.value));
+    igual("con dos cámaras, deja elegir cuál", opciones.length, 2);
+    await pg.selectOption("#camara-elegir", opciones[1]);
+    await pg.waitForFunction((id) => localStorage.getItem("camara_dispositivo_v1") === id, opciones[1], { timeout: 8000 }).catch(() => {});
+    igual("cambia a la otra y la recuerda", await pg.evaluate(() => localStorage.getItem("camara_dispositivo_v1")), opciones[1]);
+    igual("y la imagen sigue llegando", await pg.evaluate(() => { const v = document.getElementById("video"); return !!v.srcObject && v.videoWidth > 0; }), true);
+    igual("sin errores en la consola", errores, []);
+    await nav.close();
+  }
 
   console.log("\nQuien no administra");
   const n = await abrir(browser, "camara-tablero.html", { is_admin: false });

@@ -15,6 +15,12 @@
  *   PartidaEnVivo.estado(juego, nombres) → lo que se manda
  *   PartidaEnVivo.leer(payload)         → { juego, blancas, negras } o null
  *   PartidaEnVivo.pintar(div, juego, { girado })
+ *
+ * En un torneo de Pareo Integral, todas las cámaras transmiten por el mismo
+ * canal (el código del torneo) y cada mensaje dice su torneo, su ronda y su
+ * mesa física: quien mira ve todas las mesas juntas.
+ *   PartidaEnVivo.torneoDe(texto)       → el id de un enlace de Torneos en Pareo Integral
+ *   PartidaEnVivo.mesasDe(datos, ronda) → { ronda, mesas: [{ mesa, blancas, negras }] }
  */
 (function () {
     "use strict";
@@ -32,12 +38,42 @@
     const canal = (c) => "tablero-vivo-" + c;
     // Con .html: sirve igual en el sitio (que lo redirige sin perder el #) y
     // en un servidor de prueba.
-    const enlace = (c) => new URL("tablero-vivo.html#" + c, location.href).href;
+    const enlace = (c, torneo) => new URL("tablero-vivo.html#" + c + (torneo ? "&t=" + torneo : ""), location.href).href;
 
     const nombre = (s) => String(s || "").replace(/\s+/g, " ").trim().slice(0, 60);
 
-    function estado(juego, nombres) {
-        return { v: 1, pgn: juego.pgn(), blancas: nombre(nombres && nombres.blancas), negras: nombre(nombres && nombres.negras), t: Date.now() };
+    const UUID = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/;
+    // El id del torneo en su enlace («torneos-pareo.html#t=…») o suelto.
+    const torneoDe = (texto) => { const m = String(texto || "").toLowerCase().match(UUID); return m ? m[0] : null; };
+    const entero = (x, max) => (Number.isInteger(x) && x >= 1 && x <= max ? x : null);
+
+    /* `donde`, en un torneo: { torneo, ronda, mesa }. */
+    function estado(juego, nombres, donde) {
+        const p = { v: 1, pgn: juego.pgn(), blancas: nombre(nombres && nombres.blancas), negras: nombre(nombres && nombres.negras), t: Date.now() };
+        if (donde && torneoDe(donde.torneo) && entero(donde.mesa, 999)) {
+            p.torneo = torneoDe(donde.torneo); p.mesa = donde.mesa; p.ronda = entero(donde.ronda, 99);
+        }
+        return p;
+    }
+
+    /* La mesa física de la mesa k de una ronda: la misma cuenta que
+     * PareoEvento.mesaFisica (el verificador comprueba que den lo mismo; ese
+     * módulo es muy grande para cargarlo acá por una línea). */
+    const mesaFisica = (datos, k) => (Number(datos.mesaInicial) > 1 ? Math.floor(Number(datos.mesaInicial)) : 1) + k;
+
+    /* Las mesas de una ronda (por omisión, la última emparejada) de un torneo
+     * publicado, con los nombres de quien juega con cada color; sin las de
+     * «libre». null si el torneo es por equipos o todavía no tiene rondas. */
+    function mesasDe(datos, ronda) {
+        if (!datos || datos.tipo === "equipos" || !Array.isArray(datos.rondas) || !datos.rondas.length) return null;
+        const r = ronda && ronda <= datos.rondas.length ? ronda : datos.rondas.length;
+        const R = datos.rondas[r - 1] || {};
+        const nom = (id) => ((datos.jugadores || []).find((j) => j.id === id) || {}).nombre || "";
+        return {
+            ronda: r,
+            mesas: (R.mesas || []).map((m, k) => ({ mesa: mesaFisica(datos, k), blancas: nom(m.b), negras: m.n == null ? null : nom(m.n) }))
+                .filter((x) => x.negras !== null),
+        };
     }
 
     /* Lo que llega se vuelve a jugar con chess.js: una partida que no es legal
@@ -46,7 +82,9 @@
         if (!p || p.v !== 1 || typeof p.pgn !== "string" || p.pgn.length > 20000) return null;
         const juego = new window.Chess();
         if (p.pgn.trim() && !juego.load_pgn(p.pgn)) return null;
-        return { juego, blancas: nombre(p.blancas), negras: nombre(p.negras), t: Number(p.t) || 0 };
+        const d = { juego, blancas: nombre(p.blancas), negras: nombre(p.negras), t: Number(p.t) || 0 };
+        if (torneoDe(p.torneo) && entero(p.mesa, 999)) { d.torneo = torneoDe(p.torneo); d.mesa = p.mesa; d.ronda = entero(p.ronda, 99); }
+        return d;
     }
 
     const COLUMNAS = "abcdefgh";
@@ -79,7 +117,8 @@
             }
         }
         // Las letras y los números, por fuera del tablero como en todo el sitio.
-        if (window.Coordenadas && !div.dataset.coordenadas) { div.dataset.coordenadas = "1"; window.Coordenadas.aplicar(div); }
+        // (Los tableros chicos de la cuadrícula de un torneo, sin ellas.)
+        if (window.Coordenadas && !div.dataset.coordenadas && !(opciones && opciones.coordenadas === false)) { div.dataset.coordenadas = "1"; window.Coordenadas.aplicar(div); }
     }
 
     /* Las jugadas para leer: «1. e4 e5 2. Cf3», en algebraica española. */
@@ -122,5 +161,5 @@
         return ultima + ". " + (fin || "Juegan " + (juego.turn() === "w" ? "las blancas" : "las negras") + ".");
     }
 
-    window.PartidaEnVivo = { nuevoCodigo, codigoValido, canal, enlace, estado, leer, pintar, jugadasTexto, comoVa };
+    window.PartidaEnVivo = { nuevoCodigo, codigoValido, canal, enlace, estado, leer, pintar, jugadasTexto, comoVa, torneoDe, mesaFisica, mesasDe };
 })();

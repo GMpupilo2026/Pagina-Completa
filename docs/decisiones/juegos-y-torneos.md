@@ -9519,6 +9519,30 @@ página de quien mira).
 - La página de quien mira NO tiene la cámara: solo `camara-tablero` la tiene
   en `_headers` (lo revisa el verificador).
 
+- **Un torneo de Pareo Integral, con una cámara por mesa** (lo pidió el
+  dueño: «si ponemos 20 cámaras, que cada una pase su partida»). La cámara
+  elige un torneo publicado (su enlace, o «Ver los torneos de estos días»:
+  los de hace tres días a mañana en hora de Costa Rica) y su MESA física,
+  numerada como en la sala (`PartidaEnVivo.mesaFisica`, la misma cuenta que
+  `PareoEvento.mesaFisica`, comparadas en el verificador porque ese módulo es
+  muy grande para cargarlo por una línea). La cámara queda fija en la mesa y
+  en cada ronda se sientan otros: los nombres salen del torneo publicado, de
+  la ronda en que se calibró la partida (la partida que se anota no cambia de
+  jugadores a la mitad), y cuando Pareo empareja la siguiente se avisa
+  (se vuelve a leer el torneo cada minuto, o con «Buscar ronda nueva»).
+  Todas las cámaras del torneo transmiten por UN canal, el código del
+  torneo (la primera lo crea; las otras lo escriben al elegir el torneo), y
+  cada mensaje dice su torneo, ronda y mesa. Quien mira abre
+  `tablero-vivo.html#<código>&t=<id del torneo>` y ve todas las mesas de la
+  ronda en una cuadrícula (también las que no tienen cámara, con su
+  nombre), y al tocar una, en grande; un mensaje de otro torneo se ignora.
+  Los torneos por equipos todavía no.
+- **Elegir la cámara**: una computadora puede tener varias cámaras USB. La
+  lista sale después del primer permiso (antes el navegador no da los
+  nombres) y la elegida se recuerda; si ya no está conectada, se abre la de
+  siempre. Lo prueba el verificador con las dos cámaras de mentira de
+  Chromium (`--use-fake-device-for-media-stream=device-count=2`).
+
 Lo prueba `verificar-camara-tablero.js` con dos navegadores y Node relevando
 los mensajes de uno a otro, como haría el canal: quien llega tarde recibe la
 partida entera, cada jugada y «Deshacer» llegan solos, lo viejo y lo ilegal
