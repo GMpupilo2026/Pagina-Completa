@@ -8134,6 +8134,18 @@ equipos y 1059 jugadores individuales en `jdn_jugadores`, 8529 partidas en
   partidas una por una dan las de cada jugador (0 diferencias). Diez torneos
   no tienen partidas porque chess-results trae solo la composición (o, en la
   eliminatoria 2013 U20 femenino de la Zona 2, nadie jugó).
+- **Los comités viejos se escriben de otras formas**, y `comite()` los junta
+  (sin eso, el medallero partía Goicoechea en seis y San José en dos): el
+  prefijo «CDDR» o «CDR» además de «CCDR»; «Asociación» y «CD» delante
+  («Asociación Cartago», «CD Lepanto»); la categoría detrás del nombre de un
+  equipo («Goico Juvenil Masculino», «Escazú Sub 16», «El Guarco SFN»);
+  «Aguirre» es Quepos y «Alfaro Ruiz» es Zarcero (los nombres viejos de esos
+  cantones), «Nandyure» es Nandayure, la Asociación Fischer jugaba por CODEA
+  y «CCDRC» (eliminatoria 2015) es Cartago. Con eso, el medallero de la
+  herramienta da las mismas medallas por comité que el que se mandó en
+  imagen; solo cambian dos medallas individuales de 2015 que chess-results
+  trae sin comité y que la página deduce del mismo jugador (Esparza y
+  Nandayure).
 - **Lo que no está en chess-results**: doce eliminatorias por equipos (seis
   de 2012, cuatro de 2013 y dos de 2016) están publicadas sin jugadores; dos
   de 2012 (85331, 85332) quedaron en la ronda 0; tres desempates de 2011

@@ -124,22 +124,31 @@
         "montes de oca": "Montes de Oca", "monres de oca": "Montes de Oca", "goicochea": "Goicoechea", "goicoechea": "Goicoechea", "goico": "Goicoechea",
         "asociacion goicoechea": "Goicoechea", "asociacion naranjo": "Naranjo", "codea": "CODEA (Alajuela)", "alajuela": "CODEA (Alajuela)", "turri": "Turrialba", "crecia": "Grecia",
         "san joe": "San José", "lepanto": "Lepanto (distrital)", "lepantp": "Lepanto (distrital)", "paquera": "Paquera (distrital)", "el guarco": "El Guarco", "los chiles": "Los Chiles",
+        /* Los de 2011 a 2017 (ver «Las finales y eliminatorias de 2011 a
+           2017»): Aguirre es el nombre viejo del cantón de Quepos y Alfaro
+           Ruiz el de Zarcero; la Asociación Fischer jugaba por CODEA; «CCDRC»
+           (eliminatoria 2015) es Cartago. */
+        "aguirre": "Quepos", "alfaro ruiz": "Zarcero", "nandyure": "Nandayure", "fischer": "CODEA (Alajuela)", "c": "Cartago",
     };
+    /* «CCDR», y en los torneos viejos «CDDR» y «CDR». */
+    const PREFIJO = /^C+D+R\s*/i;
     const titulo = (s) => s.toLowerCase().replace(/(^|\s)\S/g, (m) => m.toUpperCase()).replace(/\bDe\b/g, "de");
     /* El comité tal como lo escribe chess-results → un solo nombre. A un equipo
        se le quita además la letra o el número del final («Escazú A»). */
     function comite(nombre, esEquipo) {
         if (UNI) return universidad(nombre, esEquipo);
-        let s = sinTilde(String(nombre || "")).trim().replace(/^C+DR\s*/i, "").replace(/^CC Distrit(o|al) (de )?/i, "").trim();
+        let s = sinTilde(String(nombre || "")).trim().replace(PREFIJO, "").replace(/^CC Distrit(o|al) (de )?/i, "").replace(/^(Asociacion|CD)\s+/i, "").trim();
         if (!s) return "";
         if (/^codea\b/i.test(s)) return NOMBRES.codea;
-        if (esEquipo) { let a; do { a = s; s = s.replace(/\s+(\d{1,2}|[A-Za-z]|SNF)$/, ""); } while (s !== a); }
+        /* Los equipos viejos llevan además la categoría («Goico Juvenil
+           Masculino», «Escazu Sub 16») o «SFN»/«SNF». */
+        if (esEquipo) { let a; do { a = s; s = s.replace(/\s+(\d{1,2}|[A-Za-z]|SNF|SFN|Sub|Infantil|Juvenil|Masculino|Femenino)$/i, ""); } while (s !== a); }
         return NOMBRES[s.toLowerCase()] || titulo(s);
     }
     /* La letra o el número que distingue a los equipos de un mismo comité
        («A», «J», «2»); «01» y «1» son el mismo. */
     function sufijo(nombre) {
-        let s = sinTilde(String(nombre || "")).trim().replace(/^C+DR\s*/i, "").replace(/^CC Distrit(o|al) (de )?/i, "").trim(), m;
+        let s = sinTilde(String(nombre || "")).trim().replace(PREFIJO, "").replace(/^CC Distrit(o|al) (de )?/i, "").trim(), m;
         const suf = [];
         while ((m = s.match(/\s+(\d{1,2}|[A-Za-z]|SNF)$/))) { const t = m[1].toUpperCase(); suf.unshift(/^\d+$/.test(t) ? String(+t) : t); s = s.slice(0, m.index); }
         return suf.join(" ");
@@ -249,7 +258,7 @@
             if (UNI && enEquipo && window.UniversidadesNombres.extranjera(f.equipo)) continue;
             jugs.push({ ed: f.edicion, cod: f.codigo, tnr: f.tnr, ...categoria(f.codigo), fase: edicion(f.edicion).fase, orden: f.orden,
                 nombre: enEquipo ? f.nombre : r.nombre, clave: clave(f.nombre), comite: enEquipo ? comite(f.equipo, true) : r.comite,
-                equipo: enEquipo ? f.equipo.replace(/^C+DR\s+/i, "") : "", sufijo: enEquipo ? sufijo(f.equipo) : "", eqRk: f.equipo_orden || 0, tablero: f.tablero || 0,
+                equipo: enEquipo ? f.equipo.replace(/^C+D+R\s+/i, "") : "", sufijo: enEquipo ? sufijo(f.equipo) : "", eqRk: f.equipo_orden || 0, tablero: f.tablero || 0,
                 elo: f.elo || 0, partidas: f.partidas, pts: Number(f.puntos), conElo: f.con_elo, ptsElo: Number(f.puntos_elo),
                 eloRiv: f.elo_rivales || 0, esperado: f.esperado == null ? null : Number(f.esperado) });
         }
@@ -260,7 +269,7 @@
             const k = f.edicion + f.codigo + "-" + f.tablero;
             const rk = f.puesto || previo[k] || 0; previo[k] = rk;
             tabs.push({ ed: f.edicion, cod: f.codigo, tnr: f.tnr, ...categoria(f.codigo), tablero: f.tablero, rk, nombre: f.nombre,
-                equipo: f.equipo.replace(/^C+DR\s+/i, ""), comite: comite(f.equipo, true), pct: Number(f.porcentaje), pts: Number(f.puntos), fase: "final",
+                equipo: f.equipo.replace(/^C+D+R\s+/i, ""), comite: comite(f.equipo, true), pct: Number(f.porcentaje), pts: Number(f.puntos), fase: "final",
                 calc: !!f.calculado });
             tamT[k] = (tamT[k] || 0) + 1;
         }
@@ -276,7 +285,7 @@
             const rk = f.puesto || previo[k] || 0; previo[k] = rk;
             const esEquipo = f.codigo.split("-")[2][0] === "E";
             const r = { ed: f.edicion, cod: f.codigo, tnr: f.tnr, orden: f.orden, ...categoria(f.codigo), rk, pts: Number(f.puntos), fase: edicion(f.edicion).fase };
-            if (esEquipo) eq.push(Object.assign(r, { equipo: f.nombre.replace(/^C+DR\s+/i, ""), comite: comite(f.comite || f.nombre, true), crudo: f.comite || f.nombre, sufijo: sufijo(f.nombre), record: f.record || "" }));
+            if (esEquipo) eq.push(Object.assign(r, { equipo: f.nombre.replace(/^C+D+R\s+/i, ""), comite: comite(f.comite || f.nombre, true), crudo: f.comite || f.nombre, sufijo: sufijo(f.nombre), record: f.record || "" }));
             else ind.push(Object.assign(r, { nombre: f.nombre, clave: clave(f.nombre), comite: comite(f.comite, false), crudo: f.comite, deducido: false }));
             tam[k] = (tam[k] || 0) + 1;
         }
