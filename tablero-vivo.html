@@ -99,6 +99,16 @@
 
             <div id="esperando" hidden class="max-w-xl mb-6 rounded-xl px-4 py-3 text-sm bg-white dark:bg-brand-900 shadow-md text-brand-700 dark:text-brand-200">Todavía no llega ninguna jugada. Puede que quien transmite no haya empezado o que tenga la pantalla apagada: esta página sigue esperando y la partida aparece sola en cuanto empiece.</div>
 
+            <section id="mesas" hidden aria-labelledby="torneo-titulo" class="mb-6">
+                <h2 id="torneo-titulo" class="font-serif text-2xl font-bold text-brand-800 dark:text-white mb-3"></h2>
+                <div id="mesas-lista" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4"></div>
+            </section>
+
+            <div class="flex flex-wrap items-center gap-3 mb-3">
+                <button id="volver" type="button" hidden class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-3 py-2 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true">←</span> Todas las mesas</button>
+                <h2 id="mesa-titulo" class="font-serif text-xl font-bold text-brand-800 dark:text-white"></h2>
+            </div>
+
             <div id="partida" hidden class="grid grid-cols-1 md:grid-cols-5 gap-6">
                 <div class="md:col-span-3 min-w-0">
                     <p id="jugador-arriba" class="font-semibold text-brand-800 dark:text-white mb-2"></p>

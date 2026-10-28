@@ -2481,6 +2481,18 @@ a.tp-org:focus-visible { outline: none; box-shadow: 0 0 0 2px rgb(var(--c-accent
 .tp-org-logo { height: 3rem; width: auto; max-width: 8rem; object-fit: contain; background: #fff; border-radius: 0.5rem; padding: 0.2rem; border: 1px solid rgb(var(--c-brand-100)); }
 .tp-org-logo-grande { height: 5rem; max-width: 12rem; }
 
+/* camara-tablero.html dentro de un cuadrito de camaras.html («?compacto=1»):
+   solo lo que hace falta para operar la cámara. El encabezado, las migas, las
+   explicaciones, el pie y la burbuja de conectados se ven en la página de
+   afuera, no repetidos en cada cámara. */
+.camara-compacta #header,
+.camara-compacta div:has(> #migas),
+.camara-compacta footer,
+.camara-compacta #burbuja-en-linea,
+.camara-compacta [data-solo-pagina] { display: none !important; }
+.camara-compacta main { padding-top: 0.75rem; padding-bottom: 0.75rem; }
+
+
 /* ===== Los stickers del profe en la clase en vivo (js/clase-stickers.js) =====
    El dibujo del profe Oscar con su frase, abajo a la derecha, encima de la
    clase. Entra con un salto corto (nada con «reducir movimiento») y se va solo.
