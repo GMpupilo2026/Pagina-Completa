@@ -2530,3 +2530,70 @@ html.modo-proyector .clase-sticker-globo { font-size: 2rem; }
 .clase-stickers-opcion img { height: 5.5rem; width: auto; }
 .clase-stickers-frase { font-size: 0.72rem; font-weight: 600; line-height: 1.2; text-align: center; color: rgb(var(--c-brand-800, 16 42 67)); }
 .dark .clase-stickers-frase { color: rgb(var(--c-brand-50, 240 244 248)); }
+/* inscripcion-jde.html (la inscripción de ajedrez de los JDE): el formulario, la
+   revisión y las tarjetas de estudiantes. Los colores de error, aviso y dato se
+   midieron contra su fondo (texto ≥ 7:1, borde ≥ 3:1, en claro y en oscuro) y
+   nunca van solos: cada hallazgo lleva escrito «Error:», «Aviso:» o «Dato:». */
+.ij-campo { display: grid; gap: 0.25rem; align-content: start; min-width: 0; }
+.ij-et { font-size: 0.85rem; font-weight: 600; color: rgb(var(--c-brand-700, 36 59 83)); }
+.dark .ij-et { color: rgb(var(--c-brand-100, 217 226 236)); }
+.ij-ayuda { font-size: 0.8rem; line-height: 1.45; color: rgb(var(--c-brand-600, 51 78 104)); margin: 0; }
+.dark .ij-ayuda { color: rgb(var(--c-brand-200, 188 204 220)); }
+.ij-casilla { display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; cursor: pointer; }
+.ij-casilla input { width: 1.1rem; height: 1.1rem; accent-color: rgb(var(--c-brand-700, 36 59 83)); }
+.dark .ij-casilla input { accent-color: rgb(var(--c-brand-300, 159 179 200)); }
+.ij-casilla input:focus-visible { outline: 3px solid rgb(var(--c-accent-500, 222 145 29)); outline-offset: 2px; }
+.ij-opciones { position: absolute; top: 100%; left: 0; right: 0; z-index: 20; margin: 0.25rem 0 0; padding: 0.25rem; list-style: none; max-height: 20rem; overflow: auto; background: #fff; color: rgb(var(--c-brand-800, 16 42 67)); border: 1px solid rgb(var(--c-brand-300, 159 179 200)); border-radius: 0.75rem; box-shadow: 0 10px 24px rgb(0 0 0 / 0.18); }
+.dark .ij-opciones { background: rgb(var(--c-brand-950, 7 21 39)); color: #fff; border-color: rgb(var(--c-brand-600, 51 78 104)); }
+.ij-opcion { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0.15rem 0.75rem; padding: 0.5rem 0.65rem; border-radius: 0.5rem; cursor: pointer; font-size: 0.92rem; }
+.ij-opcion-sub { font-size: 0.8rem; color: rgb(var(--c-brand-600, 51 78 104)); }
+.dark .ij-opcion-sub { color: rgb(var(--c-brand-200, 188 204 220)); }
+.ij-opcion[aria-selected="true"], .ij-opcion:hover { background: rgb(var(--c-brand-100, 217 226 236)); outline: 2px solid rgb(var(--c-brand-700, 36 59 83)); outline-offset: -2px; }
+.dark .ij-opcion[aria-selected="true"], .dark .ij-opcion:hover { background: rgb(var(--c-brand-800, 16 42 67)); outline-color: rgb(var(--c-brand-300, 159 179 200)); }
+.ij-caja { border: 1px dashed rgb(var(--c-brand-300, 159 179 200)); border-radius: 0.75rem; padding: 1rem; display: grid; gap: 0.5rem; }
+.dark .ij-caja { border-color: rgb(var(--c-brand-600, 51 78 104)); }
+.ij-checks { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 17rem), 1fr)); gap: 0.15rem 1rem; max-height: 18rem; overflow: auto; }
+.ij-traer-fila { padding: 0.2rem 0; }
+.ij-primario { background: rgb(var(--c-brand-800, 16 42 67)); color: #fff; border-color: rgb(var(--c-brand-800, 16 42 67)); font-weight: 600; }
+.dark .ij-primario { background: rgb(var(--c-accent-500, 222 145 29)); color: rgb(var(--c-brand-900, 10 31 51)); border-color: rgb(var(--c-accent-500, 222 145 29)); }
+.ij-persona { display: grid; grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr)); gap: 0.75rem; align-items: end; padding: 0.75rem; border: 1px solid rgb(var(--c-brand-200, 188 204 220)); border-radius: 0.75rem; }
+.dark .ij-persona { border-color: rgb(var(--c-brand-700, 36 59 83)); }
+.ij-persona .ij-ancho { grid-column: span 2; }
+.ij-estudiante { border: 2px solid rgb(var(--c-brand-200, 188 204 220)); border-radius: 0.9rem; padding: 1rem; display: grid; gap: 0.75rem; }
+.dark .ij-estudiante { border-color: rgb(var(--c-brand-700, 36 59 83)); }
+.ij-estudiante[data-estado="error"] { border-color: #b91c1c; }
+.ij-estudiante[data-estado="aviso"] { border-color: #b45309; }
+.dark .ij-estudiante[data-estado="error"] { border-color: #f87171; }
+.dark .ij-estudiante[data-estado="aviso"] { border-color: #fbbf24; }
+.ij-cabecera { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 0.75rem; }
+.ij-cabecera h3 { margin: 0; flex: 1 1 12rem; min-width: 0; overflow-wrap: anywhere; }
+.ij-rejilla { display: grid; grid-template-columns: repeat(auto-fit, minmax(12.5rem, 1fr)); gap: 0.75rem; align-items: start; }
+.ij-rejilla .ij-ancho { grid-column: 1 / -1; }
+@media (min-width: 48rem) { .ij-rejilla .ij-ancho { grid-column: span 2; } }
+.ij-fila-equipo { display: contents; }
+.ij-fila-equipo[hidden] { display: none; }
+.ij-chip { font-size: 0.78rem; font-weight: 700; padding: 0.15rem 0.6rem; border-radius: 999px; background: #dcfce7; color: #14532d; }
+.ij-chip[data-estado="error"] { background: #fef2f2; color: #7f1d1d; }
+.ij-chip[data-estado="aviso"] { background: #fffbeb; color: #78350f; }
+.ij-chip:empty { display: none; }
+.dark .ij-chip { background: #052e16; color: #bbf7d0; }
+.dark .ij-chip[data-estado="error"] { background: #450a0a; color: #fecaca; }
+.dark .ij-chip[data-estado="aviso"] { background: #451a03; color: #fde68a; }
+.ij-problemas { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.35rem; }
+.ij-problemas:empty { display: none; }
+.ij-hallazgo { padding: 0.55rem 0.8rem; border-radius: 0.6rem; border: 1px solid; font-size: 0.9rem; line-height: 1.45; }
+.ij-etiqueta { font-weight: 700; margin-right: 0.15rem; }
+.ij-error { background: #fef2f2; color: #7f1d1d; border-color: #b91c1c; }
+.ij-aviso { background: #fffbeb; color: #78350f; border-color: #b45309; }
+.ij-info { background: #eff6ff; color: #1e3a8a; border-color: #1d4ed8; }
+.dark .ij-error { background: #450a0a; color: #fecaca; border-color: #f87171; }
+.dark .ij-aviso { background: #451a03; color: #fde68a; border-color: #fbbf24; }
+.dark .ij-info { background: #172554; color: #bfdbfe; border-color: #60a5fa; }
+.ij-equipo { border: 1px solid rgb(var(--c-brand-200, 188 204 220)); border-radius: 0.75rem; padding: 0.9rem; display: grid; gap: 0.35rem; align-content: start; }
+.dark .ij-equipo { border-color: rgb(var(--c-brand-700, 36 59 83)); }
+.ij-orden { margin: 0; padding-left: 1.25rem; font-size: 0.9rem; }
+.ij-detalles { border: 1px solid rgb(var(--c-brand-200, 188 204 220)); border-radius: 0.75rem; padding: 0.6rem 0.9rem; background: #fff; }
+.dark .ij-detalles { background: rgb(var(--c-brand-900, 10 31 51)); border-color: rgb(var(--c-brand-700, 36 59 83)); }
+.ij-detalles summary { cursor: pointer; font-weight: 600; color: rgb(var(--c-brand-800, 16 42 67)); }
+.dark .ij-detalles summary { color: #fff; }
+.ij-detalles summary:focus-visible { outline: 3px solid rgb(var(--c-accent-500, 222 145 29)); outline-offset: 2px; }

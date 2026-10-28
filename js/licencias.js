@@ -181,8 +181,9 @@
             return;
         }
         const sel = $("f-herramienta");
-        // Las gratis (Pareo Integral) no llevan licencia: no se ofrecen.
-        [{ id: "todas", nombre: H.nombre("todas") }].concat(H.LISTA.filter((h) => !h.gratis)).forEach((h) => {
+        // Las gratis (Pareo Integral) no llevan licencia, y las que van con la
+        // de otra (`licencia`) se abren con esa: ninguna se ofrece aparte.
+        [{ id: "todas", nombre: H.nombre("todas") }].concat(H.LISTA.filter((h) => !h.gratis && !h.licencia)).forEach((h) => {
             const o = el("option", "", h.nombre + (h.disponible === false ? " (próximamente)" : ""));
             o.value = h.id;
             sel.appendChild(o);
