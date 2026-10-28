@@ -117,6 +117,15 @@ td .art{margin-left:10px;font-size:22px}
 td .marca{font-size:28px;padding:2px 16px;border-width:2px}
 /* Más de 8 filas: más juntas, para que entren sin achicar la letra. */
 table.larga{border-spacing:0 6px}table.larga td{padding:8px 22px}table.larga td .marca{padding:0 14px}
+/* cuadro cruzado: números centrados, el jugador a la izquierda; los empatados en negrita y con fondo (lo dice la clave) */
+table.cruzado{border-spacing:0 6px;font-size:30px;font-variant-numeric:tabular-nums}
+table.cruzado th{text-align:center;padding:0 10px;font-size:24px}
+table.cruzado td{text-align:center;padding:9px 10px;white-space:nowrap;color:var(--tinta)}
+table.cruzado td:last-child{color:var(--tinta)}
+table.cruzado th.j,table.cruzado td.j{text-align:left;padding-left:18px}
+table.cruzado td:first-child{font-weight:400}
+table.cruzado tr.emp td{background:#fdf3d7;font-weight:700}
+.cruzado-nota{font-size:24px;color:var(--gris);margin-top:4px}
 /* frase: una sola idea grande (un caso, una decisión) */
 .frase{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:26px;padding:40px 90px}
 .frase .ic{font-size:120px}.frase p{font-size:52px;font-weight:700;line-height:1.2;max-width:1200px}
@@ -231,6 +240,14 @@ function cuerpo(d, diapo, usadas) {
         d.filas.map(([sit, a, res, tn, que]) => "<tr><td>" + esc(sit) + art(a) + "</td><td>" +
           (tn ? '<span class="marca ' + tn + '">' + MARCA[tn] + " " + esc(res) + "</span>" : esc(res)) + "</td><td>" + esc(que) + "</td></tr>").join("") +
         "</tbody></table>";
+    case "cruzado": {
+      // El cuadro sale del tema del curso (formacion-ajedrez.json): no hay una segunda copia.
+      const c = d.cuadro, jug = c.cab.indexOf("Jugador"), emp = new Set(c.resaltar || []);
+      return '<table class="cruzado"><thead><tr>' + c.cab.map((x, k) => "<th" + (k === jug ? ' class="j"' : "") + ">" + esc(x) + "</th>").join("") + "</tr></thead><tbody>" +
+        c.filas.map((f, i) => "<tr" + (emp.has(i) ? ' class="emp"' : "") + ">" + f.map((x, k) => "<td" + (k === jug ? ' class="j"' : "") + ">" + esc(x) + "</td>").join("") + "</tr>").join("") +
+        "</tbody></table>" + (d.nota ? '<p class="cruzado-nota">' + esc(d.nota) + "</p>" : "") +
+        (d.clave ? '<div class="clave">' + esc(d.clave) + "</div>" : "");
+    }
     case "frase":
       return '<div class="frase caja' + tono(d.tono) + '">' + ic(d.ic) + "<p>" + esc(d.t) + "</p>" +
         (d.s ? '<span class="s">' + esc(d.s) + "</span>" : "") + art(d.a) + "</div>" +
