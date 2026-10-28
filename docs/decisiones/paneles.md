@@ -4459,6 +4459,12 @@ localStorage: con los logos pasa de 5 MB), y se baja a un archivo `.json`
 que lleva todo adentro (logos, fuentes subidas) para usarlo con el Excel del
 año siguiente o en otra computadora.
 
+«Partir del Centroamericano 2026» arma el diseño de esos gafetes con lo que
+hay en el sitio: los logos de la FCA y de la CCA, el horario, el QR de la
+federación, los colores por rol y el pizote con el tablero
+(`img/centroamericano-2026/mascota-tablero.png`, sacado de la plantilla
+original: 266 × 231 px, la misma resolución con que se imprimió).
+
 **Aprobar el diseño lo deja quieto.** Sin aprobar no se crea nada; aprobado,
 el formulario entero queda deshabilitado (`<fieldset disabled>`) y para
 tocarlo hay que «Cambiar el diseño», que pregunta. Así un Excel nuevo nunca

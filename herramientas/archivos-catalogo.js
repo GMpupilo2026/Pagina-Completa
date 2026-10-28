@@ -91,6 +91,7 @@ const TITULOS = {
   "img/centroamericano-2026/compartir.jpg": "Centroamericano 2026: la imagen que se ve al compartir la página por WhatsApp",
   "img/centroamericano-2026/mascota.jpg": "Centroamericano 2026: la mascota, el pizote de la portada de las bases",
   "img/centroamericano-2026/mascota-trofeo.png": "Centroamericano 2026: el pizote con el trofeo y la bandera, de las bases",
+  "img/centroamericano-2026/mascota-tablero.png": "Centroamericano 2026: el pizote con el tablero, de los gafetes (sacado de la plantilla original)",
   "img/centroamericano-2026/mascota-asoma.png": "Centroamericano 2026: la cabeza del pizote de la portada, recortada para que se asome en una ficha",
   "img/centroamericano-2026/hojas.png": "Centroamericano 2026: las hojas de monstera de las bases (sin fondo)",
   "img/centroamericano-2026/bandera-cr.svg": "Centroamericano 2026: la insignia de Costa Rica de la portada",

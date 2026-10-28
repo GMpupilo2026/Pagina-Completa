@@ -66,7 +66,7 @@
       ["Salida", "08/11/2026", "11:00 a.m."],
     ];
     d.codigo.plantilla = "{Federación} {n}";
-    for (const [id, ruta] of [["logoIzq", "img/fca-logo.png"], ["logoDer", "img/centroamericano-2026/cca-logo.png"]]) {
+    for (const [id, ruta] of [["logoIzq", "img/fca-logo.png"], ["logoDer", "img/centroamericano-2026/cca-logo.png"], ["ilustracion", "img/centroamericano-2026/mascota-tablero.png"]]) {
       try { d.imagenes[id] = { nombre: ruta.split("/").pop(), datos: await aDatos(await (await fetch(ruta)).blob()) }; } catch (e) { /* sin ese logo */ }
     }
     return d;

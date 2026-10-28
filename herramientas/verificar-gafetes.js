@@ -222,7 +222,7 @@ async function aceptar(page, boton) {
   console.log("\nEl diseño se queda");
   const [archivo] = await Promise.all([page.waitForEvent("download"), page.click("#g-guardar")]);
   const json = JSON.parse(fs.readFileSync(await archivo.path(), "utf8"));
-  igual("el archivo del diseño lleva sus logos y que está aprobado", [json.tipo, !!(json.imagenes.logoIzq && json.imagenes.logoIzq.datos.startsWith("data:image/")), json.aprobado], ["ajedrez-integral-gafetes", true, true]);
+  igual("el archivo del diseño lleva sus logos, el pizote y que está aprobado", [json.tipo, ["logoIzq", "logoDer", "ilustracion"].every((k) => json.imagenes[k] && json.imagenes[k].datos.startsWith("data:image/")), json.aprobado], ["ajedrez-integral-gafetes", true, true]);
   await page.reload({ waitUntil: "networkidle" });
   await page.waitForSelector("#app:not(.hidden)");
   await page.waitForFunction(() => window.Gafetes._estado().diseno.nombreDiseno === "Centroamericano 2026");
