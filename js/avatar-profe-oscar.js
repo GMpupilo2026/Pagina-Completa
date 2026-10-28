@@ -37,6 +37,7 @@
     { id: "esfuerzate", frase: "¡Esfuérzate más!", alt: "El profe Oscar serio, con las manos en la cintura" },
     { id: "vagabundo", frase: "Tan vagabundo", alt: "El profe Oscar de brazos cruzados, mirando hacia arriba con media sonrisa" },
     { id: "burlon", frase: "¿Vas a jugar esa?", alt: "El profe Oscar con cara burlona, la mano en la barbilla y señalando al frente" },
+    { id: "pobrecillo", frase: "Pobrecillo", alt: "El profe Oscar con cara triste, la mano en el pecho" },
     { id: "casi", frase: "¡Casi! Faltó poquito", alt: "El profe Oscar haciendo «un poquito» con los dedos" },
     { id: "esa-no-es", frase: "Esa no es…", alt: "El profe Oscar diciendo que no con el dedo" },
     { id: "esa-vara", frase: "¿Y esa vara?", alt: "El profe Oscar extrañado, rascándose la cabeza" },

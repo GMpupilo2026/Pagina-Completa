@@ -19081,7 +19081,7 @@
   ]
  },
  "imagenes": {
-  "total": 1118,
+  "total": 1119,
   "grupos": [
    {
     "carpeta": "entreno/img/facil",
@@ -24262,6 +24262,12 @@
       "titulo": "Nos vemos",
       "tipo": "otro",
       "kb": 20
+     },
+     {
+      "ruta": "img/avatar-profe-oscar/pobrecillo.webp",
+      "titulo": "Pobrecillo",
+      "tipo": "otro",
+      "kb": 19
      },
      {
       "ruta": "img/avatar-profe-oscar/presentando.webp",
