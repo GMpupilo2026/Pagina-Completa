@@ -127,6 +127,13 @@ const casos = [
   ["Clase Prueba - 2030/09/21 16:04 CST - Notas de Gemini", ["Clase Prueba", "2030-09", "2030-09-21 16.04"]],
   ["hiz-cejh-rbe (2030-06-18 14:26 GMT-6) - Transcript", ["Otras", "2030-06", "2030-06-18 14.26"]],
   ["Transcripción del chat: zpy-puco-ocd (2029-11-27 09:35 GMT-6)", ["Otras", "2029-11", "2029-11-27 09.35"]],
+  ["Informe de asistencia de ikm-anac-nhd (2030-03-05 17:58 GMT-6)", ["Otras", "2030-03", "2030-03-05 17.58"]],
+  ["Entrenamiento CCDR San José - 2030/09/19 08:57 CST - Asistencia", ["Entrenamiento CCDR San José", "2030-09", "2030-09-19 08.57"]],
+  ["ADAES 2030 - 2030/05/07 18:32 CST - Recording", ["Clase Selección ADAES", "2030-05", "2030-05-07 18.32"]],
+  ["Clases ADAES - 2029/07/04 18:26 CST - Transcript", ["Clase Selección ADAES", "2029-07", "2029-07-04 18.26"]],
+  ["Clases Sele - 2029/09/25 18:30 CST - Asistencia", ["Clase Selección ADAES", "2029-09", "2029-09-25 18.30"]],
+  ["Clases Escuelas ADAES - 2029/11/05 10:00 CST - Asistencia", ["Clases Escuelas ADAES", "2029-11", "2029-11-05 10.00"]],
+  ["Clase de Ajedrez SJ - 2029/06/23 18:00 CST - Asistencia", ["Entrenamiento CCDR San José", "2029-06", "2029-06-23 18.00"]],
 ];
 for (const [nombre, esperado] of casos) {
   const d = ctx.leerNombre_({ getName: () => nombre, getDateCreated: () => new Date() });
@@ -140,7 +147,11 @@ ok("sin fecha en el nombre: a «Otras», con la fecha de creación en hora de Co
 // ------------------------------------------------------------ el orden de verdad
 const { meet, ordenado } = mundo();
 const ctx2 = sandbox();
-ctx2.ORIGEN = meet.id; ctx2.DESTINO = ordenado.id;
+const informes = new Carpeta("Informes de reuniones", null);
+ctx2.ORIGENES = [meet.id, informes.id]; ctx2.DESTINO = ordenado.id;
+// La asistencia, en otra carpeta de origen: llega a la misma sesión que su grabación.
+const reunion = new Carpeta("2030-10-03 09:29 Clase SJ Octubre", informes);
+new Archivo("Clase SJ Octubre - 2030/10/03 09:29 CST - Asistencia", reunion, { mime: "application/vnd.google-apps.spreadsheet" });
 // En «Google Meet»: una carpeta por reunión recurrente, con varias sesiones.
 const sj = new Carpeta("Clase SJ Octubre - 2030/10/03 09:29 CST", meet);
 new Archivo("Clase SJ Octubre - 2030/10/03 09:29 CST - Recording", sj);
@@ -164,10 +175,11 @@ const dondeEsta = (nombre) => {
   for (const c of Object.values(todas)) for (const a of c.archivos) if (a.nombre === nombre) return ordenado.ruta(a);
   return null;
 };
-ok("cada sesión de una reunión recurrente, en su propia carpeta de grupo y mes",
+ok("cada sesión de una reunión recurrente, en su propia carpeta de grupo y mes, con la asistencia de la otra carpeta",
   dondeEsta("Clase SJ Octubre - 2030/10/03 09:29 CST - Recording") === "Entrenamiento CCDR San José/2030-10/2030-10-03 09.29"
   && dondeEsta("Clase SJ Octubre - 2030/10/03 09:29 CST - Transcript") === "Entrenamiento CCDR San José/2030-10/2030-10-03 09.29"
-  && dondeEsta("Clase SJ Octubre - 2030/10/21 18:57 CST - Recording") === "Entrenamiento CCDR San José/2030-10/2030-10-21 18.57",
+  && dondeEsta("Clase SJ Octubre - 2030/10/21 18:57 CST - Recording") === "Entrenamiento CCDR San José/2030-10/2030-10-21 18.57"
+  && dondeEsta("Clase SJ Octubre - 2030/10/03 09:29 CST - Asistencia") === "Entrenamiento CCDR San José/2030-10/2030-10-03 09.29",
   dondeEsta("Clase SJ Octubre - 2030/10/21 18:57 CST - Recording"));
 ok("lo viejo con el código de la reunión va a «Otras»", dondeEsta("hiz-cejh-rbe (2030-06-18 14:26 GMT-6)") === "Otras/2030-06/2030-06-18 14.26");
 ok("lo que ya estaba por grupo recibe su mes", vieja.padre.nombre === "2030-07" && vieja.padre.padre === cc, vieja.padre.nombre);
@@ -175,8 +187,8 @@ ok("los accesos directos se quedan donde estaban", atajo.padre === club);
 
 ok("el índice: una fila por sesión, sin fórmulas", hoja.formulas === 0 && hoja.filas.length === 1 + 4, `${hoja.filas.length - 1} filas, ${hoja.formulas} fórmulas`);
 const fila = hoja.filas.find((f) => f[1] === "2030-10-03");
-ok("el índice enlaza la grabación y la transcripción de la sesión",
-  fila && fila[0] === "Entrenamiento CCDR San José" && fila[4].url && fila[5].url && fila[4].texto === "Ver", JSON.stringify(fila));
+ok("el índice enlaza la grabación, la transcripción y la asistencia de la sesión",
+  fila && fila[0] === "Entrenamiento CCDR San José" && fila[4].url && fila[5].url && fila[4].texto === "Ver" && fila[8].url && fila[8].texto === "Lista", JSON.stringify(fila));
 ok("el índice va de lo más nuevo a lo más viejo", hoja.filas[1][1] === "2030-10-21", hoja.filas[1][1]);
 
 const otraVez = JSON.stringify(Object.values(todas).map((c) => [c.nombre, c.carpetas.length, c.archivos.length]));

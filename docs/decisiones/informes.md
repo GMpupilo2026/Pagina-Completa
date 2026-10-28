@@ -2128,13 +2128,25 @@ Cenfotec, cada hora, y lleva cada archivo a
 `Meet ordenado/<grupo>/AAAA-MM/AAAA-MM-DD HH.MM/`. Así
 `meet-clase-a-clase.py` vigila solo `Meet ordenado/Entrenamiento CCDR San José`.
 
+- **Se saca de tres carpetas** (`ORIGENES`): «Google Meet»; «CLASES ADAES»,
+  con originales de «ADAES 2026», y «Informes de reuniones», con la
+  asistencia de cada reunión desde 2023 (unas 490). La asistencia cae en la
+  misma carpeta de sesión que su grabación, porque sale de la misma fecha y
+  hora del nombre. **No se tocan** «Informes SJ» (el material del informe del
+  CCDR, con copias de la asistencia en Excel), «Informes CC» (los informes de
+  cada profesor y sus transcripciones hechas fuera de Meet) ni «Seminario
+  Asesores» (videos subidos a mano, sin fecha en el nombre).
+- **Las reuniones con el código de Meet** («ikm-anac-nhd», unas 165
+  asistencias) van a «Otras»: el nombre no dice de qué grupo son.
 - **Se ordena archivo por archivo, no carpeta por carpeta**: una carpeta de
   reunión recurrente trae sesiones de varios meses. El grupo, el mes y la
   sesión salen del nombre que pone Meet; lo que no trae fecha en el nombre
   toma la de creación, en hora de Costa Rica.
 - **El grupo es el nombre de la reunión**, salvo lo que dice `GRUPOS` («Clase
   SJ Octubre» y «Entreno SJ Martes» son el entrenamiento del CCDR; «Reunión
-  Campeones Colegiales», de Campeones Colegiales). Lo que trae el código de
+  Campeones Colegiales», de Campeones Colegiales; «Clase de Ajedrez SJ», de
+  2025, también del CCDR; y la selección de ADAES, que se llamó «Clases Sele»,
+  «Clases ADAES», «ADAES 2026» y «Clase Selección ADAES», va toda junta). Lo que trae el código de
   Meet en vez de un nombre («hiz-cejh-rbe») va a «Otras». **Una reunión nueva
   del CCDR con otro nombre hay que agregarla a `GRUPOS`**: si no, queda en un
   grupo propio y no llega al informe.

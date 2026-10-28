@@ -29,8 +29,16 @@
  * Para quitarlo: ejecutar `desinstalar`.
  */
 
-// «Google Meet»: donde Meet deja las reuniones.
-var ORIGEN = "1uJ20WG1P2OJNRq4s1o_1a1UWCHebvqbp";
+// De dónde se sacan los archivos de Meet:
+// - «Google Meet», donde Meet deja las reuniones;
+// - «CLASES ADAES», con grabaciones y transcripciones de «ADAES 2026»;
+// - «Informes de reuniones», con la asistencia de cada reunión desde 2023
+//   (una carpeta «AAAA-MM-DD HH:MM Nombre» por reunión).
+var ORIGENES = [
+  "1uJ20WG1P2OJNRq4s1o_1a1UWCHebvqbp",
+  "1xi2CM4K4bZUoG8YTMJmfBqySlzw2fJzw",
+  "1qB7TKc0VNya-LlfLMZa3kFx3_XxUmyzP",
+];
 // «Meet ordenado»: donde quedan por grupo y por mes.
 var DESTINO = "1B9ArrKDiCbZEPmSL-xeX-VwyG3FQ-WX2";
 // La hoja «Indice de reuniones», dentro de «Meet ordenado».
@@ -44,7 +52,12 @@ var GRUPOS = [
   [/^clase sj octubre/, "Entrenamiento CCDR San José"],
   [/^entreno sj martes/, "Entrenamiento CCDR San José"],
   [/^entrenamiento ccdr san jose/, "Entrenamiento CCDR San José"],
+  [/^clase de ajedrez sj/, "Entrenamiento CCDR San José"],
   [/^reunion campeones colegiales/, "Campeones Colegiales"],
+  // La selección de ADAES cambió de nombre con los años: «Clases Sele» (2024),
+  // «Clases ADAES» (2025), «ADAES 2026» y «Clase Selección ADAES». La carpeta
+  // del mes ya las separa por año.
+  [/^(adaes 20\d\d|clases adaes|clases sele)$/, "Clase Selección ADAES"],
 ];
 // Lo que no se puede leer (sin fecha, o con nombre de código de Meet como
 // «hiz-cejh-rbe») va aquí.
@@ -113,7 +126,8 @@ function ordenarTodo_(soloMirar) {
     // 2. Lo de «Google Meet», archivo por archivo (una carpeta de reunión
     //    junta varias sesiones). Los accesos directos se dejan: son archivos
     //    de otras personas.
-    var archivos = archivosDe_(DriveApp.getFolderById(ORIGEN));
+    var archivos = [];
+    ORIGENES.forEach(function (id) { archivos = archivos.concat(archivosDe_(DriveApp.getFolderById(id))); });
     for (var i = 0; i < archivos.length; i++) {
       if (Date.now() - inicio > TOPE_MS) return seguir_(movidos);
       var f = archivos[i];
@@ -166,10 +180,11 @@ function carpeta_(padre, nombre, cache) {
  *   «Clase SJ Octubre - 2026/10/03 09:29 CST - Recording»
  *   «hiz-cejh-rbe (2026-06-18 14:26 GMT-6) - Transcript»
  *   «Transcripción del chat: zpy-puco-ocd (2025-11-27 09:35 GMT-6)»
+ *   «Informe de asistencia de ikm-anac-nhd (2026-03-05 17:58 GMT-6)»
  * Sin fecha en el nombre, la de creación del archivo, y va a «Otras».
  */
 function leerNombre_(f) {
-  var nombre = f.getName().replace(/^Transcripción del chat:\s*/i, "");
+  var nombre = f.getName().replace(/^(Transcripción del chat|Informe de asistencia de)[:\s]*/i, "");
   var m = /(\d{4})[\/\-_](\d{2})[\/\-_](\d{2})[ T]+(\d{1,2})[:.](\d{2})/.exec(nombre);
   var a, me, d, h, mi, reunion;
   if (m) {
@@ -215,12 +230,13 @@ function armarIndice_(destino) {
         var p = /^(\d{4}-\d{2}-\d{2}) (\d{2})\.(\d{2})$/.exec(s.getName());
         if (!p) continue;
         var fila = { grupo: g.getName(), fecha: p[1], hora: p[2] + ":" + p[3], carpeta: s.getUrl(),
-                     grabacion: [], transcripcion: [], chat: [], notas: [], otro: [] };
+                     grabacion: [], transcripcion: [], chat: [], notas: [], asistencia: [], otro: [] };
         var fs = s.getFiles();
         while (fs.hasNext()) {
           var f = fs.next(), n = f.getName();
           var tipo = /Recording/i.test(n) ? "grabacion" : /Transcript|Transcripción/i.test(n) ? "transcripcion"
-            : /Chat/i.test(n) ? "chat" : /Notas|Gemini|Notes/i.test(n) ? "notas" : "otro";
+            : /Chat/i.test(n) ? "chat" : /Notas|Gemini|Notes/i.test(n) ? "notas"
+            : /Asistencia|Attendance/i.test(n) ? "asistencia" : "otro";
           fila[tipo].push(f.getUrl());
         }
         filas.push(fila);
@@ -231,7 +247,7 @@ function armarIndice_(destino) {
 
   var hoja = SpreadsheetApp.openById(INDICE).getSheets()[0];
   hoja.clear();
-  var titulos = ["Grupo", "Fecha", "Hora", "Carpeta", "Grabación", "Transcripción", "Chat", "Notas de Gemini", "Otro"];
+  var titulos = ["Grupo", "Fecha", "Hora", "Carpeta", "Grabación", "Transcripción", "Chat", "Notas de Gemini", "Asistencia", "Otro"];
   hoja.getRange(1, 1, 1, titulos.length).setValues([titulos]).setFontWeight("bold");
   if (!filas.length) return;
   var enlace = function (urls, texto) {
@@ -242,10 +258,10 @@ function armarIndice_(destino) {
   var valores = filas.map(function (f) { return [f.grupo, f.fecha, f.hora]; });
   var ricos = filas.map(function (f) {
     return [enlace([f.carpeta], "Abrir"), enlace(f.grabacion, "Ver"), enlace(f.transcripcion, "Leer"),
-            enlace(f.chat, "Chat"), enlace(f.notas, "Notas"), enlace(f.otro, "Otro")];
+            enlace(f.chat, "Chat"), enlace(f.notas, "Notas"), enlace(f.asistencia, "Lista"), enlace(f.otro, "Otro")];
   });
   // La fecha y la hora como texto: si no, la hoja las convierte a su manera.
   hoja.getRange(2, 1, filas.length, 3).setNumberFormat("@").setValues(valores);
-  hoja.getRange(2, 4, filas.length, 6).setRichTextValues(ricos);
+  hoja.getRange(2, 4, filas.length, 7).setRichTextValues(ricos);
   hoja.setFrozenRows(1);
 }
