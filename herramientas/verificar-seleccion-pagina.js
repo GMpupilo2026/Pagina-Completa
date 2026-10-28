@@ -178,7 +178,7 @@ const visible = (p, sel) => p.$eval(sel, (e) => e.checkVisibility());
         await v.$$eval("#temas [role=tab]", (l) => l.map((b) => [b.dataset.tema, b.querySelector(".font-serif").textContent, /^\d+ herramientas? →$/.test(b.lastChild.textContent) && b.lastChild.textContent.split(" ")[0], b.getAttribute("aria-selected")])),
         [["arbitraje", "Arbitraje", "7", "false"], ["jde", "Juegos Deportivos Estudiantiles", "6", "false"], ["jdn", "Juegos Deportivos Nacionales", "2", "false"], ["universitarios", "Universitarios", "4", "false"]]);
     igual("de entrada no hay tema elegido: ninguna herramienta abajo, y Oscar pide elegir uno",
-        [await vistas(), await visible(v, "#panel-tema"), await visible(v, "#tema-invitacion img[src='img/oscar-avatar-160.jpg']"),
+        [await vistas(), await visible(v, "#panel-tema"), await v.$eval("#tema-invitacion-avatar", (i) => i.checkVisibility() && i.complete && i.naturalWidth > 0 && /avatar-profe-oscar\/a-repasar\.webp$/.test(i.src) && i.alt === "El profe Oscar leyendo un libro de ajedrez"),
             (await v.textContent("#tema-invitacion")).includes("¡Elige un tema!"), await v.$eval("#tab-arbitraje", (b) => b.tabIndex)],
         [[], false, true, true, 0]);
     await v.click("#tab-arbitraje");
