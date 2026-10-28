@@ -17,6 +17,9 @@ Claude. El recorrido entero:
        herramientas/informe-ccdr.js) y vuelve a armar el borrador del Word;
      - pone al día <trabajo>/AAAA-MM/clase-a-clase.md, el resumen del mes.
 
+En Windows, herramientas/meet-clase-a-clase-instalar.ps1 instala todo y lo
+deja arrancando solo al entrar a la computadora.
+
 Así el informe se va llenando sesión a sesión y el último día del mes solo
 falta lo que no sale de una grabación (asistencia, torneos, fotos, lesiones),
 que se completa con la skill informe-ccdr.
@@ -44,6 +47,8 @@ Usar:
                  medium. Más grande, más exacto y más lento.
   --copiar-a     además, copia cada grabación a esta carpeta (una copia fuera
                  de Drive, por si allá se borra).
+  --registro     escribe lo que pasa en este archivo (para cuando corre sin
+                 ventana, con pythonw).
   --estudiantes  estudiantes.csv (Estudiante;…) para la lista de atletas; por
                  omisión, <trabajo>/estudiantes.csv si existe.
 
@@ -249,7 +254,7 @@ def procesar(ruta, nombre, trabajo, args, maquina):
         os.makedirs(destino, exist_ok=True)
         shutil.copy2(ruta, os.path.join(destino, nombre))
 
-    print(f"  Transcribiendo «{nombre}»…", flush=True)
+    print(f"{dt.datetime.now(HORA_CR):%Y-%m-%d %H:%M} Transcribiendo «{nombre}»…", flush=True)
     segmentos, duracion = maquina.transcribir(ruta)
     texto = " ".join(t for _, t in segmentos)
     fin = inicio + dt.timedelta(seconds=round(duracion))
@@ -363,9 +368,19 @@ def main():
     p.add_argument("--modelo", default="small")
     p.add_argument("--copiar-a")
     p.add_argument("--estudiantes")
+    p.add_argument("--registro", help="escribe lo que va pasando en este archivo (con pythonw no hay ventana)")
     args = p.parse_args()
-    if not os.path.isdir(args.grabaciones):
-        sys.exit(f"No existe la carpeta de grabaciones: {args.grabaciones}")
+    if args.registro:
+        os.makedirs(os.path.dirname(os.path.abspath(args.registro)), exist_ok=True)
+        sys.stdout = sys.stderr = open(args.registro, "a", encoding="utf-8", buffering=1)
+        print(f"\n{dt.datetime.now(HORA_CR):%Y-%m-%d %H:%M} Arranca: {args.grabaciones}")
+    # Al entrar a Windows, Drive tarda en montar su unidad: vigilando, se
+    # espera a que aparezca la carpeta en vez de terminar.
+    while not os.path.isdir(args.grabaciones):
+        if not args.vigilar:
+            sys.exit(f"No existe la carpeta de grabaciones: {args.grabaciones}")
+        print(f"  Todavía no aparece {args.grabaciones} (¿Drive está abierto?); vuelvo a mirar en un minuto.")
+        time.sleep(60)
     os.makedirs(args.trabajo, exist_ok=True)
     if not args.estudiantes:
         args.estudiantes = os.path.join(args.trabajo, "estudiantes.csv")

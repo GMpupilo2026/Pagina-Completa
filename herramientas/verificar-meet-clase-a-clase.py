@@ -22,6 +22,7 @@ Uso:  python3 herramientas/verificar-meet-clase-a-clase.py
 """
 import json
 import os
+import re
 import subprocess
 import sys
 import tempfile
@@ -147,6 +148,27 @@ else:
     amarillo = [r.text for c in celdas for p in c.paragraphs for r in p.runs if r.font.highlight_color is not None]
     ok("en el Word, los temas y la asistencia sin contar salen en amarillo",
        " — temas: Mates" in amarillo and "[completar]" in amarillo, amarillo[:6])
+
+# --registro: con pythonw no hay ventana, y esto es lo único que queda.
+registro = os.path.join(tmp, "registro.txt")
+r = subprocess.run([sys.executable, SCRIPT, "--grabaciones", grab, "--trabajo", trabajo, "--registro", registro],
+                   env={**os.environ, "MEET_MOTOR": "falso"}, capture_output=True, text=True)
+ok("con --registro, lo que pasa queda en el archivo y no en la consola",
+   r.returncode == 0 and "Arranca:" in leer(registro) and not r.stdout, (r.returncode, r.stdout[:200]))
+
+# El instalador de Windows (aquí no hay PowerShell para correrlo): que pase
+# solo opciones que el script conoce, y que lleve el BOM sin el que
+# PowerShell 5 rompe las tildes.
+with open(os.path.join(AQUI, "meet-clase-a-clase-instalar.ps1"), "rb") as f:
+    ps1 = f.read()
+ok("el instalador de Windows va con BOM", ps1.startswith(b"\xef\xbb\xbf"))
+ps1 = ps1.decode("utf-8-sig")
+argumentos = next((l for l in ps1.splitlines() if l.strip().startswith("$argumentos =")), "")
+with open(SCRIPT, encoding="utf-8") as f:
+    conocidas = set(re.findall(r'add_argument\("(--[a-z-]+)"', f.read()))
+pasa = set(re.findall(r"(--[a-z-]+)", argumentos))
+ok("el instalador pasa al script solo opciones que existen, con --vigilar y --registro",
+   pasa and pasa <= conocidas and {"--vigilar", "--registro"} <= pasa, (pasa - conocidas, argumentos))
 
 print("\n" + ("Todo bien." if not fallos else f"{fallos} fallo(s)."))
 sys.exit(1 if fallos else 0)

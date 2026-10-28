@@ -46,6 +46,7 @@ package-lock.json
 herramientas/*.js
 herramientas/*.py
 herramientas/*.sh
+herramientas/*.ps1
 herramientas/*.mts
 herramientas/*.md
 herramientas/*.html

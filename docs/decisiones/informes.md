@@ -2076,7 +2076,27 @@ tres cosas que ya existían:
   el audio («unexpected keyword argument 'metadata_errors'»). El script lo
   dice con esas palabras si pasa.
 
+**En Windows lo deja corriendo `herramientas/meet-clase-a-clase-instalar.ps1`**
+(se corre una vez con `powershell -ExecutionPolicy Bypass -File …`): instala
+faster-whisper, corre `npm ci` si hay Node, encuentra «Meet Recordings» en la
+unidad de Drive y crea la tarea «Meet clase a clase» del Programador de tareas,
+al entrar a Windows, con `pythonw` (sin ventana) y sin límite de tiempo.
+
+- Se eligió el Programador de tareas y no la carpeta Inicio porque se levanta
+  sola si el proceso se cae y no deja una ventana abierta que alguien cierre.
+- **Sin ventana, lo que pasa queda en `--registro`** (`registro.txt` en la
+  carpeta de trabajo): es lo único que hay para saber por qué no apareció una
+  clase.
+- **Al entrar a Windows, Drive tarda en montar su unidad.** Con `--vigilar`,
+  el script espera a que aparezca la carpeta en vez de terminar: la tarea
+  arrancaba antes que Drive y moría en el primer segundo.
+- El instalador va con BOM: sin él, PowerShell 5 lo lee como ANSI y las tildes
+  de los mensajes salen rotas. Python se busca por `py` y por la ruta que
+  devuelve, porque el `python` de WindowsApps es un atajo a la Tienda.
+
 `verificar-meet-clase-a-clase.py` lo comprueba con el motor falso
 (`MEET_MOTOR=falso`: el «audio» es un texto), sin bajar Whisper. Lo que no
 prueba es si Whisper entiende la clase: eso se mira con una grabación de
-verdad. El camino real se probó con el modelo `tiny` y un WAV.
+verdad. El camino real se probó con el modelo `tiny` y un WAV. El
+instalador no se puede correr en el CI (no hay Programador de tareas): se
+revisa que lleve el BOM y que solo le pase al script opciones que existen.
