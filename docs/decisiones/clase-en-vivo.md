@@ -4226,7 +4226,12 @@ Las láminas nuevas corrieron la práctica de la Sesión 3 de las láminas 41-50
 las 46-55, y sus claves van por número de lámina: la migración
 `formacion_sesion3_ejemplos_desempate` las vuelve a sembrar y se niega si hay
 respuestas guardadas de esa práctica (cuelgan de las claves con `on delete
-cascade`: borrarlas las borraría). Al aplicarla no había ninguna. Para agregar
+cascade`: borrarlas las borraría). Al aplicarla no había ninguna. Se aplicó
+pegada en el editor SQL de Supabase (el 28/10: la aprobación de `apply_migration`
+no le llegaba al dueño en la app y se cancelaba sola al minuto), así que no
+figura en la lista de migraciones de Supabase; el archivo de
+`supabase/migraciones/` es lo que se corrió, y se comprobó en la base que las
+claves quedaron en las láminas 47 a 55. Para agregar
 o quitar láminas en una sesión con práctica: los datos, el curso, la práctica
 y las claves, juntos.
 
