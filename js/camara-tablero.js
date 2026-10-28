@@ -348,7 +348,7 @@
         const bien = D.hayTablero(r);
         if (!silencioso) avisar(bien
             ? "Esquinas ajustadas a las líneas del tablero. Revisa que la cuadrícula amarilla calce y, con las piezas en la posición inicial, toca «Calibrar»."
-            : "Ajusté lo que pude, pero las líneas del tablero se ven poco. Revisa la cuadrícula; si no calza, arrastra las esquinas.", bien ? "bien" : "error");
+            : "Las esquinas se corrieron lo que se pudo, pero las líneas del tablero se ven poco. Revisa la cuadrícula; si no calza, arrastra las esquinas.", bien ? "bien" : "error");
     }
 
     async function buscarTablero() {
