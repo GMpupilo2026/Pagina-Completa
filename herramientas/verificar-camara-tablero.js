@@ -91,8 +91,9 @@ function cliente(yo) {
   };`;
 }
 
-async function abrir(browser, ruta, yo, viewport) {
+async function abrir(browser, ruta, yo, viewport, init) {
   const ctx = await browser.newContext({ serviceWorkers: "block", viewport: viewport || { width: 1280, height: 1400 } });
+  if (init) await ctx.addInitScript(init.f, init.arg);
   const page = await ctx.newPage();
   const errores = [];
   page.on("pageerror", (e) => errores.push(String(e)));
@@ -675,8 +676,52 @@ async function esperarJugadas(p, n) {
     await pw.waitForFunction(() => /c4/.test(document.querySelector('#mesas-lista button[data-mesa="5"]').textContent), null, { timeout: 8000 }).catch(() => {});
     igual("la partida nueva de la mesa 5 llega con los jugadores de la ronda 2",
       await pw.$eval('#mesas-lista button[data-mesa="5"]', (b) => b.querySelectorAll("p")[1].textContent), '<img src=x onerror="window.__xss=1">Dani – Ana Mora');
+
+    // El resultado: lo marca quien maneja la cámara y le llega a quien mira.
+    await pa.click('[data-resultado="1-0"]');
+    igual("«1-0» marca el resultado", [await pa.textContent("#resultado-texto"), await pa.getAttribute('[data-resultado="1-0"]', "aria-pressed")], ["Terminó: ganan las blancas (1-0).", "true"]);
+    await pw.waitForFunction(() => /Terminó: ganan las blancas/.test(document.querySelector('#mesas-lista button[data-mesa="5"]').textContent), null, { timeout: 8000 }).catch(() => {});
+    igual("y quien mira lo ve en la mesa", await pw.$eval('#mesas-lista button[data-mesa="5"]', (b) => b.querySelectorAll("p")[2].textContent), "Última jugada: 1. c4. Juegan las negras. Terminó: ganan las blancas (1-0).");
+    igual("el PGN que viaja lleva el resultado", await pa.evaluate(() => /\[Result "1-0"\]/.test(localStorage.getItem("camara_partida_v1_0"))), true);
+    await pa.click("#btn-deshacer");
+    igual("«Deshacer» lo borra: la partida sigue", [await pa.textContent("#resultado-texto"), await pa.getAttribute('[data-resultado="1-0"]', "aria-pressed")], ["Sigue en juego.", "false"]);
+
+    // El QR de cada mesa: una tarjeta por mesa de la ronda, que abre la cámara en esa mesa.
+    await pa.evaluate(() => { window.print = () => { window.__impreso = (window.__impreso || 0) + 1; }; });
+    await pa.click("#btn-torneo-qr");
+    igual("«Imprimir el QR de cada mesa» arma una tarjeta por mesa y manda a imprimir",
+      [await pa.$$eval("#hoja-qr .hoja-qr-numero", (x) => x.map((y) => y.textContent)), await pa.evaluate(() => window.__impreso), await pa.locator("#hoja-qr svg").count()], [["Mesa 5", "Mesa 6"], 1, 2]);
+    igual("cada QR lleva el torneo, el código y su mesa (después del #)", (await pa.getAttribute("#hoja-qr .hoja-qr-mesa:nth-child(2)", "data-enlace")).endsWith("/camara-tablero.html#t=" + ID + "&c=" + codigoT + "&m=6"), true);
+    await pa.emulateMedia({ media: "print" });
+    igual("al imprimir sale solo la hoja, con la marca de agua", await pa.evaluate(() => ["hoja-qr", "hoja-qr-marca", "app"].map((id) => document.getElementById(id).checkVisibility())), [true, true, false]);
+    await pa.evaluate(() => window.dispatchEvent(new Event("afterprint")));
+    await pa.emulateMedia({ media: "screen" });
+    igual("en la pantalla no se ve", await pa.evaluate(() => [document.getElementById("hoja-qr").checkVisibility(), document.getElementById("app").checkVisibility()]), [false, true]);
     igual("sin errores en la consola", [A.errores, Bc.errores, W.errores], [[], [], []]);
     await cerrar(W); await cerrar(Bc); await cerrar(A);
+
+    // Un celular que escanea el QR de la mesa 6: el torneo, el código y la mesa puestos, transmitiendo.
+    const Q = await abrir(browser, "camara-tablero.html#t=" + ID + "&c=" + codigoT + "&m=6", null, null, { f: (d) => { window.__pareo = d; }, arg: torneo([ronda1, ronda2]) });
+    const pq = Q.page;
+    await pq.waitForFunction(() => !document.getElementById("vivo-encendido").hidden, null, { timeout: 8000 }).catch(() => {});
+    igual("llega por el QR: su torneo, su mesa y transmitiendo con el código del torneo",
+      [await pq.textContent("#torneo-nombre"), await pq.inputValue("#torneo-mesa"), await pq.textContent("#vivo-codigo")], ["Abierto de prueba", "6", codigoT + " · mesa 6"]);
+    igual("y el código ya no queda en la dirección", await pq.evaluate(() => location.hash), "");
+    igual("sin errores en la consola (por el QR)", Q.errores, []);
+    await cerrar(Q);
+  }
+
+  console.log("\nEl mate se marca solo");
+  {
+    const M = await abrir(browser, "camara-tablero.html");
+    const pm = M.page;
+    await pm.waitForSelector("#app:not(.hidden)");
+    for (const j of ["f3", "e5", "g4", "Dh4"]) { await pm.fill("#jugada-mano", j); await pm.click("#form-anotar button[type=submit]"); }
+    igual("con mate, el resultado sale solo", await pm.textContent("#resultado-texto"), "Terminó: ganan las negras (0-1). Lo dice el tablero.");
+    await pm.click('[data-resultado="1-0"]');
+    igual("y no se puede marcar otro", [(await aviso(pm)).startsWith("El tablero ya dice cómo terminó"), await pm.getAttribute('[data-resultado="0-1"]', "aria-pressed")], [true, "true"]);
+    igual("sin errores en la consola", M.errores, []);
+    await cerrar(M);
   }
 
   console.log("\nQuien mira sin código, con uno malo o sin nadie transmitiendo");
@@ -698,6 +743,11 @@ async function esperarJugadas(p, n) {
     const nav = await chromium.launch({ executablePath: fs.existsSync(CHROME) ? CHROME : undefined,
       args: ["--use-fake-device-for-media-stream=device-count=2", "--use-fake-ui-for-media-stream"] });
     const ctx = await nav.newContext({ serviceWorkers: "block", viewport: { width: 1280, height: 1400 }, permissions: ["camera"] });
+    // La pantalla encendida (Wake Lock): un doble que cuenta los pedidos.
+    await ctx.addInitScript(() => Object.defineProperty(navigator, "wakeLock", { configurable: true, value: { request: async (tipo) => {
+      window.__pantalla = (window.__pantalla || []).concat(tipo);
+      return { release: async () => {}, addEventListener() {} };
+    } } }));
     const pg = await ctx.newPage();
     const errores = [];
     pg.on("pageerror", (e) => errores.push(String(e)));
@@ -709,6 +759,7 @@ async function esperarJugadas(p, n) {
     await pg.click("#btn-camara");
     await esperarAviso(pg, /esquinas/);
     igual("abre la cámara y pide las esquinas", (await aviso(pg)).includes("esquinas"), true);
+    igual("con la cámara abierta, pide que la pantalla no se apague (y lo dice)", [await pg.evaluate(() => window.__pantalla), await pg.locator("#pantalla-encendida").isVisible()], [["screen"], true]);
     await pg.waitForFunction(() => !document.getElementById("camara-elegir-caja").hidden, null, { timeout: 8000 }).catch(() => {});
     const opciones = await pg.$$eval("#camara-elegir option", (o) => o.map((x) => x.value));
     igual("con dos cámaras, deja elegir cuál", opciones.length, 2);
@@ -725,6 +776,13 @@ async function esperarJugadas(p, n) {
     const nav = await chromium.launch({ executablePath: fs.existsSync(CHROME) ? CHROME : undefined,
       args: ["--use-fake-device-for-media-stream=device-count=2", "--use-fake-ui-for-media-stream"] });
     const ctx = await nav.newContext({ serviceWorkers: "block", viewport: { width: 1600, height: 1400 }, permissions: ["camera"] });
+    // El sonido de «necesita ayuda»: un doble que cuenta los pitidos.
+    await ctx.addInitScript(() => {
+      window.AudioContext = function () {
+        const nodo = () => ({ connect() {}, frequency: {}, gain: {}, start() { window.__pitidos = (window.__pitidos || 0) + 1; }, stop() {} });
+        return { currentTime: 0, destination: {}, createOscillator: nodo, createGain: nodo };
+      };
+    });
     const pg = await ctx.newPage();
     const errores = [];
     pg.on("pageerror", (e) => errores.push(String(e)));
@@ -760,6 +818,19 @@ async function esperarJugadas(p, n) {
     const otra = ops.find((x) => x !== (ops[0])) || ops[0];
     await f2.selectOption("#camara-elegir", ops[1]);
     await f2.waitForFunction((id) => localStorage.getItem("camara_dispositivo_v1_p2") === id, ops[1], { timeout: 8000 }).catch(() => {});
+    // «Cómo van las cámaras»: con palabras y color, y suena cuando una necesita ayuda.
+    const fila = (n) => pg.$eval('#resumen-lista [data-puesto="' + n + '"]', (f) => [f.dataset.estado, f.textContent]);
+    await pg.waitForFunction(() => document.querySelector('#resumen-lista [data-puesto="1"]') && document.querySelector('#resumen-lista [data-puesto="1"]').dataset.estado === "sin-calibrar", null, { timeout: 8000 }).catch(() => {});
+    igual("una cámara abierta y sin calibrar dice «Falta calibrar»", (await fila(1))[0], "sin-calibrar");
+    await f2.fill("#torneo-enlace", "esto no es un torneo");
+    await f2.click("#btn-torneo");
+    await pg.waitForFunction(() => document.querySelector('#resumen-lista [data-puesto="2"]').dataset.estado === "ayuda", null, { timeout: 8000 }).catch(() => {});
+    const f2ayuda = await fila(2);
+    igual("la que tiene un problema dice «Necesita ayuda» y cuál", [f2ayuda[0], /Necesita ayuda.*Pega el enlace del torneo/.test(f2ayuda[1])], ["ayuda", true]);
+    igual("y suena una vez", await pg.evaluate(() => window.__pitidos), 1);
+    igual("arriba se cuenta", /1 necesita ayuda/.test(await pg.textContent("#resumen-cuentas")), true);
+    await pg.click('#resumen-lista [data-puesto="2"] button');
+    igual("«Ir a la cámara 2» lleva a su cuadrito", await pg.evaluate(() => document.activeElement && document.activeElement.id), "puesto-titulo-2");
     igual("cada cuadrito recuerda su propia cámara", await pg.evaluate(() => [localStorage.getItem("camara_dispositivo_v1_p1") !== localStorage.getItem("camara_dispositivo_v1_p2"), !!localStorage.getItem("camara_dispositivo_v1_p2")]), [true, true]);
 
     // El torneo: se elige en uno y el otro lo toma solo; la mesa, cada uno la suya.
@@ -776,6 +847,8 @@ async function esperarJugadas(p, n) {
       [await f2.textContent("#torneo-nombre"), await f2.inputValue("#torneo-codigo") === await f1.inputValue("#torneo-codigo")], ["Abierto de prueba", true]);
     await f1.selectOption("#torneo-mesa", "1");
     await f2.selectOption("#torneo-mesa", "2");
+    await pg.waitForFunction(() => document.querySelector('#resumen-lista [data-puesto="2"]').dataset.estado !== "ayuda", null, { timeout: 8000 }).catch(() => {});
+    igual("cuando se arregla, deja de pedir ayuda y dice su mesa", [(await fila(2))[0], /Cámara 2 · mesa 2/.test((await fila(2))[1])], ["sin-calibrar", true]);
     igual("y cada una tiene su mesa, con sus jugadores", [await f1.inputValue("#vivo-blancas"), await f2.inputValue("#vivo-blancas"),
       await pg.evaluate(() => [localStorage.getItem("camara_mesa_v1_p1_0"), localStorage.getItem("camara_mesa_v1_p2_0")])], ["Ana", "Carla", ["1", "2"]]);
     igual("sin errores en la consola", errores, []);

@@ -12,8 +12,10 @@
  *   PartidaEnVivo.codigoValido(c)
  *   PartidaEnVivo.canal(c)              → nombre del canal
  *   PartidaEnVivo.enlace(c)             → la dirección para mirarla
- *   PartidaEnVivo.estado(juego, nombres) → lo que se manda
- *   PartidaEnVivo.leer(payload)         → { juego, blancas, negras } o null
+ *   PartidaEnVivo.estado(juego, nombres, donde, resultado) → lo que se manda
+ *   PartidaEnVivo.leer(payload)         → { juego, blancas, negras, resultado } o null
+ *   PartidaEnVivo.resultadoSolo(juego)  → «1-0», «=» o «0-1» si el tablero ya lo dice (mate, ahogado)
+ *   PartidaEnVivo.pgn(juego, resultado) → el PGN con su [Result]
  *   PartidaEnVivo.pintar(div, juego, { girado })
  *
  * En un torneo de Pareo Integral, todas las cámaras transmiten por el mismo
@@ -47,9 +49,35 @@
     const torneoDe = (texto) => { const m = String(texto || "").toLowerCase().match(UUID); return m ? m[0] : null; };
     const entero = (x, max) => (Number.isInteger(x) && x >= 1 && x <= max ? x : null);
 
+    /* El resultado, en la notación de Pareo Integral: «1-0», «=» (tablas) y
+     * «0-1». El de una partida que terminó en el tablero (mate, ahogado, sin
+     * material para dar mate) sale solo; los demás (abandono, tiempo, tablas
+     * de mutuo acuerdo) los marca quien maneja la cámara. */
+    const RESULTADOS = { "1-0": "1-0", "=": "1/2-1/2", "0-1": "0-1" };
+    const resultadoValido = (r) => (Object.prototype.hasOwnProperty.call(RESULTADOS, r) ? r : null);
+    function resultadoSolo(juego) {
+        if (juego.in_checkmate()) return juego.turn() === "w" ? "0-1" : "1-0";
+        if (juego.in_stalemate() || juego.insufficient_material()) return "=";
+        return null;
+    }
+    /* El PGN con su resultado en la cabecera, sin tocar la partida que se
+     * sigue anotando. */
+    function pgn(juego, resultado) {
+        const r = resultadoValido(resultado);
+        // Sin jugadas, chess.js no vuelve a leer un PGN que es solo el resultado:
+        // ahí el resultado viaja aparte (`resultado`) y basta.
+        if (!r || !juego.history().length) return juego.pgn();
+        const copia = new window.Chess();
+        copia.load_pgn(juego.pgn());
+        copia.header("Result", RESULTADOS[r]);
+        return copia.pgn();
+    }
+
     /* `donde`, en un torneo: { torneo, ronda, mesa }. */
-    function estado(juego, nombres, donde) {
-        const p = { v: 1, pgn: juego.pgn(), blancas: nombre(nombres && nombres.blancas), negras: nombre(nombres && nombres.negras), t: Date.now() };
+    function estado(juego, nombres, donde, resultado) {
+        const r = resultadoValido(resultado);
+        const p = { v: 1, pgn: pgn(juego, r), blancas: nombre(nombres && nombres.blancas), negras: nombre(nombres && nombres.negras), t: Date.now() };
+        if (r) p.resultado = r;
         if (donde && torneoDe(donde.torneo) && entero(donde.mesa, 999)) {
             p.torneo = torneoDe(donde.torneo); p.mesa = donde.mesa; p.ronda = entero(donde.ronda, 99);
         }
@@ -82,7 +110,7 @@
         if (!p || p.v !== 1 || typeof p.pgn !== "string" || p.pgn.length > 20000) return null;
         const juego = new window.Chess();
         if (p.pgn.trim() && !juego.load_pgn(p.pgn)) return null;
-        const d = { juego, blancas: nombre(p.blancas), negras: nombre(p.negras), t: Number(p.t) || 0 };
+        const d = { juego, blancas: nombre(p.blancas), negras: nombre(p.negras), t: Number(p.t) || 0, resultado: resultadoValido(p.resultado) };
         if (torneoDe(p.torneo) && entero(p.mesa, 999)) { d.torneo = torneoDe(p.torneo); d.mesa = p.mesa; d.ronda = entero(p.ronda, 99); }
         return d;
     }
@@ -161,5 +189,9 @@
         return ultima + ". " + (fin || "Juegan " + (juego.turn() === "w" ? "las blancas" : "las negras") + ".");
     }
 
-    window.PartidaEnVivo = { nuevoCodigo, codigoValido, canal, enlace, estado, leer, pintar, jugadasTexto, comoVa, torneoDe, mesaFisica, mesasDe };
+    /* «Terminó 1-0», para quien mira. */
+    const TEXTO_RESULTADO = { "1-0": "Terminó: ganan las blancas (1-0).", "=": "Terminó en tablas (½-½).", "0-1": "Terminó: ganan las negras (0-1)." };
+    const textoResultado = (r) => TEXTO_RESULTADO[r] || "";
+
+    window.PartidaEnVivo = { nuevoCodigo, codigoValido, canal, enlace, estado, leer, pintar, jugadasTexto, comoVa, torneoDe, mesaFisica, mesasDe, resultadoSolo, pgn, textoResultado };
 })();

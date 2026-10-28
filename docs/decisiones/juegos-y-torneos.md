@@ -9859,3 +9859,68 @@ Lo prueba `verificar-camara-tablero.js` con las dos cámaras de mentira de
 Chromium: dos cuadritos, cada uno con su cámara, el torneo elegido en uno que
 aparece en el otro con el mismo código, y cada uno en su mesa con sus
 jugadores; agregar y quitar sin recargar los que ya estaban.
+
+### Un torneo con muchas cámaras: lo que lo hace andar solo
+
+Lo pidió el dueño después de probarla: «más potente, más eficiente, más
+fácil». Cinco piezas, pensadas para un torneo de 20 mesas.
+
+- **La pantalla no se apaga.** Con la cámara abierta, la página pide
+  `navigator.wakeLock.request("screen")`: un celular que apaga la pantalla
+  corta la cámara y la mesa deja de transmitir, sin avisar. El navegador
+  suelta el pedido cuando la pestaña se esconde; al volver se pide de nuevo.
+  Si no lo deja (batería baja, navegador viejo), sigue igual: lo dice solo
+  cuando lo consigue.
+- **El resultado de la partida.** El mate, el ahogado y la falta de material
+  para dar mate salen solos (`PartidaEnVivo.resultadoSolo`); el abandono, el
+  tiempo y las tablas de común acuerdo se marcan con «1-0 / ½-½ / 0-1». Viaja
+  con cada mensaje (`resultado`, en la notación de Pareo: «1-0», «=»,
+  «0-1») y en el `[Result]` del PGN (`PartidaEnVivo.pgn`, en una copia: la
+  partida que se sigue anotando no se toca). Una jugada nueva, «Deshacer» o
+  una partida nueva lo borran: si se siguió jugando, no había terminado. El
+  que dice el tablero no se puede cambiar con los botones.
+- **Un QR por mesa.** «Imprimir el QR de cada mesa» arma una hoja (dos mesas
+  por fila, con la marca de agua de Ajedrez Integral, como las hojas de
+  Pareo) con `camara-tablero.html#t=<torneo>&c=<código>&m=<mesa>`: todo
+  después del `#`, que no llega al servidor. Al abrirlo, la cámara toma ese
+  torneo, ese código y esa mesa, empieza a transmitir y abre la cámara; la
+  dirección se limpia (si se recarga, sigue con lo guardado). **El celular
+  tiene que tener la sesión abierta**: la guardia de sesión manda al login
+  sin el `#`, y el login no lo devuelve (solo acepta un `next` que termine en
+  `.html`). La página es de quien administra, así que eso no se abrió.
+- **«Cómo van las cámaras»** en `camaras.html`: cada segundo le pregunta a
+  cada cuadrito `estadoCamara()` (es la misma página web: se puede) y dice
+  con palabras y color «Necesita ayuda», «Sin cámara», «Falta calibrar»,
+  «Leyendo, sin transmitir» o «Transmitiendo», con la mesa, las jugadas y el
+  resultado, y «Ir a la cámara N». Necesita ayuda: una jugada en duda, un
+  aviso de error o la cámara que se cortó (estaba y ya no). Al pasar a
+  necesitar ayuda, suena una vez (se puede apagar; el navegador deja sonar
+  después del primer toque en la página). Las filas se cambian en su lugar,
+  sin volver a armarse, para no quitarle el foco a nadie.
+- **Pareo Integral recibe de las cámaras** («Recibir de las cámaras», en la
+  ronda en juego de un torneo individual y publicado): con el código de las
+  cámaras, la pestaña del árbitro escucha el mismo canal que
+  `tablero-vivo.html` (`tablero-vivo-<código>`; carga `js/partida-en-vivo.js`
+  y chess.js solo entonces) y pide lo que ya tienen. Solo entra lo de su
+  torneo publicado (por su id), de la ronda en juego y de una mesa con
+  rival, vuelto a jugar con chess.js.
+  - La partida entra sola a la mesa (`m.pgn`, con `pgnCamara`) y sale en el
+    torneo publicado al ponerse al día; **nunca pisa una escrita a mano**
+    (al escribirla, `pgnCamara` se borra). No es un cambio del historial
+    («Deshacer» no se llena de jugadas) y no vuelve a pintar la ronda: solo
+    la marca «✓» del botón de la partida.
+  - **El resultado nunca se anota solo**: queda en «Resultados para
+    confirmar» (`R.deCamaras`) con «Anotar» y «Descartar». Si la mesa ya
+    tenía otro, lo dice, y anotarlo pide confirmarlo y deja la constancia en
+    las incidencias, como el árbitro adjunto. El mismo resultado repetido no
+    se vuelve a pedir.
+  - Mientras esa pestaña esté abierta, como los adjuntos. Los torneos por
+    equipos todavía no.
+
+Lo prueban `verificar-camara-tablero.js` (el resultado que llega a quien
+mira, el mate que se marca solo, la hoja de QR al imprimir, llegar por el QR,
+la pantalla encendida con un doble de `wakeLock`, y «Cómo van las cámaras»
+con un doble del sonido) y `verificar-pareo-camaras.js` (Pareo con el doble
+de Realtime de `herramientas/lib/pareo-pruebas.js`: lo que entra, lo que no,
+el resultado para confirmar y que una jugada no repinta ni ensucia el
+historial). Rotos a propósito, saltan.

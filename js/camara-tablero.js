@@ -329,6 +329,7 @@
             i, esquinas: [], h: null, cal: null, juego: new window.Chess(),
             recientes: [], quieta: null, lectura: null, ajustada: false,
             vivo: null, nombres: { blancas: "", negras: "" },
+            resultadoMano: null, // el que se marcó con los botones (abandono, tiempo, tablas)
         };
     }
     let tableros = [nuevoTablero(0)];
@@ -343,9 +344,14 @@
 
     const es = (san) => (window.ComandosTablero ? window.ComandosTablero.jugadaParaMostrar(san) : san);
     const dos = () => tableros.length === 2;
+    /* El resultado: el que dice el tablero (mate, ahogado) o, si no, el que se
+     * marcó a mano. Una jugada nueva, «Deshacer» o una partida nueva lo borran. */
+    const resultadoDe = (t) => V.resultadoSolo(t.juego) || t.resultadoMano;
     const cual = (t) => (dos() ? "Tablero " + (t.i + 1) + ": " : "");
 
+    let ultimoAviso = { texto: "", tipo: "" };
     function avisar(texto, tipo) {
+        ultimoAviso = { texto, tipo: tipo || "" };
         const a = $("aviso");
         a.textContent = texto;
         a.className = "mb-4 rounded-xl px-4 py-3 text-sm " + (tipo === "error"
@@ -410,6 +416,7 @@
             }
             video.srcObject = flujo;
             await video.play();
+            mantenerEncendida();
             const pista = flujo.getVideoTracks()[0];
             const usada = pista && pista.getSettings ? pista.getSettings().deviceId || "" : "";
             try { if (usada) localStorage.setItem(CAMARA, usada); } catch (e) { /* sin almacenamiento */ }
@@ -423,6 +430,22 @@
                 : "No se pudo abrir la cámara (" + (e && e.name || "error") + "). Si otra aplicación la está usando, ciérrala y vuelve a intentar.", "error");
         }
     }
+    /* Que el celular no apague la pantalla a mitad de la partida: si se
+     * apaga, la cámara se corta y la mesa deja de transmitir sin avisar.
+     * El navegador suelta el pedido cuando la pestaña se esconde; al volver
+     * se pide de nuevo. Si no lo deja (batería baja, navegador viejo), sigue
+     * igual: el celular decide. */
+    let pantalla = null;
+    async function mantenerEncendida() {
+        if (pantalla || !("wakeLock" in navigator) || !video.srcObject || document.visibilityState !== "visible") return;
+        try {
+            pantalla = await navigator.wakeLock.request("screen");
+            $("pantalla-encendida").hidden = false;
+            pantalla.addEventListener("release", () => { pantalla = null; });
+        } catch (e) { /* sin permiso: sigue igual */ }
+    }
+    document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") mantenerEncendida(); });
+
     async function listarCamaras(usada) {
         let todas = [];
         try { todas = (await navigator.mediaDevices.enumerateDevices()).filter((d) => d.kind === "videoinput"); } catch (e) { /* sin lista */ }
@@ -443,6 +466,7 @@
         const img = new Image();
         img.onload = () => {
             if (video.srcObject) { video.srcObject.getTracks().forEach((t) => t.stop()); video.srcObject = null; }
+            if (pantalla) { pantalla.release().catch(() => {}); pantalla = null; $("pantalla-encendida").hidden = true; }
             /* Otra foto del mismo tamaño, tomada desde el mismo lugar: se
              * conservan las esquinas, la calibración y la partida. Así se
              * prueba una partida foto a foto, sin cámara en vivo. */
@@ -640,6 +664,7 @@
             return;
         }
         t.juego = new window.Chess();
+        t.resultadoMano = null;
         if (torneo) { t.ronda = ultimaRonda(); pintarTorneo(); } // la partida nueva es de la ronda de ahora
         partidaCambio(t);
         avisar(cual(t) + "Calibrado: lee bien " + bien + " de 64 casillas en la posición inicial. Ya puedes jugar.", "bien");
@@ -679,10 +704,11 @@
     function partidaCambio(t) {
         if (t === T()) pintarPartida();
         enviarVivo(t);
-        try { localStorage.setItem(PARTIDA + t.i, t.juego.pgn()); } catch (e) { /* sin almacenamiento */ }
+        try { localStorage.setItem(PARTIDA + t.i, V.pgn(t.juego, resultadoDe(t))); } catch (e) { /* sin almacenamiento */ }
     }
 
     function anotar(t, jugadas) {
+        t.resultadoMano = null; // si se siguió jugando, no había terminado
         jugadas.forEach((x) => t.juego.move(x));
         t.recientes = [];
         $("dudas").hidden = true;
@@ -731,6 +757,12 @@
         $("jugadas").textContent = V.jugadasTexto(juego) || "Todavía ninguna.";
         $("btn-deshacer").disabled = !hist.length;
         $("btn-copiar").disabled = !hist.length;
+        pintarResultado();
+    }
+    function pintarResultado() {
+        const t = T(), r = resultadoDe(t);
+        $("resultado-texto").textContent = r ? V.textoResultado(r) + (V.resultadoSolo(t.juego) ? " Lo dice el tablero." : "") : "Sigue en juego.";
+        document.querySelectorAll("[data-resultado]").forEach((b) => { if (b.dataset.resultado) b.setAttribute("aria-pressed", String(b.dataset.resultado === r)); });
     }
 
     /* ── Transmitir en vivo ─────────────────────────────────────────────
@@ -750,7 +782,7 @@
         if (!t.vivo) return;
         const canal = canales.get(t.vivo.codigo);
         if (!canal) return;
-        canal.send({ type: "broadcast", event: "estado", payload: V.estado(t.juego, nombresDe(t), dondeDe(t)) });
+        canal.send({ type: "broadcast", event: "estado", payload: V.estado(t.juego, nombresDe(t), dondeDe(t), resultadoDe(t)) });
     }
 
     function empezarVivo(t, codigo) {
@@ -897,6 +929,38 @@
         sel.value = T().mesa ? String(T().mesa) : "";
         if (T().mesa) { const nm = nombresDe(T()); $("vivo-blancas").value = nm.blancas || ""; $("vivo-negras").value = nm.negras || ""; }
     }
+
+    /* Un QR por mesa, para pegarlo en la mesa: se escanea con el celular que
+     * va encima y la cámara se abre con el torneo, el código y la mesa puestos
+     * (y empieza a transmitir). Va después del # (no llega al servidor):
+     * «camara-tablero.html#t=<id del torneo>&c=<código>&m=<mesa>». La hoja
+     * sale solo al imprimir, con la marca de agua de Ajedrez Integral. */
+    const enlaceMesa = (n) => new URL("camara-tablero.html#t=" + torneo.id + "&c=" + torneo.codigo + "&m=" + n, location.href).href;
+    function deLaDireccion() {
+        const x = new URLSearchParams(location.hash.replace(/^#/, ""));
+        const id = V.torneoDe(x.get("t")), c = (x.get("c") || "").toLowerCase(), m = Number(x.get("m"));
+        return id && V.codigoValido(c) && Number.isInteger(m) && m >= 1 && m <= 999 ? { id, codigo: c, mesa: m } : null;
+    }
+    function imprimirQr() {
+        if (!torneo) return;
+        const r = V.mesasDe(torneo.datos);
+        const hoja = $("hoja-qr");
+        hoja.textContent = "";
+        const el = (tag, clase, texto) => { const e = document.createElement(tag); e.className = clase; if (texto) e.textContent = texto; return e; };
+        for (const m of r.mesas) {
+            const tarjeta = el("div", "hoja-qr-mesa");
+            tarjeta.dataset.enlace = enlaceMesa(m.mesa);
+            const qr = el("div", "hoja-qr-codigo");
+            const svg = window.QrSvg && window.QrSvg.dibujar(enlaceMesa(m.mesa), "Código QR de la cámara de la mesa " + m.mesa);
+            if (svg) qr.append(svg);
+            tarjeta.append(el("p", "hoja-qr-numero", "Mesa " + m.mesa), el("p", "hoja-qr-torneo", torneo.nombre), qr,
+                el("p", "hoja-qr-ayuda", "Escanéalo con el celular que va encima de esta mesa (con la cuenta abierta): la cámara se abre en esta mesa y transmite."));
+            hoja.append(tarjeta);
+        }
+        document.body.classList.add("imprimir-qr");
+        window.print();
+    }
+    window.addEventListener("afterprint", () => document.body.classList.remove("imprimir-qr"));
 
     /* Los torneos que se juegan estos días, para no tener que pegar el
      * enlace: los publicados con fecha de hace tres días a mañana, en hora
@@ -1065,6 +1129,7 @@
     $("btn-deshacer").addEventListener("click", () => {
         const t = T();
         t.juego.undo();
+        t.resultadoMano = null;
         t.quieta = null; t.recientes = [];
         $("dudas").hidden = true;
         partidaCambio(t);
@@ -1093,12 +1158,20 @@
         const bien = texto && (/^[1-8pnbrqkPNBRQK/]+ [wb] /.test(texto) ? j.load(texto) : j.load_pgn(texto));
         if (!bien) { avisar(cual(t) + "No entiendo esa posición: pega un FEN (como lo da Lichess) o las jugadas en PGN.", "error"); return; }
         t.juego = j;
+        t.resultadoMano = null;
         $("dudas").hidden = true;
         partidaCambio(t);
         avisar(cual(t) + "Posición cargada. Pon las piezas así en el tablero y toca «Seguir con esta partida».", "bien");
     });
+    document.querySelectorAll("[data-resultado]").forEach((b) => b.addEventListener("click", () => {
+        const t = T(), r = b.dataset.resultado || null, solo = V.resultadoSolo(t.juego);
+        if (solo && r !== solo) { avisar(cual(t) + "El tablero ya dice cómo terminó. " + V.textoResultado(solo) + " Si no es así, deshaz la última jugada.", "error"); return; }
+        t.resultadoMano = solo ? null : r;
+        partidaCambio(t);
+        avisar(cual(t) + (r ? "Resultado marcado. " + V.textoResultado(r) : "La partida sigue en juego."), "bien");
+    }));
     $("btn-copiar").addEventListener("click", async () => {
-        const pgn = T().juego.pgn();
+        const pgn = V.pgn(T().juego, resultadoDe(T()));
         try {
             await navigator.clipboard.writeText(pgn);
             avisar("PGN copiado.", "bien");
@@ -1118,6 +1191,7 @@
         usarTorneo(id, $("torneo-codigo-unirse").value.trim().toLowerCase());
     });
     $("btn-torneo-lista").addEventListener("click", pintarListaTorneos);
+    $("btn-torneo-qr").addEventListener("click", imprimirQr);
     // Sin esperar al minuto: apenas Pareo empareja la ronda siguiente.
     $("btn-torneo-ronda").addEventListener("click", async () => {
         const antes = ultimaRonda();
@@ -1152,6 +1226,19 @@
         pausa = setTimeout(() => enviarVivo(t), 600);
     }));
 
+    /* Cómo va esta cámara, para el tablero de control de camaras.html (que la
+     * tiene en un cuadrito de la misma página web y la consulta cada segundo). */
+    window.estadoCamara = () => {
+        const t = tableros[0];
+        const pista = video.srcObject && video.srcObject.getVideoTracks()[0];
+        return {
+            camara: fuente === video ? !!(pista && pista.readyState === "live") : !!fuente,
+            calibrada: !!t.cal, mesa: t.mesa || null, transmitiendo: !!t.vivo,
+            dudas: !$("dudas").hidden, error: ultimoAviso.tipo === "error" ? ultimoAviso.texto : "",
+            jugadas: t.juego.history().length, resultado: resultadoDe(t),
+        };
+    };
+
     async function init() {
         const { data } = await sb.auth.getSession();
         const session = data.session;
@@ -1167,14 +1254,29 @@
         const j = new window.Chess();
         if (guardada && j.load_pgn(guardada) && j.history().length) {
             tableros[0].juego = j;
+            const r = { "1-0": "1-0", "1/2-1/2": "=", "0-1": "0-1" }[(j.header() || {}).Result];
+            if (r && !V.resultadoSolo(j)) tableros[0].resultadoMano = r;
             avisar("Se recuperó la partida que estabas anotando (" + j.history().length + " jugadas). Ubica el tablero y toca «Seguir con esta partida»; para empezar otra, «Calibrar con la posición inicial».", "bien");
         }
         elegirTablero(0);
         sinImagen();
-        // El torneo que se estaba transmitiendo, con su código.
+        // Llegó por el QR de una mesa: ese torneo, ese código y esa mesa, la
+        // cámara abierta y transmitiendo. Si no, el torneo que se estaba
+        // transmitiendo, con su código.
+        const qr = deLaDireccion();
         let guardado = null;
         try { guardado = JSON.parse(localStorage.getItem(TORNEO) || "null"); } catch (e) { /* sin almacenamiento */ }
-        if (guardado && V.torneoDe(guardado.id)) usarTorneo(guardado.id, guardado.codigo);
+        if (qr) {
+            history.replaceState(null, "", location.pathname + location.search);
+            try { localStorage.setItem(MESA + 0, String(qr.mesa)); } catch (e) { /* sin almacenamiento */ }
+            await usarTorneo(qr.id, qr.codigo);
+            if (torneo) {
+                pintarTorneo();
+                empezarVivo(T(), torneo.codigo);
+                await abrirCamara();
+                if (fuente) avisar("Mesa " + qr.mesa + " de " + torneo.nombre + ", transmitiendo. Toca «Buscar el tablero» y, con las piezas en la posición inicial, «Calibrar con la posición inicial».", "bien");
+            }
+        } else if (guardado && V.torneoDe(guardado.id)) usarTorneo(guardado.id, guardado.codigo);
         requestAnimationFrame(dibujar);
     }
     init();
