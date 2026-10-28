@@ -2656,3 +2656,7 @@ html.modo-proyector .clase-sticker-globo { font-size: 2rem; }
 .ij-opcion-nota { padding: 0.4rem 0.65rem; font-size: 0.8rem; color: rgb(var(--c-brand-600, 51 78 104)); }
 .dark .ij-opcion-nota { color: rgb(var(--c-brand-200, 188 204 220)); }
 .ij-opciones { max-height: 22rem; }
+
+/* La cámara abierta con el QR de una mesa, sin cuenta: solo esa mesa de ese
+ * torneo, sin elegir torneo, mesa, código ni retraso (los trae el QR). */
+.camara-mesa [data-no-mesa] { display: none !important; }

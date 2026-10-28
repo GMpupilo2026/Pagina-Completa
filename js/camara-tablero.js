@@ -996,13 +996,14 @@
     /* Un QR por mesa, para pegarlo en la mesa: se escanea con el celular que
      * va encima y la cámara se abre con el torneo, el código y la mesa puestos
      * (y empieza a transmitir). Va después del # (no llega al servidor):
-     * «camara-tablero.html#t=<id del torneo>&c=<código>&m=<mesa>». La hoja
+     * «camara-tablero.html#t=<id del torneo>&c=<código>&m=<mesa>&r=<retraso>».
+     * Con el QR la cámara anda SIN CUENTA, en «modo mesa» (ver init). La hoja
      * sale solo al imprimir, con la marca de agua de Ajedrez Integral. */
-    const enlaceMesa = (n) => new URL("camara-tablero.html#t=" + torneo.id + "&c=" + torneo.codigo + "&m=" + n, location.href).href;
+    const enlaceMesa = (n) => new URL("camara-tablero.html#t=" + torneo.id + "&c=" + torneo.codigo + "&m=" + n + "&r=" + retraso, location.href).href;
     function deLaDireccion() {
         const x = new URLSearchParams(location.hash.replace(/^#/, ""));
-        const id = V.torneoDe(x.get("t")), c = (x.get("c") || "").toLowerCase(), m = Number(x.get("m"));
-        return id && V.codigoValido(c) && Number.isInteger(m) && m >= 1 && m <= 999 ? { id, codigo: c, mesa: m } : null;
+        const id = V.torneoDe(x.get("t")), c = (x.get("c") || "").toLowerCase(), m = Number(x.get("m")), r = Number(x.get("r")) || 0;
+        return id && V.codigoValido(c) && Number.isInteger(m) && m >= 1 && m <= 999 ? { id, codigo: c, mesa: m, retraso: r } : null;
     }
     function imprimirQr() {
         if (!torneo) return;
@@ -1017,7 +1018,7 @@
             const svg = window.QrSvg && window.QrSvg.dibujar(enlaceMesa(m.mesa), "Código QR de la cámara de la mesa " + m.mesa);
             if (svg) qr.append(svg);
             tarjeta.append(el("p", "hoja-qr-numero", "Mesa " + m.mesa), el("p", "hoja-qr-torneo", torneo.nombre), qr,
-                el("p", "hoja-qr-ayuda", "Escanéalo con el celular que va encima de esta mesa (con la cuenta abierta): la cámara se abre en esta mesa y transmite."));
+                el("p", "hoja-qr-ayuda", "Escanéalo con el celular que va encima de esta mesa, sin cuenta: la cámara se abre en esta mesa y transmite."));
             hoja.append(tarjeta);
         }
         document.body.classList.add("imprimir-qr");
@@ -1308,13 +1309,51 @@
         };
     };
 
+    /* Dos entradas. Con el QR de una mesa («modo mesa»), SIN CUENTA: la
+     * cámara transmite esa mesa de ese torneo y nada más; no elige torneo,
+     * mesa, código ni retraso (los trae el QR), y no lee ni escribe nada de
+     * la Academia: solo el torneo publicado, que es de lectura pública, y el
+     * canal de Broadcast, que también lo es. Sin QR, la herramienta entera
+     * es de quien administra (un control de producto: no hay datos detrás). */
     async function init() {
+        const qr = deLaDireccion();
+        if (qr) return modoMesa(qr);
         const { data } = await sb.auth.getSession();
         const session = data.session;
         if (!session) { location.href = "login.html?next=camara-tablero.html"; return; }
         const { data: perfil } = await sb.from("profiles").select("is_admin").eq("id", session.user.id).maybeSingle();
         $("loading").classList.add("hidden");
         if (!perfil || !perfil.is_admin) { $("denegado").classList.remove("hidden"); return; }
+        try { elegirRetraso(Number(localStorage.getItem(RETRASO)) || 0, false); } catch (e) { /* sin almacenamiento */ }
+        arrancar();
+        let guardado = null;
+        try { guardado = JSON.parse(localStorage.getItem(TORNEO) || "null"); } catch (e) { /* sin almacenamiento */ }
+        // El torneo que se estaba transmitiendo, con su código.
+        if (guardado && V.torneoDe(guardado.id)) usarTorneo(guardado.id, guardado.codigo);
+    }
+
+    // Llegó por el QR de una mesa: ese torneo, ese código y esa mesa, la
+    // cámara abierta y transmitiendo. El # se queda: al recargar, sigue en
+    // modo mesa.
+    async function modoMesa(qr) {
+        document.documentElement.classList.add("camara-compacta", "camara-mesa");
+        $("loading").classList.add("hidden");
+        arrancar();
+        $("mesa-qr").hidden = false;
+        $("mesa-titulo-qr").textContent = "Mesa " + qr.mesa;
+        try { localStorage.setItem(MESA + 0, String(qr.mesa)); } catch (e) { /* sin almacenamiento */ }
+        await usarTorneo(qr.id, qr.codigo);
+        if (!torneo) return;
+        elegirRetraso(qr.retraso, true);
+        $("mesa-titulo-qr").textContent = "Mesa " + qr.mesa + " · " + torneo.nombre;
+        pintarTorneo();
+        empezarVivo(T(), torneo.codigo);
+        await abrirCamara();
+        if (fuente) avisar("Mesa " + qr.mesa + " de " + torneo.nombre + ", transmitiendo. Toca «Buscar el tablero» y, con las piezas en la posición inicial, «Calibrar con la posición inicial».", "bien");
+    }
+
+    // Lo que es igual en las dos entradas: la app, la partida guardada y el dibujo.
+    function arrancar() {
         $("app").classList.remove("hidden");
         $("dos-tableros").checked = false;
         try { elegirRetraso(Number(localStorage.getItem(RETRASO)) || 0, false); } catch (e) { /* sin almacenamiento */ }
@@ -1335,23 +1374,6 @@
         }
         elegirTablero(0);
         sinImagen();
-        // Llegó por el QR de una mesa: ese torneo, ese código y esa mesa, la
-        // cámara abierta y transmitiendo. Si no, el torneo que se estaba
-        // transmitiendo, con su código.
-        const qr = deLaDireccion();
-        let guardado = null;
-        try { guardado = JSON.parse(localStorage.getItem(TORNEO) || "null"); } catch (e) { /* sin almacenamiento */ }
-        if (qr) {
-            history.replaceState(null, "", location.pathname + location.search);
-            try { localStorage.setItem(MESA + 0, String(qr.mesa)); } catch (e) { /* sin almacenamiento */ }
-            await usarTorneo(qr.id, qr.codigo);
-            if (torneo) {
-                pintarTorneo();
-                empezarVivo(T(), torneo.codigo);
-                await abrirCamara();
-                if (fuente) avisar("Mesa " + qr.mesa + " de " + torneo.nombre + ", transmitiendo. Toca «Buscar el tablero» y, con las piezas en la posición inicial, «Calibrar con la posición inicial».", "bien");
-            }
-        } else if (guardado && V.torneoDe(guardado.id)) usarTorneo(guardado.id, guardado.codigo);
         requestAnimationFrame(dibujar);
     }
     init();

@@ -72,10 +72,11 @@ const CANAL = `
 
 function cliente(yo) {
   return `window.sb = {
-    auth: { getSession: () => Promise.resolve({ data: { session: { user: { id: "u" }, access_token: "t" } } }), onAuthStateChange() { return { data: { subscription: { unsubscribe() {} } } }; } },
+    auth: { getSession: () => Promise.resolve({ data: { session: ${yo.sinSesion ? "null" : '{ user: { id: "u" }, access_token: "t" }'} } }), onAuthStateChange() { return { data: { subscription: { unsubscribe() {} } } }; } },
     // profiles: quien mira. pareo_publicados: los torneos de window.__pareo,
     // filtrados de verdad en el resolver (eq, gte, lte).
     from(tabla) {
+      (window.__tablas = window.__tablas || []).push(tabla);
       const filtros = [];
       const filas = () => (window.__pareo || []).filter((x) => filtros.every((g) => g(x)));
       const b = {
@@ -726,7 +727,7 @@ async function esperarJugadas(p, n) {
     await pa.click("#btn-torneo-qr");
     igual("«Imprimir el QR de cada mesa» arma una tarjeta por mesa y manda a imprimir",
       [await pa.$$eval("#hoja-qr .hoja-qr-numero", (x) => x.map((y) => y.textContent)), await pa.evaluate(() => window.__impreso), await pa.locator("#hoja-qr svg").count()], [["Mesa 5", "Mesa 6"], 1, 2]);
-    igual("cada QR lleva el torneo, el código y su mesa (después del #)", (await pa.getAttribute("#hoja-qr .hoja-qr-mesa:nth-child(2)", "data-enlace")).endsWith("/camara-tablero.html#t=" + ID + "&c=" + codigoT + "&m=6"), true);
+    igual("cada QR lleva el torneo, el código y su mesa (después del #)", (await pa.getAttribute("#hoja-qr .hoja-qr-mesa:nth-child(2)", "data-enlace")).endsWith("/camara-tablero.html#t=" + ID + "&c=" + codigoT + "&m=6&r=0"), true);
     await pa.emulateMedia({ media: "print" });
     igual("al imprimir sale solo la hoja, con la marca de agua", await pa.evaluate(() => ["hoja-qr", "hoja-qr-marca", "app"].map((id) => document.getElementById(id).checkVisibility())), [true, true, false]);
     await pa.evaluate(() => window.dispatchEvent(new Event("afterprint")));
@@ -735,15 +736,57 @@ async function esperarJugadas(p, n) {
     igual("sin errores en la consola", [A.errores, Bc.errores, W.errores], [[], [], []]);
     await cerrar(W); await cerrar(Bc); await cerrar(A);
 
-    // Un celular que escanea el QR de la mesa 6: el torneo, el código y la mesa puestos, transmitiendo.
-    const Q = await abrir(browser, "camara-tablero.html#t=" + ID + "&c=" + codigoT + "&m=6", null, null, { f: (d) => { window.__pareo = d; }, arg: torneo([ronda1, ronda2]) });
+    // Un celular SIN CUENTA que escanea el QR de la mesa 6 (con 10 minutos
+    // de retraso): modo mesa, con el torneo, el código y la mesa puestos, transmitiendo.
+    const Q = await abrir(browser, "camara-tablero.html#t=" + ID + "&c=" + codigoT + "&m=6&r=10", { sinSesion: true }, { width: 412, height: 900 }, { f: (d) => { window.__pareo = d; }, arg: torneo([ronda1, ronda2]) });
     const pq = Q.page;
     await pq.waitForFunction(() => !document.getElementById("vivo-encendido").hidden, null, { timeout: 8000 }).catch(() => {});
-    igual("llega por el QR: su torneo, su mesa y transmitiendo con el código del torneo",
-      [await pq.textContent("#torneo-nombre"), await pq.inputValue("#torneo-mesa"), await pq.textContent("#vivo-codigo")], ["Abierto de prueba", "6", codigoT + " · mesa 6"]);
-    igual("y el código ya no queda en la dirección", await pq.evaluate(() => location.hash), "");
+    igual("sin cuenta, por el QR: su torneo, su mesa y transmitiendo con el código y el retraso del torneo",
+      [await pq.textContent("#torneo-nombre"), await pq.inputValue("#torneo-mesa"), await pq.textContent("#vivo-codigo")], ["Abierto de prueba", "6", codigoT + " · mesa 6 · con 10 minutos de retraso"]);
+    igual("dice arriba qué mesa transmite", [await pq.isVisible("#mesa-titulo-qr"), await pq.textContent("#mesa-titulo-qr")], [true, "Mesa 6 · Abierto de prueba"]);
+    igual("no deja elegir otro torneo, mesa, código ni retraso, ni parar",
+      await pq.evaluate(() => ["torneo-elegir", "torneo-mesa", "torneo-codigo", "btn-torneo-quitar", "btn-torneo-qr", "vivo-retraso", "btn-vivo-parar", "btn-vivo-nuevo", "header"]
+        .map((id) => document.getElementById(id).checkVisibility())), [false, false, false, false, false, false, false, false, false]);
+    igual("y sigue leyendo el tablero: «Buscar el tablero» a la vista", await pq.evaluate(() => document.getElementById("btn-buscar").checkVisibility()), true);
+    igual("no toca nada de la Academia: solo lee el torneo publicado", [...new Set(await pq.evaluate(() => window.__tablas || []))], ["pareo_publicados"]);
+    igual("el QR se queda en la dirección (al recargar sigue en su mesa)", await pq.evaluate(() => location.hash), "#t=" + ID + "&c=" + codigoT + "&m=6&r=10");
     igual("sin errores en la consola (por el QR)", Q.errores, []);
     await cerrar(Q);
+
+    // Sin cuenta y con un QR que no es válido: no hay modo mesa, va al login.
+    const Z = await abrir(browser, "camara-tablero.html#t=" + ID + "&c=XX&m=6", { sinSesion: true });
+    await Z.page.waitForURL(/login\.html/, { timeout: 8000 }).catch(() => {});
+    igual("sin cuenta y con un QR roto, va al login", /\/login\.html\?next=camara-tablero\.html/.test(Z.page.url()), true);
+    await cerrar(Z);
+  }
+
+  console.log("\nEl retraso de la transmisión");
+  {
+    const R = await abrir(browser, "camara-tablero.html");
+    const pr = R.page;
+    await pr.waitForSelector("#app:not(.hidden)");
+    for (const j of ["e4", "e5"]) { await pr.fill("#jugada-mano", j); await pr.click("#form-anotar button[type=submit]"); }
+    await pr.selectOption("#vivo-retraso", "5");
+    await pr.click("#btn-vivo");
+    const cod = (await pr.textContent("#vivo-codigo")).split(" ")[0];
+    igual("con retraso, lo dice junto al código", await pr.textContent("#vivo-codigo"), cod + " · con 5 minutos de retraso");
+    const RV = await abrir(browser, "tablero-vivo.html#" + cod);
+    const prv = RV.page;
+    await prv.waitForFunction(() => !document.getElementById("partida").hidden, null, { timeout: 8000 }).catch(() => {});
+    igual("quien mira todavía no ve las jugadas de hace menos de 5 minutos", [await prv.textContent("#jugadas"), await prv.textContent("#retraso-aviso")], ["Todavía no se ha jugado nada.", "Con 5 minutos de retraso"]);
+    // Pasan 6 minutos (el reloj de la cámara se adelanta): salen solas.
+    await pr.evaluate(() => { const real = Date.now; Date.now = () => real() + 6 * 60000; });
+    await prv.waitForFunction(() => document.getElementById("jugadas").textContent === "1. e4 e5", null, { timeout: 12000 }).catch(() => {});
+    igual("cuando cumplen su tiempo, salen solas", await prv.textContent("#jugadas"), "1. e4 e5");
+    await pr.fill("#jugada-mano", "Nf3"); await pr.click("#form-anotar button[type=submit]");
+    await prv.waitForTimeout(800);
+    igual("la jugada recién hecha todavía no", await prv.textContent("#jugadas"), "1. e4 e5");
+    await pr.click('[data-resultado="1-0"]');
+    await prv.waitForFunction(() => document.getElementById("jugadas").textContent === "1. e4 e5 2. Cf3", null, { timeout: 8000 }).catch(() => {});
+    igual("al terminar la partida, se ve entera", [await prv.textContent("#jugadas"), /Terminó: ganan las blancas/.test(await prv.textContent("#ultima"))], ["1. e4 e5 2. Cf3", true]);
+    igual("el retraso se recuerda", await pr.evaluate(() => localStorage.getItem("camara_retraso_v1")), "5");
+    igual("sin errores en la consola", [R.errores, RV.errores], [[], []]);
+    await cerrar(RV); await cerrar(R);
   }
 
   console.log("\nEl retraso de la transmisión");
@@ -917,6 +960,14 @@ async function esperarJugadas(p, n) {
       await pg.evaluate(() => [localStorage.getItem("camara_mesa_v1_p1_0"), localStorage.getItem("camara_mesa_v1_p2_0")])], ["Ana", "Carla", ["1", "2"]]);
     igual("sin errores en la consola", errores, []);
     await nav.close();
+  }
+
+  console.log("\nSin cuenta y sin QR");
+  {
+    const z = await abrir(browser, "camara-tablero.html", { sinSesion: true });
+    await z.page.waitForURL(/login\.html/, { timeout: 8000 }).catch(() => {});
+    igual("va al login: sin el QR de una mesa, la herramienta es de quien administra", /\/login\.html\?next=camara-tablero\.html/.test(z.page.url()), true);
+    await cerrar(z);
   }
 
   console.log("\nQuien no administra");

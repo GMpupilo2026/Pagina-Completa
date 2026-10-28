@@ -9918,13 +9918,10 @@ fácil». Cinco piezas, pensadas para un torneo de 20 mesas.
   que dice el tablero no se puede cambiar con los botones.
 - **Un QR por mesa.** «Imprimir el QR de cada mesa» arma una hoja (dos mesas
   por fila, con la marca de agua de Ajedrez Integral, como las hojas de
-  Pareo) con `camara-tablero.html#t=<torneo>&c=<código>&m=<mesa>`: todo
-  después del `#`, que no llega al servidor. Al abrirlo, la cámara toma ese
-  torneo, ese código y esa mesa, empieza a transmitir y abre la cámara; la
-  dirección se limpia (si se recarga, sigue con lo guardado). **El celular
-  tiene que tener la sesión abierta**: la guardia de sesión manda al login
-  sin el `#`, y el login no lo devuelve (solo acepta un `next` que termine en
-  `.html`). La página es de quien administra, así que eso no se abrió.
+  Pareo) con `camara-tablero.html#t=<torneo>&c=<código>&m=<mesa>&r=<retraso>`:
+  todo después del `#`, que no llega al servidor. Al abrirlo, la cámara toma
+  ese torneo, ese código, esa mesa y ese retraso, empieza a transmitir y abre
+  la cámara (ver «La cámara sin cuenta con el QR de la mesa»).
 - **«Cómo van las cámaras»** en `camaras.html`: cada segundo le pregunta a
   cada cuadrito `estadoCamara()` (es la misma página web: se puede) y dice
   con palabras y color «Necesita ayuda», «Sin cámara», «Falta calibrar»,
@@ -9961,6 +9958,34 @@ con un doble del sonido) y `verificar-pareo-camaras.js` (Pareo con el doble
 de Realtime de `herramientas/lib/pareo-pruebas.js`: lo que entra, lo que no,
 el resultado para confirmar y que una jugada no repinta ni ensucia el
 historial). Rotos a propósito, saltan.
+
+### La cámara sin cuenta con el QR de la mesa
+
+El dueño lo pidió así: en un torneo, los celulares que van encima de las
+mesas son de cualquiera (un padre, un voluntario), y pedirle a cada uno una
+cuenta de administración no tiene sentido. Antes, el QR exigía la sesión
+abierta y, sin ella, la guardia mandaba al login perdiendo el `#`.
+
+- **Con un QR válido, `camara-tablero.html` anda sin cuenta, en «modo
+  mesa»** (`modoMesa()` en `js/camara-tablero.js`): transmite esa mesa de ese
+  torneo y nada más. Esconde (`[data-no-mesa]`, con `.camara-mesa`) elegir
+  otro torneo, la mesa, el código, el retraso, el QR de las mesas, «Otro
+  código» y «Dejar de transmitir»; arriba dice «Mesa N · torneo». El `#` se
+  queda en la dirección: al recargar, sigue en su mesa.
+- **Lo que toca sin cuenta es lo mismo que ya era público**: el torneo
+  publicado (`pareo_publicados`, de lectura pública) y el canal de Broadcast,
+  que cualquiera con el código ya podía oír y en el que cualquiera podía
+  hablar. No lee ni escribe nada de la Academia (el verificador lo comprueba
+  con las tablas que se piden). Por eso la página **ya no lleva la guardia
+  de sesión ni el encabezado de la Academia** (salió de `PAGINAS` de
+  `academia-cabecera.py`): lleva el encabezado público, como
+  `tablero-vivo.html`.
+- **Sin QR (o con uno roto), sigue siendo de quien administra**: `init()`
+  manda al login sin sesión y muestra «Esto es de quien administra» a quien
+  no lo es. Es un control de producto —la herramienta está en prueba—, no de
+  datos: detrás no hay nada que proteger que el modo mesa no deje ya.
+- `camaras.html` sigue en la Academia (es de quien administra) y ahora cuelga
+  de Administración en las migas.
 
 ### Quien mira y quien transmite: repasar, tiempos, jugada ilegal, proyector, motor y retraso
 
