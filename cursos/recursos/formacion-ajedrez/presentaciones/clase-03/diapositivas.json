@@ -44,7 +44,7 @@
   },
   {
    "titulo": "Sonneborn-Berger y encuentro directo",
-   "texto": "El Sonneborn-Berger suma los puntos finales de los rivales a los que el jugador venció, más la mitad de los puntos de aquellos con quienes empató. Premia haberles ganado a los que terminaron arriba y es el desempate habitual en el sistema de todos contra todos. El encuentro directo ordena a los empatados según el resultado de sus partidas entre sí. Si los empatados no se enfrentaron o el encuentro no define nada, se pasa al siguiente desempate de la lista. Si se agota la lista y sigue el empate, se resuelve por sorteo, salvo que el reglamento diga otra cosa. Si el reglamento no dice nada sobre cómo ordenar a los empatados, se usan desempates fuera del tablero, no una partida extra.",
+   "texto": "El Sonneborn-Berger suma los puntos finales de los rivales a los que el jugador venció, más la mitad de los puntos de aquellos con quienes empató. Premia haberles ganado a los que terminaron arriba y es el desempate habitual en el sistema de todos contra todos. El encuentro directo ordena a los empatados según el resultado de sus partidas entre sí. Si los empatados no se enfrentaron o el encuentro no define nada, se pasa al siguiente desempate de la lista. Si el puesto da un título o un cupo, se propone un desempate jugado primero: dos rápidas y, si siguen iguales, un armagedón, que siempre da un ganador. Ese desempate y su ritmo se anuncian en las bases; los demás puestos usan la lista.",
    "imagen": "09.webp"
   },
   {
@@ -300,7 +300,7 @@
   },
   {
    "titulo": "Quiz de la sesión",
-   "texto": "1. ¿Cuál es el criterio de desempate que suma los puntajes finales de los rivales enfrentados? 2. ¿Qué distingue principalmente al ajedrez relámpago del ajedrez rápido? 3. ¿Cómo se clasifica un ritmo que tiene incremento? 4. ¿En qué tipo de torneo es habitual el Sonneborn-Berger? 5. Se agotó la lista de desempates y dos jugadores siguen empatados. ¿Qué corresponde? 6. En rápidas, ¿es obligatorio anotar las jugadas? 7. En ajedrez relámpago sin supervisión adecuada, ¿quién reclama la caída de una bandera?",
+   "texto": "1. ¿Cuál es el criterio de desempate que suma los puntajes finales de los rivales enfrentados? 2. ¿Qué distingue principalmente al ajedrez relámpago del ajedrez rápido? 3. ¿Cómo se clasifica un ritmo que tiene incremento? 4. ¿En qué tipo de torneo es habitual el Sonneborn-Berger? 5. Empate en un primer lugar que clasifica. ¿Qué se propone como primer desempate? 6. En rápidas, ¿es obligatorio anotar las jugadas? 7. En ajedrez relámpago sin supervisión adecuada, ¿quién reclama la caída de una bandera?",
    "imagen": "58.webp",
    "notas": "Un minuto por pregunta, y después las respuestas."
   },
@@ -324,7 +324,7 @@
   },
   {
    "titulo": "Quiz: respuestas",
-   "texto": "1. Buchholz. 2. El control de tiempo asignado a cada jugador. 3. Con el tiempo base más 60 veces el incremento por jugada. 4. En los de todos contra todos (round robin). 5. Un sorteo, salvo que el reglamento del torneo diga otra cosa. 6. No, salvo que el reglamento del evento lo exija; el jugador conserva sus reclamos. 7. El propio jugador: pausa el reloj y avisa a la persona árbitra. Si no puede dar mate con ninguna serie de jugadas legales, son tablas (A.5.3). 8. No, ya no se admite ese reclamo.",
+   "texto": "1. Buchholz. 2. El control de tiempo asignado a cada jugador. 3. Con el tiempo base más 60 veces el incremento por jugada. 4. En los de todos contra todos (round robin). 5. Un desempate jugado: dos rápidas y, si hace falta, armagedón. 6. No, salvo que el reglamento del evento lo exija; el jugador conserva sus reclamos. 7. El propio jugador: pausa el reloj y avisa a la persona árbitra. Si no puede dar mate con ninguna serie de jugadas legales, son tablas (A.5.3). 8. No, ya no se admite ese reclamo.",
    "imagen": "62.webp"
   },
   {

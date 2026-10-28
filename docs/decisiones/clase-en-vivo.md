@@ -4222,6 +4222,21 @@ columnas con el motor; el suizo pasa además por el comprobador de bbpPairings
 casilla con el color cambiado, un resultado cambiado en el todos contra todos y
 los empatados mal resaltados.
 
+**Sin sorteo: para un puesto que clasifica, el desempate se juega** (pedido del
+dueño al revisar la lámina 9, 28/10). El curso ya no enseña el sorteo como
+último desempate: propone que, cuando el puesto da un título, una medalla o un
+cupo a la etapa siguiente, las bases fijen primero un desempate jugado (dos
+rápidas y, si siguen iguales, un armagedón, que siempre da un ganador) y que
+los demás puestos usen la lista. Es una propuesta del curso, no una regla de la
+FIDE (el C.07 deja el sorteo al final de la lista): por eso se dice «se
+propone» y que va en las bases. Cambió en la Sesión 3 (el tema, la lámina 9,
+la pregunta 5 del quiz y su respuesta, y la del Kahoot, actualizada también en
+la base con `formacion-cuestionarios.js`) y en el caso integrador 2 de la
+Sesión 5. El sorteo de colores y el de los números al empezar no se tocan, ni
+las opciones incorrectas del Kahoot que lo nombran. Los textos se acortaron
+para que ni el tema ni el quiz se partan en otra lámina: una lámina de más
+corre la práctica y sus claves.
+
 Las láminas nuevas corrieron la práctica de la Sesión 3 de las láminas 41-50 a
 las 46-55, y sus claves van por número de lámina: la migración
 `formacion_sesion3_ejemplos_desempate` las vuelve a sembrar y se niega si hay

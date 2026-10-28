@@ -82,7 +82,7 @@ module.exports = [
     { ic: "🏆", t: "Sonneborn-Berger", s: "puntos de los vencidos + mitad de los empatados" },
     { ic: "🤝", t: "Encuentro directo", s: "las partidas entre los empatados" },
     { ic: "⏭️", t: "No se enfrentaron o no define", s: "siguiente desempate de la lista" },
-    { ic: "🎲", t: "Se agota la lista", s: "sorteo, salvo que el reglamento diga otra cosa" } ] },
+    { ic: "⚔️", t: "Un puesto que clasifica", s: "primero, desempate jugado: 2 rápidas y armagedón" } ] },
   // 10
   { tipo: "cruzado", k: "Sistema holandés · 7 jugadores: uno queda libre cada ronda", cuadro: cuadro("Ejemplo resuelto: un suizo"),
     nota: "En cada ronda: rival, color (b blancas, n negras) y resultado.",
@@ -320,7 +320,7 @@ module.exports = [
     { t: "2. ¿Qué distingue al relámpago del rápido?" },
     { t: "3. ¿Cómo se clasifica un ritmo con incremento?" },
     { t: "4. ¿Dónde es habitual el Sonneborn-Berger?" },
-    { t: "5. Se agotó la lista de desempates: ¿qué corresponde?" },
+    { t: "5. Empate en un primer lugar que clasifica: ¿qué se propone?" },
     { t: "6. En rápidas, ¿es obligatorio anotar?" },
     { t: "7. Relámpago sin supervisión: ¿quién reclama la bandera?" } ] },
   // 59
@@ -352,7 +352,7 @@ module.exports = [
     { t: "El control de tiempo" },
     { t: "Base + 60 × incremento" },
     { t: "Todos contra todos" },
-    { t: "Sorteo", s: "salvo otra regla del reglamento" },
+    { t: "Desempate jugado", s: "2 rápidas y, si hace falta, armagedón" },
     { t: "No", s: "salvo que el reglamento lo exija" },
     { t: "El propio jugador", s: "sin mate posible: tablas", a: "A.5.3" },
     { t: "No", s: "ya no se admite" } ] },

@@ -594,8 +594,8 @@
               "respuesta": "En los de todos contra todos (round robin)."
             },
             {
-              "pregunta": "Se agotó la lista de desempates y dos jugadores siguen empatados. ¿Qué corresponde?",
-              "respuesta": "Un sorteo, salvo que el reglamento del torneo diga otra cosa."
+              "pregunta": "Empate en un primer lugar que clasifica. ¿Qué se propone como primer desempate?",
+              "respuesta": "Un desempate jugado: dos rápidas y, si hace falta, armagedón."
             },
             {
               "pregunta": "En rápidas, ¿es obligatorio anotar las jugadas?",
@@ -700,7 +700,7 @@
             [
               40,
               "Sistemas de desempate",
-              "Buchholz y sus cortes, Sonneborn-Berger, encuentro directo, número de victorias y sorteo. Dos torneos resueltos paso a paso: un suizo con ronda libre y un todos contra todos con tres empatados."
+              "Buchholz y sus cortes, Sonneborn-Berger, encuentro directo, número de victorias y el desempate jugado para los puestos que clasifican. Dos torneos resueltos paso a paso: un suizo con ronda libre y un todos contra todos con tres empatados."
             ],
             [
               10,
@@ -783,8 +783,8 @@
               "texto": "El Sonneborn-Berger suma los puntos finales de los rivales a los que el jugador venció, más la mitad de los puntos de aquellos con quienes empató. Premia haberles ganado a los que terminaron arriba y es el desempate habitual en el sistema de todos contra todos. El encuentro directo ordena a los empatados según el resultado de sus partidas entre sí.",
               "puntos": [
                 "Si los empatados no se enfrentaron o el encuentro no define nada, se pasa al siguiente desempate de la lista.",
-                "Si se agota la lista y sigue el empate, se resuelve por sorteo, salvo que el reglamento diga otra cosa.",
-                "Si el reglamento no dice nada sobre cómo ordenar a los empatados, se usan desempates fuera del tablero, no una partida extra."
+                "Si el puesto da un título o un cupo, se propone un desempate jugado primero: dos rápidas y, si siguen iguales, un armagedón, que siempre da un ganador.",
+                "Ese desempate y su ritmo se anuncian en las bases; los demás puestos usan la lista."
               ],
               "fuente": "Reglamento de desempates de la FIDE (Handbook C.07)"
             },
@@ -1616,7 +1616,7 @@
             {
               "titulo": "Caso integrador 2: empate en el primer lugar",
               "situacion": "En un todos contra todos de 6 jugadores, dos estudiantes empatan en el primer lugar. Las bases anuncian: 1) encuentro directo, 2) Sonneborn-Berger, 3) número de victorias. Empataron su partida entre sí.",
-              "decision": "El encuentro directo no los separa. Se calcula el Sonneborn-Berger de cada uno (ver el ejemplo de la sesión 3) y, si siguen empatados, el número de victorias. Si todo se agota, sorteo, salvo que las bases digan otra cosa.",
+              "decision": "El encuentro directo no los separa. Se calcula el Sonneborn-Berger de cada uno (ver el ejemplo de la sesión 3) y, si siguen empatados, el número de victorias. Para la próxima vez: como el primer lugar da el título, conviene que las bases fijen antes un desempate jugado (dos rápidas y, si hace falta, un armagedón).",
               "fuente": "Reglamento de desempates de la FIDE (Handbook C.07)"
             },
             {
