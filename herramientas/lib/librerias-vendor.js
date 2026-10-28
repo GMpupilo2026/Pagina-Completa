@@ -54,6 +54,16 @@ const LIBRERIAS = [
     cdn: /https?:\/\/[^"']*qrcode[^"']*\.js/,
   },
   {
+    // Las letras de los gafetes, pasadas a curvas (js/gafetes-dibujo.js la
+    // pide recién al abrir gafetes.html): el PDF que va a imprenta no lleva
+    // ninguna fuente, solo los contornos. Ver «Creación de gafetes».
+    nombre: "opentype.js",
+    paquete: "opentype.js",
+    npm: "opentype.js/dist/opentype.min.js",
+    archivo: "js/vendor/opentype.min.js",
+    cdn: /https?:\/\/[^"']*opentype[^"']*\.js/,
+  },
+  {
     // Lo carga js/errores.js recién cuando hay un error que mandar (ver «Los
     // errores de la gente llegan a Sentry»): nadie más lo pide.
     nombre: "Sentry",

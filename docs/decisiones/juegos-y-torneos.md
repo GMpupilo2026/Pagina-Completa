@@ -8546,6 +8546,119 @@ la institución de cada fila, no publica sin árbitro ni región— y
 con su sección, la medalla del podio, la normativa del año—. Rompiendo a
 propósito la política de lectura pública, salta.
 
+## La inscripción de los JDE
+
+`inscripcion-jde.html` es la herramienta gratuita (en la vitrina de
+`herramientas-arbitraje.html`, `gratis: true`, sin cuenta ni licencia) con la que
+el **docente de un centro educativo** prepara la inscripción de su ajedrez en los
+Juegos Deportivos Estudiantiles. Lo pidió el dueño del sitio: que se ajuste a la
+Normativa y que aproveche el banco de instituciones y regionales para que llenar
+los datos de los estudiantes cueste poco. Es el **otro lado** de Pareo Integral:
+Pareo lo usa quien organiza una etapa; esta la usa quien inscribe a su colegio.
+
+- **Todo pasa en el navegador y no se guarda en ningún servidor.** Son nombres,
+  fechas de nacimiento y documentos de menores. Se guardan solo en `localStorage`
+  (`ij_borrador_v1`, en `try/catch`: sin almacenamiento la página funciona igual y
+  lo dice) y en lo que la persona baja. Por eso no lleva casilla de consentimiento
+  (no se envía nada) ni entra en la lista de proveedores de `privacidad.html`, y
+  la página lo dice arriba con esas palabras. **Si algún día se le agrega un
+  envío, eso cambia**: casilla, `privacidad.html` y la Edge Function con su freno.
+  Un borrador que se abre (`.json`) pasa siempre por `normalizar()`: nunca se
+  confía en su forma, y los `id` se limpian porque enlazan etiquetas.
+- **Las reglas no se escribieron de nuevo**: las categorías por año de nacimiento
+  (art. 17), el ascenso (art. 18), los equipos de 3 a 5, el tope de dos
+  individuales, las mujeres que pasan al Abierto, las 27 Direcciones Regionales y
+  las 11 interregionales son las de `js/pareo/grupos.js`, que es lo que Pareo
+  Integral aplica después. Así lo que esta página acepta es lo que el emparejador
+  acepta. Lo único que se agregó ahí fue `categoriasDeNacimiento()` (y se
+  exportaron `JDE_CATEGORIAS` y `JDE_ASCENSOS`). Lo propio de la inscripción está
+  en `js/inscripcion-jde-reglas.js` (funciones puras, sin DOM) y lo que se ve en
+  `js/inscripcion-jde.js`.
+- **Qué revisa, artículo por artículo** (cada hallazgo lleva escrito «Error:»,
+  «Aviso:» o «Dato:» y el artículo; el color nunca va solo):
+  - Art. 17: la categoría sale de la fecha de nacimiento. Nacidos en 2013 y 2014
+    son de la B (escuela) o la C (colegio): lo decide «¿Escuela o colegio?» del
+    centro, y sin saberlo se pide elegir; **nunca se adivina**. Otro año que 2026
+    corre los rangos y avisa de confirmarlos con la Normativa de ese año.
+  - Art. 18: subir de categoría solo en equipos y solo A→B, C→D, D→E, hasta tres
+    por equipo; en individual es error.
+  - Art. 19: unir centros pide matrícula total (máximo 300) y no deja usar el
+    ascenso a la vez.
+  - Art. 53: **en la Interregional y la Nacional solo juegan las categorías B y D**
+    (en la Institucional y la Regional, A a E; la Circuital no tiene ajedrez). Lo
+    dice la tabla de participación, no el art. 66, y ningún otro lugar del sitio lo
+    comprobaba.
+  - Art. 59: el correo del MEP (error si falta; aviso si no es `@mep.go.cr` salvo
+    «Centro privado»); el documento de cada estudiante es un aviso y no un error,
+    porque se presenta en físico el día de la acreditación. Los ocho documentos
+    son los del art. 59.e.
+  - Art. 60: una jefatura de delegación y una persona de cuerpo técnico, y **al
+    menos una persona del mismo sexo** que el estudiantado, sin excepciones; quien
+    no es funcionario pide el oficio de autorización (59.d).
+  - Art. 66.1: una sola modalidad por persona (la misma persona se reconoce por su
+    documento o por nombre y fecha, con `quitarRepetidos()`); dos individuales por
+    categoría y torneo (error en la Regional; aviso en la Institucional, donde
+    juega toda la población y solo clasifican dos); equipos de 3 a 5 con una
+    suplente (error en la Regional, aviso en la Institucional); un hombre no juega
+    el torneo de Mujeres; hasta dos equipos por categoría y torneo.
+  - Art. 66.1.i y j: en qué interregional cae la Dirección Regional y cuántos
+    clasifican (3 si cruza dos Direcciones, 2 si cruza tres), como dato.
+- **El banco** (`data/jde-banco.json`, lo arma `herramientas/jde-banco.js`, no se
+  edita a mano) sale de lo que ya se leyó de chess-results para
+  `ajedrez-estudiantil.html`. Lo que se decidió y por qué:
+  - Entran solo las instituciones con algún torneo de los JDE: chess-results
+    trae en «Club/Ciudad» países, secciones de un grupo («10-4») y nombres de
+    regiones, y el generador los descarta. El resto queda como está: **hay
+    colegios escritos de varias formas** («Cecilio Lindo», «Cecilio Liendo
+    Morales»), porque es lo que cada árbitro tecleó. Por eso el campo del colegio
+    es un combobox que busca por palabras (sin tildes, mayúsculas, orden ni «de»,
+    «la»…) **pero deja escribir cualquier nombre**: el banco propone, no obliga.
+  - La Dirección Regional de un colegio es la que más se repite en sus torneos,
+    y solo vale si es una de las 27 de la Normativa: chess-results también dice
+    «Esparza» o «Bagaces», que son circuitos. Sin región clara queda vacía y la
+    elige la persona (1 146 de 1 535 centros la traen).
+  - Los estudiantes son los de los JDE de los **últimos tres años** (los que
+    pueden volver a inscribirse); salen sin fecha de nacimiento ni documento, que
+    pone el docente. El sexo solo se guarda cuando es seguro: haber jugado un
+    torneo femenino (aunque el colegio esté escrito de dos formas, que se juntan).
+    Los nombres que pidieron salir ya no están en la fuente
+    (`herramientas/datos/ajedrez-estudiantil-excluidos.txt`).
+  - El flujo mensual «Ajedrez estudiantil» lo vuelve a armar y lo incluye en su
+    PR (`.github/workflows/ajedrez-estudiantil.yml`); el verificador comprueba que
+    lo publicado coincide con lo que se obtiene de `data/`, y falla si no.
+- **Los archivos**: el Excel trae las columnas del reporte del MEP (Nombre, Sexo,
+  FDN, Nombre de Centro Educativo, Dirección Regional, Categoría, Equipo/Ind,
+  Torneo, Documento de identidad…) y **Pareo Integral lo abre con «Subir una
+  lista»** y propone un torneo por grupo; el verificador comprueba que cada
+  columna esté en `SINONIMOS_COLUMNA` de Pareo y que los valores se lean con los
+  lectores de `grupos.js`. Las fechas van `AAAA-MM-DD` (sin ambigüedad día/mes).
+  Un **segundo equipo** del mismo centro se manda con el nombre «Centro (equipo 2)»
+  porque Pareo junta por nombre de institución. Un documento que es solo dígitos
+  `TablaExcel` lo guarda como número (pierde ceros a la izquierda): las cédulas no
+  los llevan. El PDF «nómina para firmar» sale con la marca de agua de Ajedrez
+  Integral (`ReportePDF.generar` la pone sola), deja las firmas de la jefatura de
+  delegación y del centro y dice que **no reemplaza la Boleta de Inscripción
+  Oficial** de la Plataforma de los JDE (art. 59.a): esa es la que vale. Con
+  errores pendientes se puede bajar igual, pero antes se pregunta.
+- **Lo que no hace, a propósito**: no verifica el puesto de quien clasificó a la
+  Interregional o la Nacional (no tiene los resultados de la etapa anterior; eso
+  lo hace Pareo con «Clasificados»), no sabe cuántos inscritos habrá por categoría
+  en la región (así que el sistema suizo o todos contra todos no se calcula acá,
+  solo se explica), y no lleva la delegación de una disciplina distinta del
+  ajedrez.
+
+`herramientas/verificar-inscripcion-jde.js` lo prueba: cada regla con un caso que
+la cumple y uno que no (las categorías de 2008 a 2021, el ascenso, la unión de
+centros, las etapas, los equipos, el cuerpo técnico, los documentos, la
+Interregional), el Excel contra Pareo, pegar una lista (con y sin títulos, fechas
+día/mes y mes/día, sexos y fechas que no se entienden quedan vacíos), un borrador
+adulterado, el generador del banco con datos inventados y el banco real al día, y
+en un navegador el combobox con teclado, traer y pegar estudiantes, la categoría
+y el torneo que cambian solos, el Excel y el PDF con lo escrito, guardar, bajar y
+abrir el borrador, un nombre con HTML, 400 px sin desplazamiento y el contraste de
+los hallazgos en claro y en oscuro (mínimo 4,5:1). Rompiendo a propósito la regla
+de las categorías de la Interregional o la del correo, salta.
+
 ## La página del Centroamericano 2026
 
 `centroamericano-2026.html` junta en fichas todo lo que buscan las familias,
