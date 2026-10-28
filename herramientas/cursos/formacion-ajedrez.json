@@ -693,24 +693,24 @@
               "Se comenta un caso de reclamo de la tarea de la sesión 2."
             ],
             [
-              35,
+              30,
               "Ritmos de juego: los apéndices A y B",
               "Definición de rápidas y relámpago, fórmula del tiempo base más 60 veces el incremento, ejemplos y lo que cambia en la sala (anotación, sanciones de un minuto, supervisión adecuada)."
             ],
             [
-              30,
+              40,
               "Sistemas de desempate",
-              "Buchholz y sus cortes, Sonneborn-Berger, encuentro directo, número de victorias y sorteo. Ejemplos resueltos paso a paso."
-            ],
-            [
-              20,
-              "La Normativa JDE 2026 (art. 30 y 66)",
-              "Modalidades, equipos, sistemas y ritmos por etapa, anotación, puntos, desempates y presentación tardía."
+              "Buchholz y sus cortes, Sonneborn-Berger, encuentro directo, número de victorias y sorteo. Dos torneos resueltos paso a paso: un suizo con ronda libre y un todos contra todos con tres empatados."
             ],
             [
               10,
               "Receso",
               ""
+            ],
+            [
+              20,
+              "La Normativa JDE 2026 (art. 30 y 66)",
+              "Modalidades, equipos, sistemas y ritmos por etapa, anotación, puntos, desempates y presentación tardía."
             ],
             [
               35,
@@ -738,7 +738,7 @@
               "Quiz individual y revisión."
             ],
             [
-              15,
+              10,
               "Cierre",
               "Dudas, tarea y evaluación de la sesión."
             ]
@@ -787,6 +787,52 @@
                 "Si el reglamento no dice nada sobre cómo ordenar a los empatados, se usan desempates fuera del tablero, no una partida extra."
               ],
               "fuente": "Reglamento de desempates de la FIDE (Handbook C.07)"
+            },
+            {
+              "titulo": "Ejemplo resuelto: un suizo de 7 jugadores a 4 rondas",
+              "texto": "Siete jugadores, cuatro rondas, emparejadas con el Sistema holandés de la FIDE. Con un número impar, en cada ronda alguien queda libre (bye) y suma un punto. Al final, Mateo y Camila empatan en 3 puntos, y entre ellos hicieron tablas.",
+              "puntos": [
+                "Ronda 1: Sofía 1–0 Gabriel; Lucía ½–½ Mateo; Valeria 0–1 Andrés; libre: Camila.",
+                "Ronda 2: Camila ½–½ Sofía; Andrés ½–½ Lucía; Mateo 1–0 Valeria; libre: Gabriel.",
+                "Ronda 3: Sofía 1–0 Andrés; Mateo ½–½ Camila; Gabriel ½–½ Lucía; libre: Valeria.",
+                "Ronda 4: Sofía 0–1 Mateo; Camila 1–0 Gabriel; Lucía 1–0 Valeria; libre: Andrés.",
+                "Puntos finales: Mateo 3, Camila 3, Sofía 2½, Lucía 2½, Andrés 2½, Gabriel 1½ y Valeria 1."
+              ],
+              "fuente": "Reglamento de desempates de la FIDE (Handbook C.07, art. 16: rondas no jugadas); emparejamientos del Sistema holandés (Handbook C.04.3)"
+            },
+            {
+              "titulo": "El Buchholz paso a paso, con una ronda libre",
+              "texto": "Se suman los puntos finales de los rivales de cada uno. La ronda libre no tuvo rival: el reglamento la cuenta como un rival ficticio con los mismos puntos del jugador, pero nunca más de la mitad de las rondas (aquí, 2 de 4).",
+              "puntos": [
+                "Mateo: Lucía 2½ + Valeria 1 + Camila 3 + Sofía 2½ = 9.",
+                "Camila: la ronda libre 2 (no 3, por el tope) + Sofía 2½ + Mateo 3 + Gabriel 1½ = 9.",
+                "Empatan en Buchholz. El corte 1 quita el aporte más bajo de cada uno: a Mateo, el de Valeria (1), y le quedan 8; a Camila, el de Gabriel (1½), y le quedan 7½.",
+                "Con el Buchholz con corte 1 como primer desempate, Mateo queda primero y Camila segunda. El Sonneborn-Berger no los habría separado (6¼ cada uno), ni el encuentro directo, porque hicieron tablas.",
+                "Error común: contar la ronda libre como 0 (Camila tendría 7) o con sus 3 puntos (tendría 10). El programa de emparejamiento aplica el tope; quien arbitra tiene que saber explicarlo."
+              ],
+              "fuente": "Reglamento de desempates de la FIDE (Handbook C.07, art. 16: rondas no jugadas); emparejamientos del Sistema holandés (Handbook C.04.3)"
+            },
+            {
+              "titulo": "Ejemplo resuelto: todos contra todos de 6 jugadores",
+              "texto": "Seis jugadores, cinco rondas. Irene, Julián y Karla terminan con 3½ puntos cada uno. Entre ellos, Irene le ganó a Julián, Julián a Karla y Karla a Irene.",
+              "puntos": [
+                "Irene: gana a Julián, pierde con Karla, ½ con Luis, gana a Marta y a Noelia = 3½.",
+                "Julián: pierde con Irene, gana a Karla, a Luis y a Marta, ½ con Noelia = 3½.",
+                "Karla: gana a Irene, pierde con Julián, gana a Luis, ½ con Marta, gana a Noelia = 3½.",
+                "Los demás: Luis 2, Marta 1½ y Noelia 1."
+              ],
+              "fuente": "Reglamento de desempates de la FIDE (Handbook C.07); Tablas de Berger"
+            },
+            {
+              "titulo": "Del encuentro directo al Sonneborn-Berger",
+              "texto": "Primero el encuentro directo: una mini tabla solo con las partidas entre los empatados. Aquí cada uno hizo 1 punto en ella, así que no separa a nadie y se pasa al Sonneborn-Berger.",
+              "puntos": [
+                "Julián: venció a Karla (3½), a Luis (2) y a Marta (1½) = 7, más la mitad de Noelia (1) = ½. Total 7½.",
+                "Karla: venció a Irene (3½), a Luis (2) y a Noelia (1) = 6½, más la mitad de Marta (1½) = ¾. Total 7¼.",
+                "Irene: venció a Julián (3½), a Marta (1½) y a Noelia (1) = 6, más la mitad de Luis (2) = 1. Total 7.",
+                "Clasificación: 1.° Julián, 2.° Karla y 3.° Irene. Que Irene le ganara a Julián ya no decide: con el encuentro directo empatado, cuenta a quiénes les ganó cada uno."
+              ],
+              "fuente": "Reglamento de desempates de la FIDE (Handbook C.07); Tablas de Berger"
             },
             {
               "titulo": "La Normativa JDE 2026: el artículo 66 (ajedrez)",
