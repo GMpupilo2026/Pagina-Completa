@@ -9,7 +9,10 @@
    `disponible: false` es una herramienta anunciada que todavía no se puede
    usar: sale en la vitrina como «Próximamente», sin enlace. `gratis: true` es
    una que no lleva licencia (Pareo Integral, pública y sin cuenta): sale
-   abierta para todos y no se ofrece en licencias.html. `tema` es la ficha
+   abierta para todos y no se ofrece en licencias.html. `licencia` es la de
+   otra herramienta que también abre esta (el catálogo de torneos
+   universitarios va con la de «universidades»): la vitrina pregunta por esa
+   y licencias.html no la ofrece aparte. `tema` es la ficha
    de la vitrina donde sale (uno de TEMAS); la lista se ordena por tema, y
    dentro de cada uno queda en el orden en que está escrita. Ver «Herramientas
    de arbitraje» en docs/decisiones/juegos-y-torneos.md. */
@@ -22,7 +25,7 @@
         { id: "arbitraje", emoji: "⚖️", nombre: "Arbitraje", resumen: "Para dirigir un torneo: emparejar, desempatar y encontrar a los árbitros del país, con sus torneos y sus normas." },
         { id: "jde", emoji: "🏫", nombre: "JDE", largo: "Juegos Deportivos Estudiantiles", resumen: "Los Juegos Deportivos Estudiantiles del MEP: la participación año por año, cada estudiante y cada colegio, y la selección CODICADER." },
         { id: "jdn", emoji: "🏆", nombre: "JDN", largo: "Juegos Deportivos Nacionales", resumen: "Los Juegos Deportivos Nacionales del ICODER: los resultados de cada comité de deportes y quién está inscrito para la próxima eliminatoria." },
-        { id: "universitarios", emoji: "🎓", nombre: "Universitarios", resumen: "Los torneos universitarios de Costa Rica y los JUDUCA, ordenados por universidad." },
+        { id: "universitarios", emoji: "🎓", nombre: "Universitarios", resumen: "Los torneos universitarios de Costa Rica: los resultados por universidad (también los JUDUCA), el catálogo de todos los torneos y la página de cada uno." },
     ];
 
     const LISTA = [
@@ -109,8 +112,49 @@
                 "La ficha de cada universidad: sus jugadores, sus equipos y quién jugó en cada uno, edición por edición, con el puesto, los puntos y la medalla.",
                 "El rendimiento contra el Elo, los enfrentamientos entre universidades, la copa de puntos por puesto y cada tabla en Excel, imagen o PDF.",
                 "Junta las sedes y las variantes de una misma universidad («ITCR», «TEC Alajuela») y deduce la de quien no la trae.",
-                "Con la misma licencia, «Torneos universitarios de Costa Rica»: el catálogo de todos los torneos universitarios, también los que organiza cada universidad (los Blitz del club de la UCR, el Desafío Mentes Maestras de CENFOTEC…), con su podio.",
+                "Con la misma licencia se abre «Torneos universitarios de Costa Rica», el catálogo de todos los torneos.",
             ],
+        },
+        {
+            id: "torneos-universitarios",
+            tema: "universitarios",
+            licencia: "universidades",
+            emoji: "📚",
+            nombre: "Torneos universitarios de Costa Rica",
+            corto: "Torneos universitarios",
+            href: "torneos-universitarios.html",
+            disponible: true,
+            resumen: "El catálogo de todos los torneos universitarios de ajedrez de Costa Rica que están en chess-results, los que se juegan entre universidades y los que organiza cada una, con su fecha, quién lo organizó, cuántos jugaron y su podio. Va con la licencia de «Resultados universitarios por universidad».",
+            puntos: [
+                "Más de 170 torneos: los JUNCOS, CONARE, FEDEU, FECUNDE y JUDUCA, y los de cada universidad (los Blitz del club de la UCR, el interno del TEC, el Desafío Mentes Maestras de CENFOTEC…).",
+                "Dice de qué tipo es cada uno: entre universidades o de una universidad, con su ritmo y el enlace a chess-results para comprobarlo.",
+                "La ficha de cada jugador con todos sus torneos universitarios, su clasificación, sus podios y su año a año.",
+                "Quién más ganó: los podios de los torneos individuales, jugador por jugador.",
+            ],
+        },
+        {
+            id: "cenfotec-2026",
+            tema: "universitarios",
+            emoji: "🧠",
+            nombre: "Desafío Mentes Maestras CENFOTEC 2026",
+            corto: "Mentes Maestras 2026",
+            href: "cenfotec-2026.html",
+            disponible: true,
+            gratis: true,
+            resumen: "El torneo de la Universidad CENFOTEC: el podio, la clasificación final, las rondas y el rendimiento de cada jugador, las partidas, el video de la transmisión y la comparación con la edición 2025.",
+            puntos: [],
+        },
+        {
+            id: "utn-2026",
+            tema: "universitarios",
+            emoji: "🏛️",
+            nombre: "Torneo Universitario UTN-CONARE 2026",
+            corto: "UTN-CONARE 2026",
+            href: "utn-2026.html",
+            disponible: true,
+            gratis: true,
+            resumen: "El II Torneo Universitario de Ajedrez UTN-CONARE, femenino y masculino: el podio de cada rama, la clasificación final, las rondas y el rendimiento de cada jugador, las partidas y la comparación con la primera edición.",
+            puntos: [],
         },
         {
             id: "jdn-proyeccion",

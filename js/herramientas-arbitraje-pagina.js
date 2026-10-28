@@ -73,7 +73,7 @@
                 }
             } else if (h.disponible) {
                 const a = el("a", "bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2 rounded-lg text-sm transition-colors", "Pedir una licencia");
-                a.href = "https://wa.me/50683092291?text=" + encodeURIComponent("Hola, quiero una licencia de «" + h.nombre + "».");
+                a.href = "https://wa.me/50683092291?text=" + encodeURIComponent("Hola, quiero una licencia de «" + H.nombre(h.licencia || h.id) + "».");
                 a.target = "_blank";
                 a.rel = "noopener";
                 const b = el("a", "font-semibold px-4 py-2 rounded-lg text-sm bg-brand-100 dark:bg-brand-800 hover:bg-brand-200 dark:hover:bg-brand-700", "Ya tengo un código");
@@ -173,8 +173,9 @@
     async function revisarAbiertas() {
         abiertas.clear();
         // Las gratis no se le preguntan a la base: no tienen licencia.
+        // La que va con la licencia de otra (`licencia`) pregunta por esa.
         const conLicencia = H.LISTA.filter((h) => !h.gratis);
-        const respuestas = await Promise.all(conLicencia.map((h) => sb.rpc("tengo_herramienta", { p_herramienta: h.id })));
+        const respuestas = await Promise.all(conLicencia.map((h) => sb.rpc("tengo_herramienta", { p_herramienta: h.licencia || h.id })));
         respuestas.forEach((r, i) => { if (r.data === true) abiertas.add(conLicencia[i].id); });
     }
 

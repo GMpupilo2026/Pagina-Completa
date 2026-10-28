@@ -7303,6 +7303,17 @@ y debajo las herramientas de ese tema en tarjetas compactas, con su nombre
 corto (`corto`) y lo que hace detrás de un desplegable «Qué hace», cerrado:
 así se comparan de un vistazo sin una página larguísima.
 
+**La ficha Universitarios trae también los torneos** (lo pidió el dueño):
+además de los resultados por universidad, el catálogo «Torneos universitarios
+de Costa Rica» y las páginas de cada torneo (`cenfotec-2026.html`,
+`utn-2026.html`, gratis porque son públicas). El catálogo no es una licencia
+aparte: se abre con la de `universidades` (ver «Torneos universitarios de
+Costa Rica»), así que lleva `licencia: "universidades"`: la vitrina le
+pregunta `tengo_herramienta('universidades')`, el botón pide esa licencia y
+`licencias.html` no lo ofrece solo. La página de un torneo nuevo que se arme
+con `herramientas/torneo-universitario.js` se agrega a la lista a mano, con
+`tema: "universitarios"` y `gratis: true`.
+
 También son gratis el **historial de un jugador** y las **estadísticas por
 colegio y región** (ver «Historial del jugador y estadísticas por colegio»), y
 **«Ajedrez estudiantil en Costa Rica»**
