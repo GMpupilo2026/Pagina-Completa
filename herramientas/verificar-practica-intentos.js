@@ -20,7 +20,7 @@
    - sin tope, todo como antes: «Reintentar» siempre y sin texto de intentos;
    - «Revisar los intentos» (también con la ronda cerrada) lista los de cada
      alumno, del primero al último, y «📺 Mostrar» pasa las jugadas de ese
-     intento al tablero de la clase como variante, con o sin su nombre.
+     intento a la partida de la clase, con todas sus jugadas, con o sin su nombre.
 
    Las jugadas de cada intento las guarda la base (migración
    practica_guarda_cada_intento): comprobado impersonando a una alumna que
@@ -176,20 +176,18 @@ async function pruebaRevisar(browser) {
     "1. Rf1 Rf8", "1. Ta8#", "1. Rh1",
   ]);
   await r.page.getByRole("button", { name: "Mostrar a la clase el intento 1 de Ana Rojas" }).click();
-  await r.page.waitForFunction(() => window.__updates.some((u) => u.tabla === "game_state" && u.campos.vista), null, { timeout: 5000 });
-  const vista = await r.page.evaluate(() => window.__updates.filter((u) => u.tabla === "game_state" && u.campos.vista).pop().campos.vista);
-  igual("la clase ve las jugadas de ese intento, como variante", [vista.path, vista.root], [["Kf1", "Kf8"], 0]);
-  igual("sin su nombre, si el profe no lo pidió", vista.respuesta, { nombre: null });
-  igual("la partida de la clase no se toca", await r.page.evaluate(() =>
-    window.__updates.filter((u) => u.tabla === "game_state" && "moves" in u.campos).length), 0);
+  await r.page.waitForFunction(() => window.__updates.some((u) => u.tabla === "game_state" && "moves" in u.campos), null, { timeout: 5000 });
+  const ultima = () => r.page.evaluate(() => window.__updates.filter((u) => u.tabla === "game_state" && "moves" in u.campos).pop().campos);
+  let campos = await ultima();
+  igual("todas las jugadas de ese intento quedan en la partida de la clase", [campos.moves, campos.start_fen], [["Kf1", "Kf8"], FINAL]);
+  igual("la clase arranca mirando la posición del ejercicio, para recorrerlo", [campos.vista.path, campos.vista.root], [[], 0]);
+  igual("sin su nombre, si el profe no lo pidió", campos.vista.respuesta, { nombre: null });
   await r.page.check("#practica-mostrar-con-nombre");
   await r.page.getByRole("button", { name: "Mostrar a la clase el intento 2 de Ana Rojas" }).click();
-  await r.page.waitForFunction(() => {
-    const v = window.__updates.filter((u) => u.tabla === "game_state" && u.campos.vista).pop().campos.vista;
-    return v.path.join() === "Ra8#";
-  }, null, { timeout: 5000 });
-  igual("con su nombre, si el profe lo marca", await r.page.evaluate(() =>
-    window.__updates.filter((u) => u.tabla === "game_state" && u.campos.vista).pop().campos.vista.respuesta), { nombre: "Ana Rojas" });
+  await r.page.waitForFunction(() => window.__updates.filter((u) => u.tabla === "game_state" && "moves" in u.campos).pop().campos.moves.join() === "Ra8#", null, { timeout: 5000 });
+  campos = await ultima();
+  igual("con otro intento, la partida cambia al nuevo sin preguntar", campos.moves, ["Ra8#"]);
+  igual("con su nombre, si el profe lo marca", campos.vista.respuesta, { nombre: "Ana Rojas" });
   igual("sin errores en consola", r.errores, []);
   await r.ctx.close();
 
@@ -237,12 +235,11 @@ async function pruebaMirada(browser) {
   await r.page.waitForFunction(() => /3 jugadas/.test(document.querySelectorAll("#practica-mirar-intentos li span")[1].textContent), null, { timeout: 5000 });
   igual("el intento en curso se pone al día", (await intentos())[1].split(" | ")[1], "1. Rh1 h6 2. Rg1");
   await r.page.getByRole("button", { name: "Mostrar a la clase el intento 1 de Ana Rojas" }).click();
-  await r.page.waitForFunction(() => window.__updates.some((u) => u.tabla === "game_state" && u.campos.vista), null, { timeout: 5000 });
-  const vista = await r.page.evaluate(() => window.__updates.filter((u) => u.tabla === "game_state" && u.campos.vista).pop().campos.vista);
-  igual("«📺 Mostrar» pasa ese intento a la clase, como variante", [vista.path, vista.root, vista.respuesta], [["Kf1", "Kf8"], 0, { nombre: null }]);
+  await r.page.waitForFunction(() => window.__updates.some((u) => u.tabla === "game_state" && "moves" in u.campos), null, { timeout: 5000 });
+  const ultima = () => r.page.evaluate(() => window.__updates.filter((u) => u.tabla === "game_state" && "moves" in u.campos).pop().campos);
+  let campos = await ultima();
+  igual("«📺 Mostrar» deja ese intento entero en la partida de la clase", [campos.moves, campos.vista.path, campos.vista.root, campos.vista.respuesta], [["Kf1", "Kf8"], [], 0, { nombre: null }]);
   igual("y cierra la ventana para ver el tablero de la clase", await seVe(r.page, "#practica-mirar"), false);
-  igual("la partida de la clase no se toca", await r.page.evaluate(() =>
-    window.__updates.filter((u) => u.tabla === "game_state" && "moves" in u.campos).length), 0);
   // Al volver a abrirla, la lista arranca cerrada otra vez; con el nombre marcado, va el nombre.
   await r.page.click("#practice-boards-grid .practice-mini-mirar");
   await r.page.waitForFunction(() => !document.getElementById("practica-mirar").classList.contains("hidden"), null, { timeout: 5000 });
@@ -251,12 +248,9 @@ async function pruebaMirada(browser) {
   await r.page.waitForFunction(() => document.querySelectorAll("#practica-mirar-intentos li").length === 2, null, { timeout: 5000 });
   await r.page.check("#practica-mirar-con-nombre");
   await r.page.getByRole("button", { name: "Mostrar a la clase el intento 2 de Ana Rojas" }).click();
-  await r.page.waitForFunction(() => {
-    const v = window.__updates.filter((u) => u.tabla === "game_state" && u.campos.vista).pop().campos.vista;
-    return v.path.join() === "Kh1,h6,Kg1";
-  }, null, { timeout: 5000 });
-  igual("el intento en curso va con sus jugadas de ahora y, marcado, con su nombre", await r.page.evaluate(() =>
-    window.__updates.filter((u) => u.tabla === "game_state" && u.campos.vista).pop().campos.vista.respuesta), { nombre: "Ana Rojas" });
+  await r.page.waitForFunction(() => window.__updates.filter((u) => u.tabla === "game_state" && "moves" in u.campos).pop().campos.moves.join() === "Kh1,h6,Kg1", null, { timeout: 5000 });
+  campos = await ultima();
+  igual("el intento en curso va con sus jugadas de ahora y, marcado, con su nombre", campos.vista.respuesta, { nombre: "Ana Rojas" });
   igual("sin errores en consola", r.errores, []);
   await r.ctx.close();
 }

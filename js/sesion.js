@@ -4966,6 +4966,7 @@
                 if (!seguir || !(await aplicarPosicionEnClase(fen))) return false;
                 k = 0;
             }
+            if (textos.enPartida) return dejarJugadasEnLaPartida(k, jugadas, nombre, conNombre, textos);
             const vista = { path: board.moves().slice(0, k).concat(jugadas), parent: null, root: k };
             board.showView(vista);
             renderMoveList();
@@ -4976,6 +4977,45 @@
             if (error) { console.error(error); ultimaVistaEnviada = null; setStatus("No se pudo mostrar: " + error.message); return false; }
             setStatus("📺 La clase ve " + textos.que + " de " + nombre + (conNombre ? ", con su nombre." : ", sin su nombre.")
                 + " Vuelve al final de la partida para seguir.");
+            return true;
+        }
+
+        // Un intento de Practicar entra a la PARTIDA de la clase, no como variante: una
+        // variante se pierde al volver al final o al mover algo, y el ejercicio ya terminó,
+        // así que lo que se quiere es poder revisarlo después, jugada a jugada, con la
+        // lista de jugadas de siempre. La clase arranca mirando la posición del ejercicio.
+        // Si la partida tenía más jugadas después de esa posición, se reemplazan (y se pregunta).
+        let partidaDejadaPorMostrar = null;
+        async function dejarJugadasEnLaPartida(k, jugadas, nombre, conNombre, textos) {
+            const principal = board.moves();
+            const reemplaza = k < principal.length;
+            // Pasar de un intento a otro no pregunta: lo que se reemplaza es el intento anterior.
+            if (reemplaza && JSON.stringify(principal) !== partidaDejadaPorMostrar) {
+                const seguir = await Avisos.confirmar("Para dejar " + textos.que + " en la partida de la clase se reemplazan las " + (principal.length - k)
+                    + (principal.length - k === 1 ? " jugada que viene" : " jugadas que vienen") + " después de esa posición.",
+                    { titulo: "¿Reemplazar las jugadas de la clase?", aceptar: "Reemplazarlas y mostrar" });
+                if (!seguir) return false;
+            }
+            const partida = principal.slice(0, k).concat(jugadas);
+            board.loadMoves(partida, board.startFen);
+            partidaDejadaPorMostrar = JSON.stringify(partida);
+            board.viewMainAt(k);
+            renderMoveList();
+            const vista = board.currentView();
+            ultimaVistaEnviada = JSON.stringify(vista);
+            const cambios = {
+                fen: board.fen(), moves: partida, start_fen: board.startFen,
+                last_move: partida.length ? partida[partida.length - 1] : null,
+                arrows: [], circles: [],
+                vista: vista && Object.assign({}, vista, { respuesta: { nombre: conNombre ? nombre : null } }),
+                updated_by: session.user.id, updated_at: new Date().toISOString(),
+            };
+            if (reemplaza) cambios.comentarios = {};
+            const { error } = await sb.from("game_state").update(cambios).eq("id", myGameStateId);
+            if (error) { console.error(error); ultimaVistaEnviada = null; setStatus("No se pudo mostrar: " + error.message); return false; }
+            if (reemplaza) await clearVariantTree();
+            setStatus("📺 La clase ve " + textos.que + " de " + nombre + (conNombre ? ", con su nombre." : ", sin su nombre.")
+                + " Las " + jugadas.length + " jugadas quedaron en la partida de la clase: recórrelas con las flechas para revisarlas.");
             return true;
         }
 
@@ -6755,7 +6795,7 @@
             }
             const n = intentos.length;
             mirarEl("intentos-msg").textContent = (n === 1 ? "Un intento" : n + " intentos")
-                + ". «📺 Mostrar» lo pasa al tablero de la clase como variante, para revisarlo jugada a jugada.";
+                + ". «📺 Mostrar» deja todas sus jugadas en la partida de la clase, para revisarlas jugada a jugada.";
         }
 
         // El intento en curso crece con cada jugada; si reintentó, cambió la lista entera.
@@ -7112,7 +7152,7 @@
                 const lista = jugadasDe();
                 if (!lista.length) return;
                 if (antesDeMostrar) antesDeMostrar();
-                mostrarJugadasALaClase(fen, lista, nombre, conNombre(), { de: "la práctica", que: "el intento " + i.intento });
+                mostrarJugadasALaClase(fen, lista, nombre, conNombre(), { de: "la práctica", que: "el intento " + i.intento, enPartida: true });
             });
             fila.append(texto, btn);
             li.append(fila, jugadas);
