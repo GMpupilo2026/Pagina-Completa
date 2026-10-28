@@ -153,7 +153,7 @@ const visible = (p, sel) => p.$eval(sel, (e) => e.checkVisibility());
     await v.goto(BASE + "/herramientas-arbitraje.html", { waitUntil: "load" });
     await v.waitForFunction(() => document.querySelectorAll("#lista > li").length > 0);
     igual("sin sesión: todas con candado y el aviso de iniciar sesión, menos las gratis (Pareo Integral, la lista de árbitros y las de datos estudiantiles)",
-        [await v.$$eval("#lista > li:not([data-herramienta='pareo']):not([data-herramienta='arbitros']):not([data-herramienta='ajedrez-estudiantil']):not([data-herramienta='historial-jugador']):not([data-herramienta='estadisticas-colegios']):not([data-herramienta='inscripcion-jde']):not([data-herramienta='cenfotec-2026']):not([data-herramienta='torneos-costa-rica']):not([data-herramienta='utn-2026'])", (l) => l.every((x) => /🔒/.test(x.textContent))), await visible(v, "#activar-sin-sesion"), await visible(v, "#activar-con-sesion")],
+        [await v.$$eval("#lista > li:not([data-herramienta='pareo']):not([data-herramienta='arbitros']):not([data-herramienta='ajedrez-estudiantil']):not([data-herramienta='historial-jugador']):not([data-herramienta='estadisticas-colegios']):not([data-herramienta='inscripcion-jde']):not([data-herramienta='cenfotec-2026']):not([data-herramienta='torneos-costa-rica']):not([data-herramienta='utn-2026']):not([data-herramienta='reclamos-tablas'])", (l) => l.every((x) => /🔒/.test(x.textContent))), await visible(v, "#activar-sin-sesion"), await visible(v, "#activar-con-sesion")],
         [true, true, false]);
     // Pareo Integral no lleva licencia: abierto para todos, sin sesión, con su manual.
     igual("sin sesión, Pareo Integral sale gratis y se abre",
@@ -166,7 +166,7 @@ const visible = (p, sel) => p.$eval(sel, (e) => e.checkVisibility());
     igual("sin sesión, Ajedrez estudiantil sale gratis y se abre",
         await v.$eval("#lista li[data-herramienta='ajedrez-estudiantil']", (li) => [/Gratis/.test(li.textContent), !/🔒/.test(li.textContent), !!li.querySelector("a[href='ajedrez-estudiantil.html']")]),
         [true, true, true]);
-    for (const [id, href] of [["historial-jugador", "historial-jugador.html"], ["estadisticas-colegios", "estadisticas-colegios.html"], ["inscripcion-jde", "inscripcion-jde.html"], ["cenfotec-2026", "cenfotec-2026.html"], ["utn-2026", "utn-2026.html"], ["torneos-costa-rica", "torneos-pareo.html#tambien"]]) {
+    for (const [id, href] of [["historial-jugador", "historial-jugador.html"], ["estadisticas-colegios", "estadisticas-colegios.html"], ["inscripcion-jde", "inscripcion-jde.html"], ["cenfotec-2026", "cenfotec-2026.html"], ["utn-2026", "utn-2026.html"], ["torneos-costa-rica", "torneos-pareo.html#tambien"], ["reclamos-tablas", "reclamos-tablas.html"]]) {
         igual("sin sesión, " + id + " sale gratis y se abre",
             await v.$eval("#lista li[data-herramienta='" + id + "']", (li, h) => [/Gratis/.test(li.textContent), !/🔒/.test(li.textContent), !!li.querySelector("a[href='" + h + "']")], href),
             [true, true, true]);
@@ -225,8 +225,8 @@ const visible = (p, sel) => p.$eval(sel, (e) => e.checkVisibility());
     ({ ctx, p } = await abrir(browser, "herramientas-arbitraje.html#arbitraje", "todas"));
     await p.waitForSelector("#lista li[data-herramienta='desempates'] a[href='desempates.html']");
     igual("con todas: las que vienen siguen en «Próximamente», sin «Abierta para tu cuenta»",
-        await p.$$eval("#lista li[data-herramienta='variacion-elo'], #lista li[data-herramienta='reclamos-tablas'], #lista li[data-herramienta='desempates']", (l) => l.map((x) => [x.dataset.herramienta, /Próximamente/.test(x.textContent), /Abierta para tu cuenta/.test(x.textContent)])),
-        [["desempates", false, true], ["variacion-elo", true, false], ["reclamos-tablas", true, false]]);
+        await p.$$eval("#lista li[data-herramienta='variacion-elo'], #lista li[data-herramienta='desempates']", (l) => l.map((x) => [x.dataset.herramienta, /Próximamente/.test(x.textContent), /Abierta para tu cuenta/.test(x.textContent)])),
+        [["desempates", false, true], ["variacion-elo", true, false]]);
     await ctx.close();
 
     await browser.close();
