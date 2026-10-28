@@ -8165,6 +8165,15 @@ medallas: se suman al medallero como las de 2018 en adelante.
   cálculo mandado en imagen, persona por persona y puesto por puesto (la
   única diferencia era un tabulador que chess-results trae dentro de un
   nombre).
+- **Un número de identificación dentro de un nombre se borró a mano.** En la
+  final 2013, chess-results escribe a una jugadora con lo que parece su
+  número de cédula entre los apellidos y el nombre, con un tabulador. El
+  dueño pidió que no se viera: se quitó de `jdn_jugadores` y `jdn_tableros`
+  (cualquier tira de 6 cifras o más dentro de un nombre). Si se vuelven a
+  cargar esos torneos, hay que repetirlo: `update … set nombre =
+  btrim(regexp_replace(nombre, '\s*\d{6,}\s*', ' ', 'g')) where nombre ~
+  '\d{6,}'` en las dos tablas (no en el cargador, que junta las partidas por
+  el nombre tal como viene).
 - **La página dice que son calculados** (columna `calculado`, migración
   `20261028183842`): «Mejores tableros» de esas finales explica la regla y
   que no es el orden oficial, la ficha del comité lo avisa en «Tableros de
