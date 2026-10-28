@@ -53,7 +53,7 @@ window.SUPABASE_URL = "https://falso.supabase.co";
 window.SUPABASE_ANON_KEY = "anon-falsa";
 (function () {
   const TORNEOS = ${JSON.stringify(TORNEOS)};
-  const LICENCIA = ${tieneLicencia ? "true" : "false"};
+  const LICENCIA = ${JSON.stringify(tieneLicencia || false)}; // true: la de la selección; "todas": todas (como quien administra)
   window.__pedidos = [];
   function respuesta(data, error) { return Promise.resolve({ data, error: error || null }); }
   function consulta(tabla) {
@@ -76,7 +76,7 @@ window.SUPABASE_ANON_KEY = "anon-falsa";
     },
     rpc: (nombre, args) => {
       window.__pedidos.push(nombre === "tengo_herramienta" ? nombre + " " + args.p_herramienta : nombre);
-      if (nombre === "tengo_herramienta") return respuesta(LICENCIA && args.p_herramienta === "seleccion-codicader");
+      if (nombre === "tengo_herramienta") return respuesta(LICENCIA === "todas" || (LICENCIA === true && args.p_herramienta === "seleccion-codicader"));
       return respuesta(null);
     },
     from: (t) => consulta(t),
@@ -176,13 +176,20 @@ const visible = (p, sel) => p.$eval(sel, (e) => e.checkVisibility());
     const vistas = () => v.$$eval("#lista > li", (l) => l.filter((x) => x.checkVisibility()).map((x) => x.dataset.herramienta));
     igual("las tarjetas de tema, en orden y con cuántas herramientas trae cada una",
         await v.$$eval("#temas [role=tab]", (l) => l.map((b) => [b.dataset.tema, b.querySelector(".font-serif").textContent, /^\d+ herramientas? →$/.test(b.lastChild.textContent) && b.lastChild.textContent.split(" ")[0], b.getAttribute("aria-selected")])),
-        [["arbitraje", "Arbitraje", "7", "true"], ["jde", "Juegos Deportivos Estudiantiles", "6", "false"], ["jdn", "Juegos Deportivos Nacionales", "2", "false"], ["universitarios", "Universitarios", "4", "false"]]);
+        [["arbitraje", "Arbitraje", "7", "false"], ["jde", "Juegos Deportivos Estudiantiles", "6", "false"], ["jdn", "Juegos Deportivos Nacionales", "2", "false"], ["universitarios", "Universitarios", "4", "false"]]);
+    igual("de entrada no hay tema elegido: ninguna herramienta abajo, y Oscar pide elegir uno",
+        [await vistas(), await visible(v, "#panel-tema"), await visible(v, "#tema-invitacion img[src='img/oscar-avatar-160.jpg']"),
+            (await v.textContent("#tema-invitacion")).includes("¡Elige un tema!"), await v.$eval("#tab-arbitraje", (b) => b.tabIndex)],
+        [[], false, true, true, 0]);
+    await v.click("#tab-arbitraje");
+    igual("al tocar Arbitraje, Oscar se va y salen sus herramientas",
+        [await vistas(), await visible(v, "#tema-invitacion"), await v.$eval("#tab-arbitraje", (b) => b.getAttribute("aria-selected"))],
+        [["pareo", "torneos-costa-rica", "arbitros", "arbitros-cr", "desempates", "variacion-elo", "reclamos-tablas"], false, "true"]);
     igual("lo que hace cada herramienta va detrás de «Qué hace», cerrado",
         await v.$eval("#lista li[data-herramienta='pareo'] details", (d) => [d.querySelector("summary").textContent, d.open, d.querySelector("ul").checkVisibility()]),
         ["Qué hace (5)", false, false]);
     await v.click("#lista li[data-herramienta='pareo'] summary");
     igual("y se abre al tocarlo", await v.$eval("#lista li[data-herramienta='pareo'] details ul", (u) => u.checkVisibility()), true);
-    igual("de entrada, solo las de arbitraje", await vistas(), ["pareo", "torneos-costa-rica", "arbitros", "arbitros-cr", "desempates", "variacion-elo", "reclamos-tablas"]);
     await v.click("#tab-jdn");
     igual("en la ficha JDN, solo las de los JDN, y la dirección la recuerda",
         [await vistas(), await v.evaluate(() => location.hash), await v.$eval("#panel-tema", (d) => d.getAttribute("aria-labelledby"))],
@@ -212,6 +219,14 @@ const visible = (p, sel) => p.$eval(sel, (e) => e.checkVisibility());
     igual("el catálogo de torneos universitarios pregunta por la licencia de «universidades», no por una suya",
         await p.evaluate(() => [window.__pedidos.includes("tengo_herramienta universidades"), window.__pedidos.includes("tengo_herramienta torneos-universitarios")]),
         [true, false]);
+    await ctx.close();
+    // Con todas las herramientas (la licencia «todas», o quien administra), las
+    // que todavía no se pueden usar siguen diciendo «Próximamente», no «Abierta».
+    ({ ctx, p } = await abrir(browser, "herramientas-arbitraje.html#arbitraje", "todas"));
+    await p.waitForSelector("#lista li[data-herramienta='desempates'] a[href='desempates.html']");
+    igual("con todas: las que vienen siguen en «Próximamente», sin «Abierta para tu cuenta»",
+        await p.$$eval("#lista li[data-herramienta='variacion-elo'], #lista li[data-herramienta='reclamos-tablas'], #lista li[data-herramienta='desempates']", (l) => l.map((x) => [x.dataset.herramienta, /Próximamente/.test(x.textContent), /Abierta para tu cuenta/.test(x.textContent)])),
+        [["desempates", false, true], ["variacion-elo", true, false], ["reclamos-tablas", true, false]]);
     await ctx.close();
 
     await browser.close();
