@@ -212,7 +212,17 @@
         await pintarMisLicencias();
     }
 
+    // Oscar leyendo, de la lista única del avatar (js/avatar-profe-oscar.js).
+    function ponerAvatar() {
+        const a = window.AvatarProfeOscar && window.AvatarProfeOscar.porId("a-repasar");
+        if (!a) return;
+        const img = $("tema-invitacion-avatar");
+        img.src = window.AvatarProfeOscar.ruta(a.id);
+        img.alt = a.alt;
+    }
+
     async function init() {
+        ponerAvatar();
         const deLaDireccion = location.hash.slice(1);
         if (H.TEMAS.some((t) => t.id === deLaDireccion)) temaActivo = deLaDireccion;
         pintarTemas();

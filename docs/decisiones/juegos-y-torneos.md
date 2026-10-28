@@ -7304,8 +7304,9 @@ corto (`corto`) y lo que hace detrás de un desplegable «Qué hace», cerrado:
 así se comparan de un vistazo sin una página larguísima.
 
 **De entrada no hay tema elegido** (lo pidió el dueño): debajo de las
-tarjetas no sale ninguna herramienta, sino la foto de Oscar
-(`img/oscar-avatar-160.jpg`) con un globo que dice «¡Elige un tema!»
+tarjetas no sale ninguna herramienta, sino el avatar del profe Oscar leyendo
+(«a-repasar», de `js/avatar-profe-oscar.js`; ver «El avatar del profe
+Oscar») con un globo que dice «¡Elige un tema!»
 (`#tema-invitacion`); al tocar un tema, Oscar se va y salen sus
 herramientas. Con el tema en la dirección (`#jde`), ese ya viene elegido.
 Sin ninguno elegido, ninguna pestaña está `aria-selected` y a la primera se
