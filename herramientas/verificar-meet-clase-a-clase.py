@@ -77,7 +77,8 @@ clavada = ["Hoy vemos la clavada.", "Esta pieza está clavada contra el rey.", "
 finales = ["Finales de rey y peón.", "La oposición es clave en el final.", "Otra vez la oposición.",
            "Regla del cuadrado.", "El rey activo en el final.", "Lucena."]
 grabar(grab, "Clase CCDR (2030-01-28 18:02 GMT-6).mp4", clavada)
-grabar(grab, "Clase CCDR - 2030_01_07 18:00 CST - Recording.webm", finales)
+# Así queda en el disco de Windows: Drive cambia «/» y «:» por «_».
+grabar(grab, "Clase CCDR - 2030_01_07 18_00 CST - Recording.webm", finales)
 grabar(grab, "Clase CCDR (2030-02-04 18:00 GMT-6).mp4", ["Una clase de febrero."])
 grabar(grab, "Bajándose (2030-01-30 18:00 GMT-6).mp4", ["a medias"], hace_segundos=5)
 grabar(grab, "Clase CCDR (2030-01-28 18:02 GMT-6) - Transcript.txt", ["no es audio"])

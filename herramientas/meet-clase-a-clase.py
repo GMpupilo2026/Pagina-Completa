@@ -39,9 +39,11 @@ Usar:
         --grabaciones "G:/Mi unidad/Meet Recordings" \\
         --trabajo "G:/Mi unidad/Informe CCDR" --vigilar
 
-  --grabaciones  la carpeta donde Drive deja las grabaciones de Meet: «Meet
-                 Recordings», o «Google Meet» en una cuenta en español. Mira
-                 también las subcarpetas.
+  --grabaciones  la carpeta de las grabaciones del grupo del CCDR. Con las
+                 reuniones ordenadas por herramientas/meet-ordenar.gs, es
+                 «Meet ordenado/Entrenamiento CCDR San José». NO «Google Meet»
+                 ni «Meet Recordings»: ahí están todos los grupos juntos, y
+                 todos entrarían al informe. Mira también las subcarpetas.
   --trabajo      donde van las transcripciones y el informe en curso. Si está
                  dentro de Drive, Claude la lee al cerrar el mes.
   --vigilar      se queda corriendo y mira cada --cada minutos (5). Sin esto,
@@ -113,8 +115,9 @@ MINIMO_MENCIONES = 3
 
 # Lo que Google le pone al nombre: «Clase (2026-10-28 18:02 GMT-6)» o
 # «Clase - 2026/10/28 18:02 CST - Recording», según el idioma y la época
-# (en el disco, Drive cambia las «/» por «_»).
-FECHA_EN_NOMBRE = re.compile(r"(\d{4})[-/._](\d{1,2})[-/._](\d{1,2})\D{1,6}?(\d{1,2})[:.h](\d{2})")
+# (en el disco de Windows, Drive cambia las «/» y los «:» por «_»:
+# «Clase - 2026_10_28 18_02 CST - Recording.mp4»).
+FECHA_EN_NOMBRE = re.compile(r"(\d{4})[-/._](\d{1,2})[-/._](\d{1,2})\D{1,6}?(\d{1,2})[:.h_](\d{2})")
 
 
 # ------------------------------------------------------------ transcribir

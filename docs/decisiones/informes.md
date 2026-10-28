@@ -2112,3 +2112,49 @@ prueba es si Whisper entiende la clase: eso se mira con una grabación de
 verdad. El camino real se probó con el modelo `tiny` y un WAV. El
 instalador no se puede correr en el CI (no hay Programador de tareas): se
 revisa que lleve el BOM y que solo le pase al script opciones que existen.
+
+### Las reuniones de Meet, ordenadas por grupo y por mes
+
+Las clases se graban con la cuenta de Cenfotec (Workspace: una cuenta de Gmail
+común no puede grabar en Meet), y Meet las deja en «Google Meet» de esa cuenta
+(«Meet Recordings» en una cuenta en inglés), en **una carpeta por reunión
+recurrente que junta todas sus sesiones**: la de Campeones Colegiales tenía 23
+clases. Ahí están todos los grupos mezclados, así que el transcriptor no puede
+vigilar esa carpeta: Campeones, ADAES o una clase particular terminarían en el
+informe del CCDR.
+
+`herramientas/meet-ordenar.gs` es un Apps Script que corre como la cuenta de
+Cenfotec, cada hora, y lleva cada archivo a
+`Meet ordenado/<grupo>/AAAA-MM/AAAA-MM-DD HH.MM/`. Así
+`meet-clase-a-clase.py` vigila solo `Meet ordenado/Entrenamiento CCDR San José`.
+
+- **Se ordena archivo por archivo, no carpeta por carpeta**: una carpeta de
+  reunión recurrente trae sesiones de varios meses. El grupo, el mes y la
+  sesión salen del nombre que pone Meet; lo que no trae fecha en el nombre
+  toma la de creación, en hora de Costa Rica.
+- **El grupo es el nombre de la reunión**, salvo lo que dice `GRUPOS` («Clase
+  SJ Octubre» y «Entreno SJ Martes» son el entrenamiento del CCDR; «Reunión
+  Campeones Colegiales», de Campeones Colegiales). Lo que trae el código de
+  Meet en vez de un nombre («hiz-cejh-rbe») va a «Otras». **Una reunión nueva
+  del CCDR con otro nombre hay que agregarla a `GRUPOS`**: si no, queda en un
+  grupo propio y no llega al informe.
+- **Los accesos directos se dejan donde están**: apuntan a archivos de otras
+  personas (JUNCOS, Club de Ajedrez…).
+- Lo que un Apps Script anterior ya había ordenado por grupo (sin el mes) se
+  mete en su mes. **Ordenar dos veces lo mismo no hace nada**, y por eso cortar
+  a los 5 minutos (Apps Script corta a los 6) no deja nada roto: lo que falta
+  sigue en la vuelta de la hora siguiente.
+- **El índice no lleva fórmulas.** La hoja «Indice de reuniones» del primer
+  intento estaba entera en `#ERROR!`: tenía `=HYPERLINK(…, …)`, y una hoja en
+  español separa los argumentos con «;». Ahora los enlaces van como texto con
+  enlace (`RichTextValue`), que no depende del idioma. Una fila por sesión
+  (antes había una por archivo).
+- `probar` dice qué haría con cada archivo sin mover nada: es el primer paso
+  de la instalación, para revisar el reparto antes de que pase.
+
+`verificar-meet-ordenar.js` carga el `.gs` en Node con Drive y Hojas de
+cálculo de mentira: los nombres de cada época de Meet, la hora de Costa Rica,
+que `probar` no mueva nada, que lo ordenado reciba su mes, que los accesos
+directos se queden y que el índice no tenga fórmulas. Lo que no prueba son los
+permisos de Google ni el tiempo de verdad: eso se ve en el registro de
+ejecución la primera vez.

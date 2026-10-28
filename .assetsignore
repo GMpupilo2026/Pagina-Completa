@@ -47,6 +47,7 @@ herramientas/*.js
 herramientas/*.py
 herramientas/*.sh
 herramientas/*.ps1
+herramientas/*.gs
 herramientas/*.mts
 herramientas/*.md
 herramientas/*.html
