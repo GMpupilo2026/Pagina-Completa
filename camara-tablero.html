@@ -54,6 +54,15 @@
                 <button id="btn-calibrar" type="button" disabled class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-4 py-2.5 rounded-lg text-sm disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Calibrar con la posición inicial</button>
             </div>
 
+            <div class="mb-4 bg-white dark:bg-brand-900 rounded-2xl shadow-md px-4 py-3">
+                <label class="inline-flex items-center gap-2 text-sm font-semibold text-brand-800 dark:text-white cursor-pointer"><input id="dos-tableros" type="checkbox" class="w-4 h-4 accent-accent-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"> Leer también un segundo tablero (opcional)</label>
+                <p class="text-xs text-brand-500 dark:text-brand-300 mt-1">Lo más confiable es un celular por tablero. Úsalo solo si la cámara ve los dos tableros enteros, desde arriba: con dos, cada casilla se ve más chica.</p>
+                <div id="pestanas" hidden role="group" aria-label="Qué tablero se marca, se calibra y se muestra" class="flex flex-wrap gap-2 mt-3">
+                    <button type="button" data-tablero="0" aria-pressed="true" class="font-semibold px-4 py-2 rounded-lg text-sm border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-900 text-brand-800 dark:text-brand-100 aria-pressed:bg-accent-500 aria-pressed:border-accent-500 aria-pressed:text-brand-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true" class="inline-block w-3 h-3 rounded-sm bg-yellow-400 align-middle mr-1"></span>Tablero 1</button>
+                    <button type="button" data-tablero="1" aria-pressed="false" class="font-semibold px-4 py-2 rounded-lg text-sm border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-900 text-brand-800 dark:text-brand-100 aria-pressed:bg-accent-500 aria-pressed:border-accent-500 aria-pressed:text-brand-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true" class="inline-block w-3 h-3 rounded-sm bg-cyan-400 align-middle mr-1"></span>Tablero 2</button>
+                </div>
+            </div>
+
             <p id="aviso" role="status" aria-live="polite" class="mb-4 rounded-xl px-4 py-3 text-sm bg-brand-100 text-brand-800 dark:bg-brand-800 dark:text-brand-100">Empieza por abrir la cámara o elegir una foto.</p>
 
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -73,7 +82,7 @@
                     </section>
 
                     <section class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-4" aria-labelledby="t-tablero">
-                        <h2 id="t-tablero" class="font-semibold text-brand-800 dark:text-white mb-2">La partida en digital</h2>
+                        <h2 id="t-tablero" class="font-semibold text-brand-800 dark:text-white mb-2">La partida en digital<span id="t-tablero-cual"></span></h2>
                         <div class="relative pl-5 pb-5 max-w-xs mx-auto"><div id="tablero" aria-hidden="true" class="grid grid-cols-8 grid-rows-8 aspect-square w-full rounded-lg overflow-hidden select-none"></div></div>
                         <p class="text-xs text-brand-500 dark:text-brand-300 mt-2 break-all"><span class="font-semibold">FEN:</span> <span id="fen"></span></p>
                         <h3 class="font-semibold text-sm text-brand-800 dark:text-white mt-3">Jugadas</h3>

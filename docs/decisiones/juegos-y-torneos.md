@@ -9437,6 +9437,21 @@ el celular.
   las dos con una coma y el `camera=()` sigue ahí. El verificador revisa que
   ninguna otra ruta tenga la cámara.
 
+- **Dos tableros con un celular, opcional y apagado por omisión** (lo pidió
+  el dueño: «siempre dando prioridad a que sea 1 para más confianza»). La
+  casilla «Leer también un segundo tablero» lo dice al lado: lo más confiable
+  es un celular por tablero. Encendida, cada tablero tiene sus esquinas, su
+  calibración, su partida y su transmisión con su propio código (unas
+  pestañas eligen a cuál se aplican los botones y cuál se muestra). La
+  imagen se trabaja a 960 de ancho en vez de 640, porque cada tablero ocupa
+  la mitad; las esquinas del primero se agrandan con ella y su calibración
+  sigue valiendo (mide luz, no tamaño). Al buscar el segundo, el primero se
+  tapa con gris parejo (`DetectarTablero.tapar`): si no, la búsqueda lo
+  vuelve a encontrar (rompiéndolo a propósito, los dos tableros anotan la
+  misma partida). Cada cuadrícula lleva su color y su número escrito. Más de
+  dos no: con cuatro, una casilla queda de 15 a 20 px y las piezas negras
+  sobre casillas oscuras se confunden.
+
 Con un tablero de vinilo de verdad, en el piso y con la cámara de lado, leyó
 64 de 64 y anotó las jugadas (27/10). Lo que falta: un modelo entrenado con
 fotos de nuestros tableros si con otra luz falla (las etiqueta el PGN de la

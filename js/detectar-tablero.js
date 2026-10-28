@@ -204,7 +204,37 @@
         [0.87, 0.3], [0.75, 0.3], [0.65, 0.3], [0.56, 0.3], [0.48, 0.3],
         [0.75, 0.55], [0.65, 0.55], [0.56, 0.55], [0.48, 0.55]];
 
-    async function buscar(img, alAvanzar) {
+    /* Tapar con gris parejo lo que ya se encontró (un poco agrandado), para
+     * que buscar un segundo tablero no vuelva a dar con el primero. */
+    function tapar(img, cuadros) {
+        if (!cuadros || !cuadros.length) return img;
+        const g = new Float32Array(img.g);
+        let media = 0;
+        for (let i = 0; i < g.length; i++) media += g[i];
+        media /= g.length;
+        for (const c of cuadros) {
+            const cx = c.reduce((s, p) => s + p[0], 0) / 4, cy = c.reduce((s, p) => s + p[1], 0) / 4;
+            const q = ordenar(c.map(([x, y]) => [cx + (x - cx) * 1.15, cy + (y - cy) * 1.15]));
+            const x0 = Math.max(0, Math.floor(Math.min(...q.map((p) => p[0])))), x1 = Math.min(img.w - 1, Math.ceil(Math.max(...q.map((p) => p[0]))));
+            const y0 = Math.max(0, Math.floor(Math.min(...q.map((p) => p[1])))), y1 = Math.min(img.h - 1, Math.ceil(Math.max(...q.map((p) => p[1]))));
+            let area = 0;
+            for (let i = 0; i < 4; i++) area += q[i][0] * q[(i + 1) % 4][1] - q[(i + 1) % 4][0] * q[i][1];
+            const sentido = Math.sign(area);
+            for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) {
+                // Adentro si queda del mismo lado de los cuatro bordes que el área.
+                let dentro = true;
+                for (let i = 0; i < 4 && dentro; i++) {
+                    const a = q[i], b = q[(i + 1) % 4];
+                    if (sentido * ((b[0] - a[0]) * (y - a[1]) - (b[1] - a[1]) * (x - a[0])) < 0) dentro = false;
+                }
+                if (dentro) g[y * img.w + x] = media;
+            }
+        }
+        return { w: img.w, h: img.h, g, desvio: img.desvio };
+    }
+
+    async function buscar(img, alAvanzar, opciones) {
+        img = tapar(img, opciones && opciones.excluir);
         const chica = reducir(img, 200), w = chica.w, h = chica.h, g = chica.g, sd = chica.desvio;
         const menor = Math.min(w, h), mayor = Math.max(w, h);
         const mejores = []; // { q, v } de la imagen chica
@@ -280,5 +310,5 @@
     }
     const girar = (q, k) => q.slice(k).concat(q.slice(0, k));
 
-    window.DetectarTablero = { gris, reducir, puntaje, parejo, ajustar, buscar, ordenar, girar, hayTablero, FINO, GRUESO, MINIMO };
+    window.DetectarTablero = { gris, reducir, puntaje, parejo, ajustar, buscar, tapar, ordenar, girar, hayTablero, FINO, GRUESO, MINIMO };
 })();

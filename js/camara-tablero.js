@@ -229,11 +229,14 @@
     if (!document.getElementById("lienzo")) return;
 
     const D = window.DetectarTablero, V = window.PartidaEnVivo;
-    const ANCHO = 640;          // el ancho al que se trabaja la imagen
+    /* El ancho al que se trabaja la imagen: con un tablero, 640; con dos, 960,
+     * porque cada uno ocupa la mitad y sus casillas se ven más chicas. */
+    const ANCHO = [640, 960];
     const CADA_MS = 200;        // cada cuánto se lee el tablero
     const QUIETA = 6;           // lecturas iguales seguidas para fiarse (~1,2 s)
     const NOMBRE = ["a1", "h1", "h8", "a8"];
-    const GUARDADO = "camara_vivo_codigo_v1";
+    const GUARDADO = ["camara_vivo_codigo_v1", "camara_vivo_codigo_v1_2"];
+    const COLOR = ["rgba(250, 204, 21, 0.9)", "rgba(34, 211, 238, 0.9)"]; // amarillo y celeste; además se escribe el número
 
     const $ = (id) => document.getElementById(id);
     const lienzo = $("lienzo"), ctx = lienzo.getContext("2d");
@@ -243,18 +246,28 @@
     const limpio = document.createElement("canvas"), cctx = limpio.getContext("2d", { willReadFrequently: true });
     const video = $("video");
 
+    /* Lo de cada tablero va junto. El segundo es opcional: con uno solo se
+     * lee mejor, y la página arranca así. */
+    function nuevoTablero(i) {
+        return {
+            i, esquinas: [], h: null, cal: null, juego: new window.Chess(),
+            recientes: [], quieta: null, lectura: null, ajustada: false,
+            vivo: null, nombres: { blancas: "", negras: "" },
+        };
+    }
+    let tableros = [nuevoTablero(0)];
+    let activo = 0;
+    const T = () => tableros[activo];
+
     let fuente = null;          // el <video> o la imagen de la foto
-    let esquinas = [];          // en coordenadas del lienzo; después de calibrar, en orden a1, h1, h8, a8
     let elegida = 0;            // la esquina que mueven las flechas
     let arrastre = -1;
-    let h = null, cal = null;
-    let juego = new window.Chess();
-    let recientes = [], quieta = null, ultimaMirada = 0;
-    let lecturaActual = null;
+    let ultimaMirada = 0;
     let buscando = false;
-    let vivo = null;            // { codigo, canal } mientras se transmite
 
     const es = (san) => (window.ComandosTablero ? window.ComandosTablero.jugadaParaMostrar(san) : san);
+    const dos = () => tableros.length === 2;
+    const cual = (t) => (dos() ? "Tablero " + (t.i + 1) + ": " : "");
 
     function avisar(texto, tipo) {
         const a = $("aviso");
@@ -266,24 +279,36 @@
     }
 
     function pedirEsquina() {
-        avisar(esquinas.length < 4
-            ? (esquinas.length ? "Van " + esquinas.length + " de 4 esquinas. " : "Toca «Buscar el tablero» o marca tú las cuatro esquinas, en cualquier orden. ") + "Puedes dejar el dedo apretado y moverlo: la lupa muestra dónde cae."
-            : cal ? "Leyendo el tablero. Haz las jugadas y espera a que se anoten."
-            : "Listo. Ahora pon las piezas en la posición inicial y toca «Calibrar con la posición inicial». Las esquinas se pueden arrastrar.");
+        const t = T();
+        avisar(cual(t) + (t.esquinas.length < 4
+            ? (t.esquinas.length ? "Van " + t.esquinas.length + " de 4 esquinas. " : "Toca «Buscar el tablero» o marca tú las cuatro esquinas, en cualquier orden. ") + "Puedes dejar el dedo apretado y moverlo: la lupa muestra dónde cae."
+            : t.cal ? "Leyendo el tablero. Haz las jugadas y espera a que se anoten."
+            : "Listo. Ahora pon las piezas en la posición inicial y toca «Calibrar con la posición inicial». Las esquinas se pueden arrastrar."));
+    }
+
+    function botones() {
+        const t = T();
+        $("btn-esquinas").disabled = !fuente;
+        $("btn-buscar").disabled = !fuente || buscando;
+        $("btn-ajustar").disabled = !t.h;
+        $("btn-calibrar").disabled = !t.h;
+    }
+
+    function tamano(ancho, alto) {
+        const w = ANCHO[tableros.length - 1];
+        lienzo.width = limpio.width = w;
+        lienzo.height = limpio.height = Math.round(w * alto / ancho);
     }
 
     function nuevaFuente(f, ancho, alto) {
         fuente = f;
-        lienzo.width = limpio.width = ANCHO;
-        lienzo.height = limpio.height = Math.round(ANCHO * alto / ancho);
-        esquinas = []; h = null; cal = null; recientes = []; quieta = null;
-        delete lienzo.dataset.ajustada;
-        $("btn-esquinas").disabled = false;
-        $("btn-buscar").disabled = false;
-        $("btn-ajustar").disabled = true;
-        $("btn-calibrar").disabled = true;
+        tamano(ancho, alto);
+        for (const t of tableros) { t.esquinas = []; t.h = null; t.cal = null; t.recientes = []; t.quieta = null; t.lectura = null; t.ajustada = false; }
+        botones();
         pedirEsquina();
     }
+    const anchoFuente = () => (fuente instanceof HTMLImageElement ? fuente.naturalWidth : video.videoWidth || 640);
+    const altoFuente = () => (fuente instanceof HTMLImageElement ? fuente.naturalHeight : video.videoHeight || 480);
 
     async function abrirCamara() {
         if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
@@ -291,7 +316,7 @@
             return;
         }
         try {
-            const flujo = await navigator.mediaDevices.getUserMedia({ audio: false, video: { facingMode: { ideal: "environment" }, width: { ideal: 1280 } } });
+            const flujo = await navigator.mediaDevices.getUserMedia({ audio: false, video: { facingMode: { ideal: "environment" }, width: { ideal: 1920 } } });
             video.srcObject = flujo;
             await video.play();
             nuevaFuente(video, video.videoWidth || 640, video.videoHeight || 480);
@@ -312,7 +337,7 @@
              * prueba una partida foto a foto, sin cámara en vivo. */
             if (fuente instanceof HTMLImageElement && fuente.naturalWidth === img.naturalWidth && fuente.naturalHeight === img.naturalHeight) {
                 fuente = img;
-                recientes = [];
+                for (const t of tableros) t.recientes = [];
                 return;
             }
             nuevaFuente(img, img.naturalWidth, img.naturalHeight);
@@ -321,11 +346,46 @@
         img.src = URL.createObjectURL(archivo);
     }
 
-    function rehacerHomografia() {
-        h = esquinas.length === 4 ? homografia(ESQUINAS_TABLERO, esquinas) : null;
-        $("btn-calibrar").disabled = !h;
-        $("btn-ajustar").disabled = !h;
-        recientes = []; quieta = null;
+    function rehacerHomografia(t) {
+        t = t || T();
+        t.h = t.esquinas.length === 4 ? homografia(ESQUINAS_TABLERO, t.esquinas) : null;
+        t.recientes = []; t.quieta = null;
+        botones();
+    }
+
+    /* ── El segundo tablero (opcional) ──────────────────────────────────
+     * Al encenderlo, la imagen se trabaja más grande y las esquinas del
+     * primero se agrandan con ella: su calibración sigue valiendo (lo que
+     * se mide es la luz de cada casilla, no su tamaño). */
+    function cambiarCantidad(n) {
+        const f = ANCHO[n - 1] / lienzo.width;
+        if (n === 2 && !dos()) tableros.push(nuevoTablero(1));
+        if (n === 1 && dos()) { pararVivo(tableros[1]); tableros.length = 1; }
+        if (fuente) {
+            tamano(anchoFuente(), altoFuente());
+            for (const t of tableros) {
+                t.esquinas = t.esquinas.map(([x, y]) => [x * f, y * f]);
+                const cal = t.cal;
+                rehacerHomografia(t);
+                t.cal = cal;
+            }
+        }
+        elegirTablero(n === 2 ? 1 : 0);
+        $("pestanas").hidden = n === 1;
+        if (n === 2) avisar("Segundo tablero encendido. Con dos, cada casilla se ve más chica: lo más confiable sigue siendo un celular por tablero, desde arriba. " + (fuente ? "Ahora busca o marca el tablero 2." : ""));
+    }
+
+    function elegirTablero(i) {
+        activo = i;
+        elegida = 0;
+        document.querySelectorAll("[data-tablero]").forEach((b) => b.setAttribute("aria-pressed", String(Number(b.dataset.tablero) === i)));
+        $("t-tablero-cual").textContent = dos() ? " (tablero " + (i + 1) + ")" : "";
+        $("vivo-blancas").value = T().nombres.blancas;
+        $("vivo-negras").value = T().nombres.negras;
+        pintarPartida();
+        pintarVivo();
+        botones();
+        $("acierto").textContent = T().lectura ? (64 - diferentes(T().lectura, esperada(T().juego)).length) + " de 64" : "—";
     }
 
     function imagenGris() {
@@ -336,40 +396,44 @@
     /* Las esquinas puestas a ojo se corren solas hasta donde calzan las líneas
      * del tablero. Si no mejora, se quedan donde estaban. */
     function ajustarEsquinas(silencioso) {
-        if (esquinas.length !== 4 || !fuente) return;
+        const t = T();
+        if (t.esquinas.length !== 4 || !fuente) return;
         const img = imagenGris();
-        const antes = D.ordenar(esquinas);
+        const antes = D.ordenar(t.esquinas);
         const r = D.ajustar(img, antes);
         if (r.puntaje >= D.puntaje(img, antes, D.FINO)) {
-            esquinas = r.esquinas;
-            cal = null;
-            rehacerHomografia();
+            t.esquinas = r.esquinas;
+            t.cal = null;
+            rehacerHomografia(t);
         }
         const bien = D.hayTablero(r);
-        if (!silencioso) avisar(bien
-            ? "Esquinas ajustadas a las líneas del tablero. Revisa que la cuadrícula amarilla calce y, con las piezas en la posición inicial, toca «Calibrar»."
-            : "Las esquinas se corrieron lo que se pudo, pero las líneas del tablero se ven poco. Revisa la cuadrícula; si no calza, arrastra las esquinas.", bien ? "bien" : "error");
+        if (!silencioso) avisar(cual(t) + (bien
+            ? "Esquinas ajustadas a las líneas del tablero. Revisa que la cuadrícula calce y, con las piezas en la posición inicial, toca «Calibrar»."
+            : "Las esquinas se corrieron lo que se pudo, pero las líneas del tablero se ven poco. Revisa la cuadrícula; si no calza, arrastra las esquinas."), bien ? "bien" : "error");
     }
 
     async function buscarTablero() {
         if (!fuente || buscando) return;
+        const t = T();
         buscando = true;
-        $("btn-buscar").disabled = true;
-        avisar("Buscando el tablero… 0 %");
+        botones();
+        avisar(cual(t) + "Buscando el tablero… 0 %");
         try {
-            const r = await D.buscar(imagenGris(), (f) => avisar("Buscando el tablero… " + Math.round(f * 100) + " %"));
+            // El otro tablero, si ya está, se tapa: si no, lo volvería a encontrar.
+            const excluir = tableros.filter((o) => o !== t && o.h).map((o) => o.esquinas);
+            const r = await D.buscar(imagenGris(), (f) => avisar(cual(t) + "Buscando el tablero… " + Math.round(f * 100) + " %"), { excluir });
             if (!r) {
-                avisar("No encontré el tablero. Pon el celular más encima del tablero, con buena luz y el tablero entero en la imagen, o marca tú las cuatro esquinas.", "error");
+                avisar(cual(t) + "No encontré el tablero. Pon el celular más encima del tablero, con buena luz y el tablero entero en la imagen, o marca tú las cuatro esquinas.", "error");
                 return;
             }
-            esquinas = r.esquinas;
-            lienzo.dataset.ajustada = "1";
-            cal = null;
-            rehacerHomografia();
-            avisar("Encontré el tablero. Revisa que la cuadrícula amarilla calce con las casillas (si no, arrastra las esquinas) y, con las piezas en la posición inicial, toca «Calibrar».", "bien");
+            t.esquinas = r.esquinas;
+            t.ajustada = true;
+            t.cal = null;
+            rehacerHomografia(t);
+            avisar(cual(t) + "Encontré el tablero. Revisa que la cuadrícula calce con las casillas (si no, arrastra las esquinas) y, con las piezas en la posición inicial, toca «Calibrar».", "bien");
         } finally {
             buscando = false;
-            $("btn-buscar").disabled = false;
+            botones();
         }
     }
 
@@ -378,63 +442,64 @@
         return [(e.clientX - r.left) * lienzo.width / r.width, (e.clientY - r.top) * lienzo.height / r.height];
     }
 
-    /* Tocar pone una esquina nueva (o agarra la más cercana) y, con el dedo
-     * apretado, se mueve con la lupa. Al soltar la cuarta, se ajustan solas. */
+    /* Tocar pone una esquina nueva del tablero elegido (o agarra la más
+     * cercana) y, con el dedo apretado, se mueve con la lupa. Al soltar la
+     * cuarta, se ajustan solas. */
     lienzo.addEventListener("pointerdown", (e) => {
         if (!fuente) return;
-        const p = punto(e);
+        const t = T(), p = punto(e);
         let mejor = -1, dist = 40 * lienzo.width / lienzo.getBoundingClientRect().width;
-        esquinas.forEach((q, i) => { const d = Math.hypot(q[0] - p[0], q[1] - p[1]); if (d < dist) { dist = d; mejor = i; } });
-        if (mejor < 0 && esquinas.length < 4) { esquinas.push(p); mejor = esquinas.length - 1; rehacerHomografia(); }
+        t.esquinas.forEach((q, i) => { const d = Math.hypot(q[0] - p[0], q[1] - p[1]); if (d < dist) { dist = d; mejor = i; } });
+        if (mejor < 0 && t.esquinas.length < 4) { t.esquinas.push(p); mejor = t.esquinas.length - 1; rehacerHomografia(t); }
         if (mejor < 0) return;
         arrastre = mejor; elegida = mejor;
         try { lienzo.setPointerCapture(e.pointerId); } catch (x) { /* el puntero ya se soltó */ }
     });
     lienzo.addEventListener("pointermove", (e) => {
         if (arrastre < 0) return;
-        esquinas[arrastre] = punto(e);
-        if (cal) cal = null;
-        rehacerHomografia();
+        const t = T();
+        t.esquinas[arrastre] = punto(e);
+        t.cal = null;
+        rehacerHomografia(t);
     });
     lienzo.addEventListener("pointerup", () => {
         if (arrastre < 0) return;
         arrastre = -1;
-        if (esquinas.length === 4 && !h) return;
-        if (esquinas.length === 4 && !cal && !lienzo.dataset.ajustada) {
-            lienzo.dataset.ajustada = "1"; // solo la primera vez: después manda quien arrastra
+        const t = T();
+        if (t.esquinas.length === 4 && !t.h) return;
+        if (t.esquinas.length === 4 && !t.cal && !t.ajustada) {
+            t.ajustada = true; // solo la primera vez: después manda quien arrastra
             ajustarEsquinas(true);
         }
         pedirEsquina();
     });
     lienzo.addEventListener("keydown", (e) => {
-        if (/^[1-4]$/.test(e.key) && esquinas.length > Number(e.key) - 1) { elegida = Number(e.key) - 1; e.preventDefault(); return; }
+        const t = T();
+        if (/^[1-4]$/.test(e.key) && t.esquinas.length > Number(e.key) - 1) { elegida = Number(e.key) - 1; e.preventDefault(); return; }
         const paso = e.shiftKey ? 10 : 2;
         const mov = { ArrowLeft: [-paso, 0], ArrowRight: [paso, 0], ArrowUp: [0, -paso], ArrowDown: [0, paso] }[e.key];
-        if (!mov || !esquinas[elegida]) return;
+        if (!mov || !t.esquinas[elegida]) return;
         e.preventDefault();
-        esquinas[elegida] = [esquinas[elegida][0] + mov[0], esquinas[elegida][1] + mov[1]];
-        cal = null;
-        rehacerHomografia();
+        t.esquinas[elegida] = [t.esquinas[elegida][0] + mov[0], t.esquinas[elegida][1] + mov[1]];
+        t.cal = null;
+        rehacerHomografia(t);
     });
-
-    function mirar() {
-        const pix = cctx.getImageData(0, 0, limpio.width, limpio.height).data;
-        return muestras(pix, limpio.width, limpio.height, h);
-    }
 
     /* Calibrar también decide cuál esquina es a1: prueba las cuatro maneras
      * de girar el tablero y se queda con la que ve la posición inicial. Las
      * piezas de las filas 1 y 2 tienen que ser las CLARAS: si no, el tablero
      * está dado vuelta (con media vuelta, la lectura también sale perfecta). */
     function hacerCalibrar() {
-        if (esquinas.length !== 4) return;
+        const t = T();
+        if (t.esquinas.length !== 4) return;
         cctx.drawImage(fuente, 0, 0, limpio.width, limpio.height);
-        const base = D.ordenar(esquinas), inicial = esperada(new window.Chess());
+        const pix = cctx.getImageData(0, 0, limpio.width, limpio.height).data;
+        const base = D.ordenar(t.esquinas), inicial = esperada(new window.Chess());
         let mejor = null;
         for (let k = 0; k < 4; k++) {
             const q = D.girar(base, k), hk = homografia(ESQUINAS_TABLERO, q);
             if (!hk) continue;
-            const todas = muestras(cctx.getImageData(0, 0, limpio.width, limpio.height).data, limpio.width, limpio.height, hk);
+            const todas = muestras(pix, limpio.width, limpio.height, hk);
             const c = calibrar(todas);
             const bien = 64 - diferentes(leer(todas, c), inicial).length;
             const claras = (c.blanca[true] + c.blanca[false]) - (c.negra[true] + c.negra[false]);
@@ -442,34 +507,35 @@
             if (!mejor || valor > mejor.valor) mejor = { valor, bien, q, hk, c, claras };
         }
         if (!mejor || mejor.bien < 48 || mejor.claras <= 0) {
-            avisar("Con estas esquinas no se ve una posición inicial (" + (mejor ? mejor.bien : 0) + " de 64 casillas). Revisa que la cuadrícula calce y que estén todas las piezas en su lugar.", "error");
+            avisar(cual(t) + "Con estas esquinas no se ve una posición inicial (" + (mejor ? mejor.bien : 0) + " de 64 casillas). Revisa que la cuadrícula calce y que estén todas las piezas en su lugar.", "error");
             return;
         }
-        esquinas = mejor.q; h = mejor.hk; cal = mejor.c;
-        juego = new window.Chess();
-        recientes = []; quieta = null;
+        t.esquinas = mejor.q; t.h = mejor.hk; t.cal = mejor.c;
+        t.juego = new window.Chess();
+        t.recientes = []; t.quieta = null;
         pintarPartida();
-        enviarVivo();
-        avisar("Calibrado: lee bien " + mejor.bien + " de 64 casillas en la posición inicial. Ya puedes jugar.", "bien");
+        enviarVivo(t);
+        avisar(cual(t) + "Calibrado: lee bien " + mejor.bien + " de 64 casillas en la posición inicial. Ya puedes jugar.", "bien");
     }
 
     /* Una lectura quieta que no es la esperada: se busca la jugada. */
-    function revisar(lectura) {
-        const antes = esperada(juego);
+    function revisar(t, lectura) {
+        const antes = esperada(t.juego);
         if (lectura === antes) return;
-        const jugadas = buscarJugadas(juego, lectura);
+        const jugadas = buscarJugadas(t.juego, lectura);
         if (jugadas) {
-            jugadas.forEach((s) => juego.move(s));
-            pintarPartida();
-            enviarVivo();
+            jugadas.forEach((s) => t.juego.move(s));
+            if (t === T()) pintarPartida();
+            enviarVivo(t);
             const corona = jugadas.some((s) => /=Q/.test(s));
-            avisar((jugadas.length === 2 ? "Se escapó una jugada: se anotaron " + jugadas.map(es).join(" y ") : "Se anotó " + es(jugadas[0])) + "." + (corona ? " Coronó: se anotó dama; si fue otra pieza, deshazla." : ""), "bien");
+            avisar(cual(t) + (jugadas.length === 2 ? "Se escapó una jugada: se anotaron " + jugadas.map(es).join(" y ") : "Se anotó " + es(jugadas[0])) + "." + (corona ? " Coronó: se anotó dama; si fue otra pieza, deshazla." : ""), "bien");
             return;
         }
-        avisar("No reconozco lo que cambió en " + diferentes(lectura, antes).join(", ") + ". Si es la luz o una pieza movida sin querer, déjala como estaba; si se ve mal la casilla, ajusta las esquinas.", "error");
+        avisar(cual(t) + "No reconozco lo que cambió en " + diferentes(lectura, antes).join(", ") + ". Si es la luz o una pieza movida sin querer, déjala como estaba; si se ve mal la casilla, ajusta las esquinas.", "error");
     }
 
     function pintarPartida() {
+        const juego = T().juego;
         V.pintar($("tablero"), juego);
         $("fen").textContent = juego.fen();
         const hist = juego.history();
@@ -479,45 +545,48 @@
     }
 
     /* ── Transmitir en vivo ─────────────────────────────────────────────
-     * Solo manda: la partida entera cada vez que cambia, y a quien recién
-     * llega y la pide («pedir»). Nunca toma nada de lo que llega por el
-     * canal: lo que pasa en el tablero lo decide la cámara. */
-    function codigoGuardado() {
-        try { const c = localStorage.getItem(GUARDADO); return V.codigoValido(c) ? c : null; } catch (e) { return null; }
+     * Cada tablero con su código y su enlace. Solo manda: la partida entera
+     * cada vez que cambia, y a quien recién llega y la pide («pedir»). Nunca
+     * toma nada de lo que llega por el canal: lo que pasa en el tablero lo
+     * decide la cámara. */
+    function codigoGuardado(t) {
+        try { const c = localStorage.getItem(GUARDADO[t.i]); return V.codigoValido(c) ? c : null; } catch (e) { return null; }
     }
-    function guardarCodigo(c) { try { localStorage.setItem(GUARDADO, c); } catch (e) { /* sin almacenamiento: un código por visita */ } }
+    function guardarCodigo(t, c) { try { localStorage.setItem(GUARDADO[t.i], c); } catch (e) { /* sin almacenamiento: un código por visita */ } }
 
-    function nombres() { return { blancas: $("vivo-blancas").value, negras: $("vivo-negras").value }; }
-
-    function enviarVivo() {
-        if (!vivo) return;
-        vivo.canal.send({ type: "broadcast", event: "estado", payload: V.estado(juego, nombres()) });
+    function enviarVivo(t) {
+        if (!t.vivo) return;
+        t.vivo.canal.send({ type: "broadcast", event: "estado", payload: V.estado(t.juego, t.nombres) });
     }
 
-    function empezarVivo(codigo) {
-        pararVivo();
+    function empezarVivo(t, codigo) {
+        pararVivo(t);
         const canal = window.sb.channel(V.canal(codigo));
-        canal.on("broadcast", { event: "pedir" }, enviarVivo);
-        canal.subscribe((st) => { if (st === "SUBSCRIBED") enviarVivo(); });
-        vivo = { codigo, canal };
-        guardarCodigo(codigo);
-        const url = V.enlace(codigo);
+        canal.on("broadcast", { event: "pedir" }, () => enviarVivo(t));
+        canal.subscribe((st) => { if (st === "SUBSCRIBED") enviarVivo(t); });
+        t.vivo = { codigo, canal };
+        guardarCodigo(t, codigo);
+        pintarVivo();
+    }
+    function pararVivo(t) {
+        if (t.vivo) { try { window.sb.removeChannel(t.vivo.canal); } catch (e) { /* ya cerrado */ } }
+        t.vivo = null;
+        pintarVivo();
+    }
+    function pintarVivo() {
+        const t = T();
+        $("vivo-apagado").hidden = !!t.vivo;
+        $("vivo-encendido").hidden = !t.vivo;
+        if (!t.vivo) return;
+        const url = V.enlace(t.vivo.codigo);
         const a = $("vivo-enlace");
         a.href = url; a.textContent = url;
-        $("vivo-codigo").textContent = codigo;
+        $("vivo-codigo").textContent = t.vivo.codigo;
         $("vivo-whatsapp").href = "https://wa.me/?text=" + encodeURIComponent("Mira la partida en vivo: " + url);
         const qr = $("vivo-qr");
         qr.textContent = "";
         const svg = window.QrSvg && window.QrSvg.dibujar(url, "Código QR para ver la partida en vivo");
         if (svg) qr.append(svg);
-        $("vivo-apagado").hidden = true;
-        $("vivo-encendido").hidden = false;
-    }
-    function pararVivo() {
-        if (vivo) { try { window.sb.removeChannel(vivo.canal); } catch (e) { /* ya cerrado */ } }
-        vivo = null;
-        $("vivo-apagado").hidden = false;
-        $("vivo-encendido").hidden = true;
     }
 
     /* ── Dibujar ──────────────────────────────────────────────────────── */
@@ -533,41 +602,41 @@
         ctx.beginPath(); ctx.arc(lx, ly, R, 0, 2 * Math.PI); ctx.lineWidth = 3; ctx.strokeStyle = "#ffffff"; ctx.stroke();
     }
 
-    function dibujar(ahora) {
-        requestAnimationFrame(dibujar);
-        if (!fuente) return;
-        cctx.drawImage(fuente, 0, 0, limpio.width, limpio.height);
-        ctx.drawImage(limpio, 0, 0);
-
-        if (h && cal && ahora - ultimaMirada >= CADA_MS) {
-            ultimaMirada = ahora;
-            lecturaActual = leer(mirar(), cal);
-            recientes.push(lecturaActual);
-            if (recientes.length > QUIETA) recientes.shift();
-            if (recientes.length === QUIETA && recientes.every((x) => x === lecturaActual) && lecturaActual !== quieta) {
-                quieta = lecturaActual;
-                revisar(lecturaActual);
+    function leerTableros(ahora) {
+        if (ahora - ultimaMirada < CADA_MS || !tableros.some((t) => t.h && t.cal)) return;
+        ultimaMirada = ahora;
+        const pix = cctx.getImageData(0, 0, limpio.width, limpio.height).data;
+        for (const t of tableros) {
+            if (!t.h || !t.cal) continue;
+            t.lectura = leer(muestras(pix, limpio.width, limpio.height, t.h), t.cal);
+            t.recientes.push(t.lectura);
+            if (t.recientes.length > QUIETA) t.recientes.shift();
+            if (t.recientes.length === QUIETA && t.recientes.every((x) => x === t.lectura) && t.lectura !== t.quieta) {
+                t.quieta = t.lectura;
+                revisar(t, t.lectura);
             }
-            const bien = 64 - diferentes(lecturaActual, esperada(juego)).length;
-            $("acierto").textContent = bien + " de 64";
         }
+        const t = T();
+        if (t.lectura) $("acierto").textContent = (64 - diferentes(t.lectura, esperada(t.juego)).length) + " de 64";
+    }
 
-        // La cuadrícula y lo leído en cada casilla.
-        if (h) {
-            ctx.strokeStyle = "rgba(250, 204, 21, 0.9)";
-            ctx.lineWidth = 1.5;
+    function dibujarTablero(t) {
+        const propio = t === T();
+        if (t.h) {
+            ctx.strokeStyle = COLOR[t.i];
+            ctx.lineWidth = propio ? 1.5 : 1;
             for (let i = 0; i <= 8; i++) {
-                ctx.beginPath(); ctx.moveTo(...aplicar(h, i, 0)); ctx.lineTo(...aplicar(h, i, 8)); ctx.stroke();
-                ctx.beginPath(); ctx.moveTo(...aplicar(h, 0, i)); ctx.lineTo(...aplicar(h, 8, i)); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(...aplicar(t.h, i, 0)); ctx.lineTo(...aplicar(t.h, i, 8)); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(...aplicar(t.h, 0, i)); ctx.lineTo(...aplicar(t.h, 8, i)); ctx.stroke();
             }
-            if (cal && lecturaActual) {
-                const esp = esperada(juego);
+            if (t.cal && t.lectura) {
+                const esp = esperada(t.juego);
                 ctx.font = "bold 13px sans-serif";
                 ctx.textAlign = "center"; ctx.textBaseline = "middle";
                 for (let k = 0; k < 64; k++) {
-                    const [x, y] = aplicar(h, (k & 7) + 0.5, (k >> 3) + 0.5);
-                    const mal = lecturaActual[k] !== esp[k];
-                    const txt = (lecturaActual[k] === "." ? "·" : lecturaActual[k]) + (mal ? "!" : "");
+                    const [x, y] = aplicar(t.h, (k & 7) + 0.5, (k >> 3) + 0.5);
+                    const mal = t.lectura[k] !== esp[k];
+                    const txt = (t.lectura[k] === "." ? "·" : t.lectura[k]) + (mal ? "!" : "");
                     ctx.fillStyle = "rgba(0, 0, 0, 0.75)";
                     ctx.fillRect(x - 11, y - 9, 22, 18);
                     if (mal) { ctx.strokeStyle = "#ef4444"; ctx.lineWidth = 2; ctx.strokeRect(x - 11, y - 9, 22, 18); }
@@ -575,50 +644,84 @@
                     ctx.fillText(txt, x, y + 1);
                 }
             }
+            // Con dos tableros, cada cuadrícula dice cuál es (no solo por el color).
+            if (dos()) {
+                const [x, y] = aplicar(t.h, 4, 4);
+                ctx.fillStyle = "rgba(0, 0, 0, 0.8)";
+                ctx.fillRect(x - 14, y - 14, 28, 28);
+                ctx.strokeStyle = COLOR[t.i]; ctx.lineWidth = 3; ctx.strokeRect(x - 14, y - 14, 28, 28);
+                ctx.fillStyle = "#ffffff"; ctx.font = "bold 18px sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+                ctx.fillText(String(t.i + 1), x, y + 1);
+            }
         }
         // Las esquinas: con su nombre cuando ya se sabe cuál es cuál (después de calibrar).
-        esquinas.forEach((p, i) => {
+        t.esquinas.forEach((p, i) => {
+            const ella = propio && i === elegida;
             ctx.beginPath(); ctx.arc(p[0], p[1], 12, 0, 2 * Math.PI);
-            ctx.fillStyle = i === elegida ? "#facc15" : "rgba(0, 0, 0, 0.8)"; ctx.fill();
-            ctx.lineWidth = 2; ctx.strokeStyle = "#ffffff"; ctx.stroke();
-            ctx.fillStyle = i === elegida ? "#000000" : "#ffffff";
+            ctx.fillStyle = ella ? "#facc15" : "rgba(0, 0, 0, 0.8)"; ctx.fill();
+            ctx.lineWidth = 2; ctx.strokeStyle = propio ? "#ffffff" : COLOR[t.i]; ctx.stroke();
+            ctx.fillStyle = ella ? "#000000" : "#ffffff";
             ctx.font = "bold 11px sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
-            ctx.fillText(cal ? NOMBRE[i] : String(i + 1), p[0], p[1] + 1);
+            ctx.fillText(t.cal ? NOMBRE[i] : String(i + 1), p[0], p[1] + 1);
         });
-        if (arrastre >= 0 && esquinas[arrastre]) lupa(esquinas[arrastre]);
+    }
+
+    function dibujar(ahora) {
+        requestAnimationFrame(dibujar);
+        if (!fuente) return;
+        cctx.drawImage(fuente, 0, 0, limpio.width, limpio.height);
+        ctx.drawImage(limpio, 0, 0);
+        leerTableros(ahora);
+        // El elegido, encima del otro.
+        tableros.filter((t) => t !== T()).forEach(dibujarTablero);
+        dibujarTablero(T());
+        if (arrastre >= 0 && T().esquinas[arrastre]) lupa(T().esquinas[arrastre]);
     }
 
     $("btn-camara").addEventListener("click", abrirCamara);
     $("foto").addEventListener("change", (e) => usarFoto(e.target.files[0]));
     $("btn-buscar").addEventListener("click", buscarTablero);
     $("btn-ajustar").addEventListener("click", () => ajustarEsquinas(false));
-    $("btn-esquinas").addEventListener("click", () => { esquinas = []; delete lienzo.dataset.ajustada; rehacerHomografia(); cal = null; pedirEsquina(); });
+    $("btn-esquinas").addEventListener("click", () => { const t = T(); t.esquinas = []; t.ajustada = false; t.cal = null; rehacerHomografia(t); pedirEsquina(); });
     $("btn-calibrar").addEventListener("click", hacerCalibrar);
     $("btn-deshacer").addEventListener("click", () => {
-        juego.undo();
-        quieta = null; recientes = [];
+        const t = T();
+        t.juego.undo();
+        t.quieta = null; t.recientes = [];
         pintarPartida();
-        enviarVivo();
-        avisar("Se deshizo la última jugada. Deja las piezas como en el tablero de la derecha.");
+        enviarVivo(t);
+        avisar(cual(t) + "Se deshizo la última jugada. Deja las piezas como en el tablero de la derecha.");
     });
     $("btn-copiar").addEventListener("click", async () => {
+        const pgn = T().juego.pgn();
         try {
-            await navigator.clipboard.writeText(juego.pgn());
+            await navigator.clipboard.writeText(pgn);
             avisar("PGN copiado.", "bien");
         } catch (e) {
-            avisar("No se pudo copiar. Este es el PGN: " + juego.pgn(), "error");
+            avisar("No se pudo copiar. Este es el PGN: " + pgn, "error");
         }
     });
-    $("btn-vivo").addEventListener("click", () => empezarVivo(codigoGuardado() || V.nuevoCodigo()));
-    $("btn-vivo-nuevo").addEventListener("click", () => empezarVivo(V.nuevoCodigo()));
-    $("btn-vivo-parar").addEventListener("click", pararVivo);
+    $("dos-tableros").addEventListener("change", (e) => cambiarCantidad(e.target.checked ? 2 : 1));
+    document.querySelectorAll("[data-tablero]").forEach((b) => b.addEventListener("click", () => {
+        elegirTablero(Number(b.dataset.tablero));
+        pedirEsquina();
+    }));
+    $("btn-vivo").addEventListener("click", () => empezarVivo(T(), codigoGuardado(T()) || V.nuevoCodigo()));
+    $("btn-vivo-nuevo").addEventListener("click", () => empezarVivo(T(), V.nuevoCodigo()));
+    $("btn-vivo-parar").addEventListener("click", () => pararVivo(T()));
     $("btn-vivo-copiar").addEventListener("click", async () => {
-        if (!vivo) return;
-        try { await navigator.clipboard.writeText(V.enlace(vivo.codigo)); avisar("Enlace copiado: pégalo donde quieras compartirlo.", "bien"); }
-        catch (e) { avisar("No se pudo copiar. El enlace es: " + V.enlace(vivo.codigo), "error"); }
+        const t = T();
+        if (!t.vivo) return;
+        try { await navigator.clipboard.writeText(V.enlace(t.vivo.codigo)); avisar("Enlace copiado: pégalo donde quieras compartirlo.", "bien"); }
+        catch (e) { avisar("No se pudo copiar. El enlace es: " + V.enlace(t.vivo.codigo), "error"); }
     });
     let pausa = null;
-    ["vivo-blancas", "vivo-negras"].forEach((id) => $(id).addEventListener("input", () => { clearTimeout(pausa); pausa = setTimeout(enviarVivo, 600); }));
+    [["vivo-blancas", "blancas"], ["vivo-negras", "negras"]].forEach(([id, color]) => $(id).addEventListener("input", (e) => {
+        const t = T();
+        t.nombres[color] = e.target.value;
+        clearTimeout(pausa);
+        pausa = setTimeout(() => enviarVivo(t), 600);
+    }));
 
     async function init() {
         const { data } = await sb.auth.getSession();
@@ -628,7 +731,8 @@
         $("loading").classList.add("hidden");
         if (!perfil || !perfil.is_admin) { $("denegado").classList.remove("hidden"); return; }
         $("app").classList.remove("hidden");
-        pintarPartida();
+        $("dos-tableros").checked = false;
+        elegirTablero(0);
         requestAnimationFrame(dibujar);
     }
     init();

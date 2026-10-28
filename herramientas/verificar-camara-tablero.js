@@ -95,22 +95,29 @@ async function cerrar(x) { paginas.delete(x.page); await x.ctx.close(); }
  * así que el mismo dibujo sirve para el tablero de frente, girado, de lado o
  * visto desde las negras. */
 function dibujarFoto(opc) {
-  const { fen, esq, fondo } = opc;
+  const { fondo } = opc;
   const ancho = 800, alto = 600;
   const L = window.LectorTablero;
-  // De la imagen al tablero (en centésimas de casilla: el cuadrilátero de destino tiene que tener área).
-  const inv = L.homografia(esq, L.ESQUINAS_TABLERO.map(([u, v]) => [u * 100, v * 100]));
-  const pieza = {};
-  fen.split(" ")[0].split("/").forEach((fila, i) => {
-    let f = 0;
-    for (const ch of fila) { if (/\d/.test(ch)) { f += +ch; continue; } pieza[f + "," + (7 - i)] = ch === ch.toUpperCase() ? "w" : "b"; f++; }
+  // Uno o varios tableros en la misma foto, cada uno con su posición.
+  const tabs = (opc.tableros || [{ fen: opc.fen, esq: opc.esq }]).map(({ fen, esq }) => {
+    // De la imagen al tablero (en centésimas de casilla: el cuadrilátero de destino tiene que tener área).
+    const inv = L.homografia(esq, L.ESQUINAS_TABLERO.map(([u, v]) => [u * 100, v * 100]));
+    const pieza = {};
+    fen.split(" ")[0].split("/").forEach((fila, i) => {
+      let f = 0;
+      for (const ch of fila) { if (/\d/.test(ch)) { f += +ch; continue; } pieza[f + "," + (7 - i)] = ch === ch.toUpperCase() ? "w" : "b"; f++; }
+    });
+    return { inv, pieza };
   });
   const c = document.createElement("canvas"); c.width = ancho; c.height = alto;
   const g = c.getContext("2d"), d = g.createImageData(ancho, alto), p = d.data;
   let s = 12345;
   for (let y = 0; y < alto; y++) for (let x = 0; x < ancho; x++) {
-    const [u100, v100] = L.aplicar(inv, x, y), u = u100 / 100, v = v100 / 100;
-    let col;
+    let col, u = -9, v = -9, pieza = {};
+    for (const t of tabs) {
+      const [u100, v100] = L.aplicar(t.inv, x, y);
+      if (u100 > -40 && u100 < 840 && v100 > -40 && v100 < 840) { u = u100 / 100; v = v100 / 100; pieza = t.pieza; break; }
+    }
     if (u >= 0 && u < 8 && v >= 0 && v < 8) {
       const f = Math.floor(u), r = Math.floor(v);
       col = (f + r) % 2 === 0 ? [118, 150, 86] : [238, 238, 210];
@@ -134,7 +141,8 @@ function dibujarFoto(opc) {
   return c.toDataURL("image/png").split(",")[1];
 }
 async function foto(page, fen, esq, fondo) {
-  const b64 = await page.evaluate(([src, opc]) => new Function("return " + src)()(opc), [dibujarFoto.toString(), { fen, esq, fondo }]);
+  const opc = Array.isArray(fen) ? { tableros: fen } : { fen, esq, fondo };
+  const b64 = await page.evaluate(([src, opc]) => new Function("return " + src)()(opc), [dibujarFoto.toString(), opc]);
   await page.setInputFiles("#foto", { name: "tablero.png", mimeType: "image/png", buffer: Buffer.from(b64, "base64") });
 }
 // La foto de 800 se trabaja a 640 de ancho.
@@ -289,6 +297,56 @@ async function esperarJugadas(p, n) {
     for (const san of ["e4", "c5"]) { j.move(san); await foto(b.page, j.fen(), esq); await esperarJugadas(b.page, j.history().length); }
     igual(nombre + ": e4 es e4 y c5 es c5 (a1 donde corresponde)", await jugadasDe(b.page), "1. e4 c5");
     igual(nombre + ": sin errores en la consola", b.errores, []);
+    await cerrar(b);
+  }
+
+  console.log("\nDos tableros con un celular (opcional)");
+  {
+    const IZQ = [[40, 520], [380, 535], [390, 195], [50, 180]], DER = [[430, 530], [770, 515], [760, 175], [420, 190]];
+    const b = await abrir(browser, "camara-tablero.html");
+    const pb = b.page;
+    await pb.waitForSelector("#app:not(.hidden)");
+    igual("por omisión lee un solo tablero: la opción apagada y sin pestañas",
+      [await pb.isChecked("#dos-tableros"), await pb.locator("#pestanas").isVisible()], [false, false]);
+    const ji = new Chess(), jd = new Chess();
+    const ambas = () => foto(pb, [{ fen: ji.fen(), esq: IZQ }, { fen: jd.fen(), esq: DER }]);
+    await ambas();
+    await esperarAviso(pb, /esquinas/);
+    await pb.check("#dos-tableros");
+    igual("al encenderla aparecen las pestañas, con el tablero 2 elegido",
+      [await pb.locator("#pestanas").isVisible(), await pb.getAttribute('[data-tablero="1"]', "aria-pressed")], [true, "true"]);
+    igual("y recuerda que lo más confiable es un celular por tablero", (await aviso(pb)).includes("un celular por tablero"), true);
+    igual("la imagen se trabaja más grande (960 de ancho)", await pb.evaluate(() => document.getElementById("lienzo").width), 960);
+    for (const n of ["1", "2"]) {
+      await pb.click(`[data-tablero="${n - 1}"]`);
+      await pb.click("#btn-buscar");
+      await esperarAviso(pb, /Encontré|No encontré/, 90000);
+      igual("tablero " + n + ": lo encuentra" + (n === "2" ? " (el otro, no el mismo)" : ""), (await aviso(pb)).startsWith("Tablero " + n + ": Encontré el tablero"), true);
+      await pb.click("#btn-calibrar");
+      await esperarAviso(pb, /Calibrado|no se ve/);
+      igual("tablero " + n + ": calibra con las 64", (await aviso(pb)).includes("64 de 64"), true);
+    }
+    ji.move("e4"); jd.move("d4");
+    await ambas();
+    await pb.waitForTimeout(2500);
+    const partidas = [];
+    for (const n of [0, 1]) { await pb.click(`[data-tablero="${n}"]`); partidas.push(await jugadasDe(pb)); }
+    igual("cada tablero anota su propia partida (e4 en uno, d4 en el otro)", partidas.slice().sort(), ["1. d4", "1. e4"]);
+    jd.move("d5");
+    await ambas();
+    await pb.waitForTimeout(2500);
+    const despues = [];
+    for (const n of [0, 1]) { await pb.click(`[data-tablero="${n}"]`); despues.push(await jugadasDe(pb)); }
+    igual("una jugada en un tablero no toca al otro", despues.slice().sort(), ["1. d4 d5", "1. e4"]);
+    const codigos = [];
+    for (const n of [0, 1]) { await pb.click(`[data-tablero="${n}"]`); await pb.click("#btn-vivo"); codigos.push(await pb.textContent("#vivo-codigo")); }
+    igual("cada tablero se transmite con su propio código", codigos[0] !== codigos[1] && codigos.every((c) => /^[a-hjkmnp-z2-9]{8}$/.test(c)), true);
+    await pb.click('[data-tablero="0"]');
+    const primero = await jugadasDe(pb);
+    await pb.uncheck("#dos-tableros");
+    igual("al apagarla vuelve a un tablero: sin pestañas y la imagen a 640", [await pb.locator("#pestanas").isVisible(), await pb.evaluate(() => document.getElementById("lienzo").width)], [false, 640]);
+    igual("el tablero 1 sigue con su partida", await jugadasDe(pb), primero);
+    igual("sin errores en la consola", b.errores, []);
     await cerrar(b);
   }
 
