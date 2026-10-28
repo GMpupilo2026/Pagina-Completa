@@ -315,6 +315,22 @@
     sel.value = valor;
   }
 
+  // Un cambio que podría pasarse de lo permitido (más de dos individuales por
+  // categoría y torneo, un integrante que por su edad no puede jugar en el
+  // equipo…) se hace con `intentar()`: si deja pasarse, se deshace y se dice por
+  // qué, y la pantalla vuelve a pintarse con lo que quedó.
+  function conTopes(accion) {
+    const r = I.intentar(estado, accion);
+    if (!r.ok) {
+      avisar(r.motivos[0], "error");
+      repintarTodo();
+    }
+    cambio();
+    return r;
+  }
+  function repintarTodo() { pintarEquipos(); pintarEstudiantes(); }
+
+  // Un estudiante que juega solo.
   function crearTarjeta(e) {
     const id = "ij-e-" + e.id;
     const r = { id };
@@ -327,38 +343,21 @@
     r.categoria = el("select", { id: id + "-c", clase: "ae-control w-full" });
     r.catAyuda = el("p", { clase: "ij-ayuda", id: id + "-c-a" });
     r.categoria.setAttribute("aria-describedby", id + "-c-a");
-    r.modalidad = el("select", { id: id + "-m", clase: "ae-control w-full" }, el("option", { value: "individual", texto: "Individual" }), el("option", { value: "equipo", texto: "Por equipos" }));
     r.torneo = el("select", { id: id + "-t", clase: "ae-control w-full" });
-    r.equipo = el("select", { id: id + "-q", clase: "ae-control w-full" }, el("option", { value: "1", texto: "Equipo 1" }), el("option", { value: "2", texto: "Equipo 2" }));
-    r.suplente = el("input", { id: id + "-u", type: "checkbox", checked: e.suplente });
     r.docTipo = el("select", { id: id + "-dt", clase: "ae-control w-full" }, ...I.DOCUMENTOS.map((d) => el("option", { value: d.id, texto: d.nombre })));
     r.documento = el("input", { id: id + "-d", type: "text", clase: "ae-control w-full", maxLength: 30, autocomplete: "off", value: e.documento, placeholder: "Número" });
     r.apoyo = el("input", { id: id + "-ap", type: "checkbox", checked: e.apoyo });
-    r.equipoCampos = el("div", { clase: "ij-fila-equipo" },
-      el("div", { clase: "ij-campo" }, el("label", { para: id + "-q", clase: "ij-et", texto: "Equipo" }), r.equipo),
-      el("div", { clase: "ij-campo" }, el("label", { clase: "ij-casilla" }, r.suplente, " Es la suplente del equipo")));
     r.problemas = el("ul", { clase: "ij-problemas" });
     const campo = (txt, control, extra) => el("div", { clase: "ij-campo" + (extra ? " " + extra : "") }, el("label", { para: control.id, clase: "ij-et", texto: txt }), control);
 
     r.sexo.value = e.sexo;
     r.docTipo.value = e.docTipo;
-    r.modalidad.value = e.modalidad;
-    r.equipo.value = String(e.equipo);
 
     r.nombre.addEventListener("input", () => { e.nombre = r.nombre.value; cambio(); });
-    r.sexo.addEventListener("change", () => { e.sexo = r.sexo.value; if (e.sexo !== "w") e.torneo = ""; cambio(); });
-    r.nacimiento.addEventListener("change", () => { e.nacimiento = I.anioDe(r.nacimiento.value) ? r.nacimiento.value : ""; cambio(); });
-    r.nacimiento.addEventListener("input", () => { e.nacimiento = I.anioDe(r.nacimiento.value) ? r.nacimiento.value : ""; cambio(); });
-    r.categoria.addEventListener("change", () => { e.categoria = r.categoria.value; cambio(); });
-    r.modalidad.addEventListener("change", () => {
-      e.modalidad = r.modalidad.value;
-      // Sin equipo no se sube de categoría (art. 18): si había una elegida que ya no cabe, vuelve a la suya.
-      if (e.modalidad !== "equipo") { e.categoria = I.categoriasPosibles(Object.assign({}, e, { categoria: "" }), estado).opciones.includes(e.categoria) ? e.categoria : ""; e.suplente = false; e.equipo = 1; }
-      cambio();
-    });
-    r.torneo.addEventListener("change", () => { e.torneo = r.torneo.value; cambio(); });
-    r.equipo.addEventListener("change", () => { e.equipo = Number(r.equipo.value) === 2 ? 2 : 1; cambio(); });
-    r.suplente.addEventListener("change", () => { e.suplente = r.suplente.checked; cambio(); });
+    r.sexo.addEventListener("change", () => conTopes(() => { e.sexo = r.sexo.value; if (e.sexo !== "w") e.torneo = ""; }));
+    r.nacimiento.addEventListener("change", () => conTopes(() => { e.nacimiento = I.anioDe(r.nacimiento.value) ? r.nacimiento.value : ""; }));
+    r.categoria.addEventListener("change", () => conTopes(() => { e.categoria = r.categoria.value; }));
+    r.torneo.addEventListener("change", () => conTopes(() => { e.torneo = r.torneo.value; }));
     r.docTipo.addEventListener("change", () => { e.docTipo = r.docTipo.value; cambio(); });
     r.documento.addEventListener("input", () => { e.documento = r.documento.value; cambio(); });
     r.apoyo.addEventListener("change", () => { e.apoyo = r.apoyo.checked; cambio(); });
@@ -374,7 +373,7 @@
       el("div", { clase: "ij-rejilla" },
         campo("Nombre completo", r.nombre, "ij-ancho"), campo("Sexo", r.sexo), campo("Fecha de nacimiento", r.nacimiento),
         el("div", { clase: "ij-campo" }, el("label", { para: id + "-c", clase: "ij-et", texto: "Categoría" }), r.categoria, r.catAyuda),
-        campo("Modalidad", r.modalidad), campo("Torneo", r.torneo), r.equipoCampos,
+        campo("Torneo", r.torneo),
         campo("Documento de identificación", r.docTipo), el("div", { clase: "ij-campo" }, el("label", { para: id + "-d", clase: "ij-et", texto: "Número" }), r.documento),
         el("div", { clase: "ij-campo" }, el("label", { clase: "ij-casilla" }, r.apoyo, " Necesita apoyos por discapacidad (art. 66.2.i)"))),
       r.problemas);
@@ -385,17 +384,18 @@
     const caja = $("ij-est");
     caja.textContent = "";
     refsEst.clear();
-    estado.estudiantes.forEach((e) => {
+    const solos = estado.estudiantes.filter((e) => !e.equipoId);
+    solos.forEach((e) => {
       const r = crearTarjeta(e);
       refsEst.set(e.id, r);
       caja.append(r.tarjeta);
     });
-    $("ij-est-vacio").hidden = estado.estudiantes.length > 0;
+    $("ij-est-vacio").hidden = solos.length > 0;
   }
 
   // Lo que depende de otros campos: categorías posibles, torneo, equipo, los problemas.
   function actualizarTarjetas(porId) {
-    estado.estudiantes.forEach((e, n) => {
+    estado.estudiantes.filter((e) => !e.equipoId).forEach((e, n) => {
       const r = refsEst.get(e.id);
       if (!r) return;
       r.titulo.textContent = "Estudiante " + (n + 1) + (e.nombre.trim() ? ": " + e.nombre.trim() : "");
@@ -412,7 +412,6 @@
         : e.sexo === "w" ? [{ valor: "", texto: "Mujeres" }, { valor: "m", texto: "Abierto" }]
         : [{ valor: "", texto: "— Elige el sexo primero —", deshabilitada: true }];
       opcionesDe(r.torneo, torneos, e.sexo === "w" ? e.torneo : "");
-      r.equipoCampos.hidden = e.modalidad !== "equipo";
       const problemas = porId.get(e.id) || [];
       r.problemas.textContent = "";
       for (const p of problemas) r.problemas.append(el("li", { clase: "ij-hallazgo ij-" + p.nivel }, el("strong", { clase: "ij-etiqueta", texto: p.nivel === "error" ? "Error:" : "Aviso:" }), " " + p.texto + (p.art ? " (" + p.art + ")" : "")));
@@ -425,6 +424,203 @@
   }
   // Una categoría elegida a mano solo vale si sigue entre las posibles.
   function categoriaElegidaVale(cat, pos) { return !!cat && pos.lista.includes(cat) && cat !== pos.propia; }
+
+  // --------------------------------------------------------------------- equipos
+  // Cada equipo es una tarjeta con sus integrantes. Lo que cambia la estructura
+  // (crear, quitar, pasar a alguien) vuelve a pintar la lista; lo demás solo
+  // actualiza textos en `actualizarEquipos()`. Todo lo que podría pasarse de lo
+  // permitido va por `conTopes()`/`I.agregarIntegrante()`: si no cabe, no se agrega.
+  const refsEq = new Map();
+  const refsMiembro = new Map();
+  const nombreEquipo = (t) => "Equipo " + I.NOMBRE_TORNEO[t.torneo] + " · categoría " + t.categoria + (t.numero > 1 ? " · equipo " + t.numero : "");
+
+  function llenarCategoriasEquipo() {
+    const etapa = I.ETAPAS.find((x) => x.id === estado.etapa) || I.ETAPAS[1];
+    const sel = $("ij-eq-categoria");
+    const antes = sel.value;
+    opcionesDe(sel, etapa.categorias.map((c) => ({ valor: c, texto: I.NOMBRE_CATEGORIA[c] })), etapa.categorias.includes(antes) ? antes : etapa.categorias[0]);
+  }
+
+  function crearMiembroUI(e, t) {
+    const id = "ij-m-" + e.id;
+    const r = { id };
+    r.titulo = el("h4", { clase: "font-semibold", id: id + "-h" });
+    r.estadoTxt = el("span", { clase: "ij-chip" });
+    r.sube = el("span", { clase: "ij-chip", "data-estado": "aviso" });
+    r.nombre = el("input", { id: id + "-n", type: "text", clase: "ae-control w-full", maxLength: 160, autocomplete: "off", value: e.nombre, placeholder: "Apellidos Nombre" });
+    r.sexo = el("select", { id: id + "-s", clase: "ae-control w-full" }, el("option", { value: "", texto: "— Elige —" }), el("option", { value: "w", texto: "Mujer" }), el("option", { value: "m", texto: "Hombre" }));
+    r.nacimiento = el("input", { id: id + "-f", type: "date", clase: "ae-control w-full", min: "1995-01-01", max: window.HoraCR.hoy(), value: e.nacimiento });
+    r.condicion = el("select", { id: id + "-c", clase: "ae-control w-full" }, el("option", { value: "t", texto: "Titular" }), el("option", { value: "s", texto: "Suplente" }));
+    r.docTipo = el("select", { id: id + "-dt", clase: "ae-control w-full" }, ...I.DOCUMENTOS.map((d) => el("option", { value: d.id, texto: d.nombre })));
+    r.documento = el("input", { id: id + "-d", type: "text", clase: "ae-control w-full", maxLength: 30, autocomplete: "off", value: e.documento, placeholder: "Número" });
+    r.apoyo = el("input", { id: id + "-ap", type: "checkbox", checked: e.apoyo });
+    r.sacar = el("button", { type: "button", clase: "ae-boton", texto: "Pasar a individual" });
+    r.quitar = el("button", { type: "button", clase: "ae-boton", texto: "Quitar" });
+    r.problemas = el("ul", { clase: "ij-problemas" });
+    r.sexo.value = e.sexo;
+    r.docTipo.value = e.docTipo;
+    r.condicion.value = e.suplente ? "s" : "t";
+    if (t.torneo === "w") { r.sexo.value = "w"; r.sexo.disabled = true; }
+    const campo = (txt, control, extra) => el("div", { clase: "ij-campo" + (extra ? " " + extra : "") }, el("label", { para: control.id, clase: "ij-et", texto: txt }), control);
+
+    r.nombre.addEventListener("input", () => { e.nombre = r.nombre.value; cambio(); });
+    r.sexo.addEventListener("change", () => conTopes(() => { e.sexo = r.sexo.value; }));
+    r.nacimiento.addEventListener("change", () => conTopes(() => { e.nacimiento = I.anioDe(r.nacimiento.value) ? r.nacimiento.value : ""; }));
+    r.condicion.addEventListener("change", () => conTopes(() => { e.suplente = r.condicion.value === "s"; }));
+    r.docTipo.addEventListener("change", () => { e.docTipo = r.docTipo.value; cambio(); });
+    r.documento.addEventListener("input", () => { e.documento = r.documento.value; cambio(); });
+    r.apoyo.addEventListener("change", () => { e.apoyo = r.apoyo.checked; cambio(); });
+    r.sacar.addEventListener("click", () => {
+      const res = I.sacarDelEquipo(estado, e.id);
+      if (!res.ok) avisar(res.motivos[0], "error");
+      repintarTodo();
+      cambio();
+    });
+    r.quitar.addEventListener("click", () => {
+      estado.estudiantes = estado.estudiantes.filter((x) => x !== e);
+      repintarTodo();
+      cambio();
+      const q = refsEq.get(t.id);
+      if (q) q.mas.focus();
+    });
+
+    r.tarjeta = el("div", { clase: "ij-miembro", role: "group", "aria-labelledby": id + "-h" },
+      el("div", { clase: "ij-cabecera" }, r.titulo, r.sube, r.estadoTxt),
+      el("div", { clase: "ij-rejilla" },
+        campo("Nombre completo", r.nombre, "ij-ancho"), campo("Sexo", r.sexo), campo("Fecha de nacimiento", r.nacimiento), campo("Condición", r.condicion),
+        campo("Documento de identificación", r.docTipo), el("div", { clase: "ij-campo" }, el("label", { para: id + "-d", clase: "ij-et", texto: "Número" }), r.documento),
+        el("div", { clase: "ij-campo" }, el("label", { clase: "ij-casilla" }, r.apoyo, " Necesita apoyos por discapacidad (art. 66.2.i)"))),
+      r.problemas,
+      el("div", { clase: "flex flex-wrap gap-3" }, r.sacar, r.quitar));
+    return r;
+  }
+
+  function crearEquipoUI(t) {
+    const id = "ij-q-" + t.id;
+    const r = { id };
+    r.titulo = el("h3", { clase: "font-semibold", id: id + "-h" });
+    r.estadoTxt = el("span", { clase: "ij-chip" });
+    r.quitar = el("button", { type: "button", clase: "ae-boton", texto: "Quitar el equipo" });
+    r.resumen = el("p", { clase: "ij-ayuda", id: id + "-r" });
+    r.problemas = el("ul", { clase: "ij-problemas" });
+    r.miembros = el("div", { clase: "grid gap-3" });
+    r.mas = el("button", { type: "button", clase: "ae-boton ij-primario", texto: "+ Integrante nuevo" });
+    r.aviso = el("p", { clase: "ij-ayuda", role: "status", "aria-live": "polite" });
+    r.pasar = el("select", { id: id + "-p", clase: "ae-control w-full" });
+    r.pasarEt = el("label", { para: id + "-p", clase: "ij-et", texto: "Pasar a este equipo a un estudiante individual" });
+
+    r.mas.addEventListener("click", () => {
+      if (estado.estudiantes.length >= MAX_ESTUDIANTES) { r.aviso.textContent = "Caben " + MAX_ESTUDIANTES + " estudiantes por inscripción."; return; }
+      const res = I.agregarIntegrante(estado, t.id, {});
+      if (!res.ok) { r.aviso.textContent = res.motivos[0]; return; }
+      r.aviso.textContent = "";
+      pintarEquipos();
+      cambio();
+      const m = refsMiembro.get(res.resultado.id);
+      if (m) m.nombre.focus();
+    });
+    r.pasar.addEventListener("change", () => {
+      const e = estado.estudiantes.find((x) => x.id === r.pasar.value);
+      if (!e) return;
+      const res = I.agregarIntegrante(estado, t.id, null, e);
+      if (!res.ok) avisar(res.motivos[0], "error");
+      repintarTodo();
+      cambio();
+    });
+    r.quitar.addEventListener("click", async () => {
+      const n = estado.estudiantes.filter((e) => e.equipoId === t.id && e.nombre.trim()).length;
+      const dice = n ? "Se quita el equipo con sus " + plural(n, "integrante", "integrantes") + ". ¿Seguimos?" : "Se quita el equipo. ¿Seguimos?";
+      if (!(await window.Avisos.confirmar(dice, { aceptar: "Quitar el equipo", cancelar: "Cancelar", peligro: true }))) return;
+      I.quitarEquipo(estado, t.id);
+      repintarTodo();
+      cambio();
+      $("ij-eq-crear").focus();
+    });
+
+    r.tarjeta = el("article", { clase: "ij-equipo-tarjeta", "aria-labelledby": id + "-h" },
+      el("div", { clase: "ij-cabecera" }, r.titulo, r.estadoTxt, r.quitar),
+      r.resumen, r.problemas, r.miembros,
+      el("div", { clase: "flex flex-wrap gap-3 items-end" }, r.mas, el("div", { clase: "ij-campo", style: "min-width:14rem;flex:1 1 14rem" }, r.pasarEt, r.pasar)),
+      r.aviso);
+    return r;
+  }
+
+  function pintarEquipos() {
+    const caja = $("ij-equipos-lista");
+    caja.textContent = "";
+    refsEq.clear();
+    refsMiembro.clear();
+    const orden = estado.equipos.slice().sort((a, b) => a.categoria.localeCompare(b.categoria) || (a.torneo === "w" ? -1 : 1) - (b.torneo === "w" ? -1 : 1) || a.numero - b.numero);
+    for (const t of orden) {
+      const r = crearEquipoUI(t);
+      refsEq.set(t.id, r);
+      const miembros = estado.estudiantes.filter((e) => e.equipoId === t.id).sort((a, b) => Number(!!a.suplente) - Number(!!b.suplente));
+      for (const e of miembros) {
+        const m = crearMiembroUI(e, t);
+        refsMiembro.set(e.id, m);
+        r.miembros.append(m.tarjeta);
+      }
+      caja.append(r.tarjeta);
+    }
+    $("ij-eq-vacio").hidden = estado.equipos.length > 0;
+  }
+
+  // Los textos que dependen de otros datos: el conteo, los problemas, qué botones valen.
+  function actualizarEquipos(porId) {
+    for (const t of estado.equipos) {
+      const r = refsEq.get(t.id);
+      if (!r) continue;
+      const ep = I.estadoDelEquipo(estado, t);
+      const miembros = estado.estudiantes.filter((e) => e.equipoId === t.id);
+      const ids = new Set(miembros.map((e) => e.id));
+      const sinLlenar = miembros.filter((e) => !e.nombre.trim() && !e.nacimiento && !e.documento.trim()).length;
+      r.titulo.textContent = nombreEquipo(t);
+      r.quitar.setAttribute("aria-label", "Quitar el " + nombreEquipo(t).toLowerCase());
+      const lleno = ep.caben === 0;
+      r.mas.setAttribute("aria-disabled", String(lleno));
+      r.mas.classList.toggle("ij-apagado", lleno);
+      r.mas.setAttribute("aria-describedby", r.resumen.id);
+      r.resumen.textContent = ep.integrantes + " de " + I.TOPE_EQUIPO + " integrantes · " + plural(ep.titulares, "titular", "titulares") + (ep.suplentes ? " · 1 suplente" : "")
+        + (lleno ? ". El equipo está completo: no caben más (art. 66.1.g)." : ".")
+        + (sinLlenar ? " " + plural(sinLlenar, "lugar sin llenar", "lugares sin llenar") + "." : "");
+      // Los problemas que tocan a varios del equipo se dicen una vez, arriba.
+      const vistos = new Set();
+      const delEquipo = [];
+      for (const e of miembros) for (const p of porId.get(e.id) || []) {
+        if (p.ids.length > 1 && p.ids.every((x) => ids.has(x)) && !vistos.has(p)) { vistos.add(p); delEquipo.push(p); }
+      }
+      r.problemas.textContent = "";
+      for (const p of delEquipo) r.problemas.append(el("li", { clase: "ij-hallazgo ij-" + p.nivel }, el("strong", { clase: "ij-etiqueta", texto: p.nivel === "error" ? "Error:" : "Aviso:" }), " " + p.texto + (p.art ? " (" + p.art + ")" : "")));
+      const errores = delEquipo.filter((p) => p.nivel === "error").length + miembros.reduce((s, e) => s + (porId.get(e.id) || []).filter((p) => p.nivel === "error" && p.ids.length === 1).length, 0);
+      const avisos = delEquipo.length - delEquipo.filter((p) => p.nivel === "error").length;
+      const pendiente = sinLlenar > 0 || ep.integrantes - sinLlenar < I.MIN_EQUIPO;
+      r.estadoTxt.textContent = errores ? plural(errores, "error por corregir", "errores por corregir") : avisos || pendiente ? (sinLlenar ? "Faltan datos" : "Con avisos") : "Listo";
+      r.estadoTxt.dataset.estado = errores ? "error" : avisos || pendiente ? "aviso" : "ok";
+      r.tarjeta.dataset.estado = r.estadoTxt.dataset.estado;
+      // Los individuales que podrían pasar a este equipo.
+      const solos = estado.estudiantes.filter((e) => !e.equipoId && e.nombre.trim());
+      opcionesDe(r.pasar, [{ valor: "", texto: solos.length ? "— Elige a quién —" : "No hay estudiantes individuales con nombre" }].concat(solos.map((e) => ({ valor: e.id, texto: e.nombre.trim() }))), "");
+      r.pasar.disabled = lleno || !solos.length;
+
+      miembros.forEach((e, n) => {
+        const m = refsMiembro.get(e.id);
+        if (!m) return;
+        m.titulo.textContent = (e.suplente ? "Suplente" : "Titular") + ": " + (e.nombre.trim() || "integrante " + (n + 1));
+        m.quitar.setAttribute("aria-label", "Quitar a " + (e.nombre.trim() || "el integrante " + (n + 1)) + " del equipo");
+        m.sacar.setAttribute("aria-label", "Pasar a " + (e.nombre.trim() || "el integrante " + (n + 1)) + " a individual");
+        const propios = (porId.get(e.id) || []).filter((p) => p.ids.length === 1);
+        m.problemas.textContent = "";
+        for (const p of propios) m.problemas.append(el("li", { clase: "ij-hallazgo ij-" + p.nivel }, el("strong", { clase: "ij-etiqueta", texto: p.nivel === "error" ? "Error:" : "Aviso:" }), " " + p.texto + (p.art ? " (" + p.art + ")" : "")));
+        const err = propios.filter((p) => p.nivel === "error").length;
+        m.estadoTxt.textContent = err ? plural(err, "error", "errores") : propios.length ? "Con avisos" : e.nombre.trim() ? "Listo" : "Sin llenar";
+        m.estadoTxt.dataset.estado = err ? "error" : propios.length || !e.nombre.trim() ? "aviso" : "ok";
+        const ops = G.categoriasDeNacimiento(I.anioDe(e.nacimiento), estado.anio);
+        m.sube.textContent = ops.length && I.puedeJugarEn(ops, t.categoria) === "sube" ? "Sube de categoría (art. 18)" : "";
+        m.sexo.value = t.torneo === "w" ? "w" : e.sexo;
+        m.condicion.value = e.suplente ? "s" : "t";
+      });
+    }
+  }
 
   // ------------------------------------------------------------- traer y pegar
   function abrirCaja(idCaja, idBoton, abrir) {
@@ -445,13 +641,19 @@
     });
     lista._candidatos = candidatos;
   }
+  // Agrega una lista a la inscripción sin pasarse de lo permitido: cada persona entra
+  // si cabe (individual o en su equipo) y las que no caben se dicen con su motivo.
   function agregarEstudiantes(nuevos) {
-    const sitio = MAX_ESTUDIANTES - estado.estudiantes.length;
-    if (nuevos.length > sitio) { avisar("Caben " + MAX_ESTUDIANTES + " estudiantes por inscripción: se agregaron los primeros " + Math.max(sitio, 0) + ".", "info"); nuevos = nuevos.slice(0, Math.max(sitio, 0)); }
-    estado.estudiantes.push(...nuevos);
-    pintarEstudiantes();
+    const sitio = Math.max(MAX_ESTUDIANTES - estado.estudiantes.length, 0);
+    if (nuevos.length > sitio) { avisar("Caben " + MAX_ESTUDIANTES + " estudiantes por inscripción: se intentaron los primeros " + sitio + ".", "info"); nuevos = nuevos.slice(0, sitio); }
+    const res = I.agregarLista(estado, nuevos);
+    repintarTodo();
     cambio();
-    return nuevos.length;
+    if (res.rechazados.length) {
+      const muestra = res.rechazados.slice(0, 3).map((x) => x.nombre + ": " + x.motivo).join(" · ");
+      avisar("No se agregaron " + plural(res.rechazados.length, "estudiante", "estudiantes") + " porque no cabían: " + muestra + (res.rechazados.length > 3 ? " …" : ""), "error");
+    }
+    return res.agregados.length;
   }
 
   // ------------------------------------------------------------------- revisión
@@ -475,23 +677,13 @@
     const filas = I.resumen(estado);
     if (!filas.length) cuerpo.append(el("tr", {}, el("td", { colSpan: 5, clase: "ij-ayuda", texto: "Sin estudiantes con categoría todavía." })));
     for (const f of filas) cuerpo.append(el("tr", {}, el("th", { scope: "row", texto: "Categoría " + f.categoria }), ...[f.indMujeres, f.indAbierto, f.eqMujeres, f.eqAbierto].map((n) => el("td", { clase: "ae-n", texto: String(n) }))));
-    const caja = $("ij-equipos");
-    caja.textContent = "";
-    for (const q of r.equipos) {
-      const n = q.integrantes.length;
-      const fuera = n < 3 ? " — faltan " + (3 - n) : n > 5 ? " — sobran " + (n - 5) : "";
-      caja.append(el("div", { clase: "ij-equipo" },
-        el("h3", { clase: "font-semibold", texto: "Equipo " + I.NOMBRE_TORNEO[q.torneo] + " · categoría " + q.categoria + (q.numero === 2 ? " (equipo 2)" : "") }),
-        el("p", { clase: "ij-ayuda", texto: plural(n, "integrante", "integrantes") + fuera }),
-        el("ol", { clase: "ij-orden" }, ...q.integrantes.map((j) => el("li", { texto: j.nombre + (j.suplente ? " (suplente)" : "") + (j.alAbierto ? " (pasó del equipo de Mujeres)" : "") })))));
-    }
   }
 
   function pintarCifras(r) {
     const con = estado.estudiantes.filter((e) => e.nombre.trim());
     $("ij-c1").textContent = String(con.length);
     $("ij-c1-nota").textContent = con.length ? plural(con.filter((e) => e.sexo === "w").length, "mujer", "mujeres") + " · " + plural(con.filter((e) => e.sexo === "m").length, "hombre", "hombres") : "todavía no hay ninguno";
-    $("ij-c2").textContent = String(r.equipos.length);
+    $("ij-c2").textContent = String(estado.equipos.length);
     $("ij-c3").textContent = String(r.errores);
     $("ij-c3-nota").textContent = r.errores ? "errores que impiden inscribir" : "nada que impida inscribir";
     $("ij-c4").textContent = String(r.avisos);
@@ -503,6 +695,8 @@
     const porId = new Map();
     for (const h of r.hallazgos) for (const id of h.ids) { if (!porId.has(id)) porId.set(id, []); porId.get(id).push(h); }
     actualizarCentro();
+    llenarCategoriasEquipo();
+    actualizarEquipos(porId);
     actualizarTarjetas(porId);
     pintarRevision(r);
     pintarResumen(r);
@@ -528,6 +722,7 @@
     const etapa = (I.ETAPAS.find((x) => x.id === estado.etapa) || {}).nombre;
     window.TablaExcel.bajar(nombreArchivo("xlsx"), [
       { nombre: "Inscripción", filas: [I.ENCABEZADOS].concat(I.filasExcel(estado)) },
+      { nombre: "Equipos", filas: [I.ENCABEZADOS_EQUIPOS].concat(I.filasEquipos(estado)) },
       { nombre: "Cuerpo técnico", filas: [["Nombre", "Cargo", "Sexo", "Persona funcionaria", "Teléfono"]].concat(estado.cuerpo.filter((p) => p.nombre.trim()).map((p) => [p.nombre.trim(), p.rol === "jefe" ? "Jefatura de delegación" : "Cuerpo técnico", p.sexo === "w" ? "MUJER" : p.sexo === "m" ? "HOMBRE" : "", p.funcionario ? "Sí" : "No", p.telefono])) },
       { nombre: "Delegación", filas: [["Dato", "Valor"], ["Año de los JDE", String(estado.anio)], ["Etapa", etapa || ""], ["Centro educativo", c.nombre], ["Dirección Regional", c.region], ["Circuito", c.circuito], ["Correo", c.correo], ["Teléfono", c.telefono], ["Centros unidos (art. 19)", c.union.activa ? c.union.centros : ""]] },
     ]);
@@ -554,8 +749,8 @@
     const fila = (j, n, extra) => [String(n + 1), j.nombre, j.sexo === "w" ? "Mujer" : j.sexo === "m" ? "Hombre" : "", fechaCorta(j.nacimiento), j.documento || ""].concat(extra);
     const individuales = new Map();
     for (const e of estado.estudiantes) {
-      if (e.modalidad === "equipo" || !e.nombre.trim()) continue;
-      const k = (I.categoriaEfectiva(e, estado) || "?") + "|" + I.torneoEfectivo(e);
+      if (e.equipoId || !e.nombre.trim()) continue;
+      const k = (I.categoriaEfectiva(e, estado) || "?") + "|" + I.torneoEfectivo(e, estado);
       if (!individuales.has(k)) individuales.set(k, []);
       individuales.get(k).push(e);
     }
@@ -570,7 +765,7 @@
     bloques.push({ tipo: "titulo", texto: "Torneo por equipos" });
     if (!r.equipos.length) bloques.push({ tipo: "nota", texto: "Sin equipos." });
     for (const q of r.equipos) {
-      bloques.push({ tipo: "subtitulo", texto: "Equipo " + I.NOMBRE_TORNEO[q.torneo] + " · categoría " + q.categoria + (q.numero === 2 ? " (equipo 2)" : "") + " — " + plural(q.integrantes.length, "integrante", "integrantes") });
+      bloques.push({ tipo: "subtitulo", texto: "Equipo " + I.NOMBRE_TORNEO[q.torneo] + " · categoría " + q.categoria + (q.numero > 1 ? " (equipo " + q.numero + ")" : "") + " — " + plural(q.integrantes.length, "integrante", "integrantes") });
       bloques.push({ tipo: "tabla", encabezados: ["N.°", "Nombre", "Sexo", "Nacimiento", "Documento", "Condición"], anchos: [0.8, 5, 1.4, 2, 2.6, 1.8],
         filas: q.integrantes.map((j, n) => fila(j, n, [j.suplente ? "Suplente" : "Titular"])) });
     }
@@ -619,7 +814,7 @@
     cerrarLista();
     iniciarCentro();
     pintarCuerpo();
-    pintarEstudiantes();
+    repintarTodo();
     cambio();
   }
 
@@ -657,6 +852,23 @@
       const n = agregarEstudiantes(nuevos);
       avisar("Se agregaron " + plural(n, "estudiante", "estudiantes") + ". Revisa el sexo y la fecha de nacimiento de cada uno.");
     } catch (err) { avisar("No se pudo leer el archivo: " + (err.message || err), "error"); }
+  }
+
+  // «Crear el equipo»: el equipo con cuatro lugares de titulares vacíos. Si el centro ya
+  // tiene los equipos que permite la Normativa en esa categoría y torneo, no se crea.
+  function crearEquipoDesdeFormulario() {
+    const estadoTxt = $("ij-eq-estado");
+    const cat = $("ij-eq-categoria").value;
+    const torneo = $("ij-eq-torneo").value === "w" ? "w" : "m";
+    if (estado.estudiantes.length + 4 > MAX_ESTUDIANTES) { estadoTxt.textContent = "Caben " + MAX_ESTUDIANTES + " estudiantes por inscripción."; return; }
+    const res = I.crearEquipo(estado, cat, torneo);
+    if (!res.ok) { estadoTxt.textContent = res.motivos[0]; avisar(res.motivos[0], "error"); return; }
+    for (let i = 0; i < 4; i++) I.agregarIntegrante(estado, res.resultado.id, {});
+    estadoTxt.textContent = "Se creó: " + nombreEquipo(res.resultado) + ", con cuatro lugares de titulares.";
+    pintarEquipos();
+    cambio();
+    const m = estado.estudiantes.find((e) => e.equipoId === res.resultado.id);
+    if (m && refsMiembro.get(m.id)) refsMiembro.get(m.id).nombre.focus();
   }
 
   // ----------------------------------------------------------------------- inicio
@@ -725,7 +937,8 @@
     pintarNormaCategorias();
     iniciarCentro();
     pintarCuerpo();
-    pintarEstudiantes();
+    $("ij-eq-crear").addEventListener("click", crearEquipoDesdeFormulario);
+    repintarTodo();
     refrescar();
     cargarBanco();
   }

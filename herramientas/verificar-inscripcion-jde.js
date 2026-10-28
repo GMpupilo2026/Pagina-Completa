@@ -52,6 +52,13 @@ function est(nombre, sexo, nacimiento, extra) {
   n += 1;
   return I.estudianteNuevo(Object.assign({ nombre, sexo, nacimiento, modalidad: "individual", documento: "1-0000-" + String(1000 + n) }, extra));
 }
+// Un equipo con sus integrantes ya dentro (como lo arma la pantalla).
+function equipoCon(e, categoria, torneo, miembros, numero) {
+  const t = I.equipoNuevo({ categoria, torneo, numero: numero || 1 });
+  e.equipos.push(t);
+  for (const m of miembros) { m.equipoId = t.id; m.modalidad = "equipo"; e.estudiantes.push(m); }
+  return t;
+}
 const textos = (e, nivel) => I.revisar(e, "2026-10-28").hallazgos.filter((h) => !nivel || h.nivel === nivel).map((h) => h.texto);
 const hay = (e, nivel, re) => textos(e, nivel).some((t) => re.test(t));
 
@@ -89,34 +96,30 @@ function reglas() {
   console.log("\nSubir de categoría (art. 18):");
   {
     const e = base();
-    const x = est("Dario Quesada", "m", "2011-02-02", { modalidad: "equipo", categoria: "E" });
-    e.estudiantes.push(x, est("Fer Mata", "m", "2008-02-02", { modalidad: "equipo" }), est("Gil Mata", "m", "2007-02-02", { modalidad: "equipo" }));
+    const x = est("Dario Quesada", "m", "2011-02-02");
+    const t = equipoCon(e, "E", "m", [x, est("Fer Mata", "m", "2008-02-02"), est("Gil Mata", "m", "2007-02-02")]);
     cierto("D a E en equipo, permitido: solo aviso", !hay(e, "error", /categoría E/) && hay(e, "aviso", /sube de la categoría D a la E/));
-    igual("las categorías que ofrece: la suya y la de arriba", I.categoriasPosibles(x, e).lista.sort(), ["D", "E"]);
-    x.modalidad = "individual";
-    igual("en individual solo ofrece la suya", I.categoriasPosibles(Object.assign({}, x, { categoria: "" }), e).lista, ["D"]);
-    cierto("en individual, subir es error", hay(e, "error", /en individual no se sube/));
-    x.modalidad = "equipo"; x.categoria = "";
-    const y = est("Ya Cabe", "m", "2011-02-02", { modalidad: "equipo", categoria: "E" });
-    const z = est("Tambien", "m", "2010-02-02", { modalidad: "equipo", categoria: "E" });
-    const w = est("Cuarto", "m", "2010-03-02", { modalidad: "equipo", categoria: "E" });
-    e.estudiantes.push(y, z, w);
-    cierto("el cuarto que sube en el mismo equipo pasa el tope de tres", hay(e, "error", /subidos a la categoría E/) === false);
-    x.categoria = "E";
+    igual("juega en la categoría del equipo", I.categoriaEfectiva(x, e), "E");
+    igual("quien nació en D puede jugar en un equipo D (propia) o E (sube)", [I.puedeJugarEn(["D"], "D"), I.puedeJugarEn(["D"], "E"), I.puedeJugarEn(["D"], "B")], ["propia", "sube", ""]);
+    igual("en individual solo ofrece la suya", I.categoriasPosibles(est("Solo", "m", "2011-02-02"), e).lista, ["D"]);
+    const y = est("Ya Cabe", "m", "2011-02-02"), z = est("Tambien", "m", "2010-02-02"), w = est("Cuarto", "m", "2010-03-02");
+    for (const m of [y, z]) { m.equipoId = t.id; e.estudiantes.push(m); }
+    cierto("tres que suben en el mismo equipo: dentro del tope", !hay(e, "error", /subidos a la categoría E/));
+    w.equipoId = t.id; e.estudiantes.push(w);
     cierto("con cuatro subidas hay error de tope", hay(e, "error", /subidos a la categoría E en el mismo equipo; el máximo son 3/));
-    const s = base();
-    s.estudiantes.push(est("Salta", "m", "2016-01-01", { modalidad: "equipo", categoria: "D" }));
-    cierto("saltar de B a D no se permite", hay(s, "error", /solo se sube de A a B, de C a D y de D a E/));
-    const m = base();
-    m.estudiantes.push(est("Mayor", "m", "2005-01-01", { modalidad: "equipo", categoria: "D" }));
-    cierto("nacer antes de lo que permite la categoría es error", hay(m, "error", /es para nacidos desde 2009/));
+    const s2 = base();
+    equipoCon(s2, "D", "m", [est("Salta", "m", "2016-01-01")]);
+    cierto("saltar de B a D no se permite", hay(s2, "error", /solo se sube de A a B, de C a D y de D a E/));
+    const m2 = base();
+    equipoCon(m2, "D", "m", [est("Mayor", "m", "2005-01-01")]);
+    cierto("nacer antes de lo que permite la categoría es error", hay(m2, "error", /es para nacidos desde 2009/));
   }
 
   console.log("\nUnir centros (art. 19):");
   {
     const e = base();
     e.centro.union = { activa: true, centros: "Escuela A, Escuela B", matricula: "350" };
-    e.estudiantes.push(est("Sube Uno", "m", "2011-02-02", { modalidad: "equipo", categoria: "E" }));
+    equipoCon(e, "E", "m", [est("Sube Uno", "m", "2011-02-02")]);
     cierto("más de 300 de matrícula es error", hay(e, "error", /suma 350 y no puede pasar de 300/));
     cierto("unir centros y subir de categoría es error", hay(e, "error", /no puede usar el ascenso/));
     e.centro.union.matricula = "";
@@ -142,16 +145,17 @@ function reglas() {
     const e = base();
     const h = est("Hombre Mujeres", "m", "2012-05-04", { torneo: "w" });
     e.estudiantes.push(h);
-    cierto("un hombre en el torneo de Mujeres es error (se lee como Abierto en la revisión de grupos)", I.torneoEfectivo(Object.assign({}, h, { torneo: "" })) === "m");
+    cierto("un hombre en el torneo de Mujeres es error (se lee como Abierto en la revisión de grupos)", I.torneoEfectivo(Object.assign({}, h, { torneo: "" }), e) === "m");
     const j = est("Mujer Abierto", "w", "2012-05-04", { torneo: "m" });
-    igual("una mujer puede jugar el Abierto", I.torneoEfectivo(j), "m");
-    igual("y por omisión juega el de Mujeres", I.torneoEfectivo(est("Mujer Sola", "w", "2012-05-04")), "w");
+    igual("una mujer puede jugar el Abierto", I.torneoEfectivo(j, e), "m");
+    igual("y por omisión juega el de Mujeres", I.torneoEfectivo(est("Mujer Sola", "w", "2012-05-04"), e), "w");
     const d = base();
     const a = est("Repetida Uno", "w", "2012-05-04", { documento: "9-9999-9999" });
     const b = est("Repetida Uno", "w", "2012-05-04", { documento: "9-9999-9999" });
     d.estudiantes.push(a, b);
     cierto("dos filas de la misma persona y modalidad: error", hay(d, "error", /aparece 2 veces/));
-    b.modalidad = "equipo";
+    d.estudiantes.splice(d.estudiantes.indexOf(b), 1);
+    equipoCon(d, "C", "m", [b]);
     cierto("la misma persona en individual y en equipo: error del art. 66.1.h", hay(d, "error", /una persona estudiante puede participar únicamente en una modalidad/));
   }
 
@@ -164,31 +168,116 @@ function reglas() {
     e.etapa = "institucional";
     cierto("en la Institucional es solo un aviso (puede jugar toda la población)", !hay(e, "error", /clasificar dos/) && hay(e, "aviso", /solo clasifican dos a la Regional/));
     const q = base();
-    for (let i = 0; i < 6; i++) q.estudiantes.push(est("Equipo " + "ABCDEF"[i], "m", "2011-0" + (i + 1) + "-01", { modalidad: "equipo" }));
+    equipoCon(q, "D", "m", ["A", "B", "C", "D", "E", "F"].map((l, i2) => est("Equipo " + l, "m", "2011-0" + (i2 + 1) + "-01")));
     cierto("seis en un equipo: error, el máximo son cinco", hay(q, "error", /tiene 6 integrantes y el máximo son 5/));
     const c = base();
-    c.estudiantes.push(est("Cu Uno", "m", "2011-01-01", { modalidad: "equipo" }), est("Cu Dos", "m", "2011-02-01", { modalidad: "equipo" }));
+    equipoCon(c, "D", "m", [est("Cu Uno", "m", "2011-01-01"), est("Cu Dos", "m", "2011-02-01")]);
     cierto("dos en un equipo: error en la Regional", hay(c, "error", /tiene 2 integrantes y el mínimo son 3/));
     c.etapa = "institucional";
     cierto("y solo aviso en la Institucional", !hay(c, "error", /el mínimo son 3/) && hay(c, "aviso", /el mínimo son 3/));
     const m = base();
-    m.estudiantes.push(est("Muj Uno", "w", "2011-01-01", { modalidad: "equipo" }), est("Muj Dos", "w", "2011-02-01", { modalidad: "equipo" }),
-      est("Ab Uno", "m", "2011-03-01", { modalidad: "equipo" }), est("Ab Dos", "m", "2011-04-01", { modalidad: "equipo" }), est("Ab Tres", "m", "2011-05-01", { modalidad: "equipo" }));
+    equipoCon(m, "D", "w", [est("Muj Uno", "w", "2011-01-01"), est("Muj Dos", "w", "2011-02-01")]);
+    equipoCon(m, "D", "m", [est("Ab Uno", "m", "2011-03-01"), est("Ab Dos", "m", "2011-04-01"), est("Ab Tres", "m", "2011-05-01")]);
     cierto("dos mujeres de equipo con equipo abierto en la categoría: pasan al Abierto, solo aviso", !hay(m, "error", /equipo/) && hay(m, "aviso", /las pasa al equipo Abierto/));
-    const s = base();
-    s.estudiantes.push(est("Sin Ab Uno", "w", "2011-01-01", { modalidad: "equipo" }), est("Sin Ab Dos", "w", "2011-02-01", { modalidad: "equipo" }));
-    cierto("dos mujeres sin equipo abierto adonde pasar: error", hay(s, "error", /no hay equipo Abierto de esa categoría/));
+    const s2 = base();
+    equipoCon(s2, "D", "w", [est("Sin Ab Uno", "w", "2011-01-01"), est("Sin Ab Dos", "w", "2011-02-01")]);
+    cierto("dos mujeres sin equipo abierto adonde pasar: error", hay(s2, "error", /no hay equipo Abierto de esa categoría/));
     const t = base();
-    for (let i = 0; i < 5; i++) t.estudiantes.push(est("Cinco " + i, "m", "2011-0" + (i + 1) + "-01", { modalidad: "equipo", suplente: i === 4 }));
+    const cinco = [0, 1, 2, 3, 4].map((i2) => est("Cinco " + i2, "m", "2011-0" + (i2 + 1) + "-01", { suplente: i2 === 4 }));
+    equipoCon(t, "D", "m", cinco);
     cierto("cinco con una suplente: sin errores ni avisos de suplente", !hay(t, null, /suplente/));
-    t.estudiantes[3].suplente = true;
+    cinco[3].suplente = true;
     cierto("dos suplentes marcadas: error", hay(t, "error", /2 suplentes marcadas/));
-    t.estudiantes[3].suplente = false; t.estudiantes[4].suplente = false;
+    cinco[3].suplente = false; cinco[4].suplente = false;
     cierto("cinco y ninguna suplente: aviso", hay(t, "aviso", /marca cuál es la suplente/));
     const dos = base();
-    for (let i = 0; i < 3; i++) dos.estudiantes.push(est("Eq1 " + i, "m", "2011-0" + (i + 1) + "-01", { modalidad: "equipo" }), est("Eq2 " + i, "m", "2011-0" + (i + 1) + "-15", { modalidad: "equipo", equipo: 2 }));
-    igual("dos equipos del mismo centro, categoría y torneo se arman aparte", I.revisar(dos, "2026-10-28").equipos.map((q) => [q.categoria, q.torneo, q.numero, q.integrantes.length]), [["D", "m", 1, 3], ["D", "m", 2, 3]]);
+    equipoCon(dos, "D", "m", [0, 1, 2].map((i2) => est("Eq1 " + i2, "m", "2011-0" + (i2 + 1) + "-01")), 1);
+    equipoCon(dos, "D", "m", [0, 1, 2].map((i2) => est("Eq2 " + i2, "m", "2011-0" + (i2 + 1) + "-15")), 2);
+    igual("dos equipos del mismo centro, categoría y torneo se arman aparte", I.revisar(dos, "2026-10-28").equipos.map((q2) => [q2.categoria, q2.torneo, q2.numero, q2.integrantes.length]), [["D", "m", 1, 3], ["D", "m", 2, 3]]);
     cierto("y ninguno falla por la cuenta", !hay(dos, "error", /integrantes/));
+    const vacio = base();
+    vacio.equipos.push(I.equipoNuevo({ categoria: "D", torneo: "m" }));
+    cierto("un equipo creado y sin nadie: error en la Regional", hay(vacio, "error", /no tiene integrantes todavía/));
+  }
+
+  console.log("\nLos topes: lo que la herramienta no deja agregar (art. 17, 18, 19, 53 y 66):");
+  {
+    const alDia = (e) => I.limites(e).map((v) => v.clave);
+    // Un equipo se llena hasta cinco: cuatro titulares y una suplente; el sexto no cabe.
+    const e = base();
+    const t = I.crearEquipo(e, "D", "m").resultado;
+    for (let k = 0; k < 4; k++) igual("integrante " + (k + 1) + " entra como titular", [I.agregarIntegrante(e, t.id, { nombre: "Titular " + k, sexo: "m", nacimiento: "2011-0" + (k + 1) + "-01" }).ok, e.estudiantes[e.estudiantes.length - 1].suplente], [true, false]);
+    const quinto = I.agregarIntegrante(e, t.id, { nombre: "Quinta", sexo: "m", nacimiento: "2011-09-01" });
+    igual("el quinto queda como suplente", [quinto.ok, quinto.resultado.suplente], [true, true]);
+    const antes = JSON.stringify(e);
+    const sexto = I.agregarIntegrante(e, t.id, { nombre: "Sexto", sexo: "m", nacimiento: "2011-10-01" });
+    cierto("el sexto se rechaza y dice por qué", !sexto.ok && /ya tiene 5 integrantes/.test(sexto.motivos[0]), JSON.stringify(sexto.motivos));
+    cierto("y no queda ningún rastro: la inscripción es la misma", JSON.stringify(e) === antes);
+    igual("el estado del equipo: 5, cuatro titulares y una suplente, ya no caben", [I.estadoDelEquipo(e, t).integrantes, I.estadoDelEquipo(e, t).titulares, I.estadoDelEquipo(e, t).suplentes, I.estadoDelEquipo(e, t).caben], [5, 4, 1, 0]);
+    // Dos equipos por categoría y torneo; el tercero no.
+    const dos = I.crearEquipo(e, "D", "m");
+    igual("el segundo equipo Abierto de la D recibe el número 2", [dos.ok, dos.resultado.numero], [true, 2]);
+    const tres = I.crearEquipo(e, "D", "m");
+    cierto("el tercero se rechaza en la Regional (art. 66.1.g)", !tres.ok && /máximo por centro desde la Etapa Regional/.test(tres.motivos[0]) && e.equipos.length === 2);
+    e.etapa = "institucional";
+    cierto("pero en la Institucional (toda la población) sí cabe", I.crearEquipo(e, "D", "m").ok);
+    e.etapa = "interregional";
+    cierto("en la Interregional solo juegan las categorías B y D: un equipo C no se crea", !I.crearEquipo(e, "C", "m").ok);
+    // Hombre en el equipo de Mujeres; edad; ascensos; unión.
+    const f = base(); f.etapa = "regional";
+    const mu = I.crearEquipo(f, "C", "w").resultado;
+    cierto("un hombre no entra al equipo de Mujeres", !I.agregarIntegrante(f, mu.id, { nombre: "Hombre", sexo: "m", nacimiento: "2012-01-01" }).ok);
+    igual("sin decir el sexo, en el equipo de Mujeres entra como mujer", I.agregarIntegrante(f, mu.id, { nombre: "Sin Sexo", nacimiento: "2012-02-02" }).resultado.sexo, "w");
+    const d = base();
+    const td = I.crearEquipo(d, "D", "m").resultado;
+    cierto("quien nació en 2006 no puede jugar la D", !I.agregarIntegrante(d, td.id, { nombre: "Grande", sexo: "m", nacimiento: "2006-01-01" }).ok);
+    cierto("quien nació en 2012 (C) sube a la D", I.agregarIntegrante(d, td.id, { nombre: "Sube1", sexo: "m", nacimiento: "2012-01-01" }).ok);
+    cierto("quien nació en 2016 (B) no salta a la D", !I.agregarIntegrante(d, td.id, { nombre: "Salta", sexo: "m", nacimiento: "2016-01-01" }).ok);
+    for (let k = 2; k <= 3; k++) I.agregarIntegrante(d, td.id, { nombre: "Sube" + k, sexo: "m", nacimiento: "2012-0" + k + "-01" });
+    const cuarto = I.agregarIntegrante(d, td.id, { nombre: "Sube4", sexo: "m", nacimiento: "2012-04-01" });
+    cierto("el cuarto que sube se rechaza: máximo tres por equipo (art. 18)", !cuarto.ok && /ya tiene 3 estudiantes subidos/.test(cuarto.motivos[0]), JSON.stringify(cuarto.motivos));
+    d.centro.union = { activa: true, centros: "A, B", matricula: "200" };
+    cierto("un centro unido no puede subir a nadie (art. 19.f)", !I.agregarIntegrante(d, td.id, { nombre: "Otro Sube", sexo: "m", nacimiento: "2012-05-01" }).ok);
+    // Individuales: dos por categoría y torneo.
+    const g = base();
+    const ind = [0, 1, 2].map((k) => est("Ind " + k, "m", "2011-0" + (k + 1) + "-01"));
+    const r1 = I.agregarLista(g, ind);
+    igual("de tres individuales en la misma categoría y torneo entran dos", [r1.agregados.length, r1.rechazados.length], [2, 1]);
+    cierto("el tercero dice que el máximo son dos (art. 66.1.f)", /Ya hay 2 estudiantes individuales de la categoría D/.test(r1.rechazados[0].motivo), r1.rechazados[0] && r1.rechazados[0].motivo);
+    // La misma persona dos veces.
+    const h = base(); h.etapa = "institucional";
+    const th = I.crearEquipo(h, "D", "m").resultado;
+    I.agregarIntegrante(h, th.id, { nombre: "Repe", sexo: "m", nacimiento: "2011-01-01", documento: "5-5555-5555" });
+    const repetido = I.agregarLista(h, [est("Repe", "m", "2011-01-01", { documento: "5-5555-5555" })]);
+    cierto("quien ya está en un equipo no se agrega también como individual (art. 66.1.h)", repetido.rechazados.length === 1 && /una sola modalidad/.test(repetido.rechazados[0].motivo));
+    // Una inscripción que ya venía pasada (un borrador) no impide seguir: solo que se pase más.
+    const k = base();
+    k.estudiantes.push(...[0, 1, 2].map((q) => est("Viejo " + q, "m", "2011-0" + (q + 1) + "-01")));
+    cierto("un borrador que ya venía con tres individuales: lo nuevo y ajeno no se rechaza", I.intentar(k, () => { k.centro.nombre = "Otro"; }).ok);
+    cierto("pero un cuarto individual sí", !I.agregarLista(k, [est("Nuevo", "m", "2011-09-01")]).agregados.length);
+    // intentar() devuelve los mismos objetos, no copias: la pantalla los tiene en sus cierres.
+    const l = base();
+    const uno = est("Uno", "m", "2011-01-01"); l.estudiantes.push(uno);
+    const x1 = l.estudiantes[0];
+    const rr = I.intentar(l, () => { l.estudiantes.push(est("Dos", "m", "2011-02-01"), est("Tres", "m", "2011-03-01")); uno.nombre = "Cambiado"; });
+    cierto("al deshacer, el objeto existente es el mismo y recupera sus datos", !rr.ok && l.estudiantes[0] === x1 && x1.nombre === "Uno" && l.estudiantes.length === 1);
+    void alDia;
+  }
+
+  console.log("\nLista pegada con equipos:");
+  {
+    const e = base();
+    const filas = ["Nombre\tSexo\tFDN\tEquipo/Ind\tTorneo"].concat(["A", "B", "C", "D", "E", "F", "G"].map((l, i2) => "Estu " + l + "\tHombre\t0" + (i2 + 1) + "/05/2011\tEquipo\tAbierto")).join("\n");
+    const res = I.agregarLista(e, I.leerLista(filas));
+    igual("siete hombres de equipo en la D: un equipo de cinco y otro de dos", [res.agregados.length, res.rechazados.length, e.equipos.map((t) => t.numero), e.equipos.map((t) => I.estadoDelEquipo(e, t).integrantes)], [7, 0, [1, 2], [5, 2]]);
+    const mas = I.agregarLista(e, I.leerLista("Nombre\tSexo\tFDN\tEquipo/Ind\tTorneo\n" + [1, 2, 3, 4].map((k) => "Mas " + k + "\tHombre\t0" + k + "/06/2011\tEquipo\tAbierto").join("\n")));
+    cierto("al llenarse el segundo equipo, el resto se rechaza (no hay un tercero)", mas.agregados.length === 3 && mas.rechazados.length === 1 && /ya tiene 5 integrantes|máximo por centro/.test(mas.rechazados[0].motivo), JSON.stringify(mas.rechazados));
+    const h = base();
+    const rh = I.agregarLista(h, I.leerLista("Nombre\tSexo\tFDN\tEquipo/Ind\tTorneo\nNo Cabe\tHombre\t01/05/2011\tEquipo\tMujeres"));
+    cierto("un hombre en el equipo de Mujeres de la lista se rechaza", rh.rechazados.length === 1 && /equipo de Mujeres/.test(rh.rechazados[0].motivo));
+    const o = base(); o.centro.tipo = "";
+    const ro = I.agregarLista(o, I.leerLista("Nombre\tSexo\tFDN\tEquipo/Ind\nAmbigua\tMujer\t01/05/2013\tEquipo"));
+    cierto("quien puede ser de la B o la C sin saber si el centro es escuela o colegio: se rechaza y se explica", ro.rechazados.length === 1 && /escuela o colegio/.test(ro.rechazados[0].motivo));
   }
 
   console.log("\nLa delegación, el cuerpo técnico y los documentos (arts. 59 y 60):");
@@ -233,7 +322,9 @@ function reglas() {
   console.log("\nEl Excel (lo que lee Pareo Integral):");
   {
     const e = base();
-    e.estudiantes.push(est("Ana Mora", "w", "2012-05-04", { modalidad: "equipo" }), est("Luis Soto", "m", "2011-06-04", { modalidad: "equipo", equipo: 2, suplente: true }), est("Sin Nombre Vacio", "", ""));
+    equipoCon(e, "C", "w", [est("Ana Mora", "w", "2012-05-04")], 1);
+    equipoCon(e, "D", "m", [est("Luis Soto", "m", "2011-06-04", { suplente: true })], 2);
+    e.estudiantes.push(est("Sin Nombre Vacio", "", ""));
     e.estudiantes[2].nombre = "";
     const filas = I.filasExcel(e);
     igual("una fila por estudiante con nombre", filas.length, 2);
@@ -251,6 +342,8 @@ function reglas() {
     cierto("el equipo 2 sale con otro nombre de institución (Pareo lo junta por nombre)", filas[1][3] === "Liceo de Prueba (equipo 2)" && filas[0][3] === "Liceo de Prueba");
     igual("la categoría ya viene calculada", [filas[0][5], filas[1][5]], ["C", "D"]);
     igual("«Suplente» solo en equipos", [filas[0][10], filas[1][10]], ["", "Sí"]);
+    const eq = I.filasEquipos(e);
+    igual("la hoja «Equipos»: una fila por integrante, con su equipo y su condición", [eq.length, eq[0].slice(0, 4), eq[1][3]], [2, ["Equipo Mujeres · categoría C", "1", "Ana Mora", "Titular"], "Suplente"]);
   }
 
   console.log("\nPegar una lista:");
@@ -260,7 +353,7 @@ function reglas() {
     const b = I.leerLista("Rojas Soto Ana;Mujer;2010-01-05;3-333");
     igual("sin títulos, en el orden Nombre, Sexo, Fecha y Documento", b.map((x) => [x.nombre, x.sexo, x.nacimiento]), [["Rojas Soto Ana", "w", "2010-01-05"]]);
     const c = I.leerLista([["Nombre de Centro Educativo", "Nombre", "FDN", "Sexo", "Equipo/Ind", "Torneo"], ["Liceo X", "Mora Ana", "7/17/2011", "MUJER", "Equipo", "Abierto"]]);
-    igual("las filas de un Excel del MEP, en cualquier orden de columnas", c.map((x) => [x.nombre, x.sexo, x.nacimiento, x.modalidad, x.torneo]), [["Mora Ana", "w", "2011-07-17", "equipo", ""]]);
+    igual("las filas de un Excel del MEP, en cualquier orden de columnas", c.map((x) => [x.nombre, x.sexo, x.nacimiento, x.destino.equipo, x.destino.torneo]), [["Mora Ana", "w", "2011-07-17", true, "m"]]);
     igual("un sexo o una fecha que no se entienden quedan vacíos (nunca se adivinan)", I.leerLista("Pepe\tquién sabe\t31/02/2012").map((x) => [x.sexo, x.nacimiento]), [["", ""]]);
   }
 
@@ -272,6 +365,11 @@ function reglas() {
     igual("un cuerpo que no es lista queda vacío", x.cuerpo, []);
     const dup = I.normalizar({ estudiantes: [{ id: "uno", nombre: "A" }, { id: "uno", nombre: "B" }] });
     cierto("los id repetidos se renuevan", dup.estudiantes[0].id !== dup.estudiantes[1].id);
+    const eq = I.normalizar({ equipos: [{ id: "q1", categoria: "D", torneo: "w", numero: 1 }, { id: "q1", categoria: "D", torneo: "w", numero: 2 }, { id: "q2", categoria: "Z", torneo: "m", numero: 1 }, { id: "q3", categoria: "D", torneo: "w", numero: 1 }, { id: "q4", categoria: "C", torneo: "x", numero: 99 }],
+      estudiantes: [{ id: "a", nombre: "Dentro", equipoId: "q1", suplente: true }, { id: "b", nombre: "Equipo fantasma", equipoId: "no-existe", suplente: true }, { id: "c", nombre: "Solo", suplente: true }] });
+    igual("los equipos se limpian: sin categoría falsa, sin repetir su clave y con el número en 1 a 9", eq.equipos.map((t) => [t.categoria, t.torneo, t.numero]), [["D", "w", 1], ["D", "w", 2], ["C", "m", 1]]);
+    igual("un estudiante de un equipo que no existe pasa a individual y la suplente solo vale en un equipo", eq.estudiantes.map((q) => [q.equipoId ? "equipo" : "", q.modalidad, q.suplente]), [["equipo", "equipo", true], ["", "individual", false], ["", "individual", false]]);
+    igual("un borrador de antes de los equipos se lee: sin equipos, todos individuales", [I.normalizar({ estudiantes: [{ nombre: "Viejo", modalidad: "equipo" }] }).equipos.length, I.normalizar({ estudiantes: [{ nombre: "Viejo", modalidad: "equipo" }] }).estudiantes[0].modalidad], [0, "individual"]);
   }
 
 
@@ -412,12 +510,8 @@ async function navegador() {
     await p.fill("#ij-est article >> nth=0 >> input[type=date]", "2012-05-04");
     const catTexto = await p.$eval("#ij-est article >> nth=0 >> select >> nth=1", (s) => s.options[s.selectedIndex].textContent);
     cierto("la categoría sale sola por el año de nacimiento", /Le corresponde la C \(secundaria\)/.test(catTexto), catTexto);
-    await p.selectOption("#ij-est article >> nth=0 >> select >> nth=2", "equipo");
-    cierto("en equipos aparece el número de equipo y la suplente", await p.$eval("#ij-est article >> nth=0 >> .ij-fila-equipo", (e) => !e.hidden && getComputedStyle(e).display !== "none"));
-    const opcionesCat = await p.$$eval("#ij-est article >> nth=0 >> select >> nth=1 >> option", (o) => o.map((x) => x.value));
-    cierto("y se ofrece subir a la D (art. 18)", opcionesCat.includes("D"), JSON.stringify(opcionesCat));
-    await p.selectOption("#ij-est article >> nth=0 >> select >> nth=2", "individual");
-    cierto("en individual ya no se ofrece subir", !(await p.$$eval("#ij-est article >> nth=0 >> select >> nth=1 >> option", (o) => o.map((x) => x.value))).includes("D"));
+    cierto("la tarjeta de un individual ya no trae «Equipo/Individual» ni suplente: los equipos tienen su sección", !(await p.$$eval("#ij-est article >> nth=0 >> select option", (o) => o.some((x) => /^Equipo$|Suplente/.test(x.textContent)))));
+    cierto("y en individual no se ofrece subir de categoría", !(await p.$$eval("#ij-est article >> nth=0 >> select >> nth=1 >> option", (o) => o.map((x) => x.value))).includes("D"));
     await ctx.close();
     igual("sin errores de JavaScript", errores, []);
   }
@@ -499,7 +593,7 @@ async function navegador() {
     const estado = await p.textContent("#ij-rev-estado");
     cierto("la revisión dice cuántos errores quedan o que no hay", /Sin errores|Hay \d+ error/.test(estado), estado);
     cierto("cada hallazgo trae escrito si es Error, Aviso o Dato", await p.$$eval("#ij-rev li", (l) => l.length > 0 && l.every((x) => /^(Error|Aviso|Dato):/.test(x.textContent.trim()))));
-    cierto("los equipos individuales no aparecen como equipos", (await p.$$("#ij-equipos .ij-equipo")).length === 0);
+    cierto("los individuales no aparecen como equipos", (await p.$$("#ij-equipos-lista article")).length === 0);
     igual("las cifras cuentan a los dos estudiantes (una mujer y un hombre)", [await p.textContent("#ij-c1"), await p.textContent("#ij-c1-nota")], ["2", "1 mujer · 1 hombre"]);
     igual("el resumen por torneo: categoría C Mujeres y categoría D Abierto", await p.$$eval("#ij-res tbody tr", (f) => f.map((r) => [...r.children].map((c) => c.textContent))),
       [["Categoría C", "1", "0", "0", "0"], ["Categoría D", "0", "1", "0", "0"]]);
@@ -511,7 +605,7 @@ async function navegador() {
     });
     await p.click("#ij-excel");
     const excel = await p.evaluate(() => window.__excel);
-    cierto("el Excel sale con la nómina, el cuerpo técnico y la delegación", excel && excel.hojas.map((h) => h.nombre).join() === "Inscripción,Cuerpo técnico,Delegación", JSON.stringify(excel && excel.hojas.map((h) => h.nombre)));
+    cierto("el Excel sale con la nómina, los equipos, el cuerpo técnico y la delegación", excel && excel.hojas.map((h) => h.nombre).join() === "Inscripción,Equipos,Cuerpo técnico,Delegación", JSON.stringify(excel && excel.hojas.map((h) => h.nombre)));
     igual("el nombre del archivo lleva el año y el colegio", excel.nombre, "inscripcion-jde-2026-colegio-inventado.xlsx");
     igual("la primera fila son las columnas del reporte del MEP", excel.hojas[0].filas[0], I.ENCABEZADOS);
     igual("y la de Ana, lista para Pareo Integral", excel.hojas[0].filas[1].slice(0, 8), ["Mora Ana", "MUJER", "2012-05-04", "Colegio Inventado", "Alajuela", "C", "Individual", "Mujeres"]);
@@ -561,10 +655,76 @@ async function navegador() {
   }
 
   {
+    // Equipos completos y topes, en la pantalla.
+    const { ctx, p, errores } = await abrir();
+    await p.fill("#ij-centro", "Colegio Equipos");
+    await p.selectOption("#ij-region", "Alajuela");
+    await p.check("#ij-tipo-secundaria");
+    cierto("al abrir no hay equipos y la sección lo dice", await visible(p, "#ij-eq-vacio"));
+    await p.selectOption("#ij-eq-categoria", "D");
+    await p.click("#ij-eq-crear");
+    igual("«Crear el equipo» arma el equipo con cuatro lugares de titulares", [(await p.$$("#ij-equipos-lista article")).length, (await p.$$("#ij-equipos-lista .ij-miembro")).length], [1, 4]);
+    cierto("el título dice torneo y categoría, y el resumen cuenta los lugares", /Equipo Abierto · categoría D/.test(await p.textContent("#ij-equipos-lista h3")) && /4 de 5 integrantes · 4 titulares/.test(await p.textContent("#ij-equipos-lista article >> .ij-ayuda")));
+    cierto("la sección de equipos deja de decir que no hay", !(await visible(p, "#ij-eq-vacio")));
+    const miembro = (n) => "#ij-equipos-lista .ij-miembro >> nth=" + n;
+    for (let k = 0; k < 4; k++) {
+      await p.fill(miembro(k) + " >> input[type=text] >> nth=0", "Integrante " + "ABCD"[k]);
+      await p.selectOption(miembro(k) + " >> select >> nth=0", "m");
+      await p.fill(miembro(k) + " >> input[type=date]", "2011-0" + (k + 1) + "-10");
+    }
+    await p.click("#ij-equipos-lista >> text=+ Integrante nuevo");
+    igual("el quinto se agrega y queda como suplente", [(await p.$$("#ij-equipos-lista .ij-miembro")).length, await p.inputValue(miembro(4) + " >> select >> nth=1")], [5, "s"]);
+    cierto("con cinco, el botón queda apagado (aria-disabled) y el resumen dice que está completo", (await p.getAttribute("#ij-equipos-lista >> text=+ Integrante nuevo", "aria-disabled")) === "true" && /completo: no caben más/.test(await p.textContent("#ij-equipos-lista article >> .ij-ayuda")));
+    await p.click("#ij-equipos-lista >> text=+ Integrante nuevo", { force: true });
+    cierto("y aunque se toque, el sexto no se agrega: lo dice con palabras", (await p.$$("#ij-equipos-lista .ij-miembro")).length === 5 && /ya tiene 5 integrantes/.test(await p.textContent("#ij-equipos-lista article >> [role=status]")));
+    // Segundo equipo sí; tercero no.
+    await p.click("#ij-eq-crear");
+    igual("el segundo equipo Abierto de la D se crea con el número 2", [(await p.$$("#ij-equipos-lista article")).length, /equipo 2/.test(await p.textContent("#ij-equipos-lista article >> nth=1 >> h3"))], [2, true]);
+    await p.click("#ij-eq-crear");
+    cierto("el tercero no se crea y la página dice por qué (art. 66.1.g)", (await p.$$("#ij-equipos-lista article")).length === 2 && /máximo por centro/.test(await p.textContent("#ij-eq-estado")));
+    // La edad se hace cumplir al escribir la fecha.
+    await p.fill(miembro(5) + " >> input[type=text] >> nth=0", "Muy Mayor");
+    await p.fill(miembro(5) + " >> input[type=date]", "2005-01-01");
+    cierto("una fecha que no deja jugar la D se deshace y se avisa", (await p.inputValue(miembro(5) + " >> input[type=date]")) === "" && /no puede jugar en la categoría D/.test(await p.textContent(".avisos-mensaje[data-tipo='error'] >> nth=-1")));
+    // Individuales: dos por categoría y torneo; el tercero se rechaza.
+    await p.click("#ij-pegar");
+    await p.fill("#ij-pegar-texto", "Nombre\tSexo\tFDN\nInd Uno\tHombre\t01/01/2008\nInd Dos\tHombre\t02/01/2008\nInd Tres\tHombre\t03/01/2008");
+    await p.click("#ij-pegar-agregar");
+    igual("de tres individuales entran dos y se avisa del tercero", [(await p.$$("#ij-est article")).length, /No se agregaron 1 estudiante.*Ind Tres/.test(await p.textContent(".avisos-mensaje[data-tipo='error'] >> nth=-1"))], [2, true]);
+    cierto("un individual puede pasar a un equipo con espacio: el segundo equipo, vacío", await p.$$eval("#ij-equipos-lista article >> nth=1 >> select option", (o) => o.some((x) => /Ind Uno/.test(x.textContent))));
+    // Quitar un equipo pide confirmación.
+    await p.click("#ij-equipos-lista article >> nth=1 >> text=Quitar el equipo");
+    await p.click(".avisos-dialogo button:has-text('Quitar el equipo'), dialog button:has-text('Quitar el equipo')");
+    await p.waitForFunction(() => document.querySelectorAll("#ij-equipos-lista article").length === 1);
+    igual("quitar el equipo lo saca con su confirmación", (await p.$$("#ij-equipos-lista article")).length, 1);
+    cierto("la cifra de equipos cuenta uno", (await p.textContent("#ij-c2")) === "1");
+    // El Excel trae la hoja de equipos.
+    await p.evaluate(() => { window.__excel = null; window.TablaExcel.bajar = (nombre, hojas) => { window.__excel = { nombre, hojas }; }; });
+    await p.click("#ij-excel");
+    await p.waitForFunction(() => !!window.__excel || !!document.querySelector(".avisos-dialogo"));
+    if (await p.$(".avisos-dialogo")) await p.click(".avisos-dialogo button:has-text('Bajarlo así')");
+    await p.waitForFunction(() => !!window.__excel);
+    const hojaEq = (await p.evaluate(() => window.__excel)).hojas.find((h) => h.nombre === "Equipos");
+    cierto("la hoja «Equipos» trae los cuatro con nombre y el suplente al final", hojaEq && hojaEq.filas.length === 1 + 4 + 0 || hojaEq.filas.length === 1 + 5, JSON.stringify(hojaEq && hojaEq.filas.length));
+    // El borrador guarda los equipos y se recupera.
+    await p.waitForTimeout(600);
+    await p.reload();
+    await p.waitForFunction(() => !!document.documentElement.dataset.ijBanco);
+    igual("al volver, el equipo y sus integrantes siguen ahí", [(await p.$$("#ij-equipos-lista article")).length, (await p.$$("#ij-equipos-lista .ij-miembro")).length], [1, 5]);
+    // Un equipo de Mujeres trae a todas como mujeres.
+    await p.selectOption("#ij-eq-torneo", "w");
+    await p.selectOption("#ij-eq-categoria", "C");
+    await p.click("#ij-eq-crear");
+    cierto("en el equipo de Mujeres el sexo es fijo (Mujer) y no se puede cambiar", await p.$eval("#ij-equipos-lista article >> nth=0 >> .ij-miembro >> nth=0 >> select >> nth=0", (s) => s.disabled && s.value === "w"));
+    await ctx.close();
+    igual("sin errores de JavaScript", errores, []);
+  }
+
+  {
     const { ctx, p } = await abrir(400);
     await p.click("#ij-est-mas");
     await p.click("#ij-est-mas");
-    await p.selectOption("#ij-est article >> nth=0 >> select >> nth=2", "equipo");
+    await p.click("#ij-eq-crear");
     const desborda = await p.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth);
     cierto("a 400 px no hay desplazamiento horizontal", !desborda);
     await ctx.close();
