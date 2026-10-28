@@ -81,21 +81,39 @@
     const ESQUINAS_TABLERO = [[0, 0], [8, 0], [8, 8], [0, 8]];
 
     /* ── Lo que se mira de cada casilla ──────────────────────────────────
-     * Una rejilla de N × N puntos en el centro de la casilla (del 22 % al
-     * 78 %: los bordes se los comen la perspectiva y la pieza de al lado). De
-     * cada punto, la luminancia. */
+     * Una rejilla de N × N puntos dentro de la casilla (el 56 % del medio: los
+     * bordes se los comen la perspectiva y la pieza de al lado). De cada punto,
+     * la luminancia.
+     *
+     * Con la cámara de lado, una pieza alta tapa la parte de ATRÁS de la
+     * casilla siguiente (la que en la imagen queda arriba): un caballo en f3
+     * se veía también en f4. La base de cada pieza, en cambio, queda del lado
+     * de la cámara. Por eso la rejilla se corre hacia donde la casilla mira a
+     * la cámara (abajo en la imagen), lo que dé sin salirse. Desde arriba, la
+     * corrida casi no cambia nada. */
     const N = 8;
-    const DESDE = 0.22, HASTA = 0.78;
+    const DESDE = 0.22, HASTA = 0.78, CORRIDA = 0.14;
 
     function muestras(pix, ancho, alto, h) {
         const todas = [];
         for (let r = 0; r < 8; r++) {
             for (let f = 0; f < 8; f++) {
+                // Hacia dónde queda «abajo en la imagen», en casillas.
+                const [cx, cy] = aplicar(h, f + 0.5, r + 0.5);
+                const [ux, uy] = aplicar(h, f + 0.6, r + 0.5), [vx, vy] = aplicar(h, f + 0.5, r + 0.6);
+                const a = (ux - cx) / 0.1, b = (vx - cx) / 0.1, c = (uy - cy) / 0.1, d = (vy - cy) / 0.1;
+                const det = a * d - b * c;
+                let du = 0, dv = 0;
+                if (Math.abs(det) > 1e-9) {
+                    du = -b / det; dv = a / det; // la casilla que corresponde a (0, +1) en la imagen
+                    const n = Math.hypot(du, dv) || 1;
+                    du = du / n * CORRIDA; dv = dv / n * CORRIDA;
+                }
                 const L = new Float32Array(N * N);
                 for (let j = 0; j < N; j++) {
                     for (let i = 0; i < N; i++) {
                         const t = (k) => DESDE + (HASTA - DESDE) * (k + 0.5) / N;
-                        const [x, y] = aplicar(h, f + t(i), r + t(j));
+                        const [x, y] = aplicar(h, f + t(i) + du, r + t(j) + dv);
                         const px = Math.min(ancho - 1, Math.max(0, Math.round(x)));
                         const py = Math.min(alto - 1, Math.max(0, Math.round(y)));
                         const o = (py * ancho + px) * 4;
@@ -137,27 +155,36 @@
         return { fuera: fuera / L.length, borde: borde(L), tono: fuera ? suma / fuera : media(L) };
     }
 
-    /* Calibrar: la imagen DEBE ser la posición inicial. Devuelve lo aprendido
-     * o null si lo que se ve no se parece a una posición inicial. */
-    function calibrar(todas) {
+    const INICIAL = "B".repeat(16) + ".".repeat(32) + "N".repeat(16);
+
+    /* Calibrar: aprender cómo se ve en esta imagen una casilla vacía de cada
+     * color, una pieza blanca y una negra, con la posición que se sabe que
+     * hay (64 letras como las de la lectura). Por omisión, la inicial; para
+     * seguir una partida después de mover la cámara, la de la partida. */
+    function calibrar(todas, sabida) {
+        sabida = sabida || INICIAL;
         const fondos = {};
         for (const os of [true, false]) {
-            const vacias = [];
-            for (let k = 16; k < 48; k++) if (oscura(k) === os) vacias.push(todas[k]);
+            let vacias = [];
+            for (let k = 0; k < 64; k++) if (sabida[k] === "." && oscura(k) === os) vacias.push(todas[k]);
+            if (!vacias.length) for (let k = 0; k < 64; k++) if (sabida[k] === ".") vacias.push(todas[k]);
             const medias = vacias.map(media);
             const dentro = media(vacias.map(desvio));
             fondos[os] = { media: media(medias), desvio: Math.max(2, Math.sqrt(dentro * dentro + Math.pow(desvio(medias), 2))) };
         }
         const r = todas.map((L, k) => rasgos(L, fondos[oscura(k)]));
-        const centro = (lista) => ({ fuera: media(lista.map((x) => x.fuera)), borde: media(lista.map((x) => x.borde)), tono: media(lista.map((x) => x.tono)) });
+        const centro = (lista) => (lista.length ? { fuera: media(lista.map((x) => x.fuera)), borde: media(lista.map((x) => x.borde)), tono: media(lista.map((x) => x.tono)) } : null);
         const de = (filtro) => r.filter((x, k) => filtro(k));
         const cal = { fondos, vacia: {}, ocupada: {}, blanca: {}, negra: {} };
         for (const os of [true, false]) {
             const mismo = (k) => oscura(k) === os;
-            cal.vacia[os] = centro(de((k) => k >= 16 && k < 48 && mismo(k)));
-            cal.ocupada[os] = centro(de((k) => (k < 16 || k >= 48) && mismo(k)));
-            cal.blanca[os] = centro(de((k) => k < 16 && mismo(k))).tono;
-            cal.negra[os] = centro(de((k) => k >= 48 && mismo(k))).tono;
+            // Si en un color de casilla no hay de algo (pasa en una partida
+            // avanzada), se usa lo del otro color.
+            const o = (filtro) => centro(de((k) => filtro(k) && mismo(k))) || centro(de(filtro));
+            cal.vacia[os] = o((k) => sabida[k] === ".");
+            cal.ocupada[os] = o((k) => sabida[k] !== ".");
+            cal.blanca[os] = (o((k) => sabida[k] === "B") || cal.ocupada[os]).tono;
+            cal.negra[os] = (o((k) => sabida[k] === "N") || cal.ocupada[os]).tono;
         }
         // La escala de cada rasgo: lo que separa vacía de ocupada, con piso.
         cal.escala = {
@@ -167,18 +194,25 @@
         return cal;
     }
 
-    /* La lectura: 64 letras, «.» vacía, «B» blanca, «N» negra, de a1 a h8. */
-    function leer(todas, cal) {
+    /* La lectura: 64 letras, «.» vacía, «B» blanca, «N» negra, de a1 a h8, y
+     * la seguridad de cada una, de 0 (podría ser lo otro) a 1 (sin duda). */
+    function leerDetalle(todas, cal) {
         let s = "";
+        const seguridad = new Float32Array(64);
         for (let k = 0; k < 64; k++) {
             const os = oscura(k);
             const x = rasgos(todas[k], cal.fondos[os]);
             const d = (c) => Math.hypot((x.fuera - c.fuera) / cal.escala.fuera, (x.borde - c.borde) / cal.escala.borde);
-            if (d(cal.vacia[os]) <= d(cal.ocupada[os])) { s += "."; continue; }
-            s += Math.abs(x.tono - cal.blanca[os]) <= Math.abs(x.tono - cal.negra[os]) ? "B" : "N";
+            const dv = d(cal.vacia[os]), doc = d(cal.ocupada[os]);
+            const ocupa = Math.min(1, Math.abs(dv - doc) / (dv + doc + 1e-6) * 2);
+            if (dv <= doc) { s += "."; seguridad[k] = ocupa; continue; }
+            const db = Math.abs(x.tono - cal.blanca[os]), dn = Math.abs(x.tono - cal.negra[os]);
+            s += db <= dn ? "B" : "N";
+            seguridad[k] = Math.min(ocupa, Math.min(1, Math.abs(db - dn) / (db + dn + 1e-6) * 2));
         }
-        return s;
+        return { lectura: s, seguridad };
     }
+    const leer = (todas, cal) => leerDetalle(todas, cal).lectura;
 
     const casilla = (k) => COLUMNAS[k & 7] + ((k >> 3) + 1);
 
@@ -192,29 +226,62 @@
         return s;
     }
 
-    /* Qué jugada (o qué pareja de jugadas, si se escapó una) lleva de la
-     * posición de `juego` a la lectura. Devuelve la lista de jugadas SAN o
-     * null. Al coronar, la cámara solo ve «pieza blanca»: se anota dama. */
-    function buscarJugadas(juego, lectura) {
-        const candidatas = () => juego.moves({ verbose: true }).filter((m) => !m.promotion || m.promotion === "q");
-        const halladas = [];
-        for (const m of candidatas()) {
+    /* Qué jugadas explican la lectura, de la más a la menos probable.
+     *
+     * Sin la seguridad de cada casilla, solo vale la que calza exacta. Con
+     * ella, cada casilla que no calza cuesta más cuanto más segura estaba la
+     * lectura: una casilla dudosa (el caballo que en f3 se ve también un poco
+     * en e3) casi no pesa, una clara sí. Se mide también «no pasó nada», para
+     * no inventar una jugada con una sombra. Si se escapó una jugada, se
+     * prueban las parejas, solo cuando ninguna sola explica la lectura.
+     * Al coronar, la cámara solo ve «pieza blanca»: se anota dama. */
+    function costo(pred, lectura, seguridad) {
+        let c = 0;
+        for (let k = 0; k < 64; k++) if (pred[k] !== lectura[k]) c += seguridad ? 0.4 + seguridad[k] : 1;
+        return c;
+    }
+    function candidatas(juego, lectura, seguridad) {
+        const legales = () => juego.moves({ verbose: true }).filter((m) => !m.promotion || m.promotion === "q");
+        const lista = [];
+        for (const m of legales()) {
             juego.move(m);
-            if (esperada(juego) === lectura) halladas.push([m.san]);
+            lista.push({ jugadas: [m.san], costo: costo(esperada(juego), lectura, seguridad) });
             juego.undo();
         }
-        if (halladas.length === 1) return halladas[0];
-        if (halladas.length > 1) return null;
-        for (const m of candidatas()) {
-            juego.move(m);
-            for (const m2 of candidatas()) {
-                juego.move(m2);
-                if (esperada(juego) === lectura) halladas.push([m.san, m2.san]);
+        lista.sort((a, b) => a.costo - b.costo);
+        if (!lista.length || lista[0].costo > (seguridad ? 1.6 : 0)) {
+            for (const m of legales()) {
+                juego.move(m);
+                for (const m2 of legales()) {
+                    juego.move(m2);
+                    const c = costo(esperada(juego), lectura, seguridad);
+                    if (c <= (seguridad ? 1.2 : 0)) lista.push({ jugadas: [m.san, m2.san], costo: c });
+                    juego.undo();
+                }
                 juego.undo();
             }
-            juego.undo();
+            lista.sort((a, b) => a.costo - b.costo);
         }
-        return halladas.length === 1 ? halladas[0] : null;
+        return { lista, quieto: costo(esperada(juego), lectura, seguridad) };
+    }
+    /* Lo que se anota solo: la mejor, si explica bien la lectura, explica
+     * claramente más que «no pasó nada» y le gana claro a la segunda.
+     * Devuelve { jugadas } para anotar, { dudas } si hay dos o tres parecidas
+     * (se le pregunta a la persona), o null. */
+    const MAXIMO = 1.6, VENTAJA = 0.8;
+    function decidir(juego, lectura, seguridad) {
+        const { lista, quieto } = candidatas(juego, lectura, seguridad);
+        const [a, b] = lista;
+        if (!a) return null;
+        if (!seguridad) return a.costo === 0 && (!b || b.costo > 0) ? { jugadas: a.jugadas } : null;
+        if (a.costo > 2 * MAXIMO || quieto - a.costo < 1) return null;
+        if (a.costo <= MAXIMO && (!b || b.costo - a.costo >= VENTAJA)) return { jugadas: a.jugadas };
+        const dudas = lista.filter((x) => x.costo <= a.costo + VENTAJA && x.costo <= 2 * MAXIMO).slice(0, 3);
+        return dudas.length > 1 ? { dudas: dudas.map((x) => x.jugadas) } : (a.costo <= MAXIMO ? { jugadas: a.jugadas } : null);
+    }
+    function buscarJugadas(juego, lectura, seguridad) {
+        const r = decidir(juego, lectura, seguridad);
+        return r && r.jugadas ? r.jugadas : null;
     }
 
     function diferentes(a, b) {
@@ -223,7 +290,7 @@
         return d;
     }
 
-    window.LectorTablero = { homografia, aplicar, ESQUINAS_TABLERO, muestras, calibrar, leer, esperada, buscarJugadas, diferentes, casilla };
+    window.LectorTablero = { homografia, aplicar, ESQUINAS_TABLERO, INICIAL, muestras, calibrar, leer, leerDetalle, esperada, candidatas, decidir, buscarJugadas, diferentes, casilla };
 
     /* ── La página ───────────────────────────────────────────────────────── */
     if (!document.getElementById("lienzo")) return;
@@ -236,6 +303,7 @@
     const QUIETA = 6;           // lecturas iguales seguidas para fiarse (~1,2 s)
     const NOMBRE = ["a1", "h1", "h8", "a8"];
     const GUARDADO = ["camara_vivo_codigo_v1", "camara_vivo_codigo_v1_2"];
+    const PARTIDA = "camara_partida_v1_"; // + el número del tablero
     const COLOR = ["rgba(250, 204, 21, 0.9)", "rgba(34, 211, 238, 0.9)"]; // amarillo y celeste; además se escribe el número
 
     const $ = (id) => document.getElementById(id);
@@ -292,6 +360,7 @@
         $("btn-buscar").disabled = !fuente || buscando;
         $("btn-ajustar").disabled = !t.h;
         $("btn-calibrar").disabled = !t.h;
+        $("btn-seguir").disabled = !t.h;
     }
 
     function tamano(ancho, alto) {
@@ -377,6 +446,7 @@
 
     function elegirTablero(i) {
         activo = i;
+        $("dudas").hidden = true;
         elegida = 0;
         document.querySelectorAll("[data-tablero]").forEach((b) => b.setAttribute("aria-pressed", String(Number(b.dataset.tablero) === i)));
         $("t-tablero-cual").textContent = dos() ? " (tablero " + (i + 1) + ")" : "";
@@ -486,52 +556,126 @@
     });
 
     /* Calibrar también decide cuál esquina es a1: prueba las cuatro maneras
-     * de girar el tablero y se queda con la que ve la posición inicial. Las
-     * piezas de las filas 1 y 2 tienen que ser las CLARAS: si no, el tablero
-     * está dado vuelta (con media vuelta, la lectura también sale perfecta). */
-    function hacerCalibrar() {
-        const t = T();
-        if (t.esquinas.length !== 4) return;
+     * de girar el tablero y se queda con la que mejor ve la posición que se
+     * sabe que hay. Las piezas blancas tienen que ser las CLARAS: si no, el
+     * tablero está dado vuelta (con media vuelta, la posición inicial también
+     * se lee perfecta). Si ya había un a1, a igualdad gana el giro que lo deja
+     * más cerca: la cámara se movió, no se dio vuelta el tablero.
+     *
+     * `sabida` es la posición en 64 letras: la inicial para empezar una
+     * partida, la de la partida para seguirla después de mover la cámara.
+     * Devuelve cuántas casillas lee bien, o null si no alcanza. */
+    function calibrarCon(t, sabida) {
+        if (t.esquinas.length !== 4) return null;
         cctx.drawImage(fuente, 0, 0, limpio.width, limpio.height);
         const pix = cctx.getImageData(0, 0, limpio.width, limpio.height).data;
-        const base = D.ordenar(t.esquinas), inicial = esperada(new window.Chess());
+        const base = D.ordenar(t.esquinas);
+        const hayDos = sabida.includes("B") && sabida.includes("N");
         let mejor = null;
         for (let k = 0; k < 4; k++) {
             const q = D.girar(base, k), hk = homografia(ESQUINAS_TABLERO, q);
             if (!hk) continue;
             const todas = muestras(pix, limpio.width, limpio.height, hk);
-            const c = calibrar(todas);
-            const bien = 64 - diferentes(leer(todas, c), inicial).length;
-            const claras = (c.blanca[true] + c.blanca[false]) - (c.negra[true] + c.negra[false]);
-            const valor = bien + (claras > 0 ? 0.5 : 0);
+            const c = calibrar(todas, sabida);
+            const bien = 64 - diferentes(leer(todas, c), sabida).length;
+            const claras = !hayDos || (c.blanca[true] + c.blanca[false]) - (c.negra[true] + c.negra[false]) > 0;
+            const cerca = t.a1 ? Math.hypot(q[0][0] - t.a1[0], q[0][1] - t.a1[1]) / 1e4 : 0;
+            const valor = bien + (claras ? 0.5 : 0) - cerca;
             if (!mejor || valor > mejor.valor) mejor = { valor, bien, q, hk, c, claras };
         }
-        if (!mejor || mejor.bien < 48 || mejor.claras <= 0) {
-            avisar(cual(t) + "Con estas esquinas no se ve una posición inicial (" + (mejor ? mejor.bien : 0) + " de 64 casillas). Revisa que la cuadrícula calce y que estén todas las piezas en su lugar.", "error");
+        if (!mejor || mejor.bien < 48 || !mejor.claras) return mejor ? -mejor.bien - 1 : null;
+        t.esquinas = mejor.q; t.h = mejor.hk; t.cal = mejor.c; t.a1 = mejor.q[0].slice();
+        t.recientes = []; t.quieta = null;
+        return mejor.bien;
+    }
+
+    function hacerCalibrar() {
+        const t = T();
+        const bien = calibrarCon(t, INICIAL);
+        if (bien === null || bien < 0) {
+            avisar(cual(t) + "Con estas esquinas no se ve una posición inicial (" + (bien === null ? 0 : -bien - 1) + " de 64 casillas). Revisa que la cuadrícula calce y que estén todas las piezas en su lugar.", "error");
             return;
         }
-        t.esquinas = mejor.q; t.h = mejor.hk; t.cal = mejor.c;
         t.juego = new window.Chess();
-        t.recientes = []; t.quieta = null;
+        partidaCambio(t);
+        avisar(cual(t) + "Calibrado: lee bien " + bien + " de 64 casillas en la posición inicial. Ya puedes jugar.", "bien");
+    }
+
+    /* Seguir la partida que ya está anotada (o la posición que se cargó),
+     * después de mover la cámara o de volver a abrir la página: las piezas
+     * tienen que estar como en el tablero digital. No se pierde nada. */
+    function seguirPartida() {
+        const t = T();
+        const bien = calibrarCon(t, esperada(t.juego));
+        if (bien === null || bien < 0) {
+            avisar(cual(t) + "Con estas esquinas no se ve la posición del tablero digital (" + (bien === null ? 0 : -bien - 1) + " de 64 casillas). Revisa que la cuadrícula calce y que las piezas estén como a la derecha.", "error");
+            return;
+        }
         pintarPartida();
+        avisar(cual(t) + "Listo, sigo con la partida: lee bien " + bien + " de 64 casillas. " + V.comoVa(t.juego), "bien");
+    }
+
+    /* Si la cámara se movió un poco (un golpe al trípode), casi todo deja de
+     * calzar de golpe. Se intenta solo: correr las esquinas a las líneas y
+     * volver a calibrar con la partida. Si no alcanza, se dice qué hacer. */
+    function recuperar(t) {
+        if (!fuente || t.esquinas.length !== 4) return false;
+        const img = imagenGris();
+        const r = D.ajustar(img, D.ordenar(t.esquinas));
+        if (!D.hayTablero(r)) return false;
+        const antes = { esquinas: t.esquinas, h: t.h, cal: t.cal };
+        t.esquinas = r.esquinas;
+        const bien = calibrarCon(t, esperada(t.juego));
+        if (bien === null || bien < 56) { Object.assign(t, antes); return false; }
+        return true;
+    }
+
+    /* Lo que cambia la partida: se pinta, se transmite y se guarda en el
+     * celular (si la página se recarga, se ofrece seguirla). */
+    function partidaCambio(t) {
+        if (t === T()) pintarPartida();
         enviarVivo(t);
-        avisar(cual(t) + "Calibrado: lee bien " + mejor.bien + " de 64 casillas en la posición inicial. Ya puedes jugar.", "bien");
+        try { localStorage.setItem(PARTIDA + t.i, t.juego.pgn()); } catch (e) { /* sin almacenamiento */ }
+    }
+
+    function anotar(t, jugadas) {
+        jugadas.forEach((x) => t.juego.move(x));
+        t.recientes = [];
+        $("dudas").hidden = true;
+        partidaCambio(t);
+        const corona = jugadas.some((x) => /=Q/.test(x));
+        avisar(cual(t) + (jugadas.length === 2 ? "Se escapó una jugada: se anotaron " + jugadas.map(es).join(" y ") : "Se anotó " + es(jugadas[0])) + "." + (corona ? " Coronó: se anotó dama; si fue otra pieza, deshazla y anótala a mano." : ""), "bien");
     }
 
     /* Una lectura quieta que no es la esperada: se busca la jugada. */
-    function revisar(t, lectura) {
+    function revisar(t, lectura, seguridad) {
         const antes = esperada(t.juego);
         if (lectura === antes) return;
-        const jugadas = buscarJugadas(t.juego, lectura);
-        if (jugadas) {
-            jugadas.forEach((s) => t.juego.move(s));
-            if (t === T()) pintarPartida();
-            enviarVivo(t);
-            const corona = jugadas.some((s) => /=Q/.test(s));
-            avisar(cual(t) + (jugadas.length === 2 ? "Se escapó una jugada: se anotaron " + jugadas.map(es).join(" y ") : "Se anotó " + es(jugadas[0])) + "." + (corona ? " Coronó: se anotó dama; si fue otra pieza, deshazla." : ""), "bien");
+        const r = decidir(t.juego, lectura, seguridad);
+        if (r && r.jugadas) { anotar(t, r.jugadas); return; }
+        if (r && r.dudas) {
+            // Dos o tres parecidas: que la persona elija, con un toque.
+            const caja = $("dudas-botones");
+            caja.textContent = "";
+            r.dudas.forEach((js) => {
+                const b = document.createElement("button");
+                b.type = "button";
+                b.className = "bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400";
+                b.textContent = js.map(es).join(" y ");
+                b.addEventListener("click", () => anotar(t, js));
+                caja.append(b);
+            });
+            $("dudas").hidden = false;
+            avisar(cual(t) + "No estoy seguro de cuál fue: elige la jugada abajo, o escríbela.", "error");
             return;
         }
-        avisar(cual(t) + "No reconozco lo que cambió en " + diferentes(lectura, antes).join(", ") + ". Si es la luz o una pieza movida sin querer, déjala como estaba; si se ve mal la casilla, ajusta las esquinas.", "error");
+        const cambiaron = diferentes(lectura, antes);
+        if (cambiaron.length >= 10) {
+            if (recuperar(t)) { avisar(cual(t) + "La cámara se movió: el tablero se volvió a ubicar y la partida sigue.", "bien"); return; }
+            avisar(cual(t) + "Parece que la cámara se movió. Toca «Buscar el tablero» (o marca las esquinas) y después «Seguir con esta partida»: no se pierde nada de lo anotado.", "error");
+            return;
+        }
+        avisar(cual(t) + "No reconozco lo que cambió en " + cambiaron.join(", ") + ". Si fue una jugada, escríbela abajo; si es la luz o una pieza movida sin querer, déjala como estaba.", "error");
     }
 
     function pintarPartida() {
@@ -609,12 +753,13 @@
         const pix = cctx.getImageData(0, 0, limpio.width, limpio.height).data;
         for (const t of tableros) {
             if (!t.h || !t.cal) continue;
-            t.lectura = leer(muestras(pix, limpio.width, limpio.height, t.h), t.cal);
+            const det = leerDetalle(muestras(pix, limpio.width, limpio.height, t.h), t.cal);
+            t.lectura = det.lectura; t.seguridad = det.seguridad;
             t.recientes.push(t.lectura);
             if (t.recientes.length > QUIETA) t.recientes.shift();
             if (t.recientes.length === QUIETA && t.recientes.every((x) => x === t.lectura) && t.lectura !== t.quieta) {
                 t.quieta = t.lectura;
-                revisar(t, t.lectura);
+                revisar(t, t.lectura, t.seguridad);
             }
         }
         const t = T();
@@ -707,13 +852,41 @@
     $("btn-ajustar").addEventListener("click", () => ajustarEsquinas(false));
     $("btn-esquinas").addEventListener("click", () => { const t = T(); t.esquinas = []; t.ajustada = false; t.cal = null; rehacerHomografia(t); pedirEsquina(); });
     $("btn-calibrar").addEventListener("click", hacerCalibrar);
+    $("btn-seguir").addEventListener("click", seguirPartida);
     $("btn-deshacer").addEventListener("click", () => {
         const t = T();
         t.juego.undo();
         t.quieta = null; t.recientes = [];
-        pintarPartida();
-        enviarVivo(t);
+        $("dudas").hidden = true;
+        partidaCambio(t);
         avisar(cual(t) + "Se deshizo la última jugada. Deja las piezas como en el tablero de la derecha.");
+    });
+    /* Anotar a mano lo que la cámara no reconoce: «Cf3», «e4», «O-O»…, en
+     * español o en inglés (lo entiende js/comandos-tablero.js). Tiene que ser
+     * legal en la partida: nunca se anota una posición inventada. */
+    $("form-anotar").addEventListener("submit", (e) => {
+        e.preventDefault();
+        const t = T(), texto = $("jugada-mano").value;
+        const m = window.ComandosTablero && window.ComandosTablero.jugadaEscrita(t.juego, texto);
+        if (!m) { avisar(cual(t) + "«" + texto.trim() + "» no es una jugada legal en esta partida. " + V.comoVa(t.juego), "error"); return; }
+        $("jugada-mano").value = "";
+        anotar(t, [m.san]);
+        // Lo que la cámara ve ahora ya es esta jugada: no se vuelve a buscar.
+        t.quieta = t.lectura;
+    });
+    /* Seguir desde otra posición (si la partida no estaba anotada): un FEN o
+     * un PGN, que chess.js tiene que aceptar. Después, «Seguir con esta
+     * partida» calibra con ella. */
+    $("form-posicion").addEventListener("submit", (e) => {
+        e.preventDefault();
+        const t = T(), texto = $("posicion").value.trim();
+        const j = new window.Chess();
+        const bien = texto && (/^[1-8pnbrqkPNBRQK/]+ [wb] /.test(texto) ? j.load(texto) : j.load_pgn(texto));
+        if (!bien) { avisar(cual(t) + "No entiendo esa posición: pega un FEN (como lo da Lichess) o las jugadas en PGN.", "error"); return; }
+        t.juego = j;
+        $("dudas").hidden = true;
+        partidaCambio(t);
+        avisar(cual(t) + "Posición cargada. Pon las piezas así en el tablero y toca «Seguir con esta partida».", "bien");
     });
     $("btn-copiar").addEventListener("click", async () => {
         const pgn = T().juego.pgn();
@@ -755,6 +928,14 @@
         if (!perfil || !perfil.is_admin) { $("denegado").classList.remove("hidden"); return; }
         $("app").classList.remove("hidden");
         $("dos-tableros").checked = false;
+        // La partida que se estaba anotando, si la página se cerró o se recargó.
+        let guardada = null;
+        try { guardada = localStorage.getItem(PARTIDA + 0); } catch (e) { /* sin almacenamiento */ }
+        const j = new window.Chess();
+        if (guardada && j.load_pgn(guardada) && j.history().length) {
+            tableros[0].juego = j;
+            avisar("Se recuperó la partida que estabas anotando (" + j.history().length + " jugadas). Ubica el tablero y toca «Seguir con esta partida»; para empezar otra, «Calibrar con la posición inicial».", "bien");
+        }
         elegirTablero(0);
         sinImagen();
         requestAnimationFrame(dibujar);

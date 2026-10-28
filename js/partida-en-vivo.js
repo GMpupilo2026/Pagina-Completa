@@ -83,10 +83,29 @@
     }
 
     /* Las jugadas para leer: «1. e4 e5 2. Cf3», en algebraica española. */
+    /* Desde qué jugada arranca la partida: una que se cargó con un FEN no
+     * empieza en la 1 ni, a veces, con las blancas. */
+    function arranque(juego) {
+        const j = new window.Chess();
+        if (!j.load_pgn(juego.pgn())) return { n: 1, negras: false };
+        while (j.undo()) { /* hasta la posición de la que arrancó */ }
+        const partes = j.fen().split(" ");
+        return { n: Number(partes[5]) || 1, negras: partes[1] === "b" };
+    }
+    // El número y los puntos de la jugada i (desde 0): «4.» o «4…».
+    function numero(ini, i) {
+        const ply = i + (ini.negras ? 1 : 0);
+        return ini.n + Math.floor(ply / 2) + (ply % 2 ? "…" : ".");
+    }
+
     function jugadasTexto(juego) {
         const es = (s) => (window.ComandosTablero ? window.ComandosTablero.jugadaParaMostrar(s) : s);
+        const ini = arranque(juego);
         let txt = "";
-        juego.history().forEach((s, i) => { txt += (i % 2 === 0 ? (i / 2 + 1) + ". " : "") + es(s) + " "; });
+        juego.history().forEach((s, i) => {
+            const blancas = (i + (ini.negras ? 1 : 0)) % 2 === 0;
+            txt += (blancas || i === 0 ? numero(ini, i) + " " : "") + es(s) + " ";
+        });
         return txt.trim();
     }
 
@@ -99,7 +118,7 @@
         if (juego.in_checkmate()) fin = "Jaque mate.";
         else if (juego.in_stalemate()) fin = "Tablas por ahogado.";
         else if (juego.in_check()) fin = "Jaque.";
-        const ultima = n ? "Última jugada: " + Math.ceil(n / 2) + (n % 2 ? ". " : "… ") + es(hist[n - 1]) : "La partida está en la posición inicial";
+        const ultima = n ? "Última jugada: " + numero(arranque(juego), n - 1) + " " + es(hist[n - 1]) : (juego.fen() === new window.Chess().fen() ? "La partida está en la posición inicial" : "Todavía no se ha jugado nada desde esta posición");
         return ultima + ". " + (fin || "Juegan " + (juego.turn() === "w" ? "las blancas" : "las negras") + ".");
     }
 

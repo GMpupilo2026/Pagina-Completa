@@ -9456,6 +9456,31 @@ el celular.
   las dos con una coma y el `camera=()` sigue ahí. El verificador revisa que
   ninguna otra ruta tenga la cámara.
 
+- **La jugada más probable, no la exacta** (27/10, con el tablero de verdad:
+  «hice Cf3 y no la entendía»). Con la cámara de lado, la pieza alta tapa la
+  parte de atrás de la casilla siguiente y basta una casilla mal leída para
+  que ninguna jugada calce exacta. Dos arreglos:
+  - la rejilla de cada casilla se corre un 14 % hacia donde la casilla mira a
+    la cámara (abajo en la imagen), donde está la base de su pieza y no la
+    pieza de adelante;
+  - cada casilla leída trae su seguridad (`leerDetalle`), y cada jugada legal
+    cuesta lo que no calza, pesado por esa seguridad (`decidir`): una casilla
+    dudosa casi no pesa. Se anota la mejor si cuesta poco, le gana claro a la
+    segunda y explica más que «no pasó nada» (una sombra no inventa una
+    jugada). Si dos o tres explican parecido, se pregunta con botones; y
+    siempre se puede anotar a mano, en español, solo si es legal
+    (`ComandosTablero.jugadaEscrita`). Sin la seguridad, solo vale la exacta.
+- **La cámara se movió: se sigue la partida, no se empieza otra.**
+  `calibrar` aprende con cualquier posición conocida, no solo la inicial.
+  Si una lectura quieta cambia 10 casillas o más, se corren las esquinas a
+  las líneas y se calibra con la partida anotada; si así lee 56 o más, sigue
+  solo. Si no, «Buscar el tablero» (o las esquinas) y «Seguir con esta
+  partida». A igualdad de giros gana el que deja a1 más cerca del de antes:
+  la cámara se movió, el tablero no se dio vuelta. La partida se guarda en
+  el celular en cada jugada (`camara_partida_v1_<tablero>`) y al volver a
+  abrir la página se ofrece seguirla; si no estaba anotada, se pega su FEN o
+  su PGN («Empezar desde otra posición») y la numeración sigue la del FEN
+  («4. Ag5», no «1. Ag5»).
 - **Dos tableros con un celular, opcional y apagado por omisión** (lo pidió
   el dueño: «siempre dando prioridad a que sea 1 para más confianza»). La
   casilla «Leer también un segundo tablero» lo dice al lado: lo más confiable

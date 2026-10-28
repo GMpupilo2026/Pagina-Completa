@@ -42,7 +42,7 @@
             <ol class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6 text-sm">
                 <li class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-4"><p class="font-semibold text-brand-800 dark:text-white">1. La imagen</p><p class="text-brand-500 dark:text-brand-300 mt-1">Abre la cámara o, para probar sin tablero, elige una foto.</p></li>
                 <li class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-4"><p class="font-semibold text-brand-800 dark:text-white">2. El tablero</p><p class="text-brand-500 dark:text-brand-300 mt-1">Toca «Buscar el tablero» o marca tú las cuatro esquinas, en cualquier orden: se ajustan solas a las líneas.</p></li>
-                <li class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-4"><p class="font-semibold text-brand-800 dark:text-white">3. Calibrar</p><p class="text-brand-500 dark:text-brand-300 mt-1">Con las piezas en la posición inicial, toca «Calibrar»: ahí descubre cuál esquina es a1. Desde entonces lee cada casilla y anota las jugadas.</p></li>
+                <li class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-4"><p class="font-semibold text-brand-800 dark:text-white">3. Calibrar</p><p class="text-brand-500 dark:text-brand-300 mt-1">Con las piezas en la posición inicial, toca «Calibrar»: ahí descubre cuál esquina es a1. Si se movió la cámara a media partida, «Seguir con esta partida» no pierde nada.</p></li>
             </ol>
 
             <div class="flex flex-wrap gap-2 mb-4">
@@ -52,6 +52,7 @@
                 <button id="btn-ajustar" type="button" disabled class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-4 py-2.5 rounded-lg text-sm disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Ajustar las esquinas a las líneas</button>
                 <button id="btn-esquinas" type="button" disabled class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-4 py-2.5 rounded-lg text-sm disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Volver a marcar las esquinas</button>
                 <button id="btn-calibrar" type="button" disabled class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-4 py-2.5 rounded-lg text-sm disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Calibrar con la posición inicial</button>
+                <button id="btn-seguir" type="button" disabled class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-4 py-2.5 rounded-lg text-sm disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Seguir con esta partida</button>
             </div>
 
             <div class="mb-4 bg-white dark:bg-brand-900 rounded-2xl shadow-md px-4 py-3">
@@ -92,6 +93,25 @@
                             <button id="btn-deshacer" type="button" disabled class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-3 py-2 rounded-lg text-sm disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Deshacer la última jugada</button>
                             <button id="btn-copiar" type="button" disabled class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-3 py-2 rounded-lg text-sm disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Copiar el PGN</button>
                         </div>
+                                            <div id="dudas" hidden class="mt-4 rounded-xl border-2 border-accent-500 p-3">
+                            <p class="text-sm font-semibold text-brand-800 dark:text-white">¿Cuál fue la jugada?</p>
+                            <div id="dudas-botones" class="flex flex-wrap gap-2 mt-2"></div>
+                        </div>
+                        <form id="form-anotar" class="mt-4" novalidate>
+                            <label for="jugada-mano" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 mb-1">Anotar una jugada a mano (si la cámara no la reconoce)</label>
+                            <div class="flex gap-2">
+                                <input id="jugada-mano" type="text" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="Por ejemplo: Cf3" class="flex-1 min-w-0 bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                                <button type="submit" class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-3 py-2 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Anotar</button>
+                            </div>
+                        </form>
+                        <details class="mt-4">
+                            <summary class="text-sm font-semibold text-brand-800 dark:text-white cursor-pointer rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Empezar desde otra posición</summary>
+                            <form id="form-posicion" class="mt-2" novalidate>
+                                <label for="posicion" class="block text-xs text-brand-500 dark:text-brand-300 mb-1">Si la partida no estaba anotada: pega su FEN (como lo da Lichess) o sus jugadas en PGN. Después pon las piezas así y toca «Seguir con esta partida».</label>
+                                <textarea id="posicion" rows="2" spellcheck="false" class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 font-mono"></textarea>
+                                <button type="submit" class="mt-2 bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-3 py-2 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Usar esta posición</button>
+                            </form>
+                        </details>
                     </section>
                     <section class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-4" aria-labelledby="t-vivo">
                         <h2 id="t-vivo" class="font-semibold text-brand-800 dark:text-white"><span aria-hidden="true">📡</span> Transmitir en vivo</h2>
