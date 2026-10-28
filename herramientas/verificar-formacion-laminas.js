@@ -19,6 +19,9 @@ const { huella, archivo } = require("./lib/formacion-huella");
 
 const RAIZ = path.join(__dirname, "..");
 const TOPE = 65, TOPE_TABLA = 90;
+// Un cuadro cruzado es casi todo números (un resultado, un puesto): se le
+// cuentan igual, con su propio tope.
+const TOPE_CRUZADO = 140;
 const MARCA_TONOS = ["si", "no", "ojo", "info"];
 let fallas = 0;
 const cierto = (nombre, ok, detalle) => {
@@ -51,7 +54,7 @@ for (const clase of clases) {
   datos.forEach((d, i) => {
     const n = i + 1, dia = diapos[i] || {};
     const cuenta = palabras((dia.titulo || "") + " " + texto(d));
-    if (cuenta > (d.tipo === "tabla" ? TOPE_TABLA : TOPE)) largas.push(n + " (" + cuenta + ")");
+    if (cuenta > (d.tipo === "tabla" ? TOPE_TABLA : d.tipo === "cruzado" ? TOPE_CRUZADO : TOPE)) largas.push(n + " (" + cuenta + ")");
     const pide = [];
     if (d.tipo === "tablero") pide.push(d.pos);
     if (d.tipo === "tableros") d.items.forEach((x) => pide.push(x.pos));
@@ -61,7 +64,7 @@ for (const clase of clases) {
     if (!/^RIFF....WEBP$/s.test(cab)) sinImagen.push(n);
     JSON.stringify(d).replace(/"tono":"([^"]*)"/g, (_, t) => { if (!MARCA_TONOS.includes(t)) tonos.push(n + ":" + t); });
   });
-  cierto("ninguna lámina pasa de " + TOPE + " palabras (" + TOPE_TABLA + " una tabla)", !largas.length, largas.join(", "));
+  cierto("ninguna lámina pasa de " + TOPE + " palabras (" + TOPE_TABLA + " una tabla, " + TOPE_CRUZADO + " un cuadro cruzado)", !largas.length, largas.join(", "));
   cierto("todo tablero pide una posición que la lámina tiene", !sinPos.length, sinPos.join(", "));
   cierto("cada lámina tiene su imagen WebP", !sinImagen.length, sinImagen.join(", "));
   cierto("los tonos son los que el generador conoce (cada uno con su palabra)", !tonos.length, tonos.join(", "));

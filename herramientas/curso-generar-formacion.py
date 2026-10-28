@@ -246,8 +246,29 @@ def temas_html(leccion):
         if t.get("puntos"):
             partes.append('<ul class="list-disc list-inside space-y-1">%s</ul>'
                           % "".join("<li>%s</li>" % escapar(x) for x in t["puntos"]))
+        if t.get("cuadro"):
+            partes.append(cuadro_html(t["cuadro"]))
         partes.append('<p class="text-xs text-brand-450 dark:text-brand-350">Fuente: %s</p>' % escapar(t["fuente"]))
     return "".join(partes)
+
+
+def cuadro_html(c):
+    """El cuadro cruzado de un ejemplo resuelto (los desempates de la Sesión 3).
+    Las filas de los empatados van en negrita y lo dice la nota: el color no
+    va solo. Lo verifica herramientas/verificar-formacion-desempates.js."""
+    resaltar = set(c.get("resaltar") or [])
+    jug = c["cab"].index("Jugador")
+    centro = lambda k: "" if k == jug else " text-center"
+    cab = "".join('<th scope="col" class="px-2 pb-1%s">%s</th>' % (centro(k), escapar(x)) for k, x in enumerate(c["cab"]))
+    filas = "".join(
+        '<tr class="border-t border-brand-100 dark:border-brand-700%s">%s</tr>'
+        % (" font-semibold" if i in resaltar else "",
+           "".join('<td class="px-2 py-1.5 whitespace-nowrap%s">%s</td>' % (centro(k), escapar(x)) for k, x in enumerate(f)))
+        for i, f in enumerate(c["filas"]))
+    return ('<div class="overflow-x-auto my-2"><table class="text-sm w-full tabular-nums"><caption class="text-left text-xs text-brand-450 dark:text-brand-350 pb-1">%s</caption>'
+            '<thead><tr class="text-xs uppercase tracking-wide text-brand-450 dark:text-brand-350">%s</tr></thead><tbody>%s</tbody></table></div>'
+            '<p class="text-xs text-brand-450 dark:text-brand-350">%s</p>'
+            % (escapar(c["titulo"]), cab, filas, escapar(c.get("nota", ""))))
 
 
 def casos_html(leccion):
@@ -782,7 +803,7 @@ def material_pdf(curso, leccion, destino):
     from reportlab.lib.styles import ParagraphStyle
     from reportlab.lib.units import cm
     from reportlab.lib.colors import HexColor
-    from reportlab.platypus import SimpleDocTemplate, Paragraph, HRFlowable, Table, TableStyle
+    from reportlab.platypus import SimpleDocTemplate, Paragraph, HRFlowable, Table, TableStyle, KeepTogether
 
     azul, gris, ambar = HexColor("#" + AZUL_950), HexColor("#" + AZUL_400), HexColor("#" + AMBAR_500)
     est = lambda **kw: ParagraphStyle(**kw)
@@ -840,6 +861,29 @@ def material_pdf(curso, leccion, destino):
         f.append(Paragraph(escapar(tema["texto"]), s_txt))
         for x in tema.get("puntos", []):
             f.append(Paragraph(escapar(x), s_item, bulletText="–"))
+        if tema.get("cuadro"):
+            c = tema["cuadro"]
+            bloque = [Paragraph(escapar(c["titulo"]), s_sec)]
+            jug = c["cab"].index("Jugador")
+            anchos = [(3.0 if k == jug else 17.0 / (len(c["cab"]) - 1)) * cm for k in range(len(c["cab"]))]
+            sobra = sum(anchos) - 17.0 * cm
+            anchos = [w - sobra / (len(anchos) - 1) if k != jug else w for k, w in enumerate(anchos)]
+            t = Table([c["cab"]] + c["filas"], colWidths=anchos, repeatRows=1)
+            estilo = [
+                ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+                ("TEXTCOLOR", (0, 0), (-1, 0), ambar),
+                ("FONTSIZE", (0, 0), (-1, -1), 8.5),
+                ("GRID", (0, 0), (-1, -1), 0.5, gris),
+                ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+                ("ALIGN", (jug, 1), (jug, -1), "LEFT"),
+            ]
+            for i in c.get("resaltar") or []:
+                estilo.append(("FONTNAME", (0, i + 1), (-1, i + 1), "Helvetica-Bold"))
+            t.setStyle(TableStyle(estilo))
+            bloque.append(t)
+            if c.get("nota"):
+                bloque.append(Paragraph(escapar(c["nota"]), s_fuente))
+            f.append(KeepTogether(bloque))   # el cuadro no se parte entre dos páginas
         f.append(Paragraph("Fuente: " + escapar(tema["fuente"]), s_fuente))
     f.append(Paragraph("EJEMPLOS Y CASOS", s_sec))
     for i, c in enumerate(leccion["casos"], 1):

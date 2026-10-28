@@ -4181,6 +4181,54 @@ frente en la vista limpia, sin la tapa fija de la pantalla completa para todos o
 salir de la de verdad al quitarla, aplicándosela también al profe y sin volver a
 copiar el tablero en pequeño cuando cambia.
 
+#### Los desempates, con ejemplos resueltos
+
+La Sesión 3 explicaba el Buchholz y el Sonneborn-Berger con los puntos de los
+rivales sueltos («los rivales de Ana terminaron con 3, 2½, 4…»): se entendía la
+suma, pero no de dónde salían esos números ni qué pasa con una ronda libre, que
+es lo que más se reclama en la Etapa Regional (con número impar, alguien queda
+libre cada ronda). Pedido del dueño (28/10): ejemplos prácticos, en cuadros
+cruzados. Entraron cinco láminas (10 a 14), después de «Sonneborn-Berger y
+encuentro directo»:
+
+- **Un suizo de 7 jugadores a 4 rondas**, con su cuadro (rival, color y
+  resultado de cada ronda, Pts, BH-C1, BH y SB). Mateo y Camila empatan en 3 y
+  en Buchholz (9); la ronda libre de Camila cuenta como 2 y no como 3 (el rival
+  ficticio tiene los puntos del jugador, con tope de la mitad de las rondas,
+  C.07 art. 16), y el corte 1 los separa (8 y 7½). El SB tampoco los separaba
+  (6¼ cada uno) ni el encuentro directo (tablas). Y el error común, en su
+  lámina: contar la libre como 0 (7) o con sus 3 puntos (10).
+- **Un todos contra todos de 6** con tres empatados en 3½ que se ganaron en
+  círculo: el encuentro directo da 1 a cada uno y no separa; decide el SB (7½,
+  7¼ y 7). Que Irene le ganara a Julián ya no cuenta.
+
+**Ningún número está hecho a ojo.** Las rondas del suizo las dio bbpPairings (el
+Sistema holandés de Pareo Integral) y los desempates, `js/pareo/desempates.js`.
+El cuadro vive **una sola vez**, en el tema del curso (`cuadro` en
+`formacion-ajedrez.json`: `cab`, `filas`, `resaltar`, `nota`), y de ahí lo
+toman la lámina (tipo `cruzado` de `formacion-laminas.js`, que lo lee del curso
+en vez de copiarlo), el cuadernillo (una tabla que no se parte entre páginas) y
+la página del curso. Como la lámina lee del curso, lo leído entra en la huella
+(`lib/formacion-huella.js`): si cambia el cuadro, la imagen queda vieja y falla.
+Las filas de los empatados van en negrita y con fondo, y lo dice la clave: el
+color no va solo. Un cuadro cruzado es casi todo números, así que tiene su
+propio tope de palabras (140).
+
+`node herramientas/verificar-formacion-desempates.js` arma cada torneo DESDE el
+cuadro (las casillas de cada ronda, la tabla de Berger) y recalcula todas las
+columnas con el motor; el suizo pasa además por el comprobador de bbpPairings
+(FPC). Probado que salta: un Buchholz con la libre contada con 3 puntos, una
+casilla con el color cambiado, un resultado cambiado en el todos contra todos y
+los empatados mal resaltados.
+
+Las láminas nuevas corrieron la práctica de la Sesión 3 de las láminas 41-50 a
+las 46-55, y sus claves van por número de lámina: la migración
+`formacion_sesion3_ejemplos_desempate` las vuelve a sembrar y se niega si hay
+respuestas guardadas de esa práctica (cuelgan de las claves con `on delete
+cascade`: borrarlas las borraría). Al aplicarla no había ninguna. Para agregar
+o quitar láminas en una sesión con práctica: los datos, el curso, la práctica
+y las claves, juntos.
+
 ### Buscar un ejercicio es mirarlo: «Ver todas las posiciones»
 
 Las dos listas de material del profesor —los PGN de Archivos y los ejercicios de

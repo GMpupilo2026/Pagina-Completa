@@ -12,6 +12,11 @@
  * Tonos de una marca: "si" (verde), "no" (rojo), "ojo" (ámbar), "info" (azul). El color
  * nunca va solo: la marca lleva siempre su palabra escrita.
  */
+// Los cuadros cruzados de los ejemplos de desempate viven en el tema del curso
+// y se leen de ahí (los vuelve a calcular verificar-formacion-desempates.js).
+const TEMAS = require("../cursos/formacion-ajedrez.json").bloques.flatMap((b) => b.lecciones).find((l) => l.archivo === "03-apendices-normativa-y-emparejamiento").temas;
+const cuadro = (inicio) => TEMAS.find((t) => t.titulo.startsWith(inicio)).cuadro;
+
 module.exports = [
   // 1
   { tipo: "portada", k: "Formación de Personas Árbitras y Asesoras · JDE",
@@ -79,13 +84,9 @@ module.exports = [
     { ic: "⏭️", t: "No se enfrentaron o no define", s: "siguiente desempate de la lista" },
     { ic: "🎲", t: "Se agota la lista", s: "sorteo, salvo que el reglamento diga otra cosa" } ] },
   // 10
-  { tipo: "tabla", k: "Sistema holandés · 7 jugadores: uno queda libre cada ronda",
-    cab: ["Ronda", "Libre", "Partidas"], filas: [
-    ["Ronda 1", "", "Camila", "", "Sofía 1–0 Gabriel · Lucía ½–½ Mateo · Valeria 0–1 Andrés"],
-    ["Ronda 2", "", "Gabriel", "", "Camila ½–½ Sofía · Andrés ½–½ Lucía · Mateo 1–0 Valeria"],
-    ["Ronda 3", "", "Valeria", "", "Sofía 1–0 Andrés · Mateo ½–½ Camila · Gabriel ½–½ Lucía"],
-    ["Ronda 4", "", "Andrés", "", "Sofía 0–1 Mateo · Camila 1–0 Gabriel · Lucía 1–0 Valeria"],
-    ["Final", "", "Mateo 3 · Camila 3", "ojo", "Sofía, Lucía y Andrés 2½ · Gabriel 1½ · Valeria 1"] ] },
+  { tipo: "cruzado", k: "Sistema holandés · 7 jugadores: uno queda libre cada ronda", cuadro: cuadro("Ejemplo resuelto: un suizo"),
+    nota: "En cada ronda: rival, color (b blancas, n negras) y resultado.",
+    clave: "Mateo y Camila empatan en 3 y en Buchholz: decide el corte 1." },
   // 11
   { tipo: "dos", k: "Buchholz: se suman los puntos finales de los rivales",
     izq: { t: "Mateo · Buchholz 9", items: [
@@ -97,12 +98,9 @@ module.exports = [
   { tipo: "frase", k: "Error común", ic: "⚠️", t: "La ronda libre cuenta como un rival con tus mismos puntos, con tope",
     s: "Nunca más de la mitad de las rondas. Como 0, Camila tendría 7; con sus 3 puntos, 10. Lo correcto: 9.", a: "C.07, art. 16" },
   // 13
-  { tipo: "tabla", k: "Todos contra todos · tres empatados en 3½",
-    cab: ["Jugador", "Puntos", "Resultados"], filas: [
-    ["Irene", "", "3½", "", "gana a Julián, Marta y Noelia · ½ con Luis · pierde con Karla"],
-    ["Julián", "", "3½", "", "gana a Karla, Luis y Marta · ½ con Noelia · pierde con Irene"],
-    ["Karla", "", "3½", "", "gana a Irene, Luis y Noelia · ½ con Marta · pierde con Julián"],
-    ["Luis · Marta · Noelia", "", "2 · 1½ · 1", "", ""] ] },
+  { tipo: "cruzado", k: "Todos contra todos · tres empatados en 3½", cuadro: cuadro("Ejemplo resuelto: todos contra todos"),
+    nota: "Cada casilla: lo que hizo el de la fila contra el de la columna.",
+    clave: "«Directo» da 1 a cada uno: no separa. Decide el Sonneborn-Berger." },
   // 14
   { tipo: "filas", k: "Encuentro directo: 1 punto cada uno, no separa", items: [
     { ic: "🥇", t: "Julián: 7½", s: "Karla 3½ + Luis 2 + Marta 1½ + ½ de Noelia" },
