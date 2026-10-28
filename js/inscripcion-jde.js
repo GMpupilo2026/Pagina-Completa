@@ -18,6 +18,9 @@
   const $ = (id) => document.getElementById(id);
 
   const CLAVE_BORRADOR = "ij_borrador_v1";
+  const CLAVE_DESCARGA = "ij_descarga_v1";   // cuándo se bajó el borrador (.json) por última vez
+  const HORA = 3600 * 1000;
+  const CLAVE_PARA_PAREO = "ij_para_pareo_v1";  // la lista que Pareo Integral recoge (js/pareo/pagina.js)
   const MAX_ESTUDIANTES = 400;
   const MAX_CUERPO = 20;
 
@@ -51,6 +54,14 @@
   let estado = leerBorrador() || I.estadoNuevo();
   if (!estado.cuerpo.length) estado.cuerpo.push(I.personaNueva({ rol: "jefe" }), I.personaNueva({ rol: "tecnico" }));
 
+  // Con tres estudiantes o más y sin haber bajado el borrador en la última hora, se
+  // recuerda (solo se recuerda: nada se baja solo).
+  function hayQueRecordar() {
+    if (estado.estudiantes.filter((e) => e.nombre.trim()).length < 3) return false;
+    let ultima = 0;
+    try { ultima = Number(localStorage.getItem(CLAVE_DESCARGA)) || 0; } catch (e) { /* sin almacenamiento */ }
+    return Date.now() - ultima > HORA;
+  }
   let temporizador = null;
   function guardarPronto() {
     clearTimeout(temporizador);
@@ -60,7 +71,8 @@
     const aviso = $("ij-guardado");
     try {
       localStorage.setItem(CLAVE_BORRADOR, JSON.stringify(estado));
-      aviso.textContent = "Guardado en este navegador a las " + window.HoraCR.hora(new Date()) + ". No sale de tu computadora.";
+      aviso.textContent = "Guardado en este navegador a las " + window.HoraCR.hora(new Date()) + ". No sale de tu computadora." + (hayQueRecordar() ? " Todavía no has bajado el borrador (.json) en la última hora: bájalo para no perder lo que escribiste si cambias de computadora o borras los datos del navegador." : "");
+      $("ij-bajar-borrador").classList.toggle("ij-primario", hayQueRecordar());
     } catch (e) {
       aviso.textContent = "Este navegador no deja guardar el borrador: baja el archivo (.json) para no perder lo que escribes.";
     }
@@ -136,6 +148,7 @@
     $("ij-union").setAttribute("aria-expanded", String(estado.centro.union.activa));
     const inter = I.interregionalDe(estado.centro.region);
     $("ij-region-ayuda").textContent = inter ? "Juega la " + inter.nombre + ": " + plural(inter.cupo, "persona clasifica", "personas clasifican") + " por torneo individual y " + plural(inter.cupo, "equipo", "equipos") + " por torneo." : "";
+    $("ij-eq-inter").textContent = inter ? "En tu regional (la " + inter.nombre + ") clasifican " + plural(inter.cupo, "equipo", "equipos") + " por torneo y categoría a la Interregional (art. 66.1.j): con dos equipos por categoría y torneo ya inscribes a todos los que pueden clasificar." : "Elige tu Dirección Regional arriba y aquí verás cuántos equipos clasifican a la Interregional.";
     const c = centroDelBanco();
     $("ij-traer").disabled = !(c && (banco.estudiantes.get(c.idx) || []).length);
     if (banco.listo) {
@@ -330,6 +343,28 @@
   }
   function repintarTodo() { pintarEquipos(); pintarEstudiantes(); }
 
+  // Los nombres de los estudiantes de este centro en los JDE de antes se ofrecen mientras
+  // se escribe (un <datalist>), y quien viene del banco con el sexo seguro (jugó un torneo
+  // femenino) lo trae puesto. Nunca se adivina: sin el dato seguro, no se toca.
+  function llenarNombres() {
+    let lista = document.getElementById("ij-nombres");
+    if (!lista) { lista = el("datalist", { id: "ij-nombres" }); document.body.append(lista); }
+    const c = centroDelBanco();
+    const nombres = c ? (banco.estudiantes.get(c.idx) || []).map((x) => x.nombre) : [];
+    const firma = c ? String(c.idx) : "";
+    if (lista.dataset.firma === firma) return;
+    lista.dataset.firma = firma;
+    lista.textContent = "";
+    for (const n of nombres) lista.append(el("option", { value: n }));
+  }
+  function sexoDelBanco(e) {
+    const c = centroDelBanco();
+    if (!c || e.sexo || !e.nombre.trim()) return false;
+    const b = (banco.estudiantes.get(c.idx) || []).find((x) => clavePersona(x.nombre) === clavePersona(e.nombre));
+    if (!b || b.sexo !== "w") return false;
+    return I.intentar(estado, () => { e.sexo = "w"; }).ok && (cambio(), true);
+  }
+
   // Un estudiante que juega solo.
   function crearTarjeta(e) {
     const id = "ij-e-" + e.id;
@@ -337,7 +372,9 @@
     r.titulo = el("h3", { clase: "font-semibold", id: id + "-h" });
     r.estadoTxt = el("span", { clase: "ij-chip" });
     r.quitar = el("button", { type: "button", clase: "ae-boton", texto: "Quitar" });
-    r.nombre = el("input", { id: id + "-n", type: "text", clase: "ae-control w-full", maxLength: 160, autocomplete: "off", value: e.nombre, placeholder: "Apellidos Nombre" });
+    r.agarrar = el("span", { clase: "ij-agarrar", draggable: "true", texto: "⠿ Arrastrar a un equipo", title: "Arrastra esta tarjeta sobre un equipo para pasar a este estudiante a él (también puedes hacerlo desde el equipo, con «Pasar a este equipo»)" });
+    r.agarrar.addEventListener("dragstart", (ev) => { ev.dataTransfer.setData("text/plain", "ij-e:" + e.id); ev.dataTransfer.effectAllowed = "move"; });
+    r.nombre = el("input", { id: id + "-n", type: "text", clase: "ae-control w-full", maxLength: 160, autocomplete: "off", value: e.nombre, placeholder: "Apellidos Nombre", list: "ij-nombres" });
     r.sexo = el("select", { id: id + "-s", clase: "ae-control w-full" }, el("option", { value: "", texto: "— Elige —" }), el("option", { value: "w", texto: "Mujer" }), el("option", { value: "m", texto: "Hombre" }));
     r.nacimiento = el("input", { id: id + "-f", type: "date", clase: "ae-control w-full", min: "1995-01-01", max: window.HoraCR.hoy(), value: e.nacimiento });
     r.categoria = el("select", { id: id + "-c", clase: "ae-control w-full" });
@@ -354,6 +391,7 @@
     r.docTipo.value = e.docTipo;
 
     r.nombre.addEventListener("input", () => { e.nombre = r.nombre.value; cambio(); });
+    r.nombre.addEventListener("change", () => { if (sexoDelBanco(e)) { r.sexo.value = e.sexo; } });
     r.sexo.addEventListener("change", () => conTopes(() => { e.sexo = r.sexo.value; if (e.sexo !== "w") e.torneo = ""; }));
     r.nacimiento.addEventListener("change", () => conTopes(() => { e.nacimiento = I.anioDe(r.nacimiento.value) ? r.nacimiento.value : ""; }));
     r.categoria.addEventListener("change", () => conTopes(() => { e.categoria = r.categoria.value; }));
@@ -369,7 +407,7 @@
     });
 
     r.tarjeta = el("article", { clase: "ij-estudiante", "aria-labelledby": id + "-h" },
-      el("div", { clase: "ij-cabecera" }, r.titulo, r.estadoTxt, r.quitar),
+      el("div", { clase: "ij-cabecera" }, r.titulo, r.estadoTxt, r.agarrar, r.quitar),
       el("div", { clase: "ij-rejilla" },
         campo("Nombre completo", r.nombre, "ij-ancho"), campo("Sexo", r.sexo), campo("Fecha de nacimiento", r.nacimiento),
         el("div", { clase: "ij-campo" }, el("label", { para: id + "-c", clase: "ij-et", texto: "Categoría" }), r.categoria, r.catAyuda),
@@ -447,7 +485,7 @@
     r.titulo = el("h4", { clase: "font-semibold", id: id + "-h" });
     r.estadoTxt = el("span", { clase: "ij-chip" });
     r.sube = el("span", { clase: "ij-chip", "data-estado": "aviso" });
-    r.nombre = el("input", { id: id + "-n", type: "text", clase: "ae-control w-full", maxLength: 160, autocomplete: "off", value: e.nombre, placeholder: "Apellidos Nombre" });
+    r.nombre = el("input", { id: id + "-n", type: "text", clase: "ae-control w-full", maxLength: 160, autocomplete: "off", value: e.nombre, placeholder: "Apellidos Nombre", list: "ij-nombres" });
     r.sexo = el("select", { id: id + "-s", clase: "ae-control w-full" }, el("option", { value: "", texto: "— Elige —" }), el("option", { value: "w", texto: "Mujer" }), el("option", { value: "m", texto: "Hombre" }));
     r.nacimiento = el("input", { id: id + "-f", type: "date", clase: "ae-control w-full", min: "1995-01-01", max: window.HoraCR.hoy(), value: e.nacimiento });
     r.condicion = el("select", { id: id + "-c", clase: "ae-control w-full" }, el("option", { value: "t", texto: "Titular" }), el("option", { value: "s", texto: "Suplente" }));
@@ -464,6 +502,7 @@
     const campo = (txt, control, extra) => el("div", { clase: "ij-campo" + (extra ? " " + extra : "") }, el("label", { para: control.id, clase: "ij-et", texto: txt }), control);
 
     r.nombre.addEventListener("input", () => { e.nombre = r.nombre.value; cambio(); });
+    r.nombre.addEventListener("change", () => { if (sexoDelBanco(e)) r.sexo.value = e.sexo; });
     r.sexo.addEventListener("change", () => conTopes(() => { e.sexo = r.sexo.value; }));
     r.nacimiento.addEventListener("change", () => conTopes(() => { e.nacimiento = I.anioDe(r.nacimiento.value) ? r.nacimiento.value : ""; }));
     r.condicion.addEventListener("change", () => conTopes(() => { e.suplente = r.condicion.value === "s"; }));
@@ -502,6 +541,12 @@
     r.estadoTxt = el("span", { clase: "ij-chip" });
     r.quitar = el("button", { type: "button", clase: "ae-boton", texto: "Quitar el equipo" });
     r.resumen = el("p", { clase: "ij-ayuda", id: id + "-r" });
+    r.faltan = el("p", { clase: "ij-ayuda font-semibold", id: id + "-fa" });
+    r.irPrimero = el("button", { type: "button", clase: "ae-boton", texto: "Ir al primero" });
+    r.irPrimero.addEventListener("click", () => {
+      const fa = I.faltantes(estado.estudiantes.filter((e) => e.equipoId === t.id));
+      if (fa.length) irA({ campo: fa[0].campo, ids: fa[0].ids });
+    });
     r.problemas = el("ul", { clase: "ij-problemas" });
     r.miembros = el("div", { clase: "grid gap-3" });
     r.mas = el("button", { type: "button", clase: "ae-boton ij-primario", texto: "+ Integrante nuevo" });
@@ -537,11 +582,30 @@
       $("ij-eq-crear").focus();
     });
 
+    // Soltar a un estudiante individual sobre el equipo lo pasa al equipo (el selector de
+    // abajo hace lo mismo para quien no arrastra).
+    const aceptaSuelta = (ev) => Array.from(ev.dataTransfer ? ev.dataTransfer.types : []).includes("text/plain");
+    const tarjetaEq = () => r.tarjeta;
+    r.pintarSuelta = (si) => tarjetaEq().classList.toggle("ij-suelta", si);
+    r.soltar = (ev) => {
+      ev.preventDefault();
+      r.pintarSuelta(false);
+      const dato = ev.dataTransfer.getData("text/plain");
+      const e = dato.startsWith("ij-e:") && estado.estudiantes.find((x) => x.id === dato.slice(5) && !x.equipoId);
+      if (!e) return;
+      const res = I.agregarIntegrante(estado, t.id, null, e);
+      if (!res.ok) avisar(res.motivos[0], "error");
+      repintarTodo();
+      cambio();
+    };
     r.tarjeta = el("article", { clase: "ij-equipo-tarjeta", "aria-labelledby": id + "-h" },
       el("div", { clase: "ij-cabecera" }, r.titulo, r.estadoTxt, r.quitar),
-      r.resumen, r.problemas, r.miembros,
+      r.resumen, el("div", { clase: "flex flex-wrap gap-3 items-center" }, r.faltan, r.irPrimero), r.problemas, r.miembros,
       el("div", { clase: "flex flex-wrap gap-3 items-end" }, r.mas, el("div", { clase: "ij-campo", style: "min-width:14rem;flex:1 1 14rem" }, r.pasarEt, r.pasar)),
       r.aviso);
+    r.tarjeta.addEventListener("dragover", (ev) => { if (aceptaSuelta(ev)) { ev.preventDefault(); r.pintarSuelta(true); } });
+    r.tarjeta.addEventListener("dragleave", (ev) => { if (!r.tarjeta.contains(ev.relatedTarget)) r.pintarSuelta(false); });
+    r.tarjeta.addEventListener("drop", r.soltar);
     return r;
   }
 
@@ -574,6 +638,9 @@
       const miembros = estado.estudiantes.filter((e) => e.equipoId === t.id);
       const ids = new Set(miembros.map((e) => e.id));
       const sinLlenar = miembros.filter((e) => !e.nombre.trim() && !e.nacimiento && !e.documento.trim()).length;
+      const fa = I.faltantes(miembros);
+      r.faltan.textContent = fa.length ? "Faltan: " + fa.map((x) => x.texto).join(", ") + "." : "";
+      r.irPrimero.hidden = !fa.length;
       r.titulo.textContent = nombreEquipo(t);
       r.quitar.setAttribute("aria-label", "Quitar el " + nombreEquipo(t).toLowerCase());
       const lleno = ep.caben === 0;
@@ -625,7 +692,7 @@
   // ------------------------------------------------------------- traer y pegar
   function abrirCaja(idCaja, idBoton, abrir) {
     $(idCaja).hidden = !abrir;
-    $(idBoton).setAttribute("aria-expanded", String(abrir));
+    if (idBoton) $(idBoton).setAttribute("aria-expanded", String(abrir));
   }
   const clavePersona = (s) => I.claveBusqueda(s);
   function prepararTraer() {
@@ -643,6 +710,46 @@
   }
   // Agrega una lista a la inscripción sin pasarse de lo permitido: cada persona entra
   // si cabe (individual o en su equipo) y las que no caben se dicen con su motivo.
+  // «Traer de un borrador anterior (.json)»: los estudiantes de otra inscripción (la del año
+  // pasado, bajada con «Bajar el borrador») se ofrecen con todos sus datos y se agregan
+  // sin reemplazar nada. Los que jugaban en un equipo vuelven a un equipo; la categoría se
+  // calcula de nuevo si el año cambió.
+  const ant = { lista: [], anio: 0 };
+  async function leerAnterior(archivo) {
+    if (!archivo) return;
+    if (archivo.size > 5 * 1024 * 1024) { avisar("Ese archivo es demasiado grande para ser un borrador.", "error"); return; }
+    let otro;
+    try {
+      const datos = JSON.parse(await archivo.text());
+      if (!datos || datos.formato !== "inscripcion-jde") throw new Error("no es un borrador de esta herramienta");
+      otro = I.normalizar(datos);
+    } catch (err) { avisar("No se pudo abrir el borrador: " + err.message, "error"); return; }
+    const yaEstan = new Set(estado.estudiantes.map((e) => clavePersona(e.nombre)));
+    ant.anio = otro.anio;
+    ant.lista = otro.estudiantes.filter((e) => e.nombre.trim() && !yaEstan.has(clavePersona(e.nombre))).map((e) => ({ e, equipo: I.equipoDe(e, otro) }));
+    const lista = $("ij-ant-lista");
+    lista.textContent = "";
+    if (!ant.lista.length) lista.append(el("p", { clase: "ij-ayuda", texto: "Ese borrador no tiene estudiantes que no estén ya aquí." }));
+    ant.lista.forEach((x, i) => {
+      const donde = x.equipo ? "equipo " + I.NOMBRE_TORNEO[x.equipo.torneo] + " " + x.equipo.categoria : "individual";
+      lista.append(el("label", { clase: "ij-casilla ij-traer-fila", para: "ij-ant-" + i }, el("input", { type: "checkbox", id: "ij-ant-" + i, value: String(i), checked: true }), " " + x.e.nombre + " (" + donde + ")"));
+    });
+    abrirCaja("ij-ant-caja", null, true);
+  }
+  function agregarDeAnterior() {
+    const marcados = [...$("ij-ant-lista").querySelectorAll("input:checked")].map((i) => ant.lista[Number(i.value)]).filter(Boolean);
+    if (!marcados.length) { avisar("Marca al menos un estudiante.", "info"); return; }
+    const mismoAnio = ant.anio === estado.anio;
+    const nuevos = marcados.map(({ e, equipo }) => {
+      const n = I.estudianteNuevo({ nombre: e.nombre, sexo: e.sexo, nacimiento: e.nacimiento, documento: e.documento, docTipo: e.docTipo, apoyo: e.apoyo, torneo: equipo ? "" : e.torneo, categoria: equipo || !mismoAnio ? "" : e.categoria });
+      n.destino = { equipo: !!equipo, torneo: equipo ? equipo.torneo : "m", categoria: equipo && mismoAnio ? equipo.categoria : "" };
+      return n;
+    });
+    const n = agregarEstudiantes(nuevos);
+    abrirCaja("ij-ant-caja", null, false);
+    avisar("Se agregaron " + plural(n, "estudiante", "estudiantes") + " del borrador anterior." + (mismoAnio ? "" : " La categoría se calculó con el año " + estado.anio + ": revísala."));
+  }
+
   function agregarEstudiantes(nuevos) {
     const sitio = Math.max(MAX_ESTUDIANTES - estado.estudiantes.length, 0);
     if (nuevos.length > sitio) { avisar("Caben " + MAX_ESTUDIANTES + " estudiantes por inscripción: se intentaron los primeros " + sitio + ".", "info"); nuevos = nuevos.slice(0, sitio); }
@@ -689,16 +796,55 @@
     $("ij-c4").textContent = String(r.avisos);
   }
 
+  // ------------------------------------------------- lo que falta y las ideas
+  // Lleva a quien escribe al control donde falta algo: un control de la página, el
+  // primer estudiante al que le falta ese dato o el botón de agregar de un equipo.
+  function irA(p) {
+    let ctl = null;
+    if (p.control === "ij-cuerpo") {
+      const persona = estado.cuerpo.find((x) => x.rol === (p.clave === "tecnico" ? "tecnico" : "jefe") && !x.nombre.trim()) || estado.cuerpo.find((x) => x.rol === (p.clave === "tecnico" ? "tecnico" : "jefe"));
+      ctl = persona ? $("ij-p-" + persona.id + "-n") : $("ij-cuerpo-mas");
+    } else if (p.control) ctl = $(p.control);
+    else if (p.equipo) ctl = refsEq.get(p.equipo) && refsEq.get(p.equipo).mas;
+    else if (p.campo) { const r = refsMiembro.get(p.ids[0]) || refsEst.get(p.ids[0]); ctl = r && $(r.id + "-" + p.campo); }
+    if (!ctl) return;
+    ctl.scrollIntoView({ block: "center" });
+    ctl.focus();
+  }
+
+  function pintarPendientes() {
+    const lista = $("ij-pend");
+    lista.textContent = "";
+    const todas = I.pendientes(estado);
+    for (const p of todas) {
+      const ir = el("button", { type: "button", clase: "ae-boton", texto: "Ir", "aria-label": "Ir a: " + p.texto });
+      ir.addEventListener("click", () => irA(Object.assign({ clave: p.clave }, p)));
+      lista.append(el("li", { clase: "ij-pendiente" }, el("span", { texto: p.texto }), ir));
+    }
+    $("ij-pend-estado").textContent = todas.length ? plural(todas.length, "cosa por hacer", "cosas por hacer") + " para dejar la inscripción lista." : "No falta nada: revisa abajo lo que dice la Normativa y baja tu nómina.";
+  }
+  function pintarSugerencias() {
+    const ideas = I.sugerencias(estado);
+    $("ij-sug-caja").hidden = !ideas.length;
+    const lista = $("ij-sug");
+    lista.textContent = "";
+    for (const t of ideas) lista.append(el("li", { texto: t }));
+  }
+
   function refrescar() {
     const r = I.revisar(estado, window.HoraCR.hoy());
     ultima = r;
     const porId = new Map();
     for (const h of r.hallazgos) for (const id of h.ids) { if (!porId.has(id)) porId.set(id, []); porId.get(id).push(h); }
     actualizarCentro();
+    llenarNombres();
+    pintarNormaCategorias();
     llenarCategoriasEquipo();
     actualizarEquipos(porId);
     actualizarTarjetas(porId);
     pintarRevision(r);
+    pintarPendientes();
+    pintarSugerencias();
     pintarResumen(r);
     pintarCifras(r);
     return r;
@@ -709,11 +855,12 @@
   const slug = (s) => sinTildes(s).replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 40) || "centro";
   function nombreArchivo(ext) { return "inscripcion-jde-" + estado.anio + "-" + slug(estado.centro.nombre) + "." + ext; }
 
-  async function seguirAunqueHayaErrores(que) {
+  async function seguirAunqueHayaErrores(que, verbo, asi) {
+    verbo = verbo || "bajar";
     const r = ultima || refrescar();
-    if (!estado.estudiantes.some((e) => e.nombre.trim())) { avisar("Agrega al menos un estudiante antes de bajar " + que + ".", "error"); return false; }
+    if (!estado.estudiantes.some((e) => e.nombre.trim())) { avisar("Agrega al menos un estudiante antes de " + verbo + " " + que + ".", "error"); return false; }
     if (!r.errores) return true;
-    return window.Avisos.confirmar("Todavía hay " + plural(r.errores, "error", "errores") + " por corregir. ¿Quieres bajar " + que + " de todos modos?", { aceptar: "Bajarlo así", cancelar: "Seguir corrigiendo" });
+    return window.Avisos.confirmar("Todavía hay " + plural(r.errores, "error", "errores") + " por corregir. ¿Quieres " + verbo + " " + que + " de todos modos?", { aceptar: asi || "Bajarlo así", cancelar: "Seguir corrigiendo" });
   }
 
   async function bajarExcel() {
@@ -727,6 +874,19 @@
       { nombre: "Delegación", filas: [["Dato", "Valor"], ["Año de los JDE", String(estado.anio)], ["Etapa", etapa || ""], ["Centro educativo", c.nombre], ["Dirección Regional", c.region], ["Circuito", c.circuito], ["Correo", c.correo], ["Teléfono", c.telefono], ["Centros unidos (art. 19)", c.union.activa ? c.union.centros : ""]] },
     ]);
     $("ij-sal-estado").textContent = "Excel armado. Ábrelo en Pareo Integral con «Subir una lista» o llévalo a tu reunión de coordinación.";
+  }
+
+  // «Abrir en Pareo Integral»: las mismas filas del Excel pasan a Pareo por el
+  // almacenamiento del navegador (las dos páginas son del mismo sitio), sin bajar nada ni
+  // mandar nada a ningún servidor. Pareo las lee una vez y las borra.
+  async function abrirEnPareo() {
+    if (!(await seguirAunqueHayaErrores("la lista en Pareo Integral", "abrir", "Abrirla así"))) return;
+    const carga = { nombre: nombreArchivo("xlsx"), filas: [I.ENCABEZADOS].concat(I.filasExcel(estado)), hora: Date.now() };
+    try { localStorage.setItem(CLAVE_PARA_PAREO, JSON.stringify(carga)); } catch (e) {
+      avisar("Este navegador no deja pasar la lista a Pareo Integral: baja el Excel y súbelo allá con «Subir una lista».", "error");
+      return;
+    }
+    location.href = "pareo.html#desde=inscripcion-jde";
   }
 
   function documentoPdf(r) {
@@ -799,6 +959,8 @@
   }
 
   function bajarBorrador() {
+    try { localStorage.setItem(CLAVE_DESCARGA, String(Date.now())); } catch (e) { /* sin almacenamiento */ }
+    guardarAhora();
     const blob = new Blob([JSON.stringify(Object.assign({ formato: "inscripcion-jde" }, estado), null, 1)], { type: "application/json" });
     const url = URL.createObjectURL(blob);
     const enlace = el("a", { href: url, download: nombreArchivo("json") });
@@ -914,6 +1076,11 @@
       avisar("Se agregaron " + plural(n, "estudiante", "estudiantes") + ". Revisa el sexo y la fecha de nacimiento de cada uno.");
     });
     $("ij-pegar-archivo").addEventListener("change", async (ev) => { await leerArchivoLista(ev.target.files[0]); ev.target.value = ""; abrirCaja("ij-pegar-caja", "ij-pegar", false); });
+    $("ij-anterior-archivo").addEventListener("change", async (ev) => { await leerAnterior(ev.target.files[0]); ev.target.value = ""; });
+    $("ij-ant-agregar").addEventListener("click", agregarDeAnterior);
+    $("ij-ant-todos").addEventListener("click", () => $("ij-ant-lista").querySelectorAll("input").forEach((i) => { i.checked = true; }));
+    $("ij-ant-cerrar").addEventListener("click", () => abrirCaja("ij-ant-caja", null, false));
+    $("ij-pareo").addEventListener("click", abrirEnPareo);
     $("ij-excel").addEventListener("click", bajarExcel);
     $("ij-pdf").addEventListener("click", bajarPdf);
     $("ij-bajar-borrador").addEventListener("click", bajarBorrador);
@@ -921,14 +1088,23 @@
     $("ij-empezar").addEventListener("click", empezarDeCero);
   }
 
+  // Los rangos de la Normativa del año de esta inscripción. Los de un año sin Normativa
+  // publicada son los de 2026 corridos un año (`G.rangoCategoria`) y la página lo dice.
+  let anioNorma = 0;
   function pintarNormaCategorias() {
+    if (anioNorma === estado.anio) return;
+    anioNorma = estado.anio;
     const ul = $("ij-norma-categorias");
+    ul.textContent = "";
     for (const c of ["A", "B", "C", "D", "E"]) {
-      const r = G.rangoCategoria(c, G.JDE_ANIO_NORMATIVA);
+      const r = G.rangoCategoria(c, estado.anio);
       ul.append(el("li", { texto: "Categoría " + I.NOMBRE_CATEGORIA[c] + ": " + (r[0] == null ? "nacidos en " + r[1] + " o antes" : "nacidos de " + r[0] + " a " + r[1]) + "." }));
     }
-    ul.append(el("li", { texto: "Por eso quien nació en 2013 o 2014 es de la B si estudia en escuela y de la C si estudia en colegio." }));
+    const dudosos = [];
+    for (let a = estado.anio - 22; a <= estado.anio - 3; a++) if (G.categoriasDeNacimiento(a, estado.anio).length > 1) dudosos.push(a);
+    if (dudosos.length) ul.append(el("li", { texto: "Por eso quien nació en " + dudosos.join(" o ") + " es de la B si estudia en escuela y de la C si estudia en colegio." }));
     ul.append(el("li", { texto: "En los eventos por equipos (no en individual) pueden subir a la categoría siguiente hasta tres estudiantes por equipo: de A a B, de C a D y de D a E. Un centro que se une a otros (art. 19) no puede subir de categoría." }));
+    if (estado.anio !== G.JDE_ANIO_NORMATIVA) ul.append(el("li", { clase: "font-semibold", texto: "Estos rangos de " + estado.anio + " son los de la Normativa " + G.JDE_ANIO_NORMATIVA + " corridos un año: confírmalos cuando se publique la Normativa de " + estado.anio + "." }));
   }
 
   function iniciar() {
