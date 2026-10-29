@@ -426,6 +426,36 @@
         $("girar").setAttribute("aria-pressed", String(girado));
         pintar();
     });
+    /* Todas las partidas que se están viendo (las de la cuadrícula), en un
+     * solo PGN para bajar: cada una con su torneo, su ronda, su mesa (o
+     * tablero), los nombres, la fecha de hoy en Costa Rica y el resultado, y
+     * el tiempo de cada jugada si se sabe. Lo que se baja es lo que ya llegó:
+     * con retraso, hasta donde se ve. */
+    const RESULTADO_PGN = { "1-0": "1-0", "=": "1/2-1/2", "0-1": "0-1" };
+    function pgnDeTodas() {
+        const lista = [...partidas.entries()].filter(([, x]) => x.mesa && x.juego.history().length)
+            .sort((a, b) => a[1].mesa - b[1].mesa || (a[1].tablero || 0) - (b[1].tablero || 0));
+        const limpio = (s) => String(s || "").replace(/["\\\n\r]/g, "");
+        const fecha = HoraCR.hoy().replace(/-/g, ".");
+        return lista.map(([, x]) => {
+            const r = RESULTADO_PGN[x.resultado] || "*";
+            const cab = [["Event", (torneoDatos && torneoDatos.nombre) || "Partidas en vivo"], ["Site", "Ajedrez Integral"], ["Date", fecha],
+                ["Round", x.ronda || "-"], ["Board", P.lugar(x)], ["White", x.blancas || "?"], ["Black", x.negras || "?"], ["Result", r]];
+            const jugadas = P.pgn(x.juego, x.resultado, x.tiempos).split(/\n\n/).pop();
+            return cab.map(([k, v]) => "[" + k + ' "' + limpio(v) + '"]').join("\n") + "\n\n" + jugadas;
+        });
+    }
+    $("btn-pgn-todas").addEventListener("click", () => {
+        const todas = pgnDeTodas();
+        if (!todas.length) return;
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(new Blob([todas.join("\n\n") + "\n"], { type: "application/x-chess-pgn" }));
+        const nombre = ((torneoDatos && torneoDatos.nombre) || "partidas").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+        a.download = nombre + "-" + HoraCR.hoy() + ".pgn";
+        document.body.append(a); a.click(); a.remove();
+        setTimeout(() => URL.revokeObjectURL(a.href), 10000);
+    });
+
     $("copiar").addEventListener("click", async () => {
         const x = partidas.get(elegida);
         if (!x) return;

@@ -659,6 +659,13 @@ async function esperarJugadas(p, n) {
     await foto(A.page, ja.fen(), ESQ0); await esperarJugadas(A.page, 1);
     await W.page.waitForFunction(() => /e4/.test(document.querySelector('#mesas-lista button[data-mesa="1"]').textContent), null, { timeout: 8000 }).catch(() => {});
     igual("cada jugada llega a su tablero", [/e4/.test(await W.page.textContent('#mesas-lista button[data-mesa="1"]')), /d4/.test(await W.page.textContent('#mesas-lista button[data-mesa="2"]'))], [true, true]);
+    const [bajada] = await Promise.all([W.page.waitForEvent("download"), W.page.click("#btn-pgn-todas")]);
+    const pgnTodas = fs.readFileSync(await bajada.path(), "utf8");
+    const juegos = pgnTodas.trim().split(/\n\n(?=\[Event)/);
+    igual("«Bajar todas las partidas» deja un PGN con cada tablero, sus datos y sus jugadas, que chess.js vuelve a leer",
+      [bajada.suggestedFilename().endsWith(".pgn"), juegos.length, juegos.map((g) => (/\[Board "([^"]+)"\]/.exec(g) || [])[1]),
+        juegos.map((g) => { const c = new Chess(); return c.load_pgn(g) ? c.history().join(" ") : "no se lee"; }), /\[Date "\d{4}\.\d{2}\.\d{2}"\]/.test(pgnTodas)],
+      [true, 2, ["Tablero 1", "Tablero 2"], ["e4", "d4"], true]);
     igual("lo que viaja dice el tablero de la simultánea, sin torneo", eventos.slice(antes).filter((x) => x.event === "estado").map((x) => [x.payload.simul, x.payload.mesa, "torneo" in x.payload]).slice(-1), [[1, 1, false]]);
     igual("sin errores en la consola (simultánea)", [A.errores, B.errores, W.errores, S.errores], [[], [], [], []]);
     for (const x of [A, B, W, S]) await cerrar(x);

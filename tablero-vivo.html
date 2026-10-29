@@ -103,7 +103,10 @@
             <section id="mesas" hidden aria-labelledby="torneo-titulo" class="mb-6">
                 <div class="flex flex-wrap items-center justify-between gap-3 mb-3">
                     <h2 id="torneo-titulo" class="font-serif text-2xl font-bold text-brand-800 dark:text-white"></h2>
-                    <button id="btn-proyectar" type="button" aria-pressed="false" class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-3 py-2 rounded-lg text-sm disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true">📽️</span> <span id="btn-proyectar-texto">Proyectar en la sala</span></button>
+                    <div class="flex flex-wrap gap-2">
+                        <button id="btn-proyectar" type="button" aria-pressed="false" class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-3 py-2 rounded-lg text-sm disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true">📽️</span> <span id="btn-proyectar-texto">Proyectar en la sala</span></button>
+                        <button id="btn-pgn-todas" type="button" class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-3 py-2 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Bajar todas las partidas (PGN)</button>
+                    </div>
                 </div>
                 <p id="proyector-pagina" hidden class="text-lg font-semibold mb-3"></p>
                 <div id="mesas-lista" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4"></div>
