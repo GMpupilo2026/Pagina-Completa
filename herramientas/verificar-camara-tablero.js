@@ -1477,6 +1477,48 @@ async function esperarJugadas(p, n) {
     igual("sin sesión, dice cómo entrar y no abre el formulario",
       [/^Para guardarla, entra a tu cuenta/.test(await S.page.textContent("#guardar-msg")), await S.page.evaluate(() => document.getElementById("form-guardar").checkVisibility())], [true, false]);
     await cerrar(S);
+
+    // «Guardar solas» en un torneo: se guarda una a mano con la casilla, y
+    // las siguientes de ese nombre se guardan solas al terminar.
+    const llegaMesa = (pg, o) => pg.evaluate((o) => {
+      const c = window.__canales[Object.keys(window.__canales)[0]];
+      c.estado({ payload: Object.assign({ v: 1, t: Date.now(), torneo: o.torneo }, o) });
+    }, o);
+    const IDS = "7c1e2d3f-4a5b-4c6d-8e7f-9a0b1c2d3e4f";
+    const GS = await abrir(browser, "tablero-vivo.html#gxardxsx&t=" + IDS, null, { width: 390, height: 844 });
+    const ps = GS.page;
+    await ps.waitForFunction(() => window.__canales && Object.keys(window.__canales).length, null, { timeout: 8000 });
+    await llegaMesa(ps, { torneo: IDS, mesa: 3, ronda: 2, id: "m3-0", pgn: jg.pgn(), blancas: "Ana Mora", negras: "Beto Solís", resultado: "1-0" });
+    await ps.waitForSelector('#mesas-lista button[data-mesa="3"]');
+    await ps.click('#mesas-lista button[data-mesa="3"]');
+    await ps.waitForFunction(() => document.getElementById("guardar-caja").checkVisibility(), null, { timeout: 8000 }).catch(() => {});
+    await ps.click("#btn-guardar");
+    await ps.check('#form-guardar input[value="w"]');
+    igual("en un torneo se ofrece guardarlas solas", await ps.evaluate(() => document.getElementById("guardar-solas-caja").checkVisibility()), true);
+    await ps.check("#guardar-solas");
+    await ps.click('#form-guardar button[type="submit"]');
+    await ps.waitForFunction(() => /^Listo/.test(document.getElementById("guardar-msg").textContent), null, { timeout: 8000 }).catch(() => {});
+    await ps.click("#volver");
+    igual("queda dicho arriba: las de «Ana Mora» se guardan solas", [await ps.evaluate(() => document.getElementById("solas-caja").checkVisibility()), await ps.textContent("#solas-texto")],
+      [true, "Las partidas de «Ana Mora» en este torneo se guardan solas en tu cuenta cuando terminan."]);
+    const pgn3 = jg.pgn();
+    await llegaMesa(ps, { torneo: IDS, mesa: 5, ronda: 3, id: "m5-0", pgn: pgn3, blancas: "Carla Vega", negras: "Ana Mora" });
+    await ps.waitForTimeout(400);
+    igual("mientras sigue en juego, no se guarda", await ps.evaluate(() => (window.__insertados || []).length), 1);
+    await llegaMesa(ps, { torneo: IDS, mesa: 6, ronda: 3, id: "m6-0", pgn: pgn3, blancas: "Dani Rojas", negras: "Eva Mena", resultado: "1-0" });
+    await llegaMesa(ps, { torneo: IDS, mesa: 5, ronda: 3, id: "m5-0", pgn: pgn3, blancas: "Carla Vega", negras: "Ana Mora", resultado: "0-1" });
+    await ps.waitForFunction(() => (window.__insertados || []).length >= 2, null, { timeout: 8000 }).catch(() => {});
+    const sola = await ps.evaluate(() => (window.__insertados || []).slice(1));
+    igual("al terminar, la de «Ana Mora» se guarda sola, con su color y su ronda; la de otros, no",
+      [sola.length, sola[0] && [sola[0].fila.color, sola[0].fila.ronda, sola[0].fila.resultado, sola[0].fila.jugadas.length], /Se guardó sola en tu cuenta: Mesa 5, ronda 3/.test(await ps.textContent("#solas-msg"))],
+      [1, ["b", 3, "0-1", 10], true]);
+    await llegaMesa(ps, { torneo: IDS, mesa: 5, ronda: 3, id: "m5-0", pgn: pgn3, blancas: "Carla Vega", negras: "Ana Mora", resultado: "0-1", t: Date.now() + 1 });
+    await ps.waitForTimeout(400);
+    igual("y no se guarda dos veces", await ps.evaluate(() => (window.__insertados || []).length), 2);
+    await ps.click("#btn-solas-dejar");
+    igual("«Dejar de guardarlas solas» lo apaga", await ps.evaluate(() => document.getElementById("solas-caja").checkVisibility()), false);
+    igual("sin errores en la consola (guardar solas)", GS.errores, []);
+    await cerrar(GS);
   }
 
   console.log("\nLa cámara gasta poco");

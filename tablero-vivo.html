@@ -100,6 +100,11 @@
 
             <div id="esperando" hidden class="max-w-xl mb-6 rounded-xl px-4 py-3 text-sm bg-white dark:bg-brand-900 shadow-md text-brand-700 dark:text-brand-200">Todavía no llega ninguna jugada. Puede que quien transmite no haya empezado o que tenga la pantalla apagada: esta página sigue esperando y la partida aparece sola en cuanto empiece.</div>
 
+            <div id="solas-caja" hidden class="max-w-xl mb-6 rounded-xl bg-white dark:bg-brand-900 shadow-md border border-brand-200 dark:border-brand-700 p-3 text-sm">
+                <p id="solas-texto" class="text-brand-800 dark:text-brand-100"></p>
+                <p id="solas-msg" role="status" aria-live="polite" class="text-brand-700 dark:text-brand-200 mt-1"></p>
+                <button id="btn-solas-dejar" type="button" class="mt-2 bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-3 py-2 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Dejar de guardarlas solas</button>
+            </div>
             <section id="mesas" hidden aria-labelledby="torneo-titulo" class="mb-6">
                 <div class="flex flex-wrap items-center justify-between gap-3 mb-3">
                     <h2 id="torneo-titulo" class="font-serif text-2xl font-bold text-brand-800 dark:text-white"></h2>
@@ -171,6 +176,7 @@
                             </fieldset>
                             <div><label for="guardar-evento" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 mb-1">Torneo</label><input id="guardar-evento" type="text" maxlength="120" class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"></div>
                             <div><label for="guardar-ronda" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 mb-1">Ronda (opcional)</label><input id="guardar-ronda" type="number" min="1" max="30" inputmode="numeric" class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 w-24"></div>
+                            <label id="guardar-solas-caja" class="flex items-start gap-2 text-sm"><input id="guardar-solas" type="checkbox" class="w-4 h-4 mt-0.5 accent-brand-700"> <span>Guardar solas en mi cuenta mis próximas partidas de este torneo, con este nombre, cuando terminen</span></label>
                             <button type="submit" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Guardar en mi libreta de torneos</button>
                         </form>
                         <p id="guardar-msg" role="status" class="text-sm text-brand-700 dark:text-brand-200 mt-2"></p>

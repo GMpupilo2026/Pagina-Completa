@@ -165,6 +165,7 @@
     }
 
     function pintar() {
+        pintarSolas();
         const cuadricula = enTorneo() && !elegida;
         $("mesas").hidden = !cuadricula;
         if (cuadricula) { $("partida").hidden = true; $("volver").hidden = true; $("mesa-titulo").hidden = true; pintarCuadricula(); }
@@ -190,6 +191,7 @@
         const clave = d.mesa ? P.clave(d) : "solo";
         const nueva = !antes;
         partidas.set(clave, d);
+        guardarSola(d);
         if (!d.mesa) elegida = "solo";
         if (abrirMesa && clave === abrirMesa && !elegida) { elegida = clave; abrirMesa = null; pintar(); }
         $("esperando").hidden = true;
@@ -484,6 +486,9 @@
         $("btn-guardar").textContent = ya ? "Ya está en tu cuenta" : "Guardar en mi cuenta";
         $("guardar-blancas").textContent = "Con blancas" + (x.blancas ? " (" + x.blancas + ")" : "");
         $("guardar-negras").textContent = "Con negras" + (x.negras ? " (" + x.negras + ")" : "");
+        // «Guardar solas» solo tiene sentido en un torneo, donde las partidas traen los nombres.
+        $("guardar-solas-caja").hidden = !(x.torneo && (x.blancas || x.negras));
+        pintarSolas();
         if (guardando !== elegida) { $("form-guardar").hidden = true; $("btn-guardar").setAttribute("aria-expanded", "false"); }
     }
     $("btn-guardar").addEventListener("click", async () => {
@@ -525,11 +530,57 @@
             return;
         }
         try { localStorage.setItem(GUARDADAS, JSON.stringify(guardadas().concat(claveGuardada(x)).slice(-200))); } catch (er) { /* sin almacenamiento */ }
+        const nombre = color === "w" ? x.blancas : x.negras;
+        if ($("guardar-solas").checked && x.torneo && nombre) {
+            try { localStorage.setItem(SOLAS, JSON.stringify({ torneo: x.torneo, nombre, evento: fila.evento })); } catch (er) { /* sin almacenamiento */ }
+            pintarSolas();
+        }
         $("form-guardar").hidden = true;
         $("btn-guardar").setAttribute("aria-expanded", "false");
         msg.textContent = "Listo: está en tu libreta de torneos (" + jugadas.length + " medias jugadas). En «Tus propios errores» el motor te dice dónde se pudo mejorar.";
         pintarGuardar(x);
         $("btn-guardar").focus();
+    });
+
+    /* «Guardar solas»: quien guardó una partida de un torneo y marcó la
+     * casilla no tiene que volver a hacerlo. Cada partida de ESE torneo en
+     * la que juega alguien con ESE nombre se guarda sola en su cuenta cuando
+     * termina (con su resultado y desde 10 medias jugadas, como pide la base),
+     * con el color que le tocó. Solo mientras esta página esté abierta, en
+     * este aparato, y nunca dos veces la misma (`vivo_guardadas_v1`). */
+    const SOLAS = "vivo_guardar_solas_v1";
+    function solas() { try { return JSON.parse(localStorage.getItem(SOLAS) || "null"); } catch (e) { return null; } }
+    function pintarSolas() {
+        const s = solas();
+        $("solas-caja").hidden = !(s && torneoId && s.torneo === torneoId);
+        if (!$("solas-caja").hidden) $("solas-texto").textContent = "Las partidas de «" + s.nombre + "» en este torneo se guardan solas en tu cuenta cuando terminan.";
+    }
+    const guardandoSola = new Set();
+    async function guardarSola(x) {
+        const s = solas();
+        if (!s || !x || !x.torneo || x.torneo !== s.torneo || !x.resultado || x.juego.history().length < 10) return;
+        const color = x.blancas === s.nombre ? "w" : x.negras === s.nombre ? "b" : null;
+        const k = claveGuardada(x);
+        if (!color || guardadas().includes(k) || guardandoSola.has(k)) return;
+        guardandoSola.add(k);
+        try {
+            const { data } = await window.sb.auth.getSession();
+            if (!data || !data.session) { $("solas-msg").textContent = "Para que se guarden solas, entra a tu cuenta en este aparato."; return; }
+            const fila = { fecha: window.HoraCR.hoy(), color, jugadas: x.juego.history(), ronda: x.ronda || null,
+                resultado: RESULTADO_BASE[x.resultado] || "*", evento: s.evento || (torneoDatos && torneoDatos.nombre) || null };
+            const { error } = await window.sb.from("partidas_torneo").insert(fila);
+            if (error) throw error;
+            try { localStorage.setItem(GUARDADAS, JSON.stringify(guardadas().concat(k).slice(-200))); } catch (er) { /* sin almacenamiento */ }
+            $("solas-msg").textContent = "Se guardó sola en tu cuenta: " + P.lugar(x) + (x.ronda ? ", ronda " + x.ronda : "") + " (" + fila.resultado + ").";
+            if (elegida && partidas.get(elegida) === x) pintarGuardar(x);
+        } catch (e) {
+            $("solas-msg").textContent = "No se pudo guardar sola la partida de " + P.lugar(x) + ". Ábrela y usa «Guardar en mi cuenta».";
+        } finally { guardandoSola.delete(k); }
+    }
+    $("btn-solas-dejar").addEventListener("click", () => {
+        try { localStorage.removeItem(SOLAS); } catch (e) { /* nada guardado */ }
+        $("solas-msg").textContent = "";
+        pintarSolas();
     });
 
     desdeLaDireccion();
