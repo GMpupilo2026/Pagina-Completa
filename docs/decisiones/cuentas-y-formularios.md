@@ -1230,6 +1230,14 @@ la hoja «Resumen - <comité>» de la carpeta del comité. Verificador:
   fecha de nacimiento no se limita a 2007–2020. En su ficha se marca
   «ENTRENADOR(A)» como función, el deporte es Ajedrez y «Deportes de
   conjunto» dice «No aplica (ajedrez)».
+- **El CCDR Pérez Zeledón tiene sus reglas** (lo pidió el dueño del sitio):
+  no pide la fotografía (el campo no se ve, no se manda y la ficha sale sin
+  foto) y, si es menor de edad, el tutor autoriza a **Juan Pablo Camacho
+  Navarro (delegado)**, ya puesto y sin poder cambiarlo. Viven en
+  `COMITES_PROPIOS` de `js/jdn-consentimiento.js` (`reglasDelComite()`, el
+  comité escrito sin mirar tildes ni mayúsculas): otro comité con reglas
+  propias es una línea más ahí. Al cambiar a otro comité, la foto vuelve a
+  pedirse y el campo del entrenador queda en blanco.
 - **La foto y la cédula llevan su ejemplo al lado** (`img/jdn/`, la cara
   pixelada y una cédula sin datos): bien recortadas, solo la tarjeta o de los
   hombros hacia arriba, sin mesa ni dedos alrededor. El Comité Cantonal
