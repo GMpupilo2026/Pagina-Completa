@@ -535,8 +535,12 @@ function finishPuzzle(dicho){
   const id = currentId();
   const alreadySolved = isSolved(id);
   const limpio = !missedThisPuzzle && !usedHintThisPuzzle;
-  if(limpio) bumpStreak(); else resetStreak();
-  if(limpio) setStatus(game.in_checkmate() ? '✅ ¡Jaque mate! Visualizaste la línea entera.' : '✅ ¡Correcto! Calculaste toda la línea sin ver el tablero moverse.', 'ok');
+  // Lo ya resuelto no suma a la racha (ver js/entreno-mates.js): volver a
+  // empezar el nivel la subía sin tope con los mismos ejercicios.
+  const suma = limpio && !alreadySolved && bumpStreak(id);
+  if(!limpio) resetStreak();
+  if(limpio) setStatus((game.in_checkmate() ? '✅ ¡Jaque mate! Visualizaste la línea entera.' : '✅ ¡Correcto! Calculaste toda la línea sin ver el tablero moverse.') +
+    (suma ? '' : ' Ya lo habías resuelto: no suma a la racha.'), 'ok');
   else if(dicho) setStatus(dicho + ' No cuenta como resuelto y va a volver a salir.');
   else setStatus('Llegaste al final, pero con pista o con algún error: este ejercicio no cuenta como resuelto y va a volver a salir.');
   drawStaticBoard(game.fen(), game.turn() === 'w' ? 'b' : 'w');

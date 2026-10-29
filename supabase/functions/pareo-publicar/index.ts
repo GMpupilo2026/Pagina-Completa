@@ -225,15 +225,27 @@ async function ponerIdentidad(jugadores: Persona[]) {
   }
 }
 
+// La partida en PGN (la valida el navegador con chess.js al anotarla y al
+// mostrarla): acá solo se acota el tamaño y se quitan los caracteres de control.
+const pgnLimpio = (x: unknown) => (typeof x === "string" ? x.replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/g, "").slice(0, 12000).trim() : "");
+
 function mesa(v: unknown) {
   if (!esObj(v) || !id(v.b)) return null;
   const m: Obj = { b: v.b, n: v.n == null ? null : id(v.n), r: resultado(v.r) };
   if (v.n != null && m.n === null) return null;
-  if (Array.isArray(v.partidas)) m.partidas = lista(v.partidas, 12, (p) => (esObj(p) ? { r: resultado(p.r) } : null));
+  // En un encuentro por equipos, cada tablero con su resultado y, si la hay
+  // (la cámara de ese tablero o el árbitro), su partida.
+  if (Array.isArray(v.partidas)) {
+    m.partidas = lista(v.partidas, 12, (p) => {
+      if (!esObj(p)) return null;
+      const x: Obj = { r: resultado(p.r) };
+      const pgn = pgnLimpio(p.pgn);
+      if (pgn) x.pgn = pgn;
+      return x;
+    });
+  }
   if (esObj(v.alineacion)) m.alineacion = { b: ids(v.alineacion.b, 12), n: ids(v.alineacion.n, 12) };
-  // La partida en PGN (la valida el navegador con chess.js al anotarla y al
-  // mostrarla): acá solo se acota el tamaño y se quitan los caracteres de control.
-  const pgn = typeof v.pgn === "string" ? v.pgn.replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/g, "").slice(0, 12000).trim() : "";
+  const pgn = pgnLimpio(v.pgn);
   if (pgn) m.pgn = pgn;
   return m;
 }

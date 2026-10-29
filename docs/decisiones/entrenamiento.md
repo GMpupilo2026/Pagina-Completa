@@ -28,6 +28,13 @@ celular.
   enteraba ni del fallo ni de la subida hecha en el celular, y encima la pisaba
   en la nube. La fecha local vive aparte, en `progreso_fechas_v1`, y la de la
   nube es el `updated_at` de la fila. La mejor racha sigue con el máximo.
+- **Lo ya resuelto no suma a la racha** (Mates, Temas, Visualización). Al
+  terminar una categoría, «Volver a empezar» o «Reiniciar» dejaban resolver el
+  mismo ejercicio una y otra vez, y cada vez subía la racha: un alumno la llevó
+  a 56 repitiendo un mate. Ahora suma solo un ejercicio que no estaba resuelto
+  (o uno del repaso, que vuelve solo cuando toca), y una sola vez por visita
+  (`bumpStreak(id)` de `js/ejercicio-tablero.js`); el «¡Jaque mate!» lo dice.
+  Un error la corta igual. Lo comprueba `verificar-entreno-arreglos.js`.
 - **El progreso guardado en el aparato tiene dueño** (`progreso_dueno_v1`).
   Las claves de `localStorage` no llevan el id de nadie, así que en una
   computadora del colegio lo que dejó Ana se fundía con la cuenta de Bruno al

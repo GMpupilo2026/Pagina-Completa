@@ -716,7 +716,10 @@ async function navegador() {
     await p.click("#ij-equipos-lista >> text=+ Integrante nuevo");
     igual("el quinto se agrega y queda como suplente", [(await p.$$("#ij-equipos-lista .ij-miembro")).length, await p.inputValue(miembro(4) + " >> select >> nth=1")], [5, "s"]);
     cierto("con cinco, el botón queda apagado (aria-disabled) y el resumen dice que está completo", (await p.getAttribute("#ij-equipos-lista >> text=+ Integrante nuevo", "aria-disabled")) === "true" && /completo: no caben más/.test(await p.textContent("#ij-equipos-lista article >> .ij-ayuda")));
-    await p.click("#ij-equipos-lista >> text=+ Integrante nuevo", { force: true });
+    // El clic va al botón mismo: con { force: true } Playwright aprieta en el
+    // punto de la pantalla, y si algo queda encima (en el CI pasó) el clic
+    // cae ahí y el botón ni se entera.
+    await p.dispatchEvent("#ij-equipos-lista >> text=+ Integrante nuevo", "click");
     cierto("y aunque se toque, el sexto no se agrega: lo dice con palabras", (await p.$$("#ij-equipos-lista .ij-miembro")).length === 5 && /ya tiene 5 integrantes/.test(await p.textContent("#ij-equipos-lista article >> [role=status]")));
     // Segundo equipo sí; tercero no.
     await p.click("#ij-eq-crear");

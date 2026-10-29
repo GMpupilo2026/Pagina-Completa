@@ -11,7 +11,12 @@
  *  - un pareo corregido en chess-results que no se vuelve a armar;
  *  - una mesa que no se transmite metida en el archivo (de 100 mesas, se
  *    transmiten 2);
- *  - la herramienta, que es con licencia, abierta a cualquiera.
+ *  - la herramienta, que es con licencia, abierta a cualquiera;
+ *  - «Datos para LiveChess» (la pestaña Tournament no se puede escribir
+ *    desde afuera: cada dato se copia): un dato de la ficha de chess-results
+ *    leído de otra fila, un torneo viejo que borra lo que ya se sabía, la
+ *    lista que se rehace cada 30 s y cierra la tarjeta o le quita el foco a
+ *    quien estaba copiando.
  *
  * Sin navegador: el lector de la Edge Function (supabase/functions/pareo-dgt,
  * sacado del .ts y sin tipos, como verificar-pizarra-chess-results.js) contra
@@ -71,6 +76,14 @@ const HTML_LISTA = `<table class="CRs1"><tr class="CRng1b"><th class="CRc">No.</
 <tr class="CRng1 CRC"><td class="CRc">2</td><td class="CR">${flag}</td><td class="CR">WCM</td><td class="CR">Vargas Solís, Bea</td><td>0</td><td class="CR">CRC</td><td class="CRr">1890</td><td class="CR">Club Dos</td></tr>
 </table>`;
 
+// La ficha del torneo, con la forma de la página real (tnr1498221 con sus
+// detalles y torneos en curso del 29/10/2026): filas de dos celdas, a veces con
+// <tr valign="top">, el lugar dentro de un enlace, la federación con su código.
+const HTML_FICHA = `<table border="0" cellpadding="1" cellspacing="1"><tr><td class="CR">Organizador</td><td class="CR">Universidad de Prueba</td></tr><tr><td class="CR">Federación</td><td class="CR">Costa Rica ( CRC )</td></tr><tr valign="top"><td class="CR">Árbitro principal</td><td class="CR">Perez Soto, Ana (6500000)</td></tr><tr valign="top"><td class="CR">Árbitro</td><td class="CR">Rojas, Luis; Mora, Eva ... <a Class="CRdb" href="https://chess-results.com/tnr1.aspx?turdet=ALL">All arbiters</a></td></tr><tr><td class="CR">Control de tiempo (Rapid)</td><td class="CR">15 min + 10 seg add</td></tr><tr><td class="CR">Lugar</td><td class="CR"><a Class="CRdb" href="https://www.google.com/maps/search/Liceo" target="_blank">Liceo de Prueba, San José</a></td></tr><tr><td class="CR">Número de rondas</td><td class="CR">6</td></tr><tr><td class="CR">Cálculo de elo</td><td class="CR"> - </td></tr><tr><td class="CR">Fecha</td><td class="CR">2026/09/27</td></tr></table>`;
+const HTML_FICHA_MINIMA = `<table><tr><td class="CR">Federación</td><td class="CR">Vietnam ( VIE )</td></tr><tr><td class="CR">Número de rondas</td><td class="CR">7</td></tr><tr><td class="CR">Lugar</td><td class="CR"> - </td></tr></table>`;
+const FICHA_DOBLE = { control: "15 min + 10 seg add", lugar: "Liceo de Prueba, San José", pais: "Costa Rica", rondas: 6 };
+const FICHA_VACIA = { control: "", lugar: "", pais: "", rondas: 0 };
+
 // ------------------------------------------------------------ 1. la función
 
 function pruebaFuncion() {
@@ -80,7 +93,7 @@ function pruebaFuncion() {
   const hasta = ts.indexOf("// ------------------------------------------------------------- la función");
   const MAX = (ts.match(/const MAX_MESAS = (\d+);/) || [])[1];
   const js = stripTypeScriptTypes("const MAX_MESAS = " + MAX + ";\n" + ts.slice(desde, hasta).replace(/export function/g, "function"));
-  const { leerPareo, leerLista, tnrDe } = new Function(js + "\nreturn { leerPareo, leerLista, tnrDe };")();
+  const { leerPareo, leerLista, leerFicha, tnrDe } = new Function(js + "\nreturn { leerPareo, leerLista, leerFicha, tnrDe };")();
 
   const a = leerPareo(HTML_CLUB);
   igual("el torneo, la ronda, la fecha y la hora del título", [a.torneo, a.ronda, a.fecha, a.hora],
@@ -102,6 +115,16 @@ function pruebaFuncion() {
 
   igual("la lista inicial: el FIDE-ID de cada número (un 0 es «sin ID»)", leerLista(HTML_LISTA).jugadores,
     { 1: { fide: "6500001", fed: "CRC" }, 2: { fide: "", fed: "CRC" } });
+  igual("la ficha: control de tiempo, lugar (aunque sea un enlace), país sin el código y rondas",
+    leerFicha(HTML_FICHA), { control: "15 min + 10 seg add", lugar: "Liceo de Prueba, San José", pais: "Costa Rica", rondas: 6 });
+  // tnr1529729 (Costa Rica, 29/10/2026): la «Federación» es una confederación, no el país.
+  igual("la federación que es una confederación no es el país, pero el lugar sí se lee",
+    leerFicha(`<table><tr><td class="CR">Federación</td><td class="CR">Confederation of Chess for Americas ( CCA )</td></tr><tr><td class="CR">Control de tiempo (Standard)</td><td class="CR">90 minutes + 30 second increment per move 1</td></tr>\n<tr><td class="CR">Lugar</td><td class="CR"><a Class="CRdb" href="https://www.google.com/maps/search/Gimnasio Nacional" target="_blank">Gimnasio Nacional</a></td></tr><tr><td class="CR">Número de rondas</td><td class="CR">9</td></tr></table>`),
+    { control: "90 minutes + 30 second increment per move 1", lugar: "Gimnasio Nacional", pais: "", rondas: 9 });
+  igual("y un país con «Federación» en el nombre o parecido sigue siendo país", ["Costa Rica ( CRC )", "Estados Unidos ( USA )", "Unión de Myanmar ( MYA )"].map((v) => leerFicha(`<table><tr><td class="CR">Federación</td><td class="CR">${v}</td></tr></table>`).pais).slice(0, 2), ["Costa Rica", "Estados Unidos"]);
+  igual("una ficha a medias deja vacío lo que falta (un «-» no es un dato)", leerFicha(HTML_FICHA_MINIMA), { control: "", lugar: "", pais: "Vietnam", rondas: 7 });
+  igual("una página sin ficha (torneo viejo) la deja vacía, sin inventar", leerFicha(HTML_CLUB), FICHA_VACIA);
+  igual("la ficha viaja con el pareo, también cuando no hay mesas", [leerPareo(HTML_FICHA + HTML_CLUB).ficha.rondas, leerPareo(HTML_FICHA).ficha.pais, leerPareo(HTML_FICHA).mesas], [6, "Costa Rica", []]);
   igual("una página sin tabla no inventa mesas", leerPareo("<html><h2>Nada</h2></html>").mesas, []);
 
   igual("el torneo sale del número o de cualquier dirección de chess-results",
@@ -177,6 +200,17 @@ function pruebaModulo() {
   igual("la hora de la ronda, en hora de Costa Rica (UTC−6)",
     [DGT.inicioRonda("2026.11.07", "3:00pm"), DGT.inicioRonda("2026.11.07", "12:30am"), DGT.inicioRonda("2026.11.07", "12:05pm"), DGT.inicioRonda("", "3:00pm")],
     [Date.UTC(2026, 10, 7, 21, 0), Date.UTC(2026, 10, 7, 6, 30), Date.UTC(2026, 10, 7, 18, 5), null]);
+  const campos = DGT.datosLiveChess("II Torneo UTN-CONARE 2026 - FEMENINO", FICHA_DOBLE);
+  igual("datos para LiveChess: los seis campos de la pestaña Tournament, con su rótulo", campos.map((d) => d.campo),
+    ["Short title", "Name", "Location", "Country", "Time control", "Number of rounds"]);
+  igual("con el nombre de chess-results, el título corto sin tildes ni espacios, y lo que dice la ficha", campos.map((d) => d.valor),
+    ["ii-torneo-utn-conare-2026-femenino", "II Torneo UTN-CONARE 2026 - FEMENINO", "Liceo de Prueba, San José", "Costa Rica", "15 min + 10 seg add", "6"]);
+  igual("«Copiar todo» es una línea por dato", DGT.textoDatos(campos).split("\n").length, 6);
+  const sinFicha = DGT.datosLiveChess("tnr777777", FICHA_VACIA);
+  igual("sin leer todavía (el nombre es el número) y sin ficha, no se inventa nada", [sinFicha.map((d) => d.valor).join(""), DGT.textoDatos(sinFicha)], ["", ""]);
+  igual("una ficha vacía no borra lo que ya se sabía, y lo nuevo la completa",
+    [DGT.unirFicha(FICHA_DOBLE, FICHA_VACIA), DGT.unirFicha({ pais: "Costa Rica" }, { lugar: "Liceo", rondas: 5 })],
+    [FICHA_DOBLE, { pais: "Costa Rica", lugar: "Liceo", rondas: 5 }]);
   igual("el torneo en Lichess: nombre, ritmo, zona y la clasificación en chess-results",
     DGT.formTorneo({ nombre: "Blitz de Prueba", ritmo: "blitz", visibilidad: "unlisted", tnr: "123456" }),
     [["name", "Blitz de Prueba"], ["visibility", "unlisted"], ["showScores", "true"], ["info.timeZone", "America/Costa_Rica"],
@@ -218,8 +252,8 @@ window.SUPABASE_ANON_KEY = "anon-falsa";
 }
 
 // Lo que devuelve la función para cada lectura: se cambia desde la prueba.
-function respuesta(ronda, mesas) {
-  return { tnr: "777777", url: "https://chess-results.com/tnr777777.aspx?lan=2&art=2", torneo: "Blitz de Prueba", ronda, fecha: "2026.11.07", hora: "3:00pm", mesas, leido_en: "2026-11-07T20:59:00Z" };
+function respuesta(ronda, mesas, ficha) {
+  return { tnr: "777777", url: "https://chess-results.com/tnr777777.aspx?lan=2&art=2", torneo: "Blitz de Prueba", ficha: ficha || FICHA_DOBLE, ronda, fecha: "2026.11.07", hora: "3:00pm", mesas, leido_en: "2026-11-07T20:59:00Z" };
 }
 
 async function abrir(ctx, yo, licencia) {
@@ -239,6 +273,7 @@ const bitacora = (page) => page.$$eval("#bitacora li", (ls) => ls.map((l) => l.t
 async function pruebaPagina(browser) {
   console.log("\n=== pareo-dgt.html ===");
   const ctx = await browser.newContext({ serviceWorkers: "block", acceptDownloads: true });
+  await ctx.grantPermissions(["clipboard-read", "clipboard-write"], { origin: BASE });
   const pedidosFuncion = [];
   const lichess = [];
   const estado = { leer: respuesta(0, []), lichessFalla: false, rondas: 0 };
@@ -377,6 +412,42 @@ async function pruebaPagina(browser) {
   igual("al cambiar las mesas, la ronda en curso se vuelve a armar con las nuevas", (archivo3.match(/\[Board "\d+"\]/g) || []), ['[Board "1"]', '[Board "2"]']);
   await page.waitForFunction(() => /con las mesas nuevas \(1-2\)/.test(document.getElementById("bitacora").textContent));
   igual("y el campo queda escrito en orden", await page.inputValue("#mesas-777777"), "1-2");
+
+  // Datos para LiveChess: cada campo de la pestaña Tournament, para copiar.
+  const filasLC = () => page.$$eval("#torneos details li", (ls) => ls.map((l) => l.querySelector("span").textContent));
+  igual("«Datos para LiveChess» sale cerrado", await page.$eval("#torneos details", (d) => d.open), false);
+  await page.click("#torneos summary");
+  igual("y abierto muestra los seis datos, con lo que dijo chess-results", await filasLC(),
+    ["blitz-de-prueba", "Blitz de Prueba", "Liceo de Prueba, San José", "Costa Rica", "15 min + 10 seg add", "6"]);
+  await page.click('[data-foco="777777:Location"]');
+  igual("«Copiar» deja el dato en el portapapeles y lo dice", [await page.evaluate(() => navigator.clipboard.readText()), await page.textContent("#torneos [role=status]")],
+    ["Liceo de Prueba, San José", "Copiado: Location."]);
+  await page.click('[data-foco="777777:todo"]');
+  igual("«Copiar todo» deja una línea por dato", await page.evaluate(() => navigator.clipboard.readText()),
+    "Short title: blitz-de-prueba\nName: Blitz de Prueba\nLocation: Liceo de Prueba, San José\nCountry: Costa Rica\nTime control: 15 min + 10 seg add\nNumber of rounds: 6");
+  // La lista se rehace en cada revisión (cada 30 s): no debe cerrarse ni quitarle el foco a quien copia.
+  await page.focus('[data-foco="777777:Country"]');
+  const lineasAntes = (await bitacora(page)).length;
+  await page.evaluate(() => document.getElementById("btn-revisar").click());   // como la revisión automática: sin mover el foco
+  await page.waitForFunction((n) => document.querySelectorAll("#bitacora li").length > n, lineasAntes);
+  igual("tras una revisión la tarjeta sigue abierta y el foco, en el mismo botón",
+    [await page.$eval("#torneos details", (d) => d.open), await page.evaluate(() => document.activeElement.dataset.foco)], [true, "777777:Country"]);
+  // Un torneo viejo: chess-results ya no muestra su ficha. Lo sabido no se borra, ni al recargar.
+  estado.leer = respuesta(4, DATOS.mesas, FICHA_VACIA);
+  await page.click("#btn-revisar");
+  await page.waitForFunction(() => /nada nuevo/.test(document.getElementById("bitacora").textContent));
+  await page.reload({ waitUntil: "networkidle" });
+  await page.click("#torneos summary");
+  igual("una lectura sin ficha no borra la que ya estaba, tampoco al recargar", await filasLC(),
+    ["blitz-de-prueba", "Blitz de Prueba", "Liceo de Prueba, San José", "Costa Rica", "15 min + 10 seg add", "6"]);
+  // Y un torneo al que le falta un dato: se dice, sin botón de copiar.
+  await page.evaluate(() => { const e = JSON.parse(localStorage.getItem("pareo-dgt")); e.torneos[0].ficha = { pais: "Costa Rica", rondas: 6 }; localStorage.setItem("pareo-dgt", JSON.stringify(e)); });
+  await page.reload({ waitUntil: "networkidle" });
+  await page.click("#torneos summary");
+  const textosLC = await page.$$eval("#torneos details li", (ls) => ls.map((l) => l.textContent));
+  cierto("un dato que falta se dice (el lugar y el control de tiempo)", /chess-results no lo dice/.test(textosLC[2]) && /chess-results no lo dice/.test(textosLC[4]) && !/chess-results no lo dice/.test(textosLC[3]), textosLC.join(" | "));
+  igual("y ese dato no tiene botón de copiar", await page.$$eval("#torneos details button", (bs) => bs.map((b) => b.dataset.foco)),
+    ["777777:Short title", "777777:Name", "777777:Country", "777777:Number of rounds", "777777:todo"]);
 
   // Vigilar.
   await page.click("#btn-vigilar");

@@ -82,6 +82,8 @@ function cliente(yo) {
       const filas = () => (window.__pareo || []).filter((x) => filtros.every((g) => g(x)));
       const b = {
         select: () => b, in: () => b, order: () => b, limit: () => b, range: () => b,
+        // Lo que se guarda (la partida en la cuenta del alumno), para mirarlo.
+        insert: (fila) => { (window.__insertados = window.__insertados || []).push({ tabla, fila }); return Promise.resolve({ data: null, error: null }); },
         eq: (c, v) => { filtros.push((x) => x[c] === v); return b; },
         gte: (c, v) => { filtros.push((x) => x[c] >= v); return b; },
         lte: (c, v) => { filtros.push((x) => x[c] <= v); return b; },
@@ -638,8 +640,6 @@ async function esperarJugadas(p, n) {
     await pa.click("#btn-torneo-lista");
     await pa.waitForSelector("#torneo-lista button");
     igual("«Ver los torneos de estos días» los muestra", await pa.locator("#torneo-lista button").allTextContents(), ["Abierto de prueba · ronda 1", "Por equipos · ronda 1"]);
-    await pa.click("#torneo-lista button:has-text('Por equipos')");
-    igual("un torneo por equipos todavía no se puede", (await aviso(pa)).startsWith("Los torneos por equipos todavía no"), true);
     await pa.fill("#torneo-enlace", "https://ajedrez-integral.com/torneos-pareo.html#t=" + ID);
     await pa.click("#btn-torneo");
     await pa.waitForFunction(() => !document.getElementById("torneo-elegido").hidden);
@@ -992,6 +992,114 @@ async function esperarJugadas(p, n) {
       await pg.evaluate(() => [localStorage.getItem("camara_mesa_v1_p1_0"), localStorage.getItem("camara_mesa_v1_p2_0")])], ["Ana", "Carla", ["1", "2"]]);
     igual("sin errores en la consola", errores, []);
     await nav.close();
+  }
+
+  console.log("\nUn torneo por equipos: una cámara por tablero");
+  {
+    const PEq = require("../js/pareo/equipos.js");
+    const IDE = "9e8d7c6b-5a49-4382-9170-6f5e4d3c2b1a";
+    const gente = (c, eq) => [1, 2, 3, 4, 5].map((k) => ({ id: c + k, nombre: eq + " " + k }));
+    const datosE = { nombre: "Equipos de prueba", tipo: "equipos", tableros: 4, mesaInicial: 3,
+      jugadores: [{ id: "EA", nombre: "Escuela Ana", integrantes: gente("a", "Ana") }, { id: "EB", nombre: "Escuela Beto", integrantes: gente("b", "Beto") }],
+      rondas: [{ mesas: [{ b: "EA", n: "EB", alineacion: { b: ["a1", "a2", "a3", "a5"], n: ["b1", "b2", "b3", "b4"] } }] }] };
+    const torneoE = [{ id: IDE, nombre: "Equipos de prueba", fecha: new Intl.DateTimeFormat("en-CA", { timeZone: "America/Costa_Rica" }).format(new Date()), rondas: 1, oculto: false, datos: datosE }];
+    // Los colores y quién juega cada tablero: igual que en Pareo Integral (PareoEquipos.tablerosDe).
+    const pe = (await abrir(browser, "camara-tablero.html")).page;
+    const deLaCamara = await pe.evaluate((d) => window.PartidaEnVivo.mesasDe(d).mesas.map((m) => [m.tablero, m.blancas, m.negras]), datosE);
+    const nombre = (id) => [...datosE.jugadores[0].integrantes, ...datosE.jugadores[1].integrantes].find((j) => j.id === id).nombre;
+    const dePareo = PEq.tablerosDe(datosE, datosE.rondas[0].mesas[0]).map((x) => [x.k + 1, nombre(x.blancas), nombre(x.negras)]);
+    igual("cada tablero, con quién juega con cada color: lo mismo que Pareo Integral (el suplente que entró en el 4, también)", deLaCamara, dePareo);
+    await cerrar({ page: pe, ctx: pe.context() });
+
+    const C = await abrir(browser, "camara-tablero.html", null, null, { f: (d) => { window.__pareo = d; }, arg: torneoE });
+    const pc2 = C.page;
+    await pc2.waitForSelector("#app:not(.hidden)");
+    await pc2.fill("#torneo-enlace", IDE);
+    await pc2.click("#btn-torneo");
+    await pc2.waitForFunction(() => !document.getElementById("torneo-elegido").hidden);
+    igual("en un torneo por equipos, la cámara elige mesa Y tablero, con los equipos",
+      await pc2.locator("#torneo-mesa option").allTextContents(),
+      ["Elige la mesa y el tablero…", "Mesa 3 · tablero 1: Ana 1 – Beto 1 (Escuela Ana – Escuela Beto)", "Mesa 3 · tablero 2: Beto 2 – Ana 2 (Escuela Beto – Escuela Ana)",
+        "Mesa 3 · tablero 3: Ana 3 – Beto 3 (Escuela Ana – Escuela Beto)", "Mesa 3 · tablero 4: Beto 4 – Ana 5 (Escuela Beto – Escuela Ana)"]);
+    await pc2.selectOption("#torneo-mesa", "3.2");
+    igual("y los nombres de ese tablero salen solos", [await pc2.inputValue("#vivo-blancas"), await pc2.inputValue("#vivo-negras")], ["Beto 2", "Ana 2"]);
+    const je = new Chess();
+    await foto(pc2, je.fen(), ESQ0);
+    await esperarAviso(pc2, /esquinas/);
+    await tocar(pc2, aLienzo(ESQ0));
+    await pc2.click("#btn-calibrar");
+    await esperarAviso(pc2, /Calibrado/);
+    await pc2.click("#btn-vivo");
+    const codE = await pc2.inputValue("#torneo-codigo");
+    igual("transmite diciendo su mesa y su tablero", await pc2.textContent("#vivo-codigo"), codE + " · mesa 3 · tablero 2");
+    const WE = await abrir(browser, "tablero-vivo.html#" + codE + "&t=" + IDE, null, { width: 1280, height: 1000 }, { f: (d) => { window.__pareo = d; }, arg: torneoE });
+    const pwe = WE.page;
+    await pwe.waitForFunction(() => document.querySelectorAll("#mesas-lista button[data-mesa]").length === 4, null, { timeout: 8000 }).catch(() => {});
+    je.move("e4"); await foto(pc2, je.fen(), ESQ0); await esperarJugadas(pc2, 1);
+    await pwe.waitForFunction(() => /e4/.test((document.querySelector('#mesas-lista [data-clave="m3t2"]') || {}).textContent || ""), null, { timeout: 8000 }).catch(() => {});
+    igual("quien mira ve los cuatro tableros del encuentro, cada uno con su partida",
+      await pwe.$$eval("#mesas-lista button[data-mesa]", (b) => b.map((x) => [x.dataset.clave, x.querySelector("p").textContent, /1\. e4/.test(x.textContent)])),
+      [["m3t1", "Mesa 3 · tablero 1", false], ["m3t2", "Mesa 3 · tablero 2", true], ["m3t3", "Mesa 3 · tablero 3", false], ["m3t4", "Mesa 3 · tablero 4", false]]);
+    const ev = eventos.filter((x) => x.event === "estado" && x.nombre === "tablero-vivo-" + codE).pop();
+    igual("lo que viaja dice el torneo, la mesa y el tablero", ev && [ev.payload.torneo, ev.payload.mesa, ev.payload.tablero], [IDE, 3, 2]);
+    await pwe.click('#mesas-lista [data-clave="m3t2"]');
+    igual("en grande, con su mesa y su tablero", await pwe.textContent("#mesa-titulo"), "Mesa 3 · tablero 2 · ronda 1");
+    await pc2.evaluate(() => { window.print = () => { window.__impreso = (window.__impreso || 0) + 1; }; });
+    await pc2.click("#btn-torneo-qr");
+    await pc2.waitForFunction(() => window.__impreso, null, { timeout: 8000 }).catch(() => {});
+    igual("un QR por tablero, que abre la cámara en su mesa y su tablero",
+      [await pc2.$$eval("#hoja-qr .hoja-qr-numero", (x) => x.map((y) => y.textContent)), (await pc2.getAttribute("#hoja-qr .hoja-qr-mesa:nth-child(4)", "data-enlace")).includes("&m=3&b=4&")],
+      [["Mesa 3 · tablero 1", "Mesa 3 · tablero 2", "Mesa 3 · tablero 3", "Mesa 3 · tablero 4"], true]);
+    igual("sin errores en la consola (equipos)", [C.errores, WE.errores], [[], []]);
+    await cerrar(WE); await cerrar(C);
+    const QE = await abrir(browser, "camara-tablero.html#t=" + IDE + "&c=" + codE + "&m=3&b=4&r=0", { sinSesion: true }, { width: 412, height: 900 }, { f: (d) => { window.__pareo = d; }, arg: torneoE });
+    await QE.page.waitForFunction(() => /Equipos/.test(document.getElementById("mesa-titulo-qr").textContent), null, { timeout: 8000 }).catch(() => {});
+    igual("sin cuenta, por el QR del tablero 4: esa mesa y ese tablero, transmitiendo",
+      [await QE.page.textContent("#mesa-titulo-qr"), await QE.page.textContent("#vivo-codigo")], ["Mesa 3 · tablero 4 · Equipos de prueba", codE + " · mesa 3 · tablero 4"]);
+    await cerrar(QE);
+  }
+
+  console.log("\nGuardar la partida en la cuenta del alumno");
+  {
+    const diez = ["e4", "e5", "Nf3", "Nc6", "Bc4", "Bc5", "c3", "Nf6", "d4", "exd4"];
+    const jg = new Chess(); diez.forEach((x) => jg.move(x));
+    const llega = (pg, jugadas, r) => pg.evaluate(([pgn, r]) => {
+      const c = window.__canales[Object.keys(window.__canales)[0]];
+      c.estado({ payload: { v: 1, pgn, blancas: "Ana Mora", negras: "Beto Solís", t: Date.now(), resultado: r || undefined, id: "abc-0" } });
+    }, [jugadas, r]);
+    const G = await abrir(browser, "tablero-vivo.html#guardar2", null, { width: 390, height: 844 });
+    const pg = G.page;
+    await pg.waitForFunction(() => window.__canales && Object.keys(window.__canales).length, null, { timeout: 8000 });
+    await llega(pg, "1. e4 e5 2. Nf3");
+    await pg.waitForFunction(() => !document.getElementById("partida").hidden, null, { timeout: 8000 });
+    igual("con menos de 10 medias jugadas no se ofrece (la base no guarda tan pocas)", await pg.evaluate(() => document.getElementById("guardar-caja").checkVisibility()), false);
+    await llega(pg, jg.pgn(), "0-1");
+    await pg.waitForFunction(() => document.getElementById("guardar-caja").checkVisibility(), null, { timeout: 8000 }).catch(() => {});
+    await pg.click("#btn-guardar");
+    igual("«Guardar en mi cuenta», con la sesión abierta, pregunta con qué color jugó (con los nombres)",
+      [await pg.evaluate(() => document.getElementById("form-guardar").checkVisibility()), await pg.getAttribute("#btn-guardar", "aria-expanded"), await pg.textContent("#guardar-negras")], [true, "true", "Con negras (Beto Solís)"]);
+    await pg.click('#form-guardar button[type="submit"]');
+    igual("sin el color no guarda, y lo dice", [await pg.textContent("#guardar-msg"), await pg.evaluate(() => (window.__insertados || []).length)], ["Elige con qué color jugaste.", 0]);
+    await pg.check('#form-guardar input[value="b"]');
+    await pg.fill("#guardar-evento", "Abierto de prueba");
+    await pg.fill("#guardar-ronda", "3");
+    await pg.click('#form-guardar button[type="submit"]');
+    await pg.waitForFunction(() => /^Listo/.test(document.getElementById("guardar-msg").textContent), null, { timeout: 8000 }).catch(() => {});
+    const fila = await pg.evaluate(() => (window.__insertados || [])[0]);
+    igual("la guarda en SU libreta de torneos (partidas_torneo), con sus jugadas, el color, el resultado y la fecha de hoy en Costa Rica",
+      fila && [fila.tabla, fila.fila.color, fila.fila.jugadas, fila.fila.resultado, fila.fila.evento, fila.fila.ronda, fila.fila.fecha, "student_id" in fila.fila],
+      ["partidas_torneo", "b", diez, "0-1", "Abierto de prueba", 3, new Intl.DateTimeFormat("en-CA", { timeZone: "America/Costa_Rica" }).format(new Date()), false]);
+    igual("y no deja guardarla dos veces", [await pg.textContent("#btn-guardar"), await pg.isDisabled("#btn-guardar")], ["Ya está en tu cuenta", true]);
+    igual("sin errores en la consola (guardar)", G.errores, []);
+    await cerrar(G);
+    const S = await abrir(browser, "tablero-vivo.html#guardar3", { sinSesion: true }, { width: 390, height: 844 });
+    await S.page.waitForFunction(() => window.__canales && Object.keys(window.__canales).length, null, { timeout: 8000 });
+    await llega(S.page, jg.pgn());
+    await S.page.waitForFunction(() => document.getElementById("guardar-caja").checkVisibility(), null, { timeout: 8000 }).catch(() => {});
+    await S.page.click("#btn-guardar");
+    igual("sin sesión, dice cómo entrar y no abre el formulario",
+      [/^Para guardarla, entra a tu cuenta/.test(await S.page.textContent("#guardar-msg")), await S.page.evaluate(() => document.getElementById("form-guardar").checkVisibility())], [true, false]);
+    await cerrar(S);
   }
 
   console.log("\nLa cámara gasta poco");
