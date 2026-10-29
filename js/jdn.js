@@ -20,6 +20,10 @@
  * carpeta del Drive: JDN 2027 / <comité> / <Atletas|Entrenadores> /
  * <Mujeres|Hombres> / <persona>, con la hoja «Resumen» del comité.
  *
+ * COMITÉS CON SUS REGLAS (JDNConsentimiento.reglasDelComite). Con «CCDR Pérez
+ * Zeledón» no se pide la fotografía, y quien autoriza el tutor de un menor ya
+ * viene puesto: su delegado, fijo, sin que la familia lo escriba.
+ *
  * Al terminar, quien llena solo puede descargar la ficha: los enlaces al Drive
  * no se muestran a nadie (tampoco a quien administra, que entra al Drive por su
  * cuenta).
@@ -42,6 +46,8 @@
     entrenador: "documentos/jdn/consentimiento-entrenador-jdn-2027.docx",
   };
   const LADO_MAX = 2000;
+  const AYUDA_AUTORIZADO = document.getElementById("ayuda-autorizado").textContent;
+  let fijoPuesto = null;
   const DOCS = {
     foto: "Fotografía",
     frente: "Cédula frente",
@@ -182,6 +188,11 @@
     d.lateralidad = radio("lateralidad");
     d.perroGuia = radio("perroGuia");
     d.discapacidad = marcadas("discapacidad");
+    const reglas = J.reglasDelComite(d.comite);
+    if (reglas && reglas.autorizado) {
+      d.autorizadoNombre = reglas.autorizado.nombre;
+      d.autorizadoRol = reglas.autorizado.rol;
+    }
     return d;
   }
 
@@ -217,6 +228,38 @@
     document.querySelectorAll(".jdn-oblig").forEach((s) => { s.hidden = cert; });
 
     $("caja-paratleta").hidden = ent || radio("condicion") !== "paratleta";
+
+    const reglas = J.reglasDelComite($("f-comite").value);
+    $("jdn-doc-foto").hidden = !!(reglas && reglas.sinFoto);
+    $("jdn-nota-foto").hidden = !(reglas && reglas.sinFoto);
+    ponerAutorizado(reglas && reglas.autorizado);
+  }
+
+  // Quien autoriza el tutor: lo escribe la familia (un entrenador), o lo fija
+  // el comité. Al salir de ese comité, el campo vuelve a quedar en blanco.
+  function ponerAutorizado(fijo) {
+    const nombre = $("f-autorizadoNombre");
+    const rol = $("f-autorizadoRol");
+    const delegado = rol.querySelector('option[value="delegado"]');
+    if (fijo) {
+      nombre.value = fijo.nombre;
+      nombre.readOnly = true;
+      if (!delegado) rol.append(new Option("Delegado", "delegado"));
+      rol.value = fijo.rol;
+      rol.disabled = true;
+      $("ayuda-autorizado").textContent = "Lo pone el comité: su delegado acompaña a la persona menor de edad si tiene que presentar una denuncia por hostigamiento sexual.";
+      $("etiqueta-autorizado").textContent = "Autoriza al delegado";
+      fijoPuesto = fijo.nombre;
+    } else if (fijoPuesto != null) {
+      if (nombre.value === fijoPuesto) nombre.value = "";
+      nombre.readOnly = false;
+      rol.value = "entrenador";
+      if (delegado) delegado.remove();
+      rol.disabled = false;
+      $("ayuda-autorizado").textContent = AYUDA_AUTORIZADO;
+      $("etiqueta-autorizado").textContent = "Autoriza al entrenador";
+      fijoPuesto = null;
+    }
   }
 
   // El teléfono es de 8 números: lo que no es número no entra (tampoco al
@@ -312,8 +355,10 @@
   // Los documentos que pide esta persona, en el orden en que se guardan.
   function documentosPedidos() {
     const cert = pideCertificacion();
+    const reglas = J.reglasDelComite($("f-comite").value);
+    const conFoto = !(reglas && reglas.sinFoto);
     return [
-      { clave: "foto", obligatorio: true },
+      { clave: "foto", obligatorio: conFoto, visible: conFoto },
       { clave: "frente", obligatorio: !cert },
       { clave: "reverso", obligatorio: !cert },
       { clave: "certificacion", obligatorio: cert, visible: cert },
@@ -338,6 +383,7 @@
   }
 
   async function fotoElegida() {
+    if (!documentosPedidos().some((x) => x.clave === "foto")) return null;
     const f = $("f-foto").files && $("f-foto").files[0];
     return f ? aJpeg(f) : null;
   }
