@@ -1394,7 +1394,9 @@ en **`admin.html#torneos`** (`js/admin-salas-torneo.js`). Migración
 - **Dos tipos de sala.** `lichess`: una transmisión de Lichess, que entra a la
   sala de cine (`transmision.html?torneo=<clave>`) y lleva el id de la
   transmisión. `enlaces`: cualquier otra (UTN va en idchess, que no tiene API
-  pública conocida), con uno a seis botones que la abren en otra pestaña. Las
+  pública conocida), con uno a cuarenta botones que la abren en otra pestaña
+  (eran seis; el Centroamericano lleva uno por torneo de chess-results, ver
+  «Un torneo por categoría», y la base y el editor tienen el mismo tope). Las
   de Lichess pueden llevar botones de más («Verlo directo en Lichess») y
   pizarras de chess-results (ver «Las posiciones oficiales vienen de
   chess-results»).

@@ -154,6 +154,15 @@ async function editor(browser) {
     ["insert", "copa-invierno-arbitros-2026", "enlaces", null, [{ texto: "Sala A", url: "https://www.youtube.com/watch?v=abc123" }], 4]);
   igual("y aparece en la lista", (await lista(page)).pop(), "Copa Invierno Árbitros 2026 · Publicada");
 
+  // El Centroamericano lleva un botón por torneo de chess-results (12
+  // categorías y las de rápidas y blitz): el editor deja hasta 40, como la base.
+  await page.click("#sala-nueva");
+  await page.check('input[name="sala-tipo"][value="enlaces"]');
+  // Se toca solo mientras se ve: con un tope más bajo, el botón se esconde y la cuenta lo dice.
+  for (let i = 0; i < 40; i++) await page.evaluate(() => { const b = document.getElementById("sala-enlace-mas"); if (b.checkVisibility()) b.click(); });
+  igual("caben 40 botones (uno por torneo), y el 41 ya no", [await page.$$eval("#sala-enlaces li", (l) => l.length), await page.$eval("#sala-enlace-mas", (b) => b.checkVisibility())], [40, false]);
+  await page.click("#sala-cancelar");
+
   console.log("\n=== Una sala de Lichess, pegando la dirección de UNA ronda ===");
   await page.click("#sala-nueva");
   await escribir(page, "#sala-lichess", "https://lichess.org/broadcast/copa-nacional-2026/ronda-2/Rnd00002");
