@@ -7522,6 +7522,45 @@ panel de Supabase (Project Settings → Edge Functions → Secrets) con una clav
 de `console.anthropic.com`, decidir qué pasa con el FAQ (¿se queda arriba, se
 baja, se borra?) y quitar el `<div class="hidden">`.
 
+## Reclamos de tablas desde el PGN
+
+`reclamos-tablas.html` (la anunciaba la vitrina como «Próximamente»; la pidió
+el dueño con las demás herramientas nuevas): se pega una partida y dice si
+hubo triple repetición (art. 9.2) o 50 jugadas de cada uno sin mover un peón
+ni capturar (art. 9.3), en qué jugada, quién podía reclamar las tablas, si se
+llegó a las tablas sin reclamo del 9.6 (cinco veces la misma posición, 75
+jugadas) y si un reclamo hecho en una jugada dada procedía.
+
+- **Gratis y sin cuenta, como Pareo Integral**: todo pasa en el navegador
+  (la partida no se manda a ningún lado), así que no hay candado posible en
+  el servidor; uno solo en la pantalla no sería candado (ver «El candado está
+  en el servidor»). En `js/herramientas-arbitraje.js`, `gratis: true`.
+- **El cálculo, aparte de la pantalla**: `js/reclamos-tablas.js`
+  (`ReclamosTablas`), que se usa igual en el navegador y en Node, y lo prueba
+  sin navegador `verificar-reclamos-tablas.js`; la página es
+  `js/reclamos-tablas-pagina.js` y la prueba `verificar-reclamos-tablas-pagina.js`.
+- **«La misma posición» es la del 9.2.2, no el FEN de chess.js.** chess.js
+  deja la casilla de captura al paso después de CUALQUIER avance de dos,
+  aunque nadie pueda capturar: contado así, 1. e4 Cf6 2. Cf3 Cg8 3. Cg1 Cf6
+  4. Cf3 Cg8 5. Cg1 no llegaba a tres repeticiones, y sí llega. La casilla
+  cuenta solo si hay una captura al paso legal; si la hay, la posición sí es
+  otra. Los enroques perdidos también la cambian (el tablero de salida con
+  las torres ya movidas no es la posición de salida). Las tres cosas están en
+  el verificador, con la regla rota a propósito para ver que salte.
+- **Quién podía reclamar**: quien iba a hacer la jugada que la repetía,
+  anotándola antes en la planilla y declarando que la iba a hacer
+  (9.2.1.1), o el rival, en su turno, apenas apareció (9.2.1.2). Igual con las
+  50 jugadas (9.3.1 y 9.3.2), que además siguen reclamables mientras no se
+  mueva un peón ni se capture. Un reclamo que no procede: dos minutos al rival
+  (9.5.3), y la página lo dice.
+- **El PGN en algebraica española también** (Cf3, Ab5, Te1, Dd6, Rb8, 0-0):
+  se reconoce porque trae una jugada de pieza con C, A, T o D, que en inglés
+  no existen, y entonces R es el rey; los comentarios no se traducen. Un
+  archivo con varias partidas se separa por su `[Event …]` y se elige cuál.
+- **No es la decisión del árbitro**: la página lo dice, y que en rápidas y
+  relámpago sin planilla completa (apéndices A y B) y según las bases del
+  torneo el reclamo puede tratarse distinto.
+
 ## Desempates explicados
 
 `desempates.html` recalcula la clasificación de un torneo de chess-results
