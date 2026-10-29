@@ -458,7 +458,7 @@
                 // Se "congela" su reloj: se le resta lo que pasó desde la última vez
                 // que arrancó a correr y se le suma el incremento tipo Fischer.
                 const storedKey = myColor === "w" ? "white_time_left" : "black_time_left";
-                const elapsed = SalaJuego.pensado(room, envio.alMover);
+                const elapsed = SalaJuego.pensado(room, envio);
                 const remaining = Math.max(0, (room[storedKey] || 0) - elapsed) + (room.increment_seconds || 0);
                 patch[storedKey] = remaining;
                 patch.clock_updated_at = new Date().toISOString();
