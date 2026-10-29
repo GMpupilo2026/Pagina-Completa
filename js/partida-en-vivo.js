@@ -129,6 +129,9 @@
         return copia.pgn();
     }
 
+    const DIA_MS = 86400000;
+    const relojValido = (r) => (r && Number.isFinite(r.w) && Number.isFinite(r.b) && r.w >= 0 && r.b >= 0 && r.w <= DIA_MS && r.b <= DIA_MS
+        ? { w: r.w, b: r.b, corre: r.corre === "w" || r.corre === "b" ? r.corre : null } : null);
     /* Cada partida lleva un id (el de la cámara: cambia con cada partida
      * nueva), para que «lo nuevo» se pegue solo a la partida que es. */
     const ID = /^[a-z0-9-]{1,24}$/;
@@ -142,6 +145,10 @@
         if (x.retraso) p.retraso = entero(x.retraso, 120);
         // Cuántas jugadas se escribieron a mano (para el informe de las cámaras de Pareo).
         if (Number.isInteger(x.mano) && x.mano > 0) p.mano = Math.min(x.mano, 999);
+        // El reloj de la cámara: lo que le queda a cada uno (ms) y de quién corre.
+        if (x.reloj && Number.isFinite(x.reloj.w) && Number.isFinite(x.reloj.b)) {
+            p.reloj = { w: Math.max(0, Math.round(x.reloj.w)), b: Math.max(0, Math.round(x.reloj.b)), corre: x.reloj.corre === "w" || x.reloj.corre === "b" ? x.reloj.corre : null };
+        }
         if (donde && torneoDe(donde.torneo) && entero(donde.mesa, 999)) {
             p.torneo = torneoDe(donde.torneo); p.mesa = donde.mesa; p.ronda = entero(donde.ronda, 99);
             if (entero(donde.tablero, 12)) p.tablero = donde.tablero;
@@ -238,6 +245,7 @@
         d.espera = Number.isFinite(p.espera) && p.espera >= 0 ? p.espera : null;
         d.retraso = entero(p.retraso, 120);
         d.mano = entero(p.mano, 999) || 0;
+        d.reloj = relojValido(p.reloj);
         if (torneoDe(p.torneo) && entero(p.mesa, 999)) { d.torneo = torneoDe(p.torneo); d.mesa = p.mesa; d.ronda = entero(p.ronda, 99); d.tablero = entero(p.tablero, 12); }
         else if (p.simul === 1 && entero(p.mesa, 99)) { d.simul = true; d.mesa = p.mesa; }
         d.id = idValido(p.id);
@@ -268,6 +276,7 @@
         d.espera = Number.isFinite(p.espera) && p.espera >= 0 ? p.espera : null;
         d.retraso = entero(p.retraso, 120);
         d.mano = entero(p.mano, 999) || 0;
+        d.reloj = relojValido(p.reloj);
         if (antes.torneo) { d.torneo = antes.torneo; d.mesa = antes.mesa; d.tablero = antes.tablero; d.ronda = entero(p.ronda, 99) || antes.ronda; }
         else if (antes.simul) { d.simul = true; d.mesa = antes.mesa; }
         return d;
