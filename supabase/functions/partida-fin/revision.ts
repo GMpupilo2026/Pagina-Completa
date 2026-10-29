@@ -19,7 +19,8 @@ const tablero = (fen) => String(fen || "").split(" ").slice(0, 2).join(" ");
 // Devuelve null si todo cuadra, o lo primero que no cuadra:
 //   { motivo, jugada, detalle }
 //   motivo: "jugada_ilegal" | "posicion_distinta" | "resultado_contra_el_mate"
-//           | "resultado_contra_el_ahogado"
+//           | "resultado_contra_el_ahogado" (lo que se le dice al profe de
+//           cada uno está en js/partida-revision.js)
 // fenInicial null = una sala de antes de que la base la guardara: se supone
 // la posición de siempre y, si las jugadas no calzan con ella, no se dice
 // nada (pudo arrancar de otra posición; no se acusa sin saber).
@@ -47,11 +48,3 @@ export function revisarPartida(Chess, { fenInicial, jugadas, fenFinal, resultado
   }
   return null;
 }
-
-// Lo que se le dice al profe de cada motivo.
-export const MOTIVOS = {
-  jugada_ilegal: "Una jugada ilegal",
-  posicion_distinta: "Las jugadas no llevan a la posición final",
-  resultado_contra_el_mate: "El resultado no es el del mate en el tablero",
-  resultado_contra_el_ahogado: "El tablero quedó en ahogado y la partida tiene ganador",
-};

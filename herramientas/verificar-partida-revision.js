@@ -17,6 +17,7 @@
 */
 const fs = require("fs");
 const path = require("path");
+const vm = require("vm");
 const { Chess } = require("chess.js");
 
 let fallos = 0;
@@ -46,7 +47,12 @@ const ABANDONO = {
 };
 
 async function main() {
-  const { revisarPartida, MOTIVOS } = await cargar();
+  const { revisarPartida } = await cargar();
+  // Lo que se le dice al profe vive en la página (js/partida-revision.js).
+  const caja = { window: {} };
+  vm.createContext(caja);
+  vm.runInContext(fs.readFileSync(path.join(__dirname, "..", "js", "partida-revision.js"), "utf8"), caja);
+  const { MOTIVOS, texto } = caja.window.PartidaRevision;
   const revisar = (o) => revisarPartida(Chess, o);
 
   console.log("=== Lo que terminó bien no se acusa ===");
@@ -81,10 +87,15 @@ async function main() {
   igual("un ahogado con ganador", revisar({ ...ahogado, resultado: "white" }).motivo, "resultado_contra_el_ahogado");
   igual("el mismo ahogado en tablas está bien", revisar({ ...ahogado, resultado: "draw" }), null);
 
-  console.log("\n=== Cada motivo se dice en palabras ===");
-  for (const m of ["jugada_ilegal", "posicion_distinta", "resultado_contra_el_mate", "resultado_contra_el_ahogado"]) {
-    igual("«" + m + "» tiene su texto", typeof MOTIVOS[m] === "string" && MOTIVOS[m].length > 10, true);
-  }
+  console.log("\n=== Cada motivo se dice en palabras (js/partida-revision.js) ===");
+  // Los motivos que revision.ts puede devolver, leídos de su código: uno
+  // nuevo sin su texto en la página salta acá.
+  const fuente = fs.readFileSync(path.join(__dirname, "..", "supabase", "functions", "partida-fin", "revision.ts"), "utf8");
+  const motivos = [...new Set([...fuente.matchAll(/motivo: "([a-z_]+)"/g)].map((m) => m[1]))];
+  igual("revision.ts devuelve los cuatro motivos", motivos.sort(), ["jugada_ilegal", "posicion_distinta", "resultado_contra_el_ahogado", "resultado_contra_el_mate"]);
+  for (const m of motivos) igual("«" + m + "» tiene su texto", typeof MOTIVOS[m] === "string" && MOTIVOS[m].length > 10, true);
+  igual("la jugada ilegal dice cuál",
+    texto({ motivo: "jugada_ilegal", jugada: 11, detalle: "Qxh7" }), "Una jugada ilegal (la número 11 de la lista: Qxh7).");
 
   console.log(fallos ? "\n" + fallos + " comprobación(es) fallaron." : "\nTodo bien.");
   process.exit(fallos ? 1 : 0);

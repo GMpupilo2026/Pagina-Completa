@@ -10,10 +10,10 @@
 // tablas. Ver «La partida terminada se revisa con chess.js» en
 // docs/decisiones/juegos-y-torneos.md.
 //
-// 2. El robo de puntos, solo si la partida cuadró: cuando una partida de ajedrez estándar entre dos
-// alumnos termina con un ganador, reproduce las jugadas con chess.js y
-// busca el peor momento de quien ganó (la mayor ventaja en material que
-// tuvo el perdedor). Si la hubo, le roba esos puntos —ventaja × 100— a
+// 2. El robo de puntos, solo si la partida cuadró: cuando una partida
+// entre dos alumnos termina con un ganador, reproduce las jugadas y busca
+// el peor momento de quien ganó (la mayor ventaja en material que tuvo el
+// perdedor). Si la hubo, le roba esos puntos —ventaja × 100— a
 // quien la dejó ir y se los da a quien ganó. Ver «El robo de puntos» en
 // docs/decisiones/puntos-y-premios.md.
 //
@@ -102,7 +102,9 @@ Deno.serve(async (req) => {
   const ganadorId = colorGanador === "white" ? room.white_id : room.black_id;
   const perdedorId = colorGanador === "white" ? room.black_id : room.white_id;
 
-  const chess = new Chess();
+  // Desde la posición con que nació la sala (una de la clase puede arrancar
+  // de otra); las salas viejas, sin ella, desde la de siempre.
+  const chess = room.fen_inicial ? new Chess(room.fen_inicial) : new Chess();
   const peorMomento = peorMomentoDelGanador(chess, (room.moves ?? []) as string[], colorGanador);
   const puntos = puntosDelRobo(peorMomento);
   if (puntos <= 0) return json({ ok: false, motivo: "el ganador nunca estuvo abajo" });

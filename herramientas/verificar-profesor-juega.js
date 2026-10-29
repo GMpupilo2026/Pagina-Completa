@@ -281,6 +281,49 @@ async function pruebaPartidaPropia(browser) {
   await a.ctx.close();
 }
 
+/* La partida terminada que no cuadró al revisarla (partidas_revision, que
+   escribe la Edge Function partida-fin): su profe la ve marcada, con el
+   motivo, y la da por revisada. Quién lee esa tabla lo decide la RLS (se
+   comprobó impersonando roles en SQL); acá, que la página lo muestre bien y
+   que al alumno ni siquiera se lo pida. */
+async function pruebaRevision(browser) {
+  console.log("\n=== competir.html · la partida que no cuadró, para revisar ===");
+  const terminada = Object.assign({}, PARTIDA_AJENA, { id: "r-rara", status: "finished", result: "white" });
+  const limpia = Object.assign({}, PARTIDA_AJENA, { id: "r-limpia", status: "finished", result: "draw", created_at: "2026-09-16T08:00:00Z" });
+  const datos = DATOS_JUEGOS(3, [terminada, limpia]);
+  // El nombre de la jugada lo escribe el navegador de un alumno: va como texto.
+  datos.tablas.partidas_revision = [{ room_id: "r-rara", motivo: "jugada_ilegal", jugada: 11, detalle: "<b>Qxh7</b>", revisada_en: null }];
+  const p = await pagina(browser, "/competir.html", clienteFalso(datos, "u-profe"));
+  const tarjetas = await p.page.evaluate(() => Array.from(document.querySelectorAll("#finished-list > div")).map((f) => ({
+    texto: f.textContent, negrita: !!f.querySelector("b"), boton: Array.from(f.querySelectorAll("button")).some((b) => b.textContent === "Ya la revisé"),
+  })));
+  const rara = tarjetas.find((t) => /Para revisar/.test(t.texto));
+  igual("la partida que no cuadró dice por qué",
+    rara && /Para revisar: Una jugada ilegal \(la número 11 de la lista: <b>Qxh7<\/b>\)\./.test(rara.texto), "true");
+  igual("lo que escribió el alumno no se vuelve HTML", rara && rara.negrita, false);
+  igual("trae «Ya la revisé»", rara && rara.boton, true);
+  igual("la que cuadró, nada", tarjetas.filter((t) => /Para revisar/.test(t.texto)).length, 1);
+  const visible = await p.page.$eval("#finished-list p.text-red-700", (e) => e.checkVisibility());
+  igual("el aviso se ve: la lista de terminadas se abre sola", visible, true);
+  igual("y el título lo dice", (await p.page.textContent("#para-revisar")).trim(), "· 1 para revisar");
+  await p.page.evaluate(() => {
+    window.__rpcs = [];
+    const original = window.sb.rpc;
+    window.sb.rpc = (n, a) => { window.__rpcs.push([n, a]); return original(n, a); };
+  });
+  await p.page.click("#finished-list button:has-text('Ya la revisé')");
+  await p.page.waitForFunction(() => window.__rpcs.some((r) => r[0] === "marcar_partida_revisada"));
+  igual("«Ya la revisé» le avisa a la base cuál", JSON.stringify(await p.page.evaluate(() => window.__rpcs.find((r) => r[0] === "marcar_partida_revisada")[1])), JSON.stringify({ p_room_id: "r-rara" }));
+  igual("sin errores en consola", p.errores.join(" | ") || "ninguno", "ninguno");
+  await p.ctx.close();
+
+  const a = await pagina(browser, "/competir.html", clienteFalso(datos, "u-ana"));
+  igual("al alumno no se le muestra (ni se le pide)", await a.page.evaluate(() => /Para revisar/.test(document.getElementById("finished-list").textContent)), false);
+  igual("ni en el título", (await a.page.textContent("#para-revisar")).trim(), "");
+  igual("sin errores en consola", a.errores.join(" | ") || "ninguno", "ninguno");
+  await a.ctx.close();
+}
+
 async function pruebaAlumnoIntacto(browser) {
   console.log("\n=== juegos.html · al alumno no se le movió nada ===");
   const { page, ctx, errores } = await pagina(browser, "/juegos.html",
@@ -468,6 +511,7 @@ async function pruebaFotosEnPosiciones(browser) {
     await pruebaFormulario(browser);
     await pruebaUnSoloAlumno(browser);
     await pruebaPartidaPropia(browser);
+    await pruebaRevision(browser);
     await pruebaAlumnoIntacto(browser);
     await pruebaAlumnoSinPartidas(browser);
     await pruebaEnLineaAbierto(browser);

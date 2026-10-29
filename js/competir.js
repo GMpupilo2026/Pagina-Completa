@@ -12,6 +12,9 @@
 
         let session = null, profile = null, isTeacher = false;
         const playerNames = {};
+        // Las partidas terminadas que no cuadraron al revisarlas (las lee solo
+        // su profe o administración: lo decide la RLS de partidas_revision).
+        let revisiones = {};
 
         // Tiempo asignado a cada jugador (reloj tipo Fischer). La lista vive en
         // js/ritmos.js, la misma de los torneos y del formulario del profesor.
@@ -50,6 +53,13 @@
                 '<p class="text-xs text-accent-700 dark:text-accent-400 font-semibold uppercase mb-1">' + variantLabel(variantId) + ' · ⏱️ ' + timeControlLabel(row.initial_seconds, row.increment_seconds) + '</p>' +
                 '<h3 class="font-semibold text-brand-800 dark:text-white text-sm">' + playersLine + '</h3>' +
                 '<p class="text-xs text-brand-450 dark:text-brand-350 mt-1">' + fmtDateTime(row.created_at) + (row.status === "finished" ? " · " + resultLabel(row) : "") + '</p>';
+            const revision = !is4p && revisiones[row.id];
+            if (revision && !revision.revisada_en) {
+                const aviso = document.createElement("p");
+                aviso.className = "text-xs font-semibold text-red-700 dark:text-red-300 mt-1";
+                aviso.textContent = "⚠️ Para revisar: " + PartidaRevision.texto(revision);
+                info.appendChild(aviso);
+            }
             const actions = document.createElement("div");
             actions.className = "flex items-center gap-2 shrink-0";
             // Si el profesor es uno de los jugadores no viene a mirar: viene a
@@ -87,6 +97,19 @@
                     await loadRooms();
                 });
                 actions.appendChild(endBtn);
+            }
+            if (revision && !revision.revisada_en) {
+                const revisadaBtn = document.createElement("button");
+                revisadaBtn.type = "button";
+                revisadaBtn.className = "text-xs font-semibold px-3 py-1.5 rounded-lg bg-brand-100 hover:bg-brand-200 dark:bg-brand-800 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 transition-colors";
+                revisadaBtn.textContent = "Ya la revisé";
+                revisadaBtn.addEventListener("click", async () => {
+                    revisadaBtn.disabled = true;
+                    const { error } = await sb.rpc("marcar_partida_revisada", { p_room_id: row.id });
+                    if (error) { revisadaBtn.disabled = false; Avisos.avisar("No se pudo marcar: " + error.message); return; }
+                    await loadRooms();
+                });
+                actions.appendChild(revisadaBtn);
             }
             if (isTeacher) {
                 const delBtn = document.createElement("button");
@@ -129,10 +152,25 @@
             const ongoing = all.filter((r) => r.status === "playing");
             const finished = all.filter((r) => r.status === "finished");
 
+            revisiones = {};
+            const terminadas = finished.filter((r) => r._table === "game_rooms").map((r) => r.id);
+            if (isTeacher && terminadas.length) {
+                const { data: filas, error: errorRev } = await sb.from("partidas_revision")
+                    .select("room_id, motivo, jugada, detalle, revisada_en").in("room_id", terminadas);
+                if (errorRev) console.error(errorRev);
+                (filas || []).forEach((f) => { revisiones[f.room_id] = f; });
+            }
+
             const ongoingEl = document.getElementById("ongoing-list");
             ongoingEl.innerHTML = "";
             if (!ongoing.length) ongoingEl.innerHTML = '<p class="text-brand-450 dark:text-brand-350 text-sm">Todavía no hay partidas en curso.</p>';
             else ongoing.forEach((r) => renderRoomCard(r, ongoingEl));
+
+            // Las que hay que revisar no se esconden en la lista cerrada: el
+            // título lo dice y la lista se abre sola.
+            const pendientes = Object.values(revisiones).filter((f) => !f.revisada_en).length;
+            document.getElementById("para-revisar").textContent = pendientes ? " · " + pendientes + " para revisar" : "";
+            if (pendientes) document.getElementById("finished-list").closest("details").open = true;
 
             const finishedEl = document.getElementById("finished-list");
             finishedEl.innerHTML = "";

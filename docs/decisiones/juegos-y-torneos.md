@@ -1563,6 +1563,55 @@ igual; el primero cuenta aparte los recortes tras una escritura lenta y
 falla si hubo que recortar uno que llegó a tiempo, y los otros dos fallan con
 cualquier recorte (ninguna pantalla debería necesitarlo).
 
+### La partida terminada se revisa con chess.js
+
+La base acepta la posición que manda el navegador: desde la consola se puede
+escribir cualquier tablero —un mate que no se jugó— y la partida termina con
+ese resultado. Validar cada jugada en el servidor la frenaría (es justo lo
+que el canal rápido quiso evitar); en cambio, **al terminar**, se revisa.
+Migración `20261029234634_partida_terminada_se_revisa`.
+
+- **La posición con que nació la sala, en la base.** `game_rooms.fen_inicial`
+  la fija el trigger `fen_inicial_de_partida` al crearla y ningún `UPDATE` la
+  cambia (comprobado impersonando: escribirle otra cosa la deja igual). Sin
+  ella no hay de dónde rehacer una partida de la clase, que puede arrancar
+  del tablero del profe. Las salas de antes quedaron en null salvo las que
+  no tenían jugadas.
+- **La Edge Function `partida-fin` revisa toda partida Estándar que termina**
+  (también en tablas: `disparar_fin_de_partida()` ya no espera un ganador).
+  `revision.ts`, una función pura sin Supabase ni Deno, rehace las jugadas
+  con chess.js y dice lo primero que no cuadra: una jugada ilegal (cuál y en
+  qué número), jugadas que no llevan a la posición guardada (se comparan las
+  piezas y el turno: el enroque y el paso se escriben distinto según quién
+  arma la FEN), un resultado contra el mate del tablero o un ganador en un
+  ahogado. Una sala vieja, sin `fen_inicial`, se supone en la posición de
+  siempre y, si las jugadas no calzan, **no se acusa**: pudo arrancar de
+  otra (las 100 partidas Estándar terminadas que había se revisaron así, y
+  los finales de práctica no saltan).
+- **Lo que no cuadra queda en `partidas_revision`** y esa partida **no paga
+  ni cobra el robo de puntos**. La tabla la escribe solo la función (clave
+  de servicio; no hay política de escritura) y la leen quien administra y
+  el profe de alguno de los dos jugadores (`soy_profesor_de_alguno`).
+  `marcar_partida_revisada()` («Ya la revisé») pide el mismo permiso.
+  Impersonando: el alumno no la ve ni la marca; su profe, sí.
+- **En Competir**, la partida terminada que no cuadró dice «⚠️ Para revisar:»
+  y el motivo, y trae «Ya la revisé». La lista de terminadas está cerrada
+  por omisión: si hay alguna para revisar, el título lo dice («· 1 para
+  revisar») y se abre sola. Los textos de cada motivo viven en
+  `js/partida-revision.js`; lo que escribió un alumno (el nombre de la
+  jugada) va por `textContent`. Contraste medido en los ocho temas: 5,8:1
+  el peor en claro, 9,6:1 en oscuro.
+- El robo de puntos también rehace la partida desde `fen_inicial` (antes,
+  siempre desde la posición de siempre).
+- Solo Estándar: las demás modalidades tienen sus propias reglas y chess.js
+  no las sabe jugar.
+
+Lo prueban `verificar-partida-revision.js` (la misma `revision.ts` que se
+despliega, con partidas reales de la base y casos rotos a propósito; y que
+cada motivo que puede devolver tenga su texto en la página; saltándose la
+comprobación de legalidad, falla) y `verificar-profesor-juega.js` (la marca,
+el título, «Ya la revisé» y que al alumno no se le pida).
+
 ### Cartas: cada estado, una copia propia
 
 `CartasChess.Game.fromJSON` y `toJSON` compartían las manos y el mazo con el
