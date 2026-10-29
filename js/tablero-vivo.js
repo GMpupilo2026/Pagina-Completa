@@ -32,6 +32,7 @@
     const partidas = new Map(); // «m3» o «solo» → { juego, blancas, negras, t, mesa, ronda }
     let torneoId = null, torneoDatos = null;
     let elegida = null;         // la que se ve en grande; null = la cuadrícula
+    let abrirMesa = null;       // «m3»: la que pide el enlace (&m=3, el de un alumno en una simultánea)
     let paso = null;            // la jugada que se repasa; null = en vivo
     let proyectando = false, pagina = 0;
     const POR_PAGINA = 6, ROTAR_MS = 15000;
@@ -54,7 +55,7 @@
         if (r) r.mesas.forEach((m) => lista.push({ clave: P.clave(m), mesa: m.mesa, tablero: m.tablero, blancas: m.blancas, negras: m.negras, ronda: r.ronda,
             equipos: m.equipoBlancas ? m.equipoBlancas + " – " + m.equipoNegras : "" }));
         for (const [clave, x] of partidas) {
-            if (x.mesa && !lista.some((m) => m.clave === clave)) lista.push({ clave, mesa: x.mesa, tablero: x.tablero, blancas: x.blancas, negras: x.negras, ronda: x.ronda });
+            if (x.mesa && !lista.some((m) => m.clave === clave)) lista.push({ clave, mesa: x.mesa, tablero: x.tablero, simul: x.simul, blancas: x.blancas, negras: x.negras, ronda: x.ronda });
         }
         return lista.sort((a, b) => a.mesa - b.mesa || (a.tablero || 0) - (b.tablero || 0));
     }
@@ -190,6 +191,7 @@
         const nueva = !antes;
         partidas.set(clave, d);
         if (!d.mesa) elegida = "solo";
+        if (abrirMesa && clave === abrirMesa && !elegida) { elegida = clave; abrirMesa = null; pintar(); }
         $("esperando").hidden = true;
         estadoConexion("● En vivo", "vivo");
         $("retraso-aviso").textContent = d.retraso ? "Con " + d.retraso + " minutos de retraso" : "";
@@ -359,7 +361,8 @@
         const partes = decodeURIComponent(location.hash.replace(/^#/, "")).trim().toLowerCase().split("&");
         const c = partes[0];
         const t = partes.map((x) => /^t=/.test(x) ? P.torneoDe(x) : null).find(Boolean) || null;
-        if (P.codigoValido(c)) { conectar(c, t); return; }
+        const m = partes.map((x) => /^m=([1-9][0-9]?)$/.exec(x)).find(Boolean);
+        if (P.codigoValido(c)) { conectar(c, t); abrirMesa = m ? "m" + m[1] : null; return; }
         $("visor").hidden = true;
         $("pedir-codigo").hidden = false;
         if (c) $("codigo-error").textContent = "Ese código no es válido: son 8 letras y números, como aparecen en el celular que transmite.";

@@ -633,7 +633,7 @@
         t.fotos = t.fotos.concat(f).slice(-6);
         if (t === T()) pintarFotos();
         const canal = t.vivo && canales.get(t.vivo.codigo), donde = dondeDe(t);
-        if (canal && donde) canal.send({ type: "broadcast", event: "foto", payload: { v: 1, torneo: donde.torneo, ronda: donde.ronda, mesa: donde.mesa, tablero: donde.tablero || undefined, motivo, img, t: f.h } });
+        if (canal && donde && donde.torneo) canal.send({ type: "broadcast", event: "foto", payload: { v: 1, torneo: donde.torneo, ronda: donde.ronda, mesa: donde.mesa, tablero: donde.tablero || undefined, motivo, img, t: f.h } });
     }
     function pintarFotos() {
         const t = T(), caja = $("fotos-lista");
@@ -812,7 +812,7 @@
     setInterval(() => { if (retraso) for (const t of tableros) if (t.vivo && vistaVivo(t).n !== t.enviadas) enviarVivo(t); }, 5000);
     function alertarArbitro(t, tipo) {
         const canal = t.vivo && canales.get(t.vivo.codigo), donde = dondeDe(t);
-        if (!canal || !donde) return false;
+        if (!canal || !donde || !donde.torneo) return false; // el árbitro es el de un torneo
         canal.send({ type: "broadcast", event: "alerta", payload: { v: 1, torneo: donde.torneo, ronda: donde.ronda, mesa: donde.mesa, tablero: donde.tablero || undefined, tipo: tipo || "ilegal", t: Date.now() } });
         return true;
     }
@@ -838,7 +838,7 @@
             // Quien pide puede decir qué mesa le falta: contesta solo esa.
             canal.on("broadcast", { event: "pedir" }, (msg) => {
                 const mesa = msg && msg.payload && Number(msg.payload.mesa), tb = msg && msg.payload && Number(msg.payload.tablero);
-                tableros.filter((o) => o.vivo && o.vivo.codigo === codigo && (!mesa || (o.mesa === mesa && (!tb || o.tablero === tb)))).forEach((o) => enviarVivo(o, true));
+                tableros.filter((o) => o.vivo && o.vivo.codigo === codigo && (!mesa || ((o.mesa || o.simul) === mesa && (!tb || o.tablero === tb)))).forEach((o) => enviarVivo(o, true));
             });
             canal.subscribe((st) => {
                 estadoCanal = st;
@@ -867,7 +867,11 @@
         const url = V.enlace(t.vivo.codigo, torneo && torneo.id);
         const a = $("vivo-enlace");
         a.href = url; a.textContent = url;
-        $("vivo-codigo").textContent = t.vivo.codigo + (torneo && t.mesa ? " · mesa " + t.mesa + (t.tablero ? " · tablero " + t.tablero : "") : "") + (retraso ? " · con " + retraso + " minutos de retraso" : "");
+        $("vivo-codigo").textContent = t.vivo.codigo + (torneo && t.mesa ? " · mesa " + t.mesa + (t.tablero ? " · tablero " + t.tablero : "") : "")
+            + (!torneo && t.simul ? " · tablero " + t.simul + " de la simultánea" : "") + (retraso ? " · con " + retraso + " minutos de retraso" : "");
+        // En una simultánea, el enlace de cada alumno abre su tablero en grande.
+        $("vivo-alumno").hidden = !(!torneo && t.simul);
+        if (!torneo && t.simul) { const al = $("vivo-enlace-alumno"); al.href = al.textContent = url + "&m=" + t.simul; }
         $("vivo-whatsapp").href = "https://wa.me/?text=" + encodeURIComponent((torneo ? "Mira el torneo en vivo: " : "Mira la partida en vivo: ") + url);
         const qr = $("vivo-qr");
         if (qr.dataset.url === url) return;
@@ -920,7 +924,8 @@
         }
         return t.nombres;
     }
-    const dondeDe = (t) => (torneo && t.mesa ? { torneo: torneo.id, ronda: t.ronda || ultimaRonda(), mesa: t.mesa, tablero: t.tablero || null } : null);
+    const dondeDe = (t) => (torneo && t.mesa ? { torneo: torneo.id, ronda: t.ronda || ultimaRonda(), mesa: t.mesa, tablero: t.tablero || null }
+        : !torneo && t.simul ? { simul: true, mesa: t.simul } : null); // una simultánea: su tablero, sin torneo
     const ultimaRonda = () => { const r = torneo && V.mesasDe(torneo.datos); return r ? r.ronda : null; };
 
     async function leerTorneo(id) {
@@ -1415,7 +1420,16 @@
         elegirTablero(Number(b.dataset.tablero));
         pedirEsquina();
     }));
-    $("btn-vivo").addEventListener("click", () => empezarVivo(T(), torneo ? torneo.codigo : codigoGuardado(T()) || V.nuevoCodigo()));
+    $("btn-vivo").addEventListener("click", () => {
+        const t = T();
+        if (torneo) { empezarVivo(t, torneo.codigo); return; }
+        // Una simultánea: el número de tablero y, si otra cámara ya la empezó, su código.
+        const n = Number($("simul-tablero").value), c = $("simul-codigo").value.trim().toLowerCase();
+        t.simul = Number.isInteger(n) && n >= 1 && n <= 99 ? n : null;
+        if (c && !V.codigoValido(c)) { avisar("Ese código de simultánea no es válido: son 8 letras y números, como los muestra la primera cámara.", "error"); return; }
+        if (t.simul) { empezarVivo(t, c || V.nuevoCodigo()); return; }
+        empezarVivo(t, codigoGuardado(t) || V.nuevoCodigo());
+    });
     $("btn-torneo").addEventListener("click", () => {
         const id = V.torneoDe($("torneo-enlace").value);
         if (!id) { avisar("Pega el enlace del torneo tal como sale en Torneos en Pareo Integral.", "error"); return; }

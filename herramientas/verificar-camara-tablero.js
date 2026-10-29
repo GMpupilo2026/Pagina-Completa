@@ -589,6 +589,48 @@ async function esperarJugadas(p, n) {
     await cerrar(p2);
   }
 
+  console.log("\nUna simultánea: una cámara por tablero, sin torneo");
+  {
+    const arrancar = async (tablero, codigo) => {
+      const b = await abrir(browser, "camara-tablero.html");
+      const pg = b.page;
+      await pg.waitForSelector("#app:not(.hidden)");
+      await foto(pg, new Chess().fen(), ESQ0);
+      await esperarAviso(pg, /esquinas/);
+      await tocar(pg, aLienzo(ESQ0));
+      await pg.click("#btn-calibrar");
+      await esperarAviso(pg, /Calibrado/);
+      await pg.click("summary:has-text('Una simultánea')");
+      if (codigo) await pg.fill("#simul-codigo", codigo);
+      await pg.fill("#simul-tablero", String(tablero));
+      await pg.click("#btn-vivo");
+      await pg.waitForSelector("#vivo-encendido:not([hidden])");
+      return b;
+    };
+    const A = await arrancar(1);
+    const codigo = (await A.page.textContent("#vivo-codigo")).split(" ")[0];
+    igual("la primera cámara crea la simultánea y dice su tablero", await A.page.textContent("#vivo-codigo"), codigo + " · tablero 1 de la simultánea");
+    igual("y el enlace del alumno de ese tablero abre su partida", await A.page.textContent("#vivo-enlace-alumno"), await A.page.textContent("#vivo-enlace") + "&m=1");
+    const B = await arrancar(2, codigo);
+    igual("la segunda se une con el mismo código, en su tablero", await B.page.textContent("#vivo-codigo"), codigo + " · tablero 2 de la simultánea");
+    const W = await abrir(browser, "tablero-vivo.html#" + codigo, null, { width: 1280, height: 1000 });
+    await W.page.waitForFunction(() => document.querySelectorAll("#mesas-lista button[data-mesa]").length === 2, null, { timeout: 8000 }).catch(() => {});
+    igual("quien mira ve los dos tableros juntos", await W.page.$$eval("#mesas-lista button[data-mesa]", (bs) => bs.map((b) => b.querySelector("p").textContent)), ["Tablero 1", "Tablero 2"]);
+    const S = await abrir(browser, "tablero-vivo.html#" + codigo + "&m=2", null, { width: 390, height: 844 });
+    const jb = new Chess(); jb.move("d4");
+    await foto(B.page, jb.fen(), ESQ0); await esperarJugadas(B.page, 1);
+    await S.page.waitForFunction(() => !document.getElementById("partida").hidden && /d4/.test(document.getElementById("jugadas").textContent), null, { timeout: 8000 }).catch(() => {});
+    igual("el alumno del tablero 2, con su enlace, ve su partida en grande", [await S.page.textContent("#mesa-titulo"), await S.page.textContent("#jugadas")], ["Tablero 2", "1. d4"]);
+    const ja = new Chess(); ja.move("e4");
+    const antes = eventos.length;
+    await foto(A.page, ja.fen(), ESQ0); await esperarJugadas(A.page, 1);
+    await W.page.waitForFunction(() => /e4/.test(document.querySelector('#mesas-lista button[data-mesa="1"]').textContent), null, { timeout: 8000 }).catch(() => {});
+    igual("cada jugada llega a su tablero", [/e4/.test(await W.page.textContent('#mesas-lista button[data-mesa="1"]')), /d4/.test(await W.page.textContent('#mesas-lista button[data-mesa="2"]'))], [true, true]);
+    igual("lo que viaja dice el tablero de la simultánea, sin torneo", eventos.slice(antes).filter((x) => x.event === "estado").map((x) => [x.payload.simul, x.payload.mesa, "torneo" in x.payload]).slice(-1), [[1, 1, false]]);
+    igual("sin errores en la consola (simultánea)", [A.errores, B.errores, W.errores, S.errores], [[], [], [], []]);
+    for (const x of [A, B, W, S]) await cerrar(x);
+  }
+
   console.log("\nDos tableros con un celular (opcional)");
   {
     const IZQ = [[40, 520], [380, 535], [390, 195], [50, 180]], DER = [[430, 530], [770, 515], [760, 175], [420, 190]];

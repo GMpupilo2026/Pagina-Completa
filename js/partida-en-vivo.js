@@ -143,10 +143,14 @@
         if (donde && torneoDe(donde.torneo) && entero(donde.mesa, 999)) {
             p.torneo = torneoDe(donde.torneo); p.mesa = donde.mesa; p.ronda = entero(donde.ronda, 99);
             if (entero(donde.tablero, 12)) p.tablero = donde.tablero;
+        } else if (donde && donde.simul && entero(donde.mesa, 99)) {
+            // Una simultánea: varias cámaras con el mismo código, cada una su tablero, sin torneo.
+            p.simul = 1; p.mesa = donde.mesa;
         }
         return p;
     }
-    /* La partida entera. `donde`, en un torneo: { torneo, ronda, mesa }. */
+    /* La partida entera. `donde`, en un torneo: { torneo, ronda, mesa }; en
+     * una simultánea: { simul: true, mesa } (el tablero de la simultánea). */
     function estado(juego, nombres, donde, resultado, extra) {
         const r = resultadoValido(resultado);
         const x = extra || {};
@@ -216,7 +220,7 @@
         });
         return out;
     }
-    const lugar = (x) => "Mesa " + x.mesa + (x.tablero ? " · tablero " + x.tablero : "");
+    const lugar = (x) => (x.simul ? "Tablero " + x.mesa : "Mesa " + x.mesa + (x.tablero ? " · tablero " + x.tablero : ""));
     const clave = (x) => "m" + x.mesa + (x.tablero ? "t" + x.tablero : "");
 
     /* Lo que llega se vuelve a jugar con chess.js: una partida que no es legal
@@ -232,6 +236,7 @@
         d.espera = Number.isFinite(p.espera) && p.espera >= 0 ? p.espera : null;
         d.retraso = entero(p.retraso, 120);
         if (torneoDe(p.torneo) && entero(p.mesa, 999)) { d.torneo = torneoDe(p.torneo); d.mesa = p.mesa; d.ronda = entero(p.ronda, 99); d.tablero = entero(p.tablero, 12); }
+        else if (p.simul === 1 && entero(p.mesa, 99)) { d.simul = true; d.mesa = p.mesa; }
         d.id = idValido(p.id);
         return d;
     }
@@ -260,6 +265,7 @@
         d.espera = Number.isFinite(p.espera) && p.espera >= 0 ? p.espera : null;
         d.retraso = entero(p.retraso, 120);
         if (antes.torneo) { d.torneo = antes.torneo; d.mesa = antes.mesa; d.tablero = antes.tablero; d.ronda = entero(p.ronda, 99) || antes.ronda; }
+        else if (antes.simul) { d.simul = true; d.mesa = antes.mesa; }
         return d;
     }
 
