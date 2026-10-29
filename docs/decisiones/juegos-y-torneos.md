@@ -10160,8 +10160,9 @@ estaban, y las diferencias eran solo lo nuevo.
 
 ## La cámara que lee el tablero
 
-`camara-tablero.html` (`js/camara-tablero.js`) es una **prueba**, por ahora
-solo de quien administra: el celular encima de un tablero de verdad lee cada
+`camara-tablero.html` (`js/camara-tablero.js`) empezó como una **prueba** de
+quien administra; hoy la abre toda cuenta (ver «El reloj, lo entrenado en la
+cuenta, las pistas y la cámara del árbitro adjunto»): el celular encima de un tablero de verdad lee cada
 casilla y anota las jugadas. Sirve para medir qué tan bien se ven nuestros
 tableros con la luz real de un salón antes de invertir en entrenar un modelo o
 en transmitir. No guarda nada ni manda la imagen a ningún lado: todo pasa en
@@ -10713,8 +10714,8 @@ El cuarto pedido de mejoras del dueño («todas»). Lo de este paquete:
   sola copia de qué es un error. Va con un botón porque es trabajo para el
   celular. Tocar una lleva el tablero a esa jugada.
 - **La cámara en la clase en vivo** la puede abrir también quien da clase
-  (`role = 'profesor'`); un alumno no (en un torneo entra por el QR). Ver «La
-  cámara en la clase en vivo» en `clase-en-vivo.md`.
+  (`role = 'profesor'`). Ver «La cámara en la clase en vivo» en
+  `clase-en-vivo.md`. (Desde el sexto paquete la abre también el alumno.)
 
 Lo prueban `verificar-camara-tablero.js` (la coronación preguntada y
 deducida, la luz de golpe y poco a poco, la repetición y su aviso, la foto
@@ -10769,6 +10770,62 @@ Lo prueban `verificar-camara-tablero.js` (el armado, mal y bien, sin
 calibrar y calibrada; el motor de mentira con la jugada que no es; el mate en
 2 del banco con una equivocada que vuelve; la voz; el PGN de la simultánea) y
 `verificar-pareo-camaras.js` (el informe). Rotos a propósito, saltan.
+
+### El reloj, lo entrenado en la cuenta, las pistas y la cámara del árbitro adjunto
+
+El sexto pedido de mejoras del dueño («si dale»):
+
+- **El reloj de la partida** (opcional, «Reloj»): se elige el ritmo
+  (minutos + incremento) y cambia solo con cada jugada que anota la cámara:
+  a quien movió se le resta lo que pensó y se le suma el incremento; con dos
+  jugadas juntas (se escapó una), a cada uno la suya. Se cuenta con
+  `Date.now()` del aparato, igual que el tiempo de cada jugada; «Pausar»
+  detiene los dos (ninguno corre). Una partida nueva lo apaga. **La
+  bandera**: cuando llega a cero se marca el resultado —gana el otro, o
+  tablas si el otro ya no puede dar mate con ninguna serie de jugadas legales
+  (art. 6.9): con solo el rey, o con rey y una pieza menor contra el rey
+  solo; un caballo contra rey y peón sí puede, y gana— y se dice «Lo confirma
+  el árbitro». Viaja a quien mira en cada envío (`reloj: {w, b, corre}`, en
+  ms, lo que quedaba al mandarlo; `PartidaEnVivo` lo valida, hasta un día) y
+  `tablero-vivo.html` le resta al que corre lo que pasó desde que llegó:
+  «⏱ Blancas 4:12 · Negras 3:58 (corre)». **Con retraso no se manda**: el
+  tiempo de ahora delataría lo que todavía no se ve.
+- **Lo entrenado queda en la cuenta**, y por eso **la cámara la abre toda
+  cuenta** (antes, quien administra y quien da clase): en un alumno no hay
+  nada que esconder detrás (no lee datos de nadie), y entrenar en su tablero
+  es para él. En modo mesa, sin cuenta, no se guarda nada.
+  - La partida **contra el motor**, terminada y desde 10 medias jugadas (lo
+    pide la base), va a `partidas_torneo` con el evento «Contra el motor
+    (cámara, nivel …)»: la libreta de torneos y «Tus propios errores», donde
+    su profe la ve y el motor la revisa. A medias, no se guarda.
+  - Cada **mate resuelto** (mate en 1, 2 o 3 del banco de Mates) va a su
+    progreso del Entrenamiento, `EntrenoProgress.log("mates", …)` con
+    `desde: "camara"` y `comoSalio(con error, con pista)`, como en la página
+    de Mates. La táctica no anota progreso (tampoco en su página).
+- **Las pistas**: en un ejercicio, al segundo intento que no era, qué pieza
+  se mueve (de la solución: «se mueve el rey de d3»); contra el motor, si
+  lleva más de un minuto con su turno, la pieza de la jugada que Stockfish
+  haría en su lugar («mira la dama de f3»), una vez por jugada. Nunca la
+  jugada entera. Una pista hace que el mate no cuente como limpio.
+- **La cámara del árbitro adjunto** («¿Qué mesa es? (árbitro)», con el
+  torneo elegido y fuera del modo mesa): el adjunto apunta a cualquier
+  tablero de la sala, toca «Buscar el tablero» y el botón. La cámara escucha
+  el canal del torneo (pide las partidas con `pedir` y lee los `estado`, en
+  el mismo canal que usa si también transmite: un canal por código,
+  `canalDe`), y busca cuál de las posiciones transmitidas explica lo que ve
+  con `buscarGiro` (sin calibrar: calibra con cada una). Dice la mesa y si
+  coincide (64 de 64), o qué casillas no calzan con lo transmitido —una
+  cámara que anotó mal o una pieza movida—, con la misma lista que «¿Está
+  bien armada?» (`diferencias`). Si dos mesas tienen la misma posición, lo
+  dice; si ninguna se parece (menos de 48 casillas), también.
+
+Lo prueba `verificar-camara-tablero.js`: el reloj con el reloj del aparato
+adelantado (los 10 s que se restan, el incremento, la pausa, quien mira, la
+bandera con victoria, con tablas y con el caballo contra el peón); la pista
+del motor al minuto y la partida guardada con su evento; la pista al segundo
+intento y el mate en el progreso, no limpio; el alumno que abre la cámara; y
+el adjunto que encuentra la mesa 6 sin calibrar, una casilla que no calza y
+un tablero que no es de ninguna. Rotos a propósito, saltan.
 
 ## Pareo para DGT
 

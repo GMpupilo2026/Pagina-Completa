@@ -484,7 +484,7 @@ async function esperarJugadas(p, n) {
     // Stockfish de mentira: contesta 1... e5 a 1. e4.
     await pg.route("**/js/shared-engine.js", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: "window.SharedEngine = {};" }));
     await pg.route("**/js/preparacion-motor.js", (r) => r.fulfill({ status: 200, contentType: "application/javascript",
-      body: "window.PreparacionMotor = { evaluar: (fen, p) => { window.__prof = p; return Promise.resolve({ eval: 0.2, mejor: / b /.test(fen) ? 'e5' : 'Nf3' }); } };" }));
+      body: "window.PreparacionMotor = { evaluar: (fen, p) => { window.__prof = p; return Promise.resolve({ eval: 0.2, mejor: window.__motor ? window.__motor(fen) : / b /.test(fen) ? 'e5' : 'Nf3' }); } };" }));
     // El banco, con un solo mate en 2 (del banco de verdad: mate2-0307).
     await pg.route("**/entreno/data/mates.json", (r) => r.fulfill({ status: 200, contentType: "application/json",
       body: JSON.stringify([{ id: "mate2-0307", category: "mate2", fen: "1Q6/8/8/8/8/k2K4/8/8 w - - 0 1", solution: ["Kc3", "Ka2", "Qb2#"] }]) }));
@@ -508,6 +508,34 @@ async function esperarJugadas(p, n) {
     j.move("e5"); await foto(pg, j.fen(), ESQ0); await esperarJugadas(pg, 2);
     igual("puesta la del motor, se anota y te toca otra vez", [await jugadasDe(pg), await pg.textContent("#entreno-estado")], ["1. e4 e5", "Te toca."]);
     await pg.click("#btn-entreno-dejar");
+    igual("dejarla a medias no guarda nada", await pg.evaluate(() => (window.__insertados || []).length), 0);
+
+    // Una partida entera contra el motor (escrita a mano), con la pista al pensar más de un minuto.
+    await foto(pg, new Chess().fen(), ESQ0);
+    await pg.evaluate(() => {
+      const real = Date.now; window.__mas = 0; Date.now = () => real() + window.__mas;
+      const negras = ["a6", "b6", "a5", "h6", "g6"];
+      window.__motor = (fen) => (/ b /.test(fen) ? negras.shift() : "Qxf7#");
+    });
+    await pg.click("#btn-entreno-motor");
+    const escribir = async (san) => { await pg.fill("#jugada-mano", san); await pg.click("#form-anotar button[type=submit]"); };
+    for (const [mia, suya] of [["e4", "a6"], ["Bc4", "b6"], ["Qf3", "a5"], ["Nh3", "h6"], ["d3", "g6"]]) {
+      await escribir(mia);
+      await pg.waitForFunction(() => /El motor juega/.test(document.getElementById("entreno-estado").textContent), null, { timeout: 8000 }).catch(() => {});
+      await escribir(suya);
+    }
+    igual("sin pensar mucho, no hay pista", await pg.evaluate(() => document.getElementById("entreno-pista").checkVisibility()), false);
+    await pg.evaluate(() => { window.__mas += 61000; });
+    await pg.waitForFunction(() => document.getElementById("entreno-pista").checkVisibility(), null, { timeout: 8000 }).catch(() => {});
+    igual("pensando más de un minuto, la pista: qué pieza mira el motor (no la jugada)", await pg.textContent("#entreno-pista"), "Pista: mira la dama de f3.");
+    await escribir("Qxf7#");
+    await pg.waitForFunction(() => (window.__insertados || []).some((x) => x.tabla === "partidas_torneo"), null, { timeout: 8000 }).catch(() => {});
+    igual("terminada, la partida queda en su libreta de torneos («Tus propios errores»)", await pg.evaluate(() => {
+      const f = (window.__insertados || []).find((x) => x.tabla === "partidas_torneo");
+      return f && [f.fila.color, f.fila.resultado, f.fila.jugadas.length, f.fila.evento, f.fila.fecha === window.HoraCR.hoy()];
+    }), ["w", "1-0", 11, "Contra el motor (cámara, nivel medio)", true]);
+    igual("y lo dice", (await pg.textContent("#entreno-estado")).includes("Quedó en tu libreta de torneos"), true);
+    await pg.evaluate(() => { window.__motor = null; });
 
     // Un ejercicio: armarlo, una jugada equivocada que vuelve, la solución y la respuesta del rival.
     await pg.selectOption("#entreno-banco", "mate2");
@@ -528,13 +556,25 @@ async function esperarJugadas(p, n) {
     igual("una jugada que no es se dice y no se anota", [(await aviso(pg)).startsWith("No es esa (Rc4)"), await jugadasDe(pg)], [true, "Todavía ninguna."]);
     await foto(pg, e.fen(), ESQ0);
     await esperarAviso(pg, /de vuelta/);
+    igual("con un intento fallido, todavía sin pista", await pg.evaluate(() => document.getElementById("entreno-pista").checkVisibility()), false);
+    const mal2 = new Chess(e.fen()); mal2.move("Kd4");
+    await foto(pg, mal2.fen(), ESQ0);
+    await esperarAviso(pg, /Pista/);
+    igual("al segundo, la pista: qué pieza se mueve", await pg.textContent("#entreno-pista"), "Pista: se mueve el rey de d3.");
+    await foto(pg, e.fen(), ESQ0);
+    await esperarAviso(pg, /de vuelta/);
     e.move("Kc3"); await foto(pg, e.fen(), ESQ0); await esperarJugadas(pg, 1);
     await pg.waitForFunction(() => /El rival responde/.test(document.getElementById("entreno-estado").textContent), null, { timeout: 8000 }).catch(() => {});
     igual("la buena se anota y el rival responde lo del banco", await pg.textContent("#entreno-estado"), "El rival responde Ra2: mueve el rey negro de a3 a a2. Pon esa jugada en tu tablero.");
     e.move("Ka2"); await foto(pg, e.fen(), ESQ0); await esperarJugadas(pg, 2);
     e.move("Qb2#"); await foto(pg, e.fen(), ESQ0); await esperarJugadas(pg, 3);
     await esperarAviso(pg, /Resuelto/);
-    igual("y con el mate, resuelto (con cuántos intentos fallidos)", await pg.textContent("#entreno-estado"), "¡Resuelto (con 1 intento fallido)! Es mate.");
+    igual("y con el mate, resuelto (con cuántos intentos fallidos)", await pg.textContent("#entreno-estado"), "¡Resuelto (con 2 intentos fallidos)! Es mate.");
+    await pg.waitForFunction(() => (window.__insertados || []).some((x) => x.tabla === "training_progress"), null, { timeout: 8000 }).catch(() => {});
+    igual("el mate resuelto cuenta en su progreso del Entrenamiento (con error y con pista: no es limpio)", await pg.evaluate(() => {
+      const f = (window.__insertados || []).find((x) => x.tabla === "training_progress");
+      return f && [f.fila[0].activity, f.fila[0].detail];
+    }), ["mates", { puzzle_id: "mate2-0307", category: "mate2", desde: "camara", limpio: false, con_error: true, con_pista: true }]);
     igual("sin errores en la consola", b.errores, []);
     await cerrar(b);
   }
@@ -1076,6 +1116,38 @@ async function esperarJugadas(p, n) {
     await pa.click("#btn-deshacer");
     igual("«Deshacer» lo borra: la partida sigue", [await pa.textContent("#resultado-texto"), await pa.getAttribute('[data-resultado="1-0"]', "aria-pressed")], ["Sigue en juego.", "false"]);
 
+    // El árbitro adjunto: su cámara no está en ninguna mesa; apunta a un
+    // tablero de la sala y pregunta qué mesa es.
+    const ADJ = await abrir(browser, "camara-tablero.html");
+    const pj = ADJ.page;
+    await pj.waitForSelector("#app:not(.hidden)");
+    await conTorneo(pj, [ronda1, ronda2]);
+    await pj.fill("#torneo-codigo-unirse", codigoT);
+    await pj.fill("#torneo-enlace", ID);
+    await pj.click("#btn-torneo");
+    await pj.waitForFunction(() => !document.getElementById("torneo-elegido").hidden);
+    await foto(pj, jb.fen(), TABLEROS["visto de lado (un trapecio)"]);
+    await esperarAviso(pj, /esquinas/);
+    await tocar(pj, aLienzo(TABLEROS["visto de lado (un trapecio)"]));
+    const preguntar = async () => {
+      await pj.evaluate(() => { document.getElementById("que-mesa-msg").textContent = ""; });
+      await pj.click("#btn-que-mesa");
+      await pj.waitForFunction(() => /^(Es|Parece|No se parece|Ninguna)/.test(document.getElementById("que-mesa-msg").textContent), null, { timeout: 8000 }).catch(() => {});
+      return pj.textContent("#que-mesa-msg");
+    };
+    igual("«¿Qué mesa es?» la encuentra entre las que transmiten, sin calibrar, y dice que coincide", await preguntar(),
+      'Es la mesa 6 (Carla Ruiz – <img src=x onerror="window.__xss=1">Dani): coincide con la partida transmitida (64 de 64 casillas).');
+    igual("pidió las partidas por el canal del torneo", eventos.some((x) => x.nombre.endsWith(codigoT) && x.event === "pedir"), true);
+    const movida = new Chess(jb.fen()); movida.remove("h2");
+    await foto(pj, movida.fen(), TABLEROS["visto de lado (un trapecio)"]);
+    igual("si algo no calza, dice qué mesa parece y cuál casilla", [await preguntar(), await pj.$$eval("#que-mesa-lista li", (l) => l.map((x) => x.textContent))],
+      ['Parece la mesa 6 (Carla Ruiz – <img src=x onerror="window.__xss=1">Dani), pero 1 casilla no coincide con la partida transmitida: puede que la cámara de esa mesa haya anotado mal o que se haya movido una pieza.', ["Falta el peón blanco en h2."]]);
+    await foto(pj, "4k3/8/8/8/8/8/8/4K3 w - - 0 1", TABLEROS["visto de lado (un trapecio)"]);
+    igual("un tablero que no es de ninguna mesa, lo dice", (await preguntar()).startsWith("No se parece a ninguna de las 2 partidas"), true);
+    igual("los nombres, como texto", await pj.evaluate(() => !!window.__xss || document.querySelectorAll("#que-mesa-msg img").length), 0);
+    igual("sin errores en la consola (adjunto)", ADJ.errores, []);
+    await cerrar(ADJ);
+
     // El QR de cada mesa: una tarjeta por mesa de la ronda, que abre la cámara en esa mesa.
     await pa.evaluate(() => { window.print = () => { window.__impreso = (window.__impreso || 0) + 1; }; });
     await pa.click("#btn-torneo-qr");
@@ -1144,31 +1216,55 @@ async function esperarJugadas(p, n) {
     await cerrar(RV); await cerrar(R);
   }
 
-  console.log("\nEl retraso de la transmisión");
+  console.log("\nEl reloj de la partida");
   {
     const R = await abrir(browser, "camara-tablero.html");
     const pr = R.page;
     await pr.waitForSelector("#app:not(.hidden)");
-    for (const j of ["e4", "e5"]) { await pr.fill("#jugada-mano", j); await pr.click("#form-anotar button[type=submit]"); }
-    await pr.selectOption("#vivo-retraso", "5");
+    // El reloj del aparato, adelantado a pedido.
+    await pr.evaluate(() => { const real = Date.now; window.__mas = 0; Date.now = () => real() + window.__mas; });
+    const pasan = async (ms) => { await pr.evaluate((ms) => { window.__mas += ms; }, ms); await pr.waitForTimeout(450); };
+    const tiempos = () => pr.evaluate(() => ["w", "b"].map((c) => document.querySelector("#reloj-" + c + " [data-tiempo]").textContent + (document.getElementById("reloj-" + c).getAttribute("aria-current") === "true" ? "*" : "")));
+    igual("sin empezar, no hay tiempos", await pr.evaluate(() => document.getElementById("reloj-tiempos").checkVisibility()), false);
+    await pr.selectOption("#reloj-ritmo", "3+2");
+    await pr.click("#btn-reloj");
+    igual("al empezar, 3:00 cada uno y corre el de las blancas", await tiempos(), ["3:00*", "3:00"]);
+    await pasan(10000);
+    igual("pasan 10 s: se le restan a las blancas", await tiempos(), ["2:50*", "3:00"]);
+    await pr.fill("#jugada-mano", "e4"); await pr.click("#form-anotar button[type=submit]");
+    igual("con la jugada, suma el incremento y pasa a correr el de las negras", await tiempos(), ["2:52", "3:00*"]);
+    await pr.click("#btn-reloj-pausa");
+    await pasan(30000);
+    igual("en pausa no corre ninguno, y el botón lo dice", [await tiempos(), await pr.getAttribute("#btn-reloj-pausa", "aria-pressed")], [["2:52", "3:00"], "true"]);
     await pr.click("#btn-vivo");
     const cod = (await pr.textContent("#vivo-codigo")).split(" ")[0];
-    igual("con retraso, lo dice junto al código", await pr.textContent("#vivo-codigo"), cod + " · con 5 minutos de retraso");
     const RV = await abrir(browser, "tablero-vivo.html#" + cod);
     const prv = RV.page;
-    await prv.waitForFunction(() => !document.getElementById("partida").hidden, null, { timeout: 8000 }).catch(() => {});
-    igual("quien mira todavía no ve las jugadas de hace menos de 5 minutos", [await prv.textContent("#jugadas"), await prv.textContent("#retraso-aviso")], ["Todavía no se ha jugado nada.", "Con 5 minutos de retraso"]);
-    // Pasan 6 minutos (el reloj de la cámara se adelanta): salen solas.
-    await pr.evaluate(() => { const real = Date.now; Date.now = () => real() + 6 * 60000; });
-    await prv.waitForFunction(() => document.getElementById("jugadas").textContent === "1. e4 e5", null, { timeout: 12000 }).catch(() => {});
-    igual("cuando cumplen su tiempo, salen solas", await prv.textContent("#jugadas"), "1. e4 e5");
-    await pr.fill("#jugada-mano", "Nf3"); await pr.click("#form-anotar button[type=submit]");
-    await prv.waitForTimeout(800);
-    igual("la jugada recién hecha todavía no", await prv.textContent("#jugadas"), "1. e4 e5");
-    await pr.click('[data-resultado="1-0"]');
-    await prv.waitForFunction(() => document.getElementById("jugadas").textContent === "1. e4 e5 2. Cf3", null, { timeout: 8000 }).catch(() => {});
-    igual("al terminar la partida, se ve entera", [await prv.textContent("#jugadas"), /Terminó: ganan las blancas/.test(await prv.textContent("#ultima"))], ["1. e4 e5 2. Cf3", true]);
-    igual("el retraso se recuerda", await pr.evaluate(() => localStorage.getItem("camara_retraso_v1")), "5");
+    await prv.waitForFunction(() => /Blancas/.test(document.getElementById("reloj-partida").textContent), null, { timeout: 8000 }).catch(() => {});
+    igual("quien mira ve los dos tiempos", await prv.textContent("#reloj-partida"), "⏱ Blancas 2:52 · Negras 3:00");
+    await pr.click("#btn-reloj-pausa");
+    await prv.waitForFunction(() => /corre/.test(document.getElementById("reloj-partida").textContent), null, { timeout: 8000 }).catch(() => {});
+    igual("y de quién corre", await prv.textContent("#reloj-partida"), "⏱ Blancas 2:52 · Negras 3:00 (corre)");
+    await pasan(181000);
+    igual("se le cae la bandera a las negras: ganan las blancas", [await pr.textContent("#reloj-msg"), await pr.textContent("#resultado-texto"), await tiempos()],
+      ["Se le cayó la bandera a las negras: ganan las blancas. Lo confirma el árbitro.", "Terminó: ganan las blancas (1-0).", ["2:52", "0:00"]]);
+    await prv.waitForFunction(() => /Terminó/.test(document.getElementById("ultima").textContent), null, { timeout: 8000 }).catch(() => {});
+    igual("a quien mira le llega el resultado y el reloj en cero", [/Terminó: ganan las blancas/.test(await prv.textContent("#ultima")), await prv.textContent("#reloj-partida")], [true, "⏱ Blancas 2:52 · Negras 0:00"]);
+    // Sin con qué dar mate, la bandera da tablas.
+    await pr.click("summary:has-text('Empezar desde otra posición')");
+    await pr.fill("#posicion", "kq6/8/8/8/8/8/8/K7 b - - 0 1");
+    await pr.click("#form-posicion button[type=submit]");
+    igual("una partida nueva apaga el reloj", await pr.evaluate(() => document.getElementById("reloj-tiempos").checkVisibility()), false);
+    await pr.click("#btn-reloj");
+    await pasan(181000);
+    igual("sin con qué dar mate, la bandera da tablas", [await pr.textContent("#reloj-msg"), await pr.textContent("#resultado-texto")],
+      ["Se le cayó la bandera a las negras: son tablas, porque las blancas ya no pueden dar mate. Lo confirma el árbitro.", "Terminó en tablas (½-½)."]);
+    // Con un caballo contra rey y peón sí hay mate posible (el peón tapa): ganan.
+    await pr.fill("#posicion", "k7/p7/8/8/8/8/8/K6N b - - 0 1");
+    await pr.click("#form-posicion button[type=submit]");
+    await pr.click("#btn-reloj");
+    await pasan(181000);
+    igual("un caballo contra rey y peón: hay mate posible, ganan", await pr.textContent("#reloj-msg"), "Se le cayó la bandera a las negras: ganan las blancas. Lo confirma el árbitro.");
     igual("sin errores en la consola", [R.errores, RV.errores], [[], []]);
     await cerrar(RV); await cerrar(R);
   }
@@ -1653,15 +1749,15 @@ async function esperarJugadas(p, n) {
   {
     const z = await abrir(browser, "camara-tablero.html", { sinSesion: true });
     await z.page.waitForURL(/login\.html/, { timeout: 8000 }).catch(() => {});
-    igual("va al login: sin el QR de una mesa, la herramienta es de quien administra", /\/login\.html\?next=camara-tablero\.html/.test(z.page.url()), true);
+    igual("va al login: sin el QR de una mesa, hace falta una cuenta", /\/login\.html\?next=camara-tablero\.html/.test(z.page.url()), true);
     await cerrar(z);
   }
 
   console.log("\nQuien no administra");
   const n = await abrir(browser, "camara-tablero.html", { is_admin: false, role: "alumno" });
-  await n.page.waitForSelector("#denegado:not(.hidden)");
-  igual("un alumno ve el aviso y no la cámara", await n.page.evaluate(() => [
-    document.getElementById("app").checkVisibility(), document.getElementById("denegado").checkVisibility()]), [false, true]);
+  await n.page.waitForSelector("#app:not(.hidden), #denegado:not(.hidden)");
+  igual("un alumno también la abre (entrena en su tablero de verdad)", await n.page.evaluate(() => [
+    document.getElementById("app").checkVisibility(), document.getElementById("denegado").checkVisibility()]), [true, false]);
   await cerrar(n);
   const pf = await abrir(browser, "camara-tablero.html", { is_admin: false, role: "profesor" });
   await pf.page.waitForSelector("#app:not(.hidden), #denegado:not(.hidden)");

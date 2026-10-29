@@ -210,10 +210,21 @@
     function relojTurno() {
         const x = partidas.get(elegida);
         const e = $("reloj-turno");
+        relojPartida(x);
         if (!x || $("partida").hidden || x.resultado || x.juego.game_over() || x.espera === null) { e.textContent = ""; return; }
         e.textContent = "Piensan " + (x.juego.turn() === "w" ? "las blancas" : "las negras") + ": " + P.reloj(x.espera + Date.now() - x.recibido);
     }
     setInterval(relojTurno, 1000);
+    /* El reloj de ajedrez, si quien transmite lo usa: lo que le quedaba a
+     * cada uno al mandarlo, menos lo que pasó desde que llegó al que corre. */
+    function relojPartida(x) {
+        const e = $("reloj-partida"), r = x && x.reloj;
+        e.hidden = !r || $("partida").hidden;
+        if (e.hidden) return;
+        const corre = x.resultado ? null : r.corre, gasto = corre ? Date.now() - x.recibido : 0;
+        const t = (c) => P.reloj(Math.ceil(Math.max(0, r[c] - (c === corre ? gasto : 0)) / 1000) * 1000) + (c === corre ? " (corre)" : "");
+        e.textContent = "⏱ Blancas " + t("w") + " · Negras " + t("b");
+    }
 
     /* La evaluación de Stockfish, si se pide: de la posición que se ve. */
     const evals = new Map();
