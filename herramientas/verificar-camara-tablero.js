@@ -809,6 +809,21 @@ async function esperarJugadas(p, n) {
     igual("una posible jugada ilegal se dice, y se le avisa al árbitro", (await aviso(pa)).includes("puede ser una jugada ilegal") && (await aviso(pa)).endsWith("Se le avisó al árbitro."), true);
     const alerta = eventos.slice(antesAlerta).find((x) => x.event === "alerta");
     igual("el aviso al árbitro dice el torneo, la ronda y la mesa, pero no las casillas", alerta && [alerta.payload.torneo, alerta.payload.ronda, alerta.payload.mesa, /a1|a5/.test(JSON.stringify(alerta.payload))], [ID, 2, 5, false]);
+    const fotoIlegal = eventos.slice(antesAlerta).find((x) => x.event === "foto");
+    igual("con el aviso, al árbitro le llega una foto del tablero (una JPEG chica, con su mesa y su motivo)",
+      fotoIlegal && [fotoIlegal.payload.mesa, fotoIlegal.payload.motivo, /^data:image\/jpeg;base64,/.test(fotoIlegal.payload.img), fotoIlegal.payload.img.length < 120000], [5, "ilegal", true, true]);
+    igual("y en la cámara queda en «Fotos del tablero», para bajarla", await pa.evaluate(() => [document.getElementById("fotos").checkVisibility(),
+      document.querySelectorAll("#fotos-lista a[download] img").length, document.querySelector("#fotos-lista span").textContent.startsWith("Posible jugada ilegal")]), [true, 1, true]);
+    // La foto es el tablero enderezado, visto desde arriba con la fila 8
+    // arriba: la torre blanca que saltó está en a5, una casilla oscura que
+    // se ve mucho más clara que la a3 (oscura y vacía); y arriba, en la fila
+    // 8, las piezas negras.
+    igual("la foto es el tablero enderezado, como un diagrama (a5 tiene la torre blanca)", await pa.evaluate(async (src) => {
+      const im = new Image(); im.src = src; await im.decode();
+      const c = document.createElement("canvas"); c.width = c.height = 256; const g = c.getContext("2d"); g.drawImage(im, 0, 0);
+      const luz = (col, fila) => { const d = g.getImageData(col * 32 + 12, (8 - fila) * 32 + 12, 8, 8).data; let s = 0; for (let i = 0; i < d.length; i += 4) s += d[i] + d[i + 1] + d[i + 2]; return s / (d.length / 4) / 3; };
+      return [luz(0, 5) > luz(0, 3) + 60, luz(4, 8) + 60 < luz(4, 1)];
+    }, fotoIlegal.payload.img), [true, true]);
     await foto(pa, ja2.fen(), ESQ0);
     igual("el aviso de la jugada ilegal va con su tipo", alerta && alerta.payload.tipo, "ilegal");
 
@@ -822,10 +837,14 @@ async function esperarJugadas(p, n) {
       [true, true, "Sigue en juego."]);
     const rep = eventos.slice(antesRep).filter((x) => x.event === "alerta");
     igual("y al árbitro le llega una vez, con su tipo", rep.map((x) => [x.payload.mesa, x.payload.tipo]), [[5, "repeticion3"]]);
+    igual("también con su foto", eventos.slice(antesRep).filter((x) => x.event === "foto").map((x) => x.payload.motivo), ["repeticion3"]);
 
     // El resultado: lo marca quien maneja la cámara y le llega a quien mira.
+    const antesRes = eventos.length;
     await pa.click('[data-resultado="1-0"]');
     igual("«1-0» marca el resultado", [await pa.textContent("#resultado-texto"), await pa.getAttribute('[data-resultado="1-0"]', "aria-pressed")], ["Terminó: ganan las blancas (1-0).", "true"]);
+    igual("con el resultado se toma la foto del tablero, y le llega al árbitro", [eventos.slice(antesRes).filter((x) => x.event === "foto").map((x) => x.payload.motivo),
+      await pa.locator("#fotos-lista img").count()], [["resultado"], 3]);
     await pw.waitForFunction(() => /Terminó: ganan las blancas/.test(document.querySelector('#mesas-lista button[data-mesa="5"]').textContent), null, { timeout: 8000 }).catch(() => {});
     igual("y quien mira lo ve en la mesa", await pw.$eval('#mesas-lista button[data-mesa="5"]', (b) => b.querySelectorAll("p")[2].textContent), "Última jugada: 5. Cg1. Juegan las negras. Terminó: ganan las blancas (1-0).");
     igual("el PGN que viaja lleva el resultado", await pa.evaluate(() => /\[Result "1-0"\]/.test(localStorage.getItem("camara_partida_v1_0"))), true);

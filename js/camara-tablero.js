@@ -55,6 +55,7 @@
             // la transmisión salen de acá.
             inicio: Date.now(), horas: [], horaResultado: null,
             confirmadas: new Set(), // las coronaciones ya elegidas (por su índice en la historia)
+            fotos: [], // las del tablero con cada resultado y cada aviso (ver tomarFoto)
         };
     }
     let tableros = [nuevoTablero(0)];
@@ -474,10 +475,12 @@
      * celular (si la página se recarga, se ofrece seguirla). */
     function partidaCambio(t) {
         const r = resultadoDe(t);
-        if (r && !t.horaResultado) t.horaResultado = Date.now();
+        const termino = r && !t.horaResultado;
+        if (termino) t.horaResultado = Date.now();
         if (!r) t.horaResultado = null;
         if (t === T()) pintarPartida();
         enviarVivo(t);
+        if (termino) tomarFoto(t, "resultado");
         try {
             localStorage.setItem(PARTIDA + t.i, V.pgn(t.juego, r));
             localStorage.setItem(PARTIDA + t.i + "_horas", JSON.stringify({ inicio: t.inicio, horas: t.horas }));
@@ -493,6 +496,7 @@
         const corona = jugadas.some((x) => /=Q/.test(x));
         const tablas = V.reglaDeTablas(t.juego);
         const alArbitro = tablas && alertarArbitro(t, tablas);
+        if (tablas) tomarFoto(t, tablas);
         avisar(cual(t) + (jugadas.length === 2 ? "Se escapó una jugada: se anotaron " + jugadas.map(es).join(" y ") : "Se anotó " + es(jugadas[0])) + "." + (corona ? " Coronó: se anotó dama. Si fue otra pieza, elígela abajo; si se mueve como caballo, se corrige sola." : "")
             + (tablas ? " " + TABLAS[tablas] + (alArbitro ? " Se le avisó al árbitro." : "") : ""), "bien");
     }
@@ -579,7 +583,74 @@
         // puede ser una jugada ilegal. En un torneo se le avisa al árbitro de
         // Pareo Integral (sin decir qué casillas: eso sería pasar la jugada).
         const alArbitro = alertarArbitro(t);
+        tomarFoto(t, "ilegal");
         avisar(cual(t) + "No reconozco lo que cambió en " + cambiaron.join(", ") + ": puede ser una jugada ilegal o una pieza fuera de lugar. Si fue una jugada, escríbela abajo; si es la luz o una pieza movida sin querer, déjala como estaba." + (alArbitro ? " Se le avisó al árbitro." : ""), "error");
+    }
+
+    /* ── La foto del tablero ─────────────────────────────────────────────
+     * Con cada resultado y cada aviso (jugada ilegal, repetición, 50
+     * jugadas) se guarda una foto del tablero visto desde arriba: se endereza
+     * con la homografía y queda SOLO el tablero, sin nadie alrededor. Si hay
+     * un reclamo, es la prueba de cómo estaba. Queda en esta página mientras
+     * esté abierta (las últimas 6 de cada tablero) y, en un torneo, le llega
+     * al árbitro de Pareo Integral, que la puede pasar a las incidencias. */
+    const LADO_FOTO = 256;
+    const MOTIVO_FOTO = {
+        resultado: "Al terminar la partida", ilegal: "Posible jugada ilegal", repeticion3: "Triple repetición",
+        jugadas50: "50 jugadas", repeticion5: "Quíntuple repetición", jugadas75: "75 jugadas",
+    };
+    function fotoEnderezada(t) {
+        if (!fuente || !t.h) return null;
+        const W = anchoFuente(), H = altoFuente();
+        if (!W || !H) return null;
+        const ex = W / limpio.width, ey = H / limpio.height;
+        const c = document.createElement("canvas"); c.width = W; c.height = H;
+        const g = c.getContext("2d", { willReadFrequently: true });
+        g.drawImage(fuente, 0, 0, W, H);
+        const src = g.getImageData(0, 0, W, H).data;
+        const out = document.createElement("canvas"); out.width = out.height = LADO_FOTO;
+        const og = out.getContext("2d"), img = og.createImageData(LADO_FOTO, LADO_FOTO), d = img.data;
+        for (let y = 0; y < LADO_FOTO; y++) {
+            for (let x = 0; x < LADO_FOTO; x++) {
+                // Arriba la fila 8 y a la izquierda la columna a: como un diagrama.
+                const [px, py] = aplicar(t.h, (x + 0.5) / LADO_FOTO * 8, 8 - (y + 0.5) / LADO_FOTO * 8);
+                const sx = Math.min(W - 1, Math.max(0, Math.round(px * ex))), sy = Math.min(H - 1, Math.max(0, Math.round(py * ey)));
+                const i = (y * LADO_FOTO + x) * 4, j = (sy * W + sx) * 4;
+                d[i] = src[j]; d[i + 1] = src[j + 1]; d[i + 2] = src[j + 2]; d[i + 3] = 255;
+            }
+        }
+        og.putImageData(img, 0, 0);
+        return out.toDataURL("image/jpeg", 0.7);
+    }
+    function tomarFoto(t, motivo) {
+        let img = null;
+        try { img = fotoEnderezada(t); } catch (e) { img = null; }
+        if (!img) return;
+        const f = { h: Date.now(), motivo, img, jugada: t.juego.history().length };
+        t.fotos = t.fotos.concat(f).slice(-6);
+        if (t === T()) pintarFotos();
+        const canal = t.vivo && canales.get(t.vivo.codigo), donde = dondeDe(t);
+        if (canal && donde) canal.send({ type: "broadcast", event: "foto", payload: { v: 1, torneo: donde.torneo, ronda: donde.ronda, mesa: donde.mesa, tablero: donde.tablero || undefined, motivo, img, t: f.h } });
+    }
+    function pintarFotos() {
+        const t = T(), caja = $("fotos-lista");
+        $("fotos").hidden = !t.fotos.length;
+        caja.textContent = "";
+        t.fotos.slice().reverse().forEach((f) => {
+            const hora = HoraCR.hora(new Date(f.h));
+            const a = document.createElement("a");
+            a.href = f.img;
+            a.download = "tablero-" + (t.mesa ? "mesa-" + lugarTexto(t) + "-" : "") + f.jugada + ".jpg";
+            a.className = "block w-24 text-center text-xs text-brand-600 dark:text-brand-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 rounded";
+            const im = document.createElement("img");
+            im.src = f.img; im.width = 96; im.height = 96; im.className = "w-24 h-24 rounded";
+            im.alt = "El tablero, " + MOTIVO_FOTO[f.motivo].toLowerCase() + ", a las " + hora;
+            const pie = document.createElement("span");
+            pie.className = "block mt-1";
+            pie.textContent = MOTIVO_FOTO[f.motivo] + " · " + hora;
+            a.append(im, pie);
+            caja.append(a);
+        });
     }
 
     function pintarPartida() {
@@ -593,6 +664,7 @@
         $("btn-copiar").disabled = !hist.length;
         pintarResultado();
         pintarCoronacion();
+        pintarFotos();
     }
     function pintarResultado() {
         const t = T(), r = resultadoDe(t);
