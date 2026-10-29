@@ -43,6 +43,8 @@
      * @param {boolean} opts.spectator - true = ve el tablero completo, sin niebla
      * @param {(info:{fen, san, gameOver, result})=>void} opts.onMove
      * @param {(from,to,cb)=>void} opts.onPromotionNeeded
+     * @param {boolean} opts.premoves - deja preparar la jugada en el turno del rival
+     * @param {(premove:{from,to,promotion}|null)=>void} opts.onPremove - cambió la pre-jugada
      */
     constructor(boardEl, opts) {
       opts = opts || {};
@@ -55,6 +57,13 @@
       this.onMove = opts.onMove || function () {};
       this.onPromotionNeeded = opts.onPromotionNeeded || null;
       this.game = new Chess();
+      // Pre-jugadas: js/premovidas.js, la misma para todos los tableros.
+      this.pre = opts.premoves && window.Premovidas ? Premovidas.crear(this, {
+        pieza: (sq) => { const p = this.game.get(sq); return p ? { tipos: [p.type], color: p.color } : null; },
+        turnoPropio: () => this.game.turn() === this.myColor,
+        jugar: (pm) => this._jugarPre(pm),
+        alCambiar: opts.onPremove,
+      }) : null;
       this.selected = null; // casilla de origen elegida
       this.lastMove = null; // {from,to} de la última jugada — para el resalte y el deslizamiento
       this._loadedOnce = false;
@@ -65,11 +74,11 @@
       if (typeof enableBoardDrag !== "undefined") {
         enableBoardDrag(this.boardEl, {
           isDraggable: (square) => {
-            if (!this._canActNow()) return false;
+            if (!this._canActNow()) return !!(this.pre && this.pre.arrastrable(square));
             const piece = this.game.get(square);
             return !!(piece && piece.color === this.myColor);
           },
-          isSelected: (square) => this.selected === square,
+          isSelected: (square) => this.selected === square || !!(this.pre && this.pre.elegida(square)),
           onSquareClick: (square) => this._onSquareClick(square),
         });
       }
@@ -104,11 +113,25 @@
 
     setInteractive(v) {
       this.interactive = !!v;
+      if (!this.interactive && this.pre) this.pre.quitar();
       this.render();
     }
 
     _canActNow() {
       return this.interactive && this.game.turn() === this.myColor;
+    }
+
+    // La pre-jugada que está lista (o null), y jugarla: ver js/premovidas.js.
+    get premove() { return this.pre ? this.pre.pm : null; }
+    jugarPremovida() { return this.pre ? this.pre.jugar() : null; }
+    _jugarPre(pm) {
+      const move = this.game.move({ from: pm.from, to: pm.to, promotion: pm.promotion || "q" });
+      if (!move) return null;
+      this.selected = null;
+      this.lastMove = { from: move.from, to: move.to };
+      this.render();
+      this._afterMove(move);
+      return { ok: true, san: move.san };
     }
 
     _visibleSquares() {
@@ -166,7 +189,7 @@
     }
 
     _onSquareClick(square) {
-      if (!this._canActNow()) return;
+      if (!this._canActNow()) { if (this.pre) this.pre.clic(square); return; }
       if (this.selected === square) { this._clearSelection(); return; }
       if (this.selected) {
         const targets = this._legalTargetsFromSquare(this.selected);
@@ -256,6 +279,7 @@
           btn.appendChild(dot);
         }
 
+        if (this.pre) this.pre.pintar(btn, square);
         btn.addEventListener("click", () => this._onSquareClick(square));
         this.boardEl.appendChild(btn);
       });

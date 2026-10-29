@@ -151,7 +151,9 @@
            la posición guardada (`fen`) y con la partida en juego: si mientras
            tanto pasó otra cosa (una bandera, una rendición), no la pisa. */
         async function revisarMision() {
-            if (!room || room.variant !== "misiones" || !myColor || !misionMia || reclamando || jugadaEnVuelo) return;
+            // Sobre una jugada provisional (el canal rápido) no se cobra: la
+            // posición todavía no está en la base. Se cobra al llegar la guardada.
+            if (!room || room.variant !== "misiones" || !myColor || !misionMia || reclamando || jugadaEnVuelo || room._provisional) return;
             if (room.status !== "playing" || !bothReady(room) || engine.turn() !== myColor) return;
             if (!MisionesSecretas.cumple(misionMia, engine.game, myColor)) return;
             reclamando = true;
@@ -336,7 +338,7 @@
             } else {
                 const myTurn = engine.turn() === myColor;
                 const jaque = engine.inCheck() ? " ¡Jaque!" : "";
-                setStatus((myTurn ? "Es tu turno." + jaque : "Esperando la jugada de " + nameFor(myColor === "w" ? room.black_id : room.white_id) + "…") + (room.variant === "ciegas" && myTurn ? " Escribe tu jugada en el panel." : ""));
+                setStatus((myTurn ? "Es tu turno." + jaque : "Esperando la jugada de " + nameFor(myColor === "w" ? room.black_id : room.white_id) + "…" + (board.pre ? board.pre.texto() : "")) + (room.variant === "ciegas" && myTurn ? " Escribe tu jugada en el panel." : ""));
             }
         }
 
@@ -433,7 +435,21 @@
         // La posición de la jugada propia que se está guardando (ver handleLocalMove).
         let jugadaEnVuelo = null;
 
+        // El canal de la sala (SalaJuego.suscribir): jugada(), despuesDeGuardar(), refrescar().
+        let vigilante = null;
+
         async function handleLocalMove(info) {
+            // Primero que nada, la jugada a los que miran la sala (el canal rápido):
+            // el rival la ve sin esperar a que la base la guarde. Ver «La jugada
+            // viaja por Broadcast» en docs/decisiones/juegos-y-torneos.md.
+            jugadaEnVuelo = info.fen;
+            const envio = vigilante ? await vigilante.jugada({ san: info.san, despues: info.fen }) : { ok: true };
+            if (!envio.ok) {
+                // La jugada del rival sobre la que se jugó no quedó: se manda lo que diga la base.
+                jugadaEnVuelo = null;
+                await releerSala("Esa jugada no quedó guardada: la del rival no llegó a la base.");
+                return;
+            }
             const newMoves = (room.moves || []).concat([info.san]);
             const patch = { fen: info.fen, moves: newMoves, updated_at: new Date().toISOString() };
             if (room.initial_seconds != null) {
@@ -442,7 +458,7 @@
                 // Se "congela" su reloj: se le resta lo que pasó desde la última vez
                 // que arrancó a correr y se le suma el incremento tipo Fischer.
                 const storedKey = myColor === "w" ? "white_time_left" : "black_time_left";
-                const elapsed = room.clock_updated_at ? RelojServidor.desde(room.clock_updated_at) : 0;
+                const elapsed = SalaJuego.pensado(room, envio.alMover);
                 const remaining = Math.max(0, (room[storedKey] || 0) - elapsed) + (room.increment_seconds || 0);
                 patch[storedKey] = remaining;
                 patch.clock_updated_at = new Date().toISOString();
@@ -490,7 +506,6 @@
             // ya iba más adelante —otra pestaña de la misma cuenta, una jugada
             // repetida—, no la pisa. Se pide la fila de vuelta: el reloj queda con la
             // hora de la base, no con la de esta computadora.
-            jugadaEnVuelo = info.fen;
             let guardar = sb.from("game_rooms").update(patch).eq("id", ROOM_ID).eq("status", "playing");
             if (room.fen) guardar = guardar.eq("fen", room.fen);
             const { data: guardada, error } = await guardar.select("*");
@@ -512,6 +527,34 @@
             pintarExtras();
             renderClocks();
             if (room.status !== "playing") cargarMisiones();
+            if (vigilante) vigilante.despuesDeGuardar();
+        }
+
+        /* La jugada del rival que llegó por el canal rápido (ver suscribir en
+           js/sala-juego.js), rehecha con el motor de la modalidad: se prueban
+           las jugadas legales de la posición que se ve hasta dar con la que
+           lleva a la posición avisada (así sirve también lo que se juega
+           escribiendo, en A ciegas, que no dice las casillas). Si ninguna
+           lleva ahí, no se pinta nada: llegará por la base. */
+        function jugarRapida(sala, aviso) {
+            if (typeof aviso.despues !== "string") return null;
+            const nuevo = () => {
+                const e = Variantes.crear(sala.variant);
+                if (e.configurar) e.configurar(sala.variant_state);
+                e.load(sala.fen);
+                return e;
+            };
+            const base = nuevo();
+            for (const f of "abcdefgh") for (let n = 1; n <= 8; n++) {
+                const p = base.get(f + n);
+                if (!p || p.color !== base.turn()) continue;
+                for (const m of base.movesFrom(f + n)) {
+                    const e = nuevo();
+                    const r = e.move({ from: m.from, to: m.to, promotion: m.promotion });
+                    if (r && e.serialize() === aviso.despues) return { fen: aviso.despues, moves: (sala.moves || []).concat([r.san]) };
+                }
+            }
+            return null;
         }
 
         function applyRemoteRoom(row, forzarTablero) {
@@ -530,6 +573,12 @@
             pintarExtras();
             renderClocks();
             if (row.variant === "misiones") { if (row.status !== "playing" && !misiones) cargarMisiones(); else revisarMision(); }
+            // La pre-jugada sale apenas es el turno propio (js/premovidas.js; si ya
+            // no es legal, se descarta y se dice). En Misiones, si al llegar el
+            // turno la misión propia está cumplida, primero se cobra (también
+            // sobre una jugada provisional: se cobra cuando la base la tenga).
+            const misionCumplida = row.variant === "misiones" && !!misionMia && MisionesSecretas.cumple(misionMia, engine.game, myColor);
+            if (row.status === "playing" && !jugadaEnVuelo && !reclamando && !misionCumplida) board.jugarPremovida();
             // Las seis modalidades de esta página también se juegan en torneos:
             // sin esto, el resultado nunca llegaba al cruce y la ronda no se cerraba.
             TorneoSync.onRoomUpdate(sb, row);
@@ -540,11 +589,20 @@
         // ve en pantalla ya no es lo que hay en la base.
         async function releerSala(mensaje) {
             const fila = await SalaJuego.releer(ROOM_ID);
-            if (fila) applyRemoteRoom(fila, true);
+            // Si mientras se leía ya salió otra jugada propia, lo leído es viejo:
+            // recargar el tablero la borraría de la pantalla mientras se guarda, y
+            // la jugada siguiente saldría de una posición que la sala no tiene.
+            // Esa jugada, al terminar de guardarse (o al fallar), deja todo al día.
+            if (fila && !jugadaEnVuelo) applyRemoteRoom(fila, true);
             if (mensaje) setStatus(mensaje);
         }
 
-        function subscribeRoom() { SalaJuego.suscribir(ROOM_ID, (fila) => applyRemoteRoom(fila), { sala: () => room, miColor: () => myColor }); }
+        function subscribeRoom() {
+            vigilante = SalaJuego.suscribir(ROOM_ID, (fila) => applyRemoteRoom(fila), {
+                sala: () => room, miColor: () => myColor,
+                rapida: { jugar: jugarRapida, enVuelo: () => !!jugadaEnVuelo },
+            });
+        }
 
         SalaJuego.montarRendirse({ salaId: ROOM_ID, sala: () => room, miColor: () => myColor, decir: setStatus, releer: releerSala });
 
@@ -602,6 +660,10 @@
                 ariaLabel: "Tablero de " + mod.titulo.replace(/^\S+\s/, ""),
                 onMove: handleLocalMove,
                 onPromotionNeeded: showPromotionPicker,
+                // Pre-jugadas: en el turno del rival se deja preparada la propia
+                // (no en A ciegas, que se juega escribiendo).
+                premoves: !!myColor && room.variant !== "ciegas",
+                onPremove: () => updateStatusText(),
             });
             board.load(room.fen);
             if (room.variant === "ciegas") { board.setHidePieces(ciegasOculto()); ciegasActualizarPanel(); }

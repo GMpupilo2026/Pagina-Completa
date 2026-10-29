@@ -43,6 +43,9 @@
      * @param {boolean} opts.interactive - true si este usuario puede mover/soltar ahora
      * @param {"w"|"b"} opts.myColor - con qué color juega quien mira esta pantalla
      * @param {(info: {fen, san, drop, gameOver, result}) => void} opts.onMove
+     * @param {boolean} opts.premoves - deja preparar la jugada en el turno del rival
+     *   (solo de piezas del tablero: soltar una de la reserva se decide en el turno)
+     * @param {(premove)=>void} opts.onPremove - cambió la pre-jugada
      */
     constructor(boardEl, topPocketEl, bottomPocketEl, opts) {
       opts = opts || {};
@@ -56,6 +59,13 @@
       this.onMove = opts.onMove || function () {};
       this.onPromotionNeeded = opts.onPromotionNeeded || null; // (from, to, callback(piece|null))
       this.game = new Crazyhouse.Game();
+      // Pre-jugadas: js/premovidas.js, la misma para todos los tableros.
+      this.pre = opts.premoves && window.Premovidas ? Premovidas.crear(this, {
+        pieza: (sq) => { const p = this.game.get(sq); return p ? { tipos: [p.type], color: p.color } : null; },
+        turnoPropio: () => this.game.turn() === this.myColor,
+        jugar: (pm) => this._jugarPre(pm),
+        alCambiar: opts.onPremove,
+      }) : null;
       this.selected = null; // {kind:"square", square} | {kind:"pocket", piece}
       this.lastMove = null; // {from,to} de la última jugada — para el resalte y el deslizamiento
       this._loadedOnce = false;
@@ -70,11 +80,11 @@
       if (typeof enableBoardDrag !== "undefined") {
         enableBoardDrag(this.boardEl, {
           isDraggable: (square) => {
-            if (!this._canActNow()) return false;
+            if (!this._canActNow()) return !!(this.pre && this.pre.arrastrable(square));
             const piece = this.game.get(square);
             return !!(piece && piece.color === this.myColor);
           },
-          isSelected: (square) => !!(this.selected && this.selected.kind === "square" && this.selected.square === square),
+          isSelected: (square) => !!(this.selected && this.selected.kind === "square" && this.selected.square === square) || !!(this.pre && this.pre.elegida(square)),
           onSquareClick: (square) => this._onSquareClick(square),
         });
       }
@@ -104,7 +114,19 @@
 
     setInteractive(v) {
       this.interactive = !!v;
+      if (!this.interactive && this.pre) this.pre.quitar();
       this.render();
+    }
+
+    // La pre-jugada que está lista (o null), y jugarla: ver js/premovidas.js.
+    get premove() { return this.pre ? this.pre.pm : null; }
+    jugarPremovida() { return this.pre ? this.pre.jugar() : null; }
+    _jugarPre(pm) {
+      const move = this.game.move({ from: pm.from, to: pm.to, promotion: pm.promotion || "q" });
+      if (!move) return null;
+      this.lastMove = { from: pm.from, to: pm.to };
+      this._finishTurn(move.san, false);
+      return { ok: true, san: move.san };
     }
 
     _canActNow() {
@@ -162,7 +184,7 @@
     }
 
     _onSquareClick(square) {
-      if (!this._canActNow()) return;
+      if (!this._canActNow()) { if (this.pre) this.pre.clic(square); return; }
       if (this.selected && this.selected.kind === "square" && this.selected.square === square) {
         this._clearSelection();
         return;
@@ -272,6 +294,7 @@
           btn.appendChild(dot);
         }
 
+        if (this.pre) this.pre.pintar(btn, square);
         btn.addEventListener("click", () => this._onSquareClick(square));
         this.boardEl.appendChild(btn);
       });

@@ -178,32 +178,93 @@
 
      opciones: sala() → la sala que se ve; miColor() → "w", "b" o null (en
      Ajedrez para 4, el asiento); esperando() (opcional) → si se espera algo
-     del otro lado; tabla y canal (opcionales) → para fourplayer_games. */
+     del otro lado; tabla y canal (opcionales) → para fourplayer_games;
+     rapida (opcional) → abre además el canal rápido (abajo):
+       jugar(sala, aviso) → los campos de la sala con la jugada del aviso
+                            hecha con el motor de la página (fen, moves, …),
+                            o null si no se puede comprobar;
+       posicion(sala)     → (opcional) con qué se compara «la posición de la
+                            que sale la jugada»; la fen, salvo en Cartas;
+       enVuelo()          → si la jugada propia se está guardando.
+
+     EL CANAL RÁPIDO (ver «La jugada viaja por Broadcast» en
+     docs/decisiones/juegos-y-torneos.md). Por la base, la jugada tarda lo que
+     tarda guardarla, más lo que tarda Realtime en revisar la RLS de cada
+     cambio para cada quien escucha (en un solo hilo, con todas las partidas de
+     la plataforma). Así que quien mueve la avisa ADEMÁS por un canal de
+     Broadcast privado, `sala-juego:<id>` (la política de realtime.messages
+     deja escuchar a quien puede ver la sala y mandar solo a quien la juega),
+     y del otro lado se pinta de una vez como PROVISIONAL (`_provisional`):
+     la base sigue mandando. Cuando llega la fila guardada, la reemplaza; si en
+     unos segundos no llega, se vuelve a leer la sala, y lo que la base no
+     tiene desaparece. El canal rápido va aparte: si no se puede abrir (una
+     base sin la política), el de siempre sigue igual.
+
+     Lo que el aviso trae no se cree: tiene que ser la jugada siguiente (`n`),
+     salir de la posición que se ve (`antes`) y la página la rehace con su
+     motor (`rapida.jugar`). El reloj lo calcula quien la recibe, con lo
+     guardado y la hora `desde`, acotada entre el último reloj de la base y
+     ahora: el aviso no puede regalar tiempo.
+
+     La página, al mover: `const envio = await vigilante.jugada({ … })`
+     (avisa, y si la sala era provisional espera a que la base tenga la
+     jugada del rival: la propia se guarda sobre ella); si `envio.ok` es
+     falso, la del rival no quedó y se vuelve a leer la sala. El reloj propio
+     se cuenta con `SalaJuego.pensado(sala, envio.alMover)`. Y al terminar de
+     guardar, `vigilante.despuesDeGuardar()`: aplica la del rival que llegó
+     mientras tanto. */
   const vigilantes = {};
   const ESPERA_RIVAL_MS = 5000, ESPERA_PROPIA_MS = 15000, ESPERA_SIN_CANAL_MS = 3000, ESPERA_MIRANDO_MS = 8000;
+  // Lo que se espera a que la base confirme una jugada provisional antes de
+  // volver a leer la sala (y deshacerla si la base no la tiene).
+  const ESPERA_PROVISIONAL_MS = 4000;
 
   function suscribir(salaId, alCambiar, opciones) {
     opciones = opciones || {};
     const sala = opciones.sala || (() => null);
     const tabla = opciones.tabla || "game_rooms";
     let canal = null, vuelta = 0, conectada = false, caidaDesde = Date.now(), ultimoContacto = Date.now(), leyendo = null;
+    let rapido = null, rapidoListo = false, vueltaRapida = 0, plazoProvisional = null;
+    const rapida = opciones.rapida || null;
+    const posicion = (s) => (rapida && rapida.posicion ? rapida.posicion(s) : String((s && s.fen) || ""));
+    let pendiente = null;      // una jugada rápida que llegó con la propia guardándose
+    let esperanBase = [];      // quien espera a que la base confirme la provisional
 
-    function aplicar(fila) {
+    // La sala dejó de ser provisional: sigue quien esperaba para guardar.
+    function soltarEspera() {
+      const actual = sala();
+      if (!esperanBase.length || (actual && actual._provisional)) return;
+      const listos = esperanBase;
+      esperanBase = [];
+      listos.forEach((f) => f());
+    }
+
+    /* Una fila de la BASE. Sobre una sala provisional (una jugada que llegó
+       por el canal rápido y la base todavía no confirma), la fila guardada
+       gana apenas tiene esas jugadas: su reloj es el de verdad. Una más vieja
+       se deja pasar (la jugada se está guardando), salvo `forzar`: se acabó la
+       espera y lo que diga la base es lo que hay. */
+    function aplicar(fila, forzar) {
       ultimoContacto = Date.now();
       if (!fila) return;
       const actual = sala();
+      if (actual && actual._provisional) {
+        const alcanza = (fila.moves || []).length >= (actual.moves || []).length || fila.status === "finished";
+        if (alcanza || forzar) { clearTimeout(plazoProvisional); alCambiar(fila); soltarEspera(); }
+        return;
+      }
       if (actual && esAnterior(fila, actual)) return;
       if (actual && JSON.stringify(actual) === JSON.stringify(fila)) return;
       alCambiar(fila);
     }
 
-    function refrescar() {
-      if (leyendo) return leyendo;
+    function refrescar(forzar) {
+      if (leyendo && !forzar) return leyendo;
       leyendo = (async () => {
         try {
           const { data, error } = await sb.from(tabla).select("*").eq("id", salaId).maybeSingle();
           if (error) console.error(error);
-          else aplicar(data);
+          else aplicar(data, forzar);
         } catch (e) { console.error(e); }
         ultimoContacto = Date.now();
         leyendo = null;
@@ -256,6 +317,110 @@
         });
     }
 
+    function abrirRapido() {
+      const propio = ++vueltaRapida;
+      rapidoListo = false;
+      rapido = sb.channel("sala-juego:" + salaId, { config: { private: true, broadcast: { self: false } } })
+        .on("broadcast", { event: "jugada" }, (mensaje) => {
+          try { recibir(mensaje && mensaje.payload); } catch (e) { console.error(e); }
+        })
+        .subscribe((estado) => {
+          if (propio !== vueltaRapida) return;
+          rapidoListo = estado === "SUBSCRIBED";
+          // Cerrado del todo (o sin permiso): se prueba otra vez más tarde. Las
+          // jugadas siguen llegando por la base mientras tanto.
+          if (estado === "CLOSED" || estado === "CHANNEL_ERROR") {
+            setTimeout(() => {
+              if (propio !== vueltaRapida) return;
+              try { sb.removeChannel(rapido); } catch (e) {}
+              abrirRapido();
+            }, estado === "CLOSED" ? 2000 : 15000);
+          }
+        });
+    }
+
+    /* La jugada del rival que llegó por el canal rápido. Se pinta como
+       provisional; si la base no la confirma a tiempo, se vuelve a leer la
+       sala y gana lo que diga la base. */
+    function recibir(aviso) {
+      const actual = sala();
+      if (!actual || !aviso || actual.status !== "playing") return;
+      if (rapida.enVuelo && rapida.enVuelo()) { pendiente = aviso; return; }
+      const jugadas = actual.moves || [];
+      if (aviso.n !== jugadas.length + 1 || aviso.antes !== posicion(actual)) return;
+      const campos = rapida.jugar(actual, aviso);
+      if (!campos) return;
+      const fila = Object.assign({}, actual, campos, { _provisional: true });
+      if (actual.initial_seconds != null && actual.clock_updated_at) {
+        const clave = turnoDe(actual) === "w" ? "white_time_left" : "black_time_left";
+        const base = Date.parse(actual.clock_updated_at);
+        const desde = Math.min(Math.max(Number(aviso.desde) || 0, base), RelojServidor.ahora());
+        fila[clave] = Math.max(0, (actual[clave] || 0) - (desde - base) / 1000) + (actual.increment_seconds || 0);
+        fila.clock_updated_at = new Date(desde).toISOString();
+      }
+      clearTimeout(plazoProvisional);
+      plazoProvisional = setTimeout(() => {
+        const ahora = sala();
+        if (ahora && ahora._provisional) refrescar(true);
+      }, ESPERA_PROVISIONAL_MS);
+      alCambiar(fila);
+    }
+
+    /* La jugada propia, a los que miran la sala, sin esperar a nada (si el
+       canal no está, no se manda: la base la lleva igual). Si se jugó sobre
+       una jugada PROVISIONAL del rival (la pre-jugada sale al instante), antes
+       de guardarla la del rival tiene que estar en la base: la propia se
+       guarda «sobre la posición de la que salió». Se espera a la fila
+       guardada; si no llega a tiempo, se vuelve a leer la sala. `ok` dice si
+       la posición de la que salió la jugada sigue siendo la de la sala. */
+    async function jugada(datos) {
+      const actual = sala();
+      const antes = posicion(actual);
+      const alMover = RelojServidor.ahora();
+      if (rapido && rapidoListo) {
+        try {
+          const envio = rapido.send({ type: "broadcast", event: "jugada", payload: Object.assign({ n: ((actual && actual.moves) || []).length + 1, antes: antes, desde: alMover }, datos) });
+          if (envio && envio.catch) envio.catch(() => {});
+        } catch (e) { /* la base la lleva igual */ }
+      }
+      const ok = await esperarBase(antes);
+      // Y que la jugada salga de verdad de la sala: rehecha sobre ella con el
+      // mismo motor que la del rival, tiene que dar la posición del tablero.
+      // Si el tablero y la sala se separaron (una escritura rechazada y vuelta
+      // a leer mientras se movía, por ejemplo), guardar la lista de jugadas de
+      // una con la posición de la otra dejaba en la base una partida que no se
+      // puede rejugar. Entonces no se guarda: se vuelve a leer la sala.
+      const coincide = !rapida || !datos || !!rapida.jugar(sala(), datos);
+      return { alMover: alMover, ok: ok && coincide };
+    }
+
+    /* Antes de guardar cualquier cosa sobre una sala provisional (también una
+       carta, en Cartas): que la base tenga la jugada del rival. Devuelve si la
+       posición sigue siendo `antes` (la que se tenía a la vista). */
+    async function esperarBase(antes) {
+      const actual = sala();
+      if (antes === undefined) antes = posicion(actual);
+      if (actual && actual._provisional) {
+        await new Promise((listo) => {
+          esperanBase.push(listo);
+          setTimeout(async () => {
+            if (esperanBase.indexOf(listo) === -1) return;
+            await refrescar(true);
+            esperanBase = esperanBase.filter((f) => f !== listo);
+            listo();
+          }, ESPERA_PROVISIONAL_MS);
+        });
+      }
+      return posicion(sala()) === antes;
+    }
+
+    function despuesDeGuardar() {
+      if (!pendiente) return;
+      const aviso = pendiente;
+      pendiente = null;
+      recibir(aviso);
+    }
+
     setInterval(() => {
       pintarConexion();
       if (document.visibilityState === "hidden") return;
@@ -274,9 +439,22 @@
     window.addEventListener("online", () => refrescar());
     window.addEventListener("pageshow", (e) => { if (e.persisted) refrescar(); });
 
-    vigilantes[salaId] = { refrescar };
+    vigilantes[salaId] = { refrescar, jugada, esperarBase, despuesDeGuardar };
     abrir();
+    if (rapida) abrirRapido();
     return vigilantes[salaId];
+  }
+
+  /* Lo que pensó quien acaba de mover, para su reloj: hasta el momento de
+     mover (`alMover`, de vigilante.jugada), no hasta que la jugada del rival
+     quedó en la base. Pero el trigger del reloj tolera solo 2 s entre lo que
+     se cuenta y su propia hora, y de eso vive también la red: si se esperó
+     más de medio segundo, se cuenta hasta ahora, como siempre. */
+  function pensado(room, alMover) {
+    if (!room || !room.clock_updated_at) return 0;
+    const ahora = RelojServidor.ahora();
+    const hasta = alMover && ahora - alMover <= 500 ? alMover : ahora;
+    return Math.max(0, (hasta - Date.parse(room.clock_updated_at)) / 1000);
   }
 
   /* «Estoy listo». Si el rival ya estaba listo, esta confirmación es la que
@@ -321,6 +499,16 @@
     });
   }
 
+  /* La jugada del rival que llegó por el canal rápido, rehecha con chess.js
+     (Estándar y Niebla): tiene que ser legal y dar la posición que dice el
+     aviso. Es `rapida.jugar` de suscribir. */
+  function rehacerConChess(sala, aviso) {
+    const prueba = new Chess(sala.fen);
+    const m = typeof aviso.san === "string" ? prueba.move(aviso.san) : null;
+    if (!m || prueba.fen() !== aviso.despues) return null;
+    return { fen: prueba.fen(), moves: (sala.moves || []).concat([m.san]) };
+  }
+
   const SALIDA = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
   function esTripleRepeticion(jugadas, fen) {
     return !!window.Repeticion && Repeticion.esTriple(SALIDA, jugadas, (f) => new Chess(f), fen);
@@ -350,5 +538,5 @@
     try { TorneoSync.onRoomUpdate(sb, fila); } catch (e) { console.error(e); }
   }
 
-  window.SalaJuego = { formatear, turnoDe, esAnterior, laMasNueva, restante, pintarRelojes, revisarBandera, releer, suscribir, marcarListo, montarRendirse, esTripleRepeticion, avisarTorneo, textoTablas };
+  window.SalaJuego = { formatear, turnoDe, esAnterior, laMasNueva, restante, pintarRelojes, revisarBandera, releer, suscribir, pensado, rehacerConChess, marcarListo, montarRendirse, esTripleRepeticion, avisarTorneo, textoTablas };
 })();
