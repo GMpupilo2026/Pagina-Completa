@@ -56,6 +56,7 @@
             inicio: Date.now(), horas: [], horaResultado: null,
             confirmadas: new Set(), // las coronaciones ya elegidas (por su índice en la historia)
             fotos: [], // las del tablero con cada resultado y cada aviso (ver tomarFoto)
+            mano: 0,   // cuántas jugadas se escribieron a mano (va al informe de las cámaras de Pareo)
         };
     }
     let tableros = [nuevoTablero(0)];
@@ -106,6 +107,7 @@
         $("btn-ajustar").disabled = !t.h;
         $("btn-calibrar").disabled = !t.h;
         $("btn-seguir").disabled = !t.h;
+        $("btn-armado").disabled = !t.h;
         $("btn-ahorro").disabled = !fuente;
     }
 
@@ -404,6 +406,16 @@
      * partida, la de la partida para seguirla después de mover la cámara.
      * Devuelve cuántas casillas lee bien, o null si no alcanza. */
     function calibrarCon(t, sabida) {
+        const mejor = buscarGiro(t, sabida);
+        if (mejor === null) return null;
+        if (!mejor || mejor.bien < 48 || !mejor.claras) return mejor ? -mejor.bien - 1 : null;
+        t.esquinas = mejor.q; t.h = mejor.hk; t.cal = mejor.c; t.a1 = mejor.q[0].slice();
+        t.recientes = []; t.quieta = null;
+        return mejor.bien;
+    }
+    // Cuál de los cuatro giros de las esquinas explica mejor la posición
+    // sabida, con su calibración y su lectura. null si no hay esquinas.
+    function buscarGiro(t, sabida) {
         if (t.esquinas.length !== 4) return null;
         cctx.drawImage(fuente, 0, 0, limpio.width, limpio.height);
         const pix = cctx.getImageData(0, 0, limpio.width, limpio.height).data;
@@ -414,17 +426,49 @@
             const q = D.girar(base, k), hk = homografia(ESQUINAS_TABLERO, q);
             if (!hk) continue;
             const todas = muestras(pix, limpio.width, limpio.height, hk);
-            const c = calibrar(todas, sabida);
-            const bien = 64 - diferentes(leer(todas, c), sabida).length;
+            const c = calibrar(todas, sabida), lectura = leer(todas, c);
+            const bien = 64 - diferentes(lectura, sabida).length;
             const claras = !hayDos || (c.blanca[true] + c.blanca[false]) - (c.negra[true] + c.negra[false]) > 0;
             const cerca = t.a1 ? Math.hypot(q[0][0] - t.a1[0], q[0][1] - t.a1[1]) / 1e4 : 0;
             const valor = bien + (claras ? 0.5 : 0) - cerca;
-            if (!mejor || valor > mejor.valor) mejor = { valor, bien, q, hk, c, claras };
+            if (!mejor || valor > mejor.valor) mejor = { valor, bien, q, hk, c, claras, lectura };
         }
-        if (!mejor || mejor.bien < 48 || !mejor.claras) return mejor ? -mejor.bien - 1 : null;
-        t.esquinas = mejor.q; t.h = mejor.hk; t.cal = mejor.c; t.a1 = mejor.q[0].slice();
-        t.recientes = []; t.quieta = null;
-        return mejor.bien;
+        return mejor || false;
+    }
+
+    /* «¿Está bien armada?»: lo que ve la cámara contra la posición que
+     * debería haber (la de la partida, o la inicial si no hay jugadas), casilla
+     * por casilla, con el nombre de la pieza que falta o sobra. Sirve antes de
+     * seguir una partida aplazada o de calibrar: dice qué arreglar. Con la
+     * cámara ya calibrada se usa su calibración; si no, se calibra un momento
+     * con esa misma posición (el giro que mejor la explica), sin quedarse con
+     * nada. */
+    const NOMBRES = { p: "peón", n: "caballo", b: "alfil", r: "torre", q: "dama", k: "rey" };
+    const GENERO = { p: "el", n: "el", b: "el", r: "la", q: "la", k: "el" };
+    function revisarArmado(t, juego) {
+        const sabida = esperada(juego);
+        let lectura = null;
+        if (t.cal && t.h) { const todas = muestrasDe(t); lectura = leer(todas, t.cal); }
+        else { const g = buscarGiro(t, sabida); lectura = g ? g.lectura : null; }
+        if (!lectura) return null;
+        const color = (l) => (l === "B" ? "blanca" : "negra");
+        return diferentes(lectura, sabida).map((cas) => {
+            const k = (Number(cas[1]) - 1) * 8 + "abcdefgh".indexOf(cas[0]);
+            const p = juego.get(cas), hay = lectura[k];
+            if (p && hay === ".") return "falta " + GENERO[p.type] + " " + NOMBRES[p.type] + " " + (p.color === "w" ? "blanc" : "negr") + (GENERO[p.type] === "la" ? "a" : "o") + " en " + cas;
+            if (!p) return "sobra una pieza " + color(hay) + " en " + cas;
+            return "en " + cas + " hay una pieza " + color(hay) + " y debería ser " + (p.color === "w" ? "blanca" : "negra") + " (" + GENERO[p.type] + " " + NOMBRES[p.type] + ")";
+        });
+    }
+    function decirArmado() {
+        const t = T();
+        const lista = revisarArmado(t, t.juego);
+        const caja = $("armado-lista");
+        caja.textContent = "";
+        if (!lista) { avisar(cual(t) + "Primero busca el tablero o marca sus esquinas.", "error"); return; }
+        if (!lista.length) { avisar(cual(t) + "Está bien armada: las 64 casillas calzan con la posición del tablero de la derecha.", "bien"); return; }
+        lista.slice(0, 12).forEach((x) => { const li = document.createElement("li"); li.textContent = x[0].toUpperCase() + x.slice(1) + "."; caja.append(li); });
+        avisar(cual(t) + "No está bien armada: " + (lista.length === 1 ? "hay una casilla" : "hay " + lista.length + " casillas") + " que no calzan. Arréglalas y vuelve a revisar.", "error");
     }
 
     function hacerCalibrar() {
@@ -435,7 +479,7 @@
             return;
         }
         t.juego = new window.Chess();
-        t.resultadoMano = null; t.confirmadas = new Set();
+        t.resultadoMano = null; t.confirmadas = new Set(); t.mano = 0;
         t.inicio = Date.now(); t.horas = []; t.horaResultado = null;
         if (torneo) { t.ronda = ultimaRonda(); pintarTorneo(); } // la partida nueva es de la ronda de ahora
         partidaCambio(t);
@@ -546,8 +590,14 @@
     /* Una lectura quieta que no es la esperada: se busca la jugada. */
     function revisar(t, lectura, seguridad) {
         const antes = esperada(t.juego);
+        // Entrenando: la pieza de una jugada equivocada volvió a su lugar.
+        if (t.guion && t.guion.volver) {
+            if (lectura === antes) { t.guion.volver = false; avisar(cual(t) + "Bien, de vuelta en su lugar. Prueba otra jugada.", "bien"); }
+            return;
+        }
         if (lectura === antes) return;
         const r = decidir(t.juego, lectura, seguridad);
+        if (r && r.jugadas && t.guion) { jugadaEntrenando(t, r.jugadas); return; }
         if (r && r.jugadas) { anotar(t, r.jugadas); return; }
         // La pieza coronada se movió como no puede una dama: era otra.
         const c = !r && coronacionDe(t);
@@ -567,7 +617,7 @@
                 b.type = "button";
                 b.className = "bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400";
                 b.textContent = js.map(es).join(" y ");
-                b.addEventListener("click", () => anotar(t, js));
+                b.addEventListener("click", () => (t.guion ? jugadaEntrenando : anotar)(t, js));
                 caja.append(b);
             });
             $("dudas").hidden = false;
@@ -722,6 +772,166 @@
         avisar("Se borraron las fotos guardadas en este aparato.", "bien");
     }
 
+    /* ── Entrenar en el tablero de verdad ────────────────────────────────
+     * Dos guiones con la misma idea: la cámara lee la jugada de quien
+     * entrena, y la del otro lado (el motor, o la respuesta del ejercicio) la
+     * dice la pantalla —y la voz, con «Activar voz»— y la pone a mano quien
+     * entrena: la cámara espera a ver ESA jugada en el tablero antes de
+     * seguir (`esperando`). Lo que no es lo que se esperaba no se anota.
+     *   - Contra el motor: Stockfish en este aparato, a la profundidad del
+     *     nivel elegido (js/preparacion-motor.js, el de la preparación de
+     *     rivales).
+     *   - Un ejercicio: de los bancos ya comprobados del Entrenamiento
+     *     (entreno/data/mates.json y tactica.json; ninguna posición se
+     *     inventa). Primero se arma (con «¿Está bien armada?»), después se
+     *     juega la solución; una jugada que no es, se vuelve a su lugar. */
+    const NIVELES = { facil: 1, medio: 5, dificil: 12 };
+    const BANCOS = { mate1: ["entreno/data/mates.json", "mate1"], mate2: ["entreno/data/mates.json", "mate2"], tactica: ["entreno/data/tactica.json", null] };
+    const bancos = {};
+    let cargaMotorEntreno = null;
+    const cargarScript = (src) => new Promise((ok, mal) => { const s = document.createElement("script"); s.src = src; s.onload = ok; s.onerror = () => mal(new Error(src)); document.head.append(s); });
+    function motorListo() {
+        if (window.PreparacionMotor) return Promise.resolve();
+        if (!cargaMotorEntreno) cargaMotorEntreno = cargarScript("js/shared-engine.js").then(() => cargarScript("js/preparacion-motor.js"));
+        cargaMotorEntreno.catch(() => { cargaMotorEntreno = null; });
+        return cargaMotorEntreno;
+    }
+    // «Cf3: mueve el caballo de g1 a f3».
+    function comoPonerla(juego, san) {
+        const m = juego.move(san);
+        if (!m) return es(san);
+        juego.undo();
+        const pieza = NOMBRES[m.piece] + " " + (m.color === "w" ? "blanc" : "negr") + (GENERO[m.piece] === "la" ? "a" : "o");
+        return es(m.san) + ": " + (m.flags.includes("k") || m.flags.includes("q") ? "el enroque, rey y torre" : "mueve " + GENERO[m.piece] + " " + pieza + " de " + m.from + " a " + m.to)
+            + (m.captured ? " (captura la pieza de " + m.to + ")" : "") + (m.promotion ? " y corona " + NOMBRES[m.promotion] : "");
+    }
+    function pedirQuePonga(t, san, quien) {
+        t.guion.esperando = san;
+        $("entreno-estado").textContent = quien + " " + comoPonerla(t.juego, san) + ". Pon esa jugada en tu tablero.";
+        avisar(cual(t) + quien + " " + comoPonerla(t.juego, san) + ". Ponla en tu tablero.", "bien");
+    }
+    function finEntreno(t, texto) {
+        t.guion = null;
+        $("entreno-estado").textContent = texto;
+        pintarEntreno();
+        avisar(cual(t) + texto, "bien");
+    }
+    function jugadaEntrenando(t, jugadas) {
+        const g = t.guion;
+        if (g.esperando) {
+            const sin = (s) => String(s).replace(/[+#]$/, "");
+            if (jugadas.length === 1 && sin(jugadas[0]) === sin(g.esperando)) {
+                g.esperando = null;
+                anotar(t, jugadas);
+                if (V.resultadoSolo(t.juego)) { finEntreno(t, g.tipo === "motor" ? "Se terminó: " + V.textoResultado(V.resultadoSolo(t.juego)) : "Fin del ejercicio."); return; }
+                $("entreno-estado").textContent = "Te toca.";
+                avisar(cual(t) + "Listo. Te toca.", "bien");
+            } else avisar(cual(t) + "Esa no es: hay que poner " + comoPonerla(t.juego, g.esperando) + ".", "error");
+            return;
+        }
+        if (jugadas.length !== 1) { avisar(cual(t) + "Se vieron dos jugadas juntas: deja solo la tuya.", "error"); return; }
+        if (g.tipo === "ejercicio") {
+            const debe = g.solucion[g.paso];
+            const m = t.juego.move(jugadas[0]);
+            const mate = m && t.juego.in_checkmate();
+            if (m) t.juego.undo();
+            // Un mate vale aunque sea otro (en un mate en 1 puede haber dos).
+            if (jugadas[0].replace(/[+#]$/, "") !== String(debe).replace(/[+#]$/, "") && !(mate && g.mate)) {
+                g.volver = true;
+                g.fallos++;
+                avisar(cual(t) + "No es esa (" + es(jugadas[0]) + "). Vuelve la pieza a su lugar y prueba otra.", "error");
+                $("entreno-estado").textContent = "Vuelve la pieza a su lugar.";
+                return;
+            }
+            anotar(t, jugadas);
+            g.paso++;
+            if (mate || g.paso >= g.solucion.length) { finEntreno(t, "¡Resuelto" + (g.fallos ? " (con " + g.fallos + (g.fallos === 1 ? " intento fallido" : " intentos fallidos") + ")" : " a la primera") + "! " + (mate ? "Es mate." : "")); return; }
+            const resp = g.solucion[g.paso];
+            g.paso++;
+            pedirQuePonga(t, resp, "El rival responde");
+            return;
+        }
+        // Contra el motor.
+        anotar(t, jugadas);
+        if (V.resultadoSolo(t.juego)) { finEntreno(t, "Se terminó: " + V.textoResultado(V.resultadoSolo(t.juego))); return; }
+        juegaMotor(t);
+    }
+    async function juegaMotor(t) {
+        const g = t.guion;
+        $("entreno-estado").textContent = "El motor está pensando…";
+        try { await motorListo(); } catch (e) { $("entreno-estado").textContent = "No se pudo cargar Stockfish en este aparato."; return; }
+        const r = await window.PreparacionMotor.evaluar(t.juego.fen(), g.profundidad).catch(() => null);
+        if (t.guion !== g) return; // se dejó de entrenar mientras pensaba
+        if (!r || !r.mejor) { $("entreno-estado").textContent = "Stockfish no contestó. Toca «Dejar» y vuelve a empezar."; return; }
+        pedirQuePonga(t, r.mejor, "El motor juega");
+    }
+    function empezarMotor() {
+        const t = T();
+        if (!t.cal) { avisar(cual(t) + "Primero calibra con la posición inicial: el motor empieza desde ahí.", "error"); return; }
+        t.juego = new window.Chess();
+        t.resultadoMano = null; t.confirmadas = new Set(); t.mano = 0;
+        t.inicio = Date.now(); t.horas = []; t.horaResultado = null;
+        t.quieta = null; t.recientes = [];
+        const color = $("entreno-color").value;
+        t.guion = { tipo: "motor", color, profundidad: NIVELES[$("entreno-nivel").value] || 5, esperando: null };
+        partidaCambio(t);
+        pintarEntreno();
+        if (color === "b") juegaMotor(t);
+        else { $("entreno-estado").textContent = "Te toca: juegas con blancas."; avisar(cual(t) + "Contra el motor: juegas con blancas. Te toca.", "bien"); }
+    }
+    async function otroEjercicio() {
+        const t = T();
+        const [url, cat] = BANCOS[$("entreno-banco").value] || BANCOS.mate1;
+        try {
+            if (!bancos[url]) bancos[url] = await fetch(url).then((r) => r.json());
+        } catch (e) { avisar(cual(t) + "No se pudo traer el banco de ejercicios. Revisa la conexión.", "error"); return; }
+        const lista = bancos[url].filter((x) => !cat || x.category === cat);
+        const x = lista[Math.floor(Math.random() * lista.length)];
+        const j = new window.Chess(x.fen);
+        t.juego = j;
+        t.resultadoMano = null; t.confirmadas = new Set(); t.mano = 0;
+        t.inicio = Date.now(); t.horas = []; t.horaResultado = null;
+        t.guion = null;
+        t.ejercicio = { solucion: x.solution.slice(), mate: !!x.mate || /^mate/.test(x.category || ""), id: x.id };
+        partidaCambio(t);
+        $("btn-entreno-armado").hidden = false;
+        $("entreno-estado").textContent = "Arma en tu tablero la posición de la derecha (juegan las " + (j.turn() === "w" ? "blancas" : "negras") + ") y toca «Ya está armada».";
+        pintarEntreno();
+    }
+    function empezarEjercicio() {
+        const t = T();
+        if (!t.ejercicio) return;
+        const lista = revisarArmado(t, t.juego);
+        const caja = $("armado-lista");
+        caja.textContent = "";
+        if (!lista) { avisar(cual(t) + "Primero busca el tablero o marca sus esquinas.", "error"); return; }
+        if (lista.length) {
+            lista.slice(0, 12).forEach((x) => { const li = document.createElement("li"); li.textContent = x[0].toUpperCase() + x.slice(1) + "."; caja.append(li); });
+            avisar(cual(t) + "Todavía no está igual: arregla " + (lista.length === 1 ? "esta casilla" : "estas " + lista.length + " casillas") + " y vuelve a tocar «Ya está armada».", "error");
+            return;
+        }
+        if (!t.cal && calibrarCon(t, esperada(t.juego)) < 0) { avisar(cual(t) + "No pude calibrar con esta posición. Revisa la luz y las esquinas.", "error"); return; }
+        t.quieta = null; t.recientes = [];
+        t.guion = Object.assign({ tipo: "ejercicio", paso: 0, fallos: 0, esperando: null, volver: false }, t.ejercicio);
+        t.ejercicio = null;
+        $("btn-entreno-armado").hidden = true;
+        const quien = t.juego.turn() === "w" ? "blancas" : "negras";
+        $("entreno-estado").textContent = "Juegan las " + quien + ": encuentra la mejor jugada" + (t.guion.mate ? " (hay mate)" : "") + " y hazla en tu tablero.";
+        avisar(cual(t) + "Bien armada. Juegan las " + quien + ": haz tu jugada en el tablero.", "bien");
+        pintarEntreno();
+    }
+    function dejarEntreno() {
+        const t = T();
+        t.guion = null; t.ejercicio = null;
+        $("btn-entreno-armado").hidden = true;
+        $("entreno-estado").textContent = "";
+        pintarEntreno();
+    }
+    function pintarEntreno() {
+        const t = T();
+        $("btn-entreno-dejar").hidden = !t.guion && !t.ejercicio;
+    }
+
     function pintarPartida() {
         const juego = T().juego;
         V.pintar($("tablero"), juego);
@@ -801,7 +1011,7 @@
         const id = idPartida(t), nombres = nombresDe(t), donde = dondeDe(t);
         const clave = JSON.stringify([id, nombres, donde, retraso]);
         const hist = v.juego.history(), e = t.enviado;
-        const extra = { tiempos: tiemposDe(t).slice(0, v.n), espera: v.espera, retraso, id };
+        const extra = { tiempos: tiemposDe(t).slice(0, v.n), espera: v.espera, retraso, id, mano: t.mano };
         const sigue = !entera && e && e.clave === clave && e.cuenta < 20 && v.n >= e.n && hist.slice(0, e.n).join(" ") === e.jugadas;
         const payload = sigue ? V.loNuevo(id, v.juego, e.n, donde, v.resultado, extra) : V.estado(v.juego, nombres, donde, v.resultado, extra);
         t.enviado = { clave, n: v.n, resultado: v.resultado, jugadas: hist.join(" "), cuenta: sigue ? e.cuenta + 1 : 0 };
@@ -1354,6 +1564,11 @@
     $("btn-esquinas").addEventListener("click", () => { const t = T(); t.esquinas = []; t.ajustada = false; t.cal = null; rehacerHomografia(t); pedirEsquina(); });
     $("btn-calibrar").addEventListener("click", hacerCalibrar);
     $("btn-seguir").addEventListener("click", seguirPartida);
+    $("btn-armado").addEventListener("click", decirArmado);
+    $("btn-entreno-motor").addEventListener("click", empezarMotor);
+    $("btn-entreno-ejercicio").addEventListener("click", otroEjercicio);
+    $("btn-entreno-armado").addEventListener("click", empezarEjercicio);
+    $("btn-entreno-dejar").addEventListener("click", dejarEntreno);
     $("btn-deshacer").addEventListener("click", () => {
         const t = T();
         if (t.juego.undo()) t.horas.pop();
@@ -1378,7 +1593,8 @@
         const m = window.ComandosTablero && window.ComandosTablero.jugadaEscrita(t.juego, texto);
         if (!m) { avisar(cual(t) + "«" + texto.trim() + "» no es una jugada legal en esta partida. " + V.comoVa(t.juego), "error"); return; }
         $("jugada-mano").value = "";
-        anotar(t, [m.san]);
+        t.mano++;
+        (t.guion ? jugadaEntrenando : anotar)(t, [m.san]);
         if (m.promotion) { t.confirmadas.add(t.juego.history().length - 1); pintarCoronacion(); } // la escribió: ya dijo cuál
         // Lo que la cámara ve ahora ya es esta jugada: no se vuelve a buscar.
         t.quieta = t.lectura;

@@ -10546,6 +10546,51 @@ momentos clave con un Stockfish de mentira), `verificar-pareo-camaras.js`
 «Pasar a las incidencias» y que no se publique) y `verificar-clase-camara.js`.
 Rotos a propósito, saltan.
 
+### Armar, entrenar en el tablero, el PGN de la ronda y el informe de las cámaras
+
+El quinto pedido de mejoras del dueño («si todas»):
+
+- **«¿Está bien armada?»**: lo que ve la cámara contra la posición que
+  debería haber (la de la partida, o la inicial), casilla por casilla y con
+  el nombre de la pieza: «Falta el caballo blanco en b1», «Sobra una pieza
+  blanca en e4», «En h2 hay una pieza negra y debería ser blanca (el peón)».
+  Sin calibrar, usa el giro de las esquinas que mejor explica esa posición
+  (`buscarGiro`, lo mismo que calibrar) sin quedarse con nada. La cámara solo
+  sabe color: «sobra una pieza blanca», nunca qué pieza sobra.
+- **Entrenar en el tablero de verdad** («Entrenar en tu tablero»): la cámara
+  lee la jugada de quien entrena y la del otro lado la dice la pantalla (y la
+  voz, con «Activar voz»), por ejemplo «El motor juega e5: mueve el peón
+  negro de e7 a e5». **La cámara espera a ver esa jugada en el tablero**
+  (`guion.esperando`); otra no se anota. Contra el motor: Stockfish en el
+  aparato (`preparacion-motor.js`), con blancas o negras y profundidad 1, 5 o
+  12. Un ejercicio: de los bancos ya comprobados del Entrenamiento
+  (`entreno/data/mates.json` y `tactica.json`; ninguna posición se inventa):
+  se arma con la misma comprobación, se juega la solución, una jugada
+  equivocada se vuelve a su lugar (la cámara espera a verla de vuelta) y la
+  respuesta del rival la pone quien entrena. Un mate vale aunque sea otro.
+- **Las jugadas en voz** en `tablero-vivo.html` ya funcionaban: «Activar
+  voz» del encabezado (`js/voz-pagina.js`) lee `#anuncio`. Ahora lo comprueba
+  el verificador (rompiendo la región viva, salta).
+- **«Bajar todas las partidas (PGN)»** en la cuadrícula de quien mira: las
+  mesas (o tableros de la simultánea) en un solo PGN, cada una con su torneo,
+  ronda, mesa (`Board`), nombres, la fecha de hoy en Costa Rica, resultado y
+  `[%emt]` si se sabe; lo que ya llegó, con retraso hasta donde se ve.
+- **El informe de las cámaras de la ronda** en Pareo: por mesa, desde y
+  hasta cuándo transmitió, cuántas jugadas anotó sola y cuántas se
+  escribieron a mano en la cámara (la cámara lo manda en `mano`), sus
+  posibles ilegales y avisos de tablas (contados aparte: «Visto» quita el
+  aviso de la lista, no de la cuenta) y el resultado. Sale de lo que llegó a
+  esa pestaña; no se guarda en el torneo.
+- **Reconocer qué pieza es** (y no solo su color) queda para cuando haya
+  fotos: hace falta entrenar un modelo con unas cuantas centenas de fotos
+  etiquetadas de nuestros tableros, que es lo que junta «Enseñarle a la
+  cámara».
+
+Lo prueban `verificar-camara-tablero.js` (el armado, mal y bien, sin
+calibrar y calibrada; el motor de mentira con la jugada que no es; el mate en
+2 del banco con una equivocada que vuelve; la voz; el PGN de la simultánea) y
+`verificar-pareo-camaras.js` (el informe). Rotos a propósito, saltan.
+
 ## Pareo para DGT
 
 Un torneo presencial con tableros electrónicos DGT: el árbitro sube cada ronda

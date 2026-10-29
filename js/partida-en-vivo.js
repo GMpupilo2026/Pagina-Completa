@@ -140,6 +140,8 @@
         if (r) p.resultado = r;
         if (Number.isFinite(x.espera)) p.espera = Math.max(0, Math.round(x.espera));
         if (x.retraso) p.retraso = entero(x.retraso, 120);
+        // Cuántas jugadas se escribieron a mano (para el informe de las cámaras de Pareo).
+        if (Number.isInteger(x.mano) && x.mano > 0) p.mano = Math.min(x.mano, 999);
         if (donde && torneoDe(donde.torneo) && entero(donde.mesa, 999)) {
             p.torneo = torneoDe(donde.torneo); p.mesa = donde.mesa; p.ronda = entero(donde.ronda, 99);
             if (entero(donde.tablero, 12)) p.tablero = donde.tablero;
@@ -235,6 +237,7 @@
         d.tiempos = Array.isArray(p.tiempos) ? p.tiempos.slice(0, n).map((y) => (Number.isFinite(y) && y >= 0 ? y : null)) : [];
         d.espera = Number.isFinite(p.espera) && p.espera >= 0 ? p.espera : null;
         d.retraso = entero(p.retraso, 120);
+        d.mano = entero(p.mano, 999) || 0;
         if (torneoDe(p.torneo) && entero(p.mesa, 999)) { d.torneo = torneoDe(p.torneo); d.mesa = p.mesa; d.ronda = entero(p.ronda, 99); d.tablero = entero(p.tablero, 12); }
         else if (p.simul === 1 && entero(p.mesa, 99)) { d.simul = true; d.mesa = p.mesa; }
         d.id = idValido(p.id);
@@ -264,6 +267,7 @@
         d.tiempos = (antes.tiempos || []).slice(0, p.desde).concat(nuevos);
         d.espera = Number.isFinite(p.espera) && p.espera >= 0 ? p.espera : null;
         d.retraso = entero(p.retraso, 120);
+        d.mano = entero(p.mano, 999) || 0;
         if (antes.torneo) { d.torneo = antes.torneo; d.mesa = antes.mesa; d.tablero = antes.tablero; d.ronda = entero(p.ronda, 99) || antes.ronda; }
         else if (antes.simul) { d.simul = true; d.mesa = antes.mesa; }
         return d;

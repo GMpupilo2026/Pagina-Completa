@@ -84,7 +84,7 @@ function torneo() {
   const manda = (o) => page.evaluate(([c, o]) => {
     const j = new window.Chess();
     o.jugadas.forEach((x) => j.move(x));
-    const p = window.PartidaEnVivo.estado(j, { blancas: "X", negras: "Y" }, { torneo: o.torneo, ronda: o.ronda, mesa: o.mesa }, o.resultado, { tiempos: o.tiempos });
+    const p = window.PartidaEnVivo.estado(j, { blancas: "X", negras: "Y" }, { torneo: o.torneo, ronda: o.ronda, mesa: o.mesa }, o.resultado, { tiempos: o.tiempos, mano: o.mano });
     window.__llega(c, "estado", p);
   }, [CANAL, Object.assign({ torneo: ID, ronda: 1, jugadas: [] }, o)]);
 
@@ -268,6 +268,20 @@ function torneo() {
   lichessContesta = 200;
   await page.click("#pi-lichess-dejar");
   igual("«Dejar de transmitir a Lichess» borra la clave de esta computadora", await page.evaluate(() => [localStorage.getItem("pareo_lichess_clave_v1"), !!document.getElementById("pi-lichess-conectar")]), [null, true]);
+
+  console.log("\n=== El informe de las cámaras de la ronda ===");
+  // La mesa 3: cuatro jugadas, dos escritas a mano en la cámara; sus avisos
+  // (una posible ilegal y una repetición) siguen contados aunque ya se marcaron «Visto».
+  await manda({ mesa: 3, jugadas: ["d4", "d5", "c4", "e6"], mano: 2 });
+  await page.waitForSelector("#pi-camaras-informe");
+  await page.click("#pi-camaras-informe summary");
+  const fila = (k) => page.$$eval('#pi-camaras-informe tr[data-informe="' + k + '"] td', (tds) => tds.map((x) => x.textContent));
+  const f3 = await fila("3"), f2 = await fila("2");
+  igual("una fila por mesa, con lo que anotó sola, lo escrito a mano, los avisos y el resultado",
+    [f3[0], f3[2], f3[3], f3[4], f3[5], f3[6], f2[0], f2[2], f2[3], /\d.*–.*\d/.test(f3[1])], ["3", "2", "2", "1", "1", "—", "2", "6", "0", true]);
+  await manda({ mesa: 3, jugadas: ["d4", "d5", "c4", "e6", "Nc3"], mano: 2 });
+  await page.waitForFunction(() => /^3$/.test(document.querySelector('#pi-camaras-informe tr[data-informe="3"] td:nth-child(3)').textContent), null, { timeout: 5000 }).catch(() => {});
+  igual("con cada jugada que llega se pone al día, y sigue abierto", [(await fila("3"))[2], await page.evaluate(() => document.getElementById("pi-camaras-informe").open)], ["3", true]);
 
   console.log("\n=== Dejar de recibir ===");
   await page.click("#pi-camaras-dejar");
