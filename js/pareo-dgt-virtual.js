@@ -16,6 +16,7 @@
 
     const $ = (id) => document.getElementById(id);
     const RESPIRO_MS = 200;      // entre levantar y apoyar, como una mano
+    const TOPE_REGISTRO = 200;   // renglones de «Lo que llega de LiveChess»
     const tableros = [];
     let siguienteSerie = 90001;
 
@@ -32,11 +33,28 @@
     }
 
     const esperar = (ms) => new Promise((r) => setTimeout(r, ms));
+    const hex = (bytes) => Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join(" ");
+
+    // Cada byte que llega y cada uno que sale, en hexadecimal: para saber qué
+    // espera LiveChess cuando no muestra el tablero (ver «Probar sin tableros
+    // físicos»).
+    function anotar(v, quien, bytes) {
+        const hora = new Date().toLocaleTimeString("es-CR", { timeZone: "America/Costa_Rica", hour12: false });
+        v.registro.push(hora + "  " + quien + "  " + hex(bytes));
+        if (v.registro.length > TOPE_REGISTRO) v.registro.splice(0, v.registro.length - TOPE_REGISTRO);
+        v.pre.textContent = v.registro.join("\n");
+        v.resumen.textContent = "Lo que llega de LiveChess (" + v.recibidos + " bytes recibidos)";
+    }
+
+    async function mandar(v, bytes) {
+        await v.writer.write(Uint8Array.from(bytes));
+        anotar(v, "Tablero →", bytes);
+    }
 
     async function escribir(v, mensajes) {
         for (let i = 0; i < mensajes.length; i++) {
             if (!v.writer) return;
-            await v.writer.write(Uint8Array.from(mensajes[i]));
+            await mandar(v, mensajes[i]);
             if (i < mensajes.length - 1) await esperar(RESPIRO_MS);
         }
     }
@@ -99,8 +117,10 @@
                     for (;;) {
                         const { value, done } = await v.reader.read();
                         if (done) return;
+                        v.recibidos += value.length;
+                        anotar(v, "LiveChess →", value);
                         const respuestas = v.dgt.recibir(value);
-                        for (const r of respuestas) await v.writer.write(Uint8Array.from(r));
+                        for (const r of respuestas) await mandar(v, r);
                         pintarEstado(v);
                     }
                 } finally {
@@ -161,7 +181,27 @@
         v.estado = document.createElement("p");
         v.estado.setAttribute("role", "status");
         v.estado.className = "mt-2 text-sm text-brand-700 dark:text-brand-200";
-        li.append(titulo, fila, acciones, v.estado);
+
+        const detalle = document.createElement("details");
+        detalle.className = "mt-2 text-sm";
+        v.resumen = document.createElement("summary");
+        v.resumen.className = "cursor-pointer text-brand-700 dark:text-brand-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 rounded";
+        v.resumen.textContent = "Lo que llega de LiveChess (0 bytes recibidos)";
+        const ayuda = document.createElement("p");
+        ayuda.className = "mt-1 text-brand-700 dark:text-brand-200";
+        ayuda.textContent = "Cada byte que manda LiveChess y cada uno que contesta el tablero, en hexadecimal. Si LiveChess no muestra el tablero, copia esto y pásalo.";
+        v.pre = document.createElement("pre");
+        v.pre.className = "mt-1 max-h-48 overflow-auto whitespace-pre-wrap break-all bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg p-2 text-xs text-brand-900 dark:text-brand-100";
+        v.pre.textContent = "Todavía no llegó nada.";
+        const btnCopiar = boton("Copiar", " mt-1");
+        btnCopiar.addEventListener("click", async () => {
+            const texto = "Tablero virtual " + v.dgt.serie + " · " + v.recibidos + " bytes recibidos\n" + v.registro.join("\n");
+            try { await navigator.clipboard.writeText(texto); btnCopiar.textContent = "Copiado"; }
+            catch (_) { btnCopiar.textContent = "No se pudo copiar: selecciónalo a mano"; }
+            setTimeout(() => { btnCopiar.textContent = "Copiar"; }, 2500);
+        });
+        detalle.append(v.resumen, ayuda, v.pre, btnCopiar);
+        li.append(titulo, fila, acciones, v.estado, detalle);
         return li;
     }
 
@@ -185,6 +225,9 @@
             $("virtual-error").textContent = "No se pudo abrir ese puerto (" + e.message + "). ¿Lo tiene abierto otro programa? LiveChess va en la otra punta del par.";
             return;
         }
+        // Un tablero de verdad tiene las líneas de control encendidas; con
+        // com0com, LiveChess las ve en la otra punta (DSR y CTS).
+        try { if (puerto.setSignals) await puerto.setSignals({ dataTerminalReady: true, requestToSend: true }); } catch (_) { /* no todos los puertos */ }
         const v = {
             puerto,
             writer: puerto.writable.getWriter(),
@@ -192,6 +235,8 @@
             chess: new Chess(),
             partida: MODELOS[tableros.length % MODELOS.length],
             timer: null,
+            registro: [],
+            recibidos: 0,
         };
         v.li = tarjeta(v);
         tableros.push(v);

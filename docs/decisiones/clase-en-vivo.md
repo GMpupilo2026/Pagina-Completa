@@ -4957,3 +4957,36 @@ Integral en la camisa (salvo de espalda, de lado o con la mochila).
   se lea: si alguno se usa donde importe la posición, se le pone una real.
 - **Las frases van de tú**, como el sitio: «¡Esfuérzate más!» y «¿Vas a jugar
   esa?» (el profe las cambia al mandarlas si quiere decirlas de otra forma).
+
+## La cámara en la clase en vivo
+
+Pedido del dueño el 29/10/2026 (de las mejoras de la cámara que lee el
+tablero): que el profe juegue o muestre en su tablero de verdad y la clase lo
+vea en el suyo.
+
+- **«🎥 Cámara»**, en «Tu material» (antes de «Armar posición», que va
+  último), abre un panel (`js/clase-camara.js`): en el celular, la cámara
+  (`camara-tablero.html`, que ahora abre también quien da clase) calibrada
+  encima del tablero y «Transmitir en vivo»; el profe escribe ese código de 8
+  letras y se conecta. El código queda recordado en el navegador.
+- **Cada jugada que la cámara anota entra por `board.jugar()`**, la MISMA
+  puerta que el clic: queda en `game_state` (con `pushBoardState`), la
+  planilla, el PGN y la evaluación igual que si la hubiera hecho a mano. Si
+  entrara por su propio camino, el día que el clic cambiara (otra cosa que
+  hacer después de cada jugada) la de la cámara quedaría atrás sin que nada
+  fallara.
+- **Solo entra lo que alarga la partida de la clase** (`ClaseCamara.faltan`:
+  misma posición de salida y la de la clase es el principio de la de la
+  cámara). Si la cámara tiene otra partida (el profe armó otra posición, o la
+  cámara empezó otra), no se toca nada y se dice qué hacer.
+- **Mientras el profe repasa una jugada vieja o arma una posición, las
+  jugadas esperan**: entrar ahí sería crear una variante (`jugar()` en la
+  historia la vuelve una). Se reintenta cada 1,5 s y entran al volver al vivo.
+- Solo escucha el canal de la cámara: al conectarse le pide su partida
+  («pedir»), y nada más. Una cámara de un torneo (con `torneo`) se ignora.
+- El proyector, el control remoto, «Ver como» y la vista previa no lo montan.
+
+Lo prueba `verificar-clase-camara.js` (en `sesion.html` de verdad con el
+doble: el botón del profe y no de la alumna, el código, las jugadas que
+entran también con lo nuevo, otra partida que no toca nada, la espera
+mientras se repasa y «Desconectar»). Roto a propósito, salta.

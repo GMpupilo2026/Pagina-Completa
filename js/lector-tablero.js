@@ -193,6 +193,15 @@
         return cal;
     }
 
+    /* La luz cambia (el sol que entra, una nube, una lámpara): una
+     * calibración nueva, hecha con la posición que se sabe, se mezcla con la
+     * de antes. `peso` es cuánto pesa la nueva (de 0 a 1). */
+    function mezclarCal(vieja, nueva, peso) {
+        const m = (a, b) => (typeof a === "number" && typeof b === "number" ? a + (b - a) * peso : b);
+        const obj = (a, b) => { const o = {}; for (const k of Object.keys(b)) o[k] = typeof b[k] === "object" && b[k] ? obj(a && a[k], b[k]) : m(a && a[k], b[k]); return o; };
+        return obj(vieja, nueva);
+    }
+
     /* La lectura: 64 letras, «.» vacía, «B» blanca, «N» negra, de a1 a h8, y
      * la seguridad de cada una, de 0 (podría ser lo otro) a 1 (sin duda). */
     function leerDetalle(todas, cal) {
@@ -283,11 +292,51 @@
         return r && r.jugadas ? r.jugadas : null;
     }
 
+    /* La coronación. La cámara solo ve «pieza blanca» en la casilla: se anota
+     * dama, y después se corrige. `ply` es el índice de la jugada que coronó
+     * en la historia. Cambia la pieza y vuelve a jugar lo que siguió; si algo
+     * deja de ser legal, deja la partida como estaba y devuelve false. */
+    function cambiarCoronacion(juego, ply, pieza) {
+        const hist = juego.history({ verbose: true });
+        const m = hist[ply];
+        if (!m || !m.promotion || !"qrbn".includes(pieza)) return false;
+        if (m.promotion === pieza) return true;
+        const despues = hist.slice(ply);
+        despues.forEach(() => juego.undo());
+        const rehacer = (lista) => lista.every((x) => juego.move({ from: x.from, to: x.to, promotion: x.promotion }));
+        const nuevas = despues.map((x, i) => (i === 0 ? Object.assign({}, x, { promotion: pieza }) : x));
+        if (rehacer(nuevas)) return true;
+        while (juego.history().length > ply) juego.undo();
+        rehacer(despues);
+        return false;
+    }
+    /* Si la pieza coronada se mueve como caballo (o como algo que una dama no
+     * puede), ninguna jugada explica la lectura. Se prueba con las otras
+     * piezas: la primera que la explique con una jugada de esa pieza es la
+     * que se coronó. `donde` es la casilla donde está ahora esa pieza.
+     * Devuelve { pieza, jugadas } o null; no cambia `juego`. */
+    function deducirCoronacion(juego, ply, donde, lectura, seguridad) {
+        const m = juego.history({ verbose: true })[ply];
+        if (!m || !m.promotion) return null;
+        for (const pieza of ["n", "r", "b"]) {
+            if (!cambiarCoronacion(juego, ply, pieza)) continue;
+            const r = decidir(juego, lectura, seguridad);
+            const ok = r && r.jugadas && (() => {
+                const hechas = r.jugadas.map((san) => juego.move(san));
+                hechas.forEach((x) => x && juego.undo());
+                return hechas.some((x) => x && x.from === donde);
+            })();
+            cambiarCoronacion(juego, ply, m.promotion);
+            if (ok) return { pieza, jugadas: r.jugadas };
+        }
+        return null;
+    }
+
     function diferentes(a, b) {
         const d = [];
         for (let k = 0; k < 64; k++) if (a[k] !== b[k]) d.push(casilla(k));
         return d;
     }
 
-    global.LectorTablero = { homografia, aplicar, ESQUINAS_TABLERO, INICIAL, muestras, calibrar, leer, leerDetalle, esperada, candidatas, decidir, buscarJugadas, diferentes, casilla };
+    global.LectorTablero = { homografia, aplicar, ESQUINAS_TABLERO, INICIAL, muestras, calibrar, leer, leerDetalle, esperada, candidatas, decidir, buscarJugadas, mezclarCal, cambiarCoronacion, deducirCoronacion, diferentes, casilla };
 })(typeof self !== "undefined" ? self : this);

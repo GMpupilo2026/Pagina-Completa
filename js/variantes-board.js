@@ -14,6 +14,8 @@
  *                     perdida: una sola persona juega las dos partes)
  *   onMove(info)      { san, fen, gameOver, result, from, to }
  *   onPromotionNeeded(from, to, cb)  cb(pieza | null)
+ *   premoves          deja preparar la jugada en el turno del rival (js/premovidas.js)
+ *   onPremove(pm)     cambió la pre-jugada
  */
 (function () {
   "use strict";
@@ -46,18 +48,38 @@
       this.onPromotionNeeded = opts.onPromotionNeeded || null;
       this.selected = null;
       this.lastMove = null;
+      // Pre-jugadas: js/premovidas.js, la misma para todos los tableros. Las
+      // piezas fundidas de Abrazos suman los destinos de cada una.
+      this.pre = opts.premoves && !this.ambosColores && window.Premovidas ? Premovidas.crear(this, {
+        pieza: (sq) => { const p = this.engine.get(sq); return p ? { tipos: p.types || [], color: p.color } : null; },
+        turnoPropio: () => this.engine.turn() === this.myColor,
+        jugar: (pm) => this._jugarPre(pm),
+        alCambiar: opts.onPremove,
+      }) : null;
       this.boardEl.style.position = "relative";
       this.boardEl.setAttribute("role", "group");
       this.boardEl.setAttribute("aria-label", opts.ariaLabel || "Tablero");
     }
     load(texto) { this.engine.load(texto); this.selected = null; this.render(); }
-    setInteractive(v) { this.interactive = !!v; this.render(); }
+    setInteractive(v) { this.interactive = !!v; if (!this.interactive && this.pre) this.pre.quitar(); this.render(); }
+    // La pre-jugada que está lista (o null), y jugarla: ver js/premovidas.js.
+    get premove() { return this.pre ? this.pre.pm : null; }
+    jugarPremovida() { return this.pre ? this.pre.jugar() : null; }
+    _jugarPre(pm) {
+      const r = this.engine.move({ from: pm.from, to: pm.to, promotion: pm.promotion });
+      if (!r) return null;
+      this.selected = null;
+      this.lastMove = { from: pm.from, to: pm.to };
+      this.render();
+      this.onMove(Object.assign({ from: pm.from, to: pm.to, fen: this.engine.serialize() }, r));
+      return { ok: true, san: r.san };
+    }
     setHidePieces(v) { this.hidePieces = !!v; this.render(); }
     setLastMove(m) { this.lastMove = m || null; this.render(); }
     _canActNow() { return this.interactive && (this.ambosColores || this.engine.turn() === this.myColor); }
 
     _onSquareClick(square) {
-      if (!this._canActNow()) return;
+      if (!this._canActNow()) { if (this.pre) this.pre.clic(square); return; }
       if (this.selected === square) { this.selected = null; this.render(); return; }
       if (this.selected) {
         const targets = this.engine.movesFrom(this.selected);
@@ -162,6 +184,7 @@
           dot.className = p ? "absolute inset-0 rounded-full ring-4 ring-accent-500/70 ring-inset pointer-events-none" : "absolute w-1/4 h-1/4 rounded-full bg-accent-500/70 pointer-events-none";
           btn.appendChild(dot);
         }
+        if (this.pre) this.pre.pintar(btn, square);
         btn.addEventListener("click", () => this._onSquareClick(square));
         this.boardEl.appendChild(btn);
       });

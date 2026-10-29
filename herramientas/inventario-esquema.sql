@@ -12,7 +12,8 @@
 -- un retrato viejo es peor que ninguno, porque se le cree.
 --
 -- `public` va sin prefijo; `interno` (donde viven alumnos_de() y compañía)
--- con el suyo.
+-- con el suyo. De `realtime`, solo las políticas: las de realtime.messages
+-- deciden quién entra a un canal privado (el canal rápido de las partidas).
 with obj as (
   select 1 o, 'tabla' t,
          (case when n.nspname = 'public' then '' else n.nspname || '.' end) || c.relname || '  rls=' || c.relrowsecurity l
@@ -40,7 +41,7 @@ with obj as (
   select 5, 'politica',
          (case when schemaname = 'public' then '' else schemaname || '.' end) || tablename || '  ' || policyname || '  ' || cmd
          || case when permissive = 'RESTRICTIVE' then '  restrictiva' else '' end
-    from pg_policies where schemaname in ('public', 'interno')
+    from pg_policies where schemaname in ('public', 'interno', 'realtime')
   union all
   select 6, 'trigger', (case when n.nspname = 'public' then '' else n.nspname || '.' end) || c.relname || '  ' || tg.tgname
     from pg_trigger tg join pg_class c on c.oid = tg.tgrelid join pg_namespace n on n.oid = c.relnamespace

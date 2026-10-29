@@ -357,14 +357,22 @@ window.CartasChess = (function () {
     }
     medias() { return parseInt(this.chess.fen().split(" ")[4], 10) || 0; }
 
+    /* toJSON y fromJSON COPIAN las manos, el mazo y las casillas marcadas.
+       Antes compartían los arreglos con el estado de la sala: el tablero
+       cargaba room.cartas_state y, al jugar, el motor le agregaba la carta
+       repartida y le sacaba la del mazo a la sala que tenía la página, sin
+       guardar nada. No daba ningún error: la cuenta de la triple repetición
+       leía el estado «de antes» ya cambiado, y el canal rápido (ver «La jugada
+       viaja por Broadcast» en docs/decisiones/juegos-y-torneos.md) avisaba que
+       la jugada salía de una posición que nadie más tenía. */
     toJSON() {
       return {
         fen: this.chess.fen(),
-        hands: this.hands,
-        discard: this.discard,
-        deck: this.deck,
-        frozenSquare: this.frozenSquare,
-        shieldedSquare: this.shieldedSquare,
+        hands: { w: this.hands.w.slice(), b: this.hands.b.slice() },
+        discard: this.discard.slice(),
+        deck: this.deck.slice(),
+        frozenSquare: this.frozenSquare ? Object.assign({}, this.frozenSquare) : null,
+        shieldedSquare: this.shieldedSquare ? Object.assign({}, this.shieldedSquare) : null,
         kingLeapAvailable: this.kingLeapAvailable,
         doubleTurnPending: this.doubleTurnPending,
         visionUntil: this.visionUntil,
@@ -375,11 +383,12 @@ window.CartasChess = (function () {
     static fromJSON(data) {
       const g = new Game();
       g.chess.load(data.fen);
-      g.hands = data.hands || { w: [], b: [] };
-      g.discard = data.discard || [];
-      g.deck = data.deck || [];
-      g.frozenSquare = data.frozenSquare || null;
-      g.shieldedSquare = data.shieldedSquare || null;
+      const manos = data.hands || {};
+      g.hands = { w: (manos.w || []).slice(), b: (manos.b || []).slice() };
+      g.discard = (data.discard || []).slice();
+      g.deck = (data.deck || []).slice();
+      g.frozenSquare = data.frozenSquare ? Object.assign({}, data.frozenSquare) : null;
+      g.shieldedSquare = data.shieldedSquare ? Object.assign({}, data.shieldedSquare) : null;
       g.kingLeapAvailable = !!data.kingLeapAvailable;
       g.doubleTurnPending = !!data.doubleTurnPending;
       g.visionUntil = data.visionUntil || null;

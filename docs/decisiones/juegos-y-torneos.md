@@ -1348,6 +1348,234 @@ en verse del otro lado:
 Con la sala de antes, la red mala deja partidas trabadas para siempre (una
 jugada tardó 5 minutos en verse; otras no llegaron nunca).
 
+## La jugada viaja por Broadcast, y las pre-jugadas
+
+Lo que hace fluida una partida en lichess es que la jugada no pasa por la base:
+viaja de un jugador al otro por una conexión abierta, y la base guarda después.
+Aquí cada jugada era un `UPDATE` de `game_rooms` y llegaba al rival por
+`postgres_changes`, que revisa la RLS de cada cambio para cada quien escucha,
+en un solo hilo, con todas las partidas de la plataforma (ver «Lo que falta, y
+es lo más grande» en `sitio-e-infraestructura.md`). Con la base tranquila son
+unos 100 ms; cargada, segundos. Y no había pre-jugadas: en una partida rápida,
+el tiempo de pensar la respuesta obvia más el de la red salía del reloj.
+
+Va en **todas las modalidades de a dos con turno**: Estándar y Niebla
+(`NieblaBoard`), Crazyhouse, Cartas y las seis de `variante.html` (Abrazos,
+Camaleón, A ciegas —solo el canal rápido: se juega escribiendo—, Vampiro,
+Volcanes y Misiones). Una sola copia de cada cosa: el canal rápido vive en
+`js/sala-juego.js` y las pre-jugadas en `js/premovidas.js`; cada página solo
+dice cómo rehacer con su motor la jugada que llega.
+
+- **Duelo no lo lleva, a propósito**: ahí los dos juegan a la vez (no hay turno
+  para una pre-jugada) y la jugada va escondida hasta que confirman los dos;
+  avisarla por el canal sería revelarla.
+- **Ajedrez para 4 todavía no**: usa otra tabla (`fourplayer_games`), otro
+  tablero y otra política para el canal. Queda para un paso aparte.
+
+### El canal rápido: la jugada se ve antes de que la base la guarde
+
+- **Quien mueve avisa la jugada por Broadcast antes de guardarla**
+  (`vigilante.jugada(datos)`): cuántas jugadas lleva con esta (`n`), la
+  posición de la que sale (`antes`), la hora del servidor en que movió
+  (`desde`) y lo que cada página necesite para rehacerla (la jugada escrita y
+  la posición de después; en Cartas, el estado entero). Va por el canal
+  **privado** `sala-juego:<id de la sala>`, aparte del de `postgres_changes`:
+  si no se puede abrir, el de siempre sigue igual.
+- **Del otro lado no se cree nada que no se pueda comprobar**: tiene que ser la
+  jugada siguiente, salir de la posición que se ve y la página la rehace con su
+  motor (`rapida.jugar(sala, aviso)`): chess.js en Estándar y Niebla
+  (`SalaJuego.rehacerConChess`), el de Crazyhouse (también la caída de una
+  pieza, «N@f3»), y en Variante y Cartas se prueban las jugadas legales hasta
+  dar con la que lleva exactamente a lo avisado (así sirve también lo que se
+  juega escribiendo, que no trae casillas). El reloj lo calcula quien la
+  recibe, con lo guardado y la hora `desde` acotada entre el último reloj de la
+  base y ahora: el aviso no puede regalar tiempo.
+- **Lo que llega por el canal no revela nada nuevo.** La fila de `game_rooms`
+  (posición, jugadas, `cartas_state` con las dos manos) ya la recibe por
+  `postgres_changes` la misma gente que escucha el canal; la niebla y la mano
+  rival se tapan en la pantalla, y la misión de Misiones nunca va en la sala.
+- **Se pinta como provisional** (`_provisional` en la sala) y **la base sigue
+  mandando**. La fila guardada, cuando llega, la reemplaza aunque su hora sea
+  un poco anterior (su reloj es el de verdad); una fila más vieja de la base se
+  deja pasar mientras tanto (la jugada se está guardando). Si en **4 s** la
+  base no la confirma, se vuelve a leer la sala y gana lo que diga la base: una
+  jugada que no quedó, o un aviso inventado, desaparece sola. Sobre una
+  provisional, Misiones no cobra (la posición todavía no está en la base).
+- **Una jugada propia sobre una provisional espera a que la base tenga la del
+  rival** antes de guardarse: se guarda «sobre la posición de la que salió»
+  (`.eq("fen")`, ver «Las jugadas llegan siempre») y la base todavía no la
+  tendría. Se avisa por el canal de una vez (el rival la ve igual) y se guarda
+  cuando llega la fila. En Cartas, jugar una carta sobre una provisional espera
+  lo mismo (`vigilante.esperarBase()`), y la jugada que sigue a una carta
+  espera a que la carta quede guardada.
+- **Antes de guardar, la jugada propia se rehace sobre la sala** con la misma
+  función que la del rival, y tiene que dar la posición del tablero. Si el
+  tablero y la sala se separaron, no se guarda: se vuelve a leer la sala. Sin
+  esto, la base aceptaba una lista de jugadas de una con la posición de la otra
+  (solo compara la posición de partida) y quedaba una partida que no se puede
+  rejugar: lo encontró el CI, con escrituras rechazadas al azar.
+- **Lo que separaba el tablero de la sala** era `releerSala()`: una jugada que
+  no quedó vuelve a leer la sala, y si mientras esa lectura viaja ya salió otra
+  jugada propia, lo leído llegaba viejo y recargaba el tablero a la fuerza,
+  borrando de la pantalla la jugada que se estaba guardando. Ahora no recarga
+  mientras otra jugada propia se guarda: esa, al terminar, deja todo al día.
+  Pasaba también antes del canal rápido; los avisos que llegan antes lo hacían
+  más probable.
+- **Lo pensado se cuenta hasta el momento de mover** (`SalaJuego.pensado`), no
+  hasta que llegó la fila del rival: esperar a la base no es tiempo de quien
+  juega. Pero el trigger del reloj tolera solo 2 s entre lo que se cuenta y su
+  propia hora, y de esos 2 s vive también la red: si se esperó más de medio
+  segundo, se cuenta hasta ahora, como antes.
+- **Una jugada rápida que llega mientras la propia se guarda** se aplica
+  apenas termina de guardarse (`vigilante.despuesDeGuardar()`).
+
+**Quién entra al canal lo decide la base** (migración
+`20261029032128_sala_juego_canal_rapido`), con políticas en
+`realtime.messages`, las primeras del proyecto (hasta ahora todos los canales
+eran públicos, ver «El canal en vivo» de Pareo Integral):
+
+- **Escuchar**: quien puede VER la sala, con la RLS de `game_rooms` tal cual
+  (juega, es su profesor, administra, es compañero): la misma gente que ya la
+  recibe por `postgres_changes`.
+- **Mandar**: solo quien la JUEGA, y con la partida en juego.
+- **`verificacion_en_dos_pasos`**, restrictiva, como toda tabla de Realtime.
+- Un tema con basura no da error: el id se convierte a uuid solo si tiene forma
+  de uuid.
+
+Comprobado impersonando cada rol en una transacción revertida, antes de
+aplicarla: blancas y negras escuchan y mandan; su profesor escucha y no manda;
+alguien ajeno, nada; quien jugó una partida terminada escucha y no manda; un
+tema inventado u otro prefijo, nada; y quien administra con dos pasos activos,
+con `aal1` no escucha y con `aal2` sí. El retrato del esquema
+(`herramientas/inventario-esquema.sql`) incluye desde ahora las políticas de
+`realtime`.
+
+### Las pre-jugadas
+
+- **En el turno del rival se deja preparada la propia** (`premoves: true` en el
+  tablero, que crea su `Premovidas.crear`): se elige la pieza y la casilla, con
+  el toque o arrastrando, y se juega sola apenas llega la jugada del rival
+  (`board.jugarPremovida()`, que la página llama cada vez que aplica una
+  posición nueva). Una sola a la vez, como en lichess; tocar el tablero la
+  quita.
+- **Los destinos son los de la pieza en un tablero vacío** (también las dos
+  capturas en diagonal del peón y los enroques; las piezas fundidas de Abrazos
+  suman los de cada una): la jugada se decide sobre una posición que todavía no
+  existe. Recapturar en una casilla donde hoy hay una pieza propia, por
+  ejemplo, tiene que poder prepararse. **Si al llegar el turno ya no es legal,
+  se descarta y se dice** («La pre-jugada e4 a d5 no se pudo hacer: ya no era
+  legal.»).
+- Solo de piezas del tablero: soltar una de la reserva (Crazyhouse) o jugar una
+  carta (Cartas) se decide en el turno propio. En Misiones, si al llegar el
+  turno la misión propia está cumplida, primero se cobra y la pre-jugada no
+  sale. A ciegas se juega escribiendo y no lleva.
+- **Coronar**: se elige la pieza al preparar la pre-jugada, con el mismo
+  diálogo de cada página.
+- **Se ve y se dice**: un borde punteado blanco con una línea casi negra por
+  dentro (cada tema de tablero tiene sus colores, y contra cualquiera uno de
+  los dos pasa de 3:1; medido en los 14 temas, el peor da 4,7:1), la casilla
+  dice «sale la pre-jugada» / «llega la pre-jugada» (`data-estado`, que suma
+  `js/tablero-accesible.js`, y en el nombre de la casilla cuando el tablero se
+  nombra solo) y el estado de la página, «Pre-jugada lista: g1 a f3 (se juega
+  sola; toca el tablero para quitarla)».
+- Con el teclado (escribiendo la jugada) no hay pre-jugadas: `tryMove` sigue
+  pidiendo que sea el turno propio.
+
+### El retraso de la red no se cobra en el reloj
+
+El reloj de quien recibe una jugada corre desde que la base la guardó
+(`clock_updated_at`), pero esa persona la ve en su pantalla un rato después:
+lo que tarda Realtime en avisarle, que con la base cargada son segundos. Ese
+rato se le cobraba como si lo hubiera pensado. Lichess lo devuelve (lo que
+llama *lag compensation*), con un tope.
+
+- **`SalaJuego.suscribir` anota cuándo apareció en pantalla cada posición**
+  (`vista`, con la hora del servidor), venga por la base o por el canal rápido,
+  y `vigilante.jugada()` lo devuelve como `vistaEn`. La posición que ya estaba
+  al abrir la página no cuenta (`en: null`): abrirla tarde no es retraso de la
+  red.
+- **`SalaJuego.pensado(sala, envio)` cuenta lo pensado desde ahí**: le resta
+  lo que pasó entre que la base guardó la jugada del rival y que apareció en
+  pantalla, **a lo sumo 1 s por jugada** (`RETRASO_MAXIMO_MS`). Si la jugada
+  llegó antes de que la base la guardara (lo común con el canal rápido), no hay
+  nada que devolver.
+- **La base no puede saber cuándo vio cada uno la jugada**: lo dice el
+  navegador. Por eso el tope, y el trigger (`proteger_reloj_de_partida`,
+  migración `20261029130652_reloj_retraso_de_red`) deja pasar exactamente ese
+  segundo de más (`retraso_maximo`) en el tiempo que se escribe al mover. Quien
+  haga trampa desde la consola gana a lo sumo 1 s por jugada, además de los
+  2 s de tolerancia de siempre. Comprobado en una transacción revertida: con
+  el reloj corriendo hace 10 s sobre 60, la base aceptaba hasta 52 s y ahora
+  hasta 53 s; 53,5 se sigue rechazando.
+- **La bandera no cambia**: el segundo se abona solo al mover a tiempo y nunca
+  salva de que caiga la bandera (el rival la canta, y la base la acepta, con la
+  hora de la base, como siempre). Lichess hace lo mismo.
+- Ajedrez para 4 no lo lleva todavía: su trigger y su página siguen como
+  estaban.
+
+Lo prueban `verificar-premovidas.js` (la cuenta, el tope, y `suscribir` con un
+Supabase de mentira: la jugada del rival llega 0,6 s después de guardarse y el
+reloj cobra los 3 s pensados, no 3,6; quitando la anotación o el tope, salta) y
+`verificar-partidas-simultaneas.js`, cuyo trigger de mentira deja pasar el
+mismo segundo: ninguna jugada que llegó a tiempo a la base se rechaza por
+subirse el reloj de más, y se imprime cuánto quedó cada reloj por encima de lo
+que dice la base. Con la red mala, sin esto se rechazaban 118 de 2000 jugadas;
+con esto, ninguna de las que llegaron a tiempo (devolviendo hasta 3 s, saltan
+miles).
+
+**Lo que queda: la escritura que tarda en llegar.** Si el pedido que guarda la
+jugada tarda más de un segundo en llegar a la base (la red mala del doble lo
+hace con una de cada diez, entre 0,8 y 2,5 s), la base cobra ese tiempo y el
+navegador no lo puede saber: el reloj que manda queda por encima y, pasado el
+margen de 2 s más 1, la jugada se rechaza y se vuelve a leer la sala. En la
+prueba son unas 17 de 2000, y se cuentan aparte («tras una escritura lenta»).
+Arreglarlo pide que la base calcule el reloj sola (lo que hace lichess en su
+servidor), no un margen más ancho.
+
+### Cartas: cada estado, una copia propia
+
+`CartasChess.Game.fromJSON` y `toJSON` compartían las manos y el mazo con el
+estado de la sala. El tablero cargaba `room.cartas_state` y, al jugar, el motor
+le agregaba la carta repartida y le sacaba la del mazo a la sala que tenía la
+página, sin guardar nada. No daba ningún error: la cuenta de la triple
+repetición leía el estado «de antes» ya cambiado, y el canal rápido avisaba que
+la jugada salía de una posición que nadie más tenía (casi ninguna jugada de
+Cartas llegaba por el canal). Ahora los dos copian.
+
+### Cómo se comprueba
+
+- `verificar-premovidas.js` (sin navegador): los destinos de cada pieza, el
+  controlador de las pre-jugadas con un tablero de mentira (poner, quitar,
+  jugarla, descartarla y decirlo), qué cree el canal rápido de un aviso
+  (`rehacerConChess`), el reloj de quien mueve (`pensado`) y la copia de
+  Cartas. Probado que falla con el motor de Cartas de antes.
+- `verificar-partidas-simultaneas.js` (ver «Las jugadas llegan siempre»): su
+  servidor de mentira reparte también Broadcast (con la misma red mala: avisos
+  perdidos, tarde, canales caídos), sus jugadores automáticos dejan
+  pre-jugadas al azar y la demora se mide **desde que quien mueve ve su
+  jugada** hasta que la ve el rival, así que entra también lo que tarda
+  guardarla. En la red mala la base rechaza además el 3 % de las jugadas ya
+  avisadas. La ronda **3 bis** deja una jugada avisada que la base no guarda,
+  con nadie que vuelva a mover: del otro lado tiene que desaparecer sola
+  (quitando la relectura a los 4 s, falla). Las rondas **6 y 7** juegan dos
+  partidas de cada una de las demás modalidades (con su sala inicial armada por
+  sus motores en Node), con red sana y mala, y comprueban que **en cada
+  modalidad la jugada del rival llegue también por el canal rápido**: si una
+  página no puede rehacerla, todas llegarían por la base y nada saltaría
+  (quitándoselo a Cartas, salta). Esas dos las corre
+  `verificar-partidas-modalidades.js` (el mismo código, con `RONDAS=6,7`):
+  todas juntas pasaban de los 10 minutos que `verificar-todo.js` le da a cada
+  verificador, y el CI lo cortó.
+- `SIN_RAPIDA=1`: la base sin la política (el canal privado no abre). Todo
+  tiene que seguir igual por `postgres_changes`. `SIN_PREMOVIDAS=1`: sin
+  pre-jugadas. `RONDAS=6,7` y `SOLO_MODALIDADES=cartas,niebla` para mirar unas
+  pocas.
+
+Con 10 partidas: red sana, mediana ~110 ms y la peor ~250 ms (el servidor de
+mentira contesta en 20-120 ms, así que acá el canal rápido apenas se nota: lo
+que ahorra en la vida real es lo que tarda Realtime en revisar la RLS con la
+base cargada); red mala, la peor bajó de ~8 s a ~5-7 s.
+
 ## La sala de cine de las transmisiones
 
 `torneos-en-vivo.html` (el enlace «Torneos» junto a «¡Te reto!» y «TV en
@@ -1394,7 +1622,9 @@ en **`admin.html#torneos`** (`js/admin-salas-torneo.js`). Migración
 - **Dos tipos de sala.** `lichess`: una transmisión de Lichess, que entra a la
   sala de cine (`transmision.html?torneo=<clave>`) y lleva el id de la
   transmisión. `enlaces`: cualquier otra (UTN va en idchess, que no tiene API
-  pública conocida), con uno a seis botones que la abren en otra pestaña. Las
+  pública conocida), con uno a cuarenta botones que la abren en otra pestaña
+  (eran seis; el Centroamericano lleva uno por torneo de chess-results, ver
+  «Un torneo por categoría», y la base y el editor tienen el mismo tope). Las
   de Lichess pueden llevar botones de más («Verlo directo en Lichess») y
   pizarras de chess-results (ver «Las posiciones oficiales vienen de
   chess-results»).
@@ -4927,8 +5157,10 @@ dueño del repo, no solo de código.
   (`interno.frenar_envio_publico`) tampoco aplica: ese freno protege un
   INSERT que alguien sin cuenta puede disparar, y un Broadcast no inserta
   nada en ninguna tabla.
-- **Público por default, sin RLS**: el proyecto nunca activó el modo privado
-  de canales de Supabase (que exigiría una política sobre `realtime.messages`).
+- **Público por default, sin RLS**: este canal no usa el modo privado de
+  Supabase (que exige una política sobre `realtime.messages`; el único canal
+  privado del proyecto es el de las partidas, ver «La jugada viaja por
+  Broadcast, y las pre-jugadas», y su política no habla de estos temas).
   Cualquiera con la anon key —la misma que ya es pública en
   `js/supabase-client.js`— puede unirse a un canal con solo saber su nombre.
   El nombre del canal (`pareo-vivo-<código>`) hace de contraseña: por eso el
@@ -9979,8 +10211,9 @@ estaban, y las diferencias eran solo lo nuevo.
 
 ## La cámara que lee el tablero
 
-`camara-tablero.html` (`js/camara-tablero.js`) es una **prueba**, por ahora
-solo de quien administra: el celular encima de un tablero de verdad lee cada
+`camara-tablero.html` (`js/camara-tablero.js`) empezó como una **prueba** de
+quien administra; hoy la abre toda cuenta (ver «El reloj, lo entrenado en la
+cuenta, las pistas y la cámara del árbitro adjunto»): el celular encima de un tablero de verdad lee cada
 casilla y anota las jugadas. Sirve para medir qué tan bien se ven nuestros
 tableros con la luz real de un salón antes de invertir en entrenar un modelo o
 en transmitir. No guarda nada ni manda la imagen a ningún lado: todo pasa en
@@ -10472,6 +10705,179 @@ llega al canal sin casillas y el retraso con el reloj de la cámara
 adelantado) y `verificar-pareo-camaras.js` (los `[%emt]` y las alertas).
 Rotos a propósito, saltan.
 
+### La coronación, la luz, las tablas, las fotos y las simultáneas
+
+El cuarto pedido de mejoras del dueño («todas»). Lo de este paquete:
+
+- **La coronación.** La cámara solo ve «pieza blanca» en la casilla: anota
+  dama y pregunta con cuatro botones qué pieza puso. Si después la pieza
+  coronada se mueve como no puede una dama (un salto de caballo), ninguna
+  jugada explica lo que se ve, y se prueba con las otras piezas
+  (`LectorTablero.deducirCoronacion`): la que lo explique con una jugada de
+  esa pieza es la que se coronó, y se corrige sola. Cambiar la pieza vuelve
+  a jugar lo que siguió (`cambiarCoronacion`); si algo deja de ser legal (la
+  «dama» que se movió en diagonal no puede ser torre), no se cambia. Torre y
+  alfil no se deducen nunca (todo lo que hacen lo puede hacer una dama): se
+  eligen con los botones. Lo escrito a mano («e8=C») ya dice cuál.
+- **La luz que cambia.** Mientras se lee la partida sin nada raro, cada 15
+  segundos se vuelve a calibrar con la posición que se sabe y se mezcla con
+  la de antes (`mezclarCal`, peso 0,3): sigue al sol que se corre o a una
+  nube antes de que empiece a leer mal. Si de golpe varias casillas se leen
+  mal (prendieron la luz), antes de avisar una jugada ilegal se prueba con la
+  luz de ahora: **si con ella se lee la partida entera, 64 de 64, era la
+  luz**, se calibra y sigue («Cambió la luz…»). Una pieza que de verdad se
+  movió no calza con la partida y se sigue avisando.
+- **La triple repetición y las 50 jugadas** (`PartidaEnVivo.reglaDeTablas`):
+  se dicen justo en la jugada en que se cumplen (3 y 5 veces la misma
+  posición; 50 y 75 jugadas de cada uno sin captura ni peón). La casilla al
+  paso cuenta solo si la captura se puede hacer (art. 9.2.3): chess.js la
+  pone después de todo avance doble, y sin esto «1. c4» y la misma posición
+  más tarde no eran iguales. **Nada se marca solo**: 3 veces y 50 jugadas se
+  reclaman; 5 y 75 son tablas por las Leyes (art. 9.6), pero las confirma el
+  árbitro. En un torneo, el aviso le llega a Pareo con su `tipo`, aparte del
+  de la jugada ilegal (uno no tapa al otro), con el artículo.
+- **La foto del tablero**, con cada resultado y cada aviso: el tablero
+  **enderezado con la homografía**, visto desde arriba como un diagrama
+  (256 × 256, JPEG), así que no sale nadie alrededor. Queda en «Fotos del
+  tablero» de la cámara (las últimas 6, para bajarlas) y, en un torneo, le
+  llega a Pareo junto al aviso o al resultado para confirmar: «Ver foto» y
+  «Pasar a las incidencias», donde queda con su mesa (`incidencias[].foto`)
+  y se vuelve a ver. Pareo solo acepta un `data:image/jpeg` de menos de
+  120 000 caracteres, con un motivo conocido, del torneo y la ronda en juego.
+  **No se publica**: lo que va a `pareo_publicados` no lleva incidencias.
+- **«Enseñarle a la cámara»**, apagado por omisión. Encendido (si lo permite
+  quien organiza), con cada jugada anotada se guarda en el aparato
+  (IndexedDB, hasta 500) la foto enderezada con su posición: las 64 letras de
+  la lectura y el FEN. Se bajan en un .zip (`TablaExcel.zip`, el mismo de
+  Pareo) con `etiquetas.csv`, para entrenar un modelo con nuestros tableros
+  cuando con otra luz falle. No se manda nada a ningún lado.
+- **Las simultáneas**, sin torneo: en «Transmitir en vivo», «Una
+  simultánea». Cada cámara dice su número de tablero y todas usan el mismo
+  código (la primera lo crea). Lo que viaja lleva `{ simul: 1, mesa }`; quien
+  mira ve todos los tableros juntos («Tablero 1», «Tablero 2»…) y el enlace
+  de cada alumno (`#código&m=N`) abre el suyo en grande. Los avisos y las
+  fotos al árbitro siguen siendo solo de un torneo.
+- **Los momentos clave**, en `tablero-vivo.html`, cuando la partida
+  terminó: «Ver los momentos clave» la hace revisar por Stockfish en ese
+  aparato (profundidad 10, posición por posición) y muestra hasta tres
+  jugadas que perdieron 2 peones o más, con la mejor. Se eligen con la regla
+  de «Tus propios errores» (`ErroresPropios.detectar`, de los dos lados): una
+  sola copia de qué es un error. Va con un botón porque es trabajo para el
+  celular. Tocar una lleva el tablero a esa jugada.
+- **La cámara en la clase en vivo** la puede abrir también quien da clase
+  (`role = 'profesor'`). Ver «La cámara en la clase en vivo» en
+  `clase-en-vivo.md`. (Desde el sexto paquete la abre también el alumno.)
+
+Lo prueban `verificar-camara-tablero.js` (la coronación preguntada y
+deducida, la luz de golpe y poco a poco, la repetición y su aviso, la foto
+enderezada —a5 con la torre que saltó, la fila 8 arriba—, «Enseñarle a la
+cámara» con su .zip, la simultánea con dos cámaras y dos que miran, y los
+momentos clave con un Stockfish de mentira), `verificar-pareo-camaras.js`
+(las tablas aparte de la jugada ilegal, la foto: cuál se acepta, «Ver foto»,
+«Pasar a las incidencias» y que no se publique) y `verificar-clase-camara.js`.
+Rotos a propósito, saltan.
+
+### Armar, entrenar en el tablero, el PGN de la ronda y el informe de las cámaras
+
+El quinto pedido de mejoras del dueño («si todas»):
+
+- **«¿Está bien armada?»**: lo que ve la cámara contra la posición que
+  debería haber (la de la partida, o la inicial), casilla por casilla y con
+  el nombre de la pieza: «Falta el caballo blanco en b1», «Sobra una pieza
+  blanca en e4», «En h2 hay una pieza negra y debería ser blanca (el peón)».
+  Sin calibrar, usa el giro de las esquinas que mejor explica esa posición
+  (`buscarGiro`, lo mismo que calibrar) sin quedarse con nada. La cámara solo
+  sabe color: «sobra una pieza blanca», nunca qué pieza sobra.
+- **Entrenar en el tablero de verdad** («Entrenar en tu tablero»): la cámara
+  lee la jugada de quien entrena y la del otro lado la dice la pantalla (y la
+  voz, con «Activar voz»), por ejemplo «El motor juega e5: mueve el peón
+  negro de e7 a e5». **La cámara espera a ver esa jugada en el tablero**
+  (`guion.esperando`); otra no se anota. Contra el motor: Stockfish en el
+  aparato (`preparacion-motor.js`), con blancas o negras y profundidad 1, 5 o
+  12. Un ejercicio: de los bancos ya comprobados del Entrenamiento
+  (`entreno/data/mates.json` y `tactica.json`; ninguna posición se inventa):
+  se arma con la misma comprobación, se juega la solución, una jugada
+  equivocada se vuelve a su lugar (la cámara espera a verla de vuelta) y la
+  respuesta del rival la pone quien entrena. Un mate vale aunque sea otro.
+- **Las jugadas en voz** en `tablero-vivo.html` ya funcionaban: «Activar
+  voz» del encabezado (`js/voz-pagina.js`) lee `#anuncio`. Ahora lo comprueba
+  el verificador (rompiendo la región viva, salta).
+- **«Bajar todas las partidas (PGN)»** en la cuadrícula de quien mira: las
+  mesas (o tableros de la simultánea) en un solo PGN, cada una con su torneo,
+  ronda, mesa (`Board`), nombres, la fecha de hoy en Costa Rica, resultado y
+  `[%emt]` si se sabe; lo que ya llegó, con retraso hasta donde se ve.
+- **El informe de las cámaras de la ronda** en Pareo: por mesa, desde y
+  hasta cuándo transmitió, cuántas jugadas anotó sola y cuántas se
+  escribieron a mano en la cámara (la cámara lo manda en `mano`), sus
+  posibles ilegales y avisos de tablas (contados aparte: «Visto» quita el
+  aviso de la lista, no de la cuenta) y el resultado. Sale de lo que llegó a
+  esa pestaña; no se guarda en el torneo.
+- **Reconocer qué pieza es** (y no solo su color) queda para cuando haya
+  fotos: hace falta entrenar un modelo con unas cuantas centenas de fotos
+  etiquetadas de nuestros tableros, que es lo que junta «Enseñarle a la
+  cámara».
+
+Lo prueban `verificar-camara-tablero.js` (el armado, mal y bien, sin
+calibrar y calibrada; el motor de mentira con la jugada que no es; el mate en
+2 del banco con una equivocada que vuelve; la voz; el PGN de la simultánea) y
+`verificar-pareo-camaras.js` (el informe). Rotos a propósito, saltan.
+
+### El reloj, lo entrenado en la cuenta, las pistas y la cámara del árbitro adjunto
+
+El sexto pedido de mejoras del dueño («si dale»):
+
+- **El reloj de la partida** (opcional, «Reloj»): se elige el ritmo
+  (minutos + incremento) y cambia solo con cada jugada que anota la cámara:
+  a quien movió se le resta lo que pensó y se le suma el incremento; con dos
+  jugadas juntas (se escapó una), a cada uno la suya. Se cuenta con
+  `Date.now()` del aparato, igual que el tiempo de cada jugada; «Pausar»
+  detiene los dos (ninguno corre). Una partida nueva lo apaga. **La
+  bandera**: cuando llega a cero se marca el resultado —gana el otro, o
+  tablas si el otro ya no puede dar mate con ninguna serie de jugadas legales
+  (art. 6.9): con solo el rey, o con rey y una pieza menor contra el rey
+  solo; un caballo contra rey y peón sí puede, y gana— y se dice «Lo confirma
+  el árbitro». Viaja a quien mira en cada envío (`reloj: {w, b, corre}`, en
+  ms, lo que quedaba al mandarlo; `PartidaEnVivo` lo valida, hasta un día) y
+  `tablero-vivo.html` le resta al que corre lo que pasó desde que llegó:
+  «⏱ Blancas 4:12 · Negras 3:58 (corre)». **Con retraso no se manda**: el
+  tiempo de ahora delataría lo que todavía no se ve.
+- **Lo entrenado queda en la cuenta**, y por eso **la cámara la abre toda
+  cuenta** (antes, quien administra y quien da clase): en un alumno no hay
+  nada que esconder detrás (no lee datos de nadie), y entrenar en su tablero
+  es para él. En modo mesa, sin cuenta, no se guarda nada.
+  - La partida **contra el motor**, terminada y desde 10 medias jugadas (lo
+    pide la base), va a `partidas_torneo` con el evento «Contra el motor
+    (cámara, nivel …)»: la libreta de torneos y «Tus propios errores», donde
+    su profe la ve y el motor la revisa. A medias, no se guarda.
+  - Cada **mate resuelto** (mate en 1, 2 o 3 del banco de Mates) va a su
+    progreso del Entrenamiento, `EntrenoProgress.log("mates", …)` con
+    `desde: "camara"` y `comoSalio(con error, con pista)`, como en la página
+    de Mates. La táctica no anota progreso (tampoco en su página).
+- **Las pistas**: en un ejercicio, al segundo intento que no era, qué pieza
+  se mueve (de la solución: «se mueve el rey de d3»); contra el motor, si
+  lleva más de un minuto con su turno, la pieza de la jugada que Stockfish
+  haría en su lugar («mira la dama de f3»), una vez por jugada. Nunca la
+  jugada entera. Una pista hace que el mate no cuente como limpio.
+- **La cámara del árbitro adjunto** («¿Qué mesa es? (árbitro)», con el
+  torneo elegido y fuera del modo mesa): el adjunto apunta a cualquier
+  tablero de la sala, toca «Buscar el tablero» y el botón. La cámara escucha
+  el canal del torneo (pide las partidas con `pedir` y lee los `estado`, en
+  el mismo canal que usa si también transmite: un canal por código,
+  `canalDe`), y busca cuál de las posiciones transmitidas explica lo que ve
+  con `buscarGiro` (sin calibrar: calibra con cada una). Dice la mesa y si
+  coincide (64 de 64), o qué casillas no calzan con lo transmitido —una
+  cámara que anotó mal o una pieza movida—, con la misma lista que «¿Está
+  bien armada?» (`diferencias`). Si dos mesas tienen la misma posición, lo
+  dice; si ninguna se parece (menos de 48 casillas), también.
+
+Lo prueba `verificar-camara-tablero.js`: el reloj con el reloj del aparato
+adelantado (los 10 s que se restan, el incremento, la pausa, quien mira, la
+bandera con victoria, con tablas y con el caballo contra el peón); la pista
+del motor al minuto y la partida guardada con su evento; la pista al segundo
+intento y el mate en el progreso, no limpio; el alumno que abre la cámara; y
+el adjunto que encuentra la mesa 6 sin calibrar, una casilla que no calza y
+un tablero que no es de ninguna. Rotos a propósito, saltan.
+
 ## Pareo para DGT
 
 Un torneo presencial con tableros electrónicos DGT: el árbitro sube cada ronda
@@ -10670,6 +11076,15 @@ vivo), no hacerla pasar por un tablero electrónico.
   (manda los cambios para dejar cada pieza en su casilla inicial, como quien
   vuelve a armar el tablero) y «Desconectar». La última jugada se escribe en
   algebraica española.
+- **«Lo que llega de LiveChess».** En el primer ensayo de verdad LiveChess
+  tenía el puerto marcado y no mostraba el tablero, y no había forma de saber
+  por qué: si no mandaba nada, si mandaba otro protocolo (el de bus, 0x81–0x8b
+  con dirección y suma de comprobación) o si esperaba las líneas de control.
+  Cada tarjeta trae ahora un desplegable con cada byte que llega y cada uno
+  que contesta el tablero, en hexadecimal, con la hora (de Costa Rica) y un
+  botón «Copiar»; guarda los últimos 200 renglones. Y al abrir el puerto la
+  página enciende DTR y RTS, como un tablero de verdad: com0com se las pasa a
+  LiveChess como DSR y CTS en la otra punta.
 
 `verificar-pareo-dgt-virtual.js` juega las 64 partidas modelo (4591 jugadas,
 con capturas, enroques, al paso y coronación) y arma la posición SOLO con los

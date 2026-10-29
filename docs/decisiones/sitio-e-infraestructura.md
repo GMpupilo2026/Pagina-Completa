@@ -1927,7 +1927,10 @@ todas las filas) de 21 respuestas —7 cuentas, alumnos y profesores, con y sin
 base consume en total: cada cambio de una tabla escuchada se comprueba contra la
 RLS de cada suscriptor. Pasar lo más frecuente de la clase (el tablero, las
 partidas de práctica) a mensajes directos (*broadcast*) casi no toca la base.
-Es un cambio grande, que queda pendiente. La práctica con reloj volvía a bajar
+Es un cambio grande, que queda pendiente. Las partidas entre alumnos ya dieron
+el primer paso: la jugada viaja también por un canal privado de Broadcast y la
+base solo la confirma (ver «La jugada viaja por Broadcast, y las pre-jugadas»
+en `juegos-y-torneos.md`); siguen escuchando `game_rooms` para eso. La práctica con reloj volvía a bajar
 la lista entera de partidas, con los nombres, por cada jugada (797 veces en la
 hora de la caída): eso ya lo arregló #606 (`aplicarCambioDePractica` usa la
 fila que trae Realtime), que entró a las 8:18 p. m. del 29, **después** de la

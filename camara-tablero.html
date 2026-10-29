@@ -78,8 +78,8 @@
 
         <div id="denegado" class="hidden max-w-2xl mx-auto bg-white dark:bg-brand-900 rounded-2xl shadow-md p-8 text-center">
             <p class="text-4xl mb-3" aria-hidden="true">🔒</p>
-            <h1 class="font-serif text-2xl font-bold text-brand-800 dark:text-white mb-2">Esto es de quien administra</h1>
-            <p class="text-brand-500 dark:text-brand-300">Es una prueba de la cámara que lee el tablero: todavía no está abierta a profesores ni alumnos.</p>
+            <h1 class="font-serif text-2xl font-bold text-brand-800 dark:text-white mb-2">No encontramos tu cuenta</h1>
+            <p class="text-brand-500 dark:text-brand-300">Vuelve a entrar a la Academia y abre de nuevo la cámara. En un torneo, cada mesa la abre con su QR, sin cuenta.</p>
             <a href="clases.html" class="inline-block mt-5 bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2.5 rounded-lg text-sm transition-colors">Volver al panel</a>
         </div>
 
@@ -105,6 +105,7 @@
                 <button id="btn-esquinas" type="button" disabled class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-4 py-2.5 rounded-lg text-sm disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Volver a marcar las esquinas</button>
                 <button id="btn-calibrar" type="button" disabled class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-4 py-2.5 rounded-lg text-sm disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Calibrar con la posición inicial</button>
                 <button id="btn-seguir" type="button" disabled class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-4 py-2.5 rounded-lg text-sm disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Seguir con esta partida</button>
+                <button id="btn-armado" type="button" disabled class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-4 py-2.5 rounded-lg text-sm disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">¿Está bien armada?</button>
                 <button id="btn-ahorro" type="button" disabled class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-4 py-2.5 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 disabled:opacity-50"><span aria-hidden="true">🔋</span> Ahorrar batería</button>
             </div>
 
@@ -124,6 +125,7 @@
             </div>
 
             <p id="aviso" role="status" aria-live="polite" class="mb-4 rounded-xl px-4 py-3 text-sm bg-brand-100 text-brand-800 dark:bg-brand-800 dark:text-brand-100">Empieza por abrir la cámara o elegir una foto.</p>
+            <ul id="armado-lista" class="-mt-2 mb-4 list-disc pl-6 text-sm text-red-800 dark:text-red-200 space-y-0.5"></ul>
 
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div class="lg:col-span-2 min-w-0">
@@ -152,6 +154,23 @@
                             <button id="btn-deshacer" type="button" disabled class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-3 py-2 rounded-lg text-sm disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Deshacer la última jugada</button>
                             <button id="btn-copiar" type="button" disabled class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-3 py-2 rounded-lg text-sm disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Copiar el PGN</button>
                         </div>
+                        <div id="reloj-caja" class="mt-4 rounded-xl border border-brand-200 dark:border-brand-700 p-3">
+                            <h3 class="font-semibold text-sm text-brand-800 dark:text-white"><span aria-hidden="true">⏱️</span> Reloj (opcional)</h3>
+                            <div class="flex flex-wrap items-end gap-2 mt-2">
+                                <div><label for="reloj-ritmo" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 mb-1">Ritmo</label>
+                                <select id="reloj-ritmo" class="bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                                    <option value="3+2">3 min + 2 s</option><option value="5+0">5 min</option><option value="10+5" selected>10 min + 5 s</option><option value="15+10">15 min + 10 s</option><option value="30+0">30 min</option><option value="60+30">60 min + 30 s</option><option value="90+30">90 min + 30 s</option>
+                                </select></div>
+                                <button id="btn-reloj" type="button" class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-3 py-2 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Empezar el reloj</button>
+                                <button id="btn-reloj-pausa" type="button" hidden aria-pressed="false" class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-3 py-2 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Pausar</button>
+                            </div>
+                            <div id="reloj-tiempos" hidden class="grid grid-cols-2 gap-2 mt-3 text-center">
+                                <p class="rounded-lg border-2 border-brand-200 dark:border-brand-700 p-2 aria-[current=true]:border-accent-500" id="reloj-w"><span class="block text-xs">Blancas</span><span class="block text-2xl font-bold tabular-nums" data-tiempo></span></p>
+                                <p class="rounded-lg border-2 border-brand-200 dark:border-brand-700 p-2 aria-[current=true]:border-accent-500" id="reloj-b"><span class="block text-xs">Negras</span><span class="block text-2xl font-bold tabular-nums" data-tiempo></span></p>
+                            </div>
+                            <p id="reloj-msg" role="status" aria-live="polite" class="text-sm font-semibold text-brand-800 dark:text-white mt-2"></p>
+                            <p class="text-xs text-brand-500 dark:text-brand-300 mt-1">Cambia solo con cada jugada que anota la cámara (suma el incremento). Quien mira ve los dos tiempos.</p>
+                        </div>
                         <div id="resultado-caja" class="mt-4 rounded-xl border border-brand-200 dark:border-brand-700 p-3">
                             <h3 class="font-semibold text-sm text-brand-800 dark:text-white">Resultado</h3>
                             <p id="resultado-texto" role="status" class="text-sm text-brand-700 dark:text-brand-200 mt-1">Sigue en juego.</p>
@@ -163,9 +182,23 @@
                             </div>
                             <p class="text-xs text-brand-500 dark:text-brand-300 mt-2">El mate y el ahogado se marcan solos. El abandono, el tiempo o las tablas de común acuerdo, márcalos aquí: en un torneo le llegan al árbitro de Pareo Integral para que los confirme.</p>
                         </div>
+                        <div id="fotos" hidden class="mt-4 rounded-xl border border-brand-200 dark:border-brand-700 p-3">
+                            <h3 class="font-semibold text-sm text-brand-800 dark:text-white">Fotos del tablero</h3>
+                            <p class="text-xs text-brand-500 dark:text-brand-300 mt-1">Con cada resultado y cada aviso queda una foto del tablero visto desde arriba, solo el tablero: la prueba si hay un reclamo. En un torneo le llega al árbitro. Toca una para bajarla.</p>
+                            <div id="fotos-lista" class="flex flex-wrap gap-3 mt-2"></div>
+                        </div>
                                             <div id="dudas" hidden class="mt-4 rounded-xl border-2 border-accent-500 p-3">
                             <p class="text-sm font-semibold text-brand-800 dark:text-white">¿Cuál fue la jugada?</p>
                             <div id="dudas-botones" class="flex flex-wrap gap-2 mt-2"></div>
+                        </div>
+                        <div id="coronacion" hidden class="mt-4 rounded-xl border-2 border-accent-500 p-3">
+                            <p id="coronacion-texto" class="text-sm font-semibold text-brand-800 dark:text-white">Coronó. ¿Qué pieza puso?</p>
+                            <div class="flex flex-wrap gap-2 mt-2">
+                                <button type="button" data-corona="q" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Dama</button>
+                                <button type="button" data-corona="r" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Torre</button>
+                                <button type="button" data-corona="b" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Alfil</button>
+                                <button type="button" data-corona="n" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Caballo</button>
+                            </div>
                         </div>
                         <form id="form-anotar" class="mt-4" novalidate>
                             <label for="jugada-mano" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 mb-1">Anotar una jugada a mano (si la cámara no la reconoce)</label>
@@ -182,6 +215,33 @@
                                 <button type="submit" class="mt-2 bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-3 py-2 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Usar esta posición</button>
                             </form>
                         </details>
+                        <details class="mt-4">
+                            <summary class="text-sm font-semibold text-brand-800 dark:text-white cursor-pointer rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Enseñarle a la cámara (opcional)</summary>
+                            <p class="text-xs text-brand-500 dark:text-brand-300 mt-2">Si lo permite quien organiza: con cada jugada anotada se guarda una foto del tablero, enderezado y sin nadie alrededor, con la posición que tiene. Con esas fotos se puede entrenar la cámara para que lea mejor nuestros tableros. Quedan solo en este aparato hasta que las bajes; no se mandan a ningún lado.</p>
+                            <label class="mt-2 inline-flex items-center gap-2 text-sm text-brand-700 dark:text-brand-200 cursor-pointer"><input id="muestras-si" type="checkbox" class="w-4 h-4 accent-brand-700"> Juntar fotos con su posición</label>
+                            <p id="muestras-cuenta" role="status" class="text-sm text-brand-600 dark:text-brand-300 mt-1">Ninguna foto guardada.</p>
+                            <div class="flex flex-wrap gap-2 mt-2">
+                                <button id="btn-muestras-bajar" type="button" disabled class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-3 py-2 rounded-lg text-sm disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Bajar las fotos (.zip)</button>
+                                <button id="btn-muestras-borrar" type="button" disabled class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-3 py-2 rounded-lg text-sm disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Borrar las fotos</button>
+                            </div>
+                        </details>
+                    </section>
+                    <section data-no-mesa class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-4" aria-labelledby="t-entreno">
+                        <h2 id="t-entreno" class="font-semibold text-brand-800 dark:text-white"><span aria-hidden="true">🎯</span> Entrenar en tu tablero (opcional)</h2>
+                        <p class="text-xs text-brand-500 dark:text-brand-300 mt-1">La cámara lee tus jugadas; las del motor o del rival las dice la pantalla (y la voz, con «Activar voz») y las pones tú: la cámara espera a verlas en el tablero.</p>
+                        <div class="grid grid-cols-2 gap-2 mt-3">
+                            <div><label for="entreno-color" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 mb-1">Juegas con</label><select id="entreno-color" class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><option value="w">Blancas</option><option value="b">Negras</option></select></div>
+                            <div><label for="entreno-nivel" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 mb-1">Nivel del motor</label><select id="entreno-nivel" class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><option value="facil">Fácil</option><option value="medio" selected>Medio</option><option value="dificil">Difícil</option></select></div>
+                        </div>
+                        <button id="btn-entreno-motor" type="button" class="mt-2 bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-3 py-2 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Jugar contra el motor</button>
+                        <div class="mt-3"><label for="entreno-banco" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 mb-1">Un ejercicio del Entrenamiento</label>
+                            <div class="flex flex-wrap gap-2"><select id="entreno-banco" class="bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><option value="mate1">Mate en 1</option><option value="mate2">Mate en 2</option><option value="mate3">Mate en 3</option><option value="tactica">Táctica</option></select>
+                            <button id="btn-entreno-ejercicio" type="button" class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-3 py-2 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Traer un ejercicio</button>
+                            <button id="btn-entreno-armado" type="button" hidden class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-3 py-2 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Ya está armada</button></div>
+                        </div>
+                        <p id="entreno-estado" role="status" aria-live="polite" class="text-sm font-semibold text-brand-800 dark:text-white mt-3"></p>
+                        <p id="entreno-pista" hidden class="text-sm text-brand-800 dark:text-white mt-2 rounded-lg border border-accent-500 px-3 py-2"></p>
+                        <button id="btn-entreno-dejar" type="button" hidden class="mt-2 bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-3 py-2 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Dejar de entrenar</button>
                     </section>
                     <section class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-4" aria-labelledby="t-torneo">
                         <h2 id="t-torneo" class="font-semibold text-brand-800 dark:text-white"><span aria-hidden="true">🏆</span> Partida de un torneo (opcional)</h2>
@@ -211,6 +271,12 @@
                             <button id="btn-torneo-ronda" type="button" class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-3 py-2 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Buscar ronda nueva</button>
                             <button id="btn-torneo-quitar" data-no-mesa type="button" class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-3 py-2 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Dejar el torneo</button>
                             <div data-no-mesa class="pt-1">
+                                <button id="btn-que-mesa" type="button" class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-3 py-2 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true">🔎</span> ¿Qué mesa es? (árbitro)</button>
+                                <p class="text-xs text-brand-500 dark:text-brand-300 mt-1">Para el árbitro adjunto: apunta a cualquier tablero de la sala, toca «Buscar el tablero» y después este botón. Dice qué mesa es y si coincide con lo que transmite su cámara.</p>
+                                <p id="que-mesa-msg" role="status" aria-live="polite" class="text-sm font-semibold text-brand-800 dark:text-white mt-2"></p>
+                                <ul id="que-mesa-lista" class="mt-1 list-disc pl-6 text-sm text-red-800 dark:text-red-200 space-y-0.5"></ul>
+                            </div>
+                            <div data-no-mesa class="pt-1">
                                 <button id="btn-torneo-qr" type="button" class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-3 py-2 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true">🖨️</span> Imprimir el QR de cada mesa</button>
                                 <p class="text-xs text-brand-500 dark:text-brand-300 mt-1">Una hoja con un QR por mesa: se escanea con el celular que va encima de esa mesa y la cámara se abre con el torneo, el código y la mesa puestos. Ese celular tiene que tener abierta tu cuenta.</p>
                             </div>
@@ -235,11 +301,20 @@
                             </select>
                             <p id="vivo-retraso-ayuda" class="text-xs text-brand-500 dark:text-brand-300 mt-1">Contra la ayuda desde afuera: quien mira ve cada jugada ese tiempo después. Cuando la partida termina, la ve entera. En un torneo vale para todas sus cámaras.</p>
                         </div>
+                        <details id="simul" data-no-mesa class="mt-3">
+                            <summary class="text-sm font-semibold text-brand-800 dark:text-white cursor-pointer rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Una simultánea (una cámara por tablero)</summary>
+                            <p class="text-xs text-brand-500 dark:text-brand-300 mt-2">Cada tablero con su celular, todos con el mismo código: quien mira ve todos los tableros juntos, y cada alumno abre el suyo con su enlace. La primera cámara lo crea (deja el código vacío); las otras escriben el suyo.</p>
+                            <div class="grid grid-cols-2 gap-2 mt-2">
+                                <div><label for="simul-codigo" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 mb-1">Código de la simultánea</label><input id="simul-codigo" type="text" maxlength="8" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="Vacío: uno nuevo" class="bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm w-full font-mono focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"></div>
+                                <div><label for="simul-tablero" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 mb-1">Este es el tablero n.°</label><input id="simul-tablero" type="number" min="1" max="99" inputmode="numeric" placeholder="1" class="bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm w-full focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"></div>
+                            </div>
+                        </details>
                         <div id="vivo-apagado" class="mt-3">
                             <button id="btn-vivo" type="button" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2.5 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2">Empezar a transmitir</button>
                         </div>
                         <div id="vivo-encendido" hidden class="mt-3">
                             <p class="text-sm font-semibold text-green-800 dark:text-green-200" role="status">● Transmitiendo · código <span id="vivo-codigo" class="font-mono"></span></p>
+                            <p id="vivo-alumno" hidden class="text-sm text-brand-700 dark:text-brand-200 mt-1">Para el alumno de este tablero: <a id="vivo-enlace-alumno" href="#" target="_blank" rel="noopener" class="underline underline-offset-2 break-all rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"></a></p>
                             <a id="vivo-enlace" href="#" target="_blank" rel="noopener" class="block text-sm text-brand-700 dark:text-brand-200 underline underline-offset-2 break-all mt-1 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"></a>
                             <div id="vivo-qr" data-no-mesa class="w-40 h-40 mx-auto my-3 bg-white rounded-lg"></div>
                             <div class="flex flex-wrap gap-2">

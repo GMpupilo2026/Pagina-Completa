@@ -49,7 +49,7 @@
                 myTurnNow = board.game.turn() === myColor;
                 setStatus(myTurnNow
                     ? (board.game.cardPlayedThisTurn ? "Tu turno — haz tu jugada." : "Tu turno — puedes jugar una carta y después mover.")
-                    : "Esperando la jugada de " + nameFor(myColor === "w" ? room.black_id : room.white_id) + "…");
+                    : "Esperando la jugada de " + nameFor(myColor === "w" ? room.black_id : room.white_id) + "…" + (board.pre ? board.pre.texto() : ""));
             }
             if (window.TurnAlert) TurnAlert.check(myTurnNow);
 
@@ -153,6 +153,7 @@
             const { data: guardada, error } = await sb.from("game_rooms").update(patch).eq("id", ROOM_ID).eq("status", "playing").select("*");
             if (error || !guardada || !guardada.length) {
                 if (error) console.error(error);
+                jugadaEnVuelo = false;
                 await releerSala(error ? "No se pudo guardar la jugada: " + error.message : "La partida ya había terminado: esa jugada no quedó guardada.");
                 return;
             }
@@ -163,12 +164,36 @@
             renderClocks();
         }
 
+        // El canal de la sala (SalaJuego.suscribir): jugada(), esperarBase(),
+        // despuesDeGuardar(), refrescar(). Y si la jugada propia se está guardando.
+        let vigilante = null;
+        let jugadaEnVuelo = false;
+        // La carta que se está guardando: la jugada que viene después la espera.
+        let cartaEnVuelo = null;
+
         async function handleLocalMove(info) {
+            // Si se acaba de jugar una carta, primero que quede guardada: la
+            // jugada se comprueba contra la sala (ver vigilante.jugada), y sin la
+            // carta no daría el mismo estado que el tablero.
+            if (cartaEnVuelo) await cartaEnVuelo;
+            // Primero que nada, la jugada a los que miran la sala (el canal rápido):
+            // el rival la ve sin esperar a que la base la guarde. Ver «La jugada
+            // viaja por Broadcast» en docs/decisiones/juegos-y-torneos.md. Va el
+            // estado entero de después: del otro lado se busca la jugada que
+            // lleva a él (ver jugarRapida).
+            jugadaEnVuelo = true;
+            const envio = vigilante ? await vigilante.jugada({ san: info.san, despues: board.state() }) : { ok: true };
+            if (!envio.ok) {
+                // La jugada del rival sobre la que se jugó no quedó: se manda lo que diga la base.
+                jugadaEnVuelo = false;
+                await releerSala("Esa jugada no quedó guardada: la del rival no llegó a la base.");
+                return;
+            }
             const newMoves = (room.moves || []).concat([info.san]);
             const patch = { moves: newMoves };
             if (room.initial_seconds != null) {
                 const storedKey = myColor === "w" ? "white_time_left" : "black_time_left";
-                const elapsed = room.clock_updated_at ? RelojServidor.desde(room.clock_updated_at) : 0;
+                const elapsed = SalaJuego.pensado(room, envio);
                 patch[storedKey] = Math.max(0, (room[storedKey] || 0) - elapsed) + (room.increment_seconds || 0);
                 patch.clock_updated_at = new Date().toISOString();
             }
@@ -189,12 +214,52 @@
                 if (info.result === "draw" && info.motivo) patch.variant_state.fin = { motivo: info.motivo };
             }
             await pushState(patch);
+            jugadaEnVuelo = false;
+            if (vigilante) vigilante.despuesDeGuardar();
         }
 
         async function handleCardPlayed() {
             // Jugar una carta no consume turno ni reloj: solo se guarda el nuevo
             // estado (mano, tablero si la carta lo tocó, banderas de congelar/etc.).
-            await pushState({});
+            // Pero el estado que se guarda es el que se ve: si incluye una jugada
+            // del rival todavía provisional, primero la tiene que tener la base.
+            cartaEnVuelo = (async () => {
+                if (vigilante && !(await vigilante.esperarBase())) {
+                    await releerSala("Esa carta no quedó guardada: la jugada del rival no llegó a la base.");
+                    return;
+                }
+                await pushState({});
+            })();
+            try { await cartaEnVuelo; } finally { cartaEnVuelo = null; }
+        }
+
+        /* La jugada del rival que llegó por el canal rápido (ver suscribir en
+           js/sala-juego.js). El aviso trae el estado entero de después (las
+           manos y el mazo cambian con la jugada): se prueban las jugadas
+           legales de la posición que se ve hasta dar con la que lleva
+           exactamente a ese estado. Si ninguna lleva (una carta del rival que
+           acá todavía no llegó, por ejemplo), no se pinta nada: llegará por la
+           base. */
+        function jugarRapida(sala, aviso) {
+            if (!aviso.despues || !sala.cartas_state) return null;
+            const buscado = JSON.stringify(aviso.despues);
+            const base = CartasChess.Game.fromJSON(sala.cartas_state);
+            for (const m of base.legalMoves()) {
+                const g = CartasChess.Game.fromJSON(sala.cartas_state);
+                const r = g.move({ from: m.from, to: m.to, promotion: m.promotion });
+                if (r.ok && JSON.stringify(g.toJSON()) === buscado) return { cartas_state: g.toJSON(), moves: (sala.moves || []).concat([r.san]) };
+            }
+            return null;
+        }
+
+        /* «La posición de la que sale la jugada», en Cartas: el estado entero
+           (manos, cartas pendientes, tablero), en una huella corta para que el
+           aviso no lo lleve dos veces. */
+        function huellaCartas(sala) {
+            const t = JSON.stringify((sala && sala.cartas_state) || null);
+            let h = 5381;
+            for (let i = 0; i < t.length; i++) h = ((h << 5) + h + t.charCodeAt(i)) | 0;
+            return t.length + ":" + (h >>> 0).toString(36);
         }
 
         function applyRemoteRoom(row, forzarTablero) {
@@ -207,6 +272,9 @@
             updateStatusText();
             renderClocks();
             TorneoSync.onRoomUpdate(sb, row);
+            // La pre-jugada sale apenas es el turno propio (js/premovidas.js; si ya
+            // no es legal, se descarta y se dice).
+            if (row.status === "playing" && !jugadaEnVuelo) board.jugarPremovida();
         }
 
         // Vuelve a leer la sala de la base y la aplica como un cambio remoto, forzando
@@ -214,11 +282,20 @@
         // ve en pantalla ya no es lo que hay en la base.
         async function releerSala(mensaje) {
             const fila = await SalaJuego.releer(ROOM_ID);
-            if (fila) applyRemoteRoom(fila, true);
+            // Si mientras se leía ya salió otra jugada propia, lo leído es viejo:
+            // recargar el tablero la borraría de la pantalla mientras se guarda, y
+            // la jugada siguiente saldría de una posición que la sala no tiene.
+            // Esa jugada, al terminar de guardarse (o al fallar), deja todo al día.
+            if (fila && !jugadaEnVuelo) applyRemoteRoom(fila, true);
             if (mensaje) setStatus(mensaje);
         }
 
-        function subscribeRoom() { SalaJuego.suscribir(ROOM_ID, (fila) => applyRemoteRoom(fila), { sala: () => room, miColor: () => myColor }); }
+        function subscribeRoom() {
+            vigilante = SalaJuego.suscribir(ROOM_ID, (fila) => applyRemoteRoom(fila), {
+                sala: () => room, miColor: () => myColor,
+                rapida: { jugar: jugarRapida, posicion: huellaCartas, enVuelo: () => jugadaEnVuelo },
+            });
+        }
 
         SalaJuego.montarRendirse({ salaId: ROOM_ID, sala: () => room, miColor: () => myColor, decir: setStatus, releer: releerSala });
 
@@ -279,6 +356,9 @@
                     onCardPlayed: () => { handleCardPlayed(); },
                     onPromotionNeeded: showPromotionPicker,
                     onAscensoPieceNeeded: showAscensoPicker,
+                    // Pre-jugadas: en el turno del rival se deja preparada la propia.
+                    premoves: !!myColor,
+                    onPremove: () => updateStatusText(),
                 }
             );
             // "Tu mano" no es cierto para quien mira: ahí no hay mano suya.

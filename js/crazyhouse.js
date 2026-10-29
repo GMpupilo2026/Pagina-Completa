@@ -65,7 +65,7 @@
                 setStatus("Estás mirando esta partida — solo pueden mover " + nameFor(room.white_id) + " y " + nameFor(room.black_id) + ".");
             } else {
                 myTurnNow = board.game.turn() === myColor;
-                setStatus(myTurnNow ? "Es tu turno." : "Esperando la jugada de " + nameFor(myColor === "w" ? room.black_id : room.white_id) + "…");
+                setStatus(myTurnNow ? "Es tu turno." : "Esperando la jugada de " + nameFor(myColor === "w" ? room.black_id : room.white_id) + "…" + (board.pre ? board.pre.texto() : ""));
             }
             if (window.TurnAlert) TurnAlert.check(myTurnNow);
         }
@@ -167,7 +167,21 @@
         // La posición de la jugada propia que se está guardando (ver handleLocalMove).
         let jugadaEnVuelo = null;
 
+        // El canal de la sala (SalaJuego.suscribir): jugada(), despuesDeGuardar(), refrescar().
+        let vigilante = null;
+
         async function handleLocalMove(info) {
+            // Primero que nada, la jugada a los que miran la sala (el canal rápido):
+            // el rival la ve sin esperar a que la base la guarde. Ver «La jugada
+            // viaja por Broadcast» en docs/decisiones/juegos-y-torneos.md.
+            jugadaEnVuelo = info.fen;
+            const envio = vigilante ? await vigilante.jugada({ san: info.san, despues: info.fen }) : { ok: true };
+            if (!envio.ok) {
+                // La jugada del rival sobre la que se jugó no quedó: se manda lo que diga la base.
+                jugadaEnVuelo = null;
+                await releerSala("Esa jugada no quedó guardada: la del rival no llegó a la base.");
+                return;
+            }
             const newMoves = (room.moves || []).concat([info.san]);
             const patch = { fen: info.fen, moves: newMoves, updated_at: new Date().toISOString() };
             if (room.initial_seconds != null) {
@@ -176,7 +190,7 @@
                 // Se "congela" su reloj: se le resta lo que pasó desde la última vez
                 // que arrancó a correr y se le suma el incremento tipo Fischer.
                 const storedKey = myColor === "w" ? "white_time_left" : "black_time_left";
-                const elapsed = room.clock_updated_at ? RelojServidor.desde(room.clock_updated_at) : 0;
+                const elapsed = SalaJuego.pensado(room, envio);
                 const remaining = Math.max(0, (room[storedKey] || 0) - elapsed) + (room.increment_seconds || 0);
                 patch[storedKey] = remaining;
                 patch.clock_updated_at = new Date().toISOString();
@@ -196,7 +210,6 @@
             // ya iba más adelante —otra pestaña de la misma cuenta, una jugada
             // repetida—, no la pisa. Se pide la fila de vuelta: el reloj queda con la
             // hora de la base, no con la de esta computadora.
-            jugadaEnVuelo = info.fen;
             let guardar = sb.from("game_rooms").update(patch).eq("id", ROOM_ID).eq("status", "playing");
             if (room.fen) guardar = guardar.eq("fen", room.fen);
             const { data: guardada, error } = await guardar.select("*");
@@ -215,6 +228,20 @@
             renderMoveHistory(room.moves);
             updateStatusText();
             renderClocks();
+            if (vigilante) vigilante.despuesDeGuardar();
+        }
+
+        /* La jugada del rival que llegó por el canal rápido (ver suscribir en
+           js/sala-juego.js), rehecha con el motor de Crazyhouse: una pieza del
+           tablero o una caída de la reserva («N@f3»), y tiene que dar la
+           posición que dice el aviso (también las reservas). */
+        function jugarRapida(sala, aviso) {
+            if (typeof aviso.san !== "string") return null;
+            const juego = new Crazyhouse.Game(sala.fen);
+            const caida = aviso.san.match(/^([NBRQ]?)@([a-h][1-8])$/);
+            const m = caida ? juego.drop((caida[1] || "p").toLowerCase(), caida[2]) : juego.move(aviso.san);
+            if (!m || juego.fen() !== aviso.despues) return null;
+            return { fen: juego.fen(), moves: (sala.moves || []).concat([m.san]) };
         }
 
         function applyRemoteRoom(row, forzarTablero) {
@@ -226,6 +253,9 @@
             updateStatusText();
             renderClocks();
             TorneoSync.onRoomUpdate(sb, row);
+            // La pre-jugada sale apenas es el turno propio (js/premovidas.js; si ya
+            // no es legal, se descarta y se dice).
+            if (row.status === "playing" && !jugadaEnVuelo) board.jugarPremovida();
         }
 
         // Vuelve a leer la sala de la base y la aplica como un cambio remoto, forzando
@@ -233,11 +263,20 @@
         // ve en pantalla ya no es lo que hay en la base.
         async function releerSala(mensaje) {
             const fila = await SalaJuego.releer(ROOM_ID);
-            if (fila) applyRemoteRoom(fila, true);
+            // Si mientras se leía ya salió otra jugada propia, lo leído es viejo:
+            // recargar el tablero la borraría de la pantalla mientras se guarda, y
+            // la jugada siguiente saldría de una posición que la sala no tiene.
+            // Esa jugada, al terminar de guardarse (o al fallar), deja todo al día.
+            if (fila && !jugadaEnVuelo) applyRemoteRoom(fila, true);
             if (mensaje) setStatus(mensaje);
         }
 
-        function subscribeRoom() { SalaJuego.suscribir(ROOM_ID, (fila) => applyRemoteRoom(fila), { sala: () => room, miColor: () => myColor }); }
+        function subscribeRoom() {
+            vigilante = SalaJuego.suscribir(ROOM_ID, (fila) => applyRemoteRoom(fila), {
+                sala: () => room, miColor: () => myColor,
+                rapida: { jugar: jugarRapida, enVuelo: () => !!jugadaEnVuelo },
+            });
+        }
 
         SalaJuego.montarRendirse({ salaId: ROOM_ID, sala: () => room, miColor: () => myColor, decir: setStatus, releer: releerSala });
 
@@ -289,6 +328,9 @@
                     myColor: myColor || "w",
                     onMove: handleLocalMove,
                     onPromotionNeeded: showPromotionPicker,
+                    // Pre-jugadas: en el turno del rival se deja preparada la propia.
+                    premoves: !!myColor,
+                    onPremove: () => updateStatusText(),
                 }
             );
             board.loadFen(room.fen);

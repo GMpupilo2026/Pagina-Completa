@@ -32,6 +32,7 @@
     const partidas = new Map(); // «m3» o «solo» → { juego, blancas, negras, t, mesa, ronda }
     let torneoId = null, torneoDatos = null;
     let elegida = null;         // la que se ve en grande; null = la cuadrícula
+    let abrirMesa = null;       // «m3»: la que pide el enlace (&m=3, el de un alumno en una simultánea)
     let paso = null;            // la jugada que se repasa; null = en vivo
     let proyectando = false, pagina = 0;
     const POR_PAGINA = 6, ROTAR_MS = 15000;
@@ -54,7 +55,7 @@
         if (r) r.mesas.forEach((m) => lista.push({ clave: P.clave(m), mesa: m.mesa, tablero: m.tablero, blancas: m.blancas, negras: m.negras, ronda: r.ronda,
             equipos: m.equipoBlancas ? m.equipoBlancas + " – " + m.equipoNegras : "" }));
         for (const [clave, x] of partidas) {
-            if (x.mesa && !lista.some((m) => m.clave === clave)) lista.push({ clave, mesa: x.mesa, tablero: x.tablero, blancas: x.blancas, negras: x.negras, ronda: x.ronda });
+            if (x.mesa && !lista.some((m) => m.clave === clave)) lista.push({ clave, mesa: x.mesa, tablero: x.tablero, simul: x.simul, blancas: x.blancas, negras: x.negras, ronda: x.ronda });
         }
         return lista.sort((a, b) => a.mesa - b.mesa || (a.tablero || 0) - (b.tablero || 0));
     }
@@ -96,6 +97,7 @@
         $("ultima").textContent = texto;
         relojTurno();
         pintarGuardar(x);
+        pintarMomentos(x);
         // Al lector de pantalla, solo cuando cambia de verdad.
         if (texto !== ultimaDicha) { $("anuncio").textContent = texto; ultimaDicha = texto; }
     }
@@ -163,6 +165,7 @@
     }
 
     function pintar() {
+        pintarSolas();
         const cuadricula = enTorneo() && !elegida;
         $("mesas").hidden = !cuadricula;
         if (cuadricula) { $("partida").hidden = true; $("volver").hidden = true; $("mesa-titulo").hidden = true; pintarCuadricula(); }
@@ -188,7 +191,9 @@
         const clave = d.mesa ? P.clave(d) : "solo";
         const nueva = !antes;
         partidas.set(clave, d);
+        guardarSola(d);
         if (!d.mesa) elegida = "solo";
+        if (abrirMesa && clave === abrirMesa && !elegida) { elegida = clave; abrirMesa = null; pintar(); }
         $("esperando").hidden = true;
         estadoConexion("● En vivo", "vivo");
         $("retraso-aviso").textContent = d.retraso ? "Con " + d.retraso + " minutos de retraso" : "";
@@ -205,10 +210,21 @@
     function relojTurno() {
         const x = partidas.get(elegida);
         const e = $("reloj-turno");
+        relojPartida(x);
         if (!x || $("partida").hidden || x.resultado || x.juego.game_over() || x.espera === null) { e.textContent = ""; return; }
         e.textContent = "Piensan " + (x.juego.turn() === "w" ? "las blancas" : "las negras") + ": " + P.reloj(x.espera + Date.now() - x.recibido);
     }
     setInterval(relojTurno, 1000);
+    /* El reloj de ajedrez, si quien transmite lo usa: lo que le quedaba a
+     * cada uno al mandarlo, menos lo que pasó desde que llegó al que corre. */
+    function relojPartida(x) {
+        const e = $("reloj-partida"), r = x && x.reloj;
+        e.hidden = !r || $("partida").hidden;
+        if (e.hidden) return;
+        const corre = x.resultado ? null : r.corre, gasto = corre ? Date.now() - x.recibido : 0;
+        const t = (c) => P.reloj(Math.ceil(Math.max(0, r[c] - (c === corre ? gasto : 0)) / 1000) * 1000) + (c === corre ? " (corre)" : "");
+        e.textContent = "⏱ Blancas " + t("w") + " · Negras " + t("b");
+    }
 
     /* La evaluación de Stockfish, si se pide: de la posición que se ve. */
     const evals = new Map();
@@ -242,6 +258,80 @@
         }
         evals.get(fen).then(pintarEval, () => pintarEval(null));
     }
+
+    /* Los momentos clave, cuando la partida terminó: Stockfish revisa cada
+     * posición en este aparato (profundidad 10) y las jugadas que perdieron
+     * 2 peones o más se eligen con la misma regla de «Tus propios errores»
+     * (ErroresPropios.detectar, de los dos lados): hasta tres. Se pide con
+     * un botón (es trabajo para el celular) y se arma una vez por partida. */
+    let momentos = null; // { id, lista, fens, mejores }
+    const idMomentos = (x) => elegida + ":" + x.juego.history().join(" ");
+    function pintarMomentos(x) {
+        const termino = !!x && (!!x.resultado || x.juego.game_over()) && x.juego.history().length >= 6;
+        $("momentos").hidden = !termino;
+        if (!termino) return;
+        if (momentos && momentos.id !== idMomentos(x)) momentos = null;
+        $("btn-momentos").hidden = !!momentos;
+        if (!momentos) { $("momentos-msg").textContent = ""; $("momentos-lista").textContent = ""; }
+    }
+    async function buscarMomentos() {
+        const x = partidas.get(elegida);
+        if (!x) return;
+        const id = idMomentos(x);
+        momentos = { id, lista: null };
+        $("btn-momentos").hidden = true;
+        const msg = $("momentos-msg");
+        msg.textContent = "Cargando Stockfish…";
+        try {
+            if (!cargaMotor) cargaMotor = cargar("js/shared-engine.js").then(() => cargar("js/preparacion-motor.js"));
+            await Promise.all([cargaMotor, window.ErroresPropios ? null : cargar("js/errores-propios.js")]);
+            const j = P.hasta(x.juego, 0), hist = x.juego.history();
+            const fens = [j.fen()];
+            hist.forEach((s) => { j.move(s); fens.push(j.fen()); });
+            const evalsCp = [], mejores = [];
+            for (let i = 0; i < fens.length; i++) {
+                if (!momentos || momentos.id !== id) return; // eligió otra partida
+                msg.textContent = "Stockfish revisa la posición " + (i + 1) + " de " + fens.length + "…";
+                const r = await window.PreparacionMotor.evaluar(fens[i], 10);
+                evalsCp.push(r && r.eval != null ? r.eval * 100 : null);
+                mejores.push(r ? r.mejor : null);
+            }
+            const E = window.ErroresPropios, turno0 = fens[0].split(" ")[1];
+            const lista = E.detectar(evalsCp, "w", turno0).concat(E.detectar(evalsCp, "b", turno0))
+                .sort((a, b) => b.perdida - a.perdida).slice(0, 3).sort((a, b) => a.ply - b.ply);
+            if (!momentos || momentos.id !== id) return;
+            momentos.lista = lista;
+            pintarListaMomentos(x, lista, fens, mejores);
+        } catch (e) {
+            msg.textContent = "Stockfish no se pudo cargar en este aparato. Prueba de nuevo más tarde.";
+            momentos = null;
+            $("btn-momentos").hidden = false;
+        }
+    }
+    function pintarListaMomentos(x, lista, fens, mejores) {
+        const msg = $("momentos-msg"), caja = $("momentos-lista");
+        caja.textContent = "";
+        const es = (s) => (window.ComandosTablero ? window.ComandosTablero.jugadaParaMostrar(s) : s);
+        const peones = (cp) => (Math.abs(cp) >= 1000 ? (cp > 0 ? "ganada" : "perdida") : (cp >= 0 ? "+" : "−") + (Math.abs(cp) / 100).toFixed(1).replace(".", ","));
+        msg.textContent = lista.length ? "Stockfish encontró " + (lista.length === 1 ? "un momento clave" : lista.length + " momentos clave") + "."
+            : "Ninguna jugada perdió 2 peones o más: para Stockfish fue una partida sin errores grandes.";
+        const hist = x.juego.history();
+        for (const m of lista) {
+            const f = fens[m.ply].split(" "), blancas = f[1] === "w";
+            const quien = blancas ? "las blancas" : "las negras";
+            const mejor = mejores[m.ply] && mejores[m.ply] !== hist[m.ply].replace(/[+#]$/, "") ? " Mejor era " + es(mejores[m.ply]) + "." : "";
+            const li = document.createElement("li");
+            const b = document.createElement("button");
+            b.type = "button";
+            b.dataset.ply = String(m.ply);
+            b.className = "text-left w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm text-brand-800 dark:text-brand-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 hover:ring-2 hover:ring-accent-400";
+            b.textContent = f[5] + (blancas ? ". " : "... ") + es(hist[m.ply]) + ": " + quien + " estaban en " + peones(m.antes) + " y quedaron en " + peones(m.despues) + " (contado desde " + quien + ")." + mejor;
+            b.addEventListener("click", () => { paso = m.ply + 1; pintarGrande(); $("tablero").scrollIntoView({ block: "nearest" }); });
+            li.append(b);
+            caja.append(li);
+        }
+    }
+    $("btn-momentos").addEventListener("click", buscarMomentos);
 
     async function leerTorneo() {
         if (!torneoId) return;
@@ -284,7 +374,8 @@
         const partes = decodeURIComponent(location.hash.replace(/^#/, "")).trim().toLowerCase().split("&");
         const c = partes[0];
         const t = partes.map((x) => /^t=/.test(x) ? P.torneoDe(x) : null).find(Boolean) || null;
-        if (P.codigoValido(c)) { conectar(c, t); return; }
+        const m = partes.map((x) => /^m=([1-9][0-9]?)$/.exec(x)).find(Boolean);
+        if (P.codigoValido(c)) { conectar(c, t); abrirMesa = m ? "m" + m[1] : null; return; }
         $("visor").hidden = true;
         $("pedir-codigo").hidden = false;
         if (c) $("codigo-error").textContent = "Ese código no es válido: son 8 letras y números, como aparecen en el celular que transmite.";
@@ -348,6 +439,36 @@
         $("girar").setAttribute("aria-pressed", String(girado));
         pintar();
     });
+    /* Todas las partidas que se están viendo (las de la cuadrícula), en un
+     * solo PGN para bajar: cada una con su torneo, su ronda, su mesa (o
+     * tablero), los nombres, la fecha de hoy en Costa Rica y el resultado, y
+     * el tiempo de cada jugada si se sabe. Lo que se baja es lo que ya llegó:
+     * con retraso, hasta donde se ve. */
+    const RESULTADO_PGN = { "1-0": "1-0", "=": "1/2-1/2", "0-1": "0-1" };
+    function pgnDeTodas() {
+        const lista = [...partidas.entries()].filter(([, x]) => x.mesa && x.juego.history().length)
+            .sort((a, b) => a[1].mesa - b[1].mesa || (a[1].tablero || 0) - (b[1].tablero || 0));
+        const limpio = (s) => String(s || "").replace(/["\\\n\r]/g, "");
+        const fecha = HoraCR.hoy().replace(/-/g, ".");
+        return lista.map(([, x]) => {
+            const r = RESULTADO_PGN[x.resultado] || "*";
+            const cab = [["Event", (torneoDatos && torneoDatos.nombre) || "Partidas en vivo"], ["Site", "Ajedrez Integral"], ["Date", fecha],
+                ["Round", x.ronda || "-"], ["Board", P.lugar(x)], ["White", x.blancas || "?"], ["Black", x.negras || "?"], ["Result", r]];
+            const jugadas = P.pgn(x.juego, x.resultado, x.tiempos).split(/\n\n/).pop();
+            return cab.map(([k, v]) => "[" + k + ' "' + limpio(v) + '"]').join("\n") + "\n\n" + jugadas;
+        });
+    }
+    $("btn-pgn-todas").addEventListener("click", () => {
+        const todas = pgnDeTodas();
+        if (!todas.length) return;
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(new Blob([todas.join("\n\n") + "\n"], { type: "application/x-chess-pgn" }));
+        const nombre = ((torneoDatos && torneoDatos.nombre) || "partidas").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+        a.download = nombre + "-" + HoraCR.hoy() + ".pgn";
+        document.body.append(a); a.click(); a.remove();
+        setTimeout(() => URL.revokeObjectURL(a.href), 10000);
+    });
+
     $("copiar").addEventListener("click", async () => {
         const x = partidas.get(elegida);
         if (!x) return;
@@ -376,6 +497,9 @@
         $("btn-guardar").textContent = ya ? "Ya está en tu cuenta" : "Guardar en mi cuenta";
         $("guardar-blancas").textContent = "Con blancas" + (x.blancas ? " (" + x.blancas + ")" : "");
         $("guardar-negras").textContent = "Con negras" + (x.negras ? " (" + x.negras + ")" : "");
+        // «Guardar solas» solo tiene sentido en un torneo, donde las partidas traen los nombres.
+        $("guardar-solas-caja").hidden = !(x.torneo && (x.blancas || x.negras));
+        pintarSolas();
         if (guardando !== elegida) { $("form-guardar").hidden = true; $("btn-guardar").setAttribute("aria-expanded", "false"); }
     }
     $("btn-guardar").addEventListener("click", async () => {
@@ -417,11 +541,57 @@
             return;
         }
         try { localStorage.setItem(GUARDADAS, JSON.stringify(guardadas().concat(claveGuardada(x)).slice(-200))); } catch (er) { /* sin almacenamiento */ }
+        const nombre = color === "w" ? x.blancas : x.negras;
+        if ($("guardar-solas").checked && x.torneo && nombre) {
+            try { localStorage.setItem(SOLAS, JSON.stringify({ torneo: x.torneo, nombre, evento: fila.evento })); } catch (er) { /* sin almacenamiento */ }
+            pintarSolas();
+        }
         $("form-guardar").hidden = true;
         $("btn-guardar").setAttribute("aria-expanded", "false");
         msg.textContent = "Listo: está en tu libreta de torneos (" + jugadas.length + " medias jugadas). En «Tus propios errores» el motor te dice dónde se pudo mejorar.";
         pintarGuardar(x);
         $("btn-guardar").focus();
+    });
+
+    /* «Guardar solas»: quien guardó una partida de un torneo y marcó la
+     * casilla no tiene que volver a hacerlo. Cada partida de ESE torneo en
+     * la que juega alguien con ESE nombre se guarda sola en su cuenta cuando
+     * termina (con su resultado y desde 10 medias jugadas, como pide la base),
+     * con el color que le tocó. Solo mientras esta página esté abierta, en
+     * este aparato, y nunca dos veces la misma (`vivo_guardadas_v1`). */
+    const SOLAS = "vivo_guardar_solas_v1";
+    function solas() { try { return JSON.parse(localStorage.getItem(SOLAS) || "null"); } catch (e) { return null; } }
+    function pintarSolas() {
+        const s = solas();
+        $("solas-caja").hidden = !(s && torneoId && s.torneo === torneoId);
+        if (!$("solas-caja").hidden) $("solas-texto").textContent = "Las partidas de «" + s.nombre + "» en este torneo se guardan solas en tu cuenta cuando terminan.";
+    }
+    const guardandoSola = new Set();
+    async function guardarSola(x) {
+        const s = solas();
+        if (!s || !x || !x.torneo || x.torneo !== s.torneo || !x.resultado || x.juego.history().length < 10) return;
+        const color = x.blancas === s.nombre ? "w" : x.negras === s.nombre ? "b" : null;
+        const k = claveGuardada(x);
+        if (!color || guardadas().includes(k) || guardandoSola.has(k)) return;
+        guardandoSola.add(k);
+        try {
+            const { data } = await window.sb.auth.getSession();
+            if (!data || !data.session) { $("solas-msg").textContent = "Para que se guarden solas, entra a tu cuenta en este aparato."; return; }
+            const fila = { fecha: window.HoraCR.hoy(), color, jugadas: x.juego.history(), ronda: x.ronda || null,
+                resultado: RESULTADO_BASE[x.resultado] || "*", evento: s.evento || (torneoDatos && torneoDatos.nombre) || null };
+            const { error } = await window.sb.from("partidas_torneo").insert(fila);
+            if (error) throw error;
+            try { localStorage.setItem(GUARDADAS, JSON.stringify(guardadas().concat(k).slice(-200))); } catch (er) { /* sin almacenamiento */ }
+            $("solas-msg").textContent = "Se guardó sola en tu cuenta: " + P.lugar(x) + (x.ronda ? ", ronda " + x.ronda : "") + " (" + fila.resultado + ").";
+            if (elegida && partidas.get(elegida) === x) pintarGuardar(x);
+        } catch (e) {
+            $("solas-msg").textContent = "No se pudo guardar sola la partida de " + P.lugar(x) + ". Ábrela y usa «Guardar en mi cuenta».";
+        } finally { guardandoSola.delete(k); }
+    }
+    $("btn-solas-dejar").addEventListener("click", () => {
+        try { localStorage.removeItem(SOLAS); } catch (e) { /* nada guardado */ }
+        $("solas-msg").textContent = "";
+        pintarSolas();
     });
 
     desdeLaDireccion();

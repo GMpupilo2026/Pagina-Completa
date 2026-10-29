@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20261029031824
+# al-dia-con: 20261029130652
 tabla  Ejercicios Lichess  rls=true
 tabla  _foto_rls_tmp  rls=false
 tabla  _pedidos_elo  rls=false
@@ -2986,6 +2986,9 @@ politica  questions  verificacion_en_dos_pasos  ALL  restrictiva
 politica  quiniela_participantes  quiniela_participantes_admin  SELECT
 politica  quiniela_partidas  quiniela_partidas_admin  SELECT
 politica  quiniela_pronosticos  quiniela_pronosticos_admin  SELECT
+politica  realtime.messages  sala_juego_avisar  INSERT
+politica  realtime.messages  sala_juego_escuchar  SELECT
+politica  realtime.messages  verificacion_en_dos_pasos  ALL  restrictiva
 politica  recibos  recibos_select  SELECT
 politica  relevo_jugadores  relevo_jugadores_lee  SELECT
 politica  relevo_jugadores  verificacion_en_dos_pasos  ALL  restrictiva
