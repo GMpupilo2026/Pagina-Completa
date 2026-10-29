@@ -3222,7 +3222,7 @@
     canal.on("broadcast", { event: "alerta" }, (msg) => alertaDeCamara(msg.payload || {}));
     canal.on("broadcast", { event: "foto" }, (msg) => fotoDeCamara(msg.payload || {}));
     canal.subscribe((st) => { if (st === "SUBSCRIBED") canal.send({ type: "broadcast", event: "pedir", payload: {} }); });
-    estado.camaras = { idTorneo: estado.id, codigo: c, canal, mesas: new Map(), alertas: new Map(), partidas: new Map(), pedidas: new Map(), fotos: new Map() };
+    estado.camaras = { idTorneo: estado.id, codigo: c, canal, mesas: new Map(), alertas: new Map(), partidas: new Map(), pedidas: new Map(), fotos: new Map(), desde: new Map(), cuenta: new Map() };
     return true;
   }
   function desconectarCamaras() {
@@ -3274,6 +3274,7 @@
     const clave = claveCamara(d.mesa, d.tablero);
     c.partidas.set(clave, d);
     c.mesas.set(clave, Date.now());
+    if (!c.desde.has(clave)) c.desde.set(clave, Date.now());
     let cambio = false, repintar = false, aviso = null;
     // La partida: la de la cámara, salvo que la mesa tenga una escrita a mano.
     const pgn = d.juego.history().length ? window.PartidaEnVivo.pgn(d.juego, d.resultado, d.tiempos) : "";
@@ -3323,6 +3324,10 @@
     const antes = estado.camaras.alertas.get(k);
     if (antes && Date.now() - antes.h < 30000) return;
     estado.camaras.alertas.set(k, { h: Date.now(), tipo, m: clave });
+    // Para el informe: «Visto» quita el aviso de la lista, pero no de la cuenta.
+    const cu = estado.camaras.cuenta.get(clave) || { ilegal: 0, tablas: 0 };
+    cu[tipo === "ilegal" ? tipo : "tablas"]++;
+    estado.camaras.cuenta.set(clave, cu);
     Avisos.avisar(tx(TIPOS_ALERTA[tipo], { m: verLugar(clave) }), { tipo: { ilegal: "error" }[tipo] || "info" });
     pintarCamaras();
   }
@@ -3381,6 +3386,38 @@
   }
   const botonFoto = (f) => el("button", { type: "button", class: C.mini, "data-foto": "1", onclick: () => verFoto(f, () => fotoAIncidencias(f)) },
     el("span", { "aria-hidden": "true", texto: "📷 " }), tx("fotoVer"));
+
+  // El informe de las cámaras de la ronda: desde y hasta cuándo transmitió
+  // cada mesa, cuántas jugadas anotó sola y cuántas se escribieron a mano en
+  // la cámara, sus avisos y su resultado. Sirve para ver qué mesa necesita
+  // mejor luz o mejor ángulo. Sale de lo que llegó a esta pestaña (no se
+  // guarda en el torneo).
+  function informeCamaras() {
+    const c = estado.camaras;
+    const claves = [...c.partidas.keys()].sort(ordenLugar);
+    if (!claves.length) return null;
+    const avisos = (k, cual) => (c.cuenta.get(k) || {})[cual] || 0;
+    const filas = claves.map((k) => {
+      const d = c.partidas.get(k), n = d.juego.history().length, mano = Math.min(d.mano || 0, n);
+      return el("tr", { "data-informe": k },
+        el("td", { class: "py-1 pr-3 font-semibold", texto: verLugar(k) }),
+        el("td", { class: "py-1 pr-3", texto: horaCR(c.desde.get(k)) + " – " + horaCR(c.mesas.get(k)) }),
+        el("td", { class: "py-1 pr-3", texto: String(n - mano) }),
+        el("td", { class: "py-1 pr-3", texto: String(mano) }),
+        el("td", { class: "py-1 pr-3", texto: String(avisos(k, "ilegal")) }),
+        el("td", { class: "py-1 pr-3", texto: String(avisos(k, "tablas")) }),
+        el("td", { class: "py-1", texto: d.resultado ? tx("corto_" + d.resultado) : "—" }));
+    });
+    const th = (clave) => el("th", { scope: "col", class: "py-1 pr-3 text-left font-semibold", texto: tx(clave) });
+    // Se vuelve a pintar con cada jugada que llega: si estaba abierto, sigue abierto.
+    const abierto = !!(document.getElementById("pi-camaras-informe") || {}).open;
+    return el("details", { id: "pi-camaras-informe", class: "mt-2", open: abierto },
+      el("summary", { class: "text-sm font-semibold cursor-pointer", texto: tx("camarasInforme") }),
+      el("p", { class: C.nota, texto: tx("camarasInformeTexto") }),
+      el("div", { class: "overflow-x-auto" }, el("table", { class: "text-sm mt-1" },
+        el("thead", {}, el("tr", {}, th("camarasInfLugar"), th("camarasInfHoras"), th("camarasInfSolas"), th("camarasInfMano"), th("camarasInfIlegal"), th("camarasInfTablas"), th("camarasInfResultado"))),
+        el("tbody", {}, filas))));
+  }
 
   // ---------- Transmitir a Lichess ----------
   // Las partidas de las mesas de la ronda en juego (las de las cámaras y las
@@ -3523,7 +3560,8 @@
     caja.replaceChildren(el("h3", { class: "font-semibold" }, el("span", { "aria-hidden": "true", texto: "🎥 " }), tx("camarasCajaTitulo")),
       el("p", { class: C.nota, texto: tx("camarasCajaTexto", { c: v.camaras.codigo }) }),
       el("p", { id: "pi-camaras-mesas", class: "text-sm mt-1", texto: mesas.length ? tx("camarasMesas", { m: mesas.join(", ") }) : tx("camarasNinguna") }),
-      listaAlertas, estado.camaras && estado.camaras.idTorneo === estado.id ? pintarLichess(v) : null, el("div", { class: "mt-2" }, dejar));
+      listaAlertas, estado.camaras && estado.camaras.idTorneo === estado.id ? informeCamaras() : null,
+      estado.camaras && estado.camaras.idTorneo === estado.id ? pintarLichess(v) : null, el("div", { class: "mt-2" }, dejar));
   }
 
   // ---------- El chat con los adjuntos y sus llamadas ----------

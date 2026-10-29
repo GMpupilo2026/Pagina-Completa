@@ -619,6 +619,11 @@ async function esperarJugadas(p, n) {
       const antes = V.reglaDeTablas(m); m.move("Ng1");
       return [r.map((x, i) => x && i + 1 + ":" + x).filter(Boolean), r2, V.reglaDeTablas(l), antes, V.reglaDeTablas(m)];
     }), [["8:repeticion3", "9:repeticion3", "10:repeticion3", "11:repeticion3", "16:repeticion5"], [null, "jugadas50", null], "jugadas75", null, "repeticion3"]);
+    igual("cuántas jugadas se escribieron a mano viaja con la partida (para el informe de Pareo)", await p2.page.evaluate(() => {
+      const V = window.PartidaEnVivo, j = new window.Chess(); j.move("e4"); j.move("e5");
+      const p = V.estado(j, {}, null, null, { mano: 1, id: "x-0" }), q = V.loNuevo("x-0", j, 1, null, null, { mano: 2 });
+      return [p.mano, V.leer(p).mano, q.mano, V.estado(j, {}, null, null, {}).mano];
+    }), [1, 1, 2, undefined]);
     await cerrar(p2);
   }
 

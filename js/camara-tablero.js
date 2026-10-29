@@ -56,6 +56,7 @@
             inicio: Date.now(), horas: [], horaResultado: null,
             confirmadas: new Set(), // las coronaciones ya elegidas (por su índice en la historia)
             fotos: [], // las del tablero con cada resultado y cada aviso (ver tomarFoto)
+            mano: 0,   // cuántas jugadas se escribieron a mano (va al informe de las cámaras de Pareo)
         };
     }
     let tableros = [nuevoTablero(0)];
@@ -478,7 +479,7 @@
             return;
         }
         t.juego = new window.Chess();
-        t.resultadoMano = null; t.confirmadas = new Set();
+        t.resultadoMano = null; t.confirmadas = new Set(); t.mano = 0;
         t.inicio = Date.now(); t.horas = []; t.horaResultado = null;
         if (torneo) { t.ronda = ultimaRonda(); pintarTorneo(); } // la partida nueva es de la ronda de ahora
         partidaCambio(t);
@@ -844,7 +845,7 @@
         const id = idPartida(t), nombres = nombresDe(t), donde = dondeDe(t);
         const clave = JSON.stringify([id, nombres, donde, retraso]);
         const hist = v.juego.history(), e = t.enviado;
-        const extra = { tiempos: tiemposDe(t).slice(0, v.n), espera: v.espera, retraso, id };
+        const extra = { tiempos: tiemposDe(t).slice(0, v.n), espera: v.espera, retraso, id, mano: t.mano };
         const sigue = !entera && e && e.clave === clave && e.cuenta < 20 && v.n >= e.n && hist.slice(0, e.n).join(" ") === e.jugadas;
         const payload = sigue ? V.loNuevo(id, v.juego, e.n, donde, v.resultado, extra) : V.estado(v.juego, nombres, donde, v.resultado, extra);
         t.enviado = { clave, n: v.n, resultado: v.resultado, jugadas: hist.join(" "), cuenta: sigue ? e.cuenta + 1 : 0 };
@@ -1422,6 +1423,7 @@
         const m = window.ComandosTablero && window.ComandosTablero.jugadaEscrita(t.juego, texto);
         if (!m) { avisar(cual(t) + "«" + texto.trim() + "» no es una jugada legal en esta partida. " + V.comoVa(t.juego), "error"); return; }
         $("jugada-mano").value = "";
+        t.mano++;
         anotar(t, [m.san]);
         if (m.promotion) { t.confirmadas.add(t.juego.history().length - 1); pintarCoronacion(); } // la escribió: ya dijo cuál
         // Lo que la cámara ve ahora ya es esta jugada: no se vuelve a buscar.
