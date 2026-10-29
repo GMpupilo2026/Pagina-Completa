@@ -10474,11 +10474,21 @@ formularios de Lichess) en `js/pareo/dgt.js`.
   chess-results escribe ahí un `<td & colsp & class="CRc">` roto, que el
   lector aguanta. La ronda, la fecha y la hora salen del `<h3>` («3. Ronda el
   2026/09/27 a las 11:00am»: el número va ANTES de «Ronda»).
-- **Lichess, desde el navegador, con el token de quien organiza.** La API de
-  transmisiones manda `Access-Control-Allow-Origin: *` y `lichess.org` ya
-  estaba en `connect-src`. El token (permiso `study:write`, con un enlace que
-  lo crea ya con ese permiso) **nunca va a Ajedrez Integral**: queda en
-  `sessionStorage`, o en `localStorage` si se pide recordarlo. Con él, «Crear
+- **Lichess, con el token de quien organiza.** El token (permiso
+  `study:write`, con un enlace que lo crea ya con ese permiso) queda en
+  `sessionStorage`, o en `localStorage` si se pide recordarlo. **Lo que está
+  bajo `/api/` va directo del navegador** (la cuenta, `/api/account`, y
+  empujar el pareo): esas direcciones contestan la consulta previa de CORS
+  con `Access-Control-Allow-Origin: *`, y `lichess.org` ya estaba en
+  `connect-src`. **Crear el torneo y la ronda no**: `/broadcast/new` y
+  `/broadcast/{id}/new` no tienen versión `/api/` (da 404) y su `OPTIONS` da
+  403, así que el navegador corta el pedido con «Failed to fetch» sin
+  llegar a Lichess. Así falló la primera prueba de verdad, el 29/10, con los
+  cuatro torneos del Festival Centroamericano; el doble de Lichess del
+  verificador contestaba a todo y no lo mostró. Esas dos las hace la Edge
+  Function (`accion: "lichess"`): recibe el token, lo usa para ese pedido y
+  **no lo guarda ni lo anota**; solo esas dos rutas, solo a `lichess.org` y
+  solo con licencia. Lo dicen la página y la política de privacidad. Con él, «Crear
   los torneos en Lichess» crea uno por torneo (`/broadcast/new`: nombre de
   chess-results, ritmo, zona de Costa Rica y la clasificación en
   chess-results), y cada ronda nueva se crea (`/broadcast/{id}/new`, con la
