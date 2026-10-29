@@ -103,7 +103,10 @@
             <section id="mesas" hidden aria-labelledby="torneo-titulo" class="mb-6">
                 <div class="flex flex-wrap items-center justify-between gap-3 mb-3">
                     <h2 id="torneo-titulo" class="font-serif text-2xl font-bold text-brand-800 dark:text-white"></h2>
-                    <button id="btn-proyectar" type="button" aria-pressed="false" class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-3 py-2 rounded-lg text-sm disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true">📽️</span> <span id="btn-proyectar-texto">Proyectar en la sala</span></button>
+                    <div class="flex flex-wrap gap-2">
+                        <button id="btn-proyectar" type="button" aria-pressed="false" class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-3 py-2 rounded-lg text-sm disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true">📽️</span> <span id="btn-proyectar-texto">Proyectar en la sala</span></button>
+                        <button id="btn-pgn-todas" type="button" class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-3 py-2 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Bajar todas las partidas (PGN)</button>
+                    </div>
                 </div>
                 <p id="proyector-pagina" hidden class="text-lg font-semibold mb-3"></p>
                 <div id="mesas-lista" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4"></div>
@@ -148,6 +151,13 @@
                             <button id="copiar" type="button" class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-3 py-2 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Copiar el PGN</button>
                             <p id="copiar-msg" role="status" class="text-sm text-brand-600 dark:text-brand-300"></p>
                         </div>
+                    </section>
+                    <section id="momentos" hidden class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-4" aria-labelledby="t-momentos">
+                        <h2 id="t-momentos" class="font-serif text-lg font-bold text-brand-800 dark:text-white">Los momentos clave</h2>
+                        <p class="text-sm text-brand-600 dark:text-brand-300 mt-1">La partida terminó. Stockfish la revisa en este aparato y dice las jugadas donde más cambió: hasta tres, de las que perdieron 2 peones o más. Toca una para verla en el tablero.</p>
+                        <button id="btn-momentos" type="button" class="mt-3 bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Ver los momentos clave</button>
+                        <p id="momentos-msg" role="status" class="text-sm text-brand-600 dark:text-brand-300 mt-2"></p>
+                        <ol id="momentos-lista" class="mt-2 space-y-2"></ol>
                     </section>
                     <section id="guardar-caja" hidden class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-4" aria-labelledby="t-guardar">
                         <h2 id="t-guardar" class="font-semibold text-brand-800 dark:text-white"><span aria-hidden="true">📒</span> ¿Es tu partida?</h2>

@@ -1571,7 +1571,9 @@ en **`admin.html#torneos`** (`js/admin-salas-torneo.js`). Migración
 - **Dos tipos de sala.** `lichess`: una transmisión de Lichess, que entra a la
   sala de cine (`transmision.html?torneo=<clave>`) y lleva el id de la
   transmisión. `enlaces`: cualquier otra (UTN va en idchess, que no tiene API
-  pública conocida), con uno a seis botones que la abren en otra pestaña. Las
+  pública conocida), con uno a cuarenta botones que la abren en otra pestaña
+  (eran seis; el Centroamericano lleva uno por torneo de chess-results, ver
+  «Un torneo por categoría», y la base y el editor tienen el mismo tope). Las
   de Lichess pueden llevar botones de más («Verlo directo en Lichess») y
   pizarras de chess-results (ver «Las posiciones oficiales vienen de
   chess-results»).
@@ -10651,6 +10653,123 @@ llega al canal sin casillas y el retraso con el reloj de la cámara
 adelantado) y `verificar-pareo-camaras.js` (los `[%emt]` y las alertas).
 Rotos a propósito, saltan.
 
+### La coronación, la luz, las tablas, las fotos y las simultáneas
+
+El cuarto pedido de mejoras del dueño («todas»). Lo de este paquete:
+
+- **La coronación.** La cámara solo ve «pieza blanca» en la casilla: anota
+  dama y pregunta con cuatro botones qué pieza puso. Si después la pieza
+  coronada se mueve como no puede una dama (un salto de caballo), ninguna
+  jugada explica lo que se ve, y se prueba con las otras piezas
+  (`LectorTablero.deducirCoronacion`): la que lo explique con una jugada de
+  esa pieza es la que se coronó, y se corrige sola. Cambiar la pieza vuelve
+  a jugar lo que siguió (`cambiarCoronacion`); si algo deja de ser legal (la
+  «dama» que se movió en diagonal no puede ser torre), no se cambia. Torre y
+  alfil no se deducen nunca (todo lo que hacen lo puede hacer una dama): se
+  eligen con los botones. Lo escrito a mano («e8=C») ya dice cuál.
+- **La luz que cambia.** Mientras se lee la partida sin nada raro, cada 15
+  segundos se vuelve a calibrar con la posición que se sabe y se mezcla con
+  la de antes (`mezclarCal`, peso 0,3): sigue al sol que se corre o a una
+  nube antes de que empiece a leer mal. Si de golpe varias casillas se leen
+  mal (prendieron la luz), antes de avisar una jugada ilegal se prueba con la
+  luz de ahora: **si con ella se lee la partida entera, 64 de 64, era la
+  luz**, se calibra y sigue («Cambió la luz…»). Una pieza que de verdad se
+  movió no calza con la partida y se sigue avisando.
+- **La triple repetición y las 50 jugadas** (`PartidaEnVivo.reglaDeTablas`):
+  se dicen justo en la jugada en que se cumplen (3 y 5 veces la misma
+  posición; 50 y 75 jugadas de cada uno sin captura ni peón). La casilla al
+  paso cuenta solo si la captura se puede hacer (art. 9.2.3): chess.js la
+  pone después de todo avance doble, y sin esto «1. c4» y la misma posición
+  más tarde no eran iguales. **Nada se marca solo**: 3 veces y 50 jugadas se
+  reclaman; 5 y 75 son tablas por las Leyes (art. 9.6), pero las confirma el
+  árbitro. En un torneo, el aviso le llega a Pareo con su `tipo`, aparte del
+  de la jugada ilegal (uno no tapa al otro), con el artículo.
+- **La foto del tablero**, con cada resultado y cada aviso: el tablero
+  **enderezado con la homografía**, visto desde arriba como un diagrama
+  (256 × 256, JPEG), así que no sale nadie alrededor. Queda en «Fotos del
+  tablero» de la cámara (las últimas 6, para bajarlas) y, en un torneo, le
+  llega a Pareo junto al aviso o al resultado para confirmar: «Ver foto» y
+  «Pasar a las incidencias», donde queda con su mesa (`incidencias[].foto`)
+  y se vuelve a ver. Pareo solo acepta un `data:image/jpeg` de menos de
+  120 000 caracteres, con un motivo conocido, del torneo y la ronda en juego.
+  **No se publica**: lo que va a `pareo_publicados` no lleva incidencias.
+- **«Enseñarle a la cámara»**, apagado por omisión. Encendido (si lo permite
+  quien organiza), con cada jugada anotada se guarda en el aparato
+  (IndexedDB, hasta 500) la foto enderezada con su posición: las 64 letras de
+  la lectura y el FEN. Se bajan en un .zip (`TablaExcel.zip`, el mismo de
+  Pareo) con `etiquetas.csv`, para entrenar un modelo con nuestros tableros
+  cuando con otra luz falle. No se manda nada a ningún lado.
+- **Las simultáneas**, sin torneo: en «Transmitir en vivo», «Una
+  simultánea». Cada cámara dice su número de tablero y todas usan el mismo
+  código (la primera lo crea). Lo que viaja lleva `{ simul: 1, mesa }`; quien
+  mira ve todos los tableros juntos («Tablero 1», «Tablero 2»…) y el enlace
+  de cada alumno (`#código&m=N`) abre el suyo en grande. Los avisos y las
+  fotos al árbitro siguen siendo solo de un torneo.
+- **Los momentos clave**, en `tablero-vivo.html`, cuando la partida
+  terminó: «Ver los momentos clave» la hace revisar por Stockfish en ese
+  aparato (profundidad 10, posición por posición) y muestra hasta tres
+  jugadas que perdieron 2 peones o más, con la mejor. Se eligen con la regla
+  de «Tus propios errores» (`ErroresPropios.detectar`, de los dos lados): una
+  sola copia de qué es un error. Va con un botón porque es trabajo para el
+  celular. Tocar una lleva el tablero a esa jugada.
+- **La cámara en la clase en vivo** la puede abrir también quien da clase
+  (`role = 'profesor'`); un alumno no (en un torneo entra por el QR). Ver «La
+  cámara en la clase en vivo» en `clase-en-vivo.md`.
+
+Lo prueban `verificar-camara-tablero.js` (la coronación preguntada y
+deducida, la luz de golpe y poco a poco, la repetición y su aviso, la foto
+enderezada —a5 con la torre que saltó, la fila 8 arriba—, «Enseñarle a la
+cámara» con su .zip, la simultánea con dos cámaras y dos que miran, y los
+momentos clave con un Stockfish de mentira), `verificar-pareo-camaras.js`
+(las tablas aparte de la jugada ilegal, la foto: cuál se acepta, «Ver foto»,
+«Pasar a las incidencias» y que no se publique) y `verificar-clase-camara.js`.
+Rotos a propósito, saltan.
+
+### Armar, entrenar en el tablero, el PGN de la ronda y el informe de las cámaras
+
+El quinto pedido de mejoras del dueño («si todas»):
+
+- **«¿Está bien armada?»**: lo que ve la cámara contra la posición que
+  debería haber (la de la partida, o la inicial), casilla por casilla y con
+  el nombre de la pieza: «Falta el caballo blanco en b1», «Sobra una pieza
+  blanca en e4», «En h2 hay una pieza negra y debería ser blanca (el peón)».
+  Sin calibrar, usa el giro de las esquinas que mejor explica esa posición
+  (`buscarGiro`, lo mismo que calibrar) sin quedarse con nada. La cámara solo
+  sabe color: «sobra una pieza blanca», nunca qué pieza sobra.
+- **Entrenar en el tablero de verdad** («Entrenar en tu tablero»): la cámara
+  lee la jugada de quien entrena y la del otro lado la dice la pantalla (y la
+  voz, con «Activar voz»), por ejemplo «El motor juega e5: mueve el peón
+  negro de e7 a e5». **La cámara espera a ver esa jugada en el tablero**
+  (`guion.esperando`); otra no se anota. Contra el motor: Stockfish en el
+  aparato (`preparacion-motor.js`), con blancas o negras y profundidad 1, 5 o
+  12. Un ejercicio: de los bancos ya comprobados del Entrenamiento
+  (`entreno/data/mates.json` y `tactica.json`; ninguna posición se inventa):
+  se arma con la misma comprobación, se juega la solución, una jugada
+  equivocada se vuelve a su lugar (la cámara espera a verla de vuelta) y la
+  respuesta del rival la pone quien entrena. Un mate vale aunque sea otro.
+- **Las jugadas en voz** en `tablero-vivo.html` ya funcionaban: «Activar
+  voz» del encabezado (`js/voz-pagina.js`) lee `#anuncio`. Ahora lo comprueba
+  el verificador (rompiendo la región viva, salta).
+- **«Bajar todas las partidas (PGN)»** en la cuadrícula de quien mira: las
+  mesas (o tableros de la simultánea) en un solo PGN, cada una con su torneo,
+  ronda, mesa (`Board`), nombres, la fecha de hoy en Costa Rica, resultado y
+  `[%emt]` si se sabe; lo que ya llegó, con retraso hasta donde se ve.
+- **El informe de las cámaras de la ronda** en Pareo: por mesa, desde y
+  hasta cuándo transmitió, cuántas jugadas anotó sola y cuántas se
+  escribieron a mano en la cámara (la cámara lo manda en `mano`), sus
+  posibles ilegales y avisos de tablas (contados aparte: «Visto» quita el
+  aviso de la lista, no de la cuenta) y el resultado. Sale de lo que llegó a
+  esa pestaña; no se guarda en el torneo.
+- **Reconocer qué pieza es** (y no solo su color) queda para cuando haya
+  fotos: hace falta entrenar un modelo con unas cuantas centenas de fotos
+  etiquetadas de nuestros tableros, que es lo que junta «Enseñarle a la
+  cámara».
+
+Lo prueban `verificar-camara-tablero.js` (el armado, mal y bien, sin
+calibrar y calibrada; el motor de mentira con la jugada que no es; el mate en
+2 del banco con una equivocada que vuelve; la voz; el PGN de la simultánea) y
+`verificar-pareo-camaras.js` (el informe). Rotos a propósito, saltan.
+
 ## Pareo para DGT
 
 Un torneo presencial con tableros electrónicos DGT: el árbitro sube cada ronda
@@ -10804,3 +10923,65 @@ el portapapeles de verdad, que una revisión no cierre la tarjeta ni le quite el
 foco al botón, y que una lectura sin ficha no borre la anterior. Rompiendo el
 filtro de los byes, el de las mesas, la pregunta por la licencia, la lectura de
 la ficha, el foco o `unirFicha()`, salta.
+
+### Probar sin tableros físicos
+
+Para ensayar el día del torneo entero —el pareo, LiveChess, la carpeta de
+exportación, Lichess Broadcaster y la transmisión— sin un solo tablero
+electrónico, «Pareo para DGT» trae tableros DGT **virtuales** (sección 5 de
+`pareo-dgt.html`; lo pidió el dueño, «para probar sin tableros físicos»). Es
+solo para probar: la sección lo dice. Para transmitir una mesa sin tablero
+DGT de verdad, el camino es mandar su PGN a Lichess (la cámara, la partida en
+vivo), no hacerla pasar por un tablero electrónico.
+
+- **Cómo se conecta.** LiveChess habla con cada tablero por un puerto COM.
+  com0com (gratis, Windows) crea un par de puertos unidos (COM10 ↔ COM11):
+  LiveChess abre una punta y la página la otra con **Web Serial** (Chrome o
+  Edge en la computadora; sin Web Serial, el botón se apaga y lo dice). La
+  `Permissions-Policy` del sitio no apaga `serial`, así que no hizo falta
+  tocar `_headers`. Cada tablero virtual lleva su número de serie (90001,
+  90002…), que es lo que LiveChess muestra para asignarlo a una mesa.
+- **El protocolo** está en `js/pareo/dgt-tablero.js`, comprobado contra el
+  código de Picochess (`dgt/util.py` y `dgt/board.py`), que habla con
+  tableros DGT reales: cada pedido de LiveChess es un byte (0x40 reset, 0x42
+  el tablero entero, 0x43/0x44/0x4b avisar de cada cambio, 0x45 y 0x55 el
+  número de serie, 0x47 la marca, 0x4d la versión, 0x46 la dirección de bus);
+  el 0x2b (un mensaje para el reloj) trae detrás cuántos bytes siguen, y se
+  saltan. Cada respuesta lleva 3 bytes de cabecera: el código con el bit 0x80
+  y el largo TOTAL en dos bytes de 7 bits. El tablero entero (0x86) son 64
+  bytes de **a8 a h1**, fila por fila; un cambio (0x8e), la casilla en ese
+  mismo orden y la pieza (0 vacía, 1–6 blancas P R N B K Q, 7–12 negras). No
+  contesta el reloj (0x41), como un tablero sin reloj. **Sin probar todavía
+  contra un LiveChess de verdad**: el primer ensayo dice si lo acepta.
+- **Cada jugada llega como en un tablero de verdad**: se levanta la pieza
+  (la casilla queda vacía) y se apoya en la otra, con 200 ms entre una cosa y
+  otra; en una captura se levanta primero la comida, en un enroque también la
+  torre, en una captura al paso el peón de al lado, y al coronar se apoya la
+  pieza nueva. Si LiveChess todavía no pidió que se le avise (0x43/0x4b), no
+  se manda nada, pero el tablero entero (0x42) ya trae la jugada.
+- **Ninguna posición se inventa**: las partidas son las partidas modelo de
+  maestros de `js/estilo-modelos.js`, ya comprobadas. En esa lista cada
+  partida trae su propio `id` (el de la fuente), distinto de su clave en la
+  lista: la página elige por la clave (se rompió así la primera vez: el `id`
+  pisaba la clave y ninguna partida se encontraba).
+- «Empezar»/«Pausar» (`aria-pressed`), «Una jugada», «Volver al principio»
+  (manda los cambios para dejar cada pieza en su casilla inicial, como quien
+  vuelve a armar el tablero) y «Desconectar». La última jugada se escribe en
+  algebraica española.
+- **«Lo que llega de LiveChess».** En el primer ensayo de verdad LiveChess
+  tenía el puerto marcado y no mostraba el tablero, y no había forma de saber
+  por qué: si no mandaba nada, si mandaba otro protocolo (el de bus, 0x81–0x8b
+  con dirección y suma de comprobación) o si esperaba las líneas de control.
+  Cada tarjeta trae ahora un desplegable con cada byte que llega y cada uno
+  que contesta el tablero, en hexadecimal, con la hora (de Costa Rica) y un
+  botón «Copiar»; guarda los últimos 200 renglones. Y al abrir el puerto la
+  página enciende DTR y RTS, como un tablero de verdad: com0com se las pasa a
+  LiveChess como DSR y CTS en la otra punta.
+
+`verificar-pareo-dgt-virtual.js` juega las 64 partidas modelo (4591 jugadas,
+con capturas, enroques, al paso y coronación) y arma la posición SOLO con los
+mensajes del tablero: después de cada jugada tiene que ser la de chess.js.
+Prueba también las respuestas a cada pedido, el mensaje para el reloj que se
+salta y, en el navegador con un puerto COM de mentira que hace de LiveChess,
+la página entera. Contando las casillas al revés o sin levantar el peón de
+la captura al paso, salta.

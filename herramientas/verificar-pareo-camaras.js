@@ -84,7 +84,7 @@ function torneo() {
   const manda = (o) => page.evaluate(([c, o]) => {
     const j = new window.Chess();
     o.jugadas.forEach((x) => j.move(x));
-    const p = window.PartidaEnVivo.estado(j, { blancas: "X", negras: "Y" }, { torneo: o.torneo, ronda: o.ronda, mesa: o.mesa }, o.resultado, { tiempos: o.tiempos });
+    const p = window.PartidaEnVivo.estado(j, { blancas: "X", negras: "Y" }, { torneo: o.torneo, ronda: o.ronda, mesa: o.mesa }, o.resultado, { tiempos: o.tiempos, mano: o.mano });
     window.__llega(c, "estado", p);
   }, [CANAL, Object.assign({ torneo: ID, ronda: 1, jugadas: [] }, o)]);
 
@@ -186,7 +186,42 @@ function torneo() {
   await alerta({ mesa: 3 });
   const avisosDe3 = () => page.evaluate(() => [...document.querySelectorAll(".avisos-mensaje")].filter((x) => /La cámara de la mesa 3 ve algo/.test(x.textContent)).length);
   igual("la misma mesa otra vez enseguida no se repite (ni en la lista ni en los avisos)", [await page.locator("#pi-camaras-alertas li").count(), await avisosDe3()], [1, 1]);
-  await page.click("#pi-camaras-alertas [data-alerta=\"3\"] button");
+  await alerta({ mesa: 3, tipo: "repeticion3" });
+  await page.waitForSelector("#pi-camaras-alertas [data-tipo=repeticion3]");
+  igual("la triple repetición llega aparte, sin tapar la jugada ilegal de la misma mesa",
+    [await page.locator("#pi-camaras-alertas li").count(), /Mesa 3: triple repetición, se pueden reclamar tablas/.test(await page.textContent("#pi-camaras-alertas")), /la misma posición se repitió tres veces/.test(await page.textContent("body"))], [2, true, true]);
+  await alerta({ mesa: 3, tipo: "lo-que-sea" });
+  igual("un tipo que no se conoce cuenta como jugada ilegal (y no se repite)", await page.locator("#pi-camaras-alertas li").count(), 2);
+
+  // La foto del tablero que manda la cámara con el aviso.
+  const fotoJpeg = await page.evaluate(() => { const c = document.createElement("canvas"); c.width = c.height = 16; const g = c.getContext("2d"); g.fillStyle = "#c33"; g.fillRect(0, 0, 16, 16); return c.toDataURL("image/jpeg", 0.7); });
+  const fotoLlega = (o) => page.evaluate(([c, o]) => window.__llega(c, "foto", o), [CANAL, Object.assign({ v: 1, torneo: ID, ronda: 1, mesa: 3, motivo: "ilegal", img: fotoJpeg, t: Date.now() }, o)]);
+  await fotoLlega({ img: "data:image/png;base64,AAAA" });
+  await fotoLlega({ img: "data:image/jpeg;base64," + "A".repeat(130000) });
+  await fotoLlega({ motivo: "cualquiera" });
+  await fotoLlega({ torneo: "5d6e0b9f-3c2e-4d8e-9c55-7a411f2a3b4c" });
+  await page.waitForTimeout(300);
+  ok(!(await page.$("#pi-camaras-alertas [data-foto]")), "una foto que no es JPEG, es enorme, trae otro motivo o es de otro torneo no se muestra");
+  await fotoLlega({});
+  await page.waitForSelector("#pi-camaras-alertas [data-alerta=\"3\"] [data-foto]");
+  ok(true, "la foto de la cámara aparece junto al aviso de la mesa 3: «Ver foto»");
+  await page.click("#pi-camaras-alertas [data-alerta=\"3\"][data-tipo=ilegal] [data-foto]");
+  await page.waitForSelector("#pi-foto-dialogo[open] img");
+  igual("«Ver foto» la abre en grande, con la mesa y el motivo", [await page.getAttribute("#pi-foto-dialogo img", "src") === fotoJpeg, /Foto del tablero · mesa 3/.test(await page.textContent("#pi-foto-dialogo")),
+    /posible jugada ilegal/.test(await page.textContent("#pi-foto-dialogo"))], [true, true, true]);
+  await page.click("#pi-foto-pasar");
+  g = await P.esperarGuardado(page, (l) => (l[0].rondas[0].incidencias || []).some((x) => x.foto)).then((l) => l[0]);
+  const inc = g.rondas[0].incidencias.find((x) => x.foto);
+  igual("«Pasar a las incidencias» la deja en la ronda, con su mesa y su foto", [inc.mesa, inc.foto === fotoJpeg, /Foto de la cámara: posible jugada ilegal/.test(inc.texto)], [3, true, true]);
+  igual("y lo que se publica del torneo no la lleva", JSON.stringify(require("../js/pareo/publicar.js").datosPublicos(g)).includes("base64"), false);
+  await page.waitForSelector("#pi-inc-lista [data-foto-inc]");
+  await page.click("#pi-inc-lista [data-foto-inc]");
+  await page.waitForSelector("#pi-foto-dialogo[open] img");
+  igual("desde las incidencias se vuelve a ver, sin el botón de pasarla", [await page.getAttribute("#pi-foto-dialogo img", "src") === fotoJpeg, await page.$("#pi-foto-pasar")], [true, null]);
+  await page.keyboard.press("Escape");
+
+  await page.click("#pi-camaras-alertas [data-tipo=repeticion3] button:not([data-foto])");
+  await page.click("#pi-camaras-alertas [data-alerta=\"3\"] button:not([data-foto])");
   ok(!(await page.$("#pi-camaras-alertas")), "«Visto» la quita");
 
   console.log("\n=== Transmitir a Lichess ===");
@@ -233,6 +268,20 @@ function torneo() {
   lichessContesta = 200;
   await page.click("#pi-lichess-dejar");
   igual("«Dejar de transmitir a Lichess» borra la clave de esta computadora", await page.evaluate(() => [localStorage.getItem("pareo_lichess_clave_v1"), !!document.getElementById("pi-lichess-conectar")]), [null, true]);
+
+  console.log("\n=== El informe de las cámaras de la ronda ===");
+  // La mesa 3: cuatro jugadas, dos escritas a mano en la cámara; sus avisos
+  // (una posible ilegal y una repetición) siguen contados aunque ya se marcaron «Visto».
+  await manda({ mesa: 3, jugadas: ["d4", "d5", "c4", "e6"], mano: 2 });
+  await page.waitForSelector("#pi-camaras-informe");
+  await page.click("#pi-camaras-informe summary");
+  const fila = (k) => page.$$eval('#pi-camaras-informe tr[data-informe="' + k + '"] td', (tds) => tds.map((x) => x.textContent));
+  const f3 = await fila("3"), f2 = await fila("2");
+  igual("una fila por mesa, con lo que anotó sola, lo escrito a mano, los avisos y el resultado",
+    [f3[0], f3[2], f3[3], f3[4], f3[5], f3[6], f2[0], f2[2], f2[3], /\d.*–.*\d/.test(f3[1])], ["3", "2", "2", "1", "1", "—", "2", "6", "0", true]);
+  await manda({ mesa: 3, jugadas: ["d4", "d5", "c4", "e6", "Nc3"], mano: 2 });
+  await page.waitForFunction(() => /^3$/.test(document.querySelector('#pi-camaras-informe tr[data-informe="3"] td:nth-child(3)').textContent), null, { timeout: 5000 }).catch(() => {});
+  igual("con cada jugada que llega se pone al día, y sigue abierto", [(await fila("3"))[2], await page.evaluate(() => document.getElementById("pi-camaras-informe").open)], ["3", true]);
 
   console.log("\n=== Dejar de recibir ===");
   await page.click("#pi-camaras-dejar");

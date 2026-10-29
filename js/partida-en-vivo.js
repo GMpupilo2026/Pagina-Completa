@@ -21,6 +21,8 @@
  *   PartidaEnVivo.reloj(ms)             → «1:23» o «1:02:03»
  *   PartidaEnVivo.resultadoSolo(juego)  → «1-0», «=» o «0-1» si el tablero ya lo dice (mate, ahogado)
  *   PartidaEnVivo.pgn(juego, resultado) → el PGN con su [Result]
+ *   PartidaEnVivo.reglaDeTablas(juego)  → «repeticion3», «jugadas50», «repeticion5»,
+ *     «jugadas75» justo en la jugada en que se cumple (si no, null)
  *   PartidaEnVivo.pintar(div, juego, { girado })
  *
  * En un torneo de Pareo Integral, todas las cámaras transmiten por el mismo
@@ -69,6 +71,34 @@
         if (juego.in_stalemate() || juego.insufficient_material()) return "=";
         return null;
     }
+    /* Las tablas que no se marcan solas: la misma posición tres veces y 50
+     * jugadas de cada uno sin captura ni movimiento de peón se reclaman al
+     * árbitro (art. 9.2 y 9.3 de las Leyes); cinco veces y 75 jugadas son
+     * tablas aunque nadie reclame (art. 9.6), y lo confirma el árbitro. Se
+     * devuelve solo en la jugada en que se cumple: así se avisa una vez. */
+    function reglaDeTablas(juego) {
+        const partes = juego.fen().split(" "), cuarenta = Number(partes[4]) || 0;
+        // La casilla al paso cuenta solo si la captura se puede hacer (art.
+        // 9.2.3); chess.js la pone después de todo avance doble.
+        const pos = () => {
+            const f = juego.fen().split(" ");
+            const alPaso = f[3] !== "-" && juego.moves({ verbose: true }).some((m) => m.flags.includes("e"));
+            return f.slice(0, 3).join(" ") + " " + (alPaso ? f[3] : "-");
+        };
+        const hist = juego.history(), ahora = pos();
+        let veces = 1;
+        // Hacia atrás, mientras no haya captura ni peón (antes no se pudo repetir).
+        for (let i = 0; i < Math.min(cuarenta, hist.length); i++) {
+            juego.undo();
+            if (pos() === ahora) veces++;
+        }
+        for (let i = hist.length - Math.min(cuarenta, hist.length); i < hist.length; i++) juego.move(hist[i]);
+        if (veces === 5) return "repeticion5";
+        if (cuarenta === 150) return "jugadas75";
+        if (veces === 3) return "repeticion3";
+        if (cuarenta === 100) return "jugadas50";
+        return null;
+    }
     /* El PGN con su resultado en la cabecera, sin tocar la partida que se
      * sigue anotando. Con `tiempos` (ms de cada jugada), cada jugada lleva su
      * tiempo como lo escriben Lichess y ChessBase: {[%emt 0:01:23]}. */
@@ -110,13 +140,19 @@
         if (r) p.resultado = r;
         if (Number.isFinite(x.espera)) p.espera = Math.max(0, Math.round(x.espera));
         if (x.retraso) p.retraso = entero(x.retraso, 120);
+        // Cuántas jugadas se escribieron a mano (para el informe de las cámaras de Pareo).
+        if (Number.isInteger(x.mano) && x.mano > 0) p.mano = Math.min(x.mano, 999);
         if (donde && torneoDe(donde.torneo) && entero(donde.mesa, 999)) {
             p.torneo = torneoDe(donde.torneo); p.mesa = donde.mesa; p.ronda = entero(donde.ronda, 99);
             if (entero(donde.tablero, 12)) p.tablero = donde.tablero;
+        } else if (donde && donde.simul && entero(donde.mesa, 99)) {
+            // Una simultánea: varias cámaras con el mismo código, cada una su tablero, sin torneo.
+            p.simul = 1; p.mesa = donde.mesa;
         }
         return p;
     }
-    /* La partida entera. `donde`, en un torneo: { torneo, ronda, mesa }. */
+    /* La partida entera. `donde`, en un torneo: { torneo, ronda, mesa }; en
+     * una simultánea: { simul: true, mesa } (el tablero de la simultánea). */
     function estado(juego, nombres, donde, resultado, extra) {
         const r = resultadoValido(resultado);
         const x = extra || {};
@@ -186,7 +222,7 @@
         });
         return out;
     }
-    const lugar = (x) => "Mesa " + x.mesa + (x.tablero ? " · tablero " + x.tablero : "");
+    const lugar = (x) => (x.simul ? "Tablero " + x.mesa : "Mesa " + x.mesa + (x.tablero ? " · tablero " + x.tablero : ""));
     const clave = (x) => "m" + x.mesa + (x.tablero ? "t" + x.tablero : "");
 
     /* Lo que llega se vuelve a jugar con chess.js: una partida que no es legal
@@ -201,7 +237,9 @@
         d.tiempos = Array.isArray(p.tiempos) ? p.tiempos.slice(0, n).map((y) => (Number.isFinite(y) && y >= 0 ? y : null)) : [];
         d.espera = Number.isFinite(p.espera) && p.espera >= 0 ? p.espera : null;
         d.retraso = entero(p.retraso, 120);
+        d.mano = entero(p.mano, 999) || 0;
         if (torneoDe(p.torneo) && entero(p.mesa, 999)) { d.torneo = torneoDe(p.torneo); d.mesa = p.mesa; d.ronda = entero(p.ronda, 99); d.tablero = entero(p.tablero, 12); }
+        else if (p.simul === 1 && entero(p.mesa, 99)) { d.simul = true; d.mesa = p.mesa; }
         d.id = idValido(p.id);
         return d;
     }
@@ -229,7 +267,9 @@
         d.tiempos = (antes.tiempos || []).slice(0, p.desde).concat(nuevos);
         d.espera = Number.isFinite(p.espera) && p.espera >= 0 ? p.espera : null;
         d.retraso = entero(p.retraso, 120);
+        d.mano = entero(p.mano, 999) || 0;
         if (antes.torneo) { d.torneo = antes.torneo; d.mesa = antes.mesa; d.tablero = antes.tablero; d.ronda = entero(p.ronda, 99) || antes.ronda; }
+        else if (antes.simul) { d.simul = true; d.mesa = antes.mesa; }
         return d;
     }
 
@@ -325,5 +365,5 @@
     const TEXTO_RESULTADO = { "1-0": "Terminó: ganan las blancas (1-0).", "=": "Terminó en tablas (½-½).", "0-1": "Terminó: ganan las negras (0-1)." };
     const textoResultado = (r) => TEXTO_RESULTADO[r] || "";
 
-    window.PartidaEnVivo = { nuevoCodigo, codigoValido, canal, enlace, estado, loNuevo, leer, pintar, jugadasTexto, comoVa, torneoDe, mesaFisica, mesasDe, lugar, clave, resultadoSolo, pgn, textoResultado, hasta, reloj };
+    window.PartidaEnVivo = { nuevoCodigo, codigoValido, canal, enlace, estado, loNuevo, leer, pintar, jugadasTexto, comoVa, torneoDe, mesaFisica, mesasDe, lugar, clave, resultadoSolo, reglaDeTablas, pgn, textoResultado, hasta, reloj };
 })();

@@ -155,6 +155,8 @@ function dibujarFoto(opc) {
     } else {
       col = (x % 90) < 3 || (y % 90) < 3 ? [150, 130, 115] : [215, 195, 180];
     }
+    // La luz: más oscura (`luz` < 1) y, con `sombra`, más hacia la derecha.
+    if (opc.luz || opc.sombra) { const k = (opc.luz || 1) * (1 - (opc.sombra || 0) * x / ancho); col = col.map((c) => c * k); }
     s = (s * 1103515245 + 12345) & 0x7fffffff;
     const n = (s % 19) - 9, o = (y * ancho + x) * 4;
     p[o] = col[0] + n; p[o + 1] = col[1] + n; p[o + 2] = col[2] + n; p[o + 3] = 255;
@@ -162,8 +164,8 @@ function dibujarFoto(opc) {
   g.putImageData(d, 0, 0);
   return c.toDataURL("image/png").split(",")[1];
 }
-async function foto(page, fen, esq, fondo) {
-  const opc = Array.isArray(fen) ? { tableros: fen } : { fen, esq, fondo };
+async function foto(page, fen, esq, fondo, luz) {
+  const opc = Array.isArray(fen) ? { tableros: fen } : Object.assign({ fen, esq, fondo }, luz);
   const b64 = await page.evaluate(([src, opc]) => new Function("return " + src)()(opc), [dibujarFoto.toString(), opc]);
   await page.setInputFiles("#foto", { name: "tablero.png", mimeType: "image/png", buffer: Buffer.from(b64, "base64") });
 }
@@ -440,6 +442,300 @@ async function esperarJugadas(p, n) {
     igual("y anota la jugada siguiente", await jugadasDe(pc2), "4. Ag5");
     igual("sin errores en la consola", c.errores, []);
     await cerrar(c);
+  }
+
+  console.log("\n«¿Está bien armada?»");
+  {
+    const b = await abrir(browser, "camara-tablero.html");
+    const pg = b.page;
+    await pg.waitForSelector("#app:not(.hidden)");
+    // Mal armada: falta el caballo de b1, hay un peón blanco de más en e4 y un
+    // peón negro en vez del blanco de h2.
+    const mal = new Chess(); mal.remove("b1"); mal.put({ type: "p", color: "w" }, "e4"); mal.remove("h2"); mal.put({ type: "p", color: "b" }, "h2");
+    await foto(pg, mal.fen(), ESQ0);
+    await esperarAviso(pg, /esquinas/);
+    await tocar(pg, aLienzo(ESQ0));
+    await pg.click("#btn-armado");
+    await esperarAviso(pg, /armada/);
+    igual("sin calibrar todavía, dice qué casillas no calzan con la posición inicial, con el nombre de la pieza",
+      [(await aviso(pg)).startsWith("No está bien armada: hay 3 casillas"), await pg.$$eval("#armado-lista li", (l) => l.map((x) => x.textContent))],
+      [true, ["Falta el caballo blanco en b1.", "En h2 hay una pieza negra y debería ser blanca (el peón).", "Sobra una pieza blanca en e4."]]);
+    await foto(pg, new Chess().fen(), ESQ0);
+    await pg.click("#btn-armado");
+    await esperarAviso(pg, /Está bien armada/);
+    igual("bien armada, lo dice y no queda ninguna casilla en la lista", [(await aviso(pg)).startsWith("Está bien armada"), await pg.locator("#armado-lista li").count()], [true, 0]);
+    // Ya calibrada y con una partida: contra la posición de la partida.
+    await pg.click("#btn-calibrar");
+    await esperarAviso(pg, /Calibrado/);
+    const j = new Chess(); j.move("e4"); await foto(pg, j.fen(), ESQ0); await esperarJugadas(pg, 1);
+    const otra = new Chess(j.fen()); otra.remove("d8");
+    await foto(pg, otra.fen(), ESQ0);
+    await pg.click("#btn-armado");
+    await esperarAviso(pg, /armada/);
+    igual("con la cámara calibrada, la compara con la posición de la partida", await pg.$$eval("#armado-lista li", (l) => l.map((x) => x.textContent)), ["Falta la dama negra en d8."]);
+    igual("sin errores en la consola", b.errores, []);
+    await cerrar(b);
+  }
+
+  console.log("\nEntrenar en el tablero: contra el motor y un ejercicio");
+  {
+    const b = await abrir(browser, "camara-tablero.html");
+    const pg = b.page;
+    // Stockfish de mentira: contesta 1... e5 a 1. e4.
+    await pg.route("**/js/shared-engine.js", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: "window.SharedEngine = {};" }));
+    await pg.route("**/js/preparacion-motor.js", (r) => r.fulfill({ status: 200, contentType: "application/javascript",
+      body: "window.PreparacionMotor = { evaluar: (fen, p) => { window.__prof = p; return Promise.resolve({ eval: 0.2, mejor: / b /.test(fen) ? 'e5' : 'Nf3' }); } };" }));
+    // El banco, con un solo mate en 2 (del banco de verdad: mate2-0307).
+    await pg.route("**/entreno/data/mates.json", (r) => r.fulfill({ status: 200, contentType: "application/json",
+      body: JSON.stringify([{ id: "mate2-0307", category: "mate2", fen: "1Q6/8/8/8/8/k2K4/8/8 w - - 0 1", solution: ["Kc3", "Ka2", "Qb2#"] }]) }));
+    await pg.waitForSelector("#app:not(.hidden)");
+    const j = new Chess();
+    await foto(pg, j.fen(), ESQ0);
+    await esperarAviso(pg, /esquinas/);
+    await tocar(pg, aLienzo(ESQ0));
+    await pg.click("#btn-calibrar");
+    await esperarAviso(pg, /Calibrado/);
+    await pg.click("#btn-entreno-motor");
+    igual("contra el motor, con blancas: empieza quien entrena", await pg.textContent("#entreno-estado"), "Te toca: juegas con blancas.");
+    j.move("e4"); await foto(pg, j.fen(), ESQ0); await esperarJugadas(pg, 1);
+    await pg.waitForFunction(() => /El motor juega/.test(document.getElementById("entreno-estado").textContent), null, { timeout: 8000 }).catch(() => {});
+    igual("el motor contesta (a la profundidad del nivel) y dice cómo poner su jugada", [await pg.textContent("#entreno-estado"), await pg.evaluate(() => window.__prof)],
+      ["El motor juega e5: mueve el peón negro de e7 a e5. Pon esa jugada en tu tablero.", 5]);
+    const malo = new Chess(j.fen()); malo.move("d5");
+    await foto(pg, malo.fen(), ESQ0);
+    await esperarAviso(pg, /Esa no es/);
+    igual("si se pone otra, no se anota y dice cuál es", [await jugadasDe(pg), (await aviso(pg)).includes("hay que poner e5")], ["1. e4", true]);
+    j.move("e5"); await foto(pg, j.fen(), ESQ0); await esperarJugadas(pg, 2);
+    igual("puesta la del motor, se anota y te toca otra vez", [await jugadasDe(pg), await pg.textContent("#entreno-estado")], ["1. e4 e5", "Te toca."]);
+    await pg.click("#btn-entreno-dejar");
+
+    // Un ejercicio: armarlo, una jugada equivocada que vuelve, la solución y la respuesta del rival.
+    await pg.selectOption("#entreno-banco", "mate2");
+    await pg.click("#btn-entreno-ejercicio");
+    await pg.waitForFunction(() => /Arma en tu tablero/.test(document.getElementById("entreno-estado").textContent), null, { timeout: 8000 }).catch(() => {});
+    const e = new Chess("1Q6/8/8/8/8/k2K4/8/8 w - - 0 1");
+    igual("el ejercicio aparece en el tablero de la derecha, para armarlo", [await pg.textContent("#fen"), (await pg.textContent("#entreno-estado")).startsWith("Arma en tu tablero")], [e.fen(), true]);
+    await foto(pg, new Chess("1Q6/8/8/8/8/k7/8/3K4 w - - 0 1").fen(), ESQ0);
+    await pg.click("#btn-entreno-armado");
+    await esperarAviso(pg, /Todavía no está igual/);
+    igual("armado mal, dice qué casillas arreglar", await pg.$$eval("#armado-lista li", (l) => l.map((x) => x.textContent)), ["Sobra una pieza blanca en d1.", "Falta el rey blanco en d3."]);
+    await foto(pg, e.fen(), ESQ0);
+    await pg.click("#btn-entreno-armado");
+    await esperarAviso(pg, /Bien armada/);
+    const mal = new Chess(e.fen()); mal.move("Kc4");
+    await foto(pg, mal.fen(), ESQ0);
+    await esperarAviso(pg, /No es esa/);
+    igual("una jugada que no es se dice y no se anota", [(await aviso(pg)).startsWith("No es esa (Rc4)"), await jugadasDe(pg)], [true, "Todavía ninguna."]);
+    await foto(pg, e.fen(), ESQ0);
+    await esperarAviso(pg, /de vuelta/);
+    e.move("Kc3"); await foto(pg, e.fen(), ESQ0); await esperarJugadas(pg, 1);
+    await pg.waitForFunction(() => /El rival responde/.test(document.getElementById("entreno-estado").textContent), null, { timeout: 8000 }).catch(() => {});
+    igual("la buena se anota y el rival responde lo del banco", await pg.textContent("#entreno-estado"), "El rival responde Ra2: mueve el rey negro de a3 a a2. Pon esa jugada en tu tablero.");
+    e.move("Ka2"); await foto(pg, e.fen(), ESQ0); await esperarJugadas(pg, 2);
+    e.move("Qb2#"); await foto(pg, e.fen(), ESQ0); await esperarJugadas(pg, 3);
+    await esperarAviso(pg, /Resuelto/);
+    igual("y con el mate, resuelto (con cuántos intentos fallidos)", await pg.textContent("#entreno-estado"), "¡Resuelto (con 1 intento fallido)! Es mate.");
+    igual("sin errores en la consola", b.errores, []);
+    await cerrar(b);
+  }
+
+  console.log("\nLa luz que cambia");
+  {
+    const reloj = { f: () => { const pn = performance.now.bind(performance); window.__adelanto = 0; performance.now = () => pn() + window.__adelanto; } };
+    const b = await abrir(browser, "camara-tablero.html", null, null, reloj);
+    const pg = b.page;
+    await pg.waitForSelector("#app:not(.hidden)");
+    const j = new Chess();
+    await foto(pg, j.fen(), ESQ0);
+    await esperarAviso(pg, /esquinas/);
+    await tocar(pg, aLienzo(ESQ0));
+    await pg.click("#btn-calibrar");
+    await esperarAviso(pg, /Calibrado/);
+    j.move("e4"); await foto(pg, j.fen(), ESQ0); await esperarJugadas(pg, 1);
+    // De golpe, mucho más oscuro y con sombra de un lado: con la calibración de
+    // antes varias casillas se leen mal, pero no es ninguna jugada.
+    await foto(pg, j.fen(), ESQ0, null, { luz: 0.55, sombra: 0.35 });
+    await esperarAviso(pg, /luz|ilegal|movió/);
+    igual("si cambia la luz de golpe, se vuelve a calibrar sola: ni jugada ilegal ni jugada nueva",
+      [(await aviso(pg)).startsWith("Cambió la luz"), await jugadasDe(pg)], [true, "1. e4"]);
+    j.move("e5"); await foto(pg, j.fen(), ESQ0, null, { luz: 0.55, sombra: 0.35 }); await esperarJugadas(pg, 2);
+    igual("y con la luz nueva sigue anotando", await jugadasDe(pg), "1. e4 e5");
+    // Poco a poco: mientras lee la partida, cada 15 s afina la calibración.
+    const antes = (await pg.evaluate(() => window.gastoCamara())).afinadas;
+    await pg.evaluate(() => { window.__adelanto += 16000; });
+    await foto(pg, j.fen(), ESQ0, null, { luz: 0.5, sombra: 0.35 });
+    await pg.waitForFunction((n) => window.gastoCamara().afinadas > n, antes, { timeout: 8000 }).catch(() => {});
+    igual("con la partida en paz, cada 15 segundos afina la calibración con la luz de ahora", (await pg.evaluate(() => window.gastoCamara())).afinadas > antes, true);
+    // Una pieza que de verdad salta (la torre de a1 a a5) no es la luz: se avisa.
+    const ilegal = new Chess(j.fen()); ilegal.remove("a1"); ilegal.put({ type: "r", color: "w" }, "a5");
+    await foto(pg, ilegal.fen(), ESQ0, null, { luz: 0.5, sombra: 0.35 });
+    await esperarAviso(pg, /No reconozco/);
+    igual("una pieza que se movió sin ser jugada legal sigue siendo un aviso, no «la luz»", (await aviso(pg)).includes("puede ser una jugada ilegal"), true);
+    igual("sin errores en la consola", b.errores, []);
+    await cerrar(b);
+  }
+
+  console.log("\nEnseñarle a la cámara: fotos con su posición, solo si se enciende");
+  {
+    const b = await abrir(browser, "camara-tablero.html");
+    const pg = b.page;
+    await pg.waitForSelector("#app:not(.hidden)");
+    const j = new Chess();
+    await foto(pg, j.fen(), ESQ0);
+    await esperarAviso(pg, /esquinas/);
+    await tocar(pg, aLienzo(ESQ0));
+    await pg.click("#btn-calibrar");
+    await esperarAviso(pg, /Calibrado/);
+    j.move("d4"); await foto(pg, j.fen(), ESQ0); await esperarJugadas(pg, 1);
+    igual("viene apagado: sin encenderlo no guarda nada", [await pg.isChecked("#muestras-si"), await pg.textContent("#muestras-cuenta"), await pg.isDisabled("#btn-muestras-bajar")], [false, "Ninguna foto guardada.", true]);
+    await pg.click("summary:has-text('Enseñarle a la cámara')");
+    await pg.check("#muestras-si");
+    j.move("d5"); await foto(pg, j.fen(), ESQ0); await esperarJugadas(pg, 2);
+    j.move("c4"); await foto(pg, j.fen(), ESQ0); await esperarJugadas(pg, 3);
+    await pg.waitForFunction(() => /2 fotos/.test(document.getElementById("muestras-cuenta").textContent), null, { timeout: 8000 }).catch(() => {});
+    igual("encendido, guarda una foto por jugada anotada", await pg.textContent("#muestras-cuenta"), "2 fotos guardadas.");
+    const [descarga] = await Promise.all([pg.waitForEvent("download"), pg.click("#btn-muestras-bajar")]);
+    const zip = fs.readFileSync(await descarga.path());
+    const texto = zip.toString("latin1");
+    const csv = texto.slice(texto.indexOf("archivo,etiqueta"), texto.indexOf("\n", texto.indexOf("\n", texto.indexOf("\n", texto.indexOf("archivo,etiqueta")) + 1) + 1));
+    const filas = csv.trim().split("\n").slice(1).map((l) => l.split(","));
+    const tras = (lista) => { const x = new Chess(); lista.forEach((m) => x.move(m)); return x; };
+    const etiqueta = (x) => { let s = ""; for (let k = 0; k < 64; k++) { const p = x.get("abcdefgh"[k & 7] + ((k >> 3) + 1)); s += !p ? "." : p.color === "w" ? "B" : "N"; } return s; };
+    igual("el .zip trae etiquetas.csv con cada foto, su posición en 64 letras y su FEN",
+      [descarga.suggestedFilename().startsWith("camara-muestras-"), filas.length, filas.map((f) => [f[1], f[2]]), (texto.match(/tablero-\d{5}\.jpg/g) || []).length >= 2, texto.includes("JFIF")],
+      [true, 2, [[etiqueta(tras(["d4", "d5"])), tras(["d4", "d5"]).fen()], [etiqueta(tras(["d4", "d5", "c4"])), tras(["d4", "d5", "c4"]).fen()]], true, true]);
+    await pg.click("#btn-muestras-borrar");
+    igual("«Borrar» pide tocar otra vez", [await pg.textContent("#btn-muestras-borrar"), await pg.textContent("#muestras-cuenta")], ["Toca otra vez para borrarlas", "2 fotos guardadas."]);
+    await pg.click("#btn-muestras-borrar");
+    await pg.waitForFunction(() => /Ninguna/.test(document.getElementById("muestras-cuenta").textContent), null, { timeout: 8000 }).catch(() => {});
+    igual("y las borra de este aparato", await pg.textContent("#muestras-cuenta"), "Ninguna foto guardada.");
+    igual("sin errores en la consola", b.errores, []);
+    await cerrar(b);
+  }
+
+  console.log("\nLa coronación: se pregunta la pieza, o se deduce si se mueve como caballo");
+  {
+    // Un peón blanco en e7 con e8 libre (el rey negro en c5, donde ni la
+    // dama ni el caballo de e8 le dan jaque).
+    const FEN = "rnbq1bnr/ppp1Pppp/8/2k5/8/8/PPPP1PPP/RNBQKBNR w KQ - 0 5";
+    const desde = async (b) => {
+      const pg = b.page;
+      await pg.waitForSelector("#app:not(.hidden)");
+      await pg.click("summary:has-text('Empezar desde otra posición')");
+      await pg.fill("#posicion", FEN);
+      await pg.click("#form-posicion button[type=submit]");
+      await foto(pg, FEN, ESQ0);
+      await esperarAviso(pg, /esquinas/);
+      await tocar(pg, aLienzo(ESQ0));
+      await pg.click("#btn-seguir");
+      await esperarAviso(pg, /sigo con la partida/);
+      return pg;
+    };
+    const seVe = (pg) => pg.evaluate(() => document.getElementById("coronacion").checkVisibility());
+
+    const b = await abrir(browser, "camara-tablero.html");
+    const pg = await desde(b);
+    const k = new Chess(FEN);
+    k.move("e8=Q"); await foto(pg, k.fen(), ESQ0); await esperarJugadas(pg, 1);
+    igual("al coronar se anota dama y se pregunta qué pieza puso",
+      [await jugadasDe(pg), await seVe(pg), (await pg.textContent("#coronacion-texto")).includes("e8")], ["5. e8=D", true, true]);
+    await pg.click("[data-corona=r]");
+    igual("elegir «Torre» corrige la jugada y la pregunta se va", [await jugadasDe(pg), await seVe(pg)], ["5. e8=T", false]);
+    igual("y el FEN tiene una torre en e8", (await pg.textContent("#fen")).startsWith("rnbqRbnr/"), true);
+    igual("sin errores en la consola", b.errores, []);
+    await cerrar(b);
+
+    const c = await abrir(browser, "camara-tablero.html");
+    const pc = await desde(c);
+    const j = new Chess(FEN);
+    j.move("e8=Q"); await foto(pc, j.fen(), ESQ0); await esperarJugadas(pc, 1);
+    j.move("a6"); await foto(pc, j.fen(), ESQ0); await esperarJugadas(pc, 2);
+    // La pieza de e8 salta a f6: una dama no puede, un caballo sí.
+    const n = new Chess(FEN); ["e8=N", "a6", "Nf6"].forEach((x) => n.move(x));
+    await foto(pc, n.fen(), ESQ0); await esperarJugadas(pc, 3);
+    igual("si la pieza coronada se mueve como caballo, era caballo: se corrige sola",
+      [await jugadasDe(pc), await seVe(pc), (await aviso(pc)).includes("se movió como caballo")], ["5. e8=C a6 6. Cf6", false, true]);
+    igual("y la partida sigue en la posición correcta", await pc.textContent("#fen"), n.fen());
+    igual("sin errores en la consola", c.errores, []);
+    await cerrar(c);
+
+    // Lo de LectorTablero, sin cámara: lo que sigue a la coronación tiene
+    // que seguir siendo legal con la otra pieza.
+    const p2 = await abrir(browser, "camara-tablero.html");
+    await p2.page.waitForSelector("#app:not(.hidden)");
+    igual("cambiar la coronación no deja una partida ilegal (la dama movida en diagonal no puede ser torre)", await p2.page.evaluate((fen) => {
+      const L = window.LectorTablero, x = new window.Chess(fen);
+      ["e8=Q", "a6", "Qxf7"].forEach((m) => x.move(m));
+      const antes = x.fen();
+      return [L.cambiarCoronacion(x, 0, "r"), x.fen() === antes, L.cambiarCoronacion(x, 0, "b"), x.history()[0]];
+    }, FEN), [false, true, true, "e8=B"]);
+    igual("la repetición y las 50 jugadas se dicen justo en la jugada en que se cumplen", await p2.page.evaluate(() => {
+      const V = window.PartidaEnVivo, j = new window.Chess(), r = [];
+      for (let i = 0; i < 4; i++) ["Nf3", "Nf6", "Ng1", "Ng8"].forEach((m) => { j.move(m); r.push(V.reglaDeTablas(j)); });
+      const k = new window.Chess("8/8/4k3/8/8/4K3/8/R7 w - - 98 80"), r2 = [];
+      ["Ra2", "Kd6", "Ra1"].forEach((m) => { k.move(m); r2.push(V.reglaDeTablas(k)); });
+      const l = new window.Chess("8/8/4k3/8/8/4K3/8/R7 w - - 149 80"); l.move("Ra2");
+      // Una posición con la casilla al paso que nadie puede usar es la misma (art. 9.2.3).
+      const m = new window.Chess(); m.move("c4");
+      ["Nc6", "Nf3", "Nb8", "Ng1", "Nc6", "Nf3", "Nb8"].forEach((x) => m.move(x));
+      const antes = V.reglaDeTablas(m); m.move("Ng1");
+      return [r.map((x, i) => x && i + 1 + ":" + x).filter(Boolean), r2, V.reglaDeTablas(l), antes, V.reglaDeTablas(m)];
+    }), [["8:repeticion3", "9:repeticion3", "10:repeticion3", "11:repeticion3", "16:repeticion5"], [null, "jugadas50", null], "jugadas75", null, "repeticion3"]);
+    igual("cuántas jugadas se escribieron a mano viaja con la partida (para el informe de Pareo)", await p2.page.evaluate(() => {
+      const V = window.PartidaEnVivo, j = new window.Chess(); j.move("e4"); j.move("e5");
+      const p = V.estado(j, {}, null, null, { mano: 1, id: "x-0" }), q = V.loNuevo("x-0", j, 1, null, null, { mano: 2 });
+      return [p.mano, V.leer(p).mano, q.mano, V.estado(j, {}, null, null, {}).mano];
+    }), [1, 1, 2, undefined]);
+    await cerrar(p2);
+  }
+
+  console.log("\nUna simultánea: una cámara por tablero, sin torneo");
+  {
+    const arrancar = async (tablero, codigo) => {
+      const b = await abrir(browser, "camara-tablero.html");
+      const pg = b.page;
+      await pg.waitForSelector("#app:not(.hidden)");
+      await foto(pg, new Chess().fen(), ESQ0);
+      await esperarAviso(pg, /esquinas/);
+      await tocar(pg, aLienzo(ESQ0));
+      await pg.click("#btn-calibrar");
+      await esperarAviso(pg, /Calibrado/);
+      await pg.click("summary:has-text('Una simultánea')");
+      if (codigo) await pg.fill("#simul-codigo", codigo);
+      await pg.fill("#simul-tablero", String(tablero));
+      await pg.click("#btn-vivo");
+      await pg.waitForSelector("#vivo-encendido:not([hidden])");
+      return b;
+    };
+    const A = await arrancar(1);
+    const codigo = (await A.page.textContent("#vivo-codigo")).split(" ")[0];
+    igual("la primera cámara crea la simultánea y dice su tablero", await A.page.textContent("#vivo-codigo"), codigo + " · tablero 1 de la simultánea");
+    igual("y el enlace del alumno de ese tablero abre su partida", await A.page.textContent("#vivo-enlace-alumno"), await A.page.textContent("#vivo-enlace") + "&m=1");
+    const B = await arrancar(2, codigo);
+    igual("la segunda se une con el mismo código, en su tablero", await B.page.textContent("#vivo-codigo"), codigo + " · tablero 2 de la simultánea");
+    const W = await abrir(browser, "tablero-vivo.html#" + codigo, null, { width: 1280, height: 1000 });
+    await W.page.waitForFunction(() => document.querySelectorAll("#mesas-lista button[data-mesa]").length === 2, null, { timeout: 8000 }).catch(() => {});
+    igual("quien mira ve los dos tableros juntos", await W.page.$$eval("#mesas-lista button[data-mesa]", (bs) => bs.map((b) => b.querySelector("p").textContent)), ["Tablero 1", "Tablero 2"]);
+    const S = await abrir(browser, "tablero-vivo.html#" + codigo + "&m=2", null, { width: 390, height: 844 });
+    const jb = new Chess(); jb.move("d4");
+    await foto(B.page, jb.fen(), ESQ0); await esperarJugadas(B.page, 1);
+    await S.page.waitForFunction(() => !document.getElementById("partida").hidden && /d4/.test(document.getElementById("jugadas").textContent), null, { timeout: 8000 }).catch(() => {});
+    igual("el alumno del tablero 2, con su enlace, ve su partida en grande", [await S.page.textContent("#mesa-titulo"), await S.page.textContent("#jugadas")], ["Tablero 2", "1. d4"]);
+    const ja = new Chess(); ja.move("e4");
+    const antes = eventos.length;
+    await foto(A.page, ja.fen(), ESQ0); await esperarJugadas(A.page, 1);
+    await W.page.waitForFunction(() => /e4/.test(document.querySelector('#mesas-lista button[data-mesa="1"]').textContent), null, { timeout: 8000 }).catch(() => {});
+    igual("cada jugada llega a su tablero", [/e4/.test(await W.page.textContent('#mesas-lista button[data-mesa="1"]')), /d4/.test(await W.page.textContent('#mesas-lista button[data-mesa="2"]'))], [true, true]);
+    const [bajada] = await Promise.all([W.page.waitForEvent("download"), W.page.click("#btn-pgn-todas")]);
+    const pgnTodas = fs.readFileSync(await bajada.path(), "utf8");
+    const juegos = pgnTodas.trim().split(/\n\n(?=\[Event)/);
+    igual("«Bajar todas las partidas» deja un PGN con cada tablero, sus datos y sus jugadas, que chess.js vuelve a leer",
+      [bajada.suggestedFilename().endsWith(".pgn"), juegos.length, juegos.map((g) => (/\[Board "([^"]+)"\]/.exec(g) || [])[1]),
+        juegos.map((g) => { const c = new Chess(); return c.load_pgn(g) ? c.history().join(" ") : "no se lee"; }), /\[Date "\d{4}\.\d{2}\.\d{2}"\]/.test(pgnTodas)],
+      [true, 2, ["Tablero 1", "Tablero 2"], ["e4", "d4"], true]);
+    igual("lo que viaja dice el tablero de la simultánea, sin torneo", eventos.slice(antes).filter((x) => x.event === "estado").map((x) => [x.payload.simul, x.payload.mesa, "torneo" in x.payload]).slice(-1), [[1, 1, false]]);
+    igual("sin errores en la consola (simultánea)", [A.errores, B.errores, W.errores, S.errores], [[], [], [], []]);
+    for (const x of [A, B, W, S]) await cerrar(x);
   }
 
   console.log("\nDos tableros con un celular (opcional)");
@@ -738,13 +1034,44 @@ async function esperarJugadas(p, n) {
     igual("una posible jugada ilegal se dice, y se le avisa al árbitro", (await aviso(pa)).includes("puede ser una jugada ilegal") && (await aviso(pa)).endsWith("Se le avisó al árbitro."), true);
     const alerta = eventos.slice(antesAlerta).find((x) => x.event === "alerta");
     igual("el aviso al árbitro dice el torneo, la ronda y la mesa, pero no las casillas", alerta && [alerta.payload.torneo, alerta.payload.ronda, alerta.payload.mesa, /a1|a5/.test(JSON.stringify(alerta.payload))], [ID, 2, 5, false]);
+    const fotoIlegal = eventos.slice(antesAlerta).find((x) => x.event === "foto");
+    igual("con el aviso, al árbitro le llega una foto del tablero (una JPEG chica, con su mesa y su motivo)",
+      fotoIlegal && [fotoIlegal.payload.mesa, fotoIlegal.payload.motivo, /^data:image\/jpeg;base64,/.test(fotoIlegal.payload.img), fotoIlegal.payload.img.length < 120000], [5, "ilegal", true, true]);
+    igual("y en la cámara queda en «Fotos del tablero», para bajarla", await pa.evaluate(() => [document.getElementById("fotos").checkVisibility(),
+      document.querySelectorAll("#fotos-lista a[download] img").length, document.querySelector("#fotos-lista span").textContent.startsWith("Posible jugada ilegal")]), [true, 1, true]);
+    // La foto es el tablero enderezado, visto desde arriba con la fila 8
+    // arriba: la torre blanca que saltó está en a5, una casilla oscura que
+    // se ve mucho más clara que la a3 (oscura y vacía); y arriba, en la fila
+    // 8, las piezas negras.
+    igual("la foto es el tablero enderezado, como un diagrama (a5 tiene la torre blanca)", await pa.evaluate(async (src) => {
+      const im = new Image(); im.src = src; await im.decode();
+      const c = document.createElement("canvas"); c.width = c.height = 256; const g = c.getContext("2d"); g.drawImage(im, 0, 0);
+      const luz = (col, fila) => { const d = g.getImageData(col * 32 + 12, (8 - fila) * 32 + 12, 8, 8).data; let s = 0; for (let i = 0; i < d.length; i += 4) s += d[i] + d[i + 1] + d[i + 2]; return s / (d.length / 4) / 3; };
+      return [luz(0, 5) > luz(0, 3) + 60, luz(4, 8) + 60 < luz(4, 1)];
+    }, fotoIlegal.payload.img), [true, true]);
     await foto(pa, ja2.fen(), ESQ0);
+    igual("el aviso de la jugada ilegal va con su tipo", alerta && alerta.payload.tipo, "ilegal");
+
+    // La triple repetición: los caballos van y vuelven dos veces. No se marca
+    // sola (se reclama), pero se dice y le llega al árbitro.
+    const antesRep = eventos.length;
+    for (const x of ["Nc6", "Nf3", "Nb8", "Ng1", "Nc6", "Nf3", "Nb8", "Ng1"]) {
+      ja2.move(x); await foto(pa, ja2.fen(), ESQ0); await esperarJugadas(pa, ja2.history().length);
+    }
+    igual("la triple repetición se dice, sin marcar el resultado", [(await aviso(pa)).includes("se repitió tres veces"), (await aviso(pa)).endsWith("Se le avisó al árbitro."), await pa.textContent("#resultado-texto")],
+      [true, true, "Sigue en juego."]);
+    const rep = eventos.slice(antesRep).filter((x) => x.event === "alerta");
+    igual("y al árbitro le llega una vez, con su tipo", rep.map((x) => [x.payload.mesa, x.payload.tipo]), [[5, "repeticion3"]]);
+    igual("también con su foto", eventos.slice(antesRep).filter((x) => x.event === "foto").map((x) => x.payload.motivo), ["repeticion3"]);
 
     // El resultado: lo marca quien maneja la cámara y le llega a quien mira.
+    const antesRes = eventos.length;
     await pa.click('[data-resultado="1-0"]');
     igual("«1-0» marca el resultado", [await pa.textContent("#resultado-texto"), await pa.getAttribute('[data-resultado="1-0"]', "aria-pressed")], ["Terminó: ganan las blancas (1-0).", "true"]);
+    igual("con el resultado se toma la foto del tablero, y le llega al árbitro", [eventos.slice(antesRes).filter((x) => x.event === "foto").map((x) => x.payload.motivo),
+      await pa.locator("#fotos-lista img").count()], [["resultado"], 3]);
     await pw.waitForFunction(() => /Terminó: ganan las blancas/.test(document.querySelector('#mesas-lista button[data-mesa="5"]').textContent), null, { timeout: 8000 }).catch(() => {});
-    igual("y quien mira lo ve en la mesa", await pw.$eval('#mesas-lista button[data-mesa="5"]', (b) => b.querySelectorAll("p")[2].textContent), "Última jugada: 1. c4. Juegan las negras. Terminó: ganan las blancas (1-0).");
+    igual("y quien mira lo ve en la mesa", await pw.$eval('#mesas-lista button[data-mesa="5"]', (b) => b.querySelectorAll("p")[2].textContent), "Última jugada: 5. Cg1. Juegan las negras. Terminó: ganan las blancas (1-0).");
     igual("el PGN que viaja lleva el resultado", await pa.evaluate(() => /\[Result "1-0"\]/.test(localStorage.getItem("camara_partida_v1_0"))), true);
     await pa.click("#btn-deshacer");
     igual("«Deshacer» lo borra: la partida sigue", [await pa.textContent("#resultado-texto"), await pa.getAttribute('[data-resultado="1-0"]', "aria-pressed")], ["Sigue en juego.", "false"]);
@@ -1092,6 +1419,56 @@ async function esperarJugadas(p, n) {
     igual("y no deja guardarla dos veces", [await pg.textContent("#btn-guardar"), await pg.isDisabled("#btn-guardar")], ["Ya está en tu cuenta", true]);
     igual("sin errores en la consola (guardar)", G.errores, []);
     await cerrar(G);
+
+    // «Activar voz» del encabezado (js/voz-pagina.js) dice cada jugada nueva:
+    // lee la región viva #anuncio. Con la voz del navegador de mentira.
+    const conVoz = { f: () => {
+      localStorage.setItem("oscarSpeechMode_v1", "1");
+      window.__dicho = [];
+      window.SpeechSynthesisUtterance = function (t) { this.text = t; };
+      Object.defineProperty(window, "speechSynthesis", { value: { speak: (u) => window.__dicho.push(u.text), cancel() {}, getVoices: () => [], addEventListener() {} } });
+    } };
+    const VZ = await abrir(browser, "tablero-vivo.html#vxzmentx", null, { width: 390, height: 844 }, conVoz);
+    await VZ.page.waitForFunction(() => window.__canales && Object.keys(window.__canales).length, null, { timeout: 8000 });
+    // Lo del primer segundo y medio es parte de la página, no un aviso (ver js/voz-pagina.js).
+    await VZ.page.waitForTimeout(1700);
+    await llega(VZ.page, "1. e4");
+    await VZ.page.waitForTimeout(1200);
+    await llega(VZ.page, "1. e4 e5 2. Nf3");
+    await VZ.page.waitForFunction(() => window.__dicho.some((x) => /caballo/.test(x)), null, { timeout: 8000 }).catch(() => {});
+    igual("con «Activar voz», quien mira oye cada jugada nueva", [await VZ.page.evaluate(() => document.getElementById("voz-toggle").checkVisibility()),
+      await VZ.page.evaluate(() => window.__dicho.filter((x) => /^Última jugada/.test(x)).pop())], [true, "Última jugada: 2. caballo felix 3. Juegan las negras."]);
+    await cerrar(VZ);
+
+    // Los momentos clave: con un Stockfish de mentira que da evaluaciones
+    // conocidas. Las blancas regalan en 3. Ac4 (de +0,3 a −2,5) y las negras
+    // devuelven en 4... Cf6 (de −2,5 a +0,5, es decir de +2,5 a −0,5 para ellas).
+    const fensDiez = [], recorre = new Chess();
+    fensDiez.push(recorre.fen()); diez.forEach((x) => { recorre.move(x); fensDiez.push(recorre.fen()); });
+    const evs = fensDiez.map((f, i) => ({ fen: f, eval: i <= 4 ? 0.3 : i <= 7 ? -2.5 : 0.5, mejor: i === 4 ? "d4" : i === 7 ? "d6" : null }));
+    const M = await abrir(browser, "tablero-vivo.html#mxmentxs", null, { width: 390, height: 844 });
+    const pm = M.page;
+    await pm.route("**/js/shared-engine.js", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: "window.SharedEngine = {};" }));
+    await pm.route("**/js/preparacion-motor.js", (r) => r.fulfill({ status: 200, contentType: "application/javascript",
+      body: "window.__revisadas = 0; window.PreparacionMotor = { evaluar: (fen, p) => { window.__revisadas++; window.__prof = p; const x = (window.__evs || []).find((e) => e.fen === fen); return Promise.resolve(x ? { eval: x.eval, mejor: x.mejor } : { eval: 0, mejor: null }); } };" }));
+    await pm.evaluate((e) => { window.__evs = e; }, evs);
+    await pm.waitForFunction(() => window.__canales && Object.keys(window.__canales).length, null, { timeout: 8000 });
+    await llega(pm, "1. e4 e5 2. Nf3 Nc6 3. Bc4 Bc5");
+    await pm.waitForFunction(() => !document.getElementById("partida").hidden, null, { timeout: 8000 });
+    igual("mientras se juega, los momentos clave no se ofrecen", await pm.evaluate(() => document.getElementById("momentos").checkVisibility()), false);
+    await llega(pm, jg.pgn(), "0-1");
+    await pm.waitForFunction(() => document.getElementById("momentos").checkVisibility(), null, { timeout: 8000 }).catch(() => {});
+    igual("al terminar, se ofrecen con un botón (Stockfish no arranca solo)", [await pm.evaluate(() => document.getElementById("btn-momentos").checkVisibility()), await pm.evaluate(() => window.__revisadas === undefined)], [true, true]);
+    await pm.click("#btn-momentos");
+    await pm.waitForFunction(() => document.querySelectorAll("#momentos-lista button").length, null, { timeout: 8000 }).catch(() => {});
+    igual("Stockfish revisa cada posición (11) a profundidad 10, y salen los dos momentos, en orden, con la mejor jugada",
+      [await pm.evaluate(() => [window.__revisadas, window.__prof]), await pm.$$eval("#momentos-lista button", (bs) => bs.map((b) => b.textContent))],
+      [[11, 10], ["3. Ac4: las blancas estaban en +0,3 y quedaron en −2,5 (contado desde las blancas). Mejor era d4.",
+        "4... Cf6: las negras estaban en +2,5 y quedaron en −0,5 (contado desde las negras). Mejor era d6."]]);
+    await pm.click('#momentos-lista button[data-ply="4"]');
+    igual("tocar uno lleva el tablero a esa jugada", await pm.textContent("#paso"), "Repasando: jugada 5 de 10, Ac4.");
+    igual("sin errores en la consola (momentos)", M.errores, []);
+    await cerrar(M);
     const S = await abrir(browser, "tablero-vivo.html#guardar3", { sinSesion: true }, { width: 390, height: 844 });
     await S.page.waitForFunction(() => window.__canales && Object.keys(window.__canales).length, null, { timeout: 8000 });
     await llega(S.page, jg.pgn());
@@ -1239,11 +1616,16 @@ async function esperarJugadas(p, n) {
   }
 
   console.log("\nQuien no administra");
-  const n = await abrir(browser, "camara-tablero.html", { is_admin: false });
+  const n = await abrir(browser, "camara-tablero.html", { is_admin: false, role: "alumno" });
   await n.page.waitForSelector("#denegado:not(.hidden)");
-  igual("ve el aviso y no la cámara", await n.page.evaluate(() => [
+  igual("un alumno ve el aviso y no la cámara", await n.page.evaluate(() => [
     document.getElementById("app").checkVisibility(), document.getElementById("denegado").checkVisibility()]), [false, true]);
   await cerrar(n);
+  const pf = await abrir(browser, "camara-tablero.html", { is_admin: false, role: "profesor" });
+  await pf.page.waitForSelector("#app:not(.hidden), #denegado:not(.hidden)");
+  igual("quien da clase sí la abre (para su tablero de verdad en la clase en vivo)", await pf.page.evaluate(() => [
+    document.getElementById("app").checkVisibility(), document.getElementById("denegado").checkVisibility()]), [true, false]);
+  await cerrar(pf);
 
   console.log("\nLa cámara, solo en esta página");
   const cab = fs.readFileSync(path.join(__dirname, "..", "_headers"), "utf8");
