@@ -59,9 +59,16 @@ function escuchadas() {
   return mapa;
 }
 
+/* Las publicadas de los DOS proyectos: la Academia y «Base de Colegios»
+   (donde vive la sala de arena: sala.js escucha arena_partidas). Cada retrato
+   dice las suyas. */
 function publicadas() {
-  const txt = fs.readFileSync(path.join(RAIZ, "supabase/esquema/inventario-academia.txt"), "utf8");
-  return new Set([...txt.matchAll(/^realtime\s+([a-z_0-9]+)\s*$/gm)].map((m) => m[1]));
+  const nombres = new Set();
+  for (const f of ["inventario-academia.txt", "inventario-colegios.txt"]) {
+    const txt = fs.readFileSync(path.join(RAIZ, "supabase/esquema", f), "utf8");
+    for (const m of txt.matchAll(/^realtime\s+([a-z_0-9]+)\s*$/gm)) nombres.add(m[1]);
+  }
+  return nombres;
 }
 
 const oidas = escuchadas();

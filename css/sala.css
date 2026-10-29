@@ -1,0 +1,63 @@
+/* El tablero de la sala de arena (sala.html).
+
+   Los colores de las casillas los pone js/board-color-themes.js como variables
+   en <html> (--sq-light / --sq-dark): así la sala respeta el tablero que cada
+   quien eligió en su navegador. Las filas van en minmax(0,1fr) y la casilla en
+   interlineado 1: con repeat(8,1fr) el tablero se estiraba en el celular
+   (ver verificar-tablero-cuadrado.js). */
+.sala-tablero-caja { max-width: 480px; margin: 0 auto; position: relative; padding: 0 0 18px 18px; }
+.sala-tablero {
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  grid-template-rows: repeat(8, minmax(0, 1fr));
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  border: 2px solid #de911d;
+  box-shadow: 0 8px 30px rgba(16, 42, 67, 0.18);
+}
+.sala-tablero .sq {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: min(8.5vw, 38px);
+  line-height: 1;
+  cursor: pointer;
+  user-select: none;
+  border: none;
+  padding: 0;
+  touch-action: manipulation;
+}
+.sala-tablero .sq.light { background: var(--sq-light, #f0d9b5); }
+.sala-tablero .sq.dark { background: var(--sq-dark, #b58863); }
+.sala-tablero .sq.selected { box-shadow: inset 0 0 0 4px #f0b429; }
+.sala-tablero .sq.last { background-image: linear-gradient(rgba(240, 180, 41, 0.45), rgba(240, 180, 41, 0.45)); }
+.sala-tablero .sq.target::after { content: ""; position: absolute; inset: 32%; border-radius: 50%; background: rgba(240, 180, 41, 0.6); }
+.sala-tablero .sq.target-capture::after { content: ""; position: absolute; inset: 8%; border: 4px solid rgba(203, 110, 23, 0.8); border-radius: 50%; background: none; }
+.sala-tablero .sq.wrong-flash { background-image: linear-gradient(rgba(192, 57, 43, 0.6), rgba(192, 57, 43, 0.6)); }
+.sala-tablero .sq.en-jaque { box-shadow: inset 0 0 0 4px #c0392b; }
+.sala-tablero.sin-turno .sq { cursor: default; }
+
+.sala-reloj {
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  font-size: 1.5rem;
+  min-width: 5.5rem;
+  text-align: center;
+  padding: 0.25rem 0.75rem;
+  border-radius: 0.5rem;
+  background: #f0f4f8;
+  color: #102a43;
+}
+.sala-reloj.corre { background: #f0b429; }
+.sala-reloj.poco { background: #c0392b; color: #fff; }
+html.dark .sala-reloj { background: #243b53; color: #f0f4f8; }
+html.dark .sala-reloj.corre { background: #f0b429; color: #102a43; }
+html.dark .sala-reloj.poco { background: #c0392b; color: #fff; }
+
+.sala-jugadas { font-variant-numeric: tabular-nums; }
+.sala-jugadas .ultima { font-weight: 700; text-decoration: underline; text-underline-offset: 2px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .sala-tablero .sq { transition: none; }
+}

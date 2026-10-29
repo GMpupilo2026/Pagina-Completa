@@ -11094,3 +11094,119 @@ Prueba también las respuestas a cada pedido, el mensaje para el reloj que se
 salta y, en el navegador con un puerto COM de mentira que hace de LiveChess,
 la página entera. Contando las casillas al revés o sin levantar el peón de
 la captura al paso, salta.
+
+## La sala de arena entre equipos, aparte de la Academia
+
+Torneos «arena» como los de Lichess —se juega mientras dura, cada quien se
+empareja solo con el siguiente que espera, gana puntos con racha— **entre
+equipos de estudiantes que salen de las inscripciones a los torneos en línea**
+(`inscripcion.html`). Es una sala APARTE de la Academia: `sala.html` (para
+quien juega) y `sala-admin.html` (para quien administra o coordina).
+
+**Dónde vive y por qué.** En «Base de Colegios», el proyecto de Supabase donde
+ya están las inscripciones, y no en el de la Academia. Sus jugadores no son
+cuentas de la Academia: administración les entrega un usuario y una clave, y
+con eso solo entran a la sala. Así no se mezclan con las academias (privadas
+entre sí) y los datos de los menores no cruzan de proyecto. El cliente de la
+sala es `window.sbSala` (`js/sala-cliente.js`) con su propia clave de sesión
+(`sb-sala-auth`): con la de siempre, entrar a la sala cerraba la sesión de la
+Academia en el mismo navegador. **`sala.html` no carga `js/supabase-client.js`**
+(lo comprueba `verificar-sala-base.js`).
+
+**Las cuentas.** El usuario es el que ya generó el formulario de inscripción
+(`inscripciones.usuario`, «Oscar_Angulo_C»; si dos coinciden, al segundo se le
+agrega un número) y el correo de Auth es ese usuario en minúsculas en
+`sala.ajedrez-integral.com`, un dominio **sin MX a propósito**: a esa dirección
+nunca se le manda correo. El dominio está escrito en la página y en la Edge
+Function, y `verificar-sala-base.js` comprueba que digan lo mismo (si no,
+nadie podría entrar y el mensaje sería «usuario o clave incorrectos»). La clave
+(8 letras sin las que se confunden: 0/O, 1/l/i) se genera en la Edge Function
+**`arena-admin`** y sale UNA vez, en la respuesta que crea la cuenta; en la base
+queda solo su hash. La pantalla la muestra con «Bajar en Excel (CSV)» y
+«Copiar» y dice que no se vuelve a ver; si se pierde, «Nueva clave».
+
+**Quién administra.** `arena-admin` (`supabase/functions-colegios/arena-admin/`,
+`verify_jwt` en false) hace lo mismo que `inscripciones-torneo`: el JWT de quien
+llama lo firmó la Academia, así que se lo reenvía y le pregunta a
+`soy_coordinador()`. Las tablas `arena_*` **no tienen política de escritura**:
+las escribe esa función con la service role y las funciones `arena_*` de la
+base. La pantalla no tiene ningún `sb.from(...)`. «Estado» no devuelve cédulas
+ni contactos de las inscripciones, solo lo que hace falta para armar equipos.
+
+**Los equipos los arma administración, a mano**, eligiendo inscritos en
+`sala-admin.html` (no hay un equipo por colegio automático). Quien ya tiene
+cuenta solo cambia de equipo: su clave no se toca. Si el jugador no se puede
+crear, la cuenta de Auth que se alcanzó a crear se borra (no queda una clave
+suelta).
+
+**La base lleva la partida** (migración `*_sala_arena.sql`):
+- **El emparejamiento** (`arena_emparejar`, con un candado por arena) prefiere
+  un rival de OTRO equipo y distinto del último; el mismo equipo o una
+  revancha solo si quien espera lleva 10 segundos. Los colores se reparten
+  para que nadie juegue siempre con uno. Cada pocos segundos el navegador
+  llama a `arena_entrar`, que es también el «sigo aquí»: quien cerró la
+  pestaña deja de emparejarse a los 12 segundos.
+- **Una sola partida activa por color**: índice único parcial, no un `if`.
+- **El reloj es de la base** (`reloj_desde` con su hora; el navegador la
+  corrige con `RelojServidor`). La bandera la decide la base (`arena_vencer`),
+  no el navegador: cualquiera de los dos avisa y, si quedaba tiempo, no pasa
+  nada. En las dos primeras jugadas el plazo es de 30 segundos; una partida en
+  que nadie llegó a mover se **aborta** (sin resultado, sin puntos).
+- **Los puntos**, como en Lichess: victoria 2, tablas 1; con dos victorias
+  seguidas la partida siguiente vale el doble (también las tablas); unas tablas
+  de menos de 20 jugadas no dan nada. Se guardan en la partida (son el acta: la
+  racha de ese momento no se puede reconstruir barato); la clasificación y
+  «quién va en racha» se calculan. **Por equipos suman los `mejores` N de cada
+  uno** (por omisión 5).
+- **Quien juega solo LEE**: RLS de lectura para quien es jugador de la sala
+  (`soy_jugador_de_sala()`; un usuario cualquiera de Auth no lo es) y permiso
+  por columna: del resto de jugadores solo ve `id`, `nombre`, `equipo_id`. No
+  ve el usuario de nadie. Las funciones internas (`arena_cerrar`,
+  `arena_emparejar`…) no se pueden ejecutar desde afuera.
+
+**LO QUE LA BASE NO COMPRUEBA** (dicho a propósito, igual que `game_rooms` en
+la Academia): si una jugada es legal y si una posición es mate, ahogado o
+tablas. Eso lo calcula chess.js en el navegador de quien mueve y viaja con la
+jugada (`p_fen`, `p_fin`). La base sí exige que sea su turno, que la posición
+tenga la forma de un FEN con el turno cambiado y un solo rey por bando. Quien
+quiera trampa desde la consola puede declarar una jugada ilegal o un mate que
+no es; con estudiantes conocidos y sin premios de dinero es aceptable. **Si
+alguna vez hay premios**, el paso siguiente es validar la jugada en una Edge
+Function que repita la partida con chess.js antes de escribirla.
+
+**La página.** `sala.html` es una sola página con cuatro pantallas (entrar,
+arenas, una arena, una partida) y se lee en voz: el foco va al título de cada
+pantalla, cada casilla se lee con su pieza («e4, peón blanco»), la jugada del
+rival se anuncia, el resultado se dice, y la jugada se puede **escribir**
+(«Cf3», «Cc6», «O-O»; letras en español, y si no entra se prueba tal cual) además
+de tocarla. Los colores del tablero son los que cada quien eligió en el sitio.
+Las jugadas llegan por Realtime y además se vuelve a leer cada 2,5 segundos;
+lo que llega más viejo que lo ya pintado se descarta, y mientras la jugada
+propia viaja se ignora lo que llegue igual de viejo (si no, el tablero salta
+hacia atrás y vuelve). Es `noindex` y no entra en ninguna lista del sitio.
+
+**Lo que hay que hacer una vez, a mano, en el panel de Supabase de «Base de
+Colegios»**: apagar el registro público de usuarios (Authentication → Sign In /
+Providers → «Allow new users to sign up»). Aunque esté abierto, un usuario que
+no es jugador de la sala no lee nada (las políticas lo piden), pero no tiene
+por qué poder crearse cuentas.
+
+Al tocar la sala, correr `node herramientas/verificar-todo.js sala sala-admin
+sala-base` (con el sitio en localhost:8777 y playwright):
+- `sala-base` (sin navegador) lee la migración (RLS, ninguna política de
+  escritura, `search_path`, execute de cada función, permiso por columna), ve
+  que el dominio sea el mismo en la página y en la función, y **ejecuta la Edge
+  Function** contra una base de mentira: sin sesión 401, con una sesión que la
+  Academia no reconoce 403, usuarios y claves, el número al repetido, la cuenta
+  que no queda suelta, y que «estado» no traiga cédulas;
+- `sala` abre `sala.html` con un cliente de mentira: entrar (clave mala, cuenta
+  que no es de la sala), las arenas según su estado, la clasificación con la
+  racha dicha también con texto, el tablero desde el color propio, la jugada
+  del rival que llega sola, la jugada tocada y la escrita (lo que se MANDA:
+  `p_san`, `p_fen`, `p_fin`), una ilegal que no viaja, las tablas, el final con
+  los puntos, la bandera que la página avisa y, en el celular, el tablero
+  cuadrado sin barra de desplazamiento;
+- `sala-admin` abre `sala-admin.html`: quien no administra no llama a la
+  función, un nombre con HTML es texto, lo que se manda al agregar, las claves
+  en la tabla y en el CSV (con BOM), «Nueva clave», el error de la función
+  dicho, y la arena con la hora de Costa Rica (UTC−6).

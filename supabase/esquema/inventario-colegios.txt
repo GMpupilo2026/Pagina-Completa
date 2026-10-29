@@ -1,4 +1,9 @@
 tabla  Coles  rls=true
+tabla  arena_cola  rls=true
+tabla  arena_equipos  rls=true
+tabla  arena_jugadores  rls=true
+tabla  arena_partidas  rls=true
+tabla  arena_torneos  rls=true
 tabla  chess_leads  rls=true
 tabla  inscripciones  rls=true
 columna  Coles.CANTON  text
@@ -21,6 +26,45 @@ columna  Coles.SERVICIO  text
 columna  Coles.TIPO DE CENTRO EDUCATIVO  text
 columna  Coles.TIPO INSTITUCIÓN  text
 columna  Coles.ZONA  text
+columna  arena_cola.desde  timestamp with time zone
+columna  arena_cola.jugador_id  uuid
+columna  arena_cola.torneo_id  uuid
+columna  arena_cola.visto  timestamp with time zone
+columna  arena_equipos.creado_en  timestamp with time zone
+columna  arena_equipos.id  uuid
+columna  arena_equipos.nombre  text
+columna  arena_jugadores.creado_en  timestamp with time zone
+columna  arena_jugadores.equipo_id  uuid
+columna  arena_jugadores.id  uuid
+columna  arena_jugadores.inscripcion_id  uuid
+columna  arena_jugadores.nombre  text
+columna  arena_jugadores.usuario  text
+columna  arena_partidas.blancas  uuid
+columna  arena_partidas.creada_en  timestamp with time zone
+columna  arena_partidas.estado  text
+columna  arena_partidas.fen  text
+columna  arena_partidas.id  uuid
+columna  arena_partidas.jugadas  jsonb
+columna  arena_partidas.motivo  text
+columna  arena_partidas.ms_blancas  integer
+columna  arena_partidas.ms_negras  integer
+columna  arena_partidas.negras  uuid
+columna  arena_partidas.oferta_tablas  text
+columna  arena_partidas.puntos_blancas  integer
+columna  arena_partidas.puntos_negras  integer
+columna  arena_partidas.reloj_desde  timestamp with time zone
+columna  arena_partidas.resultado  text
+columna  arena_partidas.terminada_en  timestamp with time zone
+columna  arena_partidas.torneo_id  uuid
+columna  arena_torneos.creado_en  timestamp with time zone
+columna  arena_torneos.id  uuid
+columna  arena_torneos.incremento_seg  integer
+columna  arena_torneos.inicia  timestamp with time zone
+columna  arena_torneos.inicial_seg  integer
+columna  arena_torneos.mejores  integer
+columna  arena_torneos.minutos  integer
+columna  arena_torneos.nombre  text
+columna  arena_torneos.por_equipos  boolean
 columna  chess_leads.color_jugador  text
 columna  chess_leads.correo  text
 columna  chess_leads.creado_en  timestamp with time zone
@@ -78,14 +122,53 @@ columna  inscripciones_export.tipo_centro  text
 columna  inscripciones_export.usuario  text
 columna  inscripciones_export.zona  text
 vista  inscripciones_export
+funcion  arena_bandera(p_partida uuid)  definer  anon=false  auth=true
+funcion  arena_cerrar(p_partida uuid, p_resultado text, p_motivo text)  definer  anon=false  auth=false
+funcion  arena_clasificacion(p_torneo uuid)  invoker  anon=false  auth=true
+funcion  arena_emparejar(p_torneo uuid)  definer  anon=false  auth=false
+funcion  arena_en_racha(p_torneo uuid)  invoker  anon=false  auth=true
+funcion  arena_entrar(p_torneo uuid)  definer  anon=false  auth=true
+funcion  arena_mover(p_partida uuid, p_desde text, p_hasta text, p_san text, p_fen text, p_fin text)  definer  anon=false  auth=true
+funcion  arena_puntos(p_torneo uuid, p_jugador uuid, p_res text, p_jugadas integer)  definer  anon=false  auth=false
+funcion  arena_rendirse(p_partida uuid)  definer  anon=false  auth=true
+funcion  arena_salir(p_torneo uuid)  definer  anon=false  auth=true
+funcion  arena_tablas(p_partida uuid, p_aceptar boolean)  definer  anon=false  auth=true
+funcion  arena_vencer(p_partida uuid)  definer  anon=false  auth=false
 funcion  cifras_torneos()
+funcion  hora_servidor_ms()  invoker  anon=false  auth=true
 funcion  quitar_tildes(input text)
+funcion  soy_jugador_de_sala()  definer  anon=false  auth=true
 politica  Coles  Enable read access for all users  SELECT
+politica  arena_cola  arena_cola_select  SELECT
+politica  arena_equipos  arena_equipos_select  SELECT
+politica  arena_jugadores  arena_jugadores_select  SELECT
+politica  arena_partidas  arena_partidas_select  SELECT
+politica  arena_torneos  arena_torneos_select  SELECT
+indice  arena_cola  arena_cola_jugador_idx
+indice  arena_cola  arena_cola_pkey
+indice  arena_equipos  arena_equipos_nombre_unico
+indice  arena_equipos  arena_equipos_pkey
+indice  arena_jugadores  arena_jugadores_equipo_idx
+indice  arena_jugadores  arena_jugadores_inscripcion_unica
+indice  arena_jugadores  arena_jugadores_pkey
+indice  arena_jugadores  arena_jugadores_usuario_unico
+indice  arena_partidas  arena_partidas_blancas_idx
+indice  arena_partidas  arena_partidas_negras_idx
+indice  arena_partidas  arena_partidas_pkey
+indice  arena_partidas  arena_partidas_torneo_idx
+indice  arena_partidas  arena_partidas_una_activa_blancas
+indice  arena_partidas  arena_partidas_una_activa_negras
+indice  arena_torneos  arena_torneos_pkey
 indice  chess_leads  chess_leads_pkey
 indice  inscripciones  inscripciones_cedula_unique
 indice  inscripciones  inscripciones_pkey
+realtime  arena_partidas
 grant  Coles  anon  SELECT
 grant  Coles  authenticated  SELECT
+grant  arena_cola  authenticated  SELECT
+grant  arena_equipos  authenticated  SELECT
+grant  arena_partidas  authenticated  SELECT
+grant  arena_torneos  authenticated  SELECT
 grant  inscripciones_export  anon  DELETE
 grant  inscripciones_export  anon  INSERT
 grant  inscripciones_export  anon  REFERENCES
