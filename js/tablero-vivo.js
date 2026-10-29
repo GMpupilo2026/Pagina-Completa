@@ -51,11 +51,12 @@
     function mesasTorneo() {
         const lista = [];
         const r = torneoDatos && P.mesasDe(torneoDatos);
-        if (r) r.mesas.forEach((m) => lista.push({ clave: "m" + m.mesa, mesa: m.mesa, blancas: m.blancas, negras: m.negras, ronda: r.ronda }));
+        if (r) r.mesas.forEach((m) => lista.push({ clave: P.clave(m), mesa: m.mesa, tablero: m.tablero, blancas: m.blancas, negras: m.negras, ronda: r.ronda,
+            equipos: m.equipoBlancas ? m.equipoBlancas + " – " + m.equipoNegras : "" }));
         for (const [clave, x] of partidas) {
-            if (x.mesa && !lista.some((m) => m.clave === clave)) lista.push({ clave, mesa: x.mesa, blancas: x.blancas, negras: x.negras, ronda: x.ronda });
+            if (x.mesa && !lista.some((m) => m.clave === clave)) lista.push({ clave, mesa: x.mesa, tablero: x.tablero, blancas: x.blancas, negras: x.negras, ronda: x.ronda });
         }
-        return lista.sort((a, b) => a.mesa - b.mesa);
+        return lista.sort((a, b) => a.mesa - b.mesa || (a.tablero || 0) - (b.tablero || 0));
     }
 
     // Cómo va, con el resultado si ya terminó (el mate y el ahogado ya los dice comoVa).
@@ -75,7 +76,7 @@
         const x = partidas.get(elegida);
         $("partida").hidden = !x;
         $("volver").hidden = !enTorneo();
-        $("mesa-titulo").textContent = x && x.mesa ? "Mesa " + x.mesa + (x.ronda ? " · ronda " + x.ronda : "") : "";
+        $("mesa-titulo").textContent = x && x.mesa ? P.lugar(x) + (x.ronda ? " · ronda " + x.ronda : "") : "";
         $("mesa-titulo").hidden = !$("mesa-titulo").textContent;
         if (!x) return;
         const hist = x.juego.history(), total = hist.length;
@@ -94,6 +95,7 @@
         const texto = comoVa(x) + (total && Number.isFinite(x.tiempos[total - 1]) ? " La pensó " + P.reloj(x.tiempos[total - 1]) + "." : "");
         $("ultima").textContent = texto;
         relojTurno();
+        pintarGuardar(x);
         // Al lector de pantalla, solo cuando cambia de verdad.
         if (texto !== ultimaDicha) { $("anuncio").textContent = texto; ultimaDicha = texto; }
     }
@@ -117,14 +119,15 @@
         const b = document.createElement("button");
         b.type = "button";
         b.dataset.mesa = String(m.mesa);
+        if (m.tablero) b.dataset.tablero = String(m.tablero);
         b.dataset.clave = m.clave;
         b.className = "text-left bg-white dark:bg-brand-900 rounded-2xl shadow-md p-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 hover:ring-2 hover:ring-accent-400";
         const titulo = document.createElement("p");
         titulo.className = "font-semibold text-brand-800 dark:text-white";
-        titulo.textContent = "Mesa " + m.mesa;
+        titulo.textContent = P.lugar(m);
         const quien = document.createElement("p");
         quien.className = "text-xs text-brand-600 dark:text-brand-300 mb-2";
-        quien.textContent = ((x && x.blancas) || m.blancas || "Blancas") + " – " + ((x && x.negras) || m.negras || "Negras");
+        quien.textContent = ((x && x.blancas) || m.blancas || "Blancas") + " – " + ((x && x.negras) || m.negras || "Negras") + (m.equipos ? " (" + m.equipos + ")" : "");
         const tab = document.createElement("div");
         tab.className = "grid grid-cols-8 grid-rows-8 aspect-square w-full rounded overflow-hidden select-none";
         tab.setAttribute("aria-hidden", "true");
@@ -169,7 +172,7 @@
     function alLlegar(payload) {
         if (!payload) return;
         if (torneoId && payload.torneo && payload.torneo !== torneoId) return; // de otro torneo
-        const clave0 = payload.mesa ? "m" + payload.mesa : "solo";
+        const clave0 = payload.mesa ? P.clave(payload) : "solo";
         const antes = partidas.get(clave0);
         if (antes && Number(payload.t) < antes.t) return; // lo viejo no pisa lo nuevo
         const d = P.leer(payload, antes);
@@ -177,12 +180,12 @@
         // Llegó solo lo nuevo y no calza (se perdió un mensaje): se pide esa mesa entera.
         if (d.falta) {
             // Una vez cada 3 s por mesa: lo nuevo que siga llegando mientras tanto tampoco calza.
-            if (canal && !(Date.now() - (pedidas.get(clave0) || 0) < 3000)) { pedidas.set(clave0, Date.now()); canal.send({ type: "broadcast", event: "pedir", payload: d.mesa ? { mesa: d.mesa } : {} }); }
+            if (canal && !(Date.now() - (pedidas.get(clave0) || 0) < 3000)) { pedidas.set(clave0, Date.now()); canal.send({ type: "broadcast", event: "pedir", payload: d.mesa ? { mesa: d.mesa, tablero: d.tablero || undefined } : {} }); }
             return;
         }
         d.recibido = Date.now();
         if (torneoId && d.torneo && d.torneo !== torneoId) return;
-        const clave = d.mesa ? "m" + d.mesa : "solo";
+        const clave = d.mesa ? P.clave(d) : "solo";
         const nueva = !antes;
         partidas.set(clave, d);
         if (!d.mesa) elegida = "solo";
@@ -350,6 +353,75 @@
         if (!x) return;
         try { await navigator.clipboard.writeText(x.juego.pgn()); $("copiar-msg").textContent = "PGN copiado."; }
         catch (e) { $("copiar-msg").textContent = "No se pudo copiar."; }
+    });
+
+    /* «Guardar en mi cuenta»: quien jugó esta partida (con la sesión abierta
+     * en este aparato) la guarda en su libreta de torneos (partidas_torneo,
+     * la misma de «Tus propios errores»: su profe la ve y el motor la revisa).
+     * La base deja guardar solo en la propia cuenta, y desde 10 medias
+     * jugadas. Ver «Guardar la partida en la cuenta del alumno» en
+     * docs/decisiones/juegos-y-torneos.md. */
+    const GUARDADAS = "vivo_guardadas_v1";
+    const RESULTADO_BASE = { "1-0": "1-0", "=": "1/2-1/2", "0-1": "0-1" };
+    const claveGuardada = (x) => (x.id || "") + "|" + x.juego.history().length;
+    function guardadas() { try { return JSON.parse(localStorage.getItem(GUARDADAS) || "[]"); } catch (e) { return []; } }
+    let guardando = null; // la partida (clave de `partidas`) del formulario abierto
+    function pintarGuardar(x) {
+        const caja = $("guardar-caja");
+        const n = x ? x.juego.history().length : 0;
+        caja.hidden = !x || n < 10;
+        if (caja.hidden) return;
+        const ya = guardadas().includes(claveGuardada(x));
+        $("btn-guardar").disabled = ya;
+        $("btn-guardar").textContent = ya ? "Ya está en tu cuenta" : "Guardar en mi cuenta";
+        $("guardar-blancas").textContent = "Con blancas" + (x.blancas ? " (" + x.blancas + ")" : "");
+        $("guardar-negras").textContent = "Con negras" + (x.negras ? " (" + x.negras + ")" : "");
+        if (guardando !== elegida) { $("form-guardar").hidden = true; $("btn-guardar").setAttribute("aria-expanded", "false"); }
+    }
+    $("btn-guardar").addEventListener("click", async () => {
+        const msg = $("guardar-msg");
+        msg.textContent = "";
+        let sesion = null;
+        try { sesion = (await window.sb.auth.getSession()).data.session; } catch (e) { /* sin sesión */ }
+        if (!sesion) {
+            msg.textContent = "Para guardarla, entra a tu cuenta en este aparato (arriba, «Academia») y vuelve a abrir este enlace.";
+            return;
+        }
+        const x = partidas.get(elegida);
+        if (!x) return;
+        guardando = elegida;
+        $("form-guardar").hidden = false;
+        $("btn-guardar").setAttribute("aria-expanded", "true");
+        $("guardar-evento").value = $("guardar-evento").value || (torneoDatos && torneoDatos.nombre) || "";
+        $("guardar-ronda").value = x.ronda || "";
+        const elegido = document.querySelector('#form-guardar input[name="color"]:checked');
+        (elegido || document.querySelector('#form-guardar input[name="color"]')).focus();
+    });
+    $("form-guardar").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const msg = $("guardar-msg"), x = partidas.get(guardando);
+        const color = (document.querySelector('#form-guardar input[name="color"]:checked') || {}).value;
+        if (!x) return;
+        if (!color) { msg.textContent = "Elige con qué color jugaste."; document.querySelector('#form-guardar input[name="color"]').focus(); return; }
+        const ronda = $("guardar-ronda").value.trim() === "" ? null : Number($("guardar-ronda").value);
+        if (ronda !== null && !(Number.isInteger(ronda) && ronda >= 1 && ronda <= 30)) { msg.textContent = "La ronda es un número del 1 al 30 (o déjala vacía)."; $("guardar-ronda").focus(); return; }
+        const jugadas = x.juego.history();
+        const fila = { fecha: window.HoraCR.hoy(), color, jugadas, ronda,
+            resultado: RESULTADO_BASE[x.resultado] || "*", evento: $("guardar-evento").value.trim().slice(0, 120) || null };
+        msg.textContent = "Guardando…";
+        try {
+            const { error } = await window.sb.from("partidas_torneo").insert(fila);
+            if (error) throw error;
+        } catch (err) {
+            msg.textContent = "No se pudo guardar. Revisa la conexión y vuelve a intentar; si tu cuenta tiene verificación en dos pasos, entra de nuevo a la Academia.";
+            return;
+        }
+        try { localStorage.setItem(GUARDADAS, JSON.stringify(guardadas().concat(claveGuardada(x)).slice(-200))); } catch (er) { /* sin almacenamiento */ }
+        $("form-guardar").hidden = true;
+        $("btn-guardar").setAttribute("aria-expanded", "false");
+        msg.textContent = "Listo: está en tu libreta de torneos (" + jugadas.length + " medias jugadas). En «Tus propios errores» el motor te dice dónde se pudo mejorar.";
+        pintarGuardar(x);
+        $("btn-guardar").focus();
     });
 
     desdeLaDireccion();

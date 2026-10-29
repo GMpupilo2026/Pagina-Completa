@@ -189,6 +189,51 @@ function torneo() {
   await page.click("#pi-camaras-alertas [data-alerta=\"3\"] button");
   ok(!(await page.$("#pi-camaras-alertas")), "«Visto» la quita");
 
+  console.log("\n=== Transmitir a Lichess ===");
+  // Lichess, de mentira: se guarda lo que llega y se contesta como Lichess.
+  const aLichess = [];
+  let lichessContesta = 200;
+  await page.context().route("https://lichess.org/api/broadcast/round/*/push", async (r) => {
+    const q = r.request();
+    if (q.method() === "OPTIONS") return r.fulfill({ status: 204, headers: { "access-control-allow-origin": "*", "access-control-allow-headers": "Authorization, Content-Type", "access-control-allow-methods": "POST" } });
+    aLichess.push({ url: q.url(), auth: q.headers()["authorization"], body: q.postData() || "" });
+    const juegos = (q.postData() || "").split(/\n\n\n/).filter(Boolean).map(() => ({ tags: {} }));
+    await r.fulfill({ status: lichessContesta, contentType: "application/json", headers: { "access-control-allow-origin": "*" },
+      body: JSON.stringify(lichessContesta === 200 ? { games: juegos } : { error: "No such token" }) });
+  });
+  await page.click("#pi-lichess-conectar");
+  await page.waitForSelector(dialogo);
+  await page.fill(dialogo + ' [name="clave"]', "lip_PRUEBA");
+  await page.fill(dialogo + ' [name="ronda"]', "https://lichess.org/broadcast/prueba-camaras/EUHb3ssn");
+  await page.click(dialogo + " [data-avisos-aceptar]");
+  await page.waitForFunction(() => /no es de una ronda/.test(document.body.textContent)).catch(() => {});
+  ok(/no es de una ronda/.test(await page.textContent("body")) && !aLichess.length, "el enlace de la transmisión entera (no de una ronda) no sirve, y se dice");
+  await page.click("#pi-lichess-conectar");
+  await page.waitForSelector(dialogo);
+  await page.fill(dialogo + ' [name="clave"]', "lip_PRUEBA");
+  await page.fill(dialogo + ' [name="ronda"]', "https://lichess.org/broadcast/prueba-camaras/ronda-1/AbCd1234");
+  await page.click(dialogo + " [data-avisos-aceptar]");
+  await page.waitForFunction(() => /Lichess: 3 partidas de la ronda 1/.test((document.getElementById("pi-lichess-estado") || {}).textContent || ""), null, { timeout: 8000 }).catch(() => {});
+  const primero = aLichess[0] || { url: "", body: "" };
+  igual("manda las partidas a esa ronda, con la clave", [/\/api\/broadcast\/round\/AbCd1234\/push$/.test(primero.url), primero.auth], [true, "Bearer lip_PRUEBA"]);
+  ok(/\[White "PRUEBA E"\]\n\[Black "PRUEBA B"\]/.test(primero.body) && /\[Round "1\.2"\]/.test(primero.body) && /1\. e4 .*e5 .*2\. Nf3/.test(primero.body), "cada mesa con sus jugadores, su ronda y sus jugadas", primero.body.slice(0, 400));
+  ok(/1\. d4 d5 \*/.test(primero.body), "también la partida escrita a mano, todavía sin resultado", primero.body);
+  ok(/\[Result "1-0"\]\n\n1\. d4 Nf6 1-0/.test(primero.body), "y el resultado anotado", primero.body);
+  igual("dice qué mandó y cuándo", /^Lichess: 3 partidas de la ronda 1, enviadas a las /.test(await page.textContent("#pi-lichess-estado")), true);
+  igual("la clave queda solo en esta computadora: nunca en el torneo (que se exporta y se publica)",
+    [JSON.stringify(await guardado()).includes("lip_PRUEBA"), await page.evaluate(() => localStorage.getItem("pareo_lichess_clave_v1"))], [false, "lip_PRUEBA"]);
+  await manda({ mesa: 2, jugadas: ["e4", "e5", "Nf3", "Nc6", "Bb5"] });
+  const antesLichess = aLichess.length;
+  await page.waitForTimeout(6500);
+  ok(aLichess.length === antesLichess + 1 && /Bb5/.test(aLichess[aLichess.length - 1].body), "una jugada nueva llega a Lichess sola (una vez, a los pocos segundos)", aLichess.length - antesLichess);
+  lichessContesta = 401;
+  await manda({ mesa: 2, jugadas: ["e4", "e5", "Nf3", "Nc6", "Bb5", "a6"] });
+  await page.waitForFunction(() => /Lichess no acepta la clave/.test((document.getElementById("pi-lichess-estado") || {}).textContent || ""), null, { timeout: 9000 }).catch(() => {});
+  ok(/Lichess no acepta la clave/.test(await page.textContent("#pi-lichess-estado")), "si Lichess no acepta la clave, lo dice");
+  lichessContesta = 200;
+  await page.click("#pi-lichess-dejar");
+  igual("«Dejar de transmitir a Lichess» borra la clave de esta computadora", await page.evaluate(() => [localStorage.getItem("pareo_lichess_clave_v1"), !!document.getElementById("pi-lichess-conectar")]), [null, true]);
+
   console.log("\n=== Dejar de recibir ===");
   await page.click("#pi-camaras-dejar");
   g = await P.esperarGuardado(page, (l) => l[0].camaras && l[0].camaras.activo === false).then((l) => l[0]);
@@ -198,6 +243,79 @@ function torneo() {
   ok(/1\. e4 .*e5 .*2\. Nf3/.test((await guardado()).rondas[0].mesas[1].pgn), "y ya no entra nada");
 
   igual("sin errores en la consola", errores, []);
+
+  console.log("\n=== Un torneo por equipos: una cámara por tablero ===");
+  {
+    const E = require(path.join(RAIZ, "js/pareo/equipos.js"));
+    const ID2 = "4a3b2c1d-0e9f-4a8b-9c7d-6e5f4a3b2c1d";
+    let nId = 0;
+    const nuevoId = () => "q" + (++nId);
+    const gente = ["A", "B"].flatMap((c) => [1, 2, 3, 4].map((k) => ({ id: nuevoId(), nombre: "PRUEBA " + c + k, institucion: "Escuela " + c, elo: 1500 + k, retiradoDespuesDe: null })));
+    const eqs = E.armarEquipos(gente, nuevoId);
+    const te = T.nuevo({ nombre: "PRUEBA EQUIPOS", arbitro: "PRUEBA PRINCIPAL", tipo: "equipos", tableros: 4, puntos: Object.assign({}, E.PUNTOS_EQUIPOS), rondasTotales: 3, jugadores: eqs });
+    T.fijarNumeracion(te);
+    te.rondas = [{ mesas: [{ b: eqs[0].id, n: eqs[1].id, r: null }], ausencias: {} }];
+    te.publicado = { id: ID2, clave: "clave-de-prueba", hora: 1 };
+    const Q = await P.abrirPagina(browser, BASE, "", async (p) => {
+      await p.addInitScript(() => { window.__sinAutoConfirmar = true; });
+      await p.addInitScript((x) => {
+        if (localStorage.getItem("pareo_lista_v1")) return;
+        localStorage.setItem("pareo_lista_v1", JSON.stringify([{ id: "te", nombre: x.nombre, actualizado: 1 }]));
+        localStorage.setItem("pareo_torneo_v1_te", JSON.stringify(x));
+        localStorage.setItem("pareo_abierto_v1", "te");
+      }, te);
+    });
+    const pq = Q.page;
+    await pq.click('[data-ficha="rondas"]');
+    await pq.click("#pi-camaras");
+    await pq.waitForSelector(dialogo);
+    await pq.fill(dialogo + ' [name="codigo"]', CODIGO);
+    await pq.click(dialogo + " [data-avisos-aceptar]");
+    await pq.waitForFunction((c) => window.__enviados.some((x) => x.canal === c && x.evento === "pedir"), CANAL, { timeout: 8000 }).catch(() => {});
+    ok(await P.vis(pq, "#pi-camaras-caja"), "un torneo por equipos también recibe de las cámaras");
+    const mandaTablero = (o) => pq.evaluate(([c, o]) => {
+      const j = new window.Chess();
+      o.jugadas.forEach((x) => j.move(x));
+      window.__llega(c, "estado", window.PartidaEnVivo.estado(j, { blancas: "X", negras: "Y" }, { torneo: o.torneo, ronda: 1, mesa: 1, tablero: o.tablero }, o.resultado, {}));
+    }, [CANAL, Object.assign({ torneo: ID2 }, o)]);
+    const guardadoE = () => P.leerTodos(pq).then((l) => l[0]);
+    await mandaTablero({ tablero: 2, jugadas: ["d4", "d5", "c4"] });
+    let ge = await P.esperarGuardado(pq, (l) => /c4/.test(((l[0].rondas[0].mesas[0].partidas || [])[1] || {}).pgn || "")).then((l) => l[0]);
+    igual("la partida del tablero 2 queda en ese tablero del encuentro, marcada como de la cámara",
+      [/1\. d4 d5 2\. c4/.test(ge.rondas[0].mesas[0].partidas[1].pgn), ge.rondas[0].mesas[0].partidas[1].pgnCamara, (ge.rondas[0].mesas[0].partidas[0] || {}).pgn || null], [true, true, null]);
+    await pq.waitForFunction(() => /tablero 2/.test(document.getElementById("pi-camaras-mesas").textContent)).catch(() => {});
+    igual("dice qué mesa y qué tablero tienen cámara", await pq.textContent("#pi-camaras-mesas"), "Mesas con cámara: 1 · tablero 2.");
+    await mandaTablero({ jugadas: ["e4"] });
+    await mandaTablero({ tablero: 3, jugadas: ["e4"], torneo: ID });
+    await pq.waitForTimeout(300);
+    ge = await guardadoE();
+    igual("sin tablero, o de otro torneo, no entra", [((ge.rondas[0].mesas[0].partidas || [])[0] || {}).pgn || null, ((ge.rondas[0].mesas[0].partidas || [])[2] || {}).pgn || null], [null, null]);
+    await mandaTablero({ tablero: 2, jugadas: ["d4", "d5", "c4"], resultado: "0-1" });
+    await pq.waitForSelector("#pi-confirmar [data-camara-anotar]");
+    ok(/Mesa 1 · tablero 2: la cámara dice 0-1/.test(await pq.textContent("#pi-confirmar")), "el resultado queda para confirmar, con su tablero", await pq.textContent("#pi-confirmar"));
+    await pq.click("#pi-confirmar [data-camara-anotar]");
+    ge = await P.esperarGuardado(pq, (l) => ((l[0].rondas[0].mesas[0].partidas || [])[1] || {}).r === "0-1").then((l) => l[0]);
+    igual("«Anotar» lo pone en ese tablero; el encuentro todavía no tiene resultado (faltan tableros)", [ge.rondas[0].mesas[0].partidas[1].r, ge.rondas[0].mesas[0].r], ["0-1", null]);
+    // Y a Lichess, cada tablero con sus equipos.
+    const aL = [];
+    await pq.context().route("https://lichess.org/api/broadcast/round/*/push", async (r) => {
+      if (r.request().method() === "OPTIONS") return r.fulfill({ status: 204, headers: { "access-control-allow-origin": "*", "access-control-allow-headers": "Authorization, Content-Type", "access-control-allow-methods": "POST" } });
+      aL.push(r.request().postData() || "");
+      await r.fulfill({ status: 200, contentType: "application/json", headers: { "access-control-allow-origin": "*" }, body: '{"games":[{},{},{},{}]}' });
+    });
+    await pq.click("#pi-lichess-conectar");
+    await pq.waitForSelector(dialogo);
+    await pq.fill(dialogo + ' [name="clave"]', "lip_PRUEBA");
+    await pq.fill(dialogo + ' [name="ronda"]', "XyZw5678");
+    await pq.click(dialogo + " [data-avisos-aceptar]");
+    await pq.waitForFunction(() => /Lichess: 4 partidas/.test((document.getElementById("pi-lichess-estado") || {}).textContent || ""), null, { timeout: 8000 }).catch(() => {});
+    const cuerpo = aL[0] || "";
+    ok((cuerpo.match(/\[Round "1\.1\.\d"\]/g) || []).length === 4, "a Lichess van los cuatro tableros del encuentro", cuerpo.slice(0, 300));
+    ok(/\[Round "1\.1\.2"\]\n\[White "PRUEBA B2"\]\n\[Black "PRUEBA A2"\]\n\[WhiteTeam "Escuela B"\]\n\[BlackTeam "Escuela A"\]/.test(cuerpo)
+      && /1\. d4 d5 2\. c4 0-1/.test(cuerpo), "el tablero 2 con los colores de las olimpiadas, sus equipos, sus jugadas y su resultado", cuerpo);
+    igual("sin errores en la consola (equipos)", Q.errores, []);
+  }
+
   await browser.close();
   console.log(fallos ? `\n✗ ${fallos} comprobaciones fallaron.` : "\nPareo Integral recibe de las cámaras como se pidió.");
   process.exit(fallos ? 1 : 0);

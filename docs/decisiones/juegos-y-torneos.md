@@ -10047,6 +10047,79 @@ la mide `verificar-camara-tablero.js`, en «La cámara gasta poco», con
   pedir cada 10 segundos y al volver la señal. La página ya abría sin señal
   después de la primera vez: `sw.js` guarda todo lo del sitio que pasa por él.
 
+### Torneos por equipos con la cámara
+
+En un torneo por equipos, cada encuentro es una mesa de Pareo con sus
+tableros, y **cada tablero es una partida: una cámara**. La cámara elige
+«Mesa 3 · tablero 2» (se guarda como `3.2`; el QR lleva `&b=2`) y lo que
+manda lleva `tablero` además de `mesa`.
+
+- **Quién juega cada tablero** sale de la alineación del encuentro o, si no
+  se dio, de los primeros del orden de tableros, y el equipo de la izquierda
+  juega con blancas en los tableros impares (las olimpiadas de FIDE):
+  `PartidaEnVivo.mesasDe` lo calcula del torneo publicado con la misma cuenta
+  que `PareoEquipos.tablerosDe`, que acá no se carga (el verificador compara
+  las dos, con el suplente que entró en el tablero 4). Un tablero al que le
+  falta alguien no se juega: no sale.
+- **Quien mira** ve una tarjeta por tablero (`m3t2`, «Mesa 3 · tablero 2»),
+  con los dos equipos.
+- **Pareo** guarda la partida en `m.partidas[k].pgn` y deja el resultado para
+  confirmar por tablero («Mesa 3 · tablero 2: la cámara dice 0-1»); al
+  anotarlo, el del encuentro sale de los tableros
+  (`PareoEquipos.resultadoEncuentro`). Lo que llega sin tablero a un torneo
+  por equipos (o con tablero a uno individual) no entra.
+- **La partida de cada tablero no se publica** (todavía): `pareo-publicar`
+  guarda de cada tablero solo su resultado, y cambiar eso es cambiar la Edge
+  Function. Queda en la computadora del árbitro y va a Lichess.
+
+### Transmitir a Lichess
+
+Desde la caja de las cámaras de Pareo, «Transmitir a Lichess» manda las
+partidas de la ronda en juego (las de las cámaras y las escritas a mano) y
+sus resultados a una transmisión de Lichess de quien organiza, con
+`POST https://lichess.org/api/broadcast/round/{id}/push` y su clave
+(«study:write»).
+
+- **La transmisión y cada ronda se crean en Lichess**, a mano: Lichess
+  contesta a otra página solo en `/api/` (el preflight de `/broadcast/new` da
+  403), así que crearlas desde Pareo no se puede. Se pega el enlace de la
+  ronda (`/broadcast/<torneo>/<ronda>/<id>`); el de la transmisión entera
+  (`/broadcast/<torneo>/<id>`) no sirve para mandar y se dice. Cuando empieza
+  la ronda siguiente, la caja pide su enlace.
+- **La clave queda solo en esta computadora** (`pareo_lichess_clave_v1`),
+  nunca en el torneo, que se exporta y se publica (el verificador lo
+  comprueba). «Dejar de transmitir a Lichess» la borra.
+- Cada partida lleva `Event`, `Round` («ronda.mesa», en equipos
+  «ronda.mesa.tablero»), `White`, `Black`, su Elo y, en equipos, `WhiteTeam`
+  y `BlackTeam` (la tabla de equipos de Lichess). Las jugadas salen de lo
+  guardado, sin su cabecera, y el resultado es el anotado en Pareo (no el de
+  la cámara sin confirmar).
+- **Se manda como mucho una vez cada 5 segundos** y una vez por minuto igual
+  (un resultado anotado a mano). El retraso es el de las cámaras: lo que no
+  les llegó a quienes miran tampoco le llega a Pareo. Lo que contesta Lichess
+  se dice en la caja («Lichess: 12 partidas de la ronda 3, enviadas a las
+  10:32», o que no acepta la clave).
+- En la política de privacidad, en «Lichess y Chess.com»: qué se le manda y
+  que la clave queda en la computadora de quien organiza.
+
+### Guardar la partida en la cuenta del alumno
+
+En `tablero-vivo.html`, debajo de las jugadas, «¿Es tu partida? Guardar en
+mi cuenta»: quien la jugó, con su sesión abierta en ese aparato, elige con
+qué color jugó (con los nombres al lado), el torneo y la ronda, y la partida
+queda en `partidas_torneo`, la misma de «Tus propios errores» y la libreta de
+torneos: su profe la ve y el motor la revisa.
+
+- **La base decide**: `partidas_torneo` solo deja insertar en la propia
+  cuenta (`student_id = auth.uid()` por omisión y en la política) y desde 10
+  medias jugadas; por eso el botón sale recién con 10. No se manda
+  `student_id`.
+- Sin sesión, dice cómo entrar (el login no devuelve el `#`, así que hay que
+  volver a abrir el enlace). La fecha es la de hoy en hora de Costa Rica
+  (`HoraCR.hoy()`); el resultado, el que llegó de la cámara (o `*`).
+- No se guarda dos veces la misma (`vivo_guardadas_v1`, en el aparato, por
+  partida y número de jugadas).
+
 ### Quien mira y quien transmite: repasar, tiempos, jugada ilegal, proyector, motor y retraso
 
 El tercer pedido de mejoras del dueño («todas»). Lo de este paquete:

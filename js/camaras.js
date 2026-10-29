@@ -129,7 +129,7 @@
                 fila.append(quien, etiqueta, det, ir);
                 lista.append(fila);
             }
-            fila.querySelector("[data-quien]").textContent = "Cámara " + n + (x && x.mesa ? " · mesa " + x.mesa : "");
+            fila.querySelector("[data-quien]").textContent = "Cámara " + n + (x && x.mesa ? " · mesa " + x.mesa + (x.tablero ? " · tablero " + x.tablero : "") : "");
             const et = fila.querySelector("[data-nivel]");
             et.textContent = NIVEL[nivel][0];
             et.className = "rounded-full px-2 py-0.5 text-xs font-semibold " + NIVEL[nivel][1];

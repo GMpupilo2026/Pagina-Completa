@@ -27,7 +27,11 @@
  * canal (el código del torneo) y cada mensaje dice su torneo, su ronda y su
  * mesa física: quien mira ve todas las mesas juntas.
  *   PartidaEnVivo.torneoDe(texto)       → el id de un enlace de Torneos en Pareo Integral
- *   PartidaEnVivo.mesasDe(datos, ronda) → { ronda, mesas: [{ mesa, blancas, negras }] }
+ *   PartidaEnVivo.mesasDe(datos, ronda) → { ronda, mesas: [{ mesa, tablero, blancas, negras }] }
+ *     (en un torneo por equipos, una por TABLERO de cada encuentro: `tablero` de 1 a 4;
+ *     en uno individual, `tablero` es null)
+ *   PartidaEnVivo.lugar(x)              → «Mesa 5» o «Mesa 5 · tablero 2»
+ *   PartidaEnVivo.clave(x)              → «m5» o «m5t2»: una cámara, una partida
  */
 (function () {
     "use strict";
@@ -108,6 +112,7 @@
         if (x.retraso) p.retraso = entero(x.retraso, 120);
         if (donde && torneoDe(donde.torneo) && entero(donde.mesa, 999)) {
             p.torneo = torneoDe(donde.torneo); p.mesa = donde.mesa; p.ronda = entero(donde.ronda, 99);
+            if (entero(donde.tablero, 12)) p.tablero = donde.tablero;
         }
         return p;
     }
@@ -142,16 +147,47 @@
      * publicado, con los nombres de quien juega con cada color; sin las de
      * «libre». null si el torneo es por equipos o todavía no tiene rondas. */
     function mesasDe(datos, ronda) {
-        if (!datos || datos.tipo === "equipos" || !Array.isArray(datos.rondas) || !datos.rondas.length) return null;
+        if (!datos || !Array.isArray(datos.rondas) || !datos.rondas.length) return null;
         const r = ronda && ronda <= datos.rondas.length ? ronda : datos.rondas.length;
         const R = datos.rondas[r - 1] || {};
+        if (datos.tipo === "equipos") return { ronda: r, mesas: tablerosDeEquipos(datos, R) };
         const nom = (id) => ((datos.jugadores || []).find((j) => j.id === id) || {}).nombre || "";
         return {
             ronda: r,
-            mesas: (R.mesas || []).map((m, k) => ({ mesa: mesaFisica(datos, k), blancas: nom(m.b), negras: m.n == null ? null : nom(m.n) }))
+            mesas: (R.mesas || []).map((m, k) => ({ mesa: mesaFisica(datos, k), tablero: null, blancas: nom(m.b), negras: m.n == null ? null : nom(m.n) }))
                 .filter((x) => x.negras !== null),
         };
     }
+    /* Un torneo por equipos: cada encuentro es una mesa con sus tableros, y
+     * cada tablero es una partida (una cámara). Quién juega cada tablero sale
+     * de la alineación del encuentro o, si no se dio, de los primeros del
+     * orden de tableros; el equipo de la izquierda juega con blancas en los
+     * tableros impares, como en las olimpiadas de FIDE. La misma cuenta que
+     * PareoEquipos.tablerosDe (js/pareo/equipos.js, que acá no se carga; el
+     * verificador comprueba que den lo mismo). Un tablero al que le falta
+     * alguien no se juega: no sale. */
+    function tablerosDeEquipos(datos, R) {
+        const n = Number(datos.tableros) || 4;
+        const equipo = (id) => (datos.jugadores || []).find((e) => e.id === id) || { nombre: "", integrantes: [] };
+        const out = [];
+        (R.mesas || []).forEach((m, i) => {
+            if (m.n == null) return;
+            const eb = equipo(m.b), en = equipo(m.n);
+            const al = m.alineacion || { b: (eb.integrantes || []).slice(0, n).map((j) => j.id), n: (en.integrantes || []).slice(0, n).map((j) => j.id) };
+            const nom = (e, id) => ((e.integrantes || []).find((j) => j.id === id) || {}).nombre || "";
+            for (let k = 0; k < n; k++) {
+                const deB = (al.b || [])[k], deN = (al.n || [])[k];
+                if (!deB || !deN) continue;
+                const izquierda = k % 2 === 0; // el equipo de la izquierda, con blancas
+                out.push({ mesa: mesaFisica(datos, i), tablero: k + 1,
+                    blancas: izquierda ? nom(eb, deB) : nom(en, deN), negras: izquierda ? nom(en, deN) : nom(eb, deB),
+                    equipoBlancas: (izquierda ? eb : en).nombre || "", equipoNegras: (izquierda ? en : eb).nombre || "" });
+            }
+        });
+        return out;
+    }
+    const lugar = (x) => "Mesa " + x.mesa + (x.tablero ? " · tablero " + x.tablero : "");
+    const clave = (x) => "m" + x.mesa + (x.tablero ? "t" + x.tablero : "");
 
     /* Lo que llega se vuelve a jugar con chess.js: una partida que no es legal
      * no se pinta. Los nombres son texto ajeno: van por textContent. */
@@ -165,7 +201,7 @@
         d.tiempos = Array.isArray(p.tiempos) ? p.tiempos.slice(0, n).map((y) => (Number.isFinite(y) && y >= 0 ? y : null)) : [];
         d.espera = Number.isFinite(p.espera) && p.espera >= 0 ? p.espera : null;
         d.retraso = entero(p.retraso, 120);
-        if (torneoDe(p.torneo) && entero(p.mesa, 999)) { d.torneo = torneoDe(p.torneo); d.mesa = p.mesa; d.ronda = entero(p.ronda, 99); }
+        if (torneoDe(p.torneo) && entero(p.mesa, 999)) { d.torneo = torneoDe(p.torneo); d.mesa = p.mesa; d.ronda = entero(p.ronda, 99); d.tablero = entero(p.tablero, 12); }
         d.id = idValido(p.id);
         return d;
     }
@@ -175,11 +211,11 @@
      * pisa lo nuevo: si llega atrasado, null. */
     function seguir(p, antes) {
         const mesa = entero(p.mesa, 999);
-        const falta = { falta: true, mesa };
+        const falta = { falta: true, mesa, tablero: entero(p.tablero, 12) };
         const id = idValido(p.id);
         if (!antes || !antes.juego || !id || antes.id !== id || !Array.isArray(p.san) || p.san.length > 600) return falta;
         if (Number(p.t) < antes.t) return null;
-        if ((antes.mesa || null) !== mesa || (antes.torneo || null) !== (torneoDe(p.torneo) || null)) return falta;
+        if ((antes.mesa || null) !== mesa || (antes.tablero || null) !== entero(p.tablero, 12) || (antes.torneo || null) !== (torneoDe(p.torneo) || null)) return falta;
         const j = antes.juego;
         if (j.history().length !== p.desde) return falta;
         let k = 0;
@@ -193,7 +229,7 @@
         d.tiempos = (antes.tiempos || []).slice(0, p.desde).concat(nuevos);
         d.espera = Number.isFinite(p.espera) && p.espera >= 0 ? p.espera : null;
         d.retraso = entero(p.retraso, 120);
-        if (antes.torneo) { d.torneo = antes.torneo; d.mesa = antes.mesa; d.ronda = entero(p.ronda, 99) || antes.ronda; }
+        if (antes.torneo) { d.torneo = antes.torneo; d.mesa = antes.mesa; d.tablero = antes.tablero; d.ronda = entero(p.ronda, 99) || antes.ronda; }
         return d;
     }
 
@@ -289,5 +325,5 @@
     const TEXTO_RESULTADO = { "1-0": "Terminó: ganan las blancas (1-0).", "=": "Terminó en tablas (½-½).", "0-1": "Terminó: ganan las negras (0-1)." };
     const textoResultado = (r) => TEXTO_RESULTADO[r] || "";
 
-    window.PartidaEnVivo = { nuevoCodigo, codigoValido, canal, enlace, estado, loNuevo, leer, pintar, jugadasTexto, comoVa, torneoDe, mesaFisica, mesasDe, resultadoSolo, pgn, textoResultado, hasta, reloj };
+    window.PartidaEnVivo = { nuevoCodigo, codigoValido, canal, enlace, estado, loNuevo, leer, pintar, jugadasTexto, comoVa, torneoDe, mesaFisica, mesasDe, lugar, clave, resultadoSolo, pgn, textoResultado, hasta, reloj };
 })();
