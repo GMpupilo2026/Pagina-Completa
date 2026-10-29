@@ -579,6 +579,95 @@ async function esperarJugadas(p, n) {
     await cerrar(b);
   }
 
+  console.log("\nJugar a distancia: cada uno en su tablero");
+  {
+    const lado = async (nombre) => {
+      const x = await abrir(browser, "camara-tablero.html");
+      await x.page.waitForSelector("#app:not(.hidden)");
+      await foto(x.page, new Chess().fen(), ESQ0);
+      await esperarAviso(x.page, /esquinas/);
+      await tocar(x.page, aLienzo(ESQ0));
+      await x.page.click("#btn-calibrar");
+      await esperarAviso(x.page, /Calibrado/);
+      await x.page.fill("#distancia-nombre", nombre);
+      return x;
+    };
+    const A = await lado("Ana"), B = await lado("Beto");
+    const pa = A.page, pb = B.page;
+    await pa.selectOption("#distancia-color", "w");
+    await pa.click("#btn-distancia-crear");
+    const cod = (await pa.textContent("#distancia-codigo")).trim();
+    igual("crear la partida da un código y el enlace para el rival", [/^[a-hjkmnp-z2-9]{8}$/.test(cod), (await pa.getAttribute("#distancia-enlace", "href")).endsWith("/camara-tablero.html#d=" + cod)], [true, true]);
+    await pb.fill("#distancia-unirse", cod);
+    await pb.click("#form-distancia-unirse button[type=submit]");
+    await pb.waitForFunction(() => /Juegas con negras/.test(document.getElementById("distancia-con").textContent), null, { timeout: 8000 }).catch(() => {});
+    await pa.waitForFunction(() => /Beto/.test(document.getElementById("distancia-con").textContent), null, { timeout: 8000 }).catch(() => {});
+    igual("quien se une juega con el otro color, y cada uno ve el nombre del otro",
+      [await pb.textContent("#distancia-con"), await pa.textContent("#distancia-con")], ["Juegas con negras · Rival: Ana", "Juegas con blancas · Rival: Beto"]);
+    const escribir = async (pg, san) => { await pg.fill("#jugada-mano", san); await pg.click("#form-anotar button[type=submit]"); };
+    await escribir(pa, "e4");
+    await pb.waitForFunction(() => /Tu rival juega/.test(document.getElementById("distancia-estado").textContent), null, { timeout: 8000 }).catch(() => {});
+    igual("la jugada de una cámara le llega a la otra, que dice cómo ponerla", await pb.textContent("#distancia-estado"), "Tu rival juega e4: mueve el peón blanco de e2 a e4. Pon esa jugada en tu tablero.");
+    igual("y no se anota hasta que se pone en el tablero", await jugadasDe(pb), "Todavía ninguna.");
+    await escribir(pb, "e4");
+    igual("puesta, se anota y le toca", [await jugadasDe(pb), await pb.textContent("#distancia-estado")], ["1. e4", "Te toca."]);
+    await escribir(pb, "e5");
+    await pa.waitForFunction(() => /Tu rival juega e5/.test(document.getElementById("distancia-estado").textContent), null, { timeout: 8000 }).catch(() => {});
+    await escribir(pa, "e5");
+    await escribir(pb, "Nf3"); // legal, pero es una jugada de las blancas: le toca al rival
+    igual("con el turno del rival no se juega (y lo dice)", [(await aviso(pb)).startsWith("Todavía no es tu turno"), await jugadasDe(pb)], [true, "1. e4 e5"]);
+    // Hasta 10 medias jugadas, para que la base la deje guardar.
+    for (const [quien, otro, san] of [[pa, pb, "Nf3"], [pb, pa, "Nc6"], [pa, pb, "Bc4"], [pb, pa, "Bc5"], [pa, pb, "c3"], [pb, pa, "Nf6"], [pa, pb, "d4"], [pb, pa, "exd4"]]) {
+      await escribir(quien, san);
+      await otro.waitForFunction((s) => document.getElementById("distancia-estado").textContent.includes("Tu rival juega"), san, { timeout: 8000 }).catch(() => {});
+      await escribir(otro, san);
+    }
+    igual("las dos cámaras llevan la misma partida", [await jugadasDe(pa), await jugadasDe(pb)].map((x) => x === "1. e4 e5 2. Cf3 Cc6 3. Ac4 Ac5 4. c3 Cf6 5. d4 exd4"), [true, true]);
+    await pb.click("#btn-distancia-rendirse");
+    await pa.waitForFunction(() => /Terminó/.test(document.getElementById("resultado-texto").textContent), null, { timeout: 8000 }).catch(() => {});
+    igual("«Me rindo» termina la partida en las dos", [await pb.textContent("#resultado-texto"), await pa.textContent("#resultado-texto")], ["Terminó: ganan las blancas (1-0).", "Terminó: ganan las blancas (1-0)."]);
+    for (const x of [pa, pb]) await x.waitForFunction(() => (window.__insertados || []).some((y) => y.tabla === "partidas_torneo"), null, { timeout: 8000 }).catch(() => {});
+    const guardada = (pg) => pg.evaluate(() => { const f = (window.__insertados || []).find((y) => y.tabla === "partidas_torneo"); return f && [f.fila.color, f.fila.resultado, f.fila.jugadas.length, f.fila.evento]; });
+    igual("y queda en la cuenta de cada uno, con su color y su rival", [await guardada(pa), await guardada(pb)],
+      [["w", "1-0", 10, "A distancia (cámara): contra Beto"], ["b", "1-0", 10, "A distancia (cámara): contra Ana"]]);
+
+    // Las planillas en PDF de la partida.
+    await pa.evaluate(() => { const u = URL.createObjectURL; window.__pdfs = []; URL.createObjectURL = (b) => { window.__pdfs.push(b); return u.call(URL, b); }; });
+    await pa.click("#btn-planillas");
+    await pa.waitForFunction(() => /^Listo/.test(document.getElementById("planillas-msg").textContent), null, { timeout: 15000 }).catch(() => {});
+    igual("«Planillas en PDF» arma una por jugador", await pa.textContent("#planillas-msg"), "Listo: una planilla para cada jugador, con 10 medias jugadas. Revísenlas antes de firmar.");
+    const pdf = await pa.evaluate(async () => { const b = window.__pdfs[window.__pdfs.length - 1]; const t = new TextDecoder("latin1").decode(new Uint8Array(await b.arrayBuffer())); return [b.type, (t.match(/\/Type \/Page\b/g) || []).length, /Planilla de las blancas/.test(t), /Planilla de las negras/.test(t), /\(Cf3\)/.test(t), /\(Ac4\)/.test(t), /\/Im|\/Marca|\/SMask/.test(t)]; });
+    igual("dos hojas, la de las blancas y la de las negras, con las jugadas en español y la marca de agua", pdf, ["application/pdf", 2, true, true, true, true, true]);
+    igual("sin errores en la consola", [A.errores, B.errores], [[], []]);
+    await cerrar(A); await cerrar(B);
+  }
+
+  console.log("\nCómo lee cada tablero");
+  {
+    const L = await abrir(browser, "camara-tablero.html");
+    const pl = L.page;
+    await pl.waitForSelector("#app:not(.hidden)");
+    await foto(pl, new Chess().fen(), ESQ0);
+    await esperarAviso(pl, /esquinas/);
+    await tocar(pl, aLienzo(ESQ0));
+    await pl.click("#btn-calibrar");
+    await esperarAviso(pl, /Calibrado/);
+    igual("al calibrar mide la luz", await pl.textContent("#equipo-luz"), "Luz medida al calibrar: luz normal.");
+    await pl.click("summary:has-text('Este tablero y cómo lo lee la cámara')");
+    await pl.fill("#equipo-tablero", "Vinilo verde");
+    await pl.dispatchEvent("#equipo-tablero", "change");
+    const j = new Chess();
+    for (const san of ["e4", "e5"]) { j.move(san); await foto(pl, j.fen(), ESQ0); await esperarJugadas(pl, j.history().length); }
+    await pl.fill("#jugada-mano", "Nf3"); await pl.click("#form-anotar button[type=submit]");
+    await pl.click('[data-resultado="1-0"]');
+    igual("con la partida terminada, la anota: el tablero, la luz, cuántas leyó sola y cuántas a mano",
+      await pl.evaluate(() => [...document.querySelectorAll("#lectura-filas tr")].map((tr) => [...tr.children].map((x) => x.textContent))),
+      [["Vinilo verde", "luz normal", "1", "2 de 3 (67 %)", "1", "0", "0"]]);
+    igual("y lo guarda en el aparato", await pl.evaluate(() => JSON.parse(localStorage.getItem("camara_lectura_v1")).map((x) => [x.tablero, x.luz, x.jugadas, x.mano])), [["Vinilo verde", "normal", 3, 1]]);
+    igual("sin errores en la consola", L.errores, []);
+    await cerrar(L);
+  }
+
   console.log("\nLa luz que cambia");
   {
     const reloj = { f: () => { const pn = performance.now.bind(performance); window.__adelanto = 0; performance.now = () => pn() + window.__adelanto; } };
@@ -1249,8 +1338,8 @@ async function esperarJugadas(p, n) {
     const R = await abrir(browser, "camara-tablero.html");
     const pr = R.page;
     await pr.waitForSelector("#app:not(.hidden)");
-    // El reloj del aparato, adelantado a pedido.
-    await pr.evaluate(() => { const real = Date.now; window.__mas = 0; Date.now = () => real() + window.__mas; });
+    // El reloj del aparato, quieto y adelantado a pedido (lo que tarda la prueba no cuenta).
+    await pr.evaluate(() => { const base = Date.now(); window.__mas = 0; Date.now = () => base + window.__mas; });
     const pasan = async (ms) => { await pr.evaluate((ms) => { window.__mas += ms; }, ms); await pr.waitForTimeout(450); };
     const tiempos = () => pr.evaluate(() => ["w", "b"].map((c) => document.querySelector("#reloj-" + c + " [data-tiempo]").textContent + (document.getElementById("reloj-" + c).getAttribute("aria-current") === "true" ? "*" : "")));
     igual("sin empezar, no hay tiempos", await pr.evaluate(() => document.getElementById("reloj-tiempos").checkVisibility()), false);

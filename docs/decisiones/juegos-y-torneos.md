@@ -10910,6 +10910,58 @@ quien mira adelantado, la bandera con su aviso, su color y su foto) y
 `verificar-pareo-camaras.js` (las mesas cortas y la bandera con su foto).
 Rotos a propósito, saltan.
 
+### Jugar a distancia, las planillas en PDF y cómo lee cada tablero
+
+El octavo pedido del dueño («hacer 1, 7, 10»):
+
+- **Jugar a distancia en tableros de verdad** («Jugar a distancia», fuera del
+  modo mesa): cada uno en su casa con su tablero y su celular encima. Quien
+  crea la partida elige su color y pasa el código o el enlace
+  (`camara-tablero.html#d=<código>`, que lo deja escrito); quien se une juega
+  con el otro. Va por un canal de Broadcast propio,
+  `tablero-distancia-<código>`, sin tabla, como la transmisión. **Cada
+  mensaje lleva la partida entera** (`jugadas`): uno que se pierde no rompe
+  nada, el siguiente la trae; al unirse se manda «hola» y el otro contesta
+  con la suya; si el rival quedó atrás, se le vuelve a mandar. La jugada del
+  rival se dice («Tu rival juega e4: mueve el peón blanco de e2 a e4») y
+  se pone en el tablero: la cámara espera a verla (`guion.tipo =
+  "distancia"`, `esperando`), como con el motor; jugar con el turno del
+  rival se rechaza. **El reloj**: cada uno manda lo que le queda; el tiempo
+  del rival lo pone su mensaje, y poner su jugada no le cuesta nada a nadie
+  (`guion.colocando`: `anotar` no gasta ni suma el incremento). El
+  resultado (mate, «Me rindo», la bandera o uno marcado) llega al otro y
+  termina la partida en los dos; con 10 medias jugadas o más queda en
+  `partidas_torneo` de cada uno, con su color y «A distancia (cámara):
+  contra <nombre>» (`guardarEnCuenta`, la misma de la partida contra el
+  motor).
+- **Las planillas en PDF** (`js/planilla-pdf.js`, una sola copia): una hoja
+  por jugador, como la planilla oficial —número y jugada de cada color, en
+  dos mitades de 30 renglones; otra hoja si pasa de 60 jugadas—, la jugada en
+  algebraica española (`ComandosTablero.sanEspanol`, también con el Modo
+  Adaptado; en el Pareo en inglés, el SAN), el resultado, las firmas y la
+  marca de agua de Ajedrez Integral. La cámara la arma con «Planillas en
+  PDF» (solo una partida desde la posición inicial) y Pareo, «Planillas de la
+  ronda (PDF)», con todas las mesas que mandaron su partida. Es una ayuda: la
+  planilla que vale es la que escribe cada jugador (art. 8.1), y lo dice.
+  `js/reporte-pdf.js` aprendió el bloque `salto` (la hoja siguiente).
+- **Cómo lee cada tablero** («Este tablero y cómo lo lee la cámara»): quien
+  maneja la cámara escribe qué tablero y piezas son, y la luz se mide al
+  calibrar (el brillo medio de las casillas: poca, normal o mucha). Con cada
+  partida terminada se anota en el aparato (`camara_lectura_v1`) cuántas
+  jugadas leyó sola, cuántas a mano, cuántas veces dudó y cuántas posibles
+  ilegales vio, y se resume por tablero y luz, los que mejor lee arriba. En
+  un torneo viajan `equipo` y `dudas` (`PartidaEnVivo` los valida): Pareo
+  los muestra en el informe de las cámaras y guarda cada partida terminada en
+  esa computadora para **todos los torneos** (`pareo_camaras_lectura_v1`, no
+  en el torneo, que se publica), con su tabla «Cómo leen los tableros».
+
+Lo prueban `verificar-camara-tablero.js` (dos cámaras que juegan una partida
+de 10 medias jugadas a distancia, el turno del rival, «Me rindo», lo guardado
+en la cuenta de cada una y las dos hojas del PDF; la luz, el tablero y la
+tabla de lectura) y `verificar-pareo-camaras.js` (el tablero y la luz en el
+informe, lo guardado para todos los torneos y las planillas de la ronda).
+Rotos a propósito, saltan.
+
 ## Pareo para DGT
 
 Un torneo presencial con tableros electrónicos DGT: el árbitro sube cada ronda

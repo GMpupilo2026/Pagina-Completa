@@ -84,7 +84,7 @@ function torneo() {
   const manda = (o) => page.evaluate(([c, o]) => {
     const j = new window.Chess();
     o.jugadas.forEach((x) => j.move(x));
-    const p = window.PartidaEnVivo.estado(j, { blancas: "X", negras: "Y" }, { torneo: o.torneo, ronda: o.ronda, mesa: o.mesa }, o.resultado, { tiempos: o.tiempos, mano: o.mano, reloj: o.reloj });
+    const p = window.PartidaEnVivo.estado(j, { blancas: "X", negras: "Y" }, { torneo: o.torneo, ronda: o.ronda, mesa: o.mesa }, o.resultado, { tiempos: o.tiempos, mano: o.mano, reloj: o.reloj, equipo: o.equipo, dudas: o.dudas });
     window.__llega(c, "estado", p);
   }, [CANAL, Object.assign({ torneo: ID, ronda: 1, jugadas: [] }, o)]);
 
@@ -242,6 +242,23 @@ function torneo() {
   await page.keyboard.press("Escape");
   await page.click("#pi-camaras-alertas [data-tipo=bandera] button:not([data-foto])");
 
+  console.log("\n=== Las planillas de la ronda y cómo lee cada tablero ===");
+  await page.evaluate(() => localStorage.removeItem("pareo_camaras_lectura_v1"));
+  await manda({ mesa: 3, jugadas: ["c4", "e5", "Nc3"], resultado: "0-1", mano: 1, dudas: 2, equipo: { tablero: "Vinilo verde", luz: "poca" } });
+  await page.waitForFunction(() => /Vinilo verde/.test((document.getElementById("pi-camaras-informe") || {}).textContent || ""), null, { timeout: 4000 }).catch(() => {});
+  igual("el informe dice el tablero y la luz de cada cámara", await page.evaluate(() => [...document.querySelectorAll('#pi-camaras-informe [data-informe="3"] td')].slice(2, 4).map((x) => x.textContent)), ["Vinilo verde", "poca luz"]);
+  igual("la partida terminada queda anotada en esta computadora, para todos los torneos",
+    await page.evaluate(() => JSON.parse(localStorage.getItem("pareo_camaras_lectura_v1") || "[]").map((x) => [x.tablero, x.luz, x.jugadas, x.mano, x.dudas])), [["Vinilo verde", "poca", 3, 1, 2]]);
+  igual("y se resume por tablero y luz", await page.evaluate(() => [...document.querySelectorAll("#pi-camaras-lectura tbody td")].map((x) => x.textContent)),
+    ["Vinilo verde", "poca luz", "1", "2 de 3 (67 %)", "1", "2"]);
+  await page.evaluate(() => { const u = URL.createObjectURL; window.__pdfs = []; URL.createObjectURL = (b) => { window.__pdfs.push(b); return u.call(URL, b); }; });
+  await page.evaluate(() => { document.getElementById("pi-camaras-informe").open = true; });
+  await page.click("#pi-camaras-planillas");
+  await page.waitForFunction(() => window.__pdfs.some((b) => b.type === "application/pdf"), null, { timeout: 15000 }).catch(() => {});
+  const pdf = await page.evaluate(async () => { const b = window.__pdfs.find((x) => x.type === "application/pdf"); if (!b) return null; const t = new TextDecoder("latin1").decode(new Uint8Array(await b.arrayBuffer())); return [(t.match(/\/Type \/Page\b/g) || []).length, /Planilla de las blancas/.test(t), /\(Cc3\)/.test(t)]; });
+  igual("«Planillas de la ronda» arma una por jugador de cada mesa con cámara, en español", pdf, [6, true, true]);
+  await page.evaluate(() => { document.getElementById("pi-camaras-informe").open = false; });
+
   console.log("\n=== Transmitir a Lichess ===");
   // Lichess, de mentira: se guarda lo que llega y se contesta como Lichess.
   const aLichess = [];
@@ -296,10 +313,10 @@ function torneo() {
   const fila = (k) => page.$$eval('#pi-camaras-informe tr[data-informe="' + k + '"] td', (tds) => tds.map((x) => x.textContent));
   const f3 = await fila("3"), f2 = await fila("2");
   igual("una fila por mesa, con lo que anotó sola, lo escrito a mano, los avisos y el resultado",
-    [f3[0], f3[2], f3[3], f3[4], f3[5], f3[6], f2[0], f2[2], f2[3], /\d.*–.*\d/.test(f3[1])], ["3", "2", "2", "1", "1", "—", "2", "6", "0", true]);
+    [f3[0], f3[4], f3[5], f3[6], f3[7], f3[8], f2[0], f2[4], f2[5], /\d.*–.*\d/.test(f3[1])], ["3", "2", "2", "1", "1", "—", "2", "6", "0", true]);
   await manda({ mesa: 3, jugadas: ["d4", "d5", "c4", "e6", "Nc3"], mano: 2 });
-  await page.waitForFunction(() => /^3$/.test(document.querySelector('#pi-camaras-informe tr[data-informe="3"] td:nth-child(3)').textContent), null, { timeout: 5000 }).catch(() => {});
-  igual("con cada jugada que llega se pone al día, y sigue abierto", [(await fila("3"))[2], await page.evaluate(() => document.getElementById("pi-camaras-informe").open)], ["3", true]);
+  await page.waitForFunction(() => /^3$/.test(document.querySelector('#pi-camaras-informe tr[data-informe="3"] td:nth-child(5)').textContent), null, { timeout: 5000 }).catch(() => {});
+  igual("con cada jugada que llega se pone al día, y sigue abierto", [(await fila("3"))[4], await page.evaluate(() => document.getElementById("pi-camaras-informe").open)], ["3", true]);
 
   console.log("\n=== Dejar de recibir ===");
   await page.click("#pi-camaras-dejar");
