@@ -4237,6 +4237,34 @@ las opciones incorrectas del Kahoot que lo nombran. Los textos se acortaron
 para que ni el tema ni el quiz se partan en otra lámina: una lámina de más
 corre la práctica y sus claves.
 
+**Relámpago es menos de 10 minutos** (pedido del dueño, 29/10, después de
+avisarle que el apéndice B.1 de la FIDE dice «10 minutos o menos»). El curso
+cuenta los 10 minutos justos como rápidas: relámpago es menos de 10 y rápidas,
+de 10 a menos de 60. Cambió en la Sesión 3 (el tema, la lámina 5, el caso 1, el
+ejercicio 1 y su clave, y la pregunta del Kahoot de los 10 minutos, también en
+la base) y en la explicación de la prueba final. La fuente del tema y la del
+Kahoot dicen que los 10 minutos justos van por criterio del curso, para que
+nadie crea que es la letra de la FIDE.
+
+**El calendario de un todos contra todos, paso a paso.** La práctica de la
+Sesión 3 suma ocho pasos de opción múltiple (ejercicios 10 a 17, láminas 56 a
+63): cómo se reparten los números, cuántas rondas y partidas, qué número queda
+fijo en la tabla de Berger, las rondas 1, 2 y 3 con sus colores, y qué se hace
+con 5 jugadores. Son los primeros ejercicios de la sesión que se eligen en
+lugar de escribirse: el ejercicio lleva `opciones` y `correcta` (índice) en el
+curso; `curso-generar-formacion.py` escribe las opciones en la lámina, el
+cuadernillo, el PDF de ejercicios y la página (`enunciado()`), y
+`formacion-practicas.js` las manda a la clase como pregunta de opciones con la
+correcta en `practica_claves`, que corrige la base como las de la Sesión 1. Las
+láminas de los pasos leen la pregunta y las opciones del curso (sin la
+correcta marcada) y la huella cuenta lo que leen. `verificar-formacion-desempates.js`
+compara cada ronda que el curso da por buena con `T.berger()` del motor de
+Pareo Integral; probado que salta con una ronda cambiada, el rival del 6
+equivocado y una ronda mal escrita en la respuesta. La práctica empieza igual
+en la 46: las láminas 46 a 55 no se movieron, así que sus claves solo se
+actualizaron (migración `formacion_sesion3_pasos_todos_contra_todos`, un upsert
+sin borrar nada).
+
 Las láminas nuevas corrieron la práctica de la Sesión 3 de las láminas 41-50 a
 las 46-55, y sus claves van por número de lámina: la migración
 `formacion_sesion3_ejemplos_desempate` las vuelve a sembrar y se niega si hay

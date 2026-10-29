@@ -540,14 +540,14 @@
         },
         {
           "texto": "Un torneo se juega a 10 minutos, sin incremento. ¿Qué ritmo es?",
-          "correcta": "Relámpago: 10 minutos o menos",
+          "correcta": "Rápidas: desde 10 minutos ya es rápidas",
           "distractores": [
-            "Rápidas: desde 10 minutos ya es rápidas",
+            "Relámpago: 10 minutos o menos",
             "Clásico",
             "Depende de lo que diga la Normativa JDE"
           ],
           "tiempo": 20,
-          "fuente": "FIDE B.1"
+          "fuente": "Criterio del curso para los 10 minutos justos"
         },
         {
           "texto": "¿Cómo se calcula el tiempo para clasificar un ritmo con incremento?",

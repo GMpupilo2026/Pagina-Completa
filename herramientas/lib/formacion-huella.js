@@ -16,9 +16,10 @@ function huella(clase) {
   const h = crypto.createHash("sha256");
   const datos = path.join(HERRAMIENTAS, "datos", "formacion-laminas-" + clase + ".js");
   h.update(fs.readFileSync(datos));
-  // Lo que los datos leen de otro lado (los cuadros cruzados de la Sesión 3
-  // salen del curso) también cuenta: si cambia, la lámina es de antes.
-  const leidos = fs.existsSync(datos) ? require(datos).filter((d) => d && d.cuadro).map((d) => d.cuadro) : [];
+  // Lo que los datos leen de otro lado (los cuadros cruzados y los pasos del
+  // todos contra todos de la Sesión 3 salen del curso) también cuenta: si
+  // cambia, la lámina es de antes. Por eso entran los datos ya resueltos.
+  const leidos = fs.existsSync(datos) ? require(datos).filter((d) => d && (d.cuadro || d.delCurso)) : [];
   if (leidos.length) h.update(JSON.stringify(leidos));
   h.update(fs.readFileSync(path.join(HERRAMIENTAS, "formacion-laminas.js")));
   h.update(fs.readFileSync(path.join(RAIZ, "cursos", "recursos", "formacion-ajedrez", "presentaciones", clase, "diapositivas.json")));

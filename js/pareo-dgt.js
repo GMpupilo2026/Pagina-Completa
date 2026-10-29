@@ -14,9 +14,10 @@
    Lo que ya se hizo con cada torneo (qué rondas tienen archivo, sus ids en
    Lichess) queda en localStorage de esta computadora: al recargar no se
    repite nada ni se crea una ronda dos veces en Lichess. El token de
-   Lichess va en sessionStorage, o en localStorage si se pide recordarlo; a
-   Ajedrez Integral no se manda nunca: la página habla con lichess.org
-   directo (la API manda Access-Control-Allow-Origin: *).
+   Lichess va en sessionStorage, o en localStorage si se pide recordarlo. La
+   página habla con lichess.org directo en lo que está bajo /api/; crear el
+   torneo y la ronda pasa por la Edge Function, que usa el token para ese
+   pedido y no lo guarda (ver lichess() abajo).
 
    Ver «Pareo para DGT» en docs/decisiones/juegos-y-torneos.md. */
 (function () {
@@ -153,21 +154,38 @@
 
     // ------------------------------------------------------------ Lichess
 
+    // Lo que Lichess contestó, o el error escrito para la bitácora.
+    function respuestaLichess(status, r) {
+        if (status >= 200 && status < 300) return r;
+        if (status === 401) throw new Error("Lichess no aceptó el token (¿lo copiaste entero? ¿tiene el permiso de transmisiones?)");
+        if (status === 429) throw new Error("Lichess pide esperar un minuto antes de seguir");
+        const err = typeof r.error === "string" ? r.error : r.error ? JSON.stringify(r.error) : "respondió " + status;
+        throw new Error("Lichess: " + err);
+    }
+
+    // Las direcciones de Lichess que empiezan con /api/ (la cuenta, empujar el
+    // pareo) aceptan pedidos de otra página y se llaman directo. Crear el
+    // torneo y la ronda (/broadcast/new, /broadcast/{id}/new) no: su consulta
+    // previa de CORS da 403 y el navegador corta con «Failed to fetch». Esas
+    // dos las hace la Edge Function pareo-dgt con el token, que no lo guarda.
     async function lichess(ruta, opciones) {
         const o = opciones || {};
+        if (!/^\/api\//.test(ruta)) {
+            const res = await fetch(FUNCION, {
+                method: "POST",
+                headers: { "Content-Type": "application/json", "Authorization": "Bearer " + await window.tokenDeSesion(), "apikey": window.SUPABASE_ANON_KEY },
+                body: JSON.stringify({ accion: "lichess", token, ruta, form: o.form || [] }),
+            });
+            const r = await res.json().catch(() => ({}));
+            if (!res.ok || r.error) throw new Error(window.errorDeFuncion(res, r));
+            return respuestaLichess(r.status, r.datos || {});
+        }
         const headers = { Authorization: "Bearer " + token };
         let body;
         if (o.form) { body = new URLSearchParams(o.form); }
         else if (o.texto !== undefined) { body = o.texto; headers["Content-Type"] = "text/plain; charset=utf-8"; }
         const res = await fetch(LICHESS + ruta, { method: o.method || (body ? "POST" : "GET"), headers, body });
-        const r = await res.json().catch(() => ({}));
-        if (!res.ok) {
-            if (res.status === 401) throw new Error("Lichess no aceptó el token (¿lo copiaste entero? ¿tiene el permiso de transmisiones?)");
-            if (res.status === 429) throw new Error("Lichess pide esperar un minuto antes de seguir");
-            const err = typeof r.error === "string" ? r.error : r.error ? JSON.stringify(r.error) : "respondió " + res.status;
-            throw new Error("Lichess: " + err);
-        }
-        return r;
+        return respuestaLichess(res.status, await res.json().catch(() => ({})));
     }
 
     async function conectar(nuevo) {
