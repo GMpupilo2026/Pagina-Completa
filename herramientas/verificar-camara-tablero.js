@@ -508,6 +508,8 @@ async function esperarJugadas(p, n) {
   igual("transmitiendo, con un código de 8 letras y números sin 0, 1, i, l ni o", /^[a-hjkmnp-z2-9]{8}$/.test(codigo), true);
   const enlace = await pc.getAttribute("#vivo-enlace", "href");
   igual("el enlace lleva el código después del #", enlace.endsWith("/tablero-vivo.html#" + codigo), true);
+  // La librería del QR se carga al pedirlo: se espera a que aparezca.
+  await pc.waitForSelector("#vivo-qr svg", { timeout: 8000 }).catch(() => {});
   igual("y su código QR", await pc.locator("#vivo-qr svg").count(), 1);
   igual("WhatsApp lleva el enlace", decodeURIComponent(await pc.getAttribute("#vivo-whatsapp", "href")).includes(enlace), true);
 
