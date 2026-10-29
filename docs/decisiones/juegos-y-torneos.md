@@ -10670,6 +10670,15 @@ vivo), no hacerla pasar por un tablero electrónico.
   (manda los cambios para dejar cada pieza en su casilla inicial, como quien
   vuelve a armar el tablero) y «Desconectar». La última jugada se escribe en
   algebraica española.
+- **«Lo que llega de LiveChess».** En el primer ensayo de verdad LiveChess
+  tenía el puerto marcado y no mostraba el tablero, y no había forma de saber
+  por qué: si no mandaba nada, si mandaba otro protocolo (el de bus, 0x81–0x8b
+  con dirección y suma de comprobación) o si esperaba las líneas de control.
+  Cada tarjeta trae ahora un desplegable con cada byte que llega y cada uno
+  que contesta el tablero, en hexadecimal, con la hora (de Costa Rica) y un
+  botón «Copiar»; guarda los últimos 200 renglones. Y al abrir el puerto la
+  página enciende DTR y RTS, como un tablero de verdad: com0com se las pasa a
+  LiveChess como DSR y CTS en la otra punta.
 
 `verificar-pareo-dgt-virtual.js` juega las 64 partidas modelo (4591 jugadas,
 con capturas, enroques, al paso y coronación) y arma la posición SOLO con los
