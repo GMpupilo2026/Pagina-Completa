@@ -4897,11 +4897,11 @@ próxima clase!»—, y que la frase se pueda cambiar.
   (va suelto en el `<body>`, fuera de la lista blanca, que solo esconde lo de
   adentro de la clase).
 - **Los dibujos** son los del avatar del profe Oscar que tienen frase (abajo):
-  hoy 34, entre ellos «¿Vas a jugar esa?» con cara burlona, «Tan vagabundo» y «Pobrecillo» con cara triste.
+  hoy 35, entre ellos «¿Vas a jugar esa?» con cara burlona, «Tan vagabundo», «Pobrecillo» con cara triste y «¡Qué jugadón!».
 
 ### El avatar del profe Oscar
 
-Así se llama la caricatura del profe Oscar en todas sus poses y caras (43
+Así se llama la caricatura del profe Oscar en todas sus poses y caras (44
 hoy), y el dueño pidió guardarla bien porque se va a usar en más cosas.
 Hecha en Canva a partir de sus fotos: la cara con su lunar en la mejilla, un
 poco arriba de la barba, y la arruga entre las cejas; camisa y pantalón

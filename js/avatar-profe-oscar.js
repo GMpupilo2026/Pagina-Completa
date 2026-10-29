@@ -33,6 +33,7 @@
     { id: "lo-lograron", frase: "¡Todo el grupo lo logró!", alt: "El profe Oscar aplaudiendo entre confeti" },
     { id: "felicidades", frase: "¡Felicidades!", alt: "El profe Oscar con una medalla y un diploma" },
     { id: "campeones", frase: "¡Campeones!", alt: "El profe Oscar levantando un trofeo" },
+    { id: "que-jugadon", frase: "¡Qué jugadón!", alt: "El profe Oscar maravillado, con los brazos arriba entre destellos" },
     { id: "wow", frase: "¡Wow!", alt: "El profe Oscar sorprendido, con las manos en la cara" },
     { id: "tu-puedes", frase: "¡Tú puedes!", alt: "El profe Oscar con el puño adelante, dando ánimo" },
     { id: "esfuerzate", frase: "¡Esfuérzate más!", alt: "El profe Oscar serio, con las manos en la cintura" },
