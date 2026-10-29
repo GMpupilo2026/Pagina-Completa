@@ -84,7 +84,7 @@ function torneo() {
   const manda = (o) => page.evaluate(([c, o]) => {
     const j = new window.Chess();
     o.jugadas.forEach((x) => j.move(x));
-    const p = window.PartidaEnVivo.estado(j, { blancas: "X", negras: "Y" }, { torneo: o.torneo, ronda: o.ronda, mesa: o.mesa }, o.resultado, { tiempos: o.tiempos, mano: o.mano });
+    const p = window.PartidaEnVivo.estado(j, { blancas: "X", negras: "Y" }, { torneo: o.torneo, ronda: o.ronda, mesa: o.mesa }, o.resultado, { tiempos: o.tiempos, mano: o.mano, reloj: o.reloj });
     window.__llega(c, "estado", p);
   }, [CANAL, Object.assign({ torneo: ID, ronda: 1, jugadas: [] }, o)]);
 
@@ -223,6 +223,24 @@ function torneo() {
   await page.click("#pi-camaras-alertas [data-tipo=repeticion3] button:not([data-foto])");
   await page.click("#pi-camaras-alertas [data-alerta=\"3\"] button:not([data-foto])");
   ok(!(await page.$("#pi-camaras-alertas")), "«Visto» la quita");
+
+  console.log("\n=== El reloj de las mesas y la bandera ===");
+  igual("sin relojes, no hay nadie con poco tiempo", await P.vis(page, "#pi-camaras-poco"), false);
+  await manda({ mesa: 2, jugadas: ["e4", "e5", "Nf3"], reloj: { w: 300000, b: 200000, corre: "b" } });
+  await manda({ mesa: 3, jugadas: ["c4"], reloj: { w: 300000, b: 45000, corre: "b" } });
+  await page.waitForFunction(() => { const e = document.getElementById("pi-camaras-poco"); return e && !e.hidden; }, null, { timeout: 4000 }).catch(() => {});
+  ok(/^⏱ Con poco tiempo: mesa 3 \(las negras, 0:4\d\)\.$/.test(await page.textContent("#pi-camaras-poco")), "las mesas con menos de un minuto para quien juega, escritas (la 2 tiene de sobra)", await page.textContent("#pi-camaras-poco"));
+  await alerta({ mesa: 3, tipo: "bandera", color: "b" });
+  await page.waitForSelector("#pi-camaras-alertas [data-tipo=bandera]");
+  igual("la bandera que cae en el reloj de la cámara le llega al árbitro, con el color",
+    [/Mesa 3: se cayó la bandera de las negras/.test(await page.textContent("#pi-camaras-alertas")), /se le cayó la bandera a las negras en el reloj de la cámara/.test(await page.textContent("body"))], [true, true]);
+  await fotoLlega({ motivo: "bandera" });
+  await page.waitForSelector("#pi-camaras-alertas [data-tipo=bandera] [data-foto]");
+  await page.click("#pi-camaras-alertas [data-tipo=bandera] [data-foto]");
+  await page.waitForSelector("#pi-foto-dialogo[open] img");
+  ok(/se cayó la bandera/.test(await page.textContent("#pi-foto-dialogo")), "con su foto, que dice el motivo", await page.textContent("#pi-foto-dialogo"));
+  await page.keyboard.press("Escape");
+  await page.click("#pi-camaras-alertas [data-tipo=bandera] button:not([data-foto])");
 
   console.log("\n=== Transmitir a Lichess ===");
   // Lichess, de mentira: se guarda lo que llega y se contesta como Lichess.

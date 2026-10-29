@@ -3272,6 +3272,7 @@
       if (!lugar) return;
     }
     const clave = claveCamara(d.mesa, d.tablero);
+    d.recibido = Date.now(); // para el reloj de la cámara (ver relojesCamaras)
     c.partidas.set(clave, d);
     c.mesas.set(clave, Date.now());
     if (!c.desde.has(clave)) c.desde.set(clave, Date.now());
@@ -3312,7 +3313,9 @@
   // Una vez cada 30 segundos por mesa, como mucho. También llegan la
   // repetición y las 50 jugadas (`tipo`), que no se marcan solas: el árbitro
   // las confirma si alguien reclama (o, con cinco veces y 75 jugadas, solo).
-  const TIPOS_ALERTA = { ilegal: "camaraAlerta", repeticion3: "camaraTablas3", jugadas50: "camaraTablas50", repeticion5: "camaraTablas5", jugadas75: "camaraTablas75" };
+  // y la bandera que cae en el reloj de la cámara (con el color, `color`).
+  const TIPOS_ALERTA = { ilegal: "camaraAlerta", repeticion3: "camaraTablas3", jugadas50: "camaraTablas50", repeticion5: "camaraTablas5", jugadas75: "camaraTablas75", bandera: "camaraBandera" };
+  const colorTx = (c) => tx(c === "w" ? "colorLasBlancas" : "colorLasNegras");
   function alertaDeCamara(p) {
     const v = torneoDeCamaras();
     if (!v || !v.publicado || !v.rondas.length || p.torneo !== v.publicado.id || Number(p.ronda) !== v.rondas.length) return;
@@ -3323,12 +3326,13 @@
     const k = tipo === "ilegal" ? clave : clave + "|" + tipo; // cada aviso por su lado: uno no tapa al otro
     const antes = estado.camaras.alertas.get(k);
     if (antes && Date.now() - antes.h < 30000) return;
-    estado.camaras.alertas.set(k, { h: Date.now(), tipo, m: clave });
+    const color = p.color === "w" || p.color === "b" ? p.color : null;
+    estado.camaras.alertas.set(k, { h: Date.now(), tipo, m: clave, color });
     // Para el informe: «Visto» quita el aviso de la lista, pero no de la cuenta.
     const cu = estado.camaras.cuenta.get(clave) || { ilegal: 0, tablas: 0 };
-    cu[tipo === "ilegal" ? tipo : "tablas"]++;
+    if (tipo !== "bandera") cu[tipo === "ilegal" ? tipo : "tablas"]++;
     estado.camaras.cuenta.set(clave, cu);
-    Avisos.avisar(tx(TIPOS_ALERTA[tipo], { m: verLugar(clave) }), { tipo: { ilegal: "error" }[tipo] || "info" });
+    Avisos.avisar(tx(TIPOS_ALERTA[tipo], { m: verLugar(clave), q: color ? colorTx(color) : "" }), { tipo: { ilegal: "error", bandera: "error" }[tipo] || "info" });
     pintarCamaras();
   }
 
@@ -3338,7 +3342,7 @@
   // el árbitro la pasa, en las incidencias de la ronda (y en el respaldo del
   // torneo). No se publica.
   const FOTO_VALIDA = /^data:image\/jpeg;base64,[A-Za-z0-9+/]+=*$/;
-  const MOTIVOS_FOTO = ["resultado", "ilegal", "repeticion3", "jugadas50", "repeticion5", "jugadas75"];
+  const MOTIVOS_FOTO = ["resultado", "bandera", "ilegal", "repeticion3", "jugadas50", "repeticion5", "jugadas75"];
   function fotoDeCamara(p) {
     const v = torneoDeCamaras();
     if (!v || !v.publicado || !v.rondas.length || p.torneo !== v.publicado.id || Number(p.ronda) !== v.rondas.length) return;
@@ -3543,6 +3547,22 @@
   }
 
   // Arriba de la ronda: con qué código se escucha y qué mesas mandan.
+  /* Las mesas de la ronda cuyo reloj de la cámara corre con menos de un
+   * minuto: cada segundo, solo ese renglón (la caja no se vuelve a armar). */
+  function relojesCamaras() {
+    const e = $("pi-camaras-poco"), v = estado.camaras && estado.camaras.idTorneo === estado.id ? t() : null;
+    if (!e || !v || !window.PartidaEnVivo) return;
+    const P = window.PartidaEnVivo, cortas = [];
+    for (const [clave, d] of [...estado.camaras.partidas.entries()].sort((a, b) => ordenLugar(a[0], b[0]))) {
+      if (d.ronda !== v.rondas.length) continue;
+      const r = P.relojDe(d), poco = P.pocoTiempo(r);
+      if (poco) cortas.push(tx("camaraPocoMesa", { m: verLugar(clave), q: colorTx(poco), t: P.tiempoReloj(r[poco]) }));
+    }
+    const texto = cortas.length ? tx("camaraPocoTiempo", { l: cortas.join(", ") }) : "";
+    e.hidden = !cortas.length;
+    if (e.textContent !== texto) e.textContent = texto;
+  }
+  setInterval(relojesCamaras, 1000);
   function pintarCamaras() {
     const caja = $("pi-camaras-caja");
     if (!caja) return;
@@ -3554,14 +3574,16 @@
     const dejar = el("button", { type: "button", id: "pi-camaras-dejar", class: C.mini, onclick: dejarCamaras }, tx("camarasDejar"));
     const alertas = estado.camaras && estado.camaras.idTorneo === estado.id ? [...estado.camaras.alertas.entries()].sort((a, b) => ordenLugar(a[1].m, b[1].m)) : [];
     const listaAlertas = alertas.length ? el("ul", { id: "pi-camaras-alertas", class: "mt-2 space-y-1 text-sm" }, alertas.map(([k, a]) => el("li", { class: "flex flex-wrap items-center gap-2", "data-alerta": String(a.m), "data-tipo": a.tipo },
-      el("span", { class: "font-semibold", texto: tx(a.tipo === "ilegal" ? "camaraAlertaFila" : "camaraTablasFila", { m: verLugar(a.m), h: horaCR(a.h), q: a.tipo === "ilegal" ? "" : tx(TIPOS_ALERTA[a.tipo] + "Corto") }) }),
+      el("span", { class: "font-semibold", texto: tx(a.tipo === "ilegal" ? "camaraAlertaFila" : "camaraTablasFila", { m: verLugar(a.m), h: horaCR(a.h), q: a.tipo === "ilegal" ? "" : a.tipo === "bandera" && a.color ? tx("camaraBanderaDe", { q: colorTx(a.color) }) : tx(TIPOS_ALERTA[a.tipo] + "Corto") }) }),
       fotoDe(a.m, a.h) ? botonFoto(fotoDe(a.m, a.h)) : null,
       el("button", { type: "button", class: C.mini, onclick: () => { estado.camaras.alertas.delete(k); pintarCamaras(); } }, tx("camaraAlertaVista"))))) : null;
     caja.replaceChildren(el("h3", { class: "font-semibold" }, el("span", { "aria-hidden": "true", texto: "🎥 " }), tx("camarasCajaTitulo")),
       el("p", { class: C.nota, texto: tx("camarasCajaTexto", { c: v.camaras.codigo }) }),
       el("p", { id: "pi-camaras-mesas", class: "text-sm mt-1", texto: mesas.length ? tx("camarasMesas", { m: mesas.join(", ") }) : tx("camarasNinguna") }),
+      el("p", { id: "pi-camaras-poco", class: "text-sm font-semibold text-red-800 dark:text-red-200 mt-1", hidden: true }),
       listaAlertas, estado.camaras && estado.camaras.idTorneo === estado.id ? informeCamaras() : null,
       estado.camaras && estado.camaras.idTorneo === estado.id ? pintarLichess(v) : null, el("div", { class: "mt-2" }, dejar));
+    relojesCamaras();
   }
 
   // ---------- El chat con los adjuntos y sus llamadas ----------
