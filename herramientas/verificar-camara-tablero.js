@@ -444,6 +444,39 @@ async function esperarJugadas(p, n) {
     await cerrar(c);
   }
 
+  console.log("\n«¿Está bien armada?»");
+  {
+    const b = await abrir(browser, "camara-tablero.html");
+    const pg = b.page;
+    await pg.waitForSelector("#app:not(.hidden)");
+    // Mal armada: falta el caballo de b1, hay un peón blanco de más en e4 y un
+    // peón negro en vez del blanco de h2.
+    const mal = new Chess(); mal.remove("b1"); mal.put({ type: "p", color: "w" }, "e4"); mal.remove("h2"); mal.put({ type: "p", color: "b" }, "h2");
+    await foto(pg, mal.fen(), ESQ0);
+    await esperarAviso(pg, /esquinas/);
+    await tocar(pg, aLienzo(ESQ0));
+    await pg.click("#btn-armado");
+    await esperarAviso(pg, /armada/);
+    igual("sin calibrar todavía, dice qué casillas no calzan con la posición inicial, con el nombre de la pieza",
+      [(await aviso(pg)).startsWith("No está bien armada: hay 3 casillas"), await pg.$$eval("#armado-lista li", (l) => l.map((x) => x.textContent))],
+      [true, ["Falta el caballo blanco en b1.", "En h2 hay una pieza negra y debería ser blanca (el peón).", "Sobra una pieza blanca en e4."]]);
+    await foto(pg, new Chess().fen(), ESQ0);
+    await pg.click("#btn-armado");
+    await esperarAviso(pg, /Está bien armada/);
+    igual("bien armada, lo dice y no queda ninguna casilla en la lista", [(await aviso(pg)).startsWith("Está bien armada"), await pg.locator("#armado-lista li").count()], [true, 0]);
+    // Ya calibrada y con una partida: contra la posición de la partida.
+    await pg.click("#btn-calibrar");
+    await esperarAviso(pg, /Calibrado/);
+    const j = new Chess(); j.move("e4"); await foto(pg, j.fen(), ESQ0); await esperarJugadas(pg, 1);
+    const otra = new Chess(j.fen()); otra.remove("d8");
+    await foto(pg, otra.fen(), ESQ0);
+    await pg.click("#btn-armado");
+    await esperarAviso(pg, /armada/);
+    igual("con la cámara calibrada, la compara con la posición de la partida", await pg.$$eval("#armado-lista li", (l) => l.map((x) => x.textContent)), ["Falta la dama negra en d8."]);
+    igual("sin errores en la consola", b.errores, []);
+    await cerrar(b);
+  }
+
   console.log("\nLa luz que cambia");
   {
     const reloj = { f: () => { const pn = performance.now.bind(performance); window.__adelanto = 0; performance.now = () => pn() + window.__adelanto; } };

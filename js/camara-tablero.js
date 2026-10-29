@@ -106,6 +106,7 @@
         $("btn-ajustar").disabled = !t.h;
         $("btn-calibrar").disabled = !t.h;
         $("btn-seguir").disabled = !t.h;
+        $("btn-armado").disabled = !t.h;
         $("btn-ahorro").disabled = !fuente;
     }
 
@@ -404,6 +405,16 @@
      * partida, la de la partida para seguirla después de mover la cámara.
      * Devuelve cuántas casillas lee bien, o null si no alcanza. */
     function calibrarCon(t, sabida) {
+        const mejor = buscarGiro(t, sabida);
+        if (mejor === null) return null;
+        if (!mejor || mejor.bien < 48 || !mejor.claras) return mejor ? -mejor.bien - 1 : null;
+        t.esquinas = mejor.q; t.h = mejor.hk; t.cal = mejor.c; t.a1 = mejor.q[0].slice();
+        t.recientes = []; t.quieta = null;
+        return mejor.bien;
+    }
+    // Cuál de los cuatro giros de las esquinas explica mejor la posición
+    // sabida, con su calibración y su lectura. null si no hay esquinas.
+    function buscarGiro(t, sabida) {
         if (t.esquinas.length !== 4) return null;
         cctx.drawImage(fuente, 0, 0, limpio.width, limpio.height);
         const pix = cctx.getImageData(0, 0, limpio.width, limpio.height).data;
@@ -414,17 +425,49 @@
             const q = D.girar(base, k), hk = homografia(ESQUINAS_TABLERO, q);
             if (!hk) continue;
             const todas = muestras(pix, limpio.width, limpio.height, hk);
-            const c = calibrar(todas, sabida);
-            const bien = 64 - diferentes(leer(todas, c), sabida).length;
+            const c = calibrar(todas, sabida), lectura = leer(todas, c);
+            const bien = 64 - diferentes(lectura, sabida).length;
             const claras = !hayDos || (c.blanca[true] + c.blanca[false]) - (c.negra[true] + c.negra[false]) > 0;
             const cerca = t.a1 ? Math.hypot(q[0][0] - t.a1[0], q[0][1] - t.a1[1]) / 1e4 : 0;
             const valor = bien + (claras ? 0.5 : 0) - cerca;
-            if (!mejor || valor > mejor.valor) mejor = { valor, bien, q, hk, c, claras };
+            if (!mejor || valor > mejor.valor) mejor = { valor, bien, q, hk, c, claras, lectura };
         }
-        if (!mejor || mejor.bien < 48 || !mejor.claras) return mejor ? -mejor.bien - 1 : null;
-        t.esquinas = mejor.q; t.h = mejor.hk; t.cal = mejor.c; t.a1 = mejor.q[0].slice();
-        t.recientes = []; t.quieta = null;
-        return mejor.bien;
+        return mejor || false;
+    }
+
+    /* «¿Está bien armada?»: lo que ve la cámara contra la posición que
+     * debería haber (la de la partida, o la inicial si no hay jugadas), casilla
+     * por casilla, con el nombre de la pieza que falta o sobra. Sirve antes de
+     * seguir una partida aplazada o de calibrar: dice qué arreglar. Con la
+     * cámara ya calibrada se usa su calibración; si no, se calibra un momento
+     * con esa misma posición (el giro que mejor la explica), sin quedarse con
+     * nada. */
+    const NOMBRES = { p: "peón", n: "caballo", b: "alfil", r: "torre", q: "dama", k: "rey" };
+    const GENERO = { p: "el", n: "el", b: "el", r: "la", q: "la", k: "el" };
+    function revisarArmado(t, juego) {
+        const sabida = esperada(juego);
+        let lectura = null;
+        if (t.cal && t.h) { const todas = muestrasDe(t); lectura = leer(todas, t.cal); }
+        else { const g = buscarGiro(t, sabida); lectura = g ? g.lectura : null; }
+        if (!lectura) return null;
+        const color = (l) => (l === "B" ? "blanca" : "negra");
+        return diferentes(lectura, sabida).map((cas) => {
+            const k = (Number(cas[1]) - 1) * 8 + "abcdefgh".indexOf(cas[0]);
+            const p = juego.get(cas), hay = lectura[k];
+            if (p && hay === ".") return "falta " + GENERO[p.type] + " " + NOMBRES[p.type] + " " + (p.color === "w" ? "blanc" : "negr") + (GENERO[p.type] === "la" ? "a" : "o") + " en " + cas;
+            if (!p) return "sobra una pieza " + color(hay) + " en " + cas;
+            return "en " + cas + " hay una pieza " + color(hay) + " y debería ser " + (p.color === "w" ? "blanca" : "negra") + " (" + GENERO[p.type] + " " + NOMBRES[p.type] + ")";
+        });
+    }
+    function decirArmado() {
+        const t = T();
+        const lista = revisarArmado(t, t.juego);
+        const caja = $("armado-lista");
+        caja.textContent = "";
+        if (!lista) { avisar(cual(t) + "Primero busca el tablero o marca sus esquinas.", "error"); return; }
+        if (!lista.length) { avisar(cual(t) + "Está bien armada: las 64 casillas calzan con la posición del tablero de la derecha.", "bien"); return; }
+        lista.slice(0, 12).forEach((x) => { const li = document.createElement("li"); li.textContent = x[0].toUpperCase() + x.slice(1) + "."; caja.append(li); });
+        avisar(cual(t) + "No está bien armada: " + (lista.length === 1 ? "hay una casilla" : "hay " + lista.length + " casillas") + " que no calzan. Arréglalas y vuelve a revisar.", "error");
     }
 
     function hacerCalibrar() {
@@ -1354,6 +1397,7 @@
     $("btn-esquinas").addEventListener("click", () => { const t = T(); t.esquinas = []; t.ajustada = false; t.cal = null; rehacerHomografia(t); pedirEsquina(); });
     $("btn-calibrar").addEventListener("click", hacerCalibrar);
     $("btn-seguir").addEventListener("click", seguirPartida);
+    $("btn-armado").addEventListener("click", decirArmado);
     $("btn-deshacer").addEventListener("click", () => {
         const t = T();
         if (t.juego.undo()) t.horas.pop();
