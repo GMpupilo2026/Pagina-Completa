@@ -57,8 +57,16 @@
     // Quien acompaña a la persona menor de edad si tiene que denunciar: el
     // entrenador. La plantilla dice «delegado – subdelegado»; la academia
     // inscribe a sus atletas con su entrenador (lo decidió el dueño del sitio).
-    autorizadoRol: ["entrenador"],
+    // El delegado solo lo trae Pérez Zeledón (ver COMITES_PROPIOS).
+    autorizadoRol: ["entrenador", "delegado"],
   };
+
+  // Comités con sus propias reglas (lo pidió el dueño del sitio). Pérez
+  // Zeledón no pide la fotografía, y a quien autoriza el tutor de un menor ya
+  // lo puso el comité: su delegado, sin que la familia lo escriba.
+  const COMITES_PROPIOS = [
+    { clave: "perez zeledon", sinFoto: true, autorizado: { nombre: "Juan Pablo Camacho Navarro", rol: "delegado" } },
+  ];
 
   /* ------------------------------------------------------------ fechas */
 
@@ -95,6 +103,9 @@
   const mismaCedula = (a, b) => { const x = String(a || "").replace(/[^0-9A-Za-z]/g, "").toUpperCase(); return !!x && x === String(b || "").replace(/[^0-9A-Za-z]/g, "").toUpperCase(); };
   const sinTildes = (v) => limpio(v).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
   const mismoNombre = (a, b) => !!sinTildes(a) && sinTildes(a) === sinTildes(b);
+  // Las reglas propias del comité escrito («CCDR Pérez Zeledón», «ccdr perez
+  // zeledon»…), o null.
+  const reglasDelComite = (comite) => COMITES_PROPIOS.find((c) => sinTildes(comite).includes(c.clave)) || null;
 
   // Lo que hace falta para que la ficha no lleve espacios en blanco (la
   // plantilla lo exige). Devuelve la lista de lo que falta, en palabras.
@@ -351,7 +362,7 @@
       x = poner(x, "en mi condición de (padre- madre-tutor)", "(padre- madre-tutor)", d.tutorCondicion, { reemplaza: true });
       x = poner(x, "patria potestad del atleta", "__________________", d.nombre, { reemplaza: true });
       x = poner(x, "autorizo a ____", "______________ (definir si delegado – subdelegado –)",
-        limpio(d.autorizadoNombre) + " (entrenador)", { reemplaza: true });
+        limpio(d.autorizadoNombre) + " (" + (d.autorizadoRol === "delegado" ? "delegado" : "entrenador") + ")", { reemplaza: true });
     }
 
     x = poner(x, "1-Indique el deporte", "1-Indique el deporte en el cual se inscribe:", "Ajedrez");
@@ -431,7 +442,7 @@
     return limpio(nombre).replace(/[\\/:*?"<>|#%]/g, "").slice(0, 120);
   }
 
-  const api = { CATEGORIAS, PRUEBAS, ROLES, OPCIONES, edad, categoria, diaMesAnio, telefonoValido, correoValido, validar, llenar, generar, nombreArchivo };
+  const api = { CATEGORIAS, PRUEBAS, ROLES, OPCIONES, edad, categoria, diaMesAnio, telefonoValido, correoValido, validar, llenar, generar, nombreArchivo, reglasDelComite };
   raiz.JDNConsentimiento = api;
   if (typeof module !== "undefined" && module.exports) module.exports = api;
 })(typeof window !== "undefined" ? window : globalThis);

@@ -54,7 +54,19 @@
   };
   const totalRondas = (t) => (t.sistema === "todos" ? T.rondasTodos(t) : Number(t.rondasTotales) || 0);
   const terminado = (t) => t.jugadores.length > 1 && rondasCompletas(t) >= totalRondas(t);
-  const clasificacionDe = (t) => aplicarDesempate(t, E.clasificacion(Object.assign({}, t, { rondas: t.rondas.slice(0, rondasCompletas(t)) }), t.desempates));
+  const clasificacionDe = (t) => (t.ordenOficial ? conOrdenOficial(t) : aplicarDesempate(t, E.clasificacion(Object.assign({}, t, { rondas: t.rondas.slice(0, rondasCompletas(t)) }), t.desempates)));
+
+  // Un torneo dirigido en otro programa y leído de chess-results (el Acta e
+  // informe arbitral JDE, js/acta-jde.js) trae su orden oficial,
+  // `t.ordenOficial` = { id: puesto }: ese es el que firmó el árbitro y el
+  // que va al informe, no uno recalculado acá. Sin desempates en las
+  // columnas, porque los números serían los de acá y no los de ese orden.
+  function conOrdenOficial(t) {
+    const base = E.clasificacion(Object.assign({}, t, { rondas: t.rondas.slice(0, rondasCompletas(t)) }), []);
+    const p = t.ordenOficial;
+    const con = base.filter((f) => p[f.id] != null).sort((a, b) => p[a.id] - p[b.id]).map((f) => Object.assign({}, f, { puesto: p[f.id] }));
+    return con.concat(base.filter((f) => p[f.id] == null));
+  }
 
   // El desempate rápido que jugó el árbitro (un blitz, un Armagedón) para
   // un empate que los desempates no resolvieron: `t.desempateCorte` = {

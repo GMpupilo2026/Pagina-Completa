@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="img/favicon.svg">
+    <title>Generador de bases del torneo — Ajedrez Integral</title>
+    <meta name="description" content="Gratis y sin cuenta: llena los datos de tu torneo y baja las bases en PDF o en Word, con el ritmo, el calendario, los desempates de FIDE, la tolerancia y lo que piden las Leyes del Ajedrez, revisado antes de bajar.">
+    <link rel="canonical" href="https://ajedrez-integral.com/bases-torneo.html">
+    <!-- Para cuando alguien pega el enlace en WhatsApp, que es por donde se comparte esto. -->
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="Ajedrez Integral">
+    <meta property="og:locale" content="es_CR">
+    <meta property="og:title" content="Generador de bases del torneo — Ajedrez Integral">
+    <meta property="og:description" content="Gratis y sin cuenta: llena los datos de tu torneo y baja las bases en PDF o en Word, con el ritmo, el calendario, los desempates de FIDE, la tolerancia y lo que piden las Leyes del Ajedrez, revisado antes de bajar.">
+    <meta property="og:url" content="https://ajedrez-integral.com/bases-torneo.html">
+    <meta property="og:image" content="https://ajedrez-integral.com/img/og-ajedrez-integral.jpg">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="Ajedrez Integral — clases de ajedrez en vivo, no solo videos. ajedrez-integral.com">
+    <meta name="twitter:card" content="summary_large_image">
+    <!-- Tailwind compilado: lo genera herramientas/css-construir.js.
+         Antes venía del CDN, que baja ~400 KB de JavaScript y compila el CSS
+         dentro del navegador en cada visita. -->
+    <link rel="stylesheet" href="css/tailwind.css">
+    <link rel="stylesheet" href="css/styles.css">
+    <!-- oscuro: inicio --><script>(function(){try{var t=localStorage.getItem('theme');if(t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme: dark)').matches))document.documentElement.classList.add('dark');}catch(e){}})();</script><!-- oscuro: fin -->
+    <script src="js/adaptive-mode.js"></script>
+
+
+<!-- app: inicio --><meta name="theme-color" content="#102a43"><link rel="manifest" href="/manifest.json"><link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Ajedrez"><script src="js/errores.js"></script><script src="js/pwa.js" defer></script><script src="js/navegacion.js" defer></script><!-- app: fin --><!-- fuentes: inicio --><link rel="stylesheet" href="css/fuentes.css"><!-- fuentes: fin --><!-- tema: inicio --><script>(function(){try{var l=localStorage.getItem('plataforma_letra_v1');if(l&&/^[a-z]{2,24}$/.test(l)&&l!=='tema')document.documentElement.setAttribute('data-letra',l);var t=localStorage.getItem('plataforma_tema_v1');if(!t||!/^[a-z]{2,24}$/.test(t)||t==='clasico')return;document.documentElement.setAttribute('data-tema',t);var b=getComputedStyle(document.documentElement).getPropertyValue('--c-brand-800').trim();var m=document.querySelector('meta[name="theme-color"]');if(b&&m)m.setAttribute('content','rgb('+b.replace(/\s+/g,',')+')');}catch(e){}})();</script><!-- tema: fin --></head>
+<body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300">
+    <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:bg-accent-500 focus:text-brand-900 focus:font-semibold focus:px-4 focus:py-2 focus:rounded-lg">Saltar al contenido principal</a>
+    <header id="header" class="sticky top-0 z-50 bg-brand-800 shadow-lg transition-all duration-300">
+        <div class="hidden lg:block bg-brand-900 border-b border-brand-700/60">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-8 flex items-center justify-end gap-5 text-xs text-brand-300">
+                <a href="te-reto.html" class="hover:text-accent-400 transition-colors">🏆 ¡Te reto!</a>
+                <span class="text-brand-700" aria-hidden="true">&middot;</span>
+                <a href="tv.html" class="hover:text-accent-400 transition-colors">TV en vivo</a>
+                <span class="text-brand-700" aria-hidden="true">&middot;</span>
+                <a href="torneos-en-vivo.html" class="hover:text-accent-400 transition-colors">Torneos</a>
+                <span class="text-brand-700" aria-hidden="true">&middot;</span>
+                <a href="herramientas-arbitraje.html" class="hover:text-accent-400 transition-colors">Herramientas</a>
+            </div>
+        </div>
+        <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-label="Navegación principal">
+            <div class="flex items-center justify-between min-h-[4rem] md:min-h-[5rem] py-2">
+                <a href="index.html" class="flex items-center gap-2 text-white"><img src="/img/logo-marca.png" alt="" width="78" height="48" class="h-10 md:h-12 w-auto shrink-0"><span class="font-serif text-xl md:text-2xl font-bold tracking-tight">Ajedrez <span class="text-accent-400">Integral</span></span></a>
+                <ul class="hidden lg:flex items-center gap-8 text-brand-100 font-medium">
+                    <li><a href="index.html" class="hover:text-accent-400 transition-colors">Inicio</a></li>
+                    <li><a href="cursos.html" class="hover:text-accent-400 transition-colors">Cursos</a></li>
+                    <li><a href="articulos.html" class="hover:text-accent-400 transition-colors">Artículos</a></li>
+                    <li><a href="tablero.html" class="hover:text-accent-400 transition-colors">Jugar contra el profe</a></li>
+                    <li><a href="clases.html" class="hover:text-accent-400 text-accent-400 transition-colors">Academia</a></li>
+                    <li><a href="precios.html" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2.5 rounded-lg transition-colors">Inscríbete</a></li>
+                </ul>
+                <div class="flex items-center gap-2 sm:gap-3">
+                    <button id="theme-toggle" class="text-white text-lg w-9 h-9 flex items-center justify-center rounded-lg hover:bg-brand-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Cambiar a modo oscuro" title="Cambiar entre modo claro y oscuro">
+                        <span id="theme-icon" aria-hidden="true">☀️</span>
+                    </button>
+                    <button id="menu-toggle" class="lg:hidden text-white text-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Abrir menú" aria-expanded="false" aria-controls="mobile-menu">
+                        <svg id="icon-open" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+                        <svg id="icon-close" xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                </div>
+            </div>
+        </nav>
+        <div id="mobile-menu" class="lg:hidden hidden bg-brand-800 border-t border-brand-700">
+            <ul class="px-4 py-4 space-y-3 text-brand-100 font-medium">
+                <li><a href="index.html" class="block py-2 hover:text-accent-400">Inicio</a></li>
+                <li><a href="cursos.html" class="block py-2 hover:text-accent-400">Cursos</a></li>
+                <li><a href="articulos.html" class="block py-2 hover:text-accent-400">Artículos</a></li>
+                <li><a href="tablero.html" class="block py-2 hover:text-accent-400">Jugar contra el profe</a></li>
+                <li><a href="clases.html" class="block py-2 hover:text-accent-400">Academia</a></li>
+                <li><a href="te-reto.html" class="block py-2 hover:text-accent-400">🏆 ¡Te reto!</a></li>
+                <li><a href="tv.html" class="block py-2 hover:text-accent-400">TV en vivo</a></li>
+                <li><a href="torneos-en-vivo.html" class="block py-2 hover:text-accent-400">Torneos</a></li>
+                <li><a href="herramientas-arbitraje.html" class="block py-2 hover:text-accent-400">Herramientas</a></li>
+                <li><a href="precios.html" class="block py-2 bg-accent-500 text-brand-900 font-semibold px-4 rounded-lg text-center">Inscríbete</a></li>
+            </ul>
+        </div>
+    </header>
+    <main id="main-content" class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <h1 class="font-serif text-3xl font-bold text-brand-800 dark:text-white"><span aria-hidden="true">📜 </span>Generador de bases del torneo</h1>
+        <p class="text-brand-500 dark:text-brand-300 mt-1 max-w-3xl">Llena los datos de tu torneo y baja las bases en PDF o en Word, listas para publicar: el ritmo con su modalidad, el calendario de rondas, los desempates del reglamento de FIDE, la tolerancia, los dispositivos y lo demás que piden las Leyes del Ajedrez. Antes de bajar, se revisa lo que suele faltar. Gratis y sin cuenta: nada sale de tu computadora.</p>
+
+        <div class="grid lg:grid-cols-2 gap-6 mt-6 items-start">
+            <form id="formulario" class="space-y-6" novalidate>
+                <section class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6" aria-labelledby="t-torneo">
+                    <h2 id="t-torneo" class="font-serif text-lg font-bold text-brand-800 dark:text-white">El torneo</h2>
+                    <div class="grid sm:grid-cols-2 gap-4 mt-3">
+                        <div class="sm:col-span-2"><label for="b-nombre" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Nombre del torneo</label><input id="b-nombre" type="text" placeholder="Abierto de San José 2026" autocomplete="off" class="w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none"></div>
+                        <div class=""><label for="b-organizador" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Organiza</label><input id="b-organizador" type="text" placeholder="Club de Ajedrez…" class="w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none"></div>
+                        <div class=""><label for="b-director" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Director del torneo</label><input id="b-director" type="text"  class="w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none"></div>
+                        <div class=""><label for="b-inicio" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Fecha de inicio</label><input id="b-inicio" type="date"  class="w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none"></div>
+                        <div class=""><label for="b-fin" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Fecha de cierre (si dura más de un día)</label><input id="b-fin" type="date"  class="w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none"></div>
+                        <div class="sm:col-span-2"><label for="b-lugar" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Lugar</label><input id="b-lugar" type="text" placeholder="Gimnasio del Liceo…, San José" class="w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none"></div>
+                        <div class="sm:col-span-2"><label for="b-contacto" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Contacto para información</label><input id="b-contacto" type="text" placeholder="correo o WhatsApp" class="w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none"></div>
+                    </div>
+                </section>
+
+                <section class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6" aria-labelledby="t-juego">
+                    <h2 id="t-juego" class="font-serif text-lg font-bold text-brand-800 dark:text-white">Sistema y ritmo</h2>
+                    <div class="grid sm:grid-cols-2 gap-4 mt-3">
+                        <div><label for="b-sistema" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Sistema</label><select id="b-sistema" class="w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none"><option value="suizo">Suizo</option><option value="todos">Todos contra todos</option><option value="doble">Todos contra todos a doble vuelta</option></select></div>
+                        <div class=""><label for="b-rondas" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Rondas</label><input id="b-rondas" type="number" min="1" max="30" value="7" class="w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none"></div>
+                        <div class=""><label for="b-ritmo-min" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Minutos para cada jugador</label><input id="b-ritmo-min" type="number" min="1" max="300" value="60" class="w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none"></div>
+                        <div class=""><label for="b-ritmo-inc" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Incremento por jugada (segundos)</label><input id="b-ritmo-inc" type="number" min="0" max="120" value="30" class="w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none"></div>
+                        <p id="b-modalidad" class="sm:col-span-2 text-sm text-brand-600 dark:text-brand-300" aria-live="polite"></p>
+                        <div class=""><label for="b-por-dia" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Rondas por día</label><input id="b-por-dia" type="number" min="1" max="12" value="4" class="w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none"></div>
+                        <div class=""><label for="b-hora" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Hora de la primera ronda de cada día</label><input id="b-hora" type="time" value="09:00" class="w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none"></div>
+                        <div class=""><label for="b-descanso" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Descanso entre rondas (minutos)</label><input id="b-descanso" type="number" min="0" max="240" value="15" class="w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none"></div>
+                        <div class=""><label for="b-tolerancia" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Tolerancia (minutos; 0 = ninguna)</label><input id="b-tolerancia" type="number" min="0" max="120" value="30" class="w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none"></div>
+                        <div class="sm:col-span-2 flex flex-wrap gap-x-6 gap-y-2 text-sm">
+                            <label class="inline-flex items-center gap-2"><input id="b-elo-fide" type="checkbox" class="w-4 h-4"> Válido para Elo FIDE</label>
+                            <label class="inline-flex items-center gap-2"><input id="b-elo-nacional" type="checkbox" class="w-4 h-4"> Válido para Elo nacional</label>
+                        </div>
+                        <div id="zona-byes" class="sm:col-span-2 grid sm:grid-cols-2 gap-4">
+                            <div class=""><label for="b-byes" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Byes de medio punto que puede pedir cada uno</label><input id="b-byes" type="number" min="0" max="5" value="0" class="w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none"></div>
+                            <div class=""><label for="b-byes-hasta" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Se pueden pedir hasta la ronda</label><input id="b-byes-hasta" type="number" min="0" max="30" value="0" class="w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none"></div>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6" aria-labelledby="t-desempates">
+                    <h2 id="t-desempates" class="font-serif text-lg font-bold text-brand-800 dark:text-white">Desempates</h2>
+                    <p class="text-sm text-brand-500 dark:text-brand-300 mt-1">En el orden en que se aplican, con los nombres del reglamento de FIDE (C.07). Al cambiar el sistema se proponen los de Pareo Integral.</p>
+                    <ol id="b-desempates" class="mt-3 space-y-2"></ol>
+                    <div class="flex flex-wrap items-end gap-2 mt-3">
+                        <div class="flex-1 min-w-[12rem]"><label for="b-desempate-nuevo" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Agregar un desempate</label><select id="b-desempate-nuevo" class="w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none"></select></div>
+                        <button type="button" id="b-agregar" class="bg-brand-700 hover:bg-brand-800 text-white font-semibold px-4 py-2 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Agregar</button>
+                    </div>
+                </section>
+
+                <section class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6" aria-labelledby="t-inscripcion">
+                    <h2 id="t-inscripcion" class="font-serif text-lg font-bold text-brand-800 dark:text-white">Participantes, inscripción y premios</h2>
+                    <div class="grid sm:grid-cols-2 gap-4 mt-3">
+                        <div class="sm:col-span-2"><label for="b-participantes" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Quiénes pueden jugar</label><textarea id="b-participantes" rows="2" placeholder="Abierto a todas las personas… (vacío: abierto a todos)" class="w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none"></textarea></div>
+                        <div class="sm:col-span-2"><label for="b-categorias" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Categorías (una por línea)</label><textarea id="b-categorias" rows="3" placeholder="Absoluto&#10;Sub-14&#10;Femenino" class="w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none"></textarea></div>
+                        <div class=""><label for="b-costo" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Costo de inscripción (colones; 0 = gratis)</label><input id="b-costo" type="number" min="0" step="500" value="0" class="w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none"></div>
+                        <div class=""><label for="b-cupo" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Cupo máximo (0 = sin cupo)</label><input id="b-cupo" type="number" min="0" value="0" class="w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none"></div>
+                        <div class=""><label for="b-hasta" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">La inscripción cierra el</label><input id="b-hasta" type="date"  class="w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none"></div>
+                        <div class=""><label for="b-como" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Cómo inscribirse</label><input id="b-como" type="text" placeholder="Por el formulario en…" class="w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none"></div>
+                        <div class="sm:col-span-2"><label for="b-premios" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Premios (uno por línea)</label><textarea id="b-premios" rows="3" placeholder="1.º lugar: trofeo y ₡50 000&#10;2.º lugar: medalla" class="w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none"></textarea></div>
+                    </div>
+                </section>
+
+                <section class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6" aria-labelledby="t-arbitraje">
+                    <h2 id="t-arbitraje" class="font-serif text-lg font-bold text-brand-800 dark:text-white">Arbitraje y lo demás</h2>
+                    <div class="grid sm:grid-cols-2 gap-4 mt-3">
+                        <div class=""><label for="b-arbitro" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Árbitro principal</label><input id="b-arbitro" type="text"  class="w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none"></div>
+                        <div class=""><label for="b-apelacion" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Plazo para apelar (minutos después de la partida)</label><input id="b-apelacion" type="number" min="0" value="30" class="w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none"></div>
+                        <div class="sm:col-span-2"><label for="b-otras" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Otras disposiciones (una por línea)</label><textarea id="b-otras" rows="3" placeholder="La organización no se hace responsable de objetos perdidos." class="w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none"></textarea></div>
+                    </div>
+                </section>
+            </form>
+
+            <div class="space-y-6 lg:sticky lg:top-28">
+                <section id="zona-revision" class="bg-amber-50 dark:bg-amber-950 border border-amber-300 dark:border-amber-700 rounded-2xl shadow-md p-5 md:p-6" aria-labelledby="t-revision">
+                    <h2 id="t-revision" class="font-serif text-lg font-bold text-amber-900 dark:text-amber-100"><span aria-hidden="true">🔎 </span>Antes de bajar</h2>
+                    <ul id="revision" class="mt-3 space-y-1 text-sm text-amber-900 dark:text-amber-100"></ul>
+                </section>
+                <section class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6" aria-labelledby="t-bajar">
+                    <h2 id="t-bajar" class="font-serif text-lg font-bold text-brand-800 dark:text-white">Bajar las bases</h2>
+                    <div class="flex flex-wrap gap-2 mt-3">
+                        <button type="button" id="b-pdf" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Bajar en PDF</button>
+                        <button type="button" id="b-docx" class="bg-brand-700 hover:bg-brand-800 text-white font-semibold px-5 py-2 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Bajar en Word</button>
+                    </div>
+                    <p id="b-estado" class="text-sm mt-2" role="status"></p>
+                    <p class="text-xs text-brand-500 dark:text-brand-300 mt-2">El Word se puede seguir editando. Lo que llenes se queda guardado en este navegador para la próxima vez.</p>
+                </section>
+                <section class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6" aria-labelledby="t-vista">
+                    <h2 id="t-vista" class="font-serif text-lg font-bold text-brand-800 dark:text-white">Vista previa</h2>
+                    <div id="vista" class="mt-3 text-sm text-brand-700 dark:text-brand-200 space-y-2 max-h-[70vh] overflow-y-auto"></div>
+                </section>
+            </div>
+        </div>
+    </main>
+
+    <footer class="bg-brand-900 text-brand-300 pt-16 pb-8">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid md:grid-cols-4 gap-8 mb-12">
+                <div><a href="index.html" class="flex items-center gap-2 text-white mb-4"><img src="/img/logo-marca.png" alt="" width="78" height="48" class="h-9 w-auto shrink-0"><span class="font-serif text-lg font-bold">Ajedrez Integral</span></a><p class="text-sm text-brand-300">Plataforma educativa de ajedrez para escuelas, colegios y familias. Aprende, practica y compite.</p></div>
+                <div><h3 class="text-white font-semibold mb-4">Navegación</h3><ul class="space-y-2 text-sm"><li><a href="index.html" class="hover:text-accent-400 transition-colors">Inicio</a></li><li><a href="cursos.html" class="hover:text-accent-400 transition-colors">Cursos</a></li><li><a href="articulos.html" class="hover:text-accent-400 transition-colors">Artículos</a></li><li><a href="tablero.html" class="hover:text-accent-400 transition-colors">Jugar contra el profe</a></li><li><a href="clases.html" class="hover:text-accent-400 transition-colors">Academia</a></li><li><a href="te-reto.html" class="hover:text-accent-400 transition-colors">🏆 ¡Te reto!</a></li><li><a href="tv.html" class="hover:text-accent-400 transition-colors">TV en vivo</a></li><li><a href="torneos-en-vivo.html" class="hover:text-accent-400 transition-colors">Torneos</a></li></ul></div>
+                <div><h3 class="text-white font-semibold mb-4">Recursos</h3><ul class="space-y-2 text-sm"><li><a href="entreno/diagnostico.html" class="hover:text-accent-400 transition-colors">Diagnóstico de nivel gratis</a></li><li><a href="bot.html" class="hover:text-accent-400 transition-colors">Jugar contra el bot</a></li><li><a href="sobre-oscar.html" class="hover:text-accent-400 transition-colors">Sobre Oscar</a></li><li><a href="inscripcion.html" class="hover:text-accent-400 transition-colors">Torneos en línea</a></li></ul></div>
+                <div><h3 class="text-white font-semibold mb-4">Contacto</h3><ul class="space-y-2 text-sm"><li><a href="mailto:info@ajedrez-integral.com" class="hover:text-accent-400 transition-colors">info@ajedrez-integral.com</a></li><li><a href="https://wa.me/50683092291" target="_blank" rel="noopener" class="hover:text-accent-400 transition-colors">+506 8309-2291 (WhatsApp)</a></li><li>Clases en línea desde Costa Rica</li></ul></div>
+            </div>
+            <div class="border-t border-brand-700 pt-6 text-center text-sm text-brand-300"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p><!-- legal: inicio --><p class="mt-2"><a href="privacidad.html" class="underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Política de privacidad</a> <span aria-hidden="true">·</span> <a href="terminos.html" class="underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Términos y condiciones</a></p><!-- legal: fin --></div>
+        </div>
+    </footer>
+    <script src="js/main.js"></script>
+    <script src="js/avisos.js"></script>
+    <script src="js/pareo/torneo.js"></script>
+    <script src="js/pareo/desempates.js"></script>
+    <script src="js/marca-agua.js"></script>
+    <script src="js/reporte-pdf.js"></script>
+    <script src="js/reporte-docx.js"></script>
+    <script src="js/bases-torneo.js"></script>
+    <script src="js/bases-torneo-pagina.js"></script>
+</body>
+</html>
