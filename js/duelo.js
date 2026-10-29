@@ -75,7 +75,11 @@
                 // Rendirse solo escribe room.result (no toca duelo_state), así que manda
                 // el de la sala y el del estado queda de respaldo.
                 const resultado = room.result || g.result;
-                const resultText = resultado === "draw" ? SalaJuego.textoTablas(g.motivo) : (resultado === "white" ? nameFor(room.white_id) + " ganó con blancas." : nameFor(room.black_id) + " ganó con negras.");
+                // El motivo, de la sala (que es siempre la más nueva): el tablero
+                // puede haberse quedado con el estado de la revelación propia,
+                // anterior a la ronda que terminó la partida, y diría «Tablas.».
+                const motivo = (room.duelo_state && room.duelo_state.motivo) || g.motivo;
+                const resultText = resultado === "draw" ? SalaJuego.textoTablas(motivo) : (resultado === "white" ? nameFor(room.white_id) + " ganó con blancas." : nameFor(room.black_id) + " ganó con negras.");
                 setStatus("Partida terminada — " + resultText);
             } else if (esperandoInicio) {
                 if (!myColor) setStatus("Esperando a que " + nameFor(room.white_id) + " y " + nameFor(room.black_id) + " confirmen que están listos…");

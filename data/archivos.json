@@ -19081,7 +19081,7 @@
   ]
  },
  "imagenes": {
-  "total": 1133,
+  "total": 1134,
   "grupos": [
    {
     "carpeta": "entreno/img/facil",
@@ -24274,6 +24274,12 @@
       "titulo": "Presentando",
       "tipo": "otro",
       "kb": 20
+     },
+     {
+      "ruta": "img/avatar-profe-oscar/que-jugadon.webp",
+      "titulo": "Que jugadon",
+      "tipo": "otro",
+      "kb": 31
      },
      {
       "ruta": "img/avatar-profe-oscar/reloj-de-ajedrez.webp",
