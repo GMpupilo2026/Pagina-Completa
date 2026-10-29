@@ -1126,14 +1126,17 @@ async function esperarJugadas(p, n) {
     igual("en la cuadrícula, cada mesa con reloj dice sus dos tiempos", await pw.evaluate(() => [...document.querySelectorAll("#mesas-lista [data-reloj]")].map((e) => e.checkVisibility() ? e.textContent : "")),
       ["", "⏱ Blancas 3:00 · Negras 3:00 (corre)"]);
     igual("sin nadie corto de tiempo, no hay aviso arriba", await pw.evaluate(() => document.getElementById("poco-tiempo").checkVisibility()), false);
+    // Al frente: Chrome frena los temporizadores de una pestaña de fondo (en el CI, a uno por minuto).
+    await pw.bringToFront();
     await pw.evaluate(() => { window.__mas += 150000; });
     await pw.waitForFunction(() => !document.getElementById("poco-tiempo").hidden, null, { timeout: 4000 }).catch(() => {});
     igual("con menos de un minuto: arriba, qué mesa y quién, y en su tarjeta, escrito (no solo el color)",
       [await pw.textContent("#poco-tiempo"), await pw.evaluate(() => document.querySelectorAll("#mesas-lista [data-reloj]")[1].textContent)],
       ["⏱ Con poco tiempo: Mesa 6 (las negras, 0:30).", "⏱ Blancas 3:00 · Negras 0:30 (corre) · ¡Poco tiempo para las negras!"]);
     const antesBandera = eventos.length;
+    await pbb.bringToFront();
     await pbb.evaluate(() => { window.__mas += 181000; });
-    await pbb.waitForFunction(() => /bandera/.test(document.getElementById("reloj-msg").textContent), null, { timeout: 4000 }).catch(() => {});
+    await pbb.waitForFunction(() => /bandera/.test(document.getElementById("reloj-msg").textContent), null, { timeout: 70000 }).catch(() => {});
     // Los mensajes van por el canal (relevado por Node): se espera a que lleguen, hasta 8 s.
     for (let i = 0; i < 80 && !(eventos.slice(antesBandera).some((x) => x.event === "alerta") && eventos.slice(antesBandera).some((x) => x.event === "foto")); i++) await pbb.waitForTimeout(100);
     const bandera = eventos.slice(antesBandera).find((x) => x.event === "alerta");
