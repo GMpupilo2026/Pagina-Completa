@@ -128,6 +128,7 @@ function serialFalso() {
     writable: new WritableStream({ write(chunk) { window.__salida.push(...chunk); if (chunk[0] === 0x8e) window.__historia.push(...chunk); } }),
     open: () => Promise.resolve(),
     close: () => Promise.resolve(),
+    setSignals: (s) => { window.__senales = s; return Promise.resolve(); },
   };
   window.__liveChess = (bytes) => controlador.enqueue(Uint8Array.from(bytes));
   Object.defineProperty(navigator, "serial", { value: { requestPort: () => Promise.resolve(puerto) }, configurable: true });
@@ -154,6 +155,11 @@ async function pruebaPagina(browser) {
   await p.evaluate(() => window.__liveChess([0x45]));
   await p.waitForFunction(() => window.__salida.length >= 8);
   igual("LiveChess pide el número de serie y el tablero contesta 90001", await salida(), [0x91, 0, 8, 57, 48, 48, 48, 49]);
+  igual("al abrir el puerto enciende DTR y RTS, como un tablero de verdad", await p.evaluate(() => window.__senales), { dataTerminalReady: true, requestToSend: true });
+  const registro = await p.textContent("#virtuales details pre");
+  cierto("«Lo que llega de LiveChess» anota el pedido en hexadecimal", /LiveChess →  45$/m.test(registro), registro);
+  cierto("y la respuesta del tablero", /Tablero →  91 00 08 39 30 30 30 31$/m.test(registro), registro);
+  cierto("y cuenta los bytes recibidos", /\(1 bytes recibidos\)/.test(await p.textContent("#virtuales details summary")));
   await limpiar();
   await p.evaluate(() => window.__liveChess([0x42, 0x4b]));
   await p.waitForFunction(() => window.__salida.length >= 67);
