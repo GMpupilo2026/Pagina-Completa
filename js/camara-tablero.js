@@ -590,8 +590,14 @@
     /* Una lectura quieta que no es la esperada: se busca la jugada. */
     function revisar(t, lectura, seguridad) {
         const antes = esperada(t.juego);
+        // Entrenando: la pieza de una jugada equivocada volvió a su lugar.
+        if (t.guion && t.guion.volver) {
+            if (lectura === antes) { t.guion.volver = false; avisar(cual(t) + "Bien, de vuelta en su lugar. Prueba otra jugada.", "bien"); }
+            return;
+        }
         if (lectura === antes) return;
         const r = decidir(t.juego, lectura, seguridad);
+        if (r && r.jugadas && t.guion) { jugadaEntrenando(t, r.jugadas); return; }
         if (r && r.jugadas) { anotar(t, r.jugadas); return; }
         // La pieza coronada se movió como no puede una dama: era otra.
         const c = !r && coronacionDe(t);
@@ -611,7 +617,7 @@
                 b.type = "button";
                 b.className = "bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400";
                 b.textContent = js.map(es).join(" y ");
-                b.addEventListener("click", () => anotar(t, js));
+                b.addEventListener("click", () => (t.guion ? jugadaEntrenando : anotar)(t, js));
                 caja.append(b);
             });
             $("dudas").hidden = false;
@@ -764,6 +770,166 @@
         try { await pedido((await almacen("readwrite")).clear()); } catch (e) { /* nada que borrar */ }
         pintarMuestras();
         avisar("Se borraron las fotos guardadas en este aparato.", "bien");
+    }
+
+    /* ── Entrenar en el tablero de verdad ────────────────────────────────
+     * Dos guiones con la misma idea: la cámara lee la jugada de quien
+     * entrena, y la del otro lado (el motor, o la respuesta del ejercicio) la
+     * dice la pantalla —y la voz, con «Activar voz»— y la pone a mano quien
+     * entrena: la cámara espera a ver ESA jugada en el tablero antes de
+     * seguir (`esperando`). Lo que no es lo que se esperaba no se anota.
+     *   - Contra el motor: Stockfish en este aparato, a la profundidad del
+     *     nivel elegido (js/preparacion-motor.js, el de la preparación de
+     *     rivales).
+     *   - Un ejercicio: de los bancos ya comprobados del Entrenamiento
+     *     (entreno/data/mates.json y tactica.json; ninguna posición se
+     *     inventa). Primero se arma (con «¿Está bien armada?»), después se
+     *     juega la solución; una jugada que no es, se vuelve a su lugar. */
+    const NIVELES = { facil: 1, medio: 5, dificil: 12 };
+    const BANCOS = { mate1: ["entreno/data/mates.json", "mate1"], mate2: ["entreno/data/mates.json", "mate2"], tactica: ["entreno/data/tactica.json", null] };
+    const bancos = {};
+    let cargaMotorEntreno = null;
+    const cargarScript = (src) => new Promise((ok, mal) => { const s = document.createElement("script"); s.src = src; s.onload = ok; s.onerror = () => mal(new Error(src)); document.head.append(s); });
+    function motorListo() {
+        if (window.PreparacionMotor) return Promise.resolve();
+        if (!cargaMotorEntreno) cargaMotorEntreno = cargarScript("js/shared-engine.js").then(() => cargarScript("js/preparacion-motor.js"));
+        cargaMotorEntreno.catch(() => { cargaMotorEntreno = null; });
+        return cargaMotorEntreno;
+    }
+    // «Cf3: mueve el caballo de g1 a f3».
+    function comoPonerla(juego, san) {
+        const m = juego.move(san);
+        if (!m) return es(san);
+        juego.undo();
+        const pieza = NOMBRES[m.piece] + " " + (m.color === "w" ? "blanc" : "negr") + (GENERO[m.piece] === "la" ? "a" : "o");
+        return es(m.san) + ": " + (m.flags.includes("k") || m.flags.includes("q") ? "el enroque, rey y torre" : "mueve " + GENERO[m.piece] + " " + pieza + " de " + m.from + " a " + m.to)
+            + (m.captured ? " (captura la pieza de " + m.to + ")" : "") + (m.promotion ? " y corona " + NOMBRES[m.promotion] : "");
+    }
+    function pedirQuePonga(t, san, quien) {
+        t.guion.esperando = san;
+        $("entreno-estado").textContent = quien + " " + comoPonerla(t.juego, san) + ". Pon esa jugada en tu tablero.";
+        avisar(cual(t) + quien + " " + comoPonerla(t.juego, san) + ". Ponla en tu tablero.", "bien");
+    }
+    function finEntreno(t, texto) {
+        t.guion = null;
+        $("entreno-estado").textContent = texto;
+        pintarEntreno();
+        avisar(cual(t) + texto, "bien");
+    }
+    function jugadaEntrenando(t, jugadas) {
+        const g = t.guion;
+        if (g.esperando) {
+            const sin = (s) => String(s).replace(/[+#]$/, "");
+            if (jugadas.length === 1 && sin(jugadas[0]) === sin(g.esperando)) {
+                g.esperando = null;
+                anotar(t, jugadas);
+                if (V.resultadoSolo(t.juego)) { finEntreno(t, g.tipo === "motor" ? "Se terminó: " + V.textoResultado(V.resultadoSolo(t.juego)) : "Fin del ejercicio."); return; }
+                $("entreno-estado").textContent = "Te toca.";
+                avisar(cual(t) + "Listo. Te toca.", "bien");
+            } else avisar(cual(t) + "Esa no es: hay que poner " + comoPonerla(t.juego, g.esperando) + ".", "error");
+            return;
+        }
+        if (jugadas.length !== 1) { avisar(cual(t) + "Se vieron dos jugadas juntas: deja solo la tuya.", "error"); return; }
+        if (g.tipo === "ejercicio") {
+            const debe = g.solucion[g.paso];
+            const m = t.juego.move(jugadas[0]);
+            const mate = m && t.juego.in_checkmate();
+            if (m) t.juego.undo();
+            // Un mate vale aunque sea otro (en un mate en 1 puede haber dos).
+            if (jugadas[0].replace(/[+#]$/, "") !== String(debe).replace(/[+#]$/, "") && !(mate && g.mate)) {
+                g.volver = true;
+                g.fallos++;
+                avisar(cual(t) + "No es esa (" + es(jugadas[0]) + "). Vuelve la pieza a su lugar y prueba otra.", "error");
+                $("entreno-estado").textContent = "Vuelve la pieza a su lugar.";
+                return;
+            }
+            anotar(t, jugadas);
+            g.paso++;
+            if (mate || g.paso >= g.solucion.length) { finEntreno(t, "¡Resuelto" + (g.fallos ? " (con " + g.fallos + (g.fallos === 1 ? " intento fallido" : " intentos fallidos") + ")" : " a la primera") + "! " + (mate ? "Es mate." : "")); return; }
+            const resp = g.solucion[g.paso];
+            g.paso++;
+            pedirQuePonga(t, resp, "El rival responde");
+            return;
+        }
+        // Contra el motor.
+        anotar(t, jugadas);
+        if (V.resultadoSolo(t.juego)) { finEntreno(t, "Se terminó: " + V.textoResultado(V.resultadoSolo(t.juego))); return; }
+        juegaMotor(t);
+    }
+    async function juegaMotor(t) {
+        const g = t.guion;
+        $("entreno-estado").textContent = "El motor está pensando…";
+        try { await motorListo(); } catch (e) { $("entreno-estado").textContent = "No se pudo cargar Stockfish en este aparato."; return; }
+        const r = await window.PreparacionMotor.evaluar(t.juego.fen(), g.profundidad).catch(() => null);
+        if (t.guion !== g) return; // se dejó de entrenar mientras pensaba
+        if (!r || !r.mejor) { $("entreno-estado").textContent = "Stockfish no contestó. Toca «Dejar» y vuelve a empezar."; return; }
+        pedirQuePonga(t, r.mejor, "El motor juega");
+    }
+    function empezarMotor() {
+        const t = T();
+        if (!t.cal) { avisar(cual(t) + "Primero calibra con la posición inicial: el motor empieza desde ahí.", "error"); return; }
+        t.juego = new window.Chess();
+        t.resultadoMano = null; t.confirmadas = new Set(); t.mano = 0;
+        t.inicio = Date.now(); t.horas = []; t.horaResultado = null;
+        t.quieta = null; t.recientes = [];
+        const color = $("entreno-color").value;
+        t.guion = { tipo: "motor", color, profundidad: NIVELES[$("entreno-nivel").value] || 5, esperando: null };
+        partidaCambio(t);
+        pintarEntreno();
+        if (color === "b") juegaMotor(t);
+        else { $("entreno-estado").textContent = "Te toca: juegas con blancas."; avisar(cual(t) + "Contra el motor: juegas con blancas. Te toca.", "bien"); }
+    }
+    async function otroEjercicio() {
+        const t = T();
+        const [url, cat] = BANCOS[$("entreno-banco").value] || BANCOS.mate1;
+        try {
+            if (!bancos[url]) bancos[url] = await fetch(url).then((r) => r.json());
+        } catch (e) { avisar(cual(t) + "No se pudo traer el banco de ejercicios. Revisa la conexión.", "error"); return; }
+        const lista = bancos[url].filter((x) => !cat || x.category === cat);
+        const x = lista[Math.floor(Math.random() * lista.length)];
+        const j = new window.Chess(x.fen);
+        t.juego = j;
+        t.resultadoMano = null; t.confirmadas = new Set(); t.mano = 0;
+        t.inicio = Date.now(); t.horas = []; t.horaResultado = null;
+        t.guion = null;
+        t.ejercicio = { solucion: x.solution.slice(), mate: !!x.mate || /^mate/.test(x.category || ""), id: x.id };
+        partidaCambio(t);
+        $("btn-entreno-armado").hidden = false;
+        $("entreno-estado").textContent = "Arma en tu tablero la posición de la derecha (juegan las " + (j.turn() === "w" ? "blancas" : "negras") + ") y toca «Ya la armé».";
+        pintarEntreno();
+    }
+    function empezarEjercicio() {
+        const t = T();
+        if (!t.ejercicio) return;
+        const lista = revisarArmado(t, t.juego);
+        const caja = $("armado-lista");
+        caja.textContent = "";
+        if (!lista) { avisar(cual(t) + "Primero busca el tablero o marca sus esquinas.", "error"); return; }
+        if (lista.length) {
+            lista.slice(0, 12).forEach((x) => { const li = document.createElement("li"); li.textContent = x[0].toUpperCase() + x.slice(1) + "."; caja.append(li); });
+            avisar(cual(t) + "Todavía no está igual: arregla " + (lista.length === 1 ? "esta casilla" : "estas " + lista.length + " casillas") + " y vuelve a tocar «Ya la armé».", "error");
+            return;
+        }
+        if (!t.cal && calibrarCon(t, esperada(t.juego)) < 0) { avisar(cual(t) + "No pude calibrar con esta posición. Revisa la luz y las esquinas.", "error"); return; }
+        t.quieta = null; t.recientes = [];
+        t.guion = Object.assign({ tipo: "ejercicio", paso: 0, fallos: 0, esperando: null, volver: false }, t.ejercicio);
+        t.ejercicio = null;
+        $("btn-entreno-armado").hidden = true;
+        const quien = t.juego.turn() === "w" ? "blancas" : "negras";
+        $("entreno-estado").textContent = "Juegan las " + quien + ": encuentra la mejor jugada" + (t.guion.mate ? " (hay mate)" : "") + " y hazla en tu tablero.";
+        avisar(cual(t) + "Bien armada. Juegan las " + quien + ": haz tu jugada en el tablero.", "bien");
+        pintarEntreno();
+    }
+    function dejarEntreno() {
+        const t = T();
+        t.guion = null; t.ejercicio = null;
+        $("btn-entreno-armado").hidden = true;
+        $("entreno-estado").textContent = "";
+        pintarEntreno();
+    }
+    function pintarEntreno() {
+        const t = T();
+        $("btn-entreno-dejar").hidden = !t.guion && !t.ejercicio;
     }
 
     function pintarPartida() {
@@ -1399,6 +1565,10 @@
     $("btn-calibrar").addEventListener("click", hacerCalibrar);
     $("btn-seguir").addEventListener("click", seguirPartida);
     $("btn-armado").addEventListener("click", decirArmado);
+    $("btn-entreno-motor").addEventListener("click", empezarMotor);
+    $("btn-entreno-ejercicio").addEventListener("click", otroEjercicio);
+    $("btn-entreno-armado").addEventListener("click", empezarEjercicio);
+    $("btn-entreno-dejar").addEventListener("click", dejarEntreno);
     $("btn-deshacer").addEventListener("click", () => {
         const t = T();
         if (t.juego.undo()) t.horas.pop();
@@ -1424,7 +1594,7 @@
         if (!m) { avisar(cual(t) + "«" + texto.trim() + "» no es una jugada legal en esta partida. " + V.comoVa(t.juego), "error"); return; }
         $("jugada-mano").value = "";
         t.mano++;
-        anotar(t, [m.san]);
+        (t.guion ? jugadaEntrenando : anotar)(t, [m.san]);
         if (m.promotion) { t.confirmadas.add(t.juego.history().length - 1); pintarCoronacion(); } // la escribió: ya dijo cuál
         // Lo que la cámara ve ahora ya es esta jugada: no se vuelve a buscar.
         t.quieta = t.lectura;

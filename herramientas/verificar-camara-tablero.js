@@ -477,6 +477,68 @@ async function esperarJugadas(p, n) {
     await cerrar(b);
   }
 
+  console.log("\nEntrenar en el tablero: contra el motor y un ejercicio");
+  {
+    const b = await abrir(browser, "camara-tablero.html");
+    const pg = b.page;
+    // Stockfish de mentira: contesta 1... e5 a 1. e4.
+    await pg.route("**/js/shared-engine.js", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: "window.SharedEngine = {};" }));
+    await pg.route("**/js/preparacion-motor.js", (r) => r.fulfill({ status: 200, contentType: "application/javascript",
+      body: "window.PreparacionMotor = { evaluar: (fen, p) => { window.__prof = p; return Promise.resolve({ eval: 0.2, mejor: / b /.test(fen) ? 'e5' : 'Nf3' }); } };" }));
+    // El banco, con un solo mate en 2 (del banco de verdad: mate2-0307).
+    await pg.route("**/entreno/data/mates.json", (r) => r.fulfill({ status: 200, contentType: "application/json",
+      body: JSON.stringify([{ id: "mate2-0307", category: "mate2", fen: "1Q6/8/8/8/8/k2K4/8/8 w - - 0 1", solution: ["Kc3", "Ka2", "Qb2#"] }]) }));
+    await pg.waitForSelector("#app:not(.hidden)");
+    const j = new Chess();
+    await foto(pg, j.fen(), ESQ0);
+    await esperarAviso(pg, /esquinas/);
+    await tocar(pg, aLienzo(ESQ0));
+    await pg.click("#btn-calibrar");
+    await esperarAviso(pg, /Calibrado/);
+    await pg.click("#btn-entreno-motor");
+    igual("contra el motor, con blancas: empieza quien entrena", await pg.textContent("#entreno-estado"), "Te toca: juegas con blancas.");
+    j.move("e4"); await foto(pg, j.fen(), ESQ0); await esperarJugadas(pg, 1);
+    await pg.waitForFunction(() => /El motor juega/.test(document.getElementById("entreno-estado").textContent), null, { timeout: 8000 }).catch(() => {});
+    igual("el motor contesta (a la profundidad del nivel) y dice cómo poner su jugada", [await pg.textContent("#entreno-estado"), await pg.evaluate(() => window.__prof)],
+      ["El motor juega e5: mueve el peón negro de e7 a e5. Pon esa jugada en tu tablero.", 5]);
+    const malo = new Chess(j.fen()); malo.move("d5");
+    await foto(pg, malo.fen(), ESQ0);
+    await esperarAviso(pg, /Esa no es/);
+    igual("si se pone otra, no se anota y dice cuál es", [await jugadasDe(pg), (await aviso(pg)).includes("hay que poner e5")], ["1. e4", true]);
+    j.move("e5"); await foto(pg, j.fen(), ESQ0); await esperarJugadas(pg, 2);
+    igual("puesta la del motor, se anota y te toca otra vez", [await jugadasDe(pg), await pg.textContent("#entreno-estado")], ["1. e4 e5", "Te toca."]);
+    await pg.click("#btn-entreno-dejar");
+
+    // Un ejercicio: armarlo, una jugada equivocada que vuelve, la solución y la respuesta del rival.
+    await pg.selectOption("#entreno-banco", "mate2");
+    await pg.click("#btn-entreno-ejercicio");
+    await pg.waitForFunction(() => /Arma en tu tablero/.test(document.getElementById("entreno-estado").textContent), null, { timeout: 8000 }).catch(() => {});
+    const e = new Chess("1Q6/8/8/8/8/k2K4/8/8 w - - 0 1");
+    igual("el ejercicio aparece en el tablero de la derecha, para armarlo", [await pg.textContent("#fen"), (await pg.textContent("#entreno-estado")).startsWith("Arma en tu tablero")], [e.fen(), true]);
+    await foto(pg, new Chess("1Q6/8/8/8/8/k7/8/3K4 w - - 0 1").fen(), ESQ0);
+    await pg.click("#btn-entreno-armado");
+    await esperarAviso(pg, /Todavía no está igual/);
+    igual("armado mal, dice qué casillas arreglar", await pg.$$eval("#armado-lista li", (l) => l.map((x) => x.textContent)), ["Sobra una pieza blanca en d1.", "Falta el rey blanco en d3."]);
+    await foto(pg, e.fen(), ESQ0);
+    await pg.click("#btn-entreno-armado");
+    await esperarAviso(pg, /Bien armada/);
+    const mal = new Chess(e.fen()); mal.move("Kc4");
+    await foto(pg, mal.fen(), ESQ0);
+    await esperarAviso(pg, /No es esa/);
+    igual("una jugada que no es se dice y no se anota", [(await aviso(pg)).startsWith("No es esa (Rc4)"), await jugadasDe(pg)], [true, "Todavía ninguna."]);
+    await foto(pg, e.fen(), ESQ0);
+    await esperarAviso(pg, /de vuelta/);
+    e.move("Kc3"); await foto(pg, e.fen(), ESQ0); await esperarJugadas(pg, 1);
+    await pg.waitForFunction(() => /El rival responde/.test(document.getElementById("entreno-estado").textContent), null, { timeout: 8000 }).catch(() => {});
+    igual("la buena se anota y el rival responde lo del banco", await pg.textContent("#entreno-estado"), "El rival responde Ra2: mueve el rey negro de a3 a a2. Pon esa jugada en tu tablero.");
+    e.move("Ka2"); await foto(pg, e.fen(), ESQ0); await esperarJugadas(pg, 2);
+    e.move("Qb2#"); await foto(pg, e.fen(), ESQ0); await esperarJugadas(pg, 3);
+    await esperarAviso(pg, /Resuelto/);
+    igual("y con el mate, resuelto (con cuántos intentos fallidos)", await pg.textContent("#entreno-estado"), "¡Resuelto (con 1 intento fallido)! Es mate.");
+    igual("sin errores en la consola", b.errores, []);
+    await cerrar(b);
+  }
+
   console.log("\nLa luz que cambia");
   {
     const reloj = { f: () => { const pn = performance.now.bind(performance); window.__adelanto = 0; performance.now = () => pn() + window.__adelanto; } };
