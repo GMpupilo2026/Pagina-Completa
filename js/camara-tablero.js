@@ -1486,9 +1486,11 @@
         const { data } = await sb.auth.getSession();
         const session = data.session;
         if (!session) { location.href = "login.html?next=camara-tablero.html"; return; }
-        const { data: perfil } = await sb.from("profiles").select("is_admin").eq("id", session.user.id).maybeSingle();
+        // Quien administra y quien da clase (la cámara en la clase en vivo:
+        // js/clase-camara.js). Un alumno, no: en un torneo entra por el QR.
+        const { data: perfil } = await sb.from("profiles").select("is_admin, role").eq("id", session.user.id).maybeSingle();
         $("loading").classList.add("hidden");
-        if (!perfil || !perfil.is_admin) { $("denegado").classList.remove("hidden"); return; }
+        if (!perfil || !(perfil.is_admin || perfil.role === "profesor")) { $("denegado").classList.remove("hidden"); return; }
         try { elegirRetraso(Number(localStorage.getItem(RETRASO)) || 0, false); } catch (e) { /* sin almacenamiento */ }
         arrancar();
         let guardado = null;

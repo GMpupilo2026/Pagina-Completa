@@ -52,7 +52,7 @@ const CLASE_ABIERTA = { id: "s-1", title: null, created_by: "u-profe",
    elegirla y pasarla es del profe: es su material. */
 const GRUPOS = [
   { donde: "teacher-toolbar", rotulo: "Tu material — solo lo ves tú",
-    botones: ["toggle-lesson-btn", "toggle-archivos-btn", "toggle-pdf-btn", "toggle-presentacion-btn", "toggle-free-mode-btn"] },
+    botones: ["toggle-lesson-btn", "toggle-archivos-btn", "toggle-pdf-btn", "toggle-presentacion-btn", "toggle-camara-btn", "toggle-free-mode-btn"] },
 ];
 /* «El tablero — lo ve toda la clase» ya no es una tarjeta: sus cuatro botones van en
    la barra del tablero, en su grupo #botones-tablero (que lleva ese rótulo como

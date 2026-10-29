@@ -1447,11 +1447,16 @@ async function esperarJugadas(p, n) {
   }
 
   console.log("\nQuien no administra");
-  const n = await abrir(browser, "camara-tablero.html", { is_admin: false });
+  const n = await abrir(browser, "camara-tablero.html", { is_admin: false, role: "alumno" });
   await n.page.waitForSelector("#denegado:not(.hidden)");
-  igual("ve el aviso y no la cámara", await n.page.evaluate(() => [
+  igual("un alumno ve el aviso y no la cámara", await n.page.evaluate(() => [
     document.getElementById("app").checkVisibility(), document.getElementById("denegado").checkVisibility()]), [false, true]);
   await cerrar(n);
+  const pf = await abrir(browser, "camara-tablero.html", { is_admin: false, role: "profesor" });
+  await pf.page.waitForSelector("#app:not(.hidden), #denegado:not(.hidden)");
+  igual("quien da clase sí la abre (para su tablero de verdad en la clase en vivo)", await pf.page.evaluate(() => [
+    document.getElementById("app").checkVisibility(), document.getElementById("denegado").checkVisibility()]), [true, false]);
+  await cerrar(pf);
 
   console.log("\nLa cámara, solo en esta página");
   const cab = fs.readFileSync(path.join(__dirname, "..", "_headers"), "utf8");
