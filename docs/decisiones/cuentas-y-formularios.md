@@ -1198,6 +1198,8 @@ la hoja «Resumen - <comité>» de la carpeta del comité. Verificador:
     equipo» de la 20, y decide la carpeta del Drive. La rama no se pregunta,
     y el recuadro de las pruebas dice solo «Clásico, Rápido, Relámpago.», sin
     la categoría (la categoría ya está en su renglón).
+    Ese renglón, «Categoría Deportiva», lleva solo la categoría («U-16»), sin
+    «Individual» ni «Ajedrez» (lo pidió el dueño del sitio).
   - El comité se elige de la lista de los 84 comités cantonales («CCDR
     <cantón>») o se escribe (un Concejo de Distrito, por ejemplo), y el puente
     busca la carpeta **sin mirar mayúsculas ni tildes**.
