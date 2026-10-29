@@ -167,6 +167,15 @@
                             <p class="text-sm font-semibold text-brand-800 dark:text-white">¿Cuál fue la jugada?</p>
                             <div id="dudas-botones" class="flex flex-wrap gap-2 mt-2"></div>
                         </div>
+                        <div id="coronacion" hidden class="mt-4 rounded-xl border-2 border-accent-500 p-3">
+                            <p id="coronacion-texto" class="text-sm font-semibold text-brand-800 dark:text-white">Coronó. ¿Qué pieza puso?</p>
+                            <div class="flex flex-wrap gap-2 mt-2">
+                                <button type="button" data-corona="q" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Dama</button>
+                                <button type="button" data-corona="r" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Torre</button>
+                                <button type="button" data-corona="b" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Alfil</button>
+                                <button type="button" data-corona="n" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Caballo</button>
+                            </div>
+                        </div>
                         <form id="form-anotar" class="mt-4" novalidate>
                             <label for="jugada-mano" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 mb-1">Anotar una jugada a mano (si la cámara no la reconoce)</label>
                             <div class="flex gap-2">

@@ -11,7 +11,7 @@
  */
 (function () {
     "use strict";
-    const { homografia, aplicar, ESQUINAS_TABLERO, INICIAL, muestras, calibrar, leer, leerDetalle, esperada, decidir, diferentes, casilla } = window.LectorTablero;
+    const { homografia, aplicar, ESQUINAS_TABLERO, INICIAL, muestras, calibrar, leer, leerDetalle, esperada, decidir, cambiarCoronacion, deducirCoronacion, diferentes, casilla } = window.LectorTablero;
     /* ── La página ───────────────────────────────────────────────────────── */
     if (!document.getElementById("lienzo")) return;
 
@@ -54,6 +54,7 @@
             // mano) y la de arranque: el tiempo de cada jugada y el retraso de
             // la transmisión salen de acá.
             inicio: Date.now(), horas: [], horaResultado: null,
+            confirmadas: new Set(), // las coronaciones ya elegidas (por su índice en la historia)
         };
     }
     let tableros = [nuevoTablero(0)];
@@ -433,7 +434,7 @@
             return;
         }
         t.juego = new window.Chess();
-        t.resultadoMano = null;
+        t.resultadoMano = null; t.confirmadas = new Set();
         t.inicio = Date.now(); t.horas = []; t.horaResultado = null;
         if (torneo) { t.ronda = ultimaRonda(); pintarTorneo(); } // la partida nueva es de la ronda de ahora
         partidaCambio(t);
@@ -490,7 +491,40 @@
         $("dudas").hidden = true;
         partidaCambio(t);
         const corona = jugadas.some((x) => /=Q/.test(x));
-        avisar(cual(t) + (jugadas.length === 2 ? "Se escapó una jugada: se anotaron " + jugadas.map(es).join(" y ") : "Se anotó " + es(jugadas[0])) + "." + (corona ? " Coronó: se anotó dama; si fue otra pieza, deshazla y anótala a mano." : ""), "bien");
+        avisar(cual(t) + (jugadas.length === 2 ? "Se escapó una jugada: se anotaron " + jugadas.map(es).join(" y ") : "Se anotó " + es(jugadas[0])) + "." + (corona ? " Coronó: se anotó dama. Si fue otra pieza, elígela abajo; si se mueve como caballo, se corrige sola." : ""), "bien");
+    }
+
+    /* La coronación que falta confirmar: la última de la partida, mientras la
+     * pieza siga en el tablero, con la casilla donde está ahora. La cámara
+     * solo ve «pieza blanca», así que se anota dama y se pregunta; si
+     * después se mueve como no puede una dama, se corrige sola (ver
+     * revisar). */
+    function coronacionDe(t) {
+        let c = null;
+        t.juego.history({ verbose: true }).forEach((m, i) => {
+            if (m.promotion) c = { ply: i, donde: m.to, pieza: m.promotion };
+            else if (c && m.from === c.donde) c.donde = m.to;
+            else if (c && m.to === c.donde) c = null; // la capturaron
+        });
+        return c && !t.confirmadas.has(c.ply) ? c : null;
+    }
+    const NOMBRE_PIEZA = { q: "dama", r: "torre", b: "alfil", n: "caballo" };
+    function elegirCoronacion(t, pieza) {
+        const c = coronacionDe(t);
+        if (!c) return;
+        if (!cambiarCoronacion(t.juego, c.ply, pieza)) {
+            avisar(cual(t) + "Con " + NOMBRE_PIEZA[pieza] + " lo que se jugó después no es legal. Revisa la partida.", "error");
+            return;
+        }
+        t.confirmadas.add(c.ply);
+        t.quieta = null;
+        partidaCambio(t);
+        avisar(cual(t) + "Coronó " + NOMBRE_PIEZA[pieza] + ": se anotó " + es(t.juego.history()[c.ply]) + ".", "bien");
+    }
+    function pintarCoronacion() {
+        const c = coronacionDe(T());
+        $("coronacion").hidden = !c;
+        if (c) $("coronacion-texto").textContent = "Coronó en " + c.donde + " (se anotó dama). ¿Qué pieza puso?";
     }
 
     /* Una lectura quieta que no es la esperada: se busca la jugada. */
@@ -499,6 +533,15 @@
         if (lectura === antes) return;
         const r = decidir(t.juego, lectura, seguridad);
         if (r && r.jugadas) { anotar(t, r.jugadas); return; }
+        // La pieza coronada se movió como no puede una dama: era otra.
+        const c = !r && coronacionDe(t);
+        const otra = c && deducirCoronacion(t.juego, c.ply, c.donde, lectura, seguridad);
+        if (otra && cambiarCoronacion(t.juego, c.ply, otra.pieza)) {
+            t.confirmadas.add(c.ply);
+            anotar(t, otra.jugadas);
+            avisar(cual(t) + "La pieza coronada se movió como " + NOMBRE_PIEZA[otra.pieza] + ": era " + NOMBRE_PIEZA[otra.pieza] + ", se corrigió la coronación (" + es(t.juego.history()[c.ply]) + ") y se anotó " + otra.jugadas.map(es).join(" y ") + ".", "bien");
+            return;
+        }
         if (r && r.dudas) {
             // Dos o tres parecidas: que la persona elija, con un toque.
             const caja = $("dudas-botones");
@@ -538,6 +581,7 @@
         $("btn-deshacer").disabled = !hist.length;
         $("btn-copiar").disabled = !hist.length;
         pintarResultado();
+        pintarCoronacion();
     }
     function pintarResultado() {
         const t = T(), r = resultadoDe(t);
@@ -1135,6 +1179,7 @@
     /* Anotar a mano lo que la cámara no reconoce: «Cf3», «e4», «O-O»…, en
      * español o en inglés (lo entiende js/comandos-tablero.js). Tiene que ser
      * legal en la partida: nunca se anota una posición inventada. */
+    document.querySelectorAll("[data-corona]").forEach((b) => b.addEventListener("click", () => elegirCoronacion(T(), b.dataset.corona)));
     $("form-anotar").addEventListener("submit", (e) => {
         e.preventDefault();
         const t = T(), texto = $("jugada-mano").value;
@@ -1142,6 +1187,7 @@
         if (!m) { avisar(cual(t) + "«" + texto.trim() + "» no es una jugada legal en esta partida. " + V.comoVa(t.juego), "error"); return; }
         $("jugada-mano").value = "";
         anotar(t, [m.san]);
+        if (m.promotion) { t.confirmadas.add(t.juego.history().length - 1); pintarCoronacion(); } // la escribió: ya dijo cuál
         // Lo que la cámara ve ahora ya es esta jugada: no se vuelve a buscar.
         t.quieta = t.lectura;
     });
@@ -1155,7 +1201,7 @@
         const bien = texto && (/^[1-8pnbrqkPNBRQK/]+ [wb] /.test(texto) ? j.load(texto) : j.load_pgn(texto));
         if (!bien) { avisar(cual(t) + "No entiendo esa posición: pega un FEN (como lo da Lichess) o las jugadas en PGN.", "error"); return; }
         t.juego = j;
-        t.resultadoMano = null;
+        t.resultadoMano = null; t.confirmadas = new Set(j.history({ verbose: true }).map((m, i) => (m.promotion ? i : -1)));
         t.inicio = Date.now(); t.horas = j.history().map(() => null); t.horaResultado = null;
         $("dudas").hidden = true;
         partidaCambio(t);
@@ -1310,6 +1356,8 @@
         const j = new window.Chess();
         if (guardada && j.load_pgn(guardada) && j.history().length) {
             tableros[0].juego = j;
+            // Lo guardado ya pasó: sus coronaciones no se vuelven a preguntar.
+            tableros[0].confirmadas = new Set(j.history({ verbose: true }).map((m, i) => (m.promotion ? i : -1)));
             const r = { "1-0": "1-0", "1/2-1/2": "=", "0-1": "0-1" }[(j.header() || {}).Result];
             if (r && !V.resultadoSolo(j)) tableros[0].resultadoMano = r;
             let h = null;

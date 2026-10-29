@@ -442,6 +442,65 @@ async function esperarJugadas(p, n) {
     await cerrar(c);
   }
 
+  console.log("\nLa coronación: se pregunta la pieza, o se deduce si se mueve como caballo");
+  {
+    // Un peón blanco en e7 con e8 libre (el rey negro en c5, donde ni la
+    // dama ni el caballo de e8 le dan jaque).
+    const FEN = "rnbq1bnr/ppp1Pppp/8/2k5/8/8/PPPP1PPP/RNBQKBNR w KQ - 0 5";
+    const desde = async (b) => {
+      const pg = b.page;
+      await pg.waitForSelector("#app:not(.hidden)");
+      await pg.click("summary:has-text('Empezar desde otra posición')");
+      await pg.fill("#posicion", FEN);
+      await pg.click("#form-posicion button[type=submit]");
+      await foto(pg, FEN, ESQ0);
+      await esperarAviso(pg, /esquinas/);
+      await tocar(pg, aLienzo(ESQ0));
+      await pg.click("#btn-seguir");
+      await esperarAviso(pg, /sigo con la partida/);
+      return pg;
+    };
+    const seVe = (pg) => pg.evaluate(() => document.getElementById("coronacion").checkVisibility());
+
+    const b = await abrir(browser, "camara-tablero.html");
+    const pg = await desde(b);
+    const k = new Chess(FEN);
+    k.move("e8=Q"); await foto(pg, k.fen(), ESQ0); await esperarJugadas(pg, 1);
+    igual("al coronar se anota dama y se pregunta qué pieza puso",
+      [await jugadasDe(pg), await seVe(pg), (await pg.textContent("#coronacion-texto")).includes("e8")], ["5. e8=D", true, true]);
+    await pg.click("[data-corona=r]");
+    igual("elegir «Torre» corrige la jugada y la pregunta se va", [await jugadasDe(pg), await seVe(pg)], ["5. e8=T", false]);
+    igual("y el FEN tiene una torre en e8", (await pg.textContent("#fen")).startsWith("rnbqRbnr/"), true);
+    igual("sin errores en la consola", b.errores, []);
+    await cerrar(b);
+
+    const c = await abrir(browser, "camara-tablero.html");
+    const pc = await desde(c);
+    const j = new Chess(FEN);
+    j.move("e8=Q"); await foto(pc, j.fen(), ESQ0); await esperarJugadas(pc, 1);
+    j.move("a6"); await foto(pc, j.fen(), ESQ0); await esperarJugadas(pc, 2);
+    // La pieza de e8 salta a f6: una dama no puede, un caballo sí.
+    const n = new Chess(FEN); ["e8=N", "a6", "Nf6"].forEach((x) => n.move(x));
+    await foto(pc, n.fen(), ESQ0); await esperarJugadas(pc, 3);
+    igual("si la pieza coronada se mueve como caballo, era caballo: se corrige sola",
+      [await jugadasDe(pc), await seVe(pc), (await aviso(pc)).includes("se movió como caballo")], ["5. e8=C a6 6. Cf6", false, true]);
+    igual("y la partida sigue en la posición correcta", await pc.textContent("#fen"), n.fen());
+    igual("sin errores en la consola", c.errores, []);
+    await cerrar(c);
+
+    // Lo de LectorTablero, sin cámara: lo que sigue a la coronación tiene
+    // que seguir siendo legal con la otra pieza.
+    const p2 = await abrir(browser, "camara-tablero.html");
+    await p2.page.waitForSelector("#app:not(.hidden)");
+    igual("cambiar la coronación no deja una partida ilegal (la dama movida en diagonal no puede ser torre)", await p2.page.evaluate((fen) => {
+      const L = window.LectorTablero, x = new window.Chess(fen);
+      ["e8=Q", "a6", "Qxf7"].forEach((m) => x.move(m));
+      const antes = x.fen();
+      return [L.cambiarCoronacion(x, 0, "r"), x.fen() === antes, L.cambiarCoronacion(x, 0, "b"), x.history()[0]];
+    }, FEN), [false, true, true, "e8=B"]);
+    await cerrar(p2);
+  }
+
   console.log("\nDos tableros con un celular (opcional)");
   {
     const IZQ = [[40, 520], [380, 535], [390, 195], [50, 180]], DER = [[430, 530], [770, 515], [760, 175], [420, 190]];
