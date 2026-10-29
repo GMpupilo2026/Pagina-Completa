@@ -3307,18 +3307,22 @@
   // La cámara ve algo que no sale de ninguna jugada legal: puede ser una
   // jugada ilegal. Se avisa (sin las casillas: con retraso, eso sería pasar
   // la jugada) y queda en la caja de las cámaras hasta que se marca «Visto».
-  // Una vez cada 30 segundos por mesa, como mucho.
+  // Una vez cada 30 segundos por mesa, como mucho. También llegan la
+  // repetición y las 50 jugadas (`tipo`), que no se marcan solas: el árbitro
+  // las confirma si alguien reclama (o, con cinco veces y 75 jugadas, solo).
+  const TIPOS_ALERTA = { ilegal: "camaraAlerta", repeticion3: "camaraTablas3", jugadas50: "camaraTablas50", repeticion5: "camaraTablas5", jugadas75: "camaraTablas75" };
   function alertaDeCamara(p) {
     const v = torneoDeCamaras();
     if (!v || !v.publicado || !v.rondas.length || p.torneo !== v.publicado.id || Number(p.ronda) !== v.rondas.length) return;
     const mesa = Number(p.mesa), tablero = E.esDeEquipos(v) ? Number(p.tablero) || null : null;
     const R = v.rondas[v.rondas.length - 1];
     if (!R.mesas.some((x, k) => V.mesaFisica(v, k) === mesa)) return;
-    const clave = claveCamara(mesa, tablero);
-    const antes = estado.camaras.alertas.get(clave);
-    if (antes && Date.now() - antes < 30000) return;
-    estado.camaras.alertas.set(clave, Date.now());
-    Avisos.avisar(tx("camaraAlerta", { m: verLugar(clave) }), { tipo: "error" });
+    const clave = claveCamara(mesa, tablero), tipo = TIPOS_ALERTA[p.tipo] ? p.tipo : "ilegal";
+    const k = tipo === "ilegal" ? clave : clave + "|" + tipo; // cada aviso por su lado: uno no tapa al otro
+    const antes = estado.camaras.alertas.get(k);
+    if (antes && Date.now() - antes.h < 30000) return;
+    estado.camaras.alertas.set(k, { h: Date.now(), tipo, m: clave });
+    Avisos.avisar(tx(TIPOS_ALERTA[tipo], { m: verLugar(clave) }), { tipo: tipo === "ilegal" ? "error" : "info" });
     pintarCamaras();
   }
 
@@ -3455,10 +3459,10 @@
     if (!activas) { caja.replaceChildren(); return; }
     const mesas = estado.camaras && estado.camaras.idTorneo === estado.id ? [...estado.camaras.mesas.keys()].sort(ordenLugar).map(verLugar) : [];
     const dejar = el("button", { type: "button", id: "pi-camaras-dejar", class: C.mini, onclick: dejarCamaras }, tx("camarasDejar"));
-    const alertas = estado.camaras && estado.camaras.idTorneo === estado.id ? [...estado.camaras.alertas.entries()].sort((a, b) => ordenLugar(a[0], b[0])) : [];
-    const listaAlertas = alertas.length ? el("ul", { id: "pi-camaras-alertas", class: "mt-2 space-y-1 text-sm" }, alertas.map(([m, h]) => el("li", { class: "flex flex-wrap items-center gap-2", "data-alerta": String(m) },
-      el("span", { class: "font-semibold", texto: tx("camaraAlertaFila", { m: verLugar(m), h: horaCR(h) }) }),
-      el("button", { type: "button", class: C.mini, onclick: () => { estado.camaras.alertas.delete(m); pintarCamaras(); } }, tx("camaraAlertaVista"))))) : null;
+    const alertas = estado.camaras && estado.camaras.idTorneo === estado.id ? [...estado.camaras.alertas.entries()].sort((a, b) => ordenLugar(a[1].m, b[1].m)) : [];
+    const listaAlertas = alertas.length ? el("ul", { id: "pi-camaras-alertas", class: "mt-2 space-y-1 text-sm" }, alertas.map(([k, a]) => el("li", { class: "flex flex-wrap items-center gap-2", "data-alerta": String(a.m), "data-tipo": a.tipo },
+      el("span", { class: "font-semibold", texto: tx(a.tipo === "ilegal" ? "camaraAlertaFila" : "camaraTablasFila", { m: verLugar(a.m), h: horaCR(a.h), q: a.tipo === "ilegal" ? "" : tx(TIPOS_ALERTA[a.tipo] + "Corto") }) }),
+      el("button", { type: "button", class: C.mini, onclick: () => { estado.camaras.alertas.delete(k); pintarCamaras(); } }, tx("camaraAlertaVista"))))) : null;
     caja.replaceChildren(el("h3", { class: "font-semibold" }, el("span", { "aria-hidden": "true", texto: "🎥 " }), tx("camarasCajaTitulo")),
       el("p", { class: C.nota, texto: tx("camarasCajaTexto", { c: v.camaras.codigo }) }),
       el("p", { id: "pi-camaras-mesas", class: "text-sm mt-1", texto: mesas.length ? tx("camarasMesas", { m: mesas.join(", ") }) : tx("camarasNinguna") }),

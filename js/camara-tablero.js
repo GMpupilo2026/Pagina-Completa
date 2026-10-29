@@ -491,8 +491,19 @@
         $("dudas").hidden = true;
         partidaCambio(t);
         const corona = jugadas.some((x) => /=Q/.test(x));
-        avisar(cual(t) + (jugadas.length === 2 ? "Se escapó una jugada: se anotaron " + jugadas.map(es).join(" y ") : "Se anotó " + es(jugadas[0])) + "." + (corona ? " Coronó: se anotó dama. Si fue otra pieza, elígela abajo; si se mueve como caballo, se corrige sola." : ""), "bien");
+        const tablas = V.reglaDeTablas(t.juego);
+        const alArbitro = tablas && alertarArbitro(t, tablas);
+        avisar(cual(t) + (jugadas.length === 2 ? "Se escapó una jugada: se anotaron " + jugadas.map(es).join(" y ") : "Se anotó " + es(jugadas[0])) + "." + (corona ? " Coronó: se anotó dama. Si fue otra pieza, elígela abajo; si se mueve como caballo, se corrige sola." : "")
+            + (tablas ? " " + TABLAS[tablas] + (alArbitro ? " Se le avisó al árbitro." : "") : ""), "bien");
     }
+    /* La repetición y las 50 jugadas no se marcan solas: se dicen, y en un
+     * torneo le llegan al árbitro de Pareo Integral (ver reglaDeTablas). */
+    const TABLAS = {
+        repeticion3: "La misma posición se repitió tres veces: quien juega puede reclamar tablas al árbitro.",
+        jugadas50: "Van 50 jugadas de cada uno sin capturas ni movimientos de peón: se pueden reclamar tablas al árbitro.",
+        repeticion5: "La misma posición se repitió cinco veces: por las Leyes son tablas, aunque nadie las reclame (lo confirma el árbitro).",
+        jugadas75: "Van 75 jugadas de cada uno sin capturas ni movimientos de peón: por las Leyes son tablas (lo confirma el árbitro).",
+    };
 
     /* La coronación que falta confirmar: la última de la partida, mientras la
      * pieza siga en el tablero, con la casilla donde está ahora. La cámara
@@ -658,10 +669,10 @@
     }
     // Con retraso, las jugadas van saliendo solas a medida que cumplen su tiempo.
     setInterval(() => { if (retraso) for (const t of tableros) if (t.vivo && vistaVivo(t).n !== t.enviadas) enviarVivo(t); }, 5000);
-    function alertarArbitro(t) {
+    function alertarArbitro(t, tipo) {
         const canal = t.vivo && canales.get(t.vivo.codigo), donde = dondeDe(t);
         if (!canal || !donde) return false;
-        canal.send({ type: "broadcast", event: "alerta", payload: { v: 1, torneo: donde.torneo, ronda: donde.ronda, mesa: donde.mesa, tablero: donde.tablero || undefined, t: Date.now() } });
+        canal.send({ type: "broadcast", event: "alerta", payload: { v: 1, torneo: donde.torneo, ronda: donde.ronda, mesa: donde.mesa, tablero: donde.tablero || undefined, tipo: tipo || "ilegal", t: Date.now() } });
         return true;
     }
     const RETRASO = delPuesto("camara_retraso_v1");

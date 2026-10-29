@@ -186,6 +186,13 @@ function torneo() {
   await alerta({ mesa: 3 });
   const avisosDe3 = () => page.evaluate(() => [...document.querySelectorAll(".avisos-mensaje")].filter((x) => /La cámara de la mesa 3 ve algo/.test(x.textContent)).length);
   igual("la misma mesa otra vez enseguida no se repite (ni en la lista ni en los avisos)", [await page.locator("#pi-camaras-alertas li").count(), await avisosDe3()], [1, 1]);
+  await alerta({ mesa: 3, tipo: "repeticion3" });
+  await page.waitForSelector("#pi-camaras-alertas [data-tipo=repeticion3]");
+  igual("la triple repetición llega aparte, sin tapar la jugada ilegal de la misma mesa",
+    [await page.locator("#pi-camaras-alertas li").count(), /Mesa 3: triple repetición, se pueden reclamar tablas/.test(await page.textContent("#pi-camaras-alertas")), /la misma posición se repitió tres veces/.test(await page.textContent("body"))], [2, true, true]);
+  await alerta({ mesa: 3, tipo: "lo-que-sea" });
+  igual("un tipo que no se conoce cuenta como jugada ilegal (y no se repite)", await page.locator("#pi-camaras-alertas li").count(), 2);
+  await page.click("#pi-camaras-alertas [data-tipo=repeticion3] button");
   await page.click("#pi-camaras-alertas [data-alerta=\"3\"] button");
   ok(!(await page.$("#pi-camaras-alertas")), "«Visto» la quita");
 

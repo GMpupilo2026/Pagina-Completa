@@ -498,6 +498,18 @@ async function esperarJugadas(p, n) {
       const antes = x.fen();
       return [L.cambiarCoronacion(x, 0, "r"), x.fen() === antes, L.cambiarCoronacion(x, 0, "b"), x.history()[0]];
     }, FEN), [false, true, true, "e8=B"]);
+    igual("la repetición y las 50 jugadas se dicen justo en la jugada en que se cumplen", await p2.page.evaluate(() => {
+      const V = window.PartidaEnVivo, j = new window.Chess(), r = [];
+      for (let i = 0; i < 4; i++) ["Nf3", "Nf6", "Ng1", "Ng8"].forEach((m) => { j.move(m); r.push(V.reglaDeTablas(j)); });
+      const k = new window.Chess("8/8/4k3/8/8/4K3/8/R7 w - - 98 80"), r2 = [];
+      ["Ra2", "Kd6", "Ra1"].forEach((m) => { k.move(m); r2.push(V.reglaDeTablas(k)); });
+      const l = new window.Chess("8/8/4k3/8/8/4K3/8/R7 w - - 149 80"); l.move("Ra2");
+      // Una posición con la casilla al paso que nadie puede usar es la misma (art. 9.2.3).
+      const m = new window.Chess(); m.move("c4");
+      ["Nc6", "Nf3", "Nb8", "Ng1", "Nc6", "Nf3", "Nb8"].forEach((x) => m.move(x));
+      const antes = V.reglaDeTablas(m); m.move("Ng1");
+      return [r.map((x, i) => x && i + 1 + ":" + x).filter(Boolean), r2, V.reglaDeTablas(l), antes, V.reglaDeTablas(m)];
+    }), [["8:repeticion3", "9:repeticion3", "10:repeticion3", "11:repeticion3", "16:repeticion5"], [null, "jugadas50", null], "jugadas75", null, "repeticion3"]);
     await cerrar(p2);
   }
 
@@ -798,12 +810,24 @@ async function esperarJugadas(p, n) {
     const alerta = eventos.slice(antesAlerta).find((x) => x.event === "alerta");
     igual("el aviso al árbitro dice el torneo, la ronda y la mesa, pero no las casillas", alerta && [alerta.payload.torneo, alerta.payload.ronda, alerta.payload.mesa, /a1|a5/.test(JSON.stringify(alerta.payload))], [ID, 2, 5, false]);
     await foto(pa, ja2.fen(), ESQ0);
+    igual("el aviso de la jugada ilegal va con su tipo", alerta && alerta.payload.tipo, "ilegal");
+
+    // La triple repetición: los caballos van y vuelven dos veces. No se marca
+    // sola (se reclama), pero se dice y le llega al árbitro.
+    const antesRep = eventos.length;
+    for (const x of ["Nc6", "Nf3", "Nb8", "Ng1", "Nc6", "Nf3", "Nb8", "Ng1"]) {
+      ja2.move(x); await foto(pa, ja2.fen(), ESQ0); await esperarJugadas(pa, ja2.history().length);
+    }
+    igual("la triple repetición se dice, sin marcar el resultado", [(await aviso(pa)).includes("se repitió tres veces"), (await aviso(pa)).endsWith("Se le avisó al árbitro."), await pa.textContent("#resultado-texto")],
+      [true, true, "Sigue en juego."]);
+    const rep = eventos.slice(antesRep).filter((x) => x.event === "alerta");
+    igual("y al árbitro le llega una vez, con su tipo", rep.map((x) => [x.payload.mesa, x.payload.tipo]), [[5, "repeticion3"]]);
 
     // El resultado: lo marca quien maneja la cámara y le llega a quien mira.
     await pa.click('[data-resultado="1-0"]');
     igual("«1-0» marca el resultado", [await pa.textContent("#resultado-texto"), await pa.getAttribute('[data-resultado="1-0"]', "aria-pressed")], ["Terminó: ganan las blancas (1-0).", "true"]);
     await pw.waitForFunction(() => /Terminó: ganan las blancas/.test(document.querySelector('#mesas-lista button[data-mesa="5"]').textContent), null, { timeout: 8000 }).catch(() => {});
-    igual("y quien mira lo ve en la mesa", await pw.$eval('#mesas-lista button[data-mesa="5"]', (b) => b.querySelectorAll("p")[2].textContent), "Última jugada: 1. c4. Juegan las negras. Terminó: ganan las blancas (1-0).");
+    igual("y quien mira lo ve en la mesa", await pw.$eval('#mesas-lista button[data-mesa="5"]', (b) => b.querySelectorAll("p")[2].textContent), "Última jugada: 5. Cg1. Juegan las negras. Terminó: ganan las blancas (1-0).");
     igual("el PGN que viaja lleva el resultado", await pa.evaluate(() => /\[Result "1-0"\]/.test(localStorage.getItem("camara_partida_v1_0"))), true);
     await pa.click("#btn-deshacer");
     igual("«Deshacer» lo borra: la partida sigue", [await pa.textContent("#resultado-texto"), await pa.getAttribute('[data-resultado="1-0"]', "aria-pressed")], ["Sigue en juego.", "false"]);

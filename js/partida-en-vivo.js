@@ -21,6 +21,8 @@
  *   PartidaEnVivo.reloj(ms)             → «1:23» o «1:02:03»
  *   PartidaEnVivo.resultadoSolo(juego)  → «1-0», «=» o «0-1» si el tablero ya lo dice (mate, ahogado)
  *   PartidaEnVivo.pgn(juego, resultado) → el PGN con su [Result]
+ *   PartidaEnVivo.reglaDeTablas(juego)  → «repeticion3», «jugadas50», «repeticion5»,
+ *     «jugadas75» justo en la jugada en que se cumple (si no, null)
  *   PartidaEnVivo.pintar(div, juego, { girado })
  *
  * En un torneo de Pareo Integral, todas las cámaras transmiten por el mismo
@@ -67,6 +69,34 @@
     function resultadoSolo(juego) {
         if (juego.in_checkmate()) return juego.turn() === "w" ? "0-1" : "1-0";
         if (juego.in_stalemate() || juego.insufficient_material()) return "=";
+        return null;
+    }
+    /* Las tablas que no se marcan solas: la misma posición tres veces y 50
+     * jugadas de cada uno sin captura ni movimiento de peón se reclaman al
+     * árbitro (art. 9.2 y 9.3 de las Leyes); cinco veces y 75 jugadas son
+     * tablas aunque nadie reclame (art. 9.6), y lo confirma el árbitro. Se
+     * devuelve solo en la jugada en que se cumple: así se avisa una vez. */
+    function reglaDeTablas(juego) {
+        const partes = juego.fen().split(" "), cuarenta = Number(partes[4]) || 0;
+        // La casilla al paso cuenta solo si la captura se puede hacer (art.
+        // 9.2.3); chess.js la pone después de todo avance doble.
+        const pos = () => {
+            const f = juego.fen().split(" ");
+            const alPaso = f[3] !== "-" && juego.moves({ verbose: true }).some((m) => m.flags.includes("e"));
+            return f.slice(0, 3).join(" ") + " " + (alPaso ? f[3] : "-");
+        };
+        const hist = juego.history(), ahora = pos();
+        let veces = 1;
+        // Hacia atrás, mientras no haya captura ni peón (antes no se pudo repetir).
+        for (let i = 0; i < Math.min(cuarenta, hist.length); i++) {
+            juego.undo();
+            if (pos() === ahora) veces++;
+        }
+        for (let i = hist.length - Math.min(cuarenta, hist.length); i < hist.length; i++) juego.move(hist[i]);
+        if (veces === 5) return "repeticion5";
+        if (cuarenta === 150) return "jugadas75";
+        if (veces === 3) return "repeticion3";
+        if (cuarenta === 100) return "jugadas50";
         return null;
     }
     /* El PGN con su resultado en la cabecera, sin tocar la partida que se
@@ -325,5 +355,5 @@
     const TEXTO_RESULTADO = { "1-0": "Terminó: ganan las blancas (1-0).", "=": "Terminó en tablas (½-½).", "0-1": "Terminó: ganan las negras (0-1)." };
     const textoResultado = (r) => TEXTO_RESULTADO[r] || "";
 
-    window.PartidaEnVivo = { nuevoCodigo, codigoValido, canal, enlace, estado, loNuevo, leer, pintar, jugadasTexto, comoVa, torneoDe, mesaFisica, mesasDe, lugar, clave, resultadoSolo, pgn, textoResultado, hasta, reloj };
+    window.PartidaEnVivo = { nuevoCodigo, codigoValido, canal, enlace, estado, loNuevo, leer, pintar, jugadasTexto, comoVa, torneoDe, mesaFisica, mesasDe, lugar, clave, resultadoSolo, reglaDeTablas, pgn, textoResultado, hasta, reloj };
 })();
