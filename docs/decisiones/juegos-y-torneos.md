@@ -1359,40 +1359,75 @@ es lo más grande» en `sitio-e-infraestructura.md`). Con la base tranquila son
 unos 100 ms; cargada, segundos. Y no había pre-jugadas: en una partida rápida,
 el tiempo de pensar la respuesta obvia más el de la red salía del reloj.
 
-Por ahora va en **Estándar** (`estandar.html`), la de los torneos. Las demás
-salas siguen como antes y pueden sumarse con lo mismo.
+Va en **todas las modalidades de a dos con turno**: Estándar y Niebla
+(`NieblaBoard`), Crazyhouse, Cartas y las seis de `variante.html` (Abrazos,
+Camaleón, A ciegas —solo el canal rápido: se juega escribiendo—, Vampiro,
+Volcanes y Misiones). Una sola copia de cada cosa: el canal rápido vive en
+`js/sala-juego.js` y las pre-jugadas en `js/premovidas.js`; cada página solo
+dice cómo rehacer con su motor la jugada que llega.
+
+- **Duelo no lo lleva, a propósito**: ahí los dos juegan a la vez (no hay turno
+  para una pre-jugada) y la jugada va escondida hasta que confirman los dos;
+  avisarla por el canal sería revelarla.
+- **Ajedrez para 4 todavía no**: usa otra tabla (`fourplayer_games`), otro
+  tablero y otra política para el canal. Queda para un paso aparte.
 
 ### El canal rápido: la jugada se ve antes de que la base la guarde
 
-- **Quien mueve avisa la jugada por Broadcast antes de guardarla**:
-  `{ n, san, antes, desde }` (cuántas jugadas lleva con esta, la jugada, la
-  posición de la que sale y la hora del servidor en que movió) por el canal
-  **privado** `sala-juego:<id de la sala>` (`SalaJuego.suscribir` con
-  `alJugadaRapida`, y `vigilante.anunciar()`). El canal va aparte del de
-  `postgres_changes`: si no se puede abrir, el de siempre sigue igual.
-- **Del otro lado no se cree nada que no se pueda comprobar**
-  (`jugadaRapida` en `js/estandar.js`): tiene que ser la jugada siguiente
-  (`n`), salir de la posición que se ve (`antes`) y ser legal para chess.js. El
-  reloj lo calcula quien la recibe, con lo guardado y la hora `desde` acotada
-  entre el último reloj de la base y ahora: el aviso no puede regalar tiempo.
+- **Quien mueve avisa la jugada por Broadcast antes de guardarla**
+  (`vigilante.jugada(datos)`): cuántas jugadas lleva con esta (`n`), la
+  posición de la que sale (`antes`), la hora del servidor en que movió
+  (`desde`) y lo que cada página necesite para rehacerla (la jugada escrita y
+  la posición de después; en Cartas, el estado entero). Va por el canal
+  **privado** `sala-juego:<id de la sala>`, aparte del de `postgres_changes`:
+  si no se puede abrir, el de siempre sigue igual.
+- **Del otro lado no se cree nada que no se pueda comprobar**: tiene que ser la
+  jugada siguiente, salir de la posición que se ve y la página la rehace con su
+  motor (`rapida.jugar(sala, aviso)`): chess.js en Estándar y Niebla
+  (`SalaJuego.rehacerConChess`), el de Crazyhouse (también la caída de una
+  pieza, «N@f3»), y en Variante y Cartas se prueban las jugadas legales hasta
+  dar con la que lleva exactamente a lo avisado (así sirve también lo que se
+  juega escribiendo, que no trae casillas). El reloj lo calcula quien la
+  recibe, con lo guardado y la hora `desde` acotada entre el último reloj de la
+  base y ahora: el aviso no puede regalar tiempo.
+- **Lo que llega por el canal no revela nada nuevo.** La fila de `game_rooms`
+  (posición, jugadas, `cartas_state` con las dos manos) ya la recibe por
+  `postgres_changes` la misma gente que escucha el canal; la niebla y la mano
+  rival se tapan en la pantalla, y la misión de Misiones nunca va en la sala.
 - **Se pinta como provisional** (`_provisional` en la sala) y **la base sigue
   mandando**. La fila guardada, cuando llega, la reemplaza aunque su hora sea
   un poco anterior (su reloj es el de verdad); una fila más vieja de la base se
   deja pasar mientras tanto (la jugada se está guardando). Si en **4 s** la
   base no la confirma, se vuelve a leer la sala y gana lo que diga la base: una
-  jugada que no quedó, o un aviso inventado, desaparece sola.
+  jugada que no quedó, o un aviso inventado, desaparece sola. Sobre una
+  provisional, Misiones no cobra (la posición todavía no está en la base).
 - **Una jugada propia sobre una provisional espera a que la base tenga la del
   rival** antes de guardarse: se guarda «sobre la posición de la que salió»
   (`.eq("fen")`, ver «Las jugadas llegan siempre») y la base todavía no la
   tendría. Se avisa por el canal de una vez (el rival la ve igual) y se guarda
-  cuando llega la fila. Lo pensado se cuenta **hasta el momento de mover**, no
-  hasta que llegó la fila: esperar a la base no es tiempo de quien juega. Pero
-  el trigger del reloj tolera solo 2 s entre lo que se cuenta y su propia
-  hora, y de esos 2 s vive también la red: si se esperó más de medio segundo,
-  se cuenta hasta ahora, como antes.
+  cuando llega la fila. En Cartas, jugar una carta sobre una provisional espera
+  lo mismo (`vigilante.esperarBase()`), y la jugada que sigue a una carta
+  espera a que la carta quede guardada.
+- **Antes de guardar, la jugada propia se rehace sobre la sala** con la misma
+  función que la del rival, y tiene que dar la posición del tablero. Si el
+  tablero y la sala se separaron, no se guarda: se vuelve a leer la sala. Sin
+  esto, la base aceptaba una lista de jugadas de una con la posición de la otra
+  (solo compara la posición de partida) y quedaba una partida que no se puede
+  rejugar: lo encontró el CI, con escrituras rechazadas al azar.
+- **Lo que separaba el tablero de la sala** era `releerSala()`: una jugada que
+  no quedó vuelve a leer la sala, y si mientras esa lectura viaja ya salió otra
+  jugada propia, lo leído llegaba viejo y recargaba el tablero a la fuerza,
+  borrando de la pantalla la jugada que se estaba guardando. Ahora no recarga
+  mientras otra jugada propia se guarda: esa, al terminar, deja todo al día.
+  Pasaba también antes del canal rápido; los avisos que llegan antes lo hacían
+  más probable.
+- **Lo pensado se cuenta hasta el momento de mover** (`SalaJuego.pensado`), no
+  hasta que llegó la fila del rival: esperar a la base no es tiempo de quien
+  juega. Pero el trigger del reloj tolera solo 2 s entre lo que se cuenta y su
+  propia hora, y de esos 2 s vive también la red: si se esperó más de medio
+  segundo, se cuenta hasta ahora, como antes.
 - **Una jugada rápida que llega mientras la propia se guarda** se aplica
-  apenas termina de guardarse: antes de eso, la sala todavía no tiene la
-  posición de la que sale.
+  apenas termina de guardarse (`vigilante.despuesDeGuardar()`).
 
 **Quién entra al canal lo decide la base** (migración
 `20261029032128_sala_juego_canal_rapido`), con políticas en
@@ -1417,44 +1452,70 @@ con `aal1` no escucha y con `aal2` sí. El retrato del esquema
 
 ### Las pre-jugadas
 
-- **En el turno del rival se deja preparada la propia** (`premoves: true` en
-  `NieblaBoard`): se elige la pieza y la casilla, con el toque o arrastrando,
-  y se juega sola apenas llega la jugada del rival (`board.jugarPremovida()`,
-  que la página llama cada vez que aplica una posición nueva). Una sola a la
-  vez, como en lichess; tocar el tablero la quita.
+- **En el turno del rival se deja preparada la propia** (`premoves: true` en el
+  tablero, que crea su `Premovidas.crear`): se elige la pieza y la casilla, con
+  el toque o arrastrando, y se juega sola apenas llega la jugada del rival
+  (`board.jugarPremovida()`, que la página llama cada vez que aplica una
+  posición nueva). Una sola a la vez, como en lichess; tocar el tablero la
+  quita.
 - **Los destinos son los de la pieza en un tablero vacío** (también las dos
-  capturas en diagonal del peón y los enroques): la jugada se decide sobre una
-  posición que todavía no existe. Recapturar en una casilla donde hoy hay una
-  pieza propia, por ejemplo, tiene que poder prepararse. **Si al llegar el
-  turno ya no es legal, se descarta y se dice** («La pre-jugada e2 a e4 no se
-  pudo hacer: ya no era legal.»).
+  capturas en diagonal del peón y los enroques; las piezas fundidas de Abrazos
+  suman los de cada una): la jugada se decide sobre una posición que todavía no
+  existe. Recapturar en una casilla donde hoy hay una pieza propia, por
+  ejemplo, tiene que poder prepararse. **Si al llegar el turno ya no es legal,
+  se descarta y se dice** («La pre-jugada e4 a d5 no se pudo hacer: ya no era
+  legal.»).
+- Solo de piezas del tablero: soltar una de la reserva (Crazyhouse) o jugar una
+  carta (Cartas) se decide en el turno propio. En Misiones, si al llegar el
+  turno la misión propia está cumplida, primero se cobra y la pre-jugada no
+  sale. A ciegas se juega escribiendo y no lleva.
 - **Coronar**: se elige la pieza al preparar la pre-jugada, con el mismo
-  diálogo de siempre (`js/coronacion.js`).
+  diálogo de cada página.
 - **Se ve y se dice**: un borde punteado blanco con una línea casi negra por
   dentro (cada tema de tablero tiene sus colores, y contra cualquiera uno de
   los dos pasa de 3:1; medido en los 14 temas, el peor da 4,7:1), la casilla
   dice «sale la pre-jugada» / «llega la pre-jugada» (`data-estado`, que suma
-  `js/tablero-accesible.js`) y el estado de la página, «Pre-jugada lista: g1 a
-  f3 (se juega sola; toca el tablero para quitarla)».
+  `js/tablero-accesible.js`, y en el nombre de la casilla cuando el tablero se
+  nombra solo) y el estado de la página, «Pre-jugada lista: g1 a f3 (se juega
+  sola; toca el tablero para quitarla)».
 - Con el teclado (escribiendo la jugada) no hay pre-jugadas: `tryMove` sigue
   pidiendo que sea el turno propio.
 
+### Cartas: cada estado, una copia propia
+
+`CartasChess.Game.fromJSON` y `toJSON` compartían las manos y el mazo con el
+estado de la sala. El tablero cargaba `room.cartas_state` y, al jugar, el motor
+le agregaba la carta repartida y le sacaba la del mazo a la sala que tenía la
+página, sin guardar nada. No daba ningún error: la cuenta de la triple
+repetición leía el estado «de antes» ya cambiado, y el canal rápido avisaba que
+la jugada salía de una posición que nadie más tenía (casi ninguna jugada de
+Cartas llegaba por el canal). Ahora los dos copian.
+
 ### Cómo se comprueba
 
-`verificar-partidas-simultaneas.js` (ver «Las jugadas llegan siempre»): su
-servidor de mentira reparte también Broadcast (con la misma red mala: avisos
-perdidos, tarde, canales caídos), sus jugadores automáticos dejan pre-jugadas
-al azar (muchas no van a ser legales, y se descartan) y la demora se mide
-**desde que quien mueve ve su jugada** hasta que la ve el rival, así que entra
-también lo que tarda guardarla. Además, en la red mala la base rechaza el 3 %
-de las jugadas ya avisadas, y la ronda **3 bis** deja una jugada avisada que la
-base no guarda, con nadie que vuelva a mover: del otro lado tiene que
-desaparecer sola. Quitando la relectura a los 4 s, esa ronda falla; en la red
-mala no se nota, porque la jugada siguiente de cualquiera de los dos lo arregla.
-
+- `verificar-premovidas.js` (sin navegador): los destinos de cada pieza, el
+  controlador de las pre-jugadas con un tablero de mentira (poner, quitar,
+  jugarla, descartarla y decirlo), qué cree el canal rápido de un aviso
+  (`rehacerConChess`), el reloj de quien mueve (`pensado`) y la copia de
+  Cartas. Probado que falla con el motor de Cartas de antes.
+- `verificar-partidas-simultaneas.js` (ver «Las jugadas llegan siempre»): su
+  servidor de mentira reparte también Broadcast (con la misma red mala: avisos
+  perdidos, tarde, canales caídos), sus jugadores automáticos dejan
+  pre-jugadas al azar y la demora se mide **desde que quien mueve ve su
+  jugada** hasta que la ve el rival, así que entra también lo que tarda
+  guardarla. En la red mala la base rechaza además el 3 % de las jugadas ya
+  avisadas. La ronda **3 bis** deja una jugada avisada que la base no guarda,
+  con nadie que vuelva a mover: del otro lado tiene que desaparecer sola
+  (quitando la relectura a los 4 s, falla). Las rondas **6 y 7** juegan dos
+  partidas de cada una de las demás modalidades (con su sala inicial armada por
+  sus motores en Node), con red sana y mala, y comprueban que **en cada
+  modalidad la jugada del rival llegue también por el canal rápido**: si una
+  página no puede rehacerla, todas llegarían por la base y nada saltaría
+  (quitándoselo a Cartas, salta).
 - `SIN_RAPIDA=1`: la base sin la política (el canal privado no abre). Todo
-  tiene que seguir igual por `postgres_changes`.
-- `SIN_PREMOVIDAS=1`: sin pre-jugadas.
+  tiene que seguir igual por `postgres_changes`. `SIN_PREMOVIDAS=1`: sin
+  pre-jugadas. `RONDAS=6,7` y `SOLO_MODALIDADES=cartas,niebla` para mirar unas
+  pocas.
 
 Con 10 partidas: red sana, mediana ~110 ms y la peor ~250 ms (el servidor de
 mentira contesta en 20-120 ms, así que acá el canal rápido apenas se nota: lo

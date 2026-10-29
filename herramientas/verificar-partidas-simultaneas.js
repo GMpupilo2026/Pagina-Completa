@@ -45,6 +45,12 @@
      3 bis. Una jugada avisada por el canal rápido que la base no guarda, y
         nadie vuelve a mover: del otro lado se pintó como provisional, y tiene
         que desaparecer sola (la relectura a los 4 s).
+     6 y 7. Las demás modalidades con turno (Niebla, Crazyhouse, Cartas,
+        Abrazos, Camaleón, Vampiro, Volcanes, Misiones), dos partidas de cada
+        una, con red sana y mala: además de lo de siempre, en cada modalidad la
+        jugada del rival tiene que llegar también por el canal rápido (si la
+        página no la puede rehacer con su motor, todas llegarían por la base).
+        Duelo no: ahí no hay turno ni canal rápido.
    En todas: la lista de jugadas guardada lleva siempre a la posición
    guardada (ninguna jugada se pisa ni se pierde), ninguna pestaña se va a
    otra sala, y no hay errores de JavaScript en las salas.
@@ -57,6 +63,9 @@
    En la red mala, la base rechaza además el 3 % de las jugadas ya avisadas.
    SIN_RAPIDA=1 hace de base sin la política (el canal privado no abre: todo
    tiene que seguir por postgres_changes) y SIN_PREMOVIDAS=1, sin pre-jugadas.
+   RONDAS=6,7 corre solo esas rondas, y SOLO_MODALIDADES=cartas,niebla, solo
+   esas modalidades (DEPURAR=1 muestra además lo que la página anota con
+   «DBG» en la consola).
 
    Con la sala de antes (solo Realtime, sin volver a leer), la red mala deja
    partidas trabadas para siempre (una jugada tardó 5 minutos en verse y otras
@@ -84,6 +93,39 @@ const FourPlayerChess = (() => {
 })();
 const ASIENTOS = ["red", "blue", "yellow", "green"];
 
+// Los motores de las demás modalidades, para armar la sala inicial como la arma
+// juegos.html (estadoInicial en js/juegos-comun.js).
+const Motores = (() => {
+  const caja = { window: {}, Chess, console, Math };
+  vm.createContext(caja);
+  for (const f of ["crazyhouse-engine.js", "cartas-engine.js", "variantes-engines.js"]) {
+    vm.runInContext(fs.readFileSync(path.join(__dirname, "..", "js", f), "utf8"), caja);
+  }
+  return caja.window;
+})();
+// Cada modalidad de a dos: su página y lo que trae la sala al crearse. Duelo no
+// está: ahí los dos juegan a la vez, sin turno ni canal rápido (la jugada va
+// escondida hasta que confirman los dos). Ni A ciegas, que se juega escribiendo.
+const MODALIDADES = {
+  estandar: { pagina: "estandar.html", inicial: () => ({ fen: INICIAL_ESTANDAR }) },
+  niebla: { pagina: "niebla.html", inicial: () => ({ fen: INICIAL_ESTANDAR }) },
+  crazyhouse: { pagina: "crazyhouse.html", inicial: () => ({ fen: Motores.Crazyhouse.START_FEN }) },
+  cartas: { pagina: "cartas.html", inicial: () => ({ fen: Motores.Crazyhouse.START_FEN, cartas_state: Motores.CartasChess.Game.iniciar().toJSON() }) },
+  abrazos: { pagina: "variante.html", inicial: () => ({ fen: Motores.Variantes.inicio("abrazos") }) },
+  camaleon: { pagina: "variante.html", inicial: () => ({ fen: Motores.Variantes.inicio("camaleon") }) },
+  vampiro: { pagina: "variante.html", inicial: () => ({ fen: Motores.Variantes.inicio("vampiro") }) },
+  volcanes: { pagina: "variante.html", inicial: () => ({ fen: INICIAL_ESTANDAR, variant_state: { volcanes: Motores.Variantes.Volcanes.sorteo() } }) },
+  misiones: { pagina: "variante.html", inicial: () => ({ fen: INICIAL_ESTANDAR }) },
+};
+// Dónde va la posición y de quién es el turno (lo mismo que SalaJuego.turnoDe):
+// Cartas la guarda en cartas_state (su columna fen no cambia) y Abrazos en JSON.
+const posDe = (f) => String((f.cartas_state && f.cartas_state.fen) || f.fen || "");
+function turnoDe(f) {
+  const fen = posDe(f);
+  if (fen.charAt(0) === "{") { try { return JSON.parse(fen).t === "b" ? "b" : "w"; } catch (e) { return "w"; } }
+  return fen.split(" ")[1] === "b" ? "b" : "w";
+}
+
 const BASE = process.env.BASE_URL || process.env.BASE || "http://localhost:8777";
 const PARTIDAS = Math.max(1, parseInt(process.env.PARTIDAS || "50", 10));
 // La ronda que mide «al instante»: pocas, para que la computadora que corre la
@@ -92,6 +134,7 @@ const PARTIDAS_RAPIDAS = Math.min(PARTIDAS, 10);
 const JUGADAS = Math.max(4, parseInt(process.env.JUGADAS || "40", 10)); // medias jugadas por partida
 const MESAS4 = Math.max(1, parseInt(process.env.MESAS4 || "12", 10));     // partidas de Ajedrez para 4
 const INICIAL = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+const INICIAL_ESTANDAR = INICIAL;
 
 let fallos = 0;
 function ok(nombre, condicion, detalle) {
@@ -116,17 +159,20 @@ function crearServidor(red) {
   const movidas = new Map();        // salaId|posición → cuándo la mostró por primera vez quien movió
   const antesDeGuardar = new Map(); // salaId|posición → { color: cuándo } vistas por el canal rápido, antes de la base
   const rapidas = { enviadas: 0, recibidas: 0, premovidas: 0, premovidasDescartadas: 0 };
+  const historia = new Map();      // salaId → las escrituras de jugadas, para depurar
+  const provisionales = new Map(); // salaId → cuántas jugadas del rival se pintaron como provisionales
   let cerrado = false;
 
   const ahoraIso = () => new Date().toISOString();
 
-  function sala(id, blancas, negras) {
-    return {
-      id, variant: "estandar", white_id: blancas, black_id: negras, status: "playing", result: null,
+  function sala(id, blancas, negras, variante) {
+    variante = variante || "estandar";
+    return Object.assign({
+      id, variant: variante, white_id: blancas, black_id: negras, status: "playing", result: null,
       moves: [], fen: INICIAL, initial_seconds: 300, increment_seconds: 2,
       white_time_left: 300, black_time_left: 300, clock_updated_at: null,
       white_ready: false, black_ready: false, created_by: "u-profe", updated_at: ahoraIso(),
-    };
+    }, MODALIDADES[variante].inicial());
   }
 
   // Ajedrez para 4: como la crea juegos.html.
@@ -143,8 +189,8 @@ function crearServidor(red) {
 
   // Qué se ve de una fila: la posición (dos jugadores) o cuántas jugadas y la
   // última (cuatro). Y de quién era el turno antes de guardarla.
-  const claveDe = (f) => (f.seats ? f.moves.length + "|" + JSON.stringify(f.moves[f.moves.length - 1] || null) : f.fen);
-  const autorDe = (f) => (f.seats ? f.turn : String(f.fen).split(" ")[1]);
+  const claveDe = (f) => (f.seats ? f.moves.length + "|" + JSON.stringify(f.moves[f.moves.length - 1] || null) : posDe(f));
+  const autorDe = (f) => (f.seats ? f.turn : turnoDe(f));
   const necesitan = (f) => (f.seats ? 3 : 1);
 
   // Lo mismo que hace public.proteger_reloj_de_partida() (lo que importa acá).
@@ -156,7 +202,7 @@ function crearServidor(red) {
       nuevo.clock_updated_at = ahoraIso();
     }
     const pasado = viejo.clock_updated_at ? Math.max(0, (ahora - Date.parse(viejo.clock_updated_at)) / 1000) : 0;
-    const mueve = String(viejo.fen).split(" ")[1];
+    const mueve = turnoDe(viejo);
     const tol = 2;
     for (const [c, clave] of [["w", "white_time_left"], ["b", "black_time_left"]]) {
       if (nuevo[clave] === viejo[clave] || viejo[clave] == null) continue;
@@ -251,6 +297,7 @@ function crearServidor(red) {
       }
       return { data: null, error: null };
     }
+    if (op === "provisional") { provisionales.set(pedido.salaId, (provisionales.get(pedido.salaId) || 0) + 1); return { data: null, error: null }; }
     if (op === "premovi") { rapidas[pedido.ok ? "premovidas" : "premovidasDescartadas"]++; return { data: null, error: null }; }
     if (op === "movi") {
       const k = pedido.salaId + "|" + pedido.clave;
@@ -309,6 +356,8 @@ function crearServidor(red) {
       // pintó como provisional, y tiene que desaparecer.
       if (red.rechazadas && pedido.cambio && pedido.cambio.moves && Math.random() < red.rechazadas) {
         rechazos.push("rechazada a propósito");
+        const id = (filtros.find(([o, c]) => c === "id") || [])[2];
+        if (id) { if (!historia.has(id)) historia.set(id, []); historia.get(id).push({ quien: pedido.usuario + "-RECHAZADA", n: pedido.cambio.moves.length, ult: pedido.cambio.moves[pedido.cambio.moves.length - 1] }); }
         return { data: null, error: { message: "Rechazada a propósito (prueba)" } };
       }
       // La ronda del abandono: la jugada número N no se guarda, y quien la hizo
@@ -326,6 +375,10 @@ function crearServidor(red) {
         if (error) { rechazos.push(error); return { data: null, error: { message: error } }; }
         salas.set(nueva.id, nueva);
         tocadas.push(nueva);
+        if (pedido.cambio && pedido.cambio.moves) {
+          if (!historia.has(nueva.id)) historia.set(nueva.id, []);
+          historia.get(nueva.id).push({ quien: pedido.usuario, n: nueva.moves.length, ult: nueva.moves[nueva.moves.length - 1], fenAntes: String(vieja.fen).split(" ")[0], filtros: filtros.filter(([o, c]) => c === "fen").map((x) => String(x[2]).split(" ")[0]) });
+        }
         if (claveDe(nueva) !== claveDe(vieja)) {
           if (!confirmadas.has(nueva.id)) confirmadas.set(nueva.id, []);
           // La demora se cuenta desde que quien movió la vio en SU tablero (si se
@@ -350,7 +403,7 @@ function crearServidor(red) {
   }
 
   return {
-    salas, confirmadas, vistas, rechazos, atrasos, rapidas, sala, mesa4, agregar, atender,
+    salas, confirmadas, vistas, rechazos, atrasos, rapidas, provisionales, historia, sala, mesa4, agregar, atender,
     cerrar() { cerrado = true; if (cortes) clearInterval(cortes); },
   };
 }
@@ -430,7 +483,28 @@ const JUGADOR = `
 (function () {
   const TOPE = window.__tope || ${JUGADAS};
   const PREMOVIDAS = ${!process.env.SIN_PREMOVIDAS};
-  let ultimaVista = null, pensandoHasta = 0, listoPedido = false, ultimoTic = Date.now(), premovidaPuesta = false;
+  /* Cada tablero con su motor: chess.js (Estándar, Niebla), Crazyhouse y
+     Cartas en board.game; las de variante.html en board.engine. Se arma en
+     cada vuelta: Cartas cambia board.game con cada estado que carga. */
+  window.__motor = (b) => {
+    if (b.engine) {
+      const e = b.engine;
+      return {
+        pos: () => e.serialize(), turno: () => e.turn(),
+        pieza: (sq) => { const p = e.get(sq); return p ? { tipos: p.types || [], color: p.color } : null; },
+        jugadas: () => { const out = []; for (const f of "abcdefgh") for (let n = 1; n <= 8; n++) { const p = e.get(f + n); if (p && p.color === e.turn()) out.push.apply(out, e.movesFrom(f + n)); } return out; },
+        jugar: (m) => b._apply(m.from, m.to, m.promotion),
+      };
+    }
+    const g = b.game;
+    return {
+      pos: () => g.fen(), turno: () => g.turn(),
+      pieza: (sq) => { const p = g.get(sq); return p ? { tipos: [p.type], color: p.color } : null; },
+      jugadas: () => (g.legalMoves ? g.legalMoves() : g.moves({ verbose: true })),
+      jugar: (m) => b._applyMove(m.from, m.to, m.promotion),
+    };
+  };
+  let ultimaVista = null, pensandoHasta = 0, listoPedido = false, ultimoTic = Date.now(), premovidaPuesta = false, ultimaProvisional = null;
   setInterval(() => {
     const atraso = Math.max(0, Date.now() - ultimoTic - 30);
     ultimoTic = Date.now();
@@ -446,20 +520,27 @@ const JUGADOR = `
         // La posición del rival se ve un instante, y la pre-jugada sale encima:
         // el ojo de 30 ms no alcanzaría a anotarla.
         if (b.premove && b._canActNow()) {
-          try { window.__srv({ op: "vi", salaId: room.id, clave: b.game.fen(), color: myColor, t: Date.now(), atraso: 0 }); } catch (e) {}
+          try { window.__srv({ op: "vi", salaId: room.id, clave: window.__motor(b).pos(), color: myColor, t: Date.now(), atraso: 0 }); } catch (e) {}
         }
         const h = original();
         if (h) window.__srv({ op: "premovi", ok: h.ok });
         return h;
       };
     }
-    const fen = b.game.fen();
+    const motor = window.__motor(b);
+    // Una jugada del rival pintada como provisional: llegó por el canal rápido
+    // y la página la pudo rehacer con su motor.
+    if (r._provisional && r !== ultimaProvisional) {
+      ultimaProvisional = r;
+      window.__srv({ op: "provisional", salaId: r.id });
+    }
+    const fen = motor.pos();
     if (fen !== ultimaVista) {
       ultimaVista = fen;
       // La posición nueva es una jugada PROPIA si ahora le toca al rival (con una
       // pre-jugada, la del rival puede no haberse visto sola: verla después
       // cuenta como haberla visto).
-      if (fen.split(" ")[1] !== c) window.__srv({ op: "movi", salaId: r.id, clave: fen, t: Date.now() });
+      if (motor.turno() !== c) window.__srv({ op: "movi", salaId: r.id, clave: fen, t: Date.now() });
       window.__srv({ op: "vi", salaId: r.id, clave: fen, color: c, t: Date.now(), atraso });
     }
     if (r.status !== "playing") return;
@@ -470,14 +551,15 @@ const JUGADOR = `
     }
     // En el turno del rival, a veces deja una pre-jugada (al azar: muchas no
     // van a ser legales cuando llegue el turno, y se descartan).
-    if (PREMOVIDAS && !b._canActNow() && b._puedePremover && b._puedePremover() && !b.premove && !premovidaPuesta && (r.moves || []).length < TOPE - 1) {
+    if (PREMOVIDAS && !b._canActNow() && b.pre && b.pre.puede() && !b.premove && !premovidaPuesta && (r.moves || []).length < TOPE - 1) {
       premovidaPuesta = true;
       if (Math.random() < 0.4) {
         const mias = [];
-        for (const f of "abcdefgh") for (let n = 1; n <= 8; n++) { const p = b.game.get(f + n); if (p && p.color === c) mias.push(f + n); }
-        const desde = mias[Math.floor(Math.random() * mias.length)];
-        const destinos = desde ? b._destinosPremovida(desde) : [];
-        if (destinos.length) { b._clicPremovida(desde); b._clicPremovida(destinos[Math.floor(Math.random() * destinos.length)]); }
+        for (const f of "abcdefgh") for (let n = 1; n <= 8; n++) { const p = motor.pieza(f + n); if (p && p.color === c) mias.push({ sq: f + n, p }); }
+        const elegida = mias[Math.floor(Math.random() * mias.length)];
+        const destinos = elegida ? Premovidas.destinos(elegida.p.tipos, c, elegida.sq) : [];
+        // Como una persona: se toca la pieza y después el destino.
+        if (destinos.length) { b._onSquareClick(elegida.sq); b._onSquareClick(destinos[Math.floor(Math.random() * destinos.length)]); }
       }
     }
     if (b._canActNow()) premovidaPuesta = false;
@@ -485,10 +567,10 @@ const JUGADOR = `
     if (!pensandoHasta) { pensandoHasta = Date.now() + 200 + Math.random() * 1000; return; }
     if (Date.now() < pensandoHasta) return;
     pensandoHasta = 0;
-    const jugadas = b.game.moves({ verbose: true });
+    const jugadas = motor.jugadas();
     if (!jugadas.length) return;
     const m = jugadas[Math.floor(Math.random() * jugadas.length)];
-    b._applyMove(m.from, m.to, m.promotion);
+    motor.jugar(m);
   }, 30);
 })();
 `;
@@ -533,8 +615,9 @@ const JUGADOR4 = `
 })();
 `;
 
-async function ronda(browser, nombre, PARTIDAS, red, limites) {
-  console.log("\n▶ " + nombre + " — " + PARTIDAS + " partidas a la vez (" + PARTIDAS * 2 + " pestañas)");
+async function ronda(browser, nombre, PARTIDAS, red, limites, variantes) {
+  variantes = variantes || ["estandar"];
+  console.log("\n▶ " + nombre + " — " + PARTIDAS + " partidas a la vez (" + PARTIDAS * 2 + " pestañas)" + (variantes.length > 1 ? ": " + variantes.join(", ") : ""));
   const srv = crearServidor(red);
   const ctx = await browser.newContext({ serviceWorkers: "block", viewport: { width: 900, height: 900 } });
   await ctx.exposeBinding("__srv", (fuente, pedido) => srv.atender(fuente.page, pedido));
@@ -546,20 +629,22 @@ async function ronda(browser, nombre, PARTIDAS, red, limites) {
   const errores = [];
   for (let g = 0; g < PARTIDAS; g++) {
     const id = "sala-" + g;
-    srv.agregar("game_rooms", srv.sala(id, "u-b" + g, "u-n" + g));
+    const variante = variantes[g % variantes.length];
+    srv.agregar("game_rooms", srv.sala(id, "u-b" + g, "u-n" + g, variante));
     for (const [usuario, color] of [["u-b" + g, "w"], ["u-n" + g, "b"]]) {
       const page = await ctx.newPage();
-      const pagina = id + "-" + color;
+      const pagina = id + "-" + variante + "-" + color;
       await page.addInitScript(doble(usuario, pagina));
       await page.addInitScript(JUGADOR);
       page.on("pageerror", (e) => errores.push(pagina + ": " + String(e)));
-      pestañas.push({ page, salaId: id, color, pagina });
+      if (process.env.DEPURAR) page.on("console", (m) => { if (m.text().startsWith("DBG")) console.log("    " + variante + " " + Date.now() % 100000 + " " + m.text()); });
+      pestañas.push({ page, salaId: id, color, pagina, variante });
     }
   }
   // Se abren de a diez: cien a la vez ahogan el servidor de archivos de prueba,
   // no la sala.
   for (let i = 0; i < pestañas.length; i += 10) {
-    await Promise.all(pestañas.slice(i, i + 10).map((p) => p.page.goto(BASE + "/estandar.html?room=" + p.salaId, { waitUntil: "load" })));
+    await Promise.all(pestañas.slice(i, i + 10).map((p) => p.page.goto(BASE + "/" + MODALIDADES[p.variante].pagina + "?room=" + p.salaId, { waitUntil: "load" })));
   }
 
   if (process.env.DEPURAR) console.log("    pestañas abiertas");
@@ -583,21 +668,29 @@ async function ronda(browser, nombre, PARTIDAS, red, limites) {
     let visto = null;
     try {
       if (!p.page.url().includes("room=" + p.salaId)) throw new Error("la pestaña se fue a " + p.page.url());
-      visto = await p.page.evaluate(() => ({ fen: board.game.fen(), sala: room.fen, jugadas: (room.moves || []).length, estado: room.status, lista: document.querySelectorAll("#moves-list li").length }));
+      visto = await p.page.evaluate(() => ({ fen: window.__motor(board).pos(), sala: String((room.cartas_state && room.cartas_state.fen) || room.fen), jugadas: (room.moves || []).length, estado: room.status, lista: document.querySelectorAll("#moves-list li").length }));
     } catch (e) { visto = { error: String(e) }; }
-    if (!visto || visto.fen !== enBase.fen || visto.sala !== enBase.fen || visto.jugadas !== enBase.moves.length || visto.estado !== enBase.status ||
-        visto.lista !== Math.ceil(enBase.moves.length / 2)) {
-      desfasadas.push({ pestaña: p.pagina, visto, base: { fen: enBase.fen, jugadas: enBase.moves.length, estado: enBase.status } });
+    // Niebla no muestra la lista de jugadas mientras se juega (levantaría la niebla).
+    const conLista = !(p.variante === "niebla" && enBase.status === "playing");
+    if (!visto || visto.fen !== posDe(enBase) || visto.sala !== posDe(enBase) || visto.jugadas !== enBase.moves.length || visto.estado !== enBase.status ||
+        (conLista && visto.lista !== Math.ceil(enBase.moves.length / 2))) {
+      desfasadas.push({ pestaña: p.pagina, visto, base: { fen: posDe(enBase), jugadas: enBase.moves.length, estado: enBase.status } });
     }
   }
 
   // ---------------- la lista de jugadas lleva a la posición guardada
   const rotas = [];
   for (const f of srv.salas.values()) {
+    // Con chess.js se rejuegan las de ajedrez de siempre; las demás tienen su
+    // motor y su planilla (la guarda de la posición las cuida igual).
+    if (f.variant !== "estandar" && f.variant !== "niebla") continue;
     const ch = new Chess();
     const todas = f.moves.every((san) => ch.move(san));
     const pos = (x) => String(x).split(" ").slice(0, 4).join(" ");
-    if (!todas || pos(ch.fen()) !== pos(f.fen)) rotas.push(f.id);
+    if (!todas || pos(ch.fen()) !== pos(f.fen)) {
+      rotas.push(f.id);
+      if (process.env.DEPURAR) console.log("    rota " + f.id + ": " + f.moves.join(" ") + " | " + f.fen + " | historia: " + (srv.historia.get(f.id) || []).map((h) => h.n + h.quien.slice(2, 3) + ":" + h.ult).join(" "));
+    }
   }
 
   const demoras = srv.vistas.map((v) => v.demora).sort((a, b) => a - b);
@@ -623,6 +716,19 @@ async function ronda(browser, nombre, PARTIDAS, red, limites) {
   ok("la lista de jugadas guardada lleva a la posición guardada en todas las partidas", !rotas.length, rotas.slice(0, 5));
   ok("sin errores de JavaScript en las salas", !errores.length, errores.slice(0, 3));
   if (!process.env.SIN_PREMOVIDAS) ok("las pre-jugadas salieron solas al llegar el turno", srv.rapidas.premovidas > 0, srv.rapidas);
+  // Cada modalidad tiene que poder rehacer con su motor la jugada que llega por
+  // el canal rápido: si no, todas llegarían por la base y nada saltaría.
+  if (!process.env.SIN_RAPIDA) {
+    const porModalidad = {};
+    for (const f of srv.salas.values()) {
+      const x = porModalidad[f.variant] || (porModalidad[f.variant] = { provisionales: 0, jugadas: 0 });
+      x.provisionales += srv.provisionales.get(f.id) || 0;
+      x.jugadas += f.moves.length;
+    }
+    const sinRapida = Object.keys(porModalidad).filter((v) => porModalidad[v].jugadas >= 10 && porModalidad[v].provisionales === 0);
+    if (Object.keys(porModalidad).length > 1) console.log("    pintadas como provisionales: " + Object.keys(porModalidad).map((v) => v + " " + porModalidad[v].provisionales + "/" + porModalidad[v].jugadas).join(", "));
+    ok("en cada modalidad, la jugada del rival llega también por el canal rápido", !sinRapida.length, sinRapida);
+  }
 
   srv.cerrar();
   await ctx.close();
@@ -760,6 +866,15 @@ async function ronda4(browser, nombre, MESAS, red, limites) {
       { perdidos: 0.15, tarde: 0.10, lentas: 0.10, cortes: 0.01, rechazadas: 0.03 },
       { topeMs: 8 * 60 * 1000, calmaMs: 10000, maxMs: 15000 });
     if (!process.env.SIN_RAPIDA && toca("3bis")) await rondaAbandono(browser, "3 bis. Una jugada avisada que la base no guarda, y quien la hizo se va", PARTIDAS_RAPIDAS);
+    // Las demás modalidades con turno (dos partidas de cada una): el canal rápido
+    // y las pre-jugadas, cada una con su motor.
+    // SOLO_MODALIDADES=cartas,niebla para mirar unas pocas.
+    const OTRAS = Object.keys(MODALIDADES).filter((v) => v !== "estandar" && (!process.env.SOLO_MODALIDADES || process.env.SOLO_MODALIDADES.split(",").includes(v)));
+    if (toca("6")) await ronda(browser, "6. Las demás modalidades: red sana", OTRAS.length * 2, { perdidos: 0, tarde: 0, lentas: 0, cortes: 0 },
+      { topeMs: 4 * 60 * 1000, calmaMs: 3000, maxMs: 6000 }, OTRAS);
+    if (toca("7")) await ronda(browser, "7. Las demás modalidades: red mala", OTRAS.length * 2,
+      { perdidos: 0.15, tarde: 0.10, lentas: 0.10, cortes: 0.01, rechazadas: 0.03 },
+      { topeMs: 6 * 60 * 1000, calmaMs: 10000, maxMs: 15000 }, OTRAS);
     }
     if (!process.env.SIN_CUATRO) {
       await ronda4(browser, "4. Ajedrez para 4: red sana", MESAS4, { perdidos: 0, tarde: 0, lentas: 0, cortes: 0 },

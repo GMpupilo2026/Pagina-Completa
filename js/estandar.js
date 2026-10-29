@@ -56,9 +56,7 @@
             } else {
                 myTurnNow = board.game.turn() === myColor;
                 const enJaque = board.game.in_check() && myTurnNow;
-                const pm = board.premove;
-                setStatus((enJaque ? "¡Estás en jaque! " : "") + (myTurnNow ? "Es tu turno." : "Esperando la jugada de " + nameFor(myColor === "w" ? room.black_id : room.white_id) + "…" +
-                    (pm ? " Pre-jugada lista: " + pm.from + " a " + pm.to + " (se juega sola; toca el tablero para quitarla)." : (avisoPremovida ? " " + avisoPremovida : ""))));
+                setStatus((enJaque ? "¡Estás en jaque! " : "") + (myTurnNow ? "Es tu turno." : "Esperando la jugada de " + nameFor(myColor === "w" ? room.black_id : room.white_id) + "…" + (board.pre ? board.pre.texto() : "")));
             }
             if (window.TurnAlert) TurnAlert.check(myTurnNow);
         }
@@ -154,43 +152,15 @@
 
         // La posición de la jugada propia que se está guardando (ver handleLocalMove).
         let jugadaEnVuelo = null;
-        // Lo que se dice cuando una pre-jugada no se pudo hacer (hasta la jugada siguiente).
-        let avisoPremovida = "";
-        // El canal de la sala (SalaJuego.suscribir): anunciar(), provisional(), refrescar().
+        // El canal de la sala (SalaJuego.suscribir): jugada(), despuesDeGuardar(), refrescar().
         let vigilante = null;
-        // Una jugada rápida del rival que llegó mientras la propia se guardaba.
-        let rapidaPendiente = null;
-        // Quien espera a que la base confirme la jugada provisional del rival.
-        let esperandoConfirmada = [];
-
-        /* Antes de guardar una jugada hecha sobre una jugada PROVISIONAL del
-           rival (la pre-jugada sale al instante), la del rival tiene que estar
-           en la base: la propia se guarda «sobre la posición de la que salió»
-           (.eq("fen")), y la base todavía no la tiene. Se espera a la fila
-           guardada; si no llega a tiempo, se vuelve a leer la sala. */
-        function esperarConfirmada() {
-            if (!room || !room._provisional) return Promise.resolve();
-            return new Promise((listo) => {
-                esperandoConfirmada.push(listo);
-                setTimeout(async () => {
-                    if (!esperandoConfirmada.includes(listo)) return;
-                    if (vigilante) await vigilante.refrescar(true);
-                    esperandoConfirmada = esperandoConfirmada.filter((f) => f !== listo);
-                    listo();
-                }, 4000);
-            });
-        }
 
         async function handleLocalMove(info) {
-            avisoPremovida = "";
             // Primero que nada, la jugada a los que miran la sala (el canal rápido):
             // el rival la ve sin esperar a que la base la guarde.
-            const alMover = RelojServidor.ahora();
-            const desdeFen = room.fen;
-            if (vigilante) vigilante.anunciar({ n: (room.moves || []).length + 1, san: info.san, antes: desdeFen, desde: alMover });
             jugadaEnVuelo = info.fen;
-            await esperarConfirmada();
-            if (room.fen !== desdeFen) {
+            const envio = vigilante ? await vigilante.jugada({ san: info.san, despues: info.fen }) : { ok: true };
+            if (!envio.ok) {
                 // La jugada del rival sobre la que se jugó no quedó: se manda lo que diga la base.
                 jugadaEnVuelo = null;
                 await releerSala("Esa jugada no quedó guardada: la del rival no llegó a la base.");
@@ -200,14 +170,7 @@
             const patch = { fen: info.fen, moves: newMoves, updated_at: new Date().toISOString() };
             if (room.initial_seconds != null) {
                 const storedKey = myColor === "w" ? "white_time_left" : "black_time_left";
-                // Lo pensado se cuenta hasta el momento de mover, no hasta que la
-                // jugada del rival quedó en la base (esperarConfirmada). Pero la
-                // base tolera solo 2 s entre lo que se cuenta y su propia hora, y
-                // de eso vive también la red: si se esperó más de medio segundo,
-                // se cuenta hasta ahora, como siempre.
-                const base = room.clock_updated_at ? Date.parse(room.clock_updated_at) : null;
-                const hasta = RelojServidor.ahora() - alMover > 500 ? RelojServidor.ahora() : alMover;
-                const elapsed = base ? Math.max(0, (hasta - base) / 1000) : 0;
+                const elapsed = SalaJuego.pensado(room, envio.alMover);
                 const remaining = Math.max(0, (room[storedKey] || 0) - elapsed) + (room.increment_seconds || 0);
                 patch[storedKey] = remaining;
                 patch.clock_updated_at = new Date().toISOString();
@@ -246,35 +209,7 @@
             updateStatusText();
             renderClocks();
             if (blindCtl) blindCtl.announceOwnMove(info.san);
-            if (rapidaPendiente) { const p = rapidaPendiente; rapidaPendiente = null; jugadaRapida(p); }
-        }
-
-        /* La jugada del rival que llegó por el canal rápido (ver suscribir en
-           js/sala-juego.js). No se cree nada que no se pueda comprobar: tiene
-           que salir de la posición que se ve, ser legal y ser la siguiente; el
-           reloj se calcula aquí (lo que el aviso trae es solo cuándo movió, y
-           se acota entre el último reloj guardado y ahora). Se pinta como
-           provisional: la fila guardada la reemplaza, y si no llega, se vuelve
-           a leer la sala. */
-        function jugadaRapida(aviso) {
-            if (!room || !aviso || room.status !== "playing" || !bothReady(room)) return;
-            if (jugadaEnVuelo) { rapidaPendiente = aviso; return; }
-            const jugadas = room.moves || [];
-            if (aviso.n !== jugadas.length + 1 || aviso.antes !== room.fen || typeof aviso.san !== "string") return;
-            const prueba = new Chess(room.fen);
-            const m = prueba.move(aviso.san);
-            if (!m) return;
-            const fila = Object.assign({}, room, { fen: prueba.fen(), moves: jugadas.concat([m.san]), _provisional: true });
-            if (room.initial_seconds != null && room.clock_updated_at) {
-                const mueve = SalaJuego.turnoDe(room);
-                const clave = mueve === "w" ? "white_time_left" : "black_time_left";
-                const base = Date.parse(room.clock_updated_at);
-                const desde = Math.min(Math.max(Number(aviso.desde) || 0, base), RelojServidor.ahora());
-                fila[clave] = Math.max(0, (room[clave] || 0) - (desde - base) / 1000) + (room.increment_seconds || 0);
-                fila.clock_updated_at = new Date(desde).toISOString();
-            }
-            if (vigilante) vigilante.provisional();
-            applyRemoteRoom(fila);
+            if (vigilante) vigilante.despuesDeGuardar();
         }
 
         function applyRemoteRoom(row, forzarTablero) {
@@ -292,20 +227,9 @@
             if (positionChanged && row.fen !== jugadaEnVuelo && blindCtl && row.moves && row.moves.length) {
                 blindCtl.announceOpponentMove(row.moves[row.moves.length - 1]);
             }
-            if (!row._provisional && esperandoConfirmada.length) {
-                const listos = esperandoConfirmada;
-                esperandoConfirmada = [];
-                listos.forEach((f) => f());
-            }
-            // La pre-jugada sale apenas es el turno propio. Si ya no es legal
-            // (la jugada del rival la cambió), se descarta y se dice.
-            if (myColor && row.status === "playing" && bothReady(row) && !jugadaEnVuelo) {
-                const hecha = board.jugarPremovida();
-                if (hecha && !hecha.ok) {
-                    avisoPremovida = "La pre-jugada " + hecha.premove.from + " a " + hecha.premove.to + " no se pudo hacer: ya no era legal.";
-                    updateStatusText();
-                }
-            }
+            // La pre-jugada sale apenas es el turno propio (js/premovidas.js; si ya
+            // no es legal, se descarta y se dice).
+            if (row.status === "playing" && !jugadaEnVuelo) board.jugarPremovida();
         }
 
         // Vuelve a leer la sala de la base y la aplica como un cambio remoto, forzando
@@ -313,12 +237,19 @@
         // ve en pantalla ya no es lo que hay en la base.
         async function releerSala(mensaje) {
             const fila = await SalaJuego.releer(ROOM_ID);
-            if (fila) applyRemoteRoom(fila, true);
+            // Si mientras se leía ya salió otra jugada propia, lo leído es viejo:
+            // recargar el tablero la borraría de la pantalla mientras se guarda, y
+            // la jugada siguiente saldría de una posición que la sala no tiene.
+            // Esa jugada, al terminar de guardarse (o al fallar), deja todo al día.
+            if (fila && !jugadaEnVuelo) applyRemoteRoom(fila, true);
             if (mensaje) setStatus(mensaje);
         }
 
         function subscribeRoom() {
-            vigilante = SalaJuego.suscribir(ROOM_ID, (fila) => applyRemoteRoom(fila), { sala: () => room, miColor: () => myColor, alJugadaRapida: jugadaRapida });
+            vigilante = SalaJuego.suscribir(ROOM_ID, (fila) => applyRemoteRoom(fila), {
+                sala: () => room, miColor: () => myColor,
+                rapida: { jugar: SalaJuego.rehacerConChess, enVuelo: () => !!jugadaEnVuelo },
+            });
         }
 
         SalaJuego.montarRendirse({ salaId: ROOM_ID, sala: () => room, miColor: () => myColor, decir: setStatus, releer: releerSala });
@@ -370,7 +301,7 @@
                 onPromotionNeeded: showPromotionPicker,
                 // Pre-jugadas: en el turno del rival se deja preparada la propia.
                 premoves: true,
-                onPremove: () => { avisoPremovida = ""; updateStatusText(); },
+                onPremove: () => updateStatusText(),
             });
             cargarConHistoria(room.fen, room.moves);
             renderMoveHistory(room.moves);
