@@ -1369,8 +1369,9 @@ dice cómo rehacer con su motor la jugada que llega.
 - **Duelo no lo lleva, a propósito**: ahí los dos juegan a la vez (no hay turno
   para una pre-jugada) y la jugada va escondida hasta que confirman los dos;
   avisarla por el canal sería revelarla.
-- **Ajedrez para 4 todavía no**: usa otra tabla (`fourplayer_games`), otro
-  tablero y otra política para el canal. Queda para un paso aparte.
+- **Ajedrez para 4 no, por decisión del dueño (29/10/2026)**: ni canal
+  rápido ni pre-jugadas. Usa otra tabla (`fourplayer_games`), otro tablero y
+  otra política para el canal, y no se va a hacer: no es algo pendiente.
 
 ### El canal rápido: la jugada se ve antes de que la base la guarde
 
@@ -1510,8 +1511,8 @@ llama *lag compensation*), con un tope.
 - **La bandera no cambia**: el segundo se abona solo al mover a tiempo y nunca
   salva de que caiga la bandera (el rival la canta, y la base la acepta, con la
   hora de la base, como siempre). Lichess hace lo mismo.
-- Ajedrez para 4 no lo lleva todavía: su trigger y su página siguen como
-  estaban.
+- Ajedrez para 4 no lo lleva, por decisión (ver arriba): su trigger y su
+  página siguen como estaban.
 
 Lo prueban `verificar-premovidas.js` (la cuenta, el tope, y `suscribir` con un
 Supabase de mentira: la jugada del rival llega 0,6 s después de guardarse y el
