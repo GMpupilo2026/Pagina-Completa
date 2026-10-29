@@ -9833,7 +9833,7 @@ el celular.
 Con un tablero de vinilo de verdad, en el piso y con la cámara de lado, leyó
 64 de 64 y anotó las jugadas (27/10). Lo que falta: un modelo entrenado con
 fotos de nuestros tableros si con otra luz falla (las etiqueta el PGN de la
-partida), y la transmisión a Lichess para los torneos abiertos.
+partida). La transmisión a Lichess ya está: ver «Transmitir a Lichess».
 
 ## La partida en vivo desde la cámara
 
@@ -9889,7 +9889,8 @@ página de quien mira).
   `tablero-vivo.html#<código>&t=<id del torneo>` y ve todas las mesas de la
   ronda en una cuadrícula (también las que no tienen cámara, con su
   nombre), y al tocar una, en grande; un mensaje de otro torneo se ignora.
-  Los torneos por equipos todavía no.
+  En un torneo por equipos, una tarjeta por tablero (ver «Torneos por
+  equipos con la cámara»).
 - **Elegir la cámara**: una computadora puede tener varias cámaras USB. La
   lista sale después del primer permiso (antes el navegador no da los
   nombres) y la elegida se recuerda; si ya no está conectada, se abre la de
@@ -9987,8 +9988,9 @@ fácil». Cinco piezas, pensadas para un torneo de 20 mesas.
     tenía otro, lo dice, y anotarlo pide confirmarlo y deja la constancia en
     las incidencias, como el árbitro adjunto. El mismo resultado repetido no
     se vuelve a pedir.
-  - Mientras esa pestaña esté abierta, como los adjuntos. Los torneos por
-    equipos todavía no.
+  - Mientras esa pestaña esté abierta, como los adjuntos. En un torneo por
+    equipos, el resultado se confirma tablero por tablero (ver «Torneos por
+    equipos con la cámara»).
 
 Lo prueban `verificar-camara-tablero.js` (el resultado que llega a quien
 mira, el mate que se marca solo, la hoja de QR al imprimir, llegar por el QR,
