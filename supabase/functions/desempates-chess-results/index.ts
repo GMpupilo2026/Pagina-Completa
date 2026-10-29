@@ -14,8 +14,22 @@
 // en la ficha de cada jugador (art=9&snr=N): un torneo de 60 jugadores son
 // 61 páginas.
 //
+// LA USAN CUATRO HERRAMIENTAS: «Desempates explicados», «Variación de Elo del
+// torneo» (variacion-elo.html), «Normas de título» (normas-titulo.html) y
+// «Acta e informe arbitral JDE» (acta-jde.html), que necesitan lo mismo de
+// chess-results. La
+// página dice cuál es en `herramienta` (si no lo dice, «desempates») y se
+// pregunta por la licencia de ESA: una no abre la otra. Para la Variación de
+// Elo, la ficha trae además el Elo FIDE y el nacional por separado, el año de
+// nacimiento (para el K de los menores de 18), el código FIDE, el «FIDE elo
+// +/-» que calcula chess-results y el Elo FIDE y nacional de cada rival en
+// cada ronda. Para las Normas, la clasificación trae además el título
+// (GM, IM, WGM…), la federación y el sexo de cada uno; para el Acta, el
+// club («Club/Ciudad», que en los JDE es el centro educativo) y los
+// desempates que usó el torneo, tal como los nombra chess-results.
+//
 // SOLO CON LICENCIA: igual que seleccion-chess-results, se pregunta a la
-// base `tengo_herramienta('desempates')` CON EL TOKEN DE QUIEN LLAMA (clave
+// base `tengo_herramienta(<la herramienta>)` CON EL TOKEN DE QUIEN LLAMA (clave
 // anónima + su Authorization), no con la de servicio, así que pasa por
 // antes_de_cada_pedido() y la verificación en dos pasos la exige la base.
 // Quien administra tiene todas las herramientas sin licencia.
@@ -24,7 +38,10 @@
 // servidores s1…s99), de un número de torneo, y solo art=1 y art=9&snr=N.
 //
 // CACHÉ: lo leído se guarda en `desempates_cache` (solo la ve el service
-// role) y se reusa FRESCO_MS, igual que seleccion-chess-results.
+// role) y se reusa FRESCO_MS, igual que seleccion-chess-results. La clave
+// lleva la versión de lo que se guarda («v4:»): lo guardado antes no traía los
+// Elo por separado (v1), el título y la federación (v2) ni el club y los
+// desempates (v3), y no se reusa.
 //
 // SOLO TORNEOS INDIVIDUALES por ahora (ver «Herramientas de arbitraje» en
 // docs/decisiones/juegos-y-torneos.md): un torneo por equipos reparte el
@@ -55,7 +72,8 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-const HERRAMIENTA = "desempates";
+const HERRAMIENTAS = ["desempates", "variacion-elo", "normas-titulo", "acta-jde"];
+const VERSION_CACHE = "v4:";
 const FRESCO_MS = 60_000;
 const MAX_JUGADORES = 400;
 const A_LA_VEZ = 8;
@@ -188,7 +206,8 @@ function puntosDeTexto(s: string): number | null {
 // puntaje FINAL (puede venir en la columna «Pts.» o, si el torneo no la
 // trae, en el «Des N» cuya anotación dice «points»: mismo truco que
 // pizarra-torneo).
-export interface FilaClasificacion { puesto: number; snr: number; nombre: string; elo: number; puntos: number | null }
+export interface FilaClasificacion { puesto: number; snr: number; nombre: string; elo: number; puntos: number | null; titulo: string; fed: string; sexo: string; club: string }
+const TITULOS = /^(GM|IM|WGM|WIM|FM|WFM|CM|WCM)$/;
 export function leerClasificacionCompleta(html: string): FilaClasificacion[] {
   const t = tablasCrudas(html).find((x) => x.encabezado && columna(x.encabezado, /^Rk\.?$/i) >= 0);
   if (!t || !t.encabezado) return [];
@@ -206,16 +225,39 @@ export function leerClasificacionCompleta(html: string): FilaClasificacion[] {
     if (dePuntos) iPuntos = dePuntos.i;
   }
   if (iNombre < 0 || iSnr < 0) return [];
-  return t.filas
-    .map((f) => f.map(texto))
-    .filter((f) => f[iNombre])
+  const filas = t.filas.map((f) => f.map(texto)).filter((f) => f[iNombre]);
+  // El título va en una columna SIN encabezado (antes del nombre): es la que
+  // trae títulos de FIDE en alguna fila. La federación, «FED»; el sexo, «sexo».
+  const iTitulo = enc.findIndex((c, i) => i < iNombre && c === "" && filas.some((f) => TITULOS.test(f[i] || "")));
+  const iFed = columna(enc, /^FED$/i, /^Fed\.?$/i);
+  const iSexo = columna(enc, /^sexo$/i, /^sex$/i);
+  const iClub = columna(enc, /^Club\/Ciudad$/i, /^Club\/City$/i, /^Club$/i);
+  return filas
     .map((f) => ({
       puesto: Number(f[iRk]) || 0,
       snr: Number(f[iSnr]) || 0,
       nombre: f[iNombre],
       elo: iElo >= 0 ? entero(f[iElo]) : 0,
       puntos: iPuntos >= 0 ? puntosDeTexto(f[iPuntos] || "") : null,
+      titulo: iTitulo >= 0 && TITULOS.test(f[iTitulo] || "") ? f[iTitulo] : "",
+      fed: iFed >= 0 ? (f[iFed] || "").toUpperCase() : "",
+      sexo: iSexo >= 0 ? (f[iSexo] || "").toLowerCase() : "",
+      club: iClub >= 0 ? f[iClub] || "" : "",
     }));
+}
+
+// Los desempates que usó el torneo, en orden, como los nombra chess-results
+// en la «Anotación» de la clasificación («Desempate 2: Direct Encounter (DE)»),
+// sin el primero si es el puntaje («points (game-points)»). Los traduce a
+// los códigos de FIDE quien los usa (js/acta-jde.js): acá van tal cual.
+export function leerDesempates(html: string): string[] {
+  const fuera: { n: number; nombre: string }[] = [];
+  for (const m of html.matchAll(/(?:Desempate|Tie[ -]?Break)\s*(\d+):\s*([^<]+)/gi)) {
+    const nombre = texto(m[2]);
+    if (/^(points|puntos)\b/i.test(nombre)) continue;
+    if (!fuera.some((x) => x.n === Number(m[1]))) fuera.push({ n: Number(m[1]), nombre });
+  }
+  return fuera.sort((a, b) => a.n - b.n).map((x) => x.nombre);
 }
 
 // El color de una ronda, del div «FarbewT»/«FarbesT» que trae la celda
@@ -244,9 +286,18 @@ function interpretarResultado(rivalNombre: string, resTexto: string): { bye: boo
   return { bye: false, incomparecencia: null, puntos };
 }
 
-// art=9&snr=N: nombre, Elo y las partidas ronda a ronda.
-export interface Partida { ronda: number; rivalSnr: number; rivalNombre: string; bye: boolean; incomparecencia: "gana" | "pierde" | null; color: "w" | "b" | null; puntos: number | null }
-export function leerFichaCompleta(html: string): { nombre: string; elo: number; partidas: Partida[] } {
+// «-18,8», «+7», «0» → número (coma decimal); sin el dato, null.
+function decimal(t: string | undefined): number | null {
+  const s = String(t || "").trim().replace(/\s/g, "").replace(",", ".").replace(/^\+/, "");
+  return /^-?\d+(\.\d+)?$/.test(s) ? Number(s) : null;
+}
+
+// art=9&snr=N: nombre, los Elo, el año de nacimiento, el código FIDE, el
+// «FIDE elo +/-» de chess-results y las partidas ronda a ronda (con el Elo
+// FIDE y nacional de cada rival).
+export interface Partida { ronda: number; rivalSnr: number; rivalNombre: string; bye: boolean; incomparecencia: "gana" | "pierde" | null; color: "w" | "b" | null; puntos: number | null; rivalFide: number; rivalNacional: number }
+export interface Ficha { nombre: string; elo: number; eloFide: number; eloNacional: number; nacimiento: number; fideId: number; cambioFide: number | null; partidas: Partida[] }
+export function leerFichaCompleta(html: string): Ficha {
   const ts = tablasCrudas(html);
   const datos: Record<string, string> = {};
   for (const t of ts) for (const f of [...(t.encabezado ? [t.encabezado] : []), ...t.filas.map((f) => f.map(texto))]) if (f.length === 2 && f[0]) datos[f[0]] = f[1];
@@ -257,6 +308,8 @@ export function leerFichaCompleta(html: string): { nombre: string; elo: number; 
     const iSnr = columna(rondas.encabezado, /^No\.?\s*Ini\.?$/i);
     const iNombre = columna(rondas.encabezado, /^Nombre$/i, /^Name$/i);
     const iRes = columna(rondas.encabezado, /^Res\.?$/i);
+    const iFide = columna(rondas.encabezado, /^FIDE$/i, /^Rtg$/i, /^EloI$/i);
+    const iNac = columna(rondas.encabezado, /^EloN$/i, /^RtgN$/i, /^Elo\s*nac/i);
     for (const f of rondas.filas) {
       const rdTxt = texto(f[iRd] || "");
       if (!/^\d+$/.test(rdTxt) || iNombre < 0 || iRes < 0) continue;
@@ -272,10 +325,21 @@ export function leerFichaCompleta(html: string): { nombre: string; elo: number; 
         incomparecencia: r.incomparecencia,
         color: colorDeCelda(resCelda),
         puntos: r.puntos,
+        rivalFide: iFide >= 0 ? entero(texto(f[iFide] || "")) : 0,
+        rivalNacional: iNac >= 0 ? entero(texto(f[iNac] || "")) : 0,
       });
     }
   }
-  return { nombre: datos["Nombre"] || "", elo: entero(datos["Elo internacional"]) || entero(datos["Elo nacional"]), partidas };
+  const eloFide = entero(datos["Elo internacional"]);
+  const eloNacional = entero(datos["Elo nacional"]);
+  const nace = String(datos["Fecha de nacimiento"] || datos["Año de nacimiento"] || "").match(/\b(19|20)\d{2}\b/);
+  return {
+    nombre: datos["Nombre"] || "", elo: eloFide || eloNacional, eloFide, eloNacional,
+    nacimiento: nace ? Number(nace[0]) : 0,
+    fideId: entero(datos["Código FIDE"] || datos["FIDE-ID"]),
+    cambioFide: decimal(datos["FIDE elo +/-"]),
+    partidas,
+  };
 }
 
 // La dirección que pegó el árbitro → el servidor y el número de torneo.
@@ -316,7 +380,7 @@ async function leerTorneo(servidor: string, tnr: string) {
   }
 
   const lista = clasificacion;
-  const partidasPorSnr = new Map<number, Partida[]>();
+  const fichaPorSnr = new Map<number, Ficha>();
   const faltantes: number[] = [];
   let siguiente = 0;
   await Promise.all(Array.from({ length: Math.min(A_LA_VEZ, lista.length) }, async () => {
@@ -324,7 +388,7 @@ async function leerTorneo(servidor: string, tnr: string) {
       const fila = lista[siguiente++];
       try {
         const html = await pedir(`https://${servidor}/tnr${tnr}.aspx?lan=2&turdet=YES&art=9&snr=${fila.snr}`);
-        partidasPorSnr.set(fila.snr, leerFichaCompleta(html).partidas);
+        fichaPorSnr.set(fila.snr, leerFichaCompleta(html));
       } catch (e) {
         console.error("desempates-chess-results:", tnr, fila.snr, e);
         faltantes.push(fila.snr);
@@ -332,12 +396,16 @@ async function leerTorneo(servidor: string, tnr: string) {
     }
   }));
 
-  const jugadores = lista.filter((f) => partidasPorSnr.has(f.snr)).map((f) => ({ ...f, partidas: partidasPorSnr.get(f.snr) }));
+  const jugadores = lista.filter((f) => fichaPorSnr.has(f.snr)).map((f) => {
+    const x = fichaPorSnr.get(f.snr)!;
+    return { ...f, eloFide: x.eloFide, eloNacional: x.eloNacional, nacimiento: x.nacimiento, fideId: x.fideId, cambioFide: x.cambioFide, partidas: x.partidas };
+  });
   const rondasJugadas = titulos.rondasJugadas || Math.max(0, ...jugadores.flatMap((j) => j!.partidas!.filter((p) => p.puntos != null).map((p) => p.ronda)));
   return {
     id: tnr,
     url: `https://${servidor}/tnr${tnr}.aspx?lan=2`,
     titulo: titulos.titulo,
+    desempates: leerDesempates(htmlClasif),
     rondasJugadas,
     final: titulos.final,
     jugadores,
@@ -356,20 +424,23 @@ Deno.serve(async (req) => {
     auth: { persistSession: false },
     global: { headers: { Authorization: autorizacion } },
   });
-  const { data: puede, error: errPermiso } = await comoQuienLlama.rpc("tengo_herramienta", { p_herramienta: HERRAMIENTA });
+  let cuerpo: { url?: unknown; herramienta?: unknown } = {};
+  try { cuerpo = await req.json(); } catch { cuerpo = {}; }
+  const herramienta = cuerpo.herramienta == null ? "desempates" : String(cuerpo.herramienta);
+  if (!HERRAMIENTAS.includes(herramienta)) return json({ error: "Herramienta desconocida." }, 400);
+  const { data: puede, error: errPermiso } = await comoQuienLlama.rpc("tengo_herramienta", { p_herramienta: herramienta });
   if (errPermiso) return json({ error: "No se pudo comprobar tu licencia: " + errPermiso.message }, 403);
   if (puede !== true) return json({ error: "Tu cuenta no tiene una licencia vigente de esta herramienta." }, 403);
 
   let dir;
   try {
-    const cuerpo = await req.json();
     dir = direccion(String(cuerpo.url || ""));
   } catch {
     return json({ error: "Pega la dirección de un torneo de chess-results (por ejemplo https://s3.chess-results.com/tnr1423856.aspx)." }, 400);
   }
 
   const servicio = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, { auth: { persistSession: false } });
-  const clave = dir.servidor + "/" + dir.tnr;
+  const clave = VERSION_CACHE + dir.servidor + "/" + dir.tnr;
   const { data: guardado } = await servicio.from("desempates_cache").select("datos, leido_en").eq("clave", clave).maybeSingle();
   if (guardado && Date.now() - new Date(guardado.leido_en).getTime() < FRESCO_MS) {
     return json({ ...guardado.datos, leido_en: guardado.leido_en });

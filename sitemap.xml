@@ -51,6 +51,11 @@
     <priority>0.7</priority>
   </url>
   <url>
+    <loc>https://ajedrez-integral.com/bases-torneo.html</loc>
+    <lastmod>2026-10-28</lastmod>
+    <priority>0.6</priority>
+  </url>
+  <url>
     <loc>https://ajedrez-integral.com/campeones.html</loc>
     <lastmod>2026-10-21</lastmod>
     <priority>0.6</priority>
@@ -177,7 +182,7 @@
   </url>
   <url>
     <loc>https://ajedrez-integral.com/herramientas-arbitraje.html</loc>
-    <lastmod>2026-10-28</lastmod>
+    <lastmod>2026-10-29</lastmod>
     <priority>0.6</priority>
   </url>
   <url>
@@ -246,8 +251,13 @@
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://ajedrez-integral.com/reclamos-tablas.html</loc>
+    <loc>https://ajedrez-integral.com/ranking-estudiantil.html</loc>
     <lastmod>2026-10-28</lastmod>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://ajedrez-integral.com/reclamos-tablas.html</loc>
+    <lastmod>2026-10-29</lastmod>
     <priority>0.6</priority>
   </url>
   <url>

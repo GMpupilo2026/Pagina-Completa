@@ -402,7 +402,7 @@
     pasarMujeresAlAbierto, JDE_MIN_EQUIPO, equiposDeMas, JDE_MAX_EQUIPO,
     leerSexo, leerModalidad, ordenFechas, leerFecha, agrupar, sistemaSugerido, revisarCategorias, rangoCategoria,
     categoriasDeNacimiento, JDE_CATEGORIAS, JDE_ASCENSOS,
-    JDE_MAX_TODOS, JDE_RONDAS_SUIZO, JDE_RITMO_MINIMO, JDE_ANIO_NORMATIVA, JDE_MAX_ASCENSOS,
+    JDE_MAX_TODOS, JDE_RONDAS_SUIZO, JDE_RITMO_MINIMO, JDE_ANIO_NORMATIVA, JDE_MAX_ASCENSOS, JDE_DESEMPATES_SUIZO, JDE_DESEMPATES_TODOS,
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else raiz.PareoGrupos = api;

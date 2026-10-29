@@ -7,7 +7,9 @@
 // navegador no puede pedirle nada directo; (2) es un scraper de un sitio
 // de terceros, así que conviene dejarlo detrás del mismo candado de
 // "solo la persona administradora" que ya usa admin-manage-users, en vez
-// de exponerlo como un proxy abierto a cualquiera con sesión.
+// de exponerlo como un proxy abierto a cualquiera con sesión. Desde la
+// «Ficha del jugador federado» (admin-jugador.html en la vitrina de
+// herramientas), también quien tiene esa licencia (`ficha-federado`).
 //
 // chess-results.com es un sitio ASP.NET WebForms clásico (sin cambios de
 // fondo desde hace años): cada página arrastra un __VIEWSTATE/__EVENTVALIDATION
@@ -51,6 +53,7 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+const ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
 const SITE_URL = "https://ajedrez-integral.com";
 const CR_BASE = "https://s3.chess-results.com";
 // User-Agent normal de navegador de escritorio — no se hace pasar por un
@@ -550,8 +553,22 @@ Deno.serve(async (req) => {
     .eq("id", userData.user.id)
     .single();
 
-  if (callerProfileError || !callerProfile?.is_admin) {
-    return json({ error: "Solo la persona administradora puede hacer esto" }, 403);
+  // Además de administración, quien tiene la licencia de la «Ficha del jugador
+  // federado» (herramientas-arbitraje.html). Se pregunta a la base
+  // tengo_herramienta() CON EL TOKEN DE QUIEN LLAMA y la clave anónima, como
+  // desempates-chess-results: así pasa por antes_de_cada_pedido() y la
+  // verificación en dos pasos la exige la base.
+  let puede = !callerProfileError && !!callerProfile?.is_admin;
+  if (!puede) {
+    const comoQuienLlama = createClient(SUPABASE_URL, ANON_KEY, {
+      auth: { persistSession: false },
+      global: { headers: { Authorization: `Bearer ${jwt}` } },
+    });
+    const { data: conLicencia } = await comoQuienLlama.rpc("tengo_herramienta", { p_herramienta: "ficha-federado" });
+    puede = conLicencia === true;
+  }
+  if (!puede) {
+    return json({ error: "Tu cuenta no tiene una licencia vigente de la Ficha del jugador federado." }, 403);
   }
 
   let body: Record<string, unknown>;

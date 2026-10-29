@@ -433,11 +433,39 @@ const medallero = (p) => p.$$eval("#medallero tbody tr", (trs) => trs.map((t) =>
     console.log("\n=== Comparar comités ===");
     await p.selectOption("#edicion", "");
     igual("compara los tres primeros del medallero, con la tabla de cada final",
-        await p.$$eval("#comparar tbody tr", (t) => t.map((x) => [...x.cells].map((c) => c.textContent))),
+        await p.$$eval("#comparar tr[data-comite]", (t) => t.map((x) => [...x.cells].map((c) => c.textContent))),
         [["Goicoechea", "5·0·0"], ["CODEA (Alajuela)", "1·3·0"], ["Belén", "0·1·0"]]);
+    // El comparador: cada dato es el MISMO de su sección (la copa, el
+    // rendimiento contra el Elo y los enfrentamientos se comprueban abajo con
+    // estos mismos números).
+    igual("lado a lado: el medallero, las medallas, la copa, la efectividad y el rendimiento contra el Elo",
+        await p.$$eval("#comparar tr[data-dato]", (t) => t.map((x) => [...x.cells].map((c) => c.textContent))),
+        [["Puesto en el medallero", "1.º de 5", "2.º de 5", "3.º de 5"], ["Medallas (oro · plata · bronce)", "5 (5 · 0 · 0)", "4 (1 · 3 · 0)", "1 (0 · 1 · 0)"],
+            ["Medallas individuales · de equipo · de tablero", "1 · 1 · 3", "1 · 1 · 2", "1 · 0 · 0"], ["Puntos de la copa (escala elegida)", "55 (1.º)", "34 (2.º)", "13 (3.º)"],
+            ["Participaciones en finales", "1", "1", "2"], ["Inscritos en eliminatorias (jugadores · equipos)", "1 · 1", "1 · 0", "0 · 0"],
+            ["Pasaron de la eliminatoria a la final", "1 de 1 (100\u00a0%)", "1 de 1 (100\u00a0%)", "—"],
+            ["Rendimiento contra el Elo", "+5,4 en 17 partidas (+31,9 por cada 100)", "+1,8 en 9 partidas (+20,1 por cada 100)", "−0,7 en 2 partidas (−36,0 por cada 100)"]]);
+    await p.waitForSelector("#comparar tr[data-par]");
+    igual("entre ellos, de a pares: partidas, G-E-P, puntos y encuentros de equipo (lo mismo que «Contra qué comités»)",
+        await p.$$eval("#comparar tr[data-par]", (t) => t.map((x) => [...x.cells].map((c) => c.textContent))),
+        [["Goicoechea contra CODEA (Alajuela)", "6", "2-2-2", "3 de 6", "1-0-1"], ["Goicoechea contra Belén", "2", "2-0-0", "2 de 2", "—"], ["CODEA (Alajuela) contra Belén", "2", "1-1-0", "1½ de 2", "—"]]);
     igual("la gráfica nombra cada línea al final", await p.$$eval("#comparar svg text.font-semibold", (t) => t.map((x) => x.textContent).sort()), ["Belén", "CODEA (Alajuela)", "Goicoechea"]);
     await p.selectOption("#comparar-3", "");
     igual("con dos comités, dos líneas", await p.$$eval("#comparar polyline", (l) => l.length), 2);
+    igual("y dos columnas lado a lado, con un solo par", [await p.$eval("#comparar tr[data-dato]", (tr) => tr.cells.length), await p.$$eval("#comparar tr[data-par]", (l) => l.length)], [3, 1]);
+    await p.selectOption("#comparar-2", "");
+    igual("con uno solo, pide elegir otro", await p.evaluate(() => document.getElementById("comparar-lado").textContent.includes("Elige al menos dos comités")), true);
+    await p.selectOption("#comparar-2", "CODEA (Alajuela)");
+    {
+        // El enlace de la vitrina, «Comparador de comités JDN», lleva directo al comparador.
+        const otra = await abrir(browser, "jdn-comites.html#comparar", true);
+        await otra.p.waitForFunction(() => document.getElementById("app").checkVisibility());
+        await otra.p.waitForSelector("#comparar tr[data-par]");
+        // (el sitio desplaza con «scroll-behavior: smooth»: se espera a que llegue)
+        const llego = await otra.p.waitForFunction(() => Math.abs(document.getElementById("comparar").getBoundingClientRect().top) < 200, null, { timeout: 4000 }).then(() => true, () => false);
+        igual("#comparar abre el medallero y baja hasta el comparador", [await otra.p.evaluate(() => document.getElementById("comparar").checkVisibility()), llego], [true, true]);
+        await otra.ctx.close();
+    }
 
     console.log("\n=== Cómo viene un comité y sus jugadores ===");
     await p.selectOption("#comite", "goicoechea");

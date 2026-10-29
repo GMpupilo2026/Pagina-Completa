@@ -3095,9 +3095,11 @@ Tres pedidos del dueño del sitio.
   puntos de diferencia cuenta como 400; lo esperado sale de **la tabla
   8.1.2 escrita tal cual** (sus cortes casi son los puntos medios de la
   tabla 8.1, pero no en los empates: 25 da 0,53 y 392 da 0,92; la primera
-  versión los calculaba y el verificador lo agarró en 392); K = 40 con menos
-  de 18 años al terminar el año y menos de 2300, 10 desde 2400, 20 los
-  demás. El K 40 del jugador nuevo (menos de 30 partidas con Elo) no se
+  versión los calculaba y el verificador lo agarró en 392); K = 40 hasta el
+  final del año en que cumple 18 (con menos de 2300), 10 desde 2400, 20 los
+  demás —ese año incluido: la primera versión lo cortaba un año antes, y lo
+  agarró la «Variación de Elo del torneo» comparando con chess-results (ver
+  allá)—. El K 40 del jugador nuevo (menos de 30 partidas con Elo) no se
   puede saber desde acá: se anota en «Editar». El rendimiento (Rp) es el
   Elo medio de los rivales con Elo más la diferencia de la tabla 8.1 por su
   porcentaje. **Es una cuenta del torneo, no el Elo oficial**, y la página
@@ -7521,6 +7523,236 @@ panel de Supabase (Project Settings → Edge Functions → Secrets) con una clav
 de `console.anthropic.com`, decidir qué pasa con el FAQ (¿se queda arriba, se
 baja, se borra?) y quitar el `<div class="hidden">`.
 
+## Variación de Elo del torneo
+
+`variacion-elo.html` (con licencia, `variacion-elo`; la vitrina la anunciaba
+como «Próximamente» y la pidió el dueño con las demás herramientas nuevas):
+se pega el enlace de chess-results y dice cuánto sube o baja el Elo FIDE y el
+nacional de cada participante, partida por partida, antes de la lista
+oficial.
+
+- **Nada nuevo para leer ni para calcular.** Lee el torneo con la MISMA Edge
+  Function de «Desempates explicados», `desempates-chess-results`, que ahora
+  recibe `herramienta` («desempates» si no viene: la página vieja sigue igual)
+  y pregunta por la licencia de esa, nunca de otra. La ficha de cada jugador
+  trae además el Elo FIDE y el nacional por separado, el año de nacimiento,
+  el código FIDE, el «FIDE elo +/-» de chess-results y el Elo FIDE y nacional
+  de cada rival; la caché lleva la versión en la clave («v2:») para no
+  reusar lo guardado sin esos datos. El torneo se convierte con
+  `js/desempates-convertir.js` y el Elo lo calcula `js/pareo/elo.js`, el
+  mismo de Pareo Integral, una vez con el FIDE y otra con el nacional; ahora
+  devuelve también `juegos` (cada partida que contó) para «Partida por
+  partida».
+- **Comparado contra chess-results en torneos reales, y eso destapó un error
+  de Pareo Integral**: el K 40 de los menores es «hasta el final del año en
+  que cumple 18», y `kDe()` lo cortaba un año antes (`< 18` en vez de
+  `<= 18`). Con eso arreglado, en el XLVI Metropolitano 2025 (41 jugadores)
+  coinciden 38; los otros 3 son lo que desde chess-results no se ve: dos con
+  K 10 porque alguna vez llegaron a 2400, y uno al que le falta leer una ronda
+  (la página lo avisa). En la Etapa Nacional D de los JDE 2026, los 7 con
+  dato, iguales.
+- **Lo que no se puede saber se dice, no se adivina**: si el número propio no
+  coincide con el de chess-results, la columna dice con qué K lo calculó
+  chess-results (su cambio entre puntos menos esperado, si da 10, 20 o 40); y
+  si chess-results no le da variación FIDE a nadie (vacía o 0 para todos,
+  como en el Nacional U15 2025), avisa que lo más probable es que el torneo
+  no sea válido para Elo FIDE. El «Cálculo de elo» de la ficha del torneo
+  quedaría mejor, pero en los torneos viejos chess-results lo esconde detrás
+  de un botón (ver «Los torneos con Elo nacional»).
+- **El nacional se calcula con las mismas reglas de FIDE**, y la página dice
+  que la Federación puede usar otras.
+- Lo prueba `verificar-variacion-elo.js` con un doble de Supabase y un torneo
+  armado a mano, con los números sacados a mano de la tabla 8.1.2; y la
+  lectura de la ficha, `verificar-desempates-chess-results.js`.
+
+## Normas de título
+
+`normas-titulo.html` (con licencia, `normas-titulo`; la pidió el dueño con
+las demás herramientas nuevas): se pega el enlace de chess-results y dice
+quién hizo norma de GM, IM, WGM o WIM en el torneo, y a quién le faltó poco
+y qué, artículo por artículo del Reglamento de Títulos de FIDE (B.01,
+vigente desde el 1/1/2024).
+
+- **La misma Edge Function**, `desempates-chess-results`, con `herramienta:
+  "normas-titulo"`. La clasificación trae ahora además el título (la columna
+  SIN encabezado antes del nombre que trae títulos de FIDE: la otra vacía es
+  la de la bandera), la federación («FED») y el sexo («sexo», cuando el
+  torneo lo trae). La caché subió a «v3:».
+- **El cálculo va en `js/normas-titulo.js`** (navegador y Node), sin
+  pantalla: las partidas (9, o 8 que cuentan como 9 en un torneo de 9 rondas
+  con un bye o una incomparecencia a favor, 1.4.1c; las incomparecencias no
+  cuentan, 1.4.2c), las federaciones (dos extranjeras, FID no cuenta; máximo
+  3/5 de la propia y 2/3 de una sola), los rivales con título (la mitad,
+  **sin CM ni WCM**, y un tercio, mínimo 3, del título de la norma o mayor),
+  el piso de Elo que sube **solo al rival de menos Elo** (sin Elo, 1400), el
+  promedio redondeado y el rendimiento con la tabla 1.4.9.
+- **Se prueban las mezclas que deja el reglamento**: en un suizo, cortar
+  después de cualquier ronda (1.4.1e), y en cualquier formato, dejar afuera
+  partidas ganadas (1.4.1f). Se queda con la que da norma y cuenta más
+  partidas; cada punto entero de más cuenta como una partida (1.4.1d), hasta
+  13. Probar todas las combinaciones de ganadas es 2^ganadas: se corta en
+  10 (1024), de sobra para un torneo de normas.
+- **Solo se buscan las normas que le sirven**: a un IM no se le busca la de
+  IM ni la de WIM, y las femeninas solo se buscan si chess-results trae el
+  sexo (si nadie viene marcado como mujer, se revisan para todos y lo decide
+  quien mira).
+- **Lo que no se ve desde los resultados se dice, no se da por hecho**: el
+  ritmo, las dos partidas por día, el árbitro principal IA o FA, los 90 días,
+  que esté en la lista de FIDE y que el Elo sea el de la lista vigente al
+  empezar. Si el torneo no trae federaciones o títulos, un aviso dice que
+  esos artículos salen como no cumplidos.
+- **Comprobado contra el anexo del reglamento**: `verificar-normas-titulo.js`
+  lleva copiadas las tablas de 9 a 12 partidas (160 casillas) y revisa que en
+  la punta baja de cada rango haya norma, y que con medio punto menos o un
+  punto de promedio menos no; más una partida armada por artículo. Rompiendo
+  a propósito el redondeo o metiendo a los CM entre los títulos, salta. La
+  página la prueba `verificar-normas-titulo-pagina.js` con un doble.
+- Probado con un torneo real (el tnr1313571 de chess-results): la única
+  norma que sale es una de IM de alguien que ya es IM, y la página no la
+  muestra.
+
+## Ranking estudiantil por categoría
+
+`ranking-estudiantil.html` (gratis y sin cuenta, como el historial y las
+estadísticas por colegio; la pidió el dueño con las demás herramientas
+nuevas): el ranking de los JDE de un año, una categoría y una rama, con los
+mismos datos públicos de `js/jde-datos.js`.
+
+- **El orden dice hasta dónde llegó cada estudiante, no es un Elo**: primero
+  la etapa más alta (llegar a la final pesa más que ganar la regional),
+  después su mejor puesto en esa etapa, sus puntos en esa etapa y todos los
+  del año. Dos iguales en todo comparten el lugar. La página lo explica.
+- **Solo torneos individuales de ritmo clásico de los JDE**, como
+  «Participaciones» en `ajedrez-estudiantil.html`: en uno por equipos el
+  puesto es del equipo, y los blitz y rápidos repiten a los mismos.
+- **Un torneo sin rama en el nombre cuenta como abierto**: el nombre llega
+  cortado de chess-results («…Individual A», «…Absolu») y los femeninos lo
+  dicen siempre. Sin esto, la final nacional D de 2026 quedaba afuera de la
+  rama abierta y el primero del ranking era un campeón interregional.
+- **La región es la de su torneo regional** (la final no tiene región); el
+  filtro deja a quien jugó la regional ahí. Los filtros van en la dirección.
+- En 2026 hubo dos finales nacionales D individuales en chess-results (27 y
+  29 de mayo): el orden toma el mejor puesto de cualquiera de las dos.
+- Lo prueban `verificar-ranking-estudiantil.js` (con unos pocos torneos
+  armados a mano en la forma de los archivos de datos, leídos con el mismo
+  `jde-datos.js`) y `verificar-ranking-estudiantil-pagina.js` (la página con
+  esos datos servidos en lugar de los de verdad, que cambian cada mes).
+  Rompiendo a propósito el peso de la etapa o la rama vacía, saltan.
+
+## Acta e informe arbitral JDE
+
+`acta-jde.html` (con licencia, `acta-jde`; estaba en la vitrina como
+«Próximamente» y la pidió el dueño con las demás herramientas nuevas): para
+una etapa de los JDE dirigida con Swiss-Manager y publicada en chess-results,
+no en Pareo Integral. Se pegan los enlaces de todos sus torneos y se baja el
+informe oficial de participación y resultados en PDF o Word, y los
+clasificados a la etapa siguiente en el Excel que se sube en Pareo Integral.
+
+- **El informe no se escribió otra vez**: cada torneo se lee con
+  `desempates-chess-results` (`herramienta: "acta-jde"`), se convierte con
+  `js/desempates-convertir.js` y lo arma `PareoEvento.informe()`, el mismo de
+  los eventos de Pareo Integral (participación por centro, clasificación,
+  cuadro cruzado, ausencias, medallero, firmas). `js/acta-jde.js` solo junta
+  las piezas y agrega lo que chess-results no tiene: la etapa, el lugar, la
+  sede, la fecha, los árbitros y las incidencias (las escribe el árbitro).
+- **La función lee ahora el club y los desempates del torneo**: la columna
+  «Club/Ciudad» (en los JDE, el centro educativo) y la «Anotación» de la
+  clasificación («Desempate 2: Direct Encounter (DE)…»), que
+  `ActaJde.codigoDesempate()` traduce a los códigos de FIDE. Caché «v4:».
+  Los datos del torneo (árbitro, lugar, fechas) no se leen: en los torneos
+  de más de dos semanas chess-results los esconde detrás de un botón.
+- **El orden del informe es el oficial de chess-results**, el que firmó el
+  árbitro (`t.ordenOficial`, que respeta `PareoEvento`; sin columnas de
+  desempates, porque los números serían los recalculados). El recálculo con
+  el motor de Pareo Integral y los desempates del torneo solo sirve para
+  avisar si alguien queda en otro puesto. En la Etapa Nacional D 2026
+  (tnr1423856), con DE y Buchholz Cut-1 de 2026, Swiss-Manager pone a
+  González con 13 de Buchholz Cut-1 y Pareo Integral con 12: el aviso lo
+  dice, y el informe va con el orden de chess-results.
+- **El bye de un punto que trae chess-results es el del pareo**: se anota
+  como mesa sin rival (`{ n: null }`) y no como un bye pedido, que en el
+  informe diría «Pidió bye (avisó)» de quien no pidió nada. Se hace en
+  `js/acta-jde.js` y no en `js/desempates-convertir.js`, para no cambiar los
+  desempates de «Desempates explicados».
+- **Los clasificados** salen de `PareoEvento.filasClasificados()` con el
+  cupo del art. 66.1 según la etapa y el lugar; de la Etapa Nacional no se
+  clasifica a nada.
+- Lo prueban `verificar-acta-jde.js` (un torneo armado a mano con bye del
+  pareo, incomparecencia, bye pedido y un empate que chess-results separa)
+  y `verificar-acta-jde-pagina.js` (con un doble: la licencia, los dos
+  torneos, los avisos y los tres archivos con su marca). La prueba de
+  «Próximamente» con todas las licencias de `verificar-seleccion-pagina.js`
+  usa ahora una herramienta de mentira metida en la lista, porque la vitrina
+  se va quedando sin ninguna «Próximamente». Rompiendo a propósito el bye
+  del pareo o el orden oficial, salta.
+
+## La ficha del jugador federado
+
+En la vitrina, «Ficha del jugador federado» (`ficha-federado`, con licencia,
+en el tema nuevo «Clubes y federados»; la pidió el dueño con las demás
+herramientas nuevas) lleva a `admin-jugador.html`, la «Base de datos de
+jugadores» que hasta ahora era solo de administración. **No se hizo otra
+página**: la de administración ya buscaba a una persona en chess-results,
+agrupaba sus torneos por Código FIDE (los homónimos aparte) y analizaba su
+rendimiento, su tendencia y hacia dónde va. Lo que cambió:
+
+- **El candado de `chess-results-proxy`** deja pasar a administración o a
+  quien tenga la licencia, y la licencia se pregunta como en
+  `desempates-chess-results`: `tengo_herramienta()` con el token de quien
+  llama y la clave anónima (así la verificación en dos pasos la exige la
+  base). La página pregunta lo mismo, pero es la función la que decide.
+- **El Elo nacional y el FIDE estándar** de la lista de la Federación
+  (ajedrezcostarica.com) en la cabecera de cada jugador, con la Edge
+  Function `pareo-elo-nacional` de Pareo Integral, que ya leía esa lista por
+  nombre. **Se muestra solo si el Código FIDE de la lista es el del grupo**:
+  un homónimo no se cuela.
+- Se llama «Ficha del jugador federado» y sus migas cuelgan de la Academia
+  (antes, de Administración, adonde quien tiene la licencia no entra).
+- La vitrina tiene ahora cinco fichas de tema: en la computadora van en una
+  fila de cinco (`lg:grid-cols-5`).
+- Lo prueba `verificar-ficha-federado.js`: el candado de la función leído
+  del código, y la página con un doble (sin licencia, administración sin
+  licencia, con licencia, el homónimo que no recibe el Elo). Rompiendo a
+  propósito la comparación del Código FIDE, salta.
+
+## Generador de bases del torneo
+
+`bases-torneo.html` (gratis y sin cuenta, como Pareo Integral; la pidió el
+dueño con las demás herramientas nuevas): quien organiza llena los datos de
+su torneo y baja las bases en PDF o en Word, listas para publicar.
+
+- **Todo en el navegador**: no hay nada que proteger en un servidor, así que
+  no hay licencia. Lo llenado se guarda en `localStorage` (`bases_torneo_v1`)
+  solo para la próxima visita; si el navegador no deja, la página funciona
+  igual.
+- **Un solo documento para el PDF y el Word**: `js/bases-torneo.js` arma el
+  documento neutral que leen `js/reporte-pdf.js` y `js/reporte-docx.js`, el
+  mismo de los reportes de actividades. Los dos llevan la marca de agua de
+  Ajedrez Integral: el PDF la busca solo; el Word la pide a
+  `MarcaAgua.preparar()` antes de armar (sin ella sale sin marca, por eso lo
+  revisa el verificador).
+- **Lo que dice sale de las reglas, y se revisa antes de bajar**:
+  - la modalidad, del tiempo de cada jugador para 60 jugadas (base + 60 ×
+    incremento; Leyes A.1 y B.1): 10 minutos o menos, relámpago; menos de
+    60, rápido; 60 o más, clásico;
+  - para el Elo FIDE clásico, B.02 1.1: 120 minutos para 60 jugadas si alguno
+    tiene 2400 o más, 90 si alguno tiene 1800 o más, 60 si los dos tienen
+    menos (leído del reglamento vigente en el Handbook);
+  - la tolerancia: si las bases no la dicen es cero (6.7.1), y así se
+    escribe cuando se pone 0;
+  - los celulares, con el 11.3.2; los desempates, con los nombres del
+    catálogo de Pareo Integral (`PareoDesempates.CATALOGO`), y al cambiar el
+    sistema se proponen los de Pareo Integral para ese sistema.
+- **El calendario se arma solo**: las rondas por día desde la fecha de
+  inicio, cada ronda con el tiempo de los dos más 40 jugadas de incremento
+  (como el horario de Pareo Integral), y la siguiente a la media hora
+  siguiente después del descanso. El día de calendario se lee al mediodía de
+  Costa Rica, para que no corra.
+- Lo prueban `verificar-bases-torneo.js` (sin navegador: modalidades,
+  umbrales de B.02, calendario, textos) y `verificar-bases-torneo-pagina.js`
+  (la página, bajar el PDF y el Word con su marca, lo guardado al volver y
+  que nada salga del sitio). Rompiendo a propósito el límite del relámpago,
+  la fecha que corre o la marca del Word, saltan.
 ## Reclamos de tablas desde el PGN
 
 `reclamos-tablas.html` (la anunciaba la vitrina como «Próximamente»; la pidió
@@ -8059,6 +8291,28 @@ ficha de un comité trae «Informe del comité en PDF».
   cifras como lista, las gráficas por su descripción y las tablas sin
   «Comprobar». En hoja vertical, una tabla de muchas columnas corta algún
   texto: el PDF es para entregar el resumen; el detalle está en el Excel.
+
+### El comparador de comités
+
+En la vitrina, «Comparador de comités JDN» (`comparador-jdn`, con la
+licencia de `jdn-comites`, como el catálogo de torneos universitarios con la
+de `universidades`) lleva a `jdn-comites.html#comparar`: no es otra página,
+es la sección «Comparar comités» del medallero, que antes solo traía las
+medallas final por final y ahora trae también:
+
+- **Lado a lado**: el puesto en el medallero, las medallas (y de qué tipo),
+  los puntos de la copa con la escala elegida, las participaciones en
+  finales y eliminatorias, cuántos pasaron de la eliminatoria a la final y
+  el rendimiento contra el Elo. **Cada dato sale de la misma función que su
+  sección** (`resumen`, `copa`, `efectividad`, `contraElo`): el verificador
+  comprueba los mismos números en el comparador y en cada sección. En
+  `universidades.html` (el mismo código) no van las filas de eliminatorias.
+- **Entre ellos**: las partidas de sus jugadores, de a pares, con `contra()`,
+  la misma de «Contra qué comités». Las partidas llegan después de pintar
+  (son unas 18 000): mientras tanto dice «Cargando las partidas…» y se
+  vuelve a dibujar al llegar.
+- `#comparar` no es un comité: abre el medallero, y el navegador baja solo a
+  la sección con ese `id`.
 
 ### La calidad de los datos y la corrección del comité
 
