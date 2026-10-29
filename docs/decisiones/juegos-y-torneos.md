@@ -10474,6 +10474,78 @@ llega al canal sin casillas y el retraso con el reloj de la cámara
 adelantado) y `verificar-pareo-camaras.js` (los `[%emt]` y las alertas).
 Rotos a propósito, saltan.
 
+### La coronación, la luz, las tablas, las fotos y las simultáneas
+
+El cuarto pedido de mejoras del dueño («todas»). Lo de este paquete:
+
+- **La coronación.** La cámara solo ve «pieza blanca» en la casilla: anota
+  dama y pregunta con cuatro botones qué pieza puso. Si después la pieza
+  coronada se mueve como no puede una dama (un salto de caballo), ninguna
+  jugada explica lo que se ve, y se prueba con las otras piezas
+  (`LectorTablero.deducirCoronacion`): la que lo explique con una jugada de
+  esa pieza es la que se coronó, y se corrige sola. Cambiar la pieza vuelve
+  a jugar lo que siguió (`cambiarCoronacion`); si algo deja de ser legal (la
+  «dama» que se movió en diagonal no puede ser torre), no se cambia. Torre y
+  alfil no se deducen nunca (todo lo que hacen lo puede hacer una dama): se
+  eligen con los botones. Lo escrito a mano («e8=C») ya dice cuál.
+- **La luz que cambia.** Mientras se lee la partida sin nada raro, cada 15
+  segundos se vuelve a calibrar con la posición que se sabe y se mezcla con
+  la de antes (`mezclarCal`, peso 0,3): sigue al sol que se corre o a una
+  nube antes de que empiece a leer mal. Si de golpe varias casillas se leen
+  mal (prendieron la luz), antes de avisar una jugada ilegal se prueba con la
+  luz de ahora: **si con ella se lee la partida entera, 64 de 64, era la
+  luz**, se calibra y sigue («Cambió la luz…»). Una pieza que de verdad se
+  movió no calza con la partida y se sigue avisando.
+- **La triple repetición y las 50 jugadas** (`PartidaEnVivo.reglaDeTablas`):
+  se dicen justo en la jugada en que se cumplen (3 y 5 veces la misma
+  posición; 50 y 75 jugadas de cada uno sin captura ni peón). La casilla al
+  paso cuenta solo si la captura se puede hacer (art. 9.2.3): chess.js la
+  pone después de todo avance doble, y sin esto «1. c4» y la misma posición
+  más tarde no eran iguales. **Nada se marca solo**: 3 veces y 50 jugadas se
+  reclaman; 5 y 75 son tablas por las Leyes (art. 9.6), pero las confirma el
+  árbitro. En un torneo, el aviso le llega a Pareo con su `tipo`, aparte del
+  de la jugada ilegal (uno no tapa al otro), con el artículo.
+- **La foto del tablero**, con cada resultado y cada aviso: el tablero
+  **enderezado con la homografía**, visto desde arriba como un diagrama
+  (256 × 256, JPEG), así que no sale nadie alrededor. Queda en «Fotos del
+  tablero» de la cámara (las últimas 6, para bajarlas) y, en un torneo, le
+  llega a Pareo junto al aviso o al resultado para confirmar: «Ver foto» y
+  «Pasar a las incidencias», donde queda con su mesa (`incidencias[].foto`)
+  y se vuelve a ver. Pareo solo acepta un `data:image/jpeg` de menos de
+  120 000 caracteres, con un motivo conocido, del torneo y la ronda en juego.
+  **No se publica**: lo que va a `pareo_publicados` no lleva incidencias.
+- **«Enseñarle a la cámara»**, apagado por omisión. Encendido (si lo permite
+  quien organiza), con cada jugada anotada se guarda en el aparato
+  (IndexedDB, hasta 500) la foto enderezada con su posición: las 64 letras de
+  la lectura y el FEN. Se bajan en un .zip (`TablaExcel.zip`, el mismo de
+  Pareo) con `etiquetas.csv`, para entrenar un modelo con nuestros tableros
+  cuando con otra luz falle. No se manda nada a ningún lado.
+- **Las simultáneas**, sin torneo: en «Transmitir en vivo», «Una
+  simultánea». Cada cámara dice su número de tablero y todas usan el mismo
+  código (la primera lo crea). Lo que viaja lleva `{ simul: 1, mesa }`; quien
+  mira ve todos los tableros juntos («Tablero 1», «Tablero 2»…) y el enlace
+  de cada alumno (`#código&m=N`) abre el suyo en grande. Los avisos y las
+  fotos al árbitro siguen siendo solo de un torneo.
+- **Los momentos clave**, en `tablero-vivo.html`, cuando la partida
+  terminó: «Ver los momentos clave» la hace revisar por Stockfish en ese
+  aparato (profundidad 10, posición por posición) y muestra hasta tres
+  jugadas que perdieron 2 peones o más, con la mejor. Se eligen con la regla
+  de «Tus propios errores» (`ErroresPropios.detectar`, de los dos lados): una
+  sola copia de qué es un error. Va con un botón porque es trabajo para el
+  celular. Tocar una lleva el tablero a esa jugada.
+- **La cámara en la clase en vivo** la puede abrir también quien da clase
+  (`role = 'profesor'`); un alumno no (en un torneo entra por el QR). Ver «La
+  cámara en la clase en vivo» en `clase-en-vivo.md`.
+
+Lo prueban `verificar-camara-tablero.js` (la coronación preguntada y
+deducida, la luz de golpe y poco a poco, la repetición y su aviso, la foto
+enderezada —a5 con la torre que saltó, la fila 8 arriba—, «Enseñarle a la
+cámara» con su .zip, la simultánea con dos cámaras y dos que miran, y los
+momentos clave con un Stockfish de mentira), `verificar-pareo-camaras.js`
+(las tablas aparte de la jugada ilegal, la foto: cuál se acepta, «Ver foto»,
+«Pasar a las incidencias» y que no se publique) y `verificar-clase-camara.js`.
+Rotos a propósito, saltan.
+
 ## Pareo para DGT
 
 Un torneo presencial con tableros electrónicos DGT: el árbitro sube cada ronda

@@ -7947,6 +7947,12 @@
                 });
             }
 
+            // La cámara del profe: su tablero de verdad juega en el de la clase
+            // (js/clase-camara.js), por la misma puerta que el clic.
+            if (window.ClaseCamara && isTeacher && !modoProyector && !modoControl && !vistaPrevia) {
+                ClaseCamara.montar({ sb, tablero: () => board, boton: document.getElementById("toggle-camara-btn") });
+            }
+
             document.getElementById("loading").classList.add("hidden");
             document.getElementById("app").classList.remove("hidden");
         }

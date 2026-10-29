@@ -3220,8 +3220,9 @@
     const canal = window.sb.channel(window.PartidaEnVivo.canal(c));
     canal.on("broadcast", { event: "estado" }, (msg) => recibirDeCamara(msg.payload || {}));
     canal.on("broadcast", { event: "alerta" }, (msg) => alertaDeCamara(msg.payload || {}));
+    canal.on("broadcast", { event: "foto" }, (msg) => fotoDeCamara(msg.payload || {}));
     canal.subscribe((st) => { if (st === "SUBSCRIBED") canal.send({ type: "broadcast", event: "pedir", payload: {} }); });
-    estado.camaras = { idTorneo: estado.id, codigo: c, canal, mesas: new Map(), alertas: new Map(), partidas: new Map(), pedidas: new Map() };
+    estado.camaras = { idTorneo: estado.id, codigo: c, canal, mesas: new Map(), alertas: new Map(), partidas: new Map(), pedidas: new Map(), fotos: new Map() };
     return true;
   }
   function desconectarCamaras() {
@@ -3307,20 +3308,79 @@
   // La cámara ve algo que no sale de ninguna jugada legal: puede ser una
   // jugada ilegal. Se avisa (sin las casillas: con retraso, eso sería pasar
   // la jugada) y queda en la caja de las cámaras hasta que se marca «Visto».
-  // Una vez cada 30 segundos por mesa, como mucho.
+  // Una vez cada 30 segundos por mesa, como mucho. También llegan la
+  // repetición y las 50 jugadas (`tipo`), que no se marcan solas: el árbitro
+  // las confirma si alguien reclama (o, con cinco veces y 75 jugadas, solo).
+  const TIPOS_ALERTA = { ilegal: "camaraAlerta", repeticion3: "camaraTablas3", jugadas50: "camaraTablas50", repeticion5: "camaraTablas5", jugadas75: "camaraTablas75" };
   function alertaDeCamara(p) {
     const v = torneoDeCamaras();
     if (!v || !v.publicado || !v.rondas.length || p.torneo !== v.publicado.id || Number(p.ronda) !== v.rondas.length) return;
     const mesa = Number(p.mesa), tablero = E.esDeEquipos(v) ? Number(p.tablero) || null : null;
     const R = v.rondas[v.rondas.length - 1];
     if (!R.mesas.some((x, k) => V.mesaFisica(v, k) === mesa)) return;
-    const clave = claveCamara(mesa, tablero);
-    const antes = estado.camaras.alertas.get(clave);
-    if (antes && Date.now() - antes < 30000) return;
-    estado.camaras.alertas.set(clave, Date.now());
-    Avisos.avisar(tx("camaraAlerta", { m: verLugar(clave) }), { tipo: "error" });
+    const clave = claveCamara(mesa, tablero), tipo = TIPOS_ALERTA[p.tipo] ? p.tipo : "ilegal";
+    const k = tipo === "ilegal" ? clave : clave + "|" + tipo; // cada aviso por su lado: uno no tapa al otro
+    const antes = estado.camaras.alertas.get(k);
+    if (antes && Date.now() - antes.h < 30000) return;
+    estado.camaras.alertas.set(k, { h: Date.now(), tipo, m: clave });
+    Avisos.avisar(tx(TIPOS_ALERTA[tipo], { m: verLugar(clave) }), { tipo: { ilegal: "error" }[tipo] || "info" });
     pintarCamaras();
   }
+
+  // La foto del tablero (visto desde arriba, recortado: solo el tablero, sin
+  // nadie alrededor) que manda la cámara con cada resultado y cada aviso:
+  // una prueba si hay un reclamo. Queda en la memoria de esta pestaña y, si
+  // el árbitro la pasa, en las incidencias de la ronda (y en el respaldo del
+  // torneo). No se publica.
+  const FOTO_VALIDA = /^data:image\/jpeg;base64,[A-Za-z0-9+/]+=*$/;
+  const MOTIVOS_FOTO = ["resultado", "ilegal", "repeticion3", "jugadas50", "repeticion5", "jugadas75"];
+  function fotoDeCamara(p) {
+    const v = torneoDeCamaras();
+    if (!v || !v.publicado || !v.rondas.length || p.torneo !== v.publicado.id || Number(p.ronda) !== v.rondas.length) return;
+    if (typeof p.img !== "string" || p.img.length > 120000 || !FOTO_VALIDA.test(p.img) || !MOTIVOS_FOTO.includes(p.motivo)) return;
+    const mesa = Number(p.mesa), tablero = E.esDeEquipos(v) ? Number(p.tablero) || null : null;
+    const R = v.rondas[v.rondas.length - 1];
+    if (!R.mesas.some((x, k) => V.mesaFisica(v, k) === mesa)) return;
+    const clave = claveCamara(mesa, tablero);
+    const lista = (estado.camaras.fotos.get(clave) || []).concat({ h: Date.now(), motivo: p.motivo, img: p.img, mesa, tablero });
+    estado.camaras.fotos.set(clave, lista.slice(-6));
+    pintarCamaras();
+    if (p.motivo === "resultado") pintarRondas(); // el botón de la foto va junto al resultado para confirmar
+  }
+  // La última foto de esa mesa desde un poco antes de `desde` (el aviso o el resultado).
+  const fotoDe = (clave, desde) => {
+    const lista = (estado.camaras && estado.camaras.fotos.get(String(clave))) || [];
+    return lista.filter((f) => f.h >= (desde || 0) - 120000).pop() || null;
+  };
+  const textoMotivo = (m) => tx(m === "resultado" ? "fotoMotivoResultado" : m === "ilegal" ? "fotoMotivoIlegal" : TIPOS_ALERTA[m] + "Corto");
+  function verFoto(f, pasar) {
+    const cerrarB = el("button", { type: "button", class: C.botonSec }, tx("cerrar"));
+    const pasarB = pasar ? el("button", { type: "button", id: "pi-foto-pasar", class: C.boton }, tx("fotoPasar")) : null;
+    const d = el("dialog", { id: "pi-foto-dialogo", class: "rounded-2xl p-5 max-w-md w-full bg-white dark:bg-brand-900 text-brand-800 dark:text-white", "aria-labelledby": "pi-foto-dialogo-t" },
+      el("h2", { id: "pi-foto-dialogo-t", class: "font-serif text-xl font-bold mb-1", texto: tx("fotoTitulo", { m: verLugar(claveCamara(f.mesa, f.tablero)) }) }),
+      el("p", { class: C.nota, texto: horaCR(f.h) + (f.motivo ? " · " + textoMotivo(f.motivo) : "") }),
+      el("img", { src: f.img, alt: tx("fotoAlt", { m: verLugar(claveCamara(f.mesa, f.tablero)) }), width: "256", height: "256", class: "mt-3 mx-auto rounded-lg w-64 h-64" }),
+      el("div", { class: "flex flex-wrap gap-2 mt-4" }, pasarB, cerrarB));
+    const cerrar = () => { d.close(); d.remove(); };
+    cerrarB.addEventListener("click", cerrar);
+    d.addEventListener("cancel", (e) => { e.preventDefault(); cerrar(); });
+    if (pasarB) pasarB.addEventListener("click", () => { pasar(); cerrar(); });
+    document.body.append(d);
+    d.showModal();
+    cerrarB.focus();
+  }
+  // Pasar la foto a las incidencias de la ronda en juego, con su mesa.
+  function fotoAIncidencias(f) {
+    const v = t(), R = v.rondas[v.rondas.length - 1];
+    const k = R.mesas.findIndex((x, i) => V.mesaFisica(v, i) === f.mesa);
+    if (k < 0) return;
+    R.incidencias = (R.incidencias || []).concat({ hora: f.h, mesa: k + 1, tipo: "otra",
+      texto: tx("fotoIncidencia", { q: textoMotivo(f.motivo), b: f.tablero ? " " + tx("fotoTablero", { b: f.tablero }) : "" }), foto: f.img });
+    guardar(); pintarRondas();
+    Avisos.avisar(tx("fotoPasada"), { tipo: "ok" });
+  }
+  const botonFoto = (f) => el("button", { type: "button", class: C.mini, "data-foto": "1", onclick: () => verFoto(f, () => fotoAIncidencias(f)) },
+    el("span", { "aria-hidden": "true", texto: "📷 " }), tx("fotoVer"));
 
   // ---------- Transmitir a Lichess ----------
   // Las partidas de las mesas de la ronda en juego (las de las cámaras y las
@@ -3455,10 +3515,11 @@
     if (!activas) { caja.replaceChildren(); return; }
     const mesas = estado.camaras && estado.camaras.idTorneo === estado.id ? [...estado.camaras.mesas.keys()].sort(ordenLugar).map(verLugar) : [];
     const dejar = el("button", { type: "button", id: "pi-camaras-dejar", class: C.mini, onclick: dejarCamaras }, tx("camarasDejar"));
-    const alertas = estado.camaras && estado.camaras.idTorneo === estado.id ? [...estado.camaras.alertas.entries()].sort((a, b) => ordenLugar(a[0], b[0])) : [];
-    const listaAlertas = alertas.length ? el("ul", { id: "pi-camaras-alertas", class: "mt-2 space-y-1 text-sm" }, alertas.map(([m, h]) => el("li", { class: "flex flex-wrap items-center gap-2", "data-alerta": String(m) },
-      el("span", { class: "font-semibold", texto: tx("camaraAlertaFila", { m: verLugar(m), h: horaCR(h) }) }),
-      el("button", { type: "button", class: C.mini, onclick: () => { estado.camaras.alertas.delete(m); pintarCamaras(); } }, tx("camaraAlertaVista"))))) : null;
+    const alertas = estado.camaras && estado.camaras.idTorneo === estado.id ? [...estado.camaras.alertas.entries()].sort((a, b) => ordenLugar(a[1].m, b[1].m)) : [];
+    const listaAlertas = alertas.length ? el("ul", { id: "pi-camaras-alertas", class: "mt-2 space-y-1 text-sm" }, alertas.map(([k, a]) => el("li", { class: "flex flex-wrap items-center gap-2", "data-alerta": String(a.m), "data-tipo": a.tipo },
+      el("span", { class: "font-semibold", texto: tx(a.tipo === "ilegal" ? "camaraAlertaFila" : "camaraTablasFila", { m: verLugar(a.m), h: horaCR(a.h), q: a.tipo === "ilegal" ? "" : tx(TIPOS_ALERTA[a.tipo] + "Corto") }) }),
+      fotoDe(a.m, a.h) ? botonFoto(fotoDe(a.m, a.h)) : null,
+      el("button", { type: "button", class: C.mini, onclick: () => { estado.camaras.alertas.delete(k); pintarCamaras(); } }, tx("camaraAlertaVista"))))) : null;
     caja.replaceChildren(el("h3", { class: "font-semibold" }, el("span", { "aria-hidden": "true", texto: "🎥 " }), tx("camarasCajaTitulo")),
       el("p", { class: C.nota, texto: tx("camarasCajaTexto", { c: v.camaras.codigo }) }),
       el("p", { id: "pi-camaras-mesas", class: "text-sm mt-1", texto: mesas.length ? tx("camarasMesas", { m: mesas.join(", ") }) : tx("camarasNinguna") }),
@@ -3721,7 +3782,8 @@
       lista.append(el("li", { class: "flex flex-wrap items-center gap-2" },
         el("span", {}, el("span", { class: "font-semibold", texto: tx("cortosAviso") + " " }),
           tx(ya && ya !== x.r ? "camaraDistinto" : "camaraConfirmar", { m: verLugar(claveCamara(V.mesaFisica(v, x.mesa - 1), x.tablero)), r: tx("corto_" + x.r), y: ya ? tx("corto_" + ya) : "" })),
-        r === v.rondas.length - 1 ? anotar : null, descartar));
+        r === v.rondas.length - 1 ? anotar : null, descartar,
+        fotoDe(claveCamara(V.mesaFisica(v, x.mesa - 1), x.tablero), x.hora) ? botonFoto(fotoDe(claveCamara(V.mesaFisica(v, x.mesa - 1), x.tablero), x.hora)) : null));
     }
     caja.append(el("section", { id: "pi-confirmar", class: "no-imprimir mb-4 rounded-xl border-2 border-accent-500 p-3", "aria-labelledby": "pi-confirmar-titulo" },
       el("h3", { id: "pi-confirmar-titulo", class: "font-semibold", texto: tx("confirmarTitulo") }),
@@ -4142,6 +4204,9 @@
       el("span", { texto: horaCR(x.hora) + (x.mesa ? " · " + tx("mesa") + " " + V.mesaFisica(t(), x.mesa - 1) : "") + " · " + tx(TEXTO_INCIDENCIA[x.tipo] || TEXTO_INCIDENCIA.otra) +
         (x.articulo ? " (" + V.articuloTexto(x.articulo) + ")" : "") + (x.autor ? " · " + x.autor : "") + (x.jugador ? " · " + tx("incA", { n: nombreDeQuien(x.jugador) }) : "") + ": " + x.texto +
         (x.presenta ? " " + tx("apelacionPresenta", { p: x.presenta }) : "") + (x.tipo === "apelacion" ? " " + tx("apelacionResolucion", { r: x.resolucion || tx("apelacionPendiente") }) : "") }),
+      x.foto && FOTO_VALIDA.test(x.foto) ? el("button", { type: "button", class: C.mini, "data-foto-inc": String(k),
+        onclick: () => verFoto({ h: x.hora, motivo: null, img: x.foto, mesa: x.mesa ? V.mesaFisica(t(), x.mesa - 1) : null, tablero: null }) },
+        el("span", { "aria-hidden": "true", texto: "📷 " }), tx("fotoVer")) : null,
       x.tipo === "apelacion" ? el("button", { type: "button", class: C.mini, onclick: () => resolverApelacion(R, k) }, tx(x.resolucion ? "apelacionCambiar" : "apelacionResolver")) : null,
       x.tipo === "sancion" && x.mesa && !E.esDeEquipos(t()) && R.mesas[x.mesa - 1] && R.mesas[x.mesa - 1].n
         ? el("button", { type: "button", class: C.mini, "data-sancion": k, onclick: () => aplicarSancion(R, k) }, tx(x.aplicada ? "sancionCambiar" : "sancionAplicar")) : null,
