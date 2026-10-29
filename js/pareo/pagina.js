@@ -2952,7 +2952,7 @@
         el("button", { type: "button", id: "pi-ronda-whatsapp", class: C.botonSec, "aria-expanded": "false", "aria-controls": "pi-ronda-compartir",
           onclick: (e) => abrirCompartir($("pi-ronda-compartir"), e.currentTarget, PareoCompartir.textoRonda(t(), r, { idioma, enlace: enlaceVivoActual() })) }, tx("whatsappBoton")),
         ultima ? el("button", { type: "button", id: "pi-adjunto", class: C.botonSec, onclick: () => enlaceAdjunto(r) }, tx("adjuntoBoton")) : null,
-        ultima && !E.esDeEquipos(v) ? el("button", { type: "button", id: "pi-camaras", class: C.botonSec, onclick: pedirCodigoCamaras }, tx("camarasBoton")) : null,
+        ultima ? el("button", { type: "button", id: "pi-camaras", class: C.botonSec, onclick: pedirCodigoCamaras }, tx("camarasBoton")) : null,
         el("button", { type: "button", id: "pi-planillas-anotacion", class: C.botonSec, onclick: () => imprimirPlanillasAnotacion(r) }, tx("anotacionBoton")),
         el("button", { type: "button", id: "pi-imprimir-todo", class: C.botonSec, onclick: () => imprimirTodoDeRonda(r) }, tx("imprimirTodo")),
         ultima ? el("button", { type: "button", class: C.miniPeligro + " px-3 py-2", onclick: () => deshacerRonda(r) }, tx("deshacerRonda")) : null)));
@@ -3175,9 +3175,14 @@
   //    escribió a mano.
   //  - el resultado NUNCA se anota solo: queda en «Resultados para confirmar»
   //    (`R.deCamaras`), con «Anotar» y «Descartar».
-  // Solo la última ronda, solo un torneo individual y publicado (la cámara
+  // Solo la última ronda de un torneo publicado (la cámara
   // elige el torneo publicado por su id), y lo que llega se vuelve a jugar con
   // chess.js (PartidaEnVivo.leer). Mientras esta pestaña esté abierta.
+  // En un torneo por equipos, cada tablero de un encuentro tiene su cámara
+  // (mesa y tablero): su partida va en `m.partidas[k].pgn` y su resultado se
+  // confirma por tablero; el del encuentro sale de los tableros. Esa partida
+  // queda en esta computadora (y va a Lichess si se transmite): el torneo
+  // publicado lleva solo el resultado de cada tablero.
   let cargaVivo = null;
   function cargarVivo() {
     if (window.PartidaEnVivo) return Promise.resolve();
@@ -3232,40 +3237,56 @@
     Avisos.avisar(tx("camarasApagadas"));
   }
   const torneoDeCamaras = () => estado.camaras && (estado.camaras.idTorneo === estado.id ? t() : leerJSON(PREFIJO + estado.camaras.idTorneo, null));
+  // El lugar de una cámara: «5» o, en un torneo por equipos, «5.2» (mesa y
+  // tablero: cada tablero de un encuentro es una partida). Así se guarda; se
+  // muestra «5 · tablero 2».
+  const claveCamara = (mesa, tablero) => String(mesa) + (tablero ? "." + tablero : "");
+  const verLugar = (clave) => String(clave).replace(/\.(\d+)$/, (x, k) => " · " + tx("tableroN", { t: k }).toLowerCase());
+  const ordenLugar = (a, b) => parseFloat(a) - parseFloat(b);
   function recibirDeCamara(p) {
     const v = torneoDeCamaras();
-    if (!v || !v.publicado || !v.rondas.length || E.esDeEquipos(v) || !window.PartidaEnVivo) return;
+    if (!v || !v.publicado || !v.rondas.length || !window.PartidaEnVivo) return;
+    const equipos = E.esDeEquipos(v);
     // La cámara manda casi siempre solo lo nuevo: se pega a la partida que
-    // ya llegó de esa mesa. Si no calza (se perdió un mensaje), se pide entera.
-    const antes = estado.camaras.partidas.get(Number(p.mesa));
+    // ya llegó de esa mesa (y tablero). Si no calza (se perdió un mensaje), se pide entera.
+    const c = estado.camaras;
+    const antes = c.partidas.get(claveCamara(Number(p.mesa), Number(p.tablero) || null));
     if (antes && Number(p.t) < antes.t) return;
     const d = window.PartidaEnVivo.leer(p, antes);
     if (d && d.falta) {
-      const c = estado.camaras, ya = c.pedidas.get(d.mesa) || 0;
-      if (d.mesa && Date.now() - ya >= 3000) { c.pedidas.set(d.mesa, Date.now()); c.canal.send({ type: "broadcast", event: "pedir", payload: { mesa: d.mesa } }); }
+      const k = claveCamara(d.mesa, d.tablero), ya = c.pedidas.get(k) || 0;
+      if (d.mesa && Date.now() - ya >= 3000) { c.pedidas.set(k, Date.now()); c.canal.send({ type: "broadcast", event: "pedir", payload: { mesa: d.mesa, tablero: d.tablero || undefined } }); }
       return;
     }
-    if (!d || d.torneo !== v.publicado.id || d.ronda !== v.rondas.length || !d.mesa) return;
-    estado.camaras.partidas.set(d.mesa, d);
+    if (!d || d.torneo !== v.publicado.id || d.ronda !== v.rondas.length || !d.mesa || !!d.tablero !== equipos) return;
     const R = v.rondas[v.rondas.length - 1];
     const i = R.mesas.findIndex((x, k) => V.mesaFisica(v, k) === d.mesa);
     const m = R.mesas[i];
     if (!m || m.n == null) return;
-    estado.camaras.mesas.set(d.mesa, Date.now());
+    // Dónde va: la mesa, o en un encuentro por equipos, la partida de su tablero.
+    let lugar = m;
+    if (equipos) {
+      E.prepararMesa(v, m);
+      lugar = m.partidas[d.tablero - 1];
+      if (!lugar) return;
+    }
+    const clave = claveCamara(d.mesa, d.tablero);
+    c.partidas.set(clave, d);
+    c.mesas.set(clave, Date.now());
     let cambio = false, repintar = false, aviso = null;
     // La partida: la de la cámara, salvo que la mesa tenga una escrita a mano.
     const pgn = d.juego.history().length ? window.PartidaEnVivo.pgn(d.juego, d.resultado, d.tiempos) : "";
-    if (pgn && (!m.pgn || m.pgnCamara) && m.pgn !== pgn) { m.pgn = pgn; m.pgnCamara = true; cambio = true; }
+    if (pgn && (!lugar.pgn || lugar.pgnCamara) && lugar.pgn !== pgn) { lugar.pgn = pgn; lugar.pgnCamara = true; cambio = true; }
     // El resultado: para confirmar, nunca anotado solo.
     if (d.resultado) {
       R.deCamaras = R.deCamaras || [];
-      const ya = R.deCamaras.find((x) => x.mesa === i + 1 && !x.resuelta);
-      if (m.r === d.resultado) { if (ya) { ya.resuelta = "igual"; cambio = repintar = true; } }
+      const ya = R.deCamaras.find((x) => x.mesa === i + 1 && (x.tablero || null) === (d.tablero || null) && !x.resuelta);
+      if (lugar.r === d.resultado) { if (ya) { ya.resuelta = "igual"; cambio = repintar = true; } }
       else if (!ya || ya.r !== d.resultado) {
         if (ya) ya.resuelta = "otro";
-        R.deCamaras.push({ hora: Date.now(), mesa: i + 1, r: d.resultado });
+        R.deCamaras.push(Object.assign({ hora: Date.now(), mesa: i + 1, r: d.resultado }, d.tablero ? { tablero: d.tablero } : {}));
         cambio = repintar = true;
-        aviso = tx("camaraResultadoLlego", { m: d.mesa, r: tx("corto_" + d.resultado) });
+        aviso = tx("camaraResultadoLlego", { m: verLugar(clave), r: tx("corto_" + d.resultado) });
       }
     }
     // Una jugada nueva no vuelve a pintar la ronda (le movería la página a
@@ -3277,10 +3298,11 @@
     }
     if (enLaRonda && repintar) pintarRondas();
     else {
-      if (enLaRonda) { const b = document.querySelector('#pi-ronda [data-pgn="' + i + '"]'); if (b && m.pgn) b.textContent = "✓ " + tx("pgnBoton"); }
+      if (enLaRonda && !equipos) { const b = document.querySelector('#pi-ronda [data-pgn="' + i + '"]'); if (b && m.pgn) b.textContent = "✓ " + tx("pgnBoton"); }
       pintarCamaras();
     }
     if (aviso) Avisos.avisar(aviso, { tipo: "info" });
+    lichessPronto();
   }
   // La cámara ve algo que no sale de ninguna jugada legal: puede ser una
   // jugada ilegal. Se avisa (sin las casillas: con retraso, eso sería pasar
@@ -3288,15 +3310,139 @@
   // Una vez cada 30 segundos por mesa, como mucho.
   function alertaDeCamara(p) {
     const v = torneoDeCamaras();
-    if (!v || !v.publicado || !v.rondas.length || E.esDeEquipos(v) || p.torneo !== v.publicado.id || Number(p.ronda) !== v.rondas.length) return;
-    const mesa = Number(p.mesa);
+    if (!v || !v.publicado || !v.rondas.length || p.torneo !== v.publicado.id || Number(p.ronda) !== v.rondas.length) return;
+    const mesa = Number(p.mesa), tablero = E.esDeEquipos(v) ? Number(p.tablero) || null : null;
     const R = v.rondas[v.rondas.length - 1];
     if (!R.mesas.some((x, k) => V.mesaFisica(v, k) === mesa)) return;
-    const antes = estado.camaras.alertas.get(mesa);
+    const clave = claveCamara(mesa, tablero);
+    const antes = estado.camaras.alertas.get(clave);
     if (antes && Date.now() - antes < 30000) return;
-    estado.camaras.alertas.set(mesa, Date.now());
-    Avisos.avisar(tx("camaraAlerta", { m: mesa }), { tipo: "error" });
+    estado.camaras.alertas.set(clave, Date.now());
+    Avisos.avisar(tx("camaraAlerta", { m: verLugar(clave) }), { tipo: "error" });
     pintarCamaras();
+  }
+
+  // ---------- Transmitir a Lichess ----------
+  // Las partidas de las mesas de la ronda en juego (las de las cámaras y las
+  // escritas a mano) y sus resultados van a una transmisión de Lichess de
+  // quien organiza: POST /api/broadcast/round/{id}/push, con su clave
+  // («study:write»). La transmisión y cada ronda se crean en Lichess: crearlas
+  // desde acá no se puede (Lichess no le contesta a otra página fuera de
+  // /api/), y pegar el enlace de la ronda es un clic. La clave queda solo en
+  // esta computadora (nunca en el torneo, que se exporta y se publica); qué
+  // ronda de Lichess es cada ronda, por torneo. Se manda como mucho una vez
+  // cada 5 segundos, y una vez por minuto igual (un resultado anotado a mano).
+  // Ver «Transmitir a Lichess» en docs/decisiones/juegos-y-torneos.md.
+  const LICHESS_CLAVE = "pareo_lichess_clave_v1", LICHESS_RONDAS = "pareo_lichess_v1_";
+  const LICHESS_API = "https://lichess.org/api/broadcast/round/";
+  const RESULTADO_PGN = { "1-0": "1-0", "=": "1/2-1/2", "0-1": "0-1", "+-": "1-0", "-+": "0-1" };
+  // El id de una RONDA: el enlace es lichess.org/broadcast/<torneo>/<ronda>/<id>
+  // (el de la transmisión entera, /broadcast/<torneo>/<id>, no sirve para mandar).
+  function rondaLichess(texto) {
+    const x = String(texto || "").trim();
+    if (/^[A-Za-z0-9]{8}$/.test(x)) return x;
+    let u;
+    try { u = new URL(x); } catch (e) { return null; }
+    const p = u.pathname.split("/").filter(Boolean);
+    return u.hostname === "lichess.org" && p[0] === "broadcast" && p.length === 4 && /^[A-Za-z0-9]{8}$/.test(p[3]) ? p[3] : null;
+  }
+  const rondasLichess = (id) => leerJSON(LICHESS_RONDAS + id, {});
+  function pgnParaLichess(v) {
+    const n = v.rondas.length, R = v.rondas[n - 1];
+    const jugador = (lista, id) => (lista || []).find((j) => j.id === id) || {};
+    const encabezado = (k, x) => "[" + k + ' "' + String(x == null ? "" : x).replace(/["\\\n\r]/g, "").slice(0, 120) + '"]';
+    // Solo las jugadas de lo guardado (sin su cabecera ni su resultado) y el resultado anotado.
+    const juego = (cab, pgn, r) => {
+      const jugadas = String(pgn || "").replace(/^(\s*\[[^\]]*\]\s*)+/, "").replace(/\s*(1-0|0-1|1\/2-1\/2|\*)\s*$/, "").trim();
+      const res = RESULTADO_PGN[r] || "*";
+      cab.push(["Result", res]);
+      return cab.map(([k, x]) => encabezado(k, x)).join("\n") + "\n\n" + (jugadas ? jugadas + " " : "") + res;
+    };
+    const juegos = [];
+    R.mesas.forEach((m, i) => {
+      if (m.n == null || m.r === "--") return;
+      const f = V.mesaFisica(v, i);
+      const comun = [["Event", v.nombre || "Pareo Integral"], ["Site", v.ciudad || ""]];
+      if (!E.esDeEquipos(v)) {
+        const b = jugador(v.jugadores, m.b), ne = jugador(v.jugadores, m.n);
+        juegos.push(juego(comun.concat([["Round", n + "." + f], ["White", b.nombre], ["Black", ne.nombre],
+          ["WhiteElo", Number(b.elo) || ""], ["BlackElo", Number(ne.elo) || ""]]).filter(([, x]) => x !== ""), m.pgn, m.r));
+        return;
+      }
+      const eb = jugador(v.jugadores, m.b), en = jugador(v.jugadores, m.n);
+      const copia = Object.assign({}, m);
+      if (!copia.alineacion) copia.alineacion = { b: E.alineacionPorOmision(v, m.b), n: E.alineacionPorOmision(v, m.n) };
+      for (const x of E.tablerosDe(v, copia)) {
+        if (!x.blancas || !x.negras) continue;
+        const eqB = x.bBlancas ? eb : en, eqN = x.bBlancas ? en : eb;
+        const b = jugador(eqB.integrantes, x.blancas), ne = jugador(eqN.integrantes, x.negras);
+        const p = (m.partidas || [])[x.k] || {};
+        juegos.push(juego(comun.concat([["Round", n + "." + f + "." + (x.k + 1)], ["White", b.nombre], ["Black", ne.nombre],
+          ["WhiteTeam", eqB.nombre], ["BlackTeam", eqN.nombre], ["WhiteElo", Number(b.elo) || ""], ["BlackElo", Number(ne.elo) || ""]]).filter(([, y]) => y !== ""), p.pgn, x.r));
+      }
+    });
+    return juegos.slice(0, 100).join("\n\n\n");
+  }
+  let lichessReloj = null;
+  function lichessPronto() {
+    if (lichessReloj || !estado.camaras || !leer(LICHESS_CLAVE)) return;
+    const pasado = Date.now() - ((estado.lichess && estado.lichess.hora) || 0);
+    lichessReloj = setTimeout(() => { lichessReloj = null; mandarALichess(); }, Math.max(0, 5000 - pasado));
+  }
+  setInterval(() => lichessPronto(), 60000);
+  async function mandarALichess() {
+    const v = torneoDeCamaras(), clave = leer(LICHESS_CLAVE);
+    if (!v || !clave || !v.rondas.length) return;
+    const n = v.rondas.length, ronda = rondasLichess(estado.camaras.idTorneo)[n];
+    if (!ronda) { estado.lichess = { falta: n }; pintarCamaras(); return; }
+    const pgn = pgnParaLichess(v);
+    let r = { hora: Date.now(), n, partidas: 0, error: null };
+    try {
+      const res = await fetch(LICHESS_API + ronda.id + "/push", { method: "POST", headers: { Authorization: "Bearer " + clave, "Content-Type": "text/plain" }, body: pgn });
+      const datos = await res.json().catch(() => ({}));
+      if (res.status === 401 || res.status === 403) r.error = tx("lichessClaveMala");
+      else if (!res.ok) r.error = tx("lichessError", { e: (datos && datos.error) || "HTTP " + res.status });
+      else r.partidas = Array.isArray(datos.games) ? datos.games.length : 0;
+    } catch (e) { r.error = tx("lichessError", { e: e.message }); }
+    estado.lichess = r;
+    pintarCamaras();
+  }
+  async function conectarLichess() {
+    const v = t();
+    if (!estado.camaras || estado.camaras.idTorneo !== estado.id) return;
+    const n = v.rondas.length, guardada = !!leer(LICHESS_CLAVE);
+    const res = await Avisos.formulario({ titulo: tx("lichessTitulo"), texto: tx("lichessTexto", { r: n }), aceptar: tx("lichessConectar"), cancelar: tx("cancelar"),
+      campos: [{ nombre: "clave", etiqueta: tx("lichessClave"), valor: "", max: 200, ayuda: guardada ? tx("lichessClaveGuardada") : undefined },
+        { nombre: "ronda", etiqueta: tx("lichessRonda", { r: n }), valor: "", max: 300 }] });
+    if (!res) return;
+    const clave = String(res.clave || "").trim();
+    if (!clave && !guardada) { Avisos.avisar(tx("lichessSinClave"), { tipo: "error" }); return; }
+    const id = rondaLichess(res.ronda);
+    if (!id) { Avisos.avisar(tx("lichessRondaMala"), { tipo: "error" }); return; }
+    if (clave) escribir(LICHESS_CLAVE, clave);
+    const rondas = rondasLichess(estado.id);
+    rondas[n] = { id, url: /^https:\/\/lichess\.org\//.test(String(res.ronda).trim()) ? String(res.ronda).trim() : "https://lichess.org/broadcast/-/-/" + id };
+    escribir(LICHESS_RONDAS + estado.id, JSON.stringify(rondas));
+    await mandarALichess();
+  }
+  function dejarLichess() {
+    try { localStorage.removeItem(LICHESS_CLAVE); localStorage.removeItem(LICHESS_RONDAS + estado.id); } catch (e) { /* sin almacenamiento */ }
+    estado.lichess = null;
+    pintarCamaras();
+    Avisos.avisar(tx("lichessDejado"));
+  }
+  // Lo de Lichess dentro de la caja de las cámaras.
+  function pintarLichess(v) {
+    const clave = leer(LICHESS_CLAVE), n = v.rondas.length, ronda = rondasLichess(estado.id)[n];
+    const lx = estado.lichess;
+    if (!clave) return el("div", { id: "pi-lichess", class: "mt-2" }, el("button", { type: "button", id: "pi-lichess-conectar", class: C.mini, onclick: conectarLichess }, tx("lichessBoton")));
+    const texto = !ronda ? tx("lichessFaltaRonda", { r: n }) : lx && lx.error ? lx.error : lx && lx.hora ? tx("lichessEnviado", { n: lx.partidas, r: lx.n, h: horaCR(lx.hora) }) : "";
+    return el("div", { id: "pi-lichess", class: "mt-2 text-sm" },
+      el("p", { id: "pi-lichess-estado", role: "status", class: lx && lx.error ? "font-semibold" : "", texto }),
+      el("div", { class: "flex flex-wrap gap-2 mt-1" },
+        !ronda ? el("button", { type: "button", id: "pi-lichess-conectar", class: C.mini, onclick: conectarLichess }, tx("lichessRondaBoton", { r: n })) : null,
+        ronda ? el("a", { href: ronda.url, target: "_blank", rel: "noopener", class: C.mini }, tx("lichessVer")) : null,
+        el("button", { type: "button", id: "pi-lichess-dejar", class: C.mini, onclick: dejarLichess }, tx("lichessDejar"))));
   }
 
   // Arriba de la ronda: con qué código se escucha y qué mesas mandan.
@@ -3307,16 +3453,16 @@
     const activas = !!(v.camaras && v.camaras.activo);
     caja.hidden = !activas;
     if (!activas) { caja.replaceChildren(); return; }
-    const mesas = estado.camaras && estado.camaras.idTorneo === estado.id ? [...estado.camaras.mesas.keys()].sort((a, b) => a - b) : [];
+    const mesas = estado.camaras && estado.camaras.idTorneo === estado.id ? [...estado.camaras.mesas.keys()].sort(ordenLugar).map(verLugar) : [];
     const dejar = el("button", { type: "button", id: "pi-camaras-dejar", class: C.mini, onclick: dejarCamaras }, tx("camarasDejar"));
-    const alertas = estado.camaras && estado.camaras.idTorneo === estado.id ? [...estado.camaras.alertas.entries()].sort((a, b) => a[0] - b[0]) : [];
+    const alertas = estado.camaras && estado.camaras.idTorneo === estado.id ? [...estado.camaras.alertas.entries()].sort((a, b) => ordenLugar(a[0], b[0])) : [];
     const listaAlertas = alertas.length ? el("ul", { id: "pi-camaras-alertas", class: "mt-2 space-y-1 text-sm" }, alertas.map(([m, h]) => el("li", { class: "flex flex-wrap items-center gap-2", "data-alerta": String(m) },
-      el("span", { class: "font-semibold", texto: tx("camaraAlertaFila", { m, h: horaCR(h) }) }),
+      el("span", { class: "font-semibold", texto: tx("camaraAlertaFila", { m: verLugar(m), h: horaCR(h) }) }),
       el("button", { type: "button", class: C.mini, onclick: () => { estado.camaras.alertas.delete(m); pintarCamaras(); } }, tx("camaraAlertaVista"))))) : null;
     caja.replaceChildren(el("h3", { class: "font-semibold" }, el("span", { "aria-hidden": "true", texto: "🎥 " }), tx("camarasCajaTitulo")),
       el("p", { class: C.nota, texto: tx("camarasCajaTexto", { c: v.camaras.codigo }) }),
       el("p", { id: "pi-camaras-mesas", class: "text-sm mt-1", texto: mesas.length ? tx("camarasMesas", { m: mesas.join(", ") }) : tx("camarasNinguna") }),
-      listaAlertas, el("div", { class: "mt-2" }, dejar));
+      listaAlertas, estado.camaras && estado.camaras.idTorneo === estado.id ? pintarLichess(v) : null, el("div", { class: "mt-2" }, dejar));
   }
 
   // ---------- El chat con los adjuntos y sus llamadas ----------
@@ -3555,13 +3701,18 @@
     }
     for (const x of deCamaras) {
       const m = R.mesas[x.mesa - 1];
+      // En un encuentro por equipos, el resultado es del tablero; el del encuentro sale de los tableros.
+      const ahora = () => (x.tablero ? (E.prepararMesa(v, m).partidas[x.tablero - 1] || {}).r : m.r);
+      const ya = m ? ahora() : null;
       const anotar = el("button", { type: "button", class: C.mini, "data-camara-anotar": String(x.k) }, tx("camaraAnotar", { r: tx("corto_" + x.r) }));
       anotar.addEventListener("click", async () => {
-        if (m.r && m.r !== x.r) {
-          if (!(await confirmarCambio(r, x.mesa - 1, m.r, x.r))) return;
-          anotarCorreccion(R, x.mesa - 1, m.r, x.r, tx("correccionCamara"));
+        const antes = ahora();
+        if (antes && antes !== x.r) {
+          if (!(await confirmarCambio(r, x.mesa - 1, antes, x.r, x.tablero))) return;
+          anotarCorreccion(R, x.mesa - 1, antes, x.r, tx("correccionCamara"), x.tablero);
         }
-        m.r = x.r;
+        if (x.tablero) { m.partidas[x.tablero - 1].r = x.r; m.r = E.resultadoEncuentro(v, m); }
+        else m.r = x.r;
         R.deCamaras[x.k].resuelta = "anotado";
         guardar(); pintarRondas();
       });
@@ -3569,7 +3720,7 @@
       descartar.addEventListener("click", () => { R.deCamaras[x.k].resuelta = "descartado"; guardar(); pintarRondas(); });
       lista.append(el("li", { class: "flex flex-wrap items-center gap-2" },
         el("span", {}, el("span", { class: "font-semibold", texto: tx("cortosAviso") + " " }),
-          tx(m && m.r && m.r !== x.r ? "camaraDistinto" : "camaraConfirmar", { m: V.mesaFisica(v, x.mesa - 1), r: tx("corto_" + x.r), y: m && m.r ? tx("corto_" + m.r) : "" })),
+          tx(ya && ya !== x.r ? "camaraDistinto" : "camaraConfirmar", { m: verLugar(claveCamara(V.mesaFisica(v, x.mesa - 1), x.tablero)), r: tx("corto_" + x.r), y: ya ? tx("corto_" + ya) : "" })),
         r === v.rondas.length - 1 ? anotar : null, descartar));
     }
     caja.append(el("section", { id: "pi-confirmar", class: "no-imprimir mb-4 rounded-xl border-2 border-accent-500 p-3", "aria-labelledby": "pi-confirmar-titulo" },

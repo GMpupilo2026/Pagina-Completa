@@ -527,6 +527,9 @@ async function cincuenta(browser) {
     const { ctx, pestañas } = await abrirJugadores(browser, srv, paginaDe(modo) + "?room=" + s().id, modo);
     const termino = await hasta(async () => s().status === "finished", 30000);
     await esperar(800);
+    // Como en la repetición: en Duelo, la pestaña que se entera después
+    // muestra un instante «Tablas.» antes del motivo; se le dan hasta 5 s.
+    for (const x of pestañas) await x.page.waitForFunction(() => /50 jugadas/.test((document.getElementById("status-banner") || {}).textContent || ""), null, { timeout: 5000 }).catch(() => {});
     const textos = [];
     for (const x of pestañas) textos.push(await x.page.evaluate(() => document.getElementById("status-banner").textContent).catch(() => ""));
     const errores = pestañas.reduce((a, x) => a.concat(x.errores), []);
