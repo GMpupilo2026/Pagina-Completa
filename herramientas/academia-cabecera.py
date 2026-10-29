@@ -644,7 +644,7 @@ NOMBRE_Y_PADRE = {
     "clases.html": ("Academia", None),
     "admin.html": ("Administración", "clases.html"),
     "admin-jugador.html": ("Base de datos de jugadores", "admin.html"),
-    "pareo-dgt.html": ("Pareo para DGT", "admin.html"),
+    "pareo-dgt.html": ("Pareo para DGT", "clases.html"),
     "gafetes.html": ("Creación de gafetes", "admin.html"),
     "admin-pareo.html": ("Moderación de Pareo Integral", "admin.html"),
     "inscripciones.html": ("Inscripciones a torneos", "admin.html"),

@@ -7275,7 +7275,8 @@ dueño del sitio: las herramientas se venden). La lista de herramientas vive en
 `js/herramientas-arbitraje.js` (la usan la vitrina y la administración); una
 con `disponible: false` sale como «Próximamente», sin enlace. Hoy están
 abiertas con licencia la **selección por parámetros** (`seleccion-codicader.html`),
-los **desempates explicados** (`desempates.html`, ver «Desempates explicados») y
+los **desempates explicados** (`desempates.html`, ver «Desempates explicados»),
+**Pareo para DGT** (`pareo-dgt.html`, ver «Pareo para DGT») y
 los **resultados JDN por comité** (`jdn-comites.html`, ver «Resultados JDN por
 comité»).
 **Pareo Integral** (`pareo.html`, ver «Pareo Integral») está en la vitrina con
@@ -10105,8 +10106,11 @@ Un torneo presencial con tableros electrónicos DGT: el árbitro sube cada ronda
 a chess-results (desde Swiss-Manager, como siempre), y alguien tiene que
 cargar ese mismo pareo en DGT LiveChess, mesa por mesa, y crear la ronda en
 la transmisión de Lichess. En un blitz las rondas salen cada pocos minutos.
-`pareo-dgt.html` (solo quien administra; en `admin.html`, Contenido) lo hace
-solo: vigila chess-results y, apenas sale una ronda, deja el archivo listo
+`pareo-dgt.html` lo hace solo. **Es una herramienta con licencia** (lo pidió
+el dueño: «que todas las herramientas de arbitraje sean con licencia»), en la
+vitrina, ficha Arbitraje, con el id `pareo-dgt` (ver «Herramientas de
+arbitraje»); quien administra la tiene sin licencia y le sale también en
+`admin.html`, Contenido. vigila chess-results y, apenas sale una ronda, deja el archivo listo
 para importar en LiveChess y crea la ronda en Lichess. El código está en
 `js/pareo-dgt.js` y la parte pura (el PGN, qué hacer con cada lectura, los
 formularios de Lichess) en `js/pareo/dgt.js`.
@@ -10121,10 +10125,20 @@ formularios de Lichess) en `js/pareo/dgt.js`.
   Elo y el `WhiteFideId`/`BlackFideId`. **Sin probar todavía contra un
   LiveChess de verdad**: no había uno a mano. Antes del primer torneo, se
   importa una ronda de prueba.
-- **Solo las partidas.** Un bye o un «sin emparejar» no es una partida y no
-  va al archivo. Y cada torneo lleva «Desde la mesa / Hasta la mesa»: lo
-  normal es que solo las primeras mesas tengan tablero electrónico, y las
-  demás no pueden ir al archivo.
+- **Solo las partidas, y solo las mesas que se transmiten.** Un bye o un «sin
+  emparejar» no es una partida y no va al archivo. Y cada torneo lleva «Mesas
+  que van al PGN»: de 100 mesas puede que se transmitan 2 (lo pidió el dueño).
+  Se escriben como los «slices» de Lichess: `1-2`, `1, 5, 12`, `1-4, 10`;
+  vacío son todas. `PareoDGT.leerMesas()` las ordena y junta (`2, 1` es
+  `1-2`), y lo mal escrito se dice con un ejemplo, sin agregar nada. Al
+  principio eran «Desde la mesa / Hasta la mesa», que no servía para mesas
+  salteadas; lo guardado así se convierte solo al abrir la página.
+- **Las mesas se cambian sin quitar el torneo**, en su tarjeta («Cambiar las
+  mesas»): la ronda en curso se vuelve a armar con las nuevas y la bitácora lo
+  dice («con las mesas nuevas»). Por eso `decidir()` compara también las
+  mesas con las que se armó la ronda (`mesasElegidas`), no solo el pareo. Si
+  ninguna de las mesas elegidas tiene partida en la ronda, se avisa: el
+  archivo saldría vacío.
 - **Varios torneos a la vez** (uno por categoría): cada uno con su número de
   chess-results, su rango de mesas y su transmisión en Lichess.
 - **Los archivos van a una carpeta**: con Chrome o Edge en la computadora,
@@ -10152,10 +10166,13 @@ formularios de Lichess) en `js/pareo/dgt.js`.
   páginas fijas, siempre en `s3.chess-results.com`: el pareo (`art=2`, sin
   `rd` es la última ronda emparejada) y la lista inicial (`art=0`, por el
   FIDE-ID, que el pareo no trae). Caché en `pizarras_cache`: 20 s el pareo, 2
-  min la lista. **Solo quien administra** (sesión, aal2 e `is_admin`):
-  recibe un número de torneo cualquiera, no la clave de una sala, y abierta
-  sería un raspador de chess-results gratis para cualquiera. `verify_jwt` en
-  true.
+  min la lista. **Con licencia**: antes de pedir nada pregunta
+  `tengo_herramienta('pareo-dgt')` con el token de quien llama (clave anónima
+  + su `Authorization`), igual que `desempates-chess-results`, así que la
+  verificación en dos pasos la exige la base. Recibe un número de torneo
+  cualquiera, no la clave de una sala: sin candado sería un raspador de
+  chess-results gratis para cualquiera. `verify_jwt` en true. La primera
+  versión era solo para quien administra (sesión, aal2 e `is_admin`).
 - **Cómo se lee el pareo** (comprobado con las páginas reales de tnr1498221 y
   tnr1498218, el 29/10/2026): las blancas por su lugar en el encabezado, las
   negras **desde el final de la fila** (la última celda es su «No.»), así una
@@ -10186,8 +10203,11 @@ formularios de Lichess) en `js/pareo/dgt.js`.
 
 `verificar-pareo-dgt.js` prueba el lector con HTML de la forma real y nombres
 inventados (con y sin club, el bye, el «sin emparejar» roto, la lista con
-FIDE-ID), que la función pregunte por quien administra antes de pedir nada,
-el PGN exacto, qué hacer con cada lectura y, en el navegador con dobles de la
-función y de Lichess: el archivo bajado, el orden torneo → ronda → pareo en
-Lichess, que recargar no cree nada otra vez, el pareo corregido y el Lichess
-caído. Rompiendo el filtro de los byes o la pregunta por `is_admin`, salta.
+FIDE-ID), que la función pregunte por la licencia antes de pedir nada y que
+la herramienta esté en la vitrina sin `gratis`, el PGN exacto, las mesas
+elegidas, qué hacer con cada lectura y, en el navegador con dobles de la
+función y de Lichess: el candado sin licencia, el archivo bajado con solo
+las mesas elegidas, el orden torneo → ronda → pareo en Lichess, que recargar
+no cree nada otra vez, el pareo corregido, cambiar las mesas y el Lichess
+caído. Rompiendo el filtro de los byes, el de las mesas o la pregunta por la
+licencia, salta.

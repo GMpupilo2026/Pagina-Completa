@@ -1,9 +1,11 @@
-/* El código de pareo-dgt.html: «Pareo para DGT».
+/* El código de pareo-dgt.html: «Pareo para DGT», herramienta con licencia
+   (tengo_herramienta('pareo-dgt'); quien administra la tiene sin licencia).
 
    Se sube la ronda a chess-results como siempre; esta página la ve salir
    (Edge Function pareo-dgt, cada 30 s mientras vigila) y:
-   - arma el PGN de la ronda para importar en DGT LiveChess (js/pareo/dgt.js)
-     y lo guarda en la carpeta elegida, o lo baja a Descargas;
+   - arma el PGN de la ronda para importar en DGT LiveChess (js/pareo/dgt.js),
+     solo con las mesas que se transmiten («1-2» de 100), y lo guarda en la
+     carpeta elegida, o lo baja a Descargas;
    - si hay un token de Lichess, crea el torneo de la transmisión (uno por
      torneo de chess-results) y cada ronda, y le empuja el mismo PGN para
      que el pareo se vea antes de la primera jugada. Las jugadas las sube
@@ -32,7 +34,14 @@
     function leerEstado() {
         try {
             const e = JSON.parse(localStorage.getItem(CLAVE) || "{}");
-            return { torneos: Array.isArray(e.torneos) ? e.torneos : [], sinTildes: !!e.sinTildes, ritmo: e.ritmo || "blitz",
+            const torneos = (Array.isArray(e.torneos) ? e.torneos : []).map((t) => {
+                // Antes eran «Desde la mesa» y «Hasta la mesa».
+                if (t.mesas === undefined) t.mesas = t.desde > 1 || t.hasta ? PareoDGT.leerMesas((t.desde || 1) + "-" + (t.hasta || 999)).mesas : "";
+                delete t.desde;
+                delete t.hasta;
+                return t;
+            });
+            return { torneos, sinTildes: !!e.sinTildes, ritmo: e.ritmo || "blitz",
                      visibilidad: e.visibilidad || "public", lugar: e.lugar || "", crearRondas: e.crearRondas !== false };
         } catch (_) {
             return { torneos: [], sinTildes: false, ritmo: "blitz", visibilidad: "public", lugar: "", crearRondas: true };
@@ -280,7 +289,7 @@
         if (datos.torneo && (!t.nombre || t.nombre === "tnr" + t.tnr)) { t.nombre = datos.torneo; guardar(); pintarTorneos(); }
         t.ultima = { ronda: datos.ronda, leido: datos.leido_en, viejo: !!datos.viejo };
         t.rondas = t.rondas || {};
-        const que = PareoDGT.decidir(t, datos);
+        const que = PareoDGT.decidir(t, datos, t.mesas);
         const yaHecha = t.rondas[String(datos.ronda)];
         if (que === "igual" && yaHecha.lichessPendiente && estado.crearRondas && token && usuarioLichess) {
             await intentarLichess(t, datos, yaHecha.pgn);
@@ -290,12 +299,14 @@
             pintarTorneos();
             return;
         }
-        const pgn = PareoDGT.pgn(datos, { desde: t.desde, hasta: t.hasta, sinTildes: estado.sinTildes, sitio: estado.lugar || undefined });
-        const n = PareoDGT.partidas(datos, { desde: t.desde, hasta: t.hasta }).length;
+        const pgn = PareoDGT.pgn(datos, { mesas: t.mesas, sinTildes: estado.sinTildes, sitio: estado.lugar || undefined });
+        const n = PareoDGT.partidas(datos, { mesas: t.mesas }).length;
         const nombre = PareoDGT.nombreArchivo(t.nombre, datos.ronda);
         const anterior = t.rondas[String(datos.ronda)];
-        t.rondas[String(datos.ronda)] = Object.assign({}, anterior, { firma: PareoDGT.firma(datos), pgn, archivo: nombre, mesas: n });
+        const otrasMesas = !!anterior && anterior.firma === PareoDGT.firma(datos);
+        t.rondas[String(datos.ronda)] = Object.assign({}, anterior, { firma: PareoDGT.firma(datos), mesasElegidas: t.mesas || "", pgn, archivo: nombre, mesas: n });
         guardar();
+        if (!n) anotar("«" + t.nombre + "», ronda " + datos.ronda + ": ninguna de las mesas elegidas (" + t.mesas + ") tiene partida en esta ronda. El archivo sale vacío: revisa las mesas del torneo.", { error: true });
         const donde = await guardarArchivo(nombre, pgn);
         const bajarOtra = { texto: "Bajarlo otra vez", accion: () => bajar(nombre, pgn) };
         if (que === "nueva") {
@@ -305,7 +316,7 @@
         } else {
             const botones = [bajarOtra];
             if (anterior && anterior.lichess) botones.push({ texto: "Mandarlo a Lichess", accion: () => reenviarPareo(t, datos.ronda) });
-            anotar("«" + t.nombre + "», ronda " + datos.ronda + ": el pareo cambió en chess-results. Se volvió a armar " + nombre + " (" + donde + "): vuelve a importarlo en LiveChess.", { importante: true, botones });
+            anotar("«" + t.nombre + "», ronda " + datos.ronda + ": " + (otrasMesas ? "con las mesas nuevas (" + (t.mesas || "todas") + ")" : "el pareo cambió en chess-results") + ". Se volvió a armar " + nombre + " (" + donde + "): vuelve a importarlo en LiveChess.", { importante: true, botones });
             document.title = "Pareo cambiado — Pareo para DGT";
         }
         pintarTorneos();
@@ -363,7 +374,7 @@
 
             const datos = document.createElement("p");
             datos.className = "text-sm text-brand-600 dark:text-brand-300 mt-1";
-            const rango = "mesas " + (t.desde || 1) + (t.hasta ? " a " + t.hasta : " en adelante");
+            const rango = t.mesas ? "mesas " + t.mesas : "todas las mesas";
             const ult = t.ultima ? (t.ultima.ronda ? "en chess-results va la ronda " + t.ultima.ronda : "sin ronda emparejada todavía") + (t.ultima.viejo ? " (chess-results no contesta: es lo último que se leyó)" : "") : "sin revisar todavía";
             datos.textContent = "tnr" + t.tnr + " · " + rango + " · " + ult + ".";
 
@@ -383,7 +394,35 @@
                 enlaces.append(li2);
             }
 
-            li.append(arriba, datos, enlaces);
+            // Las mesas se cambian sin quitar el torneo: la ronda en curso se
+            // vuelve a armar con las nuevas.
+            const formMesas = document.createElement("form");
+            formMesas.noValidate = true;
+            formMesas.className = "mt-2 flex flex-wrap items-center gap-2";
+            const idMesas = "mesas-" + t.tnr;
+            const etiqueta = document.createElement("label");
+            etiqueta.htmlFor = idMesas;
+            etiqueta.className = "text-sm text-brand-700 dark:text-brand-200";
+            etiqueta.textContent = "Mesas que van al PGN";
+            const campo = document.createElement("input");
+            campo.id = idMesas;
+            campo.type = "text";
+            campo.autocomplete = "off";
+            campo.spellcheck = false;
+            campo.placeholder = "Todas";
+            campo.value = t.mesas || "";
+            campo.className = "w-40 bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-1 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400";
+            const cambiar = document.createElement("button");
+            cambiar.type = "submit";
+            cambiar.className = "bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-3 py-1 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400";
+            cambiar.textContent = "Cambiar las mesas";
+            const errorMesas = document.createElement("p");
+            errorMesas.setAttribute("role", "alert");
+            errorMesas.className = "w-full text-sm text-red-700 dark:text-red-300";
+            formMesas.append(etiqueta, campo, cambiar, errorMesas);
+            formMesas.addEventListener("submit", (ev) => { ev.preventDefault(); cambiarMesas(t, campo, errorMesas); });
+
+            li.append(arriba, datos, enlaces, formMesas);
             const rondas = Object.keys(t.rondas || {}).map(Number).sort((a, b) => b - a);
             if (rondas.length) {
                 const lista = document.createElement("ul");
@@ -411,20 +450,35 @@
     async function agregarTorneo(ev) {
         ev.preventDefault();
         const tnr = PareoDGT.tnrDe($("tnr").value);
-        const desde = Number($("desde").value) || 1;
-        const hasta = $("hasta").value ? Number($("hasta").value) : null;
+        const elegidas = PareoDGT.leerMesas($("mesas").value);
         $("torneo-error").textContent = "";
         if (!tnr) { $("torneo-error").textContent = "Pega la dirección del torneo en chess-results (…chess-results.com/tnr123456.aspx) o solo su número."; $("tnr").focus(); return; }
         if (estado.torneos.some((t) => t.tnr === tnr)) { $("torneo-error").textContent = "Ese torneo ya está en la lista."; $("tnr").focus(); return; }
-        if (desde < 1 || (hasta !== null && hasta < desde)) { $("torneo-error").textContent = "«Hasta la mesa» tiene que ser igual o mayor que «Desde la mesa»."; $("hasta").focus(); return; }
-        const t = { tnr, nombre: "tnr" + tnr, desde, hasta, rondas: {} };
+        if (elegidas.error) { $("torneo-error").textContent = elegidas.error; $("mesas").focus(); return; }
+        const t = { tnr, nombre: "tnr" + tnr, mesas: elegidas.mesas, rondas: {} };
         estado.torneos.push(t);
         guardar();
         $("tnr").value = "";
+        $("mesas").value = "";
         pintarTorneos();
         anotar("Torneo agregado: tnr" + tnr + ".");
         try { await revisarTorneo(t, { contar: true }); }
         catch (e) { anotar("tnr" + tnr + ": " + e.message, { error: true }); }
+    }
+
+    async function cambiarMesas(t, campo, errorMesas) {
+        const elegidas = PareoDGT.leerMesas(campo.value);
+        errorMesas.textContent = "";
+        if (elegidas.error) { errorMesas.textContent = elegidas.error; campo.focus(); return; }
+        if (elegidas.mesas === (t.mesas || "")) { campo.value = elegidas.mesas; return; }
+        t.mesas = elegidas.mesas;
+        guardar();
+        anotar("«" + t.nombre + "»: desde ahora van al PGN " + (t.mesas ? "las mesas " + t.mesas : "todas las mesas") + ".");
+        pintarTorneos();
+        const nuevo = document.getElementById("mesas-" + t.tnr);
+        if (nuevo) nuevo.focus();
+        try { await revisarTorneo(t); }
+        catch (e) { anotar("«" + t.nombre + "»: " + e.message, { error: true }); }
     }
 
     async function quitarTorneo(t) {
@@ -476,13 +530,16 @@
         if (token) conectar(token);
     }
 
+    // Con licencia, como las demás herramientas de arbitraje: la página
+    // pregunta tengo_herramienta() solo para decidir qué pinta; el candado de
+    // verdad es la Edge Function, que pregunta lo mismo con el token de quien
+    // llama. Quien administra la tiene sin licencia.
     async function init() {
         const { data } = await sb.auth.getSession();
-        const session = data.session;
-        if (!session) { window.location.href = "login.html"; return; }
-        const { data: perfil, error } = await sb.from("profiles").select("is_admin").eq("id", session.user.id).single();
         $("loading").classList.add("hidden");
-        if (error || !perfil || !perfil.is_admin) { $("denied").classList.remove("hidden"); return; }
+        if (!data.session) { window.location.href = "login.html?next=pareo-dgt.html"; return; }
+        const { data: puede, error } = await sb.rpc("tengo_herramienta", { p_herramienta: "pareo-dgt" });
+        if (error || puede !== true) { $("denegado").classList.remove("hidden"); return; }
         $("app").classList.remove("hidden");
         enlazar();
     }

@@ -8,12 +8,15 @@
 // POR QUÉ UNA FUNCIÓN: chess-results no tiene API ni manda cabeceras CORS, así
 // que el navegador no le puede pedir nada. Esto lo pide del lado del servidor.
 //
-// SOLO QUIEN ADMINISTRA: la página es de administración, y la función recibe
-// un número de torneo cualquiera (no la clave de una sala, como
-// sala-jugadores). Para que nadie la use de raspador gratis de chess-results,
-// exige la sesión, el segundo paso (aal2: esta función mira el permiso con la
-// clave de servicio, así que el candado de la base no la alcanza) e is_admin.
-// Y de cada torneo pide solo dos páginas fijas: la lista inicial (art=0) y el
+// SOLO CON LICENCIA, como las demás herramientas de arbitraje (ver
+// «Herramientas de arbitraje» en docs/decisiones/juegos-y-torneos.md): se
+// pregunta a la base `tengo_herramienta('pareo-dgt')` CON EL TOKEN DE QUIEN
+// LLAMA (clave anónima + su Authorization), no con la de servicio, así que
+// pasa por antes_de_cada_pedido() y la verificación en dos pasos la exige la
+// base. Quien administra la tiene sin licencia. La función recibe un número
+// de torneo cualquiera (no la clave de una sala, como sala-jugadores): sin
+// candado sería un raspador de chess-results gratis para cualquiera. Y de
+// cada torneo pide solo dos páginas fijas: la lista inicial (art=0) y el
 // pareo de una ronda (art=2), siempre en s3.chess-results.com.
 //
 // CACHÉ: lo leído se guarda en pizarras_cache (solo la ve el service role),
@@ -45,6 +48,8 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+const ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
+const HERRAMIENTA = "pareo-dgt";
 const SITE_URL = "https://ajedrez-integral.com";
 const CR_BASE = "https://s3.chess-results.com";
 const FRESCO_PAREO_MS = 20_000;
@@ -220,32 +225,20 @@ async function leer(admin: Admin, url: string, frescoMs: number, leerHtml: (h: s
   }
 }
 
-// Tiene la verificación en dos pasos y el token todavía no la pasó (aal1).
-// El token ya lo validó getUser(); acá solo se lee su «aal».
-function sesionAMedias(factores: { status: string }[] | undefined, jwt: string): boolean {
-  if (!(factores ?? []).some((f) => f.status === "verified")) return false;
-  try {
-    const b = jwt.split(".")[1].replace(/-/g, "+").replace(/_/g, "/");
-    return JSON.parse(atob(b + "=".repeat((4 - (b.length % 4)) % 4))).aal !== "aal2";
-  } catch {
-    return true;
-  }
-}
-
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   if (req.method !== "POST") return json({ error: "Método no permitido" }, 405);
 
+  const autorizacion = req.headers.get("Authorization") ?? "";
+  if (!/^Bearer\s+\S+/i.test(autorizacion)) return json({ error: "Inicia sesión para usar la herramienta." }, 401);
+  const comoQuienLlama = createClient(SUPABASE_URL, ANON_KEY, {
+    auth: { persistSession: false },
+    global: { headers: { Authorization: autorizacion } },
+  });
+  const { data: puede, error: errPermiso } = await comoQuienLlama.rpc("tengo_herramienta", { p_herramienta: HERRAMIENTA });
+  if (errPermiso) return json({ error: "No se pudo comprobar tu licencia: " + errPermiso.message }, 403);
+  if (puede !== true) return json({ error: "Tu cuenta no tiene una licencia vigente de «Pareo para DGT»." }, 403);
   const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
-  const jwt = (req.headers.get("Authorization") ?? "").replace(/^Bearer\s+/i, "");
-  if (!jwt) return json({ error: "Falta la sesión." }, 401);
-  const { data: usuario, error: quienError } = await admin.auth.getUser(jwt);
-  if (quienError || !usuario?.user) return json({ error: "La sesión no es válida." }, 401);
-  if (sesionAMedias(usuario.user.factors, jwt)) {
-    return json({ error: "Falta el segundo paso de la verificación: vuelve a entrar y escribe el código de tu app." }, 401);
-  }
-  const { data: perfil } = await admin.from("profiles").select("is_admin").eq("id", usuario.user.id).maybeSingle();
-  if (!perfil?.is_admin) return json({ error: "Solo quien administra puede leer pareos de chess-results." }, 403);
 
   let body: Record<string, unknown>;
   try {

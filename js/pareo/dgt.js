@@ -13,14 +13,15 @@
  *     pareo se vea en Lichess antes de la primera jugada.
  *
  * Solo van las mesas donde se juega: un bye o un «sin emparejar» no es una
- * partida. Y se puede acotar a las mesas con tablero electrónico («de la 1 a
- * la 10»): lo normal es que solo las primeras lo tengan.
+ * partida. Y solo las que se eligen: de 100 mesas puede que se transmitan
+ * dos («1-2», «1, 5, 12», «1-4, 10»); vacío son todas.
  *
  *   PareoDGT.tnrDe(texto)                    → "1498221" | null
- *   PareoDGT.partidas(datos, {desde, hasta}) → las mesas con dos jugadores, en el rango
+ *   PareoDGT.leerMesas("1-2, 5")             → { mesas: "1-2, 5", lista: [[1,2],[5,5]] } | { error }
+ *   PareoDGT.partidas(datos, {mesas})        → las mesas con dos jugadores, de las elegidas
  *   PareoDGT.pgn(datos, opciones)            → el texto del PGN
  *   PareoDGT.firma(datos)                    → quién juega con quién en cada mesa (para ver si cambió)
- *   PareoDGT.decidir(guardado, datos)        → "esperar" | "nueva" | "cambio" | "igual"
+ *   PareoDGT.decidir(guardado, datos, mesas) → "esperar" | "nueva" | "cambio" | "igual"
  *   PareoDGT.nombreArchivo(nombre, ronda)    → "torneo-blitz-ronda-3.pgn"
  *   PareoDGT.formTorneo({...}) / formRonda({...}) → [[campo, valor]] para URLSearchParams
  *   PareoDGT.inicioRonda("2026.09.27", "3:00pm") → la hora de la ronda (ms), en hora de Costa Rica
@@ -46,12 +47,39 @@
     return String(s == null ? "" : s).replace(/[\r\n]+/g, " ").replace(/\\/g, "\\\\").replace(/"/g, '\\"').trim();
   }
 
+  // Las mesas elegidas, escritas como en Lichess («slices»): números y rangos
+  // separados por comas. Vacío: todas. Devuelve el texto ordenado y sin
+  // repetir (así dos formas de escribir lo mismo no cuentan como un cambio).
+  const MAX_MESA = 999;
+  function leerMesas(texto) {
+    const t = String(texto == null ? "" : texto).trim();
+    if (!t || /^todas$/i.test(t)) return { mesas: "", lista: [] };
+    const tramos = [];
+    for (const parte of t.split(/[,;\s]+/).filter(Boolean)) {
+      const m = parte.match(/^(\d{1,3})(?:-(\d{1,3}))?$/);
+      if (!m) return { error: "«" + parte + "» no es una mesa ni un rango. Escribe, por ejemplo, 1-2 o 1, 5, 12." };
+      const a = Number(m[1]), b = m[2] ? Number(m[2]) : a;
+      if (a < 1 || b > MAX_MESA) return { error: "Las mesas van de 1 a " + MAX_MESA + "." };
+      if (b < a) return { error: "En «" + parte + "» el rango va al revés: escribe " + b + "-" + a + "." };
+      tramos.push([a, b]);
+    }
+    tramos.sort((x, y) => x[0] - y[0] || x[1] - y[1]);
+    const lista = [];
+    for (const [a, b] of tramos) {
+      const ult = lista[lista.length - 1];
+      if (ult && a <= ult[1] + 1) ult[1] = Math.max(ult[1], b);
+      else lista.push([a, b]);
+    }
+    return { mesas: lista.map(([a, b]) => (a === b ? String(a) : a + "-" + b)).join(", "), lista };
+  }
+
   function partidas(datos, opciones) {
     const o = opciones || {};
-    const desde = Number(o.desde) || 1;
-    const hasta = Number(o.hasta) || Infinity;
+    const elegidas = leerMesas(o.mesas);
+    const lista = elegidas.lista || [];
+    const entra = (n) => !lista.length || lista.some(([a, b]) => n >= a && n <= b);
     return ((datos && datos.mesas) || [])
-      .filter((m) => m.negras && m.blancas && m.mesa >= desde && m.mesa <= hasta)
+      .filter((m) => m.negras && m.blancas && entra(m.mesa))
       .sort((a, b) => a.mesa - b.mesa);
   }
 
@@ -94,13 +122,15 @@
   // torneo. `guardado`: { rondas: { "3": { firma } } }.
   //   "esperar": todavía no hay ronda emparejada (ninguna mesa con dos jugadores).
   //   "nueva":   una ronda que todavía no tiene archivo.
-  //   "cambio":  la misma ronda, pero con otro pareo (se corrigió en chess-results).
+  //   "cambio":  la misma ronda, pero con otro pareo (se corrigió en chess-results)
+  //              o con otras mesas elegidas: hay que volver a armar el archivo.
   //   "igual":   nada nuevo.
-  function decidir(guardado, datos) {
+  function decidir(guardado, datos, mesas) {
     if (!datos || !datos.ronda || !partidas(datos).length) return "esperar";
     const ya = guardado && guardado.rondas && guardado.rondas[String(datos.ronda)];
     if (!ya) return "nueva";
-    return ya.firma === firma(datos) ? "igual" : "cambio";
+    const elegidas = leerMesas(mesas).mesas || "";
+    return ya.firma === firma(datos) && (ya.mesasElegidas || "") === elegidas ? "igual" : "cambio";
   }
 
   function slug(s) {
@@ -147,7 +177,7 @@
     return Date.UTC(Number(f[1]), Number(f[2]) - 1, Number(f[3]), horas + 6, Number(h[2]));
   }
 
-  const api = { tnrDe, quitarTildes, partidas, pgn, firma, decidir, nombreArchivo, formTorneo, formRonda, inicioRonda };
+  const api = { tnrDe, quitarTildes, leerMesas, partidas, pgn, firma, decidir, nombreArchivo, formTorneo, formRonda, inicioRonda };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else raiz.PareoDGT = api;
 })(typeof self !== "undefined" ? self : this);

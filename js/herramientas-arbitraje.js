@@ -293,6 +293,23 @@
             ],
         },
         {
+            id: "pareo-dgt",
+            tema: "arbitraje",
+            emoji: "📡",
+            nombre: "Pareo para DGT: de chess-results a DGT LiveChess y Lichess",
+            corto: "Pareo para DGT",
+            href: "pareo-dgt.html",
+            disponible: true,
+            resumen: "Para transmitir un torneo con tableros electrónicos DGT: se sube la ronda a chess-results como siempre y la herramienta arma sola el archivo para importar en DGT LiveChess y crea la ronda en la transmisión de Lichess.",
+            puntos: [
+                "Vigila chess-results cada 30 segundos: apenas sale una ronda, deja el PGN con el pareo listo para importar en LiveChess, en la carpeta que elijas.",
+                "Solo las mesas que se transmiten: de 100 mesas, las 2 que tienen tablero electrónico (o las que elijas, como «1, 5, 12»).",
+                "Varios torneos a la vez, por ejemplo uno por categoría, cada uno con sus mesas.",
+                "Crea el torneo y cada ronda en Lichess con los nombres, el Elo y el ID FIDE del pareo, con tu propia cuenta de Lichess.",
+                "Si el pareo se corrige en chess-results, vuelve a armar el archivo y te avisa. Ninguna ronda se crea dos veces.",
+            ],
+        },
+        {
             id: "variacion-elo",
             tema: "arbitraje",
             emoji: "📈",

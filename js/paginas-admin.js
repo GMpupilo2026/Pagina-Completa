@@ -58,7 +58,6 @@
             { emoji: "🛡️", label: "Moderación de Pareo Integral", desc: "Los reportes de la lista pública de torneos, el sello «Verificado» de los organizadores y los torneos ocultos", href: "admin-pareo.html", zona: "contenido" },
             { emoji: "🎥", label: "Varias cámaras en una computadora", desc: "Prueba: todas las cámaras de una computadora a la vez, cada una en su mesa del torneo", href: "camaras.html", zona: "contenido" },
             { emoji: "📷", label: "Cámara que lee el tablero", desc: "Prueba: el celular encima de un tablero de verdad lee las casillas y anota las jugadas", href: "camara-tablero.html", zona: "contenido" },
-            { emoji: "♟️", label: "Pareo para DGT", desc: "Cada ronda de chess-results, lista para importar en DGT LiveChess, y su transmisión en Lichess", href: "pareo-dgt.html", zona: "contenido" },
             { emoji: "🔎", label: "Jugadores de chess-results", desc: "Busca a una persona y su historial de torneos", href: "admin-jugador.html", zona: "contenido" },
             { emoji: "🪪", label: "Creación de gafetes", desc: "Los gafetes de un evento desde un Excel: diseño con vista previa y PDF listo para la imprenta", href: "gafetes.html", zona: "contenido" },
             { emoji: "🏅", label: "Selección por parámetros", desc: "La selección CODICADER desde chess-results, en vivo ronda a ronda", href: "seleccion-codicader.html", zona: "contenido" },
@@ -69,6 +68,7 @@
         ] },
         { title: "Herramientas", tiles: [
             { emoji: "♟️", label: "Pareo Integral", desc: "Empareja un torneo con el Sistema Holandés de FIDE: rondas, resultados, desempates y el TRF. Gratis", href: "pareo.html", zona: "contenido" },
+            { emoji: "📡", label: "Pareo para DGT", desc: "Cada ronda de chess-results, lista para importar en DGT LiveChess, y su transmisión en Lichess", href: "pareo-dgt.html", zona: "contenido" },
             { emoji: "⚖️", label: "Desempates explicados", desc: "Recalcula la clasificación de un torneo de chess-results y explica, paso a paso, por qué cada persona queda arriba de la otra", href: "desempates.html", zona: "contenido" },
             { emoji: "🧰", label: "Todas las herramientas", desc: "La vitrina pública: lo que se vende con licencia y lo que viene", href: "herramientas-arbitraje.html", zona: "contenido" },
         ] },

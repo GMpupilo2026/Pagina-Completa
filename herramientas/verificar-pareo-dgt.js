@@ -9,7 +9,9 @@
  *    dos jugadores por tablero);
  *  - recargar la página y que cree otra vez la ronda en Lichess;
  *  - un pareo corregido en chess-results que no se vuelve a armar;
- *  - la función que lee chess-results abierta a cualquiera.
+ *  - una mesa que no se transmite metida en el archivo (de 100 mesas, se
+ *    transmiten 2);
+ *  - la herramienta, que es con licencia, abierta a cualquiera.
  *
  * Sin navegador: el lector de la Edge Function (supabase/functions/pareo-dgt,
  * sacado del .ts y sin tipos, como verificar-pizarra-chess-results.js) contra
@@ -109,9 +111,12 @@ function pruebaFuncion() {
     [null, null, null, null]);
 
   const pos = (re) => ts.search(re);
-  const admin = pos(/if\s*\(!perfil\?\.is_admin\)\s*return/);
-  cierto("solo quien administra: sesión, segundo paso (aal2) e is_admin ANTES de pedir nada a chess-results",
-    pos(/auth\.getUser\(jwt\)/) >= 0 && pos(/sesionAMedias\(usuario\.user\.factors, jwt\)/) >= 0 && admin >= 0 && admin < pos(/await Promise\.all\(\[/));
+  const licencia = pos(/if\s*\(puede !== true\)\s*return json/);
+  cierto("con licencia: pregunta tengo_herramienta('pareo-dgt') con el token de quien llama ANTES de pedir nada a chess-results",
+    /const HERRAMIENTA = "pareo-dgt";/.test(ts) && /createClient\(SUPABASE_URL, ANON_KEY, \{[\s\S]*?Authorization: autorizacion/.test(ts) &&
+      /comoQuienLlama\.rpc\("tengo_herramienta", \{ p_herramienta: HERRAMIENTA \}\)/.test(ts) && licencia >= 0 && licencia < pos(/await Promise\.all\(\[/));
+  const enVitrina = (fs.readFileSync(path.join(RAIZ, "js", "herramientas-arbitraje.js"), "utf8").match(/id: "pareo-dgt",[\s\S]*?\},\n/) || [""])[0];
+  cierto("está en la vitrina de herramientas, en Arbitraje, con licencia (no gratis)", /tema: "arbitraje"/.test(enVitrina) && /href: "pareo-dgt\.html"/.test(enVitrina) && !/gratis: true/.test(enVitrina));
   cierto("pide siempre a s3.chess-results.com, solo art=0 y art=2", /const CR_BASE = "https:\/\/s3\.chess-results\.com";/.test(ts) &&
     (ts.match(/&art=\d/g) || []).every((x) => x === "&art=2" || x === "&art=0"));
   cierto("guarda lo leído en pizarras_cache (no se le pide a chess-results en cada revisión)", /from\("pizarras_cache"\)\.upsert/.test(ts));
@@ -131,7 +136,11 @@ const DATOS = {
 function pruebaModulo() {
   console.log("\n=== El PGN y Lichess (js/pareo/dgt.js) ===");
   igual("solo van las mesas con dos jugadores, en orden de mesa", DGT.partidas(DATOS).map((m) => m.mesa), [1, 2]);
-  igual("y solo las del rango con tablero electrónico", DGT.partidas(DATOS, { desde: 2, hasta: 5 }).map((m) => m.mesa), [2]);
+  igual("y solo las elegidas", [DGT.partidas(DATOS, { mesas: "2-5" }).map((m) => m.mesa), DGT.partidas(DATOS, { mesas: "1, 3" }).map((m) => m.mesa)], [[2], [1]]);
+  igual("las mesas se escriben como en Lichess, y se ordenan y juntan",
+    ["", "1-2", "5, 1-2 ,3", "2,1,1", "1-2;7", "Todas"].map((t) => DGT.leerMesas(t).mesas), ["", "1-2", "1-3, 5", "1-2", "1-2, 7", ""]);
+  cierto("lo que no es una mesa se dice, con un ejemplo", ["a", "0", "10-4", "1000"].every((t) => DGT.leerMesas(t).error),
+    ["a", "0", "10-4", "1000"].map((t) => DGT.leerMesas(t).error).join(" | "));
 
   const pgn = DGT.pgn(DATOS, { sitio: "Liceo de Prueba" });
   igual("el PGN de la ronda: una partida sin jugadas por mesa", pgn, [
@@ -145,7 +154,7 @@ function pruebaModulo() {
     /\[Black "Nunez Brenes, Dora"\]/.test(DGT.pgn(DATOS, { sinTildes: true })));
   igual("sin fecha, la de PGN para «no se sabe»", (DGT.pgn(Object.assign({}, DATOS, { fecha: "" })).match(/\[Date "[^"]*"\]/) || [])[0], '[Date "????.??.??"]');
 
-  const hecho = { rondas: { 3: { firma: DGT.firma(DATOS) } } };
+  const hecho = { rondas: { 3: { firma: DGT.firma(DATOS), mesasElegidas: "" } } };
   igual("qué hacer: sin ronda emparejada, esperar", DGT.decidir({ rondas: {} }, { ronda: 1, mesas: [DATOS.mesas[2]] }), "esperar");
   igual("una ronda sin archivo es nueva", DGT.decidir({ rondas: {} }, DATOS), "nueva");
   igual("la misma ronda leída otra vez no hace nada", DGT.decidir(hecho, DATOS), "igual");
@@ -153,6 +162,7 @@ function pruebaModulo() {
   corregida.mesas[0].negras = { no: 11, titulo: "", nombre: "Otra Persona, Iris", elo: 1500, fide: "" };
   igual("si chess-results cambia el pareo de esa ronda, se avisa", DGT.decidir(hecho, corregida), "cambio");
   igual("la ronda siguiente es nueva", DGT.decidir(hecho, Object.assign({}, DATOS, { ronda: 4 })), "nueva");
+  igual("si se eligen otras mesas, hay que volver a armarla", [DGT.decidir(hecho, DATOS, "1-2"), DGT.decidir({ rondas: { 3: { firma: DGT.firma(DATOS), mesasElegidas: "1-2" } } }, DATOS, "2, 1")], ["cambio", "igual"]);
 
   igual("el nombre del archivo", DGT.nombreArchivo("Torneo Blitz Sub-12 — Peñas", 3), "torneo-blitz-sub-12-penas-ronda-3.pgn");
   igual("la hora de la ronda, en hora de Costa Rica (UTC−6)",
@@ -190,7 +200,7 @@ window.SUPABASE_ANON_KEY = "anon-falsa";
       onAuthStateChange: () => ({ data: { subscription: { unsubscribe() {} } } }),
     },
     from: (t) => b((CFG.tablas || {})[t] || []),
-    rpc: () => b([]),
+    rpc: (n) => ({ then(res, rej) { return Promise.resolve(n === "tengo_herramienta" ? { data: !!CFG.licencia, error: null } : { data: null, error: null }).then(res, rej); } }),
     channel: () => ({ on() { return this; }, subscribe() { return this; }, track() { return Promise.resolve(); }, presenceState: () => ({}) }),
     removeChannel: () => {},
   };
@@ -203,14 +213,14 @@ function respuesta(ronda, mesas) {
   return { tnr: "777777", url: "https://chess-results.com/tnr777777.aspx?lan=2&art=2", torneo: "Blitz de Prueba", ronda, fecha: "2026.11.07", hora: "3:00pm", mesas, leido_en: "2026-11-07T20:59:00Z" };
 }
 
-async function abrir(ctx, yo, admin) {
+async function abrir(ctx, yo, licencia) {
   const page = await ctx.newPage();
   const errores = [];
   page.on("pageerror", (e) => errores.push(String(e)));
   await page.route("**/fonts.googleapis.com/**", (r) => r.fulfill({ status: 200, contentType: "text/css", body: "" }));
   await page.route("**/fonts.gstatic.com/**", (r) => r.abort());
   await page.route("**/js/supabase-client.js", (r) => r.fulfill({ status: 200, contentType: "application/javascript",
-    body: clienteFalso({ yo, tablas: { profiles: [{ id: yo, is_admin: admin }] } }) }));
+    body: clienteFalso({ yo, licencia }) }));
   await page.goto(BASE + "/pareo-dgt.html", { waitUntil: "networkidle" });
   return { page, errores };
 }
@@ -243,20 +253,23 @@ async function pruebaPagina(browser) {
 
   {
     const { page } = await abrir(ctx, "u-alumno", false);
-    igual("quien no administra ve el candado y no la herramienta", [await vis(page, "#denied"), await vis(page, "#app")], [true, false]);
+    igual("sin licencia se ve el candado, con el camino para activarla, y no la herramienta",
+      [await vis(page, "#denegado"), await vis(page, "#app"), await page.getAttribute("#denegado a", "href")], [true, false, "herramientas-arbitraje.html#activar"]);
     await page.close();
   }
 
   const { page, errores } = await abrir(ctx, "u-admin", true);
-  igual("quien administra ve la herramienta", await vis(page, "#app"), true);
+  igual("con licencia se ve la herramienta", await vis(page, "#app"), true);
 
   // Un torneo que todavía no tiene pareo.
   await page.fill("#tnr", "https://otro-sitio.com/tnr777777.aspx");
   await page.click("#form-torneo button[type=submit]");
   cierto("una dirección que no es de chess-results no se agrega, y se dice por qué", pedidosFuncion.length === 0 && /chess-results/.test(await page.textContent("#torneo-error")));
   await page.fill("#tnr", "https://chess-results.com/tnr777777.aspx?lan=2");
-  await page.fill("#desde", "1");
-  await page.fill("#hasta", "1");
+  await page.fill("#mesas", "1-2, x");
+  await page.click("#form-torneo button[type=submit]");
+  cierto("unas mesas mal escritas no se agregan, y se dice por qué", pedidosFuncion.length === 0 && /«x» no es una mesa/.test(await page.textContent("#torneo-error")));
+  await page.fill("#mesas", "1");
   await page.click("#form-torneo button[type=submit]");
   await page.waitForFunction(() => /todavía no hay ronda emparejada/.test(document.getElementById("bitacora").textContent));
   igual("se le pide a la función el número del torneo, con la sesión", [pedidosFuncion[0].body, pedidosFuncion[0].headers.authorization], [{ tnr: "777777" }, "Bearer t"]);
@@ -280,7 +293,7 @@ async function pruebaPagina(browser) {
   const archivo = await bajada;
   const contenido = fs.readFileSync(await archivo.path(), "utf8");
   igual("sale la ronda: se baja el archivo con su nombre", archivo.suggestedFilename(), "blitz-de-prueba-ronda-3.pgn");
-  igual("con solo las mesas del rango (la 1)", contenido, DGT.pgn(respuesta(3, DATOS.mesas), { desde: 1, hasta: 1 }));
+  igual("con solo la mesa elegida (la 1)", contenido, DGT.pgn(respuesta(3, DATOS.mesas), { mesas: "1" }));
   await page.waitForFunction(() => /creada en Lichess con su pareo/.test(document.getElementById("bitacora").textContent));
   const rutas = lichess.map((l) => l.metodo + " " + l.ruta).filter((r) => !/api\/account/.test(r));
   igual("en Lichess: el torneo, la ronda y el pareo empujado, en ese orden", rutas,
@@ -331,6 +344,15 @@ async function pruebaPagina(browser) {
   await page.waitForFunction(() => /ronda 4: creada en Lichess/.test(document.getElementById("bitacora").textContent));
   igual("si Lichess falla, la ronda se crea en la revisión siguiente, sin volver a bajar el archivo",
     lichess.slice(n).map((l) => l.ruta).filter((r) => r !== "/api/account"), ["/broadcast/TOUR0001/new", "/api/broadcast/round/RND00002/push"]);
+
+  // Cambiar las mesas de un torneo ya agregado: la ronda en curso se vuelve a armar.
+  const conDos = page.waitForEvent("download");
+  await page.fill("#mesas-777777", "2, 1");
+  await page.click("#mesas-777777 + button");
+  const archivo3 = fs.readFileSync(await (await conDos).path(), "utf8");
+  igual("al cambiar las mesas, la ronda en curso se vuelve a armar con las nuevas", (archivo3.match(/\[Board "\d+"\]/g) || []), ['[Board "1"]', '[Board "2"]']);
+  await page.waitForFunction(() => /con las mesas nuevas \(1-2\)/.test(document.getElementById("bitacora").textContent));
+  igual("y el campo queda escrito en orden", await page.inputValue("#mesas-777777"), "1-2");
 
   // Vigilar.
   await page.click("#btn-vigilar");
