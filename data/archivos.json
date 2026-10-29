@@ -7850,13 +7850,13 @@
         "ruta": "cursos/recursos/formacion-ajedrez/03-apendices-normativa-y-emparejamiento-material.pdf",
         "titulo": "Material de estudio",
         "tipo": "material",
-        "kb": 31
+        "kb": 33
        },
        {
         "ruta": "cursos/recursos/formacion-ajedrez/03-apendices-normativa-y-emparejamiento-ejercicios.pdf",
         "titulo": "Ejercicios",
         "tipo": "ejercicios",
-        "kb": 7
+        "kb": 11
        }
       ]
      },
@@ -13653,7 +13653,7 @@
         "ruta": "cursos/recursos/formacion-ajedrez/03-apendices-normativa-y-emparejamiento.pptx",
         "titulo": "Presentación",
         "tipo": "presentacion",
-        "kb": 5342
+        "kb": 6139
        }
       ]
      },
@@ -19081,7 +19081,7 @@
   ]
  },
  "imagenes": {
-  "total": 1124,
+  "total": 1133,
   "grupos": [
    {
     "carpeta": "entreno/img/facil",
@@ -25243,59 +25243,113 @@
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-03/56.webp",
       "titulo": "56",
       "tipo": "otro",
-      "kb": 64
+      "kb": 69
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-03/57.webp",
       "titulo": "57",
       "tipo": "otro",
-      "kb": 69
+      "kb": 55
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-03/58.webp",
       "titulo": "58",
       "tipo": "otro",
-      "kb": 75
+      "kb": 60
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-03/59.webp",
       "titulo": "59",
       "tipo": "otro",
-      "kb": 79
+      "kb": 47
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-03/60.webp",
       "titulo": "60",
       "tipo": "otro",
-      "kb": 78
+      "kb": 55
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-03/61.webp",
       "titulo": "61",
       "tipo": "otro",
-      "kb": 86
+      "kb": 38
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-03/62.webp",
       "titulo": "62",
       "tipo": "otro",
-      "kb": 58
+      "kb": 42
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-03/63.webp",
       "titulo": "63",
       "tipo": "otro",
-      "kb": 60
+      "kb": 70
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-03/64.webp",
       "titulo": "64",
       "tipo": "otro",
-      "kb": 65
+      "kb": 64
      },
      {
       "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-03/65.webp",
       "titulo": "65",
+      "tipo": "otro",
+      "kb": 69
+     },
+     {
+      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-03/66.webp",
+      "titulo": "66",
+      "tipo": "otro",
+      "kb": 58
+     },
+     {
+      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-03/67.webp",
+      "titulo": "67",
+      "tipo": "otro",
+      "kb": 75
+     },
+     {
+      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-03/68.webp",
+      "titulo": "68",
+      "tipo": "otro",
+      "kb": 79
+     },
+     {
+      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-03/69.webp",
+      "titulo": "69",
+      "tipo": "otro",
+      "kb": 78
+     },
+     {
+      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-03/70.webp",
+      "titulo": "70",
+      "tipo": "otro",
+      "kb": 86
+     },
+     {
+      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-03/71.webp",
+      "titulo": "71",
+      "tipo": "otro",
+      "kb": 58
+     },
+     {
+      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-03/72.webp",
+      "titulo": "72",
+      "tipo": "otro",
+      "kb": 60
+     },
+     {
+      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-03/73.webp",
+      "titulo": "73",
+      "tipo": "otro",
+      "kb": 65
+     },
+     {
+      "ruta": "cursos/recursos/formacion-ajedrez/presentaciones/clase-03/74.webp",
+      "titulo": "74",
       "tipo": "otro",
       "kb": 37
      }

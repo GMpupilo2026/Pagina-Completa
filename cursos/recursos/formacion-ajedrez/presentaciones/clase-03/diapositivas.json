@@ -24,7 +24,7 @@
   },
   {
    "titulo": "Cómo se clasifica un ritmo",
-   "texto": "Para clasificar un control de tiempo se supone una partida de 60 jugadas: se suma el tiempo base más 60 veces el incremento. Con 10 minutos o menos por jugador es relámpago; con más de 10 y menos de 60 es rápidas; con 60 o más es ritmo clásico. 3 min + 2 s: 3 + 2 = 5 minutos, relámpago. 15 min + 10 s: 15 + 10 = 25 minutos, rápidas. 90 min + 30 s: 90 + 30 = 120 minutos, clásico. En rápidas y relámpago rigen las Leyes con los cambios que fijan sus apéndices.",
+   "texto": "Para clasificar un control de tiempo se supone una partida de 60 jugadas: se suma el tiempo base más 60 veces el incremento. Con menos de 10 minutos por jugador es relámpago; de 10 a menos de 60 es rápidas; con 60 o más es ritmo clásico. 3 min + 2 s: 3 + 2 = 5 minutos, relámpago. 15 min + 10 s: 15 + 10 = 25 minutos, rápidas. 90 min + 30 s: 90 + 30 = 120 minutos, clásico. En rápidas y relámpago rigen las Leyes con los cambios que fijan sus apéndices.",
    "imagen": "05.webp"
   },
   {
@@ -140,7 +140,7 @@
   },
   {
    "titulo": "Caso 1 · Decisión",
-   "texto": "Caso 1, decisión: 5 + 60 × 3 s = 5 + 3 = 8 minutos: es relámpago, porque no pasa de 10 minutos.",
+   "texto": "Caso 1, decisión: 5 + 60 × 3 s = 5 + 3 = 8 minutos: es relámpago, porque es menos de 10 minutos.",
    "imagen": "28.webp"
   },
   {
@@ -151,7 +151,7 @@
   },
   {
    "titulo": "Caso 2 · Decisión",
-   "texto": "Caso 2, decisión: 45 + 15 = 60 minutos. Las rápidas son de más de 10 y menos de 60, así que este ritmo ya es clásico.",
+   "texto": "Caso 2, decisión: 45 + 15 = 60 minutos. Las rápidas van de 10 a menos de 60, así que este ritmo ya es clásico.",
    "imagen": "30.webp"
   },
   {
@@ -238,109 +238,155 @@
   },
   {
    "titulo": "Práctica · Cálculo de desempates y construcción de un cuadro de emparejamiento",
-   "texto": "Práctica: Cálculo de desempates y construcción de un cuadro de emparejamiento. Con los resultados de un torneo simulado de 8 jugadores, cada participante calcula la tabla final aplicando Buchholz y Sonneborn-Berger. Con una lista de 12 jugadores ficticios, cada participante construye la primera ronda bajo sistema suizo y, luego, la calendarización equivalente en round robin.",
+   "texto": "Práctica: Cálculo de desempates y construcción de un cuadro de emparejamiento. Con los resultados de un torneo simulado de 8 jugadores, cada participante calcula la tabla final aplicando Buchholz y Sonneborn-Berger. Con una lista de 12 jugadores ficticios, cada participante construye la primera ronda bajo sistema suizo. Al final, paso a paso, cada participante elige cómo se acomodan los números de un todos contra todos de 6 jugadores, ronda por ronda.",
    "imagen": "46.webp"
   },
   {
-   "titulo": "Ejercicio 1 de 9",
+   "titulo": "Ejercicio 1 de 17",
    "texto": "Ejercicio 1: Clasifica estos ritmos: a) 10 min sin incremento; b) 10 min + 5 s; c) 25 min + 10 s; d) 60 min sin incremento.",
    "imagen": "47.webp"
   },
   {
-   "titulo": "Ejercicio 2 de 9",
+   "titulo": "Ejercicio 2 de 17",
    "texto": "Ejercicio 2: Torneo de todos contra todos con 6 jugadores (A a F). A: ½ con B, ganó a C, D y F, perdió con E. B: ½ con A, perdió con C, ganó a D, E y F. C: 3 puntos. D: 2½. E: 1½. F: 1. A y B terminan con 3½. ¿Quién queda primero por Sonneborn-Berger?",
    "imagen": "48.webp"
   },
   {
-   "titulo": "Ejercicio 3 de 9",
+   "titulo": "Ejercicio 3 de 17",
    "texto": "Ejercicio 3: En un suizo a 5 rondas, los rivales de Carla terminaron con 4, 3, 3, 2 y ½ puntos, y los de Diego con 3½, 3, 3, 2½ y 1. Ambos tienen 4 puntos. Calcula Buchholz y Buchholz con corte 1.",
    "imagen": "49.webp"
   },
   {
-   "titulo": "Ejercicio 4 de 9",
+   "titulo": "Ejercicio 4 de 17",
    "texto": "Ejercicio 4: Con la Normativa JDE 2026, completa para ajedrez: sistema y ritmo en una Etapa Regional con 12 inscritos por modalidad, mínimo de estudiantes al iniciar una ronda por equipos, quién fija los desempates y hasta cuándo puede presentarse un estudiante.",
    "imagen": "50.webp"
   },
   {
-   "titulo": "Ejercicio 5 de 9",
+   "titulo": "Ejercicio 5 de 17",
    "texto": "Ejercicio 5: Etapa Nacional de ajedrez con siete inscritos en el torneo individual abierto. ¿Qué sistema dice la Normativa? ¿Qué debe hacer la persona árbitra principal?",
    "imagen": "51.webp"
   },
   {
-   "titulo": "Ejercicio 6 de 9",
+   "titulo": "Ejercicio 6 de 17",
    "texto": "Ejercicio 6: Con 12 jugadores ordenados por rating (1 a 12) y el 1 con blancas por sorteo, escribe la primera ronda del suizo.",
    "imagen": "52.webp"
   },
   {
-   "titulo": "Ejercicio 7 de 9",
+   "titulo": "Ejercicio 7 de 17",
    "texto": "Ejercicio 7: ¿Cuántas rondas y cuántas partidas tiene un todos contra todos con 10 jugadores? ¿Y con 9?",
    "imagen": "53.webp"
   },
   {
-   "titulo": "Ejercicio 8 de 9",
+   "titulo": "Ejercicio 8 de 17",
    "texto": "Ejercicio 8: Escribe el calendario completo de un todos contra todos de 4 jugadores con la tabla de Berger.",
    "imagen": "54.webp"
   },
   {
-   "titulo": "Ejercicio 9 de 9",
+   "titulo": "Ejercicio 9 de 17",
    "texto": "Ejercicio 9: Un suizo tiene 11 jugadores. ¿Qué pasa en cada ronda con el número impar?",
    "imagen": "55.webp"
   },
   {
+   "titulo": "Ejercicio 10 de 17",
+   "texto": "Ejercicio 10: Paso 1 de 8 · Seis jugadores en un todos contra todos. ¿Cómo se reparten los números del 1 al 6? A) Por orden de llegada a la sala B) Se sortean antes de empezar y no cambian C) Cambian cada ronda, según los puntos D) Por orden alfabético, en cada ronda",
+   "imagen": "56.webp"
+  },
+  {
+   "titulo": "Ejercicio 11 de 17",
+   "texto": "Ejercicio 11: Paso 2 de 8 · Con 6 jugadores, ¿cuántas rondas y cuántas partidas tiene el torneo? A) 6 rondas y 15 partidas B) 5 rondas y 30 partidas C) 6 rondas y 36 partidas D) 5 rondas y 15 partidas",
+   "imagen": "57.webp"
+  },
+  {
+   "titulo": "Ejercicio 12 de 17",
+   "texto": "Ejercicio 12: Paso 3 de 8 · En la tabla de Berger, ¿qué número se queda fijo mientras los demás van girando? A) El 6, el número más alto B) El 1, el primero de la lista C) Ninguno: todos giran igual D) El de la persona con más rating",
+   "imagen": "58.webp"
+  },
+  {
+   "titulo": "Ejercicio 13 de 17",
+   "texto": "Ejercicio 13: Paso 4 de 8 · Ronda 1 (el primero de cada pareja lleva blancas). ¿Cuáles son las parejas? A) 1–2, 3–4, 5–6 B) 6–1, 5–2, 4–3 C) 1–6, 2–5, 3–4 D) 1–4, 2–5, 3–6",
+   "imagen": "59.webp"
+  },
+  {
+   "titulo": "Ejercicio 14 de 17",
+   "texto": "Ejercicio 14: Paso 5 de 8 · Ronda 2: ¿con quién juega el 6 y con qué color? A) Con el 4, y el 6 lleva blancas B) Con el 2, y el 6 lleva negras C) Con el 1 otra vez, ahora con blancas D) Con el 5, y el 6 lleva negras",
+   "imagen": "60.webp"
+  },
+  {
+   "titulo": "Ejercicio 15 de 17",
+   "texto": "Ejercicio 15: Paso 6 de 8 · ¿Cuál es la ronda 2 completa? A) 4–6, 3–5, 2–1 B) 6–4, 5–3, 1–2 C) 6–4, 1–3, 2–5 D) 6–2, 1–3, 4–5",
+   "imagen": "61.webp"
+  },
+  {
+   "titulo": "Ejercicio 16 de 17",
+   "texto": "Ejercicio 16: Paso 7 de 8 · ¿Cuál es la ronda 3? Fíjate en quién lleva blancas. A) 6–2, 1–3, 5–4 B) 2–6, 1–3, 4–5 C) 3–6, 4–2, 5–1 D) 2–6, 3–1, 4–5",
+   "imagen": "62.webp"
+  },
+  {
+   "titulo": "Ejercicio 17 de 17",
+   "texto": "Ejercicio 17: Paso 8 de 8 · Se inscriben 5 jugadores y no 6. ¿Qué se hace con los números? A) Se juega un suizo, porque es impar B) Se agrega un descanso como 6: quien lo enfrenta, descansa C) Se juegan 4 rondas y nadie descansa D) El 5 juega dos partidas en la ronda 1",
+   "imagen": "63.webp"
+  },
+  {
    "titulo": "Ejercicios: respuestas",
-   "texto": "1. a) 10 minutos: relámpago (10 o menos). b) 10 + 5 = 15: rápidas. c) 25 + 10 = 35: rápidas. d) 60: clásico. 2. A: venció a C (3), D (2½) y F (1) = 6½, más la mitad de B (3½) = 1¾. Total 8¼. B: venció a D (2½), E (1½) y F (1) = 5, más la mitad de A = 1¾. Total 6¾. Queda primero A. (El encuentro directo no los separaba: empataron entre sí.) 3. Carla: Buchholz 12½; corte 1 (se quita ½) = 12. Diego: Buchholz 13; corte 1 (se quita 1) = 12. Si el primer desempate es Buchholz, gana Diego; si fuera Buchholz con corte 1, siguen empatados y se pasa al siguiente criterio. 4. Suizo de al menos cinco rondas, con un ritmo mínimo de 10 min + 2 s (66.2.a); al menos dos frente al tablero (66.2.f); la persona árbitra principal, en el congresillo, con al menos tres criterios (66.4); hasta que su reloj caiga a cero (art. 30).",
-   "imagen": "56.webp",
+   "texto": "1. a) 10 minutos: rápidas (de 10 a menos de 60). b) 10 + 5 = 15: rápidas. c) 25 + 10 = 35: rápidas. d) 60: clásico. 2. A: venció a C (3), D (2½) y F (1) = 6½, más la mitad de B (3½) = 1¾. Total 8¼. B: venció a D (2½), E (1½) y F (1) = 5, más la mitad de A = 1¾. Total 6¾. Queda primero A. (El encuentro directo no los separaba: empataron entre sí.) 3. Carla: Buchholz 12½; corte 1 (se quita ½) = 12. Diego: Buchholz 13; corte 1 (se quita 1) = 12. Si el primer desempate es Buchholz, gana Diego; si fuera Buchholz con corte 1, siguen empatados y se pasa al siguiente criterio. 4. Suizo de al menos cinco rondas, con un ritmo mínimo de 10 min + 2 s (66.2.a); al menos dos frente al tablero (66.2.f); la persona árbitra principal, en el congresillo, con al menos tres criterios (66.4); hasta que su reloj caiga a cero (art. 30).",
+   "imagen": "64.webp",
    "notas": "Repasar en plenaria; cada respuesta con su artículo."
   },
   {
    "titulo": "Ejercicios: respuestas (continuación)",
    "texto": "5. La Normativa prevé suizo con más de siete y todos contra todos con seis o menos (66.2.d y 66.2.e): no dice nada para exactamente siete. La persona árbitra principal lo plantea en el congresillo y deja el acuerdo escrito en el acta, que obliga a todas las delegaciones (art. 34). 6. 1–7, 8–2, 3–9, 10–4, 5–11, 12–6 (el primero de cada pareja lleva blancas). 7. 10 jugadores: 9 rondas y 45 partidas. 9 jugadores: se agrega un descanso, 9 rondas y 36 partidas, con un jugador libre por ronda. 8. Ronda 1: 1–4, 2–3. Ronda 2: 4–3, 1–2. Ronda 3: 2–4, 3–1 (el primero de cada pareja lleva blancas). 9. Un jugador queda libre (bye) y recibe un punto sin color. No puede recibirlo quien ya lo tuvo ni quien ya ganó por incomparecencia.",
-   "imagen": "57.webp",
+   "imagen": "65.webp",
+   "notas": "Repasar en plenaria; cada respuesta con su artículo."
+  },
+  {
+   "titulo": "Ejercicios: respuestas (continuación)",
+   "texto": "10. Se sortean antes de empezar y cada jugador conserva su número todo el torneo: de él sale su rival y su color en cada ronda. 11. 5 rondas (6 jugadores menos 1) y 15 partidas (6 × 5 ÷ 2). 12. El 6, el más alto: cambia de color cada ronda y los demás giran a su alrededor. 13. 1–6, 2–5, 3–4: el 1 con el último y, hacia el centro, el 2 con el 5 y el 3 con el 4. 14. 6–4: el 6 juega con blancas contra el 4. El número fijo cambia de color cada ronda. 15. 6–4, 5–3, 1–2. 16. 2–6, 3–1, 4–5. Siguen la ronda 4 (6–5, 1–4, 2–3) y la 5 (3–6, 4–2, 5–1). 17. Se agrega un descanso como número 6 y se usa la misma tabla: en la ronda 1 descansa el 1, que le tocaba al 6.",
+   "imagen": "66.webp",
    "notas": "Repasar en plenaria; cada respuesta con su artículo."
   },
   {
    "titulo": "Quiz de la sesión",
    "texto": "1. ¿Cuál es el criterio de desempate que suma los puntajes finales de los rivales enfrentados? 2. ¿Qué distingue principalmente al ajedrez relámpago del ajedrez rápido? 3. ¿Cómo se clasifica un ritmo que tiene incremento? 4. ¿En qué tipo de torneo es habitual el Sonneborn-Berger? 5. Empate en un primer lugar que clasifica. ¿Qué se propone como primer desempate? 6. En rápidas, ¿es obligatorio anotar las jugadas? 7. En ajedrez relámpago sin supervisión adecuada, ¿quién reclama la caída de una bandera?",
-   "imagen": "58.webp",
+   "imagen": "67.webp",
    "notas": "Un minuto por pregunta, y después las respuestas."
   },
   {
    "titulo": "Quiz de la sesión (continuación)",
    "texto": "8. Sin supervisión adecuada, pasadas 10 jugadas de cada bando, ¿se puede reclamar por un tablero mal orientado? 9. Si la Normativa JDE 2026 no regula algo del ajedrez, ¿qué se aplica? 10. El encuentro directo no separa a dos jugadores empatados porque no se enfrentaron entre sí. ¿Qué corresponde? 11. En relámpago, un jugador da mate y un instante después cae su propia bandera. ¿Quién gana? 12. En la Etapa Regional de la JDE se juega a 10 minutos más 2 segundos. ¿Qué tipo de partida es para la FIDE?",
-   "imagen": "59.webp",
+   "imagen": "68.webp",
    "notas": "Un minuto por pregunta, y después las respuestas."
   },
   {
    "titulo": "Quiz de la sesión (continuación)",
    "texto": "13. Según la Normativa JDE 2026, ¿cuántos estudiantes de un equipo deben estar frente al tablero al iniciar cada ronda? 14. ¿Qué sistema resulta más adecuado cuando hay muchos participantes y tiempo limitado? 15. En el sistema todos contra todos (round robin), ¿qué característica lo define? 16. ¿Cómo se ordena la lista inicial de un suizo? 17. Publicado el emparejamiento, ¿en qué único caso se puede cambiar? 18. ¿Qué recibe en un suizo quien queda libre por número impar? 19. ¿Cuántas partidas tiene un todos contra todos de 8 jugadores?",
-   "imagen": "60.webp",
+   "imagen": "69.webp",
    "notas": "Un minuto por pregunta, y después las respuestas."
   },
   {
    "titulo": "Quiz de la sesión (continuación)",
    "texto": "20. ¿Puede la diferencia entre las partidas que un jugador tuvo con blancas y con negras llegar a ser de 3? 21. ¿Puede un jugador recibir el mismo color tres veces seguidas en un suizo? 22. Un jugador falta a una ronda sin avisar. ¿Qué se asume? 23. ¿Por qué el desempate habitual en un todos contra todos es el Sonneborn-Berger y no el Buchholz? 24. ¿Puede el árbitro cambiar un emparejamiento ya publicado para favorecer a un estudiante?",
-   "imagen": "61.webp",
+   "imagen": "70.webp",
    "notas": "Un minuto por pregunta, y después las respuestas."
   },
   {
    "titulo": "Quiz: respuestas",
    "texto": "1. Buchholz. 2. El control de tiempo asignado a cada jugador. 3. Con el tiempo base más 60 veces el incremento por jugada. 4. En los de todos contra todos (round robin). 5. Un desempate jugado: dos rápidas y, si hace falta, armagedón. 6. No, salvo que el reglamento del evento lo exija; el jugador conserva sus reclamos. 7. El propio jugador: pausa el reloj y avisa a la persona árbitra. Si no puede dar mate con ninguna serie de jugadas legales, son tablas (A.5.3). 8. No, ya no se admite ese reclamo.",
-   "imagen": "62.webp"
+   "imagen": "71.webp"
   },
   {
    "titulo": "Quiz: respuestas (continuación)",
    "texto": "9. Primero las reglas de la Federación Costarricense de Ajedrez y, después, las de la FIDE (art. 66). 10. Pasar al siguiente desempate de la lista anunciada en el reglamento del torneo. 11. Gana quien dio mate: el mate termina la partida en el momento en que se produce. 12. Rápida: 10 + 60 × 2 s = 12 minutos (apéndice A.1). 13. Al menos dos (art. 66.2.f). 14. El sistema suizo. 15. Cada jugador se enfrenta una vez a todos los demás participantes. 16. Por rating, de mayor a menor, con criterios para los empates. 17. Si hace jugar dos veces al mismo par de jugadores.",
-   "imagen": "63.webp"
+   "imagen": "72.webp"
   },
   {
    "titulo": "Quiz: respuestas (continuación)",
    "texto": "18. Un punto, sin color asignado. 19. 28 partidas, en 7 rondas. 20. No: no puede superar 2 ni bajar de -2. 21. No, salvo las excepciones que se permiten en la última ronda. 22. Se considera retirado, salvo que explique su ausencia antes de que se publique el siguiente emparejamiento. 23. Porque en un todos contra todos cada jugador enfrenta a los mismos rivales que los demás, así que el Buchholz no distingue a nadie. 24. No, está prohibido alterar el emparejamiento correcto para favorecer a alguien.",
-   "imagen": "64.webp"
+   "imagen": "73.webp"
   },
   {
    "titulo": "Tarea y cierre",
    "texto": "Tarea para la próxima sesión: Analizar un caso de inscripción o de categorización de una persona estudiante según la normativa JDE vigente y, a partir de los resultados de la ronda 1 de un torneo simulado, elaborar el emparejamiento de la ronda 2 bajo sistema suizo. ¿Dudas? Este es el momento. Gracias por tu participación.",
-   "imagen": "65.webp"
+   "imagen": "74.webp"
   }
  ]
 }

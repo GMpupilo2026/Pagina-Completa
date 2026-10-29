@@ -97,8 +97,20 @@ function losDatos() {
     p1.laminas.slice(1, 3).flatMap((l) => l.preguntas).map((q) => [q.tipo, q.opciones.length]).filter(([t, n]) => t === "opciones" && n === 5).length, 8);
   igual("Estación 1: la planilla, de diez filas", p1.laminas[0].preguntas.map((q) => [q.tipo, q.filas]), [["planilla", 10]]);
   igual("Estaciones 3 y 4: una pregunta de texto por lámina, siete láminas", p1.laminas.slice(3).map((l) => l.preguntas.map((q) => q.tipo)), Array(7).fill(["texto"]));
-  igual("sesiones 2 a 6: un ejercicio, una caja de texto", json.practicas.slice(1).flatMap((p) => p.laminas.filter((l) => /^Ejercicio/.test(l.titulo)))
-    .every((l) => l.preguntas.length === 1 && l.preguntas[0].tipo === "texto"), true);
+  // Un ejercicio de escribir trae su caja de texto; uno de elegir (los pasos del
+  // todos contra todos de la Sesión 3), sus opciones, las mismas del curso y en
+  // su orden, y nunca la correcta (va en la clave).
+  const lecciones = JSON.parse(fs.readFileSync(path.join(RAIZ, "herramientas/cursos/formacion-ajedrez.json"), "utf8")).bloques.flatMap((b) => b.lecciones);
+  const malEjercicio = [];
+  json.practicas.slice(1).forEach((p) => p.laminas.filter((l) => /^Ejercicio/.test(l.titulo)).forEach((l) => {
+    const ej = lecciones[p.n - 1].ejercicios[+/^Ejercicio (\d+)/.exec(l.titulo)[1] - 1];
+    const q = l.preguntas[0];
+    const ok = l.preguntas.length === 1 && (ej.opciones
+      ? q.tipo === "opciones" && q.opciones.map((o) => o.t).join("|") === ej.opciones.join("|") && q.opciones.every((o) => Object.keys(o).sort().join() === "t,v")
+      : q.tipo === "texto");
+    if (!ok) malEjercicio.push(p.deck + " " + l.n);
+  }));
+  igual("sesiones 2 a 6: un ejercicio, una caja de texto (o sus opciones, si es de elegir)", malEjercicio, []);
   const claves = generador.armar().claves;
   cierto("cada pregunta tiene su clave, y cada clave su pregunta", claves.length === preguntas.length
     && preguntas.every((x) => claves.some((c) => c.deck === x.deck && c.lamina === x.lamina && c.pregunta === x.q.id && c.tipo === x.q.tipo)));

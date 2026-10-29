@@ -95,6 +95,15 @@ def escapar(t):
 
 
 # ------------------------------------------------------------------ portada
+def enunciado(e):
+    """El enunciado de un ejercicio con sus opciones, si es de elegir («A) … B) …»).
+    La correcta va aparte (`correcta`, índice): la práctica en vivo la corrige la
+    base y la respuesta escrita sigue en `respuesta`."""
+    if not e.get("opciones"):
+        return e["enunciado"]
+    return e["enunciado"] + " " + " ".join("%s) %s" % ("ABCD"[k], o) for k, o in enumerate(e["opciones"]))
+
+
 def portada(curso):
     base = open(MOLDE_PORTADA, encoding="utf-8").read()
     total = sum(len(b["lecciones"]) for b in curso["bloques"])
@@ -290,7 +299,7 @@ def ejercicios_html(leccion):
                         % (escapar(e["posicion"]), escapar(e["fen"])))
         partes.append('<details class="f100-sol"><summary>Ejercicio %d — ver respuesta</summary>'
                       '<p>%s</p>%s<p><strong>Respuesta:</strong> %s</p></details>'
-                      % (i, escapar(e["enunciado"]), posicion, escapar(e["respuesta"])))
+                      % (i, escapar(enunciado(e)), posicion, escapar(e["respuesta"])))
     return "".join(partes)
 
 
@@ -708,9 +717,9 @@ def presentacion(curso, leccion, destino):
             caja(d, 6.7, 1.5, W - 7.2, 5.3, texto, tamano_que_cabe(texto, W - 7.2, 5.2, ancho, 30, 20) or 20, OSCURO_T,
                  vertical=MSO_ANCHOR.MIDDLE)
         else:
-            d = nueva(titulo, None, None, "Ejercicio %d: %s" % (i, e["enunciado"]))
+            d = nueva(titulo, None, None, "Ejercicio %d: %s" % (i, enunciado(e)))
             figura(d, 0.5, 1.4, W - 1.0, H - 2.15, "F0F4F8")
-            caja(d, 0.9, 1.6, W - 1.8, H - 2.6, e["enunciado"], tamano_que_cabe([e["enunciado"]], W - 1.8, H - 2.7, ancho, 32, 20) or 20,
+            caja(d, 0.9, 1.6, W - 1.8, H - 2.6, enunciado(e), tamano_que_cabe([enunciado(e)], W - 1.8, H - 2.7, ancho, 32, 20) or 20,
                  OSCURO_T, vertical=MSO_ANCHOR.MIDDLE)
     cuerpo_y_lista("Ejercicios: respuestas", None, None,
                    ["%d. %s" % (i, e["respuesta"]) for i, e in enumerate(ejercicios, 1)], None,
@@ -895,7 +904,7 @@ def material_pdf(curso, leccion, destino):
     f.append(Paragraph(escapar(leccion["practica"]), s_txt))
     f.append(Paragraph("EJERCICIOS RESUELTOS", s_sec))
     for i, e in enumerate(leccion["ejercicios"], 1):
-        f.append(Paragraph("%d. %s" % (i, escapar(e["enunciado"])), s_preg))
+        f.append(Paragraph("%d. %s" % (i, escapar(enunciado(e))), s_preg))
         if e.get("fen"):
             f.append(Paragraph(escapar(e["posicion"]), s_txt))
             f.append(Paragraph("FEN: " + escapar(e["fen"]), s_fuente))
@@ -946,7 +955,7 @@ def ejercicios_pdf(curso, leccion, destino):
     f.append(Paragraph(escapar(leccion["practica_titulo"]), s_ej))
     f.append(Paragraph(escapar(leccion["practica"]), s_txt))
     for i, e in enumerate(leccion["ejercicios"], 1):
-        f.append(Paragraph("Ejercicio %d. %s" % (i, escapar(e["enunciado"])), s_ej))
+        f.append(Paragraph("Ejercicio %d. %s" % (i, escapar(enunciado(e))), s_ej))
         if e.get("fen"):
             f.append(Paragraph(escapar(e["posicion"]), s_txt))
             f.append(Paragraph("FEN: " + escapar(e["fen"]), s_txt))

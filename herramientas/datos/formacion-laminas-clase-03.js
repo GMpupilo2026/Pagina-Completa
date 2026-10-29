@@ -16,6 +16,14 @@
 // y se leen de ahí (los vuelve a calcular verificar-formacion-desempates.js).
 const TEMAS = require("../cursos/formacion-ajedrez.json").bloques.flatMap((b) => b.lecciones).find((l) => l.archivo === "03-apendices-normativa-y-emparejamiento").temas;
 const cuadro = (inicio) => TEMAS.find((t) => t.titulo.startsWith(inicio)).cuadro;
+// Los pasos del todos contra todos (ejercicios 10 a 17) también salen del curso:
+// la pregunta y sus opciones; la correcta no se dibuja.
+const EJERCICIOS = require("../cursos/formacion-ajedrez.json").bloques.flatMap((b) => b.lecciones).find((l) => l.archivo === "03-apendices-normativa-y-emparejamiento").ejercicios;
+const paso = (n) => {
+  const e = EJERCICIOS[n - 1], m = /^(Paso \d+ de \d+) · (.*)$/.exec(e.enunciado);
+  return { tipo: "filas", k: "Todos contra todos de 6 · " + m[1] + " · elige una", p: m[2], letras: true,
+    items: e.opciones.map((t) => ({ t })), delCurso: true };
+};
 
 module.exports = [
   // 1
@@ -49,8 +57,8 @@ module.exports = [
     ["3:50", "Cierre"] ] },
   // 5
   { tipo: "tarjetas", k: "Tiempo base + 60 × incremento", cols: 3, compacto: true, items: [
-    { ic: "⚡", t: "Relámpago", s: "10 min o menos" },
-    { ic: "🐇", t: "Rápidas", s: "más de 10 y menos de 60" },
+    { ic: "⚡", t: "Relámpago", s: "menos de 10 min" },
+    { ic: "🐇", t: "Rápidas", s: "de 10 a menos de 60" },
     { ic: "🐢", t: "Clásico", s: "60 min o más" },
     { t: "3 + 2 s → 5 min" },
     { t: "15 + 10 s → 25 min" },
@@ -187,7 +195,7 @@ module.exports = [
     t: "Un torneo escolar se anuncia a 5 min + 3 s por jugada." },
   // 28
   { tipo: "frase", k: "Caso 1 · ¿Rápidas o relámpago?", ic: "⚡",
-    t: "Relámpago", s: "5 + 60 × 3 s = 8 minutos: no pasa de 10." },
+    t: "Relámpago", s: "5 + 60 × 3 s = 8 minutos: menos de 10." },
   // 29
   { tipo: "frase", k: "Caso 2 · Justo en el límite", ic: "⚖️",
     t: "Un torneo se anuncia a 45 min + 15 s." },
@@ -302,19 +310,45 @@ module.exports = [
     t: "Un suizo tiene 11 jugadores",
     s: "¿Qué pasa en cada ronda con el número impar?" },
   // 56
+  paso(10),
+  // 57
+  paso(11),
+  // 58
+  paso(12),
+  // 59
+  paso(13),
+  // 60
+  paso(14),
+  // 61
+  paso(15),
+  // 62
+  paso(16),
+  // 63
+  paso(17),
+  // 64
   { tipo: "filas", k: "Ejercicios 1 a 4", numerar: true, items: [
-    { t: "Relámpago, rápidas, rápidas, clásico", s: "10 · 15 · 35 · 60 minutos" },
+    { t: "Rápidas, rápidas, rápidas, clásico", s: "10 · 15 · 35 · 60 minutos" },
     { t: "Primero A: 8¼ contra 6¾", s: "el encuentro directo no los separaba" },
     { t: "Buchholz: Diego 13, Carla 12½", s: "con corte 1, 12 y 12: siguiente criterio" },
     { t: "Suizo de 5+ rondas a 10 min + 2 s", s: "2 al tablero · desempates: el principal · hasta reloj en cero" } ] },
-  // 57
+  // 65
   { tipo: "filas", k: "Ejercicios 5 a 9", items: [
     { ic: "5️⃣", t: "Siete no está previsto", s: "se acuerda en el congresillo y va al acta", a: "art. 34" },
     { ic: "6️⃣", t: "1–7, 8–2, 3–9, 10–4, 5–11, 12–6" },
     { ic: "7️⃣", t: "10: 9 rondas y 45 partidas", s: "9: con descanso, 9 rondas y 36 partidas" },
     { ic: "8️⃣", t: "1–4, 2–3 · 4–3, 1–2 · 2–4, 3–1" },
     { ic: "9️⃣", t: "Uno libre: 1 punto sin color", s: "nunca a quien ya lo tuvo o ganó por incomparecencia" } ] },
-  // 58
+  // 66
+  { tipo: "tarjetas", k: "Ejercicios 10 a 17 · todos contra todos de 6", cols: 4, compacto: true, items: [
+    { t: "10. Se sortean", s: "y no cambian" },
+    { t: "11. 5 rondas", s: "y 15 partidas" },
+    { t: "12. El 6, fijo", s: "cambia de color" },
+    { t: "13. 1–6, 2–5, 3–4" },
+    { t: "14. 6–4", s: "el 6 con blancas" },
+    { t: "15. 6–4, 5–3, 1–2" },
+    { t: "16. 2–6, 3–1, 4–5" },
+    { t: "17. Un descanso como 6", s: "descansa el 1 en la ronda 1" } ] },
+  // 67
   { tipo: "filas", k: "Preguntas 1 a 7", cols: 2, items: [
     { t: "1. ¿Qué desempate suma los puntos de los rivales?" },
     { t: "2. ¿Qué distingue al relámpago del rápido?" },
@@ -323,14 +357,14 @@ module.exports = [
     { t: "5. Empate en un primer lugar que clasifica: ¿qué se propone?" },
     { t: "6. En rápidas, ¿es obligatorio anotar?" },
     { t: "7. Relámpago sin supervisión: ¿quién reclama la bandera?" } ] },
-  // 59
+  // 68
   { tipo: "filas", k: "Preguntas 8 a 12", items: [
     { t: "8. Sin supervisión, tras 10 jugadas: ¿se reclama un tablero mal orientado?" },
     { t: "9. Si la Normativa no lo regula, ¿qué se aplica?" },
     { t: "10. Empatados que no se enfrentaron: ¿qué corresponde?" },
     { t: "11. Da mate y al instante cae su bandera: ¿quién gana?" },
     { t: "12. Regional a 10 min + 2 s: ¿qué es para la FIDE?" } ] },
-  // 60
+  // 69
   { tipo: "filas", k: "Preguntas 13 a 19", cols: 2, items: [
     { t: "13. ¿Cuántos de un equipo, al tablero al iniciar?" },
     { t: "14. Muchos participantes y poco tiempo: ¿qué sistema?" },
@@ -339,14 +373,14 @@ module.exports = [
     { t: "17. ¿Cuándo se cambia un emparejamiento publicado?" },
     { t: "18. ¿Qué recibe quien queda libre?" },
     { t: "19. ¿Cuántas partidas, todos contra todos con 8?" } ] },
-  // 61
+  // 70
   { tipo: "filas", k: "Preguntas 20 a 24", items: [
     { ic: "⚖️", t: "20. ¿Puede la diferencia de colores llegar a 3?" },
     { ic: "🎨", t: "21. ¿Puede recibir el mismo color tres veces seguidas?" },
     { ic: "🚪", t: "22. Falta sin avisar: ¿qué se asume?" },
     { ic: "🏆", t: "23. Todos contra todos: ¿por qué Sonneborn-Berger y no Buchholz?" },
     { ic: "🚫", t: "24. ¿Se puede cambiar un emparejamiento para favorecer a alguien?" } ] },
-  // 62
+  // 71
   { tipo: "tarjetas", k: "Respuestas 1 a 8", cols: 4, compacto: true, numerar: true, items: [
     { t: "Buchholz" },
     { t: "El control de tiempo" },
@@ -356,7 +390,7 @@ module.exports = [
     { t: "No", s: "salvo que el reglamento lo exija" },
     { t: "El propio jugador", s: "sin mate posible: tablas", a: "A.5.3" },
     { t: "No", s: "ya no se admite" } ] },
-  // 63
+  // 72
   { tipo: "tarjetas", k: "Respuestas 9 a 17", cols: 3, compacto: true, items: [
     { t: "9. FCA y luego FIDE", a: "art. 66" },
     { t: "10. El siguiente desempate" },
@@ -367,7 +401,7 @@ module.exports = [
     { t: "15. Todos juegan con todos" },
     { t: "16. Por rating, de mayor a menor" },
     { t: "17. Si repite un par" } ] },
-  // 64
+  // 73
   { tipo: "dos", k: "Respuestas 18 a 24",
     izq: { t: "Suizo", items: [
       ["18. Un punto, sin color", ""],
@@ -378,7 +412,7 @@ module.exports = [
     der: { t: "Todos contra todos", items: [
       ["19. 28 partidas, en 7 rondas", ""],
       ["23. Todos tienen los mismos rivales: el Buchholz no distingue", ""] ] } },
-  // 65
+  // 74
   { tipo: "tarjetas", k: "Próxima sesión", items: [
     { ic: "📚", t: "Tarea", s: "un caso de inscripción o categoría JDE y la ronda 2 de un suizo simulado" },
     { ic: "👋", t: "¿Dudas?", s: "Este es el momento. ¡Gracias por participar!" } ] },

@@ -125,6 +125,7 @@ table.cruzado td:last-child{color:var(--tinta)}
 table.cruzado th.j,table.cruzado td.j{text-align:left;padding-left:18px}
 table.cruzado td:first-child{font-weight:400}
 table.cruzado tr.emp td{background:#fdf3d7;font-weight:700}
+.pregunta{font-size:40px;font-weight:700;line-height:1.2;color:var(--tinta);margin-bottom:6px;text-wrap:balance}
 .cruzado-nota{font-size:24px;color:var(--gris);margin-top:4px}
 /* frase: una sola idea grande (un caso, una decisión) */
 .frase{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:26px;padding:40px 90px}
@@ -210,9 +211,11 @@ function cuerpo(d, diapo, usadas) {
     }
     case "filas": {
       const cols = d.cols || 1;
-      return '<div class="filas' + (cols > 1 ? " dos-col" : "") + '" style="grid-template-columns:repeat(' + cols + ',1fr)">' +
+      // `p`: la pregunta arriba de las filas; `letras`: las filas son opciones A, B, C, D.
+      return (d.p ? '<p class="pregunta">' + esc(d.p) + "</p>" : "") +
+        '<div class="filas' + (cols > 1 ? " dos-col" : "") + '" style="grid-template-columns:repeat(' + cols + ',1fr)">' +
         d.items.map((x, k) => '<div class="caja fila' + tono(x.tono) + '"' + (d.escalera ? ' style="margin-left:' + k * 60 + 'px"' : "") + ">" +
-          (d.numerar ? '<span class="num">' + (k + 1) + "</span>" : "") + ic(x.ic) +
+          (d.numerar ? '<span class="num">' + (k + 1) + "</span>" : d.letras ? '<span class="num">' + "ABCD"[k] + "</span>" : "") + ic(x.ic) +
           "<div><b>" + esc(x.t) + "</b>" + (x.s ? '<span class="s">' + esc(x.s) + "</span>" : "") + "</div>" + art(x.a) + "</div>").join("") +
         "</div>" + (d.clave ? '<div class="clave">' + esc(d.clave) + "</div>" : "");
     }
