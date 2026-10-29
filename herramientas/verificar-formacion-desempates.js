@@ -129,11 +129,48 @@ const col = (c, nombre) => c.cab.indexOf(nombre);
   const tresArriba = cl2.filter((x) => x.puntos === cl2[0].puntos).map((x) => Number(x.id.slice(1)) - 1).sort();
   cierto("se resaltan justo los empatados arriba", (r2.resaltar || []).slice().sort().join() === tresArriba.join());
 
+  // ---------- la práctica paso a paso del todos contra todos
+  // Cada ronda que el curso da por buena (la opción correcta, y las rondas que
+  // nombra la respuesta) tiene que ser la de las tablas de Berger del motor.
+  console.log("\nLa práctica paso a paso: el calendario de un todos contra todos de 6");
+  const pasos = leccion.ejercicios.filter((e) => /^Paso \d+ de \d+ · /.test(e.enunciado));
+  cierto("son 8 pasos, numerados del 1 al 8", pasos.length === 8 && pasos.every((e, k) => e.enunciado.startsWith("Paso " + (k + 1) + " de 8 · ")));
+  cierto("cada paso tiene 4 opciones distintas y una correcta", pasos.every((e) =>
+    Array.isArray(e.opciones) && e.opciones.length === 4 && new Set(e.opciones).size === 4 && Number.isInteger(e.correcta) && e.correcta >= 0 && e.correcta < 4));
+  cierto("la correcta no está siempre en el mismo lugar", new Set(pasos.map((e) => e.correcta)).size >= 3);
+  const ronda6 = (r) => T.berger(6, r).map(([b, nn]) => b + "–" + nn).join(", ");
+  const grupos = (t) => (t.match(/\d–\d(?:, \d–\d){2}/g) || []);
+  const malasRondas = [];
+  for (const e of pasos) {
+    const m = /ronda (\d)/i.exec(e.enunciado);
+    if (!m) continue;
+    const buena = e.opciones[e.correcta];
+    for (const g of grupos(buena)) if (g !== ronda6(+m[1])) malasRondas.push(e.enunciado.slice(0, 12) + ": «" + g + "» y la ronda " + m[1] + " es " + ronda6(+m[1]));
+    if (/6–\d|\d–6/.test(buena) && !grupos(buena).length) {
+      const conSeis = T.berger(6, +m[1]).find((p) => p.includes(6));
+      const dice = /el (\d)/.exec(buena.replace("el 6", ""));
+      const blancas = /6 lleva blancas/.test(buena);
+      if (!dice || !conSeis.includes(+dice[1]) || blancas !== (conSeis[0] === 6)) malasRondas.push(e.enunciado.slice(0, 12) + ": «" + buena + "»");
+    } else if (!grupos(buena).length && /Con el (\d)/.test(buena)) {
+      const conSeis = T.berger(6, +m[1]).find((p) => p.includes(6));
+      const rival = +/Con el (\d)/.exec(buena)[1];
+      if (!conSeis.includes(rival) || (/6 lleva blancas/.test(buena) !== (conSeis[0] === 6))) malasRondas.push(e.enunciado.slice(0, 12) + ": «" + buena + "»");
+    }
+    // la respuesta puede nombrar las rondas que siguen: en orden, desde la del paso
+    grupos(e.respuesta).forEach((g, k) => { if (g !== ronda6(+m[1] + k)) malasRondas.push(e.enunciado.slice(0, 12) + " (respuesta): «" + g + "» y la ronda " + (+m[1] + k) + " es " + ronda6(+m[1] + k)); });
+  }
+  cierto("cada ronda que el curso da por buena es la de la tabla de Berger", !malasRondas.length, malasRondas.join("; "));
+  const p2 = pasos[1] && pasos[1].opciones[pasos[1].correcta];
+  cierto("rondas y partidas: " + (6 - 1) + " y " + (6 * 5) / 2, !!p2 && p2 === "5 rondas y 15 partidas");
+
   // ---------- las láminas dibujan este mismo cuadro
   console.log("\nLas láminas");
   const datos = require(path.join(__dirname, "datos", "formacion-laminas-clase-03.js"));
   const usan = datos.filter((d) => d.tipo === "cruzado").map((d) => d.cuadro);
   cierto("la presentación dibuja los dos cuadros del curso, sin copia propia", usan.length === 2 && usan.includes(suizo.cuadro) && usan.includes(todos.cuadro));
+  const dibujados = datos.filter((d) => d.delCurso);
+  cierto("las láminas de los pasos dibujan las opciones del curso, sin la correcta marcada", dibujados.length === pasos.length
+    && dibujados.every((d, k) => d.items.map((x) => x.t).join("|") === pasos[k].opciones.join("|") && d.items.every((x) => !x.tono)));
 
   console.log(fallas ? "\n✗ " + fallas + " fallas" : "\nTodo bien.");
   process.exit(fallas ? 1 : 0);
