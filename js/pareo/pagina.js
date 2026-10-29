@@ -3216,7 +3216,7 @@
     canal.on("broadcast", { event: "estado" }, (msg) => recibirDeCamara(msg.payload || {}));
     canal.on("broadcast", { event: "alerta" }, (msg) => alertaDeCamara(msg.payload || {}));
     canal.subscribe((st) => { if (st === "SUBSCRIBED") canal.send({ type: "broadcast", event: "pedir", payload: {} }); });
-    estado.camaras = { idTorneo: estado.id, codigo: c, canal, mesas: new Map(), alertas: new Map() };
+    estado.camaras = { idTorneo: estado.id, codigo: c, canal, mesas: new Map(), alertas: new Map(), partidas: new Map(), pedidas: new Map() };
     return true;
   }
   function desconectarCamaras() {
@@ -3235,8 +3235,18 @@
   function recibirDeCamara(p) {
     const v = torneoDeCamaras();
     if (!v || !v.publicado || !v.rondas.length || E.esDeEquipos(v) || !window.PartidaEnVivo) return;
-    const d = window.PartidaEnVivo.leer(p);
+    // La cámara manda casi siempre solo lo nuevo: se pega a la partida que
+    // ya llegó de esa mesa. Si no calza (se perdió un mensaje), se pide entera.
+    const antes = estado.camaras.partidas.get(Number(p.mesa));
+    if (antes && Number(p.t) < antes.t) return;
+    const d = window.PartidaEnVivo.leer(p, antes);
+    if (d && d.falta) {
+      const c = estado.camaras, ya = c.pedidas.get(d.mesa) || 0;
+      if (d.mesa && Date.now() - ya >= 3000) { c.pedidas.set(d.mesa, Date.now()); c.canal.send({ type: "broadcast", event: "pedir", payload: { mesa: d.mesa } }); }
+      return;
+    }
     if (!d || d.torneo !== v.publicado.id || d.ronda !== v.rondas.length || !d.mesa) return;
+    estado.camaras.partidas.set(d.mesa, d);
     const R = v.rondas[v.rondas.length - 1];
     const i = R.mesas.findIndex((x, k) => V.mesaFisica(v, k) === d.mesa);
     const m = R.mesas[i];

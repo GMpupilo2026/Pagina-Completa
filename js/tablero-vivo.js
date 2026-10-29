@@ -28,6 +28,7 @@
 
     let canal = null, girado = false, ultimaDicha = "";
     let reloj = null, relojTorneo = null;
+    const pedidas = new Map(); // mesa → cuándo se pidió entera (ver alLlegar)
     const partidas = new Map(); // «m3» o «solo» → { juego, blancas, negras, t, mesa, ronda }
     let torneoId = null, torneoDatos = null;
     let elegida = null;         // la que se ve en grande; null = la cuadrícula
@@ -108,37 +109,54 @@
         $("proyector-pagina").hidden = !proyectando || paginas < 2;
         $("proyector-pagina").textContent = "Mesas " + (pagina * POR_PAGINA + 1) + " a " + Math.min(lista.length, (pagina + 1) * POR_PAGINA) + " de " + lista.length;
         if (proyectando) lista = lista.slice(pagina * POR_PAGINA, (pagina + 1) * POR_PAGINA);
-        for (const m of lista) {
-            const x = partidas.get(m.clave);
-            const b = document.createElement("button");
-            b.type = "button";
-            b.dataset.mesa = String(m.mesa);
-            b.className = "text-left bg-white dark:bg-brand-900 rounded-2xl shadow-md p-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 hover:ring-2 hover:ring-accent-400";
-            const titulo = document.createElement("p");
-            titulo.className = "font-semibold text-brand-800 dark:text-white";
-            titulo.textContent = "Mesa " + m.mesa;
-            const quien = document.createElement("p");
-            quien.className = "text-xs text-brand-600 dark:text-brand-300 mb-2";
-            quien.textContent = ((x && x.blancas) || m.blancas || "Blancas") + " – " + ((x && x.negras) || m.negras || "Negras");
-            const tab = document.createElement("div");
-            tab.className = "grid grid-cols-8 grid-rows-8 aspect-square w-full rounded overflow-hidden select-none";
-            tab.setAttribute("aria-hidden", "true");
-            const como = document.createElement("p");
-            como.className = "text-xs text-brand-700 dark:text-brand-200 mt-2";
-            if (x) {
-                P.pintar(tab, x.juego, { coordenadas: false });
-                como.textContent = comoVa(x);
-            } else {
-                P.pintar(tab, new window.Chess(), { coordenadas: false });
-                tab.classList.add("opacity-40");
-                como.textContent = "Sin cámara en esta mesa.";
-            }
-            b.setAttribute("aria-label", titulo.textContent + ": " + quien.textContent + ". " + como.textContent);
-            b.append(titulo, quien, tab, como);
-            if (x) b.addEventListener("click", () => { if (proyectando) return; elegida = m.clave; paso = null; pintar(); $("volver").focus(); });
-            else b.disabled = true;
-            caja.append(b);
+        for (const m of lista) caja.append(tarjetaMesa(m));
+        caja.dataset.mesas = lista.map((m) => m.clave).join(",");
+    }
+    function tarjetaMesa(m) {
+        const x = partidas.get(m.clave);
+        const b = document.createElement("button");
+        b.type = "button";
+        b.dataset.mesa = String(m.mesa);
+        b.dataset.clave = m.clave;
+        b.className = "text-left bg-white dark:bg-brand-900 rounded-2xl shadow-md p-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 hover:ring-2 hover:ring-accent-400";
+        const titulo = document.createElement("p");
+        titulo.className = "font-semibold text-brand-800 dark:text-white";
+        titulo.textContent = "Mesa " + m.mesa;
+        const quien = document.createElement("p");
+        quien.className = "text-xs text-brand-600 dark:text-brand-300 mb-2";
+        quien.textContent = ((x && x.blancas) || m.blancas || "Blancas") + " – " + ((x && x.negras) || m.negras || "Negras");
+        const tab = document.createElement("div");
+        tab.className = "grid grid-cols-8 grid-rows-8 aspect-square w-full rounded overflow-hidden select-none";
+        tab.setAttribute("aria-hidden", "true");
+        const como = document.createElement("p");
+        como.className = "text-xs text-brand-700 dark:text-brand-200 mt-2";
+        if (x) {
+            P.pintar(tab, x.juego, { coordenadas: false });
+            como.textContent = comoVa(x);
+        } else {
+            P.pintar(tab, new window.Chess(), { coordenadas: false });
+            tab.classList.add("opacity-40");
+            como.textContent = "Sin cámara en esta mesa.";
         }
+        b.setAttribute("aria-label", titulo.textContent + ": " + quien.textContent + ". " + como.textContent);
+        b.append(titulo, quien, tab, como);
+        if (x) b.addEventListener("click", () => { if (proyectando) return; elegida = m.clave; paso = null; pintar(); $("volver").focus(); });
+        else b.disabled = true;
+        return b;
+    }
+    /* Una jugada en una mesa repinta solo esa tarjeta, no las 40 de la sala.
+     * Si cambió qué mesas se ven (una cámara nueva), se arma entera. */
+    function pintarMesa(clave) {
+        const caja = $("mesas-lista");
+        let lista = mesasTorneo();
+        if (proyectando) lista = lista.slice(pagina * POR_PAGINA, (pagina + 1) * POR_PAGINA);
+        const vieja = caja.querySelector('[data-clave="' + clave + '"]');
+        if (caja.dataset.mesas !== lista.map((m) => m.clave).join(",")) { pintarCuadricula(); return; }
+        if (!vieja) return; // en otra página del proyector
+        const nueva = tarjetaMesa(lista.find((m) => m.clave === clave));
+        const conFoco = document.activeElement === vieja;
+        vieja.replaceWith(nueva);
+        if (conFoco) nueva.focus();
     }
 
     function pintar() {
@@ -149,20 +167,34 @@
     }
 
     function alLlegar(payload) {
-        const d = P.leer(payload);
+        if (!payload) return;
+        if (torneoId && payload.torneo && payload.torneo !== torneoId) return; // de otro torneo
+        const clave0 = payload.mesa ? "m" + payload.mesa : "solo";
+        const antes = partidas.get(clave0);
+        if (antes && Number(payload.t) < antes.t) return; // lo viejo no pisa lo nuevo
+        const d = P.leer(payload, antes);
         if (!d) return;
+        // Llegó solo lo nuevo y no calza (se perdió un mensaje): se pide esa mesa entera.
+        if (d.falta) {
+            // Una vez cada 3 s por mesa: lo nuevo que siga llegando mientras tanto tampoco calza.
+            if (canal && !(Date.now() - (pedidas.get(clave0) || 0) < 3000)) { pedidas.set(clave0, Date.now()); canal.send({ type: "broadcast", event: "pedir", payload: d.mesa ? { mesa: d.mesa } : {} }); }
+            return;
+        }
         d.recibido = Date.now();
-        if (torneoId && d.torneo && d.torneo !== torneoId) return; // de otro torneo
+        if (torneoId && d.torneo && d.torneo !== torneoId) return;
         const clave = d.mesa ? "m" + d.mesa : "solo";
-        const antes = partidas.get(clave);
-        if (antes && d.t < antes.t) return; // lo viejo no pisa lo nuevo
+        const nueva = !antes;
         partidas.set(clave, d);
         if (!d.mesa) elegida = "solo";
         $("esperando").hidden = true;
         estadoConexion("● En vivo", "vivo");
         $("retraso-aviso").textContent = d.retraso ? "Con " + d.retraso + " minutos de retraso" : "";
         $("retraso-aviso").hidden = !d.retraso;
-        pintar();
+        // Solo lo que cambió: en la cuadrícula, esa tarjeta; en grande, si es la que se mira.
+        const cuadricula = enTorneo() && !elegida;
+        if (nueva || cuadricula !== !$("mesas").hidden) pintar();
+        else if (cuadricula) pintarMesa(clave);
+        else if (elegida === clave) pintarGrande();
     }
 
     /* Quién está pensando y desde hace cuánto (con el reloj de quien
