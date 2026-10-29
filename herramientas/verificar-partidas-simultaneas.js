@@ -45,7 +45,8 @@
      3 bis. Una jugada avisada por el canal rápido que la base no guarda, y
         nadie vuelve a mover: del otro lado se pintó como provisional, y tiene
         que desaparecer sola (la relectura a los 4 s).
-     6 y 7. Las demás modalidades con turno (Niebla, Crazyhouse, Cartas,
+     6 y 7 (las corre verificar-partidas-modalidades.js: todas juntas pasan de
+        los 10 minutos de verificar-todo). Las demás modalidades con turno (Niebla, Crazyhouse, Cartas,
         Abrazos, Camaleón, Vampiro, Volcanes, Misiones), dos partidas de cada
         una, con red sana y mala: además de lo de siempre, en cada modalidad la
         jugada del rival tiene que llegar también por el canal rápido (si la
@@ -853,7 +854,10 @@ async function ronda4(browser, nombre, MESAS, red, limites) {
   const browser = await chromium.launch({ args: ["--disable-background-timer-throttling", "--disable-renderer-backgrounding", "--disable-backgrounding-occluded-windows"] });
   try {
     // RONDAS=1,3bis corre solo esas (para buscar un caso raro sin esperar a las demás).
-    const toca = (n) => !process.env.RONDAS || process.env.RONDAS.split(",").includes(n);
+    // Sin RONDAS corren todas menos la 6 y la 7, las de las demás modalidades:
+    // esas las corre verificar-partidas-modalidades.js, porque todas juntas
+    // pasan de los 10 minutos que verificar-todo le da a cada verificador.
+    const toca = (n) => (process.env.RONDAS ? process.env.RONDAS.split(",").includes(n) : n !== "6" && n !== "7");
     if (!process.env.SOLO_CUATRO) {
     if (toca("1")) await ronda(browser, "1. Al instante: red sana", PARTIDAS_RAPIDAS, { perdidos: 0, tarde: 0, lentas: 0, cortes: 0 },
       { topeMs: 4 * 60 * 1000, calmaMs: 3000, maxMs: 1000, medianaMs: 300 });
@@ -877,9 +881,9 @@ async function ronda4(browser, nombre, MESAS, red, limites) {
       { topeMs: 6 * 60 * 1000, calmaMs: 10000, maxMs: 15000 }, OTRAS);
     }
     if (!process.env.SIN_CUATRO) {
-      await ronda4(browser, "4. Ajedrez para 4: red sana", MESAS4, { perdidos: 0, tarde: 0, lentas: 0, cortes: 0 },
+      if (toca("4")) await ronda4(browser, "4. Ajedrez para 4: red sana", MESAS4, { perdidos: 0, tarde: 0, lentas: 0, cortes: 0 },
         { topeMs: 4 * 60 * 1000, calmaMs: 3000, maxMs: 6000 });
-      await ronda4(browser, "5. Ajedrez para 4: red mala", MESAS4, { perdidos: 0.15, tarde: 0.10, lentas: 0.10, cortes: 0.01 },
+      if (toca("5")) await ronda4(browser, "5. Ajedrez para 4: red mala", MESAS4, { perdidos: 0.15, tarde: 0.10, lentas: 0.10, cortes: 0.01 },
         { topeMs: 6 * 60 * 1000, calmaMs: 10000, maxMs: 15000 });
     }
   } finally {

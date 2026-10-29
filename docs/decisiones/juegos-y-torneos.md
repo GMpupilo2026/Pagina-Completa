@@ -1511,7 +1511,10 @@ Cartas llegaba por el canal). Ahora los dos copian.
   sus motores en Node), con red sana y mala, y comprueban que **en cada
   modalidad la jugada del rival llegue también por el canal rápido**: si una
   página no puede rehacerla, todas llegarían por la base y nada saltaría
-  (quitándoselo a Cartas, salta).
+  (quitándoselo a Cartas, salta). Esas dos las corre
+  `verificar-partidas-modalidades.js` (el mismo código, con `RONDAS=6,7`):
+  todas juntas pasaban de los 10 minutos que `verificar-todo.js` le da a cada
+  verificador, y el CI lo cortó.
 - `SIN_RAPIDA=1`: la base sin la política (el canal privado no abre). Todo
   tiene que seguir igual por `postgres_changes`. `SIN_PREMOVIDAS=1`: sin
   pre-jugadas. `RONDAS=6,7` y `SOLO_MODALIDADES=cartas,niebla` para mirar unas
