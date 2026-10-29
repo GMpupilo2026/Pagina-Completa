@@ -221,7 +221,7 @@
       "Un ritmo sin nombre: los incrementos chicos no se clasifican."
     ],
     "correcta": 0,
-    "explica": "3 + 60 × 2 segundos = 3 + 2 = 5 minutos. Diez minutos o menos es relámpago, con incremento o sin él.",
+    "explica": "3 + 60 × 2 segundos = 3 + 2 = 5 minutos. Menos de diez minutos es relámpago, con incremento o sin él.",
     "fuente": "Leyes del Ajedrez 2023 (Handbook E.I.01), apéndice B.1"
   },
   {

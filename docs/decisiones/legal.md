@@ -31,7 +31,9 @@ cambiar algo en el sitio, revisar si contradice lo que ya prometen:
   consulta de cédula de Hacienda, y Lichess y Chess.com para bajar las partidas
   públicas de un rival —o las del propio alumno en «Tus propios errores», y si
   lo dejó guardado el hub les pregunta como mucho cada 6 horas si hay nuevas—,
-  a los que solo se les manda el usuario, y Sentry para
+  a los que solo se les manda el usuario —y a Lichess, el pareo de cada ronda
+  cuando quien tiene «Pareo para DGT» transmite un torneo con su cuenta: los nombres,
+  títulos, Elo e ID FIDE que ya publica chess-results—, y Sentry para
   los errores técnicos, sin nombre, correo ni lo que la persona escribe). **Un servicio nuevo que reciba datos de
   alumnos va a la lista**: sin eso, el envío al extranjero no está consentido
   (artículo 14).

@@ -68,6 +68,7 @@
         ] },
         { title: "Herramientas", tiles: [
             { emoji: "♟️", label: "Pareo Integral", desc: "Empareja un torneo con el Sistema Holandés de FIDE: rondas, resultados, desempates y el TRF. Gratis", href: "pareo.html", zona: "contenido" },
+            { emoji: "📡", label: "Pareo para DGT", desc: "Cada ronda de chess-results, lista para importar en DGT LiveChess, y su transmisión en Lichess", href: "pareo-dgt.html", zona: "contenido" },
             { emoji: "⚖️", label: "Desempates explicados", desc: "Recalcula la clasificación de un torneo de chess-results y explica, paso a paso, por qué cada persona queda arriba de la otra", href: "desempates.html", zona: "contenido" },
             { emoji: "📈", label: "Variación de Elo del torneo", desc: "Cuánto sube o baja el Elo FIDE y nacional de cada participante de un torneo de chess-results, partida por partida", href: "variacion-elo.html", zona: "contenido" },
             { emoji: "🎖️", label: "Normas de título", desc: "Quién hizo norma de GM, IM, WGM o WIM en un torneo de chess-results, artículo por artículo del reglamento de FIDE", href: "normas-titulo.html", zona: "contenido" },
