@@ -11,7 +11,7 @@
  */
 (function () {
     "use strict";
-    const { homografia, aplicar, ESQUINAS_TABLERO, INICIAL, muestras, calibrar, leer, leerDetalle, esperada, decidir, cambiarCoronacion, deducirCoronacion, diferentes, casilla } = window.LectorTablero;
+    const { homografia, aplicar, ESQUINAS_TABLERO, INICIAL, muestras, calibrar, leer, leerDetalle, esperada, decidir, mezclarCal, cambiarCoronacion, deducirCoronacion, diferentes, casilla } = window.LectorTablero;
     /* ── La página ───────────────────────────────────────────────────────── */
     if (!document.getElementById("lienzo")) return;
 
@@ -574,6 +574,8 @@
             return;
         }
         const cambiaron = diferentes(lectura, antes);
+        // Ninguna jugada lo explica: ¿fue la luz? Con la de ahora, ¿se lee la partida entera?
+        if (luzNueva(t)) { avisar(cual(t) + "Cambió la luz: la cámara se volvió a calibrar sola y la partida sigue.", "bien"); return; }
         if (cambiaron.length >= 10) {
             if (recuperar(t)) { avisar(cual(t) + "La cámara se movió: el tablero se volvió a ubicar y la partida sigue.", "bien"); return; }
             avisar(cual(t) + "Parece que la cámara se movió. Toca «Buscar el tablero» (o marca las esquinas) y después «Seguir con esta partida»: no se pierde nada de lo anotado.", "error");
@@ -1039,7 +1041,7 @@
      *    traba, y en camaras.html cada cámara lee en el suyo. Si el navegador
      *    no puede (sin OffscreenCanvas o createImageBitmap), se lee acá. */
     const LENTO_MS = 500, QUIETO_MS = 10000;
-    const gasto = { lecturas: 0, pixeles: 0, dibujos: 0, enHilo: 0 };
+    const gasto = { lecturas: 0, pixeles: 0, dibujos: 0, enHilo: 0, afinadas: 0 };
     function recorte() {
         let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
         for (const t of tableros) {
@@ -1056,9 +1058,39 @@
     const apurado = (ahora) => ahora - ultimoCambio < QUIETO_MS
         || tableros.some((t) => t.h && t.cal && (t.recientes.length < QUIETA || t.recientes.some((x) => x !== t.quieta)));
 
+    /* ── La luz que cambia ──────────────────────────────────────────────
+     * Mientras lo que se lee es la partida (nada raro), cada 15 segundos se
+     * vuelve a calibrar con la posición que se sabe y se mezcla con la de
+     * antes: así la cámara sigue al sol que se corre o a la nube que pasa,
+     * antes de que empiece a leer mal. Y si de golpe se leen mal varias
+     * casillas (alguien prendió la luz), antes de avisar una jugada ilegal
+     * se prueba con la luz de ahora: si con ella se lee la partida entera,
+     * 64 de 64, era la luz (ver luzNueva). */
+    const AFINAR_MS = 15000;
+    function muestrasDe(t) {
+        cctx.drawImage(fuente, 0, 0, limpio.width, limpio.height);
+        return muestras(cctx.getImageData(0, 0, limpio.width, limpio.height).data, limpio.width, limpio.height, t.h);
+    }
+    function afinarLuz(t, ahora) {
+        if (!fuente || !t.h || !t.cal || ahora - (t.afinada || 0) < AFINAR_MS) return;
+        t.afinada = ahora;
+        const sabida = esperada(t.juego), todas = muestrasDe(t), nueva = calibrar(todas, sabida);
+        if (diferentes(leer(todas, nueva), sabida).length) return; // con la nueva no se lee perfecta: no se toca
+        t.cal = mezclarCal(t.cal, nueva, 0.3);
+        gasto.afinadas++;
+    }
+    function luzNueva(t) {
+        if (!fuente || !t.h) return false;
+        const sabida = esperada(t.juego), todas = muestrasDe(t), nueva = calibrar(todas, sabida);
+        if (diferentes(leer(todas, nueva), sabida).length) return false;
+        t.cal = nueva; t.afinada = performance.now();
+        t.recientes = []; t.quieta = null;
+        return true;
+    }
     function procesar(t, det, ahora) {
         if (det.lectura !== t.lectura) { ultimoCambio = ahora; pintarYa = true; }
         t.lectura = det.lectura; t.seguridad = det.seguridad;
+        if (t.cal && det.lectura === esperada(t.juego)) afinarLuz(t, ahora);
         t.recientes.push(t.lectura);
         if (t.recientes.length > QUIETA) t.recientes.shift();
         if (t.recientes.length === QUIETA && t.recientes.every((x) => x === t.lectura) && t.lectura !== t.quieta) {

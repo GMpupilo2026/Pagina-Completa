@@ -193,6 +193,15 @@
         return cal;
     }
 
+    /* La luz cambia (el sol que entra, una nube, una lámpara): una
+     * calibración nueva, hecha con la posición que se sabe, se mezcla con la
+     * de antes. `peso` es cuánto pesa la nueva (de 0 a 1). */
+    function mezclarCal(vieja, nueva, peso) {
+        const m = (a, b) => (typeof a === "number" && typeof b === "number" ? a + (b - a) * peso : b);
+        const obj = (a, b) => { const o = {}; for (const k of Object.keys(b)) o[k] = typeof b[k] === "object" && b[k] ? obj(a && a[k], b[k]) : m(a && a[k], b[k]); return o; };
+        return obj(vieja, nueva);
+    }
+
     /* La lectura: 64 letras, «.» vacía, «B» blanca, «N» negra, de a1 a h8, y
      * la seguridad de cada una, de 0 (podría ser lo otro) a 1 (sin duda). */
     function leerDetalle(todas, cal) {
@@ -329,5 +338,5 @@
         return d;
     }
 
-    global.LectorTablero = { homografia, aplicar, ESQUINAS_TABLERO, INICIAL, muestras, calibrar, leer, leerDetalle, esperada, candidatas, decidir, buscarJugadas, cambiarCoronacion, deducirCoronacion, diferentes, casilla };
+    global.LectorTablero = { homografia, aplicar, ESQUINAS_TABLERO, INICIAL, muestras, calibrar, leer, leerDetalle, esperada, candidatas, decidir, buscarJugadas, mezclarCal, cambiarCoronacion, deducirCoronacion, diferentes, casilla };
 })(typeof self !== "undefined" ? self : this);

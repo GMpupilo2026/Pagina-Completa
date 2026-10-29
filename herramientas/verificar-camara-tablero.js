@@ -155,6 +155,8 @@ function dibujarFoto(opc) {
     } else {
       col = (x % 90) < 3 || (y % 90) < 3 ? [150, 130, 115] : [215, 195, 180];
     }
+    // La luz: más oscura (`luz` < 1) y, con `sombra`, más hacia la derecha.
+    if (opc.luz || opc.sombra) { const k = (opc.luz || 1) * (1 - (opc.sombra || 0) * x / ancho); col = col.map((c) => c * k); }
     s = (s * 1103515245 + 12345) & 0x7fffffff;
     const n = (s % 19) - 9, o = (y * ancho + x) * 4;
     p[o] = col[0] + n; p[o + 1] = col[1] + n; p[o + 2] = col[2] + n; p[o + 3] = 255;
@@ -162,8 +164,8 @@ function dibujarFoto(opc) {
   g.putImageData(d, 0, 0);
   return c.toDataURL("image/png").split(",")[1];
 }
-async function foto(page, fen, esq, fondo) {
-  const opc = Array.isArray(fen) ? { tableros: fen } : { fen, esq, fondo };
+async function foto(page, fen, esq, fondo, luz) {
+  const opc = Array.isArray(fen) ? { tableros: fen } : Object.assign({ fen, esq, fondo }, luz);
   const b64 = await page.evaluate(([src, opc]) => new Function("return " + src)()(opc), [dibujarFoto.toString(), opc]);
   await page.setInputFiles("#foto", { name: "tablero.png", mimeType: "image/png", buffer: Buffer.from(b64, "base64") });
 }
@@ -440,6 +442,42 @@ async function esperarJugadas(p, n) {
     igual("y anota la jugada siguiente", await jugadasDe(pc2), "4. Ag5");
     igual("sin errores en la consola", c.errores, []);
     await cerrar(c);
+  }
+
+  console.log("\nLa luz que cambia");
+  {
+    const reloj = { f: () => { const pn = performance.now.bind(performance); window.__adelanto = 0; performance.now = () => pn() + window.__adelanto; } };
+    const b = await abrir(browser, "camara-tablero.html", null, null, reloj);
+    const pg = b.page;
+    await pg.waitForSelector("#app:not(.hidden)");
+    const j = new Chess();
+    await foto(pg, j.fen(), ESQ0);
+    await esperarAviso(pg, /esquinas/);
+    await tocar(pg, aLienzo(ESQ0));
+    await pg.click("#btn-calibrar");
+    await esperarAviso(pg, /Calibrado/);
+    j.move("e4"); await foto(pg, j.fen(), ESQ0); await esperarJugadas(pg, 1);
+    // De golpe, mucho más oscuro y con sombra de un lado: con la calibración de
+    // antes varias casillas se leen mal, pero no es ninguna jugada.
+    await foto(pg, j.fen(), ESQ0, null, { luz: 0.55, sombra: 0.35 });
+    await esperarAviso(pg, /luz|ilegal|movió/);
+    igual("si cambia la luz de golpe, se vuelve a calibrar sola: ni jugada ilegal ni jugada nueva",
+      [(await aviso(pg)).startsWith("Cambió la luz"), await jugadasDe(pg)], [true, "1. e4"]);
+    j.move("e5"); await foto(pg, j.fen(), ESQ0, null, { luz: 0.55, sombra: 0.35 }); await esperarJugadas(pg, 2);
+    igual("y con la luz nueva sigue anotando", await jugadasDe(pg), "1. e4 e5");
+    // Poco a poco: mientras lee la partida, cada 15 s afina la calibración.
+    const antes = (await pg.evaluate(() => window.gastoCamara())).afinadas;
+    await pg.evaluate(() => { window.__adelanto += 16000; });
+    await foto(pg, j.fen(), ESQ0, null, { luz: 0.5, sombra: 0.35 });
+    await pg.waitForFunction((n) => window.gastoCamara().afinadas > n, antes, { timeout: 8000 }).catch(() => {});
+    igual("con la partida en paz, cada 15 segundos afina la calibración con la luz de ahora", (await pg.evaluate(() => window.gastoCamara())).afinadas > antes, true);
+    // Una pieza que de verdad salta (la torre de a1 a a5) no es la luz: se avisa.
+    const ilegal = new Chess(j.fen()); ilegal.remove("a1"); ilegal.put({ type: "r", color: "w" }, "a5");
+    await foto(pg, ilegal.fen(), ESQ0, null, { luz: 0.5, sombra: 0.35 });
+    await esperarAviso(pg, /No reconozco/);
+    igual("una pieza que se movió sin ser jugada legal sigue siendo un aviso, no «la luz»", (await aviso(pg)).includes("puede ser una jugada ilegal"), true);
+    igual("sin errores en la consola", b.errores, []);
+    await cerrar(b);
   }
 
   console.log("\nLa coronación: se pregunta la pieza, o se deduce si se mueve como caballo");
