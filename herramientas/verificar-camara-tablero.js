@@ -1313,6 +1313,26 @@ async function esperarJugadas(p, n) {
     igual("sin errores en la consola (guardar)", G.errores, []);
     await cerrar(G);
 
+    // «Activar voz» del encabezado (js/voz-pagina.js) dice cada jugada nueva:
+    // lee la región viva #anuncio. Con la voz del navegador de mentira.
+    const conVoz = { f: () => {
+      localStorage.setItem("oscarSpeechMode_v1", "1");
+      window.__dicho = [];
+      window.SpeechSynthesisUtterance = function (t) { this.text = t; };
+      Object.defineProperty(window, "speechSynthesis", { value: { speak: (u) => window.__dicho.push(u.text), cancel() {}, getVoices: () => [], addEventListener() {} } });
+    } };
+    const VZ = await abrir(browser, "tablero-vivo.html#vxzmentx", null, { width: 390, height: 844 }, conVoz);
+    await VZ.page.waitForFunction(() => window.__canales && Object.keys(window.__canales).length, null, { timeout: 8000 });
+    // Lo del primer segundo y medio es parte de la página, no un aviso (ver js/voz-pagina.js).
+    await VZ.page.waitForTimeout(1700);
+    await llega(VZ.page, "1. e4");
+    await VZ.page.waitForTimeout(1200);
+    await llega(VZ.page, "1. e4 e5 2. Nf3");
+    await VZ.page.waitForFunction(() => window.__dicho.some((x) => /caballo/.test(x)), null, { timeout: 8000 }).catch(() => {});
+    igual("con «Activar voz», quien mira oye cada jugada nueva", [await VZ.page.evaluate(() => document.getElementById("voz-toggle").checkVisibility()),
+      await VZ.page.evaluate(() => window.__dicho.filter((x) => /^Última jugada/.test(x)).pop())], [true, "Última jugada: 2. caballo felix 3. Juegan las negras."]);
+    await cerrar(VZ);
+
     // Los momentos clave: con un Stockfish de mentira que da evaluaciones
     // conocidas. Las blancas regalan en 3. Ac4 (de +0,3 a −2,5) y las negras
     // devuelven en 4... Cf6 (de −2,5 a +0,5, es decir de +2,5 a −0,5 para ellas).
