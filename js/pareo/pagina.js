@@ -3323,7 +3323,7 @@
     const antes = estado.camaras.alertas.get(k);
     if (antes && Date.now() - antes.h < 30000) return;
     estado.camaras.alertas.set(k, { h: Date.now(), tipo, m: clave });
-    Avisos.avisar(tx(TIPOS_ALERTA[tipo], { m: verLugar(clave) }), { tipo: tipo === "ilegal" ? "error" : "info" });
+    Avisos.avisar(tx(TIPOS_ALERTA[tipo], { m: verLugar(clave) }), { tipo: { ilegal: "error" }[tipo] || "info" });
     pintarCamaras();
   }
 
