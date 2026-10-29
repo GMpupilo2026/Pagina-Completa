@@ -39,6 +39,15 @@
 //   - art=0: «No. | | (título) | Nombre | FIDE-ID | FED | EloN | Club/Ciudad»,
 //     el FIDE-ID dentro de un enlace a ratings.fide.com.
 //
+//   - La ficha del torneo (control de tiempo, lugar, federación, número de
+//     rondas) sale de la MISMA página art=2, de las filas de dos celdas
+//     «<td class="CR">Lugar</td><td class="CR">…</td>» (comprobado el 29/10/2026
+//     con torneos en curso: Costa Rica, Malasia y Vietnam). Cada fila es
+//     opcional, y de un torneo que terminó hace más de dos semanas
+//     chess-results no la muestra sin el botón «Mostrar detalles del torneo»:
+//     ahí la ficha sale vacía y la página se queda con la que ya tenía. Sirve
+//     para la tarjeta «Datos para LiveChess».
+//
 // LICHESS (body.accion = "lichess"): crear el torneo de la transmisión
 // (POST /broadcast/new) y cada ronda (POST /broadcast/{id}/new). Esas dos
 // direcciones de Lichess no están bajo /api/ y no contestan la consulta previa
@@ -52,7 +61,7 @@
 //     form: [[campo, valor], …] } → { status, datos } (lo que contestó Lichess)
 //
 // Body: { tnr: "1498221" | "https://…chess-results.com/tnr1498221.aspx…", rd?: 1..99 }
-// Respuesta: { tnr, url, torneo, ronda, fecha, hora, mesas: [{ mesa,
+// Respuesta: { tnr, url, torneo, ficha: { control, lugar, pais, rondas }, ronda, fecha, hora, mesas: [{ mesa,
 //   blancas: { no, titulo, nombre, elo, club, fide, fed }, negras: … | null,
 //   sinRival: "" | "bye" | "sin emparejar" | …, resultado }], leido_en, viejo? }
 
@@ -120,6 +129,28 @@ function tablaCRs1(html: string) {
   return { antes: html.slice(0, inicio), encabezado: encabezado ? celdas(encabezado[2]).map(texto) : null, datos: datos.map((f) => celdas(f[2])) };
 }
 
+// «Federación» es la que organiza: casi siempre un país («Costa Rica ( CRC )»),
+// pero un torneo continental trae su confederación («Confederation of Chess for
+// Americas ( CCA )», comprobado el 29/10/2026 con el torneo de Costa Rica
+// tnr1529729). Eso no es el país de LiveChess: se deja vacío.
+const NO_ES_PAIS = /confedera|continental|\b(zone|zona|union|unión|association|asociaci[óo]n|federation of|federaci[óo]n de)\b/i;
+
+// La ficha del torneo: filas de dos celdas, cada una con su nombre. Solo las
+// que LiveChess pide en su pestaña «Tournament»; la primera de cada una.
+export function leerFicha(html: string) {
+  const ficha = { control: "", lugar: "", pais: "", rondas: 0 };
+  for (const m of html.matchAll(/<tr[^>]*>\s*<td[^>]*>([\s\S]{1,200}?)<\/td>\s*<td[^>]*>([\s\S]*?)<\/td>\s*<\/tr>/gi)) {
+    const nombre = texto(m[1]);
+    const valor = texto(m[2]);
+    if (!valor || valor === "-") continue;
+    if (!ficha.control && /^(Control de tiempo|Time control)\b/i.test(nombre)) ficha.control = valor.slice(0, 120);
+    else if (!ficha.lugar && /^(Lugar|Location)$/i.test(nombre)) ficha.lugar = valor.slice(0, 160);
+    else if (!ficha.pais && /^(Federaci[óo]n|Federation)$/i.test(nombre) && !NO_ES_PAIS.test(valor)) ficha.pais = valor.replace(/\s*\(\s*[A-Z]{3}\s*\)\s*$/, "").slice(0, 80);
+    else if (!ficha.rondas && /^(N[úu]mero de rondas|Number of rounds)$/i.test(nombre)) ficha.rondas = Number(valor) || 0;
+  }
+  return ficha;
+}
+
 // Lo que dice chess-results en lugar de las negras cuando nadie juega.
 const SIN_RIVAL = /^(bye|sin emparejar|not paired|spielfrei|libre|exento|descansa|no emparejado)$/i;
 
@@ -128,6 +159,7 @@ const SIN_RIVAL = /^(bye|sin emparejar|not paired|spielfrei|libre|exento|descans
 // una columna de más o de menos antes de «Resultado» no las corre.
 export function leerPareo(html: string) {
   const t = tablaCRs1(html);
+  const ficha = leerFicha(html);
   const titulosH2 = [...html.matchAll(/<h2[^>]*>([\s\S]*?)<\/h2>/gi)].map((m) => texto(m[1])).filter(Boolean);
   const torneo = titulosH2.find((s) => !/^(Emparejamientos|Pairings|Paarungen)/i.test(s)) || "";
   const h3 = [...(t ? t.antes : html).matchAll(/<h3[^>]*>([\s\S]*?)<\/h3>/gi)].map((m) => texto(m[1]));
@@ -136,14 +168,14 @@ export function leerPareo(html: string) {
   const f = titulo.match(/(\d{4})\/(\d{2})\/(\d{2})/);
   const fecha = f ? f[1] + "." + f[2] + "." + f[3] : "";
   const hora = (titulo.match(/(\d{1,2}:\d{2}\s*(?:am|pm)?)/i) || [])[1] || "";
-  if (!t || !t.encabezado) return { torneo, ronda, fecha, hora, mesas: [] };
+  if (!t || !t.encabezado) return { torneo, ficha, ronda, fecha, hora, mesas: [] };
   const cab = t.encabezado;
   const iB = cab.findIndex((c) => /^(White|Blancas|Weiß)$/i.test(c));
   const iN = cab.findIndex((c) => /^(Black|Negras|Schwarz)$/i.test(c));
   const iMesa = cab.findIndex((c) => /^(M\.|Mesa|Bo\.|Br\.)$/i.test(c));
   const iNo = cab.findIndex((c) => /^No\.?$/i.test(c));
   const iRes = cab.findIndex((c) => /^(Resultado|Result|Ergebnis)$/i.test(c));
-  if (iB < 0 || iN < 0 || iRes < 0) return { torneo, ronda, fecha, hora, mesas: [] };
+  if (iB < 0 || iN < 0 || iRes < 0) return { torneo, ficha, ronda, fecha, hora, mesas: [] };
   const iEloB = cab.findIndex((c, i) => i > iB && i < iRes && /^(Elo|Rtg|EloN|EloI)$/i.test(c));
   const iClubB = cab.findIndex((c, i) => i > iB && i < iRes && /^(Club\/Ciudad|Club\/City|Verein\/Ort)$/i.test(c));
   const iEloN = cab.findIndex((c, i) => i > iN && /^(Elo|Rtg|EloN|EloI)$/i.test(c));
@@ -182,7 +214,7 @@ export function leerPareo(html: string) {
       resultado: juega ? de(iRes).replace(/\s+/g, " ") : "",
     };
   }).filter((m) => m.blancas.nombre);
-  return { torneo, ronda, fecha, hora, mesas };
+  return { torneo, ficha, ronda, fecha, hora, mesas };
 }
 
 // La lista inicial (art=0): el FIDE-ID y la federación de cada número inicial.
@@ -311,6 +343,7 @@ Deno.serve(async (req) => {
     tnr,
     url: `https://chess-results.com/tnr${tnr}.aspx?lan=2&art=2` + (rd ? "&rd=" + rd : ""),
     torneo: p.torneo,
+    ficha: p.ficha || { control: "", lugar: "", pais: "", rondas: 0 },   // una lectura guardada antes no la trae
     ronda: p.ronda,
     fecha: p.fecha,
     hora: p.hora,

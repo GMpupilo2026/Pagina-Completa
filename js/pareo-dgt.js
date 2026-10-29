@@ -6,6 +6,9 @@
    - arma el PGN de la ronda para importar en DGT LiveChess (js/pareo/dgt.js),
      solo con las mesas que se transmiten («1-2» de 100), y lo guarda en la
      carpeta elegida, o lo baja a Descargas;
+   - le da a quien llena la pestaña «Tournament» de LiveChess (que no se puede
+     escribir desde afuera) cada dato listo para copiar: «Datos para
+     LiveChess», en la tarjeta de cada torneo;
    - si hay un token de Lichess, crea el torneo de la transmisión (uno por
      torneo de chess-results) y cada ronda, y le empuja el mismo PGN para
      que el pareo se vea antes de la primera jugada. Las jugadas las sube
@@ -61,6 +64,7 @@
     let carpeta = null;          // FileSystemDirectoryHandle: no sobrevive a recargar
     let vigilando = null;        // el setInterval
     let revisando = false;
+    const abiertos = new Set();  // los «Datos para LiveChess» que se dejaron abiertos: pintarTorneos() rehace la lista en cada revisión
 
     // ------------------------------------------------------------ la bitácora
 
@@ -305,6 +309,8 @@
     async function revisarTorneo(t, opciones) {
         const datos = await leerPareo(t.tnr);
         if (datos.torneo && (!t.nombre || t.nombre === "tnr" + t.tnr)) { t.nombre = datos.torneo; guardar(); pintarTorneos(); }
+        const ficha = PareoDGT.unirFicha(t.ficha, datos.ficha);
+        if (JSON.stringify(ficha) !== JSON.stringify(t.ficha || {})) { t.ficha = ficha; guardar(); }
         t.ultima = { ronda: datos.ronda, leido: datos.leido_en, viejo: !!datos.viejo };
         t.rondas = t.rondas || {};
         const que = PareoDGT.decidir(t, datos, t.mesas);
@@ -365,10 +371,98 @@
         if (encender) revisar();
     }
 
+    // ------------------------------------------------------------ copiar para LiveChess
+
+    // Al portapapeles; si el navegador no deja (sin https, sin permiso), con
+    // un textarea escondido. Devuelve si se pudo.
+    async function copiar(texto) {
+        try {
+            await navigator.clipboard.writeText(texto);
+            return true;
+        } catch (_) { /* se prueba con el textarea */ }
+        const foco = document.activeElement;
+        const area = document.createElement("textarea");
+        area.value = texto;
+        area.setAttribute("readonly", "");
+        area.style.cssText = "position:fixed;top:0;left:0;opacity:0";
+        document.body.append(area);
+        area.select();
+        let ok = false;
+        try { ok = document.execCommand("copy"); } catch (_) { /* nada */ }
+        area.remove();
+        if (foco && foco.focus) foco.focus();
+        return ok;
+    }
+
+    // La pestaña «Tournament» de LiveChess no se escribe desde afuera: cada
+    // campo sale con su botón para copiarlo y pegarlo allá.
+    function tarjetaLiveChess(t) {
+        const datos = PareoDGT.datosLiveChess(t.nombre, t.ficha);
+        const det = document.createElement("details");
+        det.className = "mt-3 rounded-lg border border-brand-200 dark:border-brand-700";
+        det.open = abiertos.has(t.tnr);
+        det.addEventListener("toggle", () => { if (det.open) abiertos.add(t.tnr); else abiertos.delete(t.tnr); });
+        const resumen = document.createElement("summary");
+        resumen.className = "cursor-pointer px-3 py-2 text-sm font-semibold text-brand-800 dark:text-brand-100 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400";
+        resumen.dataset.foco = t.tnr + ":resumen";
+        resumen.textContent = "Datos para LiveChess (pestaña Tournament)";
+        const cuerpo = document.createElement("div");
+        cuerpo.className = "px-3 pb-3";
+        const ayuda = document.createElement("p");
+        ayuda.className = "text-xs text-brand-600 dark:text-brand-300 mb-2";
+        ayuda.textContent = "Copia cada dato y pégalo en el campo que se llama igual. «Laws of chess» y «Starting position» ya vienen bien: déjalos como están.";
+        const estadoCopia = document.createElement("p");
+        estadoCopia.setAttribute("role", "status");
+        estadoCopia.className = "text-sm font-semibold text-brand-700 dark:text-brand-200 mt-2";
+
+        const lista = document.createElement("ul");
+        lista.className = "space-y-2";
+        for (const d of datos) {
+            const li = document.createElement("li");
+            const rotulo = document.createElement("p");
+            rotulo.className = "text-xs text-brand-700 dark:text-brand-200";
+            rotulo.textContent = d.campo + " · " + d.etiqueta;
+            const fila = document.createElement("div");
+            fila.className = "flex items-center gap-2";
+            const valor = document.createElement("span");
+            valor.className = (d.valor ? "font-mono text-sm text-brand-800 dark:text-white" : "text-sm text-brand-600 dark:text-brand-300") + " min-w-0 flex-1 break-words";
+            valor.textContent = d.valor || "chess-results no lo dice: escríbelo a mano";
+            fila.append(valor);
+            li.append(rotulo, fila);
+            if (d.valor) {
+                const b = document.createElement("button");
+                b.type = "button";
+                b.className = "shrink-0 bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-3 py-1 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400";
+                b.dataset.foco = t.tnr + ":" + d.campo;
+                b.textContent = "Copiar";
+                b.setAttribute("aria-label", "Copiar " + d.campo + ": " + d.valor);
+                b.addEventListener("click", async () => {
+                    estadoCopia.textContent = (await copiar(d.valor)) ? "Copiado: " + d.campo + "." : "No se pudo copiar. Selecciona el texto y cópialo con Ctrl + C.";
+                });
+                fila.append(b);
+            }
+            lista.append(li);
+        }
+
+        const todo = document.createElement("button");
+        todo.type = "button";
+        todo.className = "mt-3 bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-3 py-1 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400";
+        todo.dataset.foco = t.tnr + ":todo";
+        todo.textContent = "Copiar todo (una línea por dato)";
+        todo.disabled = !PareoDGT.textoDatos(datos);
+        todo.addEventListener("click", async () => {
+            estadoCopia.textContent = (await copiar(PareoDGT.textoDatos(datos))) ? "Copiados todos los datos." : "No se pudo copiar. Selecciona el texto y cópialo con Ctrl + C.";
+        });
+        cuerpo.append(ayuda, lista, todo, estadoCopia);
+        det.append(resumen, cuerpo);
+        return det;
+    }
+
     // ------------------------------------------------------------ los torneos
 
     function pintarTorneos() {
         const ul = $("torneos");
+        const foco = document.activeElement && document.activeElement.dataset ? document.activeElement.dataset.foco : "";
         ul.textContent = "";
         $("torneos-vacio").hidden = estado.torneos.length > 0;
         for (const t of estado.torneos) {
@@ -440,7 +534,7 @@
             formMesas.append(etiqueta, campo, cambiar, errorMesas);
             formMesas.addEventListener("submit", (ev) => { ev.preventDefault(); cambiarMesas(t, campo, errorMesas); });
 
-            li.append(arriba, datos, enlaces, formMesas);
+            li.append(arriba, datos, enlaces, formMesas, tarjetaLiveChess(t));
             const rondas = Object.keys(t.rondas || {}).map(Number).sort((a, b) => b - a);
             if (rondas.length) {
                 const lista = document.createElement("ul");
@@ -463,6 +557,8 @@
             ul.append(li);
         }
         $("btn-crear-torneos").disabled = !(token && usuarioLichess) || !estado.torneos.length;
+        // La lista se rehace en cada revisión: quien estaba en un botón lo sigue estando.
+        if (foco) { const otra = [...ul.querySelectorAll("[data-foco]")].find((e) => e.dataset.foco === foco); if (otra) otra.focus(); }
     }
 
     async function agregarTorneo(ev) {
