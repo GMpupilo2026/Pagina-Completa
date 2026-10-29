@@ -672,16 +672,18 @@ async function esperarJugadas(p, n) {
     await pn.fill("#jugada-mano", "e4"); await pn.click("#form-anotar button[type=submit]");
     await pn.click("#btn-vivo");
     const cod = (await pn.textContent("#vivo-codigo")).split(" ")[0];
+    await pn.bringToFront(); // una pestaña de fondo tiene los temporizadores frenados (la reconexión espera 1 s)
     const antesCorte = eventos.length;
     await pn.evaluate((n) => window.__canalesObj[n].__cb("CHANNEL_ERROR"), "tablero-vivo-" + cod);
     igual("si el canal se corta, dice que está sin señal", await pn.evaluate(() => document.getElementById("sin-red").checkVisibility()), true);
-    await pn.waitForFunction(() => document.getElementById("sin-red").hidden, null, { timeout: 8000 }).catch(() => {});
-    // Lo que manda va por el canal falso, que Node releva aparte: se espera a que llegue (hasta 8 s).
+    // Lo que manda va por el canal falso, que Node releva aparte: se espera a las tres cosas juntas (hasta 20 s).
     const entera = () => eventos.slice(antesCorte).some((x) => x.event === "estado" && x.payload.v === 1 && /1\. e4/.test(x.payload.pgn || ""));
-    for (let i = 0; i < 80 && !entera(); i++) await pn.waitForTimeout(100);
-    igual("y lo vuelve a armar solo: deja el viejo, se reconecta y manda la partida entera",
-      [await pn.evaluate(() => window.__quitados || 0), await pn.evaluate(() => document.getElementById("sin-red").checkVisibility()),
-        eventos.slice(antesCorte).some((x) => x.event === "estado" && x.payload.v === 1 && /1\. e4/.test(x.payload.pgn || ""))], [1, false, true]);
+    const comoVaCanal = async () => [await pn.evaluate(() => window.__quitados || 0), await pn.evaluate(() => document.getElementById("sin-red").checkVisibility()), entera()];
+    let cv = await comoVaCanal();
+    for (let i = 0; i < 100 && JSON.stringify(cv) !== "[1,false,true]"; i++) { await pn.waitForTimeout(200); cv = await comoVaCanal(); }
+    // En el CI solo se ven las líneas con ✗: el detalle va en la misma línea.
+    if (JSON.stringify(cv) !== "[1,false,true]") console.log("  ✗ detalle del canal: " + JSON.stringify(cv) + " · estado " + await pn.evaluate(() => [navigator.onLine, document.getElementById("sin-red").textContent.slice(0, 30)].join(" ")) + " · eventos " + JSON.stringify(eventos.slice(antesCorte).map((x) => x.event)));
+    igual("y lo vuelve a armar solo: deja el viejo, se reconecta y manda la partida entera", cv, [1, false, true]);
     igual("sin errores en la consola", N.errores, []);
     await cerrar(N);
   }
