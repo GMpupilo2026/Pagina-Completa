@@ -1194,6 +1194,36 @@ async function esperarJugadas(p, n) {
     igual("y no deja guardarla dos veces", [await pg.textContent("#btn-guardar"), await pg.isDisabled("#btn-guardar")], ["Ya está en tu cuenta", true]);
     igual("sin errores en la consola (guardar)", G.errores, []);
     await cerrar(G);
+
+    // Los momentos clave: con un Stockfish de mentira que da evaluaciones
+    // conocidas. Las blancas regalan en 3. Ac4 (de +0,3 a −2,5) y las negras
+    // devuelven en 4... Cf6 (de −2,5 a +0,5, es decir de +2,5 a −0,5 para ellas).
+    const fensDiez = [], recorre = new Chess();
+    fensDiez.push(recorre.fen()); diez.forEach((x) => { recorre.move(x); fensDiez.push(recorre.fen()); });
+    const evs = fensDiez.map((f, i) => ({ fen: f, eval: i <= 4 ? 0.3 : i <= 7 ? -2.5 : 0.5, mejor: i === 4 ? "d4" : i === 7 ? "d6" : null }));
+    const M = await abrir(browser, "tablero-vivo.html#mxmentxs", null, { width: 390, height: 844 });
+    const pm = M.page;
+    await pm.route("**/js/shared-engine.js", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: "window.SharedEngine = {};" }));
+    await pm.route("**/js/preparacion-motor.js", (r) => r.fulfill({ status: 200, contentType: "application/javascript",
+      body: "window.__revisadas = 0; window.PreparacionMotor = { evaluar: (fen, p) => { window.__revisadas++; window.__prof = p; const x = (window.__evs || []).find((e) => e.fen === fen); return Promise.resolve(x ? { eval: x.eval, mejor: x.mejor } : { eval: 0, mejor: null }); } };" }));
+    await pm.evaluate((e) => { window.__evs = e; }, evs);
+    await pm.waitForFunction(() => window.__canales && Object.keys(window.__canales).length, null, { timeout: 8000 });
+    await llega(pm, "1. e4 e5 2. Nf3 Nc6 3. Bc4 Bc5");
+    await pm.waitForFunction(() => !document.getElementById("partida").hidden, null, { timeout: 8000 });
+    igual("mientras se juega, los momentos clave no se ofrecen", await pm.evaluate(() => document.getElementById("momentos").checkVisibility()), false);
+    await llega(pm, jg.pgn(), "0-1");
+    await pm.waitForFunction(() => document.getElementById("momentos").checkVisibility(), null, { timeout: 8000 }).catch(() => {});
+    igual("al terminar, se ofrecen con un botón (Stockfish no arranca solo)", [await pm.evaluate(() => document.getElementById("btn-momentos").checkVisibility()), await pm.evaluate(() => window.__revisadas === undefined)], [true, true]);
+    await pm.click("#btn-momentos");
+    await pm.waitForFunction(() => document.querySelectorAll("#momentos-lista button").length, null, { timeout: 8000 }).catch(() => {});
+    igual("Stockfish revisa cada posición (11) a profundidad 10, y salen los dos momentos, en orden, con la mejor jugada",
+      [await pm.evaluate(() => [window.__revisadas, window.__prof]), await pm.$$eval("#momentos-lista button", (bs) => bs.map((b) => b.textContent))],
+      [[11, 10], ["3. Ac4: las blancas estaban en +0,3 y quedaron en −2,5 (contado desde las blancas). Mejor era d4.",
+        "4... Cf6: las negras estaban en +2,5 y quedaron en −0,5 (contado desde las negras). Mejor era d6."]]);
+    await pm.click('#momentos-lista button[data-ply="4"]');
+    igual("tocar uno lleva el tablero a esa jugada", await pm.textContent("#paso"), "Repasando: jugada 5 de 10, Ac4.");
+    igual("sin errores en la consola (momentos)", M.errores, []);
+    await cerrar(M);
     const S = await abrir(browser, "tablero-vivo.html#guardar3", { sinSesion: true }, { width: 390, height: 844 });
     await S.page.waitForFunction(() => window.__canales && Object.keys(window.__canales).length, null, { timeout: 8000 });
     await llega(S.page, jg.pgn());
