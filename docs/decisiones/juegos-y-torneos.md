@@ -1394,7 +1394,9 @@ en **`admin.html#torneos`** (`js/admin-salas-torneo.js`). Migración
 - **Dos tipos de sala.** `lichess`: una transmisión de Lichess, que entra a la
   sala de cine (`transmision.html?torneo=<clave>`) y lleva el id de la
   transmisión. `enlaces`: cualquier otra (UTN va en idchess, que no tiene API
-  pública conocida), con uno a seis botones que la abren en otra pestaña. Las
+  pública conocida), con uno a cuarenta botones que la abren en otra pestaña
+  (eran seis; el Centroamericano lleva uno por torneo de chess-results, ver
+  «Un torneo por categoría», y la base y el editor tienen el mismo tope). Las
   de Lichess pueden llevar botones de más («Verlo directo en Lichess») y
   pizarras de chess-results (ver «Las posiciones oficiales vienen de
   chess-results»).
@@ -10697,3 +10699,65 @@ el portapapeles de verdad, que una revisión no cierre la tarjeta ni le quite el
 foco al botón, y que una lectura sin ficha no borre la anterior. Rompiendo el
 filtro de los byes, el de las mesas, la pregunta por la licencia, la lectura de
 la ficha, el foco o `unirFicha()`, salta.
+
+### Probar sin tableros físicos
+
+Para ensayar el día del torneo entero —el pareo, LiveChess, la carpeta de
+exportación, Lichess Broadcaster y la transmisión— sin un solo tablero
+electrónico, «Pareo para DGT» trae tableros DGT **virtuales** (sección 5 de
+`pareo-dgt.html`; lo pidió el dueño, «para probar sin tableros físicos»). Es
+solo para probar: la sección lo dice. Para transmitir una mesa sin tablero
+DGT de verdad, el camino es mandar su PGN a Lichess (la cámara, la partida en
+vivo), no hacerla pasar por un tablero electrónico.
+
+- **Cómo se conecta.** LiveChess habla con cada tablero por un puerto COM.
+  com0com (gratis, Windows) crea un par de puertos unidos (COM10 ↔ COM11):
+  LiveChess abre una punta y la página la otra con **Web Serial** (Chrome o
+  Edge en la computadora; sin Web Serial, el botón se apaga y lo dice). La
+  `Permissions-Policy` del sitio no apaga `serial`, así que no hizo falta
+  tocar `_headers`. Cada tablero virtual lleva su número de serie (90001,
+  90002…), que es lo que LiveChess muestra para asignarlo a una mesa.
+- **El protocolo** está en `js/pareo/dgt-tablero.js`, comprobado contra el
+  código de Picochess (`dgt/util.py` y `dgt/board.py`), que habla con
+  tableros DGT reales: cada pedido de LiveChess es un byte (0x40 reset, 0x42
+  el tablero entero, 0x43/0x44/0x4b avisar de cada cambio, 0x45 y 0x55 el
+  número de serie, 0x47 la marca, 0x4d la versión, 0x46 la dirección de bus);
+  el 0x2b (un mensaje para el reloj) trae detrás cuántos bytes siguen, y se
+  saltan. Cada respuesta lleva 3 bytes de cabecera: el código con el bit 0x80
+  y el largo TOTAL en dos bytes de 7 bits. El tablero entero (0x86) son 64
+  bytes de **a8 a h1**, fila por fila; un cambio (0x8e), la casilla en ese
+  mismo orden y la pieza (0 vacía, 1–6 blancas P R N B K Q, 7–12 negras). No
+  contesta el reloj (0x41), como un tablero sin reloj. **Sin probar todavía
+  contra un LiveChess de verdad**: el primer ensayo dice si lo acepta.
+- **Cada jugada llega como en un tablero de verdad**: se levanta la pieza
+  (la casilla queda vacía) y se apoya en la otra, con 200 ms entre una cosa y
+  otra; en una captura se levanta primero la comida, en un enroque también la
+  torre, en una captura al paso el peón de al lado, y al coronar se apoya la
+  pieza nueva. Si LiveChess todavía no pidió que se le avise (0x43/0x4b), no
+  se manda nada, pero el tablero entero (0x42) ya trae la jugada.
+- **Ninguna posición se inventa**: las partidas son las partidas modelo de
+  maestros de `js/estilo-modelos.js`, ya comprobadas. En esa lista cada
+  partida trae su propio `id` (el de la fuente), distinto de su clave en la
+  lista: la página elige por la clave (se rompió así la primera vez: el `id`
+  pisaba la clave y ninguna partida se encontraba).
+- «Empezar»/«Pausar» (`aria-pressed`), «Una jugada», «Volver al principio»
+  (manda los cambios para dejar cada pieza en su casilla inicial, como quien
+  vuelve a armar el tablero) y «Desconectar». La última jugada se escribe en
+  algebraica española.
+- **«Lo que llega de LiveChess».** En el primer ensayo de verdad LiveChess
+  tenía el puerto marcado y no mostraba el tablero, y no había forma de saber
+  por qué: si no mandaba nada, si mandaba otro protocolo (el de bus, 0x81–0x8b
+  con dirección y suma de comprobación) o si esperaba las líneas de control.
+  Cada tarjeta trae ahora un desplegable con cada byte que llega y cada uno
+  que contesta el tablero, en hexadecimal, con la hora (de Costa Rica) y un
+  botón «Copiar»; guarda los últimos 200 renglones. Y al abrir el puerto la
+  página enciende DTR y RTS, como un tablero de verdad: com0com se las pasa a
+  LiveChess como DSR y CTS en la otra punta.
+
+`verificar-pareo-dgt-virtual.js` juega las 64 partidas modelo (4591 jugadas,
+con capturas, enroques, al paso y coronación) y arma la posición SOLO con los
+mensajes del tablero: después de cada jugada tiene que ser la de chess.js.
+Prueba también las respuestas a cada pedido, el mensaje para el reloj que se
+salta y, en el navegador con un puerto COM de mentira que hace de LiveChess,
+la página entera. Contando las casillas al revés o sin levantar el peón de
+la captura al paso, salta.
