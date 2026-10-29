@@ -10909,6 +10909,37 @@ intento y el mate en el progreso, no limpio; el alumno que abre la cámara; y
 el adjunto que encuentra la mesa 6 sin calibrar, una casilla que no calza y
 un tablero que no es de ninguna. Rotos a propósito, saltan.
 
+### Los relojes de todas las mesas y la bandera al árbitro
+
+El séptimo pedido del dueño («hacer 6»): con el reloj de la cámara en
+varias mesas, quien mira y el árbitro ven quién anda corto de tiempo.
+
+- **Una sola copia de la cuenta**: `PartidaEnVivo.relojDe(d)` (lo que le
+  quedaba a cada uno al mandarlo, menos lo que pasó desde que llegó al que
+  corre, con el reloj de quien mira, `d.recibido`), `pocoTiempo(r)` (el
+  color que corre con menos de un minuto) y `tiempoReloj(ms)` (los segundos
+  empezados cuentan, como un reloj de ajedrez). La usan `tablero-vivo.html`
+  (en grande y en la cuadrícula) y Pareo.
+- **En la cuadrícula de quien mira**: cada tarjeta dice sus dos tiempos; con
+  menos de un minuto, también «¡Poco tiempo para las negras!» (escrito, no
+  solo el borde rojo), y arriba la lista «⏱ Con poco tiempo: Mesa 6 (las
+  negras, 0:30)». Cada segundo se cambia solo ese texto, sin volver a armar
+  las tarjetas (ver «La cámara gasta poco»).
+- **En Pareo**, en la caja de las cámaras, el mismo renglón con las mesas de
+  la ronda que andan cortas (`relojesCamaras`, cada segundo, sin volver a
+  armar la caja).
+- **La bandera**: cuando cae en el reloj de la cámara de un torneo, al
+  árbitro le llega el aviso `bandera` con el color (`alertarArbitro(t, tipo,
+  extra)`) y la foto del tablero con ese motivo (`t.finPor`, la que se toma
+  con el resultado). En Pareo queda en la lista de avisos con «Ver foto» y
+  «Visto», y el resultado, como siempre, para confirmar. No cuenta en el
+  informe como aviso de tablas ni de jugada ilegal.
+
+Lo prueban `verificar-camara-tablero.js` (la cuadrícula con el reloj de
+quien mira adelantado, la bandera con su aviso, su color y su foto) y
+`verificar-pareo-camaras.js` (las mesas cortas y la bandera con su foto).
+Rotos a propósito, saltan.
+
 ## Pareo para DGT
 
 Un torneo presencial con tableros electrónicos DGT: el árbitro sube cada ronda

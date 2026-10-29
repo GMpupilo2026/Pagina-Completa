@@ -370,9 +370,25 @@
         return h ? h + ":" + String(m).padStart(2, "0") + ":" + s2 : m + ":" + s2;
     }
 
+    /* El reloj de una partida que llegó (`d.reloj`, lo que le quedaba a cada
+     * uno al mandarlo): al que corre se le resta lo que pasó desde que llegó
+     * (`d.recibido`, con el reloj de quien mira). null sin reloj. */
+    const POCO_TIEMPO_MS = 60000;
+    function relojDe(d, ahora) {
+        const r = d && d.reloj;
+        if (!r) return null;
+        const corre = d.resultado ? null : r.corre;
+        const gasto = corre && d.recibido ? Math.max(0, (ahora || Date.now()) - d.recibido) : 0;
+        return { w: corre === "w" ? Math.max(0, r.w - gasto) : r.w, b: corre === "b" ? Math.max(0, r.b - gasto) : r.b, corre };
+    }
+    // El color que corre con menos de un minuto (o null).
+    const pocoTiempo = (r) => (r && r.corre && r[r.corre] < POCO_TIEMPO_MS ? r.corre : null);
+    // «0:42»: los segundos que empezaron cuentan (como un reloj de ajedrez).
+    const tiempoReloj = (ms) => reloj(Math.ceil(ms / 1000) * 1000);
+
     /* «Terminó 1-0», para quien mira. */
     const TEXTO_RESULTADO = { "1-0": "Terminó: ganan las blancas (1-0).", "=": "Terminó en tablas (½-½).", "0-1": "Terminó: ganan las negras (0-1)." };
     const textoResultado = (r) => TEXTO_RESULTADO[r] || "";
 
-    window.PartidaEnVivo = { nuevoCodigo, codigoValido, canal, enlace, estado, loNuevo, leer, pintar, jugadasTexto, comoVa, torneoDe, mesaFisica, mesasDe, lugar, clave, resultadoSolo, reglaDeTablas, pgn, textoResultado, hasta, reloj };
+    window.PartidaEnVivo = { nuevoCodigo, codigoValido, canal, enlace, estado, loNuevo, leer, pintar, jugadasTexto, comoVa, torneoDe, mesaFisica, mesasDe, lugar, clave, resultadoSolo, reglaDeTablas, pgn, textoResultado, hasta, reloj, relojDe, pocoTiempo, tiempoReloj };
 })();
