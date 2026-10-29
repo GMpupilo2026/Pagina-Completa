@@ -153,7 +153,7 @@ const visible = (p, sel) => p.$eval(sel, (e) => e.checkVisibility());
     await v.goto(BASE + "/herramientas-arbitraje.html", { waitUntil: "load" });
     await v.waitForFunction(() => document.querySelectorAll("#lista > li").length > 0);
     igual("sin sesión: todas con candado y el aviso de iniciar sesión, menos las gratis (Pareo Integral, la lista de árbitros y las de datos estudiantiles)",
-        [await v.$$eval("#lista > li:not([data-herramienta='pareo']):not([data-herramienta='arbitros']):not([data-herramienta='ajedrez-estudiantil']):not([data-herramienta='historial-jugador']):not([data-herramienta='estadisticas-colegios']):not([data-herramienta='inscripcion-jde']):not([data-herramienta='cenfotec-2026']):not([data-herramienta='torneos-costa-rica']):not([data-herramienta='utn-2026']):not([data-herramienta='reclamos-tablas'])", (l) => l.every((x) => /🔒/.test(x.textContent))), await visible(v, "#activar-sin-sesion"), await visible(v, "#activar-con-sesion")],
+        [await v.$$eval("#lista > li:not([data-herramienta='pareo']):not([data-herramienta='arbitros']):not([data-herramienta='ajedrez-estudiantil']):not([data-herramienta='historial-jugador']):not([data-herramienta='estadisticas-colegios']):not([data-herramienta='inscripcion-jde']):not([data-herramienta='cenfotec-2026']):not([data-herramienta='torneos-costa-rica']):not([data-herramienta='utn-2026']):not([data-herramienta='reclamos-tablas']):not([data-herramienta='bases-torneo']):not([data-herramienta='ranking-estudiantil'])", (l) => l.every((x) => /🔒/.test(x.textContent))), await visible(v, "#activar-sin-sesion"), await visible(v, "#activar-con-sesion")],
         [true, true, false]);
     // Pareo Integral no lleva licencia: abierto para todos, sin sesión, con su manual.
     igual("sin sesión, Pareo Integral sale gratis y se abre",
@@ -166,7 +166,7 @@ const visible = (p, sel) => p.$eval(sel, (e) => e.checkVisibility());
     igual("sin sesión, Ajedrez estudiantil sale gratis y se abre",
         await v.$eval("#lista li[data-herramienta='ajedrez-estudiantil']", (li) => [/Gratis/.test(li.textContent), !/🔒/.test(li.textContent), !!li.querySelector("a[href='ajedrez-estudiantil.html']")]),
         [true, true, true]);
-    for (const [id, href] of [["historial-jugador", "historial-jugador.html"], ["estadisticas-colegios", "estadisticas-colegios.html"], ["inscripcion-jde", "inscripcion-jde.html"], ["cenfotec-2026", "cenfotec-2026.html"], ["utn-2026", "utn-2026.html"], ["torneos-costa-rica", "torneos-pareo.html#tambien"], ["reclamos-tablas", "reclamos-tablas.html"]]) {
+    for (const [id, href] of [["historial-jugador", "historial-jugador.html"], ["estadisticas-colegios", "estadisticas-colegios.html"], ["inscripcion-jde", "inscripcion-jde.html"], ["cenfotec-2026", "cenfotec-2026.html"], ["utn-2026", "utn-2026.html"], ["torneos-costa-rica", "torneos-pareo.html#tambien"], ["reclamos-tablas", "reclamos-tablas.html"], ["bases-torneo", "bases-torneo.html"], ["ranking-estudiantil", "ranking-estudiantil.html"]]) {
         igual("sin sesión, " + id + " sale gratis y se abre",
             await v.$eval("#lista li[data-herramienta='" + id + "']", (li, h) => [/Gratis/.test(li.textContent), !/🔒/.test(li.textContent), !!li.querySelector("a[href='" + h + "']")], href),
             [true, true, true]);
@@ -176,7 +176,7 @@ const visible = (p, sel) => p.$eval(sel, (e) => e.checkVisibility());
     const vistas = () => v.$$eval("#lista > li", (l) => l.filter((x) => x.checkVisibility()).map((x) => x.dataset.herramienta));
     igual("las tarjetas de tema, en orden y con cuántas herramientas trae cada una",
         await v.$$eval("#temas [role=tab]", (l) => l.map((b) => [b.dataset.tema, b.querySelector(".font-serif").textContent, /^\d+ herramientas? →$/.test(b.lastChild.textContent) && b.lastChild.textContent.split(" ")[0], b.getAttribute("aria-selected")])),
-        [["arbitraje", "Arbitraje", "7", "false"], ["jde", "Juegos Deportivos Estudiantiles", "6", "false"], ["jdn", "Juegos Deportivos Nacionales", "2", "false"], ["universitarios", "Universitarios", "4", "false"]]);
+        [["arbitraje", "Arbitraje", "9", "false"], ["jde", "Juegos Deportivos Estudiantiles", "7", "false"], ["jdn", "Juegos Deportivos Nacionales", "3", "false"], ["universitarios", "Universitarios", "4", "false"], ["clubes", "Clubes y federados", "1", "false"]]);
     igual("de entrada no hay tema elegido: ninguna herramienta abajo, y Oscar pide elegir uno",
         [await vistas(), await visible(v, "#panel-tema"), await v.$eval("#tema-invitacion-avatar", (i) => i.checkVisibility() && i.complete && i.naturalWidth > 0 && /avatar-profe-oscar\/a-repasar\.webp$/.test(i.src) && i.alt === "El profe Oscar leyendo un libro de ajedrez"),
             (await v.textContent("#tema-invitacion")).includes("¡Elige un tema!"), await v.$eval("#tab-arbitraje", (b) => b.tabIndex)],
@@ -184,7 +184,7 @@ const visible = (p, sel) => p.$eval(sel, (e) => e.checkVisibility());
     await v.click("#tab-arbitraje");
     igual("al tocar Arbitraje, Oscar se va y salen sus herramientas",
         [await vistas(), await visible(v, "#tema-invitacion"), await v.$eval("#tab-arbitraje", (b) => b.getAttribute("aria-selected"))],
-        [["pareo", "torneos-costa-rica", "arbitros", "arbitros-cr", "desempates", "variacion-elo", "reclamos-tablas"], false, "true"]);
+        [["pareo", "torneos-costa-rica", "arbitros", "arbitros-cr", "desempates", "variacion-elo", "normas-titulo", "reclamos-tablas", "bases-torneo"], false, "true"]);
     igual("lo que hace cada herramienta va detrás de «Qué hace», cerrado",
         await v.$eval("#lista li[data-herramienta='pareo'] details", (d) => [d.querySelector("summary").textContent, d.open, d.querySelector("ul").checkVisibility()]),
         ["Qué hace (5)", false, false]);
@@ -193,7 +193,7 @@ const visible = (p, sel) => p.$eval(sel, (e) => e.checkVisibility());
     await v.click("#tab-jdn");
     igual("en la ficha JDN, solo las de los JDN, y la dirección la recuerda",
         [await vistas(), await v.evaluate(() => location.hash), await v.$eval("#panel-tema", (d) => d.getAttribute("aria-labelledby"))],
-        [["jdn-comites", "jdn-proyeccion"], "#jdn", "tab-jdn"]);
+        [["jdn-comites", "comparador-jdn", "jdn-proyeccion"], "#jdn", "tab-jdn"]);
     igual("y el título de la lista dice el tema", await v.$eval("#tema-titulo", (h) => h.textContent), "🏆 Juegos Deportivos Nacionales");
     await v.focus("#tab-jdn");
     await v.keyboard.press("ArrowRight");
@@ -204,7 +204,7 @@ const visible = (p, sel) => p.$eval(sel, (e) => e.checkVisibility());
     await v.goto(BASE + "/herramientas-arbitraje.html#jde", { waitUntil: "load" });
     await v.waitForFunction(() => document.querySelectorAll("#lista > li").length > 0);
     igual("un enlace con #jde abre la ficha JDE",
-        await vistas(), ["seleccion-codicader", "ajedrez-estudiantil", "historial-jugador", "estadisticas-colegios", "inscripcion-jde", "acta-jde"]);
+        await vistas(), ["seleccion-codicader", "ajedrez-estudiantil", "historial-jugador", "estadisticas-colegios", "ranking-estudiantil", "inscripcion-jde", "acta-jde"]);
     await ctx2.close();
     // Con #jde, para que la selección (de los JDE) se vea abierta.
     ({ ctx, p } = await abrir(browser, "herramientas-arbitraje.html#jde", true));
@@ -212,21 +212,33 @@ const visible = (p, sel) => p.$eval(sel, (e) => e.checkVisibility());
     await p.waitForSelector("#lista li[data-herramienta='seleccion-codicader'] a[href='seleccion-codicader.html']");
     igual("con licencia: «Abrir la herramienta» en la que tiene, candado en las demás",
         await p.$$eval("#lista > li", (l) => l.map((x) => [x.dataset.herramienta, /🔓/.test(x.textContent)])),
-        [["pareo", false], ["torneos-costa-rica", false], ["arbitros", false], ["arbitros-cr", false], ["desempates", false], ["variacion-elo", false], ["reclamos-tablas", false], ["seleccion-codicader", true], ["ajedrez-estudiantil", false], ["historial-jugador", false], ["estadisticas-colegios", false], ["inscripcion-jde", false], ["acta-jde", false], ["jdn-comites", false], ["jdn-proyeccion", false], ["universidades", false], ["torneos-universitarios", false], ["cenfotec-2026", false], ["utn-2026", false]]);
+        [["pareo", false], ["torneos-costa-rica", false], ["arbitros", false], ["arbitros-cr", false], ["desempates", false], ["variacion-elo", false], ["normas-titulo", false], ["reclamos-tablas", false], ["bases-torneo", false], ["seleccion-codicader", true], ["ajedrez-estudiantil", false], ["historial-jugador", false], ["estadisticas-colegios", false], ["ranking-estudiantil", false], ["inscripcion-jde", false], ["acta-jde", false], ["jdn-comites", false], ["comparador-jdn", false], ["jdn-proyeccion", false], ["universidades", false], ["torneos-universitarios", false], ["cenfotec-2026", false], ["utn-2026", false], ["ficha-federado", false]]);
     igual("las gratis no se le preguntan a la base (y las demás sí)",
-        await p.evaluate(() => [window.__pedidos.includes("tengo_herramienta ajedrez-estudiantil") || window.__pedidos.includes("tengo_herramienta historial-jugador") || window.__pedidos.includes("tengo_herramienta estadisticas-colegios") || window.__pedidos.includes("tengo_herramienta inscripcion-jde"), window.__pedidos.includes("tengo_herramienta pareo"), window.__pedidos.includes("tengo_herramienta seleccion-codicader")]),
+        await p.evaluate(() => [window.__pedidos.includes("tengo_herramienta ajedrez-estudiantil") || window.__pedidos.includes("tengo_herramienta historial-jugador") || window.__pedidos.includes("tengo_herramienta estadisticas-colegios") || window.__pedidos.includes("tengo_herramienta inscripcion-jde") || window.__pedidos.includes("tengo_herramienta ranking-estudiantil"), window.__pedidos.includes("tengo_herramienta pareo"), window.__pedidos.includes("tengo_herramienta seleccion-codicader")]),
         [false, false, true]);
     igual("el catálogo de torneos universitarios pregunta por la licencia de «universidades», no por una suya",
         await p.evaluate(() => [window.__pedidos.includes("tengo_herramienta universidades"), window.__pedidos.includes("tengo_herramienta torneos-universitarios")]),
         [true, false]);
+    igual("el comparador de comités pregunta por la licencia de «jdn-comites», no por una suya",
+        await p.evaluate(() => [window.__pedidos.includes("tengo_herramienta jdn-comites"), window.__pedidos.includes("tengo_herramienta comparador-jdn")]),
+        [true, false]);
     await ctx.close();
     // Con todas las herramientas (la licencia «todas», o quien administra), las
     // que todavía no se pueden usar siguen diciendo «Próximamente», no «Abierta».
+    // Una que todavía no está («prueba-proxima») se mete en la lista solo
+    // para esto: las de verdad se van haciendo y la vitrina puede quedarse
+    // sin ninguna «Próximamente».
     ({ ctx, p } = await abrir(browser, "herramientas-arbitraje.html#arbitraje", "todas"));
+    await ctx.route("**/js/herramientas-arbitraje.js", async (r) => {
+        const original = await (await r.fetch()).text();
+        r.fulfill({ contentType: "application/javascript", body: original.replace('        {\n            id: "desempates",',
+            '        { id: "prueba-proxima", tema: "arbitraje", emoji: "🧪", nombre: "Herramienta de prueba", disponible: false, resumen: "Todavía no.", puntos: [] },\n        {\n            id: "desempates",') });
+    });
+    await p.reload({ waitUntil: "load" });
     await p.waitForSelector("#lista li[data-herramienta='desempates'] a[href='desempates.html']");
     igual("con todas: las que vienen siguen en «Próximamente», sin «Abierta para tu cuenta»",
-        await p.$$eval("#lista li[data-herramienta='variacion-elo'], #lista li[data-herramienta='desempates']", (l) => l.map((x) => [x.dataset.herramienta, /Próximamente/.test(x.textContent), /Abierta para tu cuenta/.test(x.textContent)])),
-        [["desempates", false, true], ["variacion-elo", true, false]]);
+        await p.$$eval("#lista li[data-herramienta='desempates'], #lista li[data-herramienta='prueba-proxima']", (l) => l.map((x) => [x.dataset.herramienta, /Próximamente/.test(x.textContent), /Abierta para tu cuenta/.test(x.textContent)])),
+        [["prueba-proxima", true, false], ["desempates", false, true]]);
     await ctx.close();
 
     await browser.close();
