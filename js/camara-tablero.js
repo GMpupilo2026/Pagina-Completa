@@ -529,7 +529,7 @@
         if (!r) t.horaResultado = null;
         if (t === T()) pintarPartida();
         enviarVivo(t);
-        if (termino) tomarFoto(t, "resultado");
+        if (termino) tomarFoto(t, t.finPor || "resultado");
         try {
             localStorage.setItem(PARTIDA + t.i, V.pgn(t.juego, r));
             localStorage.setItem(PARTIDA + t.i + "_horas", JSON.stringify({ inicio: t.inicio, horas: t.horas }));
@@ -614,8 +614,13 @@
             if (!V.resultadoSolo(t.juego)) t.resultadoMano = tablas ? "=" : (otro === "w" ? "1-0" : "0-1");
             const texto = "Se le cayó la bandera a " + quien + ": " + (tablas ? "son tablas, porque " + (otro === "w" ? "las blancas" : "las negras") + " ya no pueden dar mate." : "ganan " + (otro === "w" ? "las blancas" : "las negras") + ".") + " Lo confirma el árbitro.";
             if (t === T()) $("reloj-msg").textContent = texto;
-            avisar(cual(t) + texto, "error");
+            // En un torneo, al árbitro le llega el aviso, y la foto del
+            // tablero con este motivo (la que se toma con el resultado).
+            const alArbitro = alertarArbitro(t, "bandera", { color: r.bandera });
+            avisar(cual(t) + texto + (alArbitro ? " Se le avisó al árbitro." : ""), "error");
+            t.finPor = "bandera";
             partidaCambio(t); // manda el resultado y el reloj en 0
+            t.finPor = null;
         }
         pintarReloj();
     }
@@ -740,7 +745,7 @@
      * al árbitro de Pareo Integral, que la puede pasar a las incidencias. */
     const LADO_FOTO = 256;
     const MOTIVO_FOTO = {
-        resultado: "Al terminar la partida", ilegal: "Posible jugada ilegal", repeticion3: "Triple repetición",
+        resultado: "Al terminar la partida", bandera: "Se cayó la bandera", ilegal: "Posible jugada ilegal", repeticion3: "Triple repetición",
         jugadas50: "50 jugadas", repeticion5: "Quíntuple repetición", jugadas75: "75 jugadas",
     };
     function fotoEnderezada(t) {
@@ -1188,10 +1193,10 @@
     }
     // Con retraso, las jugadas van saliendo solas a medida que cumplen su tiempo.
     setInterval(() => { if (retraso) for (const t of tableros) if (t.vivo && vistaVivo(t).n !== t.enviadas) enviarVivo(t); }, 5000);
-    function alertarArbitro(t, tipo) {
+    function alertarArbitro(t, tipo, extra) {
         const canal = t.vivo && canales.get(t.vivo.codigo), donde = dondeDe(t);
         if (!canal || !donde || !donde.torneo) return false; // el árbitro es el de un torneo
-        canal.send({ type: "broadcast", event: "alerta", payload: { v: 1, torneo: donde.torneo, ronda: donde.ronda, mesa: donde.mesa, tablero: donde.tablero || undefined, tipo: tipo || "ilegal", t: Date.now() } });
+        canal.send({ type: "broadcast", event: "alerta", payload: Object.assign({ v: 1, torneo: donde.torneo, ronda: donde.ronda, mesa: donde.mesa, tablero: donde.tablero || undefined, tipo: tipo || "ilegal", t: Date.now() }, extra) });
         return true;
     }
     const RETRASO = delPuesto("camara_retraso_v1");

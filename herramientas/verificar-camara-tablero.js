@@ -1116,6 +1116,29 @@ async function esperarJugadas(p, n) {
     await pa.click("#btn-deshacer");
     igual("«Deshacer» lo borra: la partida sigue", [await pa.textContent("#resultado-texto"), await pa.getAttribute('[data-resultado="1-0"]', "aria-pressed")], ["Sigue en juego.", "false"]);
 
+    // Los relojes de las mesas en la cuadrícula de quien mira, y la bandera
+    // que cae: al árbitro le llega el aviso con el color y la foto.
+    const adelantar = (pg) => pg.evaluate(() => { if (window.__mas === undefined) { const real = Date.now; window.__mas = 0; Date.now = () => real() + window.__mas; } });
+    await adelantar(pbb); await adelantar(pw);
+    await pbb.selectOption("#reloj-ritmo", "3+2");
+    await pbb.click("#btn-reloj");
+    await pw.waitForFunction(() => /Negras 3:00 \(corre\)/.test(document.querySelector('#mesas-lista [data-clave] [data-reloj]:not([hidden])')?.textContent || ""), null, { timeout: 8000 }).catch(() => {});
+    igual("en la cuadrícula, cada mesa con reloj dice sus dos tiempos", await pw.evaluate(() => [...document.querySelectorAll("#mesas-lista [data-reloj]")].map((e) => e.checkVisibility() ? e.textContent : "")),
+      ["", "⏱ Blancas 3:00 · Negras 3:00 (corre)"]);
+    igual("sin nadie corto de tiempo, no hay aviso arriba", await pw.evaluate(() => document.getElementById("poco-tiempo").checkVisibility()), false);
+    await pw.evaluate(() => { window.__mas += 150000; });
+    await pw.waitForFunction(() => !document.getElementById("poco-tiempo").hidden, null, { timeout: 4000 }).catch(() => {});
+    igual("con menos de un minuto: arriba, qué mesa y quién, y en su tarjeta, escrito (no solo el color)",
+      [await pw.textContent("#poco-tiempo"), await pw.evaluate(() => document.querySelectorAll("#mesas-lista [data-reloj]")[1].textContent)],
+      ["⏱ Con poco tiempo: Mesa 6 (las negras, 0:30).", "⏱ Blancas 3:00 · Negras 0:30 (corre) · ¡Poco tiempo para las negras!"]);
+    const antesBandera = eventos.length;
+    await pbb.evaluate(() => { window.__mas += 181000; });
+    await pbb.waitForFunction(() => /bandera/.test(document.getElementById("reloj-msg").textContent), null, { timeout: 4000 }).catch(() => {});
+    const bandera = eventos.slice(antesBandera).find((x) => x.event === "alerta");
+    igual("se cae la bandera de las negras: el árbitro recibe el aviso, con la mesa y el color", bandera && [bandera.payload.tipo, bandera.payload.mesa, bandera.payload.color], ["bandera", 6, "b"]);
+    igual("y la foto del tablero con ese motivo", eventos.slice(antesBandera).filter((x) => x.event === "foto").map((x) => x.payload.motivo), ["bandera"]);
+    igual("en la cámara lo dice, y que se le avisó", (await aviso(pbb)).endsWith("Se le avisó al árbitro."), true);
+
     // El árbitro adjunto: su cámara no está en ninguna mesa; apunta a un
     // tablero de la sala y pregunta qué mesa es.
     const ADJ = await abrir(browser, "camara-tablero.html");

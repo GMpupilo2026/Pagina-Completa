@@ -115,6 +115,7 @@
         if (proyectando) lista = lista.slice(pagina * POR_PAGINA, (pagina + 1) * POR_PAGINA);
         for (const m of lista) caja.append(tarjetaMesa(m));
         caja.dataset.mesas = lista.map((m) => m.clave).join(",");
+        relojesMesas();
     }
     function tarjetaMesa(m) {
         const x = partidas.get(m.clave);
@@ -144,7 +145,11 @@
             como.textContent = "Sin cámara en esta mesa.";
         }
         b.setAttribute("aria-label", titulo.textContent + ": " + quien.textContent + ". " + como.textContent);
-        b.append(titulo, quien, tab, como);
+        const rel = document.createElement("p");
+        rel.className = "text-xs font-semibold tabular-nums text-brand-800 dark:text-white mt-1";
+        rel.dataset.reloj = "";
+        rel.hidden = true;
+        b.append(titulo, quien, tab, como, rel);
         if (x) b.addEventListener("click", () => { if (proyectando) return; elegida = m.clave; paso = null; pintar(); $("volver").focus(); });
         else b.disabled = true;
         return b;
@@ -162,6 +167,7 @@
         const conFoco = document.activeElement === vieja;
         vieja.replaceWith(nueva);
         if (conFoco) nueva.focus();
+        relojesMesas();
     }
 
     function pintar() {
@@ -218,13 +224,40 @@
     /* El reloj de ajedrez, si quien transmite lo usa: lo que le quedaba a
      * cada uno al mandarlo, menos lo que pasó desde que llegó al que corre. */
     function relojPartida(x) {
-        const e = $("reloj-partida"), r = x && x.reloj;
+        const e = $("reloj-partida"), r = P.relojDe(x);
         e.hidden = !r || $("partida").hidden;
-        if (e.hidden) return;
-        const corre = x.resultado ? null : r.corre, gasto = corre ? Date.now() - x.recibido : 0;
-        const t = (c) => P.reloj(Math.ceil(Math.max(0, r[c] - (c === corre ? gasto : 0)) / 1000) * 1000) + (c === corre ? " (corre)" : "");
-        e.textContent = "⏱ Blancas " + t("w") + " · Negras " + t("b");
+        if (!e.hidden) e.textContent = textoReloj(r);
     }
+    function colorTexto(c) { return c === "w" ? "las blancas" : "las negras"; }
+    function textoReloj(r) {
+        const t = (c) => P.tiempoReloj(r[c]) + (c === r.corre ? " (corre)" : "");
+        const poco = P.pocoTiempo(r);
+        return "⏱ Blancas " + t("w") + " · Negras " + t("b") + (poco ? " · ¡Poco tiempo para " + colorTexto(poco) + "!" : "");
+    }
+    /* Los relojes de la cuadrícula: cada segundo se cambia solo su texto (no
+     * se arma la tarjeta de nuevo), y arriba, las mesas con menos de un
+     * minuto para quien juega, para que el árbitro vaya a mirar. */
+    function relojesMesas() {
+        const caja = $("mesas-lista");
+        if ($("mesas").hidden) return;
+        const cortas = [];
+        for (const m of mesasTorneo()) {
+            const r = P.relojDe(partidas.get(m.clave));
+            const poco = P.pocoTiempo(r);
+            if (poco) cortas.push(P.lugar(m) + " (" + colorTexto(poco) + ", " + P.tiempoReloj(r[poco]) + ")");
+            const e = caja.querySelector('[data-clave="' + m.clave + '"] [data-reloj]');
+            if (!e) continue;
+            const txt = r ? textoReloj(r) : "";
+            if (e.textContent !== txt) e.textContent = txt;
+            e.hidden = !r;
+            e.closest("[data-clave]").classList.toggle("ring-2", !!poco);
+            e.closest("[data-clave]").classList.toggle("ring-red-700", !!poco);
+        }
+        const aviso = $("poco-tiempo"), txt = cortas.length ? "⏱ Con poco tiempo: " + cortas.join(", ") + "." : "";
+        aviso.hidden = !cortas.length;
+        if (aviso.textContent !== txt) aviso.textContent = txt;
+    }
+    setInterval(relojesMesas, 1000);
 
     /* La evaluación de Stockfish, si se pide: de la posición que se ve. */
     const evals = new Map();
