@@ -157,7 +157,9 @@
   /* Dos listas de pares con la misma forma: los botones de enlaces (texto y
    * dirección) y las pizarras de chess-results (título y dirección). */
   const LISTAS = {
-    enlaces: { ul: "sala-enlaces", mas: "sala-enlace-mas", max: 6, campo: "texto", largo: 60,
+    // 40 botones: el Centroamericano lleva uno por torneo de chess-results (12
+    // categorías de clásico, y las de rápidas y blitz) más «Toda la información».
+    enlaces: { ul: "sala-enlaces", mas: "sala-enlace-mas", max: 40, campo: "texto", largo: 60,
       etiqueta: "Texto del botón", direccion: "Dirección del botón", quitar: "Quitar el botón", ejemplo: "https://…" },
     pizarras: { ul: "sala-pizarras", mas: "sala-pizarra-mas", max: 4, campo: "titulo", largo: 40,
       etiqueta: "Título de la pizarra", direccion: "Dirección en chess-results", quitar: "Quitar la pizarra", ejemplo: "https://chess-results.com/tnr123456.aspx" },
