@@ -14,6 +14,9 @@
  *       `<prefijo>_best` (las dos en CLAVES de js/progreso-usuario.js) y
  *       pintada en #streak-count, #streak-best y #streak-bar. Devuelve
  *       { getStreak, getBestStreak, setStreak, bumpStreak, resetStreak }.
+ *       bumpStreak(id) suma una sola vez por ejercicio en cada visita y
+ *       devuelve si sumó: con «Reiniciar» el mismo ejercicio se resolvía otra
+ *       vez y la racha subía sin tope.
  *
  *   EjercicioTablero.casillas(orientacion)
  *       Las 64 casillas en el orden en que se dibujan, mirando desde el bando
@@ -109,10 +112,13 @@
       if (c) c.textContent = n;
       if (b) b.textContent = mejor;
     }
-    function bumpStreak() {
+    const sumados = new Set();
+    function bumpStreak(id) {
+      if (id != null) { if (sumados.has(id)) return false; sumados.add(id); }
       setStreak(getStreak() + 1);
       const bar = document.getElementById("streak-bar");
       if (bar) { bar.classList.remove("pulse"); void bar.offsetWidth; bar.classList.add("pulse"); }
+      return true;
     }
     function resetStreak() { setStreak(0); }
     return { getStreak, getBestStreak, setStreak, bumpStreak, resetStreak };

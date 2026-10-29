@@ -501,8 +501,15 @@ function finishPuzzle(){
   document.getElementById('hint-btn').disabled = true;
   const puzzle = currentPuzzle();
   const alreadySolved = isSolved(puzzle.id);
-  if(!missedThisPuzzle && !usedHintThisPuzzle) bumpStreak(); else resetStreak();
-  setStatus('✅ ¡Jaque mate!', 'ok');
+  /* Lo ya resuelto no suma a la racha: al terminar la categoría, «Volver a
+     empezar» o «Reiniciar» dejaban resolver el mismo mate una y otra vez, y
+     la racha subía sin tope. El repaso sí suma (lo que está en la cola ya se
+     resolvió, y vuelve solo cuando toca), una vez por visita. Un error la
+     sigue cortando siempre. */
+  const limpio = !missedThisPuzzle && !usedHintThisPuzzle;
+  const suma = limpio && (!alreadySolved || currentCategory === REPASO) && bumpStreak(puzzle.id);
+  if(!limpio) resetStreak();
+  setStatus('✅ ¡Jaque mate!' + (limpio && !suma ? ' Ya lo habías resuelto: no suma a la racha.' : ''), 'ok');
   // La cola de repaso: lo que costó entra, lo que se repasa se reprograma. Lo
   // limpio a la primera no entra nunca. Repasar no vuelve a registrar nada:
   // lo que está en la cola ya se resolvió (y contó) una vez.

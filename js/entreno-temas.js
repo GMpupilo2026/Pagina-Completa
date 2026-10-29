@@ -770,9 +770,16 @@ function finishPuzzle(){
     return;
   }
   const alreadySolved = isSolved(id);
-  if(!missedThisPuzzle && !usedHintThisPuzzle) bumpStreak(); else resetStreak();
-  ajustarDificultad(!missedThisPuzzle && !usedHintThisPuzzle);
-  setStatus(game.in_checkmate() ? '✅ ¡Jaque mate!' : '✅ ¡Correcto! Con esto se obtiene una ventaja decisiva.', 'ok');
+  /* Lo ya resuelto no suma a la racha: con «Volver a empezar el tema» o
+     «Reiniciar» se resolvía el mismo ejercicio una y otra vez y la racha
+     subía sin tope. El repaso sí suma, una vez por visita. Un error la sigue
+     cortando siempre. */
+  const limpio = !missedThisPuzzle && !usedHintThisPuzzle;
+  const suma = limpio && (!alreadySolved || enRepaso()) && bumpStreak(id);
+  if(!limpio) resetStreak();
+  ajustarDificultad(limpio);
+  setStatus((game.in_checkmate() ? '✅ ¡Jaque mate!' : '✅ ¡Correcto! Con esto se obtiene una ventaja decisiva.') +
+    (limpio && !suma ? ' Ya lo habías resuelto: no suma a la racha.' : ''), 'ok');
   // La cola de repaso: lo que costó entra, lo que se repasa se vuelve a
   // programar. Lo resuelto limpio a la primera no entra nunca.
   if(window.RepasoFallados) RepasoFallados.anotar(CLAVE_REPASO, id, missedThisPuzzle, usedHintThisPuzzle,

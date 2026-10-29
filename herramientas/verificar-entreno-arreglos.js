@@ -2,7 +2,8 @@
    no daban ningún error: la página se veía bien y hacía otra cosa.
 
    - Mates: acepta cualquier jugada que dé mate (el banco guarda UNA solución y
-     a veces hay dos) y mira el tablero desde el bando que juega.
+     a veces hay dos) y mira el tablero desde el bando que juega; un mate ya
+     resuelto no sube la racha (se repetía sin tope con «Reiniciar»).
    - Practicar: también acepta otro mate; «Ver solución» ya no sube la racha; y
      las jugadas equivocadas bajan las estrellas, no solo las pistas.
    - Desafíos: con «Ver solución» no se festeja «¡Correcto!» ni sube la racha.
@@ -63,6 +64,38 @@ async function mates(browser) {
   await clic(page, "f7"); await clic(page, "e5");
   igual("un mate que no es el guardado (Ce5#) se acepta", await estado(page), "✅ ¡Jaque mate!");
   igual("y cuenta como resuelto", await page.evaluate(() => isSolved("mate1-0071")), "true");
+
+  // Lo ya resuelto no suma a la racha: con «Reiniciar» (o «Volver a empezar la
+  // categoría») el mismo mate se resolvía una y otra vez y la racha subía sin tope.
+  const racha0 = await page.evaluate(() => getStreak());
+  for (let i = 0; i < 3; i += 1) {
+    await page.click("#retry-btn");
+    await clic(page, "f7"); await clic(page, "e5");
+  }
+  igual("resolver otra vez el mismo mate no sube la racha", await page.evaluate(() => getStreak()), racha0);
+  igual("y lo dice", await estado(page), "✅ ¡Jaque mate! Ya lo habías resuelto: no suma a la racha.");
+  // Uno que ya estaba resuelto de antes (de otra visita) tampoco.
+  await page.evaluate(() => {
+    const id = PUZZLES.mate1[0].id === "mate1-0071" ? PUZZLES.mate1[1].id : PUZZLES.mate1[0].id;
+    markSolved(id);
+    currentCategory = "mate1";
+    currentIndex = PUZZLES.mate1.findIndex((p) => p.id === id);
+    loadPuzzle();
+    const p = PUZZLES.mate1[currentIndex];
+    const j = new Chess(p.fen).move(p.solution[0]);
+    playMove(j.from, j.to, j.promotion);
+  });
+  igual("uno resuelto en otra visita tampoco la sube", await page.evaluate(() => getStreak()), racha0);
+  // Y uno nuevo sí.
+  await page.evaluate(() => {
+    currentCategory = "mate1";
+    currentIndex = PUZZLES.mate1.findIndex((p) => !isSolved(p.id));
+    loadPuzzle();
+    const p = PUZZLES.mate1[currentIndex];
+    const j = new Chess(p.fen).move(p.solution[0]);
+    playMove(j.from, j.to, j.promotion);
+  });
+  igual("uno nuevo sí la sube", await page.evaluate(() => getStreak()), racha0 + 1);
 
   // mate2-1255: juegan las negras, así que la fila 1 va arriba y la h a la izquierda.
   await page.evaluate(() => {
