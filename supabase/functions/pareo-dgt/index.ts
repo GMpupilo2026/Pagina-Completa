@@ -1,0 +1,280 @@
+// Edge Function: pareo-dgt
+//
+// El pareo de una ronda de un torneo de chess-results.com, para «Pareo para
+// DGT» (pareo-dgt.html): la página arma con él el PGN que se importa en DGT
+// LiveChess y las rondas de la transmisión de Lichess. Ver «Pareo para DGT» en
+// docs/decisiones/juegos-y-torneos.md.
+//
+// POR QUÉ UNA FUNCIÓN: chess-results no tiene API ni manda cabeceras CORS, así
+// que el navegador no le puede pedir nada. Esto lo pide del lado del servidor.
+//
+// SOLO CON LICENCIA, como las demás herramientas de arbitraje (ver
+// «Herramientas de arbitraje» en docs/decisiones/juegos-y-torneos.md): se
+// pregunta a la base `tengo_herramienta('pareo-dgt')` CON EL TOKEN DE QUIEN
+// LLAMA (clave anónima + su Authorization), no con la de servicio, así que
+// pasa por antes_de_cada_pedido() y la verificación en dos pasos la exige la
+// base. Quien administra la tiene sin licencia. La función recibe un número
+// de torneo cualquiera (no la clave de una sala, como sala-jugadores): sin
+// candado sería un raspador de chess-results gratis para cualquiera. Y de
+// cada torneo pide solo dos páginas fijas: la lista inicial (art=0) y el
+// pareo de una ronda (art=2), siempre en s3.chess-results.com.
+//
+// CACHÉ: lo leído se guarda en pizarras_cache (solo la ve el service role),
+// por dirección: el pareo FRESCO_PAREO_MS y la lista FRESCO_LISTA_MS. La
+// página vuelve a preguntar cada 30 s mientras vigila, varios torneos a la
+// vez: sin caché, cada pestaña abierta serían dos pedidos a chess-results por
+// torneo cada 30 s. Si chess-results falla, se devuelve lo último que se
+// leyó, marcado como viejo.
+//
+// LO QUE SE LEE (comprobado con las páginas reales de tnr1498221, UTN-CONARE
+// 2026 femenino, pedidas desde la sesión de Claude Code el 29/10/2026):
+//   - art=2 (sin rd: la última ronda emparejada; con rd: esa): un <h2> con el
+//     nombre del torneo, otro «Emparejamientos/Resultados» y un <h3> «3. Ronda
+//     el 2026/09/27 a las 11:00am». La tabla <table class="CRs1"> con el
+//     encabezado «M. | No. | | (título) | White | Elo | Club/Ciudad | Pts. |
+//     Resultado | Pts. | (título) | Black | Elo | Club/Ciudad | | No.» («White»
+//     y «Black» van en <td>, no en <th>). La fila de quien no juega trae una
+//     celda de menos y «sin emparejar» (o «bye») en lugar de las negras; esa
+//     fila además trae un <td & colsp & …> mal escrito, que el lector aguanta.
+//   - art=0: «No. | | (título) | Nombre | FIDE-ID | FED | EloN | Club/Ciudad»,
+//     el FIDE-ID dentro de un enlace a ratings.fide.com.
+//
+// Body: { tnr: "1498221" | "https://…chess-results.com/tnr1498221.aspx…", rd?: 1..99 }
+// Respuesta: { tnr, url, torneo, ronda, fecha, hora, mesas: [{ mesa,
+//   blancas: { no, titulo, nombre, elo, club, fide, fed }, negras: … | null,
+//   sinRival: "" | "bye" | "sin emparejar" | …, resultado }], leido_en, viejo? }
+
+import { createClient } from "npm:@supabase/supabase-js@2";
+
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
+const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+const ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
+const HERRAMIENTA = "pareo-dgt";
+const SITE_URL = "https://ajedrez-integral.com";
+const CR_BASE = "https://s3.chess-results.com";
+const FRESCO_PAREO_MS = 20_000;
+const FRESCO_LISTA_MS = 120_000;
+const MAX_MESAS = 500;
+const CR_USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": SITE_URL,
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+};
+
+function json(body: unknown, status = 200) {
+  return new Response(JSON.stringify(body), { status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+}
+
+// ------------------------------------------------------------- el HTML
+
+function texto(html: string): string {
+  return html
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&frac12;/g, "½")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&#(\d+);/g, (_, n) => String.fromCharCode(Number(n)))
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function celdas(filaHtml: string): string[] {
+  const out: string[] = [];
+  const re = /<t([dh])\b[^>]*>([\s\S]*?)<\/t\1>/gi;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(filaHtml))) out.push(m[2]);
+  return out;
+}
+
+// La federación de una celda con bandera: <div class="tn_CRC"> → «CRC».
+function bandera(celda: string): string {
+  return (celda.match(/class="tn_([A-Z]{3})"/) || [])[1] || "";
+}
+
+function tablaCRs1(html: string) {
+  const inicio = html.search(/<table[^>]*class="CRs1"/i);
+  if (inicio < 0) return null;
+  const fin = html.indexOf("</table>", inicio);
+  const tabla = html.slice(inicio, fin < 0 ? undefined : fin);
+  const filas = [...tabla.matchAll(/<tr[^>]*class="([^"]*)"[^>]*>([\s\S]*?)(?=<tr\b|$)/gi)];
+  const encabezado = filas.find((f) => /\bCRn?g1b\b/i.test(f[1]));
+  const datos = filas.filter((f) => /\bCRn?g[12]\b/i.test(f[1]) && !/\bCRn?g1b\b/i.test(f[1]));
+  return { antes: html.slice(0, inicio), encabezado: encabezado ? celdas(encabezado[2]).map(texto) : null, datos: datos.map((f) => celdas(f[2])) };
+}
+
+// Lo que dice chess-results en lugar de las negras cuando nadie juega.
+const SIN_RIVAL = /^(bye|sin emparejar|not paired|spielfrei|libre|exento|descansa|no emparejado)$/i;
+
+// El pareo de una ronda (art=2). Las blancas se leen por su posición en el
+// encabezado; las negras, desde el final de la fila («No.» es la última), así
+// una columna de más o de menos antes de «Resultado» no las corre.
+export function leerPareo(html: string) {
+  const t = tablaCRs1(html);
+  const titulosH2 = [...html.matchAll(/<h2[^>]*>([\s\S]*?)<\/h2>/gi)].map((m) => texto(m[1])).filter(Boolean);
+  const torneo = titulosH2.find((s) => !/^(Emparejamientos|Pairings|Paarungen)/i.test(s)) || "";
+  const h3 = [...(t ? t.antes : html).matchAll(/<h3[^>]*>([\s\S]*?)<\/h3>/gi)].map((m) => texto(m[1]));
+  const titulo = h3.length ? h3[h3.length - 1] : "";
+  const ronda = Number((titulo.match(/(\d+)\.\s*(?:Ronda|Round|Runde)\b/i) || titulo.match(/(?:Ronda|Round|Runde)\s*(\d+)/i) || [])[1] || 0);
+  const f = titulo.match(/(\d{4})\/(\d{2})\/(\d{2})/);
+  const fecha = f ? f[1] + "." + f[2] + "." + f[3] : "";
+  const hora = (titulo.match(/(\d{1,2}:\d{2}\s*(?:am|pm)?)/i) || [])[1] || "";
+  if (!t || !t.encabezado) return { torneo, ronda, fecha, hora, mesas: [] };
+  const cab = t.encabezado;
+  const iB = cab.findIndex((c) => /^(White|Blancas|Weiß)$/i.test(c));
+  const iN = cab.findIndex((c) => /^(Black|Negras|Schwarz)$/i.test(c));
+  const iMesa = cab.findIndex((c) => /^(M\.|Mesa|Bo\.|Br\.)$/i.test(c));
+  const iNo = cab.findIndex((c) => /^No\.?$/i.test(c));
+  const iRes = cab.findIndex((c) => /^(Resultado|Result|Ergebnis)$/i.test(c));
+  if (iB < 0 || iN < 0 || iRes < 0) return { torneo, ronda, fecha, hora, mesas: [] };
+  const iEloB = cab.findIndex((c, i) => i > iB && i < iRes && /^(Elo|Rtg|EloN|EloI)$/i.test(c));
+  const iClubB = cab.findIndex((c, i) => i > iB && i < iRes && /^(Club\/Ciudad|Club\/City|Verein\/Ort)$/i.test(c));
+  const iEloN = cab.findIndex((c, i) => i > iN && /^(Elo|Rtg|EloN|EloI)$/i.test(c));
+  const iClubN = cab.findIndex((c, i) => i > iN && /^(Club\/Ciudad|Club\/City|Verein\/Ort)$/i.test(c));
+  const desdeFin = (i: number) => i - cab.length;   // negativo: se cuenta desde el final de la fila
+  const mesas = t.datos.slice(0, MAX_MESAS).map((c) => {
+    const v = c.map(texto);
+    const de = (i: number) => (i < 0 ? "" : v[i] || "");
+    const finN = (i: number) => (i < 0 ? "" : v[v.length + desdeFin(i)] || "");
+    const nombreN = finN(iN);
+    const sin = v.find((x) => SIN_RIVAL.test(x)) || "";
+    const juega = !sin && v.length === cab.length && !!nombreN;
+    return {
+      mesa: Number(de(iMesa >= 0 ? iMesa : 0)) || 0,
+      blancas: {
+        no: Number(de(iNo >= 0 && iNo < iB ? iNo : 1)) || 0,
+        titulo: de(iB - 1),
+        nombre: de(iB),
+        elo: Number(de(iEloB)) || 0,
+        club: de(iClubB),
+        fide: "",
+        fed: bandera(c[iB - 2] || ""),
+      },
+      negras: juega
+        ? {
+          no: Number(v[v.length - 1]) || 0,
+          titulo: finN(iN - 1),
+          nombre: nombreN,
+          elo: Number(finN(iEloN)) || 0,
+          club: finN(iClubN),
+          fide: "",
+          fed: bandera(c[c.length - 2] || ""),
+        }
+        : null,
+      sinRival: juega ? "" : (sin || "sin rival"),
+      resultado: juega ? de(iRes).replace(/\s+/g, " ") : "",
+    };
+  }).filter((m) => m.blancas.nombre);
+  return { torneo, ronda, fecha, hora, mesas };
+}
+
+// La lista inicial (art=0): el FIDE-ID y la federación de cada número inicial.
+export function leerLista(html: string) {
+  const t = tablaCRs1(html);
+  if (!t || !t.encabezado) return { jugadores: {} };
+  const cab = t.encabezado;
+  const iNo = cab.findIndex((c) => /^No\.?$/i.test(c));
+  const iFide = cab.findIndex((c) => /^(FIDE-ID|ID FIDE|FideID)$/i.test(c));
+  const iFed = cab.findIndex((c) => /^(FED|Fed\.?)$/i.test(c));
+  const jugadores: Record<string, { fide: string; fed: string }> = {};
+  if (iNo < 0) return { jugadores };
+  for (const c of t.datos.slice(0, 5000)) {
+    const v = c.map(texto);
+    const no = Number(v[iNo]);
+    if (!no) continue;
+    const fide = iFide >= 0 && /^\d{3,10}$/.test(v[iFide] || "") && v[iFide] !== "0" ? v[iFide] : "";
+    jugadores[no] = { fide, fed: iFed >= 0 ? (v[iFed] || "").replace(/[^A-Z]/g, "").slice(0, 3) : "" };
+  }
+  return { jugadores };
+}
+
+// El número de torneo: «1498221», «tnr1498221» o cualquier dirección de
+// chess-results que lo lleve. Otra cosa, null.
+export function tnrDe(entrada: unknown): string | null {
+  const s = String(entrada ?? "").trim();
+  if (/^\d{3,9}$/.test(s)) return s;
+  const m = s.match(/^(?:https?:\/\/)?(?:s\d{1,2}\.|www\.)?chess-results\.com\/tnr(\d{3,9})\.aspx(?:[?#].*)?$/i);
+  return m ? m[1] : null;
+}
+
+// ------------------------------------------------------------- la función
+
+type Admin = ReturnType<typeof createClient>;
+
+async function leer(admin: Admin, url: string, frescoMs: number, leerHtml: (h: string) => unknown) {
+  const { data: guardado } = await admin.from("pizarras_cache").select("datos, leido_en").eq("url", url).maybeSingle();
+  if (guardado && Date.now() - new Date(guardado.leido_en as string).getTime() < frescoMs) {
+    return { leido_en: guardado.leido_en as string, datos: guardado.datos };
+  }
+  try {
+    const res = await fetch(url, { headers: { "User-Agent": CR_USER_AGENT }, signal: AbortSignal.timeout(12_000) });
+    if (!res.ok) throw new Error("chess-results respondió " + res.status);
+    const datos = leerHtml(await res.text());
+    const leido_en = new Date().toISOString();
+    await admin.from("pizarras_cache").upsert({ url, datos, leido_en });
+    return { leido_en, datos };
+  } catch (e) {
+    console.error("pareo-dgt:", url, e);
+    if (guardado) return { leido_en: guardado.leido_en as string, datos: guardado.datos, viejo: true };
+    return null;
+  }
+}
+
+Deno.serve(async (req) => {
+  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+  if (req.method !== "POST") return json({ error: "Método no permitido" }, 405);
+
+  const autorizacion = req.headers.get("Authorization") ?? "";
+  if (!/^Bearer\s+\S+/i.test(autorizacion)) return json({ error: "Inicia sesión para usar la herramienta." }, 401);
+  const comoQuienLlama = createClient(SUPABASE_URL, ANON_KEY, {
+    auth: { persistSession: false },
+    global: { headers: { Authorization: autorizacion } },
+  });
+  const { data: puede, error: errPermiso } = await comoQuienLlama.rpc("tengo_herramienta", { p_herramienta: HERRAMIENTA });
+  if (errPermiso) return json({ error: "No se pudo comprobar tu licencia: " + errPermiso.message }, 403);
+  if (puede !== true) return json({ error: "Tu cuenta no tiene una licencia vigente de «Pareo para DGT»." }, 403);
+  const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
+
+  let body: Record<string, unknown>;
+  try {
+    body = await req.json();
+  } catch {
+    return json({ error: "Cuerpo JSON inválido" }, 400);
+  }
+  const tnr = tnrDe(body.tnr);
+  if (!tnr) return json({ error: "Eso no es un torneo de chess-results: pega su dirección (…chess-results.com/tnr123456.aspx) o su número." }, 400);
+  const rd = body.rd === undefined || body.rd === null || body.rd === "" ? null : Number(body.rd);
+  if (rd !== null && !(Number.isInteger(rd) && rd >= 1 && rd <= 99)) return json({ error: "La ronda va de 1 a 99." }, 400);
+
+  const base = `${CR_BASE}/tnr${tnr}.aspx?lan=2&turdet=YES`;
+  const urlPareo = base + "&art=2" + (rd ? "&rd=" + rd : "");
+  const [pareo, lista] = await Promise.all([
+    leer(admin, urlPareo, FRESCO_PAREO_MS, leerPareo),
+    leer(admin, base + "&art=0&zeilen=99999", FRESCO_LISTA_MS, leerLista),
+  ]);
+  if (!pareo) return json({ error: "No se pudo leer chess-results ahora mismo. Se vuelve a intentar sola." }, 502);
+
+  const p = pareo.datos as ReturnType<typeof leerPareo>;
+  const jugadores = ((lista?.datos as { jugadores?: Record<string, { fide: string; fed: string }> } | undefined)?.jugadores) || {};
+  const completar = <T extends { no: number; fide: string; fed: string } | null>(j: T): T => {
+    if (!j) return j;
+    const l = jugadores[j.no];
+    return l ? { ...j, fide: l.fide || j.fide, fed: j.fed || l.fed } : j;
+  };
+  return json({
+    tnr,
+    url: `https://chess-results.com/tnr${tnr}.aspx?lan=2&art=2` + (rd ? "&rd=" + rd : ""),
+    torneo: p.torneo,
+    ronda: p.ronda,
+    fecha: p.fecha,
+    hora: p.hora,
+    mesas: (p.mesas || []).map((m) => ({ ...m, blancas: completar(m.blancas), negras: completar(m.negras) })),
+    leido_en: pareo.leido_en,
+    ...(pareo.viejo ? { viejo: true } : {}),
+  });
+});

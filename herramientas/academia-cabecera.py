@@ -53,7 +53,7 @@ RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # forma confiable por convención de nombre — sí se puede, y ya se hizo,
 # revisando el patrón de cada archivo antes de escribir esta lista.
 PAGINAS = [
-    "admin-jugador.html", "admin-pareo.html", "admin.html", "gafetes.html", "arbitraje.html", "asistencia.html",
+    "admin-jugador.html", "admin-pareo.html", "pareo-dgt.html", "admin.html", "gafetes.html", "arbitraje.html", "asistencia.html",
     "cartas.html",
     "ciegos.html", "clases.html", "cobros.html", "concentracion.html",
     "configuracion.html", "crazyhouse.html", "cuatro-jugadores.html",
@@ -644,6 +644,7 @@ NOMBRE_Y_PADRE = {
     "clases.html": ("Academia", None),
     "admin.html": ("Administración", "clases.html"),
     "admin-jugador.html": ("Ficha del jugador federado", "clases.html"),
+    "pareo-dgt.html": ("Pareo para DGT", "clases.html"),
     "gafetes.html": ("Creación de gafetes", "admin.html"),
     "admin-pareo.html": ("Moderación de Pareo Integral", "admin.html"),
     "inscripciones.html": ("Inscripciones a torneos", "admin.html"),
