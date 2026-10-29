@@ -10098,3 +10098,96 @@ tiempo y el reloj, Stockfish de verdad, el proyector, la jugada ilegal que
 llega al canal sin casillas y el retraso con el reloj de la cámara
 adelantado) y `verificar-pareo-camaras.js` (los `[%emt]` y las alertas).
 Rotos a propósito, saltan.
+
+## Pareo para DGT
+
+Un torneo presencial con tableros electrónicos DGT: el árbitro sube cada ronda
+a chess-results (desde Swiss-Manager, como siempre), y alguien tiene que
+cargar ese mismo pareo en DGT LiveChess, mesa por mesa, y crear la ronda en
+la transmisión de Lichess. En un blitz las rondas salen cada pocos minutos.
+`pareo-dgt.html` (solo quien administra; en `admin.html`, Contenido) lo hace
+solo: vigila chess-results y, apenas sale una ronda, deja el archivo listo
+para importar en LiveChess y crea la ronda en Lichess. El código está en
+`js/pareo-dgt.js` y la parte pura (el PGN, qué hacer con cada lectura, los
+formularios de Lichess) en `js/pareo/dgt.js`.
+
+- **Lo que LiveChess importa es un PGN, no otra cosa.** El manual de LiveChess
+  2.2 (pestaña «Rounds», menú de abajo a la derecha) dice que el pareo se
+  puede importar «desde un PGN preparado con otro programa de pareo». No hay
+  API para escribirle el pareo a LiveChess (la de `localhost:1982` es para
+  leer los tableros), así que el último paso, importar, lo hace una persona:
+  dos clics por ronda. El archivo lleva una partida **sin jugadas** por mesa
+  (`*`), con `Event`, `Date`, `Round`, `Board`, `White`, `Black`, el título, el
+  Elo y el `WhiteFideId`/`BlackFideId`. **Sin probar todavía contra un
+  LiveChess de verdad**: no había uno a mano. Antes del primer torneo, se
+  importa una ronda de prueba.
+- **Solo las partidas.** Un bye o un «sin emparejar» no es una partida y no
+  va al archivo. Y cada torneo lleva «Desde la mesa / Hasta la mesa»: lo
+  normal es que solo las primeras mesas tengan tablero electrónico, y las
+  demás no pueden ir al archivo.
+- **Varios torneos a la vez** (uno por categoría): cada uno con su número de
+  chess-results, su rango de mesas y su transmisión en Lichess.
+- **Los archivos van a una carpeta**: con Chrome o Edge en la computadora,
+  «Elegir la carpeta» (`showDirectoryPicker`) y cada ronda se escribe ahí sola,
+  `<torneo>-ronda-<n>.pgn`; un pareo corregido reemplaza al de esa ronda. Sin
+  eso (otro navegador), se baja a Descargas. El permiso de la carpeta no
+  sobrevive a recargar la página: se vuelve a elegir, y lo dice.
+- **Vigila cada 30 segundos mientras la pestaña esté abierta**, también en
+  segundo plano (la computadora de LiveChess tiene LiveChess adelante; el
+  navegador la estira a un minuto como mucho). Cerrar la pestaña vigilando
+  pregunta antes.
+- **Cada ronda una sola vez.** Lo que ya se hizo con cada torneo (qué rondas
+  tienen archivo, con qué pareo, y sus ids en Lichess) queda en `localStorage`
+  de esa computadora: recargar no repite nada ni crea otra ronda en Lichess.
+  Es de la computadora que maneja el torneo, no de la cuenta; abrir la página
+  en dos computadoras crearía las rondas dos veces en Lichess.
+- **Si chess-results cambia el pareo de una ronda ya hecha** (un error del
+  árbitro, una incomparecencia), el archivo se vuelve a armar y la bitácora lo
+  dice en grande: hay que importarlo otra vez. **A Lichess no se le manda
+  solo**: si las partidas ya empezaron, el pareo sin jugadas podría dejarlas
+  en la posición inicial hasta la jugada siguiente. Hay un botón «Mandarlo a
+  Lichess» que pregunta antes.
+- **La lectura de chess-results, en la Edge Function `pareo-dgt`.**
+  chess-results no manda CORS. La función pide de cada torneo solo dos
+  páginas fijas, siempre en `s3.chess-results.com`: el pareo (`art=2`, sin
+  `rd` es la última ronda emparejada) y la lista inicial (`art=0`, por el
+  FIDE-ID, que el pareo no trae). Caché en `pizarras_cache`: 20 s el pareo, 2
+  min la lista. **Solo quien administra** (sesión, aal2 e `is_admin`):
+  recibe un número de torneo cualquiera, no la clave de una sala, y abierta
+  sería un raspador de chess-results gratis para cualquiera. `verify_jwt` en
+  true.
+- **Cómo se lee el pareo** (comprobado con las páginas reales de tnr1498221 y
+  tnr1498218, el 29/10/2026): las blancas por su lugar en el encabezado, las
+  negras **desde el final de la fila** (la última celda es su «No.»), así una
+  columna de más o de menos (los torneos sin «Club/Ciudad») no las corre. La
+  fila de quien no juega trae una celda de menos y «sin emparejar» o «bye»; y
+  chess-results escribe ahí un `<td & colsp & class="CRc">` roto, que el
+  lector aguanta. La ronda, la fecha y la hora salen del `<h3>` («3. Ronda el
+  2026/09/27 a las 11:00am»: el número va ANTES de «Ronda»).
+- **Lichess, desde el navegador, con el token de quien organiza.** La API de
+  transmisiones manda `Access-Control-Allow-Origin: *` y `lichess.org` ya
+  estaba en `connect-src`. El token (permiso `study:write`, con un enlace que
+  lo crea ya con ese permiso) **nunca va a Ajedrez Integral**: queda en
+  `sessionStorage`, o en `localStorage` si se pide recordarlo. Con él, «Crear
+  los torneos en Lichess» crea uno por torneo (`/broadcast/new`: nombre de
+  chess-results, ritmo, zona de Costa Rica y la clasificación en
+  chess-results), y cada ronda nueva se crea (`/broadcast/{id}/new`, con la
+  hora de chess-results en hora de Costa Rica) y recibe el mismo PGN
+  (`/api/broadcast/round/{id}/push`): el pareo se ve en Lichess antes de la
+  primera jugada. Si Lichess falla, la ronda queda pendiente y se vuelve a
+  intentar en la revisión siguiente, sin volver a bajar el archivo.
+- **Las jugadas no las sube esta página.** Las sube **Lichess Broadcaster**
+  (la aplicación oficial de Lichess para la computadora), que mira la carpeta
+  donde LiveChess escribe el PGN de cada ronda: ahí se elige la ronda que creó
+  esta página. Los nombres coinciden porque LiveChess los tomó del mismo
+  archivo.
+- Va en la Política de privacidad: a Lichess se le mandan los nombres,
+  títulos, Elo e ID FIDE del pareo, los mismos que ya publica chess-results.
+
+`verificar-pareo-dgt.js` prueba el lector con HTML de la forma real y nombres
+inventados (con y sin club, el bye, el «sin emparejar» roto, la lista con
+FIDE-ID), que la función pregunte por quien administra antes de pedir nada,
+el PGN exacto, qué hacer con cada lectura y, en el navegador con dobles de la
+función y de Lichess: el archivo bajado, el orden torneo → ronda → pareo en
+Lichess, que recargar no cree nada otra vez, el pareo corregido y el Lichess
+caído. Rompiendo el filtro de los byes o la pregunta por `is_admin`, salta.
