@@ -39,6 +39,18 @@
 //   - art=0: «No. | | (título) | Nombre | FIDE-ID | FED | EloN | Club/Ciudad»,
 //     el FIDE-ID dentro de un enlace a ratings.fide.com.
 //
+// LICHESS (body.accion = "lichess"): crear el torneo de la transmisión
+// (POST /broadcast/new) y cada ronda (POST /broadcast/{id}/new). Esas dos
+// direcciones de Lichess no están bajo /api/ y no contestan la consulta previa
+// de CORS (el OPTIONS da 403): desde el navegador fallan con «Failed to fetch»
+// (lo vio el dueño el 29/10, con los cuatro torneos del Festival). Por eso las
+// hace esta función: recibe el token de Lichess de quien organiza, lo usa
+// para ESE pedido y no lo guarda ni lo anota en ningún lado. Solo esas dos
+// rutas, solo a lichess.org y solo con licencia. Lo demás de Lichess (la
+// cuenta, empujar el pareo: /api/…) sigue yendo directo del navegador.
+//   { accion: "lichess", token: "lip_…", ruta: "/broadcast/new" | "/broadcast/<8>/new",
+//     form: [[campo, valor], …] } → { status, datos } (lo que contestó Lichess)
+//
 // Body: { tnr: "1498221" | "https://…chess-results.com/tnr1498221.aspx…", rd?: 1..99 }
 // Respuesta: { tnr, url, torneo, ronda, fecha, hora, mesas: [{ mesa,
 //   blancas: { no, titulo, nombre, elo, club, fide, fed }, negras: … | null,
@@ -225,6 +237,34 @@ async function leer(admin: Admin, url: string, frescoMs: number, leerHtml: (h: s
   }
 }
 
+// Crear el torneo o la ronda en Lichess con el token de quien organiza. Ver
+// «LICHESS» arriba. El token no se guarda ni se escribe en ningún registro:
+// los errores se anotan sin él.
+const RUTA_LICHESS = /^\/broadcast\/(new|[A-Za-z0-9]{8}\/new)$/;
+async function aLichess(body: Record<string, unknown>) {
+  const token = typeof body.token === "string" ? body.token.trim() : "";
+  const ruta = typeof body.ruta === "string" ? body.ruta : "";
+  const form = Array.isArray(body.form) ? body.form : [];
+  if (!/^lip_[A-Za-z0-9_-]{8,80}$/.test(token)) return json({ error: "Falta el token de Lichess." }, 400);
+  if (!RUTA_LICHESS.test(ruta)) return json({ error: "Esa dirección de Lichess no se puede usar desde acá." }, 400);
+  if (form.length > 40 || !form.every((c) => Array.isArray(c) && c.length === 2 && typeof c[0] === "string" && typeof c[1] === "string" && c[0].length <= 60 && c[1].length <= 20000)) {
+    return json({ error: "Los datos para Lichess no tienen la forma esperada." }, 400);
+  }
+  try {
+    const res = await fetch("https://lichess.org" + ruta, {
+      method: "POST",
+      headers: { "Authorization": "Bearer " + token, "Content-Type": "application/x-www-form-urlencoded", "Accept": "application/json" },
+      body: new URLSearchParams(form as [string, string][]),
+      signal: AbortSignal.timeout(15_000),
+    });
+    const datos = await res.json().catch(() => ({}));
+    return json({ status: res.status, datos });
+  } catch (e) {
+    console.error("pareo-dgt: Lichess", ruta, e instanceof Error ? e.message : String(e));
+    return json({ error: "No se pudo llegar a Lichess. Se vuelve a intentar en la próxima revisión." }, 502);
+  }
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   if (req.method !== "POST") return json({ error: "Método no permitido" }, 405);
@@ -246,6 +286,7 @@ Deno.serve(async (req) => {
   } catch {
     return json({ error: "Cuerpo JSON inválido" }, 400);
   }
+  if (body.accion === "lichess") return await aLichess(body);
   const tnr = tnrDe(body.tnr);
   if (!tnr) return json({ error: "Eso no es un torneo de chess-results: pega su dirección (…chess-results.com/tnr123456.aspx) o su número." }, 400);
   const rd = body.rd === undefined || body.rd === null || body.rd === "" ? null : Number(body.rd);

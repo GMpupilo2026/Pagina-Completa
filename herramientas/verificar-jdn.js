@@ -190,7 +190,7 @@ async function pruebaFicha() {
   cierto("18. parentesco: la madre, no el padre", /\(X\) Madre, \( \)Padre/.test(linea(ps, "18-")), linea(ps, "18-"));
   cierto("19. una atleta no marca nada de paratleta",
     !/\(X\)/.test(linea(ps, "Tipo de discapacidad")) && !/\(X\)/.test(linea(ps, "Perro guía")));
-  igual("20. categoría", linea(ps, "Categoría Deportiva"), "Categoría Deportiva (Deporte colectivo o individual): Individual. Ajedrez U-16");
+  igual("20. categoría", linea(ps, "Categoría Deportiva"), "Categoría Deportiva (Deporte colectivo o individual): U-16");
   igual("recuadro de las pruebas: Clásico, Rápido y Relámpago, sin la categoría",
     texto(xml.slice(xml.indexOf("<w:txbxContent>"), xml.indexOf("</w:txbxContent>"))),
     "Clásico, Rápido, Relámpago.");
@@ -211,7 +211,7 @@ async function pruebaFicha() {
     /\(X\)Discapacidad visual/.test(disc) && /\(X\) Deterioro en el rango/.test(disc) && (disc.match(/\(X\)/g) || []).length === 2, disc);
   cierto("19. perro guía y silla", /\(X\) sí, \( \) no/.test(linea(ps2, "Perro guía")) && /\(X\) Eléctrica/.test(linea(ps2, "Perro guía")));
   cierto("20. U-20, con las tres pruebas",
-    /Ajedrez U-20$/.test(linea(ps2, "Categoría Deportiva")) &&
+    /individual\): U-20$/.test(linea(ps2, "Categoría Deportiva")) &&
     J.PRUEBAS.every((p) => texto(xml2.slice(xml2.indexOf("<w:txbxContent>"), xml2.indexOf("</w:txbxContent>"))).includes(p)));
 
   console.log("\n=== La fotografía en el punto 3 ===");
@@ -635,7 +635,7 @@ async function pruebaPagina(browser) {
   const fichaXml = await (await window.ReporteExcel.abrirZip(docx.buffer.slice(docx.byteOffset, docx.byteOffset + docx.byteLength))).texto("word/document.xml");
   const fp = parrafos(fichaXml);
   cierto("la ficha que se manda es la llena: U-12, con su tutora y su comité",
-    /Ajedrez U-12$/.test(linea(fp, "Categoría Deportiva")) && /^Yo Marta Ruiz Mora, mayor, divorciada, contadora/.test(linea(fp, "Yo ")) &&
+    /individual\): U-12$/.test(linea(fp, "Categoría Deportiva")) && /^Yo Marta Ruiz Mora, mayor, divorciada, contadora/.test(linea(fp, "Yo ")) &&
     linea(fp, "Nombre del equipo").trim() === "Nombre del equipo: CCDR Barva");
   const zipFicha = await window.ReporteExcel.abrirZip(docx.buffer.slice(docx.byteOffset, docx.byteOffset + docx.byteLength));
   cierto("y lleva adentro la misma foto que se guarda (en JPEG)",

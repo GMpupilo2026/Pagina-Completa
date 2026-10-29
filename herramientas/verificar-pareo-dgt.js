@@ -120,6 +120,15 @@ function pruebaFuncion() {
   cierto("pide siempre a s3.chess-results.com, solo art=0 y art=2", /const CR_BASE = "https:\/\/s3\.chess-results\.com";/.test(ts) &&
     (ts.match(/&art=\d/g) || []).every((x) => x === "&art=2" || x === "&art=0"));
   cierto("guarda lo leído en pizarras_cache (no se le pide a chess-results en cada revisión)", /from\("pizarras_cache"\)\.upsert/.test(ts));
+
+  // Crear el torneo y la ronda en Lichess pasa por la función (esas dos
+  // direcciones no aceptan pedidos de otra página): solo esas dos, con licencia.
+  const rutaLichess = new RegExp((ts.match(/const RUTA_LICHESS = \/(.+)\/;/) || [])[1] || "^$");
+  igual("a Lichess, la función solo crea torneos y rondas",
+    ["/broadcast/new", "/broadcast/AbCd1234/new", "/api/broadcast/round/x/push", "/api/account", "/broadcast/new/../../api/token", "/broadcast/AbCd1234/edit", "/team/x/kick"].map((r) => rutaLichess.test(r)),
+    [true, true, false, false, false, false, false]);
+  cierto("y solo después de comprobar la licencia", licencia >= 0 && licencia < pos(/if \(body\.accion === "lichess"\) return await aLichess\(body\)/));
+  cierto("sin escribir el token en ningún registro", !/console\.\w+\([^)]*token/.test(ts));
 }
 
 // ------------------------------------------------------------ 2. js/pareo/dgt.js
@@ -233,22 +242,35 @@ async function pruebaPagina(browser) {
   const pedidosFuncion = [];
   const lichess = [];
   const estado = { leer: respuesta(0, []), lichessFalla: false, rondas: 0 };
+  // Lichess de mentira, como contesta el de verdad. Lo anota todo en `lichess`
+  // (desde dónde llegó cada pedido: el navegador o la función).
+  const bloqueados = [];
+  function lichessContesta(ruta, metodo, auth, cuerpo, desde) {
+    lichess.push({ ruta, metodo, auth, cuerpo, desde });
+    if (ruta === "/api/account") return auth === "Bearer lip_bueno" ? [200, { id: "organiza", username: "Organiza" }] : [401, { error: "No such token" }];
+    if (estado.lichessFalla) return [500, { error: "Lichess caído" }];
+    if (ruta === "/broadcast/new") return [200, { tour: { id: "TOUR0001", url: "https://lichess.org/broadcast/blitz/TOUR0001" }, rounds: [] }];
+    if (/^\/broadcast\/TOUR0001\/new$/.test(ruta)) { estado.rondas += 1; return [200, { round: { id: "RND" + String(estado.rondas).padStart(5, "0"), url: "https://lichess.org/broadcast/blitz/ronda/RND" } }]; }
+    if (/^\/api\/broadcast\/round\/[^/]+\/push$/.test(ruta)) return [200, { games: [] }];
+    return [404, { error: "no" }];
+  }
   await ctx.route("https://falso.supabase.co/functions/v1/pareo-dgt", (r) => {
-    pedidosFuncion.push({ body: JSON.parse(r.request().postData() || "{}"), headers: r.request().headers() });
+    const body = JSON.parse(r.request().postData() || "{}");
+    pedidosFuncion.push({ body, headers: r.request().headers() });
+    if (body.accion === "lichess") {
+      const [status, datos] = lichessContesta(body.ruta, "POST", "Bearer " + body.token, new URLSearchParams(body.form).toString(), "funcion");
+      return r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ status, datos }) });
+    }
     r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(estado.leer) });
   });
   await ctx.route("https://lichess.org/**", (r) => {
     const q = r.request();
     const ruta = new URL(q.url()).pathname;
-    lichess.push({ ruta, metodo: q.method(), auth: q.headers()["authorization"] || "", cuerpo: q.postData() || "" });
-    const json = (status, body) => r.fulfill({ status, contentType: "application/json", headers: { "Access-Control-Allow-Origin": "*" }, body: JSON.stringify(body) });
-    if (ruta === "/api/account") return q.headers()["authorization"] === "Bearer lip_bueno" ? json(200, { id: "organiza", username: "Organiza" }) : json(401, { error: "No such token" });
-    if (estado.lichessFalla) return json(500, { error: "Lichess caído" });
-    if (ruta === "/broadcast/new") return json(200, { tour: { id: "TOUR0001", url: "https://lichess.org/broadcast/blitz/TOUR0001" }, rounds: [] });
-    const m = ruta.match(/^\/broadcast\/TOUR0001\/new$/);
-    if (m) { estado.rondas += 1; return json(200, { round: { id: "RND" + String(estado.rondas).padStart(5, "0"), url: "https://lichess.org/broadcast/blitz/ronda/RND" } }); }
-    if (/^\/api\/broadcast\/round\/[^/]+\/push$/.test(ruta)) return json(200, { games: [] });
-    return json(404, { error: "no" });
+    // Lo que no está bajo /api/ no contesta la consulta previa de CORS (403
+    // en el Lichess de verdad): el navegador corta con «Failed to fetch».
+    if (!ruta.startsWith("/api/")) { bloqueados.push(ruta); return r.abort("failed"); }
+    const [status, body] = lichessContesta(ruta, q.method(), q.headers()["authorization"] || "", q.postData() || "", "navegador");
+    r.fulfill({ status, contentType: "application/json", headers: { "Access-Control-Allow-Origin": "*" }, body: JSON.stringify(body) });
   });
 
   {
@@ -283,8 +305,8 @@ async function pruebaPagina(browser) {
   await page.click("#form-lichess button[type=submit]");
   await page.waitForFunction(() => /Conectado a Lichess como Organiza/.test(document.getElementById("lichess-estado").textContent));
   cierto("con el bueno, dice con qué cuenta quedó", true);
-  cierto("el token de Lichess nunca va a la función de Ajedrez Integral",
-    pedidosFuncion.every((p) => !JSON.stringify(p).includes("lip_bueno")));
+  cierto("el token de Lichess no va a la función para leer chess-results (solo para crear en Lichess)",
+    pedidosFuncion.every((p) => !JSON.stringify(p).includes("lip_bueno") || p.body.accion === "lichess"));
 
   // Sale la ronda 3: el archivo, el torneo y la ronda en Lichess.
   estado.leer = respuesta(3, DATOS.mesas);
@@ -305,6 +327,8 @@ async function pruebaPagina(browser) {
   igual("la ronda, con su nombre y la hora de chess-results", [formRonda.get("name"), formRonda.get("startsAt")], ["Ronda 3", String(Date.UTC(2026, 10, 7, 21))]);
   igual("lo empujado es el mismo PGN del archivo", lichess.find((l) => /push$/.test(l.ruta)).cuerpo, contenido);
   cierto("con el token en la cabecera", lichess.filter((l) => l.ruta !== "/api/account").every((l) => l.auth === "Bearer lip_bueno"));
+  igual("crear el torneo y la ronda va por la función (Lichess no acepta esos pedidos desde otra página); empujar el pareo, directo",
+    [lichess.filter((l) => l.ruta !== "/api/account").map((l) => l.desde), bloqueados], [["funcion", "funcion", "navegador"], []]);
 
   // Volver a leer la misma ronda, y recargar la página: nada se repite.
   const antes = lichess.length;

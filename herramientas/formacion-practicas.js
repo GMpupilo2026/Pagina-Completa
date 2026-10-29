@@ -224,8 +224,16 @@ function armar() {
       if (k) {
         const ej = ejercicios[+k[1] - 1];
         if (!ej) throw new Error("Sesión " + s.n + ": la lámina «" + d.titulo + "» no tiene su ejercicio en el curso");
-        lamina.preguntas.push({ id: "respuesta", tipo: "texto", texto: "Tu respuesta" });
-        claves.push({ deck: s.presentacion, lamina: i + 1, pregunta: "respuesta", tipo: "texto", clave: null, modelo: ej.respuesta });
+        if (ej.opciones) {
+          // Un ejercicio de elegir (los pasos del todos contra todos de la Sesión 3):
+          // las opciones viajan, la correcta no (va en la clave y la corrige la base).
+          const v = (k) => "abcd"[k];
+          lamina.preguntas.push({ id: "opcion", tipo: "opciones", texto: "Elige una", opciones: ej.opciones.map((t, k) => ({ v: v(k), t })) });
+          claves.push({ deck: s.presentacion, lamina: i + 1, pregunta: "opcion", tipo: "opciones", clave: { correcta: v(ej.correcta) }, modelo: ej.respuesta });
+        } else {
+          lamina.preguntas.push({ id: "respuesta", tipo: "texto", texto: "Tu respuesta" });
+          claves.push({ deck: s.presentacion, lamina: i + 1, pregunta: "respuesta", tipo: "texto", clave: null, modelo: ej.respuesta });
+        }
       }
       laminas.push(lamina);
     });
