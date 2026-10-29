@@ -494,6 +494,7 @@
         $("dudas").hidden = true;
         partidaCambio(t);
         const corona = jugadas.some((x) => /=Q/.test(x));
+        guardarMuestra(t);
         const tablas = V.reglaDeTablas(t.juego);
         const alArbitro = tablas && alertarArbitro(t, tablas);
         if (tablas) tomarFoto(t, tablas);
@@ -653,6 +654,72 @@
             a.append(im, pie);
             caja.append(a);
         });
+    }
+
+    /* ── Enseñarle a la cámara ───────────────────────────────────────────
+     * Si se enciende (y solo entonces: viene apagado), con cada jugada
+     * anotada se guarda la foto del tablero enderezado con su posición: 64
+     * letras como las de la lectura y el FEN. Es lo que hace falta para
+     * entrenar un modelo con nuestros tableros. Quedan en este aparato
+     * (IndexedDB), hasta 500, y se bajan en un .zip con su lista en CSV. */
+    const MUESTRAS_SI = "camara_muestras_si_v1", MAX_MUESTRAS = 500;
+    let base = null;
+    function abrirBase() {
+        if (!base) base = new Promise((ok, mal) => {
+            const r = indexedDB.open("camara_muestras", 1);
+            r.onupgradeneeded = () => r.result.createObjectStore("muestras", { keyPath: "id", autoIncrement: true });
+            r.onsuccess = () => ok(r.result);
+            r.onerror = () => mal(r.error);
+        });
+        base.catch(() => { base = null; });
+        return base;
+    }
+    const almacen = async (modo) => (await abrirBase()).transaction("muestras", modo).objectStore("muestras");
+    const pedido = (r) => new Promise((ok, mal) => { r.onsuccess = () => ok(r.result); r.onerror = () => mal(r.error); });
+    async function guardarMuestra(t) {
+        if (!$("muestras-si").checked) return;
+        let img = null;
+        try { img = fotoEnderezada(t); } catch (e) { img = null; }
+        if (!img) return;
+        try {
+            const st = await almacen("readwrite");
+            await pedido(st.add({ h: Date.now(), img, etiqueta: esperada(t.juego), fen: t.juego.fen() }));
+            const n = await pedido(st.count());
+            if (n > MAX_MUESTRAS) { const viejas = await pedido(st.getAllKeys(null, n - MAX_MUESTRAS)); for (const k of viejas) st.delete(k); }
+        } catch (e) { /* sin IndexedDB: no se juntan */ }
+        pintarMuestras();
+    }
+    async function pintarMuestras() {
+        let n = 0;
+        try { n = await pedido((await almacen("readonly")).count()); } catch (e) { n = 0; }
+        $("muestras-cuenta").textContent = n ? (n === 1 ? "Una foto guardada." : n + " fotos guardadas.") : "Ninguna foto guardada.";
+        $("btn-muestras-bajar").disabled = $("btn-muestras-borrar").disabled = !n;
+    }
+    async function bajarMuestras() {
+        let lista = [];
+        try { lista = await pedido((await almacen("readonly")).getAll()); } catch (e) { lista = []; }
+        if (!lista.length) return;
+        if (!window.TablaExcel) await new Promise((ok, mal) => { const sc = document.createElement("script"); sc.src = "js/tabla-excel.js"; sc.onload = ok; sc.onerror = mal; document.head.append(sc); });
+        const nombre = (m) => "tablero-" + String(m.id).padStart(5, "0") + ".jpg";
+        const bytes = (url) => Uint8Array.from(atob(url.split(",")[1]), (c) => c.charCodeAt(0));
+        const csv = "archivo,etiqueta,fen,hora\n" + lista.map((m) => [nombre(m), m.etiqueta, m.fen, HoraCR.dia(new Date(m.h)) + " " + HoraCR.hora(new Date(m.h))].join(",")).join("\n") + "\n";
+        const partes = [{ nombre: "etiquetas.csv", texto: csv }].concat(lista.map((m) => ({ nombre: nombre(m), bytes: bytes(m.img) })));
+        const blob = new Blob([window.TablaExcel.zip(partes)], { type: "application/zip" });
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = "camara-muestras-" + HoraCR.hoy() + ".zip";
+        document.body.append(a); a.click(); a.remove();
+        setTimeout(() => URL.revokeObjectURL(a.href), 10000);
+        avisar("Se bajaron " + lista.length + " fotos con su posición (y etiquetas.csv).", "bien");
+    }
+    let borrarSeguro = 0;
+    async function borrarMuestras() {
+        const b = $("btn-muestras-borrar");
+        if (Date.now() - borrarSeguro > 5000) { borrarSeguro = Date.now(); b.textContent = "Toca otra vez para borrarlas"; setTimeout(() => { b.textContent = "Borrar las fotos"; }, 5000); return; }
+        borrarSeguro = 0; b.textContent = "Borrar las fotos";
+        try { await pedido((await almacen("readwrite")).clear()); } catch (e) { /* nada que borrar */ }
+        pintarMuestras();
+        avisar("Se borraron las fotos guardadas en este aparato.", "bien");
     }
 
     function pintarPartida() {
@@ -1294,6 +1361,11 @@
     /* Anotar a mano lo que la cámara no reconoce: «Cf3», «e4», «O-O»…, en
      * español o en inglés (lo entiende js/comandos-tablero.js). Tiene que ser
      * legal en la partida: nunca se anota una posición inventada. */
+    try { $("muestras-si").checked = localStorage.getItem(MUESTRAS_SI) === "1"; } catch (e) { /* sin almacenamiento: apagado */ }
+    $("muestras-si").addEventListener("change", () => { try { localStorage.setItem(MUESTRAS_SI, $("muestras-si").checked ? "1" : "0"); } catch (e) { /* solo por esta visita */ } });
+    $("btn-muestras-bajar").addEventListener("click", bajarMuestras);
+    $("btn-muestras-borrar").addEventListener("click", borrarMuestras);
+    if (window.indexedDB) pintarMuestras();
     document.querySelectorAll("[data-corona]").forEach((b) => b.addEventListener("click", () => elegirCoronacion(T(), b.dataset.corona)));
     $("form-anotar").addEventListener("submit", (e) => {
         e.preventDefault();

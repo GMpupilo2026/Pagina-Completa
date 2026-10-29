@@ -480,6 +480,44 @@ async function esperarJugadas(p, n) {
     await cerrar(b);
   }
 
+  console.log("\nEnseñarle a la cámara: fotos con su posición, solo si se enciende");
+  {
+    const b = await abrir(browser, "camara-tablero.html");
+    const pg = b.page;
+    await pg.waitForSelector("#app:not(.hidden)");
+    const j = new Chess();
+    await foto(pg, j.fen(), ESQ0);
+    await esperarAviso(pg, /esquinas/);
+    await tocar(pg, aLienzo(ESQ0));
+    await pg.click("#btn-calibrar");
+    await esperarAviso(pg, /Calibrado/);
+    j.move("d4"); await foto(pg, j.fen(), ESQ0); await esperarJugadas(pg, 1);
+    igual("viene apagado: sin encenderlo no guarda nada", [await pg.isChecked("#muestras-si"), await pg.textContent("#muestras-cuenta"), await pg.isDisabled("#btn-muestras-bajar")], [false, "Ninguna foto guardada.", true]);
+    await pg.click("summary:has-text('Enseñarle a la cámara')");
+    await pg.check("#muestras-si");
+    j.move("d5"); await foto(pg, j.fen(), ESQ0); await esperarJugadas(pg, 2);
+    j.move("c4"); await foto(pg, j.fen(), ESQ0); await esperarJugadas(pg, 3);
+    await pg.waitForFunction(() => /2 fotos/.test(document.getElementById("muestras-cuenta").textContent), null, { timeout: 8000 }).catch(() => {});
+    igual("encendido, guarda una foto por jugada anotada", await pg.textContent("#muestras-cuenta"), "2 fotos guardadas.");
+    const [descarga] = await Promise.all([pg.waitForEvent("download"), pg.click("#btn-muestras-bajar")]);
+    const zip = fs.readFileSync(await descarga.path());
+    const texto = zip.toString("latin1");
+    const csv = texto.slice(texto.indexOf("archivo,etiqueta"), texto.indexOf("\n", texto.indexOf("\n", texto.indexOf("\n", texto.indexOf("archivo,etiqueta")) + 1) + 1));
+    const filas = csv.trim().split("\n").slice(1).map((l) => l.split(","));
+    const tras = (lista) => { const x = new Chess(); lista.forEach((m) => x.move(m)); return x; };
+    const etiqueta = (x) => { let s = ""; for (let k = 0; k < 64; k++) { const p = x.get("abcdefgh"[k & 7] + ((k >> 3) + 1)); s += !p ? "." : p.color === "w" ? "B" : "N"; } return s; };
+    igual("el .zip trae etiquetas.csv con cada foto, su posición en 64 letras y su FEN",
+      [descarga.suggestedFilename().startsWith("camara-muestras-"), filas.length, filas.map((f) => [f[1], f[2]]), (texto.match(/tablero-\d{5}\.jpg/g) || []).length >= 2, texto.includes("JFIF")],
+      [true, 2, [[etiqueta(tras(["d4", "d5"])), tras(["d4", "d5"]).fen()], [etiqueta(tras(["d4", "d5", "c4"])), tras(["d4", "d5", "c4"]).fen()]], true, true]);
+    await pg.click("#btn-muestras-borrar");
+    igual("«Borrar» pide tocar otra vez", [await pg.textContent("#btn-muestras-borrar"), await pg.textContent("#muestras-cuenta")], ["Toca otra vez para borrarlas", "2 fotos guardadas."]);
+    await pg.click("#btn-muestras-borrar");
+    await pg.waitForFunction(() => /Ninguna/.test(document.getElementById("muestras-cuenta").textContent), null, { timeout: 8000 }).catch(() => {});
+    igual("y las borra de este aparato", await pg.textContent("#muestras-cuenta"), "Ninguna foto guardada.");
+    igual("sin errores en la consola", b.errores, []);
+    await cerrar(b);
+  }
+
   console.log("\nLa coronación: se pregunta la pieza, o se deduce si se mueve como caballo");
   {
     // Un peón blanco en e7 con e8 libre (el rey negro en c5, donde ni la

@@ -196,6 +196,16 @@
                                 <button type="submit" class="mt-2 bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-3 py-2 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Usar esta posición</button>
                             </form>
                         </details>
+                        <details class="mt-4">
+                            <summary class="text-sm font-semibold text-brand-800 dark:text-white cursor-pointer rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Enseñarle a la cámara (opcional)</summary>
+                            <p class="text-xs text-brand-500 dark:text-brand-300 mt-2">Si lo permite quien organiza: con cada jugada anotada se guarda una foto del tablero, enderezado y sin nadie alrededor, con la posición que tiene. Con esas fotos se puede entrenar la cámara para que lea mejor nuestros tableros. Quedan solo en este aparato hasta que las bajes; no se mandan a ningún lado.</p>
+                            <label class="mt-2 inline-flex items-center gap-2 text-sm text-brand-700 dark:text-brand-200 cursor-pointer"><input id="muestras-si" type="checkbox" class="w-4 h-4 accent-brand-700"> Juntar fotos con su posición</label>
+                            <p id="muestras-cuenta" role="status" class="text-sm text-brand-600 dark:text-brand-300 mt-1">Ninguna foto guardada.</p>
+                            <div class="flex flex-wrap gap-2 mt-2">
+                                <button id="btn-muestras-bajar" type="button" disabled class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-3 py-2 rounded-lg text-sm disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Bajar las fotos (.zip)</button>
+                                <button id="btn-muestras-borrar" type="button" disabled class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-3 py-2 rounded-lg text-sm disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Borrar las fotos</button>
+                            </div>
+                        </details>
                     </section>
                     <section class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-4" aria-labelledby="t-torneo">
                         <h2 id="t-torneo" class="font-semibold text-brand-800 dark:text-white"><span aria-hidden="true">🏆</span> Partida de un torneo (opcional)</h2>
