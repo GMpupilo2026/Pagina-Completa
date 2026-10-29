@@ -232,9 +232,12 @@
     // Cuándo apareció en pantalla la posición que se ve (con la hora del
     // servidor), para devolver en el reloj lo que tardó en llegar la jugada del
     // rival (ver pensado). La que ya estaba al abrir la página no cuenta: `en`
-    // queda en null y no se devuelve nada.
+    // queda en null y no se devuelve nada. Una sala sin reloj (el Relevo no
+    // carga js/reloj-servidor.js) no anota nada: sin esto, cada jugada que
+    // llegaba reventaba antes de pintarse.
     let vista = null;
     function anotarVista(fila) {
+      if (!window.RelojServidor) return;
       if (!vista) vista = { pos: posicion(sala()), en: null };
       const pos = posicion(fila);
       if (pos !== vista.pos) vista = { pos: pos, en: RelojServidor.ahora() };
