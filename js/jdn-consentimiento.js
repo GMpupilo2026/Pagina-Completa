@@ -398,7 +398,8 @@
       if (OPCIONES.silla.includes(d.silla)) x = marcar(x, "Perro guía", d.silla);
     }
 
-    x = poner(x, "Categoría Deportiva", ":", "Individual. Ajedrez " + (cat ? cat.codigo : ""));
+    // Solo la categoría, sin «Individual» (lo pidió el dueño del sitio).
+    x = poner(x, "Categoría Deportiva", ":", cat ? cat.codigo : "");
     x = poner(x, "Deportes de conjunto indicar", ":", "No aplica (ajedrez)");
     x = poner(x, "Nombre del equipo:", "Nombre del equipo:", d.comite);
     x = enRecuadro(x, PRUEBAS.join(", ") + ".");
