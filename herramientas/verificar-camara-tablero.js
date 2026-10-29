@@ -676,6 +676,9 @@ async function esperarJugadas(p, n) {
     await pn.evaluate((n) => window.__canalesObj[n].__cb("CHANNEL_ERROR"), "tablero-vivo-" + cod);
     igual("si el canal se corta, dice que está sin señal", await pn.evaluate(() => document.getElementById("sin-red").checkVisibility()), true);
     await pn.waitForFunction(() => document.getElementById("sin-red").hidden, null, { timeout: 8000 }).catch(() => {});
+    // Lo que manda va por el canal falso, que Node releva aparte: se espera a que llegue (hasta 8 s).
+    const entera = () => eventos.slice(antesCorte).some((x) => x.event === "estado" && x.payload.v === 1 && /1\. e4/.test(x.payload.pgn || ""));
+    for (let i = 0; i < 80 && !entera(); i++) await pn.waitForTimeout(100);
     igual("y lo vuelve a armar solo: deja el viejo, se reconecta y manda la partida entera",
       [await pn.evaluate(() => window.__quitados || 0), await pn.evaluate(() => document.getElementById("sin-red").checkVisibility()),
         eventos.slice(antesCorte).some((x) => x.event === "estado" && x.payload.v === 1 && /1\. e4/.test(x.payload.pgn || ""))], [1, false, true]);
