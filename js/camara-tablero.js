@@ -895,7 +895,7 @@
         t.ejercicio = { solucion: x.solution.slice(), mate: !!x.mate || /^mate/.test(x.category || ""), id: x.id };
         partidaCambio(t);
         $("btn-entreno-armado").hidden = false;
-        $("entreno-estado").textContent = "Arma en tu tablero la posición de la derecha (juegan las " + (j.turn() === "w" ? "blancas" : "negras") + ") y toca «Ya la armé».";
+        $("entreno-estado").textContent = "Arma en tu tablero la posición de la derecha (juegan las " + (j.turn() === "w" ? "blancas" : "negras") + ") y toca «Ya está armada».";
         pintarEntreno();
     }
     function empezarEjercicio() {
@@ -907,7 +907,7 @@
         if (!lista) { avisar(cual(t) + "Primero busca el tablero o marca sus esquinas.", "error"); return; }
         if (lista.length) {
             lista.slice(0, 12).forEach((x) => { const li = document.createElement("li"); li.textContent = x[0].toUpperCase() + x.slice(1) + "."; caja.append(li); });
-            avisar(cual(t) + "Todavía no está igual: arregla " + (lista.length === 1 ? "esta casilla" : "estas " + lista.length + " casillas") + " y vuelve a tocar «Ya la armé».", "error");
+            avisar(cual(t) + "Todavía no está igual: arregla " + (lista.length === 1 ? "esta casilla" : "estas " + lista.length + " casillas") + " y vuelve a tocar «Ya está armada».", "error");
             return;
         }
         if (!t.cal && calibrarCon(t, esperada(t.juego)) < 0) { avisar(cual(t) + "No pude calibrar con esta posición. Revisa la luz y las esquinas.", "error"); return; }
