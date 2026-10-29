@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8"><!-- guardia: inicio --><script>(function(){try{if(window.sb||localStorage.getItem("sb-bgtijpimpcokxatxxbki-auth-token"))return;}catch(e){return;}try{window.stop()}catch(e){}var p=location.pathname.replace(/^\/+/,'');if(!p||/\/$/.test(p))p+='index.html';else if(!/\.html$/.test(p))p+='.html';location.replace('/login.html?next='+encodeURIComponent(p));})();</script><!-- guardia: fin -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="img/favicon.svg">
+    <title>Sala de arena — Ajedrez Integral</title>
+    <meta name="description" content="Herramienta interna: los equipos, los jugadores y las arenas de la sala de juego aparte.">
+    <meta name="robots" content="noindex">
+    <!-- Tailwind compilado: lo genera herramientas/css-construir.js.
+         Antes venía del CDN, que baja ~400 KB de JavaScript y compila el CSS
+         dentro del navegador en cada visita. -->
+    <link rel="stylesheet" href="css/tailwind.css">
+    <link rel="stylesheet" href="css/styles.css">
+    <!-- oscuro: inicio --><script>(function(){try{var t=localStorage.getItem('theme');if(t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme: dark)').matches))document.documentElement.classList.add('dark');}catch(e){}})();</script><!-- oscuro: fin -->
+    <script src="js/adaptive-mode.js"></script>
+
+
+<!-- app: inicio --><meta name="theme-color" content="#102a43"><link rel="manifest" href="/manifest.json"><link rel="apple-touch-icon" href="/img/app/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Ajedrez"><script src="js/errores.js"></script><script src="js/pwa.js" defer></script><script src="js/navegacion.js" defer></script><!-- app: fin --><!-- fuentes: inicio --><link rel="stylesheet" href="css/fuentes.css"><!-- fuentes: fin --><!-- tema: inicio --><script>(function(){try{var l=localStorage.getItem('plataforma_letra_v1');if(l&&/^[a-z]{2,24}$/.test(l)&&l!=='tema')document.documentElement.setAttribute('data-letra',l);var t=localStorage.getItem('plataforma_tema_v1');if(!t||!/^[a-z]{2,24}$/.test(t)||t==='clasico')return;document.documentElement.setAttribute('data-tema',t);var b=getComputedStyle(document.documentElement).getPropertyValue('--c-brand-800').trim();var m=document.querySelector('meta[name="theme-color"]');if(b&&m)m.setAttribute('content','rgb('+b.replace(/\s+/g,',')+')');}catch(e){}})();</script><!-- tema: fin --></head>
+<body class="font-sans bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100 transition-colors duration-300">
+    <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:bg-accent-500 focus:text-brand-900 focus:font-semibold focus:px-4 focus:py-2 focus:rounded-lg">Saltar al contenido principal</a>
+    <header id="header" class="sticky top-0 z-50 bg-brand-800 shadow-lg transition-all duration-300"><nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-label="Academia"><div class="flex items-center justify-between min-h-[4rem] md:min-h-[5rem] py-2"><a id="marca-enlace" href="clases.html" class="flex items-center gap-2 text-white min-w-0"><img src="/img/logo-marca.png" alt="" width="78" height="48" class="h-10 md:h-12 w-auto shrink-0"><span class="font-serif text-xl md:text-2xl font-bold tracking-tight">Ajedrez <span class="text-accent-400">Integral</span></span><span class="sr-only"> — panel de la Academia</span></a><div class="flex items-center gap-2"><a id="ayuda-guia" href="guia-del-profesor-accesible.html#cap-15" target="_blank" rel="noopener" class="hidden text-white font-bold text-lg w-9 h-9 items-center justify-center rounded-lg border border-white/40 hover:bg-brand-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Ayuda: capítulo «Administración» de la guía del profesor (se abre en otra pestaña)" title="Guía del profesor: Administración"><span aria-hidden="true">?</span></a><button id="theme-toggle" class="text-white text-lg w-9 h-9 flex items-center justify-center rounded-lg hover:bg-brand-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Cambiar a modo oscuro" title="Cambiar entre modo claro y oscuro"><span id="theme-icon" aria-hidden="true">☀️</span></button></div></div></nav></header><!-- migas: inicio --><div class="bg-brand-900"><nav id="migas" aria-label="Estás en" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 text-sm"><ol class="flex flex-wrap items-center gap-x-2 gap-y-1"><li class="flex items-center gap-2"><a href="clases.html" class="text-brand-200 underline underline-offset-2 hover:text-accent-400 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true">🏛️ </span>Academia</a></li><li class="flex items-center gap-2"><span aria-hidden="true" class="text-brand-400">›</span><a href="admin.html" class="text-brand-200 underline underline-offset-2 hover:text-accent-400 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Administración</a></li><li class="flex items-center gap-2"><span aria-hidden="true" class="text-brand-400">›</span><span aria-current="page" class="font-semibold text-white">Sala de arena</span></li></ol></nav></div><!-- migas: fin -->
+        <main id="main-content" class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        <div id="loading" role="status" class="min-h-[50vh] flex flex-col items-center justify-center gap-3 px-4 text-center text-brand-500 dark:text-brand-300"><span aria-hidden="true" class="w-8 h-8 rounded-full border-4 border-brand-200 dark:border-brand-700 border-t-accent-500 animate-spin motion-reduce:animate-none"></span><p class="text-sm">Cargando…</p></div>
+
+        <div id="denegado" class="hidden max-w-2xl mx-auto bg-white dark:bg-brand-900 rounded-2xl shadow-md p-8 text-center">
+            <p class="text-4xl mb-3" aria-hidden="true">🔒</p>
+            <h1 class="font-serif text-2xl font-bold text-brand-800 dark:text-white mb-2">Solo para quien administra o coordina</h1>
+            <p class="text-brand-500 dark:text-brand-300">La sala de arena trae cuentas de estudiantes menores de edad, así que no la maneja todo el equipo docente. Si crees que deberías tener acceso, pídeselo a la persona administradora.</p>
+            <a href="clases.html" class="inline-block mt-5 bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2.5 rounded-lg text-sm transition-colors">← Volver a la Academia</a>
+        </div>
+
+        <div id="app" class="hidden">
+            <div class="flex flex-wrap items-end justify-between gap-4 mb-2">
+                <div>
+                    <h1 class="font-serif text-3xl sm:text-4xl font-bold text-brand-800 dark:text-white"><span aria-hidden="true">⚔️</span> Sala de arena</h1>
+                    <p class="text-brand-500 dark:text-brand-300 mt-1">Equipos de estudiantes de las inscripciones, que juegan arenas entre ellos en <a href="sala.html" class="text-accent-700 dark:text-accent-400 hover:underline">sala.html</a>, una sala aparte de la Academia.</p>
+                </div>
+            </div>
+            <p class="text-xs rounded-lg bg-accent-50 dark:bg-brand-800 border-l-4 border-accent-500 px-3 py-2 text-brand-700 dark:text-brand-200 mb-6">
+                🔒 Cada estudiante entra a la sala con su usuario y su clave, que se le entregan a mano. La sala no tiene nada que ver con las cuentas de la Academia: no ve sus clases, sus tareas ni a sus compañeros de academia. Los demás jugadores solo ven su nombre y su primer apellido.
+            </p>
+            <p id="error-carga" role="alert" hidden class="text-sm rounded-lg bg-red-50 dark:bg-red-950 border-l-4 border-red-500 px-3 py-2 text-red-800 dark:text-red-200 mb-6"></p>
+
+            <!-- Las claves, una sola vez -->
+            <section id="cuentas" hidden aria-labelledby="cuentas-titulo" class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-6 border-2 border-accent-500">
+                <h2 id="cuentas-titulo" tabindex="-1" class="font-serif text-lg font-bold text-brand-800 dark:text-white focus:outline-none"></h2>
+                <p class="text-sm text-red-700 dark:text-red-300 font-semibold mt-1 mb-3">Anota o baja estas claves ahora: no se vuelven a mostrar. Si una se pierde, usa «Nueva clave» en el jugador.</p>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm">
+                        <caption class="sr-only">Usuarios y claves recién creados</caption>
+                        <thead>
+                            <tr class="text-left text-brand-450 dark:text-brand-350 uppercase text-xs border-b border-brand-100 dark:border-brand-800">
+                                <th scope="col" class="py-1.5 pr-3 font-semibold">Jugador</th>
+                                <th scope="col" class="py-1.5 pr-3 font-semibold">Usuario</th>
+                                <th scope="col" class="py-1.5 pr-3 font-semibold">Clave</th>
+                            </tr>
+                        </thead>
+                        <tbody id="cuentas-cuerpo"></tbody>
+                    </table>
+                </div>
+                <div class="flex flex-wrap gap-2 mt-4">
+                    <button type="button" id="bajar-csv" class="bg-brand-700 hover:bg-brand-600 text-white font-semibold px-4 py-2 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">⬇️ Bajar en Excel (CSV)</button>
+                    <button type="button" id="copiar-cuentas" class="bg-brand-100 hover:bg-brand-200 text-brand-800 dark:bg-brand-800 dark:hover:bg-brand-700 dark:text-brand-100 font-semibold px-4 py-2 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">📋 Copiar</button>
+                    <button type="button" id="cerrar-cuentas" class="bg-brand-100 hover:bg-brand-200 text-brand-800 dark:bg-brand-800 dark:hover:bg-brand-700 dark:text-brand-100 font-semibold px-4 py-2 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Ya las tengo, cerrar</button>
+                </div>
+            </section>
+
+            <!-- Equipos -->
+            <section aria-labelledby="h-equipos" class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-6">
+                <h2 id="h-equipos" class="font-serif text-lg font-bold text-brand-800 dark:text-white">Los equipos</h2>
+                <form id="form-equipo" class="flex flex-wrap items-end gap-2 mt-3 mb-4">
+                    <div>
+                        <label for="equipo-nombre" class="block text-xs font-semibold text-brand-600 dark:text-brand-300 mb-1">Nombre del equipo nuevo</label>
+                        <input id="equipo-nombre" type="text" maxlength="60" autocomplete="off" class="px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm w-64 max-w-full focus:ring-2 focus:ring-accent-500 outline-none">
+                    </div>
+                    <button type="submit" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Crear equipo</button>
+                </form>
+                <div id="lista-equipos" class="space-y-3"></div>
+            </section>
+
+            <!-- Agregar jugadores desde las inscripciones -->
+            <section aria-labelledby="h-agregar" class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-6">
+                <h2 id="h-agregar" class="font-serif text-lg font-bold text-brand-800 dark:text-white">Agregar jugadores desde las inscripciones</h2>
+                <p class="text-sm text-brand-500 dark:text-brand-300 mt-1">Marca a quienes van a jugar y elige su equipo. A cada uno que no tenga cuenta se le crea una, con el usuario de su inscripción. Quien ya la tiene solo cambia de equipo.</p>
+                <div class="flex flex-wrap items-end gap-3 mt-4">
+                    <div>
+                        <label for="destino" class="block text-xs font-semibold text-brand-600 dark:text-brand-300 mb-1">Equipo</label>
+                        <select id="destino" class="px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none"></select>
+                    </div>
+                    <div>
+                        <label for="buscar" class="block text-xs font-semibold text-brand-600 dark:text-brand-300 mb-1">Buscar</label>
+                        <input id="buscar" type="search" placeholder="🔍 Nombre, centro o usuario…" autocomplete="off" class="px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm w-64 max-w-full focus:ring-2 focus:ring-accent-500 outline-none">
+                    </div>
+                    <button type="button" id="marcar-visibles" class="bg-brand-100 hover:bg-brand-200 text-brand-800 dark:bg-brand-800 dark:hover:bg-brand-700 dark:text-brand-100 font-semibold px-3 py-2 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Marcar los que se ven</button>
+                    <button type="button" id="desmarcar" class="bg-brand-100 hover:bg-brand-200 text-brand-800 dark:bg-brand-800 dark:hover:bg-brand-700 dark:text-brand-100 font-semibold px-3 py-2 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Quitar las marcas</button>
+                </div>
+                <p id="resumen-inscritos" class="text-xs text-brand-450 dark:text-brand-350 mt-3" role="status">Cargando…</p>
+                <div id="lista-inscritos" class="mt-2 max-h-[28rem] overflow-y-auto divide-y divide-brand-50 dark:divide-brand-800/60"></div>
+                <div class="flex flex-wrap items-center gap-3 mt-3">
+                    <button type="button" id="ver-mas" hidden class="text-sm font-semibold text-accent-700 dark:text-accent-400 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 rounded">Ver más inscripciones</button>
+                    <button type="button" id="agregar" disabled class="bg-accent-500 hover:bg-accent-600 disabled:opacity-50 disabled:cursor-not-allowed text-brand-900 font-semibold px-4 py-2 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Agregar jugadores</button>
+                </div>
+            </section>
+
+            <!-- Arenas -->
+            <section aria-labelledby="h-arenas" class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6">
+                <h2 id="h-arenas" class="font-serif text-lg font-bold text-brand-800 dark:text-white">Las arenas</h2>
+                <p class="text-sm text-brand-500 dark:text-brand-300 mt-1">Durante la arena, cada jugador que está esperando se empareja solo con otro apenas hay quién; al terminar una partida pasa a la siguiente. Gana 2 puntos, empata 1 y, con dos victorias seguidas, la partida siguiente vale el doble.</p>
+                <form id="form-arena" class="grid sm:grid-cols-2 gap-3 mt-4 mb-5">
+                    <div class="sm:col-span-2">
+                        <label for="arena-nombre" class="block text-xs font-semibold text-brand-600 dark:text-brand-300 mb-1">Nombre de la arena</label>
+                        <input id="arena-nombre" type="text" required maxlength="100" autocomplete="off" class="px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm w-full focus:ring-2 focus:ring-accent-500 outline-none">
+                    </div>
+                    <div>
+                        <label for="arena-inicia" class="block text-xs font-semibold text-brand-600 dark:text-brand-300 mb-1">Empieza (hora de Costa Rica)</label>
+                        <input id="arena-inicia" type="datetime-local" required class="px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm w-full focus:ring-2 focus:ring-accent-500 outline-none">
+                    </div>
+                    <div>
+                        <label for="arena-minutos" class="block text-xs font-semibold text-brand-600 dark:text-brand-300 mb-1">Dura (minutos)</label>
+                        <input id="arena-minutos" type="number" required min="10" max="240" value="60" class="px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm w-full focus:ring-2 focus:ring-accent-500 outline-none">
+                    </div>
+                    <div>
+                        <label for="arena-ritmo" class="block text-xs font-semibold text-brand-600 dark:text-brand-300 mb-1">Tiempo de cada partida</label>
+                        <select id="arena-ritmo" class="px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm w-full focus:ring-2 focus:ring-accent-500 outline-none"></select>
+                    </div>
+                    <div class="flex flex-col justify-end gap-2">
+                        <label class="flex items-center gap-2 text-sm"><input id="arena-equipos" type="checkbox" checked class="h-4 w-4 accent-accent-500"> Por equipos</label>
+                        <div id="arena-mejores-caja" class="flex items-center gap-2 text-sm">
+                            <label for="arena-mejores">Cuentan los mejores</label>
+                            <input id="arena-mejores" type="number" min="1" max="20" value="5" class="px-2 py-1 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm w-16 focus:ring-2 focus:ring-accent-500 outline-none">
+                            <span>de cada equipo</span>
+                        </div>
+                    </div>
+                    <div class="sm:col-span-2">
+                        <button type="submit" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Programar arena</button>
+                    </div>
+                </form>
+                <div id="lista-arenas" class="space-y-2"></div>
+            </section>
+        </div>
+    </main>
+
+<footer class="bg-brand-900 text-brand-300 py-8"><div class="max-w-7xl mx-auto px-4 text-center text-sm"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p><!-- legal: inicio --><p class="mt-2"><a href="privacidad.html" class="underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Política de privacidad</a> <span aria-hidden="true">·</span> <a href="terminos.html" class="underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Términos y condiciones</a></p><!-- legal: fin --></div></footer>
+    <script src="js/vendor/supabase.js"></script>
+    <script src="js/supabase-client.js"></script>
+    <script src="js/main.js"></script>
+    <script src="js/hora-cr.js"></script>
+    <script src="js/avisos.js"></script>
+    <script src="js/ritmos.js"></script>
+    <script src="js/sala-admin.js"></script>
+<!-- burbuja: inicio --><script src="js/burbuja-en-linea.js" defer></script><!-- burbuja: fin --><!-- juego-aviso: inicio --><script src="js/juego-aviso.js" defer></script><!-- juego-aviso: fin --><!-- aviso-profe: inicio --><script src="js/aviso-profe.js" defer></script><!-- aviso-profe: fin --><!-- tanda: inicio --><script src="js/tanda-diez.js" defer></script><!-- tanda: fin --><!-- acceso: inicio --><script src="js/acceso-vigente.js" defer></script><!-- acceso: fin --><!-- modo-vista: inicio --><script src="js/modo-vista.js" defer></script><!-- modo-vista: fin --><!-- marca: inicio --><script src="js/marca-academia.js" defer></script><!-- marca: fin --><!-- ayuda: inicio --><script src="js/ayuda-guia.js" defer></script><!-- ayuda: fin --><!-- atajo: inicio --><script src="js/atajo-buscar.js" data-arriba="" defer></script><!-- atajo: fin --></body>
+</html>
