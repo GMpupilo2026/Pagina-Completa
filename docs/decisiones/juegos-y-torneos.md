@@ -1518,20 +1518,50 @@ Lo prueban `verificar-premovidas.js` (la cuenta, el tope, y `suscribir` con un
 Supabase de mentira: la jugada del rival llega 0,6 s después de guardarse y el
 reloj cobra los 3 s pensados, no 3,6; quitando la anotación o el tope, salta) y
 `verificar-partidas-simultaneas.js`, cuyo trigger de mentira deja pasar el
-mismo segundo: ninguna jugada que llegó a tiempo a la base se rechaza por
-subirse el reloj de más, y se imprime cuánto quedó cada reloj por encima de lo
-que dice la base. Con la red mala, sin esto se rechazaban 118 de 2000 jugadas;
-con esto, ninguna de las que llegaron a tiempo (devolviendo hasta 3 s, saltan
-miles).
+mismo segundo: ningún reloj de una jugada que llegó a tiempo a la base queda
+por encima del tope, y se imprime cuánto quedó cada reloj por encima de lo que
+dice la base. Con la red mala, sin esto pasaban del tope 118 de 2000 jugadas
+(entonces se rechazaban); con esto, ninguna de las que llegaron a tiempo
+(devolviendo hasta 3 s, saltan miles).
 
-**Lo que queda: la escritura que tarda en llegar.** Si el pedido que guarda la
-jugada tarda más de un segundo en llegar a la base (la red mala del doble lo
-hace con una de cada diez, entre 0,8 y 2,5 s), la base cobra ese tiempo y el
-navegador no lo puede saber: el reloj que manda queda por encima y, pasado el
-margen de 2 s más 1, la jugada se rechaza y se vuelve a leer la sala. En la
-prueba son unas 17 de 2000, y se cuentan aparte («tras una escritura lenta»).
-Arreglarlo pide que la base calcule el reloj sola (lo que hace lichess en su
-servidor), no un margen más ancho.
+**La escritura que tarda en llegar.** Si el pedido que guarda la jugada tarda
+más de un segundo en llegar a la base (la red mala del doble lo hace con una
+de cada diez, entre 0,8 y 2,5 s), la base cobra ese tiempo y el navegador no
+lo puede saber: el reloj que manda queda por encima del margen. Hasta el
+29/10 eso rechazaba la jugada entera (unas 17 de 2000 en la prueba); ahora la
+base la guarda y recorta el reloj (ver la sección siguiente).
+
+### El reloj de más se recorta, no se rechaza
+
+Migración `20261029210004_reloj_recorta_y_sin_jugada_no_sube`.
+
+- **Lo de más se recorta.** El paso (4) de `proteger_reloj_de_partida()`
+  ya no lanza «Tiempo restante inválido»: deja el reloj en el tope (lo que le
+  quedaba, más el incremento, los 2 s de tolerancia y el segundo del
+  retraso) y guarda la jugada. Una escritura lenta ya no pierde la jugada, y
+  quien haga trampa no gana nada nuevo: es el mismo tope.
+- **Sin jugada, el reloj no sube.** Ese margen se daba en cualquier
+  escritura: probado en una transacción revertida, escribiendo el reloj
+  propio cinco veces seguidas desde la consola las blancas pasaban de 60 s a
+  74,5 s. Ahora el margen se da solo si hay jugada —cambia `fen`,
+  `cartas_state` o el compromiso del Duelo—; si no, el tope es lo que ya
+  estaba guardado. Ninguna página sube el reloj sin mover: las demás
+  escrituras son al crear la partida (INSERT) o la bandera, que lo baja a 0.
+- **Lo que no cierra:** una jugada que no trae el reloj de quien mueve (o lo
+  trae igual) no se descuenta: el trigger solo mira la columna que cambia. Ya
+  pasaba antes. Cerrarlo pide saber de quién es el reloj que corre en cada
+  escritura (en el Duelo corren los dos y `clock_updated_at` no se toca al
+  confirmar), y eso es que la base calcule el reloj sola.
+- Ajedrez para 4 queda como estaba, por decisión.
+
+Probado en producción en una transacción revertida: con el reloj corriendo
+hace 10 s sobre 60, una jugada con 53,5 queda en 53 y se guarda; cinco
+escrituras sin jugada con 2,9 s de más dejan 60; bajarlo a 55 pasa. Los
+dobles de `verificar-partidas-simultaneas.js`,
+`verificar-juegos-nuevos-en-vivo.js` y `verificar-torneo-jugado.js` recortan
+igual; el primero cuenta aparte los recortes tras una escritura lenta y
+falla si hubo que recortar uno que llegó a tiempo, y los otros dos fallan con
+cualquier recorte (ninguna pantalla debería necesitarlo).
 
 ### Cartas: cada estado, una copia propia
 

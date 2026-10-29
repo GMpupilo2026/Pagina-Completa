@@ -82,7 +82,10 @@ function crearServidor() {
       if (nuevo[clave] === viejo[clave] || viejo[clave] == null) continue;
       const corre = viejo.status === "playing" && viejo.clock_updated_at && mueve === c ? pasado : 0;
       if ((nuevo[clave] || 0) < viejo[clave] - corre - tol) return "Todavía le queda tiempo a las " + (c === "w" ? "blancas" : "negras");
-      if (nuevo[clave] > Math.max(viejo[clave] - pasado, 0) + (viejo.increment_seconds || 0) + tol) return "Tiempo restante inválido";
+      // Lo de más se recorta (con jugada, con el margen; sin jugada, no sube) y
+      // queda anotado: ninguna pantalla debería necesitarlo.
+      const tope = nuevo.fen !== viejo.fen ? Math.max(viejo[clave] - pasado, 0) + (viejo.increment_seconds || 0) + tol + 1 : viejo[clave];
+      if (nuevo[clave] > tope) { nuevo[clave] = tope; rechazos.push("Reloj recortado"); }
     }
     return null;
   }

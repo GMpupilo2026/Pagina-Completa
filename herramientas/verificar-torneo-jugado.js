@@ -128,10 +128,15 @@ function crearServidor(tablas) {
         correW = m === "b" ? 0 : pasado; correB = m === "w" ? 0 : pasado;
       }
     }
+    const esJugada = nuevo.fen !== viejo.fen || JSON.stringify(nuevo.cartas_state) !== JSON.stringify(viejo.cartas_state) ||
+      (duelo && JSON.stringify(cn) !== JSON.stringify(cv));
     for (const [k, corre, quien] of [["white_time_left", correW, "blancas"], ["black_time_left", correB, "negras"]]) {
       if (nuevo[k] === viejo[k] || viejo[k] == null) continue;
       if ((nuevo[k] || 0) < viejo[k] - corre - tol) return "Todavía le queda tiempo a las " + quien;
-      if (nuevo[k] > Math.max(viejo[k] - pasado, 0) + (viejo.increment_seconds || 0) + tol) return "Tiempo restante inválido (" + quien + ")";
+      // Lo de más se recorta (con jugada, con el margen; sin jugada, no sube) y
+      // queda anotado: ninguna pantalla debería necesitarlo.
+      const tope = esJugada ? Math.max(viejo[k] - pasado, 0) + (viejo.increment_seconds || 0) + tol + 1 : viejo[k];
+      if (nuevo[k] > tope) { nuevo[k] = tope; rechazos.push("Reloj recortado (" + quien + ")"); }
     }
     return null;
   }
