@@ -1517,8 +1517,20 @@ Lo prueban `verificar-premovidas.js` (la cuenta, el tope, y `suscribir` con un
 Supabase de mentira: la jugada del rival llega 0,6 s después de guardarse y el
 reloj cobra los 3 s pensados, no 3,6; quitando la anotación o el tope, salta) y
 `verificar-partidas-simultaneas.js`, cuyo trigger de mentira deja pasar el
-mismo segundo: ninguna jugada se rechaza por subirse el reloj de más, y se
-imprime cuánto quedó cada reloj por encima de lo que dice la base.
+mismo segundo: ninguna jugada que llegó a tiempo a la base se rechaza por
+subirse el reloj de más, y se imprime cuánto quedó cada reloj por encima de lo
+que dice la base. Con la red mala, sin esto se rechazaban 118 de 2000 jugadas;
+con esto, ninguna de las que llegaron a tiempo (devolviendo hasta 3 s, saltan
+miles).
+
+**Lo que queda: la escritura que tarda en llegar.** Si el pedido que guarda la
+jugada tarda más de un segundo en llegar a la base (la red mala del doble lo
+hace con una de cada diez, entre 0,8 y 2,5 s), la base cobra ese tiempo y el
+navegador no lo puede saber: el reloj que manda queda por encima y, pasado el
+margen de 2 s más 1, la jugada se rechaza y se vuelve a leer la sala. En la
+prueba son unas 17 de 2000, y se cuentan aparte («tras una escritura lenta»).
+Arreglarlo pide que la base calcule el reloj sola (lo que hace lichess en su
+servidor), no un margen más ancho.
 
 ### Cartas: cada estado, una copia propia
 
