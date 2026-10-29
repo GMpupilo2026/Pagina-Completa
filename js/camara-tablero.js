@@ -133,7 +133,7 @@
      * cámaras el navegador solo los da después del primer permiso, así que
      * la lista se arma después de abrir una. La elegida se recuerda. */
     const CAMARA = delPuesto("camara_dispositivo_v1");
-    async function abrirCamara(id) {
+    async function abrirCamara(id, sola) {
         if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
             avisar("Este navegador no deja usar la cámara desde la página. Prueba con Chrome o Safari al día.", "error");
             return;
@@ -164,7 +164,10 @@
             if (!misma) nuevaFuente(video, video.videoWidth || 640, video.videoHeight || 480);
             else fuente = video;
             listarCamaras(usada);
+            camaraAbierta = true; intentosCamara = 0; vigilarPista(flujo);
+            if (sola) avisar("La cámara volvió: sigue leyendo la partida.", "bien");
         } catch (e) {
+            if (sola && !(e && e.name === "NotAllowedError")) { camaraCortada(); return; }
             avisar(e && e.name === "NotAllowedError"
                 ? "No se dio permiso para usar la cámara. Actívalo en los permisos del sitio y vuelve a tocar «Abrir la cámara»."
                 : "No se pudo abrir la cámara (" + (e && e.name || "error") + "). Si otra aplicación la está usando, ciérrala y vuelve a intentar.", "error");
@@ -181,10 +184,102 @@
         try {
             pantalla = await navigator.wakeLock.request("screen");
             $("pantalla-encendida").hidden = false;
-            pantalla.addEventListener("release", () => { pantalla = null; });
+            // Si el celular la suelta (batería baja, otra app), se vuelve a pedir.
+            pantalla.addEventListener("release", () => { pantalla = null; setTimeout(mantenerEncendida, 1000); });
         } catch (e) { /* sin permiso: sigue igual */ }
     }
     document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") mantenerEncendida(); });
+
+    /* ── Que no se caiga ────────────────────────────────────────────────
+     * La cámara se recupera sola: si el video se corta (el celular la soltó,
+     * otra app la tomó, se bloqueó la pantalla) o se queda congelado más de
+     * 15 s, se vuelve a abrir, esperando cada vez más (1, 2, 4… hasta 30 s).
+     * Lo mismo el canal de la transmisión (ver canalDe). Y antes de la ronda,
+     * «¿Está lista esta mesa?»: lee las 64, hay luz, hay batería, transmite y
+     * la pantalla no se apaga; en un torneo eso y la batería le llegan a
+     * Pareo con un latido cada 30 s, que también le dice que la cámara sigue
+     * viva aunque nadie mueva. */
+    let camaraAbierta = false, intentosCamara = 0, reabriendo = null;
+    const espera = (n) => Math.min(30000, 1000 * 2 ** n);
+    function vigilarPista(flujo) {
+        const pista = flujo && flujo.getVideoTracks()[0];
+        if (pista) pista.addEventListener("ended", () => { if (video.srcObject === flujo) camaraCortada(); });
+    }
+    function camaraCortada() {
+        if (reabriendo || !camaraAbierta) return;
+        const ms = espera(intentosCamara++);
+        avisar("Se cortó la cámara: la vuelvo a abrir en " + Math.round(ms / 1000) + " s. No muevas el celular.", "error");
+        reabriendo = setTimeout(() => { reabriendo = null; abrirCamara(undefined, true); }, ms);
+    }
+    // El video congelado (no avanza) o en pausa: se despierta, y si no, se vuelve a abrir.
+    let tiempoVideo = -1, quietoVideo = 0;
+    setInterval(() => {
+        if (!camaraAbierta || !video.srcObject || document.visibilityState !== "visible" || reabriendo) { quietoVideo = 0; return; }
+        if (video.paused) video.play().catch(() => {});
+        const vivo = video.srcObject.getVideoTracks().some((x) => x.readyState === "live");
+        quietoVideo = vivo && video.currentTime !== tiempoVideo ? 0 : quietoVideo + 1;
+        tiempoVideo = video.currentTime;
+        if (quietoVideo >= 3) { quietoVideo = 0; camaraCortada(); }
+    }, 5000);
+    document.addEventListener("visibilitychange", () => {
+        if (document.visibilityState === "visible" && camaraAbierta && video.srcObject && !video.srcObject.getVideoTracks().some((x) => x.readyState === "live")) camaraCortada();
+    });
+
+    // La batería (Chrome en Android; en otros, no se sabe y no se dice nada).
+    let bateria = null, bateriaBajaDicha = false;
+    if (navigator.getBattery) {
+        navigator.getBattery().then((b) => {
+            const leerla = () => { bateria = { nivel: Math.round(b.level * 100), cargando: !!b.charging }; pintarBateria(); };
+            leerla();
+            b.addEventListener("levelchange", leerla);
+            b.addEventListener("chargingchange", leerla);
+        }).catch(() => { /* sin dato */ });
+    }
+    const bateriaBaja = () => !!(bateria && !bateria.cargando && bateria.nivel < 20);
+    function pintarBateria() {
+        const baja = bateriaBaja();
+        $("bateria-aviso").hidden = !baja;
+        if (baja) $("bateria-aviso").textContent = "🔋 Batería baja (" + bateria.nivel + " %): conecta el cargador. Si el celular se apaga, esta mesa deja de leer y de transmitir.";
+        if (baja && !bateriaBajaDicha) avisar("Batería baja (" + bateria.nivel + " %): conecta el cargador.", "error");
+        bateriaBajaDicha = baja;
+        revisarLista();
+    }
+
+    // «¿Está lista esta mesa?»: lo que hay que mirar antes de la ronda, escrito.
+    function listaDe(t) {
+        if (!t.cal || !t.lectura) return null;
+        const items = [];
+        const bien = 64 - diferentes(t.lectura, esperada(t.juego)).length;
+        items.push(bien === 64 ? { ok: true, k: "lectura", txt: "Lee las 64 casillas." } : { ok: false, k: "lectura", txt: "Lee " + bien + " de 64: revisa que la cuadrícula calce y que las piezas estén en su lugar." });
+        items.push(t.luz === "poca" ? { ok: false, k: "luz", txt: "Poca luz: acerca una lámpara o cambia la mesa de lugar." } : { ok: true, k: "luz", txt: "Luz suficiente." });
+        if (bateria) items.push(bateria.cargando || bateria.nivel >= 30 ? { ok: true, k: "bateria", txt: "Batería: " + bateria.nivel + " %" + (bateria.cargando ? ", cargando." : ".") } : { ok: false, k: "bateria", txt: "Batería baja (" + bateria.nivel + " %): conecta el cargador antes de la ronda." });
+        if (t.vivo || t.mesa) items.push(t.vivo && !sinRed() ? { ok: true, k: "senal", txt: "Transmite." } : { ok: false, k: "senal", txt: t.vivo ? "Sin señal: la partida se guarda en el celular hasta que vuelva." : "No transmite: toca «Transmitir en vivo»." });
+        if ("wakeLock" in navigator && camaraAbierta) items.push(pantalla ? { ok: true, k: "pantalla", txt: "La pantalla no se apaga." } : { ok: false, k: "pantalla", txt: "La pantalla se puede apagar: tócala para que vuelva a quedar encendida." });
+        return { ok: items.every((x) => x.ok), faltan: items.filter((x) => !x.ok).map((x) => x.k), items };
+    }
+    let listaAntes = "";
+    function revisarLista() {
+        const t = T(), l = listaDe(t);
+        $("lista-caja").hidden = !l;
+        if (l) {
+            $("lista-titulo").textContent = l.ok ? "✅ Esta mesa está lista." : "⚠️ Revisar antes de la ronda (" + l.faltan.length + (l.faltan.length === 1 ? " cosa)." : " cosas).");
+            const ul = $("lista-items");
+            ul.textContent = "";
+            for (const x of l.items) { const li = document.createElement("li"); li.textContent = (x.ok ? "✅ " : "⚠️ ") + x.txt; ul.append(li); }
+        }
+        // Si cambió algo, Pareo se entera ya, sin esperar el próximo latido.
+        const clave = JSON.stringify([l && l.faltan, bateria]);
+        if (clave !== listaAntes) { listaAntes = clave; for (const o of tableros) latir(o); }
+    }
+    setInterval(revisarLista, 3000);
+    function latir(t) {
+        const canal = t.vivo && canales.get(t.vivo.codigo), donde = dondeDe(t);
+        if (!canal || !donde || !donde.torneo || estadoCanal !== "SUBSCRIBED") return;
+        const l = listaDe(t);
+        canal.send({ type: "broadcast", event: "latido", payload: { v: 1, torneo: donde.torneo, ronda: donde.ronda, mesa: donde.mesa, tablero: donde.tablero || undefined,
+            bateria: bateria ? { nivel: bateria.nivel, cargando: bateria.cargando } : null, lista: l ? { ok: l.ok, faltan: l.faltan } : null, t: Date.now() } });
+    }
+    setInterval(() => { for (const t of tableros) latir(t); }, 30000);
 
     /* «Ahorrar batería»: la pantalla tiene que quedar encendida (si se apaga,
      * se corta la cámara), pero no tiene por qué mostrar nada: queda en negro,
@@ -1463,13 +1558,34 @@
         });
         canal.on("broadcast", { event: "estado" }, (msg) => oirMesa(codigo, (msg && msg.payload) || {}));
         canal.subscribe((st) => {
+            if (canales.get(codigo) !== canal) return; // uno viejo, ya reemplazado
             estadoCanal = st;
+            pintarRed();
+            if (st === "CHANNEL_ERROR" || st === "TIMED_OUT" || st === "CLOSED") { reconectarCanal(codigo); return; }
             if (st !== "SUBSCRIBED") return;
-            tableros.filter((o) => o.vivo && o.vivo.codigo === codigo).forEach((o) => enviarVivo(o, true));
+            intentosCanal = 0;
+            tableros.filter((o) => o.vivo && o.vivo.codigo === codigo).forEach((o) => { enviarVivo(o, true); latir(o); });
             if (escuchando === codigo) canal.send({ type: "broadcast", event: "pedir", payload: {} });
         });
         canales.set(codigo, canal);
         return canal;
+    }
+    /* Si el canal se cae (y Realtime no lo levanta solo), se arma de nuevo,
+     * esperando cada vez más; al volver, cada tablero manda su partida entera. */
+    let intentosCanal = 0;
+    const reconectando = new Set();
+    function reconectarCanal(codigo) {
+        if (reconectando.has(codigo)) return;
+        reconectando.add(codigo);
+        setTimeout(() => {
+            reconectando.delete(codigo);
+            const usan = tableros.some((o) => o.vivo && o.vivo.codigo === codigo) || escuchando === codigo;
+            if (!usan) return;
+            const viejo = canales.get(codigo);
+            canales.delete(codigo);
+            try { if (viejo) window.sb.removeChannel(viejo); } catch (e) { /* ya cerrado */ }
+            canalDe(codigo);
+        }, espera(intentosCanal++));
     }
     function pararVivo(t) {
         const codigo = t.vivo && t.vivo.codigo;

@@ -10962,6 +10962,46 @@ tabla de lectura) y `verificar-pareo-camaras.js` (el tablero y la luz en el
 informe, lo guardado para todos los torneos y las planillas de la ronda).
 Rotos a propósito, saltan.
 
+### Que no se caiga: la cámara que se recupera sola, «¿Está lista esta mesa?» y la batería
+
+El noveno pedido del dueño («hacer 3, 4 y 5», de las mejoras para que la
+cámara no falle en un torneo):
+
+- **Se recupera sola.** Si el video se corta (la pista avisa `ended`: el
+  celular soltó la cámara, otra app la tomó) o se queda congelado 15 s (el
+  tiempo del video no avanza), se vuelve a abrir sola, esperando cada vez
+  más (1, 2, 4… hasta 30 s), y lo dice: «Se cortó la cámara: la vuelvo a
+  abrir en 1 s» y «La cámara volvió». Al volver a la pestaña, lo mismo. Si
+  el celular suelta la pantalla encendida (Wake Lock), se vuelve a pedir.
+  **El canal**: si Realtime avisa `CHANNEL_ERROR`, `TIMED_OUT` o `CLOSED`, se
+  deja el canal viejo, se arma uno nuevo con la misma espera creciente, y al
+  conectarse cada tablero manda su partida entera (lo que pasó sin señal se
+  guardó en el celular). Los avisos de un canal ya reemplazado se ignoran:
+  sin eso, cerrar el viejo disparaba otra reconexión.
+- **«¿Está lista esta mesa?»** (arriba, apenas calibra): lee las 64
+  casillas, hay luz (la que se midió al calibrar), hay batería, transmite y
+  la pantalla no se apaga; cada cosa escrita con ✅ o ⚠️ y qué hacer, y el
+  título dice cuántas faltan. Se revisa cada 3 s.
+- **La batería** (`navigator.getBattery`, Chrome en Android; donde no se
+  sabe, no se dice nada): con menos de 20 % y sin cargar, el aviso arriba y
+  una vez en el aviso de la página; con el cargador, se va.
+- **El latido a Pareo** (en un torneo): cada 30 s, y apenas cambia la
+  revisión o la batería, la cámara manda `latido` con su mesa, la batería y
+  lo que falta (`lista.faltan`). Pareo (`latidoDeCamara`, validado como los
+  avisos) lo junta con las jugadas en la caja de las cámaras: **«📵 Sin
+  noticias de la cámara: mesa 5 (hace 2 min)»** si una mesa sin terminar no
+  manda nada en 90 s (ni jugadas ni latido: una partida quieta igual late),
+  «🔋 Batería baja: mesa 2 (15 %)», «⚠️ Revisar antes de la ronda: mesa 2
+  (poca luz, batería baja)» y «✅ Listas: mesa 3», cada segundo, sin volver a
+  armar la caja. Una partida terminada ya no necesita a nadie.
+
+Lo prueban `verificar-camara-tablero.js` (la batería de mentira, la revisión
+antes y después del cargador, el canal cortado a propósito que se vuelve a
+armar y manda la partida entera, la cámara de Chromium que se corta y vuelve
+sola, y el latido de una mesa del torneo) y `verificar-pareo-camaras.js`
+(los latidos, lo de otro torneo u otra mesa que no entra, y la mesa sin
+noticias con el reloj adelantado). Rotos a propósito, saltan.
+
 ## Pareo para DGT
 
 Un torneo presencial con tableros electrónicos DGT: el árbitro sube cada ronda

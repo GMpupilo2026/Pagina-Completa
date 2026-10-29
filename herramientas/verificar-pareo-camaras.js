@@ -258,7 +258,6 @@ function torneo() {
   const pdf = await page.evaluate(async () => { const b = window.__pdfs.find((x) => x.type === "application/pdf"); if (!b) return null; const t = new TextDecoder("latin1").decode(new Uint8Array(await b.arrayBuffer())); return [(t.match(/\/Type \/Page\b/g) || []).length, /Planilla de las blancas/.test(t), /\(Cc3\)/.test(t)]; });
   igual("«Planillas de la ronda» arma una por jugador de cada mesa con cámara, en español", pdf, [6, true, true]);
   await page.evaluate(() => { document.getElementById("pi-camaras-informe").open = false; });
-
   console.log("\n=== Transmitir a Lichess ===");
   // Lichess, de mentira: se guarda lo que llega y se contesta como Lichess.
   const aLichess = [];
@@ -317,6 +316,27 @@ function torneo() {
   await manda({ mesa: 3, jugadas: ["d4", "d5", "c4", "e6", "Nc3"], mano: 2 });
   await page.waitForFunction(() => /^3$/.test(document.querySelector('#pi-camaras-informe tr[data-informe="3"] td:nth-child(5)').textContent), null, { timeout: 5000 }).catch(() => {});
   igual("con cada jugada que llega se pone al día, y sigue abierto", [(await fila("3"))[4], await page.evaluate(() => document.getElementById("pi-camaras-informe").open)], ["3", true]);
+
+  console.log("\n=== Cómo está cada cámara: latido, batería, lista y sin noticias ===");
+  const latido = (o) => page.evaluate(([c, o]) => window.__llega(c, "latido", o), [CANAL, Object.assign({ v: 1, torneo: ID, ronda: 1, t: Date.now() }, o)]);
+  // Sin resultado todavía (una partida terminada ya no necesita a nadie).
+  await manda({ mesa: 2, jugadas: ["e4", "e5", "Nf3"] });
+  await manda({ mesa: 3, jugadas: ["c4"] });
+  await latido({ mesa: 2, bateria: { nivel: 15, cargando: false }, lista: { ok: false, faltan: ["luz", "bateria", "inventado"] } });
+  await latido({ mesa: 3, bateria: { nivel: 80, cargando: false }, lista: { ok: true, faltan: [] } });
+  await latido({ mesa: 9, bateria: { nivel: 5, cargando: false } });
+  await latido({ mesa: 2, torneo: "5d6e0b9f-3c2e-4d8e-9c55-7a411f2a3b4c", bateria: { nivel: 1, cargando: false } });
+  const salud = () => page.evaluate(() => [...document.querySelectorAll("#pi-camaras-salud li")].map((x) => x.textContent));
+  await page.waitForFunction(() => document.querySelectorAll("#pi-camaras-salud li").length >= 3, null, { timeout: 4000 }).catch(() => {});
+  igual("arriba de la ronda: la batería baja, lo que hay que revisar de cada mesa y las que están listas (lo de otro torneo o de otra mesa, no)", await salud(),
+    ["🔋 Batería baja: mesa 2 (15 %). Hay que conectar el cargador.", "⚠️ Revisar antes de la ronda: mesa 2 (poca luz, batería baja).", "✅ Listas: mesa 3."]);
+  await page.evaluate(() => { const real = Date.now; window.__dateReal = real; Date.now = () => real() + 100000; });
+  await page.waitForFunction(() => /Sin noticias/.test(document.getElementById("pi-camaras-salud").textContent), null, { timeout: 4000 }).catch(() => {});
+  igual("una cámara que no manda nada en minuto y medio se avisa (ni jugadas ni latido)", (await salud())[0], "📵 Sin noticias de la cámara: mesa 2 (hace 1 min), mesa 3 (hace 1 min). Ve a mirar si sigue encendida.");
+  await latido({ mesa: 3, bateria: { nivel: 80, cargando: false }, lista: { ok: true, faltan: [] }, t: Date.now() });
+  await page.waitForFunction(() => /^📵 Sin noticias de la cámara: mesa 2 \(/.test(document.getElementById("pi-camaras-salud").textContent) && !/mesa 3 \(hace/.test(document.getElementById("pi-camaras-salud").textContent), null, { timeout: 4000 }).catch(() => {});
+  igual("con su latido, la mesa 3 vuelve a estar bien", (await salud())[0], "📵 Sin noticias de la cámara: mesa 2 (hace 1 min). Ve a mirar si sigue encendida.");
+  await page.evaluate(() => { Date.now = window.__dateReal; });
 
   console.log("\n=== Dejar de recibir ===");
   await page.click("#pi-camaras-dejar");

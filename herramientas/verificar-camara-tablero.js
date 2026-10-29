@@ -63,13 +63,14 @@ const CANAL = `
       const c = {
         __nombre: nombre,
         on(t, f, cb) { if (t === "broadcast") oy[f.event] = cb; return c; },
-        subscribe(cb) { (window.__canales = window.__canales || {})[nombre] = oy; if (cb) setTimeout(() => cb("SUBSCRIBED"), 0); return c; },
+        // __cb: el aviso de cómo está el canal, para que la prueba pueda «cortarlo».
+        subscribe(cb) { (window.__canales = window.__canales || {})[nombre] = oy; c.__cb = cb; (window.__canalesObj = window.__canalesObj || {})[nombre] = c; if (cb) setTimeout(() => cb("SUBSCRIBED"), 0); return c; },
         send(m) { window.__aCanal(nombre, JSON.parse(JSON.stringify(m))); return Promise.resolve("ok"); },
         unsubscribe() {},
       };
       return c;
     },
-    removeChannel(c) { if (window.__canales) delete window.__canales[c.__nombre]; },`;
+    removeChannel(c) { window.__quitados = (window.__quitados || 0) + 1; if (window.__canales) delete window.__canales[c.__nombre]; },`;
 
 function cliente(yo) {
   return `window.sb = {
@@ -642,6 +643,46 @@ async function esperarJugadas(p, n) {
     await cerrar(A); await cerrar(B);
   }
 
+  console.log("\nQue no se caiga: la batería, «¿Está lista esta mesa?» y el canal que se corta");
+  {
+    // La batería, de mentira: 15 %, sin cargar; window.__bat la cambia.
+    const bat = { f: () => {
+      const oy = {};
+      window.__bat = { level: 0.15, charging: false, addEventListener: (ev, fn) => { (oy[ev] = oy[ev] || []).push(fn); }, cambiar(x) { Object.assign(this, x); (oy.levelchange || []).concat(oy.chargingchange || []).forEach((f) => f()); } };
+      navigator.getBattery = () => Promise.resolve(window.__bat);
+    } };
+    const N = await abrir(browser, "camara-tablero.html", null, null, bat);
+    const pn = N.page;
+    await pn.waitForSelector("#app:not(.hidden)");
+    await pn.waitForFunction(() => !document.getElementById("bateria-aviso").hidden, null, { timeout: 5000 }).catch(() => {});
+    igual("con poca batería y sin cargar, lo dice arriba", await pn.textContent("#bateria-aviso"), "🔋 Batería baja (15 %): conecta el cargador. Si el celular se apaga, esta mesa deja de leer y de transmitir.");
+    await foto(pn, new Chess().fen(), ESQ0);
+    await esperarAviso(pn, /esquinas/);
+    await tocar(pn, aLienzo(ESQ0));
+    await pn.click("#btn-calibrar");
+    await esperarAviso(pn, /Calibrado/);
+    await pn.waitForFunction(() => !document.getElementById("lista-caja").hidden, null, { timeout: 5000 }).catch(() => {});
+    const lista = () => pn.evaluate(() => [document.getElementById("lista-titulo").textContent, [...document.querySelectorAll("#lista-items li")].map((x) => x.textContent)]);
+    igual("calibrada, dice si la mesa está lista y qué revisar, escrito", await lista(),
+      ["⚠️ Revisar antes de la ronda (1 cosa).", ["✅ Lee las 64 casillas.", "✅ Luz suficiente.", "⚠️ Batería baja (15 %): conecta el cargador antes de la ronda."]]);
+    await pn.evaluate(() => window.__bat.cambiar({ charging: true }));
+    await pn.waitForFunction(() => /lista/.test(document.getElementById("lista-titulo").textContent), null, { timeout: 5000 }).catch(() => {});
+    igual("con el cargador, se va el aviso y la mesa queda lista", [await pn.evaluate(() => document.getElementById("bateria-aviso").checkVisibility()), (await lista())[0]], [false, "✅ Esta mesa está lista."]);
+    // El canal se cae: se vuelve a armar solo y manda la partida entera.
+    await pn.fill("#jugada-mano", "e4"); await pn.click("#form-anotar button[type=submit]");
+    await pn.click("#btn-vivo");
+    const cod = (await pn.textContent("#vivo-codigo")).split(" ")[0];
+    const antesCorte = eventos.length;
+    await pn.evaluate((n) => window.__canalesObj[n].__cb("CHANNEL_ERROR"), "tablero-vivo-" + cod);
+    igual("si el canal se corta, dice que está sin señal", await pn.evaluate(() => document.getElementById("sin-red").checkVisibility()), true);
+    await pn.waitForFunction(() => document.getElementById("sin-red").hidden, null, { timeout: 8000 }).catch(() => {});
+    igual("y lo vuelve a armar solo: deja el viejo, se reconecta y manda la partida entera",
+      [await pn.evaluate(() => window.__quitados || 0), await pn.evaluate(() => document.getElementById("sin-red").checkVisibility()),
+        eventos.slice(antesCorte).some((x) => x.event === "estado" && x.payload.v === 1 && /1\. e4/.test(x.payload.pgn || ""))], [1, false, true]);
+    igual("sin errores en la consola", N.errores, []);
+    await cerrar(N);
+  }
+
   console.log("\nCómo lee cada tablero");
   {
     const L = await abrir(browser, "camara-tablero.html");
@@ -1082,6 +1123,11 @@ async function esperarJugadas(p, n) {
     await pa.click("#btn-vivo");
     const codigoT = await pa.inputValue("#torneo-codigo");
     igual("transmite con el código del torneo, en su mesa", await pa.textContent("#vivo-codigo"), codigoT + " · mesa 5");
+    // El latido: al árbitro le llega que la cámara está viva y si la mesa está lista.
+    const latido5 = () => eventos.filter((x) => x.event === "latido" && x.payload.mesa === 5 && x.payload.lista).pop();
+    for (let i = 0; i < 80 && !latido5(); i++) await pa.waitForTimeout(100);
+    const lat = latido5();
+    igual("transmitiendo en un torneo, manda su latido con la mesa y si está lista", lat && [lat.payload.torneo, lat.payload.ronda, lat.payload.mesa, lat.payload.lista.ok, lat.payload.lista.faltan], [ID, 1, 5, true, []]);
     const enlaceT = await pa.getAttribute("#vivo-enlace", "href");
     igual("el enlace lleva el código y el torneo", enlaceT.endsWith("/tablero-vivo.html#" + codigoT + "&t=" + ID), true);
 
@@ -1446,6 +1492,14 @@ async function esperarJugadas(p, n) {
       const s = document.getElementById("video").srcObject.getVideoTracks()[0].getSettings();
       return [s.frameRate <= 10.5, s.width <= 1280];
     }), [true, true]);
+    // Si el video se corta (el celular soltó la cámara), se vuelve a abrir solo.
+    const antes = await pg.evaluate(() => document.getElementById("video").srcObject.id);
+    await pg.evaluate(() => document.getElementById("video").srcObject.getVideoTracks()[0].dispatchEvent(new Event("ended")));
+    await esperarAviso(pg, /Se cortó la cámara/);
+    igual("si se corta la cámara, lo dice", (await aviso(pg)).startsWith("Se cortó la cámara: la vuelvo a abrir en 1 s."), true);
+    await pg.waitForFunction((a) => { const v = document.getElementById("video"); return v.srcObject && v.srcObject.id !== a && v.videoWidth > 0; }, antes, { timeout: 8000 }).catch(() => {});
+    igual("y la vuelve a abrir sola, con imagen", [await pg.evaluate((a) => { const v = document.getElementById("video"); return !!v.srcObject && v.srcObject.id !== a && v.videoWidth > 0; }, antes), await aviso(pg)],
+      [true, "La cámara volvió: sigue leyendo la partida."]);
     igual("sin errores en la consola", errores, []);
     await nav.close();
   }

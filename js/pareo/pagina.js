@@ -3221,8 +3221,9 @@
     canal.on("broadcast", { event: "estado" }, (msg) => recibirDeCamara(msg.payload || {}));
     canal.on("broadcast", { event: "alerta" }, (msg) => alertaDeCamara(msg.payload || {}));
     canal.on("broadcast", { event: "foto" }, (msg) => fotoDeCamara(msg.payload || {}));
+    canal.on("broadcast", { event: "latido" }, (msg) => latidoDeCamara(msg.payload || {}));
     canal.subscribe((st) => { if (st === "SUBSCRIBED") canal.send({ type: "broadcast", event: "pedir", payload: {} }); });
-    estado.camaras = { idTorneo: estado.id, codigo: c, canal, mesas: new Map(), alertas: new Map(), partidas: new Map(), pedidas: new Map(), fotos: new Map(), desde: new Map(), cuenta: new Map() };
+    estado.camaras = { idTorneo: estado.id, codigo: c, canal, mesas: new Map(), alertas: new Map(), partidas: new Map(), pedidas: new Map(), fotos: new Map(), desde: new Map(), cuenta: new Map(), latidos: new Map() };
     return true;
   }
   function desconectarCamaras() {
@@ -3614,6 +3615,48 @@
   }
 
   // Arriba de la ronda: con qué código se escucha y qué mesas mandan.
+  /* El latido de cada cámara (cada 30 s y cuando algo cambia): que sigue
+   * viva aunque nadie mueva, su batería y si la mesa está lista (lee las 64,
+   * hay luz, transmite, la pantalla no se apaga). Ver «Que no se caiga» en
+   * js/camara-tablero.js. */
+  const FALTA_TX = { lectura: "camaraFaltaLectura", luz: "camaraFaltaLuz", bateria: "camaraFaltaBateria", senal: "camaraFaltaSenal", pantalla: "camaraFaltaPantalla" };
+  const SIN_NOTICIAS_MS = 90000;
+  function latidoDeCamara(p) {
+    const v = torneoDeCamaras();
+    if (!v || !v.publicado || !v.rondas.length || p.torneo !== v.publicado.id || Number(p.ronda) !== v.rondas.length) return;
+    const mesa = Number(p.mesa), tablero = E.esDeEquipos(v) ? Number(p.tablero) || null : null;
+    if (!v.rondas[v.rondas.length - 1].mesas.some((x, k) => V.mesaFisica(v, k) === mesa)) return;
+    const clave = claveCamara(mesa, tablero);
+    const nivel = p.bateria && Number.isFinite(p.bateria.nivel) ? Math.max(0, Math.min(100, Math.round(p.bateria.nivel))) : null;
+    const faltan = p.lista && Array.isArray(p.lista.faltan) ? p.lista.faltan.filter((k) => FALTA_TX[k]).slice(0, 5) : null;
+    estado.camaras.latidos.set(clave, { h: Date.now(), ronda: v.rondas.length, bateria: nivel === null ? null : { nivel, cargando: !!p.bateria.cargando }, faltan });
+    const nueva = !estado.camaras.mesas.has(clave);
+    estado.camaras.mesas.set(clave, Date.now());
+    if (nueva) pintarCamaras(); else relojesCamaras();
+  }
+  // Las mesas de la ronda que necesitan a alguien: sin noticias, sin batería o por revisar.
+  function saludCamaras(v) {
+    const c = estado.camaras, ahora = Date.now(), lineas = [];
+    const sinNoticias = [], baja = [], revisar = [], listas = [];
+    for (const clave of [...c.mesas.keys()].sort(ordenLugar)) {
+      const d = c.partidas.get(clave), l = c.latidos.get(clave);
+      const ronda = (d && d.ronda) || (l && l.ronda);
+      if (ronda !== v.rondas.length || (d && d.resultado)) continue;
+      const hace = ahora - c.mesas.get(clave);
+      if (hace > SIN_NOTICIAS_MS) sinNoticias.push(tx("camaraSinNoticiasMesa", { m: verLugar(clave), n: Math.floor(hace / 60000) }));
+      if (l && l.bateria && !l.bateria.cargando && l.bateria.nivel < 20) baja.push(tx("camaraBateriaMesa", { m: verLugar(clave), n: l.bateria.nivel }));
+      if (l && l.faltan) {
+        if (l.faltan.length) revisar.push(tx("camaraRevisarMesa", { m: verLugar(clave), q: l.faltan.map((k) => tx(FALTA_TX[k])).join(", ") }));
+        else listas.push(verLugar(clave));
+      }
+    }
+    if (sinNoticias.length) lineas.push(tx("camarasSinNoticias", { l: sinNoticias.join(", ") }));
+    if (baja.length) lineas.push(tx("camarasBateriaBaja", { l: baja.join(", ") }));
+    if (revisar.length) lineas.push(tx("camarasRevisar", { l: revisar.join("; ") }));
+    if (listas.length) lineas.push(tx("camarasListas", { l: listas.join(", ") }));
+    return lineas;
+  }
+
   /* Las mesas de la ronda cuyo reloj de la cámara corre con menos de un
    * minuto: cada segundo, solo ese renglón (la caja no se vuelve a armar). */
   function relojesCamaras() {
@@ -3628,6 +3671,12 @@
     const texto = cortas.length ? tx("camaraPocoTiempo", { l: cortas.join(", ") }) : "";
     e.hidden = !cortas.length;
     if (e.textContent !== texto) e.textContent = texto;
+    const s = $("pi-camaras-salud");
+    if (s) {
+      const lineas = saludCamaras(v), txt = lineas.join("\n");
+      s.hidden = !lineas.length;
+      if (s.dataset.txt !== txt) { s.dataset.txt = txt; s.replaceChildren(...lineas.map((x) => el("li", { texto: x }))); }
+    }
   }
   setInterval(relojesCamaras, 1000);
   function pintarCamaras() {
@@ -3648,6 +3697,7 @@
       el("p", { class: C.nota, texto: tx("camarasCajaTexto", { c: v.camaras.codigo }) }),
       el("p", { id: "pi-camaras-mesas", class: "text-sm mt-1", texto: mesas.length ? tx("camarasMesas", { m: mesas.join(", ") }) : tx("camarasNinguna") }),
       el("p", { id: "pi-camaras-poco", class: "text-sm font-semibold text-red-800 dark:text-red-200 mt-1", hidden: true }),
+      el("ul", { id: "pi-camaras-salud", class: "text-sm mt-1 space-y-0.5", hidden: true }),
       listaAlertas, estado.camaras && estado.camaras.idTorneo === estado.id ? informeCamaras() : null,
       estado.camaras && estado.camaras.idTorneo === estado.id ? pintarLichess(v) : null, el("div", { class: "mt-2" }, dejar));
     relojesCamaras();

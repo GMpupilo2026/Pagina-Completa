@@ -109,6 +109,11 @@
                 <button id="btn-ahorro" type="button" disabled class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-4 py-2.5 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 disabled:opacity-50"><span aria-hidden="true">🔋</span> Ahorrar batería</button>
             </div>
 
+            <p id="bateria-aviso" hidden role="alert" class="mb-4 rounded-xl px-4 py-3 text-sm font-semibold bg-red-100 text-red-900"></p>
+            <div id="lista-caja" hidden class="mb-4 rounded-xl border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-900 px-4 py-3">
+                <p id="lista-titulo" class="text-sm font-semibold text-brand-800 dark:text-white"></p>
+                <ul id="lista-items" class="mt-1 text-sm text-brand-700 dark:text-brand-200 space-y-0.5"></ul>
+            </div>
             <p id="sin-red" hidden role="status" class="mb-4 rounded-xl px-4 py-3 text-sm font-semibold bg-accent-100 text-brand-900">Sin conexión: la partida se sigue anotando en este celular y se manda sola cuando vuelva la señal. No cierres la página.</p>
             <p id="pantalla-encendida" hidden class="mb-4 text-xs text-brand-500 dark:text-brand-300">La pantalla se queda encendida mientras la cámara esté abierta: el celular no se apaga a mitad de la partida.</p>
             <div id="camara-elegir-caja" hidden class="mb-4">
