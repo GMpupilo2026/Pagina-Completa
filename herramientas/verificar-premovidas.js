@@ -32,8 +32,10 @@ function ok(nombre, condicion, detalle) {
   console.log("  ✗ " + nombre + (detalle !== undefined ? "  →  " + JSON.stringify(detalle) : ""));
 }
 
-const caja = { window: {}, Chess, console, Math, Date, JSON, setInterval() {}, setTimeout, clearTimeout, document: { addEventListener() {}, getElementById: () => null } };
-caja.window.RelojServidor = { ahora: () => Date.now() };
+const caja = { window: { addEventListener() {} }, Chess, console, Math, Date, JSON, Promise, setInterval() {}, setTimeout, clearTimeout, document: { addEventListener() {}, getElementById: () => null, visibilityState: "visible" } };
+// La hora del servidor, que la prueba del retraso mueve a mano (null: la de verdad).
+let relojFijo = null;
+caja.window.RelojServidor = { ahora: () => (relojFijo === null ? Date.now() : relojFijo) };
 caja.RelojServidor = caja.window.RelojServidor;
 vm.createContext(caja);
 for (const f of ["premovidas.js", "sala-juego.js", "cartas-engine.js"]) {
@@ -105,6 +107,13 @@ const recien = Date.now() - 300;
 ok("cuenta hasta el momento de mover si se guardó enseguida", Math.abs(SalaJuego.pensado({ clock_updated_at: hace10 }, recien) - 9.7) < 0.05);
 ok("si se esperó más de medio segundo, cuenta hasta ahora", Math.abs(SalaJuego.pensado({ clock_updated_at: hace10 }, Date.now() - 2000) - 10) < 0.05);
 ok("sin reloj en marcha, nada", SalaJuego.pensado({ clock_updated_at: null }, recien) === 0);
+// El retraso de la red (ver «El retraso de la red no se cobra en el reloj»).
+const base10 = Date.parse(hace10);
+const conRetraso = (ms) => SalaJuego.pensado({ clock_updated_at: hace10 }, { alMover: recien, vistaEn: base10 + ms });
+ok("lo que tardó en llegar la jugada del rival no se cobra (0,4 s)", Math.abs(conRetraso(400) - 9.3) < 0.05, conRetraso(400));
+ok("pero a lo sumo 1 s por jugada (llegó a los 3 s)", Math.abs(conRetraso(3000) - 8.7) < 0.05, conRetraso(3000));
+ok("si llegó antes de que la base la guardara (el canal rápido), no se devuelve nada", Math.abs(conRetraso(-800) - 9.7) < 0.05, conRetraso(-800));
+ok("sin saber cuándo se vio, tampoco", Math.abs(SalaJuego.pensado({ clock_updated_at: hace10 }, { alMover: recien, vistaEn: null }) - 9.7) < 0.05);
 
 console.log("\n=== Cartas: cada estado es una copia propia ===");
 const estado = CartasChess.Game.iniciar().toJSON();
@@ -117,5 +126,43 @@ const json = g.toJSON();
 g.hands.w.push("robo");
 ok("toJSON no comparte arreglos con el motor", json.hands.w.indexOf("robo") === -1 || json.hands.w.length !== g.hands.w.length);
 
-console.log(fallos ? "\n" + fallos + " comprobación(es) fallaron." : "\nTodo bien.");
-process.exit(fallos ? 1 : 0);
+(async () => {
+  console.log("\n=== suscribir anota cuándo se vio la jugada del rival ===");
+  // Un Supabase de mentira: lo justo para suscribir() y jugada().
+  let alCambio = null;
+  caja.sb = {
+    channel() {
+      const api = {
+        on(tipo, cfg, fn) { if (tipo === "postgres_changes") alCambio = fn; return api; },
+        subscribe(cb) { setTimeout(() => cb && cb("SUBSCRIBED"), 0); return api; },
+        send() { return Promise.resolve("ok"); },
+      };
+      return api;
+    },
+    removeChannel() {},
+    from() { const b = { select: () => b, eq: () => b, maybeSingle: () => Promise.resolve({ data: null, error: null }) }; return b; },
+  };
+  const t0 = Date.now();
+  relojFijo = t0;
+  const salida = new Chess().fen();
+  let sala = { id: "s1", fen: salida, moves: [], status: "playing", initial_seconds: 300, white_time_left: 300, black_time_left: 300,
+    white_ready: true, black_ready: true, clock_updated_at: new Date(t0 - 30000).toISOString() };
+  const v = SalaJuego.suscribir("s1", (fila) => { sala = fila; }, { sala: () => sala, miColor: () => "b",
+    rapida: { jugar: SalaJuego.rehacerConChess, enVuelo: () => false } });
+  await new Promise((r) => setTimeout(r, 5));
+  // Las blancas juegan e4: la base la guarda en t0 y la pantalla de las negras
+  // la ve 600 ms después (Realtime atrasado).
+  const c = new Chess(); c.move("e4");
+  relojFijo = t0 + 600;
+  alCambio({ new: Object.assign({}, sala, { fen: c.fen(), moves: ["e4"], clock_updated_at: new Date(t0).toISOString() }) });
+  ok("la jugada del rival llegó a la sala", sala.moves.join() === "e4");
+  // Las negras piensan 3 s y juegan e5.
+  relojFijo = t0 + 3600;
+  c.move("e5");
+  const envio = await v.jugada({ san: "e5", despues: c.fen() });
+  ok("jugada() dice cuándo se vio la posición", envio.ok && envio.vistaEn === t0 + 600, envio);
+  ok("y el reloj cobra los 3 s pensados, no los 3,6 desde que la base la guardó", Math.abs(SalaJuego.pensado(sala, envio) - 3) < 0.01, SalaJuego.pensado(sala, envio));
+
+  console.log(fallos ? "\n" + fallos + " comprobación(es) fallaron." : "\nTodo bien.");
+  process.exit(fallos ? 1 : 0);
+})().catch((e) => { console.error(e); process.exit(1); });

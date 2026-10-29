@@ -210,7 +210,7 @@
      (avisa, y si la sala era provisional espera a que la base tenga la
      jugada del rival: la propia se guarda sobre ella); si `envio.ok` es
      falso, la del rival no quedó y se vuelve a leer la sala. El reloj propio
-     se cuenta con `SalaJuego.pensado(sala, envio.alMover)`. Y al terminar de
+     se cuenta con `SalaJuego.pensado(sala, envio)`. Y al terminar de
      guardar, `vigilante.despuesDeGuardar()`: aplica la del rival que llegó
      mientras tanto. */
   const vigilantes = {};
@@ -229,6 +229,19 @@
     const posicion = (s) => (rapida && rapida.posicion ? rapida.posicion(s) : String((s && s.fen) || ""));
     let pendiente = null;      // una jugada rápida que llegó con la propia guardándose
     let esperanBase = [];      // quien espera a que la base confirme la provisional
+    // Cuándo apareció en pantalla la posición que se ve (con la hora del
+    // servidor), para devolver en el reloj lo que tardó en llegar la jugada del
+    // rival (ver pensado). La que ya estaba al abrir la página no cuenta: `en`
+    // queda en null y no se devuelve nada. Una sala sin reloj (el Relevo no
+    // carga js/reloj-servidor.js) no anota nada: sin esto, cada jugada que
+    // llegaba reventaba antes de pintarse.
+    let vista = null;
+    function anotarVista(fila) {
+      if (!window.RelojServidor) return;
+      if (!vista) vista = { pos: posicion(sala()), en: null };
+      const pos = posicion(fila);
+      if (pos !== vista.pos) vista = { pos: pos, en: RelojServidor.ahora() };
+    }
 
     // La sala dejó de ser provisional: sigue quien esperaba para guardar.
     function soltarEspera() {
@@ -250,11 +263,12 @@
       const actual = sala();
       if (actual && actual._provisional) {
         const alcanza = (fila.moves || []).length >= (actual.moves || []).length || fila.status === "finished";
-        if (alcanza || forzar) { clearTimeout(plazoProvisional); alCambiar(fila); soltarEspera(); }
+        if (alcanza || forzar) { clearTimeout(plazoProvisional); anotarVista(fila); alCambiar(fila); soltarEspera(); }
         return;
       }
       if (actual && esAnterior(fila, actual)) return;
       if (actual && JSON.stringify(actual) === JSON.stringify(fila)) return;
+      anotarVista(fila);
       alCambiar(fila);
     }
 
@@ -363,6 +377,7 @@
         const ahora = sala();
         if (ahora && ahora._provisional) refrescar(true);
       }, ESPERA_PROVISIONAL_MS);
+      anotarVista(fila);
       alCambiar(fila);
     }
 
@@ -383,6 +398,8 @@
           if (envio && envio.catch) envio.catch(() => {});
         } catch (e) { /* la base la lleva igual */ }
       }
+      // Cuándo se vio la posición de la que sale esta jugada (null si no se sabe).
+      const vistaEn = vista && vista.pos === antes ? vista.en : null;
       const ok = await esperarBase(antes);
       // Y que la jugada salga de verdad de la sala: rehecha sobre ella con el
       // mismo motor que la del rival, tiene que dar la posición del tablero.
@@ -391,7 +408,7 @@
       // una con la posición de la otra dejaba en la base una partida que no se
       // puede rejugar. Entonces no se guarda: se vuelve a leer la sala.
       const coincide = !rapida || !datos || !!rapida.jugar(sala(), datos);
-      return { alMover: alMover, ok: ok && coincide };
+      return { alMover: alMover, vistaEn: vistaEn, ok: ok && coincide };
     }
 
     /* Antes de guardar cualquier cosa sobre una sala provisional (también una
@@ -445,16 +462,29 @@
     return vigilantes[salaId];
   }
 
-  /* Lo que pensó quien acaba de mover, para su reloj: hasta el momento de
-     mover (`alMover`, de vigilante.jugada), no hasta que la jugada del rival
-     quedó en la base. Pero el trigger del reloj tolera solo 2 s entre lo que
-     se cuenta y su propia hora, y de eso vive también la red: si se esperó
-     más de medio segundo, se cuenta hasta ahora, como siempre. */
-  function pensado(room, alMover) {
+  /* Lo que pensó quien acaba de mover, para su reloj (`envio` es lo que
+     devuelve vigilante.jugada; un número solo, la hora de mover).
+
+     · Hasta el momento de mover (`alMover`), no hasta que la jugada del rival
+       quedó en la base. Pero el trigger del reloj tolera solo 2 s entre lo que
+       se cuenta y su propia hora, y de eso vive también la red: si se esperó
+       más de medio segundo, se cuenta hasta ahora, como siempre.
+     · Desde que la jugada del rival apareció en pantalla (`vistaEn`), no desde
+       que la base la guardó: lo que tardó en llegar no lo pensó nadie. Como en
+       lichess, con tope: a lo sumo RETRASO_MAXIMO por jugada, el mismo que el
+       trigger deja pasar de más (ver «El retraso de la red no se cobra en el
+       reloj» en docs/decisiones/juegos-y-torneos.md). Si la jugada llegó antes
+       de que la base la guardara (el canal rápido), no hay nada que devolver. */
+  const RETRASO_MAXIMO_MS = 1000;
+  function pensado(room, envio) {
     if (!room || !room.clock_updated_at) return 0;
+    const alMover = typeof envio === "number" ? envio : envio && envio.alMover;
+    const vistaEn = envio && typeof envio === "object" ? envio.vistaEn : null;
     const ahora = RelojServidor.ahora();
     const hasta = alMover && ahora - alMover <= 500 ? alMover : ahora;
-    return Math.max(0, (hasta - Date.parse(room.clock_updated_at)) / 1000);
+    const base = Date.parse(room.clock_updated_at);
+    const retraso = vistaEn ? Math.min(Math.max(0, vistaEn - base), RETRASO_MAXIMO_MS) : 0;
+    return Math.max(0, (hasta - base - retraso) / 1000);
   }
 
   /* «Estoy listo». Si el rival ya estaba listo, esta confirmación es la que

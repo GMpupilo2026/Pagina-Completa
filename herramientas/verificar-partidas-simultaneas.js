@@ -161,6 +161,7 @@ function crearServidor(red) {
   const antesDeGuardar = new Map(); // salaId|posición → { color: cuándo } vistas por el canal rápido, antes de la base
   const rapidas = { enviadas: 0, recibidas: 0, premovidas: 0, premovidasDescartadas: 0 };
   const historia = new Map();      // salaId → las escrituras de jugadas, para depurar
+  const devueltos = [];             // ms que el reloj de quien movió quedó por encima de lo que dice la base
   const provisionales = new Map(); // salaId → cuántas jugadas del rival se pintaron como provisionales
   let cerrado = false;
 
@@ -205,11 +206,16 @@ function crearServidor(red) {
     const pasado = viejo.clock_updated_at ? Math.max(0, (ahora - Date.parse(viejo.clock_updated_at)) / 1000) : 0;
     const mueve = turnoDe(viejo);
     const tol = 2;
+    const retrasoMaximo = 1; // lo que el navegador devuelve como máximo por la jugada que tardó en llegarle
     for (const [c, clave] of [["w", "white_time_left"], ["b", "black_time_left"]]) {
       if (nuevo[clave] === viejo[clave] || viejo[clave] == null) continue;
       const corre = viejo.status === "playing" && viejo.clock_updated_at && mueve === c ? pasado : 0;
       if ((nuevo[clave] || 0) < viejo[clave] - corre - tol) return "Todavía le queda tiempo a las " + (c === "w" ? "blancas" : "negras");
-      if (nuevo[clave] > Math.max(viejo[clave] - pasado, 0) + (viejo.increment_seconds || 0) + tol) return "Tiempo restante inválido";
+      const justo = Math.max(viejo[clave] - pasado, 0) + (viejo.increment_seconds || 0);
+      if (nuevo[clave] > justo + tol + retrasoMaximo) return "Tiempo restante inválido";
+      // Cuánto le devolvió el navegador por encima de lo que pasó según la base
+      // (el retraso de la red, más lo que tardó la escritura en llegar).
+      if (mueve === c && viejo.status === "playing" && viejo.clock_updated_at) devueltos.push(Math.round((nuevo[clave] - justo) * 1000));
     }
     return null;
   }
@@ -259,7 +265,8 @@ function crearServidor(red) {
 
   async function atender(page, pedido) {
     // La respuesta de la base tarda: casi siempre poco, a veces mucho.
-    await esperar(Math.random() < red.lentas ? entre(800, 2500) : entre(20, 120));
+    const lenta = Math.random() < red.lentas;
+    await esperar(lenta ? entre(800, 2500) : entre(20, 120));
     const { op } = pedido;
 
     if (op === "rpc") {
@@ -373,7 +380,9 @@ function crearServidor(red) {
         if (!cumple(vieja, filtros)) continue;
         const nueva = Object.assign({}, vieja, pedido.cambio);
         const error = trigger(vieja, nueva);
-        if (error) { rechazos.push(error); return { data: null, error: { message: error } }; }
+        // Una escritura que tardó en llegar se cobra entera en la base: el
+        // navegador no la puede descontar, y eso no lo arregla el retraso.
+        if (error) { rechazos.push(error + (lenta ? " (escritura lenta)" : "")); return { data: null, error: { message: error } }; }
         salas.set(nueva.id, nueva);
         tocadas.push(nueva);
         if (pedido.cambio && pedido.cambio.moves) {
@@ -404,7 +413,7 @@ function crearServidor(red) {
   }
 
   return {
-    salas, confirmadas, vistas, rechazos, atrasos, rapidas, provisionales, historia, sala, mesa4, agregar, atender,
+    salas, confirmadas, vistas, rechazos, atrasos, rapidas, provisionales, historia, devueltos, sala, mesa4, agregar, atender,
     cerrar() { cerrado = true; if (cortes) clearInterval(cortes); },
   };
 }
@@ -717,6 +726,13 @@ async function ronda(browser, nombre, PARTIDAS, red, limites, variantes) {
   ok("la lista de jugadas guardada lleva a la posición guardada en todas las partidas", !rotas.length, rotas.slice(0, 5));
   ok("sin errores de JavaScript en las salas", !errores.length, errores.slice(0, 3));
   if (!process.env.SIN_PREMOVIDAS) ok("las pre-jugadas salieron solas al llegar el turno", srv.rapidas.premovidas > 0, srv.rapidas);
+  // El retraso que devuelve el navegador (ver «El retraso de la red no se
+  // cobra en el reloj»): nunca más de lo que la base deja pasar.
+  const dev = srv.devueltos.slice().sort((a, b) => a - b);
+  if (dev.length) console.log("    reloj de quien mueve, por encima de lo que dice la base: mediana " + dev[Math.floor(dev.length / 2)] + " ms, el máximo " + dev[dev.length - 1] + " ms");
+  const lentas = srv.rechazos.filter((x) => x === "Tiempo restante inválido (escritura lenta)").length;
+  if (lentas) console.log("    " + lentas + " jugada(s) rechazadas por el reloj tras una escritura que tardó más de 0,8 s en llegar a la base");
+  ok("ninguna jugada que llegó a tiempo a la base se rechazó por subirse el reloj de más", !srv.rechazos.some((x) => x === "Tiempo restante inválido"), srv.rechazos.filter((x) => x === "Tiempo restante inválido").length);
   // Cada modalidad tiene que poder rehacer con su motor la jugada que llega por
   // el canal rápido: si no, todas llegarían por la base y nada saltaría.
   if (!process.env.SIN_RAPIDA) {
