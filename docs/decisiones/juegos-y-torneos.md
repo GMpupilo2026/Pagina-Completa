@@ -1481,6 +1481,45 @@ con `aal1` no escucha y con `aal2` sí. El retrato del esquema
 - Con el teclado (escribiendo la jugada) no hay pre-jugadas: `tryMove` sigue
   pidiendo que sea el turno propio.
 
+### El retraso de la red no se cobra en el reloj
+
+El reloj de quien recibe una jugada corre desde que la base la guardó
+(`clock_updated_at`), pero esa persona la ve en su pantalla un rato después:
+lo que tarda Realtime en avisarle, que con la base cargada son segundos. Ese
+rato se le cobraba como si lo hubiera pensado. Lichess lo devuelve (lo que
+llama *lag compensation*), con un tope.
+
+- **`SalaJuego.suscribir` anota cuándo apareció en pantalla cada posición**
+  (`vista`, con la hora del servidor), venga por la base o por el canal rápido,
+  y `vigilante.jugada()` lo devuelve como `vistaEn`. La posición que ya estaba
+  al abrir la página no cuenta (`en: null`): abrirla tarde no es retraso de la
+  red.
+- **`SalaJuego.pensado(sala, envio)` cuenta lo pensado desde ahí**: le resta
+  lo que pasó entre que la base guardó la jugada del rival y que apareció en
+  pantalla, **a lo sumo 1 s por jugada** (`RETRASO_MAXIMO_MS`). Si la jugada
+  llegó antes de que la base la guardara (lo común con el canal rápido), no hay
+  nada que devolver.
+- **La base no puede saber cuándo vio cada uno la jugada**: lo dice el
+  navegador. Por eso el tope, y el trigger (`proteger_reloj_de_partida`,
+  migración `20261029130652_reloj_retraso_de_red`) deja pasar exactamente ese
+  segundo de más (`retraso_maximo`) en el tiempo que se escribe al mover. Quien
+  haga trampa desde la consola gana a lo sumo 1 s por jugada, además de los
+  2 s de tolerancia de siempre. Comprobado en una transacción revertida: con
+  el reloj corriendo hace 10 s sobre 60, la base aceptaba hasta 52 s y ahora
+  hasta 53 s; 53,5 se sigue rechazando.
+- **La bandera no cambia**: el segundo se abona solo al mover a tiempo y nunca
+  salva de que caiga la bandera (el rival la canta, y la base la acepta, con la
+  hora de la base, como siempre). Lichess hace lo mismo.
+- Ajedrez para 4 no lo lleva todavía: su trigger y su página siguen como
+  estaban.
+
+Lo prueban `verificar-premovidas.js` (la cuenta, el tope, y `suscribir` con un
+Supabase de mentira: la jugada del rival llega 0,6 s después de guardarse y el
+reloj cobra los 3 s pensados, no 3,6; quitando la anotación o el tope, salta) y
+`verificar-partidas-simultaneas.js`, cuyo trigger de mentira deja pasar el
+mismo segundo: ninguna jugada se rechaza por subirse el reloj de más, y se
+imprime cuánto quedó cada reloj por encima de lo que dice la base.
+
 ### Cartas: cada estado, una copia propia
 
 `CartasChess.Game.fromJSON` y `toJSON` compartían las manos y el mazo con el

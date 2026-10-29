@@ -162,7 +162,7 @@
             const patch = { fen: info.fen, moves: newMoves, updated_at: new Date().toISOString() };
             if (room.initial_seconds != null) {
                 const storedKey = myColor === "w" ? "white_time_left" : "black_time_left";
-                const elapsed = SalaJuego.pensado(room, envio.alMover);
+                const elapsed = SalaJuego.pensado(room, envio);
                 const remaining = Math.max(0, (room[storedKey] || 0) - elapsed) + (room.increment_seconds || 0);
                 patch[storedKey] = remaining;
                 patch.clock_updated_at = new Date().toISOString();
