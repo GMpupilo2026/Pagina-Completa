@@ -62,6 +62,7 @@
         "sin-camara": ["Sin cámara", "bg-brand-100 text-brand-800 dark:bg-brand-800 dark:text-brand-100"],
         "sin-calibrar": ["Falta calibrar", "bg-brand-100 text-brand-800 dark:bg-brand-800 dark:text-brand-100"],
         leyendo: ["Leyendo, sin transmitir", "bg-brand-100 text-brand-800 dark:bg-brand-800 dark:text-brand-100"],
+        "sin-red": ["Sin conexión", "bg-brand-100 text-brand-800 dark:bg-brand-800 dark:text-brand-100"],
         transmitiendo: ["Transmitiendo", "bg-green-50 text-green-800 dark:bg-green-900/30 dark:text-green-200"],
     };
     const antes = new Map(); // puesto → { nivel, camara }
@@ -91,6 +92,7 @@
         if (x.error) return { nivel: "ayuda", detalle: x.error };
         if (!x.camara) return a.camara ? { nivel: "ayuda", detalle: "Se cortó la cámara: revisa el cable y toca «Abrir la cámara»" } : { nivel: "sin-camara", detalle: "Toca «Abrir la cámara»" };
         if (!x.calibrada) return { nivel: "sin-calibrar", detalle: "Busca el tablero y calibra" };
+        if (x.transmitiendo && x.sinRed) return { nivel: "sin-red", detalle: x.jugadas + (x.jugadas === 1 ? " jugada" : " jugadas") + " guardadas: se mandan al volver la señal" };
         return { nivel: x.transmitiendo ? "transmitiendo" : "leyendo", detalle: x.jugadas + (x.jugadas === 1 ? " jugada" : " jugadas") + (x.resultado ? " · terminó " + (x.resultado === "=" ? "½-½" : x.resultado) : "") };
     }
     function irA(n) {
@@ -142,6 +144,7 @@
         if (cuenta.transmitiendo) partes.push(cuenta.transmitiendo + " transmitiendo");
         if (cuenta.ayuda) partes.push(cuenta.ayuda + (cuenta.ayuda === 1 ? " necesita ayuda" : " necesitan ayuda"));
         if (cuenta.leyendo) partes.push(cuenta.leyendo + " leyendo sin transmitir");
+        if (cuenta["sin-red"]) partes.push(cuenta["sin-red"] + " sin conexión");
         const resto = (cuenta["sin-camara"] || 0) + (cuenta["sin-calibrar"] || 0);
         if (resto) partes.push(resto + " sin empezar");
         const texto = partes.join(" · ");

@@ -10026,6 +10026,66 @@ abierta y, sin ella, la guardia mandaba al login perdiendo el `#`.
 - `camaras.html` sigue en la Academia (es de quien administra) y ahora cuelga
   de Administración en las migas.
 
+### La cámara gasta poco
+
+Un celular encima de una mesa pasa 4 o 5 horas con la cámara abierta y la
+pantalla encendida, y en `camaras.html` una computadora lleva hasta 8 cámaras
+en el mismo hilo de la página. Lo que se hacía de más, y cómo quedó (cada cosa
+la mide `verificar-camara-tablero.js`, en «La cámara gasta poco», con
+`window.gastoCamara()`):
+
+- **La cámara da lo justo**: `width: 1280` y `frameRate: 10`, todo `ideal`
+  (si no puede, da lo que tenga). Antes se pedían 1920 a 30 imágenes por
+  segundo para trabajar a 640 y leer 5 veces por segundo.
+- **Se dibuja poco**: mientras se ubica el tablero (sin calibrar, arrastrando
+  una esquina, buscando), a todo lo que dé; ya calibrada, 2 veces por segundo
+  o apenas cambia lo que se lee (`pintarYa`). Antes, la imagen entera con su
+  cuadrícula 60 veces por segundo, aunque nadie la mirara.
+- **«Ahorrar batería»**: la pantalla en negro con «Mesa N · transmitiendo» y
+  cómo va, en letra blanca (21:1), y nada de dibujo. La pantalla no se puede
+  apagar (se corta la cámara), pero en negro una OLED casi no gasta. En modo
+  mesa se pone sola a los 2 minutos sin tocar nada, ya calibrada y
+  transmitiendo; si la cámara necesita a alguien (una jugada dudosa, algo que
+  no reconoce), se quita sola.
+- **Se lee solo el recorte** donde están los tableros (sus esquinas con un
+  margen del 4 %), no la imagen entera. `muestras()` recibe dónde empieza el
+  pedazo (`ox`, `oy`).
+- **Más despacio con el tablero quieto**: si nada cambió en 10 segundos, 2
+  lecturas por segundo en vez de 5; apenas algo cambia, otra vez 5. Una
+  jugada tarda medio segundo más, como mucho, en empezar a contarse.
+- **La lectura, en su propio hilo**: el cálculo salió de `camara-tablero.js` a
+  `js/lector-tablero.js` (sin `window` ni `document`), y
+  `js/lector-tablero-worker.js` lo usa en un Web Worker: la página manda el
+  recorte ya achicado (`createImageBitmap`, sin copiar píxeles en la página) y
+  el hilo lo lee en un `OffscreenCanvas`. Una lectura que vuelve cuando ya se
+  recalibró o cambió la imagen no vale (se comparan `h`, `cal` y
+  `fuenteVer`). Sin `OffscreenCanvas` o si el hilo falla, se lee en la página
+  como antes, también solo el recorte. La CSP ya tenía `worker-src 'self'`.
+- **La librería del QR (57 KB) se carga cuando hace falta**: al imprimir la
+  hoja de QR o al mostrar el de «Transmitir en vivo»; en modo mesa, nunca.
+- **Solo lo nuevo por el canal** (`PartidaEnVivo.loNuevo`, `v: 2`): la
+  jugada nueva y su tiempo, unos 150 bytes, en vez de la partida entera. Cada
+  partida lleva un `id` (`idPartida`, de su hora de inicio) y lo nuevo dice
+  desde qué jugada va (`desde`). La entera va la primera vez, cuando alguien
+  la pide, cuando cambia algo que no es una jugada más (otros nombres, otra
+  ronda, «Deshacer») y cada 20 mensajes por si alguien se perdió uno sin
+  notarlo. Quien recibe (`tablero-vivo.js` y Pareo) la pega a la que tiene
+  con `PartidaEnVivo.leer(payload, antes)`, sin volver a leer el PGN; si no
+  calza, pide esa mesa entera (`pedir` con `{ mesa }`: contesta solo esa
+  cámara, no las 50). Una página vieja no entiende `v: 2` y lo deja pasar.
+- **El visor repinta solo la mesa que cambió** (`pintarMesa`): con 40 mesas
+  en el proyector, cada jugada volvía a armar las 40 tarjetas. Si cambió qué
+  mesas se ven (una cámara nueva), se arma entera.
+- **Sin señal, sigue y lo dice**: «Sin conexión: la partida se sigue anotando
+  en este celular y se manda sola cuando vuelva la señal» (`#sin-red`, por
+  `navigator.onLine` y el estado del canal); en «Cómo van las cámaras», «Sin
+  conexión». Al volver (`online` o el canal otra vez `SUBSCRIBED`), se manda
+  la partida entera. El torneo leído se guarda en el celular
+  (`camara_torneo_datos_v1`, hasta 400 KB): un QR abierto sin señal sigue con
+  sus nombres; sin nada guardado, la cámara abre igual y el torneo se vuelve a
+  pedir cada 10 segundos y al volver la señal. La página ya abría sin señal
+  después de la primera vez: `sw.js` guarda todo lo del sitio que pasa por él.
+
 ### Quien mira y quien transmite: repasar, tiempos, jugada ilegal, proyector, motor y retraso
 
 El tercer pedido de mejoras del dueño («todas»). Lo de este paquete:
