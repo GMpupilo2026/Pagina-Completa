@@ -55,6 +55,7 @@
         ] },
         { title: "Torneos", tiles: [
             { emoji: "🏅", label: "Inscripciones a torneos en línea", desc: "Las respuestas del formulario de inscripcion.html", href: "inscripciones.html", zona: "contenido" },
+            { emoji: "⚔️", label: "Sala de arena", desc: "Equipos de estudiantes de las inscripciones, sus usuarios y claves, y las arenas que juegan en sala.html", href: "sala-admin.html", zona: "contenido" },
             { emoji: "🛡️", label: "Moderación de Pareo Integral", desc: "Los reportes de la lista pública de torneos, el sello «Verificado» de los organizadores y los torneos ocultos", href: "admin-pareo.html", zona: "contenido" },
             { emoji: "🎥", label: "Varias cámaras en una computadora", desc: "Prueba: todas las cámaras de una computadora a la vez, cada una en su mesa del torneo", href: "camaras.html", zona: "contenido" },
             { emoji: "📷", label: "Cámara que lee el tablero", desc: "Prueba: el celular encima de un tablero de verdad lee las casillas y anota las jugadas", href: "camara-tablero.html", zona: "contenido" },

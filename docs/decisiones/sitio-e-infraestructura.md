@@ -1965,6 +1965,11 @@ retrato del esquema. Una tabla nueva que se escuche va a la publicación en su
 misma migración; una que se deje de escuchar, sale. Con el retrato de antes de
 este arreglo, salta en las cinco.
 
+**Son dos proyectos y dos retratos**: las tablas de la Academia salen de
+`inventario-academia.txt` y las de «Base de Colegios» (`arena_partidas`, que
+escucha la sala de arena, `js/sala.js`) de `inventario-colegios.txt`. La
+verificación compara contra la unión de los dos.
+
 ### El perfil propio, una lectura por página
 
 **`window.MiPerfil.obtener(uid)`** (en `js/supabase-client.js`, que cargan todas

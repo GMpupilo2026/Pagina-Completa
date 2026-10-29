@@ -1,5 +1,11 @@
 -- La sala de arena: torneos "arena" entre equipos, en una sala APARTE de la Academia.
 --
+-- APLICADA A MANO el 29/10/2026 en el SQL Editor de «Base de Colegios»: la
+-- herramienta de migraciones de Supabase pidió una confirmación al dueño que
+-- nadie pudo contestar a tiempo. El SQL que se pegó es este, con un encabezado
+-- de comentarios más corto; después se comprobó con pruebas (emparejar, mover,
+-- puntos, permisos) dentro de una transacción que se deshizo.
+--
 -- Vive en "Base de Colegios" a propósito. Sus jugadores NO son cuentas de la
 -- Academia: son estudiantes que salen de las inscripciones a los torneos en
 -- línea, a quienes administración les da un usuario y una clave. Así no se
