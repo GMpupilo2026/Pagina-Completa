@@ -37,7 +37,8 @@
   };
   const mesa = (m) => {
     const x = { b: m.b, n: m.n == null ? null : m.n, r: m.r || null };
-    if (Array.isArray(m.partidas)) x.partidas = m.partidas.map((p) => ({ r: (p && p.r) || null }));
+    // En equipos, cada tablero con su resultado y su partida, si la hay (sin la marca interna de la cámara).
+    if (Array.isArray(m.partidas)) x.partidas = m.partidas.map((p) => Object.assign({ r: (p && p.r) || null }, p && p.pgn ? { pgn: String(p.pgn) } : {}));
     if (m.alineacion) x.alineacion = { b: (m.alineacion.b || []).slice(), n: (m.alineacion.n || []).slice() };
     if (m.pgn) x.pgn = String(m.pgn);
     return x;

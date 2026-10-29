@@ -73,6 +73,26 @@ function pruebaSinNavegador() {
   const d = PP.datosPublicos(t, { codigoEvento: "evt12345" });
   igual("el anuncio, la inscripción y los códigos de los enlaces en vivo", [d.anuncio.hora, d.inscripcion.abierta, d.vivo, d.codigoEvento], ["08:30", true, "abc12345", "evt12345"]);
   ok(d.rondas[0].mesas[0].pgn === PGN_ES, "y la partida de la mesa");
+  const te = torneoEquipos();
+  const de = PP.datosPublicos(te).rondas[0].mesas[0].partidas;
+  igual("en equipos, la partida de cada tablero (la de la cámara, sin su marca interna)", de.map((p) => [p.r, p.pgn || null, "pgnCamara" in p]),
+    [["1-0", PGN_ES, false], [null, "1. d4 d5", false], [null, null, false], [null, null, false]]);
+}
+
+// Un torneo por equipos con la partida de dos tableros (la de la cámara y una escrita).
+function torneoEquipos() {
+  const E = require("../js/pareo/equipos.js");
+  let n = 0;
+  const nuevoId = () => "q" + (++n);
+  const gente = ["A", "B"].flatMap((c) => [1, 2, 3, 4].map((k) => ({ id: nuevoId(), nombre: "PRUEBA " + c + k, institucion: "ESCUELA " + c, elo: 1500, retiradoDespuesDe: null })));
+  const eqs = E.armarEquipos(gente, nuevoId);
+  const t = T.nuevo({ nombre: "PRUEBA EQUIPOS", tipo: "equipos", tableros: 4, puntos: Object.assign({}, E.PUNTOS_EQUIPOS), rondasTotales: 3, mesaInicial: 1, fechaInicio: "2026-10-22", jugadores: eqs });
+  const m = { b: eqs[0].id, n: eqs[1].id, r: null };
+  E.prepararMesa(t, m);
+  m.partidas[0] = { r: "1-0", pgn: PGN_ES, pgnCamara: true };
+  m.partidas[1] = { r: null, pgn: "1. d4 d5" };
+  t.rondas = [{ mesas: [m], ausencias: {} }];
+  return t;
 }
 
 // El doble de la Edge Function.
@@ -283,6 +303,33 @@ async function pruebaPublica(browser) {
   await ctx.close();
 }
 
+async function pruebaEquiposPublica(browser) {
+  console.log("\n=== En equipos, la partida de cada tablero ===");
+  const te = torneoEquipos();
+  const filas = [{ id: "66666666-6666-4666-8666-666666666666", nombre: te.nombre, evento: "", lugar: "", fecha: "2026-10-22", rondas: 1, rondas_total: 3,
+    jugadores: te.jugadores.length, actualizado: "2026-10-22T15:00:00Z", datos: PP.datosPublicos(te) }];
+  const ctx = await browser.newContext({ serviceWorkers: "block", viewport: { width: 1100, height: 900 } });
+  const page = await ctx.newPage();
+  const errores = [];
+  page.on("pageerror", (e) => errores.push(String(e)));
+  await dobleTabla(page, filas);
+  await require("./lib/pareo-pruebas").dobleListaPareo(page, filas);
+  await page.goto(BASE + "/torneos-pareo.html#t=66666666-6666-4666-8666-666666666666&v=rondas", { waitUntil: "networkidle" });
+  await page.waitForSelector("#tp-tabla-ronda tr[data-tablero]");
+  igual("cada tablero con sus jugadores en su color (el equipo de la izquierda, con blancas en los impares)",
+    await page.$$eval("#tp-tabla-ronda tr[data-tablero]", (l) => l.map((tr) => tr.children[1].textContent + " – " + tr.children[3].textContent)),
+    ["PRUEBA A1 – PRUEBA B1", "PRUEBA B2 – PRUEBA A2", "PRUEBA A3 – PRUEBA B3", "PRUEBA B4 – PRUEBA A4"]);
+  igual("«Ver partida» solo en los tableros que tienen partida", await page.$$eval("#tp-tabla-ronda [data-ver-pgn]", (l) => l.map((b) => b.dataset.verPgn)), ["0.1", "0.2"]);
+  await page.click('[data-ver-pgn="0.2"]');
+  await page.waitForSelector("#tp-visor");
+  igual("la partida del tablero 2, con quién jugó cada color", await page.textContent("#tp-partida-titulo"), "Mesa 1, tablero 2: PRUEBA B2 – PRUEBA A2");
+  ok(await page.evaluate(() => document.querySelectorAll("#tp-visor button, #tp-visor [data-square]").length >= 64), "en el tablero");
+  await page.click('[data-ver-pgn="0.1"]');
+  igual("y la del tablero 1, con su resultado", await page.textContent("#tp-partida-titulo"), "Mesa 1, tablero 1: PRUEBA A1 – PRUEBA B1 (1 – 0)");
+  ok(!errores.length, "sin errores en la página", errores.join(" | "));
+  await ctx.close();
+}
+
 async function pruebaEnVivo(browser) {
   console.log("\n=== El enlace en vivo lleva a lo publicado ===");
   const { ctx, page, errores } = await P.abrirPagina(browser, BASE, "#vivo=prueba12", async (p) => {
@@ -325,6 +372,7 @@ async function pruebaEnVivo(browser) {
     await pruebaPgn(browser);
     await pruebaPublica(browser);
     await pruebaEnVivo(browser);
+    await pruebaEquiposPublica(browser);
   } finally {
     await browser.close();
   }

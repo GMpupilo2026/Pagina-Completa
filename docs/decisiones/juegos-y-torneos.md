@@ -10068,9 +10068,13 @@ manda lleva `tablero` además de `mesa`.
   anotarlo, el del encuentro sale de los tableros
   (`PareoEquipos.resultadoEncuentro`). Lo que llega sin tablero a un torneo
   por equipos (o con tablero a uno individual) no entra.
-- **La partida de cada tablero no se publica** (todavía): `pareo-publicar`
-  guarda de cada tablero solo su resultado, y cambiar eso es cambiar la Edge
-  Function. Queda en la computadora del árbitro y va a Lichess.
+- **La partida de cada tablero se publica** (`m.partidas[k].pgn`, sin la
+  marca de la cámara): `pareo-publicar` la guarda con la misma limpieza que la
+  de una mesa (versión 10, el 29/10: hasta 12 000 caracteres, sin caracteres
+  de control). En `torneos-pareo.html`, cada tablero del encuentro dice quién
+  juega con cada color (antes la columna «Blancas» era siempre el equipo de la
+  izquierda, y en los tableros pares jugaba con negras) y, si tiene partida,
+  «Ver partida» la abre en el tablero.
 
 ### Transmitir a Lichess
 

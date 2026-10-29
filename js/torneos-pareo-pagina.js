@@ -742,9 +742,15 @@
       if (deEquipos && m.alineacion && Array.isArray(m.partidas) && m.n) {
         const eqB = t.jugadores.find((x) => x.id === m.b) || {}, eqN = t.jugadores.find((x) => x.id === m.n) || {};
         const de = (eq, id) => ((eq.integrantes || []).find((x) => x.id === id) || {}).nombre || "—";
-        m.partidas.forEach((p, b) => tbody.append(el("tr", { class: "text-sm text-brand-600 dark:text-brand-300", "data-nombres": fila.dataset.nombres },
-          el("td", { class: "num", texto: "T" + (b + 1) }), el("td", { texto: de(eqB, (m.alineacion.b || [])[b]) }),
-          el("td", { class: "num", texto: p && p.r ? RESULTADO[p.r] || p.r : "" }), el("td", { texto: de(eqN, (m.alineacion.n || [])[b]) }))));
+        // El equipo de la izquierda juega con blancas en los tableros impares (las olimpiadas).
+        m.partidas.forEach((p, b) => {
+          const izq = de(eqB, (m.alineacion.b || [])[b]), der = de(eqN, (m.alineacion.n || [])[b]), conBlancas = b % 2 === 0;
+          tbody.append(el("tr", { class: "text-sm text-brand-600 dark:text-brand-300", "data-nombres": fila.dataset.nombres, "data-tablero": String(b + 1) },
+            el("td", { class: "num", texto: "T" + (b + 1) }), el("td", { texto: conBlancas ? izq : der }),
+            el("td", { class: "num", texto: p && p.r ? RESULTADO[p.r] || p.r : "" }), el("td", { texto: conBlancas ? der : izq }),
+            el("td", {}, p && p.pgn ? el("button", { type: "button", class: C.pestana + " bg-white dark:bg-brand-900 text-xs px-2 py-1", "data-ver-pgn": k + "." + (b + 1),
+              "aria-label": "Ver la partida del tablero " + (b + 1) + " de la mesa " + V.mesaFisica(t, k), onclick: () => verPartida(t, i, k, b) }, "Ver partida") : null)));
+        });
       }
     });
     const tabla = el("table", { id: "tp-tabla-ronda", class: "pi-tabla" },
@@ -771,11 +777,20 @@
   // La partida de una mesa (la subió el árbitro en PGN): se lee jugada por
   // jugada con chess.js (js/pareo/partida.js) y se recorre en el tablero de
   // js/visor-linea.js, con el teclado y el lector de pantalla.
-  function verPartida(t, r, k) {
+  // En equipos, `b` es el tablero (desde 0): su partida y sus jugadores.
+  function verPartida(t, r, k, b) {
     const caja = $("tp-partida");
     const m = t.rondas[r].mesas[k];
-    const lectura = window.Chess ? PareoPartida.leer(m.pgn, window.Chess) : { ok: false };
-    const titulo = "Mesa " + V.mesaFisica(t, k) + ": " + nombreDe(t, m.b) + " – " + nombreDe(t, m.n) + (m.r ? " (" + (RESULTADO[m.r] || m.r) + ")" : "");
+    let pgn = m.pgn, titulo = "Mesa " + V.mesaFisica(t, k) + ": " + nombreDe(t, m.b) + " – " + nombreDe(t, m.n) + (m.r ? " (" + (RESULTADO[m.r] || m.r) + ")" : "");
+    if (b != null) {
+      const p = m.partidas[b] || {};
+      const eqB = t.jugadores.find((x) => x.id === m.b) || {}, eqN = t.jugadores.find((x) => x.id === m.n) || {};
+      const de = (eq, id) => ((eq.integrantes || []).find((x) => x.id === id) || {}).nombre || "—";
+      const izq = de(eqB, (m.alineacion.b || [])[b]), der = de(eqN, (m.alineacion.n || [])[b]);
+      pgn = p.pgn;
+      titulo = "Mesa " + V.mesaFisica(t, k) + ", tablero " + (b + 1) + ": " + (b % 2 === 0 ? izq + " – " + der : der + " – " + izq) + (p.r ? " (" + (RESULTADO[p.r] || p.r) + ")" : "");
+    }
+    const lectura = window.Chess ? PareoPartida.leer(pgn, window.Chess) : { ok: false };
     caja.hidden = false;
     caja.replaceChildren(el("h3", { id: "tp-partida-titulo", class: "font-serif text-lg font-bold mb-2", tabindex: "-1", texto: titulo }));
     if (!lectura.ok || !lectura.jugadas.length) {
