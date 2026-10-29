@@ -10496,6 +10496,34 @@ formularios de Lichess) en `js/pareo/dgt.js`.
   (`/api/broadcast/round/{id}/push`): el pareo se ve en Lichess antes de la
   primera jugada. Si Lichess falla, la ronda queda pendiente y se vuelve a
   intentar en la revisión siguiente, sin volver a bajar el archivo.
+- **La pestaña «Tournament» de LiveChess no se puede automatizar, y se
+  ahorra lo que sí.** Título corto, nombre, lugar, país, control de tiempo y
+  número de rondas se escriben a mano en LiveChess: no tiene API ni importación
+  para eso (la del PGN es solo de la pestaña «Rounds»). Por eso cada torneo de
+  la lista trae «Datos para LiveChess», un desplegable con los seis campos, con
+  el rótulo que LiveChess muestra y su traducción, y un botón «Copiar» por
+  dato (más «Copiar todo»). `PareoDGT.datosLiveChess()` los arma; «Laws of
+  chess» y «Starting position» ya vienen bien de fábrica y no se tocan. El
+  título corto es el nombre sin tildes ni espacios, el mismo del archivo.
+  - **La ficha sale de la página que ya se pide**, sin una tercera: la Edge
+    Function lee del art=2 las filas de dos celdas «Lugar», «Federación»,
+    «Control de tiempo (Rapid)» y «Número de rondas» (`leerFicha`; comprobado
+    el 29/10/2026 con torneos en curso de Costa Rica, Malasia y Vietnam). Cada
+    una es opcional: lo que chess-results no dice se avisa («escríbelo a
+    mano») y no tiene botón de copiar, nunca se inventa.
+  - **«Federación» no siempre es un país.** En un torneo continental
+    (tnr1529729, 29/10/2026) dice «Confederation of Chess for Americas ( CCA )»:
+    eso no se copia como «Country» (`NO_ES_PAIS`); queda vacío, «escríbelo a
+    mano». En ese mismo torneo el lugar («Gimnasio Nacional») sí se lee.
+  - **Un torneo que terminó hace más de dos semanas ya no muestra la ficha**
+    sin el botón «Mostrar detalles del torneo» (`turdet=YES` no basta, como sí
+    basta para la clasificación): la lectura sale vacía. Por eso `unirFicha()`
+    conserva lo ya sabido y la ficha se guarda con el torneo en `localStorage`.
+    Lo normal, un torneo en curso, la trae completa.
+  - **La lista se rehace en cada revisión (cada 30 s)**: `pintarTorneos()`
+    recuerda qué desplegables estaban abiertos y a qué botón tenía el foco
+    quien copiaba (`data-foco`); sin eso, la tarjeta se cerraba sola en medio
+    de pegar los datos.
 - **Las jugadas no las sube esta página.** Las sube **Lichess Broadcaster**
   (la aplicación oficial de Lichess para la computadora), que mira la carpeta
   donde LiveChess escribe el PGN de cada ronda: ahí se elige la ronda que creó
@@ -10506,11 +10534,15 @@ formularios de Lichess) en `js/pareo/dgt.js`.
 
 `verificar-pareo-dgt.js` prueba el lector con HTML de la forma real y nombres
 inventados (con y sin club, el bye, el «sin emparejar» roto, la lista con
-FIDE-ID), que la función pregunte por la licencia antes de pedir nada y que
+FIDE-ID, la ficha con la forma de la página real, completa, a medias y
+ausente), que la función pregunte por la licencia antes de pedir nada y que
 la herramienta esté en la vitrina sin `gratis`, el PGN exacto, las mesas
 elegidas, qué hacer con cada lectura y, en el navegador con dobles de la
 función y de Lichess: el candado sin licencia, el archivo bajado con solo
 las mesas elegidas, el orden torneo → ronda → pareo en Lichess, que recargar
 no cree nada otra vez, el pareo corregido, cambiar las mesas y el Lichess
-caído. Rompiendo el filtro de los byes, el de las mesas o la pregunta por la
-licencia, salta.
+caído, y «Datos para LiveChess»: los seis campos, «Copiar» y «Copiar todo» con
+el portapapeles de verdad, que una revisión no cierre la tarjeta ni le quite el
+foco al botón, y que una lectura sin ficha no borre la anterior. Rompiendo el
+filtro de los byes, el de las mesas, la pregunta por la licencia, la lectura de
+la ficha, el foco o `unirFicha()`, salta.

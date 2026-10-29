@@ -25,6 +25,9 @@
  *   PareoDGT.nombreArchivo(nombre, ronda)    → "torneo-blitz-ronda-3.pgn"
  *   PareoDGT.formTorneo({...}) / formRonda({...}) → [[campo, valor]] para URLSearchParams
  *   PareoDGT.inicioRonda("2026.09.27", "3:00pm") → la hora de la ronda (ms), en hora de Costa Rica
+ *   PareoDGT.datosLiveChess(nombre, ficha)   → [{ campo, etiqueta, valor }] de la pestaña «Tournament» de LiveChess
+ *   PareoDGT.textoDatos(datos)               → los mismos datos en líneas «Campo: valor» (solo los que tienen valor)
+ *   PareoDGT.unirFicha(anterior, nueva)      → la ficha nueva, sin perder lo que ya se sabía
  *
  * Lógica pura, para el navegador y Node (lo prueba verificar-pareo-dgt.js).
  */
@@ -177,7 +180,43 @@
     return Date.UTC(Number(f[1]), Number(f[2]) - 1, Number(f[3]), horas + 6, Number(h[2]));
   }
 
-  const api = { tnrDe, quitarTildes, leerMesas, partidas, pgn, firma, decidir, nombreArchivo, formTorneo, formRonda, inicioRonda };
+  // La pestaña «Tournament» de LiveChess no se puede escribir desde afuera (no
+  // tiene API ni importación), así que se le da a quien la llena cada campo
+  // listo para copiar. `campo` es el rótulo que LiveChess muestra, `etiqueta`
+  // su traducción. «Laws of chess» y «Starting position» ya vienen bien de
+  // fábrica (leyes estándar, posición inicial): no se tocan. `ficha` es la que
+  // lee la Edge Function de chess-results: { control, lugar, pais, rondas },
+  // y cada dato puede faltar; entonces el valor queda vacío.
+  function datosLiveChess(nombre, ficha) {
+    const f = ficha || {};
+    const n = String(nombre || "").trim();
+    const nombreReal = n && !/^tnr\d+$/i.test(n) ? n : "";
+    const rondas = Number(f.rondas) > 0 ? String(Number(f.rondas)) : "";
+    return [
+      { campo: "Short title", etiqueta: "Título corto", valor: nombreReal ? slug(nombreReal) : "" },
+      { campo: "Name", etiqueta: "Nombre", valor: nombreReal },
+      { campo: "Location", etiqueta: "Lugar", valor: String(f.lugar || "").trim() },
+      { campo: "Country", etiqueta: "País", valor: String(f.pais || "").trim() },
+      { campo: "Time control", etiqueta: "Control de tiempo", valor: String(f.control || "").trim() },
+      { campo: "Number of rounds", etiqueta: "Número de rondas", valor: rondas },
+    ];
+  }
+
+  function textoDatos(datos) {
+    return (datos || []).filter((d) => d.valor).map((d) => d.campo + ": " + d.valor).join("\n");
+  }
+
+  // Un torneo que terminó hace más de dos semanas ya no muestra su ficha en
+  // chess-results: la lectura sale vacía y no debe borrar lo que ya se sabía.
+  function unirFicha(anterior, nueva) {
+    const sale = Object.assign({}, anterior || {});
+    for (const [k, v] of Object.entries(nueva || {})) {
+      if (v) sale[k] = v;
+    }
+    return sale;
+  }
+
+  const api = { datosLiveChess, textoDatos, unirFicha, tnrDe, quitarTildes, leerMesas, partidas, pgn, firma, decidir, nombreArchivo, formTorneo, formRonda, inicioRonda };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else raiz.PareoDGT = api;
 })(typeof self !== "undefined" ? self : this);
