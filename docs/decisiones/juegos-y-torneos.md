@@ -1348,6 +1348,119 @@ en verse del otro lado:
 Con la sala de antes, la red mala deja partidas trabadas para siempre (una
 jugada tardó 5 minutos en verse; otras no llegaron nunca).
 
+## La jugada viaja por Broadcast, y las pre-jugadas
+
+Lo que hace fluida una partida en lichess es que la jugada no pasa por la base:
+viaja de un jugador al otro por una conexión abierta, y la base guarda después.
+Aquí cada jugada era un `UPDATE` de `game_rooms` y llegaba al rival por
+`postgres_changes`, que revisa la RLS de cada cambio para cada quien escucha,
+en un solo hilo, con todas las partidas de la plataforma (ver «Lo que falta, y
+es lo más grande» en `sitio-e-infraestructura.md`). Con la base tranquila son
+unos 100 ms; cargada, segundos. Y no había pre-jugadas: en una partida rápida,
+el tiempo de pensar la respuesta obvia más el de la red salía del reloj.
+
+Por ahora va en **Estándar** (`estandar.html`), la de los torneos. Las demás
+salas siguen como antes y pueden sumarse con lo mismo.
+
+### El canal rápido: la jugada se ve antes de que la base la guarde
+
+- **Quien mueve avisa la jugada por Broadcast antes de guardarla**:
+  `{ n, san, antes, desde }` (cuántas jugadas lleva con esta, la jugada, la
+  posición de la que sale y la hora del servidor en que movió) por el canal
+  **privado** `sala-juego:<id de la sala>` (`SalaJuego.suscribir` con
+  `alJugadaRapida`, y `vigilante.anunciar()`). El canal va aparte del de
+  `postgres_changes`: si no se puede abrir, el de siempre sigue igual.
+- **Del otro lado no se cree nada que no se pueda comprobar**
+  (`jugadaRapida` en `js/estandar.js`): tiene que ser la jugada siguiente
+  (`n`), salir de la posición que se ve (`antes`) y ser legal para chess.js. El
+  reloj lo calcula quien la recibe, con lo guardado y la hora `desde` acotada
+  entre el último reloj de la base y ahora: el aviso no puede regalar tiempo.
+- **Se pinta como provisional** (`_provisional` en la sala) y **la base sigue
+  mandando**. La fila guardada, cuando llega, la reemplaza aunque su hora sea
+  un poco anterior (su reloj es el de verdad); una fila más vieja de la base se
+  deja pasar mientras tanto (la jugada se está guardando). Si en **4 s** la
+  base no la confirma, se vuelve a leer la sala y gana lo que diga la base: una
+  jugada que no quedó, o un aviso inventado, desaparece sola.
+- **Una jugada propia sobre una provisional espera a que la base tenga la del
+  rival** antes de guardarse: se guarda «sobre la posición de la que salió»
+  (`.eq("fen")`, ver «Las jugadas llegan siempre») y la base todavía no la
+  tendría. Se avisa por el canal de una vez (el rival la ve igual) y se guarda
+  cuando llega la fila. Lo pensado se cuenta **hasta el momento de mover**, no
+  hasta que llegó la fila: esperar a la base no es tiempo de quien juega. Pero
+  el trigger del reloj tolera solo 2 s entre lo que se cuenta y su propia
+  hora, y de esos 2 s vive también la red: si se esperó más de medio segundo,
+  se cuenta hasta ahora, como antes.
+- **Una jugada rápida que llega mientras la propia se guarda** se aplica
+  apenas termina de guardarse: antes de eso, la sala todavía no tiene la
+  posición de la que sale.
+
+**Quién entra al canal lo decide la base** (migración
+`20261029032128_sala_juego_canal_rapido`), con políticas en
+`realtime.messages`, las primeras del proyecto (hasta ahora todos los canales
+eran públicos, ver «El canal en vivo» de Pareo Integral):
+
+- **Escuchar**: quien puede VER la sala, con la RLS de `game_rooms` tal cual
+  (juega, es su profesor, administra, es compañero): la misma gente que ya la
+  recibe por `postgres_changes`.
+- **Mandar**: solo quien la JUEGA, y con la partida en juego.
+- **`verificacion_en_dos_pasos`**, restrictiva, como toda tabla de Realtime.
+- Un tema con basura no da error: el id se convierte a uuid solo si tiene forma
+  de uuid.
+
+Comprobado impersonando cada rol en una transacción revertida, antes de
+aplicarla: blancas y negras escuchan y mandan; su profesor escucha y no manda;
+alguien ajeno, nada; quien jugó una partida terminada escucha y no manda; un
+tema inventado u otro prefijo, nada; y quien administra con dos pasos activos,
+con `aal1` no escucha y con `aal2` sí. El retrato del esquema
+(`herramientas/inventario-esquema.sql`) incluye desde ahora las políticas de
+`realtime`.
+
+### Las pre-jugadas
+
+- **En el turno del rival se deja preparada la propia** (`premoves: true` en
+  `NieblaBoard`): se elige la pieza y la casilla, con el toque o arrastrando,
+  y se juega sola apenas llega la jugada del rival (`board.jugarPremovida()`,
+  que la página llama cada vez que aplica una posición nueva). Una sola a la
+  vez, como en lichess; tocar el tablero la quita.
+- **Los destinos son los de la pieza en un tablero vacío** (también las dos
+  capturas en diagonal del peón y los enroques): la jugada se decide sobre una
+  posición que todavía no existe. Recapturar en una casilla donde hoy hay una
+  pieza propia, por ejemplo, tiene que poder prepararse. **Si al llegar el
+  turno ya no es legal, se descarta y se dice** («La pre-jugada e2 a e4 no se
+  pudo hacer: ya no era legal.»).
+- **Coronar**: se elige la pieza al preparar la pre-jugada, con el mismo
+  diálogo de siempre (`js/coronacion.js`).
+- **Se ve y se dice**: un borde punteado blanco con una línea casi negra por
+  dentro (cada tema de tablero tiene sus colores, y contra cualquiera uno de
+  los dos pasa de 3:1; medido en los 14 temas, el peor da 4,7:1), la casilla
+  dice «sale la pre-jugada» / «llega la pre-jugada» (`data-estado`, que suma
+  `js/tablero-accesible.js`) y el estado de la página, «Pre-jugada lista: g1 a
+  f3 (se juega sola; toca el tablero para quitarla)».
+- Con el teclado (escribiendo la jugada) no hay pre-jugadas: `tryMove` sigue
+  pidiendo que sea el turno propio.
+
+### Cómo se comprueba
+
+`verificar-partidas-simultaneas.js` (ver «Las jugadas llegan siempre»): su
+servidor de mentira reparte también Broadcast (con la misma red mala: avisos
+perdidos, tarde, canales caídos), sus jugadores automáticos dejan pre-jugadas
+al azar (muchas no van a ser legales, y se descartan) y la demora se mide
+**desde que quien mueve ve su jugada** hasta que la ve el rival, así que entra
+también lo que tarda guardarla. Además, en la red mala la base rechaza el 3 %
+de las jugadas ya avisadas, y la ronda **3 bis** deja una jugada avisada que la
+base no guarda, con nadie que vuelva a mover: del otro lado tiene que
+desaparecer sola. Quitando la relectura a los 4 s, esa ronda falla; en la red
+mala no se nota, porque la jugada siguiente de cualquiera de los dos lo arregla.
+
+- `SIN_RAPIDA=1`: la base sin la política (el canal privado no abre). Todo
+  tiene que seguir igual por `postgres_changes`.
+- `SIN_PREMOVIDAS=1`: sin pre-jugadas.
+
+Con 10 partidas: red sana, mediana ~110 ms y la peor ~250 ms (el servidor de
+mentira contesta en 20-120 ms, así que acá el canal rápido apenas se nota: lo
+que ahorra en la vida real es lo que tarda Realtime en revisar la RLS con la
+base cargada); red mala, la peor bajó de ~8 s a ~5-7 s.
+
 ## La sala de cine de las transmisiones
 
 `torneos-en-vivo.html` (el enlace «Torneos» junto a «¡Te reto!» y «TV en
@@ -4927,8 +5040,10 @@ dueño del repo, no solo de código.
   (`interno.frenar_envio_publico`) tampoco aplica: ese freno protege un
   INSERT que alguien sin cuenta puede disparar, y un Broadcast no inserta
   nada en ninguna tabla.
-- **Público por default, sin RLS**: el proyecto nunca activó el modo privado
-  de canales de Supabase (que exigiría una política sobre `realtime.messages`).
+- **Público por default, sin RLS**: este canal no usa el modo privado de
+  Supabase (que exige una política sobre `realtime.messages`; el único canal
+  privado del proyecto es el de las partidas, ver «La jugada viaja por
+  Broadcast, y las pre-jugadas», y su política no habla de estos temas).
   Cualquiera con la anon key —la misma que ya es pública en
   `js/supabase-client.js`— puede unirse a un canal con solo saber su nombre.
   El nombre del canal (`pareo-vivo-<código>`) hace de contraseña: por eso el

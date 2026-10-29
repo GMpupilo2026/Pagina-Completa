@@ -178,32 +178,60 @@
 
      opciones: sala() → la sala que se ve; miColor() → "w", "b" o null (en
      Ajedrez para 4, el asiento); esperando() (opcional) → si se espera algo
-     del otro lado; tabla y canal (opcionales) → para fourplayer_games. */
+     del otro lado; tabla y canal (opcionales) → para fourplayer_games;
+     alJugadaRapida(aviso) (opcional) → abre además el canal rápido (abajo).
+
+     EL CANAL RÁPIDO (ver «La jugada viaja por Broadcast» en
+     docs/decisiones/juegos-y-torneos.md). Por la base, la jugada tarda lo que
+     tarda guardarla, más lo que tarda Realtime en revisar la RLS de cada
+     cambio para cada quien escucha (en un solo hilo, con todas las partidas de
+     la plataforma). Así que quien mueve la avisa ADEMÁS por un canal de
+     Broadcast privado, `sala-juego:<id>` (la política de realtime.messages
+     deja escuchar a quien puede ver la sala y mandar solo a quien la juega),
+     y del otro lado se pinta de una vez como PROVISIONAL (`_provisional`):
+     la base sigue mandando. Cuando llega la fila guardada, la reemplaza; si en
+     unos segundos no llega, se vuelve a leer la sala, y lo que la base no
+     tiene desaparece. El canal rápido va aparte: si no se puede abrir (una
+     base sin la política), el de siempre sigue igual. */
   const vigilantes = {};
   const ESPERA_RIVAL_MS = 5000, ESPERA_PROPIA_MS = 15000, ESPERA_SIN_CANAL_MS = 3000, ESPERA_MIRANDO_MS = 8000;
+  // Lo que se espera a que la base confirme una jugada provisional antes de
+  // volver a leer la sala (y deshacerla si la base no la tiene).
+  const ESPERA_PROVISIONAL_MS = 4000;
 
   function suscribir(salaId, alCambiar, opciones) {
     opciones = opciones || {};
     const sala = opciones.sala || (() => null);
     const tabla = opciones.tabla || "game_rooms";
     let canal = null, vuelta = 0, conectada = false, caidaDesde = Date.now(), ultimoContacto = Date.now(), leyendo = null;
+    let rapido = null, rapidoListo = false, vueltaRapida = 0, plazoProvisional = null;
 
-    function aplicar(fila) {
+    /* Una fila de la BASE. Sobre una sala provisional (una jugada que llegó
+       por el canal rápido y la base todavía no confirma), la fila guardada
+       gana apenas tiene esas jugadas: su reloj es el de verdad. Una más vieja
+       se deja pasar (la jugada se está guardando), salvo `forzar`: se acabó la
+       espera y lo que diga la base es lo que hay. */
+    function aplicar(fila, forzar) {
       ultimoContacto = Date.now();
       if (!fila) return;
       const actual = sala();
+      if (actual && actual._provisional) {
+        const alcanza = (fila.moves || []).length >= (actual.moves || []).length || fila.status === "finished";
+        if (alcanza || forzar) { clearTimeout(plazoProvisional); alCambiar(fila); }
+        return;
+      }
       if (actual && esAnterior(fila, actual)) return;
       if (actual && JSON.stringify(actual) === JSON.stringify(fila)) return;
       alCambiar(fila);
     }
 
-    function refrescar() {
-      if (leyendo) return leyendo;
+    function refrescar(forzar) {
+      if (leyendo && !forzar) return leyendo;
       leyendo = (async () => {
         try {
           const { data, error } = await sb.from(tabla).select("*").eq("id", salaId).maybeSingle();
           if (error) console.error(error);
-          else aplicar(data);
+          else aplicar(data, forzar);
         } catch (e) { console.error(e); }
         ultimoContacto = Date.now();
         leyendo = null;
@@ -256,6 +284,49 @@
         });
     }
 
+    function abrirRapido() {
+      const propio = ++vueltaRapida;
+      rapidoListo = false;
+      rapido = sb.channel("sala-juego:" + salaId, { config: { private: true, broadcast: { self: false } } })
+        .on("broadcast", { event: "jugada" }, (mensaje) => {
+          try { opciones.alJugadaRapida(mensaje && mensaje.payload); } catch (e) { console.error(e); }
+        })
+        .subscribe((estado) => {
+          if (propio !== vueltaRapida) return;
+          rapidoListo = estado === "SUBSCRIBED";
+          // Cerrado del todo (o sin permiso): se prueba otra vez más tarde. Las
+          // jugadas siguen llegando por la base mientras tanto.
+          if (estado === "CLOSED" || estado === "CHANNEL_ERROR") {
+            setTimeout(() => {
+              if (propio !== vueltaRapida) return;
+              try { sb.removeChannel(rapido); } catch (e) {}
+              abrirRapido();
+            }, estado === "CLOSED" ? 2000 : 15000);
+          }
+        });
+    }
+
+    /* La jugada propia, a los que miran la sala. Sin esperar a nada: si el
+       canal no está, no se manda (la base la lleva igual). */
+    function anunciar(aviso) {
+      if (!rapido || !rapidoListo) return false;
+      try {
+        const envio = rapido.send({ type: "broadcast", event: "jugada", payload: aviso });
+        if (envio && envio.catch) envio.catch(() => {});
+      } catch (e) { return false; }
+      return true;
+    }
+
+    /* La página aplicó una sala provisional: si la base no la confirma a
+       tiempo, se vuelve a leer y gana lo que diga la base. */
+    function provisional() {
+      clearTimeout(plazoProvisional);
+      plazoProvisional = setTimeout(() => {
+        const actual = sala();
+        if (actual && actual._provisional) refrescar(true);
+      }, ESPERA_PROVISIONAL_MS);
+    }
+
     setInterval(() => {
       pintarConexion();
       if (document.visibilityState === "hidden") return;
@@ -274,8 +345,9 @@
     window.addEventListener("online", () => refrescar());
     window.addEventListener("pageshow", (e) => { if (e.persisted) refrescar(); });
 
-    vigilantes[salaId] = { refrescar };
+    vigilantes[salaId] = { refrescar, anunciar, provisional };
     abrir();
+    if (opciones.alJugadaRapida) abrirRapido();
     return vigilantes[salaId];
   }
 
