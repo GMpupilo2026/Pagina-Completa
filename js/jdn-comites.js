@@ -1275,6 +1275,7 @@
     /* Cuando terminan de llegar las partidas, se pinta lo que estaba esperando. */
     function refrescarEnfrentamientos() {
         if ($("duelo-resultado") && !$("general").classList.contains("hidden")) dibujarDuelo();
+        if (dibujarComparar && !$("comparar").classList.contains("hidden")) dibujarComparar();
         const vieja = $("contra-comites");
         if (vieja) vieja.replaceWith(contraComites(vieja.dataset.contra, $("edicion").value));
     }
@@ -1496,8 +1497,59 @@
             g.append(lineas("Medallas en cada final (oro, plata y bronce sumados)", etq, series));
             g.append(tabla("Medallas de los comités comparados en cada final", ["Comité", ...etq.map((t) => ({ t, num: 1 }))],
                 series.map((x) => el("tr", { "data-comite": x.nombre }, td(x.nombre), ...x.det.map((d) => td(d, 1))))));
+            g.append(ladoALado(series.map((x) => x.nombre)));
         };
+        dibujarComparar = dibujar;
         dibujar();
+    }
+    let dibujarComparar = null;
+
+    /* El comparador: los comités elegidos lado a lado, una fila por dato (con
+       los filtros puestos), y lo que jugaron entre ellos. Cada dato sale de la
+       MISMA función que su sección del medallero (resumen, copa, efectividad,
+       contraElo, contra): no hay una segunda cuenta. Ver «El comparador de
+       comités». */
+    function ladoALado(nombres) {
+        const caja = el("div", { class: "mt-6", id: "comparar-lado" });
+        if (nombres.length < 2) {
+            caja.append(el("p", { class: "text-sm text-brand-500 dark:text-brand-300" }, "Elige al menos dos comités para verlos lado a lado."));
+            return caja;
+        }
+        const med = (n) => todos.find((y) => y.nombre === n) || vacio(n);
+        const lugarMed = (n) => { const i = todos.findIndex((y) => y.nombre === n); return i >= 0 ? (i + 1) + ".º de " + todos.length : "—"; };
+        const cp = copa(() => true);
+        const lugarCopa = (n) => { const i = cp.findIndex((y) => y.nombre === n); return i >= 0 ? num1(cp[i].total) + " (" + (i + 1) + ".º)" : "0"; };
+        const ef = efectividad(ciclos());
+        const pasaron = (n) => { const x = ef.find((y) => y.nombre === n); return x && x.jugE ? x.pasaron + " de " + x.jugE + " (" + pct(x.pasaron, x.jugE) + ")" : "—"; };
+        const elo = (n) => { const t = contraElo(jugs.filter((r) => r.comite === n)); return t.partidas ? signo(t.dif) + " en " + t.partidas + " partidas (" + signo(100 * t.dif / t.partidas) + " por cada 100)" : "—"; };
+        const filas = [
+            ["Puesto en el medallero", lugarMed],
+            ["Medallas (oro · plata · bronce)", (n) => { const x = med(n); return (x.oro + x.plata + x.bronce) + " (" + x.oro + " · " + x.plata + " · " + x.bronce + ")"; }],
+            ["Medallas individuales · de equipo · de tablero", (n) => { const x = med(n); return x.ind + " · " + x.eqm + " · " + x.tab; }],
+            ["Puntos de la copa (escala elegida)", lugarCopa],
+            ["Participaciones en finales", (n) => String(med(n).fin.size)],
+            ["Inscritos en eliminatorias (jugadores · equipos)", (n) => med(n).insc + " · " + med(n).eqElim],
+            ["Pasaron de la eliminatoria a la final", pasaron],
+            ["Rendimiento contra el Elo", elo],
+        ].filter(([t]) => !UNI || !/eliminatoria/.test(t)); // las universidades no tienen eliminatorias
+        caja.append(el("h3", { class: "font-serif text-lg font-bold text-brand-800 dark:text-white" }, "Lado a lado"),
+            el("p", { class: "text-sm text-brand-500 dark:text-brand-300 mt-1" }, "Cada dato sale de la misma cuenta que su sección del medallero, con los filtros que estén puestos."));
+        caja.append(tabla("Los comités comparados, lado a lado", ["Dato", ...nombres],
+            filas.map(([t, f]) => el("tr", { "data-dato": t }, td(t), ...nombres.map((n) => td(f(n)))))));
+        // Lo que jugaron entre ellos, de a pares.
+        caja.append(el("h3", { class: "font-serif text-lg font-bold text-brand-800 dark:text-white mt-5" }, "Entre ellos"));
+        if (!PARTIDAS) { caja.append(el("p", { class: "text-sm text-brand-500 dark:text-brand-300 mt-1", role: "status" }, "Cargando las partidas…")); return caja; }
+        const lista = partidasVisibles("");
+        const pares = [];
+        for (let i = 0; i < nombres.length; i++) for (let k = i + 1; k < nombres.length; k++) {
+            const r = contra(nombres[i], lista).find((x) => x.nombre === nombres[k]);
+            pares.push(el("tr", { "data-par": nombres[i] + "|" + nombres[k] }, td(nombres[i] + " contra " + nombres[k]),
+                td(r ? r.n : 0, 1), td(r ? r.g + "-" + r.e + "-" + r.p : "—", 1), td(r ? fmt(r.pts) + " de " + r.n : "—", 1),
+                td(r && r.eg + r.ee + r.ep ? r.eg + "-" + r.ee + "-" + r.ep : "—", 1)));
+        }
+        caja.append(el("p", { class: "text-sm text-brand-500 dark:text-brand-300 mt-1" }, "Las partidas jugadas de verdad entre sus jugadores, desde el lado del primero: ganadas, tablas y perdidas; y los encuentros de equipo."),
+            tabla("Las partidas entre los comités comparados", ["Quiénes", { t: "Partidas", num: 1 }, { t: "G-E-P", num: 1 }, { t: "Puntos", num: 1 }, { t: "Encuentros de equipo G-E-P", num: 1 }], pares));
+        return caja;
     }
 
     /* ---- La ficha del jugador ----
@@ -1755,7 +1807,9 @@
             : `Los resultados de cada comité de deportes en los ${torneos} torneos de ajedrez de los Juegos Deportivos Nacionales que están en chess-results: ${nE} eliminatorias y ${nF} finales. Elige un comité para ver a todos sus jugadores y equipos, edición por edición.`;
         armarControles();
         $("loading").classList.add("hidden"); $("app").classList.remove("hidden");
-        if (ED[h1]) pintar("", h1); else pintar(h1 || "", h2 || "");
+        // «#comparar» (el enlace de la vitrina) no es un comité: abre el medallero,
+        // y el navegador baja solo a la sección con ese id.
+        if (ED[h1]) pintar("", h1); else pintar(h1 === "comparar" ? "" : h1 || "", h2 || "");
         pintarBusqueda();
         pintarJugador();
         // Las partidas (para los enfrentamientos) son muchas: se leen después

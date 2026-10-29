@@ -91,7 +91,7 @@ module.exports = [
     { ic: "🤝", t: "Encuentro directo", s: "no los separa" },
     { ic: "🧮", t: "Sonneborn-Berger", s: "como en el ejemplo de la sesión 3" },
     { ic: "🏅", t: "Número de victorias", s: "si siguen empatados" },
-    { ic: "🎲", t: "Sorteo", s: "si todo se agota, salvo que las bases digan otra cosa" } ] },
+    { ic: "⚔️", t: "Para la próxima", s: "si el puesto da el título, desempate jugado en las bases" } ] },
   // 14
   { tipo: "frase", k: "Caso 3 · La logística que falló", ic: "🧰",
     t: "Faltan 4 relojes y 3 tableros tienen piezas incompletas.",

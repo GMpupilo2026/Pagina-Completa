@@ -264,6 +264,47 @@ function reglas() {
     void alDia;
   }
 
+  console.log("\nLo que falta y las ideas (pendientes, faltantes, sugerencias):");
+  {
+    const e = base();
+    e.centro.nombre = ""; e.centro.correo = ""; e.centro.region = ""; e.cuerpo = [];
+    igual("una inscripción vacía pide primero lo de la delegación", I.pendientes(e).map((p) => p.clave), ["centro", "region", "correo", "jefatura", "tecnico", "estudiantes"]);
+    const q = base();
+    const t = equipoCon(q, "D", "m", [est("Con Todo", "m", "2011-01-01"), est("Sin Fecha", "m", ""), est("Sin Sexo Ni Doc", "", "2011-03-01", { documento: "" })]);
+    q.estudiantes.push(I.estudianteNuevo({ equipoId: t.id, modalidad: "equipo" })); // un lugar vacío: no cuenta
+    igual("los lugares vacíos de un equipo no cuentan como faltantes", I.faltantes(q.estudiantes).map((f) => [f.campo, f.n, f.texto]), [["s", 1, "1 sexo"], ["f", 1, "1 fecha de nacimiento"], ["d", 1, "1 documento"]]);
+    igual("y el texto de la lista de tareas dice «Falta» en singular", I.pendientes(q).map((p) => p.texto), ["Falta 1 sexo.", "Falta 1 fecha de nacimiento.", "Falta 1 documento."]);
+    const dos = base();
+    dos.estudiantes.push(est("Uno", "m", "2011-01-01"), est("Dos", "m", "2011-02-01"));
+    dos.estudiantes[0].sexo = ""; dos.estudiantes[1].sexo = "";
+    cierto("con dos faltantes del mismo dato dice «Faltan 2 sexos»", I.pendientes(dos).some((p) => p.texto === "Faltan 2 sexos."));
+    igual("una inscripción completa no tiene nada pendiente", I.pendientes((() => { const c = base(); equipoCon(c, "D", "m", [0, 1, 2].map((k) => est("Ok " + k, "m", "2011-0" + (k + 1) + "-01"))); return c; })()), []);
+    const s1 = base();
+    const eq1 = equipoCon(s1, "D", "m", [est("Mi Uno", "m", "2011-01-01"), est("Mi Dos", "m", "2011-02-01")]);
+    const solo = est("Solo Cabe", "m", "2011-05-01"); s1.estudiantes.push(solo);
+    const chica = est("Muy Chica", "m", "2016-05-01"); s1.estudiantes.push(chica);
+    cierto("un individual que cabe se ofrece para el equipo de 2", /necesita 3.*Solo Cabe/.test(I.sugerencias(s1).join(" ")) && !/Muy Chica/.test(I.sugerencias(s1).join(" ")));
+    igual("cabeEnEquipo prueba en una copia y no toca nada", [I.cabeEnEquipo(s1, solo, eq1), I.cabeEnEquipo(s1, chica, eq1), solo.equipoId, s1.estudiantes.length], [true, false, "", 4]);
+    equipoCon(s1, "D", "m", [], 2);
+    const lleno = base(); lleno.estudiantes.push(est("Sobra", "m", "2011-01-01"));
+    equipoCon(lleno, "D", "m", [0, 1, 2].map((k) => est("Tres " + k, "m", "2011-0" + (k + 2) + "-01")));
+    cierto("un equipo de 3 sugiere llegar a 4 titulares", /tiene 3: con Sobra llegaría a 4 titulares/.test(I.sugerencias(lleno).join(" ")));
+    const cuatro = base(); cuatro.estudiantes.push(est("Suplente Posible", "m", "2011-01-01"));
+    equipoCon(cuatro, "D", "m", [0, 1, 2, 3].map((k) => est("Cuatro " + k, "m", "2011-0" + (k + 2) + "-01")));
+    cierto("un equipo de 4 sin suplente sugiere una", /ninguna suplente: Suplente Posible podría ser la suplente/.test(I.sugerencias(cuatro).join(" ")));
+    igual("un equipo de 5 no sugiere nada", I.sugerencias((() => { const c = base(); c.estudiantes.push(est("Otro", "m", "2011-01-01")); equipoCon(c, "D", "m", [0, 1, 2, 3, 4].map((k) => est("Cinco " + k, "m", "2011-0" + (k + 1) + "-02"))); return c; })()), []);
+  }
+
+  console.log("\nLos rangos de categoría: si cambian, esta página debe revisarse:");
+  {
+    // La inscripción calcula la categoría con js/pareo/grupos.js. Si alguien cambia esos rangos
+    // (una Normativa nueva), este caso falla y obliga a mirar la página y sus textos.
+    igual("los rangos de 2026 son los de la Normativa 2026 (art. 17), como los comprobó esta página", Object.fromEntries(["A", "B", "C", "D", "E"].map((c) => [c, G.rangoCategoria(c, 2026)])),
+      { A: [2017, 2020], B: [2013, 2016], C: [2012, 2014], D: [2009, 2011], E: [null, 2008] });
+    igual("el año de la Normativa que usa grupos.js es el que dice esta página", G.JDE_ANIO_NORMATIVA, 2026);
+    igual("para 2027 los rangos corren un año", ["A", "B", "C", "D", "E"].map((c) => G.rangoCategoria(c, 2027).map((x) => (x == null ? null : x - 0))), ["A", "B", "C", "D", "E"].map((c) => G.rangoCategoria(c, 2026).map((x) => (x == null ? null : x + 1))));
+  }
+
   console.log("\nLista pegada con equipos:");
   {
     const e = base();
@@ -467,8 +508,8 @@ function reglas() {
 async function navegador() {
   console.log("\nLa página:");
   const browser = await chromium.launch();
-  async function abrir(ancho, esquema) {
-    const ctx = await browser.newContext({ viewport: { width: ancho || 1200, height: 900 }, serviceWorkers: "block", acceptDownloads: true, colorScheme: esquema || "light" });
+  async function abrir(ancho, esquema, alto) {
+    const ctx = await browser.newContext({ viewport: { width: ancho || 1200, height: alto || 900 }, serviceWorkers: "block", acceptDownloads: true, colorScheme: esquema || "light" });
     const p = await ctx.newPage();
     const errores = [];
     p.on("pageerror", (e) => errores.push(e.message));
@@ -716,6 +757,169 @@ async function navegador() {
     await p.selectOption("#ij-eq-categoria", "C");
     await p.click("#ij-eq-crear");
     cierto("en el equipo de Mujeres el sexo es fijo (Mujer) y no se puede cambiar", await p.$eval("#ij-equipos-lista article >> nth=0 >> .ij-miembro >> nth=0 >> select >> nth=0", (s) => s.disabled && s.value === "w"));
+    await ctx.close();
+    igual("sin errores de JavaScript", errores, []);
+  }
+
+  {
+    // Lo que falta y las ideas, en pantalla.
+    const { ctx, p, errores } = await abrir();
+    cierto("«Para estar listo» arranca con lo de la delegación", /Escribe el nombre del centro educativo/.test(await p.textContent("#ij-pend")) && /Elige la Dirección Regional/.test(await p.textContent("#ij-pend")));
+    await p.click("#ij-pend li:has-text('nombre del centro') button");
+    igual("«Ir» lleva al campo que falta", await p.evaluate(() => document.activeElement.id), "ij-centro");
+    await p.selectOption("#ij-region", "Alajuela");
+    cierto("al elegir la regional, la tarea desaparece y la de equipos dice cuántos clasifican (art. 66.1.j)", !/Elige la Dirección Regional/.test(await p.textContent("#ij-pend")) && /clasifican \d+ equipos? por torneo y categoría a la Interregional/.test(await p.textContent("#ij-eq-inter")), await p.textContent("#ij-eq-inter"));
+    await p.selectOption("#ij-eq-categoria", "D");
+    await p.click("#ij-eq-crear");
+    for (const k of [0, 1]) await p.fill("#ij-equipos-lista .ij-miembro >> nth=" + k + " >> input[type=text] >> nth=0", "Quien " + k);
+    cierto("el equipo dice qué le falta, por campo", /Faltan: 2 sexos, 2 fechas de nacimiento, 2 documentos\./.test(await p.textContent("#ij-equipos-lista article >> .font-semibold.ij-ayuda")), await p.textContent("#ij-equipos-lista article >> .font-semibold.ij-ayuda"));
+    await p.click("#ij-equipos-lista >> text=Ir al primero");
+    cierto("«Ir al primero» enfoca el primer sexo que falta", /^ij-m-.*-s$/.test(await p.evaluate(() => document.activeElement.id)));
+    cierto("la lista de tareas dice «Faltan 2 sexos» y que al equipo le falta 1 integrante", /Faltan 2 sexos/.test(await p.textContent("#ij-pend")) && /le falta 1 integrante/.test(await p.textContent("#ij-pend")));
+    // Un individual que cabe en ese equipo: sale como idea, y se puede arrastrar al equipo.
+    await p.click("#ij-est-mas");
+    await p.fill("#ij-est article >> input[type=text] >> nth=0", "Individual Cabe");
+    await p.selectOption("#ij-est article >> select >> nth=0", "m");
+    await p.fill("#ij-est article >> input[type=date]", "2011-05-05");
+    cierto("el equipo de 2 con un individual que cabe: sale la idea con su nombre", await visible(p, "#ij-sug-caja") && /Individual Cabe/.test(await p.textContent("#ij-sug")), await p.textContent("#ij-sug"));
+    // El arrastre con los eventos de verdad (dragstart en la agarradera, dragover y drop en el equipo) y un mismo DataTransfer.
+    const datos = await p.evaluateHandle(() => new DataTransfer());
+    await p.dispatchEvent("#ij-est article >> .ij-agarrar", "dragstart", { dataTransfer: datos });
+    await p.dispatchEvent("#ij-equipos-lista article", "dragover", { dataTransfer: datos });
+    cierto("mientras se arrastra, el equipo se marca como destino (borde discontinuo)", await p.$eval("#ij-equipos-lista article", (a) => a.classList.contains("ij-suelta") && getComputedStyle(a).outlineStyle === "dashed"));
+    await p.dispatchEvent("#ij-equipos-lista article", "drop", { dataTransfer: datos });
+    await p.waitForFunction(() => document.querySelectorAll("#ij-est article").length === 0);
+    cierto("arrastrar la tarjeta sobre el equipo pasa al estudiante al equipo", (await p.$$eval("#ij-equipos-lista .ij-miembro input[type=text]:not([id$='-d'])", (l) => l.some((x) => x.value === "Individual Cabe"))));
+    igual("y ya no es individual", (await p.$$("#ij-est article")).length, 0);
+    await ctx.close();
+    igual("sin errores de JavaScript", errores, []);
+  }
+
+  {
+    // Traer a los estudiantes de un borrador anterior (.json), sin reemplazar nada.
+    const { ctx, p, errores } = await abrir();
+    const q = { id: "q1", categoria: "D", torneo: "m", numero: 1 };
+    const e = (id, nombre, extra) => Object.assign({ id, nombre, sexo: "m", nacimiento: "2011-03-03", categoria: "", modalidad: "individual", torneo: "", equipoId: "", suplente: false, docTipo: "cedula", documento: "9-" + id, apoyo: false }, extra);
+    const viejo = { formato: "inscripcion-jde", version: 2, anio: 2026, etapa: "regional", centro: { nombre: "Otro" }, cuerpo: [], equipos: [q], estudiantes: [e("a1", "Anterior Uno", { equipoId: "q1" }), e("a2", "Anterior Dos", { equipoId: "q1", nacimiento: "2011-04-04" }), e("a3", "Anterior Tres", { equipoId: "q1", nacimiento: "2010-04-04" }), e("a4", "Anterior Solita", { sexo: "w", nacimiento: "2012-06-06" })] };
+    await p.fill("#ij-centro", "Colegio Equipos");
+    await p.selectOption("#ij-region", "Alajuela");
+    await p.check("#ij-tipo-secundaria");
+    await p.selectOption("#ij-anio", "2027");
+    await p.setInputFiles("#ij-anterior-archivo", { name: "viejo.json", mimeType: "application/json", buffer: Buffer.from(JSON.stringify(viejo)) });
+    await p.waitForSelector("#ij-ant-caja:not([hidden])");
+    igual("el borrador anterior ofrece a sus cuatro estudiantes, con dónde jugaban", await p.$$eval("#ij-ant-lista label", (l) => l.map((x) => x.textContent.trim())), ["Anterior Uno (equipo Abierto D)", "Anterior Dos (equipo Abierto D)", "Anterior Tres (equipo Abierto D)", "Anterior Solita (individual)"]);
+    await p.click("#ij-ant-agregar");
+    igual("al agregar, los del equipo vuelven a un equipo y la otra queda individual, con sus datos", [(await p.$$("#ij-equipos-lista article")).length, (await p.$$("#ij-equipos-lista .ij-miembro")).length, (await p.$$("#ij-est article")).length, await p.inputValue("#ij-est article >> input[type=date]")], [1, 3, 1, "2012-06-06"]);
+    cierto("y, como el año cambió (2026 → 2027), avisa que la categoría se calculó de nuevo", /categoría se calculó con el año 2027/.test((await p.$$eval(".avisos-mensaje", (l) => l.map((x) => x.textContent))).join(" | ")));
+    await p.setInputFiles("#ij-anterior-archivo", { name: "viejo.json", mimeType: "application/json", buffer: Buffer.from(JSON.stringify(viejo)) });
+    await p.waitForSelector("#ij-ant-lista");
+    cierto("si se vuelve a traer el mismo borrador, no ofrece a los que ya están", /no tiene estudiantes que no estén ya aquí/.test(await p.textContent("#ij-ant-lista")));
+    await p.setInputFiles("#ij-anterior-archivo", { name: "malo.json", mimeType: "application/json", buffer: Buffer.from('{"formato":"otra"}') });
+    await p.waitForFunction(() => /no es un borrador/.test(document.body.textContent));
+    await ctx.close();
+    igual("sin errores de JavaScript", errores, []);
+  }
+
+  {
+    // Los nombres del banco se ofrecen mientras se escribe, y el sexo seguro viene puesto.
+    const real = leerJson("data/jde-banco.json");
+    const cs = real.instituciones.map((x, i) => ({ nombre: x[0], region: x[1], tipo: x[4], idx: i }));
+    const conW = real.estudiantes.find((x) => x[3] === "w" && cs[x[1]].region && cs[x[1]].tipo);
+    const centro = cs[conW[1]];
+    const { ctx, p, errores } = await abrir();
+    await p.selectOption("#ij-region", centro.region);
+    await p.check(centro.tipo === "e" ? "#ij-tipo-primaria" : "#ij-tipo-secundaria");
+    await p.fill("#ij-centro", centro.nombre);
+    await p.keyboard.press("ArrowDown");
+    await p.keyboard.press("Enter");
+    cierto("con el centro del banco, el campo de nombre ofrece a sus estudiantes de antes", (await p.$$eval("#ij-nombres option", (o) => o.length)) > 0);
+    await p.click("#ij-est-mas");
+    cierto("el campo de nombre apunta a esa lista", (await p.getAttribute("#ij-est article >> input[type=text] >> nth=0", "list")) === "ij-nombres");
+    await p.fill("#ij-est article >> input[type=text] >> nth=0", conW[0]);
+    await p.dispatchEvent("#ij-est article >> input[type=text] >> nth=0", "change");
+    igual("quien jugó un torneo femenino trae el sexo puesto (Mujer)", await p.inputValue("#ij-est article >> select >> nth=0"), "w");
+    await p.fill("#ij-est article >> input[type=text] >> nth=0", "Nombre Que No Esta En El Banco");
+    await ctx.close();
+    igual("sin errores de JavaScript", errores, []);
+  }
+
+  {
+    // «Abrir en Pareo Integral»: la lista pasa directo y Pareo la recoge una sola vez.
+    const { ctx, p, errores } = await abrir();
+    await p.fill("#ij-centro", "Colegio Pareo");
+    await p.selectOption("#ij-region", "Alajuela");
+    await p.check("#ij-tipo-secundaria");
+    await p.selectOption("#ij-eq-categoria", "D");
+    await p.click("#ij-eq-crear");
+    for (const k of [0, 1, 2]) {
+      await p.fill("#ij-equipos-lista .ij-miembro >> nth=" + k + " >> input[type=text] >> nth=0", "Jugador Pareo " + k);
+      await p.selectOption("#ij-equipos-lista .ij-miembro >> nth=" + k + " >> select >> nth=0", "m");
+      await p.fill("#ij-equipos-lista .ij-miembro >> nth=" + k + " >> input[type=date]", "2011-0" + (k + 1) + "-10");
+    }
+    await p.click("#ij-pareo");
+    await p.click(".avisos-dialogo button:has-text('Abrirla así'), dialog button:has-text('Abrirla así')");
+    await p.waitForURL(/pareo\.html/);
+    await p.waitForFunction(() => document.querySelectorAll("#pi-tabla-jugadores tbody tr").length >= 3 || /Se agregaron/.test(document.body.textContent), null, { timeout: 15000 });
+    const quedo = await p.$$eval("#pi-tabla-jugadores tbody tr", (f) => f.map((r) => r.textContent));
+    cierto("Pareo recibió a los tres jugadores del equipo, con su centro", quedo.length === 3 && quedo.every((t) => /Jugador Pareo/.test(t)) && quedo.every((t) => /Colegio Pareo/.test(t)), JSON.stringify(quedo).slice(0, 300));
+    igual("y la lista pasó una sola vez: el almacenamiento quedó limpio y la dirección también", [await p.evaluate(() => localStorage.getItem("ij_para_pareo_v1")), await p.evaluate(() => location.hash)], [null, ""]);
+    await ctx.close();
+    igual("sin errores de JavaScript (Pareo y la inscripción)", errores, []);
+    const v = await abrir();
+    await v.p.evaluate(() => localStorage.setItem("ij_para_pareo_v1", JSON.stringify({ nombre: "viejo.xlsx", filas: [["Nombre"], ["Alguien"]], hora: Date.now() - 20 * 60 * 1000 })));
+    await v.p.goto(BASE + "/pareo.html#desde=inscripcion-jde");
+    await v.p.waitForSelector(".avisos-mensaje[data-tipo='error']");
+    cierto("una lista de hace más de diez minutos no se usa y se explica", /ya no está/.test(await v.p.textContent(".avisos-mensaje[data-tipo='error']")));
+    await v.ctx.close();
+  }
+
+  {
+    // El año, el recordatorio de bajar el borrador y una inscripción grande.
+    const { ctx, p, errores } = await abrir();
+    cierto("con el año de la Normativa no hay aviso de rangos corridos", !/corridos un año/.test(await p.textContent("#ij-norma-categorias")));
+    await p.selectOption("#ij-anio", "2027");
+    cierto("con 2027 la tabla corre un año y avisa que hay que confirmarla", /Categoría A \(primaria\): nacidos de 2018 a 2021/.test(await p.textContent("#ij-norma-categorias")) && /corridos un año: confírmalos cuando se publique la Normativa de 2027/.test(await p.textContent("#ij-norma-categorias")), await p.textContent("#ij-norma-categorias"));
+    await p.selectOption("#ij-anio", "2026");
+    cierto("y al volver a 2026 vuelve la tabla de la Normativa", /nacidos de 2017 a 2020/.test(await p.textContent("#ij-norma-categorias")) && /quien nació en 2013 o 2014 es de la B/.test(await p.textContent("#ij-norma-categorias")));
+    // 60 estudiantes: 8 equipos de 5 y 20 individuales (dos por categoría y torneo).
+    await p.evaluate(() => {
+      const I = window.InscripcionJde;
+      const e = I.estadoNuevo();
+      e.centro.nombre = "Colegio Grande"; e.centro.region = "Alajuela"; e.centro.tipo = "secundaria"; e.centro.correo = "x@mep.go.cr";
+      let n = 0;
+      const doc = () => "1-" + String(1000 + ++n);
+      const equipos = [["A", "m", 1], ["B", "m", 1], ["C", "m", 1], ["D", "m", 1], ["D", "m", 2], ["E", "m", 1], ["C", "w", 1], ["D", "w", 1]];
+      for (const [cat, torneo] of equipos) {
+        const t = I.crearEquipo(e, cat, torneo).resultado;
+        const anio = { A: 2018, B: 2015, C: 2012, D: 2010, E: 2007 }[cat];
+        for (let k = 0; k < 5; k++) I.agregarIntegrante(e, t.id, { nombre: "Eq" + cat + torneo + t.numero + " " + k, sexo: torneo === "w" ? "w" : "m", nacimiento: anio + "-0" + (k + 1) + "-15", documento: doc() });
+      }
+      for (const [cat, anio] of [["A", 2018], ["B", 2015], ["C", 2012], ["D", 2010], ["E", 2007]]) {
+        for (const [torneo, sexo] of [["m", "m"], ["w", "w"]]) for (let k = 0; k < 2; k++) {
+          const s = I.estudianteNuevo({ nombre: "Ind" + cat + torneo + k, sexo, nacimiento: anio + "-0" + (k + 6) + "-20", documento: doc() });
+          if (torneo === "m" && sexo === "w") s.torneo = "m";
+          e.estudiantes.push(s);
+        }
+      }
+      localStorage.setItem("ij_borrador_v1", JSON.stringify(e));
+    });
+    await p.reload();
+    await p.waitForFunction(() => !!document.documentElement.dataset.ijBanco);
+    const cuantos = await p.evaluate(() => [document.querySelectorAll("#ij-equipos-lista .ij-miembro").length, document.querySelectorAll("#ij-est article").length]);
+    igual("una inscripción de 60 se pinta completa (40 en equipos y 20 individuales)", cuantos, [40, 20]);
+    const ms = await p.evaluate(() => {
+      const campo = document.querySelector("#ij-equipos-lista .ij-miembro input[type=text]");
+      const t0 = performance.now();
+      for (let i = 0; i < 20; i++) { campo.value = "Nombre " + i; campo.dispatchEvent(new Event("input", { bubbles: true })); }
+      return (performance.now() - t0) / 20;
+    });
+    cierto("escribir en un campo con 60 estudiantes cuesta menos de 150 ms por tecla (" + ms.toFixed(0) + " ms)", ms < 150, String(ms));
+    // El recordatorio de bajar el borrador.
+    await p.waitForTimeout(700);
+    cierto("con tres estudiantes o más y sin bajar el borrador, se recuerda", /Todavía no has bajado el borrador/.test(await p.textContent("#ij-guardado")));
+    await p.evaluate(() => { document.querySelector("#ij-bajar-borrador").click(); });
+    await p.waitForTimeout(300);
+    cierto("al bajarlo, el recordatorio se va", !/Todavía no has bajado el borrador/.test(await p.textContent("#ij-guardado")));
     await ctx.close();
     igual("sin errores de JavaScript", errores, []);
   }

@@ -18,7 +18,7 @@
  * calibración, que ve dónde están las piezas blancas. Ver «La cámara que lee
  * el tablero» en docs/decisiones/juegos-y-torneos.md.
  *
- * Necesita window.LectorTablero (js/camara-tablero.js) para la homografía.
+ * Necesita window.LectorTablero (js/lector-tablero.js) para la homografía.
  */
 (function () {
     "use strict";

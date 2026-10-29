@@ -7,9 +7,11 @@
  *   - lo esperado sale de la tabla 8.1.2 (escrita abajo, tal cual), y el
  *     rendimiento de la 8.1 (la de los desempates, js/pareo/desempates.js:
  *     dpDeP);
- *   - el cambio es K × (puntos − esperado), con K = 40 para quien tiene
- *     menos de 18 años al terminar el año y menos de 2300, 10 desde 2400 y
- *     20 para los demás. El K de un jugador nuevo (menos de 30 partidas con
+ *   - el cambio es K × (puntos − esperado), con K = 40 hasta el final del
+ *     año en que cumple 18 (con menos de 2300), 10 desde 2400 y 20 para los
+ *     demás. «Hasta el final del año en que cumple 18» incluye ese año: quien
+ *     nació en 2007 lleva K 40 en todo 2025 (se comprobó contra el «FIDE elo
+ *     +/-» de chess-results en torneos reales; antes se cortaba un año antes). El K de un jugador nuevo (menos de 30 partidas con
  *     Elo, también 40) no se puede saber desde acá: se anota en «Editar».
  *
  * Es una cuenta del torneo, no el Elo oficial: FIDE (o la federación) junta
@@ -17,7 +19,10 @@
  * cada jugador, sea FIDE o Nacional.
  *
  *   PareoElo.calcular(t, hasta) → Map id → { elo, k, partidas, puntos,
- *     esperado, cambio, rp, rivales }
+ *     esperado, cambio, rp, rivales, juegos }
+ *   `juegos`: cada partida que contó, para explicar el número (lo usa la
+ *   «Variación de Elo del torneo», variacion-elo.html): { ronda, rival,
+ *   eloRival, dif (ya con el tope de 400), esperado, puntos }.
  */
 (function (raiz) {
   "use strict";
@@ -48,7 +53,7 @@
     const e = Number(j.elo) || 0;
     if (e >= 2400) return 10;
     const nace = Number(String(j.nacimiento || "").slice(0, 4));
-    if (nace && anio - nace < 18 && e < 2300) return 40;
+    if (nace && anio - nace <= 18 && e < 2300) return 40;
     return 20;
   }
 
@@ -61,7 +66,7 @@
     const out = new Map();
     for (const j of t.jugadores) {
       const elo = Number(j.elo) || 0;
-      const x = { elo, k: elo ? kDe(j, anio) : null, partidas: 0, puntos: 0, esperado: 0, cambio: null, rp: null, rivales: 0 };
+      const x = { elo, k: elo ? kDe(j, anio) : null, partidas: 0, puntos: 0, esperado: 0, cambio: null, rp: null, rivales: 0, juegos: [] };
       if (elo) {
         let sumaRivales = 0;
         for (let r = 0; r < h; r++) {
@@ -71,9 +76,11 @@
           const er = Number(rival && rival.elo) || 0;
           if (!er) continue;
           const dif = Math.max(-TOPE, Math.min(TOPE, elo - er));
+          const pts = s.codigo === "1" ? 1 : s.codigo === "=" ? 0.5 : 0;
           x.partidas++;
-          x.puntos += s.codigo === "1" ? 1 : s.codigo === "=" ? 0.5 : 0;
+          x.puntos += pts;
           x.esperado += esperado(dif);
+          x.juegos.push({ ronda: r + 1, rival: s.rival, eloRival: er, dif, esperado: esperado(dif), puntos: pts });
           sumaRivales += er;
         }
         if (x.partidas) {

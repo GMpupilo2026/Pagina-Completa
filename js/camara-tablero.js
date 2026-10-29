@@ -6,292 +6,12 @@
  * ni manda la imagen a ningún lado: todo pasa en el celular. Ver «La cámara que
  * lee el tablero» en docs/decisiones/juegos-y-torneos.md.
  *
- * La idea que la vuelve posible: NO reconoce piezas, reconoce JUGADAS.
- *  1. Con las cuatro esquinas que marca la persona se arma una homografía (la
- *     cuenta que lleva una casilla del tablero a su lugar en la imagen,
- *     inclinada como esté). No hace falta OpenCV: son ocho incógnitas.
- *  2. De cada casilla solo se pregunta si está vacía, con pieza blanca o con
- *     pieza negra. Lo aprende de la posición inicial («Calibrar»): las filas 3
- *     a 6 enseñan cómo se ve una casilla vacía de cada color, las 1 y 2 una
- *     pieza blanca y las 7 y 8 una negra.
- *  3. Cuando la lectura se queda quieta un rato (la mano ya salió) y no es la
- *     posición que se espera, chess.js busca qué jugada legal la explica. Si
- *     ninguna, o ninguna pareja de jugadas, la explica, NO se anota nada: se
- *     dice qué casillas cambiaron. Ninguna posición se inventa.
- *
- * Lo de calcular (homografía, lectura, jugadas) está en window.LectorTablero,
- * sin tocar la página, para que verificar-camara-tablero.js lo pruebe solo.
+ * Lo de calcular (homografía, lectura, jugadas) está en js/lector-tablero.js,
+ * window.LectorTablero.
  */
 (function () {
     "use strict";
-
-    const COLUMNAS = "abcdefgh";
-
-    /* ── La homografía ───────────────────────────────────────────────────
-     * Lleva (u, v) del tablero —u la columna de 0 a 8 desde la a, v la fila de
-     * 0 a 8 desde la 1— a (x, y) de la imagen. Con cuatro puntos se resuelve
-     * exacta: x = (h0 u + h1 v + h2) / (h6 u + h7 v + 1), igual con y. */
-    function homografia(desde, hacia) {
-        if (!convexo(hacia)) return null; // esquinas cruzadas o en línea: no hay tablero
-        const A = [], b = [];
-        for (let i = 0; i < 4; i++) {
-            const [u, v] = desde[i], [x, y] = hacia[i];
-            A.push([u, v, 1, 0, 0, 0, -u * x, -v * x]); b.push(x);
-            A.push([0, 0, 0, u, v, 1, -u * y, -v * y]); b.push(y);
-        }
-        // Eliminación de Gauss con pivote parcial.
-        for (let c = 0; c < 8; c++) {
-            let p = c;
-            for (let f = c + 1; f < 8; f++) if (Math.abs(A[f][c]) > Math.abs(A[p][c])) p = f;
-            if (Math.abs(A[p][c]) < 1e-12) return null;
-            [A[c], A[p]] = [A[p], A[c]]; [b[c], b[p]] = [b[p], b[c]];
-            for (let f = c + 1; f < 8; f++) {
-                const k = A[f][c] / A[c][c];
-                for (let j = c; j < 8; j++) A[f][j] -= k * A[c][j];
-                b[f] -= k * b[c];
-            }
-        }
-        const h = new Array(8);
-        for (let f = 7; f >= 0; f--) {
-            let s = b[f];
-            for (let j = f + 1; j < 8; j++) s -= A[f][j] * h[j];
-            h[f] = s / A[f][f];
-        }
-        return h;
-    }
-    /* Las cuatro esquinas tienen que formar un cuadrilátero de verdad: todas
-     * las vueltas hacia el mismo lado y con algo de área. */
-    function convexo(p) {
-        let signo = 0, area = 0;
-        for (let i = 0; i < 4; i++) {
-            const [a, b, c] = [p[i], p[(i + 1) % 4], p[(i + 2) % 4]];
-            const giro = (b[0] - a[0]) * (c[1] - b[1]) - (b[1] - a[1]) * (c[0] - b[0]);
-            if (Math.abs(giro) < 1e-9) return false;
-            if (signo && Math.sign(giro) !== signo) return false;
-            signo = Math.sign(giro);
-            area += a[0] * b[1] - b[0] * a[1];
-        }
-        return Math.abs(area) / 2 >= 100;
-    }
-    function aplicar(h, u, v) {
-        const w = h[6] * u + h[7] * v + 1;
-        return [(h[0] * u + h[1] * v + h[2]) / w, (h[3] * u + h[4] * v + h[5]) / w];
-    }
-    // Las esquinas se marcan en este orden: a1, h1, h8, a8.
-    const ESQUINAS_TABLERO = [[0, 0], [8, 0], [8, 8], [0, 8]];
-
-    /* ── Lo que se mira de cada casilla ──────────────────────────────────
-     * Una rejilla de N × N puntos dentro de la casilla (el 56 % del medio: los
-     * bordes se los comen la perspectiva y la pieza de al lado). De cada punto,
-     * la luminancia.
-     *
-     * Con la cámara de lado, una pieza alta tapa la parte de ATRÁS de la
-     * casilla siguiente (la que en la imagen queda arriba): un caballo en f3
-     * se veía también en f4. La base de cada pieza, en cambio, queda del lado
-     * de la cámara. Por eso la rejilla se corre hacia donde la casilla mira a
-     * la cámara (abajo en la imagen), lo que dé sin salirse. Desde arriba, la
-     * corrida casi no cambia nada. */
-    const N = 8;
-    const DESDE = 0.22, HASTA = 0.78, CORRIDA = 0.14;
-
-    function muestras(pix, ancho, alto, h) {
-        const todas = [];
-        for (let r = 0; r < 8; r++) {
-            for (let f = 0; f < 8; f++) {
-                // Hacia dónde queda «abajo en la imagen», en casillas.
-                const [cx, cy] = aplicar(h, f + 0.5, r + 0.5);
-                const [ux, uy] = aplicar(h, f + 0.6, r + 0.5), [vx, vy] = aplicar(h, f + 0.5, r + 0.6);
-                const a = (ux - cx) / 0.1, b = (vx - cx) / 0.1, c = (uy - cy) / 0.1, d = (vy - cy) / 0.1;
-                const det = a * d - b * c;
-                let du = 0, dv = 0;
-                if (Math.abs(det) > 1e-9) {
-                    du = -b / det; dv = a / det; // la casilla que corresponde a (0, +1) en la imagen
-                    const n = Math.hypot(du, dv) || 1;
-                    du = du / n * CORRIDA; dv = dv / n * CORRIDA;
-                }
-                const L = new Float32Array(N * N);
-                for (let j = 0; j < N; j++) {
-                    for (let i = 0; i < N; i++) {
-                        const t = (k) => DESDE + (HASTA - DESDE) * (k + 0.5) / N;
-                        const [x, y] = aplicar(h, f + t(i) + du, r + t(j) + dv);
-                        const px = Math.min(ancho - 1, Math.max(0, Math.round(x)));
-                        const py = Math.min(alto - 1, Math.max(0, Math.round(y)));
-                        const o = (py * ancho + px) * 4;
-                        L[j * N + i] = 0.299 * pix[o] + 0.587 * pix[o + 1] + 0.114 * pix[o + 2];
-                    }
-                }
-                todas.push(L);
-            }
-        }
-        return todas; // índice r * 8 + f: 0 es a1, 63 es h8
-    }
-
-    const oscura = (k) => ((k >> 3) + (k & 7)) % 2 === 0; // a1 es oscura
-    const media = (a) => a.reduce((s, x) => s + x, 0) / (a.length || 1);
-    const desvio = (a) => { const m = media(a); return Math.sqrt(media(a.map((x) => (x - m) * (x - m)))); };
-
-    /* El borde: cuánto cambia la luz de un punto al vecino. Una casilla vacía
-     * es lisa; una pieza, aunque sea del mismo color que la casilla, tiene su
-     * contorno y su sombra. */
-    function borde(L) {
-        let s = 0, n = 0;
-        for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) {
-            if (i + 1 < N) { s += Math.abs(L[j * N + i] - L[j * N + i + 1]); n++; }
-            if (j + 1 < N) { s += Math.abs(L[j * N + i] - L[(j + 1) * N + i]); n++; }
-        }
-        return s / n;
-    }
-
-    /* Los rasgos de una casilla, contra el fondo vacío de su color:
-     *   fuera: qué parte de los puntos se aparta del fondo;
-     *   borde: lo de arriba;
-     *   tono:  la luz media de los puntos que se apartan (blanca o negra). */
-    function rasgos(L, fondo) {
-        const umbral = Math.max(2.5 * fondo.desvio, 12);
-        let fuera = 0, suma = 0;
-        for (let k = 0; k < L.length; k++) {
-            if (Math.abs(L[k] - fondo.media) > umbral) { fuera++; suma += L[k]; }
-        }
-        return { fuera: fuera / L.length, borde: borde(L), tono: fuera ? suma / fuera : media(L) };
-    }
-
-    const INICIAL = "B".repeat(16) + ".".repeat(32) + "N".repeat(16);
-
-    /* Calibrar: aprender cómo se ve en esta imagen una casilla vacía de cada
-     * color, una pieza blanca y una negra, con la posición que se sabe que
-     * hay (64 letras como las de la lectura). Por omisión, la inicial; para
-     * seguir una partida después de mover la cámara, la de la partida. */
-    function calibrar(todas, sabida) {
-        sabida = sabida || INICIAL;
-        const fondos = {};
-        for (const os of [true, false]) {
-            let vacias = [];
-            for (let k = 0; k < 64; k++) if (sabida[k] === "." && oscura(k) === os) vacias.push(todas[k]);
-            if (!vacias.length) for (let k = 0; k < 64; k++) if (sabida[k] === ".") vacias.push(todas[k]);
-            const medias = vacias.map(media);
-            const dentro = media(vacias.map(desvio));
-            fondos[os] = { media: media(medias), desvio: Math.max(2, Math.sqrt(dentro * dentro + Math.pow(desvio(medias), 2))) };
-        }
-        const r = todas.map((L, k) => rasgos(L, fondos[oscura(k)]));
-        const centro = (lista) => (lista.length ? { fuera: media(lista.map((x) => x.fuera)), borde: media(lista.map((x) => x.borde)), tono: media(lista.map((x) => x.tono)) } : null);
-        const de = (filtro) => r.filter((x, k) => filtro(k));
-        const cal = { fondos, vacia: {}, ocupada: {}, blanca: {}, negra: {} };
-        for (const os of [true, false]) {
-            const mismo = (k) => oscura(k) === os;
-            // Si en un color de casilla no hay de algo (pasa en una partida
-            // avanzada), se usa lo del otro color.
-            const o = (filtro) => centro(de((k) => filtro(k) && mismo(k))) || centro(de(filtro));
-            cal.vacia[os] = o((k) => sabida[k] === ".");
-            cal.ocupada[os] = o((k) => sabida[k] !== ".");
-            cal.blanca[os] = (o((k) => sabida[k] === "B") || cal.ocupada[os]).tono;
-            cal.negra[os] = (o((k) => sabida[k] === "N") || cal.ocupada[os]).tono;
-        }
-        // La escala de cada rasgo: lo que separa vacía de ocupada, con piso.
-        cal.escala = {
-            fuera: Math.max(0.05, Math.abs(media([true, false].map((o) => cal.ocupada[o].fuera - cal.vacia[o].fuera)))),
-            borde: Math.max(1, Math.abs(media([true, false].map((o) => cal.ocupada[o].borde - cal.vacia[o].borde)))),
-        };
-        return cal;
-    }
-
-    /* La lectura: 64 letras, «.» vacía, «B» blanca, «N» negra, de a1 a h8, y
-     * la seguridad de cada una, de 0 (podría ser lo otro) a 1 (sin duda). */
-    function leerDetalle(todas, cal) {
-        let s = "";
-        const seguridad = new Float32Array(64);
-        for (let k = 0; k < 64; k++) {
-            const os = oscura(k);
-            const x = rasgos(todas[k], cal.fondos[os]);
-            const d = (c) => Math.hypot((x.fuera - c.fuera) / cal.escala.fuera, (x.borde - c.borde) / cal.escala.borde);
-            const dv = d(cal.vacia[os]), doc = d(cal.ocupada[os]);
-            const ocupa = Math.min(1, Math.abs(dv - doc) / (dv + doc + 1e-6) * 2);
-            if (dv <= doc) { s += "."; seguridad[k] = ocupa; continue; }
-            const db = Math.abs(x.tono - cal.blanca[os]), dn = Math.abs(x.tono - cal.negra[os]);
-            s += db <= dn ? "B" : "N";
-            seguridad[k] = Math.min(ocupa, Math.min(1, Math.abs(db - dn) / (db + dn + 1e-6) * 2));
-        }
-        return { lectura: s, seguridad };
-    }
-    const leer = (todas, cal) => leerDetalle(todas, cal).lectura;
-
-    const casilla = (k) => COLUMNAS[k & 7] + ((k >> 3) + 1);
-
-    /* Lo que se espera ver de una partida de chess.js, con las mismas letras. */
-    function esperada(juego) {
-        let s = "";
-        for (let k = 0; k < 64; k++) {
-            const p = juego.get(casilla(k));
-            s += !p ? "." : p.color === "w" ? "B" : "N";
-        }
-        return s;
-    }
-
-    /* Qué jugadas explican la lectura, de la más a la menos probable.
-     *
-     * Sin la seguridad de cada casilla, solo vale la que calza exacta. Con
-     * ella, cada casilla que no calza cuesta más cuanto más segura estaba la
-     * lectura: una casilla dudosa (el caballo que en f3 se ve también un poco
-     * en e3) casi no pesa, una clara sí. Se mide también «no pasó nada», para
-     * no inventar una jugada con una sombra. Si se escapó una jugada, se
-     * prueban las parejas, solo cuando ninguna sola explica la lectura.
-     * Al coronar, la cámara solo ve «pieza blanca»: se anota dama. */
-    function costo(pred, lectura, seguridad) {
-        let c = 0;
-        for (let k = 0; k < 64; k++) if (pred[k] !== lectura[k]) c += seguridad ? 0.4 + seguridad[k] : 1;
-        return c;
-    }
-    function candidatas(juego, lectura, seguridad) {
-        const legales = () => juego.moves({ verbose: true }).filter((m) => !m.promotion || m.promotion === "q");
-        const lista = [];
-        for (const m of legales()) {
-            juego.move(m);
-            lista.push({ jugadas: [m.san], costo: costo(esperada(juego), lectura, seguridad) });
-            juego.undo();
-        }
-        lista.sort((a, b) => a.costo - b.costo);
-        if (!lista.length || lista[0].costo > (seguridad ? 1.6 : 0)) {
-            for (const m of legales()) {
-                juego.move(m);
-                for (const m2 of legales()) {
-                    juego.move(m2);
-                    const c = costo(esperada(juego), lectura, seguridad);
-                    if (c <= (seguridad ? 1.2 : 0)) lista.push({ jugadas: [m.san, m2.san], costo: c });
-                    juego.undo();
-                }
-                juego.undo();
-            }
-            lista.sort((a, b) => a.costo - b.costo);
-        }
-        return { lista, quieto: costo(esperada(juego), lectura, seguridad) };
-    }
-    /* Lo que se anota solo: la mejor, si explica bien la lectura, explica
-     * claramente más que «no pasó nada» y le gana claro a la segunda.
-     * Devuelve { jugadas } para anotar, { dudas } si hay dos o tres parecidas
-     * (se le pregunta a la persona), o null. */
-    const MAXIMO = 1.6, VENTAJA = 0.8;
-    function decidir(juego, lectura, seguridad) {
-        const { lista, quieto } = candidatas(juego, lectura, seguridad);
-        const [a, b] = lista;
-        if (!a) return null;
-        if (!seguridad) return a.costo === 0 && (!b || b.costo > 0) ? { jugadas: a.jugadas } : null;
-        if (a.costo > 2 * MAXIMO || quieto - a.costo < 1) return null;
-        if (a.costo <= MAXIMO && (!b || b.costo - a.costo >= VENTAJA)) return { jugadas: a.jugadas };
-        const dudas = lista.filter((x) => x.costo <= a.costo + VENTAJA && x.costo <= 2 * MAXIMO).slice(0, 3);
-        return dudas.length > 1 ? { dudas: dudas.map((x) => x.jugadas) } : (a.costo <= MAXIMO ? { jugadas: a.jugadas } : null);
-    }
-    function buscarJugadas(juego, lectura, seguridad) {
-        const r = decidir(juego, lectura, seguridad);
-        return r && r.jugadas ? r.jugadas : null;
-    }
-
-    function diferentes(a, b) {
-        const d = [];
-        for (let k = 0; k < 64; k++) if (a[k] !== b[k]) d.push(casilla(k));
-        return d;
-    }
-
-    window.LectorTablero = { homografia, aplicar, ESQUINAS_TABLERO, INICIAL, muestras, calibrar, leer, leerDetalle, esperada, candidatas, decidir, buscarJugadas, diferentes, casilla };
-
+    const { homografia, aplicar, ESQUINAS_TABLERO, INICIAL, muestras, calibrar, leer, leerDetalle, esperada, decidir, diferentes, casilla } = window.LectorTablero;
     /* ── La página ───────────────────────────────────────────────────────── */
     if (!document.getElementById("lienzo")) return;
 
@@ -329,6 +49,11 @@
             i, esquinas: [], h: null, cal: null, juego: new window.Chess(),
             recientes: [], quieta: null, lectura: null, ajustada: false,
             vivo: null, nombres: { blancas: "", negras: "" },
+            resultadoMano: null, // el que se marcó con los botones (abandono, tiempo, tablas)
+            // La hora de cada jugada (null si no se sabe: una partida cargada a
+            // mano) y la de arranque: el tiempo de cada jugada y el retraso de
+            // la transmisión salen de acá.
+            inicio: Date.now(), horas: [], horaResultado: null,
         };
     }
     let tableros = [nuevoTablero(0)];
@@ -339,13 +64,23 @@
     let elegida = 0;            // la esquina que mueven las flechas
     let arrastre = -1;
     let ultimaMirada = 0;
+    let fuenteVer = 0;          // cambia con cada imagen nueva: una lectura de la anterior no vale
+    let pintarYa = true;        // hay algo nuevo que dibujar (ver dibujar)
+    let ultimoCambio = 0;       // la última vez que cambió lo que se lee (ver leerTableros)
     let buscando = false;
 
     const es = (san) => (window.ComandosTablero ? window.ComandosTablero.jugadaParaMostrar(san) : san);
     const dos = () => tableros.length === 2;
+    /* El resultado: el que dice el tablero (mate, ahogado) o, si no, el que se
+     * marcó a mano. Una jugada nueva, «Deshacer» o una partida nueva lo borran. */
+    const resultadoDe = (t) => V.resultadoSolo(t.juego) || t.resultadoMano;
+    // Cuánto tardó cada jugada, en ms (null si no se sabe).
+    const tiemposDe = (t) => t.horas.map((h, i) => { const antes = i ? t.horas[i - 1] : t.inicio; return h && antes ? h - antes : null; });
     const cual = (t) => (dos() ? "Tablero " + (t.i + 1) + ": " : "");
 
+    let ultimoAviso = { texto: "", tipo: "" };
     function avisar(texto, tipo) {
+        ultimoAviso = { texto, tipo: tipo || "" };
         const a = $("aviso");
         a.textContent = texto;
         a.className = "mb-4 rounded-xl px-4 py-3 text-sm " + (tipo === "error"
@@ -369,6 +104,7 @@
         $("btn-ajustar").disabled = !t.h;
         $("btn-calibrar").disabled = !t.h;
         $("btn-seguir").disabled = !t.h;
+        $("btn-ahorro").disabled = !fuente;
     }
 
     function tamano(ancho, alto) {
@@ -378,7 +114,7 @@
     }
 
     function nuevaFuente(f, ancho, alto) {
-        fuente = f;
+        fuente = f; fuenteVer++;
         tamano(ancho, alto);
         for (const t of tableros) { t.esquinas = []; t.h = null; t.cal = null; t.recientes = []; t.quieta = null; t.lectura = null; t.ajustada = false; }
         botones();
@@ -399,9 +135,14 @@
         }
         if (typeof id !== "string") { try { id = localStorage.getItem(CAMARA) || ""; } catch (e) { id = ""; } }
         if (video.srcObject) { video.srcObject.getTracks().forEach((x) => x.stop()); video.srcObject = null; }
+        /* Lo justo: la imagen se trabaja a 640 (o 960 con dos tableros) y se
+         * lee 5 veces por segundo, así que pedir 1920 a 30 imágenes por
+         * segundo era hacerle decodificar al celular seis veces más de lo
+         * que se usa. Todo «ideal»: si la cámara no lo da, da lo que tenga. */
+        const justo = { width: { ideal: 1280 }, frameRate: { ideal: 10 } };
         const pedir = (conId) => navigator.mediaDevices.getUserMedia({ audio: false, video: conId
-            ? { deviceId: { exact: conId }, width: { ideal: 1920 } }
-            : { facingMode: { ideal: "environment" }, width: { ideal: 1920 } } });
+            ? Object.assign({ deviceId: { exact: conId } }, justo)
+            : Object.assign({ facingMode: { ideal: "environment" } }, justo) });
         try {
             let flujo;
             try { flujo = await pedir(id); } catch (e) {
@@ -410,6 +151,7 @@
             }
             video.srcObject = flujo;
             await video.play();
+            mantenerEncendida();
             const pista = flujo.getVideoTracks()[0];
             const usada = pista && pista.getSettings ? pista.getSettings().deviceId || "" : "";
             try { if (usada) localStorage.setItem(CAMARA, usada); } catch (e) { /* sin almacenamiento */ }
@@ -423,6 +165,55 @@
                 : "No se pudo abrir la cámara (" + (e && e.name || "error") + "). Si otra aplicación la está usando, ciérrala y vuelve a intentar.", "error");
         }
     }
+    /* Que el celular no apague la pantalla a mitad de la partida: si se
+     * apaga, la cámara se corta y la mesa deja de transmitir sin avisar.
+     * El navegador suelta el pedido cuando la pestaña se esconde; al volver
+     * se pide de nuevo. Si no lo deja (batería baja, navegador viejo), sigue
+     * igual: el celular decide. */
+    let pantalla = null;
+    async function mantenerEncendida() {
+        if (pantalla || !("wakeLock" in navigator) || !video.srcObject || document.visibilityState !== "visible") return;
+        try {
+            pantalla = await navigator.wakeLock.request("screen");
+            $("pantalla-encendida").hidden = false;
+            pantalla.addEventListener("release", () => { pantalla = null; });
+        } catch (e) { /* sin permiso: sigue igual */ }
+    }
+    document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") mantenerEncendida(); });
+
+    /* «Ahorrar batería»: la pantalla tiene que quedar encendida (si se apaga,
+     * se corta la cámara), pero no tiene por qué mostrar nada: queda en negro,
+     * con la mesa y cómo va en letra grande, y deja de dibujar la imagen. La
+     * cámara sigue leyendo y transmitiendo. En modo mesa se enciende sola a
+     * los 2 minutos sin tocar nada, ya calibrada y transmitiendo. Si la
+     * cámara necesita a alguien (una jugada dudosa, un error), se apaga sola. */
+    let ahorro = false, quietoDesde = performance.now();
+    const SOLO_MS = 120000;
+    function ahorrar(si) {
+        if (ahorro === si) return;
+        ahorro = si;
+        const a = $("ahorro");
+        a.classList.toggle("hidden", !si);
+        a.classList.toggle("flex", si);
+        if (si) { pintarAhorro(); a.focus(); }
+        else { pintarYa = true; quietoDesde = performance.now(); $("btn-ahorro").focus(); }
+    }
+    function pintarAhorro() {
+        const t = T(), n = t.juego.history().length;
+        $("ahorro-titulo").textContent = (t.mesa ? "Mesa " + t.mesa : "Cámara") + " · " + (!t.vivo ? "sin transmitir" : sinRed() ? "sin conexión, guardando" : "transmitiendo");
+        $("ahorro-estado").textContent = (n === 1 ? "1 jugada anotada" : n + " jugadas anotadas") + (n ? ". " + V.comoVa(t.juego) : ".");
+    }
+    $("btn-ahorro").addEventListener("click", () => ahorrar(true));
+    $("ahorro").addEventListener("click", () => ahorrar(false));
+    for (const ev of ["pointerdown", "keydown"]) document.addEventListener(ev, () => { quietoDesde = performance.now(); }, true);
+    setInterval(() => {
+        const necesita = !$("dudas").hidden || ultimoAviso.tipo === "error";
+        if (ahorro) { if (necesita) ahorrar(false); else pintarAhorro(); return; }
+        const t = T();
+        if (document.documentElement.classList.contains("camara-mesa") && fuente && t.cal && t.vivo && !necesita
+            && performance.now() - quietoDesde > SOLO_MS) ahorrar(true);
+    }, 1000);
+
     async function listarCamaras(usada) {
         let todas = [];
         try { todas = (await navigator.mediaDevices.enumerateDevices()).filter((d) => d.kind === "videoinput"); } catch (e) { /* sin lista */ }
@@ -443,11 +234,12 @@
         const img = new Image();
         img.onload = () => {
             if (video.srcObject) { video.srcObject.getTracks().forEach((t) => t.stop()); video.srcObject = null; }
+            if (pantalla) { pantalla.release().catch(() => {}); pantalla = null; $("pantalla-encendida").hidden = true; }
             /* Otra foto del mismo tamaño, tomada desde el mismo lugar: se
              * conservan las esquinas, la calibración y la partida. Así se
              * prueba una partida foto a foto, sin cámara en vivo. */
             if (fuente instanceof HTMLImageElement && fuente.naturalWidth === img.naturalWidth && fuente.naturalHeight === img.naturalHeight) {
-                fuente = img;
+                fuente = img; fuenteVer++;
                 for (const t of tableros) t.recientes = [];
                 return;
             }
@@ -459,6 +251,7 @@
 
     function rehacerHomografia(t) {
         t = t || T();
+        pintarYa = true; ultimoCambio = performance.now();
         t.h = t.esquinas.length === 4 ? homografia(ESQUINAS_TABLERO, t.esquinas) : null;
         t.recientes = []; t.quieta = null;
         botones();
@@ -640,6 +433,8 @@
             return;
         }
         t.juego = new window.Chess();
+        t.resultadoMano = null;
+        t.inicio = Date.now(); t.horas = []; t.horaResultado = null;
         if (torneo) { t.ronda = ultimaRonda(); pintarTorneo(); } // la partida nueva es de la ronda de ahora
         partidaCambio(t);
         avisar(cual(t) + "Calibrado: lee bien " + bien + " de 64 casillas en la posición inicial. Ya puedes jugar.", "bien");
@@ -677,13 +472,20 @@
     /* Lo que cambia la partida: se pinta, se transmite y se guarda en el
      * celular (si la página se recarga, se ofrece seguirla). */
     function partidaCambio(t) {
+        const r = resultadoDe(t);
+        if (r && !t.horaResultado) t.horaResultado = Date.now();
+        if (!r) t.horaResultado = null;
         if (t === T()) pintarPartida();
         enviarVivo(t);
-        try { localStorage.setItem(PARTIDA + t.i, t.juego.pgn()); } catch (e) { /* sin almacenamiento */ }
+        try {
+            localStorage.setItem(PARTIDA + t.i, V.pgn(t.juego, r));
+            localStorage.setItem(PARTIDA + t.i + "_horas", JSON.stringify({ inicio: t.inicio, horas: t.horas }));
+        } catch (e) { /* sin almacenamiento */ }
     }
 
     function anotar(t, jugadas) {
-        jugadas.forEach((x) => t.juego.move(x));
+        t.resultadoMano = null; // si se siguió jugando, no había terminado
+        jugadas.forEach((x) => { t.juego.move(x); t.horas.push(Date.now()); });
         t.recientes = [];
         $("dudas").hidden = true;
         partidaCambio(t);
@@ -719,7 +521,11 @@
             avisar(cual(t) + "Parece que la cámara se movió. Toca «Buscar el tablero» (o marca las esquinas) y después «Seguir con esta partida»: no se pierde nada de lo anotado.", "error");
             return;
         }
-        avisar(cual(t) + "No reconozco lo que cambió en " + cambiaron.join(", ") + ". Si fue una jugada, escríbela abajo; si es la luz o una pieza movida sin querer, déjala como estaba.", "error");
+        // Una o dos piezas en otro lugar sin que salga ninguna jugada legal:
+        // puede ser una jugada ilegal. En un torneo se le avisa al árbitro de
+        // Pareo Integral (sin decir qué casillas: eso sería pasar la jugada).
+        const alArbitro = alertarArbitro(t);
+        avisar(cual(t) + "No reconozco lo que cambió en " + cambiaron.join(", ") + ": puede ser una jugada ilegal o una pieza fuera de lugar. Si fue una jugada, escríbela abajo; si es la luz o una pieza movida sin querer, déjala como estaba." + (alArbitro ? " Se le avisó al árbitro." : ""), "error");
     }
 
     function pintarPartida() {
@@ -731,6 +537,12 @@
         $("jugadas").textContent = V.jugadasTexto(juego) || "Todavía ninguna.";
         $("btn-deshacer").disabled = !hist.length;
         $("btn-copiar").disabled = !hist.length;
+        pintarResultado();
+    }
+    function pintarResultado() {
+        const t = T(), r = resultadoDe(t);
+        $("resultado-texto").textContent = r ? V.textoResultado(r) + (V.resultadoSolo(t.juego) ? " Lo dice el tablero." : "") : "Sigue en juego.";
+        document.querySelectorAll("[data-resultado]").forEach((b) => { if (b.dataset.resultado) b.setAttribute("aria-pressed", String(b.dataset.resultado === r)); });
     }
 
     /* ── Transmitir en vivo ─────────────────────────────────────────────
@@ -746,11 +558,80 @@
     }
     function guardarCodigo(t, c) { try { localStorage.setItem(GUARDADO[t.i], c); } catch (e) { /* sin almacenamiento: un código por visita */ } }
 
-    function enviarVivo(t) {
+    /* El retraso de la transmisión (lo elige quien transmite: nada, 5, 10,
+     * 15 o 30 minutos), contra la ayuda desde afuera: se manda la partida
+     * con las jugadas que tienen ya ese tiempo. Sale de la hora de cada
+     * jugada, así que vale también después de recargar la página. Cuando la
+     * partida termina, se manda entera: ya no hay a quién ayudar. */
+    let retraso = 0;
+    function vistaVivo(t) {
+        const r = resultadoDe(t), total = t.juego.history().length, ahora = Date.now();
+        let k = total, corte = ahora;
+        if (retraso && !r) {
+            corte = ahora - retraso * 60000;
+            k = 0;
+            while (k < total && !(t.horas[k] > corte)) k++; // sin hora: ya pasó hace rato
+        }
+        const base = k ? t.horas[k - 1] : t.inicio;
+        return { juego: k === total ? t.juego : V.hasta(t.juego, k), resultado: k === total ? r : null, n: k, espera: base ? corte - base : null };
+    }
+    /* Lo que se manda: la partida entera la primera vez, cuando la piden
+     * (alguien que recién llega o que se perdió algo) o cuando cambia algo que
+     * no es una jugada más (otra partida, otros nombres, «Deshacer»); si no,
+     * solo lo nuevo (V.loNuevo: unos 150 bytes en vez de la partida entera).
+     * Cada 20 mensajes va la entera igual, por si alguien se perdió uno sin
+     * darse cuenta. */
+    /* Sin señal: la cámara sigue leyendo y anotando (la partida se guarda en
+     * el celular), y se dice. Al volver, se manda entera: quien mira no se
+     * pierde nada. Realtime se vuelve a conectar solo; «online» lo apura. */
+    let estadoCanal = null;
+    const sinRed = () => tableros.some((t) => t.vivo) && (navigator.onLine === false || (estadoCanal && estadoCanal !== "SUBSCRIBED"));
+    function pintarRed() {
+        const e = $("sin-red");
+        const no = sinRed();
+        if (e.hidden !== !no) e.hidden = !no;
+    }
+    window.addEventListener("online", () => { for (const t of tableros) if (t.vivo) enviarVivo(t, true); pintarRed(); });
+    window.addEventListener("offline", pintarRed);
+    setInterval(pintarRed, 2000);
+    const idPartida = (t) => Math.round(t.inicio || 0).toString(36) + "-" + t.i;
+    let bytesMandados = 0;
+    function enviarVivo(t, entera) {
         if (!t.vivo) return;
         const canal = canales.get(t.vivo.codigo);
         if (!canal) return;
-        canal.send({ type: "broadcast", event: "estado", payload: V.estado(t.juego, nombresDe(t), dondeDe(t)) });
+        const v = vistaVivo(t);
+        t.enviadas = v.n;
+        const id = idPartida(t), nombres = nombresDe(t), donde = dondeDe(t);
+        const clave = JSON.stringify([id, nombres, donde, retraso]);
+        const hist = v.juego.history(), e = t.enviado;
+        const extra = { tiempos: tiemposDe(t).slice(0, v.n), espera: v.espera, retraso, id };
+        const sigue = !entera && e && e.clave === clave && e.cuenta < 20 && v.n >= e.n && hist.slice(0, e.n).join(" ") === e.jugadas;
+        const payload = sigue ? V.loNuevo(id, v.juego, e.n, donde, v.resultado, extra) : V.estado(v.juego, nombres, donde, v.resultado, extra);
+        t.enviado = { clave, n: v.n, resultado: v.resultado, jugadas: hist.join(" "), cuenta: sigue ? e.cuenta + 1 : 0 };
+        bytesMandados += JSON.stringify(payload).length;
+        canal.send({ type: "broadcast", event: "estado", payload });
+    }
+    // Con retraso, las jugadas van saliendo solas a medida que cumplen su tiempo.
+    setInterval(() => { if (retraso) for (const t of tableros) if (t.vivo && vistaVivo(t).n !== t.enviadas) enviarVivo(t); }, 5000);
+    function alertarArbitro(t) {
+        const canal = t.vivo && canales.get(t.vivo.codigo), donde = dondeDe(t);
+        if (!canal || !donde) return false;
+        canal.send({ type: "broadcast", event: "alerta", payload: { v: 1, torneo: donde.torneo, ronda: donde.ronda, mesa: donde.mesa, t: Date.now() } });
+        return true;
+    }
+    const RETRASO = delPuesto("camara_retraso_v1");
+    function elegirRetraso(min, guardar) {
+        retraso = [0, 5, 10, 15, 30].includes(min) ? min : 0;
+        $("vivo-retraso").value = String(retraso);
+        if (guardar) {
+            try {
+                if (torneo) { torneo.retraso = retraso; localStorage.setItem(TORNEO, JSON.stringify({ id: torneo.id, codigo: torneo.codigo, retraso })); }
+                else localStorage.setItem(RETRASO, String(retraso));
+            } catch (e) { /* sin almacenamiento */ }
+        }
+        for (const t of tableros) enviarVivo(t);
+        pintarVivo();
     }
 
     function empezarVivo(t, codigo) {
@@ -758,16 +639,23 @@
         t.vivo = { codigo };
         if (!canales.has(codigo)) {
             const canal = window.sb.channel(V.canal(codigo));
-            canal.on("broadcast", { event: "pedir" }, () => tableros.filter((o) => o.vivo && o.vivo.codigo === codigo).forEach(enviarVivo));
-            canal.subscribe((st) => { if (st === "SUBSCRIBED") tableros.filter((o) => o.vivo && o.vivo.codigo === codigo).forEach(enviarVivo); });
+            // Quien pide puede decir qué mesa le falta: contesta solo esa.
+            canal.on("broadcast", { event: "pedir" }, (msg) => {
+                const mesa = msg && msg.payload && Number(msg.payload.mesa);
+                tableros.filter((o) => o.vivo && o.vivo.codigo === codigo && (!mesa || o.mesa === mesa)).forEach((o) => enviarVivo(o, true));
+            });
+            canal.subscribe((st) => {
+                estadoCanal = st;
+                if (st === "SUBSCRIBED") tableros.filter((o) => o.vivo && o.vivo.codigo === codigo).forEach((o) => enviarVivo(o, true));
+            });
             canales.set(codigo, canal);
-        } else enviarVivo(t);
+        } else enviarVivo(t, true);
         if (!torneo) guardarCodigo(t, codigo);
         pintarVivo();
     }
     function pararVivo(t) {
         const codigo = t.vivo && t.vivo.codigo;
-        t.vivo = null;
+        t.vivo = null; t.enviado = null;
         if (codigo && !tableros.some((o) => o.vivo && o.vivo.codigo === codigo)) {
             try { window.sb.removeChannel(canales.get(codigo)); } catch (e) { /* ya cerrado */ }
             canales.delete(codigo);
@@ -783,12 +671,28 @@
         const url = V.enlace(t.vivo.codigo, torneo && torneo.id);
         const a = $("vivo-enlace");
         a.href = url; a.textContent = url;
-        $("vivo-codigo").textContent = t.vivo.codigo + (torneo && t.mesa ? " · mesa " + t.mesa : "");
+        $("vivo-codigo").textContent = t.vivo.codigo + (torneo && t.mesa ? " · mesa " + t.mesa : "") + (retraso ? " · con " + retraso + " minutos de retraso" : "");
         $("vivo-whatsapp").href = "https://wa.me/?text=" + encodeURIComponent((torneo ? "Mira el torneo en vivo: " : "Mira la partida en vivo: ") + url);
         const qr = $("vivo-qr");
+        if (qr.dataset.url === url) return;
+        qr.dataset.url = url;
         qr.textContent = "";
-        const svg = window.QrSvg && window.QrSvg.dibujar(url, torneo ? "Código QR para ver el torneo en vivo" : "Código QR para ver la partida en vivo");
-        if (svg) qr.append(svg);
+        // En modo mesa no se muestra: ni se carga la librería del QR.
+        if (document.documentElement.classList.contains("camara-mesa")) return;
+        cargarQr().then(() => {
+            if (qr.dataset.url !== url) return;
+            const svg = window.QrSvg.dibujar(url, torneo ? "Código QR para ver el torneo en vivo" : "Código QR para ver la partida en vivo");
+            if (svg) qr.replaceChildren(svg);
+        }, () => { /* sin el QR: queda el enlace */ });
+    }
+    /* La librería del QR (57 KB) se carga recién cuando hace falta: el
+     * celular que va encima de una mesa nunca la usa. */
+    let cargaQr = null;
+    function cargarQr() {
+        const una = (src) => new Promise((ok, mal) => { const sc = document.createElement("script"); sc.src = src; sc.onload = ok; sc.onerror = () => mal(new Error(src)); document.head.append(sc); });
+        if (!cargaQr) cargaQr = (window.qrcode ? Promise.resolve() : una("js/vendor/qrcode.js")).then(() => (window.QrSvg ? null : una("js/qr-svg.js")));
+        cargaQr.catch(() => { cargaQr = null; });
+        return cargaQr;
     }
 
     /* ── Un torneo de Pareo Integral ────────────────────────────────────
@@ -817,16 +721,30 @@
         return data;
     }
 
+    /* El último torneo leído se guarda en el celular: si se recarga la
+     * página sin señal, la mesa sigue con sus nombres (hasta 400 KB). */
+    const TORNEO_DATOS = "camara_torneo_datos_v1";
     async function usarTorneo(id, codigo) {
         let fila;
-        try { fila = await leerTorneo(id); } catch (e) { avisar("No se pudo leer el torneo. Revisa la conexión y vuelve a intentar.", "error"); return; }
+        try {
+            fila = await leerTorneo(id);
+            try { const x = JSON.stringify(fila); if (fila && x.length < 400000) localStorage.setItem(TORNEO_DATOS, x); } catch (e) { /* sin almacenamiento */ }
+        } catch (e) {
+            try { fila = JSON.parse(localStorage.getItem(TORNEO_DATOS) || "null"); } catch (x) { fila = null; }
+            if (!fila || fila.id !== id) { avisar("No se pudo leer el torneo. Revisa la conexión y vuelve a intentar.", "error"); return "red"; }
+        }
         if (!fila) { avisar("No encuentro ese torneo en Torneos en Pareo Integral. Revisa el enlace.", "error"); return; }
         if (!V.mesasDe(fila.datos)) {
             avisar(fila.datos && fila.datos.tipo === "equipos" ? "Los torneos por equipos todavía no se pueden transmitir desde la cámara." : "Ese torneo todavía no tiene ninguna ronda emparejada.", "error");
             return;
         }
         torneo = { id: fila.id, nombre: fila.nombre || (fila.datos && fila.datos.nombre) || "Torneo", datos: fila.datos, codigo: V.codigoValido(codigo) ? codigo : V.nuevoCodigo() };
-        try { localStorage.setItem(TORNEO, JSON.stringify({ id: torneo.id, codigo: torneo.codigo })); } catch (e) { /* sin almacenamiento */ }
+        // El retraso es del torneo (todas sus cámaras igual): el que ya tenía, si es el mismo.
+        let antes = null;
+        try { antes = JSON.parse(localStorage.getItem(TORNEO) || "null"); } catch (e) { /* nada */ }
+        torneo.retraso = antes && antes.id === torneo.id && antes.retraso ? antes.retraso : retraso;
+        try { localStorage.setItem(TORNEO, JSON.stringify({ id: torneo.id, codigo: torneo.codigo, retraso: torneo.retraso })); } catch (e) { /* sin almacenamiento */ }
+        retraso = torneo.retraso; $("vivo-retraso").value = String(retraso);
         for (const t of tableros) {
             let m = null;
             try { m = Number(localStorage.getItem(MESA + t.i)) || null; } catch (e) { /* sin almacenamiento */ }
@@ -898,6 +816,40 @@
         if (T().mesa) { const nm = nombresDe(T()); $("vivo-blancas").value = nm.blancas || ""; $("vivo-negras").value = nm.negras || ""; }
     }
 
+    /* Un QR por mesa, para pegarlo en la mesa: se escanea con el celular que
+     * va encima y la cámara se abre con el torneo, el código y la mesa puestos
+     * (y empieza a transmitir). Va después del # (no llega al servidor):
+     * «camara-tablero.html#t=<id del torneo>&c=<código>&m=<mesa>&r=<retraso>».
+     * Con el QR la cámara anda SIN CUENTA, en «modo mesa» (ver init). La hoja
+     * sale solo al imprimir, con la marca de agua de Ajedrez Integral. */
+    const enlaceMesa = (n) => new URL("camara-tablero.html#t=" + torneo.id + "&c=" + torneo.codigo + "&m=" + n + "&r=" + retraso, location.href).href;
+    function deLaDireccion() {
+        const x = new URLSearchParams(location.hash.replace(/^#/, ""));
+        const id = V.torneoDe(x.get("t")), c = (x.get("c") || "").toLowerCase(), m = Number(x.get("m")), r = Number(x.get("r")) || 0;
+        return id && V.codigoValido(c) && Number.isInteger(m) && m >= 1 && m <= 999 ? { id, codigo: c, mesa: m, retraso: r } : null;
+    }
+    async function imprimirQr() {
+        if (!torneo) return;
+        try { await cargarQr(); } catch (e) { avisar("No se pudo cargar lo que dibuja los QR. Revisa la conexión y vuelve a intentar.", "error"); return; }
+        const r = V.mesasDe(torneo.datos);
+        const hoja = $("hoja-qr");
+        hoja.textContent = "";
+        const el = (tag, clase, texto) => { const e = document.createElement(tag); e.className = clase; if (texto) e.textContent = texto; return e; };
+        for (const m of r.mesas) {
+            const tarjeta = el("div", "hoja-qr-mesa");
+            tarjeta.dataset.enlace = enlaceMesa(m.mesa);
+            const qr = el("div", "hoja-qr-codigo");
+            const svg = window.QrSvg.dibujar(enlaceMesa(m.mesa), "Código QR de la cámara de la mesa " + m.mesa);
+            if (svg) qr.append(svg);
+            tarjeta.append(el("p", "hoja-qr-numero", "Mesa " + m.mesa), el("p", "hoja-qr-torneo", torneo.nombre), qr,
+                el("p", "hoja-qr-ayuda", "Escanéalo con el celular que va encima de esta mesa, sin cuenta: la cámara se abre en esta mesa y transmite."));
+            hoja.append(tarjeta);
+        }
+        document.body.classList.add("imprimir-qr");
+        window.print();
+    }
+    window.addEventListener("afterprint", () => document.body.classList.remove("imprimir-qr"));
+
     /* Los torneos que se juegan estos días, para no tener que pegar el
      * enlace: los publicados con fecha de hace tres días a mañana, en hora
      * de Costa Rica. */
@@ -937,24 +889,114 @@
         ctx.beginPath(); ctx.arc(lx, ly, R, 0, 2 * Math.PI); ctx.lineWidth = 3; ctx.strokeStyle = "#ffffff"; ctx.stroke();
     }
 
-    function leerTableros(ahora) {
-        if (ahora - ultimaMirada < CADA_MS * 0.9 || !tableros.some((t) => t.h && t.cal)) return;
-        ultimaMirada = ahora;
-        const pix = cctx.getImageData(0, 0, limpio.width, limpio.height).data;
+    /* ── Leer gastando poco ──────────────────────────────────────────────
+     * Ver «La cámara gasta poco» en docs/decisiones/juegos-y-torneos.md.
+     *  · Solo el pedazo de la imagen donde están los tableros (con un margen),
+     *    no la imagen entera: de un celular encima del tablero, el tablero
+     *    ocupa a veces la mitad.
+     *  · Con el tablero quieto un rato (alguien piensa), se lee 2 veces por
+     *    segundo en vez de 5; apenas algo cambia, vuelve a 5.
+     *  · En su propio hilo (js/lector-tablero-worker.js): la página no se
+     *    traba, y en camaras.html cada cámara lee en el suyo. Si el navegador
+     *    no puede (sin OffscreenCanvas o createImageBitmap), se lee acá. */
+    const LENTO_MS = 500, QUIETO_MS = 10000;
+    const gasto = { lecturas: 0, pixeles: 0, dibujos: 0, enHilo: 0 };
+    function recorte() {
+        let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
         for (const t of tableros) {
             if (!t.h || !t.cal) continue;
-            const det = leerDetalle(muestras(pix, limpio.width, limpio.height, t.h), t.cal);
-            t.lectura = det.lectura; t.seguridad = det.seguridad;
-            t.recientes.push(t.lectura);
-            if (t.recientes.length > QUIETA) t.recientes.shift();
-            if (t.recientes.length === QUIETA && t.recientes.every((x) => x === t.lectura) && t.lectura !== t.quieta) {
-                t.quieta = t.lectura;
-                revisar(t, t.lectura, t.seguridad);
-            }
+            for (const [x, y] of t.esquinas) { x0 = Math.min(x0, x); y0 = Math.min(y0, y); x1 = Math.max(x1, x); y1 = Math.max(y1, y); }
         }
+        if (x0 === Infinity) return null;
+        const m = 0.04 * Math.max(x1 - x0, y1 - y0) + 2;
+        const x = Math.max(0, Math.floor(x0 - m)), y = Math.max(0, Math.floor(y0 - m));
+        const w = Math.min(limpio.width, Math.ceil(x1 + m)) - x, h = Math.min(limpio.height, Math.ceil(y1 + m)) - y;
+        return w > 0 && h > 0 ? { x, y, w, h } : null;
+    }
+    // Apurado: algún tablero todavía no se fió de lo que ve, o algo cambió hace poco.
+    const apurado = (ahora) => ahora - ultimoCambio < QUIETO_MS
+        || tableros.some((t) => t.h && t.cal && (t.recientes.length < QUIETA || t.recientes.some((x) => x !== t.quieta)));
+
+    function procesar(t, det, ahora) {
+        if (det.lectura !== t.lectura) { ultimoCambio = ahora; pintarYa = true; }
+        t.lectura = det.lectura; t.seguridad = det.seguridad;
+        t.recientes.push(t.lectura);
+        if (t.recientes.length > QUIETA) t.recientes.shift();
+        if (t.recientes.length === QUIETA && t.recientes.every((x) => x === t.lectura) && t.lectura !== t.quieta) {
+            t.quieta = t.lectura;
+            revisar(t, t.lectura, t.seguridad);
+        }
+    }
+    function despuesDeLeer() {
         const t = T();
         if (t.lectura) $("acierto").textContent = (64 - diferentes(t.lectura, esperada(t.juego)).length) + " de 64";
     }
+
+    let hilo = null, enCamino = null, pedidos = 0;
+    function abrirHilo() {
+        if (hilo !== null) return hilo;
+        hilo = false;
+        if (typeof Worker === "undefined" || typeof OffscreenCanvas === "undefined" || typeof createImageBitmap !== "function") return hilo;
+        try {
+            hilo = new Worker("js/lector-tablero-worker.js");
+            hilo.onmessage = (e) => recibirDelHilo(e.data);
+            hilo.onerror = () => { hilo = false; enCamino = null; }; // se sigue leyendo acá
+        } catch (e) { hilo = false; }
+        return hilo;
+    }
+    function recibirDelHilo(r) {
+        const pedido = enCamino;
+        if (!pedido || r.id !== pedido.id) return;
+        enCamino = null;
+        if (r.error) { hilo.terminate(); hilo = false; return; }
+        if (pedido.fuenteVer !== fuenteVer) return; // otra imagen: no vale
+        const ahora = performance.now();
+        for (const x of r.lecturas) {
+            const t = tableros[x.i], antes = pedido.tableros.find((y) => y.i === x.i);
+            // Si se recalibró o se movieron las esquinas mientras tanto, no vale.
+            if (!t || !antes || t.h !== antes.h || t.cal !== antes.cal) continue;
+            procesar(t, x, ahora);
+        }
+        despuesDeLeer();
+    }
+
+    function leerTableros(ahora) {
+        const cada = apurado(ahora) ? CADA_MS : LENTO_MS;
+        if (ahora - ultimaMirada < cada * 0.9 || !tableros.some((t) => t.h && t.cal) || enCamino) return;
+        const r = recorte();
+        if (!r) return;
+        ultimaMirada = ahora;
+        gasto.lecturas++; gasto.pixeles += r.w * r.h;
+        const listos = tableros.filter((t) => t.h && t.cal);
+        if (abrirHilo()) {
+            const ex = anchoFuente() / limpio.width, ey = altoFuente() / limpio.height;
+            const pedido = { id: ++pedidos, fuenteVer, tableros: listos.map((t) => ({ i: t.i, h: t.h, cal: t.cal })) };
+            enCamino = pedido;
+            gasto.enHilo++;
+            createImageBitmap(fuente, Math.round(r.x * ex), Math.round(r.y * ey), Math.max(1, Math.round(r.w * ex)), Math.max(1, Math.round(r.h * ey)), { resizeWidth: r.w, resizeHeight: r.h, resizeQuality: "low" })
+                .then((imagen) => {
+                    if (enCamino !== pedido) { imagen.close(); return; }
+                    hilo.postMessage({ id: pedido.id, imagen, ox: r.x, oy: r.y, tableros: pedido.tableros }, [imagen]);
+                })
+                .catch((e) => {
+                    if (enCamino === pedido) enCamino = null;
+                    // La imagen todavía no está (la cámara recién abre o se trabó): se vuelve a intentar.
+                    if (e && e.name === "InvalidStateError") return;
+                    if (hilo) hilo.terminate();
+                    hilo = false;
+                });
+            // Si el hilo no contesta en 2 s, se suelta y se vuelve a pedir.
+            setTimeout(() => { if (enCamino === pedido) enCamino = null; }, 2000);
+            return;
+        }
+        // Acá mismo: solo el recorte.
+        cctx.drawImage(fuente, r.x * anchoFuente() / limpio.width, r.y * altoFuente() / limpio.height, r.w * anchoFuente() / limpio.width, r.h * altoFuente() / limpio.height, r.x, r.y, r.w, r.h);
+        const pix = cctx.getImageData(r.x, r.y, r.w, r.h).data;
+        for (const t of listos) procesar(t, leerDetalle(muestras(pix, r.w, r.h, t.h, r.x, r.y), t.cal), ahora);
+        despuesDeLeer();
+    }
+    // Para el verificador y para «Cómo van las cámaras»: cuánto trabaja.
+    window.gastoCamara = () => Object.assign({ hilo: !!hilo, lento: !apurado(performance.now()) }, gasto);
 
     function dibujarTablero(t) {
         const propio = t === T();
@@ -1027,15 +1069,21 @@
     /* Leer va con su propio reloj, no con el dibujo: el navegador deja de
      * dibujar lo que no se ve (un cuadrito de camaras.html fuera de la
      * pantalla), pero la partida se tiene que seguir anotando. */
-    setInterval(() => {
-        if (!fuente) return;
-        cctx.drawImage(fuente, 0, 0, limpio.width, limpio.height);
-        leerTableros(performance.now());
-    }, CADA_MS);
+    setInterval(() => { if (fuente) leerTableros(performance.now()); }, CADA_MS);
 
-    function dibujar() {
+    /* Dibujar la imagen con su cuadrícula cuesta (60 veces por segundo, la
+     * imagen entera): mientras se ubica el tablero va a todo lo que dé; ya
+     * calibrado, 2 veces por segundo, o apenas cambia algo (pintarYa). Con
+     * «Ahorrar batería», nada. */
+    const DIBUJO_LENTO_MS = 500;
+    let ultimoDibujo = 0;
+    function dibujar(ahora) {
         requestAnimationFrame(dibujar);
-        if (!fuente) return;
+        if (!fuente || ahorro) return;
+        ahora = ahora || performance.now();
+        const ubicando = arrastre >= 0 || buscando || tableros.some((t) => !t.cal);
+        if (!ubicando && !pintarYa && ahora - ultimoDibujo < DIBUJO_LENTO_MS) return;
+        pintarYa = false; ultimoDibujo = ahora; gasto.dibujos++;
         cctx.drawImage(fuente, 0, 0, limpio.width, limpio.height);
         ctx.drawImage(limpio, 0, 0);
         // El elegido, encima del otro.
@@ -1054,6 +1102,7 @@
         try { nuevo = JSON.parse(e.newValue || "null"); } catch (x) { /* nada */ }
         if (!nuevo) { if (torneo) dejarTorneo(); return; }
         if (!torneo || torneo.id !== nuevo.id || torneo.codigo !== nuevo.codigo) usarTorneo(nuevo.id, nuevo.codigo);
+        else if ((nuevo.retraso || 0) !== retraso) { torneo.retraso = nuevo.retraso || 0; elegirRetraso(torneo.retraso, false); }
     });
     $("camara-elegir").addEventListener("change", (e) => abrirCamara(e.target.value));
     $("foto").addEventListener("change", (e) => usarFoto(e.target.files[0]));
@@ -1064,7 +1113,8 @@
     $("btn-seguir").addEventListener("click", seguirPartida);
     $("btn-deshacer").addEventListener("click", () => {
         const t = T();
-        t.juego.undo();
+        if (t.juego.undo()) t.horas.pop();
+        t.resultadoMano = null;
         t.quieta = null; t.recientes = [];
         $("dudas").hidden = true;
         partidaCambio(t);
@@ -1093,12 +1143,21 @@
         const bien = texto && (/^[1-8pnbrqkPNBRQK/]+ [wb] /.test(texto) ? j.load(texto) : j.load_pgn(texto));
         if (!bien) { avisar(cual(t) + "No entiendo esa posición: pega un FEN (como lo da Lichess) o las jugadas en PGN.", "error"); return; }
         t.juego = j;
+        t.resultadoMano = null;
+        t.inicio = Date.now(); t.horas = j.history().map(() => null); t.horaResultado = null;
         $("dudas").hidden = true;
         partidaCambio(t);
         avisar(cual(t) + "Posición cargada. Pon las piezas así en el tablero y toca «Seguir con esta partida».", "bien");
     });
+    document.querySelectorAll("[data-resultado]").forEach((b) => b.addEventListener("click", () => {
+        const t = T(), r = b.dataset.resultado || null, solo = V.resultadoSolo(t.juego);
+        if (solo && r !== solo) { avisar(cual(t) + "El tablero ya dice cómo terminó. " + V.textoResultado(solo) + " Si no es así, deshaz la última jugada.", "error"); return; }
+        t.resultadoMano = solo ? null : r;
+        partidaCambio(t);
+        avisar(cual(t) + (r ? "Resultado marcado. " + V.textoResultado(r) : "La partida sigue en juego."), "bien");
+    }));
     $("btn-copiar").addEventListener("click", async () => {
-        const pgn = T().juego.pgn();
+        const pgn = V.pgn(T().juego, resultadoDe(T()));
         try {
             await navigator.clipboard.writeText(pgn);
             avisar("PGN copiado.", "bien");
@@ -1118,6 +1177,7 @@
         usarTorneo(id, $("torneo-codigo-unirse").value.trim().toLowerCase());
     });
     $("btn-torneo-lista").addEventListener("click", pintarListaTorneos);
+    $("btn-torneo-qr").addEventListener("click", imprimirQr);
     // Sin esperar al minuto: apenas Pareo empareja la ronda siguiente.
     $("btn-torneo-ronda").addEventListener("click", async () => {
         const antes = ultimaRonda();
@@ -1132,9 +1192,13 @@
         if (!torneo) return;
         if (!V.codigoValido(c)) { e.target.value = torneo.codigo; avisar("El código del torneo son 8 letras y números, como sale en la otra cámara.", "error"); return; }
         torneo.codigo = c;
-        try { localStorage.setItem(TORNEO, JSON.stringify({ id: torneo.id, codigo: c })); } catch (x) { /* sin almacenamiento */ }
+        try { localStorage.setItem(TORNEO, JSON.stringify({ id: torneo.id, codigo: c, retraso })); } catch (x) { /* sin almacenamiento */ }
         for (const t of tableros) if (t.vivo) empezarVivo(t, c);
         avisar("Código del torneo cambiado: todas las cámaras del torneo tienen que tener el mismo.", "bien");
+    });
+    $("vivo-retraso").addEventListener("change", (e) => {
+        elegirRetraso(Number(e.target.value), true);
+        avisar(retraso ? "Quien mira ve cada jugada " + retraso + " minutos después; al terminar la partida, la ve entera." : "Sin retraso: quien mira ve cada jugada al momento.", "bien");
     });
     $("btn-vivo-nuevo").addEventListener("click", () => empezarVivo(T(), V.nuevoCodigo()));
     $("btn-vivo-parar").addEventListener("click", () => pararVivo(T()));
@@ -1152,29 +1216,99 @@
         pausa = setTimeout(() => enviarVivo(t), 600);
     }));
 
+    /* Cómo va esta cámara, para el tablero de control de camaras.html (que la
+     * tiene en un cuadrito de la misma página web y la consulta cada segundo). */
+    window.estadoCamara = () => {
+        const t = tableros[0];
+        const pista = video.srcObject && video.srcObject.getVideoTracks()[0];
+        return {
+            camara: fuente === video ? !!(pista && pista.readyState === "live") : !!fuente,
+            calibrada: !!t.cal, mesa: t.mesa || null, transmitiendo: !!t.vivo,
+            dudas: !$("dudas").hidden, error: ultimoAviso.tipo === "error" ? ultimoAviso.texto : "",
+            jugadas: t.juego.history().length, resultado: resultadoDe(t), sinRed: sinRed(),
+        };
+    };
+
+    /* Dos entradas. Con el QR de una mesa («modo mesa»), SIN CUENTA: la
+     * cámara transmite esa mesa de ese torneo y nada más; no elige torneo,
+     * mesa, código ni retraso (los trae el QR), y no lee ni escribe nada de
+     * la Academia: solo el torneo publicado, que es de lectura pública, y el
+     * canal de Broadcast, que también lo es. Sin QR, la herramienta entera
+     * es de quien administra (un control de producto: no hay datos detrás). */
     async function init() {
+        const qr = deLaDireccion();
+        if (qr) return modoMesa(qr);
         const { data } = await sb.auth.getSession();
         const session = data.session;
         if (!session) { location.href = "login.html?next=camara-tablero.html"; return; }
         const { data: perfil } = await sb.from("profiles").select("is_admin").eq("id", session.user.id).maybeSingle();
         $("loading").classList.add("hidden");
         if (!perfil || !perfil.is_admin) { $("denegado").classList.remove("hidden"); return; }
+        try { elegirRetraso(Number(localStorage.getItem(RETRASO)) || 0, false); } catch (e) { /* sin almacenamiento */ }
+        arrancar();
+        let guardado = null;
+        try { guardado = JSON.parse(localStorage.getItem(TORNEO) || "null"); } catch (e) { /* sin almacenamiento */ }
+        // El torneo que se estaba transmitiendo, con su código.
+        if (guardado && V.torneoDe(guardado.id)) usarTorneo(guardado.id, guardado.codigo);
+    }
+
+    // Llegó por el QR de una mesa: ese torneo, ese código y esa mesa, la
+    // cámara abierta y transmitiendo. El # se queda: al recargar, sigue en
+    // modo mesa.
+    async function modoMesa(qr) {
+        document.documentElement.classList.add("camara-compacta", "camara-mesa");
+        $("loading").classList.add("hidden");
+        arrancar();
+        $("mesa-qr").hidden = false;
+        $("mesa-titulo-qr").textContent = "Mesa " + qr.mesa;
+        try { localStorage.setItem(MESA + 0, String(qr.mesa)); } catch (e) { /* sin almacenamiento */ }
+        // Sin señal y sin el torneo guardado: la cámara abre igual y anota;
+        // el torneo se vuelve a pedir cada 10 segundos y al volver la señal.
+        if (await usarTorneo(qr.id, qr.codigo) === "red") {
+            await abrirCamara();
+            const otraVez = async () => {
+                if (torneo || await usarTorneo(qr.id, qr.codigo) === "red") return;
+                clearInterval(reintento); window.removeEventListener("online", otraVez);
+                if (torneo) mesaLista(qr);
+            };
+            const reintento = setInterval(otraVez, 10000);
+            window.addEventListener("online", otraVez);
+            return;
+        }
+        if (!torneo) return;
+        mesaLista(qr);
+        await abrirCamara();
+        if (fuente) avisar("Mesa " + qr.mesa + " de " + torneo.nombre + ", transmitiendo. Toca «Buscar el tablero» y, con las piezas en la posición inicial, «Calibrar con la posición inicial».", "bien");
+    }
+    function mesaLista(qr) {
+        elegirRetraso(qr.retraso, true);
+        $("mesa-titulo-qr").textContent = "Mesa " + qr.mesa + " · " + torneo.nombre;
+        pintarTorneo();
+        empezarVivo(T(), torneo.codigo);
+    }
+
+    // Lo que es igual en las dos entradas: la app, la partida guardada y el dibujo.
+    function arrancar() {
         $("app").classList.remove("hidden");
         $("dos-tableros").checked = false;
+        try { elegirRetraso(Number(localStorage.getItem(RETRASO)) || 0, false); } catch (e) { /* sin almacenamiento */ }
         // La partida que se estaba anotando, si la página se cerró o se recargó.
         let guardada = null;
         try { guardada = localStorage.getItem(PARTIDA + 0); } catch (e) { /* sin almacenamiento */ }
         const j = new window.Chess();
         if (guardada && j.load_pgn(guardada) && j.history().length) {
             tableros[0].juego = j;
+            const r = { "1-0": "1-0", "1/2-1/2": "=", "0-1": "0-1" }[(j.header() || {}).Result];
+            if (r && !V.resultadoSolo(j)) tableros[0].resultadoMano = r;
+            let h = null;
+            try { h = JSON.parse(localStorage.getItem(PARTIDA + 0 + "_horas") || "null"); } catch (e) { /* nada */ }
+            const n = j.history().length;
+            tableros[0].horas = h && Array.isArray(h.horas) && h.horas.length === n ? h.horas : new Array(n).fill(null);
+            tableros[0].inicio = h && h.inicio || null;
             avisar("Se recuperó la partida que estabas anotando (" + j.history().length + " jugadas). Ubica el tablero y toca «Seguir con esta partida»; para empezar otra, «Calibrar con la posición inicial».", "bien");
         }
         elegirTablero(0);
         sinImagen();
-        // El torneo que se estaba transmitiendo, con su código.
-        let guardado = null;
-        try { guardado = JSON.parse(localStorage.getItem(TORNEO) || "null"); } catch (e) { /* sin almacenamiento */ }
-        if (guardado && V.torneoDe(guardado.id)) usarTorneo(guardado.id, guardado.codigo);
         requestAnimationFrame(dibujar);
     }
     init();

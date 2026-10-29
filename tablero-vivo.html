@@ -95,12 +95,17 @@
             <div class="flex flex-wrap items-center gap-3 mb-4">
                 <p id="conexion" role="status" class="inline-flex items-center gap-2 rounded-full px-3 py-1 text-sm font-semibold bg-brand-100 text-brand-800 dark:bg-brand-800 dark:text-brand-100">Conectando…</p>
                 <p class="text-sm text-brand-500 dark:text-brand-300">Código <span id="codigo-visto" class="font-mono font-semibold text-brand-800 dark:text-white"></span></p>
+                <p id="retraso-aviso" hidden class="text-sm font-semibold text-brand-700 dark:text-brand-200"></p>
             </div>
 
             <div id="esperando" hidden class="max-w-xl mb-6 rounded-xl px-4 py-3 text-sm bg-white dark:bg-brand-900 shadow-md text-brand-700 dark:text-brand-200">Todavía no llega ninguna jugada. Puede que quien transmite no haya empezado o que tenga la pantalla apagada: esta página sigue esperando y la partida aparece sola en cuanto empiece.</div>
 
             <section id="mesas" hidden aria-labelledby="torneo-titulo" class="mb-6">
-                <h2 id="torneo-titulo" class="font-serif text-2xl font-bold text-brand-800 dark:text-white mb-3"></h2>
+                <div class="flex flex-wrap items-center justify-between gap-3 mb-3">
+                    <h2 id="torneo-titulo" class="font-serif text-2xl font-bold text-brand-800 dark:text-white"></h2>
+                    <button id="btn-proyectar" type="button" aria-pressed="false" class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-3 py-2 rounded-lg text-sm disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true">📽️</span> <span id="btn-proyectar-texto">Proyectar en la sala</span></button>
+                </div>
+                <p id="proyector-pagina" hidden class="text-lg font-semibold mb-3"></p>
                 <div id="mesas-lista" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4"></div>
             </section>
 
@@ -112,6 +117,10 @@
             <div id="partida" hidden class="grid grid-cols-1 md:grid-cols-5 gap-6">
                 <div class="md:col-span-3 min-w-0">
                     <p id="jugador-arriba" class="font-semibold text-brand-800 dark:text-white mb-2"></p>
+                    <div id="evaluacion" hidden class="mb-3">
+                        <div class="h-4 w-full rounded-full overflow-hidden bg-brand-800 ring-1 ring-brand-300 dark:ring-brand-600" aria-hidden="true"><div id="evaluacion-blancas" class="h-full bg-white transition-all" style="width:50%"></div></div>
+                        <p id="evaluacion-texto" role="status" class="text-sm text-brand-700 dark:text-brand-200 mt-1"></p>
+                    </div>
                     <div class="relative pl-5 pb-5"><div id="tablero" aria-hidden="true" class="grid grid-cols-8 grid-rows-8 aspect-square w-full max-w-[min(100%,80vh)] rounded-lg overflow-hidden shadow-md select-none"></div></div>
                     <p id="jugador-abajo" class="font-semibold text-brand-800 dark:text-white mt-2"></p>
                 </div>
@@ -119,11 +128,21 @@
                     <section class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-4" aria-labelledby="t-ahora">
                         <h2 id="t-ahora" class="font-semibold text-brand-800 dark:text-white">Ahora</h2>
                         <p id="ultima" class="text-brand-700 dark:text-brand-200 mt-1"></p>
+                        <p id="reloj-turno" class="text-sm font-semibold text-brand-800 dark:text-white mt-1"></p>
                         <p id="anuncio" class="sr-only" aria-live="polite"></p>
                     </section>
                     <section class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-4" aria-labelledby="t-jugadas">
                         <h2 id="t-jugadas" class="font-semibold text-brand-800 dark:text-white">Jugadas</h2>
                         <p id="jugadas" class="text-brand-700 dark:text-brand-200 mt-1 leading-relaxed"></p>
+                        <div class="flex flex-wrap items-center gap-2 mt-3" role="group" aria-label="Repasar la partida jugada a jugada">
+                            <button id="ir-inicio" type="button" aria-label="Al principio" class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-3 py-2 rounded-lg text-sm disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true">⏮</span></button>
+                            <button id="ir-atras" type="button" aria-label="Una jugada atrás" class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-3 py-2 rounded-lg text-sm disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true">◀</span></button>
+                            <button id="ir-adelante" type="button" aria-label="Una jugada adelante" class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-3 py-2 rounded-lg text-sm disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true">▶</span></button>
+                            <button id="ir-final" type="button" aria-label="A la última jugada" class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-3 py-2 rounded-lg text-sm disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true">⏭</span></button>
+                            <button id="ir-vivo" type="button" hidden class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-3 py-2 rounded-lg text-sm disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Volver al vivo</button>
+                        </div>
+                        <p id="paso" role="status" class="text-sm text-brand-600 dark:text-brand-300 mt-2"></p>
+                        <label class="mt-3 inline-flex items-center gap-2 text-sm text-brand-700 dark:text-brand-200 cursor-pointer"><input id="ver-motor" type="checkbox" class="w-4 h-4 accent-brand-700"> Ver la evaluación de Stockfish</label>
                         <div class="flex flex-wrap items-center gap-2 mt-3">
                             <button id="girar" type="button" aria-pressed="false" class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-3 py-2 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Girar el tablero</button>
                             <button id="copiar" type="button" class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-3 py-2 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Copiar el PGN</button>
