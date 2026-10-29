@@ -68,7 +68,7 @@ arrastre as (
     from ubic u),
 det as materialized (
   select tnr, nullif(c[array_position(cab, 'Rd.')], '')::smallint ronda,
-         lower(regexp_replace(regexp_replace(regexp_replace(grupo, '^Información de jugadores\s*', ''), '\s+((W?(GM|IM|FM|CM)|A(IM|FM|CM))\s+)?\d+(\s+[A-Z]{3})?\s+Rp:\S*$', ''), '\s+', ' ', 'g')) k,
+         lower(regexp_replace(regexp_replace(regexp_replace(grupo, '^Información de jugadores\s*', ''), '\s+((W?(GM|IM|FM|CM|NM)|A(IM|FM|CM))\s+)?\d+(\s+[A-Z]{3})?\s+Rp:\S*$', ''), '\s+', ' ', 'g')) k,
          lower(regexp_replace(c[array_position(cab, 'Nombre')], '\s+', ' ', 'g')) k_rival,
          case substring(c[array_position(cab, 'Res.')] from '^[wsb]\s*(1|0|½)$') when '1' then 1 when '½' then 0.5 when '0' then 0 end puntos
     from (select tnr, celdas c, cab, grupo, clase from arrastre) x
