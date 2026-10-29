@@ -685,6 +685,40 @@ async function pruebaPagina(browser) {
     await ctx.close();
   }
 
+  // CCDR Pérez Zeledón: sin fotografía, y quien autoriza el tutor es su delegado, fijo.
+  {
+    const { ctx, page, pedidos, errores } = await abrir(browser, { tablas: PERFILES }, () => [200, { ok: true }]);
+    page.__ya = true;
+    await llenarMenor(page);
+    await page.fill("#f-comite", "ccdr perez zeledon");
+    cierto("Pérez Zeledón: no pide la fotografía (no se ve) y lo dice",
+      !(await vis(page, '[data-doc="foto"]')) && await vis(page, "#jdn-nota-foto"));
+    igual("Pérez Zeledón: autoriza a su delegado, ya puesto y sin poder cambiarlo",
+      [await page.inputValue("#f-autorizadoNombre"), await page.inputValue("#f-autorizadoRol"),
+        await page.getAttribute("#f-autorizadoNombre", "readonly") !== null, await page.isDisabled("#f-autorizadoRol")],
+      ["Juan Pablo Camacho Navarro", "delegado", true, true]);
+    await page.setInputFiles("#f-certificacion", { name: "cert.pdf", mimeType: "application/pdf", buffer: Buffer.from("%PDF-1.4 prueba") });
+    await page.check("#jdn-acepto");
+    const descarga = page.waitForEvent("download", { timeout: 8000 }).catch(() => null);
+    await page.click("#jdn-guardar");
+    const bajada = await descarga;
+    if (!bajada) console.log("      (error en la página: " + await page.textContent("#jdn-error") + ")");
+    const g = pedidos.find((x) => x.body.action === "guardar");
+    igual("Pérez Zeledón: se manda sin fotografía (la ficha y la certificación)",
+      g && g.body.archivos.map((a) => a.nombre), ["Ficha JDN 2027 - Valeria Solano Ruiz.docx", "Certificación de nacimiento - Valeria Solano Ruiz.pdf"]);
+    const b = g && Buffer.from(g.body.archivos[0].base64, "base64");
+    const xp = b ? await (await window.ReporteExcel.abrirZip(b.buffer.slice(b.byteOffset, b.byteOffset + b.byteLength))).texto("word/document.xml") : "";
+    cierto("Pérez Zeledón: la ficha autoriza a Juan Pablo Camacho Navarro como delegado, sin foto",
+      /autorizo a Juan Pablo Camacho Navarro \(delegado\)/.test(texto(xp)) && !xp.includes("rIdFotoJdn"), texto(xp).match(/autorizo a .{0,60}/));
+    await page.click("#jdn-otra");
+    await page.fill("#f-comite", "CCDR Barva");
+    cierto("al cambiar de comité, vuelve a pedir la foto y el entrenador queda libre",
+      await vis(page, '[data-doc="foto"]') && (await page.inputValue("#f-autorizadoNombre")) === "" &&
+      !(await page.isDisabled("#f-autorizadoRol")) && (await page.$$eval("#f-autorizadoRol option", (os) => os.map((o) => o.value))).join() === "entrenador");
+    cierto("Pérez Zeledón: sin errores en la página", errores.length === 0, errores.join(" | "));
+    await ctx.close();
+  }
+
   // La sesión cerrada en otro aparato: la función contesta 401 aunque el token parezca bueno.
   {
     const { ctx, page } = await abrir(browser, { yo: "u-admin", tablas: PERFILES },

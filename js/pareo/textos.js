@@ -460,7 +460,7 @@
     verCentroFila: ["{p}.º {n} · {pts}", "{p}. {n} · {pts}"],
     verCentroNada: ["Todavía no hay rondas terminadas de este centro.", "No finished rounds for this school yet."],
     eloRp: ["Rendimiento: el Elo medio de sus rivales con Elo más la diferencia de la tabla de FIDE por su porcentaje", "Performance: the average rating of their rated opponents plus the FIDE table difference for their score"],
-    eloK: ["El factor K de FIDE: 40 si tiene menos de 18 años y menos de 2300, 10 desde 2400, 20 los demás", "The FIDE K-factor: 40 if under 18 and under 2300, 10 from 2400, 20 otherwise"],
+    eloK: ["El factor K de FIDE: 40 hasta el año en que cumple 18 (con menos de 2300), 10 desde 2400, 20 los demás", "The FIDE K-factor: 40 until the end of the year of the 18th birthday (under 2300), 10 from 2400, 20 otherwise"],
     eloCambio: ["El Elo que gana o pierde en este torneo: K × (puntos − esperado)", "Rating change in this tournament: K × (score − expected)"],
     eloNota: ["Una cuenta del torneo con las reglas de FIDE (solo partidas jugadas entre jugadores con Elo; más de 400 de diferencia cuenta como 400), con el Elo anotado de cada uno. El oficial lo publica FIDE o la federación, con todos los torneos del período.", "A tournament estimate with FIDE rules (only games played between rated players; more than 400 points apart counts as 400), using each player's recorded rating. The official one is published by FIDE or the federation, with every tournament in the period."],
     eloKCampo: ["Factor K de FIDE", "FIDE K-factor"],

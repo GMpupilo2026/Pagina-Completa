@@ -408,6 +408,21 @@
                 </div>`;
         }
 
+        /* El Elo nacional y el FIDE estándar de la lista de la Federación
+           (ajedrezcostarica.com, con la Edge Function pareo-elo-nacional de
+           Pareo Integral). Se busca por el nombre, y SOLO se muestra si el
+           Código FIDE de la lista es el del grupo: un homónimo no se cuela. */
+        async function ponerEloOficial(p, nombre, fideId) {
+            const r = await window.PareoEloNacional.buscar([nombre]);
+            const x = r && r.ok && r.resultados && r.resultados[0];
+            if (!r || !r.ok) { p.textContent = "La lista de la Federación no contestó: su Elo nacional no se pudo leer ahora."; return; }
+            if (!x || x.estado !== "encontrado" || String(x.fideId || "") !== String(fideId)) {
+                p.textContent = "No está en la lista de la Federación con este Código FIDE.";
+                return;
+            }
+            p.textContent = "Elo nacional " + (x.nacional || "—") + " · Elo FIDE estándar " + (x.fideEstandar || "—") + " (lista de la Federación, ajedrezcostarica.com)";
+        }
+
         function renderGrupo(grupo) {
             const card = document.createElement("div");
             card.className = "bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6";
@@ -415,7 +430,8 @@
             const yaCargado = grupoEstaCargado(grupo);
             card.innerHTML = `
                 <h3 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-1">${escapeHtml(primerNombre)}</h3>
-                <p class="text-xs text-brand-450 dark:text-brand-350 mb-4">Código FIDE ${escapeHtml(grupo.fideId)} · ${escapeHtml(grupo.club || "sin club registrado")} · ${escapeHtml(grupo.fed)} · ${grupo.filas.length} torneo(s) encontrado(s)</p>
+                <p class="text-xs text-brand-450 dark:text-brand-350 mb-1">Código FIDE ${escapeHtml(grupo.fideId)} · ${escapeHtml(grupo.club || "sin club registrado")} · ${escapeHtml(grupo.fed)} · ${grupo.filas.length} torneo(s) encontrado(s)</p>
+                <p class="elo-oficial text-sm text-brand-700 dark:text-brand-200 mb-4" role="status">Buscando su Elo en la lista de la Federación…</p>
 
                 <div class="flex items-center justify-between flex-wrap gap-2 mb-4 pb-4 border-b border-brand-100 dark:border-brand-800">
                     <button type="button" class="cargar-todo-btn bg-brand-100 dark:bg-brand-800 hover:bg-brand-200 dark:hover:bg-brand-700 text-brand-700 dark:text-brand-200 font-semibold px-4 py-2 rounded-lg text-xs transition-colors">
@@ -462,6 +478,7 @@
             `;
             const list = card.querySelector(".torneos-list");
             grupo.filas.forEach((fila) => list.appendChild(filaTorneoHtml(fila)));
+            ponerEloOficial(card.querySelector(".elo-oficial"), primerNombre, grupo.fideId);
 
             const btnCargarTodo = card.querySelector(".cargar-todo-btn");
             const progresoEl = card.querySelector(".carga-progreso");
@@ -689,10 +706,18 @@
             session = data.session;
             if (!session) { window.location.href = "login.html"; return; }
 
+            // Administración, o quien tiene la licencia de la «Ficha del jugador
+            // federado»: lo mismo que pregunta la Edge Function chess-results-proxy,
+            // que es la que de verdad decide.
             const { data: profile, error } = await sb.from("profiles").select("is_admin").eq("id", session.user.id).single();
+            let puede = !error && !!profile?.is_admin;
+            if (!puede) {
+                const { data: conLicencia } = await sb.rpc("tengo_herramienta", { p_herramienta: "ficha-federado" });
+                puede = conLicencia === true;
+            }
             document.getElementById("loading").classList.add("hidden");
 
-            if (error || !profile?.is_admin) {
+            if (!puede) {
                 document.getElementById("denied").classList.remove("hidden");
                 return;
             }

@@ -53,7 +53,7 @@ RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # forma confiable por convención de nombre — sí se puede, y ya se hizo,
 # revisando el patrón de cada archivo antes de escribir esta lista.
 PAGINAS = [
-    "admin-jugador.html", "admin-pareo.html", "admin.html", "gafetes.html", "arbitraje.html", "asistencia.html",
+    "admin-jugador.html", "admin-pareo.html", "pareo-dgt.html", "admin.html", "gafetes.html", "arbitraje.html", "asistencia.html",
     "cartas.html",
     "ciegos.html", "clases.html", "cobros.html", "concentracion.html",
     "configuracion.html", "crazyhouse.html", "cuatro-jugadores.html",
@@ -66,7 +66,7 @@ PAGINAS = [
     "informe-mensual.html", "supervision.html", "supervisor.html", "academias.html", "tablero-academias.html",
     "novedades.html", "repasar-clases.html", "camaras.html",
     "tienda.html", "accesos.html",
-    "licencias.html", "seleccion-codicader.html", "desempates.html", "jdn-comites.html", "universidades.html", "torneos-universitarios.html", "jdn-proyeccion.html", "arbitros-cr.html",
+    "licencias.html", "seleccion-codicader.html", "desempates.html", "variacion-elo.html", "normas-titulo.html", "acta-jde.html", "jdn-comites.html", "universidades.html", "torneos-universitarios.html", "jdn-proyeccion.html", "arbitros-cr.html",
     "encuesta-profesor.html", "satisfaccion.html", "encuestas-curso.html",
     "justificaciones.html",
     "preparacion-rivales.html", "plan-rival.html", "libreta-torneos.html",
@@ -643,7 +643,8 @@ MIGAS_FIN = "<!-- migas: fin -->"
 NOMBRE_Y_PADRE = {
     "clases.html": ("Academia", None),
     "admin.html": ("Administración", "clases.html"),
-    "admin-jugador.html": ("Base de datos de jugadores", "admin.html"),
+    "admin-jugador.html": ("Ficha del jugador federado", "clases.html"),
+    "pareo-dgt.html": ("Pareo para DGT", "clases.html"),
     "gafetes.html": ("Creación de gafetes", "admin.html"),
     "admin-pareo.html": ("Moderación de Pareo Integral", "admin.html"),
     "inscripciones.html": ("Inscripciones a torneos", "admin.html"),
@@ -688,6 +689,9 @@ NOMBRE_Y_PADRE = {
     "licencias.html": ("Licencias de herramientas", "clases.html"),
     "seleccion-codicader.html": ("Selección por parámetros", "clases.html"),
     "desempates.html": ("Desempates explicados", "clases.html"),
+    "variacion-elo.html": ("Variación de Elo del torneo", "clases.html"),
+    "normas-titulo.html": ("Normas de título", "clases.html"),
+    "acta-jde.html": ("Acta e informe arbitral JDE", "clases.html"),
     "jdn-comites.html": ("Resultados JDN por comité", "clases.html"),
     "universidades.html": ("Resultados universitarios por universidad", "clases.html"),
     "torneos-universitarios.html": ("Torneos universitarios de Costa Rica", "universidades.html"),

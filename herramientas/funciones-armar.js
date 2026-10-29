@@ -63,6 +63,9 @@ const FUNCIONES = {
   // La calculadora de la selección CODICADER: lee un torneo entero de
   // chess-results, solo con licencia. Ver su cabecera.
   "seleccion-chess-results": [],
+  // Pareo para DGT: el pareo de una ronda de chess-results, solo quien
+  // administra. Ver su cabecera.
+  "pareo-dgt": [],
   // Desempates explicados: lee un torneo individual entero de chess-results
   // (clasificación y partidas ronda a ronda), solo con licencia. El cálculo
   // de los desempates lo hace el navegador (js/pareo/desempates.js). Ver su

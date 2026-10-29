@@ -3095,9 +3095,11 @@ Tres pedidos del dueño del sitio.
   puntos de diferencia cuenta como 400; lo esperado sale de **la tabla
   8.1.2 escrita tal cual** (sus cortes casi son los puntos medios de la
   tabla 8.1, pero no en los empates: 25 da 0,53 y 392 da 0,92; la primera
-  versión los calculaba y el verificador lo agarró en 392); K = 40 con menos
-  de 18 años al terminar el año y menos de 2300, 10 desde 2400, 20 los
-  demás. El K 40 del jugador nuevo (menos de 30 partidas con Elo) no se
+  versión los calculaba y el verificador lo agarró en 392); K = 40 hasta el
+  final del año en que cumple 18 (con menos de 2300), 10 desde 2400, 20 los
+  demás —ese año incluido: la primera versión lo cortaba un año antes, y lo
+  agarró la «Variación de Elo del torneo» comparando con chess-results (ver
+  allá)—. El K 40 del jugador nuevo (menos de 30 partidas con Elo) no se
   puede saber desde acá: se anota en «Editar». El rendimiento (Rp) es el
   Elo medio de los rivales con Elo más la diferencia de la tabla 8.1 por su
   porcentaje. **Es una cuenta del torneo, no el Elo oficial**, y la página
@@ -7275,7 +7277,8 @@ dueño del sitio: las herramientas se venden). La lista de herramientas vive en
 `js/herramientas-arbitraje.js` (la usan la vitrina y la administración); una
 con `disponible: false` sale como «Próximamente», sin enlace. Hoy están
 abiertas con licencia la **selección por parámetros** (`seleccion-codicader.html`),
-los **desempates explicados** (`desempates.html`, ver «Desempates explicados») y
+los **desempates explicados** (`desempates.html`, ver «Desempates explicados»),
+**Pareo para DGT** (`pareo-dgt.html`, ver «Pareo para DGT») y
 los **resultados JDN por comité** (`jdn-comites.html`, ver «Resultados JDN por
 comité»).
 **Pareo Integral** (`pareo.html`, ver «Pareo Integral») está en la vitrina con
@@ -7521,6 +7524,236 @@ panel de Supabase (Project Settings → Edge Functions → Secrets) con una clav
 de `console.anthropic.com`, decidir qué pasa con el FAQ (¿se queda arriba, se
 baja, se borra?) y quitar el `<div class="hidden">`.
 
+## Variación de Elo del torneo
+
+`variacion-elo.html` (con licencia, `variacion-elo`; la vitrina la anunciaba
+como «Próximamente» y la pidió el dueño con las demás herramientas nuevas):
+se pega el enlace de chess-results y dice cuánto sube o baja el Elo FIDE y el
+nacional de cada participante, partida por partida, antes de la lista
+oficial.
+
+- **Nada nuevo para leer ni para calcular.** Lee el torneo con la MISMA Edge
+  Function de «Desempates explicados», `desempates-chess-results`, que ahora
+  recibe `herramienta` («desempates» si no viene: la página vieja sigue igual)
+  y pregunta por la licencia de esa, nunca de otra. La ficha de cada jugador
+  trae además el Elo FIDE y el nacional por separado, el año de nacimiento,
+  el código FIDE, el «FIDE elo +/-» de chess-results y el Elo FIDE y nacional
+  de cada rival; la caché lleva la versión en la clave («v2:») para no
+  reusar lo guardado sin esos datos. El torneo se convierte con
+  `js/desempates-convertir.js` y el Elo lo calcula `js/pareo/elo.js`, el
+  mismo de Pareo Integral, una vez con el FIDE y otra con el nacional; ahora
+  devuelve también `juegos` (cada partida que contó) para «Partida por
+  partida».
+- **Comparado contra chess-results en torneos reales, y eso destapó un error
+  de Pareo Integral**: el K 40 de los menores es «hasta el final del año en
+  que cumple 18», y `kDe()` lo cortaba un año antes (`< 18` en vez de
+  `<= 18`). Con eso arreglado, en el XLVI Metropolitano 2025 (41 jugadores)
+  coinciden 38; los otros 3 son lo que desde chess-results no se ve: dos con
+  K 10 porque alguna vez llegaron a 2400, y uno al que le falta leer una ronda
+  (la página lo avisa). En la Etapa Nacional D de los JDE 2026, los 7 con
+  dato, iguales.
+- **Lo que no se puede saber se dice, no se adivina**: si el número propio no
+  coincide con el de chess-results, la columna dice con qué K lo calculó
+  chess-results (su cambio entre puntos menos esperado, si da 10, 20 o 40); y
+  si chess-results no le da variación FIDE a nadie (vacía o 0 para todos,
+  como en el Nacional U15 2025), avisa que lo más probable es que el torneo
+  no sea válido para Elo FIDE. El «Cálculo de elo» de la ficha del torneo
+  quedaría mejor, pero en los torneos viejos chess-results lo esconde detrás
+  de un botón (ver «Los torneos con Elo nacional»).
+- **El nacional se calcula con las mismas reglas de FIDE**, y la página dice
+  que la Federación puede usar otras.
+- Lo prueba `verificar-variacion-elo.js` con un doble de Supabase y un torneo
+  armado a mano, con los números sacados a mano de la tabla 8.1.2; y la
+  lectura de la ficha, `verificar-desempates-chess-results.js`.
+
+## Normas de título
+
+`normas-titulo.html` (con licencia, `normas-titulo`; la pidió el dueño con
+las demás herramientas nuevas): se pega el enlace de chess-results y dice
+quién hizo norma de GM, IM, WGM o WIM en el torneo, y a quién le faltó poco
+y qué, artículo por artículo del Reglamento de Títulos de FIDE (B.01,
+vigente desde el 1/1/2024).
+
+- **La misma Edge Function**, `desempates-chess-results`, con `herramienta:
+  "normas-titulo"`. La clasificación trae ahora además el título (la columna
+  SIN encabezado antes del nombre que trae títulos de FIDE: la otra vacía es
+  la de la bandera), la federación («FED») y el sexo («sexo», cuando el
+  torneo lo trae). La caché subió a «v3:».
+- **El cálculo va en `js/normas-titulo.js`** (navegador y Node), sin
+  pantalla: las partidas (9, o 8 que cuentan como 9 en un torneo de 9 rondas
+  con un bye o una incomparecencia a favor, 1.4.1c; las incomparecencias no
+  cuentan, 1.4.2c), las federaciones (dos extranjeras, FID no cuenta; máximo
+  3/5 de la propia y 2/3 de una sola), los rivales con título (la mitad,
+  **sin CM ni WCM**, y un tercio, mínimo 3, del título de la norma o mayor),
+  el piso de Elo que sube **solo al rival de menos Elo** (sin Elo, 1400), el
+  promedio redondeado y el rendimiento con la tabla 1.4.9.
+- **Se prueban las mezclas que deja el reglamento**: en un suizo, cortar
+  después de cualquier ronda (1.4.1e), y en cualquier formato, dejar afuera
+  partidas ganadas (1.4.1f). Se queda con la que da norma y cuenta más
+  partidas; cada punto entero de más cuenta como una partida (1.4.1d), hasta
+  13. Probar todas las combinaciones de ganadas es 2^ganadas: se corta en
+  10 (1024), de sobra para un torneo de normas.
+- **Solo se buscan las normas que le sirven**: a un IM no se le busca la de
+  IM ni la de WIM, y las femeninas solo se buscan si chess-results trae el
+  sexo (si nadie viene marcado como mujer, se revisan para todos y lo decide
+  quien mira).
+- **Lo que no se ve desde los resultados se dice, no se da por hecho**: el
+  ritmo, las dos partidas por día, el árbitro principal IA o FA, los 90 días,
+  que esté en la lista de FIDE y que el Elo sea el de la lista vigente al
+  empezar. Si el torneo no trae federaciones o títulos, un aviso dice que
+  esos artículos salen como no cumplidos.
+- **Comprobado contra el anexo del reglamento**: `verificar-normas-titulo.js`
+  lleva copiadas las tablas de 9 a 12 partidas (160 casillas) y revisa que en
+  la punta baja de cada rango haya norma, y que con medio punto menos o un
+  punto de promedio menos no; más una partida armada por artículo. Rompiendo
+  a propósito el redondeo o metiendo a los CM entre los títulos, salta. La
+  página la prueba `verificar-normas-titulo-pagina.js` con un doble.
+- Probado con un torneo real (el tnr1313571 de chess-results): la única
+  norma que sale es una de IM de alguien que ya es IM, y la página no la
+  muestra.
+
+## Ranking estudiantil por categoría
+
+`ranking-estudiantil.html` (gratis y sin cuenta, como el historial y las
+estadísticas por colegio; la pidió el dueño con las demás herramientas
+nuevas): el ranking de los JDE de un año, una categoría y una rama, con los
+mismos datos públicos de `js/jde-datos.js`.
+
+- **El orden dice hasta dónde llegó cada estudiante, no es un Elo**: primero
+  la etapa más alta (llegar a la final pesa más que ganar la regional),
+  después su mejor puesto en esa etapa, sus puntos en esa etapa y todos los
+  del año. Dos iguales en todo comparten el lugar. La página lo explica.
+- **Solo torneos individuales de ritmo clásico de los JDE**, como
+  «Participaciones» en `ajedrez-estudiantil.html`: en uno por equipos el
+  puesto es del equipo, y los blitz y rápidos repiten a los mismos.
+- **Un torneo sin rama en el nombre cuenta como abierto**: el nombre llega
+  cortado de chess-results («…Individual A», «…Absolu») y los femeninos lo
+  dicen siempre. Sin esto, la final nacional D de 2026 quedaba afuera de la
+  rama abierta y el primero del ranking era un campeón interregional.
+- **La región es la de su torneo regional** (la final no tiene región); el
+  filtro deja a quien jugó la regional ahí. Los filtros van en la dirección.
+- En 2026 hubo dos finales nacionales D individuales en chess-results (27 y
+  29 de mayo): el orden toma el mejor puesto de cualquiera de las dos.
+- Lo prueban `verificar-ranking-estudiantil.js` (con unos pocos torneos
+  armados a mano en la forma de los archivos de datos, leídos con el mismo
+  `jde-datos.js`) y `verificar-ranking-estudiantil-pagina.js` (la página con
+  esos datos servidos en lugar de los de verdad, que cambian cada mes).
+  Rompiendo a propósito el peso de la etapa o la rama vacía, saltan.
+
+## Acta e informe arbitral JDE
+
+`acta-jde.html` (con licencia, `acta-jde`; estaba en la vitrina como
+«Próximamente» y la pidió el dueño con las demás herramientas nuevas): para
+una etapa de los JDE dirigida con Swiss-Manager y publicada en chess-results,
+no en Pareo Integral. Se pegan los enlaces de todos sus torneos y se baja el
+informe oficial de participación y resultados en PDF o Word, y los
+clasificados a la etapa siguiente en el Excel que se sube en Pareo Integral.
+
+- **El informe no se escribió otra vez**: cada torneo se lee con
+  `desempates-chess-results` (`herramienta: "acta-jde"`), se convierte con
+  `js/desempates-convertir.js` y lo arma `PareoEvento.informe()`, el mismo de
+  los eventos de Pareo Integral (participación por centro, clasificación,
+  cuadro cruzado, ausencias, medallero, firmas). `js/acta-jde.js` solo junta
+  las piezas y agrega lo que chess-results no tiene: la etapa, el lugar, la
+  sede, la fecha, los árbitros y las incidencias (las escribe el árbitro).
+- **La función lee ahora el club y los desempates del torneo**: la columna
+  «Club/Ciudad» (en los JDE, el centro educativo) y la «Anotación» de la
+  clasificación («Desempate 2: Direct Encounter (DE)…»), que
+  `ActaJde.codigoDesempate()` traduce a los códigos de FIDE. Caché «v4:».
+  Los datos del torneo (árbitro, lugar, fechas) no se leen: en los torneos
+  de más de dos semanas chess-results los esconde detrás de un botón.
+- **El orden del informe es el oficial de chess-results**, el que firmó el
+  árbitro (`t.ordenOficial`, que respeta `PareoEvento`; sin columnas de
+  desempates, porque los números serían los recalculados). El recálculo con
+  el motor de Pareo Integral y los desempates del torneo solo sirve para
+  avisar si alguien queda en otro puesto. En la Etapa Nacional D 2026
+  (tnr1423856), con DE y Buchholz Cut-1 de 2026, Swiss-Manager pone a
+  González con 13 de Buchholz Cut-1 y Pareo Integral con 12: el aviso lo
+  dice, y el informe va con el orden de chess-results.
+- **El bye de un punto que trae chess-results es el del pareo**: se anota
+  como mesa sin rival (`{ n: null }`) y no como un bye pedido, que en el
+  informe diría «Pidió bye (avisó)» de quien no pidió nada. Se hace en
+  `js/acta-jde.js` y no en `js/desempates-convertir.js`, para no cambiar los
+  desempates de «Desempates explicados».
+- **Los clasificados** salen de `PareoEvento.filasClasificados()` con el
+  cupo del art. 66.1 según la etapa y el lugar; de la Etapa Nacional no se
+  clasifica a nada.
+- Lo prueban `verificar-acta-jde.js` (un torneo armado a mano con bye del
+  pareo, incomparecencia, bye pedido y un empate que chess-results separa)
+  y `verificar-acta-jde-pagina.js` (con un doble: la licencia, los dos
+  torneos, los avisos y los tres archivos con su marca). La prueba de
+  «Próximamente» con todas las licencias de `verificar-seleccion-pagina.js`
+  usa ahora una herramienta de mentira metida en la lista, porque la vitrina
+  se va quedando sin ninguna «Próximamente». Rompiendo a propósito el bye
+  del pareo o el orden oficial, salta.
+
+## La ficha del jugador federado
+
+En la vitrina, «Ficha del jugador federado» (`ficha-federado`, con licencia,
+en el tema nuevo «Clubes y federados»; la pidió el dueño con las demás
+herramientas nuevas) lleva a `admin-jugador.html`, la «Base de datos de
+jugadores» que hasta ahora era solo de administración. **No se hizo otra
+página**: la de administración ya buscaba a una persona en chess-results,
+agrupaba sus torneos por Código FIDE (los homónimos aparte) y analizaba su
+rendimiento, su tendencia y hacia dónde va. Lo que cambió:
+
+- **El candado de `chess-results-proxy`** deja pasar a administración o a
+  quien tenga la licencia, y la licencia se pregunta como en
+  `desempates-chess-results`: `tengo_herramienta()` con el token de quien
+  llama y la clave anónima (así la verificación en dos pasos la exige la
+  base). La página pregunta lo mismo, pero es la función la que decide.
+- **El Elo nacional y el FIDE estándar** de la lista de la Federación
+  (ajedrezcostarica.com) en la cabecera de cada jugador, con la Edge
+  Function `pareo-elo-nacional` de Pareo Integral, que ya leía esa lista por
+  nombre. **Se muestra solo si el Código FIDE de la lista es el del grupo**:
+  un homónimo no se cuela.
+- Se llama «Ficha del jugador federado» y sus migas cuelgan de la Academia
+  (antes, de Administración, adonde quien tiene la licencia no entra).
+- La vitrina tiene ahora cinco fichas de tema: en la computadora van en una
+  fila de cinco (`lg:grid-cols-5`).
+- Lo prueba `verificar-ficha-federado.js`: el candado de la función leído
+  del código, y la página con un doble (sin licencia, administración sin
+  licencia, con licencia, el homónimo que no recibe el Elo). Rompiendo a
+  propósito la comparación del Código FIDE, salta.
+
+## Generador de bases del torneo
+
+`bases-torneo.html` (gratis y sin cuenta, como Pareo Integral; la pidió el
+dueño con las demás herramientas nuevas): quien organiza llena los datos de
+su torneo y baja las bases en PDF o en Word, listas para publicar.
+
+- **Todo en el navegador**: no hay nada que proteger en un servidor, así que
+  no hay licencia. Lo llenado se guarda en `localStorage` (`bases_torneo_v1`)
+  solo para la próxima visita; si el navegador no deja, la página funciona
+  igual.
+- **Un solo documento para el PDF y el Word**: `js/bases-torneo.js` arma el
+  documento neutral que leen `js/reporte-pdf.js` y `js/reporte-docx.js`, el
+  mismo de los reportes de actividades. Los dos llevan la marca de agua de
+  Ajedrez Integral: el PDF la busca solo; el Word la pide a
+  `MarcaAgua.preparar()` antes de armar (sin ella sale sin marca, por eso lo
+  revisa el verificador).
+- **Lo que dice sale de las reglas, y se revisa antes de bajar**:
+  - la modalidad, del tiempo de cada jugador para 60 jugadas (base + 60 ×
+    incremento; Leyes A.1 y B.1): 10 minutos o menos, relámpago; menos de
+    60, rápido; 60 o más, clásico;
+  - para el Elo FIDE clásico, B.02 1.1: 120 minutos para 60 jugadas si alguno
+    tiene 2400 o más, 90 si alguno tiene 1800 o más, 60 si los dos tienen
+    menos (leído del reglamento vigente en el Handbook);
+  - la tolerancia: si las bases no la dicen es cero (6.7.1), y así se
+    escribe cuando se pone 0;
+  - los celulares, con el 11.3.2; los desempates, con los nombres del
+    catálogo de Pareo Integral (`PareoDesempates.CATALOGO`), y al cambiar el
+    sistema se proponen los de Pareo Integral para ese sistema.
+- **El calendario se arma solo**: las rondas por día desde la fecha de
+  inicio, cada ronda con el tiempo de los dos más 40 jugadas de incremento
+  (como el horario de Pareo Integral), y la siguiente a la media hora
+  siguiente después del descanso. El día de calendario se lee al mediodía de
+  Costa Rica, para que no corra.
+- Lo prueban `verificar-bases-torneo.js` (sin navegador: modalidades,
+  umbrales de B.02, calendario, textos) y `verificar-bases-torneo-pagina.js`
+  (la página, bajar el PDF y el Word con su marca, lo guardado al volver y
+  que nada salga del sitio). Rompiendo a propósito el límite del relámpago,
+  la fecha que corre o la marca del Word, saltan.
 ## Reclamos de tablas desde el PGN
 
 `reclamos-tablas.html` (la anunciaba la vitrina como «Próximamente»; la pidió
@@ -8059,6 +8292,28 @@ ficha de un comité trae «Informe del comité en PDF».
   cifras como lista, las gráficas por su descripción y las tablas sin
   «Comprobar». En hoja vertical, una tabla de muchas columnas corta algún
   texto: el PDF es para entregar el resumen; el detalle está en el Excel.
+
+### El comparador de comités
+
+En la vitrina, «Comparador de comités JDN» (`comparador-jdn`, con la
+licencia de `jdn-comites`, como el catálogo de torneos universitarios con la
+de `universidades`) lleva a `jdn-comites.html#comparar`: no es otra página,
+es la sección «Comparar comités» del medallero, que antes solo traía las
+medallas final por final y ahora trae también:
+
+- **Lado a lado**: el puesto en el medallero, las medallas (y de qué tipo),
+  los puntos de la copa con la escala elegida, las participaciones en
+  finales y eliminatorias, cuántos pasaron de la eliminatoria a la final y
+  el rendimiento contra el Elo. **Cada dato sale de la misma función que su
+  sección** (`resumen`, `copa`, `efectividad`, `contraElo`): el verificador
+  comprueba los mismos números en el comparador y en cada sección. En
+  `universidades.html` (el mismo código) no van las filas de eliminatorias.
+- **Entre ellos**: las partidas de sus jugadores, de a pares, con `contra()`,
+  la misma de «Contra qué comités». Las partidas llegan después de pintar
+  (son unas 18 000): mientras tanto dice «Cargando las partidas…» y se
+  vuelve a dibujar al llegar.
+- `#comparar` no es un comité: abre el medallero, y el navegador baja solo a
+  la sección con ese `id`.
 
 ### La calidad de los datos y la corrección del comité
 
@@ -10216,3 +10471,115 @@ tiempo y el reloj, Stockfish de verdad, el proyector, la jugada ilegal que
 llega al canal sin casillas y el retraso con el reloj de la cámara
 adelantado) y `verificar-pareo-camaras.js` (los `[%emt]` y las alertas).
 Rotos a propósito, saltan.
+
+## Pareo para DGT
+
+Un torneo presencial con tableros electrónicos DGT: el árbitro sube cada ronda
+a chess-results (desde Swiss-Manager, como siempre), y alguien tiene que
+cargar ese mismo pareo en DGT LiveChess, mesa por mesa, y crear la ronda en
+la transmisión de Lichess. En un blitz las rondas salen cada pocos minutos.
+`pareo-dgt.html` lo hace solo. **Es una herramienta con licencia** (lo pidió
+el dueño: «que todas las herramientas de arbitraje sean con licencia»), en la
+vitrina, ficha Arbitraje, con el id `pareo-dgt` (ver «Herramientas de
+arbitraje»); quien administra la tiene sin licencia y le sale también en
+`admin.html`, Contenido. vigila chess-results y, apenas sale una ronda, deja el archivo listo
+para importar en LiveChess y crea la ronda en Lichess. El código está en
+`js/pareo-dgt.js` y la parte pura (el PGN, qué hacer con cada lectura, los
+formularios de Lichess) en `js/pareo/dgt.js`.
+
+- **Lo que LiveChess importa es un PGN, no otra cosa.** El manual de LiveChess
+  2.2 (pestaña «Rounds», menú de abajo a la derecha) dice que el pareo se
+  puede importar «desde un PGN preparado con otro programa de pareo». No hay
+  API para escribirle el pareo a LiveChess (la de `localhost:1982` es para
+  leer los tableros), así que el último paso, importar, lo hace una persona:
+  dos clics por ronda. El archivo lleva una partida **sin jugadas** por mesa
+  (`*`), con `Event`, `Date`, `Round`, `Board`, `White`, `Black`, el título, el
+  Elo y el `WhiteFideId`/`BlackFideId`. **Sin probar todavía contra un
+  LiveChess de verdad**: no había uno a mano. Antes del primer torneo, se
+  importa una ronda de prueba.
+- **Solo las partidas, y solo las mesas que se transmiten.** Un bye o un «sin
+  emparejar» no es una partida y no va al archivo. Y cada torneo lleva «Mesas
+  que van al PGN»: de 100 mesas puede que se transmitan 2 (lo pidió el dueño).
+  Se escriben como los «slices» de Lichess: `1-2`, `1, 5, 12`, `1-4, 10`;
+  vacío son todas. `PareoDGT.leerMesas()` las ordena y junta (`2, 1` es
+  `1-2`), y lo mal escrito se dice con un ejemplo, sin agregar nada. Al
+  principio eran «Desde la mesa / Hasta la mesa», que no servía para mesas
+  salteadas; lo guardado así se convierte solo al abrir la página.
+- **Las mesas se cambian sin quitar el torneo**, en su tarjeta («Cambiar las
+  mesas»): la ronda en curso se vuelve a armar con las nuevas y la bitácora lo
+  dice («con las mesas nuevas»). Por eso `decidir()` compara también las
+  mesas con las que se armó la ronda (`mesasElegidas`), no solo el pareo. Si
+  ninguna de las mesas elegidas tiene partida en la ronda, se avisa: el
+  archivo saldría vacío.
+- **Varios torneos a la vez** (uno por categoría): cada uno con su número de
+  chess-results, su rango de mesas y su transmisión en Lichess.
+- **Los archivos van a una carpeta**: con Chrome o Edge en la computadora,
+  «Elegir la carpeta» (`showDirectoryPicker`) y cada ronda se escribe ahí sola,
+  `<torneo>-ronda-<n>.pgn`; un pareo corregido reemplaza al de esa ronda. Sin
+  eso (otro navegador), se baja a Descargas. El permiso de la carpeta no
+  sobrevive a recargar la página: se vuelve a elegir, y lo dice.
+- **Vigila cada 30 segundos mientras la pestaña esté abierta**, también en
+  segundo plano (la computadora de LiveChess tiene LiveChess adelante; el
+  navegador la estira a un minuto como mucho). Cerrar la pestaña vigilando
+  pregunta antes.
+- **Cada ronda una sola vez.** Lo que ya se hizo con cada torneo (qué rondas
+  tienen archivo, con qué pareo, y sus ids en Lichess) queda en `localStorage`
+  de esa computadora: recargar no repite nada ni crea otra ronda en Lichess.
+  Es de la computadora que maneja el torneo, no de la cuenta; abrir la página
+  en dos computadoras crearía las rondas dos veces en Lichess.
+- **Si chess-results cambia el pareo de una ronda ya hecha** (un error del
+  árbitro, una incomparecencia), el archivo se vuelve a armar y la bitácora lo
+  dice en grande: hay que importarlo otra vez. **A Lichess no se le manda
+  solo**: si las partidas ya empezaron, el pareo sin jugadas podría dejarlas
+  en la posición inicial hasta la jugada siguiente. Hay un botón «Mandarlo a
+  Lichess» que pregunta antes.
+- **La lectura de chess-results, en la Edge Function `pareo-dgt`.**
+  chess-results no manda CORS. La función pide de cada torneo solo dos
+  páginas fijas, siempre en `s3.chess-results.com`: el pareo (`art=2`, sin
+  `rd` es la última ronda emparejada) y la lista inicial (`art=0`, por el
+  FIDE-ID, que el pareo no trae). Caché en `pizarras_cache`: 20 s el pareo, 2
+  min la lista. **Con licencia**: antes de pedir nada pregunta
+  `tengo_herramienta('pareo-dgt')` con el token de quien llama (clave anónima
+  + su `Authorization`), igual que `desempates-chess-results`, así que la
+  verificación en dos pasos la exige la base. Recibe un número de torneo
+  cualquiera, no la clave de una sala: sin candado sería un raspador de
+  chess-results gratis para cualquiera. `verify_jwt` en true. La primera
+  versión era solo para quien administra (sesión, aal2 e `is_admin`).
+- **Cómo se lee el pareo** (comprobado con las páginas reales de tnr1498221 y
+  tnr1498218, el 29/10/2026): las blancas por su lugar en el encabezado, las
+  negras **desde el final de la fila** (la última celda es su «No.»), así una
+  columna de más o de menos (los torneos sin «Club/Ciudad») no las corre. La
+  fila de quien no juega trae una celda de menos y «sin emparejar» o «bye»; y
+  chess-results escribe ahí un `<td & colsp & class="CRc">` roto, que el
+  lector aguanta. La ronda, la fecha y la hora salen del `<h3>` («3. Ronda el
+  2026/09/27 a las 11:00am»: el número va ANTES de «Ronda»).
+- **Lichess, desde el navegador, con el token de quien organiza.** La API de
+  transmisiones manda `Access-Control-Allow-Origin: *` y `lichess.org` ya
+  estaba en `connect-src`. El token (permiso `study:write`, con un enlace que
+  lo crea ya con ese permiso) **nunca va a Ajedrez Integral**: queda en
+  `sessionStorage`, o en `localStorage` si se pide recordarlo. Con él, «Crear
+  los torneos en Lichess» crea uno por torneo (`/broadcast/new`: nombre de
+  chess-results, ritmo, zona de Costa Rica y la clasificación en
+  chess-results), y cada ronda nueva se crea (`/broadcast/{id}/new`, con la
+  hora de chess-results en hora de Costa Rica) y recibe el mismo PGN
+  (`/api/broadcast/round/{id}/push`): el pareo se ve en Lichess antes de la
+  primera jugada. Si Lichess falla, la ronda queda pendiente y se vuelve a
+  intentar en la revisión siguiente, sin volver a bajar el archivo.
+- **Las jugadas no las sube esta página.** Las sube **Lichess Broadcaster**
+  (la aplicación oficial de Lichess para la computadora), que mira la carpeta
+  donde LiveChess escribe el PGN de cada ronda: ahí se elige la ronda que creó
+  esta página. Los nombres coinciden porque LiveChess los tomó del mismo
+  archivo.
+- Va en la Política de privacidad: a Lichess se le mandan los nombres,
+  títulos, Elo e ID FIDE del pareo, los mismos que ya publica chess-results.
+
+`verificar-pareo-dgt.js` prueba el lector con HTML de la forma real y nombres
+inventados (con y sin club, el bye, el «sin emparejar» roto, la lista con
+FIDE-ID), que la función pregunte por la licencia antes de pedir nada y que
+la herramienta esté en la vitrina sin `gratis`, el PGN exacto, las mesas
+elegidas, qué hacer con cada lectura y, en el navegador con dobles de la
+función y de Lichess: el candado sin licencia, el archivo bajado con solo
+las mesas elegidas, el orden torneo → ronda → pareo en Lichess, que recargar
+no cree nada otra vez, el pareo corregido, cambiar las mesas y el Lichess
+caído. Rompiendo el filtro de los byes, el de las mesas o la pregunta por la
+licencia, salta.

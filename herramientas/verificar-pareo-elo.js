@@ -41,10 +41,11 @@ function pruebaSinNavegador() {
   igual("y al revés, para el de menos Elo", [-4, -100, -400].map(L.esperado), [0.49, 0.36, 0.08]);
 
   console.log("\n=== El factor K ===");
-  igual("40 con menos de 18 años y menos de 2300; 20; 10 desde 2400", [
+  igual("40 hasta el final del año en que cumple 18 y con menos de 2300; 20; 10 desde 2400", [
     L.kDe({ elo: 1500, nacimiento: "2012-05-01" }, 2026), L.kDe({ elo: 2350, nacimiento: "2012-05-01" }, 2026),
-    L.kDe({ elo: 1500, nacimiento: "2008-01-01" }, 2026), L.kDe({ elo: 2000 }, 2026), L.kDe({ elo: 2450 }, 2026),
-  ], [40, 20, 20, 20, 10]);
+    L.kDe({ elo: 1500, nacimiento: "2008-01-01" }, 2026), L.kDe({ elo: 1500, nacimiento: "2007-12-31" }, 2026),
+    L.kDe({ elo: 2000 }, 2026), L.kDe({ elo: 2450 }, 2026),
+  ], [40, 20, 40, 20, 20, 10]);
   igual("el que se anota a mano manda", L.kDe({ elo: 2000, kFide: 40 }, 2026), 40);
 
   console.log("\n=== El cambio de Elo ===");
