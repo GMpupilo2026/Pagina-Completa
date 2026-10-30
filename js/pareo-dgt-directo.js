@@ -104,9 +104,39 @@
     function nuevoJuego(t, tnr, ronda) {
         const ahora = t.juego ? t.juego.partida.casillas() : t.casillas;
         const guardada = tnr && ronda && estado.juegos[clave(tnr, ronda)] && estado.juegos[clave(tnr, ronda)][t.dir];
+        // Las piezas se volvieron a armar cuando la partida de antes ya tenía
+        // jugadas: lo que se jugó desde entonces es de esta partida, aunque la
+        // ronda haya llegado tarde (sin internet no se lee chess-results).
+        const repetir = !guardada && t.inicio && t.inicioTrasJugadas && t.desdeInicio.length;
         t.juego = { tnr, ronda, partida: DgtLector.crearPartida(Chess, guardada ? { guardada } : {}) };
         t.vistos = -1;
-        if (ahora) t.juego.partida.tablero(ahora);
+        if (repetir) {
+            t.juego.partida.tablero(t.inicio);
+            t.juego.partida.memoria(t.desdeInicio);
+            t.inicioTrasJugadas = false;
+        } else if (ahora) t.juego.partida.tablero(ahora);
+    }
+
+    // Todo lo que pasó en el tablero desde la última vez que se armaron las
+    // piezas en la posición inicial, para no perder las jugadas de una ronda
+    // que se empezó antes de que la página supiera que había salido.
+    const MAX_DESDE_INICIO = 5000;
+    const armadoInicial = (c) => [DgtLector.colocacion(c), DgtLector.colocacion(c.slice().reverse())].includes(DgtLector.INICIAL);
+    function registrar(t, eventos) {
+        if (!t.fisico) return;
+        for (const e of eventos) {
+            if (e.tipo === "pieza") t.fisico[e.casilla] = e.pieza;
+            if (e.tipo !== "pieza" && e.tipo !== "reloj") continue;
+            if (e.tipo === "pieza" && armadoInicial(t.fisico)) {
+                t.inicio = t.fisico.slice();
+                t.desdeInicio = [];
+                t.inicioTrasJugadas = !!(t.juego && t.juego.partida.jugadas().length);
+                continue;
+            }
+            t.desdeInicio.push(e);
+        }
+        // Una sesión larguísima sin volver a armar: ya no se puede repetir desde el principio.
+        if (t.desdeInicio.length > MAX_DESDE_INICIO) { t.desdeInicio = []; t.inicio = null; }
     }
 
     // Lo de este tablero en esta ronda, para empujarlo y para no perderlo.
@@ -152,7 +182,9 @@
         if (!t.juego || t.juego.ronda === obj.ronda) return;
         const p = t.juego.partida;
         const armado = [DgtLector.colocacion(p.casillas()), DgtLector.colocacion(p.casillas().reverse())].includes(DgtLector.INICIAL);
-        if (p.resultado() !== "*" || armado) { nuevoJuego(t, obj.tnr, obj.ronda); anotarJuego(t); pintarFila(t); }
+        // También si las piezas ya se armaron y se está jugando la nueva
+        // (la ronda llegó tarde): nuevoJuego repite lo que se jugó desde entonces.
+        if (p.resultado() !== "*" || armado || t.inicioTrasJugadas) { nuevoJuego(t, obj.tnr, obj.ronda); anotarJuego(t); pintarFila(t); }
     }
 
     // El resultado que anotó el árbitro en chess-results (para emparejar la
@@ -181,7 +213,13 @@
     async function primeraVez(t, cadena) {
         await cadena.cambios(t.dir);                    // lo de antes de conectar no es de esta partida
         const r = await cadena.tablero(t.dir);
-        if (!r.error) t.casillas = r.casillas;
+        if (!r.error) {
+            t.casillas = r.casillas;
+            t.fisico = r.casillas.slice();
+            t.desdeInicio = [];
+            t.inicio = armadoInicial(t.fisico) ? t.fisico.slice() : null;
+            t.inicioTrasJugadas = false;
+        }
         alDia(t);
         if (!r.error) t.juego.partida.tablero(r.casillas);
         despues(t);
@@ -192,6 +230,7 @@
         const c = await p.cadena.cambios(t.dir);
         if (c.error) { t.fallas += 1; pintarFila(t); return; }
         t.fallas = 0;
+        registrar(t, c.eventos);
         const partida = t.juego.partida;
         partida.memoria(c.eventos);
         if (n % RELOJ_CADA === 0) {

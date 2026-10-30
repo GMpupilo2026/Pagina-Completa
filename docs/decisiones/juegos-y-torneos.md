@@ -11958,6 +11958,20 @@ creó la página (`/api/broadcast/round/{id}/push`, directo, como el pareo).
   (`cerrarAnterior`): sus últimos resultados se anotan justo antes de
   emparejar y en 30 s quizá no se vieron. Con el resultado, el tablero pasa
   solo a la ronda nueva.
+- **Sin internet no se pierde nada.** Los tableros están por cable: se
+  siguen leyendo, cada partida queda guardada en la computadora, y lo que
+  Lichess no recibió se le vuelve a mandar (la ronda entera) apenas vuelve la
+  conexión. Lo que no llega mientras tanto es chess-results: si en ese rato
+  sale la ronda siguiente y se empieza a jugar, la página no lo sabe. Para
+  eso cada tablero anota todo lo que pasa desde la última vez que se armaron
+  las piezas en la posición inicial (`registrar`, `desdeInicio`); si se
+  armaron cuando la partida anterior ya tenía jugadas, es la partida nueva, y
+  cuando la ronda por fin llega, la partida se repite desde la primera
+  jugada (`nuevoJuego`) en vez de esperar una posición inicial que ya pasó.
+  Por lo mismo, las piezas otra vez en la posición inicial no son una
+  «corrección» para el lector: tomarlas como «deshacer todo» borraba una
+  partida corta. Pidió el arreglo el dueño («¿qué pasa si se va el
+  internet?»); la prueba corta internet a mitad de la ronda.
 - **Al recargar, los puertos se vuelven a abrir solos.** Chrome pide un clic
   para elegir un puerto COM la primera vez; después `navigator.serial.getPorts()`
   da los que ya tienen permiso, sin clic. Se abren solo los USB (traen

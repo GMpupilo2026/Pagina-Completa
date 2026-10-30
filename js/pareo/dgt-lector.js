@@ -254,6 +254,10 @@
         p.cambios += 1;
         return { nuevas, atras: 0 };
       }
+      // Las piezas otra vez en la posición inicial no son una corrección: se
+      // terminó la partida y se arma la siguiente (y si se tomara por «deshacer
+      // todo», una partida corta se borraría entera).
+      if (ahora === INICIAL) return { nuevas: [], atras: 0 };
       // Una corrección: el tablero volvió a una posición de hace poco, o se
       // leyó mal una jugada a medio hacer (en un enroque que empieza por la
       // torre, Tf1 parece una jugada entera hasta que llega el rey: se vuelve
