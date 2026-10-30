@@ -109,6 +109,11 @@
                 <button id="btn-ahorro" type="button" disabled class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-4 py-2.5 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 disabled:opacity-50"><span aria-hidden="true">🔋</span> Ahorrar batería</button>
             </div>
 
+            <p id="bateria-aviso" hidden role="alert" class="mb-4 rounded-xl px-4 py-3 text-sm font-semibold bg-red-100 text-red-900"></p>
+            <div id="lista-caja" hidden class="mb-4 rounded-xl border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-900 px-4 py-3">
+                <p id="lista-titulo" class="text-sm font-semibold text-brand-800 dark:text-white"></p>
+                <ul id="lista-items" class="mt-1 text-sm text-brand-700 dark:text-brand-200 space-y-0.5"></ul>
+            </div>
             <p id="sin-red" hidden role="status" class="mb-4 rounded-xl px-4 py-3 text-sm font-semibold bg-accent-100 text-brand-900">Sin conexión: la partida se sigue anotando en este celular y se manda sola cuando vuelva la señal. No cierres la página.</p>
             <p id="pantalla-encendida" hidden class="mb-4 text-xs text-brand-500 dark:text-brand-300">La pantalla se queda encendida mientras la cámara esté abierta: el celular no se apaga a mitad de la partida.</p>
             <div id="camara-elegir-caja" hidden class="mb-4">
@@ -181,6 +186,9 @@
                                 <button type="button" data-resultado="" class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-3 py-2 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Sigue en juego</button>
                             </div>
                             <p class="text-xs text-brand-500 dark:text-brand-300 mt-2">El mate y el ahogado se marcan solos. El abandono, el tiempo o las tablas de común acuerdo, márcalos aquí: en un torneo le llegan al árbitro de Pareo Integral para que los confirme.</p>
+                            <button id="btn-planillas" type="button" disabled class="mt-3 bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-3 py-2 rounded-lg text-sm disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true">📝</span> Planillas en PDF</button>
+                            <p id="planillas-msg" role="status" aria-live="polite" class="text-sm text-brand-700 dark:text-brand-200 mt-1"></p>
+                            <p class="text-xs text-brand-500 dark:text-brand-300 mt-1">Una para cada jugador, con las jugadas que anotó la cámara, para revisar y firmar. La que vale es la que escribe cada jugador.</p>
                         </div>
                         <div id="fotos" hidden class="mt-4 rounded-xl border border-brand-200 dark:border-brand-700 p-3">
                             <h3 class="font-semibold text-sm text-brand-800 dark:text-white">Fotos del tablero</h3>
@@ -216,6 +224,20 @@
                             </form>
                         </details>
                         <details class="mt-4">
+                            <summary class="text-sm font-semibold text-brand-800 dark:text-white cursor-pointer rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Este tablero y cómo lo lee la cámara</summary>
+                            <label for="equipo-tablero" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 mt-2 mb-1">¿Qué tablero y piezas son?</label>
+                            <input id="equipo-tablero" type="text" maxlength="40" list="equipo-lista" autocomplete="off" placeholder="Por ejemplo: Vinilo verde, piezas de torneo" class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                            <datalist id="equipo-lista"></datalist>
+                            <p id="equipo-luz" class="text-xs text-brand-500 dark:text-brand-300 mt-1"></p>
+                            <p class="text-xs text-brand-500 dark:text-brand-300 mt-2">Con cada partida terminada se anota en este aparato cómo la leyó: así se sabe qué tableros y qué luz conviene usar.</p>
+                            <p id="lectura-vacia" class="text-sm text-brand-600 dark:text-brand-300 mt-1">Todavía no hay partidas terminadas.</p>
+                            <div class="overflow-x-auto"><table id="lectura-tabla" hidden class="text-sm mt-2">
+                                <caption class="sr-only">Cómo lee la cámara cada tablero</caption>
+                                <thead><tr><th scope="col" class="py-1 pr-3 text-left">Tablero</th><th scope="col" class="py-1 pr-3 text-left">Luz</th><th scope="col" class="py-1 pr-3 text-left">Partidas</th><th scope="col" class="py-1 pr-3 text-left">Leyó sola</th><th scope="col" class="py-1 pr-3 text-left">A mano</th><th scope="col" class="py-1 pr-3 text-left">Dudas</th><th scope="col" class="py-1 pr-3 text-left">Posibles ilegales</th></tr></thead>
+                                <tbody id="lectura-filas"></tbody>
+                            </table></div>
+                        </details>
+                        <details class="mt-4">
                             <summary class="text-sm font-semibold text-brand-800 dark:text-white cursor-pointer rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Enseñarle a la cámara (opcional)</summary>
                             <p class="text-xs text-brand-500 dark:text-brand-300 mt-2">Si lo permite quien organiza: con cada jugada anotada se guarda una foto del tablero, enderezado y sin nadie alrededor, con la posición que tiene. Con esas fotos se puede entrenar la cámara para que lea mejor nuestros tableros. Quedan solo en este aparato hasta que las bajes; no se mandan a ningún lado.</p>
                             <label class="mt-2 inline-flex items-center gap-2 text-sm text-brand-700 dark:text-brand-200 cursor-pointer"><input id="muestras-si" type="checkbox" class="w-4 h-4 accent-brand-700"> Juntar fotos con su posición</label>
@@ -242,6 +264,35 @@
                         <p id="entreno-estado" role="status" aria-live="polite" class="text-sm font-semibold text-brand-800 dark:text-white mt-3"></p>
                         <p id="entreno-pista" hidden class="text-sm text-brand-800 dark:text-white mt-2 rounded-lg border border-accent-500 px-3 py-2"></p>
                         <button id="btn-entreno-dejar" type="button" hidden class="mt-2 bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-3 py-2 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Dejar de entrenar</button>
+                    </section>
+                    <section data-no-mesa class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-4" aria-labelledby="t-distancia">
+                        <h2 id="t-distancia" class="font-semibold text-brand-800 dark:text-white"><span aria-hidden="true">🌎</span> Jugar a distancia (opcional)</h2>
+                        <p class="text-xs text-brand-500 dark:text-brand-300 mt-1">Cada uno en su casa, con su tablero y su celular encima. Tu cámara lee tu jugada y se la manda a tu rival; la suya la dice la pantalla y la pones tú. Calibra primero con la posición inicial.</p>
+                        <div class="mt-3"><label for="distancia-nombre" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 mb-1">Tu nombre (opcional)</label>
+                            <input id="distancia-nombre" type="text" maxlength="40" autocomplete="off" class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"></div>
+                        <div id="distancia-apagada" class="mt-3 space-y-3">
+                            <div class="flex flex-wrap items-end gap-2">
+                                <div><label for="distancia-color" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 mb-1">Juegas con</label>
+                                <select id="distancia-color" class="bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><option value="w">Blancas</option><option value="b">Negras</option><option value="azar">Al azar</option></select></div>
+                                <button id="btn-distancia-crear" type="button" class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-3 py-2 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Crear una partida</button>
+                            </div>
+                            <form id="form-distancia-unirse" class="flex flex-wrap items-end gap-2" novalidate>
+                                <div><label for="distancia-unirse" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 mb-1">O únete con el código de tu rival</label>
+                                <input id="distancia-unirse" type="text" maxlength="8" autocomplete="off" autocapitalize="none" spellcheck="false" class="font-mono bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"></div>
+                                <button type="submit" class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-3 py-2 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Unirme</button>
+                            </form>
+                        </div>
+                        <div id="distancia-encendida" hidden class="mt-3">
+                            <p class="text-sm text-brand-800 dark:text-white">Código: <span id="distancia-codigo" class="font-mono font-bold"></span></p>
+                            <p class="text-xs mt-1 break-all"><a id="distancia-enlace" href="#" class="underline text-brand-700 dark:text-brand-200"></a></p>
+                            <p id="distancia-con" class="text-sm text-brand-700 dark:text-brand-200 mt-1"></p>
+                            <div class="flex flex-wrap gap-2 mt-2">
+                                <a id="distancia-whatsapp" href="#" target="_blank" rel="noopener" class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-3 py-2 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Mandar por WhatsApp</a>
+                                <button id="btn-distancia-rendirse" type="button" class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-3 py-2 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Me rindo</button>
+                                <button id="btn-distancia-dejar" type="button" class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-3 py-2 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Dejar la partida</button>
+                            </div>
+                        </div>
+                        <p id="distancia-estado" role="status" aria-live="polite" class="text-sm font-semibold text-brand-800 dark:text-white mt-3"></p>
                     </section>
                     <section class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-4" aria-labelledby="t-torneo">
                         <h2 id="t-torneo" class="font-semibold text-brand-800 dark:text-white"><span aria-hidden="true">🏆</span> Partida de un torneo (opcional)</h2>
