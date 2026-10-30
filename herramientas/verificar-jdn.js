@@ -198,6 +198,15 @@ async function pruebaFicha() {
   cierto("la fecha de la firma queda en blanco (se firma a mano)", /^Firmado el día___/.test(linea(ps, "Firmado")));
   igual("en total, 6 «(X)»: condición, documento, estado civil, sexo, lateralidad y parentesco", (ps.join("\n").match(/\(X\)/g) || []).length, 6);
 
+  // CCDR San José: «Categoría Deportiva» lleva el deporte y la categoría, y autoriza a su delegado.
+  const SJ = Object.assign({}, MENOR, { comite: "CCDR San José", autorizadoNombre: "Reynaldo Fernandez Santana", autorizadoRol: "delegado" });
+  const xmlSJ = await (await window.ReporteExcel.abrirZip(ab(Buffer.from(await J.generar(plantilla, SJ, HOY))))).texto("word/document.xml");
+  const psSJ = parrafos(xmlSJ);
+  igual("San José: la categoría lleva «Ajedrez» y nada de «Individual»", linea(psSJ, "Categoría Deportiva"),
+    "Categoría Deportiva (Deporte colectivo o individual): Ajedrez U-16");
+  cierto("San José: autoriza a Reynaldo Fernandez Santana (delegado)",
+    /autorizo a Reynaldo Fernandez Santana \(delegado\) para que/.test(linea(psSJ, "Yo ")), linea(psSJ, "Yo "));
+
   console.log("\n=== La ficha llena (un mayor, paratleta) ===");
   const xml2 = await (await window.ReporteExcel.abrirZip(ab(Buffer.from(await J.generar(plantilla, MAYOR, HOY))))).texto("word/document.xml");
   const ps2 = parrafos(xml2);
@@ -716,6 +725,21 @@ async function pruebaPagina(browser) {
       await vis(page, '[data-doc="foto"]') && (await page.inputValue("#f-autorizadoNombre")) === "" &&
       !(await page.isDisabled("#f-autorizadoRol")) && (await page.$$eval("#f-autorizadoRol option", (os) => os.map((o) => o.value))).join() === "entrenador");
     cierto("Pérez Zeledón: sin errores en la página", errores.length === 0, errores.join(" | "));
+    await ctx.close();
+  }
+
+  // CCDR San José: autoriza a su delegado, fijo, y pide la foto como cualquier comité.
+  {
+    const { ctx, page, errores } = await abrir(browser, { tablas: PERFILES }, () => [200, { ok: true }]);
+    page.__ya = true;
+    await llenarMenor(page);
+    await page.fill("#f-comite", "CCDR San José");
+    igual("San José: autoriza a su delegado, ya puesto y sin poder cambiarlo",
+      [await page.inputValue("#f-autorizadoNombre"), await page.inputValue("#f-autorizadoRol"),
+        await page.getAttribute("#f-autorizadoNombre", "readonly") !== null, await page.isDisabled("#f-autorizadoRol")],
+      ["Reynaldo Fernandez Santana", "delegado", true, true]);
+    cierto("San José: sigue pidiendo la fotografía", await vis(page, '[data-doc="foto"]') && !(await vis(page, "#jdn-nota-foto")));
+    cierto("San José: sin errores en la página", errores.length === 0, errores.join(" | "));
     await ctx.close();
   }
 

@@ -22,7 +22,8 @@
  *
  * COMITÉS CON SUS REGLAS (JDNConsentimiento.reglasDelComite). Con «CCDR Pérez
  * Zeledón» no se pide la fotografía, y quien autoriza el tutor de un menor ya
- * viene puesto: su delegado, fijo, sin que la familia lo escriba.
+ * viene puesto: su delegado, fijo, sin que la familia lo escriba. Con «CCDR San
+ * José» también (Reynaldo Fernandez Santana), y la categoría lleva «Ajedrez».
  *
  * Al terminar, quien llena solo puede descargar la ficha: los enlaces al Drive
  * no se muestran a nadie (tampoco a quien administra, que entra al Drive por su

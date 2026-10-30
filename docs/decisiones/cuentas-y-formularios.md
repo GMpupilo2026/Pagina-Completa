@@ -1240,6 +1240,13 @@ la hoja «Resumen - <comité>» de la carpeta del comité. Verificador:
   comité escrito sin mirar tildes ni mayúsculas): otro comité con reglas
   propias es una línea más ahí. Al cambiar a otro comité, la foto vuelve a
   pedirse y el campo del entrenador queda en blanco.
+  - **El CCDR San José también autoriza a su delegado**, **Reynaldo Fernandez
+    Santana (delegado)**, fijo (lo pidió el dueño del sitio, el 30/10/2026),
+    y su renglón «Categoría Deportiva» lleva el deporte además de la
+    categoría: «Ajedrez U-16», siempre sin «Individual» ni «Equipo»
+    (`deporteEnCategoria`). San José sí pide la fotografía. Los demás
+    comités siguen con solo la categoría. Las fichas que ya estaban en el
+    Drive se hicieron antes de esta regla.
 - **La foto y la cédula llevan su ejemplo al lado** (`img/jdn/`, la cara
   pixelada y una cédula sin datos): bien recortadas, solo la tarjeta o de los
   hombros hacia arriba, sin mesa ni dedos alrededor. El Comité Cantonal
