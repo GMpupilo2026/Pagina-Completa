@@ -155,6 +155,9 @@
   function bwtime(r) {
     if (!r) return [0, 0, 0, 0, 0, 0, 0x20];
     const der = hms(r.derecha), izq = hms(r.izquierda);
+    // La bandera caída (r.bandera = "izquierda" | "derecha"): el bit 0x10 de las horas.
+    if (r.bandera === "derecha") der[0] |= 0x10;
+    if (r.bandera === "izquierda") izq[0] |= 0x10;
     const estado = (r.corriendo ? 0x01 : 0) | (r.turno === "derecha" ? 0x08 : 0) | (r.turno === "izquierda" ? 0x10 : 0);
     return der.concat(izq, [estado]);
   }

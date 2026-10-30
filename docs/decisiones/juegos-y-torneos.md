@@ -12111,6 +12111,37 @@ creó la página (`/api/broadcast/round/{id}/push`, directo, como el pareo).
   presta por `window.PareoDGTPagina`; la ronda guarda ahora también su pareo
   (`pareo`), porque sin él no se puede volver a armar el PGN con jugadas. Las
   rondas guardadas antes lo reciben en la revisión siguiente.
+- **Los avisos de la sala** (lo pidió el dueño entre las mejoras: con más de
+  50 tableros, el árbitro no puede mirar fila por fila). Debajo de la lista
+  de tableros, «Avisos de la sala» dice solo lo que hay que mirar, cada uno
+  con su tablero, su categoría y su mesa y empezando por «Problema:» o
+  «Atención:» (no solo un color): el tablero que **no contesta**; la
+  **partida trabada**, cuando el tablero lleva 30 s sin coincidir con
+  ninguna jugada, con las casillas que no cuadran («d4: en el tablero un
+  caballo blanco, en la partida nada») y la pregunta de si es una pieza mal
+  puesta o una jugada ilegal (`p.diferencias()` y `p.trabadaDesde()` del
+  lector); la **bandera** del DGT 3000 (el bit 0x10 de las horas en el
+  mensaje de reloj, `p.bandera()`), con el color de quien se quedó sin
+  tiempo y **sin poner ningún resultado**: lo decide el árbitro (puede haber
+  material insuficiente o un reclamo); la mesa del pareo **sin tablero
+  conectado** («no se transmite») y los tableros **sin categoría ni mesa**.
+  Un aviso que se arregla se va solo. «Avisar con un sonido» (guardado en la
+  computadora) suena una vez por cada aviso nuevo de problema o atención,
+  nunca por los de información, y una vez al encenderlo para que se sepa
+  cómo suena.
+- **«¿Cuál es este tablero?»**: con el botón apretado, levantar una pieza de
+  un tablero marca su fila, la lleva a la vista y pone el foco en su
+  categoría. Con 50 tableros iguales en la sala, el número de la etiqueta no
+  se ve desde la mesa.
+- **«PGN de la ronda N»** junto a cada categoría baja las partidas de esa
+  ronda (las últimas 3 guardadas), con su pareo y los relojes, para subirlas
+  a chess-results o guardarlas. Es el mismo PGN que se empuja a Lichess.
+- La lista de categorías se vuelve a armar **solo si cambió** (`firma`): se
+  pinta después de cada subida a Lichess, y rehacerla siempre dejaba suelto
+  el botón que se estaba tocando (el clic no bajaba nada).
+- Una respuesta de chess-results que no trae el número de ronda ya no borra
+  la ronda que se estaba transmitiendo (`revisarTorneo` se queda con la
+  anterior).
 
 `verificar-pareo-dgt-lector.js`, sin navegador: una cadena de 40 tableros
 virtuales donde las respuestas al ping general chocan (llega una sola), las

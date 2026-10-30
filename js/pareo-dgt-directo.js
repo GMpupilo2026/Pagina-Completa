@@ -28,6 +28,9 @@
     const ESPERA_MS = 300;       // una respuesta: 80 ms dice DGT, más lo que tarda el USB
     const RONDAS_GUARDADAS = 3;  // por categoría, las últimas rondas con sus partidas
     const API = () => window.PareoDGTPagina;
+    // Una pieza en la mano dura segundos; más que esto sin coincidir con
+    // ninguna jugada es una pieza mal puesta o una jugada ilegal.
+    const TRABADA_MS = window.PAREO_DGT_TRABADA_MS || 30000;
 
     function leer() {
         try {
@@ -38,8 +41,8 @@
                 if (a && typeof a === "object" && a.tnr && a.mesa) asignadas[d] = { tnr: String(a.tnr), mesa: Number(a.mesa) };
                 else if (Number(a) && e.torneo) asignadas[d] = { tnr: String(e.torneo), mesa: Number(a) };
             }
-            return { asignadas, conocidos: Array.isArray(e.conocidos) ? e.conocidos : [], juegos: e.juegos && typeof e.juegos === "object" ? e.juegos : {} };
-        } catch (_) { return { asignadas: {}, conocidos: [], juegos: {} }; }
+            return { asignadas, conocidos: Array.isArray(e.conocidos) ? e.conocidos : [], juegos: e.juegos && typeof e.juegos === "object" ? e.juegos : {}, sonido: !!e.sonido };
+        } catch (_) { return { asignadas: {}, conocidos: [], juegos: {}, sonido: false }; }
     }
     const estado = leer();
     function guardar() {
@@ -231,6 +234,7 @@
         if (c.error) { t.fallas += 1; pintarFila(t); return; }
         t.fallas = 0;
         registrar(t, c.eventos);
+        if (identificar && c.eventos.some((e) => e.tipo === "pieza")) marcarFila(t);
         const partida = t.juego.partida;
         partida.memoria(c.eventos);
         if (n % RELOJ_CADA === 0) {
@@ -389,8 +393,8 @@
     function pintarEstado() {
         const n = tableros.size;
         const ul = $("directo-categorias");
-        ul.textContent = "";
-        if (!puertos.length) { $("directo-estado").textContent = "Ningún puerto conectado."; return; }
+        const items = [];
+        if (!puertos.length) { pintarLista(ul, items); $("directo-estado").textContent = "Ningún puerto conectado."; return; }
         const listo = API() && API().lichessListo();
         $("directo-estado").textContent = n + " tablero" + (n === 1 ? "" : "s") + " conectado" + (n === 1 ? "" : "s") + "." +
             (!listo ? " Falta conectar Lichess (paso 3)." : "") + (API() && !API().vigilando() ? " chess-results no se está vigilando (paso 4): las rondas nuevas no van a llegar solas." : "");
@@ -400,13 +404,149 @@
         for (const [tnr, cuantos] of porCategoria) {
             const r = API().ronda(tnr);
             const e = r ? empujadas[clave(tnr, r.ronda)] : null;
-            const li = document.createElement("li");
-            li.textContent = nombreDe(tnr) + ": " + cuantos + " tablero" + (cuantos === 1 ? "" : "s") + ", " +
+            const texto = nombreDe(tnr) + ": " + cuantos + " tablero" + (cuantos === 1 ? "" : "s") + ", " +
                 (!r ? "esperando la primera ronda de chess-results" : !r.lichess ? "ronda " + r.ronda + ", esperando que se cree en Lichess (paso 3)" :
                  "ronda " + r.ronda + (e && e.error ? ". Lichess no recibió la última subida (" + e.error + ")" : e && e.hora ? ". Subido a Lichess: " + e.hora : "")) + ".";
+            // Las partidas de cada ronda en un PGN, para subirlas a chess-results.
+            const rondas = Object.keys(estado.juegos).filter((k) => k.startsWith(tnr + "|")).map((k) => Number(k.split("|")[1])).sort((a, b) => b - a);
+            items.push({ texto, tnr, rondas });
+        }
+        if (sin) items.push({ texto: sin + " tablero" + (sin === 1 ? "" : "s") + " sin categoría: no se transmite" + (sin === 1 ? "" : "n") + ".", rondas: [] });
+        pintarLista(ul, items);
+        pintarAlertas();
+    }
+
+    // La lista se vuelve a armar solo si cambió: se pinta después de cada
+    // subida, y rehacerla siempre deja suelto el botón que se está tocando.
+    function pintarLista(ul, items) {
+        const firma = JSON.stringify(items);
+        if (ul.dataset.firma === firma) return;
+        ul.dataset.firma = firma;
+        ul.textContent = "";
+        for (const it of items) {
+            const li = document.createElement("li");
+            li.className = "flex flex-wrap items-center gap-x-2";
+            const txt = document.createElement("span");
+            txt.textContent = it.texto;
+            li.append(txt);
+            for (const n of it.rondas) {
+                const b = document.createElement("button");
+                b.type = "button";
+                b.className = "underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400";
+                b.textContent = "PGN de la ronda " + n;
+                b.dataset.tnr = it.tnr;
+                b.dataset.ronda = n;
+                li.append(b);
+            }
             ul.append(li);
         }
-        if (sin) { const li = document.createElement("li"); li.textContent = sin + " tablero" + (sin === 1 ? "" : "s") + " sin categoría: no se transmite" + (sin === 1 ? "" : "n") + "."; ul.append(li); }
+    }
+
+    function bajarPgn(tnr, n) {
+        const r = API().ronda(tnr, n);
+        if (!r) return;
+        API().bajar(PareoDGT.nombreArchivo(r.nombre || nombreDe(tnr), n).replace(/\.pgn$/, "-partidas.pgn"), pgnDe(clave(tnr, n), r));
+    }
+
+    // ------------------------------------------------------------ los avisos de la sala
+
+    const NOMBRE_PIEZA = { P: "un peón blanco", N: "un caballo blanco", B: "un alfil blanco", R: "una torre blanca", Q: "una dama blanca", K: "el rey blanco",
+        p: "un peón negro", n: "un caballo negro", b: "un alfil negro", r: "una torre negra", q: "una dama negra", k: "el rey negro", ".": "nada" };
+    const dondeEsta = (t) => { const a = asignacion(t.dir); return a ? nombreDe(a.tnr) + ", mesa " + a.mesa : "sin mesa"; };
+    // «5, 7, 8» y, si son muchas, las primeras y cuántas más.
+    const lista = (xs) => xs.slice(0, 12).join(", ") + (xs.length > 12 ? " y " + (xs.length - 12) + " más" : "");
+
+    // Lo que el árbitro tiene que mirar, de lo más urgente a lo menos.
+    function alertas() {
+        const out = [];
+        const orden = [...tableros.values()].sort((a, b) => a.dir - b.dir);
+        for (const t of orden) {
+            if (t.fallas >= 3) out.push({ clave: "sin-respuesta-" + t.dir, tipo: "error", texto: "Tablero " + t.dir + " (" + dondeEsta(t) + "): no contesta. ¿Se soltó el cable o se apagó?" });
+            const p = t.juego && t.juego.partida;
+            if (!p) continue;
+            const desde = p.trabadaDesde();
+            if (desde !== null && Date.now() - desde >= TRABADA_MS) {
+                const d = p.diferencias() || [];
+                out.push({ clave: "trabada-" + t.dir + "-" + p.jugadas().length, tipo: "aviso",
+                    texto: "Tablero " + t.dir + " (" + dondeEsta(t) + "): hace " + Math.round((Date.now() - desde) / 1000) + " s que no coincide con ninguna jugada. " +
+                        d.slice(0, 6).map((x) => x.casilla + ": en el tablero " + NOMBRE_PIEZA[x.tablero] + ", en la partida " + NOMBRE_PIEZA[x.partida]).join("; ") + (d.length > 6 ? "…" : "") +
+                        ". ¿Una pieza mal puesta o una jugada ilegal?" });
+            }
+            const b = p.resultado() === "*" ? p.bandera() : null;
+            if (b) out.push({ clave: "bandera-" + t.dir + "-" + t.juego.ronda, tipo: "aviso",
+                texto: "Tablero " + t.dir + " (" + dondeEsta(t) + "): cayó la bandera de " + (b.color === "w" ? "las blancas" : b.color === "b" ? "las negras" : "la " + b.lado) + ". El resultado lo decide el árbitro." });
+        }
+        if (tableros.size) {
+            for (const c of API() ? API().torneos() : []) {
+                const r = API().ronda(c.tnr);
+                if (!r) continue;
+                const conTablero = new Set([...tableros.values()].map((t) => asignacion(t.dir)).filter((a) => a && a.tnr === c.tnr).map((a) => a.mesa));
+                const faltan = PareoDGT.partidas(r.pareo, { mesas: r.mesas }).map((m) => m.mesa).filter((m) => !conTablero.has(m));
+                if (faltan.length && conTablero.size) out.push({ clave: "faltan-" + c.tnr + "-" + r.ronda + "-" + faltan.join(","), tipo: "info",
+                    texto: c.nombre + ", ronda " + r.ronda + ": " + (faltan.length === 1 ? "la mesa " : "las mesas ") + lista(faltan) + " no tiene" + (faltan.length === 1 ? "" : "n") + " tablero conectado: no se transmite" + (faltan.length === 1 ? "" : "n") + "." });
+            }
+            const sinMesa = orden.filter((t) => !asignacion(t.dir)).map((t) => t.dir);
+            if (sinMesa.length) out.push({ clave: "sin-mesa-" + sinMesa.join(","), tipo: "info", texto: "Sin categoría ni mesa: " + (sinMesa.length === 1 ? "el tablero " : "los tableros ") + lista(sinMesa) + "." });
+        }
+        return out;
+    }
+
+    const avisados = new Set();   // los avisos que ya sonaron
+    let ultimasAlertas = "";
+    const CLASE_ALERTA = { error: "bg-red-50 text-red-800 dark:bg-red-950 dark:text-red-200", aviso: "bg-accent-100 text-brand-900 dark:bg-brand-800 dark:text-white", info: "bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-100" };
+    const PREFIJO = { error: "Problema: ", aviso: "Atención: ", info: "" };
+
+    function pintarAlertas() {
+        if (!$("directo-alertas")) return;
+        const xs = alertas();
+        const firma = xs.map((a) => a.clave + "|" + a.texto).join("\n");
+        if (firma === ultimasAlertas) return;
+        ultimasAlertas = firma;
+        const ul = $("directo-alertas");
+        ul.textContent = "";
+        for (const a of xs) {
+            const li = document.createElement("li");
+            li.className = "rounded-lg px-3 py-2 " + CLASE_ALERTA[a.tipo];
+            li.textContent = PREFIJO[a.tipo] + a.texto;
+            li.dataset.tipo = a.tipo;
+            ul.append(li);
+        }
+        $("directo-alertas-vacio").hidden = xs.length > 0;
+        const nuevos = xs.filter((a) => a.tipo !== "info" && !avisados.has(a.clave));
+        for (const a of nuevos) avisados.add(a.clave);
+        if (nuevos.length && estado.sonido) sonar();
+    }
+
+    let audio = null;
+    function sonar() {
+        try {
+            const C = window.AudioContext || window.webkitAudioContext;
+            if (!C) return;
+            audio = audio || new C();
+            const o = audio.createOscillator(), g = audio.createGain();
+            o.frequency.value = 880;
+            g.gain.value = 0.15;
+            o.connect(g);
+            g.connect(audio.destination);
+            o.start();
+            o.stop(audio.currentTime + 0.25);
+            window.__sonidosDirecto = (window.__sonidosDirecto || 0) + 1;
+        } catch (_) { /* sin sonido */ }
+    }
+
+    // ------------------------------------------------------------ ¿cuál es este tablero?
+
+    let identificar = false;
+    function marcarFila(t) {
+        if (!t.fila) return;
+        const a = asignacion(t.dir);
+        $("directo-cual-texto").textContent = "Es el tablero " + t.dir + (a ? " (" + nombreDe(a.tnr) + ", mesa " + a.mesa + ")" : ", todavía sin categoría ni mesa") + ".";
+        for (const x of tableros.values()) if (x.fila) x.fila.classList.remove("bg-accent-100", "dark:bg-brand-800");
+        t.fila.classList.add("bg-accent-100", "dark:bg-brand-800");
+        t.fila.dataset.marcada = "si";
+        t.fila.scrollIntoView({ block: "nearest" });
+        const cat = t.fila.querySelector("select");
+        if (cat && document.activeElement !== cat) cat.focus({ preventScroll: true });
     }
 
     function pintarPuertos() {
@@ -589,6 +729,19 @@
         if (!$("btn-directo-puerto")) return;
         $("btn-directo-puerto").addEventListener("click", conectar);
         $("form-directo-asignar").addEventListener("submit", asignarVarios);
+        $("directo-categorias").addEventListener("click", (ev) => {
+            const b = ev.target.closest("button[data-ronda]");
+            if (b) bajarPgn(b.dataset.tnr, Number(b.dataset.ronda));
+        });
+        $("directo-sonido").checked = estado.sonido;
+        $("directo-sonido").addEventListener("change", () => { estado.sonido = $("directo-sonido").checked; guardar(); if (estado.sonido) sonar(); });
+        $("btn-directo-cual").addEventListener("click", () => {
+            identificar = !identificar;
+            $("btn-directo-cual").setAttribute("aria-pressed", identificar ? "true" : "false");
+            $("btn-directo-cual").textContent = identificar ? "Listo: dejar de buscar" : "¿Cuál es este tablero?";
+            $("directo-cual-texto").textContent = identificar ? "Levanta una pieza del tablero que quieres encontrar: su fila se marca." : "";
+            if (!identificar) for (const x of tableros.values()) if (x.fila) { x.fila.classList.remove("bg-accent-100", "dark:bg-brand-800"); delete x.fila.dataset.marcada; }
+        });
         if (!navigator.serial) {
             $("btn-directo-puerto").disabled = true;
             $("directo-error").textContent = "Este navegador no puede usar puertos COM. Usa Chrome o Edge en la computadora.";

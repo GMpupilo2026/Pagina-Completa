@@ -191,6 +191,8 @@
     const sans = [];                // las jugadas en SAN: chess.history() las vuelve a armar todas cada vez (caro)
     let ultimoReloj = null;
     let resultado = "*";
+    let trabadaDesde = null;        // desde cuándo el tablero no coincide con la partida
+    const ahoraMs = o.ahora || (() => Date.now());
     const p = { cambios: 0 };
 
     const fisico = () => (rotado ? girar(casillas) : casillas);
@@ -281,8 +283,27 @@
       return { nuevas: [], atras: 0 };       // una pieza en la mano: se espera
     };
 
+    // Las casillas donde el tablero no coincide con la partida (con la partida
+    // empezada): [{ casilla: "e4", tablero: "N", partida: "." }]. Vacío si
+    // coincide; null si todavía espera la posición inicial.
+    p.diferencias = function () {
+      if (rotado === null) return null;
+      const a = expandir(colocacion(fisico())), b = expandir(piezasDe(chess.fen()));
+      const out = [];
+      for (let i = 0; i < 64; i++) if (a[i] !== b[i]) out.push({ casilla: nombre(i), tablero: a[i], partida: b[i] });
+      return out;
+    };
+    // Una pieza en la mano dura segundos; una pieza mal puesta o una jugada
+    // ilegal, mucho más: quien mira cuánto lleva así decide si avisar.
+    function anotarTrabada() {
+      const d = resultado === "*" ? p.diferencias() : [];
+      if (d && d.length) { if (trabadaDesde === null) trabadaDesde = ahoraMs(); }
+      else trabadaDesde = null;
+    }
+    p.trabadaDesde = () => trabadaDesde;
+
     // Lo que trae el tablero.
-    p.tablero = function (todas) { for (let i = 0; i < 64; i++) casillas[i] = todas[i] || 0; return p.revisar(); };
+    p.tablero = function (todas) { for (let i = 0; i < 64; i++) casillas[i] = todas[i] || 0; const r = p.revisar(); anotarTrabada(); return r; };
     p.memoria = function (eventos) {
       let nuevas = [], atras = 0;
       const juntar = (r) => { if (r.atras) { nuevas = nuevas.slice(0, Math.max(0, nuevas.length - r.atras)); atras += r.atras; } nuevas = nuevas.concat(r.nuevas); };
@@ -296,6 +317,7 @@
         else if (e.tipo === "reloj") { juntar(p.revisar()); p.relojParado(e.lado, e.segundos); }
       }
       juntar(p.revisar());
+      anotarTrabada();
       return { nuevas, atras };
     };
 
@@ -322,7 +344,17 @@
       if (r[ladoDe("w")].bandera || r[ladoDe("b")].bandera) p.cambios += 1;
     };
 
-    p.ponerResultado = function (r) { resultado = r; p.cambios += 1; };
+    // La bandera que cayó, según la última lectura del reloj: de qué lado y,
+    // si ya se sabe, de qué color.
+    p.bandera = function () {
+      const r = ultimoReloj;
+      if (!r) return null;
+      const lado = r.izquierda.bandera ? "izquierda" : r.derecha.bandera ? "derecha" : null;
+      if (!lado) return null;
+      return { lado, color: blancasA ? (lado === blancasA ? "w" : "b") : null, segundos: r[lado === "izquierda" ? "derecha" : "izquierda"].segundos };
+    };
+
+    p.ponerResultado = function (r) { resultado = r; trabadaDesde = null; p.cambios += 1; };
     p.resultado = () => resultado;
     p.jugadas = () => sans.slice();
     p.fen = () => chess.fen();

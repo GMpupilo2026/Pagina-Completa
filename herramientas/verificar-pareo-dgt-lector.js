@@ -399,7 +399,7 @@ async function pruebaPagina(browser) {
   cierto("las jugadas de cada categoría van a su ronda en Lichess, con el reloj de cada jugada",
     (await esperarEmpuje("rondaA01", '\\[White "Sub-12 R1 blancas 1"\\][\\s\\S]*1\\. e4 \\{ \\[%clk 0:04:57\\] \\} c5 \\{ \\[%clk 0:04:56\\] \\}')) &&
     (await esperarEmpuje("rondaB01", '\\[White "Abierto R1 blancas 1"\\][\\s\\S]*1\\. d4 \\{ \\[%clk 0:04:58\\] \\}')), (empujados.rondaA01 || "").slice(0, 300));
-  igual("cada categoría dice su ronda y cuándo subió", (await p.$$eval("#directo-categorias li", (l) => l.map((x) => x.textContent.replace(/: [\d:]+ [ap]\. m/, ": HORA")))), ["Sub-12: 2 tableros, ronda 1. Subido a Lichess: HORA.", "Abierto: 1 tablero, ronda 1. Subido a Lichess: HORA."]);
+  igual("cada categoría dice su ronda y cuándo subió", (await p.$$eval("#directo-categorias li > span", (l) => l.map((x) => x.textContent.replace(/: [\d:]+ [ap]\. m/, ": HORA")))), ["Sub-12: 2 tableros, ronda 1. Subido a Lichess: HORA.", "Abierto: 1 tablero, ronda 1. Subido a Lichess: HORA."]);
 
   // La mesa 1 de Sub-12 termina; la mesa 2 sigue jugando. Sale la ronda 2 de Sub-12.
   // Nadie marca el resultado en esta página: lo anota el árbitro en chess-results.
@@ -481,6 +481,76 @@ async function pruebaPagina(browser) {
   await ctx.close();
 }
 
+// Los avisos de la sala, «¿Cuál es este tablero?», la bandera y el PGN de la
+// ronda: un solo tablero con categoría y mesa, y dos sin nada.
+async function pruebaSala(browser) {
+  console.log("\n=== pareo-dgt.html: los avisos de la sala ===");
+  const ctx = await browser.newContext({ serviceWorkers: "block", acceptDownloads: true });
+  const p = await ctx.newPage();
+  const errores = [];
+  p.on("pageerror", (e) => errores.push(String(e)));
+  await p.route("**/fonts.googleapis.com/**", (r) => r.fulfill({ status: 200, contentType: "text/css", body: "" }));
+  await p.route("**/js/supabase-client.js", (r) => r.fulfill({ contentType: "application/javascript", body: clienteFalso() }));
+  await p.route("https://falso.supabase.co/**", (r) => r.fulfill({ contentType: "application/json", body: "{}" }));
+  await p.route("https://lichess.org/**", (r) => /\/api\/account$/.test(r.request().url())
+    ? r.fulfill({ contentType: "application/json", body: JSON.stringify({ id: "oscar", username: "Oscar" }) })
+    : r.fulfill({ contentType: "application/json", body: "{}" }));
+  await p.addInitScript(() => { window.PAREO_DGT_TRABADA_MS = 1500; });
+  await p.addInitScript(preparar);
+  await p.goto(BASE + "/pareo-dgt.html", { waitUntil: "networkidle" });
+  await p.waitForFunction(() => /Conectado a Lichess/.test(document.getElementById("lichess-estado").textContent));
+  await p.click("#btn-directo-puerto");
+  await p.waitForFunction(() => document.querySelectorAll("#directo-tableros tr").length === 3, null, { timeout: 30000 });
+  await p.selectOption("#directo-tableros tr:nth-child(1) select[aria-label^='Categoría']", "111");
+  const avisos = () => p.$$eval("#directo-alertas li", (l) => l.map((x) => x.textContent));
+  const esperarAviso = (re) => p.waitForFunction((re) => [...document.querySelectorAll("#directo-alertas li")].some((x) => new RegExp(re).test(x.textContent)), re, { timeout: 20000 });
+
+  await esperarAviso("la mesa 2 no tiene tablero");
+  const a1 = await avisos();
+  cierto("las mesas de la ronda sin tablero conectado se avisan (no se transmiten)", a1.some((x) => x === "Sub-12, ronda 1: la mesa 2 no tiene tablero conectado: no se transmite."), a1.join(" | "));
+  cierto("y los tableros sin categoría ni mesa", a1.some((x) => x === "Sin categoría ni mesa: los tableros 10002, 10003."), a1.join(" | "));
+
+  await p.check("#directo-sonido");
+  igual("«Avisar con un sonido» suena una vez para que se oiga cómo es", await p.evaluate(() => window.__sonidosDirecto), 1);
+
+  // ¿Cuál es este tablero? Se levanta una pieza del 10002 y su fila se marca.
+  await p.click("#btn-directo-cual");
+  igual("«¿Cuál es este tablero?» queda apretado", await p.getAttribute("#btn-directo-cual", "aria-pressed"), "true");
+  await p.evaluate(() => window.__jugar(1, "e4", 2));
+  await p.waitForFunction(() => document.querySelector("#directo-tableros tr:nth-child(2)").dataset.marcada === "si", null, { timeout: 15000 });
+  igual("se levanta una pieza de un tablero y su fila se marca, con su número",
+    [await p.textContent("#directo-cual-texto"), await p.evaluate(() => document.activeElement && document.activeElement.getAttribute("aria-label"))],
+    ["Es el tablero 10002, todavía sin categoría ni mesa.", "Categoría del tablero 10002"]);
+  await p.click("#btn-directo-cual");
+
+  // Una pieza mal puesta: el caballo de b1 aparece en d4 después de 1. e4.
+  await p.evaluate(() => { window.__jugar(0, "e4", 2); });
+  await p.waitForFunction(() => /1 · 1\. e4/.test(document.querySelector("#directo-tableros tr:nth-child(1) td:nth-child(5)").textContent), null, { timeout: 15000 });
+  await p.evaluate(() => { const t = window.__tabs[0]; t.ponerFen("rnbqkbnr/pppppppp/8/8/3NP3/8/PPPP1PPP/R1BQKBNR b KQkq - 0 1"); });
+  await esperarAviso("Tablero 10001 .*no coincide con ninguna jugada");
+  const trabada = (await avisos()).find((x) => /10001/.test(x) && /no coincide/.test(x)) || "";
+  cierto("una pieza mal puesta: al rato se avisa qué tablero y qué casillas no cuadran",
+    /^Atención: Tablero 10001 \(Sub-12, mesa 1\): hace \d+ s que no coincide con ninguna jugada\. d4: en el tablero un caballo blanco, en la partida nada; b1: en el tablero nada, en la partida un caballo blanco\. ¿Una pieza mal puesta o una jugada ilegal\?$/.test(trabada), trabada);
+  igual("y suena (una vez por aviso nuevo)", await p.evaluate(() => window.__sonidosDirecto), 2);
+  await p.evaluate(() => { const t = window.__tabs[0]; t.ponerFen("rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1"); });
+  await p.waitForFunction(() => ![...document.querySelectorAll("#directo-alertas li")].some((x) => /no coincide/.test(x.textContent)), null, { timeout: 15000 });
+  cierto("al volver la pieza a su casilla, el aviso se va solo", true);
+
+  // La bandera de las negras del 10002 (las blancas jugaron 1. e4 a la izquierda).
+  await p.evaluate(() => { window.__tabs[1].reloj.bandera = "derecha"; });
+  await esperarAviso("cayó la bandera");
+  cierto("la bandera que cae se avisa, con el color, y el resultado queda para el árbitro",
+    (await avisos()).includes("Atención: Tablero 10002 (sin mesa): cayó la bandera de las negras. El resultado lo decide el árbitro."), (await avisos()).join(" | "));
+
+  // El PGN de la ronda, para chess-results.
+  const [descarga] = await Promise.all([p.waitForEvent("download"), p.click("#directo-categorias button:has-text('PGN de la ronda 1')")]);
+  const pgn = fs.readFileSync(await descarga.path(), "utf8");
+  cierto("«PGN de la ronda 1» baja las partidas de la ronda, con su pareo, para chess-results",
+    descarga.suggestedFilename() === "sub-12-ronda-1-partidas.pgn" && /\[White "Sub-12 R1 blancas 1"\][\s\S]*1\. e4 \{ \[%clk 0:04:58\] \}/.test(pgn), descarga.suggestedFilename() + " " + pgn.slice(0, 300));
+  cierto("sin errores en la página", errores.length === 0, errores.join(" | "));
+  await ctx.close();
+}
+
 (async () => {
   pruebaPiezas();
   await pruebaCadena();
@@ -490,6 +560,7 @@ async function pruebaPagina(browser) {
   const browser = await chromium.launch({ executablePath: fs.existsSync(CHROME) ? CHROME : undefined });
   try {
     await pruebaPagina(browser);
+    await pruebaSala(browser);
   } finally {
     await browser.close();
   }
