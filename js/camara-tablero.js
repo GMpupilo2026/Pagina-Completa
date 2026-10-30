@@ -2024,7 +2024,7 @@
             "Quien decide es el árbitro, no la cámara.",
             "El video queda solo en este celular: no se manda a ningún lado y se borra al terminar.",
         ]) lista.append(el("li", "", x));
-        hoja.append(lista, el("p", "hoja-mesa-pie", "Ajedrez Integral · La cámara que lee el tablero"));
+        hoja.append(lista, el("p", "hoja-mesa-pie", "Ajedrez Integral · Notara, la cámara que lee el tablero"));
         document.body.classList.add("imprimir-hoja");
         window.print();
     }
