@@ -14,6 +14,11 @@
        copian; se cierran y no vuelven;
      · una arena sale con la hora de Costa Rica (UTC−6) y su ritmo;
      · un error de la función se dice, no se traga.
+     · el juego limpio: «Revisar partidas» pide la arena, dice cuántas se
+       revisaron, muestra solo las que tienen algo, con cada indicio escrito
+       (no solo en color) y dicho como indicio; un nombre con HTML es texto;
+       anular sin motivo no llama a la función, con motivo sí; una anulada
+       dice su motivo y se devuelve.
 
    Uso:  python3 -m http.server 8777    (desde la raíz del sitio)
          node herramientas/verificar-sala-admin.js                         */
@@ -210,6 +215,64 @@ async function pruebaPantalla(browser) {
   await ctx.close();
 }
 
+async function pruebaJuegoLimpio(browser) {
+  console.log("\n=== El juego limpio ===");
+  let anulada = false;
+  const partidas = () => [
+    { id: "p1", blancas: "Ana Rojas", negras: "<b>Luis</b>", resultado: "1-0", motivo: "mate", jugadas: 31, anulada,
+      anulada_motivo: anulada ? "Declaró un mate que no era." : null, anulada_por: anulada ? "oscar@x.com" : null, anulada_en: anulada ? "2026-10-30T20:00:00Z" : null,
+      salidas_blancas: 4, salidas_negras: 0, problemas: [{ tipo: "fin_falso", jugada: 31, detalle: "mate" }],
+      indicios: { w: [{ tipo: "salidas", veces: 4 }], b: [{ tipo: "tiempos_parejos", jugadas: 18, promedio_ms: 6200 }] } },
+    { id: "p2", blancas: "Ana Rojas", negras: "Luis Mora", resultado: "0-1", motivo: "abandono", jugadas: 22, anulada: false,
+      salidas_blancas: 0, salidas_negras: 1, problemas: [], indicios: { w: [], b: [] } },
+  ];
+  const { page, ctx, errores, pedidos } = await abrir(browser, true, {
+    responder: (c) => {
+      if (c.accion === "juego_limpio") return { cuerpo: { partidas: partidas(), revisadas: 2 } };
+      if (c.accion === "anular") { anulada = true; return { cuerpo: {} }; }
+      if (c.accion === "devolver") { anulada = false; return { cuerpo: {} }; }
+      return { cuerpo: { ok: true } };
+    },
+  });
+  await page.waitForSelector("#app:not(.hidden)");
+  const revisar = page.getByRole("button", { name: "Revisar las partidas de la arena Arena de apertura" });
+  igual("«Revisar partidas» empieza cerrado", await revisar.getAttribute("aria-expanded"), "false");
+  await revisar.click();
+  await page.waitForFunction(() => /Juego limpio/.test(document.getElementById("lista-arenas").textContent));
+  igual("pide el juego limpio de ESA arena", pedidos.filter((p) => p.cuerpo.accion === "juego_limpio")[0].cuerpo.torneo_id, "t1");
+  igual("y dice que se abrió", await revisar.getAttribute("aria-expanded"), "true");
+  const caja = await texto(page, "#lista-arenas");
+  ok("dice cuántas se revisaron y cuántas tienen algo", /2 partidas terminadas revisadas con chess\.js\. 1 con algo para mirar\./.test(caja), caja);
+  ok("y que son indicios, no pruebas", /indicios, no pruebas: nada se anula solo/.test(caja));
+  ok("solo muestra las que tienen algo", !/Luis Mora/.test(caja));
+  ok("el problema de la revisión, escrito", /Revisión: Se declaró «mate» y la posición no lo es\./.test(caja), caja);
+  ok("cada indicio con el nombre de quien lo tuvo", /Indicio: Ana Rojas salió de la pantalla 4 veces durante la partida\./.test(caja)
+    && /Indicio: <b>Luis<\/b> jugó 18 jugadas con tiempos muy parejos \(unos 6 s cada una\)\./.test(caja), caja);
+  ok("un nombre con HTML es texto", (await page.$$("#lista-arenas b")).length === 0);
+
+  // Anular sin motivo: no se llama a la función.
+  await page.getByRole("button", { name: "Anular la partida Ana Rojas – <b>Luis</b>" }).click();
+  await page.locator("dialog[data-avisos][open] input").fill("   ");
+  await page.locator("dialog[data-avisos][open] [data-avisos-aceptar]").click();
+  await page.waitForTimeout(200);
+  ok("anular sin motivo no llama a la función", pedidos.filter((p) => p.cuerpo.accion === "anular").length === 0);
+  await page.getByRole("button", { name: "Anular la partida Ana Rojas – <b>Luis</b>" }).click();
+  igual("el botón del diálogo dice lo que hace", await page.locator("dialog[data-avisos][open] [data-avisos-aceptar]").textContent(), "Anular la partida");
+  await page.locator("dialog[data-avisos][open] input").fill("Declaró un mate que no era.");
+  await page.locator("dialog[data-avisos][open] [data-avisos-aceptar]").click();
+  await page.waitForFunction(() => /Anulada: no cuenta/.test(document.getElementById("lista-arenas").textContent));
+  igual("con motivo, manda la partida y el motivo", (({ partida_id, motivo }) => ({ partida_id, motivo }))(pedidos.filter((p) => p.cuerpo.accion === "anular")[0].cuerpo), { partida_id: "p1", motivo: "Declaró un mate que no era." });
+  ok("la anulada dice su motivo y quién", /Motivo: Declaró un mate que no era\. · oscar@x\.com/.test(await texto(page, "#lista-arenas")));
+  await page.getByRole("button", { name: "Devolver los puntos de la partida Ana Rojas – <b>Luis</b>" }).click();
+  await page.locator("dialog[data-avisos][open] [data-avisos-aceptar]").click();
+  await page.waitForFunction(() => !/Anulada: no cuenta/.test(document.getElementById("lista-arenas").textContent));
+  igual("«Devolver los puntos» manda esa partida", pedidos.filter((p) => p.cuerpo.accion === "devolver")[0].cuerpo.partida_id, "p1");
+  await revisar.click();
+  igual("se vuelve a cerrar", await revisar.getAttribute("aria-expanded"), "false");
+  ok("sin errores de JavaScript", errores.length === 0, errores.join(" | "));
+  await ctx.close();
+}
+
 async function pruebaFallaTotal(browser) {
   console.log("\n=== Si la función falla ===");
   const { page, ctx } = await abrir(browser, true, { responder: () => ({ estado: 502, cuerpo: { error: "No se pudo leer la base." } }) });
@@ -224,6 +287,7 @@ async function pruebaFallaTotal(browser) {
   try {
     await pruebaPermiso(browser);
     await pruebaPantalla(browser);
+    await pruebaJuegoLimpio(browser);
     await pruebaFallaTotal(browser);
   } finally {
     await browser.close();

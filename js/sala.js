@@ -774,6 +774,13 @@
     $("otra-partida").addEventListener("click", async () => { await volverAArena(); buscar(); });
     $("resultado-volver").addEventListener("click", volverAArena);
     document.addEventListener("visibilitychange", () => {
+      // Juego limpio: salir de la pantalla en medio de una partida queda
+      // anotado (lo cuenta la base; la pantalla de la arena lo avisa). Si no
+      // llega, no se reintenta: es un indicio, no un castigo.
+      if (document.visibilityState === "hidden") {
+        if (S.partida && S.partida.estado === "en_juego") Promise.resolve(sb.rpc("arena_anotar_salida", { p_partida: S.partida.id })).catch(() => {});
+        return;
+      }
       if (document.visibilityState !== "visible") return;
       if (S.partida && S.partida.estado === "en_juego") releer();
       if (S.buscando) latir();

@@ -52,7 +52,7 @@
     while (k < t.rondas.length && T.rondaCompleta(t.rondas[k])) k++;
     return k;
   };
-  const totalRondas = (t) => (t.sistema === "todos" ? T.rondasTodos(t) : Number(t.rondasTotales) || 0);
+  const totalRondas = (t) => T.rondasDelTorneo(t);
   const terminado = (t) => t.jugadores.length > 1 && rondasCompletas(t) >= totalRondas(t);
   const clasificacionDe = (t) => (t.ordenOficial ? conOrdenOficial(t) : aplicarDesempate(t, E.clasificacion(Object.assign({}, t, { rondas: t.rondas.slice(0, rondasCompletas(t)) }), t.desempates)));
 
@@ -119,9 +119,9 @@
     const meses = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "setiembre", "octubre", "noviembre", "diciembre"];
     return m ? Number(m[3]) + " de " + meses[Number(m[2]) - 1] + " de " + m[1] : "";
   };
-  const sistemaTexto = (t) => (t.sistema === "todos" ? "todos contra todos" : "suizo de " + (Number(t.rondasTotales) || 0) + " rondas");
+  const sistemaTexto = (t) => (t.sistema === "todos" ? "todos contra todos" : t.sistema === "scheveningen" ? "Scheveningen" : "suizo de " + (Number(t.rondasTotales) || 0) + " rondas");
   // Para las tablas, más corto: en una columna angosta lo largo se corta.
-  const sistemaCorto = (t) => (t.sistema === "todos" ? "Todos c. todos" : "Suizo, " + (Number(t.rondasTotales) || 0) + " rondas");
+  const sistemaCorto = (t) => (t.sistema === "todos" ? "Todos c. todos" : t.sistema === "scheveningen" ? "Scheveningen" : "Suizo, " + (Number(t.rondasTotales) || 0) + " rondas");
   const nombreTorneo = (t) => t.grupo || t.nombre;
   const linea = (s) => "______________________________   " + s;
 
@@ -134,7 +134,7 @@
   }
   function textoConfiguracion(c) {
     const p = c.puntos || {};
-    return [c.ritmo ? "ritmo " + c.ritmo : "sin ritmo", c.sistema === "todos" ? "todos contra todos" : "suizo de " + (Number(c.rondasTotales) || 0) + " rondas",
+    return [c.ritmo ? "ritmo " + c.ritmo : "sin ritmo", c.sistema === "todos" ? "todos contra todos" : c.sistema === "scheveningen" ? "Scheveningen" : "suizo de " + (Number(c.rondasTotales) || 0) + " rondas",
       "puntos " + [p.victoria, p.tablas, p.derrota].map(puntosTexto).join(" · ") + ", bye " + puntosTexto(p.bye || 0),
       "desempates " + ((c.desempates || []).join(", ") || "ninguno")].join("; ");
   }
@@ -1063,7 +1063,7 @@
         const c = [color(id, r - 2), color(id, r - 1), color(id, r)];
         if (c[0] && c.every((y) => y === c[0])) out.push({ tipo: "colores", mesa: i, nombre: x.nombre, color: c[0] });
       }
-      if (t.sistema !== "todos" && r > 0) {
+      if (!T.fijo(t) && r > 0) {
         const pb = T.puntosHasta(t, m.b, r), pn = T.puntosHasta(t, m.n, r);
         if (Math.abs(pb - pn) > 1) out.push({ tipo: "puntos", mesa: i, b: b.nombre, n: n.nombre, pb, pn });
       }
