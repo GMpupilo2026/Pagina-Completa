@@ -312,6 +312,18 @@
     function pareoDe(datos) {
         return { torneo: datos.torneo, fecha: datos.fecha, hora: datos.hora, ronda: datos.ronda, mesas: datos.mesas };
     }
+    const resultados = (datos) => ((datos && datos.mesas) || []).map((m) => m.mesa + ":" + (m.resultado || "")).join("|");
+
+    // Al salir la ronda nueva, la anterior se lee una vez más: sus últimos
+    // resultados se anotaron justo antes de emparejar y quizá no se vieron.
+    async function cerrarAnterior(t, ronda) {
+        const anterior = t.rondas[String(ronda - 1)];
+        if (!anterior || !anterior.pareo) return;
+        try {
+            const datos = await leerPareo(t.tnr, ronda - 1);
+            if (datos && Number(datos.ronda) === ronda - 1 && resultados(datos) !== resultados(anterior.pareo)) { anterior.pareo = pareoDe(datos); guardar(); }
+        } catch (_) { /* se queda con lo que tenía */ }
+    }
 
     async function revisarTorneo(t, opciones) {
         const datos = await leerPareo(t.tnr);
@@ -322,8 +334,10 @@
         t.rondas = t.rondas || {};
         const que = PareoDGT.decidir(t, datos, t.mesas);
         const yaHecha = t.rondas[String(datos.ronda)];
-        // Las rondas guardadas antes de «Transmitir sin LiveChess» no tienen el pareo.
-        if (yaHecha && !yaHecha.pareo && que === "igual") { yaHecha.pareo = pareoDe(datos); guardar(); }
+        // Las rondas guardadas antes de «Transmitir sin LiveChess» no tienen el
+        // pareo, y los resultados que el árbitro va anotando en chess-results
+        // llegan solos a Lichess («Transmitir sin LiveChess» los toma de acá).
+        if (yaHecha && que === "igual" && (!yaHecha.pareo || resultados(yaHecha.pareo) !== resultados(datos))) { yaHecha.pareo = pareoDe(datos); guardar(); }
         if (que === "igual" && yaHecha.lichessPendiente && estado.crearRondas && token && usuarioLichess) {
             await intentarLichess(t, datos, yaHecha.pgn);
         }
@@ -342,6 +356,7 @@
         if (!n) anotar("«" + t.nombre + "», ronda " + datos.ronda + ": ninguna de las mesas elegidas (" + t.mesas + ") tiene partida en esta ronda. El archivo sale vacío: revisa las mesas del torneo.", { error: true });
         const donde = await guardarArchivo(nombre, pgn);
         const bajarOtra = { texto: "Bajarlo otra vez", accion: () => bajar(nombre, pgn) };
+        if (que === "nueva") await cerrarAnterior(t, Number(datos.ronda));
         if (que === "nueva") {
             anotar("«" + t.nombre + "», ronda " + datos.ronda + ": " + n + " partida" + (n === 1 ? "" : "s") + " en " + nombre + ", " + donde + ". Impórtalo en LiveChess.", { importante: true, botones: [bajarOtra] });
             document.title = "Ronda " + datos.ronda + " lista — Pareo para DGT";

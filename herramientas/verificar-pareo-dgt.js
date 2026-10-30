@@ -186,6 +186,14 @@ function pruebaModulo() {
     /\[Black "Nunez Brenes, Dora"\]/.test(DGT.pgn(DATOS, { sinTildes: true })));
   igual("sin fecha, la de PGN para «no se sabe»", (DGT.pgn(Object.assign({}, DATOS, { fecha: "" })).match(/\[Date "[^"]*"\]/) || [])[0], '[Date "????.??.??"]');
 
+  // El resultado como lo escribe chess-results, en el formato del PGN
+  // («Transmitir sin LiveChess» lo pasa solo a Lichess).
+  igual("los resultados de chess-results: 1 - 0, 0 - 1, ½ - ½, + - - y - - + (no se presentó); sin anotar o los dos ausentes, nada",
+    ["1 - 0", "0 - 1", "½ - ½", "1/2 - 1/2", "+ - -", "- - +", "- - -", "", null].map(DGT.resultadoCR),
+    ["1-0", "0-1", "1/2-1/2", "1/2-1/2", "1-0", "0-1", null, null, null]);
+  const conJugadas = DGT.pgn(DATOS, { jugadas: { 1: { texto: "1. e4 e5 1-0", resultado: "1-0" } } });
+  cierto("con las jugadas de una mesa, el PGN lleva su resultado y sus jugadas", /\[Result "1-0"\]\n[\s\S]*?\n\n1\. e4 e5 1-0\n/.test(conJugadas), conJugadas.slice(0, 300));
+
   const hecho = { rondas: { 3: { firma: DGT.firma(DATOS), mesasElegidas: "" } } };
   igual("qué hacer: sin ronda emparejada, esperar", DGT.decidir({ rondas: {} }, { ronda: 1, mesas: [DATOS.mesas[2]] }), "esperar");
   igual("una ronda sin archivo es nueva", DGT.decidir({ rondas: {} }, DATOS), "nueva");
