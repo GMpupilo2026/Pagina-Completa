@@ -118,7 +118,7 @@ const ClaseCamara = (function () {
             '<h2 id="camara-clase-titulo" class="font-serif font-bold text-brand-800 dark:text-white text-sm"><span aria-hidden="true">🎥</span> Tu tablero de verdad, con la cámara</h2>' +
             '<button type="button" id="camara-clase-cerrar" class="shrink-0 w-6 h-6 flex items-center justify-center rounded-lg text-brand-400 hover:text-brand-700 dark:hover:text-brand-200 hover:bg-brand-100 dark:hover:bg-brand-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400" aria-label="Cerrar"><span aria-hidden="true">✕</span></button></div>' +
             '<ol class="text-xs text-brand-600 dark:text-brand-300 list-decimal pl-4 space-y-1">' +
-            '<li>En tu celular, abre <a href="camara-tablero.html" target="_blank" rel="noopener" class="underline font-semibold">la cámara que lee el tablero</a>, ponlo encima de tu tablero y calibra con la posición inicial.</li>' +
+            '<li>En tu celular, abre <a href="camara-tablero.html" target="_blank" rel="noopener" class="underline font-semibold">Notara, la cámara que lee el tablero</a>, ponlo encima de tu tablero y calibra con la posición inicial.</li>' +
             '<li>Toca «Transmitir en vivo» y escribe aquí el código de 8 letras que aparece.</li>' +
             '<li>Juega en tu tablero: cada jugada que anote la cámara se juega sola en el tablero de la clase.</li></ol>' +
             '<form id="camara-clase-conectar" class="mt-3 flex gap-2" novalidate>' +
