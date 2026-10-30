@@ -62,7 +62,7 @@
     function pintarEstado(v) {
         const total = v.partida.jugadas.length;
         const n = v.chess.history().length;
-        const lc = v.dgt.modo === "avisa" ? "LiveChess lo está siguiendo" : v.dgt.pedidos.length ? "LiveChess ya lo reconoció; todavía no pidió las jugadas" : "Esperando a LiveChess";
+        const lc = v.dgt.modo === "avisa" || v.dgt.siguiendo ? "LiveChess lo está siguiendo" : v.dgt.pedidos.length ? "LiveChess ya lo reconoció; todavía no pidió las jugadas" : "Esperando a LiveChess";
         const espanol = (san) => san.replace(/[NBRQK]/g, (l) => ({ N: "C", B: "A", R: "T", Q: "D", K: "R" })[l]);
         const ultima = n ? (Math.ceil(n / 2)) + (n % 2 ? ". " : "… ") + espanol(v.chess.history()[n - 1]) : "posición inicial";
         v.estado.textContent = lc + " · jugada " + n + " de " + total + " (" + ultima + ")" + (n >= total ? " · partida terminada: " + v.partida.resultado : "") + ".";

@@ -11704,8 +11704,29 @@ vivo), no hacerla pasar por un tablero electrónico.
   y el largo TOTAL en dos bytes de 7 bits. El tablero entero (0x86) son 64
   bytes de **a8 a h1**, fila por fila; un cambio (0x8e), la casilla en ese
   mismo orden y la pieza (0 vacía, 1–6 blancas P R N B K Q, 7–12 negras). No
-  contesta el reloj (0x41), como un tablero sin reloj. **Sin probar todavía
-  contra un LiveChess de verdad**: el primer ensayo dice si lo acepta.
+  contesta el reloj (0x41), como un tablero sin reloj.
+- **LiveChess por un puerto COM habla en modo bus**, no así. Lo dijo el
+  registro del primer ensayo con un LiveChess 2.2.11 de verdad: pide la marca
+  (0x47) y la dirección (0x46), manda 0x4a (pasar a modo bus) y pregunta la
+  versión en bus (`8b 3f 11 5b`); como el tablero no contestaba, volvía a
+  empezar cada tres segundos y nunca lo ponía en la lista de e-Boards. El modo
+  bus está comprobado contra ese registro y contra DGTCentaurMods
+  (`game/eboard.py`, GPL; se leyó el protocolo, no se copió el código), que
+  hace pasar un tablero Centaur por uno DGT ante LiveChess:
+  - cada pedido son 4 bytes: el comando (0x81–0x8b, 0x92), la dirección en
+    dos bytes de 7 bits y la suma de los tres módulo 128; lo que no trae la
+    dirección del tablero (ni la 00 00, la general) o trae la suma mal, no se
+    contesta;
+  - cada respuesta: el código, el largo TOTAL, la dirección, los datos y la
+    suma de todo lo anterior: ping (0x87 → 0x87), versión (0x8b → 0x89),
+    tablero entero (0x82 → 0x83), cambios (0x83 → 0x85), repetirlos (0x84),
+    empezar partida (0x85 → 0x88) y desde el principio (0x86 → 0x86);
+  - **las jugadas no se avisan: quedan en la memoria del tablero** (como su
+    EEPROM: 0x40 + la pieza y la casilla, en el mismo orden a8…h1 que el
+    tablero entero; al encender, la posición y 0x6f si es la inicial) y van
+    en la respuesta a la siguiente 0x83;
+  - lo que va para otro aparato del bus (0xdf y lo que le sigue) se deja
+    pasar, y 0x40 lo saca del modo bus.
 - **Cada jugada llega como en un tablero de verdad**: se levanta la pieza
   (la casilla queda vacía) y se apoya en la otra, con 200 ms entre una cosa y
   otra; en una captura se levanta primero la comida, en un enroque también la
@@ -11735,7 +11756,8 @@ vivo), no hacerla pasar por un tablero electrónico.
 con capturas, enroques, al paso y coronación) y arma la posición SOLO con los
 mensajes del tablero: después de cada jugada tiene que ser la de chess.js.
 Prueba también las respuestas a cada pedido, el mensaje para el reloj que se
-salta y, en el navegador con un puerto COM de mentira que hace de LiveChess,
+salta, el modo bus con el arranque exacto que mandó LiveChess (las 64
+partidas otra vez, armando la posición solo con las respuestas a 0x83) y, en el navegador con un puerto COM de mentira que hace de LiveChess,
 la página entera. Contando las casillas al revés o sin levantar el peón de
 la captura al paso, salta.
 
