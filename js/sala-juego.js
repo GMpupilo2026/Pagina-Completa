@@ -240,8 +240,37 @@
       if (!window.RelojServidor) return;
       if (!vista) vista = { pos: posicion(sala()), en: null };
       const pos = posicion(fila);
-      if (pos !== vista.pos) vista = { pos: pos, en: RelojServidor.ahora() };
+      if (pos !== vista.pos) {
+        vista = { pos: pos, en: RelojServidor.ahora() };
+        medir(fila);
+      }
+      if (fila.status === "finished") enviarMedida();
     }
+
+    /* Cuánto tardó en aparecer cada jugada del rival: desde que la movió (si
+       llegó por el canal rápido, la provisional trae esa hora) o desde que la
+       base la guardó, hasta que se vio acá. Se manda a la base cada 20
+       jugadas, al terminar y al irse (ver «Cómo andan las partidas en
+       línea»). Solo quien juega, y solo en game_rooms. */
+    const medida = { demoras: [], rapidas: 0, base: 0, enviadas: 0 };
+    function medir(fila) {
+      const color = opciones.miColor ? opciones.miColor() : null;
+      if (tabla !== "game_rooms" || !color || !fila.clock_updated_at || turnoDe(fila) !== color) return;
+      const demora = vista.en - Date.parse(fila.clock_updated_at);
+      if (!(demora >= 0) || demora > 600000 || medida.demoras.length >= 2000) return;
+      medida.demoras.push(Math.round(demora));
+      if (fila._provisional) medida.rapidas++; else medida.base++;
+      if (medida.demoras.length % 20 === 0) enviarMedida();
+    }
+    function enviarMedida() {
+      if (!medida.demoras.length || medida.demoras.length === medida.enviadas) return;
+      medida.enviadas = medida.demoras.length;
+      const datos = Object.assign(resumenDemoras(medida.demoras), { rapidas: medida.rapidas, base: medida.base });
+      try {
+        sb.rpc("anotar_medicion_partida", { p_room_id: salaId, p_datos: datos }).then(null, () => {});
+      } catch (e) { /* medir nunca rompe la partida */ }
+    }
+    window.addEventListener("pagehide", enviarMedida);
 
     // La sala dejó de ser provisional: sigue quien esperaba para guardar.
     function soltarEspera() {
@@ -466,6 +495,14 @@
     return vigilantes[salaId];
   }
 
+  /* Lo que se manda de las demoras de una partida: cuántas, la mitad, el
+     95 % y la peor, en milisegundos. */
+  function resumenDemoras(lista) {
+    const orden = lista.slice().sort((a, b) => a - b);
+    const en = (q) => orden[Math.min(orden.length - 1, Math.floor(q * orden.length))];
+    return { jugadas: orden.length, mediana_ms: en(0.5), p95_ms: en(0.95), max_ms: orden[orden.length - 1] };
+  }
+
   /* Lo que pensó quien acaba de mover, para su reloj (`envio` es lo que
      devuelve vigilante.jugada; un número solo, la hora de mover).
 
@@ -572,5 +609,5 @@
     try { TorneoSync.onRoomUpdate(sb, fila); } catch (e) { console.error(e); }
   }
 
-  window.SalaJuego = { formatear, turnoDe, esAnterior, laMasNueva, restante, pintarRelojes, revisarBandera, releer, suscribir, pensado, rehacerConChess, marcarListo, montarRendirse, esTripleRepeticion, avisarTorneo, textoTablas };
+  window.SalaJuego = { formatear, turnoDe, esAnterior, laMasNueva, restante, pintarRelojes, revisarBandera, releer, suscribir, pensado, rehacerConChess, marcarListo, montarRendirse, esTripleRepeticion, avisarTorneo, textoTablas, resumenDemoras };
 })();

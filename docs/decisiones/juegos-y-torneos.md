@@ -1656,6 +1656,44 @@ reclamo enseguida lo rechaza el doble de la base, el aviso y el botón llegan,
 el reclamo termina la partida y la pantalla lo muestra (con los segundos
 acortados, que el doble dice como la base). Sin el botón, salta.
 
+### Cómo andan las partidas en línea
+
+Todo lo anterior —el canal rápido, el retraso que no se cobra, el reloj que
+se recorta— se midió con la red simulada de `verificar-partidas-simultaneas.js`.
+Para decidir el paso siguiente (que la base calcule el reloj sola) hace falta
+saber cómo andan las partidas de verdad. Migración
+`20261030021034_medir_partidas_en_linea`.
+
+- **Cada pantalla mide lo suyo.** `SalaJuego.suscribir` anota, para cada
+  jugada del rival, cuánto tardó en aparecer: desde que la movió (si llegó
+  por el canal rápido, la provisional trae esa hora) o desde que la base la
+  guardó, hasta que se vio. Cada 20 jugadas, al terminar y al irse de la
+  página manda el resumen —cuántas, la mitad, el 95 %, la peor y cuántas por
+  el canal rápido— con `anotar_medicion_partida()` a `partida_mediciones`
+  (una fila por jugador y partida). La base solo deja escribir a quien juega
+  y recorta los números a un rango sano. Medir nunca rompe la partida: si el
+  pedido falla, no pasa nada.
+- **La base anota cada reloj que recorta.** `proteger_reloj_de_partida()`
+  llama a `interno.anotar_recorte()` en `reloj_recortes`, con cuánto y si era
+  una jugada. Como el trigger corre con el permiso de quien escribe, esa
+  función conserva el execute de `authenticated` (interno no está en la API).
+- **Quien administra lo ve en Competir**, «📶 Cómo andan las partidas en
+  línea»: partidas y jugadas medidas en 30 días, la demora típica, el 95 % y
+  la peor, cuánto llegó por el canal rápido y los relojes recortados.
+  `mediciones_de_partidas()` se lo niega a todos los demás. Contraste medido:
+  10,3:1 el peor en claro, 11,1:1 en oscuro.
+- Ninguna de las dos tablas tiene políticas: solo las tocan esas funciones.
+  Probado impersonando en una transacción revertida: el alumno anota lo suyo
+  y no ve nada; quien no juega no anota; el resumen solo para quien
+  administra; el trigger, corrido como el alumno que mueve, recorta 53,5 a 53
+  y lo anota.
+
+Lo prueban `verificar-premovidas.js` (el resumen, y que una jugada del rival
+vista 600 ms después de guardarse llegue a la base como 600 ms al irse; con
+la demora mal medida, salta), `verificar-partidas-simultaneas.js` (en cada
+ronda, la mayoría de las pantallas manda lo que midió y tiene sentido) y
+`verificar-profesor-juega.js` (el recuadro, solo para administración).
+
 ### Cartas: cada estado, una copia propia
 
 `CartasChess.Game.fromJSON` y `toJSON` compartían las manos y el mazo con el
