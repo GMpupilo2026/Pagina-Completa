@@ -2937,11 +2937,10 @@ juega con todos los del otro equipo y con ninguno del suyo.
 - **La Clasificación trae arriba el encuentro** (`marcadorScheveningen()`):
   el total de cada equipo, quién va ganando o ganó escrito con palabras, y
   una fila por ronda con las mesas que faltan.
-- **Al publicar** se manda el número de rondas del calendario. La Edge
-  Function `pareo-publicar` todavía guarda cualquier sistema que no sea
-  «todos» como «suizo»: hasta que se despliegue con «scheveningen», la lista
-  pública lo muestra como «Suizo de n rondas». La página pública ya sabe
-  pintarlo.
+- **Al publicar** se manda el número de rondas del calendario, y
+  `pareo-publicar` guarda «scheveningen» tal cual (antes, todo lo que no era
+  «todos» quedaba como «suizo»): la lista pública y la ficha del torneo dicen
+  «Scheveningen». `verificar-pareo-publicar.js` lo revisa.
 
 Al tocar esto, `node herramientas/verificar-pareo-scheveningen.js` (con el
 sitio en localhost:8777). Rompiendo a propósito un color de la tabla o el
@@ -11854,12 +11853,9 @@ torneos en línea con control antitrampa.
   recalculan: dependían de la racha de ese momento.
 - Anular pide motivo (sin él, ni se llama a la función) y una partida que se
   está jugando no se anula.
-- **Pendiente de aplicar** (este cambio se hizo sin acceso a la base): la
-  migración espera en `supabase/pendientes-colegios/`; al aplicarla en «Base
-  de Colegios» se mueve, sin tocarla, a `migraciones-colegios/`, y se
-  despliega `arena-admin` con su `revision.ts`. Hasta entonces, «Revisar
-  partidas» contesta «Esa acción no existe.» y la salida de la pantalla no
-  se anota (la página no se rompe: el aviso falla callado).
+- Se aplicó el 30/10 (`20261030121444_sala_arena_juego_limpio`, probada antes
+  dentro de una transacción que se deshizo) y se desplegó `arena-admin` con
+  su `revision.ts`.
 
 **La página.** `sala.html` es una sola página con cuatro pantallas (entrar,
 arenas, una arena, una partida) y se lee en voz: el foco va al título de cada

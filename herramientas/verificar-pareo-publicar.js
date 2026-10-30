@@ -83,6 +83,7 @@ function pruebaSinNavegador() {
   const borra = fn.indexOf("delete j.fideId"), pone = fn.indexOf("await ponerIdentidad(t.jugadores)"), guarda = fn.indexOf('from("pareo_publicados").insert(');
   ok(borra > 0 && pone > 0 && pone < guarda && pone < fn.indexOf('from("pareo_publicados").update(cambio)'), "la función borra el ID FIDE (deja su huella) antes de guardar el torneo");
   ok(/ritmoTipo: \["clasico", "rapido", "blitz"\]\.includes\(v\.ritmoTipo/.test(fn), "y el ritmo (sin eso, el filtro de ritmo de la lista no encuentra nada)");
+  ok(/sistema: \["todos", "scheveningen"\]\.includes\(v\.sistema/.test(fn), "y el sistema, también el Scheveningen (sin eso, la lista lo muestra como suizo)");
   // Las pruebas abren Pareo Integral en localhost y la publicación es
   // automática: sin este candado cada corrida del CI llenaba la lista pública.
   ok(/req\.headers\.get\("origin"\) !== SITE_URL\) return json\(/.test(fn) && fn.indexOf('get("origin") !== SITE_URL') < fn.indexOf("await req.text()"),

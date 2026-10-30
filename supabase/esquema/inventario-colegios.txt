@@ -3,6 +3,7 @@ tabla  arena_cola  rls=true
 tabla  arena_equipos  rls=true
 tabla  arena_jugadores  rls=true
 tabla  arena_partidas  rls=true
+tabla  arena_revisiones  rls=true
 tabla  arena_torneos  rls=true
 tabla  chess_leads  rls=true
 tabla  inscripciones  rls=true
@@ -39,6 +40,7 @@ columna  arena_jugadores.id  uuid
 columna  arena_jugadores.inscripcion_id  uuid
 columna  arena_jugadores.nombre  text
 columna  arena_jugadores.usuario  text
+columna  arena_partidas.anulada  boolean
 columna  arena_partidas.blancas  uuid
 columna  arena_partidas.creada_en  timestamp with time zone
 columna  arena_partidas.estado  text
@@ -56,6 +58,14 @@ columna  arena_partidas.reloj_desde  timestamp with time zone
 columna  arena_partidas.resultado  text
 columna  arena_partidas.terminada_en  timestamp with time zone
 columna  arena_partidas.torneo_id  uuid
+columna  arena_revisiones.anulada_en  timestamp with time zone
+columna  arena_revisiones.anulada_motivo  text
+columna  arena_revisiones.anulada_por  text
+columna  arena_revisiones.historial  jsonb
+columna  arena_revisiones.partida_id  uuid
+columna  arena_revisiones.revision  jsonb
+columna  arena_revisiones.salidas_blancas  integer
+columna  arena_revisiones.salidas_negras  integer
 columna  arena_torneos.creado_en  timestamp with time zone
 columna  arena_torneos.id  uuid
 columna  arena_torneos.incremento_seg  integer
@@ -122,6 +132,7 @@ columna  inscripciones_export.tipo_centro  text
 columna  inscripciones_export.usuario  text
 columna  inscripciones_export.zona  text
 vista  inscripciones_export
+funcion  arena_anotar_salida(p_partida uuid)  definer  anon=false  auth=true
 funcion  arena_bandera(p_partida uuid)  definer  anon=false  auth=true
 funcion  arena_cerrar(p_partida uuid, p_resultado text, p_motivo text)  definer  anon=false  auth=false
 funcion  arena_clasificacion(p_torneo uuid)  invoker  anon=false  auth=true
@@ -158,6 +169,7 @@ indice  arena_partidas  arena_partidas_pkey
 indice  arena_partidas  arena_partidas_torneo_idx
 indice  arena_partidas  arena_partidas_una_activa_blancas
 indice  arena_partidas  arena_partidas_una_activa_negras
+indice  arena_revisiones  arena_revisiones_pkey
 indice  arena_torneos  arena_torneos_pkey
 indice  chess_leads  chess_leads_pkey
 indice  inscripciones  inscripciones_cedula_unique
