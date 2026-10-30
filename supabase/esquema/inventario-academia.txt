@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20261029234634
+# al-dia-con: 20261030000014
 tabla  Ejercicios Lichess  rls=true
 tabla  _foto_rls_tmp  rls=false
 tabla  _pedidos_elo  rls=false
@@ -140,6 +140,7 @@ tabla  pareo_reportes  rls=true
 tabla  pareo_solicitudes_sello  rls=true
 tabla  pareo_suscripciones  rls=true
 tabla  pareo_suscripciones_push  rls=true
+tabla  partida_latidos  rls=true
 tabla  partidas_revision  rls=true
 tabla  partidas_torneo  rls=true
 tabla  pizarras_cache  rls=true
@@ -1348,6 +1349,10 @@ columna  pareo_suscripciones_push.endpoint  text
 columna  pareo_suscripciones_push.id  uuid
 columna  pareo_suscripciones_push.ident  text
 columna  pareo_suscripciones_push.p256dh  text
+columna  partida_latidos.desde  timestamp with time zone
+columna  partida_latidos.room_id  uuid
+columna  partida_latidos.user_id  uuid
+columna  partida_latidos.visto_en  timestamp with time zone
 columna  partidas_revision.creado_en  timestamp with time zone
 columna  partidas_revision.detalle  text
 columna  partidas_revision.jugada  integer
@@ -2274,6 +2279,7 @@ funcion  interno.analisis_partidas_al_guardar()  definer  anon=false  auth=false
 funcion  interno.arbitros_cr_normas_revision_consentimiento()  definer  anon=false  auth=false
 funcion  interno.auditar()  definer  anon=false  auth=false
 funcion  interno.auditoria_intocable()  invoker  anon=false  auth=false
+funcion  interno.ausencia_del_rival(p_room_id uuid, p_yo uuid)  invoker  anon=false  auth=false
 funcion  interno.autores_visibles_para_mi_supervision()  definer  anon=false  auth=true
 funcion  interno.avance_reto(p_alumno uuid, p_metrica text, p_desde timestamp with time zone)  definer  anon=false  auth=false
 funcion  interno.avisos_que_mande()  definer  anon=false  auth=true
@@ -2358,6 +2364,7 @@ funcion  interno.retos_ejercicios_cuantas()  definer  anon=false  auth=true
 funcion  interno.retos_ejercicios_tope()  definer  anon=false  auth=false
 funcion  interno.rondas_de_mis_alumnos()  definer  anon=false  auth=true
 funcion  interno.salas_torneo_sello()  invoker  anon=false  auth=false
+funcion  interno.segundos_para_reclamar()  invoker  anon=false  auth=false
 funcion  interno.segundos_vistos(p_tramos int4multirange)  invoker  anon=false  auth=false
 funcion  interno.sesiones_de_supervisados()  definer  anon=false  auth=true
 funcion  interno.subgrupo_del_equipo_al_dia(p_equipo uuid, p_profesor uuid)  definer  anon=false  auth=false
@@ -2378,6 +2385,7 @@ funcion  jugadores_de_asientos(p_asientos jsonb)  invoker  anon=false  auth=true
 funcion  justificaciones_pendientes()  invoker  anon=false  auth=true
 funcion  justificaciones_recibidas(p_estado text, p_busqueda text, p_limite integer, p_desde integer)  invoker  anon=false  auth=true
 funcion  justificar_ausencia(p_desde date, p_hasta date, p_motivo text, p_detalle text, p_adjuntos jsonb, p_privacidad text)  definer  anon=false  auth=true
+funcion  latido_de_partida(p_room_id uuid)  definer  anon=false  auth=true
 funcion  lector_planilla_gastar()  definer  anon=false  auth=true
 funcion  lectores_de_aviso(p_aviso uuid)  definer  anon=false  auth=true
 funcion  licencias_admin()  definer  anon=false  auth=true
@@ -2522,6 +2530,7 @@ funcion  quitar_verificacion_en_dos_pasos(p_persona uuid)  definer  anon=false  
 funcion  rango_es(p_desde date, p_hasta date)  invoker  anon=false  auth=true
 funcion  recibo_entregado_en_mano(p_recibo uuid, p_entregado boolean)  definer  anon=false  auth=true
 funcion  recibos_resumen(p_desde date, p_hasta date, p_alumno uuid, p_buscar text)  invoker  anon=false  auth=true
+funcion  reclamar_por_abandono(p_room_id uuid, p_tablas boolean)  definer  anon=false  auth=true
 funcion  reclamar_puntos_pendientes()  definer  anon=false  auth=true
 funcion  recordar_informes_mensuales(p_hoy date)  definer  anon=false  auth=false
 funcion  regalar_premio(p_premio_id uuid, p_para uuid, p_mensaje text)  definer  anon=false  auth=true
@@ -3577,6 +3586,7 @@ indice  pareo_suscripciones_push  pareo_suscripciones_push_clave_idx
 indice  pareo_suscripciones_push  pareo_suscripciones_push_ident_idx
 indice  pareo_suscripciones_push  pareo_suscripciones_push_pkey
 indice  pareo_suscripciones_push  pareo_suscripciones_push_una
+indice  partida_latidos  partida_latidos_pkey
 indice  partidas_revision  partidas_revision_pkey
 indice  partidas_torneo  partidas_torneo_alumno
 indice  partidas_torneo  partidas_torneo_pkey
