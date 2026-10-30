@@ -10509,6 +10509,30 @@ tableros con la luz real de un salón antes de invertir en entrenar un modelo o
 en transmitir. No guarda nada ni manda la imagen a ningún lado: todo pasa en
 el celular.
 
+### El nombre: Notara
+
+La herramienta se llama **Notara**, y se presenta siempre con lo que hace:
+«Notara, la cámara que lee el tablero» (en otro idioma, la explicación se
+traduce y el nombre no: *Notara — the camera that reads the board*). Lo
+eligió el dueño entre varias propuestas, con estas condiciones: que la
+use cualquiera en el mundo, desde un torneo de FIDE hasta uno amistoso en
+una escuela, así que tenía que decirse igual en español, inglés o
+portugués, sin ñ ni tildes, ser corto y no quedar amarrado a una sola
+función (anota, transmite, lleva el reloj y tiene el VAR). Viene de
+«notación», que es casi igual en muchos idiomas.
+
+- Va en el título y el encabezado de `camara-tablero.html` y de
+  `camaras.html`, en la lista de páginas de quien administra, en la hoja
+  para la mesa, en la nota de la planilla en PDF, en la clase en vivo y en
+  la política de privacidad. Los nombres de archivo y de las funciones no
+  cambian.
+- Antes de elegirlo se buscó: ningún producto de ajedrez se llama así. Sí
+  hay otros programas con ese nombre en otros rubros (una empresa de
+  Estados Unidos con marcas registradas de software de licencias, una app
+  de notas y una para documentar incidentes). Para registrar la marca hay
+  que revisarlo con quien sepa de marcas, en Costa Rica y donde se piense
+  usar.
+
 - **No reconoce piezas: reconoce jugadas.** Distinguir un alfil de un peón
   desde arriba, con sombras y reflejos, es caro y falla. De cada casilla solo
   se pregunta si está vacía, con pieza blanca o con pieza negra, y chess.js
