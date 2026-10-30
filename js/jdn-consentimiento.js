@@ -63,9 +63,12 @@
 
   // Comités con sus propias reglas (lo pidió el dueño del sitio). Pérez
   // Zeledón no pide la fotografía, y a quien autoriza el tutor de un menor ya
-  // lo puso el comité: su delegado, sin que la familia lo escriba.
+  // lo puso el comité: su delegado, sin que la familia lo escriba. San José
+  // también autoriza a su delegado, y su «Categoría Deportiva» lleva el deporte
+  // además de la categoría («Ajedrez U-16»).
   const COMITES_PROPIOS = [
     { clave: "perez zeledon", sinFoto: true, autorizado: { nombre: "Juan Pablo Camacho Navarro", rol: "delegado" } },
+    { clave: "ccdr san jose", deporteEnCategoria: true, autorizado: { nombre: "Reynaldo Fernandez Santana", rol: "delegado" } },
   ];
 
   /* ------------------------------------------------------------ fechas */
@@ -398,8 +401,10 @@
       if (OPCIONES.silla.includes(d.silla)) x = marcar(x, "Perro guía", d.silla);
     }
 
-    // Solo la categoría, sin «Individual» (lo pidió el dueño del sitio).
-    x = poner(x, "Categoría Deportiva", ":", cat ? cat.codigo : "");
+    // Solo la categoría, sin «Individual» (lo pidió el dueño del sitio); con el
+    // deporte delante donde el comité lo pide (San José: «Ajedrez U-16»).
+    const reglas = reglasDelComite(d.comite);
+    x = poner(x, "Categoría Deportiva", ":", cat ? (reglas && reglas.deporteEnCategoria ? "Ajedrez " : "") + cat.codigo : "");
     x = poner(x, "Deportes de conjunto indicar", ":", "No aplica (ajedrez)");
     x = poner(x, "Nombre del equipo:", "Nombre del equipo:", d.comite);
     x = enRecuadro(x, PRUEBAS.join(", ") + ".");
