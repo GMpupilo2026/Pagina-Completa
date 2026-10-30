@@ -10,7 +10,8 @@
  *
  *   { formato: 1, nombre, ciudad, federacion, fechaInicio, fechaFin, arbitro,
  *     arbitroAdjunto, ritmo,
- *     sistema: "suizo" | "todos",   dobleVuelta (solo en todos contra todos),
+ *     sistema: "suizo" | "todos" | "scheveningen",
+ *     dobleVuelta (en todos contra todos y en Scheveningen),
  *     rondasTotales, colorInicial: "w" | "b", baku (aceleración Baku),
  *     puntos: { victoria, tablas, derrota, bye },     bye = el que asigna el pareo
  *     desempates: ["BH-C1", "BH", "SB", …]            ver js/pareo/desempates.js
@@ -76,7 +77,7 @@
     const orden = t.numeracion.filter((id) => porId.has(id));
     const tardios = t.jugadores.filter((j) => !orden.includes(j.id)).sort(cmp);
     for (const j of tardios) {
-      let i = t.sistema === "todos" ? orden.length : orden.findIndex((id) => cmp(j, porId.get(id)) < 0);
+      let i = fijo(t) ? orden.length : orden.findIndex((id) => cmp(j, porId.get(id)) < 0);
       if (i < 0) i = orden.length;
       orden.splice(i, 0, j.id);
     }
@@ -220,6 +221,127 @@
     return (n - 1) * (t.dobleVuelta ? 2 : 1);
   }
 
+  // ---------- Scheveningen: dos equipos, cada uno contra todos los del otro ----------
+  // Los equipos son las dos instituciones de los jugadores, y cada equipo va
+  // en su orden inicial (Elo, título, nombre): ese es su orden de tableros. El
+  // equipo A es el del n.º 1. En la ronda r, el tablero i es A[i] contra
+  // B[(i + r) mod n]: en n rondas, cada uno juega una vez con cada rival.
+  //
+  // Los colores salen de COLORES_SCHEVENINGEN, no de una fórmula: con ese giro
+  // ninguna fórmula simple deja a los dos equipos parejos (con n par, el
+  // jugador de B llevaría siempre el mismo color). Las tablas se buscaron por
+  // fuerza bruta: cada jugador, de A y de B, termina con tantas blancas como
+  // negras (con n impar, a lo sumo una de diferencia) y nunca lleva el mismo
+  // color tres rondas seguidas. Con n par, cada equipo lleva blancas en la
+  // mitad de los tableros de cada ronda, salvo con 2, 6 y 10 (n/2 impar), donde
+  // eso no se puede sin desparejar a alguien y una ronda lleva una de más.
+  // verificar-pareo-scheveningen.js lo comprueba todo. Fila = ronda, letra i =
+  // color de A[i] (B blancas, N negras).
+  const COLORES_SCHEVENINGEN = {
+    1: ["B"],
+    2: ["BB", "NN"],
+    3: ["BNB", "NBN", "NNB"],
+    4: ["BNBN", "NBNB", "NBNB", "BNBN"],
+    5: ["BNBNB", "NBNBN", "NBNNB", "BNBBN", "BNNBN"],
+    6: ["BNBNBB", "NBNBNN", "NBNNBB", "BNBBNB", "BBNBNN", "NNBNBN"],
+    7: ["BNBNBNB", "NBNBNBN", "NBNBNNB", "BNBNBBN", "BNBNNBN", "NBNBNNB", "NBBNBNB"],
+    8: ["BNBNBNBN", "NBNBNBNB", "NBNBNBNB", "BNBNBNBN", "BNBNBNBN", "NBNBNBNB", "NBNBNBNB", "BNBNBNBN"],
+    9: ["BNBNBNBNB", "NBNBNBNBN", "NBNBNBNNB", "BNBNBNBBN", "BNBNBNNBN", "NBNBNBNNB", "NBNBNBBNB", "BNBNBNBBN", "BNBNBNNBN"],
+    10: ["BNBNBNBNBN", "NBNBNBBBNN", "NBNBNNNBBB", "BNBNBBNNNB", "BNBBNNBBNN", "NBNNBBNBBB", "NBBBNBNNNB", "BNNBBNBBBN", "NBNNBBNNBN", "BNBNNNBNNB"],
+    11: ["BNBNBNBNBNB", "NBNBNBNBNBN", "NBNBNBNBNNB", "BNBNBNBNBBN", "BNBNBNBNNBN", "NBNBNBNBNNB", "NBNBNBBNBNB", "BNBNBNBBNBN", "BNBNBNNBNBN", "NBNBNBNNBNB", "NBNBBNBNBNB"],
+    12: ["BNBNBNBNBNBN", "NBNBNBNBNBNB", "NBNBNBNBNBNB", "BNBNBNBNBNBN", "BNBNBNBNBNBN", "NBNBNBNBNBNB", "NBNBNBNBNBNB", "BNBNBNBNBNBN", "BNBNBNBNBNBN", "NBNBNBNBNBNB", "NBNBNBNBNBNB", "BNBNBNBNBNBN"],
+  };
+  const MAX_SCHEVENINGEN = 12;
+
+  // Las dos instituciones se comparan sin tildes, sin mayúsculas y sin
+  // espacios de más: «Liceo  de Costa Rica» y «liceo de costa rica» son la misma.
+  const claveEquipo = (s) => String(s || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, " ").trim().toLowerCase();
+
+  // { a: { nombre, ids }, b: { nombre, ids }, n } o { error, … } si no se puede.
+  function equiposScheveningen(t) {
+    const orden = ordenInicial(t);
+    const porId = new Map(t.jugadores.map((j) => [j.id, j]));
+    const sin = orden.filter((id) => !claveEquipo(porId.get(id).institucion));
+    if (sin.length) return { error: "sinEquipo", ids: sin };
+    const grupos = new Map();
+    for (const id of orden) {
+      const j = porId.get(id);
+      const k = claveEquipo(j.institucion);
+      if (!grupos.has(k)) grupos.set(k, { nombre: String(j.institucion).trim(), ids: [] });
+      grupos.get(k).ids.push(id);
+    }
+    const lista = [...grupos.values()];
+    if (lista.length !== 2) return { error: "dosEquipos", cuantos: lista.length, nombres: lista.map((g) => g.nombre) };
+    const [a, b] = lista;
+    if (a.ids.length !== b.ids.length) return { error: "mismoNumero", a, b };
+    if (a.ids.length > MAX_SCHEVENINGEN) return { error: "muchos", a, b, max: MAX_SCHEVENINGEN };
+    return { a, b, n: a.ids.length };
+  }
+
+  function rondasScheveningen(t) {
+    const e = equiposScheveningen(t);
+    const n = e.error ? Math.ceil(t.jugadores.length / 2) : e.n;
+    return n * (t.dobleVuelta ? 2 : 1);
+  }
+
+  function rondaScheveningen(t, ronda) {
+    const e = equiposScheveningen(t);
+    if (e.error) { const x = new Error(e.error); x.detalle = e; throw x; }
+    const n = e.n;
+    const r = ronda % n;
+    // En la segunda vuelta, los mismos encuentros con los colores al revés.
+    const vuelta = Math.floor(ronda / n) % 2 === 1;
+    const alReves = vuelta !== (t.colorInicial === "b");
+    const mesas = [];
+    for (let i = 0; i < n; i++) {
+      const A = e.a.ids[i], B = e.b.ids[(i + r) % n];
+      const aBlancas = (COLORES_SCHEVENINGEN[n][r][i] === "B") !== alReves;
+      mesas.push(aBlancas ? { b: A, n: B, r: null } : { b: B, n: A, r: null });
+    }
+    return { mesas, ausencias: {} };
+  }
+
+  // Cuánto lleva cada equipo: los puntos de cada ronda y el total (con los
+  // puntos del torneo: victoria, tablas, derrota).
+  function marcadorScheveningen(t, hastaRonda) {
+    const e = equiposScheveningen(t);
+    if (e.error) return null;
+    const deA = new Set(e.a.ids);
+    const p = t.puntos;
+    const hasta = hastaRonda == null ? t.rondas.length : hastaRonda;
+    const valor = (r, blancas) => {
+      switch (r) {
+        case "1-0": case "+-": return blancas ? p.victoria : p.derrota;
+        case "0-1": case "-+": return blancas ? p.derrota : p.victoria;
+        case "=": return p.tablas;
+        case "--": return p.derrota;
+        default: return null;
+      }
+    };
+    const rondas = [];
+    let totalA = 0, totalB = 0;
+    for (let k = 0; k < hasta; k++) {
+      let a = 0, b = 0, faltan = 0;
+      for (const m of t.rondas[k].mesas) {
+        if (m.n == null) continue;
+        const vb = valor(m.r, true), vn = valor(m.r, false);
+        if (vb == null) { faltan++; continue; }
+        if (deA.has(m.b)) { a += vb; b += vn; } else { a += vn; b += vb; }
+      }
+      rondas.push({ a, b, faltan });
+      totalA += a; totalB += b;
+    }
+    return { a: e.a.nombre, b: e.b.nombre, n: e.n, rondas, totalA, totalB };
+  }
+
+  // Los sistemas con el calendario fijo de antemano (no se empareja ronda a
+  // ronda con el motor): todos contra todos y Scheveningen.
+  const fijo = (t) => t.sistema === "todos" || t.sistema === "scheveningen";
+  function rondasFijas(t) { return t.sistema === "scheveningen" ? rondasScheveningen(t) : rondasTodos(t); }
+  function rondaFija(t, r) { return t.sistema === "scheveningen" ? rondaScheveningen(t, r) : rondaTodos(t, r); }
+  // Cuántas rondas tiene el torneo, sea cual sea el sistema.
+  function rondasDelTorneo(t) { return fijo(t) ? rondasFijas(t) : Number(t.rondasTotales) || 0; }
+
   // ---------- TRF ----------
   const izq = (s, w) => String(s == null ? "" : s).slice(0, w).padEnd(w, " ");
   const der = (s, w) => String(s == null ? "" : s).slice(-w).padStart(w, " ");
@@ -257,15 +379,15 @@
     cab("062", t.jugadores.length);
     cab("072", t.jugadores.filter((j) => Number(j.elo) > 0).length);
     cab("082", 0);
-    cab("092", t.sistema === "todos" ? "Individual: Round-Robin" : "Individual: Swiss-System");
+    cab("092", t.sistema === "todos" ? "Individual: Round-Robin" : t.sistema === "scheveningen" ? "Individual: Scheveningen" : "Individual: Swiss-System");
     cab("102", t.arbitro);
     cab("112", t.arbitroAdjunto);
     cab("122", t.ritmo);
-    cab("142", t.sistema === "todos" ? rondasTodos(t) : t.rondasTotales);
+    cab("142", rondasDelTorneo(t));
     L.push("152 " + (t.colorInicial === "b" ? "B" : "W"));
     const lp = lineaPuntos(t);
     if (lp) L.push(lp);
-    if (t.sistema !== "todos") L.push("192 " + (t.baku ? "FIDE_DUTCH_2026_BAKU" : "FIDE_DUTCH_2026"));
+    if (!fijo(t)) L.push("192 " + (t.baku ? "FIDE_DUTCH_2026_BAKU" : "FIDE_DUTCH_2026"));
 
     for (const id of orden) {
       const j = t.jugadores.find((x) => x.id === id);
@@ -333,6 +455,7 @@
       else if (c === "042") t.fechaInicio = v.replace(/\//g, "-").slice(0, 10);
       else if (c === "052") t.fechaFin = v.replace(/\//g, "-").slice(0, 10);
       else if (c === "092" && /round.?robin/i.test(v)) t.sistema = "todos";
+      else if (c === "092" && /scheveningen/i.test(v)) t.sistema = "scheveningen";
       else if (c === "102") t.arbitro = v;
       else if (c === "112") t.arbitroAdjunto = v;
       else if (c === "122") t.ritmo = v;
@@ -411,7 +534,7 @@
     // Sin línea 142 (bbpPairings no la escribe si ya se jugaron todas), el
     // torneo tiene las rondas que trae; nunca menos de las que trae.
     t.rondasTotales = Math.max(rondasLeidas || 0, t.rondas.length) || t.rondasTotales;
-    if (t.sistema === "todos") t.rondasTotales = rondasTodos(t);
+    if (fijo(t)) t.rondasTotales = rondasFijas(t);
     return t;
   }
 
@@ -433,7 +556,9 @@
 
   const api = {
     PUNTOS_FIDE, TITULOS, nuevo, ordenInicial, fijarNumeracion, sortearNumeracion, sortearColor, numeros, situacion, puntos, puntosHasta,
-    rondaCompleta, participantes, retirosPorIncomparecencia, berger, rondaTodos, rondasTodos, aTrf, leerPareo, deTrf,
+    rondaCompleta, participantes, retirosPorIncomparecencia, berger, rondaTodos, rondasTodos, aTrf,
+    COLORES_SCHEVENINGEN, MAX_SCHEVENINGEN, equiposScheveningen, rondaScheveningen, rondasScheveningen, marcadorScheveningen,
+    fijo, rondasFijas, rondaFija, rondasDelTorneo, leerPareo, deTrf,
     // El formato de las columnas del TRF: lo usa también el TRF de equipos (js/pareo/equipos.js).
     formatoTrf: { izq, der, decimal, fechaTrf },
   };

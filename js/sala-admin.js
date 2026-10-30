@@ -17,6 +17,12 @@
  * tabla de usuarios y claves con «Bajar en Excel (CSV)» y «Copiar», y dice que
  * no se vuelve a ver. Si se pierde una, «Nueva clave» genera otra.
  *
+ * EL JUEGO LIMPIO: «Revisar partidas» de cada arena le pide a la función que
+ * repita con chess.js las partidas terminadas y devuelve lo que no cuadra y
+ * los indicios (salir de la pantalla, tiempos muy parejos). Son indicios, no
+ * pruebas: la pantalla lo dice, y nada se anula solo. «Anular» pide el motivo
+ * y queda anotado quién y cuándo; «Devolver los puntos» lo deshace.
+ *
  * Todo texto de una persona entra por `textContent`.
  */
 const FUNCION = "https://prcfbzvshnusisczlpxl.supabase.co/functions/v1/arena-admin";
@@ -366,13 +372,98 @@ function pintarArenas() {
             HoraCR.fechaHora(t.inicia, { dateStyle: "medium", timeStyle: "short" }) + " · " + t.minutos + " min · ritmo " + ritmo
             + (t.por_equipos ? " · por equipos (cuentan los " + t.mejores + " mejores)" : " · individual")));
         fila.appendChild(info);
-        fila.appendChild(boton("Borrar arena", BOTON_PELIGRO, async () => {
+        const acciones = el("div", "flex flex-wrap gap-2");
+        const revisar = boton("Revisar partidas", BOTON_SECUNDARIO, () => revisarArena(t, revisar, caja2), "Revisar las partidas de la arena " + t.nombre);
+        revisar.setAttribute("aria-expanded", "false");
+        acciones.appendChild(revisar);
+        fila.appendChild(acciones);
+        const caja2 = el("div", "w-full");
+        caja2.hidden = true;
+        acciones.appendChild(boton("Borrar arena", BOTON_PELIGRO, async () => {
             const si = await Avisos.confirmar("Se borran también sus partidas y su clasificación.",
                 { titulo: "¿Borrar «" + t.nombre + "»?", aceptar: "Borrar arena", peligro: true });
             if (si && await hacer("borrar_torneo", { id: t.id }, "Arena borrada.")) await recargar();
         }, "Borrar la arena " + t.nombre));
+        fila.appendChild(caja2);
         caja.appendChild(fila);
     });
+}
+
+/* ------------------------------------------------------------ juego limpio */
+
+const PROBLEMA = {
+    jugada_ilegal: (p) => "La jugada " + p.jugada + " (" + p.detalle + ") no se puede jugar en esa posición.",
+    posicion_distinta: () => "La posición guardada no es la que dejan las jugadas.",
+    fin_falso: (p) => "Se declaró «" + (FIN[p.detalle] || p.detalle) + "» y la posición no lo es.",
+    resultado_contra_el_mate: (p) => "Hay mate en el tablero y el resultado guardado es " + p.detalle + ".",
+};
+const FIN = { mate: "mate", ahogado: "ahogado", material: "material insuficiente", repeticion: "triple repetición", cincuenta: "50 jugadas" };
+
+function textoIndicio(i, nombre) {
+    if (i.tipo === "salidas") return nombre + " salió de la pantalla " + i.veces + " veces durante la partida.";
+    if (i.tipo === "tiempos_parejos") return nombre + " jugó " + i.jugadas + " jugadas con tiempos muy parejos (unos " + Math.round(i.promedio_ms / 1000) + " s cada una).";
+    return nombre + ": " + i.tipo;
+}
+
+async function revisarArena(t, botonRevisar, caja) {
+    if (!caja.hidden) { caja.hidden = true; botonRevisar.setAttribute("aria-expanded", "false"); return; }
+    botonRevisar.disabled = true;
+    const r = await hacer("juego_limpio", { torneo_id: t.id });
+    botonRevisar.disabled = false;
+    if (!r) return;
+    caja.hidden = false;
+    botonRevisar.setAttribute("aria-expanded", "true");
+    pintarJuegoLimpio(t, r.partidas || [], caja);
+}
+
+function pintarJuegoLimpio(t, partidas, caja) {
+    caja.textContent = "";
+    const conAlgo = partidas.filter((p) => p.anulada || p.problemas.length || p.indicios.w.length || p.indicios.b.length);
+    caja.appendChild(el("h3", "font-semibold text-sm mt-3", "Juego limpio"));
+    caja.appendChild(el("p", "text-xs text-brand-450 dark:text-brand-350 mb-2",
+        partidas.length + (partidas.length === 1 ? " partida terminada revisada" : " partidas terminadas revisadas") + " con chess.js. "
+        + (conAlgo.length ? conAlgo.length + " con algo para mirar." : "Ninguna tiene nada para mirar.")
+        + " Lo que sigue son indicios, no pruebas: nada se anula solo."));
+    conAlgo.forEach((p) => caja.appendChild(tarjetaJuegoLimpio(t, p, caja)));
+}
+
+function tarjetaJuegoLimpio(t, p, caja) {
+    const tarjeta = el("div", "rounded-lg border border-brand-100 dark:border-brand-800 p-3 mb-2 text-sm");
+    tarjeta.appendChild(el("p", "font-semibold", p.blancas + " – " + p.negras + " · " + (p.resultado || "sin resultado") + " · " + p.jugadas + " jugadas"));
+    const lista = el("ul", "list-disc pl-5 mt-1");
+    p.problemas.forEach((x) => lista.appendChild(el("li", "text-red-800 dark:text-red-200", "Revisión: " + (PROBLEMA[x.tipo] ? PROBLEMA[x.tipo](x) : x.tipo))));
+    p.indicios.w.forEach((x) => lista.appendChild(el("li", null, "Indicio: " + textoIndicio(x, p.blancas))));
+    p.indicios.b.forEach((x) => lista.appendChild(el("li", null, "Indicio: " + textoIndicio(x, p.negras))));
+    tarjeta.appendChild(lista);
+    if (p.anulada) {
+        tarjeta.appendChild(el("p", "mt-2 font-semibold", "Anulada: no cuenta en la clasificación."));
+        tarjeta.appendChild(el("p", "text-xs text-brand-450 dark:text-brand-350",
+            "Motivo: " + (p.anulada_motivo || "") + (p.anulada_por ? " · " + p.anulada_por : "")
+            + (p.anulada_en ? " · " + HoraCR.fechaHora(p.anulada_en, { dateStyle: "medium", timeStyle: "short" }) : "")));
+    }
+    const fila = el("div", "flex flex-wrap gap-2 mt-2");
+    const nombre = p.blancas + " – " + p.negras;
+    if (p.anulada) {
+        fila.appendChild(boton("Devolver los puntos", BOTON_SECUNDARIO, async () => {
+            const si = await Avisos.confirmar("La partida vuelve a contar en la clasificación.", { titulo: "¿Devolverle los puntos a «" + nombre + "»?", aceptar: "Devolver los puntos" });
+            if (si && await hacer("devolver", { partida_id: p.id }, "La partida vuelve a contar.")) await recargarJuegoLimpio(t, caja);
+        }, "Devolver los puntos de la partida " + nombre));
+    } else {
+        fila.appendChild(boton("Anular la partida", BOTON_PELIGRO, async () => {
+            const motivo = await Avisos.pedir("La partida deja de contar en la clasificación (no se borra). Queda anotado quién la anuló y por qué.",
+                { titulo: "¿Anular «" + nombre + "»?", etiqueta: "Motivo", aceptar: "Anular la partida" });
+            if (motivo == null) return;
+            if (!motivo.trim()) { Avisos.avisar("Hace falta el motivo para anular.", { tipo: "error" }); return; }
+            if (await hacer("anular", { partida_id: p.id, motivo }, "Partida anulada.")) await recargarJuegoLimpio(t, caja);
+        }, "Anular la partida " + nombre));
+    }
+    tarjeta.appendChild(fila);
+    return tarjeta;
+}
+
+async function recargarJuegoLimpio(t, caja) {
+    const r = await hacer("juego_limpio", { torneo_id: t.id });
+    if (r) pintarJuegoLimpio(t, r.partidas || [], caja);
 }
 
 function montarFormularioArena() {

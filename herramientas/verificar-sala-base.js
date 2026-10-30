@@ -19,6 +19,13 @@
       8 letras sin las ambiguas; al segundo del mismo usuario le agrega un
       número; deshace la cuenta de Auth si no pudo crear al jugador; y no
       devuelve cédulas ni contactos.
+   5. El juego limpio (`*_sala_arena_juego_limpio.sql`, `arena-admin/revision.ts`):
+      la tabla de revisiones que ningún jugador lee, la salida de la pantalla
+      que solo suma a su color, el tiempo de cada jugada, lo anulado que deja
+      de contar; la revisión con chess.js (jugada ilegal, posición que no
+      cuadra, un fin declarado que no es, el resultado contra el mate) y los
+      indicios; y la función: revisa una sola vez, anular pide motivo y deja
+      constancia, devolver también, y una partida en juego no se anula.
 
    Uso:  node herramientas/verificar-sala-base.js                           */
 "use strict";
@@ -85,6 +92,28 @@ ok("soy_jugador_de_sala conserva el execute de authenticated (la usan las polít
 // El if del permiso va con coalesce: con auth.uid() nulo `not (null)` no rechaza.
 ok("el permiso de las funciones va envuelto en coalesce", (sinComentarios.match(/not coalesce\(public\.soy_jugador_de_sala\(\), false\)/g) || []).length >= 2);
 
+/* ------------------------------------------- 1b. la migración del juego limpio */
+console.log("\n=== La migración del juego limpio ===");
+// Mientras no se aplica, espera en supabase/pendientes-colegios/; al aplicarla
+// se MUEVE (sin tocarla) a migraciones-colegios/.
+const carpetaJl = [carpeta, path.join(RAIZ, "supabase", "pendientes-colegios")]
+  .find((d) => fs.existsSync(d) && fs.readdirSync(d).some((f) => /sala_arena_juego_limpio\.sql$/.test(f)));
+const archivoJl = carpetaJl ? path.join(carpetaJl, fs.readdirSync(carpetaJl).find((f) => /sala_arena_juego_limpio\.sql$/.test(f))) : null;
+ok("existe la migración del juego limpio", !!archivoJl);
+const jl = archivoJl ? fs.readFileSync(archivoJl, "utf8").replace(/--[^\n]*/g, "") : "";
+ok("arena_revisiones tiene RLS", /alter table public\.arena_revisiones enable row level security/.test(jl));
+ok("y ninguna política: ningún jugador la lee ni la escribe", !/create policy/i.test(jl));
+ok("a anon y authenticated no se les da nada de ella", /revoke all on public\.arena_revisiones from anon, authenticated/.test(jl) && !/grant[^;]*arena_revisiones/.test(jl));
+const anotar = (jl.match(/create or replace function public\.arena_anotar_salida[\s\S]*?\$function\$;/) || [""])[0];
+ok("arena_anotar_salida: SECURITY DEFINER con search_path vacío", /security definer/.test(anotar) && /set search_path to ''/.test(anotar));
+ok("arena_anotar_salida pide ser jugador de la sala (con coalesce) y de ESA partida", /not coalesce\(public\.soy_jugador_de_sala\(\), false\)/.test(anotar) && /yo not in \(p\.blancas, p\.negras\)/.test(anotar));
+ok("solo suma en una partida en juego, a su propio color y con tope", /if p\.estado <> 'en_juego' then return; end if;/.test(anotar) && /least\(r\.salidas_blancas \+ case when yo = p\.blancas/.test(anotar));
+ok("arena_anotar_salida sin execute para public ni anon, con execute para authenticated",
+  /revoke execute on function public\.arena_anotar_salida\(uuid\) from public, anon;/.test(jl) && /grant execute on function public\.arena_anotar_salida\(uuid\) to authenticated/.test(jl));
+ok("cada jugada guarda el tiempo que usó, medido por la base", /'ms', least\(greatest\(usado, 0\)/.test(jl));
+ok("la partida anulada no cuenta en la clasificación ni en la racha",
+  (jl.match(/and not p\.anulada/g) || []).length === 5);
+
 /* ------------------------------------------------ 2 y 3. lo que las une */
 console.log("\n=== Lo que une la página y la función ===");
 const cliente = leer("js/sala-cliente.js");
@@ -108,7 +137,13 @@ ok("sala-admin no toca las tablas desde el navegador", !/\bsb\.from\(/.test(sinC
 console.log("\n=== La Edge Function, contra una base de mentira ===");
 const dir = fs.mkdtempSync(path.join(os.tmpdir(), "sala-fn-"));
 const modulo = path.join(dir, "arena-admin.mts");
-fs.writeFileSync(modulo, funcion.replace(/^import "jsr:[^"]+";\s*$/m, ""));
+// chess.js de npm se cambia por el del sitio (el mismo 0.10.3), y revision.ts
+// va al lado, como en la función.
+const chessLocal = require.resolve("chess.js");
+fs.writeFileSync(modulo, funcion.replace(/^import "jsr:[^"]+";\s*$/m, "")
+  .replace(/^import \{ Chess \} from "npm:chess\.js@[^"]+";\s*$/m,
+    `import { createRequire } from "node:module"; const { Chess } = createRequire(import.meta.url)(${JSON.stringify(chessLocal)});`));
+fs.copyFileSync(path.join(RAIZ, "supabase/functions-colegios/arena-admin/revision.ts"), path.join(dir, "revision.ts"));
 const prueba = path.join(dir, "prueba.mjs");
 fs.writeFileSync(prueba, `
 const salida = { cuentasCreadas: [] };
@@ -116,7 +151,7 @@ let manejador = null;
 globalThis.Deno = { serve: (h) => { manejador = h; }, env: { get: (k) => ({ SUPABASE_URL: "https://base.test", SUPABASE_SERVICE_ROLE_KEY: "clave-de-servicio" })[k] } };
 
 /* La base de mentira: lo justo de PostgREST y de Auth admin. */
-const db = { equipos: [], jugadores: [], torneos: [], inscripciones: [
+const db = { equipos: [], jugadores: [], torneos: [], partidas: [], revisiones: [], inscripciones: [
   { id: "00000000-0000-4000-8000-000000000001", nombre: "Ana María", apellido1: "Rojas", apellido2: "Cruz", usuario: "Ana_Rojas_C", centro: "Liceo A", grado: "7", cedula: "1-1111-1111", contacto: "8888", creado_en: "2026-10-01" },
   { id: "00000000-0000-4000-8000-000000000002", nombre: "Ana", apellido1: "Rojas", apellido2: "Campos", usuario: "Ana_Rojas_C", centro: "Liceo A", grado: "7", cedula: "2", contacto: "9", creado_en: "2026-10-02" },
   { id: "00000000-0000-4000-8000-000000000003", nombre: "José Ángel", apellido1: "Peña", apellido2: "Vega", usuario: null, centro: "Liceo B", grado: "8", cedula: "3", contacto: "7", creado_en: "2026-10-03" },
@@ -151,7 +186,7 @@ globalThis.fetch = async (url, init = {}) => {
     if (m === "DELETE") { cuentas.delete(id); return resp({}); }
   }
   const tabla = u.pathname.replace("/rest/v1/", "");
-  const clave = { arena_equipos: "equipos", arena_jugadores: "jugadores", arena_torneos: "torneos", inscripciones: "inscripciones" }[tabla];
+  const clave = { arena_equipos: "equipos", arena_jugadores: "jugadores", arena_torneos: "torneos", inscripciones: "inscripciones", arena_partidas: "partidas", arena_revisiones: "revisiones" }[tabla];
   if (!clave) return resp({ message: "tabla desconocida " + tabla }, 404);
   const filas = db[clave];
   const filtro = (f) => [...u.searchParams.entries()].every(([k, v]) => {
@@ -164,6 +199,18 @@ globalThis.fetch = async (url, init = {}) => {
   const recorta = (f) => cols[0] === "*" ? f : Object.fromEntries(cols.map((c) => [c, f[c]]));
   if (m === "GET") return resp(filas.filter(filtro).map(recorta));
   const cuerpo = init.body ? JSON.parse(init.body) : {};
+  if (m === "POST" && u.searchParams.get("on_conflict")) {
+    // Un upsert: solo cambia las columnas que llegan (merge-duplicates).
+    const k = u.searchParams.get("on_conflict");
+    const lista = Array.isArray(cuerpo) ? cuerpo : [cuerpo];
+    const hechas = lista.map((x) => {
+      const ya = filas.find((f) => f[k] === x[k]);
+      if (ya) return Object.assign(ya, x);
+      const nueva = Object.assign({ salidas_blancas: 0, salidas_negras: 0, historial: [] }, x); filas.push(nueva); return nueva;
+    });
+    salida.upserts = (salida.upserts || 0) + 1;
+    return resp(hechas, 201);
+  }
   if (m === "POST") {
     if (clave === "equipos" && filas.some((f) => f.nombre.toLowerCase() === String(cuerpo.nombre).toLowerCase())) return resp({ code: "23505", message: "duplicate key" }, 409);
     if (clave === "jugadores" && fallarProximoJugador) { fallarProximoJugador = false; return resp({ code: "23514", message: "check violation" }, 400); }
@@ -235,6 +282,55 @@ const vivas = cuentas.size;
 await llamar({ accion: "quitar_jugador", jugador_id: jugadorAna.id });
 R.quitar = { cuentasMenos: vivas - cuentas.size };
 R.uuidMalo = (await llamar({ accion: "quitar_jugador", jugador_id: "no-es-uuid" })).cuerpo.error;
+
+// ---- El juego limpio: las funciones puras, con el chess.js del sitio.
+const { revisarArena, indiciosArena } = await import(${JSON.stringify("file://" + path.join(dir, "revision.ts"))});
+const { createRequire } = await import("node:module");
+const { Chess } = createRequire(import.meta.url)(${JSON.stringify(require.resolve("chess.js"))});
+const J = (lista) => lista.map(([s, f, t, ms]) => ({ s, f, t, ms }));
+const MATE = J([["f3", "f2", "f3"], ["e5", "e7", "e5"], ["g4", "g2", "g4"], ["Qh4#", "d8", "h4"]]);
+const FEN_MATE = "rnb1kbnr/pppp1ppp/8/4p3/6Pq/5P2/PPPPP2P/RNBQKBNR w KQkq - 1 3";
+R.rev = {
+  bien: revisarArena(Chess, { jugadas: MATE, fen: FEN_MATE, resultado: "0-1", motivo: "mate" }),
+  ilegal: revisarArena(Chess, { jugadas: J([["e4", "e2", "e4"], ["e5", "e7", "e5"], ["Qh5", "d1", "h5"], ["Kxe2", "e7", "e2"]]), fen: "x w - - 0 1", resultado: "0-1", motivo: "mate" }),
+  casillaCambiada: revisarArena(Chess, { jugadas: J([["e4", "d2", "d4"]]), fen: "", resultado: "1-0", motivo: "abandono" }),
+  fenDistinta: revisarArena(Chess, { jugadas: J([["e4", "e2", "e4"]]), fen: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR b KQkq - 0 1", resultado: "1-0", motivo: "abandono" }),
+  mateFalso: revisarArena(Chess, { jugadas: J([["e4", "e2", "e4"]]), fen: "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1", resultado: "1-0", motivo: "mate" }),
+  contraElMate: revisarArena(Chess, { jugadas: MATE, fen: FEN_MATE, resultado: "1-0", motivo: "tiempo" }),
+};
+const parejas = Array.from({ length: 50 }, (_, i) => ({ s: "x", ms: i % 2 === 0 ? 8000 + (i % 4) * 100 : 1000 + (i % 7) * 900 }));
+R.ind = {
+  salidas: indiciosArena({ jugadas: [] }, { salidas_blancas: 4, salidas_negras: 2 }),
+  tiempos: indiciosArena({ jugadas: parejas }, {}),
+  pocas: indiciosArena({ jugadas: parejas.slice(0, 20) }, {}),
+};
+
+// ---- El juego limpio en la función.
+const T1 = "20000000-0000-4000-8000-000000000001";
+db.jugadores.push({ id: "30000000-0000-4000-8000-000000000001", usuario: "a", nombre: "Ana", equipo_id: null }, { id: "30000000-0000-4000-8000-000000000002", usuario: "b", nombre: "Beto", equipo_id: null });
+const base = { torneo_id: T1, blancas: "30000000-0000-4000-8000-000000000001", negras: "30000000-0000-4000-8000-000000000002", anulada: false, terminada_en: "2026-10-30T12:00:00Z" };
+db.partidas.push(
+  Object.assign({ id: "40000000-0000-4000-8000-000000000001", estado: "terminada", jugadas: MATE, fen: FEN_MATE, resultado: "0-1", motivo: "mate" }, base),
+  Object.assign({ id: "40000000-0000-4000-8000-000000000002", estado: "terminada", jugadas: J([["e4", "e2", "e4"]]), fen: "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1", resultado: "1-0", motivo: "mate" }, base),
+  Object.assign({ id: "40000000-0000-4000-8000-000000000003", estado: "en_juego", jugadas: [], fen: "", resultado: null, motivo: null }, base),
+);
+db.revisiones.push({ partida_id: "40000000-0000-4000-8000-000000000001", salidas_blancas: 0, salidas_negras: 5, historial: [] });
+const jl1 = await llamar({ accion: "juego_limpio", torneo_id: T1 });
+R.jl = {
+  estado: jl1.estado, revisadas: jl1.cuerpo.revisadas,
+  partidas: (jl1.cuerpo.partidas || []).map((x) => ({ id: x.id.slice(-1), problemas: x.problemas.map((p) => p.tipo), indicios: x.indicios, salidas: [x.salidas_blancas, x.salidas_negras], blancas: x.blancas })),
+  guardadas: db.revisiones.filter((r) => r.revision).length,
+};
+R.jl.otraVez = (await llamar({ accion: "juego_limpio", torneo_id: T1 })).cuerpo.revisadas;
+R.jl.sinMotivo = (await llamar({ accion: "anular", partida_id: "40000000-0000-4000-8000-000000000002", motivo: "  " })).cuerpo.error;
+R.jl.sinMotivoNoAnula = db.partidas[1].anulada;
+await llamar({ accion: "anular", partida_id: "40000000-0000-4000-8000-000000000002", motivo: "Declaró un mate que no era." });
+const revAnulada = db.revisiones.find((r) => r.partida_id === "40000000-0000-4000-8000-000000000002");
+R.jl.anulada = { partida: db.partidas[1].anulada, motivo: revAnulada.anulada_motivo, por: revAnulada.anulada_por, en: !!revAnulada.anulada_en, revisionSigue: !!revAnulada.revision };
+await llamar({ accion: "devolver", partida_id: "40000000-0000-4000-8000-000000000002" });
+R.jl.devuelta = { partida: db.partidas[1].anulada, motivo: revAnulada.anulada_motivo, historial: revAnulada.historial.map((h) => h.accion) };
+R.jl.enJuego = (await llamar({ accion: "anular", partida_id: "40000000-0000-4000-8000-000000000003", motivo: "x" })).estado;
+R.jl.sinPermiso = (await llamar({ accion: "juego_limpio", torneo_id: T1 }, "vencida")).estado;
 console.log(JSON.stringify(R));
 `);
 const r = spawnSync(process.execPath, ["--experimental-strip-types", "--no-warnings", prueba], { encoding: "utf8", timeout: 60000 });
@@ -271,6 +367,32 @@ if (!R) {
   ok("una arena válida queda con lo pedido (por equipos y los 5 mejores por omisión)", R.arena && R.arena.minutos === 60 && R.arena.inicial === 180 && R.arena.inc === 2 && R.arena.equipos === true && R.arena.mejores === 5, JSON.stringify(R.arena));
   ok("quitar a un jugador borra su cuenta de Auth", R.quitar.cuentasMenos === 1);
   ok("un id que no es uuid se rechaza", /Falta el jugador/.test(R.uuidMalo || ""), String(R.uuidMalo));
+
+  console.log("\n=== La revisión con chess.js y los indicios ===");
+  const tipos = (l) => (l || []).map((x) => x.tipo).join(",");
+  ok("una partida bien jugada hasta el mate no tiene problemas", tipos(R.rev.bien) === "", JSON.stringify(R.rev.bien));
+  ok("una jugada ilegal se marca con su número", tipos(R.rev.ilegal) === "jugada_ilegal" && R.rev.ilegal[0].jugada === 4, JSON.stringify(R.rev.ilegal));
+  ok("una jugada que dice salir de otra casilla también", tipos(R.rev.casillaCambiada) === "jugada_ilegal", JSON.stringify(R.rev.casillaCambiada));
+  ok("una posición guardada que no es la de las jugadas", tipos(R.rev.fenDistinta) === "posicion_distinta", JSON.stringify(R.rev.fenDistinta));
+  ok("un mate declarado que no es mate", tipos(R.rev.mateFalso) === "fin_falso", JSON.stringify(R.rev.mateFalso));
+  ok("un resultado contra el mate del tablero", tipos(R.rev.contraElMate) === "resultado_contra_el_mate", JSON.stringify(R.rev.contraElMate));
+  ok("salir de la pantalla 3 veces o más es un indicio; 2, no", R.ind.salidas.w.length === 1 && R.ind.salidas.w[0].veces === 4 && R.ind.salidas.b.length === 0, JSON.stringify(R.ind.salidas));
+  ok("tiempos muy parejos en muchas jugadas son un indicio solo de quien los tuvo", R.ind.tiempos.w.length === 1 && R.ind.tiempos.w[0].tipo === "tiempos_parejos" && R.ind.tiempos.b.length === 0, JSON.stringify(R.ind.tiempos));
+  ok("con pocas jugadas no se dice nada", R.ind.pocas.w.length === 0 && R.ind.pocas.b.length === 0, JSON.stringify(R.ind.pocas));
+
+  console.log("\n=== El juego limpio en la Edge Function ===");
+  const jl = R.jl;
+  ok("revisa las partidas terminadas (no la que se está jugando)", jl.estado === 200 && jl.revisadas === 2 && jl.partidas.length === 2, JSON.stringify(jl));
+  ok("y guarda la revisión", jl.guardadas === 2);
+  ok("trae el mate falso, con los nombres", jl.partidas.some((x) => x.id === "2" && x.problemas.join() === "fin_falso" && x.blancas === "Ana"), JSON.stringify(jl.partidas));
+  ok("y las salidas de la pantalla de quien las tuvo", jl.partidas.some((x) => x.id === "1" && x.salidas[1] === 5 && x.indicios.b.length === 1 && x.indicios.w.length === 0), JSON.stringify(jl.partidas));
+  ok("lo ya revisado no se vuelve a revisar", jl.otraVez === 0);
+  ok("anular sin motivo se rechaza y no anula", /Falta el motivo/.test(jl.sinMotivo || "") && jl.sinMotivoNoAnula === false, String(jl.sinMotivo));
+  ok("anular marca la partida, con su motivo, quién y cuándo", jl.anulada.partida === true && jl.anulada.motivo === "Declaró un mate que no era." && !!jl.anulada.por && jl.anulada.en, JSON.stringify(jl.anulada));
+  ok("y no borra la revisión", jl.anulada.revisionSigue);
+  ok("devolver la deja contando otra vez, con las dos cosas en el historial", jl.devuelta.partida === false && jl.devuelta.motivo === null && jl.devuelta.historial.join() === "anular,devolver", JSON.stringify(jl.devuelta));
+  ok("una partida que se está jugando no se anula", jl.enJuego === 404, String(jl.enJuego));
+  ok("sin permiso de la Academia, el juego limpio tampoco se ve", jl.sinPermiso === 403);
 }
 fs.rmSync(dir, { recursive: true, force: true });
 

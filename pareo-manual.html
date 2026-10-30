@@ -118,7 +118,7 @@
                 <h2 id="es-torneo">3. Los datos del torneo</h2>
                 <ul>
                     <li><strong>Nombre, ciudad, federación, fechas, árbitros y ritmo</strong>: van al TRF.</li>
-                    <li><strong>Sistema</strong>: suizo (Sistema Holandés) o todos contra todos. No se puede cambiar una vez emparejada la primera ronda.</li>
+                    <li><strong>Sistema</strong>: suizo (Sistema Holandés), todos contra todos o Scheveningen. No se puede cambiar una vez emparejada la primera ronda.</li>
                     <li><strong>Número de rondas</strong>: se puede subir durante el torneo, nunca por debajo de las ya emparejadas.</li>
                     <li><strong>Color del n.º 1 en la ronda 1</strong>: blancas o negras; lo decide el sorteo del árbitro.</li>
                     <li><strong>Aceleración Baku</strong>: la aceleración de FIDE para torneos grandes.</li>
@@ -153,6 +153,13 @@
                     <li>Antes de la ronda 1 se pueden <strong>sortear los números</strong>. Si no, quedan por Elo.</li>
                     <li>Con un número impar de jugadores, en cada ronda uno queda <strong>libre</strong> (0 puntos).</li>
                     <li>Quien no se presenta pierde por incomparecencia: se anota en el resultado de su mesa.</li>
+                </ul>
+                <p><strong>Scheveningen.</strong> Dos equipos, y cada jugador juega una vez con cada integrante del otro equipo, nunca con uno del suyo.</p>
+                <ul>
+                    <li>Los equipos salen de la columna <strong>Institución</strong>: tienen que ser dos, con la misma cantidad de jugadores (hasta 12 por equipo). Si no, la ficha Rondas dice qué falta y no empareja.</li>
+                    <li>El orden de tableros de cada equipo es el de la lista (Elo, título y nombre), y se ve antes de la ronda 1. Con n jugadores por equipo hay n rondas (2n a doble vuelta, con los colores al revés).</li>
+                    <li>Los colores quedan parejos: cada jugador tiene tantas blancas como negras (con un número impar, una de diferencia) y nunca lleva el mismo color tres rondas seguidas.</li>
+                    <li>La <strong>Clasificación</strong> trae arriba el encuentro entre los dos equipos, ronda por ronda, y debajo la clasificación individual.</li>
                 </ul>
 
                 <h2 id="es-desempates">7. La clasificación y los desempates</h2>
@@ -275,7 +282,7 @@ node pareo.js standings torneo.trf --tiebreaks BH-C1,BH,SB --lang es</code></pre
                 <h2 id="en-tournament">3. Tournament details</h2>
                 <ul>
                     <li><strong>Name, city, federation, dates, arbiters and time control</strong> go into the TRF.</li>
-                    <li><strong>System</strong>: Swiss (Dutch System) or round robin. It cannot be changed once round 1 is paired.</li>
+                    <li><strong>System</strong>: Swiss (Dutch System), round robin or Scheveningen. It cannot be changed once round 1 is paired.</li>
                     <li><strong>Number of rounds</strong>: it can be raised during the tournament, never below the rounds already paired.</li>
                     <li><strong>Colour of no. 1 in round 1</strong>: white or black, as drawn by the arbiter.</li>
                     <li><strong>Baku acceleration</strong>: FIDE's acceleration for large tournaments.</li>
@@ -310,6 +317,13 @@ node pareo.js standings torneo.trf --tiebreaks BH-C1,BH,SB --lang es</code></pre
                     <li>Before round 1 the numbers can be <strong>drawn by lot</strong>. Otherwise they follow the ratings.</li>
                     <li>With an odd number of players, one player has a <strong>free round</strong> (0 points) in each round.</li>
                     <li>A player who does not show up loses by forfeit: record it as the result of their board.</li>
+                </ul>
+                <p><strong>Scheveningen.</strong> Two teams, and each player meets every member of the other team once, never a teammate.</p>
+                <ul>
+                    <li>The teams come from the <strong>Institution</strong> column: there must be two, with the same number of players (up to 12 per team). Otherwise the Rounds tab says what is missing and does not pair.</li>
+                    <li>Each team's board order is the list order (rating, title and name), shown before round 1. With n players per team there are n rounds (2n in a double round, with colours reversed).</li>
+                    <li>Colours stay balanced: every player has as many whites as blacks (one apart with an odd number) and never has the same colour three rounds in a row.</li>
+                    <li>The <strong>Standings</strong> show the match between the two teams at the top, round by round, and the individual standings below.</li>
                 </ul>
 
                 <h2 id="en-tiebreaks">7. Standings and tie-breaks</h2>

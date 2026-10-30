@@ -259,6 +259,8 @@ async function pruebaArena(browser) {
   ok("el propio se marca con «(tú)»", /Ana Rojas \(tú\)/.test(jugadores[1]), jugadores[1]);
   ok("la tabla de equipos se ve en una arena por equipos", await visible(page, "#card-equipos"));
   igual("Jugar está habilitado", [await texto(page, "#btn-jugar"), await page.isDisabled("#btn-jugar")], ["Jugar", false]);
+  ok("la arena avisa del juego limpio: salir de la pantalla queda anotado y se revisa", await visible(page, "#aviso-juego-limpio")
+    && /sales de esta pantalla durante una partida, queda anotado/.test(await texto(page, "#aviso-juego-limpio")) && /se anula/.test(await texto(page, "#aviso-juego-limpio")));
 
   await page.click("#btn-jugar");
   await page.waitForFunction(() => document.getElementById("btn-jugar").textContent === "Pausar");
@@ -272,6 +274,8 @@ async function pruebaArena(browser) {
   await page.waitForSelector("#vista-lobby:not([hidden])");
   await page.click('#lista-torneos button[aria-label="Ver la arena: Arena de mañana"]');
   await page.waitForSelector("#vista-arena:not([hidden])");
+  await page.evaluate(() => { Object.defineProperty(document, "visibilityState", { configurable: true, get: () => "hidden" }); document.dispatchEvent(new Event("visibilitychange")); Object.defineProperty(document, "visibilityState", { configurable: true, get: () => "visible" }); });
+  ok("fuera de una partida, salir de la pantalla no se anota", (await llamadas(page, "arena_anotar_salida")).length === 0);
   ok("una arena que no empezó no se puede jugar", await page.isDisabled("#btn-jugar"));
   ok("y lo dice", /Todavía no empieza/.test(await texto(page, "#arena-aviso")));
   ok("empieza en…", /^Empieza en \d+:\d\d(:\d\d)?$/.test(await texto(page, "#arena-reloj")), await texto(page, "#arena-reloj"));
@@ -313,6 +317,15 @@ async function pruebaPartida(browser) {
   await casilla(page, "e7").click();
   ok("tocar una pieza fuera de turno no la selecciona", (await page.$$("#tablero .selected")).length === 0);
   ok("los botones de tablas y rendirse se ven", (await visible(page, "#btn-tablas")) && (await visible(page, "#btn-rendirse")));
+
+  // Juego limpio: esconder la pestaña en medio de la partida se anota.
+  const ocultar = (estado) => page.evaluate((e) => {
+    Object.defineProperty(document, "visibilityState", { configurable: true, get: () => e });
+    document.dispatchEvent(new Event("visibilitychange"));
+  }, estado);
+  await ocultar("hidden");
+  await ocultar("visible");
+  igual("salir de la pantalla durante la partida se anota en la base, con su partida", await llamadas(page, "arena_anotar_salida"), [{ p_partida: "p1" }]);
 
   // Llega la jugada del rival.
   await jugarRival(page, { san: "e4", desde: "e2", hasta: "e4", fen: FEN.e4 });

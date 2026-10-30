@@ -2372,8 +2372,9 @@ las flechas.
 `pareo.html`: el emparejador público de torneos. Cualquiera arma su torneo sin
 cuenta —jugadores, rondas, resultados, clasificación con desempates, tabla
 cruzada y el TRF para FIDE— con el **Sistema Holandés de FIDE** (C.04.3,
-versión vigente desde el 1 de febrero de 2026) o un todos contra todos con
-las tablas de Berger. Se pidió «que cumpla con todas las reglas de la FIDE
+versión vigente desde el 1 de febrero de 2026), un todos contra todos con
+las tablas de Berger o un Scheveningen entre dos equipos (ver «El Sistema
+Scheveningen: dos equipos, cada uno contra todos los del otro»). Se pidió «que cumpla con todas las reglas de la FIDE
 para ser avalado»: el aval lo tramita el dueño del sitio por su cuenta; esto
 deja el programa listo para pedirlo. No es el torneo de la Academia
 (`torneo.html`, con `js/torneo-engine.js`), que sigue siendo un suizo
@@ -2893,6 +2894,58 @@ por año (cada motivo, el tope de tres por equipo y el equipo de mujeres
 aparte del abierto). Con la cabecera buscada solo en la primera fila, con el
 grupo de uno marcado, con el tope en 4 o con el ascenso permitido en
 individual, salta.
+
+### El Sistema Scheveningen: dos equipos, cada uno contra todos los del otro
+
+Lo pidió el dueño del sitio, entre las herramientas que le faltaban a un
+árbitro: el encuentro de dos colegios o dos clubes en que cada jugador
+juega con todos los del otro equipo y con ninguno del suyo.
+
+- **Es un torneo individual con `sistema: "scheveningen"`**, no un torneo
+  por equipos (`tipo: "equipos"` lo rechaza): cada partida es de dos
+  personas, la clasificación individual y el TRF son los de siempre, y lo
+  único nuevo es el calendario y el marcador del encuentro.
+- **Los dos equipos salen de la columna Institución** (sin tildes,
+  mayúsculas ni espacios de más: «liceo  a» y «Liceo A» son el mismo). Tienen
+  que ser exactamente dos, con la misma cantidad, hasta 12 por equipo
+  (`equiposScheveningen()`); si no, la ficha Rondas dice qué falta, con los
+  nombres, y no empareja. No se inventa un «libre»: un Scheveningen desparejo
+  no es un Scheveningen.
+- **El orden de tableros es el orden inicial** (Elo, título, nombre), que
+  queda fijo al emparejar la ronda 1, y se ve antes de emparejar. El equipo
+  A es el del n.º 1. En la ronda r, el tablero i es A[i] contra
+  B[(i + r) mod n]: en n rondas, cada pareja una vez.
+- **Los colores salen de una tabla, `COLORES_SCHEVENINGEN`, no de una
+  fórmula.** Con ese giro ninguna fórmula simple deja parejos a los dos
+  equipos: con (i + r) par, cada jugador de B llevaba el mismo color en
+  todas las rondas cuando n es par. Las tablas de 1 a 12 se buscaron por
+  fuerza bruta: cada jugador de A y de B termina con tantas blancas como
+  negras (con n impar, una de diferencia) y nunca lleva el mismo color tres
+  rondas seguidas. Con n par cada equipo lleva blancas en la mitad de los
+  tableros de cada ronda, salvo con 2, 6 y 10 (n/2 impar), donde eso no se
+  puede sin desparejar a alguien: ahí una ronda lleva una blanca de más. El
+  color del n.º 1 y la doble vuelta dan vuelta los colores, como en Berger.
+- **Calendario fijo, como el todos contra todos**: `T.fijo(t)` dice si el
+  sistema no se empareja con el motor, y `T.rondaFija()` /
+  `T.rondasDelTorneo()` son la única puerta para cualquiera de los dos. Todo
+  lo que antes preguntaba `sistema === "todos"` para decir «calendario fijo»
+  (sin «Número de rondas» ni Baku, con doble vuelta, sin «no viene» por
+  ronda, la incomparecencia con el rival programado en los desempates) ahora
+  pregunta `T.fijo()`.
+- **El TRF dice `092 Individual: Scheveningen`**, sin la línea 192 del
+  Holandés, y se vuelve a leer como Scheveningen.
+- **La Clasificación trae arriba el encuentro** (`marcadorScheveningen()`):
+  el total de cada equipo, quién va ganando o ganó escrito con palabras, y
+  una fila por ronda con las mesas que faltan.
+- **Al publicar** se manda el número de rondas del calendario. La Edge
+  Function `pareo-publicar` todavía guarda cualquier sistema que no sea
+  «todos» como «suizo»: hasta que se despliegue con «scheveningen», la lista
+  pública lo muestra como «Suizo de n rondas». La página pública ya sabe
+  pintarlo.
+
+Al tocar esto, `node herramientas/verificar-pareo-scheveningen.js` (con el
+sitio en localhost:8777). Rompiendo a propósito un color de la tabla o el
+giro de B, salta.
 
 ### Torneos por equipos: el orden de tableros y el pareo de encuentros
 
@@ -11762,9 +11815,51 @@ tablas. Eso lo calcula chess.js en el navegador de quien mueve y viaja con la
 jugada (`p_fen`, `p_fin`). La base sí exige que sea su turno, que la posición
 tenga la forma de un FEN con el turno cambiado y un solo rey por bando. Quien
 quiera trampa desde la consola puede declarar una jugada ilegal o un mate que
-no es; con estudiantes conocidos y sin premios de dinero es aceptable. **Si
-alguna vez hay premios**, el paso siguiente es validar la jugada en una Edge
-Function que repita la partida con chess.js antes de escribirla.
+no es: no se impide, pero **se encuentra después** (ver «El juego limpio de la
+sala de arena»). Validar cada jugada en una Edge Function antes de escribirla
+haría esperar al servidor en cada jugada; si alguna vez hay premios de dinero,
+ese es el paso siguiente.
+
+**El juego limpio de la sala de arena.** Lo pidió el dueño del sitio:
+torneos en línea con control antitrampa.
+- **Nada se anula solo.** La revisión junta problemas e indicios y quien
+  administra decide en `sala-admin.html` («Revisar partidas» de cada arena).
+  La pantalla dice que son indicios, no pruebas, y cada uno va escrito con el
+  nombre de quien lo tuvo (no en un color).
+- **La revisión con chess.js** (`supabase/functions-colegios/arena-admin/
+  revision.ts`, una función pura que corre en la Edge Function con el
+  chess.js de npm y en Node con el del sitio, sin dos copias, como
+  `partida-fin` en la Academia): repite cada partida terminada y marca la
+  jugada que no se puede jugar o que dice salir de otra casilla, la posición
+  guardada que no es la que dejan las jugadas, el fin declarado (mate,
+  ahogado, material, repetición, cincuenta) que la posición no es y el
+  resultado contra el mate del tablero. Se revisa UNA vez: queda guardada en
+  `arena_revisiones` y la siguiente vez no se repite.
+- **Los indicios**: salir de la pantalla 3 veces o más en una partida (la
+  pestaña escondida; lo anota `arena_anotar_salida`, solo al color de quien
+  llama y solo en una partida en juego) y tiempos muy parejos (15 jugadas
+  propias o más después de las 5 de la apertura, con un promedio de al menos
+  3 s y un coeficiente de variación bajo 0,25: un programa tarda siempre
+  parecido). El tiempo de cada jugada lo mide la base con su hora (`ms` en
+  cada jugada de `arena_mover`). El segundo es un indicio débil y se dice así.
+- **Se avisa a quien juega**: la arena dice que salir de la pantalla durante
+  una partida queda anotado y que una partida con trampa se anula. Una
+  medida que vigila sin avisar no disuade a nadie.
+- **Anular no borra** (la partida es el acta): `arena_partidas.anulada`, que
+  sí ve quien jugó, la saca de la clasificación y de la racha. El motivo, quién
+  y cuándo van en `arena_revisiones`, que ningún jugador lee (RLS sin
+  políticas): el motivo de una anulación no se les muestra a los compañeros.
+  «Devolver los puntos» la deja contando otra vez; las dos cosas quedan en
+  `historial`. Los puntos ya guardados de las partidas siguientes no se
+  recalculan: dependían de la racha de ese momento.
+- Anular pide motivo (sin él, ni se llama a la función) y una partida que se
+  está jugando no se anula.
+- **Pendiente de aplicar** (este cambio se hizo sin acceso a la base): la
+  migración espera en `supabase/pendientes-colegios/`; al aplicarla en «Base
+  de Colegios» se mueve, sin tocarla, a `migraciones-colegios/`, y se
+  despliega `arena-admin` con su `revision.ts`. Hasta entonces, «Revisar
+  partidas» contesta «Esa acción no existe.» y la salida de la pantalla no
+  se anota (la página no se rompe: el aviso falla callado).
 
 **La página.** `sala.html` es una sola página con cuatro pantallas (entrar,
 arenas, una arena, una partida) y se lee en voz: el foco va al título de cada
@@ -11801,4 +11896,14 @@ sala-base` (con el sitio en localhost:8777 y playwright):
 - `sala-admin` abre `sala-admin.html`: quien no administra no llama a la
   función, un nombre con HTML es texto, lo que se manda al agregar, las claves
   en la tabla y en el CSV (con BOM), «Nueva clave», el error de la función
-  dicho, y la arena con la hora de Costa Rica (UTC−6).
+  dicho, y la arena con la hora de Costa Rica (UTC−6);
+  y el juego limpio: la revisión pedida para esa arena, solo las partidas con
+  algo, cada indicio escrito, anular sin motivo que no llama a la función,
+  la anulada con su motivo y «Devolver los puntos».
+- `sala-base` revisa además la migración del juego limpio (la tabla que nadie
+  lee, la salida que solo suma a su color, el tiempo de cada jugada, lo
+  anulado fuera de la clasificación y la racha), la revisión con chess.js y
+  los indicios, y la función: revisa una vez, anular pide motivo y deja
+  constancia, devolver también, y una partida en juego no se anula. `sala`,
+  que la arena avisa del juego limpio y que esconder la pestaña en medio de
+  una partida (y solo entonces) llama a `arena_anotar_salida`.

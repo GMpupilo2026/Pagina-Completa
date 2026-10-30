@@ -26,8 +26,16 @@
  * El usuario es el que ya generó el formulario de inscripción
  * (`inscripciones.usuario`, por ejemplo «Oscar_Angulo_C»). Si dos estudiantes
  * dieran el mismo, al segundo se le agrega un número.
+ *
+ * EL JUEGO LIMPIO. «juego_limpio» repite con chess.js (revision.ts) cada
+ * partida terminada de una arena que todavía no se revisó, guarda lo que no
+ * cuadra en `arena_revisiones` y devuelve cada partida con sus indicios. Nada
+ * se anula solo: «anular» (con su motivo) y «devolver» los decide quien
+ * administra, y quedan anotados con quién y cuándo.
  */
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+import { Chess } from "npm:chess.js@0.10.3";
+import { indiciosArena, revisarArena } from "./revision.ts";
 
 const ACADEMIA_URL = "https://bgtijpimpcokxatxxbki.supabase.co";
 const ACADEMIA_ANON =
@@ -173,14 +181,14 @@ function mensajeDe(datos: any, t: string): string {
   return String((datos && (datos.message || datos.msg || datos.error_description || datos.error)) || t || "Error desconocido");
 }
 
-async function rest(c: Ctx, metodo: string, ruta: string, cuerpo?: unknown): Promise<any> {
+async function rest(c: Ctx, metodo: string, ruta: string, cuerpo?: unknown, prefer = ""): Promise<any> {
   const res = await fetch(`${c.url}/rest/v1/${ruta}`, {
     method: metodo,
     headers: {
       apikey: c.key,
       Authorization: `Bearer ${c.key}`,
       "Content-Type": "application/json",
-      Prefer: "return=representation",
+      Prefer: ["return=representation", prefer].filter(Boolean).join(","),
     },
     body: cuerpo === undefined ? undefined : JSON.stringify(cuerpo),
   });
@@ -379,7 +387,83 @@ async function borrarTorneo(c: Ctx, p: Json): Promise<Json> {
   return {};
 }
 
-const ACCIONES: Record<string, (c: Ctx, p: Json) => Promise<Json>> = {
+/* ------------------------------------------------------------ juego limpio */
+
+/* Quién hizo algo, para el historial: lo que dice el token de la Academia
+   (que ya se comprobó con soy_coordinador). Solo se lee, no se valida acá. */
+function quienDe(jwt: string): string {
+  try {
+    const cuerpo = JSON.parse(atob(jwt.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")));
+    return String(cuerpo.email || cuerpo.sub || "administración").slice(0, 120);
+  } catch (_e) {
+    return "administración";
+  }
+}
+
+async function juegoLimpio(c: Ctx, p: Json): Promise<Json> {
+  const torneo = uuid(p.torneo_id, "la arena");
+  const partidas = await todas(c,
+    `arena_partidas?select=id,blancas,negras,fen,jugadas,resultado,motivo,anulada,terminada_en&torneo_id=eq.${torneo}&estado=eq.terminada&order=terminada_en.desc`);
+  const ids = partidas.map((x) => String(x.id));
+  const revisiones = new Map<string, Json>();
+  // De a 100 ids por pedido: la dirección no puede ser infinita.
+  for (let i = 0; i < ids.length; i += 100) {
+    const lote = ids.slice(i, i + 100).join(",");
+    for (const r of await todas(c, `arena_revisiones?select=*&partida_id=in.(${lote})`)) revisiones.set(String(r.partida_id), r);
+  }
+  // Las que todavía no tienen revisión se revisan ahora, y queda guardado.
+  const nuevas: Json[] = [];
+  for (const x of partidas) {
+    const r = revisiones.get(String(x.id));
+    if (r && r.revision) continue;
+    const revision = { problemas: revisarArena(Chess, x), revisada_en: new Date().toISOString() };
+    nuevas.push({ partida_id: x.id, revision });
+    revisiones.set(String(x.id), Object.assign({ salidas_blancas: 0, salidas_negras: 0, historial: [] }, r || {}, { revision }));
+  }
+  for (let i = 0; i < nuevas.length; i += 100) {
+    await rest(c, "POST", "arena_revisiones?on_conflict=partida_id", nuevas.slice(i, i + 100), "resolution=merge-duplicates");
+  }
+  const jugadores = await todas(c, "arena_jugadores?select=id,nombre,equipo_id");
+  const nombre = new Map(jugadores.map((j) => [String(j.id), String(j.nombre)]));
+  const lista = partidas.map((x) => {
+    const r = revisiones.get(String(x.id)) || {};
+    const rev = (r.revision || {}) as Json;
+    return {
+      id: x.id,
+      blancas: nombre.get(String(x.blancas)) || "?",
+      negras: nombre.get(String(x.negras)) || "?",
+      resultado: x.resultado, motivo: x.motivo,
+      jugadas: Array.isArray(x.jugadas) ? x.jugadas.length : 0,
+      terminada_en: x.terminada_en,
+      anulada: x.anulada === true,
+      anulada_motivo: r.anulada_motivo ?? null, anulada_por: r.anulada_por ?? null, anulada_en: r.anulada_en ?? null,
+      salidas_blancas: Number(r.salidas_blancas) || 0, salidas_negras: Number(r.salidas_negras) || 0,
+      problemas: Array.isArray(rev.problemas) ? rev.problemas : [],
+      indicios: indiciosArena(x, r),
+    };
+  });
+  return { partidas: lista, revisadas: nuevas.length };
+}
+
+async function marcarAnulada(c: Ctx, p: Json, anular: boolean, jwt: string): Promise<Json> {
+  const id = uuid(p.partida_id, "la partida");
+  const motivo = anular ? texto(p.motivo, 300, "el motivo") : null;
+  const filas = await rest(c, "PATCH", `arena_partidas?id=eq.${id}&estado=eq.terminada`, { anulada: anular });
+  if (!filas.length) throw new ErrorHttp("Esa partida no existe o todavía se está jugando.", 404);
+  const previa = (await rest(c, "GET", `arena_revisiones?select=historial&partida_id=eq.${id}`))[0];
+  const por = quienDe(jwt);
+  const en = new Date().toISOString();
+  const historial = (Array.isArray(previa?.historial) ? previa.historial : [])
+    .concat({ accion: anular ? "anular" : "devolver", motivo, por, en });
+  await rest(c, "POST", "arena_revisiones?on_conflict=partida_id", {
+    partida_id: id,
+    anulada_motivo: motivo, anulada_por: anular ? por : null, anulada_en: anular ? en : null,
+    historial,
+  }, "resolution=merge-duplicates");
+  return {};
+}
+
+const ACCIONES: Record<string, (c: Ctx, p: Json, jwt: string) => Promise<Json>> = {
   estado: (c) => estado(c),
   crear_equipo: crearEquipo,
   renombrar_equipo: renombrarEquipo,
@@ -390,6 +474,9 @@ const ACCIONES: Record<string, (c: Ctx, p: Json) => Promise<Json>> = {
   reiniciar_clave: reiniciarClave,
   crear_torneo: crearTorneo,
   borrar_torneo: borrarTorneo,
+  juego_limpio: juegoLimpio,
+  anular: (c, p, jwt) => marcarAnulada(c, p, true, jwt),
+  devolver: (c, p, jwt) => marcarAnulada(c, p, false, jwt),
 };
 
 Deno.serve(async (req: Request) => {
@@ -418,7 +505,7 @@ Deno.serve(async (req: Request) => {
   if (!hacer) return json({ error: "Esa acción no existe." }, 400);
 
   try {
-    return json({ ok: true, ...(await hacer({ url, key }, cuerpo)) });
+    return json({ ok: true, ...(await hacer({ url, key }, cuerpo, jwt)) });
   } catch (e) {
     if (e instanceof ErrorHttp) return json({ error: e.message }, e.estado);
     return json({ error: "No se pudo completar la acción." }, 500);
