@@ -283,7 +283,9 @@ function preparar() {
   }
   sessionStorage.setItem("pareo-dgt-token", "lip_prueba");
   window.__pareo = pareo;
-  window.addEventListener("DOMContentLoaded", () => {
+  // En document y desde antes que la página: así el puerto de mentira ya
+  // existe cuando la sección 5 pregunta por los puertos permitidos.
+  document.addEventListener("DOMContentLoaded", () => {
     const fens = JSON.parse(localStorage.getItem("prueba-fens") || "[]");
     const tabs = [10001, 10002, 10003].map((n, i) => DgtTablero.crear({ serie: String(n), fen: fens[i], reloj: { izquierda: 300, derecha: 300, turno: null } }));
     window.__tabs = tabs;
@@ -298,7 +300,14 @@ function preparar() {
       } }),
       open: () => Promise.resolve(), close: () => Promise.resolve(), setSignals: () => Promise.resolve(), getInfo: () => ({ usbProductId: 1 }),
     };
-    Object.defineProperty(navigator, "serial", { value: { requestPort: () => Promise.resolve(puerto) }, configurable: true });
+    // Con permiso ya dado (después del primer «Conectar un puerto»), Chrome lo
+    // devuelve en getPorts() al recargar. Es USB: trae usbVendorId.
+    puerto.getInfo = () => ({ usbVendorId: 0x0403, usbProductId: 0x6001 });
+    puerto.forget = () => { localStorage.removeItem("prueba-permiso"); return Promise.resolve(); };
+    Object.defineProperty(navigator, "serial", { value: {
+      requestPort: () => { localStorage.setItem("prueba-permiso", "1"); return Promise.resolve(puerto); },
+      getPorts: () => Promise.resolve(localStorage.getItem("prueba-permiso") ? [puerto] : []),
+    }, configurable: true });
     // Jugar en el tablero i (como alguien de verdad: mueve y aprieta el reloj).
     window.__jugar = (i, san, segundos) => {
       const t = tabs[i];
@@ -322,6 +331,7 @@ async function pruebaPagina(browser) {
   const errores = [];
   const empujados = {};                     // id de la ronda en Lichess → lo último que recibió
   const publicada = { 111: 1, 222: 1 };     // la última ronda de cada categoría en chess-results
+  const anotados = {};                      // «tnr|ronda» → { mesa: "1 - 0" }: lo que el árbitro anotó en chess-results
   p.on("pageerror", (e) => errores.push(String(e)));
   await p.route("**/fonts.googleapis.com/**", (r) => r.fulfill({ status: 200, contentType: "text/css", body: "" }));
   await p.route("**/js/supabase-client.js", (r) => r.fulfill({ contentType: "application/javascript", body: clienteFalso() }));
@@ -334,7 +344,9 @@ async function pruebaPagina(browser) {
         return r.fulfill({ contentType: "application/json", body: JSON.stringify({ status: 200, datos: { round: { id, url: "https://lichess.org/broadcast/-/-/" + id } } }) });
       }
       const cat = b.tnr === "111" ? "Sub-12" : "Abierto";
-      const pareo = await p.evaluate(([c, n, m]) => window.__pareo(c, n, m), [cat, publicada[b.tnr], b.tnr === "111" ? 2 : 1]);
+      const n = b.rd || publicada[b.tnr];
+      const pareo = await p.evaluate(([c, n, m]) => window.__pareo(c, n, m), [cat, n, b.tnr === "111" ? 2 : 1]);
+      for (const m of pareo.mesas) m.resultado = (anotados[b.tnr + "|" + n] || {})[m.mesa] || "";
       return r.fulfill({ contentType: "application/json", body: JSON.stringify(Object.assign(pareo, { leido_en: new Date().toISOString() })) });
     }
     return r.fulfill({ contentType: "application/json", body: "{}" });
@@ -379,16 +391,23 @@ async function pruebaPagina(browser) {
   igual("cada categoría dice su ronda y cuándo subió", (await p.$$eval("#directo-categorias li", (l) => l.map((x) => x.textContent.replace(/: [\d:]+ [ap]\. m/, ": HORA")))), ["Sub-12: 2 tableros, ronda 1. Subido a Lichess: HORA.", "Abierto: 1 tablero, ronda 1. Subido a Lichess: HORA."]);
 
   // La mesa 1 de Sub-12 termina; la mesa 2 sigue jugando. Sale la ronda 2 de Sub-12.
-  await p.selectOption("#directo-tableros tr:nth-child(1) select[aria-label^='Resultado']", "1-0");
+  // Nadie marca el resultado en esta página: lo anota el árbitro en chess-results.
   await p.evaluate(() => window.__jugar(1, "e4", 2));
   await esperarFila(2, 5, "1 · 1. e4");
+  // En chess-results: el árbitro anota el 1-0 de la mesa 1 de Sub-12 y empareja
+  // la ronda 2; en el Abierto anota el 0-1 de su mesa 1 (sin ronda nueva).
+  anotados["111|1"] = { 1: "1 - 0" };
+  anotados["222|1"] = { 1: "0 - 1" };
   publicada[111] = 2;
   await p.click("#btn-revisar");
   await esperarFila(1, 4, "Sub-12 R2 blancas 1 – Sub-12 R2 negras 1 \\(ronda 2\\)");
-  cierto("sale la ronda 2 en chess-results: el tablero que terminó toma solo a los jugadores nuevos de su mesa", true);
+  cierto("sale la ronda 2: el 1-0 que anotó el árbitro en chess-results termina la partida, y el tablero toma solo a los jugadores nuevos de su mesa", true);
   await esperarFila(2, 4, "\\(ronda 1; termina y pasa a la 2\\)");
   cierto("el que sigue jugando termina primero la partida de la ronda 1", true);
   cierto("el Abierto, sin ronda nueva, sigue en la 1", /Abierto R1 blancas 1 .*\(ronda 1\)$/.test(await fila(3, 4)), await fila(3, 4));
+  await p.waitForFunction(() => document.querySelector("#directo-tableros tr:nth-child(3) select[aria-label^='Resultado']").value === "0-1", null, { timeout: 15000 });
+  cierto("y el 0-1 que anotó el árbitro en chess-results aparece solo en su fila", true);
+  cierto("y llega solo a Lichess", await esperarEmpuje("rondaB01", '\\[Result "0-1"\\][\\s\\S]*1\\. d4 \\{ \\[%clk 0:04:58\\] \\} 0-1'), (empujados.rondaB01 || "").slice(0, 400));
 
   await p.evaluate(() => { window.__armar(0); window.__jugar(0, "Nf3", 5); window.__jugar(1, "e5", 6); });
   cierto("la partida nueva va a la ronda 2 de Lichess, con los nombres nuevos",
@@ -404,10 +423,11 @@ async function pruebaPagina(browser) {
   await p.waitForTimeout(500);
   await p.reload({ waitUntil: "networkidle" });
   await p.waitForFunction(() => /Conectado a Lichess/.test(document.getElementById("lichess-estado").textContent));
-  await p.click("#btn-directo-puerto");
-  await p.waitForFunction(() => document.querySelectorAll("#directo-tableros tr").length === 3, null, { timeout: 15000 });
+  // Sin tocar «Conectar un puerto»: el puerto USB que ya tenía permiso se abre solo
+  // (y vuelve a buscar sus tableros: unos segundos).
+  await p.waitForFunction(() => document.querySelectorAll("#directo-tableros tr").length === 3, null, { timeout: 30000 });
   await esperarFila(1, 5, "1 · 1. Cf3");
-  igual("después de recargar: cada tablero en su categoría y su mesa, y la partida sigue donde iba",
+  igual("después de recargar, sin tocar nada: el puerto se conecta solo, cada tablero en su categoría y su mesa, y la partida sigue donde iba",
     [await p.$$eval("#directo-tableros select[aria-label^='Categoría']", (s) => s.map((x) => x.value)), (await fila(1, 4)).trim(), (await fila(1, 5)).trim()],
     [["111", "111", "222"], "Sub-12 R2 blancas 1 – Sub-12 R2 negras 1 (ronda 2)", "1 · 1. Cf3"]);
   await p.evaluate(() => window.__jugar(0, "d5", 4));

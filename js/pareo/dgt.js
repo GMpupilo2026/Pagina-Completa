@@ -22,6 +22,7 @@
  *   PareoDGT.pgn(datos, opciones)            → el texto del PGN (opciones.jugadas: { mesa: { texto, resultado } }
  *                                              para «Transmitir sin LiveChess»: las jugadas leídas de cada tablero)
  *   PareoDGT.firma(datos)                    → quién juega con quién en cada mesa (para ver si cambió)
+ *   PareoDGT.resultadoCR("½ - ½")            → "1/2-1/2" (el resultado de chess-results, para el PGN) | null
  *   PareoDGT.decidir(guardado, datos, mesas) → "esperar" | "nueva" | "cambio" | "igual"
  *   PareoDGT.nombreArchivo(nombre, ronda)    → "torneo-blitz-ronda-3.pgn"
  *   PareoDGT.formTorneo({...}) / formRonda({...}) → [[campo, valor]] para URLSearchParams
@@ -114,6 +115,17 @@
       return tags.map(([k, v]) => "[" + k + ' "' + valor(v) + '"]').join("\n") + "\n\n" + (j && j.texto ? j.texto : "*") + "\n";
     });
     return bloques.join("\n");
+  }
+
+  // El resultado de una mesa como lo escribe chess-results («1 - 0», «½ - ½»,
+  // «+ - -» si uno no se presentó), en el formato del PGN; null si todavía no
+  // está o no es una partida (los dos ausentes: «- - -»).
+  function resultadoCR(texto) {
+    const s = String(texto || "").replace(/\s+/g, "").replace(/½/g, "1/2").replace(/0\.5|0,5/g, "1/2");
+    if (s === "1-0" || s === "+--" || s === "+-") return "1-0";
+    if (s === "0-1" || s === "--+" || s === "-+") return "0-1";
+    if (s === "1/2-1/2") return "1/2-1/2";
+    return null;
   }
 
   // Quién juega con quién en cada mesa, por número inicial y nombre: si
@@ -219,7 +231,7 @@
     return sale;
   }
 
-  const api = { datosLiveChess, textoDatos, unirFicha, tnrDe, quitarTildes, leerMesas, partidas, pgn, firma, decidir, nombreArchivo, formTorneo, formRonda, inicioRonda };
+  const api = { datosLiveChess, textoDatos, unirFicha, tnrDe, quitarTildes, leerMesas, partidas, pgn, firma, resultadoCR, decidir, nombreArchivo, formTorneo, formRonda, inicioRonda };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else raiz.PareoDGT = api;
 })(typeof self !== "undefined" ? self : this);
