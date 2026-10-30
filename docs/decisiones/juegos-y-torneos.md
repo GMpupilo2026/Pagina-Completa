@@ -1612,6 +1612,50 @@ cada motivo que puede devolver tenga su texto en la página; saltándose la
 comprobación de legalidad, falla) y `verificar-profesor-juega.js` (la marca,
 el título, «Ya la revisé» y que al alumno no se le pida).
 
+### El rival que se va
+
+Si el rival cerraba la página o se le caía la conexión, solo quedaba esperar a
+que se le cayera la bandera: en una partida de 30 minutos, media hora mirando
+un tablero quieto. Ahora, como en lichess, quien se queda lo ve y puede
+reclamar. Migración `20261030000014_rival_que_se_va`.
+
+- **La base sabe quién sigue ahí.** Cada pantalla de una sala de a dos llama
+  cada pocos segundos a `latido_de_partida()` (`js/rival-ausente.js`, que
+  pone en marcha `SalaJuego.suscribir` en las seis salas: Estándar, Niebla,
+  Crazyhouse, Cartas, Duelo y las variantes). La base anota la hora en
+  `partida_latidos` y contesta en la misma llamada cuánto hace que no ve al
+  rival, cada cuánto volver a latir (10 s), desde cuándo avisar (20 s) y si
+  ya se puede reclamar (40 s, `interno.segundos_para_reclamar()`). Los
+  números viven en la base, una sola vez: la pantalla los recibe.
+- **El aviso:** «Tu rival se desconectó hace N s», debajo del estado de la
+  sala; desde los 40 s, «Reclamar la victoria» y «Declarar tablas», cada uno
+  con su confirmación. Si el rival vuelve, el aviso se va solo.
+- **Lo decide la base, con su hora.** `reclamar_por_abandono()` vuelve a
+  contar la ausencia y rechaza el reclamo antes de tiempo («Tu rival sigue
+  conectado»); desde la consola no se adelanta nada. Termina la partida con
+  `status = 'finished'` y el resultado, igual que una rendición (la
+  revisión y el robo de puntos corren como siempre).
+- **El que nunca entró:** se cuenta desde que llegó quien reclama, no desde
+  que se creó la sala (que el profe pudo armar horas antes): nadie gana al
+  abrir la página.
+- **Sin red, no se acusa:** si el pedido propio no llega, el aviso no sale.
+  Una pestaña escondida late más despacio (el navegador frena sus relojes) y
+  al volver late enseguida.
+- `partida_latidos` no tiene políticas ni permisos: solo la tocan las dos
+  funciones. Probado impersonando en una transacción revertida: el alumno no
+  ve ninguna fila; con el rival latiendo, el reclamo se rechaza; quien no
+  juega no reclama; a los 50 s sin el rival, el reclamo termina la partida;
+  un segundo reclamo, rechazado.
+- Ajedrez para 4 y el Relevo quedan afuera (el Relevo es por equipos y usa
+  su propia tabla).
+
+Lo prueba `verificar-partidas-simultaneas.js`: en todas las rondas, cada
+pestaña late y nadie ve el aviso con los dos en la sala; y la ronda 8, una
+partida por modalidad a la que se le cierra la pestaña de las negras: el
+reclamo enseguida lo rechaza el doble de la base, el aviso y el botón llegan,
+el reclamo termina la partida y la pantalla lo muestra (con los segundos
+acortados, que el doble dice como la base). Sin el botón, salta.
+
 ### Cartas: cada estado, una copia propia
 
 `CartasChess.Game.fromJSON` y `toJSON` compartían las manos y el mazo con el

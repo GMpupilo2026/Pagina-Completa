@@ -459,6 +459,10 @@
     vigilantes[salaId] = { refrescar, jugada, esperarBase, despuesDeGuardar };
     abrir();
     if (rapida) abrirRapido();
+    // El rival que se desconecta (js/rival-ausente.js): en toda sala de a dos.
+    if (tabla === "game_rooms" && window.RivalAusente && opciones.miColor) {
+      window.RivalAusente.vigilar(salaId, { sala, miColor: opciones.miColor, refrescar });
+    }
     return vigilantes[salaId];
   }
 

@@ -163,6 +163,16 @@ function crearServidor(red) {
   const historia = new Map();      // salaId → las escrituras de jugadas, para depurar
   const devueltos = [];             // ms que el reloj de quien movió quedó por encima de lo que dice la base
   const recortes = [];              // relojes de más que la base recortó: { lenta } (si la escritura tardó en llegar)
+  // El rival que se va (latido_de_partida y reclamar_por_abandono): cuándo vio
+  // la base a cada jugador, y los segundos de la base (la ronda 8 los acorta).
+  const latidos = new Map();        // salaId/usuario → { desde, visto }
+  const AUSENCIA = red.ausencia || { latido_s: 10, aviso_s: 20, reclamar_s: 40 };
+  const reclamos = [];              // { salaId, usuario, error }
+  function ausencia(f, yo) {
+    const rival = yo === f.white_id ? f.black_id : f.white_id;
+    const suyo = latidos.get(f.id + "/" + rival), mio = latidos.get(f.id + "/" + yo);
+    return (Date.now() - (suyo ? suyo.visto : (mio ? mio.desde : Date.now()))) / 1000;
+  }
   const provisionales = new Map(); // salaId → cuántas jugadas del rival se pintaron como provisionales
   let cerrado = false;
 
@@ -278,6 +288,27 @@ function crearServidor(red) {
 
     if (op === "rpc") {
       if (pedido.nombre === "hora_servidor_ms") return { data: Date.now(), error: null };
+      // Lo mismo que hacen las de la base (ver «El rival que se va»).
+      if (pedido.nombre === "latido_de_partida" || pedido.nombre === "reclamar_por_abandono") {
+        const f = salas.get(pedido.args.p_room_id);
+        const yo = pedido.usuario;
+        if (!f || (yo !== f.white_id && yo !== f.black_id)) return { data: null, error: { message: "Solo quien juega esta partida" } };
+        if (pedido.nombre === "latido_de_partida") {
+          const k = f.id + "/" + yo, antes = latidos.get(k);
+          latidos.set(k, { desde: antes ? antes.desde : Date.now(), visto: Date.now() });
+          const seg = f.status === "playing" ? ausencia(f, yo) : 0;
+          return { data: Object.assign({ segundos: Math.floor(seg), puede_reclamar: seg >= AUSENCIA.reclamar_s }, AUSENCIA), error: null };
+        }
+        let error = null;
+        if (f.status !== "playing") error = "La partida ya terminó";
+        else if (ausencia(f, yo) < AUSENCIA.reclamar_s) error = "Tu rival sigue conectado";
+        reclamos.push({ salaId: f.id, usuario: yo, error });
+        if (error) return { data: null, error: { message: error } };
+        const nueva = Object.assign({}, f, { status: "finished", result: pedido.args.p_tablas ? "draw" : (yo === f.white_id ? "white" : "black"), updated_at: ahoraIso() });
+        salas.set(f.id, nueva);
+        repartir(nueva);
+        return { data: null, error: null };
+      }
       if (pedido.nombre === "nombres_de_jugadores") {
         return { data: (pedido.args.p_ids || []).map((id) => ({ id, nombre: "Alumno " + id.slice(2) })), error: null };
       }
@@ -422,7 +453,7 @@ function crearServidor(red) {
   }
 
   return {
-    salas, confirmadas, vistas, rechazos, atrasos, rapidas, provisionales, historia, devueltos, recortes, sala, mesa4, agregar, atender,
+    salas, confirmadas, vistas, rechazos, atrasos, rapidas, provisionales, historia, devueltos, recortes, reclamos, latidos, sala, mesa4, agregar, atender,
     cerrar() { cerrado = true; if (cortes) clearInterval(cortes); },
   };
 }
@@ -697,6 +728,14 @@ async function ronda(browser, nombre, PARTIDAS, red, limites, variantes) {
     }
   }
 
+  // ---------------- con los dos en la sala, nadie ve «Tu rival se desconectó»
+  const avisosDeMas = [];
+  for (const p of pestañas) {
+    try {
+      if (await p.page.evaluate(() => { const c = document.getElementById("rival-ausente"); return !!c && c.checkVisibility(); })) avisosDeMas.push(p.pagina);
+    } catch (e) { /* pestaña cerrada */ }
+  }
+
   // ---------------- la lista de jugadas lleva a la posición guardada
   const rotas = [];
   for (const f of srv.salas.values()) {
@@ -734,6 +773,8 @@ async function ronda(browser, nombre, PARTIDAS, red, limites, variantes) {
   ok("al final cada pestaña muestra lo mismo que la base (tablero, sala, lista de jugadas, estado)", !desfasadas.length, desfasadas.slice(0, 3));
   ok("la lista de jugadas guardada lleva a la posición guardada en todas las partidas", !rotas.length, rotas.slice(0, 5));
   ok("sin errores de JavaScript en las salas", !errores.length, errores.slice(0, 3));
+  ok("cada pestaña le avisó a la base que seguía ahí (latido_de_partida)", srv.latidos.size === pestañas.length, srv.latidos.size + " de " + pestañas.length);
+  ok("con los dos en la sala, nadie ve «Tu rival se desconectó»", !avisosDeMas.length, avisosDeMas.slice(0, 5));
   if (!process.env.SIN_PREMOVIDAS) ok("las pre-jugadas salieron solas al llegar el turno", srv.rapidas.premovidas > 0, srv.rapidas);
   // El retraso que devuelve el navegador (ver «El retraso de la red no se
   // cobra en el reloj»): nunca más de lo que la base deja pasar.
@@ -803,6 +844,84 @@ async function rondaAbandono(browser, nombre, PARTIDAS) {
 }
 
 /* Ajedrez para 4: MESAS4 partidas, cuatro pestañas cada una. */
+/* 8. El rival que se va (ver «El rival que se va»): una partida por
+   modalidad; a media partida se cierra la pestaña de las negras. Las blancas
+   tienen que ver «Tu rival se desconectó», no poder reclamar antes de tiempo
+   (lo rechaza la base, no la pantalla) y, pasado el plazo, reclamar la
+   victoria con el botón y ver la partida terminada. Los segundos de la base
+   van acortados (el doble los dice, como la base de verdad: la pantalla
+   solo los recibe). */
+async function rondaAusente(browser, nombre, variantes) {
+  console.log("\n▶ " + nombre + " — " + variantes.length + " partidas: " + variantes.join(", "));
+  const srv = crearServidor({ perdidos: 0, tarde: 0, lentas: 0, cortes: 0, ausencia: { latido_s: 1, aviso_s: 2, reclamar_s: 5 } });
+  const ctx = await browser.newContext({ serviceWorkers: "block", viewport: { width: 900, height: 900 } });
+  await ctx.exposeBinding("__srv", (fuente, pedido) => srv.atender(fuente.page, pedido));
+  await ctx.addInitScript(() => { try { localStorage.setItem("oscarMoveHelpShown_v1", "1"); } catch (e) {} });
+  const errores = [];
+  const mesas = [];
+  for (let g = 0; g < variantes.length; g++) {
+    const id = "ausente-" + g, variante = variantes[g];
+    srv.agregar("game_rooms", srv.sala(id, "u-b" + g, "u-n" + g, variante));
+    const mesa = { id, variante };
+    for (const [usuario, color] of [["u-b" + g, "w"], ["u-n" + g, "b"]]) {
+      const page = await ctx.newPage();
+      await page.addInitScript(doble(usuario, id + "-" + color));
+      await page.addInitScript(JUGADOR);
+      page.on("pageerror", (e) => errores.push(id + "-" + color + ": " + String(e)));
+      mesa[color] = page;
+    }
+    mesas.push(mesa);
+  }
+  await Promise.all(mesas.flatMap((m) => ["w", "b"].map((c) => m[c].goto(BASE + "/" + MODALIDADES[m.variante].pagina + "?room=" + m.id, { waitUntil: "load" }))));
+  // Que se jueguen unas jugadas con los dos en la sala.
+  const inicio = Date.now();
+  while (Date.now() - inicio < 30000 && mesas.some((m) => (srv.salas.get(m.id).moves || []).length < 4)) await esperar(500);
+  const visible = (page) => page.evaluate(() => { const c = document.getElementById("rival-ausente"); return !!c && c.checkVisibility(); });
+  const conAviso = [];
+  for (const m of mesas) if (await visible(m.w) || await visible(m.b)) conAviso.push(m.id);
+  ok("con los dos en la sala, nadie ve el aviso", !conAviso.length, conAviso);
+
+  // Las negras se van.
+  for (const m of mesas) await m.b.close();
+  const temprano = [];
+  for (const m of mesas) {
+    const r = await m.w.evaluate((id) => sb.rpc("reclamar_por_abandono", { p_room_id: id, p_tablas: false }), m.id);
+    if (!r.error) temprano.push(m.id);
+  }
+  ok("reclamar enseguida lo rechaza la base", !temprano.length, temprano);
+
+  const sinBoton = [];
+  for (const m of mesas) {
+    try {
+      await m.w.waitForSelector("#rival-ausente button:has-text('Reclamar la victoria')", { state: "visible", timeout: 20000 });
+    } catch (e) { sinBoton.push(m.id); }
+  }
+  ok("a las blancas les llega «Tu rival se desconectó» y, pasado el plazo, el botón", !sinBoton.length, sinBoton);
+  const texto = await mesas[0].w.textContent("#rival-ausente");
+  ok("el aviso dice cuánto hace", /Tu rival se desconectó hace \d+ s/.test(texto), texto);
+  // CAPTURA=archivo.png guarda cómo se ve, para mirarlo.
+  if (process.env.CAPTURA) await (await mesas[0].w.$("#rival-ausente")).screenshot({ path: process.env.CAPTURA });
+
+  for (const m of mesas) {
+    if (sinBoton.includes(m.id)) continue;
+    await m.w.click("#rival-ausente button:has-text('Reclamar la victoria')");
+    await m.w.click("dialog[open] button:has-text('Reclamar la victoria')");
+  }
+  const fin = Date.now();
+  while (Date.now() - fin < 15000 && mesas.some((m) => srv.salas.get(m.id).status !== "finished")) await esperar(300);
+  const mal = mesas.filter((m) => { const f = srv.salas.get(m.id); return f.status !== "finished" || f.result !== "white"; }).map((m) => m.id);
+  ok("cada reclamo terminó la partida con la victoria de quien se quedó", !mal.length, mal);
+  await esperar(1500);
+  const pantallas = [];
+  for (const m of mesas) {
+    const v = await m.w.evaluate(() => ({ estado: room.status, aviso: (() => { const c = document.getElementById("rival-ausente"); return !!c && c.checkVisibility(); })() }));
+    if (v.estado !== "finished" || v.aviso) pantallas.push({ id: m.id, v });
+  }
+  ok("y en su pantalla la partida terminó y el aviso se fue", !pantallas.length, pantallas);
+  ok("sin errores de JavaScript en las salas", !errores.length, errores.slice(0, 3));
+  await ctx.close();
+}
+
 async function ronda4(browser, nombre, MESAS, red, limites) {
   console.log("\n▶ " + nombre + " — " + MESAS + " partidas de 4 a la vez (" + MESAS * 4 + " pestañas)");
   const srv = crearServidor(red);
@@ -904,6 +1023,7 @@ async function ronda4(browser, nombre, MESAS, red, limites) {
     if (toca("7")) await ronda(browser, "7. Las demás modalidades: red mala", OTRAS.length * 2,
       { perdidos: 0.15, tarde: 0.10, lentas: 0.10, cortes: 0.01, rechazadas: 0.03 },
       { topeMs: 6 * 60 * 1000, calmaMs: 10000, maxMs: 15000 }, OTRAS);
+    if (toca("8")) await rondaAusente(browser, "8. El rival se va", ["estandar"].concat(OTRAS));
     }
     if (!process.env.SIN_CUATRO) {
       if (toca("4")) await ronda4(browser, "4. Ajedrez para 4: red sana", MESAS4, { perdidos: 0, tarde: 0, lentas: 0, cortes: 0 },
