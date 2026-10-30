@@ -1,0 +1,202 @@
+{
+ "round": {
+  "id": "MdLROwfK",
+  "name": "Round 7",
+  "slug": "round-7",
+  "finishedAt": 1793380254865,
+  "finished": true,
+  "startsAt": 1793369400000,
+  "url": "https://lichess.org/broadcast/vii-campeonato-sudamericano-de-ajedrez-bogota-2026-g15/round-7/MdLROwfK"
+ },
+ "tour": {
+  "id": "OlpxXUwD",
+  "name": "VII Campeonato Sudamericano de Ajedrez Bogotá 2026 | G15",
+  "slug": "vii-campeonato-sudamericano-de-ajedrez-bogota-2026-g15",
+  "info": {
+   "format": "9-round Swiss",
+   "tc": "90 min + 30 sec / move",
+   "fideTC": "standard",
+   "location": "Bogota Colombia",
+   "timeZone": "America/Bogota",
+   "website": "https://fideamerica.net/xxxvi-panamerican-youth-chess-festival-open-and-girls/"
+  },
+  "createdAt": 1793112391859,
+  "url": "https://lichess.org/broadcast/vii-campeonato-sudamericano-de-ajedrez-bogota-2026-g15/OlpxXUwD",
+  "tier": 3,
+  "dates": [
+   1793113800000,
+   1793455800000
+  ]
+ },
+ "study": {
+  "writeable": false,
+  "features": {
+   "chat": true,
+   "computer": true,
+   "explorer": true
+  }
+ },
+ "games": [
+  {
+   "id": "mmVkiyPd",
+   "name": "Mora Vargas, Ana Lucia - Rojas Solano, Sofia",
+   "fen": "8/8/8/p1b2p2/1p4p1/1P4P1/P1k1p1K1/4B3 w - - 6 58",
+   "players": [
+    {
+     "name": "Mora Vargas, Ana Lucia",
+     "rating": 1433,
+     "fed": "COL",
+     "clock": 10000
+    },
+    {
+     "name": "Rojas Solano, Sofia",
+     "title": "WCM",
+     "rating": 1864,
+     "fed": "COL",
+     "clock": 49300
+    }
+   ],
+   "lastMove": "d3c2",
+   "status": "0-1"
+  },
+  {
+   "id": "h9JiUi0f",
+   "name": "Jimenez Castro, Valeria - Araya Quesada, Daniela",
+   "fen": "4Q3/p5kr/2p3p1/2Pp4/P2P2P1/4PP2/5RK1/2q5 w - - 11 49",
+   "players": [
+    {
+     "name": "Jimenez Castro, Valeria",
+     "rating": 1527,
+     "fed": "COL",
+     "clock": 8300
+    },
+    {
+     "name": "Araya Quesada, Daniela",
+     "rating": 1914,
+     "fed": "COL",
+     "clock": 20100
+    }
+   ],
+   "lastMove": "g8g7",
+   "status": "½-½"
+  },
+  {
+   "id": "5z50l1Mj",
+   "name": "Chaves Mena, Camila - Segura Brenes, Isabel",
+   "fen": "7Q/8/8/4b1k1/8/7K/7q/8 w - - 1 71",
+   "players": [
+    {
+     "name": "Chaves Mena, Camila",
+     "rating": 1516,
+     "fed": "COL",
+     "clock": 29800
+    },
+    {
+     "name": "Segura Brenes, Isabel",
+     "rating": 1518,
+     "fed": "COL",
+     "clock": 35800
+    }
+   ],
+   "lastMove": "g1h2",
+   "check": "#",
+   "status": "0-1"
+  },
+  {
+   "id": "7Iy7MrSV",
+   "name": "Calderon Rivas, Mariana - Alfaro Leiva, Paula",
+   "fen": "8/8/8/8/8/5K2/5p2/6k1 w - - 1 61",
+   "players": [
+    {
+     "name": "Calderon Rivas, Mariana",
+     "rating": 1431,
+     "fed": "COL",
+     "clock": 191000
+    },
+    {
+     "name": "Alfaro Leiva, Paula",
+     "rating": 1590,
+     "fed": "COL",
+     "clock": 332600
+    }
+   ],
+   "lastMove": "f1g1",
+   "status": "0-1"
+  },
+  {
+   "id": "DXiTKW3M",
+   "name": "Campos Ulate, Laura - Salazar Pineda, Elena",
+   "fen": "8/8/r7/3k3R/8/8/P7/K7 b - - 5 67",
+   "players": [
+    {
+     "name": "Campos Ulate, Laura",
+     "rating": 1499,
+     "fed": "VEN",
+     "clock": 29000
+    },
+    {
+     "name": "Salazar Pineda, Elena",
+     "fed": "COL",
+     "clock": 9900
+    }
+   ],
+   "lastMove": "h3h5",
+   "check": "+",
+   "thinkTime": 248,
+   "status": "*"
+  },
+  {
+   "id": "iemtRVhT",
+   "name": "Vindas Arce, Julia - Fallas Murillo, Andrea",
+   "fen": "N1b4R/p2p1p1k/2q3p1/p6p/3Q1p2/8/PPP3PP/R6K b - - 3 26",
+   "players": [
+    {
+     "name": "Vindas Arce, Julia",
+     "rating": 1558,
+     "fed": "CHI",
+     "clock": 293200
+    },
+    {
+     "name": "Fallas Murillo, Andrea",
+     "rating": 1408,
+     "fed": "COL",
+     "clock": 268200
+    }
+   ],
+   "lastMove": "e8h8",
+   "check": "#",
+   "status": "1-0"
+  }
+ ],
+ "group": {
+  "id": "CVbqLY5H",
+  "slug": "vii-campeonato-sudamericano-de-ajedrez-bogota-2026",
+  "name": "VII Campeonato Sudamericano de Ajedrez Bogotá 2026",
+  "tours": [
+   {
+    "id": "v4WYzSwj",
+    "name": "Open U17",
+    "active": true,
+    "live": false
+   },
+   {
+    "id": "UuPKDMo2",
+    "name": "Girls U17",
+    "active": true,
+    "live": false
+   },
+   {
+    "id": "OljVJl9V",
+    "name": "Open U15",
+    "active": true,
+    "live": false
+   },
+   {
+    "id": "OlpxXUwD",
+    "name": "Girls U15",
+    "active": true,
+    "live": false
+   }
+  ]
+ }
+}

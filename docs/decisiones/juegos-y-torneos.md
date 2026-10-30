@@ -10278,6 +10278,75 @@ lo que hay que leer en el celular.
   lo que llega tarde, el calendario fuera del clásico, el selector con una
   sola modalidad y la lectura de «Rápidas», y saltaron.
 
+
+### Las partidas en vivo, dentro de la página
+
+Lo pidió el dueño: el festival transmite por Lichess algunas mesas (todavía
+no se sabe cuáles; seguramente las primeras de cada categoría), y quien sigue
+a un jugador tiene que poder ver su partida **en la página del sitio**, sin
+irse a Lichess. Y todas las demás, con filtros, para ir y volver por las
+jugadas y con una barra que diga cómo va la partida.
+
+- **Qué se transmite lo dice la sala**, como lo demás: un botón más en la
+  sala del festival (`admin.html#torneos`, la sala `centroamericano-2026`) con
+  la dirección de la transmisión en Lichess, de cualquier categoría o de
+  cualquier ronda (`lichess.org/broadcast/…`). No hace falta uno por
+  categoría: un evento con categorías es en Lichess un **grupo** de torneos,
+  y la respuesta de cualquiera trae el grupo entero (comprobado con el
+  Sudamericano de Bogotá 2026: «Open U15», «Girls U15»…). La categoría sale del
+  nombre de cada torneo de Lichess y la modalidad también, con la misma regla
+  que la función (`codigoCategoria()`/`modalidadDe()`: el navegador no puede
+  cargar el `.ts`, así que la página lleva una copia y el verificador compara
+  las dos con los mismos textos). La sala se lee con la clave pública: la
+  política deja leer las visibles (y quien administra, en el modo de prueba,
+  también la oculta). No hizo falta ni migración ni tocar la función.
+- **Mientras la sala no tenga ese botón, nada cambia**: la ficha «Partidas en
+  vivo» sigue en «Pronto» y no se le pide nada a Lichess. Con el botón, la
+  ficha se enciende sola y abre la ventana `#partidas`.
+- **Todo sale de la API pública de Lichess, desde el navegador** (contesta con
+  `Access-Control-Allow-Origin: *`; `js/lichess-transmision.js`): el torneo y su
+  grupo, las rondas de cada uno, la ronda (`/api/broadcast/-/-/<ronda>`: Lichess
+  no mira los nombres de la dirección, solo el id) con la posición, los
+  jugadores, la federación y los relojes, y el PGN de la ronda, que trae **la
+  evaluación de Lichess y el reloj después de cada jugada** (`[%eval]`,
+  `[%clk]`). La federación no viene en el PGN: se junta por el id de la partida.
+- **La lista**: todas las mesas de la ronda de ahora (o de otra), cada una con
+  su tablero chico, quién juega, su federación, Elo y reloj, y el resultado o
+  «● En juego» escrito (no solo con color). Filtros: categoría, país, ronda,
+  buscar un jugador (sin tildes), «Solo las que se están jugando» y «Solo mis
+  jugadores» (los de la estrella; no sale si no sigues a nadie). Se pone al día
+  cada 20 segundos mientras la ventana está abierta.
+- **El visor**: el tablero grande (el mismo de la sala de cine, que pasó a
+  `js/tablero-fen.js` para que no haya dos copias), la barra de la evaluación
+  al costado —blanco desde abajo, con la curva de Lichess, así una ventaja de
+  un peón se nota y solo el mate la llena—, la evaluación escrita, los botones
+  ⏮ ◀ ▶ ⏭ y las flechas del teclado (← → Inicio Fin), girar el tablero, la
+  lista de jugadas en algebraica española (la regla del sitio,
+  `ComandosTablero`; quien no ve las oye en el formato para ciegos), el gráfico
+  de la evaluación de toda la partida (tocarlo lleva a esa jugada), «Ver en
+  Lichess» y «Copiar las jugadas (PGN)». Las jugadas se piden cada 10 segundos.
+- **Las jugadas nuevas no le quitan a nadie la posición que estaba mirando**:
+  si está en la última, la siguen sola; si volvió atrás, se queda ahí y
+  aparece «Ir a la jugada de ahora (N nuevas)».
+- **La evaluación no se inventa**: si Lichess no la trae (pasa con la última
+  jugada mientras se juega, o en algunas posiciones), la página lo dice, la
+  barra queda apagada, y ofrece «Calcular con Stockfish en este aparato»
+  (`js/preparacion-motor.js`, que se carga solo si se pide).
+- **«Ver su partida en vivo» en la tarjeta del jugador** (el buscador, «Mis
+  jugadores», Mi delegación): cuando llegan los datos de chess-results, la
+  página busca a cada jugador en las mesas transmitidas de la ronda de ahora,
+  por su nombre (chess-results y Lichess escriben «Apellidos, Nombre», los dos
+  de FIDE; también vale con los apellidos y el primer nombre) y **en su
+  categoría**: alguien con el mismo nombre en otra no recibe el botón. El
+  botón abre su partida en el visor.
+- La política de privacidad lo dice en Lichess: el navegador de quien mira le
+  pide las partidas directo a Lichess, sin mandarle ningún dato suyo.
+- Lo revisa `verificar-centroamericano-partidas.js`, con una ronda de verdad
+  de Lichess guardada en `herramientas/datos/lichess-prueba/` **con los nombres
+  cambiados y sin los ID de FIDE** (son jugadoras menores de edad). Rompí a
+  propósito que las jugadas nuevas siempre movieran la posición, la barra al
+  revés y el botón sin mirar la categoría, y saltaron.
+
 ## Las páginas de los torneos universitarios
 
 Dos, con la misma maquinaria: `cenfotec-2026.html` (el Desafío Mentes
