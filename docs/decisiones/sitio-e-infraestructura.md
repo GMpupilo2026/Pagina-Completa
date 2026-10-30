@@ -1490,6 +1490,14 @@ adentro), en el celular parecían un error del sistema, el botón decía siempre
   `window.__avisos`, y lo que hay que escribir se prepara en
   `window.__respuestas`. Ya no sirve `page.on("dialog")` ni pisar
   `window.confirm`.
+- **Contestado un diálogo, se espera a que se vaya antes de la próxima
+  tecla**: `page.waitForFunction(() => !document.querySelector("dialog[data-avisos]"))`.
+  El botón lo cierra con `d.close()`, pero el evento `close` —que saca el
+  diálogo de la página y le devuelve el foco a donde estaba— llega en una
+  tarea aparte. En el CI cargado cayó entre el foco que pone un localizador y
+  su `press("Enter")`: el foco volvió al título y el Enter se perdió
+  (`verificar-panel.js`, «con Enter y «Ver los planes»…», en los PR #1082 y
+  #1086). Se reprodujo soltando el `close` en la tarea siguiente al foco.
 - `herramientas/verificar-avisos.js` barre **todo** el sitio buscando un
   `alert(`/`confirm(`/`prompt(` nuevo (sin contar comentarios), revisa que toda
   página que llama a `Avisos` cargue el archivo, y prueba en el navegador el

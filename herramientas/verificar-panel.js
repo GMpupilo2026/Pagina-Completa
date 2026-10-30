@@ -680,6 +680,14 @@ async function pruebaCupoInvitaciones(browser) {
       /No te quedan invitaciones/.test(aviso) && /plan mayor/.test(aviso) && /Ver los planes/.test(aviso));
     igual("y con «Ahora no» se queda en el panel", new URL(page.url()).pathname, "/clases.html");
     // Con Enter, lo mismo, y «Ver los planes» lleva a los paquetes.
+    // Antes, que el primer aviso termine de irse: «Ahora no» lo cierra con
+    // d.close(), pero el evento `close` —que lo saca de la página y le
+    // devuelve el foco al título— llega en una tarea aparte. En el CI cargado
+    // caía ENTRE el foco que pone el localizador en la ficha y el Enter: el
+    // foco volvía al título y el Enter se perdía (falló así en los PR #1082 y
+    // #1086, «foco: H1#panel-titulo | avisos: []»). Una persona no aprieta en
+    // ese hueco; la prueba sí.
+    await page.waitForFunction(() => !document.querySelector("dialog[data-avisos]"), null, { timeout: 10000 });
     await page.evaluate(() => { window.__cancelarAvisos = false; window.__avisos = []; });
 
     // Se espera a que la dirección CAMBIE ("commit"), no a que precios.html
@@ -3767,7 +3775,9 @@ const PRUEBAS = [
   const browser = await chromium.launch({ executablePath: CHROME });
   cierresConTope(browser);
   try {
-    for (const prueba of PRUEBAS) {
+    // SOLO_PRUEBA=pruebaCupoInvitaciones corre solo esa (para buscar un fallo
+    // sin esperar los cuatro minutos de todas).
+    for (const prueba of PRUEBAS.filter((p) => !process.env.SOLO_PRUEBA || p.name === process.env.SOLO_PRUEBA)) {
       pruebaEnCurso = prueba.name;
       const colgada = await conTope(prueba(browser).then(() => false), PRUEBA_MS, () => true);
       if (colgada) mal(prueba.name + " se colgó: pasó de " + PRUEBA_MS / 1000 + " s sin terminar");
