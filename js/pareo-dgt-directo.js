@@ -146,12 +146,26 @@
     // resultado o con las piezas otra vez en la posición inicial) deja lugar a
     // la nueva.
     function despues(t) {
+        resultadoOficial(t);
         anotarJuego(t);
         const obj = rondaObjetivo(t);
         if (!t.juego || t.juego.ronda === obj.ronda) return;
         const p = t.juego.partida;
         const armado = [DgtLector.colocacion(p.casillas()), DgtLector.colocacion(p.casillas().reverse())].includes(DgtLector.INICIAL);
         if (p.resultado() !== "*" || armado) { nuevoJuego(t, obj.tnr, obj.ronda); anotarJuego(t); pintarFila(t); }
+    }
+
+    // El resultado que anotó el árbitro en chess-results (para emparejar la
+    // ronda siguiente) es el oficial: llega solo, sin marcarlo otra vez acá.
+    function resultadoDeMesa(r, mesa) {
+        const m = r && r.pareo && (r.pareo.mesas || []).find((x) => x.mesa === mesa);
+        return m ? PareoDGT.resultadoCR(m.resultado) : null;
+    }
+    function resultadoOficial(t) {
+        const j = t.juego, a = asignacion(t.dir);
+        if (!j || !j.tnr || !j.ronda || !a || a.tnr !== j.tnr || !API()) return;
+        const res = resultadoDeMesa(API().ronda(j.tnr, j.ronda), a.mesa);
+        if (res && res !== j.partida.resultado()) j.partida.ponerResultado(res);
     }
 
     // ------------------------------------------------------------ leer los tableros
@@ -236,6 +250,25 @@
         let serial;
         try { serial = await navigator.serial.requestPort(); }
         catch (e) { if (e && e.name !== "NotFoundError") $("directo-error").textContent = "No se pudo elegir el puerto: " + e.message; return; }
+        await abrir(serial);
+    }
+
+    // Al recargar la página (o al volver a prender la computadora) los puertos
+    // a los que ya se les dio permiso se abren solos: Chrome los da con
+    // getPorts() sin pedir un clic. Solo los USB (los tableros DGT y los
+    // adaptadores de las cadenas): un puerto de com0com no dice de qué aparato
+    // es, y puede ser el del tablero virtual de la sección 6.
+    async function reconectar() {
+        if (!navigator.serial || !navigator.serial.getPorts) return;
+        let lista = [];
+        try { lista = await navigator.serial.getPorts(); } catch (_) { return; }
+        const usb = lista.filter((s) => { const i = s.getInfo ? s.getInfo() : {}; return i.usbVendorId && !puertos.some((p) => p.serial === s); });
+        if (!usb.length) return;
+        API() && API().anotar("Transmitir sin LiveChess: " + usb.length + " puerto" + (usb.length === 1 ? "" : "s") + " USB que ya tenía" + (usb.length === 1 ? "" : "n") + " permiso, conectado" + (usb.length === 1 ? "" : "s") + " sin tocar nada.");
+        for (const s of usb) await abrir(s);
+    }
+
+    async function abrir(serial) {
         try { await serial.open({ baudRate: 9600 }); }
         catch (e) { $("directo-error").textContent = "No se pudo abrir ese puerto (" + e.message + "). ¿Lo tiene abierto LiveChess u otra pestaña?"; return; }
         try { if (serial.setSignals) await serial.setSignals({ dataTerminalReady: true, requestToSend: true }); } catch (_) { /* no todos */ }
@@ -257,6 +290,8 @@
         try { if (p.io.reader) await p.io.reader.cancel(); } catch (_) { /* cerrado */ }
         try { p.io.writer.releaseLock(); } catch (_) { /* nada */ }
         try { await p.serial.close(); } catch (_) { /* nada */ }
+        // Desconectado a propósito: que no se vuelva a abrir solo al recargar.
+        try { if (p.serial.forget) await p.serial.forget(); } catch (_) { /* nada */ }
         puertos.splice(puertos.indexOf(p), 1);
         pintarPuertos();
         pintarTableros();
@@ -270,8 +305,15 @@
     function pgnDe(k, r) {
         const jugadas = {};
         for (const g of Object.values(estado.juegos[k] || {})) {
-            if (!g.jugadas.length && g.resultado === "*") continue;
-            jugadas[g.mesa] = { texto: DgtLector.textoPgn(g.jugadas, g.tiempos, g.resultado), resultado: g.resultado };
+            const res = resultadoDeMesa(r, g.mesa) || g.resultado;
+            if (!g.jugadas.length && res === "*") continue;
+            jugadas[g.mesa] = { texto: DgtLector.textoPgn(g.jugadas, g.tiempos, res), resultado: res };
+        }
+        // Las mesas sin tablero (o que no se transmiten) también llevan el
+        // resultado de chess-results.
+        for (const m of (r.pareo && r.pareo.mesas) || []) {
+            const res = PareoDGT.resultadoCR(m.resultado);
+            if (res && !jugadas[m.mesa]) jugadas[m.mesa] = { texto: res, resultado: res };
         }
         return PareoDGT.pgn(r.pareo, Object.assign({ mesas: r.mesas, jugadas }, API().opcionesPgn()));
     }
@@ -517,10 +559,23 @@
         // cambió algo de lo que muestra (si no, quien está en un campo perdería
         // lo que escribe cada 30 segundos).
         let antes = "";
+        let reconectado = false;
+        // Los puertos se vuelven a abrir cuando js/pareo-dgt.js ya comprobó la
+        // sesión y la licencia: con su primer aviso o, si ese aviso llegó antes
+        // de que esta parte escuchara, al ver la página ya abierta.
+        const arrancar = () => { if (!reconectado) { reconectado = true; reconectar(); } };
+        if ($("app") && !$("app").classList.contains("hidden")) arrancar();
         document.addEventListener("pareo-dgt:cambio", () => {
+            arrancar();
             const lista = API() ? API().torneos() : [];
             const ahora = lista.map((c) => { const r = API().ronda(c.tnr); return c.tnr + ":" + c.nombre + ":" + (r ? r.ronda + ":" + !!r.lichess + ":" + PareoDGT.firma(r.pareo) : ""); }).join("|");
             for (const t of tableros.values()) { alDia(t); despues(t); }
+            // Llegaron resultados nuevos de chess-results: cada ronda donde
+            // juegan tableros se vuelve a armar y se empuja si cambió algo. Solo
+            // con un puerto conectado: sin tableros, esta sección no le manda
+            // nada a Lichess (un pareo cambiado no se manda solo: ver «Pareo
+            // para DGT»).
+            if (puertos.length) for (const k of Object.keys(estado.juegos)) sucias.add(k);
             if (ahora !== antes) { antes = ahora; pintarTableros(); } else pintarEstado();
             empujar();
         });

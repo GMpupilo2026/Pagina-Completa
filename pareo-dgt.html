@@ -128,7 +128,8 @@
                         <li>Toca «Conectar un puerto»: uno por cada cadena de tableros o por cada tablero USB. La página encuentra todos los tableros de esa cadena y empieza a vigilar chess-results.</li>
                         <li>Dile a cada tablero su categoría y su mesa: de a muchos con «Asignar», o en su fila. Se recuerda para todas las rondas.</li>
                         <li>Listo. Cuando sale una ronda, cada partida empieza sola al armar las piezas en la posición inicial, con los nombres de esa mesa, y va llegando a Lichess. Un tablero que todavía está en la ronda anterior la termina primero.</li>
-                        <li>El resultado de una partida que no termina en mate se marca en su fila.</li>
+                        <li>El resultado llega solo: el que anota el árbitro en chess-results (para emparejar la ronda siguiente) pasa a Lichess. También se puede marcar a mano en la fila del tablero.</li>
+                        <li>Si se recarga la página o se reinicia la computadora, los puertos USB que ya tenían permiso se vuelven a conectar solos; lo de cada tablero no se pierde. «Desconectar» le quita el permiso a ese puerto.</li>
                     </ol>
                 </details>
                 <button id="btn-directo-puerto" type="button" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2 rounded-lg text-sm disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2">Conectar un puerto</button>

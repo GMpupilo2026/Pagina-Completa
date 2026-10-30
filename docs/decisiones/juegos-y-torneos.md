@@ -11970,9 +11970,29 @@ creó la página (`/api/broadcast/round/{id}/push`, directo, como el pareo).
   si el tablero está dado vuelta (las blancas del lado del conector: DGT no
   da vuelta la numeración). Una por ronda: con la ronda nueva empieza otra
   que espera a que se armen las piezas.
-- **El resultado** sale solo con mate, ahogado o material insuficiente. La
-  triple repetición no: sobre el tablero hay que reclamarla. Lo demás lo marca
-  el árbitro en la fila del tablero.
+- **El resultado** sale solo con mate, ahogado o material insuficiente (la
+  triple repetición no: sobre el tablero hay que reclamarla), y **el oficial
+  llega de chess-results**: el árbitro lo anota ahí de todos modos para
+  emparejar la ronda siguiente, la página ya lee esa ronda cada 30 s, y
+  `PareoDGT.resultadoCR()` lo pasa al formato del PGN («½ - ½» → 1/2-1/2,
+  «+ - -» → 1-0; «- - -», los dos ausentes, no es una partida). Lo pidió el
+  dueño para que nadie tenga que marcarlo dos veces. Lo de chess-results
+  manda sobre lo que se marcó a mano, y también va en las mesas sin tablero.
+  Al salir la ronda nueva, `pareo-dgt.js` lee la anterior una vez más
+  (`cerrarAnterior`): sus últimos resultados se anotan justo antes de
+  emparejar y en 30 s quizá no se vieron. Con el resultado, el tablero pasa
+  solo a la ronda nueva.
+- **Al recargar, los puertos se vuelven a abrir solos.** Chrome pide un clic
+  para elegir un puerto COM la primera vez; después `navigator.serial.getPorts()`
+  da los que ya tienen permiso, sin clic. Se abren solo los USB (traen
+  `usbVendorId`: los tableros DGT y los adaptadores de las cadenas): un puerto
+  de com0com no dice de qué aparato es, y abrirlo podía quitarle el puerto al
+  tablero virtual de la sección 6. «Desconectar» le quita el permiso
+  (`forget()`), para que no vuelva solo. La primera vez se intenta cuando
+  `pareo-dgt.js` ya comprobó la sesión y la licencia (su primer aviso, o la
+  página ya abierta si el aviso llegó antes). En la prueba, el puerto de
+  mentira se arma con el `DOMContentLoaded` de `document`, no el de `window`:
+  el de `window` llega después y la sección preguntaba antes de que existiera.
 - **Se configura una vez y el resto va solo** (lo pidió el dueño: «más de 50
   tableros… decirle cuál tablero es de cada categoría… que cuando salga la
   ronda en chess-results le asigne la nueva ronda… sin tener que
