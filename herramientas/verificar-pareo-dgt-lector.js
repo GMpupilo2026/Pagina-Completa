@@ -242,6 +242,14 @@ function pruebaDesorden() {
   for (const s of ["d4", "Nf6", "c4", "e6"]) { ch2.move(s); rot.tablero(girado()); }
   igual("con el tablero dado vuelta (blancas del lado del conector) se lee igual", [rot.rotado(), rot.jugadas()], [true, ["d4", "Nf6", "c4", "e6"]]);
 
+  // Una partida corta y las piezas otra vez en la posición inicial: se armó
+  // la siguiente, no es «deshacer todo».
+  const corta = L.crearPartida(Chess);
+  const chc = new Chess();
+  corta.tablero(T.volcado(chc.fen()).slice(3));
+  for (const s of ["e4", "e5"]) { chc.move(s); corta.tablero(T.volcado(chc.fen()).slice(3)); }
+  igual("las piezas otra vez en la posición inicial no borran la partida (se armó la siguiente)", [corta.tablero(T.volcado(T.INICIAL).slice(3)).atras, corta.jugadas()], [0, ["e4", "e5"]]);
+
   const nueva = L.crearPartida(Chess);
   nueva.tablero(T.volcado("rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1").slice(3));
   igual("una partida empieza solo desde la posición inicial: con otra, espera", [nueva.rotado(), nueva.jugadas()], [null, []]);
@@ -332,10 +340,12 @@ async function pruebaPagina(browser) {
   const empujados = {};                     // id de la ronda en Lichess → lo último que recibió
   const publicada = { 111: 1, 222: 1 };     // la última ronda de cada categoría en chess-results
   const anotados = {};                      // «tnr|ronda» → { mesa: "1 - 0" }: lo que el árbitro anotó en chess-results
+  let sinInternet = false;                  // chess-results y Lichess no contestan
   p.on("pageerror", (e) => errores.push(String(e)));
   await p.route("**/fonts.googleapis.com/**", (r) => r.fulfill({ status: 200, contentType: "text/css", body: "" }));
   await p.route("**/js/supabase-client.js", (r) => r.fulfill({ contentType: "application/javascript", body: clienteFalso() }));
   await p.route("https://falso.supabase.co/**", async (r) => {
+    if (sinInternet && /functions\/v1/.test(r.request().url())) return r.abort("internetdisconnected");
     const b = JSON.parse(r.request().postData() || "{}");
     if (/functions\/v1\/pareo-dgt/.test(r.request().url())) {
       if (b.accion === "lichess") {
@@ -352,6 +362,7 @@ async function pruebaPagina(browser) {
     return r.fulfill({ contentType: "application/json", body: "{}" });
   });
   await p.route("https://lichess.org/**", (r) => {
+    if (sinInternet) return r.abort("internetdisconnected");
     const u = r.request().url();
     if (/\/api\/account$/.test(u)) return r.fulfill({ contentType: "application/json", body: JSON.stringify({ id: "oscar", username: "Oscar" }) });
     const m = u.match(/\/api\/broadcast\/round\/(\w+)\/push$/);
@@ -433,6 +444,32 @@ async function pruebaPagina(browser) {
   await p.evaluate(() => window.__jugar(0, "d5", 4));
   cierto("y lo que se juega después llega a Lichess con lo de antes",
     await esperarEmpuje("rondaA02", '1\\. Nf3 \\{ \\[%clk 0:04:55\\] \\} d5 \\{ \\[%clk 0:04:56\\] \\}'), (empujados.rondaA02 || "").slice(0, 300));
+
+  // Se va internet: los tableros se siguen leyendo y nada se pierde. En el
+  // Abierto la partida terminó (0-1), se arman las piezas y se empieza la
+  // ronda 2, que la página todavía no puede leer de chess-results.
+  sinInternet = true;
+  publicada[222] = 2;
+  await p.evaluate(() => { window.__jugar(0, "c4", 3); window.__armar(2); window.__jugar(2, "e4", 2); window.__jugar(2, "c5", 3); });
+  await esperarFila(1, 5, "3 · 2\\. c4");
+  await p.click("#btn-revisar");
+  await p.waitForTimeout(4000);
+  cierto("sin internet: los tableros se siguen leyendo, y el del Abierto espera en la ronda 1 (no sabe que salió la 2)", /\(ronda 1\)$/.test(await fila(3, 4)), await fila(3, 4));
+  cierto("y a Lichess no llegó nada nuevo", !/c4/.test(empujados.rondaA02 || "") && !empujados.rondaB02);
+
+  // Vuelve internet: la ronda 2 del Abierto se lee y se crea en Lichess, y la
+  // partida que se empezó sin conexión llega entera, desde la primera jugada.
+  sinInternet = false;
+  await p.click("#btn-revisar");
+  await esperarFila(3, 4, "Abierto R2 blancas 1 – Abierto R2 negras 1 \\(ronda 2\\)");
+  cierto("vuelve internet: la partida que se empezó sin conexión queda en la ronda 2, desde la primera jugada",
+    /2 · 1… c5/.test(await fila(3, 5)), await fila(3, 5));
+  cierto("y llega entera a la ronda 2 de Lichess, con el reloj de cada jugada",
+    await esperarEmpuje("rondaB02", '\\[White "Abierto R2 blancas 1"\\][\\s\\S]*1\\. e4 \\{ \\[%clk 0:04:58\\] \\} c5 \\{ \\[%clk 0:04:57\\] \\}'), (empujados.rondaB02 || "").slice(0, 400));
+  // (Al recargar, el reloj del tablero virtual volvió a 5:00: la c4 queda con 4:57.)
+  cierto("y lo que se jugó sin internet en Sub-12 también llega",
+    await esperarEmpuje("rondaA02", '1\\. Nf3 \\{ \\[%clk 0:04:55\\] \\} d5 \\{ \\[%clk 0:04:56\\] \\} 2\\. c4 \\{ \\[%clk 0:04:57\\] \\}'), (empujados.rondaA02 || "").slice(0, 400));
+  igual("y el Abierto de la ronda 1 sigue con su 0-1 en Lichess", /\[Result "0-1"\]/.test(empujados.rondaB01 || ""), true);
 
   // Una mesa de una categoría, un tablero.
   await p.fill("#directo-tableros tr:nth-child(2) input[aria-label^='Mesa']", "1");
