@@ -12142,6 +12142,26 @@ creó la página (`/api/broadcast/round/{id}/push`, directo, como el pareo).
 - Una respuesta de chess-results que no trae el número de ronda ya no borra
   la ronda que se estaba transmitiendo (`revisarTorneo` se queda con la
   anterior).
+- **«Proyectar la sala»** abre otra ventana con todos los tableros con
+  categoría y mesa, en cuadrícula y en el orden de las categorías del paso 1:
+  la mesa y la ronda, el tablero (`js/tablero-fen.js`, con la última jugada
+  marcada), los dos nombres con su reloj, la última jugada o el resultado, y
+  «Sin señal del tablero», «Cayó la bandera» o «Revisando la posición» (de
+  los mismos avisos de la sala; el detalle es para el árbitro, no para el
+  público). La ventana es un `about:blank` que **pinta esta página**: no lee
+  nada por su cuenta, así que anda sin internet y el estado tiene una sola
+  copia; cada tarjeta se redibuja solo si cambió lo suyo, a lo sumo cada
+  300 ms. Una ventana `about:blank` **no carga las hojas enlazadas** (probado:
+  el `<link>` queda sin reglas), así que se le copian las reglas `.cine-*` y
+  `.piece-*` de las hojas que ya cargó la página: siguen saliendo de
+  `css/styles.css`. Colores fijos, medidos: blanco sobre #0b1a2b 17,5:1 y sobre #12263f 15,3:1,
+  #fcd34d sobre #12263f 10,6:1, #cbd5e1 sobre #12263f 10,3:1.
+- **Poner los relojes DGT 3000 desde la computadora: no, por ahora.** En modo
+  bus, lo comprobado (Picochess, DGTCentaurMods, el registro de LiveChess)
+  solo trae los comandos 0x81–0x8b y 0x92, y ninguno escribe en el reloj; el
+  0x2b es del modo de un solo tablero. Mandar un comando sin documentar por
+  una cadena de 50 tableros a mitad de un torneo puede trabar la lectura de
+  todos. Se prueba primero con un tablero y un reloj de verdad.
 
 `verificar-pareo-dgt-lector.js`, sin navegador: una cadena de 40 tableros
 virtuales donde las respuestas al ping general chocan (llega una sola), las

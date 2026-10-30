@@ -547,6 +547,33 @@ async function pruebaSala(browser) {
   const pgn = fs.readFileSync(await descarga.path(), "utf8");
   cierto("«PGN de la ronda 1» baja las partidas de la ronda, con su pareo, para chess-results",
     descarga.suggestedFilename() === "sub-12-ronda-1-partidas.pgn" && /\[White "Sub-12 R1 blancas 1"\][\s\S]*1\. e4 \{ \[%clk 0:04:58\] \}/.test(pgn), descarga.suggestedFilename() + " " + pgn.slice(0, 300));
+
+  // La sala en el proyector: otra ventana que pinta esta página.
+  const [ventana] = await Promise.all([ctx.waitForEvent("page"), p.click("#btn-directo-sala")]);
+  ventana.on("pageerror", (e) => errores.push("proyector: " + e));
+  await ventana.waitForFunction(() => document.querySelectorAll("#sala-mesas article").length === 1, null, { timeout: 10000 });
+  const tarjeta = () => ventana.$$eval("#sala-mesas article", (l) => l.map((a) => [a.querySelector("h2").textContent, ...[...a.querySelectorAll(".jug")].map((j) => j.textContent), a.querySelector(".ult").textContent, a.querySelector(".aviso").textContent, a.querySelectorAll(".cine-sq").length, a.querySelectorAll(".cine-sq-ultima").length].join(" | ")));
+  const t1 = (await tarjeta())[0];
+  cierto("«Proyectar la sala» abre otra ventana con cada mesa: categoría, mesa, ronda, nombres, reloj, última jugada y su tablero",
+    /^Sub-12 · Mesa 1 · Ronda 1 \| ♔ Sub-12 R1 blancas 1\d+:\d\d \| ♚ Sub-12 R1 negras 1\d+:\d\d \| Última: 1\. e4 \|  \| 64 \| 2$/.test(t1), t1);
+  igual("la ventana tiene título y la página dice dónde quedó", [await ventana.title(), await p.textContent("#directo-sala-texto")],
+    ["La sala · Pareo para DGT", "La sala está abierta en otra ventana: llévala al proyector y pon pantalla completa (F11)."]);
+  await ventana.waitForFunction(() => getComputedStyle(document.querySelector(".cine-sq-clara")).backgroundColor !== "rgba(0, 0, 0, 0)", null, { timeout: 10000 }).catch(() => {});
+  const casilla = await ventana.$eval(".cine-sq-clara", (c) => getComputedStyle(c).backgroundColor);
+  cierto("las casillas se ven con color (la hoja de estilos llegó a la ventana)", casilla && casilla !== "rgba(0, 0, 0, 0)", casilla);
+  await p.fill("#directo-tableros tr:nth-child(2) input[aria-label^='Mesa']", "2");
+  await p.selectOption("#directo-tableros tr:nth-child(2) select[aria-label^='Categoría']", "111");
+  await ventana.waitForFunction(() => document.querySelectorAll("#sala-mesas article").length === 2, null, { timeout: 10000 });
+  const t2 = (await tarjeta())[1];
+  // Su partida de la ronda empieza de cero: espera la posición inicial.
+  cierto("al darle mesa a otro tablero aparece solo, en su orden, y dice que cayó la bandera",
+    /^Sub-12 · Mesa 2 · Ronda 1 \| ♔ Sub-12 R1 blancas 2.* \| Por empezar \| Cayó la bandera \| 64 \| 0$/.test(t2), t2);
+  await p.evaluate(() => window.__jugar(0, "e5", 3));
+  await ventana.waitForFunction(() => /1… e5/.test(document.querySelector("#sala-mesas article .ult").textContent), null, { timeout: 15000 });
+  cierto("la jugada nueva llega a la ventana sola", true);
+  await ventana.close();
+  await p.waitForFunction(() => document.getElementById("directo-sala-texto").textContent === "", null, { timeout: 10000 });
+  cierto("al cerrar la ventana, la página lo nota", true);
   cierto("sin errores en la página", errores.length === 0, errores.join(" | "));
   await ctx.close();
 }

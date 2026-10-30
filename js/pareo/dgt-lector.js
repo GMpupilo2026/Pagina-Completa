@@ -358,6 +358,8 @@
     p.resultado = () => resultado;
     p.jugadas = () => sans.slice();
     p.fen = () => chess.fen();
+    // La última jugada en UCI («e2e4»), para marcarla en un tablero dibujado.
+    p.ultima = () => { const h = chess.history({ verbose: true }); const m = h[h.length - 1]; return m ? m.from + m.to : ""; };
     p.casillas = () => casillas.slice();     // el tablero de verdad, como está ahora
     p.rotado = () => rotado;
     p.blancasA = () => blancasA;

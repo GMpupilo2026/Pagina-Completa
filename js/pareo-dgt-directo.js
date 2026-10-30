@@ -414,6 +414,7 @@
         if (sin) items.push({ texto: sin + " tablero" + (sin === 1 ? "" : "s") + " sin categoría: no se transmite" + (sin === 1 ? "" : "n") + ".", rondas: [] });
         pintarLista(ul, items);
         pintarAlertas();
+        pintarSalaPronto();
     }
 
     // La lista se vuelve a armar solo si cambió: se pinta después de cada
@@ -534,6 +535,125 @@
         } catch (_) { /* sin sonido */ }
     }
 
+    // ------------------------------------------------------------ la sala en el proyector
+
+    // Una ventana aparte (about:blank, del mismo origen) que pinta ESTA página:
+    // no lee nada por su cuenta, así que anda sin internet y no hay dos copias
+    // del estado. Se lleva a la pantalla del proyector y se pone en F11.
+    // Colores fijos, medidos: blanco sobre #0b1a2b 17,5:1 y sobre #12263f 15,3:1; #fcd34d sobre
+    // #12263f 10,6:1; #cbd5e1 sobre #12263f 10,3:1.
+    let sala = null, salaPendiente = false;
+    const ESTILO_SALA = ":root{--esc-ultima:rgba(250,204,21,.45)}body{margin:0;background:#0b1a2b;color:#fff;font-family:system-ui,sans-serif}" +
+        "header{display:flex;justify-content:space-between;align-items:baseline;padding:12px 20px;font-size:1.6rem;font-weight:700}" +
+        "main{display:grid;grid-template-columns:repeat(auto-fill,minmax(15rem,1fr));gap:14px;padding:0 20px 20px}" +
+        "article{background:#12263f;border-radius:12px;padding:10px}" +
+        "h2{margin:0 0 6px;font-size:1.05rem;color:#cbd5e1}" +
+        ".jug{display:flex;justify-content:space-between;gap:8px;font-size:1.05rem;font-weight:600;margin:4px 0}" +
+        ".jug span:last-child{font-variant-numeric:tabular-nums}" +
+        ".ult{font-size:1rem;color:#cbd5e1;margin-top:4px}.aviso{color:#fcd34d;font-weight:700;margin-top:4px}" +
+        ".cine-tablero{width:100%}";
+
+    // Las reglas del tablero dibujado (.cine-*, .piece-*) de las hojas que ya
+    // cargó esta página: una ventana about:blank no carga las enlazadas, y así
+    // siguen saliendo de css/styles.css.
+    function reglasDelTablero() {
+        let css = "";
+        for (const hoja of document.styleSheets) {
+            let reglas;
+            try { reglas = hoja.cssRules; } catch (_) { continue; }
+            for (const r of reglas) if (r.selectorText && /\.(cine-|piece-)/.test(r.selectorText)) css += r.cssText + "\n";
+        }
+        return css;
+    }
+
+    function abrirSala() {
+        if (sala && !sala.closed) { sala.focus(); return; }
+        const w = window.open("", "pareo-dgt-sala", "width=1280,height=800");
+        if (!w) { $("directo-sala-texto").textContent = "El navegador no dejó abrir la ventana: permite las ventanas emergentes de esta página y vuelve a tocar «Proyectar la sala»."; return; }
+        sala = w;
+        const d = w.document;
+        d.title = "La sala · Pareo para DGT";
+        d.documentElement.lang = "es";
+        const st = d.createElement("style");
+        // Las casillas con los colores que eligió quien maneja la página.
+        const raiz = getComputedStyle(document.documentElement);
+        st.textContent = reglasDelTablero() + ESTILO_SALA + ":root{" + ["--sq-light", "--sq-dark", "--esc-ultima"].map((v) => raiz.getPropertyValue(v).trim() ? v + ":" + raiz.getPropertyValue(v).trim() : "").filter(Boolean).join(";") + "}";
+        d.head.append(st);
+        d.body.innerHTML = "<header><span id='sala-titulo'></span><span id='sala-hora'></span></header><main id='sala-mesas'></main>";
+        $("directo-sala-texto").textContent = "La sala está abierta en otra ventana: llévala al proyector y pon pantalla completa (F11).";
+        pintarSala();
+    }
+
+    function pintarSalaPronto() {
+        if (!sala || salaPendiente) return;
+        salaPendiente = true;
+        setTimeout(() => { salaPendiente = false; pintarSala(); }, 300);
+    }
+
+    // Lo que muestra cada mesa: de la categoría (en el orden del paso 1) y la mesa.
+    function mesasDeLaSala() {
+        const orden = new Map((API() ? API().torneos() : []).map((c, i) => [c.tnr, i]));
+        const avisos = new Map();
+        for (const a of alertas()) { const m = /^Tablero (\d+) /.exec(a.texto); if (m && a.tipo !== "info") avisos.set(Number(m[1]), a); }
+        return [...tableros.values()].map((t) => {
+            const a = asignacion(t.dir);
+            if (!a || !t.juego) return null;
+            const p = t.juego.partida;
+            const r = t.juego.tnr && t.juego.ronda ? API().ronda(t.juego.tnr, t.juego.ronda) : null;
+            const m = r ? PareoDGT.partidas(r.pareo, { mesas: r.mesas }).find((x) => x.mesa === a.mesa) : null;
+            const rl = p.ultimoReloj(), lb = p.blancasA();
+            const seg = (lado) => rl && lb ? reloj(rl[lado === "w" ? lb : lb === "izquierda" ? "derecha" : "izquierda"].segundos) : "";
+            const h = p.jugadas();
+            const av = avisos.get(t.dir);
+            return {
+                orden: orden.has(a.tnr) ? orden.get(a.tnr) : 999, mesa: a.mesa, dir: t.dir,
+                titulo: nombreDe(a.tnr) + " · Mesa " + a.mesa + (r ? " · Ronda " + r.ronda : ""),
+                blancas: m ? m.blancas.nombre : "Blancas", negras: m ? m.negras.nombre : "Negras",
+                relojB: seg("w"), relojN: seg("b"), fen: p.fen(), ultima: p.ultima(),
+                jugada: p.resultado() !== "*" ? "Resultado: " + p.resultado().replace("1/2-1/2", "½-½") :
+                    h.length ? "Última: " + Math.ceil(h.length / 2) + (h.length % 2 ? ". " : "… ") + espanol(h[h.length - 1]) : "Por empezar",
+                aviso: t.fallas >= 3 ? "Sin señal del tablero" : av ? (/bandera/.test(av.texto) ? "Cayó la bandera" : "Revisando la posición") : ""
+            };
+        }).filter(Boolean).sort((x, y) => x.orden - y.orden || x.mesa - y.mesa);
+    }
+
+    function pintarSala() {
+        if (!sala) return;
+        if (sala.closed) { sala = null; $("directo-sala-texto").textContent = ""; return; }
+        const d = sala.document, main = d.getElementById("sala-mesas");
+        if (!main) return;
+        d.getElementById("sala-titulo").textContent = (API() ? API().torneos() : []).map((c) => c.nombre).join(" · ") || "La sala";
+        d.getElementById("sala-hora").textContent = window.HoraCR ? HoraCR.hora(new Date()) : "";
+        const mesas = mesasDeLaSala();
+        // Cada tarjeta se vuelve a dibujar solo si cambió lo suyo.
+        const vistas = new Set();
+        for (const m of mesas) {
+            const id = "sala-" + m.dir;
+            vistas.add(id);
+            let art = d.getElementById(id);
+            if (!art) {
+                art = d.createElement("article");
+                art.id = id;
+                art.innerHTML = "<h2></h2><div class='cine-tablero cine-tablero-mini'></div><div class='jug'><span></span><span></span></div><div class='jug'><span></span><span></span></div><div class='ult'></div><div class='aviso'></div>";
+            }
+            main.append(art);   // en orden: append mueve la que ya estaba
+            const firma = JSON.stringify(m);
+            if (art.dataset.firma === firma) continue;
+            art.dataset.firma = firma;
+            art.querySelector("h2").textContent = m.titulo;
+            const [b, n] = art.querySelectorAll(".jug");
+            b.children[0].textContent = "♔ " + m.blancas; b.children[1].textContent = m.relojB;
+            n.children[0].textContent = "♚ " + m.negras; n.children[1].textContent = m.relojN;
+            art.querySelector(".ult").textContent = m.jugada;
+            art.querySelector(".aviso").textContent = m.aviso;
+            const tab = art.querySelector(".cine-tablero");
+            if (tab.dataset.fen !== m.fen) { tab.dataset.fen = m.fen; TableroFen.dibujar(tab, m.fen, m.ultima, { miniatura: true }); }
+        }
+        for (const art of [...main.children]) if (!vistas.has(art.id)) art.remove();
+        if (!d.getElementById("sala-vacia")) { const v = d.createElement("p"); v.id = "sala-vacia"; v.style.padding = "0 20px"; d.body.append(v); }
+        d.getElementById("sala-vacia").textContent = mesas.length ? "" : "Todavía no hay tableros con categoría y mesa.";
+    }
+
     // ------------------------------------------------------------ ¿cuál es este tablero?
 
     let identificar = false;
@@ -594,6 +714,7 @@
         const ladoB = partida.blancasA();
         t.celdas.reloj.textContent = !rl ? "—" : ladoB ? "Blancas " + reloj(rl[ladoB].segundos) + " · Negras " + reloj(rl[ladoB === "izquierda" ? "derecha" : "izquierda"].segundos) : "Izq. " + reloj(rl.izquierda.segundos) + " · Der. " + reloj(rl.derecha.segundos);
         if (document.activeElement !== t.celdas.resultado) t.celdas.resultado.value = partida.resultado();
+        pintarSalaPronto();
     }
 
     const CLASE_CAMPO = "bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-2 py-1 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400";
@@ -733,6 +854,8 @@
             const b = ev.target.closest("button[data-ronda]");
             if (b) bajarPgn(b.dataset.tnr, Number(b.dataset.ronda));
         });
+        $("btn-directo-sala").addEventListener("click", abrirSala);
+        window.addEventListener("pagehide", () => { if (sala && !sala.closed) sala.close(); });
         $("directo-sonido").checked = estado.sonido;
         $("directo-sonido").addEventListener("change", () => { estado.sonido = $("directo-sonido").checked; guardar(); if (estado.sonido) sonar(); });
         $("btn-directo-cual").addEventListener("click", () => {
