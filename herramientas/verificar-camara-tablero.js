@@ -1221,6 +1221,8 @@ async function esperarJugadas(p, n) {
         /^Imagen A del video, /.test(document.getElementById("var-comparar-a").getAttribute("aria-label"))];
     }), [true, true, true, true, true, true, true]);
     await pr.click("#var-cerrar");
+    // El cierre de la ventana se avisa un instante después (el evento «close» va en cola).
+    await pr.waitForFunction(() => document.getElementById("var-comparar").hidden, null, { timeout: 5000 }).catch(() => {});
     igual("al cerrar, la comparación se limpia", await pr.evaluate(() => [document.getElementById("var-comparar").hidden, document.getElementById("var-comparar-a-hora").textContent]), [true, "A · sin fijar"]);
     // El grabador: lo marcado no se borra. En chico: 3 pedazos de 1 s y hasta 2 marcados.
     const fijo = await pr.evaluate(async () => {
@@ -2177,6 +2179,7 @@ async function esperarJugadas(p, n) {
     const aLaVista = await pg.evaluate((src) => new Function("return " + src)()(), vista.toString());
     igual("y la revisión queda a la vista en la página de afuera, de arriba hasta «Volver a la partida»", aLaVista, [true, true]);
     await f1.click("#var-cerrar");
+    await pg.waitForFunction(() => document.activeElement && document.activeElement.textContent === "Revisar el VAR (cámara 1)", null, { timeout: 5000 }).catch(() => {});
     igual("al cerrarla, el foco vuelve al botón que la abrió", await pg.evaluate(() => document.activeElement && document.activeElement.textContent), "Revisar el VAR (cámara 1)");
     await pg.uncheck("#var-todas");
     await f2.waitForFunction(() => !document.getElementById("var-grabar").checked, null, { timeout: 5000 }).catch(() => {});
