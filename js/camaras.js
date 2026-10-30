@@ -15,6 +15,11 @@
  * «Ir» para llegar a la que necesita ayuda. Si una pasa a necesitar ayuda
  * (una jugada en duda, un aviso de error, la cámara que se cortó), suena.
  *
+ * El VAR de cada cámara también se maneja desde arriba: grabarlo en todas,
+ * «Marcar» un momento y «Revisar el VAR» de una mesa (se abre en su
+ * cuadrito, que queda a la vista). El video sigue quedando en esta
+ * computadora: es la misma página de siempre (ver «El VAR de la mesa»).
+ *
  * Ver «Varias cámaras en una computadora» en docs/decisiones/juegos-y-torneos.md.
  */
 (function () {
@@ -95,6 +100,25 @@
         if (x.transmitiendo && x.sinRed) return { nivel: "sin-red", detalle: x.jugadas + (x.jugadas === 1 ? " jugada" : " jugadas") + " guardadas: se mandan al volver la señal" };
         return { nivel: x.transmitiendo ? "transmitiendo" : "leyendo", detalle: x.jugadas + (x.jugadas === 1 ? " jugada" : " jugadas") + (x.resultado ? " · terminó " + (x.resultado === "=" ? "½-½" : x.resultado) : "") };
     }
+    const varDe = (marco) => { try { return marco.contentWindow && marco.contentWindow.varDesdeAfuera; } catch (e) { return null; } };
+    const marcoDe = (n) => document.querySelector('#puestos iframe[data-puesto="' + n + '"]');
+    async function revisarVar(n, boton) {
+        const marco = marcoDe(n), v = marco && varDe(marco);
+        if (!v) return;
+        const abierto = await v.revisar();
+        if (!abierto) return;
+        /* La revisión es una ventana fija DENTRO del cuadrito: queda a media
+         * altura de él, que es más alto que la pantalla. Se lleva la página
+         * de afuera hasta su borde de arriba. */
+        const dialogo = marco.contentDocument.getElementById("var-dialogo");
+        window.scrollBy({ top: marco.getBoundingClientRect().top + dialogo.getBoundingClientRect().top - 8, behavior: "instant" });
+        // Al cerrar la revisión, el foco vuelve al botón que la abrió.
+        dialogo.addEventListener("close", () => boton.focus(), { once: true });
+    }
+    function marcarVar(n) {
+        const marco = marcoDe(n), v = marco && varDe(marco);
+        if (v) v.marcar();
+    }
     function irA(n) {
         const h = document.getElementById("puesto-titulo-" + n);
         if (!h) return;
@@ -104,10 +128,11 @@
     function revisarEstados() {
         const lista = $("resumen-lista");
         const marcos = [...document.querySelectorAll("#puestos iframe")];
-        const cuenta = {};
+        const cuenta = {}, estados = [];
         for (const marco of marcos) {
             const n = Number(marco.dataset.puesto);
             const x = leerEstado(marco);
+            estados.push(x);
             const { nivel, detalle } = nivelDe(n, x);
             const a = antes.get(n) || {};
             if (nivel === "ayuda" && a.nivel !== "ayuda") sonar();
@@ -126,7 +151,17 @@
                 ir.className = "ml-auto bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-3 py-1 rounded-lg text-xs focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400";
                 ir.textContent = "Ir a la cámara " + n;
                 ir.addEventListener("click", () => irA(n));
-                fila.append(quien, etiqueta, det, ir);
+                const marcar = document.createElement("button");
+                marcar.type = "button"; marcar.dataset.marcar = "";
+                marcar.className = "bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-3 py-1 rounded-lg text-xs disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400";
+                marcar.textContent = "📍 Marcar (cámara " + n + ")";
+                marcar.addEventListener("click", () => marcarVar(n));
+                const revisar = document.createElement("button");
+                revisar.type = "button"; revisar.dataset.revisar = "";
+                revisar.className = "bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-3 py-1 rounded-lg text-xs disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400";
+                revisar.textContent = "Revisar el VAR (cámara " + n + ")";
+                revisar.addEventListener("click", () => revisarVar(n, revisar));
+                fila.append(quien, etiqueta, det, ir, marcar, revisar);
                 lista.append(fila);
             }
             fila.querySelector("[data-quien]").textContent = "Cámara " + n + (x && x.mesa ? " · mesa " + x.mesa + (x.tablero ? " · tablero " + x.tablero : "") : "");
@@ -134,7 +169,11 @@
             et.textContent = NIVEL[nivel][0];
             et.className = "rounded-full px-2 py-0.5 text-xs font-semibold " + NIVEL[nivel][1];
             fila.dataset.estado = nivel;
-            fila.querySelector("[data-detalle]").textContent = detalle;
+            const v = (x && x.var) || {};
+            const delVar = v.grabando ? " · 🎥 VAR grabando" + (v.marcados ? " · " + v.marcados + (v.marcados === 1 ? " marcado" : " marcados") : "") + (v.tocadas ? " · ⚠️ " + v.tocadas + (v.tocadas === 1 ? " posible pieza tocada" : " posibles piezas tocadas") : "") : "";
+            fila.querySelector("[data-detalle]").textContent = detalle + delVar;
+            fila.querySelector("[data-marcar]").disabled = !v.grabando;
+            fila.querySelector("[data-revisar]").disabled = !v.grabando;
             const tit = document.getElementById("puesto-titulo-" + n);
             if (tit) tit.dataset.estado = nivel;
         }
@@ -147,10 +186,20 @@
         if (cuenta["sin-red"]) partes.push(cuenta["sin-red"] + " sin conexión");
         const resto = (cuenta["sin-camara"] || 0) + (cuenta["sin-calibrar"] || 0);
         if (resto) partes.push(resto + " sin empezar");
+        // «Grabar el VAR en todas» marcado si todas las que pueden lo graban.
+        const conVar = estados.filter((x) => x && x.var && x.var.puede);
+        $("var-todas").disabled = !conVar.length;
+        if (document.activeElement !== $("var-todas")) $("var-todas").checked = conVar.length > 0 && conVar.every((x) => x.var.grabando || !x.camara);
+        const grabando = conVar.filter((x) => x.var.grabando).length;
+        if (grabando) partes.push(grabando + " con el VAR grabando");
         const texto = partes.join(" · ");
         if ($("resumen-cuentas").textContent !== texto) $("resumen-cuentas").textContent = texto;
     }
 
+    $("var-todas").addEventListener("change", (e) => {
+        for (const marco of document.querySelectorAll("#puestos iframe")) { const v = varDe(marco); if (v) v.encender(e.target.checked); }
+        revisarEstados();
+    });
     $("btn-agregar").addEventListener("click", () => { if (cantidad < MAXIMO) { cantidad++; pintar(); } });
     $("btn-quitar").addEventListener("click", () => { if (cantidad > 1) { cantidad--; pintar(); } });
 

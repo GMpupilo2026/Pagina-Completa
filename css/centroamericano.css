@@ -575,6 +575,20 @@ a.cac-despedida:hover .cac-globo { transform: translateY(-2px); }
 /* Cómo va la ronda: el número va escrito; la barra solo lo acompaña. */
 .cac-progreso { padding: 0.8rem 1rem; border-radius: 1rem; background: var(--cac-fondo); border: 2px solid var(--cac-verde); }
 .cac-progreso[hidden] { display: none; }
+
+/* Clásico · Rápidas · Blitz: una modalidad a la vez (js/centroamericano-vivo.js).
+   La puesta va rellena y con «✓», no solo con otro color. Contraste: #40478F
+   sobre blanco y blanco sobre #40478F 8,35 (sobre el fondo de la página 7,62);
+   en oscuro, #B8BBF2 sobre brand-950 9,98 y #1E2453 sobre #B8BBF2 7,98. */
+.cac-modalidad { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.cac-modalidad[hidden] { display: none; }
+.cac-modalidad-boton { flex: 1 1 auto; max-width: 11rem; min-height: 2.75rem; padding: 0.4rem 0.5rem; white-space: nowrap; border-radius: 999px; border: 2px solid #40478f; background: #fff; color: #40478f; font-weight: 800; }
+.cac-modalidad-boton[aria-pressed="true"] { background: #40478f; color: #fff; }
+.cac-modalidad [aria-pressed="true"]::before { content: "✓ "; }
+@media (max-width: 400px) { .cac-modalidad { gap: 0.375rem; } .cac-modalidad-boton { font-size: 0.875rem; padding: 0.4rem 0.45rem; } }
+.cac-modalidad-boton:focus-visible { outline: 3px solid var(--cac-rojo); outline-offset: 2px; }
+.dark .cac-modalidad-boton { border-color: #b8bbf2; background: transparent; color: #b8bbf2; }
+.dark .cac-modalidad-boton[aria-pressed="true"] { background: #b8bbf2; color: #1e2453; }
 .cac-progreso-barra { margin-top: 0.5rem; height: 0.75rem; border-radius: 999px; background: #dfe0f7; overflow: hidden; }
 .cac-progreso-barra span { display: block; height: 100%; width: 0; background: var(--cac-verde); transition: width 0.4s; }
 .dark .cac-progreso { border-color: #9be0bb; }

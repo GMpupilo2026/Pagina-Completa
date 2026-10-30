@@ -1187,9 +1187,161 @@ async function esperarJugadas(p, n) {
     await esperarJugadas(pr, 2);
     await pr.waitForTimeout(800);
     igual("por la transmisión no viaja nada del video", eventos.slice(antes).some((x) => /blob:|video|webm/i.test(JSON.stringify(x.payload))), false);
+    // «📍 Marcar este momento»: queda en el VAR aunque nadie reclame todavía.
+    await pr.bringToFront();
+    await pr.click("#btn-var-marcar");
+    await esperarAviso(pr, /Momento marcado/);
+    igual("«Marcar este momento» lo dice, con su hora, y que ese minuto no se borra",
+      /📍 Momento marcado \(\d{1,2}:\d{2}:\d{2}.*\): ese minuto del video queda guardado aunque pasen los 10 minutos/.test(await aviso(pr)), true);
+    // Los caballos van y vuelven: la posición después de 1… e5 se repite tres veces.
+    for (const m of ["Nf3", "Nf6", "Ng1", "Ng8", "Nf3", "Nf6", "Ng1", "Ng8"]) {
+      j.move(m);
+      await fotoEnCamara(pr, { fen: j.fen(), esq: ESQ0 });
+      await esperarJugadas(pr, j.history().length);
+    }
+    await pr.waitForTimeout(800);
+    await pr.click("#btn-var");
+    await pr.waitForSelector("#var-dialogo[open]", { timeout: 8000 });
+    const marcas2 = await pr.$$eval("#var-marcas button", (bs) => bs.map((x) => x.textContent.split(" — ")[0]));
+    igual("lo marcado sale en el VAR", marcas2.filter((x) => /^📍/.test(x)), ["📍 Marcado por el árbitro"]);
+    igual("y cada vez que apareció la posición repetida tres veces (para un reclamo de tablas), de la última a la primera", marcas2.filter((x) => /^🔁/.test(x)),
+      ["🔁 Posición repetida: vez 3 de 3, después de 5… Cg8", "🔁 Posición repetida: vez 2 de 3, después de 3… Cg8", "🔁 Posición repetida: vez 1 de 3, después de 1… e5"]);
+    // Comparar: lo que se ve ahora como A, dos segundos antes como B.
+    await pr.waitForFunction(() => document.getElementById("var-video").readyState >= 2, null, { timeout: 8000 }).catch(() => {});
+    igual("sin fijar nada, no hay comparación", await pr.evaluate(() => document.getElementById("var-comparar").checkVisibility()), false);
+    await pr.click("#var-fijar-a");
+    await pr.click("#var-atras");
+    await pr.waitForFunction(() => document.getElementById("var-video").readyState >= 2, null, { timeout: 8000 }).catch(() => {});
+    await pr.waitForTimeout(300);
+    await pr.click("#var-fijar-b");
+    igual("«Fijar como A» y «Fijar como B»: los dos momentos lado a lado, cada uno con su imagen y su hora", await pr.evaluate(() => {
+      const conImagen = (l) => { const c = document.getElementById("var-comparar-" + l); const d = c.getContext("2d").getImageData(0, 0, c.width, c.height).data; let n = 0; for (let i = 0; i < d.length; i += 4) if (d[i] > 60) n++; return n > 100; };
+      const a = document.getElementById("var-comparar-a-hora").textContent, b = document.getElementById("var-comparar-b-hora").textContent;
+      return [document.getElementById("var-comparar").checkVisibility(), /^A · \d{1,2}:\d{2}:\d{2}/.test(a), /^B · \d{1,2}:\d{2}:\d{2}/.test(b), a.slice(4) !== b.slice(4), conImagen("a"), conImagen("b"),
+        /^Imagen A del video, /.test(document.getElementById("var-comparar-a").getAttribute("aria-label"))];
+    }), [true, true, true, true, true, true, true]);
+    await pr.click("#var-cerrar");
+    // El cierre de la ventana se avisa un instante después (el evento «close» va en cola).
+    await pr.waitForFunction(() => document.getElementById("var-comparar").hidden, null, { timeout: 5000 }).catch(() => {});
+    igual("al cerrar, la comparación se limpia", await pr.evaluate(() => [document.getElementById("var-comparar").hidden, document.getElementById("var-comparar-a-hora").textContent]), [true, "A · sin fijar"]);
+    // El grabador: lo marcado no se borra. En chico: 3 pedazos de 1 s y hasta 2 marcados.
+    const fijo = await pr.evaluate(async () => {
+      const c = document.createElement("canvas"); c.width = 64; c.height = 48;
+      const g = c.getContext("2d");
+      const pinta = setInterval(() => { g.fillStyle = "#" + Math.floor(Math.random() * 0xffffff).toString(16).padStart(6, "0"); g.fillRect(0, 0, 64, 48); }, 50);
+      const gr = CamaraVar.grabador({ minutos: 3 / 60, trozoMs: 1000, fijosMax: 2 });
+      gr.empezar(c.captureStream(10));
+      const espera = (ms) => new Promise((listo) => setTimeout(listo, ms));
+      await espera(1500);
+      const marcada = Date.now();
+      gr.fijar(marcada);
+      await espera(6500);
+      await gr.parar(); clearInterval(pinta);
+      const tr = gr.trozos();
+      return [tr.some((x) => marcada >= x.inicio && marcada <= x.fin), tr.filter((x) => !x.fijo).length, tr.filter((x) => x.fijo).length, tr.every((x, i) => !i || x.inicio >= tr[i - 1].inicio),
+        CamaraVar.donde(tr, marcada).trozo.fijo];
+    });
+    igual("un momento marcado no se borra: su pedazo (y el de antes) se guarda aparte de los últimos", fijo, [true, 3, 2, true, true]);
     await pr.uncheck("#var-grabar");
     igual("al apagarlo se deja de grabar y se borra lo grabado", [await pr.textContent("#var-estado"), await pr.isDisabled("#btn-var")], ["No se está grabando.", true]);
     igual("sin errores en la consola (VAR)", b.errores, []);
+    await cerrar(b);
+  }
+
+  console.log("\nProbar esta mesa, el celular mal puesto para el VAR y la hoja para la mesa");
+  {
+    // El tablero chico en la imagen (el celular lejos): un toque no se notaría en el video.
+    const b1 = await abrir(browser, "camara-tablero.html", null, null, CAMARA_FALSA);
+    const pl = b1.page;
+    await pl.waitForSelector("#app:not(.hidden)");
+    await pl.bringToFront();
+    const CHICO = TABLEROS["chico, en una esquina de la foto"];
+    await pl.check("#var-grabar");
+    await fotoEnCamara(pl, { fen: new Chess().fen(), esq: CHICO });
+    await pl.click("#btn-camara");
+    await esperarAviso(pl, /esquinas/);
+    await tocar(pl, aLienzo(CHICO));
+    await pl.click("#btn-calibrar");
+    await esperarAviso(pl, /Calibrado/);
+    await pl.waitForFunction(() => !document.getElementById("var-ubicacion").hidden, null, { timeout: 7000 }).catch(() => {});
+    igual("con el tablero chico en la imagen, avisa que en el VAR un toque casi no se va a notar, y qué hacer",
+      /^⚠️ El tablero ocupa poco de la imagen \(1\d %\): en el video del VAR un toque de pieza casi no se va a notar\. Acerca el celular/.test(await pl.textContent("#var-ubicacion")), true);
+    igual("sin errores en la consola (mal puesto)", b1.errores, []);
+    await cerrar(b1);
+
+    const b = await abrir(browser, "camara-tablero.html", null, null, CAMARA_FALSA);
+    const pq = b.page;
+    await pq.waitForSelector("#app:not(.hidden)");
+    await pq.bringToFront();
+    const j = new Chess();
+    await fotoEnCamara(pq, { fen: j.fen(), esq: ESQ0 });
+    await pq.click("#btn-camara");
+    await esperarAviso(pq, /esquinas/);
+    await pq.click("#btn-prueba");
+    igual("sin calibrar, la prueba no empieza y dice qué falta", [/Primero calibra el tablero/.test(await aviso(pq)), await pq.evaluate(() => document.getElementById("prueba-caja").hidden)], [true, true]);
+    await tocar(pq, aLienzo(ESQ0));
+    await pq.click("#btn-calibrar");
+    await esperarAviso(pq, /Calibrado/);
+    igual("bien puesto (el tablero grande y de frente), no hay aviso", await pq.evaluate(() => document.getElementById("var-ubicacion").hidden), true);
+    await pq.click("#btn-prueba");
+    await esperarAviso(pq, /Empezó la prueba/);
+    igual("al empezar prende el VAR, y lo dice", [/Se prendió el VAR para probarlo/.test(await aviso(pq)), await pq.isChecked("#var-grabar")], [true, true]);
+    const pasos = () => pq.$$eval("#prueba-pasos li", (l) => l.map((x) => x.textContent));
+    await pq.waitForFunction(() => /El VAR está grabando/.test(document.getElementById("prueba-pasos").textContent), null, { timeout: 8000 }).catch(() => {});
+    igual("la lista dice qué está bien y qué falta, con palabras (no solo con el color)", await pasos(), [
+      "✅ Bien: Lee las 64 casillas.",
+      "✅ Bien: El celular está bien puesto: el tablero se ve grande y de frente.",
+      "✅ Bien: El VAR está grabando.",
+      "⏳ Falta: Jueguen 5 jugadas: van 0.",
+      "⏳ Falta: Toquen una pieza sin moverla y suelten: la cámara tiene que ver la mano.",
+      "⚪ No se está leyendo el reloj de la mesa (es opcional: «Leer el reloj de la mesa»).",
+      "⏳ Falta: Mira el toque en el VAR: toca «Ver el toque en el VAR» y fíjate que se vea la mano.",
+    ]);
+    igual("arriba, cuánto lleva y que siga", /^Van 0:0\d\. Sigue con lo que falta\.$/.test(await pq.textContent("#prueba-tiempo")), true);
+    // Una mano tapa el caballo de g1 y se va, sin jugar.
+    await fotoEnCamara(pq, { fen: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKB1R w KQkq - 0 1", esq: ESQ0 });
+    await pq.waitForTimeout(700);
+    await fotoEnCamara(pq, { fen: j.fen(), esq: ESQ0 });
+    await pq.waitForFunction(() => /Vio la mano que tocó sin mover/.test(document.getElementById("prueba-pasos").textContent), null, { timeout: 9000 }).catch(() => {});
+    igual("ve el toque sin jugada", (await pasos()).find((x) => /mano/.test(x)), "✅ Bien: Vio la mano que tocó sin mover (g1).");
+    for (const m of ["e4", "e5", "Nf3", "Nc6", "Bc4"]) { j.move(m); await fotoEnCamara(pq, { fen: j.fen(), esq: ESQ0 }); await esperarJugadas(pq, j.history().length); }
+    await pq.waitForFunction(() => /Anotó 5 jugadas/.test(document.getElementById("prueba-pasos").textContent), null, { timeout: 5000 }).catch(() => {});
+    igual("cuenta las jugadas", (await pasos()).find((x) => /jugadas/.test(x)), "✅ Bien: Anotó 5 jugadas.");
+    igual("«Ver el toque en el VAR» se puede tocar", await pq.isDisabled("#btn-prueba-var"), false);
+    await pq.click("#btn-prueba-var");
+    await pq.waitForSelector("#var-dialogo[open]", { timeout: 8000 });
+    await pq.waitForFunction(() => /^Se ve: /.test(document.getElementById("var-hora").textContent), null, { timeout: 8000 }).catch(() => {});
+    igual("abre el VAR en el toque (2 s antes)", await pq.evaluate(() => document.getElementById("var-dialogo").open), true);
+    await pq.click("#var-cerrar");
+    await pq.waitForFunction(() => /Se miró el toque en el VAR/.test(document.getElementById("prueba-pasos").textContent), null, { timeout: 5000 }).catch(() => {});
+    igual("y queda anotado que se miró", (await pasos()).slice(-1), ["✅ Bien: Se miró el toque en el VAR."]);
+    igual("cuando está todo, dice que ya se puede terminar", /Ya está todo: toca «Terminar la prueba»\.$/.test(await pq.textContent("#prueba-tiempo")), true);
+    await pq.click("#btn-prueba-fin");
+    const informe = await pq.textContent("#prueba-texto");
+    igual("al terminar, el resultado arriba, con el foco ahí", [await pq.textContent("#prueba-resumen"), await pq.evaluate(() => document.activeElement.id)], ["✅ Esta mesa pasó la prueba: la cámara la puede seguir.", "prueba-resumen"]);
+    igual("y el informe para copiar: cada cosa, las jugadas y que el VAR se prendió para la prueba", [
+      /^Prueba de la mesa — \d{1,2} de \w+ de \d{4}, \d{1,2}:\d{2}/.test(informe), informe.includes("✅ Bien: Vio la mano que tocó sin mover (g1)."),
+      informe.includes("Jugadas de la prueba: e4 e5 Cf3 Cc6 Ac4."), informe.includes("El VAR se prendió para la prueba.")], [true, true, true, true]);
+    // La partida de verdad, desde la posición inicial: lo de la prueba no queda.
+    await fotoEnCamara(pq, { fen: new Chess().fen(), esq: ESQ0 });
+    await pq.waitForTimeout(800);
+    await pq.click("#btn-prueba-jugar");
+    await esperarAviso(pq, /Calibrado/);
+    igual("«Empezar la partida» arranca de cero: las jugadas de la prueba no quedan", [/ninguna/i.test(await jugadasDe(pq)), await pq.evaluate(() => document.getElementById("prueba-informe").hidden)], [true, true]);
+
+    // La hoja para la mesa: solo al imprimir, con la marca de agua.
+    await pq.evaluate(() => { window.print = () => { window.__impreso = (window.__impreso || 0) + 1; }; });
+    await pq.click("#btn-hoja-mesa");
+    igual("«Imprimir la hoja para la mesa»: qué hacer si hay un reclamo, que decide el árbitro y que el video no sale del celular", [
+      await pq.textContent("#hoja-mesa .hoja-mesa-titulo"), await pq.$$eval("#hoja-mesa li", (l) => l.length), await pq.evaluate(() => window.__impreso),
+      /llama al árbitro.*VAR/.test(await pq.textContent("#hoja-mesa")), /Quien decide es el árbitro, no la cámara/.test(await pq.textContent("#hoja-mesa")), /no se manda a ningún lado/.test(await pq.textContent("#hoja-mesa"))],
+      ["Esta mesa tiene cámara", 5, 1, true, true, true]);
+    await pq.emulateMedia({ media: "print" });
+    igual("al imprimir sale solo la hoja, con la marca de agua", await pq.evaluate(() => ["hoja-mesa", "hoja-qr-marca", "hoja-qr", "app"].map((id) => document.getElementById(id).checkVisibility())), [true, true, false, false]);
+    await pq.emulateMedia({ media: "screen" });
+    await pq.evaluate(() => window.dispatchEvent(new Event("afterprint")));
+    igual("en la pantalla no se ve", await pq.evaluate(() => [document.getElementById("hoja-mesa").checkVisibility(), document.getElementById("app").checkVisibility()]), [false, true]);
+    igual("sin errores en la consola (probar esta mesa)", b.errores, []);
     await cerrar(b);
   }
 
@@ -2002,6 +2154,36 @@ async function esperarJugadas(p, n) {
     igual("cuando se arregla, deja de pedir ayuda y dice su mesa", [(await fila(2))[0], /Cámara 2 · mesa 2/.test((await fila(2))[1])], ["sin-calibrar", true]);
     igual("y cada una tiene su mesa, con sus jugadores", [await f1.inputValue("#vivo-blancas"), await f2.inputValue("#vivo-blancas"),
       await pg.evaluate(() => [localStorage.getItem("camara_mesa_v1_p1_0"), localStorage.getItem("camara_mesa_v1_p2_0")])], ["Ana", "Carla", ["1", "2"]]);
+
+    // El VAR de cada mesa, desde arriba: grabar en todas, marcar y revisar.
+    await pg.bringToFront();
+    igual("antes, los botones del VAR de cada fila no se pueden tocar", await pg.evaluate(() => [...document.querySelectorAll('#resumen-lista [data-puesto="1"] [data-marcar], #resumen-lista [data-puesto="1"] [data-revisar]')].map((x) => x.disabled)), [true, true]);
+    await pg.check("#var-todas");
+    await pg.waitForFunction(() => /🎥 VAR grabando/.test(document.querySelector('#resumen-lista [data-puesto="1"]').textContent) && /🎥 VAR grabando/.test(document.querySelector('#resumen-lista [data-puesto="2"]').textContent), null, { timeout: 8000 }).catch(() => {});
+    igual("«Grabar el VAR en todas» lo prende en cada cuadrito, y cada fila y la cuenta de arriba lo dicen",
+      [await f1.isChecked("#var-grabar"), await f2.isChecked("#var-grabar"), /🎥 VAR grabando/.test((await fila(1))[1]), /2 con el VAR grabando/.test(await pg.textContent("#resumen-cuentas"))], [true, true, true, true]);
+    await pg.click('#resumen-lista [data-puesto="1"] [data-marcar]');
+    await f1.waitForFunction(() => /Momento marcado/.test(document.getElementById("aviso").textContent), null, { timeout: 5000 }).catch(() => {});
+    await pg.waitForFunction(() => /1 marcado/.test(document.querySelector('#resumen-lista [data-puesto="1"]').textContent), null, { timeout: 5000 }).catch(() => {});
+    igual("«📍 Marcar» marca el momento en esa cámara, y su fila lo cuenta", [/Momento marcado/.test(await f1.textContent("#aviso")), /· 1 marcado/.test((await fila(1))[1])], [true, true]);
+    await pg.waitForTimeout(1500);
+    await pg.click('#resumen-lista [data-puesto="1"] [data-revisar]');
+    await f1.waitForSelector("#var-dialogo[open]", { timeout: 8000 }).catch(() => {});
+    igual("«Revisar el VAR» lo abre en su cuadrito, con lo marcado", await f1.$$eval("#var-marcas button", (b) => b.some((x) => /^📍 Marcado por el árbitro/.test(x.textContent))), true);
+    const vista = () => {
+      const marco = document.querySelector('#puestos iframe[data-puesto="1"]'), m = marco.getBoundingClientRect();
+      const d = marco.contentDocument.getElementById("var-dialogo").getBoundingClientRect(), c = marco.contentDocument.getElementById("var-cerrar").getBoundingClientRect();
+      return [m.top + d.top >= 0, m.top + c.bottom <= innerHeight];
+    };
+    await pg.waitForFunction((src) => new Function("return " + src)()().every(Boolean), vista.toString(), { timeout: 5000 }).catch(() => {});
+    const aLaVista = await pg.evaluate((src) => new Function("return " + src)()(), vista.toString());
+    igual("y la revisión queda a la vista en la página de afuera, de arriba hasta «Volver a la partida»", aLaVista, [true, true]);
+    await f1.click("#var-cerrar");
+    await pg.waitForFunction(() => document.activeElement && document.activeElement.textContent === "Revisar el VAR (cámara 1)", null, { timeout: 5000 }).catch(() => {});
+    igual("al cerrarla, el foco vuelve al botón que la abrió", await pg.evaluate(() => document.activeElement && document.activeElement.textContent), "Revisar el VAR (cámara 1)");
+    await pg.uncheck("#var-todas");
+    await f2.waitForFunction(() => !document.getElementById("var-grabar").checked, null, { timeout: 5000 }).catch(() => {});
+    igual("y se apaga en todas igual", [await f1.isChecked("#var-grabar"), await f2.isChecked("#var-grabar")], [false, false]);
     igual("sin errores en la consola", errores, []);
     await nav.close();
   }

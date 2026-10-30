@@ -69,9 +69,10 @@
 
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { type LlavesVapid, mandar as mandarPush } from "./webpush.ts";
-import { codigoCategoria, deCategorias, type Jug, type Mesa, puntosDe, resumenDelegacion } from "./torneos-sala.ts";
+import { codigoCategoria, deCategorias, MODALIDADES, type Modalidad, modalidadDe, type Jug, type Mesa, puntosDe, resumenDelegacion } from "./torneos-sala.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
+const ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const FRESCO_MS = 90_000;
 const MAX_JUGADORES = 1500;
@@ -528,9 +529,39 @@ async function revisar(admin: Admin) {
 
 // ------------------------------------------------------------- la función
 
+// ¿Quien llama administra? Se pregunta con SU token, por PostgREST: así pasa
+// por antes_de_cada_pedido() y la verificación en dos pasos (con un factor y
+// el token en aal1, la base corta y esto da que no). Sin sesión, el token es
+// la clave pública y soy_admin() da que no.
+async function esAdministrador(req: Request): Promise<boolean> {
+  const jwt = (req.headers.get("Authorization") ?? "").replace(/^Bearer\s+/i, "");
+  if (!jwt || !ANON_KEY) return false;
+  try {
+    const comoEl = createClient(SUPABASE_URL, ANON_KEY, { auth: { persistSession: false }, global: { headers: { Authorization: "Bearer " + jwt } } });
+    const { data, error } = await comoEl.rpc("soy_admin");
+    return !error && data === true;
+  } catch {
+    return false;
+  }
+}
+
 // Los torneos de chess-results de una sala visible, leídos (o de la caché).
-async function datosDeSala(admin: Admin, clave: string) {
-  const { data: sala, error } = await admin.from("salas_torneo").select("enlaces").eq("clave", clave).eq("visible", true).maybeSingle();
+// Con «conOcultas» (el modo de prueba de quien administra), también una oculta.
+// Solo los de una modalidad (la del texto del enlace, modalidadDe): con
+// Clásico, Rápidas y Blitz por categoría la sala tiene 36 torneos, y leerlos
+// todos en cada visita serían más de cien páginas de chess-results.
+async function datosDeSala(admin: Admin, clave: string, conOcultas = false, modalidad: Modalidad = "clasico") {
+  const sala = await enlacesDeSala(admin, clave, conOcultas);
+  if (!sala) return null;
+  return await leerTorneos(admin, sala.torneos.filter((t) => t.modalidad === modalidad).slice(0, 15));
+}
+
+// Los enlaces de chess-results de la sala, sin repetir, con su categoría y su
+// modalidad; y las modalidades que tiene (para el selector de la página).
+async function enlacesDeSala(admin: Admin, clave: string, conOcultas = false) {
+  let q = admin.from("salas_torneo").select("enlaces").eq("clave", clave);
+  if (!conOcultas) q = q.eq("visible", true);
+  const { data: sala, error } = await q.maybeSingle();
   if (error || !sala) return null;
   const enlaces = Array.isArray(sala.enlaces) ? sala.enlaces : [];
   const vistos = new Set<string>();
@@ -538,9 +569,15 @@ async function datosDeSala(admin: Admin, clave: string) {
   // de todos los jugadores de ese torneo (un torneo por categoría).
   const torneos = enlaces.map((e: { url: string; texto?: string }) => {
     const t = torneoDe(e && e.url);
-    return t ? { ...t, texto: corto(e.texto, 80), categoria: codigoCategoria(e.texto || "") } : null;
-  }).filter((t: { tnr: string } | null) => t && !vistos.has(t.tnr) && vistos.add(t.tnr)).slice(0, 15);
-  return await Promise.all(torneos.map(async (t: { tnr: string; host: string; texto: string; categoria: string }) => {
+    return t ? { ...t, texto: corto(e.texto, 80), categoria: codigoCategoria(e.texto || ""), modalidad: modalidadDe(e.texto || "") } : null;
+  }).filter((t: { tnr: string } | null) => t && !vistos.has(t.tnr) && vistos.add(t.tnr)) as EnlaceSala[];
+  return { torneos, modalidades: MODALIDADES.filter((m) => torneos.some((t) => t.modalidad === m)) };
+}
+
+type EnlaceSala = { tnr: string; host: string; texto: string; categoria: string; modalidad: Modalidad };
+
+async function leerTorneos(admin: Admin, torneos: EnlaceSala[]) {
+  return await Promise.all(torneos.map(async (t) => {
     const base = "https://" + t.host + "/tnr" + t.tnr + ".aspx?lan=2&turdet=YES";
     const [clasif, ronda, cruzado] = await Promise.all([
       leer(admin, base + "&art=1&zeilen=99999", leerClasificacion),
@@ -557,6 +594,7 @@ async function datosDeSala(admin: Admin, clave: string) {
       tnr: t.tnr,
       texto: t.texto,
       categoria: t.categoria,
+      modalidad: t.modalidad,
       url: base + "&art=1",
       leido_en: clasif.leido_en,
       viejo: !!(clasif.viejo || (ronda && ronda.viejo) || (cruzado && cruzado.viejo)),
@@ -648,7 +686,20 @@ Deno.serve(async (req) => {
     return json({ ok: true });
   }
 
-  const torneos = await datosDeSala(admin, clave);
-  if (!torneos) return json({ error: "Esa sala no existe o no está publicada." }, 404);
-  return json({ torneos });
+  // El modo de prueba (centroamericano-2026.html?sala=<clave>): quien
+  // administra ve la página con los torneos de una sala oculta, sin que
+  // nadie más la vea. Ver «El modo de prueba» en docs/decisiones/juegos-y-torneos.md.
+  const prueba = body.prueba === true;
+  const conOcultas = prueba && await esAdministrador(req);
+  const sala = await enlacesDeSala(admin, clave, conOcultas);
+  if (!sala) {
+    return prueba && !conOcultas
+      ? json({ error: "El modo de prueba es solo para quien administra: entra con tu cuenta." }, 403)
+      : json({ error: "Esa sala no existe o no está publicada." }, 404);
+  }
+  // La modalidad que pide la página; si la sala no la tiene, la primera que sí.
+  const pedida = MODALIDADES.find((m) => m === body.modalidad) ?? "clasico";
+  const modalidad = sala.modalidades.includes(pedida) ? pedida : (sala.modalidades[0] ?? "clasico");
+  const torneos = await leerTorneos(admin, sala.torneos.filter((t) => t.modalidad === modalidad).slice(0, 15));
+  return json({ torneos, modalidad, modalidades: sala.modalidades });
 });

@@ -10236,6 +10236,48 @@ categoría antes del festival, sin que lo vea el público.
 - Lo revisa `verificar-centroamericano.js`. Rompí a propósito el pedido en
   modo de prueba y el freno de los avisos, y saltaron.
 
+### Rápidas y Blitz: una modalidad a la vez
+
+Lo pidió el dueño: el festival juega también Rápidas y Blitz, cada una con
+las mismas doce categorías, y «eso hará que sea mucha información: busca una
+forma que no sea tan cargado todo y sea agradable su navegación». Mostrar
+las tres juntas, o una pestaña por modalidad en cada ventana, triplicaba
+lo que hay que leer en el celular.
+
+- **Un solo selector, «Clásico · Rápidas · Blitz»**, y todo lo demás sigue
+  igual: el buscador, «Mis jugadores», la clasificación, el medallero, Mi
+  delegación, la tabla por país, las sorpresas, el proyector… muestran la
+  modalidad elegida, con las mismas categorías. Está arriba del buscador y en
+  cada ventana (y en la barra del proyector), todos iguales: cambiarlo en uno
+  los cambia todos. Con una sola modalidad en la sala (como hasta ahora) no se
+  ve. La elegida queda en este aparato (`cac_modalidad_v1`); por omisión, el
+  clásico.
+- **La modalidad la dice el texto del botón** en `admin.html#torneos`, como
+  la categoría: «Blitz Sub-10 Absoluto», «Rápidas Sub-12 Femenino» (también
+  «Rapid», «Rápida»). Sin ninguna de las dos palabras, clásico. Lo lee
+  `modalidadDe()` en `supabase/functions/sala-jugadores/torneos-sala.ts`.
+- **La función lee de chess-results solo la modalidad pedida** (`modalidad`
+  en el cuerpo) y contesta también cuáles tiene la sala (`modalidades`) y cuál
+  mandó: si la sala no tiene la pedida, manda la primera que sí, y la página
+  se queda con esa. Por qué: con las tres son 36 torneos y cada uno cuesta
+  tres páginas de chess-results; leer más de cien en cada visita era lento y
+  pesado para chess-results. El tope de 15 torneos por pedido es por
+  modalidad. Los avisos al celular siguen con el clásico.
+- **Lo que llega tarde no se pinta como de otra**: cada pedido lleva su
+  número, y si se cambió de modalidad mientras iba en camino, lo que trae se
+  descarta. Lo guardado para sin internet va una copia por modalidad (la del
+  clásico, con su nombre de siempre, `cac_jugadores_v1`).
+- Lo que sale de la página (el certificado, la imagen del jugador, el título
+  del proyector) dice la modalidad si no es el clásico: «Sub-10 Absoluto
+  (Blitz)». El botón «Sus rondas en mi calendario» sale solo en el clásico:
+  el calendario de la página es el de sus rondas.
+- La puesta va rellena y con «✓», no solo con otro color; los contrastes
+  están medidos en `css/centroamericano.css`. En 320 px, en inglés, las tres
+  caben en una fila sin cortar el texto.
+- Lo revisa `verificar-centroamericano.js`. Rompí a propósito el descarte de
+  lo que llega tarde, el calendario fuera del clásico, el selector con una
+  sola modalidad y la lectura de «Rápidas», y saltaron.
+
 ## Las páginas de los torneos universitarios
 
 Dos, con la misma maquinaria: `cenfotec-2026.html` (el Desafío Mentes
@@ -11522,6 +11564,83 @@ distintas que junta sus fotos, «Entrenar con estas fotos», «Leer la posición
 del tablero» con una posición de otra partida, bajar el modelo y el archivo
 que no es un modelo). Rotos a propósito (sin aprender; sin las reglas del rey
 y de los peones), saltan.
+
+### Probar esta mesa, el VAR que guarda lo marcado y el VAR desde camaras.html
+
+El pedido «hacer 1, 3, 4, 5, 6, 7, 10, 11» de las mejoras al VAR. Lo que más
+faltaba no era otra función: era saber si todo esto sirve en una mesa de
+verdad, porque las pruebas del sitio usan piezas y relojes dibujados.
+
+- **«Probar esta mesa»** (1): dos minutos con la mesa armada y calibrada.
+  Prende el VAR si estaba apagado (y lo dice), y una lista dice con
+  palabras —no solo con el color— qué está bien, qué falta y qué revisar:
+  lee las 64 casillas, el celular bien puesto, el VAR grabando, 5 jugadas
+  anotadas (y cuántas tuvo que preguntar o vio raras, **desde que empezó
+  la prueba**), una mano que tocó sin mover (una mano que entró al tablero
+  y se fue sin jugada en los 4 segundos siguientes), el reloj de la mesa
+  apretado (si se está leyendo; si no, es opcional) y el toque mirado en el
+  VAR. Al terminar, el resultado arriba (con el foco) y un informe para
+  copiar con cada cosa y las jugadas. **La prueba no queda en la
+  partida**: «Empezar la partida» vuelve a calibrar desde la posición
+  inicial, como siempre.
+- **«📍 Marcar este momento»** (4): el árbitro vio algo, o se lo avisaron,
+  y lo deja marcado con su hora aunque nadie reclame todavía. Sale en el
+  VAR como «📍 Marcado por el árbitro».
+- **Lo marcado no se borra** (5): el pedazo donde cae la marca, y el
+  anterior si la marca cayó en sus primeros 10 segundos (la marca deja el
+  video 3 s antes), se guardan aparte de los últimos 10 minutos, hasta 10
+  minutos marcados más (`fijar()` de `js/camara-var.js`). Un reclamo puede
+  llegar después de los 10 minutos. Si se busca una hora que cae en el
+  hueco entre lo marcado y lo último, se va al pedazo siguiente.
+- **Comparar dos momentos** (6): «Fijar como A» y «Fijar como B» dejan la
+  imagen quieta de lo que se ve, lado a lado, cada una con su hora (y su
+  texto para el lector de pantalla). Se dibujan en la página; no se baja
+  nada. Al cerrar el VAR se limpian.
+- **La posición repetida en el VAR** (7): cada vez que apareció una
+  posición que se repitió tres veces o más («🔁 vez 1 de 3, después de
+  1… e5»), para mostrarles a los jugadores un reclamo de tablas (art. 9.2).
+  Sale de `PartidaEnVivo.repeticiones()`, con la misma clave de posición
+  que el aviso de la triple repetición (`clavePosicion`: la casilla al paso
+  solo si la captura se puede hacer). Una sola copia de la regla.
+- **El VAR desde `camaras.html`** (3): «Grabar el VAR en todas las cámaras»
+  y, en la fila de cada mesa de «Cómo van las cámaras», «📍 Marcar» y
+  «Revisar el VAR», con lo grabado y lo marcado escrito en la fila. La
+  revisión se abre **en el cuadrito** (es la misma página: una sola copia
+  del VAR, `window.varDesdeAfuera` de `js/camara-tablero.js`), y la página
+  de afuera la lleva a la vista: es una ventana fija dentro de un cuadrito
+  más alto que la pantalla, y desplazar desde adentro solo mueve el
+  cuadrito. `revisar()` contesta apenas la ventana se abre, no cuando
+  termina de cargar el video: si se cierra antes, el foco igual vuelve al
+  botón que la abrió. El video sigue quedando en esa computadora: desde el
+  celular de una mesa no se pide a distancia, porque eso sería mandar video
+  de menores por la red, justo lo que «El VAR de la mesa» descartó.
+- **Cómo se usa y la hoja para la mesa** (10): «📖 Cómo se usa en un
+  torneo», cinco pasos escritos en la página, y «Imprimir la hoja para la
+  mesa»: lo que tienen que saber los jugadores (no mover el celular, qué
+  hacer si hay un reclamo, que decide el árbitro y no la cámara, que el
+  video no sale del celular), con la mesa y el torneo si los hay y la marca
+  de agua de Ajedrez Integral. Sale solo al imprimir. **El video corto de
+  cómo se usa no se hizo**: tiene que grabarse en una mesa de verdad, con
+  el celular encima; un video armado con las piezas dibujadas de las
+  pruebas enseñaría otra cosa.
+- **El celular mal puesto para el VAR** (11): con el tablero calibrado se
+  sabe qué tanto de la imagen ocupa y qué tan de lado está. Menos de 15 %
+  de la imagen, o dos lados opuestos que miden menos de 60 % uno del otro
+  (muy de costado), y lo dice en el VAR y en «Probar esta mesa»: un toque
+  no se notaría. Solo un aviso: la cámara sigue leyendo igual. Los
+  umbrales son de las fotos de prueba; si en las mesas de verdad avisa de
+  más o de menos, se ajustan con lo que diga «Probar esta mesa».
+
+Lo prueban `verificar-camara-tablero.js` («Marcar este momento»; los
+caballos que van y vuelven y la posición de 1… e5 tres veces en el VAR;
+«Fijar como A» y «Fijar como B» con imagen y hora; el grabador en chico,
+pedazos de 1 s, que guarda lo marcado; el tablero chico en la imagen;
+«Probar esta mesa» entera, desde sin calibrar hasta «Empezar la partida»
+sin las jugadas de la prueba; la hoja para la mesa al imprimir; y en
+`camaras.html`, grabar en todas, marcar, revisar a la vista con el foco de
+vuelta y apagar en todas). Rotos a propósito (lo marcado que se borra, sin
+repeticiones, el umbral del tablero chico y la página de afuera que no se
+desplaza), saltan.
 
 ## Pareo para DGT
 
