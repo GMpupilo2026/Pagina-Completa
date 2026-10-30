@@ -111,10 +111,13 @@ function pruebaProtocolo() {
 // El modo bus, con lo que mandó un LiveChess 2.2.11 de verdad (su registro
 // en «Lo que llega de LiveChess»): ahí quedó trabado la primera vez, porque el
 // tablero no contestaba la versión (8b 3f 11 5b) y LiveChess volvía a empezar.
-const ARRANQUE_LIVECHESS = [0x40, 0x40, 0x47, 0x46, 0x4a, 0x8b, 0x3f, 0x11, 0x5b,
+const ARRANQUE_REGISTRO = [0x40, 0x40, 0x47, 0x46, 0x4a, 0x8b, 0x3f, 0x11, 0x5b,
   0xdf, 0x0d, 0x12, 0x03, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0x01, 0, 0, 0, 0, 0, 0, 0, 0, 0x01, 0, 0x03, 0x02, 0x30, 0,
   0xdf, 0x31, 0x12, 0x03, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0x01, 0, 0, 0, 0, 0, 0, 0, 0, 0x02, 0, 0x03, 0x02, 0x30, 0];
 const pedido = (c, dir) => [c, dir[0], dir[1], T.suma([c, dir[0], dir[1]])];
+// El mismo arranque, para un tablero con otra dirección (LiveChess le pregunta
+// la versión a la que le contestó el tablero).
+const arranque = (dir) => ARRANQUE_REGISTRO.slice(0, 5).concat(pedido(0x8b, dir), ARRANQUE_REGISTRO.slice(9));
 
 // Lee una respuesta de bus y comprueba su suma: [código, dirección, datos].
 function leerBus(m) {
@@ -126,8 +129,9 @@ function leerBus(m) {
 function pruebaBus() {
   console.log("\n=== El modo bus (lo que usa LiveChess por un puerto COM) ===");
   igual("la suma de comprobación: 8b 3f 11 → 5b, como la mandó LiveChess", T.suma([0x8b, 0x3f, 0x11]), 0x5b);
-  const t = T.crear({ serie: "90001" });
-  const r = t.recibir(ARRANQUE_LIVECHESS);
+  // La serie 8081 es la dirección 3f 11, la del registro: su arranque, byte a byte.
+  const t = T.crear({ serie: "8081" });
+  const r = t.recibir(ARRANQUE_REGISTRO);
   igual("al arranque de LiveChess contesta la marca, la dirección (3f 11) y la versión", r.map((m) => m[0]), [0x92, 0x90, 0x89]);
   igual("la versión en modo bus: 89, largo 8, la dirección, 1.2 y la suma", r[2], [0x89, 0, 8, 0x3f, 0x11, 1, 2, 0x64]);
   igual("lo que va para otro aparato del bus (0xdf…) no se contesta", r.length, 3);
@@ -143,8 +147,8 @@ function pruebaBus() {
   let partidas = 0, malas = [];
   for (const [id, m] of Object.entries(MODELOS)) {
     const ch = new Chess();
-    const b = T.crear({ serie: "90001" });
-    b.recibir(ARRANQUE_LIVECHESS);
+    const b = T.crear({ serie: "8081" });
+    b.recibir(ARRANQUE_REGISTRO);
     const casillas = new Array(64).fill(0);
     const aplicar = () => {
       const resp = leerBus(b.recibir(pedido(0x83, dir))[0]);
@@ -170,12 +174,18 @@ function pruebaBus() {
   cierto("las " + partidas + " partidas modelo por bus: con lo que contesta a 0x83, la posición de LiveChess es la de chess.js",
     malas.length === 0 && partidas >= 60, malas.slice(0, 5).join(" | "));
 
-  const rep = T.crear({ serie: "90001" });
-  rep.recibir(ARRANQUE_LIVECHESS);
+  const rep = T.crear({ serie: "8081" });
+  rep.recibir(ARRANQUE_REGISTRO);
   const ultima = rep.recibir(pedido(0x83, dir));
   igual("0x84 repite la última respuesta tal cual", rep.recibir(pedido(0x84, dir)), ultima);
   igual("y otra 0x83 sin jugadas nuevas no trae cambios", leerBus(rep.recibir(pedido(0x83, dir))[0])[2], []);
   igual("0x40 lo saca del modo bus", (rep.recibir([0x40]), rep.bus), false);
+  const seriesBien = [];
+  for (let n = 10001; n <= 10099; n++) {
+    const dir = T.crear({ serie: String(n) }).recibir([0x46])[0].slice(3, 5);
+    if ((dir[0] << 7) + dir[1] === n) seriesBien.push(n);
+  }
+  igual("del 10001 al 10099, la dirección de bus es el mismo número de serie (lo que muestra LiveChess)", seriesBien.length, 99);
 }
 
 // ------------------------------------------------------------ la página
@@ -225,11 +235,11 @@ async function pruebaPagina(browser) {
 
   await p.evaluate(() => window.__liveChess([0x45]));
   await p.waitForFunction(() => window.__salida.length >= 8);
-  igual("LiveChess pide el número de serie y el tablero contesta 90001", await salida(), [0x91, 0, 8, 57, 48, 48, 48, 49]);
+  igual("LiveChess pide el número de serie y el tablero contesta 10001", await salida(), [0x91, 0, 8, 49, 48, 48, 48, 49]);
   igual("al abrir el puerto enciende DTR y RTS, como un tablero de verdad", await p.evaluate(() => window.__senales), { dataTerminalReady: true, requestToSend: true });
   const registro = await p.textContent("#virtuales details pre");
   cierto("«Lo que llega de LiveChess» anota el pedido en hexadecimal", /LiveChess →  45$/m.test(registro), registro);
-  cierto("y la respuesta del tablero", /Tablero →  91 00 08 39 30 30 30 31$/m.test(registro), registro);
+  cierto("y la respuesta del tablero", /Tablero →  91 00 08 31 30 30 30 31$/m.test(registro), registro);
   cierto("y cuenta los bytes recibidos", /\(1 bytes recibidos\)/.test(await p.textContent("#virtuales details summary")));
   await limpiar();
   await p.evaluate(() => window.__liveChess([0x42, 0x4b]));
@@ -265,14 +275,15 @@ async function pruebaPagina(browser) {
   // Por bus, como LiveChess por un puerto COM: la jugada no se manda sola, se
   // la lleva la respuesta a 0x83.
   await limpiar();
-  await p.evaluate((b) => window.__liveChess(b), ARRANQUE_LIVECHESS.concat(pedido(0x83, [0x3f, 0x11])));
+  await p.evaluate((b) => window.__liveChess(b), [arranque([0x4e, 0x11]), pedido(0x83, [0x4e, 0x11])].flat());
   await p.waitForFunction(() => /LiveChess lo está siguiendo/.test(document.querySelector("#virtuales [role=status]").textContent));
+  cierto("la página contesta la versión en bus con la dirección 4e 11, la del 10001", /Tablero →  89 00 08 4e 11 01 02/.test(await p.textContent("#virtuales details pre")));
   cierto("por bus, con el arranque de LiveChess y su primera pregunta, la tarjeta dice que lo sigue", true);
   await limpiar();
   await p.click("#virtuales li button:has-text('Una jugada')");
   await p.waitForFunction(() => /jugada 1 de/.test(document.querySelector("#virtuales [role=status]").textContent));
   igual("«Una jugada» por bus no manda nada sola", await salida(), []);
-  await p.evaluate((b) => window.__liveChess(b), pedido(0x83, [0x3f, 0x11]));
+  await p.evaluate((b) => window.__liveChess(b), pedido(0x83, [0x4e, 0x11]));
   await p.waitForFunction(() => window.__salida.length > 0);
   const resp = leerBus(await salida());
   igual("y la trae la respuesta a 0x83: levantar y apoyar", resp && resp[2], [].concat(...T.cambiosDeJugada(mv).map((m) => [0x40 + m[4], m[3]])));

@@ -11692,8 +11692,8 @@ vivo), no hacerla pasar por un tablero electrónico.
   LiveChess abre una punta y la página la otra con **Web Serial** (Chrome o
   Edge en la computadora; sin Web Serial, el botón se apaga y lo dice). La
   `Permissions-Policy` del sitio no apaga `serial`, así que no hizo falta
-  tocar `_headers`. Cada tablero virtual lleva su número de serie (90001,
-  90002…), que es lo que LiveChess muestra para asignarlo a una mesa.
+  tocar `_headers`. Cada tablero virtual lleva su número de serie (10001,
+  10002…), que es lo que LiveChess muestra para asignarlo a una mesa.
 - **El protocolo** está en `js/pareo/dgt-tablero.js`, comprobado contra el
   código de Picochess (`dgt/util.py` y `dgt/board.py`), que habla con
   tableros DGT reales: cada pedido de LiveChess es un byte (0x40 reset, 0x42
@@ -11727,6 +11727,11 @@ vivo), no hacerla pasar por un tablero electrónico.
     en la respuesta a la siguiente 0x83;
   - lo que va para otro aparato del bus (0xdf y lo que le sigue) se deja
     pasar, y 0x40 lo saca del modo bus.
+  - **LiveChess muestra como número de serie la dirección de bus**, no lo
+    que contesta a 0x45: con la serie 90001 (dirección `3f 11`, 14 bits)
+    el tablero salió en e-Boards como 8081 en el primer ensayo que funcionó.
+    Por eso los tableros virtuales van del 10001 en adelante (hasta 16383
+    cabe entero), y el verificador comprueba que los dos números coinciden.
 - **Cada jugada llega como en un tablero de verdad**: se levanta la pieza
   (la casilla queda vacía) y se apoya en la otra, con 200 ms entre una cosa y
   otra; en una captura se levanta primero la comida, en un enroque también la

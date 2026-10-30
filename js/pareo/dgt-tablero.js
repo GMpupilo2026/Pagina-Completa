@@ -31,6 +31,9 @@
  *     (la suma de los tres, módulo 128).
  *   - Cada respuesta: el código, el largo TOTAL en dos bytes, la dirección y,
  *     al final, la suma de comprobación de todo lo anterior.
+ *   - En modo bus LiveChess muestra como número de serie la DIRECCIÓN (14
+ *     bits, hasta 16383): con la serie 90001 mostraba 8081. Por eso los
+ *     tableros virtuales van del 10001 en adelante.
  *   - Las jugadas no se avisan: LiveChess pregunta (0x83) y el tablero le
  *     manda lo que pasó desde la última vez como en su memoria (EEPROM): cada
  *     cambio de casilla son 2 bytes, 0x40 + la pieza y la casilla (en el
@@ -38,7 +41,7 @@
  *   - Lo que no conoce (0xdf y lo que le sigue, que es para otro aparato del
  *     bus) se deja pasar.
  *
- *   DgtTablero.crear({ serie: "90001" }) → { recibir(bytes) → [respuestas], jugar(move) → [mensajes],
+ *   DgtTablero.crear({ serie: "10001" }) → { recibir(bytes) → [respuestas], jugar(move) → [mensajes],
  *                                             ponerFen(fen) → [mensajes], fen(), modo }
  *   DgtTablero.volcado(fen) / campo(casilla) / cambiosDeJugada(move) / cambiosEntre(fenA, fenB)
  *   DgtTablero.mensajeBus(id, [dirAlta, dirBaja], datos) / suma(bytes)
@@ -149,7 +152,7 @@
 
   function crear(opciones) {
     const o = opciones || {};
-    const serie = String(o.serie || "90001").replace(/\D/g, "").padStart(5, "0").slice(-5);
+    const serie = String(o.serie || "10001").replace(/\D/g, "").padStart(5, "0").slice(-5);
     let fenActual = o.fen || INICIAL;
     let saltar = 0;           // bytes de un mensaje para el reloj que todavía hay que saltar
     let esperaLargo = false;  // después de 0x2b viene cuántos bytes siguen

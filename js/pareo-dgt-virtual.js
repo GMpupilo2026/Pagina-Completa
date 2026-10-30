@@ -18,7 +18,7 @@
     const RESPIRO_MS = 200;      // entre levantar y apoyar, como una mano
     const TOPE_REGISTRO = 200;   // renglones de «Lo que llega de LiveChess»
     const tableros = [];
-    let siguienteSerie = 90001;
+    let siguienteSerie = 10001;    // cabe en la dirección de bus (14 bits): LiveChess muestra el mismo número
 
     const MODELOS = Object.entries(window.EstiloModelos || {})
         .map(([clave, m]) => ({ ...m, clave }))   // m.id es el de la fuente, no la clave
