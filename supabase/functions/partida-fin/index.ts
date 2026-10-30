@@ -1,9 +1,19 @@
 // Edge Function: partida-fin
 //
-// El robo de puntos: cuando una partida de ajedrez estándar entre dos
-// alumnos termina con un ganador, reproduce las jugadas con chess.js y
-// busca el peor momento de quien ganó (la mayor ventaja en material que
-// tuvo el perdedor). Si la hubo, le roba esos puntos —ventaja × 100— a
+// Dos cosas al terminar una partida de ajedrez estándar:
+//
+// 1. La revisión (revision.ts): rehace las jugadas con chess.js desde la
+// posición con que nació la sala (game_rooms.fen_inicial, que fija la base)
+// y anota en partidas_revision la que no cuadra —una jugada ilegal, jugadas
+// que no llevan a la posición final o un resultado que contradice el mate o
+// el ahogado del tablero—, para que la mire su profe. Corre también con
+// tablas. Ver «La partida terminada se revisa con chess.js» en
+// docs/decisiones/juegos-y-torneos.md.
+//
+// 2. El robo de puntos, solo si la partida cuadró: cuando una partida
+// entre dos alumnos termina con un ganador, reproduce las jugadas y busca
+// el peor momento de quien ganó (la mayor ventaja en material que tuvo el
+// perdedor). Si la hubo, le roba esos puntos —ventaja × 100— a
 // quien la dejó ir y se los da a quien ganó. Ver «El robo de puntos» en
 // docs/decisiones/puntos-y-premios.md.
 //
@@ -23,6 +33,7 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { Chess } from "npm:chess.js@0.10.3";
 import { peorMomentoDelGanador, puntosDelRobo } from "./calculo.ts";
+import { revisarPartida } from "./revision.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -47,15 +58,34 @@ Deno.serve(async (req) => {
 
   const { data: room, error } = await admin
     .from("game_rooms")
-    .select("id, white_id, black_id, status, result, moves, variant")
+    .select("id, white_id, black_id, status, result, moves, variant, fen, fen_inicial")
     .eq("id", roomId)
     .maybeSingle();
   if (error) return json({ ok: false, error: error.message }, 500);
   if (!room) return json({ ok: false, motivo: "la sala ya no existe" });
-  if (room.status !== "finished" || (room.result !== "white" && room.result !== "black")) {
-    return json({ ok: false, motivo: "sin ganador" });
+  if (room.status !== "finished" || !["white", "black", "draw"].includes(room.result)) {
+    return json({ ok: false, motivo: "sin resultado" });
   }
-  if (room.variant !== "estandar") return json({ ok: false, motivo: "variante sin conteo de material" });
+  if (room.variant !== "estandar") return json({ ok: false, motivo: "variante que chess.js no sabe jugar" });
+
+  const revision = revisarPartida(Chess, {
+    fenInicial: room.fen_inicial,
+    jugadas: room.moves ?? [],
+    fenFinal: room.fen,
+    resultado: room.result,
+  });
+  if (revision) {
+    const { error: errorRevision } = await admin.from("partidas_revision").upsert({
+      room_id: room.id,
+      motivo: revision.motivo,
+      jugada: revision.jugada,
+      detalle: revision.detalle,
+    }, { onConflict: "room_id", ignoreDuplicates: true });
+    if (errorRevision) return json({ ok: false, error: errorRevision.message }, 500);
+    // Una partida que no cuadra no paga ni cobra puntos.
+    return json({ ok: true, revision });
+  }
+  if (room.result === "draw") return json({ ok: true, motivo: "tablas: sin robo" });
 
   // Solo entre dos alumnos: si juega un profesor (el profe también se
   // sienta a jugar) no hay robo.
@@ -72,7 +102,9 @@ Deno.serve(async (req) => {
   const ganadorId = colorGanador === "white" ? room.white_id : room.black_id;
   const perdedorId = colorGanador === "white" ? room.black_id : room.white_id;
 
-  const chess = new Chess();
+  // Desde la posición con que nació la sala (una de la clase puede arrancar
+  // de otra); las salas viejas, sin ella, desde la de siempre.
+  const chess = room.fen_inicial ? new Chess(room.fen_inicial) : new Chess();
   const peorMomento = peorMomentoDelGanador(chess, (room.moves ?? []) as string[], colorGanador);
   const puntos = puntosDelRobo(peorMomento);
   if (puntos <= 0) return json({ ok: false, motivo: "el ganador nunca estuvo abajo" });

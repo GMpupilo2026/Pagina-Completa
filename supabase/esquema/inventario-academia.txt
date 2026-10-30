@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20261029210004
+# al-dia-con: 20261029234634
 tabla  Ejercicios Lichess  rls=true
 tabla  _foto_rls_tmp  rls=false
 tabla  _pedidos_elo  rls=false
@@ -140,6 +140,7 @@ tabla  pareo_reportes  rls=true
 tabla  pareo_solicitudes_sello  rls=true
 tabla  pareo_suscripciones  rls=true
 tabla  pareo_suscripciones_push  rls=true
+tabla  partidas_revision  rls=true
 tabla  partidas_torneo  rls=true
 tabla  pizarras_cache  rls=true
 tabla  plan_compartidos  rls=true
@@ -959,6 +960,7 @@ columna  game_rooms.created_at  timestamp with time zone
 columna  game_rooms.created_by  uuid
 columna  game_rooms.duelo_state  jsonb
 columna  game_rooms.fen  text
+columna  game_rooms.fen_inicial  text
 columna  game_rooms.id  uuid
 columna  game_rooms.increment_seconds  integer
 columna  game_rooms.initial_seconds  integer
@@ -1346,6 +1348,13 @@ columna  pareo_suscripciones_push.endpoint  text
 columna  pareo_suscripciones_push.id  uuid
 columna  pareo_suscripciones_push.ident  text
 columna  pareo_suscripciones_push.p256dh  text
+columna  partidas_revision.creado_en  timestamp with time zone
+columna  partidas_revision.detalle  text
+columna  partidas_revision.jugada  integer
+columna  partidas_revision.motivo  text
+columna  partidas_revision.revisada_en  timestamp with time zone
+columna  partidas_revision.revisada_por  uuid
+columna  partidas_revision.room_id  uuid
 columna  partidas_torneo.avisada_at  timestamp with time zone
 columna  partidas_torneo.color  text
 columna  partidas_torneo.comentarios  jsonb
@@ -2217,6 +2226,7 @@ funcion  examenes_con_nota(p_alumno uuid, p_profesor uuid, p_limite integer)  in
 funcion  exigir_acceso_vigente()  definer  anon=false  auth=false
 funcion  faltas_justificadas(p_desde date, p_hasta date)  invoker  anon=false  auth=true
 funcion  fecha_segura(p_texto text)  invoker  anon=false  auth=true
+funcion  fijar_fen_inicial()  invoker  anon=false  auth=false
 funcion  fondos_region_fijar(p_personas uuid[], p_fondo text)  definer  anon=false  auth=true
 funcion  formulario_acepta_adjuntos(p_carpeta text)  definer  anon=true  auth=true
 funcion  formulario_compartido_conmigo(p_formulario uuid)  definer  anon=false  auth=true
@@ -2383,6 +2393,7 @@ funcion  marca_de_diagnostico(p_id uuid)  definer  anon=false  auth=true
 funcion  marcador_del_salon(p_periodo text)  definer  anon=false  auth=true
 funcion  marcar_aviso_leido(p_aviso uuid)  definer  anon=false  auth=true
 funcion  marcar_coordinador(p_profesor uuid, p_valor boolean)  definer  anon=false  auth=true
+funcion  marcar_partida_revisada(p_room_id uuid)  definer  anon=false  auth=true
 funcion  marcar_supervisor(p_persona uuid, p_valor boolean)  definer  anon=false  auth=true
 funcion  marcar_vision(p_persona uuid, p_vision text)  definer  anon=false  auth=true
 funcion  material_compartir(p_producto text, p_persona uuid, p_academia uuid, p_todos boolean, p_compartir boolean)  definer  anon=false  auth=true
@@ -2872,6 +2883,7 @@ politica  pareo_organizadores  pareo_organizadores_lectura  SELECT
 politica  pareo_publicados  pareo_publicados_lectura_publica  SELECT
 politica  pareo_reportes  pareo_reportes_admin  SELECT
 politica  pareo_solicitudes_sello  pareo_solicitudes_sello_admin  SELECT
+politica  partidas_revision  partidas_revision_select  SELECT
 politica  partidas_torneo  partidas_torneo_anota  INSERT
 politica  partidas_torneo  partidas_torneo_borra  DELETE
 politica  partidas_torneo  partidas_torneo_corrige  UPDATE
@@ -3156,6 +3168,7 @@ trigger  examenes  otorgar_puntos_de_examen
 trigger  formularios  formularios_academia_propia
 trigger  fourplayer_games  reloj_de_partida
 trigger  game_rooms  disparar_fin_de_partida
+trigger  game_rooms  fen_inicial_de_partida
 trigger  game_rooms  game_rooms_exige_acceso
 trigger  game_rooms  game_rooms_ligar_a_la_clase
 trigger  game_rooms  reloj_de_partida
@@ -3564,6 +3577,7 @@ indice  pareo_suscripciones_push  pareo_suscripciones_push_clave_idx
 indice  pareo_suscripciones_push  pareo_suscripciones_push_ident_idx
 indice  pareo_suscripciones_push  pareo_suscripciones_push_pkey
 indice  pareo_suscripciones_push  pareo_suscripciones_push_una
+indice  partidas_revision  partidas_revision_pkey
 indice  partidas_torneo  partidas_torneo_alumno
 indice  partidas_torneo  partidas_torneo_pkey
 indice  pizarras_cache  pizarras_cache_pkey
@@ -4508,6 +4522,9 @@ grant  paquetes_acceso  authenticated  TRUNCATE
 grant  pareo_moderaciones  authenticated  SELECT
 grant  pareo_reportes  authenticated  SELECT
 grant  pareo_solicitudes_sello  authenticated  SELECT
+grant  partidas_revision  authenticated  REFERENCES
+grant  partidas_revision  authenticated  SELECT
+grant  partidas_revision  authenticated  TRIGGER
 grant  partidas_torneo  authenticated  DELETE
 grant  partidas_torneo  authenticated  INSERT
 grant  partidas_torneo  authenticated  SELECT
