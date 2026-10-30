@@ -2172,7 +2172,8 @@
         const antes = t.ciegoAntes;
         t.ciegoAntes = r[c];
         if (antes == null) return;
-        const lim = [300000, 60000, 30000].find((x) => antes > x && r[c] <= x);
+        // Si se cruzaron varios de una vez (el celular estuvo trabado), el más urgente.
+        const lim = [300000, 60000, 30000].filter((x) => antes > x && r[c] <= x).pop();
         if (lim) decirCiego(t, "Te quedan " + tiempoHablado(lim) + ".");
     }
     function cargarCiego(t) {

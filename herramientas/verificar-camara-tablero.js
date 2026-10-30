@@ -1209,7 +1209,9 @@ async function esperarJugadas(p, n) {
     igual("sin «sus jugadas», solo la del rival", [ultimos.length, /^Tu rival jugó /.test(ultimos[0] || "")], [1, true]);
     await pc.click("#btn-ciego-repetir");
     igual("«Repetir la última jugada» lo vuelve a decir", (await dicho()).slice(-1)[0], ultimos[0]);
-    // A los 30 segundos (su reloj corre): se adelanta la hora del aparato.
+    // A los 30 segundos: le toca a él (su reloj corre) y se adelanta la hora del aparato.
+    j.move("c4"); await foto(pc, j.fen(), ESQ0); await esperarJugadas(pc, 5);
+    await pc.waitForTimeout(500);
     await pc.evaluate(() => { const real = Date.now; Date.now = () => real() + (5 * 60 - 25) * 1000; });
     await pc.waitForFunction(() => (window.__dicho || []).some((x) => /^Te quedan/.test(x)), null, { timeout: 4000 }).catch(() => {});
     igual("cuando cruza los 30 segundos, se le avisa", (await dicho()).filter((x) => /^Te quedan/.test(x)), ["Te quedan 30 segundos."]);
