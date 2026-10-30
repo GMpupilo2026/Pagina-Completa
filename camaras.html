@@ -51,6 +51,8 @@
                     <label class="inline-flex items-center gap-2 text-sm text-brand-700 dark:text-brand-200 cursor-pointer"><input id="sonido" type="checkbox" class="w-4 h-4 accent-brand-700"> Sonar cuando una mesa necesita ayuda</label>
                 </div>
                 <p id="resumen-cuentas" role="status" class="text-sm text-brand-700 dark:text-brand-200 mt-1"></p>
+                <label class="mt-2 inline-flex items-center gap-2 text-sm font-semibold text-brand-800 dark:text-white cursor-pointer"><input id="var-todas" type="checkbox" aria-describedby="var-todas-ayuda" class="w-4 h-4 accent-brand-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"> Grabar el VAR en todas las cámaras</label>
+                <p id="var-todas-ayuda" class="text-xs text-brand-500 dark:text-brand-300">Los últimos 10 minutos de cada mesa, solo en esta computadora (nada se manda) y se borran al cerrar la página. En cada mesa: «📍 Marcar» deja guardado ese momento y «Revisar el VAR» lo abre en su cuadrito.</p>
                 <ul id="resumen-lista" class="mt-3 space-y-2 text-sm"></ul>
             </section>
             <div id="puestos" class="grid grid-cols-1 xl:grid-cols-2 gap-6"></div>
