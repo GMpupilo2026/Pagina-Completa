@@ -579,12 +579,12 @@
     const p = paginas[pagina];
     const conFed = (j, n) => nombreCompleto(n || j) + (j && j.fed ? " (" + j.fed + ")" : "");
     if (p.tipo === "pareo") {
-      titulo.textContent = tx.proyTitulo(p.ronda, V.categoria(p.grupo), p.pag, p.de);
+      titulo.textContent = tx.proyTitulo(p.ronda, V.conModalidad(V.categoria(p.grupo)), p.pag, p.de);
       const quien = (n) => (n ? conFed(p.porNo.get(n.no), n) : "");
       caja.replaceChildren(tablaProyector([tx.proyMesa, tx.proyBlancas, tx.proyResultado, tx.proyNegras], p.mesas.map((m) => [
         String(m.mesa), quien(m.blancas), m.negras ? (/\d|½|\+/.test(m.resultado || "") ? m.resultado : "–") : "", m.negras ? quien(m.negras) : tx.proyBye]), ["mesa", "", "res", ""]));
     } else if (p.tipo === "clasif") {
-      titulo.textContent = tx.proyClasif(p.ronda, V.categoria(p.grupo), p.pag, p.de);
+      titulo.textContent = tx.proyClasif(p.ronda, V.conModalidad(V.categoria(p.grupo)), p.pag, p.de);
       caja.replaceChildren(tablaProyector([tx.colPuesto, tx.colJugador, tx.colPuntos, tx.colRend], p.filas.map((x, i) => {
         const r = V.rendimiento(x);
         return [String(p.desde + i + 1), conFed(x.j), x.j.puntos || "0", r ? String(r.rp) : "—"];
@@ -702,7 +702,7 @@
     let y = 360;
     renglones(ctx, nombreCompleto(x.j), 960, 2).forEach((l) => { ctx.fillText(l, 60, y); y += 84; });
     ctx.fillStyle = CARA.acento; ctx.font = "700 40px " + letra;
-    ctx.fillText([V.categoria(x.j.grupo), x.j.fed, x.j.elo ? "Elo " + x.j.elo : ""].filter(Boolean).join(" · "), 60, y + 10);
+    ctx.fillText([V.conModalidad(V.categoria(x.j.grupo)), x.j.fed, x.j.elo ? "Elo " + x.j.elo : ""].filter(Boolean).join(" · "), 60, y + 10);
     y += 60;
     // El recuadro de cómo va (un poco más bajo si abajo va su puesto ronda a ronda).
     const puestos = V.puestosDe(x);
@@ -1170,7 +1170,7 @@
     // La medalla a cada lado del nombre, con el número del puesto.
     if (podio) [cx - 930, cx + 930].forEach((mx) => medalla(ctx, mx, 930, 92, p, letra));
     if (x.j.fed) centrado(V.pais(x.j.fed).toUpperCase(), 1030, "700 46px " + letra);
-    const cat = V.categoria(x.j.grupo);
+    const cat = V.conModalidad(V.categoria(x.j.grupo));
     centrado(podio ? tx.dipPodio(p, cat) : tx.dipParticipa(cat), 1150, "700 54px " + letra, 1700, 3);
     if (de) centrado(tx.dipDetalle(x.j.puntos || "0", x.torneo.ronda || x.torneo.rondas || 0, p, de), 1230, "600 42px " + letra);
     centrado(D.lugar, 1390, "600 34px " + letra, 1650);
@@ -1665,6 +1665,8 @@
     if ($("delegaciones") && $("delegaciones").open) pintarDelegaciones();
     if ($("sorpresas") && $("sorpresas").open) pintarSorpresas();
     if ($("cara-a-cara") && $("cara-a-cara").open) pintarCaraACara();
+    if ($("resultados") && $("resultados").open) pintarResultados();
+    if ($("numeros") && $("numeros").open) pintarNumeros();
     if (proy && proy.open) { paginas = armarPaginas(); pintarProyector(); }
   };
   document.addEventListener("cac-datos", repintar);

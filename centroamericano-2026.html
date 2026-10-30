@@ -164,6 +164,10 @@
                      en este aparato (sin cuenta). Se esconde mientras no haya
                      ninguno. «Avisarme en este celular» manda cada ronda como
                      notificación (la función sala-jugadores, acciones seguir/baja). -->
+                <!-- Clásico · Rápidas · Blitz: lo arma js/centroamericano-vivo.js
+                     cuando la sala tiene más de una modalidad. Hay uno igual en
+                     cada ventana y en el proyector. -->
+                <div class="cac-modalidad mb-6" data-modalidades hidden data-no-traducir></div>
                 <!-- Cómo va la ronda: cuántas partidas ya tienen resultado. -->
                 <div id="ronda-progreso" class="cac-progreso mb-6" hidden data-no-traducir>
                     <p id="ronda-progreso-texto" class="font-bold" role="status"></p>
@@ -433,6 +437,7 @@
             <h2 id="medallero-titulo" class="font-serif text-xl md:text-2xl font-bold text-brand-800 dark:text-white flex-1 min-w-0"><span aria-hidden="true">🥇 </span>Medallero</h2>
             <button type="button" data-cerrar class="shrink-0 bg-brand-800 hover:bg-brand-700 text-white font-semibold text-sm px-4 py-2 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2">Cerrar</button>
         </div>
+        <div class="cac-modalidad px-4 sm:px-6 pt-4" data-modalidades hidden data-no-traducir></div>
         <div class="px-4 sm:px-6 pt-2 pb-6">
             <p class="text-brand-600 dark:text-brand-300 mt-2">Los tres primeros de cada categoría y las medallas de cada federación, según la clasificación de chess-results.</p>
             <div id="medallero-contenido" class="mt-4" data-no-traducir>
@@ -448,6 +453,7 @@
             <h2 id="clasificacion-titulo" class="font-serif text-xl md:text-2xl font-bold text-brand-800 dark:text-white flex-1 min-w-0"><span aria-hidden="true">📊 </span>Clasificación completa</h2>
             <button type="button" data-cerrar class="shrink-0 bg-brand-800 hover:bg-brand-700 text-white font-semibold text-sm px-4 py-2 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2">Cerrar</button>
         </div>
+        <div class="cac-modalidad px-4 sm:px-6 pt-4" data-modalidades hidden data-no-traducir></div>
         <div class="px-4 sm:px-6 pt-2 pb-6">
             <p class="text-brand-600 dark:text-brand-300 mt-2">Cada categoría entera, en el orden de chess-results, con los puntos y el rendimiento de cada jugador.</p>
             <div class="mt-4 grid gap-3 sm:grid-cols-2">
@@ -470,6 +476,7 @@
             <h2 id="delegaciones-titulo" class="font-serif text-xl md:text-2xl font-bold text-brand-800 dark:text-white flex-1 min-w-0"><span aria-hidden="true">🌎 </span>Tabla por país</h2>
             <button type="button" data-cerrar class="shrink-0 bg-brand-800 hover:bg-brand-700 text-white font-semibold text-sm px-4 py-2 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2">Cerrar</button>
         </div>
+        <div class="cac-modalidad px-4 sm:px-6 pt-4" data-modalidades hidden data-no-traducir></div>
         <div class="px-4 sm:px-6 pt-2 pb-6">
             <p class="text-brand-600 dark:text-brand-300 mt-2">Los puntos de todos los jugadores de cada país, el porcentaje que llevan y lo que sumaron en cada ronda.</p>
             <div id="delegaciones-contenido" class="mt-4" data-no-traducir>
@@ -484,6 +491,7 @@
             <h2 id="sorpresas-titulo" class="font-serif text-xl md:text-2xl font-bold text-brand-800 dark:text-white flex-1 min-w-0"><span aria-hidden="true">⚡ </span>Sorpresas e invictos</h2>
             <button type="button" data-cerrar class="shrink-0 bg-brand-800 hover:bg-brand-700 text-white font-semibold text-sm px-4 py-2 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2">Cerrar</button>
         </div>
+        <div class="cac-modalidad px-4 sm:px-6 pt-4" data-modalidades hidden data-no-traducir></div>
         <div class="px-4 sm:px-6 pt-2 pb-6">
             <p class="text-brand-600 dark:text-brand-300 mt-2">Las partidas en que el de menos Elo le ganó (o le hizo tablas) al de más, y quién no ha perdido ninguna partida en cada categoría.</p>
             <div id="sorpresas-contenido" class="mt-4" data-no-traducir>
@@ -499,6 +507,7 @@
             <h2 id="cara-a-cara-titulo" class="font-serif text-xl md:text-2xl font-bold text-brand-800 dark:text-white flex-1 min-w-0"><span aria-hidden="true">🆚 </span>Cara a cara</h2>
             <button type="button" data-cerrar class="shrink-0 bg-brand-800 hover:bg-brand-700 text-white font-semibold text-sm px-4 py-2 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2">Cerrar</button>
         </div>
+        <div class="cac-modalidad px-4 sm:px-6 pt-4" data-modalidades hidden data-no-traducir></div>
         <div class="px-4 sm:px-6 pt-2 pb-6">
             <p class="text-brand-600 dark:text-brand-300 mt-2">Elige dos jugadores y mira su torneo lado a lado, ronda a ronda, y la partida entre ellos si se enfrentaron.</p>
             <div class="mt-4 grid gap-3 sm:grid-cols-2">
@@ -522,6 +531,7 @@
             <h2 id="numeros-titulo" class="font-serif text-xl md:text-2xl font-bold text-brand-800 dark:text-white flex-1 min-w-0"><span aria-hidden="true">📈 </span>El festival en números</h2>
             <button type="button" data-cerrar class="shrink-0 bg-brand-800 hover:bg-brand-700 text-white font-semibold text-sm px-4 py-2 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2">Cerrar</button>
         </div>
+        <div class="cac-modalidad px-4 sm:px-6 pt-4" data-modalidades hidden data-no-traducir></div>
         <div id="numeros-contenido" class="px-4 sm:px-6 pt-4 pb-6" data-no-traducir>
             <p class="text-brand-600 dark:text-brand-300">Cargando…</p>
         </div>
@@ -534,6 +544,7 @@
             <h2 id="resultados-titulo" class="font-serif text-xl md:text-2xl font-bold text-brand-800 dark:text-white flex-1 min-w-0"><span aria-hidden="true">📊 </span>Resultados en vivo</h2>
             <button type="button" data-cerrar class="shrink-0 bg-brand-800 hover:bg-brand-700 text-white font-semibold text-sm px-4 py-2 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2">Cerrar</button>
         </div>
+        <div class="cac-modalidad px-4 sm:px-6 pt-4" data-modalidades hidden data-no-traducir></div>
         <div id="resultados-contenido" class="px-4 sm:px-6 pt-4 pb-6" data-no-traducir>
             <p class="text-brand-600 dark:text-brand-300">Cargando…</p>
         </div>
@@ -555,6 +566,7 @@
                 <label class="cac-proyector-modo"><span class="sr-only">Qué categoría</span>
                     <select id="proyector-categoria" class="cac-proyector-boton" data-no-traducir></select>
                 </label>
+                <div class="cac-modalidad cac-modalidad-proyector" data-modalidades data-proyector hidden data-no-traducir></div>
                 <button type="button" id="proyector-completa" class="cac-proyector-boton">Pantalla completa</button>
                 <button type="button" data-cerrar class="cac-proyector-boton">Cerrar</button>
             </div>

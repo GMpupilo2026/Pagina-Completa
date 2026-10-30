@@ -10236,6 +10236,48 @@ categoría antes del festival, sin que lo vea el público.
 - Lo revisa `verificar-centroamericano.js`. Rompí a propósito el pedido en
   modo de prueba y el freno de los avisos, y saltaron.
 
+### Rápidas y Blitz: una modalidad a la vez
+
+Lo pidió el dueño: el festival juega también Rápidas y Blitz, cada una con
+las mismas doce categorías, y «eso hará que sea mucha información: busca una
+forma que no sea tan cargado todo y sea agradable su navegación». Mostrar
+las tres juntas, o una pestaña por modalidad en cada ventana, triplicaba
+lo que hay que leer en el celular.
+
+- **Un solo selector, «Clásico · Rápidas · Blitz»**, y todo lo demás sigue
+  igual: el buscador, «Mis jugadores», la clasificación, el medallero, Mi
+  delegación, la tabla por país, las sorpresas, el proyector… muestran la
+  modalidad elegida, con las mismas categorías. Está arriba del buscador y en
+  cada ventana (y en la barra del proyector), todos iguales: cambiarlo en uno
+  los cambia todos. Con una sola modalidad en la sala (como hasta ahora) no se
+  ve. La elegida queda en este aparato (`cac_modalidad_v1`); por omisión, el
+  clásico.
+- **La modalidad la dice el texto del botón** en `admin.html#torneos`, como
+  la categoría: «Blitz Sub-10 Absoluto», «Rápidas Sub-12 Femenino» (también
+  «Rapid», «Rápida»). Sin ninguna de las dos palabras, clásico. Lo lee
+  `modalidadDe()` en `supabase/functions/sala-jugadores/torneos-sala.ts`.
+- **La función lee de chess-results solo la modalidad pedida** (`modalidad`
+  en el cuerpo) y contesta también cuáles tiene la sala (`modalidades`) y cuál
+  mandó: si la sala no tiene la pedida, manda la primera que sí, y la página
+  se queda con esa. Por qué: con las tres son 36 torneos y cada uno cuesta
+  tres páginas de chess-results; leer más de cien en cada visita era lento y
+  pesado para chess-results. El tope de 15 torneos por pedido es por
+  modalidad. Los avisos al celular siguen con el clásico.
+- **Lo que llega tarde no se pinta como de otra**: cada pedido lleva su
+  número, y si se cambió de modalidad mientras iba en camino, lo que trae se
+  descarta. Lo guardado para sin internet va una copia por modalidad (la del
+  clásico, con su nombre de siempre, `cac_jugadores_v1`).
+- Lo que sale de la página (el certificado, la imagen del jugador, el título
+  del proyector) dice la modalidad si no es el clásico: «Sub-10 Absoluto
+  (Blitz)». El botón «Sus rondas en mi calendario» sale solo en el clásico:
+  el calendario de la página es el de sus rondas.
+- La puesta va rellena y con «✓», no solo con otro color; los contrastes
+  están medidos en `css/centroamericano.css`. En 320 px, en inglés, las tres
+  caben en una fila sin cortar el texto.
+- Lo revisa `verificar-centroamericano.js`. Rompí a propósito el descarte de
+  lo que llega tarde, el calendario fuera del clásico, el selector con una
+  sola modalidad y la lectura de «Rápidas», y saltaron.
+
 ## Las páginas de los torneos universitarios
 
 Dos, con la misma maquinaria: `cenfotec-2026.html` (el Desafío Mentes

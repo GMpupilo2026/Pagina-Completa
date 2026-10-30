@@ -20,6 +20,20 @@ export function codigoCategoria(texto: string): string {
   return "U" + m[1].padStart(2, "0") + (fem ? "F" : "");
 }
 
+// La modalidad que dice el texto de un enlace de la sala: «Blitz Sub-10
+// Absoluto» → «blitz», «Rápidas Sub-12 Femenino» o «Rapid U12» → «rapidas»;
+// sin ninguna de las dos, «clasico». La página muestra una modalidad a la vez
+// (el selector «Clásico · Rápidas · Blitz») y la función lee solo esa. Ver
+// «Rápidas y Blitz: una modalidad a la vez» en docs/decisiones/juegos-y-torneos.md.
+export const MODALIDADES = ["clasico", "rapidas", "blitz"] as const;
+export type Modalidad = typeof MODALIDADES[number];
+export function modalidadDe(texto: string): Modalidad {
+  const t = String(texto || "");
+  if (/(?:^|[^A-Za-z])blitz(?![A-Za-z])/i.test(t)) return "blitz";
+  if (/(?:^|[^A-Za-zÀ-ÿ])r[aá]pid[oa]?s?(?![A-Za-z])/i.test(t)) return "rapidas";
+  return "clasico";
+}
+
 // Con torneos de categoría en la sala, los que no tienen categoría (la lista
 // general, el Rapid) quedan afuera de las cuentas: sus jugadores ya están en
 // el de su categoría y se contarían dos veces. La misma regla que normalizar()
