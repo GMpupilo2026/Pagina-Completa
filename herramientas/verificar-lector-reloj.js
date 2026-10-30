@@ -96,6 +96,7 @@ igual("un recuadro sin números no da nada", R.leer(dibujar("1:05:32").g, 400, 1
 igual("más de 59 segundos no es un tiempo", R.tiempo("1075"), null);
 igual("más de 59 minutos con cuatro números, tampoco", R.tiempo("7512"), null);
 igual("los números leídos pasan a tiempo: 1:05:32", R.tiempo("10532"), 3932000);
+igual("números seguidos sin separadores no son un tiempo (pedazos de dos pantallas)", leer(dibujar("32058")), null);
 {
   // Una raya tapada (una mano encima, un reflejo): ese número no se reconoce y la lectura no vale.
   const d = dibujar("1:05:32");
@@ -109,6 +110,46 @@ igual("los números leídos pasan a tiempo: 1:05:32", R.tiempo("10532"), 3932000
   const d = dibujar("1:05:32");
   for (let y = 30; y < 90; y++) for (let x = 98; x < 136; x++) d.g[y * d.W + x] = 185;
   igual("con un número tapado entero, tampoco", leer(d), null);
+}
+
+console.log("\nGirado, como lo ve una cámara encima de la mesa");
+// La imagen entera girada (y su recuadro con ella).
+function girar(d, giro) {
+  const { g, W, H, recuadro: r } = d;
+  if (giro === 180) {
+    const o = new Uint8Array(W * H);
+    for (let i = 0; i < W * H; i++) o[i] = g[W * H - 1 - i];
+    return { g: o, W, H, recuadro: { x: W - r.x - r.w, y: H - r.y - r.h, w: r.w, h: r.h } };
+  }
+  // 90 en el sentido del reloj: (x, y) → (H - 1 - y, x).
+  const o = new Uint8Array(W * H);
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) o[x * H + (H - 1 - y)] = g[y * W + x];
+  return { g: o, W: H, H: W, recuadro: { x: H - r.y - r.h, y: r.x, w: r.h, h: r.w } };
+}
+const conGiro = (d) => { const r = R.leer(d.g, d.W, d.H, d.recuadro); return r && [r.texto, r.giro]; };
+igual("girado un cuarto de vuelta", conGiro(girar(dibujar("1:05:32"), 90)), ["1:05:32", 270]);
+igual("girado tres cuartos", conGiro(girar(girar(girar(dibujar("1:05:32"), 90), 90), 90)), ["1:05:32", 90]);
+igual("de cabeza (la cámara del lado de las negras): lo dice la inclinación", conGiro(girar(dibujar("46:08"), 180)), ["46:08", 180]);
+igual("y derecho sigue derecho", conGiro(dibujar("46:08")), ["46:08", 0]);
+
+console.log("\nBuscar el reloj en la imagen entera");
+{
+  // Una escena: la mesa, un tablero (cuadros que no son números) y el reloj con sus dos tiempos.
+  const W = 900, H = 600, g = new Uint8Array(W * H);
+  let semilla = 3;
+  for (let i = 0; i < W * H; i++) { semilla = (semilla * 1103515245 + 12345) & 0x7fffffff; g[i] = 120 + (semilla % 13) - 6; }
+  for (let y = 40; y < 440; y++) for (let x = 40; x < 440; x++) g[y * W + x] = ((Math.floor((x - 40) / 50) + Math.floor((y - 40) / 50)) % 2) ? 200 : 70;
+  const pegar = (d, ox, oy) => { for (let y = 0; y < d.H; y++) for (let x = 0; x < d.W; x++) g[(oy + y) * W + ox + x] = d.g[y * d.W + x]; };
+  pegar(dibujar("1:05:32", { W: 400, H: 140 }), 480, 100);
+  pegar(dibujar("58:10", { W: 400, H: 140 }), 480, 300);
+  const fuera = (x, y) => x >= 30 && x < 450 && y >= 30 && y < 450;
+  const hallados = R.buscar(g, W, H, { fuera });
+  igual("encuentra los dos tiempos, cada uno en su lugar", hallados.map((h) => [h.texto, h.y < 250 ? "arriba" : "abajo"]).sort(), [["1:05:32", "arriba"], ["58:10", "abajo"]]);
+  igual("y en el tablero no ve ningún reloj", hallados.every((h) => h.x >= 450), true);
+  const sinReloj = R.buscar(g.map((v, i) => ((i % W) >= 470 ? 120 : v)), W, H, { fuera });
+  igual("sin reloj en la mesa, no inventa ninguno", sinReloj, []);
+  const g90 = girar({ g, W, H, recuadro: { x: 0, y: 0, w: 1, h: 1 } }, 90);
+  igual("con la cámara girada, los encuentra igual", R.buscar(g90.g, g90.W, g90.H, { fuera: (x, y) => fuera(y, H - 1 - x) }).map((h) => h.texto).sort(), ["1:05:32", "58:10"]);
 }
 
 console.log(fallos ? "\n" + fallos + " fallo(s)" : "\nEl reloj se lee como se pidió.");

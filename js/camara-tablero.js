@@ -59,6 +59,7 @@
             confirmadas: new Set(), // las coronaciones ya elegidas (por su índice en la historia)
             fotos: [], // las del tablero con cada resultado y cada aviso (ver tomarFoto)
             mano: 0,   // cuántas jugadas se escribieron a mano (va al informe de las cámaras de Pareo)
+            restan: [], // lo que le quedaba en el reloj a cada uno después de cada jugada (si hubo reloj)
             manos: [], tapado: false, // para el VAR: cada vez que algo tapó o movió piezas (ver procesar)
             ciego: { color: "", propias: true, reloj: true }, ciegoUltimo: "", // un jugador ciego en la mesa
             relojMesa: null, relojLeido: {}, // el reloj de la mesa leído de la imagen
@@ -681,8 +682,10 @@
             t.horas.push(horaPartida());
             if (m) movidas.push(m);
             if (m && t.reloj && !t.reloj.bandera && !t.reloj.leido && !colocando) t.reloj[m.color] += t.reloj.inc;
+            const r = relojAhora(t);
+            t.restan[t.horas.length - 1] = r ? { w: r.w, b: r.b } : null;
         });
-        if (t.reloj) t.reloj.corre = t.juego.game_over() ? null : t.juego.turn();
+        if (t.reloj && !t.reloj.leido) t.reloj.corre = t.juego.game_over() ? null : t.juego.turn();
         t.recientes = [];
         $("dudas").hidden = true;
         partidaCambio(t);
@@ -993,6 +996,11 @@
         jugadas50: "50 jugadas", repeticion5: "Quíntuple repetición", jugadas75: "75 jugadas",
     };
     function fotoEnderezada(t) {
+        const c = enderezado(t);
+        return c ? c.toDataURL("image/jpeg", 0.7) : null;
+    }
+    // El tablero visto desde arriba, LADO_FOTO × LADO_FOTO (lo usan la foto y el modelo de las piezas).
+    function enderezado(t) {
         if (!fuente || !t.h) return null;
         const W = anchoFuente(), H = altoFuente();
         if (!W || !H) return null;
@@ -1013,7 +1021,7 @@
             }
         }
         og.putImageData(img, 0, 0);
-        return out.toDataURL("image/jpeg", 0.7);
+        return out;
     }
     function tomarFoto(t, motivo) {
         let img = null;
@@ -1084,7 +1092,87 @@
         try { n = await pedido((await almacen("readonly")).count()); } catch (e) { n = 0; }
         $("muestras-cuenta").textContent = n ? (n === 1 ? "Una foto guardada." : n + " fotos guardadas.") : "Ninguna foto guardada.";
         $("btn-muestras-bajar").disabled = $("btn-muestras-borrar").disabled = !n;
+        $("btn-modelo-entrenar").disabled = n < 10 || entrenando;
     }
+
+    /* ── Reconocer qué pieza es (js/piezas-modelo.js) ───────────────────
+     * Con las fotos de «Enseñarle a la cámara» se entrena en este aparato una
+     * red chica que dice qué pieza hay en cada casilla; el color y si está
+     * vacía los sigue diciendo el lector. Se guarda en el aparato y se puede
+     * bajar y cargar en otro. «Leer la posición del tablero» la usa para
+     * escribir la posición entera, que se revisa antes de usarla. */
+    const MODELO = "camara_modelo_piezas_v1";
+    let modelo = null, entrenando = false;
+    try { const g = localStorage.getItem(MODELO); if (g && window.PiezasModelo) modelo = PiezasModelo.deJSON(g); } catch (e) { modelo = null; }
+    const porciento = (x) => Math.round(x * 100) + " %";
+    function pintarModelo(texto) {
+        $("modelo-estado").textContent = texto || (modelo
+            ? "Hay un modelo de las piezas en este aparato" + (modelo.acierto != null ? ": acierta " + porciento(modelo.acierto) + " de las piezas en fotos que no vio" : "") + (modelo.ejemplos ? " (aprendió con " + modelo.ejemplos + " piezas)." : ".")
+            : "Todavía no hay un modelo de las piezas en este aparato.");
+        $("btn-modelo-bajar").disabled = !modelo;
+        $("btn-leer-posicion").disabled = !modelo;
+    }
+    const imagenDe = (url) => new Promise((listo, mal) => { const i = new Image(); i.onload = () => listo(i); i.onerror = mal; i.src = url; });
+    const rgbaDe = (fuenteImg) => {
+        const c = document.createElement("canvas"); c.width = c.height = LADO_FOTO;
+        const g = c.getContext("2d", { willReadFrequently: true });
+        g.drawImage(fuenteImg, 0, 0, LADO_FOTO, LADO_FOTO);
+        return g.getImageData(0, 0, LADO_FOTO, LADO_FOTO).data;
+    };
+    async function entrenarModelo() {
+        if (entrenando || !window.PiezasModelo) return;
+        let lista = [];
+        try { lista = await pedido((await almacen("readonly")).getAll()); } catch (e) { lista = []; }
+        if (lista.length < 10) { pintarModelo("Hacen falta al menos 10 fotos para entrenar: activa «Juntar fotos con su posición» y juega unas jugadas."); return; }
+        entrenando = true; pintarMuestras();
+        try {
+            pintarModelo("Preparando " + lista.length + " fotos…");
+            const porFoto = [];
+            for (const m of lista) { try { porFoto.push(PiezasModelo.ejemplos(rgbaDe(await imagenDe(m.img)), LADO_FOTO, m.fen)); } catch (e) { /* una foto rota no frena las demás */ } }
+            const nuevo = await PiezasModelo.entrenar(porFoto, { alAvanzar: (x) => pintarModelo("Entrenando… " + porciento(x)) });
+            modelo = nuevo;
+            try { localStorage.setItem(MODELO, PiezasModelo.aJSON(modelo)); } catch (e) { /* sin almacenamiento: solo por esta visita */ }
+            pintarModelo();
+            avisar("Listo el modelo de las piezas" + (modelo.acierto != null ? ": acierta " + porciento(modelo.acierto) + " de las piezas en fotos que no vio." : "."), "bien");
+        } finally { entrenando = false; pintarMuestras(); }
+    }
+    function leerPosicion() {
+        const t = T();
+        if (!modelo) return;
+        if (!t.h || !t.cal || !t.lectura) { avisar(cual(t) + "Primero ubica el tablero y calibra: el color de cada pieza lo dice la lectura de siempre.", "error"); return; }
+        const c = enderezado(t);
+        if (!c) return;
+        const r = PiezasModelo.posicion(modelo, c.getContext("2d").getImageData(0, 0, LADO_FOTO, LADO_FOTO).data, LADO_FOTO, t.lectura);
+        // El enroque y la captura al paso no se ven: se deducen de dónde están el rey y las torres.
+        const filas = r.colocacion.split("/"), en = (fila, col) => { let i = 0; for (const ch of filas[7 - fila]) { if (/\d/.test(ch)) { i += Number(ch); continue; } if (i === col) return ch; i++; } return ""; };
+        const enroques = (en(0, 4) === "K" ? (en(0, 7) === "R" ? "K" : "") + (en(0, 0) === "R" ? "Q" : "") : "") + (en(7, 4) === "k" ? (en(7, 7) === "r" ? "k" : "") + (en(7, 0) === "r" ? "q" : "") : "");
+        const fen = r.colocacion + " " + $("leer-turno").value + " " + (enroques || "-") + " - 0 1";
+        if (!new window.Chess().load(fen)) { avisar(cual(t) + "La posición leída no es posible (" + fen + "): revisa el tablero o escríbela a mano.", "error"); return; }
+        $("posicion").value = fen;
+        avisar(cual(t) + "Posición leída" + (r.dudosas.length ? "; revisa sobre todo " + r.dudosas.join(", ") : "") + ". Compárala con el tablero y toca «Usar esta posición».", r.dudosas.length ? "" : "bien");
+    }
+    $("btn-modelo-entrenar").addEventListener("click", entrenarModelo);
+    $("btn-leer-posicion").addEventListener("click", leerPosicion);
+    $("btn-modelo-bajar").addEventListener("click", () => {
+        if (!modelo) return;
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(new Blob([PiezasModelo.aJSON(modelo)], { type: "application/json" }));
+        a.download = "modelo-piezas-" + HoraCR.hoy() + ".json";
+        document.body.append(a); a.click(); a.remove();
+        setTimeout(() => URL.revokeObjectURL(a.href), 10000);
+    });
+    $("modelo-archivo").addEventListener("change", async (e) => {
+        const f = e.target.files[0];
+        if (!f) return;
+        let m = null;
+        try { m = PiezasModelo.deJSON(await f.text()); } catch (x) { m = null; }
+        e.target.value = "";
+        if (!m) { pintarModelo("Ese archivo no es un modelo de las piezas: tiene que ser el que se baja con «Bajar el modelo»."); return; }
+        modelo = m;
+        try { localStorage.setItem(MODELO, PiezasModelo.aJSON(m)); } catch (x) { /* solo por esta visita */ }
+        pintarModelo();
+    });
+    pintarModelo();
     async function bajarMuestras() {
         let lista = [];
         try { lista = await pedido((await almacen("readonly")).getAll()); } catch (e) { lista = []; }
@@ -1366,6 +1454,7 @@
         $("como-va").textContent = V.comoVa(juego);
         const hist = juego.history();
         $("jugadas").textContent = V.jugadasTexto(juego) || "Todavía ninguna.";
+        pintarTiempo(T());
         $("btn-deshacer").disabled = !hist.length;
         $("btn-copiar").disabled = !hist.length;
         $("btn-planillas").disabled = !hist.length;
@@ -1373,6 +1462,12 @@
         pintarCoronacion();
         pintarFotos();
         pintarReloj();
+    }
+    // Cómo usó el tiempo cada uno (js/grafico-tiempo.js): lo que pensó cada jugada y, con reloj, lo que le quedaba.
+    function pintarTiempo(t) {
+        if (!window.GraficoTiempo) return;
+        const v = t.juego.history({ verbose: true });
+        GraficoTiempo.pintar($("tiempo-grafico"), { jugadas: v.map((m) => m.san), tiempos: tiemposDe(t), restan: t.restan.slice(0, v.length), primero: v.length ? v[0].color : "w", escribir: es });
     }
     function pintarResultado() {
         const t = T(), r = resultadoDe(t);
@@ -2027,20 +2122,53 @@
             : !varSi ? "No se está grabando."
             : !grabador.grabando() ? "Se empieza a grabar al abrir la cámara."
             : "● Grabando los últimos 10 minutos" + (grabador.desde() ? " (desde las " + HoraCR.hora(new Date(grabador.desde()), { hour: "numeric", minute: "2-digit", second: "2-digit" }) + ")" : "") + ", solo en este celular · " + grabador.megas() + " MB.";
-        if (e.textContent !== txt) e.textContent = txt;
+        const n = varSi && grabador && grabador.desde() ? tocadas(T()).filter((x) => x.h >= grabador.desde()).length : 0;
+        const pista = n ? " Para revisar: " + (n === 1 ? "1 posible pieza tocada." : n + " posibles piezas tocadas.") : "";
+        if (e.textContent !== txt + pista) e.textContent = txt + pista;
         $("btn-var").disabled = !(archivoVideo || (grabador && (grabador.grabando() || grabador.trozos().length)));
     }
     setInterval(pintarVar, 5000);
 
     // Lo que se puede revisar: cada jugada y cada vez que algo tapó el tablero, lo último primero.
+    /* Posible pieza tocada: antes de una jugada, una mano que tapó o movió
+     * una pieza PROPIA de quien jugó y se fue sin tocar la que después jugó
+     * (la mano junta todo lo que tapó mientras estuvo; ver procesar). Es una
+     * pista para el árbitro, nunca una decisión: una mano puede tapar una
+     * pieza sin tocarla. Solo en el VAR, no en la pantalla de la mesa. */
+    function tocadas(t) {
+        const hist = t.juego.history({ verbose: true }), n = hist.length;
+        if (!n || !t.manos.length) return [];
+        const c = new window.Chess();
+        if (!c.load_pgn(t.juego.pgn())) return [];
+        const antes = new Array(n);
+        for (let i = n - 1; i >= 0; i--) { c.undo(); antes[i] = c.fen(); }
+        const salida = [];
+        for (let i = 0; i < n; i++) {
+            const desde = i ? t.horas[i - 1] : t.inicio, hasta = t.horas[i], m = hist[i];
+            if (!hasta) continue;
+            let pos = null;
+            for (const mano of t.manos) {
+                if (!(mano.h > (desde || 0) && mano.h < hasta) || mano.casillas.includes(m.from)) continue;
+                pos = pos || new window.Chess(antes[i]);
+                const propia = mano.casillas.find((sq) => { const p = pos.get(sq); return p && p.color === m.color; });
+                if (propia) salida.push({ h: mano.h, casilla: propia, pieza: pos.get(propia).type, i, san: m.san });
+            }
+        }
+        return salida;
+    }
+    const PIEZA_CON_ARTICULO = { p: "el peón", n: "el caballo", b: "el alfil", r: "la torre", q: "la dama", k: "el rey" };
     function marcasVar(t, desde, hasta) {
         const marcas = [], hist = t.juego.history();
+        for (const x of tocadas(t)) if (x.h >= desde && x.h <= hasta) {
+            marcas.push({ h: x.h, tocada: true, texto: "⚠️ Posible pieza tocada: " + PIEZA_CON_ARTICULO[x.pieza] + " de " + x.casilla + " (después jugó " + es(x.san) + ")" });
+        }
         hist.forEach((san, i) => {
             const h = t.horas[i];
             if (h && h >= desde && h <= hasta) marcas.push({ h, texto: "Jugada " + (Math.floor(i / 2) + 1) + (i % 2 ? "… " : ". ") + es(san) + (i % 2 ? " (negras)" : " (blancas)") });
         });
         for (const m of t.manos) if (m.h >= desde && m.h <= hasta) marcas.push({ h: m.h, texto: "Mano sobre el tablero" + (m.casillas.length ? " (" + m.casillas.join(", ") + ")" : "") });
-        return marcas.sort((a, b) => b.h - a.h);
+        // La pista, antes que la mano que la originó (son de la misma hora).
+        return marcas.sort((a, b) => b.h - a.h || (b.tocada ? 1 : 0) - (a.tocada ? 1 : 0));
     }
     function cuandoVar(h) {
         if (archivoVideo) return "minuto " + mmss((h - archivoVideo.inicio) / 1000) + " del video";
@@ -2249,8 +2377,12 @@
         if (!r || !r.leido) r = t.reloj = { base: null, inc: 0, w: L.w.ms, b: L.b.ms, corre: null, desde: Date.now(), pausa: false, bandera: null, leido: true, movio: 0 };
         if (r.bandera) return;
         const bw = r.w - L.w.ms, bb = r.b - L.b.ms;
-        if (bw > 300 || bb > 300) { r.corre = bw >= bb ? "w" : "b"; r.movio = Date.now(); }
-        else if (Date.now() - r.movio > 3000) r.corre = null;
+        if (bw > 300 || bb > 300) {
+            r.corre = bw >= bb ? "w" : "b"; r.movio = Date.now();
+            // Cuándo se apretó el reloj: el que corre ahora no es el último que corría.
+            if (r.ultimo && r.ultimo !== r.corre) (r.cambios = r.cambios || []).push({ de: r.ultimo, h: Date.now() });
+            r.ultimo = r.corre;
+        } else if (Date.now() - r.movio > 3000) r.corre = null;
         const cambio = r.w !== L.w.ms || r.b !== L.b.ms;
         r.w = L.w.ms; r.b = L.b.ms; r.desde = Math.max(L.w.h, L.b.h);
         if (cambio && t.vivo) enviarVivo(t, true);
@@ -2259,6 +2391,8 @@
     function pintarRelojLeido() {
         const t = T(), m = t.relojMesa, e = $("reloj-leido");
         $("btn-reloj-dejar").hidden = !m;
+        $("btn-reloj-cambiar").hidden = !(m && m.w && m.b);
+        pintarIncidencias();
         $("btn-reloj-marcar").textContent = m ? "Volver a marcar el reloj" : "Marcar el reloj de la mesa";
         let txt = "";
         if (m && m.w && m.b) {
@@ -2270,6 +2404,114 @@
         if (e.textContent !== txt) e.textContent = txt;
     }
     setInterval(leerRelojMesa, 1000);
+    setInterval(() => { for (const t of tableros) revisarApretar(t); }, 1000);
+
+    /* ── El reloj y las jugadas ──────────────────────────────────────────
+     * Con el reloj de la mesa leído se sabe cuándo se aprieta y con las
+     * jugadas, cuándo se mueve. Dos cosas que el árbitro quiere saber:
+     *  · Apretó el reloj sin mover (se trata como una jugada ilegal, art.
+     *    7.5.3): el reloj pasó al otro y no hubo jugada de quien apretó desde
+     *    que empezó a correr su reloj hasta 8 s después de apretar (la cámara
+     *    anota la jugada cuando la mano se va: después de apretar, a veces). Si
+     *    apretó tarde (después de «movió y no apretó»), no es sin mover.
+     *  · Movió y no apretó: 15 s después de su jugada, su reloj sigue
+     *    corriendo. El árbitro no se lo dice al jugador; queda anotado por si
+     *    hay un reclamo.
+     * Las dos van a las incidencias de la cámara y, en un torneo, a Pareo. */
+    const SIN_MOVER_MS = 8000, SIN_APRETAR_MS = 15000;
+    function revisarApretar(t) {
+        const r = t.reloj;
+        if (!r || !r.leido || r.bandera || resultadoDe(t)) return;
+        const ahora = Date.now(), hist = t.juego.history({ verbose: true });
+        const jugadasDe = (color, desde, hasta) => hist.some((m, i) => m.color === color && t.horas[i] && t.horas[i] >= desde && t.horas[i] <= hasta);
+        (r.cambios || []).forEach((c, k, todos) => {
+            if (c.visto || ahora - c.h < SIN_MOVER_MS) return;
+            c.visto = true;
+            // Desde que empezó a correr su reloj (el apretón anterior), con 20 s de margen.
+            const desde = (k ? todos[k - 1].h : t.inicio || 0) - 20000;
+            if (!jugadasDe(c.de, desde, c.h + SIN_MOVER_MS)) incidenciaReloj(t, "sinMover", c.de, c.h);
+        });
+        const i = hist.length - 1;
+        if (i < 0 || !t.horas[i] || t.sinApretarVisto === i) return;
+        const quien = hist[i].color;
+        if (ahora - t.horas[i] < SIN_APRETAR_MS) return;
+        t.sinApretarVisto = i;
+        const apreto = (r.cambios || []).some((c) => c.de === quien && c.h >= t.horas[i] - 20000);
+        if (!apreto && r.corre === quien) incidenciaReloj(t, "sinApretar", quien, t.horas[i]);
+    }
+    const TEXTO_RELOJ = {
+        sinMover: (q) => q + " apretaron el reloj sin mover: si se confirma, se trata como una jugada ilegal (art. 7.5.3).",
+        sinApretar: (q) => q + " movieron y no apretaron el reloj: su tiempo sigue corriendo. El árbitro no se lo dice al jugador; queda anotado por si hay un reclamo.",
+    };
+    function incidenciaReloj(t, tipo, color, h) {
+        const quien = color === "w" ? "Las blancas" : "Las negras";
+        (t.incidencias = t.incidencias || []).push({ tipo, color, h, texto: HoraCR.hora(new Date(h), { hour: "numeric", minute: "2-digit", second: "2-digit" }) + ": " + TEXTO_RELOJ[tipo](quien) });
+        alertarArbitro(t, tipo, { color });
+        if (t === T()) pintarIncidencias();
+    }
+    function pintarIncidencias() {
+        const t = T(), ul = $("reloj-incidencias"), lista = t.incidencias || [];
+        ul.hidden = !lista.length;
+        ul.textContent = "";
+        for (const x of lista.slice(-10)) { const li = document.createElement("li"); li.textContent = x.texto; ul.append(li); }
+    }
+
+    /* «Buscar el reloj»: sin marcar nada, se buscan los números en la imagen
+     * a su tamaño de verdad, fuera de los tableros (LectorReloj.buscar). De
+     * los tiempos que encuentra, los dos de alturas parecidas y más cerca
+     * uno del otro. Cuál es de las blancas lo dice el tablero calibrado: la
+     * pantalla más cerca de la fila 1. Si no se puede saber (el reloj está
+     * de costado al tablero), se avisa y «Están al revés» los da vuelta. */
+    function buscarReloj() {
+        const t = T();
+        if (!fuente) { avisar("Primero abre la cámara: el reloj se busca en su imagen.", "error"); return; }
+        const ex = anchoFuente() / limpio.width, ey = altoFuente() / limpio.height;
+        const W = Math.min(1600, Math.round(anchoFuente())), k = W / anchoFuente(), H = Math.round(altoFuente() * k);
+        relojLienzo.width = W; relojLienzo.height = H;
+        rctx.drawImage(fuente, 0, 0, W, H);
+        const d = rctx.getImageData(0, 0, W, H).data, g = new Uint8Array(W * H);
+        for (let i = 0; i < W * H; i++) g[i] = (d[4 * i] * 299 + d[4 * i + 1] * 587 + d[4 * i + 2] * 114) / 1000;
+        // Lo de adentro de cada tablero (con un margen) no es el reloj.
+        const a = (x, y) => [x / k / ex, y / k / ey]; // de esta imagen al lienzo
+        // De la imagen al tablero (en centésimas de casilla: homografia() pide un destino con área).
+        const alTablero = (o) => homografia(o.esquinas, ESQUINAS_TABLERO.map(([u, v]) => [u * 100, v * 100]));
+        const inversas = tableros.filter((o) => o.esquinas.length === 4).map(alTablero).filter(Boolean);
+        const fuera = (x, y) => inversas.some((inv) => { const [u, v] = aplicar(inv, ...a(x, y)); return u > -60 && u < 860 && v > -60 && v < 860; });
+        const hallados = LectorReloj.buscar(g, W, H, { fuera });
+        if (hallados.length < 2) { avisar(cual(t) + (hallados.length ? "Encontré un solo tiempo" : "No encontré el reloj") + ": que la cámara lo vea entero y sin reflejos, o márcalo con el dedo.", "error"); return; }
+        let par = null;
+        for (let i = 0; i < hallados.length; i++) for (let j = i + 1; j < hallados.length; j++) {
+            const x = hallados[i], y = hallados[j], alto = (o) => Math.min(o.w, o.h);
+            if (Math.abs(alto(x) - alto(y)) > 0.35 * Math.max(alto(x), alto(y))) continue;
+            const dist = Math.hypot(x.x + x.w / 2 - y.x - y.w / 2, x.y + x.h / 2 - y.y - y.h / 2);
+            if (!par || dist < par.dist) par = { x, y, dist };
+        }
+        if (!par) { avisar(cual(t) + "Encontré números, pero no dos tiempos del mismo reloj: márcalos con el dedo.", "error"); return; }
+        const enLienzo = (o) => { const [x0, y0] = a(o.x, o.y), [x1, y1] = a(o.x + o.w, o.y + o.h); return { x: x0, y: y0, w: x1 - x0, h: y1 - y0 }; };
+        let [hw, hb] = [par.x, par.y], [w, b] = [enLienzo(hw), enLienzo(hb)];
+        let seguro = false;
+        if (t.h && t.cal) {
+            const inv = alTablero(t), fila = (r) => aplicar(inv, r.x + r.w / 2, r.y + r.h / 2)[1] / 100;
+            if (inv && Math.abs(fila(w) - fila(b)) > 1) { seguro = true; if (fila(w) > fila(b)) { [w, b] = [b, w]; [hw, hb] = [hb, hw]; } }
+        }
+        t.relojMesa = { w, b }; t.relojLeido = {}; marcandoReloj = null;
+        if (t.reloj && t.reloj.leido) t.reloj = null;
+        pintarYa = true;
+        $("reloj-leer").open = true;
+        avisar(cual(t) + (seguro ? "Encontré el reloj de la mesa: blancas " + hw.texto + ", negras " + hb.texto + " (la pantalla más cerca de cada uno)."
+            : "Encontré el reloj de la mesa: " + hw.texto + " y " + hb.texto + ". No sé cuál es el de las blancas: si están al revés, toca «Están al revés»."), seguro ? "bien" : "");
+        leerRelojMesa(); pintarRelojLeido();
+    }
+    $("btn-reloj-buscar").addEventListener("click", buscarReloj);
+    $("btn-reloj-cambiar").addEventListener("click", () => {
+        const t = T();
+        if (!t.relojMesa || !t.relojMesa.w || !t.relojMesa.b) return;
+        t.relojMesa = { w: t.relojMesa.b, b: t.relojMesa.w }; t.relojLeido = {};
+        if (t.reloj && t.reloj.leido) t.reloj = null;
+        pintarYa = true;
+        avisar(cual(t) + "Listo: cambiados los tiempos de las blancas y las negras.", "bien");
+        leerRelojMesa(); pintarRelojLeido();
+    });
     $("btn-reloj-marcar").addEventListener("click", () => {
         const t = T();
         if (!fuente) { avisar("Primero abre la cámara: el reloj se marca sobre su imagen.", "error"); return; }
@@ -2384,8 +2626,15 @@
         if (t.cal) {
             const esp = esperada(t.juego), distinto = det.lectura !== esp;
             if (distinto && !t.tapado) {
-                t.manos.push({ h: horaPartida(), casillas: diferentes(det.lectura, esp).slice(0, 6) });
+                t.manos.push({ h: horaPartida(), casillas: [] });
                 if (t.manos.length > 300) t.manos.shift();
+            }
+            /* Mientras la mano siga ahí, junta todas las casillas que tapó o
+             * movió: si en el camino levantó la pieza que jugó, no es una
+             * pieza tocada de más (ver tocadas). */
+            if (distinto && t.manos.length) {
+                const m = t.manos[t.manos.length - 1];
+                for (const c of diferentes(det.lectura, esp)) if (!m.casillas.includes(c) && m.casillas.length < 12) m.casillas.push(c);
             }
             t.tapado = distinto;
         }

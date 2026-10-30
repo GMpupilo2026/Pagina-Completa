@@ -3316,7 +3316,7 @@
   // repetición y las 50 jugadas (`tipo`), que no se marcan solas: el árbitro
   // las confirma si alguien reclama (o, con cinco veces y 75 jugadas, solo).
   // y la bandera que cae en el reloj de la cámara (con el color, `color`).
-  const TIPOS_ALERTA = { ilegal: "camaraAlerta", repeticion3: "camaraTablas3", jugadas50: "camaraTablas50", repeticion5: "camaraTablas5", jugadas75: "camaraTablas75", bandera: "camaraBandera" };
+  const TIPOS_ALERTA = { ilegal: "camaraAlerta", repeticion3: "camaraTablas3", jugadas50: "camaraTablas50", repeticion5: "camaraTablas5", jugadas75: "camaraTablas75", bandera: "camaraBandera", sinMover: "camaraSinMover", sinApretar: "camaraSinApretar" };
   const colorTx = (c) => tx(c === "w" ? "colorLasBlancas" : "colorLasNegras");
   function alertaDeCamara(p) {
     const v = torneoDeCamaras();
@@ -3332,9 +3332,10 @@
     estado.camaras.alertas.set(k, { h: Date.now(), tipo, m: clave, color });
     // Para el informe: «Visto» quita el aviso de la lista, pero no de la cuenta.
     const cu = estado.camaras.cuenta.get(clave) || { ilegal: 0, tablas: 0 };
-    if (tipo !== "bandera") cu[tipo === "ilegal" ? tipo : "tablas"]++;
+    if (tipo === "ilegal") cu.ilegal++;
+    else if (/^(repeticion|jugadas)/.test(tipo)) cu.tablas++;
     estado.camaras.cuenta.set(clave, cu);
-    Avisos.avisar(tx(TIPOS_ALERTA[tipo], { m: verLugar(clave), q: color ? colorTx(color) : "" }), { tipo: { ilegal: "error", bandera: "error" }[tipo] || "info" });
+    Avisos.avisar(tx(TIPOS_ALERTA[tipo], { m: verLugar(clave), q: color ? colorTx(color) : "" }), { tipo: { ilegal: "error", bandera: "error", sinMover: "error" }[tipo] || "info" });
     pintarCamaras();
   }
 

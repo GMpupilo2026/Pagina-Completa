@@ -172,6 +172,10 @@
                         <p class="text-xs text-brand-500 dark:text-brand-300 mt-2 break-all"><span class="font-semibold">FEN:</span> <span id="fen"></span></p>
                         <h3 class="font-semibold text-sm text-brand-800 dark:text-white mt-3">Jugadas</h3>
                         <p id="jugadas" class="text-sm text-brand-700 dark:text-brand-200 mt-1 min-h-[1.5rem]">Todavía ninguna.</p>
+                        <details id="tiempo-caja" class="mt-3 text-brand-800 dark:text-brand-100">
+                            <summary class="text-sm font-semibold cursor-pointer rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true">⏳</span> Cómo usó el tiempo</summary>
+                            <div id="tiempo-grafico" class="mt-2"></div>
+                        </details>
                         <div class="flex flex-wrap gap-2 mt-3">
                             <button id="btn-deshacer" type="button" disabled class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-3 py-2 rounded-lg text-sm disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Deshacer la última jugada</button>
                             <button id="btn-copiar" type="button" disabled class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-3 py-2 rounded-lg text-sm disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Copiar el PGN</button>
@@ -194,12 +198,16 @@
                             <p class="text-xs text-brand-500 dark:text-brand-300 mt-1">Cambia solo con cada jugada que anota la cámara (suma el incremento). Quien mira ve los dos tiempos.</p>
                             <details id="reloj-leer" class="mt-3">
                                 <summary class="text-sm font-semibold text-brand-800 dark:text-white cursor-pointer rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Leer el reloj de la mesa (prueba)</summary>
-                                <p class="text-xs text-brand-500 dark:text-brand-300 mt-2">Si la cámara ve el reloj digital de la mesa, puede leer sus números en vez de llevar el tiempo ella. Marca con el dedo un rectángulo sobre el tiempo de las blancas y otro sobre el de las negras. Si el reloj no se lee bien (un reflejo, una mano encima), se sigue con el último tiempo que se leyó.</p>
+                                <p class="text-xs text-brand-500 dark:text-brand-300 mt-2">Si la cámara ve el reloj digital de la mesa, puede leer sus números en vez de llevar el tiempo ella. Toca «Buscar el reloj» (con el tablero ya calibrado, sabe cuál tiempo es de las blancas) o marca con el dedo un rectángulo sobre el tiempo de las blancas y otro sobre el de las negras. Si el reloj no se lee bien (un reflejo, una mano encima), se sigue con el último tiempo que se leyó.</p>
                                 <div class="flex flex-wrap gap-2 mt-2">
+                                    <button id="btn-reloj-buscar" type="button" class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-3 py-2 rounded-lg text-sm disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Buscar el reloj</button>
                                     <button id="btn-reloj-marcar" type="button" class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-3 py-2 rounded-lg text-sm disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Marcar el reloj de la mesa</button>
+                                    <button id="btn-reloj-cambiar" type="button" hidden class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-3 py-2 rounded-lg text-sm disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Están al revés</button>
                                     <button id="btn-reloj-dejar" type="button" hidden class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-3 py-2 rounded-lg text-sm disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Dejar de leer el reloj</button>
                                 </div>
                                 <p id="reloj-leido" role="status" aria-live="polite" class="text-sm text-brand-700 dark:text-brand-200 mt-1"></p>
+                                <p class="text-xs text-brand-500 dark:text-brand-300 mt-2">Con el reloj leído, queda anotado para el árbitro si alguien aprieta el reloj sin mover o mueve y no lo aprieta (en un torneo, le llega a Pareo).</p>
+                                <ul id="reloj-incidencias" hidden class="mt-1 list-disc pl-5 text-sm text-brand-700 dark:text-brand-200 space-y-0.5"></ul>
                             </details>
                         </div>
                         <div id="ciego-caja" class="mt-4 rounded-xl border border-brand-200 dark:border-brand-700 p-3">
@@ -260,6 +268,12 @@
                                 <textarea id="posicion" rows="2" spellcheck="false" class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 font-mono"></textarea>
                                 <button type="submit" class="mt-2 bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-3 py-2 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Usar esta posición</button>
                             </form>
+                            <div class="flex flex-wrap items-center gap-2 mt-3">
+                                <label for="leer-turno" class="sr-only">A quién le toca</label>
+                                <select id="leer-turno" class="bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><option value="w">Le toca a las blancas</option><option value="b">Le toca a las negras</option></select>
+                                <button id="btn-leer-posicion" type="button" disabled class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-3 py-2 rounded-lg text-sm disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Leer la posición del tablero</button>
+                            </div>
+                            <p class="text-xs text-brand-500 dark:text-brand-300 mt-1">Con el modelo de las piezas entrenado («Enseñarle a la cámara»): lee qué pieza hay en cada casilla y escribe la posición arriba. Revísala contra el tablero antes de tocar «Usar esta posición».</p>
                         </details>
                         <details class="mt-4">
                             <summary class="text-sm font-semibold text-brand-800 dark:text-white cursor-pointer rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Este tablero y cómo lo lee la cámara</summary>
@@ -284,6 +298,14 @@
                                 <button id="btn-muestras-bajar" type="button" disabled class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-3 py-2 rounded-lg text-sm disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Bajar las fotos (.zip)</button>
                                 <button id="btn-muestras-borrar" type="button" disabled class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-3 py-2 rounded-lg text-sm disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Borrar las fotos</button>
                             </div>
+                            <h3 class="font-semibold text-sm text-brand-800 dark:text-white mt-4">Reconocer qué pieza es (prueba)</h3>
+                            <p class="text-xs text-brand-500 dark:text-brand-300 mt-1">Con las fotos juntadas, la cámara aprende a reconocer cada pieza (peón, caballo, alfil, torre, dama, rey) en ESTE tablero, con esta luz. Se entrena en este aparato, en segundos, y nada se manda a ningún lado. Hacen falta al menos 10 fotos; con 100 o más, mejor. Sirve para leer la posición entera, abajo en «Empezar desde otra posición».</p>
+                            <div class="flex flex-wrap gap-2 mt-2">
+                                <button id="btn-modelo-entrenar" type="button" disabled class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-3 py-2 rounded-lg text-sm disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Entrenar con estas fotos</button>
+                                <button id="btn-modelo-bajar" type="button" disabled class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-3 py-2 rounded-lg text-sm disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Bajar el modelo</button>
+                                <label class="inline-flex items-center bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-3 py-2 rounded-lg text-sm cursor-pointer focus-within:ring-2 focus-within:ring-accent-400">Cargar un modelo<input id="modelo-archivo" type="file" accept="application/json,.json" class="sr-only"></label>
+                            </div>
+                            <p id="modelo-estado" role="status" aria-live="polite" class="text-sm text-brand-600 dark:text-brand-300 mt-1">Todavía no hay un modelo de las piezas en este aparato.</p>
                         </details>
                     </section>
                     <section data-no-mesa class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-4" aria-labelledby="t-entreno">
@@ -479,6 +501,8 @@
     <script src="js/lector-tablero.js"></script>
     <script src="js/lector-reloj.js"></script>
     <script src="js/camara-var.js"></script>
+    <script src="js/grafico-tiempo.js"></script>
+    <script src="js/piezas-modelo.js"></script>
     <script src="js/camara-tablero.js"></script>
 </body>
 </html>

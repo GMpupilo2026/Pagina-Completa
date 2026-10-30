@@ -711,6 +711,8 @@ async function init() {
   $('app').classList.remove('hidden');
   // El cuadernillo trae las respuestas: solo administración.
   if (perfil.is_admin === true) $('banco-pdf').classList.remove('hidden');
+  // Los casos del VAR (js/arbitraje-casos-var.js): los sube solo administración.
+  if (window.CasosVar) CasosVar.iniciar({ admin: perfil.is_admin === true });
   await pintarPrevio();
   await pintarPublicos();
   await pintarConsultasIA();

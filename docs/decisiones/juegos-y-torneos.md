@@ -11313,6 +11313,164 @@ reloj de la mesa dibujado en la foto, con la bandera en 0:00) y
 `verificar-pareo-camaras.js` (la ronda en un vistazo). Rotos a propósito,
 saltan.
 
+### La posible pieza tocada, el reloj que no se aprieta, encontrar el reloj solo y el tiempo de cada jugada
+
+El undécimo pedido del dueño («hacer 2, 3, 4, 5…»):
+
+- **Posible pieza tocada** (en el VAR). La «mano sobre el tablero» ahora
+  junta TODAS las casillas que tapó o movió mientras estuvo (antes, solo las
+  del primer instante). Antes de cada jugada, una mano que tapó una pieza
+  PROPIA de quien jugó y se fue sin tocar la que después jugó sale primera en
+  la lista del VAR: «⚠️ Posible pieza tocada: el caballo de g1 (después jugó
+  e4)», y el estado del VAR dice cuántas hay para revisar. Es una pista para
+  el árbitro, nunca una decisión: una mano puede tapar una pieza sin tocarla
+  (desde arriba, el brazo tapa medio tablero). Por eso no sale en la pantalla
+  de la mesa, que ven los jugadores, ni se le manda a Pareo: se mira en el
+  VAR cuando hay un reclamo. Juntar todo lo que tapó la mano es lo que evita
+  la falsa alarma más común: el brazo que pasa sobre el caballo de camino al
+  peón que juega.
+- **El reloj y las jugadas** (con el reloj de la mesa leído). Se anota
+  cuándo se aprieta el reloj (el que corre ahora no es el último que corría)
+  y se compara con las jugadas:
+  - **Apretó sin mover**: el reloj pasó al otro y no hubo jugada de quien
+    apretó desde que empezó a correr su reloj hasta 8 s después de apretar
+    (la cámara anota la jugada cuando la mano se va, a veces después de
+    apretar). Contar solo «20 s antes» marcaba como «sin mover» a quien
+    apretó tarde después de mover. Por las Leyes se trata como una jugada
+    ilegal (art. 7.5.3).
+  - **Movió y no apretó**: 15 s después de su jugada, su reloj sigue
+    corriendo. El árbitro no se lo dice al jugador; queda anotado por si hay
+    un reclamo.
+  Las dos van a la lista de la cámara (dentro de «Leer el reloj de la
+  mesa») y, en un torneo, a Pareo como avisos `sinMover` y `sinApretar`, que
+  ya no cuentan como «avisos de tablas» en el informe. Con el reloj leído,
+  anotar una jugada ya no cambia quién corre: eso lo dice el reloj de la
+  mesa (si no, se inventaba que el otro había apretado).
+- **«Buscar el reloj»** (`LectorReloj.buscar`). Sin marcar nada: se buscan
+  en la imagen entera, a su tamaño de verdad y fuera de los tableros, las
+  manchas más oscuras (o más claras) que su vecindad que son rayas (llenas,
+  angostas y largas) o, con la imagen algo borrosa, números enteros (las
+  rayas se tocan: más altos que anchos y con huecos); las cercanas se juntan
+  y cada grupo se lee. Si no se lee, puede ser las DOS pantallas juntas
+  (entre una y otra a veces hay menos que entre dos rayas): se parte por sus
+  tres huecos más grandes —el que separa las pantallas no siempre es el
+  mayor: antes de un 1 también hay uno grande— y se prueba cada mitad. Los
+  huecos claros de los números oscuros salen como otro grupo en el mismo
+  lugar: de lo que se encima queda lo mejor leído. Partir así trajo lecturas
+  falsas que las reglas de siempre no veían («3:20:58», con el «32» de una
+  pantalla y el «0:58» de la otra), y por eso dos reglas más: **sin ningún
+  separador no hay tiempo** (todo reloj muestra sus dos puntos o sus puntos)
+  y antes del primer separador van uno o dos números. Y los dos puntos ya no
+  se tiraban como motas: una mota es menos del 2 % de la mancha más grande
+  (un número entero, con la imagen borrosa), no del 8 %. De lo que
+  encuentra, los dos tiempos de altura parecida más cerca uno del otro.
+  **Cuál es de las blancas lo dice el tablero calibrado**: desde arriba, las
+  dos pantallas del reloj quedan una hacia cada jugador, así que la que está
+  más cerca de la fila 1 es la de las blancas. Si las dos quedan a la misma
+  altura del tablero, se avisa, y «Están al revés» las da vuelta.
+  - **Los números girados**: desde arriba el reloj casi nunca se ve derecho.
+    `leer()` prueba derecho y de cabeza (o, si el recuadro es más alto que
+    ancho, girado a un lado y al otro). De cabeza, varios números se leen
+    como otros (el 6 como 9): desempata la inclinación, porque los de un
+    reloj se inclinan hacia adelante y, de cabeza, hacia atrás, que no se
+    prueba.
+- **Cómo usó el tiempo** (`js/grafico-tiempo.js`, en la cámara y en
+  `tablero-vivo.html`, para revisar la partida en clase): barras de lo que
+  pensó cada jugada y, si hubo reloj (el de la cámara o el de la mesa
+  leído), las líneas de lo que le quedaba a cada uno; el resumen escrito (el
+  total de cada uno y su jugada más larga) y una tabla para el lector de
+  pantalla. El color nunca va solo: las blancas con borde y línea entera,
+  las negras rellenas y línea cortada, todo en `currentColor` (el contraste
+  es el del texto). Lo que quedaba se guarda en la cámara con cada jugada
+  (`t.restan`); a quien mira le llegan solo los tiempos de cada jugada.
+
+### Los casos del VAR para el curso de árbitros
+
+El sexto punto del mismo pedido («cuando se graba ya se cuenta con los
+permisos siempre»): un pedazo de video del VAR se vuelve un caso de
+formación en `arbitraje.html`, «Casos del VAR: ¿qué decides tú?»
+(`js/arbitraje-casos-var.js`).
+
+- **El camino**: el árbitro baja el pedazo con «Guardar este pedazo para el
+  acta» en la cámara (que funciona también sin cuenta, en modo mesa), y
+  quien administra lo sube en «Agregar un caso» con el título, la pregunta,
+  de dos a cuatro opciones, la correcta, el porqué, el artículo y desde qué
+  segundo se mira. Una sola puerta para crear casos: no hay otra en la
+  cámara.
+- **Quién**: los ven profesores y quien administra (como el examen); los
+  suben y los borran solo quien administra. Lo dice la base: la RLS de
+  `arbitraje_casos_var` y el bucket **privado** `arbitraje-var` (el video se
+  pide con una dirección firmada de una hora). El formulario pide confirmar
+  que quienes salen (o sus encargados) dieron permiso, y la política de
+  privacidad lo dice (en «Menores de edad»).
+- **El video y la fila llevan el mismo id** (`<id>.webm`): si la fila no se
+  puede guardar, el video subido se borra; al borrar un caso, se borran los
+  dos.
+- Al elegir: «✅ Así es» o «❌ No: lo que corresponde es…», el porqué y el
+  artículo de las Leyes. El video arranca en su segundo y a la mitad de la
+  velocidad: un toque de pieza dura un instante. No se guardan las
+  respuestas: es para practicar, no un examen.
+
+Lo prueban `verificar-lector-reloj.js` (el reloj girado y de cabeza, y
+buscarlo en una escena con un tablero, también con la cámara girada, y que
+sin reloj no inventa ninguno), `verificar-camara-tablero.js` (la mano que
+toca el caballo de g1 y se va antes de jugar e4; las negras que mueven y no
+aprietan y las blancas que aprietan sin mover, con el reloj dibujado en la
+foto; «Buscar el reloj» con las blancas a la izquierda y «Están al revés»;
+el gráfico en la cámara y en quien mira), `verificar-pareo-camaras.js` y
+`verificar-casos-var.js` (la RLS de la migración; un profesor que mira y
+decide pero no agrega ni borra; quien administra que agrega —no sin el
+permiso— y borra la fila y el video; el título que va como texto; el alumno
+que no entra). Rotos a propósito, saltan.
+
+### Reconocer qué pieza es
+
+El séptimo punto del mismo pedido: hasta ahora la cámara sabía si una casilla
+estaba vacía o tenía una pieza blanca o negra, y la jugada la deducía
+chess.js de la posición anterior. Para arrancar desde cualquier posición
+había que escribirla. Ahora la cámara puede aprender QUÉ pieza es
+(`js/piezas-modelo.js`).
+
+- **Se entrena en el aparato, con nuestras fotos.** «Enseñarle a la cámara»
+  ya juntaba, con cada jugada, la foto del tablero enderezado con su FEN:
+  cada casilla ocupada es un ejemplo, y su pieza la dice el FEN.
+  «Entrenar con estas fotos» (desde 10 fotos; con 100 o más, mejor) arma
+  una red chica (la casilla, con un poco de margen, en 16 × 16 grises
+  centrados y escalados → 32 → las 6 piezas) en segundos, en el mismo
+  celular, y dice cuánto acierta **en fotos que no vio** (se aparta una de
+  cada cinco FOTOS, no casillas: dos casillas de la misma foto se parecen
+  demasiado para medir con ellas). Aprende nuestros tableros, con nuestra
+  luz y nuestro ángulo; nada se manda a ningún lado. Se guarda en el
+  aparato, y «Bajar el modelo» / «Cargar un modelo» lo pasan a otro celular
+  (un archivo que no es un modelo no se carga).
+- **El color y si está vacía los sigue diciendo el lector** de siempre, que
+  ya los lee bien: el modelo solo decide el tipo. Por eso no hace falta
+  entrenarlo con cada luz para el color.
+- **«Leer la posición del tablero»** (en «Empezar desde otra posición»):
+  arma la posición entera y la escribe arriba, con a quién le toca (se
+  elige) y los enroques que se ven (rey y torre en su casilla). Lo que no
+  puede ser se corrige con lo más probable que sí: un rey de cada color y
+  ningún peón en la fila 1 ni en la 8; si aun así chess.js no la acepta, se
+  dice. Las casillas de las que duda (menos de 60 %) se nombran: **la
+  posición la confirma una persona** («Usar esta posición») antes de seguir.
+- Un peón se ve casi igual desde un lado que desde el otro: se entrena
+  también con el espejo de cada casilla.
+- **Sin probar con fotos de verdad**: los verificadores dibujan piezas con
+  formas distintas vistas desde arriba (corridas, de tamaño un poco
+  distinto y con ruido) y comprueban que aprende, que arma posiciones que
+  no vio y que las reglas del rey y los peones corrigen lo imposible. Si
+  con nuestros tableros acierta poco, lo siguiente es una red más grande o
+  una casilla más grande (24 o 32), con las mismas fotos.
+
+Lo prueban `verificar-piezas-modelo.js` (sin navegador: 120 fotos de
+partidas al azar, acierto en las que no vio, posiciones enteras nuevas, la
+foto sin rey blanco y con un peón en a8, guardar y cargar) y
+`verificar-camara-tablero.js` (una partida jugada con piezas de formas
+distintas que junta sus fotos, «Entrenar con estas fotos», «Leer la posición
+del tablero» con una posición de otra partida, bajar el modelo y el archivo
+que no es un modelo). Rotos a propósito (sin aprender; sin las reglas del rey
+y de los peones), saltan.
+
 ## Pareo para DGT
 
 Un torneo presencial con tableros electrónicos DGT: el árbitro sube cada ronda

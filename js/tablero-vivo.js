@@ -87,6 +87,10 @@
         P.pintar($("tablero"), visto, { girado });
         jugadores(x);
         $("jugadas").textContent = P.jugadasTexto(x.juego) || "Todavía no se ha jugado nada.";
+        if (window.GraficoTiempo) {
+            const v = x.juego.history({ verbose: true });
+            GraficoTiempo.pintar($("tiempo-grafico"), { jugadas: v.map((m) => m.san), tiempos: x.tiempos, primero: v.length ? v[0].color : "w", escribir: (san) => (window.ComandosTablero ? ComandosTablero.jugadaParaMostrar(san) : san) });
+        }
         $("ir-inicio").disabled = $("ir-atras").disabled = k === 0;
         $("ir-adelante").disabled = $("ir-final").disabled = k >= total;
         $("ir-vivo").hidden = paso === null;

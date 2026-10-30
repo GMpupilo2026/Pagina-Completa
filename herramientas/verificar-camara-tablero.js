@@ -128,7 +128,7 @@ function dibujarFoto(opc) {
     const pieza = {};
     fen.split(" ")[0].split("/").forEach((fila, i) => {
       let f = 0;
-      for (const ch of fila) { if (/\d/.test(ch)) { f += +ch; continue; } pieza[f + "," + (7 - i)] = ch === ch.toUpperCase() ? "w" : "b"; f++; }
+      for (const ch of fila) { if (/\d/.test(ch)) { f += +ch; continue; } pieza[f + "," + (7 - i)] = ch; f++; }
     });
     return { inv, pieza };
   });
@@ -144,8 +144,14 @@ function dibujarFoto(opc) {
     if (u >= 0 && u < 8 && v >= 0 && v < 8) {
       const f = Math.floor(u), r = Math.floor(v);
       col = (f + r) % 2 === 0 ? [118, 150, 86] : [238, 238, 210];
-      const pz = pieza[f + "," + r];
-      if (pz) {
+      const ch = pieza[f + "," + r], pz = ch && (ch === ch.toUpperCase() ? "w" : "b");
+      if (pz && opc.formas) {
+        // Cada pieza con su forma vista desde arriba (para el modelo de las piezas): el centro siempre lleno.
+        const lx = u - f - 0.5, ly = v - r - 0.5, rr = Math.hypot(lx, ly), t = ch.toLowerCase();
+        const dentro = t === "p" ? rr < 0.22 : t === "n" ? rr < 0.34 && !(rr > 0.16 && lx > 0.05 && ly < -0.05) : t === "b" ? rr < 0.34 && !(rr > 0.14 && Math.abs(lx - ly) < 0.06)
+          : t === "r" ? Math.abs(lx) < 0.3 && Math.abs(ly) < 0.3 : t === "q" ? rr < 0.36 && !(rr > 0.2 && rr < 0.27) : rr < 0.34 && !(rr > 0.14 && (Math.abs(lx) < 0.05 || Math.abs(ly) < 0.05));
+        if (dentro) col = pz === "w" ? [250, 248, 240] : [30, 30, 30];
+      } else if (pz) {
         const dd = Math.hypot(u - f - 0.5, v - r - 0.5);
         if (dd < 0.33) col = pz === "w" ? (dd > 0.28 ? [60, 60, 60] : [250, 248, 240]) : (dd > 0.28 ? [170, 170, 170] : [30, 30, 30]);
       }
@@ -1133,7 +1139,11 @@ async function esperarJugadas(p, n) {
     await tocar(pr, aLienzo(ESQ0));
     await pr.click("#btn-calibrar");
     await esperarAviso(pr, /Calibrado/);
-    // Una mano levanta el peón de e2 (la casilla queda vacía) y después lo pone en e4.
+    // Primero una mano toca (tapa) el caballo de g1 y se va; después levanta el peón de e2 y lo pone en e4.
+    await fotoEnCamara(pr, { fen: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKB1R w KQkq - 0 1", esq: ESQ0 });
+    await pr.waitForTimeout(700);
+    await fotoEnCamara(pr, { fen: j.fen(), esq: ESQ0 });
+    await pr.waitForTimeout(1500);
     const levantado = "rnbqkbnr/pppppppp/8/8/8/8/PPPP1PPP/RNBQKBNR w KQkq - 0 1";
     await fotoEnCamara(pr, { fen: levantado, esq: ESQ0 });
     await pr.waitForTimeout(800);
@@ -1144,9 +1154,13 @@ async function esperarJugadas(p, n) {
     await pr.click("#btn-var");
     await pr.waitForSelector("#var-dialogo[open]", { timeout: 8000 });
     const marcas = await pr.$$eval("#var-marcas button", (bs) => bs.map((x) => x.textContent));
+    igual("la posible pieza tocada, primero en su momento: el caballo de g1, y después jugó e4", marcas.filter((x) => /Posible pieza tocada/.test(x)).map((x) => x.split(" — ")[0]),
+      ["⚠️ Posible pieza tocada: el caballo de g1 (después jugó e4)"]);
+    igual("el estado del VAR dice que hay una para revisar", / Para revisar: 1 posible pieza tocada\.$/.test(await pr.textContent("#var-estado")), true);
+    // La mano junta todo lo que tapó mientras estuvo: el peón que levantó de e2 y lo que dejó en e4.
     igual("las marcas: la jugada y la mano que levantó el peón de e2, con su hora", [
       marcas.some((x) => /^Jugada 1\. e4 \(blancas\) — \d{1,2}:\d{2}:\d{2}.*, hace 0:0\d$/.test(x)),
-      marcas.some((x) => /^Mano sobre el tablero \(e2\) — /.test(x)), marcas.length >= 2], [true, true, true]);
+      marcas.some((x) => /^Mano sobre el tablero \(e2(, e4)?\) — /.test(x)), marcas.length >= 2], [true, true, true]);
     await pr.waitForFunction(() => { const v = document.getElementById("var-video"); return v.readyState >= 2; }, null, { timeout: 8000 }).catch(() => {});
     const t0 = await pr.evaluate(() => document.getElementById("var-video").currentTime);
     await pr.click("#var-cuadro");
@@ -1216,6 +1230,10 @@ async function esperarJugadas(p, n) {
     await pc.waitForFunction(() => (window.__dicho || []).some((x) => /^Te quedan/.test(x)), null, { timeout: 4000 }).catch(() => {});
     igual("cuando cruza los 30 segundos, se le avisa", (await dicho()).filter((x) => /^Te quedan/.test(x)), ["Te quedan 30 segundos."]);
     igual("no prende la voz de toda la página", await pc.evaluate(() => BlindNotation.isSpeechEnabled()), false);
+    await pc.evaluate(() => { document.getElementById("tiempo-caja").open = true; });
+    igual("«Cómo usó el tiempo»: una barra por jugada, y con reloj las dos líneas de lo que le quedaba (entera y cortada)",
+      [await pc.$$eval("#tiempo-grafico svg rect", (r) => r.length), await pc.$$eval("#tiempo-grafico polyline", (l) => l.map((x) => x.dataset.color + (x.getAttribute("stroke-dasharray") ? " cortada" : " entera")))], [5, ["w entera", "b cortada"]]);
+    igual("y lo mismo escrito, en una tabla para el lector de pantalla", await pc.$$eval("#tiempo-grafico table tr", (f) => f.length), 6);
     igual("sin errores en la consola (jugador ciego)", b.errores, []);
     await cerrar(b);
   }
@@ -1247,17 +1265,103 @@ async function esperarJugadas(p, n) {
     for (const t of ["1:05:31", "1:05:30", "1:05:29"]) { await conReloj(t, "0:58:10"); await pk.waitForTimeout(1000); }
     await pk.waitForFunction(() => document.getElementById("reloj-w").getAttribute("aria-current") === "true", null, { timeout: 4000 }).catch(() => {});
     igual("se sabe que corre el de las blancas (el que baja)", [await pk.getAttribute("#reloj-w", "aria-current"), await pk.getAttribute("#reloj-b", "aria-current")], ["true", "false"]);
+    // Movió y no apretó: las blancas juegan e4 y apretan; las negras juegan e5 y su reloj sigue corriendo.
+    let tw = 65 * 60 + 29, tb = 58 * 60 + 10;
+    const hhmmss = (s) => { const h = Math.floor(s / 3600), m = Math.floor(s / 60) % 60, x = s % 60; return (h ? h + ":" + String(m).padStart(2, "0") : String(m)) + ":" + String(x).padStart(2, "0"); };
+    const correr = async (quien, segundos) => { for (let k = 0; k < segundos; k++) { if (quien === "w") tw--; else tb--; await conReloj(hhmmss(tw), hhmmss(tb)); await pk.waitForTimeout(1000); } };
+    j.move("e4"); await conReloj(hhmmss(tw), hhmmss(tb)); await esperarJugadas(pk, 1);
+    await correr("b", 3);
+    j.move("e5"); await conReloj(hhmmss(tw), hhmmss(tb)); await esperarJugadas(pk, 2);
+    await correr("b", 17);
+    const incid = () => pk.$$eval("#reloj-incidencias li", (l) => l.map((x) => x.textContent.replace(/^[^:]+:\d{2}:\d{2}[^:]*: /, "")));
+    igual("si mueve y no aprieta el reloj, queda anotado para el árbitro (sin decírselo al jugador)", await incid(),
+      ["Las negras movieron y no apretaron el reloj: su tiempo sigue corriendo. El árbitro no se lo dice al jugador; queda anotado por si hay un reclamo."]);
+    // Las negras por fin aprietan: corren las blancas, que aprietan sin mover.
+    await correr("w", 3);
+    await correr("b", 10);
+    igual("si aprieta el reloj sin mover, también (como una jugada ilegal, art. 7.5.3)", (await incid())[1],
+      "Las blancas apretaron el reloj sin mover: si se confirma, se trata como una jugada ilegal (art. 7.5.3).");
+    igual("apretar a tiempo después de mover no se anota", (await incid()).length, 2);
     // Un reflejo tapa los números: no se inventa nada, sigue con el último.
     await foto(pk, [{ fen: j.fen(), esq: IZQ }], { reloj: Object.assign({ w: "", b: "" }, RELOJ) });
     await pk.waitForTimeout(2500);
-    igual("si no se leen los números, sigue con el último tiempo leído", /^Del reloj de la mesa: blancas 1:05:2\d · negras 58:10\./.test(await pk.textContent("#reloj-leido")), true);
+    igual("si no se leen los números, sigue con el último tiempo leído", /^Del reloj de la mesa: blancas 1:05:\d\d · negras 57:\d\d\./.test(await pk.textContent("#reloj-leido")), true);
     // La bandera: el reloj de la mesa llega a 0.
-    await conReloj("0:00", "0:58:10"); await pk.waitForTimeout(1100); await conReloj("0:00", "0:58:10");
+    await conReloj("0:00", hhmmss(tb)); await pk.waitForTimeout(1100); await conReloj("0:00", hhmmss(tb));
     await esperarAviso(pk, /bandera/, 6000).catch(() => {});
     igual("con 0:00 en el reloj de la mesa, se cae la bandera de las blancas", (await aviso(pk)).startsWith("Se le cayó la bandera a las blancas: ganan las negras."), true);
     await pk.click("#btn-reloj-dejar");
     igual("«Dejar de leer el reloj» lo quita", [await pk.textContent("#reloj-leido"), await pk.locator("#reloj-tiempos").isVisible()], ["", false]);
     igual("sin errores en la consola (reloj de la mesa)", b.errores, []);
+    await cerrar(b);
+  }
+
+  console.log("\nReconocer qué pieza es: entrenar con las fotos y leer la posición entera");
+  {
+    const b = await abrir(browser, "camara-tablero.html");
+    const pm = b.page;
+    await pm.waitForSelector("#app:not(.hidden)");
+    const conFormas = (fen) => foto(pm, [{ fen, esq: ESQ0 }], { formas: true });
+    const j = new Chess();
+    await conFormas(j.fen());
+    await esperarAviso(pm, /esquinas/);
+    await tocar(pm, aLienzo(ESQ0));
+    await pm.click("#btn-calibrar");
+    await esperarAviso(pm, /Calibrado/);
+    await pm.evaluate(() => { document.querySelectorAll("details").forEach((d) => { if (d.querySelector("#muestras-si") || d.querySelector("#form-posicion")) d.open = true; }); });
+    igual("sin modelo, no se puede leer la posición entera", [await pm.textContent("#modelo-estado"), await pm.isDisabled("#btn-leer-posicion")], ["Todavía no hay un modelo de las piezas en este aparato.", true]);
+    await pm.check("#muestras-si");
+    // Una partida con todas las piezas en juego (cada jugada, una foto con su posición).
+    const partida = ["e4", "e5", "Nf3", "Nc6", "Bb5", "a6", "Ba4", "Nf6", "O-O", "Be7", "Re1", "b5", "Bb3", "d6", "c3", "O-O", "h3", "Nb8", "d4", "Nbd7", "Nbd2", "Bb7", "Bc2", "Re8"];
+    for (const m of partida) { j.move(m); await conFormas(j.fen()); await esperarJugadas(pm, j.history().length); }
+    await pm.waitForFunction(() => /^\d+ fotos guardadas\.$/.test(document.getElementById("muestras-cuenta").textContent) && !document.getElementById("btn-modelo-entrenar").disabled, null, { timeout: 8000 }).catch(() => {});
+    igual("cada jugada dejó su foto, y con 10 o más se puede entrenar", [await pm.textContent("#muestras-cuenta"), await pm.isEnabled("#btn-modelo-entrenar")], [partida.length + " fotos guardadas.", true]);
+    await pm.click("#btn-modelo-entrenar");
+    await pm.waitForFunction(() => /^Hay un modelo de las piezas en este aparato/.test(document.getElementById("modelo-estado").textContent), null, { timeout: 60000 }).catch(() => {});
+    const estado = await pm.textContent("#modelo-estado");
+    const acierto = Number((/acierta (\d+) %/.exec(estado) || [])[1]);
+    igual("entrena en el aparato y dice cuánto acierta en fotos que no vio: " + estado, acierto >= 90, true);
+    // Una posición que no vio (de otra partida): lee qué pieza hay en cada casilla.
+    const otra = "r1bq1rk1/pppp1ppp/2n2n2/2b1p3/2B1P3/2NP1N2/PPP2PPP/R1BQK2R w KQ - 0 1";
+    await conFormas(otra);
+    await pm.waitForFunction(() => document.getElementById("acierto").textContent !== "64 de 64", null, { timeout: 5000 }).catch(() => {});
+    await pm.waitForTimeout(2000);
+    await pm.click("#btn-leer-posicion");
+    igual("«Leer la posición del tablero» la escribe entera, con a quién le toca y los enroques que se ven",
+      await pm.inputValue("#posicion"), "r1bq1rk1/pppp1ppp/2n2n2/2b1p3/2B1P3/2NP1N2/PPP2PPP/R1BQK2R w KQ - 0 1");
+    igual("y pide revisarla antes de usarla", /Compárala con el tablero y toca «Usar esta posición»\.$/.test(await aviso(pm)), true);
+    const [bajada] = await Promise.all([pm.waitForEvent("download"), pm.click("#btn-modelo-bajar")]);
+    const archivo = fs.readFileSync(await bajada.path(), "utf8");
+    igual("el modelo se baja en un archivo, para cargarlo en otro celular", [/^modelo-piezas-\d{4}-\d{2}-\d{2}\.json$/.test(bajada.suggestedFilename()), JSON.parse(archivo).v], [true, 1]);
+    await pm.setInputFiles("#modelo-archivo", { name: "otro.json", mimeType: "application/json", buffer: Buffer.from('{"v":1}') });
+    igual("un archivo que no es un modelo no se carga", await pm.textContent("#modelo-estado"), "Ese archivo no es un modelo de las piezas: tiene que ser el que se baja con «Bajar el modelo».");
+    igual("sin errores en la consola (modelo de las piezas)", b.errores, []);
+    await cerrar(b);
+  }
+
+  console.log("\nBuscar el reloj de la mesa en la imagen");
+  {
+    // Las blancas a la izquierda (a1 abajo a la izquierda, h1 arriba): el reloj abajo, su pantalla izquierda del lado de las blancas.
+    const LADO = [[60, 400], [60, 40], [420, 40], [420, 400]];
+    const b = await abrir(browser, "camara-tablero.html");
+    const pk = b.page;
+    await pk.waitForSelector("#app:not(.hidden)");
+    const j = new Chess();
+    await foto(pk, [{ fen: j.fen(), esq: LADO }], { reloj: { w: "1:05:32", b: "0:58:10", x: 80, y: 440 }, fondo: "liso" });
+    await esperarAviso(pk, /esquinas/);
+    await tocar(pk, aLienzo(LADO));
+    await pk.click("#btn-calibrar");
+    await esperarAviso(pk, /Calibrado/);
+    await pk.click("#reloj-leer summary");
+    await pk.click("#btn-reloj-buscar");
+    igual("«Buscar el reloj» lo encuentra solo y sabe cuál es de las blancas (el lado del tablero calibrado)", await aviso(pk),
+      "Encontré el reloj de la mesa: blancas 1:05:32, negras 58:10 (la pantalla más cerca de cada uno).");
+    await pk.waitForFunction(() => /negras/.test(document.getElementById("reloj-leido").textContent), null, { timeout: 6000 }).catch(() => {});
+    igual("y lo lee", await pk.textContent("#reloj-leido"), "Del reloj de la mesa: blancas 1:05:32 · negras 58:10.");
+    await pk.click("#btn-reloj-cambiar");
+    await pk.waitForFunction(() => /blancas 58:10/.test(document.getElementById("reloj-leido").textContent), null, { timeout: 6000 }).catch(() => {});
+    igual("«Están al revés» los da vuelta", await pk.textContent("#reloj-leido"), "Del reloj de la mesa: blancas 58:10 · negras 1:05:32.");
+    igual("sin errores en la consola (buscar el reloj)", b.errores, []);
     await cerrar(b);
   }
 
@@ -1304,6 +1408,8 @@ async function esperarJugadas(p, n) {
   for (const san of ["e5", "Nf3"]) { jv.move(san); await foto(pc, jv.fen(), ESQ0); await esperarJugadas(pc, jv.history().length); }
   await pv.waitForFunction(() => document.getElementById("jugadas").textContent === "1. e4 e5 2. Cf3", null, { timeout: 8000 }).catch(() => {});
   igual("cada jugada nueva le llega sola a quien mira", await pv.textContent("#jugadas"), "1. e4 e5 2. Cf3");
+  igual("quien mira ve cómo usó el tiempo cada uno: una barra por jugada y el resumen escrito",
+    [await pv.$$eval("#tiempo-grafico svg rect", (r) => r.length), /^Las blancas pensaron \d+:\d{2} en total; la jugada más larga, \d\. /.test(await pv.textContent("#tiempo-grafico [data-resumen]"))], [3, true]);
   {
     const estados = eventos.filter((x) => x.event === "estado" && x.nombre === "tablero-vivo-" + codigo).map((x) => x.payload);
     const conE5 = estados.find((x) => x.v === 2 && (x.san || []).includes("e5")), conCf3 = estados.find((x) => x.v === 2 && (x.san || []).includes("Nf3"));
