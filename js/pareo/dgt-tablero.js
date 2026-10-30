@@ -37,7 +37,8 @@
  *   - Las jugadas no se avisan: LiveChess pregunta (0x83) y el tablero le
  *     manda lo que pasó desde la última vez como en su memoria (EEPROM): cada
  *     cambio de casilla son 2 bytes, 0x40 + la pieza y la casilla (en el
- *     mismo orden que el tablero entero). 0x84 repite la última respuesta.
+ *     mismo orden que el tablero entero). 0x84 repite la última respuesta, y
+ *     0x8d manda todo junto: los cambios, el reloj y el tablero entero.
  *   - Lo que no conoce (0xdf y lo que le sigue, que es para otro aparato del
  *     bus) se deja pasar.
  *
@@ -45,6 +46,8 @@
  *                                             ponerFen(fen) → [mensajes], fen(), modo }
  *   DgtTablero.volcado(fen) / campo(casilla) / cambiosDeJugada(move) / cambiosEntre(fenA, fenB)
  *   DgtTablero.mensajeBus(id, [dirAlta, dirBaja], datos) / suma(bytes)
+ *   crear({ reloj: { izquierda: 300, derecha: 300, turno: null } }) → con un DGT 3000:
+ *     contesta 0x81 y t.apretar(lado) deja en la memoria el tiempo de quien jugó
  *
  * Lógica pura (recibe la clase Chess), para el navegador y Node.
  */
@@ -144,6 +147,20 @@
   const EE = { POWERUP: 0x6a, BEGINPOS: 0x6f, START_TAG: 0x7b, NOP: 0x7f };
   const memoriaDe = (eventos) => [].concat(...eventos.map(([c, p]) => [0x40 + p, campo(c)]));
   const posicionEnMemoria = (fen) => memoriaDe(casillas(fen).map((p, i) => [nombre(i), p]).filter(([, p]) => p));
+  // El reloj (DGT 3000) como lo manda el tablero: 7 bytes, horas y minutos y
+  // segundos en BCD de la derecha y de la izquierda, y el estado. Sin reloj,
+  // el bit 0x20 del estado.
+  const aBcd = (n) => ((Math.floor(n / 10) % 10) << 4) | (n % 10);
+  const hms = (seg) => { const s = Math.max(0, Math.floor(seg)); return [Math.min(9, Math.floor(s / 3600)), aBcd(Math.floor(s / 60) % 60), aBcd(s % 60)]; };
+  function bwtime(r) {
+    if (!r) return [0, 0, 0, 0, 0, 0, 0x20];
+    const der = hms(r.derecha), izq = hms(r.izquierda);
+    const estado = (r.corriendo ? 0x01 : 0) | (r.turno === "derecha" ? 0x08 : 0) | (r.turno === "izquierda" ? 0x10 : 0);
+    return der.concat(izq, [estado]);
+  }
+  // En la memoria: el reloj que quedó parado al apretar (0x70 el de la izquierda).
+  function tiempoEnMemoria(lado, seg) { const [h, m, s] = hms(seg); return [(lado === "izquierda" ? 0x70 : 0x60) | h, m, s]; }
+
   const esInicial = (fen) => String(fen).split(" ")[0] === INICIAL.split(" ")[0];
 
   function ascii(texto) {
@@ -156,7 +173,7 @@
     let fenActual = o.fen || INICIAL;
     let saltar = 0;           // bytes de un mensaje para el reloj que todavía hay que saltar
     let esperaLargo = false;  // después de 0x2b viene cuántos bytes siguen
-    const t = { modo: "quieto", pedidos: [], bus: false, siguiendo: false };
+    const t = { modo: "quieto", pedidos: [], bus: false, siguiendo: false, reloj: o.reloj || null };
     const direccion = [Number(serie) >> 7 & 0x7f, Number(serie) & 0x7f];
     // Como un tablero recién encendido: NOP, encendido, la posición y, si es la inicial, BEGINPOS.
     let memoria = [EE.NOP, EE.NOP, EE.NOP, EE.POWERUP].concat(posicionEnMemoria(fenActual), esInicial(fenActual) ? [EE.BEGINPOS] : []);
@@ -183,6 +200,14 @@
           ultimoBus = mensajeBus(0x05, direccion, memoria.slice(enviado));
           enviado = memoria.length;
           return [ultimoBus];
+        // «Todo»: los cambios, el reloj y el tablero entero, uno detrás del otro
+        // (DGT_BUS_SEND_ALL_D). Sin esto LiveChess armaba la posición solo con
+        // los cambios y mostraba el tablero vacío con el peón de e4.
+        case 0x8d:
+          t.siguiendo = true;
+          ultimoBus = mensajeBus(0x05, direccion, memoria.slice(enviado));
+          enviado = memoria.length;
+          return [ultimoBus, mensajeBus(0x04, direccion, bwtime(t.reloj)), mensajeBus(0x03, direccion, casillas(fenActual))];
         case 0x84: return ultimoBus ? [ultimoBus] : [];
         case 0x85:
           memoria = memoria.concat([EE.START_TAG], posicionEnMemoria(fenActual), esInicial(fenActual) ? [EE.BEGINPOS] : []);
@@ -195,7 +220,8 @@
         }
         case 0x88: t.bus = false; return [];
         case 0x89: t.bus = false; t.modo = "quieto"; return [];
-        default: return [];   // 0x81 el reloj (no hay), 0x92 y otros: nada
+        case 0x81: return [mensajeBus(0x04, direccion, bwtime(t.reloj))];
+        default: return [];   // 0x92 y otros: nada
       }
     }
 
@@ -250,6 +276,16 @@
       return t.modo === "avisa" && !t.bus ? cambiosDeJugada(move) : [];
     };
 
+    // Quien jugó aprieta el reloj: su tiempo queda en la memoria y corre el
+    // del otro lado (t.reloj = { izquierda, derecha, turno, corriendo }, en
+    // segundos; lo descuenta quien llama).
+    t.apretar = function (lado) {
+      if (!t.reloj) return;
+      memoria = memoria.concat(tiempoEnMemoria(lado, t.reloj[lado]));
+      t.reloj.turno = lado === "izquierda" ? "derecha" : "izquierda";
+      t.reloj.corriendo = true;
+    };
+
     t.ponerFen = function (fen) {
       const antes = fenActual;
       fenActual = fen;
@@ -259,7 +295,7 @@
     return t;
   }
 
-  const api = { INICIAL, campo, mensaje, mensajeBus, suma, volcado, cambiosDeJugada, cambiosEntre, crear };
+  const api = { INICIAL, campo, mensaje, mensajeBus, suma, volcado, cambiosDeJugada, cambiosEntre, bwtime, crear };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else raiz.DgtTablero = api;
 })(typeof self !== "undefined" ? self : this);

@@ -117,9 +117,59 @@
                 </div>
             </section>
 
+            <section aria-labelledby="t-directo" class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5">
+                <h2 id="t-directo" class="font-semibold text-lg text-brand-800 dark:text-white mb-1">5. Transmitir sin LiveChess</h2>
+                <p class="text-sm text-brand-600 dark:text-brand-300 mb-2">Los tableros DGT se conectan directo a esta página, por USB o en cadena: lee las jugadas y el reloj de cada tablero y las sube a la ronda de Lichess, sin LiveChess ni Lichess Broadcaster. Se configura una vez —cada tablero con su categoría y su mesa— y el resto va solo: cuando sale una ronda en chess-results, cada tablero toma a los jugadores de su mesa y la transmite. Hace falta Chrome o Edge en la computadora.</p>
+                <details class="mb-3 text-sm text-brand-700 dark:text-brand-200">
+                    <summary class="cursor-pointer font-semibold rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Cómo se usa</summary>
+                    <ol class="list-decimal ml-5 mt-2 space-y-1">
+                        <li>En el paso 1, agrega cada categoría: un torneo de chess-results por categoría. En el paso 3, conecta Lichess y «Crear los torneos en Lichess».</li>
+                        <li>Cierra LiveChess: un puerto COM lo puede tener abierto un solo programa.</li>
+                        <li>Toca «Conectar un puerto»: uno por cada cadena de tableros o por cada tablero USB. La página encuentra todos los tableros de esa cadena y empieza a vigilar chess-results.</li>
+                        <li>Dile a cada tablero su categoría y su mesa: de a muchos con «Asignar», o en su fila. Se recuerda para todas las rondas.</li>
+                        <li>Listo. Cuando sale una ronda, cada partida empieza sola al armar las piezas en la posición inicial, con los nombres de esa mesa, y va llegando a Lichess. Un tablero que todavía está en la ronda anterior la termina primero.</li>
+                        <li>El resultado de una partida que no termina en mate se marca en su fila.</li>
+                    </ol>
+                </details>
+                <button id="btn-directo-puerto" type="button" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2 rounded-lg text-sm disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2">Conectar un puerto</button>
+                <p id="directo-error" role="alert" class="text-sm text-red-700 dark:text-red-300 mt-2"></p>
+                <p id="directo-estado" role="status" class="text-sm font-semibold text-brand-700 dark:text-brand-200 mt-2">Ningún puerto conectado.</p>
+                <ul id="directo-categorias" class="mt-1 space-y-1 text-sm text-brand-700 dark:text-brand-200"></ul>
+                <ul id="directo-puertos" class="mt-2 space-y-2 text-sm"></ul>
+                <form id="form-directo-asignar" novalidate class="mt-4 flex flex-wrap items-end gap-3 text-sm">
+                    <div>
+                        <label for="directo-desde" class="block text-brand-700 dark:text-brand-200 mb-1">Del tablero</label>
+                        <input id="directo-desde" type="number" min="1" max="16383" inputmode="numeric" class="w-28 bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                    </div>
+                    <div>
+                        <label for="directo-hasta" class="block text-brand-700 dark:text-brand-200 mb-1">al tablero</label>
+                        <input id="directo-hasta" type="number" min="1" max="16383" inputmode="numeric" class="w-28 bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                    </div>
+                    <div>
+                        <label for="directo-categoria" class="block text-brand-700 dark:text-brand-200 mb-1">Categoría</label>
+                        <select id="directo-categoria" class="max-w-[14rem] bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"></select>
+                    </div>
+                    <div>
+                        <label for="directo-mesa1" class="block text-brand-700 dark:text-brand-200 mb-1">desde la mesa</label>
+                        <input id="directo-mesa1" type="number" min="1" max="999" value="1" inputmode="numeric" class="w-24 bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                    </div>
+                    <button id="btn-directo-asignar" type="submit" class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-3 py-2 rounded-lg disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Asignar</button>
+                </form>
+                <p id="directo-asignar-error" role="alert" class="text-sm text-red-700 dark:text-red-300 mt-2"></p>
+                <div class="mt-3 overflow-x-auto">
+                    <table class="w-full text-sm text-left">
+                        <caption class="sr-only">Tableros conectados</caption>
+                        <thead class="text-brand-600 dark:text-brand-300">
+                            <tr><th scope="col" class="py-1 pr-3">Tablero</th><th scope="col" class="py-1 pr-3">Categoría</th><th scope="col" class="py-1 pr-3">Mesa</th><th scope="col" class="py-1 pr-3">Partida</th><th scope="col" class="py-1 pr-3">Jugadas</th><th scope="col" class="py-1 pr-3">Reloj</th><th scope="col" class="py-1 pr-3">Resultado</th></tr>
+                        </thead>
+                        <tbody id="directo-tableros" class="text-brand-800 dark:text-brand-100"></tbody>
+                    </table>
+                </div>
+            </section>
+
             <section aria-labelledby="t-virtual" class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5">
-                <h2 id="t-virtual" class="font-semibold text-lg text-brand-800 dark:text-white mb-1">5. Probar sin tableros físicos</h2>
-                <p class="text-sm text-brand-600 dark:text-brand-300 mb-2">Tableros DGT virtuales para ensayar todo antes del torneo: LiveChess los ve como tableros de verdad y cada uno juega una partida de maestros, una jugada cada pocos segundos. Solo para probar.</p>
+                <h2 id="t-virtual" class="font-semibold text-lg text-brand-800 dark:text-white mb-1">6. Probar sin tableros físicos</h2>
+                <p class="text-sm text-brand-600 dark:text-brand-300 mb-2">Tableros DGT virtuales para ensayar todo antes del torneo: LiveChess (o «Transmitir sin LiveChess», en otra pestaña) los ve como tableros de verdad, con su reloj DGT 3000, y cada uno juega una partida de maestros, una jugada cada pocos segundos. Solo para probar.</p>
                 <details class="mb-3 text-sm text-brand-700 dark:text-brand-200">
                     <summary class="cursor-pointer font-semibold rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Cómo se conecta (una vez por computadora)</summary>
                     <ol class="list-decimal ml-5 mt-2 space-y-1">
@@ -163,5 +213,7 @@
     <script src="js/estilo-modelos.js"></script>
     <script src="js/pareo/dgt-tablero.js"></script>
     <script src="js/pareo-dgt-virtual.js"></script>
+    <script src="js/pareo/dgt-lector.js"></script>
+    <script src="js/pareo-dgt-directo.js"></script>
 <!-- burbuja: inicio --><script src="js/burbuja-en-linea.js" defer></script><!-- burbuja: fin --><!-- juego-aviso: inicio --><script src="js/juego-aviso.js" defer></script><!-- juego-aviso: fin --><!-- aviso-profe: inicio --><script src="js/aviso-profe.js" defer></script><!-- aviso-profe: fin --><!-- tanda: inicio --><script src="js/tanda-diez.js" defer></script><!-- tanda: fin --><!-- acceso: inicio --><script src="js/acceso-vigente.js" defer></script><!-- acceso: fin --><!-- modo-vista: inicio --><script src="js/modo-vista.js" defer></script><!-- modo-vista: fin --><!-- marca: inicio --><script src="js/marca-academia.js" defer></script><!-- marca: fin --><!-- atajo: inicio --><script src="js/atajo-buscar.js" data-arriba="" defer></script><!-- atajo: fin --></body>
 </html>

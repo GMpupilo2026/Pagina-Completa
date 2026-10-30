@@ -33,6 +33,7 @@
     }
 
     const esperar = (ms) => new Promise((r) => setTimeout(r, ms));
+    const relojNuevo = () => ({ izquierda: 300, derecha: 300, turno: null, corriendo: false });   // 5 minutos cada uno
     const hex = (bytes) => Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join(" ");
 
     // Cada byte que llega y cada uno que sale, en hexadecimal: para saber qué
@@ -65,7 +66,9 @@
         const lc = v.dgt.modo === "avisa" || v.dgt.siguiendo ? "LiveChess lo está siguiendo" : v.dgt.pedidos.length ? "LiveChess ya lo reconoció; todavía no pidió las jugadas" : "Esperando a LiveChess";
         const espanol = (san) => san.replace(/[NBRQK]/g, (l) => ({ N: "C", B: "A", R: "T", Q: "D", K: "R" })[l]);
         const ultima = n ? (Math.ceil(n / 2)) + (n % 2 ? ". " : "… ") + espanol(v.chess.history()[n - 1]) : "posición inicial";
-        v.estado.textContent = lc + " · jugada " + n + " de " + total + " (" + ultima + ")" + (n >= total ? " · partida terminada: " + v.partida.resultado : "") + ".";
+        const r = v.dgt.reloj;
+        const mmss = (x) => Math.floor(x / 60) + ":" + String(x % 60).padStart(2, "0");
+        v.estado.textContent = lc + " · jugada " + n + " de " + total + " (" + ultima + ")" + " · reloj " + mmss(r.izquierda) + " – " + mmss(r.derecha) + (n >= total ? " · partida terminada: " + v.partida.resultado : "") + ".";
         v.btnJugar.textContent = v.timer ? "Pausar" : "Empezar";
         v.btnJugar.setAttribute("aria-pressed", v.timer ? "true" : "false");
         v.btnJugar.disabled = n >= total;
@@ -77,7 +80,13 @@
         if (!san) { parar(v); return; }
         const mv = v.chess.move(san);
         if (!mv) { parar(v); v.estado.textContent = "La partida tiene una jugada que no es legal («" + san + "»): se detuvo."; return; }
-        await escribir(v, v.dgt.jugar(mv, v.chess.fen()));
+        // El reloj DGT 3000: las blancas a la izquierda; quien jugó gasta sus
+        // segundos y aprieta (su tiempo queda en la memoria del tablero).
+        const lado = mv.color === "w" ? "izquierda" : "derecha";
+        v.dgt.reloj[lado] = Math.max(0, v.dgt.reloj[lado] - segundos());
+        const mensajes = v.dgt.jugar(mv, v.chess.fen());
+        v.dgt.apretar(lado);
+        await escribir(v, mensajes);
         if (v.chess.history().length >= v.partida.jugadas.length) parar(v);
         pintarEstado(v);
     }
@@ -95,6 +104,7 @@
     async function alPrincipio(v) {
         parar(v);
         v.chess.reset();
+        v.dgt.reloj = relojNuevo();
         await escribir(v, v.dgt.ponerFen(v.chess.fen()));
         pintarEstado(v);
     }
@@ -231,7 +241,7 @@
         const v = {
             puerto,
             writer: puerto.writable.getWriter(),
-            dgt: DgtTablero.crear({ serie: String(siguienteSerie++) }),
+            dgt: DgtTablero.crear({ serie: String(siguienteSerie++), reloj: relojNuevo() }),
             chess: new Chess(),
             partida: MODELOS[tableros.length % MODELOS.length],
             timer: null,

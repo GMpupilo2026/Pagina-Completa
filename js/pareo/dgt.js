@@ -19,7 +19,8 @@
  *   PareoDGT.tnrDe(texto)                    → "1498221" | null
  *   PareoDGT.leerMesas("1-2, 5")             → { mesas: "1-2, 5", lista: [[1,2],[5,5]] } | { error }
  *   PareoDGT.partidas(datos, {mesas})        → las mesas con dos jugadores, de las elegidas
- *   PareoDGT.pgn(datos, opciones)            → el texto del PGN
+ *   PareoDGT.pgn(datos, opciones)            → el texto del PGN (opciones.jugadas: { mesa: { texto, resultado } }
+ *                                              para «Transmitir sin LiveChess»: las jugadas leídas de cada tablero)
  *   PareoDGT.firma(datos)                    → quién juega con quién en cada mesa (para ver si cambió)
  *   PareoDGT.decidir(guardado, datos, mesas) → "esperar" | "nueva" | "cambio" | "igual"
  *   PareoDGT.nombreArchivo(nombre, ronda)    → "torneo-blitz-ronda-3.pgn"
@@ -92,6 +93,8 @@
     const evento = o.evento || datos.torneo || "Torneo";
     const fecha = /^\d{4}\.\d{2}\.\d{2}$/.test(datos.fecha || "") ? datos.fecha : "????.??.??";
     const bloques = partidas(datos, o).map((m) => {
+      const j = o.jugadas && o.jugadas[m.mesa];
+      const resultado = j && /^(1-0|0-1|1\/2-1\/2)$/.test(j.resultado) ? j.resultado : "*";
       const tags = [
         ["Event", t(evento)],
         ["Site", t(o.sitio || "?")],
@@ -100,7 +103,7 @@
         ["Board", String(m.mesa)],
         ["White", t(m.blancas.nombre)],
         ["Black", t(m.negras.nombre)],
-        ["Result", "*"],
+        ["Result", resultado],
       ];
       if (m.blancas.titulo) tags.push(["WhiteTitle", m.blancas.titulo]);
       if (m.negras.titulo) tags.push(["BlackTitle", m.negras.titulo]);
@@ -108,7 +111,7 @@
       if (m.negras.elo) tags.push(["BlackElo", String(m.negras.elo)]);
       if (m.blancas.fide) tags.push(["WhiteFideId", m.blancas.fide]);
       if (m.negras.fide) tags.push(["BlackFideId", m.negras.fide]);
-      return tags.map(([k, v]) => "[" + k + ' "' + valor(v) + '"]').join("\n") + "\n\n*\n";
+      return tags.map(([k, v]) => "[" + k + ' "' + valor(v) + '"]').join("\n") + "\n\n" + (j && j.texto ? j.texto : "*") + "\n";
     });
     return bloques.join("\n");
   }

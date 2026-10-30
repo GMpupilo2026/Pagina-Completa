@@ -11885,6 +11885,122 @@ partidas otra vez, armando la posición solo con las respuestas a 0x83) y, en el
 la página entera. Contando las casillas al revés o sin levantar el peón de
 la captura al paso, salta.
 
+El tablero virtual trae también un **reloj DGT 3000** (5 minutos cada uno,
+las blancas a la izquierda): quien juega gasta los «Segundos por jugada» y
+aprieta, y su tiempo queda en la memoria del tablero (`t.apretar(lado)`), y
+contesta 0x81 con los 7 bytes del reloj (`bwtime()`). Así se ensaya también
+«Transmitir sin LiveChess» (abajo) sin un solo tablero: un par de com0com, el
+tablero virtual en una punta y la sección 5 en la otra.
+
+### Transmitir sin LiveChess
+
+Una vez que el tablero virtual habló con LiveChess, quedó claro de qué lado
+está cada uno, y el dueño pidió el paso siguiente: «que todos los tableros
+electrónicos reales, físicos, que conectemos, se conecten directamente a
+nuestro programa». Con tableros en cadena (bus serial) y USB, relojes DGT
+3000 y más de 50 tableros. La sección 5 de `pareo-dgt.html` hace lo de
+LiveChess y lo de Lichess Broadcaster juntos: abre cada puerto COM con Web
+Serial, lee los tableros y empuja cada partida a la ronda de Lichess que ya
+creó la página (`/api/broadcast/round/{id}/push`, directo, como el pareo).
+
+- **El protocolo no se adivinó**: sale de la descripción oficial de DGT
+  (`dgtbrd.h`, revisada hasta 2015; copia en `test/dgtbrd-ruud.h` del
+  repositorio público well69/picochess-1), y de lo que LiveChess le mandó al
+  tablero virtual. Lo que dice y se usa:
+  - **Siempre en modo bus**, como LiveChess: es el modo en que arranca el
+    tablero, y sirve igual para un tablero USB solo que para una cadena. Un
+    `0x4a` suelto pasa a bus al que haya quedado en el otro modo.
+  - **Encontrar los tableros de una cadena**: ping a la dirección 0 (todos
+    contestan, repartidos al azar en 1,1 s para no chocar), a cada uno que
+    contestó «ignora el próximo ping general» (0x8a), y otra vez. Se para
+    cuando nadie nuevo contesta tres veces seguidas: una respuesta que choca o
+    llega rota cuenta como nadie, y con dos (la primera versión) en una cadena
+    de 64 con respuestas rotas se quedaban tableros afuera. Los números ya
+    conocidos se preguntan antes uno por uno (`pareo-dgt-directo` los
+    recuerda).
+  - **Las jugadas**: 0x83 trae lo que pasó desde el último 0x83, en el formato
+    de la memoria del tablero (una pieza que se apoya o se levanta, el reloj
+    que quedó parado al apretar, marcas). **Con la suma mal se pide 0x84
+    (repetir), nunca otra vez 0x83**: el tablero ya dio esas jugadas por
+    mandadas y no las vuelve a dar (la descripción de DGT lo advierte; el
+    verificador, cambiando 0x84 por 0x83, pierde partidas).
+  - **El reloj**: 0x81, 7 bytes en BCD por lado y el estado (de quién es el
+    turno, sin reloj). Además, en la memoria queda el tiempo del reloj que se
+    paró al apretar: ese es el de quien acaba de jugar, y va al PGN como
+    `{ [%clk 0:04:57] }`, que Lichess muestra. Qué lado es de las blancas se
+    deduce de la primera jugada (el reloj que se para es el suyo).
+- **La partida se arma con chess.js, no con las piezas**: después de cada
+  tanda (y al apretar el reloj, no después de cada pieza) se compara el
+  tablero con la posición; si coincide con una jugada legal, o con dos (en un
+  blitz pueden llegar dos en una consulta), se anota. Un tablero de verdad
+  no avisa limpio —la descripción de DGT da el ejemplo de la dama que va de
+  c1 a c4 y se ve en c2 y en c3, y de la pieza comida que nunca se ve vacía—,
+  así que lo que no coincide con nada (una pieza en la mano) se espera, y si
+  algo se anotó a medio hacer se corrige: el enroque que empieza por la torre
+  parece Tf1 hasta que llega el rey, y entonces se vuelve atrás la Tf1 y
+  aparece O-O; una jugada devuelta a su casilla se borra (hasta 4 atrás).
+  Solo se prueban jugadas que salen de una casilla que cambió: probar las
+  1200 parejas de jugadas cada vez que alguien tiene una pieza en la mano
+  tardaba lo suficiente para trabar 50 tableros; así, unos 3 ms.
+- **Una partida empieza solo desde la posición inicial**, y desde ahí se sabe
+  si el tablero está dado vuelta (las blancas del lado del conector: DGT no
+  da vuelta la numeración). Una por ronda: con la ronda nueva empieza otra
+  que espera a que se armen las piezas.
+- **El resultado** sale solo con mate, ahogado o material insuficiente. La
+  triple repetición no: sobre el tablero hay que reclamarla. Lo demás lo marca
+  el árbitro en la fila del tablero.
+- **Se configura una vez y el resto va solo** (lo pidió el dueño: «más de 50
+  tableros… decirle cuál tablero es de cada categoría… que cuando salga la
+  ronda en chess-results le asigne la nueva ronda… sin tener que
+  intervenir»). Cada tablero tiene su **categoría** (uno de los torneos de
+  chess-results del paso 1: un torneo por categoría, como los publica
+  chess-results) y su **mesa**, que se recuerdan entre rondas
+  (`pareo-dgt-directo` en el navegador). Se asignan de a muchos («del
+  tablero 10001 al 10020, a Sub-12, desde la mesa 1») o en la fila de cada
+  uno, y una mesa de una categoría tiene un solo tablero. Al conectar el
+  primer puerto la página empieza a vigilar chess-results (paso 4): así cada
+  ronda nueva se lee, se crea en Lichess y le llega a cada tablero sin que
+  nadie toque nada.
+- **La ronda nueva no corta la partida que sigue.** Un tablero pasa a la
+  ronda nueva de su categoría apenas sale si su partida no empezó o ya tiene
+  resultado; si se sigue jugando, la termina primero (la fila lo dice:
+  «termina y pasa a la 3») y pasa cuando tiene resultado o cuando las piezas
+  vuelven a la posición inicial. Mientras la partida espera la posición
+  inicial se mira pieza por pieza: si en una misma consulta llegan el armado
+  y la primera jugada (pasó en la prueba), la posición inicial no se vería y
+  la partida no empezaría nunca.
+- **Cada ronda se empuja entera, y nada se pierde al recargar.** Lo de cada
+  tablero en cada ronda (jugadas, tiempos, resultado, mesa, de qué lado
+  están las blancas) se guarda en la computadora (`juegos`, las últimas 3
+  rondas de cada categoría), y el PGN de una ronda se arma con eso: un
+  tablero que ya pasó a la ronda siguiente no se cae de la anterior en
+  Lichess. Al recargar la página y volver a conectar, cada partida sigue
+  desde lo guardado (`crearPartida(…, { guardada })`). El PGN es el mismo de
+  siempre (`PareoDGT.pgn`, con `jugadas` por mesa), con todas las mesas
+  elegidas: las que todavía no tienen jugadas van con su pareo. Se empuja a
+  cada ronda de Lichess cada 3 s como mucho, y solo si algo cambió.
+- **Una sola copia del estado**: el token de Lichess, los torneos y la ronda
+  con su pareo y su ronda en Lichess los tiene `js/pareo-dgt.js`, que los
+  presta por `window.PareoDGTPagina`; la ronda guarda ahora también su pareo
+  (`pareo`), porque sin él no se puede volver a armar el PGN con jugadas. Las
+  rondas guardadas antes lo reciben en la revisión siguiente.
+
+`verificar-pareo-dgt-lector.js`, sin navegador: una cadena de 40 tableros
+virtuales donde las respuestas al ping general chocan (llega una sola), las
+64 partidas modelo por la cadena con el 8 % de las respuestas rotas y el
+reloj de cada jugada, y las 64 otra vez con las piezas en el orden
+desordenado de un tablero de verdad y 871 consultas a mitad de jugada; el
+enroque por la torre, la jugada devuelta, el tablero dado vuelta y el reloj.
+Con navegador, la página con dos categorías y tres tableros virtuales en
+cadena detrás de un puerto de mentira, un chess-results y una Lichess de
+mentira: la configuración inicial, la ronda 2 que sale en una categoría (el
+tablero que terminó pasa solo y con los nombres nuevos, el que sigue jugando
+termina primero, la ronda 1 queda entera en Lichess) y la página recargada
+a mitad de la partida.
+Cambiando 0x84 por 0x83, o sin «ignorar el próximo ping», salta. **Todavía
+sin probar con tableros de verdad**: el primer ensayo con la cadena del
+torneo dice si los tiempos de espera (300 ms por respuesta) alcanzan.
+
 ## La sala de arena entre equipos, aparte de la Academia
 
 Torneos «arena» como los de Lichess —se juega mientras dura, cada quien se
