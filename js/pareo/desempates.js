@@ -27,7 +27,8 @@
 
   function registros(t) {
     const rondas = t.rondas.length;
-    const todos = t.sistema === "todos";
+    // Un Scheveningen también tiene el calendario fijo: cuenta como todos contra todos.
+    const todos = T.fijo(t);
     const elo = new Map(t.jugadores.map((j) => [j.id, Number(j.elo) || 0]));
     const reg = new Map(t.jugadores.map((j) => [j.id, []]));
 

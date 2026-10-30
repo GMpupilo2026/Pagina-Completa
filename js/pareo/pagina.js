@@ -210,7 +210,7 @@
     while (k < t().rondas.length && T.rondaCompleta(t().rondas[k])) k++;
     return k;
   }
-  function totalRondas() { return t().sistema === "todos" ? T.rondasTodos(t()) : Number(t().rondasTotales) || 0; }
+  function totalRondas() { return T.rondasDelTorneo(t()); }
   function hasta(k) { return Object.assign({}, t(), { rondas: t().rondas.slice(0, k) }); }
   function formatoNum(x) {
     if (x == null || Number.isNaN(x)) return "";
@@ -465,9 +465,9 @@
       r.disabled = v.rondas.length > 0;
     }
     $("pi-sistema-fijo").hidden = v.rondas.length === 0;
-    $("pi-campo-rondas").hidden = v.sistema === "todos";
-    $("pi-campo-baku").hidden = v.sistema === "todos";
-    $("pi-campo-doble").hidden = v.sistema !== "todos";
+    $("pi-campo-rondas").hidden = T.fijo(v);
+    $("pi-campo-baku").hidden = T.fijo(v);
+    $("pi-campo-doble").hidden = !T.fijo(v);
     f.elements.dobleVuelta.disabled = v.rondas.length > 0;
     f.elements.colorInicial.disabled = v.rondas.length > 0;
     f.elements.baku.disabled = v.rondas.length > 0;
@@ -4539,7 +4539,7 @@
         const actual = (R.ausencias || {})[id] || "Z";
         const s = el("select", { class: C.campoChico, "aria-label": tx("ausenciaDe", { n: nombreDe(id) }) },
           el("option", { value: "H", texto: tx("byeMedio", { p: puntosTexto(v.puntos.tablas) }) }),
-          el("option", { value: "Z", texto: tx(v.sistema === "todos" ? "libre" : "byeCero") }),
+          el("option", { value: "Z", texto: tx(T.fijo(v) ? "libre" : "byeCero") }),
           el("option", { value: "F", texto: tx("byeEntero", { p: puntosTexto(v.puntos.victoria) }) }));
         s.value = actual;
         s.addEventListener("change", () => {
@@ -5314,10 +5314,10 @@
     }
     // Lo que quedó de la inscripción para revisar (evento de los JDE): cada
     // punto se marca como visto, y hasta marcarlos todos no se empareja.
-    if (r === 0 || (v.pasarLista && v.sistema !== "todos")) pintarPasarLista(caja, pintarRondas);
+    if (r === 0 || (v.pasarLista && !T.fijo(v))) pintarPasarLista(caja, pintarRondas);
     // En un suizo, quien no se acreditó no se empareja en ninguna ronda; en
     // todos contra todos, se decide antes de sortear la ronda 1.
-    const ausentes = r === 0 || v.sistema !== "todos" ? noLlegaron(v) : [];
+    const ausentes = r === 0 || !T.fijo(v) ? noLlegaron(v) : [];
     let faltanRevisar = () => 0;
     const revisarEstado = el("p", { id: "pi-revisar-estado", class: "text-sm mt-2 font-semibold", role: "status" });
     if (r === 0) {
@@ -5366,7 +5366,10 @@
     if (!v.pedidas || v.pedidas.r !== r) v.pedidas = { r, ausencias: {} };
     const elegidas = v.pedidas.ausencias;
     const pedidas = Object.assign({}, elegidas);
-    if (v.sistema === "todos") {
+    if (v.sistema === "scheveningen") {
+      caja.append(el("p", { class: C.nota + " mb-3", texto: tx("schevAyuda") }));
+      if (r === 0) caja.append(equiposSchevVista(v));
+    } else if (v.sistema === "todos") {
       caja.append(el("p", { class: C.nota + " mb-3", texto: tx("todosAyuda") }));
       if (r === 0) {
         const lista = el("ol", { class: "list-decimal pl-6 mb-3 text-sm" });
@@ -5435,7 +5438,7 @@
       }
       if (r === 0 && ausentes.length) {
         const nombres = ausentes.map(nombreDe);
-        if (v.sistema === "todos") {
+        if (T.fijo(v)) {
           // En todos contra todos no hay «no viene» por ronda: o se sacan
           // del torneo antes de sortear, o juegan todos.
           const sacar = await Avisos.confirmar(tx("listaSacar", { n: ausentes.length, l: nombres.join(", ") }), { aceptar: tx("listaSacarSi"), cancelar: tx("listaConTodos") });
@@ -5451,7 +5454,7 @@
       msg.textContent = tx("emparejando");
       // Con muchos jugadores el Sistema Holandés tarda (crece con el cubo de
       // cuántos son: 800 son unos 20 segundos): se dice y se cuenta.
-      const juegan = v.sistema === "todos" ? v.jugadores.length : T.participantes(v, r, pedidas).length;
+      const juegan = T.fijo(v) ? v.jugadores.length : T.participantes(v, r, pedidas).length;
       const desde = Date.now();
       // (El aviso se lee una vez; la cuenta de segundos va aparte, fuera de
       // la región que lee el lector de pantalla, para no repetirlo cada segundo.)
@@ -5552,9 +5555,14 @@
     if (r === 0 && !Array.isArray(v.numeracion)) T.fijarNumeracion(v);
     if (r === 0) E.fijarOrden(v);
     let ronda;
-    if (v.sistema === "todos") {
+    if (v.sistema === "scheveningen") {
+      if (E.esDeEquipos(v)) throw new Error(tx("schevSoloIndividual"));
+      const eq = T.equiposScheveningen(v);
+      if (eq.error) throw new Error(textoErrorSchev(eq));
+    }
+    if (T.fijo(v)) {
       if (v.jugadores.length < 2) throw new Error(tx("pocosJugadores"));
-      ronda = T.rondaTodos(v, r);
+      ronda = T.rondaFija(v, r);
       // En todos contra todos el calendario es fijo: el retirado no se saca
       // de la ronda, pierde su partida sin jugarla (y si faltan los dos, «--»).
       const fuera = (id) => { const j = v.jugadores.find((x) => x.id === id); return !!j && j.retiradoDespuesDe != null && r >= j.retiradoDespuesDe; };
@@ -5595,7 +5603,7 @@
       { aceptar: tx("deshacerRonda"), peligro: true });
     if (!ok || v.rondas.length !== r + 1) return;
     v.rondas.pop();
-    if (r === 0 && v.sistema === "suizo" && !v.numeracionDeArchivo) v.numeracion = null;
+    if (r === 0 && v.sistema !== "todos" && !v.numeracionDeArchivo) v.numeracion = null;
     // Sin la ronda 1, el orden de tableros se vuelve a poder cambiar.
     if (r === 0) delete v.ordenTableros;
     guardar();
@@ -5611,6 +5619,55 @@
       ? todasFilas.filter((f) => jugador(f.id).institucion === estado.filtroInstitucion) : todasFilas;
   }
 
+  // ---------- Scheveningen ----------
+  // Por qué no se puede emparejar, dicho con los nombres.
+  function textoErrorSchev(e) {
+    if (e.error === "sinEquipo") return tx("schevSinEquipo", { l: e.ids.map(nombreDe).join(", ") });
+    if (e.error === "dosEquipos") return tx("schevDosEquipos", { n: e.cuantos, l: e.nombres.join(", ") });
+    if (e.error === "mismoNumero") return tx("schevMismoNumero", { a: e.a.nombre, na: e.a.ids.length, b: e.b.nombre, nb: e.b.ids.length });
+    return tx("schevMuchos", { m: e.max, n: Math.max(e.a.ids.length, e.b.ids.length) });
+  }
+
+  // Antes de la ronda 1: los dos equipos con su orden de tableros, o lo que
+  // falta para poder armarlos.
+  function equiposSchevVista(v) {
+    const e = T.equiposScheveningen(v);
+    if (e.error) return el("p", { class: "mb-4 text-sm font-semibold text-red-800 dark:text-red-200", role: "status", texto: textoErrorSchev(e) });
+    const lista = (letra, eq) => el("div", {},
+      el("h4", { class: "font-semibold text-sm", texto: tx("schevEquipoTitulo", { l: letra, e: eq.nombre }) }),
+      el("ol", { class: "list-decimal pl-6 text-sm" }, eq.ids.map((id) => el("li", { texto: nombreDe(id) }))));
+    return el("div", { class: "mb-4" },
+      el("h3", { class: "font-semibold mb-1", texto: tx("schevEquipos") }),
+      el("div", { class: "grid sm:grid-cols-2 gap-4" }, lista("A", e.a), lista("B", e.b)));
+  }
+
+  // El marcador del encuentro: lo que importa en un Scheveningen es qué
+  // equipo suma más. Va arriba de la clasificación individual.
+  function pintarMarcadorSchev(v) {
+    const caja = $("pi-clas-schev");
+    if (!caja) return;
+    caja.replaceChildren();
+    const m = v.sistema === "scheveningen" && v.rondas.length ? T.marcadorScheveningen(v) : null;
+    caja.hidden = !m;
+    if (!m) return;
+    const total = T.rondasDelTorneo(v);
+    const terminado = v.rondas.length === total && m.rondas.every((x) => !x.faltan);
+    const frase = m.totalA === m.totalB ? tx(terminado ? "schevEmpateFinal" : "schevEmpate")
+      : tx(terminado ? "schevGano" : "schevGana", { e: m.totalA > m.totalB ? m.a : m.b });
+    const filas = m.rondas.map((x, k) => el("tr", {},
+      el("th", { scope: "row", class: "num", texto: k + 1 }),
+      el("td", { class: "num", texto: puntosTexto(x.a) }), el("td", { class: "num", texto: puntosTexto(x.b) }),
+      el("td", { texto: x.faltan ? tx("schevFaltan", { n: x.faltan }) : "" })));
+    caja.append(
+      el("h3", { class: "font-semibold", texto: tx("schevMarcador") }),
+      el("p", { class: "text-lg font-bold mt-1", texto: tx("schevMarcadorTotal", { a: m.a, pa: puntosTexto(m.totalA), pb: puntosTexto(m.totalB), b: m.b }) }),
+      el("p", { class: "text-sm mb-2", texto: frase }),
+      el("div", { class: "overflow-x-auto" }, el("table", { class: "pi-tabla" },
+        el("thead", {}, el("tr", {}, el("th", { scope: "col", class: "num", texto: tx("schevRonda") }),
+          el("th", { scope: "col", class: "num", texto: m.a }), el("th", { scope: "col", class: "num", texto: m.b }), el("th", { scope: "col", texto: tx("schevPendientes") }))),
+        el("tbody", {}, filas))));
+  }
+
   // ---------- Clasificación ----------
   function pintarClasificacion() {
     const v = t();
@@ -5623,6 +5680,7 @@
     $("pi-clas-nota").textContent = (k < v.rondas.length ? tx("clasSoloCompletas", { r: k }) : (v.nombre || ""))
       + (estado.filtroInstitucion ? tx("clasFiltroNota", { n: filas.length, total: todasFilas.length, inst: estado.filtroInstitucion }) : "");
     pintarSelectInstitucion($("pi-clas-institucion"));
+    pintarMarcadorSchev(v);
     const tabla = $("pi-tabla-clas");
     tabla.replaceChildren();
     if (!v.jugadores.length) return;
