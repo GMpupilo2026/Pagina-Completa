@@ -61,6 +61,7 @@
             mano: 0,   // cuántas jugadas se escribieron a mano (va al informe de las cámaras de Pareo)
             restan: [], // lo que le quedaba en el reloj a cada uno después de cada jugada (si hubo reloj)
             manos: [], tapado: false, // para el VAR: cada vez que algo tapó o movió piezas (ver procesar)
+            marcados: [], // para el VAR: los momentos que marcó el árbitro («Marcar este momento»)
             ciego: { color: "", propias: true, reloj: true }, ciegoUltimo: "", // un jugador ciego en la mesa
             relojMesa: null, relojLeido: {}, // el reloj de la mesa leído de la imagen
         };
@@ -614,7 +615,7 @@
         const bien = calibrarCon(t, INICIAL);
         if (bien === null || bien < 0) {
             avisar(cual(t) + "Con estas esquinas no se ve una posición inicial (" + (bien === null ? 0 : -bien - 1) + " de 64 casillas). Revisa que la cuadrícula calce y que estén todas las piezas en su lugar.", "error");
-            return;
+            return false;
         }
         t.juego = new window.Chess();
         t.resultadoMano = null; t.confirmadas = new Set(); t.mano = 0; t.reloj = null; t.dudas = 0; t.ilegales = 0;
@@ -622,6 +623,7 @@
         if (torneo) { t.ronda = ultimaRonda(); pintarTorneo(); } // la partida nueva es de la ronda de ahora
         partidaCambio(t);
         avisar(cual(t) + "Calibrado: lee bien " + bien + " de 64 casillas en la posición inicial. Ya puedes jugar.", "bien");
+        return true;
     }
 
     /* Seguir la partida que ya está anotada (o la posición que se cargó),
@@ -2003,7 +2005,30 @@
         document.body.classList.add("imprimir-qr");
         window.print();
     }
-    window.addEventListener("afterprint", () => document.body.classList.remove("imprimir-qr"));
+    window.addEventListener("afterprint", () => document.body.classList.remove("imprimir-qr", "imprimir-hoja"));
+
+    /* La hoja para pegar en la mesa: lo que los jugadores tienen que saber de
+     * una mesa con cámara y VAR. Sale solo al imprimir, con la marca de agua. */
+    function imprimirHojaMesa() {
+        const t = T(), hoja = $("hoja-mesa");
+        hoja.textContent = "";
+        const el = (tag, clase, texto) => { const e = document.createElement(tag); e.className = clase; if (texto) e.textContent = texto; return e; };
+        hoja.append(el("p", "hoja-mesa-titulo", "Esta mesa tiene cámara"));
+        const donde = [t.mesa ? lugarDe(t) : "", torneo ? torneo.nombre : ""].filter(Boolean).join(" · ");
+        if (donde) hoja.append(el("p", "hoja-mesa-lugar", donde));
+        const lista = el("ol", "hoja-mesa-lista");
+        for (const x of [
+            "No muevas ni tapes el celular que está encima del tablero.",
+            "La cámara anota la partida. Si duda, el árbitro la corrige: tú juega y anota como siempre.",
+            "Si hay un reclamo (una pieza tocada, el reloj, una jugada ilegal), detén el reloj y llama al árbitro. Él puede revisar el video de los últimos minutos (el VAR).",
+            "Quien decide es el árbitro, no la cámara.",
+            "El video queda solo en este celular: no se manda a ningún lado y se borra al terminar.",
+        ]) lista.append(el("li", "", x));
+        hoja.append(lista, el("p", "hoja-mesa-pie", "Ajedrez Integral · La cámara que lee el tablero"));
+        document.body.classList.add("imprimir-hoja");
+        window.print();
+    }
+    $("btn-hoja-mesa").addEventListener("click", imprimirHojaMesa);
 
     /* Los torneos que se juegan estos días, para no tener que pegar el
      * enlace: los publicados con fecha de hace tres días a mañana, en hora
@@ -2105,7 +2130,7 @@
     /* ── El VAR (ver js/camara-var.js) ─────────────────────────────────── */
     const VAR_SI = delPuesto("camara_var_v1");
     const grabador = window.CamaraVar && CamaraVar.tipo() ? CamaraVar.grabador({ minutos: 10, trozoMs: 60000 }) : null;
-    let varSi = false, varTrozos = [], varTrozo = null, varUrl = null;
+    let varSi = false, varTrozos = [], varTrozo = null, varUrl = null, varAbiertoDeAfuera = false;
     function encenderVar(si) {
         varSi = !!si && !!grabador;
         try { localStorage.setItem(VAR_SI, varSi ? "1" : "0"); } catch (e) { /* solo por esta visita */ }
@@ -2126,8 +2151,43 @@
         const pista = n ? " Para revisar: " + (n === 1 ? "1 posible pieza tocada." : n + " posibles piezas tocadas.") : "";
         if (e.textContent !== txt + pista) e.textContent = txt + pista;
         $("btn-var").disabled = !(archivoVideo || (grabador && (grabador.grabando() || grabador.trozos().length)));
+        $("btn-var-marcar").disabled = !(archivoVideo || (grabador && grabador.grabando()));
+        const u = varSi && !archivoVideo ? malPuesto(T()) : "";
+        $("var-ubicacion").hidden = !u;
+        if ($("var-ubicacion").textContent !== u) $("var-ubicacion").textContent = u;
     }
     setInterval(pintarVar, 5000);
+
+    /* ¿Se notaría un toque en el video? Con el tablero calibrado se sabe qué
+     * tanto de la imagen ocupa y qué tan de lado está: muy chico (el celular
+     * lejos o con zoom de menos) o muy torcido (de costado), una mano que roza
+     * una pieza no se ve. Solo un aviso: la cámara sigue leyendo igual. */
+    function malPuesto(t) {
+        if (!t || t.esquinas.length !== 4 || !limpio.width) return "";
+        const q = D.ordenar(t.esquinas);
+        let area = 0;
+        for (let k = 0; k < 4; k++) { const [x1, y1] = q[k], [x2, y2] = q[(k + 1) % 4]; area += x1 * y2 - x2 * y1; }
+        const parte = Math.abs(area) / 2 / (limpio.width * limpio.height);
+        const lado = (k) => Math.hypot(q[(k + 1) % 4][0] - q[k][0], q[(k + 1) % 4][1] - q[k][1]);
+        const lados = [0, 1, 2, 3].map(lado);
+        const torcido = Math.min(lados[0], lados[2]) / Math.max(lados[0], lados[2]) < 0.6 || Math.min(lados[1], lados[3]) / Math.max(lados[1], lados[3]) < 0.6;
+        if (parte < 0.15) return "⚠️ El tablero ocupa poco de la imagen (" + Math.round(parte * 100) + " %): en el video del VAR un toque de pieza casi no se va a notar. Acerca el celular o ponlo más alto, justo encima del tablero.";
+        if (torcido) return "⚠️ El celular mira el tablero muy de lado: en el video del VAR una mano puede tapar la pieza que toca. Ponlo más encima del tablero, mirando hacia abajo.";
+        return "";
+    }
+
+    /* «Marcar este momento»: el árbitro vio algo (o le avisaron) y lo deja
+     * marcado con su hora, aunque nadie reclame todavía. Ese minuto del video
+     * no se borra (ver js/camara-var.js) y la marca sale en el VAR. */
+    function marcarMomento(t) {
+        t = t || T();
+        const h = horaPartida();
+        t.marcados.push({ h });
+        if (t.marcados.length > 50) t.marcados.shift();
+        if (grabador && !archivoVideo) grabador.fijar(h);
+        avisar(cual(t) + "📍 Momento marcado (" + HoraCR.hora(new Date(h), { hour: "numeric", minute: "2-digit", second: "2-digit" }) + ")" + (archivoVideo ? "." : ": ese minuto del video queda guardado aunque pasen los 10 minutos. Está en «Revisar el video»."), "bien");
+        return h;
+    }
 
     // Lo que se puede revisar: cada jugada y cada vez que algo tapó el tablero, lo último primero.
     /* Posible pieza tocada: antes de una jugada, una mano que tapó o movió
@@ -2167,6 +2227,13 @@
             if (h && h >= desde && h <= hasta) marcas.push({ h, texto: "Jugada " + (Math.floor(i / 2) + 1) + (i % 2 ? "… " : ". ") + es(san) + (i % 2 ? " (negras)" : " (blancas)") });
         });
         for (const m of t.manos) if (m.h >= desde && m.h <= hasta) marcas.push({ h: m.h, texto: "Mano sobre el tablero" + (m.casillas.length ? " (" + m.casillas.join(", ") + ")" : "") });
+        for (const m of t.marcados) if (m.h >= desde && m.h <= hasta) marcas.push({ h: m.h, texto: "📍 Marcado por el árbitro" });
+        /* La misma posición tres veces o más: cada vez que apareció, para
+         * mostrarle a los jugadores un reclamo de tablas (art. 9.2). */
+        V.repeticiones(t.juego).forEach((veces, g) => veces.forEach((i, k) => {
+            const h = i < 0 ? t.inicio : t.horas[i];
+            if (h && h >= desde && h <= hasta) marcas.push({ h, texto: "🔁 Posición repetida" + (g ? " (" + (g + 1) + ".ª)" : "") + ": vez " + (k + 1) + " de " + veces.length + (i < 0 ? " (al empezar)" : ", después de " + (Math.floor(i / 2) + 1) + (i % 2 ? "… " : ". ") + es(hist[i])) });
+        }));
         // La pista, antes que la mano que la originó (son de la misma hora).
         return marcas.sort((a, b) => b.h - a.h || (b.tocada ? 1 : 0) - (a.tocada ? 1 : 0));
     }
@@ -2174,7 +2241,8 @@
         if (archivoVideo) return "minuto " + mmss((h - archivoVideo.inicio) / 1000) + " del video";
         return HoraCR.hora(new Date(h), { hour: "numeric", minute: "2-digit", second: "2-digit" }) + ", hace " + mmss((Date.now() - h) / 1000);
     }
-    async function abrirVar() {
+    // `alAbrir`: apenas la ventana está abierta (el video carga después).
+    async function abrirVar(alAbrir) {
         const t = T();
         if (archivoVideo) {
             video.pause(); pintarVideo();
@@ -2202,6 +2270,7 @@
         if (!marcas.length) { const li = document.createElement("li"); li.textContent = "En estos minutos no se anotó ninguna jugada ni se tapó el tablero."; ol.append(li); }
         $("var-titulo").textContent = "Revisar una jugada" + (t.mesa ? " · " + lugarDe(t) : varios() ? " · tablero " + (t.i + 1) : "");
         $("var-dialogo").showModal();
+        if (alAbrir) alAbrir();
         await irVar(marcas.length ? marcas[0].h - 3000 : hasta - 10000);
     }
     async function irVar(hora) {
@@ -2231,8 +2300,35 @@
         v.pause();
         v.currentTime = Math.max(0, Math.min(Number.isFinite(v.duration) ? v.duration : Infinity, v.currentTime + seg));
     }
+    /* Comparar dos momentos lado a lado: la imagen quieta de lo que se ve
+     * ahora queda como A o como B, con su hora (antes y después del toque,
+     * para mostrarle a los jugadores). Se dibuja en la página, no se baja. */
+    function fijarComparar(letra) {
+        const v = $("var-video");
+        if (!varTrozo || !v.videoWidth) return;
+        const lienzo = $("var-comparar-" + letra.toLowerCase());
+        const ancho = Math.min(640, v.videoWidth);
+        lienzo.width = ancho; lienzo.height = Math.round(ancho * v.videoHeight / v.videoWidth);
+        lienzo.getContext("2d").drawImage(v, 0, 0, lienzo.width, lienzo.height);
+        const cuando = cuandoVar(varTrozo.inicio + v.currentTime * 1000);
+        lienzo.setAttribute("aria-label", "Imagen " + letra + " del video, " + cuando);
+        $("var-comparar-" + letra.toLowerCase() + "-hora").textContent = letra + " · " + cuando;
+        lienzo.dataset.lleno = "1";
+        $("var-comparar").hidden = false;
+    }
+    function limpiarComparar() {
+        $("var-comparar").hidden = true;
+        for (const l of ["a", "b"]) {
+            const c = $("var-comparar-" + l);
+            c.width = c.width; delete c.dataset.lleno; c.removeAttribute("aria-label");
+            $("var-comparar-" + l + "-hora").textContent = l.toUpperCase() + " · sin fijar";
+        }
+    }
+    $("var-fijar-a").addEventListener("click", () => fijarComparar("A"));
+    $("var-fijar-b").addEventListener("click", () => fijarComparar("B"));
+    $("btn-var-marcar").addEventListener("click", () => { marcarMomento(); pintarVar(); });
     $("var-grabar").addEventListener("change", (e) => encenderVar(e.target.checked));
-    $("btn-var").addEventListener("click", abrirVar);
+    $("btn-var").addEventListener("click", () => abrirVar());
     $("var-video").addEventListener("timeupdate", horaVar);
     $("var-video").addEventListener("seeked", horaVar);
     $("var-atras").addEventListener("click", () => moverVar(-2));
@@ -2245,7 +2341,9 @@
         v.pause(); v.removeAttribute("src"); v.load();
         if (varUrl && varTrozo && !varTrozo.url) URL.revokeObjectURL(varUrl);
         varUrl = null; varTrozo = null;
-        $("btn-var").focus();
+        limpiarComparar();
+        if (!varAbiertoDeAfuera) $("btn-var").focus();
+        varAbiertoDeAfuera = false;
     });
     // El pedazo que se ve, para el acta: lo baja el árbitro a propósito, es lo único que sale del aparato.
     $("var-guardar").addEventListener("click", () => {
@@ -2258,6 +2356,109 @@
     });
     try { varSi = localStorage.getItem(VAR_SI) === "1" && !!grabador; } catch (e) { /* apagado */ }
     pintarVar();
+
+    /* ── Probar esta mesa ───────────────────────────────────────────────
+     * Antes de un torneo, dos minutos con la mesa armada: se juegan unas
+     * jugadas, se toca una pieza sin moverla, se aprieta el reloj y se mira
+     * en el VAR. La página dice, con palabras, qué vio bien y qué no, y deja
+     * un informe para copiar. Es lo que dice si la cámara sirve EN ESA MESA,
+     * con esa luz y ese celular: las pruebas del sitio usan piezas dibujadas.
+     * Ver «Probar esta mesa» en docs/decisiones/juegos-y-torneos.md. */
+    let prueba = null;
+    const JUGADAS_PRUEBA = 5;
+    function empezarPrueba() {
+        const t = T();
+        if (!t.cal) { avisar(cual(t) + "Primero calibra el tablero (con las piezas en la posición inicial): la prueba empieza desde ahí.", "error"); return; }
+        const prendioVar = !!grabador && !varSi && !archivoVideo;
+        if (prendioVar) encenderVar(true);
+        prueba = { t, desde: horaPartida(), base: t.juego.history().length, mano: t.mano || 0, dudas: t.dudas || 0, ilegales: t.ilegales || 0, prendioVar, vioVar: false, fin: null };
+        $("prueba-caja").hidden = false;
+        $("prueba-informe").hidden = true;
+        $("btn-prueba").textContent = "Empezar otra vez";
+        pintarPrueba();
+        avisar(cual(t) + "Empezó la prueba: juega " + JUGADAS_PRUEBA + " jugadas, toca una pieza sin moverla y aprieta el reloj." + (prendioVar ? " Se prendió el VAR para probarlo." : ""), "bien");
+    }
+    // Una mano que entró al tablero y se fue sin que hubiera jugada: un toque.
+    function toqueDePrueba() {
+        if (!prueba) return null;
+        const t = prueba.t, ahora = horaPartida();
+        return t.manos.slice().reverse().find((m) => m.h >= prueba.desde && m.h < ahora - 4000 && m.casillas.length && !t.horas.some((h) => h && h >= m.h - 500 && h <= m.h + 4000)) || null;
+    }
+    function pasosPrueba() {
+        const t = prueba.t, pasos = [];
+        const paso = (estado, texto) => pasos.push({ estado, texto });
+        paso(t.cal ? "bien" : "mal", t.cal ? "Lee las 64 casillas." : "Se perdió la calibración: vuelve a calibrar.");
+        const u = malPuesto(t);
+        paso(u ? "mal" : "bien", u ? u.replace(/^⚠️ /, "") : "El celular está bien puesto: el tablero se ve grande y de frente.");
+        if (!grabador) paso("mal", "Este navegador no graba video: en esta mesa no hay VAR (prueba con Chrome o Safari al día).");
+        else paso(varSi && grabador.grabando() ? "bien" : "mal", varSi && grabador.grabando() ? "El VAR está grabando." : "El VAR no está grabando: marca «Grabar los últimos 10 minutos».");
+        const n = t.juego.history().length - prueba.base, raras = (t.dudas || 0) - prueba.dudas + (t.ilegales || 0) - prueba.ilegales;
+        paso(n >= JUGADAS_PRUEBA ? "bien" : "falta", n >= JUGADAS_PRUEBA ? "Anotó " + n + " jugadas" + ((t.mano || 0) > prueba.mano ? " (" + ((t.mano || 0) - prueba.mano) + " a mano)" : "") + "." : "Jueguen " + JUGADAS_PRUEBA + " jugadas: van " + n + ".");
+        if (raras > 0) paso("mal", "Tuvo que preguntar o vio algo raro " + raras + (raras === 1 ? " vez" : " veces") + ": revisa la luz y que las piezas se distingan del tablero.");
+        const toque = toqueDePrueba();
+        paso(toque ? "bien" : "falta", toque ? "Vio la mano que tocó sin mover (" + toque.casillas.join(", ") + ")." : "Toquen una pieza sin moverla y suelten: la cámara tiene que ver la mano.");
+        const r = t.reloj;
+        if (r && r.leido) {
+            const apreto = (r.cambios || []).some((c) => c.h >= prueba.desde);
+            paso(apreto ? "bien" : "falta", apreto ? "Leyó el reloj de la mesa y vio cuando lo apretaron." : "Aprieten el reloj: tiene que ver el cambio en la pantalla del reloj.");
+        } else paso("opcional", "No se está leyendo el reloj de la mesa (es opcional: «Leer el reloj de la mesa»).");
+        if (grabador && varSi) paso(prueba.vioVar ? "bien" : "falta", prueba.vioVar ? "Se miró el toque en el VAR." : "Mira el toque en el VAR: toca «Ver el toque en el VAR» y fíjate que se vea la mano.");
+        return pasos;
+    }
+    const ICONO_PRUEBA = { bien: "✅ Bien: ", mal: "⚠️ Revisar: ", falta: "⏳ Falta: ", opcional: "⚪ " };
+    function pintarPrueba() {
+        if (!prueba || prueba.fin) return;
+        const pasos = pasosPrueba(), ol = $("prueba-pasos");
+        const textos = pasos.map((p) => ICONO_PRUEBA[p.estado] + p.texto);
+        if ([...ol.children].map((li) => li.textContent).join("|") !== textos.join("|")) {
+            ol.textContent = "";
+            for (const x of textos) { const li = document.createElement("li"); li.textContent = x; ol.append(li); }
+        }
+        const seg = Math.round((horaPartida() - prueba.desde) / 1000);
+        const txt = "Van " + mmss(seg) + ". " + (pasos.some((p) => p.estado === "falta") ? "Sigue con lo que falta." : "Ya está todo: toca «Terminar la prueba».");
+        if ($("prueba-tiempo").textContent !== txt) $("prueba-tiempo").textContent = txt;
+        $("btn-prueba-var").disabled = !(toqueDePrueba() && grabador && varSi);
+    }
+    setInterval(pintarPrueba, 1000);
+    function terminarPrueba() {
+        if (!prueba) return;
+        const t = prueba.t, pasos = pasosPrueba();
+        prueba.fin = horaPartida();
+        const malos = pasos.filter((p) => p.estado === "mal" || p.estado === "falta").length;
+        const resumen = malos ? "⚠️ Hay " + (malos === 1 ? "1 cosa" : malos + " cosas") + " que revisar antes de usar esta mesa en un torneo." : "✅ Esta mesa pasó la prueba: la cámara la puede seguir.";
+        const cuando = HoraCR.fecha(new Date(prueba.desde), { day: "numeric", month: "long", year: "numeric" }) + ", " + HoraCR.hora(new Date(prueba.desde), { hour: "numeric", minute: "2-digit" });
+        const texto = ["Prueba de la mesa" + (t.mesa ? " (" + lugarDe(t) + ")" : "") + " — " + cuando, resumen, ""]
+            .concat(pasos.map((p) => ICONO_PRUEBA[p.estado] + p.texto))
+            .concat(["", "Jugadas de la prueba: " + (t.juego.history().slice(prueba.base).map(es).join(" ") || "ninguna") + ".", "Duró " + mmss((prueba.fin - prueba.desde) / 1000) + "." + (prueba.prendioVar ? " El VAR se prendió para la prueba." : "")]).join("\n");
+        $("prueba-resumen").textContent = resumen;
+        $("prueba-texto").textContent = texto;
+        $("prueba-informe").hidden = false;
+        $("prueba-caja").hidden = true;
+        $("btn-prueba").textContent = "Probar otra vez";
+        avisar(cual(t) + resumen.replace(/^\S+ /, "") + " Para jugar de verdad: las piezas a la posición inicial y «Empezar la partida».", malos ? "error" : "bien");
+        $("prueba-resumen").focus();
+    }
+    async function verToqueEnVar() {
+        const toque = toqueDePrueba();
+        if (!toque) return;
+        await abrirVar();
+        if (!$("var-dialogo").open) return;
+        prueba.vioVar = true;
+        await irVar(toque.h - 2000);
+        pintarPrueba();
+    }
+    $("btn-prueba").addEventListener("click", empezarPrueba);
+    $("btn-prueba-fin").addEventListener("click", terminarPrueba);
+    $("btn-prueba-var").addEventListener("click", verToqueEnVar);
+    $("btn-prueba-copiar").addEventListener("click", async () => {
+        try { await navigator.clipboard.writeText($("prueba-texto").textContent); avisar("Informe de la prueba copiado.", "bien"); }
+        catch (e) { avisar("No se pudo copiar: selecciona el texto del informe y cópialo a mano.", "error"); }
+    });
+    // La partida de verdad empieza de cero: lo de la prueba no queda anotado.
+    $("btn-prueba-jugar").addEventListener("click", () => {
+        if (!hacerCalibrar()) return; // dice qué falta; el informe sigue ahí
+        prueba = null; $("prueba-informe").hidden = true; $("btn-prueba").textContent = "Empezar la prueba";
+    });
 
     /* ── Un jugador ciego en la mesa ─────────────────────────────────────
      * El celular le dice al oído (con un audífono) la jugada del rival apenas
@@ -3001,7 +3202,21 @@
             calibrada: !!t.cal, mesa: t.mesa || null, tablero: t.tablero || null, transmitiendo: !!t.vivo,
             dudas: !$("dudas").hidden, error: ultimoAviso.tipo === "error" ? ultimoAviso.texto : "",
             jugadas: t.juego.history().length, resultado: resultadoDe(t), sinRed: sinRed(),
+            var: { puede: !!grabador, grabando: !!(grabador && varSi && grabador.grabando()), marcados: t.marcados.length, tocadas: varSi && grabador && grabador.desde() ? tocadas(t).filter((x) => x.h >= grabador.desde()).length : 0 },
         };
+    };
+    /* El VAR manejado desde camaras.html (la página de afuera): grabar,
+     * marcar y revisar sin buscar los botones de cada cuadrito. La revisión
+     * se abre en el cuadrito mismo; la página de afuera la deja a la vista
+     * (ver js/camaras.js). */
+    window.varDesdeAfuera = {
+        encender: (si) => { encenderVar(si); return varSi; },
+        marcar: () => (grabador && grabador.grabando() ? marcarMomento(tableros[0]) : null),
+        // Contesta apenas la ventana se abre: si se cierra antes de que cargue el video, el foco igual vuelve.
+        revisar: () => new Promise((listo) => {
+            varAbiertoDeAfuera = true;
+            abrirVar(() => { $("var-cerrar").focus(); listo(true); }).then(() => { if (!$("var-dialogo").open) { varAbiertoDeAfuera = false; listo(false); } });
+        }),
     };
 
     /* Dos entradas. Con el QR de una mesa («modo mesa»), SIN CUENTA: la

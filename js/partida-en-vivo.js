@@ -76,15 +76,16 @@
      * árbitro (art. 9.2 y 9.3 de las Leyes); cinco veces y 75 jugadas son
      * tablas aunque nadie reclame (art. 9.6), y lo confirma el árbitro. Se
      * devuelve solo en la jugada en que se cumple: así se avisa una vez. */
+    // La casilla al paso cuenta solo si la captura se puede hacer (art.
+    // 9.2.3); chess.js la pone después de todo avance doble.
+    function clavePosicion(juego) {
+        const f = juego.fen().split(" ");
+        const alPaso = f[3] !== "-" && juego.moves({ verbose: true }).some((m) => m.flags.includes("e"));
+        return f.slice(0, 3).join(" ") + " " + (alPaso ? f[3] : "-");
+    }
     function reglaDeTablas(juego) {
         const partes = juego.fen().split(" "), cuarenta = Number(partes[4]) || 0;
-        // La casilla al paso cuenta solo si la captura se puede hacer (art.
-        // 9.2.3); chess.js la pone después de todo avance doble.
-        const pos = () => {
-            const f = juego.fen().split(" ");
-            const alPaso = f[3] !== "-" && juego.moves({ verbose: true }).some((m) => m.flags.includes("e"));
-            return f.slice(0, 3).join(" ") + " " + (alPaso ? f[3] : "-");
-        };
+        const pos = () => clavePosicion(juego);
         const hist = juego.history(), ahora = pos();
         let veces = 1;
         // Hacia atrás, mientras no haya captura ni peón (antes no se pudo repetir).
@@ -98,6 +99,20 @@
         if (veces === 3) return "repeticion3";
         if (cuarenta === 100) return "jugadas50";
         return null;
+    }
+    /* Las posiciones que se repitieron tres veces o más, con cada vez que
+     * aparecieron: `i` es la jugada después de la cual se vio (-1, la
+     * posición del comienzo). Para mostrarle a los jugadores, en el VAR,
+     * las tres veces de un reclamo de tablas (art. 9.2). */
+    function repeticiones(juego) {
+        const hist = juego.history(), c = new window.Chess();
+        if (!c.load_pgn(juego.pgn())) return [];
+        while (c.undo()) { /* hasta la posición de la que arrancó */ }
+        const veces = new Map();
+        const anotar = (i) => { const k = clavePosicion(c); if (!veces.has(k)) veces.set(k, []); veces.get(k).push(i); };
+        anotar(-1);
+        hist.forEach((san, i) => { c.move(san); anotar(i); });
+        return [...veces.values()].filter((v) => v.length >= 3);
     }
     /* El PGN con su resultado en la cabecera, sin tocar la partida que se
      * sigue anotando. Con `tiempos` (ms de cada jugada), cada jugada lleva su
@@ -407,5 +422,5 @@
     const TEXTO_RESULTADO = { "1-0": "Terminó: ganan las blancas (1-0).", "=": "Terminó en tablas (½-½).", "0-1": "Terminó: ganan las negras (0-1)." };
     const textoResultado = (r) => TEXTO_RESULTADO[r] || "";
 
-    window.PartidaEnVivo = { nuevoCodigo, codigoValido, canal, enlace, estado, loNuevo, leer, pintar, jugadasTexto, comoVa, torneoDe, mesaFisica, mesasDe, lugar, clave, resultadoSolo, reglaDeTablas, pgn, textoResultado, hasta, reloj, relojDe, pocoTiempo, tiempoReloj };
+    window.PartidaEnVivo = { nuevoCodigo, codigoValido, canal, enlace, estado, loNuevo, leer, pintar, jugadasTexto, comoVa, torneoDe, mesaFisica, mesasDe, lugar, clave, resultadoSolo, reglaDeTablas, repeticiones, pgn, textoResultado, hasta, reloj, relojDe, pocoTiempo, tiempoReloj };
 })();
