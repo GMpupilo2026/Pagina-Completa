@@ -478,6 +478,7 @@ window.ReportePDF = (function () {
           if (bloque.pie) lienzo.parrafo(bloque.pie, 9, false, 0, 0.45);
         }
       } else if (bloque.tipo === "separador") lienzo.linea(acento);
+      else if (bloque.tipo === "salto" && lienzo.ops.length) lienzo.cerrarPagina(); // la hoja siguiente (una planilla por jugador)
     }
   }
 

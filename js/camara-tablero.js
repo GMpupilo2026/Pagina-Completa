@@ -133,7 +133,7 @@
      * cámaras el navegador solo los da después del primer permiso, así que
      * la lista se arma después de abrir una. La elegida se recuerda. */
     const CAMARA = delPuesto("camara_dispositivo_v1");
-    async function abrirCamara(id) {
+    async function abrirCamara(id, sola) {
         if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
             avisar("Este navegador no deja usar la cámara desde la página. Prueba con Chrome o Safari al día.", "error");
             return;
@@ -164,7 +164,10 @@
             if (!misma) nuevaFuente(video, video.videoWidth || 640, video.videoHeight || 480);
             else fuente = video;
             listarCamaras(usada);
+            camaraAbierta = true; intentosCamara = 0; vigilarPista(flujo);
+            if (sola) avisar("La cámara volvió: sigue leyendo la partida.", "bien");
         } catch (e) {
+            if (sola && !(e && e.name === "NotAllowedError")) { camaraCortada(); return; }
             avisar(e && e.name === "NotAllowedError"
                 ? "No se dio permiso para usar la cámara. Actívalo en los permisos del sitio y vuelve a tocar «Abrir la cámara»."
                 : "No se pudo abrir la cámara (" + (e && e.name || "error") + "). Si otra aplicación la está usando, ciérrala y vuelve a intentar.", "error");
@@ -181,10 +184,102 @@
         try {
             pantalla = await navigator.wakeLock.request("screen");
             $("pantalla-encendida").hidden = false;
-            pantalla.addEventListener("release", () => { pantalla = null; });
+            // Si el celular la suelta (batería baja, otra app), se vuelve a pedir.
+            pantalla.addEventListener("release", () => { pantalla = null; setTimeout(mantenerEncendida, 1000); });
         } catch (e) { /* sin permiso: sigue igual */ }
     }
     document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") mantenerEncendida(); });
+
+    /* ── Que no se caiga ────────────────────────────────────────────────
+     * La cámara se recupera sola: si el video se corta (el celular la soltó,
+     * otra app la tomó, se bloqueó la pantalla) o se queda congelado más de
+     * 15 s, se vuelve a abrir, esperando cada vez más (1, 2, 4… hasta 30 s).
+     * Lo mismo el canal de la transmisión (ver canalDe). Y antes de la ronda,
+     * «¿Está lista esta mesa?»: lee las 64, hay luz, hay batería, transmite y
+     * la pantalla no se apaga; en un torneo eso y la batería le llegan a
+     * Pareo con un latido cada 30 s, que también le dice que la cámara sigue
+     * viva aunque nadie mueva. */
+    let camaraAbierta = false, intentosCamara = 0, reabriendo = null;
+    const espera = (n) => Math.min(30000, 1000 * 2 ** n);
+    function vigilarPista(flujo) {
+        const pista = flujo && flujo.getVideoTracks()[0];
+        if (pista) pista.addEventListener("ended", () => { if (video.srcObject === flujo) camaraCortada(); });
+    }
+    function camaraCortada() {
+        if (reabriendo || !camaraAbierta) return;
+        const ms = espera(intentosCamara++);
+        avisar("Se cortó la cámara: la vuelvo a abrir en " + Math.round(ms / 1000) + " s. No muevas el celular.", "error");
+        reabriendo = setTimeout(() => { reabriendo = null; abrirCamara(undefined, true); }, ms);
+    }
+    // El video congelado (no avanza) o en pausa: se despierta, y si no, se vuelve a abrir.
+    let tiempoVideo = -1, quietoVideo = 0;
+    setInterval(() => {
+        if (!camaraAbierta || !video.srcObject || document.visibilityState !== "visible" || reabriendo) { quietoVideo = 0; return; }
+        if (video.paused) video.play().catch(() => {});
+        const vivo = video.srcObject.getVideoTracks().some((x) => x.readyState === "live");
+        quietoVideo = vivo && video.currentTime !== tiempoVideo ? 0 : quietoVideo + 1;
+        tiempoVideo = video.currentTime;
+        if (quietoVideo >= 3) { quietoVideo = 0; camaraCortada(); }
+    }, 5000);
+    document.addEventListener("visibilitychange", () => {
+        if (document.visibilityState === "visible" && camaraAbierta && video.srcObject && !video.srcObject.getVideoTracks().some((x) => x.readyState === "live")) camaraCortada();
+    });
+
+    // La batería (Chrome en Android; en otros, no se sabe y no se dice nada).
+    let bateria = null, bateriaBajaDicha = false;
+    if (navigator.getBattery) {
+        navigator.getBattery().then((b) => {
+            const leerla = () => { bateria = { nivel: Math.round(b.level * 100), cargando: !!b.charging }; pintarBateria(); };
+            leerla();
+            b.addEventListener("levelchange", leerla);
+            b.addEventListener("chargingchange", leerla);
+        }).catch(() => { /* sin dato */ });
+    }
+    const bateriaBaja = () => !!(bateria && !bateria.cargando && bateria.nivel < 20);
+    function pintarBateria() {
+        const baja = bateriaBaja();
+        $("bateria-aviso").hidden = !baja;
+        if (baja) $("bateria-aviso").textContent = "🔋 Batería baja (" + bateria.nivel + " %): conecta el cargador. Si el celular se apaga, esta mesa deja de leer y de transmitir.";
+        if (baja && !bateriaBajaDicha) avisar("Batería baja (" + bateria.nivel + " %): conecta el cargador.", "error");
+        bateriaBajaDicha = baja;
+        revisarLista();
+    }
+
+    // «¿Está lista esta mesa?»: lo que hay que mirar antes de la ronda, escrito.
+    function listaDe(t) {
+        if (!t.cal || !t.lectura) return null;
+        const items = [];
+        const bien = 64 - diferentes(t.lectura, esperada(t.juego)).length;
+        items.push(bien === 64 ? { ok: true, k: "lectura", txt: "Lee las 64 casillas." } : { ok: false, k: "lectura", txt: "Lee " + bien + " de 64: revisa que la cuadrícula calce y que las piezas estén en su lugar." });
+        items.push(t.luz === "poca" ? { ok: false, k: "luz", txt: "Poca luz: acerca una lámpara o cambia la mesa de lugar." } : { ok: true, k: "luz", txt: "Luz suficiente." });
+        if (bateria) items.push(bateria.cargando || bateria.nivel >= 30 ? { ok: true, k: "bateria", txt: "Batería: " + bateria.nivel + " %" + (bateria.cargando ? ", cargando." : ".") } : { ok: false, k: "bateria", txt: "Batería baja (" + bateria.nivel + " %): conecta el cargador antes de la ronda." });
+        if (t.vivo || t.mesa) items.push(t.vivo && !sinRed() ? { ok: true, k: "senal", txt: "Transmite." } : { ok: false, k: "senal", txt: t.vivo ? "Sin señal: la partida se guarda en el celular hasta que vuelva." : "No transmite: toca «Transmitir en vivo»." });
+        if ("wakeLock" in navigator && camaraAbierta) items.push(pantalla ? { ok: true, k: "pantalla", txt: "La pantalla no se apaga." } : { ok: false, k: "pantalla", txt: "La pantalla se puede apagar: tócala para que vuelva a quedar encendida." });
+        return { ok: items.every((x) => x.ok), faltan: items.filter((x) => !x.ok).map((x) => x.k), items };
+    }
+    let listaAntes = "";
+    function revisarLista() {
+        const t = T(), l = listaDe(t);
+        $("lista-caja").hidden = !l;
+        if (l) {
+            $("lista-titulo").textContent = l.ok ? "✅ Esta mesa está lista." : "⚠️ Revisar antes de la ronda (" + l.faltan.length + (l.faltan.length === 1 ? " cosa)." : " cosas).");
+            const ul = $("lista-items");
+            ul.textContent = "";
+            for (const x of l.items) { const li = document.createElement("li"); li.textContent = (x.ok ? "✅ " : "⚠️ ") + x.txt; ul.append(li); }
+        }
+        // Si cambió algo, Pareo se entera ya, sin esperar el próximo latido.
+        const clave = JSON.stringify([l && l.faltan, bateria]);
+        if (clave !== listaAntes) { listaAntes = clave; for (const o of tableros) latir(o); }
+    }
+    setInterval(revisarLista, 3000);
+    function latir(t) {
+        const canal = t.vivo && canales.get(t.vivo.codigo), donde = dondeDe(t);
+        if (!canal || !donde || !donde.torneo || estadoCanal !== "SUBSCRIBED") return;
+        const l = listaDe(t);
+        canal.send({ type: "broadcast", event: "latido", payload: { v: 1, torneo: donde.torneo, ronda: donde.ronda, mesa: donde.mesa, tablero: donde.tablero || undefined,
+            bateria: bateria ? { nivel: bateria.nivel, cargando: bateria.cargando } : null, lista: l ? { ok: l.ok, faltan: l.faltan } : null, t: Date.now() } });
+    }
+    setInterval(() => { for (const t of tableros) latir(t); }, 30000);
 
     /* «Ahorrar batería»: la pantalla tiene que quedar encendida (si se apaga,
      * se corta la cámara), pero no tiene por qué mostrar nada: queda en negro,
@@ -412,6 +507,8 @@
         if (!mejor || mejor.bien < 48 || !mejor.claras) return mejor ? -mejor.bien - 1 : null;
         t.esquinas = mejor.q; t.h = mejor.hk; t.cal = mejor.c; t.a1 = mejor.q[0].slice();
         t.recientes = []; t.quieta = null;
+        t.luz = luzDe(muestrasDe(t));
+        pintarEquipo();
         return mejor.bien;
     }
     // Cuál de los cuatro giros de las esquinas explica mejor la posición
@@ -484,7 +581,7 @@
             return;
         }
         t.juego = new window.Chess();
-        t.resultadoMano = null; t.confirmadas = new Set(); t.mano = 0; t.reloj = null;
+        t.resultadoMano = null; t.confirmadas = new Set(); t.mano = 0; t.reloj = null; t.dudas = 0; t.ilegales = 0;
         t.inicio = Date.now(); t.horas = []; t.horaResultado = null;
         if (torneo) { t.ronda = ultimaRonda(); pintarTorneo(); } // la partida nueva es de la ronda de ahora
         partidaCambio(t);
@@ -529,7 +626,9 @@
         if (!r) t.horaResultado = null;
         if (t === T()) pintarPartida();
         enviarVivo(t);
+        if (distancia && distancia.t === t) enviarDistancia(t);
         if (termino) tomarFoto(t, t.finPor || "resultado");
+        if (r) anotarLectura(t);
         try {
             localStorage.setItem(PARTIDA + t.i, V.pgn(t.juego, r));
             localStorage.setItem(PARTIDA + t.i + "_horas", JSON.stringify({ inicio: t.inicio, horas: t.horas }));
@@ -538,8 +637,9 @@
 
     function anotar(t, jugadas) {
         t.resultadoMano = null; // si se siguió jugando, no había terminado
-        gastarReloj(t);
-        jugadas.forEach((x) => { const m = t.juego.move(x); t.horas.push(Date.now()); if (m && t.reloj && !t.reloj.bandera) t.reloj[m.color] += t.reloj.inc; });
+        const colocando = t.guion && t.guion.colocando;
+        if (!colocando) gastarReloj(t);
+        jugadas.forEach((x) => { const m = t.juego.move(x); t.horas.push(Date.now()); if (m && t.reloj && !t.reloj.bandera && !colocando) t.reloj[m.color] += t.reloj.inc; });
         if (t.reloj) t.reloj.corre = t.juego.game_over() ? null : t.juego.turn();
         t.recientes = [];
         $("dudas").hidden = true;
@@ -590,6 +690,7 @@
         $("reloj-msg").textContent = "Reloj en marcha: " + min + " min" + (inc ? " + " + inc + " s por jugada" : "") + ". Corre el de las " + (t.juego.turn() === "w" ? "blancas" : "negras") + ".";
         pintarReloj();
         enviarVivo(t, true);
+        if (distancia && distancia.t === t) enviarDistancia(t);
     }
     function pausarReloj() {
         const t = T(), r = t.reloj;
@@ -621,6 +722,7 @@
             t.finPor = "bandera";
             partidaCambio(t); // manda el resultado y el reloj en 0
             t.finPor = null;
+            terminoDistancia(t);
         }
         pintarReloj();
     }
@@ -640,6 +742,97 @@
         }
     }
     setInterval(revisarBanderas, 200);
+
+    /* ── Cómo lee cada tablero ──────────────────────────────────────────
+     * Qué tablero y piezas son (lo escribe quien maneja la cámara: «Vinilo
+     * verde», «Madera de la academia») y la luz que midió al calibrar (el
+     * brillo medio de las casillas). Con cada partida terminada se anota en
+     * este aparato cuántas jugadas leyó sola, cuántas se escribieron a mano,
+     * cuántas veces dudó y cuántas posibles ilegales vio: así se sabe qué
+     * tableros conviene usar. En un torneo viaja también a Pareo Integral
+     * (`equipo`, `dudas`), que lo junta de todas las mesas. */
+    const EQUIPO = delPuesto("camara_tablero_nombre_v1"), LECTURA = "camara_lectura_v1";
+    const NOMBRE_LUZ = { poca: "poca luz", normal: "luz normal", mucha: "mucha luz" };
+    function luzDe(todas) {
+        let s = 0, n = 0;
+        for (const L of todas) for (let i = 0; i < L.length; i++) { s += L[i]; n++; }
+        const m = n ? s / n : 0;
+        return m < 95 ? "poca" : m > 215 ? "mucha" : "normal";
+    }
+    function nombreEquipo() {
+        try { return (localStorage.getItem(EQUIPO) || "").slice(0, 40); } catch (e) { return ""; }
+    }
+    function equipoDe(t) {
+        const tablero = nombreEquipo();
+        return tablero || t.luz ? { tablero, luz: t.luz || null } : undefined;
+    }
+    function lecturas() { try { return JSON.parse(localStorage.getItem(LECTURA) || "[]"); } catch (e) { return []; } }
+    function anotarLectura(t) {
+        const n = t.juego.history().length;
+        if (n < 2 || t.guion) return;
+        const fila = { id: idPartida(t), fecha: window.HoraCR.hoy(), tablero: nombreEquipo() || "Sin nombre", luz: t.luz || null,
+            jugadas: n, mano: Math.min(t.mano || 0, n), dudas: t.dudas || 0, ilegales: t.ilegales || 0 };
+        const lista = lecturas().filter((x) => x.id !== fila.id).concat(fila).slice(-500);
+        try { localStorage.setItem(LECTURA, JSON.stringify(lista)); } catch (e) { /* sin almacenamiento */ }
+        pintarLecturas();
+    }
+    // Por tablero y luz: partidas, jugadas, cuántas leyó sola, a mano, dudas e ilegales.
+    function resumenLecturas(lista) {
+        const grupos = new Map();
+        for (const x of lista) {
+            const k = x.tablero + "|" + (x.luz || "");
+            const g = grupos.get(k) || { tablero: x.tablero, luz: x.luz, partidas: 0, jugadas: 0, mano: 0, dudas: 0, ilegales: 0 };
+            g.partidas++; g.jugadas += x.jugadas; g.mano += x.mano; g.dudas += x.dudas; g.ilegales += x.ilegales;
+            grupos.set(k, g);
+        }
+        return [...grupos.values()].sort((a, b) => (b.jugadas - b.mano) / b.jugadas - (a.jugadas - a.mano) / a.jugadas);
+    }
+    function pintarEquipo() {
+        const t = T();
+        $("equipo-luz").textContent = t.luz ? "Luz medida al calibrar: " + NOMBRE_LUZ[t.luz] + "." : "La luz se mide al calibrar.";
+    }
+    function pintarLecturas() {
+        const lista = lecturas(), cuerpo = $("lectura-filas");
+        cuerpo.textContent = "";
+        $("lectura-tabla").hidden = !lista.length;
+        $("lectura-vacia").hidden = !!lista.length;
+        for (const g of resumenLecturas(lista)) {
+            const tr = document.createElement("tr");
+            const solas = g.jugadas - g.mano;
+            [g.tablero, g.luz ? NOMBRE_LUZ[g.luz] : "—", String(g.partidas), solas + " de " + g.jugadas + " (" + Math.round(100 * solas / g.jugadas) + " %)",
+                String(g.mano), String(g.dudas), String(g.ilegales)].forEach((x, i) => {
+                const td = document.createElement(i ? "td" : "th");
+                if (!i) td.scope = "row";
+                td.className = "py-1 pr-3 text-left" + (i ? "" : " font-semibold");
+                td.textContent = x;
+                tr.append(td);
+            });
+            cuerpo.append(tr);
+        }
+    }
+
+    /* ── Las planillas en PDF ───────────────────────────────────────────
+     * La de cada jugador, con las jugadas que anotó la cámara, lista para
+     * revisar y firmar (js/planilla-pdf.js, la misma que usa Pareo). */
+    let cargaPlanillas = null;
+    function cargarPlanillas() {
+        if (!cargaPlanillas) cargaPlanillas = cargarScript("js/reporte-pdf.js").then(() => cargarScript("js/marca-agua.js")).then(() => cargarScript("js/planilla-pdf.js"));
+        cargaPlanillas.catch(() => { cargaPlanillas = null; });
+        return cargaPlanillas;
+    }
+    async function bajarPlanillas() {
+        const t = T(), msg = $("planillas-msg");
+        if (t.juego.header().FEN) { msg.textContent = "La planilla es de una partida desde la posición inicial: esta empezó en otra posición."; return; }
+        msg.textContent = "Armando las planillas…";
+        try { await cargarPlanillas(); } catch (e) { msg.textContent = "No se pudo cargar lo de las planillas. Revisa la conexión."; return; }
+        const nm = nombresDe(t), donde = dondeDe(t);
+        const partida = { jugadas: t.juego.history(), blancas: nm.blancas, negras: nm.negras, resultado: resultadoDe(t) || null,
+            evento: torneo ? torneo.nombre : "", ronda: donde && donde.ronda, mesa: donde && donde.mesa ? lugarTexto(t) : null, fecha: window.HoraCR.hoy() };
+        try {
+            await window.PlanillaPDF.descargar([partida], "planillas" + (partida.mesa ? "-mesa-" + partida.mesa : "") + ".pdf");
+            msg.textContent = "Listo: una planilla para cada jugador, con " + partida.jugadas.length + " medias jugadas. Revísenlas antes de firmar.";
+        } catch (e) { msg.textContent = "No se pudo armar el PDF."; }
+    }
 
     /* La repetición y las 50 jugadas no se marcan solas: se dicen, y en un
      * torneo le llegan al árbitro de Pareo Integral (ver reglaDeTablas). */
@@ -717,6 +910,7 @@
                 caja.append(b);
             });
             $("dudas").hidden = false;
+            t.dudas = (t.dudas || 0) + 1;
             avisar(cual(t) + "No estoy seguro de cuál fue: elige la jugada abajo, o escríbela.", "error");
             return;
         }
@@ -732,6 +926,7 @@
         // puede ser una jugada ilegal. En un torneo se le avisa al árbitro de
         // Pareo Integral (sin decir qué casillas: eso sería pasar la jugada).
         const alArbitro = alertarArbitro(t);
+        t.ilegales = (t.ilegales || 0) + 1;
         tomarFoto(t, "ilegal");
         avisar(cual(t) + "No reconozco lo que cambió en " + cambiaron.join(", ") + ": puede ser una jugada ilegal o una pieza fuera de lugar. Si fue una jugada, escríbela abajo; si es la luz o una pieza movida sin querer, déjala como estaba." + (alArbitro ? " Se le avisó al árbitro." : ""), "error");
     }
@@ -901,20 +1096,23 @@
         return es(m.san) + ": " + (m.flags.includes("k") || m.flags.includes("q") ? "el enroque, rey y torre" : "mueve " + GENERO[m.piece] + " " + pieza + " de " + m.from + " a " + m.to)
             + (m.captured ? " (captura la pieza de " + m.to + ")" : "") + (m.promotion ? " y corona " + NOMBRES[m.promotion] : "");
     }
+    // El renglón que dice qué hacer: el de Entrenar o el de Jugar a distancia.
+    const estadoGuion = (t, texto, g) => { $((g || t.guion || {}).tipo === "distancia" ? "distancia-estado" : "entreno-estado").textContent = texto; };
     function pedirQuePonga(t, san, quien) {
         t.guion.esperando = san;
         $("entreno-pista").hidden = true;
-        $("entreno-estado").textContent = quien + " " + comoPonerla(t.juego, san) + ". Pon esa jugada en tu tablero.";
+        estadoGuion(t, quien + " " + comoPonerla(t.juego, san) + ". Pon esa jugada en tu tablero.");
         avisar(cual(t) + quien + " " + comoPonerla(t.juego, san) + ". Ponla en tu tablero.", "bien");
     }
     function finEntreno(t, texto) {
         const g = t.guion;
         t.guion = null;
         $("entreno-pista").hidden = true;
-        $("entreno-estado").textContent = texto;
+        estadoGuion(t, texto, g);
         pintarEntreno();
         avisar(cual(t) + texto, "bien");
-        if (g && g.tipo === "motor") guardarContraMotor(t, g);
+        if (g && g.tipo === "motor") guardarEnCuenta(t, g.color, "Contra el motor (cámara" + ({ 1: ", nivel fácil", 5: ", nivel medio", 12: ", nivel difícil" }[g.profundidad] || "") + ")", "entreno-estado");
+        if (g && g.tipo === "distancia") { enviarDistancia(t); guardarEnCuenta(t, g.color, "A distancia (cámara)" + (distancia && distancia.rival ? ": contra " + distancia.rival : ""), "distancia-estado"); pintarDistancia(); }
         if (g && g.tipo === "ejercicio" && g.deMates) progresoMate(g);
     }
 
@@ -926,17 +1124,16 @@
      *   - cada mate resuelto, en su progreso del Entrenamiento
      *     (training_progress, como en Mates: con error o pista no es limpio). */
     const RESULTADO_BASE = { "1-0": "1-0", "=": "1/2-1/2", "0-1": "0-1" };
-    async function guardarContraMotor(t, g) {
+    async function guardarEnCuenta(t, color, evento, donde) {
         const r = resultadoDe(t), jugadas = t.juego.history();
         if (!cuenta || !r || jugadas.length < 10 || t.juego.header().FEN) return;
-        const nivel = { 1: "fácil", 5: "medio", 12: "difícil" }[g.profundidad] || "";
-        const fila = { fecha: window.HoraCR.hoy(), color: g.color, jugadas, ronda: null, resultado: RESULTADO_BASE[r], evento: "Contra el motor (cámara" + (nivel ? ", nivel " + nivel : "") + ")" };
+        const fila = { fecha: window.HoraCR.hoy(), color, jugadas, ronda: null, resultado: RESULTADO_BASE[r], evento: evento.slice(0, 120) };
         try {
             const { error } = await window.sb.from("partidas_torneo").insert(fila);
             if (error) throw error;
-            $("entreno-estado").textContent += " Quedó en tu libreta de torneos: en «Tus propios errores» la puedes revisar con tu profe.";
+            $(donde).textContent += " Quedó en tu libreta de torneos: en «Tus propios errores» la puedes revisar con tu profe.";
         } catch (e) {
-            $("entreno-estado").textContent += " No se pudo guardar en tu cuenta (revisa la conexión); copia el PGN si la quieres.";
+            $(donde).textContent += " No se pudo guardar en tu cuenta (revisa la conexión); copia el PGN si la quieres.";
         }
     }
     async function progresoMate(g) {
@@ -990,15 +1187,24 @@
             const sin = (s) => String(s).replace(/[+#]$/, "");
             if (jugadas.length === 1 && sin(jugadas[0]) === sin(g.esperando)) {
                 g.esperando = null;
+                g.colocando = g.tipo === "distancia"; // la del rival: su tiempo ya lo contó su reloj
                 anotar(t, jugadas);
-                if (V.resultadoSolo(t.juego)) { finEntreno(t, g.tipo === "motor" ? "Se terminó: " + V.textoResultado(V.resultadoSolo(t.juego)) : "Fin del ejercicio."); return; }
-                $("entreno-estado").textContent = "Te toca.";
+                g.colocando = false;
+                if (V.resultadoSolo(t.juego)) { finEntreno(t, g.tipo === "ejercicio" ? "Fin del ejercicio." : "Se terminó: " + V.textoResultado(V.resultadoSolo(t.juego))); return; }
+                estadoGuion(t, "Te toca.");
                 g.desde = Date.now();
                 avisar(cual(t) + "Listo. Te toca.", "bien");
             } else avisar(cual(t) + "Esa no es: hay que poner " + comoPonerla(t.juego, g.esperando) + ".", "error");
             return;
         }
         if (jugadas.length !== 1) { avisar(cual(t) + "Se vieron dos jugadas juntas: deja solo la tuya.", "error"); return; }
+        if (g.tipo === "distancia") {
+            if (t.juego.turn() !== g.color) { avisar(cual(t) + "Todavía no es tu turno: espera la jugada de tu rival. Deja las piezas como en el tablero de la derecha.", "error"); return; }
+            anotar(t, jugadas); // y partidaCambio se la manda al rival
+            if (V.resultadoSolo(t.juego)) { finEntreno(t, "Se terminó: " + V.textoResultado(V.resultadoSolo(t.juego))); return; }
+            estadoGuion(t, "Listo: le llegó a tu rival. Espera su jugada.");
+            return;
+        }
         if (g.tipo === "ejercicio") {
             const debe = g.solucion[g.paso];
             const m = t.juego.move(jugadas[0]);
@@ -1040,7 +1246,7 @@
         const t = T();
         if (!t.cal) { avisar(cual(t) + "Primero calibra con la posición inicial: el motor empieza desde ahí.", "error"); return; }
         t.juego = new window.Chess();
-        t.resultadoMano = null; t.confirmadas = new Set(); t.mano = 0; t.reloj = null;
+        t.resultadoMano = null; t.confirmadas = new Set(); t.mano = 0; t.reloj = null; t.dudas = 0; t.ilegales = 0;
         t.inicio = Date.now(); t.horas = []; t.horaResultado = null;
         t.quieta = null; t.recientes = [];
         const color = $("entreno-color").value;
@@ -1060,7 +1266,7 @@
         const x = lista[Math.floor(Math.random() * lista.length)];
         const j = new window.Chess(x.fen);
         t.juego = j;
-        t.resultadoMano = null; t.confirmadas = new Set(); t.mano = 0; t.reloj = null;
+        t.resultadoMano = null; t.confirmadas = new Set(); t.mano = 0; t.reloj = null; t.dudas = 0; t.ilegales = 0;
         t.inicio = Date.now(); t.horas = []; t.horaResultado = null;
         t.guion = null;
         t.ejercicio = { solucion: x.solution.slice(), mate: !!x.mate || /^mate/.test(x.category || ""), id: x.id, categoria: x.category, deMates: /mates\.json$/.test(url) };
@@ -1101,7 +1307,7 @@
     }
     function pintarEntreno() {
         const t = T();
-        $("btn-entreno-dejar").hidden = !t.guion && !t.ejercicio;
+        $("btn-entreno-dejar").hidden = !(t.guion && t.guion.tipo !== "distancia") && !t.ejercicio;
     }
 
     function pintarPartida() {
@@ -1113,6 +1319,7 @@
         $("jugadas").textContent = V.jugadasTexto(juego) || "Todavía ninguna.";
         $("btn-deshacer").disabled = !hist.length;
         $("btn-copiar").disabled = !hist.length;
+        $("btn-planillas").disabled = !hist.length;
         pintarResultado();
         pintarCoronacion();
         pintarFotos();
@@ -1122,6 +1329,124 @@
         const t = T(), r = resultadoDe(t);
         $("resultado-texto").textContent = r ? V.textoResultado(r) + (V.resultadoSolo(t.juego) ? " Lo dice el tablero." : "") : "Sigue en juego.";
         document.querySelectorAll("[data-resultado]").forEach((b) => { if (b.dataset.resultado) b.setAttribute("aria-pressed", String(b.dataset.resultado === r)); });
+    }
+
+    /* ── Jugar a distancia ──────────────────────────────────────────────
+     * Dos personas, cada una en su casa con su tablero y su celular encima.
+     * Quien crea la partida elige su color y pasa el código (o el enlace);
+     * quien se une juega con el otro. La cámara de cada uno lee SU jugada y se
+     * la manda al otro por un canal de Broadcast propio
+     * («tablero-distancia-<código>», sin tabla y sin cuenta, como la
+     * transmisión); la del rival la dice la pantalla (y la voz) y la pone cada
+     * uno en su tablero: la cámara espera a verla (`esperando`), como con el
+     * motor. Cada mensaje lleva la partida entera, así un mensaje perdido no
+     * rompe nada (el siguiente la trae, y al unirse se pide con «hola»). Con
+     * el reloj, cada uno manda lo que le queda: el tiempo del rival lo cuenta
+     * su reloj, no lo que uno tarda en poner su jugada. Al terminar, la partida
+     * queda en la cuenta de cada uno (ver guardarEnCuenta). */
+    let distancia = null; // { codigo, canal, yo, color, nombre, rival, t }
+    const CANAL_DISTANCIA = (codigo) => "tablero-distancia-" + codigo;
+    const DIST_ID = Math.random().toString(36).slice(2, 10);
+    function enviarDistancia(t) {
+        if (!distancia || !distancia.canal || distancia.t !== t || !distancia.color) return;
+        const r = t.reloj;
+        distancia.canal.send({ type: "broadcast", event: "jugada", payload: { v: 1, de: DIST_ID, color: distancia.color, nombre: distancia.nombre,
+            jugadas: t.juego.history(), resultado: resultadoDe(t) || null, reloj: r ? relojAhora(t) : null, ritmo: r ? { base: r.base, inc: r.inc } : null, t: Date.now() } });
+    }
+    function conectarDistancia(codigo, color) {
+        const t = T();
+        if (!t.cal) { avisar(cual(t) + "Primero calibra con la posición inicial: la partida a distancia empieza desde ahí.", "error"); return false; }
+        dejarDistancia(true);
+        t.juego = new window.Chess();
+        t.resultadoMano = null; t.confirmadas = new Set(); t.mano = 0; t.reloj = null; t.dudas = 0; t.ilegales = 0;
+        t.inicio = Date.now(); t.horas = []; t.horaResultado = null;
+        t.quieta = null; t.recientes = []; t.ejercicio = null;
+        distancia = { codigo, color, nombre: $("distancia-nombre").value.trim().slice(0, 40), rival: "", t };
+        t.guion = color ? { tipo: "distancia", color, esperando: null } : null;
+        const canal = window.sb.channel(CANAL_DISTANCIA(codigo));
+        canal.on("broadcast", { event: "jugada" }, (msg) => recibirDistancia((msg && msg.payload) || {}));
+        canal.on("broadcast", { event: "hola" }, (msg) => { const p = (msg && msg.payload) || {}; if (p.de === DIST_ID) return; if (typeof p.nombre === "string") distancia.rival = p.nombre.slice(0, 40); enviarDistancia(t); pintarDistancia(); });
+        canal.subscribe((st) => { if (st === "SUBSCRIBED") canal.send({ type: "broadcast", event: "hola", payload: { v: 1, de: DIST_ID, nombre: distancia && distancia.nombre } }); });
+        distancia.canal = canal;
+        partidaCambio(t);
+        pintarEntreno();
+        pintarDistancia();
+        return true;
+    }
+    function recibirDistancia(p) {
+        if (!distancia || p.de === DIST_ID || !Array.isArray(p.jugadas) || p.jugadas.length > 600) return;
+        const t = distancia.t;
+        if (typeof p.nombre === "string" && p.nombre) distancia.rival = p.nombre.slice(0, 40);
+        // Quien se unió todavía no tiene color: juega con el otro.
+        if (!distancia.color && (p.color === "w" || p.color === "b")) {
+            distancia.color = p.color === "w" ? "b" : "w";
+            t.guion = { tipo: "distancia", color: distancia.color, esperando: null };
+            estadoGuion(t, distancia.color === "w" ? "Juegas con blancas: te toca." : "Juegas con negras: espera la primera jugada de tu rival.");
+            avisar(cual(t) + "Conectado con " + (distancia.rival || "tu rival") + ". Juegas con " + (distancia.color === "w" ? "blancas." : "negras."), "bien");
+            pintarEntreno();
+        }
+        const g = t.guion;
+        if (!g || g.tipo !== "distancia") { pintarDistancia(); return; }
+        const rival = g.color === "w" ? "b" : "w";
+        // El reloj: lo que le queda al rival lo dice su reloj.
+        if (p.reloj && p.ritmo && Number.isFinite(p.reloj.w) && Number.isFinite(p.reloj.b)) {
+            if (!t.reloj) t.reloj = { base: p.ritmo.base, inc: p.ritmo.inc, w: p.reloj.w, b: p.reloj.b, corre: t.juego.turn(), desde: Date.now(), pausa: false, bandera: null };
+            else if (!t.reloj.bandera) t.reloj[rival] = Math.max(0, p.reloj[rival]);
+            pintarReloj();
+        }
+        const mias = t.juego.history(), suyas = p.jugadas;
+        const igualHasta = (n) => mias.slice(0, n).join(" ") === suyas.slice(0, n).join(" ");
+        if (suyas.length === mias.length + 1 && igualHasta(mias.length) && t.juego.turn() === rival) {
+            const nueva = suyas[suyas.length - 1];
+            if (g.esperando !== nueva) {
+                if (t.reloj && !t.reloj.bandera) { t.reloj.corre = g.color; t.reloj.desde = Date.now(); }
+                pedirQuePonga(t, nueva, "Tu rival juega");
+            }
+        } else if (suyas.length < mias.length && igualHasta(suyas.length)) {
+            enviarDistancia(t); // se perdió la mía: se la vuelvo a mandar
+        } else if (!igualHasta(Math.max(suyas.length, mias.length)) && !(g.esperando && suyas.length === mias.length + 1)) {
+            avisar(cual(t) + "Tu partida y la de tu rival ya no coinciden. Revisen las dos planillas.", "error");
+        }
+        // El resultado que marcó el rival (abandono, bandera, tablas de acuerdo).
+        const res = ["1-0", "=", "0-1"].includes(p.resultado) ? p.resultado : null;
+        if (res && !resultadoDe(t) && suyas.length <= t.juego.history().length) {
+            t.resultadoMano = res;
+            partidaCambio(t);
+            finEntreno(t, "Se terminó: " + V.textoResultado(res));
+            return;
+        }
+        pintarDistancia();
+    }
+    function dejarDistancia(callado) {
+        if (distancia && distancia.canal) { try { window.sb.removeChannel(distancia.canal); } catch (e) { /* ya cerrado */ } }
+        const t = distancia && distancia.t;
+        distancia = null;
+        if (t && t.guion && t.guion.tipo === "distancia") t.guion = null;
+        if (!callado) { $("distancia-estado").textContent = "Dejaste la partida a distancia."; pintarEntreno(); }
+        pintarDistancia();
+    }
+    // Un resultado marcado a mano (o la bandera) en una partida a distancia la termina.
+    function terminoDistancia(t) {
+        if (t.guion && t.guion.tipo === "distancia" && resultadoDe(t)) finEntreno(t, "Se terminó: " + V.textoResultado(resultadoDe(t)));
+    }
+    function rendirse() {
+        const t = distancia && distancia.t;
+        if (!t || !distancia.color || resultadoDe(t)) return;
+        t.resultadoMano = distancia.color === "w" ? "0-1" : "1-0";
+        partidaCambio(t);
+        finEntreno(t, "Te rendiste: " + V.textoResultado(t.resultadoMano));
+    }
+    function pintarDistancia() {
+        const activa = !!distancia;
+        $("distancia-apagada").hidden = activa;
+        $("distancia-encendida").hidden = !activa;
+        if (!activa) return;
+        const url = new URL("camara-tablero.html#d=" + distancia.codigo, location.href).href;
+        $("distancia-codigo").textContent = distancia.codigo;
+        const a = $("distancia-enlace"); a.href = url; a.textContent = url;
+        $("distancia-whatsapp").href = "https://wa.me/?text=" + encodeURIComponent("Juguemos a distancia, cada uno en su tablero: " + url);
+        $("distancia-con").textContent = (distancia.color ? "Juegas con " + (distancia.color === "w" ? "blancas" : "negras") : "Esperando el color…") + " · " + (distancia.rival ? "Rival: " + distancia.rival : "Esperando a tu rival…");
+        $("btn-distancia-rendirse").hidden = !distancia.color || !!resultadoDe(distancia.t);
     }
 
     /* ── Transmitir en vivo ─────────────────────────────────────────────
@@ -1184,7 +1509,7 @@
         const id = idPartida(t), nombres = nombresDe(t), donde = dondeDe(t);
         const clave = JSON.stringify([id, nombres, donde, retraso]);
         const hist = v.juego.history(), e = t.enviado;
-        const extra = { tiempos: tiemposDe(t).slice(0, v.n), espera: v.espera, retraso, id, mano: t.mano, reloj: retraso ? null : relojAhora(t) };
+        const extra = { tiempos: tiemposDe(t).slice(0, v.n), espera: v.espera, retraso, id, mano: t.mano, reloj: retraso ? null : relojAhora(t), dudas: t.dudas || 0, equipo: equipoDe(t) };
         const sigue = !entera && e && e.clave === clave && e.cuenta < 20 && v.n >= e.n && hist.slice(0, e.n).join(" ") === e.jugadas;
         const payload = sigue ? V.loNuevo(id, v.juego, e.n, donde, v.resultado, extra) : V.estado(v.juego, nombres, donde, v.resultado, extra);
         t.enviado = { clave, n: v.n, resultado: v.resultado, jugadas: hist.join(" "), cuenta: sigue ? e.cuenta + 1 : 0 };
@@ -1233,13 +1558,34 @@
         });
         canal.on("broadcast", { event: "estado" }, (msg) => oirMesa(codigo, (msg && msg.payload) || {}));
         canal.subscribe((st) => {
+            if (canales.get(codigo) !== canal) return; // uno viejo, ya reemplazado
             estadoCanal = st;
+            pintarRed();
+            if (st === "CHANNEL_ERROR" || st === "TIMED_OUT" || st === "CLOSED") { reconectarCanal(codigo); return; }
             if (st !== "SUBSCRIBED") return;
-            tableros.filter((o) => o.vivo && o.vivo.codigo === codigo).forEach((o) => enviarVivo(o, true));
+            intentosCanal = 0;
+            tableros.filter((o) => o.vivo && o.vivo.codigo === codigo).forEach((o) => { enviarVivo(o, true); latir(o); });
             if (escuchando === codigo) canal.send({ type: "broadcast", event: "pedir", payload: {} });
         });
         canales.set(codigo, canal);
         return canal;
+    }
+    /* Si el canal se cae (y Realtime no lo levanta solo), se arma de nuevo,
+     * esperando cada vez más; al volver, cada tablero manda su partida entera. */
+    let intentosCanal = 0;
+    const reconectando = new Set();
+    function reconectarCanal(codigo) {
+        if (reconectando.has(codigo)) return;
+        reconectando.add(codigo);
+        setTimeout(() => {
+            reconectando.delete(codigo);
+            const usan = tableros.some((o) => o.vivo && o.vivo.codigo === codigo) || escuchando === codigo;
+            if (!usan) return;
+            const viejo = canales.get(codigo);
+            canales.delete(codigo);
+            try { if (viejo) window.sb.removeChannel(viejo); } catch (e) { /* ya cerrado */ }
+            canalDe(codigo);
+        }, espera(intentosCanal++));
     }
     function pararVivo(t) {
         const codigo = t.vivo && t.vivo.codigo;
@@ -1812,6 +2158,32 @@
     $("btn-entreno-armado").addEventListener("click", empezarEjercicio);
     $("btn-entreno-dejar").addEventListener("click", dejarEntreno);
     $("btn-reloj").addEventListener("click", empezarReloj);
+    $("btn-planillas").addEventListener("click", bajarPlanillas);
+    $("btn-distancia-crear").addEventListener("click", () => {
+        let color = $("distancia-color").value;
+        if (color === "azar") color = Math.random() < 0.5 ? "w" : "b";
+        if (conectarDistancia(V.nuevoCodigo(), color)) {
+            estadoGuion(T(), color === "w" ? "Juegas con blancas: haz tu primera jugada cuando llegue tu rival." : "Juegas con negras: espera la primera jugada de tu rival.");
+            avisar(cual(T()) + "Partida a distancia creada. Pásale el código " + distancia.codigo + " (o el enlace) a tu rival.", "bien");
+        }
+    });
+    $("form-distancia-unirse").addEventListener("submit", (e) => {
+        e.preventDefault();
+        const codigo = $("distancia-unirse").value.trim().toLowerCase();
+        if (!V.codigoValido(codigo)) { avisar("Ese código no es de una partida a distancia: son 8 letras y números.", "error"); return; }
+        if (conectarDistancia(codigo, null)) { $("distancia-estado").textContent = "Conectando con tu rival…"; }
+    });
+    $("btn-distancia-rendirse").addEventListener("click", rendirse);
+    $("btn-distancia-dejar").addEventListener("click", () => dejarDistancia(false));
+    { const m = /^#d=([a-z0-9]{8})$/.exec(location.hash); if (m) $("distancia-unirse").value = m[1]; }
+    try { $("equipo-tablero").value = nombreEquipo(); } catch (e) { /* sin almacenamiento */ }
+    $("equipo-tablero").addEventListener("change", () => {
+        try { localStorage.setItem(EQUIPO, $("equipo-tablero").value.trim().slice(0, 40)); } catch (e) { /* solo por esta visita */ }
+        for (const t of tableros) enviarVivo(t, true);
+    });
+    const nombresVistos = [...new Set(lecturas().map((x) => x.tablero).filter((x) => x !== "Sin nombre"))];
+    for (const x of nombresVistos) { const o = document.createElement("option"); o.value = x; $("equipo-lista").append(o); }
+    pintarLecturas(); pintarEquipo();
     $("btn-reloj-pausa").addEventListener("click", pausarReloj);
     $("btn-deshacer").addEventListener("click", () => {
         const t = T();
@@ -1856,7 +2228,7 @@
         if (!bien) { avisar(cual(t) + "No entiendo esa posición: pega un FEN (como lo da Lichess) o las jugadas en PGN.", "error"); return; }
         t.juego = j;
         t.resultadoMano = null; t.confirmadas = new Set(j.history({ verbose: true }).map((m, i) => (m.promotion ? i : -1)));
-        t.inicio = Date.now(); t.horas = j.history().map(() => null); t.horaResultado = null; t.reloj = null;
+        t.inicio = Date.now(); t.horas = j.history().map(() => null); t.horaResultado = null; t.reloj = null; t.dudas = 0; t.ilegales = 0;
         $("dudas").hidden = true;
         partidaCambio(t);
         avisar(cual(t) + "Posición cargada. Pon las piezas así en el tablero y toca «Seguir con esta partida».", "bien");
@@ -1866,6 +2238,7 @@
         if (solo && r !== solo) { avisar(cual(t) + "El tablero ya dice cómo terminó. " + V.textoResultado(solo) + " Si no es así, deshaz la última jugada.", "error"); return; }
         t.resultadoMano = solo ? null : r;
         partidaCambio(t);
+        terminoDistancia(t);
         avisar(cual(t) + (r ? "Resultado marcado. " + V.textoResultado(r) : "La partida sigue en juego."), "bien");
     }));
     $("btn-copiar").addEventListener("click", async () => {

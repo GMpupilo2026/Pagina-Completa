@@ -130,6 +130,14 @@
     }
 
     const DIA_MS = 86400000;
+    // El tablero (lo escribe quien maneja la cámara: «Vinilo verde») y la luz que midió.
+    const LUCES = ["poca", "normal", "mucha"];
+    const equipoValido = (e) => {
+        if (!e || typeof e !== "object") return null;
+        const tablero = typeof e.tablero === "string" ? e.tablero.trim().slice(0, 40) : "";
+        const luz = LUCES.includes(e.luz) ? e.luz : null;
+        return tablero || luz ? { tablero, luz } : null;
+    };
     const relojValido = (r) => (r && Number.isFinite(r.w) && Number.isFinite(r.b) && r.w >= 0 && r.b >= 0 && r.w <= DIA_MS && r.b <= DIA_MS
         ? { w: r.w, b: r.b, corre: r.corre === "w" || r.corre === "b" ? r.corre : null } : null);
     /* Cada partida lleva un id (el de la cámara: cambia con cada partida
@@ -145,6 +153,11 @@
         if (x.retraso) p.retraso = entero(x.retraso, 120);
         // Cuántas jugadas se escribieron a mano (para el informe de las cámaras de Pareo).
         if (Number.isInteger(x.mano) && x.mano > 0) p.mano = Math.min(x.mano, 999);
+        // Cuántas veces dudó (y preguntó cuál jugada fue), y con qué tablero y qué luz:
+        // para saber qué tableros lee bien la cámara (ver equipoValido).
+        if (Number.isInteger(x.dudas) && x.dudas > 0) p.dudas = Math.min(x.dudas, 999);
+        const eq = equipoValido(x.equipo);
+        if (eq) p.equipo = eq;
         // El reloj de la cámara: lo que le queda a cada uno (ms) y de quién corre.
         if (x.reloj && Number.isFinite(x.reloj.w) && Number.isFinite(x.reloj.b)) {
             p.reloj = { w: Math.max(0, Math.round(x.reloj.w)), b: Math.max(0, Math.round(x.reloj.b)), corre: x.reloj.corre === "w" || x.reloj.corre === "b" ? x.reloj.corre : null };
@@ -246,6 +259,8 @@
         d.retraso = entero(p.retraso, 120);
         d.mano = entero(p.mano, 999) || 0;
         d.reloj = relojValido(p.reloj);
+        d.dudas = entero(p.dudas, 999) || 0;
+        d.equipo = equipoValido(p.equipo);
         if (torneoDe(p.torneo) && entero(p.mesa, 999)) { d.torneo = torneoDe(p.torneo); d.mesa = p.mesa; d.ronda = entero(p.ronda, 99); d.tablero = entero(p.tablero, 12); }
         else if (p.simul === 1 && entero(p.mesa, 99)) { d.simul = true; d.mesa = p.mesa; }
         d.id = idValido(p.id);
@@ -277,6 +292,8 @@
         d.retraso = entero(p.retraso, 120);
         d.mano = entero(p.mano, 999) || 0;
         d.reloj = relojValido(p.reloj);
+        d.dudas = entero(p.dudas, 999) || 0;
+        d.equipo = equipoValido(p.equipo) || antes.equipo || null;
         if (antes.torneo) { d.torneo = antes.torneo; d.mesa = antes.mesa; d.tablero = antes.tablero; d.ronda = entero(p.ronda, 99) || antes.ronda; }
         else if (antes.simul) { d.simul = true; d.mesa = antes.mesa; }
         return d;

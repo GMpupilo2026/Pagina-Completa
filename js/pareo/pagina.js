@@ -3221,8 +3221,9 @@
     canal.on("broadcast", { event: "estado" }, (msg) => recibirDeCamara(msg.payload || {}));
     canal.on("broadcast", { event: "alerta" }, (msg) => alertaDeCamara(msg.payload || {}));
     canal.on("broadcast", { event: "foto" }, (msg) => fotoDeCamara(msg.payload || {}));
+    canal.on("broadcast", { event: "latido" }, (msg) => latidoDeCamara(msg.payload || {}));
     canal.subscribe((st) => { if (st === "SUBSCRIBED") canal.send({ type: "broadcast", event: "pedir", payload: {} }); });
-    estado.camaras = { idTorneo: estado.id, codigo: c, canal, mesas: new Map(), alertas: new Map(), partidas: new Map(), pedidas: new Map(), fotos: new Map(), desde: new Map(), cuenta: new Map() };
+    estado.camaras = { idTorneo: estado.id, codigo: c, canal, mesas: new Map(), alertas: new Map(), partidas: new Map(), pedidas: new Map(), fotos: new Map(), desde: new Map(), cuenta: new Map(), latidos: new Map() };
     return true;
   }
   function desconectarCamaras() {
@@ -3274,6 +3275,7 @@
     const clave = claveCamara(d.mesa, d.tablero);
     d.recibido = Date.now(); // para el reloj de la cámara (ver relojesCamaras)
     c.partidas.set(clave, d);
+    anotarLectura(v, claveCamara(d.mesa, d.tablero), d);
     c.mesas.set(clave, Date.now());
     if (!c.desde.has(clave)) c.desde.set(clave, Date.now());
     let cambio = false, repintar = false, aviso = null;
@@ -3401,26 +3403,92 @@
     const claves = [...c.partidas.keys()].sort(ordenLugar);
     if (!claves.length) return null;
     const avisos = (k, cual) => (c.cuenta.get(k) || {})[cual] || 0;
+    const th = (clave) => el("th", { scope: "col", class: "py-1 pr-3 text-left font-semibold", texto: tx(clave) });
     const filas = claves.map((k) => {
       const d = c.partidas.get(k), n = d.juego.history().length, mano = Math.min(d.mano || 0, n);
       return el("tr", { "data-informe": k },
         el("td", { class: "py-1 pr-3 font-semibold", texto: verLugar(k) }),
         el("td", { class: "py-1 pr-3", texto: horaCR(c.desde.get(k)) + " – " + horaCR(c.mesas.get(k)) }),
+        el("td", { class: "py-1 pr-3", texto: (d.equipo && d.equipo.tablero) || "—" }),
+        el("td", { class: "py-1 pr-3", texto: d.equipo && d.equipo.luz ? tx(LUZ_TX[d.equipo.luz]) : "—" }),
         el("td", { class: "py-1 pr-3", texto: String(n - mano) }),
         el("td", { class: "py-1 pr-3", texto: String(mano) }),
         el("td", { class: "py-1 pr-3", texto: String(avisos(k, "ilegal")) }),
         el("td", { class: "py-1 pr-3", texto: String(avisos(k, "tablas")) }),
         el("td", { class: "py-1", texto: d.resultado ? tx("corto_" + d.resultado) : "—" }));
     });
-    const th = (clave) => el("th", { scope: "col", class: "py-1 pr-3 text-left font-semibold", texto: tx(clave) });
+    // Lo de todos los torneos de esta computadora, por tablero y luz (ver anotarLectura).
+    const historial = resumenLectura();
+    const tablaHistorial = historial.length ? el("div", { class: "overflow-x-auto mt-3" },
+      el("p", { class: "text-sm font-semibold", texto: tx("camarasLecturaTitulo") }),
+      el("p", { class: C.nota, texto: tx("camarasLecturaTexto") }),
+      el("table", { id: "pi-camaras-lectura", class: "text-sm mt-1" },
+        el("thead", {}, el("tr", {}, th("camarasInfTablero"), th("camarasInfLuz"), th("camarasLecturaPartidas"), th("camarasInfSolas"), th("camarasInfMano"), th("camarasLecturaDudas"))),
+        el("tbody", {}, historial.map((g) => el("tr", {},
+          el("td", { class: "py-1 pr-3 font-semibold", texto: g.tablero || "—" }),
+          el("td", { class: "py-1 pr-3", texto: g.luz ? tx(LUZ_TX[g.luz]) : "—" }),
+          el("td", { class: "py-1 pr-3", texto: String(g.partidas) }),
+          el("td", { class: "py-1 pr-3", texto: tx("camarasLecturaSolas", { s: g.jugadas - g.mano, n: g.jugadas, p: Math.round(100 * (g.jugadas - g.mano) / g.jugadas) }) }),
+          el("td", { class: "py-1 pr-3", texto: String(g.mano) }),
+          el("td", { class: "py-1 pr-3", texto: String(g.dudas) })))))) : null;
     // Se vuelve a pintar con cada jugada que llega: si estaba abierto, sigue abierto.
     const abierto = !!(document.getElementById("pi-camaras-informe") || {}).open;
     return el("details", { id: "pi-camaras-informe", class: "mt-2", open: abierto },
       el("summary", { class: "text-sm font-semibold cursor-pointer", texto: tx("camarasInforme") }),
       el("p", { class: C.nota, texto: tx("camarasInformeTexto") }),
       el("div", { class: "overflow-x-auto" }, el("table", { class: "text-sm mt-1" },
-        el("thead", {}, el("tr", {}, th("camarasInfLugar"), th("camarasInfHoras"), th("camarasInfSolas"), th("camarasInfMano"), th("camarasInfIlegal"), th("camarasInfTablas"), th("camarasInfResultado"))),
-        el("tbody", {}, filas))));
+        el("thead", {}, el("tr", {}, th("camarasInfLugar"), th("camarasInfHoras"), th("camarasInfTablero"), th("camarasInfLuz"), th("camarasInfSolas"), th("camarasInfMano"), th("camarasInfIlegal"), th("camarasInfTablas"), th("camarasInfResultado"))),
+        el("tbody", {}, filas))),
+      el("button", { type: "button", id: "pi-camaras-planillas", class: C.mini + " mt-2", onclick: planillasDeCamaras }, el("span", { "aria-hidden": "true", texto: "📝 " }), tx("camarasPlanillas")),
+      tablaHistorial);
+  }
+
+  /* Cómo leyó cada cámara su partida, guardado en ESTA computadora para todos
+   * los torneos (no va en el torneo, que se publica): una fila por partida
+   * terminada, con el tablero y la luz que dice la cámara. Así quien organiza
+   * sabe qué tableros conviene llevar. */
+  const LECTURA_CAMARAS = "pareo_camaras_lectura_v1";
+  const LUZ_TX = { poca: "luzPoca", normal: "luzNormal", mucha: "luzMucha" };
+  function anotarLectura(v, clave, d) {
+    const n = d.juego.history().length;
+    if (!d.resultado || n < 2) return;
+    const lista = leerJSON(LECTURA_CAMARAS, []).filter((x) => x.k !== v.id + "|" + d.ronda + "|" + clave);
+    lista.push({ k: v.id + "|" + d.ronda + "|" + clave, tablero: (d.equipo && d.equipo.tablero) || "", luz: (d.equipo && d.equipo.luz) || null,
+      jugadas: n, mano: Math.min(d.mano || 0, n), dudas: d.dudas || 0 });
+    escribir(LECTURA_CAMARAS, JSON.stringify(lista.slice(-2000)));
+  }
+  function resumenLectura() {
+    const grupos = new Map();
+    for (const x of leerJSON(LECTURA_CAMARAS, [])) {
+      const k = x.tablero + "|" + (x.luz || "");
+      const g = grupos.get(k) || { tablero: x.tablero, luz: x.luz, partidas: 0, jugadas: 0, mano: 0, dudas: 0 };
+      g.partidas++; g.jugadas += x.jugadas; g.mano += x.mano; g.dudas += x.dudas;
+      grupos.set(k, g);
+    }
+    return [...grupos.values()].filter((g) => g.jugadas).sort((a, b) => (b.jugadas - b.mano) / b.jugadas - (a.jugadas - a.mano) / a.jugadas);
+  }
+
+  // Las planillas de anotación de la ronda en juego, de lo que mandaron las
+  // cámaras (js/planilla-pdf.js, la misma de la cámara): una por jugador.
+  let cargaPlanillas = null;
+  function cargarPlanillas() {
+    const una = (src) => new Promise((ok, mal) => { const sc = document.createElement("script"); sc.src = src; sc.onload = ok; sc.onerror = () => mal(new Error(src)); document.head.appendChild(sc); });
+    if (!cargaPlanillas) cargaPlanillas = (window.ComandosTablero ? Promise.resolve() : una("js/comandos-tablero.js")).then(() => (window.PlanillaPDF ? null : una("js/planilla-pdf.js")));
+    cargaPlanillas.catch(() => { cargaPlanillas = null; });
+    return cargaPlanillas;
+  }
+  async function planillasDeCamaras() {
+    const v = t(), c = estado.camaras;
+    const partidas = [...c.partidas.entries()].sort((a, b) => ordenLugar(a[0], b[0]))
+      .filter(([, d]) => d.ronda === v.rondas.length && d.juego.history().length && !d.juego.header().FEN)
+      .map(([k, d]) => ({ jugadas: d.juego.history(), blancas: d.blancas, negras: d.negras, resultado: d.resultado || null,
+        evento: v.nombre || "", ronda: v.rondas.length, mesa: verLugar(k), fecha: window.HoraCR ? HoraCR.hoy() : "" }));
+    if (!partidas.length) { Avisos.avisar(tx("camarasPlanillasNinguna"), { tipo: "info" }); return; }
+    try {
+      await cargarPlanillas();
+      await window.PlanillaPDF.descargar(partidas, "planillas-ronda-" + v.rondas.length + ".pdf", { en: idioma === "en" });
+      Avisos.avisar(tx("camarasPlanillasListas", { n: partidas.length }), { tipo: "ok" });
+    } catch (e) { Avisos.avisar(tx("camarasPlanillasError"), { tipo: "error" }); }
   }
 
   // ---------- Transmitir a Lichess ----------
@@ -3547,6 +3615,48 @@
   }
 
   // Arriba de la ronda: con qué código se escucha y qué mesas mandan.
+  /* El latido de cada cámara (cada 30 s y cuando algo cambia): que sigue
+   * viva aunque nadie mueva, su batería y si la mesa está lista (lee las 64,
+   * hay luz, transmite, la pantalla no se apaga). Ver «Que no se caiga» en
+   * js/camara-tablero.js. */
+  const FALTA_TX = { lectura: "camaraFaltaLectura", luz: "camaraFaltaLuz", bateria: "camaraFaltaBateria", senal: "camaraFaltaSenal", pantalla: "camaraFaltaPantalla" };
+  const SIN_NOTICIAS_MS = 90000;
+  function latidoDeCamara(p) {
+    const v = torneoDeCamaras();
+    if (!v || !v.publicado || !v.rondas.length || p.torneo !== v.publicado.id || Number(p.ronda) !== v.rondas.length) return;
+    const mesa = Number(p.mesa), tablero = E.esDeEquipos(v) ? Number(p.tablero) || null : null;
+    if (!v.rondas[v.rondas.length - 1].mesas.some((x, k) => V.mesaFisica(v, k) === mesa)) return;
+    const clave = claveCamara(mesa, tablero);
+    const nivel = p.bateria && Number.isFinite(p.bateria.nivel) ? Math.max(0, Math.min(100, Math.round(p.bateria.nivel))) : null;
+    const faltan = p.lista && Array.isArray(p.lista.faltan) ? p.lista.faltan.filter((k) => FALTA_TX[k]).slice(0, 5) : null;
+    estado.camaras.latidos.set(clave, { h: Date.now(), ronda: v.rondas.length, bateria: nivel === null ? null : { nivel, cargando: !!p.bateria.cargando }, faltan });
+    const nueva = !estado.camaras.mesas.has(clave);
+    estado.camaras.mesas.set(clave, Date.now());
+    if (nueva) pintarCamaras(); else relojesCamaras();
+  }
+  // Las mesas de la ronda que necesitan a alguien: sin noticias, sin batería o por revisar.
+  function saludCamaras(v) {
+    const c = estado.camaras, ahora = Date.now(), lineas = [];
+    const sinNoticias = [], baja = [], revisar = [], listas = [];
+    for (const clave of [...c.mesas.keys()].sort(ordenLugar)) {
+      const d = c.partidas.get(clave), l = c.latidos.get(clave);
+      const ronda = (d && d.ronda) || (l && l.ronda);
+      if (ronda !== v.rondas.length || (d && d.resultado)) continue;
+      const hace = ahora - c.mesas.get(clave);
+      if (hace > SIN_NOTICIAS_MS) sinNoticias.push(tx("camaraSinNoticiasMesa", { m: verLugar(clave), n: Math.floor(hace / 60000) }));
+      if (l && l.bateria && !l.bateria.cargando && l.bateria.nivel < 20) baja.push(tx("camaraBateriaMesa", { m: verLugar(clave), n: l.bateria.nivel }));
+      if (l && l.faltan) {
+        if (l.faltan.length) revisar.push(tx("camaraRevisarMesa", { m: verLugar(clave), q: l.faltan.map((k) => tx(FALTA_TX[k])).join(", ") }));
+        else listas.push(verLugar(clave));
+      }
+    }
+    if (sinNoticias.length) lineas.push(tx("camarasSinNoticias", { l: sinNoticias.join(", ") }));
+    if (baja.length) lineas.push(tx("camarasBateriaBaja", { l: baja.join(", ") }));
+    if (revisar.length) lineas.push(tx("camarasRevisar", { l: revisar.join("; ") }));
+    if (listas.length) lineas.push(tx("camarasListas", { l: listas.join(", ") }));
+    return lineas;
+  }
+
   /* Las mesas de la ronda cuyo reloj de la cámara corre con menos de un
    * minuto: cada segundo, solo ese renglón (la caja no se vuelve a armar). */
   function relojesCamaras() {
@@ -3561,6 +3671,12 @@
     const texto = cortas.length ? tx("camaraPocoTiempo", { l: cortas.join(", ") }) : "";
     e.hidden = !cortas.length;
     if (e.textContent !== texto) e.textContent = texto;
+    const s = $("pi-camaras-salud");
+    if (s) {
+      const lineas = saludCamaras(v), txt = lineas.join("\n");
+      s.hidden = !lineas.length;
+      if (s.dataset.txt !== txt) { s.dataset.txt = txt; s.replaceChildren(...lineas.map((x) => el("li", { texto: x }))); }
+    }
   }
   setInterval(relojesCamaras, 1000);
   function pintarCamaras() {
@@ -3581,6 +3697,7 @@
       el("p", { class: C.nota, texto: tx("camarasCajaTexto", { c: v.camaras.codigo }) }),
       el("p", { id: "pi-camaras-mesas", class: "text-sm mt-1", texto: mesas.length ? tx("camarasMesas", { m: mesas.join(", ") }) : tx("camarasNinguna") }),
       el("p", { id: "pi-camaras-poco", class: "text-sm font-semibold text-red-800 dark:text-red-200 mt-1", hidden: true }),
+      el("ul", { id: "pi-camaras-salud", class: "text-sm mt-1 space-y-0.5", hidden: true }),
       listaAlertas, estado.camaras && estado.camaras.idTorneo === estado.id ? informeCamaras() : null,
       estado.camaras && estado.camaras.idTorneo === estado.id ? pintarLichess(v) : null, el("div", { class: "mt-2" }, dejar));
     relojesCamaras();
