@@ -42,9 +42,6 @@
     // Una partida que todavía no empezó viene de Lichess SIN «fen»: es la inicial.
     const POSICION_INICIAL = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
     const PIZARRA_MS = 90000;       // y la pizarra de chess-results (la función guarda 90 s)
-    const FILES = ["a", "b", "c", "d", "e", "f", "g", "h"];
-    const NOMBRE_PIEZA = { k: "rey", q: "dama", r: "torre", b: "alfil", n: "caballo", p: "peón" };
-    const ORDEN_PIEZA = "kqrbnp";
 
     const $ = (id) => document.getElementById(id);
 
@@ -128,81 +125,16 @@
 
     // ---- El tablero ----------------------------------------------------------
 
-    // Solo hace falta la parte de las piezas de la FEN: no se juega nada acá.
-    function piezasDeFen(fen) {
-        const piezas = {};
-        const filas = String(fen || POSICION_INICIAL).split(" ")[0].split("/");
-        if (filas.length !== 8) return piezas;
-        filas.forEach((fila, i) => {
-            const rank = 8 - i;
-            let f = 0;
-            for (const ch of fila) {
-                if (/[1-8]/.test(ch)) { f += Number(ch); continue; }
-                if (f > 7) break;
-                const tipo = ch.toLowerCase();
-                if (ORDEN_PIEZA.indexOf(tipo) === -1) { f++; continue; }
-                piezas[FILES[f] + rank] = { type: tipo, color: ch === tipo ? "b" : "w" };
-                f++;
-            }
-        });
-        return piezas;
-    }
+    // El dibujo de un tablero que solo muestra una FEN es de js/tablero-fen.js
+    // (lo usa también la página del Centroamericano).
+    const piezasDeFen = (fen) => window.TableroFen.piezas(fen);
+    const dibujarTablero = (el, fen, ultima, opts) => window.TableroFen.dibujar(el, fen, ultima, opts);
+    const ajustarPiezas = (el) => window.TableroFen.ajustar(el);
+    const describirPosicion = (fen) => window.TableroFen.describir(fen);
 
     function turnoDeFen(fen) {
         const t = String(fen || POSICION_INICIAL).split(" ")[1];
         return t === "b" ? "b" : "w";
-    }
-
-    // Mismo dibujo que el resto del sitio: las casillas con los colores que
-    // eligió cada quien (--sq-light/--sq-dark) y la pieza por PiezaPreferida.
-    function dibujarTablero(el, fen, ultima, opts) {
-        const piezas = piezasDeFen(fen);
-        const marcadas = ultima && /^[a-h][1-8][a-h][1-8]/.test(ultima) ? [ultima.slice(0, 2), ultima.slice(2, 4)] : [];
-        el.innerHTML = "";
-        for (let rank = 8; rank >= 1; rank--) {
-            for (let f = 0; f < 8; f++) {
-                const casilla = FILES[f] + rank;
-                const clara = (f + rank - 1) % 2 === 1;   // a1 oscura
-                const sq = document.createElement("div");
-                sq.className = "cine-sq " + (clara ? "cine-sq-clara" : "cine-sq-oscura") +
-                    (marcadas.indexOf(casilla) !== -1 ? " cine-sq-ultima" : "");
-                sq.dataset.square = casilla;
-                const p = piezas[casilla];
-                if (p) {
-                    const span = document.createElement("span");
-                    span.setAttribute("aria-hidden", "true");
-                    if (window.PiezaPreferida) PiezaPreferida.pintar(span, p.type, p.color);
-                    else {
-                        span.className = p.color === "w" ? "piece-white" : "piece-black";
-                        span.textContent = { k: "♚", q: "♛", r: "♜", b: "♝", n: "♞", p: "♟" }[p.type];
-                    }
-                    sq.appendChild(span);
-                }
-                el.appendChild(sq);
-            }
-        }
-        requestAnimationFrame(() => ajustarPiezas(el));
-        if (!opts || !opts.miniatura) { if (window.Coordenadas) Coordenadas.aplicar(el); }
-    }
-
-    // La pieza se mide contra la casilla ya dibujada, no contra la ventana.
-    function ajustarPiezas(el) {
-        const sq = el.querySelector(".cine-sq");
-        if (!sq) return;
-        const ancho = sq.getBoundingClientRect().width;
-        if (!ancho) return;
-        el.style.fontSize = Math.max(8, ancho * 0.72) + "px";
-    }
-
-    // Lo que dice el tablero en palabras, para quien no lo ve.
-    function describirPosicion(fen) {
-        const piezas = piezasDeFen(fen);
-        const lado = (color) => Object.keys(piezas)
-            .filter((c) => piezas[c].color === color)
-            .sort((a, b) => ORDEN_PIEZA.indexOf(piezas[a].type) - ORDEN_PIEZA.indexOf(piezas[b].type) || a.localeCompare(b))
-            .map((c) => NOMBRE_PIEZA[piezas[c].type] + " en " + c)
-            .join(", ");
-        return "Blancas: " + (lado("w") || "ninguna pieza") + ". Negras: " + (lado("b") || "ninguna pieza") + ".";
     }
 
     // ---- Textos de una partida -----------------------------------------------

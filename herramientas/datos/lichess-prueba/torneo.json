@@ -1,0 +1,131 @@
+{
+ "tour": {
+  "id": "OlpxXUwD",
+  "name": "VII Campeonato Sudamericano de Ajedrez Bogotá 2026 | G15",
+  "slug": "vii-campeonato-sudamericano-de-ajedrez-bogota-2026-g15",
+  "info": {
+   "format": "9-round Swiss",
+   "tc": "90 min + 30 sec / move",
+   "fideTC": "standard",
+   "location": "Bogota Colombia",
+   "timeZone": "America/Bogota"
+  },
+  "createdAt": 1793112391859,
+  "url": "https://lichess.org/broadcast/vii-campeonato-sudamericano-de-ajedrez-bogota-2026-g15/OlpxXUwD",
+  "tier": 3,
+  "dates": [
+   1793113800000,
+   1793455800000
+  ]
+ },
+ "rounds": [
+  {
+   "id": "RZL0OeZa",
+   "name": "Round 1",
+   "slug": "round-1",
+   "finishedAt": 1793125304248,
+   "finished": true,
+   "startsAt": 1793113800000,
+   "url": "https://lichess.org/broadcast/vii-campeonato-sudamericano-de-ajedrez-bogota-2026-g15/round-1/RZL0OeZa"
+  },
+  {
+   "id": "DKgQiEKV",
+   "name": "Round 2",
+   "slug": "round-2",
+   "finishedAt": 1793148236762,
+   "finished": true,
+   "startsAt": 1793137200000,
+   "url": "https://lichess.org/broadcast/vii-campeonato-sudamericano-de-ajedrez-bogota-2026-g15/round-2/DKgQiEKV"
+  },
+  {
+   "id": "SGzVVHAZ",
+   "name": "Round 3",
+   "slug": "round-3",
+   "finishedAt": 1793207977339,
+   "finished": true,
+   "startsAt": 1793196600000,
+   "url": "https://lichess.org/broadcast/vii-campeonato-sudamericano-de-ajedrez-bogota-2026-g15/round-3/SGzVVHAZ"
+  },
+  {
+   "id": "odZUDBub",
+   "name": "Round 4",
+   "slug": "round-4",
+   "finishedAt": 1793242559383,
+   "finished": true,
+   "startsAt": 1793221800000,
+   "url": "https://lichess.org/broadcast/vii-campeonato-sudamericano-de-ajedrez-bogota-2026-g15/round-4/odZUDBub"
+  },
+  {
+   "id": "NyAjCZcM",
+   "name": "Round 5",
+   "slug": "round-5",
+   "finishedAt": 1793303655277,
+   "finished": true,
+   "startsAt": 1793283000000,
+   "url": "https://lichess.org/broadcast/vii-campeonato-sudamericano-de-ajedrez-bogota-2026-g15/round-5/NyAjCZcM"
+  },
+  {
+   "id": "2XsJtak9",
+   "name": "Round 6",
+   "slug": "round-6",
+   "finishedAt": 1793324078362,
+   "finished": true,
+   "startsAt": 1793308200000,
+   "url": "https://lichess.org/broadcast/vii-campeonato-sudamericano-de-ajedrez-bogota-2026-g15/round-6/2XsJtak9"
+  },
+  {
+   "id": "MdLROwfK",
+   "name": "Round 7",
+   "slug": "round-7",
+   "ongoing": true,
+   "startsAt": 1793369400000,
+   "url": "https://lichess.org/broadcast/vii-campeonato-sudamericano-de-ajedrez-bogota-2026-g15/round-7/MdLROwfK"
+  },
+  {
+   "id": "07HGcwFx",
+   "name": "Round 8",
+   "slug": "round-8",
+   "startsAt": 1793394600000,
+   "url": "https://lichess.org/broadcast/vii-campeonato-sudamericano-de-ajedrez-bogota-2026-g15/round-8/07HGcwFx"
+  },
+  {
+   "id": "93Ww9jbp",
+   "name": "Round 9",
+   "slug": "round-9",
+   "startsAt": 1793455800000,
+   "url": "https://lichess.org/broadcast/vii-campeonato-sudamericano-de-ajedrez-bogota-2026-g15/round-9/93Ww9jbp"
+  }
+ ],
+ "group": {
+  "id": "CVbqLY5H",
+  "slug": "vii-campeonato-sudamericano-de-ajedrez-bogota-2026",
+  "name": "VII Campeonato Sudamericano de Ajedrez Bogotá 2026",
+  "tours": [
+   {
+    "id": "v4WYzSwj",
+    "name": "Open U17",
+    "active": true,
+    "live": false
+   },
+   {
+    "id": "UuPKDMo2",
+    "name": "Girls U17",
+    "active": true,
+    "live": false
+   },
+   {
+    "id": "OljVJl9V",
+    "name": "Open U15",
+    "active": true,
+    "live": false
+   },
+   {
+    "id": "OlpxXUwD",
+    "name": "Girls U15",
+    "active": true,
+    "live": true
+   }
+  ]
+ },
+ "defaultRoundId": "MdLROwfK"
+}
