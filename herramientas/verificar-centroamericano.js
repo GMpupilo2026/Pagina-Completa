@@ -169,9 +169,9 @@ ok("la página carga el cliente de Supabase antes que su código en vivo", html.
   };
   const textos = ["Sub-10 Femenino", "U08", "U10F", "Resultados U12 Girls", "Sub 8 Absoluto", "Sub-14 Niñas", "Lista general", "Rapid", "Toda la información del torneo"];
   const r = require("child_process").spawnSync(process.execPath, ["--experimental-strip-types", "--no-warnings", "--input-type=module", "-e",
-    `import { codigoCategoria, deCategorias, resumenDelegacion } from ${JSON.stringify(path.join(RAIZ, "supabase/functions/sala-jugadores/torneos-sala.ts"))};
+    `import { codigoCategoria, deCategorias, modalidadDe, resumenDelegacion } from ${JSON.stringify(path.join(RAIZ, "supabase/functions/sala-jugadores/torneos-sala.ts"))};
      const [casos, textos] = JSON.parse(process.argv[1]);
-     const out = { codigos: textos.map(codigoCategoria), solo: deCategorias([{ tnr: "g" }, ...casos.juntos]).map((t) => t.tnr), sinCat: deCategorias(casos.falta).length };
+     const out = { modos: [...textos, "Blitz Sub-10 Absoluto", "Rápidas Sub-12 Femenino", "RAPIDAS U14", "Rápida Sub-8", "Blitz-U16F", "Sub-10 Blitzkrieg", "Torneo Rapidito"].map(modalidadDe), codigos: textos.map(codigoCategoria), solo: deCategorias([{ tnr: "g" }, ...casos.juntos]).map((t) => t.tnr), sinCat: deCategorias(casos.falta).length };
      for (const k of Object.keys(casos)) out[k] = resumenDelegacion("es", "CRC", casos[k]);
      out.en = resumenDelegacion("en", "CRC", casos.juntos);
      process.stdout.write(JSON.stringify(out));`, JSON.stringify([casos, textos])], { encoding: "utf8" });
@@ -180,6 +180,8 @@ ok("la página carga el cliente de Supabase antes que su código en vivo", html.
   if (o) {
     ok("la categoría sale del texto del enlace, con el código de chess-results",
        JSON.stringify(o.codigos) === JSON.stringify(["U10F", "U08", "U10F", "U12F", "U08", "U14F", "", "", ""]), JSON.stringify(o.codigos));
+    ok("la modalidad sale del texto del enlace: Blitz, Rápidas o, sin ninguna, Clásico",
+       JSON.stringify(o.modos) === JSON.stringify(["clasico", "clasico", "clasico", "clasico", "clasico", "clasico", "clasico", "rapidas", "clasico", "blitz", "rapidas", "rapidas", "rapidas", "blitz", "clasico", "clasico"]), JSON.stringify(o.modos));
     ok("con torneos de categoría, los otros (la lista general) no se cuentan; sin ellos, todos", JSON.stringify(o.solo) === JSON.stringify(["1", "2"]) && o.sinCat === 2, JSON.stringify(o));
     ok("el resumen de un país junta todas sus categorías en UN aviso por ronda",
        !!o.juntos && o.juntos.ronda === 3 && o.juntos.titulo === "CRC · Ronda 3" && o.juntos.cuerpo === "1 ganada, 1 en tablas: 1½ de 2 puntos en sus partidas.", JSON.stringify(o.juntos));
@@ -192,6 +194,9 @@ ok("la página carga el cliente de Supabase antes que su código en vivo", html.
   ok("la función manda un solo resumen por país y ronda (tnr «0»), no uno por torneo",
      /avisar\(s, "delegacion", "0", 0, r\.ronda/.test(fn) && !/for \(const t of torneos\)[\s\S]{0,200}resumenDelegacion/.test(fn));
   ok("y a cada jugador sin «Gr» le pone la categoría de su enlace", /grupo: j\.grupo \|\| t\.categoria/.test(fn));
+  ok("la función lee solo los torneos de la modalidad que pide la página, y dice cuáles tiene la sala",
+     /sala\.torneos\.filter\(\(t\) => t\.modalidad === modalidad\)\.slice\(0, 15\)/.test(fn) && /json\(\{ torneos, modalidad, modalidades: sala\.modalidades \}\)/.test(fn));
+  ok("y los avisos al celular siguen con el clásico", /const torneos = await datosDeSala\(admin, sala\);/.test(fn));
   ok("y manda cada aviso de la organización una vez a cada aparato que ya estaba suscrito, en su idioma",
      /avisar\(s, "anuncio", "0", 0, Number\(a\.id\)/.test(fn) && /new Date\(s\.creada\)\.getTime\(\) > new Date\(a\.creado\)\.getTime\(\)/.test(fn) && /en && a\.texto_en \? a\.texto_en : a\.texto/.test(fn));
 }
@@ -450,7 +455,7 @@ ok("la página carga el cliente de Supabase antes que su código en vivo", html.
     let r = await buscar("mayorga");
     ok("buscar por el apellido da su mesa, su color y su rival", r.tarjetas.length === 1 && /Ronda 4 · Mesa 1 · Juega con blancas contra FM Guevara Ruiz, Santiago Jose \(ESA, 2252\)/.test(r.tarjetas[0]), JSON.stringify(r));
     ok("y su categoría, su puesto en ella y sus puntos", /Sub-18 Absoluto · Elo 2215 · Puesto 1 de 3 en Sub-18 Absoluto · 3 puntos/.test(r.tarjetas[0]), r.tarjetas[0]);
-    ok("le pide a la función la sala del torneo, no una dirección", await p6.evaluate(() => JSON.stringify(window.__pedidos[0]) === JSON.stringify(["sala-jugadores", { clave: "centroamericano-2026" }])));
+    ok("le pide a la función la sala del torneo, no una dirección", await p6.evaluate(() => JSON.stringify(window.__pedidos[0]) === JSON.stringify(["sala-jugadores", { clave: "centroamericano-2026", modalidad: "clasico" }])));
     r = await buscar("munoz jose");
     ok("sin tildes y en cualquier orden, y el bye se dice", r.tarjetas.length === 1 && /tiene bye/.test(r.tarjetas[0]), JSON.stringify(r));
     r = await buscar("castillo");
@@ -1067,7 +1072,7 @@ ok("la página carga el cliente de Supabase antes que su código en vivo", html.
       return { visible: !!c && c.checkVisibility(), texto: c && c.textContent, fondo: s && s.backgroundColor, letra: s && s.color, salir: c && c.querySelector("a").getAttribute("href"),
         pedido: window.__pedidos[0], propio: !!localStorage.getItem("cac_prueba_jugadores_v1"), real: !!localStorage.getItem("cac_jugadores_v1") };
     });
-    ok("?sala= pide esa sala en modo de prueba, en cuanto se abre la página", JSON.stringify(prb.pedido) === JSON.stringify({ clave: "centroamericano-prueba", prueba: true }), JSON.stringify(prb.pedido));
+    ok("?sala= pide esa sala en modo de prueba, en cuanto se abre la página", JSON.stringify(prb.pedido) === JSON.stringify({ clave: "centroamericano-prueba", modalidad: "clasico", prueba: true }), JSON.stringify(prb.pedido));
     ok("y lo dice arriba, en rojo con letra blanca, con un enlace para salir", prb.visible && /Modo de prueba: esta página muestra los torneos de la sala «centroamericano-prueba»/.test(prb.texto)
       && prb.fondo === "rgb(206, 19, 40)" && prb.letra === "rgb(255, 255, 255)" && prb.salir === "/" + PAGINA, JSON.stringify(prb));
     ok("lo de la prueba se guarda aparte: no pisa lo guardado del festival", prb.propio && !prb.real, JSON.stringify(prb));
@@ -1087,6 +1092,100 @@ ok("la página carga el cliente de Supabase antes que su código en vivo", html.
     await pPr.goto(BASE + "/" + PAGINA + "?sala=" + encodeURIComponent("<script>"), { waitUntil: "load" });
     ok("y una clave rara se ignora", await pPr.evaluate(() => !document.getElementById("cac-prueba")));
     await ctxPr.close();
+
+    // Clásico · Rápidas · Blitz: una modalidad a la vez. La página le pide a la
+    // función solo la elegida; el selector sale solo si la sala tiene más de una,
+    // es el mismo en el buscador y en cada ventana, y lo de una modalidad no se
+    // pinta como de otra aunque llegue tarde.
+    const BLITZ = { modalidad: "blitz", modalidades: ["clasico", "rapidas", "blitz"], torneos: [{ tnr: "2000001", url: "x", leido_en: "2026-11-07T16:05:00Z", ronda: 1, rondas: 9, categoria: "U10",
+      jugadores: [{ puesto: 1, no: 1, titulo: "", nombre: "Blitzer Rojas, Ana", fed: "CRC", elo: 1500, grupo: "U10", puntos: "1", r: ["2w1"] },
+                  { puesto: 2, no: 2, titulo: "", nombre: "Zeta Mora, Luis", fed: "PAN", elo: 1400, grupo: "U10", puntos: "0", r: ["1b0"] }], pareo: null }] };
+    const RAPIDAS = { ...BLITZ, modalidad: "rapidas", torneos: [{ ...BLITZ.torneos[0], tnr: "2000002", jugadores: [{ ...BLITZ.torneos[0].jugadores[0], nombre: "Rapidez Vargas, Eva" }] }] };
+    const ctxMod = await nav.newContext({ viewport: { width: 1280, height: 900 }, serviceWorkers: "block" });
+    await ctxMod.addInitScript(([d, b, rp]) => {
+      window.__pedidos = [];
+      const solo = sessionStorage.getItem("solo") === "1", sinBlitz = sessionStorage.getItem("sinBlitz") === "1";
+      window.sb = { functions: { invoke: async (nombre, op) => {
+        const m = op.body && op.body.modalidad;
+        window.__pedidos.push(m);
+        if (solo) return { data: { ...d, modalidad: "clasico", modalidades: ["clasico"] }, error: null };
+        const todas = sinBlitz ? ["clasico", "rapidas"] : ["clasico", "rapidas", "blitz"];
+        if (m === "rapidas") { await new Promise((r) => setTimeout(r, 900)); return { data: { ...rp, modalidades: todas }, error: null }; }
+        if (m === "blitz" && !sinBlitz) return { data: b, error: null };
+        return { data: { ...d, modalidad: "clasico", modalidades: todas }, error: null };
+      } } };
+    }, [DATOS, BLITZ, RAPIDAS]);
+    const pMod = await ctxMod.newPage();
+    const estadoMod = () => pMod.evaluate(() => ({
+      cajas: [...document.querySelectorAll("[data-modalidades]")].filter((c) => c.checkVisibility()).map((c) => c.closest("dialog") ? c.closest("dialog").id : "buscador"),
+      puesta: [...document.querySelectorAll("#buscador [data-modalidad][aria-pressed=true]")].map((b) => b.textContent + "|" + getComputedStyle(b, "::before").content),
+      botones: [...document.querySelectorAll("#buscador [data-modalidad]")].map((b) => b.textContent),
+      tarjetas: [...document.querySelectorAll("#buscador-resultados li")].map((l) => l.innerText.replace(/\s+/g, " ").trim()),
+      pedidos: window.__pedidos.slice(), elegida: localStorage.getItem("cac_modalidad_v1"),
+      foco: document.activeElement && document.activeElement.dataset ? document.activeElement.dataset.modalidad : null,
+    }));
+    const buscarMod = async (q) => { await pMod.fill("#buscador-nombre", q); await pMod.waitForTimeout(500); return estadoMod(); };
+    await pMod.goto(BASE + "/" + PAGINA, { waitUntil: "load" });
+    await pMod.evaluate(() => sessionStorage.setItem("solo", "1"));
+    await pMod.reload({ waitUntil: "load" });
+    let em = await buscarMod("mayorga");
+    ok("con una sola modalidad en la sala, el selector no se ve", em.tarjetas.length === 1 && !em.cajas.length, JSON.stringify(em));
+    await pMod.evaluate(() => { sessionStorage.removeItem("solo"); localStorage.clear(); });
+    await pMod.reload({ waitUntil: "load" });
+    em = await buscarMod("mayorga");
+    ok("con Rápidas y Blitz en la sala, sale «Clásico · Rápidas · Blitz» y empieza en el clásico",
+       JSON.stringify(em.cajas) === JSON.stringify(["buscador"]) && JSON.stringify(em.botones) === JSON.stringify(["Clásico", "Rápidas", "Blitz"]) && JSON.stringify(em.puesta) === JSON.stringify(['Clásico|"✓ "']) && em.pedidos[0] === "clasico", JSON.stringify(em));
+    ok("la elegida no va solo con color: va rellena y con «✓»", await pMod.evaluate(() => {
+      const [a, b] = ["clasico", "blitz"].map((m) => getComputedStyle(document.querySelector('#buscador [data-modalidad="' + m + '"]')));
+      return a.backgroundColor !== b.backgroundColor && a.color === "rgb(255, 255, 255)";
+    }));
+    ok("en el clásico, la tarjeta trae «Agregar a mi calendario»", await pMod.evaluate(() => !!document.querySelector('#buscador-resultados [data-accion="calendario"]')));
+    await pMod.click('#buscador [data-modalidad="blitz"]');
+    await pMod.waitForTimeout(400);
+    em = await buscarMod("blitzer");
+    ok("al tocar Blitz se pide solo el Blitz y todo pasa a sus torneos", em.pedidos[em.pedidos.length - 1] === "blitz" && em.tarjetas.length === 1 && /Blitzer Rojas, Ana/.test(em.tarjetas[0])
+       && JSON.stringify(em.puesta) === JSON.stringify(['Blitz|"✓ "']) && em.elegida === '"blitz"', JSON.stringify(em));
+    ok("y los del clásico ya no salen", (await buscarMod("mayorga")).tarjetas.length === 0);
+    ok("en el Blitz no hay calendario de rondas (el de la página es el del clásico)", await buscarMod("blitzer").then(() => pMod.evaluate(() => !document.querySelector('#buscador-resultados [data-accion="calendario"]'))));
+    ok("lo que sale de la página dice la modalidad: «Sub-10 Absoluto (Blitz)»", await pMod.evaluate(() => window.CentroamericanoVivo.conModalidad("Sub-10 Absoluto") === "Sub-10 Absoluto (Blitz)"));
+    ok("cada modalidad se guarda aparte: el clásico no se pisa", await pMod.evaluate(() => /Mayorga/.test(localStorage.getItem("cac_jugadores_v1") || "") && /Blitzer/.test(localStorage.getItem("cac_jugadores_v1_blitz") || "")));
+    await pMod.focus('#buscador [data-modalidad="clasico"]');
+    await pMod.keyboard.press("Enter");
+    await pMod.waitForTimeout(300);
+    ok("se cambia con el teclado y el foco no se pierde", (await estadoMod()).foco === "clasico");
+    await pMod.click('a[href="#clasificacion"]');
+    await pMod.waitForTimeout(500);
+    em = await estadoMod();
+    ok("cada ventana trae el mismo selector, con la misma puesta", em.cajas.includes("clasificacion") && await pMod.evaluate(() => document.querySelector('#clasificacion [data-modalidad="clasico"]').getAttribute("aria-pressed") === "true"), JSON.stringify(em));
+    await pMod.click('#clasificacion [data-modalidad="blitz"]');
+    await pMod.waitForFunction(() => /Blitzer/.test(document.getElementById("clasificacion-contenido").textContent), null, { timeout: 5000 }).catch(() => {});
+    ok("y cambiarla ahí cambia la ventana y la página", await pMod.evaluate(() => /Blitzer/.test(document.getElementById("clasificacion-contenido").textContent) && !/Mayorga/.test(document.getElementById("clasificacion-contenido").textContent)
+       && document.querySelector('#buscador [data-modalidad="blitz"]').getAttribute("aria-pressed") === "true"));
+    await pMod.keyboard.press("Escape");
+    // Rápidas tarda; antes de que llegue se toca Blitz: lo de Rápidas no se pinta.
+    await pMod.click('#buscador [data-modalidad="rapidas"]');
+    await pMod.click('#buscador [data-modalidad="clasico"]');
+    await pMod.waitForTimeout(1300);
+    em = await buscarMod("rapidez");
+    ok("lo que llega tarde de otra modalidad no se pinta ni se guarda", em.tarjetas.length === 0 && JSON.stringify(em.puesta) === JSON.stringify(['Clásico|"✓ "'])
+       && await pMod.evaluate(() => !localStorage.getItem("cac_jugadores_v1_rapidas")), JSON.stringify(em));
+    await pMod.click('#buscador [data-modalidad="blitz"]');
+    await pMod.waitForTimeout(400);
+    await pMod.reload({ waitUntil: "load" });
+    em = await buscarMod("blitzer");
+    ok("la elegida se recuerda en este aparato", em.pedidos[0] === "blitz" && em.tarjetas.length === 1, JSON.stringify(em));
+    // La sala ya no tiene Blitz: la función manda el clásico y ese queda puesto.
+    await pMod.evaluate(() => sessionStorage.setItem("sinBlitz", "1"));
+    await pMod.reload({ waitUntil: "load" });
+    em = await buscarMod("mayorga");
+    ok("si la sala ya no tiene la elegida, queda la que manda la función", em.tarjetas.length === 1 && JSON.stringify(em.botones) === JSON.stringify(["Clásico", "Rápidas"])
+       && JSON.stringify(em.puesta) === JSON.stringify(['Clásico|"✓ "']) && em.elegida === '"clasico"', JSON.stringify(em));
+    await pMod.setViewportSize({ width: 320, height: 800 });
+    ok("en el celular el selector cabe en una fila, sin scroll de costado ni texto cortado", await pMod.evaluate(() => {
+      const bs = [...document.querySelectorAll("#buscador [data-modalidad]")];
+      return document.documentElement.scrollWidth <= window.innerWidth && bs.every((b) => b.scrollWidth <= b.clientWidth && b.offsetTop === bs[0].offsetTop);
+    }));
+    await ctxMod.close();
 
     // Instalar en iPhone: Safari no avisa, así que se explica cómo, una vez.
     const ctxIos = await nav.newContext({ viewport: { width: 390, height: 844 }, serviceWorkers: "block",

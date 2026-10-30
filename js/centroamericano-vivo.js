@@ -56,6 +56,19 @@
   const CLAVE_DELEGACION = PREFIJO + "_delegacion_v1";
   const CLAVE_AVISOS = PREFIJO + "_avisos_v1";
   const CLAVE_AVISO_DELEG = PREFIJO + "_aviso_delegacion_v1";
+  // Clásico, Rápidas y Blitz: una modalidad a la vez. Todo (el buscador, la
+  // clasificación, el medallero, Mi delegación, el proyector) muestra la que se
+  // eligió, con las mismas categorías, y la función lee de chess-results solo
+  // esa. La elegida queda en este aparato; lo guardado, una copia por
+  // modalidad (la del clásico, con su nombre de siempre). Ver «Rápidas y
+  // Blitz: una modalidad a la vez» en docs/decisiones/juegos-y-torneos.md.
+  const MODALIDADES = ["clasico", "rapidas", "blitz"];
+  const CLAVE_MODALIDAD = PREFIJO + "_modalidad_v1";
+  const CLAVE_MODALIDADES = PREFIJO + "_modalidades_v1";
+  const leerGuardado = (clave, valido) => { try { const v = JSON.parse(localStorage.getItem(clave) || "null"); return valido(v) ? v : null; } catch (e) { return null; } };
+  let modalidades = (leerGuardado(CLAVE_MODALIDADES, Array.isArray) || []).filter((m) => MODALIDADES.includes(m));
+  let modalidad = leerGuardado(CLAVE_MODALIDAD, (m) => MODALIDADES.includes(m)) || "clasico";
+  const claveGuardado = (m) => (m === "clasico" ? CLAVE_GUARDADO : CLAVE_GUARDADO + "_" + m);
   const MAX_SEGUIDOS = 20;
   const REFRESCO_MS = 120000;
   const MAX_RESULTADOS = 8;
@@ -158,6 +171,9 @@
       calPendiente: "El pareo sale cuando lo publique el árbitro: vuelve a bajar el calendario para ver la mesa y el rival.",
       calLugar: "Gimnasio Nacional, Parque Metropolitano La Sabana, San José, Costa Rica",
       calNombre: (nombre) => "Rondas de " + nombre + " · Centroamericano 2026",
+      modalidad: "Modalidad",
+      modalidades: { clasico: "Clásico", rapidas: "Rápidas", blitz: "Blitz" },
+      modalidadAhora: (m) => "Ahora ves " + (m === "clasico" ? "el Clásico" : m === "rapidas" ? "las Rápidas" : "el Blitz") + ".",
       prueba: (sala) => "Modo de prueba: esta página muestra los torneos de la sala «" + sala + "», no los del festival. Solo funciona entrando con una cuenta de administración, y no lo ve nadie más.",
       pruebaError: "No se pudo leer la sala de prueba: revisa que exista en administración (Torneos) y que entraste con tu cuenta de administración.",
       pruebaSinAvisos: "En el modo de prueba los avisos al celular están apagados.",
@@ -259,6 +275,9 @@
       calPendiente: "The pairings come out when the arbiter publishes them: download the calendar again to see the board and the opponent.",
       calLugar: "Gimnasio Nacional, La Sabana Metropolitan Park, San José, Costa Rica",
       calNombre: (nombre) => nombre + "'s rounds · Centroamericano 2026",
+      modalidad: "Time control",
+      modalidades: { clasico: "Classical", rapidas: "Rapid", blitz: "Blitz" },
+      modalidadAhora: (m) => "Now showing " + (m === "clasico" ? "Classical" : m === "rapidas" ? "Rapid" : "Blitz") + ".",
       prueba: (sala) => "Test mode: this page shows the tournaments of the room “" + sala + "”, not the festival's. It only works signed in with an admin account, and nobody else sees it.",
       pruebaError: "We couldn't read the test room: check that it exists in admin (Tournaments) and that you're signed in with your admin account.",
       pruebaSinAvisos: "Phone notifications are off in test mode.",
@@ -328,7 +347,7 @@
   let ultimoPedido = 0;
 
   function guardados() {
-    try { return normalizar(JSON.parse(localStorage.getItem(CLAVE_GUARDADO) || "null")); } catch (e) { return null; }
+    try { return normalizar(JSON.parse(localStorage.getItem(claveGuardado(modalidad)) || "null")); } catch (e) { return null; }
   }
 
   // Con el torneo terminado, chess-results titula «Clasificación final», sin
@@ -364,33 +383,103 @@
     return d;
   }
 
+  // Cada pedido lleva su número: si se cambia de modalidad mientras uno va en
+  // camino, lo que trae ya no se pinta ni se guarda como de la otra.
+  let pedidos = 0;
   function pedir() {
     if (pidiendo) return pidiendo;
     if (datos && !deGuardado && Date.now() - ultimoPedido < REFRESCO_MS) return Promise.resolve(datos);
     ultimoPedido = Date.now();
-    pidiendo = (async () => {
+    const n = ++pedidos, pidio = modalidad;
+    const p = (async () => {
+      await null;
       try {
         if (!window.sb || !window.sb.functions) throw new Error("sin cliente");
-        const { data, error } = await window.sb.functions.invoke("sala-jugadores", { body: PRUEBA ? { clave: SALA, prueba: true } : { clave: SALA } });
+        const body = { clave: SALA, modalidad: pidio };
+        if (PRUEBA) body.prueba = true;
+        const { data, error } = await window.sb.functions.invoke("sala-jugadores", { body });
         if (error || !data || !Array.isArray(data.torneos)) throw error || new Error("respuesta rara");
-        datos = normalizar({ torneos: data.torneos, recibido: new Date().toISOString() });
+        if (n !== pedidos) return datos;
+        // Las modalidades que tiene la sala; si no tiene la pedida, la función
+        // manda la primera que sí, y esa queda elegida.
+        if (Array.isArray(data.modalidades)) {
+          modalidades = data.modalidades.filter((m) => MODALIDADES.includes(m));
+          try { localStorage.setItem(CLAVE_MODALIDADES, JSON.stringify(modalidades)); } catch (e) {}
+        }
+        const llego = MODALIDADES.includes(data.modalidad) ? data.modalidad : pidio;
+        if (llego !== modalidad) { modalidad = llego; try { localStorage.setItem(CLAVE_MODALIDAD, JSON.stringify(llego)); } catch (e) {} }
+        datos = normalizar({ torneos: data.torneos, recibido: new Date().toISOString(), modalidad: llego });
         deGuardado = false;
         pruebaFallo = false;
-        try { localStorage.setItem(CLAVE_GUARDADO, JSON.stringify(datos)); } catch (e) {}
+        try { localStorage.setItem(claveGuardado(llego), JSON.stringify(datos)); } catch (e) {}
+        pintarModalidades();
         // Para lo que arma js/centroamericano-tablas.js con los mismos datos.
         document.dispatchEvent(new Event("cac-datos"));
       } catch (e) {
+        if (n !== pedidos) return datos;
         if (PRUEBA) { pruebaFallo = true; pintarPrueba(); }
         const g = guardados();
         if (g && !datos) { datos = g; deGuardado = true; }
         if (!datos) throw e;
       } finally {
-        pidiendo = null;
+        if (n === pedidos) pidiendo = null;
       }
       return datos;
     })();
-    return pidiendo;
+    pidiendo = p;
+    return p;
   }
+
+  // El selector «Clásico · Rápidas · Blitz»: uno en cada lugar marcado con
+  // data-modalidades (el buscador, cada ventana, el proyector), todos iguales.
+  // Con una sola modalidad en la sala no se ve. Se arma una vez por lista (así
+  // el botón tocado no pierde el foco) y después solo cambia cuál está puesto.
+  function pintarModalidades() {
+    const tx = t();
+    document.querySelectorAll("[data-modalidades]").forEach((caja) => {
+      caja.hidden = modalidades.length < 2;
+      if (caja.hidden) return;
+      const lista = modalidades.join(",") + "|" + idioma();
+      if (caja.dataset.lista !== lista) {
+        caja.dataset.lista = lista;
+        caja.setAttribute("role", "group");
+        caja.setAttribute("aria-label", tx.modalidad);
+        const clase = caja.hasAttribute("data-proyector") ? "cac-proyector-boton" : "cac-modalidad-boton";
+        caja.replaceChildren(...modalidades.map((m) => {
+          const b = el("button", clase, tx.modalidades[m]);
+          b.type = "button";
+          b.dataset.modalidad = m;
+          return b;
+        }));
+      }
+      caja.querySelectorAll("[data-modalidad]").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.modalidad === modalidad)));
+    });
+  }
+
+  function cambiarModalidad(m) {
+    if (!MODALIDADES.includes(m) || m === modalidad) return;
+    modalidad = m;
+    try { localStorage.setItem(CLAVE_MODALIDAD, JSON.stringify(m)); } catch (e) {}
+    // Lo que iba en camino era de la otra: se olvida, y se pide esta.
+    pidiendo = null;
+    pedidos++;
+    ultimoPedido = 0;
+    datos = guardados();
+    deGuardado = !!datos;
+    pintarModalidades();
+    anunciar(t().modalidadAhora(m));
+    const alDia = () => { pintarTodo(); if (dialogo && dialogo.open) pintarMedallero(); };
+    alDia();
+    document.dispatchEvent(new Event("cac-datos"));
+    pedir().then(alDia, alDia);
+  }
+  document.addEventListener("click", (e) => {
+    const b = e.target && e.target.closest ? e.target.closest("[data-modalidades] [data-modalidad]") : null;
+    if (b) cambiarModalidad(b.dataset.modalidad);
+  });
+  // Lo que sale de la página (el certificado, la imagen para compartir)
+  // dice la modalidad si no es el clásico: «Sub-10 Absoluto (Blitz)».
+  const conModalidad = (texto) => (modalidad === "clasico" || !texto ? texto : texto + " (" + t().modalidades[modalidad] + ")");
 
   // Todos los jugadores de todos los torneos de la sala, cada uno con su ronda.
   function jugadores() {
@@ -771,7 +860,8 @@
     }
     // Sus rondas en el calendario del celular (solo en la página que trae el
     // calendario de las rondas: la del Centroamericano).
-    if (document.querySelector("#calendario tr[data-ronda]") && window.CalendarioIcs) {
+    // El calendario de la página es el de las rondas del clásico.
+    if (modalidad === "clasico" && document.querySelector("#calendario tr[data-ronda]") && window.CalendarioIcs) {
       const cal = el("button", "cac-jugador-boton", tx.calendario);
       cal.type = "button";
       cal.dataset.accion = "calendario";
@@ -1113,7 +1203,7 @@
     caja.replaceChildren(el("p", "", tx.prueba(PRUEBA)), ...(pruebaFallo ? [el("p", "font-bold", tx.pruebaError)] : []), salir);
   }
 
-  function pintarTodo() { pintarPrueba(); pintarAnuncios(); pintarHoyCategorias(); pintarProgreso(); pintarSeguidos(); pintarBuscador(); pintarDelegacion(); pintarAvisoDelegacion(); }
+  function pintarTodo() { pintarModalidades(); pintarPrueba(); pintarAnuncios(); pintarHoyCategorias(); pintarProgreso(); pintarSeguidos(); pintarBuscador(); pintarDelegacion(); pintarAvisoDelegacion(); }
 
   /* ---------------- Avisarme en este celular ---------------- */
   // Qué dice la función, también cuando contesta un error (lo trae el cuerpo).
@@ -1397,6 +1487,7 @@
   pintarHoyCategorias();
   // En el modo de prueba se piden los datos de una vez: se vino a ver si todo anda.
   pintarPrueba();
+  pintarModalidades();
   if (PRUEBA) pedir().then(pintarTodo, () => {});
   pedirAnuncios();
   setInterval(pedirAnuncios, 5 * 60000);
@@ -1424,6 +1515,7 @@
     textos: t, idioma, categoria: (g) => t().categoria(g), ordenGrupo, pais: (f) => pais(f, idioma()), fmtPuntos, puntosNum,
     cuandoSeLeyo: () => cuandoSeLeyo(t()), plano, el, ZONA, progresoRonda, anunciar, puntosDeMesa, eloDe, porColor, textoElo,
     puestosDe, puntosTras, puestoTexto: (p) => puestoTexto(p, idioma()), delegacionGuardada, eventosDelCalendario, nombreCorto, enlaceDe, slugDe,
+    modalidad: () => modalidad, conModalidad,
   };
 
   document.addEventListener("cac-idioma", () => { pintarTodo(); ponerAvisosAlDia(); if (dialogo && dialogo.open) pintarMedallero(); });

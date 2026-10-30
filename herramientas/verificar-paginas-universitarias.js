@@ -165,7 +165,7 @@ for (const P of PAGINAS) {
       await p.waitForFunction((n) => document.querySelectorAll("#podio-lista .u-podio-puesto").length === n, cuantos, { timeout: 10000 }).catch(() => {});
       const podio = await p.evaluate(() => ({ titulos: [...document.querySelectorAll("#podio-lista h3")].map((h) => h.textContent),
         puestos: [...document.querySelectorAll("#podio-lista .u-podio-puesto")].map((li) => [li.dataset.puesto, li.querySelector(".u-podio-nombre").textContent, li.querySelector(".u-podio-puntos").textContent]) }));
-      ok("le pide a la función la sala «" + P.sala + "»", await p.evaluate((s) => JSON.stringify(window.__pedidos[0]) === JSON.stringify(["sala-jugadores", { clave: s }]), P.sala));
+      ok("le pide a la función la sala «" + P.sala + "»", await p.evaluate((s) => JSON.stringify(window.__pedidos[0]) === JSON.stringify(["sala-jugadores", { clave: s, modalidad: "clasico" }]), P.sala));
       ok("el podio trae los tres primeros" + (P.ramas ? " de cada rama, con su nombre" : ", sin un título de grupo") + ", en orden y con sus puntos",
         podio.puestos.length === cuantos && podio.puestos[0][1] === P.primero && podio.puestos[0][2].startsWith("2½ puntos")
         && JSON.stringify(podio.titulos) === JSON.stringify(P.ramas || []), JSON.stringify(podio));
