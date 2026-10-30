@@ -285,7 +285,10 @@ window.BlindNotation = (function () {
   let ultimoDicho = '', ultimoDichoEn = 0;
   function speak(text, opts) {
     opts = opts || {};
-    if (!hasSpeechApi || !isSpeechEnabled() || !text) return false;
+    // `opts.siempre`: aunque la voz del sitio esté apagada (la cámara de la
+    // mesa de un jugador ciego le dice al oído la jugada del rival sin
+    // encender la voz de toda la página, que leería cada aviso).
+    if (!hasSpeechApi || (!opts.siempre && !isSpeechEnabled()) || !text) return false;
     const ahora = Date.now();
     // `opts.igualA`: el mismo aviso escrito de otra forma (js/voz-pagina.js dice
     // «eva 4» donde el aviso escribe «e4»), que también cuenta como ya dicho.

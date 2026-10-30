@@ -316,6 +316,12 @@ function torneo() {
   await manda({ mesa: 3, jugadas: ["d4", "d5", "c4", "e6", "Nc3"], mano: 2 });
   await page.waitForFunction(() => /^3$/.test(document.querySelector('#pi-camaras-informe tr[data-informe="3"] td:nth-child(5)').textContent), null, { timeout: 5000 }).catch(() => {});
   igual("con cada jugada que llega se pone al día, y sigue abierto", [(await fila("3"))[4], await page.evaluate(() => document.getElementById("pi-camaras-informe").open)], ["3", true]);
+  // La ronda en un vistazo: cuántas mesas leyeron solas y qué mejorar en cada una.
+  igual("arriba, la ronda en un vistazo: cuántas leyeron solas la partida entera, cuántas con correcciones y cuántas siguen",
+    await page.textContent("#pi-camaras-vistazo p"), "Mesas con cámara: 3. Leyeron solas la partida entera: 1. Con correcciones a mano: 0. Siguen jugando: 2.");
+  igual("y qué mejorar en cada mesa: la 3, con muchas a mano y una posible ilegal", (await fila("3"))[9], "muchas jugadas a mano: centrar la cámara y revisar la cuadrícula, posibles ilegales: 1, mirar el ángulo");
+  igual("una mesa que leyó bien dice que no hay nada que mejorar", (await fila("2"))[9], "Nada: leyó bien");
+  igual("y la lista de la próxima ronda nombra la mesa", /^Para la próxima ronda: mesa 3 \(muchas jugadas a mano/.test(await page.textContent("#pi-camaras-vistazo p:nth-child(2)")), true);
 
   console.log("\n=== Cómo está cada cámara: latido, batería, lista y sin noticias ===");
   const latido = (o) => page.evaluate(([c, o]) => window.__llega(c, "latido", o), [CANAL, Object.assign({ v: 1, torneo: ID, ronda: 1, t: Date.now() }, o)]);

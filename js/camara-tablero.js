@@ -17,8 +17,9 @@
 
     const D = window.DetectarTablero, V = window.PartidaEnVivo;
     /* El ancho al que se trabaja la imagen: con un tablero, 640; con dos, 960,
-     * porque cada uno ocupa la mitad y sus casillas se ven más chicas. */
-    const ANCHO = [640, 960];
+     * y con tres o cuatro, 1280, porque cada uno ocupa una parte y sus
+     * casillas se ven más chicas. */
+    const ANCHO = [640, 960, 1280, 1280];
     const CADA_MS = 200;        // cada cuánto se lee el tablero
     const QUIETA = 6;           // lecturas iguales seguidas para fiarse (~1,2 s)
     const NOMBRE = ["a1", "h1", "h8", "a8"];
@@ -30,9 +31,10 @@
     const PUESTO = (parametros.get("puesto") || "").replace(/[^0-9]/g, "").slice(0, 2);
     const delPuesto = (clave) => (PUESTO ? clave + "_p" + PUESTO : clave);
     if (parametros.get("compacto") === "1") document.documentElement.classList.add("camara-compacta");
-    const GUARDADO = ["camara_vivo_codigo_v1", "camara_vivo_codigo_v1_2"].map(delPuesto);
+    const GUARDADO = ["camara_vivo_codigo_v1", "camara_vivo_codigo_v1_2", "camara_vivo_codigo_v1_3", "camara_vivo_codigo_v1_4"].map(delPuesto);
     const PARTIDA = delPuesto("camara_partida_v1") + "_"; // + el número del tablero
-    const COLOR = ["rgba(250, 204, 21, 0.9)", "rgba(34, 211, 238, 0.9)"]; // amarillo y celeste; además se escribe el número
+    // Amarillo, celeste, rosado y verde limón; además se escribe el número.
+    const COLOR = ["rgba(250, 204, 21, 0.9)", "rgba(34, 211, 238, 0.9)", "rgba(244, 114, 182, 0.9)", "rgba(163, 230, 53, 0.9)"];
 
     const $ = (id) => document.getElementById(id);
     const lienzo = $("lienzo"), ctx = lienzo.getContext("2d");
@@ -42,8 +44,8 @@
     const limpio = document.createElement("canvas"), cctx = limpio.getContext("2d", { willReadFrequently: true });
     const video = $("video");
 
-    /* Lo de cada tablero va junto. El segundo es opcional: con uno solo se
-     * lee mejor, y la página arranca así. */
+    /* Lo de cada tablero va junto. Los otros (hasta cuatro) son opcionales:
+     * con uno solo se lee mejor, y la página arranca así. */
     function nuevoTablero(i) {
         return {
             i, esquinas: [], h: null, cal: null, juego: new window.Chess(),
@@ -57,6 +59,9 @@
             confirmadas: new Set(), // las coronaciones ya elegidas (por su índice en la historia)
             fotos: [], // las del tablero con cada resultado y cada aviso (ver tomarFoto)
             mano: 0,   // cuántas jugadas se escribieron a mano (va al informe de las cámaras de Pareo)
+            manos: [], tapado: false, // para el VAR: cada vez que algo tapó o movió piezas (ver procesar)
+            ciego: { color: "", propias: true, reloj: true }, ciegoUltimo: "", // un jugador ciego en la mesa
+            relojMesa: null, relojLeido: {}, // el reloj de la mesa leído de la imagen
         };
     }
     let cuenta = null; // con la sesión abierta (en modo mesa no hay)
@@ -74,13 +79,13 @@
     let buscando = false;
 
     const es = (san) => (window.ComandosTablero ? window.ComandosTablero.jugadaParaMostrar(san) : san);
-    const dos = () => tableros.length === 2;
+    const varios = () => tableros.length > 1;
     /* El resultado: el que dice el tablero (mate, ahogado) o, si no, el que se
      * marcó a mano. Una jugada nueva, «Deshacer» o una partida nueva lo borran. */
     const resultadoDe = (t) => V.resultadoSolo(t.juego) || t.resultadoMano;
     // Cuánto tardó cada jugada, en ms (null si no se sabe).
     const tiemposDe = (t) => t.horas.map((h, i) => { const antes = i ? t.horas[i - 1] : t.inicio; return h && antes ? h - antes : null; });
-    const cual = (t) => (dos() ? "Tablero " + (t.i + 1) + ": " : "");
+    const cual = (t) => (varios() ? "Tablero " + (t.i + 1) + ": " : "");
 
     let ultimoAviso = { texto: "", tipo: "" };
     function avisar(texto, tipo) {
@@ -139,12 +144,13 @@
             return;
         }
         if (typeof id !== "string") { try { id = localStorage.getItem(CAMARA) || ""; } catch (e) { id = ""; } }
+        dejarVideo();
         if (video.srcObject) { video.srcObject.getTracks().forEach((x) => x.stop()); video.srcObject = null; }
         /* Lo justo: la imagen se trabaja a 640 (o 960 con dos tableros) y se
          * lee 5 veces por segundo, así que pedir 1920 a 30 imágenes por
          * segundo era hacerle decodificar al celular seis veces más de lo
          * que se usa. Todo «ideal»: si la cámara no lo da, da lo que tenga. */
-        const justo = { width: { ideal: 1280 }, frameRate: { ideal: 10 } };
+        const justo = { width: { ideal: tableros.length > 2 ? 1920 : 1280 }, frameRate: { ideal: 10 } };
         const pedir = (conId) => navigator.mediaDevices.getUserMedia({ audio: false, video: conId
             ? Object.assign({ deviceId: { exact: conId } }, justo)
             : Object.assign({ facingMode: { ideal: "environment" } }, justo) });
@@ -165,6 +171,8 @@
             else fuente = video;
             listarCamaras(usada);
             camaraAbierta = true; intentosCamara = 0; vigilarPista(flujo);
+            if (varSi && grabador) grabador.empezar(flujo); // la que se volvió a abrir también: lo grabado antes sigue
+            pintarVar();
             if (sola) avisar("La cámara volvió: sigue leyendo la partida.", "bien");
         } catch (e) {
             if (sola && !(e && e.name === "NotAllowedError")) { camaraCortada(); return; }
@@ -333,8 +341,7 @@
         if (!archivo) return;
         const img = new Image();
         img.onload = () => {
-            if (video.srcObject) { video.srcObject.getTracks().forEach((t) => t.stop()); video.srcObject = null; }
-            if (pantalla) { pantalla.release().catch(() => {}); pantalla = null; $("pantalla-encendida").hidden = true; }
+            soltarCamara(); dejarVideo();
             /* Otra foto del mismo tamaño, tomada desde el mismo lugar: se
              * conservan las esquinas, la calibración y la partida. Así se
              * prueba una partida foto a foto, sin cámara en vivo. */
@@ -357,14 +364,17 @@
         botones();
     }
 
-    /* ── El segundo tablero (opcional) ──────────────────────────────────
-     * Al encenderlo, la imagen se trabaja más grande y las esquinas del
-     * primero se agrandan con ella: su calibración sigue valiendo (lo que
-     * se mide es la luz de cada casilla, no su tamaño). */
+    /* ── Más de un tablero (opcional, hasta cuatro) ──────────────────────
+     * Con más tableros, la imagen se trabaja más grande y las esquinas de
+     * los que ya estaban se agrandan con ella: su calibración sigue valiendo
+     * (lo que se mide es la luz de cada casilla, no su tamaño). */
     function cambiarCantidad(n) {
-        const f = ANCHO[n - 1] / lienzo.width;
-        if (n === 2 && !dos()) tableros.push(nuevoTablero(1));
-        if (n === 1 && dos()) { pararVivo(tableros[1]); tableros.length = 1; }
+        n = Math.max(1, Math.min(4, Number(n) || 1));
+        const antes = tableros.length, f = ANCHO[n - 1] / lienzo.width;
+        while (tableros.length < n) tableros.push(cargarCiego(nuevoTablero(tableros.length)));
+        // El elegido primero: parar la transmisión pinta el tablero elegido, y tiene que existir.
+        activo = Math.min(activo, n - 1);
+        while (tableros.length > n) pararVivo(tableros.pop());
         if (fuente) {
             tamano(anchoFuente(), altoFuente());
             for (const t of tableros) {
@@ -374,9 +384,12 @@
                 t.cal = cal;
             }
         }
-        elegirTablero(n === 2 ? 1 : 0);
+        document.querySelectorAll("[data-tablero]").forEach((b) => { b.hidden = Number(b.dataset.tablero) >= n; });
         $("pestanas").hidden = n === 1;
-        if (n === 2) avisar("Segundo tablero encendido. Con dos, cada casilla se ve más chica: lo más confiable sigue siendo un celular por tablero, desde arriba. " + (fuente ? "Ahora busca o marca el tablero 2." : ""));
+        $("cuantos-tableros").value = String(n);
+        // El primero nuevo, para ubicarlo; si se sacaron, el que quede más cerca.
+        elegirTablero(n > antes ? antes : Math.min(activo, n - 1));
+        if (n > antes) avisar((n === 2 ? "Segundo tablero encendido." : n + " tableros.") + " Con varios, cada casilla se ve más chica: lo más confiable sigue siendo un celular por tablero, desde arriba. " + (fuente ? "Ahora busca o marca el tablero " + (antes + 1) + "." : ""));
     }
 
     function elegirTablero(i) {
@@ -384,12 +397,15 @@
         $("dudas").hidden = true;
         elegida = 0;
         document.querySelectorAll("[data-tablero]").forEach((b) => b.setAttribute("aria-pressed", String(Number(b.dataset.tablero) === i)));
-        $("t-tablero-cual").textContent = dos() ? " (tablero " + (i + 1) + ")" : "";
+        $("t-tablero-cual").textContent = varios() ? " (tablero " + (i + 1) + ")" : "";
         $("vivo-blancas").value = T().nombres.blancas;
         $("vivo-negras").value = T().nombres.negras;
         pintarPartida();
         pintarVivo();
         pintarTorneo();
+        pintarCiego();
+        pintarRelojLeido();
+        pintarReloj();
         botones();
         $("acierto").textContent = T().lectura ? (64 - diferentes(T().lectura, esperada(T().juego)).length) + " de 64" : "—";
     }
@@ -453,6 +469,12 @@
      * cuarta, se ajustan solas. */
     lienzo.addEventListener("pointerdown", (e) => {
         if (!fuente) return;
+        // Marcando el reloj de la mesa: se arrastra un rectángulo.
+        if (marcandoReloj) {
+            marcandoReloj.desde = marcandoReloj.hasta = punto(e);
+            try { lienzo.setPointerCapture(e.pointerId); } catch (x) { /* el puntero ya se soltó */ }
+            return;
+        }
         const t = T(), p = punto(e);
         let mejor = -1, dist = 40 * lienzo.width / lienzo.getBoundingClientRect().width;
         t.esquinas.forEach((q, i) => { const d = Math.hypot(q[0] - p[0], q[1] - p[1]); if (d < dist) { dist = d; mejor = i; } });
@@ -462,6 +484,7 @@
         try { lienzo.setPointerCapture(e.pointerId); } catch (x) { /* el puntero ya se soltó */ }
     });
     lienzo.addEventListener("pointermove", (e) => {
+        if (marcandoReloj && marcandoReloj.desde) { marcandoReloj.hasta = punto(e); pintarYa = true; return; }
         if (arrastre < 0) return;
         const t = T();
         t.esquinas[arrastre] = punto(e);
@@ -469,6 +492,18 @@
         rehacerHomografia(t);
     });
     lienzo.addEventListener("pointerup", () => {
+        if (marcandoReloj && marcandoReloj.desde) {
+            const [a, b] = [marcandoReloj.desde, marcandoReloj.hasta], t = T();
+            const r = { x: Math.min(a[0], b[0]), y: Math.min(a[1], b[1]), w: Math.abs(a[0] - b[0]), h: Math.abs(a[1] - b[1]) };
+            pintarYa = true;
+            if (r.w < 10 || r.h < 6) { marcandoReloj.desde = null; avisar(cual(t) + "Ese rectángulo es muy chico: arrastra el dedo de una esquina del tiempo a la otra.", "error"); return; }
+            t.relojMesa[marcandoReloj.color] = r;
+            if (marcandoReloj.color === "w") { pedirReloj("b"); return; }
+            marcandoReloj = null;
+            avisar(cual(t) + "Listo: el reloj de la mesa se lee cada segundo. Revisa abajo del reloj que los dos tiempos coincidan con los de la mesa.", "bien");
+            leerRelojMesa();
+            return;
+        }
         if (arrastre < 0) return;
         arrastre = -1;
         const t = T();
@@ -582,7 +617,7 @@
         }
         t.juego = new window.Chess();
         t.resultadoMano = null; t.confirmadas = new Set(); t.mano = 0; t.reloj = null; t.dudas = 0; t.ilegales = 0;
-        t.inicio = Date.now(); t.horas = []; t.horaResultado = null;
+        t.inicio = horaPartida(); t.horas = []; t.horaResultado = null; t.manos = []; t.tapado = false;
         if (torneo) { t.ronda = ultimaRonda(); pintarTorneo(); } // la partida nueva es de la ronda de ahora
         partidaCambio(t);
         avisar(cual(t) + "Calibrado: lee bien " + bien + " de 64 casillas en la posición inicial. Ya puedes jugar.", "bien");
@@ -622,8 +657,9 @@
     function partidaCambio(t) {
         const r = resultadoDe(t);
         const termino = r && !t.horaResultado;
-        if (termino) t.horaResultado = Date.now();
+        if (termino) t.horaResultado = horaPartida();
         if (!r) t.horaResultado = null;
+        if (termino) decirCiego(t, V.textoResultado(r));
         if (t === T()) pintarPartida();
         enviarVivo(t);
         if (distancia && distancia.t === t) enviarDistancia(t);
@@ -639,13 +675,20 @@
         t.resultadoMano = null; // si se siguió jugando, no había terminado
         const colocando = t.guion && t.guion.colocando;
         if (!colocando) gastarReloj(t);
-        jugadas.forEach((x) => { const m = t.juego.move(x); t.horas.push(Date.now()); if (m && t.reloj && !t.reloj.bandera && !colocando) t.reloj[m.color] += t.reloj.inc; });
+        const movidas = [];
+        jugadas.forEach((x) => {
+            const m = t.juego.move(x);
+            t.horas.push(horaPartida());
+            if (m) movidas.push(m);
+            if (m && t.reloj && !t.reloj.bandera && !t.reloj.leido && !colocando) t.reloj[m.color] += t.reloj.inc;
+        });
         if (t.reloj) t.reloj.corre = t.juego.game_over() ? null : t.juego.turn();
         t.recientes = [];
         $("dudas").hidden = true;
         partidaCambio(t);
         const corona = jugadas.some((x) => /=Q/.test(x));
         guardarMuestra(t);
+        ciegoJugadas(t, movidas);
         const tablas = V.reglaDeTablas(t.juego);
         const alArbitro = tablas && alertarArbitro(t, tablas);
         if (tablas) tomarFoto(t, tablas);
@@ -662,6 +705,7 @@
      * tiempos con cada envío (no con retraso: delataría el tiempo de ahora). */
     function gastarReloj(t) {
         const r = t.reloj, ahora = Date.now();
+        if (r && r.leido) return; // lo lleva el reloj de la mesa
         if (r && r.corre && !r.pausa && !r.bandera && !resultadoDe(t)) r[r.corre] = Math.max(0, r[r.corre] - (ahora - r.desde));
         if (r) r.desde = ahora;
     }
@@ -669,7 +713,8 @@
         const r = t.reloj;
         if (!r) return null;
         const corre = r.pausa || r.bandera || resultadoDe(t) ? null : r.corre;
-        const gasto = corre ? Date.now() - r.desde : 0;
+        // Con el reloj leído, entre lectura y lectura se sigue a lo sumo 2 s.
+        const gasto = corre ? (r.leido ? Math.min(2000, Date.now() - r.desde) : Date.now() - r.desde) : 0;
         return { w: corre === "w" ? Math.max(0, r.w - gasto) : r.w, b: corre === "b" ? Math.max(0, r.b - gasto) : r.b, corre };
     }
     /* ¿Puede dar mate el que no se quedó sin tiempo, con alguna serie de
@@ -686,6 +731,8 @@
         const [min, inc] = $("reloj-ritmo").value.split("+").map(Number);
         const fin = t.juego.game_over() || resultadoDe(t);
         if (fin) { avisar(cual(t) + "La partida ya terminó: el reloj es para una partida en juego.", "error"); return; }
+        // El reloj de la cámara reemplaza al leído de la mesa.
+        if (t.relojMesa) { t.relojMesa = null; t.relojLeido = {}; marcandoReloj = null; pintarRelojLeido(); pintarYa = true; }
         t.reloj = { base: min * 60000, inc: inc * 1000, w: min * 60000, b: min * 60000, corre: t.juego.turn(), desde: Date.now(), pausa: false, bandera: null };
         $("reloj-msg").textContent = "Reloj en marcha: " + min + " min" + (inc ? " + " + inc + " s por jugada" : "") + ". Corre el de las " + (t.juego.turn() === "w" ? "blancas" : "negras") + ".";
         pintarReloj();
@@ -702,11 +749,13 @@
         enviarVivo(t, true);
     }
     function revisarBanderas() {
+        for (const t of tableros) tiempoCiego(t);
         for (const t of tableros) {
             const r = t.reloj;
             if (!r || r.bandera || r.pausa || !r.corre || resultadoDe(t)) continue;
             const ahora = relojAhora(t);
-            if (ahora[r.corre] > 0) continue;
+            // Con el reloj leído, la bandera es cuando el reloj de la mesa muestra 0.
+            if (r.leido ? r[r.corre] > 0 : ahora[r.corre] > 0) continue;
             gastarReloj(t);
             r.bandera = r.corre; r.corre = null;
             const otro = r.bandera === "w" ? "b" : "w";
@@ -729,7 +778,7 @@
     function pintarReloj() {
         const t = T(), r = relojAhora(t);
         $("reloj-tiempos").hidden = !r;
-        $("btn-reloj-pausa").hidden = !r || !!t.reloj.bandera;
+        $("btn-reloj-pausa").hidden = !r || !!t.reloj.bandera || !!t.reloj.leido;
         $("btn-reloj").textContent = r ? "Volver a empezar el reloj" : "Empezar el reloj";
         if (!r) { $("reloj-msg").textContent = ""; return; }
         $("btn-reloj-pausa").textContent = t.reloj.pausa ? "Seguir" : "Pausar";
@@ -1887,6 +1936,376 @@
         }
     }
 
+    /* ── Leer un video grabado ───────────────────────────────────────────
+     * El mismo lector que la cámara, sobre un video del celular: se ubica el
+     * tablero en la primera imagen, se calibra y el video corre (normal, al
+     * doble o a cuatro veces) mientras se leen sus imágenes. La hora de cada
+     * jugada es la de adentro del video, no la de ahora. Sirve para la mesa
+     * que no tuvo transmisión y para reconstruir una partida después de un
+     * reclamo; y el VAR revisa el video mismo. No sale del aparato. */
+    let archivoVideo = null;
+    const horaPartida = () => (archivoVideo && fuente === video ? archivoVideo.inicio + video.currentTime * 1000 : Date.now());
+    const mmss = (seg) => { const s = Math.max(0, Math.floor(seg)); return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0"); };
+    function soltarCamara() {
+        camaraAbierta = false; clearTimeout(reabriendo); reabriendo = null;
+        if (video.srcObject) { video.srcObject.getTracks().forEach((x) => x.stop()); video.srcObject = null; }
+        if (pantalla) { pantalla.release().catch(() => {}); pantalla = null; $("pantalla-encendida").hidden = true; }
+        if (grabador) grabador.parar();
+        pintarVar();
+    }
+    function dejarVideo() {
+        if (!archivoVideo) return;
+        video.pause();
+        video.removeAttribute("src");
+        video.load();
+        URL.revokeObjectURL(archivoVideo.url);
+        archivoVideo = null;
+        if (fuente === video) fuente = null;
+        $("video-controles").hidden = true;
+        pintarVar();
+    }
+    async function usarVideo(archivo) {
+        if (!archivo) return;
+        soltarCamara(); dejarVideo();
+        const url = URL.createObjectURL(archivo);
+        try {
+            await new Promise((listo, mal) => { video.onloadeddata = listo; video.onerror = mal; video.src = url; });
+        } catch (e) {
+            URL.revokeObjectURL(url); video.removeAttribute("src");
+            avisar("No se pudo abrir ese video. Prueba con uno en MP4 o WebM, como los que graba el celular.", "error");
+            return;
+        } finally { video.onloadeddata = video.onerror = null; }
+        const dur = await CamaraVar.duracion(video);
+        video.pause(); video.currentTime = 0;
+        archivoVideo = { url, blob: archivo, nombre: archivo.name || "video", inicio: Date.now(), dur };
+        nuevaFuente(video, video.videoWidth || 640, video.videoHeight || 480);
+        $("video-controles").hidden = false;
+        pintarVideo(); pintarVar();
+        avisar("Video abierto (" + mmss(dur) + "). Ubica el tablero en esta primera imagen, calibra y toca «Leer el video».", "bien");
+    }
+    function pintarVideo() {
+        if (!archivoVideo) return;
+        $("btn-video-leer").textContent = video.paused ? (video.ended || video.currentTime >= archivoVideo.dur - 0.05 ? "Leerlo otra vez" : "Leer el video") : "Pausar";
+        const txt = mmss(video.currentTime) + " de " + mmss(archivoVideo.dur);
+        if ($("video-progreso").textContent !== txt) $("video-progreso").textContent = txt;
+    }
+    $("video-archivo").addEventListener("change", (e) => usarVideo(e.target.files[0]));
+    $("btn-video-leer").addEventListener("click", () => {
+        if (!archivoVideo) return;
+        if (!video.paused) { video.pause(); pintarVideo(); return; }
+        if (!tableros.some((t) => t.cal)) { avisar("Primero ubica el tablero y calibra: así la cámara sabe qué hay en cada casilla.", "error"); return; }
+        if (video.ended) video.currentTime = 0;
+        video.playbackRate = Number($("video-velocidad").value) || 1;
+        video.play().then(pintarVideo).catch(() => avisar("Este navegador no deja reproducir el video.", "error"));
+    });
+    $("video-velocidad").addEventListener("change", () => { video.playbackRate = Number($("video-velocidad").value) || 1; });
+    video.addEventListener("ended", () => {
+        if (!archivoVideo) return;
+        pintarVideo();
+        const t = T(), n = t.juego.history().length;
+        avisar(cual(t) + "Terminó el video: " + (n === 1 ? "se anotó 1 jugada" : "se anotaron " + n + " jugadas") + ". Revisa la partida a la derecha: puedes copiar el PGN o bajar las planillas.", "bien");
+    });
+    setInterval(pintarVideo, 500);
+
+    /* ── El VAR (ver js/camara-var.js) ─────────────────────────────────── */
+    const VAR_SI = delPuesto("camara_var_v1");
+    const grabador = window.CamaraVar && CamaraVar.tipo() ? CamaraVar.grabador({ minutos: 10, trozoMs: 60000 }) : null;
+    let varSi = false, varTrozos = [], varTrozo = null, varUrl = null;
+    function encenderVar(si) {
+        varSi = !!si && !!grabador;
+        try { localStorage.setItem(VAR_SI, varSi ? "1" : "0"); } catch (e) { /* solo por esta visita */ }
+        if (grabador && varSi && video.srcObject) grabador.empezar(video.srcObject);
+        if (grabador && !varSi) { grabador.parar(); grabador.borrar(); }
+        pintarVar();
+    }
+    function pintarVar() {
+        const e = $("var-estado");
+        $("var-grabar").checked = varSi;
+        $("var-grabar").disabled = !grabador;
+        const txt = !grabador ? "Este navegador no puede grabar video: aquí no hay VAR (prueba con Chrome o Safari al día)."
+            : archivoVideo ? "Con un video grabado, se revisa el video mismo."
+            : !varSi ? "No se está grabando."
+            : !grabador.grabando() ? "Se empieza a grabar al abrir la cámara."
+            : "● Grabando los últimos 10 minutos" + (grabador.desde() ? " (desde las " + HoraCR.hora(new Date(grabador.desde()), { hour: "numeric", minute: "2-digit", second: "2-digit" }) + ")" : "") + ", solo en este celular · " + grabador.megas() + " MB.";
+        if (e.textContent !== txt) e.textContent = txt;
+        $("btn-var").disabled = !(archivoVideo || (grabador && (grabador.grabando() || grabador.trozos().length)));
+    }
+    setInterval(pintarVar, 5000);
+
+    // Lo que se puede revisar: cada jugada y cada vez que algo tapó el tablero, lo último primero.
+    function marcasVar(t, desde, hasta) {
+        const marcas = [], hist = t.juego.history();
+        hist.forEach((san, i) => {
+            const h = t.horas[i];
+            if (h && h >= desde && h <= hasta) marcas.push({ h, texto: "Jugada " + (Math.floor(i / 2) + 1) + (i % 2 ? "… " : ". ") + es(san) + (i % 2 ? " (negras)" : " (blancas)") });
+        });
+        for (const m of t.manos) if (m.h >= desde && m.h <= hasta) marcas.push({ h: m.h, texto: "Mano sobre el tablero" + (m.casillas.length ? " (" + m.casillas.join(", ") + ")" : "") });
+        return marcas.sort((a, b) => b.h - a.h);
+    }
+    function cuandoVar(h) {
+        if (archivoVideo) return "minuto " + mmss((h - archivoVideo.inicio) / 1000) + " del video";
+        return HoraCR.hora(new Date(h), { hour: "numeric", minute: "2-digit", second: "2-digit" }) + ", hace " + mmss((Date.now() - h) / 1000);
+    }
+    async function abrirVar() {
+        const t = T();
+        if (archivoVideo) {
+            video.pause(); pintarVideo();
+            varTrozos = [{ inicio: archivoVideo.inicio, fin: archivoVideo.inicio + archivoVideo.dur * 1000, blob: archivoVideo.blob, url: archivoVideo.url }];
+        } else {
+            if (!grabador) return;
+            $("btn-var").disabled = true;
+            await grabador.cortar(); // lo de recién también se puede ver
+            varTrozos = grabador.trozos();
+            pintarVar();
+        }
+        if (!varTrozos.length) { avisar("Todavía no hay video para revisar: espera unos segundos a que se grabe.", "error"); return; }
+        const desde = varTrozos[0].inicio, hasta = varTrozos[varTrozos.length - 1].fin;
+        const ol = $("var-marcas");
+        ol.textContent = "";
+        const marcas = marcasVar(t, desde, hasta);
+        for (const m of marcas) {
+            const li = document.createElement("li"), b = document.createElement("button");
+            b.type = "button";
+            b.className = "w-full text-left rounded-lg border border-brand-200 dark:border-brand-700 px-3 py-1.5 hover:border-accent-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400";
+            b.textContent = m.texto + " — " + cuandoVar(m.h);
+            b.addEventListener("click", () => irVar(m.h - 3000));
+            li.append(b); ol.append(li);
+        }
+        if (!marcas.length) { const li = document.createElement("li"); li.textContent = "En estos minutos no se anotó ninguna jugada ni se tapó el tablero."; ol.append(li); }
+        $("var-titulo").textContent = "Revisar una jugada" + (t.mesa ? " · " + lugarDe(t) : varios() ? " · tablero " + (t.i + 1) : "");
+        $("var-dialogo").showModal();
+        await irVar(marcas.length ? marcas[0].h - 3000 : hasta - 10000);
+    }
+    async function irVar(hora) {
+        const d = CamaraVar.donde(varTrozos, hora);
+        if (!d) return;
+        const v = $("var-video");
+        if (varTrozo !== d.trozo) {
+            if (varUrl && varTrozo && !varTrozo.url) URL.revokeObjectURL(varUrl);
+            varTrozo = d.trozo;
+            varUrl = d.trozo.url || URL.createObjectURL(d.trozo.blob);
+            await new Promise((listo) => { v.onloadeddata = listo; v.onerror = listo; v.src = varUrl; });
+            v.onloadeddata = v.onerror = null;
+            await CamaraVar.duracion(v);
+        }
+        v.pause();
+        v.playbackRate = Number($("var-velocidad").value) || 1;
+        v.currentTime = Math.max(0, d.segundo);
+        horaVar();
+    }
+    function horaVar() {
+        if (!varTrozo) return;
+        const txt = "Se ve: " + cuandoVar(varTrozo.inicio + $("var-video").currentTime * 1000) + ".";
+        if ($("var-hora").textContent !== txt) $("var-hora").textContent = txt;
+    }
+    function moverVar(seg) {
+        const v = $("var-video");
+        v.pause();
+        v.currentTime = Math.max(0, Math.min(Number.isFinite(v.duration) ? v.duration : Infinity, v.currentTime + seg));
+    }
+    $("var-grabar").addEventListener("change", (e) => encenderVar(e.target.checked));
+    $("btn-var").addEventListener("click", abrirVar);
+    $("var-video").addEventListener("timeupdate", horaVar);
+    $("var-video").addEventListener("seeked", horaVar);
+    $("var-atras").addEventListener("click", () => moverVar(-2));
+    $("var-cuadro-atras").addEventListener("click", () => moverVar(-0.1));
+    $("var-cuadro").addEventListener("click", () => moverVar(0.1));
+    $("var-velocidad").addEventListener("change", () => { $("var-video").playbackRate = Number($("var-velocidad").value) || 1; });
+    $("var-cerrar").addEventListener("click", () => $("var-dialogo").close());
+    $("var-dialogo").addEventListener("close", () => {
+        const v = $("var-video");
+        v.pause(); v.removeAttribute("src"); v.load();
+        if (varUrl && varTrozo && !varTrozo.url) URL.revokeObjectURL(varUrl);
+        varUrl = null; varTrozo = null;
+        $("btn-var").focus();
+    });
+    // El pedazo que se ve, para el acta: lo baja el árbitro a propósito, es lo único que sale del aparato.
+    $("var-guardar").addEventListener("click", () => {
+        if (!varTrozo) return;
+        const t = T(), tipo = varTrozo.blob.type || "", ext = /mp4/.test(tipo) ? "mp4" : /webm/.test(tipo) ? "webm" : ((archivoVideo && /\.(\w+)$/.exec(archivoVideo.nombre)) || [, "webm"])[1];
+        const a = document.createElement("a");
+        a.href = varUrl;
+        a.download = "var-" + (t.mesa ? "mesa-" + lugarTexto(t) + "-" : "") + HoraCR.hoy() + "-" + HoraCR.hora(new Date(varTrozo.inicio), { hour: "2-digit", minute: "2-digit", hour12: false }).replace(/\D/g, "") + "." + ext;
+        document.body.append(a); a.click(); a.remove();
+    });
+    try { varSi = localStorage.getItem(VAR_SI) === "1" && !!grabador; } catch (e) { /* apagado */ }
+    pintarVar();
+
+    /* ── Un jugador ciego en la mesa ─────────────────────────────────────
+     * El celular le dice al oído (con un audífono) la jugada del rival apenas
+     * la anota y su tiempo si hay reloj; si quiere, también las suyas, para
+     * saber que se anotaron, y avisa a los 5 minutos, al minuto y a los 30
+     * segundos. Habla aunque la voz del sitio esté apagada: encenderla haría
+     * que leyera cada aviso de la página (ver `siempre` en js/blind-notation.js). */
+    const CIEGO = delPuesto("camara_ciego_v1_");
+    function tiempoHablado(ms) {
+        const s = Math.max(0, Math.round(ms / 1000)), h = Math.floor(s / 3600), m = Math.floor(s / 60) % 60, ss = s % 60;
+        const min = (n) => n + (n === 1 ? " minuto" : " minutos"), seg = (n) => n + (n === 1 ? " segundo" : " segundos");
+        if (h) return h + (h === 1 ? " hora" : " horas") + (m ? " y " + min(m) : "");
+        if (m >= 10 || (m && !ss)) return min(m);
+        return m ? min(m) + " y " + seg(ss) : seg(ss);
+    }
+    function decirCiego(t, texto) {
+        if (!t.ciego.color || !texto || !window.BlindNotation) return;
+        BlindNotation.speak(texto, { siempre: true, encolar: true });
+        t.ciegoUltimo = texto;
+        if (t === T()) { $("ciego-dicho").textContent = "Se le dijo: «" + texto + "»"; $("btn-ciego-repetir").disabled = false; }
+    }
+    function ciegoJugadas(t, movidas) {
+        const c = t.ciego.color;
+        if (!c || !window.BlindNotation) return;
+        const partes = [];
+        for (const m of movidas) {
+            const dicha = BlindNotation.sanSpoken(m.san);
+            if (c === "ambos") partes.push((m.color === "w" ? "Blancas: " : "Negras: ") + dicha);
+            else if (m.color !== c) partes.push("Tu rival jugó " + dicha);
+            else if (t.ciego.propias) partes.push("Anotada tu jugada: " + dicha);
+        }
+        const r = relojAhora(t);
+        if (r && t.ciego.reloj && c !== "ambos" && movidas.some((m) => m.color !== c)) partes.push("Te quedan " + tiempoHablado(r[c]));
+        if (partes.length) decirCiego(t, partes.join(". ") + ".");
+    }
+    // Al cruzar 5 minutos, 1 minuto y 30 segundos (cuando su reloj corre y baja).
+    function tiempoCiego(t) {
+        const c = t.ciego.color, r = c && c !== "ambos" && t.ciego.reloj ? relojAhora(t) : null;
+        if (!r || r.corre !== c) { t.ciegoAntes = null; return; }
+        const antes = t.ciegoAntes;
+        t.ciegoAntes = r[c];
+        if (antes == null) return;
+        const lim = [300000, 60000, 30000].find((x) => antes > x && r[c] <= x);
+        if (lim) decirCiego(t, "Te quedan " + tiempoHablado(lim) + ".");
+    }
+    function cargarCiego(t) {
+        try { const c = JSON.parse(localStorage.getItem(CIEGO + t.i) || "null"); if (c && typeof c === "object") Object.assign(t.ciego, { color: ["w", "b", "ambos"].includes(c.color) ? c.color : "", propias: c.propias !== false, reloj: c.reloj !== false }); } catch (e) { /* sin almacenamiento */ }
+        return t;
+    }
+    function guardarCiego(t) { try { localStorage.setItem(CIEGO + t.i, JSON.stringify(t.ciego)); } catch (e) { /* solo por esta visita */ } }
+    function pintarCiego() {
+        const t = T();
+        $("ciego-color").value = t.ciego.color;
+        $("ciego-propias").checked = t.ciego.propias;
+        $("ciego-reloj").checked = t.ciego.reloj;
+        $("btn-ciego-repetir").disabled = !t.ciego.color || !t.ciegoUltimo;
+        $("ciego-dicho").textContent = t.ciego.color && t.ciegoUltimo ? "Se le dijo: «" + t.ciegoUltimo + "»" : "";
+    }
+    $("ciego-color").addEventListener("change", (e) => {
+        const t = T();
+        t.ciego.color = e.target.value;
+        guardarCiego(t);
+        // Lo primero que dice sirve de prueba (y en el celular, la voz solo arranca después de un toque).
+        if (t.ciego.color) decirCiego(t, "Listo. Te voy a decir " + (t.ciego.color === "ambos" ? "cada jugada" : "la jugada de tu rival") + " apenas se anote.");
+        pintarCiego();
+    });
+    $("ciego-propias").addEventListener("change", (e) => { T().ciego.propias = e.target.checked; guardarCiego(T()); });
+    $("ciego-reloj").addEventListener("change", (e) => { T().ciego.reloj = e.target.checked; guardarCiego(T()); });
+    $("btn-ciego-repetir").addEventListener("click", () => { const t = T(); if (t.ciegoUltimo && window.BlindNotation) BlindNotation.speak(t.ciegoUltimo, { siempre: true }); });
+
+    /* ── El reloj leído de la imagen (js/lector-reloj.js) ────────────────
+     * Se marca un rectángulo sobre el tiempo de las blancas y otro sobre el
+     * de las negras, y cada segundo se leen sus números de la imagen a su
+     * tamaño de verdad (no de la achicada a 640). Una lectura vale si la
+     * anterior cuadra con ella (igual, o menos lo que pasó): así un número
+     * mal leído no mueve el reloj. Corre el que bajó; si ninguno baja en 3 s,
+     * el reloj de la mesa está parado. Con el reloj leído, la cámara no lleva
+     * el tiempo: lo dice el reloj de la mesa, y la bandera es cuando muestra 0. */
+    let marcandoReloj = null; // { color, desde, hasta } mientras se marca
+    const relojLienzo = document.createElement("canvas"), rctx = relojLienzo.getContext("2d", { willReadFrequently: true });
+    function pedirReloj(color) {
+        marcandoReloj = { color, desde: null, hasta: null };
+        pintarYa = true;
+        avisar(cual(T()) + "Marca con el dedo un rectángulo sobre el tiempo de las " + (color === "w" ? "blancas" : "negras") + " en el reloj de la mesa: solo los números.");
+    }
+    function grisDel(r) {
+        const ex = anchoFuente() / limpio.width, ey = altoFuente() / limpio.height;
+        const w = Math.max(8, Math.round(r.w * ex)), h = Math.max(6, Math.round(r.h * ey));
+        relojLienzo.width = w; relojLienzo.height = h;
+        rctx.drawImage(fuente, r.x * ex, r.y * ey, r.w * ex, r.h * ey, 0, 0, w, h);
+        const d = rctx.getImageData(0, 0, w, h).data, g = new Uint8Array(w * h);
+        for (let i = 0; i < w * h; i++) g[i] = (d[4 * i] * 299 + d[4 * i + 1] * 587 + d[4 * i + 2] * 114) / 1000;
+        return { g, w, h };
+    }
+    function leerRelojMesa() {
+        if (!fuente || !window.LectorReloj) return;
+        for (const t of tableros) {
+            const m = t.relojMesa;
+            if (!m || !m.w || !m.b) continue;
+            const ahora = Date.now();
+            for (const c of ["w", "b"]) {
+                const { g, w, h } = grisDel(m[c]), r = LectorReloj.leer(g, w, h, { x: 0, y: 0, w, h });
+                const L = t.relojLeido[c] || (t.relojLeido[c] = { ms: null, h: 0, antes: null, hAntes: 0 });
+                if (!r) continue;
+                if (L.antes !== null && (L.antes === r.ms || Math.abs((L.antes - r.ms) - (ahora - L.hAntes)) <= 2500)) { L.ms = r.ms; L.h = ahora; }
+                L.antes = r.ms; L.hAntes = ahora;
+            }
+            usarRelojLeido(t);
+        }
+        pintarRelojLeido();
+    }
+    function usarRelojLeido(t) {
+        const L = t.relojLeido;
+        if (!L.w || !L.b || L.w.ms === null || L.b.ms === null) return;
+        let r = t.reloj;
+        if (!r || !r.leido) r = t.reloj = { base: null, inc: 0, w: L.w.ms, b: L.b.ms, corre: null, desde: Date.now(), pausa: false, bandera: null, leido: true, movio: 0 };
+        if (r.bandera) return;
+        const bw = r.w - L.w.ms, bb = r.b - L.b.ms;
+        if (bw > 300 || bb > 300) { r.corre = bw >= bb ? "w" : "b"; r.movio = Date.now(); }
+        else if (Date.now() - r.movio > 3000) r.corre = null;
+        const cambio = r.w !== L.w.ms || r.b !== L.b.ms;
+        r.w = L.w.ms; r.b = L.b.ms; r.desde = Math.max(L.w.h, L.b.h);
+        if (cambio && t.vivo) enviarVivo(t, true);
+        if (t === T()) pintarReloj();
+    }
+    function pintarRelojLeido() {
+        const t = T(), m = t.relojMesa, e = $("reloj-leido");
+        $("btn-reloj-dejar").hidden = !m;
+        $("btn-reloj-marcar").textContent = m ? "Volver a marcar el reloj" : "Marcar el reloj de la mesa";
+        let txt = "";
+        if (m && m.w && m.b) {
+            const L = t.relojLeido, ok = L.w && L.b && L.w.ms !== null && L.b.ms !== null;
+            const viejo = ok ? Math.round((Date.now() - Math.min(L.w.h, L.b.h)) / 1000) : 0;
+            txt = !ok ? "Todavía no se leen los números: revisa que cada rectángulo tenga solo los números de su tiempo, sin reflejos."
+                : "Del reloj de la mesa: blancas " + LectorReloj.texto(L.w.ms) + " · negras " + LectorReloj.texto(L.b.ms) + "." + (viejo > 5 ? " No se lee bien hace " + viejo + " s: se sigue con el último tiempo leído." : "");
+        }
+        if (e.textContent !== txt) e.textContent = txt;
+    }
+    setInterval(leerRelojMesa, 1000);
+    $("btn-reloj-marcar").addEventListener("click", () => {
+        const t = T();
+        if (!fuente) { avisar("Primero abre la cámara: el reloj se marca sobre su imagen.", "error"); return; }
+        t.relojMesa = { w: null, b: null }; t.relojLeido = {};
+        if (t.reloj && t.reloj.leido) t.reloj = null;
+        $("reloj-leer").open = true;
+        pedirReloj("w");
+        pintarRelojLeido();
+    });
+    $("btn-reloj-dejar").addEventListener("click", () => {
+        const t = T();
+        t.relojMesa = null; t.relojLeido = {}; marcandoReloj = null;
+        if (t.reloj && t.reloj.leido) t.reloj = null;
+        pintarYa = true;
+        pintarReloj(); pintarRelojLeido();
+        if (t.vivo) enviarVivo(t, true);
+        avisar(cual(t) + "Ya no se lee el reloj de la mesa.");
+    });
+    function dibujarRelojMesa(t) {
+        const caja = (r, texto) => {
+            ctx.setLineDash([6, 4]); ctx.lineWidth = 2; ctx.strokeStyle = "#ffffff"; ctx.strokeRect(r.x, r.y, r.w, r.h); ctx.setLineDash([]);
+            ctx.font = "bold 12px sans-serif"; ctx.textAlign = "left"; ctx.textBaseline = "bottom";
+            const ancho = ctx.measureText(texto).width + 8;
+            ctx.fillStyle = "rgba(0, 0, 0, 0.8)"; ctx.fillRect(r.x, r.y - 17, ancho, 16);
+            ctx.fillStyle = "#ffffff"; ctx.fillText(texto, r.x + 4, r.y - 2);
+        };
+        const m = t.relojMesa;
+        if (m) for (const c of ["w", "b"]) if (m[c]) {
+            const L = t.relojLeido[c];
+            caja(m[c], (c === "w" ? "Blancas" : "Negras") + (L && L.ms !== null ? " " + LectorReloj.texto(L.ms) : ""));
+        }
+        if (t === T() && marcandoReloj && marcandoReloj.desde) {
+            const [a, b] = [marcandoReloj.desde, marcandoReloj.hasta];
+            caja({ x: Math.min(a[0], b[0]), y: Math.min(a[1], b[1]), w: Math.abs(a[0] - b[0]), h: Math.abs(a[1] - b[1]) }, marcandoReloj.color === "w" ? "Blancas" : "Negras");
+        }
+    }
+
     /* ── Dibujar ──────────────────────────────────────────────────────── */
     function lupa(p) {
         const R = 70, Z = 3;
@@ -1959,6 +2378,16 @@
     }
     function procesar(t, det, ahora) {
         if (det.lectura !== t.lectura) { ultimoCambio = ahora; pintarYa = true; }
+        // Para el VAR: la primera lectura distinta de la partida es una mano
+        // que entra al tablero (o una pieza que se movió), con sus casillas.
+        if (t.cal) {
+            const esp = esperada(t.juego), distinto = det.lectura !== esp;
+            if (distinto && !t.tapado) {
+                t.manos.push({ h: horaPartida(), casillas: diferentes(det.lectura, esp).slice(0, 6) });
+                if (t.manos.length > 300) t.manos.shift();
+            }
+            t.tapado = distinto;
+        }
         t.lectura = det.lectura; t.seguridad = det.seguridad;
         if (t.cal && det.lectura === esperada(t.juego)) afinarLuz(t, ahora);
         t.recientes.push(t.lectura);
@@ -2063,8 +2492,8 @@
                     ctx.fillText(txt, x, y + 1);
                 }
             }
-            // Con dos tableros, cada cuadrícula dice cuál es (no solo por el color).
-            if (dos()) {
+            // Con varios tableros, cada cuadrícula dice cuál es (no solo por el color).
+            if (varios()) {
                 const [x, y] = aplicar(t.h, 4, 4);
                 ctx.fillStyle = "rgba(0, 0, 0, 0.8)";
                 ctx.fillRect(x - 14, y - 14, 28, 28);
@@ -2122,7 +2551,7 @@
         requestAnimationFrame(dibujar);
         if (!fuente || ahorro) return;
         ahora = ahora || performance.now();
-        const ubicando = arrastre >= 0 || buscando || tableros.some((t) => !t.cal);
+        const ubicando = arrastre >= 0 || buscando || !!marcandoReloj || tableros.some((t) => !t.cal);
         if (!ubicando && !pintarYa && ahora - ultimoDibujo < DIBUJO_LENTO_MS) return;
         pintarYa = false; ultimoDibujo = ahora; gasto.dibujos++;
         cctx.drawImage(fuente, 0, 0, limpio.width, limpio.height);
@@ -2130,6 +2559,7 @@
         // El elegido, encima del otro.
         tableros.filter((t) => t !== T()).forEach(dibujarTablero);
         dibujarTablero(T());
+        tableros.forEach(dibujarRelojMesa);
         if (arrastre >= 0 && T().esquinas[arrastre]) lupa(T().esquinas[arrastre]);
     }
 
@@ -2228,7 +2658,7 @@
         if (!bien) { avisar(cual(t) + "No entiendo esa posición: pega un FEN (como lo da Lichess) o las jugadas en PGN.", "error"); return; }
         t.juego = j;
         t.resultadoMano = null; t.confirmadas = new Set(j.history({ verbose: true }).map((m, i) => (m.promotion ? i : -1)));
-        t.inicio = Date.now(); t.horas = j.history().map(() => null); t.horaResultado = null; t.reloj = null; t.dudas = 0; t.ilegales = 0;
+        t.inicio = horaPartida(); t.horas = j.history().map(() => null); t.horaResultado = null; t.reloj = null; t.dudas = 0; t.ilegales = 0;
         $("dudas").hidden = true;
         partidaCambio(t);
         avisar(cual(t) + "Posición cargada. Pon las piezas así en el tablero y toca «Seguir con esta partida».", "bien");
@@ -2250,7 +2680,7 @@
             avisar("No se pudo copiar. Este es el PGN: " + pgn, "error");
         }
     });
-    $("dos-tableros").addEventListener("change", (e) => cambiarCantidad(e.target.checked ? 2 : 1));
+    $("cuantos-tableros").addEventListener("change", (e) => cambiarCantidad(e.target.value));
     document.querySelectorAll("[data-tablero]").forEach((b) => b.addEventListener("click", () => {
         elegirTablero(Number(b.dataset.tablero));
         pedirEsquina();
@@ -2317,7 +2747,7 @@
         const t = tableros[0];
         const pista = video.srcObject && video.srcObject.getVideoTracks()[0];
         return {
-            camara: fuente === video ? !!(pista && pista.readyState === "live") : !!fuente,
+            camara: fuente === video && !archivoVideo ? !!(pista && pista.readyState === "live") : !!fuente,
             calibrada: !!t.cal, mesa: t.mesa || null, tablero: t.tablero || null, transmitiendo: !!t.vivo,
             dudas: !$("dudas").hidden, error: ultimoAviso.tipo === "error" ? ultimoAviso.texto : "",
             jugadas: t.juego.history().length, resultado: resultadoDe(t), sinRed: sinRed(),
@@ -2389,7 +2819,7 @@
     // Lo que es igual en las dos entradas: la app, la partida guardada y el dibujo.
     function arrancar() {
         $("app").classList.remove("hidden");
-        $("dos-tableros").checked = false;
+        $("cuantos-tableros").value = "1";
         try { elegirRetraso(Number(localStorage.getItem(RETRASO)) || 0, false); } catch (e) { /* sin almacenamiento */ }
         // La partida que se estaba anotando, si la página se cerró o se recargó.
         let guardada = null;
@@ -2408,6 +2838,7 @@
             tableros[0].inicio = h && h.inicio || null;
             avisar("Se recuperó la partida que estabas anotando (" + j.history().length + " jugadas). Ubica el tablero y toca «Seguir con esta partida»; para empezar otra, «Calibrar con la posición inicial».", "bien");
         }
+        cargarCiego(tableros[0]);
         elegirTablero(0);
         sinImagen();
         requestAnimationFrame(dibujar);

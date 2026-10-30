@@ -163,15 +163,75 @@ function dibujarFoto(opc) {
     p[o] = col[0] + n; p[o + 1] = col[1] + n; p[o + 2] = col[2] + n; p[o + 3] = 255;
   }
   g.putImageData(d, 0, 0);
+  /* Un reloj digital en la mesa (`reloj: { w: "1:05:32", b: "0:58:10", x, y }`):
+   * la caja negra y dos pantallas grises con los números de siete rayas,
+   * inclinados como los de un DGT. */
+  if (opc.reloj) {
+    const SEG = { 0: "abcdef", 1: "bc", 2: "abdeg", 3: "abcdg", 4: "bcfg", 5: "acdfg", 6: "acdefg", 7: "abc", 8: "abcdefg", 9: "abcdfg" };
+    const { x, y } = opc.reloj, A = 34, w = 18, t = 4, gap = 2, inc = 0.12, y0 = y + 28;
+    g.fillStyle = "#222222"; g.fillRect(x, y, 330, 90);
+    const raya = (x0, ya, x1, yb) => { for (let yy = ya; yy < yb; yy++) g.fillRect(Math.round(x0 + inc * (y0 + A - yy)), yy, x1 - x0, 1); };
+    const pantalla = (px, texto) => {
+      g.fillStyle = "#b9c0b0"; g.fillRect(px, y + 15, 150, 60);
+      g.fillStyle = "#1a1a1a";
+      let cx = px + 8;
+      for (const ch of texto || "") {
+        if (ch === ":") { raya(cx + 1, y0 + 9, cx + 1 + t, y0 + 9 + t); raya(cx + 1, y0 + 22, cx + 1 + t, y0 + 22 + t); cx += t + 5; continue; }
+        const s = SEG[ch], m = A / 2;
+        if (s.includes("a")) raya(cx + gap, y0, cx + w - gap, y0 + t);
+        if (s.includes("g")) raya(cx + gap, y0 + m - t / 2, cx + w - gap, y0 + m + t / 2);
+        if (s.includes("d")) raya(cx + gap, y0 + A - t, cx + w - gap, y0 + A);
+        if (s.includes("f")) raya(cx, y0 + gap, cx + t, y0 + m - gap);
+        if (s.includes("b")) raya(cx + w - t, y0 + gap, cx + w, y0 + m - gap);
+        if (s.includes("e")) raya(cx, y0 + m + gap, cx + t, y0 + A - gap);
+        if (s.includes("c")) raya(cx + w - t, y0 + m + gap, cx + w, y0 + A - gap);
+        cx += w + 6;
+      }
+    };
+    pantalla(x + 10, opc.reloj.w); pantalla(x + 170, opc.reloj.b);
+  }
   return c.toDataURL("image/png").split(",")[1];
 }
 async function foto(page, fen, esq, fondo, luz) {
-  const opc = Array.isArray(fen) ? { tableros: fen } : Object.assign({ fen, esq, fondo }, luz);
+  const opc = Array.isArray(fen) ? Object.assign({ tableros: fen }, esq) : Object.assign({ fen, esq, fondo }, luz);
   const b64 = await page.evaluate(([src, opc]) => new Function("return " + src)()(opc), [dibujarFoto.toString(), opc]);
   await page.setInputFiles("#foto", { name: "tablero.png", mimeType: "image/png", buffer: Buffer.from(b64, "base64") });
 }
 // La foto de 800 se trabaja a 640 de ancho.
 const aLienzo = (esq) => esq.map(([x, y]) => [x * 0.8, y * 0.8]);
+// Puntos de la foto (800 × 600) en la pantalla, sea cual sea el ancho del lienzo.
+async function enPantalla(page, puntos) {
+  await page.locator("#lienzo").evaluate((c) => c.scrollIntoView({ block: "center", behavior: "instant" }));
+  const caja = await page.locator("#lienzo").boundingBox();
+  return puntos.map(([x, y]) => [caja.x + x * caja.width / 800, caja.y + y * caja.height / 600]);
+}
+async function tocarFoto(page, puntos) { for (const [x, y] of await enPantalla(page, puntos)) await page.mouse.click(x, y); }
+async function arrastrarFoto(page, a, b) {
+  const [[x0, y0], [x1, y1]] = await enPantalla(page, [a, b]);
+  await page.mouse.move(x0, y0); await page.mouse.down();
+  await page.mouse.move((x0 + x1) / 2, (y0 + y1) / 2); await page.mouse.move(x1, y1); await page.mouse.up();
+}
+/* Lo que dice la voz, sin parlantes: se anota lo que se le pide decir. */
+const VOZ_ANOTADA = { f: () => {
+  Object.defineProperty(window, "speechSynthesis", { configurable: true, value: { speak(u) { (window.__dicho = window.__dicho || []).push(u.text); }, cancel() {}, getVoices() { return []; }, addEventListener() {}, removeEventListener() {} } });
+} };
+/* Una cámara de mentira: getUserMedia da el video de un lienzo donde la prueba
+ * dibuja la foto que quiera (window.__ponerFoto con el PNG en base64). */
+const CAMARA_FALSA = { f: () => {
+  const c = document.createElement("canvas"); c.width = 800; c.height = 600;
+  const g = c.getContext("2d"); g.fillStyle = "#888"; g.fillRect(0, 0, 800, 600);
+  let img = null;
+  window.__ponerFoto = (b64) => new Promise((listo) => { const i = new Image(); i.onload = () => { img = i; g.drawImage(i, 0, 0); listo(); }; i.src = "data:image/png;base64," + b64; });
+  // El lienzo solo manda imagen cuando cambia: se vuelve a pintar 10 veces por segundo.
+  setInterval(() => { if (img) g.drawImage(img, 0, 0); g.fillStyle = "rgba(0,0,0,0.01)"; g.fillRect(0, 0, 1, 1); }, 100);
+  const flujo = () => c.captureStream(10);
+  navigator.mediaDevices.getUserMedia = async () => flujo();
+  navigator.mediaDevices.enumerateDevices = async () => [{ kind: "videoinput", deviceId: "falsa", label: "Cámara de prueba" }];
+} };
+async function fotoEnCamara(page, opc) {
+  const b64 = await page.evaluate(([src, opc]) => new Function("return " + src)()(opc), [dibujarFoto.toString(), opc]);
+  await page.evaluate((b) => window.__ponerFoto(b), b64);
+}
 
 /* Los tableros de prueba: dónde caen a1, h1, h8 y a8 en la foto. */
 const TABLEROS = {
@@ -919,13 +979,13 @@ async function esperarJugadas(p, n) {
     const b = await abrir(browser, "camara-tablero.html");
     const pb = b.page;
     await pb.waitForSelector("#app:not(.hidden)");
-    igual("por omisión lee un solo tablero: la opción apagada y sin pestañas",
-      [await pb.isChecked("#dos-tableros"), await pb.locator("#pestanas").isVisible()], [false, false]);
+    igual("por omisión lee un solo tablero: «Uno» en la lista y sin pestañas",
+      [await pb.inputValue("#cuantos-tableros"), await pb.locator("#pestanas").isVisible()], ["1", false]);
     const ji = new Chess(), jd = new Chess();
     const ambas = () => foto(pb, [{ fen: ji.fen(), esq: IZQ }, { fen: jd.fen(), esq: DER }]);
     await ambas();
     await esperarAviso(pb, /esquinas/);
-    await pb.check("#dos-tableros");
+    await pb.selectOption("#cuantos-tableros", "2");
     igual("al encenderla aparecen las pestañas, con el tablero 2 elegido",
       [await pb.locator("#pestanas").isVisible(), await pb.getAttribute('[data-tablero="1"]', "aria-pressed")], [true, "true"]);
     igual("y recuerda que lo más confiable es un celular por tablero", (await aviso(pb)).includes("un celular por tablero"), true);
@@ -956,10 +1016,246 @@ async function esperarJugadas(p, n) {
     igual("cada tablero se transmite con su propio código", codigos[0] !== codigos[1] && codigos.every((c) => /^[a-hjkmnp-z2-9]{8}$/.test(c)), true);
     await pb.click('[data-tablero="0"]');
     const primero = await jugadasDe(pb);
-    await pb.uncheck("#dos-tableros");
+    await pb.selectOption("#cuantos-tableros", "1");
     igual("al apagarla vuelve a un tablero: sin pestañas y la imagen a 640", [await pb.locator("#pestanas").isVisible(), await pb.evaluate(() => document.getElementById("lienzo").width)], [false, 640]);
     igual("el tablero 1 sigue con su partida", await jugadasDe(pb), primero);
     igual("sin errores en la consola", b.errores, []);
+    await cerrar(b);
+  }
+
+
+  console.log("\nCuatro tableros con un celular (opcional)");
+  {
+    // Cuatro tableros en la foto, uno en cada cuarto, cada uno con su partida.
+    const ESQS = [
+      [[50, 280], [330, 280], [330, 30], [50, 30]], [[460, 280], [740, 280], [740, 30], [460, 30]],
+      [[50, 580], [330, 580], [330, 320], [50, 320]], [[460, 580], [740, 580], [740, 320], [460, 320]],
+    ];
+    const b = await abrir(browser, "camara-tablero.html");
+    const pb = b.page;
+    await pb.waitForSelector("#app:not(.hidden)");
+    const js = ESQS.map(() => new Chess());
+    const todos = () => foto(pb, js.map((j, i) => ({ fen: j.fen(), esq: ESQS[i] })));
+    await todos();
+    await esperarAviso(pb, /esquinas/);
+    await pb.selectOption("#cuantos-tableros", "4");
+    igual("con «Cuatro», cuatro pestañas y la imagen a 1280 de ancho",
+      [await pb.$$eval("[data-tablero]", (bs) => bs.filter((x) => !x.hidden).length), await pb.evaluate(() => document.getElementById("lienzo").width)], [4, 1280]);
+    for (let n = 0; n < 4; n++) {
+      await pb.click(`[data-tablero="${n}"]`);
+      await tocarFoto(pb, ESQS[n]);
+      await pb.waitForTimeout(300);
+      await pb.click("#btn-calibrar");
+      await esperarAviso(pb, /Calibrado|no se ve/);
+      igual("tablero " + (n + 1) + ": calibra con las 64", (await aviso(pb)).startsWith("Tablero " + (n + 1) + ": Calibrado") && (await aviso(pb)).includes("64 de 64"), true);
+    }
+    ["e4", "d4", "c4", "Nf3"].forEach((m, i) => js[i].move(m));
+    await todos();
+    await pb.waitForTimeout(2500);
+    const partidas = [];
+    for (let n = 0; n < 4; n++) { await pb.click(`[data-tablero="${n}"]`); partidas.push(await jugadasDe(pb)); }
+    igual("cada tablero anota su propia partida", partidas, ["1. e4", "1. d4", "1. c4", "1. Cf3"]);
+    await pb.selectOption("#cuantos-tableros", "2");
+    igual("al bajar a dos, quedan dos pestañas y los dos primeros siguen con su partida",
+      [await pb.$$eval("[data-tablero]", (bs) => bs.filter((x) => !x.hidden).length), await (async () => { await pb.click('[data-tablero="1"]'); return jugadasDe(pb); })()], [2, "1. d4"]);
+    igual("sin errores en la consola", b.errores, []);
+    await cerrar(b);
+  }
+
+  console.log("\nLeer un video grabado");
+  {
+    const b = await abrir(browser, "camara-tablero.html");
+    const pv = b.page;
+    await pv.waitForSelector("#app:not(.hidden)");
+    // Un video de verdad (WebM), grabado en la página con tres posiciones de 5 s cada una.
+    const j = new Chess(), fens = [j.fen()];
+    j.move("e4"); fens.push(j.fen()); j.move("e5"); fens.push(j.fen());
+    const pngs = [];
+    for (const fen of fens) pngs.push(await pv.evaluate(([src, opc]) => new Function("return " + src)()(opc), [dibujarFoto.toString(), { fen, esq: ESQ0 }]));
+    const webm = await pv.evaluate(async (pngs) => {
+      const c = document.createElement("canvas"); c.width = 800; c.height = 600;
+      const g = c.getContext("2d");
+      const imgs = await Promise.all(pngs.map((b) => new Promise((ok) => { const i = new Image(); i.onload = () => ok(i); i.src = "data:image/png;base64," + b; })));
+      const r = new MediaRecorder(c.captureStream(10), { mimeType: "video/webm;codecs=vp8" }), partes = [];
+      r.ondataavailable = (e) => partes.push(e.data);
+      let actual = imgs[0];
+      const pinta = setInterval(() => g.drawImage(actual, 0, 0), 100);
+      g.drawImage(actual, 0, 0);
+      r.start();
+      for (const i of imgs) { actual = i; await new Promise((ok) => setTimeout(ok, 5000)); }
+      await new Promise((ok) => { r.onstop = ok; r.stop(); });
+      clearInterval(pinta);
+      const buf = await new Blob(partes, { type: "video/webm" }).arrayBuffer();
+      let s = ""; const u = new Uint8Array(buf);
+      for (let k = 0; k < u.length; k += 0x8000) s += String.fromCharCode.apply(null, u.subarray(k, k + 0x8000));
+      return btoa(s);
+    }, pngs);
+    await pv.setInputFiles("#video-archivo", { name: "partida.webm", mimeType: "video/webm", buffer: Buffer.from(webm, "base64") });
+    await esperarAviso(pv, /Video abierto|No se pudo/, 15000);
+    igual("abre el video, dice cuánto dura y qué hacer", /^Video abierto \(0:1[45]\)\. Ubica el tablero/.test(await aviso(pv)), true);
+    igual("aparecen sus controles", await pv.locator("#video-controles").isVisible(), true);
+    await tocar(pv, aLienzo(ESQ0));
+    await pv.click("#btn-calibrar");
+    await esperarAviso(pv, /Calibrado/);
+    await pv.selectOption("#video-velocidad", "2");
+    await pv.click("#btn-video-leer");
+    await esperarAviso(pv, /Terminó el video/, 20000);
+    igual("al doble de velocidad, anota la partida del video", await jugadasDe(pv), "1. e4 e5");
+    igual("y lo dice al terminar", (await aviso(pv)).startsWith("Terminó el video: se anotaron 2 jugadas."), true);
+    // El VAR del video: las jugadas con su minuto DENTRO del video, no la hora de ahora.
+    igual("se puede revisar el video mismo (VAR)", [await pv.isEnabled("#btn-var"), await pv.textContent("#var-estado")], [true, "Con un video grabado, se revisa el video mismo."]);
+    await pv.click("#btn-var");
+    await pv.waitForSelector("#var-dialogo[open]");
+    const marcas = await pv.$$eval("#var-marcas button", (bs) => bs.map((x) => x.textContent));
+    igual("las jugadas, con su minuto en el video (la última primero)", marcas.filter((x) => x.startsWith("Jugada")).map((x) => x.replace(/0:(0\d|1\d)/, (m, s) => (Math.abs(Number(s) - (x.includes("e5") ? 10 : 5)) <= 2 ? "OK" : m))),
+      ["Jugada 1… e5 (negras) — minuto OK del video", "Jugada 1. e4 (blancas) — minuto OK del video"]);
+    await pv.click('#var-marcas button:has-text("Jugada 1. e4")');
+    await pv.waitForFunction(() => /minuto 0:0\d del video/.test(document.getElementById("var-hora").textContent), null, { timeout: 5000 }).catch(() => {});
+    igual("tocar una jugada deja el video unos segundos antes, en pausa", [/^Se ve: minuto 0:0[1-4] del video\.$/.test(await pv.textContent("#var-hora")), await pv.evaluate(() => document.getElementById("var-video").paused)], [true, true]);
+    await pv.click("#var-cerrar");
+    igual("sin errores en la consola (video)", b.errores, []);
+    await cerrar(b);
+  }
+
+  console.log("\nEl VAR: grabar los últimos minutos y revisar una jugada");
+  {
+    const b = await abrir(browser, "camara-tablero.html", null, null, CAMARA_FALSA);
+    const pr = b.page;
+    await pr.waitForSelector("#app:not(.hidden)");
+    igual("por omisión no se graba", [await pr.isChecked("#var-grabar"), await pr.textContent("#var-estado"), await pr.isDisabled("#btn-var")], [false, "No se está grabando.", true]);
+    await pr.check("#var-grabar");
+    igual("encendido sin cámara: empieza al abrirla", await pr.textContent("#var-estado"), "Se empieza a grabar al abrir la cámara.");
+    const j = new Chess();
+    await fotoEnCamara(pr, { fen: j.fen(), esq: ESQ0 });
+    await pr.click("#btn-camara");
+    await pr.waitForFunction(() => /^● Grabando los últimos 10 minutos \(desde las .+\), solo en este celular · [\d.]+ MB\.$/.test(document.getElementById("var-estado").textContent), null, { timeout: 8000 }).catch(() => {});
+    igual("con la cámara abierta graba, y dice que el video queda solo en el celular", /^● Grabando los últimos 10 minutos \(desde las .+\), solo en este celular/.test(await pr.textContent("#var-estado")), true);
+    await tocar(pr, aLienzo(ESQ0));
+    await pr.click("#btn-calibrar");
+    await esperarAviso(pr, /Calibrado/);
+    // Una mano levanta el peón de e2 (la casilla queda vacía) y después lo pone en e4.
+    const levantado = "rnbqkbnr/pppppppp/8/8/8/8/PPPP1PPP/RNBQKBNR w KQkq - 0 1";
+    await fotoEnCamara(pr, { fen: levantado, esq: ESQ0 });
+    await pr.waitForTimeout(800);
+    j.move("e4");
+    await fotoEnCamara(pr, { fen: j.fen(), esq: ESQ0 });
+    await esperarJugadas(pr, 1);
+    await pr.waitForTimeout(1500);
+    await pr.click("#btn-var");
+    await pr.waitForSelector("#var-dialogo[open]", { timeout: 8000 });
+    const marcas = await pr.$$eval("#var-marcas button", (bs) => bs.map((x) => x.textContent));
+    igual("las marcas: la jugada y la mano que levantó el peón de e2, con su hora", [
+      marcas.some((x) => /^Jugada 1\. e4 \(blancas\) — \d{1,2}:\d{2}:\d{2}.*, hace 0:0\d$/.test(x)),
+      marcas.some((x) => /^Mano sobre el tablero \(e2\) — /.test(x)), marcas.length >= 2], [true, true, true]);
+    await pr.waitForFunction(() => { const v = document.getElementById("var-video"); return v.readyState >= 2; }, null, { timeout: 8000 }).catch(() => {});
+    const t0 = await pr.evaluate(() => document.getElementById("var-video").currentTime);
+    await pr.click("#var-cuadro");
+    await pr.waitForTimeout(300);
+    const t1 = await pr.evaluate(() => document.getElementById("var-video").currentTime);
+    igual("el video de lo grabado se ve, en pausa, y avanza de a un cuadro (0,1 s)", [await pr.evaluate(() => document.getElementById("var-video").paused), Math.round((t1 - t0) * 10)], [true, 1]);
+    igual("y dice qué hora es lo que se ve", /^Se ve: \d{1,2}:\d{2}:\d{2}.*, hace \d+:\d{2}\.$/.test(await pr.textContent("#var-hora")), true);
+    igual("a un cuarto de la velocidad, por omisión", await pr.evaluate(() => document.getElementById("var-video").playbackRate), 0.25);
+    const [bajada] = await Promise.all([pr.waitForEvent("download"), pr.click("#var-guardar")]);
+    igual("«Guardar este pedazo» baja el video para el acta (lo único que sale del aparato)", /^var-\d{4}-\d{2}-\d{2}-\d{4}\.webm$/.test(bajada.suggestedFilename()) && fs.statSync(await bajada.path()).size > 1000, true);
+    await pr.click("#var-cerrar");
+    igual("al cerrar vuelve a la partida, con el foco en el botón", [await pr.evaluate(() => document.getElementById("var-dialogo").open), await pr.evaluate(() => document.activeElement.id)], [false, "btn-var"]);
+    // Nada del video viaja por el canal de la transmisión (ni siquiera transmitiendo).
+    await pr.click("#btn-vivo");
+    await pr.waitForSelector("#vivo-encendido:not([hidden])");
+    const antes = eventos.length;
+    j.move("e5");
+    await fotoEnCamara(pr, { fen: j.fen(), esq: ESQ0 });
+    await esperarJugadas(pr, 2);
+    await pr.waitForTimeout(800);
+    igual("por la transmisión no viaja nada del video", eventos.slice(antes).some((x) => /blob:|video|webm/i.test(JSON.stringify(x.payload))), false);
+    await pr.uncheck("#var-grabar");
+    igual("al apagarlo se deja de grabar y se borra lo grabado", [await pr.textContent("#var-estado"), await pr.isDisabled("#btn-var")], ["No se está grabando.", true]);
+    igual("sin errores en la consola (VAR)", b.errores, []);
+    await cerrar(b);
+  }
+
+  console.log("\nUn jugador ciego en la mesa");
+  {
+    const b = await abrir(browser, "camara-tablero.html", null, null, VOZ_ANOTADA);
+    const pc = b.page;
+    await pc.waitForSelector("#app:not(.hidden)");
+    const dicho = () => pc.evaluate(() => (window.__dicho || []).slice());
+    const j = new Chess();
+    await foto(pc, j.fen(), ESQ0);
+    await esperarAviso(pc, /esquinas/);
+    await tocar(pc, aLienzo(ESQ0));
+    await pc.click("#btn-calibrar");
+    await esperarAviso(pc, /Calibrado/);
+    igual("por omisión no dice nada", await dicho(), []);
+    await pc.selectOption("#reloj-ritmo", "5+0");
+    await pc.click("#btn-reloj");
+    await pc.selectOption("#ciego-color", "b");
+    igual("al elegir quién no ve, se lo dice (y sirve de prueba de la voz)", (await dicho()).slice(-1), ["Listo. Te voy a decir la jugada de tu rival apenas se anote."]);
+    j.move("e4");
+    await foto(pc, j.fen(), ESQ0);
+    await esperarJugadas(pc, 1);
+    await pc.waitForFunction(() => (window.__dicho || []).length >= 2, null, { timeout: 4000 }).catch(() => {});
+    igual("la jugada del rival, con su tiempo", /^Tu rival jugó .*e.*4\. Te quedan (5 minutos|4 minutos y 5\d segundos)\.$/.test((await dicho()).slice(-1)[0] || ""), true);
+    j.move("Nf6");
+    await foto(pc, j.fen(), ESQ0);
+    await esperarJugadas(pc, 2);
+    await pc.waitForFunction(() => (window.__dicho || []).length >= 3, null, { timeout: 4000 }).catch(() => {});
+    igual("y la suya, para que sepa que se anotó", (await dicho()).slice(-1)[0], "Anotada tu jugada: caballo f 6.".replace("f 6", (await pc.evaluate(() => BlindNotation.squareSpoken("f6")))));
+    await pc.uncheck("#ciego-propias");
+    j.move("d4"); await foto(pc, j.fen(), ESQ0); await esperarJugadas(pc, 3);
+    j.move("d5"); await foto(pc, j.fen(), ESQ0); await esperarJugadas(pc, 4);
+    await pc.waitForTimeout(500);
+    const ultimos = (await dicho()).slice(3);
+    igual("sin «sus jugadas», solo la del rival", [ultimos.length, /^Tu rival jugó /.test(ultimos[0] || "")], [1, true]);
+    await pc.click("#btn-ciego-repetir");
+    igual("«Repetir la última jugada» lo vuelve a decir", (await dicho()).slice(-1)[0], ultimos[0]);
+    // A los 30 segundos (su reloj corre): se adelanta la hora del aparato.
+    await pc.evaluate(() => { const real = Date.now; Date.now = () => real() + (5 * 60 - 25) * 1000; });
+    await pc.waitForFunction(() => (window.__dicho || []).some((x) => /^Te quedan/.test(x)), null, { timeout: 4000 }).catch(() => {});
+    igual("cuando cruza los 30 segundos, se le avisa", (await dicho()).filter((x) => /^Te quedan/.test(x)), ["Te quedan 30 segundos."]);
+    igual("no prende la voz de toda la página", await pc.evaluate(() => BlindNotation.isSpeechEnabled()), false);
+    igual("sin errores en la consola (jugador ciego)", b.errores, []);
+    await cerrar(b);
+  }
+
+  console.log("\nEl reloj de la mesa, leído de la imagen");
+  {
+    const IZQ = [[40, 560], [400, 560], [400, 200], [40, 200]], RELOJ = { x: 440, y: 420 };
+    const b = await abrir(browser, "camara-tablero.html");
+    const pk = b.page;
+    await pk.waitForSelector("#app:not(.hidden)");
+    const j = new Chess();
+    const conReloj = (w, bl) => foto(pk, [{ fen: j.fen(), esq: IZQ }], { reloj: Object.assign({ w, b: bl }, RELOJ) });
+    await conReloj("1:05:32", "0:58:10");
+    await esperarAviso(pk, /esquinas/);
+    await tocar(pk, aLienzo(IZQ));
+    await pk.click("#btn-calibrar");
+    await esperarAviso(pk, /Calibrado/);
+    await pk.click("#reloj-leer summary");
+    await pk.click("#btn-reloj-marcar");
+    igual("pide marcar el tiempo de las blancas", (await aviso(pk)).startsWith("Marca con el dedo un rectángulo sobre el tiempo de las blancas"), true);
+    await arrastrarFoto(pk, [452, 437], [598, 493]);
+    igual("y después el de las negras", (await aviso(pk)).startsWith("Marca con el dedo un rectángulo sobre el tiempo de las negras"), true);
+    await arrastrarFoto(pk, [612, 437], [758, 493]);
+    igual("listo: lo dice", (await aviso(pk)).startsWith("Listo: el reloj de la mesa se lee cada segundo."), true);
+    await pk.waitForFunction(() => /negras 58:10/.test(document.getElementById("reloj-leido").textContent), null, { timeout: 6000 }).catch(() => {});
+    igual("lee los dos tiempos del reloj de la mesa", await pk.textContent("#reloj-leido"), "Del reloj de la mesa: blancas 1:05:32 · negras 58:10.");
+    igual("y los muestra en el reloj de la partida", [await pk.locator("#reloj-tiempos").isVisible(), (await pk.textContent("#reloj-w [data-tiempo]")).trim(), (await pk.textContent("#reloj-b [data-tiempo]")).trim()], [true, "1:05:32", "58:10"]);
+    // Corre el de las blancas: baja un segundo por segundo.
+    for (const t of ["1:05:31", "1:05:30", "1:05:29"]) { await conReloj(t, "0:58:10"); await pk.waitForTimeout(1000); }
+    await pk.waitForFunction(() => document.getElementById("reloj-w").getAttribute("aria-current") === "true", null, { timeout: 4000 }).catch(() => {});
+    igual("se sabe que corre el de las blancas (el que baja)", [await pk.getAttribute("#reloj-w", "aria-current"), await pk.getAttribute("#reloj-b", "aria-current")], ["true", "false"]);
+    // Un reflejo tapa los números: no se inventa nada, sigue con el último.
+    await foto(pk, [{ fen: j.fen(), esq: IZQ }], { reloj: Object.assign({ w: "", b: "" }, RELOJ) });
+    await pk.waitForTimeout(2500);
+    igual("si no se leen los números, sigue con el último tiempo leído", /^Del reloj de la mesa: blancas 1:05:2\d · negras 58:10\./.test(await pk.textContent("#reloj-leido")), true);
+    // La bandera: el reloj de la mesa llega a 0.
+    await conReloj("0:00", "0:58:10"); await pk.waitForTimeout(1100); await conReloj("0:00", "0:58:10");
+    await esperarAviso(pk, /bandera/, 6000).catch(() => {});
+    igual("con 0:00 en el reloj de la mesa, se cae la bandera de las blancas", (await aviso(pk)).startsWith("Se le cayó la bandera a las blancas: ganan las negras."), true);
+    await pk.click("#btn-reloj-dejar");
+    igual("«Dejar de leer el reloj» lo quita", [await pk.textContent("#reloj-leido"), await pk.locator("#reloj-tiempos").isVisible()], ["", false]);
+    igual("sin errores en la consola (reloj de la mesa)", b.errores, []);
     await cerrar(b);
   }
 
