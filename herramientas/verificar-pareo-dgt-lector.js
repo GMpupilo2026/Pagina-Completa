@@ -268,15 +268,24 @@ rpc:(n)=>({then(r){return Promise.resolve({data:n==="tengo_herramienta"?true:nul
 channel:()=>({on(){return this},subscribe(){return this},track(){return Promise.resolve()},presenceState:()=>({})}),removeChannel(){}};`;
 }
 
-// Un torneo con su ronda 1 ya leída de chess-results y creada en Lichess, y
-// un puerto COM con tres tableros virtuales en cadena (los de la página).
+// Dos categorías (Sub-12 y Abierto), cada una un torneo de chess-results con
+// su ronda 1 ya leída y creada en Lichess, y un puerto COM con tres tableros
+// virtuales en cadena (los de la página). Con «prueba-fens», los tableros
+// arrancan donde quedaron (como uno de verdad después de recargar la página).
 function preparar() {
   const j = (no, nombre) => ({ no, nombre, elo: 1800 + no });
-  const pareo = { torneo: "Blitz de prueba", fecha: "2026.10.30", ronda: 1, mesas: [1, 2, 3].map((n) => ({ mesa: n, blancas: j(n * 2 - 1, "Blancas " + n), negras: j(n * 2, "Negras " + n) })) };
-  localStorage.setItem("pareo-dgt", JSON.stringify({ torneos: [{ tnr: "999", nombre: "Blitz de prueba", mesas: "", ultima: { ronda: 1 }, rondas: { 1: { firma: "x", pareo, lichess: { id: "abcd1234", url: "https://lichess.org/broadcast/-/-/abcd1234" }, empujada: true } } }] }));
+  const pareo = (cat, n, mesas) => ({ torneo: cat, fecha: "2026.10.30", ronda: n, mesas: Array.from({ length: mesas }, (_, i) => ({ mesa: i + 1, blancas: j(i * 2 + 1, cat + " R" + n + " blancas " + (i + 1)), negras: j(i * 2 + 2, cat + " R" + n + " negras " + (i + 1)) })) });
+  if (!localStorage.getItem("pareo-dgt")) {
+    localStorage.setItem("pareo-dgt", JSON.stringify({ torneos: [
+      { tnr: "111", nombre: "Sub-12", mesas: "", lichess: { id: "torneoA", url: "x" }, ultima: { ronda: 1 }, rondas: { 1: { firma: "1:1/Sub-12 R1 blancas 1-2/Sub-12 R1 negras 1|2:3/Sub-12 R1 blancas 2-4/Sub-12 R1 negras 2", pareo: pareo("Sub-12", 1, 2), lichess: { id: "rondaA01", url: "x" }, empujada: true } } },
+      { tnr: "222", nombre: "Abierto", mesas: "", lichess: { id: "torneoB", url: "x" }, ultima: { ronda: 1 }, rondas: { 1: { firma: "1:1/Abierto R1 blancas 1-2/Abierto R1 negras 1", pareo: pareo("Abierto", 1, 1), lichess: { id: "rondaB01", url: "x" }, empujada: true } } },
+    ] }));
+  }
   sessionStorage.setItem("pareo-dgt-token", "lip_prueba");
+  window.__pareo = pareo;
   window.addEventListener("DOMContentLoaded", () => {
-    const tabs = [10001, 10002, 10003].map((n) => DgtTablero.crear({ serie: String(n), reloj: { izquierda: 300, derecha: 300, turno: null } }));
+    const fens = JSON.parse(localStorage.getItem("prueba-fens") || "[]");
+    const tabs = [10001, 10002, 10003].map((n, i) => DgtTablero.crear({ serie: String(n), fen: fens[i], reloj: { izquierda: 300, derecha: 300, turno: null } }));
     window.__tabs = tabs;
     let ctl;
     const puerto = {
@@ -293,73 +302,124 @@ function preparar() {
     // Jugar en el tablero i (como alguien de verdad: mueve y aprieta el reloj).
     window.__jugar = (i, san, segundos) => {
       const t = tabs[i];
-      t.chess = t.chess || new Chess();
+      t.chess = t.chess || new Chess(t.fen());
       const mv = t.chess.move(san);
       const lado = mv.color === "w" ? "izquierda" : "derecha";
       t.reloj[lado] -= segundos;
       t.jugar(mv, t.chess.fen());
       t.apretar(lado);
     };
+    // Volver a armar las piezas en la posición inicial y el reloj en 5:00.
+    window.__armar = (i) => { tabs[i].chess = new Chess(); tabs[i].ponerFen(DgtTablero.INICIAL); tabs[i].reloj = { izquierda: 300, derecha: 300, turno: null }; };
+    window.__guardarFens = () => localStorage.setItem("prueba-fens", JSON.stringify(tabs.map((t) => t.fen())));
   });
 }
 
 async function pruebaPagina(browser) {
-  console.log("\n=== pareo-dgt.html: Transmitir sin LiveChess ===");
+  console.log("\n=== pareo-dgt.html: Transmitir sin LiveChess, dos categorías ===");
   const ctx = await browser.newContext({ serviceWorkers: "block" });
   const p = await ctx.newPage();
   const errores = [];
-  const empujados = [];
+  const empujados = {};                     // id de la ronda en Lichess → lo último que recibió
+  const publicada = { 111: 1, 222: 1 };     // la última ronda de cada categoría en chess-results
   p.on("pageerror", (e) => errores.push(String(e)));
   await p.route("**/fonts.googleapis.com/**", (r) => r.fulfill({ status: 200, contentType: "text/css", body: "" }));
   await p.route("**/js/supabase-client.js", (r) => r.fulfill({ contentType: "application/javascript", body: clienteFalso() }));
-  await p.route("https://falso.supabase.co/**", (r) => r.fulfill({ contentType: "application/json", body: "{}" }));
+  await p.route("https://falso.supabase.co/**", async (r) => {
+    const b = JSON.parse(r.request().postData() || "{}");
+    if (/functions\/v1\/pareo-dgt/.test(r.request().url())) {
+      if (b.accion === "lichess") {
+        const m = b.ruta.match(/^\/broadcast\/(torneo[AB])\/new$/);
+        const id = m ? "ronda" + m[1].slice(-1) + "02" : "x";
+        return r.fulfill({ contentType: "application/json", body: JSON.stringify({ status: 200, datos: { round: { id, url: "https://lichess.org/broadcast/-/-/" + id } } }) });
+      }
+      const cat = b.tnr === "111" ? "Sub-12" : "Abierto";
+      const pareo = await p.evaluate(([c, n, m]) => window.__pareo(c, n, m), [cat, publicada[b.tnr], b.tnr === "111" ? 2 : 1]);
+      return r.fulfill({ contentType: "application/json", body: JSON.stringify(Object.assign(pareo, { leido_en: new Date().toISOString() })) });
+    }
+    return r.fulfill({ contentType: "application/json", body: "{}" });
+  });
   await p.route("https://lichess.org/**", (r) => {
     const u = r.request().url();
     if (/\/api\/account$/.test(u)) return r.fulfill({ contentType: "application/json", body: JSON.stringify({ id: "oscar", username: "Oscar" }) });
-    if (/\/api\/broadcast\/round\/abcd1234\/push$/.test(u)) { empujados.push(r.request().postData()); return r.fulfill({ contentType: "application/json", body: "{}" }); }
+    const m = u.match(/\/api\/broadcast\/round\/(\w+)\/push$/);
+    if (m) { empujados[m[1]] = r.request().postData(); return r.fulfill({ contentType: "application/json", body: "{}" }); }
     return r.fulfill({ status: 404, contentType: "application/json", body: "{}" });
   });
   await p.addInitScript(preparar);
   await p.goto(BASE + "/pareo-dgt.html", { waitUntil: "networkidle" });
   await p.waitForFunction(() => /Conectado a Lichess/.test(document.getElementById("lichess-estado").textContent));
 
-  igual("el torneo de la lista ya está elegido", await p.inputValue("#directo-torneo"), "999");
+  const fila = (i, col) => p.textContent("#directo-tableros tr:nth-child(" + i + ") td:nth-child(" + col + ")");
+  const esperarFila = (i, col, re) => p.waitForFunction(([i, col, re]) => new RegExp(re).test(document.querySelector("#directo-tableros tr:nth-child(" + i + ") td:nth-child(" + col + ")").textContent), [i, col, re], { timeout: 15000 });
+  const esperarEmpuje = (id, re) => p.waitForFunction(() => true).then(async () => { for (let k = 0; k < 60; k++) { if (new RegExp(re).test(empujados[id] || "")) return true; await p.waitForTimeout(250); } return false; });
+
   await p.click("#btn-directo-puerto");
   await p.waitForFunction(() => document.querySelectorAll("#directo-tableros tr").length === 3, null, { timeout: 15000 });
   igual("encuentra los tres tableros de la cadena", await p.$$eval("#directo-tableros th", (t) => t.map((x) => x.textContent)), ["10001", "10002", "10003"]);
-  await p.click("#btn-directo-orden");
-  igual("«Asignar en orden»: el 10001 a la mesa 1, el 10002 a la 2…", await p.$$eval("#directo-tableros select[aria-label^='Mesa']", (s) => s.map((x) => x.value)), ["1", "2", "3"]);
-  igual("y la fila dice quién juega en esa mesa", await p.textContent("#directo-tableros tr:first-child td:nth-child(3)"), "Blancas 1 – Negras 1");
+  cierto("y al conectar el puerto empieza a vigilar chess-results, para que las rondas lleguen solas", /Vigilando/.test(await p.textContent("#vigilar-estado")));
 
-  await p.evaluate(() => { window.__jugar(0, "e4", 3); window.__jugar(0, "c5", 4); window.__jugar(1, "d4", 2); });
-  await p.waitForFunction(() => /Sicilian|c5/.test(document.querySelector("#directo-tableros tr:first-child td:nth-child(4)").textContent), null, { timeout: 15000 });
-  cierto("las jugadas del tablero aparecen en su fila", /2 · 1… c5/.test(await p.textContent("#directo-tableros tr:first-child td:nth-child(4)")), await p.textContent("#directo-tableros tr:first-child td:nth-child(4)"));
-  await p.waitForFunction(() => /Subido a Lichess/.test(document.getElementById("directo-estado").textContent), null, { timeout: 15000 });
-  await p.waitForTimeout(3500);
-  const ultimo = empujados[empujados.length - 1] || "";
-  cierto("y llegan a Lichess con los nombres de su mesa y el reloj de cada jugada",
-    /\[White "Blancas 1"\][\s\S]*1\. e4 \{ \[%clk 0:04:57\] \} c5 \{ \[%clk 0:04:56\] \}/.test(ultimo) && /\[White "Blancas 2"\][\s\S]*1\. d4 \{ \[%clk 0:04:58\] \}/.test(ultimo), ultimo.slice(0, 400));
-  cierto("la mesa 3, sin jugadas, sale con su pareo para que se vea en Lichess", /\[White "Blancas 3"\][\s\S]*?\n\n\*\n/.test(ultimo));
+  // La configuración inicial: del 10001 al 10002 a Sub-12 desde la mesa 1, y el 10003 al Abierto.
+  await p.fill("#directo-desde", "10001");
+  await p.fill("#directo-hasta", "10002");
+  await p.selectOption("#directo-categoria", "111");
+  await p.fill("#directo-mesa1", "1");
+  await p.click("#btn-directo-asignar");
+  await p.selectOption("#directo-tableros tr:nth-child(3) select[aria-label^='Categoría']", "222");
+  igual("«Asignar»: el 10001 y el 10002 a Sub-12, mesas 1 y 2; el 10003 al Abierto, mesa 1",
+    [await p.$$eval("#directo-tableros select[aria-label^='Categoría']", (s) => s.map((x) => x.value)), await p.$$eval("#directo-tableros input[aria-label^='Mesa']", (s) => s.map((x) => x.value))],
+    [["111", "111", "222"], ["1", "2", "1"]]);
+  cierto("y cada fila dice quién juega en esa mesa y en qué ronda", /Sub-12 R1 blancas 2 – Sub-12 R1 negras 2 \(ronda 1\)/.test(await fila(2, 4)), await fila(2, 4));
 
-  await p.selectOption("#directo-tableros tr:first-child select[aria-label^='Resultado']", "0-1");
-  await p.waitForFunction((n) => true, null);
-  await p.waitForTimeout(3500);
-  await p.evaluate(() => window.__jugar(1, "d5", 1));
-  await p.waitForTimeout(3500);
-  const fin = empujados[empujados.length - 1] || "";
-  cierto("el resultado que marca el árbitro va a Lichess", /\[White "Blancas 1"\][\s\S]*\[Result "0-1"\][\s\S]*c5 \{ \[%clk 0:04:56\] \} 0-1/.test(fin), fin.slice(0, 500));
+  await p.evaluate(() => { window.__jugar(0, "e4", 3); window.__jugar(0, "c5", 4); window.__jugar(2, "d4", 2); });
+  await esperarFila(1, 5, "2 · 1… c5");
+  cierto("las jugadas de cada categoría van a su ronda en Lichess, con el reloj de cada jugada",
+    (await esperarEmpuje("rondaA01", '\\[White "Sub-12 R1 blancas 1"\\][\\s\\S]*1\\. e4 \\{ \\[%clk 0:04:57\\] \\} c5 \\{ \\[%clk 0:04:56\\] \\}')) &&
+    (await esperarEmpuje("rondaB01", '\\[White "Abierto R1 blancas 1"\\][\\s\\S]*1\\. d4 \\{ \\[%clk 0:04:58\\] \\}')), (empujados.rondaA01 || "").slice(0, 300));
+  igual("cada categoría dice su ronda y cuándo subió", (await p.$$eval("#directo-categorias li", (l) => l.map((x) => x.textContent.replace(/: [\d:]+ [ap]\. m/, ": HORA")))), ["Sub-12: 2 tableros, ronda 1. Subido a Lichess: HORA.", "Abierto: 1 tablero, ronda 1. Subido a Lichess: HORA."]);
 
-  // Buscar otra vez mientras se leen las jugadas: un pedido a la vez por puerto.
-  await p.click("#directo-puertos button:has-text('Buscar tableros otra vez')");
-  await p.waitForFunction(() => /Puerto 1 \(USB\): 3 tableros/.test(document.getElementById("directo-puertos").textContent), null, { timeout: 15000 });
-  await p.evaluate(() => window.__jugar(2, "Nf3", 2));
-  await p.waitForFunction(() => /1 · 1\. Cf3/.test(document.querySelector("#directo-tableros tr:nth-child(3) td:nth-child(4)").textContent), null, { timeout: 15000 });
-  cierto("«Buscar tableros otra vez» mientras se leen las jugadas: siguen los tres y la jugada nueva llega", true);
+  // La mesa 1 de Sub-12 termina; la mesa 2 sigue jugando. Sale la ronda 2 de Sub-12.
+  await p.selectOption("#directo-tableros tr:nth-child(1) select[aria-label^='Resultado']", "1-0");
+  await p.evaluate(() => window.__jugar(1, "e4", 2));
+  await esperarFila(2, 5, "1 · 1. e4");
+  publicada[111] = 2;
+  await p.click("#btn-revisar");
+  await esperarFila(1, 4, "Sub-12 R2 blancas 1 – Sub-12 R2 negras 1 \\(ronda 2\\)");
+  cierto("sale la ronda 2 en chess-results: el tablero que terminó toma solo a los jugadores nuevos de su mesa", true);
+  await esperarFila(2, 4, "\\(ronda 1; termina y pasa a la 2\\)");
+  cierto("el que sigue jugando termina primero la partida de la ronda 1", true);
+  cierto("el Abierto, sin ronda nueva, sigue en la 1", /Abierto R1 blancas 1 .*\(ronda 1\)$/.test(await fila(3, 4)), await fila(3, 4));
 
-  // La mesa que se cambia a mano: una mesa, un tablero.
-  await p.selectOption("#directo-tableros tr:nth-child(3) select[aria-label^='Mesa']", "1");
-  igual("si un tablero toma una mesa que tenía otro, el otro la suelta", await p.$$eval("#directo-tableros select[aria-label^='Mesa']", (s) => s.map((x) => x.value)), ["", "2", "1"]);
-  igual("y se recuerda para la ronda siguiente", await p.evaluate(() => JSON.parse(localStorage.getItem("pareo-dgt-directo")).asignadas), { 10002: 2, 10003: 1 });
+  await p.evaluate(() => { window.__armar(0); window.__jugar(0, "Nf3", 5); window.__jugar(1, "e5", 6); });
+  cierto("la partida nueva va a la ronda 2 de Lichess, con los nombres nuevos",
+    await esperarEmpuje("rondaA02", '\\[White "Sub-12 R2 blancas 1"\\][\\s\\S]*1\\. Nf3 \\{ \\[%clk 0:04:55\\] \\}'), (empujados.rondaA02 || "").slice(0, 300));
+  cierto("y la ronda 1 sigue entera en Lichess: la partida terminada (1-0) y la que se sigue jugando",
+    await esperarEmpuje("rondaA01", '\\[Result "1-0"\\][\\s\\S]*c5 \\{ \\[%clk 0:04:56\\] \\} 1-0[\\s\\S]*\\[White "Sub-12 R1 blancas 2"\\][\\s\\S]*1\\. e4 \\{ \\[%clk 0:04:58\\] \\} e5 \\{ \\[%clk 0:04:54\\] \\}'), (empujados.rondaA01 || "").slice(0, 600));
+  await p.evaluate(() => window.__armar(1));
+  await esperarFila(2, 4, "Sub-12 R2 blancas 2 – Sub-12 R2 negras 2 \\(ronda 2\\)");
+  cierto("al volver a armar las piezas, ese tablero también pasa a la ronda 2", true);
+
+  // Recargar la página no pierde nada: la configuración y las partidas quedan en la computadora.
+  await p.evaluate(() => window.__guardarFens());
+  await p.waitForTimeout(500);
+  await p.reload({ waitUntil: "networkidle" });
+  await p.waitForFunction(() => /Conectado a Lichess/.test(document.getElementById("lichess-estado").textContent));
+  await p.click("#btn-directo-puerto");
+  await p.waitForFunction(() => document.querySelectorAll("#directo-tableros tr").length === 3, null, { timeout: 15000 });
+  await esperarFila(1, 5, "1 · 1. Cf3");
+  igual("después de recargar: cada tablero en su categoría y su mesa, y la partida sigue donde iba",
+    [await p.$$eval("#directo-tableros select[aria-label^='Categoría']", (s) => s.map((x) => x.value)), (await fila(1, 4)).trim(), (await fila(1, 5)).trim()],
+    [["111", "111", "222"], "Sub-12 R2 blancas 1 – Sub-12 R2 negras 1 (ronda 2)", "1 · 1. Cf3"]);
+  await p.evaluate(() => window.__jugar(0, "d5", 4));
+  cierto("y lo que se juega después llega a Lichess con lo de antes",
+    await esperarEmpuje("rondaA02", '1\\. Nf3 \\{ \\[%clk 0:04:55\\] \\} d5 \\{ \\[%clk 0:04:56\\] \\}'), (empujados.rondaA02 || "").slice(0, 300));
+
+  // Una mesa de una categoría, un tablero.
+  await p.fill("#directo-tableros tr:nth-child(2) input[aria-label^='Mesa']", "1");
+  await p.press("#directo-tableros tr:nth-child(2) input[aria-label^='Mesa']", "Enter");
+  await p.dispatchEvent("#directo-tableros tr:nth-child(2) input[aria-label^='Mesa']", "change");
+  igual("si un tablero toma la mesa de otro de su categoría, el otro la suelta",
+    await p.evaluate(() => JSON.parse(localStorage.getItem("pareo-dgt-directo")).asignadas), { 10002: { tnr: "111", mesa: 1 }, 10003: { tnr: "222", mesa: 1 } });
   cierto("sin errores en la página", errores.length === 0, errores.join(" | "));
   await ctx.close();
 }

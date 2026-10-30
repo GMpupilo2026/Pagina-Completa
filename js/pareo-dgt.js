@@ -659,13 +659,16 @@
     // empujarle el PGN. Una sola copia del estado y del token.
     window.PareoDGTPagina = {
         torneos: () => estado.torneos.map((t) => ({ tnr: t.tnr, nombre: t.nombre, mesas: t.mesas || "" })),
-        ronda(tnr) {
+        // La ronda que se está jugando (la última que salió), u otra por su número.
+        ronda(tnr, numero) {
             const t = estado.torneos.find((x) => x.tnr === tnr);
-            const n = t && t.ultima && t.ultima.ronda;
+            const n = numero || (t && t.ultima && t.ultima.ronda);
             const r = n && t.rondas && t.rondas[String(n)];
             if (!r || !r.pareo) return null;
-            return { ronda: n, pareo: r.pareo, mesas: t.mesas || "", lichess: r.lichess || null };
+            return { ronda: Number(n), pareo: r.pareo, mesas: t.mesas || "", lichess: r.lichess || null, nombre: t.nombre };
         },
+        vigilando: () => !!vigilando,
+        vigilar: () => { if (!vigilando && estado.torneos.length) vigilar(true); },
         lichessListo: () => !!(token && usuarioLichess),
         empujar: (idRonda, pgn) => lichess("/api/broadcast/round/" + idRonda + "/push", { texto: pgn }),
         opcionesPgn: () => ({ sinTildes: estado.sinTildes, sitio: estado.lugar || undefined }),

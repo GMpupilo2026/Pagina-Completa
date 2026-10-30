@@ -11830,12 +11830,36 @@ creó la página (`/api/broadcast/round/{id}/push`, directo, como el pareo).
 - **El resultado** sale solo con mate, ahogado o material insuficiente. La
   triple repetición no: sobre el tablero hay que reclamarla. Lo demás lo marca
   el árbitro en la fila del tablero.
-- **Cada tablero va a una mesa**, que se recuerda entre rondas
-  (`pareo-dgt-directo` en el navegador): «Asignar en orden» o a mano, y una
-  mesa tiene un solo tablero. El PGN es el mismo de siempre
-  (`PareoDGT.pgn`, con `jugadas` por mesa), con todas las mesas elegidas del
-  torneo: las que todavía no tienen jugadas van con su pareo. Se empuja a
-  Lichess cada 3 s como mucho, y solo si algo cambió.
+- **Se configura una vez y el resto va solo** (lo pidió el dueño: «más de 50
+  tableros… decirle cuál tablero es de cada categoría… que cuando salga la
+  ronda en chess-results le asigne la nueva ronda… sin tener que
+  intervenir»). Cada tablero tiene su **categoría** (uno de los torneos de
+  chess-results del paso 1: un torneo por categoría, como los publica
+  chess-results) y su **mesa**, que se recuerdan entre rondas
+  (`pareo-dgt-directo` en el navegador). Se asignan de a muchos («del
+  tablero 10001 al 10020, a Sub-12, desde la mesa 1») o en la fila de cada
+  uno, y una mesa de una categoría tiene un solo tablero. Al conectar el
+  primer puerto la página empieza a vigilar chess-results (paso 4): así cada
+  ronda nueva se lee, se crea en Lichess y le llega a cada tablero sin que
+  nadie toque nada.
+- **La ronda nueva no corta la partida que sigue.** Un tablero pasa a la
+  ronda nueva de su categoría apenas sale si su partida no empezó o ya tiene
+  resultado; si se sigue jugando, la termina primero (la fila lo dice:
+  «termina y pasa a la 3») y pasa cuando tiene resultado o cuando las piezas
+  vuelven a la posición inicial. Mientras la partida espera la posición
+  inicial se mira pieza por pieza: si en una misma consulta llegan el armado
+  y la primera jugada (pasó en la prueba), la posición inicial no se vería y
+  la partida no empezaría nunca.
+- **Cada ronda se empuja entera, y nada se pierde al recargar.** Lo de cada
+  tablero en cada ronda (jugadas, tiempos, resultado, mesa, de qué lado
+  están las blancas) se guarda en la computadora (`juegos`, las últimas 3
+  rondas de cada categoría), y el PGN de una ronda se arma con eso: un
+  tablero que ya pasó a la ronda siguiente no se cae de la anterior en
+  Lichess. Al recargar la página y volver a conectar, cada partida sigue
+  desde lo guardado (`crearPartida(…, { guardada })`). El PGN es el mismo de
+  siempre (`PareoDGT.pgn`, con `jugadas` por mesa), con todas las mesas
+  elegidas: las que todavía no tienen jugadas van con su pareo. Se empuja a
+  cada ronda de Lichess cada 3 s como mucho, y solo si algo cambió.
 - **Una sola copia del estado**: el token de Lichess, los torneos y la ronda
   con su pareo y su ronda en Lichess los tiene `js/pareo-dgt.js`, que los
   presta por `window.PareoDGTPagina`; la ronda guarda ahora también su pareo
@@ -11848,8 +11872,12 @@ virtuales donde las respuestas al ping general chocan (llega una sola), las
 reloj de cada jugada, y las 64 otra vez con las piezas en el orden
 desordenado de un tablero de verdad y 871 consultas a mitad de jugada; el
 enroque por la torre, la jugada devuelta, el tablero dado vuelta y el reloj.
-Con navegador, la página con tres tableros virtuales en cadena detrás de un
-puerto de mentira y una Lichess de mentira que recibe lo que se empuja.
+Con navegador, la página con dos categorías y tres tableros virtuales en
+cadena detrás de un puerto de mentira, un chess-results y una Lichess de
+mentira: la configuración inicial, la ronda 2 que sale en una categoría (el
+tablero que terminó pasa solo y con los nombres nuevos, el que sigue jugando
+termina primero, la ronda 1 queda entera en Lichess) y la página recargada
+a mitad de la partida.
 Cambiando 0x84 por 0x83, o sin «ignorar el próximo ping», salta. **Todavía
 sin probar con tableros de verdad**: el primer ensayo con la cadena del
 torneo dice si los tiempos de espera (300 ms por respuesta) alcanzan.

@@ -44,7 +44,9 @@
  *   DgtLector.leerBus(msg)                → { codigo, dir, datos } | null (suma mal)
  *   DgtLector.leerMemoria(datos)          → [{ tipo: "pieza"|"reloj"|"marca", … }]
  *   DgtLector.leerReloj(datos)            → { derecha, izquierda, corriendo, turno, sinReloj } | null
- *   DgtLector.crearPartida(Chess, opc)    → la partida de un tablero (ver abajo)
+ *   DgtLector.crearPartida(Chess, opc)    → la partida de un tablero (ver abajo);
+ *                                           opc.guardada: lo que dio p.guardar(), para seguirla
+ *   DgtLector.textoPgn(jugadas, tiempos, resultado) → «1. e4 { [%clk 0:04:58] } … 1-0»
  *   DgtLector.crearCadena(puerto, opc)    → encontrar y leer los tableros de un puerto
  *
  * Lógica pura (recibe la clase Chess y el puerto), para el navegador y Node:
@@ -283,7 +285,10 @@
       // Se revisa al apretar el reloj y al final de la tanda, no después de
       // cada pieza: a mitad de una jugada el tablero puede parecer otra.
       for (const e of eventos) {
-        if (e.tipo === "pieza") casillas[e.casilla] = e.pieza;
+        // Mientras espera la posición inicial se mira pieza por pieza: si en
+        // la misma tanda se arman las piezas y se hace la primera jugada, la
+        // posición inicial no se vería nunca.
+        if (e.tipo === "pieza") { casillas[e.casilla] = e.pieza; if (rotado === null) juntar(p.revisar()); }
         else if (e.tipo === "reloj") { juntar(p.revisar()); p.relojParado(e.lado, e.segundos); }
       }
       juntar(p.revisar());
@@ -324,18 +329,42 @@
     p.tiempos = () => relojes.slice();
 
     // Las jugadas en PGN, con el reloj de cada una ({[%clk 0:04:58]}).
-    p.texto = function () {
-      const h = sans;
-      const partes = [];
-      for (let i = 0; i < h.length; i++) {
-        if (i % 2 === 0) partes.push(i / 2 + 1 + ".");
-        partes.push(h[i]);
-        if (relojes[i] != null) partes.push("{ [%clk " + reloj(relojes[i]) + "] }");
+    p.texto = () => textoPgn(sans, relojes, resultado);
+
+    // Lo que se guarda para no perder la partida si se recarga la página
+    // (y se le vuelve a pasar a crearPartida en opciones.guardada).
+    p.guardar = () => ({ jugadas: sans.slice(), tiempos: relojes.slice(), resultado, rotado, blancasA });
+
+    if (o.guardada) {
+      const g = o.guardada;
+      for (const san of g.jugadas || []) {
+        const mv = chess.move(san);
+        if (!mv) break;
+        sans.push(mv.san);
+        relojes.push(null);
       }
-      partes.push(resultado);
-      return partes.join(" ");
-    };
+      (g.tiempos || []).slice(0, sans.length).forEach((t, i) => { relojes[i] = t == null ? null : t; });
+      if (g.resultado) resultado = g.resultado;
+      if (typeof g.rotado === "boolean") rotado = g.rotado;
+      if (g.blancasA) blancasA = g.blancasA;
+      // El tablero es el de la partida hasta que llegue el de verdad.
+      const lugar = expandir(piezasDe(chess.fen())).map((c) => Math.max(0, LETRA.indexOf(c)));
+      const fis = rotado ? girar(lugar) : lugar;
+      for (let i = 0; i < 64; i++) casillas[i] = fis[i];
+    }
     return p;
+  }
+
+  // Las jugadas en PGN, con el reloj de cada una ({ [%clk 0:04:58] }).
+  function textoPgn(jugadas, tiempos, resultado) {
+    const partes = [];
+    for (let i = 0; i < jugadas.length; i++) {
+      if (i % 2 === 0) partes.push(i / 2 + 1 + ".");
+      partes.push(jugadas[i]);
+      if (tiempos && tiempos[i] != null) partes.push("{ [%clk " + reloj(tiempos[i]) + "] }");
+    }
+    partes.push(resultado || "*");
+    return partes.join(" ");
   }
 
   // ------------------------------------------------------------ la cadena
@@ -419,7 +448,7 @@
     return { encontrar, cambios, tablero, reloj: relojDe, preguntar };
   }
 
-  const api = { CMD, MSG, INICIAL, suma, direccion, pedido, crearFlujo, leerBus, leerReloj, leerMemoria, colocacion, crearPartida, crearCadena };
+  const api = { CMD, MSG, INICIAL, suma, direccion, pedido, crearFlujo, leerBus, leerReloj, leerMemoria, colocacion, crearPartida, textoPgn, crearCadena };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else raiz.DgtLector = api;
 })(typeof self !== "undefined" ? self : this);
