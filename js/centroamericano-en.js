@@ -71,6 +71,7 @@ window.CentroamericanoEN = {
     "Inscritos, emparejamientos, resultados y clasificación de cada ronda en chess-results.": "Players, pairings, results and standings of every round on chess-results.",
     "Abrir chess-results →": "Open chess-results →",
     "Partidas en vivo": "Live games",
+    "Ver las partidas →": "Watch the games →",
     "La transmisión de los tableros en directo, jugada a jugada.": "The live broadcast of the boards, move by move.",
     "Pronto": "Coming soon",
     ": la transmisión todavía no está publicada": ": the broadcast is not published yet",

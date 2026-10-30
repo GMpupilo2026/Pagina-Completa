@@ -646,3 +646,91 @@ a.cac-despedida:hover .cac-globo { transform: translateY(-2px); }
 .cac-instalar { display: flex; flex-wrap: wrap; align-items: center; gap: 1rem; padding: 1rem 1.25rem; border-radius: 1.5rem; background: #fff; border: 3px solid var(--cac-morado); }
 .cac-instalar[hidden] { display: none; }
 .dark .cac-instalar { background: rgb(var(--c-brand-900, 10 31 51)); border-color: #b8bbf2; }
+
+/* Las partidas en vivo de Lichess (js/centroamericano-partidas.js): la lista
+   con sus filtros y el visor de una partida. El tablero es el de la sala de
+   cine (.cine-tablero, css/styles.css, de js/tablero-fen.js) con los colores
+   de casilla de cada quien; acá solo se le dan las variables del ambiente.
+   La última jugada va marcada en el tablero y también escrita (la jugada
+   resaltada en la lista); la evaluación va en la barra y escrita debajo.
+   Contrastes medidos (WCAG AA): «En juego» #FFFFFF sobre #1F774C 5,6; el
+   número de jugada #5A5FA3 sobre blanco 6,0; en oscuro #B8BBF2 sobre
+   brand-900 9,09. */
+#partidas { --esc-ultima: rgb(240 180 41 / 0.45); --esc-pantalla-borde: #40478f; }
+.dark #partidas { --esc-pantalla-borde: #b8bbf2; }
+.cac-partidas-estado { margin-bottom: 0.75rem; }
+.cac-partidas-filtros { display: grid; gap: 0.5rem 0.75rem; grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr)); }
+@media (max-width: 640px) { .cac-partidas-filtros .cac-buscador-campo { font-size: 1rem; padding-top: 0.45rem; padding-bottom: 0.45rem; } }
+.cac-partidas-filtro { display: block; font-size: 0.875rem; font-weight: 700; }
+.cac-partidas-marcas { display: flex; flex-wrap: wrap; gap: 0.5rem 1.25rem; margin: 0.75rem 0 1rem; font-size: 0.9375rem; font-weight: 600; }
+.cac-partidas-marca { display: inline-flex; align-items: center; gap: 0.35rem; min-height: 2.75rem; cursor: pointer; }
+.cac-partidas-marca[hidden] { display: none; }
+.cac-partidas-marca input { width: 1.15rem; height: 1.15rem; accent-color: #40478f; }
+.cac-partidas-lista { display: grid; gap: 0.75rem; grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr)); }
+.cac-partidas-nada { font-weight: 600; }
+.cac-partida { position: relative; background: #fff; border: 2px solid #dfe0f7; border-radius: 1rem; padding: 0.75rem; transition: border-color 0.15s; }
+.dark .cac-partida { background: rgb(var(--c-brand-900, 16 42 67)); border-color: rgb(255 255 255 / 0.15); }
+.cac-partida:hover, .cac-partida:focus-within { border-color: #40478f; }
+.dark .cac-partida:hover, .dark .cac-partida:focus-within { border-color: #b8bbf2; }
+.cac-partida-cabeza { font-size: 0.8125rem; font-weight: 800; color: #40478f; margin-bottom: 0.5rem; }
+.dark .cac-partida-cabeza { color: #b8bbf2; }
+.cac-partida-fila { display: flex; gap: 0.75rem; align-items: center; }
+.cac-partida-tablero { width: 6.5rem; flex: none; }
+.cac-partida-datos { flex: 1; min-width: 0; display: grid; gap: 0.25rem; }
+.cac-partida-jugador { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.25rem 0.4rem; font-size: 0.875rem; line-height: 1.3; }
+.cac-partida-nombre { font-weight: 700; overflow-wrap: anywhere; }
+.cac-partida-elo { font-size: 0.75rem; }
+.cac-partida-reloj { font-variant-numeric: tabular-nums; font-size: 0.75rem; font-weight: 700; padding: 0 0.35rem; border-radius: 0.35rem; background: #eef0fb; color: #1e2453; }
+.cac-partida-turno .cac-partida-reloj { background: #1e2453; color: #fff; }
+.dark .cac-partida-reloj { background: rgb(255 255 255 / 0.12); color: #fff; }
+.dark .cac-partida-turno .cac-partida-reloj { background: #b8bbf2; color: #1e2453; }
+.cac-partida-resultado { justify-self: start; font-weight: 800; font-size: 0.8125rem; padding: 0.1rem 0.55rem; border-radius: 999px; background: #eef0fb; color: #1e2453; }
+.cac-partida-envivo { background: #1f774c; color: #fff; }
+.cac-partida-envivo::before { content: "● "; }
+/* La tarjeta entera se toca (el botón la cubre); el foco se ve en el borde. */
+.cac-partida-abrir { position: absolute; inset: 0; border-radius: 1rem; background: transparent; cursor: pointer; }
+.cac-partida-abrir:focus-visible { outline: 3px solid #ce1328; outline-offset: 2px; }
+.cac-jugador-vivo { background: #1f774c !important; border-color: #1f774c !important; color: #fff !important; }
+
+.cac-visor-cabeza { margin: 0.75rem 0; }
+.cac-visor-cuerpo { display: grid; gap: 1.25rem; }
+@media (min-width: 900px) { .cac-visor-cuerpo { grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); align-items: start; } }
+.cac-visor-tableros { display: grid; gap: 0.5rem; max-width: 36rem; width: 100%; margin: 0 auto; }
+.cac-visor-jugador .cac-partida-jugador { font-size: 1rem; }
+.cac-visor-jugador .cac-partida-reloj { font-size: 0.9375rem; margin-left: auto; }
+.cac-visor-zona { display: flex; gap: 0.5rem; align-items: stretch; }
+.cac-visor-marco { flex: 1; min-width: 0; max-width: none; margin: 0; }
+/* La barra de la evaluación: blanco desde abajo (las blancas), negro arriba. */
+.cac-visor-barra { position: relative; width: 0.9rem; flex: none; border-radius: 0.3rem; overflow: hidden; background: #2b2b2b; box-shadow: 0 0 0 2px var(--esc-pantalla-borde); margin-bottom: 18px; }
+.cac-visor-barra-blancas { position: absolute; left: 0; right: 0; bottom: 0; height: 50%; background: #f5f5f5; transition: height 0.3s; }
+.cac-visor-barra-girada .cac-visor-barra-blancas { bottom: auto; top: 0; }
+.cac-visor-barra-sin { opacity: 0.4; }
+.cac-visor-eval { font-weight: 700; }
+.cac-visor-motor { margin-top: 0.5rem; }
+.cac-visor-nav { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 0.75rem 0; }
+.cac-visor-boton { min-width: 2.9rem; min-height: 2.75rem; border-radius: 0.6rem; border: 2px solid #40478f; background: #fff; color: #40478f; font-weight: 800; font-size: 1.1rem; }
+.cac-visor-boton:disabled { opacity: 0.4; cursor: not-allowed; }
+.cac-visor-boton[aria-pressed="true"] { background: #40478f; color: #fff; }
+.cac-visor-boton:focus-visible { outline: 3px solid #ce1328; outline-offset: 2px; }
+.dark .cac-visor-boton { background: transparent; border-color: #b8bbf2; color: #b8bbf2; }
+.dark .cac-visor-boton[aria-pressed="true"] { background: #b8bbf2; color: #1e2453; }
+.cac-visor-nuevas[hidden] { display: none; }
+.cac-visor-grafico { margin: 0.5rem 0 0.75rem; border-radius: 0.5rem; overflow: hidden; background: #2b2b2b; cursor: pointer; }
+.cac-visor-grafico[hidden] { display: none; }
+.cac-visor-grafico svg { display: block; width: 100%; height: 4rem; }
+.cac-grafico-area { fill: #f5f5f5; }
+.cac-grafico-linea { fill: none; stroke: #e0ab5b; stroke-width: 1.5; vector-effect: non-scaling-stroke; }
+.cac-grafico-medio { stroke: #888; stroke-width: 1; vector-effect: non-scaling-stroke; }
+.cac-grafico-cursor { stroke: #ce1328; stroke-width: 2; vector-effect: non-scaling-stroke; }
+.cac-visor-jugadas { max-height: 16rem; overflow-y: auto; display: grid; grid-template-columns: repeat(auto-fill, minmax(8.5rem, 1fr)); gap: 0.15rem 0.5rem; padding: 0.5rem; border-radius: 0.75rem; background: #fff; border: 2px solid #dfe0f7; }
+.dark .cac-visor-jugadas { background: rgb(var(--c-brand-900, 16 42 67)); border-color: rgb(255 255 255 / 0.15); }
+.cac-visor-par { display: flex; align-items: center; gap: 0.2rem; }
+.cac-visor-num { color: #5a5fa3; font-size: 0.8125rem; min-width: 1.8rem; font-variant-numeric: tabular-nums; }
+.dark .cac-visor-num { color: #b8bbf2; }
+.cac-visor-jugada { padding: 0.2rem 0.4rem; border-radius: 0.35rem; font-weight: 700; min-height: 2rem; }
+.cac-visor-jugada:hover { background: #eef0fb; }
+.dark .cac-visor-jugada:hover { background: rgb(255 255 255 / 0.1); }
+.cac-visor-jugada[aria-current="true"] { background: #40478f; color: #fff; }
+.dark .cac-visor-jugada[aria-current="true"] { background: #b8bbf2; color: #1e2453; }
+.cac-visor-jugada:focus-visible { outline: 3px solid #ce1328; outline-offset: 1px; }
+.cac-visor-pie { display: flex; flex-wrap: wrap; gap: 0.75rem 1.25rem; align-items: center; margin-top: 0.75rem; }

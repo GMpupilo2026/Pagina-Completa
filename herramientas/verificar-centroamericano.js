@@ -63,12 +63,16 @@ ok("ningún teléfono sin confirmar", tels.every((t) => TELEFONOS.includes(t)), 
 const contacto = (html.match(/<dialog id="contacto"[\s\S]*?<\/dialog>/) || [""])[0];
 // Toda la información va en fichas: cada ventana de la página tiene su ficha y su «Cerrar».
 const dialogos = [...html.matchAll(/<dialog id="([a-z-]+)" class="ficha-dialogo[^"]*" aria-labelledby="\1-titulo">([\s\S]*?)<\/dialog>/g)];
-ok("el reglamento, el calendario, los hoteles, los contactos, el medallero, la clasificación, los países, las sorpresas, el cara a cara, los números, la elección de categoría y el proyector van en ventanas",
-  JSON.stringify(dialogos.map((m) => m[1]).sort()) === JSON.stringify(["calendario", "cara-a-cara", "clasificacion", "contacto", "delegaciones", "hoteles", "medallero", "numeros", "proyector", "reglamento", "resultados", "sorpresas"]), dialogos.map((m) => m[1]).join(", "));
+ok("el reglamento, el calendario, los hoteles, los contactos, el medallero, la clasificación, los países, las sorpresas, el cara a cara, los números, la elección de categoría, las partidas en vivo y el proyector van en ventanas",
+  JSON.stringify(dialogos.map((m) => m[1]).sort()) === JSON.stringify(["calendario", "cara-a-cara", "clasificacion", "contacto", "delegaciones", "hoteles", "medallero", "numeros", "partidas", "proyector", "reglamento", "resultados", "sorpresas"]), dialogos.map((m) => m[1]).join(", "));
 for (const [, id, cuerpo] of dialogos) {
   // La elección de categoría la abre la ficha «Resultados en vivo», que sin
   // JavaScript sigue llevando a chess-results (js/centroamericano-tablas.js).
   if (id === "resultados") { ok("la ventana «resultados» la abre la ficha «Resultados en vivo»", fichas.includes('id="ficha-resultados"') && /\$\("ficha-resultados"\), dialogoResultados = \$\("resultados"\)/.test(fs.readFileSync(path.join(RAIZ, "js/centroamericano-tablas.js"), "utf8"))); }
+  // La de las partidas en vivo la abre la ficha «Partidas en vivo», que
+  // queda en «Pronto» hasta que la sala tenga la transmisión de Lichess y
+  // entonces la enciende js/centroamericano-partidas.js.
+  else if (id === "partidas") { ok("la ventana «partidas» la abre la ficha «Partidas en vivo», cuando hay transmisión", fichas.includes('id="ficha-partidas"') && /a\.href = "#partidas"/.test(fs.readFileSync(path.join(RAIZ, "js/centroamericano-partidas.js"), "utf8"))); }
   else ok("la ventana «" + id + "» tiene su ficha", fichas.includes('href="#' + id + '"'));
   ok("y su título y su botón «Cerrar»", cuerpo.includes('id="' + id + '-titulo"') && /data-cerrar[^>]*>Cerrar</.test(cuerpo));
 }

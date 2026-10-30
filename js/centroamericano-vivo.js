@@ -868,6 +868,10 @@
       cal.addEventListener("click", () => bajarCalendario(x));
       acciones.appendChild(cal);
     }
+    // Su partida en vivo, si la transmite Lichess (js/centroamericano-partidas.js,
+    // que carga después y vuelve a pintar las tarjetas cuando la encuentra).
+    const enVivo = window.CentroamericanoPartidas && window.CentroamericanoPartidas.botonDe(x);
+    if (enVivo) acciones.insertBefore(enVivo, acciones.firstChild);
     li.appendChild(acciones);
     if (abierta) {
       const rondas = rondasDe(x);
@@ -1516,6 +1520,8 @@
     cuandoSeLeyo: () => cuandoSeLeyo(t()), plano, el, ZONA, progresoRonda, anunciar, puntosDeMesa, eloDe, porColor, textoElo,
     puestosDe, puntosTras, puestoTexto: (p) => puestoTexto(p, idioma()), delegacionGuardada, eventosDelCalendario, nombreCorto, enlaceDe, slugDe,
     modalidad: () => modalidad, conModalidad,
+    // Para las partidas en vivo de Lichess (js/centroamericano-partidas.js).
+    sala: () => SALA, seguidos, repintar: () => pintarTodo(),
   };
 
   document.addEventListener("cac-idioma", () => { pintarTodo(); ponerAvisosAlDia(); if (dialogo && dialogo.open) pintarMedallero(); });
