@@ -64,7 +64,7 @@ const CANAL = `
         __nombre: nombre,
         on(t, f, cb) { if (t === "broadcast") oy[f.event] = cb; return c; },
         // __cb: el aviso de cómo está el canal, para que la prueba pueda «cortarlo».
-        subscribe(cb) { (window.__canales = window.__canales || {})[nombre] = oy; c.__cb = cb; (window.__canalesObj = window.__canalesObj || {})[nombre] = c; if (cb) setTimeout(() => cb("SUBSCRIBED"), 0); return c; },
+        subscribe(cb) { (window.__canales = window.__canales || {})[nombre] = oy; c.__cb = cb; (window.__canalesObj = window.__canalesObj || {})[nombre] = c; if (cb) setTimeout(() => { cb("SUBSCRIBED"); c.__suscrito = true; }, 0); return c; },
         send(m) { window.__aCanal(nombre, JSON.parse(JSON.stringify(m))); return Promise.resolve("ok"); },
         unsubscribe() {},
       };
@@ -742,6 +742,8 @@ async function esperarJugadas(p, n) {
     await pn.click("#btn-vivo");
     const cod = (await pn.textContent("#vivo-codigo")).split(" ")[0];
     await pn.bringToFront(); // una pestaña de fondo tiene los temporizadores frenados (la reconexión espera 1 s)
+    // Primero que termine de conectarse: si el «SUBSCRIBED» del canal falso llega después del corte, lo tapa.
+    await pn.waitForFunction((n) => window.__canalesObj && window.__canalesObj[n] && window.__canalesObj[n].__suscrito, "tablero-vivo-" + cod, { timeout: 5000 });
     const antesCorte = eventos.length;
     await pn.evaluate((n) => window.__canalesObj[n].__cb("CHANNEL_ERROR"), "tablero-vivo-" + cod);
     igual("si el canal se corta, dice que está sin señal", await pn.evaluate(() => document.getElementById("sin-red").checkVisibility()), true);
@@ -1337,6 +1339,8 @@ async function esperarJugadas(p, n) {
     const archivo = fs.readFileSync(await bajada.path(), "utf8");
     igual("el modelo se baja en un archivo, para cargarlo en otro celular", [/^modelo-piezas-\d{4}-\d{2}-\d{2}\.json$/.test(bajada.suggestedFilename()), JSON.parse(archivo).v], [true, 1]);
     await pm.setInputFiles("#modelo-archivo", { name: "otro.json", mimeType: "application/json", buffer: Buffer.from('{"v":1}') });
+    // Leer el archivo es asíncrono (f.text()): se espera a que lo diga.
+    await pm.waitForFunction(() => /^Ese archivo/.test(document.getElementById("modelo-estado").textContent), null, { timeout: 5000 }).catch(() => {});
     igual("un archivo que no es un modelo no se carga", await pm.textContent("#modelo-estado"), "Ese archivo no es un modelo de las piezas: tiene que ser el que se baja con «Bajar el modelo».");
     igual("sin errores en la consola (modelo de las piezas)", b.errores, []);
     await cerrar(b);
