@@ -21,7 +21,7 @@
   const TX = {
     es: { titulo: "Planilla de anotación", deB: "Planilla de las blancas", deN: "Planilla de las negras", blancas: "Blancas", negras: "Negras", ronda: "Ronda", mesa: "Mesa",
       fecha: "Fecha", resultado: "Resultado", sinResultado: "Sin terminar", firmaB: "Firma de las blancas", firmaN: "Firma de las negras",
-      firmaA: "Firma del árbitro", nota: "La armó la cámara que lee el tablero con las jugadas que anotó. Revísala contra lo jugado antes de firmar: la que vale es la que escribe cada jugador.",
+      firmaA: "Firma del árbitro", nota: "La armó Notara, la cámara que lee el tablero, con las jugadas que anotó. Revísala contra lo jugado antes de firmar: la que vale es la que escribe cada jugador.",
       r: { "1-0": "1-0 (ganan las blancas)", "=": "½-½ (tablas)", "0-1": "0-1 (ganan las negras)" } },
     en: { titulo: "Scoresheet", deB: "White's scoresheet", deN: "Black's scoresheet", blancas: "White", negras: "Black", ronda: "Round", mesa: "Table",
       fecha: "Date", resultado: "Result", sinResultado: "Not finished", firmaB: "White's signature", firmaN: "Black's signature",
