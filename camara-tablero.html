@@ -100,6 +100,7 @@
             <div class="flex flex-wrap gap-2 mb-4">
                 <button id="btn-camara" type="button" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2.5 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2">Abrir la cámara</button>
                 <label class="inline-flex items-center bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-4 py-2.5 rounded-lg text-sm cursor-pointer focus-within:ring-2 focus-within:ring-accent-400">Probar con una foto<input id="foto" type="file" accept="image/*" class="sr-only"></label>
+                <label data-no-mesa class="inline-flex items-center bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-4 py-2.5 rounded-lg text-sm cursor-pointer focus-within:ring-2 focus-within:ring-accent-400">Leer un video grabado<input id="video-archivo" type="file" accept="video/*" class="sr-only"></label>
                 <button id="btn-buscar" type="button" disabled class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-4 py-2.5 rounded-lg text-sm disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Buscar el tablero</button>
                 <button id="btn-ajustar" type="button" disabled class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-4 py-2.5 rounded-lg text-sm disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Ajustar las esquinas a las líneas</button>
                 <button id="btn-esquinas" type="button" disabled class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-4 py-2.5 rounded-lg text-sm disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Volver a marcar las esquinas</button>
@@ -107,6 +108,17 @@
                 <button id="btn-seguir" type="button" disabled class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-4 py-2.5 rounded-lg text-sm disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Seguir con esta partida</button>
                 <button id="btn-armado" type="button" disabled class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-4 py-2.5 rounded-lg text-sm disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">¿Está bien armada?</button>
                 <button id="btn-ahorro" type="button" disabled class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-4 py-2.5 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 disabled:opacity-50"><span aria-hidden="true">🔋</span> Ahorrar batería</button>
+            </div>
+
+            <div id="video-controles" hidden class="mb-4 bg-white dark:bg-brand-900 rounded-2xl shadow-md px-4 py-3">
+                <p class="text-sm font-semibold text-brand-800 dark:text-white"><span aria-hidden="true">🎞️</span> Leer un video grabado</p>
+                <p class="text-xs text-brand-500 dark:text-brand-300 mt-1">El video se queda en este aparato. Ubica el tablero en la primera imagen, calibra con la posición inicial (o carga la posición y toca «Seguir con esta partida») y toca «Leer el video»: anota las jugadas como si fuera la cámara, con la hora de cada una dentro del video.</p>
+                <div class="flex flex-wrap items-end gap-2 mt-2">
+                    <button id="btn-video-leer" type="button" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-3 py-2 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Leer el video</button>
+                    <div><label for="video-velocidad" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 mb-1">Velocidad</label>
+                    <select id="video-velocidad" class="bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><option value="1">Normal</option><option value="2" selected>El doble</option><option value="4">Cuatro veces</option></select></div>
+                    <p id="video-progreso" role="status" class="text-sm text-brand-700 dark:text-brand-200 tabular-nums"></p>
+                </div>
             </div>
 
             <p id="bateria-aviso" hidden role="alert" class="mb-4 rounded-xl px-4 py-3 text-sm font-semibold bg-red-100 text-red-900"></p>
@@ -121,11 +133,16 @@
                 <select id="camara-elegir" class="w-full sm:w-auto bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"></select>
             </div>
             <div data-solo-pagina class="mb-4 bg-white dark:bg-brand-900 rounded-2xl shadow-md px-4 py-3">
-                <label class="inline-flex items-center gap-2 text-sm font-semibold text-brand-800 dark:text-white cursor-pointer"><input id="dos-tableros" type="checkbox" class="w-4 h-4 accent-accent-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"> Leer también un segundo tablero (opcional)</label>
-                <p class="text-xs text-brand-500 dark:text-brand-300 mt-1">Lo más confiable es un celular por tablero. Úsalo solo si la cámara ve los dos tableros enteros, desde arriba: con dos, cada casilla se ve más chica.</p>
+                <label for="cuantos-tableros" class="block text-sm font-semibold text-brand-800 dark:text-white">¿Cuántos tableros ve esta cámara?</label>
+                <select id="cuantos-tableros" class="mt-1 bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                    <option value="1" selected>Uno (lo más confiable)</option><option value="2">Dos</option><option value="3">Tres</option><option value="4">Cuatro</option>
+                </select>
+                <p class="text-xs text-brand-500 dark:text-brand-300 mt-1">Lo más confiable es un celular por tablero. Con varios, el celular va bien alto, encima de las mesas, y tiene que ver todos los tableros enteros: cada casilla se ve más chica. Elige cuántos antes de abrir la cámara, para que la pida con más detalle.</p>
                 <div id="pestanas" hidden role="group" aria-label="Qué tablero se marca, se calibra y se muestra" class="flex flex-wrap gap-2 mt-3">
                     <button type="button" data-tablero="0" aria-pressed="true" class="font-semibold px-4 py-2 rounded-lg text-sm border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-900 text-brand-800 dark:text-brand-100 aria-pressed:bg-accent-500 aria-pressed:border-accent-500 aria-pressed:text-brand-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true" class="inline-block w-3 h-3 rounded-sm bg-yellow-400 align-middle mr-1"></span>Tablero 1</button>
                     <button type="button" data-tablero="1" aria-pressed="false" class="font-semibold px-4 py-2 rounded-lg text-sm border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-900 text-brand-800 dark:text-brand-100 aria-pressed:bg-accent-500 aria-pressed:border-accent-500 aria-pressed:text-brand-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true" class="inline-block w-3 h-3 rounded-sm bg-cyan-400 align-middle mr-1"></span>Tablero 2</button>
+                    <button type="button" data-tablero="2" aria-pressed="false" class="font-semibold px-4 py-2 rounded-lg text-sm border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-900 text-brand-800 dark:text-brand-100 aria-pressed:bg-accent-500 aria-pressed:border-accent-500 aria-pressed:text-brand-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true" class="inline-block w-3 h-3 rounded-sm bg-pink-400 align-middle mr-1"></span>Tablero 3</button>
+                    <button type="button" data-tablero="3" aria-pressed="false" class="font-semibold px-4 py-2 rounded-lg text-sm border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-900 text-brand-800 dark:text-brand-100 aria-pressed:bg-accent-500 aria-pressed:border-accent-500 aria-pressed:text-brand-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true" class="inline-block w-3 h-3 rounded-sm bg-lime-400 align-middle mr-1"></span>Tablero 4</button>
                 </div>
             </div>
 
@@ -155,6 +172,10 @@
                         <p class="text-xs text-brand-500 dark:text-brand-300 mt-2 break-all"><span class="font-semibold">FEN:</span> <span id="fen"></span></p>
                         <h3 class="font-semibold text-sm text-brand-800 dark:text-white mt-3">Jugadas</h3>
                         <p id="jugadas" class="text-sm text-brand-700 dark:text-brand-200 mt-1 min-h-[1.5rem]">Todavía ninguna.</p>
+                        <details id="tiempo-caja" class="mt-3 text-brand-800 dark:text-brand-100">
+                            <summary class="text-sm font-semibold cursor-pointer rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true">⏳</span> Cómo usó el tiempo</summary>
+                            <div id="tiempo-grafico" class="mt-2"></div>
+                        </details>
                         <div class="flex flex-wrap gap-2 mt-3">
                             <button id="btn-deshacer" type="button" disabled class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-3 py-2 rounded-lg text-sm disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Deshacer la última jugada</button>
                             <button id="btn-copiar" type="button" disabled class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-3 py-2 rounded-lg text-sm disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Copiar el PGN</button>
@@ -175,6 +196,31 @@
                             </div>
                             <p id="reloj-msg" role="status" aria-live="polite" class="text-sm font-semibold text-brand-800 dark:text-white mt-2"></p>
                             <p class="text-xs text-brand-500 dark:text-brand-300 mt-1">Cambia solo con cada jugada que anota la cámara (suma el incremento). Quien mira ve los dos tiempos.</p>
+                            <details id="reloj-leer" class="mt-3">
+                                <summary class="text-sm font-semibold text-brand-800 dark:text-white cursor-pointer rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Leer el reloj de la mesa (prueba)</summary>
+                                <p class="text-xs text-brand-500 dark:text-brand-300 mt-2">Si la cámara ve el reloj digital de la mesa, puede leer sus números en vez de llevar el tiempo ella. Toca «Buscar el reloj» (con el tablero ya calibrado, sabe cuál tiempo es de las blancas) o marca con el dedo un rectángulo sobre el tiempo de las blancas y otro sobre el de las negras. Si el reloj no se lee bien (un reflejo, una mano encima), se sigue con el último tiempo que se leyó.</p>
+                                <div class="flex flex-wrap gap-2 mt-2">
+                                    <button id="btn-reloj-buscar" type="button" class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-3 py-2 rounded-lg text-sm disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Buscar el reloj</button>
+                                    <button id="btn-reloj-marcar" type="button" class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-3 py-2 rounded-lg text-sm disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Marcar el reloj de la mesa</button>
+                                    <button id="btn-reloj-cambiar" type="button" hidden class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-3 py-2 rounded-lg text-sm disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Están al revés</button>
+                                    <button id="btn-reloj-dejar" type="button" hidden class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-3 py-2 rounded-lg text-sm disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Dejar de leer el reloj</button>
+                                </div>
+                                <p id="reloj-leido" role="status" aria-live="polite" class="text-sm text-brand-700 dark:text-brand-200 mt-1"></p>
+                                <p class="text-xs text-brand-500 dark:text-brand-300 mt-2">Con el reloj leído, queda anotado para el árbitro si alguien aprieta el reloj sin mover o mueve y no lo aprieta (en un torneo, le llega a Pareo).</p>
+                                <ul id="reloj-incidencias" hidden class="mt-1 list-disc pl-5 text-sm text-brand-700 dark:text-brand-200 space-y-0.5"></ul>
+                            </details>
+                        </div>
+                        <div id="ciego-caja" class="mt-4 rounded-xl border border-brand-200 dark:border-brand-700 p-3">
+                            <h3 class="font-semibold text-sm text-brand-800 dark:text-white"><span aria-hidden="true">🔊</span> Un jugador ciego en esta mesa</h3>
+                            <p class="text-xs text-brand-500 dark:text-brand-300 mt-1">El celular le dice en voz la jugada de su rival apenas la anota, y su tiempo si hay reloj. Con un audífono conectado al celular, solo lo oye él. Él mueve en su tablero, como siempre.</p>
+                            <div class="flex flex-wrap items-end gap-3 mt-2">
+                                <div><label for="ciego-color" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 mb-1">¿Quién no ve?</label>
+                                <select id="ciego-color" class="bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><option value="">Nadie</option><option value="w">Quien juega con blancas</option><option value="b">Quien juega con negras</option><option value="ambos">Los dos</option></select></div>
+                                <button id="btn-ciego-repetir" type="button" disabled class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-3 py-2 rounded-lg text-sm disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Repetir la última jugada</button>
+                            </div>
+                            <label class="mt-2 flex items-center gap-2 text-sm text-brand-700 dark:text-brand-200 cursor-pointer"><input id="ciego-propias" type="checkbox" checked class="w-4 h-4 accent-brand-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"> Decirle también sus propias jugadas, para que sepa que se anotaron</label>
+                            <label class="mt-1 flex items-center gap-2 text-sm text-brand-700 dark:text-brand-200 cursor-pointer"><input id="ciego-reloj" type="checkbox" checked class="w-4 h-4 accent-brand-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"> Decirle su tiempo con cada jugada del rival y al quedarle 5 minutos, 1 minuto y 30 segundos</label>
+                            <p id="ciego-dicho" role="status" class="text-xs text-brand-500 dark:text-brand-300 mt-1"></p>
                         </div>
                         <div id="resultado-caja" class="mt-4 rounded-xl border border-brand-200 dark:border-brand-700 p-3">
                             <h3 class="font-semibold text-sm text-brand-800 dark:text-white">Resultado</h3>
@@ -222,6 +268,12 @@
                                 <textarea id="posicion" rows="2" spellcheck="false" class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 font-mono"></textarea>
                                 <button type="submit" class="mt-2 bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-3 py-2 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Usar esta posición</button>
                             </form>
+                            <div class="flex flex-wrap items-center gap-2 mt-3">
+                                <label for="leer-turno" class="sr-only">A quién le toca</label>
+                                <select id="leer-turno" class="bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><option value="w">Le toca a las blancas</option><option value="b">Le toca a las negras</option></select>
+                                <button id="btn-leer-posicion" type="button" disabled class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-3 py-2 rounded-lg text-sm disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Leer la posición del tablero</button>
+                            </div>
+                            <p class="text-xs text-brand-500 dark:text-brand-300 mt-1">Con el modelo de las piezas entrenado («Enseñarle a la cámara»): lee qué pieza hay en cada casilla y escribe la posición arriba. Revísala contra el tablero antes de tocar «Usar esta posición».</p>
                         </details>
                         <details class="mt-4">
                             <summary class="text-sm font-semibold text-brand-800 dark:text-white cursor-pointer rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Este tablero y cómo lo lee la cámara</summary>
@@ -246,6 +298,14 @@
                                 <button id="btn-muestras-bajar" type="button" disabled class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-3 py-2 rounded-lg text-sm disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Bajar las fotos (.zip)</button>
                                 <button id="btn-muestras-borrar" type="button" disabled class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-3 py-2 rounded-lg text-sm disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Borrar las fotos</button>
                             </div>
+                            <h3 class="font-semibold text-sm text-brand-800 dark:text-white mt-4">Reconocer qué pieza es (prueba)</h3>
+                            <p class="text-xs text-brand-500 dark:text-brand-300 mt-1">Con las fotos juntadas, la cámara aprende a reconocer cada pieza (peón, caballo, alfil, torre, dama, rey) en ESTE tablero, con esta luz. Se entrena en este aparato, en segundos, y nada se manda a ningún lado. Hacen falta al menos 10 fotos; con 100 o más, mejor. Sirve para leer la posición entera, abajo en «Empezar desde otra posición».</p>
+                            <div class="flex flex-wrap gap-2 mt-2">
+                                <button id="btn-modelo-entrenar" type="button" disabled class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-3 py-2 rounded-lg text-sm disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Entrenar con estas fotos</button>
+                                <button id="btn-modelo-bajar" type="button" disabled class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-3 py-2 rounded-lg text-sm disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Bajar el modelo</button>
+                                <label class="inline-flex items-center bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-3 py-2 rounded-lg text-sm cursor-pointer focus-within:ring-2 focus-within:ring-accent-400">Cargar un modelo<input id="modelo-archivo" type="file" accept="application/json,.json" class="sr-only"></label>
+                            </div>
+                            <p id="modelo-estado" role="status" aria-live="polite" class="text-sm text-brand-600 dark:text-brand-300 mt-1">Todavía no hay un modelo de las piezas en este aparato.</p>
                         </details>
                     </section>
                     <section data-no-mesa class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-4" aria-labelledby="t-entreno">
@@ -334,6 +394,14 @@
                         </div>
                     </section>
 
+                    <section class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-4" aria-labelledby="t-var">
+                        <h2 id="t-var" class="font-semibold text-brand-800 dark:text-white"><span aria-hidden="true">🎥</span> Revisar una jugada (VAR)</h2>
+                        <p class="text-xs text-brand-500 dark:text-brand-300 mt-1">Si hay un reclamo (tocó una pieza y la tiene que mover, la soltó en otra casilla…), el árbitro ve el video de los últimos minutos aquí mismo: en pausa, más lento o cuadro a cuadro, y salta a cada jugada o a cada vez que una mano tapó el tablero. El video queda solo en este celular, nunca se manda, y se borra al cerrar la página.</p>
+                        <label class="mt-2 flex items-center gap-2 text-sm font-semibold text-brand-800 dark:text-white cursor-pointer"><input id="var-grabar" type="checkbox" class="w-4 h-4 accent-brand-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"> Grabar los últimos 10 minutos para revisar</label>
+                        <p id="var-estado" role="status" class="text-sm text-brand-700 dark:text-brand-200 mt-1">No se está grabando.</p>
+                        <button id="btn-var" type="button" disabled class="mt-2 bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-3 py-2 rounded-lg text-sm disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Revisar el video</button>
+                    </section>
+
                     <section class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-4" aria-labelledby="t-vivo">
                         <h2 id="t-vivo" class="font-semibold text-brand-800 dark:text-white"><span aria-hidden="true">📡</span> Transmitir en vivo</h2>
                         <p class="text-xs text-brand-500 dark:text-brand-300 mt-1">Quien tenga el enlace ve la partida en su celular o en un proyector, sin cuenta. Se manda solo la partida, nunca la imagen.</p>
@@ -393,6 +461,28 @@
 
     <footer class="bg-brand-900 text-brand-300 py-8"><div class="max-w-7xl mx-auto px-4 text-center text-sm"><p>&copy; 2026 Ajedrez Integral. Todos los derechos reservados.</p><!-- legal: inicio --><p class="mt-2"><a href="privacidad.html" class="underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Política de privacidad</a> <span aria-hidden="true">·</span> <a href="terminos.html" class="underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Términos y condiciones</a></p><!-- legal: fin --></div></footer>
     <!-- tablero-js: inicio -->
+    <dialog id="var-dialogo" aria-labelledby="var-titulo" class="w-[calc(100%-1rem)] max-w-3xl rounded-2xl shadow-2xl p-0 bg-white dark:bg-brand-900 text-brand-800 dark:text-white backdrop:bg-black/70">
+        <div class="p-4">
+            <h2 id="var-titulo" class="font-serif text-lg font-bold">Revisar una jugada</h2>
+            <video id="var-video" playsinline muted controls class="mt-2 w-full rounded-lg bg-black"></video>
+            <p id="var-hora" role="status" aria-live="polite" class="text-sm font-semibold mt-1 tabular-nums"></p>
+            <div class="flex flex-wrap items-end gap-2 mt-2">
+                <button id="var-atras" type="button" class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-3 py-2 rounded-lg text-sm disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Atrás 2 s</button>
+                <button id="var-cuadro-atras" type="button" class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-3 py-2 rounded-lg text-sm disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Cuadro anterior</button>
+                <button id="var-cuadro" type="button" class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-3 py-2 rounded-lg text-sm disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Cuadro siguiente</button>
+                <div><label for="var-velocidad" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 mb-1">Velocidad</label>
+                <select id="var-velocidad" class="bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><option value="1">Normal</option><option value="0.5">La mitad</option><option value="0.25" selected>Un cuarto</option></select></div>
+            </div>
+            <h3 class="font-semibold text-sm mt-3">Ir a</h3>
+            <p class="text-xs text-brand-500 dark:text-brand-300">Cada marca deja el video 3 segundos antes, en pausa. «Mano sobre el tablero» es cada vez que algo tapó o movió piezas, con las casillas que cambiaron.</p>
+            <ol id="var-marcas" class="mt-1 max-h-48 overflow-y-auto space-y-1 text-sm"></ol>
+            <div class="flex flex-wrap gap-2 mt-3">
+                <button id="var-guardar" type="button" class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-3 py-2 rounded-lg text-sm disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Guardar este pedazo para el acta</button>
+                <button id="var-cerrar" type="button" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-3 py-2 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Volver a la partida</button>
+            </div>
+        </div>
+    </dialog>
+
     <script src="js/board-themes.js"></script>
     <script src="js/chess-piece-svg.js"></script>
     <script src="js/pieza-preferida.js"></script>
@@ -409,6 +499,10 @@
     <script src="js/detectar-tablero.js"></script>
     <script src="js/main.js"></script>
     <script src="js/lector-tablero.js"></script>
+    <script src="js/lector-reloj.js"></script>
+    <script src="js/camara-var.js"></script>
+    <script src="js/grafico-tiempo.js"></script>
+    <script src="js/piezas-modelo.js"></script>
     <script src="js/camara-tablero.js"></script>
 </body>
 </html>

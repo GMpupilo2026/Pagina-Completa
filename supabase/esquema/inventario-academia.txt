@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20261030032850
+# al-dia-con: 20261030061718
 tabla  Ejercicios Lichess  rls=true
 tabla  _foto_rls_tmp  rls=false
 tabla  _pedidos_elo  rls=false
@@ -11,6 +11,7 @@ tabla  acceso_config  rls=true
 tabla  actualizaciones_plataforma  rls=true
 tabla  ajustes_academia  rls=true
 tabla  analisis_partidas_alumno  rls=true
+tabla  arbitraje_casos_var  rls=true
 tabla  arbitraje_consulta_config  rls=true
 tabla  arbitrajes_publicos  rls=true
 tabla  arbitros_cr  rls=true
@@ -293,6 +294,17 @@ columna  analisis_partidas_alumno.chesscom  text
 columna  analisis_partidas_alumno.lichess  text
 columna  analisis_partidas_alumno.partidas  integer
 columna  analisis_partidas_alumno.updated_at  timestamp with time zone
+columna  arbitraje_casos_var.articulo  text
+columna  arbitraje_casos_var.correcta  smallint
+columna  arbitraje_casos_var.creado_por  uuid
+columna  arbitraje_casos_var.created_at  timestamp with time zone
+columna  arbitraje_casos_var.desde  numeric
+columna  arbitraje_casos_var.explicacion  text
+columna  arbitraje_casos_var.id  uuid
+columna  arbitraje_casos_var.opciones  text[]
+columna  arbitraje_casos_var.pregunta  text
+columna  arbitraje_casos_var.titulo  text
+columna  arbitraje_casos_var.video  text
 columna  arbitraje_consulta_config.id  smallint
 columna  arbitraje_consulta_config.modelo  text
 columna  arbitraje_consulta_config.tope_mensual_usd  numeric(10,2)
@@ -2659,6 +2671,10 @@ politica  analisis_partidas_alumno  analisis_partidas_delete  DELETE
 politica  analisis_partidas_alumno  analisis_partidas_insert  INSERT
 politica  analisis_partidas_alumno  analisis_partidas_select  SELECT
 politica  analisis_partidas_alumno  analisis_partidas_update  UPDATE
+politica  arbitraje_casos_var  arbitraje_casos_var_delete  DELETE
+politica  arbitraje_casos_var  arbitraje_casos_var_insert  INSERT
+politica  arbitraje_casos_var  arbitraje_casos_var_select  SELECT
+politica  arbitraje_casos_var  arbitraje_casos_var_update  UPDATE
 politica  arbitraje_consulta_config  arbitraje_consulta_config_select  SELECT
 politica  arbitrajes_publicos  arbitrajes_publicos_insert  INSERT
 politica  arbitrajes_publicos  arbitrajes_publicos_select  SELECT
@@ -3282,6 +3298,8 @@ indice  actualizaciones_plataforma  actualizaciones_plataforma_pkey
 indice  ajustes_academia  ajustes_academia_actualizado_por_fk
 indice  ajustes_academia  ajustes_academia_pkey
 indice  analisis_partidas_alumno  analisis_partidas_alumno_pkey
+indice  arbitraje_casos_var  arbitraje_casos_var_fecha_idx
+indice  arbitraje_casos_var  arbitraje_casos_var_pkey
 indice  arbitraje_consulta_config  arbitraje_consulta_config_pkey
 indice  arbitrajes_publicos  arbitrajes_publicos_pendientes
 indice  arbitrajes_publicos  arbitrajes_publicos_pkey
@@ -3919,6 +3937,20 @@ grant  analisis_partidas_alumno  authenticated  DELETE
 grant  analisis_partidas_alumno  authenticated  INSERT
 grant  analisis_partidas_alumno  authenticated  SELECT
 grant  analisis_partidas_alumno  authenticated  UPDATE
+grant  arbitraje_casos_var  anon  DELETE
+grant  arbitraje_casos_var  anon  INSERT
+grant  arbitraje_casos_var  anon  REFERENCES
+grant  arbitraje_casos_var  anon  SELECT
+grant  arbitraje_casos_var  anon  TRIGGER
+grant  arbitraje_casos_var  anon  TRUNCATE
+grant  arbitraje_casos_var  anon  UPDATE
+grant  arbitraje_casos_var  authenticated  DELETE
+grant  arbitraje_casos_var  authenticated  INSERT
+grant  arbitraje_casos_var  authenticated  REFERENCES
+grant  arbitraje_casos_var  authenticated  SELECT
+grant  arbitraje_casos_var  authenticated  TRIGGER
+grant  arbitraje_casos_var  authenticated  TRUNCATE
+grant  arbitraje_casos_var  authenticated  UPDATE
 grant  arbitraje_consulta_config  authenticated  SELECT
 grant  arbitrajes_publicos  anon  DELETE
 grant  arbitrajes_publicos  anon  INSERT

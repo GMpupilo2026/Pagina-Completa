@@ -3316,7 +3316,7 @@
   // repetición y las 50 jugadas (`tipo`), que no se marcan solas: el árbitro
   // las confirma si alguien reclama (o, con cinco veces y 75 jugadas, solo).
   // y la bandera que cae en el reloj de la cámara (con el color, `color`).
-  const TIPOS_ALERTA = { ilegal: "camaraAlerta", repeticion3: "camaraTablas3", jugadas50: "camaraTablas50", repeticion5: "camaraTablas5", jugadas75: "camaraTablas75", bandera: "camaraBandera" };
+  const TIPOS_ALERTA = { ilegal: "camaraAlerta", repeticion3: "camaraTablas3", jugadas50: "camaraTablas50", repeticion5: "camaraTablas5", jugadas75: "camaraTablas75", bandera: "camaraBandera", sinMover: "camaraSinMover", sinApretar: "camaraSinApretar" };
   const colorTx = (c) => tx(c === "w" ? "colorLasBlancas" : "colorLasNegras");
   function alertaDeCamara(p) {
     const v = torneoDeCamaras();
@@ -3332,9 +3332,10 @@
     estado.camaras.alertas.set(k, { h: Date.now(), tipo, m: clave, color });
     // Para el informe: «Visto» quita el aviso de la lista, pero no de la cuenta.
     const cu = estado.camaras.cuenta.get(clave) || { ilegal: 0, tablas: 0 };
-    if (tipo !== "bandera") cu[tipo === "ilegal" ? tipo : "tablas"]++;
+    if (tipo === "ilegal") cu.ilegal++;
+    else if (/^(repeticion|jugadas)/.test(tipo)) cu.tablas++;
     estado.camaras.cuenta.set(clave, cu);
-    Avisos.avisar(tx(TIPOS_ALERTA[tipo], { m: verLugar(clave), q: color ? colorTx(color) : "" }), { tipo: { ilegal: "error", bandera: "error" }[tipo] || "info" });
+    Avisos.avisar(tx(TIPOS_ALERTA[tipo], { m: verLugar(clave), q: color ? colorTx(color) : "" }), { tipo: { ilegal: "error", bandera: "error", sinMover: "error" }[tipo] || "info" });
     pintarCamaras();
   }
 
@@ -3404,6 +3405,25 @@
     if (!claves.length) return null;
     const avisos = (k, cual) => (c.cuenta.get(k) || {})[cual] || 0;
     const th = (clave) => el("th", { scope: "col", class: "py-1 pr-3 text-left font-semibold", texto: tx(clave) });
+    /* La ronda en un vistazo: cuántas mesas leyeron solas de punta a punta y,
+     * mesa por mesa, qué mejorar para la próxima (luz, ángulo, batería). */
+    const vistazo = (k) => {
+      const d = c.partidas.get(k), n = d.juego.history().length, mano = Math.min(d.mano || 0, n), dudas = d.dudas || 0, ilegal = avisos(k, "ilegal");
+      const mejorar = [];
+      if (d.equipo && d.equipo.luz === "poca") mejorar.push(tx("vistazoLuz"));
+      if (n && mano / n >= 0.2) mejorar.push(tx("vistazoMano"));
+      if (dudas >= 3) mejorar.push(tx("vistazoDudas", { n: dudas }));
+      if (ilegal) mejorar.push(tx("vistazoIlegal", { n: ilegal }));
+      if (!d.resultado && Date.now() - (c.mesas.get(k) || 0) > SIN_NOTICIAS_MS) mejorar.push(tx("vistazoSinNoticias"));
+      const terminada = { true: "sola", false: "corregida" }[!mano && !ilegal];
+      return { estado: d.resultado ? terminada : "juega", mejorar };
+    };
+    const vistos = new Map(claves.map((k) => [k, vistazo(k)]));
+    const cuenta = (e) => [...vistos.values()].filter((x) => x.estado === e).length;
+    const conAlgo = claves.filter((k) => vistos.get(k).mejorar.length);
+    const resumen = el("div", { id: "pi-camaras-vistazo", class: "text-sm mt-1" },
+      el("p", { class: "font-semibold", texto: tx("camarasVistazo", { n: claves.length, s: cuenta("sola"), c: cuenta("corregida"), j: cuenta("juega") }) }),
+      conAlgo.length ? el("p", { texto: tx("camarasVistazoMejorar", { l: conAlgo.map((k) => tx("vistazoMesa", { m: verLugar(k), q: vistos.get(k).mejorar.join(", ") })).join("; ") }) }) : null);
     const filas = claves.map((k) => {
       const d = c.partidas.get(k), n = d.juego.history().length, mano = Math.min(d.mano || 0, n);
       return el("tr", { "data-informe": k },
@@ -3415,7 +3435,8 @@
         el("td", { class: "py-1 pr-3", texto: String(mano) }),
         el("td", { class: "py-1 pr-3", texto: String(avisos(k, "ilegal")) }),
         el("td", { class: "py-1 pr-3", texto: String(avisos(k, "tablas")) }),
-        el("td", { class: "py-1", texto: d.resultado ? tx("corto_" + d.resultado) : "—" }));
+        el("td", { class: "py-1 pr-3", texto: d.resultado ? tx("corto_" + d.resultado) : "—" }),
+        el("td", { class: "py-1", "data-mejorar": "", texto: vistos.get(k).mejorar.join(", ") || tx("vistazoNada") }));
     });
     // Lo de todos los torneos de esta computadora, por tablero y luz (ver anotarLectura).
     const historial = resumenLectura();
@@ -3436,8 +3457,9 @@
     return el("details", { id: "pi-camaras-informe", class: "mt-2", open: abierto },
       el("summary", { class: "text-sm font-semibold cursor-pointer", texto: tx("camarasInforme") }),
       el("p", { class: C.nota, texto: tx("camarasInformeTexto") }),
+      resumen,
       el("div", { class: "overflow-x-auto" }, el("table", { class: "text-sm mt-1" },
-        el("thead", {}, el("tr", {}, th("camarasInfLugar"), th("camarasInfHoras"), th("camarasInfTablero"), th("camarasInfLuz"), th("camarasInfSolas"), th("camarasInfMano"), th("camarasInfIlegal"), th("camarasInfTablas"), th("camarasInfResultado"))),
+        el("thead", {}, el("tr", {}, th("camarasInfLugar"), th("camarasInfHoras"), th("camarasInfTablero"), th("camarasInfLuz"), th("camarasInfSolas"), th("camarasInfMano"), th("camarasInfIlegal"), th("camarasInfTablas"), th("camarasInfResultado"), th("camarasInfMejorar"))),
         el("tbody", {}, filas))),
       el("button", { type: "button", id: "pi-camaras-planillas", class: C.mini + " mt-2", onclick: planillasDeCamaras }, el("span", { "aria-hidden": "true", texto: "📝 " }), tx("camarasPlanillas")),
       tablaHistorial);
