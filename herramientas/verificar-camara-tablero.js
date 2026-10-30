@@ -147,10 +147,13 @@ function dibujarFoto(opc) {
       const ch = pieza[f + "," + r], pz = ch && (ch === ch.toUpperCase() ? "w" : "b");
       if (pz && opc.formas) {
         // Cada pieza con su forma vista desde arriba (para el modelo de las piezas): el centro siempre lleno.
-        const lx = u - f - 0.5, ly = v - r - 0.5, rr = Math.hypot(lx, ly), t = ch.toLowerCase();
-        const dentro = t === "p" ? rr < 0.22 : t === "n" ? rr < 0.34 && !(rr > 0.16 && lx > 0.05 && ly < -0.05) : t === "b" ? rr < 0.34 && !(rr > 0.14 && Math.abs(lx - ly) < 0.06)
-          : t === "r" ? Math.abs(lx) < 0.3 && Math.abs(ly) < 0.3 : t === "q" ? rr < 0.36 && !(rr > 0.2 && rr < 0.27) : rr < 0.34 && !(rr > 0.14 && (Math.abs(lx) < 0.05 || Math.abs(ly) < 0.05));
-        if (dentro) col = pz === "w" ? [250, 248, 240] : [30, 30, 30];
+        const t = ch.toLowerCase();
+        const forma = (lx, ly) => { const rr = Math.hypot(lx, ly); return t === "p" ? rr < 0.22 : t === "n" ? rr < 0.34 && !(rr > 0.16 && lx > 0.05 && ly < -0.05) : t === "b" ? rr < 0.34 && !(rr > 0.14 && Math.abs(lx - ly) < 0.06)
+          : t === "r" ? Math.abs(lx) < 0.3 && Math.abs(ly) < 0.3 : t === "q" ? rr < 0.36 && !(rr > 0.2 && rr < 0.27) : rr < 0.34 && !(rr > 0.14 && (Math.abs(lx) < 0.05 || Math.abs(ly) < 0.05)); };
+        const lx = u - f - 0.5, ly = v - r - 0.5;
+        // Con su borde, como las otras: una pieza blanca en una casilla clara se distingue por él.
+        if (forma(lx, ly)) col = pz === "w" ? [250, 248, 240] : [30, 30, 30];
+        else if (forma(lx * 0.85, ly * 0.85)) col = pz === "w" ? [60, 60, 60] : [170, 170, 170];
       } else if (pz) {
         const dd = Math.hypot(u - f - 0.5, v - r - 0.5);
         if (dd < 0.33) col = pz === "w" ? (dd > 0.28 ? [60, 60, 60] : [250, 248, 240]) : (dd > 0.28 ? [170, 170, 170] : [30, 30, 30]);
