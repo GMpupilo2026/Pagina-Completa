@@ -18,7 +18,7 @@
     const RESPIRO_MS = 200;      // entre levantar y apoyar, como una mano
     const TOPE_REGISTRO = 200;   // renglones de «Lo que llega de LiveChess»
     const tableros = [];
-    let siguienteSerie = 90001;
+    let siguienteSerie = 10001;    // cabe en la dirección de bus (14 bits): LiveChess muestra el mismo número
 
     const MODELOS = Object.entries(window.EstiloModelos || {})
         .map(([clave, m]) => ({ ...m, clave }))   // m.id es el de la fuente, no la clave
@@ -62,7 +62,7 @@
     function pintarEstado(v) {
         const total = v.partida.jugadas.length;
         const n = v.chess.history().length;
-        const lc = v.dgt.modo === "avisa" ? "LiveChess lo está siguiendo" : v.dgt.pedidos.length ? "LiveChess ya lo reconoció; todavía no pidió las jugadas" : "Esperando a LiveChess";
+        const lc = v.dgt.modo === "avisa" || v.dgt.siguiendo ? "LiveChess lo está siguiendo" : v.dgt.pedidos.length ? "LiveChess ya lo reconoció; todavía no pidió las jugadas" : "Esperando a LiveChess";
         const espanol = (san) => san.replace(/[NBRQK]/g, (l) => ({ N: "C", B: "A", R: "T", Q: "D", K: "R" })[l]);
         const ultima = n ? (Math.ceil(n / 2)) + (n % 2 ? ". " : "… ") + espanol(v.chess.history()[n - 1]) : "posición inicial";
         v.estado.textContent = lc + " · jugada " + n + " de " + total + " (" + ultima + ")" + (n >= total ? " · partida terminada: " + v.partida.resultado : "") + ".";

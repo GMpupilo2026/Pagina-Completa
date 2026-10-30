@@ -105,6 +105,87 @@ function pruebaProtocolo() {
   vuelta.recibir([0x4b]);
   igual("«Volver al principio»: se levanta el peón de e4 y se apoya en e2", vuelta.ponerFen(T.INICIAL),
     [[0x8e, 0, 5, T.campo("e4"), 0], [0x8e, 0, 5, T.campo("e2"), 1]]);
+  pruebaBus();
+}
+
+// El modo bus, con lo que mandó un LiveChess 2.2.11 de verdad (su registro
+// en «Lo que llega de LiveChess»): ahí quedó trabado la primera vez, porque el
+// tablero no contestaba la versión (8b 3f 11 5b) y LiveChess volvía a empezar.
+const ARRANQUE_REGISTRO = [0x40, 0x40, 0x47, 0x46, 0x4a, 0x8b, 0x3f, 0x11, 0x5b,
+  0xdf, 0x0d, 0x12, 0x03, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0x01, 0, 0, 0, 0, 0, 0, 0, 0, 0x01, 0, 0x03, 0x02, 0x30, 0,
+  0xdf, 0x31, 0x12, 0x03, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0x01, 0, 0, 0, 0, 0, 0, 0, 0, 0x02, 0, 0x03, 0x02, 0x30, 0];
+const pedido = (c, dir) => [c, dir[0], dir[1], T.suma([c, dir[0], dir[1]])];
+// El mismo arranque, para un tablero con otra dirección (LiveChess le pregunta
+// la versión a la que le contestó el tablero).
+const arranque = (dir) => ARRANQUE_REGISTRO.slice(0, 5).concat(pedido(0x8b, dir), ARRANQUE_REGISTRO.slice(9));
+
+// Lee una respuesta de bus y comprueba su suma: [código, dirección, datos].
+function leerBus(m) {
+  const largo = (m[1] << 7) + m[2];
+  if (largo !== m.length || T.suma(m.slice(0, -1)) !== m[m.length - 1]) return null;
+  return [m[0], [m[3], m[4]], m.slice(5, -1)];
+}
+
+function pruebaBus() {
+  console.log("\n=== El modo bus (lo que usa LiveChess por un puerto COM) ===");
+  igual("la suma de comprobación: 8b 3f 11 → 5b, como la mandó LiveChess", T.suma([0x8b, 0x3f, 0x11]), 0x5b);
+  // La serie 8081 es la dirección 3f 11, la del registro: su arranque, byte a byte.
+  const t = T.crear({ serie: "8081" });
+  const r = t.recibir(ARRANQUE_REGISTRO);
+  igual("al arranque de LiveChess contesta la marca, la dirección (3f 11) y la versión", r.map((m) => m[0]), [0x92, 0x90, 0x89]);
+  igual("la versión en modo bus: 89, largo 8, la dirección, 1.2 y la suma", r[2], [0x89, 0, 8, 0x3f, 0x11, 1, 2, 0x64]);
+  igual("lo que va para otro aparato del bus (0xdf…) no se contesta", r.length, 3);
+  const dir = [0x3f, 0x11];
+  igual("un ping con su dirección: 87, largo 6", t.recibir(pedido(0x87, dir)), [T.mensajeBus(0x07, dir, [])]);
+  igual("un pedido para otra dirección no se contesta", t.recibir(pedido(0x87, [0x10, 0x06])), []);
+  igual("ni uno con la suma mal", t.recibir([0x87, 0x3f, 0x11, 0x00]), []);
+  const tab = leerBus(t.recibir(pedido(0x82, dir))[0]);
+  igual("el tablero entero en modo bus: 83 con las 64 casillas de a8 a h1", [tab[0], tab[2]], [0x83, T.volcado(T.INICIAL).slice(3)]);
+
+  // Las partidas modelo por bus: cada jugada queda en la memoria, LiveChess
+  // pregunta (0x83) y arma la posición con lo que le llega.
+  let partidas = 0, malas = [];
+  for (const [id, m] of Object.entries(MODELOS)) {
+    const ch = new Chess();
+    const b = T.crear({ serie: "8081" });
+    b.recibir(ARRANQUE_REGISTRO);
+    const casillas = new Array(64).fill(0);
+    const aplicar = () => {
+      const resp = leerBus(b.recibir(pedido(0x83, dir))[0]);
+      if (!resp || resp[0] !== 0x85) return false;
+      const datos = resp[2];
+      for (let i = 0; i < datos.length; i++) {
+        const x = datos[i];
+        if (x >= 0x40 && x <= 0x4c) { casillas[datos[i + 1]] = x - 0x40; i += 1; }
+        else if (![0x6a, 0x6f, 0x7f].includes(x)) return false;
+      }
+      return true;
+    };
+    if (!aplicar() || casillas.join() !== T.volcado(T.INICIAL).slice(3).join()) { malas.push(id + " (al empezar)"); continue; }
+    for (const [k, san] of m.jugadas.entries()) {
+      const mv = ch.move(san);
+      if (!mv) break;
+      if (b.jugar(mv, ch.fen()).length) { malas.push(id + " " + san + " (mandó sin que le pregunten)"); break; }
+      if (k % 3 !== 2 && k !== m.jugadas.length - 1) continue;   // LiveChess no pregunta en cada jugada
+      if (!aplicar() || casillas.join() !== T.volcado(ch.fen()).slice(3).join()) { malas.push(id + " " + san); break; }
+    }
+    partidas += 1;
+  }
+  cierto("las " + partidas + " partidas modelo por bus: con lo que contesta a 0x83, la posición de LiveChess es la de chess.js",
+    malas.length === 0 && partidas >= 60, malas.slice(0, 5).join(" | "));
+
+  const rep = T.crear({ serie: "8081" });
+  rep.recibir(ARRANQUE_REGISTRO);
+  const ultima = rep.recibir(pedido(0x83, dir));
+  igual("0x84 repite la última respuesta tal cual", rep.recibir(pedido(0x84, dir)), ultima);
+  igual("y otra 0x83 sin jugadas nuevas no trae cambios", leerBus(rep.recibir(pedido(0x83, dir))[0])[2], []);
+  igual("0x40 lo saca del modo bus", (rep.recibir([0x40]), rep.bus), false);
+  const seriesBien = [];
+  for (let n = 10001; n <= 10099; n++) {
+    const dir = T.crear({ serie: String(n) }).recibir([0x46])[0].slice(3, 5);
+    if ((dir[0] << 7) + dir[1] === n) seriesBien.push(n);
+  }
+  igual("del 10001 al 10099, la dirección de bus es el mismo número de serie (lo que muestra LiveChess)", seriesBien.length, 99);
 }
 
 // ------------------------------------------------------------ la página
@@ -154,11 +235,11 @@ async function pruebaPagina(browser) {
 
   await p.evaluate(() => window.__liveChess([0x45]));
   await p.waitForFunction(() => window.__salida.length >= 8);
-  igual("LiveChess pide el número de serie y el tablero contesta 90001", await salida(), [0x91, 0, 8, 57, 48, 48, 48, 49]);
+  igual("LiveChess pide el número de serie y el tablero contesta 10001", await salida(), [0x91, 0, 8, 49, 48, 48, 48, 49]);
   igual("al abrir el puerto enciende DTR y RTS, como un tablero de verdad", await p.evaluate(() => window.__senales), { dataTerminalReady: true, requestToSend: true });
   const registro = await p.textContent("#virtuales details pre");
   cierto("«Lo que llega de LiveChess» anota el pedido en hexadecimal", /LiveChess →  45$/m.test(registro), registro);
-  cierto("y la respuesta del tablero", /Tablero →  91 00 08 39 30 30 30 31$/m.test(registro), registro);
+  cierto("y la respuesta del tablero", /Tablero →  91 00 08 31 30 30 30 31$/m.test(registro), registro);
   cierto("y cuenta los bytes recibidos", /\(1 bytes recibidos\)/.test(await p.textContent("#virtuales details summary")));
   await limpiar();
   await p.evaluate(() => window.__liveChess([0x42, 0x4b]));
@@ -190,6 +271,22 @@ async function pruebaPagina(browser) {
   const tablero = T.volcado(T.INICIAL).slice(3);
   for (const msg of partir(antes.concat(await salida()))) if (msg[0] === 0x8e) tablero[msg[3]] = msg[4];
   igual("«Volver al principio» deja, con lo que mandó, cada pieza en su casilla inicial", tablero, T.volcado(T.INICIAL).slice(3));
+
+  // Por bus, como LiveChess por un puerto COM: la jugada no se manda sola, se
+  // la lleva la respuesta a 0x83.
+  await limpiar();
+  await p.evaluate((b) => window.__liveChess(b), [arranque([0x4e, 0x11]), pedido(0x83, [0x4e, 0x11])].flat());
+  await p.waitForFunction(() => /LiveChess lo está siguiendo/.test(document.querySelector("#virtuales [role=status]").textContent));
+  cierto("la página contesta la versión en bus con la dirección 4e 11, la del 10001", /Tablero →  89 00 08 4e 11 01 02/.test(await p.textContent("#virtuales details pre")));
+  cierto("por bus, con el arranque de LiveChess y su primera pregunta, la tarjeta dice que lo sigue", true);
+  await limpiar();
+  await p.click("#virtuales li button:has-text('Una jugada')");
+  await p.waitForFunction(() => /jugada 1 de/.test(document.querySelector("#virtuales [role=status]").textContent));
+  igual("«Una jugada» por bus no manda nada sola", await salida(), []);
+  await p.evaluate((b) => window.__liveChess(b), pedido(0x83, [0x4e, 0x11]));
+  await p.waitForFunction(() => window.__salida.length > 0);
+  const resp = leerBus(await salida());
+  igual("y la trae la respuesta a 0x83: levantar y apoyar", resp && resp[2], [].concat(...T.cambiosDeJugada(mv).map((m) => [0x40 + m[4], m[3]])));
 
   await p.click("#virtuales li button:has-text('Desconectar')");
   igual("«Desconectar» lo quita de la lista", await p.$$eval("#virtuales li", (l) => l.length), 0);
