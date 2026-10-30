@@ -222,6 +222,7 @@
 
     function pintarLichess(error) {
         const conectado = !!(token && usuarioLichess);
+        document.dispatchEvent(new CustomEvent("pareo-dgt:cambio"));
         $("lichess-estado").textContent = error ? "No se conectó: " + error + "." : conectado ? "Conectado a Lichess como " + usuarioLichess + "." : "Sin conectar.";
         $("lichess-estado").className = "text-sm font-semibold mt-2 " + (error ? "text-red-700 dark:text-red-300" : "text-brand-700 dark:text-brand-200");
         $("btn-desconectar").hidden = !conectado;
@@ -306,6 +307,12 @@
 
     // ------------------------------------------------------------ una revisión
 
+    // Lo del pareo que hace falta para volver a armar el PGN con las jugadas
+    // («Transmitir sin LiveChess», js/pareo-dgt-directo.js).
+    function pareoDe(datos) {
+        return { torneo: datos.torneo, fecha: datos.fecha, hora: datos.hora, ronda: datos.ronda, mesas: datos.mesas };
+    }
+
     async function revisarTorneo(t, opciones) {
         const datos = await leerPareo(t.tnr);
         if (datos.torneo && (!t.nombre || t.nombre === "tnr" + t.tnr)) { t.nombre = datos.torneo; guardar(); pintarTorneos(); }
@@ -315,6 +322,8 @@
         t.rondas = t.rondas || {};
         const que = PareoDGT.decidir(t, datos, t.mesas);
         const yaHecha = t.rondas[String(datos.ronda)];
+        // Las rondas guardadas antes de «Transmitir sin LiveChess» no tienen el pareo.
+        if (yaHecha && !yaHecha.pareo && que === "igual") { yaHecha.pareo = pareoDe(datos); guardar(); }
         if (que === "igual" && yaHecha.lichessPendiente && estado.crearRondas && token && usuarioLichess) {
             await intentarLichess(t, datos, yaHecha.pgn);
         }
@@ -328,7 +337,7 @@
         const nombre = PareoDGT.nombreArchivo(t.nombre, datos.ronda);
         const anterior = t.rondas[String(datos.ronda)];
         const otrasMesas = !!anterior && anterior.firma === PareoDGT.firma(datos);
-        t.rondas[String(datos.ronda)] = Object.assign({}, anterior, { firma: PareoDGT.firma(datos), mesasElegidas: t.mesas || "", pgn, archivo: nombre, mesas: n });
+        t.rondas[String(datos.ronda)] = Object.assign({}, anterior, { firma: PareoDGT.firma(datos), mesasElegidas: t.mesas || "", pgn, archivo: nombre, mesas: n, pareo: pareoDe(datos) });
         guardar();
         if (!n) anotar("«" + t.nombre + "», ronda " + datos.ronda + ": ninguna de las mesas elegidas (" + t.mesas + ") tiene partida en esta ronda. El archivo sale vacío: revisa las mesas del torneo.", { error: true });
         const donde = await guardarArchivo(nombre, pgn);
@@ -559,6 +568,7 @@
         $("btn-crear-torneos").disabled = !(token && usuarioLichess) || !estado.torneos.length;
         // La lista se rehace en cada revisión: quien estaba en un botón lo sigue estando.
         if (foco) { const otra = [...ul.querySelectorAll("[data-foco]")].find((e) => e.dataset.foco === foco); if (otra) otra.focus(); }
+        document.dispatchEvent(new CustomEvent("pareo-dgt:cambio"));
     }
 
     async function agregarTorneo(ev) {
@@ -643,6 +653,24 @@
         pintarLichess();
         if (token) conectar(token);
     }
+
+    // Lo que usa «Transmitir sin LiveChess» (js/pareo-dgt-directo.js): los
+    // torneos, la ronda de cada uno con su pareo y su ronda en Lichess, y
+    // empujarle el PGN. Una sola copia del estado y del token.
+    window.PareoDGTPagina = {
+        torneos: () => estado.torneos.map((t) => ({ tnr: t.tnr, nombre: t.nombre, mesas: t.mesas || "" })),
+        ronda(tnr) {
+            const t = estado.torneos.find((x) => x.tnr === tnr);
+            const n = t && t.ultima && t.ultima.ronda;
+            const r = n && t.rondas && t.rondas[String(n)];
+            if (!r || !r.pareo) return null;
+            return { ronda: n, pareo: r.pareo, mesas: t.mesas || "", lichess: r.lichess || null };
+        },
+        lichessListo: () => !!(token && usuarioLichess),
+        empujar: (idRonda, pgn) => lichess("/api/broadcast/round/" + idRonda + "/push", { texto: pgn }),
+        opcionesPgn: () => ({ sinTildes: estado.sinTildes, sitio: estado.lugar || undefined }),
+        anotar,
+    };
 
     // Con licencia, como las demás herramientas de arbitraje: la página
     // pregunta tengo_herramienta() solo para decidir qué pinta; el candado de

@@ -286,7 +286,7 @@ async function pruebaPagina(browser) {
   await p.evaluate((b) => window.__liveChess(b), pedido(0x83, [0x4e, 0x11]));
   await p.waitForFunction(() => window.__salida.length > 0);
   const resp = leerBus(await salida());
-  igual("y la trae la respuesta a 0x83: levantar y apoyar", resp && resp[2], [].concat(...T.cambiosDeJugada(mv).map((m) => [0x40 + m[4], m[3]])));
+  igual("y la trae la respuesta a 0x83: levantar y apoyar, y el reloj que apretó (4:59 a la izquierda, 0x70)", resp && resp[2], [].concat(...T.cambiosDeJugada(mv).map((m) => [0x40 + m[4], m[3]]), [0x70, 0x04, 0x59]));
 
   await p.click("#virtuales li button:has-text('Desconectar')");
   igual("«Desconectar» lo quita de la lista", await p.$$eval("#virtuales li", (l) => l.length), 0);
