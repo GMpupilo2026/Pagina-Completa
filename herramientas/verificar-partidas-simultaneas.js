@@ -235,6 +235,19 @@ function crearServidor(red) {
       const tope = esJugada ? justo + tol + retrasoMaximo : viejo[clave];
       if (nuevo[clave] > tope) { nuevo[clave] = tope; recortes.push({ lenta: false }); }
     }
+    // (5) El reloj lo lleva la base: la jugada que pasa el turno (no en el
+    // Duelo) arranca el reloj del rival con la hora de la base, y el de quien
+    // movió no queda por encima del tope aunque la pantalla no lo mande.
+    const turno = (f) => String((f.cartas_state && f.cartas_state.fen) || f.fen || "").split(" ")[1];
+    if (viejo.variant !== "duelo" && viejo.status === "playing" && viejo.clock_updated_at && viejo.initial_seconds != null &&
+        esJugada && turno(nuevo) !== turno(viejo)) {
+      nuevo.clock_updated_at = ahoraIso();
+      const m = turno(viejo), k = m === "w" ? "white_time_left" : m === "b" ? "black_time_left" : null;
+      if (k && viejo[k] != null) {
+        const tope = Math.max(viejo[k] - pasado, 0) + (viejo.increment_seconds || 0) + tol + 1;
+        if (nuevo[k] > tope) { nuevo[k] = tope; recortes.push({ lenta: false }); }
+      }
+    }
     return null;
   }
 

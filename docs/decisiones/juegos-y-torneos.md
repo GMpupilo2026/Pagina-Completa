@@ -1551,7 +1551,8 @@ Migración `20261029210004_reloj_recorta_y_sin_jugada_no_sube`.
   trae igual) no se descuenta: el trigger solo mira la columna que cambia. Ya
   pasaba antes. Cerrarlo pide saber de quién es el reloj que corre en cada
   escritura (en el Duelo corren los dos y `clock_updated_at` no se toca al
-  confirmar), y eso es que la base calcule el reloj sola.
+  confirmar), y eso es que la base calcule el reloj sola. Cerrado fuera del
+  Duelo en «El reloj lo lleva la base».
 - Ajedrez para 4 queda como estaba, por decisión.
 
 Probado en producción en una transacción revertida: con el reloj corriendo
@@ -1693,6 +1694,39 @@ vista 600 ms después de guardarse llegue a la base como 600 ms al irse; con
 la demora mal medida, salta), `verificar-partidas-simultaneas.js` (en cada
 ronda, la mayoría de las pantallas manda lo que midió y tiene sentido) y
 `verificar-profesor-juega.js` (el recuadro, solo para administración).
+
+### El reloj lo lleva la base
+
+Hasta acá el navegador mandaba, en cada jugada, su reloj y la hora en que
+arranca el del rival, y la base solo ponía topes. Quedaban dos huecos: una
+jugada guardada **sin el reloj propio** no se descontaba (el trigger solo
+miraba la columna que cambiaba; probado en producción: con 60 s y 10 s
+pensando, la jugada se guardaba y el reloj seguía en 60), y una jugada sin
+`clock_updated_at` dejaba correr el reloj del rival desde antes, cobrándole
+lo que pensó quien movió. Migración `20261030032850_reloj_lo_lleva_la_base`.
+
+- **En la jugada que pasa el turno**, el paso (5) de
+  `proteger_reloj_de_partida()` pone la hora de arranque (`now()`), la
+  mande la pantalla o no, y deja el reloj de quien movió en el tope aunque
+  no venga en el `UPDATE`: lo que le quedaba menos lo que pasó según la
+  base, más el incremento, los 2 s de tolerancia y el segundo del retraso.
+  El turno se lee de `fen` o del estado de Cartas.
+- **Quien juega honesto no nota nada:** su reloj ya venía por debajo del tope
+  y la hora la ponía igual la base. Lo que el navegador muestra entre
+  jugada y jugada no cambia.
+- **El Duelo queda como estaba:** ahí corren los dos relojes a la vez y no
+  hay un turno que pase.
+- El recorte queda anotado en `reloj_recortes`, como los del paso (4).
+- Ajedrez para 4 queda como estaba, por decisión.
+
+Probado en producción en una transacción revertida: con 60 s y el reloj
+corriendo hace 10 s, la jugada sin reloj propio queda en 53 y arranca el
+reloj del rival en ese momento; la honesta con 50 queda en 50; una escritura
+sin jugada no toca el reloj ni la hora. Los dobles de
+`verificar-partidas-simultaneas.js`, `verificar-juegos-nuevos-en-vivo.js` y
+`verificar-torneo-jugado.js` hacen el mismo paso (5), y los tres fallan si
+hubo que recortar un reloj que llegó a tiempo: ninguna pantalla honesta
+debería tocarlo.
 
 ### Cartas: cada estado, una copia propia
 
