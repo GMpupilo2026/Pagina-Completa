@@ -1681,8 +1681,10 @@ async function esperarJugadas(p, n) {
     await pbb.bringToFront();
     await pbb.evaluate(() => { window.__mas += 181000; });
     await pbb.waitForFunction(() => /bandera/.test(document.getElementById("reloj-msg").textContent), null, { timeout: 70000 }).catch(() => {});
-    // Los mensajes van por el canal (relevado por Node): se espera a que lleguen, hasta 8 s.
-    for (let i = 0; i < 80 && !(eventos.slice(antesBandera).some((x) => x.event === "alerta") && eventos.slice(antesBandera).some((x) => x.event === "foto")); i++) await pbb.waitForTimeout(100);
+    /* Los mensajes van por el canal (relevado por Node): se espera a que
+     * lleguen, hasta 20 s. La foto pesa (un JPEG de hasta 120 KB) y en el CI
+     * cargado una vez llegó después de los 8 s que se esperaban antes. */
+    for (let i = 0; i < 200 && !(eventos.slice(antesBandera).some((x) => x.event === "alerta") && eventos.slice(antesBandera).some((x) => x.event === "foto")); i++) await pbb.waitForTimeout(100);
     const bandera = eventos.slice(antesBandera).find((x) => x.event === "alerta");
     igual("se cae la bandera de las negras: el árbitro recibe el aviso, con la mesa y el color", bandera && [bandera.payload.tipo, bandera.payload.mesa, bandera.payload.color], ["bandera", 6, "b"]);
     igual("y la foto del tablero con ese motivo", eventos.slice(antesBandera).filter((x) => x.event === "foto").map((x) => x.payload.motivo), ["bandera"]);
