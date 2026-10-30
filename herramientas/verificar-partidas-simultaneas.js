@@ -168,6 +168,7 @@ function crearServidor(red) {
   const latidos = new Map();        // salaId/usuario → { desde, visto }
   const AUSENCIA = red.ausencia || { latido_s: 10, aviso_s: 20, reclamar_s: 40 };
   const reclamos = [];              // { salaId, usuario, error }
+  const mediciones = new Map();     // salaId/usuario → lo que mandó anotar_medicion_partida
   function ausencia(f, yo) {
     const rival = yo === f.white_id ? f.black_id : f.white_id;
     const suyo = latidos.get(f.id + "/" + rival), mio = latidos.get(f.id + "/" + yo);
@@ -288,6 +289,12 @@ function crearServidor(red) {
 
     if (op === "rpc") {
       if (pedido.nombre === "hora_servidor_ms") return { data: Date.now(), error: null };
+      if (pedido.nombre === "anotar_medicion_partida") {
+        const f = salas.get(pedido.args.p_room_id);
+        if (!f || (pedido.usuario !== f.white_id && pedido.usuario !== f.black_id)) return { data: null, error: { message: "Solo quien juega esta partida" } };
+        mediciones.set(f.id + "/" + pedido.usuario, pedido.args.p_datos);
+        return { data: null, error: null };
+      }
       // Lo mismo que hacen las de la base (ver «El rival que se va»).
       if (pedido.nombre === "latido_de_partida" || pedido.nombre === "reclamar_por_abandono") {
         const f = salas.get(pedido.args.p_room_id);
@@ -453,7 +460,7 @@ function crearServidor(red) {
   }
 
   return {
-    salas, confirmadas, vistas, rechazos, atrasos, rapidas, provisionales, historia, devueltos, recortes, reclamos, latidos, sala, mesa4, agregar, atender,
+    salas, confirmadas, vistas, rechazos, atrasos, rapidas, provisionales, historia, devueltos, recortes, reclamos, latidos, mediciones, sala, mesa4, agregar, atender,
     cerrar() { cerrado = true; if (cortes) clearInterval(cortes); },
   };
 }
@@ -775,6 +782,13 @@ async function ronda(browser, nombre, PARTIDAS, red, limites, variantes) {
   ok("sin errores de JavaScript en las salas", !errores.length, errores.slice(0, 3));
   ok("cada pestaña le avisó a la base que seguía ahí (latido_de_partida)", srv.latidos.size === pestañas.length, srv.latidos.size + " de " + pestañas.length);
   ok("con los dos en la sala, nadie ve «Tu rival se desconectó»", !avisosDeMas.length, avisosDeMas.slice(0, 5));
+  // Lo que mide cada pantalla y le manda a la base (ver «Cómo andan las
+  // partidas en línea»): con 40 medias jugadas, cada una vio 20 del rival.
+  const medidas = [...srv.mediciones.values()];
+  const medianas = medidas.map((m) => m.mediana_ms).sort((a, b) => a - b);
+  if (medidas.length) console.log("    lo que midieron las pantallas: " + medidas.length + " de " + pestañas.length + ", la mitad de las medianas por debajo de " + medianas[Math.floor(medianas.length / 2)] + " ms, la peor demora " + Math.max(...medidas.map((m) => m.max_ms)) + " ms");
+  ok("la mayoría de las pantallas mandó lo que midió", medidas.length >= pestañas.length * 0.8, medidas.length + " de " + pestañas.length);
+  ok("y lo que mandó tiene sentido (demoras de 0 al tope de la ronda)", medidas.every((m) => m.jugadas > 0 && m.mediana_ms >= 0 && m.mediana_ms <= m.p95_ms && m.p95_ms <= m.max_ms && m.max_ms < limites.maxMs), medidas.slice(0, 3));
   if (!process.env.SIN_PREMOVIDAS) ok("las pre-jugadas salieron solas al llegar el turno", srv.rapidas.premovidas > 0, srv.rapidas);
   // El retraso que devuelve el navegador (ver «El retraso de la red no se
   // cobra en el reloj»): nunca más de lo que la base deja pasar.

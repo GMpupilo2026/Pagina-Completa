@@ -32,7 +32,9 @@ function ok(nombre, condicion, detalle) {
   console.log("  ✗ " + nombre + (detalle !== undefined ? "  →  " + JSON.stringify(detalle) : ""));
 }
 
-const caja = { window: { addEventListener() {} }, Chess, console, Math, Date, JSON, Promise, setInterval() {}, setTimeout, clearTimeout, document: { addEventListener() {}, getElementById: () => null, visibilityState: "visible" } };
+// Lo que la página engancha en window (pagehide manda la medición).
+const enganches = {};
+const caja = { window: { addEventListener(tipo, fn) { (enganches[tipo] = enganches[tipo] || []).push(fn); } }, Chess, console, Math, Date, JSON, Promise, setInterval() {}, setTimeout, clearTimeout, document: { addEventListener() {}, getElementById: () => null, visibilityState: "visible" } };
 // La hora del servidor, que la prueba del retraso mueve a mano (null: la de verdad).
 let relojFijo = null;
 caja.window.RelojServidor = { ahora: () => (relojFijo === null ? Date.now() : relojFijo) };
@@ -115,6 +117,10 @@ ok("pero a lo sumo 1 s por jugada (llegó a los 3 s)", Math.abs(conRetraso(3000)
 ok("si llegó antes de que la base la guardara (el canal rápido), no se devuelve nada", Math.abs(conRetraso(-800) - 9.7) < 0.05, conRetraso(-800));
 ok("sin saber cuándo se vio, tampoco", Math.abs(SalaJuego.pensado({ clock_updated_at: hace10 }, { alMover: recien, vistaEn: null }) - 9.7) < 0.05);
 
+console.log("\n=== Lo que se mide de una partida (ver «Cómo andan las partidas en línea») ===");
+const resumen = SalaJuego.resumenDemoras([900, 100, 300, 200, 5000, 150, 120, 110, 130, 140]);
+ok("el resumen: cuántas, la mitad, el 95 % y la peor", JSON.stringify(resumen) === JSON.stringify({ jugadas: 10, mediana_ms: 150, p95_ms: 5000, max_ms: 5000 }), resumen);
+
 console.log("\n=== Cartas: cada estado es una copia propia ===");
 const estado = CartasChess.Game.iniciar().toJSON();
 const copia = JSON.stringify(estado);
@@ -130,7 +136,9 @@ ok("toJSON no comparte arreglos con el motor", json.hands.w.indexOf("robo") === 
   console.log("\n=== suscribir anota cuándo se vio la jugada del rival ===");
   // Un Supabase de mentira: lo justo para suscribir() y jugada().
   let alCambio = null;
+  const rpcs = [];
   caja.sb = {
+    rpc(nombre, args) { rpcs.push([nombre, args]); return Promise.resolve({ data: null, error: null }); },
     channel() {
       const api = {
         on(tipo, cfg, fn) { if (tipo === "postgres_changes") alCambio = fn; return api; },
@@ -162,6 +170,12 @@ ok("toJSON no comparte arreglos con el motor", json.hands.w.indexOf("robo") === 
   const envio = await v.jugada({ san: "e5", despues: c.fen() });
   ok("jugada() dice cuándo se vio la posición", envio.ok && envio.vistaEn === t0 + 600, envio);
   ok("y el reloj cobra los 3 s pensados, no los 3,6 desde que la base la guardó", Math.abs(SalaJuego.pensado(sala, envio) - 3) < 0.01, SalaJuego.pensado(sala, envio));
+  // Al irse de la página se manda lo medido: una jugada del rival, vista
+  // 600 ms después de que la base la guardó.
+  (enganches.pagehide || []).forEach((fn) => fn());
+  const medicion = rpcs.find((r) => r[0] === "anotar_medicion_partida");
+  ok("al irse, la medición llega a la base con la demora de verdad",
+    !!medicion && medicion[1].p_room_id === "s1" && medicion[1].p_datos.jugadas === 1 && medicion[1].p_datos.mediana_ms === 600 && medicion[1].p_datos.base === 1, medicion);
 
   console.log(fallos ? "\n" + fallos + " comprobación(es) fallaron." : "\nTodo bien.");
   process.exit(fallos ? 1 : 0);

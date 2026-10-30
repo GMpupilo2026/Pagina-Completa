@@ -120,6 +120,13 @@
                     <p class="text-brand-450 dark:text-brand-350 text-sm">Todavía no hay partidas terminadas.</p>
                 </div>
             </details>
+
+            <!-- Solo para quien administra: cómo andan las partidas en línea de
+                 verdad (mediciones_de_partidas(), que la base niega a los demás). -->
+            <details id="mediciones" class="hidden mt-8">
+                <summary class="font-serif text-lg font-bold text-brand-800 dark:text-white cursor-pointer mb-3"><span aria-hidden="true">📶</span> Cómo andan las partidas en línea</summary>
+                <ul id="mediciones-lista" class="space-y-1 text-sm text-brand-700 dark:text-brand-200 list-disc pl-5"></ul>
+            </details>
         </div>
     </div>
 

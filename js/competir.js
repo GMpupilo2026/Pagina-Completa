@@ -127,6 +127,28 @@
             container.appendChild(card);
         }
 
+        /* Lo que midieron las pantallas en sus partidas de los últimos 30 días
+           (ver «Cómo andan las partidas en línea»). Solo quien administra: la
+           base se lo niega a los demás, y entonces no se muestra nada. */
+        async function mostrarMediciones() {
+            const { data: m, error } = await sb.rpc("mediciones_de_partidas", { p_dias: 30 });
+            if (error || !m) return;
+            const seg = (ms) => ms == null ? "—" : (ms < 1000 ? ms + " ms" : (ms / 1000).toLocaleString("es-CR", { maximumFractionDigits: 1 }) + " s");
+            const lineas = !m.pantallas
+                ? ["En los últimos " + m.dias + " días ninguna pantalla mandó lo que midió."]
+                : [
+                    m.partidas + " partidas medidas (" + m.pantallas + " pantallas, " + m.jugadas + " jugadas del rival vistas) en los últimos " + m.dias + " días.",
+                    "La jugada del rival aparece, en la pantalla típica, en " + seg(m.mediana_ms) + "; el 95 % de las veces, en menos de " + seg(m.p95_ms) + ". La más lenta: " + seg(m.peor_ms) + ".",
+                    (m.por_canal_rapido == null ? "—" : m.por_canal_rapido + " %") + " de las jugadas llegaron por el canal rápido, antes de que la base las guardara.",
+                ];
+            lineas.push(m.recortes
+                ? "La base recortó " + m.recortes + " relojes de más (" + m.recortes_en_jugadas + " al mover); el mayor, " + Number(m.recorte_mayor_s).toLocaleString("es-CR", { maximumFractionDigits: 1 }) + " s."
+                : "La base no tuvo que recortar ningún reloj.");
+            const lista = document.getElementById("mediciones-lista");
+            lista.replaceChildren(...lineas.map((t) => { const li = document.createElement("li"); li.textContent = t; return li; }));
+            document.getElementById("mediciones").classList.remove("hidden");
+        }
+
         async function loadRooms() {
             const [{ data: rooms, error }, { data: games4p, error: error4p }] = await Promise.all([
                 // Solo lo que pinta la tarjeta: `moves`, `fen` y los estados de cada
@@ -537,6 +559,7 @@
                 : "Torneos, TV en vivo, retos a quien esté en línea y tus partidas, en curso y terminadas.";
             // A quien arma torneos no se le dice «los que arma tu profesor».
             if (isTeacher) document.getElementById("torneos-desc").textContent = "Arma torneos para tus alumnos, con sus rondas y su tabla.";
+            if (profile.is_admin) mostrarMediciones();
 
             // Quién está en línea y los retos: para todos, alumnos y profesores.
             await iniciarPresencia();

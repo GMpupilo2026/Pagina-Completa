@@ -102,6 +102,8 @@ window.__inserts = [];
           .filter((p) => pedidos.indexOf(p.id) >= 0)
           .map((p) => ({ id: p.id, nombre: p.full_name || String(p.email || "").split("@")[0] })));
       }
+      // Una función que devuelve un objeto (no una lista), tal cual.
+      if (DATOS.rpc[n] && !Array.isArray(DATOS.rpc[n])) return Promise.resolve({ data: DATOS.rpc[n], error: null });
       return constructor(n, DATOS.rpc[n] !== undefined ? DATOS.rpc[n] : []);
     },
     /* Las fotos de perfil (js/foto-perfil.js): la «dirección firmada» es un
@@ -324,6 +326,29 @@ async function pruebaRevision(browser) {
   await a.ctx.close();
 }
 
+/* Cómo andan las partidas en línea: lo que midieron las pantallas, solo para
+   quien administra (mediciones_de_partidas() se lo niega a los demás en la
+   base; acá, que la página lo pinte bien y que al profe ni se lo pida). */
+async function pruebaMediciones(browser) {
+  console.log("\n=== competir.html · cómo andan las partidas, para administración ===");
+  const ADMIN = Object.assign({}, PROFE, { id: "u-admin", is_admin: true, full_name: "Ana Admin" });
+  const datos = DATOS_JUEGOS(3, []);
+  datos.tablas.profiles = datos.tablas.profiles.concat([ADMIN]);
+  datos.rpc.mediciones_de_partidas = { dias: 30, partidas: 12, pantallas: 24, jugadas: 480, mediana_ms: 180, p95_ms: 1400, peor_ms: 6200, por_canal_rapido: 87, recortes: 2, recortes_en_jugadas: 2, recorte_mayor_s: 1.4 };
+  const a = await pagina(browser, "/competir.html", clienteFalso(datos, "u-admin"));
+  await a.page.waitForFunction(() => document.getElementById("mediciones-lista").children.length > 0, null, { timeout: 5000 }).catch(() => {});
+  const texto = await a.page.evaluate(() => { const d = document.getElementById("mediciones"); d.open = true; return d.checkVisibility() ? d.textContent : ""; });
+  igual("a quien administra le aparece, con lo medido escrito",
+    /12 partidas medidas/.test(texto) && /180 ms/.test(texto) && /1,4 s/.test(texto) && /87 %/.test(texto) && /recortó 2 relojes/.test(texto) && /el mayor, 1,4 s/.test(texto), true);
+  igual("sin errores en consola", a.errores.join(" | ") || "ninguno", "ninguno");
+  await a.ctx.close();
+
+  const p = await pagina(browser, "/competir.html", clienteFalso(datos, "u-profe"));
+  await p.page.waitForTimeout(500);
+  igual("al profe no se le muestra", await p.page.evaluate(() => document.getElementById("mediciones").checkVisibility()), false);
+  await p.ctx.close();
+}
+
 async function pruebaAlumnoIntacto(browser) {
   console.log("\n=== juegos.html · al alumno no se le movió nada ===");
   const { page, ctx, errores } = await pagina(browser, "/juegos.html",
@@ -512,6 +537,7 @@ async function pruebaFotosEnPosiciones(browser) {
     await pruebaUnSoloAlumno(browser);
     await pruebaPartidaPropia(browser);
     await pruebaRevision(browser);
+    await pruebaMediciones(browser);
     await pruebaAlumnoIntacto(browser);
     await pruebaAlumnoSinPartidas(browser);
     await pruebaEnLineaAbierto(browser);
