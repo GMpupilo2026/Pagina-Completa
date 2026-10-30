@@ -94,13 +94,9 @@ ok("el permiso de las funciones va envuelto en coalesce", (sinComentarios.match(
 
 /* ------------------------------------------- 1b. la migración del juego limpio */
 console.log("\n=== La migración del juego limpio ===");
-// Mientras no se aplica, espera en supabase/pendientes-colegios/; al aplicarla
-// se MUEVE (sin tocarla) a migraciones-colegios/.
-const carpetaJl = [carpeta, path.join(RAIZ, "supabase", "pendientes-colegios")]
-  .find((d) => fs.existsSync(d) && fs.readdirSync(d).some((f) => /sala_arena_juego_limpio\.sql$/.test(f)));
-const archivoJl = carpetaJl ? path.join(carpetaJl, fs.readdirSync(carpetaJl).find((f) => /sala_arena_juego_limpio\.sql$/.test(f))) : null;
+const archivoJl = fs.readdirSync(carpeta).find((f) => /sala_arena_juego_limpio\.sql$/.test(f));
 ok("existe la migración del juego limpio", !!archivoJl);
-const jl = archivoJl ? fs.readFileSync(archivoJl, "utf8").replace(/--[^\n]*/g, "") : "";
+const jl = archivoJl ? fs.readFileSync(path.join(carpeta, archivoJl), "utf8").replace(/--[^\n]*/g, "") : "";
 ok("arena_revisiones tiene RLS", /alter table public\.arena_revisiones enable row level security/.test(jl));
 ok("y ninguna política: ningún jugador la lee ni la escribe", !/create policy/i.test(jl));
 ok("a anon y authenticated no se les da nada de ella", /revoke all on public\.arena_revisiones from anon, authenticated/.test(jl) && !/grant[^;]*arena_revisiones/.test(jl));

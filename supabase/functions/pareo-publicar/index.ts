@@ -272,7 +272,8 @@ function limpiar(v: unknown) {
     // Si el torneo cambia el Elo de quien juega (lo dice la lista pública).
     validoElo: ["fide", "nacional", "no"].includes(v.validoElo as string) ? v.validoElo as string : "",
     ritmoTipo: ["clasico", "rapido", "blitz"].includes(v.ritmoTipo as string) ? v.ritmoTipo as string : "",
-    sistema: v.sistema === "todos" ? "todos" : "suizo", dobleVuelta: v.dobleVuelta === true,
+    // Los sistemas que sabe pintar la página pública; cualquier otra cosa, suizo.
+    sistema: ["todos", "scheveningen"].includes(v.sistema as string) ? v.sistema as string : "suizo", dobleVuelta: v.dobleVuelta === true,
     rondasTotales: Math.round(numero(v.rondasTotales, 0, 99)),
     tipo: v.tipo === "equipos" ? "equipos" : undefined, tableros: v.tipo === "equipos" ? Math.round(numero(v.tableros, 1, 12)) : undefined,
     puntos: { victoria: numero(puntos.victoria, 0, 10), tablas: numero(puntos.tablas, 0, 10), derrota: numero(puntos.derrota, 0, 10), bye: numero(puntos.bye, 0, 10) },
