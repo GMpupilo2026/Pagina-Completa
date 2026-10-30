@@ -37,7 +37,8 @@
  *   - Las jugadas no se avisan: LiveChess pregunta (0x83) y el tablero le
  *     manda lo que pasó desde la última vez como en su memoria (EEPROM): cada
  *     cambio de casilla son 2 bytes, 0x40 + la pieza y la casilla (en el
- *     mismo orden que el tablero entero). 0x84 repite la última respuesta.
+ *     mismo orden que el tablero entero). 0x84 repite la última respuesta, y
+ *     0x8d manda todo junto: los cambios, el reloj y el tablero entero.
  *   - Lo que no conoce (0xdf y lo que le sigue, que es para otro aparato del
  *     bus) se deja pasar.
  *
@@ -199,6 +200,14 @@
           ultimoBus = mensajeBus(0x05, direccion, memoria.slice(enviado));
           enviado = memoria.length;
           return [ultimoBus];
+        // «Todo»: los cambios, el reloj y el tablero entero, uno detrás del otro
+        // (DGT_BUS_SEND_ALL_D). Sin esto LiveChess armaba la posición solo con
+        // los cambios y mostraba el tablero vacío con el peón de e4.
+        case 0x8d:
+          t.siguiendo = true;
+          ultimoBus = mensajeBus(0x05, direccion, memoria.slice(enviado));
+          enviado = memoria.length;
+          return [ultimoBus, mensajeBus(0x04, direccion, bwtime(t.reloj)), mensajeBus(0x03, direccion, casillas(fenActual))];
         case 0x84: return ultimoBus ? [ultimoBus] : [];
         case 0x85:
           memoria = memoria.concat([EE.START_TAG], posicionEnMemoria(fenActual), esInicial(fenActual) ? [EE.BEGINPOS] : []);

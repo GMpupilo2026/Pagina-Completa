@@ -178,6 +178,9 @@ function pruebaBus() {
   rep.recibir(ARRANQUE_REGISTRO);
   const ultima = rep.recibir(pedido(0x83, dir));
   igual("0x84 repite la última respuesta tal cual", rep.recibir(pedido(0x84, dir)), ultima);
+  const todo = rep.recibir(pedido(0x8d, dir)).map(leerBus);
+  igual("0x8d («todo»): los cambios, el reloj y el tablero entero, en ese orden; sin esto LiveChess mostraba solo el peón de e4",
+    [todo.map((m) => m && m[0]), todo[2] && todo[2][2]], [[0x85, 0x84, 0x83], T.volcado(T.INICIAL).slice(3)]);
   igual("y otra 0x83 sin jugadas nuevas no trae cambios", leerBus(rep.recibir(pedido(0x83, dir))[0])[2], []);
   igual("0x40 lo saca del modo bus", (rep.recibir([0x40]), rep.bus), false);
   const seriesBien = [];
