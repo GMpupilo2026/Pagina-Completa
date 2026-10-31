@@ -280,7 +280,31 @@ async function pruebaPagina(browser) {
   await page.click("#pi-horario-imprimir");
   ok(/Horario del día/.test(await page.textContent("#pi-firmas")), "y se imprime");
   await page.evaluate(() => window.dispatchEvent(new Event("afterprint")));
-  // Todo tablas: todos empatados en el corte. El desempate.
+  // Todo tablas: todos empatados en el corte. Primero, el desempate jugado
+  // acá: Pareo Integral arma las partidas y ordena el corte solo.
+  const botonVivo = await page.$("#pi-clasificados [data-desempate-vivo]");
+  ok(!!botonVivo, "con un empate en el corte, ofrece jugar el desempate en Pareo Integral");
+  await botonVivo.click();
+  await page.waitForSelector(dialogo);
+  await page.click(dialogo + " [data-avisos-aceptar]");
+  await page.waitForSelector("#pi-clasificados [data-desempate-panel]");
+  const partidasVivo = await page.$$eval("#pi-clasificados [data-desempate-partida]", (l) => l.length);
+  ok(partidasVivo >= 1, "arma las partidas del desempate (" + partidasVivo + ")");
+  ok(!/Desempatado con/.test(await page.textContent("#pi-clasificados")), "y mientras falten resultados, el corte no se ordena");
+  // Gana siempre el nombre que va primero en el abecedario: un orden sin ciclos.
+  for (let vuelta = 0; vuelta < 12; vuelta++) {
+    const libres = await page.$$eval("#pi-clasificados [data-desempate-partida]", (l) => l.filter((x) => !x.value).map((x) => x.dataset.desempatePartida));
+    if (!libres.length) break;
+    const k = libres[0];
+    const etiqueta = await page.getAttribute('#pi-clasificados [data-desempate-partida="' + k + '"]', "aria-label");
+    const [, b, n] = etiqueta.match(/^Resultado de (.+) contra (.+)$/);
+    await page.selectOption('#pi-clasificados [data-desempate-partida="' + k + '"]', b.localeCompare(n, "es") < 0 ? "1-0" : "0-1");
+  }
+  await page.waitForFunction(() => /Desempatado con/.test(document.getElementById("pi-clasificados").textContent));
+  ok(!(await page.$("#pi-clasificados [data-desempate-panel]")), "con todos los resultados, el corte queda ordenado solo y el panel se va");
+  const guardadoVivo = (await leerTodos(page)).find((x) => x.desempateCorte && x.desempateCorte.vivo);
+  ok(guardadoVivo && Array.isArray(guardadoVivo.desempateCorte.orden) && guardadoVivo.desempateCorte.orden.length >= 2, "el orden queda guardado con el torneo", JSON.stringify(guardadoVivo && guardadoVivo.desempateCorte));
+  // Y también se puede anotar a mano (lo jugado fuera de Pareo Integral).
   const botonDesempate = await page.$("#pi-clasificados [data-desempate]");
   ok(!!botonDesempate, "con un empate en el corte, ofrece anotar el desempate");
   await botonDesempate.click();

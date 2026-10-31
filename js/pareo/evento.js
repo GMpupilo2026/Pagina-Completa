@@ -84,6 +84,69 @@
     return copia;
   }
 
+  // El desempate jugado en Pareo Integral (en vez de anotarlo después):
+  // `t.desempateCorte` = { formato, vivo: true, partidas: [{ b, n, r, grupo,
+  // intento, arm }], orden }. Cada grupo de empatados juega primero un todos
+  // contra todos rápido (dos partidas con los colores cambiados si son dos);
+  // si siguen empatados, dos juegan un Armagedón (las tablas las gana el de
+  // negras: siempre hay ganador) y tres o más vuelven a jugar entre ellos. Si
+  // el todos contra todos separa a algunos, los que quedan empatados juegan
+  // el suyo. Muta `d`: agrega las partidas que tocan y, cuando ya no queda
+  // nadie empatado, pone `d.orden`. Devuelve el orden (o null mientras falte).
+  function resolverDesempate(d, empatados) {
+    if (!d || !Array.isArray(empatados) || empatados.length < 2) return null;
+    d.partidas = Array.isArray(d.partidas) ? d.partidas : [];
+    const clave = (ids) => ids.slice().sort().join("|");
+    let falta = false;
+    const usados = new Set();
+    const ordenar = (ids, intento) => {
+      const grupo = clave(ids);
+      usados.add(grupo + "#" + intento);
+      let P = d.partidas.filter((p) => p.grupo === grupo && p.intento === intento);
+      if (!P.length) {
+        if (intento > 0 && ids.length === 2) {
+          d.partidas.push({ b: ids[0], n: ids[1], r: null, grupo, intento, arm: true });
+        } else if (ids.length === 2) {
+          d.partidas.push({ b: ids[0], n: ids[1], r: null, grupo, intento }, { b: ids[1], n: ids[0], r: null, grupo, intento });
+        } else {
+          const n = ids.length % 2 ? ids.length + 1 : ids.length;
+          for (let r = 1; r < n; r++) for (const [a, b] of T.berger(n, r)) {
+            if (ids[a - 1] !== undefined && ids[b - 1] !== undefined) d.partidas.push({ b: ids[a - 1], n: ids[b - 1], r: null, grupo, intento });
+          }
+        }
+        falta = true;
+        return ids.slice();
+      }
+      if (P.some((p) => !p.r)) { falta = true; return ids.slice(); }
+      const pts = new Map(ids.map((id) => [id, 0]));
+      for (const p of P) {
+        // En el Armagedón las tablas las gana el de negras.
+        const r = p.arm && p.r === "=" ? "0-1" : p.r;
+        if (r === "1-0") pts.set(p.b, pts.get(p.b) + 1);
+        else if (r === "0-1") pts.set(p.n, pts.get(p.n) + 1);
+        else { pts.set(p.b, pts.get(p.b) + 0.5); pts.set(p.n, pts.get(p.n) + 0.5); }
+      }
+      const porPuntos = ids.slice().sort((a, b) => pts.get(b) - pts.get(a) || ids.indexOf(a) - ids.indexOf(b));
+      const out = [];
+      for (let i = 0; i < porPuntos.length;) {
+        let j = i;
+        while (j < porPuntos.length && pts.get(porPuntos[j]) === pts.get(porPuntos[i])) j++;
+        const g = porPuntos.slice(i, j);
+        if (g.length === 1) out.push(g[0]);
+        else if (g.length === ids.length) out.push(...ordenar(ids, intento + 1));
+        else out.push(...ordenar(g, 0));
+        i = j;
+      }
+      return out;
+    };
+    const orden = ordenar(empatados.slice(), 0);
+    // Lo que quedó suelto (una partida corregida cambió quién seguía
+    // empatado) ya no se juega.
+    d.partidas = d.partidas.filter((p) => usados.has(p.grupo + "#" + p.intento));
+    d.orden = falta ? null : orden;
+    return d.orden;
+  }
+
   // Quiénes están empatados en el último lugar que clasifica (para armar el
   // desempate), o [] si no hay empate en el corte.
   function empatadosEnCorte(t, n) {
@@ -119,9 +182,9 @@
     const meses = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "setiembre", "octubre", "noviembre", "diciembre"];
     return m ? Number(m[3]) + " de " + meses[Number(m[2]) - 1] + " de " + m[1] : "";
   };
-  const sistemaTexto = (t) => (t.sistema === "todos" ? "todos contra todos" : t.sistema === "scheveningen" ? "Scheveningen" : "suizo de " + (Number(t.rondasTotales) || 0) + " rondas");
+  const sistemaTexto = (t) => (t.sistema === "todos" ? "todos contra todos" : t.sistema === "scheveningen" ? "Scheveningen" : t.sistema === "eliminacion" ? "eliminación directa" : "suizo de " + (Number(t.rondasTotales) || 0) + " rondas");
   // Para las tablas, más corto: en una columna angosta lo largo se corta.
-  const sistemaCorto = (t) => (t.sistema === "todos" ? "Todos c. todos" : t.sistema === "scheveningen" ? "Scheveningen" : "Suizo, " + (Number(t.rondasTotales) || 0) + " rondas");
+  const sistemaCorto = (t) => (t.sistema === "todos" ? "Todos c. todos" : t.sistema === "scheveningen" ? "Scheveningen" : t.sistema === "eliminacion" ? "eliminación directa" : "Suizo, " + (Number(t.rondasTotales) || 0) + " rondas");
   const nombreTorneo = (t) => t.grupo || t.nombre;
   const linea = (s) => "______________________________   " + s;
 
@@ -134,7 +197,7 @@
   }
   function textoConfiguracion(c) {
     const p = c.puntos || {};
-    return [c.ritmo ? "ritmo " + c.ritmo : "sin ritmo", c.sistema === "todos" ? "todos contra todos" : c.sistema === "scheveningen" ? "Scheveningen" : "suizo de " + (Number(c.rondasTotales) || 0) + " rondas",
+    return [c.ritmo ? "ritmo " + c.ritmo : "sin ritmo", c.sistema === "todos" ? "todos contra todos" : c.sistema === "scheveningen" ? "Scheveningen" : c.sistema === "eliminacion" ? "eliminación directa" : "suizo de " + (Number(c.rondasTotales) || 0) + " rondas",
       "puntos " + [p.victoria, p.tablas, p.derrota].map(puntosTexto).join(" · ") + ", bye " + puntosTexto(p.bye || 0),
       "desempates " + ((c.desempates || []).join(", ") || "ninguno")].join("; ");
   }
@@ -1166,7 +1229,7 @@
     sorpresas, proximaRonda, informePrensa, buscarEnHistorial, DIFERENCIA_SORPRESA,
     compararAnioAnterior,
     revisarCierre,
-    aplicarDesempate, empatadosEnCorte, segundosIncremento, duracionRonda, horario, porDireccion, constancias, textoConstancia,
+    aplicarDesempate, resolverDesempate, empatadosEnCorte, segundosIncremento, duracionRonda, horario, porDireccion, constancias, textoConstancia,
     medallero, estadisticas, compararEtapa, minutosBase, estadoRetraso, incidenciasDe, NOMBRE_INCIDENCIA,
     SIGUIENTE, NOMBRE_ETAPA, ENCABEZADOS, FORMATO_RESPALDO, cupo, clasificados, terminado, acta, informe, filasClasificados,
     lugarTexto, siguienteDe, podio, especialesDe, premiacion, diplomas, textoDiploma, pendientes, respaldo, esRespaldo, vistaTorneo, vistaEvento, tablerosVista, mejoresVista, marcarTiempos, duraciones, mesaFisica, mesasQueNecesita, numerarSala, rondasCompletas, totalRondas, nombreTorneo,

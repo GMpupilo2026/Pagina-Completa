@@ -162,6 +162,7 @@
                             <label class="flex items-center gap-2"><input type="radio" name="sistema" value="suizo" class="w-4 h-4 accent-brand-800"> <span data-t="suizo">Suizo (Sistema Holandés de FIDE)</span></label>
                             <label class="flex items-center gap-2"><input type="radio" name="sistema" value="todos" class="w-4 h-4 accent-brand-800"> <span data-t="todos">Todos contra todos (tablas de Berger)</span></label>
                             <label class="flex items-center gap-2"><input type="radio" name="sistema" value="scheveningen" class="w-4 h-4 accent-brand-800"> <span data-t="scheveningen">Scheveningen (dos equipos: cada uno contra todos los del otro)</span></label>
+                            <label class="flex items-center gap-2"><input type="radio" name="sistema" value="eliminacion" class="w-4 h-4 accent-brand-800"> <span data-t="eliminacion">Eliminación directa (copa, con desempate en la mesa)</span></label>
                         </div>
                         <p id="pi-sistema-fijo" class="text-xs text-brand-600 dark:text-brand-300 mt-2" hidden data-t="sistemaFijo">El sistema ya no se puede cambiar: hay rondas emparejadas.</p>
                         <div class="grid sm:grid-cols-3 gap-4 mt-4">
@@ -280,6 +281,7 @@
                 <div id="pi-clas-compartir" class="no-imprimir" hidden></div>
                 <p id="pi-clas-nota" class="text-sm text-brand-600 dark:text-brand-300 mb-3"></p>
                 <section id="pi-clas-schev" class="mb-4 rounded-xl border border-brand-200 dark:border-brand-700 p-4" hidden></section>
+                <section id="pi-clas-cuadro" class="mb-4 rounded-xl border border-brand-200 dark:border-brand-700 p-4" hidden></section>
                 <div class="overflow-x-auto"><table class="pi-tabla" id="pi-tabla-clas"></table></div>
                 <dl id="pi-clas-leyenda" class="text-xs text-brand-600 dark:text-brand-300 mt-3 grid sm:grid-cols-2 gap-x-6 gap-y-1"></dl>
                 <div id="pi-clas-tableros"></div>
