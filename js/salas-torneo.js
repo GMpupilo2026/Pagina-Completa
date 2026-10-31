@@ -105,6 +105,9 @@
     "centroamericano-2026": {
       clase: "cac-sala", imagen: "/img/centroamericano-2026/mascota-trofeo.png", ancho: 124, alto: 120,
       pagina: "/centroamericano-2026.html",
+      // La marca de agua de Ajedrez Integral, suave en el centro de la ficha
+      // (`<clase>-marca`): lo pidió el dueño. La misma de los PDF.
+      marca: true,
       // chess-results lleva a la elección de categoría (un torneo por cada
       // una): «#resultados», que la página abre encima.
       fichas: [[/chess-results\.com\//i, "resultados", "Resultados en vivo"], [/bases-cac-2026\.pdf$/i, "ficha-bases"]],
@@ -166,6 +169,15 @@
       img.height = portada.alto;
       img.setAttribute("aria-hidden", "true");
       li.appendChild(img);
+      if (portada.marca) {
+        const marca = el("img", portada.clase + "-marca");
+        marca.src = "/img/marca-agua-ajedrez-integral.png";
+        marca.alt = "";
+        marca.width = 760;
+        marca.height = 564;
+        marca.setAttribute("aria-hidden", "true");
+        li.appendChild(marca);
+      }
     }
     const emoji = el("p", "text-4xl mb-3", sala.emoji || "🏆");
     emoji.setAttribute("aria-hidden", "true");

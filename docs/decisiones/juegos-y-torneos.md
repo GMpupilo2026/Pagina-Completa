@@ -9819,6 +9819,24 @@ Es una página estática, sin cuenta y sin base: nada se guarda.
   cargan también `torneos-en-vivo.html` y `admin.html` (la vista previa del
   editor es la misma ficha). Contraste: blanco sobre #5A5FA3 5,83, #40478F
   sobre blanco 8,35 y blanco sobre el rojo 5,6.
+- **La marca de agua de Ajedrez Integral en esa ficha.** Lo pidió el dueño.
+  - Es la misma de los PDF (`img/marca-agua-ajedrez-integral.png`). Va en el
+    centro, en blanco y al 14 %, detrás del texto y los botones.
+  - Se enciende con `marca: true` en `PORTADAS`, así que las otras salas no la
+    llevan.
+  - Lo revisa `verificar-centroamericano.js`: que se vea, que sea suave, que
+    vaya detrás y que solo la lleve esa ficha.
+- **La franja de arriba de la página es de la academia, no de la
+  organización.**
+  - Antes decía «Organiza» con los logos de la CCA y de la FCA. El dueño pidió
+    que se viera como un servicio de la academia.
+  - Ahora lleva el logo del sitio y «Academia Ajedrez Integral», con «Un
+    servicio de la academia para jugadores y familias», en el azul del
+    encabezado (#102a43) y con la raya roja de las bases.
+  - Los logos de la organización siguen en los documentos que son suyos: el
+    cartel, los gafetes y el contacto.
+  - La franja `.cac-organiza` se queda en la hoja porque la usan las páginas
+    de los torneos universitarios.
 - **Sus botones nunca sacan a nadie del sitio** (lo pidió el dueño). «Toda la
   información» abre la página en la misma pestaña, y lo que es de afuera
   —«Resultados en vivo» (chess-results) y las bases— lleva a SU ficha en la

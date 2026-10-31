@@ -106,13 +106,22 @@
 }
 .cac-dato dt { color: #dfe0f7; font-size: 0.875rem; }
 
-/* La franja de quien organiza, blanca como el pie de la portada de las bases. */
+/* La franja de quien organiza, blanca como el pie de la portada de las bases
+ * (la usan las páginas de los torneos universitarios). */
 .cac-organiza {
   background: #fff;
   color: var(--cac-morado-hondo);
   border-bottom: 6px solid var(--cac-rojo);
 }
 .cac-organiza strong { color: var(--cac-morado); }
+
+/* La firma de la Academia Ajedrez Integral, en el azul del encabezado del
+ * sitio y con la raya roja de las bases: blanco sobre #102a43 14,8; el dorado
+ * del logo (accent-400) sobre #102a43, más de 8; brand-200 sobre #102a43, más de 9. */
+.cac-academia {
+  background: #102a43;
+  border-bottom: 6px solid var(--cac-rojo);
+}
 
 /* Los títulos de sección: el morado de las bases, en mayúsculas gruesas. */
 .cac-seccion {
@@ -361,6 +370,22 @@ a.cac-despedida:hover .cac-globo { transform: translateY(-2px); }
   animation: cac-mecer 3s ease-in-out infinite;
   transform-origin: 50% 90%;
 }
+/* La marca de agua de Ajedrez Integral (gris en el archivo, aquí en blanco y
+ * muy suave): en el centro, detrás del texto y los botones, que siguen igual
+ * de legibles porque la marca no pasa del 14 % de opacidad. */
+.cac-sala-marca {
+  position: absolute;
+  left: 50%;
+  top: 56%;
+  width: min(60%, 15rem);
+  height: auto;
+  transform: translate(-50%, -50%);
+  filter: brightness(0) invert(1);
+  opacity: 0.14;
+  pointer-events: none;
+  z-index: 0;
+}
+.cac-sala > :not(.cac-sala-marca):not(.cac-sala-imagen) { position: relative; z-index: 1; }
 .cac-sala a.cac-sala-boton { background: #fff; color: #40478f; font-weight: 700; box-shadow: 0 4px 0 rgb(30 36 83 / 0.35); }
 .cac-sala a.cac-sala-boton:hover { background: #e8e9f8; }
 .cac-sala a.cac-sala-principal { background: #ce1328; color: #fff; }
