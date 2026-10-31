@@ -106,6 +106,30 @@ const ts = require("child_process").spawnSync(process.execPath, ["--experimental
 const deTs = ts.status === 0 ? JSON.parse(ts.stdout) : null;
 ok("la función sala-jugadores se deja importar para comparar", !!deTs, ts.stderr);
 
+// El aviso «… juega en vivo» (sala-jugadores, revisar): reconoce los enlaces
+// de Lichess igual que la página, y avisa solo de la partida empezada y sin
+// terminar de esa persona, en su categoría y su ronda.
+const URLS = ["https://lichess.org/broadcast/centroamericano-2026/AbCd1234", "https://lichess.org/broadcast/c/ronda-1/XyZw9876",
+  "https://lichess.org/broadcast/c/ronda-1/XyZw9876/Gm123456", "https://s1.chess-results.com/tnr1529719.aspx", "https://lichess.org/study/AbCd1234", "nada"];
+const PARTIDAS_TS = [
+  { id: "AAAAAAAA", ronda: 7, categoria: "U15F", mesa: 5, blancas: "Campos Ulate, Laura", negras: "Salazar Pineda, Elena", empezada: true, terminada: false },
+  { id: "BBBBBBBB", ronda: 7, categoria: "U15F", mesa: 1, blancas: "Mora Vargas, Ana Lucia", negras: "Rojas Solano, Sofia", empezada: true, terminada: true },
+  { id: "CCCCCCCC", ronda: 7, categoria: "U15F", mesa: 6, blancas: "Vindas Arce, Julia", negras: "Fallas Murillo, Andrea", empezada: false, terminada: false },
+  { id: "DDDDDDDD", ronda: 7, categoria: "U15F", mesa: 7, blancas: "Brenes Soto, Ana", negras: "Leiva Mora, Rosa", empezada: true, terminada: false },
+  { id: "EEEEEEEE", ronda: 7, categoria: "U15F", mesa: 8, blancas: "Brenes Soto, Ana", negras: "Quesada, Eva", empezada: true, terminada: false },
+];
+const CASOS_TS = [["Salazar Pineda, Elena María", "U15F", 7], ["Salazar Pineda, Elena", "U12F", 7], ["Salazar Pineda, Elena", "U15F", 6],
+  ["Mora Vargas, Ana Lucia", "U15F", 7], ["Vindas Arce, Julia", "U15F", 7], ["Brenes Soto, Ana", "U15F", 7], ["salazar pineda, elena", "", 0]];
+const vivoTs = require("child_process").spawnSync(process.execPath, ["--experimental-strip-types", "--no-warnings", "--input-type=module", "-e",
+  `import { idDeEnlaceLichess, partidaEnVivo } from ${JSON.stringify(path.join(RAIZ, "supabase/functions/sala-jugadores/torneos-sala.ts"))};
+   const [u, ps, casos] = JSON.parse(process.argv[1]);
+   process.stdout.write(JSON.stringify([u.map(idDeEnlaceLichess), casos.map(([n, c, r]) => { const v = partidaEnVivo(ps, n, c, r); return v && v.p.id + v.color; })]));`,
+  JSON.stringify([URLS, PARTIDAS_TS, CASOS_TS])], { encoding: "utf8" });
+const deVivo = vivoTs.status === 0 ? JSON.parse(vivoTs.stdout) : null;
+ok("la función reconoce los enlaces de Lichess igual que la página", !!deVivo && JSON.stringify(deVivo[0]) === JSON.stringify(URLS.map(L.idDeEnlace)), vivoTs.stderr || JSON.stringify(deVivo && deVivo[0]));
+ok("y avisa solo de la partida empezada y sin terminar de esa persona, en su categoría y su ronda (con dos que calzan, de ninguna)",
+   !!deVivo && JSON.stringify(deVivo[1]) === JSON.stringify(["AAAAAAAAb", null, null, null, null, null, "AAAAAAAAb"]), JSON.stringify(deVivo && deVivo[1]));
+
 (async () => {
   console.log("2. La página");
   const nav = await chromium.launch({ executablePath: fs.existsSync(CHROME) ? CHROME : undefined });
@@ -353,6 +377,13 @@ ok("la función sala-jugadores se deja importar para comparar", !!deTs, ts.stder
     ok("y se puede dejar en «Solo las partidas en vivo»", proy.modos.includes("vivo"), JSON.stringify(proy.modos));
     await p.keyboard.press("Escape");
     await p.evaluate(() => history.replaceState(null, "", location.pathname));
+
+    // El enlace del aviso al celular, #partida=<id>, abre esa partida en el visor.
+    await p.evaluate((id) => { location.hash = "partida=" + id; }, g5.id);
+    await p.waitForFunction(() => document.getElementById("partidas").open && document.querySelectorAll("#partidas-contenido .cac-visor-jugada").length > 0, null, { timeout: 8000 }).catch(() => {});
+    const porEnlace = await p.evaluate(() => ({ cabeza: (document.querySelector("#partidas-contenido [data-cabeza]") || {}).textContent || "", hash: location.hash }));
+    ok("el enlace del aviso «… juega en vivo» abre esa partida en el visor (y se borra de la dirección)", /Mesa 5 · En juego$/.test(porEnlace.cabeza) && !porEnlace.hash, JSON.stringify(porEnlace));
+    await p.keyboard.press("Escape");
 
     // El botón en la tarjeta del jugador: solo para quien está en un tablero
     // transmitido, de su categoría (la de Sub-12 con el mismo nombre, no).

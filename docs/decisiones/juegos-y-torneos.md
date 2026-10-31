@@ -10498,6 +10498,47 @@ una función pura que se prueba con node.
   giro, los momentos sin filtrar y el visor que no abría en la jugada.
 
 
+### Su partida está en vivo: el aviso al celular
+
+A quien sigue a un jugador con «Avisarme en este celular», `sala-jugadores`
+(`revisar`, cada 5 minutos con pg_cron) le avisa cuando la partida de ese
+jugador **empieza en un tablero que Lichess transmite**: «📺 Ronda N: Nombre
+juega en vivo», con la mesa, el color y el rival. Tocar el aviso abre la
+página en `#partida=<id de Lichess>`, que abre esa partida en el visor (y si
+la partida ya no está en la ronda de ahora, la lista).
+
+- **Lo de Lichess lo lee la función**: los botones de la sala con la dirección
+  de la transmisión, los mismos que usa la página, llevan al grupo entero.
+  Solo el Clásico (el de los demás avisos), la ronda que Lichess marca «en
+  curso» y la API pública, sin cuenta. Se pide una sola vez por sala en cada
+  vuelta, y solo si hay algún seguido con pareo y sin resultado. Si Lichess no
+  contesta, sale el aviso del pareo de siempre.
+- **La regla, en `torneos-sala.ts`** (sin Deno, se prueba con node):
+  `idDeEnlaceLichess()` lee los enlaces igual que la página (el verificador
+  compara las dos) y `partidaEnVivo()` busca la partida empezada y sin
+  terminar de esa persona. La compara por nombre como la página: igual sin
+  tildes, o con los mismos apellidos y el primer nombre. Además tiene que ser
+  de su categoría y de su ronda. **Si calzan dos, no avisa de ninguna**:
+  mejor no avisar que avisar de otra persona.
+- **Reemplaza al del pareo**: cuando el pareo salió con la partida ya
+  empezada, va solo este, que dice lo mismo y además la abre. Lleva la misma
+  etiqueta (`sala-<tnr>-<no>`), así el del resultado lo reemplaza después en
+  la pantalla del celular. Se anota con el tipo `envivo` en
+  `sala_avisos_push_enviados`; la migración `sala_avisos_envivo` lo agregó a su
+  `check`. Sale una vez por jugador y ronda.
+- La política de privacidad lo dice: el servidor le pide a Lichess las
+  partidas que transmite, sin ningún dato de quien pidió el aviso.
+- Lo revisa `verificar-centroamericano-partidas.js`, con la regla (las mismas
+  direcciones en la página y en la función; la terminada, la que no empezó,
+  otra categoría, otra ronda y dos que calzan) y el enlace `#partida=` en la
+  página. Rompí a propósito dos cosas y saltaron sus comprobaciones: que
+  avisara también de las terminadas, y la página sin leer el enlace.
+- La función desplegada (versión 9) es la del repositorio. Hay una sola
+  diferencia: la herramienta de despliegue escribe las dos expresiones
+  `[̀-ͯ]` con los caracteres mismos en lugar del escape, y eso no
+  cambia lo que hacen.
+
+
 ### «Así terminó mi torneo»
 
 Cuando el torneo de un jugador terminó, su tarjeta trae «🏁 Así terminó mi

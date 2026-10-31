@@ -957,6 +957,22 @@
     if (!e.target.closest || !e.target.closest("[data-modalidades] [data-modalidad]")) return;
     setTimeout(() => { if (dialogo && dialogo.open && !visor) { contenido.replaceChildren(); pintarLista(); } if (evento && evento.torneos.length) pintarEnVivo(); }, 0);
   });
+  // El enlace a una partida, #partida=<id de Lichess>: lo trae el aviso al
+  // celular «… juega en vivo» (sala-jugadores). Abre el visor; si la partida
+  // ya no está en la ronda de ahora (o es de otra modalidad), la lista. Ver
+  // «Su partida está en vivo: el aviso al celular».
+  function abrirEnlacePartida() {
+    const m = location.hash.match(/^#partida=([A-Za-z0-9]{8})$/);
+    if (!m) return;
+    history.replaceState(null, "", location.pathname + location.search);
+    armarIndice().then((ix) => {
+      const x = (ix || []).find((y) => y.p.id === m[1]);
+      if (x) abrirPartida(x, null); else abrirLista({});
+    }, () => abrirLista({}));
+  }
+  abrirEnlacePartida();
+  window.addEventListener("hashchange", abrirEnlacePartida);
+
   // La ficha se enciende sola si la sala ya tiene la transmisión, y entonces
   // arranca «En vivo ahora».
   cargarEvento().then(() => { if (evento && evento.torneos.length) vigilarEnVivo(); }, () => {});
