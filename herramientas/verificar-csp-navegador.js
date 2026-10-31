@@ -89,6 +89,38 @@ async function contexto(browser, opciones = {}) {
     const inter = await p.evaluate(async () => { await document.fonts.ready; return [...document.fonts].some((f) => /Inter/.test(f.family) && f.status === "loaded"); });
     if (inter) bien("con la CSP puesta, Inter carga desde el propio sitio");
     else mal("con la CSP puesta, Inter no cargó: ¿font-src deja pasar /fonts/?");
+    /* Un video grabado en el aparato (el VAR de Notara) se mira desde un blob:.
+     * Sin media-src, la CSP lo bloquea y el reproductor queda en 0:00 sin
+     * decir nada: pasó en un torneo de verdad. */
+    const video = await p.evaluate(() => new Promise((listo) => {
+      const lienzo = document.createElement("canvas");
+      lienzo.width = 64; lienzo.height = 64;
+      const g = lienzo.getContext("2d");
+      const flujo = lienzo.captureStream(10);
+      const partes = [];
+      const r = new MediaRecorder(flujo, { mimeType: "video/webm" });
+      r.ondataavailable = (e) => { if (e.data.size) partes.push(e.data); };
+      let n = 0;
+      const pintar = setInterval(() => { g.fillStyle = n++ % 2 ? "#123" : "#fc0"; g.fillRect(0, 0, 64, 64); }, 50);
+      r.onstop = () => {
+        clearInterval(pintar);
+        const v = document.createElement("video");
+        v.muted = true;
+        const antes = window.__violaciones.length;
+        const fin = (cargo) => listo({ cargo, media: window.__violaciones.slice(antes).filter((x) => /^media-src|^default-src/.test(x.directiva)).length });
+        v.onloadeddata = () => fin(true);
+        v.onerror = () => fin(false);
+        setTimeout(() => fin(false), 5000);
+        v.src = URL.createObjectURL(new Blob(partes, { type: "video/webm" }));
+      };
+      r.start();
+      setTimeout(() => r.stop(), 600);
+    }));
+    if (video.cargo && !video.media) bien("con la CSP puesta, un video grabado en el aparato (blob:) se ve: el VAR de Notara");
+    else mal("con la CSP puesta, un video grabado en el aparato no se ve (" + (video.media ? "la CSP lo bloquea: ¿media-src deja pasar blob:?" : "no cargó") + ")");
+    const firmado = CSP.match(/media-src ([^;]*)/);
+    if (firmado && firmado[1].includes("https://bgtijpimpcokxatxxbki.supabase.co")) bien("media-src deja pasar los videos de la Academia (los casos del VAR del curso de árbitros)");
+    else mal("media-src no deja pasar el proyecto de la Academia: los casos del VAR de arbitraje.html no se verían");
     await ctx.close();
   }
 

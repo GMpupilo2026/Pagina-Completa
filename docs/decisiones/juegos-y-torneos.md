@@ -11748,6 +11748,26 @@ vuelta y apagar en todas). Rotos a propósito (lo marcado que se borra, sin
 repeticiones, el umbral del tablero chico y la página de afuera que no se
 desplaza), saltan.
 
+### El VAR no se veía en el sitio publicado: faltaba `media-src`
+
+En el primer torneo de verdad, el árbitro abrió «Revisar una jugada» y el
+video se quedó en 0:00 con el ícono de roto, aunque las marcas y la hora
+salían bien. La CSP de `_headers` no tenía `media-src`, así que los videos
+caían en `default-src 'self'`, y un `blob:` no es `'self'`: el navegador
+lo bloqueaba sin que la página dijera nada. Las pruebas no lo veían
+porque el sitio local no manda las cabeceras de `_headers`.
+
+- `media-src 'self' blob: https://bgtijpimpcokxatxxbki.supabase.co`:
+  `blob:` es el VAR y «Leer un video grabado» (el video se graba o se abre
+  en el mismo aparato y se mira desde ahí: no sale de él), y el proyecto
+  de la Academia sirve los casos del VAR del curso de árbitros
+  (`arbitraje.html`, enlace firmado del bucket `arbitraje-var`), que
+  tenían el mismo problema.
+- `verificar-csp-navegador.js`, que ya ponía la CSP exacta de `_headers` a
+  cada página, ahora graba un video corto en el navegador, lo mira desde
+  un `blob:` con esa CSP y revisa que `media-src` deje pasar la Academia.
+  Sin `media-src`, salta.
+
 ## Pareo para DGT
 
 Un torneo presencial con tableros electrónicos DGT: el árbitro sube cada ronda
