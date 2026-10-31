@@ -10466,6 +10466,38 @@ El dueño vio primero un ejemplo en imagen y dijo que sí.
   páginas en vivo, y las dos comprobaciones saltaron.
 
 
+### Lo mejor de la ronda
+
+En «Partidas en vivo», arriba de la lista, van hasta cinco momentos de las
+partidas transmitidas. Cada uno lleva su tablero en la jugada que cambió la
+partida, lo que pasó escrito y «Ver el momento», que abre el visor en esa
+jugada y lo dice arriba del tablero. La regla es `LichessTransmision.momentos()`,
+una función pura que se prueba con node.
+
+- **Nada se inventa**: sale de la evaluación que trae Lichess en el PGN, o del
+  Elo. Una partida sin evaluación solo puede ser sorpresa.
+- **Los cuatro tipos**:
+  - **remontada**: quien ganó llegó a estar −2 o peor;
+  - **partida salvada**: tablas de quien llegó a estar −3 o peor;
+  - **sorpresa**: ganó quien tenía 150 puntos de Elo menos, o más;
+  - **vuelco**: una jugada movió la evaluación 3 peones o más. Solo cuenta si
+    la partida no trae nada de más peso.
+- **Uno por partida**, y los de más peso primero. Un mate o +25 cuentan como
+  +10, porque perdido es perdido y si no, todo sería «salvada».
+- **La jugada que se muestra**: en la remontada y la salvada, la que más acercó
+  la partida a quien se salvó después de su peor momento, o sea el error del
+  rival. En el vuelco, la que lo provocó; en la sorpresa, la última.
+- **Pasa por los filtros de la lista** (categoría, país, mis jugadores,
+  buscar), salvo «solo las que se están jugando». En el celular, los momentos
+  van de costado para no empujar la lista hacia abajo.
+- Desde un momento, «Ir a la jugada de ahora» cuenta solo las jugadas que
+  llegan después de abrir, no todas las que siguen.
+- Lo revisa `verificar-centroamericano-partidas.js` con la ronda de prueba
+  (una salvada, dos remontadas y dos vuelcos). Rompí a propósito tres cosas y
+  saltaron sus comprobaciones: la jugada del peor momento en lugar de la del
+  giro, los momentos sin filtrar y el visor que no abría en la jugada.
+
+
 ### «Así terminó mi torneo»
 
 Cuando el torneo de un jugador terminó, su tarjeta trae «🏁 Así terminó mi

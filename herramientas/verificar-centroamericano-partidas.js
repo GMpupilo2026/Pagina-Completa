@@ -78,6 +78,24 @@ ok("la ronda de ahora: la que se juega; si ninguna, la que marca Lichess", (() =
   return L.rondaDeAhora(r).id === "b" && L.rondaDeAhora(s).id === "c";
 })());
 
+// Lo mejor de la ronda: lo que dice la evaluación de Lichess, uno por partida.
+const ms = L.momentos(juegos);
+ok("lo mejor de la ronda: la salvada, las dos remontadas y los vuelcos, de más a menos peso",
+   ms.map((m) => m.tipo + m.mesa).join(",") === "salvada2,remontada4,remontada3,vuelco6,vuelco1", JSON.stringify(ms));
+ok("cada momento cae en la jugada que cambió la partida", (() => {
+  const en = (m) => juegos[m.mesa - 1].jugadas[m.ply];
+  const [s2, r4] = ms;
+  // Mesa 2: las blancas iban +10 y Dg2 lo tiró a 0; mesa 4: las negras
+  // estaban −5 y Af2 de las blancas lo dejó parejo.
+  return en(s2).san === "Qg2" && s2.lado === "b" && s2.peor === 10 && en(r4).san === "Bf2" && r4.lado === "b" && r4.peor > 5;
+})(), JSON.stringify(ms.slice(0, 2)));
+ok("la sorpresa: gana quien tenía 150 de Elo menos, y sin evaluación no se inventa nada más", (() => {
+  const g = { id: "x", mesa: 9, resultado: "1-0", blancas: { elo: 1400 }, negras: { elo: 1600 }, jugadas: [{ san: "e4", eval: null }, { san: "e5", eval: null }] };
+  const m = L.momentos([g]);
+  const sin = L.momentos([Object.assign({}, g, { negras: { elo: 1500 } })]);
+  return m.length === 1 && m[0].tipo === "sorpresa" && m[0].difElo === 200 && m[0].ply === 1 && !sin.length;
+})());
+
 // La categoría y la modalidad del nombre de un torneo: la misma regla en la
 // página (JS) y en la función (TS). Se comparan con los mismos textos.
 const TEXTOS = ["Open U15", "Girls U15", "Sub-10 Femenino", "U08", "Sub 8 Absoluto", "Blitz Sub-10 Absoluto", "Rápidas Sub-12 Femenino",
@@ -203,6 +221,32 @@ ok("la función sala-jugadores se deja importar para comparar", !!deTs, ts.stder
     ok("«Solo las que se están jugando»", await cuenta() === 1);
     await p.uncheck('[data-filtro="vivo"]');
     ok("«Solo mis jugadores» no sale si no sigues a nadie", await p.evaluate(() => !document.querySelector("[data-mios]").checkVisibility()));
+
+    // Lo mejor de la ronda, arriba de la lista.
+    await p.waitForFunction(() => document.querySelectorAll("#partidas-contenido .cac-momento").length > 0, null, { timeout: 8000 }).catch(() => {});
+    const mom = await p.evaluate(() => { const c = document.querySelector("#partidas-contenido [data-momentos]");
+      return { ve: !!c && c.checkVisibility(), titulo: c && c.querySelector("h3").textContent,
+        items: [...c.querySelectorAll(".cac-momento")].map((li) => ({ texto: li.querySelector(".cac-momento-datos").innerText.replace(/\s+/g, " ").replace(/^\S+ /, "").trim(), casillas: li.querySelectorAll(".cine-sq").length })),
+        antes: c.compareDocumentPosition(document.querySelector("#partidas-contenido [data-partidas]")) === Node.DOCUMENT_POSITION_FOLLOWING }; });
+    ok("«Lo mejor de la ronda» sale arriba de la lista, con lo que pasó escrito y su tablero",
+       mom.ve && mom.antes && /Lo mejor de la ronda/.test(mom.titulo) && mom.items.length === 5 && mom.items.every((x) => x.casillas === 64) &&
+       /^Partida salvada Las negras llegaron a estar perdidas \(\+10 o más\) y se salvaron con tablas\. Todo cambió con 33\.Dg2\./.test(mom.items[0].texto) &&
+       /^Remontada Las negras llegaron a estar perdidas \(\+5,1\) y terminaron ganando\. Todo cambió con 18\.Af2\./.test(mom.items[1].texto), JSON.stringify(mom));
+    await p.selectOption('[data-filtro="pais"]', "VEN");
+    await p.waitForTimeout(300);
+    ok("y pasa por los mismos filtros", await p.evaluate(() => !document.querySelector("#partidas-contenido [data-momentos]").checkVisibility()));
+    await p.selectOption('[data-filtro="pais"]', "");
+    await p.waitForFunction(() => document.querySelectorAll("#partidas-contenido .cac-momento").length === 5, null, { timeout: 8000 }).catch(() => {});
+    await p.click('#partidas-contenido [data-momento="remontada"]');
+    await p.waitForFunction(() => document.querySelectorAll("#partidas-contenido [data-jugadas] .cac-visor-jugada").length > 0, null, { timeout: 8000 }).catch(() => {});
+    const enMom = await p.evaluate(() => { const c = document.getElementById("partidas-contenido"); const a = c.querySelector('.cac-visor-jugada[aria-current="true"]');
+      return { ply: a ? Number(a.dataset.ply) : -1, jug: a ? a.textContent : "", momento: c.querySelector("[data-momento]").checkVisibility() ? c.querySelector("[data-momento]").textContent : "",
+        nuevas: c.querySelector("[data-nuevas]").checkVisibility(), cabeza: c.querySelector("[data-cabeza]").textContent }; });
+    ok("«Ver el momento» abre la partida en esa jugada, lo dice arriba y no avisa de jugadas «nuevas»",
+       enMom.ply === 34 && enMom.jug === "Af2" && /^Remontada: Las negras/.test(enMom.momento) && !enMom.nuevas && /Mesa 4/.test(enMom.cabeza), JSON.stringify(enMom));
+    await p.click("[data-volver]");
+    await p.waitForFunction(() => document.activeElement && document.activeElement.dataset.momento === "remontada", null, { timeout: 5000 }).catch(() => {});
+    ok("al volver, el foco queda en el momento que se miraba", await p.evaluate(() => document.activeElement && document.activeElement.dataset.momento === "remontada"));
 
     // El visor.
     await p.click('#partidas-contenido [data-partida="' + juegos[0].id + '"]');
