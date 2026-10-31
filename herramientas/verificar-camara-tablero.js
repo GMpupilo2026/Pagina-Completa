@@ -1925,8 +1925,8 @@ async function esperarJugadas(p, n) {
     const fotoIlegal = eventos.slice(antesAlerta).find((x) => x.event === "foto");
     igual("con el aviso, al árbitro le llega una foto del tablero (una JPEG chica, con su mesa y su motivo)",
       fotoIlegal && [fotoIlegal.payload.mesa, fotoIlegal.payload.motivo, /^data:image\/jpeg;base64,/.test(fotoIlegal.payload.img), fotoIlegal.payload.img.length < 120000], [5, "ilegal", true, true]);
-    igual("y en la cámara queda en «Fotos del tablero», para bajarla", await pa.evaluate(() => [document.getElementById("fotos").checkVisibility(),
-      document.querySelectorAll("#fotos-lista a[download] img").length, document.querySelector("#fotos-lista span").textContent.startsWith("Posible jugada ilegal")]), [true, 1, true]);
+    igual("y en la cámara queda en «Fotos del tablero», para bajarla", [await pa.isVisible("#fotos")].concat(await pa.evaluate(() => [
+      document.querySelectorAll("#fotos-lista a[download] img").length, document.querySelector("#fotos-lista span").textContent.startsWith("Posible jugada ilegal")])), [true, 1, true]);
     // La foto es el tablero enderezado, visto desde arriba con la fila 8
     // arriba: la torre blanca que saltó está en a5, una casilla oscura que
     // se ve mucho más clara que la a3 (oscura y vacía); y arriba, en la fila
@@ -1963,6 +1963,12 @@ async function esperarJugadas(p, n) {
     igual("el PGN que viaja lleva el resultado", await pa.evaluate(() => /\[Result "1-0"\]/.test(localStorage.getItem("camara_partida_v1_0"))), true);
     await pa.click("#btn-deshacer");
     igual("«Deshacer» lo borra: la partida sigue", [await pa.textContent("#resultado-texto"), await pa.getAttribute('[data-resultado="1-0"]', "aria-pressed")], ["Sigue en juego.", "false"]);
+    /* «Deshacer» quitó también la última jugada, que sigue en el tablero: la
+     * cámara la vuelve a leer y vuelve a avisar la triple repetición. Se
+     * espera acá, para que ese aviso no llegue en medio de lo de la bandera. */
+    await pa.bringToFront();
+    await esperarJugadas(pa, ja2.history().length);
+    await pa.waitForTimeout(500);
 
     // Los relojes de las mesas en la cuadrícula de quien mira, y la bandera
     // que cae: al árbitro le llega el aviso con el color y la foto.
@@ -2244,6 +2250,7 @@ async function esperarJugadas(p, n) {
     const cuadro = async (n) => {
       const f = pg.frame({ url: new RegExp("puesto=" + n + "$") });
       await f.waitForSelector("#app:not(.hidden)");
+      conPestanas(f);
       return f;
     };
     const f1 = await cuadro(1), f2 = await cuadro(2);
