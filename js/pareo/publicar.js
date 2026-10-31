@@ -41,6 +41,8 @@
     if (Array.isArray(m.partidas)) x.partidas = m.partidas.map((p) => Object.assign({ r: (p && p.r) || null }, p && p.pgn ? { pgn: String(p.pgn) } : {}));
     if (m.alineacion) x.alineacion = { b: (m.alineacion.b || []).slice(), n: (m.alineacion.n || []).slice() };
     if (m.pgn) x.pgn = String(m.pgn);
+    // La eliminación directa: el lugar en el cuadro y, si fue tablas, quién pasó y cómo.
+    if (m.ko) { x.ko = true; x.slot = m.slot; if (m.pasa) { x.pasa = m.pasa; x.desempate = String(m.desempate || ""); } }
     return x;
   };
 
@@ -83,7 +85,7 @@
     return {
       nombre: t.nombre || "", grupo: t.grupo || "", ciudad: t.ciudad || "", provincia: PROVINCIAS.includes(t.provincia) ? t.provincia : "", federacion: t.federacion || "",
       fechaInicio: t.fechaInicio || "", fechaFin: t.fechaFin || "", arbitro: t.arbitro || "", arbitroAdjunto: t.arbitroAdjunto || "", ritmo: t.ritmo || "", ritmoTipo: ritmoTipo(t), validoElo: t.validoElo || "",
-      sistema: t.sistema, dobleVuelta: !!t.dobleVuelta, rondasTotales: t.sistema === "scheveningen" ? modulo("PareoTorneo", "./torneo.js").rondasDelTorneo(t) : t.rondasTotales, tipo: t.tipo, tableros: t.tableros,
+      sistema: t.sistema, dobleVuelta: !!t.dobleVuelta, rondasTotales: t.sistema === "scheveningen" || t.sistema === "eliminacion" ? modulo("PareoTorneo", "./torneo.js").rondasDelTorneo(t) : t.rondasTotales, tipo: t.tipo, tableros: t.tableros,
       puntos: t.puntos, desempates: (t.desempates || []).slice(), mesaInicial: t.mesaInicial,
       evento: t.evento ? { nombre: t.evento.nombre || "" } : null,
       jugadores: (t.jugadores || []).map(persona),

@@ -245,6 +245,14 @@ function mesa(v: unknown) {
     });
   }
   if (esObj(v.alineacion)) m.alineacion = { b: ids(v.alineacion.b, 12), n: ids(v.alineacion.n, 12) };
+  // La eliminación directa: el lugar en el cuadro y, si fue tablas, quién
+  // pasó (uno de los dos de la mesa) y cómo. Sin eso, la clasificación
+  // pública no sabe quién siguió.
+  if (v.ko === true) {
+    m.ko = true;
+    m.slot = Math.round(numero(v.slot, 0, 999));
+    if (v.pasa != null && (v.pasa === v.b || v.pasa === v.n)) { m.pasa = v.pasa; m.desempate = texto(v.desempate, 30); }
+  }
   const pgn = pgnLimpio(v.pgn);
   if (pgn) m.pgn = pgn;
   return m;
@@ -273,7 +281,7 @@ function limpiar(v: unknown) {
     validoElo: ["fide", "nacional", "no"].includes(v.validoElo as string) ? v.validoElo as string : "",
     ritmoTipo: ["clasico", "rapido", "blitz"].includes(v.ritmoTipo as string) ? v.ritmoTipo as string : "",
     // Los sistemas que sabe pintar la página pública; cualquier otra cosa, suizo.
-    sistema: ["todos", "scheveningen"].includes(v.sistema as string) ? v.sistema as string : "suizo", dobleVuelta: v.dobleVuelta === true,
+    sistema: ["todos", "scheveningen", "eliminacion"].includes(v.sistema as string) ? v.sistema as string : "suizo", dobleVuelta: v.dobleVuelta === true,
     rondasTotales: Math.round(numero(v.rondasTotales, 0, 99)),
     tipo: v.tipo === "equipos" ? "equipos" : undefined, tableros: v.tipo === "equipos" ? Math.round(numero(v.tableros, 1, 12)) : undefined,
     puntos: { victoria: numero(puntos.victoria, 0, 10), tablas: numero(puntos.tablas, 0, 10), derrota: numero(puntos.derrota, 0, 10), bye: numero(puntos.bye, 0, 10) },

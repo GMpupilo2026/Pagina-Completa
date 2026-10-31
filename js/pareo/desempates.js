@@ -399,6 +399,15 @@
       for (const c of lista) if (b.valores[c] !== a.valores[c]) return b.valores[c] - a.valores[c];
       return 0;
     };
+    // En la eliminación directa el puesto no sale de los puntos sino de hasta
+    // dónde llegó cada uno: campeón, finalista, los dos de semifinales
+    // comparten el 3.º, los de cuartos el 5.º… (las semillas solo ordenan la lista).
+    if (t.sistema === "eliminacion") {
+      const llego = T.alcanceEliminacion(t);
+      filas.sort((a, b) => llego.get(b.id) - llego.get(a.id) || num.get(a.id) - num.get(b.id));
+      filas.forEach((f, i) => { f.puesto = i > 0 && llego.get(filas[i - 1].id) === llego.get(f.id) ? filas[i - 1].puesto : i + 1; });
+      return filas;
+    }
     filas.sort((a, b) => cmp(a, b) || num.get(a.id) - num.get(b.id));
     filas.forEach((f, i) => { f.puesto = i > 0 && cmp(filas[i - 1], f) === 0 ? filas[i - 1].puesto : i + 1; });
     return filas;
