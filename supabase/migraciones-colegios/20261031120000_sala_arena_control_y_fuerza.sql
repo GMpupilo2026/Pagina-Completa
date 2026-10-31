@@ -16,8 +16,8 @@
 --
 -- 2. LA FUERZA. Cada jugador tiene una `fuerza` (Elo, 1000 al empezar, que
 --    administración puede fijar) que se actualiza al terminar cada partida
---    (K = 32, suma cero). Sirve para EMPAREJAR: entre los rivales de otro
---    equipo se prefiere al más parecido, y a quien espera mucho se le va
+--    (K = 32, suma cero). Sirve para EMPAREJAR: entre los rivales posibles
+--    (nunca del mismo equipo) se prefiere al más parecido, y a quien espera mucho se le va
 --    aflojando el criterio (150 puntos de diferencia más 40 por cada segundo
 --    de espera) para que nadie se quede sin partida. No se muestra: el permiso
 --    por columna de arena_jugadores no la incluye. Unas tablas de menos de 20
