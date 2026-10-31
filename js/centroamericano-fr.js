@@ -394,6 +394,9 @@ window.CentroamericanoFR = {
     hoyA: (h) => "aujourd'hui à " + h, mananaA: (d, h) => "demain, " + d + ", à " + h, diaA: (d, h) => "le " + d + " à " + h,
     gracias: "Merci d'être venus au Costa Rica !", final: "Le classement final de chaque catégorie est dans « Résultats en direct ».",
     zona: "heure du Costa Rica", locale: "fr-FR",
+    reloj: (n, cuando) => "Avant la ronde " + n + " (" + cuando + ") :", relojCorto: "Commence dans :",
+    relojTexto: (n, falta) => "Encore " + falta + " avant la ronde " + n + ".",
+    unidades: { d: ["jour", "jours"], h: ["heure", "heures"], m: ["min", "min"], s: ["s", "s"] },
   },
   // js/centroamericano-vivo.js: el buscador, los avisos, el medallero, Mi delegación…
   vivo: (mod) => ({

@@ -397,17 +397,39 @@ ok("la página carga el cliente de Supabase antes que su código en vivo", html.
       const pg = await c.newPage();
       await pg.clock.install({ time: new Date(momento) });
       await pg.goto(BASE + "/" + PAGINA + (idioma ? "?lang=" + idioma : ""), { waitUntil: "load" });
-      const r = await pg.evaluate(() => ({ estado: document.getElementById("hoy").dataset.estado,
-        texto: ["hoy-etiqueta", "hoy-principal", "hoy-detalle"].map((id) => document.getElementById(id).textContent).join(" | ") }));
+      const leer = () => pg.evaluate(() => { const rel = document.getElementById("hoy-reloj");
+        return { estado: document.getElementById("hoy").dataset.estado,
+          texto: ["hoy-etiqueta", "hoy-principal", "hoy-detalle"].map((id) => document.getElementById(id).textContent).join(" | "),
+          reloj: rel.checkVisibility() ? { etiqueta: rel.querySelector("[data-reloj-etiqueta]").textContent,
+            cifras: [...rel.querySelectorAll(".cac-hoy-reloj-casilla")].map((c) => c.innerText.replace(/\s+/g, " ")).join(" | "),
+            sr: rel.querySelector("[data-reloj-texto]").textContent, oculto: rel.querySelector("[data-reloj-cifras]").getAttribute("aria-hidden") } : null }; });
+      const r = await leer();
+      // Un segundo después, la cuenta bajó un segundo.
+      await pg.clock.runFor(1000);
+      r.despues = await leer();
       await c.close();
       return r;
     };
     let h = await hoyEn("2026-10-24T10:00:00-06:00");
+    const hAntes = h;
     ok("antes del festival, la cuenta regresiva", h.estado === "antes" && /Faltan 8 días/.test(h.texto) && /ronda 1 se juega el lunes 2 de noviembre a las 9:30/.test(h.texto), h.texto);
     h = await hoyEn("2026-11-02T10:15:00-06:00");
     ok("durante una ronda, lo que se juega ahora y lo que sigue", h.estado === "durante" && /Ahora: Ronda 1/.test(h.texto) && /Después: Ronda 2, hoy a las 3:30/.test(h.texto), h.texto);
     h = await hoyEn("2026-11-03T21:00:00-06:00");
-    ok("entre rondas, lo próximo con cuánto falta", /Lo próximo: Ronda 4/.test(h.texto) && /Mañana, miércoles 4 de noviembre, a las 9:00/.test(h.texto) && /faltan 12 h/.test(h.texto), h.texto);
+    ok("entre rondas, lo próximo, y cuánto falta lo dice el reloj (sin repetir la fecha)", /Lo próximo: Ronda 4/.test(h.texto) && /Mañana, miércoles 4 de noviembre, a las 9:00/.test(h.texto) && !/faltan/.test(h.texto) && h.reloj && h.reloj.etiqueta === "Faltan:" && /^1[12] HORAS/i.test(h.reloj.cifras), h.texto + " " + JSON.stringify(h.reloj));
+    // La cuenta regresiva a la próxima ronda, con días, horas, minutos y segundos.
+    ok("antes del festival, la cuenta regresiva a la ronda 1 con sus días",
+       hAntes.reloj && /^Faltan para la ronda 1 \(el lunes 2 de noviembre a las 9:30/.test(hAntes.reloj.etiqueta) && /^(9 DÍAS \| 00 HORAS \| 30|8 DÍAS \| 23 HORAS \| 29) MIN \| \d\d SEG$/i.test(hAntes.reloj.cifras), JSON.stringify(hAntes.reloj));
+    h = await hoyEn("2026-11-02T10:15:00-06:00");
+    ok("durante la ronda 1, la cuenta va a la ronda 2, sin días", h.reloj && /ronda 2 \(hoy a las 3:30/.test(h.reloj.etiqueta) && /^05 HORAS \| 1[45] MIN \| \d\d SEG$/i.test(h.reloj.cifras), JSON.stringify(h.reloj));
+    // Cuántos segundos faltan, leído de las casillas.
+    const segs = (c) => c.split(" | ").map((x) => parseInt(x, 10)).reduce((a, v, i, l) => a + v * [3600, 60, 1].slice(-l.length)[i], 0);
+    ok("cambia cada segundo, y los números no se leen: el lector de pantalla oye una frase",
+       h.despues.reloj && segs(h.reloj.cifras) - segs(h.despues.reloj.cifras) === 1 && h.reloj.oculto === "true" && /^Faltan 5 horas, 1[45] minutos para la ronda 2\.$/.test(h.reloj.sr), JSON.stringify(h.despues.reloj) + " " + h.reloj.sr);
+    h = await hoyEn("2026-11-07T10:00:00-06:00");
+    ok("en la última ronda ya no hay cuenta regresiva", h.reloj === null, JSON.stringify(h.reloj));
+    h = await hoyEn("2026-11-03T21:00:00-06:00", "fr");
+    ok("y en francés", h.reloj && /^Commence dans :$/.test(h.reloj.etiqueta) && /HEURES/i.test(h.reloj.cifras), JSON.stringify(h.reloj));
     h = await hoyEn("2026-11-08T13:00:00-06:00");
     ok("después, el cierre", h.estado === "despues" && /terminó/.test(h.texto), h.texto);
     h = await hoyEn("2026-11-02T10:15:00-06:00", "en");
@@ -420,7 +442,9 @@ ok("la página carga el cliente de Supabase antes que su código en vivo", html.
     const guardada = (pg) => pg.waitForFunction(() => !document.getElementById("hoy-sin-red").hidden, null, { timeout: 15000 }).catch(() => {});
     await p4.goto(BASE + "/" + PAGINA, { waitUntil: "load" });
     await guardada(p4);
-    const textoEs = await p4.evaluate(() => document.body.innerText);
+    // Sin los números de la cuenta regresiva, que cambian cada segundo.
+    const textoSinReloj = () => p4.evaluate(() => document.body.innerText.replace((document.querySelector("#hoy-reloj [data-reloj-cifras]") || {}).innerText || "\u0000", ""));
+    const textoEs = await textoSinReloj();
     await cambiarIdioma(p4);
     const en = await p4.evaluate(() => {
       const valores = new Set(Object.values(window.CentroamericanoEN.textos));
@@ -450,7 +474,7 @@ ok("la página carga el cliente de Supabase antes que su código en vivo", html.
     await guardada(p4);
     ok("la elección se recuerda al volver", await p4.evaluate(() => document.documentElement.lang === "en"));
     await cambiarIdioma(p4);
-    ok("y al volver al español queda exactamente como estaba", (await p4.evaluate(() => document.body.innerText)) === textoEs && await p4.evaluate(() => document.documentElement.lang === "es"));
+    ok("y al volver al español queda exactamente como estaba", (await textoSinReloj()) === textoEs && await p4.evaluate(() => document.documentElement.lang === "es"));
 
     // El francés: el menú de idiomas, y todo texto de la página con el suyo.
     await p4.click("#cac-idioma");
@@ -489,7 +513,7 @@ ok("la página carga el cliente de Supabase antes que su código en vivo", html.
       return document.documentElement.lang === "en" && ![...document.querySelectorAll("#fichas h3, #fichas p")].some((e) => fr.has(e.textContent.trim()) && !en.has(e.textContent.trim()));
     }));
     await cambiarIdioma(p4, "es");
-    ok("y al volver al español, otra vez exactamente como estaba", (await p4.evaluate(() => document.body.innerText)) === textoEs);
+    ok("y al volver al español, otra vez exactamente como estaba", (await textoSinReloj()) === textoEs);
 
     // Qué hacer en el tiempo libre: la ficha abre la ventana y los botones filtran.
     await p4.click('#fichas a[href="#paseos"]');

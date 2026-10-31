@@ -160,6 +160,9 @@
       hoyA: (h) => "hoy a las " + h, mananaA: (d, h) => "mañana, " + d + ", a las " + h, diaA: (d, h) => "el " + d + " a las " + h,
       gracias: "¡Gracias por venir a Costa Rica!", final: "La clasificación final de cada categoría está en «Resultados en vivo».",
       zona: "hora de Costa Rica", locale: "es-CR",
+      reloj: (n, cuando) => "Faltan para la ronda " + n + " (" + cuando + "):", relojCorto: "Faltan:",
+      relojTexto: (n, falta) => "Faltan " + falta + " para la ronda " + n + ".",
+      unidades: { d: ["día", "días"], h: ["hora", "horas"], m: ["min", "min"], s: ["seg", "seg"] },
     },
     en: {
       cuenta: "Countdown", hoy: "Today at the tournament", termino: "The festival is over",
@@ -172,6 +175,9 @@
       hoyA: (h) => "today at " + h, mananaA: (d, h) => "tomorrow, " + d + ", at " + h, diaA: (d, h) => "on " + d + " at " + h,
       gracias: "Thank you for coming to Costa Rica!", final: "The final standings of every section are in “Live results”.",
       zona: "Costa Rica time", locale: "en-US",
+      reloj: (n, cuando) => "Countdown to round " + n + " (" + cuando + "):", relojCorto: "Starts in:",
+      relojTexto: (n, falta) => falta + " to round " + n + ".",
+      unidades: { d: ["day", "days"], h: ["hour", "hours"], m: ["min", "min"], s: ["sec", "sec"] },
     },
     // El francés está en js/centroamericano-fr.js (sin él, esta página va en español).
     fr: window.CentroamericanoFR ? window.CentroamericanoFR.hoy : null,
@@ -241,9 +247,12 @@
         detalle = t.empezo(hora(enCurso.inicio, t)) + (siguiente ? t.despues(siguiente.nombre(), cuando(siguiente.inicio, ahora, t)) : "");
       } else {
         principal = t.proximo(siguiente.nombre());
-        detalle = t.cuando(cuando(siguiente.inicio, ahora, t), falta(siguiente.inicio - ahora, t));
+        // Si lo próximo es una ronda, cuánto falta lo dice el reloj de abajo.
+        const c = cuando(siguiente.inicio, ahora, t);
+        detalle = siguiente.tr.dataset.ronda ? c.charAt(0).toUpperCase() + c.slice(1) + "." : t.cuando(c, falta(siguiente.inicio - ahora, t));
       }
     }
+    pintarReloj(evs, ahora, t);
     $("hoy-etiqueta").textContent = etiqueta;
     $("hoy-principal").textContent = principal;
     // «9:30 a. m.» ya trae su punto: no se le pone otro.
@@ -258,6 +267,58 @@
       $("hoy-ics-texto").textContent = fijo.ics;
     }
   }
+
+  /* La cuenta regresiva a la próxima ronda: la ronda que sigue en el
+     calendario (las filas con data-ronda), con días, horas, minutos y
+     segundos. Los números cambian cada segundo (tic(), aparte de pintarHoy,
+     que va cada 30 s) y no se leen en voz alta; para el lector de pantalla,
+     una frase que cambia cada minuto. */
+  let relojMeta = null;
+  function pintarReloj(evs, ahora, t) {
+    const caja = $("hoy-reloj");
+    if (!caja) return;
+    const r = evs.find((e) => e.tr.dataset.ronda && e.inicio > ahora);
+    relojMeta = r ? { inicio: r.inicio, n: r.tr.dataset.ronda, t } : null;
+    caja.hidden = !r;
+    if (!r) return;
+    // Si arriba ya dice que lo próximo es esta ronda y cuándo, el reloj no lo repite.
+    const enCurso = evs.some((e) => e.inicio <= ahora && ahora < e.fin);
+    const esLoProximo = ahora >= evs[0].inicio && !enCurso && evs.find((e) => e.inicio > ahora) === r;
+    caja.querySelector("[data-reloj-etiqueta]").textContent = esLoProximo ? t.relojCorto : t.reloj(r.tr.dataset.ronda, cuando(r.inicio, ahora, t));
+    tic();
+  }
+  const dos = (n) => String(n).padStart(2, "0");
+  function tic() {
+    const caja = $("hoy-reloj");
+    if (!caja || !relojMeta || caja.hidden) return;
+    const { inicio, n, t } = relojMeta;
+    const ms = inicio - new Date();
+    if (ms <= 0) { pintarHoy(); return; }
+    const seg = Math.floor(ms / 1000);
+    const d = Math.floor(seg / 86400), h = Math.floor((seg % 86400) / 3600), m = Math.floor((seg % 3600) / 60), s = seg % 60;
+    const partes = (d ? [[d, t.unidades.d]] : []).concat([[h, t.unidades.h], [m, t.unidades.m], [s, t.unidades.s]]);
+    const cifras = caja.querySelector("[data-reloj-cifras]");
+    const firma = partes.length + ":" + t.locale;
+    if (cifras.dataset.firma !== firma) {
+      cifras.replaceChildren(...partes.map(() => {
+        const c = document.createElement("span");
+        c.className = "cac-hoy-reloj-casilla";
+        c.innerHTML = '<span class="cac-hoy-reloj-numero"></span><span class="cac-hoy-reloj-unidad"></span>';
+        return c;
+      }));
+      cifras.dataset.firma = firma;
+    }
+    [...cifras.children].forEach((c, i) => {
+      const [v, u] = partes[i];
+      c.firstChild.textContent = i === 0 && d ? String(v) : dos(v);
+      c.lastChild.textContent = v === 1 ? u[0] : u[1];
+    });
+    // La frase, solo cuando cambia el minuto.
+    const texto = t.relojTexto(n, (d ? plural(d, t.dias) + ", " : "") + (h ? plural(h, t.horas) + ", " : "") + plural(m, t.minutos));
+    const sr = caja.querySelector("[data-reloj-texto]");
+    if (sr.textContent !== texto) sr.textContent = texto;
+  }
+  setInterval(tic, 1000);
 
   /* ---------------- sin internet ---------------- */
   // Todo lo que la página necesita para abrir sin red: ella misma (con y sin
