@@ -852,7 +852,21 @@
   // La ficha se enciende sola si la sala ya tiene la transmisión.
   cargarEvento().catch(() => {});
 
+  // Para la ventana de cada categoría (js/centroamericano-tablas.js): si
+  // Lichess transmite esa categoría, y abrir la lista ya filtrada por ella.
+  function transmiteCategoria(g) {
+    return cargarEvento().then(() => torneosVisibles().some((t) => t.categoria === g), () => false);
+  }
+  function abrirLista(f) {
+    filtros.categoria = (f && f.categoria) || "";
+    vista = null; visor = null;
+    if (contenido) contenido.replaceChildren();
+    if (dialogo && !dialogo.open) {
+      if (window.VentanaEnlace) window.VentanaEnlace.abrirDialogo(dialogo, null); else dialogo.showModal();
+    } else pintarLista();
+  }
+
   // actualizar(): lo que hace el temporizador, ya (lo usa el verificador).
-  window.CentroamericanoPartidas = { botonDe, codigoCategoria, modalidadDe, abrirPartida, cargarEvento, pgnDe,
+  window.CentroamericanoPartidas = { botonDe, codigoCategoria, modalidadDe, abrirPartida, cargarEvento, pgnDe, transmiteCategoria, abrirLista,
     actualizar: () => (visor ? traerJugadas(true) : (Object.values(evento ? evento.torneos : []).forEach((t) => { t.partidasPorRonda = {}; }), pintarLista())) };
 })();

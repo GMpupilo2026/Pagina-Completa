@@ -64,7 +64,7 @@ const contacto = (html.match(/<dialog id="contacto"[\s\S]*?<\/dialog>/) || [""])
 // Toda la información va en fichas: cada ventana de la página tiene su ficha y su «Cerrar».
 const dialogos = [...html.matchAll(/<dialog id="([a-z-]+)" class="ficha-dialogo[^"]*" aria-labelledby="\1-titulo">([\s\S]*?)<\/dialog>/g)];
 ok("el reglamento, el calendario, los hoteles, los contactos, el medallero, la clasificación, los países, las sorpresas, el cara a cara, los números, la elección de categoría, las partidas en vivo y el proyector van en ventanas",
-  JSON.stringify(dialogos.map((m) => m[1]).sort()) === JSON.stringify(["calendario", "cara-a-cara", "clasificacion", "contacto", "delegaciones", "hoteles", "medallero", "numeros", "partidas", "proyector", "reglamento", "resultados", "sorpresas"]), dialogos.map((m) => m[1]).join(", "));
+  JSON.stringify(dialogos.map((m) => m[1]).sort()) === JSON.stringify(["calendario", "cara-a-cara", "categoria", "clasificacion", "contacto", "delegaciones", "hoteles", "medallero", "numeros", "partidas", "proyector", "reglamento", "resultados", "sorpresas"]), dialogos.map((m) => m[1]).join(", "));
 for (const [, id, cuerpo] of dialogos) {
   // La elección de categoría la abre la ficha «Resultados en vivo», que sin
   // JavaScript sigue llevando a chess-results (js/centroamericano-tablas.js).
@@ -72,6 +72,8 @@ for (const [, id, cuerpo] of dialogos) {
   // La de las partidas en vivo la abre la ficha «Partidas en vivo», que
   // queda en «Pronto» hasta que la sala tenga la transmisión de Lichess y
   // entonces la enciende js/centroamericano-partidas.js.
+  // La de cada categoría la abren los botones de «Resultados en vivo».
+  else if (id === "categoria") { ok("la ventana «categoria» la abren las categorías de «Resultados en vivo»", /abrirCategoria\(tor\.categoria, b\)/.test(fs.readFileSync(path.join(RAIZ, "js/centroamericano-tablas.js"), "utf8"))); }
   else if (id === "partidas") { ok("la ventana «partidas» la abre la ficha «Partidas en vivo», cuando hay transmisión", fichas.includes('id="ficha-partidas"') && /a\.href = "#partidas"/.test(fs.readFileSync(path.join(RAIZ, "js/centroamericano-partidas.js"), "utf8"))); }
   else ok("la ventana «" + id + "» tiene su ficha", fichas.includes('href="#' + id + '"'));
   ok("y su título y su botón «Cerrar»", cuerpo.includes('id="' + id + '-titulo"') && /data-cerrar[^>]*>Cerrar</.test(cuerpo));
@@ -937,31 +939,63 @@ ok("la página carga el cliente de Supabase antes que su código en vivo", html.
       const eleccion = await pd.evaluate(() => {
         const d = document.getElementById("resultados");
         const filas = [...d.querySelectorAll(".cac-categorias > li")].map((li) => [li.querySelector(".cac-categoria-edad").textContent,
-          ...[...li.querySelectorAll("a")].map((a) => a.textContent + "|" + a.getAttribute("aria-label") + "|" + (a.getAttribute("href").match(/tnr(\d+)/) || [])[1])]);
+          ...[...li.querySelectorAll(".cac-categoria")].map((a) => a.textContent + "|" + a.getAttribute("aria-label") + "|" + a.dataset.categoria)]);
         const b = d.querySelector(".cac-categoria"), cs = b ? getComputedStyle(b) : {};
         return { abierta: d.checkVisibility(), ventana: !!document.querySelector("dialog.ventana-enlace"), filas,
-          otros: [...d.querySelectorAll(".cac-otros a")].map((a) => a.textContent), colores: [cs.backgroundColor, cs.color],
+          otros: [...d.querySelectorAll(".cac-otros a")].map((a) => a.textContent), afuera: [...d.querySelectorAll("a[href]")].map((a) => a.href),
+          colores: [cs.backgroundColor, cs.color],
           costado: d.scrollWidth - d.clientWidth, enPantalla: [...d.querySelectorAll(".cac-categoria")].every((a) => a.checkVisibility() && a.getBoundingClientRect().right <= window.innerWidth) };
       });
-      const filasEsperadas = [8, 10, 12, 14, 16, 18].map((n, i) => ["Sub-" + n, "Absoluto|Sub-" + n + " Absoluto|" + (1600001 + 2 * i), "Femenino|Sub-" + n + " Femenino|" + (1600002 + 2 * i)]);
+      const filasEsperadas = [8, 10, 12, 14, 16, 18].map((n) => ["Sub-" + n, "Absoluto|Sub-" + n + " Absoluto|U" + String(n).padStart(2, "0"), "Femenino|Sub-" + n + " Femenino|U" + String(n).padStart(2, "0") + "F"]);
       ok("«Resultados en vivo» abre la elección de categoría encima (no un torneo)", eleccion.abierta && !eleccion.ventana, JSON.stringify(eleccion));
-      ok("una fila por edad, Absoluto y Femenino lado a lado, cada uno con su torneo y su nombre entero para el lector",
+      ok("una fila por edad, Absoluto y Femenino lado a lado, cada uno con su nombre entero para el lector",
          JSON.stringify(eleccion.filas) === JSON.stringify(filasEsperadas), JSON.stringify(eleccion.filas));
-      ok("la lista general queda aparte, en «Otros torneos»", JSON.stringify(eleccion.otros) === JSON.stringify(["Lista general"]), JSON.stringify(eleccion.otros));
+      ok("ningún enlace a chess-results: ni las categorías ni la lista general (quien mira no sale de la página)",
+         !eleccion.afuera.length && !eleccion.otros.length, JSON.stringify(eleccion));
       ok("blanco sobre el morado de las bases (8,35)", JSON.stringify(eleccion.colores) === JSON.stringify(["rgb(64, 71, 143)", "rgb(255, 255, 255)"]), JSON.stringify(eleccion.colores));
       ok("en un celular cabe entero, sin scroll de costado", eleccion.costado <= 0 && eleccion.enPantalla, JSON.stringify(eleccion));
-      await pd.click('#resultados a[aria-label="Sub-10 Femenino"]', { timeout: 5000 }).catch(() => {});
-      const marco = await pd.waitForFunction(() => { const d = document.querySelector("dialog.ventana-enlace"); return d && d.open && { titulo: d.querySelector("h2").textContent, src: d.querySelector("iframe").src }; }, null, { timeout: 5000 }).then((h) => h.jsonValue()).catch(() => null);
-      ok("cada categoría abre su torneo de chess-results encima, sin salir del sitio",
-         !!marco && marco.titulo === "Resultados · Sub-10 Femenino" && /tnr1600004\.aspx\?lan=2&turdet=YES$/.test(marco.src) && new URL(pd.url()).pathname === "/" + PAGINA, JSON.stringify(marco));
+      // Cada categoría abre SU ventana: el pareo de la ronda y la clasificación,
+      // con el diseño de la página.
+      await pd.click('#resultados [aria-label="Sub-10 Femenino"]', { timeout: 5000 }).catch(() => {});
+      await pd.waitForFunction(() => document.getElementById("categoria").open && document.querySelector("#categoria-contenido .cac-cat-mesa"), null, { timeout: 5000 }).catch(() => {});
+      const vCat = () => pd.evaluate(() => {
+        const d = document.getElementById("categoria");
+        return { abierta: !!d && d.open && d.checkVisibility(), titulo: document.getElementById("categoria-titulo").textContent,
+          estado: (d.querySelector("[data-cat-estado]") || {}).textContent,
+          puesta: [...d.querySelectorAll("[data-cat-vista]")].filter((b) => b.getAttribute("aria-pressed") === "true").map((b) => b.textContent),
+          filas: [...d.querySelectorAll("#categoria-contenido tbody tr, #categoria-contenido .cac-cat-mesa")].map((tr) => tr.innerText.replace(/\s+/g, " ").trim()),
+          marco: !!document.querySelector("dialog.ventana-enlace"), afuera: [...d.querySelectorAll("a[href]")].map((a) => a.href),
+          costado: d.scrollWidth - d.clientWidth };
+      });
+      let vc = await vCat();
+      ok("cada categoría abre su ventana en la página, sin chess-results ni un marco", vc.abierta && vc.titulo === "Sub-10 Femenino" && !vc.marco && !vc.afuera.length, JSON.stringify(vc));
+      ok("con el pareo de la ronda: mesa, blancas, resultado y negras, con país y puntos", vc.estado === "Ronda 5 · 1 de 1 partida terminada."
+         && JSON.stringify(vc.puesta) === JSON.stringify(["Pareo"]) && vc.filas.length === 1
+         && /^Mesa 1 Blancas: ♔ Primero U10F, Ana CRC · 4 puntos 1 - 0 Negras: ♚ Segundo U10F, Luis PAN · 3 puntos$/.test(vc.filas[0]), JSON.stringify(vc));
+      ok("y en el celular cabe sin scroll de costado", vc.costado <= 0, JSON.stringify(vc));
+      await pd.click('#categoria [data-cat-vista="clasificacion"]');
+      vc = await vCat();
+      ok("«Clasificación»: la de la categoría, en el orden de chess-results", JSON.stringify(vc.puesta) === JSON.stringify(["Clasificación"]) && vc.filas.length === 2 && /^1 Primero U10F, Ana CRC/.test(vc.filas[0]), JSON.stringify(vc));
+      await pd.fill("#categoria [data-cat-buscar]", "segundo");
+      vc = await vCat();
+      ok("el buscador de la categoría deja solo a quien se busca", vc.filas.length === 1 && /Segundo U10F, Luis/.test(vc.filas[0]), JSON.stringify(vc));
+      await pd.fill("#categoria [data-cat-buscar]", "");
       await pd.keyboard.press("Escape");
-      await pd.waitForFunction(() => !document.querySelector("dialog.ventana-enlace"), null, { timeout: 5000 }).catch(() => {});
-      ok("al cerrarlo se vuelve a la elección, con el foco en su botón", await pd.evaluate(() => document.getElementById("resultados").open && document.activeElement && document.activeElement.getAttribute("aria-label") === "Sub-10 Femenino"));
+      await pd.waitForFunction(() => !document.getElementById("categoria").open, null, { timeout: 5000 }).catch(() => {});
+      ok("al cerrarla se vuelve a la elección, con el foco en su botón", await pd.evaluate(() => document.getElementById("resultados").open && document.activeElement && document.activeElement.getAttribute("aria-label") === "Sub-10 Femenino"));
+      // Tocar un jugador lleva a sus rondas, en «Busca a tu jugador».
+      await pd.click('#resultados [aria-label="Sub-10 Femenino"]');
+      await pd.waitForSelector("#categoria-contenido .cac-cat-jugador");
+      await pd.click('#categoria-contenido .cac-cat-jugador[aria-label="Ver las rondas de Primero U10F, Ana"]');
+      await pd.waitForFunction(() => document.querySelector('#buscador-resultados [data-rondas="1600004-1"][aria-expanded="true"]'), null, { timeout: 5000 }).catch(() => {});
+      ok("tocar un jugador cierra las ventanas y abre su tarjeta con «Sus rondas»", await pd.evaluate(() => !document.getElementById("categoria").open && !document.getElementById("resultados").open
+         && !!document.querySelector('#buscador-resultados [data-rondas="1600004-1"][aria-expanded="true"]') && location.hash.startsWith("#jugador=1600004-1-")));
+      await pd.evaluate(() => { history.replaceState(null, "", location.pathname); document.getElementById("buscador-nombre").value = ""; });
       // Una categoría que todavía no publicaron deja su hueco: la fila no se corre.
       await pd.evaluate(() => { const d = window.CentroamericanoVivo.datos(); d.torneos = d.torneos.filter((t) => t.categoria !== "U16F"); document.getElementById("resultados").close(); });
       await pd.click("#ficha-resultados");
       await pd.waitForFunction(() => document.getElementById("resultados").open, null, { timeout: 5000 }).catch(() => {});
-      const hueco = await pd.evaluate(() => { const li = [...document.querySelectorAll("#resultados .cac-categorias > li")][4]; if (!li) return null; return [li.children.length, li.querySelectorAll("a").length, li.lastElementChild.className]; });
+      const hueco = await pd.evaluate(() => { const li = [...document.querySelectorAll("#resultados .cac-categorias > li")][4]; if (!li) return null; return [li.children.length, li.querySelectorAll(".cac-categoria").length, li.lastElementChild.className]; });
       ok("una categoría sin torneo todavía deja su hueco en la fila", JSON.stringify(hueco) === JSON.stringify([3, 1, "cac-categoria-falta"]), JSON.stringify(hueco));
       await pd.keyboard.press("Escape");
       // En inglés.
@@ -975,7 +1009,7 @@ ok("la página carga el cliente de Supabase antes que su código en vivo", html.
       // Desde Torneos se entra con «#resultados»: abre la elección ya llena.
       const pe = await ctx12.newPage();
       await pe.goto(BASE + "/" + PAGINA + "#resultados", { waitUntil: "load" });
-      ok("entrar con #resultados (el botón de Torneos) abre la elección de categoría", await pe.waitForFunction(() => document.getElementById("resultados").open && document.querySelectorAll("#resultados .cac-categorias a").length === 12, null, { timeout: 5000 }).then(() => true).catch(() => false));
+      ok("entrar con #resultados (el botón de Torneos) abre la elección de categoría", await pe.waitForFunction(() => document.getElementById("resultados").open && document.querySelectorAll("#resultados .cac-categorias .cac-categoria").length === 12, null, { timeout: 5000 }).then(() => true).catch(() => false));
       // El medallero: final solo cuando terminaron TODOS.
       await pe.keyboard.press("Escape");
       await pe.click('a[href="#medallero"]');

@@ -734,3 +734,31 @@ a.cac-despedida:hover .cac-globo { transform: translateY(-2px); }
 .dark .cac-visor-jugada[aria-current="true"] { background: #b8bbf2; color: #1e2453; }
 .cac-visor-jugada:focus-visible { outline: 3px solid #ce1328; outline-offset: 1px; }
 .cac-visor-pie { display: flex; flex-wrap: wrap; gap: 0.75rem 1.25rem; align-items: center; margin-top: 0.75rem; }
+
+/* La ventana de cada categoría (#categoria, js/centroamericano-tablas.js):
+   el pareo de la ronda mesa por mesa y la clasificación, con el nombre de
+   cada jugador como botón (sus rondas). Contraste: #40478F sobre blanco 8,35;
+   el dato de abajo, #5A5FA3 sobre blanco 6,0; en oscuro, #B8BBF2 sobre
+   brand-950 9,98. */
+.cac-cat-jugador { font-weight: 800; color: #40478f; text-align: left; text-decoration: underline; text-underline-offset: 2px; border-radius: 0.25rem; }
+.cac-cat-jugador:hover { text-decoration: none; }
+.cac-cat-jugador:focus-visible { outline: 3px solid #ce1328; outline-offset: 2px; }
+.dark .cac-cat-jugador { color: #b8bbf2; }
+.cac-cat-lado { display: grid; gap: 0.1rem; }
+.cac-cat-sub { font-size: 0.75rem; color: #5a5fa3; }
+.dark .cac-cat-sub { color: #b8bbf2; }
+.cac-cat-pareo { display: grid; gap: 0.6rem; }
+.cac-cat-mesa { background: #fff; border: 2px solid #dfe0f7; border-radius: 1rem; padding: 0.6rem 0.8rem; }
+.dark .cac-cat-mesa { background: rgb(var(--c-brand-900, 16 42 67)); border-color: rgb(255 255 255 / 0.15); }
+.cac-cat-num { font-size: 0.8125rem; font-weight: 800; color: #40478f; margin-bottom: 0.35rem; }
+.dark .cac-cat-num { color: #b8bbf2; }
+.cac-cat-par { display: grid; gap: 0.35rem; }
+.cac-cat-nombre { display: flex; gap: 0.35rem; align-items: baseline; }
+.cac-cat-res { justify-self: start; font-weight: 800; font-variant-numeric: tabular-nums; padding: 0.05rem 0.55rem; border-radius: 999px; background: #eef0fb; color: #1e2453; }
+.dark .cac-cat-res { background: rgb(255 255 255 / 0.12); color: #fff; }
+/* En una pantalla ancha, las blancas, el resultado y las negras en una fila. */
+@media (min-width: 640px) {
+  .cac-cat-par { grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 0.75rem; }
+  .cac-cat-res { justify-self: center; }
+}
+.cac-cat-arriba [hidden] { display: none; }

@@ -10070,8 +10070,9 @@ sesión), con la forma que les da la función.
   irían en salas aparte.
 - **«Resultados en vivo» abre primero la elección**: un diálogo
   (`#resultados`) con una fila por edad y Absoluto y Femenino lado a lado,
-  y cada botón abre su torneo encima, en la ventana de siempre, sin salir del
-  sitio. Al cerrarla se vuelve a la elección, con el foco en el botón. Una
+  y cada botón abre su categoría encima (antes, su torneo de chess-results en
+  un marco; ver «Resultados en vivo, sin salir de la página»). Al cerrarla se
+  vuelve a la elección, con el foco en el botón. Una
   categoría que todavía no publicaron deja su hueco, así la fila no se corre.
   La ficha sigue apuntando a chess-results para quien no tiene JavaScript, y
   con un solo torneo (como hasta ahora) lo abre directo, sin elegir nada.
@@ -10364,6 +10365,46 @@ jugadas y con una barra que diga cómo va la partida.
   propósito que las jugadas nuevas siempre movieran la posición, la barra al
   revés y el botón sin mirar la categoría, y saltaron.
 
+
+### Resultados en vivo, sin salir de la página
+
+Lo pidió el dueño: «la idea es que nunca abandonen la página». Cada categoría
+de «Resultados en vivo» abría su torneo de chess-results dentro de un marco
+(`js/ventana-enlace.js`). No se salía de la página, pero se veía el diseño de
+chess-results en letra chica y cortado al costado en el celular, y arriba
+estaba «Abrir en otra pestaña», que sí sacaba. Se le mostraron las dos
+salidas: quitar solo ese enlace (y que la ventana quedara en blanco el día que
+chess-results no se deje mostrar en otra página) o una ventana propia. Eligió
+la propia.
+
+- **`#categoria`** (`js/centroamericano-tablas.js`, `abrirCategoria`), encima
+  de la elección: el título es la categoría (con la modalidad si no es el
+  clásico), «Ronda N · X de Y partidas terminadas», el selector **Pareo ·
+  Clasificación** (la puesta, rellena y con «✓», como la modalidad) y un
+  buscador de la categoría. Sin pareo publicado (antes de la ronda 1) o con el
+  torneo terminado, empieza en la clasificación.
+- **El pareo, una tarjeta por mesa**: blancas, resultado y negras, cada una con
+  su país, su Elo y sus puntos; en una pantalla ancha, en una fila. Primero fue
+  una tabla, y en el celular las negras quedaban fuera de la pantalla.
+- **La clasificación es la misma de «Clasificación completa»**
+  (`clasificacionEn()`, una sola copia; la de la ventana grande la llama con su
+  selector de categoría).
+- **Tocar un jugador lleva a sus rondas**: se cierran las dos ventanas y se
+  abre su tarjeta en «Busca a tu jugador» con «Sus rondas» desplegado, por el
+  mismo enlace directo de siempre (`#jugador=<tnr>-<no>-<nombre>`).
+- Si Lichess transmite la categoría, sale **«📺 Ver sus partidas en vivo»**,
+  que abre «Partidas en vivo» ya filtrada por ella
+  (`CentroamericanoPartidas.abrirLista`).
+- **Lo que no es de una categoría** (la lista general, «Otros torneos») era solo
+  un enlace a chess-results: en esta página ya no va. Las otras páginas que
+  usan el mismo código (las de los torneos universitarios) no tienen
+  `#categoria` y siguen como estaban. La ficha «Resultados en vivo» sigue
+  apuntando a chess-results solo para quien no tiene JavaScript.
+- Lo revisa `verificar-centroamericano.js`: que la elección no tenga ningún
+  enlace afuera, el pareo y la clasificación de una categoría, el buscador, la
+  vuelta a la elección con el foco y el jugador que abre sus rondas. Rompí a
+  propósito que las categorías abrieran chess-results y que tocar un jugador
+  no cerrara las ventanas, y saltaron.
 ## Las páginas de los torneos universitarios
 
 Dos, con la misma maquinaria: `cenfotec-2026.html` (el Desafío Mentes
