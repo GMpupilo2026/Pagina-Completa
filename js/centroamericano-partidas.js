@@ -30,8 +30,12 @@
   // oye en el formato para ciegos: la regla de todo el sitio, de
   // js/comandos-tablero.js. En inglés, como las trae Lichess.
   const CT = window.ComandosTablero;
-  const sanVer = (san) => (V.idioma() === "en" || !CT ? san : CT.sanEspanol(san));
-  const sanOir = (san) => (V.idioma() === "en" || !CT ? san : CT.jugadaParaMostrar(san));
+  // En francés, con sus letras: R(oi), D(ame), T(our), F(ou), C(avalier).
+  const sanFrances = (san) => String(san).replace(/[KQRBN]/g, (p) => ({ K: "R", Q: "D", R: "T", B: "F", N: "C" })[p]);
+  // «: » en español y en inglés; « : » en francés, con su espacio antes.
+  const dosPuntos = () => (V.idioma() === "fr" ? " : " : ": ");
+  const sanVer = (san) => (V.idioma() === "en" || !CT ? san : V.idioma() === "fr" ? sanFrances(san) : CT.sanEspanol(san));
+  const sanOir = (san) => (V.idioma() === "en" || !CT ? san : V.idioma() === "fr" ? sanFrances(san) : CT.jugadaParaMostrar(san));
 
   const EVENTO_MS = 5 * 60000;   // la sala y los torneos de Lichess: cada cinco minutos
   const RONDAS_MS = 60000;       // las rondas de cada torneo (para enterarse de la nueva)
@@ -145,6 +149,8 @@
       verMomento: "See the moment",
       verMomentoDe: (tipo, b, n) => tipo + ": see the moment in " + b + " against " + n,
     },
+    // El francés está en js/centroamericano-fr.js (sin él, esta página va en español).
+    fr: window.CentroamericanoFR ? window.CentroamericanoFR.partidas : null,
   };
   const T = () => TEXTOS[V.idioma()] || TEXTOS.es;
 
@@ -349,7 +355,7 @@
     a.className = "cac-ficha h-full flex flex-col rounded-3xl bg-white dark:bg-brand-900 shadow-md p-4 sm:p-6 focus:outline-none focus-visible:ring-4 focus-visible:ring-[#ce1328]";
     [...f.childNodes].forEach((n) => a.appendChild(n));
     const pie = a.querySelector("span:last-child");
-    if (pie) { pie.className = "mt-auto pt-3 sm:pt-4 text-xs sm:text-sm font-bold cac-accion"; pie.textContent = (V.idioma() === "en" ? "Watch the games" : "Ver las partidas") + " →"; }
+    if (pie) { pie.className = "mt-auto pt-3 sm:pt-4 text-xs sm:text-sm font-bold cac-accion"; pie.textContent = ({ en: "Watch the games", fr: "Voir les parties" }[V.idioma()] || "Ver las partidas") + " →"; }
     f.replaceWith(a);
   }
 
@@ -570,7 +576,7 @@
       b.dataset.momento = m.tipo;
       b.dataset.momentoDe = x.p.id;
       b.setAttribute("aria-label", tx.verMomentoDe(tipo, nombreDe(x.p.blancas, tx), nombreDe(x.p.negras, tx)));
-      b.addEventListener("click", () => abrirPartida(x, b, { ply: m.ply, texto: tipo + ": " + texto }));
+      b.addEventListener("click", () => abrirPartida(x, b, { ply: m.ply, texto: tipo + dosPuntos() + texto }));
       datos.appendChild(b);
       li.append(tab, datos);
       ul.appendChild(li);
@@ -692,7 +698,7 @@
     grafico.dataset.grafico = "";
     const jugadas = el("ol", "cac-visor-jugadas");
     jugadas.dataset.jugadas = "";
-    jugadas.setAttribute("aria-label", V.idioma() === "en" ? "Moves" : "Jugadas");
+    jugadas.setAttribute("aria-label", { en: "Moves", fr: "Coups" }[V.idioma()] || "Jugadas");
     const pie = el("div", "cac-visor-pie");
     const copiar = el("button", "cac-jugador-boton", tx.copiar);
     copiar.type = "button";
@@ -765,7 +771,7 @@
       const n = (x >= 0 ? "+" : "−") + (Math.round(Math.abs(x) * 10) / 10).toFixed(1).replace(".", V.idioma() === "en" ? "." : ",");
       s = n + " (" + (Math.abs(x) < 0.3 ? tx.igualado : x > 0 ? tx.mejorBlancas : tx.mejorNegras) + ")";
     }
-    return (e.de === "motor" ? tx.evalMotor : tx.evalLichess) + ": " + s + ".";
+    return (e.de === "motor" ? tx.evalMotor : tx.evalLichess) + dosPuntos() + s + ".";
   }
 
   let cargaMotor = null;

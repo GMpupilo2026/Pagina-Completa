@@ -808,3 +808,12 @@ a.cac-despedida:hover .cac-globo { transform: translateY(-2px); }
   .cac-momento { flex: 0 0 88%; scroll-snap-align: start; grid-template-columns: 5.25rem minmax(0, 1fr); gap: 0.6rem; }
   .cac-momento-ver { white-space: nowrap; }
 }
+/* El menú de idiomas del encabezado (js/centroamericano.js). */
+.cac-idiomas { position: absolute; right: 0; top: calc(100% + 0.35rem); z-index: 60; min-width: 9rem; padding: 0.3rem; border-radius: 0.75rem; background: #fff; box-shadow: 0 10px 30px rgb(0 0 0 / 0.25); }
+.cac-idiomas[hidden] { display: none; }
+.dark .cac-idiomas { background: rgb(var(--c-brand-900, 16 42 67)); border: 1px solid rgb(255 255 255 / 0.15); }
+.cac-idiomas button { display: block; width: 100%; text-align: left; padding: 0.55rem 0.75rem; border-radius: 0.5rem; font-weight: 700; color: #1f2347; min-height: 2.75rem; }
+.dark .cac-idiomas button { color: #fff; }
+.cac-idiomas button:hover, .cac-idiomas button:focus-visible { background: #eceefb; outline: 2px solid #40478f; outline-offset: -2px; }
+.dark .cac-idiomas button:hover, .dark .cac-idiomas button:focus-visible { background: rgb(255 255 255 / 0.1); outline-color: #b8bbf2; }
+.cac-idiomas button[aria-current="true"]::after { content: " ✓"; }

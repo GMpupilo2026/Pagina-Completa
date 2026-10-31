@@ -340,8 +340,10 @@
       catSinRes: "no result yet",
       locale: "en-US",
     },
+    // El francés está en js/centroamericano-fr.js (sin él, esta página va en español).
+    fr: window.CentroamericanoFR ? window.CentroamericanoFR.tablas({ NOMBRE_CORTO }) : null,
   };
-  const T = () => TEXTOS[V.idioma()];
+  const T = () => TEXTOS[V.idioma()] || TEXTOS.es;
   const decir = (nodo, s) => { nodo.textContent = String(s).replace(/\.\./g, "."); };
   const nombreCompleto = (j) => (j.titulo ? j.titulo + " " : "") + j.nombre;
 
@@ -1651,7 +1653,7 @@
         const lugar = x.torneo.ronda > 0 ? x.j._puestoGrupo : 0;
         if (lugar >= 1 && lugar <= 3) medallas[lugar - 1]++;
         filas.push([V.categoria(g), nombreCompleto(x.j), x.torneo.ronda > 0 ? x.j.puntos || "0" : "—",
-          lugar ? lugar + (V.idioma() === "en" ? "" : ".º") + (lugar <= 3 ? " · " + tx.infMedalla[lugar - 1] : "") : "—",
+          lugar ? lugar + ({ en: "", fr: lugar === 1 ? "er" : "e" }[V.idioma()] ?? ".º") + (lugar <= 3 ? " · " + tx.infMedalla[lugar - 1] : "") : "—",
           rend ? String(rend.rp) : "—", elo ? V.textoElo(elo.cambio) : "—",
           c.blancas.n ? V.fmtPuntos(c.blancas.pts) + "/" + c.blancas.n : "—", c.negras.n ? V.fmtPuntos(c.negras.pts) + "/" + c.negras.n : "—"]);
       });

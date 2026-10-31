@@ -10539,6 +10539,57 @@ la partida ya no está en la ronda de ahora, la lista).
   cambia lo que hacen.
 
 
+### La página en francés
+
+La página del Centroamericano sale también en francés, para las delegaciones
+del Caribe que lo hablan. Lo pidió el dueño.
+
+- **Un solo botón con menú**: el botón del idioma dice el de ahora («ES»,
+  «EN» o «FR»; en una pantalla ancha, el nombre entero y «▾»). Abre la lista
+  `#cac-idiomas` con los tres, cada uno escrito en su idioma y el de ahora
+  marcado con «✓» y `aria-current`. Se maneja con Escape, las flechas y
+  tocando afuera. Primero fueron dos botones, uno por cada otro idioma, pero
+  en un celular de 375 px se encimaban con el logo. Para el lector de
+  pantalla, el botón dice «Idioma · Language · Langue», en los tres idiomas.
+- **Todo el francés en `js/centroamericano-fr.js`**:
+  - los textos fijos de la página, con las mismas 245 claves que el inglés;
+  - lo que escribe cada módulo (`hoy`, `vivo`, `tablas`, `partidas`; los que
+    necesitan algo de su módulo lo reciben como `mod`);
+  - los nombres de los países.
+
+  El francés va en un archivo aparte porque `verificar-voseo.py` se salta ese
+  archivo entero: dentro de los módulos marcaba «vos», «été» o «trié», y
+  meterlos en su lista blanca dejaría pasar voseo de verdad. Sin ese archivo
+  (las páginas universitarias usan los mismos módulos y no lo cargan), todo
+  queda en español.
+- **De un idioma a otro se pasa por el español**: los mapas traducen desde el
+  texto en español, así que al pasar del inglés al francés primero se vuelve
+  al original.
+- **Lo propio del francés**:
+  - el espacio antes de los dos puntos;
+  - «1er» y «3e»; «rang» y no «place», para que concuerde con «1er»;
+  - las jugadas con sus letras: R, D, T, F y C;
+  - las horas a la francesa (15 h 00);
+  - las categorías como «U15 Filles».
+- **Lo que no tiene francés**:
+  - Los avisos de la organización se escriben solo en español e inglés: en
+    francés se muestra el inglés.
+  - Los avisos al celular los escribe `sala-jugadores` en español o en inglés:
+    a quien tiene la página en francés le llegan en inglés.
+  - `?lang=fr` en la dirección abre la página en francés.
+- Lo revisa `verificar-centroamericano.js`:
+  - que el francés tenga las mismas claves que el inglés;
+  - que cada módulo traiga sus textos en los tres idiomas;
+  - que en francés ningún texto de la página quede en español;
+  - el menú (abrir, la marca, Escape con el foco en el botón);
+  - que de francés a inglés no quede nada en francés, y que al volver al
+    español la página quede idéntica.
+
+  Rompí a propósito una clave de un módulo y un texto fijo, y saltaron sus
+  comprobaciones. Las pruebas de antes, que tocaban el botón para alternar,
+  ahora usan `cambiarIdioma()`.
+
+
 ### «Así terminó mi torneo»
 
 Cuando el torneo de un jugador terminó, su tarjeta trae «🏁 Así terminó mi

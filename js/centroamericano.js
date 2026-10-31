@@ -10,12 +10,13 @@
  *    con sus scripts, hojas, imágenes, fuentes y el PDF de las bases. Se vuelve
  *    a guardar cada vez que se abre con señal, como «Ejercicios sin internet»:
  *    así no queda un HTML de un día con el CSS de otro.
- * 3. El inglés (botón #cac-idioma): cambia cada texto de la página por el suyo
- *    de js/centroamericano-en.js —también lo que se arma después, como la
- *    ventana de las bases— y lo deja como estaba al volver al español. La
- *    elección se recuerda en este aparato; sin elección, va en español.
- *    `?lang=en` o `?lang=es` en la dirección mandan (el cartel lleva el
- *    enlace en inglés).
+ * 3. El inglés y el francés (el botón #cac-idioma, que dice el idioma de
+ *    ahora y abre la lista #cac-idiomas con los tres): cambian cada texto de la página
+ *    por el suyo de js/centroamericano-en.js o js/centroamericano-fr.js
+ *    —también lo que se arma después, como la ventana de las bases— y lo
+ *    dejan como estaba al volver al español. La elección se recuerda en este
+ *    aparato; sin elección, va en español. `?lang=en`, `?lang=fr` o
+ *    `?lang=es` en la dirección mandan (el cartel lleva el enlace en inglés).
  *
  * Ver «La página del Centroamericano 2026» en docs/decisiones/juegos-y-torneos.md.
  */
@@ -25,7 +26,12 @@
   const ZONA = "America/Costa_Rica";
   const CACHE = "ajedrez-integral-sin-red";
   const CLAVE_IDIOMA = "cac_idioma_v1";
-  const EN = (window.CentroamericanoEN && window.CentroamericanoEN.textos) || {};
+  const IDIOMAS = ["es", "en", "fr"];
+  const MAPAS = {
+    en: (window.CentroamericanoEN && window.CentroamericanoEN.textos) || {},
+    fr: (window.CentroamericanoFR && window.CentroamericanoFR.textos) || {},
+  };
+  const NOMBRES = { es: "Español", en: "English", fr: "Français" };
   const ATRIBUTOS = ["alt", "aria-label", "title", "data-ventana", "placeholder"];
   const $ = (id) => document.getElementById(id);
 
@@ -43,10 +49,10 @@
   function traducirTexto(nodo) {
     if (fueraDeTraduccion(nodo.parentElement)) return;
     const original = nodo.nodeValue;
-    const en = EN[limpio(original)];
-    if (en == null) return;
+    const otro = (MAPAS[idioma] || {})[limpio(original)];
+    if (otro == null) return;
     const antes = original.match(/^\s*/)[0], despues = original.match(/\s*$/)[0];
-    const nuevo = antes + en + despues;
+    const nuevo = antes + otro + despues;
     if (nuevo === original) return;
     textosOriginales.push([nodo, original]);
     nodo.nodeValue = nuevo;
@@ -57,10 +63,10 @@
     ATRIBUTOS.forEach((a) => {
       if (!el.hasAttribute(a)) return;
       const v = el.getAttribute(a);
-      const en = EN[limpio(v)];
-      if (en == null || en === v) return;
+      const otro = (MAPAS[idioma] || {})[limpio(v)];
+      if (otro == null || otro === v) return;
       atributosOriginales.push([el, a, v]);
-      el.setAttribute(a, en);
+      el.setAttribute(a, otro);
     });
   }
 
@@ -82,7 +88,7 @@
   // Lo que se arma con la página en inglés (la ventana de las bases, el
   // «Cambiar a modo claro» del botón del tema) también se traduce.
   const vigia = new MutationObserver((cambios) => {
-    if (idioma !== "en") return;
+    if (idioma === "es") return;
     cambios.forEach((c) => {
       if (c.type === "childList") c.addedNodes.forEach(traducir);
       else if (c.type === "characterData") traducirTexto(c.target);
@@ -90,43 +96,48 @@
     });
   });
 
-  const TITULO = { es: document.title, en: (window.CentroamericanoEN && window.CentroamericanoEN.titulo) || document.title };
+  const TITULO = { es: document.title, en: (window.CentroamericanoEN && window.CentroamericanoEN.titulo) || document.title,
+    fr: (window.CentroamericanoFR && window.CentroamericanoFR.titulo) || document.title };
 
   function ponerIdioma(nuevo, recordar) {
-    if (nuevo !== "en") nuevo = "es";
+    if (IDIOMAS.indexOf(nuevo) === -1) nuevo = "es";
     if (recordar) { try { localStorage.setItem(CLAVE_IDIOMA, nuevo); } catch (e) {} }
     if (nuevo === idioma) { pintarHoy(); return; }
-    idioma = nuevo;
+    // Los mapas van del español a cada idioma: de inglés a francés se pasa por él.
     vigia.disconnect();
-    if (idioma === "en") {
+    volverAlEspanol();
+    idioma = nuevo;
+    if (idioma !== "es") {
       traducir(document.body);
       vigia.observe(document.body, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ATRIBUTOS });
-    } else {
-      volverAlEspanol();
     }
     document.documentElement.lang = idioma;
     document.title = TITULO[idioma];
     // Lo que se arma con datos (js/centroamericano-vivo.js) se vuelve a pintar en el idioma nuevo.
     document.dispatchEvent(new CustomEvent("cac-idioma", { detail: idioma }));
+    // El botón dice el idioma de ahora («ES», «EN», «FR» en el celular, con
+    // el nombre completo en una pantalla ancha y para el lector), y en la
+    // lista queda marcado. «Idioma · Language · Langue» va en los tres: lo
+    // tiene que encontrar quien no lee el de ahora.
     const boton = $("cac-idioma");
     if (boton) {
-      // El botón dice el OTRO idioma, en ese idioma: «English» o «Español»
-      // («EN» o «ES» en el celular, con el nombre completo para el lector).
-      const otro = idioma === "en" ? "es" : "en";
-      boton.lang = otro;
-      boton.setAttribute("aria-label", otro === "en" ? "Read this page in English" : "Ver la página en español");
-      boton.children[0].textContent = otro.toUpperCase();
-      boton.children[1].textContent = otro === "en" ? "English" : "Español";
+      boton.lang = idioma;
+      boton.setAttribute("aria-label", "Idioma · Language · Langue : " + NOMBRES[idioma]);
+      boton.children[0].textContent = idioma.toUpperCase();
+      boton.children[1].textContent = NOMBRES[idioma];
     }
+    document.querySelectorAll("#cac-idiomas [data-idioma]").forEach((b) => {
+      if (b.dataset.idioma === idioma) b.setAttribute("aria-current", "true"); else b.removeAttribute("aria-current");
+    });
     pintarHoy();
   }
 
   function idiomaInicial() {
     const pedido = new URLSearchParams(location.search).get("lang");
-    if (pedido === "en" || pedido === "es") return pedido;
+    if (IDIOMAS.indexOf(pedido) !== -1) return pedido;
     try {
       const guardado = localStorage.getItem(CLAVE_IDIOMA);
-      if (guardado === "en" || guardado === "es") return guardado;
+      if (IDIOMAS.indexOf(guardado) !== -1) return guardado;
     } catch (e) {}
     // Sin elección, en español: la página es de un torneo en Costa Rica, y
     // tomarlo del navegador la cambiaba a quien tiene el celular en inglés.
@@ -159,6 +170,8 @@
       gracias: "Thank you for coming to Costa Rica!", final: "The final standings of every section are in “Live results”.",
       zona: "Costa Rica time", locale: "en-US",
     },
+    // El francés está en js/centroamericano-fr.js (sin él, esta página va en español).
+    fr: window.CentroamericanoFR ? window.CentroamericanoFR.hoy : null,
   };
 
   function eventos() {
@@ -196,7 +209,7 @@
   function pintarHoy() {
     const caja = $("hoy");
     if (!caja) return;
-    const t = TEXTOS[idioma];
+    const t = TEXTOS[idioma] || TEXTOS.es;
     const evs = eventos();
     if (!evs.length) return;
     const ahora = new Date();
@@ -234,11 +247,12 @@
     $("hoy-detalle").textContent = detalle.replace(/\.\./g, ".");
     caja.dataset.estado = ahora < primero.inicio ? "antes" : ahora >= ultimo.fin ? "despues" : "durante";
     // Lo fijo de la franja va en el idioma de la página.
-    const fijo = window.CentroamericanoEN && window.CentroamericanoEN.franja;
-    if (fijo) {
-      $("hoy-calendario").textContent = idioma === "en" ? fijo.calendario : "Ver el calendario completo →";
-      $("hoy-sin-red-texto").textContent = idioma === "en" ? fijo.sinRed : "Esta página quedó guardada en este aparato: la puedes abrir aunque no haya internet en la sala.";
-      $("hoy-ics-texto").textContent = idioma === "en" ? fijo.ics : "Agregar a mi calendario";
+    const fijo = { es: { calendario: "Ver el calendario completo →", sinRed: "Esta página quedó guardada en este aparato: la puedes abrir aunque no haya internet en la sala.", ics: "Agregar a mi calendario" },
+      en: window.CentroamericanoEN && window.CentroamericanoEN.franja, fr: window.CentroamericanoFR && window.CentroamericanoFR.franja }[idioma] || {};
+    if (fijo.calendario) {
+      $("hoy-calendario").textContent = fijo.calendario;
+      $("hoy-sin-red-texto").textContent = fijo.sinRed;
+      $("hoy-ics-texto").textContent = fijo.ics;
     }
   }
 
@@ -290,8 +304,30 @@
 
   /* ---------------- arranque ---------------- */
   ofrecerIos();
-  const boton = $("cac-idioma");
-  if (boton) boton.addEventListener("click", () => ponerIdioma(idioma === "en" ? "es" : "en", true));
+  // El menú de idiomas: se abre con el botón y se cierra al elegir, con
+  // Escape (el foco vuelve al botón) o tocando afuera.
+  const boton = $("cac-idioma"), menu = $("cac-idiomas");
+  if (boton && menu) {
+    const abrir = (si) => { menu.hidden = !si; boton.setAttribute("aria-expanded", si ? "true" : "false"); };
+    boton.addEventListener("click", () => {
+      abrir(menu.hidden);
+      if (!menu.hidden) (menu.querySelector("[aria-current]") || menu.querySelector("button")).focus();
+    });
+    menu.addEventListener("click", (e) => {
+      const b = e.target.closest("[data-idioma]");
+      if (!b) return;
+      abrir(false);
+      ponerIdioma(b.dataset.idioma, true);
+      boton.focus();
+    });
+    menu.addEventListener("keydown", (e) => {
+      const bs = [...menu.querySelectorAll("button")], i = bs.indexOf(document.activeElement);
+      if (e.key === "Escape") { e.preventDefault(); abrir(false); boton.focus(); }
+      else if (e.key === "ArrowDown" || e.key === "ArrowUp") { e.preventDefault(); bs[(i + (e.key === "ArrowDown" ? 1 : bs.length - 1)) % bs.length].focus(); }
+    });
+    document.addEventListener("click", (e) => { if (!menu.hidden && !e.target.closest(".cac-idioma")) abrir(false); });
+    menu.addEventListener("focusout", (e) => { if (!menu.hidden && e.relatedTarget && !e.relatedTarget.closest(".cac-idioma")) abrir(false); });
+  }
   ponerIdioma(idiomaInicial(), false);
   setInterval(pintarHoy, 30000);
   if (document.readyState === "complete") guardarParaSinRed();

@@ -284,20 +284,26 @@
       pruebaSalir: "Leave test mode",
       locale: "en-US",
     },
+    // El francés está en js/centroamericano-fr.js (sin él, esta página va en español).
+    fr: window.CentroamericanoFR ? window.CentroamericanoFR.vivo({ categoria: (g, l) => categoria(g, l), MAX_SEGUIDOS, fmtPuntos: (n) => fmtPuntos(n) }) : null,
   };
 
-  const idioma = () => (document.documentElement.lang === "en" ? "en" : "es");
-  const t = () => TEXTOS[idioma()];
+  // El idioma de la página: «es», «en» o «fr» (lo pone js/centroamericano.js).
+  const IDIOMAS = ["es", "en", "fr"];
+  const idioma = () => (IDIOMAS.indexOf(document.documentElement.lang) !== -1 ? document.documentElement.lang : "es");
+  const t = () => TEXTOS[idioma()] || TEXTOS.es;
 
   // «U18F» → «Sub-18 Femenino» / «U18 Girls»; «U08» → «Sub-8 Absoluto» / «U8 Open».
   function categoria(g, lang) {
     // «—» es el grupo de un torneo sin categorías (el de CENFOTEC): todos juntos.
-    if (g === "—") return lang === "en" ? "Overall" : "General";
+    if (g === "—") return lang === "en" ? "Overall" : lang === "fr" ? "Général" : "General";
     const m = String(g || "").match(/^U0?(\d+)(F?)$/i);
     if (!m) return g || "";
+    if (lang === "fr") return "U" + m[1] + (m[2] ? " Filles" : " Open");
     return lang === "en" ? "U" + m[1] + (m[2] ? " Girls" : " Open") : "Sub-" + m[1] + (m[2] ? " Femenino" : " Absoluto");
   }
-  // Las federaciones de la región (código de FIDE). La que no esté, con su código.
+  // Las federaciones de la región (código de FIDE), en español e inglés; en
+  // francés, las de js/centroamericano-fr.js. La que no esté, con su código.
   const PAISES = {
     ARU: ["Aruba", "Aruba"], BAH: ["Bahamas", "Bahamas"], BAR: ["Barbados", "Barbados"], BER: ["Bermudas", "Bermuda"],
     BIZ: ["Belice", "Belize"], CAY: ["Islas Caimán", "Cayman Islands"], COL: ["Colombia", "Colombia"], CRC: ["Costa Rica", "Costa Rica"],
@@ -309,7 +315,11 @@
     SUR: ["Surinam", "Suriname"], TTO: ["Trinidad y Tobago", "Trinidad and Tobago"], VEN: ["Venezuela", "Venezuela"],
     VIN: ["San Vicente y las Granadinas", "Saint Vincent and the Grenadines"],
   };
-  const pais = (f, lang) => (PAISES[f] ? PAISES[f][lang === "en" ? 1 : 0] + " (" + f + ")" : f);
+  const pais = (f, lang) => {
+    if (!PAISES[f]) return f;
+    const fr = lang === "fr" && window.CentroamericanoFR && window.CentroamericanoFR.paises[f];
+    return (fr || PAISES[f][lang === "en" ? 1 : 0]) + " (" + f + ")";
+  };
   const ordenGrupo = (g) => { const m = String(g).match(/^U0?(\d+)(F?)$/i); return m ? Number(m[1]) * 2 + (m[2] ? 1 : 0) : 999; };
 
   // Sin tildes, sin mayúsculas y sin comas: «Muñoz, José» → «munoz jose».
@@ -603,8 +613,9 @@
     }
     return out;
   }
-  // 3 → «3.º» / «3rd»; un puesto compartido, «3.º–5.º».
+  // 3 → «3.º» / «3rd» / «3e» (1 → «1er»); un puesto compartido, «3.º–5.º».
   function ordinal(n, lang) {
+    if (lang === "fr") return n + (n === 1 ? "er" : "e");
     if (lang !== "en") return n + ".º";
     const d = n % 100;
     return n + (d >= 11 && d <= 13 ? "th" : ["th", "st", "nd", "rd"][n % 10] || "th");
@@ -674,7 +685,8 @@
       const ico = el("span", "", "📢 ");
       ico.setAttribute("aria-hidden", "true");
       cab.append(ico, document.createTextNode(tx.anuncioDe(hora(a.creado))));
-      p.append(cab, document.createTextNode(idioma() === "en" && a.texto_en ? a.texto_en : a.texto));
+      // Solo se escriben en español y en inglés: en francés va el inglés, si lo hay.
+      p.append(cab, document.createTextNode(idioma() !== "es" && a.texto_en ? a.texto_en : a.texto));
       return p;
     }));
   }
@@ -1166,7 +1178,7 @@
     const c = porColor(deCada.flatMap((d) => d.rondas));
     if (c.blancas.n || c.negras.n) caja.appendChild(el("p", "cac-colores-pais text-sm", tx.coloresPais(c)));
     const texto = [tx.whatsappTitulo(nombrePais, ronda), tx.resumen(ronda, g, e, p, b, a) + " " + tx.resumenPuntos(pts, posibles), ""]
-      .concat(lineas, ["", "https://ajedrez-integral.com/centroamericano-2026.html" + (idioma() === "en" ? "?lang=en" : "")]).join("\n");
+      .concat(lineas, ["", "https://ajedrez-integral.com/centroamericano-2026.html" + (idioma() !== "es" ? "?lang=" + idioma() : "")]).join("\n");
     const boton = el("button", "cac-boton mt-3", tx.copiarWhatsapp);
     boton.type = "button";
     const aviso = el("p", "mt-2 text-sm font-semibold");
@@ -1250,7 +1262,7 @@
   const delegAviso = () => { try { return (localStorage.getItem(CLAVE_AVISO_DELEG) || "").replace(/[^A-Z]/g, "").slice(0, 3); } catch (e) { return ""; } };
   const marcarDeleg = (f) => { try { if (f) localStorage.setItem(CLAVE_AVISO_DELEG, f); else localStorage.removeItem(CLAVE_AVISO_DELEG); } catch (e) {} };
   // Todo lo que sigue este aparato, junto: la función deja EXACTAMENTE eso.
-  const cuerpoSeguir = (sub) => ({ accion: "seguir", clave: SALA, suscripcion: sub.toJSON(), jugadores: paraMandar(), delegacion: delegAviso() || null, idioma: idioma() });
+  const cuerpoSeguir = (sub) => ({ accion: "seguir", clave: SALA, suscripcion: sub.toJSON(), jugadores: paraMandar(), delegacion: delegAviso() || null, idioma: idioma() === "es" ? "es" : "en" });
 
   let ocupado = false;
   // Pide el permiso (solo cuando se toca un botón), se suscribe y le manda la lista a la función.
