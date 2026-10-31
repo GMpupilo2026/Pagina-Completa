@@ -10920,6 +10920,58 @@ Rompí a propósito dos cosas y saltaron sus comprobaciones:
 El de los datos salta con un nombre entero («Apellido, Nombre»), una jugada
 ilegal, una clave de más o una posición repetida.
 
+### Mientras esperas
+
+Una ronda clásica dura entre tres y cuatro horas, y afuera de la sala esperan
+hermanos, amigos y los que ya terminaron. La ficha «Mientras esperas» abre una
+ventana (`#esperas`) con juegos de ajedrez **sin cuenta**, uno por tarjeta, con
+su edad sugerida. Cada juego se abre encima, en la ventana de
+`js/ventana-enlace.js`, y al cerrarlo se sigue en el Centroamericano. También
+se llega desde una línea fija en «Hoy en el torneo».
+
+- **Los seis juegos:**
+  - Aprende a jugar, la de las estrellas;
+  - Confites del caballo;
+  - Batalla naval;
+  - Buscaminas de ajedrez;
+  - «¿Qué tipo de partida te gusta?» (`estilo-muestra.html`);
+  - los ejercicios de la ronda.
+- **Los públicos.** Confites, Buscaminas y la muestra del estilo ya lo eran.
+- **Los de la Academia.** Batalla naval y «Aprende a jugar» piden cuenta. El
+  dueño eligió abrirlos **solo como invitados del Centroamericano y solo esos
+  días**: no hacerlos públicos para siempre ni dejarlos con cuenta.
+  - Su enlace lleva `?invitado=centroamericano`.
+  - `js/invitado-centroamericano.js` lo deja jugar sin sesión del 1 al 9 de
+    noviembre de 2026, en hora de Costa Rica.
+  - Se recuerda en `sessionStorage` para los cambios de nivel.
+  - Arriba pone un aviso: «Juegas como invitado del Centroamericano 2026: tu
+    progreso queda en este celular», con la vuelta a la página del torneo.
+  - Sin el parámetro, o fuera de esas fechas, la página manda al login como
+    siempre.
+- **No es un candado, y se aceptó así.** Los dos juegos corren enteros en el
+  navegador y no leen ni escriben nada de la base. Quien copie el enlace los
+  juega esos días. El progreso queda en el aparato: `js/progreso-usuario.js` no
+  sube nada sin cuenta.
+- **Sin la guardia de sesión.** Las dos páginas pasaron a `SIN_GUARDIA` de
+  `herramientas/academia-cabecera.py`, como `cobros.html`. La guardia en línea
+  manda al login antes de cargar nada, así que no habría dejado entrar al
+  invitado. Cambiarla en todas las páginas habría movido su hash en la CSP.
+  Ahora decide el script de cada página, que ya se fijaba en la sesión.
+- **El idioma.** Los juegos están en español. Las tarjetas y la ventana van en
+  los tres idiomas, y al pie se avisa que los juegos están en español.
+
+Lo revisa `verificar-centroamericano-esperas.js`:
+- las seis tarjetas y adónde lleva cada una;
+- que solo las dos de la Academia lleven el `?invitado`;
+- que esas dos estén sin la guardia;
+- la ventana con el clic de verdad;
+- y, con el reloj del navegador puesto, que como invitado abran con su aviso
+  y que pidan cuenta sin el parámetro, el 10 de noviembre y el 31 de octubre a
+  las 11:30 p. m. de Costa Rica (ya 1.º en UTC).
+
+Rompí a propósito el modo invitado: lo abrí sin mirar el parámetro y lo dejé
+hasta fin de mes. Saltaron las cuatro comprobaciones que lo cuidan.
+
 ## Las páginas de los torneos universitarios
 
 Dos, con la misma maquinaria: `cenfotec-2026.html` (el Desafío Mentes

@@ -460,7 +460,11 @@ GUARDIA_INICIO = "<!-- guardia: inicio -->"
 GUARDIA_FIN = "<!-- guardia: fin -->"
 # cobros.html no manda al login: sin sesión enseña su propia tarjeta de
 # «Iniciar sesión», a propósito (es la puerta para arreglar un pago).
-SIN_GUARDIA = {"cobros.html"}
+# Batalla naval y «Aprende a jugar» tampoco: durante el Centroamericano 2026 se
+# juegan sin cuenta si se llega desde su ficha «Mientras esperas»
+# (js/invitado-centroamericano.js); fuera de eso, su propio script manda al
+# login como siempre.
+SIN_GUARDIA = {"cobros.html", "batalla-naval.html", "entreno/aprende-a-jugar.html"}
 
 
 def proyecto_supabase():

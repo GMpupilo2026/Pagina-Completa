@@ -803,6 +803,18 @@ a.cac-despedida:hover .cac-globo { transform: translateY(-2px); }
 .cac-visor-momento { margin: -0.25rem 0 0.75rem; padding: 0.5rem 0.75rem; border-left: 4px solid #e0ab5b; background: #fdf6e7; border-radius: 0.5rem; font-weight: 600; }
 .dark .cac-visor-momento { background: rgb(224 171 91 / 0.12); }
 .cac-visor-momento[hidden] { display: none; }
+/* Mientras esperas: los juegos para los que esperan afuera de la sala. */
+.cac-esperas-lista { display: grid; gap: 0.75rem; grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr)); }
+.cac-espera { display: grid; grid-template-columns: 3rem minmax(0, 1fr); column-gap: 0.75rem; row-gap: 0.15rem; height: 100%; background: #fff; border-radius: 1rem; padding: 0.85rem; border: 2px solid #dfe0f7; color: #102a43; text-decoration: none; box-shadow: 0 1px 3px rgb(0 0 0 / 0.08); }
+.cac-espera:hover { border-color: #40478f; }
+.cac-espera:focus-visible { outline: 3px solid #ce1328; outline-offset: 2px; }
+.dark .cac-espera { background: rgb(var(--c-brand-900, 16 42 67)); border-color: rgb(255 255 255 / 0.15); color: #fff; }
+.cac-espera-icono { grid-row: span 3; display: grid; place-items: center; width: 3rem; height: 3rem; border-radius: 9999px; background: #f4f4fd; font-size: 1.6rem; }
+.dark .cac-espera-icono { background: rgb(255 255 255 / 0.08); }
+.cac-espera-nombre { font-weight: 800; }
+.cac-espera-texto { font-size: 0.88rem; line-height: 1.35; }
+.cac-espera-edad { font-size: 0.8rem; font-weight: 700; color: #40478f; }
+.dark .cac-espera-edad { color: #b8bbf2; }
 /* Ejercicios de la ronda (js/centroamericano-ejercicios.js). */
 .cac-ejercicios-lista { display: grid; gap: 0.75rem; grid-template-columns: repeat(auto-fill, minmax(9.5rem, 1fr)); }
 .cac-ejercicio-tarjeta { display: grid; gap: 0.2rem; width: 100%; text-align: left; background: #fff; border-radius: 1rem; padding: 0.5rem; border: 2px solid #dfe0f7; box-shadow: 0 1px 3px rgb(0 0 0 / 0.08); }
