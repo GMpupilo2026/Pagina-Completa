@@ -1875,6 +1875,7 @@ html.dark .comparar-serie-3 { background: #199e70; }
    papel: solo la ficha abierta, sin encabezado, pie ni botones, y el
    resultado escrito en vez del menú para elegirlo. */
 .pi-tabla { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
+
 .pi-tabla th, .pi-tabla td { padding: 0.4rem 0.5rem; border-bottom: 1px solid rgb(var(--c-brand-100, 217 226 236)); text-align: left; vertical-align: middle; }
 .dark .pi-tabla th, .dark .pi-tabla td { border-bottom-color: rgb(var(--c-brand-700, 36 59 83)); }
 .pi-tabla th { font-weight: 600; white-space: nowrap; }
@@ -1892,6 +1893,127 @@ html.dark .comparar-serie-3 { background: #199e70; }
   body:has(#pi-fichas) [role="tabpanel"] { box-shadow: none !important; padding: 0 !important; background: #fff !important; color: #000 !important; }
   .pi-tabla th, .pi-tabla td { border-bottom-color: #999 !important; color: #000 !important; }
 }
+/* ----- Pareo Integral como programa de computadora -----
+   El editor es una ventana: la barra de título (nombre, manual e idioma), la
+   barra de herramientas (el torneo abierto y sus botones), las pestañas
+   pegadas al panel, el panel como área de trabajo y la barra de estado abajo
+   (pintarEstado en js/pareo/pagina.js). Todo va colgado de #pi-editor, así
+   que el enlace de solo lectura (#ver=, #vivo=) no cambia; y en papel la
+   ventana desaparece y queda solo la hoja. Esquinas de 3 px, sin sombras de
+   tarjeta y las tablas como cuadrícula. Los colores salen de los del tema
+   (--c-brand-*), con su contraste medido como el resto del sitio. */
+.pi-escritorio:has(> .pi-ventana:not([hidden])) { padding-top: 1.5rem; background: rgb(var(--c-brand-100)); }
+.dark .pi-escritorio:has(> .pi-ventana:not([hidden])) { background: rgb(var(--c-brand-950)); }
+#pi-editor.pi-ventana {
+  max-width: 88rem; padding: 0; margin-left: auto; margin-right: auto;
+  border: 1px solid rgb(var(--c-brand-300)); border-radius: 6px;
+  background: rgb(var(--c-brand-50)); box-shadow: 0 10px 30px -12px rgb(var(--c-brand-900) / 0.35);
+}
+.dark #pi-editor.pi-ventana { border-color: rgb(var(--c-brand-700)); background: rgb(var(--c-brand-900)); }
+@media (max-width: 1440px) { #pi-editor.pi-ventana { margin-left: 1rem; margin-right: 1rem; } }
+@media (max-width: 640px) { #pi-editor.pi-ventana { margin-left: 0.5rem; margin-right: 0.5rem; } }
+#pi-editor .rounded-2xl, #pi-editor .rounded-xl, #pi-editor .rounded-lg { border-radius: 3px; }
+#pi-editor .rounded-md { border-radius: 2px; }
+#pi-editor .shadow-md { box-shadow: none; }
+
+/* La barra de título. */
+#pi-editor .pi-barra-titulo {
+  margin: 0; gap: 0.5rem 1rem; align-items: center; padding: 0.5rem 0.9rem; border-radius: 5px 5px 0 0;
+  background-color: rgb(var(--c-brand-800)); background-image: linear-gradient(rgb(var(--c-brand-800)), rgb(var(--c-brand-900))); color: #fff;
+}
+#pi-editor .pi-barra-titulo > div { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.15rem 0.9rem; }
+#pi-editor .pi-barra-titulo h1 { font-family: inherit; font-size: 1rem; line-height: 1.5; color: #fff; }
+#pi-editor .pi-barra-titulo h1 + p { margin: 0; font-size: 0.75rem; color: rgb(var(--c-brand-100)); max-width: none; }
+#pi-editor .pi-barra-titulo p + p { margin: 0; font-size: 0.75rem; }
+#pi-editor .pi-barra-titulo a { color: #fff; }
+#pi-editor .pi-barra-titulo button { padding: 0.15rem 0.6rem; font-size: 0.75rem; color: #fff; border-color: rgb(255 255 255 / 0.55); }
+#pi-editor .pi-barra-titulo button:hover { background: rgb(255 255 255 / 0.12); }
+
+/* Lo que aparece entre la barra de título y el área de trabajo. */
+#pi-editor > #pi-otra-pestana, #pi-editor > p { margin: 0.75rem; }
+
+/* La barra de herramientas. */
+#pi-editor .pi-barra-herramientas {
+  margin: 0; padding: 0.5rem 0.9rem; border-radius: 0;
+  background: rgb(var(--c-brand-50)); border-bottom: 1px solid rgb(var(--c-brand-200));
+}
+.dark #pi-editor .pi-barra-herramientas { background: rgb(var(--c-brand-900)); border-bottom-color: rgb(var(--c-brand-700)); }
+#pi-editor .pi-barra-herramientas > div:first-of-type { gap: 0.5rem 0.75rem; }
+#pi-editor .pi-barra-herramientas select, #pi-editor .pi-barra-herramientas button { padding-top: 0.3rem; padding-bottom: 0.3rem; }
+#pi-editor .pi-barra-herramientas label > span.block { font-size: 0.75rem; margin-bottom: 0.15rem; }
+#pi-editor .pi-barra-herramientas label.pb-2 { padding-bottom: 0.35rem; }
+#pi-editor .pi-barra-herramientas > p { margin-top: 0.35rem; }
+
+/* Las pestañas, pegadas al panel; la abierta es del color del panel. */
+#pi-editor .pi-pestanas {
+  margin: 0; padding: 0.5rem 0.75rem 0; gap: 2px; flex-wrap: nowrap; overflow-x: auto;
+  background: rgb(var(--c-brand-100)); border-bottom: 1px solid rgb(var(--c-brand-300));
+}
+.dark #pi-editor .pi-pestanas { background: rgb(var(--c-brand-950)); border-bottom-color: rgb(var(--c-brand-700)); }
+.pi-ficha {
+  flex: none; position: relative; margin-bottom: -1px; padding: 0.4rem 0.9rem; white-space: nowrap;
+  border: 1px solid rgb(var(--c-brand-300)); border-bottom-color: transparent; border-radius: 4px 4px 0 0;
+  background: rgb(var(--c-brand-50)); color: rgb(var(--c-brand-700));
+}
+.pi-ficha:hover { background: #fff; color: rgb(var(--c-brand-900)); }
+.pi-ficha[aria-selected="true"] {
+  background: #fff; color: rgb(var(--c-brand-900)); border-bottom-color: #fff;
+  box-shadow: inset 0 3px 0 rgb(var(--c-accent-500));
+}
+.dark .pi-ficha { border-color: rgb(var(--c-brand-700)); border-bottom-color: transparent; background: rgb(var(--c-brand-800)); color: rgb(var(--c-brand-100)); }
+.dark .pi-ficha:hover { background: rgb(var(--c-brand-700)); color: #fff; }
+.dark .pi-ficha[aria-selected="true"] { background: rgb(var(--c-brand-900)); color: #fff; border-bottom-color: rgb(var(--c-brand-900)); }
+
+/* El área de trabajo: la ficha abierta, sin tarjeta alrededor. */
+#pi-editor > [role="tabpanel"] { border-radius: 0; box-shadow: none; padding: 1rem 1.1rem; background: #fff; }
+.dark #pi-editor > [role="tabpanel"] { background: rgb(var(--c-brand-900)); }
+#pi-editor > [role="tabpanel"].space-y-6 > :not([hidden]) ~ :not([hidden]) { margin-top: 1rem; }
+#pi-editor > [role="tabpanel"].space-y-6 > * { box-shadow: none; border: 1px solid rgb(var(--c-brand-200)); }
+.dark #pi-editor > [role="tabpanel"].space-y-6 > * { border-color: rgb(var(--c-brand-700)); }
+
+/* Los botones de cada ronda, como un selector segmentado. */
+.pi-ronda-boton {
+  padding: 0.3rem 0.75rem; border: 1px solid rgb(var(--c-brand-300)); border-radius: 3px;
+  background: rgb(var(--c-brand-50)); color: rgb(var(--c-brand-700));
+}
+.pi-ronda-boton:hover { background: rgb(var(--c-brand-100)); color: rgb(var(--c-brand-900)); }
+.pi-ronda-boton[aria-pressed="true"] { background: rgb(var(--c-brand-800)); border-color: rgb(var(--c-brand-800)); color: #fff; }
+.dark .pi-ronda-boton { border-color: rgb(var(--c-brand-600)); background: rgb(var(--c-brand-800)); color: rgb(var(--c-brand-100)); }
+.dark .pi-ronda-boton:hover { background: rgb(var(--c-brand-700)); color: #fff; }
+.dark .pi-ronda-boton[aria-pressed="true"] { background: rgb(var(--c-accent-500)); border-color: rgb(var(--c-accent-500)); color: rgb(var(--c-brand-900)); }
+
+/* Las tablas, como la cuadrícula de una hoja de cálculo. */
+#pi-editor .pi-tabla { border: 1px solid rgb(var(--c-brand-200)); }
+#pi-editor .pi-tabla th, #pi-editor .pi-tabla td { padding: 0.3rem 0.5rem; border: 1px solid rgb(var(--c-brand-200)); }
+#pi-editor .pi-tabla thead th { background: rgb(var(--c-brand-100)); color: rgb(var(--c-brand-900)); font-size: 0.8rem; }
+#pi-editor .pi-tabla tbody tr:nth-child(even) { background: rgb(var(--c-brand-50)); }
+#pi-editor .pi-tabla tbody tr:hover { background: rgb(var(--c-brand-100) / 0.7); }
+.dark #pi-editor .pi-tabla, .dark #pi-editor .pi-tabla th, .dark #pi-editor .pi-tabla td { border-color: rgb(var(--c-brand-700)); }
+.dark #pi-editor .pi-tabla thead th { background: rgb(var(--c-brand-800)); color: #fff; }
+.dark #pi-editor .pi-tabla tbody tr:nth-child(even) { background: rgb(var(--c-brand-800) / 0.45); }
+.dark #pi-editor .pi-tabla tbody tr:hover { background: rgb(var(--c-brand-800)); }
+
+/* La barra de estado. */
+.pi-barra-estado {
+  display: flex; flex-wrap: wrap; min-height: 1.6rem; font-size: 0.75rem;
+  background: rgb(var(--c-brand-100)); color: rgb(var(--c-brand-800)); border-top: 1px solid rgb(var(--c-brand-300));
+}
+.pi-barra-estado:empty { display: none; }
+.pi-barra-estado > span { padding: 0.25rem 0.9rem; border-right: 1px solid rgb(var(--c-brand-300)); }
+.pi-barra-estado > span:first-child { font-weight: 600; }
+.pi-barra-estado { border-radius: 0 0 5px 5px; }
+.pi-barra-estado > span:last-child { border-right: 0; }
+.pi-barra-estado > span:nth-child(4) { margin-left: auto; }
+.dark .pi-barra-estado { background: rgb(var(--c-brand-950)); color: rgb(var(--c-brand-100)); border-top-color: rgb(var(--c-brand-700)); }
+.dark .pi-barra-estado > span { border-right-color: rgb(var(--c-brand-700)); }
+
+@media print {
+  .pi-escritorio:has(> .pi-ventana:not([hidden])) { background: #fff !important; padding-top: 0 !important; }
+  #pi-editor.pi-ventana { border: 0 !important; box-shadow: none !important; background: #fff !important; margin: 0 !important; max-width: none !important; }
+  #pi-editor .pi-tabla tbody tr:nth-child(even) { background: none !important; }
+  #pi-editor .pi-tabla thead th { background: none !important; }
+}
+
 /* La plantilla de resultados por mesa (imprimirPlantillaMesas() en
    js/pareo/pagina.js): siempre oculta en pantalla, y la única cosa visible
    al imprimirla —se superpone a la ficha abierta, no a la tabla de la ronda

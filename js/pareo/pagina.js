@@ -37,8 +37,11 @@
     mini: "border border-brand-300 dark:border-brand-600 text-brand-800 dark:text-white px-2 py-1 rounded-md text-xs font-semibold hover:bg-brand-50 dark:hover:bg-brand-800 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 disabled:opacity-40 disabled:cursor-not-allowed",
     miniPeligro: "border border-red-700 text-red-700 dark:border-red-400 dark:text-red-300 px-2 py-1 rounded-md text-xs font-semibold hover:bg-red-50 dark:hover:bg-red-950 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400",
     nota: "text-sm text-brand-600 dark:text-brand-300",
-    fichaSi: "px-4 py-2 rounded-lg text-sm font-semibold border border-brand-200 dark:border-brand-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 bg-accent-500 text-brand-900",
-    fichaNo: "px-4 py-2 rounded-lg text-sm font-semibold border border-brand-200 dark:border-brand-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 bg-white dark:bg-brand-900 text-brand-700 dark:text-brand-100",
+    // Las pestañas pegadas al panel, como las de un programa: el color de la
+    // abierta lo pone [aria-selected] en css/styles.css («Pareo Integral como
+    // programa de computadora»).
+    ficha: "pi-ficha text-sm font-semibold focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400",
+    rondaBoton: "pi-ronda-boton text-sm font-semibold focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400",
   };
 
   // ---------- Lo guardado en el navegador (puede no estar: modo privado) ----------
@@ -111,7 +114,8 @@
     estado.ultimoGuardado = texto;
     if (!escribir(PREFIJO + estado.id, texto)) {
       Avisos.avisar(tx("noGuarda"), { tipo: "error" });
-    }
+    } else estado.guardadoEn = Date.now();
+    pintarEstado();
     const item = estado.lista.find((x) => x.id === estado.id);
     const nombre = estado.t.nombre || "";
     // El evento va también en la lista, para separar los torneos de cada uno.
@@ -247,7 +251,7 @@
     for (const f of FICHAS) {
       const b = $("pi-f-" + f);
       const si = f === estado.ficha;
-      b.className = si ? C.fichaSi : C.fichaNo;
+      b.className = C.ficha;
       b.setAttribute("aria-selected", si ? "true" : "false");
       b.tabIndex = si ? 0 : -1;
       $("pi-p-" + f).hidden = !si;
@@ -436,6 +440,26 @@
     pintarLista();
     pintarFichas();
     pintarPanel();
+    pintarEstado();
+  }
+
+  // La barra de estado de abajo, como la de un programa de computadora: el
+  // torneo abierto, cuántos juegan, por qué ronda va y cuándo se guardó.
+  function pintarEstado() {
+    const barra = $("pi-barra-estado");
+    if (!barra) return;
+    const v = estado.t;
+    if (!v) { barra.replaceChildren(); return; }
+    const n = v.jugadores.length;
+    const total = T.rondasDelTorneo(v);
+    const r = v.rondas.length;
+    const partes = [
+      v.nombre || tx("estadoSinNombre"),
+      n === 1 ? tx("estadoUnJugador") : tx("estadoJugadores", { n }),
+      r ? tx("estadoRonda", { r, total: Math.max(total, r) }) : tx("estadoSinRondas"),
+    ];
+    if (estado.guardadoEn) partes.push(tx("estadoGuardado", { h: horaCR(estado.guardadoEn) }));
+    barra.replaceChildren(...partes.map((texto) => el("span", { texto })));
   }
 
   // Si el torneo cambia el Elo de quien juega: lo dice la lista pública.
@@ -2767,12 +2791,14 @@
     const v = t();
     const n = estado.marcados.size;
     barra.hidden = false;
-    barra.replaceChildren(
+    // replaceChildren escribe «null» si le llega un null: van filtrados.
+    barra.replaceChildren(...[
       el("span", { id: "pi-masivo-cuenta", class: "text-sm", role: "status", texto: n ? tx("marcadosCuenta", { n }) : tx("marcadosNinguno") }),
       el("button", { type: "button", id: "pi-marcar-visibles", class: C.mini, onclick: () => { for (const id of visibles) estado.marcados.add(id); pintarJugadores(); } },
         tx(visibles.length === v.jugadores.length ? "marcarTodosBoton" : "marcarVisibles", { n: visibles.length })),
       n ? el("button", { type: "button", id: "pi-desmarcar", class: C.mini, onclick: () => { estado.marcados.clear(); pintarJugadores(); } }, tx("desmarcar")) : null,
-      n ? el("button", { type: "button", id: "pi-eliminar-marcados", class: C.miniPeligro, onclick: eliminarMarcados }, tx("eliminarMarcados", { n })) : null);
+      n ? el("button", { type: "button", id: "pi-eliminar-marcados", class: C.miniPeligro, onclick: eliminarMarcados }, tx("eliminarMarcados", { n })) : null,
+    ].filter(Boolean));
   }
 
   async function eliminarMarcados() {
@@ -2905,7 +2931,7 @@
       const si = r === estado.ronda;
       nav.append(el("button", {
         type: "button", "aria-pressed": si ? "true" : "false",
-        class: si ? C.fichaSi : C.fichaNo,
+        class: C.rondaBoton,
         onclick: () => { estado.ronda = r; pintarRondas(); },
       }, tx("rondaN", { r: r + 1 }) + (r === hay ? " · " + tx("porEmparejar") : T.rondaCompleta(v.rondas[r]) ? "" : " · " + tx("enJuego"))));
     }
