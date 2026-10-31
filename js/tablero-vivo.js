@@ -55,7 +55,7 @@
         if (r) r.mesas.forEach((m) => lista.push({ clave: P.clave(m), mesa: m.mesa, tablero: m.tablero, blancas: m.blancas, negras: m.negras, ronda: r.ronda,
             equipos: m.equipoBlancas ? m.equipoBlancas + " – " + m.equipoNegras : "" }));
         for (const [clave, x] of partidas) {
-            if (x.mesa && !lista.some((m) => m.clave === clave)) lista.push({ clave, mesa: x.mesa, tablero: x.tablero, simul: x.simul, blancas: x.blancas, negras: x.negras, ronda: x.ronda });
+            if (x.mesa && !lista.some((m) => m.clave === clave)) lista.push({ clave, mesa: x.mesa, tablero: x.tablero, simul: x.simul, amistosa: x.amistosa, blancas: x.blancas, negras: x.negras, ronda: x.ronda });
         }
         return lista.sort((a, b) => a.mesa - b.mesa || (a.tablero || 0) - (b.tablero || 0));
     }

@@ -109,7 +109,32 @@ async function abrir(browser, ruta, yo, viewport, init) {
   await page.route("**/js/supabase-client.js", (r) => r.fulfill({ status: 200, contentType: "application/javascript", body: cliente(yo || { is_admin: true }) }));
   paginas.add(page); // antes de cargar: quien mira pide la partida apenas abre
   await page.goto(BASE + "/" + ruta, { waitUntil: "load" });
+  conPestanas(page);
   return { ctx, page, errores };
+}
+/* Notara tiene el panel en pestañas (js/notara-interfaz.js): lo que está en
+ * otra pestaña no se ve. Antes de tocar o de mirar un control, la prueba
+ * abre su pestaña, como haría una persona. Lo que una comprobación dice que
+ * NO se ve sigue sin verse por lo suyo (hidden, el modo mesa), no por la
+ * pestaña. */
+async function alPanel(page, sel) {
+  const id = typeof sel === "string" && /#([\w-]+)/.exec(sel);
+  for (const s of [sel, id && "#" + id[1]]) {
+    if (typeof s !== "string") continue;
+    try {
+      await page.locator(s).first().evaluate((el) => {
+        const p = el.closest("[role=tabpanel]");
+        if (p && p.hidden && window.NotaraInterfaz) window.NotaraInterfaz.elegir(p.id.replace(/^nt-panel-/, ""));
+      }, null, { timeout: 400 });
+      return;
+    } catch (e) { /* todavía no está: sigue */ }
+  }
+}
+function conPestanas(page) {
+  for (const m of ["click", "fill", "selectOption", "check", "uncheck", "isVisible", "waitForSelector", "setInputFiles", "press", "focus", "type", "inputValue"]) {
+    const orig = page[m].bind(page);
+    page[m] = async (sel, ...resto) => { await alPanel(page, sel); return orig(sel, ...resto); };
+  }
 }
 async function cerrar(x) { paginas.delete(x.page); await x.ctx.close(); }
 
@@ -935,6 +960,63 @@ async function esperarJugadas(p, n) {
     await cerrar(p2);
   }
 
+  console.log("\nNotara como programa: la barra, los pasos, las pestañas y la barra de abajo");
+  {
+    const I = await abrir(browser, "camara-tablero.html", null, { width: 1280, height: 900 });
+    const pi = I.page;
+    await pi.waitForSelector("#app:not(.hidden)");
+    const vis = (ids) => pi.evaluate((x) => x.map((id) => document.getElementById(id).checkVisibility()), ids);
+    const pestanas = () => pi.$$eval("#nt-pestanas [role=tab]", (bs) => bs.filter((b) => b.checkVisibility()).map((b) => b.textContent.trim() + (b.getAttribute("aria-selected") === "true" ? " ✓" : "")));
+    igual("cinco pestañas, con «Partida» elegida", await pestanas(), ["♟Partida ✓", "🏆Mesas", "📡En vivo", "🎥VAR", "☰Más"]);
+    igual("se ve lo de su pestaña y nada más", await vis(["t-lectura", "t-tablero", "t-vivo", "t-torneo", "t-var"]), [true, true, false, false, false]);
+    await pi.evaluate(() => document.getElementById("nt-tab-vivo").click());
+    igual("al tocar «En vivo», se ve transmitir y no la partida", await vis(["t-vivo", "t-distancia", "t-lectura"]), [true, true, false]);
+    await pi.focus("#nt-tab-vivo");
+    await pi.keyboard.press("ArrowRight");
+    igual("con la flecha pasa a la siguiente («VAR»), con el foco en ella",
+      [await pi.evaluate(() => document.activeElement.id), await pi.getAttribute("#nt-tab-var", "aria-selected"), (await vis(["t-var"]))[0]], ["nt-tab-var", "true", true]);
+    await pi.keyboard.press("End");
+    igual("Fin lleva a la última («Más»)", await pi.evaluate(() => document.activeElement.id), "nt-tab-mas");
+    await pi.reload();
+    await pi.waitForSelector("#app:not(.hidden)");
+    igual("la pestaña elegida se recuerda al volver", await pi.getAttribute("#nt-tab-mas", "aria-selected"), "true");
+    await pi.evaluate(() => document.getElementById("nt-tab-partida").click());
+    await pi.evaluate(() => document.getElementById("nt-ayuda").click());
+    igual("«?» lleva a «Más», a cómo se usa", [await pi.getAttribute("#nt-tab-mas", "aria-selected"), await pi.evaluate(() => document.activeElement.id)], ["true", "t-guia"]);
+
+    const paso = () => pi.$$eval("#nt-pasos li", (ls) => ls.map((l) => l.dataset.estado));
+    const siguiente = () => pi.evaluate(() => [...document.querySelectorAll(".nt-siguiente")].map((b) => b.id));
+    await pi.waitForFunction(() => document.getElementById("nt-paso-camara").dataset.estado, null, { timeout: 4000 }).catch(() => {});
+    igual("al empezar toca la cámara, y su botón está resaltado", [await paso(), await siguiente()], [["ahora", "falta", "falta", "falta"], ["btn-camara"]]);
+    igual("el paso de ahora lo dice también sin color", [await pi.getAttribute("#nt-paso-camara", "aria-current"), await pi.textContent("#nt-paso-camara .nt-paso-estado")], ["step", " (ahora)"]);
+    await foto(pi, new Chess().fen(), ESQ0);
+    await esperarAviso(pi, /esquinas/);
+    await pi.waitForFunction(() => document.getElementById("nt-paso-camara").dataset.estado === "hecho", null, { timeout: 4000 }).catch(() => {});
+    igual("con la imagen, toca el tablero: «Buscar el tablero»", [await paso(), await siguiente()], [["hecho", "ahora", "falta", "falta"], ["btn-buscar"]]);
+    await tocar(pi, aLienzo(ESQ0));
+    await pi.waitForFunction(() => document.getElementById("nt-paso-tablero").dataset.estado === "hecho", null, { timeout: 4000 }).catch(() => {});
+    igual("con las esquinas, toca calibrar", [await paso(), await siguiente()], [["hecho", "hecho", "ahora", "falta"], ["btn-calibrar"]]);
+    await pi.click("#btn-calibrar");
+    await esperarAviso(pi, /Calibrado/);
+    await pi.waitForFunction(() => document.getElementById("nt-paso-calibrar").dataset.estado === "hecho", null, { timeout: 4000 }).catch(() => {});
+    igual("calibrada, toca jugar, sin ningún botón resaltado", [await paso(), await siguiente()], [["hecho", "hecho", "hecho", "ahora"], []]);
+    igual("la barra de abajo dice que está todo bien y las jugadas", [await pi.textContent("#nt-estado-msg"), await pi.textContent("#nt-estado-jugadas")], ["Todo bien", "0 jugadas"]);
+    igual("«Revisar jugada» de arriba está como el del VAR", await pi.evaluate(() => document.getElementById("nt-revisar").disabled === document.getElementById("btn-var").disabled), true);
+    await pi.click("#btn-vivo");
+    await pi.waitForFunction(() => !document.getElementById("nt-vivo").hidden, null, { timeout: 4000 }).catch(() => {});
+    const cod = (await pi.textContent("#vivo-codigo")).split(" ")[0];
+    igual("transmitiendo: la etiqueta arriba y el código abajo", [await pi.textContent("#nt-vivo"), await pi.textContent("#nt-estado-codigo")], ["● Transmitiendo", "Código " + cod]);
+    igual("sin errores en la consola (la interfaz)", I.errores, []);
+    await cerrar(I);
+
+    const C = await abrir(browser, "camara-tablero.html", null, { width: 390, height: 844 });
+    await C.page.waitForSelector("#app:not(.hidden)");
+    igual("en el celular, las pestañas van fijas abajo, como en una app",
+      await C.page.evaluate(() => { const r = document.getElementById("nt-pestanas").getBoundingClientRect(); return [getComputedStyle(document.getElementById("nt-pestanas")).position, Math.round(r.bottom) === innerHeight]; }), ["fixed", true]);
+    igual("y la barra de abajo de la computadora no sale", await C.page.evaluate(() => document.getElementById("nt-estado").checkVisibility()), false);
+    await cerrar(C);
+  }
+
   console.log("\nUna simultánea: una cámara por tablero, sin torneo");
   {
     const arrancar = async (tablero, codigo) => {
@@ -982,6 +1064,69 @@ async function esperarJugadas(p, n) {
     igual("lo que viaja dice el tablero de la simultánea, sin torneo", eventos.slice(antes).filter((x) => x.event === "estado").map((x) => [x.payload.simul, x.payload.mesa, "torneo" in x.payload]).slice(-1), [[1, 1, false]]);
     igual("sin errores en la consola (simultánea)", [A.errores, B.errores, W.errores, S.errores], [[], [], [], []]);
     for (const x of [A, B, W, S]) await cerrar(x);
+  }
+
+  console.log("\nPartidas amistosas: un QR por mesa, sin torneo");
+  {
+    const A = await abrir(browser, "camara-tablero.html");
+    const pa = A.page;
+    await pa.waitForSelector("#app:not(.hidden)");
+    await pa.evaluate(() => { window.print = () => { window.__impreso = (window.__impreso || 0) + 1; }; });
+    await pa.fill("#amistosas-nombre", "Amistosos del club");
+    await pa.fill("#amistosas-mesas", "2");
+    await pa.click("#btn-amistosas-qr");
+    await pa.waitForFunction(() => window.__impreso, null, { timeout: 8000 }).catch(() => {});
+    igual("«Imprimir el QR de cada mesa» arma una tarjeta por mesa y una para mirarlas, y manda a imprimir",
+      [await pa.$$eval("#hoja-qr .hoja-qr-numero", (x) => x.map((y) => y.textContent)), await pa.$$eval("#hoja-qr .hoja-qr-torneo", (x) => x.map((y) => y.textContent)), await pa.locator("#hoja-qr svg").count(), await pa.evaluate(() => window.__impreso)],
+      [["Mesa 1", "Mesa 2", "Para mirarlas"], ["Amistosos del club", "Amistosos del club", "Amistosos del club"], 3, 1]);
+    const codigo = await pa.textContent("#amistosas-codigo");
+    const enlace2 = await pa.getAttribute("#hoja-qr .hoja-qr-mesa:nth-child(2)", "data-enlace");
+    igual("cada QR lleva el código y su mesa (después del #), sin torneo", enlace2.endsWith("/camara-tablero.html#a=1&c=" + codigo + "&m=2&n=Amistosos%20del%20club"), true);
+    igual("el de mirarlas abre todas en tablero-vivo, y el enlace queda en la página",
+      [(await pa.getAttribute("#hoja-qr .hoja-qr-mesa:nth-child(3)", "data-enlace")).endsWith("/tablero-vivo.html#" + codigo), (await pa.textContent("#amistosas-enlace")).endsWith("/tablero-vivo.html#" + codigo), await pa.isVisible("#btn-amistosas-nuevas")],
+      [true, true, true]);
+    await pa.evaluate(() => window.dispatchEvent(new Event("afterprint")));
+    await pa.reload();
+    await pa.waitForSelector("#app:not(.hidden)");
+    igual("al volver, el mismo código: los QR impresos siguen sirviendo", [await pa.textContent("#amistosas-codigo"), await pa.inputValue("#amistosas-nombre")], [codigo, "Amistosos del club"]);
+
+    // El celular de la mesa 2, SIN CUENTA, por su QR.
+    const M = await abrir(browser, enlace2.replace(/^.*?camara-tablero/, "camara-tablero"), { sinSesion: true }, { width: 412, height: 900 });
+    const pm = M.page;
+    await pm.waitForFunction(() => !document.getElementById("vivo-encendido").hidden, null, { timeout: 8000 }).catch(() => {});
+    igual("sin cuenta, por el QR: su mesa, transmitiendo con el código de las amistosas",
+      [await pm.textContent("#mesa-titulo-qr"), await pm.textContent("#vivo-codigo")], ["Mesa 2 · Amistosos del club", codigo + " · mesa 2"]);
+    igual("sin la parte de torneos, y sin elegir código, retraso ni parar",
+      await pm.evaluate(() => ["t-torneo", "t-amistosas", "vivo-retraso", "btn-vivo-parar", "btn-vivo-nuevo", "simul", "vivo-alumno"].map((id) => document.getElementById(id).checkVisibility())), [false, false, false, false, false, false, false]);
+    igual("sin la pestaña «Mesas» (no tiene nada que mostrar)", await pm.$$eval("#nt-pestanas [role=tab]", (bs) => bs.filter((b) => b.checkVisibility()).map((b) => b.dataset.pestana)), ["partida", "vivo", "var", "mas"]);
+    igual("arriba dice qué mesa es", await pm.textContent("#nt-lugar"), "Mesa 2 · Amistosos del club");
+    igual("los jugadores pueden escribir sus nombres (en «En vivo»)", [await pm.isVisible("#vivo-blancas"), await pm.evaluate(() => document.getElementById("vivo-blancas").readOnly)], [true, false]);
+    igual("no toca nada de la Academia", [...new Set(await pm.evaluate(() => window.__tablas || []))], []);
+    await pm.fill("#vivo-blancas", "Ana");
+    await foto(pm, new Chess().fen(), ESQ0);
+    await esperarAviso(pm, /esquinas/);
+    await tocar(pm, aLienzo(ESQ0));
+    await pm.click("#btn-calibrar");
+    await esperarAviso(pm, /Calibrado/);
+    const W = await abrir(browser, "tablero-vivo.html#" + codigo, null, { width: 1280, height: 1000 });
+    const antes = eventos.length;
+    const j = new Chess(); j.move("e4");
+    await foto(pm, j.fen(), ESQ0); await esperarJugadas(pm, 1);
+    await W.page.waitForFunction(() => { const b = document.querySelector('#mesas-lista button[data-mesa="2"]'); return b && /e4/.test(b.textContent); }, null, { timeout: 8000 }).catch(() => {});
+    igual("quien mira la ve como «Mesa 2», con su jugada y su nombre",
+      await W.page.evaluate(() => { const b = document.querySelector('#mesas-lista button[data-mesa="2"]'); return b ? [b.querySelector("p").textContent, /e4/.test(b.textContent), /Ana/.test(b.textContent)] : null; }), ["Mesa 2", true, true]);
+    igual("lo que viaja dice que es una partida amistosa (simul 2), sin torneo", eventos.slice(antes).filter((x) => x.event === "estado").map((x) => [x.payload.simul, x.payload.mesa, "torneo" in x.payload]).slice(-1), [[2, 2, false]]);
+    igual("sin errores en la consola (amistosas)", [A.errores, M.errores, W.errores], [[], [], []]);
+    await cerrar(W); await cerrar(M);
+
+    await pa.click("#btn-amistosas-nuevas");
+    igual("«Empezar otras» olvida el código: los QR siguientes llevan uno nuevo", [await pa.isVisible("#amistosas-hay"), await pa.isVisible("#btn-amistosas-nuevas")], [false, false]);
+    await cerrar(A);
+
+    const Z = await abrir(browser, "camara-tablero.html#a=1&c=XX&m=2", { sinSesion: true });
+    await Z.page.waitForURL(/login\.html/, { timeout: 8000 }).catch(() => {});
+    igual("sin cuenta y con un QR de amistosas roto, va al login", /\/login\.html\?next=camara-tablero\.html/.test(Z.page.url()), true);
+    await cerrar(Z);
   }
 
   console.log("\nDos tableros con un celular (opcional)");
@@ -1780,8 +1925,8 @@ async function esperarJugadas(p, n) {
     const fotoIlegal = eventos.slice(antesAlerta).find((x) => x.event === "foto");
     igual("con el aviso, al árbitro le llega una foto del tablero (una JPEG chica, con su mesa y su motivo)",
       fotoIlegal && [fotoIlegal.payload.mesa, fotoIlegal.payload.motivo, /^data:image\/jpeg;base64,/.test(fotoIlegal.payload.img), fotoIlegal.payload.img.length < 120000], [5, "ilegal", true, true]);
-    igual("y en la cámara queda en «Fotos del tablero», para bajarla", await pa.evaluate(() => [document.getElementById("fotos").checkVisibility(),
-      document.querySelectorAll("#fotos-lista a[download] img").length, document.querySelector("#fotos-lista span").textContent.startsWith("Posible jugada ilegal")]), [true, 1, true]);
+    igual("y en la cámara queda en «Fotos del tablero», para bajarla", [await pa.isVisible("#fotos")].concat(await pa.evaluate(() => [
+      document.querySelectorAll("#fotos-lista a[download] img").length, document.querySelector("#fotos-lista span").textContent.startsWith("Posible jugada ilegal")])), [true, 1, true]);
     // La foto es el tablero enderezado, visto desde arriba con la fila 8
     // arriba: la torre blanca que saltó está en a5, una casilla oscura que
     // se ve mucho más clara que la a3 (oscura y vacía); y arriba, en la fila
@@ -1818,6 +1963,12 @@ async function esperarJugadas(p, n) {
     igual("el PGN que viaja lleva el resultado", await pa.evaluate(() => /\[Result "1-0"\]/.test(localStorage.getItem("camara_partida_v1_0"))), true);
     await pa.click("#btn-deshacer");
     igual("«Deshacer» lo borra: la partida sigue", [await pa.textContent("#resultado-texto"), await pa.getAttribute('[data-resultado="1-0"]', "aria-pressed")], ["Sigue en juego.", "false"]);
+    /* «Deshacer» quitó también la última jugada, que sigue en el tablero: la
+     * cámara la vuelve a leer y vuelve a avisar la triple repetición. Se
+     * espera acá, para que ese aviso no llegue en medio de lo de la bandera. */
+    await pa.bringToFront();
+    await esperarJugadas(pa, ja2.history().length);
+    await pa.waitForTimeout(500);
 
     // Los relojes de las mesas en la cuadrícula de quien mira, y la bandera
     // que cae: al árbitro le llega el aviso con el color y la foto.
@@ -2099,6 +2250,7 @@ async function esperarJugadas(p, n) {
     const cuadro = async (n) => {
       const f = pg.frame({ url: new RegExp("puesto=" + n + "$") });
       await f.waitForSelector("#app:not(.hidden)");
+      conPestanas(f);
       return f;
     };
     const f1 = await cuadro(1), f2 = await cuadro(2);

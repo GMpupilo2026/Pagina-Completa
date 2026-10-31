@@ -181,13 +181,15 @@
             p.torneo = torneoDe(donde.torneo); p.mesa = donde.mesa; p.ronda = entero(donde.ronda, 99);
             if (entero(donde.tablero, 12)) p.tablero = donde.tablero;
         } else if (donde && donde.simul && entero(donde.mesa, 99)) {
-            // Una simultánea: varias cámaras con el mismo código, cada una su tablero, sin torneo.
-            p.simul = 1; p.mesa = donde.mesa;
+            // Una simultánea (1) o partidas amistosas (2): varias cámaras con el
+            // mismo código, cada una su tablero o su mesa, sin torneo.
+            p.simul = donde.amistosa ? 2 : 1; p.mesa = donde.mesa;
         }
         return p;
     }
     /* La partida entera. `donde`, en un torneo: { torneo, ronda, mesa }; en
-     * una simultánea: { simul: true, mesa } (el tablero de la simultánea). */
+     * una simultánea: { simul: true, mesa } (el tablero de la simultánea); en
+     * partidas amistosas, lo mismo con `amistosa: true` (la mesa). */
     function estado(juego, nombres, donde, resultado, extra) {
         const r = resultadoValido(resultado);
         const x = extra || {};
@@ -257,7 +259,7 @@
         });
         return out;
     }
-    const lugar = (x) => (x.simul ? "Tablero " + x.mesa : "Mesa " + x.mesa + (x.tablero ? " · tablero " + x.tablero : ""));
+    const lugar = (x) => (x.simul && !x.amistosa ? "Tablero " + x.mesa : "Mesa " + x.mesa + (x.tablero ? " · tablero " + x.tablero : ""));
     const clave = (x) => "m" + x.mesa + (x.tablero ? "t" + x.tablero : "");
 
     /* Lo que llega se vuelve a jugar con chess.js: una partida que no es legal
@@ -277,7 +279,7 @@
         d.dudas = entero(p.dudas, 999) || 0;
         d.equipo = equipoValido(p.equipo);
         if (torneoDe(p.torneo) && entero(p.mesa, 999)) { d.torneo = torneoDe(p.torneo); d.mesa = p.mesa; d.ronda = entero(p.ronda, 99); d.tablero = entero(p.tablero, 12); }
-        else if (p.simul === 1 && entero(p.mesa, 99)) { d.simul = true; d.mesa = p.mesa; }
+        else if ((p.simul === 1 || p.simul === 2) && entero(p.mesa, 99)) { d.simul = true; d.mesa = p.mesa; if (p.simul === 2) d.amistosa = true; }
         d.id = idValido(p.id);
         return d;
     }
@@ -310,7 +312,7 @@
         d.dudas = entero(p.dudas, 999) || 0;
         d.equipo = equipoValido(p.equipo) || antes.equipo || null;
         if (antes.torneo) { d.torneo = antes.torneo; d.mesa = antes.mesa; d.tablero = antes.tablero; d.ronda = entero(p.ronda, 99) || antes.ronda; }
-        else if (antes.simul) { d.simul = true; d.mesa = antes.mesa; }
+        else if (antes.simul) { d.simul = true; d.mesa = antes.mesa; if (antes.amistosa) d.amistosa = true; }
         return d;
     }
 
