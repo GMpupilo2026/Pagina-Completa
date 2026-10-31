@@ -71,8 +71,8 @@ ok("ningún teléfono sin confirmar", tels.every((t) => TELEFONOS.includes(t)), 
 const contacto = (html.match(/<dialog id="contacto"[\s\S]*?<\/dialog>/) || [""])[0];
 // Toda la información va en fichas: cada ventana de la página tiene su ficha y su «Cerrar».
 const dialogos = [...html.matchAll(/<dialog id="([a-z-]+)" class="ficha-dialogo[^"]*" aria-labelledby="\1-titulo">([\s\S]*?)<\/dialog>/g)];
-ok("el reglamento, el calendario, los hoteles, los paseos, los contactos, el medallero, la clasificación, los países, las sorpresas, el cara a cara, los números, la elección de categoría, las partidas en vivo y el proyector van en ventanas",
-  JSON.stringify(dialogos.map((m) => m[1]).sort()) === JSON.stringify(["calendario", "cara-a-cara", "categoria", "clasificacion", "contacto", "delegaciones", "hoteles", "medallero", "numeros", "partidas", "paseos", "proyector", "reglamento", "resultados", "sorpresas"]), dialogos.map((m) => m[1]).join(", "));
+ok("el reglamento, el calendario, los hoteles, los paseos, los contactos, el medallero, la clasificación, los países, las sorpresas, el cara a cara, los números, la elección de categoría, las partidas en vivo, los ejercicios de la ronda y el proyector van en ventanas",
+  JSON.stringify(dialogos.map((m) => m[1]).sort()) === JSON.stringify(["calendario", "cara-a-cara", "categoria", "clasificacion", "contacto", "delegaciones", "ejercicios", "hoteles", "medallero", "numeros", "partidas", "paseos", "proyector", "reglamento", "resultados", "sorpresas"]), dialogos.map((m) => m[1]).join(", "));
 for (const [, id, cuerpo] of dialogos) {
   // La elección de categoría la abre la ficha «Resultados en vivo», que sin
   // JavaScript sigue llevando a chess-results (js/centroamericano-tablas.js).
@@ -82,6 +82,9 @@ for (const [, id, cuerpo] of dialogos) {
   // entonces la enciende js/centroamericano-partidas.js.
   // La de cada categoría la abren los botones de «Resultados en vivo».
   else if (id === "categoria") { ok("la ventana «categoria» la abren las categorías de «Resultados en vivo»", /abrirCategoria\(tor\.categoria, b\)/.test(fs.readFileSync(path.join(RAIZ, "js/centroamericano-tablas.js"), "utf8"))); }
+  // La de los ejercicios de la ronda, la ficha «Ejercicios de la ronda», que
+  // queda en «Pronto» hasta que hay alguno (js/centroamericano-ejercicios.js).
+  else if (id === "ejercicios") { ok("la ventana «ejercicios» la abre la ficha «Ejercicios de la ronda», cuando hay alguno", fichas.includes('id="ficha-ejercicios"') && /a\.href = "#ejercicios"/.test(fs.readFileSync(path.join(RAIZ, "js/centroamericano-ejercicios.js"), "utf8"))); }
   else if (id === "partidas") { ok("la ventana «partidas» la abre la ficha «Partidas en vivo», cuando hay transmisión", fichas.includes('id="ficha-partidas"') && /a\.href = "#partidas"/.test(fs.readFileSync(path.join(RAIZ, "js/centroamericano-partidas.js"), "utf8"))); }
   else ok("la ventana «" + id + "» tiene su ficha", fichas.includes('href="#' + id + '"'));
   ok("y su título y su botón «Cerrar»", cuerpo.includes('id="' + id + '-titulo"') && /data-cerrar[^>]*>Cerrar</.test(cuerpo));
@@ -1375,7 +1378,7 @@ ok("la página carga el cliente de Supabase antes que su código en vivo", html.
     await p5.reload({ waitUntil: "load" }).catch(() => {});
     const sinRed = await p5.evaluate(() => ({ titulo: (document.querySelector("h1") || {}).textContent || "", fichas: document.querySelectorAll("#fichas .cac-ficha").length,
       css: getComputedStyle(document.querySelector(".cac-portada") || document.body).backgroundImage })).catch((e) => ({ error: String(e) }));
-    ok("sin red, abre entera: el título, las fichas y su hoja de estilos", /Centroamericano/.test(sinRed.titulo) && sinRed.fichas === 10 && /gradient/.test(sinRed.css), JSON.stringify(sinRed));
+    ok("sin red, abre entera: el título, las fichas y su hoja de estilos", /Centroamericano/.test(sinRed.titulo) && sinRed.fichas === 11 && /gradient/.test(sinRed.css), JSON.stringify(sinRed));
     await ctx5.close();
   } finally {
     await nav.close();

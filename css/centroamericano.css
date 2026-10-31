@@ -803,6 +803,35 @@ a.cac-despedida:hover .cac-globo { transform: translateY(-2px); }
 .cac-visor-momento { margin: -0.25rem 0 0.75rem; padding: 0.5rem 0.75rem; border-left: 4px solid #e0ab5b; background: #fdf6e7; border-radius: 0.5rem; font-weight: 600; }
 .dark .cac-visor-momento { background: rgb(224 171 91 / 0.12); }
 .cac-visor-momento[hidden] { display: none; }
+/* Ejercicios de la ronda (js/centroamericano-ejercicios.js). */
+.cac-ejercicios-lista { display: grid; gap: 0.75rem; grid-template-columns: repeat(auto-fill, minmax(9.5rem, 1fr)); }
+.cac-ejercicio-tarjeta { display: grid; gap: 0.2rem; width: 100%; text-align: left; background: #fff; border-radius: 1rem; padding: 0.5rem; border: 2px solid #dfe0f7; box-shadow: 0 1px 3px rgb(0 0 0 / 0.08); }
+.cac-ejercicio-tarjeta:hover { border-color: #40478f; }
+.cac-ejercicio-tarjeta:focus-visible { outline: 3px solid #ce1328; outline-offset: 2px; }
+.dark .cac-ejercicio-tarjeta { background: rgb(var(--c-brand-900, 16 42 67)); border-color: rgb(255 255 255 / 0.15); }
+.cac-ejercicio-tarjeta .cine-tablero { margin-bottom: 0.3rem; }
+.cac-ejercicio-hecho { border-color: #1f774c; }
+.dark .cac-ejercicio-hecho { border-color: #6fd3a0; }
+.cac-ejercicio-nombre { font-weight: 800; font-size: 0.9rem; }
+.cac-ejercicio-dato { font-size: 0.8rem; }
+.cac-ejercicio-resuelto { font-size: 0.8rem; font-weight: 800; color: #1f774c; }
+.dark .cac-ejercicio-resuelto { color: #6fd3a0; }
+.cac-ejercicios-ronda[aria-pressed="true"] { background: #40478f; border-color: #40478f; color: #fff; }
+.cac-ejercicio-pregunta { font-family: var(--font-serif, Georgia, serif); font-weight: 700; font-size: 1.45rem; line-height: 1.2; margin-top: 0.25rem; }
+.cac-ejercicio-pregunta:focus { outline: none; }
+.cac-ejercicio-tablero { width: 100%; max-width: 26rem; margin: 0.75rem auto 0; border-radius: 0.5rem; overflow: hidden; }
+.cac-ejercicio-aviso { min-height: 1.5rem; margin-top: 0.6rem; font-weight: 700; }
+.cac-ejercicio-aviso-mal { color: #a50f1f; }
+.dark .cac-ejercicio-aviso-mal { color: #ff9ca7; }
+.cac-ejercicio-aviso-bien { color: #1f774c; }
+.dark .cac-ejercicio-aviso-bien { color: #6fd3a0; }
+.cac-ejercicio-escribir { margin-top: 0.5rem; }
+.cac-ejercicio-input { flex: 1; min-width: 0; border: 2px solid #40478f; border-radius: 0.75rem; padding: 0.5rem 0.75rem; background: #fff; color: #102a43; }
+.dark .cac-ejercicio-input { background: rgb(var(--c-brand-900, 16 42 67)); color: #fff; border-color: #b8bbf2; }
+.cac-ejercicio-resultado { margin-top: 0.75rem; padding: 0.75rem 0.9rem; border-radius: 1rem; background: #f4f4fd; border: 2px solid #dfe0f7; }
+.dark .cac-ejercicio-resultado { background: rgb(255 255 255 / 0.05); border-color: rgb(255 255 255 / 0.15); }
+.cac-ejercicio-resultado-bien { background: #e8f5ee; border-color: #1f774c; color: #123f29; }
+.dark .cac-ejercicio-resultado-bien { background: rgb(31 119 76 / 0.2); border-color: #6fd3a0; color: #e8f5ee; }
 @media (max-width: 640px) {
   .cac-momentos-lista { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; padding-bottom: 0.4rem; }
   .cac-momento { flex: 0 0 88%; scroll-snap-align: start; grid-template-columns: 5.25rem minmax(0, 1fr); gap: 0.6rem; }

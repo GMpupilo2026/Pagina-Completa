@@ -1,0 +1,108 @@
+# «Ejercicios de la ronda» del Centroamericano 2026: los busca y los publica
+# solo (lo pidió el dueño: sin que nadie los apruebe antes).
+#
+# Cada media hora, del 1 al 9 de noviembre de 2026, revisa la transmisión de
+# Lichess de la sala del Centroamericano. Cuando una ronda de partidas
+# clásicas terminó en todas las categorías, busca en sus partidas las
+# posiciones con UNA sola jugada que gana, confirmadas con Stockfish
+# (herramientas/centroamericano-ejercicios.js), y las deja en
+# data/centroamericano-ejercicios.json. Si cambió algo:
+#
+#   1. abre un PR desde una rama datos/centroamericano-ejercicios-…;
+#   2. corre «Verificar» sobre esa rama (un PR abierto con el GITHUB_TOKEN no
+#      dispara otros flujos solo, así que se lo pide a mano); ahí
+#      verificar-centroamericano-ejercicios.js comprueba con chess.js cada
+#      posición y cada solución, y que no lleve nombres;
+#   3. si todo pasa, lo mergea (squash) y Cloudflare publica el sitio.
+#
+# Si «Verificar» falla, el PR queda abierto con el CI en rojo y este flujo no
+# abre otro hasta que se cierre. Necesita que el repositorio deje a GitHub
+# Actions crear PR (lo mismo que «Ajedrez estudiantil»). Ver «Los ejercicios
+# de la ronda» en docs/decisiones/juegos-y-torneos.md.
+name: Ejercicios del Centroamericano
+
+on:
+  schedule:
+    - cron: "7,37 * 1-9 11 *"   # cada media hora del 1 al 9 de noviembre (UTC)
+  workflow_dispatch:
+    inputs:
+      ronda:
+        description: "Volver a buscar una ronda (el número); vacío = las nuevas"
+        required: false
+
+permissions:
+  contents: write
+  pull-requests: write
+  actions: write
+
+concurrency:
+  group: centroamericano-ejercicios
+  cancel-in-progress: false
+
+jobs:
+  buscar:
+    name: Buscar los ejercicios
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: ¿Quedó un PR de ejercicios sin mergear?
+        id: pendiente
+        run: |
+          n=$(gh pr list --state open --json headRefName --jq '[.[] | select(.headRefName | startswith("datos/centroamericano-ejercicios-"))] | length')
+          echo "abiertos=$n" >> "$GITHUB_OUTPUT"
+          if [ "$n" != "0" ]; then echo "::warning::Hay un PR de ejercicios abierto: se espera a que se cierre."; fi
+
+      - uses: actions/setup-node@v7
+        if: steps.pendiente.outputs.abiertos == '0'
+        with:
+          node-version: 22
+
+      - name: Instalar chess.js y Stockfish
+        if: steps.pendiente.outputs.abiertos == '0'
+        run: |
+          npm ci --ignore-scripts --no-audit --no-fund
+          sudo apt-get update -qq && sudo apt-get install -y -qq stockfish
+
+      - name: Buscar los ejercicios de las rondas terminadas
+        if: steps.pendiente.outputs.abiertos == '0'
+        env:
+          RONDA: ${{ github.event.inputs.ronda }}
+        run: |
+          set -- --resumen "$RUNNER_TEMP/resumen.md"
+          if [ -n "$RONDA" ]; then
+            if ! [[ "$RONDA" =~ ^[0-9]{1,2}$ ]]; then echo "::error::La ronda es un número."; exit 1; fi
+            set -- "$@" --ronda "$RONDA"
+          fi
+          node --experimental-strip-types --no-warnings herramientas/centroamericano-ejercicios.js "$@"
+
+      - name: Revisarlos con chess.js
+        if: steps.pendiente.outputs.abiertos == '0'
+        run: node herramientas/verificar-centroamericano-ejercicios.js --solo-datos
+
+      - name: Abrir el PR, verificar y mergear
+        if: steps.pendiente.outputs.abiertos == '0'
+        run: |
+          if git diff --quiet; then echo "Nada nuevo."; exit 0; fi
+          rama="datos/centroamericano-ejercicios-$(date -u +%Y%m%d-%H%M)"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch -c "$rama"
+          git add data/centroamericano-ejercicios.json
+          git commit -q -m "Centroamericano: los ejercicios de la ronda" -m "$(cat "$RUNNER_TEMP/resumen.md")"
+          git push -q -u origin "$rama"
+          titulo="Centroamericano: los ejercicios de la ronda ($(date -u '+%Y-%m-%d %H:%M') UTC)"
+          gh pr create --base main --head "$rama" --title "$titulo" --body-file "$RUNNER_TEMP/resumen.md"
+          gh workflow run verificar.yml --ref "$rama"
+          id=""
+          for i in $(seq 1 30); do
+            sleep 10
+            id=$(gh run list --workflow verificar.yml --branch "$rama" --event workflow_dispatch --limit 1 --json databaseId --jq '.[0].databaseId // empty')
+            [ -n "$id" ] && break
+          done
+          if [ -z "$id" ]; then echo "::error::No arrancó «Verificar» sobre $rama."; exit 1; fi
+          gh run watch "$id" --exit-status --interval 30
+          gh pr merge "$rama" --squash --delete-branch

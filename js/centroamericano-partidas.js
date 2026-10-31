@@ -95,7 +95,8 @@
       },
       decisiva: (e) => (e > 0 ? "+10 o más" : "−10 o más"),
       verMomento: "Ver el momento",
-      verMomentoDe: (tipo, b, n) => tipo + ": ver el momento en la partida " + b + " contra " + n,
+      verMomentoDe: (tipo, cat) => tipo + ": ver el momento en la partida" + (cat ? " del " + cat : ""),
+      loLogro: (a) => "lo logró " + a,
     },
     en: {
       titulo: "Live games",
@@ -147,7 +148,8 @@
       },
       decisiva: (e) => (e > 0 ? "+10 or more" : "−10 or more"),
       verMomento: "See the moment",
-      verMomentoDe: (tipo, b, n) => tipo + ": see the moment in " + b + " against " + n,
+      verMomentoDe: (tipo, cat) => tipo + ": see the moment in the game" + (cat ? " (" + cat + ")" : ""),
+      loLogro: (a) => "by " + a,
     },
     // El francés está en js/centroamericano-fr.js (sin él, esta página va en español).
     fr: window.CentroamericanoFR ? window.CentroamericanoFR.partidas : null,
@@ -561,6 +563,11 @@
       const j = g.jugadas[m.ply];
       const tipo = tx.momentoTipo[m.tipo];
       const texto = tx.momento[m.tipo](m, tx.lado(m.lado), evalTexto(m.tipo === "vuelco" ? m.despues : m.peor || 0, tx), jugadaTexto(j, m.ply), m.tipo === "vuelco" ? evalTexto(m.antes, tx) : "");
+      // Sin la mesa ni el nombre del rival: solo el apellido de quien remontó,
+      // salvó la partida o dio la sorpresa (en un vuelco, nadie: ahí alguien
+      // se equivocó). Lo pidió el dueño, para que nadie vea publicado cómo
+      // perdió. Ver «Lo mejor de la ronda, sin el nombre de quien perdió».
+      const quien = m.tipo === "vuelco" ? "" : L.apellido((m.lado === "w" ? x.p.blancas : x.p.negras).nombre);
       const li = el("li", "cac-momento");
       const tab = el("div", "cine-tablero cine-tablero-mini");
       tab.setAttribute("aria-hidden", "true");
@@ -570,12 +577,12 @@
       t.appendChild(el("span", "", { remontada: "🔄", salvada: "🛡️", sorpresa: "🎯", vuelco: "⚡" }[m.tipo] + " ")).setAttribute("aria-hidden", "true");
       t.appendChild(document.createTextNode(tipo));
       datos.append(t, el("p", "cac-momento-texto", texto),
-        el("p", "cac-momento-partida", tx.partida(V.categoria(x.t.categoria) || x.t.nombre, 0, x.p.mesa) + " · " + nombreDe(x.p.blancas, tx) + " – " + nombreDe(x.p.negras, tx)));
+        el("p", "cac-momento-partida", tx.partida(V.categoria(x.t.categoria) || x.t.nombre, 0, 0) + (quien ? " · " + tx.loLogro(quien) : "")));
       const b = el("button", "cac-jugador-boton cac-momento-ver", tx.verMomento);
       b.type = "button";
       b.dataset.momento = m.tipo;
       b.dataset.momentoDe = x.p.id;
-      b.setAttribute("aria-label", tx.verMomentoDe(tipo, nombreDe(x.p.blancas, tx), nombreDe(x.p.negras, tx)));
+      b.setAttribute("aria-label", tx.verMomentoDe(tipo, V.categoria(x.t.categoria) || x.t.nombre));
       b.addEventListener("click", () => abrirPartida(x, b, { ply: m.ply, texto: tipo + dosPuntos() + texto }));
       datos.appendChild(b);
       li.append(tab, datos);
@@ -1107,6 +1114,6 @@
   }
 
   // actualizar(): lo que hace el temporizador, ya (lo usa el verificador).
-  window.CentroamericanoPartidas = { botonDe, codigoCategoria, modalidadDe, abrirPartida, cargarEvento, pgnDe, transmiteCategoria, abrirLista, enJuego, tarjetaGrande, pintarEnVivo,
+  window.CentroamericanoPartidas = { sanVer, botonDe, codigoCategoria, modalidadDe, abrirPartida, cargarEvento, pgnDe, transmiteCategoria, abrirLista, enJuego, tarjetaGrande, pintarEnVivo,
     actualizar: () => (visor ? traerJugadas(true) : (Object.values(evento ? evento.torneos : []).forEach((t) => { t.partidasPorRonda = {}; }), pintarLista())) };
 })();

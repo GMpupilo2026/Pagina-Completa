@@ -16,6 +16,7 @@
  * Uso:
  *   const t = TableroPregunta.montar(document.getElementById('board'), {
  *     fen, tipo: 'jugada' | 'casilla' | 'mirar',
+ *     orientacion: 'w' | 'b',             // desde qué lado se mira (blancas, si no se dice)
  *     alSeleccionar(respuesta) { ... }    // {from,to,san} o {casilla}
  *   });
  *   t.bloquear();   // una vez respondida, no se toca más
@@ -60,8 +61,13 @@ window.TableroPregunta = (function () {
     function pintar(destacadas) {
       const g = juego();
       nodo.innerHTML = "";
-      for (let rank = 8; rank >= 1; rank--) {
-        for (const f of FILES) {
+      // Desde las negras, la fila 1 arriba y la h a la izquierda: la de los
+      // ejercicios donde juegan las negras (js/centroamericano-ejercicios.js).
+      const negras = op.orientacion === "b";
+      const filas = negras ? [1, 2, 3, 4, 5, 6, 7, 8] : [8, 7, 6, 5, 4, 3, 2, 1];
+      const columnas = negras ? FILES.slice().reverse() : FILES;
+      for (const rank of filas) {
+        for (const f of columnas) {
           const sq = f + rank;
           const btn = document.createElement("button");
           btn.type = "button";

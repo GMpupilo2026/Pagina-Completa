@@ -256,6 +256,14 @@ ok("y avisa solo de la partida empezada y sin terminar de esa persona, en su cat
        mom.ve && mom.antes && /Lo mejor de la ronda/.test(mom.titulo) && mom.items.length === 5 && mom.items.every((x) => x.casillas === 64) &&
        /^Partida salvada Las negras llegaron a estar perdidas \(\+10 o más\) y se salvaron con tablas\. Todo cambió con 33\.Dg2\./.test(mom.items[0].texto) &&
        /^Remontada Las negras llegaron a estar perdidas \(\+5,1\) y terminaron ganando\. Todo cambió con 18\.Af2\./.test(mom.items[1].texto), JSON.stringify(mom));
+    // Sin el nombre de quien perdió: ni la mesa ni «blancas – negras», solo el
+    // apellido de quien remontó, salvó la partida o dio la sorpresa.
+    const pie = await p.evaluate(() => [...document.querySelectorAll("#partidas-contenido .cac-momento")].map((li) => ({
+      tipo: li.querySelector("[data-momento]").dataset.momento, pie: li.querySelector(".cac-momento-partida").textContent,
+      aria: li.querySelector("[data-momento]").getAttribute("aria-label") })));
+    ok("«Lo mejor de la ronda» no dice la mesa ni el nombre del rival: solo el apellido de quien lo logró",
+       pie.length === 5 && pie.every((x) => !/Mesa| – |,/.test(x.pie) && !/ contra /.test(x.aria)) &&
+       pie.filter((x) => x.tipo !== "vuelco").every((x) => /· lo logró \S/.test(x.pie)) && pie.filter((x) => x.tipo === "vuelco").every((x) => !/lo logró/.test(x.pie)), JSON.stringify(pie));
     await p.selectOption('[data-filtro="pais"]', "VEN");
     await p.waitForTimeout(300);
     ok("y pasa por los mismos filtros", await p.evaluate(() => !document.querySelector("#partidas-contenido [data-momentos]").checkVisibility()));
