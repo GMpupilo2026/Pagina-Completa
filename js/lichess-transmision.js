@@ -191,7 +191,80 @@
     return 50 + 50 * (2 / (1 + Math.exp(-0.00368208 * cp)) - 1);
   }
 
-  const api = { LICHESS, INICIAL, idDeEnlace, torneosDelEvento, rondas, rondaDeAhora, partidas, pgn, leerPgn, porcentaje, evalDe, relojDe, resultadoDe };
+  // Lo mejor de la ronda: en cada partida, lo más llamativo que dice la
+  // evaluación de Lichess (o el Elo), uno por partida y los de más peso
+  // primero. Nada se inventa: sin evaluación de Lichess, solo la sorpresa.
+  //   remontada  quien ganó llegó a estar perdido (−2 o peor para él)
+  //   salvada    tablas de quien llegó a estar perdido (−3 o peor)
+  //   sorpresa   ganó quien tenía 150 puntos de Elo menos, o más
+  //   vuelco     una jugada cambió la evaluación en 3 peones o más
+  // ply: la jugada que se muestra (el índice en g.jugadas): en la remontada y
+  // la salvada, la que más la acercó a quien se salvó después de su peor
+  // momento; en el vuelco, la que lo provocó; en la sorpresa, la última.
+  // lado: quien ganó o se salvó ("w" o "b"); en el vuelco, a quién favoreció.
+  // peor / antes / despues: la evaluación, siempre del lado de las blancas.
+  const TOPE = 10;   // un mate o +25 cuentan como +10: perdido es perdido
+  const tope = (e) => Math.max(-TOPE, Math.min(TOPE, e));
+  function momentos(juegos) {
+    const out = [];
+    (juegos || []).forEach((g) => {
+      const js = g.jugadas || [];
+      const ev = js.map((j, i) => ({ i, e: j.eval })).filter((x) => x.e != null).map((x) => ({ i: x.i, e: tope(x.e) }));
+      const candidatos = [];
+      const base = { id: g.id, mesa: g.mesa };
+      // La jugada que más acercó la partida al lado s después de su peor
+      // momento (k, el índice en ev).
+      const giro = (s, k) => {
+        let mejor = null;
+        for (let n = k + 1; n < ev.length; n++) {
+          const d = s * (ev[n].e - ev[n - 1].e);
+          if (!mejor || d > mejor.d) mejor = { d, i: ev[n].i };
+        }
+        return mejor ? mejor.i : ev[k].i;
+      };
+      const peorDe = (s) => {
+        let k = -1;
+        ev.forEach((x, n) => { if (k < 0 || s * x.e < s * ev[k].e) k = n; });
+        return k;
+      };
+      const gana = g.resultado === "1-0" ? 1 : g.resultado === "0-1" ? -1 : 0;
+      if (ev.length >= 6 && gana) {
+        const k = peorDe(gana);
+        if (gana * ev[k].e <= -2) candidatos.push(Object.assign({ tipo: "remontada", lado: gana > 0 ? "w" : "b", ply: giro(gana, k), peor: ev[k].e, valor: 1.5 * -gana * ev[k].e }, base));
+      }
+      if (ev.length >= 6 && g.resultado === "½-½") {
+        [1, -1].forEach((s) => {
+          const k = peorDe(s);
+          if (s * ev[k].e <= -3) candidatos.push(Object.assign({ tipo: "salvada", lado: s > 0 ? "w" : "b", ply: giro(s, k), peor: ev[k].e, valor: 1.2 * -s * ev[k].e }, base));
+        });
+      }
+      const eb = (g.blancas && g.blancas.elo) || 0, en = (g.negras && g.negras.elo) || 0;
+      if (gana && eb && en && js.length) {
+        const dif = gana > 0 ? en - eb : eb - en;
+        if (dif >= 150) candidatos.push(Object.assign({ tipo: "sorpresa", lado: gana > 0 ? "w" : "b", ply: js.length - 1, difElo: dif, valor: dif / 50 }, base));
+      }
+      // El vuelco, solo si la partida no trae algo de más peso: la jugada que
+      // más movió la evaluación (la evaluación de antes es la de la jugada
+      // anterior; la primera, contra la posición inicial pareja).
+      if (!candidatos.length && ev.length >= 6) {
+        let mejor = null;
+        ev.forEach((x, n) => {
+          if (n === 0 || ev[n - 1].i !== x.i - 1) return;
+          const d = Math.abs(x.e - ev[n - 1].e);
+          if (!mejor || d > mejor.d) mejor = { d, n };
+        });
+        if (mejor && mejor.d >= 3) {
+          const x = ev[mejor.n], a = ev[mejor.n - 1];
+          candidatos.push(Object.assign({ tipo: "vuelco", lado: x.e > a.e ? "w" : "b", ply: x.i, antes: a.e, despues: x.e, valor: 0.7 * mejor.d }, base));
+        }
+      }
+      candidatos.sort((a, b) => b.valor - a.valor);
+      if (candidatos[0]) out.push(candidatos[0]);
+    });
+    return out.sort((a, b) => b.valor - a.valor || a.mesa - b.mesa);
+  }
+
+  const api = { LICHESS, INICIAL, idDeEnlace, torneosDelEvento, rondas, rondaDeAhora, partidas, pgn, leerPgn, porcentaje, evalDe, relojDe, resultadoDe, momentos };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else raiz.LichessTransmision = api;
 })(typeof window !== "undefined" ? window : globalThis);

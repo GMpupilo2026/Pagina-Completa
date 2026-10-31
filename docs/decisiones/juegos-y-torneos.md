@@ -10506,6 +10506,206 @@ la propia.
   vuelta a la elección con el foco y el jugador que abre sus rondas. Rompí a
   propósito que las categorías abrieran chess-results y que tocar un jugador
   no cerrara las ventanas, y saltaron.
+
+
+### «En vivo ahora» y las partidas en el proyector
+
+El dueño vio primero un ejemplo en imagen y dijo que sí.
+
+- **«En vivo ahora»** (`#en-vivo-ahora`, arriba del buscador): una franja con
+  las partidas transmitidas que **ya empezaron y no terminaron**, en la
+  modalidad que se ve. Cada una lleva un tablero chico, la barra de la
+  evaluación de costado, «Categoría · Mesa N» y los dos jugadores. Tocarla abre
+  esa partida en el visor, y «Ver las N →» abre la lista con el filtro «en
+  vivo». Sin partidas en juego, la franja no se muestra. Se vuelve a pedir
+  cada 30 s (`ENVIVO_MS`).
+- **Una sola fuente**: `CentroamericanoPartidas.enJuego()` arma la lista para
+  la franja y para el proyector. La evaluación sale del PGN de Lichess, y el
+  PGN de cada ronda se pide a lo sumo una vez por minuto (`PGN_VIVO_MS`).
+- **La barra nunca va sola**: dice con palabras «mejor las blancas», «mejor las
+  negras», «igualada» o «sin evaluación». En el proyector, además, va la cifra
+  (+4,8).
+- **El proyector** pone las partidas en vivo **antes** del pareo, seis por
+  pantalla (`PARTIDAS_POR_PAGINA`). Cada partida lleva su tablero, los
+  jugadores con su reloj y la barra escrita. El modo nuevo «Solo partidas en
+  vivo» deja solo eso. Si se fijó una categoría, se muestran solo las suyas.
+  Sin Lichess, el proyector sigue con lo suyo.
+- Lo revisa `verificar-centroamericano-partidas.js`. Rompí a propósito que la
+  lista incluyera las partidas terminadas y que el proyector no pusiera las
+  páginas en vivo, y las dos comprobaciones saltaron.
+
+
+### Lo mejor de la ronda
+
+En «Partidas en vivo», arriba de la lista, van hasta cinco momentos de las
+partidas transmitidas. Cada uno lleva su tablero en la jugada que cambió la
+partida, lo que pasó escrito y «Ver el momento», que abre el visor en esa
+jugada y lo dice arriba del tablero. La regla es `LichessTransmision.momentos()`,
+una función pura que se prueba con node.
+
+- **Nada se inventa**: sale de la evaluación que trae Lichess en el PGN, o del
+  Elo. Una partida sin evaluación solo puede ser sorpresa.
+- **Los cuatro tipos**:
+  - **remontada**: quien ganó llegó a estar −2 o peor;
+  - **partida salvada**: tablas de quien llegó a estar −3 o peor;
+  - **sorpresa**: ganó quien tenía 150 puntos de Elo menos, o más;
+  - **vuelco**: una jugada movió la evaluación 3 peones o más. Solo cuenta si
+    la partida no trae nada de más peso.
+- **Uno por partida**, y los de más peso primero. Un mate o +25 cuentan como
+  +10, porque perdido es perdido y si no, todo sería «salvada».
+- **La jugada que se muestra**: en la remontada y la salvada, la que más acercó
+  la partida a quien se salvó después de su peor momento, o sea el error del
+  rival. En el vuelco, la que lo provocó; en la sorpresa, la última.
+- **Pasa por los filtros de la lista** (categoría, país, mis jugadores,
+  buscar), salvo «solo las que se están jugando». En el celular, los momentos
+  van de costado para no empujar la lista hacia abajo.
+- Desde un momento, «Ir a la jugada de ahora» cuenta solo las jugadas que
+  llegan después de abrir, no todas las que siguen.
+- Lo revisa `verificar-centroamericano-partidas.js` con la ronda de prueba
+  (una salvada, dos remontadas y dos vuelcos). Rompí a propósito tres cosas y
+  saltaron sus comprobaciones: la jugada del peor momento en lugar de la del
+  giro, los momentos sin filtrar y el visor que no abría en la jugada.
+
+
+### Su partida está en vivo: el aviso al celular
+
+A quien sigue a un jugador con «Avisarme en este celular», `sala-jugadores`
+(`revisar`, cada 5 minutos con pg_cron) le avisa cuando la partida de ese
+jugador **empieza en un tablero que Lichess transmite**: «📺 Ronda N: Nombre
+juega en vivo», con la mesa, el color y el rival. Tocar el aviso abre la
+página en `#partida=<id de Lichess>`, que abre esa partida en el visor (y si
+la partida ya no está en la ronda de ahora, la lista).
+
+- **Lo de Lichess lo lee la función**: los botones de la sala con la dirección
+  de la transmisión, los mismos que usa la página, llevan al grupo entero.
+  Solo el Clásico (el de los demás avisos), la ronda que Lichess marca «en
+  curso» y la API pública, sin cuenta. Se pide una sola vez por sala en cada
+  vuelta, y solo si hay algún seguido con pareo y sin resultado. Si Lichess no
+  contesta, sale el aviso del pareo de siempre.
+- **La regla, en `torneos-sala.ts`** (sin Deno, se prueba con node):
+  `idDeEnlaceLichess()` lee los enlaces igual que la página (el verificador
+  compara las dos) y `partidaEnVivo()` busca la partida empezada y sin
+  terminar de esa persona. La compara por nombre como la página: igual sin
+  tildes, o con los mismos apellidos y el primer nombre. Además tiene que ser
+  de su categoría y de su ronda. **Si calzan dos, no avisa de ninguna**:
+  mejor no avisar que avisar de otra persona.
+- **Reemplaza al del pareo**: cuando el pareo salió con la partida ya
+  empezada, va solo este, que dice lo mismo y además la abre. Lleva la misma
+  etiqueta (`sala-<tnr>-<no>`), así el del resultado lo reemplaza después en
+  la pantalla del celular. Se anota con el tipo `envivo` en
+  `sala_avisos_push_enviados`; la migración `sala_avisos_envivo` lo agregó a su
+  `check`. Sale una vez por jugador y ronda.
+- La política de privacidad lo dice: el servidor le pide a Lichess las
+  partidas que transmite, sin ningún dato de quien pidió el aviso.
+- Lo revisa `verificar-centroamericano-partidas.js`, con la regla (las mismas
+  direcciones en la página y en la función; la terminada, la que no empezó,
+  otra categoría, otra ronda y dos que calzan) y el enlace `#partida=` en la
+  página. Rompí a propósito dos cosas y saltaron sus comprobaciones: que
+  avisara también de las terminadas, y la página sin leer el enlace.
+- La función desplegada (versión 9) es la del repositorio. Hay una sola
+  diferencia: la herramienta de despliegue escribe las dos expresiones
+  `[̀-ͯ]` con los caracteres mismos en lugar del escape, y eso no
+  cambia lo que hacen.
+
+
+### Qué hacer en el tiempo libre
+
+Una ficha más, «🌴 Qué hacer en el tiempo libre», que abre la ventana
+`#paseos`. Trae 14 lugares para las horas sin ronda, cada uno con su emoji,
+qué es, sus etiquetas escritas, «Ver en el mapa» y «Cómo llegar» (Google Maps,
+desde donde esté la persona). Los botones de arriba filtran: Todos, Cerca de
+la sala, En el centro de San José, Para niños, Si llueve y Excursión de medio
+día. El puesto lo dicen `aria-pressed` y «✓», no solo el color.
+
+- **Sin horarios, precios ni distancias en metros.** Al buscarlos (31/10), las
+  fuentes no coincidían entre sí y ninguna era oficial de 2026. La ficha dice
+  «Revisa el horario antes de ir», y el mapa de cada lugar trae los del día.
+  Las distancias van por categoría («Cerca de la sala», «En taxi, 10–20 min»,
+  «a una hora y media»).
+- **El Museo de Arte Costarricense** primero quedó fuera, porque en la web no
+  se pudo confirmar que hubiera reabierto; el dueño confirmó que está abierto y
+  se agregó. Del Poás se avisa que cierra cuando el volcán está activo,
+  y de los volcanes, que la entrada se compra antes en línea.
+- La ficha va de ancho completo en la computadora (con diez fichas, la última
+  quedaba sola en la fila). Hoteles ya no ocupa dos columnas en el celular.
+- Los textos van en inglés y en francés, como el resto de la página. El
+  filtro está en `js/centroamericano.js`.
+- Lo revisa `verificar-centroamericano.js`:
+  - que la ficha abra los 14 lugares, cada uno con sus dos enlaces al mapa;
+  - que «Si llueve» deje los 9 bajo techo y diga cuál está puesto;
+  - que «Excursión de medio día» deje los tres de lejos;
+  - que «Todos» los vuelva a mostrar.
+
+  Rompí a propósito el filtro y saltaron sus comprobaciones.
+
+
+### La página en francés
+
+La página del Centroamericano sale también en francés, para las delegaciones
+del Caribe que lo hablan. Lo pidió el dueño.
+
+- **Un solo botón con menú**: el botón del idioma dice el de ahora («ES»,
+  «EN» o «FR»; en una pantalla ancha, el nombre entero y «▾»). Abre la lista
+  `#cac-idiomas` con los tres, cada uno escrito en su idioma y el de ahora
+  marcado con «✓» y `aria-current`. Se maneja con Escape, las flechas y
+  tocando afuera. Primero fueron dos botones, uno por cada otro idioma, pero
+  en un celular de 375 px se encimaban con el logo. Para el lector de
+  pantalla, el botón dice «Idioma · Language · Langue», en los tres idiomas.
+- **Todo el francés en `js/centroamericano-fr.js`**:
+  - los textos fijos de la página, con las mismas 245 claves que el inglés;
+  - lo que escribe cada módulo (`hoy`, `vivo`, `tablas`, `partidas`; los que
+    necesitan algo de su módulo lo reciben como `mod`);
+  - los nombres de los países.
+
+  El francés va en un archivo aparte porque `verificar-voseo.py` se salta ese
+  archivo entero: dentro de los módulos marcaba «vos», «été» o «trié», y
+  meterlos en su lista blanca dejaría pasar voseo de verdad. Sin ese archivo
+  (las páginas universitarias usan los mismos módulos y no lo cargan), todo
+  queda en español.
+- **De un idioma a otro se pasa por el español**: los mapas traducen desde el
+  texto en español, así que al pasar del inglés al francés primero se vuelve
+  al original.
+- **Lo propio del francés**:
+  - el espacio antes de los dos puntos;
+  - «1er» y «3e»; «rang» y no «place», para que concuerde con «1er»;
+  - las jugadas con sus letras: R, D, T, F y C;
+  - las horas a la francesa (15 h 00);
+  - las categorías como «U15 Filles».
+- **Lo que no tiene francés**:
+  - Los avisos de la organización se escriben solo en español e inglés: en
+    francés se muestra el inglés.
+  - Los avisos al celular los escribe `sala-jugadores` en español o en inglés:
+    a quien tiene la página en francés le llegan en inglés.
+  - `?lang=fr` en la dirección abre la página en francés.
+- Lo revisa `verificar-centroamericano.js`:
+  - que el francés tenga las mismas claves que el inglés;
+  - que cada módulo traiga sus textos en los tres idiomas;
+  - que en francés ningún texto de la página quede en español;
+  - el menú (abrir, la marca, Escape con el foco en el botón);
+  - que de francés a inglés no quede nada en francés, y que al volver al
+    español la página quede idéntica.
+
+  Rompí a propósito una clave de un módulo y un texto fijo, y saltaron sus
+  comprobaciones. Las pruebas de antes, que tocaban el botón para alternar,
+  ahora usan `cambiarIdioma()`.
+
+
+### «Así terminó mi torneo»
+
+Cuando el torneo de un jugador terminó, su tarjeta trae «🏁 Así terminó mi
+torneo», que arma una imagen de 1080 × 1920 para el estado de WhatsApp
+(`imagenFinal` en `js/centroamericano-tablas.js`). La imagen lleva:
+
+- el puesto, con su medalla si subió al podio;
+- cuatro cifras: puntos, rendimiento, ± Elo y partidas;
+- la ronda a ronda en círculos, cada uno con su resultado escrito (el color no
+  va solo);
+- la mejor victoria;
+- la marca de agua, una sola vez.
+
+Se comparte con `navigator.share` si el aparato puede, y si no, se baja. Lo
+revisa `verificar-centroamericano.js`: el tamaño, que sea PNG y que la marca
+vaya una vez.
 ## Las páginas de los torneos universitarios
 
 Dos, con la misma maquinaria: `cenfotec-2026.html` (el Desafío Mentes

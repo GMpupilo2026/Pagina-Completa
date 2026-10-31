@@ -34,6 +34,14 @@ const TELEFONOS = ["+50622321266", "+50621065100", "+50622961001",
   "+50689604707", "+50688200156", "+50661298565"];
 
 let fallos = 0;
+// El menú de idiomas del encabezado: lo abre y elige otro idioma. Sin
+// decir cuál, alterna entre el español y el inglés (como el botón de antes).
+async function cambiarIdioma(pg, cual) {
+  const ahora = await pg.evaluate(() => document.documentElement.lang);
+  await pg.click("#cac-idioma");
+  await pg.click('#cac-idiomas [data-idioma="' + (cual || (ahora === "es" ? "en" : "es")) + '"]');
+}
+
 function ok(nombre, cond, detalle) {
   if (cond) console.log("  ✓ " + nombre);
   else { fallos++; console.log("  ✗ " + nombre + (detalle ? " — " + detalle : "")); }
@@ -63,8 +71,8 @@ ok("ningún teléfono sin confirmar", tels.every((t) => TELEFONOS.includes(t)), 
 const contacto = (html.match(/<dialog id="contacto"[\s\S]*?<\/dialog>/) || [""])[0];
 // Toda la información va en fichas: cada ventana de la página tiene su ficha y su «Cerrar».
 const dialogos = [...html.matchAll(/<dialog id="([a-z-]+)" class="ficha-dialogo[^"]*" aria-labelledby="\1-titulo">([\s\S]*?)<\/dialog>/g)];
-ok("el reglamento, el calendario, los hoteles, los contactos, el medallero, la clasificación, los países, las sorpresas, el cara a cara, los números, la elección de categoría, las partidas en vivo y el proyector van en ventanas",
-  JSON.stringify(dialogos.map((m) => m[1]).sort()) === JSON.stringify(["calendario", "cara-a-cara", "categoria", "clasificacion", "contacto", "delegaciones", "hoteles", "medallero", "numeros", "partidas", "proyector", "reglamento", "resultados", "sorpresas"]), dialogos.map((m) => m[1]).join(", "));
+ok("el reglamento, el calendario, los hoteles, los paseos, los contactos, el medallero, la clasificación, los países, las sorpresas, el cara a cara, los números, la elección de categoría, las partidas en vivo y el proyector van en ventanas",
+  JSON.stringify(dialogos.map((m) => m[1]).sort()) === JSON.stringify(["calendario", "cara-a-cara", "categoria", "clasificacion", "contacto", "delegaciones", "hoteles", "medallero", "numeros", "partidas", "paseos", "proyector", "reglamento", "resultados", "sorpresas"]), dialogos.map((m) => m[1]).join(", "));
 for (const [, id, cuerpo] of dialogos) {
   // La elección de categoría la abre la ficha «Resultados en vivo», que sin
   // JavaScript sigue llevando a chess-results (js/centroamericano-tablas.js).
@@ -141,7 +149,26 @@ const hotelesHtml = (html.match(/<dialog id="hoteles"[\s\S]*?<\/dialog>/) || [""
 const rutas = [...hotelesHtml.matchAll(/href="https:\/\/www\.google\.com\/maps\/dir\/\?api=1&amp;origin=[^"&]+&amp;destination=Gimnasio\+Nacional[^"]*"/g)].length;
 ok("los seis hoteles con dirección traen su ruta a la sala", rutas === 6, rutas + " rutas");
 ok("y la ruta en Waze, una vez", /href="https:\/\/waze\.com\/ul\?q=Gimnasio%20Nacional[^"]*navigate=yes"/.test(hotelesHtml));
-ok("la página carga su traducción y su código, en ese orden", html.indexOf('<script src="js/centroamericano-en.js"></script>') > 0 && html.indexOf('<script src="js/centroamericano-en.js"></script>') < html.indexOf('<script src="js/centroamericano.js"></script>'));
+{
+  // El francés trae las mismas claves que el inglés, y cada módulo de la
+  // página sus textos en los tres idiomas (si falta una, la página muestra
+  // «undefined» en francés sin dar ningún error). El francés de los módulos
+  // vive en js/centroamericano-fr.js.
+  global.window = global.window || {};
+  require(path.join(RAIZ, "js/centroamericano-en.js"));
+  require(path.join(RAIZ, "js/centroamericano-fr.js"));
+  const kEn = Object.keys(window.CentroamericanoEN.textos), kFr = Object.keys(window.CentroamericanoFR.textos);
+  ok("el francés trae las mismas claves que el inglés", kEn.length === kFr.length && kEn.every((k) => kFr.includes(k)), JSON.stringify(kEn.filter((k) => !kFr.includes(k)).slice(0, 5)));
+  const faltan = [];
+  for (const f of ["centroamericano-vivo.js", "centroamericano-tablas.js", "centroamericano-partidas.js", "centroamericano.js"]) {
+    const s = fs.readFileSync(path.join(RAIZ, "js", f), "utf8");
+    const i = s.indexOf("const TEXTOS = {"), j = s.indexOf("\n  };", i);
+    const T = new Function("window", "categoria", "MAX_SEGUIDOS", "fmtPuntos", "NOMBRE_CORTO", "return " + s.slice(i + 15, j + 4))(window, () => "", 20, String, "x");
+    ["en", "fr"].forEach((l) => Object.keys(T.es).forEach((k) => { if (!T[l] || !(k in T[l])) faltan.push(f + ":" + l + ":" + k); }));
+  }
+  ok("cada módulo de la página trae sus textos en español, inglés y francés", !faltan.length, faltan.slice(0, 6).join(" "));
+}
+ok("la página carga sus traducciones y su código, en ese orden", html.indexOf('<script src="js/centroamericano-fr.js"></script>') > 0 && html.indexOf('<script src="js/centroamericano-fr.js"></script>') < html.indexOf('<script src="js/centroamericano.js"></script>') && html.indexOf('<script src="js/centroamericano-en.js"></script>') > 0 && html.indexOf('<script src="js/centroamericano-en.js"></script>') < html.indexOf('<script src="js/centroamericano.js"></script>'));
 
 
 // «Agregar a mi calendario»: el .ics sale de la tabla, con las mismas horas.
@@ -375,7 +402,7 @@ ok("la página carga el cliente de Supabase antes que su código en vivo", html.
     await p4.goto(BASE + "/" + PAGINA, { waitUntil: "load" });
     await guardada(p4);
     const textoEs = await p4.evaluate(() => document.body.innerText);
-    await p4.click("#cac-idioma");
+    await cambiarIdioma(p4);
     const en = await p4.evaluate(() => {
       const valores = new Set(Object.values(window.CentroamericanoEN.textos));
       const sinTraducir = [];
@@ -394,7 +421,7 @@ ok("la página carga el cliente de Supabase antes que su código en vivo", html.
       return { sinTraducir, lang: document.documentElement.lang, boton: b.textContent, titulo: document.title };
     });
     ok("en inglés, ningún texto se queda en español", en.sinTraducir.length === 0, JSON.stringify(en.sinTraducir.slice(0, 8)));
-    ok("y la página lo dice (lang=en, el título, el botón ofrece «Español»)", en.lang === "en" && /^Central American/.test(en.titulo) && /Español/.test(en.boton), JSON.stringify(en));
+    ok("y la página lo dice (lang=en, el título, el botón dice «English»)", en.lang === "en" && /^Central American/.test(en.titulo) && /English/.test(en.boton), JSON.stringify(en));
     await p4.click('#fichas a[data-ventana="Championship regulations"]');
     await p4.waitForSelector("dialog.ventana-enlace[open]");
     ok("lo que se abre después también va en inglés", await p4.evaluate(() => { const d = document.querySelector("dialog.ventana-enlace"); return d.querySelector("h2").textContent === "Championship regulations" && /Close/.test(d.textContent) && /Open in a new tab/.test(d.textContent); }));
@@ -403,8 +430,65 @@ ok("la página carga el cliente de Supabase antes que su código en vivo", html.
     await p4.reload({ waitUntil: "load" });
     await guardada(p4);
     ok("la elección se recuerda al volver", await p4.evaluate(() => document.documentElement.lang === "en"));
-    await p4.click("#cac-idioma");
+    await cambiarIdioma(p4);
     ok("y al volver al español queda exactamente como estaba", (await p4.evaluate(() => document.body.innerText)) === textoEs && await p4.evaluate(() => document.documentElement.lang === "es"));
+
+    // El francés: el menú de idiomas, y todo texto de la página con el suyo.
+    await p4.click("#cac-idioma");
+    const menu = await p4.evaluate(() => ({ abierto: document.getElementById("cac-idiomas").checkVisibility(), expandido: document.getElementById("cac-idioma").getAttribute("aria-expanded"),
+      opciones: [...document.querySelectorAll("#cac-idiomas [data-idioma]")].map((b) => b.textContent + (b.getAttribute("aria-current") ? "*" : "") + "|" + b.lang),
+      foco: document.activeElement && document.activeElement.dataset.idioma }));
+    ok("el botón del idioma abre la lista de los tres, cada uno en su idioma, con el de ahora marcado y el foco en él",
+       menu.abierto && menu.expandido === "true" && JSON.stringify(menu.opciones) === JSON.stringify(["Español*|es", "English|en", "Français|fr"]) && menu.foco === "es", JSON.stringify(menu));
+    await p4.keyboard.press("Escape");
+    ok("Escape la cierra y deja el foco en el botón", await p4.evaluate(() => !document.getElementById("cac-idiomas").checkVisibility() && document.activeElement.id === "cac-idioma"
+       && document.getElementById("cac-idioma").getAttribute("aria-expanded") === "false"));
+    await cambiarIdioma(p4, "fr");
+    const fr = await p4.evaluate(() => {
+      const valores = new Set(Object.values(window.CentroamericanoFR.textos));
+      const sinTraducir = [];
+      const w = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+      let n;
+      while ((n = w.nextNode())) {
+        if (n.parentElement.closest("script, style, [data-no-traducir]")) continue;
+        const t = n.nodeValue.replace(/\s+/g, " ").trim();
+        if (/[A-Za-zÁÉÍÓÚáéíóúñ]/.test(t) && !valores.has(t)) sinTraducir.push(t);
+      }
+      document.querySelectorAll("[alt], [aria-label], [title], [data-ventana]").forEach((e) => {
+        if (e.closest("[data-no-traducir]")) return;
+        ["alt", "aria-label", "title", "data-ventana"].forEach((a) => { const v = e.getAttribute(a); if (v && /[A-Za-z]/.test(v) && !valores.has(v)) sinTraducir.push(a + "=" + v); });
+      });
+      return { sinTraducir, lang: document.documentElement.lang, boton: document.getElementById("cac-idioma").textContent, titulo: document.title,
+        hoy: document.getElementById("hoy-etiqueta").textContent, calendario: document.getElementById("hoy-calendario").textContent };
+    });
+    ok("en francés, ningún texto se queda en español", fr.sinTraducir.length === 0, JSON.stringify(fr.sinTraducir.slice(0, 8)));
+    ok("y la página lo dice (lang=fr, el título, el botón y «Hoy en el torneo»)", fr.lang === "fr" && /^Championnat d'Amérique centrale/.test(fr.titulo) && /Français/.test(fr.boton)
+       && /^(Compte à rebours|Aujourd'hui au tournoi|Le festival est terminé)$/.test(fr.hoy) && fr.calendario === "Voir tout le calendrier →", JSON.stringify(fr));
+    await cambiarIdioma(p4, "en");
+    ok("de francés a inglés pasa por el español: ningún texto queda en francés", await p4.evaluate(() => {
+      const fr = new Set(Object.values(window.CentroamericanoFR.textos)), en = new Set(Object.values(window.CentroamericanoEN.textos));
+      return document.documentElement.lang === "en" && ![...document.querySelectorAll("#fichas h3, #fichas p")].some((e) => fr.has(e.textContent.trim()) && !en.has(e.textContent.trim()));
+    }));
+    await cambiarIdioma(p4, "es");
+    ok("y al volver al español, otra vez exactamente como estaba", (await p4.evaluate(() => document.body.innerText)) === textoEs);
+
+    // Qué hacer en el tiempo libre: la ficha abre la ventana y los botones filtran.
+    await p4.click('#fichas a[href="#paseos"]');
+    await p4.waitForFunction(() => document.getElementById("paseos").open, null, { timeout: 5000 }).catch(() => {});
+    const visibles = () => p4.evaluate(() => [...document.querySelectorAll("#paseos .cac-paseo")].filter((li) => li.checkVisibility()).map((li) => li.querySelector("h3").textContent.replace(/^\S+ /, "")));
+    const todos = await visibles();
+    await p4.click('#paseos [data-paseo-filtro="techo"]');
+    const techo = await visibles();
+    const puesto = await p4.evaluate(() => [...document.querySelectorAll("#paseos [data-paseo-filtro]")].filter((b) => b.getAttribute("aria-pressed") === "true").map((b) => b.dataset.paseoFiltro));
+    await p4.click('#paseos [data-paseo-filtro="excursion"]');
+    const excursion = await visibles();
+    ok("la ficha «Qué hacer en el tiempo libre» abre sus 14 paseos, cada uno con su mapa y cómo llegar", todos.length === 14 && await p4.evaluate(() =>
+      [...document.querySelectorAll("#paseos .cac-paseo")].every((li) => li.querySelectorAll('a[href^="https://www.google.com/maps/"]').length === 2)), JSON.stringify(todos));
+    ok("«Si llueve» deja solo los bajo techo, y el botón dice que está puesto", techo.length === 9 && !techo.includes("Parque Metropolitano La Sabana") && techo.includes("Museo de los Niños") && JSON.stringify(puesto) === '["techo"]', JSON.stringify([techo, puesto]));
+    ok("«Excursión de medio día», los tres de lejos", JSON.stringify(excursion) === JSON.stringify(["Volcán Poás", "Volcán Irazú", "La Paz Waterfall Gardens"]), JSON.stringify(excursion));
+    await p4.click('#paseos [data-paseo-filtro="todos"]');
+    ok("«Todos» los vuelve a mostrar", (await visibles()).length === 14);
+    await p4.keyboard.press("Escape");
     await ctx4.close();
 
     // «Busca a tu jugador» y el medallero, con un doble de la función (datos con la forma de sala-jugadores).
@@ -475,10 +559,10 @@ ok("la página carga el cliente de Supabase antes que su código en vivo", html.
     ok("el medallero cuenta los tres primeros de cada categoría por federación", JSON.stringify(med.filas) === JSON.stringify(["CRC 2 0 0 2", "PAN 1 0 0 1", "CUB 0 1 0 1", "ESA 0 1 0 1", "BAR 0 0 1 1", "GUA 0 0 1 1"]), JSON.stringify(med.filas));
     ok("y los podios van por categoría, de la menor a la mayor", med.podios.length === 3 && /^Sub-8 Absoluto/.test(med.podios[0]) && /^Sub-18 Femenino .*1\. IM Castillo/.test(med.podios[2]), JSON.stringify(med.podios));
     await p6.keyboard.press("Escape");
-    await p6.click("#cac-idioma");
+    await cambiarIdioma(p6);
     r = await buscar("mayorga");
     ok("en inglés, el buscador también", /Round 4 · Board 1 · Plays white against/.test(r.tarjetas[0]) && /U18 Open · Rating 2215 · Place 1 of 3/.test(r.tarjetas[0]), JSON.stringify(r));
-    await p6.click("#cac-idioma");
+    await cambiarIdioma(p6);
 
     // Mis jugadores: la estrella lo pone arriba, guardado en el aparato.
     const seguidosVis = () => p6.evaluate(() => ({ visible: document.getElementById("seguidos").checkVisibility(),
@@ -530,12 +614,12 @@ ok("la página carga el cliente de Supabase antes que su código en vivo", html.
 
     // En inglés: el botón y la delegación.
     await p6.evaluate(() => { window.__pedidos = []; });
-    await p6.click("#cac-idioma");
+    await cambiarIdioma(p6);
     await p6.waitForFunction(() => window.__pedidos.some((x) => x[1].accion === "seguir"), null, { timeout: 5000 }).catch(() => {});
     ok("en inglés, el botón, la delegación y los avisos cambian de idioma", await p6.evaluate(() => /Notifications on this phone: on/.test(document.getElementById("avisos-boton").textContent)
       && /^2 players from Costa Rica \(CRC\)/.test(document.getElementById("delegacion-estado").textContent)
       && window.__pedidos.some((x) => x[1].accion === "seguir" && x[1].idioma === "en")));
-    await p6.click("#cac-idioma");
+    await cambiarIdioma(p6);
 
     // La delegación elegida y los seguidos se recuerdan; si chess-results le
     // cambió el número a un seguido, se lo encuentra por su nombre.
@@ -584,10 +668,10 @@ ok("la página carga el cliente de Supabase antes que su código en vivo", html.
     await p6.click('#buscador-resultados [data-rondas="1494141-1"]');
     const puestos = await p6.evaluate(() => { const c = document.querySelector("#buscador-resultados .cac-jugador-rondas"); return { linea: c.querySelector(".cac-puestos").textContent, nota: c.textContent.includes("se comparte el puesto") }; });
     ok("«Sus rondas» trae su puesto ronda a ronda; empatado en puntos, el puesto compartido", puestos.linea === "Su puesto en la categoría después de cada ronda: R1 2.º–3.º · R2 2.º · R3 2.º" && puestos.nota, JSON.stringify(puestos));
-    await p6.click("#cac-idioma");
+    await cambiarIdioma(p6);
     const puestosEn = await p6.evaluate(() => document.querySelector("#buscador-resultados .cac-puestos").textContent);
     ok("y en inglés, con sus ordinales", puestosEn === "Their place in the section after each round: R1 2nd–3rd · R2 2nd · R3 2nd", puestosEn);
-    await p6.click("#cac-idioma");
+    await cambiarIdioma(p6);
     await p6.click('#buscador-resultados [data-rondas="1494141-1"]');
     await buscar("mayorga");
 
@@ -642,11 +726,11 @@ ok("la página carga el cliente de Supabase antes que su código en vivo", html.
     const pngDia = fs.readFileSync(await descDia.path());
     ok("el botón baja la imagen del día, de 1080 de ancho, con la marca de agua", pngDia.slice(1, 4).toString() === "PNG" && pngDia.readUInt32BE(16) === 1080 && pngDia.readUInt32BE(20) >= 1080
       && descDia.suggestedFilename() === "centroamericano-2026-2026-11-03.png" && await p6.evaluate(() => window.__marcas === 1), descDia.suggestedFilename());
-    await p6.click("#cac-idioma");
+    await cambiarIdioma(p6);
     const diaEn = await p6.evaluate(() => ({ boton: document.getElementById("imagen-dia").textContent, d: window.CentroamericanoTablas.resumenDelDia() }));
     ok("y en inglés", /Today's image to share/.test(diaEn.boton) && diaEn.d.titulo === "How the day ended" && diaEn.d.fecha === "Tuesday, November 3 · round 3"
       && diaEn.d.delegacion === "Costa Rica (CRC) today: 1 of 2 points (1 win)", JSON.stringify(diaEn));
-    await p6.click("#cac-idioma");
+    await cambiarIdioma(p6);
 
     // La hoja de la delegación en PDF: sus jugadores en la ronda emparejada, por categoría.
     const hoja = await p6.evaluate(() => {
@@ -663,10 +747,10 @@ ok("la página carga el cliente de Supabase antes que su código en vivo", html.
     ok("el botón baja el PDF con su nombre, los jugadores y la marca de agua", pdf.startsWith("%PDF-") && descPdf.suggestedFilename() === "centroamericano-2026-crc-ronda-4.pdf"
       && pdf.includes("Mayorga Araya, Sofia") && pdf.includes("FM Guevara Ruiz, Santiago Jose \\(ESA, 2252\\)") && pdf.includes("/Marca Do")
       && /Listo: la hoja se bajó/.test(await p6.textContent("#delegacion-lista .cac-hoja [role=status]")), descPdf.suggestedFilename());
-    await p6.click("#cac-idioma");
+    await cambiarIdioma(p6);
     const hojaEn = await p6.evaluate(() => { const d = window.CentroamericanoTablas.documentoDelegacion("CRC"); return { t: d.titulo, p: d.pagina(1, 2), boton: document.getElementById("delegacion-pdf").textContent }; });
     ok("y en inglés, también el número de página", hojaEn.t === "Costa Rica (CRC) · Round 4" && hojaEn.p === "Page 1 of 2" && /Delegation sheet to print/.test(hojaEn.boton), JSON.stringify(hojaEn));
-    await p6.click("#cac-idioma");
+    await cambiarIdioma(p6);
     // Con cada color, el país entero: Mayorga 2 de 2 con blancas y 1 de 1 con
     // negras; Muñoz ½ de 1 con negras (su bye y su «-0» no son partidas).
     ok("el resumen de la delegación dice cómo le fue al país con cada color",
@@ -915,9 +999,9 @@ ok("la página carga el cliente de Supabase antes que su código en vivo", html.
       ok("el aviso de la organización sale arriba de «Hoy en el torneo», con su hora (pedido solo de esta sala)", aviso.ve && aviso.arriba
         && aviso.texto.replace(/\s/g, " ") === "📢 Aviso de la organización · 4 nov, 9:00 a. m.La ronda 6 se atrasa 30 minutos." && JSON.stringify(aviso.pedido) === JSON.stringify([["sala", "centroamericano-2026"]]), JSON.stringify(aviso));
       ok("en blanco sobre el rojo de las bases (5,6)", JSON.stringify(aviso.colores) === JSON.stringify(["rgb(206, 19, 40)", "rgb(255, 255, 255)"]), JSON.stringify(aviso.colores));
-      await pd.click("#cac-idioma");
+      await cambiarIdioma(pd);
       ok("y en inglés, con su texto en inglés", /Notice from the organizers .*Round 6 is delayed by 30 minutes\.$/.test(await pd.textContent("#anuncios .cac-anuncio")), await pd.textContent("#anuncios .cac-anuncio"));
-      await pd.click("#cac-idioma");
+      await cambiarIdioma(pd);
       await pd.fill("#buscador-nombre", "mayorga");
       await pd.waitForTimeout(450);
       const encontrados = await pd.evaluate(() => [...document.querySelectorAll("#buscador-resultados li")].map((l) => l.innerText.replace(/\s+/g, " ").trim()));
@@ -999,13 +1083,13 @@ ok("la página carga el cliente de Supabase antes que su código en vivo", html.
       ok("una categoría sin torneo todavía deja su hueco en la fila", JSON.stringify(hueco) === JSON.stringify([3, 1, "cac-categoria-falta"]), JSON.stringify(hueco));
       await pd.keyboard.press("Escape");
       // En inglés.
-      await pd.click("#cac-idioma");
+      await cambiarIdioma(pd);
       await pd.click("#ficha-resultados");
       await pd.waitForFunction(() => document.getElementById("resultados").open, null, { timeout: 5000 }).catch(() => {});
       ok("y en inglés", await pd.evaluate(() => { const li = document.querySelector("#resultados .cac-categorias > li"); return !!li && li.innerText.replace(/\s+/g, " ").trim() === "U8 Open Girls" && document.querySelector("#resultados h2").textContent.includes("Live results"); }),
          await pd.evaluate(() => document.querySelector("#resultados").innerText.slice(0, 200)));
       await pd.keyboard.press("Escape");
-      await pd.click("#cac-idioma");
+      await cambiarIdioma(pd);
       // Desde Torneos se entra con «#resultados»: abre la elección ya llena.
       const pe = await ctx12.newPage();
       await pe.goto(BASE + "/" + PAGINA + "#resultados", { waitUntil: "load" });
@@ -1051,6 +1135,18 @@ ok("la página carga el cliente de Supabase antes que su código en vivo", html.
     await pDip.waitForSelector('#buscador-resultados [data-accion="diploma-pdf"]', { timeout: 10000 }).catch(() => {});
     const botonesDip = await pDip.evaluate(() => [...document.querySelectorAll('#buscador-resultados [data-accion^="diploma"]')].map((b) => b.textContent + (b.checkVisibility() ? "" : " (oculto)")));
     ok("con el torneo terminado, cada tarjeta trae su certificado en PDF y en imagen", JSON.stringify(botonesDip) === JSON.stringify(["Certificado (PDF)", "Certificado (imagen)"]), JSON.stringify(botonesDip));
+    // «Así terminó mi torneo»: la imagen final, del tamaño del estado de WhatsApp y con la marca de agua.
+    ok("con el torneo terminado, la tarjeta trae «Así terminó mi torneo»", await pDip.evaluate(() => { const b = document.querySelector('#buscador-resultados [data-accion="asi-termino"]'); return !!b && b.checkVisibility() && b.textContent === "🏁 Así terminó mi torneo"; }));
+    const fin = await pDip.evaluate(async () => {
+      let marcas = 0; const orig = window.TablaImagen.marcar;
+      window.TablaImagen.marcar = async (c) => { marcas++; return orig(c); };
+      const x = window.CentroamericanoVivo.jugadores().find((y) => /Mayorga/.test(y.j.nombre));
+      const b = await window.CentroamericanoTablas.imagenFinal(x);
+      window.TablaImagen.marcar = orig;
+      const img = await createImageBitmap(b);
+      return { w: img.width, h: img.height, tipo: b.type, marcas };
+    });
+    ok("y su imagen es de 1080 × 1920 (el estado de WhatsApp), en PNG y con la marca de agua", fin.w === 1080 && fin.h === 1920 && fin.tipo === "image/png" && fin.marcas === 1, JSON.stringify(fin));
     ok("el nombre va al derecho, con el título adelante", await pDip.evaluate(() => window.CentroamericanoTablas.nombreAlDerecho({ titulo: "WIM", nombre: "Mayorga Araya, Sofia" }) === "WIM Sofia Mayorga Araya"
       && window.CentroamericanoTablas.nombreAlDerecho({ titulo: "", nombre: "Wilson Hannah" }) === "Wilson Hannah"));
     // Con la cara de las bases: el morado del fondo (arriba #40478F, abajo
@@ -1255,7 +1351,7 @@ ok("la página carga el cliente de Supabase antes que su código en vivo", html.
     await p5.reload({ waitUntil: "load" }).catch(() => {});
     const sinRed = await p5.evaluate(() => ({ titulo: (document.querySelector("h1") || {}).textContent || "", fichas: document.querySelectorAll("#fichas .cac-ficha").length,
       css: getComputedStyle(document.querySelector(".cac-portada") || document.body).backgroundImage })).catch((e) => ({ error: String(e) }));
-    ok("sin red, abre entera: el título, las fichas y su hoja de estilos", /Centroamericano/.test(sinRed.titulo) && sinRed.fichas === 9 && /gradient/.test(sinRed.css), JSON.stringify(sinRed));
+    ok("sin red, abre entera: el título, las fichas y su hoja de estilos", /Centroamericano/.test(sinRed.titulo) && sinRed.fichas === 10 && /gradient/.test(sinRed.css), JSON.stringify(sinRed));
     await ctx5.close();
   } finally {
     await nav.close();

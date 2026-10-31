@@ -219,7 +219,10 @@ def archivos():
             # herramienta arbitros-cr (los nombres de los árbitros y de los
             # torneos tal cual: Solís, Zurquí…). No se publica: está en
             # herramientas/, fuera del sitio.
-            and f != os.path.join("herramientas", "datos", "arbitros-cr-chess-results.json")]
+            and f != os.path.join("herramientas", "datos", "arbitros-cr-chess-results.json")
+            # La página del Centroamericano en francés: todo su francés vive
+            # en ese archivo («vos», «été», «trié» no son voseo).
+            and f != os.path.join("js", "centroamericano-fr.js")]
 
 def hallazgos(ruta):
     """Devuelve [(palabra, contexto)] del voseo que quede en el archivo."""
