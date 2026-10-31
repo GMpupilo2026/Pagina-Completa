@@ -100,3 +100,43 @@ export function resumenDelegacion(idioma: string, fed: string, torneos: Torneo[]
     cuerpo: lista + (jugadas ? (en ? ": " + fmtPuntos(pts) + " of " + jugadas + " points in their games." : ": " + fmtPuntos(pts) + " de " + jugadas + " puntos en sus partidas.") : "."),
   };
 }
+
+// ---- «su partida está en vivo»: el aviso cuando la partida de un seguido
+// empieza en un tablero que Lichess transmite. Ver «Su partida está en vivo:
+// el aviso al celular» en docs/decisiones/juegos-y-torneos.md.
+
+// lichess.org/broadcast/<torneo>/<id> → un torneo; /<torneo>/<ronda>/<id>
+// (con la partida al final o no) → una ronda. La misma regla que idDeEnlace()
+// de js/lichess-transmision.js.
+export function idDeEnlaceLichess(url: string): { id: string; es: "torneo" | "ronda" } | null {
+  let u: URL;
+  try { u = new URL(String(url || "")); } catch { return null; }
+  if (!/(^|\.)lichess\.org$/.test(u.hostname)) return null;
+  const p = u.pathname.split("/").filter(Boolean);
+  if (p[0] !== "broadcast") return null;
+  const ok = (s?: string) => /^[A-Za-z0-9]{8}$/.test(s || "");
+  if (p.length === 3 && ok(p[2])) return { id: p[2], es: "torneo" };
+  if ((p.length === 4 || p.length === 5) && ok(p[3])) return { id: p[3], es: "ronda" };
+  return null;
+}
+
+// La misma persona en chess-results y en Lichess (los dos escriben
+// «Apellidos, Nombre» de FIDE): igual sin tildes ni mayúsculas, o con los
+// mismos apellidos y el mismo primer nombre. La regla de partidaDe() en
+// js/centroamericano-partidas.js.
+const sinTildes = (s: string) => String(s || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9 ]+/g, " ").replace(/\s+/g, " ").trim();
+const apellidosYNombre = (n: string) => { const [a, b] = String(n || "").split(","); return sinTildes(a) + "|" + sinTildes(b || "").split(" ")[0]; };
+export const mismoNombre = (a: string, b: string) => !!a && !!b && (sinTildes(a) === sinTildes(b) || apellidosYNombre(a) === apellidosYNombre(b));
+
+export type PartidaLichess = { id: string; ronda: number; categoria: string; mesa: number; blancas: string; negras: string; empezada: boolean; terminada: boolean };
+
+// La partida que juega ahora alguien de esa categoría y esa ronda: empezada
+// (ya tiene una jugada) y sin terminar. Si hay dos que calzan (dos personas
+// con el mismo nombre), ninguna: mejor no avisar que avisar de otra.
+export function partidaEnVivo(partidas: PartidaLichess[], nombre: string, categoria: string, ronda: number): { p: PartidaLichess; color: "w" | "b" } | null {
+  const calzan = partidas.filter((p) => p.empezada && !p.terminada &&
+    (!categoria || !p.categoria || p.categoria === categoria) && (!ronda || !p.ronda || p.ronda === ronda) &&
+    (mismoNombre(p.blancas, nombre) || mismoNombre(p.negras, nombre)));
+  if (calzan.length !== 1) return null;
+  return { p: calzan[0], color: mismoNombre(calzan[0].blancas, nombre) ? "w" : "b" };
+}

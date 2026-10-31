@@ -807,6 +807,8 @@
     $("pi-nota-equipos").hidden = !deEquipos;
     $("pi-form-jugador").hidden = deEquipos;
     $("pi-pegar-caja").hidden = deEquipos;
+    $("pi-listas-caja").hidden = deEquipos;
+    if (!deEquipos) pintarListaElo();
     $("pi-caja-elo-nacional").hidden = deEquipos;
     tabla.hidden = deEquipos;
     $("pi-masivo").hidden = true;
@@ -2798,6 +2800,110 @@
     if (todosFaltantes.length > TOPE_BUSQUEDA_ELO) {
       Avisos.avisar(tx("eloNacionalTope", { tope: TOPE_BUSQUEDA_ELO }), { tipo: "info" });
     }
+  }
+
+  // ---------- Agregar desde una lista de Elo ----------
+  // FIDE (Estándar, Rápido, Blitz) o la nacional de Costa Rica, por la Edge
+  // Function pareo-listas-elo (elo-nacional.js). Las tres de FIDE salen de la
+  // misma búsqueda: cada fila trae los tres Elo y la lista elegida decide
+  // cuál entra. Ver «Pareo Integral: agregar jugadores desde las listas de
+  // Elo» en docs/decisiones/juegos-y-torneos.md.
+  const CLAVE_LISTA_ELO = "pareo_lista_elo_v1";
+  const LISTAS_ELO = { estandar: "listaEstandar", rapido: "listaRapido", blitz: "listaBlitz", nacional: "listaNacional" };
+  const fuenteDeLista = (lista) => (lista === "nacional" && lista) || "fide";
+  const eloDeLista = (f, lista) => (Number(f[lista]) > 0 ? Math.round(Number(f[lista])) : 0);
+
+  function listaEloInicial() {
+    const g = leer(CLAVE_LISTA_ELO);
+    if (LISTAS_ELO[g]) return g;
+    return (t() && t().validoElo === "nacional" && "nacional") || "estandar";
+  }
+
+  async function buscarEnListaElo() {
+    const lista = $("pi-listas-lista").value;
+    const caja = $("pi-listas-q");
+    const q = caja.value.replace(/\s+/g, " ").trim();
+    const estadoEl = $("pi-listas-estado");
+    if (q.length < 3) { estadoEl.textContent = tx("listasCorto"); caja.focus(); return; }
+    const boton = $("pi-listas-buscar");
+    boton.disabled = true;
+    estadoEl.textContent = tx("listasBuscando");
+    const r = await window.PareoEloNacional.buscarEnLista(fuenteDeLista(lista), q);
+    boton.disabled = false;
+    if (!r || r.ok === false) {
+      estadoEl.textContent = "";
+      Avisos.avisar((r && r.error) || tx("listasError"), { tipo: "error" });
+      return;
+    }
+    const filas = (Array.isArray(r.filas) ? r.filas : []).filter((f) => f && f.nombre && /^\d{3,11}$/.test(String(f.fideId)));
+    estado.listaElo = { fuente: fuenteDeLista(lista), q, filas, total: Number(r.total) || filas.length, hayMas: !!r.hayMas, periodo: r.periodo || null };
+    pintarListaElo();
+  }
+
+  function pintarListaElo() {
+    const tabla = $("pi-listas-resultados");
+    const estadoEl = $("pi-listas-estado");
+    const b = estado.listaElo;
+    const lista = $("pi-listas-lista").value;
+    // Lo buscado en FIDE sirve para las tres listas de FIDE; si se cambia a
+    // la nacional (o al revés), hay que volver a buscar.
+    if (!b || b.fuente !== fuenteDeLista(lista)) {
+      tabla.hidden = true;
+      tabla.replaceChildren();
+      if (b) { estado.listaElo = null; estadoEl.textContent = ""; }
+      return;
+    }
+    const textos = [b.filas.length
+      ? (b.hayMas ? tx("listasHayMas", { n: b.filas.length, total: b.total }) : tx("listasEncontrados", { n: b.filas.length }))
+      : tx("listasNadie", { q: b.q })];
+    if (b.periodo) textos.push(tx("listasPeriodo", { p: b.periodo }));
+    const texto = textos.join(" ");
+    // El mismo texto no se vuelve a escribir: aria-live lo leería otra vez
+    // cada vez que se pinta la ficha.
+    if (estadoEl.textContent !== texto) estadoEl.textContent = texto;
+    tabla.hidden = !b.filas.length;
+    const ya = new Set(t().jugadores.map((j) => String(j.fideId || "")).filter(Boolean));
+    const nacional = b.fuente === "nacional";
+    const sexo = (x) => (x === "m" ? tx("masculino") : x === "w" ? tx("femenino") : "");
+    tabla.replaceChildren(
+      el("thead", {}, el("tr", {},
+        el("th", { scope: "col", texto: tx("nombre") }), el("th", { scope: "col", texto: tx("titulo") }),
+        el("th", { scope: "col", texto: tx("fed") }), el("th", { class: "num", scope: "col", texto: tx(LISTAS_ELO[lista]) }),
+        el("th", { scope: "col", texto: tx("fideId") }),
+        nacional ? el("th", { scope: "col", texto: tx("listasClub") }) : el("th", { class: "num", scope: "col", texto: tx("listasNacimiento") }),
+        nacional ? el("th", { scope: "col", texto: tx("listasSexo") }) : null,
+        el("th", { scope: "col" }, el("span", { class: "sr-only", texto: tx("listasAgregar") })))),
+      el("tbody", {}, b.filas.map((f) => {
+        const esta = ya.has(String(f.fideId));
+        const elo = eloDeLista(f, lista);
+        return el("tr", {},
+          el("td", { texto: f.nombre }), el("td", { texto: f.titulo || "" }), el("td", { texto: f.fed || "" }),
+          el("td", { class: "num", texto: elo || "—" }), el("td", { texto: f.fideId }),
+          nacional ? el("td", { texto: f.club || "" }) : el("td", { class: "num", texto: f.nacimiento || "" }),
+          nacional ? el("td", { texto: sexo(f.sexo) }) : null,
+          el("td", {}, el("button", {
+            type: "button", class: C.mini, "data-fide-id": f.fideId, disabled: esta,
+            "aria-label": esta ? tx("listasYaEstaA", { n: f.nombre }) : tx("listasAgregarA", { n: f.nombre }),
+            onclick: (e) => agregarDeLista(f, lista, e.currentTarget),
+          }, esta ? tx("listasYaEsta") : tx("listasAgregar"))));
+      })));
+  }
+
+  function agregarDeLista(f, lista, boton) {
+    if (t().jugadores.some((j) => String(j.fideId || "") === String(f.fideId))) return;
+    const elo = eloDeLista(f, lista);
+    // El año de nacimiento de FIDE NO se guarda como fecha: Pareo pide el día
+    // exacto, y un 1 de enero inventado cambiaría la categoría de los JDE.
+    const datos = datosJugador({ nombre: f.nombre, elo, titulo: f.titulo, fed: f.fed, fideId: f.fideId, sexo: f.sexo });
+    // El foco va al botón «Agregar» siguiente (o al buscador): el de esta fila
+    // queda deshabilitado al repintar y lo perdería.
+    const botones = Array.from($("pi-listas-resultados").querySelectorAll("button[data-fide-id]"));
+    const siguiente = botones.slice(botones.indexOf(boton) + 1).find((x) => !x.disabled);
+    const idSiguiente = siguiente ? siguiente.dataset.fideId : null;
+    if (!agregarJugadores([datos])) return;
+    Avisos.avisar(elo ? tx("listasAgregado", { n: datos.nombre, e: elo }) : tx("listasAgregadoSinElo", { n: datos.nombre }));
+    const destino = idSiguiente && $("pi-listas-resultados").querySelector("button[data-fide-id='" + idSiguiente + "']");
+    (destino || $("pi-listas-q")).focus();
   }
 
   async function editarJugador(id) {
@@ -6913,6 +7019,9 @@
       if (fs.length) subirLista(fs);
     });
     $("pi-elo-nacional").addEventListener("click", buscarEloNacional);
+    $("pi-listas-lista").value = listaEloInicial();
+    $("pi-listas-lista").addEventListener("change", (e) => { escribir(CLAVE_LISTA_ELO, e.target.value); pintarListaElo(); });
+    $("pi-listas-form").addEventListener("submit", (e) => { e.preventDefault(); buscarEnListaElo(); });
     $("pi-buscar-jugador").addEventListener("input", (e) => { estado.filtroJugador = e.target.value; pintarJugadores(); });
     $("pi-ver-copiar").addEventListener("click", async () => {
       try { await navigator.clipboard.writeText($("pi-ver-direccion").textContent); Avisos.avisar(tx("enlaceCopiado")); }

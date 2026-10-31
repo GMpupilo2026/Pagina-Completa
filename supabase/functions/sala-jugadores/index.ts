@@ -50,9 +50,11 @@
 //   - "baja"        { clave, suscripcion } → deja de avisarle a ese aparato.
 //   - "revisar"     la llama pg_cron (disparar_sala_avisos) con el secreto de
 //                   la bóveda: lee cada sala con suscripciones y manda a quien
-//                   no lo tenga tres avisos: el recordatorio de la ronda que
+//                   no lo tenga estos avisos: el recordatorio de la ronda que
 //                   empieza en 30 minutos (la hora sale del .ics de la página),
-//                   el pareo de cada seguido y, cuando chess-results lo anota,
+//                   el pareo de cada seguido, que su partida empezó en un
+//                   tablero que Lichess transmite (abre la partida en la
+//                   página) y, cuando chess-results lo anota,
 //                   su resultado con su puesto; y a quien sigue un país
 //                   (delegacion, el código de FIDE), el resumen de la ronda
 //                   cuando terminan todas sus partidas; y los avisos de la
@@ -69,7 +71,7 @@
 
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { type LlavesVapid, mandar as mandarPush } from "./webpush.ts";
-import { codigoCategoria, deCategorias, MODALIDADES, type Modalidad, modalidadDe, type Jug, type Mesa, puntosDe, resumenDelegacion } from "./torneos-sala.ts";
+import { codigoCategoria, deCategorias, idDeEnlaceLichess, MODALIDADES, type Modalidad, modalidadDe, type Jug, type Mesa, type PartidaLichess, partidaEnVivo, puntosDe, resumenDelegacion } from "./torneos-sala.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
@@ -397,12 +399,12 @@ async function revisar(admin: Admin) {
   let mandados = 0;
   const caducas = new Set<string>();
   // Anota el aviso ANTES de mandarlo (la clave primaria impide el segundo) y lo manda.
-  async function avisar(s: Suscrito, tipo: string, tnr: string, no: number, ronda: number, aviso: { titulo: string; cuerpo: string; etiqueta: string }) {
+  async function avisar(s: Suscrito, tipo: string, tnr: string, no: number, ronda: number, aviso: { titulo: string; cuerpo: string; etiqueta: string; url?: string }) {
     if (caducas.has(s.id)) return;
     const { error } = await admin.from("sala_avisos_push_enviados").insert({ suscripcion_id: s.id, tipo, tnr, no, ronda });
     if (error) return; // ya salió (23505) o no se pudo anotar: no se manda
     const r = await mandarPush({ endpoint: s.endpoint, p256dh: s.p256dh, auth: s.auth },
-      { titulo: aviso.titulo, cuerpo: aviso.cuerpo, url: "/centroamericano-2026.html#buscador", etiqueta: aviso.etiqueta }, llaves!, CONTACTO_PUSH);
+      { titulo: aviso.titulo, cuerpo: aviso.cuerpo, url: aviso.url || "/centroamericano-2026.html#buscador", etiqueta: aviso.etiqueta }, llaves!, CONTACTO_PUSH);
     if (!r.ok && r.caduca) { caducas.add(s.id); await admin.from("sala_suscripciones_push").delete().eq("id", s.id); return; }
     mandados++;
   }
@@ -489,7 +491,9 @@ async function revisar(admin: Admin) {
       }
     }
 
-    // 2) El pareo y 3) el resultado de cada seguido.
+    // 2) El pareo, 2b) su partida en vivo y 3) el resultado de cada seguido.
+    // Lo de Lichess se pide una sola vez por sala y solo si hace falta.
+    let enLichess: Promise<PartidaLichess[]> | null = null;
     for (const s of deSala) {
       for (const j of s.jugadores) {
         if (mandados >= TOPE_AVISOS) return { ok: true, mandados, tope: true };
@@ -507,6 +511,22 @@ async function revisar(admin: Admin) {
         }
         const cuerpo = textoRonda(s.idioma, pareo.ronda, e.no, pareo.mesas, porNo);
         if (!cuerpo) continue;
+        // Si su partida ya empezó en un tablero transmitido, va ese aviso, que
+        // dice lo mismo que el del pareo y además abre la partida: el del pareo
+        // ya no hace falta.
+        if (!enLichess) enLichess = partidasDeLichess(admin, sala);
+        const yo = porNo.get(e.no);
+        const vivo = partidaEnVivo(await enLichess, nombre, (yo && yo.grupo) || String(e.t.categoria || ""), pareo.ronda);
+        if (vivo) {
+          const en = s.idioma === "en";
+          await avisar(s, "envivo", e.t.tnr, e.no, pareo.ronda, {
+            titulo: "📺 " + (en ? "Round " + pareo.ronda + ": " + nombre + " is playing live" : "Ronda " + pareo.ronda + ": " + nombre + " juega en vivo"),
+            cuerpo: cuerpo + (en ? " The game has started and is being broadcast: tap to watch it." : " La partida ya empezó y se transmite: tócala para verla."),
+            etiqueta: "sala-" + e.t.tnr + "-" + e.no,
+            url: "/centroamericano-2026.html#partida=" + vivo.p.id,
+          });
+          continue;
+        }
         await avisar(s, "pareo", e.t.tnr, e.no, pareo.ronda, {
           titulo: (s.idioma === "en" ? "Round " : "Ronda ") + pareo.ronda + ": " + nombre,
           cuerpo,
@@ -525,6 +545,56 @@ async function revisar(admin: Admin) {
     }
   }
   return { ok: true, mandados };
+}
+
+// Las partidas de la ronda que se está jugando en cada categoría que Lichess
+// transmite, del Clásico (el de los demás avisos). Sale de los botones de la
+// sala con la dirección de la transmisión (lichess.org/broadcast/…), los
+// mismos que usa la página; con uno, se llega al grupo entero. La API de
+// Lichess es pública y sin cuenta. Si Lichess no contesta, ninguna: el aviso
+// del pareo sale igual.
+async function partidasDeLichess(admin: Admin, sala: string): Promise<PartidaLichess[]> {
+  const pedir = async (ruta: string) => {
+    const r = await fetch("https://lichess.org" + ruta, { headers: { Accept: "application/json" }, signal: AbortSignal.timeout(10_000) });
+    if (!r.ok) throw new Error("Lichess " + r.status + " " + ruta);
+    return await r.json();
+  };
+  try {
+    const { data } = await admin.from("salas_torneo").select("enlaces").eq("clave", sala).eq("visible", true).maybeSingle();
+    const enlaces = (Array.isArray(data?.enlaces) ? data!.enlaces : []) as { url?: string; texto?: string }[];
+    const torneos = new Map<string, { nombre: string; texto: string }>();
+    for (const e of enlaces) {
+      const l = idDeEnlaceLichess(String(e.url || ""));
+      if (!l) continue;
+      const d = await pedir(l.es === "ronda" ? "/api/broadcast/-/-/" + l.id : "/api/broadcast/" + l.id);
+      const grupo = d.group && Array.isArray(d.group.tours) && d.group.tours.length ? d.group.tours : null;
+      // Un torneo suelto toma la categoría del texto del botón si su nombre no la dice.
+      for (const t of grupo || [d.tour || {}]) {
+        if (/^[A-Za-z0-9]{8}$/.test(t.id || "") && !torneos.has(t.id)) torneos.set(t.id, { nombre: String(t.name || ""), texto: grupo ? "" : String(e.texto || "") });
+      }
+    }
+    const out: PartidaLichess[] = [];
+    await Promise.all([...torneos].map(async ([id, t]) => {
+      if (modalidadDe(t.nombre + " " + t.texto) !== "clasico") return;
+      try {
+        const d = await pedir("/api/broadcast/" + id);
+        const r = (d.rounds || []).find((x: { ongoing?: boolean }) => x.ongoing);
+        if (!r) return;
+        const ronda = Number((String(r.name || "").match(/(\d+)/) || [])[1]) || 0;
+        const categoria = codigoCategoria(t.nombre) || codigoCategoria(t.texto);
+        const rd = await pedir("/api/broadcast/-/-/" + r.id);
+        (rd.games || []).forEach((g: { id: string; lastMove?: string; status?: string; players?: { name?: string }[] }, i: number) => {
+          out.push({ id: String(g.id || ""), ronda, categoria, mesa: i + 1,
+            blancas: String(g.players?.[0]?.name || ""), negras: String(g.players?.[1]?.name || ""),
+            empezada: !!g.lastMove, terminada: /^(1-0|0-1|½-½|1\/2-1\/2)$/.test(String(g.status || "")) });
+        });
+      } catch (e) { console.error("sala-jugadores: Lichess", id, e); }
+    }));
+    return out.filter((p) => /^[A-Za-z0-9]{8}$/.test(p.id));
+  } catch (e) {
+    console.error("sala-jugadores: Lichess", sala, e);
+    return [];
+  }
 }
 
 // ------------------------------------------------------------- la función

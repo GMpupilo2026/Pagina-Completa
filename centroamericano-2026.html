@@ -43,7 +43,16 @@
                     <li><a href="#hoteles" class="hover:text-accent-400 transition-colors">Hoteles</a></li>
                 </ul>
                 <div class="flex items-center gap-2 sm:gap-3">
-                    <button id="cac-idioma" type="button" lang="en" aria-label="Read this page in English" data-no-traducir class="shrink-0 text-white text-sm font-bold h-9 px-2 sm:px-3 rounded-lg border border-white/40 hover:bg-brand-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800"><span class="sm:hidden" aria-hidden="true">EN</span><span class="hidden sm:inline">English</span></button>
+                    <div class="cac-idioma relative shrink-0" data-no-traducir>
+                        <!-- El idioma de la página (js/centroamericano.js): el botón dice el
+                             de ahora y abre la lista de los tres, cada uno en su idioma. -->
+                        <button id="cac-idioma" type="button" lang="es" aria-haspopup="true" aria-expanded="false" aria-controls="cac-idiomas" aria-label="Idioma · Language · Langue : Español" class="shrink-0 text-white text-sm font-bold h-9 px-2 sm:px-3 rounded-lg border border-white/40 hover:bg-brand-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800"><span class="sm:hidden">ES</span><span class="hidden sm:inline">Español</span><span class="hidden sm:inline" aria-hidden="true"> ▾</span></button>
+                        <ul id="cac-idiomas" class="cac-idiomas" hidden>
+                            <li><button type="button" data-idioma="es" lang="es">Español</button></li>
+                            <li><button type="button" data-idioma="en" lang="en">English</button></li>
+                            <li><button type="button" data-idioma="fr" lang="fr">Français</button></li>
+                        </ul>
+                    </div>
                     <button id="theme-toggle" class="text-white text-lg w-9 h-9 flex items-center justify-center rounded-lg hover:bg-brand-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Cambiar a modo oscuro" title="Cambiar entre modo claro y oscuro">
                         <span id="theme-icon" aria-hidden="true">☀️</span>
                     </button>
@@ -173,6 +182,9 @@
                      cuando la sala tiene más de una modalidad. Hay uno igual en
                      cada ventana y en el proyector. -->
                 <div class="cac-modalidad mb-6" data-modalidades hidden data-no-traducir></div>
+                <!-- «En vivo ahora»: las partidas transmitidas que se están jugando
+                     (js/centroamericano-partidas.js). Sin transmisión, no se ve. -->
+                <div id="en-vivo-ahora" class="cac-envivo mb-6" role="region" aria-label="En vivo ahora" hidden data-no-traducir></div>
                 <!-- Cómo va la ronda: cuántas partidas ya tienen resultado. -->
                 <div id="ronda-progreso" class="cac-progreso mb-6" hidden data-no-traducir>
                     <p id="ronda-progreso-texto" class="font-bold" role="status"></p>
@@ -293,12 +305,20 @@
                         <span class="mt-auto pt-3 sm:pt-4 text-xs sm:text-sm font-bold cac-accion">Abrir el mapa →</span>
                     </a>
                 </li>
-                <li class="col-span-2 lg:col-span-1">
+                <li>
                     <a href="#hoteles" data-color="verde" class="cac-ficha h-full flex flex-col rounded-3xl bg-white dark:bg-brand-900 shadow-md p-4 sm:p-6 focus:outline-none focus-visible:ring-4 focus-visible:ring-[#ce1328]">
                         <span class="cac-icono" aria-hidden="true">🏨</span>
                         <span class="mt-3 font-extrabold text-base sm:text-lg leading-snug text-brand-800 dark:text-white">Hoteles oficiales</span>
                         <span class="hidden sm:block mt-1 text-sm text-brand-600 dark:text-brand-300 flex-1">Los siete hoteles con su dirección, teléfono, mapa y el precio del paquete de cada uno.</span>
                         <span class="mt-auto pt-3 sm:pt-4 text-xs sm:text-sm font-bold cac-accion">Ver los hoteles →</span>
+                    </a>
+                </li>
+                <li class="lg:col-span-3">
+                    <a href="#paseos" data-color="naranja" class="cac-ficha h-full flex flex-col rounded-3xl bg-white dark:bg-brand-900 shadow-md p-4 sm:p-6 focus:outline-none focus-visible:ring-4 focus-visible:ring-[#ce1328]">
+                        <span class="cac-icono" aria-hidden="true">🌴</span>
+                        <span class="mt-3 font-extrabold text-base sm:text-lg leading-snug text-brand-800 dark:text-white">Qué hacer en el tiempo libre</span>
+                        <span class="hidden sm:block mt-1 text-sm text-brand-600 dark:text-brand-300 flex-1">Paseos para las horas sin ronda: cerca de la sala, en el centro de San José, para niños, si llueve o de medio día.</span>
+                        <span class="mt-auto pt-3 sm:pt-4 text-xs sm:text-sm font-bold cac-accion">Ver los paseos →</span>
                     </a>
                 </li>
             </ul>
@@ -610,6 +630,159 @@
         <div class="cac-proyector-qr" aria-hidden="true"><div id="proyector-qr"></div><p>Ábrela en tu celular</p></div>
     </dialog>
 
+    <dialog id="paseos" class="ficha-dialogo w-[calc(100%-1rem)] sm:w-[calc(100%-2rem)] max-w-5xl max-h-[90vh] rounded-2xl shadow-2xl p-0 bg-brand-50 dark:bg-brand-950 text-brand-800 dark:text-brand-100 backdrop:bg-black/60" aria-labelledby="paseos-titulo">
+        <div class="sticky top-0 z-10 flex items-center gap-3 px-4 sm:px-6 py-3 bg-white dark:bg-brand-900 border-b border-brand-100 dark:border-brand-800">
+            <h2 id="paseos-titulo" class="font-serif text-xl md:text-2xl font-bold text-brand-800 dark:text-white flex-1 min-w-0"><span aria-hidden="true">🌴 </span>Qué hacer en el tiempo libre</h2>
+            <button type="button" data-cerrar class="shrink-0 bg-brand-800 hover:bg-brand-700 text-white font-semibold text-sm px-4 py-2 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2">Cerrar</button>
+        </div>
+        <div class="px-4 sm:px-6 pt-2 pb-6">
+            <!-- Los paseos (js/centroamericano.js los filtra). Sin horarios ni
+                 precios: cambian y no hay de dónde confirmarlos; el mapa de
+                 cada lugar trae los del día. Ver «Qué hacer en el tiempo libre»
+                 en docs/decisiones/juegos-y-torneos.md. -->
+            <div class="mt-4 rounded-2xl border-l-4 border-accent-500 bg-white dark:bg-brand-900 p-5 text-sm">
+                <p class="font-bold text-brand-800 dark:text-white">Revisa el horario antes de ir.</p>
+                <p class="mt-1 text-brand-600 dark:text-brand-300">Los horarios y los precios cambian: «Ver en el mapa» muestra los de hoy. Y vuelve con tiempo a la sala: la tolerancia es de 30 minutos desde el inicio de la ronda.</p>
+            </div>
+            <div class="mt-5 flex flex-wrap gap-2" role="group" aria-label="Mostrar">
+                <button type="button" data-paseo-filtro="todos" aria-pressed="true" class="cac-paseo-filtro">Todos</button>
+                <button type="button" data-paseo-filtro="cerca" aria-pressed="false" class="cac-paseo-filtro">Cerca de la sala</button>
+                <button type="button" data-paseo-filtro="centro" aria-pressed="false" class="cac-paseo-filtro">En el centro de San José</button>
+                <button type="button" data-paseo-filtro="ninos" aria-pressed="false" class="cac-paseo-filtro">Para niños</button>
+                <button type="button" data-paseo-filtro="techo" aria-pressed="false" class="cac-paseo-filtro">Si llueve</button>
+                <button type="button" data-paseo-filtro="excursion" aria-pressed="false" class="cac-paseo-filtro">Excursión de medio día</button>
+            </div>
+            <ul class="mt-5 grid sm:grid-cols-2 lg:grid-cols-3 gap-4" data-paseos>
+                <li class="cac-paseo" data-etiquetas="cerca ninos">
+                    <h3 class="font-bold text-lg text-brand-800 dark:text-white"><span aria-hidden="true">🌳 </span>Parque Metropolitano La Sabana</h3>
+                    <p class="mt-1 text-xs font-bold cac-paseo-etiquetas">Cerca de la sala · Para niños</p>
+                    <p class="mt-2 text-sm text-brand-600 dark:text-brand-300">El parque de la sala: el lago, zonas verdes, canchas y juegos para niños. Para despejarse entre rondas.</p>
+                    <p class="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-sm font-semibold">
+                        <a href="https://www.google.com/maps/search/?api=1&amp;query=Parque+Metropolitano+La+Sabana+San+Jos%C3%A9+Costa+Rica" target="_blank" rel="noopener" class="text-accent-700 dark:text-accent-400 underline underline-offset-2 hover:no-underline">Ver en el mapa →<span class="sr-only"> Parque Metropolitano La Sabana (se abre en otra pestaña)</span></a>
+                        <a href="https://www.google.com/maps/dir/?api=1&amp;destination=Parque+Metropolitano+La+Sabana+San+Jos%C3%A9+Costa+Rica" target="_blank" rel="noopener" class="text-accent-700 dark:text-accent-400 underline underline-offset-2 hover:no-underline">Cómo llegar →<span class="sr-only"> Parque Metropolitano La Sabana (se abre en otra pestaña)</span></a>
+                    </p>
+                </li>
+                <li class="cac-paseo" data-etiquetas="cerca techo">
+                    <h3 class="font-bold text-lg text-brand-800 dark:text-white"><span aria-hidden="true">🎨 </span>Museo de Arte Costarricense</h3>
+                    <p class="mt-1 text-xs font-bold cac-paseo-etiquetas">Cerca de la sala · Bajo techo</p>
+                    <p class="mt-2 text-sm text-brand-600 dark:text-brand-300">En la antigua terminal del aeropuerto, al este de La Sabana: arte costarricense y el Salón Dorado, con su mural de relieves dorados.</p>
+                    <p class="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-sm font-semibold">
+                        <a href="https://www.google.com/maps/search/?api=1&amp;query=Museo+de+Arte+Costarricense+La+Sabana+San+Jos%C3%A9+Costa+Rica" target="_blank" rel="noopener" class="text-accent-700 dark:text-accent-400 underline underline-offset-2 hover:no-underline">Ver en el mapa →<span class="sr-only"> Museo de Arte Costarricense (se abre en otra pestaña)</span></a>
+                        <a href="https://www.google.com/maps/dir/?api=1&amp;destination=Museo+de+Arte+Costarricense+La+Sabana+San+Jos%C3%A9+Costa+Rica" target="_blank" rel="noopener" class="text-accent-700 dark:text-accent-400 underline underline-offset-2 hover:no-underline">Cómo llegar →<span class="sr-only"> Museo de Arte Costarricense (se abre en otra pestaña)</span></a>
+                    </p>
+                </li>
+                <li class="cac-paseo" data-etiquetas="cerca ninos techo">
+                    <h3 class="font-bold text-lg text-brand-800 dark:text-white"><span aria-hidden="true">🦕 </span>Museo de Ciencias Naturales La Salle</h3>
+                    <p class="mt-1 text-xs font-bold cac-paseo-etiquetas">Cerca de la sala · Para niños · Bajo techo</p>
+                    <p class="mt-2 text-sm text-brand-600 dark:text-brand-300">En Sabana Sur: animales disecados, fósiles y minerales de todo el mundo. A los niños les encanta.</p>
+                    <p class="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-sm font-semibold">
+                        <a href="https://www.google.com/maps/search/?api=1&amp;query=Museo+de+Ciencias+Naturales+La+Salle+San+Jos%C3%A9+Costa+Rica" target="_blank" rel="noopener" class="text-accent-700 dark:text-accent-400 underline underline-offset-2 hover:no-underline">Ver en el mapa →<span class="sr-only"> Museo de Ciencias Naturales La Salle (se abre en otra pestaña)</span></a>
+                        <a href="https://www.google.com/maps/dir/?api=1&amp;destination=Museo+de+Ciencias+Naturales+La+Salle+San+Jos%C3%A9+Costa+Rica" target="_blank" rel="noopener" class="text-accent-700 dark:text-accent-400 underline underline-offset-2 hover:no-underline">Cómo llegar →<span class="sr-only"> Museo de Ciencias Naturales La Salle (se abre en otra pestaña)</span></a>
+                    </p>
+                </li>
+                <li class="cac-paseo" data-etiquetas="cerca techo">
+                    <h3 class="font-bold text-lg text-brand-800 dark:text-white"><span aria-hidden="true">🛍️ </span>Plaza Mayor (Rohrmoser)</h3>
+                    <p class="mt-1 text-xs font-bold cac-paseo-etiquetas">Cerca de la sala · Bajo techo</p>
+                    <p class="mt-2 text-sm text-brand-600 dark:text-brand-300">Centro comercial al oeste de La Sabana, con restaurantes y cine. Para un día de lluvia.</p>
+                    <p class="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-sm font-semibold">
+                        <a href="https://www.google.com/maps/search/?api=1&amp;query=Centro+Comercial+Plaza+Mayor+Rohrmoser+San+Jos%C3%A9+Costa+Rica" target="_blank" rel="noopener" class="text-accent-700 dark:text-accent-400 underline underline-offset-2 hover:no-underline">Ver en el mapa →<span class="sr-only"> Plaza Mayor (Rohrmoser) (se abre en otra pestaña)</span></a>
+                        <a href="https://www.google.com/maps/dir/?api=1&amp;destination=Centro+Comercial+Plaza+Mayor+Rohrmoser+San+Jos%C3%A9+Costa+Rica" target="_blank" rel="noopener" class="text-accent-700 dark:text-accent-400 underline underline-offset-2 hover:no-underline">Cómo llegar →<span class="sr-only"> Plaza Mayor (Rohrmoser) (se abre en otra pestaña)</span></a>
+                    </p>
+                </li>
+                <li class="cac-paseo" data-etiquetas="centro ninos techo">
+                    <h3 class="font-bold text-lg text-brand-800 dark:text-white"><span aria-hidden="true">🧒 </span>Museo de los Niños</h3>
+                    <p class="mt-1 text-xs font-bold cac-paseo-etiquetas">En taxi, 10–20 min · Para niños · Bajo techo</p>
+                    <p class="mt-2 text-sm text-brand-600 dark:text-brand-300">En el antiguo Centro Penal: salas para tocar, jugar y probar. Ideal para los más pequeños.</p>
+                    <p class="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-sm font-semibold">
+                        <a href="https://www.google.com/maps/search/?api=1&amp;query=Museo+de+los+Ni%C3%B1os+San+Jos%C3%A9+Costa+Rica" target="_blank" rel="noopener" class="text-accent-700 dark:text-accent-400 underline underline-offset-2 hover:no-underline">Ver en el mapa →<span class="sr-only"> Museo de los Niños (se abre en otra pestaña)</span></a>
+                        <a href="https://www.google.com/maps/dir/?api=1&amp;destination=Museo+de+los+Ni%C3%B1os+San+Jos%C3%A9+Costa+Rica" target="_blank" rel="noopener" class="text-accent-700 dark:text-accent-400 underline underline-offset-2 hover:no-underline">Cómo llegar →<span class="sr-only"> Museo de los Niños (se abre en otra pestaña)</span></a>
+                    </p>
+                </li>
+                <li class="cac-paseo" data-etiquetas="centro ninos techo">
+                    <h3 class="font-bold text-lg text-brand-800 dark:text-white"><span aria-hidden="true">🏛️ </span>Museo Nacional de Costa Rica</h3>
+                    <p class="mt-1 text-xs font-bold cac-paseo-etiquetas">En taxi, 10–20 min · Para niños · Bajo techo</p>
+                    <p class="mt-2 text-sm text-brand-600 dark:text-brand-300">En el antiguo Cuartel Bellavista: la historia del país y un mariposario.</p>
+                    <p class="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-sm font-semibold">
+                        <a href="https://www.google.com/maps/search/?api=1&amp;query=Museo+Nacional+de+Costa+Rica+San+Jos%C3%A9" target="_blank" rel="noopener" class="text-accent-700 dark:text-accent-400 underline underline-offset-2 hover:no-underline">Ver en el mapa →<span class="sr-only"> Museo Nacional de Costa Rica (se abre en otra pestaña)</span></a>
+                        <a href="https://www.google.com/maps/dir/?api=1&amp;destination=Museo+Nacional+de+Costa+Rica+San+Jos%C3%A9" target="_blank" rel="noopener" class="text-accent-700 dark:text-accent-400 underline underline-offset-2 hover:no-underline">Cómo llegar →<span class="sr-only"> Museo Nacional de Costa Rica (se abre en otra pestaña)</span></a>
+                    </p>
+                </li>
+                <li class="cac-paseo" data-etiquetas="centro techo">
+                    <h3 class="font-bold text-lg text-brand-800 dark:text-white"><span aria-hidden="true">🏺 </span>Museo del Oro Precolombino</h3>
+                    <p class="mt-1 text-xs font-bold cac-paseo-etiquetas">En taxi, 10–20 min · Bajo techo</p>
+                    <p class="mt-2 text-sm text-brand-600 dark:text-brand-300">Bajo la Plaza de la Cultura: el oro de los pueblos originarios y la historia de la moneda.</p>
+                    <p class="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-sm font-semibold">
+                        <a href="https://www.google.com/maps/search/?api=1&amp;query=Museo+del+Oro+Precolombino+San+Jos%C3%A9+Costa+Rica" target="_blank" rel="noopener" class="text-accent-700 dark:text-accent-400 underline underline-offset-2 hover:no-underline">Ver en el mapa →<span class="sr-only"> Museo del Oro Precolombino (se abre en otra pestaña)</span></a>
+                        <a href="https://www.google.com/maps/dir/?api=1&amp;destination=Museo+del+Oro+Precolombino+San+Jos%C3%A9+Costa+Rica" target="_blank" rel="noopener" class="text-accent-700 dark:text-accent-400 underline underline-offset-2 hover:no-underline">Cómo llegar →<span class="sr-only"> Museo del Oro Precolombino (se abre en otra pestaña)</span></a>
+                    </p>
+                </li>
+                <li class="cac-paseo" data-etiquetas="centro techo">
+                    <h3 class="font-bold text-lg text-brand-800 dark:text-white"><span aria-hidden="true">🎭 </span>Teatro Nacional</h3>
+                    <p class="mt-1 text-xs font-bold cac-paseo-etiquetas">En taxi, 10–20 min · Bajo techo</p>
+                    <p class="mt-2 text-sm text-brand-600 dark:text-brand-300">El teatro de 1897, frente a la Plaza de la Cultura. Tiene visitas guiadas y un café.</p>
+                    <p class="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-sm font-semibold">
+                        <a href="https://www.google.com/maps/search/?api=1&amp;query=Teatro+Nacional+de+Costa+Rica+San+Jos%C3%A9" target="_blank" rel="noopener" class="text-accent-700 dark:text-accent-400 underline underline-offset-2 hover:no-underline">Ver en el mapa →<span class="sr-only"> Teatro Nacional (se abre en otra pestaña)</span></a>
+                        <a href="https://www.google.com/maps/dir/?api=1&amp;destination=Teatro+Nacional+de+Costa+Rica+San+Jos%C3%A9" target="_blank" rel="noopener" class="text-accent-700 dark:text-accent-400 underline underline-offset-2 hover:no-underline">Cómo llegar →<span class="sr-only"> Teatro Nacional (se abre en otra pestaña)</span></a>
+                    </p>
+                </li>
+                <li class="cac-paseo" data-etiquetas="centro techo">
+                    <h3 class="font-bold text-lg text-brand-800 dark:text-white"><span aria-hidden="true">🍲 </span>Mercado Central</h3>
+                    <p class="mt-1 text-xs font-bold cac-paseo-etiquetas">En taxi, 10–20 min · Bajo techo</p>
+                    <p class="mt-2 text-sm text-brand-600 dark:text-brand-300">Desde 1880: sodas con casado y gallo pinto, y el helado de sorbetera.</p>
+                    <p class="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-sm font-semibold">
+                        <a href="https://www.google.com/maps/search/?api=1&amp;query=Mercado+Central+San+Jos%C3%A9+Costa+Rica" target="_blank" rel="noopener" class="text-accent-700 dark:text-accent-400 underline underline-offset-2 hover:no-underline">Ver en el mapa →<span class="sr-only"> Mercado Central (se abre en otra pestaña)</span></a>
+                        <a href="https://www.google.com/maps/dir/?api=1&amp;destination=Mercado+Central+San+Jos%C3%A9+Costa+Rica" target="_blank" rel="noopener" class="text-accent-700 dark:text-accent-400 underline underline-offset-2 hover:no-underline">Cómo llegar →<span class="sr-only"> Mercado Central (se abre en otra pestaña)</span></a>
+                    </p>
+                </li>
+                <li class="cac-paseo" data-etiquetas="centro ninos">
+                    <h3 class="font-bold text-lg text-brand-800 dark:text-white"><span aria-hidden="true">🎢 </span>Parque de Diversiones</h3>
+                    <p class="mt-1 text-xs font-bold cac-paseo-etiquetas">En taxi, 10–20 min · Para niños</p>
+                    <p class="mt-2 text-sm text-brand-600 dark:text-brand-300">En La Uruca: juegos mecánicos para todas las edades.</p>
+                    <p class="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-sm font-semibold">
+                        <a href="https://www.google.com/maps/search/?api=1&amp;query=Parque+de+Diversiones+La+Uruca+San+Jos%C3%A9+Costa+Rica" target="_blank" rel="noopener" class="text-accent-700 dark:text-accent-400 underline underline-offset-2 hover:no-underline">Ver en el mapa →<span class="sr-only"> Parque de Diversiones (se abre en otra pestaña)</span></a>
+                        <a href="https://www.google.com/maps/dir/?api=1&amp;destination=Parque+de+Diversiones+La+Uruca+San+Jos%C3%A9+Costa+Rica" target="_blank" rel="noopener" class="text-accent-700 dark:text-accent-400 underline underline-offset-2 hover:no-underline">Cómo llegar →<span class="sr-only"> Parque de Diversiones (se abre en otra pestaña)</span></a>
+                    </p>
+                </li>
+                <li class="cac-paseo" data-etiquetas="centro techo">
+                    <h3 class="font-bold text-lg text-brand-800 dark:text-white"><span aria-hidden="true">🛒 </span>Multiplaza Escazú</h3>
+                    <p class="mt-1 text-xs font-bold cac-paseo-etiquetas">En taxi, 10–20 min · Bajo techo</p>
+                    <p class="mt-2 text-sm text-brand-600 dark:text-brand-300">Centro comercial grande, con restaurantes y cine. Para un día de lluvia.</p>
+                    <p class="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-sm font-semibold">
+                        <a href="https://www.google.com/maps/search/?api=1&amp;query=Multiplaza+Escaz%C3%BA+Costa+Rica" target="_blank" rel="noopener" class="text-accent-700 dark:text-accent-400 underline underline-offset-2 hover:no-underline">Ver en el mapa →<span class="sr-only"> Multiplaza Escazú (se abre en otra pestaña)</span></a>
+                        <a href="https://www.google.com/maps/dir/?api=1&amp;destination=Multiplaza+Escaz%C3%BA+Costa+Rica" target="_blank" rel="noopener" class="text-accent-700 dark:text-accent-400 underline underline-offset-2 hover:no-underline">Cómo llegar →<span class="sr-only"> Multiplaza Escazú (se abre en otra pestaña)</span></a>
+                    </p>
+                </li>
+                <li class="cac-paseo" data-etiquetas="excursion">
+                    <h3 class="font-bold text-lg text-brand-800 dark:text-white"><span aria-hidden="true">🌋 </span>Volcán Poás</h3>
+                    <p class="mt-1 text-xs font-bold cac-paseo-etiquetas">Excursión de medio día</p>
+                    <p class="mt-2 text-sm text-brand-600 dark:text-brand-300">El cráter, a una hora y media. La entrada se compra antes en línea, y se ve mejor temprano. Cierra cuando el volcán está activo: revisa antes.</p>
+                    <p class="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-sm font-semibold">
+                        <a href="https://www.google.com/maps/search/?api=1&amp;query=Parque+Nacional+Volc%C3%A1n+Po%C3%A1s+Costa+Rica" target="_blank" rel="noopener" class="text-accent-700 dark:text-accent-400 underline underline-offset-2 hover:no-underline">Ver en el mapa →<span class="sr-only"> Volcán Poás (se abre en otra pestaña)</span></a>
+                        <a href="https://www.google.com/maps/dir/?api=1&amp;destination=Parque+Nacional+Volc%C3%A1n+Po%C3%A1s+Costa+Rica" target="_blank" rel="noopener" class="text-accent-700 dark:text-accent-400 underline underline-offset-2 hover:no-underline">Cómo llegar →<span class="sr-only"> Volcán Poás (se abre en otra pestaña)</span></a>
+                    </p>
+                </li>
+                <li class="cac-paseo" data-etiquetas="excursion">
+                    <h3 class="font-bold text-lg text-brand-800 dark:text-white"><span aria-hidden="true">⛰️ </span>Volcán Irazú</h3>
+                    <p class="mt-1 text-xs font-bold cac-paseo-etiquetas">Excursión de medio día</p>
+                    <p class="mt-2 text-sm text-brand-600 dark:text-brand-300">El volcán más alto del país, a una hora y media. La entrada se compra antes en línea. Lleva abrigo: arriba hace frío.</p>
+                    <p class="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-sm font-semibold">
+                        <a href="https://www.google.com/maps/search/?api=1&amp;query=Parque+Nacional+Volc%C3%A1n+Iraz%C3%BA+Costa+Rica" target="_blank" rel="noopener" class="text-accent-700 dark:text-accent-400 underline underline-offset-2 hover:no-underline">Ver en el mapa →<span class="sr-only"> Volcán Irazú (se abre en otra pestaña)</span></a>
+                        <a href="https://www.google.com/maps/dir/?api=1&amp;destination=Parque+Nacional+Volc%C3%A1n+Iraz%C3%BA+Costa+Rica" target="_blank" rel="noopener" class="text-accent-700 dark:text-accent-400 underline underline-offset-2 hover:no-underline">Cómo llegar →<span class="sr-only"> Volcán Irazú (se abre en otra pestaña)</span></a>
+                    </p>
+                </li>
+                <li class="cac-paseo" data-etiquetas="excursion ninos">
+                    <h3 class="font-bold text-lg text-brand-800 dark:text-white"><span aria-hidden="true">🦋 </span>La Paz Waterfall Gardens</h3>
+                    <p class="mt-1 text-xs font-bold cac-paseo-etiquetas">Excursión de medio día · Para niños</p>
+                    <p class="mt-2 text-sm text-brand-600 dark:text-brand-300">Cataratas, mariposario, aves y colibríes, a una hora y media.</p>
+                    <p class="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-sm font-semibold">
+                        <a href="https://www.google.com/maps/search/?api=1&amp;query=La+Paz+Waterfall+Gardens+Costa+Rica" target="_blank" rel="noopener" class="text-accent-700 dark:text-accent-400 underline underline-offset-2 hover:no-underline">Ver en el mapa →<span class="sr-only"> La Paz Waterfall Gardens (se abre en otra pestaña)</span></a>
+                        <a href="https://www.google.com/maps/dir/?api=1&amp;destination=La+Paz+Waterfall+Gardens+Costa+Rica" target="_blank" rel="noopener" class="text-accent-700 dark:text-accent-400 underline underline-offset-2 hover:no-underline">Cómo llegar →<span class="sr-only"> La Paz Waterfall Gardens (se abre en otra pestaña)</span></a>
+                    </p>
+                </li>
+            </ul>
+        </div>
+    </dialog>
+
     <dialog id="hoteles" class="ficha-dialogo w-[calc(100%-1rem)] sm:w-[calc(100%-2rem)] max-w-5xl max-h-[90vh] rounded-2xl shadow-2xl p-0 bg-brand-50 dark:bg-brand-950 text-brand-800 dark:text-brand-100 backdrop:bg-black/60" aria-labelledby="hoteles-titulo">
         <div class="sticky top-0 z-10 flex items-center gap-3 px-4 sm:px-6 py-3 bg-white dark:bg-brand-900 border-b border-brand-100 dark:border-brand-800">
             <h2 id="hoteles-titulo" class="font-serif text-xl md:text-2xl font-bold text-brand-800 dark:text-white flex-1 min-w-0"><span aria-hidden="true">🏨 </span>Hoteles oficiales</h2>
@@ -714,6 +887,7 @@
     <script src="js/vendor/supabase.js"></script>
     <script src="js/supabase-client.js"></script>
     <script src="js/centroamericano-en.js"></script>
+    <script src="js/centroamericano-fr.js"></script>
     <script src="js/centroamericano.js"></script>
     <script src="js/pareo/torneo.js"></script>
     <script src="js/pareo/desempates.js"></script>

@@ -30,14 +30,19 @@
   // oye en el formato para ciegos: la regla de todo el sitio, de
   // js/comandos-tablero.js. En inglés, como las trae Lichess.
   const CT = window.ComandosTablero;
-  const sanVer = (san) => (V.idioma() === "en" || !CT ? san : CT.sanEspanol(san));
-  const sanOir = (san) => (V.idioma() === "en" || !CT ? san : CT.jugadaParaMostrar(san));
+  // En francés, con sus letras: R(oi), D(ame), T(our), F(ou), C(avalier).
+  const sanFrances = (san) => String(san).replace(/[KQRBN]/g, (p) => ({ K: "R", Q: "D", R: "T", B: "F", N: "C" })[p]);
+  // «: » en español y en inglés; « : » en francés, con su espacio antes.
+  const dosPuntos = () => (V.idioma() === "fr" ? " : " : ": ");
+  const sanVer = (san) => (V.idioma() === "en" || !CT ? san : V.idioma() === "fr" ? sanFrances(san) : CT.sanEspanol(san));
+  const sanOir = (san) => (V.idioma() === "en" || !CT ? san : V.idioma() === "fr" ? sanFrances(san) : CT.jugadaParaMostrar(san));
 
   const EVENTO_MS = 5 * 60000;   // la sala y los torneos de Lichess: cada cinco minutos
   const RONDAS_MS = 60000;       // las rondas de cada torneo (para enterarse de la nueva)
   const LISTA_MS = 20000;        // las partidas de la ronda, con la ventana abierta
   const VISOR_MS = 10000;        // las jugadas de la partida que se está viendo
   const TARJETAS_MS = 60000;     // para el botón de las tarjetas
+  const PGN_VIVO_MS = 60000;     // el PGN de una ronda para la barra y los momentos
 
   const TEXTOS = {
     es: {
@@ -77,6 +82,20 @@
       sinJugadas: "Todavía no hay jugadas.",
       blancas: "Blancas", negras: "Negras",
       porDefinir: "Por definir",
+      enVivoTitulo: "En vivo ahora", enVivoVer: (n) => "Ver las " + n + " →",
+      barra: (e) => e == null ? "sin evaluación" : (Math.abs(e) < 0.3 ? "igualado" : e > 0 ? "mejor las blancas" : "mejor las negras"),
+      momentosTitulo: "Lo mejor de la ronda",
+      momentoTipo: { remontada: "Remontada", salvada: "Partida salvada", sorpresa: "Sorpresa", vuelco: "Vuelco" },
+      lado: (c) => (c === "w" ? "blancas" : "negras"),
+      momento: {
+        remontada: (m, lado, ev, jug) => "Las " + lado + " llegaron a estar perdidas (" + ev + ") y terminaron ganando. Todo cambió con " + jug + ".",
+        salvada: (m, lado, ev, jug) => "Las " + lado + " llegaron a estar perdidas (" + ev + ") y se salvaron con tablas. Todo cambió con " + jug + ".",
+        sorpresa: (m, lado) => "Ganaron las " + lado + ", con " + m.difElo + " puntos de Elo menos que su rival.",
+        vuelco: (m, lado, ev, jug, antes) => "Con " + jug + " la evaluación pasó de " + antes + " a " + ev + ": mejor las " + lado + ".",
+      },
+      decisiva: (e) => (e > 0 ? "+10 o más" : "−10 o más"),
+      verMomento: "Ver el momento",
+      verMomentoDe: (tipo, b, n) => tipo + ": ver el momento en la partida " + b + " contra " + n,
     },
     en: {
       titulo: "Live games",
@@ -115,7 +134,23 @@
       sinJugadas: "No moves yet.",
       blancas: "White", negras: "Black",
       porDefinir: "To be decided",
+      enVivoTitulo: "Live now", enVivoVer: (n) => "See all " + n + " →",
+      barra: (e) => e == null ? "no evaluation" : (Math.abs(e) < 0.3 ? "equal" : e > 0 ? "white is better" : "black is better"),
+      momentosTitulo: "Best of the round",
+      momentoTipo: { remontada: "Comeback", salvada: "Game saved", sorpresa: "Upset", vuelco: "Turnaround" },
+      lado: (c) => (c === "w" ? "white" : "black"),
+      momento: {
+        remontada: (m, lado, ev, jug) => "The " + lado + " player was lost (" + ev + ") and went on to win. It all changed with " + jug + ".",
+        salvada: (m, lado, ev, jug) => "The " + lado + " player was lost (" + ev + ") and held the draw. It all changed with " + jug + ".",
+        sorpresa: (m, lado) => "The " + lado + " player won while rated " + m.difElo + " points lower than the opponent.",
+        vuelco: (m, lado, ev, jug, antes) => "With " + jug + " the evaluation went from " + antes + " to " + ev + ": " + lado + " is better.",
+      },
+      decisiva: (e) => (e > 0 ? "+10 or more" : "−10 or more"),
+      verMomento: "See the moment",
+      verMomentoDe: (tipo, b, n) => tipo + ": see the moment in " + b + " against " + n,
     },
+    // El francés está en js/centroamericano-fr.js (sin él, esta página va en español).
+    fr: window.CentroamericanoFR ? window.CentroamericanoFR.partidas : null,
   };
   const T = () => TEXTOS[V.idioma()] || TEXTOS.es;
 
@@ -320,7 +355,7 @@
     a.className = "cac-ficha h-full flex flex-col rounded-3xl bg-white dark:bg-brand-900 shadow-md p-4 sm:p-6 focus:outline-none focus-visible:ring-4 focus-visible:ring-[#ce1328]";
     [...f.childNodes].forEach((n) => a.appendChild(n));
     const pie = a.querySelector("span:last-child");
-    if (pie) { pie.className = "mt-auto pt-3 sm:pt-4 text-xs sm:text-sm font-bold cac-accion"; pie.textContent = (V.idioma() === "en" ? "Watch the games" : "Ver las partidas") + " →"; }
+    if (pie) { pie.className = "mt-auto pt-3 sm:pt-4 text-xs sm:text-sm font-bold cac-accion"; pie.textContent = ({ en: "Watch the games", fr: "Voir les parties" }[V.idioma()] || "Ver las partidas") + " →"; }
     f.replaceWith(a);
   }
 
@@ -390,9 +425,12 @@
         if (clave === "mios") l.dataset.mios = "";
         marcas.appendChild(l);
       });
+      const momentos = el("section", "cac-momentos");
+      momentos.dataset.momentos = "";
+      momentos.hidden = true;
       const ul = el("ul", "cac-partidas-lista");
       ul.dataset.partidas = "";
-      caja.append(estado, fila, marcas, ul);
+      caja.append(estado, fila, marcas, momentos, ul);
       contenido.replaceChildren(caja);
     }
     ultimaLista = todas;
@@ -422,12 +460,14 @@
 
     const q = plano(filtros.buscar);
     const esMio = (x) => mios.some((n) => [x.p.blancas.nombre, x.p.negras.nombre].some((m) => plano(m) === plano(n) || corto(m) === corto(n)));
-    const vistas = todas.filter((x) =>
+    // Los momentos pasan por los mismos filtros, salvo «solo las que se están jugando».
+    const pasa = (x) =>
       (!filtros.categoria || x.t.categoria === filtros.categoria) &&
       (!filtros.pais || x.p.blancas.fed === filtros.pais || x.p.negras.fed === filtros.pais) &&
-      (!filtros.vivo || !x.p.resultado) &&
       (!filtros.mios || !mios.length || esMio(x)) &&
-      (!q || plano(x.p.blancas.nombre + " " + x.p.negras.nombre).includes(q)));
+      (!q || plano(x.p.blancas.nombre + " " + x.p.negras.nombre).includes(q));
+    const vistas = todas.filter((x) => pasa(x) && (!filtros.vivo || !x.p.resultado));
+    pintarMomentos(caja.querySelector("[data-momentos]"), todas.filter(pasa), tx);
     const enJuego = todas.filter((x) => !x.p.resultado).length;
     caja.querySelector("[data-estado]").textContent = tx.resumen(ahora, todas.length, enJuego) + ". " + tx.leido(horaCorta());
     const ul = caja.querySelector("[data-partidas]");
@@ -482,14 +522,78 @@
     return li;
   }
 
+  /* ---------------- lo mejor de la ronda ---------------- */
+  // Los momentos (L.momentos) de las partidas de la lista que ya tienen
+  // evaluación: el PGN de cada ronda se pide a lo sumo cada minuto. Cada uno
+  // con su tablero en la jugada que cambió la partida, y lo que pasó escrito.
+  const MOMENTOS_MAX = 5;
+  const evalTexto = (e, tx) => (Math.abs(e) >= 10 ? tx.decisiva(e) : (e >= 0 ? "+" : "−") + (Math.round(Math.abs(e) * 10) / 10).toFixed(1).replace(".", V.idioma() === "en" ? "." : ","));
+  const jugadaTexto = (j, ply) => (Math.floor(ply / 2) + 1) + (j.color === "w" ? "." : "…") + sanVer(j.san);
+  let firmaMomentos = "";
+  async function pintarMomentos(caja, lista, tx) {
+    if (!caja) return;
+    const porRonda = new Map();
+    lista.forEach((x) => { if (x.p.ultima) porRonda.set(x.r.id, x); });
+    const juegos = [];
+    await Promise.all([...porRonda.values()].map(async (x0) => {
+      try {
+        const porId = await cargarPgn(x0.t, x0.r, PGN_VIVO_MS);
+        lista.filter((x) => x.r.id === x0.r.id && porId[x.p.id]).forEach((x) => juegos.push({ x, g: porId[x.p.id] }));
+      } catch (e) { /* sin el PGN de esa ronda: sus partidas no entran */ }
+    }));
+    if (!caja.isConnected) return;
+    const deId = new Map(juegos.map((y) => [y.g.id + "|" + y.x.r.id, y]));
+    const ms = [];
+    juegos.forEach((y) => L.momentos([Object.assign({}, y.g, { mesa: y.x.p.mesa })]).forEach((m) => ms.push(Object.assign(m, { clave: y.g.id + "|" + y.x.r.id }))));
+    ms.sort((a, b) => b.valor - a.valor);
+    const elegidos = ms.slice(0, MOMENTOS_MAX);
+    const firma = V.idioma() + ":" + elegidos.map((m) => m.clave + m.tipo + m.ply).join(",");
+    if (firma === firmaMomentos && caja.childNodes.length) return;
+    firmaMomentos = firma;
+    caja.hidden = !elegidos.length;
+    if (!elegidos.length) { caja.replaceChildren(); return; }
+    const h = el("h3", "cac-momentos-titulo");
+    h.appendChild(el("span", "", "⭐ ")).setAttribute("aria-hidden", "true");
+    h.appendChild(document.createTextNode(tx.momentosTitulo));
+    const ul = el("ul", "cac-momentos-lista");
+    elegidos.forEach((m) => {
+      const { x, g } = deId.get(m.clave);
+      const j = g.jugadas[m.ply];
+      const tipo = tx.momentoTipo[m.tipo];
+      const texto = tx.momento[m.tipo](m, tx.lado(m.lado), evalTexto(m.tipo === "vuelco" ? m.despues : m.peor || 0, tx), jugadaTexto(j, m.ply), m.tipo === "vuelco" ? evalTexto(m.antes, tx) : "");
+      const li = el("li", "cac-momento");
+      const tab = el("div", "cine-tablero cine-tablero-mini");
+      tab.setAttribute("aria-hidden", "true");
+      F.dibujar(tab, j.fen, j.de + j.a, { miniatura: true });
+      const datos = el("div", "cac-momento-datos");
+      const t = el("p", "cac-momento-tipo");
+      t.appendChild(el("span", "", { remontada: "🔄", salvada: "🛡️", sorpresa: "🎯", vuelco: "⚡" }[m.tipo] + " ")).setAttribute("aria-hidden", "true");
+      t.appendChild(document.createTextNode(tipo));
+      datos.append(t, el("p", "cac-momento-texto", texto),
+        el("p", "cac-momento-partida", tx.partida(V.categoria(x.t.categoria) || x.t.nombre, 0, x.p.mesa) + " · " + nombreDe(x.p.blancas, tx) + " – " + nombreDe(x.p.negras, tx)));
+      const b = el("button", "cac-jugador-boton cac-momento-ver", tx.verMomento);
+      b.type = "button";
+      b.dataset.momento = m.tipo;
+      b.dataset.momentoDe = x.p.id;
+      b.setAttribute("aria-label", tx.verMomentoDe(tipo, nombreDe(x.p.blancas, tx), nombreDe(x.p.negras, tx)));
+      b.addEventListener("click", () => abrirPartida(x, b, { ply: m.ply, texto: tipo + dosPuntos() + texto }));
+      datos.appendChild(b);
+      li.append(tab, datos);
+      ul.appendChild(li);
+    });
+    caja.replaceChildren(h, ul);
+  }
+
   /* ---------------- el visor ---------------- */
   let visor = null;   // { t, r, id, p (de la lista), g (del PGN), ply, girado, siguiendo, evals: Map }
   let quienAbrioVisor = null;
 
-  function abrirPartida(x, desde) {
+  // m: un momento de «Lo mejor de la ronda»: el visor abre en esa jugada y lo dice.
+  function abrirPartida(x, desde, m) {
     vista = { t: x.t, r: x.r, id: x.p.id };
-    visor = { t: x.t, r: x.r, id: x.p.id, p: x.p, g: null, ply: -1, girado: false, siguiendo: true, motor: new Map() };
-    quienAbrioVisor = desde && dialogo && dialogo.contains(desde) ? desde.dataset.partida : null;
+    visor = { t: x.t, r: x.r, id: x.p.id, p: x.p, g: null, ply: m ? m.ply : -1, girado: false, siguiendo: !m, motor: new Map(), momento: m ? m.texto : "" };
+    quienAbrioVisor = !desde || !dialogo || !dialogo.contains(desde) ? null
+      : desde.dataset.momentoDe ? '[data-momento-de="' + desde.dataset.momentoDe + '"]' : '[data-partida="' + desde.dataset.partida + '"]';
     if (dialogo && !dialogo.open) {
       if (window.VentanaEnlace) window.VentanaEnlace.abrirDialogo(dialogo, desde); else dialogo.showModal();
     }
@@ -502,8 +606,12 @@
     vista = null; visor = null;
     contenido.replaceChildren();
     pintarLista().then(() => {
-      const b = quienAbrioVisor && contenido.querySelector('[data-partida="' + quienAbrioVisor + '"]');
-      if (b) b.focus();
+      // El botón de un momento llega un poco después (espera el PGN).
+      const enfocar = (n) => {
+        const b = quienAbrioVisor && contenido.querySelector(quienAbrioVisor);
+        if (b) b.focus(); else if (n) setTimeout(() => enfocar(n - 1), 100);
+      };
+      enfocar(20);
     });
   }
 
@@ -520,7 +628,9 @@
         const antes = v.g ? v.g.jugadas.length : 0;
         v.g = g;
         if (v.siguiendo || v.ply < 0) v.ply = g.jugadas.length - 1;
-        v.nuevas = v.siguiendo ? 0 : Math.max(0, g.jugadas.length - 1 - v.ply);
+        else v.ply = Math.min(v.ply, g.jugadas.length - 1);
+        // Desde un momento, «nuevas» son solo las que llegan después de abrir.
+        v.nuevas = v.siguiendo ? 0 : v.momento ? (v.nuevas || 0) + (antes ? Math.max(0, g.jugadas.length - antes) : 0) : Math.max(0, g.jugadas.length - 1 - v.ply);
         if (!primera && g.jugadas.length > antes && v.siguiendo) anunciarJugada();
       }
       v.error = false;
@@ -540,6 +650,10 @@
     volver.addEventListener("click", volverALista);
     const cab = el("p", "cac-visor-cabeza font-bold");
     cab.dataset.cabeza = "";
+    const momento = el("p", "cac-visor-momento");
+    momento.dataset.momento = "";
+    momento.hidden = !(visor && visor.momento);
+    if (visor && visor.momento) momento.textContent = visor.momento;
     const arriba = el("div", "cac-visor-jugador"); arriba.dataset.arriba = "";
     const zona = el("div", "cac-visor-zona");
     const barra = el("div", "cac-visor-barra");
@@ -584,7 +698,7 @@
     grafico.dataset.grafico = "";
     const jugadas = el("ol", "cac-visor-jugadas");
     jugadas.dataset.jugadas = "";
-    jugadas.setAttribute("aria-label", V.idioma() === "en" ? "Moves" : "Jugadas");
+    jugadas.setAttribute("aria-label", { en: "Moves", fr: "Coups" }[V.idioma()] || "Jugadas");
     const pie = el("div", "cac-visor-pie");
     const copiar = el("button", "cac-jugador-boton", tx.copiar);
     copiar.type = "button";
@@ -601,7 +715,7 @@
     izquierda.append(arriba, zona, abajo);
     const cuerpo = el("div", "cac-visor-cuerpo");
     cuerpo.append(izquierda, derecha);
-    raiz.append(volver, cab, cuerpo, anuncio);
+    raiz.append(volver, cab, momento, cuerpo, anuncio);
     contenido.replaceChildren(raiz);
     volver.focus();
   }
@@ -657,7 +771,7 @@
       const n = (x >= 0 ? "+" : "−") + (Math.round(Math.abs(x) * 10) / 10).toFixed(1).replace(".", V.idioma() === "en" ? "." : ",");
       s = n + " (" + (Math.abs(x) < 0.3 ? tx.igualado : x > 0 ? tx.mejorBlancas : tx.mejorNegras) + ")";
     }
-    return (e.de === "motor" ? tx.evalMotor : tx.evalLichess) + ": " + s + ".";
+    return (e.de === "motor" ? tx.evalMotor : tx.evalLichess) + dosPuntos() + s + ".";
   }
 
   let cargaMotor = null;
@@ -847,10 +961,135 @@
   // Cambiar de modalidad cambia los torneos que se ven.
   document.addEventListener("click", (e) => {
     if (!e.target.closest || !e.target.closest("[data-modalidades] [data-modalidad]")) return;
-    setTimeout(() => { if (dialogo && dialogo.open && !visor) { contenido.replaceChildren(); pintarLista(); } }, 0);
+    setTimeout(() => { if (dialogo && dialogo.open && !visor) { contenido.replaceChildren(); pintarLista(); } if (evento && evento.torneos.length) pintarEnVivo(); }, 0);
   });
-  // La ficha se enciende sola si la sala ya tiene la transmisión.
-  cargarEvento().catch(() => {});
+  // El enlace a una partida, #partida=<id de Lichess>: lo trae el aviso al
+  // celular «… juega en vivo» (sala-jugadores). Abre el visor; si la partida
+  // ya no está en la ronda de ahora (o es de otra modalidad), la lista. Ver
+  // «Su partida está en vivo: el aviso al celular».
+  function abrirEnlacePartida() {
+    const m = location.hash.match(/^#partida=([A-Za-z0-9]{8})$/);
+    if (!m) return;
+    history.replaceState(null, "", location.pathname + location.search);
+    armarIndice().then((ix) => {
+      const x = (ix || []).find((y) => y.p.id === m[1]);
+      if (x) abrirPartida(x, null); else abrirLista({});
+    }, () => abrirLista({}));
+  }
+  abrirEnlacePartida();
+  window.addEventListener("hashchange", abrirEnlacePartida);
+
+  // La ficha se enciende sola si la sala ya tiene la transmisión, y entonces
+  // arranca «En vivo ahora».
+  cargarEvento().then(() => { if (evento && evento.torneos.length) vigilarEnVivo(); }, () => {});
+
+  /* ---------------- lo que se está jugando ---------------- */
+  // Las partidas de la ronda de ahora que ya empezaron y no terminaron, en la
+  // modalidad que se ve, cada una con la evaluación de su última jugada que
+  // traiga Lichess (el PGN se pide a lo sumo cada minuto por ronda). Lo usan
+  // «En vivo ahora» de la portada y el proyector (js/centroamericano-tablas.js).
+  async function enJuego() {
+    await cargarEvento();
+    if (!evento || !evento.torneos.length) return [];
+    const vivas = (await partidasDeTodo(0, LISTA_MS)).filter((x) => !x.p.resultado && x.p.ultima);
+    const porRonda = new Map();
+    vivas.forEach((x) => porRonda.set(x.r.id, x));
+    await Promise.all([...porRonda.values()].map(async (x0) => {
+      try {
+        const porId = await cargarPgn(x0.t, x0.r, PGN_VIVO_MS);
+        vivas.filter((x) => x.r.id === x0.r.id).forEach((x) => {
+          const g = porId[x.p.id];
+          const j = g && g.jugadas.slice().reverse().find((k) => k.eval != null);
+          x.eval = j ? j.eval : null;
+        });
+      } catch (e) { /* sin evaluación: la barra queda apagada */ }
+    }));
+    return vivas;
+  }
+
+  // La barra chica de una partida, de costado: blanco a la izquierda. Con el
+  // dato escrito para el lector (y en el proyector, también a la vista).
+  function barraChica(e, tx) {
+    const b = el("div", "cac-vivo-barra" + (e == null ? " cac-visor-barra-sin" : ""));
+    b.setAttribute("role", "img");
+    b.setAttribute("aria-label", tx.barra(e));
+    const blanco = el("span", "");
+    blanco.style.width = L.porcentaje(e == null ? 0 : e).toFixed(1) + "%";
+    b.appendChild(blanco);
+    return b;
+  }
+
+  // La tarjeta de una partida en la fila de la portada: un toque abre el visor.
+  function tarjetaMini(x, tx) {
+    const { p, t, r } = x;
+    const li = el("li", "cac-envivo-item");
+    const tab = el("div", "cine-tablero cine-tablero-mini");
+    tab.setAttribute("aria-hidden", "true");
+    F.dibujar(tab, p.fen, p.ultima, { miniatura: true });
+    const datos = el("div", "cac-envivo-datos");
+    datos.append(el("p", "cac-envivo-cat", tx.partida(V.categoria(t.categoria) || t.nombre, 0, p.mesa)),
+      lineaJugador(p.negras, "b", tx, ""), lineaJugador(p.blancas, "w", tx, ""));
+    li.append(tab, barraChica(x.eval, tx), datos);
+    const abrir = el("button", "cac-partida-abrir");
+    abrir.type = "button";
+    abrir.dataset.partida = p.id;
+    abrir.setAttribute("aria-label", tx.ver(nombreDe(p.blancas, tx), nombreDe(p.negras, tx)) + ". " + tx.enJuego + ".");
+    abrir.addEventListener("click", () => abrirPartida(x, abrir));
+    li.appendChild(abrir);
+    return li;
+  }
+
+  // La tarjeta grande del proyector: tablero, jugadores con su reloj y la barra.
+  function tarjetaGrande(x) {
+    const tx = T(), { p, t } = x;
+    const c = el("section", "cac-proyector-partida");
+    c.appendChild(el("h3", "", tx.partida(V.categoria(t.categoria) || t.nombre, 0, p.mesa)));
+    c.appendChild(lineaJugador(p.negras, "b", tx, relojTexto(p.negras.reloj != null ? p.negras.reloj / 100 : null)));
+    const tab = el("div", "cine-tablero");
+    tab.setAttribute("aria-hidden", "true");
+    F.dibujar(tab, p.fen, p.ultima, { miniatura: true });
+    c.appendChild(tab);
+    c.appendChild(lineaJugador(p.blancas, "w", tx, relojTexto(p.blancas.reloj != null ? p.blancas.reloj / 100 : null)));
+    c.appendChild(barraChica(x.eval, tx));
+    c.appendChild(el("p", "cac-proyector-eval", tx.barra(x.eval) + (x.eval != null && Math.abs(x.eval) < 90 ? " (" + (x.eval >= 0 ? "+" : "−") + (Math.round(Math.abs(x.eval) * 10) / 10).toFixed(1).replace(".", V.idioma() === "en" ? "." : ",") + ")" : "")));
+    return c;
+  }
+
+  // «En vivo ahora», arriba de «Busca a tu jugador»: las partidas que se
+  // están jugando, de costado; se esconde sin transmisión o sin partidas en
+  // juego. Se pone al día cada 30 segundos mientras la página está a la vista.
+  const ENVIVO_MS = 30000;
+  const filaVivo = $("en-vivo-ahora");
+  async function pintarEnVivo() {
+    if (!filaVivo) return;
+    let vivas = [];
+    try { vivas = await enJuego(); } catch (e) { vivas = []; }
+    const tx = T();
+    filaVivo.hidden = !vivas.length;
+    if (!vivas.length) { filaVivo.replaceChildren(); return; }
+    const cab = el("div", "cac-envivo-cabeza");
+    const h = el("h3", "cac-buscador-titulo");
+    h.appendChild(el("span", "", "🔴 ")).setAttribute("aria-hidden", "true");
+    h.appendChild(document.createTextNode(tx.enVivoTitulo));
+    const ver = el("a", "cac-accion underline underline-offset-2", tx.enVivoVer(vivas.length));
+    ver.href = "#partidas";
+    ver.addEventListener("click", (e) => { e.preventDefault(); abrirLista({ vivo: true }); });
+    cab.append(h, ver);
+    const ul = el("ul", "cac-envivo-lista");
+    ul.setAttribute("aria-label", tx.enVivoTitulo);
+    vivas.slice(0, 12).forEach((x) => ul.appendChild(tarjetaMini(x, tx)));
+    // Si el foco estaba en una tarjeta, vuelve a la misma después de repintar.
+    const foco = document.activeElement && filaVivo.contains(document.activeElement) ? document.activeElement.dataset.partida : null;
+    filaVivo.replaceChildren(cab, ul);
+    if (foco) { const b = filaVivo.querySelector('[data-partida="' + foco + '"]'); if (b) b.focus(); }
+  }
+  let relojVivo = null;
+  function vigilarEnVivo() {
+    if (!filaVivo) return;
+    clearInterval(relojVivo);
+    pintarEnVivo();
+    relojVivo = setInterval(() => { if (!document.hidden && evento && evento.torneos.length) pintarEnVivo(); }, ENVIVO_MS);
+  }
 
   // Para la ventana de cada categoría (js/centroamericano-tablas.js): si
   // Lichess transmite esa categoría, y abrir la lista ya filtrada por ella.
@@ -859,6 +1098,7 @@
   }
   function abrirLista(f) {
     filtros.categoria = (f && f.categoria) || "";
+    filtros.vivo = !!(f && f.vivo);
     vista = null; visor = null;
     if (contenido) contenido.replaceChildren();
     if (dialogo && !dialogo.open) {
@@ -867,6 +1107,6 @@
   }
 
   // actualizar(): lo que hace el temporizador, ya (lo usa el verificador).
-  window.CentroamericanoPartidas = { botonDe, codigoCategoria, modalidadDe, abrirPartida, cargarEvento, pgnDe, transmiteCategoria, abrirLista,
+  window.CentroamericanoPartidas = { botonDe, codigoCategoria, modalidadDe, abrirPartida, cargarEvento, pgnDe, transmiteCategoria, abrirLista, enJuego, tarjetaGrande, pintarEnVivo,
     actualizar: () => (visor ? traerJugadas(true) : (Object.values(evento ? evento.torneos : []).forEach((t) => { t.partidasPorRonda = {}; }), pintarLista())) };
 })();

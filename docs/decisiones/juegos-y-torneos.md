@@ -3919,6 +3919,73 @@ Al tocar esto, `node herramientas/verificar-pareo-sala-evento.js`. Rompiendo a
 propósito la mesa física, la casilla de consentimiento, el llamado, el fin de
 la ronda o el aceptar, salta.
 
+### Pareo Integral: agregar jugadores desde las listas de Elo
+
+El 31/10/2026 el dueño pidió poder agregar jugadores «desde listas de Elo,
+las 3 de la FIDE, y la del Elo de Costa Rica». En Jugadores, debajo de
+«Pegar una lista», está ahora **«Agregar desde una lista de Elo (FIDE o
+Nacional)»**: se elige la lista (FIDE Estándar, FIDE Rápido, FIDE Blitz o
+Elo Nacional de Costa Rica), se escriben los apellidos o el código FIDE y
+cada resultado tiene su «Agregar». Entra con el nombre, el Elo **de la lista
+elegida**, el título, la federación, el código FIDE y, si la lista lo dice,
+el sexo.
+
+- **Las dos páginas no se dejan leer desde el navegador** (ni
+  ratings.fide.com ni ajedrezcostarica.com mandan CORS), así que las lee la
+  Edge Function `pareo-listas-elo` (verify_jwt en false, CORS solo a
+  ajedrez-integral.com, como `pareo-elo-nacional`). Recibe solo
+  `{ lista: "fide" | "nacional", q }` —lo escrito, de 3 a 60 caracteres de
+  nombre o números— y no guarda nada.
+- **Las tres listas de FIDE son UNA búsqueda.** El buscador de FIDE
+  (`ratings.fide.com/incl_search_l.php?search=…&simple=1`, lo que pinta la
+  página de búsqueda de FIDE) trae en cada fila el código, el nombre, el
+  título, la federación, Std., Rpd., Blz. y el año de nacimiento. La página
+  elige cuál de los tres usa; cambiar entre Estándar, Rápido y Blitz no
+  vuelve a buscar. Busca por nombre o por código. Encuentra muchos (con
+  «garcia», 5722) pero devuelve unas 450 filas; la función manda las
+  primeras 60 y dice «escribe más del nombre».
+- **La lista nacional** (`ajedrezcostarica.com/es/national-rating?name=…`)
+  trae de a 50 y dice cuántos encontró («2 jugadores») y de qué mes es
+  («Octubre 2026»), que se muestra. Cada jugador trae su código FIDE, club,
+  título, «gender» (1 hombre, 2 mujer: comprobado con los nombres de la
+  lista en octubre de 2026), la edad y los cuatro Elo: Nacional, Estándar,
+  Rápido y Blitz. «NM» no es un título de FIDE de jugador y se deja fuera;
+  la federación es CRC.
+- **Nunca se inventa un dato.** Un Elo de 0 o vacío es null y el jugador
+  entra **sin Elo**, no con el de otra lista. El año de nacimiento de FIDE
+  **no** se guarda como fecha: Pareo pide el día exacto, y un 1 de enero
+  inventado cambiaría la categoría de los JDE. FIDE no dice el sexo: queda
+  vacío.
+- **Quien ya está no entra dos veces**: el mismo código FIDE ya inscrito
+  sale como «Ya está», deshabilitado. Al agregar, el foco pasa al «Agregar»
+  siguiente para poder sumar varios seguidos.
+- **El freno es suyo**, `pareo_listas_frenar()`: 60 búsquedas por hora por
+  conexión y 600 en total. Va con su propio tipo («busqueda_lista») en
+  `interno.envios_publicos` y no con «formulario», porque con «formulario»
+  cada búsqueda gastaría el tope de 40 por hora que comparten todos los
+  formularios públicos desde esa conexión: un árbitro buscando a su torneo
+  dejaría sin poder inscribirse a alguien de su misma red.
+- La política de privacidad lo dice (FIDE y Ajedrez Costa Rica, en
+  proveedores), y la página también, debajo del título del apartado.
+- **La migración la aplicó el dueño pegándola en el editor SQL de Supabase**
+  (`apply_migration` le pidió confirmar dos veces y la pregunta se venció a
+  los 60 segundos sin llegarle). El mismo SQL la anotó en
+  `supabase_migrations.schema_migrations` (versión 20261031060000) para que
+  cuente como las demás. El editor le sumó la sangría al pegar, y por eso
+  `supabase/migraciones/20261031060000_pareo_listas_elo.sql` la trae y no
+  lleva comentarios: es byte a byte lo que quedó guardado, que es lo que
+  compara la huella. Los comentarios de la función están aquí arriba.
+- La lista elegida se recuerda en el navegador (`pareo_lista_elo_v1`); la
+  primera vez, si el torneo es válido para Elo Nacional, empieza en la
+  nacional.
+- El lector vive aparte (`supabase/functions/pareo-listas-elo/leer-listas.ts`)
+  para probarlo sin red. `node herramientas/verificar-pareo-listas-elo.js`
+  lo prueba contra extractos reales de las dos páginas y, con un doble de la
+  función, prueba la página: lo que viaja, el Elo de Rápido y el Nacional, el
+  sexo, el «Ya está», el texto corto que no viaja y el aviso del freno.
+  Se rompió a propósito (el Elo siempre del Estándar; el sexo dado vuelta) y
+  saltó.
+
 ### Pareo Integral como programa de computadora
 
 El 31/10/2026 el dueño pidió que Pareo Integral se viera «tipo programa de
@@ -10493,6 +10560,206 @@ la propia.
   vuelta a la elección con el foco y el jugador que abre sus rondas. Rompí a
   propósito que las categorías abrieran chess-results y que tocar un jugador
   no cerrara las ventanas, y saltaron.
+
+
+### «En vivo ahora» y las partidas en el proyector
+
+El dueño vio primero un ejemplo en imagen y dijo que sí.
+
+- **«En vivo ahora»** (`#en-vivo-ahora`, arriba del buscador): una franja con
+  las partidas transmitidas que **ya empezaron y no terminaron**, en la
+  modalidad que se ve. Cada una lleva un tablero chico, la barra de la
+  evaluación de costado, «Categoría · Mesa N» y los dos jugadores. Tocarla abre
+  esa partida en el visor, y «Ver las N →» abre la lista con el filtro «en
+  vivo». Sin partidas en juego, la franja no se muestra. Se vuelve a pedir
+  cada 30 s (`ENVIVO_MS`).
+- **Una sola fuente**: `CentroamericanoPartidas.enJuego()` arma la lista para
+  la franja y para el proyector. La evaluación sale del PGN de Lichess, y el
+  PGN de cada ronda se pide a lo sumo una vez por minuto (`PGN_VIVO_MS`).
+- **La barra nunca va sola**: dice con palabras «mejor las blancas», «mejor las
+  negras», «igualada» o «sin evaluación». En el proyector, además, va la cifra
+  (+4,8).
+- **El proyector** pone las partidas en vivo **antes** del pareo, seis por
+  pantalla (`PARTIDAS_POR_PAGINA`). Cada partida lleva su tablero, los
+  jugadores con su reloj y la barra escrita. El modo nuevo «Solo partidas en
+  vivo» deja solo eso. Si se fijó una categoría, se muestran solo las suyas.
+  Sin Lichess, el proyector sigue con lo suyo.
+- Lo revisa `verificar-centroamericano-partidas.js`. Rompí a propósito que la
+  lista incluyera las partidas terminadas y que el proyector no pusiera las
+  páginas en vivo, y las dos comprobaciones saltaron.
+
+
+### Lo mejor de la ronda
+
+En «Partidas en vivo», arriba de la lista, van hasta cinco momentos de las
+partidas transmitidas. Cada uno lleva su tablero en la jugada que cambió la
+partida, lo que pasó escrito y «Ver el momento», que abre el visor en esa
+jugada y lo dice arriba del tablero. La regla es `LichessTransmision.momentos()`,
+una función pura que se prueba con node.
+
+- **Nada se inventa**: sale de la evaluación que trae Lichess en el PGN, o del
+  Elo. Una partida sin evaluación solo puede ser sorpresa.
+- **Los cuatro tipos**:
+  - **remontada**: quien ganó llegó a estar −2 o peor;
+  - **partida salvada**: tablas de quien llegó a estar −3 o peor;
+  - **sorpresa**: ganó quien tenía 150 puntos de Elo menos, o más;
+  - **vuelco**: una jugada movió la evaluación 3 peones o más. Solo cuenta si
+    la partida no trae nada de más peso.
+- **Uno por partida**, y los de más peso primero. Un mate o +25 cuentan como
+  +10, porque perdido es perdido y si no, todo sería «salvada».
+- **La jugada que se muestra**: en la remontada y la salvada, la que más acercó
+  la partida a quien se salvó después de su peor momento, o sea el error del
+  rival. En el vuelco, la que lo provocó; en la sorpresa, la última.
+- **Pasa por los filtros de la lista** (categoría, país, mis jugadores,
+  buscar), salvo «solo las que se están jugando». En el celular, los momentos
+  van de costado para no empujar la lista hacia abajo.
+- Desde un momento, «Ir a la jugada de ahora» cuenta solo las jugadas que
+  llegan después de abrir, no todas las que siguen.
+- Lo revisa `verificar-centroamericano-partidas.js` con la ronda de prueba
+  (una salvada, dos remontadas y dos vuelcos). Rompí a propósito tres cosas y
+  saltaron sus comprobaciones: la jugada del peor momento en lugar de la del
+  giro, los momentos sin filtrar y el visor que no abría en la jugada.
+
+
+### Su partida está en vivo: el aviso al celular
+
+A quien sigue a un jugador con «Avisarme en este celular», `sala-jugadores`
+(`revisar`, cada 5 minutos con pg_cron) le avisa cuando la partida de ese
+jugador **empieza en un tablero que Lichess transmite**: «📺 Ronda N: Nombre
+juega en vivo», con la mesa, el color y el rival. Tocar el aviso abre la
+página en `#partida=<id de Lichess>`, que abre esa partida en el visor (y si
+la partida ya no está en la ronda de ahora, la lista).
+
+- **Lo de Lichess lo lee la función**: los botones de la sala con la dirección
+  de la transmisión, los mismos que usa la página, llevan al grupo entero.
+  Solo el Clásico (el de los demás avisos), la ronda que Lichess marca «en
+  curso» y la API pública, sin cuenta. Se pide una sola vez por sala en cada
+  vuelta, y solo si hay algún seguido con pareo y sin resultado. Si Lichess no
+  contesta, sale el aviso del pareo de siempre.
+- **La regla, en `torneos-sala.ts`** (sin Deno, se prueba con node):
+  `idDeEnlaceLichess()` lee los enlaces igual que la página (el verificador
+  compara las dos) y `partidaEnVivo()` busca la partida empezada y sin
+  terminar de esa persona. La compara por nombre como la página: igual sin
+  tildes, o con los mismos apellidos y el primer nombre. Además tiene que ser
+  de su categoría y de su ronda. **Si calzan dos, no avisa de ninguna**:
+  mejor no avisar que avisar de otra persona.
+- **Reemplaza al del pareo**: cuando el pareo salió con la partida ya
+  empezada, va solo este, que dice lo mismo y además la abre. Lleva la misma
+  etiqueta (`sala-<tnr>-<no>`), así el del resultado lo reemplaza después en
+  la pantalla del celular. Se anota con el tipo `envivo` en
+  `sala_avisos_push_enviados`; la migración `sala_avisos_envivo` lo agregó a su
+  `check`. Sale una vez por jugador y ronda.
+- La política de privacidad lo dice: el servidor le pide a Lichess las
+  partidas que transmite, sin ningún dato de quien pidió el aviso.
+- Lo revisa `verificar-centroamericano-partidas.js`, con la regla (las mismas
+  direcciones en la página y en la función; la terminada, la que no empezó,
+  otra categoría, otra ronda y dos que calzan) y el enlace `#partida=` en la
+  página. Rompí a propósito dos cosas y saltaron sus comprobaciones: que
+  avisara también de las terminadas, y la página sin leer el enlace.
+- La función desplegada (versión 9) es la del repositorio. Hay una sola
+  diferencia: la herramienta de despliegue escribe las dos expresiones
+  `[̀-ͯ]` con los caracteres mismos en lugar del escape, y eso no
+  cambia lo que hacen.
+
+
+### Qué hacer en el tiempo libre
+
+Una ficha más, «🌴 Qué hacer en el tiempo libre», que abre la ventana
+`#paseos`. Trae 14 lugares para las horas sin ronda, cada uno con su emoji,
+qué es, sus etiquetas escritas, «Ver en el mapa» y «Cómo llegar» (Google Maps,
+desde donde esté la persona). Los botones de arriba filtran: Todos, Cerca de
+la sala, En el centro de San José, Para niños, Si llueve y Excursión de medio
+día. El puesto lo dicen `aria-pressed` y «✓», no solo el color.
+
+- **Sin horarios, precios ni distancias en metros.** Al buscarlos (31/10), las
+  fuentes no coincidían entre sí y ninguna era oficial de 2026. La ficha dice
+  «Revisa el horario antes de ir», y el mapa de cada lugar trae los del día.
+  Las distancias van por categoría («Cerca de la sala», «En taxi, 10–20 min»,
+  «a una hora y media»).
+- **El Museo de Arte Costarricense** primero quedó fuera, porque en la web no
+  se pudo confirmar que hubiera reabierto; el dueño confirmó que está abierto y
+  se agregó. Del Poás se avisa que cierra cuando el volcán está activo,
+  y de los volcanes, que la entrada se compra antes en línea.
+- La ficha va de ancho completo en la computadora (con diez fichas, la última
+  quedaba sola en la fila). Hoteles ya no ocupa dos columnas en el celular.
+- Los textos van en inglés y en francés, como el resto de la página. El
+  filtro está en `js/centroamericano.js`.
+- Lo revisa `verificar-centroamericano.js`:
+  - que la ficha abra los 14 lugares, cada uno con sus dos enlaces al mapa;
+  - que «Si llueve» deje los 9 bajo techo y diga cuál está puesto;
+  - que «Excursión de medio día» deje los tres de lejos;
+  - que «Todos» los vuelva a mostrar.
+
+  Rompí a propósito el filtro y saltaron sus comprobaciones.
+
+
+### La página en francés
+
+La página del Centroamericano sale también en francés, para las delegaciones
+del Caribe que lo hablan. Lo pidió el dueño.
+
+- **Un solo botón con menú**: el botón del idioma dice el de ahora («ES»,
+  «EN» o «FR»; en una pantalla ancha, el nombre entero y «▾»). Abre la lista
+  `#cac-idiomas` con los tres, cada uno escrito en su idioma y el de ahora
+  marcado con «✓» y `aria-current`. Se maneja con Escape, las flechas y
+  tocando afuera. Primero fueron dos botones, uno por cada otro idioma, pero
+  en un celular de 375 px se encimaban con el logo. Para el lector de
+  pantalla, el botón dice «Idioma · Language · Langue», en los tres idiomas.
+- **Todo el francés en `js/centroamericano-fr.js`**:
+  - los textos fijos de la página, con las mismas 245 claves que el inglés;
+  - lo que escribe cada módulo (`hoy`, `vivo`, `tablas`, `partidas`; los que
+    necesitan algo de su módulo lo reciben como `mod`);
+  - los nombres de los países.
+
+  El francés va en un archivo aparte porque `verificar-voseo.py` se salta ese
+  archivo entero: dentro de los módulos marcaba «vos», «été» o «trié», y
+  meterlos en su lista blanca dejaría pasar voseo de verdad. Sin ese archivo
+  (las páginas universitarias usan los mismos módulos y no lo cargan), todo
+  queda en español.
+- **De un idioma a otro se pasa por el español**: los mapas traducen desde el
+  texto en español, así que al pasar del inglés al francés primero se vuelve
+  al original.
+- **Lo propio del francés**:
+  - el espacio antes de los dos puntos;
+  - «1er» y «3e»; «rang» y no «place», para que concuerde con «1er»;
+  - las jugadas con sus letras: R, D, T, F y C;
+  - las horas a la francesa (15 h 00);
+  - las categorías como «U15 Filles».
+- **Lo que no tiene francés**:
+  - Los avisos de la organización se escriben solo en español e inglés: en
+    francés se muestra el inglés.
+  - Los avisos al celular los escribe `sala-jugadores` en español o en inglés:
+    a quien tiene la página en francés le llegan en inglés.
+  - `?lang=fr` en la dirección abre la página en francés.
+- Lo revisa `verificar-centroamericano.js`:
+  - que el francés tenga las mismas claves que el inglés;
+  - que cada módulo traiga sus textos en los tres idiomas;
+  - que en francés ningún texto de la página quede en español;
+  - el menú (abrir, la marca, Escape con el foco en el botón);
+  - que de francés a inglés no quede nada en francés, y que al volver al
+    español la página quede idéntica.
+
+  Rompí a propósito una clave de un módulo y un texto fijo, y saltaron sus
+  comprobaciones. Las pruebas de antes, que tocaban el botón para alternar,
+  ahora usan `cambiarIdioma()`.
+
+
+### «Así terminó mi torneo»
+
+Cuando el torneo de un jugador terminó, su tarjeta trae «🏁 Así terminó mi
+torneo», que arma una imagen de 1080 × 1920 para el estado de WhatsApp
+(`imagenFinal` en `js/centroamericano-tablas.js`). La imagen lleva:
+
+- el puesto, con su medalla si subió al podio;
+- cuatro cifras: puntos, rendimiento, ± Elo y partidas;
+- la ronda a ronda en círculos, cada uno con su resultado escrito (el color no
+  va solo);
+- la mejor victoria;
+- la marca de agua, una sola vez.
+
+Se comparte con `navigator.share` si el aparato puede, y si no, se baja. Lo
+revisa `verificar-centroamericano.js`: el tamaño, que sea PNG y que la marca
+vaya una vez.
 ## Las páginas de los torneos universitarios
 
 Dos, con la misma maquinaria: `cenfotec-2026.html` (el Desafío Mentes

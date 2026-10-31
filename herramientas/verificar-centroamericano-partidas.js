@@ -78,6 +78,24 @@ ok("la ronda de ahora: la que se juega; si ninguna, la que marca Lichess", (() =
   return L.rondaDeAhora(r).id === "b" && L.rondaDeAhora(s).id === "c";
 })());
 
+// Lo mejor de la ronda: lo que dice la evaluación de Lichess, uno por partida.
+const ms = L.momentos(juegos);
+ok("lo mejor de la ronda: la salvada, las dos remontadas y los vuelcos, de más a menos peso",
+   ms.map((m) => m.tipo + m.mesa).join(",") === "salvada2,remontada4,remontada3,vuelco6,vuelco1", JSON.stringify(ms));
+ok("cada momento cae en la jugada que cambió la partida", (() => {
+  const en = (m) => juegos[m.mesa - 1].jugadas[m.ply];
+  const [s2, r4] = ms;
+  // Mesa 2: las blancas iban +10 y Dg2 lo tiró a 0; mesa 4: las negras
+  // estaban −5 y Af2 de las blancas lo dejó parejo.
+  return en(s2).san === "Qg2" && s2.lado === "b" && s2.peor === 10 && en(r4).san === "Bf2" && r4.lado === "b" && r4.peor > 5;
+})(), JSON.stringify(ms.slice(0, 2)));
+ok("la sorpresa: gana quien tenía 150 de Elo menos, y sin evaluación no se inventa nada más", (() => {
+  const g = { id: "x", mesa: 9, resultado: "1-0", blancas: { elo: 1400 }, negras: { elo: 1600 }, jugadas: [{ san: "e4", eval: null }, { san: "e5", eval: null }] };
+  const m = L.momentos([g]);
+  const sin = L.momentos([Object.assign({}, g, { negras: { elo: 1500 } })]);
+  return m.length === 1 && m[0].tipo === "sorpresa" && m[0].difElo === 200 && m[0].ply === 1 && !sin.length;
+})());
+
 // La categoría y la modalidad del nombre de un torneo: la misma regla en la
 // página (JS) y en la función (TS). Se comparan con los mismos textos.
 const TEXTOS = ["Open U15", "Girls U15", "Sub-10 Femenino", "U08", "Sub 8 Absoluto", "Blitz Sub-10 Absoluto", "Rápidas Sub-12 Femenino",
@@ -87,6 +105,30 @@ const ts = require("child_process").spawnSync(process.execPath, ["--experimental
    const t = JSON.parse(process.argv[1]); process.stdout.write(JSON.stringify([t.map(codigoCategoria), t.map(modalidadDe)]));`, JSON.stringify(TEXTOS)], { encoding: "utf8" });
 const deTs = ts.status === 0 ? JSON.parse(ts.stdout) : null;
 ok("la función sala-jugadores se deja importar para comparar", !!deTs, ts.stderr);
+
+// El aviso «… juega en vivo» (sala-jugadores, revisar): reconoce los enlaces
+// de Lichess igual que la página, y avisa solo de la partida empezada y sin
+// terminar de esa persona, en su categoría y su ronda.
+const URLS = ["https://lichess.org/broadcast/centroamericano-2026/AbCd1234", "https://lichess.org/broadcast/c/ronda-1/XyZw9876",
+  "https://lichess.org/broadcast/c/ronda-1/XyZw9876/Gm123456", "https://s1.chess-results.com/tnr1529719.aspx", "https://lichess.org/study/AbCd1234", "nada"];
+const PARTIDAS_TS = [
+  { id: "AAAAAAAA", ronda: 7, categoria: "U15F", mesa: 5, blancas: "Campos Ulate, Laura", negras: "Salazar Pineda, Elena", empezada: true, terminada: false },
+  { id: "BBBBBBBB", ronda: 7, categoria: "U15F", mesa: 1, blancas: "Mora Vargas, Ana Lucia", negras: "Rojas Solano, Sofia", empezada: true, terminada: true },
+  { id: "CCCCCCCC", ronda: 7, categoria: "U15F", mesa: 6, blancas: "Vindas Arce, Julia", negras: "Fallas Murillo, Andrea", empezada: false, terminada: false },
+  { id: "DDDDDDDD", ronda: 7, categoria: "U15F", mesa: 7, blancas: "Brenes Soto, Ana", negras: "Leiva Mora, Rosa", empezada: true, terminada: false },
+  { id: "EEEEEEEE", ronda: 7, categoria: "U15F", mesa: 8, blancas: "Brenes Soto, Ana", negras: "Quesada, Eva", empezada: true, terminada: false },
+];
+const CASOS_TS = [["Salazar Pineda, Elena María", "U15F", 7], ["Salazar Pineda, Elena", "U12F", 7], ["Salazar Pineda, Elena", "U15F", 6],
+  ["Mora Vargas, Ana Lucia", "U15F", 7], ["Vindas Arce, Julia", "U15F", 7], ["Brenes Soto, Ana", "U15F", 7], ["salazar pineda, elena", "", 0]];
+const vivoTs = require("child_process").spawnSync(process.execPath, ["--experimental-strip-types", "--no-warnings", "--input-type=module", "-e",
+  `import { idDeEnlaceLichess, partidaEnVivo } from ${JSON.stringify(path.join(RAIZ, "supabase/functions/sala-jugadores/torneos-sala.ts"))};
+   const [u, ps, casos] = JSON.parse(process.argv[1]);
+   process.stdout.write(JSON.stringify([u.map(idDeEnlaceLichess), casos.map(([n, c, r]) => { const v = partidaEnVivo(ps, n, c, r); return v && v.p.id + v.color; })]));`,
+  JSON.stringify([URLS, PARTIDAS_TS, CASOS_TS])], { encoding: "utf8" });
+const deVivo = vivoTs.status === 0 ? JSON.parse(vivoTs.stdout) : null;
+ok("la función reconoce los enlaces de Lichess igual que la página", !!deVivo && JSON.stringify(deVivo[0]) === JSON.stringify(URLS.map(L.idDeEnlace)), vivoTs.stderr || JSON.stringify(deVivo && deVivo[0]));
+ok("y avisa solo de la partida empezada y sin terminar de esa persona, en su categoría y su ronda (con dos que calzan, de ninguna)",
+   !!deVivo && JSON.stringify(deVivo[1]) === JSON.stringify(["AAAAAAAAb", null, null, null, null, null, "AAAAAAAAb"]), JSON.stringify(deVivo && deVivo[1]));
 
 (async () => {
   console.log("2. La página");
@@ -143,6 +185,7 @@ ok("la función sala-jugadores se deja importar para comparar", !!deTs, ts.stder
     await p0.waitForTimeout(800);
     ok("sin la transmisión en la sala, la ficha sigue en «Pronto» y no se le pide nada a Lichess",
        await p0.evaluate(() => { const f = document.getElementById("ficha-partidas"); return f && f.tagName === "DIV" && f.getAttribute("aria-disabled") === "true"; }) && !ped0.length, JSON.stringify(ped0));
+    ok("y «En vivo ahora» no se ve", await p0.evaluate(() => !document.getElementById("en-vivo-ahora").checkVisibility()));
     await p0.evaluate(() => document.querySelector('a[href="#fichas"]') && 0);
     await ctx0.close();
 
@@ -160,6 +203,19 @@ ok("la función sala-jugadores se deja importar para comparar", !!deTs, ts.stder
       const deJs = await p.evaluate((t) => [t.map(window.CentroamericanoPartidas.codigoCategoria), t.map(window.CentroamericanoPartidas.modalidadDe)], TEXTOS);
       ok("la categoría y la modalidad del nombre de un torneo salen igual que en la función", JSON.stringify(deJs) === JSON.stringify(deTs), JSON.stringify([deJs, deTs]));
     }
+    // «En vivo ahora», arriba de «Busca a tu jugador»: solo la que se está jugando.
+    await p.waitForFunction(() => document.querySelectorAll("#en-vivo-ahora .cac-envivo-item").length > 0, null, { timeout: 8000 }).catch(() => {});
+    const fila = await p.evaluate(() => { const f = document.getElementById("en-vivo-ahora");
+      return { ve: f.checkVisibility(), items: [...f.querySelectorAll(".cac-envivo-item")].map((li) => li.innerText.replace(/\s+/g, " ").trim()),
+        casillas: f.querySelectorAll(".cine-sq").length, ver: (f.querySelector("a") || {}).textContent, barra: (f.querySelector(".cac-vivo-barra") || { getAttribute: () => "" }).getAttribute("aria-label"),
+        arriba: f.compareDocumentPosition(document.getElementById("buscador-nombre")) === Node.DOCUMENT_POSITION_FOLLOWING }; });
+    ok("«En vivo ahora» sale arriba del buscador con las partidas que se están jugando (y no las terminadas)",
+       fila.ve && fila.arriba && fila.items.length === 1 && /Sub-15 Femenino · Mesa 5/.test(fila.items[0]) && /Salazar Pineda, Elena/.test(fila.items[0]) && fila.casillas === 64 && fila.ver === "Ver las 1 →", JSON.stringify(fila));
+    ok("con su barra, dicha para el lector", /^(igualado|mejor las blancas|mejor las negras|sin evaluación)$/.test(fila.barra), fila.barra);
+    await p.click("#en-vivo-ahora .cac-partida-abrir");
+    await p.waitForFunction(() => document.getElementById("partidas").open && document.querySelectorAll("#partidas-contenido .cac-visor-jugada").length > 0, null, { timeout: 8000 }).catch(() => {});
+    ok("tocarla abre esa partida en el visor", await p.evaluate(() => /Mesa 5/.test((document.querySelector("#partidas-contenido [data-cabeza]") || {}).textContent || "")));
+    await p.keyboard.press("Escape");
     await p.click("#ficha-partidas");
     await p.waitForFunction(() => document.querySelectorAll("#partidas-contenido .cac-partida").length > 0, null, { timeout: 8000 }).catch(() => {});
     const lista = await p.evaluate(() => ({
@@ -176,8 +232,8 @@ ok("la función sala-jugadores se deja importar para comparar", !!deTs, ts.stder
     ok("el resultado escrito, y la que se juega dice «En juego» (no solo con color)", lista.vivo.join(",") === "0-1|false,½-½|false,0-1|false,0-1|false,En juego|true,1-0|false", JSON.stringify(lista.vivo));
     ok("arriba dice la ronda, cuántas se transmiten y cuántas se juegan", /^Ronda 7 · 6 partidas transmitidas · 1 en juego\. Leído en Lichess a las/.test(lista.estado), lista.estado);
     ok("los filtros salen de lo que hay: solo la categoría que se transmite", JSON.stringify(lista.cats) === JSON.stringify(["Todas", "Sub-15 Femenino"]), JSON.stringify(lista.cats));
-    ok("la página le pidió a Lichess el grupo, las rondas y la ronda, sin el PGN todavía",
-       pedidos.includes("/api/broadcast/" + ID) && pedidos.includes("/api/broadcast/-/-/" + RID) && !pedidos.some((x) => /\.pgn$/.test(x)), JSON.stringify(pedidos));
+    ok("la página le pidió a Lichess el grupo, las rondas y la ronda (y el PGN solo de la ronda con partidas en juego, para la barra)",
+       pedidos.includes("/api/broadcast/" + ID) && pedidos.includes("/api/broadcast/-/-/" + RID) && pedidos.filter((x) => /\.pgn$/.test(x)).every((x) => x === "/api/broadcast/round/" + RID + ".pgn"), JSON.stringify(pedidos));
     const cuenta = () => p.evaluate(() => document.querySelectorAll("#partidas-contenido .cac-partida").length);
     await p.selectOption('[data-filtro="pais"]', "VEN");
     ok("el filtro de país deja las partidas de ese país", await cuenta() === 1);
@@ -190,8 +246,34 @@ ok("la función sala-jugadores se deja importar para comparar", !!deTs, ts.stder
     await p.uncheck('[data-filtro="vivo"]');
     ok("«Solo mis jugadores» no sale si no sigues a nadie", await p.evaluate(() => !document.querySelector("[data-mios]").checkVisibility()));
 
+    // Lo mejor de la ronda, arriba de la lista.
+    await p.waitForFunction(() => document.querySelectorAll("#partidas-contenido .cac-momento").length > 0, null, { timeout: 8000 }).catch(() => {});
+    const mom = await p.evaluate(() => { const c = document.querySelector("#partidas-contenido [data-momentos]");
+      return { ve: !!c && c.checkVisibility(), titulo: c && c.querySelector("h3").textContent,
+        items: [...c.querySelectorAll(".cac-momento")].map((li) => ({ texto: li.querySelector(".cac-momento-datos").innerText.replace(/\s+/g, " ").replace(/^\S+ /, "").trim(), casillas: li.querySelectorAll(".cine-sq").length })),
+        antes: c.compareDocumentPosition(document.querySelector("#partidas-contenido [data-partidas]")) === Node.DOCUMENT_POSITION_FOLLOWING }; });
+    ok("«Lo mejor de la ronda» sale arriba de la lista, con lo que pasó escrito y su tablero",
+       mom.ve && mom.antes && /Lo mejor de la ronda/.test(mom.titulo) && mom.items.length === 5 && mom.items.every((x) => x.casillas === 64) &&
+       /^Partida salvada Las negras llegaron a estar perdidas \(\+10 o más\) y se salvaron con tablas\. Todo cambió con 33\.Dg2\./.test(mom.items[0].texto) &&
+       /^Remontada Las negras llegaron a estar perdidas \(\+5,1\) y terminaron ganando\. Todo cambió con 18\.Af2\./.test(mom.items[1].texto), JSON.stringify(mom));
+    await p.selectOption('[data-filtro="pais"]', "VEN");
+    await p.waitForTimeout(300);
+    ok("y pasa por los mismos filtros", await p.evaluate(() => !document.querySelector("#partidas-contenido [data-momentos]").checkVisibility()));
+    await p.selectOption('[data-filtro="pais"]', "");
+    await p.waitForFunction(() => document.querySelectorAll("#partidas-contenido .cac-momento").length === 5, null, { timeout: 8000 }).catch(() => {});
+    await p.click('#partidas-contenido [data-momento="remontada"]');
+    await p.waitForFunction(() => document.querySelectorAll("#partidas-contenido [data-jugadas] .cac-visor-jugada").length > 0, null, { timeout: 8000 }).catch(() => {});
+    const enMom = await p.evaluate(() => { const c = document.getElementById("partidas-contenido"); const a = c.querySelector('.cac-visor-jugada[aria-current="true"]');
+      return { ply: a ? Number(a.dataset.ply) : -1, jug: a ? a.textContent : "", momento: c.querySelector("[data-momento]").checkVisibility() ? c.querySelector("[data-momento]").textContent : "",
+        nuevas: c.querySelector("[data-nuevas]").checkVisibility(), cabeza: c.querySelector("[data-cabeza]").textContent }; });
+    ok("«Ver el momento» abre la partida en esa jugada, lo dice arriba y no avisa de jugadas «nuevas»",
+       enMom.ply === 34 && enMom.jug === "Af2" && /^Remontada: Las negras/.test(enMom.momento) && !enMom.nuevas && /Mesa 4/.test(enMom.cabeza), JSON.stringify(enMom));
+    await p.click("[data-volver]");
+    await p.waitForFunction(() => document.activeElement && document.activeElement.dataset.momento === "remontada", null, { timeout: 5000 }).catch(() => {});
+    ok("al volver, el foco queda en el momento que se miraba", await p.evaluate(() => document.activeElement && document.activeElement.dataset.momento === "remontada"));
+
     // El visor.
-    await p.click('[data-partida="' + juegos[0].id + '"]');
+    await p.click('#partidas-contenido [data-partida="' + juegos[0].id + '"]');
     await p.waitForFunction(() => document.querySelectorAll("#partidas-contenido [data-jugadas] .cac-visor-jugada").length > 0, null, { timeout: 8000 }).catch(() => {});
     const estado = () => p.evaluate(() => {
       const c = document.getElementById("partidas-contenido");
@@ -251,9 +333,9 @@ ok("la función sala-jugadores se deja importar para comparar", !!deTs, ts.stder
     }).join("\n\n");
     pgnActual = corta(20);
     await p.click("[data-volver]");
-    await p.waitForSelector('[data-partida="' + g5.id + '"]');
+    await p.waitForSelector('#partidas-contenido [data-partida="' + g5.id + '"]');
     ok("al volver a la lista, el foco queda en la partida que se miraba", await p.evaluate((id) => document.activeElement && document.activeElement.dataset.partida === id, juegos[0].id));
-    await p.click('[data-partida="' + g5.id + '"]');
+    await p.click('#partidas-contenido [data-partida="' + g5.id + '"]');
     await p.waitForFunction(() => document.querySelectorAll("#partidas-contenido .cac-visor-jugada").length > 0);
     e = await estado();
     ok("una partida en juego dice «En juego»", /· En juego$/.test(e.cabeza) && e.jugadas === 40, JSON.stringify(e));
@@ -272,8 +354,8 @@ ok("la función sala-jugadores se deja importar para comparar", !!deTs, ts.stder
     pgnActual = null;
     // Sin evaluación de Lichess en una jugada: lo dice y ofrece Stockfish.
     await p.click("[data-volver]");
-    await p.waitForSelector('[data-partida="' + juegos[2].id + '"]');
-    await p.click('[data-partida="' + juegos[2].id + '"]');
+    await p.waitForSelector('#partidas-contenido [data-partida="' + juegos[2].id + '"]');
+    await p.click('#partidas-contenido [data-partida="' + juegos[2].id + '"]');
     await p.waitForFunction(() => document.querySelectorAll("#partidas-contenido .cac-visor-jugada").length > 0);
     e = await estado();
     ok("sin la evaluación de Lichess lo dice y ofrece calcularla en el aparato (no la inventa)",
@@ -283,6 +365,25 @@ ok("la función sala-jugadores se deja importar para comparar", !!deTs, ts.stder
     ok("en el celular cabe sin scroll de costado", await p.evaluate(() => { const d = document.getElementById("partidas"); return d.scrollWidth <= d.clientWidth + 1 && document.documentElement.scrollWidth <= window.innerWidth; }));
     await p.keyboard.press("Escape");
     await p.setViewportSize({ width: 1280, height: 900 });
+
+    // El proyector pasa también las partidas en vivo, con su barra escrita.
+    await p.click('a[href="#proyector"]');
+    await p.waitForFunction(() => document.getElementById("proyector").open && document.querySelector("#proyector-contenido .cac-proyector-partida"), null, { timeout: 10000 }).catch(() => {});
+    const proy = await p.evaluate(() => ({ titulo: document.getElementById("proyector-titulo").textContent,
+      partidas: [...document.querySelectorAll("#proyector-contenido .cac-proyector-partida")].map((c) => ({ texto: c.innerText.replace(/\s+/g, " ").trim(), casillas: c.querySelectorAll(".cine-sq").length })),
+      modos: [...document.querySelectorAll("#proyector-modo option")].map((o) => o.value) }));
+    ok("el proyector empieza por las partidas en vivo, cada una con su tablero y su barra escrita",
+       /^Partidas en vivo/.test(proy.titulo) && proy.partidas.length === 1 && proy.partidas[0].casillas === 64 && /Salazar Pineda/.test(proy.partidas[0].texto) && /(igualado|mejor las|sin evaluación)/.test(proy.partidas[0].texto), JSON.stringify(proy));
+    ok("y se puede dejar en «Solo las partidas en vivo»", proy.modos.includes("vivo"), JSON.stringify(proy.modos));
+    await p.keyboard.press("Escape");
+    await p.evaluate(() => history.replaceState(null, "", location.pathname));
+
+    // El enlace del aviso al celular, #partida=<id>, abre esa partida en el visor.
+    await p.evaluate((id) => { location.hash = "partida=" + id; }, g5.id);
+    await p.waitForFunction(() => document.getElementById("partidas").open && document.querySelectorAll("#partidas-contenido .cac-visor-jugada").length > 0, null, { timeout: 8000 }).catch(() => {});
+    const porEnlace = await p.evaluate(() => ({ cabeza: (document.querySelector("#partidas-contenido [data-cabeza]") || {}).textContent || "", hash: location.hash }));
+    ok("el enlace del aviso «… juega en vivo» abre esa partida en el visor (y se borra de la dirección)", /Mesa 5 · En juego$/.test(porEnlace.cabeza) && !porEnlace.hash, JSON.stringify(porEnlace));
+    await p.keyboard.press("Escape");
 
     // El botón en la tarjeta del jugador: solo para quien está en un tablero
     // transmitido, de su categoría (la de Sub-12 con el mismo nombre, no).
