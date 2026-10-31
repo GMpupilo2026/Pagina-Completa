@@ -3913,6 +3913,14 @@ el sexo.
   dejaría sin poder inscribirse a alguien de su misma red.
 - La política de privacidad lo dice (FIDE y Ajedrez Costa Rica, en
   proveedores), y la página también, debajo del título del apartado.
+- **La migración la aplicó el dueño pegándola en el editor SQL de Supabase**
+  (`apply_migration` le pidió confirmar dos veces y la pregunta se venció a
+  los 60 segundos sin llegarle). El mismo SQL la anotó en
+  `supabase_migrations.schema_migrations` (versión 20261031060000) para que
+  cuente como las demás. El editor le sumó la sangría al pegar, y por eso
+  `supabase/migraciones/20261031060000_pareo_listas_elo.sql` la trae y no
+  lleva comentarios: es byte a byte lo que quedó guardado, que es lo que
+  compara la huella. Los comentarios de la función están aquí arriba.
 - La lista elegida se recuerda en el navegador (`pareo_lista_elo_v1`); la
   primera vez, si el torneo es válido para Elo Nacional, empieza en la
   nacional.
