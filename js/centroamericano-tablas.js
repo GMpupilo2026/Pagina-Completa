@@ -195,6 +195,16 @@
       catToca: "Toca un jugador para ver sus rondas.",
       catVer: (n) => "Ver las rondas de " + n,
       catSinRes: "sin resultado todavía",
+      hjTitulo: (dias) => (dias === 0 ? "¡Hoy juega!" : dias === 1 ? "¡Mañana juega!" : "¡A jugar!"),
+      hjRonda: (r, m) => "Ronda " + r + " · Mesa " + m,
+      hjColor: (blancas) => (blancas ? "Con blancas contra" : "Con negras contra"),
+      hjHoy: (h) => "Hoy, " + h, hjManana: (h) => "Mañana, " + h, hjDia: (d, h) => d.charAt(0).toUpperCase() + d.slice(1) + ", " + h,
+      hjRondaSola: (r) => "Ronda " + r,
+      hjLugar: "Gimnasio Nacional, La Sabana",
+      hjSeguir: (n) => "Sigue a " + n + " en vivo",
+      hjSeguirTexto: "Escanea el código: su mesa, su rival, sus resultados y su partida, ronda a ronda.",
+      hjMensaje: (n, r, m, cuando, dias) => "📣 ¡" + (dias === 0 ? "Hoy juega " : dias === 1 ? "Mañana juega " : "Juega ") + n + "! Ronda " + r + ", mesa " + m + (cuando ? ", " + cuando.charAt(0).toLowerCase() + cuando.slice(1) : "") + ", en el Centroamericano 2026.",
+      hjMensajeEnlace: "Sigue su partida en vivo:",
       locale: "es-CR",
     },
     en: {
@@ -338,6 +348,16 @@
       catToca: "Tap a player to see their rounds.",
       catVer: (n) => "See the rounds of " + n,
       catSinRes: "no result yet",
+      hjTitulo: (dias) => (dias === 0 ? "Playing today!" : dias === 1 ? "Playing tomorrow!" : "Game on!"),
+      hjRonda: (r, m) => "Round " + r + " · Board " + m,
+      hjColor: (blancas) => (blancas ? "With white against" : "With black against"),
+      hjHoy: (h) => "Today, " + h, hjManana: (h) => "Tomorrow, " + h, hjDia: (d, h) => d + ", " + h,
+      hjRondaSola: (r) => "Round " + r,
+      hjLugar: "Gimnasio Nacional, La Sabana",
+      hjSeguir: (n) => "Follow " + n + " live",
+      hjSeguirTexto: "Scan the code: their board, opponent, results and game, round by round.",
+      hjMensaje: (n, r, m, cuando, dias) => "📣 " + n + (dias === 0 ? " plays today!" : dias === 1 ? " plays tomorrow!" : " plays!") + " Round " + r + ", board " + m + (cuando ? ", " + cuando.charAt(0).toLowerCase() + cuando.slice(1) : "") + ", at the Centroamericano 2026.",
+      hjMensajeEnlace: "Follow the game live:",
       locale: "en-US",
     },
     // El francés está en js/centroamericano-fr.js (sin él, esta página va en español).
@@ -1154,6 +1174,142 @@
     try {
       const blob = await imagenFinal(x);
       await compartirBlob(blob, CARA.archivo + "-asi-termino-" + V.plano(x.j.nombre).replace(/ /g, "-") + ".png", tx.finTexto(x.j.nombre) + " https://" + URL_PAGINA);
+    } catch (e) {
+      anunciar(tx.imagenError);
+    } finally {
+      if (boton) boton.disabled = false;
+    }
+  }
+
+  /* ---------------- «¡Hoy juega!» ---------------- */
+  // La tarjeta de antes de la ronda, para el estado de WhatsApp (1080 × 1920,
+  // con 190 px sin texto arriba y abajo, como «Así terminó mi torneo»): su
+  // nombre, la ronda y la mesa, el color y el rival, la hora y el lugar, el QR
+  // de su enlace directo (#jugador=…) para seguirlo en la página y el logo. Sin
+  // su puesto (lo pidió el dueño). Al compartirla va también el mensaje con el
+  // enlace, que en un chat sí se toca: dentro de una imagen nada se toca.
+  // Colores medidos (WCAG AA): blanco sobre #40478F 8,35 y sobre la caja
+  // translúcida (≈ #5A5FA3) 5,83; #1E2453 sobre blanco 14,7; #40478F sobre
+  // blanco 8,35; blanco sobre #102A43 14,3. Ver «La tarjeta «¡Hoy juega!»».
+  function horaDeRonda(r) {
+    const tr = document.querySelector('#calendario tr[data-ronda="' + r + '"][data-inicio]');
+    const d = tr ? new Date(tr.dataset.inicio + ":00-06:00") : null;   // Costa Rica no tiene horario de verano
+    return d && !isNaN(d) ? d : null;
+  }
+  // Cuántos días faltan (en hora de Costa Rica) y «Hoy, 3:00 p. m.» o «domingo 1 de noviembre, 3:00 p. m.».
+  function cuandoJuega(d, tx) {
+    const dia = (x) => x.toLocaleDateString("en-CA", { timeZone: V.ZONA });
+    const dias = Math.round((Date.parse(dia(d)) - Date.parse(dia(new Date()))) / 86400000);
+    const h = d.toLocaleTimeString(tx.locale, { hour: "numeric", minute: "2-digit", timeZone: V.ZONA });
+    const fecha = d.toLocaleDateString(tx.locale, { weekday: "long", day: "numeric", month: "long", timeZone: V.ZONA }).replace(/,/g, "");
+    return { dias, texto: dias === 0 ? tx.hjHoy(h) : dias === 1 ? tx.hjManana(h) : tx.hjDia(fecha, h) };
+  }
+  // El código QR dibujado en el lienzo (la misma librería que js/qr-svg.js).
+  function qrEnLienzo(ctx, texto, x0, y0, lado) {
+    if (!window.qrcode) return false;
+    const q = window.qrcode(0, "M");
+    q.addData(texto);
+    q.make();
+    const n = q.getModuleCount(), m = lado / (n + 2);
+    ctx.fillStyle = "#ffffff"; ctx.fillRect(x0, y0, lado, lado);
+    ctx.fillStyle = "#000000";
+    for (let f = 0; f < n; f++) for (let k = 0; k < n; k++) if (q.isDark(f, k)) ctx.fillRect(x0 + (k + 1) * m, y0 + (f + 1) * m, Math.ceil(m), Math.ceil(m));
+    return true;
+  }
+  const primerNombre = (j) => V.nombreCorto(j).split(" ")[0] || j.nombre;
+
+  async function imagenHoyJuega(x) {
+    const tx = T();
+    if (document.fonts && document.fonts.ready) await document.fonts.ready;
+    const letra = getComputedStyle(document.body).fontFamily || "system-ui, sans-serif";
+    const c = document.createElement("canvas");
+    c.width = 1080; c.height = 1920;
+    const ctx = c.getContext("2d");
+    const caja = (x0, y0, w, h, r, color) => {
+      ctx.fillStyle = color; ctx.beginPath(); ctx.moveTo(x0 + r, y0); ctx.arcTo(x0 + w, y0, x0 + w, y0 + h, r); ctx.arcTo(x0 + w, y0 + h, x0, y0 + h, r);
+      ctx.arcTo(x0, y0 + h, x0, y0, r); ctx.arcTo(x0, y0, x0 + w, y0, r); ctx.closePath(); ctx.fill();
+    };
+    ctx.fillStyle = CARA.banda; ctx.fillRect(0, 0, 1080, 1920);
+    ctx.textBaseline = "alphabetic"; ctx.textAlign = "start";
+    // La píldora con el evento.
+    ctx.font = "800 30px " + letra;
+    const evento = NOMBRE_CORTO.toUpperCase();
+    caja(60, 205, Math.min(960, ctx.measureText(evento).width + 48), 64, 16, "#ce1328");
+    ctx.fillStyle = "#ffffff"; ctx.fillText(evento, 84, 248);
+    // El título y el nombre.
+    const r = x.ronda, cuando = horaDeRonda(r) ? cuandoJuega(horaDeRonda(r), tx) : null;
+    ctx.font = "900 92px " + letra;
+    ctx.fillText(tx.hjTitulo(cuando ? cuando.dias : 0).toUpperCase(), 60, 380);
+    let y = 460;
+    ctx.font = "800 60px " + letra;
+    renglones(ctx, V.nombreCorto(x.j), 960, 2).forEach((l) => { ctx.fillText(l, 60, y); y += 70; });
+    ctx.font = "500 36px " + letra;
+    ctx.fillText([V.conModalidad(V.categoria(x.j.grupo)), x.j.fed ? V.pais(x.j.fed) : ""].filter(Boolean).join(" · "), 60, y);
+    y += 50;
+    // La ronda, la mesa, el color y el rival.
+    const rival = x.partida.rival, rd = (x.rivalDe && x.rivalDe(rival.no)) || {};
+    ctx.font = "700 46px " + letra;
+    const lineasRival = renglones(ctx, nombreAlDerecho({ titulo: rival.titulo || "", nombre: rival.nombre || "" }), 880, 2);
+    const altoRival = 206 + (lineasRival.length - 1) * 56 + (rd.fed || rd.elo ? 56 : 0) + 40;
+    caja(60, y, 960, altoRival, 34, "rgba(255,255,255,0.14)");
+    ctx.fillStyle = "#ffffff";
+    ctx.font = "900 72px " + letra; ctx.fillText(tx.hjRonda(r, x.partida.mesa), 100, y + 90);
+    ctx.font = "500 38px " + letra; ctx.fillText(tx.hjColor(x.partida.color === "blancas"), 100, y + 150);
+    let yr = y + 206;
+    ctx.font = "700 46px " + letra;
+    lineasRival.forEach((l) => { ctx.fillText(l, 100, yr); yr += 56; });
+    if (rd.fed || rd.elo) { ctx.font = "500 36px " + letra; ctx.fillText([rd.fed ? V.pais(rd.fed) : "", rd.elo || ""].filter(Boolean).join(" · "), 100, yr); }
+    y += altoRival + 30;
+    // La hora y el lugar, con el dibujo al lado.
+    caja(60, y, 640, 300, 34, "rgba(255,255,255,0.14)");
+    ctx.fillStyle = "#ffffff";
+    let yh = y + 90;
+    ctx.font = "800 48px " + letra;
+    renglones(ctx, cuando ? cuando.texto : tx.hjRondaSola(r), 560, 2).forEach((l) => { ctx.fillText(l, 100, yh); yh += 58; });
+    ctx.font = "500 36px " + letra;
+    renglones(ctx, tx.hjLugar, 560, 2).forEach((l) => { ctx.fillText(l, 100, yh + 10); yh += 46; });
+    const dibujo = await cargarImagen(CARA.dibujo);
+    if (dibujo) {
+      ctx.save(); caja(730, y, 290, 300, 34, "#ffffff"); ctx.clip();
+      const escala = Math.max(290 / dibujo.width, 300 / dibujo.height), w = dibujo.width * escala, h = dibujo.height * escala;
+      ctx.drawImage(dibujo, 730 + (290 - w) / 2, y + (300 - h) / 2, w, h);
+      ctx.restore();
+    }
+    // El recuadro para seguirlo: el QR de su enlace directo.
+    const yq = Math.min(1330, y + 340);   // debajo de la hora, sin pasar a la franja del logo
+    caja(60, yq, 960, 300, 34, "#ffffff");
+    qrEnLienzo(ctx, V.enlaceDe(x), 90, yq + 30, 240);
+    ctx.fillStyle = CARA.tinta; ctx.font = "800 46px " + letra;
+    let ys = yq + 82;
+    renglones(ctx, tx.hjSeguir(primerNombre(x.j)), 640, 2).forEach((l) => { ctx.fillText(l, 360, ys); ys += 54; });
+    ctx.font = "500 30px " + letra;
+    renglones(ctx, tx.hjSeguirTexto, 630, 3).forEach((l) => { ctx.fillText(l, 360, ys + 4); ys += 38; });
+    ctx.fillStyle = CARA.acento; ctx.font = "700 26px " + letra;
+    ctx.fillText(URL_PAGINA.replace(/\.html$/, ""), 360, Math.min(ys + 30, yq + 280));
+    // Abajo, el logo de la página.
+    ctx.fillStyle = "#102a43"; ctx.fillRect(0, 1650, 1080, 80);
+    const logo = await cargarImagen("img/logo-marca.png");
+    ctx.font = "800 36px " + letra;
+    const anchoNombre = ctx.measureText("Ajedrez Integral").width, anchoLogo = logo ? 56 * logo.width / logo.height : 0;
+    const x0 = (1080 - anchoLogo - (logo ? 18 : 0) - anchoNombre) / 2;
+    if (logo) ctx.drawImage(logo, x0, 1662, anchoLogo, 56);
+    ctx.fillStyle = "#ffffff"; ctx.fillText("Ajedrez Integral", x0 + anchoLogo + (logo ? 18 : 0), 1702);
+    if (window.TablaImagen && window.TablaImagen.marcar) await window.TablaImagen.marcar(c);
+    return new Promise((ok, mal) => c.toBlob((b) => (b ? ok(b) : mal(new Error("sin imagen"))), "image/png"));
+  }
+
+  // El mensaje que va con la imagen: en un chat, el enlace sí se toca.
+  function mensajeHoyJuega(x) {
+    const tx = T(), d = horaDeRonda(x.ronda), cuando = d ? cuandoJuega(d, tx) : null;
+    return tx.hjMensaje(primerNombre(x.j), x.ronda, x.partida.mesa, cuando ? cuando.texto : "", cuando ? cuando.dias : 0) + "\n\n" + tx.hjMensajeEnlace + " " + V.enlaceDe(x);
+  }
+
+  async function compartirHoyJuega(x, boton) {
+    const tx = T();
+    if (boton) boton.disabled = true;
+    try {
+      const blob = await imagenHoyJuega(x);
+      await compartirBlob(blob, CARA.archivo + "-hoy-juega-" + V.plano(x.j.nombre).replace(/ /g, "-") + ".png", mensajeHoyJuega(x));
     } catch (e) {
       anunciar(tx.imagenError);
     } finally {
@@ -2036,5 +2192,5 @@
   document.addEventListener("cac-datos", repintar);
   document.addEventListener("cac-idioma", repintar);
 
-  window.CentroamericanoTablas = { compartirJugador, imagenJugador, imagenFinal, compartirFinal, compartirResumen, imagenResumen, resumenDelDia, imagenDia, compartirDia, documentoDelegacion, hojaDelegacion, documentoInforme, informeDelegacion, numerosDelFestival, imagenNumeros, diplomasDelegacion, conDiploma, textosTablas: T, diploma, descargarDiploma, nombreAlDerecho };
+  window.CentroamericanoTablas = { compartirJugador, imagenJugador, imagenFinal, compartirFinal, imagenHoyJuega, compartirHoyJuega, mensajeHoyJuega, compartirResumen, imagenResumen, resumenDelDia, imagenDia, compartirDia, documentoDelegacion, hojaDelegacion, documentoInforme, informeDelegacion, numerosDelFestival, imagenNumeros, diplomasDelegacion, conDiploma, textosTablas: T, diploma, descargarDiploma, nombreAlDerecho };
 })();
