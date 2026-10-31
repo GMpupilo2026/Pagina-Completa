@@ -190,14 +190,19 @@ ok("una jugada es la única que gana: +3 contra +0,5 sí; contra +2 no; dos mate
        cab.pregunta === "Juegan las blancas. ¿Cómo ganas?" && /Pasó en la ronda 3 del Sub-10 Femenino/.test(cab.donde) && cab.primera === "a8" && /pregunta/.test(cab.foco), JSON.stringify(cab));
     const escribir = async (t) => { await p.fill("#ejercicio-jugada", t); await p.press("#ejercicio-jugada", "Enter"); await p.waitForTimeout(150); return p.$eval("[data-aviso]", (x) => x.textContent); };
     ok("una jugada escrita que no es: lo dice y deja intentar otra vez", new RegExp("^" + es(mala).replace(/[+]/g, "\\+") + " no es\\. Inténtalo otra vez\\.$").test(await escribir(es(mala))));
+    const cara = () => p.$eval("[data-aviso]", (x) => (x.dataset.profe || "") + "|" + getComputedStyle(x, "::before").backgroundImage);
+    ok("y el profe pone su cara de «casi» al lado (se ve: el dibujo en ::before)", /^casi\|url\(.*casi\.webp/.test(await cara()), await cara());
     await p.waitForTimeout(800);
     ok("una que no se entiende: lo dice", /^No entendí esa jugada/.test(await escribir("zz9")));
     await p.click("[data-pista]");
+    ok("con la pista, el profe pone su cara de «idea»", /^idea\|url\(.*idea\.webp/.test(await cara()), await cara());
     ok("la pista marca la pieza que se mueve", await p.evaluate((de) => document.querySelector('.cac-ejercicio-tablero [data-square="' + de + '"]').dataset.estado === "elegida", e.solucion[0].slice(0, 2)));
     await escribir(es(buena));
     const res = await p.evaluate(() => ({ r: document.querySelector("[data-resultado]") && document.querySelector("[data-resultado]").dataset.resultado,
       texto: document.querySelector("[data-resultado]") ? document.querySelector("[data-resultado]").innerText : "", aviso: document.querySelector("[data-aviso]").textContent,
       escribir: document.querySelector(".cac-ejercicio-escribir").checkVisibility(), sig: !!document.querySelector("[data-siguiente]") }));
+    const fiesta = await p.evaluate(() => { const x = document.querySelector("[data-resultado] [data-profe]"); return x ? x.dataset.profe + "|" + getComputedStyle(x, "::before").backgroundImage : ""; });
+    ok("resuelto: el profe celebra al lado de «¡Bien!» y el aviso queda sin cara", /^excelente\|url\(.*excelente\.webp/.test(fiesta) && /^\|none$/.test(await cara()), fiesta + " / " + await cara());
     ok("la buena: «¡Bien!», qué gana, cómo sigue y el apellido de quien la encontró en la partida",
        res.r === "bien" && /^✓ ¡Bien! Esa es la jugada\./.test(res.texto) && /\d+\. \S+: las blancas ganan una torre\./.test(res.texto) &&
        /Cómo sigue, según Stockfish: /.test(res.texto) && /En la partida la encontró Rojas Quesada\./.test(res.texto) && !res.aviso && !res.escribir && res.sig, JSON.stringify(res));
@@ -212,9 +217,11 @@ ok("una jugada es la única que gana: +3 contra +0,5 sí; contra +2 no; dos mate
     await tocar(e0.solucion[0]);
     await p.waitForTimeout(150);
     const medio = await p.$eval("[data-aviso]", (x) => x.textContent);
+    const caraMedio = await cara();
     await p.waitForTimeout(800);
     const tras = await p.evaluate((u) => document.querySelector('.cac-ejercicio-tablero [data-square="' + u.slice(2, 4) + '"] span') !== null, e0.solucion[1]);
     ok("a mitad de la línea: «¡Bien! El rival contesta …» y la página hace la jugada del rival", /^¡Bien! El rival contesta \S+\. ¿Y ahora\?$/.test(medio) && tras, medio);
+    ok("y el profe, con su cara de «muy bien»", /^muy-bien\|url\(.*muy-bien\.webp/.test(caraMedio), caraMedio);
     await tocar(e0.solucion[2]);
     await p.waitForTimeout(300);
     ok("y con la última, resuelto: las negras ganan una pieza", await p.evaluate(() => { const r = document.querySelector("[data-resultado]"); return !!r && r.dataset.resultado === "bien" && /las negras ganan una pieza/.test(r.innerText); }));
@@ -239,6 +246,13 @@ ok("una jugada es la única que gana: +3 contra +0,5 sí; contra +2 no; dos mate
     await pf.click('#ejercicios [data-ejercicio="4"]');
     const fr = await pf.evaluate(() => document.querySelector(".cac-ejercicio-pregunta").textContent + " | " + document.querySelector(".cac-ejercicio").innerText);
     ok("en francés", /^Les noirs jouent\. Comment gagner \?/.test(fr) && /Ronde 3, U16 Filles/.test(fr), fr);
+    // El profe también habla francés (CentroamericanoFR.profe, las mismas preguntas).
+    await pf.keyboard.press("Escape");
+    await pf.waitForTimeout(200);
+    await pf.click("#profe-boton");
+    const pfr = await pf.evaluate(() => ({ t: document.getElementById("profe-titulo").textContent, n: document.querySelectorAll("#profe-panel [data-pregunta]").length,
+      b: document.getElementById("profe-boton").getAttribute("aria-label") }));
+    ok("el profe, en francés", pfr.t === "Bonjour ! Je suis le prof" && pfr.n === 6 && /^Je vous aide \?/.test(pfr.b), JSON.stringify(pfr));
     await pf.context().close();
   } finally {
     await nav.close();

@@ -595,6 +595,52 @@ ok("la página carga el cliente de Supabase antes que su código en vivo", html.
     ok("con el resultado si ya lo hay", /Juega con negras contra WFM Wilson, Hannah \(BAR, 1920\)/.test(r.tarjetas[0]) && /Resultado: 0 - 1/.test(r.tarjetas[0]), JSON.stringify(r));
     r = await buscar("zzzz");
     ok("y si no hay nadie, lo dice", !r.tarjetas.length && /No encontramos/.test(r.estado), r.estado);
+    // El profe (js/centroamericano-profe.js): cara de «mmm» al lado de «nadie», y se va al encontrar.
+    const caraProfe = () => p6.evaluate(() => { const e = document.getElementById("buscador-estado");
+      return (e.dataset.profe || "") + "|" + getComputedStyle(e, "::before").backgroundImage; });
+    let cp = await caraProfe();
+    ok("sin nadie, el profe pone su cara de «mmm» al lado (se ve: el dibujo en ::before)", /^mmm\|url\(.*avatar-profe-oscar\/mmm\.webp/.test(cp), cp);
+    await buscar("mayorga");
+    cp = await caraProfe();
+    ok("y al encontrar a alguien, la cara se va", cp === "|none", cp);
+    // «¿Te ayudo?»: el botón con su cara abre el panel con las preguntas.
+    const pf = await p6.evaluate(() => { const b = document.getElementById("profe-boton");
+      return { ve: !!b && b.checkVisibility(), globo: b && b.querySelector(".cac-profe-globo").checkVisibility(), texto: b && b.textContent.trim(),
+        aria: b && b.getAttribute("aria-expanded"), panel: document.getElementById("profe-panel").checkVisibility(), fijo: b && getComputedStyle(b).position }; });
+    ok("el botón del profe está abajo, fijo, con «¿Te ayudo?» la primera vez y el panel cerrado",
+       pf.ve && pf.globo && pf.texto === "¿Te ayudo?" && pf.aria === "false" && !pf.panel && pf.fijo === "fixed", JSON.stringify(pf));
+    await p6.click("#profe-boton");
+    const lp = await p6.evaluate(() => { const pn = document.getElementById("profe-panel");
+      return { ve: pn.checkVisibility(), aria: document.getElementById("profe-boton").getAttribute("aria-expanded"), titulo: pn.querySelector("#profe-titulo").textContent,
+        preguntas: [...pn.querySelectorAll("[data-pregunta]")].map((b) => b.textContent), foco: document.activeElement.dataset.pregunta,
+        img: [...pn.querySelectorAll("img")].map((i) => i.alt + ":" + i.complete + ":" + i.naturalWidth), globo: document.querySelector(".cac-profe-globo").checkVisibility(),
+        nombre: /Oscar/.test(pn.textContent + document.getElementById("profe-boton").textContent + document.getElementById("profe-boton").getAttribute("aria-label")) }; });
+    ok("al tocarlo: el panel abierto, «¡Hola! Soy el profe» y las seis preguntas, con el foco en la primera",
+       lp.ve && lp.aria === "true" && lp.titulo === "¡Hola! Soy el profe" && lp.preguntas.length === 6 && /¿En qué mesa juega mi hijo\?/.test(lp.preguntas[0]) && lp.foco === "mesa", JSON.stringify(lp));
+    ok("dice «el profe», nunca su nombre (lo pidió el dueño)", !lp.nombre);
+    ok("su dibujo carga y es de adorno (alt vacío): lo que dice va escrito", lp.img.length === 1 && /^:true:[1-9]\d+$/.test(lp.img[0]), JSON.stringify(lp.img));
+    ok("y el globito ya no vuelve a salir", !lp.globo);
+    await p6.click('[data-pregunta="hora"]');
+    const rp = await p6.evaluate(() => ({ titulo: document.getElementById("profe-titulo").textContent, foco: document.activeElement.id,
+      img: document.querySelector("#profe-panel img").getAttribute("src"), boton: (document.querySelector("#profe-panel [data-accion]") || {}).textContent }));
+    ok("una pregunta: su respuesta, la pose que le toca y el botón que lleva", rp.titulo === "¿A qué hora es la ronda?" && rp.foco === "profe-titulo" && /reloj-de-ajedrez\.webp$/.test(rp.img) && rp.boton === "Ver el calendario", JSON.stringify(rp));
+    await p6.click("#profe-panel [data-accion]");
+    await p6.waitForTimeout(200);
+    const cal = await p6.evaluate(() => ({ abierto: document.getElementById("calendario").open, panel: document.getElementById("profe-panel").checkVisibility(), boton: document.getElementById("profe-boton").checkVisibility() }));
+    ok("«Ver el calendario» lo abre, y con la ventana abierta el profe se aparta", cal.abierto && !cal.panel && !cal.boton, JSON.stringify(cal));
+    await p6.keyboard.press("Escape");
+    await p6.waitForTimeout(200);
+    await p6.click("#profe-boton");
+    await p6.click('[data-pregunta="mesa"]');
+    await p6.click("#profe-panel [data-accion]");
+    ok("«Llévame al buscador» cierra el panel y pone el foco en el campo",
+       await p6.evaluate(() => document.activeElement.id === "buscador-nombre" && !document.getElementById("profe-panel").checkVisibility() && document.getElementById("profe-boton").getAttribute("aria-expanded") === "false"));
+    await p6.click("#profe-boton");
+    await p6.click('[data-pregunta="instalar"]');
+    await p6.click("[data-volver]");
+    ok("«← Otras preguntas» vuelve a la lista, con el foco en la que se abrió", await p6.evaluate(() => document.activeElement.dataset.pregunta === "instalar"));
+    await p6.keyboard.press("Escape");
+    ok("Escape lo cierra y devuelve el foco al botón", await p6.evaluate(() => document.activeElement.id === "profe-boton" && !document.getElementById("profe-panel").checkVisibility()));
     await p6.click('a[href="#medallero"]');
     await p6.waitForFunction(() => /Provisional/.test(document.getElementById("medallero-contenido").textContent));
     const med = await p6.evaluate(() => ({ filas: [...document.querySelectorAll("#medallero-contenido tbody tr")].map((tr) => tr.innerText.replace(/\s+/g, " ").trim()),

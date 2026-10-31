@@ -778,13 +778,15 @@
     const tx = t();
     const q = plano(campo.value);
     lista.replaceChildren();
+    delete estado.dataset.profe;
     if (!q) { estado.textContent = ""; return; }
     if (q.replace(/ /g, "").length < 3) { estado.textContent = tx.corto; return; }
     if (!datos) { estado.textContent = tx.cargando; return; }
     const palabras = q.split(" ");
     const hallados = jugadores().filter((x) => { const n = plano(x.j.nombre); return palabras.every((p) => n.includes(p)); });
     const cuando = cuandoSeLeyo(tx);
-    if (!hallados.length) { decir(estado, tx.nadie + cuando); return; }
+    // Sin nadie, el profe pone cara de «mmm» al lado (lo pinta el CSS).
+    if (!hallados.length) { decir(estado, tx.nadie + cuando); estado.dataset.profe = "mmm"; return; }
     decir(estado, tx.cuantos(hallados.length, MAX_RESULTADOS) + cuando);
     hallados.slice(0, MAX_RESULTADOS).forEach((x) => lista.appendChild(tarjeta(x, tx)));
   }

@@ -10973,6 +10973,46 @@ números del reloj, que cambian cada segundo.
 
 Rompí a propósito el tic de cada segundo y saltó.
 
+### El profe ayuda en la página
+
+El dueño preguntó cómo usar el avatar del profe para ayudar a la gente en la
+página del Centroamericano, y pidió que diga **«el profe», nada más**: sin su
+nombre, ni en el texto, ni en la etiqueta del botón, ni en los dibujos (van
+con `alt` vacío). Lo arma `js/centroamericano-profe.js`; los dibujos salen de
+la lista única `js/avatar-profe-oscar.js`.
+
+- **«¿Te ayudo?»:** un botón redondo con su cara, fijo abajo a la derecha. El
+  globito con el texto sale solo la primera vez en cada aparato
+  (`cac_profe_visto` en `localStorage`); el botón siempre lo dice en su
+  `aria-label` y lleva `aria-expanded`.
+- **El panel** (`#profe-panel`, `role="dialog"` no modal) trae las seis
+  preguntas que más hacen las familias, cada una con su pose: en qué mesa
+  juega, a qué hora es la ronda, cómo llegar al Gimnasio Nacional, los avisos
+  al celular, instalar la página y qué hacer mientras esperan. Cada respuesta
+  dice **solo lo que la página ya dice** (nada de inteligencia artificial ni
+  de datos nuevos) y su botón lleva al lugar: el buscador, el calendario, el
+  mapa, los juegos. Escape o un clic afuera lo cierran.
+- **Con una ventana abierta, el profe se aparta** (`body:has(dialog[open])`):
+  la ventana va primero y el botón no tapa sus controles.
+- **Reacciona donde hace falta, sin texto nuevo:** en el buscador, si no
+  encontró a nadie, pone su cara de «mmm» al lado del aviso; en los ejercicios
+  de la ronda, «casi» si la jugada no era, «muy bien» a mitad de la línea,
+  «idea» con la pista y «excelente» al resolverlo. Es un `data-profe` y el
+  dibujo lo pinta el CSS en `::before`: el aviso escrito sigue diciendo todo
+  y el color nunca va solo.
+- **Un detalle que costó:** el botón de una pregunta ya no está en la página
+  cuando el clic llega al `document` (el panel se repintó), y parecía un clic
+  afuera que cerraba el panel. Por eso se mira `e.target.isConnected`.
+- **Los idiomas:** español e inglés en el archivo; francés en
+  `CentroamericanoFR.profe`, con las mismas claves. El traductor de la página
+  no toca el botón ni el panel (`data-no-traducir`).
+
+Lo revisan `verificar-centroamericano.js` (el botón, el panel, cada pregunta y
+su botón, Escape, el foco, que no diga «Oscar», la cara del buscador vista en
+`::before`) y `verificar-centroamericano-ejercicios.js` (las caras de los
+ejercicios y el panel en francés). Los rompí a propósito (sin `isConnected`,
+con «profe Oscar» en el título, sin el `data-profe`) y saltaron.
+
 ### Mientras esperas
 
 Una ronda clásica dura entre tres y cuatro horas, y afuera de la sala esperan

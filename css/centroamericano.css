@@ -904,3 +904,45 @@ a.cac-despedida:hover .cac-globo { transform: translateY(-2px); }
 .cac-paseo-filtro:focus-visible { outline: 3px solid #ce1328; outline-offset: 2px; }
 .dark .cac-paseo-filtro { background: transparent; color: #b8bbf2; border-color: #b8bbf2; }
 .dark .cac-paseo-filtro[aria-pressed="true"] { background: #b8bbf2; color: #1f2347; }
+
+/* «¿Te ayudo?»: el profe abajo a la derecha (js/centroamericano-profe.js). */
+.cac-profe-boton { position: fixed; right: 0.9rem; bottom: 0.9rem; z-index: 60; display: flex; align-items: flex-end; gap: 0.5rem; border: 0; background: none; padding: 0; cursor: pointer; }
+.cac-profe-boton:focus-visible { outline: none; }
+.cac-profe-boton:focus-visible .cac-profe-cara { outline: 3px solid var(--cac-rojo); outline-offset: 3px; }
+.cac-profe-globo { background: #fff; color: var(--cac-morado-hondo); font-weight: 800; font-size: 0.95rem; padding: 0.5rem 0.8rem; border-radius: 1rem 1rem 0.2rem 1rem; box-shadow: 0 6px 18px rgb(0 0 0 / 0.25); }
+.cac-profe-globo[hidden] { display: none; }
+.cac-profe-cara { width: 4.25rem; height: 4.25rem; border-radius: 9999px; background: var(--cac-morado); border: 3px solid #fff; box-shadow: 0 6px 18px rgb(0 0 0 / 0.3); overflow: hidden; display: grid; place-items: end center; }
+.cac-profe-cara img { width: 3.75rem; height: auto; transform: translateY(0.5rem); }
+.cac-profe-boton[aria-expanded="true"] .cac-profe-cara { background: var(--cac-rojo); }
+.cac-profe-panel { position: fixed; right: 0.75rem; bottom: 6rem; z-index: 61; width: min(24rem, calc(100vw - 1.5rem)); max-height: calc(100vh - 7.5rem); overflow-y: auto; background: #fff; color: #102a43; border-radius: 1.25rem; box-shadow: 0 16px 40px rgb(0 0 0 / 0.35); padding: 1rem; border-top: 6px solid var(--cac-rojo); }
+.cac-profe-panel[hidden] { display: none; }
+.dark .cac-profe-panel { background: rgb(var(--c-brand-900, 16 42 67)); color: #fff; }
+.cac-profe-cerrar { position: absolute; top: 0.5rem; right: 0.6rem; width: 2.5rem; height: 2.5rem; border-radius: 9999px; font-size: 1.2rem; color: var(--cac-morado); background: transparent; }
+.dark .cac-profe-cerrar { color: #b8bbf2; }
+.cac-profe-cerrar:focus-visible, .cac-profe-pregunta:focus-visible { outline: 3px solid var(--cac-rojo); outline-offset: 2px; }
+.cac-profe-cabeza { display: grid; grid-template-columns: 5.5rem minmax(0, 1fr); gap: 0.75rem; align-items: end; padding-right: 2rem; }
+.cac-profe-figura { width: 5.5rem; height: 9rem; object-fit: contain; object-position: 50% 100%; }
+.cac-profe-titulo { font-weight: 800; font-size: 1.1rem; color: var(--cac-morado-hondo); }
+.dark .cac-profe-titulo { color: #fff; }
+.cac-profe-titulo:focus { outline: none; }
+.cac-profe-texto { font-size: 0.95rem; margin-top: 0.2rem; color: #334e68; }
+.dark .cac-profe-texto { color: #d9e2ec; }
+.cac-profe-lista { display: grid; gap: 0.45rem; margin-top: 0.75rem; }
+.cac-profe-pregunta { width: 100%; text-align: left; min-height: 2.75rem; border: 2px solid #dfe0f7; border-radius: 0.85rem; padding: 0.55rem 0.75rem; font-weight: 700; color: var(--cac-morado-hondo); background: #f8f8fe; }
+.cac-profe-pregunta:hover { border-color: var(--cac-morado); }
+.dark .cac-profe-pregunta { background: rgb(255 255 255 / 0.06); border-color: rgb(255 255 255 / 0.2); color: #fff; }
+.cac-profe-acciones { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.85rem; }
+/* Con una ventana abierta, el profe se aparta: la ventana va primero. */
+body:has(dialog[open]) .cac-profe-boton, body:has(dialog[open]) .cac-profe-panel { display: none; }
+@media print { .cac-profe-boton, .cac-profe-panel { display: none; } }
+
+/* El profe reacciona: en el buscador (no encontró a nadie) y en los ejercicios. */
+#buscador-estado[data-profe], .cac-ejercicio-aviso[data-profe] { display: flex; align-items: center; gap: 0.6rem; }
+#buscador-estado[data-profe]::before, .cac-ejercicio-aviso[data-profe]::before, .cac-ejercicio-resultado [data-profe]::before { content: ""; flex: none; width: 2.75rem; height: 2.75rem; border-radius: 9999px; background-color: var(--cac-morado); background-repeat: no-repeat; background-size: 2.5rem auto; background-position: 50% 0.35rem; }
+/* En «¡Bien!», la cara va en la línea, antes del ✓. */
+.cac-ejercicio-resultado [data-profe]::before { display: inline-block; vertical-align: middle; margin-right: 0.5rem; }
+[data-profe="mmm"]::before { background-image: url("../img/avatar-profe-oscar/mmm.webp"); }
+[data-profe="casi"]::before { background-image: url("../img/avatar-profe-oscar/casi.webp"); }
+[data-profe="muy-bien"]::before { background-image: url("../img/avatar-profe-oscar/muy-bien.webp"); }
+[data-profe="idea"]::before { background-image: url("../img/avatar-profe-oscar/idea.webp"); }
+[data-profe="excelente"]::before { background-image: url("../img/avatar-profe-oscar/excelente.webp"); }

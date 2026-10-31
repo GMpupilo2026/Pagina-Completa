@@ -693,6 +693,20 @@ window.CentroamericanoFR = {
     ficha: (r) => "Résoudre ceux de la ronde " + r + " →",
     hoy: (r) => "Les exercices de la ronde " + r + " sont là. Combien en résous-tu ? →",
   },
+  // js/centroamericano-profe.js: «¿Te ayudo?», el profe que ayuda en la página.
+  profe: {
+    boton: "Je vous aide ?", botonAria: "Je vous aide ? Les questions les plus fréquentes sur le tournoi",
+    hola: "Bonjour ! Je suis le prof", intro: "Je vous aide à trouver ce que vous cherchez sur le Championnat. De quoi avez-vous besoin ?",
+    cerrar: "Fermer", otras: "← Autres questions",
+    preguntas: {
+      mesa: ["🔎", "Sur quel échiquier joue mon enfant ?", "Écrivez son nom de famille dans « Trouvez votre joueur » : vous verrez son échiquier, sa couleur et son adversaire de la ronde du jour, sa catégorie et comment il avance.", "M'emmener à la recherche"],
+      hora: ["🗓️", "À quelle heure est la ronde ?", "En haut, « Aujourd'hui au tournoi » affiche le compte à rebours jusqu'à la prochaine ronde. Le calendrier les montre toutes, avec leur jour et l'heure du Costa Rica.", "Voir le calendrier"],
+      llegar: ["📍", "Comment aller au Gimnasio Nacional ?", "Le Gimnasio Nacional se trouve dans le parc métropolitain La Sabana, à San José. Les déjeuners et les dîners y sont aussi servis.", "Ouvrir la carte"],
+      avisos: ["🔔", "Comment recevoir les alertes sur mon téléphone ?", "Trouvez votre joueur et touchez l'étoile ⭐ pour le suivre. « Mes joueurs » apparaît en haut : touchez « M'avertir sur ce téléphone » pour recevoir son échiquier et son adversaire à chaque ronde, et son résultat.", "M'emmener à la recherche"],
+      instalar: ["📲", "Comment l'installer sur mon téléphone ?", "Sur Android : le menu ⋮ du navigateur puis « Installer l'application » ou « Ajouter à l'écran d'accueil ». Sur iPhone : le bouton Partager de Safari puis « Sur l'écran d'accueil ». Elle prend l'icône du pizote et s'ouvre même sans internet dans la salle.", ""],
+      esperar: ["🎈", "Que faire pendant l'attente ?", "Pour les frères et sœurs, les amis et ceux qui ont déjà fini leur partie, il y a des jeux d'échecs gratuits et sans compte.", "Voir les jeux"],
+    },
+  },
   // js/centroamericano-partidas.js: las partidas en vivo de Lichess.
   partidas: {
     titulo: "Parties en direct",

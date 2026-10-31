@@ -348,6 +348,10 @@
     if (!a) return;
     a.textContent = texto;
     a.className = "cac-ejercicio-aviso" + (tipo ? " cac-ejercicio-aviso-" + tipo : "");
+    // La cara del profe al lado (la pinta el CSS): «casi» si no era esa,
+    // «muy bien» si va bien, «idea» con la pista; sin texto, ninguna.
+    const cara = !texto ? "" : tipo === "mal" ? "casi" : tipo === "bien" ? "muy-bien" : "idea";
+    if (cara) a.dataset.profe = cara; else delete a.dataset.profe;
   }
 
   function contestar(resp) {
@@ -408,6 +412,7 @@
     const res = el("div", "cac-ejercicio-resultado" + (bien ? " cac-ejercicio-resultado-bien" : ""));
     res.dataset.resultado = bien ? "bien" : "solucion";
     const t = el("p", "font-extrabold", "");
+    if (bien) t.dataset.profe = "excelente";
     if (bien) t.appendChild(el("span", "", "✓ ")).setAttribute("aria-hidden", "true");
     t.appendChild(document.createTextNode(bien ? tx.bien : tx.laSolucion));
     res.append(t, el("p", "mt-1", tx.explica(lineaTexto(e.fen, linea), color, e.tema)));
