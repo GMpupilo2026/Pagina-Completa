@@ -157,7 +157,7 @@
       delegApagado: (p) => "Listo: ya no te avisamos el resumen de " + p + ".",
       imagenResumen: "Compartir imagen",
       hojaPdf: "Hoja de la delegación para imprimir (PDF)",
-      diplomaPdf: "Certificado (PDF)", diplomaImagen: "Certificado (imagen)", asiTermino: "🏁 Así terminó mi torneo",
+      diplomaPdf: "Certificado (PDF)", diplomaImagen: "Certificado (imagen)", asiTermino: "🏁 Así terminó mi torneo", hoyJuega: "📣 ¡Hoy juega!",
       puestosTitulo: "Su puesto en la categoría después de cada ronda:",
       puestoRonda: (r, p) => "R" + r + " " + p,
       puestosNota: "Con los mismos puntos se comparte el puesto (por ejemplo, 3.º–5.º): el desempate lo decide al final del torneo.",
@@ -261,7 +261,7 @@
       delegApagado: (p) => "Done: we no longer send you " + p + "'s summary.",
       imagenResumen: "Share image",
       hojaPdf: "Delegation sheet to print (PDF)",
-      diplomaPdf: "Certificate (PDF)", diplomaImagen: "Certificate (image)", asiTermino: "🏁 How my tournament ended",
+      diplomaPdf: "Certificate (PDF)", diplomaImagen: "Certificate (image)", asiTermino: "🏁 How my tournament ended", hoyJuega: "📣 Playing today!",
       puestosTitulo: "Their place in the section after each round:",
       puestoRonda: (r, p) => "R" + r + " " + p,
       puestosNota: "Players on the same points share the place (for example, 3rd–5th): tiebreaks decide it at the end of the tournament.",
@@ -875,6 +875,16 @@
         b.addEventListener("click", () => { if (window.CentroamericanoTablas) window.CentroamericanoTablas.descargarDiploma(x, formato, b); });
         acciones.appendChild(b);
       });
+    }
+    // «¡Hoy juega!»: la tarjeta de antes de la ronda, con su mesa y su rival,
+    // mientras la partida de la ronda emparejada no tiene resultado. Solo en la
+    // página que trae el calendario (la hora sale de ahí) y en el clásico.
+    if (modalidad === "clasico" && !x.torneo.terminado && x.partida && x.partida.rival && !res && document.querySelector("#calendario tr[data-ronda]")) {
+      const hoy = el("button", "cac-jugador-boton", tx.hoyJuega);
+      hoy.type = "button";
+      hoy.dataset.accion = "hoy-juega";
+      hoy.addEventListener("click", () => { if (window.CentroamericanoTablas) window.CentroamericanoTablas.compartirHoyJuega(x, hoy); });
+      acciones.appendChild(hoy);
     }
     // Sus rondas en el calendario del celular (solo en la página que trae el
     // calendario de las rondas: la del Centroamericano).

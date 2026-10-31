@@ -10706,6 +10706,47 @@ torneo», que arma una imagen de 1080 × 1920 para el estado de WhatsApp
 Se comparte con `navigator.share` si el aparato puede, y si no, se baja. Lo
 revisa `verificar-centroamericano.js`: el tamaño, que sea PNG y que la marca
 vaya una vez.
+
+### La tarjeta «¡Hoy juega!»
+
+Antes de cada ronda, la familia quiere avisar: «hoy juega, a tal hora, contra
+tal». Con la ronda emparejada y todavía sin resultado (y el calendario en la
+página, para saber la hora), la tarjeta del jugador trae «📣 ¡Hoy juega!»
+(`compartirHoyJuega` en `js/centroamericano-tablas.js`). Arma una imagen de
+1080 × 1920 y la comparte **junto con un mensaje** que lleva el enlace.
+
+- **La imagen** lleva, de arriba abajo:
+  - el título según el día: «¡Hoy juega!», «¡Mañana juega!» o «¡A jugar!»;
+  - el nombre del jugador, con su categoría y su país;
+  - la ronda y la mesa;
+  - el color y el rival, con su país y su Elo;
+  - el día y la hora de la ronda en hora de Costa Rica, y el lugar;
+  - el pizote;
+  - un código QR que abre su ficha (`#jugador=…`) con «Sigue a … en vivo»;
+  - la banda con el logo de Ajedrez Integral;
+  - la marca de agua, una sola vez.
+- **El puesto no va** (lo pidió el dueño). Antes de la ronda es un dato que
+  cambia, y no es lo que se quiere anunciar.
+- **El enlace va en el mensaje, no en la imagen.** Una imagen no tiene botones:
+  en el estado de WhatsApp o en un chat nadie puede tocar un enlace pintado. Por
+  eso el QR sirve a quien ve la imagen en otra pantalla, y el mensaje que
+  acompaña a la imagen (`mensajeHoyJuega`) lleva el enlace, que sí se toca. Ese
+  mensaje dice «Hoy juega», «Mañana juega» o «Juega» según el día, igual que el
+  título.
+- Los textos están en español, inglés y francés (`hj*`; el francés, en
+  `js/centroamericano-fr.js`).
+
+Lo revisa `verificar-centroamericano.js`, que espía lo escrito en el lienzo y
+lo que recibe el QR. Comprueba:
+
+- que el botón aparezca;
+- que la imagen mida 1080 × 1920, sea PNG y lleve la marca una sola vez;
+- que traiga la ronda y la mesa, el color, el rival, «Sigue a … en vivo» y
+  «Ajedrez Integral»;
+- que no aparezca el puesto;
+- que el QR lleve el enlace del jugador;
+- que el mensaje empiece como debe y traiga el enlace.
+
 ## Las páginas de los torneos universitarios
 
 Dos, con la misma maquinaria: `cenfotec-2026.html` (el Desafío Mentes

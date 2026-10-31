@@ -683,6 +683,30 @@ ok("la página carga el cliente de Supabase antes que su código en vivo", html.
     ok("«Compartir» da una imagen de 1080 × 1080 con su nombre de archivo", png.slice(1, 4).toString() === "PNG" && anchoPng === 1080 && altoPng === 1080 && /^centroamericano-2026-mayorga-araya-sofia\.png$/.test(descarga.suggestedFilename()), anchoPng + "×" + altoPng + " " + descarga.suggestedFilename());
     ok("y lleva la marca de agua de Ajedrez Integral", await p6.evaluate(() => window.__marcas === 1));
 
+    // «¡Hoy juega!»: la tarjeta de antes de la ronda, con el QR de su enlace
+    // directo y el mensaje con el enlace que se toca. Sin el puesto.
+    const hj = await p6.evaluate(async () => {
+      const V = window.CentroamericanoVivo, x = V.jugadores().find((y) => /Mayorga/.test(y.j.nombre));
+      const b = document.querySelector('#buscador-resultados [data-accion="hoy-juega"]');
+      let marcas = 0; const orig = window.TablaImagen.marcar;
+      window.TablaImagen.marcar = async (c) => { marcas++; return orig(c); };
+      const escrito = [], fill = CanvasRenderingContext2D.prototype.fillText;
+      CanvasRenderingContext2D.prototype.fillText = function (t, ...r) { escrito.push(String(t)); return fill.call(this, t, ...r); };
+      const qr = [], qrOrig = window.qrcode;
+      window.qrcode = (...a) => { const q = qrOrig(...a); const add = q.addData.bind(q); q.addData = (t) => { qr.push(t); return add(t); }; return q; };
+      const blob = await window.CentroamericanoTablas.imagenHoyJuega(x);
+      window.TablaImagen.marcar = orig; CanvasRenderingContext2D.prototype.fillText = fill; window.qrcode = qrOrig;
+      const img = await createImageBitmap(blob);
+      return { boton: b && b.checkVisibility() ? b.textContent : null, w: img.width, h: img.height, tipo: blob.type, marcas, escrito, qr, enlace: V.enlaceDe(x),
+        mensaje: window.CentroamericanoTablas.mensajeHoyJuega(x), ronda: x.ronda, mesa: x.partida && x.partida.mesa };
+    });
+    ok("con la ronda emparejada y sin resultado, la tarjeta trae «📣 ¡Hoy juega!»", hj.boton === "📣 ¡Hoy juega!", JSON.stringify(hj.boton));
+    ok("su imagen es de 1080 × 1920, en PNG y con la marca de agua", hj.w === 1080 && hj.h === 1920 && hj.tipo === "image/png" && hj.marcas === 1, JSON.stringify([hj.w, hj.h, hj.tipo, hj.marcas]));
+    ok("dice la ronda y la mesa, el rival, a quién seguir y el logo; el puesto no", hj.escrito.includes("Ronda " + hj.ronda + " · Mesa " + hj.mesa) && hj.escrito.some((t) => /^Con (blancas|negras) contra$/.test(t))
+      && hj.escrito.includes("Sigue a Sofia en vivo") && hj.escrito.includes("Ajedrez Integral") && !hj.escrito.some((t) => /Puesto|\.º/.test(t)), JSON.stringify(hj.escrito));
+    ok("el QR lleva su enlace directo (#jugador=…)", hj.qr.length === 1 && hj.qr[0] === hj.enlace && /#jugador=1494141-2-/.test(hj.enlace), JSON.stringify([hj.qr, hj.enlace]));
+    ok("y el mensaje que va con la imagen trae el enlace, que en un chat se toca", hj.mensaje.includes(hj.enlace) && /^📣 ¡(Hoy juega|Mañana juega|Juega) Sofia! Ronda \d+, mesa \d+/.test(hj.mensaje), hj.mensaje);
+
     // Sus rondas en el calendario del celular: un .ics con cada ronda de su
     // torneo a la hora del calendario de la página (en hora de Costa Rica),
     // lo que hizo en las jugadas, su mesa y rival en la emparejada, y el aviso
