@@ -14,7 +14,9 @@
    universitarios va con la de «universidades»): la vitrina pregunta por esa
    y licencias.html no la ofrece aparte. `imagen` (opcional) es la foto de
    la tarjeta, con su `alt` y su tamaño para que la página no salte al
-   cargarla; sale arriba del título. `tema` es la ficha
+   cargarla; sale arriba del título. `oculta: true` saca la herramienta de la
+   vitrina y de licencias.html sin borrar su ficha (la página sigue
+   existiendo, solo no se anuncia). `tema` es la ficha
    de la vitrina donde sale (uno de TEMAS); la lista se ordena por tema, y
    dentro de cada uno queda en el orden en que está escrita. Ver «Herramientas
    de arbitraje» en docs/decisiones/juegos-y-torneos.md. */
@@ -76,6 +78,7 @@
             corto: "Lista de árbitros",
             href: "arbitros.html",
             disponible: true,
+            oculta: true,
             gratis: true,
             resumen: "La lista de árbitros de la Federación con su título, su categoría nacional y su último torneo, y qué categoría pide tu torneo según el Reglamento para Árbitros. Gratis y sin cuenta.",
             puntos: [
@@ -475,6 +478,8 @@
 
     const ordenTema = new Map(TEMAS.map((t, i) => [t.id, i]));
     LISTA.sort((a, b) => ordenTema.get(a.tema) - ordenTema.get(b.tema));
+
+    for (let i = LISTA.length - 1; i >= 0; i--) if (LISTA[i].oculta) LISTA.splice(i, 1);
 
     const porId = new Map(LISTA.map((h) => [h.id, h]));
     function nombre(id) {

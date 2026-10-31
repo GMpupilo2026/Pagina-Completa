@@ -73,7 +73,7 @@
             </ul>
         </div>
     </header>
-        <main id="main-content" class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <main id="main-content" class="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
         <div id="loading" role="status" class="min-h-[50vh] flex flex-col items-center justify-center gap-3 px-4 text-center text-brand-500 dark:text-brand-300"><span aria-hidden="true" class="w-8 h-8 rounded-full border-4 border-brand-200 dark:border-brand-700 border-t-accent-500 animate-spin motion-reduce:animate-none"></span><p class="text-sm">Comprobando tu sesión…</p></div>
 
         <div id="denegado" class="hidden max-w-2xl mx-auto bg-white dark:bg-brand-900 rounded-2xl shadow-md p-8 text-center">
@@ -88,16 +88,30 @@
                 <h1 id="mesa-titulo-qr" class="font-serif text-2xl font-bold text-brand-800 dark:text-white"></h1>
                 <p id="mesa-ayuda-qr" class="text-sm text-brand-500 dark:text-brand-300 mt-1">Esta cámara transmite solo esta mesa, sin cuenta. Pon el celular encima del tablero, toca «Buscar el tablero» y, con las piezas en la posición inicial, «Calibrar con la posición inicial».</p>
             </div>
-            <h1 data-solo-pagina class="font-serif text-3xl sm:text-4xl font-bold text-brand-800 dark:text-white"><span aria-hidden="true">📷</span> Notara <span class="text-base align-middle font-sans font-semibold bg-accent-100 text-brand-900 rounded-full px-3 py-1">Prueba</span> <span class="block font-sans text-lg sm:text-xl font-semibold text-brand-500 dark:text-brand-300 mt-1">La cámara que lee el tablero</span></h1>
-            <p data-solo-pagina class="text-brand-500 dark:text-brand-300 mt-1 mb-6">Pon el celular encima del tablero, mirando hacia abajo, y sigue los pasos. Sirve para medir qué tan bien se ven nuestros tableros con la luz real del salón. No guarda nada ni manda la imagen a ningún lado: todo pasa en este celular.</p>
-
-            <ol data-solo-pagina class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6 text-sm">
-                <li class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-4"><p class="font-semibold text-brand-800 dark:text-white">1. La imagen</p><p class="text-brand-500 dark:text-brand-300 mt-1">Abre la cámara o, para probar sin tablero, elige una foto.</p></li>
-                <li class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-4"><p class="font-semibold text-brand-800 dark:text-white">2. El tablero</p><p class="text-brand-500 dark:text-brand-300 mt-1">Toca «Buscar el tablero» o marca tú las cuatro esquinas, en cualquier orden: se ajustan solas a las líneas.</p></li>
-                <li class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-4"><p class="font-semibold text-brand-800 dark:text-white">3. Calibrar</p><p class="text-brand-500 dark:text-brand-300 mt-1">Con las piezas en la posición inicial, toca «Calibrar»: ahí descubre cuál esquina es a1. Si se movió la cámara a media partida, «Seguir con esta partida» no pierde nada.</p></li>
+            <div id="nt-barra" class="nt-barra">
+                <h1 data-solo-pagina class="font-serif text-xl font-bold text-white flex items-center gap-2"><span aria-hidden="true">📷</span> Notara <span class="text-base align-middle font-sans font-semibold bg-accent-100 text-brand-900 rounded-full px-3 py-1">Prueba</span> <span class="hidden sm:inline font-sans text-sm font-semibold text-brand-200">La cámara que lee el tablero</span></h1>
+                <p class="flex flex-wrap items-center gap-1.5 text-xs" aria-label="Cómo va esta cámara">
+                    <span id="nt-lugar" hidden class="nt-chip"></span>
+                    <span id="nt-vivo" hidden class="nt-chip nt-chip-bien"></span>
+                    <span id="nt-var" hidden class="nt-chip nt-chip-rojo"></span>
+                    <span id="nt-red" hidden class="nt-chip nt-chip-ambar"></span>
+                    <span id="nt-bateria" hidden class="nt-chip"></span>
+                </p>
+                <div class="flex flex-wrap items-center gap-2 sm:ml-auto">
+                    <button id="nt-marcar" type="button" hidden class="bg-brand-800 hover:bg-brand-700 border border-brand-600 text-white font-semibold px-3 py-1.5 rounded-lg text-sm disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true">📍</span> Marcar momento</button>
+                    <button id="nt-revisar" type="button" disabled class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-3 py-1.5 rounded-lg text-sm disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true">🎥</span> Revisar jugada</button>
+                    <button id="nt-ayuda" type="button" aria-label="Cómo se usa" title="Cómo se usa" class="bg-brand-800 hover:bg-brand-700 border border-brand-600 text-white font-semibold px-3 py-1.5 rounded-lg text-sm disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">?</button>
+                </div>
+            </div>
+            <ol id="nt-pasos" class="nt-pasos" aria-label="Pasos para empezar">
+                <li id="nt-paso-camara" class="nt-paso" title="Abre la cámara o, para probar sin tablero, elige una foto."><span class="nt-paso-num" aria-hidden="true">1</span><span>Cámara<span class="sr-only nt-paso-estado"></span></span></li>
+                <li id="nt-paso-tablero" class="nt-paso" title="Toca «Buscar el tablero» o marca tú las cuatro esquinas, en cualquier orden: se ajustan solas a las líneas."><span class="nt-paso-num" aria-hidden="true">2</span><span>Tablero<span class="sr-only nt-paso-estado"></span></span></li>
+                <li id="nt-paso-calibrar" class="nt-paso" title="Con las piezas en la posición inicial, toca «Calibrar»: ahí descubre cuál esquina es a1. Si se movió la cámara a media partida, «Seguir con esta partida» no pierde nada."><span class="nt-paso-num" aria-hidden="true">3</span><span>Calibrar<span class="sr-only nt-paso-estado"></span></span></li>
+                <li id="nt-paso-partida" class="nt-paso" title="Con la cámara calibrada, cada jugada se anota sola."><span class="nt-paso-num" aria-hidden="true">4</span><span>Partida<span class="sr-only nt-paso-estado"></span></span></li>
             </ol>
-
-            <div class="flex flex-wrap gap-2 mb-4">
+            <div class="nt-cuerpo">
+                <div class="nt-centro min-w-0">
+            <div class="nt-herr flex flex-wrap gap-2 mb-4">
                 <button id="btn-camara" type="button" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2.5 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2">Abrir la cámara</button>
                 <label class="inline-flex items-center bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-4 py-2.5 rounded-lg text-sm cursor-pointer focus-within:ring-2 focus-within:ring-accent-400">Probar con una foto<input id="foto" type="file" accept="image/*" class="sr-only"></label>
                 <label data-no-mesa class="inline-flex items-center bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-4 py-2.5 rounded-lg text-sm cursor-pointer focus-within:ring-2 focus-within:ring-accent-400">Leer un video grabado<input id="video-archivo" type="file" accept="video/*" class="sr-only"></label>
@@ -149,22 +163,26 @@
             <p id="aviso" role="status" aria-live="polite" class="mb-4 rounded-xl px-4 py-3 text-sm bg-brand-100 text-brand-800 dark:bg-brand-800 dark:text-brand-100">Empieza por abrir la cámara o elegir una foto.</p>
             <ul id="armado-lista" class="-mt-2 mb-4 list-disc pl-6 text-sm text-red-800 dark:text-red-200 space-y-0.5"></ul>
 
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div class="lg:col-span-2 min-w-0">
                     <div class="bg-black rounded-2xl overflow-hidden">
                         <canvas id="lienzo" tabindex="0" width="640" height="400" aria-label="La imagen de la cámara con las casillas leídas encima. Con el teclado: las teclas 1 a 4 eligen una esquina y las flechas la mueven; con Mayúscula, de a 10." class="block w-full h-auto touch-none focus:outline-none focus-visible:ring-4 focus-visible:ring-accent-400"></canvas>
                     </div>
                     <video id="video" playsinline muted class="hidden"></video>
                     <p class="text-xs text-brand-500 dark:text-brand-300 mt-2">Encima de cada casilla: <strong>·</strong> vacía, <strong>B</strong> pieza blanca, <strong>N</strong> pieza negra. Con borde rojo y una <strong>!</strong>, las que no coinciden con la posición que se espera.</p>
                 </div>
-
-                <div class="space-y-4 min-w-0">
+                <aside class="nt-lado min-w-0" aria-label="Paneles">
+                    <div id="nt-pestanas" role="tablist" aria-label="Paneles de Notara" class="nt-pestanas">
+                        <button type="button" role="tab" id="nt-tab-partida" data-pestana="partida" aria-controls="nt-panel-partida" aria-selected="false" tabindex="-1" class="nt-pestana"><span aria-hidden="true" class="nt-pestana-ico">♟</span><span>Partida</span></button>
+                        <button type="button" role="tab" id="nt-tab-mesas" data-pestana="mesas" aria-controls="nt-panel-mesas" aria-selected="false" tabindex="-1" class="nt-pestana"><span aria-hidden="true" class="nt-pestana-ico">🏆</span><span>Mesas</span></button>
+                        <button type="button" role="tab" id="nt-tab-vivo" data-pestana="vivo" aria-controls="nt-panel-vivo" aria-selected="false" tabindex="-1" class="nt-pestana"><span aria-hidden="true" class="nt-pestana-ico">📡</span><span>En vivo</span></button>
+                        <button type="button" role="tab" id="nt-tab-var" data-pestana="var" aria-controls="nt-panel-var" aria-selected="false" tabindex="-1" class="nt-pestana"><span aria-hidden="true" class="nt-pestana-ico">🎥</span><span>VAR</span></button>
+                        <button type="button" role="tab" id="nt-tab-mas" data-pestana="mas" aria-controls="nt-panel-mas" aria-selected="false" tabindex="-1" class="nt-pestana"><span aria-hidden="true" class="nt-pestana-ico">☰</span><span>Más</span></button>
+                    </div>
+                    <div id="nt-panel-partida" role="tabpanel" aria-labelledby="nt-tab-partida" tabindex="0" class="space-y-4 nt-panel">
                     <section class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-4" aria-labelledby="t-lectura">
                         <h2 id="t-lectura" class="font-semibold text-brand-800 dark:text-white">Qué tan bien lee</h2>
                         <p id="acierto" class="text-3xl font-bold text-brand-800 dark:text-white mt-1">—</p>
                         <p id="acierto-detalle" class="text-xs text-brand-500 dark:text-brand-300 mt-1">Casillas leídas igual que la posición que se espera, después de calibrar.</p>
                     </section>
-
                     <section class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-4" aria-labelledby="t-tablero">
                         <h2 id="t-tablero" class="font-semibold text-brand-800 dark:text-white mb-2">La partida en digital<span id="t-tablero-cual"></span></h2>
                         <div class="relative pl-5 pb-5 max-w-sm mx-auto"><div id="tablero" aria-hidden="true" class="grid grid-cols-8 grid-rows-8 aspect-square w-full rounded-md overflow-hidden select-none ring-4 ring-brand-800 dark:ring-brand-600 shadow-lg"></div></div>
@@ -308,52 +326,8 @@
                             <p id="modelo-estado" role="status" aria-live="polite" class="text-sm text-brand-600 dark:text-brand-300 mt-1">Todavía no hay un modelo de las piezas en este aparato.</p>
                         </details>
                     </section>
-                    <section data-no-mesa class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-4" aria-labelledby="t-entreno">
-                        <h2 id="t-entreno" class="font-semibold text-brand-800 dark:text-white"><span aria-hidden="true">🎯</span> Entrenar en tu tablero (opcional)</h2>
-                        <p class="text-xs text-brand-500 dark:text-brand-300 mt-1">La cámara lee tus jugadas; las del motor o del rival las dice la pantalla (y la voz, con «Activar voz») y las pones tú: la cámara espera a verlas en el tablero.</p>
-                        <div class="grid grid-cols-2 gap-2 mt-3">
-                            <div><label for="entreno-color" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 mb-1">Juegas con</label><select id="entreno-color" class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><option value="w">Blancas</option><option value="b">Negras</option></select></div>
-                            <div><label for="entreno-nivel" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 mb-1">Nivel del motor</label><select id="entreno-nivel" class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><option value="facil">Fácil</option><option value="medio" selected>Medio</option><option value="dificil">Difícil</option></select></div>
-                        </div>
-                        <button id="btn-entreno-motor" type="button" class="mt-2 bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-3 py-2 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Jugar contra el motor</button>
-                        <div class="mt-3"><label for="entreno-banco" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 mb-1">Un ejercicio del Entrenamiento</label>
-                            <div class="flex flex-wrap gap-2"><select id="entreno-banco" class="bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><option value="mate1">Mate en 1</option><option value="mate2">Mate en 2</option><option value="mate3">Mate en 3</option><option value="tactica">Táctica</option></select>
-                            <button id="btn-entreno-ejercicio" type="button" class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-3 py-2 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Traer un ejercicio</button>
-                            <button id="btn-entreno-armado" type="button" hidden class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-3 py-2 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Ya está armada</button></div>
-                        </div>
-                        <p id="entreno-estado" role="status" aria-live="polite" class="text-sm font-semibold text-brand-800 dark:text-white mt-3"></p>
-                        <p id="entreno-pista" hidden class="text-sm text-brand-800 dark:text-white mt-2 rounded-lg border border-accent-500 px-3 py-2"></p>
-                        <button id="btn-entreno-dejar" type="button" hidden class="mt-2 bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-3 py-2 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Dejar de entrenar</button>
-                    </section>
-                    <section data-no-mesa class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-4" aria-labelledby="t-distancia">
-                        <h2 id="t-distancia" class="font-semibold text-brand-800 dark:text-white"><span aria-hidden="true">🌎</span> Jugar a distancia (opcional)</h2>
-                        <p class="text-xs text-brand-500 dark:text-brand-300 mt-1">Cada uno en su casa, con su tablero y su celular encima. Tu cámara lee tu jugada y se la manda a tu rival; la suya la dice la pantalla y la pones tú. Calibra primero con la posición inicial.</p>
-                        <div class="mt-3"><label for="distancia-nombre" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 mb-1">Tu nombre (opcional)</label>
-                            <input id="distancia-nombre" type="text" maxlength="40" autocomplete="off" class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"></div>
-                        <div id="distancia-apagada" class="mt-3 space-y-3">
-                            <div class="flex flex-wrap items-end gap-2">
-                                <div><label for="distancia-color" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 mb-1">Juegas con</label>
-                                <select id="distancia-color" class="bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><option value="w">Blancas</option><option value="b">Negras</option><option value="azar">Al azar</option></select></div>
-                                <button id="btn-distancia-crear" type="button" class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-3 py-2 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Crear una partida</button>
-                            </div>
-                            <form id="form-distancia-unirse" class="flex flex-wrap items-end gap-2" novalidate>
-                                <div><label for="distancia-unirse" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 mb-1">O únete con el código de tu rival</label>
-                                <input id="distancia-unirse" type="text" maxlength="8" autocomplete="off" autocapitalize="none" spellcheck="false" class="font-mono bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"></div>
-                                <button type="submit" class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-3 py-2 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Unirme</button>
-                            </form>
-                        </div>
-                        <div id="distancia-encendida" hidden class="mt-3">
-                            <p class="text-sm text-brand-800 dark:text-white">Código: <span id="distancia-codigo" class="font-mono font-bold"></span></p>
-                            <p class="text-xs mt-1 break-all"><a id="distancia-enlace" href="#" class="underline text-brand-700 dark:text-brand-200"></a></p>
-                            <p id="distancia-con" class="text-sm text-brand-700 dark:text-brand-200 mt-1"></p>
-                            <div class="flex flex-wrap gap-2 mt-2">
-                                <a id="distancia-whatsapp" href="#" target="_blank" rel="noopener" class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-3 py-2 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Mandar por WhatsApp</a>
-                                <button id="btn-distancia-rendirse" type="button" class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-3 py-2 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Me rindo</button>
-                                <button id="btn-distancia-dejar" type="button" class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-3 py-2 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Dejar la partida</button>
-                            </div>
-                        </div>
-                        <p id="distancia-estado" role="status" aria-live="polite" class="text-sm font-semibold text-brand-800 dark:text-white mt-3"></p>
-                    </section>
+                    </div>
+                    <div id="nt-panel-mesas" role="tabpanel" aria-labelledby="nt-tab-mesas" tabindex="0" class="space-y-4 nt-panel">
                     <section class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-4" aria-labelledby="t-torneo">
                         <h2 id="t-torneo" class="font-semibold text-brand-800 dark:text-white"><span aria-hidden="true">🏆</span> Partida de un torneo (opcional)</h2>
                         <p class="text-xs text-brand-500 dark:text-brand-300 mt-1">De Torneos en Pareo Integral: cada cámara elige su mesa, los nombres de cada ronda salen solos y quien mira ve todas las mesas juntas.</p>
@@ -393,54 +367,24 @@
                             </div>
                         </div>
                     </section>
-
-                    <section class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-4" aria-labelledby="t-guia">
-                        <h2 id="t-guia" class="font-semibold text-brand-800 dark:text-white"><span aria-hidden="true">📖</span> Cómo se usa en un torneo</h2>
-                        <ol class="mt-2 space-y-2 text-sm text-brand-700 dark:text-brand-200 list-decimal pl-5">
-                            <li><strong class="text-brand-800 dark:text-white">El celular encima de la mesa</strong>, mirando hacia abajo, con el cargador puesto. El tablero entero en la imagen y lo más grande posible.</li>
-                            <li><strong class="text-brand-800 dark:text-white">Abre la cámara, «Buscar el tablero» y «Calibrar»</strong>, con las piezas en la posición inicial.</li>
-                            <li><strong class="text-brand-800 dark:text-white">«Probar esta mesa»</strong> antes de la ronda: dos minutos para saber si la cámara la sigue bien con esa luz.</li>
-                            <li><strong class="text-brand-800 dark:text-white">Marca «Grabar los últimos 10 minutos»</strong> (el VAR). Si ves algo raro: «📍 Marcar este momento». Si hay un reclamo: «Revisar el video».</li>
-                            <li><strong class="text-brand-800 dark:text-white">Imprime la hoja para la mesa</strong>: les dice a los jugadores que hay cámara, qué hacer si hay un reclamo y que el video no sale del celular.</li>
-                        </ol>
-                        <button id="btn-hoja-mesa" type="button" class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-3 py-2 rounded-lg text-sm disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 mt-3"><span aria-hidden="true">🖨️</span> Imprimir la hoja para la mesa</button>
-                    </section>
-
-                    <section class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-4" aria-labelledby="t-prueba">
-                        <h2 id="t-prueba" class="font-semibold text-brand-800 dark:text-white"><span aria-hidden="true">🧪</span> Probar esta mesa</h2>
-                        <p class="text-xs text-brand-500 dark:text-brand-300 mt-1">Antes de un torneo, dos minutos con la mesa armada y calibrada: jueguen unas jugadas, toquen una pieza sin moverla, aprieten el reloj y miren el toque en el VAR. La página dice qué vio bien y qué no, y deja un informe para copiar. Lo de la prueba no queda en la partida.</p>
-                        <button id="btn-prueba" type="button" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2.5 rounded-lg text-sm disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 mt-2">Empezar la prueba</button>
-                        <div id="prueba-caja" hidden class="mt-3">
-                            <p id="prueba-tiempo" role="status" class="text-sm font-semibold text-brand-800 dark:text-white"></p>
-                            <ol id="prueba-pasos" class="mt-2 space-y-1 text-sm text-brand-700 dark:text-brand-200"></ol>
-                            <div class="flex flex-wrap gap-2 mt-3">
-                                <button id="btn-prueba-var" type="button" disabled class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-3 py-2 rounded-lg text-sm disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Ver el toque en el VAR</button>
-                                <button id="btn-prueba-fin" type="button" class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-3 py-2 rounded-lg text-sm disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Terminar la prueba</button>
-                            </div>
+                    <section data-no-mesa class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-4" aria-labelledby="t-amistosas">
+                        <h2 id="t-amistosas" class="font-semibold text-brand-800 dark:text-white"><span aria-hidden="true">🤝</span> Partidas amistosas (sin torneo)</h2>
+                        <p class="text-xs text-brand-500 dark:text-brand-300 mt-1">Varias partidas a la vez, sin armar un torneo: un QR por mesa. Cada celular escanea el de su mesa, sin cuenta, y transmite su partida; quien mira las ve todas juntas con un solo enlace.</p>
+                        <div class="grid grid-cols-2 gap-2 mt-3">
+                            <div><label for="amistosas-nombre" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 mb-1">Nombre (opcional)</label><input id="amistosas-nombre" type="text" maxlength="60" autocomplete="off" placeholder="Amistosos del club" class="bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm w-full focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"></div>
+                            <div><label for="amistosas-mesas" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 mb-1">¿Cuántas mesas?</label><input id="amistosas-mesas" type="number" min="1" max="50" value="4" inputmode="numeric" class="bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm w-full focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"></div>
                         </div>
-                        <div id="prueba-informe" hidden class="mt-3">
-                            <p id="prueba-resumen" tabindex="-1" class="text-sm font-semibold text-brand-800 dark:text-white rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"></p>
-                            <pre id="prueba-texto" class="mt-2 whitespace-pre-wrap text-xs bg-brand-50 dark:bg-brand-950 text-brand-800 dark:text-brand-100 rounded-lg p-3 font-sans"></pre>
-                            <div class="flex flex-wrap gap-2 mt-2">
-                                <button id="btn-prueba-copiar" type="button" class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-3 py-2 rounded-lg text-sm disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Copiar el informe</button>
-                                <button id="btn-prueba-jugar" type="button" class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-3 py-2 rounded-lg text-sm disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Empezar la partida (con las piezas en la posición inicial)</button>
-                            </div>
+                        <div class="flex flex-wrap gap-2 mt-3">
+                            <button id="btn-amistosas-qr" type="button" class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-3 py-2 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true">🖨️</span> Imprimir el QR de cada mesa</button>
+                            <button id="btn-amistosas-nuevas" type="button" hidden class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-3 py-2 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Empezar otras (código nuevo)</button>
+                        </div>
+                        <div id="amistosas-hay" hidden class="mt-3 text-sm">
+                            <p role="status">Código <span id="amistosas-codigo" class="font-mono font-semibold"></span>: los QR que ya imprimiste siguen sirviendo. Para mirarlas todas:</p>
+                            <a id="amistosas-enlace" href="#" target="_blank" rel="noopener" class="block text-sm text-brand-700 dark:text-brand-200 underline underline-offset-2 break-all mt-1 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"></a>
                         </div>
                     </section>
-
-                    <section class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-4" aria-labelledby="t-var">
-                        <h2 id="t-var" class="font-semibold text-brand-800 dark:text-white"><span aria-hidden="true">🎥</span> Revisar una jugada (VAR)</h2>
-                        <p class="text-xs text-brand-500 dark:text-brand-300 mt-1">Si hay un reclamo (tocó una pieza y la tiene que mover, la soltó en otra casilla…), el árbitro ve el video de los últimos minutos aquí mismo: en pausa, más lento o cuadro a cuadro, y salta a cada jugada o a cada vez que una mano tapó el tablero. El video queda solo en este celular, nunca se manda, y se borra al cerrar la página.</p>
-                        <label class="mt-2 flex items-center gap-2 text-sm font-semibold text-brand-800 dark:text-white cursor-pointer"><input id="var-grabar" type="checkbox" class="w-4 h-4 accent-brand-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"> Grabar los últimos 10 minutos para revisar</label>
-                        <p id="var-estado" role="status" class="text-sm text-brand-700 dark:text-brand-200 mt-1">No se está grabando.</p>
-                        <p id="var-ubicacion" hidden role="status" class="mt-2 rounded-lg px-3 py-2 text-sm font-semibold bg-accent-100 text-brand-900"></p>
-                        <div class="flex flex-wrap gap-2 mt-2">
-                            <button id="btn-var" type="button" disabled class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-3 py-2 rounded-lg text-sm disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Revisar el video</button>
-                            <button id="btn-var-marcar" type="button" disabled aria-describedby="var-marcar-ayuda" class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-3 py-2 rounded-lg text-sm disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true">📍</span> Marcar este momento</button>
-                        </div>
-                        <p id="var-marcar-ayuda" class="text-xs text-brand-500 dark:text-brand-300 mt-1">Si ves algo raro (o te avisan), márcalo aunque nadie reclame todavía: ese minuto del video no se borra y queda señalado en «Revisar el video».</p>
-                    </section>
-
+                    </div>
+                    <div id="nt-panel-vivo" role="tabpanel" aria-labelledby="nt-tab-vivo" tabindex="0" class="space-y-4 nt-panel">
                     <section class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-4" aria-labelledby="t-vivo">
                         <h2 id="t-vivo" class="font-semibold text-brand-800 dark:text-white"><span aria-hidden="true">📡</span> Transmitir en vivo</h2>
                         <p class="text-xs text-brand-500 dark:text-brand-300 mt-1">Quien tenga el enlace ve la partida en su celular o en un proyector, sin cuenta. Se manda solo la partida, nunca la imagen.</p>
@@ -484,7 +428,109 @@
                             <p class="text-xs text-brand-500 dark:text-brand-300 mt-2">Mientras esta página siga abierta. Si se cierra, quien ya miraba se queda con la última jugada; al volver a transmitir se usa el mismo código.</p>
                         </div>
                     </section>
-                </div>
+                    <section data-no-mesa class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-4" aria-labelledby="t-distancia">
+                        <h2 id="t-distancia" class="font-semibold text-brand-800 dark:text-white"><span aria-hidden="true">🌎</span> Jugar a distancia (opcional)</h2>
+                        <p class="text-xs text-brand-500 dark:text-brand-300 mt-1">Cada uno en su casa, con su tablero y su celular encima. Tu cámara lee tu jugada y se la manda a tu rival; la suya la dice la pantalla y la pones tú. Calibra primero con la posición inicial.</p>
+                        <div class="mt-3"><label for="distancia-nombre" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 mb-1">Tu nombre (opcional)</label>
+                            <input id="distancia-nombre" type="text" maxlength="40" autocomplete="off" class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"></div>
+                        <div id="distancia-apagada" class="mt-3 space-y-3">
+                            <div class="flex flex-wrap items-end gap-2">
+                                <div><label for="distancia-color" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 mb-1">Juegas con</label>
+                                <select id="distancia-color" class="bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><option value="w">Blancas</option><option value="b">Negras</option><option value="azar">Al azar</option></select></div>
+                                <button id="btn-distancia-crear" type="button" class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-3 py-2 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Crear una partida</button>
+                            </div>
+                            <form id="form-distancia-unirse" class="flex flex-wrap items-end gap-2" novalidate>
+                                <div><label for="distancia-unirse" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 mb-1">O únete con el código de tu rival</label>
+                                <input id="distancia-unirse" type="text" maxlength="8" autocomplete="off" autocapitalize="none" spellcheck="false" class="font-mono bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"></div>
+                                <button type="submit" class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-3 py-2 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Unirme</button>
+                            </form>
+                        </div>
+                        <div id="distancia-encendida" hidden class="mt-3">
+                            <p class="text-sm text-brand-800 dark:text-white">Código: <span id="distancia-codigo" class="font-mono font-bold"></span></p>
+                            <p class="text-xs mt-1 break-all"><a id="distancia-enlace" href="#" class="underline text-brand-700 dark:text-brand-200"></a></p>
+                            <p id="distancia-con" class="text-sm text-brand-700 dark:text-brand-200 mt-1"></p>
+                            <div class="flex flex-wrap gap-2 mt-2">
+                                <a id="distancia-whatsapp" href="#" target="_blank" rel="noopener" class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-3 py-2 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Mandar por WhatsApp</a>
+                                <button id="btn-distancia-rendirse" type="button" class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-3 py-2 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Me rindo</button>
+                                <button id="btn-distancia-dejar" type="button" class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-3 py-2 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Dejar la partida</button>
+                            </div>
+                        </div>
+                        <p id="distancia-estado" role="status" aria-live="polite" class="text-sm font-semibold text-brand-800 dark:text-white mt-3"></p>
+                    </section>
+                    </div>
+                    <div id="nt-panel-var" role="tabpanel" aria-labelledby="nt-tab-var" tabindex="0" class="space-y-4 nt-panel">
+                    <section class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-4" aria-labelledby="t-var">
+                        <h2 id="t-var" class="font-semibold text-brand-800 dark:text-white"><span aria-hidden="true">🎥</span> Revisar una jugada (VAR)</h2>
+                        <p class="text-xs text-brand-500 dark:text-brand-300 mt-1">Si hay un reclamo (tocó una pieza y la tiene que mover, la soltó en otra casilla…), el árbitro ve el video de los últimos minutos aquí mismo: en pausa, más lento o cuadro a cuadro, y salta a cada jugada o a cada vez que una mano tapó el tablero. El video queda solo en este celular, nunca se manda, y se borra al cerrar la página.</p>
+                        <label class="mt-2 flex items-center gap-2 text-sm font-semibold text-brand-800 dark:text-white cursor-pointer"><input id="var-grabar" type="checkbox" class="w-4 h-4 accent-brand-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"> Grabar los últimos 10 minutos para revisar</label>
+                        <p id="var-estado" role="status" class="text-sm text-brand-700 dark:text-brand-200 mt-1">No se está grabando.</p>
+                        <p id="var-ubicacion" hidden role="status" class="mt-2 rounded-lg px-3 py-2 text-sm font-semibold bg-accent-100 text-brand-900"></p>
+                        <div class="flex flex-wrap gap-2 mt-2">
+                            <button id="btn-var" type="button" disabled class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-3 py-2 rounded-lg text-sm disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Revisar el video</button>
+                            <button id="btn-var-marcar" type="button" disabled aria-describedby="var-marcar-ayuda" class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-3 py-2 rounded-lg text-sm disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><span aria-hidden="true">📍</span> Marcar este momento</button>
+                        </div>
+                        <p id="var-marcar-ayuda" class="text-xs text-brand-500 dark:text-brand-300 mt-1">Si ves algo raro (o te avisan), márcalo aunque nadie reclame todavía: ese minuto del video no se borra y queda señalado en «Revisar el video».</p>
+                    </section>
+                    <section class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-4" aria-labelledby="t-prueba">
+                        <h2 id="t-prueba" class="font-semibold text-brand-800 dark:text-white"><span aria-hidden="true">🧪</span> Probar esta mesa</h2>
+                        <p class="text-xs text-brand-500 dark:text-brand-300 mt-1">Antes de un torneo, dos minutos con la mesa armada y calibrada: jueguen unas jugadas, toquen una pieza sin moverla, aprieten el reloj y miren el toque en el VAR. La página dice qué vio bien y qué no, y deja un informe para copiar. Lo de la prueba no queda en la partida.</p>
+                        <button id="btn-prueba" type="button" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-4 py-2.5 rounded-lg text-sm disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 mt-2">Empezar la prueba</button>
+                        <div id="prueba-caja" hidden class="mt-3">
+                            <p id="prueba-tiempo" role="status" class="text-sm font-semibold text-brand-800 dark:text-white"></p>
+                            <ol id="prueba-pasos" class="mt-2 space-y-1 text-sm text-brand-700 dark:text-brand-200"></ol>
+                            <div class="flex flex-wrap gap-2 mt-3">
+                                <button id="btn-prueba-var" type="button" disabled class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-3 py-2 rounded-lg text-sm disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Ver el toque en el VAR</button>
+                                <button id="btn-prueba-fin" type="button" class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-3 py-2 rounded-lg text-sm disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Terminar la prueba</button>
+                            </div>
+                        </div>
+                        <div id="prueba-informe" hidden class="mt-3">
+                            <p id="prueba-resumen" tabindex="-1" class="text-sm font-semibold text-brand-800 dark:text-white rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"></p>
+                            <pre id="prueba-texto" class="mt-2 whitespace-pre-wrap text-xs bg-brand-50 dark:bg-brand-950 text-brand-800 dark:text-brand-100 rounded-lg p-3 font-sans"></pre>
+                            <div class="flex flex-wrap gap-2 mt-2">
+                                <button id="btn-prueba-copiar" type="button" class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-3 py-2 rounded-lg text-sm disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Copiar el informe</button>
+                                <button id="btn-prueba-jugar" type="button" class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-3 py-2 rounded-lg text-sm disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Empezar la partida (con las piezas en la posición inicial)</button>
+                            </div>
+                        </div>
+                    </section>
+                    </div>
+                    <div id="nt-panel-mas" role="tabpanel" aria-labelledby="nt-tab-mas" tabindex="0" class="space-y-4 nt-panel">
+                    <p data-solo-pagina class="nt-intro text-sm text-brand-500 dark:text-brand-300">Pon el celular encima del tablero, mirando hacia abajo, y sigue los pasos. Sirve para medir qué tan bien se ven nuestros tableros con la luz real del salón. No guarda nada ni manda la imagen a ningún lado: todo pasa en este celular.</p>
+                    <section class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-4" aria-labelledby="t-guia">
+                        <h2 id="t-guia" class="font-semibold text-brand-800 dark:text-white"><span aria-hidden="true">📖</span> Cómo se usa en un torneo</h2>
+                        <ol class="mt-2 space-y-2 text-sm text-brand-700 dark:text-brand-200 list-decimal pl-5">
+                            <li><strong class="text-brand-800 dark:text-white">El celular encima de la mesa</strong>, mirando hacia abajo, con el cargador puesto. El tablero entero en la imagen y lo más grande posible.</li>
+                            <li><strong class="text-brand-800 dark:text-white">Abre la cámara, «Buscar el tablero» y «Calibrar»</strong>, con las piezas en la posición inicial.</li>
+                            <li><strong class="text-brand-800 dark:text-white">«Probar esta mesa»</strong> antes de la ronda: dos minutos para saber si la cámara la sigue bien con esa luz.</li>
+                            <li><strong class="text-brand-800 dark:text-white">Marca «Grabar los últimos 10 minutos»</strong> (el VAR). Si ves algo raro: «📍 Marcar este momento». Si hay un reclamo: «Revisar el video».</li>
+                            <li><strong class="text-brand-800 dark:text-white">Imprime la hoja para la mesa</strong>: les dice a los jugadores que hay cámara, qué hacer si hay un reclamo y que el video no sale del celular.</li>
+                        </ol>
+                        <button id="btn-hoja-mesa" type="button" class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-3 py-2 rounded-lg text-sm disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 mt-3"><span aria-hidden="true">🖨️</span> Imprimir la hoja para la mesa</button>
+                    </section>
+                    <section data-no-mesa class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-4" aria-labelledby="t-entreno">
+                        <h2 id="t-entreno" class="font-semibold text-brand-800 dark:text-white"><span aria-hidden="true">🎯</span> Entrenar en tu tablero (opcional)</h2>
+                        <p class="text-xs text-brand-500 dark:text-brand-300 mt-1">La cámara lee tus jugadas; las del motor o del rival las dice la pantalla (y la voz, con «Activar voz») y las pones tú: la cámara espera a verlas en el tablero.</p>
+                        <div class="grid grid-cols-2 gap-2 mt-3">
+                            <div><label for="entreno-color" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 mb-1">Juegas con</label><select id="entreno-color" class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><option value="w">Blancas</option><option value="b">Negras</option></select></div>
+                            <div><label for="entreno-nivel" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 mb-1">Nivel del motor</label><select id="entreno-nivel" class="w-full bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><option value="facil">Fácil</option><option value="medio" selected>Medio</option><option value="dificil">Difícil</option></select></div>
+                        </div>
+                        <button id="btn-entreno-motor" type="button" class="mt-2 bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-3 py-2 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Jugar contra el motor</button>
+                        <div class="mt-3"><label for="entreno-banco" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 mb-1">Un ejercicio del Entrenamiento</label>
+                            <div class="flex flex-wrap gap-2"><select id="entreno-banco" class="bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"><option value="mate1">Mate en 1</option><option value="mate2">Mate en 2</option><option value="mate3">Mate en 3</option><option value="tactica">Táctica</option></select>
+                            <button id="btn-entreno-ejercicio" type="button" class="bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-3 py-2 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Traer un ejercicio</button>
+                            <button id="btn-entreno-armado" type="button" hidden class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-3 py-2 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Ya está armada</button></div>
+                        </div>
+                        <p id="entreno-estado" role="status" aria-live="polite" class="text-sm font-semibold text-brand-800 dark:text-white mt-3"></p>
+                        <p id="entreno-pista" hidden class="text-sm text-brand-800 dark:text-white mt-2 rounded-lg border border-accent-500 px-3 py-2"></p>
+                        <button id="btn-entreno-dejar" type="button" hidden class="mt-2 bg-white dark:bg-brand-900 border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-100 font-semibold px-3 py-2 rounded-lg text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Dejar de entrenar</button>
+                    </section>
+                    </div>
+                </aside>
+            </div>
+            <div id="nt-estado" class="nt-estado">
+                <span id="nt-estado-msg" data-tipo="bien">Todo bien</span>
+                <span id="nt-estado-codigo" hidden></span>
+                <span id="nt-estado-jugadas" hidden></span>
+                <span id="nt-estado-lectura" hidden></span>
             </div>
         </div>
     </main>
@@ -552,5 +598,6 @@
     <script src="js/grafico-tiempo.js"></script>
     <script src="js/piezas-modelo.js"></script>
     <script src="js/camara-tablero.js"></script>
+    <script src="js/notara-interfaz.js"></script>
 </body>
 </html>

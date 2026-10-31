@@ -3865,6 +3865,73 @@ Al tocar esto, `node herramientas/verificar-pareo-sala-evento.js`. Rompiendo a
 propósito la mesa física, la casilla de consentimiento, el llamado, el fin de
 la ronda o el aceptar, salta.
 
+### Pareo Integral: agregar jugadores desde las listas de Elo
+
+El 31/10/2026 el dueño pidió poder agregar jugadores «desde listas de Elo,
+las 3 de la FIDE, y la del Elo de Costa Rica». En Jugadores, debajo de
+«Pegar una lista», está ahora **«Agregar desde una lista de Elo (FIDE o
+Nacional)»**: se elige la lista (FIDE Estándar, FIDE Rápido, FIDE Blitz o
+Elo Nacional de Costa Rica), se escriben los apellidos o el código FIDE y
+cada resultado tiene su «Agregar». Entra con el nombre, el Elo **de la lista
+elegida**, el título, la federación, el código FIDE y, si la lista lo dice,
+el sexo.
+
+- **Las dos páginas no se dejan leer desde el navegador** (ni
+  ratings.fide.com ni ajedrezcostarica.com mandan CORS), así que las lee la
+  Edge Function `pareo-listas-elo` (verify_jwt en false, CORS solo a
+  ajedrez-integral.com, como `pareo-elo-nacional`). Recibe solo
+  `{ lista: "fide" | "nacional", q }` —lo escrito, de 3 a 60 caracteres de
+  nombre o números— y no guarda nada.
+- **Las tres listas de FIDE son UNA búsqueda.** El buscador de FIDE
+  (`ratings.fide.com/incl_search_l.php?search=…&simple=1`, lo que pinta la
+  página de búsqueda de FIDE) trae en cada fila el código, el nombre, el
+  título, la federación, Std., Rpd., Blz. y el año de nacimiento. La página
+  elige cuál de los tres usa; cambiar entre Estándar, Rápido y Blitz no
+  vuelve a buscar. Busca por nombre o por código. Encuentra muchos (con
+  «garcia», 5722) pero devuelve unas 450 filas; la función manda las
+  primeras 60 y dice «escribe más del nombre».
+- **La lista nacional** (`ajedrezcostarica.com/es/national-rating?name=…`)
+  trae de a 50 y dice cuántos encontró («2 jugadores») y de qué mes es
+  («Octubre 2026»), que se muestra. Cada jugador trae su código FIDE, club,
+  título, «gender» (1 hombre, 2 mujer: comprobado con los nombres de la
+  lista en octubre de 2026), la edad y los cuatro Elo: Nacional, Estándar,
+  Rápido y Blitz. «NM» no es un título de FIDE de jugador y se deja fuera;
+  la federación es CRC.
+- **Nunca se inventa un dato.** Un Elo de 0 o vacío es null y el jugador
+  entra **sin Elo**, no con el de otra lista. El año de nacimiento de FIDE
+  **no** se guarda como fecha: Pareo pide el día exacto, y un 1 de enero
+  inventado cambiaría la categoría de los JDE. FIDE no dice el sexo: queda
+  vacío.
+- **Quien ya está no entra dos veces**: el mismo código FIDE ya inscrito
+  sale como «Ya está», deshabilitado. Al agregar, el foco pasa al «Agregar»
+  siguiente para poder sumar varios seguidos.
+- **El freno es suyo**, `pareo_listas_frenar()`: 60 búsquedas por hora por
+  conexión y 600 en total. Va con su propio tipo («busqueda_lista») en
+  `interno.envios_publicos` y no con «formulario», porque con «formulario»
+  cada búsqueda gastaría el tope de 40 por hora que comparten todos los
+  formularios públicos desde esa conexión: un árbitro buscando a su torneo
+  dejaría sin poder inscribirse a alguien de su misma red.
+- La política de privacidad lo dice (FIDE y Ajedrez Costa Rica, en
+  proveedores), y la página también, debajo del título del apartado.
+- **La migración la aplicó el dueño pegándola en el editor SQL de Supabase**
+  (`apply_migration` le pidió confirmar dos veces y la pregunta se venció a
+  los 60 segundos sin llegarle). El mismo SQL la anotó en
+  `supabase_migrations.schema_migrations` (versión 20261031060000) para que
+  cuente como las demás. El editor le sumó la sangría al pegar, y por eso
+  `supabase/migraciones/20261031060000_pareo_listas_elo.sql` la trae y no
+  lleva comentarios: es byte a byte lo que quedó guardado, que es lo que
+  compara la huella. Los comentarios de la función están aquí arriba.
+- La lista elegida se recuerda en el navegador (`pareo_lista_elo_v1`); la
+  primera vez, si el torneo es válido para Elo Nacional, empieza en la
+  nacional.
+- El lector vive aparte (`supabase/functions/pareo-listas-elo/leer-listas.ts`)
+  para probarlo sin red. `node herramientas/verificar-pareo-listas-elo.js`
+  lo prueba contra extractos reales de las dos páginas y, con un doble de la
+  función, prueba la página: lo que viaja, el Elo de Rápido y el Nacional, el
+  sexo, el «Ya está», el texto corto que no viaja y el aviso del freno.
+  Se rompió a propósito (el Elo siempre del Estándar; el sexo dado vuelta) y
+  saltó.
+
 ### Pareo Integral como programa de computadora
 
 El 31/10/2026 el dueño pidió que Pareo Integral se viera «tipo programa de
@@ -6811,8 +6878,10 @@ y sin cuenta, para que organizadores y clubes vean a quién pueden contratar.
   Siempre recuerda que cualquier categoría puede trabajar como árbitro bajo la
   supervisión de uno con licencia FIDE. Primero va quien arbitró hace poco, y
   la casilla (marcada al entrar) deja fuera a quien no arbitró en dos años.
-- Está en la vitrina de herramientas como gratis (`js/herramientas-arbitraje.js`,
-  `id: "arbitros"`).
+- Su tarjeta está **oculta** de la vitrina de herramientas (`oculta: true` en
+  `id: "arbitros"` de `js/herramientas-arbitraje.js`; el dueño dijo que no hacía
+  falta): la página sigue publicada, solo no se anuncia. Para volver a mostrarla
+  se quita esa línea (y se devuelve a `verificar-seleccion-pagina.js`).
 - `verificar-arbitros-publico.js` la prueba con la llamada contestada por una
   lista falsa y el reloj fijo: el orden, cada regla de categoría, la casilla,
   el buscador, el error de la base y los 400 px.
@@ -12044,6 +12113,78 @@ porque el sitio local no manda las cabeceras de `_headers`.
   cada página, ahora graba un video corto en el navegador, lo mira desde
   un `blob:` con esa CSP y revisa que `media-src` deje pasar la Academia.
   Sin `media-src`, salta.
+
+### Partidas amistosas: un QR por mesa, sin torneo
+
+Lo pidió el dueño: poner cámaras en varias mesas para partidas amistosas, sin
+armar un torneo en Pareo Integral. En «Mesas», «Partidas amistosas (sin
+torneo)»: un nombre opcional y cuántas mesas (1 a 50), e «Imprimir el QR de
+cada mesa» arma la misma hoja de QR que un torneo (`hojaQr`, una sola copia),
+con una tarjeta más, «Para mirarlas», que abre `tablero-vivo.html#<código>`.
+
+- **Por dentro es una simultánea**: un código para todas y cada cámara con su
+  número. Lo que viaja lleva `simul: 2` (la simultánea es `1`), y quien mira
+  lee «Mesa N» en vez de «Tablero N» (`PartidaEnVivo.lugar`). Un `simul`
+  distinto de 1 o 2 no se pinta.
+- **El QR es `camara-tablero.html#a=1&c=<código>&m=<mesa>&n=<nombre>`**, todo
+  después del `#`. Abre la cámara en modo mesa, **sin cuenta**, como el QR
+  de un torneo: transmite esa mesa y nada más, sin la parte de torneos, sin
+  elegir código ni retraso (sin retraso: es una amistosa) y sin parar. Los
+  jugadores pueden escribir sus nombres. No toca nada de la Academia (lo
+  revisa el verificador). Un QR roto manda al login, como el de un torneo.
+- **El código se guarda en el aparato** (`camara_amistosas_v1`): los QR ya
+  impresos siguen sirviendo al volver. «Empezar otras (código nuevo)» lo
+  olvida; los QR siguientes ya no se juntan con los de antes.
+- Sin cuenta, Notara anda solo con un QR válido. Lo de la herramienta
+  entera sigue siendo de quien tiene cuenta (ver «La cámara sin cuenta con el
+  QR de la mesa»): el control es de producto, no de datos.
+
+Lo prueba `verificar-camara-tablero.js` (la hoja con sus tres tarjetas, el
+enlace de cada mesa, el código que se recuerda, el celular sin cuenta en su
+mesa, la jugada que llega como «Mesa 2» con su nombre, `simul: 2` en lo que
+viaja, «Empezar otras» y el QR roto). Roto a propósito (que viaje como
+simultánea), salta.
+
+### Notara como programa
+
+Lo pidió el dueño: «que todo sea más ordenado, que se vea tipo un programa de
+computación». La página era una sola columna larga, con diez botones arriba y
+diez secciones una debajo de otra. Ahora (`js/notara-interfaz.js`, con los
+estilos `.nt-*` de `css/styles.css`):
+
+- **La barra de arriba**: Notara, dónde está la cámara (la mesa del QR o el
+  torneo y la ronda) y su estado en etiquetas con texto —«● Transmitiendo»,
+  «● VAR», «Sin señal», la batería—, y los dos botones del árbitro: «Marcar
+  momento» (solo con el VAR grabando) y «Revisar jugada». **Tocan los botones
+  de la sección del VAR**: una sola copia de lo que hacen.
+- **Los pasos**: Cámara › Tablero › Calibrar › Partida, con ✓ en los
+  hechos, el que toca resaltado (`aria-current="step"`) y su botón con un
+  anillo (`.nt-siguiente`). Los botones no se esconden: los apagados ya
+  están apagados, y esconderlos cambiaría de lugar lo que el árbitro busca.
+- **Dos columnas en la computadora**: la cámara a la izquierda con los botones
+  y los avisos, y a la derecha **el panel con pestañas** (patrón de pestañas
+  del W3C: flechas, Inicio, Fin; la elegida se recuerda en el aparato):
+  Partida (qué tan bien lee y la partida en digital), Mesas (torneo y
+  amistosas), En vivo (transmitir y jugar a distancia), VAR (el VAR y
+  «Probar esta mesa») y Más (cómo se usa y entrenar). Una pestaña sin nada
+  que mostrar (en modo mesa, las de quien administra) no sale.
+- **La barra de abajo** (en la computadora): «Todo bien» o lo que necesita
+  atención (un error, una jugada en duda, sin señal), el código, las jugadas
+  y cuánto lee. **No flota**: pegada al borde de la pantalla tapaba
+  la parte de abajo de la imagen, donde se tocan las esquinas (la prueba de
+  los cuatro tableros no podía marcar los de abajo).
+- **El aviso de encima de la imagen tiene lugar para tres líneas** (en la
+  computadora). En la columna de la cámara, más angosta que antes, un aviso
+  de dos líneas después de uno de una corría la imagen hacia abajo entre un
+  toque y el siguiente: marcando las esquinas, el cuarto toque caía en otro
+  lado (la prueba de los cuatro tableros y la de la luz lo mostraron).
+- **En el celular**, como una app: una columna, y las pestañas fijas abajo.
+  En un cuadrito de `camaras.html` (compacto) y en el celular de una mesa,
+  una columna también.
+- **Todo lo que muestra sale de `window.estadoCamara()`** (el mismo que lee
+  `camaras.html`, que ahora dice también si están las esquinas y la
+  batería) y de lo que ya está escrito en la página: no lleva otra copia del
+  estado.
 
 ## Pareo para DGT
 
