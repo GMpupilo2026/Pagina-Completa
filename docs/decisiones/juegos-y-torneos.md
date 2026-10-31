@@ -11768,6 +11768,71 @@ porque el sitio local no manda las cabeceras de `_headers`.
   un `blob:` con esa CSP y revisa que `media-src` deje pasar la Academia.
   Sin `media-src`, salta.
 
+### Partidas amistosas: un QR por mesa, sin torneo
+
+Lo pidió el dueño: poner cámaras en varias mesas para partidas amistosas, sin
+armar un torneo en Pareo Integral. En «Mesas», «Partidas amistosas (sin
+torneo)»: un nombre opcional y cuántas mesas (1 a 50), e «Imprimir el QR de
+cada mesa» arma la misma hoja de QR que un torneo (`hojaQr`, una sola copia),
+con una tarjeta más, «Para mirarlas», que abre `tablero-vivo.html#<código>`.
+
+- **Por dentro es una simultánea**: un código para todas y cada cámara con su
+  número. Lo que viaja lleva `simul: 2` (la simultánea es `1`), y quien mira
+  lee «Mesa N» en vez de «Tablero N» (`PartidaEnVivo.lugar`). Un `simul`
+  distinto de 1 o 2 no se pinta.
+- **El QR es `camara-tablero.html#a=1&c=<código>&m=<mesa>&n=<nombre>`**, todo
+  después del `#`. Abre la cámara en modo mesa, **sin cuenta**, como el QR
+  de un torneo: transmite esa mesa y nada más, sin la parte de torneos, sin
+  elegir código ni retraso (sin retraso: es una amistosa) y sin parar. Los
+  jugadores pueden escribir sus nombres. No toca nada de la Academia (lo
+  revisa el verificador). Un QR roto manda al login, como el de un torneo.
+- **El código se guarda en el aparato** (`camara_amistosas_v1`): los QR ya
+  impresos siguen sirviendo al volver. «Empezar otras (código nuevo)» lo
+  olvida; los QR siguientes ya no se juntan con los de antes.
+- Sin cuenta, Notara anda solo con un QR válido. Lo de la herramienta
+  entera sigue siendo de quien tiene cuenta (ver «La cámara sin cuenta con el
+  QR de la mesa»): el control es de producto, no de datos.
+
+Lo prueba `verificar-camara-tablero.js` (la hoja con sus tres tarjetas, el
+enlace de cada mesa, el código que se recuerda, el celular sin cuenta en su
+mesa, la jugada que llega como «Mesa 2» con su nombre, `simul: 2` en lo que
+viaja, «Empezar otras» y el QR roto). Roto a propósito (que viaje como
+simultánea), salta.
+
+### Notara como programa
+
+Lo pidió el dueño: «que todo sea más ordenado, que se vea tipo un programa de
+computación». La página era una sola columna larga, con diez botones arriba y
+diez secciones una debajo de otra. Ahora (`js/notara-interfaz.js`, con los
+estilos `.nt-*` de `css/styles.css`):
+
+- **La barra de arriba**: Notara, dónde está la cámara (la mesa del QR o el
+  torneo y la ronda) y su estado en etiquetas con texto —«● Transmitiendo»,
+  «● VAR», «Sin señal», la batería—, y los dos botones del árbitro: «Marcar
+  momento» (solo con el VAR grabando) y «Revisar jugada». **Tocan los botones
+  de la sección del VAR**: una sola copia de lo que hacen.
+- **Los pasos**: Cámara › Tablero › Calibrar › Partida, con ✓ en los
+  hechos, el que toca resaltado (`aria-current="step"`) y su botón con un
+  anillo (`.nt-siguiente`). Los botones no se esconden: los apagados ya
+  están apagados, y esconderlos cambiaría de lugar lo que el árbitro busca.
+- **Dos columnas en la computadora**: la cámara a la izquierda con los botones
+  y los avisos, y a la derecha **el panel con pestañas** (patrón de pestañas
+  del W3C: flechas, Inicio, Fin; la elegida se recuerda en el aparato):
+  Partida (qué tan bien lee y la partida en digital), Mesas (torneo y
+  amistosas), En vivo (transmitir y jugar a distancia), VAR (el VAR y
+  «Probar esta mesa») y Más (cómo se usa y entrenar). Una pestaña sin nada
+  que mostrar (en modo mesa, las de quien administra) no sale.
+- **La barra de abajo** (en la computadora): «Todo bien» o lo que necesita
+  atención (un error, una jugada en duda, sin señal), el código, las jugadas
+  y cuánto lee.
+- **En el celular**, como una app: una columna, y las pestañas fijas abajo.
+  En un cuadrito de `camaras.html` (compacto) y en el celular de una mesa,
+  una columna también.
+- **Todo lo que muestra sale de `window.estadoCamara()`** (el mismo que lee
+  `camaras.html`, que ahora dice también si están las esquinas y la
+  batería) y de lo que ya está escrito en la página: no lleva otra copia del
+  estado.
+
 ## Pareo para DGT
 
 Un torneo presencial con tableros electrónicos DGT: el árbitro sube cada ronda

@@ -1752,9 +1752,9 @@
         const a = $("vivo-enlace");
         a.href = url; a.textContent = url;
         $("vivo-codigo").textContent = t.vivo.codigo + (torneo && t.mesa ? " · mesa " + t.mesa + (t.tablero ? " · tablero " + t.tablero : "") : "")
-            + (!torneo && t.simul ? " · tablero " + t.simul + " de la simultánea" : "") + (retraso ? " · con " + retraso + " minutos de retraso" : "");
+            + (!torneo && t.simul ? (t.amistosa ? " · mesa " + t.simul : " · tablero " + t.simul + " de la simultánea") : "") + (retraso ? " · con " + retraso + " minutos de retraso" : "");
         // En una simultánea, el enlace de cada alumno abre su tablero en grande.
-        $("vivo-alumno").hidden = !(!torneo && t.simul);
+        $("vivo-alumno").hidden = !(!torneo && t.simul && !t.amistosa);
         if (!torneo && t.simul) { const al = $("vivo-enlace-alumno"); al.href = al.textContent = url + "&m=" + t.simul; }
         $("vivo-whatsapp").href = "https://wa.me/?text=" + encodeURIComponent((torneo ? "Mira el torneo en vivo: " : "Mira la partida en vivo: ") + url);
         const qr = $("vivo-qr");
@@ -1809,7 +1809,7 @@
         return t.nombres;
     }
     const dondeDe = (t) => (torneo && t.mesa ? { torneo: torneo.id, ronda: t.ronda || ultimaRonda(), mesa: t.mesa, tablero: t.tablero || null }
-        : !torneo && t.simul ? { simul: true, mesa: t.simul } : null); // una simultánea: su tablero, sin torneo
+        : !torneo && t.simul ? { simul: true, mesa: t.simul, amistosa: !!t.amistosa } : null); // una simultánea (su tablero) o partidas amistosas (su mesa), sin torneo
     const ultimaRonda = () => { const r = torneo && V.mesasDe(torneo.datos); return r ? r.ronda : null; };
 
     async function leerTorneo(id) {
@@ -1981,29 +1981,70 @@
     function deLaDireccion() {
         const x = new URLSearchParams(location.hash.replace(/^#/, ""));
         const id = V.torneoDe(x.get("t")), c = (x.get("c") || "").toLowerCase(), m = Number(x.get("m")), r = Number(x.get("r")) || 0;
+        // Partidas amistosas: «#a=1&c=<código>&m=<mesa>&n=<nombre>», sin torneo.
+        if (x.get("a") === "1") return V.codigoValido(c) && Number.isInteger(m) && m >= 1 && m <= 99 ? { amistosa: true, codigo: c, mesa: m, nombre: (x.get("n") || "").trim().slice(0, 60) } : null;
         const b = x.has("b") ? Number(x.get("b")) : null;
         if (b !== null && !(Number.isInteger(b) && b >= 1 && b <= 12)) return null;
         return id && V.codigoValido(c) && Number.isInteger(m) && m >= 1 && m <= 999 ? { id, codigo: c, mesa: m, tablero: b, retraso: r } : null;
     }
-    async function imprimirQr() {
+    const AYUDA_QR = "Escanéalo con el celular que va encima de esta mesa, sin cuenta: la cámara se abre en esta mesa y transmite.";
+    function imprimirQr() {
         if (!torneo) return;
+        hojaQr(V.mesasDe(torneo.datos).mesas.map((m) => ({ titulo: V.lugar(m), sub: torneo.nombre, enlace: enlaceMesa(m), ayuda: AYUDA_QR })));
+    }
+    /* La hoja de QR (de un torneo o de partidas amistosas): una tarjeta por
+     * QR, { titulo, sub, enlace, ayuda }. Sale solo al imprimir. */
+    async function hojaQr(tarjetas) {
         try { await cargarQr(); } catch (e) { avisar("No se pudo cargar lo que dibuja los QR. Revisa la conexión y vuelve a intentar.", "error"); return; }
-        const r = V.mesasDe(torneo.datos);
         const hoja = $("hoja-qr");
         hoja.textContent = "";
         const el = (tag, clase, texto) => { const e = document.createElement(tag); e.className = clase; if (texto) e.textContent = texto; return e; };
-        for (const m of r.mesas) {
+        for (const x of tarjetas) {
             const tarjeta = el("div", "hoja-qr-mesa");
-            tarjeta.dataset.enlace = enlaceMesa(m);
+            tarjeta.dataset.enlace = x.enlace;
             const qr = el("div", "hoja-qr-codigo");
-            const svg = window.QrSvg.dibujar(enlaceMesa(m), "Código QR de la cámara de la " + V.lugar(m).toLowerCase());
+            const svg = window.QrSvg.dibujar(x.enlace, "Código QR: " + x.titulo.toLowerCase());
             if (svg) qr.append(svg);
-            tarjeta.append(el("p", "hoja-qr-numero", V.lugar(m)), el("p", "hoja-qr-torneo", torneo.nombre), qr,
-                el("p", "hoja-qr-ayuda", "Escanéalo con el celular que va encima de esta mesa, sin cuenta: la cámara se abre en esta mesa y transmite."));
+            tarjeta.append(el("p", "hoja-qr-numero", x.titulo), el("p", "hoja-qr-torneo", x.sub), qr, el("p", "hoja-qr-ayuda", x.ayuda));
             hoja.append(tarjeta);
         }
         document.body.classList.add("imprimir-qr");
         window.print();
+    }
+
+    /* Partidas amistosas, sin torneo: un QR por mesa con el mismo código.
+     * Por dentro es una simultánea (cada cámara su número, el mismo canal),
+     * pero quien mira ve «Mesa N». El código se guarda en el aparato: los
+     * QR ya impresos siguen sirviendo hasta empezar otras. */
+    const AMISTOSAS = "camara_amistosas_v1";
+    let amistosas = null; // { codigo, nombre, mesas }
+    try { const x = JSON.parse(localStorage.getItem(AMISTOSAS) || "null"); if (x && V.codigoValido(x.codigo)) amistosas = x; } catch (e) { /* sin almacenamiento */ }
+    const enlaceAmistosa = (m) => new URL("camara-tablero.html#a=1&c=" + amistosas.codigo + "&m=" + m + (amistosas.nombre ? "&n=" + encodeURIComponent(amistosas.nombre) : ""), location.href).href;
+    function pintarAmistosas() {
+        $("amistosas-hay").hidden = $("btn-amistosas-nuevas").hidden = !amistosas;
+        if (!amistosas) return;
+        $("amistosas-codigo").textContent = amistosas.codigo;
+        const a = $("amistosas-enlace");
+        a.href = a.textContent = V.enlace(amistosas.codigo);
+        if (!$("amistosas-nombre").value && amistosas.nombre) $("amistosas-nombre").value = amistosas.nombre;
+    }
+    function imprimirAmistosas() {
+        const n = Number($("amistosas-mesas").value);
+        if (!(Number.isInteger(n) && n >= 1 && n <= 50)) { avisar("Escribe cuántas mesas son: de 1 a 50.", "error"); $("amistosas-mesas").focus(); return; }
+        amistosas = { codigo: amistosas ? amistosas.codigo : V.nuevoCodigo(), nombre: $("amistosas-nombre").value.trim().slice(0, 60), mesas: n };
+        try { localStorage.setItem(AMISTOSAS, JSON.stringify(amistosas)); } catch (e) { /* sin almacenamiento */ }
+        pintarAmistosas();
+        const sub = amistosas.nombre || "Partidas amistosas";
+        const tarjetas = [];
+        for (let m = 1; m <= n; m++) tarjetas.push({ titulo: "Mesa " + m, sub, enlace: enlaceAmistosa(m), ayuda: AYUDA_QR });
+        tarjetas.push({ titulo: "Para mirarlas", sub, enlace: V.enlace(amistosas.codigo), ayuda: "Escanéalo para ver todas las partidas en vivo, en el celular o en un proyector. Sin cuenta." });
+        hojaQr(tarjetas);
+    }
+    function nuevasAmistosas() {
+        amistosas = null;
+        try { localStorage.removeItem(AMISTOSAS); } catch (e) { /* sin almacenamiento */ }
+        pintarAmistosas();
+        avisar("Listo: los QR que imprimas ahora llevan un código nuevo. Los de antes ya no se juntan con estos.", "bien");
     }
     window.addEventListener("afterprint", () => document.body.classList.remove("imprimir-qr", "imprimir-hoja"));
 
@@ -3153,6 +3194,9 @@
     });
     $("btn-torneo-lista").addEventListener("click", pintarListaTorneos);
     $("btn-torneo-qr").addEventListener("click", imprimirQr);
+    $("btn-amistosas-qr").addEventListener("click", imprimirAmistosas);
+    $("btn-amistosas-nuevas").addEventListener("click", nuevasAmistosas);
+    pintarAmistosas();
     // Sin esperar al minuto: apenas Pareo empareja la ronda siguiente.
     $("btn-torneo-ronda").addEventListener("click", async () => {
         const antes = ultimaRonda();
@@ -3193,13 +3237,16 @@
     }));
 
     /* Cómo va esta cámara, para el tablero de control de camaras.html (que la
-     * tiene en un cuadrito de la misma página web y la consulta cada segundo). */
+     * tiene en un cuadrito de la misma página web y la consulta cada segundo)
+     * y para la barra de arriba y los pasos de esta misma página
+     * (js/notara-interfaz.js). */
     window.estadoCamara = () => {
         const t = tableros[0];
         const pista = video.srcObject && video.srcObject.getVideoTracks()[0];
         return {
             camara: fuente === video && !archivoVideo ? !!(pista && pista.readyState === "live") : !!fuente,
-            calibrada: !!t.cal, mesa: t.mesa || null, tablero: t.tablero || null, transmitiendo: !!t.vivo,
+            esquinas: t.esquinas.length === 4, calibrada: !!t.cal, mesa: t.mesa || null, tablero: t.tablero || null, transmitiendo: !!t.vivo,
+            bateria: bateria ? { nivel: bateria.nivel, cargando: bateria.cargando } : null,
             dudas: !$("dudas").hidden, error: ultimoAviso.tipo === "error" ? ultimoAviso.texto : "",
             jugadas: t.juego.history().length, resultado: resultadoDe(t), sinRed: sinRed(),
             var: { puede: !!grabador, grabando: !!(grabador && varSi && grabador.grabando()), marcados: t.marcados.length, tocadas: varSi && grabador && grabador.desde() ? tocadas(t).filter((x) => x.h >= grabador.desde()).length : 0 },
@@ -3254,6 +3301,7 @@
         $("loading").classList.add("hidden");
         arrancar();
         $("mesa-qr").hidden = false;
+        if (qr.amistosa) return mesaAmistosa(qr);
         $("mesa-titulo-qr").textContent = V.lugar(qr);
         try { localStorage.setItem(MESA + 0, lugarTexto(qr)); } catch (e) { /* sin almacenamiento */ }
         // Sin señal y sin el torneo guardado: la cámara abre igual y anota;
@@ -3273,6 +3321,19 @@
         mesaLista(qr);
         await abrirCamara();
         if (fuente) avisar(V.lugar(qr) + " de " + torneo.nombre + ", transmitiendo. Toca «Buscar el tablero» y, con las piezas en la posición inicial, «Calibrar con la posición inicial».", "bien");
+    }
+    // Una mesa de partidas amistosas: sin torneo, con el código del QR y su número.
+    async function mesaAmistosa(qr) {
+        const t = T();
+        t.simul = qr.mesa; t.amistosa = true;
+        const titulo = "Mesa " + qr.mesa + (qr.nombre ? " · " + qr.nombre : "");
+        $("mesa-titulo-qr").textContent = titulo;
+        $("mesa-ayuda-qr").textContent = "Esta cámara transmite solo esta mesa, sin cuenta. Si quieren, escriban sus nombres en «Transmitir en vivo». Pon el celular encima del tablero, toca «Buscar el tablero» y, con las piezas en la posición inicial, «Calibrar con la posición inicial».";
+        $("t-torneo").closest("section").hidden = true;
+        elegirRetraso(0, false);
+        empezarVivo(t, qr.codigo);
+        await abrirCamara();
+        if (fuente) avisar(titulo + ", transmitiendo. Toca «Buscar el tablero» y, con las piezas en la posición inicial, «Calibrar con la posición inicial».", "bien");
     }
     function mesaLista(qr) {
         elegirRetraso(qr.retraso, true);

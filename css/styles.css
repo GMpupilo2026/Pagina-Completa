@@ -2675,3 +2675,50 @@ html.modo-proyector .clase-sticker-globo { font-size: 2rem; }
 /* La cámara abierta con el QR de una mesa, sin cuenta: solo esa mesa de ese
  * torneo, sin elegir torneo, mesa, código ni retraso (los trae el QR). */
 .camara-mesa [data-no-mesa] { display: none !important; }
+
+/* ── Notara como programa (camara-tablero.html; js/notara-interfaz.js) ──
+ * La barra de arriba con el estado, los pasos, el cuerpo en dos columnas
+ * (la cámara y el panel con pestañas) y la barra de abajo. En el celular,
+ * las pestañas van fijas abajo, como en una app. */
+.nt-barra { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 0.75rem; padding: 0.6rem 0.9rem; border-radius: 1rem; background: rgb(var(--c-brand-900)); color: #fff; margin-bottom: 0.5rem; }
+.nt-chip { display: inline-flex; align-items: center; border-radius: 999px; padding: 0.15rem 0.6rem; font-weight: 600; background: rgb(var(--c-brand-800)); border: 1px solid rgb(var(--c-brand-600)); color: #fff; }
+.nt-chip-bien { background: #0b7a52; border-color: #0b7a52; }
+.nt-chip-rojo { background: #b3263a; border-color: #b3263a; }
+.nt-chip-ambar { background: #8a5a00; border-color: #8a5a00; }
+.nt-pasos { display: flex; flex-wrap: wrap; gap: 0.25rem; margin: 0 0 0.75rem; padding: 0; list-style: none; font-size: 0.875rem; }
+.nt-paso { display: flex; align-items: center; gap: 0.45rem; padding: 0.35rem 0.8rem 0.35rem 0.4rem; border-radius: 999px; color: rgb(var(--c-brand-500)); border: 1px solid transparent; }
+.dark .nt-paso { color: rgb(var(--c-brand-300)); }
+.nt-paso-num { display: grid; place-items: center; width: 1.4rem; height: 1.4rem; border-radius: 50%; font-size: 0.75rem; font-weight: 700; border: 1px solid rgb(var(--c-brand-300)); }
+.nt-paso[data-estado="hecho"] .nt-paso-num { background: rgb(var(--c-accent-500)); border-color: rgb(var(--c-accent-500)); color: rgb(var(--c-brand-900)); font-size: 0; }
+.nt-paso[data-estado="hecho"] .nt-paso-num::after { content: "✓"; font-size: 0.75rem; }
+.nt-paso[data-estado="ahora"] { color: rgb(var(--c-brand-900)); font-weight: 700; border-color: rgb(var(--c-accent-500)); background: rgb(var(--c-accent-500) / 0.12); }
+.dark .nt-paso[data-estado="ahora"] { color: #fff; }
+.nt-siguiente { box-shadow: 0 0 0 3px rgb(var(--c-accent-500)); }
+.nt-herr > button, .nt-herr > label { padding: 0.45rem 0.8rem; font-size: 0.8125rem; }
+.nt-cuerpo { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1rem; }
+.nt-pestanas { display: flex; gap: 0.25rem; padding: 0.25rem; border-radius: 0.9rem; background: rgb(var(--c-brand-900)); margin-bottom: 0.75rem; }
+.nt-pestana { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 0.1rem; padding: 0.4rem 0.2rem; border-radius: 0.7rem; color: rgb(var(--c-brand-200)); font-size: 0.75rem; font-weight: 600; }
+.nt-pestana[hidden] { display: none; }
+.nt-pestana-ico { font-size: 1.1rem; line-height: 1.2; }
+.nt-pestana[aria-selected="true"] { background: rgb(var(--c-brand-700)); color: #fff; box-shadow: inset 0 -3px 0 rgb(var(--c-accent-400)); }
+.nt-pestana:focus-visible { outline: 2px solid rgb(var(--c-accent-400)); outline-offset: 1px; }
+.nt-panel:focus-visible { outline: 2px solid rgb(var(--c-accent-400)); outline-offset: 4px; border-radius: 1rem; }
+.nt-estado { display: none; }
+#nt-estado-msg[data-tipo="atencion"] { color: #ffcf6b; font-weight: 700; }
+/* En el celular: las pestañas fijas abajo, y lugar para que no tapen nada. */
+@media (max-width: 1023.98px) {
+  .nt-pestanas { position: fixed; left: 0; right: 0; bottom: 0; z-index: 40; margin: 0; border-radius: 0; padding: 0.3rem 0.3rem calc(0.3rem + env(safe-area-inset-bottom)); box-shadow: 0 -4px 16px rgb(0 0 0 / 0.25); }
+  #app:has(.nt-pestanas) { padding-bottom: 4.5rem; }
+}
+@media (min-width: 1024px) {
+  .nt-cuerpo { grid-template-columns: minmax(0, 1fr) 27rem; align-items: start; }
+  .nt-lado { position: sticky; top: 0.5rem; max-height: calc(100vh - 3.5rem); overflow-y: auto; overscroll-behavior: contain; }
+  .nt-estado { display: flex; flex-wrap: wrap; gap: 0.4rem 1.25rem; align-items: center; position: sticky; bottom: 0; z-index: 30; margin-top: 1rem; padding: 0.45rem 0.9rem; border-radius: 0.75rem; background: rgb(var(--c-brand-900)); color: rgb(var(--c-brand-200)); font-size: 0.8rem; }
+  .nt-estado [hidden] { display: none; }
+  #nt-estado-msg { color: #fff; font-weight: 600; }
+}
+/* Dentro de un cuadrito de camaras.html (compacto) no hay lugar para el panel al lado. */
+.camara-compacta .nt-cuerpo { grid-template-columns: minmax(0, 1fr); }
+.camara-compacta .nt-lado { position: static; max-height: none; }
+.camara-compacta .nt-estado { display: none; }
+@media print { .nt-barra, .nt-pasos, .nt-pestanas, .nt-estado { display: none !important; } }
