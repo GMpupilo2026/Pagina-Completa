@@ -11827,6 +11827,11 @@ estilos `.nt-*` de `css/styles.css`):
   y cuánto lee. **No flota**: pegada al borde de la pantalla tapaba
   la parte de abajo de la imagen, donde se tocan las esquinas (la prueba de
   los cuatro tableros no podía marcar los de abajo).
+- **El aviso de encima de la imagen tiene lugar para tres líneas** (en la
+  computadora). En la columna de la cámara, más angosta que antes, un aviso
+  de dos líneas después de uno de una corría la imagen hacia abajo entre un
+  toque y el siguiente: marcando las esquinas, el cuarto toque caía en otro
+  lado (la prueba de los cuatro tableros y la de la luz lo mostraron).
 - **En el celular**, como una app: una columna, y las pestañas fijas abajo.
   En un cuadrito de `camaras.html` (compacto) y en el celular de una mesa,
   una columna también.

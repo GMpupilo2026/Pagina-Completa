@@ -2714,6 +2714,10 @@ html.modo-proyector .clase-sticker-globo { font-size: 2rem; }
 }
 @media (min-width: 1024px) {
   .nt-cuerpo { grid-template-columns: minmax(0, 1fr) 27rem; align-items: start; }
+  /* El aviso va encima de la imagen: con lugar para tres líneas, para que
+   * un aviso más largo no corra la imagen entre un toque y otro (marcando
+   * las esquinas, el toque caería en otro lado). */
+  .nt-centro #aviso { min-height: 5.25rem; }
   .nt-lado { position: sticky; top: 0.5rem; max-height: calc(100vh - 3.5rem); overflow-y: auto; overscroll-behavior: contain; }
   .nt-estado { display: flex; flex-wrap: wrap; gap: 0.4rem 1.25rem; align-items: center; margin-top: 1rem; padding: 0.45rem 0.9rem; border-radius: 0.75rem; background: rgb(var(--c-brand-900)); color: rgb(var(--c-brand-200)); font-size: 0.8rem; }
   .nt-estado [hidden] { display: none; }
