@@ -218,6 +218,26 @@
                         <textarea id="pi-pegar" rows="5" class="w-full rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-800 text-brand-800 dark:text-white px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 mt-2 font-mono text-xs" aria-label="Lista de jugadores" data-t-aria="listaJugadores"></textarea>
                         <button type="button" id="pi-pegar-agregar" class="bg-brand-800 hover:bg-brand-900 dark:bg-brand-700 dark:hover:bg-brand-600 text-white font-semibold px-4 py-2 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 disabled:opacity-50 disabled:cursor-not-allowed mt-2" data-t="agregarLista">Agregar la lista</button>
                     </details>
+                    <!-- Agregar desde una lista de Elo: FIDE (Estándar, Rápido, Blitz) o
+                         la nacional de Costa Rica, por la Edge Function
+                         pareo-listas-elo. Ver «Pareo Integral: agregar jugadores
+                         desde las listas de Elo» en docs/decisiones/juegos-y-torneos.md. -->
+                    <details id="pi-listas-caja" class="mt-4">
+                        <summary class="cursor-pointer font-semibold text-sm rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400" data-t="listasTitulo">Agregar desde una lista de Elo (FIDE o Nacional)</summary>
+                        <p class="text-sm text-brand-600 dark:text-brand-300 mt-2" data-t="listasAyuda">Busca por apellidos o por el código FIDE y agrega a cada uno con un clic, con el Elo de la lista que elijas. Lo que escribes en el buscador se manda a nuestro servidor para buscarlo en ratings.fide.com o en ajedrezcostarica.com; no se guarda.</p>
+                        <form id="pi-listas-form" class="mt-2 flex flex-wrap items-end gap-3" novalidate>
+                            <label><span class="block text-sm font-semibold mb-1" data-t="listasLista">Lista</span><select id="pi-listas-lista" class="w-full rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-800 text-brand-800 dark:text-white px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">
+                                <option value="estandar" data-t="listaEstandar">FIDE Estándar</option>
+                                <option value="rapido" data-t="listaRapido">FIDE Rápido</option>
+                                <option value="blitz" data-t="listaBlitz">FIDE Blitz</option>
+                                <option value="nacional" data-t="listaNacional">Elo Nacional de Costa Rica</option>
+                            </select></label>
+                            <label class="flex-1 min-w-[12rem]"><span class="block text-sm font-semibold mb-1" data-t="listasBuscar">Apellidos o código FIDE</span><input id="pi-listas-q" type="search" maxlength="60" autocomplete="off" class="w-full rounded-lg border border-brand-200 dark:border-brand-700 bg-white dark:bg-brand-800 text-brand-800 dark:text-white px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"></label>
+                            <button type="submit" id="pi-listas-buscar" class="bg-brand-800 hover:bg-brand-900 dark:bg-brand-700 dark:hover:bg-brand-600 text-white font-semibold px-4 py-2 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 disabled:opacity-50 disabled:cursor-not-allowed" data-t="listasBoton">Buscar</button>
+                        </form>
+                        <p id="pi-listas-estado" class="text-sm mt-2" role="status" aria-live="polite"></p>
+                        <div class="overflow-x-auto mt-2"><table class="pi-tabla" id="pi-listas-resultados" hidden></table></div>
+                    </details>
                     <p class="mt-4 text-sm"><span data-t="subirListaEnTorneo">¿Tienes la lista en Word o Excel?</span> <button type="button" id="pi-ir-subir-lista" class="font-semibold underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400" data-t="subirListaIr">Súbela en la ficha Torneo</button></p>
                 </div>
                 <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5">
