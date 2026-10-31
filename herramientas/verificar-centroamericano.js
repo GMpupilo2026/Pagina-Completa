@@ -1051,6 +1051,18 @@ ok("la página carga el cliente de Supabase antes que su código en vivo", html.
     await pDip.waitForSelector('#buscador-resultados [data-accion="diploma-pdf"]', { timeout: 10000 }).catch(() => {});
     const botonesDip = await pDip.evaluate(() => [...document.querySelectorAll('#buscador-resultados [data-accion^="diploma"]')].map((b) => b.textContent + (b.checkVisibility() ? "" : " (oculto)")));
     ok("con el torneo terminado, cada tarjeta trae su certificado en PDF y en imagen", JSON.stringify(botonesDip) === JSON.stringify(["Certificado (PDF)", "Certificado (imagen)"]), JSON.stringify(botonesDip));
+    // «Así terminó mi torneo»: la imagen final, del tamaño del estado de WhatsApp y con la marca de agua.
+    ok("con el torneo terminado, la tarjeta trae «Así terminó mi torneo»", await pDip.evaluate(() => { const b = document.querySelector('#buscador-resultados [data-accion="asi-termino"]'); return !!b && b.checkVisibility() && b.textContent === "🏁 Así terminó mi torneo"; }));
+    const fin = await pDip.evaluate(async () => {
+      let marcas = 0; const orig = window.TablaImagen.marcar;
+      window.TablaImagen.marcar = async (c) => { marcas++; return orig(c); };
+      const x = window.CentroamericanoVivo.jugadores().find((y) => /Mayorga/.test(y.j.nombre));
+      const b = await window.CentroamericanoTablas.imagenFinal(x);
+      window.TablaImagen.marcar = orig;
+      const img = await createImageBitmap(b);
+      return { w: img.width, h: img.height, tipo: b.type, marcas };
+    });
+    ok("y su imagen es de 1080 × 1920 (el estado de WhatsApp), en PNG y con la marca de agua", fin.w === 1080 && fin.h === 1920 && fin.tipo === "image/png" && fin.marcas === 1, JSON.stringify(fin));
     ok("el nombre va al derecho, con el título adelante", await pDip.evaluate(() => window.CentroamericanoTablas.nombreAlDerecho({ titulo: "WIM", nombre: "Mayorga Araya, Sofia" }) === "WIM Sofia Mayorga Araya"
       && window.CentroamericanoTablas.nombreAlDerecho({ titulo: "", nombre: "Wilson Hannah" }) === "Wilson Hannah"));
     // Con la cara de las bases: el morado del fondo (arriba #40478F, abajo

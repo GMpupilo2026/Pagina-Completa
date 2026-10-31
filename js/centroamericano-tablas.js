@@ -77,6 +77,15 @@
       imgAntes: "El torneo empieza el 2 de noviembre",
       imgRonda: (r, que, rival) => "Ronda " + r + ": " + que + (rival ? " " + rival : ""),
       compartirTexto: (n) => n + " en el Centroamericano 2026:",
+      // «Así terminó mi torneo» (imagenFinal).
+      finTitulo: "Así terminó mi torneo",
+      finPuesto: (p, de) => "Puesto " + p + " de " + de,
+      finPuntos: "Puntos", finDe: (r) => "de " + r,
+      finRend: "Rendimiento", finElo: "Elo FIDE", finEloSin: "sin Elo FIDE",
+      finColores: "Blancas · Negras",
+      finRondas: "Ronda a ronda",
+      finMejor: (r, rival, n) => "Mejor victoria: " + rival + ", ronda " + n + ".",
+      finTexto: (n) => "Así terminó el Centroamericano 2026 para " + n + ":",
       imagenLista: "Listo: la imagen se bajó a tu aparato.",
       imagenError: "No se pudo armar la imagen. Intenta de nuevo.",
       sorpresa: (r, cat, yo, gano, rival, dif) => "Ronda " + r + " · " + cat + ": " + yo + (gano ? " le ganó a " : " hizo tablas con ") + rival + ", " + dif + " puntos de Elo más.",
@@ -212,6 +221,14 @@
       imgAntes: "The tournament starts on November 2",
       imgRonda: (r, que, rival) => "Round " + r + ": " + que + (rival ? " " + rival : ""),
       compartirTexto: (n) => n + " at the Centroamericano 2026:",
+      finTitulo: "How my tournament ended",
+      finPuesto: (p, de) => "Place " + p + " of " + de,
+      finPuntos: "Points", finDe: (r) => "of " + r,
+      finRend: "Performance", finElo: "FIDE rating", finEloSin: "no FIDE rating",
+      finColores: "White · Black",
+      finRondas: "Round by round",
+      finMejor: (r, rival, n) => "Best win: " + rival + ", round " + n + ".",
+      finTexto: (n) => "How the Centroamericano 2026 ended for " + n + ":",
       imagenLista: "Done: the image was saved to your device.",
       imagenError: "We couldn't make the image. Please try again.",
       sorpresa: (r, cat, yo, gano, rival, dif) => "Round " + r + " · " + cat + ": " + yo + (gano ? " beat " : " drew with ") + rival + ", rated " + dif + " points higher.",
@@ -998,6 +1015,120 @@
       await compartirBlob(blob, "centroamericano-2026-" + V.plano(d.pais).replace(/ /g, "-") + "-ronda-" + d.ronda + ".png", d.pais + " · " + d.resumen + " https://" + URL_PAGINA);
     } catch (e) {
       anunciar(T().imagenError);
+    } finally {
+      if (boton) boton.disabled = false;
+    }
+  }
+
+  /* ---------------- «Así terminó mi torneo» ---------------- */
+  // 1080 × 1920, para el estado de WhatsApp: arriba y abajo quedan 190 px sin
+  // texto (ahí WhatsApp pone el nombre y el «Responder»). Su puesto final (con
+  // la medalla si llegó al podio), los puntos, el rendimiento, el Elo que ganó,
+  // cómo le fue con cada color, cada ronda y su mejor victoria. Con la marca de
+  // agua. Colores medidos (WCAG AA): blanco sobre #40478F 8,35; #1E2453 sobre
+  // blanco 14,7 y sobre #F4F4FB 13,4; #40478F sobre #F4F4FB 7,62. El resultado de
+  // cada ronda va escrito (1, ½, 0), no solo con su color.
+  async function imagenFinal(x) {
+    const tx = T();
+    if (document.fonts && document.fonts.ready) await document.fonts.ready;
+    const letra = getComputedStyle(document.body).fontFamily || "system-ui, sans-serif";
+    const c = document.createElement("canvas");
+    c.width = 1080; c.height = 1920;
+    const ctx = c.getContext("2d");
+    const caja = (x0, y0, w, h, r, color) => {
+      ctx.fillStyle = color; ctx.beginPath(); ctx.moveTo(x0 + r, y0); ctx.arcTo(x0 + w, y0, x0 + w, y0 + h, r); ctx.arcTo(x0 + w, y0 + h, x0, y0 + h, r);
+      ctx.arcTo(x0, y0 + h, x0, y0, r); ctx.arcTo(x0, y0, x0 + w, y0, r); ctx.closePath(); ctx.fill();
+    };
+    ctx.fillStyle = CARA.banda; ctx.fillRect(0, 0, 1080, 1920);
+    // La cabeza: el título, el nombre del torneo y el dibujo.
+    ctx.fillStyle = "#ffffff"; ctx.textBaseline = "alphabetic";
+    ctx.font = "800 60px " + letra; ctx.fillText(tx.finTitulo, 60, 290);
+    ctx.font = "500 34px " + letra; ctx.fillText(NOMBRE_CORTO, 60, 345);
+    const dibujo = await cargarImagen(CARA.dibujo);
+    if (dibujo && CARA.redondo) {
+      ctx.save(); ctx.beginPath(); ctx.arc(945, 290, 80, 0, Math.PI * 2); ctx.closePath(); ctx.clip();
+      const lado = Math.min(dibujo.width, dibujo.height);
+      ctx.drawImage(dibujo, (dibujo.width - lado) / 2, (dibujo.height - lado) / 2, lado, lado, 865, 210, 160, 160);
+      ctx.restore();
+      ctx.lineWidth = 6; ctx.strokeStyle = "#ffffff"; ctx.beginPath(); ctx.arc(945, 290, 80, 0, Math.PI * 2); ctx.stroke();
+    }
+    // La tarjeta blanca.
+    caja(40, 410, 1000, 1290, 44, "#ffffff");
+    ctx.fillStyle = CARA.tinta; ctx.font = "800 70px " + letra;
+    let y = 520;
+    renglones(ctx, nombreAlDerecho(x.j), 920, 2).forEach((l) => { ctx.fillText(l, 80, y); y += 80; });
+    ctx.fillStyle = CARA.acento; ctx.font = "700 38px " + letra;
+    ctx.fillText([V.conModalidad(V.categoria(x.j.grupo)), x.j.fed ? V.pais(x.j.fed) : ""].filter(Boolean).join(" · "), 80, y + 4);
+    y += 50;
+    // El puesto, con su medalla si llegó al podio.
+    const p = x.j._puestoGrupo || x.j.puesto || 0, de = x.j._deGrupo || 0;
+    caja(80, y, 920, 200, 34, CARA.suave);
+    const conMedalla = p >= 1 && p <= 3;
+    if (conMedalla) medalla(ctx, 185, y + 100, 62, p, letra);
+    ctx.textAlign = "start";   // la medalla escribe su número centrado
+    ctx.fillStyle = CARA.tinta; ctx.font = "800 84px " + letra;
+    ctx.fillText(tx.finPuesto(p, de), conMedalla ? 290 : 120, y + 130);
+    y += 250;
+    // Cuatro datos: puntos, rendimiento, Elo y colores.
+    const rondas = V.rondasDe(x);
+    const jugadas = x.torneo.ronda || x.torneo.rondas || rondas.length;
+    const rend = V.rendimiento(x), elo = V.eloDe(x), col = V.porColor(rondas);
+    const datos = [
+      [tx.finPuntos, (x.j.puntos || "0") + " " + tx.finDe(jugadas)],
+      [tx.finRend, rend ? String(rend.rp) : "—"],
+      [tx.finElo, elo ? V.textoElo(elo.cambio) : tx.finEloSin],
+      [tx.finColores, V.fmtPuntos(col.blancas.pts) + "/" + col.blancas.n + " · " + V.fmtPuntos(col.negras.pts) + "/" + col.negras.n],
+    ];
+    datos.forEach(([titulo, valor], i) => {
+      const cx = 80 + (i % 2) * 470, cy = y + Math.floor(i / 2) * 190;
+      caja(cx, cy, 450, 170, 30, CARA.suave);
+      ctx.fillStyle = CARA.acento; ctx.font = "700 30px " + letra; ctx.fillText(titulo, cx + 32, cy + 58);
+      ctx.fillStyle = CARA.tinta; ctx.font = "800 " + (valor.length > 12 ? 46 : 58) + "px " + letra; ctx.fillText(valor, cx + 32, cy + 130);
+    });
+    y += 400;
+    // Ronda a ronda: un círculo por ronda con lo que hizo escrito adentro.
+    ctx.fillStyle = CARA.acento; ctx.font = "700 32px " + letra; ctx.fillText(tx.finRondas, 80, y + 20);
+    y += 50;
+    const n = Math.max(1, rondas.length), paso = Math.min(100, 920 / n), radio = Math.min(40, paso / 2 - 6);
+    rondas.forEach((o, i) => {
+      const cx = 80 + paso * i + paso / 2, cy = y + 50;
+      const t = o.bye ? "B" : o.puntos === 1 ? "1" : o.puntos === 0.5 ? "½" : o.puntos === 0 ? "0" : "·";
+      ctx.fillStyle = o.puntos === 1 ? "#1f774c" : o.puntos === 0.5 ? "#40478f" : o.puntos === 0 ? "#ce1328" : "#9ca3af";
+      ctx.beginPath(); ctx.arc(cx, cy, radio, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = "#ffffff"; ctx.font = "800 " + Math.round(radio * 0.95) + "px " + letra; ctx.textAlign = "center";
+      ctx.fillText(t, cx, cy + radio * 0.34);
+      ctx.fillStyle = CARA.tinta; ctx.font = "600 22px " + letra; ctx.fillText("R" + o.ronda, cx, cy + radio + 30);
+      ctx.textAlign = "start";
+    });
+    y += 200;
+    // Su mejor victoria: contra el rival con más Elo al que le ganó.
+    const victorias = rondas.filter((o) => o.puntos === 1 && !o.bye && !o.incomparecencia && o.rival);
+    const mejor = victorias.sort((a, b) => (b.rival.elo || 0) - (a.rival.elo || 0))[0];
+    if (mejor) {
+      const r = mejor.rival;
+      const quien = nombreAlDerecho({ titulo: r.titulo || "", nombre: r.nombre || "" }) + (r.fed || r.elo ? " (" + [r.fed, r.elo || ""].filter(Boolean).join(", ") + ")" : "");
+      ctx.fillStyle = "#1f2937"; ctx.font = "600 36px " + letra;
+      renglones(ctx, tx.finMejor(mejor, quien, mejor.ronda), 920, 2).forEach((l) => { ctx.fillText(l, 80, y); y += 48; });
+    }
+    // Abajo: la dirección y las franjas.
+    ctx.fillStyle = CARA.acento; ctx.font = "700 32px " + letra;
+    ctx.fillText(URL_PAGINA, 80, 1655);
+    const base = 1700 - CARA.franjas[0][1];
+    CARA.franjas.forEach(([color, yy], i, arr) => {
+      ctx.fillStyle = color; ctx.fillRect(0, yy + base, 1080, ((arr[i + 1] ? arr[i + 1][1] : 1080) - yy));
+    });
+    if (window.TablaImagen && window.TablaImagen.marcar) await window.TablaImagen.marcar(c);
+    return new Promise((ok, mal) => c.toBlob((b) => (b ? ok(b) : mal(new Error("sin imagen"))), "image/png"));
+  }
+
+  async function compartirFinal(x, boton) {
+    const tx = T();
+    if (boton) boton.disabled = true;
+    try {
+      const blob = await imagenFinal(x);
+      await compartirBlob(blob, CARA.archivo + "-asi-termino-" + V.plano(x.j.nombre).replace(/ /g, "-") + ".png", tx.finTexto(x.j.nombre) + " https://" + URL_PAGINA);
+    } catch (e) {
+      anunciar(tx.imagenError);
     } finally {
       if (boton) boton.disabled = false;
     }
@@ -1878,5 +2009,5 @@
   document.addEventListener("cac-datos", repintar);
   document.addEventListener("cac-idioma", repintar);
 
-  window.CentroamericanoTablas = { compartirJugador, imagenJugador, compartirResumen, imagenResumen, resumenDelDia, imagenDia, compartirDia, documentoDelegacion, hojaDelegacion, documentoInforme, informeDelegacion, numerosDelFestival, imagenNumeros, diplomasDelegacion, conDiploma, textosTablas: T, diploma, descargarDiploma, nombreAlDerecho };
+  window.CentroamericanoTablas = { compartirJugador, imagenJugador, imagenFinal, compartirFinal, compartirResumen, imagenResumen, resumenDelDia, imagenDia, compartirDia, documentoDelegacion, hojaDelegacion, documentoInforme, informeDelegacion, numerosDelFestival, imagenNumeros, diplomasDelegacion, conDiploma, textosTablas: T, diploma, descargarDiploma, nombreAlDerecho };
 })();

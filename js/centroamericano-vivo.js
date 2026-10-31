@@ -157,7 +157,7 @@
       delegApagado: (p) => "Listo: ya no te avisamos el resumen de " + p + ".",
       imagenResumen: "Compartir imagen",
       hojaPdf: "Hoja de la delegación para imprimir (PDF)",
-      diplomaPdf: "Certificado (PDF)", diplomaImagen: "Certificado (imagen)",
+      diplomaPdf: "Certificado (PDF)", diplomaImagen: "Certificado (imagen)", asiTermino: "🏁 Así terminó mi torneo",
       puestosTitulo: "Su puesto en la categoría después de cada ronda:",
       puestoRonda: (r, p) => "R" + r + " " + p,
       puestosNota: "Con los mismos puntos se comparte el puesto (por ejemplo, 3.º–5.º): el desempate lo decide al final del torneo.",
@@ -261,7 +261,7 @@
       delegApagado: (p) => "Done: we no longer send you " + p + "'s summary.",
       imagenResumen: "Share image",
       hojaPdf: "Delegation sheet to print (PDF)",
-      diplomaPdf: "Certificate (PDF)", diplomaImagen: "Certificate (image)",
+      diplomaPdf: "Certificate (PDF)", diplomaImagen: "Certificate (image)", asiTermino: "🏁 How my tournament ended",
       puestosTitulo: "Their place in the section after each round:",
       puestoRonda: (r, p) => "R" + r + " " + p,
       puestosNota: "Players on the same points share the place (for example, 3rd–5th): tiebreaks decide it at the end of the tournament.",
@@ -850,6 +850,12 @@
     acciones.appendChild(comp);
     // Con el torneo terminado, su diploma: en PDF para imprimir y en imagen.
     if (x.torneo.terminado || (x.torneo.rondas > 0 && x.torneo.ronda >= x.torneo.rondas)) {
+      // «Así terminó mi torneo»: la imagen final para el estado de WhatsApp.
+      const fin = el("button", "cac-jugador-boton", tx.asiTermino);
+      fin.type = "button";
+      fin.dataset.accion = "asi-termino";
+      fin.addEventListener("click", () => { if (window.CentroamericanoTablas) window.CentroamericanoTablas.compartirFinal(x, fin); });
+      acciones.appendChild(fin);
       [["pdf", tx.diplomaPdf], ["imagen", tx.diplomaImagen]].forEach(([formato, texto]) => {
         const b = el("button", "cac-jugador-boton", texto);
         b.type = "button";
