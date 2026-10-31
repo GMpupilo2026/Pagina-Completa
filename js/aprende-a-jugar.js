@@ -516,6 +516,12 @@
   async function requireLoginThenGate() {
     let hay = false;
     try { const { data } = await sb.auth.getSession(); hay = !!(data && data.session); } catch (e) { hay = false; }
+    // Sin cuenta solo como invitado del Centroamericano (js/invitado-centroamericano.js).
+    if (!hay && window.InvitadoCentroamericano && window.InvitadoCentroamericano.activo()) {
+      window.InvitadoCentroamericano.franja();
+      unlock();
+      return;
+    }
     if (!hay) {
       $("gate-checking").textContent = "Necesitas iniciar sesión para entrar a Aprende a jugar. Te llevamos a iniciar sesión…";
       window.location.href = "../login.html?next=" + encodeURIComponent(NEXT_PATH);
