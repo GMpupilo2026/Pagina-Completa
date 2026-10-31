@@ -325,6 +325,7 @@ async function pruebaArena(browser) {
   await page.click("#btn-jugar");
   await page.waitForFunction(() => document.getElementById("btn-jugar").textContent === "Pausar");
   ok("al jugar dice que busca rival", /Buscando rival/.test(await texto(page, "#arena-aviso")));
+  ok("y, en una arena por equipos, que será alguien de otro equipo", /otro equipo/.test(await texto(page, "#arena-aviso")), await texto(page, "#arena-aviso"));
   igual("pide entrar a ESA arena", (await llamadas(page, "arena_entrar"))[0], { p_torneo: "t1" });
   await page.click("#btn-jugar");
   await page.waitForFunction(() => document.getElementById("btn-jugar").textContent === "Jugar");

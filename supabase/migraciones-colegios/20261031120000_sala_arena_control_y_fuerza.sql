@@ -160,9 +160,11 @@ create trigger arena_fuerza_al_anular
 
 -- --------------------------------------------------------- el emparejamiento
 -- Como antes, más: la pausa, el cierre anticipado, quien está fuera y la
--- fuerza (entre los candidatos igual de buenos por equipo y por revancha, el
--- más parecido; y no se junta a dos muy distintos mientras haya tiempo de
--- esperar a alguien mejor).
+-- fuerza (entre los candidatos, el más parecido; y no se junta a dos muy
+-- distintos mientras haya tiempo de esperar a alguien mejor). Y ahora una
+-- regla, no una preferencia: en una arena por equipos dos del MISMO equipo no
+-- se enfrentan nunca, por mucho que esperen (antes se aflojaba a los 10 s).
+-- Quien se queda sin rival posible espera a que llegue alguien de otro equipo.
 create or replace function public.arena_emparejar(p_torneo uuid)
  returns void
  language plpgsql
@@ -220,12 +222,13 @@ begin
     join public.arena_jugadores j on j.id = q.jugador_id
     where q.torneo_id = p_torneo
       and q.jugador_id <> c.jugador_id
+      -- En una arena por equipos NUNCA se enfrentan dos del mismo equipo.
+      and not (t.por_equipos and j.equipo_id is not distinct from c.equipo_id)
       and q.visto > clock_timestamp() - interval '12 seconds'
       and not exists (select 1 from public.arena_fuera f where f.torneo_id = p_torneo and f.jugador_id = q.jugador_id)
       and not exists (select 1 from public.arena_partidas a
                        where a.estado = 'en_juego' and q.jugador_id in (a.blancas, a.negras))
-    order by (t.por_equipos and j.equipo_id is not distinct from c.equipo_id),
-             (q.jugador_id is not distinct from ultimo),
+    order by (q.jugador_id is not distinct from ultimo),
              abs(j.fuerza - c.fuerza),
              q.desde
     limit 1;
@@ -233,8 +236,8 @@ begin
 
     espera := extract(epoch from (clock_timestamp() - c.desde));
 
-    if ((t.por_equipos and r.equipo_id is not distinct from c.equipo_id) or r.jugador_id is not distinct from ultimo)
-       and espera < 10 then
+    -- La revancha inmediata solo si ya esperó 10 segundos.
+    if r.jugador_id is not distinct from ultimo and espera < 10 then
       continue;
     end if;
     -- Muy distintos: se espera a alguien más parecido, cada vez menos.

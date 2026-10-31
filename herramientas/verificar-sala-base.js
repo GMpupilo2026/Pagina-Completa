@@ -142,6 +142,8 @@ ok("arena_entrar sigue pidiendo ser jugador de la sala (con coalesce)", /not coa
 ok("y respeta a quien administración sacó y la hora de cierre", /arena_fuera f where f\.torneo_id = p_torneo and f\.jugador_id = yo/.test(entrar) && /coalesce\(t\.cerrada_en/.test(entrar));
 const emparejar = (cf.match(/create or replace function public\.arena_emparejar[\s\S]*?\$function\$;/) || [""])[0];
 ok("arena_emparejar no empareja en pausa ni a quien está fuera", /if t\.pausada then return; end if;/.test(emparejar) && /not exists \(select 1 from public\.arena_fuera/.test(emparejar));
+ok("en una arena por equipos NUNCA junta a dos del mismo equipo (regla, no preferencia: no se afloja con la espera)",
+  /and not \(t\.por_equipos and j\.equipo_id is not distinct from c\.equipo_id\)/.test(emparejar) && !/order by \(t\.por_equipos/.test(emparejar) && /if r\.jugador_id is not distinct from ultimo and espera < 10 then/.test(emparejar));
 ok("y empareja por fuerza, aflojando el criterio con la espera", /abs\(j\.fuerza - c\.fuerza\)/.test(emparejar) && /150 \+ 40 \* espera/.test(emparejar));
 const cerrar = (cf.match(/create or replace function public\.arena_cerrar[\s\S]*?\$function\$;/) || [""])[0];
 ok("arena_cerrar mueve la fuerza con K = 32 y suma cero, y unas tablas cortas no la mueven", /32 \* \(logrado - esperado\)/.test(cerrar) && /fuerza \+ db/.test(cerrar) && /fuerza - db/.test(cerrar) && /not \(p_resultado = '1\/2-1\/2' and n < 20\)/.test(cerrar));

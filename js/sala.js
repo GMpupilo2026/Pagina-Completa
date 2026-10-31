@@ -323,7 +323,9 @@
     $("aviso-pausa").hidden = !enPausa;
     if (S.buscando) $("arena-aviso").textContent = enPausa
       ? "Buscando rival… La arena está en pausa: seguirás esperando hasta que se reanude."
-      : "Buscando rival… Te emparejamos apenas haya alguien esperando.";
+      : S.torneo.por_equipos
+        ? "Buscando rival… Te emparejamos con alguien de otro equipo apenas esté esperando."
+        : "Buscando rival… Te emparejamos apenas haya alguien esperando.";
     else if (!abierta) $("arena-aviso").textContent = S.torneo && estadoDe(S.torneo) === "proxima" ? "Todavía no empieza." : "La arena terminó.";
     else if ($("arena-aviso").textContent.indexOf("Buscando") === 0) $("arena-aviso").textContent = "";
   }

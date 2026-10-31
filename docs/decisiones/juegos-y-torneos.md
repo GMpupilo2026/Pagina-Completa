@@ -12476,8 +12476,12 @@ suelta).
 
 **La base lleva la partida** (migración `*_sala_arena.sql`):
 - **El emparejamiento** (`arena_emparejar`, con un candado por arena) prefiere
-  un rival de OTRO equipo y distinto del último; el mismo equipo o una
-  revancha solo si quien espera lleva 10 segundos. Los colores se reparten
+  un rival distinto del último (la revancha solo si quien espera lleva 10
+  segundos). **En una arena por equipos dos del mismo equipo no se enfrentan
+  nunca**: en la primera versión era una preferencia que se aflojaba a los 10
+  segundos y con pocos jugadores se juntaban compañeros; la segunda migración
+  lo volvió regla (quien no tiene rival posible espera a que llegue alguien de
+  otro equipo). Los colores se reparten
   para que nadie juegue siempre con uno. Cada pocos segundos el navegador
   llama a `arena_entrar`, que es también el «sigo aquí»: quien cerró la
   pestaña deja de emparejarse a los 12 segundos.
