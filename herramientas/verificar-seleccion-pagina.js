@@ -153,13 +153,18 @@ const visible = (p, sel) => p.$eval(sel, (e) => e.checkVisibility());
     await v.goto(BASE + "/herramientas-arbitraje.html", { waitUntil: "load" });
     await v.waitForFunction(() => document.querySelectorAll("#lista > li").length > 0);
     igual("sin sesión: todas con candado y el aviso de iniciar sesión, menos las gratis (Pareo Integral, la lista de árbitros y las de datos estudiantiles)",
-        [await v.$$eval("#lista > li:not([data-herramienta='pareo']):not([data-herramienta='arbitros']):not([data-herramienta='ajedrez-estudiantil']):not([data-herramienta='historial-jugador']):not([data-herramienta='estadisticas-colegios']):not([data-herramienta='inscripcion-jde']):not([data-herramienta='cenfotec-2026']):not([data-herramienta='torneos-costa-rica']):not([data-herramienta='utn-2026']):not([data-herramienta='reclamos-tablas']):not([data-herramienta='bases-torneo']):not([data-herramienta='ranking-estudiantil'])", (l) => l.every((x) => /🔒/.test(x.textContent))), await visible(v, "#activar-sin-sesion"), await visible(v, "#activar-con-sesion")],
+        [await v.$$eval("#lista > li:not([data-herramienta='pareo']):not([data-herramienta='arbitros']):not([data-herramienta='ajedrez-estudiantil']):not([data-herramienta='historial-jugador']):not([data-herramienta='estadisticas-colegios']):not([data-herramienta='inscripcion-jde']):not([data-herramienta='cenfotec-2026']):not([data-herramienta='torneos-costa-rica']):not([data-herramienta='utn-2026']):not([data-herramienta='reclamos-tablas']):not([data-herramienta='bases-torneo']):not([data-herramienta='ranking-estudiantil']):not([data-herramienta='notara'])", (l) => l.every((x) => /🔒/.test(x.textContent))), await visible(v, "#activar-sin-sesion"), await visible(v, "#activar-con-sesion")],
         [true, true, false]);
     // Pareo Integral no lleva licencia: abierto para todos, sin sesión, con su manual.
     igual("sin sesión, Pareo Integral sale gratis y se abre",
         await v.$eval("#lista li[data-herramienta='pareo']", (li) => [/Gratis/.test(li.textContent), !/🔒/.test(li.textContent),
             !!li.querySelector("a[href='pareo.html']"), !!li.querySelector("a[href='pareo-manual.html']"), !li.querySelector("a[href^='https://wa.me']")]),
         [true, true, true, true, true]);
+    igual("sin sesión, Notara sale gratis, con su foto a la vista, y abre la cámara",
+        await v.$eval("#lista li[data-herramienta='notara']", (li) => { const img = li.querySelector("img"); li.hidden = false;
+            return [/Gratis/.test(li.textContent), !/🔒/.test(li.textContent), !!li.querySelector("a[href='camara-tablero.html']"),
+                !!img && img.getAttribute("src") === "img/herramientas/notara.jpg" && img.alt.length > 40 && img.width === 1200 && img.height === 675]; }),
+        [true, true, true, true]);
     igual("sin sesión, la lista de árbitros sale gratis y se abre",
         await v.$eval("#lista li[data-herramienta='arbitros']", (li) => [/Gratis/.test(li.textContent), !/🔒/.test(li.textContent), !!li.querySelector("a[href='arbitros.html']")]),
         [true, true, true]);
@@ -176,7 +181,7 @@ const visible = (p, sel) => p.$eval(sel, (e) => e.checkVisibility());
     const vistas = () => v.$$eval("#lista > li", (l) => l.filter((x) => x.checkVisibility()).map((x) => x.dataset.herramienta));
     igual("las tarjetas de tema, en orden y con cuántas herramientas trae cada una",
         await v.$$eval("#temas [role=tab]", (l) => l.map((b) => [b.dataset.tema, b.querySelector(".font-serif").textContent, /^\d+ herramientas? →$/.test(b.lastChild.textContent) && b.lastChild.textContent.split(" ")[0], b.getAttribute("aria-selected")])),
-        [["arbitraje", "Arbitraje", "10", "false"], ["jde", "Juegos Deportivos Estudiantiles", "7", "false"], ["jdn", "Juegos Deportivos Nacionales", "3", "false"], ["universitarios", "Universitarios", "4", "false"], ["clubes", "Clubes y federados", "1", "false"]]);
+        [["arbitraje", "Arbitraje", "11", "false"], ["jde", "Juegos Deportivos Estudiantiles", "7", "false"], ["jdn", "Juegos Deportivos Nacionales", "3", "false"], ["universitarios", "Universitarios", "4", "false"], ["clubes", "Clubes y federados", "1", "false"]]);
     igual("de entrada no hay tema elegido: ninguna herramienta abajo, y Oscar pide elegir uno",
         [await vistas(), await visible(v, "#panel-tema"), await v.$eval("#tema-invitacion-avatar", (i) => i.checkVisibility() && i.complete && i.naturalWidth > 0 && /avatar-profe-oscar\/a-repasar\.webp$/.test(i.src) && i.alt === "El profe Oscar leyendo un libro de ajedrez"),
             (await v.textContent("#tema-invitacion")).includes("¡Elige un tema!"), await v.$eval("#tab-arbitraje", (b) => b.tabIndex)],
@@ -184,7 +189,7 @@ const visible = (p, sel) => p.$eval(sel, (e) => e.checkVisibility());
     await v.click("#tab-arbitraje");
     igual("al tocar Arbitraje, Oscar se va y salen sus herramientas",
         [await vistas(), await visible(v, "#tema-invitacion"), await v.$eval("#tab-arbitraje", (b) => b.getAttribute("aria-selected"))],
-        [["pareo", "torneos-costa-rica", "arbitros", "arbitros-cr", "desempates", "pareo-dgt", "variacion-elo", "normas-titulo", "reclamos-tablas", "bases-torneo"], false, "true"]);
+        [["pareo", "torneos-costa-rica", "arbitros", "arbitros-cr", "desempates", "pareo-dgt", "notara", "variacion-elo", "normas-titulo", "reclamos-tablas", "bases-torneo"], false, "true"]);
     igual("lo que hace cada herramienta va detrás de «Qué hace», cerrado",
         await v.$eval("#lista li[data-herramienta='pareo'] details", (d) => [d.querySelector("summary").textContent, d.open, d.querySelector("ul").checkVisibility()]),
         ["Qué hace (5)", false, false]);
@@ -212,7 +217,7 @@ const visible = (p, sel) => p.$eval(sel, (e) => e.checkVisibility());
     await p.waitForSelector("#lista li[data-herramienta='seleccion-codicader'] a[href='seleccion-codicader.html']");
     igual("con licencia: «Abrir la herramienta» en la que tiene, candado en las demás",
         await p.$$eval("#lista > li", (l) => l.map((x) => [x.dataset.herramienta, /🔓/.test(x.textContent)])),
-        [["pareo", false], ["torneos-costa-rica", false], ["arbitros", false], ["arbitros-cr", false], ["desempates", false], ["pareo-dgt", false], ["variacion-elo", false], ["normas-titulo", false], ["reclamos-tablas", false], ["bases-torneo", false], ["seleccion-codicader", true], ["ajedrez-estudiantil", false], ["historial-jugador", false], ["estadisticas-colegios", false], ["ranking-estudiantil", false], ["inscripcion-jde", false], ["acta-jde", false], ["jdn-comites", false], ["comparador-jdn", false], ["jdn-proyeccion", false], ["universidades", false], ["torneos-universitarios", false], ["cenfotec-2026", false], ["utn-2026", false], ["ficha-federado", false]]);
+        [["pareo", false], ["torneos-costa-rica", false], ["arbitros", false], ["arbitros-cr", false], ["desempates", false], ["pareo-dgt", false], ["notara", false], ["variacion-elo", false], ["normas-titulo", false], ["reclamos-tablas", false], ["bases-torneo", false], ["seleccion-codicader", true], ["ajedrez-estudiantil", false], ["historial-jugador", false], ["estadisticas-colegios", false], ["ranking-estudiantil", false], ["inscripcion-jde", false], ["acta-jde", false], ["jdn-comites", false], ["comparador-jdn", false], ["jdn-proyeccion", false], ["universidades", false], ["torneos-universitarios", false], ["cenfotec-2026", false], ["utn-2026", false], ["ficha-federado", false]]);
     igual("las gratis no se le preguntan a la base (y las demás sí)",
         await p.evaluate(() => [window.__pedidos.includes("tengo_herramienta ajedrez-estudiantil") || window.__pedidos.includes("tengo_herramienta historial-jugador") || window.__pedidos.includes("tengo_herramienta estadisticas-colegios") || window.__pedidos.includes("tengo_herramienta inscripcion-jde") || window.__pedidos.includes("tengo_herramienta ranking-estudiantil"), window.__pedidos.includes("tengo_herramienta pareo"), window.__pedidos.includes("tengo_herramienta seleccion-codicader")]),
         [false, false, true]);

@@ -41,6 +41,14 @@
             li.dataset.herramienta = h.id;
             li.dataset.tema = h.tema;
             li.hidden = h.tema !== temaActivo;
+            // La foto de la herramienta (si tiene), arriba del título, con su tamaño para que no salte.
+            if (h.imagen) {
+                const img = el("img", "w-full h-auto rounded-xl mb-4");
+                img.src = h.imagen.src; img.alt = h.imagen.alt;
+                img.width = h.imagen.ancho; img.height = h.imagen.alto;
+                img.loading = "lazy"; img.decoding = "async";
+                li.appendChild(img);
+            }
             const fila = el("div", "flex flex-wrap items-start justify-between gap-3");
             const titulo = el("h3", "font-serif text-lg font-bold text-brand-800 dark:text-white");
             const emoji = el("span", "", h.emoji + " ");

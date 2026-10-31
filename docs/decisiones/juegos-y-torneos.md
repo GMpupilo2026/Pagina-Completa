@@ -7766,6 +7766,19 @@ comité»).
 abierto para todos, sin sesión ni candado, con «Abrir» y «Manual de uso»; la
 vitrina no le pregunta `tengo_herramienta()` y `licencias.html` no lo ofrece
 (no hay licencia que vender de algo gratis).
+**Notara** (`camara-tablero.html`, ver «El nombre: Notara») también está, en
+Arbitraje y con `gratis: true`: no lleva licencia; la abre cualquier cuenta, y
+la mesa con su QR, sin cuenta. Es la primera tarjeta con **foto** (`imagen`,
+con su `alt` y su tamaño para que la página no salte al cargarla): dos
+jugadores de un torneo escolar con el celular encima del tablero, mostrando la
+pantalla real de Notara. La foto la armó una IA a pedido del dueño (nadie real
+sale en ella) y encima se puso la pantalla de Notara, con la misma partida que
+el tablero de la mesa (1. e4 e5 2. Cf3 Cc6, comprobada con chess.js; las
+piezas que la IA dejó fuera de lugar se movieron a su casilla) y la marca de
+agua de Ajedrez Integral. Lo revisa `verificar-herramientas-vitrina.js` (sin
+navegador): que cada enlace lleve a una página que existe, que cada imagen
+exista, mida lo que dice y tenga su `alt`, y que Notara esté gratis y abra la
+cámara.
 
 **La vitrina va en fichas por tema** (lo pidió el dueño: «que queden fichas por
 cada tema»): Arbitraje, JDE, JDN y Universitarios, en `TEMAS` del mismo
