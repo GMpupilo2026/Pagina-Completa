@@ -209,7 +209,7 @@ ok("la función sala-jugadores se deja importar para comparar", !!deTs, ts.stder
         arriba: c.querySelector("[data-arriba]").textContent, abajo: c.querySelector("[data-abajo]").textContent,
         nuevas: c.querySelector("[data-nuevas]").checkVisibility() ? c.querySelector("[data-nuevas]").textContent : "",
         grafico: !!c.querySelector("[data-grafico] svg") && c.querySelector("[data-grafico]").checkVisibility(),
-        lichess: c.querySelector("[data-lichess]").href,
+        afuera: [...document.getElementById("partidas").querySelectorAll("a[href]")].map((a) => a.href).filter((h) => new URL(h, location.href).origin !== location.origin),
         foco: document.activeElement && (document.activeElement.dataset.volver != null ? "volver" : document.activeElement.textContent),
       };
     });
@@ -220,7 +220,7 @@ ok("la función sala-jugadores se deja importar para comparar", !!deTs, ts.stder
     ok("en la última no se puede seguir: «siguiente» y «última» apagadas", e.ultima && !e.primera);
     ok("la evaluación escrita y la barra del lado que gana (mate de las negras: vacía)", /Evaluación de Lichess: mate en \d+ para las negras/.test(e.eval) && e.barra === 0, JSON.stringify([e.eval, e.barra]));
     ok("el gráfico de la evaluación de toda la partida", e.grafico);
-    ok("«Ver en Lichess» lleva a la partida", /lichess\.org\/broadcast\/.*\/mmVkiyPd$/.test(e.lichess), e.lichess);
+    ok("ningún enlace saca de la página (ni «Ver en Lichess»): quien mira se queda", !e.afuera.length, JSON.stringify(e.afuera));
     await p.keyboard.press("Home");
     e = await estado();
     ok("Inicio: la posición inicial, con la barra en el medio", e.ply === -1 && e.primera && /Posición inicial/.test(e.eval) && e.barra === 50 && e.casilla === "a8", JSON.stringify(e));

@@ -57,7 +57,7 @@
       volver: "← Todas las partidas",
       verSuPartida: "Ver su partida en vivo", verSuPartidaFin: "Ver su partida",
       primera: "Al inicio", anterior: "Jugada anterior", siguiente: "Jugada siguiente", ultima: "A la última jugada",
-      girar: "Girar el tablero", enLichess: "Ver en Lichess", copiar: "Copiar las jugadas (PGN)", copiado: "Listo: las jugadas se copiaron.",
+      girar: "Girar el tablero", copiar: "Copiar las jugadas (PGN)", copiado: "Listo: las jugadas se copiaron.",
       inicio: "Posición inicial",
       jugada: (n, color, san) => "Jugada " + n + ", " + (color === "w" ? "blancas" : "negras") + ": " + san + ".",
       nuevas: (n) => "Ir a la jugada de ahora (" + n + (n === 1 ? " nueva" : " nuevas") + ")",
@@ -95,7 +95,7 @@
       volver: "← All games",
       verSuPartida: "Watch their game live", verSuPartidaFin: "Watch their game",
       primera: "To the start", anterior: "Previous move", siguiente: "Next move", ultima: "To the last move",
-      girar: "Flip the board", enLichess: "Open on Lichess", copiar: "Copy the moves (PGN)", copiado: "Done: the moves were copied.",
+      girar: "Flip the board", copiar: "Copy the moves (PGN)", copiado: "Done: the moves were copied.",
       inicio: "Starting position",
       jugada: (n, color, san) => "Move " + n + ", " + (color === "w" ? "white" : "black") + ": " + san + ".",
       nuevas: (n) => "Go to the current move (" + n + " new)",
@@ -586,16 +586,15 @@
     jugadas.dataset.jugadas = "";
     jugadas.setAttribute("aria-label", V.idioma() === "en" ? "Moves" : "Jugadas");
     const pie = el("div", "cac-visor-pie");
-    const enLichess = el("a", "cac-accion underline underline-offset-2", tx.enLichess + " ↗");
-    enLichess.dataset.lichess = "";
-    enLichess.target = "_blank"; enLichess.rel = "noopener";
     const copiar = el("button", "cac-jugador-boton", tx.copiar);
     copiar.type = "button";
     copiar.addEventListener("click", async () => {
       try { await navigator.clipboard.writeText(pgnDe(visor)); V.anunciar(T().copiado); copiar.textContent = "✓ " + T().copiar; }
       catch (e) { /* sin permiso para copiar: no pasa nada */ }
     });
-    pie.append(enLichess, copiar);
+    // Sin «Ver en Lichess»: quien mira se queda en la página (lo pidió el
+    // dueño). Ver «Las partidas en vivo, dentro de la página».
+    pie.append(copiar);
     const derecha = el("div", "cac-visor-lado");
     derecha.append(evalTexto, nav, nuevas, grafico, jugadas, pie);
     const izquierda = el("div", "cac-visor-tableros");
@@ -731,8 +730,6 @@
     if (v.nuevas) nuevas.textContent = tx.nuevas(v.nuevas);
     pintarJugadas(v, js, tx);
     pintarGrafico(v, js, tx);
-    const lich = contenido.querySelector("[data-lichess]");
-    lich.href = (v.g && v.g.url) || L.LICHESS + "/broadcast/-/-/" + v.r.id + "/" + v.id;
   }
 
   function pintarJugadas(v, js, tx) {
