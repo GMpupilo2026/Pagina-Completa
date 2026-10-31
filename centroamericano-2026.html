@@ -134,6 +134,14 @@
                 <p id="hoy-principal" class="cac-hoy-principal">Del domingo 1 al domingo 8 de noviembre de 2026</p>
                 <p id="hoy-detalle" class="cac-hoy-detalle">La ronda 1 se juega el lunes 2 de noviembre a las 9:30 a.m., hora de Costa Rica.</p>
                 <p id="hoy-categorias" class="cac-hoy-detalle" hidden></p>
+                <!-- La cuenta regresiva a la próxima ronda (js/centroamericano.js):
+                     los números cambian cada segundo y no se leen; el texto para
+                     el lector de pantalla cambia cada minuto. -->
+                <div id="hoy-reloj" class="cac-hoy-reloj" hidden data-no-traducir>
+                    <p class="cac-hoy-reloj-etiqueta" data-reloj-etiqueta></p>
+                    <div class="cac-hoy-reloj-cifras" data-reloj-cifras aria-hidden="true"></div>
+                    <p class="sr-only" data-reloj-texto></p>
+                </div>
                 <p class="mt-3 flex flex-wrap gap-x-5 gap-y-2 text-sm font-bold">
                     <a href="#calendario" id="hoy-calendario" class="cac-accion underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ce1328]">Ver el calendario completo →</a>
                     <a href="documentos/centroamericano-2026/calendario-centroamericano-2026.ics" download id="hoy-ics" class="cac-accion underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ce1328]"><span aria-hidden="true">📅 </span><span id="hoy-ics-texto">Agregar a mi calendario</span></a>

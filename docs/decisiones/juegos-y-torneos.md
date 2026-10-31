@@ -10938,6 +10938,41 @@ Rompí a propósito dos cosas y saltaron sus comprobaciones:
 El de los datos salta con un nombre entero («Apellido, Nombre»), una jugada
 ilegal, una clave de más o una posición repetida.
 
+### La cuenta regresiva a la próxima ronda
+
+«Hoy en el torneo» tenía una cuenta regresiva solo antes del festival, y en
+texto («Faltan 8 días»). El dueño pidió una para las rondas. Ahora, debajo de
+lo de siempre, va un reloj con la ronda que sigue en el calendario (las filas
+con `data-ronda`), en días, horas, minutos y segundos, en casillas moradas
+(blanco sobre #40478f, 8,35). Lo arma `pintarReloj()` en `js/centroamericano.js`.
+
+- **Cuenta a las rondas clásicas:** a la que sigue aunque haya otra en curso.
+  Las rápidas, el Blitz y los actos no cuentan. En la última ronda ya no
+  aparece.
+- **Sin repetir la fecha.** Si arriba ya dice «Lo próximo: Ronda 4, mañana a
+  las 9:00», el reloj solo dice «Faltan:» y arriba se quita el «(faltan 12 h)».
+  Si hay algo en curso o falta poco para el festival, dice de qué ronda y
+  cuándo.
+- **Cambia cada segundo** con su propio `setInterval` (`tic()`), aparte del
+  repintado de cada 30 s.
+- **El lector de pantalla no oye un número por segundo.** Las casillas van con
+  `aria-hidden` y aparte hay una frase («Faltan 5 horas, 15 minutos para la
+  ronda 2.») que cambia solo cuando cambia el minuto.
+- **Los idiomas:** español e inglés en `TEXTOS`, francés en
+  `CentroamericanoFR.hoy`.
+
+Lo revisa `verificar-centroamericano.js` con el reloj del navegador puesto:
+- antes del festival (9 días a la ronda 1);
+- durante la ronda 1 (cuenta a la 2, sin días);
+- que un segundo después baje un segundo;
+- que en la última ronda no aparezca;
+- en francés.
+
+Las pruebas de volver al español comparan el texto de la página sin los
+números del reloj, que cambian cada segundo.
+
+Rompí a propósito el tic de cada segundo y saltó.
+
 ### Mientras esperas
 
 Una ronda clásica dura entre tres y cuatro horas, y afuera de la sala esperan

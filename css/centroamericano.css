@@ -419,6 +419,15 @@ a.cac-despedida:hover .cac-globo { transform: translateY(-2px); }
 }
 .cac-hoy-principal { margin-top: 0.25rem; font-size: clamp(1.35rem, 3.6vw, 2rem); font-weight: 800; line-height: 1.15; }
 .cac-hoy-detalle { margin-top: 0.4rem; }
+.cac-hoy-reloj { margin-top: 0.85rem; }
+.cac-hoy-reloj[hidden] { display: none; }
+.cac-hoy-reloj-etiqueta { font-weight: 700; }
+.cac-hoy-reloj-cifras { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.4rem; }
+/* Cada casilla, con su número y lo que es escrito debajo: blanco sobre el
+ * morado de las bases (#40478f) 8,35; en oscuro, el mismo morado. */
+.cac-hoy-reloj-casilla { min-width: 4.25rem; padding: 0.45rem 0.6rem; border-radius: 0.85rem; background: #40478f; color: #fff; text-align: center; }
+.cac-hoy-reloj-numero { display: block; font-size: clamp(1.6rem, 5vw, 2.2rem); font-weight: 800; line-height: 1; font-variant-numeric: tabular-nums; }
+.cac-hoy-reloj-unidad { display: block; margin-top: 0.2rem; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; }
 .cac-hoy-sin-red { margin-top: 0.75rem; font-size: 0.85rem; color: var(--cac-acento); }
 .cac-hoy-sin-red[hidden] { display: none; }
 
