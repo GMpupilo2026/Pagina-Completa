@@ -330,7 +330,10 @@
         if (datos.torneo && (!t.nombre || t.nombre === "tnr" + t.tnr)) { t.nombre = datos.torneo; guardar(); pintarTorneos(); }
         const ficha = PareoDGT.unirFicha(t.ficha, datos.ficha);
         if (JSON.stringify(ficha) !== JSON.stringify(t.ficha || {})) { t.ficha = ficha; guardar(); }
-        t.ultima = { ronda: datos.ronda, leido: datos.leido_en, viejo: !!datos.viejo };
+        // Una lectura sin número de ronda (chess-results contestó a medias) no
+        // borra la que ya se sabía: «Transmitir sin LiveChess» la usa para saber
+        // en qué ronda está cada tablero.
+        t.ultima = { ronda: datos.ronda || (t.ultima && t.ultima.ronda), leido: datos.leido_en, viejo: !!datos.viejo };
         t.rondas = t.rondas || {};
         const que = PareoDGT.decidir(t, datos, t.mesas);
         const yaHecha = t.rondas[String(datos.ronda)];
@@ -687,6 +690,7 @@
         lichessListo: () => !!(token && usuarioLichess),
         empujar: (idRonda, pgn) => lichess("/api/broadcast/round/" + idRonda + "/push", { texto: pgn }),
         opcionesPgn: () => ({ sinTildes: estado.sinTildes, sitio: estado.lugar || undefined }),
+        bajar,
         anotar,
     };
 
