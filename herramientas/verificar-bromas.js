@@ -255,19 +255,24 @@ async function main() {
     await page.goto(`${BASE}/entreno/mates.html`, { waitUntil: "domcontentloaded" });
     const SEL = "[data-square] .piece-white, [data-square] .piece-black, [data-square] .chess-piece-illustrated";
     const aLaVista = () => page.$$eval(SEL, (l) => l.filter((x) => x.checkVisibility({ visibilityProperty: true })).length);
+    // Todas las del tablero, se vean o no. Se compara contra esto y no contra lo
+    // que se contó al principio: en una máquina lenta el tablero puede estar a
+    // medio pintar al contar (salía 9 y luego eran 10), y la prueba fallaba con
+    // el ovni funcionando bien.
+    const enJuego = () => page.$$eval(SEL, (l) => l.length);
     let antes = 0;
     for (let i = 0; i < 20 && !antes; i++) { await page.clock.runFor(500); antes = await aLaVista(); }
     ok(antes > 1, "la prueba no prueba nada: entreno/mates.html no mostró un tablero con piezas");
     await page.clock.runFor(1500);
     ok(await page.$("[data-broma-escena='ovni']") !== null, "el ovni no bajó sobre el tablero");
-    ok(await aLaVista() === antes - 1, `el ovni tenía que llevarse UNA pieza (antes ${antes}, ahora ${await aLaVista()})`);
+    ok(await aLaVista() === await enJuego() - 1, `el ovni tenía que llevarse UNA pieza (en juego ${await enJuego()}, a la vista ${await aLaVista()})`);
     const t = await avisos(page);
     ok(t.some((x) => x.includes("Beto Rojas mandó un ovni que se llevó una pieza")), "el ovni no avisa quién lo mandó: " + JSON.stringify(t));
     ok((await page.evaluate(() => window.__llamadas.filter((l) => l.rpc === "broma_vista").map((l) => l.args.p_id))).includes("o-1"), "el ovni no se marca visto");
     // El tablero se vuelve a pintar entero (como en cada jugada): sigue escondida.
     await page.evaluate(() => { const t = document.querySelector("[data-broma-ovni]"); t.replaceChildren(...Array.from(t.children).map((c) => c.cloneNode(true))); });
     await page.clock.runFor(1000);
-    ok(await aLaVista() === antes - 1, "al volver a pintar el tablero, la pieza que se llevó el ovni volvió a aparecer");
+    ok(await aLaVista() === await enJuego() - 1, "al volver a pintar el tablero, la pieza que se llevó el ovni volvió a aparecer");
     // La pieza sigue en juego: si se mueve, sigue escondida en su casilla nueva.
     const movida = await page.evaluate(() => {
       const t = document.querySelector("[data-broma-ovni]");
@@ -282,12 +287,12 @@ async function main() {
     await page.clock.runFor(500);
     ok(movida && await page.$eval(`[data-broma-ovni] > [data-square="${movida}"] :is(.piece-white, .piece-black, .chess-piece-illustrated)`,
       (p) => !p.checkVisibility({ visibilityProperty: true })).catch(() => false), "al mover la pieza que se llevó el ovni, se volvió a ver");
-    ok(await aLaVista() === antes - 1, "al mover la pieza escondida, otra cosa cambió de lo que se ve");
+    ok(await aLaVista() === await enJuego() - 1, "al mover la pieza escondida, otra cosa cambió de lo que se ve");
     if (process.env.FOTOS) await page.screenshot({ path: process.env.FOTOS + "/ovni.png" });
     await page.clock.runFor(30000);
-    ok(await aLaVista() === antes - 1, "la pieza tiene que seguir escondida a la mitad del minuto");
+    ok(await aLaVista() === await enJuego() - 1, "la pieza tiene que seguir escondida a la mitad del minuto");
     await page.clock.runFor(30000);
-    ok(await aLaVista() === antes, "al minuto el ovni no devolvió la pieza");
+    ok(await aLaVista() === await enJuego(), "al minuto el ovni no devolvió la pieza");
     ok((await avisos(page)).some((x) => new RegExp("El ovni te devolvió .+: está en " + movida + "\\.").test(x)), "al devolverla no dice cuál era ni dónde: " + JSON.stringify(await avisos(page)));
     await ctx.close();
   }
