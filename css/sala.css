@@ -61,3 +61,59 @@ html.dark .sala-reloj.poco { background: #c0392b; color: #fff; }
 @media (prefers-reduced-motion: reduce) {
   .sala-tablero .sq { transition: none; }
 }
+
+/* ---------------------------------------------------------------------------
+   La pantalla para proyectar (sala-admin.html?proyector=<id>): la clasificación
+   grande, para la pared del salón. Los colores son pares que ya usa el sitio
+   (texto claro sobre el azul de la marca; texto oscuro sobre el dorado) y
+   alcanzan el contraste AA con holgura. */
+body.proyectando #header,
+body.proyectando #migas,
+body.proyectando footer { display: none !important; }
+body.proyectando main { max-width: none; padding: 0; }
+.proyector { min-height: 100vh; padding: clamp(1rem, 3vw, 3rem); background: #102a43; color: #f0f4f8; }
+.proyector h1 { font-family: Georgia, "Times New Roman", serif; font-size: clamp(2rem, 5vw, 4rem); font-weight: 700; line-height: 1.1; }
+.proyector h1:focus { outline: none; }
+.proy-cabecera { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 1rem; }
+.proy-detalle { font-size: clamp(1rem, 1.8vw, 1.6rem); color: #bcccdc; }
+.proy-reloj { font-size: clamp(2rem, 6vw, 5rem); font-weight: 700; font-variant-numeric: tabular-nums; color: #f0b429; }
+.proy-aviso { margin-top: 1rem; padding: 0.5rem 1rem; border-radius: 0.75rem; background: #f0b429; color: #102a43; font-size: clamp(1.4rem, 3vw, 2.6rem); font-weight: 700; }
+.proy-error { margin-top: 0.75rem; font-size: 1rem; color: #fbd5d5; }
+.proy-cuerpo { display: grid; gap: clamp(1rem, 3vw, 3rem); margin-top: clamp(1rem, 3vw, 2.5rem); grid-template-columns: repeat(auto-fit, minmax(min(100%, 26rem), 1fr)); }
+.proy-cuerpo h2 { font-size: clamp(1.4rem, 3vw, 2.4rem); font-weight: 700; margin-bottom: 0.5rem; }
+.proy-lista { list-style: none; margin: 0; padding: 0; }
+.proy-fila { display: flex; align-items: center; gap: 1rem; padding: 0.5rem 0; border-bottom: 1px solid rgba(255, 255, 255, 0.18); font-size: clamp(1.2rem, 2.6vw, 2.2rem); }
+.proy-puesto { min-width: 2.2em; text-align: center; font-variant-numeric: tabular-nums; }
+.proy-medio { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.proy-nombre { font-weight: 600; overflow-wrap: anywhere; }
+.proy-equipo { font-size: 0.6em; color: #bcccdc; }
+.proy-barra { display: block; height: 0.5rem; margin-top: 0.3rem; border-radius: 999px; background: rgba(255, 255, 255, 0.18); }
+.proy-relleno { display: block; height: 100%; border-radius: 999px; background: #f0b429; transition: width 0.6s; }
+.proy-puntos { min-width: 2.2em; text-align: right; font-weight: 700; font-variant-numeric: tabular-nums; }
+.proy-vacio { opacity: 0.85; padding: 0.5rem 0; }
+.proy-pie { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1rem; margin-top: clamp(1rem, 3vw, 2.5rem); font-size: clamp(1rem, 1.8vw, 1.5rem); color: #bcccdc; }
+.proy-boton { padding: 0.5rem 1rem; border-radius: 0.5rem; background: #f0f4f8; color: #102a43; font-weight: 600; font-size: 1rem; }
+.proy-boton:focus-visible { outline: 3px solid #f0b429; outline-offset: 2px; }
+.proy-enlace { color: #f0f4f8; text-decoration: underline; font-size: 1rem; }
+@media (prefers-reduced-motion: reduce) { .proy-relleno { transition: none; } }
+
+/* ---------------------------------------------------------------------------
+   Los diplomas: una hoja A4 apaisada por persona, con la marca de agua de
+   Ajedrez Integral. Existen solo al imprimir (sala-control.js arma la capa
+   #hoja-diplomas y la quita después). */
+#hoja-diplomas { display: none; }
+.diploma { position: relative; width: 297mm; height: 210mm; box-sizing: border-box; padding: 12mm; overflow: hidden; background: #fff; color: #102a43; break-after: page; page-break-after: always; }
+.diploma-marca { position: absolute; top: 50%; left: 50%; width: 150mm; transform: translate(-50%, -50%); opacity: 0.12; }
+.diploma-marco { position: relative; height: 100%; box-sizing: border-box; border: 3mm double #de911d; padding: 12mm; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 6mm; text-align: center; }
+.diploma-sello { margin: 0; letter-spacing: 0.3em; text-transform: uppercase; font-weight: 700; font-size: 5mm; }
+.diploma-titulo { margin: 0; font-family: Georgia, "Times New Roman", serif; font-size: 16mm; font-weight: 700; line-height: 1.1; }
+.diploma-leyenda { margin: 0; font-size: 6mm; }
+.diploma-nombre { margin: 0; padding: 0 10mm 1mm; border-bottom: 0.4mm solid #102a43; font-family: Georgia, "Times New Roman", serif; font-size: 14mm; line-height: 1.2; }
+.diploma-texto { margin: 0; max-width: 220mm; font-size: 6.5mm; line-height: 1.4; }
+.diploma-fecha { margin: 4mm 0 0; font-size: 5mm; }
+@media print {
+  @page { size: A4 landscape; margin: 0; }
+  body.imprimiendo-diplomas > *:not(#hoja-diplomas) { display: none !important; }
+  body.imprimiendo-diplomas #hoja-diplomas { display: block; }
+  body.imprimiendo-diplomas { background: #fff !important; margin: 0; }
+}

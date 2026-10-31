@@ -240,7 +240,7 @@ async function auth(c: Ctx, metodo: string, ruta: string, cuerpo?: unknown): Pro
 async function estado(c: Ctx): Promise<Json> {
   const [equipos, jugadores, torneos, inscripciones] = await Promise.all([
     todas(c, "arena_equipos?select=id,nombre&order=nombre"),
-    todas(c, "arena_jugadores?select=id,usuario,nombre,equipo_id,inscripcion_id&order=nombre"),
+    todas(c, "arena_jugadores?select=id,usuario,nombre,equipo_id,inscripcion_id,fuerza&order=nombre"),
     todas(c, "arena_torneos?select=*&order=inicia.desc"),
     // Solo lo que hace falta para armar equipos: nada de cédulas ni contactos.
     todas(c, "inscripciones?select=id,nombre,apellido1,apellido2,centro,grado,usuario,creado_en&order=creado_en.desc"),
@@ -463,6 +463,143 @@ async function marcarAnulada(c: Ctx, p: Json, anular: boolean, jwt: string): Pro
   return {};
 }
 
+/* -------------------------------------------------- el control de una arena */
+
+async function rpc(c: Ctx, nombre: string, cuerpo: Json): Promise<any> {
+  return rest(c, "POST", `rpc/${nombre}`, cuerpo);
+}
+
+async function ponerEnArena(c: Ctx, id: string, cambios: Json): Promise<Json> {
+  const filas = await rest(c, "PATCH", `arena_torneos?id=eq.${id}`, cambios);
+  if (!filas.length) throw new ErrorHttp("Esa arena no existe.", 404);
+  return { torneo: filas[0] };
+}
+
+/* En pausa nadie se empareja; las partidas que ya empezaron siguen. */
+async function pausarArena(c: Ctx, p: Json): Promise<Json> {
+  return ponerEnArena(c, uuid(p.id, "la arena"), { pausada: p.pausada !== false });
+}
+
+/* Cerrarla antes de tiempo: nadie se vuelve a emparejar; las partidas que ya
+ * empezaron terminan. */
+async function terminarArena(c: Ctx, p: Json): Promise<Json> {
+  return ponerEnArena(c, uuid(p.id, "la arena"), { cerrada_en: new Date().toISOString(), pausada: false });
+}
+
+/* Sumarle minutos (también reabre una cerrada a mano). */
+async function extenderArena(c: Ctx, p: Json): Promise<Json> {
+  const id = uuid(p.id, "la arena");
+  const mas = entero(p.minutos, 1, 120, "los minutos que se suman");
+  const filas = await rest(c, "GET", `arena_torneos?select=*&id=eq.${id}`);
+  if (!filas.length) throw new ErrorHttp("Esa arena no existe.", 404);
+  const t = filas[0];
+  const minutos = Math.min(240, Number(t.minutos) + mas);
+  if (new Date(t.inicia).getTime() + minutos * 60000 <= Date.now()) {
+    throw new ErrorHttp("Con eso la arena seguiría terminada. Suma más minutos.");
+  }
+  return ponerEnArena(c, id, { minutos, cerrada_en: null });
+}
+
+/* Cancelar una partida que se está jugando: sin resultado ni puntos. */
+async function abortarPartida(c: Ctx, p: Json): Promise<Json> {
+  await rpc(c, "arena_abortar", { p_partida: uuid(p.id, "la partida") });
+  return {};
+}
+
+/* Sacar a alguien de UNA arena: no vuelve a entrar y su partida en juego se
+ * cancela. «Dejarlo volver» lo borra de la lista. */
+async function expulsar(c: Ctx, p: Json): Promise<Json> {
+  const torneo = uuid(p.torneo_id, "la arena");
+  const jugador = uuid(p.jugador_id, "el jugador");
+  if (p.fuera === false) {
+    await rest(c, "DELETE", `arena_fuera?torneo_id=eq.${torneo}&jugador_id=eq.${jugador}`);
+    return {};
+  }
+  const ya = await rest(c, "GET", `arena_fuera?select=jugador_id&torneo_id=eq.${torneo}&jugador_id=eq.${jugador}`);
+  if (!ya.length) await rest(c, "POST", "arena_fuera", { torneo_id: torneo, jugador_id: jugador });
+  await rest(c, "DELETE", `arena_cola?torneo_id=eq.${torneo}&jugador_id=eq.${jugador}`);
+  const activas = await rest(
+    c, "GET",
+    `arena_partidas?select=id&torneo_id=eq.${torneo}&estado=eq.en_juego&or=(blancas.eq.${jugador},negras.eq.${jugador})`,
+  );
+  for (const a of activas) await rpc(c, "arena_abortar", { p_partida: a.id });
+  return { canceladas: activas.length };
+}
+
+/* El nivel (Elo) de partida de un jugador: con él se empareja. */
+async function fijarNivel(c: Ctx, p: Json): Promise<Json> {
+  const id = uuid(p.jugador_id, "el jugador");
+  const fuerza = entero(p.fuerza, 100, 3500, "el nivel");
+  const filas = await rest(c, "PATCH", `arena_jugadores?id=eq.${id}`, { fuerza });
+  if (!filas.length) throw new ErrorHttp("Ese jugador no existe.", 404);
+  return {};
+}
+
+/* Lo que se ve mientras corre una arena: ella, la clasificación, quién va en
+ * racha, las partidas que se están jugando y las últimas que terminaron. Lo
+ * usan el panel de control y la pantalla de proyectar. */
+async function control(c: Ctx, p: Json): Promise<Json> {
+  const torneo = uuid(p.torneo_id, "la arena");
+  const filas = await rest(c, "GET", `arena_torneos?select=*&id=eq.${torneo}`);
+  if (!filas.length) throw new ErrorHttp("Esa arena no existe.", 404);
+  const [clasificacion, racha, enJuego, recientes, fuera, enCola, jugadores] = await Promise.all([
+    rpc(c, "arena_clasificacion", { p_torneo: torneo }),
+    rpc(c, "arena_en_racha", { p_torneo: torneo }),
+    todas(c, `arena_partidas?select=id,blancas,negras,jugadas,creada_en&torneo_id=eq.${torneo}&estado=eq.en_juego&order=creada_en`),
+    rest(c, "GET", `arena_partidas?select=id,blancas,negras,resultado,motivo,jugadas,terminada_en,anulada&torneo_id=eq.${torneo}&estado=eq.terminada&order=terminada_en.desc&limit=15`),
+    todas(c, `arena_fuera?select=jugador_id&torneo_id=eq.${torneo}`),
+    todas(c, `arena_cola?select=jugador_id&torneo_id=eq.${torneo}`),
+    todas(c, "arena_jugadores?select=id,nombre,equipo_id"),
+  ]);
+  const nombres = new Map(jugadores.map((j) => [String(j.id), String(j.nombre)]));
+  const con = (f: Json) => ({
+    id: f.id,
+    blancas: f.blancas,
+    negras: f.negras,
+    nombre_blancas: nombres.get(String(f.blancas)) ?? "?",
+    nombre_negras: nombres.get(String(f.negras)) ?? "?",
+    jugadas: Array.isArray(f.jugadas) ? f.jugadas.length : 0,
+    resultado: f.resultado ?? null,
+    motivo: f.motivo ?? null,
+    anulada: f.anulada === true,
+  });
+  return {
+    torneo: filas[0],
+    ahora: new Date().toISOString(),
+    clasificacion,
+    racha: Array.isArray(racha) ? racha : [],
+    en_juego: enJuego.map(con),
+    recientes: recientes.map(con),
+    fuera: fuera.map((f) => String(f.jugador_id)),
+    esperando: enCola.length,
+  };
+}
+
+/* Todas las partidas terminadas de una arena con los nombres, para bajarlas en
+ * PGN. Las anuladas y las abortadas no van. */
+async function partidasArena(c: Ctx, p: Json): Promise<Json> {
+  const torneo = uuid(p.torneo_id, "la arena");
+  const filas = await rest(c, "GET", `arena_torneos?select=*&id=eq.${torneo}`);
+  if (!filas.length) throw new ErrorHttp("Esa arena no existe.", 404);
+  const [partidas, jugadores] = await Promise.all([
+    todas(c, `arena_partidas?select=id,blancas,negras,jugadas,resultado,motivo,creada_en&torneo_id=eq.${torneo}&estado=eq.terminada&resultado=not.is.null&anulada=eq.false&order=creada_en`),
+    todas(c, "arena_jugadores?select=id,nombre"),
+  ]);
+  const nombres = new Map(jugadores.map((j) => [String(j.id), String(j.nombre)]));
+  return {
+    torneo: filas[0],
+    partidas: partidas.map((f) => ({
+      id: f.id,
+      blancas: nombres.get(String(f.blancas)) ?? "?",
+      negras: nombres.get(String(f.negras)) ?? "?",
+      jugadas: f.jugadas,
+      resultado: f.resultado,
+      motivo: f.motivo,
+      creada_en: f.creada_en,
+    })),
+  };
+}
+
 const ACCIONES: Record<string, (c: Ctx, p: Json, jwt: string) => Promise<Json>> = {
   estado: (c) => estado(c),
   crear_equipo: crearEquipo,
@@ -477,6 +614,14 @@ const ACCIONES: Record<string, (c: Ctx, p: Json, jwt: string) => Promise<Json>> 
   juego_limpio: juegoLimpio,
   anular: (c, p, jwt) => marcarAnulada(c, p, true, jwt),
   devolver: (c, p, jwt) => marcarAnulada(c, p, false, jwt),
+  pausar_arena: pausarArena,
+  terminar_arena: terminarArena,
+  extender_arena: extenderArena,
+  abortar_partida: abortarPartida,
+  expulsar: expulsar,
+  fijar_nivel: fijarNivel,
+  control: control,
+  partidas_arena: partidasArena,
 };
 
 Deno.serve(async (req: Request) => {

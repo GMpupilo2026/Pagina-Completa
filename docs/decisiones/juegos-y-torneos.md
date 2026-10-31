@@ -12476,8 +12476,12 @@ suelta).
 
 **La base lleva la partida** (migración `*_sala_arena.sql`):
 - **El emparejamiento** (`arena_emparejar`, con un candado por arena) prefiere
-  un rival de OTRO equipo y distinto del último; el mismo equipo o una
-  revancha solo si quien espera lleva 10 segundos. Los colores se reparten
+  un rival distinto del último (la revancha solo si quien espera lleva 10
+  segundos). **En una arena por equipos dos del mismo equipo no se enfrentan
+  nunca**: en la primera versión era una preferencia que se aflojaba a los 10
+  segundos y con pocos jugadores se juntaban compañeros; la segunda migración
+  lo volvió regla (quien no tiene rival posible espera a que llegue alguien de
+  otro equipo). Los colores se reparten
   para que nadie juegue siempre con uno. Cada pocos segundos el navegador
   llama a `arena_entrar`, que es también el «sigo aquí»: quien cerró la
   pestaña deja de emparejarse a los 12 segundos.
@@ -12499,16 +12503,24 @@ suelta).
   ve el usuario de nadie. Las funciones internas (`arena_cerrar`,
   `arena_emparejar`…) no se pueden ejecutar desde afuera.
 
-**LO QUE LA BASE NO COMPRUEBA** (dicho a propósito, igual que `game_rooms` en
-la Academia): si una jugada es legal y si una posición es mate, ahogado o
-tablas. Eso lo calcula chess.js en el navegador de quien mueve y viaja con la
-jugada (`p_fen`, `p_fin`). La base sí exige que sea su turno, que la posición
-tenga la forma de un FEN con el turno cambiado y un solo rey por bando. Quien
-quiera trampa desde la consola puede declarar una jugada ilegal o un mate que
-no es: no se impide, pero **se encuentra después** (ver «El juego limpio de la
-sala de arena»). Validar cada jugada en una Edge Function antes de escribirla
-haría esperar al servidor en cada jugada; si alguna vez hay premios de dinero,
-ese es el paso siguiente.
+**La jugada la valida el servidor** (migración `*_sala_arena_control_y_fuerza.sql`
+y Edge Function `arena-jugar`). La primera versión hizo lo que `game_rooms` en
+la Academia: el navegador de quien movía mandaba la jugada, la posición y si
+era mate (`p_san`, `p_fen`, `p_fin`), y la base solo comprobaba el turno, el
+reloj y la forma del FEN. Desde la consola se podía declarar un mate que no
+era. Ahora el navegador manda **solo de dónde a dónde** (y la pieza en que
+corona) a `arena-jugar`, que saca quién es del token, repite la partida entera
+con chess.js (así valen la repetición y las 50 jugadas), comprueba el turno y
+la legalidad, calcula ELLA el SAN, el FEN y el final, y recién entonces llama a
+`arena_aplicar_jugada()`. Esa función es la antigua `arena_mover` pero recibe
+a quien juega como argumento y **solo la ejecuta la service role**; `arena_mover`
+se borró, así que nadie puede saltarse la validación llamando a la base (lo
+comprueba `verificar-sala-base.js`, que además EJECUTA `arena-jugar` contra una
+base de mentira: la identidad sale del token aunque el cuerpo diga otra, una
+ilegal no llega a la base, el mate y la triple repetición los declara el
+servidor). El reloj, la bandera, los puntos y el emparejamiento siguen siendo
+de la base. El costo es una ida más al servidor por jugada; el reloj ya
+descuenta con la hora de la base, no con la del navegador.
 
 **El juego limpio de la sala de arena.** Lo pidió el dueño del sitio:
 torneos en línea con control antitrampa.
@@ -12531,7 +12543,7 @@ torneos en línea con control antitrampa.
   propias o más después de las 5 de la apertura, con un promedio de al menos
   3 s y un coeficiente de variación bajo 0,25: un programa tarda siempre
   parecido). El tiempo de cada jugada lo mide la base con su hora (`ms` en
-  cada jugada de `arena_mover`). El segundo es un indicio débil y se dice así.
+  cada jugada de `arena_aplicar_jugada`). El segundo es un indicio débil y se dice así.
 - **Se avisa a quien juega**: la arena dice que salir de la pantalla durante
   una partida queda anotado y que una partida con trampa se anula. Una
   medida que vigila sin avisar no disuade a nadie.
@@ -12547,6 +12559,62 @@ torneos en línea con control antitrampa.
 - Se aplicó el 30/10 (`20261030121444_sala_arena_juego_limpio`, probada antes
   dentro de una transacción que se deshizo) y se desplegó `arena-admin` con
   su `revision.ts`.
+
+**El control en vivo, la fuerza y lo que queda al terminar** (la misma
+migración; `arena-admin` y `js/sala-control.js`, que va aparte de
+`sala-admin.js`):
+- **Pausar, sumar minutos, cerrar antes de tiempo.** `arena_torneos.pausada`
+  y `cerrada_en`. En pausa nadie se empareja y quien espera se queda en la cola
+  (`arena_entrar` no da error: la pantalla dice «en pausa»); las partidas que ya
+  empezaron siguen. El fin de la arena es el menor entre `cerrada_en` e
+  `inicia + minutos`, y se calcula igual en la base (`arena_emparejar`,
+  `arena_entrar`) y en las dos pantallas (`finDe`/`finDeArena`). «Sumar minutos»
+  reabre una cerrada a mano (tope 240) y no deja sumar a una que seguiría
+  terminada.
+- **Sacar a un jugador de UNA arena** (`arena_fuera`, sin políticas): no
+  vuelve a entrar, sale de la cola y su partida en juego se cancela;
+  «Dejarlo volver» lo borra de la lista. **Cancelar una partida en juego**
+  (`arena_abortar`, solo la service role) la deja «abortada»: sin resultado, sin
+  puntos y sin mover la fuerza, igual que cuando nadie llega a mover. Anular una
+  partida TERMINADA es la marca `anulada` del juego limpio; un trigger le
+  devuelve a cada jugador la fuerza que esa partida había movido
+  (`cambio_blancas`/`cambio_negras`) y, si se devuelve, se la vuelve a mover.
+- **Emparejar por fuerza.** Cada jugador tiene una `fuerza` (Elo, 1000 al
+  empezar, que administración fija con «Nivel»). Se actualiza al terminar cada
+  partida (K = 32, suma cero; unas tablas de menos de 20 jugadas no la mueven,
+  igual que no dan puntos). Entre los candidatos igual de buenos por equipo y
+  por revancha se prefiere al más parecido, y no se junta a dos muy distintos
+  mientras haya tiempo de esperar: la diferencia que se tolera es 150 más 40
+  por cada segundo de espera, para que nadie se quede sin partida. **No se
+  muestra** (el permiso por columna de `arena_jugadores` no la incluye: un
+  niño no ve el «nivel» de un compañero; solo la ve administración).
+- **El panel de control** (`control` de `arena-admin`): la arena, la
+  clasificación, quién va en racha, lo que se está jugando (con nombres y
+  cuántas jugadas van), lo que terminó hace poco, quién está fuera y cuántos
+  esperan; se vuelve a leer cada 5 segundos mientras está abierto. No trae el
+  usuario de nadie.
+- **Proyectar** (`sala-admin.html?proyector=<id>`): la clasificación grande,
+  por equipos y por jugadores, el reloj de lo que falta y el aviso de pausa o
+  de fin, para la pared del salón. La lee la Edge Function con la sesión de la
+  Academia (quien proyecta no es un jugador de la sala). Los colores son
+  pares del sitio con contraste AA.
+- **Al terminar**: el podio (equipo ganador y tres mejores), la clasificación
+  de equipos y de jugadores en Excel (CSV con BOM), **diplomas** para imprimir
+  (una hoja A4 apaisada por persona: equipo campeón, diploma de honor para los
+  tres mejores y, si se marca, participación) con la marca de agua de Ajedrez
+  Integral (`css/sala.css`: la capa `#hoja-diplomas` existe solo al imprimir) y
+  **las partidas en PGN** (`partidas_arena`; las anuladas y las abortadas no van).
+- **Para quien juega**: cambiar su propia clave (Auth `updateUser`, con la
+  clave nueva repetida y de 8 o más caracteres), **mirar** las partidas que
+  se están jugando de los demás (solo lectura, con la jugada en vivo; el tablero
+  es el mismo y no se puede mover), sonido (apagable, y se acuerda) y vibración
+  al mover, capturar, encontrar rival y terminar, el aviso «es tu turno» en el
+  título de la pestaña, y bajar las propias partidas en PGN. El sonido nunca va
+  solo: todo lo que suena también está escrito.
+- **Descartado a propósito**: el modo «berserk» de Lichess (jugar con la
+  mitad del tiempo por el doble de puntos) y avisar de la sala en la política
+  de privacidad (la sala no recoge nada que la inscripción no haya recogido ya;
+  si algún día guarda algo propio, hay que decirlo en `privacidad.html`).
 
 **La página.** `sala.html` es una sola página con cuatro pantallas (entrar,
 arenas, una arena, una partida) y se lee en voz: el foco va al título de cada
@@ -12594,3 +12662,13 @@ sala-base` (con el sitio en localhost:8777 y playwright):
   constancia, devolver también, y una partida en juego no se anula. `sala`,
   que la arena avisa del juego limpio y que esconder la pestaña en medio de
   una partida (y solo entonces) llama a `arena_anotar_salida`.
+- Para el control y la jugada validada: `sala-base` lee la segunda migración
+  (la tabla `arena_fuera` sin políticas, la fuerza fuera del permiso por
+  columna, `arena_aplicar_jugada` y `arena_abortar` solo para la service role,
+  `arena_mover` borrada, el emparejamiento por fuerza), ejecuta las acciones
+  nuevas de `arena-admin` (pausar, sumar, cerrar, cancelar, sacar, nivel,
+  control, PGN) y ejecuta `arena-jugar`; `sala` cubre mirar, el sonido, cambiar
+  la clave, el podio, el PGN y que las jugadas viajan SOLO como
+  de-dónde-a-dónde; `sala-admin`, el panel de control, la pantalla de proyectar,
+  los resultados, el Excel, los diplomas (hoja A4 apaisada, solo ellos al
+  imprimir) y el PGN.

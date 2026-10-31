@@ -45,8 +45,8 @@ const ESTADO = {
   dominio: "sala.ajedrez-integral.com",
   equipos: [{ id: "e1", nombre: "Los Alfiles" }, { id: "e2", nombre: "Las Torres" }],
   jugadores: [
-    { id: "j1", usuario: "Ana_Rojas_C", nombre: "Ana Rojas", equipo_id: "e1", inscripcion_id: "i1" },
-    { id: "j2", usuario: "Luis_Mora", nombre: "Luis Mora", equipo_id: null, inscripcion_id: "i3" },
+    { id: "j1", usuario: "Ana_Rojas_C", nombre: "Ana Rojas", equipo_id: "e1", inscripcion_id: "i1", fuerza: 1000 },
+    { id: "j2", usuario: "Luis_Mora", nombre: "Luis Mora", equipo_id: null, inscripcion_id: "i3", fuerza: 1250 },
   ],
   torneos: [{ id: "t1", nombre: "Arena de apertura", inicia: "2026-11-06T01:00:00.000Z", minutos: 60, inicial_seg: 180, incremento_seg: 2, por_equipos: true, mejores: 5 }],
   inscripciones: [
@@ -84,7 +84,7 @@ async function abrir(browser, esCoordinador, opciones) {
     const cuerpo = JSON.parse(r.request().postData() || "{}");
     pedidos.push({ cuerpo, auth: r.request().headers().authorization });
     const respuesta = o.responder ? o.responder(cuerpo) : { estado: 200, cuerpo: { ok: true } };
-    const base = cuerpo.accion === "estado" ? ESTADO : {};
+    const base = cuerpo.accion === "estado" ? Object.assign({}, ESTADO, o.estado ? o.estado() : {}) : {};
     await r.fulfill({
       status: respuesta.estado || 200, contentType: "application/json",
       headers: { "access-control-allow-origin": "*" },
@@ -142,6 +142,19 @@ async function pruebaPantalla(browser) {
   ok("…y se lee tal cual", (await page.$eval("#lista-inscritos", (e) => e.textContent)).includes("<img src=x onerror=window.__xss=1> Mena"));
   ok("quien ya tiene cuenta lo dice", /Ya tiene cuenta \(Ana_Rojas_C\) en Los Alfiles/.test(await page.$eval("#lista-inscritos", (e) => e.textContent)));
   ok("el resumen cuenta las inscripciones", (await texto(page, "#resumen-inscritos")) === "Mostrando 4 de 4 inscripciones.");
+
+  // El nivel con que se empareja
+  const nivel = page.getByLabel("Nivel de Ana Rojas (Elo con que se empareja)");
+  igual("cada jugador muestra su nivel", await nivel.inputValue(), "1000");
+  await nivel.fill("1300");
+  await nivel.dispatchEvent("change");
+  await page.waitForFunction(() => document.body.textContent.indexOf("Nivel de Ana Rojas: 1300.") >= 0);
+  igual("cambiar el nivel manda el jugador y el nivel", (({ jugador_id, fuerza }) => ({ jugador_id, fuerza }))(pedidos.filter((p) => p.cuerpo.accion === "fijar_nivel")[0].cuerpo), { jugador_id: "j1", fuerza: 1300 });
+  await nivel.fill("50");
+  await nivel.dispatchEvent("change");
+  await page.waitForFunction(() => document.body.textContent.indexOf("El nivel va de 100 a 3500.") >= 0);
+  ok("un nivel fuera de rango no se manda y el campo vuelve a lo anterior", pedidos.filter((p) => p.cuerpo.accion === "fijar_nivel").length === 1 && (await nivel.inputValue()) === "1300");
+  await page.locator("#avisos-zona button").first().click();
 
   // Buscar
   await page.fill("#buscar", "maria");
@@ -273,6 +286,298 @@ async function pruebaJuegoLimpio(browser) {
   await ctx.close();
 }
 
+/* Una arena en curso, para probar lo que se hace mientras corre. */
+const AHORA = Date.now();
+function arenaEnCurso(extra) {
+  return Object.assign({}, ESTADO.torneos[0], { inicia: new Date(AHORA - 10 * 60000).toISOString(), minutos: 60, pausada: false, cerrada_en: null }, extra || {});
+}
+const CLASIFICACION = {
+  equipos: [{ id: "e1", nombre: "Los Alfiles", puntos: 7, jugadores: 2 }, { id: "e2", nombre: "Las Torres", puntos: 3, jugadores: 1 }],
+  jugadores: [
+    { id: "j1", nombre: "Ana Rojas", equipo_id: "e1", equipo: "Los Alfiles", puntos: 5, partidas: 3, victorias: 2 },
+    { id: "j3", nombre: "Mario Díaz", equipo_id: "e2", equipo: "Las Torres", puntos: 3, partidas: 2, victorias: 1 },
+    { id: "j2", nombre: "Luis Mora", equipo_id: "e1", equipo: "Los Alfiles", puntos: 2, partidas: 2, victorias: 1 },
+    { id: "j4", nombre: "Sofía Vega", equipo_id: "e2", equipo: "Las Torres", puntos: 0, partidas: 1, victorias: 0 },
+  ],
+};
+const ACEPTAR = "dialog[data-avisos][open] [data-avisos-aceptar]";
+const MAS_JUGADORES = [{ id: "j3", usuario: "Mario_D", nombre: "Mario Díaz", equipo_id: "e2", inscripcion_id: "i5", fuerza: 900 }];
+
+function controlDe(torneo, extra) {
+  return Object.assign({
+    torneo, ahora: new Date().toISOString(), clasificacion: CLASIFICACION, racha: ["j1"],
+    en_juego: [{ id: "p9", blancas: "j1", negras: "j2", nombre_blancas: "Ana Rojas", nombre_negras: "Luis Mora", jugadas: 12, resultado: null, motivo: null, anulada: false }],
+    recientes: [{ id: "p8", blancas: "j3", negras: "j4", nombre_blancas: "Mario Díaz", nombre_negras: "Sofía Vega", jugadas: 30, resultado: "1-0", motivo: "mate", anulada: false }],
+    fuera: ["j2"], esperando: 3,
+  }, extra || {});
+}
+
+const lineasDe = (page) => page.$$eval("#lista-arenas button", (bs) => bs.map((b) => b.textContent.trim()));
+const accion = (pedidos, nombre) => pedidos.filter((p) => p.cuerpo.accion === nombre).map((p) => p.cuerpo);
+
+async function pruebaControl(browser) {
+  console.log("\n=== El control de una arena en curso ===");
+  let torneo = arenaEnCurso();
+  let esperando = 3;
+  const { page, ctx, errores, pedidos } = await abrir(browser, true, {
+    estado: () => ({ torneos: [torneo], jugadores: ESTADO.jugadores.concat(MAS_JUGADORES) }),
+    responder: (c) => {
+      if (c.accion === "control") return { cuerpo: controlDe(torneo, { esperando }) };
+      if (c.accion === "pausar_arena") { torneo = Object.assign({}, torneo, { pausada: c.pausada }); return { cuerpo: { torneo } }; }
+      return { cuerpo: { ok: true } };
+    },
+  });
+  await page.waitForSelector("#app:not(.hidden)");
+  igual("los botones de una arena, en orden", await lineasDe(page), ["Controlar", "Proyectar", "Resultados", "Partidas (PGN)", "Revisar partidas", "Borrar arena"]);
+  const controlar = page.getByRole("button", { name: /^Controlar la arena Arena de apertura/ });
+  igual("«Controlar» empieza cerrado", await controlar.getAttribute("aria-expanded"), "false");
+  await controlar.click();
+  await page.waitForFunction(() => /En curso · quedan/.test(document.getElementById("lista-arenas").textContent));
+  igual("al abrirlo pide el control de ESA arena", accion(pedidos, "control")[0].torneo_id, "t1");
+  const resumen = await texto(page, "#lista-arenas [role=status]");
+  ok("dice el estado, lo que queda, las partidas en juego y quién espera", /^En curso · quedan \d+:\d\d(:\d\d)? · 1 partida en juego · 3 esperando rival$/.test(resumen), resumen);
+  const lista = await texto(page, "#lista-arenas");
+  ok("lista la partida en juego con sus jugadas", /Ana Rojas – Luis Mora · 12 jugadas/.test(lista), lista);
+  ok("y las últimas terminadas con su resultado", /Mario Díaz – Sofía Vega · 1-0 \(mate\)/.test(lista), lista);
+  ok("quien está fuera, con la forma de dejarlo volver", /Fuera: Luis Mora/.test(lista) && (await page.getByRole("button", { name: "Dejar volver a la arena a Luis Mora" }).count()) === 1);
+
+  // Pausar y reanudar
+  await page.getByRole("button", { name: "Pausar la arena Arena de apertura" }).click();
+  await page.waitForFunction(() => /En pausa · quedan/.test(document.getElementById("lista-arenas").textContent));
+  igual("pausar manda la arena y que se pause", (({ id, pausada }) => ({ id, pausada }))(accion(pedidos, "pausar_arena")[0]), { id: "t1", pausada: true });
+  igual("el panel sigue abierto después de volver a pintar la lista", await page.getByRole("button", { name: /^Controlar la arena/ }).getAttribute("aria-expanded"), "true");
+  await page.getByRole("button", { name: "Reanudar la arena Arena de apertura" }).click();
+  await page.waitForFunction(() => /En curso · quedan/.test(document.getElementById("lista-arenas").textContent));
+  igual("reanudar manda pausada falso", accion(pedidos, "pausar_arena")[1].pausada, false);
+
+  // Sumar minutos
+  await page.getByRole("button", { name: "Sumar 10 minutos a la arena Arena de apertura" }).click();
+  await page.waitForFunction(() => document.body.textContent.indexOf("Arena alargada 10 minutos.") >= 0);
+  igual("sumar minutos manda la arena y cuántos", (({ id, minutos }) => ({ id, minutos }))(accion(pedidos, "extender_arena")[0]), { id: "t1", minutos: 10 });
+
+  // Terminarla: primero se arrepiente
+  await page.getByRole("button", { name: "Terminar ahora la arena Arena de apertura" }).click();
+  igual("el botón del diálogo dice lo que hace", await page.locator(ACEPTAR).textContent(), "Terminar la arena");
+  await page.keyboard.press("Escape");
+  await page.waitForTimeout(250);
+  ok("si se arrepiente, no la termina", accion(pedidos, "terminar_arena").length === 0);
+  await page.getByRole("button", { name: "Terminar ahora la arena Arena de apertura" }).click();
+  await page.locator(ACEPTAR).click();
+  await page.waitForFunction(() => document.body.textContent.indexOf("Arena terminada.") >= 0);
+  igual("terminarla manda esa arena", accion(pedidos, "terminar_arena")[0].id, "t1");
+
+  // Cancelar una partida que se está jugando
+  await page.getByRole("button", { name: "Cancelar la partida de Ana Rojas contra Luis Mora" }).click();
+  igual("el diálogo explica que no cuenta para nadie", /no cuenta para nadie/.test(await page.locator("dialog[data-avisos][open]").textContent()), true);
+  await page.locator(ACEPTAR).click();
+  await page.waitForFunction(() => document.body.textContent.indexOf("Partida cancelada.") >= 0);
+  igual("cancelarla manda esa partida", accion(pedidos, "abortar_partida")[0].id, "p9");
+
+  // Sacar a un jugador de la arena
+  const sacar = page.getByRole("button", { name: /^Sacar de la arena Arena de apertura/ });
+  await sacar.click();
+  await page.waitForFunction(() => document.body.textContent.indexOf("Elige a quién sacar.") >= 0);
+  ok("sin elegir a nadie, no manda nada", accion(pedidos, "expulsar").length === 0);
+  const selector = page.getByLabel("Jugador para sacar de la arena Arena de apertura");
+  ok("el selector trae a todos los jugadores, con su equipo", (await selector.locator("option").allTextContents()).join("|") === "Elige un jugador…|Ana Rojas · Los Alfiles|Luis Mora|Mario Díaz · Las Torres", (await selector.locator("option").allTextContents()).join("|"));
+  await selector.selectOption("j3");
+  await sacar.click();
+  igual("el botón del diálogo dice lo que hace", await page.locator(ACEPTAR).textContent(), "Sacarlo de la arena");
+  await page.locator(ACEPTAR).click();
+  await page.waitForFunction(() => document.body.textContent.indexOf("Mario Díaz ya no está en la arena.") >= 0);
+  igual("sacarlo manda la arena y el jugador", accion(pedidos, "expulsar")[0], { accion: "expulsar", torneo_id: "t1", jugador_id: "j3" });
+  await page.getByRole("button", { name: "Dejar volver a la arena a Luis Mora" }).click();
+  await page.waitForFunction(() => document.body.textContent.indexOf("Luis Mora puede volver a entrar.") >= 0);
+  igual("dejarlo volver lo dice con «fuera: false»", accion(pedidos, "expulsar")[1], { accion: "expulsar", torneo_id: "t1", jugador_id: "j2", fuera: false });
+
+  // Se vuelve a leer solo mientras está abierto, y deja de hacerlo al cerrarlo.
+  esperando = 5;
+  await page.waitForFunction(() => /5 esperando rival/.test(document.getElementById("lista-arenas").textContent), null, { timeout: 8000 });
+  ok("el panel se pone al día solo", true);
+  await page.getByRole("button", { name: /^Controlar la arena/ }).click();
+  igual("cerrarlo lo dice", await page.getByRole("button", { name: /^Controlar la arena/ }).getAttribute("aria-expanded"), "false");
+  const antes = accion(pedidos, "control").length;
+  await page.waitForTimeout(5600);
+  igual("cerrado, deja de preguntar", accion(pedidos, "control").length, antes);
+  ok("sin errores de JavaScript", errores.length === 0, errores.join(" | "));
+  await ctx.close();
+}
+
+/* El contraste de un color de la pantalla contra su fondo real, medido. */
+const CONTRASTE = `(function (sel, fondoSel) {
+  const num = (c) => c.match(/[\\d.]+/g).map(Number);
+  const lum = (rgb) => { const [r, g, b] = rgb.slice(0, 3).map((v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); }); return 0.2126 * r + 0.7152 * g + 0.0722 * b; };
+  const fg = num(getComputedStyle(document.querySelector(sel)).color);
+  const bg = num(getComputedStyle(document.querySelector(fondoSel)).backgroundColor);
+  const a = lum(fg), b = lum(bg);
+  return (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
+})`;
+
+async function pruebaProyector(browser) {
+  console.log("\n=== La pantalla para proyectar ===");
+  let torneo = arenaEnCurso();
+  let clasificacion = CLASIFICACION;
+  let falla = false;
+  const { page, ctx, pedidos } = await abrir(browser, true, {
+    estado: () => ({ torneos: [torneo] }),
+    responder: (c) => {
+      if (c.accion !== "control") return { cuerpo: { ok: true } };
+      if (falla) return { estado: 502, cuerpo: { error: "La base no contesta." } };
+      return { cuerpo: controlDe(torneo, { clasificacion }) };
+    },
+  });
+  await page.waitForSelector("#app:not(.hidden)");
+  const [proyector] = await Promise.all([ctx.waitForEvent("page"), page.getByRole("button", { name: /^Proyectar la clasificación de la arena Arena de apertura/ }).click()]);
+  const errores = [];
+  proyector.on("pageerror", (e) => errores.push(String(e)));
+  await proyector.waitForSelector("#proyector:not([hidden])");
+  await proyector.waitForFunction(() => document.querySelectorAll("#proy-equipos li").length === 2);
+  ok("se abre en otra ventana, con la arena en la dirección", /\?proyector=t1$/.test(proyector.url()), proyector.url());
+  ok("solo se ve la pantalla de proyectar: ni el panel ni el encabezado", !(await visible(proyector, "#app")) && !(await visible(proyector, "#header")));
+  ok("el título recibe el foco", await proyector.evaluate(() => document.activeElement.id === "proy-titulo"));
+  igual("el título es el de la arena", await texto(proyector, "#proy-titulo"), "Arena de apertura");
+  igual("y dice cómo se juega", await texto(proyector, "#proy-detalle"), "60 minutos · partidas de 3+2 · por equipos: cuentan los 5 mejores de cada uno");
+  ok("el reloj dice cuánto queda", /^Quedan \d+:\d\d(:\d\d)?$/.test(await texto(proyector, "#proy-reloj")), await texto(proyector, "#proy-reloj"));
+  igual("los equipos, del que más puntos tiene al que menos", await proyector.$$eval("#proy-equipos .proy-nombre", (n) => n.map((x) => x.textContent)), ["Los Alfiles", "Las Torres"]);
+  igual("con sus puntos", await proyector.$$eval("#proy-equipos .proy-puntos", (n) => n.map((x) => x.textContent)), ["7", "3"]);
+  igual("la barra del primero es completa y la otra va en proporción", await proyector.$$eval("#proy-equipos .proy-relleno", (n) => n.map((x) => x.style.width)), ["100%", "43%"]);
+  ok("el primer lugar lleva medalla y también lo dice con palabras", /🥇/.test(await texto(proyector, "#proy-equipos li:first-child .proy-puesto")) && /1\.º lugar/.test(await proyector.$eval("#proy-equipos li:first-child .proy-puesto", (e) => e.textContent)));
+  const jugadores = await proyector.$$eval("#proy-jugadores li", (ls) => ls.map((l) => l.textContent.replace(/\s+/g, " ").trim()));
+  ok("los jugadores, con la racha dicha con 🔥 y con texto", jugadores.length === 4 && /Ana Rojas 🔥 en racha/.test(jugadores[0]) && /Los Alfiles/.test(jugadores[0]), jugadores.join(" | "));
+  igual("abajo, las partidas en juego y quién espera", await texto(proyector, "#proy-pie"), "1 partida en juego · 3 esperando rival");
+  ok("hay botón de pantalla completa y vuelta al panel", (await proyector.getByRole("button", { name: "Pantalla completa" }).count()) === 1 && (await proyector.getByRole("link", { name: "Volver al panel" }).count()) === 1);
+
+  // El contraste de lo que se proyecta, medido contra su fondo real.
+  const medidas = {};
+  for (const [nombre, sel, fondo] of [["nombre", ".proy-nombre", ".proyector"], ["puntos", ".proy-puntos", ".proyector"], ["equipo del jugador", ".proy-equipo", ".proyector"], ["reloj", "#proy-reloj", ".proyector"], ["detalle", "#proy-detalle", ".proyector"], ["pie", "#proy-pie", ".proyector"]]) {
+    medidas[nombre] = await proyector.evaluate(`${CONTRASTE}(${JSON.stringify(sel)}, ${JSON.stringify(fondo)})`);
+  }
+  ok("todo el texto alcanza el contraste AA (4.5) contra el fondo", Object.values(medidas).every((v) => v >= 4.5), JSON.stringify(medidas));
+
+  // Se pone al día solo.
+  clasificacion = Object.assign({}, CLASIFICACION, { equipos: [{ id: "e2", nombre: "Las Torres", puntos: 9, jugadores: 1 }, CLASIFICACION.equipos[0]] });
+  await proyector.waitForFunction(() => document.querySelector("#proy-equipos .proy-nombre").textContent === "Las Torres", null, { timeout: 9000 });
+  ok("cuando cambia la clasificación, la pantalla cambia sola", true);
+
+  // Pausa y fin
+  torneo = arenaEnCurso({ pausada: true });
+  await proyector.waitForSelector("#proy-aviso:not([hidden])", { timeout: 9000 });
+  igual("en pausa lo dice grande", await texto(proyector, "#proy-aviso"), "⏸️ La arena está en pausa");
+  const aviso = await proyector.evaluate(`${CONTRASTE}("#proy-aviso", "#proy-aviso")`);
+  ok("y el aviso también tiene contraste", true);
+  torneo = arenaEnCurso({ cerrada_en: new Date(Date.now() - 5000).toISOString() });
+  await proyector.waitForFunction(() => document.getElementById("proy-reloj").textContent === "Terminó", null, { timeout: 9000 });
+  igual("al terminar lo dice", await texto(proyector, "#proy-aviso"), "🏆 ¡Terminó la arena!");
+
+  // Si la función falla, queda lo último que llegó y se dice.
+  falla = true;
+  await proyector.waitForSelector("#proy-error:not([hidden])", { timeout: 9000 });
+  ok("si falla, lo dice y deja lo último que llegó", /La base no contesta/.test(await texto(proyector, "#proy-error")) && (await proyector.$$("#proy-equipos li")).length === 2);
+  ok("pidió siempre la arena que se proyecta", accion(pedidos, "control").every((c) => c.torneo_id === "t1"));
+  ok("sin errores de JavaScript", errores.length === 0, errores.join(" | "));
+  await ctx.close();
+}
+
+async function pruebaResultados(browser) {
+  console.log("\n=== Los resultados, el Excel y los diplomas ===");
+  const torneo = arenaEnCurso({ cerrada_en: new Date(AHORA - 60000).toISOString() });
+  const { page, ctx, errores } = await abrir(browser, true, {
+    estado: () => ({ torneos: [torneo] }),
+    responder: (c) => (c.accion === "control" ? { cuerpo: controlDe(torneo) } : { cuerpo: { ok: true } }),
+  });
+  await page.waitForSelector("#app:not(.hidden)");
+  await page.getByRole("button", { name: /^Ver los resultados y los diplomas de la arena Arena de apertura/ }).click();
+  await page.waitForFunction(() => /Equipo ganador/.test(document.getElementById("lista-arenas").textContent));
+  const caja = await texto(page, "#lista-arenas");
+  ok("dice el equipo ganador", /Equipo ganador: Los Alfiles \(7 puntos\)/.test(caja), caja);
+  ok("y los tres mejores jugadores", /🥇 Ana Rojas \(Los Alfiles\) · 5 puntos/.test(caja) && /🥈 Mario Díaz/.test(caja) && /🥉 Luis Mora/.test(caja), caja);
+  ok("la arena terminó: no dice que son resultados parciales", !/todavía no termina/.test(caja));
+
+  // El Excel (CSV): con BOM para que se lean las tildes.
+  const [csvEquipos] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "Bajar la clasificación de los equipos en Excel" }).click()]);
+  igual("el archivo de los equipos", csvEquipos.suggestedFilename(), "arena-arena-de-apertura-equipos.csv");
+  const texto1 = fs.readFileSync(await csvEquipos.path(), "utf8");
+  ok("empieza con BOM", texto1.charCodeAt(0) === 0xFEFF);
+  igual("y trae los puestos", texto1.replace(/^﻿/, "").split("\r\n"), ['"Puesto","Equipo","Puntos","Jugadores que cuentan"', '"1","Los Alfiles","7","2"', '"2","Las Torres","3","1"']);
+  const [csvJug] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "Bajar la clasificación de los jugadores en Excel" }).click()]);
+  igual("el de los jugadores", fs.readFileSync(await csvJug.path(), "utf8").replace(/^﻿/, "").split("\r\n").slice(0, 3),
+    ['"Puesto","Jugador","Equipo","Puntos","Partidas","Victorias"', '"1","Ana Rojas","Los Alfiles","5","3","2"', '"2","Mario Díaz","Las Torres","3","2","1"']);
+
+  // Los diplomas
+  await page.evaluate(() => { window.__imprimio = 0; window.print = () => { window.__imprimio++; }; });
+  const marcas = page.locator("#lista-arenas fieldset input[type=checkbox]");
+  igual("las opciones de diplomas: ganador y mejores vienen marcadas, la participación no", await marcas.evaluateAll((cs) => cs.map((c) => c.checked)), [true, true, false]);
+  await marcas.nth(0).uncheck();
+  await marcas.nth(1).uncheck();
+  await page.getByRole("button", { name: "Imprimir los diplomas de la arena Arena de apertura" }).click();
+  await page.waitForFunction(() => document.body.textContent.indexOf("Marca qué diplomas imprimir.") >= 0);
+  ok("sin marcar nada, no imprime", (await page.evaluate(() => window.__imprimio)) === 0);
+  await page.locator("#avisos-zona button").first().click();
+  await marcas.nth(0).check();
+  await marcas.nth(1).check();
+  await page.getByRole("button", { name: "Imprimir los diplomas de la arena Arena de apertura" }).click();
+  await page.waitForFunction(() => window.__imprimio === 1);
+  const diplomas = await page.$$eval("#hoja-diplomas .diploma", (ds) => ds.map((d) => [d.querySelector(".diploma-titulo").textContent, d.querySelector(".diploma-nombre").textContent, d.querySelector(".diploma-texto").textContent]));
+  igual("un diploma por persona: los del equipo campeón y los tres mejores", diplomas.map((d) => d[0] + " · " + d[1]),
+    ["Equipo campeón · Ana Rojas", "Equipo campeón · Luis Mora", "Diploma de honor · Ana Rojas", "Diploma de honor · Mario Díaz", "Diploma de honor · Luis Mora"]);
+  igual("el del equipo dice por qué", diplomas[0][2], "por integrar el equipo «Los Alfiles», campeón de la arena «Arena de apertura»");
+  igual("el de honor dice el lugar y los puntos", diplomas[3][2], "por el segundo lugar entre los jugadores de la arena «Arena de apertura», con 3 puntos");
+  const marca = await page.$eval("#hoja-diplomas .diploma img.diploma-marca", (i) => ({ src: i.getAttribute("src"), ancho: i.naturalWidth }));
+  ok("cada diploma lleva la marca de agua de Ajedrez Integral, ya cargada", marca.src === "img/marca-agua-ajedrez-integral.png" && marca.ancho > 0, JSON.stringify(marca));
+  ok("el diploma dice la fecha de la arena en hora de Costa Rica", /\d{4}$/.test(await page.$eval("#hoja-diplomas .diploma-fecha", (e) => e.textContent)));
+
+  // Cómo sale en papel: una hoja A4 apaisada por diploma y nada más.
+  await page.emulateMedia({ media: "print" });
+  const papel = await page.evaluate(() => {
+    const d = document.querySelector("#hoja-diplomas .diploma").getBoundingClientRect();
+    return { encabezado: getComputedStyle(document.getElementById("header")).display, panel: document.getElementById("app").checkVisibility() ? "visible" : "oculto",
+      hoja: getComputedStyle(document.getElementById("hoja-diplomas")).display, ancho: Math.round(d.width), alto: Math.round(d.height),
+      salto: getComputedStyle(document.querySelector(".diploma")).breakAfter };
+  });
+  ok("al imprimir solo queda la hoja de diplomas", papel.encabezado === "none" && papel.panel === "oculto" && papel.hoja === "block", JSON.stringify(papel));
+  ok("cada diploma es una hoja A4 apaisada (297 × 210 mm) y salta de página", Math.abs(papel.ancho - 1122) <= 2 && Math.abs(papel.alto - 794) <= 2 && papel.salto === "page", JSON.stringify(papel));
+  await page.emulateMedia({ media: "screen" });
+  ok("en pantalla los diplomas no se ven", !(await page.evaluate(() => document.getElementById("hoja-diplomas").checkVisibility())));
+  await page.evaluate(() => window.dispatchEvent(new Event("afterprint")));
+  ok("después de imprimir, la capa de diplomas se quita", await page.evaluate(() => !document.getElementById("hoja-diplomas") && !document.body.classList.contains("imprimiendo-diplomas")));
+
+  // Participación: todos los que jugaron
+  await marcas.nth(0).uncheck();
+  await marcas.nth(1).uncheck();
+  await marcas.nth(2).check();
+  await page.getByRole("button", { name: "Imprimir los diplomas de la arena Arena de apertura" }).click();
+  await page.waitForFunction(() => window.__imprimio === 2);
+  igual("la participación da uno a cada jugador que jugó", await page.$$eval("#hoja-diplomas .diploma-nombre", (n) => n.map((x) => x.textContent)), ["Ana Rojas", "Mario Díaz", "Luis Mora", "Sofía Vega"]);
+  ok("sin errores de JavaScript", errores.length === 0, errores.join(" | "));
+  await ctx.close();
+}
+
+async function pruebaPgn(browser) {
+  console.log("\n=== Las partidas en PGN ===");
+  let partidas = [
+    { id: "a", blancas: "Ana Rojas", negras: "Luis Mora", jugadas: [{ s: "e4" }, { s: "e5" }, { s: "Nf3" }, { s: "Nc6" }], resultado: "1-0", motivo: "abandono", creada_en: "2026-10-31T20:00:00Z" },
+    { id: "b", blancas: "Mario Díaz", negras: "Sofía Vega", jugadas: [{ s: "d4" }, { s: "d5" }], resultado: "1/2-1/2", motivo: "acuerdo", creada_en: "2026-10-31T20:10:00Z" },
+  ];
+  const torneo = arenaEnCurso();
+  const { page, ctx, errores, pedidos } = await abrir(browser, true, {
+    estado: () => ({ torneos: [torneo] }),
+    responder: (c) => (c.accion === "partidas_arena" ? { cuerpo: { torneo, partidas } } : { cuerpo: { ok: true } }),
+  });
+  await page.waitForSelector("#app:not(.hidden)");
+  const [pgn] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "Bajar las partidas de la arena Arena de apertura en PGN" }).click()]);
+  igual("el archivo se llama con la arena", pgn.suggestedFilename(), "arena-arena-de-apertura.pgn");
+  igual("pidió las partidas de ESA arena", accion(pedidos, "partidas_arena")[0].torneo_id, "t1");
+  const texto1 = fs.readFileSync(await pgn.path(), "utf8");
+  ok("trae las dos partidas con sus encabezados", ['[Event "Arena de apertura"]', '[White "Ana Rojas"]', '[Black "Luis Mora"]', '[Result "1-0"]', '[Result "1/2-1/2"]', '[TimeControl "180+2"]', '[Date "2026.10.31"]', '[Termination "Abandono"]', '[Termination "Acuerdo"]'].every((l) => texto1.includes(l)), texto1);
+  ok("y las jugadas de cada una", /1\. e4 e5 2\. Nf3 Nc6 1-0/.test(texto1.replace(/\n/g, " ")) && /1\. d4 d5 1\/2-1\/2/.test(texto1.replace(/\n/g, " ")), texto1);
+  partidas = [];
+  await page.getByRole("button", { name: "Bajar las partidas de la arena Arena de apertura en PGN" }).click();
+  await page.waitForFunction(() => document.body.textContent.indexOf("todavía no tiene partidas terminadas") >= 0);
+  ok("sin partidas terminadas, lo dice en vez de bajar un archivo vacío", true);
+  ok("sin errores de JavaScript", errores.length === 0, errores.join(" | "));
+  await ctx.close();
+}
+
 async function pruebaFallaTotal(browser) {
   console.log("\n=== Si la función falla ===");
   const { page, ctx } = await abrir(browser, true, { responder: () => ({ estado: 502, cuerpo: { error: "No se pudo leer la base." } }) });
@@ -288,6 +593,10 @@ async function pruebaFallaTotal(browser) {
     await pruebaPermiso(browser);
     await pruebaPantalla(browser);
     await pruebaJuegoLimpio(browser);
+    await pruebaControl(browser);
+    await pruebaProyector(browser);
+    await pruebaResultados(browser);
+    await pruebaPgn(browser);
     await pruebaFallaTotal(browser);
   } finally {
     await browser.close();

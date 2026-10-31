@@ -12,6 +12,7 @@
          dentro del navegador en cada visita. -->
     <link rel="stylesheet" href="css/tailwind.css">
     <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/sala.css">
     <!-- oscuro: inicio --><script>(function(){try{var t=localStorage.getItem('theme');if(t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme: dark)').matches))document.documentElement.classList.add('dark');}catch(e){}})();</script><!-- oscuro: fin -->
     <script src="js/adaptive-mode.js"></script>
 
@@ -29,6 +30,35 @@
             <p class="text-brand-500 dark:text-brand-300">La sala de arena trae cuentas de estudiantes menores de edad, así que no la maneja todo el equipo docente. Si crees que deberías tener acceso, pídeselo a la persona administradora.</p>
             <a href="clases.html" class="inline-block mt-5 bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2.5 rounded-lg text-sm transition-colors">← Volver a la Academia</a>
         </div>
+
+        <section id="proyector" class="proyector" hidden aria-labelledby="proy-titulo">
+            <div class="proy-cabecera">
+                <div>
+                    <h1 id="proy-titulo" tabindex="-1"></h1>
+                    <p id="proy-detalle" class="proy-detalle"></p>
+                </div>
+                <p id="proy-reloj" class="proy-reloj" role="timer" aria-live="off"></p>
+            </div>
+            <p id="proy-aviso" class="proy-aviso" role="status" hidden></p>
+            <p id="proy-error" class="proy-error" role="alert" hidden></p>
+            <div class="proy-cuerpo">
+                <section id="proy-card-equipos" aria-labelledby="proy-h-equipos">
+                    <h2 id="proy-h-equipos">Equipos</h2>
+                    <ol id="proy-equipos" class="proy-lista"></ol>
+                </section>
+                <section aria-labelledby="proy-h-jugadores">
+                    <h2 id="proy-h-jugadores">Jugadores</h2>
+                    <ol id="proy-jugadores" class="proy-lista"></ol>
+                </section>
+            </div>
+            <div class="proy-pie">
+                <p id="proy-pie"></p>
+                <div class="flex items-center gap-4">
+                    <button type="button" id="proy-pantalla" class="proy-boton">Pantalla completa</button>
+                    <a href="sala-admin.html" class="proy-enlace">Volver al panel</a>
+                </div>
+            </div>
+        </section>
 
         <div id="app" class="hidden">
             <div class="flex flex-wrap items-end justify-between gap-4 mb-2">
@@ -148,6 +178,8 @@
     <script src="js/hora-cr.js"></script>
     <script src="js/avisos.js"></script>
     <script src="js/ritmos.js"></script>
+    <script src="js/vendor/chess.js"></script>
+    <script src="js/sala-control.js"></script>
     <script src="js/sala-admin.js"></script>
 <!-- burbuja: inicio --><script src="js/burbuja-en-linea.js" defer></script><!-- burbuja: fin --><!-- juego-aviso: inicio --><script src="js/juego-aviso.js" defer></script><!-- juego-aviso: fin --><!-- aviso-profe: inicio --><script src="js/aviso-profe.js" defer></script><!-- aviso-profe: fin --><!-- tanda: inicio --><script src="js/tanda-diez.js" defer></script><!-- tanda: fin --><!-- acceso: inicio --><script src="js/acceso-vigente.js" defer></script><!-- acceso: fin --><!-- modo-vista: inicio --><script src="js/modo-vista.js" defer></script><!-- modo-vista: fin --><!-- marca: inicio --><script src="js/marca-academia.js" defer></script><!-- marca: fin --><!-- ayuda: inicio --><script src="js/ayuda-guia.js" defer></script><!-- ayuda: fin --><!-- atajo: inicio --><script src="js/atajo-buscar.js" data-arriba="" defer></script><!-- atajo: fin --></body>
 </html>
