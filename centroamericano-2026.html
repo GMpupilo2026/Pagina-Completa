@@ -555,6 +555,20 @@
         </div>
     </dialog>
 
+    <!-- Cada categoría de «Resultados en vivo», dentro de la página: su pareo
+         y su clasificación con el diseño de la página, sin chess-results a la
+         vista. La arma js/centroamericano-tablas.js (abrirCategoria). -->
+    <dialog id="categoria" class="ficha-dialogo w-[calc(100%-1rem)] sm:w-[calc(100%-2rem)] max-w-3xl max-h-[92vh] rounded-2xl shadow-2xl p-0 bg-brand-50 dark:bg-brand-950 text-brand-800 dark:text-brand-100 backdrop:bg-black/60" aria-labelledby="categoria-titulo">
+        <div class="sticky top-0 z-10 flex items-center gap-3 px-4 sm:px-6 py-3 bg-white dark:bg-brand-900 border-b border-brand-100 dark:border-brand-800">
+            <h2 id="categoria-titulo" class="font-serif text-xl md:text-2xl font-bold text-brand-800 dark:text-white flex-1 min-w-0" data-no-traducir>Categoría</h2>
+            <button type="button" data-cerrar class="shrink-0 bg-brand-800 hover:bg-brand-700 text-white font-semibold text-sm px-4 py-2 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2">Cerrar</button>
+        </div>
+        <div class="cac-modalidad px-4 sm:px-6 pt-4" data-modalidades hidden data-no-traducir></div>
+        <div id="categoria-contenido" class="px-4 sm:px-6 pt-4 pb-6" data-no-traducir>
+            <p class="text-brand-600 dark:text-brand-300">Cargando…</p>
+        </div>
+    </dialog>
+
     <!-- Las partidas que transmite Lichess, dentro de la página: todas las
          mesas con sus filtros y el visor de una, jugada por jugada. La arma
          js/centroamericano-partidas.js con lo que dice la sala (un botón con la

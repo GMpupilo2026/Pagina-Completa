@@ -173,6 +173,18 @@
       resUno: "Por ahora es un solo torneo con todas las categorías.",
       resVer: "Ver los resultados",
       resVentana: (c) => "Resultados · " + c,
+      // La ventana de cada categoría (#categoria): su pareo y su clasificación.
+      catElige: "Elige la categoría: su pareo y su clasificación se abren aquí mismo.",
+      catPareo: "Pareo", catClasif: "Clasificación", catGrupo: "Qué mostrar",
+      catVivo: "📺 Ver sus partidas en vivo",
+      catRonda: (r, h, t) => "Ronda " + r + " · " + h + " de " + t + (t === 1 ? " partida terminada" : " partidas terminadas") + ".",
+      catSinPareo: (r) => "El pareo de la ronda " + (r || 1) + " todavía no está publicado.",
+      catTermino: "El torneo terminó: esta es la clasificación final.",
+      catBuscar: "Buscar en la categoría",
+      catColMesa: "Mesa", catColBlancas: "Blancas", catColRes: "Resultado", catColNegras: "Negras",
+      catToca: "Toca un jugador para ver sus rondas.",
+      catVer: (n) => "Ver las rondas de " + n,
+      catSinRes: "sin resultado todavía",
       locale: "es-CR",
     },
     en: {
@@ -296,6 +308,17 @@
       resUno: "For now it is a single tournament with every category.",
       resVer: "See the results",
       resVentana: (c) => "Results · " + c,
+      catElige: "Choose the category: its pairings and standings open right here.",
+      catPareo: "Pairings", catClasif: "Standings", catGrupo: "What to show",
+      catVivo: "📺 Watch its live games",
+      catRonda: (r, h, t) => "Round " + r + " · " + h + " of " + t + (t === 1 ? " game finished" : " games finished") + ".",
+      catSinPareo: (r) => "The pairings of round " + (r || 1) + " are not published yet.",
+      catTermino: "The tournament is over: these are the final standings.",
+      catBuscar: "Search in the category",
+      catColMesa: "Board", catColBlancas: "White", catColRes: "Result", catColNegras: "Black",
+      catToca: "Tap a player to see their rounds.",
+      catVer: (n) => "See the rounds of " + n,
+      catSinRes: "no result yet",
       locale: "en-US",
     },
   };
@@ -316,7 +339,9 @@
     filas.forEach((f) => {
       const fila = el("tr");
       f.forEach((c, i) => {
-        const celda = el(i === iFila ? "th" : "td", numericas.includes(i) ? "num" : "", c);
+        // Una celda puede ser texto o un nodo (el botón de un jugador).
+        const celda = el(i === iFila ? "th" : "td", numericas.includes(i) ? "num" : "", typeof c === "string" ? c : null);
+        if (c && typeof c !== "string") celda.appendChild(c);
         if (i === iFila) celda.scope = "row";
         fila.appendChild(celda);
       });
@@ -350,20 +375,179 @@
     }
     if (!grupos.includes(categoriaElegida)) categoriaElegida = grupos[0] || "";
     sel.value = categoriaElegida;
-    const lista = todos.filter((x) => (x.j.grupo || "—") === categoriaElegida).sort((a, b) => a.j.puesto - b.j.puesto);
+    clasificacionEn(caja, categoriaElegida, q.value);
+  }
+
+  // La clasificación de una categoría dentro de una caja: la de la ventana
+  // «Clasificación completa» y la de la ventana de cada categoría. Con
+  // `alTocar`, el nombre de cada jugador es un botón (sus rondas).
+  function clasificacionEn(caja, grupo, texto, alTocar) {
+    const tx = T();
+    const lista = V.jugadores().filter((x) => (x.j.grupo || "—") === grupo).sort((a, b) => a.j.puesto - b.j.puesto);
     const ronda = rondaActual();
-    const palabras = V.plano(q.value).split(" ").filter(Boolean);
+    const palabras = V.plano(texto).split(" ").filter(Boolean);
     const filas = [];
     lista.forEach((x, i) => {
       if (palabras.length && !palabras.every((p) => V.plano(x.j.nombre).includes(p))) return;
       const rend = ronda ? V.rendimiento(x) : null;
-      filas.push([String(ronda ? i + 1 : "—"), nombreCompleto(x.j), x.j.fed || "", x.j.elo ? String(x.j.elo) : "—", ronda ? x.j.puntos || "0" : "—", rend ? String(rend.rp) : "—"]);
+      filas.push([String(ronda ? i + 1 : "—"), alTocar ? botonJugador(x, alTocar) : nombreCompleto(x.j), x.j.fed || "", x.j.elo ? String(x.j.elo) : "—", ronda ? x.j.puntos || "0" : "—", rend ? String(rend.rp) : "—"]);
     });
     const estado = el("p", "font-semibold");
     decir(estado, (ronda ? comoVa(ronda) : tx.antes) + V.cuandoSeLeyo());
     caja.replaceChildren(estado);
     if (!filas.length) { caja.appendChild(el("p", "mt-3", tx.nadie)); return; }
     caja.appendChild(tabla([tx.colPuesto, tx.colJugador, tx.colFed, tx.colElo, tx.colPuntos, tx.colRend], filas, [0, 3, 4, 5], 1));
+  }
+
+  function botonJugador(x, alTocar) {
+    const b = el("button", "cac-cat-jugador", nombreCompleto(x.j));
+    b.type = "button";
+    b.setAttribute("aria-label", T().catVer(nombreCompleto(x.j)));
+    b.addEventListener("click", () => alTocar(x));
+    return b;
+  }
+
+  /* ---------------- la ventana de cada categoría ---------------- */
+  // «Resultados en vivo» abre aquí cada categoría, con el diseño de la página
+  // y sin chess-results a la vista: su pareo (la ronda de ahora, mesa por mesa)
+  // y su clasificación, con un buscador; tocar un jugador lleva a sus rondas
+  // («Busca a tu jugador», por su enlace directo), y si Lichess transmite la
+  // categoría, un botón abre sus partidas en vivo. Ver «Resultados en vivo,
+  // sin salir de la página» en docs/decisiones/juegos-y-torneos.md.
+  const cat = { grupo: "", vista: "pareo", texto: "" };
+
+  function abrirCategoria(grupo, desde) {
+    const d = $("categoria");
+    if (!d) return;
+    cat.grupo = grupo; cat.texto = ""; cat.vista = "pareo";
+    // Se abre encima de «Resultados en vivo»: al cerrarla se vuelve a la
+    // elección, con el foco en el botón de la categoría.
+    if (!d.open) { if (window.VentanaEnlace) window.VentanaEnlace.abrirDialogo(d, desde); else d.showModal(); }
+    pintarCategoria(true);
+  }
+
+  // Sus rondas: se cierra la ventana y se abre su tarjeta en «Busca a tu
+  // jugador», con «Sus rondas» desplegado (el mismo enlace directo de siempre).
+  const cerrarCategoria = () => ["categoria", "resultados"].forEach((id) => { const d = $(id); if (d && d.open) d.close(); });
+  function verRondas(x) {
+    cerrarCategoria();
+    location.hash = "jugador=" + x.torneo.tnr + "-" + x.j.no + "-" + V.slugDe(x.j.nombre);
+  }
+
+  function pintarCategoria(nueva) {
+    const d = $("categoria"), caja = $("categoria-contenido");
+    if (!d || !caja || !d.open) return;
+    const tx = T();
+    if (!cat.grupo) {
+      const g = porCategoria()[0];
+      cat.grupo = g ? g.categoria : "";
+    }
+    $("categoria-titulo").textContent = V.conModalidad(V.categoria(cat.grupo) || tx.resVer);
+    if (!V.datos()) { caja.replaceChildren(el("p", "", tx.cargando)); return; }
+    const lista = V.jugadores().filter((x) => (x.j.grupo || "—") === cat.grupo);
+    const pareo = pareoDe(lista);
+    const termino = lista.length && lista.every((x) => x.torneo.terminado);
+
+    // Lo de arriba se arma una vez; al ponerse al día solo cambia la tabla.
+    let arriba = caja.querySelector("[data-cat-arriba]");
+    if (!arriba || nueva) {
+      // Sin pareo (antes de la ronda 1, o terminado), empieza en la clasificación.
+      cat.vista = termino || !pareo.filas.length ? "clasificacion" : "pareo";
+      arriba = el("div", "cac-cat-arriba");
+      arriba.dataset.catArriba = "";
+      const estado = el("p", "font-bold");
+      estado.dataset.catEstado = "";
+      estado.setAttribute("role", "status");
+      const grupo = el("div", "cac-modalidad mt-3");
+      grupo.setAttribute("role", "group");
+      grupo.setAttribute("aria-label", tx.catGrupo);
+      [["pareo", tx.catPareo], ["clasificacion", tx.catClasif]].forEach(([v, texto]) => {
+        const b = el("button", "cac-modalidad-boton", texto);
+        b.type = "button";
+        b.dataset.catVista = v;
+        b.addEventListener("click", () => { cat.vista = v; pintarCategoria(false); b.focus(); });
+        grupo.appendChild(b);
+      });
+      const vivo = el("button", "cac-jugador-boton cac-jugador-vivo mt-3");
+      vivo.type = "button";
+      vivo.dataset.catVivo = "";
+      vivo.hidden = true;
+      vivo.textContent = tx.catVivo;
+      vivo.addEventListener("click", () => {
+        cerrarCategoria();
+        if (window.CentroamericanoPartidas) window.CentroamericanoPartidas.abrirLista({ categoria: cat.grupo });
+      });
+      const l = el("label", "block text-sm font-bold mt-3", tx.catBuscar);
+      const q = el("input", "cac-buscador-campo !mt-1");
+      q.type = "search"; q.autocomplete = "off"; q.spellcheck = false;
+      q.dataset.catBuscar = "";
+      q.addEventListener("input", () => { cat.texto = q.value; pintarCategoria(false); });
+      l.appendChild(q);
+      const cuerpo = el("div", "mt-4");
+      cuerpo.dataset.catCuerpo = "";
+      arriba.append(estado, grupo, vivo, l);
+      caja.replaceChildren(arriba, cuerpo, el("p", "text-sm mt-3 text-brand-600 dark:text-brand-300", tx.catToca));
+      // Si Lichess transmite esta categoría, el botón de sus partidas.
+      if (window.CentroamericanoPartidas) {
+        window.CentroamericanoPartidas.transmiteCategoria(cat.grupo).then((si) => { vivo.hidden = !si; }, () => {});
+      }
+    }
+    caja.querySelectorAll("[data-cat-vista]").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.catVista === cat.vista)));
+    const estado = caja.querySelector("[data-cat-estado]");
+    decir(estado, termino ? tx.catTermino : pareo.ronda ? tx.catRonda(pareo.ronda, pareo.hechas, pareo.total) : tx.catSinPareo(rondaActual() + 1));
+    const cuerpo = caja.querySelector("[data-cat-cuerpo]");
+    if (cat.vista === "clasificacion") { clasificacionEn(cuerpo, cat.grupo, cat.texto, verRondas); return; }
+    if (!pareo.filas.length) { cuerpo.replaceChildren(el("p", "font-semibold", termino ? tx.catTermino : tx.catSinPareo(rondaActual() + 1))); return; }
+    const palabras = V.plano(cat.texto).split(" ").filter(Boolean);
+    const coincide = (j) => !!j && palabras.every((p) => V.plano(j.nombre).includes(p));
+    // Una tarjeta por mesa (no una tabla: en el celular las negras quedaban
+    // fuera de la pantalla): las blancas, el resultado y las negras.
+    const lado = (x, j, color) => {
+      const c = el("div", "cac-cat-lado");
+      c.appendChild(el("span", "sr-only", (color === "w" ? tx.catColBlancas : tx.catColNegras) + ": "));
+      const fila = el("span", "cac-cat-nombre");
+      fila.appendChild(el("span", "cac-partida-color", color === "w" ? "♔" : "♚")).setAttribute("aria-hidden", "true");
+      fila.appendChild(x ? botonJugador(x, verRondas) : el("span", "font-bold", nombreCompleto(j)));
+      c.appendChild(fila);
+      c.appendChild(el("span", "cac-cat-sub", [j.fed, j.elo ? String(j.elo) : "", tx.puntosCortos(j.puntos || "0")].filter(Boolean).join(" · ")));
+      return c;
+    };
+    const mesas = pareo.filas.filter((f) => !palabras.length || coincide(f.b) || coincide(f.n));
+    if (!mesas.length) { cuerpo.replaceChildren(el("p", "", tx.nadie)); return; }
+    const ol = el("ol", "cac-cat-pareo");
+    mesas.forEach((f) => {
+      const li = el("li", "cac-cat-mesa");
+      li.appendChild(el("p", "cac-cat-num", tx.catColMesa + " " + f.m.mesa));
+      const par = el("div", "cac-cat-par");
+      const res = f.m.negras ? (f.m.resultado || "—") : "bye";
+      const celdaRes = el("span", "cac-cat-res", res);
+      if (res === "—") { celdaRes.setAttribute("aria-hidden", "true"); par.appendChild(el("span", "sr-only", tx.catSinRes)); }
+      par.append(lado(f.xb, f.b, "w"), celdaRes);
+      if (f.m.negras) par.appendChild(lado(f.xn, f.n, "b"));
+      li.appendChild(par);
+      ol.appendChild(li);
+    });
+    cuerpo.replaceChildren(ol);
+  }
+
+  // Las mesas de la ronda emparejada en que juega la categoría, con cada
+  // jugador y cuántas terminaron. Un torneo ya terminado no cuenta.
+  function pareoDe(lista) {
+    const porClave = new Map(lista.map((x) => [x.torneo.tnr + "-" + x.j.no, x]));
+    const out = { ronda: 0, filas: [], total: 0, hechas: 0 };
+    [...new Set(lista.map((x) => x.torneo))].forEach((tor) => {
+      if (tor.terminado || !tor.pareo || !Array.isArray(tor.pareo.mesas)) return;
+      const porNo = new Map((tor.jugadores || []).map((j) => [j.no, j]));
+      tor.pareo.mesas.forEach((m) => {
+        const xb = porClave.get(tor.tnr + "-" + m.blancas.no), xn = m.negras ? porClave.get(tor.tnr + "-" + m.negras.no) : null;
+        if (!xb && !xn) return;
+        out.ronda = Math.max(out.ronda, tor.pareo.ronda);
+        out.filas.push({ m, xb, xn, b: porNo.get(m.blancas.no) || m.blancas, n: m.negras ? porNo.get(m.negras.no) || m.negras : null });
+        if (m.negras) { out.total++; if (/\d|½|\+/.test(m.resultado || "")) out.hechas++; }
+      });
+    });
+    out.filas.sort((a, b) => a.m.mesa - b.m.mesa);
+    return out;
   }
 
   /* ---------------- la tabla por país ---------------- */
@@ -1553,6 +1737,16 @@
   const portadaCR = (tor) => String(tor.url || "").replace(/&art=1$/, "");
   const porCategoria = () => ((V.datos() || { torneos: [] }).torneos || []).filter((tor) => tor.categoria);
   function botonTorneo(tor, texto, nombre) {
+    // En la página del Centroamericano, la categoría se abre en su ventana
+    // propia; en las otras (sin #categoria), su torneo de chess-results.
+    if ($("categoria") && tor.categoria) {
+      const b = el("button", "cac-categoria", texto);
+      b.type = "button";
+      if (nombre !== texto) b.setAttribute("aria-label", nombre);
+      b.dataset.categoria = tor.categoria;
+      b.addEventListener("click", () => abrirCategoria(tor.categoria, b));
+      return b;
+    }
     const a = el("a", "cac-categoria", texto);
     a.href = portadaCR(tor);
     a.target = "_blank";
@@ -1577,7 +1771,7 @@
       });
       return;
     }
-    caja.appendChild(el("p", "", tx.resElige));
+    caja.appendChild(el("p", "", $("categoria") ? tx.catElige : tx.resElige));
     const edades = [...new Set(cats.map((tor) => Number(tor.categoria.match(/\d+/)[0])))].sort((a, b) => a - b);
     const ul = el("ul", "cac-categorias");
     edades.forEach((n) => {
@@ -1591,7 +1785,9 @@
       ul.appendChild(li);
     });
     caja.appendChild(ul);
-    const otros = d.otros || [];
+    // Lo que no es de una categoría (la lista general) es solo de chess-results:
+    // en la página que no se sale, no va.
+    const otros = $("categoria") ? [] : d.otros || [];
     if (otros.length) {
       caja.appendChild(el("h3", "mt-5 font-bold", tx.resOtros));
       const ol = el("ul", "cac-otros");
@@ -1627,6 +1823,15 @@
   alAbrir("cara-a-cara", pintarCaraACara);
   alAbrir("resultados", pintarResultados);
   alAbrir("numeros", pintarNumeros);
+  // La de cada categoría la abre «Resultados en vivo» (abrirCategoria); al
+  // cerrarse se vacía, para que la próxima arranque de cero.
+  const dCat = $("categoria");
+  if (dCat) {
+    new MutationObserver(() => {
+      if (dCat.open) { pintarCategoria(false); V.pedir().then(() => pintarCategoria(false), () => {}); }
+      else { const c = $("categoria-contenido"); if (c) c.replaceChildren(); }
+    }).observe(dCat, { attributes: true, attributeFilter: ["open"] });
+  }
   ["cara-a", "cara-b"].forEach((id) => { const c = $(id); if (c) c.addEventListener("input", pintarCaraACara); });
   const proy = $("proyector");
   if (proy) {
@@ -1667,6 +1872,7 @@
     if ($("cara-a-cara") && $("cara-a-cara").open) pintarCaraACara();
     if ($("resultados") && $("resultados").open) pintarResultados();
     if ($("numeros") && $("numeros").open) pintarNumeros();
+    if ($("categoria") && $("categoria").open) pintarCategoria(false);
     if (proy && proy.open) { paginas = armarPaginas(); pintarProyector(); }
   };
   document.addEventListener("cac-datos", repintar);
