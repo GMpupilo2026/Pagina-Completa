@@ -10620,6 +10620,25 @@ una función pura que se prueba con node.
   saltaron sus comprobaciones: la jugada del peor momento en lugar de la del
   giro, los momentos sin filtrar y el visor que no abría en la jugada.
 
+#### Lo mejor de la ronda, sin el nombre de quien perdió
+
+Cada momento decía la categoría, la mesa y los dos nombres. El dueño pidió
+que no se nombre a quien perdió, para que nadie vea destacado cómo perdió y
+no lleguen reclamos. Ahora el pie de cada momento lleva solo la categoría y el
+apellido de quien lo logró (`LichessTransmision.apellido()`): «Sub-14 Absoluto ·
+lo logró Mayorga».
+
+- **Quién lo logró:** quien remontó, salvó las tablas o dio la sorpresa (el
+  `lado` del momento). En un **vuelco** no se nombra a nadie: ahí lo que pasó es
+  que alguien se equivocó.
+- **Sin la mesa:** con la mesa, la ronda y la categoría, chess-results dice
+  quién era el rival.
+- **El nombre del botón** («Ver el momento») tampoco lleva los nombres.
+- **Abrir la partida sí los muestra:** el visor es la transmisión de Lichess,
+  que ya es pública. Lo que se quitó es solo destacarlo.
+- `verificar-centroamericano-partidas.js` comprueba que el pie y el botón no
+  lleven la mesa ni el rival, y que el apellido salga solo donde corresponde.
+
 
 ### Su partida está en vivo: el aviso al celular
 
@@ -10800,6 +10819,106 @@ lo que recibe el QR. Comprueba:
 - que no aparezca el puesto;
 - que el QR lleve el enlace del jugador;
 - que el mensaje empiece como debe y traiga el enlace.
+
+### Los ejercicios de la ronda
+
+Unas diez posiciones de las partidas transmitidas de cada ronda, con UNA sola
+jugada que gana, para que el público las resuelva: la ficha «Ejercicios de la
+ronda», la ventana `#ejercicios` y una línea en «Hoy en el torneo» («Ya están
+los ejercicios de la ronda 3. ¿Cuántos resuelves?»). Lo pidió el dueño, con
+dos condiciones:
+
+- **Se publican solos.** Nadie los aprueba antes.
+- **Sin el nombre de quien jugó.** El ejercicio dice «Pasó en la ronda 3 del
+  Sub-14 Absoluto». Si en la partida se jugó la jugada buena, al resolverlo
+  dice además el **apellido** de quien la encontró. De quien se equivocó no se
+  dice nada.
+
+**De dónde salen.** `herramientas/centroamericano-ejercicios.js` los busca y
+los deja en `data/centroamericano-ejercicios.json`. Lo corre
+`.github/workflows/centroamericano-ejercicios.yml` cada media hora del 1 al 9
+de noviembre de 2026. Ese flujo abre el PR, corre «Verificar» y lo mergea,
+igual que «Ajedrez estudiantil». Si «Verificar» falla, el PR queda abierto y el
+flujo no abre otro hasta que se cierre. Para volver a buscar una ronda, se
+corre el flujo a mano con su número.
+
+1. **Qué se transmite** lo dice la sala (`salas_torneo.enlaces`), igual que en
+   la página. El flujo lo lee con la clave pública.
+2. **La categoría y la modalidad** de cada torneo de Lichess salen de
+   `torneos-sala.ts`, la misma regla de la página. Solo entran las partidas
+   clásicas.
+3. **Una ronda está lista** cuando se cumplen dos cosas:
+   - terminó en todos los torneos que la tienen;
+   - Lichess ya evaluó el 80 % de sus jugadas (la evaluación llega un rato
+     después de cada partida).
+   Si a las 8 horas de empezada todavía no se cumplen, se busca igual. Una
+   ronda ya publicada no se vuelve a buscar sola.
+4. **Las candidatas.** `js/ejercicios-partidas.js` las saca de las posiciones
+   donde el rival acaba de equivocarse. Con la evaluación de Lichess, quien
+   mueve pasó de +1 o menos a +2 o más. Se descartan las primeras 10 jugadas y
+   se toma una por partida.
+5. **Stockfish confirma cada una** con el motor de la máquina del flujo
+   (`apt install stockfish`), a profundidad 18 y con las dos mejores jugadas.
+   La posición entra solo si se cumplen tres condiciones:
+   - la mejor deja +2,5 o más, o da mate;
+   - la segunda deja +1 o menos, y no da mate;
+   - la mejor no es la recaptura obvia de lo que el rival acaba de tomar.
+
+   **La línea:** se piden hasta tres jugadas mientras cada una siga siendo la
+   única. En un mate, la última vale cualquier mate. La respuesta del rival es
+   la de Stockfish.
+
+   **El tema** (mate, dama, torre, pieza, calidad, coronar o «ventaja
+   decisiva») sale del material que gana la línea del motor.
+6. **Se eligen 10:** primero los mates cortos, después lo que gana material. Se
+   reparten entre las categorías y nunca van dos de la misma partida ni la
+   misma posición. Si una ronda da menos, se publican los que haya. En las
+   pruebas con rondas reales de Lichess salieron 5 de 46 o 47 partidas, así que
+   con pocas mesas transmitidas puede haber rondas con menos de diez.
+
+**Lo que se guarda de cada uno:**
+- la categoría (`U14`, `U10F`…);
+- la posición (FEN);
+- la línea en UCI, en `solucion` y `despues`;
+- el tema y, si es mate, en cuántas;
+- y, si en la partida se jugó la buena, el apellido en `logro`
+  (`LichessTransmision.apellido()`: «Apellidos, Nombre» → «Apellidos»).
+
+Ni el nombre, ni la mesa, ni el enlace a la partida: con la mesa y la ronda,
+chess-results dice quién era.
+
+**En la página** (`js/centroamericano-ejercicios.js`):
+- **Un botón por ronda.** Los de rondas anteriores no se pierden. Cada
+  ejercicio va en una tarjeta con su tablero, y dice quién juega y, si es mate,
+  en cuántas.
+- **Se contesta** moviendo en el tablero (`js/tablero-pregunta.js`, que ahora
+  se ve desde las negras con `orientacion: "b"`) o escribiendo la jugada
+  («Cf3», «enroque corto»).
+- **Si no es la jugada**, lo dice y se vuelve a intentar.
+- **La pista** marca la pieza que se mueve.
+- **«Ver la solución»** la juega entera y no cuenta como resuelto.
+- **Al resolverlo** dice qué gana, cómo sigue según Stockfish y el apellido de
+  quien la encontró.
+- **Los resueltos** quedan en este aparato (`cac_ejercicios_resueltos`), sin
+  cuenta.
+- **Los idiomas:** español e inglés en el módulo; el francés en
+  `CentroamericanoFR.ejercicios`.
+
+**Lo revisa `verificar-centroamericano-ejercicios.js`** en tres partes:
+- **Los datos:** cada posición y cada línea con chess.js, y nada más que la
+  categoría y un apellido. Es lo que corre el flujo antes de abrir su PR, con
+  `--solo-datos`.
+- **El buscador**, con un Stockfish de mentira.
+- **La página**, con `herramientas/datos/centroamericano-ejercicios-prueba.json`:
+  posiciones de partidas de verdad de Lichess, confirmadas con Stockfish y con
+  los apellidos cambiados.
+
+Rompí a propósito dos cosas y saltaron sus comprobaciones:
+- que la segunda jugada también ganara y se aceptara igual;
+- que no saliera el apellido al resolverlo.
+
+El de los datos salta con un nombre entero («Apellido, Nombre»), una jugada
+ilegal, una clave de más o una posición repetida.
 
 ## Las páginas de los torneos universitarios
 

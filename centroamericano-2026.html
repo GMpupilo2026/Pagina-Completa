@@ -135,6 +135,8 @@
                     <a href="#calendario" id="hoy-calendario" class="cac-accion underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ce1328]">Ver el calendario completo →</a>
                     <a href="documentos/centroamericano-2026/calendario-centroamericano-2026.ics" download id="hoy-ics" class="cac-accion underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ce1328]"><span aria-hidden="true">📅 </span><span id="hoy-ics-texto">Agregar a mi calendario</span></a>
                 </p>
+                <!-- «Ya están los ejercicios de la ronda N» (js/centroamericano-ejercicios.js). -->
+                <p id="hoy-ejercicios" class="mt-3 text-sm font-bold" hidden data-no-traducir></p>
                 <p id="hoy-sin-red" class="cac-hoy-sin-red" hidden><span aria-hidden="true">📴 </span><span id="hoy-sin-red-texto">Esta página quedó guardada en este aparato: la puedes abrir aunque no haya internet en la sala.</span></p>
             </div>
         </div>
@@ -271,6 +273,17 @@
                         <span class="mt-3 font-extrabold text-base sm:text-lg leading-snug text-brand-800 dark:text-white">Partidas en vivo</span>
                         <span class="hidden sm:block mt-1 text-sm text-brand-600 dark:text-brand-300 flex-1">La transmisión de los tableros en directo, jugada a jugada.</span>
                         <span class="mt-auto pt-3 sm:pt-4 text-xs sm:text-sm font-semibold text-brand-600 dark:text-brand-300">Pronto<span class="hidden sm:inline">: la transmisión todavía no está publicada</span></span>
+                    </div>
+                </li>
+                <li>
+                    <!-- Ejercicios de la ronda: se enciende cuando
+                         data/centroamericano-ejercicios.json trae alguno
+                         (js/centroamericano-ejercicios.js). -->
+                    <div id="ficha-ejercicios" tabindex="0" aria-disabled="true" data-color="verde" class="cac-ficha h-full flex flex-col rounded-3xl bg-white/70 dark:bg-brand-900/70 border-2 border-dashed border-brand-300 dark:border-brand-700 p-4 sm:p-6 focus:outline-none focus-visible:ring-4 focus-visible:ring-[#ce1328]">
+                        <span class="cac-icono" aria-hidden="true">🧩</span>
+                        <span class="mt-3 font-extrabold text-base sm:text-lg leading-snug text-brand-800 dark:text-white">Ejercicios de la ronda</span>
+                        <span class="hidden sm:block mt-1 text-sm text-brand-600 dark:text-brand-300 flex-1">Posiciones de las partidas de cada ronda con una sola jugada que gana. ¿La encuentras?</span>
+                        <span class="mt-auto pt-3 sm:pt-4 text-xs sm:text-sm font-semibold text-brand-600 dark:text-brand-300">Pronto<span class="hidden sm:inline">: aparecen cuando termina la primera ronda</span></span>
                     </div>
                 </li>
                 <li>
@@ -604,6 +617,20 @@
         </div>
     </dialog>
 
+    <!-- Ejercicios de la ronda: las posiciones de cada ronda para resolver.
+         Las arma js/centroamericano-ejercicios.js con
+         data/centroamericano-ejercicios.json, que publica solo
+         herramientas/centroamericano-ejercicios.js. -->
+    <dialog id="ejercicios" class="ficha-dialogo w-[calc(100%-1rem)] sm:w-[calc(100%-2rem)] max-w-4xl max-h-[92vh] rounded-2xl shadow-2xl p-0 bg-brand-50 dark:bg-brand-950 text-brand-800 dark:text-brand-100 backdrop:bg-black/60" aria-labelledby="ejercicios-titulo">
+        <div class="sticky top-0 z-10 flex items-center gap-3 px-4 sm:px-6 py-3 bg-white dark:bg-brand-900 border-b border-brand-100 dark:border-brand-800">
+            <h2 id="ejercicios-titulo" class="font-serif text-xl md:text-2xl font-bold text-brand-800 dark:text-white flex-1 min-w-0"><span aria-hidden="true">🧩 </span>Ejercicios de la ronda</h2>
+            <button type="button" data-cerrar class="shrink-0 bg-brand-800 hover:bg-brand-700 text-white font-semibold text-sm px-4 py-2 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2">Cerrar</button>
+        </div>
+        <div id="ejercicios-contenido" class="px-4 sm:px-6 pt-4 pb-6" data-no-traducir>
+            <p class="text-brand-600 dark:text-brand-300">Cargando…</p>
+        </div>
+    </dialog>
+
     <!-- El pareo en letra grande para una pantalla en la sala: pasa solo por
          las categorías. Se abre con #proyector en la dirección. -->
     <dialog id="proyector" class="ficha-dialogo cac-proyector p-0 backdrop:bg-black" aria-labelledby="proyector-titulo">
@@ -906,5 +933,8 @@
     <script src="js/lichess-transmision.js"></script>
     <script src="js/tablero-fen.js"></script>
     <script src="js/centroamericano-partidas.js"></script>
+    <script src="js/tablero-accesible.js"></script>
+    <script src="js/tablero-pregunta.js"></script>
+    <script src="js/centroamericano-ejercicios.js"></script>
 </body>
 </html>

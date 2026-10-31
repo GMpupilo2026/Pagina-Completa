@@ -24,6 +24,7 @@
  *   LichessTransmision.pgn(idRonda)         → el PGN de la ronda, en texto
  *   LichessTransmision.leerPgn(texto, Chess)→ cada partida con sus jugadas y posiciones
  *   LichessTransmision.porcentaje(ev)       → cuánto de la barra es de las blancas
+ *   LichessTransmision.apellido(nombre)     → solo el apellido («Apellidos, Nombre» → «Apellidos»)
  */
 (function (raiz) {
   "use strict";
@@ -180,6 +181,17 @@
     });
   }
 
+  // «Mayorga Araya, Sofia» → «Mayorga Araya»: solo el apellido. Lichess y
+  // FIDE escriben «Apellidos, Nombre»; sin coma, la última palabra. Lo que se
+  // publica de un jugador fuera de su partida (lo mejor de la ronda, quién
+  // encontró la jugada de un ejercicio) es solo esto: lo pidió el dueño.
+  function apellido(nombre) {
+    const t = String(nombre || "").replace(/[<>]/g, "").replace(/\s+/g, " ").trim();
+    if (!t) return "";
+    const a = t.indexOf(",") !== -1 ? t.slice(0, t.indexOf(",")).trim() : t.split(" ").pop();
+    return a.length >= 2 && a.length <= 40 ? a : "";
+  }
+
   // La barra de la evaluación: cuánto de ella es de las blancas, de 0 a 100.
   // La misma curva que usa Lichess (una ventaja de un peón ya se nota, pero
   // ninguna llena la barra salvo el mate).
@@ -264,7 +276,7 @@
     return out.sort((a, b) => b.valor - a.valor || a.mesa - b.mesa);
   }
 
-  const api = { LICHESS, INICIAL, idDeEnlace, torneosDelEvento, rondas, rondaDeAhora, partidas, pgn, leerPgn, porcentaje, evalDe, relojDe, resultadoDe, momentos };
+  const api = { LICHESS, INICIAL, idDeEnlace, torneosDelEvento, rondas, rondaDeAhora, partidas, pgn, leerPgn, porcentaje, evalDe, relojDe, resultadoDe, momentos, apellido };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else raiz.LichessTransmision = api;
 })(typeof window !== "undefined" ? window : globalThis);

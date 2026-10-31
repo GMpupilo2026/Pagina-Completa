@@ -10,6 +10,8 @@
  * un solo archivo: herramientas/verificar-voseo.py, que busca voseo en el
  * español, se lo salta entero.
  */
+// Lo que gana cada ejercicio (js/centroamericano-ejercicios.js).
+const CAC_EJERCICIOS_GANA_FR = { mate: "font mat", dama: "gagnent la dame", corona: "promeuvent un pion", torre: "gagnent une tour", pieza: "gagnent une pièce", calidad: "gagnent la qualité", ataque: "obtiennent un avantage décisif" };
 window.CentroamericanoFR = {
   titulo: "Championnat d'Amérique centrale et des Caraïbes de la jeunesse 2026 — règlement, hôtels et résultats | Ajedrez Integral",
   franja: {
@@ -77,6 +79,9 @@ window.CentroamericanoFR = {
     "La transmisión de los tableros en directo, jugada a jugada.": "La retransmission des échiquiers en direct, coup par coup.",
     "Pronto": "Bientôt",
     ": la transmisión todavía no está publicada": ": la retransmission n'est pas encore publiée",
+    "Ejercicios de la ronda": "Exercices de la ronde",
+    "Posiciones de las partidas de cada ronda con una sola jugada que gana. ¿La encuentras?": "Des positions des parties de chaque ronde avec un seul coup gagnant. Le trouveras-tu ?",
+    ": aparecen cuando termina la primera ronda": ": ils apparaissent à la fin de la première ronde",
     "Calendario de rondas": "Calendrier des rondes",
     "El día y la hora de cada ronda, el Rapid, el Blitz, la inauguración y la clausura.": "Le jour et l'heure de chaque ronde, du Rapide, du Blitz, de l'ouverture et de la clôture.",
     "Ver el calendario →": "Voir le calendrier →",
@@ -626,6 +631,42 @@ window.CentroamericanoFR = {
     hjMensajeEnlace: "Suivez sa partie en direct :",
     locale: "fr-FR",
   }),
+  // js/centroamericano-ejercicios.js: los ejercicios de la ronda.
+  ejercicios: {
+    cargando: "Chargement des exercices…",
+    error: "Impossible de charger les exercices. Réessayez dans un instant.",
+    vacio: "Les exercices de chaque ronde apparaissent ici à la fin de la ronde.",
+    intro: "De vraies positions, tirées des parties retransmises de chaque ronde : dans chacune il n'y a qu'un seul coup gagnant, vérifié avec Stockfish. Nous ne disons pas qui jouait : seulement la catégorie.",
+    ronda: (n) => "Ronde " + n,
+    rondaHecha: (n) => "Ronde " + n + ", tous résolus",
+    resueltos: (r, h, n) => "Ronde " + r + " · tu en as résolu " + h + " sur " + n,
+    juegan: (c) => (c === "w" ? "Les blancs jouent" : "Les noirs jouent"),
+    mateEn: (n) => "mat en " + n,
+    pregunta: (e) => (e.tema === "mate" ? (e.mate === 1 ? "Comment mater ?" : "Comment mater en " + e.mate + " ?") : "Comment gagner ?"),
+    donde: (i, n, r, cat) => "Exercice " + i + " sur " + n + " · Ronde " + r + (cat ? ", " + cat : ""),
+    volver: (n, r) => "← Les " + n + " de la ronde " + r,
+    escribe: "Ou écris ton coup",
+    ejemplo: "Par exemple : Cf3, Fxh7+ ou petit roque",
+    jugar: "Jouer",
+    pista: "Un indice",
+    pistaTexto: "La pièce qui bouge est marquée sur l'échiquier.",
+    verSolucion: "Voir la solution",
+    ayuda: "Déplace une pièce sur l'échiquier ou écris le coup. Si ce n'est pas le bon, tu peux réessayer.",
+    noEntendi: "Coup non compris. Écris-le comme sur une feuille de partie, par exemple Cf3.",
+    noEsa: (san) => san + " n'est pas le bon coup. Réessaie.",
+    sigue: (san) => "Bien ! L'adversaire répond " + san + ". Et maintenant ?",
+    bien: "Bravo ! C'est le bon coup.",
+    laSolucion: "La solution",
+    explica: (linea, c, tema) => linea + " : les " + (c === "w" ? "blancs" : "noirs") + " " + CAC_EJERCICIOS_GANA_FR[tema] + ".",
+    despues: (l) => "La suite, selon Stockfish : " + l + ".",
+    logro: (a) => "Dans la partie, " + a + " l'a trouvé.",
+    siguiente: "Exercice suivant →",
+    otraVez: "Réessayer",
+    resuelto: "Résolu",
+    tablero: "Échiquier de l'exercice",
+    ficha: (r) => "Résoudre ceux de la ronde " + r + " →",
+    hoy: (r) => "Les exercices de la ronde " + r + " sont là. Combien en résous-tu ? →",
+  },
   // js/centroamericano-partidas.js: las partidas en vivo de Lichess.
   partidas: {
     titulo: "Parties en direct",
@@ -677,7 +718,8 @@ window.CentroamericanoFR = {
     },
     decisiva: (e) => (e > 0 ? "+10 ou plus" : "−10 ou plus"),
     verMomento: "Voir le moment",
-    verMomentoDe: (tipo, b, n) => tipo + " : voir le moment dans la partie " + b + " contre " + n,
+    verMomentoDe: (tipo, cat) => tipo + " : voir le moment dans la partie" + (cat ? " (" + cat + ")" : ""),
+    loLogro: (a) => "réussi par " + a,
   },
   // Los países, en francés (los de js/centroamericano-vivo.js).
   paises: {
