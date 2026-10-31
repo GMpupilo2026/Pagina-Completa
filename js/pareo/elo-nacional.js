@@ -1,10 +1,15 @@
-/* ===== Pareo Integral — buscar el Elo Nacional =====
+/* ===== Pareo Integral — buscar en las listas de Elo =====
  *
- * La ÚNICA llamada de Pareo Integral a un servidor (ver «Buscar Elo
- * Nacional» en docs/decisiones/juegos-y-torneos.md): manda los NOMBRES de
- * los jugadores, nada más, a la Edge Function `pareo-elo-nacional`, que los
- * busca en ajedrezcostarica.com porque esa página no manda CORS y el
- * navegador no la puede leer directo.
+ * Las dos búsquedas de Pareo Integral en las listas de Elo, que pasan por
+ * nuestro servidor porque ni ajedrezcostarica.com ni ratings.fide.com mandan
+ * CORS y el navegador no las puede leer directo:
+ *   - buscar(nombres): el Elo Nacional de quien no tiene (ver «Buscar Elo
+ *     Nacional» en docs/decisiones/juegos-y-torneos.md). Manda los NOMBRES
+ *     de los jugadores, nada más, a la Edge Function `pareo-elo-nacional`.
+ *   - buscarEnLista(lista, q): «Agregar desde una lista de Elo» (ver
+ *     «Pareo Integral: agregar jugadores desde las listas de Elo»). Manda la
+ *     lista («fide» o «nacional») y lo escrito en el buscador, nada más, a
+ *     `pareo-listas-elo`.
  *
  * No carga js/supabase-client.js: no hace falta el cliente entero de
  * Supabase (ni su sesión, ni Realtime) para un solo POST sin cuenta. Es un
@@ -14,19 +19,31 @@
  */
 window.PareoEloNacional = (function () {
   "use strict";
-  const URL_FUNCION = "https://bgtijpimpcokxatxxbki.supabase.co/functions/v1/pareo-elo-nacional";
+  const FUNCIONES = "https://bgtijpimpcokxatxxbki.supabase.co/functions/v1/";
   const ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJndGlqcGltcGNva3hhdHh4YmtpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg5ODczMjksImV4cCI6MjEwNDU2MzMyOX0.h-AcAEQNaYMVo5UVtdWqUCTYgiSLFKDgXsn3lnbAhmQ";
 
   /* { nombres: string[] } -> { ok: true, resultados: [{nombre, estado,
      nacional, fideEstandar, fideId}] } o { ok: false, error }. Nunca lanza:
      un problema de red o de la función vuelve como { ok: false }. */
   async function buscar(nombres) {
+    return pedir("pareo-elo-nacional", { nombres: nombres });
+  }
+
+  /* ("fide" | "nacional", texto) -> { ok: true, filas: [{ fideId, nombre,
+     titulo, fed, sexo, nacimiento, club, nacional, estandar, rapido, blitz }],
+     total, hayMas, periodo } o { ok: false, error }. Las tres listas de FIDE
+     vienen en la misma fila: quien llama elige cuál usa. Nunca lanza. */
+  async function buscarEnLista(lista, q) {
+    return pedir("pareo-listas-elo", { lista: lista, q: q });
+  }
+
+  async function pedir(funcion, cuerpo) {
     let res;
     try {
-      res = await fetch(URL_FUNCION, {
+      res = await fetch(FUNCIONES + funcion, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: "Bearer " + ANON, apikey: ANON },
-        body: JSON.stringify({ nombres: nombres }),
+        body: JSON.stringify(cuerpo),
       });
     } catch {
       return { ok: false, error: null };
@@ -36,5 +53,5 @@ window.PareoEloNacional = (function () {
     return datos && typeof datos === "object" ? datos : { ok: false, error: null };
   }
 
-  return { buscar: buscar };
+  return { buscar: buscar, buscarEnLista: buscarEnLista };
 })();
