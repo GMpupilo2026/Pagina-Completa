@@ -96,7 +96,8 @@
       invictos: "Invictos de cada categoría",
       nadieInvicto: "Nadie va invicto.",
       puntosCortos: (p) => p + (p === "1" ? " punto" : " puntos"),
-      modoTodo: "Pareo y clasificación", modoPareo: "Solo el pareo", modoClasif: "Solo la clasificación", catTodas: "Todas las categorías",
+      modoTodo: "Pareo y clasificación", modoPareo: "Solo el pareo", modoClasif: "Solo la clasificación", modoVivo: "Solo las partidas en vivo", catTodas: "Todas las categorías",
+      proyVivo: (pag, de) => "Partidas en vivo" + (de > 1 ? " · " + pag + "/" + de : ""),
       proyClasif: (r, cat, pag, de) => "Clasificación · " + cat + " · tras la ronda " + r + (de > 1 ? " · " + pag + "/" + de : ""),
       proyPodios: "Los podios",
       dipTodos: "Todos los certificados (PDF)",
@@ -239,7 +240,8 @@
       invictos: "Unbeaten players in each section",
       nadieInvicto: "Nobody is unbeaten.",
       puntosCortos: (p) => p + (p === "1" ? " point" : " points"),
-      modoTodo: "Pairings and standings", modoPareo: "Pairings only", modoClasif: "Standings only", catTodas: "All sections",
+      modoTodo: "Pairings and standings", modoPareo: "Pairings only", modoClasif: "Standings only", modoVivo: "Live games only", catTodas: "All sections",
+      proyVivo: (pag, de) => "Live games" + (de > 1 ? " · " + pag + "/" + de : ""),
       proyClasif: (r, cat, pag, de) => "Standings · " + cat + " · after round " + r + (de > 1 ? " · " + pag + "/" + de : ""),
       proyPodios: "The podiums",
       dipTodos: "All the certificates (PDF)",
@@ -678,7 +680,16 @@
   // empieza por los podios. Lo elegido queda en este aparato (la pantalla de la sala).
   const CLAVE_MODO = "cac_proyector_modo_v1";
   const FILAS_CLASIF = 12;
-  let modo = (() => { try { const m = localStorage.getItem(CLAVE_MODO); return ["todo", "pareo", "clasif"].includes(m) ? m : "todo"; } catch (e) { return "todo"; } })();
+  const PARTIDAS_POR_PAGINA = 6;
+  // Las partidas en vivo para el proyector: se piden con el resto, solo si la
+  // sala tiene la transmisión de Lichess.
+  let vivoProy = [];
+  async function traerVivoProyector() {
+    const P = window.CentroamericanoPartidas;
+    if (!P || !P.enJuego) { vivoProy = []; return; }
+    try { vivoProy = await P.enJuego(); } catch (e) { /* sin Lichess: el proyector sigue con lo suyo */ }
+  }
+  let modo = (() => { try { const m = localStorage.getItem(CLAVE_MODO); return ["todo", "pareo", "clasif", "vivo"].includes(m) ? m : "todo"; } catch (e) { return "todo"; } })();
   // Una sola categoría, para la pantalla de su sala (con un torneo por
   // categoría, cada sala tiene la suya). Vacía: todas, una tras otra.
   const CLAVE_CAT = "cac_proyector_categoria_v1";
@@ -705,6 +716,14 @@
       const grupos = conPodio;
       const de = Math.ceil(grupos.length / 3);
       for (let i = 0; i < de; i++) salida.push({ tipo: "podios", grupos: grupos.slice(i * 3, i * 3 + 3), porGrupo: porGrupoJug, pag: i + 1, de });
+    }
+    // Las partidas transmitidas que se están jugando, seis por pantalla, antes
+    // que el pareo (las trae js/centroamericano-partidas.js; ver vivoProy).
+    if (modo === "todo" || modo === "vivo") {
+      const vivas = vivoProy.filter((x) => !sola || x.t.categoria === sola);
+      const de = Math.ceil(vivas.length / PARTIDAS_POR_PAGINA);
+      for (let i = 0; i < de; i++) salida.push({ tipo: "vivo", pag: i + 1, de, partidas: vivas.slice(i * PARTIDAS_POR_PAGINA, (i + 1) * PARTIDAS_POR_PAGINA) });
+      if (modo === "vivo") return salida;
     }
     const pareoDe = {};
     datos.torneos.forEach((tor) => {
@@ -751,9 +770,9 @@
     $("proyector-pausa").textContent = pausado ? tx.seguir : tx.pausa;
     $("proyector-pausa").setAttribute("aria-pressed", pausado ? "true" : "false");
     const sel = $("proyector-modo");
-    if (sel && sel.dataset.idioma !== V.idioma()) {
-      sel.dataset.idioma = V.idioma();
-      sel.replaceChildren(...[["todo", tx.modoTodo], ["pareo", tx.modoPareo], ["clasif", tx.modoClasif]].map(([v, t]) => { const o = el("option", "", t); o.value = v; return o; }));
+    if (sel && sel.dataset.idioma !== V.idioma() + (vivoProy.length ? "+vivo" : "")) {
+      sel.dataset.idioma = V.idioma() + (vivoProy.length ? "+vivo" : "");
+      sel.replaceChildren(...[["todo", tx.modoTodo], ["pareo", tx.modoPareo], ["clasif", tx.modoClasif]].concat(vivoProy.length || modo === "vivo" ? [["vivo", tx.modoVivo]] : []).map(([v, t]) => { const o = el("option", "", t); o.value = v; return o; }));
     }
     if (sel) sel.value = modo;
     // Las categorías que hay en los datos (se rearma si cambian o cambia el idioma).
@@ -779,7 +798,12 @@
     if (pagina >= paginas.length) pagina = 0;
     const p = paginas[pagina];
     const conFed = (j, n) => nombreCompleto(n || j) + (j && j.fed ? " (" + j.fed + ")" : "");
-    if (p.tipo === "pareo") {
+    if (p.tipo === "vivo") {
+      titulo.textContent = tx.proyVivo(p.pag, p.de);
+      const rejilla = el("div", "cac-proyector-vivo");
+      p.partidas.forEach((x) => rejilla.appendChild(window.CentroamericanoPartidas.tarjetaGrande(x)));
+      caja.replaceChildren(rejilla);
+    } else if (p.tipo === "pareo") {
       titulo.textContent = tx.proyTitulo(p.ronda, V.conModalidad(V.categoria(p.grupo)), p.pag, p.de);
       const quien = (n) => (n ? conFed(p.porNo.get(n.no), n) : "");
       caja.replaceChildren(tablaProyector([tx.proyMesa, tx.proyBlancas, tx.proyResultado, tx.proyNegras], p.mesas.map((m) => [
@@ -840,9 +864,10 @@
       if (++segundos >= SEGUNDOS_PROYECTOR) { segundos = 0; avanzar(1); }
     }, 1000);
     clearInterval(refresco);
-    const traer = () => V.pedir().then(() => { paginas = armarPaginas(); pintarProyector(); }, () => pintarProyector());
+    const traer = () => Promise.all([V.pedir(), traerVivoProyector()]).then(() => { paginas = armarPaginas(); pintarProyector(); }, () => pintarProyector());
     traer();
-    refresco = setInterval(traer, 60000);
+    // Con partidas en vivo, más seguido: cada 20 segundos.
+    refresco = setInterval(traer, 20000);
   }
   function cerrarProyector() {
     clearInterval(reloj); clearInterval(refresco);

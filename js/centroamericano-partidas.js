@@ -77,6 +77,8 @@
       sinJugadas: "Todavía no hay jugadas.",
       blancas: "Blancas", negras: "Negras",
       porDefinir: "Por definir",
+      enVivoTitulo: "En vivo ahora", enVivoVer: (n) => "Ver las " + n + " →",
+      barra: (e) => e == null ? "sin evaluación" : (Math.abs(e) < 0.3 ? "igualado" : e > 0 ? "mejor las blancas" : "mejor las negras"),
     },
     en: {
       titulo: "Live games",
@@ -115,6 +117,8 @@
       sinJugadas: "No moves yet.",
       blancas: "White", negras: "Black",
       porDefinir: "To be decided",
+      enVivoTitulo: "Live now", enVivoVer: (n) => "See all " + n + " →",
+      barra: (e) => e == null ? "no evaluation" : (Math.abs(e) < 0.3 ? "equal" : e > 0 ? "white is better" : "black is better"),
     },
   };
   const T = () => TEXTOS[V.idioma()] || TEXTOS.es;
@@ -847,10 +851,120 @@
   // Cambiar de modalidad cambia los torneos que se ven.
   document.addEventListener("click", (e) => {
     if (!e.target.closest || !e.target.closest("[data-modalidades] [data-modalidad]")) return;
-    setTimeout(() => { if (dialogo && dialogo.open && !visor) { contenido.replaceChildren(); pintarLista(); } }, 0);
+    setTimeout(() => { if (dialogo && dialogo.open && !visor) { contenido.replaceChildren(); pintarLista(); } if (evento && evento.torneos.length) pintarEnVivo(); }, 0);
   });
-  // La ficha se enciende sola si la sala ya tiene la transmisión.
-  cargarEvento().catch(() => {});
+  // La ficha se enciende sola si la sala ya tiene la transmisión, y entonces
+  // arranca «En vivo ahora».
+  cargarEvento().then(() => { if (evento && evento.torneos.length) vigilarEnVivo(); }, () => {});
+
+  /* ---------------- lo que se está jugando ---------------- */
+  // Las partidas de la ronda de ahora que ya empezaron y no terminaron, en la
+  // modalidad que se ve, cada una con la evaluación de su última jugada que
+  // traiga Lichess (el PGN se pide a lo sumo cada minuto por ronda). Lo usan
+  // «En vivo ahora» de la portada y el proyector (js/centroamericano-tablas.js).
+  const PGN_VIVO_MS = 60000;
+  async function enJuego() {
+    await cargarEvento();
+    if (!evento || !evento.torneos.length) return [];
+    const vivas = (await partidasDeTodo(0, LISTA_MS)).filter((x) => !x.p.resultado && x.p.ultima);
+    const porRonda = new Map();
+    vivas.forEach((x) => porRonda.set(x.r.id, x));
+    await Promise.all([...porRonda.values()].map(async (x0) => {
+      try {
+        const porId = await cargarPgn(x0.t, x0.r, PGN_VIVO_MS);
+        vivas.filter((x) => x.r.id === x0.r.id).forEach((x) => {
+          const g = porId[x.p.id];
+          const j = g && g.jugadas.slice().reverse().find((k) => k.eval != null);
+          x.eval = j ? j.eval : null;
+        });
+      } catch (e) { /* sin evaluación: la barra queda apagada */ }
+    }));
+    return vivas;
+  }
+
+  // La barra chica de una partida, de costado: blanco a la izquierda. Con el
+  // dato escrito para el lector (y en el proyector, también a la vista).
+  function barraChica(e, tx) {
+    const b = el("div", "cac-vivo-barra" + (e == null ? " cac-visor-barra-sin" : ""));
+    b.setAttribute("role", "img");
+    b.setAttribute("aria-label", tx.barra(e));
+    const blanco = el("span", "");
+    blanco.style.width = L.porcentaje(e == null ? 0 : e).toFixed(1) + "%";
+    b.appendChild(blanco);
+    return b;
+  }
+
+  // La tarjeta de una partida en la fila de la portada: un toque abre el visor.
+  function tarjetaMini(x, tx) {
+    const { p, t, r } = x;
+    const li = el("li", "cac-envivo-item");
+    const tab = el("div", "cine-tablero cine-tablero-mini");
+    tab.setAttribute("aria-hidden", "true");
+    F.dibujar(tab, p.fen, p.ultima, { miniatura: true });
+    const datos = el("div", "cac-envivo-datos");
+    datos.append(el("p", "cac-envivo-cat", tx.partida(V.categoria(t.categoria) || t.nombre, 0, p.mesa)),
+      lineaJugador(p.negras, "b", tx, ""), lineaJugador(p.blancas, "w", tx, ""));
+    li.append(tab, barraChica(x.eval, tx), datos);
+    const abrir = el("button", "cac-partida-abrir");
+    abrir.type = "button";
+    abrir.dataset.partida = p.id;
+    abrir.setAttribute("aria-label", tx.ver(nombreDe(p.blancas, tx), nombreDe(p.negras, tx)) + ". " + tx.enJuego + ".");
+    abrir.addEventListener("click", () => abrirPartida(x, abrir));
+    li.appendChild(abrir);
+    return li;
+  }
+
+  // La tarjeta grande del proyector: tablero, jugadores con su reloj y la barra.
+  function tarjetaGrande(x) {
+    const tx = T(), { p, t } = x;
+    const c = el("section", "cac-proyector-partida");
+    c.appendChild(el("h3", "", tx.partida(V.categoria(t.categoria) || t.nombre, 0, p.mesa)));
+    c.appendChild(lineaJugador(p.negras, "b", tx, relojTexto(p.negras.reloj != null ? p.negras.reloj / 100 : null)));
+    const tab = el("div", "cine-tablero");
+    tab.setAttribute("aria-hidden", "true");
+    F.dibujar(tab, p.fen, p.ultima, { miniatura: true });
+    c.appendChild(tab);
+    c.appendChild(lineaJugador(p.blancas, "w", tx, relojTexto(p.blancas.reloj != null ? p.blancas.reloj / 100 : null)));
+    c.appendChild(barraChica(x.eval, tx));
+    c.appendChild(el("p", "cac-proyector-eval", tx.barra(x.eval) + (x.eval != null && Math.abs(x.eval) < 90 ? " (" + (x.eval >= 0 ? "+" : "−") + (Math.round(Math.abs(x.eval) * 10) / 10).toFixed(1).replace(".", V.idioma() === "en" ? "." : ",") + ")" : "")));
+    return c;
+  }
+
+  // «En vivo ahora», arriba de «Busca a tu jugador»: las partidas que se
+  // están jugando, de costado; se esconde sin transmisión o sin partidas en
+  // juego. Se pone al día cada 30 segundos mientras la página está a la vista.
+  const ENVIVO_MS = 30000;
+  const filaVivo = $("en-vivo-ahora");
+  async function pintarEnVivo() {
+    if (!filaVivo) return;
+    let vivas = [];
+    try { vivas = await enJuego(); } catch (e) { vivas = []; }
+    const tx = T();
+    filaVivo.hidden = !vivas.length;
+    if (!vivas.length) { filaVivo.replaceChildren(); return; }
+    const cab = el("div", "cac-envivo-cabeza");
+    const h = el("h3", "cac-buscador-titulo");
+    h.appendChild(el("span", "", "🔴 ")).setAttribute("aria-hidden", "true");
+    h.appendChild(document.createTextNode(tx.enVivoTitulo));
+    const ver = el("a", "cac-accion underline underline-offset-2", tx.enVivoVer(vivas.length));
+    ver.href = "#partidas";
+    ver.addEventListener("click", (e) => { e.preventDefault(); abrirLista({ vivo: true }); });
+    cab.append(h, ver);
+    const ul = el("ul", "cac-envivo-lista");
+    ul.setAttribute("aria-label", tx.enVivoTitulo);
+    vivas.slice(0, 12).forEach((x) => ul.appendChild(tarjetaMini(x, tx)));
+    // Si el foco estaba en una tarjeta, vuelve a la misma después de repintar.
+    const foco = document.activeElement && filaVivo.contains(document.activeElement) ? document.activeElement.dataset.partida : null;
+    filaVivo.replaceChildren(cab, ul);
+    if (foco) { const b = filaVivo.querySelector('[data-partida="' + foco + '"]'); if (b) b.focus(); }
+  }
+  let relojVivo = null;
+  function vigilarEnVivo() {
+    if (!filaVivo) return;
+    clearInterval(relojVivo);
+    pintarEnVivo();
+    relojVivo = setInterval(() => { if (!document.hidden && evento && evento.torneos.length) pintarEnVivo(); }, ENVIVO_MS);
+  }
 
   // Para la ventana de cada categoría (js/centroamericano-tablas.js): si
   // Lichess transmite esa categoría, y abrir la lista ya filtrada por ella.
@@ -859,6 +973,7 @@
   }
   function abrirLista(f) {
     filtros.categoria = (f && f.categoria) || "";
+    filtros.vivo = !!(f && f.vivo);
     vista = null; visor = null;
     if (contenido) contenido.replaceChildren();
     if (dialogo && !dialogo.open) {
@@ -867,6 +982,6 @@
   }
 
   // actualizar(): lo que hace el temporizador, ya (lo usa el verificador).
-  window.CentroamericanoPartidas = { botonDe, codigoCategoria, modalidadDe, abrirPartida, cargarEvento, pgnDe, transmiteCategoria, abrirLista,
+  window.CentroamericanoPartidas = { botonDe, codigoCategoria, modalidadDe, abrirPartida, cargarEvento, pgnDe, transmiteCategoria, abrirLista, enJuego, tarjetaGrande, pintarEnVivo,
     actualizar: () => (visor ? traerJugadas(true) : (Object.values(evento ? evento.torneos : []).forEach((t) => { t.partidasPorRonda = {}; }), pintarLista())) };
 })();

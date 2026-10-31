@@ -762,3 +762,27 @@ a.cac-despedida:hover .cac-globo { transform: translateY(-2px); }
   .cac-cat-res { justify-self: center; }
 }
 .cac-cat-arriba [hidden] { display: none; }
+
+/* «En vivo ahora» (arriba de «Busca a tu jugador») y las partidas del
+   proyector: el tablero de js/tablero-fen.js y una barra de costado con el
+   blanco a la izquierda; la evaluación va también escrita (en la tarjeta, para
+   el lector; en el proyector, a la vista). */
+.cac-envivo { --esc-ultima: rgb(240 180 41 / 0.45); --esc-pantalla-borde: #40478f; }
+.dark .cac-envivo { --esc-pantalla-borde: #b8bbf2; }
+.cac-envivo[hidden] { display: none; }
+.cac-envivo-cabeza { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; margin-bottom: 0.6rem; flex-wrap: wrap; }
+.cac-envivo-lista { display: flex; gap: 0.75rem; overflow-x: auto; scroll-snap-type: x mandatory; padding-bottom: 0.4rem; }
+.cac-envivo-item { position: relative; flex: 0 0 11.5rem; scroll-snap-align: start; background: #fff; border: 2px solid #dfe0f7; border-radius: 1rem; padding: 0.6rem; display: grid; gap: 0.4rem; align-content: start; }
+.dark .cac-envivo-item { background: rgb(var(--c-brand-900, 16 42 67)); border-color: rgb(255 255 255 / 0.15); }
+.cac-envivo-item:hover, .cac-envivo-item:focus-within { border-color: #40478f; }
+.cac-envivo-cat { font-size: 0.72rem; font-weight: 800; color: #40478f; }
+.dark .cac-envivo-cat { color: #b8bbf2; }
+.cac-envivo-datos .cac-partida-jugador { font-size: 0.8rem; }
+.cac-vivo-barra { height: 0.5rem; border-radius: 999px; background: #2b2b2b; overflow: hidden; }
+.cac-vivo-barra span { display: block; height: 100%; background: #f5f5f5; border-right: 2px solid #e0ab5b; transition: width 0.3s; }
+.cac-proyector-vivo { --esc-ultima: rgb(240 180 41 / 0.5); --esc-pantalla-borde: #ffffff; display: grid; gap: 1.2rem; grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr)); }
+.cac-proyector-partida { display: grid; gap: 0.4rem; align-content: start; }
+.cac-proyector-partida h3 { font-weight: 800; font-size: 1.15rem; }
+.cac-proyector-partida .cac-partida-jugador { font-size: 1.1rem; }
+.cac-proyector-partida .cac-vivo-barra { height: 0.8rem; }
+.cac-proyector-eval { font-weight: 700; }

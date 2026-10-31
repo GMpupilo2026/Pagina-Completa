@@ -10437,6 +10437,51 @@ la propia.
   vuelta a la elección con el foco y el jugador que abre sus rondas. Rompí a
   propósito que las categorías abrieran chess-results y que tocar un jugador
   no cerrara las ventanas, y saltaron.
+
+
+### «En vivo ahora» y las partidas en el proyector
+
+El dueño vio primero un ejemplo en imagen y dijo que sí.
+
+- **«En vivo ahora»** (`#en-vivo-ahora`, arriba del buscador): una franja con
+  las partidas transmitidas que **ya empezaron y no terminaron**, en la
+  modalidad que se ve. Cada una lleva un tablero chico, la barra de la
+  evaluación de costado, «Categoría · Mesa N» y los dos jugadores. Tocarla abre
+  esa partida en el visor, y «Ver las N →» abre la lista con el filtro «en
+  vivo». Sin partidas en juego, la franja no se muestra. Se vuelve a pedir
+  cada 30 s (`ENVIVO_MS`).
+- **Una sola fuente**: `CentroamericanoPartidas.enJuego()` arma la lista para
+  la franja y para el proyector. La evaluación sale del PGN de Lichess, y el
+  PGN de cada ronda se pide a lo sumo una vez por minuto (`PGN_VIVO_MS`).
+- **La barra nunca va sola**: dice con palabras «mejor las blancas», «mejor las
+  negras», «igualada» o «sin evaluación». En el proyector, además, va la cifra
+  (+4,8).
+- **El proyector** pone las partidas en vivo **antes** del pareo, seis por
+  pantalla (`PARTIDAS_POR_PAGINA`). Cada partida lleva su tablero, los
+  jugadores con su reloj y la barra escrita. El modo nuevo «Solo partidas en
+  vivo» deja solo eso. Si se fijó una categoría, se muestran solo las suyas.
+  Sin Lichess, el proyector sigue con lo suyo.
+- Lo revisa `verificar-centroamericano-partidas.js`. Rompí a propósito que la
+  lista incluyera las partidas terminadas y que el proyector no pusiera las
+  páginas en vivo, y las dos comprobaciones saltaron.
+
+
+### «Así terminó mi torneo»
+
+Cuando el torneo de un jugador terminó, su tarjeta trae «🏁 Así terminó mi
+torneo», que arma una imagen de 1080 × 1920 para el estado de WhatsApp
+(`imagenFinal` en `js/centroamericano-tablas.js`). La imagen lleva:
+
+- el puesto, con su medalla si subió al podio;
+- cuatro cifras: puntos, rendimiento, ± Elo y partidas;
+- la ronda a ronda en círculos, cada uno con su resultado escrito (el color no
+  va solo);
+- la mejor victoria;
+- la marca de agua, una sola vez.
+
+Se comparte con `navigator.share` si el aparato puede, y si no, se baja. Lo
+revisa `verificar-centroamericano.js`: el tamaño, que sea PNG y que la marca
+vaya una vez.
 ## Las páginas de los torneos universitarios
 
 Dos, con la misma maquinaria: `cenfotec-2026.html` (el Desafío Mentes
