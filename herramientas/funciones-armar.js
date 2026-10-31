@@ -95,6 +95,9 @@ const FUNCIONES = {
   // cuenta (verify_jwt en false), con su propio freno (pareo_elo_frenar).
   // Su lector de ajedrezcostarica.com es compartido con elo-fide.
   "pareo-elo-nacional": ["ajedrezcostarica.ts"],
+  // «Agregar desde una lista de Elo» de Pareo Integral: su lector
+  // (leer-listas.ts) es suyo y vive en su carpeta. Ver su cabecera.
+  "pareo-listas-elo": [],
   // «Torneos en Pareo Integral»: publicar, la organización, los reportes y
   // sus correos (verify_jwt en false). Su correos.ts es suyo; la franja de
   // arriba de los correos es la de siempre. Ver su cabecera.

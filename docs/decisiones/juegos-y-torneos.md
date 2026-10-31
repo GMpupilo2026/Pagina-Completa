@@ -3865,6 +3865,65 @@ Al tocar esto, `node herramientas/verificar-pareo-sala-evento.js`. Rompiendo a
 propósito la mesa física, la casilla de consentimiento, el llamado, el fin de
 la ronda o el aceptar, salta.
 
+### Pareo Integral: agregar jugadores desde las listas de Elo
+
+El 31/10/2026 el dueño pidió poder agregar jugadores «desde listas de Elo,
+las 3 de la FIDE, y la del Elo de Costa Rica». En Jugadores, debajo de
+«Pegar una lista», está ahora **«Agregar desde una lista de Elo (FIDE o
+Nacional)»**: se elige la lista (FIDE Estándar, FIDE Rápido, FIDE Blitz o
+Elo Nacional de Costa Rica), se escriben los apellidos o el código FIDE y
+cada resultado tiene su «Agregar». Entra con el nombre, el Elo **de la lista
+elegida**, el título, la federación, el código FIDE y, si la lista lo dice,
+el sexo.
+
+- **Las dos páginas no se dejan leer desde el navegador** (ni
+  ratings.fide.com ni ajedrezcostarica.com mandan CORS), así que las lee la
+  Edge Function `pareo-listas-elo` (verify_jwt en false, CORS solo a
+  ajedrez-integral.com, como `pareo-elo-nacional`). Recibe solo
+  `{ lista: "fide" | "nacional", q }` —lo escrito, de 3 a 60 caracteres de
+  nombre o números— y no guarda nada.
+- **Las tres listas de FIDE son UNA búsqueda.** El buscador de FIDE
+  (`ratings.fide.com/incl_search_l.php?search=…&simple=1`, lo que pinta la
+  página de búsqueda de FIDE) trae en cada fila el código, el nombre, el
+  título, la federación, Std., Rpd., Blz. y el año de nacimiento. La página
+  elige cuál de los tres usa; cambiar entre Estándar, Rápido y Blitz no
+  vuelve a buscar. Busca por nombre o por código. Encuentra muchos (con
+  «garcia», 5722) pero devuelve unas 450 filas; la función manda las
+  primeras 60 y dice «escribe más del nombre».
+- **La lista nacional** (`ajedrezcostarica.com/es/national-rating?name=…`)
+  trae de a 50 y dice cuántos encontró («2 jugadores») y de qué mes es
+  («Octubre 2026»), que se muestra. Cada jugador trae su código FIDE, club,
+  título, «gender» (1 hombre, 2 mujer: comprobado con los nombres de la
+  lista en octubre de 2026), la edad y los cuatro Elo: Nacional, Estándar,
+  Rápido y Blitz. «NM» no es un título de FIDE de jugador y se deja fuera;
+  la federación es CRC.
+- **Nunca se inventa un dato.** Un Elo de 0 o vacío es null y el jugador
+  entra **sin Elo**, no con el de otra lista. El año de nacimiento de FIDE
+  **no** se guarda como fecha: Pareo pide el día exacto, y un 1 de enero
+  inventado cambiaría la categoría de los JDE. FIDE no dice el sexo: queda
+  vacío.
+- **Quien ya está no entra dos veces**: el mismo código FIDE ya inscrito
+  sale como «Ya está», deshabilitado. Al agregar, el foco pasa al «Agregar»
+  siguiente para poder sumar varios seguidos.
+- **El freno es suyo**, `pareo_listas_frenar()`: 60 búsquedas por hora por
+  conexión y 600 en total. Va con su propio tipo («busqueda_lista») en
+  `interno.envios_publicos` y no con «formulario», porque con «formulario»
+  cada búsqueda gastaría el tope de 40 por hora que comparten todos los
+  formularios públicos desde esa conexión: un árbitro buscando a su torneo
+  dejaría sin poder inscribirse a alguien de su misma red.
+- La política de privacidad lo dice (FIDE y Ajedrez Costa Rica, en
+  proveedores), y la página también, debajo del título del apartado.
+- La lista elegida se recuerda en el navegador (`pareo_lista_elo_v1`); la
+  primera vez, si el torneo es válido para Elo Nacional, empieza en la
+  nacional.
+- El lector vive aparte (`supabase/functions/pareo-listas-elo/leer-listas.ts`)
+  para probarlo sin red. `node herramientas/verificar-pareo-listas-elo.js`
+  lo prueba contra extractos reales de las dos páginas y, con un doble de la
+  función, prueba la página: lo que viaja, el Elo de Rápido y el Nacional, el
+  sexo, el «Ya está», el texto corto que no viaja y el aviso del freno.
+  Se rompió a propósito (el Elo siempre del Estándar; el sexo dado vuelta) y
+  saltó.
+
 ### Pareo Integral como programa de computadora
 
 El 31/10/2026 el dueño pidió que Pareo Integral se viera «tipo programa de
