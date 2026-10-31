@@ -1100,7 +1100,7 @@ async function esperarJugadas(p, n) {
       await pm.evaluate(() => ["t-torneo", "t-amistosas", "vivo-retraso", "btn-vivo-parar", "btn-vivo-nuevo", "simul", "vivo-alumno"].map((id) => document.getElementById(id).checkVisibility())), [false, false, false, false, false, false, false]);
     igual("sin la pestaña «Mesas» (no tiene nada que mostrar)", await pm.$$eval("#nt-pestanas [role=tab]", (bs) => bs.filter((b) => b.checkVisibility()).map((b) => b.dataset.pestana)), ["partida", "vivo", "var", "mas"]);
     igual("arriba dice qué mesa es", await pm.textContent("#nt-lugar"), "Mesa 2 · Amistosos del club");
-    igual("los jugadores pueden escribir sus nombres", await pm.evaluate(() => [document.getElementById("vivo-blancas").checkVisibility(), document.getElementById("vivo-blancas").readOnly]), [true, false]);
+    igual("los jugadores pueden escribir sus nombres (en «En vivo»)", [await pm.isVisible("#vivo-blancas"), await pm.evaluate(() => document.getElementById("vivo-blancas").readOnly)], [true, false]);
     igual("no toca nada de la Academia", [...new Set(await pm.evaluate(() => window.__tablas || []))], []);
     await pm.fill("#vivo-blancas", "Ana");
     await foto(pm, new Chess().fen(), ESQ0);

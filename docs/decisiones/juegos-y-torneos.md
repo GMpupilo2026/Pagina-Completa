@@ -11824,7 +11824,9 @@ estilos `.nt-*` de `css/styles.css`):
   que mostrar (en modo mesa, las de quien administra) no sale.
 - **La barra de abajo** (en la computadora): «Todo bien» o lo que necesita
   atención (un error, una jugada en duda, sin señal), el código, las jugadas
-  y cuánto lee.
+  y cuánto lee. **No flota**: pegada al borde de la pantalla tapaba
+  la parte de abajo de la imagen, donde se tocan las esquinas (la prueba de
+  los cuatro tableros no podía marcar los de abajo).
 - **En el celular**, como una app: una columna, y las pestañas fijas abajo.
   En un cuadrito de `camaras.html` (compacto) y en el celular de una mesa,
   una columna también.

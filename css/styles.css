@@ -2679,7 +2679,9 @@ html.modo-proyector .clase-sticker-globo { font-size: 2rem; }
 /* ── Notara como programa (camara-tablero.html; js/notara-interfaz.js) ──
  * La barra de arriba con el estado, los pasos, el cuerpo en dos columnas
  * (la cámara y el panel con pestañas) y la barra de abajo. En el celular,
- * las pestañas van fijas abajo, como en una app. */
+ * las pestañas van fijas abajo, como en una app. La barra de abajo NO flota:
+ * pegada al borde tapaba la parte de abajo de la imagen, donde se tocan las
+ * esquinas. */
 .nt-barra { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 0.75rem; padding: 0.6rem 0.9rem; border-radius: 1rem; background: rgb(var(--c-brand-900)); color: #fff; margin-bottom: 0.5rem; }
 .nt-chip { display: inline-flex; align-items: center; border-radius: 999px; padding: 0.15rem 0.6rem; font-weight: 600; background: rgb(var(--c-brand-800)); border: 1px solid rgb(var(--c-brand-600)); color: #fff; }
 .nt-chip-bien { background: #0b7a52; border-color: #0b7a52; }
@@ -2713,7 +2715,7 @@ html.modo-proyector .clase-sticker-globo { font-size: 2rem; }
 @media (min-width: 1024px) {
   .nt-cuerpo { grid-template-columns: minmax(0, 1fr) 27rem; align-items: start; }
   .nt-lado { position: sticky; top: 0.5rem; max-height: calc(100vh - 3.5rem); overflow-y: auto; overscroll-behavior: contain; }
-  .nt-estado { display: flex; flex-wrap: wrap; gap: 0.4rem 1.25rem; align-items: center; position: sticky; bottom: 0; z-index: 30; margin-top: 1rem; padding: 0.45rem 0.9rem; border-radius: 0.75rem; background: rgb(var(--c-brand-900)); color: rgb(var(--c-brand-200)); font-size: 0.8rem; }
+  .nt-estado { display: flex; flex-wrap: wrap; gap: 0.4rem 1.25rem; align-items: center; margin-top: 1rem; padding: 0.45rem 0.9rem; border-radius: 0.75rem; background: rgb(var(--c-brand-900)); color: rgb(var(--c-brand-200)); font-size: 0.8rem; }
   .nt-estado [hidden] { display: none; }
   #nt-estado-msg { color: #fff; font-weight: 600; }
 }
