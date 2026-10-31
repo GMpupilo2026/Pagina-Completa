@@ -610,6 +610,8 @@ ok("la página carga el cliente de Supabase antes que su código en vivo", html.
     ok("el botón del profe está abajo, fijo, con «¿Te ayudo?» la primera vez y el panel cerrado",
        pf.ve && pf.globo && pf.texto === "¿Te ayudo?" && pf.aria === "false" && !pf.panel && pf.fijo === "fixed", JSON.stringify(pf));
     await p6.click("#profe-boton");
+    // El dibujo puede tardar en llegar (en el CI tarda): se espera a que cargue, con un tope.
+    await p6.waitForFunction(() => { const i = document.querySelector("#profe-panel img"); return i && i.complete && i.naturalWidth > 0; }, null, { timeout: 8000 }).catch(() => {});
     const lp = await p6.evaluate(() => { const pn = document.getElementById("profe-panel");
       return { ve: pn.checkVisibility(), aria: document.getElementById("profe-boton").getAttribute("aria-expanded"), titulo: pn.querySelector("#profe-titulo").textContent,
         preguntas: [...pn.querySelectorAll("[data-pregunta]")].map((b) => b.textContent), foco: document.activeElement.dataset.pregunta,
