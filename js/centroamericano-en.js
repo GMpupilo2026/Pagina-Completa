@@ -275,6 +275,9 @@ window.CentroamericanoEN = {
     "por confirmar con la organización (las bases no dicen cuál de los Wyndham de San José).": "to be confirmed with the organizers (the regulations don't say which of the Wyndham hotels in San José).",
 
     // Qué hacer en el tiempo libre (#paseos)
+    "Museo de Arte Costarricense": "Costa Rican Art Museum",
+    "En la antigua terminal del aeropuerto, al este de La Sabana: arte costarricense y el Salón Dorado, con su mural de relieves dorados.": "In the old airport terminal, on the east side of La Sabana: Costa Rican art and the Golden Hall, with its gilded relief mural.",
+    "Museo de Arte Costarricense (se abre en otra pestaña)": "Costa Rican Art Museum (opens in a new tab)",
     "Qué hacer en el tiempo libre": "What to do in your free time",
     "Revisa el horario antes de ir.": "Check the opening hours before you go.",
     "Los horarios y los precios cambian: «Ver en el mapa» muestra los de hoy. Y vuelve con tiempo a la sala: la tolerancia es de 30 minutos desde el inicio de la ronda.": "Opening hours and prices change: “See on the map” shows today's. And be back at the venue in time: the default time is 30 minutes from the start of the round.",

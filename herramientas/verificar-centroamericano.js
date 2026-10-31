@@ -482,12 +482,12 @@ ok("la página carga el cliente de Supabase antes que su código en vivo", html.
     const puesto = await p4.evaluate(() => [...document.querySelectorAll("#paseos [data-paseo-filtro]")].filter((b) => b.getAttribute("aria-pressed") === "true").map((b) => b.dataset.paseoFiltro));
     await p4.click('#paseos [data-paseo-filtro="excursion"]');
     const excursion = await visibles();
-    ok("la ficha «Qué hacer en el tiempo libre» abre sus paseos, cada uno con su mapa y cómo llegar", todos.length === 13 && await p4.evaluate(() =>
+    ok("la ficha «Qué hacer en el tiempo libre» abre sus 14 paseos, cada uno con su mapa y cómo llegar", todos.length === 14 && await p4.evaluate(() =>
       [...document.querySelectorAll("#paseos .cac-paseo")].every((li) => li.querySelectorAll('a[href^="https://www.google.com/maps/"]').length === 2)), JSON.stringify(todos));
-    ok("«Si llueve» deja solo los bajo techo, y el botón dice que está puesto", techo.length === 8 && !techo.includes("Parque Metropolitano La Sabana") && techo.includes("Museo de los Niños") && JSON.stringify(puesto) === '["techo"]', JSON.stringify([techo, puesto]));
+    ok("«Si llueve» deja solo los bajo techo, y el botón dice que está puesto", techo.length === 9 && !techo.includes("Parque Metropolitano La Sabana") && techo.includes("Museo de los Niños") && JSON.stringify(puesto) === '["techo"]', JSON.stringify([techo, puesto]));
     ok("«Excursión de medio día», los tres de lejos", JSON.stringify(excursion) === JSON.stringify(["Volcán Poás", "Volcán Irazú", "La Paz Waterfall Gardens"]), JSON.stringify(excursion));
     await p4.click('#paseos [data-paseo-filtro="todos"]');
-    ok("«Todos» los vuelve a mostrar", (await visibles()).length === 13);
+    ok("«Todos» los vuelve a mostrar", (await visibles()).length === 14);
     await p4.keyboard.press("Escape");
     await ctx4.close();
 

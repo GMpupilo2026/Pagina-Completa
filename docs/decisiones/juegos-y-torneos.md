@@ -10542,7 +10542,7 @@ la partida ya no está en la ronda de ahora, la lista).
 ### Qué hacer en el tiempo libre
 
 Una ficha más, «🌴 Qué hacer en el tiempo libre», que abre la ventana
-`#paseos`. Trae 13 lugares para las horas sin ronda, cada uno con su emoji,
+`#paseos`. Trae 14 lugares para las horas sin ronda, cada uno con su emoji,
 qué es, sus etiquetas escritas, «Ver en el mapa» y «Cómo llegar» (Google Maps,
 desde donde esté la persona). Los botones de arriba filtran: Todos, Cerca de
 la sala, En el centro de San José, Para niños, Si llueve y Excursión de medio
@@ -10553,16 +10553,17 @@ día. El puesto lo dicen `aria-pressed` y «✓», no solo el color.
   «Revisa el horario antes de ir», y el mapa de cada lugar trae los del día.
   Las distancias van por categoría («Cerca de la sala», «En taxi, 10–20 min»,
   «a una hora y media»).
-- **El Museo de Arte Costarricense quedó fuera**: no se pudo confirmar que
-  haya reabierto. Del Poás se avisa que cierra cuando el volcán está activo,
+- **El Museo de Arte Costarricense** primero quedó fuera, porque en la web no
+  se pudo confirmar que hubiera reabierto; el dueño confirmó que está abierto y
+  se agregó. Del Poás se avisa que cierra cuando el volcán está activo,
   y de los volcanes, que la entrada se compra antes en línea.
 - La ficha va de ancho completo en la computadora (con diez fichas, la última
   quedaba sola en la fila). Hoteles ya no ocupa dos columnas en el celular.
 - Los textos van en inglés y en francés, como el resto de la página. El
   filtro está en `js/centroamericano.js`.
 - Lo revisa `verificar-centroamericano.js`:
-  - que la ficha abra los 13 lugares, cada uno con sus dos enlaces al mapa;
-  - que «Si llueve» deje los 8 bajo techo y diga cuál está puesto;
+  - que la ficha abra los 14 lugares, cada uno con sus dos enlaces al mapa;
+  - que «Si llueve» deje los 9 bajo techo y diga cuál está puesto;
   - que «Excursión de medio día» deje los tres de lejos;
   - que «Todos» los vuelva a mostrar.
 
