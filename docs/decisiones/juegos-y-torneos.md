@@ -10539,6 +10539,36 @@ la partida ya no está en la ronda de ahora, la lista).
   cambia lo que hacen.
 
 
+### Qué hacer en el tiempo libre
+
+Una ficha más, «🌴 Qué hacer en el tiempo libre», que abre la ventana
+`#paseos`. Trae 13 lugares para las horas sin ronda, cada uno con su emoji,
+qué es, sus etiquetas escritas, «Ver en el mapa» y «Cómo llegar» (Google Maps,
+desde donde esté la persona). Los botones de arriba filtran: Todos, Cerca de
+la sala, En el centro de San José, Para niños, Si llueve y Excursión de medio
+día. El puesto lo dicen `aria-pressed` y «✓», no solo el color.
+
+- **Sin horarios, precios ni distancias en metros.** Al buscarlos (31/10), las
+  fuentes no coincidían entre sí y ninguna era oficial de 2026. La ficha dice
+  «Revisa el horario antes de ir», y el mapa de cada lugar trae los del día.
+  Las distancias van por categoría («Cerca de la sala», «En taxi, 10–20 min»,
+  «a una hora y media»).
+- **El Museo de Arte Costarricense quedó fuera**: no se pudo confirmar que
+  haya reabierto. Del Poás se avisa que cierra cuando el volcán está activo,
+  y de los volcanes, que la entrada se compra antes en línea.
+- La ficha va de ancho completo en la computadora (con diez fichas, la última
+  quedaba sola en la fila). Hoteles ya no ocupa dos columnas en el celular.
+- Los textos van en inglés y en francés, como el resto de la página. El
+  filtro está en `js/centroamericano.js`.
+- Lo revisa `verificar-centroamericano.js`:
+  - que la ficha abra los 13 lugares, cada uno con sus dos enlaces al mapa;
+  - que «Si llueve» deje los 8 bajo techo y diga cuál está puesto;
+  - que «Excursión de medio día» deje los tres de lejos;
+  - que «Todos» los vuelva a mostrar.
+
+  Rompí a propósito el filtro y saltaron sus comprobaciones.
+
+
 ### La página en francés
 
 La página del Centroamericano sale también en francés, para las delegaciones

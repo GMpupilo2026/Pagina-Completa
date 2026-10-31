@@ -18,6 +18,9 @@
  *    aparato; sin elección, va en español. `?lang=en`, `?lang=fr` o
  *    `?lang=es` en la dirección mandan (el cartel lleva el enlace en inglés).
  *
+ * 4. Los botones de «Qué hacer en el tiempo libre» (#paseos), que filtran los
+ *    lugares por su etiqueta.
+ *
  * Ver «La página del Centroamericano 2026» en docs/decisiones/juegos-y-torneos.md.
  */
 (function () {
@@ -300,6 +303,20 @@
       caja.hidden = true;
       try { localStorage.setItem(CLAVE_IOS, "1"); } catch (e) {}
     });
+  }
+
+  /* ---------------- los paseos ---------------- */
+  // «Qué hacer en el tiempo libre» (#paseos): cada botón deja los lugares que
+  // tienen su etiqueta (data-etiquetas); «Todos», todos. El puesto dice
+  // aria-pressed y lleva «✓», no solo el color.
+  const paseos = document.querySelector("#paseos [data-paseos]");
+  if (paseos) {
+    const filtros = document.querySelectorAll("#paseos [data-paseo-filtro]");
+    filtros.forEach((b) => b.addEventListener("click", () => {
+      const k = b.dataset.paseoFiltro;
+      filtros.forEach((x) => x.setAttribute("aria-pressed", x === b ? "true" : "false"));
+      paseos.querySelectorAll(".cac-paseo").forEach((li) => { li.hidden = k !== "todos" && li.dataset.etiquetas.split(" ").indexOf(k) === -1; });
+    }));
   }
 
   /* ---------------- arranque ---------------- */

@@ -71,8 +71,8 @@ ok("ningún teléfono sin confirmar", tels.every((t) => TELEFONOS.includes(t)), 
 const contacto = (html.match(/<dialog id="contacto"[\s\S]*?<\/dialog>/) || [""])[0];
 // Toda la información va en fichas: cada ventana de la página tiene su ficha y su «Cerrar».
 const dialogos = [...html.matchAll(/<dialog id="([a-z-]+)" class="ficha-dialogo[^"]*" aria-labelledby="\1-titulo">([\s\S]*?)<\/dialog>/g)];
-ok("el reglamento, el calendario, los hoteles, los contactos, el medallero, la clasificación, los países, las sorpresas, el cara a cara, los números, la elección de categoría, las partidas en vivo y el proyector van en ventanas",
-  JSON.stringify(dialogos.map((m) => m[1]).sort()) === JSON.stringify(["calendario", "cara-a-cara", "categoria", "clasificacion", "contacto", "delegaciones", "hoteles", "medallero", "numeros", "partidas", "proyector", "reglamento", "resultados", "sorpresas"]), dialogos.map((m) => m[1]).join(", "));
+ok("el reglamento, el calendario, los hoteles, los paseos, los contactos, el medallero, la clasificación, los países, las sorpresas, el cara a cara, los números, la elección de categoría, las partidas en vivo y el proyector van en ventanas",
+  JSON.stringify(dialogos.map((m) => m[1]).sort()) === JSON.stringify(["calendario", "cara-a-cara", "categoria", "clasificacion", "contacto", "delegaciones", "hoteles", "medallero", "numeros", "partidas", "paseos", "proyector", "reglamento", "resultados", "sorpresas"]), dialogos.map((m) => m[1]).join(", "));
 for (const [, id, cuerpo] of dialogos) {
   // La elección de categoría la abre la ficha «Resultados en vivo», que sin
   // JavaScript sigue llevando a chess-results (js/centroamericano-tablas.js).
@@ -471,6 +471,24 @@ ok("la página carga el cliente de Supabase antes que su código en vivo", html.
     }));
     await cambiarIdioma(p4, "es");
     ok("y al volver al español, otra vez exactamente como estaba", (await p4.evaluate(() => document.body.innerText)) === textoEs);
+
+    // Qué hacer en el tiempo libre: la ficha abre la ventana y los botones filtran.
+    await p4.click('#fichas a[href="#paseos"]');
+    await p4.waitForFunction(() => document.getElementById("paseos").open, null, { timeout: 5000 }).catch(() => {});
+    const visibles = () => p4.evaluate(() => [...document.querySelectorAll("#paseos .cac-paseo")].filter((li) => li.checkVisibility()).map((li) => li.querySelector("h3").textContent.replace(/^\S+ /, "")));
+    const todos = await visibles();
+    await p4.click('#paseos [data-paseo-filtro="techo"]');
+    const techo = await visibles();
+    const puesto = await p4.evaluate(() => [...document.querySelectorAll("#paseos [data-paseo-filtro]")].filter((b) => b.getAttribute("aria-pressed") === "true").map((b) => b.dataset.paseoFiltro));
+    await p4.click('#paseos [data-paseo-filtro="excursion"]');
+    const excursion = await visibles();
+    ok("la ficha «Qué hacer en el tiempo libre» abre sus paseos, cada uno con su mapa y cómo llegar", todos.length === 13 && await p4.evaluate(() =>
+      [...document.querySelectorAll("#paseos .cac-paseo")].every((li) => li.querySelectorAll('a[href^="https://www.google.com/maps/"]').length === 2)), JSON.stringify(todos));
+    ok("«Si llueve» deja solo los bajo techo, y el botón dice que está puesto", techo.length === 8 && !techo.includes("Parque Metropolitano La Sabana") && techo.includes("Museo de los Niños") && JSON.stringify(puesto) === '["techo"]', JSON.stringify([techo, puesto]));
+    ok("«Excursión de medio día», los tres de lejos", JSON.stringify(excursion) === JSON.stringify(["Volcán Poás", "Volcán Irazú", "La Paz Waterfall Gardens"]), JSON.stringify(excursion));
+    await p4.click('#paseos [data-paseo-filtro="todos"]');
+    ok("«Todos» los vuelve a mostrar", (await visibles()).length === 13);
+    await p4.keyboard.press("Escape");
     await ctx4.close();
 
     // «Busca a tu jugador» y el medallero, con un doble de la función (datos con la forma de sala-jugadores).
@@ -1333,7 +1351,7 @@ ok("la página carga el cliente de Supabase antes que su código en vivo", html.
     await p5.reload({ waitUntil: "load" }).catch(() => {});
     const sinRed = await p5.evaluate(() => ({ titulo: (document.querySelector("h1") || {}).textContent || "", fichas: document.querySelectorAll("#fichas .cac-ficha").length,
       css: getComputedStyle(document.querySelector(".cac-portada") || document.body).backgroundImage })).catch((e) => ({ error: String(e) }));
-    ok("sin red, abre entera: el título, las fichas y su hoja de estilos", /Centroamericano/.test(sinRed.titulo) && sinRed.fichas === 9 && /gradient/.test(sinRed.css), JSON.stringify(sinRed));
+    ok("sin red, abre entera: el título, las fichas y su hoja de estilos", /Centroamericano/.test(sinRed.titulo) && sinRed.fichas === 10 && /gradient/.test(sinRed.css), JSON.stringify(sinRed));
     await ctx5.close();
   } finally {
     await nav.close();

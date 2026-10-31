@@ -817,3 +817,15 @@ a.cac-despedida:hover .cac-globo { transform: translateY(-2px); }
 .cac-idiomas button:hover, .cac-idiomas button:focus-visible { background: #eceefb; outline: 2px solid #40478f; outline-offset: -2px; }
 .dark .cac-idiomas button:hover, .dark .cac-idiomas button:focus-visible { background: rgb(255 255 255 / 0.1); outline-color: #b8bbf2; }
 .cac-idiomas button[aria-current="true"]::after { content: " ✓"; }
+/* Qué hacer en el tiempo libre (#paseos, js/centroamericano.js). */
+.cac-paseo { background: #fff; border: 1px solid #dfe0f7; border-radius: 1rem; padding: 1.25rem; }
+.dark .cac-paseo { background: rgb(var(--c-brand-900, 16 42 67)); border-color: rgb(255 255 255 / 0.15); }
+.cac-paseo[hidden] { display: none; }
+.cac-paseo-etiquetas { color: #40478f; }
+.dark .cac-paseo-etiquetas { color: #b8bbf2; }
+.cac-paseo-filtro { min-height: 2.75rem; padding: 0.4rem 0.9rem; border-radius: 999px; border: 2px solid #40478f; background: #fff; color: #40478f; font-weight: 700; font-size: 0.9rem; }
+.cac-paseo-filtro[aria-pressed="true"] { background: #40478f; color: #fff; }
+.cac-paseo-filtro[aria-pressed="true"]::before { content: "✓ "; }
+.cac-paseo-filtro:focus-visible { outline: 3px solid #ce1328; outline-offset: 2px; }
+.dark .cac-paseo-filtro { background: transparent; color: #b8bbf2; border-color: #b8bbf2; }
+.dark .cac-paseo-filtro[aria-pressed="true"] { background: #b8bbf2; color: #1f2347; }
