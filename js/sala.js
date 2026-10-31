@@ -6,9 +6,12 @@
 
    QUIÉN DECIDE QUÉ. La base lleva el emparejamiento, de quién es el turno, el
    reloj de cada quien (con SU hora, js/reloj-servidor.js), la bandera y los
-   puntos; esta página solo pide y pinta. La legalidad de la jugada y el mate los
-   calcula chess.js acá y viajan con la jugada: es el mismo modelo de confianza
-   de las partidas de la Academia, dicho en la migración de `arena_*`.
+   puntos; esta página solo pide y pinta. Las JUGADAS las valida el servidor: acá
+   se manda solo de dónde a dónde (y la pieza en que corona) a la Edge Function
+   `arena-jugar`, que repite la partida con chess.js, comprueba que sea legal y
+   calcula ella el SAN, la posición y si hubo mate o tablas. chess.js acá solo
+   sirve para dibujar, mostrar a dónde puede ir cada pieza y entender la jugada
+   que se escribe; lo que el navegador diga del final de la partida no cuenta.
 
    LAS JUGADAS LLEGAN SIEMPRE. Realtime avisa de cada cambio de la partida, y
    además se vuelve a leer cada pocos segundos: un aviso perdido no deja a nadie
@@ -16,6 +19,15 @@
    descarta (una jugada menos, o una partida que ya terminó), y mientras la
    jugada propia viaja se ignora lo que llegue igual de viejo, para que el
    tablero no salte hacia atrás y vuelva.
+
+   MIRAR. Cualquiera puede mirar una partida en juego de su arena (la RLS ya
+   deja leer las partidas a los jugadores de la sala): es la misma pantalla sin
+   controles ni reloj que cante bandera (la canta quien juega).
+
+   SONIDO Y AVISO DE TURNO. Un tono corto al mover, al capturar, al encontrar
+   rival y al terminar, y vibración en el celular cuando es tu turno. Si la
+   pestaña está escondida, el título de la página avisa. Se apaga con el botón
+   del encabezado y se acuerda en el navegador.
 
    Todo texto de una persona (nombres, equipos) entra por `textContent`. */
 (function () {
@@ -50,8 +62,65 @@
     ultimaBandera: 0,
     canal: null,
     coordenadas: false,
+    espectador: false,   // mirando la partida de otros
+    jug: { w: null, b: null },   // los dos jugadores de la partida abierta
+    sonido: true,
+    titulo: document.title,
     t: {},               // los temporizadores
   };
+
+  try { S.sonido = localStorage.getItem("sala_sonido") !== "0"; } catch (e) { /* sin almacenamiento: queda sí */ }
+
+  /* ---------------------------------------------------------------- sonido */
+
+  const Sonido = (function () {
+    let ctx = null;
+    function contexto() {
+      if (ctx) return ctx;
+      const A = window.AudioContext || window.webkitAudioContext;
+      if (!A) return null;
+      try { ctx = new A(); } catch (e) { ctx = null; }
+      return ctx;
+    }
+    function tono(frecuencia, duracion, inicio) {
+      const c = contexto();
+      if (!c) return;
+      if (c.state === "suspended" && c.resume) c.resume().catch(() => {});
+      const o = c.createOscillator(), g = c.createGain();
+      const t0 = c.currentTime + inicio;
+      o.type = "sine";
+      o.frequency.value = frecuencia;
+      g.gain.setValueAtTime(0.0001, t0);
+      g.gain.exponentialRampToValueAtTime(0.16, t0 + 0.01);
+      g.gain.exponentialRampToValueAtTime(0.0001, t0 + duracion);
+      o.connect(g);
+      g.connect(c.destination);
+      o.start(t0);
+      o.stop(t0 + duracion + 0.02);
+    }
+    // [frecuencia, duración, cuándo empieza], todo en segundos
+    const SONIDOS = {
+      mover: [[540, 0.07, 0]],
+      captura: [[300, 0.12, 0]],
+      turno: [[660, 0.09, 0], [880, 0.14, 0.11]],
+      encontrado: [[587, 0.1, 0], [784, 0.2, 0.12]],
+      fin: [[523, 0.14, 0], [659, 0.14, 0.15], [784, 0.3, 0.3]],
+    };
+    function sonar(nombre) {
+      if (!S.sonido) return;
+      (SONIDOS[nombre] || []).forEach((n) => tono(n[0], n[1], n[2]));
+    }
+    function vibrar(patron) {
+      if (!S.sonido || typeof navigator.vibrate !== "function") return;
+      try { navigator.vibrate(patron); } catch (e) { /* no todos los celulares */ }
+    }
+    return { sonar: sonar, vibrar: vibrar, preparar: contexto };
+  })();
+
+  /* Con la pestaña escondida, el título de la página avisa. */
+  function avisarEnElTitulo(texto) {
+    if (document.hidden) document.title = texto + " — Sala de arena";
+  }
 
   function el(tag, clase, texto) {
     const e = document.createElement(tag);
@@ -80,10 +149,15 @@
     return (Number.isInteger(m) ? m : t.inicial_seg + " s") + "+" + t.incremento_seg;
   }
 
+  /* Cuándo acaba la arena: lo previsto, o antes si administración la cerró. */
+  function finDe(t) {
+    const previsto = Date.parse(t.inicia) + t.minutos * 60000;
+    return t.cerrada_en ? Math.min(previsto, Date.parse(t.cerrada_en)) : previsto;
+  }
+
   function estadoDe(t) {
     const ahora = RelojServidor.ahora();
-    const ini = Date.parse(t.inicia), fin = ini + t.minutos * 60000;
-    return ahora < ini ? "proxima" : ahora < fin ? "en_curso" : "terminada";
+    return ahora < Date.parse(t.inicia) ? "proxima" : ahora < finDe(t) ? "en_curso" : "terminada";
   }
 
   /* ---------------------------------------------------------------- sesión */
@@ -142,6 +216,8 @@
     try { await sb.auth.signOut(); } catch (e) { /* la sesión local se borra igual */ }
     $("saludo").textContent = "";
     $("salir").hidden = true;
+    $("btn-clave").hidden = true;
+    $("btn-sonido").hidden = true;
     mostrar("entrada", true);
   }
 
@@ -151,6 +227,8 @@
     RelojServidor.iniciar(sb);
     $("saludo").textContent = "Hola, " + S.yo.nombre;
     $("salir").hidden = false;
+    $("btn-clave").hidden = false;
+    $("btn-sonido").hidden = false;
     const mio = S.yo.equipo_id ? S.equipos[S.yo.equipo_id] : "";
     $("lobby-equipo").textContent = mio
       ? "Tu equipo: " + mio + "."
@@ -228,7 +306,7 @@
     const t = S.torneo;
     if (!t || $("vista-arena").hidden) return;
     const ahora = RelojServidor.ahora();
-    const ini = Date.parse(t.inicia), fin = ini + t.minutos * 60000;
+    const ini = Date.parse(t.inicia), fin = finDe(t);
     const estado = estadoDe(t);
     $("arena-reloj").textContent = estado === "proxima" ? "Empieza en " + mmss(ini - ahora)
       : estado === "en_curso" ? "Quedan " + mmss(fin - ahora) : "Terminó";
@@ -241,7 +319,11 @@
     const abierta = S.torneo && estadoDe(S.torneo) === "en_curso";
     b.textContent = S.buscando ? "Pausar" : "Jugar";
     b.disabled = !abierta;
-    if (S.buscando) $("arena-aviso").textContent = "Buscando rival… Te emparejamos apenas haya alguien esperando.";
+    const enPausa = !!(abierta && S.torneo.pausada);
+    $("aviso-pausa").hidden = !enPausa;
+    if (S.buscando) $("arena-aviso").textContent = enPausa
+      ? "Buscando rival… La arena está en pausa: seguirás esperando hasta que se reanude."
+      : "Buscando rival… Te emparejamos apenas haya alguien esperando.";
     else if (!abierta) $("arena-aviso").textContent = S.torneo && estadoDe(S.torneo) === "proxima" ? "Todavía no empieza." : "La arena terminó.";
     else if ($("arena-aviso").textContent.indexOf("Buscando") === 0) $("arena-aviso").textContent = "";
   }
@@ -249,13 +331,94 @@
   async function refrescarClasificacion() {
     const t = S.torneo;
     if (!t) return;
-    const [c, r] = await Promise.all([
+    const [c, r, vivo, fila] = await Promise.all([
       sb.rpc("arena_clasificacion", { p_torneo: t.id }),
       sb.rpc("arena_en_racha", { p_torneo: t.id }),
+      sb.from("arena_partidas").select("id,blancas,negras,jugadas,creada_en").eq("torneo_id", t.id).eq("estado", "en_juego").order("creada_en"),
+      sb.from("arena_torneos").select("*").eq("id", t.id).maybeSingle(),
     ]);
-    if (!S.torneo || S.torneo.id !== t.id || c.error || !c.data) return;
+    if (!S.torneo || S.torneo.id !== t.id) return;
+    // Administración puede pausarla, alargarla o cerrarla: se vuelve a leer ella.
+    if (fila && fila.data) { S.torneo = fila.data; pintarRelojArena(); }
+    if (c.error || !c.data) return;
     const racha = new Set(((r && r.data) || []).map((x) => (typeof x === "string" ? x : Object.values(x)[0])));
     pintarClasificacion(c.data, racha);
+    pintarPartidasEnJuego((vivo && vivo.data) || [], c.data.jugadores || []);
+    pintarPodio(c.data);
+  }
+
+  /* Las partidas que se están jugando en esta arena, para mirarlas. */
+  function pintarPartidasEnJuego(partidas, jugadores) {
+    const nombres = {};
+    jugadores.forEach((j) => { nombres[j.id] = j; });
+    const ajenas = partidas.filter((p) => p.blancas !== S.yo.id && p.negras !== S.yo.id);
+    const caja = $("lista-en-juego");
+    caja.textContent = "";
+    $("titulo-en-juego").textContent = "Partidas en juego (" + partidas.length + ")";
+    if (!ajenas.length) {
+      caja.appendChild(el("li", "text-sm text-brand-500 dark:text-brand-300", partidas.length ? "Solo estás tú jugando ahora." : "No hay partidas en juego ahora."));
+      return;
+    }
+    ajenas.slice(0, 12).forEach((p) => {
+      const b = (nombres[p.blancas] || {}).nombre || "Jugador";
+      const n = (nombres[p.negras] || {}).nombre || "Jugador";
+      const li = el("li", "flex items-center justify-between gap-3 py-1.5 border-b border-brand-50 dark:border-brand-800/60 text-sm");
+      li.appendChild(el("span", null, b + " – " + n + " · " + (p.jugadas || []).length + " jugadas"));
+      const mirar = el("button", "text-sm font-semibold text-accent-700 dark:text-accent-400 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 rounded", "Mirar");
+      mirar.type = "button";
+      mirar.setAttribute("aria-label", "Mirar la partida de " + b + " contra " + n);
+      mirar.addEventListener("click", () => mirarPartida(p.id));
+      li.appendChild(mirar);
+      caja.appendChild(li);
+    });
+    if (ajenas.length > 12) caja.appendChild(el("li", "text-xs text-brand-450 dark:text-brand-350 pt-1", "y " + (ajenas.length - 12) + " más."));
+  }
+
+  /* El podio: cuando la arena terminó, quién ganó y cómo te fue a ti. */
+  const MEDALLA = ["🥇", "🥈", "🥉"];
+  const PUESTO = ["primer lugar", "segundo lugar", "tercer lugar"];
+
+  function pintarPodio(datos) {
+    const t = S.torneo;
+    const termino = !!t && estadoDe(t) === "terminada";
+    $("podio").hidden = !termino;
+    if (!termino) return;
+    const cuerpo = $("podio-cuerpo");
+    cuerpo.textContent = "";
+    const equipos = (datos.equipos || []).filter((e) => e.puntos > 0);
+    const jugadores = (datos.jugadores || []).filter((j) => j.puntos > 0);
+    if (!equipos.length && !jugadores.length) {
+      cuerpo.appendChild(el("p", "text-sm", "En esta arena no se jugó ninguna partida que sumara puntos."));
+    }
+    if (t.por_equipos && equipos.length) {
+      cuerpo.appendChild(el("p", "text-lg font-bold", "🏆 Equipo ganador: " + equipos[0].nombre + " (" + equipos[0].puntos + " puntos)"));
+      const ol = el("ol", "mt-2 space-y-1 text-sm");
+      equipos.slice(0, 3).forEach((e, i) => {
+        const li = el("li");
+        li.appendChild(el("span", null, MEDALLA[i] + " "));
+        li.appendChild(el("span", "sr-only", PUESTO[i] + ": "));
+        li.appendChild(document.createTextNode(e.nombre + " · " + e.puntos + " puntos"));
+        ol.appendChild(li);
+      });
+      cuerpo.appendChild(ol);
+    }
+    if (jugadores.length) {
+      cuerpo.appendChild(el("p", "font-semibold mt-4", "Mejores jugadores"));
+      const ol = el("ol", "mt-1 space-y-1 text-sm");
+      jugadores.slice(0, 3).forEach((j, i) => {
+        const li = el("li");
+        li.appendChild(el("span", null, MEDALLA[i] + " "));
+        li.appendChild(el("span", "sr-only", PUESTO[i] + ": "));
+        li.appendChild(document.createTextNode(j.nombre + (j.equipo ? " (" + j.equipo + ")" : "") + " · " + j.puntos + " puntos"));
+        ol.appendChild(li);
+      });
+      cuerpo.appendChild(ol);
+    }
+    const lugar = (datos.jugadores || []).findIndex((j) => j.id === S.yo.id);
+    cuerpo.appendChild(el("p", "mt-4 text-sm font-semibold", lugar < 0
+      ? "No jugaste partidas en esta arena."
+      : "Tú: puesto " + (lugar + 1) + " de " + datos.jugadores.length + ", con " + datos.jugadores[lugar].puntos + " puntos en "
+        + datos.jugadores[lugar].partidas + (datos.jugadores[lugar].partidas === 1 ? " partida." : " partidas.")));
   }
 
   function celda(texto, clase) { return el("td", "py-1.5 pr-2 " + (clase || ""), texto); }
@@ -329,7 +492,12 @@
       if (data) {
         detenerBusqueda(false);
         const fila = await leerPartida(data);
-        if (fila) await abrirPartida(fila);
+        if (fila) {
+          Sonido.sonar("encontrado");
+          Sonido.vibrar([120, 60, 120]);
+          avisarEnElTitulo("⚔️ ¡Tienes partida!");
+          await abrirPartida(fila);
+        }
       }
     } catch (e) {
       detenerBusqueda(false);
@@ -367,6 +535,8 @@
     if (S.canal) { try { sb.removeChannel(S.canal); } catch (e) { /* ya estaba cerrado */ } S.canal = null; }
   }
 
+  /* Abre una partida: la propia (se juega) o, si quien la abre no es ninguno de
+     los dos, ajena (se mira). */
   async function abrirPartida(fila) {
     cerrarPartida();
     clearInterval(S.t.clasificacion);
@@ -375,19 +545,31 @@
     S.partida = null;
     S.enviando = false;
     S.seleccionada = null;
-    S.color = fila.blancas === S.yo.id ? "w" : "b";
-    S.rival = await datosDeJugador(S.color === "w" ? fila.negras : fila.blancas);
+    S.espectador = fila.blancas !== S.yo.id && fila.negras !== S.yo.id;
+    S.color = fila.negras === S.yo.id ? "b" : "w";
+    S.jug = {
+      w: fila.blancas === S.yo.id ? S.yo : await datosDeJugador(fila.blancas),
+      b: fila.negras === S.yo.id ? S.yo : await datosDeJugador(fila.negras),
+    };
+    S.rival = S.jug[S.color === "w" ? "b" : "w"];
     if (!S.torneo || S.torneo.id !== fila.torneo_id) {
       const t = await sb.from("arena_torneos").select("*").eq("id", fila.torneo_id).maybeSingle();
       S.torneo = (t && t.data) || null;
     }
-    $("nombre-yo").textContent = S.yo.nombre + " (tú)";
-    $("equipo-yo").textContent = S.yo.equipo_id ? "· " + (S.equipos[S.yo.equipo_id] || "") : "";
-    $("nombre-rival").textContent = S.rival.nombre;
-    $("equipo-rival").textContent = S.rival.equipo_id ? "· " + (S.equipos[S.rival.equipo_id] || "") : "";
+    const abajo = S.jug[S.color], arriba = S.jug[S.color === "w" ? "b" : "w"];
+    const equipoDe = (j) => (j.equipo_id ? "· " + (S.equipos[j.equipo_id] || "") : "");
+    $("nombre-yo").textContent = S.espectador ? abajo.nombre + " (blancas)" : S.yo.nombre + " (tú)";
+    $("equipo-yo").textContent = equipoDe(abajo);
+    $("nombre-rival").textContent = S.espectador ? arriba.nombre + " (negras)" : S.rival.nombre;
+    $("equipo-rival").textContent = equipoDe(arriba);
+    $("reloj-yo").setAttribute("aria-label", S.espectador ? "Reloj de las blancas" : "Tu reloj");
+    $("reloj-rival").setAttribute("aria-label", S.espectador ? "Reloj de las negras" : "Reloj de tu rival");
+    $("aviso-espectador").hidden = !S.espectador;
+    if (S.espectador) $("texto-espectador").textContent = "Estás mirando la partida de " + S.jug.w.nombre + " (blancas) contra " + S.jug.b.nombre + " (negras).";
+    $("h-partida").textContent = S.espectador ? "Partida de otros jugadores" : "Tu partida";
     $("resultado").hidden = true;
     $("oferta").hidden = true;
-    $("controles").hidden = false;
+    $("controles").hidden = S.espectador;
     mostrar("partida", true);
     aplicarFila(fila, true);
     // Una partida que ya terminó no necesita reloj ni avisos.
@@ -476,7 +658,7 @@
     const p = S.partida;
     if (!p) return;
     pintarRelojes();
-    if (p.estado !== "en_juego" || S.enviando) return;
+    if (p.estado !== "en_juego" || S.enviando || S.espectador) return;
     const reloj = turnoDe(p) === "w" ? p.ms_blancas : p.ms_negras;
     const limite = (p.jugadas || []).length < 2 ? Math.min(PRIMERA_JUGADA_MS, reloj) : reloj;
     if (limite - usadoMs(p) > 0 || Date.now() - S.ultimaBandera < 2500) return;
@@ -519,7 +701,7 @@
   }
 
   function puedoMover() {
-    return !!(S.partida && S.partida.estado === "en_juego" && S.juego && S.juego.turn() === S.color && !S.enviando);
+    return !!(S.partida && S.partida.estado === "en_juego" && S.juego && S.juego.turn() === S.color && !S.enviando && !S.espectador);
   }
 
   function pintarTablero() {
@@ -560,14 +742,23 @@
     EjercicioTablero.jugarCoronando(g, desde, sq, (pieza) => jugar(desde, sq, pieza));
   }
 
-  /* El final de la partida que dejó esta jugada, para que la base la cierre. */
-  function finDe(g) {
-    if (g.in_checkmate()) return "mate";
-    if (g.in_stalemate()) return "ahogado";
-    if (g.insufficient_material()) return "material";
-    if (g.in_threefold_repetition()) return "repeticion";
-    if (g.in_draw()) return "cincuenta";
-    return null;
+  /* La jugada va a `arena-jugar`, que la valida con chess.js en el servidor.
+     Solo viaja de dónde a dónde y la pieza en que se corona: el SAN, la
+     posición y si la partida acabó los calcula el servidor. */
+  async function mandarJugada(id, desde, hasta, pieza) {
+    const { data } = await sb.auth.getSession();
+    const token = data && data.session && data.session.access_token;
+    if (!token) throw new Error("Tu sesión venció. Vuelve a entrar.");
+    const cuerpo = { partida: id, desde: desde, hasta: hasta };
+    if (pieza) cuerpo.promocion = pieza;
+    const res = await fetch(window.SALA.URL + "/functions/v1/arena-jugar", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: "Bearer " + token, apikey: window.SALA.KEY },
+      body: JSON.stringify(cuerpo),
+    });
+    const respuesta = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(respuesta.error || "No se pudo enviar la jugada.");
+    return respuesta.partida;
   }
 
   async function jugar(desde, hasta, pieza) {
@@ -575,17 +766,18 @@
     const g = S.juego;
     const pedido = { from: desde, to: hasta };
     if (pieza) pedido.promotion = pieza;
+    // Se pinta enseguida para que se sienta inmediata; si el servidor dice
+    // que no, se vuelve a leer la partida y el tablero vuelve a como estaba.
     const m = g.move(pedido);
     if (!m) return;
     S.enviando = true;
     S.seleccionada = null;
     const id = S.partida.id;
+    Sonido.sonar(m.captured ? "captura" : "mover");
     pintarTablero();
     pintarTurno();
     try {
-      const { data, error } = await sb.rpc("arena_mover", { p_partida: id, p_desde: m.from, p_hasta: m.to, p_san: m.san, p_fen: g.fen(), p_fin: finDe(g) });
-      if (error) throw error;
-      aplicarFila(data, true);
+      aplicarFila(await mandarJugada(id, m.from, m.to, m.promotion), true);
     } catch (e) {
       S.enviando = false;
       Avisos.avisar("No se pudo enviar la jugada: " + ((e && e.message) || "intenta otra vez."), { tipo: "error" });
@@ -632,6 +824,7 @@
     const p = S.partida;
     const caja = $("turno");
     if (!p || p.estado === "terminada") { caja.textContent = ""; return; }
+    if (S.espectador) { caja.textContent = "Es el turno de " + S.jug[S.juego.turn()].nombre + " (" + (S.juego.turn() === "w" ? "blancas" : "negras") + ")."; return; }
     if (S.enviando) { caja.textContent = "Enviando tu jugada…"; return; }
     if (S.juego.turn() === S.color) {
       caja.textContent = (p.jugadas || []).length < 2 ? "Es tu turno: tienes 30 segundos para esta jugada." : "Es tu turno.";
@@ -656,7 +849,8 @@
   function pintarControles() {
     const p = S.partida;
     const enJuego = p.estado === "en_juego";
-    $("controles").hidden = !enJuego;
+    $("controles").hidden = !enJuego || S.espectador;
+    if (S.espectador) { $("oferta").hidden = true; return; }
     const ofertaRival = enJuego && p.oferta_tablas && p.oferta_tablas !== S.color;
     $("oferta").hidden = !ofertaRival;
     const t = $("btn-tablas");
@@ -676,10 +870,18 @@
   function anunciar(previa, fila) {
     const antes = previa ? (previa.jugadas || []).length : (fila.jugadas || []).length;
     const ahora = (fila.jugadas || []).length;
-    if (ahora > antes) {
+    if (ahora > antes && !S.espectador) {
       const u = fila.jugadas[ahora - 1];
       const delRival = (ahora % 2 === 1) === (S.color === "b");
-      if (delRival) $("anuncio").textContent = S.rival.nombre + " jugó " + sanEs(u.s) + ".";
+      if (delRival) {
+        $("anuncio").textContent = S.rival.nombre + " jugó " + sanEs(u.s) + ".";
+        if (fila.estado === "en_juego") {
+          Sonido.sonar(/x/.test(u.s) ? "captura" : "mover");
+          Sonido.sonar("turno");
+          Sonido.vibrar(80);
+          avisarEnElTitulo("🔔 ¡Tu turno!");
+        }
+      }
     }
   }
 
@@ -701,9 +903,16 @@
     if (S.canal) { try { sb.removeChannel(S.canal); } catch (e) { /* ya estaba cerrado */ } S.canal = null; }
     const mios = S.color === "w" ? p.puntos_blancas : p.puntos_negras;
     let titulo, detalle;
-    if (!p.resultado) {
-      titulo = "Partida cancelada";
-      detalle = "No se llegó a jugar, así que no cuenta para nadie.";
+    if (S.espectador) {
+      titulo = "Terminó la partida";
+      detalle = !p.resultado ? "Se canceló: no cuenta para nadie."
+        : p.resultado === "1/2-1/2" ? "Empataron " + (MOTIVO[p.motivo] || "") + "."
+        : "Ganaron las " + (p.resultado === "1-0" ? "blancas (" + S.jug.w.nombre + ")" : "negras (" + S.jug.b.nombre + ")") + " " + (MOTIVO[p.motivo] || "") + ".";
+    } else if (!p.resultado) {
+      titulo = p.motivo === "anulada" ? "Partida anulada" : "Partida cancelada";
+      detalle = p.motivo === "anulada" ? "Tu profe la anuló: no cuenta para nadie."
+        : p.motivo === "abortada" && (p.jugadas || []).length >= 2 ? "Tu profe la canceló: no cuenta para nadie."
+        : "No se llegó a jugar, así que no cuenta para nadie.";
     } else if (p.resultado === "1/2-1/2") {
       titulo = "Tablas";
       detalle = "Empate " + (MOTIVO[p.motivo] || "") + ". ";
@@ -712,17 +921,20 @@
       titulo = gane ? "¡Ganaste!" : "Perdiste";
       detalle = (gane ? "Ganaste " : "Perdiste ") + (MOTIVO[p.motivo] || "") + ". ";
     }
-    if (p.resultado) detalle += mios ? "Sumaste " + mios + (mios === 1 ? " punto." : " puntos.") : "Esta partida no suma puntos.";
+    if (p.resultado && !S.espectador) detalle += mios ? "Sumaste " + mios + (mios === 1 ? " punto." : " puntos.") : "Esta partida no suma puntos.";
     $("resultado-titulo").textContent = titulo;
     $("resultado-detalle").textContent = detalle;
     $("resultado").hidden = false;
     $("controles").hidden = true;
     $("oferta").hidden = true;
     const abierta = S.torneo && estadoDe(S.torneo) === "en_curso";
-    $("otra-partida").hidden = !abierta;
+    $("otra-partida").hidden = !abierta || S.espectador;
     $("anuncio").textContent = titulo + ". " + detalle;
     // Solo se le quita el foco a quien estaba jugando: no a quien abre una partida ya terminada.
-    if (previa && previa.estado === "en_juego") $("resultado-titulo").focus();
+    if (previa && previa.estado === "en_juego") {
+      $("resultado-titulo").focus();
+      if (!S.espectador) { Sonido.sonar("fin"); Sonido.vibrar([200, 80, 200]); avisarEnElTitulo("🏁 Terminó tu partida"); }
+    }
     pintarTurno();
   }
 
@@ -736,6 +948,103 @@
     } catch (e) {
       Avisos.avisar((e && e.message) || "No se pudo completar la acción.", { tipo: "error" });
     }
+  }
+
+  /* Mirar la partida de otros: la misma pantalla, sin controles. */
+  async function mirarPartida(id) {
+    const fila = await leerPartida(id);
+    if (!fila) { Avisos.avisar("No se pudo abrir esa partida.", { tipo: "error" }); return; }
+    await abrirPartida(fila);
+  }
+
+  /* ------------------------------------------------------------------- PGN */
+
+  const TERMINACION = {
+    mate: "Jaque mate", ahogado: "Rey ahogado", material: "Material insuficiente",
+    repeticion: "Repetición de posición", cincuenta: "Regla de las 50 jugadas",
+    tiempo: "Tiempo", abandono: "Abandono", acuerdo: "Acuerdo",
+  };
+
+  /* La partida en PGN, con sus datos: se abre en cualquier programa de ajedrez. */
+  function pgnDe(fila, blancas, negras, torneo) {
+    const g = new Chess();
+    for (const j of fila.jugadas || []) if (!g.move(j.s)) break;
+    const dia = (fila.creada_en ? HoraCR.dia(fila.creada_en) : HoraCR.dia()).replace(/-/g, ".");
+    g.header("Event", (torneo && torneo.nombre) || "Arena", "Site", "ajedrez-integral.com/sala", "Date", dia, "Round", "-",
+      "White", blancas, "Black", negras, "Result", fila.estado === "terminada" && fila.resultado ? fila.resultado : "*");
+    if (torneo) g.header("TimeControl", torneo.inicial_seg + (torneo.incremento_seg ? "+" + torneo.incremento_seg : ""));
+    if (fila.estado === "terminada" && TERMINACION[fila.motivo]) g.header("Termination", TERMINACION[fila.motivo]);
+    return g.pgn({ max_width: 80, newline_char: "\n" }) + "\n";
+  }
+
+  function bajarPgn() {
+    const p = S.partida;
+    if (!p) return;
+    const texto = pgnDe(p, S.jug.w.nombre, S.jug.b.nombre, S.torneo);
+    const limpio = (t) => String(t).normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^A-Za-z0-9]+/g, "-").replace(/^-|-$/g, "").toLowerCase();
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([texto], { type: "application/x-chess-pgn;charset=utf-8" }));
+    a.download = "partida-" + limpio(S.jug.w.nombre) + "-contra-" + limpio(S.jug.b.nombre) + ".pgn";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  }
+
+  /* --------------------------------------------------------- cambiar la clave */
+
+  const ERRORES_CLAVE = [
+    [/same|different from the old/i, "La clave nueva tiene que ser distinta de la que tienes."],
+    [/at least|short|least \d+/i, "La clave es muy corta. Usa al menos 8 caracteres."],
+    [/weak|pwned|easy to guess/i, "Esa clave es muy fácil de adivinar. Prueba con otra."],
+    [/reauth|recent|session/i, "Por seguridad, sal y vuelve a entrar antes de cambiar la clave."],
+  ];
+
+  function errorClave(texto) {
+    const p = $("clave-error");
+    p.textContent = texto || "";
+    p.hidden = !texto;
+  }
+
+  async function cambiarClave(ev) {
+    ev.preventDefault();
+    const nueva = $("clave-nueva").value, repetida = $("clave-repetida").value;
+    errorClave("");
+    if (nueva.length < 8) { errorClave("La clave nueva tiene que tener al menos 8 caracteres."); return; }
+    if (nueva !== repetida) { errorClave("Las dos claves no son iguales. Escríbelas otra vez."); return; }
+    const boton = $("clave-guardar");
+    boton.disabled = true;
+    try {
+      const { error } = await sb.auth.updateUser({ password: nueva });
+      if (error) {
+        const hallado = ERRORES_CLAVE.find((e) => e[0].test(error.message || ""));
+        errorClave(hallado ? hallado[1] : "No se pudo cambiar la clave. Intenta otra vez.");
+        return;
+      }
+      $("dialogo-clave").close();
+      Avisos.avisar("Tu clave se cambió. Úsala la próxima vez que entres.");
+    } catch (e) {
+      errorClave("No se pudo cambiar la clave. Revisa tu conexión e intenta otra vez.");
+    } finally {
+      boton.disabled = false;
+    }
+  }
+
+  function abrirClave() {
+    $("form-clave").reset();
+    errorClave("");
+    $("dialogo-clave").showModal();
+    $("clave-nueva").focus();
+  }
+
+  function ponerSonido(activo) {
+    S.sonido = activo;
+    try { localStorage.setItem("sala_sonido", activo ? "1" : "0"); } catch (e) { /* no se acuerda, pero funciona */ }
+    const b = $("btn-sonido");
+    b.setAttribute("aria-pressed", activo ? "true" : "false");
+    b.setAttribute("aria-label", activo ? "Sonido activado. Pulsa para apagarlo" : "Sonido apagado. Pulsa para encenderlo");
+    b.title = activo ? "Sonido activado" : "Sonido apagado";
+    $("icono-sonido").textContent = activo ? "🔊" : "🔇";
   }
 
   async function volverAArena() {
@@ -773,12 +1082,25 @@
     });
     $("otra-partida").addEventListener("click", async () => { await volverAArena(); buscar(); });
     $("resultado-volver").addEventListener("click", volverAArena);
+    $("dejar-de-mirar").addEventListener("click", volverAArena);
+    $("bajar-pgn").addEventListener("click", bajarPgn);
+    $("btn-sonido").addEventListener("click", () => { ponerSonido(!S.sonido); if (S.sonido) Sonido.sonar("mover"); });
+    $("btn-clave").addEventListener("click", abrirClave);
+    $("form-clave").addEventListener("submit", cambiarClave);
+    $("clave-cancelar").addEventListener("click", () => $("dialogo-clave").close());
+    $("dialogo-clave").addEventListener("close", () => $("btn-clave").focus());
+    ponerSonido(S.sonido);
+    // El navegador solo deja sonar después de un toque de la persona.
+    document.addEventListener("pointerdown", () => Sonido.preparar(), { once: true });
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "visible") document.title = S.titulo;
+    });
     document.addEventListener("visibilitychange", () => {
       // Juego limpio: salir de la pantalla en medio de una partida queda
       // anotado (lo cuenta la base; la pantalla de la arena lo avisa). Si no
       // llega, no se reintenta: es un indicio, no un castigo.
       if (document.visibilityState === "hidden") {
-        if (S.partida && S.partida.estado === "en_juego") Promise.resolve(sb.rpc("arena_anotar_salida", { p_partida: S.partida.id })).catch(() => {});
+        if (S.partida && S.partida.estado === "en_juego" && !S.espectador) Promise.resolve(sb.rpc("arena_anotar_salida", { p_partida: S.partida.id })).catch(() => {});
         return;
       }
       if (document.visibilityState !== "visible") return;
@@ -786,7 +1108,7 @@
       if (S.buscando) latir();
     });
     sb.auth.onAuthStateChange((evento) => {
-      if (evento === "SIGNED_OUT" && S.yo) { limpiarTodo(); $("salir").hidden = true; $("saludo").textContent = ""; mostrar("entrada", true); }
+      if (evento === "SIGNED_OUT" && S.yo) { limpiarTodo(); $("salir").hidden = true; $("btn-clave").hidden = true; $("btn-sonido").hidden = true; $("saludo").textContent = ""; mostrar("entrada", true); }
     });
   }
 

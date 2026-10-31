@@ -29,6 +29,8 @@
                 <a href="sala.html" class="flex items-center gap-2 text-white min-w-0"><img src="/img/logo-marca.png" alt="" width="78" height="48" class="h-10 w-auto shrink-0"><span class="font-serif text-xl font-bold tracking-tight">Sala de <span class="text-accent-400">arena</span></span></a>
                 <div class="flex items-center gap-2 sm:gap-3">
                     <span id="saludo" class="hidden sm:inline text-sm text-brand-100"></span>
+                    <button type="button" id="btn-sonido" hidden aria-pressed="true" aria-label="Sonido activado. Pulsa para apagarlo" title="Sonido activado" class="text-white text-sm font-semibold px-3 py-1.5 rounded-lg border border-white/40 hover:bg-brand-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800"><span id="icono-sonido" aria-hidden="true">🔊</span></button>
+                    <button type="button" id="btn-clave" hidden class="text-white text-sm font-semibold px-3 py-1.5 rounded-lg border border-white/40 hover:bg-brand-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800">Mi clave</button>
                     <button type="button" id="salir" hidden class="text-white text-sm font-semibold px-3 py-1.5 rounded-lg border border-white/40 hover:bg-brand-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800">Salir</button>
                     <button id="theme-toggle" class="text-white text-lg w-9 h-9 flex items-center justify-center rounded-lg hover:bg-brand-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-brand-800" aria-label="Cambiar a modo oscuro" title="Cambiar entre modo claro y oscuro"><span id="theme-icon" aria-hidden="true">☀️</span></button>
                 </div>
@@ -79,9 +81,14 @@
                     <button type="button" id="btn-jugar" class="bg-accent-500 hover:bg-accent-600 disabled:opacity-50 disabled:cursor-not-allowed text-brand-900 font-semibold px-5 py-2.5 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2">Jugar</button>
                     <p id="arena-aviso" role="status" class="text-sm text-brand-600 dark:text-brand-200"></p>
                 </div>
+                <p id="aviso-pausa" role="status" hidden class="mt-3 text-sm font-semibold rounded-lg bg-accent-50 dark:bg-brand-800 border-l-4 border-accent-500 px-3 py-2"><span aria-hidden="true">⏸️</span> La arena está en pausa. Tu profe la reanuda en un momento: sigue esperando aquí.</p>
                 <p class="text-xs text-brand-450 dark:text-brand-350 mt-3">Cuando hay con quién, te emparejamos solo. Ganas 2 puntos, empatas 1; con dos victorias seguidas (🔥) la partida siguiente vale el doble. Unas tablas de menos de 20 jugadas no dan puntos.</p>
                 <p id="aviso-juego-limpio" class="text-xs text-brand-450 dark:text-brand-350 mt-2"><span aria-hidden="true">🛡️</span> Juego limpio: juega sin ayuda de nadie ni de ningún programa. Si sales de esta pantalla durante una partida, queda anotado, y la organización revisa las partidas: una con trampa se anula y no suma.</p>
             </div>
+            <section id="podio" hidden aria-labelledby="h-podio" class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mb-6 border-2 border-accent-500">
+                <h2 id="h-podio" class="font-serif text-2xl font-bold text-brand-800 dark:text-white mb-2"><span aria-hidden="true">🏆</span> ¡Terminó la arena!</h2>
+                <div id="podio-cuerpo" class="text-brand-700 dark:text-brand-100"></div>
+            </section>
             <div class="grid md:grid-cols-2 gap-6">
                 <div id="card-equipos" class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6">
                     <h2 class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-2">Equipos</h2>
@@ -97,11 +104,19 @@
                     <button type="button" id="ver-todos" hidden class="text-sm font-semibold text-accent-700 dark:text-accent-400 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 rounded mt-3">Ver todos los jugadores</button>
                 </div>
             </div>
+        <section id="card-en-juego" aria-labelledby="titulo-en-juego" class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6 mt-6">
+                <h2 id="titulo-en-juego" class="font-serif text-lg font-bold text-brand-800 dark:text-white mb-2">Partidas en juego</h2>
+                <ul id="lista-en-juego" class="divide-y-0"></ul>
+            </section>
         </section>
 
         <!-- 4. Una partida -->
         <section id="vista-partida" hidden aria-labelledby="h-partida">
             <h1 id="h-partida" tabindex="-1" class="sr-only">Tu partida</h1>
+            <div id="aviso-espectador" hidden class="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-lg bg-accent-50 dark:bg-brand-800 border-l-4 border-accent-500 px-3 py-2 text-sm">
+                <p id="texto-espectador" class="font-semibold"></p>
+                <button type="button" id="dejar-de-mirar" class="bg-brand-100 hover:bg-brand-200 text-brand-800 dark:bg-brand-900 dark:hover:bg-brand-700 dark:text-brand-100 font-semibold px-4 py-2 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Dejar de mirar</button>
+            </div>
             <div class="grid lg:grid-cols-[minmax(0,1fr)_20rem] gap-6 items-start">
                 <div>
                     <div class="flex items-center justify-between gap-3 mb-3">
@@ -148,13 +163,35 @@
                         </div>
                     </div>
                     <div class="bg-white dark:bg-brand-900 rounded-2xl shadow-md p-5 md:p-6">
-                        <h2 class="font-serif text-base font-bold text-brand-800 dark:text-white mb-2">Jugadas</h2>
+                        <div class="flex items-center justify-between gap-3 mb-2">
+                            <h2 class="font-serif text-base font-bold text-brand-800 dark:text-white">Jugadas</h2>
+                            <button type="button" id="bajar-pgn" class="text-sm font-semibold text-accent-700 dark:text-accent-400 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 rounded">Bajar PGN</button>
+                        </div>
                         <p id="lista-jugadas" class="sala-jugadas text-sm leading-7" aria-label="Jugadas de la partida"></p>
                     </div>
                 </div>
             </div>
             <p id="anuncio" class="sr-only" aria-live="polite"></p>
         </section>
+        <dialog id="dialogo-clave" aria-labelledby="titulo-clave" class="rounded-2xl p-0 w-[min(92vw,26rem)] bg-white dark:bg-brand-900 text-brand-800 dark:text-brand-100 shadow-xl backdrop:bg-black/50">
+            <form id="form-clave" class="p-6 space-y-3" autocomplete="off">
+                <h2 id="titulo-clave" class="font-serif text-xl font-bold text-brand-800 dark:text-white">Cambiar mi clave</h2>
+                <p class="text-sm text-brand-500 dark:text-brand-300">Escribe una clave nueva de al menos 8 caracteres. La de ahora deja de servir.</p>
+                <div>
+                    <label for="clave-nueva" class="block text-xs font-semibold text-brand-600 dark:text-brand-300 mb-1">Clave nueva</label>
+                    <input id="clave-nueva" type="password" required minlength="8" autocomplete="new-password" class="px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm w-full focus:ring-2 focus:ring-accent-500 outline-none">
+                </div>
+                <div>
+                    <label for="clave-repetida" class="block text-xs font-semibold text-brand-600 dark:text-brand-300 mb-1">Repite la clave nueva</label>
+                    <input id="clave-repetida" type="password" required minlength="8" autocomplete="new-password" class="px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm w-full focus:ring-2 focus:ring-accent-500 outline-none">
+                </div>
+                <p id="clave-error" role="alert" hidden class="text-sm rounded-lg bg-red-50 dark:bg-red-950 border-l-4 border-red-500 px-3 py-2 text-red-800 dark:text-red-200"></p>
+                <div class="flex flex-wrap gap-2 pt-1">
+                    <button type="submit" id="clave-guardar" class="bg-accent-500 hover:bg-accent-600 disabled:opacity-50 text-brand-900 font-semibold px-5 py-2.5 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Cambiar mi clave</button>
+                    <button type="button" id="clave-cancelar" class="bg-brand-100 hover:bg-brand-200 text-brand-800 dark:bg-brand-800 dark:hover:bg-brand-700 dark:text-brand-100 font-semibold px-4 py-2 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Cancelar</button>
+                </div>
+            </form>
+        </dialog>
     </main>
 
     <footer class="bg-brand-900 text-brand-300 pt-16 pb-8">

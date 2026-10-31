@@ -135,7 +135,7 @@ function tarjetaEquipo(equipo) {
     tabla.appendChild(el("caption", "sr-only", "Jugadores de " + (equipo ? equipo.nombre : "ningún equipo")));
     const cabeza = el("thead");
     const fila0 = el("tr", "text-left text-brand-450 dark:text-brand-350 uppercase text-xs border-b border-brand-100 dark:border-brand-800");
-    ["Jugador", "Usuario", "Equipo", "Acciones"].forEach((t) => {
+    ["Jugador", "Usuario", "Nivel", "Equipo", "Acciones"].forEach((t) => {
         const th = el("th", "py-1.5 pr-3 font-semibold", t);
         th.scope = "col";
         fila0.appendChild(th);
@@ -147,6 +147,29 @@ function tarjetaEquipo(equipo) {
         const tr = el("tr", "border-b border-brand-50 dark:border-brand-800/60");
         tr.appendChild(el("td", "py-1.5 pr-3", j.nombre));
         tr.appendChild(el("td", "py-1.5 pr-3 font-mono text-xs", j.usuario));
+        /* El nivel (Elo) con que se empareja: sube y baja solo con cada partida;
+           aquí se puede fijar de entrada para que un principiante no caiga con
+           alguien de torneo. Los demás jugadores no lo ven. */
+        const tdNivel = el("td", "py-1.5 pr-3");
+        const nivel = el("input", CAMPO + " py-1 text-xs w-20");
+        nivel.type = "number";
+        nivel.min = "100";
+        nivel.max = "3500";
+        nivel.step = "50";
+        nivel.value = String(j.fuerza == null ? 1000 : j.fuerza);
+        nivel.setAttribute("aria-label", "Nivel de " + j.nombre + " (Elo con que se empareja)");
+        nivel.addEventListener("change", async () => {
+            const valor = Number(nivel.value);
+            if (!Number.isInteger(valor) || valor < 100 || valor > 3500) {
+                Avisos.avisar("El nivel va de 100 a 3500.", { tipo: "error" });
+                nivel.value = String(j.fuerza == null ? 1000 : j.fuerza);
+                return;
+            }
+            if (await hacer("fijar_nivel", { jugador_id: j.id, fuerza: valor }, "Nivel de " + j.nombre + ": " + valor + ".")) j.fuerza = valor;
+            else nivel.value = String(j.fuerza == null ? 1000 : j.fuerza);
+        });
+        tdNivel.appendChild(nivel);
+        tr.appendChild(tdNivel);
         const tdEq = el("td", "py-1.5 pr-3");
         const sel = el("select", CAMPO + " py-1 text-xs");
         sel.setAttribute("aria-label", "Equipo de " + j.nombre);
@@ -350,43 +373,74 @@ async function copiarCuentas() {
 /* ------------------------------------------------------------- las arenas */
 
 function estadoDeArena(t) {
-    const ini = new Date(t.inicia).getTime();
-    const fin = ini + t.minutos * 60000;
-    const ahora = Date.now();
-    return ahora < ini ? "Próxima" : ahora < fin ? "En curso" : "Terminada";
+    return ETIQUETA_ESTADO[estadoTorneo(t)];
 }
 
 function pintarArenas() {
+    detenerControles();
     const caja = $("lista-arenas");
     caja.textContent = "";
     if (!sala.torneos.length) {
         caja.appendChild(el("p", "text-sm text-brand-450 dark:text-brand-350", "Todavía no hay arenas. Programa la primera arriba."));
         return;
     }
-    sala.torneos.forEach((t) => {
-        const fila = el("div", "flex flex-wrap items-center justify-between gap-3 border border-brand-100 dark:border-brand-800 rounded-xl p-3");
-        const info = el("div", "text-sm");
-        info.appendChild(el("p", "font-semibold", t.nombre + " · " + estadoDeArena(t)));
-        const ritmo = (t.inicial_seg / 60) + "+" + t.incremento_seg;
-        info.appendChild(el("p", "text-xs text-brand-450 dark:text-brand-350",
-            HoraCR.fechaHora(t.inicia, { dateStyle: "medium", timeStyle: "short" }) + " · " + t.minutos + " min · ritmo " + ritmo
-            + (t.por_equipos ? " · por equipos (cuentan los " + t.mejores + " mejores)" : " · individual")));
-        fila.appendChild(info);
-        const acciones = el("div", "flex flex-wrap gap-2");
-        const revisar = boton("Revisar partidas", BOTON_SECUNDARIO, () => revisarArena(t, revisar, caja2), "Revisar las partidas de la arena " + t.nombre);
-        revisar.setAttribute("aria-expanded", "false");
-        acciones.appendChild(revisar);
-        fila.appendChild(acciones);
-        const caja2 = el("div", "w-full");
-        caja2.hidden = true;
-        acciones.appendChild(boton("Borrar arena", BOTON_PELIGRO, async () => {
-            const si = await Avisos.confirmar("Se borran también sus partidas y su clasificación.",
-                { titulo: "¿Borrar «" + t.nombre + "»?", aceptar: "Borrar arena", peligro: true });
-            if (si && await hacer("borrar_torneo", { id: t.id }, "Arena borrada.")) await recargar();
-        }, "Borrar la arena " + t.nombre));
-        fila.appendChild(caja2);
-        caja.appendChild(fila);
-    });
+    sala.torneos.forEach((t) => caja.appendChild(filaDeArena(t)));
+}
+
+/* Una arena: sus datos, sus botones y, debajo, los paneles que se abren (el
+   control en vivo, los resultados y la revisión de juego limpio). */
+function filaDeArena(t) {
+    const fila = el("div", "border border-brand-100 dark:border-brand-800 rounded-xl p-3");
+    const arriba = el("div", "flex flex-wrap items-center justify-between gap-3");
+    const info = el("div", "text-sm");
+    info.appendChild(el("p", "font-semibold", t.nombre + " · " + estadoDeArena(t)));
+    const ritmo = (t.inicial_seg / 60) + "+" + t.incremento_seg;
+    info.appendChild(el("p", "text-xs text-brand-450 dark:text-brand-350",
+        HoraCR.fechaHora(t.inicia, { dateStyle: "medium", timeStyle: "short" }) + " · " + t.minutos + " min · ritmo " + ritmo
+        + (t.por_equipos ? " · por equipos (cuentan los " + t.mejores + " mejores)" : " · individual")));
+    arriba.appendChild(info);
+    const acciones = el("div", "flex flex-wrap gap-2");
+    arriba.appendChild(acciones);
+    fila.appendChild(arriba);
+
+    const panelControl = el("div", "w-full");
+    panelControl.hidden = true;
+    const panelResultados = el("div", "w-full");
+    panelResultados.hidden = true;
+    const panelLimpio = el("div", "w-full");
+    panelLimpio.hidden = true;
+
+    const conPanel = (texto, panel, alAbrir, etiqueta) => {
+        const b = boton(texto, BOTON_SECUNDARIO, () => alAbrir(b, panel), etiqueta);
+        b.setAttribute("aria-expanded", "false");
+        acciones.appendChild(b);
+        return b;
+    };
+    const bControl = conPanel("Controlar", panelControl, (b, p) => alternarControl(t, b, p), "Controlar la arena " + t.nombre + ": pausar, sumar minutos, terminar, cancelar partidas y sacar jugadores");
+    acciones.appendChild(boton("Proyectar", BOTON_SECUNDARIO, () => abrirProyector(t), "Proyectar la clasificación de la arena " + t.nombre + " en otra ventana"));
+    conPanel("Resultados", panelResultados, (b, p) => alternarResultados(t, b, p), "Ver los resultados y los diplomas de la arena " + t.nombre);
+    acciones.appendChild(boton("Partidas (PGN)", BOTON_SECUNDARIO, () => bajarPgnArena(t), "Bajar las partidas de la arena " + t.nombre + " en PGN"));
+    const revisar = boton("Revisar partidas", BOTON_SECUNDARIO, () => revisarArena(t, revisar, panelLimpio), "Revisar las partidas de la arena " + t.nombre);
+    revisar.setAttribute("aria-expanded", "false");
+    acciones.appendChild(revisar);
+    acciones.appendChild(boton("Borrar arena", BOTON_PELIGRO, async () => {
+        const si = await Avisos.confirmar("Se borran también sus partidas y su clasificación.",
+            { titulo: "¿Borrar «" + t.nombre + "»?", aceptar: "Borrar arena", peligro: true });
+        if (si && await hacer("borrar_torneo", { id: t.id }, "Arena borrada.")) await recargar();
+    }, "Borrar la arena " + t.nombre));
+
+    fila.appendChild(panelControl);
+    fila.appendChild(panelResultados);
+    fila.appendChild(panelLimpio);
+    // Si estaban abiertos antes de volver a pintar la lista, siguen abiertos.
+    if (abiertos.control.has(t.id)) { panelControl.hidden = false; bControl.setAttribute("aria-expanded", "true"); montarControl(t, panelControl); }
+    if (abiertos.resultados.has(t.id)) {
+        const bRes = acciones.children[2];
+        panelResultados.hidden = false;
+        bRes.setAttribute("aria-expanded", "true");
+        montarResultados(t, panelResultados);
+    }
+    return fila;
 }
 
 /* ------------------------------------------------------------ juego limpio */
@@ -511,6 +565,9 @@ async function init() {
     const { data: puede } = await sb.rpc("soy_coordinador");
     $("loading").classList.add("hidden");
     if (puede !== true) { $("denegado").classList.remove("hidden"); return; }
+    // La pantalla para proyectar: solo la clasificación, grande (sala-control.js).
+    const aProyectar = new URLSearchParams(location.search).get("proyector");
+    if (aProyectar) { iniciarProyector(aProyectar); return; }
     $("app").classList.remove("hidden");
 
     $("form-equipo").addEventListener("submit", async (ev) => {

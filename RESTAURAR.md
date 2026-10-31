@@ -123,8 +123,8 @@ Sin el CLI, se pegan una por una en el editor SQL, **en orden**: varias
 dependen de la anterior (la que agrega una columna a una tabla que otra creó).
 
 - Academia: `supabase/migraciones/` — 275 migraciones (septiembre de 2026).
-- Inscripciones y sala de arena: `supabase/migraciones-colegios/` — 9 (`sala_arena`: las tablas `arena_*`, sin las cuales la sala no funciona; y la última, `sala_arena_juego_limpio`: la revisión de las partidas y las anulaciones).
-- Edge Functions de ese proyecto: `supabase/functions-colegios/` (`inscripciones-torneo`, `smart-function` y `arena-admin`, esta última con `verify_jwt` en false y con su `revision.ts` al lado).
+- Inscripciones y sala de arena: `supabase/migraciones-colegios/` — 10 (`sala_arena`: las tablas `arena_*`, sin las cuales la sala no funciona; `sala_arena_juego_limpio`: la revisión de las partidas y las anulaciones; y la última, `sala_arena_control_y_fuerza`: el control en vivo, la fuerza para emparejar y la jugada validada por el servidor, que borra `arena_mover`).
+- Edge Functions de ese proyecto: `supabase/functions-colegios/` (`inscripciones-torneo`, `smart-function`, `arena-admin`, con su `revision.ts` al lado, y `arena-jugar`; las dos últimas con `verify_jwt` en false).
 
 **Después de aplicarlas, comparar contra el retrato** que está en
 `supabase/esquema/inventario-academia.txt` (esquemas `public` e `interno`):

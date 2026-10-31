@@ -5,8 +5,8 @@
 
    El cliente de la base es un doble puesto ANTES de cargar la página
    (`window.sbSala`; ver «Los dobles de Supabase»). Lo que se mira es lo que se
-   MANDA —los argumentos de `arena_mover`, `arena_tablas`…— y lo que se VE, con
-   `checkVisibility()`, no la clase ni el atributo:
+   MANDA —el pedido a `arena-jugar`, los argumentos de `arena_tablas`…— y lo que
+   se VE, con `checkVisibility()`, no la clase ni el atributo:
 
      · entrar: usuario que se vuelve correo en minúsculas, clave mala, cuenta
        que no es de la sala (se cierra la sesión);
@@ -15,8 +15,13 @@
        racha 🔥 dicha también con texto, Jugar / Pausar y «todavía no empieza»;
      · la partida: el tablero se mira desde el color propio, las jugadas del
        rival llegan solas, una jugada tocada y una escrita («Cc6», en español)
-       viajan con su SAN y su FEN, una ilegal no viaja, las tablas, el final
-       con los puntos y la bandera;
+       viajan SOLO como de dónde a dónde (el SAN, la posición y el final los
+       calcula el servidor), una ilegal no viaja y una que el servidor rechaza
+       deja el tablero como estaba, las tablas, el final con los puntos y la
+       bandera;
+     · mirar la partida de otros, bajarla en PGN, el sonido y el aviso de turno,
+       cambiar la clave, el podio, la pausa y el cierre que decide
+       administración y el jugador que sacan de la arena;
      · en el celular, sin barra de desplazamiento horizontal y con el tablero
        cuadrado.
 
@@ -48,6 +53,15 @@ g.move("e4"); FEN.e4 = g.fen();
 g.move("e5"); FEN.e5 = g.fen();
 g.move("Nf3"); FEN.cf3 = g.fen();
 const g2 = new Chess(FEN.cf3); g2.move("Nc6"); FEN.cc6 = g2.fen();
+g2.move("Bc4"); FEN.ac4 = g2.fen();
+
+// La partida de otros que se mira: Carlos (blancas) y Diana (negras), seis jugadas.
+const AJENA = { jugadas: [], fen: null };
+{
+  const x = new Chess();
+  [["e4", "e2", "e4"], ["e5", "e7", "e5"], ["Nf3", "g1", "f3"], ["Nc6", "b8", "c6"], ["Bb5", "f1", "b5"], ["a6", "a7", "a6"]].forEach(([san, f, t]) => { x.move(san); AJENA.jugadas.push({ s: san, f, t }); });
+  AJENA.fen = x.fen();
+}
 
 /* ---------------------------------------------------------- el doble de la base */
 const DOBLE = `(() => {
@@ -59,18 +73,25 @@ const DOBLE = `(() => {
     },
     sesion: null, llamadas: [], rivalListo: false, colorAna: "b", bandera: false,
     equipos: [{ id: "e1", nombre: "Equipo A" }, { id: "e2", nombre: "Equipo B" }],
-    jugadores: [{ id: "u-ana", nombre: "Ana Rojas", equipo_id: "e1" }, { id: "u-bruno", nombre: "Bruno Mena", equipo_id: "e2" }],
+    jugadores: [
+      { id: "u-ana", nombre: "Ana Rojas", equipo_id: "e1" }, { id: "u-bruno", nombre: "Bruno Mena", equipo_id: "e2" },
+      { id: "u-carlos", nombre: "Carlos Mora", equipo_id: "e1" }, { id: "u-diana", nombre: "Diana Solís", equipo_id: "e2" },
+    ],
     torneos: [
       { id: "t1", nombre: "Arena de prueba", inicia: new Date(ahora - 5 * 60000).toISOString(), minutos: 60, inicial_seg: 180, incremento_seg: 0, por_equipos: true, mejores: 5 },
       { id: "t2", nombre: "Arena de mañana", inicia: new Date(ahora + 3600000).toISOString(), minutos: 30, inicial_seg: 300, incremento_seg: 3, por_equipos: false, mejores: 5 },
       { id: "t3", nombre: "Arena de ayer", inicia: new Date(ahora - 86400000).toISOString(), minutos: 30, inicial_seg: 180, incremento_seg: 0, por_equipos: true, mejores: 5 },
     ],
     partidas: [],
+    ajenas: [],
+    errorJugada: null, errorEntrar: null, errorClave: null,
     racha: ["u-bruno"],
     clasificacion: {
       jugadores: [
         { id: "u-bruno", nombre: "Bruno Mena", equipo_id: "e2", equipo: "Equipo B", puntos: 6, partidas: 3, victorias: 3 },
         { id: "u-ana", nombre: "Ana Rojas", equipo_id: "e1", equipo: "Equipo A", puntos: 2, partidas: 2, victorias: 1 },
+        { id: "u-carlos", nombre: "Carlos Mora", equipo_id: "e1", equipo: "Equipo A", puntos: 1, partidas: 1, victorias: 0 },
+        { id: "u-diana", nombre: "Diana Solís", equipo_id: "e2", equipo: "Equipo B", puntos: 0, partidas: 1, victorias: 0 },
       ],
       equipos: [{ id: "e2", nombre: "Equipo B", puntos: 6, jugadores: 1 }, { id: "e1", nombre: "Equipo A", puntos: 2, jugadores: 1 }],
     },
@@ -80,7 +101,7 @@ const DOBLE = `(() => {
   const TABLAS = { arena_jugadores: "jugadores", arena_equipos: "equipos", arena_torneos: "torneos", arena_partidas: "partidas" };
 
   function consulta(tabla) {
-    const filas = B[TABLAS[tabla]] || [];
+    const filas = tabla === "arena_partidas" ? B.partidas.concat(B.ajenas) : (B[TABLAS[tabla]] || []);
     const filtros = []; let unica = false, orden = null, tope = null;
     const b = {
       select() { return b; },
@@ -113,6 +134,7 @@ const DOBLE = `(() => {
     arena_en_racha: () => B.racha,
     arena_salir: () => null,
     arena_entrar: () => {
+      if (B.errorEntrar) throw new Error(B.errorEntrar);
       if (!B.rivalListo) return null;
       if (!activa()) {
         const n = B.partidas.length + 1;
@@ -121,13 +143,6 @@ const DOBLE = `(() => {
           reloj_desde: iso(), estado: "en_juego", resultado: null, motivo: null, oferta_tablas: null, puntos_blancas: 0, puntos_negras: 0, creada_en: iso(), terminada_en: null });
       }
       return activa().id;
-    },
-    arena_mover: (a) => {
-      const p = porId(a.p_partida);
-      p.jugadas.push({ s: a.p_san, f: a.p_desde, t: a.p_hasta });
-      p.fen = a.p_fen; p.reloj_desde = iso(); p.oferta_tablas = null;
-      if (a.p_fin === "mate") cerrar(p, p.fen.split(" ")[1] === "b" ? "1-0" : "0-1", "mate", 2, 0);
-      return clon(p);
     },
     arena_bandera: (a) => {
       const p = porId(a.p_partida);
@@ -143,6 +158,46 @@ const DOBLE = `(() => {
     },
   };
 
+  /* arena-jugar: el servidor repite la partida con chess.js, comprueba la jugada
+     y calcula el SAN, la posición y el final; el navegador solo dice de dónde a
+     dónde. Acá se hace lo mismo con el chess.js de la página. */
+  const fetchOriginal = window.fetch.bind(window);
+  window.fetch = async (url, init) => {
+    if (String(url).indexOf("/functions/v1/arena-jugar") < 0) return fetchOriginal(url, init);
+    const cuerpo = JSON.parse((init && init.body) || "{}");
+    B.llamadas.push(["arena-jugar", cuerpo, init && init.headers && init.headers.Authorization]);
+    const responder = (estado, datos) => new Response(JSON.stringify(datos), { status: estado, headers: { "Content-Type": "application/json" } });
+    if (B.errorJugada) return responder(400, { error: B.errorJugada });
+    const p = porId(cuerpo.partida);
+    if (!p) return responder(404, { error: "Esa partida no existe." });
+    const g = new window.Chess();
+    p.jugadas.forEach((j) => g.move(j.s));
+    const pedido = { from: cuerpo.desde, to: cuerpo.hasta };
+    if (cuerpo.promocion) pedido.promotion = cuerpo.promocion;
+    const m = g.move(pedido);
+    if (!m) return responder(400, { error: "Esa jugada no es legal." });
+    p.jugadas.push({ s: m.san, f: m.from, t: m.to });
+    p.fen = g.fen(); p.reloj_desde = iso(); p.oferta_tablas = null;
+    if (g.in_checkmate()) cerrar(p, m.color === "w" ? "1-0" : "0-1", "mate", 2, 0);
+    return responder(200, { ok: true, partida: clon(p) });
+  };
+
+  // El sonido: no se oye, pero se cuenta cada tono que se pide.
+  window.__audio = { contextos: 0, tonos: 0 };
+  window.__vibraciones = [];
+  window.AudioContext = function () {
+    window.__audio.contextos++;
+    this.currentTime = 0; this.state = "running"; this.destination = {};
+    this.createOscillator = () => { window.__audio.tonos++; return { frequency: { value: 0 }, connect() {}, start() {}, stop() {}, type: "" }; };
+    this.createGain = () => ({ gain: { setValueAtTime() {}, exponentialRampToValueAtTime() {} }, connect() {} });
+    this.resume = () => Promise.resolve();
+  };
+  Object.defineProperty(navigator, "vibrate", { configurable: true, value: (patron) => { window.__vibraciones.push(patron); return true; } });
+
+  B.ajenas.push({ id: "p-otros", torneo_id: "t1", blancas: "u-carlos", negras: "u-diana", fen: ${JSON.stringify(AJENA.fen)}, jugadas: ${JSON.stringify(AJENA.jugadas)},
+    ms_blancas: 170000, ms_negras: 172000, reloj_desde: iso(), estado: "en_juego", resultado: null, motivo: null, oferta_tablas: null,
+    puntos_blancas: 0, puntos_negras: 0, creada_en: iso(), terminada_en: null });
+
   const oyentes = [];
   window.sbSala = {
     auth: {
@@ -155,6 +210,11 @@ const DOBLE = `(() => {
         B.sesion = { access_token: "t", user: { id: u.id } };
         sessionStorage.setItem("__ses", JSON.stringify(B.sesion));
         return { data: { session: B.sesion, user: B.sesion.user }, error: null };
+      },
+      updateUser: async (cambios) => {
+        B.llamadas.push(["updateUser", cambios]);
+        if (B.errorClave) return { data: null, error: { message: B.errorClave } };
+        return { data: { user: {} }, error: null };
       },
       signOut: async () => { B.llamadas.push(["signOut"]); B.sesion = null; sessionStorage.removeItem("__ses"); oyentes.forEach((f) => f("SIGNED_OUT")); return { error: null }; },
       onAuthStateChange: (f) => { oyentes.push(f); return { data: { subscription: { unsubscribe() {} } } }; },
@@ -334,6 +394,8 @@ async function pruebaPartida(browser) {
   ok("el peón aparece en e4", (await casilla(page, "e4").locator("span").count()) === 1);
   ok("la casilla de la última jugada se marca", (await page.$$("#tablero .last")).length === 2);
   igual("se anuncia para quien no ve el tablero", await texto(page, "#anuncio"), "Bruno Mena jugó e4.");
+  const tonos = await page.evaluate(() => window.__audio.tonos);
+  ok("la jugada del rival suena (su jugada y el aviso de turno) y vibra el celular", tonos >= 3 && (await page.evaluate(() => window.__vibraciones.length)) >= 1, "tonos: " + tonos);
   igual("la lista de jugadas", await texto(page, "#lista-jugadas"), "1. e4");
   const etiqueta = await casilla(page, "e4").getAttribute("aria-label");
   ok("cada casilla se lee con su pieza y su estado", etiqueta === "e4, peón blanco, de la última jugada", etiqueta);
@@ -344,14 +406,27 @@ async function pruebaPartida(browser) {
   ok("tocar mi peón lo selecciona", (await page.$$("#tablero .selected")).length === 1);
   ok("y marca adónde puede ir", (await page.$$("#tablero .target")).length === 2);
   await casilla(page, "e4").click();
-  ok("una casilla a la que no puede ir no manda nada", (await llamadas(page, "arena_mover")).length === 0);
+  ok("una casilla a la que no puede ir no manda nada", (await llamadas(page, "arena-jugar")).length === 0);
+
+  // El servidor rechaza la jugada: el tablero vuelve a como estaba y se dice por qué.
+  await cambiar(page, () => { window.__base.errorJugada = "Esa jugada no es legal."; });
+  await casilla(page, "e5").click();
+  await page.waitForFunction(() => document.body.textContent.indexOf("No se pudo enviar la jugada: Esa jugada no es legal.") >= 0);
+  ok("si el servidor rechaza la jugada, se dice y el tablero vuelve a como estaba", (await casilla(page, "e7").locator("span").count()) === 1 && (await casilla(page, "e5").locator("span").count()) === 0);
+  igual("…y sigue siendo su turno", await texto(page, "#turno"), "Es tu turno: tienes 30 segundos para esta jugada.");
+  // Los avisos de error no se van solos: se cierran con su ✕.
+  await page.locator("#avisos-zona button").first().click();
+  await cambiar(page, () => { window.__base.errorJugada = null; window.__base.llamadas.length = 0; });
+  await casilla(page, "e7").click();
 
   // La jugada tocada.
   await casilla(page, "e5").click();
-  await page.waitForFunction(() => window.__base.llamadas.some((l) => l[0] === "arena_mover"));
-  const mover = (await llamadas(page, "arena_mover"))[0];
-  igual("la jugada tocada manda de dónde a dónde, su SAN, la posición y que no acaba la partida",
-    mover, { p_partida: "p1", p_desde: "e7", p_hasta: "e5", p_san: "e5", p_fen: FEN.e5, p_fin: null });
+  await page.waitForFunction(() => window.__base.llamadas.some((l) => l[0] === "arena-jugar"));
+  const mover = (await llamadas(page, "arena-jugar"))[0];
+  igual("la jugada tocada manda SOLO de dónde a dónde (el SAN, la posición y el final los calcula el servidor)",
+    mover, { partida: "p1", desde: "e7", hasta: "e5" });
+  igual("…con la sesión de quien juega", await page.evaluate(() => window.__base.llamadas.filter((l) => l[0] === "arena-jugar")[0][2]), "Bearer t");
+  ok("ya no existe la llamada a la base que dejaba declarar el final", (await llamadas(page, "arena_mover")).length === 0);
   await page.waitForFunction(() => document.getElementById("turno").textContent.indexOf("Es el turno de") === 0);
   igual("tras mover, el turno pasa al rival", await texto(page, "#turno"), "Es el turno de Bruno Mena.");
   igual("las jugadas, en español", await texto(page, "#lista-jugadas"), "1. e4 e5");
@@ -362,12 +437,13 @@ async function pruebaPartida(browser) {
   igual("el SAN del rival se lee en español (Cf3, no Nf3)", await texto(page, "#lista-jugadas"), "1. e4 e5 2. Cf3");
   await page.fill("#jugada", "Zz9");
   await page.click("#form-jugada button");
-  ok("una jugada que no se entiende lo dice y no manda nada", (await visible(page, "#jugada-error")) && (await llamadas(page, "arena_mover")).length === 1);
+  ok("una jugada que no se entiende lo dice y no manda nada", (await visible(page, "#jugada-error")) && (await llamadas(page, "arena-jugar")).length === 1);
   await page.fill("#jugada", "Cc6");
   await page.click("#form-jugada button");
-  await page.waitForFunction(() => window.__base.llamadas.filter((l) => l[0] === "arena_mover").length === 2);
-  const escrita = (await llamadas(page, "arena_mover"))[1];
-  igual("«Cc6» viaja como Nc6 con su posición", [escrita.p_desde, escrita.p_hasta, escrita.p_san, escrita.p_fen], ["b8", "c6", "Nc6", FEN.cc6]);
+  await page.waitForFunction(() => window.__base.llamadas.filter((l) => l[0] === "arena-jugar").length === 2);
+  const escrita = (await llamadas(page, "arena-jugar"))[1];
+  igual("«Cc6» viaja como de b8 a c6, sin SAN ni posición", escrita, { partida: "p1", desde: "b8", hasta: "c6" });
+  ok("y el servidor la dejó como Nc6 con su posición", await page.evaluate((fen) => { const p = window.__base.partidas[0]; return p.fen === fen && p.jugadas[p.jugadas.length - 1].s === "Nc6"; }, FEN.cc6));
   ok("el campo se vacía", (await page.inputValue("#jugada")) === "");
 
   // Tablas: yo ofrezco; luego el rival ofrece y las rechazo.
@@ -382,10 +458,20 @@ async function pruebaPartida(browser) {
   igual("rechazar las tablas lo dice con p_aceptar false", (await llamadas(page, "arena_tablas"))[1], { p_partida: "p1", p_aceptar: false });
   await page.waitForSelector("#oferta[hidden]", { state: "attached", timeout: 8000 });
 
+  // El sonido se puede apagar, y se acuerda.
+  const antesDeApagar = await page.evaluate(() => window.__audio.tonos);
+  await page.click("#btn-sonido");
+  igual("apagar el sonido lo dice para quien lee la pantalla", [await page.getAttribute("#btn-sonido", "aria-pressed"), await page.evaluate(() => localStorage.getItem("sala_sonido"))], ["false", "0"]);
+  await jugarRival(page, { san: "Bc4", desde: "f1", hasta: "c4", fen: FEN.ac4 });
+  await page.waitForFunction(() => document.getElementById("lista-jugadas").textContent.indexOf("Ac4") >= 0, null, { timeout: 8000 });
+  ok("con el sonido apagado no suena nada", (await page.evaluate(() => window.__audio.tonos)) === antesDeApagar);
+  await page.click("#btn-sonido");
+  igual("y se enciende otra vez", await page.getAttribute("#btn-sonido", "aria-pressed"), "true");
+
   // El final: el rival se rinde y suma puntos.
   await cambiar(page, () => {
     const p = window.__base.partidas[0];
-    p.estado = "terminada"; p.resultado = "0-1"; p.motivo = "abandono"; p.puntos_negras = 2; p.jugadas.push({ s: "Cg1", f: "f3", t: "g1" });
+    p.estado = "terminada"; p.resultado = "0-1"; p.motivo = "abandono"; p.puntos_negras = 2;
   });
   await page.waitForSelector("#resultado:not([hidden])", { timeout: 8000 });
   igual("al terminar dice quién ganó, cómo y los puntos", [await texto(page, "#resultado-titulo"), await texto(page, "#resultado-detalle")], ["¡Ganaste!", "Ganaste por abandono. Sumaste 2 puntos."]);
@@ -393,11 +479,19 @@ async function pruebaPartida(browser) {
   ok("el foco va al resultado", await page.evaluate(() => document.activeElement.id === "resultado-titulo"));
   ok("el tablero ya no responde", await page.$eval("#tablero", (t) => t.classList.contains("sin-turno")));
   ok("«Jugar otra» se ofrece porque la arena sigue", await visible(page, "#otra-partida"));
+
+  // La partida en PGN.
+  const [pgn] = await Promise.all([page.waitForEvent("download"), page.click("#bajar-pgn")]);
+  igual("el PGN se llama con los dos nombres", pgn.suggestedFilename(), "partida-bruno-mena-contra-ana-rojas.pgn");
+  const textoPgn = require("fs").readFileSync(await pgn.path(), "utf8");
+  ok("el PGN trae sus encabezados", ['[Event "Arena de prueba"]', '[White "Bruno Mena"]', '[Black "Ana Rojas"]', '[Result "0-1"]', '[TimeControl "180"]', '[Termination "Abandono"]'].every((l) => textoPgn.includes(l)), textoPgn);
+  ok("y las jugadas en notación estándar, con el resultado al final", /1\. e4 e5 2\. Nf3 Nc6 3\. Bc4 0-1/.test(textoPgn.replace(/\n/g, " ")), textoPgn);
   await cambiar(page, () => { window.__base.partidas[0].estado = "terminada"; });
 
   // Jugar otra: vuelve a la arena y busca.
   await page.click("#otra-partida");
-  await page.waitForFunction(() => window.__base.llamadas.filter((l) => l[0] === "arena_entrar").length >= 2, null, { timeout: 8000 });
+  // (la lista de llamadas se vació antes: acá cuenta la búsqueda de ahora)
+  await page.waitForFunction(() => window.__base.llamadas.filter((l) => l[0] === "arena_entrar").length >= 1, null, { timeout: 8000 });
   await page.waitForSelector("#vista-partida:not([hidden])", { timeout: 10000 });
   ok("«Jugar otra» busca y entra a la partida siguiente", (await texto(page, "#h-partida")) === "Tu partida" && (await casilla(page, "e2").count()) === 1);
   ok("sin errores de JavaScript", errores.length === 0, errores.join(" | "));
@@ -440,7 +534,7 @@ async function pruebaCelular(browser) {
   ok("el lobby no se desborda a los lados", await sinBarra());
   await page.click('#lista-torneos button[aria-label="Entrar a la arena: Arena de prueba"]');
   await page.waitForSelector("#vista-arena:not([hidden])");
-  await page.waitForFunction(() => document.querySelectorAll("#tabla-jugadores tr").length === 2);
+  await page.waitForFunction(() => document.querySelectorAll("#tabla-jugadores tr").length === 4);
   ok("la arena no se desborda a los lados", await sinBarra());
   await page.click("#btn-jugar");
   await page.waitForSelector("#vista-partida:not([hidden])", { timeout: 10000 });
@@ -454,6 +548,162 @@ async function pruebaCelular(browser) {
   await ctx.close();
 }
 
+
+async function pruebaMirar(browser) {
+  console.log("\n=== Mirar la partida de otros ===");
+  const { page, ctx, errores } = await abrir(browser);
+  await entrar(page);
+  await page.click('#lista-torneos button[aria-label="Entrar a la arena: Arena de prueba"]');
+  await page.waitForSelector("#vista-arena:not([hidden])");
+  await page.waitForFunction(() => document.querySelectorAll("#lista-en-juego button").length === 1);
+  igual("la arena lista las partidas que se están jugando", await texto(page, "#titulo-en-juego"), "Partidas en juego (1)");
+  const fila = await texto(page, "#lista-en-juego li");
+  ok("con quién juega y cuántas jugadas lleva", /Carlos Mora – Diana Solís · 6 jugadas/.test(fila), fila);
+  await page.click('#lista-en-juego button[aria-label="Mirar la partida de Carlos Mora contra Diana Solís"]');
+  await page.waitForSelector("#vista-partida:not([hidden])");
+  ok("se abre la partida", !(await visible(page, "#vista-arena")));
+  igual("dice que se está mirando", await texto(page, "#texto-espectador"), "Estás mirando la partida de Carlos Mora (blancas) contra Diana Solís (negras).");
+  ok("sin controles de juego (ni jugada escrita, ni tablas, ni rendirse)", !(await visible(page, "#controles")) && !(await visible(page, "#oferta")));
+  igual("se mira desde las blancas (la primera casilla es a8)", await page.$eval("#tablero [data-square]", (b) => b.dataset.square), "a8");
+  igual("los dos nombres con su color", [await texto(page, "#nombre-yo"), await texto(page, "#nombre-rival")], ["Carlos Mora (blancas)", "Diana Solís (negras)"]);
+  igual("las jugadas se ven", await texto(page, "#lista-jugadas"), "1. e4 e5 2. Cf3 Cc6 3. Ab5 a6");
+  ok("tocar el tablero no hace nada", await (async () => { await casilla(page, "e2").click(); return (await page.$$("#tablero .selected")).length === 0; })());
+  igual("el título de la partida lo dice", await page.$eval("#h-partida", (h) => h.textContent), "Partida de otros jugadores");
+  igual("de quién es el turno", await texto(page, "#turno"), "Es el turno de Carlos Mora (blancas).");
+
+  // El que mira no canta bandera ni anota salidas.
+  await cambiar(page, () => { const p = window.__base.ajenas[0]; p.ms_blancas = 500; p.reloj_desde = new Date(Date.now() - 20000).toISOString(); });
+  await page.evaluate(() => { Object.defineProperty(document, "visibilityState", { configurable: true, get: () => "hidden" }); document.dispatchEvent(new Event("visibilitychange")); Object.defineProperty(document, "visibilityState", { configurable: true, get: () => "visible" }); document.dispatchEvent(new Event("visibilitychange")); });
+  await page.waitForTimeout(3200);
+  ok("quien mira no avisa la bandera de los otros", (await llamadas(page, "arena_bandera")).length === 0);
+  ok("ni se le anota salir de la pantalla", (await llamadas(page, "arena_anotar_salida")).length === 0);
+
+  // Termina mientras se mira.
+  await cambiar(page, () => { const p = window.__base.ajenas[0]; p.estado = "terminada"; p.resultado = "1-0"; p.motivo = "mate"; p.puntos_blancas = 2; p.jugadas.push({ s: "Ba4", f: "b5", t: "a4" }); });
+  await page.waitForSelector("#resultado:not([hidden])", { timeout: 8000 });
+  igual("al terminar dice quién ganó, sin hablar de puntos propios", [await texto(page, "#resultado-titulo"), await texto(page, "#resultado-detalle")], ["Terminó la partida", "Ganaron las blancas (Carlos Mora) por jaque mate."]);
+  ok("no ofrece «Jugar otra»", !(await visible(page, "#otra-partida")));
+  const [pgn] = await Promise.all([page.waitForEvent("download"), page.click("#bajar-pgn")]);
+  igual("se puede bajar en PGN", pgn.suggestedFilename(), "partida-carlos-mora-contra-diana-solis.pgn");
+  ok("con las jugadas de las dos partes", /\[White "Carlos Mora"\]/.test(require("fs").readFileSync(await pgn.path(), "utf8")));
+
+  await page.click("#resultado-volver");
+  await page.waitForSelector("#vista-arena:not([hidden])");
+  ok("volver deja en la arena", await visible(page, "#vista-arena"));
+  ok("sin errores de JavaScript", errores.length === 0, errores.join(" | "));
+  await ctx.close();
+}
+
+async function pruebaClave(browser) {
+  console.log("\n=== Cambiar la clave ===");
+  const { page, ctx, errores } = await abrir(browser);
+  ok("antes de entrar no hay botón para la clave", !(await visible(page, "#btn-clave")));
+  await entrar(page);
+  ok("ya entró: el botón se ve", await visible(page, "#btn-clave"));
+  await page.click("#btn-clave");
+  ok("se abre un diálogo", await page.$eval("#dialogo-clave", (d) => d.open));
+  ok("el foco va a la clave nueva", await page.evaluate(() => document.activeElement.id === "clave-nueva"));
+  await page.fill("#clave-nueva", "corta");
+  await page.fill("#clave-repetida", "corta");
+  await page.evaluate(() => document.getElementById("form-clave").requestSubmit());
+  ok("una clave corta no pasa (la frena el campo)", await page.$eval("#dialogo-clave", (d) => d.open) && (await llamadas(page, "updateUser")).length === 0);
+  await page.fill("#clave-nueva", "ClaveNueva2026");
+  await page.fill("#clave-repetida", "ClaveDistinta1");
+  await page.click("#clave-guardar");
+  igual("dos claves distintas lo dicen", await texto(page, "#clave-error"), "Las dos claves no son iguales. Escríbelas otra vez.");
+  ok("y no se manda nada", (await llamadas(page, "updateUser")).length === 0);
+  await cambiar(page, () => { window.__base.errorClave = "New password should be different from the old password."; });
+  await page.fill("#clave-repetida", "ClaveNueva2026");
+  await page.click("#clave-guardar");
+  await page.waitForFunction(() => /distinta/.test(document.getElementById("clave-error").textContent));
+  igual("el error de Supabase se dice en español", await texto(page, "#clave-error"), "La clave nueva tiene que ser distinta de la que tienes.");
+  await cambiar(page, () => { window.__base.errorClave = null; });
+  await page.click("#clave-guardar");
+  await page.waitForFunction(() => !document.getElementById("dialogo-clave").open);
+  igual("la clave nueva viaja", (await llamadas(page, "updateUser")).pop(), { password: "ClaveNueva2026" });
+  ok("el diálogo se cierra y el foco vuelve al botón", await page.evaluate(() => document.activeElement.id === "btn-clave"));
+  ok("se avisa que se cambió", await page.evaluate(() => document.body.textContent.indexOf("Tu clave se cambió.") >= 0));
+  await page.click("#btn-clave");
+  ok("al abrirlo otra vez, los campos están vacíos", (await page.inputValue("#clave-nueva")) === "" && !(await visible(page, "#clave-error")));
+  await page.keyboard.press("Escape");
+  ok("Escape lo cierra", await page.evaluate(() => !document.getElementById("dialogo-clave").open));
+  ok("sin errores de JavaScript", errores.length === 0, errores.join(" | "));
+  await ctx.close();
+}
+
+/* Lo que decide administración mientras corre la arena: la pausa, el cierre, y
+   sacar a un jugador. La página lo ve al volver a leer la arena (cada 5 s). */
+async function pruebaControl(browser) {
+  console.log("\n=== Lo que decide administración ===");
+  const { page, ctx, errores } = await abrir(browser);
+  await entrar(page);
+  await page.click('#lista-torneos button[aria-label="Entrar a la arena: Arena de prueba"]');
+  await page.waitForSelector("#vista-arena:not([hidden])");
+  ok("mientras corre, el podio no se ve", !(await visible(page, "#podio")));
+  ok("ni el aviso de pausa", !(await visible(page, "#aviso-pausa")));
+
+  await cambiar(page, () => { window.__base.torneos[0].pausada = true; });
+  await page.waitForSelector("#aviso-pausa:not([hidden])", { timeout: 9000 });
+  ok("en pausa, la arena lo dice", /en pausa/.test(await texto(page, "#aviso-pausa")));
+  await page.click("#btn-jugar");
+  await page.waitForFunction(() => /en pausa/.test(document.getElementById("arena-aviso").textContent));
+  ok("y quien busca rival sabe que espera la pausa", /seguirás esperando/.test(await texto(page, "#arena-aviso")));
+  await page.click("#btn-jugar");
+  await cambiar(page, () => { window.__base.torneos[0].pausada = false; });
+  await page.waitForSelector("#aviso-pausa[hidden]", { state: "attached", timeout: 9000 });
+  ok("al reanudarla, el aviso se va", !(await visible(page, "#aviso-pausa")));
+
+  // Sacarlo de la arena
+  await cambiar(page, () => { window.__base.errorEntrar = "Tu profe te sacó de esta arena."; });
+  await page.click("#btn-jugar");
+  await page.waitForFunction(() => /te sacó de esta arena/.test(document.getElementById("arena-aviso").textContent));
+  igual("a quien sacan se le dice", await texto(page, "#arena-aviso"), "Tu profe te sacó de esta arena.");
+  igual("y deja de buscar", await texto(page, "#btn-jugar"), "Jugar");
+  await cambiar(page, () => { window.__base.errorEntrar = null; });
+
+  // Cerrarla antes de tiempo
+  await cambiar(page, () => { window.__base.torneos[0].cerrada_en = new Date(Date.now() - 1000).toISOString(); });
+  await page.waitForFunction(() => document.getElementById("arena-reloj").textContent === "Terminó", null, { timeout: 9000 });
+  ok("cerrada a mano, la arena termina aunque quedara tiempo", (await page.isDisabled("#btn-jugar")) && /terminó/.test(await texto(page, "#arena-aviso")));
+  await page.waitForSelector("#podio:not([hidden])", { timeout: 9000 });
+  const podio = await texto(page, "#podio-cuerpo");
+  ok("sale el podio con el equipo ganador", /Equipo ganador: Equipo B \(6 puntos\)/.test(podio), podio);
+  ok("los tres mejores jugadores, con medalla y dichos con palabras", /🥇.*Bruno Mena.*6 puntos/.test(podio) && /primer lugar/.test(await page.$eval("#podio-cuerpo", (e) => e.innerHTML)), podio);
+  ok("y cómo le fue a quien mira", /Tú: puesto 2 de 4, con 2 puntos en 2 partidas/.test(podio), podio);
+  ok("el podio es una sección con su título", (await page.$eval("#podio", (e) => e.getAttribute("aria-labelledby"))) === "h-podio");
+  ok("sin errores de JavaScript", errores.length === 0, errores.join(" | "));
+  await ctx.close();
+}
+
+/* El título de la pestaña avisa cuando es tu turno y no la estás mirando. */
+async function pruebaTitulo(browser) {
+  console.log("\n=== El aviso en el título de la pestaña ===");
+  const { page, ctx, errores } = await abrir(browser);
+  await entrar(page);
+  await page.click('#lista-torneos button[aria-label="Entrar a la arena: Arena de prueba"]');
+  await page.waitForSelector("#vista-arena:not([hidden])");
+  await page.click("#btn-jugar");
+  await cambiar(page, () => { window.__base.rivalListo = true; });
+  await page.waitForSelector("#vista-partida:not([hidden])", { timeout: 10000 });
+  const original = await page.title();
+  await page.evaluate(() => {
+    Object.defineProperty(document, "hidden", { configurable: true, get: () => true });
+    Object.defineProperty(document, "visibilityState", { configurable: true, get: () => "hidden" });
+    document.dispatchEvent(new Event("visibilitychange"));
+  });
+  await jugarRival(page, { san: "e4", desde: "e2", hasta: "e4", fen: FEN.e4 });
+  await page.waitForFunction(() => document.title.indexOf("¡Tu turno!") >= 0, null, { timeout: 8000 });
+  ok("con la pestaña escondida, el título avisa que es tu turno", /¡Tu turno!/.test(await page.title()), await page.title());
+  await page.evaluate(() => {
+    Object.defineProperty(document, "hidden", { configurable: true, get: () => false });
+    Object.defineProperty(document, "visibilityState", { configurable: true, get: () => "visible" });
+    document.dispatchEvent(new Event("visibilitychange"));
+  });
+  igual("al volver, el título es el de siempre", await page.title(), original);
+  ok("sin errores de JavaScript", errores.length === 0, errores.join(" | "));
+  await ctx.close();
+}
+
 (async () => {
   const browser = await chromium.launch({ executablePath: CHROME });
   try {
@@ -461,6 +711,10 @@ async function pruebaCelular(browser) {
     await pruebaArena(browser);
     await pruebaPartida(browser);
     await pruebaBandera(browser);
+    await pruebaMirar(browser);
+    await pruebaClave(browser);
+    await pruebaControl(browser);
+    await pruebaTitulo(browser);
     await pruebaCelular(browser);
   } finally {
     await browser.close();
