@@ -491,7 +491,7 @@
     $("pi-sistema-fijo").hidden = v.rondas.length === 0;
     $("pi-campo-rondas").hidden = T.fijo(v);
     $("pi-campo-baku").hidden = T.fijo(v);
-    $("pi-campo-doble").hidden = !T.fijo(v);
+    $("pi-campo-doble").hidden = !T.fijo(v) || v.sistema === "eliminacion";
     f.elements.dobleVuelta.disabled = v.rondas.length > 0;
     f.elements.colorInicial.disabled = v.rondas.length > 0;
     f.elements.baku.disabled = v.rondas.length > 0;
@@ -2444,10 +2444,15 @@
         const empatados = V.empatadosEnCorte(Object.assign({}, tor, { desempateCorte: null }), n);
         if (empatados.length) {
           const resuelto = c.filas.some((f) => f.porDesempate);
-          if (resuelto) sec.append(el("p", { class: "text-sm", texto: tx("desempateHecho", { f: tor.desempateCorte.formato || tx("desempateRapido") }) }));
+          const d = tor.desempateCorte;
+          const enVivo = d && d.vivo && !d.orden && sonLosMismos(d.empatados, empatados);
+          if (resuelto) sec.append(el("p", { class: "text-sm", texto: tx("desempateHecho", { f: d.formato || tx("desempateRapido") }) }));
+          if (enVivo) sec.append(panelDesempateVivo(tor, empatados));
           const b = el("button", { type: "button", class: C.mini + " mt-1", "data-desempate": tor.__id }, tx(resuelto ? "desempateCambiar" : "desempateArmar"));
           b.addEventListener("click", () => armarDesempate(tor, empatados, n));
-          sec.append(b);
+          const bVivo = el("button", { type: "button", class: C.mini + " mt-1 ml-2", "data-desempate-vivo": tor.__id }, tx("desempateJugar"));
+          bVivo.addEventListener("click", () => empezarDesempateVivo(tor, empatados));
+          sec.append(b, enVivo || resuelto ? null : bVivo);
         }
       }
       lista.append(sec);
@@ -2532,6 +2537,49 @@
     if (!guardarDelEvento(tor)) return;
     pintarEvento();
     Avisos.avisar(tx("desempateListo"));
+  }
+
+  const sonLosMismos = (a, b) => Array.isArray(a) && a.length === b.length && a.every((x) => b.includes(x));
+
+  // El desempate jugado acá: Pareo Integral arma cada partida (todos contra
+  // todos, y si siguen empatados, un Armagedón o otra vuelta) y ordena el
+  // corte solo cuando ya no queda nadie empatado (V.resolverDesempate).
+  async function empezarDesempateVivo(tor, empatados) {
+    const r = await Avisos.formulario({
+      titulo: tx("desempateTitulo", { t: tor.grupo || tor.nombre }), texto: tx("desempateJugarTexto", { k: empatados.length }),
+      aceptar: tx("desempateJugarEmpezar"), cancelar: tx("cancelar"),
+      campos: [{ nombre: "formato", etiqueta: tx("desempateFormato"), valor: tx("desempateBlitz"), max: 60 }],
+    });
+    if (!r) return;
+    tor.desempateCorte = { formato: String(r.formato || "").trim().slice(0, 60) || tx("desempateBlitz"), vivo: true, empatados: empatados.slice(), partidas: [], orden: null };
+    V.resolverDesempate(tor.desempateCorte, empatados);
+    if (!guardarDelEvento(tor)) return;
+    pintarEvento();
+  }
+
+  function panelDesempateVivo(tor, empatados) {
+    const d = tor.desempateCorte;
+    const nombre = (id) => (tor.jugadores.find((j) => j.id === id) || {}).nombre || "?";
+    const filas = d.partidas.map((p, k) => {
+      const sel = el("select", { class: C.campoChico, "data-desempate-partida": String(k), "aria-label": tx("desempatePartidaA", { b: nombre(p.b), n: nombre(p.n) }) },
+        RESULTADOS.slice(0, 4).map(([val, clave]) => el("option", { value: val, texto: tx(clave) })));
+      sel.value = p.r || "";
+      sel.addEventListener("change", () => {
+        p.r = sel.value || null;
+        // Una partida cambiada puede deshacer lo que venía después: se vuelve
+        // a resolver desde cero con las que siguen sirviendo.
+        V.resolverDesempate(d, empatados);
+        if (!guardarDelEvento(tor)) return;
+        pintarEvento();
+        if (d.orden) Avisos.avisar(tx("desempateResuelto", { l: d.orden.map((id, i) => (i + 1) + ". " + nombre(id)).join(", ") }));
+      });
+      return el("li", { class: "flex flex-wrap items-center gap-2" },
+        el("span", { texto: (p.arm ? tx("desempateArm") + ": " : "") + nombre(p.b) + " – " + nombre(p.n) }), sel);
+    });
+    return el("div", { class: "mt-2 rounded-lg border border-brand-200 dark:border-brand-700 p-3", "data-desempate-panel": tor.__id },
+      el("p", { class: "font-semibold text-sm", texto: tx("desempateEnJuego", { f: d.formato }) }),
+      el("ul", { class: "mt-1 space-y-1 text-sm" }, filas),
+      d.partidas.some((p) => p.arm) ? el("p", { class: C.nota + " mt-1", texto: tx("desempateArmNota") }) : null);
   }
 
   // El horario del día en una hoja, para la pared y las delegaciones.
@@ -3071,10 +3119,10 @@
   function pintarRondaJugada(caja, r) {
     const v = t();
     const R = v.rondas[r];
-    const pendientes = R.mesas.filter((m) => m.n && !m.r).length;
+    const pendientes = R.mesas.filter((m) => m.n && !T.rondaCompleta({ mesas: [m] })).length;
     const ultima = r === v.rondas.length - 1;
     caja.append(el("div", { class: "flex flex-wrap items-baseline justify-between gap-3 mb-3" },
-      el("h2", { class: "font-serif text-xl font-bold", texto: tx("emparejamientosRonda", { r: r + 1 }) + (v.nombre ? " — " + v.nombre : "") }),
+      el("h2", { class: "font-serif text-xl font-bold", texto: tx("emparejamientosRonda", { r: r + 1 }) + (v.sistema === "eliminacion" ? " · " + nombreRondaElim(v, r) : "") + (v.nombre ? " — " + v.nombre : "") }),
       el("div", { class: "flex flex-wrap gap-2 no-imprimir" },
         el("button", { type: "button", class: C.botonSec, onclick: () => window.print() }, tx("imprimir")),
         el("button", { type: "button", class: C.botonSec, onclick: () => imprimirPlantillaMesas(r) }, tx("plantillaMesas")),
@@ -4651,8 +4699,12 @@
           anotarCorreccion(R, i, m.r, sel.value || null, tx("correccionPrincipal"));
         }
         m.r = sel.value || null;
+        // En la eliminación directa, unas tablas piden quién pasó; otro
+        // resultado borra lo que se había anotado del desempate.
+        if (m.ko && m.r !== "=") { delete m.pasa; delete m.desempate; }
         guardar();
-        const quedan = R.mesas.filter((x) => x.n && !x.r).length;
+        if (m.ko) { pintarRondas(); return; }
+        const quedan = R.mesas.filter((x) => x.n && !T.rondaCompleta({ mesas: [x] })).length;
         const estadoTxt = caja.querySelector('[role="status"]');
         if (estadoTxt) estadoTxt.textContent = quedan ? tx("faltanResultados", { n: quedan }) : tx("rondaCompleta");
         if (!quedan) pintarRondasNav();
@@ -4668,6 +4720,7 @@
         el("td", { class: "num", texto: V.mesaFisica(v, i) }), el("td", { class: "num", texto: num.get(m.b) }),
         el("td", { class: "font-semibold" }, nombreDe(m.b), mb ? " " : null, mb), el("td", { class: "num", texto: puntosTexto(antes(m.b)) }),
         el("td", { class: "text-center" }, sel, el("span", { class: "pi-solo-imprimir", texto: m.r ? tx("corto_" + m.r) : "" }),
+          m.ko && m.r === "=" ? desempateDeMesa(v, R, m, i) : null,
           m.porAdjunto ? el("span", { class: "block text-xs " + C.nota, texto: typeof m.porAdjunto === "string" ? tx("adjuntoAnotoNombre", { n: m.porAdjunto }) : tx("adjuntoAnoto") }) : null,
           el("button", { type: "button", class: C.mini + " no-imprimir block mx-auto mt-1", "data-pgn": String(i), "aria-label": tx("pgnBotonA", { m: V.mesaFisica(v, i) }),
             onclick: (e) => editarPartida(r, i, e.currentTarget) }, (m.pgn ? "✓ " : "") + tx("pgnBoton"))),
@@ -4679,9 +4732,41 @@
     caja.append(el("div", { class: "overflow-x-auto" }, tabla));
   }
 
+  // El nombre de la ronda en una eliminación directa: «Final», «Cuartos de final»…
+  const RONDA_ELIM = { final: "elimRonda_final", semifinal: "elimRonda_semifinal", cuartos: "elimRonda_cuartos", octavos: "elimRonda_octavos", ronda: "elimRonda_ronda" };
+  function nombreRondaElim(v, r) {
+    return tx(RONDA_ELIM[T.nombreRondaEliminacion(v, r)], { r: r + 1 });
+  }
+
+  // En la eliminación directa, unas tablas se desempatan en la mesa: quién
+  // pasó y cómo (el resultado de la partida queda «=», que es el que va al
+  // TRF y al Elo).
+  function desempateDeMesa(v, R, m, i) {
+    const mesa = V.mesaFisica(v, i);
+    const pasa = el("select", { class: C.campoChico + " mt-1", "data-pasa": String(i), "aria-label": tx("elimPasaA", { m: mesa }) },
+      el("option", { value: "", texto: tx("elimPasaFalta") }),
+      el("option", { value: m.b, texto: tx("elimPasa") + ": " + nombreDe(m.b) }),
+      el("option", { value: m.n, texto: tx("elimPasa") + ": " + nombreDe(m.n) }));
+    pasa.value = m.pasa || "";
+    const formatos = tx("elimFormatos").split("|");
+    const como = el("select", { class: C.campoChico + " mt-1", "data-desempate-mesa": String(i), "aria-label": tx("elimDesempateA", { m: mesa }) },
+      formatos.map((f) => el("option", { value: f, texto: f })));
+    como.value = formatos.includes(m.desempate) ? m.desempate : formatos[0];
+    pasa.addEventListener("change", () => {
+      if (pasa.value) { m.pasa = pasa.value; m.desempate = como.value; } else { delete m.pasa; delete m.desempate; }
+      guardar();
+      pintarRondas();
+    });
+    como.addEventListener("change", () => { if (m.pasa) { m.desempate = como.value; guardar(); } });
+    return el("span", { class: "block no-imprimir" }, pasa, " ", como,
+      m.pasa ? el("span", { class: "pi-solo-imprimir", texto: tx("elimPasoDesempate", { n: nombreDe(m.pasa), f: m.desempate || formatos[0] }) }) : null);
+  }
+
   // Quienes no jugaron esta ronda: byes pedidos, retirados, inscritos después.
   function pintarNoJuegan(caja, r) {
     const v = t();
+    // En la eliminación directa, quien no está en una mesa ya quedó fuera.
+    if (v.sistema === "eliminacion") return;
     const R = v.rondas[r];
     const num = T.numeros(v);
     const enMesa = new Set();
@@ -5520,7 +5605,9 @@
     if (!v.pedidas || v.pedidas.r !== r) v.pedidas = { r, ausencias: {} };
     const elegidas = v.pedidas.ausencias;
     const pedidas = Object.assign({}, elegidas);
-    if (v.sistema === "scheveningen") {
+    if (v.sistema === "eliminacion") {
+      caja.append(el("p", { class: C.nota + " mb-3", texto: tx("elimAyuda") }));
+    } else if (v.sistema === "scheveningen") {
       caja.append(el("p", { class: C.nota + " mb-3", texto: tx("schevAyuda") }));
       if (r === 0) caja.append(equiposSchevVista(v));
     } else if (v.sistema === "todos") {
@@ -5709,6 +5796,7 @@
     if (r === 0 && !Array.isArray(v.numeracion)) T.fijarNumeracion(v);
     if (r === 0) E.fijarOrden(v);
     let ronda;
+    if (v.sistema === "eliminacion" && E.esDeEquipos(v)) throw new Error(tx("elimSoloIndividual"));
     if (v.sistema === "scheveningen") {
       if (E.esDeEquipos(v)) throw new Error(tx("schevSoloIndividual"));
       const eq = T.equiposScheveningen(v);
@@ -5822,12 +5910,40 @@
         el("tbody", {}, filas))));
   }
 
+  // El cuadro de una eliminación directa: cada ronda con sus mesas y quién
+  // pasó, escrito (no solo en negrita).
+  function pintarCuadroElim(v) {
+    const caja = $("pi-clas-cuadro");
+    if (!caja) return;
+    caja.replaceChildren();
+    caja.hidden = !(v.sistema === "eliminacion" && v.rondas.length);
+    if (caja.hidden) return;
+    const llego = T.alcanceEliminacion(v);
+    const total = T.rondasDelTorneo(v);
+    const final = v.rondas.length === total ? v.rondas[total - 1].mesas[0] : null;
+    const campeon = final ? T.pasaDe(final) : undefined;
+    const enCarrera = v.jugadores.filter((j) => llego.get(j.id) === v.rondas.length && v.rondas[v.rondas.length - 1].mesas.some((m) => m.b === j.id || m.n === j.id)).length;
+    caja.append(el("h3", { class: "font-semibold", texto: tx("elimCuadro") }),
+      el("p", { class: "text-sm mb-2", texto: campeon ? tx("elimCampeon", { n: nombreDe(campeon) }) : tx("elimEnJuego", { n: enCarrera }) }));
+    v.rondas.forEach((R, r) => {
+      caja.append(el("h4", { class: "font-semibold text-sm mt-3", texto: nombreRondaElim(v, r) }),
+        el("ul", { class: "text-sm space-y-1" }, R.mesas.map((m) => {
+          if (m.n === null) return el("li", { texto: tx("elimLibre", { n: nombreDe(m.b) }) });
+          const g = T.pasaDe(m);
+          const que = g === undefined ? "" : g === null ? tx("elimSinPasar") : m.r === "=" ? tx("elimPasoDesempate", { n: nombreDe(g), f: m.desempate || "" }) : tx("elimPasoPor", { n: nombreDe(g) });
+          return el("li", {}, nombreDe(m.b) + " – " + nombreDe(m.n) + (m.r ? " · " + tx("corto_" + m.r) : ""), que ? el("strong", { texto: " · " + que }) : null);
+        })));
+    });
+  }
+
   // ---------- Clasificación ----------
   function pintarClasificacion() {
     const v = t();
+    // En la eliminación directa el puesto sale del cuadro: los desempates no ordenan nada.
+    const desList = v.sistema === "eliminacion" ? [] : v.desempates;
     const k = rondasCompletas();
     const tc = hasta(k);
-    const todasFilas = E.clasificacion(tc, v.desempates);
+    const todasFilas = E.clasificacion(tc, desList);
     const filas = filasFiltradas(todasFilas);
     const num = T.numeros(v);
     $("pi-clas-titulo").textContent = k ? tx("clasificacionTras", { r: k }) : tx("fClasificacion");
@@ -5835,6 +5951,7 @@
       + (estado.filtroInstitucion ? tx("clasFiltroNota", { n: filas.length, total: todasFilas.length, inst: estado.filtroInstitucion }) : "");
     pintarSelectInstitucion($("pi-clas-institucion"));
     pintarMarcadorSchev(v);
+    pintarCuadroElim(v);
     const tabla = $("pi-tabla-clas");
     tabla.replaceChildren();
     if (!v.jugadores.length) return;
@@ -5846,7 +5963,7 @@
       el("th", { scope: "col", texto: tx("nombre") }), el("th", { scope: "col", texto: tx("institucion") }),
       el("th", { scope: "col", texto: tx("fed") }), el("th", { class: "num", scope: "col", texto: "Elo" }),
       el("th", { class: "num", scope: "col", texto: tx("pts") }),
-      v.desempates.map((c) => el("th", { class: "num", scope: "col" }, el("abbr", { title: (E.catalogo(v).find((x) => x.codigo === c) || {})[idioma], texto: c }))), thElo)));
+      desList.map((c) => el("th", { class: "num", scope: "col" }, el("abbr", { title: (E.catalogo(v).find((x) => x.codigo === c) || {})[idioma], texto: c }))), thElo)));
     const cuerpo = el("tbody");
     for (const f of filas) {
       const j = jugador(f.id);
@@ -5857,7 +5974,7 @@
         el("td", { texto: j.institucion || "" }),
         el("td", { texto: j.fed || "" }), el("td", { class: "num", texto: Number(j.elo) > 0 ? j.elo : "" }),
         el("td", { class: "num font-bold", texto: puntosTexto(f.puntos) }),
-        v.desempates.map((c) => el("td", { class: "num", texto: valorDesempate(c, f.valores[c]) })),
+        desList.map((c) => el("td", { class: "num", texto: valorDesempate(c, f.valores[c]) })),
         elos ? celdasElo(x).map((c) => el("td", { class: "num", "data-elo": c[0], texto: c[1] })) : null));
     }
     tabla.append(cuerpo);
@@ -5867,7 +5984,7 @@
       for (const [c, d] of [["Rp", "eloRp"], ["K", "eloK"], ["±Elo", "eloCambio"]]) dl.append(el("div", {}, el("dt", { class: "inline font-semibold", texto: c + ": " }), el("dd", { class: "inline", texto: tx(d) })));
       dl.append(el("p", { class: C.nota + " mt-1", texto: tx("eloNota") }));
     }
-    for (const c of v.desempates) {
+    for (const c of desList) {
       const info = E.catalogo(v).find((x) => x.codigo === c);
       if (info) dl.append(el("div", {}, el("dt", { class: "inline font-semibold", texto: c + ": " }), el("dd", { class: "inline", texto: info[idioma] })));
     }

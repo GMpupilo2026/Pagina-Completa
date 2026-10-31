@@ -10,7 +10,7 @@
  *
  *   { formato: 1, nombre, ciudad, federacion, fechaInicio, fechaFin, arbitro,
  *     arbitroAdjunto, ritmo,
- *     sistema: "suizo" | "todos" | "scheveningen",
+ *     sistema: "suizo" | "todos" | "scheveningen" | "eliminacion",
  *     dobleVuelta (en todos contra todos y en Scheveningen),
  *     rondasTotales, colorInicial: "w" | "b", baku (aceleración Baku),
  *     puntos: { victoria, tablas, derrota, bye },     bye = el que asigna el pareo
@@ -146,8 +146,9 @@
 
   const puntos = (t, id) => puntosHasta(t, id, t.rondas.length);
 
+  // En la eliminación directa, unas tablas sin el desempate no cierran la mesa.
   function rondaCompleta(R) {
-    return R.mesas.every((m) => m.n === null || !!m.r);
+    return R.mesas.every((m) => m.n === null || (!!m.r && !(m.ko && m.r === "=" && m.pasa !== m.b && m.pasa !== m.n)));
   }
 
   // Quién juega la ronda que viene: los que no están retirados ni pidieron bye.
@@ -334,11 +335,108 @@
     return { a: e.a.nombre, b: e.b.nombre, n: e.n, rondas, totalA, totalB };
   }
 
+  // ---------- Eliminación directa: el cuadro ----------
+  // Las semillas son el orden inicial (Elo, título, nombre) y van en el cuadro
+  // de siempre: el 1 y el 2 solo se cruzan en la final, el 1 y el 4 en
+  // semifinales, y así. Si no son potencia de dos, los primeros pasan la
+  // ronda 1 con un bye. Cada mesa lleva su lugar en el cuadro (`slot`): la
+  // ronda que sigue cruza a los ganadores de los lugares 2k y 2k + 1.
+  //
+  // Una partida en tablas no deja pasar a nadie: el desempate (un blitz, un
+  // Armagedón) se juega ahí mismo y la mesa guarda quién pasó (`pasa`) y
+  // cómo (`desempate`, el formato). El resultado de la partida queda «=»:
+  // es el que va al TRF y al Elo. Sin `pasa`, la ronda no está completa.
+  function semillasCuadro(tam) {
+    let a = [1, 2];
+    while (a.length < tam) {
+      const n = a.length * 2 + 1;
+      a = a.flatMap((x) => [x, n - x]);
+    }
+    return a.slice(0, tam);
+  }
+  const tamCuadro = (n) => { let k = 1; while (k < n) k *= 2; return Math.max(2, k); };
+  function rondasEliminacion(t) {
+    let r = 0;
+    for (let k = tamCuadro(t.jugadores.length); k > 1; k /= 2) r++;
+    return r;
+  }
+  // Quién pasa de una mesa: su id; null si no pasa nadie («--»); undefined
+  // si todavía no se sabe (sin resultado, o tablas sin el desempate).
+  function pasaDe(m) {
+    if (m.n === null) return m.b;
+    switch (m.r) {
+      case "1-0": case "+-": return m.b;
+      case "0-1": case "-+": return m.n;
+      case "--": return null;
+      case "=": return m.pasa === m.b || m.pasa === m.n ? m.pasa : undefined;
+      default: return undefined;
+    }
+  }
+  function rondaEliminacion(t, ronda) {
+    const orden = ordenInicial(t);
+    const semilla = new Map(orden.map((id, i) => [id, i + 1]));
+    const tam = tamCuadro(orden.length);
+    const alterna = (k) => (k % 2 === 0) === (t.colorInicial !== "b");
+    const mesas = [];
+    if (ronda === 0) {
+      const s = semillasCuadro(tam);
+      for (let k = 0; k < tam / 2; k++) {
+        const A = orden[s[2 * k] - 1], B = orden[s[2 * k + 1] - 1];
+        if (A === undefined && B === undefined) continue;
+        if (A === undefined || B === undefined) { mesas.push({ b: A === undefined ? B : A, n: null, r: null, slot: k, ko: true }); continue; }
+        mesas.push(alterna(k) ? { b: A, n: B, r: null, slot: k, ko: true } : { b: B, n: A, r: null, slot: k, ko: true });
+      }
+      return { mesas, ausencias: {} };
+    }
+    const previa = t.rondas[ronda - 1];
+    if (!previa) throw new Error("falta la ronda anterior");
+    const ganador = new Map();
+    for (const m of previa.mesas) {
+      const g = pasaDe(m);
+      if (g === undefined) { const x = new Error("pendiente"); x.detalle = { error: "pendiente" }; throw x; }
+      ganador.set(m.slot, g);
+    }
+    // Cuántas blancas lleva cada uno: el que menos tiene, juega con blancas.
+    const blancas = new Map();
+    for (let r = 0; r < ronda; r++) for (const m of t.rondas[r].mesas) if (m.n !== null) blancas.set(m.b, (blancas.get(m.b) || 0) + 1);
+    const lugares = tam / Math.pow(2, ronda + 1);
+    for (let k = 0; k < lugares; k++) {
+      const A = ganador.get(2 * k), B = ganador.get(2 * k + 1);
+      if (!A && !B) continue;
+      if (!A || !B) { mesas.push({ b: A || B, n: null, r: null, slot: k, ko: true }); continue; }
+      const [alto, bajo] = semilla.get(A) < semilla.get(B) ? [A, B] : [B, A];
+      const ba = blancas.get(alto) || 0, bb = blancas.get(bajo) || 0;
+      const altoBlancas = ba !== bb ? ba < bb : alterna(k + ronda);
+      mesas.push(altoBlancas ? { b: alto, n: bajo, r: null, slot: k, ko: true } : { b: bajo, n: alto, r: null, slot: k, ko: true });
+    }
+    return { mesas, ausencias: {} };
+  }
+  // Hasta qué ronda llegó cada uno: cuántas pasó. El campeón pasó todas.
+  function alcanceEliminacion(t, hasta) {
+    const out = new Map(t.jugadores.map((j) => [j.id, 0]));
+    const R = hasta == null ? t.rondas.length : hasta;
+    for (let r = 0; r < R; r++) for (const m of t.rondas[r].mesas) {
+      const g = pasaDe(m);
+      if (g) out.set(g, (out.get(g) || 0) + 1);
+    }
+    return out;
+  }
+  // El nombre de una ronda del cuadro: final, semifinal, cuartos…
+  function nombreRondaEliminacion(t, ronda) {
+    const quedan = rondasEliminacion(t) - ronda;
+    return ["final", "semifinal", "cuartos", "octavos"][quedan - 1] || "ronda";
+  }
+
   // Los sistemas con el calendario fijo de antemano (no se empareja ronda a
-  // ronda con el motor): todos contra todos y Scheveningen.
-  const fijo = (t) => t.sistema === "todos" || t.sistema === "scheveningen";
-  function rondasFijas(t) { return t.sistema === "scheveningen" ? rondasScheveningen(t) : rondasTodos(t); }
-  function rondaFija(t, r) { return t.sistema === "scheveningen" ? rondaScheveningen(t, r) : rondaTodos(t, r); }
+  // ronda con el motor): todos contra todos, Scheveningen y la eliminación
+  // directa (que depende de quién pasó, pero no del motor).
+  const fijo = (t) => t.sistema === "todos" || t.sistema === "scheveningen" || t.sistema === "eliminacion";
+  function rondasFijas(t) {
+    return t.sistema === "scheveningen" ? rondasScheveningen(t) : t.sistema === "eliminacion" ? rondasEliminacion(t) : rondasTodos(t);
+  }
+  function rondaFija(t, r) {
+    return t.sistema === "scheveningen" ? rondaScheveningen(t, r) : t.sistema === "eliminacion" ? rondaEliminacion(t, r) : rondaTodos(t, r);
+  }
   // Cuántas rondas tiene el torneo, sea cual sea el sistema.
   function rondasDelTorneo(t) { return fijo(t) ? rondasFijas(t) : Number(t.rondasTotales) || 0; }
 
@@ -379,7 +477,8 @@
     cab("062", t.jugadores.length);
     cab("072", t.jugadores.filter((j) => Number(j.elo) > 0).length);
     cab("082", 0);
-    cab("092", t.sistema === "todos" ? "Individual: Round-Robin" : t.sistema === "scheveningen" ? "Individual: Scheveningen" : "Individual: Swiss-System");
+    cab("092", t.sistema === "todos" ? "Individual: Round-Robin" : t.sistema === "scheveningen" ? "Individual: Scheveningen"
+      : t.sistema === "eliminacion" ? "Individual: Knockout" : "Individual: Swiss-System");
     cab("102", t.arbitro);
     cab("112", t.arbitroAdjunto);
     cab("122", t.ritmo);
@@ -456,6 +555,7 @@
       else if (c === "052") t.fechaFin = v.replace(/\//g, "-").slice(0, 10);
       else if (c === "092" && /round.?robin/i.test(v)) t.sistema = "todos";
       else if (c === "092" && /scheveningen/i.test(v)) t.sistema = "scheveningen";
+      else if (c === "092" && /knock.?out/i.test(v)) t.sistema = "eliminacion";
       else if (c === "102") t.arbitro = v;
       else if (c === "112") t.arbitroAdjunto = v;
       else if (c === "122") t.ritmo = v;
@@ -558,6 +658,7 @@
     PUNTOS_FIDE, TITULOS, nuevo, ordenInicial, fijarNumeracion, sortearNumeracion, sortearColor, numeros, situacion, puntos, puntosHasta,
     rondaCompleta, participantes, retirosPorIncomparecencia, berger, rondaTodos, rondasTodos, aTrf,
     COLORES_SCHEVENINGEN, MAX_SCHEVENINGEN, equiposScheveningen, rondaScheveningen, rondasScheveningen, marcadorScheveningen,
+    semillasCuadro, rondasEliminacion, rondaEliminacion, pasaDe, alcanceEliminacion, nombreRondaEliminacion,
     fijo, rondasFijas, rondaFija, rondasDelTorneo, leerPareo, deTrf,
     // El formato de las columnas del TRF: lo usa también el TRF de equipos (js/pareo/equipos.js).
     formatoTrf: { izq, der, decimal, fechaTrf },

@@ -118,7 +118,7 @@
                 <h2 id="es-torneo">3. Los datos del torneo</h2>
                 <ul>
                     <li><strong>Nombre, ciudad, federación, fechas, árbitros y ritmo</strong>: van al TRF.</li>
-                    <li><strong>Sistema</strong>: suizo (Sistema Holandés), todos contra todos o Scheveningen. No se puede cambiar una vez emparejada la primera ronda.</li>
+                    <li><strong>Sistema</strong>: suizo (Sistema Holandés), todos contra todos, Scheveningen o eliminación directa. No se puede cambiar una vez emparejada la primera ronda.</li>
                     <li><strong>Número de rondas</strong>: se puede subir durante el torneo, nunca por debajo de las ya emparejadas.</li>
                     <li><strong>Color del n.º 1 en la ronda 1</strong>: blancas o negras; lo decide el sorteo del árbitro.</li>
                     <li><strong>Aceleración Baku</strong>: la aceleración de FIDE para torneos grandes.</li>
@@ -160,6 +160,12 @@
                     <li>El orden de tableros de cada equipo es el de la lista (Elo, título y nombre), y se ve antes de la ronda 1. Con n jugadores por equipo hay n rondas (2n a doble vuelta, con los colores al revés).</li>
                     <li>Los colores quedan parejos: cada jugador tiene tantas blancas como negras (con un número impar, una de diferencia) y nunca lleva el mismo color tres rondas seguidas.</li>
                     <li>La <strong>Clasificación</strong> trae arriba el encuentro entre los dos equipos, ronda por ronda, y debajo la clasificación individual.</li>
+                </ul>
+                <p><strong>Eliminación directa.</strong> Una copa: quien gana pasa a la ronda siguiente y quien pierde queda fuera.</p>
+                <ul>
+                    <li>Las semillas son el orden de la lista (Elo, título y nombre), en el cuadro de siempre: la 1 y la 2 solo se cruzan en la final. Si no son 4, 8, 16… los primeros pasan la ronda 1 sin jugar.</li>
+                    <li>Una partida en tablas se desempata en la mesa: al lado del resultado se elige quién pasó y cómo (Armagedón, blitz, rápidas o sorteo). La partida queda en tablas para el TRF y el Elo, y sin elegir quién pasó no se empareja la ronda siguiente.</li>
+                    <li>La <strong>Clasificación</strong> trae el cuadro con el campeón y quién pasó en cada mesa, y el puesto sale de hasta dónde llegó cada uno: los que cayeron en semifinales comparten el 3.º, los de cuartos el 5.º.</li>
                 </ul>
 
                 <h2 id="es-desempates">7. La clasificación y los desempates</h2>
@@ -282,7 +288,7 @@ node pareo.js standings torneo.trf --tiebreaks BH-C1,BH,SB --lang es</code></pre
                 <h2 id="en-tournament">3. Tournament details</h2>
                 <ul>
                     <li><strong>Name, city, federation, dates, arbiters and time control</strong> go into the TRF.</li>
-                    <li><strong>System</strong>: Swiss (Dutch System), round robin or Scheveningen. It cannot be changed once round 1 is paired.</li>
+                    <li><strong>System</strong>: Swiss (Dutch System), round robin, Scheveningen or knockout. It cannot be changed once round 1 is paired.</li>
                     <li><strong>Number of rounds</strong>: it can be raised during the tournament, never below the rounds already paired.</li>
                     <li><strong>Colour of no. 1 in round 1</strong>: white or black, as drawn by the arbiter.</li>
                     <li><strong>Baku acceleration</strong>: FIDE's acceleration for large tournaments.</li>
@@ -324,6 +330,12 @@ node pareo.js standings torneo.trf --tiebreaks BH-C1,BH,SB --lang es</code></pre
                     <li>Each team's board order is the list order (rating, title and name), shown before round 1. With n players per team there are n rounds (2n in a double round, with colours reversed).</li>
                     <li>Colours stay balanced: every player has as many whites as blacks (one apart with an odd number) and never has the same colour three rounds in a row.</li>
                     <li>The <strong>Standings</strong> show the match between the two teams at the top, round by round, and the individual standings below.</li>
+                </ul>
+                <p><strong>Knockout.</strong> A cup: the winner goes through to the next round and the loser is out.</p>
+                <ul>
+                    <li>Seeds follow the list order (rating, title and name) in the usual bracket: seeds 1 and 2 can only meet in the final. If there are not 4, 8, 16… players, the top seeds get a bye in round 1.</li>
+                    <li>A drawn game is decided at the board: next to the result, choose who went through and how (Armageddon, blitz, rapid or drawing of lots). The game stays a draw for the TRF and the rating, and the next round cannot be paired until it is chosen.</li>
+                    <li>The <strong>Standings</strong> show the bracket with the champion and who went through at each board, and places come from how far each player got: semi-final losers share 3rd, quarter-final losers share 5th.</li>
                 </ul>
 
                 <h2 id="en-tiebreaks">7. Standings and tie-breaks</h2>

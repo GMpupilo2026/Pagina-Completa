@@ -2373,8 +2373,9 @@ las flechas.
 cuenta —jugadores, rondas, resultados, clasificación con desempates, tabla
 cruzada y el TRF para FIDE— con el **Sistema Holandés de FIDE** (C.04.3,
 versión vigente desde el 1 de febrero de 2026), un todos contra todos con
-las tablas de Berger o un Scheveningen entre dos equipos (ver «El Sistema
-Scheveningen: dos equipos, cada uno contra todos los del otro»). Se pidió «que cumpla con todas las reglas de la FIDE
+las tablas de Berger, un Scheveningen entre dos equipos (ver «El Sistema
+Scheveningen: dos equipos, cada uno contra todos los del otro») o una
+eliminación directa (ver «La eliminación directa y el desempate en la mesa»). Se pidió «que cumpla con todas las reglas de la FIDE
 para ser avalado»: el aval lo tramita el dueño del sitio por su cuenta; esto
 deja el programa listo para pedirlo. No es el torneo de la Academia
 (`torneo.html`, con `js/torneo-engine.js`), que sigue siendo un suizo
@@ -2946,6 +2947,58 @@ Al tocar esto, `node herramientas/verificar-pareo-scheveningen.js` (con el
 sitio en localhost:8777). Rompiendo a propósito un color de la tabla o el
 giro de B, salta.
 
+### La eliminación directa y el desempate en la mesa
+
+Lo pidió el dueño del sitio: las copas y las finales se jugaban fuera de
+Pareo Integral, y el desempate del corte también («se juega fuera de Pareo
+Integral» decía la pantalla).
+
+- **`sistema: "eliminacion"`**, solo en torneos individuales. Es de
+  calendario fijo como el todos contra todos (`T.fijo`): no pasa por el
+  motor, pero cada ronda depende de quién pasó la anterior
+  (`T.rondaEliminacion`).
+- **El cuadro de siempre** (`T.semillasCuadro`): las semillas son el orden
+  inicial y van 1-8, 4-5, 2-7, 3-6 (y así para 16, 32…), de modo que el 1 y el
+  2 solo se cruzan en la final. Si no son potencia de dos, las mejores
+  semillas pasan la ronda 1 con un bye. Cada mesa guarda su lugar (`slot`) y
+  la ronda siguiente cruza a los ganadores de los lugares 2k y 2k + 1. Los
+  colores de la ronda 1 se alternan por lugar desde el color del n.º 1;
+  después, juega con blancas el que lleva menos.
+- **Unas tablas se desempatan en la mesa**: al lado del resultado se elige
+  quién pasó (`pasa`, uno de los dos de la mesa) y cómo (`desempate`:
+  Armagedón, blitz, rápidas o sorteo). La partida queda «=»: es la que va al
+  TRF y al Elo; el desempate no es una partida más. Sin `pasa`, la ronda no
+  está completa (`T.rondaCompleta`) y no se empareja la siguiente. «--» deja
+  el lugar vacío y el rival de la ronda que sigue pasa sin jugar.
+- **El puesto sale de hasta dónde llegó cada uno**
+  (`T.alcanceEliminacion`, en `D.clasificacion`): campeón, finalista, los
+  dos de semifinales comparten el 3.º, los de cuartos el 5.º. Los desempates
+  de FIDE no ordenan nada y no se muestran. La Clasificación trae arriba el
+  cuadro con cada ronda por su nombre (final, semifinales, cuartos…) y quién
+  pasó en cada mesa, escrito.
+- **El TRF dice `092 Individual: Knockout`**, sin la línea 192, y se vuelve a
+  leer como eliminación directa.
+- **Al publicar** van `ko`, `slot`, `pasa` y `desempate` de cada mesa, y
+  `pareo-publicar` los guarda (solo si `pasa` es uno de los dos de la mesa):
+  con eso la página pública arma la misma clasificación con el mismo código.
+
+**El desempate del corte, jugado en Pareo Integral**
+(`V.resolverDesempate`): además de «Anotar el desempate» (lo jugado afuera),
+«Jugar el desempate aquí» arma las partidas entre los empatados y ordena el
+corte solo. Un grupo empatado juega primero entre ellos (dos partidas con los
+colores cambiados si son dos, todos contra todos si son más); si siguen
+empatados, dos juegan un Armagedón (las tablas las gana el de negras: siempre
+hay ganador) y tres o más otra vuelta; si el todos contra todos separa a
+algunos, los que quedan empatados juegan lo suyo. Se guarda en
+`t.desempateCorte` con `vivo`, los `empatados` y las `partidas`; `orden`
+queda en null mientras falte algo, y `V.aplicarDesempate` no cambia nada
+hasta que esté. Corregir un resultado vuelve a resolver desde cero y borra lo
+que quedó suelto.
+
+Al tocar esto, `node herramientas/verificar-pareo-eliminacion.js`, y el
+desempate en vivo también en `verificar-pareo-jde-arbitraje.js`. Rompiendo a
+propósito las semillas del cuadro o las tablas del Armagedón, salta.
+
 ### Torneos por equipos: el orden de tableros y el pareo de encuentros
 
 Lo pidió el dueño del sitio: la mitad de la inscripción de los JDE (193 de
@@ -3242,8 +3295,9 @@ eliminarlos.
   por FIDE**: falta probarlo con el que use la Federación.
 - **El desempate del corte** (`armarDesempate()`, `V.aplicarDesempate()`):
   con un empate en el último lugar que clasifica, «Anotar el desempate» pide
-  cómo se desempató (un blitz, un Armagedón: se juega fuera de Pareo
-  Integral) y el orden en que quedaron. Se guarda en `t.desempateCorte` y
+  cómo se desempató (un blitz, un Armagedón jugado fuera de Pareo Integral)
+  y el orden en que quedaron; o «Jugar el desempate aquí» lo juega dentro
+  (ver «La eliminación directa y el desempate en la mesa»). Se guarda en `t.desempateCorte` y
   ordena a esos jugadores en la clasificación del evento (clasificados,
   podio, informe, que lo dice). **Solo vale mientras sigan empatados entre
   ellos**: si una corrección deshace el empate, se ignora sola.

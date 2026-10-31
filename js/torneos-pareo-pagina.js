@@ -221,7 +221,7 @@
   const inscribe = (x) => !!(x.inscripcion && x.inscripcion.abierta && (!x.inscripcion.hasta || x.inscripcion.hasta >= hoy()));
   const RITMO = { clasico: "Clásico", rapido: "Rápido", blitz: "Relámpago" };
   const ritmoDe = (x) => RITMO[x.ritmo_tipo || (window.RitmoControl ? RitmoControl.deducir(x.ritmo || "", x.nombre) : "")] || "";
-  const SISTEMA = { suizo: "Suizo", todos: "Todos contra todos", scheveningen: "Scheveningen" };
+  const SISTEMA = { suizo: "Suizo", todos: "Todos contra todos", scheveningen: "Scheveningen", eliminacion: "Eliminación directa" };
   const MODALIDAD = { equipos: "Por equipos", individual: "Individual" };
   const ELO = { fide: "FIDE", nacional: "Nacional", no: "No" };
   const lugarDe = (x) => [x.lugar, x.fed].filter(Boolean).join(", ");
@@ -667,7 +667,7 @@
 
   function cabecera(fila, t) {
     const partes = [t.evento && t.evento.nombre, t.ciudad, [fechaTexto(t.fechaInicio), fechaTexto(t.fechaFin)].filter(Boolean).join(" al ")].filter(Boolean);
-    const datos = [t.sistema === "todos" ? "Todos contra todos" : t.sistema === "scheveningen" ? "Scheveningen" : "Suizo de " + (t.rondasTotales || "?") + " rondas", t.ritmo, ELO_LARGO[t.validoElo] || "", t.arbitro ? "Árbitro: " + t.arbitro : ""].filter(Boolean);
+    const datos = [t.sistema === "todos" ? "Todos contra todos" : t.sistema === "scheveningen" ? "Scheveningen" : t.sistema === "eliminacion" ? "Eliminación directa" : "Suizo de " + (t.rondasTotales || "?") + " rondas", t.ritmo, ELO_LARGO[t.validoElo] || "", t.arbitro ? "Árbitro: " + t.arbitro : ""].filter(Boolean);
     return el("div", { class: "mb-6" },
       el("a", { href: "#", class: C.enlace + " text-sm", texto: "← Todos los torneos" }),
       el("h1", { id: "tp-titulo", class: "font-serif text-3xl md:text-4xl font-bold text-brand-800 dark:text-white mt-3", tabindex: "-1", texto: fila.nombre }),
@@ -689,7 +689,7 @@
     const caja = el("section", { class: C.tarjeta, "aria-labelledby": "tp-clas-titulo" },
       el("h2", { id: "tp-clas-titulo", class: "font-serif text-xl font-bold mb-1", texto: k ? "Clasificación tras la ronda " + k : "Clasificación" }));
     if (!k) { caja.append(el("p", { class: C.nota, texto: "Todavía no hay una ronda completa." })); return caja; }
-    if (k < (t.sistema === "scheveningen" ? Number(t.rondasTotales) || 0 : t.sistema === "todos" ? T.rondasTodos(t) : Number(t.rondasTotales) || 0)) caja.append(el("p", { class: C.nota + " mb-2", texto: "Provisional: faltan rondas." }));
+    if (k < (t.sistema === "scheveningen" || t.sistema === "eliminacion" ? Number(t.rondasTotales) || 0 : t.sistema === "todos" ? T.rondasTodos(t) : Number(t.rondasTotales) || 0)) caja.append(el("p", { class: C.nota + " mb-2", texto: "Provisional: faltan rondas." }));
     const des = t.desempates || [];
     caja.append(el("div", { class: "overflow-x-auto" }, el("table", { id: "tp-tabla-clas", class: "pi-tabla" },
       el("thead", {}, el("tr", {},
@@ -972,7 +972,7 @@
   function tarjetaAnuncio(t) {
     const an = t.anuncio || {};
     const filas = [["Fecha", [fechaTexto(t.fechaInicio), fechaTexto(t.fechaFin)].filter(Boolean).join(" al ")], ["Hora", an.hora || ""], ["Lugar", t.ciudad],
-      ["Ritmo", t.ritmo], ["Sistema", t.sistema === "todos" ? "Todos contra todos" : t.sistema === "scheveningen" ? "Scheveningen" : "Suizo de " + (t.rondasTotales || "?") + " rondas"], ["Contacto", an.contacto || ""],
+      ["Ritmo", t.ritmo], ["Sistema", t.sistema === "todos" ? "Todos contra todos" : t.sistema === "scheveningen" ? "Scheveningen" : t.sistema === "eliminacion" ? "Eliminación directa" : "Suizo de " + (t.rondasTotales || "?") + " rondas"], ["Contacto", an.contacto || ""],
       ["Inscritos", t.jugadores.length ? String(t.jugadores.length) : ""]].filter(([, v]) => v);
     return el("section", { id: "tp-anuncio", class: C.tarjeta + " mb-6", "aria-labelledby": "tp-anuncio-titulo" },
       el("h2", { id: "tp-anuncio-titulo", class: "font-serif text-xl font-bold mb-3", texto: "Próximamente" }),
