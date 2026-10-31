@@ -3865,6 +3865,38 @@ Al tocar esto, `node herramientas/verificar-pareo-sala-evento.js`. Rompiendo a
 propósito la mesa física, la casilla de consentimiento, el llamado, el fin de
 la ronda o el aceptar, salta.
 
+### Pareo Integral como programa de computadora
+
+El 31/10/2026 el dueño pidió que Pareo Integral se viera «tipo programa de
+computadora»: antes eran tarjetas redondeadas sueltas sobre el fondo de la
+página, con las fichas como botones amarillos. Ahora el editor (`#pi-editor`)
+es una ventana: la barra de título (nombre, lema, manual e idioma), la barra
+de herramientas (el torneo abierto y sus botones), las pestañas pegadas al
+panel (la abierta, del color del panel con una raya de acento arriba), el
+panel como área de trabajo, las tablas como la cuadrícula de una hoja de
+cálculo y una barra de estado abajo con el torneo, cuántos juegan, la ronda y
+la hora en que se guardó (`pintarEstado`, que corre en `pintarTodo` y en
+`guardar`).
+
+- **Es solo CSS colgado de `#pi-editor`** («Pareo Integral como programa de
+  computadora» en `css/styles.css`), con los colores del tema
+  (`--c-brand-*`), así que vale para todos los temas y para el oscuro. Las
+  pestañas y los botones de ronda ya no llevan clases de color: lo ponen
+  `[aria-selected]` y `[aria-pressed]`, de modo que el estado que lee el
+  lector de pantalla y el que se ve son el mismo.
+- **El enlace de solo lectura (`#ver=`, `#vivo=`) no cambia**: el fondo gris
+  del escritorio va con `:has(> .pi-ventana:not([hidden]))`, y en ese modo el
+  editor está escondido.
+- **La ventana no lleva `overflow: hidden`**: las esquinas redondas las ponen
+  la barra de título y la de estado, para no recortar nada que se abra encima.
+- **En papel la ventana desaparece**: sin borde, sombra, fondo ni filas
+  rayadas; queda la hoja como antes.
+- El contraste se midió con los colores calculados en el tema clásico, Magia
+  y Bosque, claro y oscuro: todo pasa AA.
+- De paso: `pintarMasivo` escribía «nullnull» junto a «Marcar a todos»
+  porque `replaceChildren` convierte un `null` en el texto «null»; ahora los
+  botones que no van se filtran antes.
+
 ### Pareo Integral: los adjuntos con nombre, el chat, las llamadas y corregir con constancia
 
 Lo pidió el dueño del sitio (con una captura del formulario del enlace).

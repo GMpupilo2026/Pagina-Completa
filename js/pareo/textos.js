@@ -124,6 +124,12 @@
     fClasificacion: ["Clasificación", "Standings"],
     fCruzada: ["Tabla cruzada", "Crosstable"],
     fArchivos: ["Archivos y comprobador", "Files and checker"],
+    estadoSinNombre: ["Torneo sin nombre", "Untitled tournament"],
+    estadoJugadores: ["{n} jugadores", "{n} players"],
+    estadoUnJugador: ["1 jugador", "1 player"],
+    estadoRonda: ["Ronda {r} de {total}", "Round {r} of {total}"],
+    estadoSinRondas: ["Sin rondas emparejadas", "No rounds paired"],
+    estadoGuardado: ["Guardado en este navegador a las {h}", "Saved in this browser at {h}"],
     sinNombre: ["(sin nombre)", "(untitled)"],
     noGuarda: ["El navegador no dejó guardar el torneo (¿ventana privada?). Baja una copia en «Archivos» para no perderlo.", "The browser did not allow saving the tournament (private window?). Download a copy under “Files” so you don't lose it."],
 
