@@ -12,7 +12,9 @@
    abierta para todos y no se ofrece en licencias.html. `licencia` es la de
    otra herramienta que también abre esta (el catálogo de torneos
    universitarios va con la de «universidades»): la vitrina pregunta por esa
-   y licencias.html no la ofrece aparte. `tema` es la ficha
+   y licencias.html no la ofrece aparte. `imagen` (opcional) es la foto de
+   la tarjeta, con su `alt` y su tamaño para que la página no salte al
+   cargarla; sale arriba del título. `tema` es la ficha
    de la vitrina donde sale (uno de TEMAS); la lista se ordena por tema, y
    dentro de cada uno queda en el orden en que está escrita. Ver «Herramientas
    de arbitraje» en docs/decisiones/juegos-y-torneos.md. */
@@ -342,6 +344,28 @@
                 "Varios torneos a la vez, por ejemplo uno por categoría, cada uno con sus mesas.",
                 "Crea el torneo y cada ronda en Lichess con los nombres, el Elo y el ID FIDE del pareo, con tu propia cuenta de Lichess.",
                 "Si el pareo se corrige en chess-results, vuelve a armar el archivo y te avisa. Ninguna ronda se crea dos veces.",
+            ],
+        },
+        {
+            id: "notara",
+            tema: "arbitraje",
+            emoji: "📷",
+            nombre: "Notara: la cámara que lee el tablero",
+            corto: "Notara",
+            href: "camara-tablero.html",
+            disponible: true,
+            gratis: true,
+            imagen: {
+                src: "img/herramientas/notara.jpg", ancho: 1200, alto: 675,
+                alt: "Dos jugadores en un torneo escolar; encima de su tablero, un celular en un soporte muestra Notara: el tablero que lee la cámara, las jugadas anotadas, el reloj de la mesa, «En vivo» y el VAR grabando.",
+            },
+            resumen: "Un celular encima de la mesa anota la partida sola, la transmite en vivo y guarda el VAR de los últimos minutos para el árbitro. Sirve igual en un torneo de FIDE que en uno de la escuela. En prueba.",
+            puntos: [
+                "Encuentra el tablero en la imagen, lee las 64 casillas y anota cada jugada con las reglas del ajedrez; si duda, pregunta.",
+                "Transmite la partida en vivo, sin cuenta para quien mira, y le manda cada mesa a Pareo Integral, que deja el resultado para confirmar.",
+                "El VAR: los últimos 10 minutos de video, solo en el celular, para revisar un reclamo en pausa, más lento o cuadro a cuadro.",
+                "Avisa de una posible jugada ilegal, de la triple repetición y de las 50 jugadas, y lee el reloj de la mesa.",
+                "Un QR por mesa abre la cámara en su mesa sin cuenta, y «Probar esta mesa» dice en dos minutos si todo funciona.",
             ],
         },
         {

@@ -19081,7 +19081,7 @@
   ]
  },
  "imagenes": {
-  "total": 1134,
+  "total": 1135,
   "grupos": [
    {
     "carpeta": "entreno/img/facil",
@@ -26025,6 +26025,19 @@
       "titulo": "Icon 512",
       "tipo": "otro",
       "kb": 193
+     }
+    ]
+   },
+   {
+    "carpeta": "img/herramientas",
+    "titulo": "Herramientas",
+    "grupo": "Carpetas",
+    "archivos": [
+     {
+      "ruta": "img/herramientas/notara.jpg",
+      "titulo": "Notara",
+      "tipo": "otro",
+      "kb": 155
      }
     ]
    },
