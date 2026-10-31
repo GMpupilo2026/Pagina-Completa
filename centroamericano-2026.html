@@ -137,6 +137,8 @@
                 </p>
                 <!-- «Ya están los ejercicios de la ronda N» (js/centroamericano-ejercicios.js). -->
                 <p id="hoy-ejercicios" class="mt-3 text-sm font-bold" hidden data-no-traducir></p>
+                <!-- «Mientras esperas»: los juegos para los que esperan afuera de la sala. -->
+                <p class="mt-3 text-sm font-bold"><a href="#esperas" class="cac-accion underline underline-offset-2 hover:no-underline rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ce1328]"><span aria-hidden="true">🎈 </span>¿Alguien espera afuera de la sala? Juegos de ajedrez para pasar el rato →</a></p>
                 <p id="hoy-sin-red" class="cac-hoy-sin-red" hidden><span aria-hidden="true">📴 </span><span id="hoy-sin-red-texto">Esta página quedó guardada en este aparato: la puedes abrir aunque no haya internet en la sala.</span></p>
             </div>
         </div>
@@ -285,6 +287,16 @@
                         <span class="hidden sm:block mt-1 text-sm text-brand-600 dark:text-brand-300 flex-1">Posiciones de las partidas de cada ronda con una sola jugada que gana. ¿La encuentras?</span>
                         <span class="mt-auto pt-3 sm:pt-4 text-xs sm:text-sm font-semibold text-brand-600 dark:text-brand-300">Pronto<span class="hidden sm:inline">: aparecen cuando termina la primera ronda</span></span>
                     </div>
+                </li>
+                <li>
+                    <!-- Mientras esperas: juegos de ajedrez sin cuenta para los que
+                         esperan afuera de la sala (la ventana #esperas, abajo). -->
+                    <a href="#esperas" id="ficha-esperas" data-color="naranja" class="cac-ficha h-full flex flex-col rounded-3xl bg-white dark:bg-brand-900 shadow-md p-4 sm:p-6 focus:outline-none focus-visible:ring-4 focus-visible:ring-[#ce1328]">
+                        <span class="cac-icono" aria-hidden="true">🎈</span>
+                        <span class="mt-3 font-extrabold text-base sm:text-lg leading-snug text-brand-800 dark:text-white">Mientras esperas</span>
+                        <span class="hidden sm:block mt-1 text-sm text-brand-600 dark:text-brand-300 flex-1">Juegos de ajedrez para hermanos, amigos y quien espera afuera de la sala. Sin cuenta.</span>
+                        <span class="mt-auto pt-3 sm:pt-4 text-xs sm:text-sm font-bold cac-accion">Ver los juegos →</span>
+                    </a>
                 </li>
                 <li>
                     <a href="#calendario" data-color="naranja" class="cac-ficha h-full flex flex-col rounded-3xl bg-white dark:bg-brand-900 shadow-md p-4 sm:p-6 focus:outline-none focus-visible:ring-4 focus-visible:ring-[#ce1328]">
@@ -614,6 +626,71 @@
         <div class="cac-modalidad px-4 sm:px-6 pt-4" data-modalidades hidden data-no-traducir></div>
         <div id="partidas-contenido" class="px-4 sm:px-6 pt-4 pb-6" data-no-traducir>
             <p class="text-brand-600 dark:text-brand-300">Cargando…</p>
+        </div>
+    </dialog>
+
+    <!-- Mientras esperas: juegos de ajedrez sin cuenta. Batalla naval y
+         «Aprende a jugar» son de la Academia y se abren como invitado solo
+         durante el festival (js/invitado-centroamericano.js); los demás ya
+         son públicos. Cada uno se abre encima, en la ventana de js/ventana-enlace.js. -->
+    <dialog id="esperas" class="ficha-dialogo w-[calc(100%-1rem)] sm:w-[calc(100%-2rem)] max-w-4xl max-h-[92vh] rounded-2xl shadow-2xl p-0 bg-brand-50 dark:bg-brand-950 text-brand-800 dark:text-brand-100 backdrop:bg-black/60" aria-labelledby="esperas-titulo">
+        <div class="sticky top-0 z-10 flex items-center gap-3 px-4 sm:px-6 py-3 bg-white dark:bg-brand-900 border-b border-brand-100 dark:border-brand-800">
+            <h2 id="esperas-titulo" class="font-serif text-xl md:text-2xl font-bold text-brand-800 dark:text-white flex-1 min-w-0"><span aria-hidden="true">🎈 </span>Mientras esperas</h2>
+            <button type="button" data-cerrar class="shrink-0 bg-brand-800 hover:bg-brand-700 text-white font-semibold text-sm px-4 py-2 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2">Cerrar</button>
+        </div>
+        <div class="px-4 sm:px-6 pt-4 pb-6">
+            <p class="text-brand-600 dark:text-brand-300">Una ronda dura varias horas. Para los hermanos, los amigos y los que ya terminaron su partida: juegos de ajedrez gratis, sin cuenta. Lo que avancen queda guardado en este celular.</p>
+            <ul class="cac-esperas-lista mt-4">
+                <li>
+                    <a href="entreno/aprende-a-jugar.html?invitado=centroamericano" data-ventana="Aprende a jugar" class="cac-espera">
+                        <span class="cac-espera-icono" aria-hidden="true">⭐</span>
+                        <span class="cac-espera-nombre">Aprende a jugar</span>
+                        <span class="cac-espera-texto">Para quien nunca ha jugado: cada pieza, paso a paso, juntando estrellas.</span>
+                        <span class="cac-espera-edad">Desde 5 años</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="confites.html" data-ventana="Confites del caballo" class="cac-espera">
+                        <span class="cac-espera-icono" aria-hidden="true">🍬</span>
+                        <span class="cac-espera-nombre">Confites del caballo</span>
+                        <span class="cac-espera-texto">Recorre el tablero con el caballo y recoge los confites sin quedar encerrado.</span>
+                        <span class="cac-espera-edad">Desde 6 años</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="batalla-naval.html?invitado=centroamericano" data-ventana="Batalla naval" class="cac-espera">
+                        <span class="cac-espera-icono" aria-hidden="true">🚢</span>
+                        <span class="cac-espera-nombre">Batalla naval</span>
+                        <span class="cac-espera-texto">La computadora esconde su flota de piezas y tú disparas: cada tiro al agua dice cuántas piezas apuntan ahí.</span>
+                        <span class="cac-espera-edad">Desde 8 años</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="buscaminas.html" data-ventana="Buscaminas de ajedrez" class="cac-espera">
+                        <span class="cac-espera-icono" aria-hidden="true">💣</span>
+                        <span class="cac-espera-nombre">Buscaminas de ajedrez</span>
+                        <span class="cac-espera-texto">Cada casilla dice cuántas piezas escondidas la atacan: deduce dónde están.</span>
+                        <span class="cac-espera-edad">Desde 9 años</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="estilo-muestra.html" data-ventana="¿Qué tipo de partida te gusta?" class="cac-espera">
+                        <span class="cac-espera-icono" aria-hidden="true">🧭</span>
+                        <span class="cac-espera-nombre">¿Qué tipo de partida te gusta?</span>
+                        <span class="cac-espera-texto">Doce posiciones de maestros con dos jugadas igual de buenas: descubre tu estilo.</span>
+                        <span class="cac-espera-edad">Jugadores y familias</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#ejercicios" class="cac-espera">
+                        <span class="cac-espera-icono" aria-hidden="true">🧩</span>
+                        <span class="cac-espera-nombre">Ejercicios de la ronda</span>
+                        <span class="cac-espera-texto">Posiciones de las partidas del torneo con una sola jugada que gana.</span>
+                        <span class="cac-espera-edad">Jugadores y familias</span>
+                    </a>
+                </li>
+            </ul>
+            <p class="mt-4 text-sm text-brand-600 dark:text-brand-300">Los juegos están en español.</p>
         </div>
     </dialog>
 

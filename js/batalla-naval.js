@@ -375,7 +375,10 @@ $("btn-nuevo").addEventListener("click", () => empezar(nivelActual));
 async function init() {
   let sesion = null;
   try { const { data } = await sb.auth.getSession(); sesion = data && data.session; } catch (e) { sesion = null; }
-  if (!sesion) {
+  // Sin cuenta solo como invitado del Centroamericano (js/invitado-centroamericano.js).
+  const invitado = !sesion && window.InvitadoCentroamericano && window.InvitadoCentroamericano.activo();
+  if (invitado) window.InvitadoCentroamericano.franja();
+  if (!sesion && !invitado) {
     $("loading").textContent = "Necesitas iniciar sesión para jugar. Redirigiendo…";
     window.location.href = "login.html?next=" + encodeURIComponent("batalla-naval.html");
     return;
