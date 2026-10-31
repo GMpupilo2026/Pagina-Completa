@@ -53,8 +53,6 @@ window.CentroamericanoEN = {
     "Gimnasio Nacional, Parque Metropolitano La Sabana, San José": "Gimnasio Nacional (National Gymnasium), La Sabana Metropolitan Park, San José",
     "Ritmo": "Time control",
     "Suizo a 9 rondas, 90 minutos + 30 segundos por jugada": "9-round Swiss, 90 minutes + 30 seconds per move",
-    "Quién organiza": "Organizers",
-    "Organiza": "Organized by",
     "Confederación de Ajedrez de América (CCA)": "Confederation of Chess for America (CCA)",
     "Federación Costarricense de Ajedrez (FCA)": "Costa Rican Chess Federation (FCA)",
 
@@ -97,6 +95,9 @@ window.CentroamericanoEN = {
     "Jugadores y familias": "Players and families",
     "Posiciones de las partidas del torneo con una sola jugada que gana.": "Positions from the tournament's games with only one winning move.",
     "Los juegos están en español.": "The games are in Spanish.",
+    "Academia Ajedrez Integral": "Academia Ajedrez Integral",
+    "Academia Ajedrez": "Academia Ajedrez",
+    "Un servicio de la academia para jugadores y familias.": "A service of the academy for players and families.",
     "Ejercicios de la ronda": "Round puzzles",
     "Posiciones de las partidas de cada ronda con una sola jugada que gana. ¿La encuentras?": "Positions from each round's games with only one winning move. Can you find it?",
     ": aparecen cuando termina la primera ronda": ": they show up when the first round is over",

@@ -100,9 +100,15 @@ ok("el correo de la organización va en los contactos, no en una ficha aparte", 
 ok("cada contacto con su teléfono y su WhatsApp", (contacto.match(/href="tel:/g) || []).length === 3 && (contacto.match(/href="https:\/\/wa\.me\/506\d{8}"/g) || []).length === 3);
 // La cara de las bases: su hoja de estilos, la mascota, la bandera y los logos.
 ok("la página carga css/centroamericano.css y el cuerpo lleva la clase cac", html.includes('<link rel="stylesheet" href="css/centroamericano.css">') && /<body class="cac /.test(html));
-for (const img of ["mascota.jpg", "mascota-trofeo.png", "mascota-asoma.png", "hojas.png", "bandera-cr.svg", "cca-logo.png"]) {
+for (const img of ["mascota.jpg", "mascota-trofeo.png", "mascota-asoma.png", "hojas.png", "bandera-cr.svg"]) {
   ok("la imagen " + img + " existe y se usa", fs.existsSync(path.join(RAIZ, "img/centroamericano-2026", img)) && html.includes("img/centroamericano-2026/" + img));
 }
+// La firma de la página es de la academia, no de la organización del torneo
+// (lo pidió el dueño): el logo de Ajedrez Integral y «Academia Ajedrez
+// Integral», sin «Organiza» ni los logos de la CCA y la FCA.
+const firma = (html.match(/<section class="cac-academia"[\s\S]*?<\/section>/) || [""])[0];
+ok("la franja de arriba es de la Academia Ajedrez Integral, sin «Organiza» ni los logos de la CCA y la FCA",
+   /src="img\/logo-marca\.png"/.test(firma) && /Academia Ajedrez <span[^>]*>Integral<\/span>/.test(firma) && !/class="cac-organiza"/.test(html) && !/cca-logo\.png|fca-logo\.png/.test(html));
 ok("la mascota tiene su texto alternativo", /src="img\/centroamericano-2026\/mascota\.jpg"[^>]*alt="[^"]{20,}"/.test(html));
 // Los pizotes de más: uno se asoma en «Pedir un bye», otro festeja en «Resultados» y otro despide.
 ok("el pizote se asoma en «Pedir un bye»", /data-ventana="Pedir un bye"[^>]*cac-con-asoma[\s\S]*?mascota-asoma\.png[\s\S]*?<\/a>/.test(html));
@@ -325,6 +331,16 @@ ok("la página carga el cliente de Supabase antes que su código en vivo", html.
     const p3 = await ctx3.newPage();
     await p3.goto(BASE + "/torneos-en-vivo.html", { waitUntil: "load" });
     await p3.waitForSelector('#salas-lista li[data-sala="otra"]');
+    // La marca de agua de Ajedrez Integral en la ficha del Centroamericano: se
+    // ve, suave y detrás del texto (lo pidió el dueño); las demás no la llevan.
+    const marca = await p3.evaluate(() => {
+      const m = document.querySelector('#salas-lista li[data-sala="centroamericano-2026"] .cac-sala-marca');
+      const h = document.querySelector('#salas-lista li[data-sala="centroamericano-2026"] h2');
+      return { ve: !!m && m.checkVisibility(), op: m ? Number(getComputedStyle(m).opacity) : 1, src: m ? m.getAttribute("src") : "",
+        detras: !!m && !!h && Number(getComputedStyle(m).zIndex) < Number(getComputedStyle(h).zIndex), otras: document.querySelectorAll('#salas-lista li:not([data-sala="centroamericano-2026"]) .cac-sala-marca').length };
+    });
+    ok("la ficha del Centroamericano en Torneos lleva la marca de agua de Ajedrez Integral, suave y detrás del texto",
+       marca.ve && marca.op > 0 && marca.op <= 0.2 && /marca-agua-ajedrez-integral\.png$/.test(marca.src) && marca.detras && marca.otras === 0, JSON.stringify(marca));
     const fichaSala = await p3.evaluate(() => {
       const mira = (li) => {
         const m = li.querySelector(".cac-sala-imagen");
