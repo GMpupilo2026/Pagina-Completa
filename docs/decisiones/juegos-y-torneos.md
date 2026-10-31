@@ -6811,8 +6811,10 @@ y sin cuenta, para que organizadores y clubes vean a quién pueden contratar.
   Siempre recuerda que cualquier categoría puede trabajar como árbitro bajo la
   supervisión de uno con licencia FIDE. Primero va quien arbitró hace poco, y
   la casilla (marcada al entrar) deja fuera a quien no arbitró en dos años.
-- Está en la vitrina de herramientas como gratis (`js/herramientas-arbitraje.js`,
-  `id: "arbitros"`).
+- Su tarjeta está **oculta** de la vitrina de herramientas (`oculta: true` en
+  `id: "arbitros"` de `js/herramientas-arbitraje.js`; el dueño dijo que no hacía
+  falta): la página sigue publicada, solo no se anuncia. Para volver a mostrarla
+  se quita esa línea (y se devuelve a `verificar-seleccion-pagina.js`).
 - `verificar-arbitros-publico.js` la prueba con la llamada contestada por una
   lista falsa y el reloj fijo: el orden, cada regla de categoría, la casilla,
   el buscador, el error de la base y los 400 px.
