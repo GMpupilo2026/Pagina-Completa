@@ -10336,8 +10336,12 @@ jugadas y con una barra que diga cómo va la partida.
   ⏮ ◀ ▶ ⏭ y las flechas del teclado (← → Inicio Fin), girar el tablero, la
   lista de jugadas en algebraica española (la regla del sitio,
   `ComandosTablero`; quien no ve las oye en el formato para ciegos), el gráfico
-  de la evaluación de toda la partida (tocarlo lleva a esa jugada), «Ver en
-  Lichess» y «Copiar las jugadas (PGN)». Las jugadas se piden cada 10 segundos.
+  de la evaluación de toda la partida (tocarlo lleva a esa jugada) y «Copiar
+  las jugadas (PGN)». Las jugadas se piden cada 10 segundos.
+- **Ningún enlace lleva a Lichess**: hubo un «Ver en Lichess» en el visor y el
+  dueño lo pidió quitar («la idea es que nunca abandonen la página»). Lichess
+  da los datos, pero quien mira se queda en la página; el verificador comprueba
+  que dentro de la ventana no quede ningún enlace a otro sitio.
 - **Las jugadas nuevas no le quitan a nadie la posición que estaba mirando**:
   si está en la última, la siguen sola; si volvió atrás, se queda ahí y
   aparece «Ir a la jugada de ahora (N nuevas)».
