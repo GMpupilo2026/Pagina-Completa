@@ -126,7 +126,13 @@
 
   const hoyCR = () => new Date().toLocaleDateString("en-CA", { timeZone: ZONA });
   const abierta = () => { const d = hoyCR(); return d >= DESDE && d <= HASTA; };
-  const fechaCR = (iso, locale) => new Date(iso).toLocaleString(locale, { timeZone: ZONA, day: "numeric", month: "long", hour: "numeric", minute: "2-digit" });
+  // La fecha y la hora por separado: juntas, cada versión del navegador las une
+  // distinto («7 de noviembre, 10:00» o «7 de noviembre a las 10:00»).
+  const fechaCR = (iso, locale) => {
+    const d = new Date(iso);
+    return d.toLocaleDateString(locale, { timeZone: ZONA, day: "numeric", month: "long" }) + ", " +
+      d.toLocaleTimeString(locale, { timeZone: ZONA, hour: "numeric", minute: "2-digit" });
+  };
   const enlaceWA = (tx) => "https://wa.me/" + WHATSAPP + "?text=" + encodeURIComponent(tx.whatsappTexto);
 
   function enlace(texto, href, clase, nueva) {
