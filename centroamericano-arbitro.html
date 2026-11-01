@@ -54,6 +54,7 @@
     <main id="main-content" class="cam-principal max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <!-- Lo que manda la organización: arriba de todo y pegado, para que no se pase por alto.
              Llega aunque chess-results esté caído (va por la base). -->
+        <section id="conexion" class="cam-conexion" role="status" aria-live="polite" hidden></section>
         <section id="mensajes" class="cam-mensajes" aria-label="Avisos de la organización" aria-live="assertive" hidden></section>
 
         <div id="cargando" role="status" class="min-h-[30vh] flex flex-col items-center justify-center gap-3 text-center text-brand-500 dark:text-brand-300"><span aria-hidden="true" class="w-8 h-8 rounded-full border-4 border-brand-200 dark:border-brand-700 border-t-accent-500 animate-spin motion-reduce:animate-none"></span><p>Entrando a tus mesas…</p></div>
@@ -145,6 +146,7 @@
     <script src="js/centroamericano-horario.js"></script>
     <script src="js/main.js"></script>
     <script src="js/guia-planillas.js"></script>
+    <script src="js/centroamericano-cola.js"></script>
     <script src="js/centroamericano-arbitro.js"></script>
 </body>
 </html>

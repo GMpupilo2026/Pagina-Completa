@@ -96,6 +96,9 @@ function dobleOrganizacion(licencia) {
     rpc: (f, a) => { window.__llamadas.push({ rpc: f, a: a && a.p_herramienta, copia: a && a.p_copia });
       if (f === "tengo_herramienta") return R(${licencia ? "a.p_herramienta === 'mesa-arbitro'" : "false"});
       if (f === "centroamericano_copia_manual") return R(COPIA(0));
+      if (f === "centroamericano_hojas") return R([
+        { asignacion: "asig-ana", arbitro: "Ana Árbitra", tnr: "1529737", torneo: "Sub-10 Absoluto", categoria: "Sub-10", rama: "Absoluto", mesa_desde: 1, mesa_hasta: 2, ronda: 3, leida: "2026-11-03T15:00:00Z", mesas: [{ mesa: 1, blancas: "Eli", negras: "Fran", valor: "1" }, { mesa: 2, blancas: "Gus", negras: "Hana", valor: "0" }] },
+        { asignacion: "asig-b", arbitro: "Beto Árbitro", tnr: "1529737", torneo: "Sub-10 Absoluto", categoria: "Sub-10", rama: "Absoluto", mesa_desde: 3, mesa_hasta: 3, ronda: 3, leida: "2026-11-03T15:00:00Z", mesas: [{ mesa: 3, blancas: "Ivo", negras: "Jana", valor: "0" }] }]);
       if (f === "centroamericano_restaurar") return a.p_copia.version !== 1 ? R(null, { message: "Ese archivo no es una copia del Centroamericano 2026" }) : R({ asignaciones: 1, registro: 0, avisos: 0, progreso: 0, finales: 0, planillas: 0 });
       return R(null); },
     storage: { from: (b) => ({ createSignedUrl: (ruta) => { window.__llamadas.push({ foto: b + "/" + ruta }); return R({ signedUrl: "data:image/png;base64," + PNG }); } }) },
@@ -483,9 +486,20 @@ const CONTRASTE = `(sel) => {
         [["Ana Árbitra", "1 a 15", "7 de 15", "8 (8 a 15)", "en-curso"], ["Árbitro 1", "16 a 30", "15 de 15", "0", "termino"]]);
     igual("el resumen dice cuántos jugadores revisó cada árbitro y cuántos no han llegado", await q.$$eval("#resumen tr", (l) => l.map((tr) => tr.children[6].textContent)), ["2 de 30 · faltan 1", "Sin revisar"]);
     igual("«Jugadores que no han llegado» lista a los que el árbitro marcó ausentes, con mesa, color, árbitro y hora", await q.$$eval("#faltan tr", (l) => l.map((tr) => [tr.children[0].textContent, tr.children[1].textContent, tr.children[2].textContent, tr.children[3].textContent, tr.children[4].textContent])), [["Sub-10 Absoluto", "5", "Cleo Tres", "Negras", "Ana Árbitra"]]);
+    // El tiempo de espera de las bases (30 min desde el inicio de la ronda): se cambia la hora de la página (sin tocar la real).
+    igual("fuera de una ronda en juego no hay alerta de tiempo de espera", await q.evaluate(() => [document.getElementById("espera-alerta").hidden, document.querySelector("#faltan tr").children[6].textContent]), [true, ""]);
+    await q.evaluate(() => {
+      const r = Number(/ronda (\d+)/.exec(document.getElementById("faltan-nota").textContent)[1]);
+      const ev = window.CentroamericanoHorario.EVENTOS.find((e) => e.ronda === r);
+      Date.now = () => new Date(ev.inicio + ":00-06:00").getTime() + 40 * 60000; // 40 minutos después de empezar la ronda
+    });
+    await q.waitForFunction(() => !document.getElementById("espera-alerta").hidden, null, { timeout: 30000 });
+    igual("a los 40 minutos (la espera es de 30) sale la alerta bien visible, con su palabra, la mesa y para avisar a los árbitros; el título de la pestaña lo marca", await q.evaluate(() => { const a = document.getElementById("espera-alerta"); return [a.checkVisibility(), a.getAttribute("role"), a.dataset.nivel, a.textContent.startsWith("⏰ Se cumplió el tiempo de espera (30 min)"), a.textContent.includes("(mesas "), a.textContent.includes("Avisa a los árbitros"), document.title.startsWith("⏰ (2) ")]; }), [true, "alert", "cumplido", true, true, true, true]);
+    igual("cada jugador de la lista dice «Tiempo cumplido (hace 10 min)»", await q.$$eval("#faltan tr", (l) => l.map((tr) => [tr.dataset.espera, tr.children[6].textContent])), [["cumplido", "Tiempo cumplido (hace 10 min)"]]);
+    igual("la alerta no hace ruido: ni audio ni vibración (en un torneo no hay ruido)", await q.evaluate(() => [window.__audio, window.__vib]), [0, 0]);
     igual("el total de la ronda y la revisión previa que lleva cada uno", [await q.textContent("#resumen-total"), await q.$eval('#resumen tr[data-id="asig-ana"] td:nth-child(6)', (t) => t.textContent.replace(/\s+/g, " ").trim()), await q.textContent("#resumen-ronda")], ["Con resultado: 22 de 30 mesas (73 %)", "En curso Revisión previa 1/2", " — ronda 3"]);
     igual("arriba siempre a la vista: los avisos abiertos, quién está conectado y cuántos torneos tienen clave", await q.$eval("#estado-general", (e) => e.textContent.replace(/\s+/g, " ").trim()).then((t) => [t.startsWith("2 avisos de árbitros abiertos"), t.includes("1 de 2 árbitros conectados"), t.includes("Clave en 1 de 3 torneos"), t.includes("Drive"), t.includes("Última copia: hace 2 min")]), [true, true, true, true, true]);
-    igual("la pestaña lleva el contador y el título de la pestaña del navegador también", await q.evaluate(() => [document.getElementById("contador-pedidos").textContent, document.title.startsWith("(2) ")]), ["2", true]);
+    igual("la pestaña lleva el contador y el título de la pestaña del navegador también", await q.evaluate(() => [document.getElementById("contador-pedidos").textContent, document.title.includes("(2) ")]), ["2", true]);
     igual("el pedido de ayuda dice la mesa, quién, de qué torneo, hace cuánto y lo que escribió", await q.$eval('.cam-pedido[data-estado="abierto"][data-tipo="ayuda"]', (e) => [e.querySelector("p.font-bold").textContent, /^Sub-10 Absoluto · hace 3 min \(\d{1,2}:\d\d [ap]\. m\.\)$/.test(e.querySelectorAll("p")[1].textContent), e.textContent.includes("«Prueba: ven a la mesa»")]), ["🆘 Ana Árbitra pide al principal EN LA MESA 4", true, true]);
     igual("quien TERMINÓ sus mesas llega como aviso con una sugerencia de a dónde ir a ayudar (primero su mismo torneo)", await q.$eval('.cam-pedido[data-estado="abierto"][data-tipo="termino"]', (e) => [e.querySelector("p.font-bold").textContent, [...e.querySelectorAll(".cam-sugerencia span")].map((x) => x.textContent)]),
         ["✅ Árbitro 1 terminó sus mesas de la ronda 3", ["Ana Árbitra (Sub-10 Absoluto, su mismo torneo): le quedan 8 mesas; podría tomar las mesas 12 a 15."]]);
@@ -727,6 +741,14 @@ const CONTRASTE = `(sel) => {
     const [descarga] = await Promise.all([q.waitForEvent("download"), q.click("#r-pdf")]);
     const pdf = fs.readFileSync(await descarga.path());
     igual("el PDF del registro, con su nombre y la marca de agua", [descarga.suggestedFilename(), pdf.toString("latin1").startsWith("%PDF"), /\/SMask \d+ 0 R/.test(pdf.toString("latin1"))], ["registro-arbitros-centroamericano-2026.pdf", true, true]);
+    await q.click("#pest-ronda");
+    const [descargaH] = await Promise.all([q.waitForEvent("download"), q.click("#resumen-hojas")]);
+    const pdfH = fs.readFileSync(await descargaH.path());
+    igual("las hojas en papel (plan B): un PDF con una hoja por árbitro, su nombre y la marca de agua", [descargaH.suggestedFilename(), pdfH.toString("latin1").startsWith("%PDF"), /\/SMask \d+ 0 R/.test(pdfH.toString("latin1")), (pdfH.toString("latin1").match(/\/Type \/Page\b/g) || []).length, await q.evaluate(() => window.__llamadas.filter((l) => l.rpc === "centroamericano_hojas").length)], ["hojas-resultados-papel-ronda-3-centroamericano-2026.pdf", true, true, 2, 1]);
+    await q.click("#pest-registro");
+    const [descargaF] = await Promise.all([q.waitForEvent("download"), q.click("#r-informe")]);
+    const pdfF = fs.readFileSync(await descargaF.path());
+    igual("el informe final en PDF (resumen por ronda, ilegales, ausentes, rondas finalizadas y planillas), con su nombre y la marca de agua", [descargaF.suggestedFilename(), pdfF.toString("latin1").startsWith("%PDF"), /\/SMask \d+ 0 R/.test(pdfF.toString("latin1")), await q.$eval("#r-informe", (b) => b.disabled)], ["informe-final-arbitros-centroamericano-2026.pdf", true, true, false]);
     igual("sin errores en la página", errores, []);
 
     console.log("\n=== La organización en la tablet y en el celular, en claro y en oscuro ===");

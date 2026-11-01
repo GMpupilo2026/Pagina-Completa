@@ -150,8 +150,13 @@
         const c = $("contador-pedidos");
         c.hidden = n === 0;
         c.textContent = String(n);
-        document.title = (n ? "(" + n + ") " : "") + TITULO;
+        avisosEnTitulo = n;
+        ponerTitulo();
     }
+
+    // El título de la pestaña lleva los avisos abiertos «(2)» y, si se cumplió el tiempo de espera de alguien, un ⏰.
+    let avisosEnTitulo = 0, esperaCumplida = false;
+    function ponerTitulo() { document.title = (esperaCumplida ? "⏰ " : "") + (avisosEnTitulo ? "(" + avisosEnTitulo + ") " : "") + TITULO; }
 
     // ------------------------------------------------------------- 1. ronda en curso
 
@@ -197,14 +202,42 @@
         pintarFaltan(ronda);
     }
 
-    // Los que no han llegado, según el árbitro de cada mesa.
+    // El tiempo de espera de las bases (30 min desde el inicio de la ronda, js/centroamericano-horario.js): mientras
+    // la ronda está en juego, cuánto falta o cuánto pasó. Sin ronda en juego, null (no hay nada que avisar).
+    let rondaDeFaltan = 0;
+    function esperaDeRonda(ronda) {
+        const H = window.CentroamericanoHorario;
+        const ev = H && ronda ? H.EVENTOS.find((e) => e.ronda === ronda) : null;
+        if (!ev) return null;
+        const pasados = Math.floor((Date.now() - new Date(ev.inicio + ":00-06:00").getTime()) / 60000);
+        if (pasados < 0 || pasados >= ev.minutos) return null;
+        return { cumplido: pasados >= H.TOLERANCIA_MIN, quedan: H.TOLERANCIA_MIN - pasados, pasaron: pasados - H.TOLERANCIA_MIN, minutos: H.TOLERANCIA_MIN };
+    }
+
+    // Los que no han llegado, según el árbitro de cada mesa. Cuando se cumple el tiempo de espera, la alerta
+    // sale arriba de la lista, bien visible (sin sonido: en un torneo no hay ruido) y en el título de la pestaña.
     function pintarFaltan(ronda) {
+        rondaDeFaltan = ronda;
         const lista = C.jugadoresQueFaltan(presencia, ronda);
+        const espera = esperaDeRonda(ronda);
         $("faltan-nota").textContent = ronda ? " — ronda " + ronda + ": " + lista.length : "";
         $("faltan-vacio").hidden = lista.length > 0;
-        $("faltan").replaceChildren(...lista.map((x) => el("tr", { "data-mesa": String(x.mesa) },
+        const textoEspera = !espera ? "" : espera.cumplido ? "Tiempo cumplido" + (espera.pasaron > 0 ? " (hace " + espera.pasaron + " min)" : "") : "Quedan " + espera.quedan + " min";
+        $("faltan").replaceChildren(...lista.map((x) => el("tr", { "data-mesa": String(x.mesa), "data-espera": espera ? (espera.cumplido ? "cumplido" : "corre") : null },
             el("td", { texto: nombreTorneo(x.tnr) }), el("td", { texto: String(x.mesa) }), el("td", { texto: x.jugador }), el("td", { texto: x.color === "negras" ? "Negras" : "Blancas" }),
-            el("td", { texto: x.arbitro }), el("td", { texto: window.HoraCR.hora(new Date(x.marcada)) }))));
+            el("td", { texto: x.arbitro }), el("td", { texto: window.HoraCR.hora(new Date(x.marcada)) }), el("td", { class: espera && espera.cumplido ? "cam-espera-cumplida" : "", texto: textoEspera }))));
+        const alerta = $("espera-alerta");
+        const mesas = [...new Set(lista.map((x) => x.mesa))].sort((a, b) => a - b);
+        if (espera && lista.length && (espera.cumplido || espera.quedan <= 10)) {
+            alerta.hidden = false;
+            alerta.dataset.nivel = espera.cumplido ? "cumplido" : "pronto";
+            alerta.setAttribute("role", espera.cumplido ? "alert" : "status");
+            alerta.textContent = espera.cumplido
+                ? "⏰ Se cumplió el tiempo de espera (" + espera.minutos + " min) de la ronda " + ronda + ": " + lista.length + (lista.length === 1 ? " jugador sigue sin llegar" : " jugadores siguen sin llegar") + " (mesas " + mesas.join(", ") + "). Avisa a los árbitros de esas mesas."
+                : "⏳ Quedan " + espera.quedan + " min del tiempo de espera de la ronda " + ronda + " y " + lista.length + (lista.length === 1 ? " jugador no ha llegado" : " jugadores no han llegado") + " (mesas " + mesas.join(", ") + ").";
+            esperaCumplida = espera.cumplido;
+        } else { alerta.hidden = true; alerta.textContent = ""; esperaCumplida = false; }
+        ponerTitulo();
     }
 
     function tarjetaAviso(f, atendido, filas) {
@@ -332,6 +365,39 @@
             fotos: [],
         };
         await descargarPdf(doc, "avance-ronda-" + (ronda || "x") + "-centroamericano-2026.pdf");
+    }
+
+    // El plan B en papel: una hoja por árbitro con sus mesas, los jugadores y un renglón para marcar el resultado a mano,
+    // por si falla la señal de la sala. Sale de la última lectura de chess-results (la misma de las tablets).
+    async function hojasPapelPdf() {
+        $("resumen-hojas").disabled = true;
+        try {
+            const { data, error } = await sb.rpc("centroamericano_hojas");
+            if (error) throw new Error(error.message);
+            const hojas = (data || []).filter((h) => h.mesas && h.mesas.length);
+            if (!hojas.length) { avisar("Todavía no hay mesas leídas. Toca «Actualizar desde chess-results» y vuelve a intentar.", true); return; }
+            const bloques = [];
+            hojas.forEach((h, i) => {
+                if (i) bloques.push({ tipo: "salto" });
+                bloques.push({ tipo: "titulo", texto: h.arbitro + " — mesas " + h.mesa_desde + " a " + h.mesa_hasta });
+                bloques.push({ tipo: "parrafo", texto: (h.categoria ? h.categoria + " " + (h.rama || "") : h.torneo) + " · ronda " + h.ronda + " · mesas de chess-results a las " + window.HoraCR.hora(new Date(h.leida)) });
+                bloques.push({ tipo: "nota", texto: "Marca con una X el resultado de cada partida y anota al lado lo que haga falta (ilegales, control de tiempos, incidencias). Cuando vuelva la señal, pasa los resultados a la tablet." });
+                bloques.push({
+                    tipo: "tabla", altoFila: 30, encabezados: ["Mesa", "Blancas", "Negras", "Resultado", "Notas"], anchos: [1.1, 3, 3, 3.6, 2.2],
+                    filas: h.mesas.map((m) => [String(m.mesa), m.blancas, m.negras, m.valor && m.valor !== "0" ? "ya en chess-results: " + M.textoResultado(m.valor) : "[   ] 1-0     [   ] 1/2     [   ] 0-1", ""]),
+                });
+                bloques.push({ tipo: "parrafo", texto: "Firma del árbitro: ______________________________" });
+            });
+            const doc = {
+                titulo: "Hojas de resultados en papel (plan B)",
+                subtitulo: "Centroamericano 2026 · " + window.HoraCR.fechaHora(new Date()),
+                pie: "Centroamericano 2026 · ajedrez-integral.com",
+                bloques, fotos: [],
+            };
+            await descargarPdf(doc, "hojas-resultados-papel-ronda-" + (hojas[0].ronda || "x") + "-centroamericano-2026.pdf");
+        } catch (e) {
+            avisar("No se pudo armar las hojas: " + (e.message || e), true);
+        } finally { $("resumen-hojas").disabled = false; }
     }
 
     async function descargarPdf(doc, nombre) {
@@ -1063,6 +1129,58 @@
         await descargarPdf(doc, "registro-arbitros-centroamericano-2026" + (tnr ? "-" + tnr : "") + ".pdf");
     }
 
+    // El informe final: por ronda, cuántos resultados, ilegales, irregularidades, incidencias y controles de tiempos hubo, el detalle de
+    // lo que pasó en las mesas, quién no llegó, cuántas planillas quedaron y qué árbitro finalizó cada ronda. Con los datos que ya
+    // tiene la página (el registro del torneo elegido); no inventa nada.
+    async function informeFinalPdf() {
+        const tnr = $("r-torneo").value;
+        $("r-informe").disabled = true;
+        try {
+            await Promise.all([cargarRegistro(), cargarPlanillas(), cargarTiempos()]);
+            const deTorneo = (x) => !tnr || x.tnr === tnr;
+            const anuladas = new Set(registro.filter((f) => f.tipo === "anulacion" && f.anula).map((f) => f.anula));
+            const reg = registro.filter((f) => f.tipo !== "anulacion" && !anuladas.has(f.id)).slice().sort((a, b) => String(a.ocurrio).localeCompare(String(b.ocurrio)));
+            const rondas = [...new Set([...reg.map((f) => f.ronda), ...tiempos.filter(deTorneo).map((t) => t.ronda), ...planillas.filter(deTorneo).map((x) => x.ronda), ...finales.map((f) => f.ronda)])].filter((r) => r != null).sort((a, b) => a - b);
+            const cuenta = (r, t) => reg.filter((f) => f.ronda === r && f.tipo === t).length;
+            const hora = (x) => window.HoraCR.fechaHora(x);
+            const b = [];
+            b.push({ tipo: "titulo", texto: "Resumen por ronda" });
+            b.push(rondas.length
+                ? { tipo: "tabla", encabezados: ["Ronda", "Resultados", "Correcciones", "Ilegales", "Irregularidades", "Incidencias", "Controles de tiempos", "Planillas"], anchos: [0.9, 1.3, 1.4, 1.1, 1.5, 1.3, 1.6, 1.2],
+                    filas: rondas.map((r) => [String(r), String(cuenta(r, "resultado")), String(cuenta(r, "correccion")), String(cuenta(r, "ilegal")), String(cuenta(r, "irregularidad")), String(cuenta(r, "incidencia")), String(tiempos.filter((t) => deTorneo(t) && t.ronda === r).length), String(planillas.filter((x) => deTorneo(x) && x.ronda === r).length)]) }
+                : { tipo: "parrafo", texto: "Todavía no hay nada anotado." });
+            const casos = reg.filter((f) => ["ilegal", "irregularidad", "incidencia"].includes(f.tipo));
+            b.push({ tipo: "titulo", texto: "Jugadas ilegales, irregularidades e incidencias" });
+            b.push(casos.length
+                ? { tipo: "tabla", encabezados: ["Hora (Costa Rica)", "Ronda", "Mesa", "Tipo", "Detalle", "Art.", "Árbitro"], anchos: [2, 0.7, 0.7, 1.3, 3.6, 0.8, 1.6],
+                    filas: casos.map((f) => [hora(f.ocurrio), String(f.ronda), String(f.mesa), M.TIPOS[f.tipo] || f.tipo, M.detalle ? M.detalle(f) : (f.jugador + (f.texto ? ": " + f.texto : "")), f.articulo || "", f.arbitro]) }
+                : { tipo: "parrafo", texto: "No se anotó ninguna." });
+            const ausentes = presencia.filter((x) => deTorneo(x) && !x.presente).sort((a, b2) => a.ronda - b2.ronda || a.mesa - b2.mesa);
+            b.push({ tipo: "titulo", texto: "Jugadores marcados como «no ha llegado»" });
+            b.push(ausentes.length
+                ? { tipo: "tabla", encabezados: ["Ronda", "Mesa", "Jugador", "Color", "Marcado"], anchos: [0.8, 0.8, 4.2, 1.1, 2],
+                    filas: ausentes.map((x) => [String(x.ronda), String(x.mesa), x.jugador, x.color === "negras" ? "Negras" : "Blancas", hora(x.marcada)]) }
+                : { tipo: "parrafo", texto: "Ninguno quedó marcado como ausente." });
+            const fin = finales.filter((f) => !f.reabierta).sort((a, b2) => a.ronda - b2.ronda || String(a.finalizada_en).localeCompare(String(b2.finalizada_en)));
+            b.push({ tipo: "titulo", texto: "Rondas finalizadas por cada árbitro" });
+            b.push(fin.length
+                ? { tipo: "lista", items: fin.map((f) => "Ronda " + f.ronda + ": " + nombreAsig(f.asignacion_id) + " finalizó a las " + hora(f.finalizada_en) + ".") }
+                : { tipo: "parrafo", texto: "Ningún árbitro ha finalizado una ronda." });
+            const sinDrive = planillas.filter((x) => deTorneo(x) && !x.drive_ok).length;
+            b.push({ tipo: "titulo", texto: "Planillas" });
+            b.push({ tipo: "parrafo", texto: planillas.filter(deTorneo).length + " fotos de planillas guardadas" + (sinDrive ? ", " + sinDrive + " todavía sin pasar al Drive." : ", todas ya en el Drive.") });
+            const doc = {
+                titulo: "Informe final de los árbitros",
+                subtitulo: (tnr ? nombreTorneo(tnr) : "Centroamericano 2026 (todos los torneos)") + " · " + hora(new Date()),
+                pie: "Centroamericano 2026 · ajedrez-integral.com",
+                bloques: b, fotos: [],
+            };
+            await descargarPdf(doc, "informe-final-arbitros-centroamericano-2026" + (tnr ? "-" + tnr : "") + ".pdf");
+        } catch (e) {
+            avisar("No se pudo armar el informe: " + (e.message || e), true);
+        } finally { $("r-informe").disabled = false; }
+    }
+
     // ------------------------------------------------------------- arranque
 
     // Cada 6 s se miran los avisos y el avance (es lo urgente); los enlaces cada 18 s (quién está
@@ -1094,6 +1212,7 @@
         $("form-aviso").addEventListener("submit", enviarAviso);
         $("resumen-actualizar").addEventListener("click", actualizarResumen);
         $("resumen-pdf").addEventListener("click", reportePdf);
+        $("resumen-hojas").addEventListener("click", hojasPapelPdf);
         $("g-guardar").addEventListener("click", guardarGrupo);
         $("claves-bloque-guardar").addEventListener("click", guardarBloque);
         $("form-asignar").addEventListener("submit", crear);
@@ -1120,6 +1239,7 @@
         $("r-torneo").addEventListener("change", cargarRegistro);
         $("r-tipo").addEventListener("change", pintarRegistro);
         $("r-pdf").addEventListener("click", bajarPdf);
+        $("r-informe").addEventListener("click", informeFinalPdf);
         await cargarTorneos();
         await cargarAsignaciones();
         await Promise.all([cargarAvisos(), cargarCopias(), cargarDrive()]);
@@ -1127,6 +1247,7 @@
         const hash = location.hash.replace("#", "");
         abrirPanel(PANELES.includes(hash) ? hash : torneos.some((t) => t.sid_en_boveda) ? "ronda" : "claves");
         setInterval(pulso, TIC_MS);
+        setInterval(() => { if (rondaDeFaltan) pintarFaltan(rondaDeFaltan); }, 15000); // el tiempo de espera corre solo
     }
 
     init().catch((e) => { $("cargando").hidden = true; avisar("No se pudo abrir la página: " + (e.message || e), true); });

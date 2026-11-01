@@ -29,6 +29,7 @@ const SERVIDOR_ARBITRO = `
   const NOMBRE = { "0": "sin resultado", "1": "1-0", "2": "1/2", "3": "0-1", "D": "borrado" };
   // Lo que la organización le mandó y lo que él pidió: la prueba lo cambia desde afuera.
   window.__avisos = { nombrado: true, arbitro: "Ana Árbitra", mensajes: [], ayuda: null, abiertas: [] };
+  window.__filas = filas;
   window.__lista = []; window.__planillas = []; window.__finalizada = null; window.__presencia = []; window.__tiempos = []; window.__hermanas = [];
   const PASOS = ["relojes", "tableros"];
   window.__servidor = (b) => {
@@ -38,12 +39,14 @@ const SERVIDOR_ARBITRO = `
       window.__presencia = window.__presencia.filter((x) => !(x.mesa === b.mesa && x.color === b.color)).concat([{ mesa: b.mesa, color: b.color, presente: b.presente, marcada: "2026-11-02T15:51:00Z" }]);
       return { data: { ok: true, mesa: b.mesa, color: b.color, presente: b.presente }, error: null }; }
     if (b.action === "tiempo") {
+      const yaT = b.id && window.__tiempos.find((x) => x.id === b.id);
+      if (yaT) return { data: { ok: true, id: yaT.id, ocurrio: yaT.ocurrio, jugada: yaT.jugada, repetido: true }, error: null };
       const m = MESAS.find((x) => x.mesa === b.mesa); if (!m) return falla(403, "La mesa " + b.mesa + " no es de tu rango (1 a 3).");
       if (m.valor !== "0") return falla(409, "La mesa " + b.mesa + " ya tiene resultado en chess-results.");
       if (![b.j_blancas, b.j_negras].every((j) => Number.isInteger(j) && j >= 0 && j <= 400)) return falla(400, "Las jugadas de cada color van de 0 a 400.");
       const jugada = Math.max(1, b.j_blancas, b.j_negras);
-      window.__tiempos.unshift({ id: "t" + (++n), ocurrio: "2026-11-02T15:55:00Z", mesa: b.mesa, jugada, j_blancas: b.j_blancas, j_negras: b.j_negras, turno: null, t_blancas: b.t_blancas, t_negras: b.t_negras, nota: "" });
-      return { data: { ok: true, id: "t" + n, ocurrio: "2026-11-02T15:55:00Z", jugada }, error: null }; }
+      window.__tiempos.unshift({ id: b.id || "t" + (++n), ocurrio: "2026-11-02T15:55:00Z", mesa: b.mesa, jugada, j_blancas: b.j_blancas, j_negras: b.j_negras, turno: null, t_blancas: b.t_blancas, t_negras: b.t_negras, nota: "" });
+      return { data: { ok: true, id: window.__tiempos[0].id, ocurrio: "2026-11-02T15:55:00Z", jugada }, error: null }; }
     if (b.action === "lista") {
       const i = PASOS.indexOf(b.paso); if (i < 0) return falla(400, "Paso no válido.");
       if (PASOS.slice(0, i).some((x) => !window.__lista.includes(x))) return falla(409, "Antes tienes que aprobar el paso anterior de la lista.");
@@ -80,7 +83,10 @@ const SERVIDOR_ARBITRO = `
       return { data: { ok: r.every((x) => x.ok), ronda: 3, resultados: r, diferencias: [], leido_en: "2026-11-02T15:31:00Z", registro_error: false }, error: null }; }
     if (b.action === "anotar") {
       const m = MESAS.find((x) => x.mesa === b.mesa); const jugador = b.color === "blancas" ? m.blancas : m.negras;
-      const f = { id: "f" + (++n), ocurrio: "2026-11-02T15:32:00Z", mesa: b.mesa, color: b.color, jugador, tipo: b.tipo, resultado: null, anterior: null, texto: b.texto || "", articulo: b.tipo === "ilegal" ? "7.5.5" : "", enviado: false };
+      // Un reenvío con el mismo id (la tablet no supo si llegó): la base lo reconoce y no lo cuenta dos veces.
+      const yaA = b.id && filas.find((x) => x.id === b.id);
+      if (yaA) { const marcaA = marcasDe()[b.mesa + "|" + b.color]; return { data: { ok: true, id: yaA.id, jugador, color: b.color, marca: marcaA, aviso: b.tipo === "ilegal" ? (marcaA.ilegales >= 2 ? "segunda" : "primera") : null }, error: null }; }
+      const f = { id: b.id || "f" + (++n), ocurrio: "2026-11-02T15:32:00Z", mesa: b.mesa, color: b.color, jugador, tipo: b.tipo, resultado: null, anterior: null, texto: b.texto || "", articulo: b.tipo === "ilegal" ? "7.5.5" : "", enviado: false };
       filas.push(f); const marca = marcasDe()[b.mesa + "|" + b.color];
       return { data: { ok: true, id: f.id, jugador, color: b.color, marca, aviso: b.tipo === "ilegal" ? (marca.ilegales >= 2 ? "segunda" : "primera") : null }, error: null }; }
     if (b.action === "anular") {
@@ -93,11 +99,25 @@ const SERVIDOR_ARBITRO = `
 function dobleArbitro() {
     return `(function(){
   window.__llamadas = [];
+  try { window.__red = JSON.parse(sessionStorage.getItem("__red") || "null"); } catch (e) { window.__red = null; }
   ${SERVIDOR_ARBITRO}
   const R = (data, error) => Promise.resolve({ data, error: error || null });
   window.sb = {
     auth: { getSession: () => R({ session: null }), onAuthStateChange: () => ({ data: { subscription: { unsubscribe() {} } } }) },
-    functions: { invoke: (f, o) => { window.__llamadas.push({ f, body: JSON.parse(JSON.stringify(o.body)) }); return Promise.resolve(window.__servidor(o.body)); } },
+    functions: { invoke: (f, o) => {
+      window.__llamadas.push({ f, body: JSON.parse(JSON.stringify(o.body)) });
+      // Fallas de la señal para las pruebas: window.__red = { fallar: N | siempre: true, tipo: "red" | "boot" | "h404", accion?, perderRespuesta? }
+      // («perderRespuesta»: la función SÍ procesa el pedido pero la respuesta no llega, como un wifi que se cae a medias).
+      const m = window.__red;
+      if (m && (!m.accion || m.accion === o.body.action) && (m.siempre || m.fallar > 0)) {
+        if (!m.siempre) m.fallar--;
+        if (m.perderRespuesta) window.__servidor(o.body);
+        const t = m.tipo || "red";
+        if (t === "boot") return Promise.resolve({ data: null, error: { context: { status: 503, json: () => Promise.resolve({ code: "BOOT_ERROR", message: "Function failed to start (please check logs)" }) } } });
+        if (t === "h404") return Promise.resolve({ data: null, error: { context: { status: 404, json: () => Promise.resolve({ error: "Este enlace no es válido. Pídele a la organización que te mande el QR de nuevo." }) } } });
+        return Promise.resolve({ data: null, error: { message: "Failed to send a request to the Edge Function" } });
+      }
+      return Promise.resolve(window.__servidor(o.body)); } },
     from: () => { const q = {}; ["select","eq","order","range","insert","update"].forEach((m) => q[m] = () => q); q.then = (ok) => Promise.resolve({ data: [], error: null }).then(ok); return q; },
     channel: () => ({ on() { return this; }, subscribe() { return this; } }), removeChannel() {},
   };

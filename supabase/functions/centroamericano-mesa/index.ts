@@ -53,18 +53,27 @@
 //   "ayuda"   { mesa?, texto? }           -> pide al árbitro principal (le llega un aviso a la cuenta principal)
 //   "leido"   { id }                      -> marca un mensaje de la organización como leído («Entendido»)
 //   "nombre"  { nombre }                  -> el árbitro «por definir» pone su nombre (una sola vez)
+//   "calentar" {}                         -> sin token: solo contesta ok (la base lo manda cada minuto para mantener la función arrancada)
 //
 // EL MISMO ÁRBITRO EN VARIOS TORNEOS: la organización junta sus enlaces con `persona`. El árbitro
 // abre uno y `leer` le devuelve los otros (`hermanas`, con su token) para pasar de uno a otro;
 // los avisos de la organización de cualquiera de ellos le llegan estando en cualquiera. Cada enlace
 // sigue con su torneo, su rango, su avance, su lista previa y su «finalizar».
 //
+// LO QUE SE REINTENTA NO SE DUPLICA: la tablet puede mandar una anotación (`anotar`, `tiempo`) con un
+// `id` suyo (un uuid); si la manda dos veces porque no supo si llegó la primera, la base la reconoce
+// y la segunda no cuenta. `presencia`, `planilla`, `lista` y `guardar` ya son idempotentes por su forma.
+//
+// LA LECTURA DE CHESS-RESULTS ES COMPARTIDA (lecturas-cache.ts): con 15 a 20 tablets no se le pregunta
+// a chess-results cada vez; y si no contesta, se sirve lo último que se leyó (`datos.viejo`).
+//
 // verify_jwt en false.
 
 import { createClient } from "npm:@supabase/supabase-js@2";
-import { guardarYComprobar, leerRonda, MAX_CAMBIOS } from "./chess-results-ingreso.ts";
+import { guardarYComprobar, MAX_CAMBIOS } from "./chess-results-ingreso.ts";
 import { avance, guardarAvance } from "./avance-ronda.ts";
 import { aBase64, deBase64, llamarPuente } from "./drive-puente.ts";
+import { aLectura, leerConCache, ponerLectura } from "./lecturas-cache.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -123,6 +132,9 @@ Deno.serve(async (req) => {
 
   let cuerpo: Record<string, unknown> = {};
   try { cuerpo = await req.json(); } catch { cuerpo = {}; }
+  // «calentar»: lo manda la base cada minuto durante el torneo para tener la función arrancada (ver la migración
+  // centroamericano_calentar). No pide token, no toca la base y no habla con chess-results: solo contesta.
+  if (cuerpo.action === "calentar") return json({ ok: true });
   const token = String(cuerpo.token ?? "").trim();
   if (!/^[0-9a-f]{64}$/.test(token)) return json({ error: "Este enlace no es válido. Pídele a la organización que te mande el QR de nuevo." }, 404);
 
@@ -143,18 +155,20 @@ Deno.serve(async (req) => {
 
   // Los avisos van por la base, sin chess-results: no necesitan la clave ni se caen con ella.
   const DE_AVISOS = ["avisos", "ayuda", "leido", "nombre", "lista"];
-  const { data: acc } = DE_AVISOS.includes(String(cuerpo.action)) ? { data: null } : await servicio.rpc("centroamericano_acceso", { p_tnr: a.tnr });
+  type Hermana = { id: string; token: string; tnr: string; arbitro: string; mesa_desde: number; mesa_hasta: number };
+  // Las dos preguntas no dependen una de otra: se hacen a la vez (cada ida y vuelta a la base cuenta,
+  // con 15 tablets pidiendo `leer` cada pocos segundos).
+  const [{ data: acc }, { data: hermanasData }] = await Promise.all([
+    DE_AVISOS.includes(String(cuerpo.action)) ? Promise.resolve({ data: null }) : servicio.rpc("centroamericano_acceso", { p_tnr: a.tnr }),
+    // Los otros enlaces del MISMO árbitro (otros torneos u otros tramos), si la organización los juntó.
+    a.persona
+      ? servicio.from("centroamericano_asignaciones").select("id, token, tnr, arbitro, mesa_desde, mesa_hasta")
+          .eq("persona", a.persona).neq("id", a.id).eq("revocada", false).gt("vence", new Date().toISOString())
+      : Promise.resolve({ data: null }),
+  ]);
   const acceso = (Array.isArray(acc) ? acc[0] : acc) as { acceso: string; sid: string } | null;
   if (!acceso && !DE_AVISOS.includes(String(cuerpo.action))) return json({ error: "La organización todavía no cargó la clave de este torneo. Avísale." }, 409);
-
-  // Los otros enlaces del MISMO árbitro (otros torneos u otros tramos), si la organización los juntó.
-  type Hermana = { id: string; token: string; tnr: string; arbitro: string; mesa_desde: number; mesa_hasta: number };
-  let hermanasFilas: Hermana[] = [];
-  if (a.persona) {
-    const { data: h } = await servicio.from("centroamericano_asignaciones").select("id, token, tnr, arbitro, mesa_desde, mesa_hasta")
-      .eq("persona", a.persona).neq("id", a.id).eq("revocada", false).gt("vence", new Date().toISOString());
-    hermanasFilas = (h ?? []) as Hermana[];
-  }
+  const hermanasFilas = (hermanasData ?? []) as Hermana[];
   const idsDe = [a.id, ...hermanasFilas.map((x) => x.id)];
 
   // Lo que la organización le mandó (sin leer, de cualquiera de sus enlaces) y cómo va su último pedido de ayuda.
@@ -185,26 +199,37 @@ Deno.serve(async (req) => {
     return (data ?? []) as Fila[];
   };
 
+  // La lectura de chess-results es COMPARTIDA entre los árbitros (ver lecturas-cache.ts): la copia
+  // reciente se reutiliza, y si chess-results no contesta se sirve la última que hubo.
+  const MAX_LEER_MS = 40_000;   // «ver mis mesas»: hasta 40 s de antigüedad
+  const MAX_COMUN_MS = 120_000; // presencia, tiempo, anotar, planilla: solo comprueban ronda, mesa y jugadores
+  const leerCompartida = (maxEdadMs: number, fresca = false) => leerConCache(servicio, acceso!, a.tnr, { maxEdadMs, fresca });
+
   try {
     if (cuerpo.action === "leer") {
-      const leida = await leerRonda(acceso!.acceso, acceso!.sid, a.tnr);
-      if ("error" in leida) return json({ error: leida.error }, leida.estado);
-      const p = leida.pantalla;
-      const filas = await registroDe(p.ronda);
+      const lectura = await leerCompartida(MAX_LEER_MS);
+      if (!lectura.ok) return json({ error: lectura.error }, lectura.estado);
+      const p = lectura.lectura;
       visto();
-      await guardarAvance(servicio, a.id, p.ronda, avance(p.mesas, a.mesa_desde, a.mesa_hasta));
-      const { data: fin } = await servicio.from("centroamericano_finales").select("finalizada_en").eq("asignacion_id", a.id).eq("ronda", p.ronda).eq("reabierta", false).maybeSingle();
-      const { data: pasosOk } = await servicio.from("centroamericano_listas").select("paso").eq("asignacion_id", a.id).eq("ronda", p.ronda);
-      const { data: plan } = await servicio.from("centroamericano_planillas").select("mesa, lado, subida, drive_ok").eq("tnr", a.tnr).eq("ronda", p.ronda).gte("mesa", a.mesa_desde).lte("mesa", a.mesa_hasta);
-      const { data: pres } = await servicio.from("centroamericano_presencia").select("mesa, color, presente, marcada").eq("tnr", a.tnr).eq("ronda", p.ronda).gte("mesa", a.mesa_desde).lte("mesa", a.mesa_hasta);
-      const { data: tiem } = await servicio.from("centroamericano_tiempos").select("id, ocurrio, mesa, jugada, j_blancas, j_negras, turno, t_blancas, t_negras, nota").eq("tnr", a.tnr).eq("ronda", p.ronda).gte("mesa", a.mesa_desde).lte("mesa", a.mesa_hasta).order("ocurrio", { ascending: false }).limit(150);
-      let hermanas: { token: string; tnr: string; torneo: string; arbitro: string; mesa_desde: number; mesa_hasta: number }[] = [];
-      if (hermanasFilas.length) {
-        const { data: nombres } = await servicio.from("centroamericano_torneos").select("tnr, nombre").in("tnr", hermanasFilas.map((x) => x.tnr));
-        hermanas = hermanasFilas.map((x) => ({ token: x.token, tnr: x.tnr, torneo: (nombres ?? []).find((n: { tnr: string }) => n.tnr === x.tnr)?.nombre ?? x.tnr, arbitro: x.arbitro, mesa_desde: x.mesa_desde, mesa_hasta: x.mesa_hasta }));
-      }
+      // Todo lo que sigue es independiente entre sí: una sola tanda en paralelo.
+      const [filas, { data: fin }, { data: pasosOk }, { data: plan }, { data: pres }, { data: tiem }, avisos, hermanas] = await Promise.all([
+        registroDe(p.ronda),
+        servicio.from("centroamericano_finales").select("finalizada_en").eq("asignacion_id", a.id).eq("ronda", p.ronda).eq("reabierta", false).maybeSingle(),
+        servicio.from("centroamericano_listas").select("paso").eq("asignacion_id", a.id).eq("ronda", p.ronda),
+        servicio.from("centroamericano_planillas").select("mesa, lado, subida, drive_ok").eq("tnr", a.tnr).eq("ronda", p.ronda).gte("mesa", a.mesa_desde).lte("mesa", a.mesa_hasta),
+        servicio.from("centroamericano_presencia").select("mesa, color, presente, marcada").eq("tnr", a.tnr).eq("ronda", p.ronda).gte("mesa", a.mesa_desde).lte("mesa", a.mesa_hasta),
+        servicio.from("centroamericano_tiempos").select("id, ocurrio, mesa, jugada, j_blancas, j_negras, turno, t_blancas, t_negras, nota").eq("tnr", a.tnr).eq("ronda", p.ronda).gte("mesa", a.mesa_desde).lte("mesa", a.mesa_hasta).order("ocurrio", { ascending: false }).limit(150),
+        avisosDe(),
+        (async () => {
+          if (!hermanasFilas.length) return [] as { token: string; tnr: string; torneo: string; arbitro: string; mesa_desde: number; mesa_hasta: number }[];
+          const { data: nombres } = await servicio.from("centroamericano_torneos").select("tnr, nombre").in("tnr", hermanasFilas.map((x) => x.tnr));
+          return hermanasFilas.map((x) => ({ token: x.token, tnr: x.tnr, torneo: (nombres ?? []).find((n: { tnr: string }) => n.tnr === x.tnr)?.nombre ?? x.tnr, arbitro: x.arbitro, mesa_desde: x.mesa_desde, mesa_hasta: x.mesa_hasta }));
+        })(),
+        // El avance de la ronda (lo ve la organización) no espera a nadie ni retrasa la respuesta.
+        guardarAvance(servicio, a.id, p.ronda, avance(p.mesas, a.mesa_desde, a.mesa_hasta)).catch(() => ({ termino: false })),
+      ]);
       return json({
-        ...(await avisosDe()),
+        ...avisos,
         hermanas,
         presencia: pres ?? [],
         tiempos: tiem ?? [],
@@ -218,6 +243,8 @@ Deno.serve(async (req) => {
         anotaciones: filas.filter((f) => f.tipo !== "anulacion").slice(-60),
         anuladas: filas.filter((f) => f.tipo === "anulacion" && f.anula).map((f) => f.anula),
         leido_en: new Date().toISOString(),
+        // De cuándo son las mesas: si chess-results no contestó, son las últimas que se leyeron (`viejo`).
+        datos: { desde: lectura.desde, viejo: lectura.viejo, motivo: lectura.motivo ?? null },
       });
     }
 
@@ -241,7 +268,9 @@ Deno.serve(async (req) => {
       if (res.estado !== 200 || !("cuerpo" in res)) return json({ error: (res as { error: string }).error }, res.estado);
 
       // Al registro entra solo lo que chess-results confirmó al volver a leerlo.
-      const filas = res.cuerpo.resultados.filter((r) => r.ok).map((r) => {
+      // (Un reenvío del mismo resultado —la tablet no supo si el primero llegó— no deja una «corrección»
+      // de más: si la mesa ya tenía ese valor, no hay nada nuevo que anotar.)
+      const filas = res.cuerpo.resultados.filter((r) => r.ok && (res.antes.mesas.find((m) => m.mesa === r.mesa)?.valor ?? "0") !== (r.pedido === "D" ? "0" : r.pedido)).map((r) => {
         const c = cambios.find((x) => x.mesa === r.mesa)!;
         const antes = res.antes.mesas.find((m) => m.mesa === r.mesa)?.valor ?? "0";
         return {
@@ -254,6 +283,7 @@ Deno.serve(async (req) => {
       // El avance con lo que quedó: lo de la pantalla de antes, con lo confirmado encima.
       const quedo = new Map(res.cuerpo.resultados.filter((r) => r.ok).map((r) => [r.mesa, r.pedido === "D" ? "0" : r.pedido]));
       await guardarAvance(servicio, a.id, res.cuerpo.ronda, avance(res.antes.mesas.map((m) => ({ mesa: m.mesa, valor: quedo.get(m.mesa) ?? m.valor })), a.mesa_desde, a.mesa_hasta));
+      await ponerLectura(servicio, a.tnr, aLectura(res.despues));
       let registroError = false;
       if (filas.length) {
         const { error } = await servicio.from("centroamericano_registro").insert(filas);
@@ -275,18 +305,26 @@ Deno.serve(async (req) => {
       if ((tipo === "incidencia" || tipo === "nota") && !texto) return json({ error: "Cuenta qué pasó." }, 400);
 
       // La ronda y el jugador salen de chess-results, no de lo que mande la pantalla.
-      const leida = await leerRonda(acceso!.acceso, acceso!.sid, a.tnr);
-      if ("error" in leida) return json({ error: leida.error }, leida.estado);
-      const p = leida.pantalla;
+      const lectura = await leerCompartida(MAX_COMUN_MS);
+      if (!lectura.ok) return json({ error: lectura.error }, lectura.estado);
+      const p = lectura.lectura;
       if (!Number.isInteger(ronda) || p.ronda !== ronda) return json({ error: "La ronda abierta en chess-results es la " + p.ronda + ", no la " + cuerpo.ronda + ". Actualiza la página." }, 409);
       const m = p.mesas.find((x) => x.mesa === mesa);
       if (!m) return json({ error: "La mesa " + mesa + " no está en la ronda " + p.ronda + "." }, 404);
       const jugador = color === "blancas" ? m.blancas : color === "negras" ? m.negras : "";
 
-      const { data: nueva, error } = await servicio.from("centroamericano_registro").insert({
+      // `id` lo pone la tablet: si reenvía la misma anotación (no supo si llegó), la base la reconoce y
+      // NO la cuenta dos veces (una ilegal de más cambiaría el resultado de la partida).
+      const idCliente = typeof cuerpo.id === "string" && /^[0-9a-f-]{36}$/.test(cuerpo.id) ? cuerpo.id : null;
+      let { data: nueva, error } = await servicio.from("centroamericano_registro").insert({
+        ...(idCliente ? { id: idCliente } : {}),
         asignacion_id: a.id, arbitro: a.arbitro, tnr: a.tnr, ronda: p.ronda, mesa, color, jugador: jugador.slice(0, 120), tipo,
         articulo: articulo || (tipo === "ilegal" ? "7.5.5" : ""), texto,
       }).select("id").single();
+      if (error && error.code === "23505" && idCliente) {
+        const { data: ya } = await servicio.from("centroamericano_registro").select("id").eq("id", idCliente).eq("asignacion_id", a.id).maybeSingle();
+        if (ya) { nueva = ya; error = null; }
+      }
       if (error || !nueva) { console.error("centroamericano-mesa: anotar", a.tnr, error?.code); return json({ error: "No se pudo anotar. Intenta de nuevo." }, 500); }
 
       const marca = marcasDe(await registroDe(p.ronda, mesa))[mesa + "|" + color] ?? { ilegales: 0, irregularidades: 0, ultima_ilegal: null, ultima_irregularidad: null };
@@ -318,9 +356,9 @@ Deno.serve(async (req) => {
       if (typeof cuerpo.presente !== "boolean") return json({ error: "Falta decir si llegó o no." }, 400);
       if (!enRango(mesa)) return json({ error: "La mesa " + mesa + " no es de tu rango (" + a.mesa_desde + " a " + a.mesa_hasta + ")." }, 403);
       // El jugador sale de chess-results, no de lo que mande la pantalla.
-      const leida = await leerRonda(acceso!.acceso, acceso!.sid, a.tnr);
-      if ("error" in leida) return json({ error: leida.error }, leida.estado);
-      const p = leida.pantalla;
+      const lectura = await leerCompartida(MAX_COMUN_MS);
+      if (!lectura.ok) return json({ error: lectura.error }, lectura.estado);
+      const p = lectura.lectura;
       if (!Number.isInteger(ronda) || p.ronda !== ronda) return json({ error: "La ronda abierta en chess-results es la " + p.ronda + ", no la " + cuerpo.ronda + ". Actualiza la página." }, 409);
       const m = p.mesas.find((x) => x.mesa === mesa);
       if (!m) return json({ error: "La mesa " + mesa + " no está en la ronda " + p.ronda + "." }, 404);
@@ -346,18 +384,25 @@ Deno.serve(async (req) => {
       if (porColor && ![jB!, jN!].every((j) => Number.isInteger(j) && j >= 0 && j <= 400)) return json({ error: "Las jugadas de cada color van de 0 a 400." }, 400);
       if (!Number.isInteger(jugada) || jugada < 1 || jugada > 400) return json({ error: "La jugada va de 1 a 400." }, 400);
       if (![tB, tN].every((t) => Number.isInteger(t) && t >= 0 && t <= 36000)) return json({ error: "Los tiempos de los relojes no son válidos." }, 400);
-      const leida = await leerRonda(acceso!.acceso, acceso!.sid, a.tnr);
-      if ("error" in leida) return json({ error: leida.error }, leida.estado);
-      const p = leida.pantalla;
+      const lectura = await leerCompartida(MAX_COMUN_MS);
+      if (!lectura.ok) return json({ error: lectura.error }, lectura.estado);
+      const p = lectura.lectura;
       if (!Number.isInteger(ronda) || p.ronda !== ronda) return json({ error: "La ronda abierta en chess-results es la " + p.ronda + ", no la " + cuerpo.ronda + ". Actualiza la página." }, 409);
       const m = p.mesas.find((x) => x.mesa === mesa);
       if (!m) return json({ error: "La mesa " + mesa + " no está en la ronda " + p.ronda + "." }, 404);
       // Es para una partida SIN terminar: si ya tiene resultado, no hay nada que corregir.
       if (m.valor !== "0") return json({ error: "La mesa " + mesa + " ya tiene resultado en chess-results." }, 409);
-      const { data: nueva, error } = await servicio.from("centroamericano_tiempos").insert({
+      const idCliente = typeof cuerpo.id === "string" && /^[0-9a-f-]{36}$/.test(cuerpo.id) ? cuerpo.id : null;
+      let { data: nueva, error } = await servicio.from("centroamericano_tiempos").insert({
+        ...(idCliente ? { id: idCliente } : {}),
         asignacion_id: a.id, arbitro: a.arbitro, tnr: a.tnr, ronda: p.ronda, mesa, blancas: m.blancas.slice(0, 120), negras: m.negras.slice(0, 120),
         jugada, j_blancas: jB, j_negras: jN, turno, t_blancas: tB, t_negras: tN, nota,
       }).select("id, ocurrio").single();
+      // Un reenvío de la misma lectura (la tablet no supo si llegó): ya está, no se anota otra vez.
+      if (error && error.code === "23505" && idCliente) {
+        const { data: ya } = await servicio.from("centroamericano_tiempos").select("id, ocurrio").eq("id", idCliente).eq("asignacion_id", a.id).maybeSingle();
+        if (ya) return json({ ok: true, id: ya.id, ocurrio: ya.ocurrio, jugada, registro_error: false, repetido: true });
+      }
       if (error || !nueva) { console.error("centroamericano-mesa: tiempo", a.tnr, error?.code); return json({ error: "No se pudo anotar. Intenta de nuevo." }, 500); }
       // También queda en la bitácora de la mesa: que se hizo este control y qué marcaban los relojes.
       const texto = "Control de tiempos de la mesa " + mesa + " · Blancas (" + m.blancas + "): " + formatoTiempo(tB) + (jB != null ? ", " + jB + (jB === 1 ? " jugada" : " jugadas") : "")
@@ -400,9 +445,9 @@ Deno.serve(async (req) => {
       const bytes = deBase64(m64[1]);
       if (bytes.length > MAX_IMAGEN || bytes.length < 2000) return json({ error: "La foto no es válida o es demasiado grande." }, 400);
       // El nombre del enfrentamiento sale de chess-results, no de lo que mande la pantalla.
-      const leida = await leerRonda(acceso!.acceso, acceso!.sid, a.tnr);
-      if ("error" in leida) return json({ error: leida.error }, leida.estado);
-      const p = leida.pantalla;
+      const lectura = await leerCompartida(MAX_COMUN_MS);
+      if (!lectura.ok) return json({ error: lectura.error }, lectura.estado);
+      const p = lectura.lectura;
       if (!Number.isInteger(ronda) || p.ronda !== ronda) return json({ error: "La ronda abierta en chess-results es la " + p.ronda + ", no la " + cuerpo.ronda + ". Actualiza la página." }, 409);
       const m = p.mesas.find((x) => x.mesa === mesa);
       if (!m) return json({ error: "La mesa " + mesa + " no está en la ronda " + p.ronda + "." }, 404);
@@ -434,9 +479,9 @@ Deno.serve(async (req) => {
       const rev = (cuerpo.revision ?? {}) as Record<string, unknown>;
       const revision = { resultados: rev.resultados === true, planillas: rev.planillas === true, firmadas: rev.firmadas === true };
       if (!revision.resultados || !revision.planillas || !revision.firmadas) return json({ error: "Para finalizar tienes que confirmar las tres revisiones." }, 400);
-      const leida = await leerRonda(acceso!.acceso, acceso!.sid, a.tnr);
-      if ("error" in leida) return json({ error: leida.error }, leida.estado);
-      const p = leida.pantalla;
+      const lectura = await leerCompartida(0, true);
+      if (!lectura.ok) return json({ error: lectura.error }, lectura.estado);
+      const p = lectura.lectura;
       if (!Number.isInteger(ronda) || p.ronda !== ronda) return json({ error: "La ronda abierta en chess-results es la " + p.ronda + ", no la " + cuerpo.ronda + ". Actualiza la página." }, 409);
       const av = avance(p.mesas, a.mesa_desde, a.mesa_hasta);
       await guardarAvance(servicio, a.id, p.ronda, av);

@@ -271,7 +271,7 @@ export async function leerRonda(acceso: string, sid: string, destino: string = a
 // justo antes de guardar (para saber qué tenía cada mesa).
 export async function guardarYComprobar(acceso: string, sid: string, destino: string, ronda: number, cambios: Cambio[]): Promise<
   { estado: number; error: string } |
-  { estado: 200; antes: Pantalla; cuerpo: { ok: boolean; ronda: number; resultados: { mesa: number; pedido: string; quedo: string | null; ok: boolean }[]; diferencias: { mesa: number; antes: string | null; ahora: string }[]; leido_en: string } }
+  { estado: 200; antes: Pantalla; despues: Pantalla; cuerpo: { ok: boolean; ronda: number; resultados: { mesa: number; pedido: string; quedo: string | null; ok: boolean }[]; diferencias: { mesa: number; antes: string | null; ahora: string }[]; leido_en: string } }
 > {
   const { sesion, html, url, pantalla } = await entrar(acceso, sid, destino);
   if (pantalla.entro && pantalla.tnr !== destino) return { estado: 409, error: "La clave abrió el torneo " + pantalla.tnr + " y no el " + destino + ". No se guardó nada." };
@@ -297,6 +297,7 @@ export async function guardarYComprobar(acceso: string, sid: string, destino: st
   return {
     estado: 200,
     antes: pantalla,
+    despues,
     cuerpo: { ok: resultados.every((r) => r.ok) && diferencias.length === 0, ronda: despues.ronda, resultados, diferencias, leido_en: new Date().toISOString() },
   };
 }

@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20261101153757
+# al-dia-con: 20261101203224
 tabla  Ejercicios Lichess  rls=true
 tabla  _foto_rls_tmp  rls=false
 tabla  _pedidos_elo  rls=false
@@ -15,6 +15,7 @@ tabla  arbitraje_casos_var  rls=true
 tabla  arbitraje_consulta_config  rls=true
 tabla  arbitrajes_publicos  rls=true
 tabla  arbitro_bitacora  rls=true
+tabla  arbitro_torneos  rls=true
 tabla  arbitros_cr  rls=true
 tabla  arbitros_cr_avisos_enviados  rls=true
 tabla  arbitros_cr_cargos  rls=true
@@ -47,6 +48,7 @@ tabla  centroamericano_asignaciones  rls=true
 tabla  centroamericano_avisos  rls=true
 tabla  centroamericano_copias  rls=true
 tabla  centroamericano_finales  rls=true
+tabla  centroamericano_lecturas  rls=true
 tabla  centroamericano_listas  rls=true
 tabla  centroamericano_planillas  rls=true
 tabla  centroamericano_presencia  rls=true
@@ -347,6 +349,13 @@ columna  arbitro_bitacora.texto  text
 columna  arbitro_bitacora.tipo  text
 columna  arbitro_bitacora.tnr  text
 columna  arbitro_bitacora.torneo  text
+columna  arbitro_torneos.archivado  boolean
+columna  arbitro_torneos.creada_por  uuid
+columna  arbitro_torneos.nombre  text
+columna  arbitro_torneos.primera_vez  timestamp with time zone
+columna  arbitro_torneos.tnr  text
+columna  arbitro_torneos.torneo  text
+columna  arbitro_torneos.ultima_vez  timestamp with time zone
 columna  arbitros_cr.federacion  text
 columna  arbitros_cr.fide_id  integer
 columna  arbitros_cr.nombre  text
@@ -578,6 +587,12 @@ columna  centroamericano_finales.id  uuid
 columna  centroamericano_finales.reabierta  boolean
 columna  centroamericano_finales.revision  jsonb
 columna  centroamericano_finales.ronda  integer
+columna  centroamericano_lecturas.leida  timestamp with time zone
+columna  centroamericano_lecturas.leyendo_hasta  timestamp with time zone
+columna  centroamericano_lecturas.mesas  jsonb
+columna  centroamericano_lecturas.ronda  integer
+columna  centroamericano_lecturas.tnr  text
+columna  centroamericano_lecturas.torneo  text
 columna  centroamericano_listas.aprobada_en  timestamp with time zone
 columna  centroamericano_listas.asignacion_id  uuid
 columna  centroamericano_listas.paso  text
@@ -2278,6 +2293,9 @@ funcion  anular_certificado(p_codigo text)  definer  anon=false  auth=true
 funcion  anular_recibo(p_recibo uuid, p_anular boolean, p_motivo text)  definer  anon=false  auth=true
 funcion  arbitraje_consulta_config_guardar(p_modelo text, p_tope numeric)  definer  anon=false  auth=true
 funcion  arbitraje_consulta_frenar(p_ip text, p_correo text)  definer  anon=false  auth=false
+funcion  arbitro_torneo_ajustar(p_tnr text, p_nombre text, p_archivado boolean)  definer  anon=false  auth=true
+funcion  arbitro_torneo_visto(p_tnr text, p_torneo text)  definer  anon=false  auth=true
+funcion  arbitro_torneos_mis()  definer  anon=false  auth=true
 funcion  arbitros_cr_por_vencer(p_dias integer)  definer  anon=false  auth=true
 funcion  arbitros_cr_publico()  definer  anon=true  auth=true
 funcion  asesores_grabaciones(p_detalle text)  definer  anon=false  auth=true
@@ -2311,6 +2329,7 @@ funcion  centroamericano_copia_manual()  definer  anon=false  auth=true
 funcion  centroamericano_drive_guardar(p_url text, p_secreto text)  definer  anon=false  auth=false
 funcion  centroamericano_drive_leer()  definer  anon=false  auth=false
 funcion  centroamericano_guardar_acceso(p_acceso text, p_sid text, p_tnrs text[], p_persona uuid)  definer  anon=false  auth=false
+funcion  centroamericano_hojas()  definer  anon=false  auth=true
 funcion  centroamericano_restaurar(p_copia jsonb)  definer  anon=false  auth=true
 funcion  cerrar_examen(p_examen uuid, p_motivo text)  definer  anon=false  auth=true
 funcion  certificado_publico(p_codigo text)  definer  anon=true  auth=true
@@ -2467,6 +2486,7 @@ funcion  interno.avance_reto(p_alumno uuid, p_metrica text, p_desde timestamp wi
 funcion  interno.avisos_que_mande()  definer  anon=false  auth=true
 funcion  interno.avisos_que_recibi()  definer  anon=false  auth=true
 funcion  interno.bajo_mi_coordinacion_conjunto()  definer  anon=false  auth=true
+funcion  interno.centroamericano_calentar()  definer  anon=false  auth=false
 funcion  interno.centroamericano_copia_a_drive()  definer  anon=false  auth=false
 funcion  interno.centroamericano_hacer_copia(p_anillo text, p_forzar boolean)  definer  anon=false  auth=false
 funcion  interno.centroamericano_instantanea()  definer  anon=false  auth=false
@@ -3483,6 +3503,7 @@ indice  arbitrajes_publicos  arbitrajes_publicos_pkey
 indice  arbitrajes_publicos  arbitrajes_publicos_revisado_por_fk
 indice  arbitro_bitacora  arbitro_bitacora_persona_torneo_idx
 indice  arbitro_bitacora  arbitro_bitacora_pkey
+indice  arbitro_torneos  arbitro_torneos_pkey
 indice  arbitros_cr  arbitros_cr_pkey
 indice  arbitros_cr_avisos_enviados  arbitros_cr_avisos_enviados_pkey
 indice  arbitros_cr_cargos  arbitros_cr_cargos_fide_id
@@ -3540,6 +3561,7 @@ indice  centroamericano_avisos  centroamericano_avisos_termino_uidx
 indice  centroamericano_copias  centroamericano_copias_pkey
 indice  centroamericano_finales  centroamericano_finales_asignacion_id_ronda_key
 indice  centroamericano_finales  centroamericano_finales_pkey
+indice  centroamericano_lecturas  centroamericano_lecturas_pkey
 indice  centroamericano_listas  centroamericano_listas_pkey
 indice  centroamericano_planillas  centroamericano_planillas_pkey
 indice  centroamericano_planillas  centroamericano_planillas_tnr_ronda_mesa_lado_key
@@ -4081,6 +4103,7 @@ cron  auditoria-purga  17 9 1 * *
 cron  avisar-fichas-faltantes  10 * * * *
 cron  avisar-rachas  5 0 * * *
 cron  avisos-arbitros  7 14 1 * *
+cron  centroamericano-calentar  * * * * *
 cron  centroamericano-copia-5min  */5 * * * *
 cron  centroamericano-copia-drive  */10 * * * *
 cron  centroamericano-copia-hora  0 * * * *

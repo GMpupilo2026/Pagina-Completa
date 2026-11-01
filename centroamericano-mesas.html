@@ -78,6 +78,7 @@
                 <div class="cam-herramientas" role="toolbar" aria-label="Ronda en curso">
                     <button type="button" id="resumen-actualizar" class="cam-btn cam-btn-chico"><span aria-hidden="true">🔄</span> Actualizar desde chess-results</button>
                     <button type="button" id="resumen-pdf" class="cam-btn cam-btn-claro cam-btn-chico"><span aria-hidden="true">📄</span> Reporte de la ronda (PDF)</button>
+                    <button type="button" id="resumen-hojas" class="cam-btn cam-btn-claro cam-btn-chico"><span aria-hidden="true">🖨️</span> Hojas en papel (plan B)</button>
                     <span id="resumen-total" class="cam-herramientas-nota" role="status"></span>
                 </div>
                 <h2 id="t-resumen" class="cam-subtitulo">Cuánto le queda a cada árbitro<span id="resumen-ronda" class="cam-subtitulo-nota"></span></h2>
@@ -93,10 +94,11 @@
 
                 <h2 id="t-faltan" class="cam-subtitulo mt-6">Jugadores que no han llegado<span id="faltan-nota" class="cam-subtitulo-nota"></span></h2>
                 <p class="cam-herramientas-nota">Cada árbitro marca en su tablet, mesa por mesa, si el jugador llegó. Aquí salen los que marcó «No ha llegado»; si el jugador llega, el árbitro lo cambia y desaparece de la lista.</p>
+                <p id="espera-alerta" class="cam-espera-alerta" hidden></p>
                 <div class="cam-tabla-envoltura mt-2">
                     <table class="cam-tabla cam-rejilla">
                         <caption class="sr-only">Jugadores que el árbitro de su mesa marcó como no llegados</caption>
-                        <thead><tr><th scope="col">Torneo</th><th scope="col">Mesa</th><th scope="col">Jugador</th><th scope="col">Color</th><th scope="col">Árbitro</th><th scope="col">Marcado</th></tr></thead>
+                        <thead><tr><th scope="col">Torneo</th><th scope="col">Mesa</th><th scope="col">Jugador</th><th scope="col">Color</th><th scope="col">Árbitro</th><th scope="col">Marcado</th><th scope="col">Tiempo de espera</th></tr></thead>
                         <tbody id="faltan"></tbody>
                     </table>
                 </div>
@@ -302,6 +304,7 @@
                         <option value="">Todo</option><option value="ilegal">Ilegales</option><option value="irregularidad">Irregularidades</option><option value="resultado">Resultados</option><option value="correccion">Correcciones</option><option value="incidencia">Incidencias</option><option value="nota">Notas</option></select></label>
                     <button type="button" id="r-actualizar" class="cam-btn cam-btn-claro cam-btn-chico"><span aria-hidden="true">🔄</span> Actualizar</button>
                     <button type="button" id="r-pdf" class="cam-btn cam-btn-chico" disabled>Bajar el registro en PDF</button>
+                    <button type="button" id="r-informe" class="cam-btn cam-btn-chico">Informe final en PDF</button>
                 </div>
                 <p id="r-estado" class="text-sm mt-2" role="status"></p>
 
@@ -357,6 +360,7 @@
     <script src="js/reporte-pdf.js"></script>
     <script src="js/mesa-arbitro.js"></script>
     <script src="js/centroamericano-mesas.js"></script>
+    <script src="js/centroamericano-horario.js"></script>
     <script src="js/main.js"></script>
     <script src="js/centroamericano-mesas-pagina.js"></script>
 </body>
