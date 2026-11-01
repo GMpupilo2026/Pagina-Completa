@@ -172,21 +172,50 @@
                 el("div", { class: "cam-resultado-fila" }, sel,
                     el("button", { type: "button", class: "cam-btn", "data-accion": "guardar", disabled: !pendiente || ocupada || !listaCompleta(), title: listaCompleta() ? null : "Primero la revisión previa de la ronda", onclick: () => guardar(m) }, ocupada ? "Guardando…" : "Guardar")),
                 msg ? el("p", { class: msg.ok ? "cam-guardado" : "cam-fallo", role: msg.ok ? "status" : "alert", texto: msg.texto }) : null),
-            bloquePlanillas(m, ocupada));
+            bloqueIconos(m, ocupada));
     }
 
-    // ------------------------------------------------------------- las planillas (fotos)
+    // ------------------------------------------------------------- los dos iconos de cada mesa: la cámara y el reloj
+
+    // Iconos propios (SVG en línea): se ven igual en cualquier tablet y no dependen de las fuentes de emojis.
+    const SVG_NS = "http://www.w3.org/2000/svg";
+    const ICONOS = {
+      camara: [["path", { d: "M4 8h3l1.5-2h7L17 8h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z" }], ["circle", { cx: "12", cy: "13", r: "3.5" }]],
+      reloj: [["circle", { cx: "12", cy: "12", r: "9" }], ["path", { d: "M12 7v5l3 2" }]],
+    };
+    function icono(nombre) {
+      const s = document.createElementNS(SVG_NS, "svg");
+      for (const [k, v] of Object.entries({ viewBox: "0 0 24 24", class: "cam-icono", "aria-hidden": "true", focusable: "false", fill: "none", stroke: "currentColor", "stroke-width": "2", "stroke-linecap": "round", "stroke-linejoin": "round" })) s.setAttribute(k, v);
+      for (const [etiqueta, atributos] of ICONOS[nombre]) {
+        const f = document.createElementNS(SVG_NS, etiqueta);
+        for (const [k, v] of Object.entries(atributos)) f.setAttribute(k, v);
+        s.append(f);
+      }
+      return s;
+    }
+    // Un botón de solo icono (el texto va en aria-label y en title): grande, para el dedo en una tablet.
+    function botonIcono(accion, nombre, etiqueta, fn, { hecho = false, ocupado = false, deshabilitado = false } = {}) {
+      return el("button", { type: "button", class: "cam-btn-icono", "data-accion": accion, "data-hecho": hecho ? "si" : null, "data-ocupado": ocupado ? "si" : null, disabled: deshabilitado,
+        "aria-label": etiqueta, title: etiqueta, onclick: fn }, icono(nombre), hecho ? el("span", { class: "cam-icono-marca", "aria-hidden": "true", texto: "✓" }) : null);
+    }
+
+    // ------------------------------------------------------------- las planillas (UNA foto con las dos juntas)
 
     const subidas = () => (estado && estado.planillas) || [];
-    const tienePlanilla = (mesa, lado) => subidas().some((x) => x.mesa === mesa && x.lado === lado);
+    // Una foto por mesa. (Las fotos de prueba de antes eran una por lado: cualquiera cuenta.)
+    const tienePlanilla = (mesa) => subidas().some((x) => x.mesa === mesa);
 
-    function bloquePlanillas(m, ocupada) {
-        const boton = (lado) => el("button", { type: "button", class: "cam-btn cam-btn-claro cam-btn-chico", "data-accion": "planilla", "data-lado": lado, "data-subida": tienePlanilla(m.mesa, lado) ? "si" : null, disabled: ocupada || subiendo.has(m.mesa + lado),
-            "aria-label": (tienePlanilla(m.mesa, lado) ? "Cambiar la foto de la planilla de " : "Subir la foto de la planilla de ") + lado + " de la mesa " + m.mesa, onclick: () => subirPlanilla(m, lado) },
-            el("span", { "aria-hidden": "true", texto: "📷 " }), (subiendo.has(m.mesa + lado) ? "Subiendo…" : "Planilla de " + lado), tienePlanilla(m.mesa, lado) ? el("span", { texto: " ✓" }) : null);
-        return el("div", { class: "cam-planillas" },
-            el("p", { class: "cam-planillas-estado", texto: "Fotos de las planillas: blancas " + (tienePlanilla(m.mesa, "blancas") ? "✓ subida" : "falta") + " · negras " + (tienePlanilla(m.mesa, "negras") ? "✓ subida" : "falta") }),
-            el("div", { class: "cam-acciones" }, boton("blancas"), boton("negras")));
+    function bloqueIconos(m, ocupada) {
+        const hecha = tienePlanilla(m.mesa), sube = subiendo.has(m.mesa);
+        const pendiente = m.valor === "0";
+        const hayLectura = lecturas(m.mesa).length > 0;
+        return el("div", { class: "cam-planillas cam-iconos" },
+            botonIcono("planilla", "camara",
+                sube ? "Subiendo la foto de las planillas de la mesa " + m.mesa
+                    : (hecha ? "Cambiar la foto de las planillas de la mesa " + m.mesa + ": tiene que salir las dos planillas juntas" : "Tomar la foto de las dos planillas de la mesa " + m.mesa + " (las dos juntas)"),
+                () => subirPlanilla(m), { hecho: hecha, ocupado: sube, deshabilitado: ocupada || sube }),
+            pendiente ? botonIcono("tiempo", "reloj", "Control de tiempos de la mesa " + m.mesa + (hayLectura ? " (ya hay una lectura)" : ""), () => abrirTiempos(false, m.mesa), { hecho: hayLectura }) : null,
+            sube ? el("span", { class: "cam-iconos-estado", role: "status", texto: "Subiendo…" }) : null);
     }
 
     // La foto se achica y se pasa a JPG en el aparato (una planilla legible cabe en ~400 KB):
@@ -204,7 +233,7 @@
         return await new Promise((ok, mal) => { const r = new FileReader(); r.onload = () => ok(r.result); r.onerror = () => mal(new Error("No se pudo leer la foto.")); r.readAsDataURL(blob); });
     }
 
-    function subirPlanilla(m, lado) {
+    function subirPlanilla(m) {
         const entrada = document.createElement("input");
         entrada.type = "file";
         entrada.accept = "image/*";
@@ -212,18 +241,17 @@
         entrada.addEventListener("change", async () => {
             const archivo = entrada.files && entrada.files[0];
             if (!archivo) return;
-            const k = m.mesa + lado;
-            subiendo.add(k);
+            subiendo.add(m.mesa);
             pintar();
             try {
                 const imagen = await reducir(archivo);
-                const d = await invocar("planilla", { ronda: estado.ronda, mesa: m.mesa, lado, imagen });
-                estado.planillas = subidas().filter((x) => !(x.mesa === m.mesa && x.lado === lado)).concat([{ mesa: m.mesa, lado, subida: d.subida, drive_ok: d.drive === "enviada" }]);
-                avisar("Planilla de " + lado + " de la mesa " + m.mesa + " guardada" + (d.drive === "enviada" ? " y ya está en el Drive." : d.drive === "pendiente" ? ". El Drive la recibirá en un rato." : "."));
+                const d = await invocar("planilla", { ronda: estado.ronda, mesa: m.mesa, imagen });
+                estado.planillas = subidas().filter((x) => x.mesa !== m.mesa).concat([{ mesa: m.mesa, lado: "blancas", subida: d.subida, drive_ok: d.drive === "enviada" }]);
+                avisar("Foto de las planillas de la mesa " + m.mesa + " guardada" + (d.drive === "enviada" ? " y ya está en el Drive." : d.drive === "pendiente" ? ". El Drive la recibirá en un rato." : "."));
             } catch (e) {
                 avisar(e.message, true);
             } finally {
-                subiendo.delete(k);
+                subiendo.delete(m.mesa);
                 pintar();
             }
         });
@@ -279,7 +307,7 @@
         caja.hidden = !todas;
         if (!todas) { caja.replaceChildren(); return; }
         const faltanFotos = [];
-        for (const m of estado.mesas) for (const l of ["blancas", "negras"]) if (!tienePlanilla(m.mesa, l)) faltanFotos.push(m.mesa);
+        for (const m of estado.mesas) if (!tienePlanilla(m.mesa)) faltanFotos.push(m.mesa);
         if (estado.finalizada) {
             caja.dataset.estado = "finalizada";
             caja.replaceChildren(
@@ -293,15 +321,15 @@
         const casilla = (id, texto) => el("label", { class: "cam-check cam-check-revision" }, el("input", { type: "checkbox", id, class: "w-6 h-6", checked: !!revisadas[id], onchange: (e) => { revisadas[id] = e.target.checked; $("finalizar").disabled = !completas(); } }), el("span", { texto }));
         const filas = estado.mesas.slice().sort((a, b) => a.mesa - b.mesa).map((m) => el("tr", {},
             el("td", { texto: String(m.mesa) }), el("td", { texto: m.blancas + " – " + m.negras }), el("td", { texto: M.textoResultado(m.valor) }),
-            el("td", { texto: (tienePlanilla(m.mesa, "blancas") ? "✓" : "—") + " / " + (tienePlanilla(m.mesa, "negras") ? "✓" : "—") })));
+            el("td", { texto: tienePlanilla(m.mesa) ? "✓" : "—" })));
         caja.replaceChildren(
             el("h2", { id: "revision-titulo", class: "font-bold text-xl", texto: "Terminaste tus mesas: revisa antes de cerrar la ronda" }),
             el("p", { class: "mt-2", texto: "Repasa cada resultado contra su planilla. Cuando todo esté bien, confirma las tres cosas y finaliza la ronda: la organización recibe el aviso." }),
             el("div", { class: "cam-tabla-envoltura mt-3" }, el("table", { class: "cam-tabla" },
                 el("caption", { class: "sr-only", texto: "Resultados de tus mesas para revisar" }),
-                el("thead", {}, el("tr", {}, el("th", { scope: "col", texto: "Mesa" }), el("th", { scope: "col", texto: "Partida" }), el("th", { scope: "col", texto: "Resultado" }), el("th", { scope: "col", texto: "Fotos (blancas / negras)" }))),
+                el("thead", {}, el("tr", {}, el("th", { scope: "col", texto: "Mesa" }), el("th", { scope: "col", texto: "Partida" }), el("th", { scope: "col", texto: "Resultado" }), el("th", { scope: "col", texto: "Foto de las planillas" }))),
                 el("tbody", {}, ...filas))),
-            faltanFotos.length ? el("p", { class: "cam-aviso-suave mt-3", texto: "Todavía no subes la foto de algunas planillas (mesas " + C.listaMesas(faltanFotos) + "). Es opcional, pero ayuda a no perder nada." }) : null,
+            faltanFotos.length ? el("p", { class: "cam-aviso-suave mt-3", texto: "Todavía no subes la foto de las planillas de algunas mesas (" + C.listaMesas(faltanFotos) + "). Es opcional, pero ayuda a no perder nada." }) : null,
             el("div", { class: "mt-3" },
                 casilla("rev-resultados", "Revisé que cada resultado coincide con su planilla."),
                 casilla("rev-planillas", "Tengo todas las planillas de mis partidas, ordenadas por mesa."),
@@ -381,75 +409,87 @@
 
     // ------------------------------------------------------------- control de tiempos (ventana flotante)
 
+    // Se abre con el reloj de una mesa (o con el botón de arriba, o sola cuando la organización lo pide).
+    // Blancas: lo que marca su reloj y las jugadas que lleva; Negras, lo mismo; Guardar. Cada lectura
+    // queda en la tabla de tiempos Y como una línea en la bitácora de la mesa (lo hace la función).
     let tiemposAbierto = false;
     let tiemposMin = false;
     let lecturaMesa = null;
-    let borrador = {};
+    let tiemposPorMesa = false;   // se abrió con el reloj de una mesa: al guardar se cierra
+    let borrador = {};            // lo escrito sobrevive a minimizar y a que la página se vuelva a dibujar
+    let borradorMesa = null;
 
     const sinTerminar = () => estado.mesas.filter((m) => m.valor === "0").sort((a, b) => a.mesa - b.mesa);
     const lecturas = (mesa) => ((estado && estado.tiempos) || []).filter((x) => x.mesa === mesa);
 
-    function abrirTiempos(porLaOrganizacion) {
+    function abrirTiempos(porLaOrganizacion, mesa) {
         tiemposAbierto = true;
-        tiemposMin = false;
+        // Si la pide la organización en una pantalla angosta (un celular), sale minimizada: abierta taparía el aviso
+        // que hay que leer primero. En una tablet sale abierta, como una ventanita en la esquina.
+        tiemposMin = !!porLaOrganizacion && window.innerWidth < 700;
+        tiemposPorMesa = !!mesa;
+        if (mesa) lecturaMesa = mesa;
         if (estado) pintarTiempos();
-        if (porLaOrganizacion) avisar("El árbitro principal pide un control de tiempos: anota jugada y relojes de las mesas sin terminar.");
+        if (porLaOrganizacion) avisar("El árbitro principal pide un control de tiempos: anota el tiempo y las jugadas de las blancas y de las negras en las mesas sin terminar.");
+    }
+
+    function leerBorrador() {
+        if ($("lt-tb")) borrador = { tb: $("lt-tb").value, jb: $("lt-jb").value, tn: $("lt-tn").value, jn: $("lt-jn").value };
     }
 
     function pintarTiempos() {
         const caja = $("control-tiempos");
         caja.hidden = !tiemposAbierto;
         if (!tiemposAbierto) { caja.replaceChildren(); return; }
-        // Lo escrito sobrevive a minimizar la ventana y a volver a dibujarla (cada lectura nueva o cada aviso).
-        if ($("lt-jugada")) borrador = { jugada: $("lt-jugada").value, blancas: $("lt-blancas").value, negras: $("lt-negras").value, turno: $("lt-turno").value, nota: $("lt-nota").value };
+        leerBorrador();
         const mesas = sinTerminar();
         if (!lecturaMesa || !mesas.some((m) => m.mesa === lecturaMesa)) lecturaMesa = mesas.length ? mesas[0].mesa : null;
+        // Otra mesa: lo escrito era de la anterior.
+        if (borradorMesa !== lecturaMesa) { borrador = {}; borradorMesa = lecturaMesa; }
         caja.dataset.minimizada = tiemposMin ? "si" : "no";
         const cabeza = el("div", { class: "cam-flotante-cabeza" },
-            el("strong", { texto: "⏱ Control de tiempos" }),
+            el("strong", { class: "cam-flotante-titulo" }, icono("reloj"), el("span", { texto: lecturaMesa ? "Mesa " + lecturaMesa : "Control de tiempos" })),
             el("span", { class: "cam-flotante-botones" },
-                el("button", { type: "button", class: "cam-btn cam-btn-claro cam-btn-chico", "data-accion": "minimizar-tiempos", "aria-expanded": tiemposMin ? "false" : "true", onclick: () => { tiemposMin = !tiemposMin; pintarTiempos(); } }, tiemposMin ? "Abrir" : "Minimizar"),
-                el("button", { type: "button", class: "cam-btn cam-btn-claro cam-btn-chico", "data-accion": "cerrar-tiempos", onclick: () => { tiemposAbierto = false; pintarTiempos(); } }, "Cerrar")));
+                el("button", { type: "button", class: "cam-btn cam-btn-claro cam-btn-chico", "data-accion": "minimizar-tiempos", "aria-expanded": tiemposMin ? "false" : "true", "aria-label": tiemposMin ? "Abrir el control de tiempos" : "Minimizar el control de tiempos", title: tiemposMin ? "Abrir" : "Minimizar", onclick: () => { tiemposMin = !tiemposMin; pintarTiempos(); } }, tiemposMin ? "▢" : "–"),
+                el("button", { type: "button", class: "cam-btn cam-btn-claro cam-btn-chico", "data-accion": "cerrar-tiempos", "aria-label": "Cerrar el control de tiempos", title: "Cerrar", onclick: () => { tiemposAbierto = false; pintarTiempos(); } }, "✕")));
         if (tiemposMin) { caja.replaceChildren(cabeza); return; }
         if (!mesas.length) { caja.replaceChildren(cabeza, el("p", { class: "cam-flotante-cuerpo", texto: "Todas tus mesas ya tienen resultado: no hay partidas sin terminar." })); return; }
-        const previo = borrador.jugada, pB = borrador.blancas, pN = borrador.negras, pT = borrador.turno, pNota = borrador.nota;
         const m = mesas.find((x) => x.mesa === lecturaMesa);
-        const ult = lecturas(lecturaMesa).slice(0, 4);
+        const ult = lecturas(lecturaMesa).slice(0, 1);
+        const lado = (color, nombre, id) => el("fieldset", { class: "cam-tiempo-lado", "data-color": color },
+            el("legend", {}, el("span", { class: "cam-color", "data-color": color, texto: color === "blancas" ? "Blancas" : "Negras" }), " ", el("span", { class: "cam-tiempo-nombre", texto: nombre })),
+            el("div", { class: "grid grid-cols-2 gap-2" },
+                el("div", {}, el("label", { for: "lt-t" + id, class: "block text-sm font-bold", texto: "Tiempo" }), el("input", { id: "lt-t" + id, type: "text", inputmode: "numeric", autocomplete: "off", placeholder: "h:mm:ss", class: "cam-campo", value: borrador["t" + id] || "" })),
+                el("div", {}, el("label", { for: "lt-j" + id, class: "block text-sm font-bold", texto: "Jugadas" }), el("input", { id: "lt-j" + id, type: "number", min: "0", max: "400", inputmode: "numeric", class: "cam-campo", value: borrador["j" + id] || "" }))));
         caja.replaceChildren(cabeza, el("form", { class: "cam-flotante-cuerpo", id: "form-tiempos", novalidate: true, onsubmit: guardarLectura },
-            el("p", { class: "text-sm", texto: "Elige una partida SIN terminar y anota en qué jugada va y lo que marca cada reloj. Si un reloj falla, esta lectura sirve para corregirlo. Puedes minimizar esta ventana para meter un resultado." }),
-            el("label", { for: "lt-mesa", class: "block text-sm font-bold mt-2", texto: "Mesa" }),
-            el("select", { id: "lt-mesa", class: "cam-select", onchange: (e) => { lecturaMesa = Number(e.target.value); pintarTiempos(); } },
-                ...mesas.map((x) => el("option", { value: String(x.mesa), selected: x.mesa === lecturaMesa, texto: "Mesa " + x.mesa + " — " + x.blancas + " vs " + x.negras }))),
-            el("div", { class: "grid grid-cols-2 gap-2 mt-2" },
-                el("div", {}, el("label", { for: "lt-jugada", class: "block text-sm font-bold", texto: "Jugada en que va" }), el("input", { id: "lt-jugada", type: "number", min: "1", max: "400", inputmode: "numeric", class: "cam-campo", value: previo || "" })),
-                el("div", {}, el("label", { for: "lt-turno", class: "block text-sm font-bold", texto: "Le toca a" }), el("select", { id: "lt-turno", class: "cam-select" },
-                    el("option", { value: "", texto: "No sé" }), el("option", { value: "blancas", texto: "Blancas" }), el("option", { value: "negras", texto: "Negras" })))),
-            el("div", { class: "grid grid-cols-2 gap-2 mt-2" },
-                el("div", {}, el("label", { for: "lt-blancas", class: "block text-sm font-bold", texto: "Reloj de las blancas (" + (m ? m.blancas : "") + ")" }), el("input", { id: "lt-blancas", type: "text", inputmode: "numeric", autocomplete: "off", placeholder: "h:mm:ss o mm:ss", class: "cam-campo", value: pB || "" })),
-                el("div", {}, el("label", { for: "lt-negras", class: "block text-sm font-bold", texto: "Reloj de las negras (" + (m ? m.negras : "") + ")" }), el("input", { id: "lt-negras", type: "text", inputmode: "numeric", autocomplete: "off", placeholder: "h:mm:ss o mm:ss", class: "cam-campo", value: pN || "" }))),
-            el("label", { for: "lt-nota", class: "block text-sm font-bold mt-2", texto: "Nota (opcional)" }),
-            el("input", { id: "lt-nota", type: "text", maxlength: "500", class: "cam-campo", autocomplete: "off", value: pNota || "" }),
-            el("div", { class: "cam-acciones" }, el("button", { type: "submit", id: "lt-guardar", class: "cam-btn" }, "Guardar la lectura")),
-            ult.length ? el("div", { class: "mt-2" }, el("p", { class: "text-sm font-bold", texto: "Lo último anotado en la mesa " + lecturaMesa }),
-                el("ul", { class: "text-sm", id: "lt-ultimas" }, ...ult.map((x) => el("li", { texto: hora(x.ocurrio) + " — jugada " + x.jugada + (x.turno ? ", le toca a las " + x.turno : "") + " · blancas " + C.formatoTiempo(x.t_blancas) + " · negras " + C.formatoTiempo(x.t_negras) + (x.nota ? " · " + x.nota : "") })))) : null));
-        if (pT) $("lt-turno").value = pT;
+            mesas.length > 1 ? el("div", {}, el("label", { for: "lt-mesa", class: "sr-only", texto: "Mesa" }),
+                el("select", { id: "lt-mesa", class: "cam-select", onchange: (e) => { leerBorrador(); lecturaMesa = Number(e.target.value); tiemposPorMesa = false; pintarTiempos(); } },
+                    ...mesas.map((x) => el("option", { value: String(x.mesa), selected: x.mesa === lecturaMesa, texto: "Mesa " + x.mesa + " — " + x.blancas + " vs " + x.negras })))) : null,
+            lado("blancas", m ? m.blancas : "", "b"),
+            lado("negras", m ? m.negras : "", "n"),
+            el("div", { class: "cam-acciones" }, el("button", { type: "submit", id: "lt-guardar", class: "cam-btn" }, "Guardar")),
+            ult.length ? el("ul", { class: "text-sm mt-2", id: "lt-ultimas", "aria-label": "Lo último anotado en la mesa " + lecturaMesa },
+                ...ult.map((x) => el("li", { texto: hora(x.ocurrio) + " · Blancas " + C.formatoTiempo(x.t_blancas) + (x.j_blancas != null ? " (" + x.j_blancas + ")" : "") + " · Negras " + C.formatoTiempo(x.t_negras) + (x.j_negras != null ? " (" + x.j_negras + ")" : x.j_blancas == null ? " · jugada " + x.jugada : "") }))) : null));
     }
 
     async function guardarLectura(ev) {
         ev.preventDefault();
-        const jugada = parseInt($("lt-jugada").value, 10);
-        const tB = C.leerTiempo($("lt-blancas").value), tN = C.leerTiempo($("lt-negras").value);
-        if (!Number.isInteger(jugada) || jugada < 1 || jugada > 400) { avisar("Escribe la jugada en que va (de 1 a 400).", true); return; }
+        const tB = C.leerTiempo($("lt-tb").value), tN = C.leerTiempo($("lt-tn").value);
+        const jB = $("lt-jb").value === "" ? NaN : Number($("lt-jb").value), jN = $("lt-jn").value === "" ? NaN : Number($("lt-jn").value);
         if (tB === null || tN === null) { avisar("Escribe el tiempo de cada reloj así: 1:23:45 o 45:10.", true); return; }
-        const turno = $("lt-turno").value || null, nota = $("lt-nota").value.trim();
+        if (![jB, jN].every((j) => Number.isInteger(j) && j >= 0 && j <= 400)) { avisar("Escribe las jugadas que lleva cada color (de 0 a 400).", true); return; }
+        const mesa = lecturaMesa;
         $("lt-guardar").disabled = true;
         try {
-            const d = await invocar("tiempo", { ronda: estado.ronda, mesa: lecturaMesa, jugada, turno, t_blancas: tB, t_negras: tN, nota });
-            estado.tiempos = [{ id: d.id, ocurrio: d.ocurrio, mesa: lecturaMesa, jugada, turno, t_blancas: tB, t_negras: tN, nota }].concat(estado.tiempos || []);
-            avisar("Lectura guardada: mesa " + lecturaMesa + ", jugada " + jugada + ".");
-            for (const i of ["lt-jugada", "lt-blancas", "lt-negras", "lt-nota"]) $(i).value = "";
+            const d = await invocar("tiempo", { ronda: estado.ronda, mesa, t_blancas: tB, j_blancas: jB, t_negras: tN, j_negras: jN });
+            estado.tiempos = [{ id: d.id, ocurrio: d.ocurrio, mesa, jugada: d.jugada, j_blancas: jB, j_negras: jN, turno: null, t_blancas: tB, t_negras: tN, nota: "" }].concat(estado.tiempos || []);
+            avisar("Control de tiempos de la mesa " + mesa + " guardado: queda en la bitácora.");
             borrador = {};
+            borradorMesa = null;
+            // Desde el reloj de una mesa se cierra; si lo pidió la organización, queda abierta para la siguiente mesa.
+            if (tiemposPorMesa) tiemposAbierto = false;
             pintarTiempos();
+            pintar();
         } catch (e) {
             avisar(e.message, true);
             if ($("lt-guardar")) $("lt-guardar").disabled = false;

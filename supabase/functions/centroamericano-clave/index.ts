@@ -193,9 +193,12 @@ async function accionesGenerales(accion: string, cuerpo: Record<string, unknown>
       const { data: blob } = await servicio.storage.from(BUCKET).download(f.ruta);
       if (!blob) { fallaron++; continue; }
       const { data: t } = await servicio.from("centroamericano_torneos").select("nombre").eq("tnr", f.tnr).maybeSingle();
+      // Desde el 1 de noviembre la foto es una por mesa con las dos planillas (ruta «…-planillas.jpg», lado «blancas»);
+      // las fotos viejas por lado se siguen mandando como eran.
+      const ambas = /-planillas\.jpg$/.test(f.ruta);
       const blancas = f.lado === "blancas" ? f.jugador : f.rival, negras = f.lado === "blancas" ? f.rival : f.jugador;
       const r = await llamarPuente(puente!.url!, puente!.secreto!, {
-        accion: "planilla", torneo: t?.nombre ?? f.tnr, ronda: f.ronda, mesa: f.mesa, lado: f.lado, blancas, negras, jugador: f.jugador, imagen: aBase64(new Uint8Array(await blob.arrayBuffer())),
+        accion: "planilla", torneo: t?.nombre ?? f.tnr, ronda: f.ronda, mesa: f.mesa, lado: ambas ? "ambas" : f.lado, blancas, negras, jugador: f.jugador, imagen: aBase64(new Uint8Array(await blob.arrayBuffer())),
       });
       await servicio.from("centroamericano_planillas").update(r.ok ? { drive_ok: true, drive_en: new Date().toISOString(), drive_error: "" } : { drive_error: String(r.error ?? "").slice(0, 300) }).eq("id", f.id);
       if (r.ok) enviadas++; else fallaron++;

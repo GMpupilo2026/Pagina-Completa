@@ -11,12 +11,11 @@
  * Todo va ordenado así:
  *
  *   Planillas Centroamericano / <torneo> / Ronda <n> /
- *       Mesa 07 - <blancas> vs <negras> - Planilla de blancas (<blancas>).jpg
- *       Mesa 07 - <blancas> vs <negras> - Planilla de negras (<negras>).jpg
+ *       Mesa 07 - <blancas> vs <negras> - Planillas (las dos).jpg
  *   Planillas Centroamericano / _Copias de seguridad / copia-AAAA-MM-DD-HHMM.json
  *
- * Si se vuelve a subir la foto de la misma planilla, la anterior va a la papelera: nunca
- * quedan dos planillas «de blancas» de la misma mesa. Las copias de seguridad no se pisan:
+ * Si se vuelve a subir la foto de la misma mesa, la anterior va a la papelera: nunca
+ * quedan dos fotos de las planillas de la misma mesa. Las copias de seguridad no se pisan:
  * cada una lleva su hora (se pueden borrar a mano cuando termine el torneo).
  *
  * CÓMO SE INSTALA (una sola vez; está también en docs/decisiones/juegos-y-torneos.md,
@@ -94,16 +93,18 @@ function dosCifras(n) { n = Number(n) || 0; return (n < 10 ? "0" : "") + n; }
 function guardarPlanilla(d) {
   var ronda = Number(d.ronda), mesa = Number(d.mesa);
   if (!(ronda >= 1 && ronda <= 99) || !(mesa >= 1 && mesa <= 9999)) throw new Error("ronda o mesa no válidas");
-  if (d.lado !== "blancas" && d.lado !== "negras") throw new Error("lado no válido");
+  // «ambas»: una sola foto con las dos planillas (lo normal desde el 1 de noviembre).
+  if (d.lado !== "ambas" && d.lado !== "blancas" && d.lado !== "negras") throw new Error("lado no válido");
   var bytes = Utilities.base64Decode(String(d.imagen || ""));
   if (bytes.length < 2000 || bytes.length > 8 * 1024 * 1024) throw new Error("imagen no válida");
   var torneo = subcarpeta(carpetaRaiz(), limpio(d.torneo || "Sin torneo", 60));
   var rondaCarpeta = subcarpeta(torneo, "Ronda " + ronda);
+  var ambas = d.lado === "ambas";
   var nombre = "Mesa " + dosCifras(mesa) + " - " + limpio(d.blancas, 45) + " vs " + limpio(d.negras, 45) +
-    " - Planilla de " + d.lado + " (" + limpio(d.jugador, 45) + ").jpg";
-  // La misma planilla vuelta a subir: la anterior (misma mesa y lado) a la papelera.
+    (ambas ? " - Planillas (las dos).jpg" : " - Planilla de " + d.lado + " (" + limpio(d.jugador, 45) + ").jpg");
+  // La misma foto vuelta a subir: la anterior (misma mesa) a la papelera.
   var prefijo = "Mesa " + dosCifras(mesa) + " - ";
-  var sufijo = " - Planilla de " + d.lado + " (";
+  var sufijo = ambas ? " - Planillas (las dos)" : " - Planilla de " + d.lado + " (";
   var archivos = rondaCarpeta.getFiles();
   while (archivos.hasNext()) {
     var f = archivos.next();

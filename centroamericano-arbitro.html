@@ -87,7 +87,7 @@
                     <label class="cam-ir"><span class="sr-only">Ir a la mesa</span><input id="ir-mesa" type="number" inputmode="numeric" min="1" max="9999" placeholder="Ir a la mesa…" class="cam-campo" aria-label="Ir a la mesa número"></label>
                     <label class="cam-check"><input id="solo-faltan" type="checkbox" class="w-5 h-5"> <span>Solo las que faltan</span></label>
                     <button type="button" id="actualizar" class="cam-btn cam-btn-claro"><span aria-hidden="true">🔄</span> Actualizar</button>
-                    <button type="button" id="abrir-tiempos" class="cam-btn cam-btn-claro"><span aria-hidden="true">⏱</span> Control de tiempos</button>
+                    <button type="button" id="abrir-tiempos" class="cam-btn cam-btn-claro"><svg class="cam-icono-boton" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg> Control de tiempos</button>
                     <button type="button" id="horarios" class="cam-btn cam-btn-claro"><span aria-hidden="true">⏰</span> Horarios</button>
                     <button type="button" id="pedir-ayuda" class="cam-btn cam-btn-rojo"><span aria-hidden="true">🆘</span> Necesito ayuda (para mí)</button>
                 </div>
@@ -104,6 +104,7 @@
 
             <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
                 <h2 class="cac-seccion text-xl">Las mesas de la ronda<span class="cac-seccion-raya" aria-hidden="true"></span></h2>
+                <p class="cam-leyenda"><svg  viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l1.5-2h7L17 8h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13" r="3.5"/></svg> <span>Foto de las dos planillas, juntas</span> <svg  viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg> <span>Control de tiempos de la mesa</span></p>
                 <p id="actualizado" class="text-sm" role="status"></p>
             </div>
             <p id="sin-mesas" class="cam-tarjeta" hidden>Todavía no hay mesas tuyas en esta ronda. Cuando la organización empareje y suba la ronda a chess-results, toca «Actualizar».</p>

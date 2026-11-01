@@ -38,12 +38,15 @@
 //   "anular"  { id }                      -> deshace una ilegal o irregularidad
 //   "lista"   { ronda, paso }             -> aprueba un paso de la lista previa de la ronda (relojes, tableros; en ese orden).
 //                                             Sin los dos aprobados, "guardar" responde 409.
-//   "planilla" { ronda, mesa, lado, imagen } -> la foto de la planilla de blancas o negras: se guarda
-//                                             en el bucket privado y pasa al Drive («Planillas Centroamericano»)
+//   "planilla" { ronda, mesa, imagen }    -> UNA foto por mesa con las dos planillas juntas (la parte de «lado» ya no se usa):
+//                                             se guarda en el bucket privado y pasa al Drive («Planillas Centroamericano»)
 //   "finalizar" { ronda, revision }       -> el árbitro finaliza la ronda (todas sus mesas con resultado y
 //                                             confirmó que revisó resultados y planillas ordenadas y firmadas)
 //   "presencia" { ronda, mesa, color, presente } -> marca si el jugador de esa mesa llegó (la organización ve a los que faltan)
-//   "tiempo"  { ronda, mesa, jugada, turno?, t_blancas, t_negras, nota? } -> una lectura del control de tiempos de una partida sin terminar
+//   "tiempo"  { ronda, mesa, t_blancas, j_blancas, t_negras, j_negras, nota? } -> una lectura del control de tiempos de una partida
+//                                             sin terminar: lo que marca el reloj de cada color y las jugadas que lleva. Queda en la
+//                                             tabla de tiempos Y como una línea («nota») en la bitácora de la mesa. (Aún acepta la
+//                                             forma vieja { jugada, turno?, t_blancas, t_negras } para una página que no se recargó.)
 // y las que NO hablan con chess-results (ni necesitan la clave), para que el árbitro
 // reciba lo que le manda la organización aunque chess-results esté caído:
 //   "avisos"  {}                          -> mensajes sin leer de la organización y el estado de su pedido de ayuda
@@ -83,6 +86,14 @@ const BUCKET = "centroamericano-planillas";
 // La lista previa de cada ronda, en este orden (paso a paso): ver la migración centroamericano_lista_previa.
 const PASOS = ["relojes", "tableros"];
 const MAX_IMAGEN = 6 * 1024 * 1024; // lo mismo que el bucket
+
+// segundos -> «1:23:45» o «45:10» (igual que formatoTiempo de js/centroamericano-mesas.js)
+function formatoTiempo(seg: number): string {
+  seg = Math.max(0, Math.round(Number(seg) || 0));
+  const h = Math.floor(seg / 3600), m = Math.floor((seg % 3600) / 60), s = seg % 60;
+  const dos = (n: number) => (n < 10 ? "0" : "") + n;
+  return h ? h + ":" + dos(m) + ":" + dos(s) : m + ":" + dos(s);
+}
 
 type Fila = {
   id: string; ocurrio: string; arbitro: string; mesa: number; color: string | null; jugador: string; tipo: string;
@@ -186,7 +197,7 @@ Deno.serve(async (req) => {
       const { data: pasosOk } = await servicio.from("centroamericano_listas").select("paso").eq("asignacion_id", a.id).eq("ronda", p.ronda);
       const { data: plan } = await servicio.from("centroamericano_planillas").select("mesa, lado, subida, drive_ok").eq("tnr", a.tnr).eq("ronda", p.ronda).gte("mesa", a.mesa_desde).lte("mesa", a.mesa_hasta);
       const { data: pres } = await servicio.from("centroamericano_presencia").select("mesa, color, presente, marcada").eq("tnr", a.tnr).eq("ronda", p.ronda).gte("mesa", a.mesa_desde).lte("mesa", a.mesa_hasta);
-      const { data: tiem } = await servicio.from("centroamericano_tiempos").select("id, ocurrio, mesa, jugada, turno, t_blancas, t_negras, nota").eq("tnr", a.tnr).eq("ronda", p.ronda).gte("mesa", a.mesa_desde).lte("mesa", a.mesa_hasta).order("ocurrio", { ascending: false }).limit(150);
+      const { data: tiem } = await servicio.from("centroamericano_tiempos").select("id, ocurrio, mesa, jugada, j_blancas, j_negras, turno, t_blancas, t_negras, nota").eq("tnr", a.tnr).eq("ronda", p.ronda).gte("mesa", a.mesa_desde).lte("mesa", a.mesa_hasta).order("ocurrio", { ascending: false }).limit(150);
       let hermanas: { token: string; tnr: string; torneo: string; arbitro: string; mesa_desde: number; mesa_hasta: number }[] = [];
       if (hermanasFilas.length) {
         const { data: nombres } = await servicio.from("centroamericano_torneos").select("tnr, nombre").in("tnr", hermanasFilas.map((x) => x.tnr));
@@ -324,11 +335,15 @@ Deno.serve(async (req) => {
     if (cuerpo.action === "tiempo") {
       const ronda = Number(cuerpo.ronda);
       const mesa = Number(cuerpo.mesa);
-      const jugada = Number(cuerpo.jugada);
       const tB = Number(cuerpo.t_blancas), tN = Number(cuerpo.t_negras);
       const turno = cuerpo.turno === "blancas" || cuerpo.turno === "negras" ? cuerpo.turno : null;
       const nota = String(cuerpo.nota ?? "").trim().slice(0, 500);
+      // La forma nueva trae las jugadas de cada color; la vieja, una sola «jugada en que va».
+      const porColor = cuerpo.j_blancas !== undefined || cuerpo.j_negras !== undefined;
+      const jB = porColor ? Number(cuerpo.j_blancas) : null, jN = porColor ? Number(cuerpo.j_negras) : null;
+      const jugada = porColor ? Math.max(1, jB!, jN!) : Number(cuerpo.jugada);
       if (!enRango(mesa)) return json({ error: "La mesa " + mesa + " no es de tu rango (" + a.mesa_desde + " a " + a.mesa_hasta + ")." }, 403);
+      if (porColor && ![jB!, jN!].every((j) => Number.isInteger(j) && j >= 0 && j <= 400)) return json({ error: "Las jugadas de cada color van de 0 a 400." }, 400);
       if (!Number.isInteger(jugada) || jugada < 1 || jugada > 400) return json({ error: "La jugada va de 1 a 400." }, 400);
       if (![tB, tN].every((t) => Number.isInteger(t) && t >= 0 && t <= 36000)) return json({ error: "Los tiempos de los relojes no son válidos." }, 400);
       const leida = await leerRonda(acceso!.acceso, acceso!.sid, a.tnr);
@@ -340,10 +355,19 @@ Deno.serve(async (req) => {
       // Es para una partida SIN terminar: si ya tiene resultado, no hay nada que corregir.
       if (m.valor !== "0") return json({ error: "La mesa " + mesa + " ya tiene resultado en chess-results." }, 409);
       const { data: nueva, error } = await servicio.from("centroamericano_tiempos").insert({
-        asignacion_id: a.id, arbitro: a.arbitro, tnr: a.tnr, ronda: p.ronda, mesa, blancas: m.blancas.slice(0, 120), negras: m.negras.slice(0, 120), jugada, turno, t_blancas: tB, t_negras: tN, nota,
+        asignacion_id: a.id, arbitro: a.arbitro, tnr: a.tnr, ronda: p.ronda, mesa, blancas: m.blancas.slice(0, 120), negras: m.negras.slice(0, 120),
+        jugada, j_blancas: jB, j_negras: jN, turno, t_blancas: tB, t_negras: tN, nota,
       }).select("id, ocurrio").single();
       if (error || !nueva) { console.error("centroamericano-mesa: tiempo", a.tnr, error?.code); return json({ error: "No se pudo anotar. Intenta de nuevo." }, 500); }
-      return json({ ok: true, id: nueva.id, ocurrio: nueva.ocurrio });
+      // También queda en la bitácora de la mesa: que se hizo este control y qué marcaban los relojes.
+      const texto = "Control de tiempos de la mesa " + mesa + " · Blancas (" + m.blancas + "): " + formatoTiempo(tB) + (jB != null ? ", " + jB + (jB === 1 ? " jugada" : " jugadas") : "")
+        + " · Negras (" + m.negras + "): " + formatoTiempo(tN) + (jN != null ? ", " + jN + (jN === 1 ? " jugada" : " jugadas") : "") + (nota ? " · " + nota : "");
+      const { error: eReg } = await servicio.from("centroamericano_registro").insert({
+        asignacion_id: a.id, arbitro: a.arbitro, tnr: a.tnr, ronda: p.ronda, mesa, color: null, jugador: (m.blancas + " – " + m.negras).slice(0, 120),
+        tipo: "nota", articulo: "Control de tiempos", texto: texto.slice(0, 2000),
+      });
+      if (eReg) console.error("centroamericano-mesa: tiempo registro", a.tnr, eReg.code);
+      return json({ ok: true, id: nueva.id, ocurrio: nueva.ocurrio, jugada, registro_error: !!eReg });
     }
 
     if (cuerpo.action === "lista") {
@@ -366,9 +390,9 @@ Deno.serve(async (req) => {
     if (cuerpo.action === "planilla") {
       const ronda = Number(cuerpo.ronda);
       const mesa = Number(cuerpo.mesa);
-      const lado = cuerpo.lado === "blancas" || cuerpo.lado === "negras" ? cuerpo.lado : null;
+      // UNA foto por mesa, con las dos planillas juntas: el árbitro cuida que salgan las dos.
+      // Se guarda con lado = «blancas» (la fila de siempre; la base solo admite blancas o negras).
       const imagen = String(cuerpo.imagen ?? "");
-      if (!lado) return json({ error: "Falta decir de quién es la planilla (blancas o negras)." }, 400);
       if (!enRango(mesa)) return json({ error: "La mesa " + mesa + " no es de tu rango (" + a.mesa_desde + " a " + a.mesa_hasta + ")." }, 403);
       const m64 = imagen.match(/^data:image\/jpeg;base64,([A-Za-z0-9+/=]+)$/);
       if (!m64) return json({ error: "La foto tiene que ser una imagen JPG." }, 400);
@@ -382,13 +406,12 @@ Deno.serve(async (req) => {
       if (!Number.isInteger(ronda) || p.ronda !== ronda) return json({ error: "La ronda abierta en chess-results es la " + p.ronda + ", no la " + cuerpo.ronda + ". Actualiza la página." }, 409);
       const m = p.mesas.find((x) => x.mesa === mesa);
       if (!m) return json({ error: "La mesa " + mesa + " no está en la ronda " + p.ronda + "." }, 404);
-      const jugador = lado === "blancas" ? m.blancas : m.negras;
-      const rival = lado === "blancas" ? m.negras : m.blancas;
-      const ruta = a.tnr + "/ronda-" + p.ronda + "/mesa-" + mesa + "-" + lado + ".jpg";
+      const jugador = m.blancas, rival = m.negras;
+      const ruta = a.tnr + "/ronda-" + p.ronda + "/mesa-" + mesa + "-planillas.jpg";
       const { error: eSubida } = await servicio.storage.from(BUCKET).upload(ruta, bytes, { contentType: "image/jpeg", upsert: true });
       if (eSubida) { console.error("centroamericano-mesa: planilla", a.tnr, eSubida.message); return json({ error: "No se pudo guardar la foto. Intenta de nuevo." }, 500); }
       const { data: fila, error: eFila } = await servicio.from("centroamericano_planillas").upsert({
-        asignacion_id: a.id, arbitro: a.arbitro, tnr: a.tnr, ronda: p.ronda, mesa, lado, jugador: jugador.slice(0, 120), rival: rival.slice(0, 120),
+        asignacion_id: a.id, arbitro: a.arbitro, tnr: a.tnr, ronda: p.ronda, mesa, lado: "blancas", jugador: jugador.slice(0, 120), rival: rival.slice(0, 120),
         ruta, subida: new Date().toISOString(), bytes: bytes.length, drive_ok: false, drive_en: null, drive_error: "",
       }, { onConflict: "tnr,ronda,mesa,lado" }).select("id").single();
       if (eFila || !fila) { console.error("centroamericano-mesa: planilla fila", a.tnr, eFila?.code); return json({ error: "La foto se guardó pero no se pudo anotar. Intenta de nuevo." }, 500); }
@@ -398,12 +421,12 @@ Deno.serve(async (req) => {
       const puente = (Array.isArray(dr) ? dr[0] : dr) as { url: string; secreto: string } | null;
       if (puente?.url && puente?.secreto) {
         const r = await llamarPuente(puente.url, puente.secreto, {
-          accion: "planilla", torneo: torneoInfo?.nombre ?? p.torneo, ronda: p.ronda, mesa, lado, blancas: m.blancas, negras: m.negras, jugador, imagen: aBase64(bytes),
+          accion: "planilla", torneo: torneoInfo?.nombre ?? p.torneo, ronda: p.ronda, mesa, lado: "ambas", blancas: m.blancas, negras: m.negras, jugador, imagen: aBase64(bytes),
         });
         drive = r.ok ? "enviada" : "pendiente";
         await servicio.from("centroamericano_planillas").update(r.ok ? { drive_ok: true, drive_en: new Date().toISOString(), drive_error: "" } : { drive_error: String(r.error ?? "").slice(0, 300) }).eq("id", fila.id);
       }
-      return json({ ok: true, mesa, lado, drive, subida: new Date().toISOString() });
+      return json({ ok: true, mesa, lado: "ambas", drive, subida: new Date().toISOString() });
     }
 
     if (cuerpo.action === "finalizar") {
