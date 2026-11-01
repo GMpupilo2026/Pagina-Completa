@@ -252,7 +252,7 @@ ok("una jugada es la única que gana: +3 contra +0,5 sí; contra +2 no; dos mate
     await pf.click("#profe-boton");
     const pfr = await pf.evaluate(() => ({ t: document.getElementById("profe-titulo").textContent, n: document.querySelectorAll("#profe-panel [data-pregunta]").length,
       b: document.getElementById("profe-boton").getAttribute("aria-label") }));
-    ok("el profe, en francés", pfr.t === "Bonjour ! Je suis le prof" && pfr.n === 6 && /^Je vous aide \?/.test(pfr.b), JSON.stringify(pfr));
+    ok("el profe, en francés", pfr.t === "Bonjour ! Je suis le prof" && pfr.n === 7 && /^Je vous aide \?/.test(pfr.b), JSON.stringify(pfr));
     await pf.context().close();
   } finally {
     await nav.close();

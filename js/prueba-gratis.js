@@ -163,6 +163,56 @@
     $("prueba-clave").value = claveNueva();
     $("prueba-publico").classList.add("hidden");
     $("prueba-admin").classList.remove("hidden");
+    invitados(sb).catch(() => {});
+  }
+
+  /* Las cuentas de invitado del Centroamericano: las que la gente se abrió
+     sola (Edge Function cuenta-invitado). Quien administra las ve todas por la
+     política de pruebas_gratis; el nombre y el usuario salen del perfil. Ver
+     «Las cuentas de invitado del Centroamericano» en
+     docs/decisiones/cobros-acceso-y-tienda.md. */
+  async function invitados(sb) {
+    const caja = $("invitados");
+    if (!caja) return;
+    const filas = [];
+    for (let desde = 0; ; desde += 1000) {
+      const { data, error: e } = await sb.from("pruebas_gratis")
+        .select("alumno_id, empieza, vence, profiles(full_name, email)")
+        .eq("origen", "centroamericano-2026").order("empieza", { ascending: false })
+        .range(desde, desde + 999);
+      if (e) throw e;
+      filas.push(...(data || []));
+      if (!data || data.length < 1000) break;
+    }
+    const ahora = Date.now();
+    const abiertas = filas.filter((f) => new Date(f.vence).getTime() > ahora).length;
+    $("invitados-resumen").textContent = filas.length
+      ? filas.length + (filas.length === 1 ? " cuenta" : " cuentas") + " · " + abiertas + (abiertas === 1 ? " abierta" : " abiertas") + " · " + (filas.length - abiertas) + (filas.length - abiertas === 1 ? " cerrada" : " cerradas")
+      : "Todavía nadie se ha abierto una cuenta desde el Centroamericano.";
+    const lista = $("invitados-lista");
+    lista.replaceChildren();
+    filas.forEach((f) => {
+      const p = f.profiles || {};
+      const abierta = new Date(f.vence).getTime() > ahora;
+      const li = document.createElement("li");
+      li.className = "py-2 flex flex-wrap items-baseline gap-x-3 gap-y-1";
+      const nombre = document.createElement("strong");
+      nombre.className = "text-brand-800 dark:text-white";
+      nombre.textContent = p.full_name || "(sin nombre)";
+      const usuario = document.createElement("span");
+      usuario.className = "font-mono text-brand-600 dark:text-brand-300";
+      usuario.textContent = String(p.email || "").replace(/@alumno\.ajedrez-integral\.com$/, "");
+      const fechas = document.createElement("span");
+      fechas.className = "text-brand-600 dark:text-brand-300";
+      fechas.textContent = "Se la abrió el " + fechaHora(f.empieza) + " · " + (abierta ? "se cierra" : "se cerró") + " el " + fechaHora(f.vence);
+      const estado = document.createElement("span");
+      // El estado va escrito, no solo en color.
+      estado.className = "text-xs font-bold px-2 py-0.5 rounded-full " + (abierta ? "bg-green-100 text-green-900" : "bg-brand-100 text-brand-800");
+      estado.textContent = abierta ? "Abierta" : "Cerrada";
+      li.append(nombre, usuario, estado, fechas);
+      lista.appendChild(li);
+    });
+    caja.classList.remove("hidden");
   }
   arrancar().catch(() => {});
 })();
