@@ -142,6 +142,7 @@ async function abrir(browser, licencia) {
     igual("al elegir el otro torneo se lee ESE (misma clave, con `destino`) y la pantalla cambia de torneo y de ronda",
         [await p.evaluate(() => { const b = window.__ultimo; return [b.action, b.tnr, b.destino]; }), await p.textContent("#m-torneo"), await p.inputValue("#b-ronda")],
         [["leer", "1532448", "1532486"], "Torneo de Prueba 2 · ronda 5", "5"]);
+    igual("mientras se lee, el desplegable de torneos del grupo no se puede tocar (y queda libre al terminar)", await p.$eval("#m-ligados", (x) => x.disabled), false);
     await p.selectOption("#m-ligados", "1532448");
     await p.waitForFunction(() => document.getElementById("m-torneo").textContent.startsWith("Torneo de Prueba ·") && document.getElementById("b-ronda").value === "3");
 

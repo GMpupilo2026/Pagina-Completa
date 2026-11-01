@@ -120,7 +120,9 @@
         const sid = $("m-sid").value.trim();
         if (!tnr) { avisar("El código de la base de datos son hasta 7 números.", true); return; }
         if (!sid) { avisar("Falta el SID (la clave del torneo).", true); return; }
+        // Mientras se lee no se puede elegir otro torneo del grupo: dos lecturas a la vez podían dejar la pantalla con el equivocado.
         $("m-leer").disabled = true;
+        $("m-ligados").disabled = true;
         $("m-estado").textContent = "Entrando a chess-results…";
         try {
             const d = await invocar(Object.assign({ action: "leer", tnr, sid }, typeof destino === "string" && destino ? { destino } : {}));
@@ -140,8 +142,11 @@
         } catch (e) {
             $("m-estado").textContent = "";
             avisar(e.message || String(e), true);
+            // Si no se pudo abrir el torneo elegido, el desplegable vuelve al que sigue en pantalla.
+            if (pantalla && $("m-ligados").querySelector('option[value="' + pantalla.tnr + '"]')) $("m-ligados").value = pantalla.tnr;
         } finally {
             $("m-leer").disabled = false;
+            $("m-ligados").disabled = false;
         }
     }
 
