@@ -388,3 +388,34 @@
 .cam-check-revision { display: flex; align-items: flex-start; gap: 0.6rem; min-height: 48px; padding: 0.3rem 0; }
 .cam-acciones-sin-margen { margin-top: 0; }
 .cam-chip-al-lado { margin-left: 0.5rem; }
+
+/* ===== Varios torneos, presencia, control de tiempos y avisos sin ruido ===== */
+.cam-mis-torneos { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; margin-bottom: 0.8rem; }
+.cam-mis-torneos-titulo { font-weight: 800; }
+.cam-mis-torneos .cam-pestana[aria-current="true"] { background: var(--cac-morado); color: #fff; opacity: 1; }
+.cam-presencia { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem 0.5rem; margin-top: 0.5rem; }
+.cam-presencia-estado { font-weight: 800; font-size: 0.9rem; }
+.cam-presencia[data-presente="si"] .cam-presencia-estado { color: var(--cac-verde); }
+.cam-presencia[data-presente="no"] .cam-presencia-estado { color: var(--cac-rojo); }
+.dark .cam-presencia[data-presente="si"] .cam-presencia-estado { color: #9be0bb; }
+.dark .cam-presencia[data-presente="no"] .cam-presencia-estado { color: #ff9aa5; }
+.cam-presencia .cam-btn[aria-pressed="true"] { background: var(--cac-morado); color: #fff; border-color: var(--cac-morado); }
+
+/* La ventana flotante del control de tiempos: no tapa la página, se minimiza. */
+.cam-flotante { position: fixed; right: 0.6rem; bottom: 0.6rem; z-index: 60; width: min(27rem, calc(100% - 1.2rem)); max-height: 82vh; overflow: auto; background: #fff; color: var(--cac-morado-hondo); border: 3px solid var(--cac-morado-hondo); border-radius: 0.8rem; box-shadow: 0 10px 30px rgb(30 36 83 / 0.4); }
+.cam-flotante[hidden] { display: none; }
+.dark .cam-flotante { background: rgb(var(--c-brand-900, 10 31 51)); color: rgb(var(--c-brand-100, 217 226 236)); border-color: #b8bbf2; }
+.cam-flotante-cabeza { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; background: var(--cac-morado-hondo); color: #fff; padding: 0.4rem 0.7rem; position: sticky; top: 0; }
+.cam-flotante-botones { display: inline-flex; gap: 0.4rem; }
+.cam-flotante-cuerpo { padding: 0.7rem 0.8rem 0.9rem; }
+.cam-flotante[data-minimizada="si"] { width: auto; max-width: calc(100% - 1.2rem); }
+
+/* Los avisos se ven, no suenan: un parpadeo suave (apagado si la persona pidió menos movimiento). */
+@keyframes cam-latido { 0%, 100% { box-shadow: 0 6px 18px rgb(30 36 83 / 0.35); } 50% { box-shadow: 0 0 0 6px rgb(206 19 40 / 0.55); } }
+@media (prefers-reduced-motion: no-preference) { .cam-mensaje, .cam-estado-ayuda[data-estado="abierto"] { animation: cam-latido 1.6s ease-in-out infinite; } }
+.cam-tabla td.cam-tiempo { font-variant-numeric: tabular-nums; font-weight: 700; }
+
+.cam-tambien { display: block; font-size: 0.8rem; font-weight: 600; }
+.cam-sin-ruido { font-style: italic; }
+@media (prefers-reduced-motion: no-preference) { .cam-barra-estado[data-alerta="si"] { animation: cam-latido 1.6s ease-in-out infinite; } }
+.cam-barra-estado[data-alerta="si"] { border-top-color: var(--cac-rojo); }

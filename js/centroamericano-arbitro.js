@@ -47,7 +47,6 @@
     let vistosMensajes = new Set(); // los que ya sonaron
     let ayuda = null; // el último pedido de ayuda (abierto o recién atendido)
     let abiertas = []; // mesas (o null = general) con un pedido abierto
-    let audio = null;
     let bloqueo = null;
 
     const token = () => (location.hash || "").replace(/^#(t=)?/, "").trim();
@@ -85,26 +84,12 @@
     const nombreDe = (m, color) => (color === "blancas" ? m.blancas : m.negras);
     const hora = (x) => window.HoraCR.hora(x);
 
-    // ------------------------------------------------------------- sonido, vibración y pantalla encendida
+    // ------------------------------------------------------------- pantalla encendida (SIN sonido ni vibración)
 
-    // El navegador solo deja sonar después de un toque: se prepara en el primero.
-    function prepararAudio() {
-        if (audio) return;
-        try { const A = window.AudioContext || window.webkitAudioContext; if (A) audio = new A(); } catch (e) { audio = null; }
-    }
-    function pitar() {
-        try {
-            if (!audio) return;
-            if (audio.state === "suspended") audio.resume();
-            [0, 0.28].forEach((t) => {
-                const o = audio.createOscillator(), g = audio.createGain();
-                o.type = "sine"; o.frequency.value = 880; g.gain.value = 0.25;
-                o.connect(g); g.connect(audio.destination);
-                o.start(audio.currentTime + t); o.stop(audio.currentTime + t + 0.2);
-            });
-        } catch (e) { /* sin sonido */ }
-        try { if (navigator.vibrate) navigator.vibrate([200, 100, 200]); } catch (e) { /* sin vibración */ }
-    }
+    // En un torneo no puede haber ruido: los avisos de la organización se ven (arriba, pegados, con
+    // un parpadeo suave y un número en el título de la pestaña) pero NUNCA suenan ni vibran.
+    const TITULO = document.title;
+    function marcarTitulo() { document.title = (pendientes.length ? "(" + pendientes.length + ") " : "") + TITULO; }
     async function mantenerEncendida() {
         try {
             if (!("wakeLock" in navigator) || document.hidden) return;
@@ -136,7 +121,7 @@
         if (k.ultima_irregularidad) acciones.append(el("button", { type: "button", class: "cam-anular", "data-accion": "anular-irregularidad", disabled: ocupada, onclick: () => anular(m, color, "irregularidad", k.ultima_irregularidad) }, "Anular la última irregularidad"));
         return el("div", { class: "cam-jugador", "data-color": color },
             el("div", { class: "cam-jugador-fila" }, el("span", { class: "cam-color", "data-color": color, texto: color === "blancas" ? "Blancas" : "Negras" }), el("span", { class: "cam-nombre", texto: nombre })),
-            marcas, acciones);
+            marcas, bloquePresencia(m, color), acciones);
     }
 
     // La banda de las ilegales de una mesa, sacada de las marcas (no de un recuerdo de la
@@ -174,8 +159,8 @@
         return el("article", { id: "mesa-" + m.mesa, class: "cam-mesa", "data-mesa": String(m.mesa), "data-estado": est, tabindex: "-1", "aria-label": "Mesa " + m.mesa },
             el("div", { class: "cam-mesa-cabeza" }, el("span", { class: "cam-mesa-numero", texto: "Mesa " + m.mesa }),
                 el("div", { class: "cam-mesa-cabeza-acciones" },
-                    el("button", { type: "button", class: "cam-btn cam-ayuda-mesa", "data-accion": "ayuda", "data-pedida": pedida ? "si" : null, disabled: pedida, "aria-label": pedida ? "Ya pediste ayuda en la mesa " + m.mesa : "Pedir al árbitro principal en la mesa " + m.mesa, onclick: () => pedirAyuda(m.mesa) },
-                        el("span", { "aria-hidden": "true", texto: "🆘 " }), pedida ? "Ayuda pedida" : "Ayuda"),
+                    el("button", { type: "button", class: "cam-btn cam-ayuda-mesa", "data-accion": "ayuda", "data-pedida": pedida ? "si" : null, disabled: pedida, "aria-label": pedida ? "Ya pediste al principal en la mesa " + m.mesa : "Pedir al árbitro principal en la mesa " + m.mesa + ": irá directo a esa mesa", onclick: () => pedirAyuda(m.mesa) },
+                        el("span", { "aria-hidden": "true", texto: "🆘 " }), pedida ? "Principal pedido" : "Principal en esta mesa"),
                     el("span", { class: "cam-estado", texto: textoEstado(m, est) }))),
             bandas(m),
             bloqueJugador(m, "blancas"),
@@ -337,6 +322,138 @@
         }
     }
 
+    // ------------------------------------------------------------- presencia: quién llegó a cada mesa
+
+    const presencias = () => (estado && estado.presencia) || [];
+    function presenciaDe(mesa, color) {
+        const f = presencias().find((x) => x.mesa === mesa && x.color === color);
+        return f ? f.presente : null;
+    }
+
+    function pintarPresenciaResumen() {
+        const total = estado.mesas.length * 2;
+        const revisados = estado.mesas.reduce((n, m) => n + (presenciaDe(m.mesa, "blancas") !== null ? 1 : 0) + (presenciaDe(m.mesa, "negras") !== null ? 1 : 0), 0);
+        const faltan = presencias().filter((x) => !x.presente).length;
+        $("presencia-resumen").textContent = total ? "Presencia revisada: " + revisados + " de " + total + " jugadores" + (faltan ? " · no han llegado: " + faltan : "") + "." : "";
+    }
+
+    async function marcarPresencia(m, color, presente) {
+        const antes = presencias().slice();
+        // Se ve al instante; si la función dice que no, se deshace.
+        estado.presencia = presencias().filter((x) => !(x.mesa === m.mesa && x.color === color)).concat([{ mesa: m.mesa, color, presente, marcada: new Date().toISOString() }]);
+        pintar();
+        try { await invocar("presencia", { ronda: estado.ronda, mesa: m.mesa, color, presente }); }
+        catch (e) { estado.presencia = antes; pintar(); avisar(e.message, true); }
+    }
+
+    function bloquePresencia(m, color) {
+        const v = presenciaDe(m.mesa, color);
+        const nombre = nombreDe(m, color);
+        return el("div", { class: "cam-presencia", "data-presente": v === null ? "sin-revisar" : v ? "si" : "no" },
+            el("span", { class: "cam-presencia-estado", texto: v === null ? "Presencia: sin revisar" : v ? "✓ Llegó" : "✗ No ha llegado" }),
+            el("button", { type: "button", class: "cam-btn cam-btn-claro cam-btn-chico", "data-accion": "presente", "aria-pressed": v === true ? "true" : "false", "aria-label": nombre + " llegó", onclick: () => marcarPresencia(m, color, true) }, "Llegó"),
+            el("button", { type: "button", class: "cam-btn cam-btn-claro cam-btn-chico", "data-accion": "ausente", "aria-pressed": v === false ? "true" : "false", "aria-label": nombre + " no ha llegado", onclick: () => marcarPresencia(m, color, false) }, "No ha llegado"));
+    }
+
+    // ------------------------------------------------------------- varios torneos para el mismo árbitro
+
+    function pintarHermanas() {
+        const caja = $("mis-torneos");
+        const otras = (estado && estado.hermanas) || [];
+        caja.hidden = otras.length === 0;
+        if (!otras.length) { caja.replaceChildren(); return; }
+        caja.replaceChildren(
+            el("span", { class: "cam-mis-torneos-titulo", texto: "Tus torneos:" }),
+            el("button", { type: "button", class: "cam-pestana", "aria-current": "true", disabled: true }, estado.torneo + " · mesas " + estado.desde + " a " + estado.hasta),
+            ...otras.map((h) => el("button", { type: "button", class: "cam-pestana", "data-accion": "cambiar-torneo", onclick: () => cambiarTorneo(h.token) }, h.torneo + " · mesas " + h.mesa_desde + " a " + h.mesa_hasta)));
+    }
+
+    // Pasar al otro enlace del mismo árbitro: se cambia el «#» y se vuelve a leer todo.
+    function cambiarTorneo(nuevo) {
+        try { history.replaceState(null, "", "#" + nuevo); } catch (e) { location.hash = nuevo; }
+        estado = null; elegido = {}; mensajes = {}; revisadas = {}; ayuda = null; abiertas = []; anuladas = new Set();
+        $("app").hidden = true;
+        $("cargando").hidden = false;
+        leer(false);
+    }
+
+    // ------------------------------------------------------------- control de tiempos (ventana flotante)
+
+    let tiemposAbierto = false;
+    let tiemposMin = false;
+    let lecturaMesa = null;
+    let borrador = {};
+
+    const sinTerminar = () => estado.mesas.filter((m) => m.valor === "0").sort((a, b) => a.mesa - b.mesa);
+    const lecturas = (mesa) => ((estado && estado.tiempos) || []).filter((x) => x.mesa === mesa);
+
+    function abrirTiempos(porLaOrganizacion) {
+        tiemposAbierto = true;
+        tiemposMin = false;
+        if (estado) pintarTiempos();
+        if (porLaOrganizacion) avisar("El árbitro principal pide un control de tiempos: anota jugada y relojes de las mesas sin terminar.");
+    }
+
+    function pintarTiempos() {
+        const caja = $("control-tiempos");
+        caja.hidden = !tiemposAbierto;
+        if (!tiemposAbierto) { caja.replaceChildren(); return; }
+        // Lo escrito sobrevive a minimizar la ventana y a volver a dibujarla (cada lectura nueva o cada aviso).
+        if ($("lt-jugada")) borrador = { jugada: $("lt-jugada").value, blancas: $("lt-blancas").value, negras: $("lt-negras").value, turno: $("lt-turno").value, nota: $("lt-nota").value };
+        const mesas = sinTerminar();
+        if (!lecturaMesa || !mesas.some((m) => m.mesa === lecturaMesa)) lecturaMesa = mesas.length ? mesas[0].mesa : null;
+        caja.dataset.minimizada = tiemposMin ? "si" : "no";
+        const cabeza = el("div", { class: "cam-flotante-cabeza" },
+            el("strong", { texto: "⏱ Control de tiempos" }),
+            el("span", { class: "cam-flotante-botones" },
+                el("button", { type: "button", class: "cam-btn cam-btn-claro cam-btn-chico", "data-accion": "minimizar-tiempos", "aria-expanded": tiemposMin ? "false" : "true", onclick: () => { tiemposMin = !tiemposMin; pintarTiempos(); } }, tiemposMin ? "Abrir" : "Minimizar"),
+                el("button", { type: "button", class: "cam-btn cam-btn-claro cam-btn-chico", "data-accion": "cerrar-tiempos", onclick: () => { tiemposAbierto = false; pintarTiempos(); } }, "Cerrar")));
+        if (tiemposMin) { caja.replaceChildren(cabeza); return; }
+        if (!mesas.length) { caja.replaceChildren(cabeza, el("p", { class: "cam-flotante-cuerpo", texto: "Todas tus mesas ya tienen resultado: no hay partidas sin terminar." })); return; }
+        const previo = borrador.jugada, pB = borrador.blancas, pN = borrador.negras, pT = borrador.turno, pNota = borrador.nota;
+        const m = mesas.find((x) => x.mesa === lecturaMesa);
+        const ult = lecturas(lecturaMesa).slice(0, 4);
+        caja.replaceChildren(cabeza, el("form", { class: "cam-flotante-cuerpo", id: "form-tiempos", novalidate: true, onsubmit: guardarLectura },
+            el("p", { class: "text-sm", texto: "Elige una partida SIN terminar y anota en qué jugada va y lo que marca cada reloj. Si un reloj falla, esta lectura sirve para corregirlo. Puedes minimizar esta ventana para meter un resultado." }),
+            el("label", { for: "lt-mesa", class: "block text-sm font-bold mt-2", texto: "Mesa" }),
+            el("select", { id: "lt-mesa", class: "cam-select", onchange: (e) => { lecturaMesa = Number(e.target.value); pintarTiempos(); } },
+                ...mesas.map((x) => el("option", { value: String(x.mesa), selected: x.mesa === lecturaMesa, texto: "Mesa " + x.mesa + " — " + x.blancas + " vs " + x.negras }))),
+            el("div", { class: "grid grid-cols-2 gap-2 mt-2" },
+                el("div", {}, el("label", { for: "lt-jugada", class: "block text-sm font-bold", texto: "Jugada en que va" }), el("input", { id: "lt-jugada", type: "number", min: "1", max: "400", inputmode: "numeric", class: "cam-campo", value: previo || "" })),
+                el("div", {}, el("label", { for: "lt-turno", class: "block text-sm font-bold", texto: "Le toca a" }), el("select", { id: "lt-turno", class: "cam-select" },
+                    el("option", { value: "", texto: "No sé" }), el("option", { value: "blancas", texto: "Blancas" }), el("option", { value: "negras", texto: "Negras" })))),
+            el("div", { class: "grid grid-cols-2 gap-2 mt-2" },
+                el("div", {}, el("label", { for: "lt-blancas", class: "block text-sm font-bold", texto: "Reloj de las blancas (" + (m ? m.blancas : "") + ")" }), el("input", { id: "lt-blancas", type: "text", inputmode: "numeric", autocomplete: "off", placeholder: "h:mm:ss o mm:ss", class: "cam-campo", value: pB || "" })),
+                el("div", {}, el("label", { for: "lt-negras", class: "block text-sm font-bold", texto: "Reloj de las negras (" + (m ? m.negras : "") + ")" }), el("input", { id: "lt-negras", type: "text", inputmode: "numeric", autocomplete: "off", placeholder: "h:mm:ss o mm:ss", class: "cam-campo", value: pN || "" }))),
+            el("label", { for: "lt-nota", class: "block text-sm font-bold mt-2", texto: "Nota (opcional)" }),
+            el("input", { id: "lt-nota", type: "text", maxlength: "500", class: "cam-campo", autocomplete: "off", value: pNota || "" }),
+            el("div", { class: "cam-acciones" }, el("button", { type: "submit", id: "lt-guardar", class: "cam-btn" }, "Guardar la lectura")),
+            ult.length ? el("div", { class: "mt-2" }, el("p", { class: "text-sm font-bold", texto: "Lo último anotado en la mesa " + lecturaMesa }),
+                el("ul", { class: "text-sm", id: "lt-ultimas" }, ...ult.map((x) => el("li", { texto: hora(x.ocurrio) + " — jugada " + x.jugada + (x.turno ? ", le toca a las " + x.turno : "") + " · blancas " + C.formatoTiempo(x.t_blancas) + " · negras " + C.formatoTiempo(x.t_negras) + (x.nota ? " · " + x.nota : "") })))) : null));
+        if (pT) $("lt-turno").value = pT;
+    }
+
+    async function guardarLectura(ev) {
+        ev.preventDefault();
+        const jugada = parseInt($("lt-jugada").value, 10);
+        const tB = C.leerTiempo($("lt-blancas").value), tN = C.leerTiempo($("lt-negras").value);
+        if (!Number.isInteger(jugada) || jugada < 1 || jugada > 400) { avisar("Escribe la jugada en que va (de 1 a 400).", true); return; }
+        if (tB === null || tN === null) { avisar("Escribe el tiempo de cada reloj así: 1:23:45 o 45:10.", true); return; }
+        const turno = $("lt-turno").value || null, nota = $("lt-nota").value.trim();
+        $("lt-guardar").disabled = true;
+        try {
+            const d = await invocar("tiempo", { ronda: estado.ronda, mesa: lecturaMesa, jugada, turno, t_blancas: tB, t_negras: tN, nota });
+            estado.tiempos = [{ id: d.id, ocurrio: d.ocurrio, mesa: lecturaMesa, jugada, turno, t_blancas: tB, t_negras: tN, nota }].concat(estado.tiempos || []);
+            avisar("Lectura guardada: mesa " + lecturaMesa + ", jugada " + jugada + ".");
+            for (const i of ["lt-jugada", "lt-blancas", "lt-negras", "lt-nota"]) $(i).value = "";
+            borrador = {};
+            pintarTiempos();
+        } catch (e) {
+            avisar(e.message, true);
+            if ($("lt-guardar")) $("lt-guardar").disabled = false;
+        }
+    }
+
     // ------------------------------------------------------------- horarios y tiempo de espera
 
     function pintarEspera() {
@@ -391,9 +508,12 @@
         $("lista").replaceChildren(...visibles.map(tarjeta));
         $("sin-mesas").hidden = estado.mesas.length > 0;
         pintarProgreso();
+        pintarHermanas();
+        pintarPresenciaResumen();
         pintarLista();
         pintarRevision();
         pintarEspera();
+        if (tiemposAbierto && !(document.activeElement && document.activeElement.closest && document.activeElement.closest('#control-tiempos'))) pintarTiempos();
         pintarAnotado();
     }
 
@@ -447,12 +567,12 @@
         pendientes = d.mensajes || [];
         const nuevos = pendientes.filter((m) => !vistosMensajes.has(m.id));
         nuevos.forEach((m) => vistosMensajes.add(m.id));
-        if (nuevos.length) pitar();
+        if (nuevos.some((m) => m.control_tiempos)) abrirTiempos(true);
         const estabaAbierta = ayuda && ayuda.estado === "abierto";
         ayuda = d.ayuda || null;
-        if (estabaAbierta && ayuda && ayuda.estado === "atendido") pitar();
         abiertas = d.abiertas || (ayuda && ayuda.estado === "abierto" ? [ayuda.mesa] : []);
         pintarMensajes();
+        marcarTitulo();
         pintarAyuda();
         pintarNombre();
         if (estado) pintar();
@@ -473,10 +593,9 @@
     }
 
     async function pedirAyuda(mesa) {
-        prepararAudio();
         let texto = "";
         if (mesa == null) {
-            const nota = await Avisos.pedir("Se le avisa al árbitro principal ahora mismo. Si quieres, dile qué pasa.", { titulo: "Pedir al árbitro principal", etiqueta: "Qué pasa (opcional)", aceptar: "Pedir ayuda" });
+            const nota = await Avisos.pedir("Pides ayuda PARA TI, no para una mesa en especial. Si lo que necesitas es que el principal vaya a una mesa, usa «Principal en esta mesa» en esa mesa. Si quieres, dile qué pasa.", { titulo: "Necesito ayuda", etiqueta: "Qué pasa (opcional)", aceptar: "Pedir ayuda" });
             if (nota === null) return;
             texto = String(nota).trim();
         }
@@ -486,7 +605,7 @@
             if (!abiertas.includes(mesa)) abiertas = abiertas.concat([mesa]);
             pintarAyuda();
             if (estado) pintar();
-            avisar(d.ya ? "Ya habías pedido ayuda" + (mesa != null ? " en la mesa " + mesa : "") + ": el árbitro principal ya lo sabe." : "Aviso enviado al árbitro principal.");
+            avisar(d.ya ? "Ya habías pedido ayuda" + (mesa != null ? " en la mesa " + mesa : "") + ": el árbitro principal ya lo sabe." : mesa != null ? "Aviso enviado: el árbitro principal irá directo a la mesa " + mesa + "." : "Aviso enviado: el árbitro principal sabe que necesitas ayuda.");
         } catch (e) { avisar(e.message, true); }
     }
 
@@ -690,12 +809,11 @@
             problema("Falta tu enlace", "Esta página se abre con el enlace o el QR que te dio la organización. Pídelo de nuevo o escanéalo otra vez.", false);
             return;
         }
-        // El primer toque prepara el sonido de los avisos.
-        document.addEventListener("pointerdown", prepararAudio, { once: true });
-        $("actualizar").addEventListener("click", () => { prepararAudio(); leer(false); consultarAvisos(); });
+        $("actualizar").addEventListener("click", () => { leer(false); consultarAvisos(); });
         $("problema-reintentar").addEventListener("click", () => { $("problema").hidden = true; $("cargando").hidden = false; leer(false); });
         $("pedir-ayuda").addEventListener("click", () => pedirAyuda(null));
         $("horarios").addEventListener("click", verHorarios);
+        $("abrir-tiempos").addEventListener("click", () => abrirTiempos(false));
         setInterval(() => { if (!document.hidden && estado) pintarEspera(); }, 30000);
         $("nombre-guardar").addEventListener("click", guardarNombre);
         $("nombre-campo").addEventListener("keydown", (e) => { if (e.key === "Enter") guardarNombre(); });

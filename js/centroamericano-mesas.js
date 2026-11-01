@@ -270,7 +270,47 @@
       (s.quedan === 1 ? " mesa" : " mesas") + ". Toma la" + (s.mesas.length === 1 ? " mesa " : "s mesas ") + listaMesas(s.mesas) + ".";
   }
 
-  const api = { ARTICULO_ILEGAL, FIN_DEL_TORNEO, marcasTexto, avisoIlegal, estadoMesa, estadoAsignacion, vencimiento, enlaceArbitro, textoWhatsapp, leerClaves, jugadoresMarcados, repartirMesas, leerRango, nombrePorDefinir, enLinea, hace, enviosAgrupados, TIPOS_ILEGAL, TIPOS_IRREGULARIDAD, textoTipo, listaMesas, resumenRonda, sugerirAyuda, textoSugerencia };
+  // ---- El control de tiempos: lo que marca cada reloj, en segundos.
+  // «1:23:45» (h:mm:ss), «45:10» (mm:ss) o «85» (segundos) -> segundos; null si no se entiende.
+  function leerTiempo(texto) {
+    const t = String(texto == null ? "" : texto).trim();
+    if (!/^\d{1,3}(:[0-5]?\d){0,2}$/.test(t)) return null;
+    const p = t.split(":").map(Number);
+    if (p.length === 3 && p[1] > 59) return null;
+    const seg = p.length === 3 ? p[0] * 3600 + p[1] * 60 + p[2] : p.length === 2 ? p[0] * 60 + p[1] : p[0];
+    return seg >= 0 && seg <= 36000 ? seg : null;
+  }
+  // segundos -> «1:23:45» o «45:10»
+  function formatoTiempo(seg) {
+    seg = Math.max(0, Math.round(Number(seg) || 0));
+    const h = Math.floor(seg / 3600), m = Math.floor((seg % 3600) / 60), s = seg % 60;
+    const dos = (n) => (n < 10 ? "0" : "") + n;
+    return h ? h + ":" + dos(m) + ":" + dos(s) : m + ":" + dos(s);
+  }
+  // Lo último que se leyó de cada partida (torneo, ronda, mesa): la lectura más reciente.
+  function ultimasLecturas(filas) {
+    const por = new Map();
+    for (const f of filas) {
+      const k = [f.tnr, f.ronda, f.mesa].join("|");
+      const x = por.get(k);
+      if (!x || String(f.ocurrio) > String(x.ocurrio)) por.set(k, f);
+    }
+    return [...por.values()].sort((a, b) => a.tnr.localeCompare(b.tnr) || a.ronda - b.ronda || a.mesa - b.mesa);
+  }
+
+  // ---- La presencia: quiénes no han llegado. `mesas` son las de la ronda (de cada árbitro) y
+  // `presencia` las filas de centroamericano_presencia. Un jugador «falta» si el árbitro lo marcó
+  // ausente; «sin revisar» si todavía no lo marcó.
+  function jugadoresQueFaltan(presencia, ronda) {
+    return presencia.filter((p) => p.ronda === ronda && !p.presente)
+      .sort((a, b) => a.tnr.localeCompare(b.tnr) || a.mesa - b.mesa || a.color.localeCompare(b.color));
+  }
+  function presenciaDeLaMesa(presencia, tnr, ronda, mesa) {
+    const f = (c) => presencia.find((p) => p.tnr === tnr && p.ronda === ronda && p.mesa === mesa && p.color === c);
+    return { blancas: f("blancas") ? f("blancas").presente : null, negras: f("negras") ? f("negras").presente : null };
+  }
+
+  const api = { ARTICULO_ILEGAL, FIN_DEL_TORNEO, marcasTexto, avisoIlegal, estadoMesa, estadoAsignacion, vencimiento, enlaceArbitro, textoWhatsapp, leerClaves, jugadoresMarcados, repartirMesas, leerRango, nombrePorDefinir, enLinea, hace, enviosAgrupados, TIPOS_ILEGAL, TIPOS_IRREGULARIDAD, textoTipo, listaMesas, resumenRonda, sugerirAyuda, textoSugerencia, leerTiempo, formatoTiempo, ultimasLecturas, jugadoresQueFaltan, presenciaDeLaMesa };
   if (enNode) module.exports = api;
   else raiz.CentroamericanoMesas = api;
 })(typeof self !== "undefined" ? self : this);

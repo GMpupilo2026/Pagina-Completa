@@ -5,7 +5,7 @@
 
    Siete pestañas:
    1. Ronda en curso: cuánto le queda a cada árbitro (resumen), la revisión previa que lleva,
-      y los pedidos de ayuda y avisos de los árbitros —con sonido y contador—: quién pidió
+      y los pedidos de ayuda y avisos de los árbitros —sin sonido, con contador y la barra que parpadea—: quién pidió
       ayuda, quién TERMINÓ sus mesas (con una sugerencia de a dónde ir a ayudar) y quién
       FINALIZÓ la ronda.
    2. Avisos: mandar un mensaje a un árbitro, a un torneo o a todos, y ver quién lo leyó.
@@ -20,6 +20,8 @@
    6. Respaldo: las copias automáticas, hacer una ahora y bajarla, y restaurar (solo agrega lo
       que falta).
    7. Lo que anotan: resultados enviados, ilegales e irregularidades, y el PDF.
+   Más: quién no ha llegado (presencia mesa por mesa), el control de tiempos que se le pide a los
+   árbitros, y un árbitro con mesas de VARIOS torneos (`persona`: sus enlaces se juntan).
 
    Quien entra tiene que tener la licencia «mesa-arbitro» (administración también): lo hace
    cumplir la base (RLS), no esta página.
@@ -43,12 +45,12 @@
     let finales = [];
     let listas = [];
     let planillas = [];
+    let presencia = [];
+    let tiempos = [];
     let copias = [];
     let registro = [];
     let drive = null;
     let pedidosVistos = null; // null: todavía no se leyó nada (la primera lectura no suena)
-    let audio = null;
-    let sonido = false;
     let tic = 0;
     let firmaRonda = "";
     let firmaAsignaciones = "";
@@ -93,11 +95,14 @@
     const asig = (id) => asignaciones.find((a) => a.id === id);
     const nombreAsig = (id) => (asig(id) || { arbitro: "Un árbitro" }).arbitro;
     const activa = (a) => C.estadoAsignacion(a, new Date()) === "activo";
+    // El mismo árbitro con varios enlaces (varios torneos): un aviso le llega UNA vez, no una por enlace.
+    const unicosPorPersona = (lista) => { const vistos = new Set(); return lista.filter((a) => { const k = a.persona || a.id; if (vistos.has(k)) return false; vistos.add(k); return true; }); };
+    const otrosEnlaces = (a) => (a.persona ? asignaciones.filter((x) => x.persona === a.persona && x.id !== a.id) : []);
     const ahoraTxt = () => window.HoraCR.hora(new Date());
 
     // ------------------------------------------------------------- pestañas
 
-    const PANELES = ["ronda", "avisos", "arbitros", "planillas", "claves", "respaldo", "registro"];
+    const PANELES = ["ronda", "avisos", "arbitros", "tiempos", "planillas", "claves", "respaldo", "registro"];
     function abrirPanel(nombre, enfocar) {
         if (!PANELES.includes(nombre)) nombre = "ronda";
         for (const p of PANELES) {
@@ -110,6 +115,7 @@
         if (enfocar) $("pest-" + nombre).focus();
         try { history.replaceState(null, "", "#" + nombre); } catch (e) { /* sin historial */ }
         if (nombre === "planillas") { cargarPlanillas(); cargarDrive(); }
+        if (nombre === "tiempos") cargarTiempos();
         if (nombre === "respaldo") { cargarCopias(); cargarDrive(); }
         if (nombre === "registro") cargarRegistro();
     }
@@ -122,7 +128,7 @@
         abrirPanel(PANELES[j], true);
     }
 
-    // ------------------------------------------------------------- barra de estado y sonido
+    // ------------------------------------------------------------- barra de estado (sin sonido: en un torneo no puede haber ruido)
 
     const abiertosDeArbitros = () => avisos.filter((f) => f.de === "arbitro" && f.estado === "abierto").sort((a, b) => String(a.creado).localeCompare(String(b.creado)));
     const pedidosAbiertos = () => abiertosDeArbitros().filter((f) => f.tipo === "ayuda");
@@ -139,50 +145,24 @@
         const ultima = copias.filter((c) => c.anillo !== "d").map((c) => c.creada).sort().pop();
         $("eg-copia").textContent = ultima ? "Última copia: " + C.hace(ultima, new Date()) : "Sin copias todavía";
         $("eg-reloj").textContent = ahoraTxt();
+        // Sin sonido: la barra de abajo parpadea suave mientras haya avisos abiertos.
+        $("estado-general").dataset.alerta = n ? "si" : "no";
         const c = $("contador-pedidos");
         c.hidden = n === 0;
         c.textContent = String(n);
         document.title = (n ? "(" + n + ") " : "") + TITULO;
     }
 
-    function pitar() {
-        if (!sonido || !audio) return;
-        try {
-            const t0 = audio.currentTime;
-            [660, 880, 660].forEach((f, i) => {
-                const o = audio.createOscillator(), g = audio.createGain();
-                o.type = "sine";
-                o.frequency.value = f;
-                g.gain.setValueAtTime(0.0001, t0 + i * 0.2);
-                g.gain.exponentialRampToValueAtTime(0.3, t0 + i * 0.2 + 0.03);
-                g.gain.exponentialRampToValueAtTime(0.0001, t0 + i * 0.2 + 0.18);
-                o.connect(g).connect(audio.destination);
-                o.start(t0 + i * 0.2);
-                o.stop(t0 + i * 0.2 + 0.2);
-            });
-        } catch (e) { /* sin audio */ }
-    }
-
-    function alternarSonido() {
-        // El navegador solo deja sonar después de un toque: por eso es un botón.
-        if (!audio) { try { audio = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { audio = null; } }
-        if (!audio) { avisar("Este navegador no puede reproducir el sonido.", true); return; }
-        sonido = !sonido;
-        if (audio.state === "suspended") audio.resume();
-        const b = $("sonido");
-        b.setAttribute("aria-pressed", sonido ? "true" : "false");
-        b.replaceChildren(el("span", { "aria-hidden": "true", texto: sonido ? "🔔" : "🔕" }), document.createTextNode(sonido ? " Sonido activado" : " Activar el sonido de los pedidos"));
-        if (sonido) pitar();
-    }
-
     // ------------------------------------------------------------- 1. ronda en curso
 
     async function cargarAvance() {
-        const [p, f, l] = await Promise.all([
+        const [p, f, l, pr] = await Promise.all([
             sb.from("centroamericano_progreso").select("*").range(0, 999),
             sb.from("centroamericano_finales").select("*").range(0, 999),
             sb.from("centroamericano_listas").select("*").range(0, 999),
+            sb.from("centroamericano_presencia").select("*").range(0, 999),
         ]);
+        if (!pr.error) presencia = pr.data || [];
         if (!p.error) progreso = p.data || [];
         if (!f.error) finales = f.data || [];
         if (!l.error) listas = l.data || [];
@@ -190,6 +170,12 @@
 
     const filasRonda = () => C.resumenRonda(asignaciones, progreso, finales, new Date(), listas)
         .sort((a, b) => (torneos.findIndex((t) => t.tnr === a.tnr) - torneos.findIndex((t) => t.tnr === b.tnr)) || a.mesa_desde - b.mesa_desde);
+
+    // La presencia revisada de un árbitro en la ronda: cuántos jugadores marcó y cuántos no han llegado.
+    function presenciaDeFila(f) {
+        const filas = presencia.filter((x) => x.tnr === f.tnr && x.ronda === f.ronda && x.mesa >= f.mesa_desde && x.mesa <= f.mesa_hasta);
+        return { marcados: filas.length, faltan: filas.filter((x) => !x.presente).length, total: (f.sinDatos ? f.mesa_hasta - f.mesa_desde + 1 : f.total) * 2 };
+    }
 
     const ETIQUETA_ESTADO = { "sin-datos": "Sin datos", "en-curso": "En curso", termino: "Terminó sus mesas", finalizada: "Ronda finalizada ✓" };
 
@@ -206,7 +192,19 @@
             el("td", {}, f.sinDatos ? el("span", { texto: "—" }) : el("span", { class: "cam-avance" }, el("progress", { max: String(f.total), value: String(f.con_resultado), "aria-label": "Mesas con resultado de " + f.arbitro }), " " + f.con_resultado + " de " + f.total)),
             el("td", { class: "cam-quedan", title: f.pendientes && f.pendientes.length ? "Faltan las mesas " + C.listaMesas(f.pendientes) : null, texto: f.sinDatos ? "—" : f.quedan === 0 ? "0" : f.quedan + " (" + C.listaMesas(f.pendientes) + ")" }),
             el("td", {}, el("span", { class: "cam-chip", "data-estado": f.estado, texto: ETIQUETA_ESTADO[f.estado] }), f.estado === "en-curso" || f.estado === "sin-datos" ? el("span", { class: "cam-lista-previa-estado", texto: " Revisión previa " + f.lista + "/" + PASOS_LISTA }) : null),
+            el("td", { class: "cam-presencia-celda", texto: (() => { const q = presenciaDeFila(f); return q.marcados ? q.marcados + " de " + q.total + (q.faltan ? " · faltan " + q.faltan : "") : "Sin revisar"; })() }),
             el("td", { class: "cam-conectado", "data-en-linea": C.enLinea(asig(f.id) || {}, new Date()) ? "si" : "no", texto: C.enLinea(asig(f.id) || {}, new Date()) ? "● Conectado" : "—" }))));
+        pintarFaltan(ronda);
+    }
+
+    // Los que no han llegado, según el árbitro de cada mesa.
+    function pintarFaltan(ronda) {
+        const lista = C.jugadoresQueFaltan(presencia, ronda);
+        $("faltan-nota").textContent = ronda ? " — ronda " + ronda + ": " + lista.length : "";
+        $("faltan-vacio").hidden = lista.length > 0;
+        $("faltan").replaceChildren(...lista.map((x) => el("tr", { "data-mesa": String(x.mesa) },
+            el("td", { texto: nombreTorneo(x.tnr) }), el("td", { texto: String(x.mesa) }), el("td", { texto: x.jugador }), el("td", { texto: x.color === "negras" ? "Negras" : "Blancas" }),
+            el("td", { texto: x.arbitro }), el("td", { texto: window.HoraCR.hora(new Date(x.marcada)) }))));
     }
 
     function tarjetaAviso(f, atendido, filas) {
@@ -216,7 +214,8 @@
         let titulo = "";
         if (f.tipo === "termino") titulo = "✅ " + quien + " terminó sus mesas de la ronda " + f.ronda;
         else if (f.tipo === "finalizo") titulo = "📋 " + quien + " finalizó la ronda " + f.ronda;
-        else titulo = (atendido ? "✓ " : "🆘 ") + (f.mesa ? "Mesa " + f.mesa : "Ayuda general") + " — " + quien;
+        else if (f.mesa) titulo = (atendido ? "✓ " : "🆘 ") + quien + " pide al principal EN LA MESA " + f.mesa;
+        else titulo = (atendido ? "✓ " : "🆘 ") + quien + " necesita ayuda (para él o ella, no es de una mesa)";
         const hora = atendido && f.atendido_en ? "atendido a las " + window.HoraCR.hora(new Date(f.atendido_en)) : null;
         const sugerencias = [];
         if (f.tipo === "termino" && !atendido) {
@@ -254,7 +253,7 @@
         const hechos = avisos.filter((f) => f.de === "arbitro" && f.estado === "atendido").slice(0, 20);
         // Se llega acá cada pocos segundos: si nada cambió, no se vuelven a dibujar los botones
         // (un toque no debe caer en un botón que se acaba de reemplazar).
-        const firma = JSON.stringify([filas.map((f) => [f.id, f.arbitro, f.con_resultado, f.estado, f.lista, C.enLinea(asig(f.id) || {}, new Date())]), abiertos.map((f) => f.id), hechos.map((f) => f.id), torneos.map((t) => t.nombre)]);
+        const firma = JSON.stringify([filas.map((f) => [f.id, f.arbitro, f.con_resultado, f.estado, f.lista, C.enLinea(asig(f.id) || {}, new Date())]), presencia.map((x) => [x.id, x.presente]), abiertos.map((f) => f.id), hechos.map((f) => f.id), torneos.map((t) => t.nombre)]);
         if (firma === firmaRonda) { refrescarHace(); return; }
         firmaRonda = firma;
         pintarResumen(filas);
@@ -272,7 +271,6 @@
         avisos = data || [];
         await cargarAvance();
         const ids = new Set(abiertosDeArbitros().map((f) => f.id));
-        if (pedidosVistos !== null && [...ids].some((id) => !pedidosVistos.has(id))) pitar();
         pedidosVistos = ids;
         pintarRonda();
         marcarPedidos();
@@ -378,13 +376,26 @@
         const antes = $("av-para").value;
         const act = asignaciones.filter(activa).sort((a, b) => nombreTorneo(a.tnr).localeCompare(nombreTorneo(b.tnr)) || a.mesa_desde - b.mesa_desde);
         const tnrs = [...new Set(act.map((a) => a.tnr))];
-        const op = [el("option", { value: "todos", texto: "Todos los árbitros (" + act.length + ")" })];
-        for (const t of tnrs) op.push(el("option", { value: "t:" + t, texto: "Todo el torneo: " + nombreTorneo(t) + " (" + act.filter((a) => a.tnr === t).length + ")" }));
-        for (const a of act) op.push(el("option", { value: "a:" + a.id, texto: a.arbitro + " — " + nombreTorneo(a.tnr) + ", mesas " + a.mesa_desde + " a " + a.mesa_hasta }));
+        const op = () => {
+            const o = [el("option", { value: "todos", texto: "Todos los árbitros (" + unicosPorPersona(act).length + ")" })];
+            for (const t of tnrs) o.push(el("option", { value: "t:" + t, texto: "Todo el torneo: " + nombreTorneo(t) + " (" + unicosPorPersona(act.filter((a) => a.tnr === t)).length + ")" }));
+            for (const a of act) o.push(el("option", { value: "a:" + a.id, texto: a.arbitro + " — " + nombreTorneo(a.tnr) + ", mesas " + a.mesa_desde + " a " + a.mesa_hasta }));
+            return o;
+        };
         // Si la lista es la misma no se toca: con el desplegable abierto, cambiarla lo cerraría.
-        if ([...$("av-para").options].map((o) => o.value + o.textContent).join("|") === op.map((o) => o.value + o.textContent).join("|")) return;
-        $("av-para").replaceChildren(...op);
-        if ([...$("av-para").options].some((o) => o.value === antes)) $("av-para").value = antes;
+        for (const sel of [$("av-para"), $("ct-para")]) {
+            const nuevas = op(), previo = sel.value;
+            if ([...sel.options].map((o) => o.value + o.textContent).join("|") === nuevas.map((o) => o.value + o.textContent).join("|")) continue;
+            sel.replaceChildren(...nuevas);
+            if ([...sel.options].some((o) => o.value === previo)) sel.value = previo;
+        }
+        // El desplegable de «¿ya tiene mesas en otro torneo?» (un árbitro por persona).
+        const personas = unicosPorPersona(act), sp = $("a-persona"), antesP = sp.value;
+        const opsP = [el("option", { value: "", texto: "No: es un árbitro nuevo" }), ...personas.map((a) => el("option", { value: a.persona ? "p:" + a.persona : "a:" + a.id, texto: a.arbitro + " (" + asignaciones.filter((x) => activa(x) && (a.persona ? x.persona === a.persona : x.id === a.id)).map((x) => nombreTorneo(x.tnr)).join(", ") + ")" }))];
+        if ([...sp.options].map((o) => o.value + o.textContent).join("|") !== opsP.map((o) => o.value + o.textContent).join("|")) {
+            sp.replaceChildren(...opsP);
+            if ([...sp.options].some((o) => o.value === antesP)) sp.value = antesP;
+        }
     }
 
     async function enviarAviso(ev) {
@@ -393,7 +404,7 @@
         if (!texto) { avisar("Escribe el mensaje.", true); return; }
         const para = $("av-para").value;
         const act = asignaciones.filter(activa);
-        const destinos = para === "todos" ? act : para.startsWith("t:") ? act.filter((a) => a.tnr === para.slice(2)) : act.filter((a) => a.id === para.slice(2));
+        const destinos = para === "todos" ? unicosPorPersona(act) : para.startsWith("t:") ? unicosPorPersona(act.filter((a) => a.tnr === para.slice(2))) : act.filter((a) => a.id === para.slice(2));
         if (!destinos.length) { avisar("No hay ningún árbitro con enlace activo para ese aviso.", true); return; }
         $("av-enviar").disabled = true;
         const { error } = await sb.from("centroamericano_avisos").insert(destinos.map((a) => ({ de: "organizacion", asignacion_id: a.id, texto })));
@@ -412,9 +423,9 @@
         torneos = data || [];
         pintarTorneos();
         const opciones = () => torneos.map((t) => el("option", { value: t.tnr, texto: t.nombre + (t.sid_en_boveda ? "" : " (sin clave)") }));
-        for (const id of ["a-torneo", "rp-torneo", "r-torneo", "pl-torneo"]) {
+        for (const id of ["a-torneo", "rp-torneo", "r-torneo", "pl-torneo", "ct-torneo"]) {
             const s = $(id), antes = s.value;
-            s.replaceChildren(...(id === "r-torneo" || id === "pl-torneo" ? [el("option", { value: "", texto: "Todos los torneos" })] : []), ...opciones());
+            s.replaceChildren(...(id === "r-torneo" || id === "pl-torneo" || id === "ct-torneo" ? [el("option", { value: "", texto: "Todos los torneos" })] : []), ...opciones());
             if (antes) s.value = antes;
         }
         // El código del grupo no es secreto: se propone el que ya se usó.
@@ -565,7 +576,8 @@
         const linea = C.enLinea(a, new Date());
         const boton = (accion, texto, fn, extra) => el("button", { type: "button", class: "cam-btn cam-btn-chico " + (extra || "cam-btn-claro"), "data-accion": accion, onclick: fn }, texto);
         return el("tr", { class: "cam-asignacion", "data-estado": est, "data-id": a.id, "data-nombrado": a.nombrado === false ? "no" : "si" },
-            el("td", {}, el("strong", { texto: a.arbitro }), a.nombrado === false ? el("span", { class: "cam-chip cam-chip-al-lado", "data-clave": "neutro", texto: "Por definir" }) : null),
+            el("td", {}, el("strong", { texto: a.arbitro }), a.nombrado === false ? el("span", { class: "cam-chip cam-chip-al-lado", "data-clave": "neutro", texto: "Por definir" }) : null,
+                otrosEnlaces(a).length ? el("span", { class: "cam-tambien", texto: "También en: " + otrosEnlaces(a).map((x) => nombreTorneo(x.tnr) + " (mesas " + x.mesa_desde + " a " + x.mesa_hasta + ")").join("; ") }) : null),
             el("td", { texto: a.mesa_desde + " a " + a.mesa_hasta }),
             el("td", { texto: textoEstado(a) }),
             el("td", { class: "cam-conectado", "data-en-linea": linea ? "si" : "no" }, linea ? "● Conectado ahora" : a.ultimo_uso ? "Visto: " + window.HoraCR.fechaHora(a.ultimo_uso) : "Todavía no ha abierto el enlace",
@@ -575,6 +587,7 @@
                 boton("nombre", a.nombrado === false ? "Ponerle nombre" : "Nombre", () => cambiarNombre(a)),
                 boton("mesas", "Mesas", () => cambiarMesas(a)),
                 est === "activo" ? boton("avisarle", "Avisarle", () => escribirA(a.id)) : null,
+                est === "activo" ? boton("otro-torneo", "Otro torneo", () => abrirOtroTorneo(a)) : null,
                 boton(a.revocada ? "reactivar" : "apagar", a.revocada ? "Volver a encender" : "Apagar", () => cambiar(a, !a.revocada), a.revocada ? "cam-btn-claro" : "cam-btn-rojo"))));
     }
 
@@ -592,7 +605,7 @@
     function pintarAsignaciones() {
         $("sin-asignaciones").hidden = asignaciones.length > 0;
         const ahora = new Date();
-        const firma = JSON.stringify([torneos.map((t) => t.nombre), asignaciones.map((a) => [a.id, a.arbitro, a.nombrado, a.mesa_desde, a.mesa_hasta, a.revocada, a.vence, C.enLinea(a, ahora), C.enLinea(a, ahora) ? null : a.ultimo_uso])]);
+        const firma = JSON.stringify([torneos.map((t) => t.nombre), asignaciones.map((a) => [a.id, a.arbitro, a.nombrado, a.persona, a.mesa_desde, a.mesa_hasta, a.revocada, a.vence, C.enLinea(a, ahora), C.enLinea(a, ahora) ? null : a.ultimo_uso])]);
         if (firma === firmaAsignaciones) return;
         firmaAsignaciones = firma;
         const grupos = new Map();
@@ -607,6 +620,14 @@
         }
         $("asignaciones").replaceChildren(...filas);
         marcarPedidos();
+    }
+
+    // «Otro torneo» de un árbitro que ya tiene enlace: abre el formulario ya con él elegido.
+    function abrirOtroTorneo(a) {
+        $("nuevo").open = true;
+        $("a-persona").value = a.persona ? "p:" + a.persona : "a:" + a.id;
+        $("a-torneo").focus();
+        $("nuevo").scrollIntoView({ block: "center" });
     }
 
     async function cambiar(a, apagar) {
@@ -624,7 +645,8 @@
         if (v == null) return;
         const nombre = String(v).trim().slice(0, 80);
         if (!nombre) { avisar("El nombre no puede quedar vacío.", true); return; }
-        const { error } = await sb.from("centroamericano_asignaciones").update({ arbitro: nombre, nombrado: true }).eq("id", a.id);
+        const q = sb.from("centroamericano_asignaciones").update({ arbitro: nombre, nombrado: true });
+        const { error } = await (a.persona ? q.eq("persona", a.persona) : q.eq("id", a.id));
         if (error) { avisar("No se pudo cambiar el nombre: " + error.message, true); return; }
         await cargarAsignaciones();
     }
@@ -667,17 +689,26 @@
             const sigue = await Avisos.confirmar(avisos2.join(" ") + " ¿Crear el enlace igual?", { titulo: "Revisa esto", aceptar: "Sí, crearlo" });
             if (!sigue) return;
         }
-        const nombrado = !!escrito;
-        const arbitro = nombrado ? escrito : C.nombrePorDefinir(asignaciones.filter((a) => a.tnr === tnr));
+        // «Otro torneo del mismo árbitro»: comparte persona (y nombre) con el que ya está.
+        const elegida = $("a-persona").value;
+        const base = !elegida ? null : elegida.startsWith("p:") ? asignaciones.find((x) => x.persona === elegida.slice(2)) : asignaciones.find((x) => x.id === elegida.slice(2));
+        const persona = base ? (base.persona || crypto.randomUUID()) : null;
+        const nombrado = base ? base.nombrado !== false : !!escrito;
+        const arbitro = base ? base.arbitro : nombrado ? escrito : C.nombrePorDefinir(asignaciones.filter((a) => a.tnr === tnr));
         const vence = C.vencimiento($("a-vence").value, new Date(), window.HoraCR.hoy());
         $("a-crear").disabled = true;
-        const { error } = await sb.from("centroamericano_asignaciones").insert({ tnr, arbitro, nombrado, mesa_desde: desde, mesa_hasta: hasta, vence: vence.toISOString() });
+        if (base && !base.persona) {
+            const { error: e1 } = await sb.from("centroamericano_asignaciones").update({ persona }).eq("id", base.id);
+            if (e1) { $("a-crear").disabled = false; avisar("No se pudo juntar con el otro torneo: " + e1.message, true); return; }
+        }
+        const { error } = await sb.from("centroamericano_asignaciones").insert(Object.assign({ tnr, arbitro, nombrado, mesa_desde: desde, mesa_hasta: hasta, vence: vence.toISOString() }, persona ? { persona } : {}));
         $("a-crear").disabled = false;
         if (error) { avisar("No se pudo crear el enlace: " + error.message, true); return; }
         $("a-arbitro").value = "";
         $("a-desde").value = "";
         $("a-hasta").value = "";
-        avisar("Enlace creado para " + arbitro + (nombrado ? "." : " (por definir)."));
+        $("a-persona").value = "";
+        avisar("Enlace creado para " + arbitro + (persona ? " (en otro torneo, junto con los demás de ese árbitro)." : nombrado ? "." : " (por definir)."));
         await cargarAsignaciones();
     }
 
@@ -747,6 +778,59 @@
         document.body.classList.add("cam-imprime-qr");
         window.addEventListener("afterprint", () => document.body.classList.remove("cam-imprime-qr"), { once: true });
         window.print();
+    }
+
+    // ------------------------------------------------------------- control de tiempos
+
+    async function cargarTiempos() {
+        const { data, error } = await sb.from("centroamericano_tiempos").select("*").order("ocurrio", { ascending: false }).range(0, 999);
+        if (error) { avisar("No se pudieron leer las lecturas: " + error.message, true); return; }
+        tiempos = data || [];
+        pintarTiempos();
+    }
+
+    function lecturasVisibles() {
+        const tnr = $("ct-torneo").value;
+        const lista = tiempos.filter((f) => !tnr || f.tnr === tnr);
+        return $("ct-ultimas").checked ? C.ultimasLecturas(lista) : lista.slice().sort((a, b) => a.tnr.localeCompare(b.tnr) || a.mesa - b.mesa || String(b.ocurrio).localeCompare(String(a.ocurrio)));
+    }
+
+    function pintarTiempos() {
+        const lista = lecturasVisibles();
+        $("tiempos").replaceChildren(...lista.map((f) => el("tr", { "data-mesa": String(f.mesa) },
+            el("td", { texto: nombreTorneo(f.tnr) }), el("td", { texto: String(f.ronda) }), el("td", { texto: String(f.mesa) }), el("td", { texto: f.blancas + " vs " + f.negras }),
+            el("td", { texto: String(f.jugada) }), el("td", { texto: f.turno ? (f.turno === "negras" ? "Negras" : "Blancas") : "—" }),
+            el("td", { class: "cam-tiempo", texto: C.formatoTiempo(f.t_blancas) }), el("td", { class: "cam-tiempo", texto: C.formatoTiempo(f.t_negras) }),
+            el("td", { texto: f.arbitro }), el("td", { texto: window.HoraCR.fechaHora(f.ocurrio) }), el("td", { texto: f.nota }))));
+        $("tiempos-vacio").hidden = lista.length > 0;
+        $("ct-pdf").disabled = lista.length === 0;
+    }
+
+    async function pedirTiempos() {
+        const para = $("ct-para").value;
+        const act = asignaciones.filter(activa);
+        const destinos = para === "todos" ? unicosPorPersona(act) : para.startsWith("t:") ? unicosPorPersona(act.filter((a) => a.tnr === para.slice(2))) : act.filter((a) => a.id === para.slice(2));
+        if (!destinos.length) { avisar("No hay ningún árbitro con enlace activo.", true); return; }
+        const texto = "Control de tiempos: anota la jugada y los relojes de las mesas que no han terminado.";
+        $("ct-pedir").disabled = true;
+        const { error } = await sb.from("centroamericano_avisos").insert(destinos.map((a) => ({ de: "organizacion", asignacion_id: a.id, texto, control_tiempos: true })));
+        $("ct-pedir").disabled = false;
+        if (error) { avisar("No se pudo pedir: " + error.message, true); return; }
+        avisar("Control de tiempos pedido a " + destinos.length + (destinos.length === 1 ? " árbitro." : " árbitros."));
+        await cargarAvisos();
+    }
+
+    async function tiemposPdf() {
+        const lista = lecturasVisibles();
+        const doc = {
+            titulo: "Control de tiempos del Centroamericano 2026",
+            subtitulo: window.HoraCR.fechaHora(new Date()),
+            pie: "Centroamericano 2026 · ajedrez-integral.com",
+            bloques: [{ tipo: "tabla", encabezados: ["Torneo", "Mesa", "Partida", "Jugada", "Le toca", "Blancas", "Negras", "Árbitro", "Hora"], anchos: [1.6, 0.6, 3, 0.7, 0.9, 1, 1, 1.5, 1.5],
+                filas: lista.map((f) => [nombreTorneo(f.tnr), String(f.mesa), f.blancas + " vs " + f.negras, String(f.jugada), f.turno || "—", C.formatoTiempo(f.t_blancas), C.formatoTiempo(f.t_negras), f.arbitro, window.HoraCR.fechaHora(f.ocurrio)]) }],
+            fotos: [],
+        };
+        await descargarPdf(doc, "control-de-tiempos-centroamericano-2026.pdf");
     }
 
     // ------------------------------------------------------------- 4. planillas y Drive
@@ -892,7 +976,7 @@
         if (!sigue) return;
         const { data, error } = await sb.rpc("centroamericano_restaurar", { p_copia: copia });
         if (error) { avisar("No se pudo restaurar: " + error.message, true); return; }
-        avisar("Restaurado. Se agregaron " + data.asignaciones + " enlaces, " + data.registro + " anotaciones, " + data.avisos + " avisos, " + data.planillas + " planillas.");
+        avisar("Restaurado. Se agregaron " + data.asignaciones + " enlaces, " + data.registro + " anotaciones, " + data.avisos + " avisos, " + data.planillas + " planillas, " + (data.presencia || 0) + " marcas de presencia y " + (data.tiempos || 0) + " lecturas de tiempos.");
         await Promise.all([cargarAsignaciones(), cargarAvisos(), cargarPlanillas(), cargarRegistro()]);
     }
 
@@ -983,6 +1067,7 @@
         if (tic % 5 === 0 && !$("panel-registro").hidden) tareas.push(cargarRegistro());
         if (tic % 10 === 0) tareas.push(cargarCopias(), cargarDrive());
         if (tic % 5 === 0 && !$("panel-planillas").hidden) tareas.push(cargarPlanillas());
+        if (tic % 3 === 0 && !$("panel-tiempos").hidden) tareas.push(cargarTiempos());
         await Promise.all(tareas);
     }
 
@@ -998,7 +1083,6 @@
             b.addEventListener("keydown", teclaPestana);
         });
         $("frases").replaceChildren(...FRASES.map((f) => el("button", { type: "button", class: "cam-btn cam-btn-claro cam-btn-chico", "data-accion": "frase", onclick: () => { $("av-texto").value = f; $("av-texto").focus(); } }, f)));
-        $("sonido").addEventListener("click", alternarSonido);
         $("form-aviso").addEventListener("submit", enviarAviso);
         $("resumen-actualizar").addEventListener("click", actualizarResumen);
         $("resumen-pdf").addEventListener("click", reportePdf);
@@ -1012,6 +1096,10 @@
         $("rp-leer").addEventListener("click", leerMesas);
         $("rp-crear").addEventListener("click", repartir);
         $("imprimir-qr").addEventListener("click", imprimirQr);
+        $("ct-pedir").addEventListener("click", pedirTiempos);
+        $("ct-pdf").addEventListener("click", tiemposPdf);
+        $("ct-torneo").addEventListener("change", pintarTiempos);
+        $("ct-ultimas").addEventListener("change", pintarTiempos);
         $("pl-actualizar").addEventListener("click", () => { cargarPlanillas(); cargarDrive(); });
         $("pl-torneo").addEventListener("change", pintarPlanillas);
         $("pl-ronda").addEventListener("change", pintarPlanillas);

@@ -64,6 +64,7 @@
                 <button type="button" role="tab" class="cam-pestana" id="pest-ronda" data-panel="ronda" aria-controls="panel-ronda" aria-selected="true">Ronda en curso <span id="contador-pedidos" class="cam-contador" hidden>0</span></button>
                 <button type="button" role="tab" class="cam-pestana" id="pest-avisos" data-panel="avisos" aria-controls="panel-avisos" aria-selected="false" tabindex="-1">Avisos</button>
                 <button type="button" role="tab" class="cam-pestana" id="pest-arbitros" data-panel="arbitros" aria-controls="panel-arbitros" aria-selected="false" tabindex="-1">Árbitros y mesas</button>
+                <button type="button" role="tab" class="cam-pestana" id="pest-tiempos" data-panel="tiempos" aria-controls="panel-tiempos" aria-selected="false" tabindex="-1">Control de tiempos</button>
                 <button type="button" role="tab" class="cam-pestana" id="pest-planillas" data-panel="planillas" aria-controls="panel-planillas" aria-selected="false" tabindex="-1">Planillas y Drive</button>
                 <button type="button" role="tab" class="cam-pestana" id="pest-claves" data-panel="claves" aria-controls="panel-claves" aria-selected="false" tabindex="-1">Clave de chess-results</button>
                 <button type="button" role="tab" class="cam-pestana" id="pest-respaldo" data-panel="respaldo" aria-controls="panel-respaldo" aria-selected="false" tabindex="-1">Respaldo</button>
@@ -83,17 +84,28 @@
                 <div class="cam-tabla-envoltura">
                     <table class="cam-tabla cam-rejilla" id="resumen-tabla">
                         <caption class="sr-only">Avance de cada árbitro en la ronda abierta</caption>
-                        <thead><tr><th scope="col">Árbitro</th><th scope="col">Torneo</th><th scope="col">Mesas</th><th scope="col">Avance</th><th scope="col">Quedan</th><th scope="col">Estado</th><th scope="col">Conexión</th></tr></thead>
+                        <thead><tr><th scope="col">Árbitro</th><th scope="col">Torneo</th><th scope="col">Mesas</th><th scope="col">Avance</th><th scope="col">Quedan</th><th scope="col">Estado</th><th scope="col">Presencia</th><th scope="col">Conexión</th></tr></thead>
                         <tbody id="resumen"></tbody>
                     </table>
                 </div>
                 <p id="resumen-vacio" class="cam-nota-vacia">Todavía no hay enlaces activos. Créalos en «Árbitros y mesas».</p>
                 <p class="cam-herramientas-nota mt-2">El avance se pone al día solo cuando cada árbitro abre o guarda en su tablet; «Actualizar desde chess-results» lo lee de todos los torneos de una vez.</p>
 
+                <h2 id="t-faltan" class="cam-subtitulo mt-6">Jugadores que no han llegado<span id="faltan-nota" class="cam-subtitulo-nota"></span></h2>
+                <p class="cam-herramientas-nota">Cada árbitro marca en su tablet, mesa por mesa, si el jugador llegó. Aquí salen los que marcó «No ha llegado»; si el jugador llega, el árbitro lo cambia y desaparece de la lista.</p>
+                <div class="cam-tabla-envoltura mt-2">
+                    <table class="cam-tabla cam-rejilla">
+                        <caption class="sr-only">Jugadores que el árbitro de su mesa marcó como no llegados</caption>
+                        <thead><tr><th scope="col">Torneo</th><th scope="col">Mesa</th><th scope="col">Jugador</th><th scope="col">Color</th><th scope="col">Árbitro</th><th scope="col">Marcado</th></tr></thead>
+                        <tbody id="faltan"></tbody>
+                    </table>
+                </div>
+                <p id="faltan-vacio" class="cam-nota-vacia">Ninguno marcado como «no ha llegado».</p>
+
                 <h2 id="t-pedidos" class="cam-subtitulo mt-6">Pedidos de ayuda y avisos de los árbitros</h2>
-                <p class="cam-herramientas-nota">Se actualiza sola cada pocos segundos: deja esta ventana abierta durante la ronda y activa el sonido.</p>
+                <p class="cam-herramientas-nota">Se actualiza sola cada pocos segundos: deja esta ventana abierta durante la ronda. No suena nada (en un torneo no puede haber ruido): los avisos se ven en la barra de abajo, en el número de esta pestaña y en el título del navegador.</p>
                 <div id="pedidos" class="grid gap-2 mt-2"></div>
-                <p id="sin-pedidos" class="cam-nota-vacia">Nadie ha pedido ayuda ni avisado. Cuando alguien lo haga, aparece aquí.</p>
+                <p id="sin-pedidos" class="cam-nota-vacia">Nadie ha pedido ayuda ni avisado. Cuando alguien lo haga, aparece aquí (sin sonido).</p>
                 <details class="cam-detalle mt-3" id="atendidos-caja" hidden>
                     <summary>Ya atendidos (<span id="atendidos-n">0</span>)</summary>
                     <div id="atendidos" class="grid gap-2 mt-2"></div>
@@ -136,6 +148,8 @@
                     <form id="form-asignar" class="cam-formulario mt-2" novalidate>
                         <p class="text-sm">A cada árbitro le toca un torneo y un rango de mesas. Se crea un enlace con su QR: lo abre en su tablet y anota resultados, ilegales e irregularidades <strong>solo de sus mesas</strong>, sin cuenta ni clave. <strong>Si todavía no sabes quién es</strong>, deja el nombre vacío: queda como «Árbitro 1», «Árbitro 2»… y quien abra el enlace pone su nombre (o se lo pones tú después).</p>
                         <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-3 mt-3">
+                            <div class="lg:col-span-4"><label for="a-persona" class="block text-sm font-bold">¿Es un árbitro que ya tiene mesas en otro torneo?</label><select id="a-persona" class="cam-select"><option value="">No: es un árbitro nuevo</option></select>
+                                <p class="text-sm mt-1">Si eliges uno, sus mesas de varios torneos quedan juntas: abre UN enlace (un QR) y la página le deja pasar de un torneo a otro.</p></div>
                             <div class="lg:col-span-2"><label for="a-arbitro" class="block text-sm font-bold">Árbitro (opcional)</label><input id="a-arbitro" type="text" maxlength="80" class="cam-campo" autocomplete="off" placeholder="Nombre y apellido, o vacío si está por definir"></div>
                             <div class="lg:col-span-2"><label for="a-torneo" class="block text-sm font-bold">Torneo</label><select id="a-torneo" class="cam-select"></select></div>
                             <div><label for="a-desde" class="block text-sm font-bold">Mesa desde</label><input id="a-desde" type="number" min="1" max="9999" inputmode="numeric" class="cam-campo"></div>
@@ -175,6 +189,28 @@
                 <p id="sin-asignaciones" class="cam-nota-vacia cam-no-qr">Todavía no has creado ningún enlace.</p>
                 <!-- La hoja de QR para imprimir: solo se ve al imprimir. -->
                 <div id="hoja-qr" class="cam-hoja-qr" aria-hidden="true"></div>
+            </section>
+
+            <!-- Control de tiempos -->
+            <section id="panel-tiempos" role="tabpanel" aria-labelledby="pest-tiempos" class="cam-no-qr" hidden>
+                <div class="cam-herramientas" role="toolbar" aria-label="Control de tiempos">
+                    <label class="cam-herramientas-campo"><span>Pedirlo a</span><select id="ct-para" class="cam-select"></select></label>
+                    <button type="button" id="ct-pedir" class="cam-btn cam-btn-chico"><span aria-hidden="true">⏱</span> Pedir un control de tiempos</button>
+                    <button type="button" id="ct-pdf" class="cam-btn cam-btn-claro cam-btn-chico" disabled>Bajar en PDF</button>
+                </div>
+                <p class="cam-herramientas-nota mt-2">A cada árbitro se le abre una ventana (que puede minimizar si necesita meter un resultado) para elegir una partida SIN terminar y anotar en qué jugada va y lo que marca cada reloj. El árbitro también puede abrirla por su cuenta con «Control de tiempos». Cada lectura queda anotada con su hora y no se borra: si un reloj falla, la última lectura sirve para corregirlo.</p>
+                <div class="cam-herramientas mt-2">
+                    <label class="cam-herramientas-campo"><span>Torneo</span><select id="ct-torneo" class="cam-select"></select></label>
+                    <label class="cam-herramientas-campo"><span>Solo la última de cada mesa</span><input type="checkbox" id="ct-ultimas" class="w-5 h-5" checked></label>
+                </div>
+                <div class="cam-tabla-envoltura mt-2">
+                    <table class="cam-tabla cam-rejilla">
+                        <caption class="sr-only">Lecturas del control de tiempos, la más reciente primero</caption>
+                        <thead><tr><th scope="col">Torneo</th><th scope="col">Ronda</th><th scope="col">Mesa</th><th scope="col">Partida</th><th scope="col">Jugada</th><th scope="col">Le toca a</th><th scope="col">Blancas</th><th scope="col">Negras</th><th scope="col">Árbitro</th><th scope="col">Hora (Costa Rica)</th><th scope="col">Nota</th></tr></thead>
+                        <tbody id="tiempos"></tbody>
+                    </table>
+                </div>
+                <p id="tiempos-vacio" class="cam-nota-vacia">Todavía no hay lecturas. Pídele un control de tiempos a un árbitro.</p>
             </section>
 
             <!-- 4. Planillas y Drive -->
@@ -298,7 +334,7 @@
                 <span id="eg-claves" class="cam-celda-estado"></span>
                 <span id="eg-drive" class="cam-celda-estado"></span>
                 <span id="eg-copia" class="cam-celda-estado"></span>
-                <button type="button" id="sonido" class="cam-btn cam-btn-claro cam-btn-chico" aria-pressed="false"><span aria-hidden="true">🔔</span> Activar el sonido de los pedidos</button>
+                <span class="cam-celda-estado cam-sin-ruido">Sin sonido: los avisos solo se ven</span>
             </div>
           </div>
         </div>

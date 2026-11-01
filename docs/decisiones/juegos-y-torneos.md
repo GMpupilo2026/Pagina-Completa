@@ -8694,6 +8694,57 @@ resultado).
   al Drive (necesita que la dueña instale el Apps Script) y «Actualizar desde chess-results» con
   sesión (lo prueba el navegador con un doble, no la función desplegada).
 
+### Mesas de varios torneos, presencia y control de tiempos (Centroamericano)
+
+Lo que pidió el dueño después: que **un árbitro pueda tener mesas de torneos distintos**; que
+cada árbitro **revise mesa por mesa si el jugador llegó**, para que la principal tenga la lista de
+los que faltan; que la principal pueda **mandar a los árbitros a hacer un control de tiempos** (una
+ventana emergente que se puede minimizar para meter un resultado, donde se elige la mesa sin
+terminar y se anotan jugada y tiempos, por si un reloj falla) y que **el árbitro también pueda
+activarlo**; que la ayuda sea **de las dos formas** (en una mesa concreta, o ayuda para el
+árbitro); y que **los avisos no hagan ruido: en un torneo no se puede**.
+
+- **Sin ruido, en las dos páginas.** Se quitó todo el audio (WebAudio) y la vibración, también el
+  botón «Activar el sonido» de la organización. Los avisos se ven: arriba y pegados en la tablet
+  del árbitro (con un parpadeo suave que se apaga con `prefers-reduced-motion`), y en la
+  organización el número de la pestaña, el título del navegador y la barra de estado, que parpadea
+  mientras haya algo abierto. El verificador falla si en las dos páginas aparece `AudioContext`,
+  `createOscillator`, `vibrate` o `new Audio(`.
+- **Un árbitro, varios torneos** (`centroamericano_asignaciones.persona`, un uuid que junta
+  enlaces). Cada enlace sigue siendo UN torneo y UN rango, con su avance, su lista previa y su
+  «finalizar»: es la unidad que ya funcionaba. `persona` solo los junta: el árbitro abre un QR y
+  `leer` le devuelve sus otros enlaces (`hermanas`, con su token: los puso la organización a
+  propósito) para pasar de uno a otro sin salir de la página. Los avisos de la organización y
+  «Entendido» valen desde cualquiera de sus enlaces; el pedido de ayuda es del enlace en que está
+  (una ayuda en una mesa es de ese torneo); el nombre que ponga vale para todos. En la
+  organización, «Otro torneo» en la fila de un árbitro (o «¿Ya tiene mesas en otro torneo?» en el
+  formulario) crea el nuevo enlace con su mismo nombre y su misma `persona`; un aviso a «todos» o a
+  «todo el torneo» le llega **una vez** al árbitro aunque tenga dos enlaces.
+- **Presencia** (`centroamericano_presencia`): por mesa y color, «Llegó» o «No ha llegado»; sin
+  marcar, «sin revisar». El nombre del jugador lo lee la función de chess-results, no la pantalla.
+  Una fila por torneo, ronda, mesa y color: marcar otra vez la actualiza (el jugador llegó tarde).
+  La organización ve en «Ronda en curso» cuántos jugadores revisó cada árbitro y la lista «Jugadores
+  que no han llegado» con torneo, mesa, jugador, color, árbitro y hora. No frena nada (no es parte
+  de la lista previa): es información.
+- **Control de tiempos** (`centroamericano_tiempos`, solo se agrega). Lo pide la organización (a
+  todos, a un torneo o a un árbitro: un mensaje con `control_tiempos = true`, una columna nueva
+  que solo escribe la organización en sus mensajes) o lo abre el propio árbitro con «Control de
+  tiempos». Es una ventana flotante que no tapa la página y se **minimiza** («Abrir» la devuelve,
+  sin perder lo escrito). Lista solo las partidas SIN terminar (la función lo comprueba: si la mesa
+  ya tiene resultado, 409), pide la jugada en que va, a quién le toca y lo que marca cada reloj
+  (`1:23:45`, `45:10` o segundos) y una nota. Cada lectura queda con su hora; la organización las ve
+  en la pestaña «Control de tiempos» (la última de cada partida o todo el historial) y en PDF con la
+  marca de agua. Si un reloj falla, la última lectura sirve para corregirlo.
+- **La ayuda, de dos formas.** En cada mesa, «Principal en esta mesa» (el principal va directo a
+  esa mesa; le llega «X pide al principal EN LA MESA N»); y arriba, «Necesito ayuda (para mí)»
+  (no es de una mesa; le llega «X necesita ayuda»).
+- La copia de seguridad y «Restaurar» incluyen la presencia, los tiempos y `persona`.
+- **Migración**: `centroamericano_varios_torneos_presencia_tiempos`. Se escribió SIN ningún `drop`
+  (ni de restricción ni de política): la herramienta de migraciones de Supabase pregunta a la
+  persona antes de aplicar cualquier `drop` y, sin respuesta, vence sin aplicar nada (como pasó con
+  el `delete` de otra vez). Por eso `control_tiempos` es una columna nueva en vez de un valor nuevo
+  de `tipo`.
+
 ## La ficha del jugador federado
 
 En la vitrina, «Ficha del jugador federado» (`ficha-federado`, con licencia,
