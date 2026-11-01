@@ -508,3 +508,7 @@ body.cam-guia-abierta { overflow: hidden; }
 .cam-espera-alerta[data-nivel="cumplido"] { background: #7a1020; border-color: #7a1020; color: #fff; }
 .cam-espera-cumplida { font-weight: 800; color: #7a1020; }
 .dark .cam-espera-cumplida { color: #ffb3bd; }
+
+/* «Modo ensayo»: una franja bien visible mientras se miran los torneos de prueba (con su texto: el color no va solo). */
+.cam-aviso-ensayo { margin: 0 0 0.5rem; padding: 0.6rem 0.9rem; border-radius: 0.75rem; background: #3b2600; color: #fff4d6; border: 2px solid #8a5a00; font-weight: 800; position: sticky; top: 0; z-index: 38; }
+.cam-modo-ensayo { display: inline-flex; align-items: center; gap: 0.4rem; font-weight: 700; }

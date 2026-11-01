@@ -8854,6 +8854,14 @@ puede fallar por la conexión. Dos decisiones, una en el servidor y una en la ta
   firma— por si falla la señal de toda la sala. Sale de la última lectura de chess-results (la copia compartida) por
   `public.centroamericano_hojas()` (solo con la licencia; las tablas siguen cerradas); si no hay lectura, dice que
   primero se toque «Actualizar desde chess-results». `js/reporte-pdf.js` admite `altoFila` para tablas que se llenan a mano.
+- **«Modo ensayo»** (columna `centroamericano_torneos.prueba`, interruptor en la barra de abajo de la organización).
+  Probar con las tablets no puede ensuciar el torneo real. Los torneos de prueba (PRUEBA grupo A y B, que son torneos
+  de chess-results aparte de los 12 reales: ahí un resultado de ensayo nunca llega a un torneo real) están marcados
+  `prueba = true`. La organización, por omisión, ve **solo los reales** (selectores, resumen, ausentes, avisos,
+  planillas, tiempos, registro, hojas en papel e informe final); con «Modo ensayo» ve **solo los de prueba**, con una
+  franja «MODO ENSAYO» y «ENSAYO ·» en el título de la pestaña. Se filtra por torneo (o por el torneo del enlace) en cada
+  carga (`dentro(tnr)`); las copias de seguridad siguen llevando todo. Los enlaces de ensayo se crean en ese modo,
+  igual que los reales. Para un torneo de prueba nuevo: crearlo en chess-results, agregarlo con `prueba = true`.
 - **iPad y Android.** El iPad no tiene `navigator.vibrate`: los avisos de la organización no pueden depender de
   vibrar. Se ven (aviso fijo arriba, grande, con número en el título de la pestaña) y la tablet vibra donde se
   puede (Android). Sigue sin sonido, por orden del dueño. Nada usa APIs que Safari no tenga (`randomUUID` y

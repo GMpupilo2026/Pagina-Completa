@@ -52,14 +52,18 @@ function dobleOrganizacion(licencia) {
   const TORNEOS = [
     { tnr: "1529719", nombre: "Sub-8 Absoluto", categoria: "Sub-8", rama: "Absoluto", orden: 1, sid_en_boveda: false, clave_puesta: null, acceso_tnr: null },
     { tnr: "1529729", nombre: "Sub-8 Femenino", categoria: "Sub-8", rama: "Femenino", orden: 2, sid_en_boveda: false, clave_puesta: null, acceso_tnr: null },
-    { tnr: "1529733", nombre: "Sub-10 Absoluto", categoria: "Sub-10", rama: "Absoluto", orden: 3, sid_en_boveda: true, clave_puesta: "2026-11-01T10:00:00Z", acceso_tnr: "1529733" }];
+    { tnr: "1529733", nombre: "Sub-10 Absoluto", categoria: "Sub-10", rama: "Absoluto", orden: 3, sid_en_boveda: true, clave_puesta: "2026-11-01T10:00:00Z", acceso_tnr: "1529733" },
+    // Un torneo de PRUEBA: no debe salir mezclado con los reales (solo con «Modo ensayo»).
+    { tnr: "1532448", nombre: "PRUEBA grupo A", categoria: "Sub-8", rama: "Absoluto", orden: 901, sid_en_boveda: true, clave_puesta: "2026-11-01T10:00:00Z", acceso_tnr: "1532448", prueba: true }];
   // Ana abrió su enlace hace medio minuto; «Árbitro 1» (por definir) todavía no, pero ya terminó sus 15 mesas.
   const ASIG = [
     { id: "asig-ana", token: "a".repeat(64), tnr: "1529733", arbitro: "Ana Árbitra", nombrado: true, mesa_desde: 1, mesa_hasta: 15, vence: "2026-11-10T05:59:59Z", revocada: false, creada: "2026-11-02T10:00:00Z", ultimo_uso: hace(30) },
-    { id: "asig-arb1", token: "b".repeat(64), tnr: "1529733", arbitro: "Árbitro 1", nombrado: false, mesa_desde: 16, mesa_hasta: 30, vence: "2026-11-10T05:59:59Z", revocada: false, creada: "2026-11-02T10:01:00Z", ultimo_uso: null }];
+    { id: "asig-arb1", token: "b".repeat(64), tnr: "1529733", arbitro: "Árbitro 1", nombrado: false, mesa_desde: 16, mesa_hasta: 30, vence: "2026-11-10T05:59:59Z", revocada: false, creada: "2026-11-02T10:01:00Z", ultimo_uso: null },
+    { id: "asig-ensayo", token: "e".repeat(64), tnr: "1532448", arbitro: "Árbitro de ensayo 1", nombrado: false, mesa_desde: 1, mesa_hasta: 15, vence: "2026-11-10T05:59:59Z", revocada: false, creada: "2026-11-02T10:02:00Z", ultimo_uso: null }];
   const PROGRESO = [
     { asignacion_id: "asig-ana", ronda: 3, total: 15, con_resultado: 7, pendientes: [8, 9, 10, 11, 12, 13, 14, 15], actualizado: hace(20) },
-    { asignacion_id: "asig-arb1", ronda: 3, total: 15, con_resultado: 15, pendientes: [], actualizado: hace(20) }];
+    { asignacion_id: "asig-arb1", ronda: 3, total: 15, con_resultado: 15, pendientes: [], actualizado: hace(20) },
+    { asignacion_id: "asig-ensayo", ronda: 1, total: 15, con_resultado: 0, pendientes: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15], actualizado: hace(20) }];
   const FINALES = [];
   const LISTAS = [{ asignacion_id: "asig-ana", ronda: 3, paso: "relojes", aprobada_en: hace(900) }];
   const AVISOS = [
@@ -74,7 +78,8 @@ function dobleOrganizacion(licencia) {
     { anillo: "m", ranura: 3, creada: hace(7200), huella: "h2", resumen: { asignaciones: 2, registro: 1, avisos: 0, planillas: 0 }, contenido: COPIA(7200) }];
   const PRESENCIA = [
     { id: "pr1", asignacion_id: "asig-ana", arbitro: "Ana Árbitra", tnr: "1529733", ronda: 3, mesa: 5, color: "negras", jugador: "Cleo Tres", presente: false, marcada: hace(600) },
-    { id: "pr2", asignacion_id: "asig-ana", arbitro: "Ana Árbitra", tnr: "1529733", ronda: 3, mesa: 5, color: "blancas", jugador: "Dani Cuatro", presente: true, marcada: hace(600) }];
+    { id: "pr2", asignacion_id: "asig-ana", arbitro: "Ana Árbitra", tnr: "1529733", ronda: 3, mesa: 5, color: "blancas", jugador: "Dani Cuatro", presente: true, marcada: hace(600) },
+    { id: "pr3", asignacion_id: "asig-ensayo", arbitro: "Árbitro de ensayo 1", tnr: "1532448", ronda: 1, mesa: 2, color: "blancas", jugador: "Jugador de Prueba", presente: false, marcada: hace(300) }];
   const TIEMPOS = [
     { id: "ti1", ocurrio: hace(900), asignacion_id: "asig-ana", arbitro: "Ana Árbitra", tnr: "1529733", ronda: 3, mesa: 9, blancas: "Eli Uno", negras: "Fran Dos", jugada: 22, j_blancas: null, j_negras: null, turno: "blancas", t_blancas: 1500, t_negras: 1710, nota: "" },
     { id: "ti2", ocurrio: hace(300), asignacion_id: "asig-ana", arbitro: "Ana Árbitra", tnr: "1529733", ronda: 3, mesa: 9, blancas: "Eli Uno", negras: "Fran Dos", jugada: 31, j_blancas: 31, j_negras: 30, turno: null, t_blancas: 600, t_negras: 5025, nota: "" },
@@ -742,6 +747,19 @@ const CONTRASTE = `(sel) => {
     const pdf = fs.readFileSync(await descarga.path());
     igual("el PDF del registro, con su nombre y la marca de agua", [descarga.suggestedFilename(), pdf.toString("latin1").startsWith("%PDF"), /\/SMask \d+ 0 R/.test(pdf.toString("latin1"))], ["registro-arbitros-centroamericano-2026.pdf", true, true]);
     await q.click("#pest-ronda");
+    await q.click("#pest-ronda");
+    console.log("\n=== La organización: el «Modo ensayo» (los torneos de prueba no se mezclan con los reales) ===");
+    igual("por omisión, solo se ven los torneos reales: el de prueba no sale en los selectores, ni en el resumen, ni entre los que no han llegado",
+        await q.evaluate(() => [[...document.querySelectorAll("#a-torneo option")].map((o) => o.textContent.replace(" (sin clave)", "")), ![...document.querySelectorAll("#resumen tr")].some((tr) => tr.children[0].textContent.includes("ensayo")), ![...document.querySelectorAll("#faltan tr")].some((tr) => tr.children[2].textContent.includes("Prueba")), [...document.querySelectorAll("#faltan tr")].map((tr) => tr.children[2].textContent), document.getElementById("aviso-ensayo").hidden, document.getElementById("modo-ensayo").checked]),
+        [["Sub-8 Absoluto", "Sub-8 Femenino", "Sub-10 Absoluto"], true, true, ["Cleo Tres"], true, false]);
+    await q.check("#modo-ensayo");
+    await q.waitForFunction(() => !document.getElementById("aviso-ensayo").hidden && [...document.querySelectorAll("#a-torneo option")].length === 1);
+    igual("con «Modo ensayo» se ve SOLO lo de prueba, y una franja lo dice con palabras",
+        await q.evaluate(() => [[...document.querySelectorAll("#a-torneo option")].map((o) => o.textContent), [...document.querySelectorAll("#resumen tr")].map((tr) => tr.children[0].textContent), [...document.querySelectorAll("#faltan tr")].map((tr) => tr.children[2].textContent), document.getElementById("aviso-ensayo").checkVisibility(), document.getElementById("aviso-ensayo").textContent.startsWith("MODO ENSAYO"), document.title.startsWith("ENSAYO · ")]),
+        [["PRUEBA grupo A"], ["Árbitro de ensayo 1"], ["Jugador de Prueba"], true, true, true]);
+    await q.uncheck("#modo-ensayo");
+    await q.waitForFunction(() => document.getElementById("aviso-ensayo").hidden && [...document.querySelectorAll("#a-torneo option")].length === 3);
+    igual("al volver, otra vez solo los reales (y el título sin «ENSAYO»)", await q.evaluate(() => [![...document.querySelectorAll("#resumen tr")].some((tr) => tr.children[0].textContent.includes("ensayo")), document.title.startsWith("ENSAYO")]), [true, false]);
     const [descargaH] = await Promise.all([q.waitForEvent("download"), q.click("#resumen-hojas")]);
     const pdfH = fs.readFileSync(await descargaH.path());
     igual("las hojas en papel (plan B): un PDF con una hoja por árbitro, su nombre y la marca de agua", [descargaH.suggestedFilename(), pdfH.toString("latin1").startsWith("%PDF"), /\/SMask \d+ 0 R/.test(pdfH.toString("latin1")), (pdfH.toString("latin1").match(/\/Type \/Page\b/g) || []).length, await q.evaluate(() => window.__llamadas.filter((l) => l.rpc === "centroamericano_hojas").length)], ["hojas-resultados-papel-ronda-3-centroamericano-2026.pdf", true, true, 2, 1]);
