@@ -34,6 +34,7 @@
         avisos: ["🔔", "¿Cómo me llegan los avisos al celular?", "Busca a tu jugador y toca la estrella ⭐ para seguirlo. Arriba aparece «Mis jugadores»: toca «Avisarme en este celular» y te llegan su mesa y su rival en cada ronda, y su resultado.", "Llévame al buscador"],
         instalar: ["📲", "¿Cómo la instalo en el celular?", "En Android: el menú ⋮ del navegador y «Instalar app» o «Agregar a la pantalla principal». En iPhone: el botón Compartir de Safari y «Agregar a inicio». Queda con el ícono del pizote y abre aunque no haya internet en la sala.", ""],
         esperar: ["🎈", "¿Qué hacemos mientras esperamos?", "Para los hermanos, los amigos y los que ya terminaron su partida hay juegos de ajedrez gratis y sin cuenta.", "Ver los juegos"],
+        academia: ["🏫", "¿Quiénes hacen esta página?", "La Academia Ajedrez Integral, de Costa Rica: damos clases de ajedrez en línea y entrenamiento todo el año. Durante el festival puedes probarla gratis 5 días, sin correo y sin tarjeta.", "Conocer la Academia"],
       },
     },
     en: {
@@ -47,11 +48,12 @@
         avisos: ["🔔", "How do I get alerts on my phone?", "Find your player and tap the star ⭐ to follow them. “My players” shows up at the top: tap “Alert me on this phone” to get their board and opponent every round, and their result.", "Take me to the search"],
         instalar: ["📲", "How do I install it on my phone?", "On Android: the browser's ⋮ menu and “Install app” or “Add to Home screen”. On iPhone: Safari's Share button and “Add to Home Screen”. It gets the pizote icon and opens even without internet at the venue.", ""],
         esperar: ["🎈", "What can we do while we wait?", "For siblings, friends and those who already finished their game there are free chess games, no account needed.", "See the games"],
+        academia: ["🏫", "Who makes this page?", "Academia Ajedrez Integral, from Costa Rica: we teach chess online and offer training all year. During the festival you can try it free for 5 days, no email and no card.", "Meet the Academy"],
       },
     },
   };
   const T = () => (V.idioma() === "fr" && window.CentroamericanoFR && window.CentroamericanoFR.profe) || TEXTOS[V.idioma()] || TEXTOS.es;
-  const POSE = { lista: "presentando", mesa: "te-toca", hora: "reloj-de-ajedrez", llegar: "frente", avisos: "atencion", instalar: "idea", esperar: "jugando" };
+  const POSE = { lista: "presentando", mesa: "te-toca", hora: "reloj-de-ajedrez", llegar: "frente", avisos: "atencion", instalar: "idea", esperar: "jugando", academia: "presentando" };
 
   // Lo que hace el botón de cada respuesta: lleva a su lugar de la página.
   function abrirDialogo(id) {
@@ -65,6 +67,7 @@
     hora: () => abrirDialogo("calendario"),
     llegar: () => { const a = document.querySelector('a[href*="google.com/maps"][href*="Gimnasio"]'); if (a) window.open(a.href, "_blank", "noopener"); },
     esperar: () => abrirDialogo("esperas"),
+    academia: () => { const c = document.getElementById("conoce"); if (c) { c.scrollIntoView({ block: "start" }); const h = c.querySelector("h2"); if (h) { h.tabIndex = -1; h.focus({ preventScroll: true }); } } },
   };
 
   /* ---------------- el botón ---------------- */

@@ -148,3 +148,15 @@ que recibe quien publica (acá solo se guarda su sha256), y antes de escribir
 pasa por el freno `pareo_frenar`. Con `verify_jwt` en true nadie podría
 publicar. Ver «Torneos en Pareo Integral: el espacio público» en
 `docs/decisiones/juegos-y-torneos.md`.
+
+## `cuenta-invitado` va con `verify_jwt` en **false**
+
+La llama `centroamericano-2026.html` para que la persona se abra sola una
+cuenta de invitado de 5 días, del 1 al 9 de noviembre de 2026: quien la llama
+todavía no tiene cuenta. Lo que la cuida está en la base, no en la casilla:
+`cuenta_invitado_frenar()` rechaza fuera de esas fechas y pasa por el freno de
+envíos públicos (tipo `cuenta_evento`), y `cuenta_invitado_activar()` vuelve a
+mirar las fechas, exige la aceptación legal y una cuenta de alumno recién
+creada. La cuenta nace bloqueada y solo se abre después de guardar su
+vencimiento, como la prueba gratis. Ver «Las cuentas de invitado del
+Centroamericano» en `docs/decisiones/cobros-acceso-y-tienda.md`.

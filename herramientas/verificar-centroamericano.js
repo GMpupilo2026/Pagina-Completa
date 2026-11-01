@@ -71,12 +71,15 @@ ok("ningún teléfono sin confirmar", tels.every((t) => TELEFONOS.includes(t)), 
 const contacto = (html.match(/<dialog id="contacto"[\s\S]*?<\/dialog>/) || [""])[0];
 // Toda la información va en fichas: cada ventana de la página tiene su ficha y su «Cerrar».
 const dialogos = [...html.matchAll(/<dialog id="([a-z-]+)" class="ficha-dialogo[^"]*" aria-labelledby="\1-titulo">([\s\S]*?)<\/dialog>/g)];
-ok("el reglamento, el calendario, los hoteles, los paseos, los contactos, el medallero, la clasificación, los países, las sorpresas, el cara a cara, los números, la elección de categoría, las partidas en vivo, los ejercicios de la ronda, los juegos para los que esperan y el proyector van en ventanas",
-  JSON.stringify(dialogos.map((m) => m[1]).sort()) === JSON.stringify(["calendario", "cara-a-cara", "categoria", "clasificacion", "contacto", "delegaciones", "ejercicios", "esperas", "hoteles", "medallero", "numeros", "partidas", "paseos", "proyector", "reglamento", "resultados", "sorpresas"]), dialogos.map((m) => m[1]).join(", "));
+ok("el reglamento, el calendario, los hoteles, los paseos, los contactos, el medallero, la clasificación, los países, las sorpresas, el cara a cara, los números, la elección de categoría, las partidas en vivo, los ejercicios de la ronda, los juegos para los que esperan, la cuenta gratis y el proyector van en ventanas",
+  JSON.stringify(dialogos.map((m) => m[1]).sort()) === JSON.stringify(["calendario", "cara-a-cara", "categoria", "clasificacion", "contacto", "cuenta-gratis", "delegaciones", "ejercicios", "esperas", "hoteles", "medallero", "numeros", "partidas", "paseos", "proyector", "reglamento", "resultados", "sorpresas"]), dialogos.map((m) => m[1]).join(", "));
 for (const [, id, cuerpo] of dialogos) {
   // La elección de categoría la abre la ficha «Resultados en vivo», que sin
   // JavaScript sigue llevando a chess-results (js/centroamericano-tablas.js).
-  if (id === "resultados") { ok("la ventana «resultados» la abre la ficha «Resultados en vivo»", fichas.includes('id="ficha-resultados"') && /\$\("ficha-resultados"\), dialogoResultados = \$\("resultados"\)/.test(fs.readFileSync(path.join(RAIZ, "js/centroamericano-tablas.js"), "utf8"))); }
+  // La de la cuenta gratis la abre la sección «Conoce la Academia» (y la
+  // franja de los juegos de invitado), no una ficha: js/centroamericano-academia.js.
+  if (id === "cuenta-gratis") { ok("la ventana «cuenta-gratis» la abre «Conoce la Academia»", /enlace\(tx\.crear, "#cuenta-gratis"/.test(fs.readFileSync(path.join(RAIZ, "js/centroamericano-academia.js"), "utf8"))); }
+  else if (id === "resultados") { ok("la ventana «resultados» la abre la ficha «Resultados en vivo»", fichas.includes('id="ficha-resultados"') && /\$\("ficha-resultados"\), dialogoResultados = \$\("resultados"\)/.test(fs.readFileSync(path.join(RAIZ, "js/centroamericano-tablas.js"), "utf8"))); }
   // La de las partidas en vivo la abre la ficha «Partidas en vivo», que
   // queda en «Pronto» hasta que la sala tenga la transmisión de Lichess y
   // entonces la enciende js/centroamericano-partidas.js.
@@ -617,8 +620,8 @@ ok("la página carga el cliente de Supabase antes que su código en vivo", html.
         preguntas: [...pn.querySelectorAll("[data-pregunta]")].map((b) => b.textContent), foco: document.activeElement.dataset.pregunta,
         img: [...pn.querySelectorAll("img")].map((i) => i.alt + ":" + i.complete + ":" + i.naturalWidth), globo: document.querySelector(".cac-profe-globo").checkVisibility(),
         nombre: /Oscar/.test(pn.textContent + document.getElementById("profe-boton").textContent + document.getElementById("profe-boton").getAttribute("aria-label")) }; });
-    ok("al tocarlo: el panel abierto, «¡Hola! Soy el profe» y las seis preguntas, con el foco en la primera",
-       lp.ve && lp.aria === "true" && lp.titulo === "¡Hola! Soy el profe" && lp.preguntas.length === 6 && /¿En qué mesa juega mi hijo\?/.test(lp.preguntas[0]) && lp.foco === "mesa", JSON.stringify(lp));
+    ok("al tocarlo: el panel abierto, «¡Hola! Soy el profe» y las siete preguntas, con el foco en la primera",
+       lp.ve && lp.aria === "true" && lp.titulo === "¡Hola! Soy el profe" && lp.preguntas.length === 7 && /¿En qué mesa juega mi hijo\?/.test(lp.preguntas[0]) && lp.foco === "mesa", JSON.stringify(lp));
     ok("dice «el profe», nunca su nombre (lo pidió el dueño)", !lp.nombre);
     ok("su dibujo carga y es de adorno (alt vacío): lo que dice va escrito", lp.img.length === 1 && /^:true:[1-9]\d+$/.test(lp.img[0]), JSON.stringify(lp.img));
     ok("y el globito ya no vuelve a salir", !lp.globo);

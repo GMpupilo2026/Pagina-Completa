@@ -946,3 +946,44 @@ body:has(dialog[open]) .cac-profe-boton, body:has(dialog[open]) .cac-profe-panel
 [data-profe="muy-bien"]::before { background-image: url("../img/avatar-profe-oscar/muy-bien.webp"); }
 [data-profe="idea"]::before { background-image: url("../img/avatar-profe-oscar/idea.webp"); }
 [data-profe="excelente"]::before { background-image: url("../img/avatar-profe-oscar/excelente.webp"); }
+
+/* «Conoce la Academia» y la cuenta gratis de 5 días (js/centroamericano-academia.js). */
+.cac-academia-conoce { display: inline-flex; align-items: center; min-height: 2.5rem; padding: 0.35rem 1rem; border-radius: 999px; background: var(--cac-naranja); color: var(--cac-morado-hondo); font-weight: 800; font-size: 0.9rem; text-decoration: none; }
+.cac-academia-conoce:hover { background: #ecc283; }
+.cac-academia-conoce:focus-visible { outline: 3px solid #fff; outline-offset: 2px; }
+.cac-conoce { padding: 2.5rem 0 3rem; background: var(--cac-morado-hondo); color: #fff; border-top: 6px solid var(--cac-rojo); }
+.cac-conoce-etiqueta { font-size: 0.8rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: var(--cac-naranja); }
+.cac-conoce-titulo { font-family: var(--font-serif, Georgia, serif); font-size: clamp(1.5rem, 3.5vw, 2.2rem); font-weight: 800; margin-top: 0.25rem; }
+.cac-conoce-titulo:focus { outline: none; }
+.cac-conoce-intro { margin-top: 0.75rem; max-width: 46rem; color: #dfe0f7; }
+.cac-conoce-lista { display: grid; gap: 0.75rem; margin-top: 1.25rem; grid-template-columns: repeat(auto-fill, minmax(13rem, 1fr)); }
+.cac-conoce-cosa { display: grid; grid-template-columns: 2.25rem minmax(0, 1fr); column-gap: 0.6rem; row-gap: 0.15rem; padding: 0.85rem; border-radius: 1rem; background: rgb(255 255 255 / 0.08); border: 1px solid rgb(255 255 255 / 0.18); }
+.cac-conoce-cosa > span:last-child { grid-column: 2; font-size: 0.92rem; color: #dfe0f7; }
+.cac-conoce-icono { grid-row: span 2; font-size: 1.6rem; line-height: 1; }
+.cac-conoce-gratis { margin-top: 1.5rem; padding: 1.1rem 1.2rem; border-radius: 1.25rem; background: #fff; color: #102a43; }
+.cac-conoce-gratis-titulo { font-size: 1.25rem; font-weight: 800; color: var(--cac-morado-hondo); }
+.cac-conoce-acciones { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.9rem; align-items: center; }
+.cac-conoce-acciones a { text-decoration: none; }
+.cac-conoce-otro { display: inline-flex; align-items: center; }
+.cac-conoce-nota { margin-top: 0.6rem; font-size: 0.85rem; color: #486581; }
+.cac-cuenta-form { display: grid; gap: 0.9rem; }
+.cac-cuenta-campo label { display: block; font-weight: 700; margin-bottom: 0.25rem; }
+.cac-cuenta-input { width: 100%; min-height: 2.75rem; padding: 0.5rem 0.75rem; border-radius: 0.6rem; border: 2px solid #bcbde6; background: #fff; color: #102a43; }
+.cac-cuenta-input:focus-visible { outline: 3px solid var(--cac-rojo); outline-offset: 1px; }
+.dark .cac-cuenta-input { background: rgb(var(--c-brand-900, 16 42 67)); color: #fff; border-color: rgb(255 255 255 / 0.3); }
+.cac-cuenta-clave { display: flex; gap: 0.5rem; }
+.cac-cuenta-ayuda { margin-top: 0.25rem; font-size: 0.85rem; color: #486581; }
+.dark .cac-cuenta-ayuda { color: #bcccdc; }
+.cac-cuenta-acepto { display: flex; gap: 0.6rem; align-items: flex-start; font-size: 0.92rem; }
+.cac-cuenta-acepto input { width: 1.25rem; height: 1.25rem; margin-top: 0.15rem; flex: none; }
+.cac-cuenta-error { font-weight: 700; color: #a50f1f; }
+.dark .cac-cuenta-error { color: #ff9ca7; }
+.cac-cuenta-error[hidden] { display: none; }
+.cac-cuenta-lista-titulo { font-size: 1.25rem; font-weight: 800; color: var(--cac-verde); }
+.dark .cac-cuenta-lista-titulo { color: #6fd3a0; }
+.cac-cuenta-lista-titulo:focus { outline: none; }
+.cac-cuenta-datos { margin-top: 0.75rem; padding: 0.85rem 1rem; border-radius: 1rem; background: #e8f5ee; border: 2px solid var(--cac-verde); color: #123f29; display: grid; gap: 0.35rem; }
+.cac-cuenta-datos dt { display: inline; font-weight: 600; }
+.cac-cuenta-datos dt::after { content: ": "; }
+.cac-cuenta-datos dd { display: inline; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-weight: 800; word-break: break-all; }
+.cac-cuenta-datos dd[data-dato="hasta"] { font-family: inherit; }

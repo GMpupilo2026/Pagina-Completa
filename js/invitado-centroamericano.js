@@ -54,6 +54,16 @@ window.InvitadoCentroamericano = (function () {
       a.style.cssText = "color:#fff;text-decoration:underline;white-space:nowrap";
       p.appendChild(a);
     }
+    // Y la invitación a seguir con una cuenta: la de 5 días del festival, que
+    // se abre en la página del torneo (js/centroamericano-academia.js). Lo que
+    // juntó aquí sube solo a la cuenta al entrar (js/progreso-usuario.js).
+    const cuenta = document.createElement("a");
+    cuenta.href = (location.pathname.indexOf("/entreno/") !== -1 ? "../" : "") + "centroamericano-2026.html#cuenta-gratis";
+    cuenta.target = "_top";
+    cuenta.dataset.cuentaGratis = "";
+    cuenta.textContent = "¿Te gustó? Crea tu cuenta gratis de 5 días y sigue con tus estrellas →";
+    cuenta.style.cssText = "display:inline-block;margin-left:.75rem;color:#fff;text-decoration:underline;font-weight:800";
+    p.appendChild(cuenta);
     const ref = antesDe || document.body.firstElementChild;
     if (ref && ref.parentNode) ref.parentNode.insertBefore(p, ref); else document.body.prepend(p);
   }
