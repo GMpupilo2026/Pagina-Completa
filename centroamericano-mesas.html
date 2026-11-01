@@ -53,35 +53,57 @@
         </div>
 
         <div id="app" hidden>
-
-            <!-- Estado general: siempre a la vista -->
-            <div id="estado-general" class="cam-estado-general cam-no-qr" role="status" aria-live="polite">
-                <span id="eg-pedidos"></span>
-                <span id="eg-enlinea"></span>
-                <span id="eg-claves"></span>
-                <button type="button" id="sonido" class="cam-btn cam-btn-claro cam-btn-chico" aria-pressed="false"><span aria-hidden="true">🔔</span> Activar el sonido de los pedidos</button>
+          <div class="cam-ventana">
+            <div class="cam-titulo-ventana">
+                <img src="img/app/icon-192.png" width="22" height="22" alt="" aria-hidden="true">
+                <span class="cam-titulo-texto">Mesa del árbitro — Centroamericano 2026</span>
+                <span id="eg-reloj" class="cam-titulo-reloj" aria-hidden="true"></span>
             </div>
 
-            <div class="cam-pestanas cam-no-qr" role="tablist" aria-label="Secciones de la página">
-                <button type="button" role="tab" class="cam-pestana" id="pest-avisos" data-panel="avisos" aria-controls="panel-avisos" aria-selected="true">Ayuda y avisos <span id="contador-pedidos" class="cam-contador" hidden>0</span></button>
+            <div class="cam-menu cam-no-qr" role="tablist" aria-label="Secciones del programa">
+                <button type="button" role="tab" class="cam-pestana" id="pest-ronda" data-panel="ronda" aria-controls="panel-ronda" aria-selected="true">Ronda en curso <span id="contador-pedidos" class="cam-contador" hidden>0</span></button>
+                <button type="button" role="tab" class="cam-pestana" id="pest-avisos" data-panel="avisos" aria-controls="panel-avisos" aria-selected="false" tabindex="-1">Avisos</button>
                 <button type="button" role="tab" class="cam-pestana" id="pest-arbitros" data-panel="arbitros" aria-controls="panel-arbitros" aria-selected="false" tabindex="-1">Árbitros y mesas</button>
+                <button type="button" role="tab" class="cam-pestana" id="pest-planillas" data-panel="planillas" aria-controls="panel-planillas" aria-selected="false" tabindex="-1">Planillas y Drive</button>
                 <button type="button" role="tab" class="cam-pestana" id="pest-claves" data-panel="claves" aria-controls="panel-claves" aria-selected="false" tabindex="-1">Clave de chess-results</button>
+                <button type="button" role="tab" class="cam-pestana" id="pest-respaldo" data-panel="respaldo" aria-controls="panel-respaldo" aria-selected="false" tabindex="-1">Respaldo</button>
                 <button type="button" role="tab" class="cam-pestana" id="pest-registro" data-panel="registro" aria-controls="panel-registro" aria-selected="false" tabindex="-1">Lo que anotan</button>
             </div>
 
-            <!-- 1. Ayuda y avisos -->
-            <section id="panel-avisos" role="tabpanel" aria-labelledby="pest-avisos" class="cam-no-qr">
-                <h2 id="t-pedidos" class="cac-seccion text-xl">Pedidos de ayuda<span class="cac-seccion-raya" aria-hidden="true"></span></h2>
-                <p class="mt-3 text-sm">Cuando un árbitro toca «Ayuda» en su tablet, el pedido aparece aquí con su mesa. Esta página se actualiza sola cada pocos segundos; deja la pestaña abierta durante la ronda.</p>
-                <div id="pedidos" class="grid gap-3 mt-3"></div>
-                <p id="sin-pedidos" class="cam-tarjeta mt-3">Nadie ha pedido ayuda. Cuando alguien lo haga, sonará aquí si activaste el sonido.</p>
-                <details class="cam-tarjeta mt-3" id="atendidos-caja" hidden>
-                    <summary class="font-bold cursor-pointer">Pedidos ya atendidos (<span id="atendidos-n">0</span>)</summary>
-                    <div id="atendidos" class="grid gap-2 mt-3"></div>
-                </details>
+            <div class="cam-contenido">
 
-                <h2 id="t-aviso" class="cac-seccion text-xl mt-10">Enviar un aviso a los árbitros<span class="cac-seccion-raya" aria-hidden="true"></span></h2>
-                <form id="form-aviso" class="cam-tarjeta mt-3" novalidate>
+            <!-- 1. La ronda en curso: cuánto le queda a cada árbitro y lo que piden -->
+            <section id="panel-ronda" role="tabpanel" aria-labelledby="pest-ronda" class="cam-no-qr">
+                <div class="cam-herramientas" role="toolbar" aria-label="Ronda en curso">
+                    <button type="button" id="resumen-actualizar" class="cam-btn cam-btn-chico"><span aria-hidden="true">🔄</span> Actualizar desde chess-results</button>
+                    <button type="button" id="resumen-pdf" class="cam-btn cam-btn-claro cam-btn-chico"><span aria-hidden="true">📄</span> Reporte de la ronda (PDF)</button>
+                    <span id="resumen-total" class="cam-herramientas-nota" role="status"></span>
+                </div>
+                <h2 id="t-resumen" class="cam-subtitulo">Cuánto le queda a cada árbitro<span id="resumen-ronda" class="cam-subtitulo-nota"></span></h2>
+                <div class="cam-tabla-envoltura">
+                    <table class="cam-tabla cam-rejilla" id="resumen-tabla">
+                        <caption class="sr-only">Avance de cada árbitro en la ronda abierta</caption>
+                        <thead><tr><th scope="col">Árbitro</th><th scope="col">Torneo</th><th scope="col">Mesas</th><th scope="col">Avance</th><th scope="col">Quedan</th><th scope="col">Estado</th><th scope="col">Conexión</th></tr></thead>
+                        <tbody id="resumen"></tbody>
+                    </table>
+                </div>
+                <p id="resumen-vacio" class="cam-nota-vacia">Todavía no hay enlaces activos. Créalos en «Árbitros y mesas».</p>
+                <p class="cam-herramientas-nota mt-2">El avance se pone al día solo cuando cada árbitro abre o guarda en su tablet; «Actualizar desde chess-results» lo lee de todos los torneos de una vez.</p>
+
+                <h2 id="t-pedidos" class="cam-subtitulo mt-6">Pedidos de ayuda y avisos de los árbitros</h2>
+                <p class="cam-herramientas-nota">Se actualiza sola cada pocos segundos: deja esta ventana abierta durante la ronda y activa el sonido.</p>
+                <div id="pedidos" class="grid gap-2 mt-2"></div>
+                <p id="sin-pedidos" class="cam-nota-vacia">Nadie ha pedido ayuda ni avisado. Cuando alguien lo haga, aparece aquí.</p>
+                <details class="cam-detalle mt-3" id="atendidos-caja" hidden>
+                    <summary>Ya atendidos (<span id="atendidos-n">0</span>)</summary>
+                    <div id="atendidos" class="grid gap-2 mt-2"></div>
+                </details>
+            </section>
+
+            <!-- 2. Avisos a los árbitros -->
+            <section id="panel-avisos" role="tabpanel" aria-labelledby="pest-avisos" class="cam-no-qr" hidden>
+                <h2 id="t-aviso" class="cam-subtitulo">Enviar un aviso a los árbitros</h2>
+                <form id="form-aviso" class="cam-formulario" novalidate>
                     <p class="text-sm">El árbitro lo ve arriba de su pantalla, con un sonido y una vibración, y lo cierra con «Entendido»: aquí sabes quién ya lo leyó.</p>
                     <div class="grid sm:grid-cols-3 gap-3 mt-3">
                         <div><label for="av-para" class="block text-sm font-bold">Para</label><select id="av-para" class="cam-select"></select></div>
@@ -91,36 +113,43 @@
                     <div class="cam-acciones"><button type="submit" id="av-enviar" class="cam-btn">Enviar el aviso</button></div>
                 </form>
 
-                <h3 class="font-bold text-lg mt-6">Avisos enviados</h3>
-                <div class="cam-tabla-envoltura mt-2">
-                    <table class="cam-tabla">
+                <h3 class="cam-subtitulo mt-6">Avisos enviados</h3>
+                <div class="cam-tabla-envoltura">
+                    <table class="cam-tabla cam-rejilla">
                         <caption class="sr-only">Avisos que la organización mandó a los árbitros, lo más reciente primero</caption>
                         <thead><tr><th scope="col">Hora (Costa Rica)</th><th scope="col">Mensaje</th><th scope="col">Lo leyeron</th></tr></thead>
                         <tbody id="enviados"></tbody>
                     </table>
                 </div>
-                <p id="enviados-vacio" class="text-sm mt-2">Todavía no has mandado ningún aviso.</p>
+                <p id="enviados-vacio" class="cam-nota-vacia">Todavía no has mandado ningún aviso.</p>
             </section>
 
-            <!-- 2. Árbitros y mesas -->
+            <!-- 3. Árbitros y mesas -->
             <section id="panel-arbitros" role="tabpanel" aria-labelledby="pest-arbitros" hidden>
-                <h2 id="t-asignar" class="cac-seccion text-xl cam-no-qr">Árbitros y sus mesas<span class="cac-seccion-raya" aria-hidden="true"></span></h2>
-                <form id="form-asignar" class="cam-tarjeta mt-3 cam-no-qr" novalidate>
-                    <p class="text-sm">A cada árbitro le toca un torneo y un rango de mesas. Se crea un enlace con su QR: lo abre en su tablet y anota resultados, ilegales e irregularidades <strong>solo de sus mesas</strong>, sin cuenta ni clave. <strong>Si todavía no sabes quién es</strong>, deja el nombre vacío: queda como «Árbitro 1», «Árbitro 2»… y quien abra el enlace pone su nombre (o se lo pones tú después).</p>
-                    <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-3 mt-3">
-                        <div class="lg:col-span-2"><label for="a-arbitro" class="block text-sm font-bold">Árbitro (opcional)</label><input id="a-arbitro" type="text" maxlength="80" class="cam-campo" autocomplete="off" placeholder="Nombre y apellido, o vacío si está por definir"></div>
-                        <div class="lg:col-span-2"><label for="a-torneo" class="block text-sm font-bold">Torneo</label><select id="a-torneo" class="cam-select"></select></div>
-                        <div><label for="a-desde" class="block text-sm font-bold">Mesa desde</label><input id="a-desde" type="number" min="1" max="9999" inputmode="numeric" class="cam-campo"></div>
-                        <div><label for="a-hasta" class="block text-sm font-bold">Mesa hasta</label><input id="a-hasta" type="number" min="1" max="9999" inputmode="numeric" class="cam-campo"></div>
-                        <div class="lg:col-span-2"><label for="a-vence" class="block text-sm font-bold">El enlace vence</label>
-                            <select id="a-vence" class="cam-select"><option value="torneo">Al terminar el torneo (9 de noviembre)</option><option value="hoy">Esta noche (11:59 p. m.)</option><option value="12h">Dentro de 12 horas</option></select></div>
-                    </div>
-                    <p id="a-aviso" class="cam-aviso-suave mt-3" hidden></p>
-                    <div class="cam-acciones"><button type="submit" id="a-crear" class="cam-btn">Crear el enlace y el QR</button></div>
-                </form>
+                <div class="cam-herramientas cam-no-qr" role="toolbar" aria-label="Árbitros y mesas">
+                    <button type="button" id="abrir-nuevo" class="cam-btn cam-btn-chico"><span aria-hidden="true">➕</span> Nuevo árbitro</button>
+                    <button type="button" id="abrir-reparto" class="cam-btn cam-btn-chico"><span aria-hidden="true">⚖️</span> Repartir las mesas</button>
+                    <button type="button" id="imprimir-qr" class="cam-btn cam-btn-claro cam-btn-chico"><span aria-hidden="true">🖨️</span> Imprimir los QR</button>
+                </div>
+                <details id="nuevo" class="cam-detalle cam-no-qr mt-3">
+                    <summary>Nuevo árbitro (un enlace con su QR)</summary>
+                    <form id="form-asignar" class="cam-formulario mt-2" novalidate>
+                        <p class="text-sm">A cada árbitro le toca un torneo y un rango de mesas. Se crea un enlace con su QR: lo abre en su tablet y anota resultados, ilegales e irregularidades <strong>solo de sus mesas</strong>, sin cuenta ni clave. <strong>Si todavía no sabes quién es</strong>, deja el nombre vacío: queda como «Árbitro 1», «Árbitro 2»… y quien abra el enlace pone su nombre (o se lo pones tú después).</p>
+                        <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-3 mt-3">
+                            <div class="lg:col-span-2"><label for="a-arbitro" class="block text-sm font-bold">Árbitro (opcional)</label><input id="a-arbitro" type="text" maxlength="80" class="cam-campo" autocomplete="off" placeholder="Nombre y apellido, o vacío si está por definir"></div>
+                            <div class="lg:col-span-2"><label for="a-torneo" class="block text-sm font-bold">Torneo</label><select id="a-torneo" class="cam-select"></select></div>
+                            <div><label for="a-desde" class="block text-sm font-bold">Mesa desde</label><input id="a-desde" type="number" min="1" max="9999" inputmode="numeric" class="cam-campo"></div>
+                            <div><label for="a-hasta" class="block text-sm font-bold">Mesa hasta</label><input id="a-hasta" type="number" min="1" max="9999" inputmode="numeric" class="cam-campo"></div>
+                            <div class="lg:col-span-2"><label for="a-vence" class="block text-sm font-bold">El enlace vence</label>
+                                <select id="a-vence" class="cam-select"><option value="torneo">Al terminar el torneo (9 de noviembre)</option><option value="hoy">Esta noche (11:59 p. m.)</option><option value="12h">Dentro de 12 horas</option></select></div>
+                        </div>
+                        <p id="a-aviso" class="cam-aviso-suave mt-3" hidden></p>
+                        <div class="cam-acciones"><button type="submit" id="a-crear" class="cam-btn">Crear el enlace y el QR</button></div>
+                    </form>
+                </details>
 
-                <details class="cam-tarjeta mt-3 cam-no-qr" id="reparto">
-                    <summary class="font-bold cursor-pointer">Repartir las mesas de un torneo entre varios árbitros por definir</summary>
+                <details class="cam-detalle cam-no-qr mt-3" id="reparto">
+                    <summary>Repartir las mesas de un torneo entre varios árbitros por definir</summary>
                     <p class="text-sm mt-2">Dices cuántas mesas hay y cuántos árbitros serán: se crean todos los enlaces de una vez, con mesas seguidas y parejas, y cada uno queda como «Árbitro N» hasta que alguien le ponga nombre. Puedes cambiar después las mesas de cada uno.</p>
                     <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-3 mt-3">
                         <div class="lg:col-span-2"><label for="rp-torneo" class="block text-sm font-bold">Torneo</label><select id="rp-torneo" class="cam-select"></select></div>
@@ -135,17 +164,51 @@
                     <div class="cam-acciones"><button type="button" id="rp-crear" class="cam-btn" disabled>Crear los enlaces</button></div>
                 </details>
 
-                <div class="flex flex-wrap items-center justify-between gap-2 mt-6 cam-no-qr">
-                    <h3 class="font-bold text-lg">Los enlaces creados</h3>
-                    <button type="button" id="imprimir-qr" class="cam-btn cam-btn-claro cam-btn-chico"><span aria-hidden="true">🖨️</span> Imprimir los QR</button>
+                <h2 class="cam-subtitulo mt-5 cam-no-qr">Los enlaces creados</h2>
+                <div class="cam-tabla-envoltura cam-no-qr">
+                    <table class="cam-tabla cam-rejilla" id="asignaciones-tabla">
+                        <caption class="sr-only">Enlaces de los árbitros, agrupados por torneo y ordenados por mesa</caption>
+                        <thead><tr><th scope="col">Árbitro</th><th scope="col">Mesas</th><th scope="col">Estado</th><th scope="col">Conexión</th><th scope="col">Acciones</th></tr></thead>
+                        <tbody id="asignaciones"></tbody>
+                    </table>
                 </div>
-                <div id="asignaciones" class="mt-3"></div>
-                <p id="sin-asignaciones" class="cam-tarjeta mt-3 cam-no-qr">Todavía no has creado ningún enlace.</p>
+                <p id="sin-asignaciones" class="cam-nota-vacia cam-no-qr">Todavía no has creado ningún enlace.</p>
+                <!-- La hoja de QR para imprimir: solo se ve al imprimir. -->
+                <div id="hoja-qr" class="cam-hoja-qr" aria-hidden="true"></div>
             </section>
 
-            <!-- 3. La clave -->
+            <!-- 4. Planillas y Drive -->
+            <section id="panel-planillas" role="tabpanel" aria-labelledby="pest-planillas" class="cam-no-qr" hidden>
+                <div class="cam-herramientas" role="toolbar" aria-label="Planillas y Drive">
+                    <button type="button" id="pl-actualizar" class="cam-btn cam-btn-claro cam-btn-chico"><span aria-hidden="true">🔄</span> Actualizar</button>
+                    <button type="button" id="drive-reintentar" class="cam-btn cam-btn-chico"><span aria-hidden="true">☁️</span> Mandar al Drive las que faltan</button>
+                    <label class="cam-herramientas-campo"><span>Torneo</span><select id="pl-torneo" class="cam-select"></select></label>
+                    <label class="cam-herramientas-campo"><span>Ronda</span><select id="pl-ronda" class="cam-select"><option value="">Todas</option></select></label>
+                </div>
+                <p id="drive-estado" class="cam-estado-drive" role="status"></p>
+                <details class="cam-detalle mt-3" id="drive-conectar-caja">
+                    <summary>Conectar o cambiar el Drive («Planillas Centroamericano»)</summary>
+                    <p class="text-sm mt-2">Las fotos de las planillas se guardan primero aquí, a salvo, y pasan al Drive en la carpeta <strong>Planillas Centroamericano</strong>, ordenadas por torneo y por ronda, con el nombre del enfrentamiento. Eso lo hace un Apps Script de la dueña del Drive (<code>documentos/centroamericano/puente-drive.gs</code>): pega aquí la dirección y el secreto que da al instalarlo. Se prueban antes de guardarse.</p>
+                    <div class="grid sm:grid-cols-2 gap-3 mt-3">
+                        <div><label for="drive-url" class="block text-sm font-bold">Dirección (termina en /exec)</label><input id="drive-url" type="text" class="cam-campo" autocomplete="off" spellcheck="false"></div>
+                        <div><label for="drive-secreto" class="block text-sm font-bold">Secreto</label><input id="drive-secreto" type="password" class="cam-campo" autocomplete="off" spellcheck="false"></div>
+                    </div>
+                    <div class="cam-acciones"><button type="button" id="drive-conectar" class="cam-btn">Probar y conectar</button></div>
+                    <p id="drive-conectar-estado" class="text-sm mt-2" role="status"></p>
+                </details>
+                <div class="cam-tabla-envoltura mt-3">
+                    <table class="cam-tabla cam-rejilla">
+                        <caption class="sr-only">Fotos de las planillas subidas por los árbitros</caption>
+                        <thead><tr><th scope="col">Torneo</th><th scope="col">Ronda</th><th scope="col">Mesa</th><th scope="col">Partida</th><th scope="col">Planilla de</th><th scope="col">Árbitro</th><th scope="col">Subida</th><th scope="col">Drive</th><th scope="col">Foto</th></tr></thead>
+                        <tbody id="planillas"></tbody>
+                    </table>
+                </div>
+                <p id="planillas-vacio" class="cam-nota-vacia">Todavía no se ha subido ninguna foto.</p>
+            </section>
+
+            <!-- 5. La clave -->
             <section id="panel-claves" role="tabpanel" aria-labelledby="pest-claves" class="cam-no-qr" hidden>
-                <h2 id="t-claves" class="cac-seccion text-xl">Una sola clave para todo el torneo<span class="cac-seccion-raya" aria-hidden="true"></span></h2>
+                <h2 id="t-claves" class="cam-subtitulo">Una sola clave para todo el torneo</h2>
                 <div class="cam-clave-grupo mt-3" id="clave-grupo">
                     <p>Los torneos del Centroamericano están <strong>ligados en un grupo</strong> de chess-results: no hace falta una clave por torneo. Pon aquí el <strong>código del grupo</strong> y su <strong>clave (SID)</strong>, la de «Internet / Customize lists on chess-results.com» en Swiss-Manager. Se prueba contra chess-results antes de guardarla y queda <strong>cifrada</strong>: nadie la vuelve a ver, ni tú ni los árbitros.</p>
                     <div class="grid sm:grid-cols-2 gap-3 mt-3">
@@ -159,8 +222,8 @@
                 <p id="resumen-claves" class="font-bold mt-5" role="status"></p>
                 <div id="torneos" class="cam-estado-torneos mt-3"></div>
 
-                <details class="cam-tarjeta mt-4" id="pegar">
-                    <summary class="font-bold cursor-pointer">Otras claves: un torneo que no esté en el grupo</summary>
+                <details class="cam-detalle mt-4" id="pegar">
+                    <summary>Otras claves: un torneo que no esté en el grupo</summary>
                     <p class="text-sm mt-2">Solo si algún torneo no está ligado y tiene su propia clave. Una línea por clave: el <strong>código de la base de datos</strong> del torneo y la clave, separados por un espacio. Por ejemplo: <code>1529719 AAAA1111BBBB2222CCCC3333DDDD4444</code>.</p>
                     <label for="claves-bloque" class="block text-sm font-bold mt-3">Códigos y claves</label>
                     <textarea id="claves-bloque" rows="4" class="cam-campo mt-1" autocomplete="off" spellcheck="false"></textarea>
@@ -169,38 +232,75 @@
                 </details>
             </section>
 
-            <!-- 4. Lo que anotan -->
+            <!-- 6. Respaldo -->
+            <section id="panel-respaldo" role="tabpanel" aria-labelledby="pest-respaldo" class="cam-no-qr" hidden>
+                <div class="cam-herramientas" role="toolbar" aria-label="Respaldo">
+                    <button type="button" id="copia-ahora" class="cam-btn cam-btn-chico"><span aria-hidden="true">💾</span> Hacer una copia ahora y bajarla</button>
+                    <button type="button" id="copia-restaurar" class="cam-btn cam-btn-claro cam-btn-chico"><span aria-hidden="true">📂</span> Restaurar desde un archivo…</button>
+                    <input type="file" id="copia-archivo" accept="application/json,.json" class="sr-only" tabindex="-1" aria-label="Archivo de copia de seguridad">
+                </div>
+                <h2 class="cam-subtitulo mt-3">Copia de seguridad automática</h2>
+                <ul class="cam-lista-simple text-sm">
+                    <li><strong>Cada 5 minutos</strong>, si algo cambió, se guarda una copia de todo lo que solo vive aquí: los enlaces de los árbitros (con el mismo token, así los QR impresos siguen sirviendo), lo que anotaron, los avisos, el avance, las rondas finalizadas y las planillas.</li>
+                    <li><strong>Cada hora</strong> se guarda otra, que se conserva tres días.</li>
+                    <li><strong>Cada 10 minutos</strong>, si el Drive está conectado, la copia también se manda a «Planillas Centroamericano / _Copias de seguridad».</li>
+                    <li>La <strong>clave de chess-results</strong> no va en la copia (queda cifrada aparte): si hiciera falta, se vuelve a poner una vez en «Clave de chess-results». Los <strong>resultados</strong> de las partidas viven en chess-results y Swiss-Manager.</li>
+                    <li><strong>Restaurar</strong> solo agrega lo que falta: nunca pisa lo que ya está. Se puede restaurar desde una copia de esta lista o desde un archivo que bajaste.</li>
+                </ul>
+                <p id="respaldo-estado" class="cam-estado-drive" role="status"></p>
+                <div class="cam-tabla-envoltura mt-3">
+                    <table class="cam-tabla cam-rejilla">
+                        <caption class="sr-only">Copias de seguridad guardadas, la más reciente primero</caption>
+                        <thead><tr><th scope="col">Hora (Costa Rica)</th><th scope="col">Cuál</th><th scope="col">Enlaces</th><th scope="col">Anotaciones</th><th scope="col">Avisos</th><th scope="col">Planillas</th><th scope="col">Acciones</th></tr></thead>
+                        <tbody id="copias"></tbody>
+                    </table>
+                </div>
+                <p id="copias-vacio" class="cam-nota-vacia">Todavía no hay copias. Se guardan solas durante el torneo; también puedes hacer una ahora.</p>
+            </section>
+
+            <!-- 7. Lo que anotan -->
             <section id="panel-registro" role="tabpanel" aria-labelledby="pest-registro" class="cam-no-qr" hidden>
-                <h2 id="t-registro" class="cac-seccion text-xl">Lo que están anotando<span class="cac-seccion-raya" aria-hidden="true"></span></h2>
-                <div class="flex flex-wrap items-end gap-3 mt-3">
-                    <div><label for="r-torneo" class="block text-sm font-bold">Torneo</label><select id="r-torneo" class="cam-select"></select></div>
-                    <div><label for="r-tipo" class="block text-sm font-bold">Qué</label><select id="r-tipo" class="cam-select">
-                        <option value="">Todo</option><option value="ilegal">Ilegales</option><option value="irregularidad">Irregularidades</option><option value="resultado">Resultados</option><option value="correccion">Correcciones</option><option value="incidencia">Incidencias</option><option value="nota">Notas</option></select></div>
-                    <button type="button" id="r-actualizar" class="cam-btn cam-btn-claro"><span aria-hidden="true">🔄</span> Actualizar</button>
-                    <button type="button" id="r-pdf" class="cam-btn" disabled>Bajar el registro en PDF</button>
+                <div class="cam-herramientas" role="toolbar" aria-label="Registro">
+                    <label class="cam-herramientas-campo"><span>Torneo</span><select id="r-torneo" class="cam-select"></select></label>
+                    <label class="cam-herramientas-campo"><span>Qué</span><select id="r-tipo" class="cam-select">
+                        <option value="">Todo</option><option value="ilegal">Ilegales</option><option value="irregularidad">Irregularidades</option><option value="resultado">Resultados</option><option value="correccion">Correcciones</option><option value="incidencia">Incidencias</option><option value="nota">Notas</option></select></label>
+                    <button type="button" id="r-actualizar" class="cam-btn cam-btn-claro cam-btn-chico"><span aria-hidden="true">🔄</span> Actualizar</button>
+                    <button type="button" id="r-pdf" class="cam-btn cam-btn-chico" disabled>Bajar el registro en PDF</button>
                 </div>
                 <p id="r-estado" class="text-sm mt-2" role="status"></p>
 
-                <h3 class="font-bold text-lg mt-4">Jugadores con ilegales o irregularidades</h3>
-                <div class="cam-tabla-envoltura mt-2">
-                    <table class="cam-tabla">
+                <h3 class="cam-subtitulo mt-3">Jugadores con ilegales o irregularidades</h3>
+                <div class="cam-tabla-envoltura">
+                    <table class="cam-tabla cam-rejilla">
                         <caption class="sr-only">Jugadores con jugadas ilegales o irregularidades, por ronda y mesa</caption>
                         <thead><tr><th scope="col">Torneo</th><th scope="col">Ronda</th><th scope="col">Mesa</th><th scope="col">Jugador</th><th scope="col">Ilegales</th><th scope="col">Irregularidades</th></tr></thead>
                         <tbody id="marcados"></tbody>
                     </table>
                 </div>
-                <p id="marcados-vacio" class="text-sm mt-2">Ninguno todavía.</p>
+                <p id="marcados-vacio" class="cam-nota-vacia">Ninguno todavía.</p>
 
-                <h3 class="font-bold text-lg mt-6">Todo lo anotado</h3>
-                <div class="cam-tabla-envoltura mt-2">
-                    <table class="cam-tabla">
+                <h3 class="cam-subtitulo mt-6">Todo lo anotado</h3>
+                <div class="cam-tabla-envoltura">
+                    <table class="cam-tabla cam-rejilla">
                         <caption class="sr-only">Todo lo que anotaron los árbitros, lo más reciente primero</caption>
                         <thead><tr><th scope="col">Hora (Costa Rica)</th><th scope="col">Torneo</th><th scope="col">Ronda</th><th scope="col">Mesa</th><th scope="col">Árbitro</th><th scope="col">Qué</th><th scope="col">Detalle</th></tr></thead>
                         <tbody id="registro"></tbody>
                     </table>
                 </div>
-                <p id="registro-vacio" class="text-sm mt-2">Todavía no hay nada anotado.</p>
+                <p id="registro-vacio" class="cam-nota-vacia">Todavía no hay nada anotado.</p>
             </section>
+            </div>
+
+            <!-- La barra de estado: siempre a la vista, como en un programa -->
+            <div id="estado-general" class="cam-barra-estado cam-no-qr" role="status" aria-live="polite">
+                <span id="eg-pedidos" class="cam-celda-estado"></span>
+                <span id="eg-enlinea" class="cam-celda-estado"></span>
+                <span id="eg-claves" class="cam-celda-estado"></span>
+                <span id="eg-drive" class="cam-celda-estado"></span>
+                <span id="eg-copia" class="cam-celda-estado"></span>
+                <button type="button" id="sonido" class="cam-btn cam-btn-claro cam-btn-chico" aria-pressed="false"><span aria-hidden="true">🔔</span> Activar el sonido de los pedidos</button>
+            </div>
+          </div>
         </div>
     </main>
 

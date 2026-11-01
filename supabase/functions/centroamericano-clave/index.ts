@@ -23,15 +23,22 @@
 // servicio, así que pasa por antes_de_cada_pedido() y la verificación en dos
 // pasos la exige la base. Quien administra tiene todas las herramientas.
 //
-// Dos acciones (body.action):
+// Las acciones (body.action):
 //   "poner"  { tnr, sid }  -> { ok, acceso, torneos[], ronda, mesas }   valida y guarda la clave
 //                             (tnr es el código con el que se entra: el del torneo o el del grupo)
 //   "probar" { tnr }       -> { ok, torneo, ronda, mesas }   prueba la clave guardada de ESE torneo
+//   "resumen" {}           -> { ok, torneos, errores[] }   lee de chess-results la ronda abierta de cada torneo con
+//                             enlaces activos y pone al día el avance de cada árbitro (centroamericano_progreso)
+//   "drive_estado" {}      -> { ok, conectado, pendientes, ultima_copia }   sin devolver nunca la dirección ni el secreto
+//   "drive_conectar" { url, secreto } -> { ok, carpeta }   prueba el Apps Script antes de guardarlo en la bóveda
+//   "drive_reintentar" {}  -> { ok, enviadas, fallaron, quedan }   manda al Drive las planillas que no llegaron
 //
 // verify_jwt en true.
 
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { entrar, leerRonda } from "./chess-results-ingreso.ts";
+import { avance, guardarAvance } from "./avance-ronda.ts";
+import { aBase64, llamarPuente } from "./drive-puente.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
@@ -66,12 +73,24 @@ Deno.serve(async (req) => {
   const { data: quien } = await comoQuienLlama.auth.getUser(autorizacion.replace(/^Bearer\s+/i, "").trim());
   const persona = quien?.user?.id ?? null;
 
-  let cuerpo: { action?: unknown; tnr?: unknown; sid?: unknown } = {};
+  let cuerpo: { action?: unknown; tnr?: unknown; sid?: unknown; url?: unknown; secreto?: unknown } = {};
   try { cuerpo = await req.json(); } catch { cuerpo = {}; }
-  const tnr = String(cuerpo.tnr ?? "").trim();
-  if (!/^\d{1,7}$/.test(tnr)) return json({ error: "El código del torneo no es válido." }, 400);
 
   const servicio = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, { auth: { persistSession: false } });
+
+  // Lo que no es de un solo torneo.
+  const accion = String(cuerpo.action ?? "");
+  if (accion === "resumen" || accion.startsWith("drive_")) {
+    try {
+      return await accionesGenerales(accion, cuerpo, servicio);
+    } catch (e) {
+      console.error("centroamericano-clave:", accion, e instanceof Error ? e.message : String(e));
+      return json({ error: "No se pudo completar: " + (e instanceof Error ? e.message : String(e)) }, 502);
+    }
+  }
+
+  const tnr = String(cuerpo.tnr ?? "").trim();
+  if (!/^\d{1,7}$/.test(tnr)) return json({ error: "El código del torneo no es válido." }, 400);
 
   try {
     if (cuerpo.action === "poner") {
@@ -116,3 +135,74 @@ Deno.serve(async (req) => {
     return json({ error: "No se pudo hablar con chess-results: " + (e instanceof Error ? e.message : String(e)) }, 502);
   }
 });
+
+const BUCKET = "centroamericano-planillas";
+
+// deno-lint-ignore no-explicit-any
+async function accionesGenerales(accion: string, cuerpo: Record<string, unknown>, servicio: any): Promise<Response> {
+  if (accion === "resumen") {
+    // Los torneos que tienen enlaces activos: cada uno se lee una vez, en paralelo (de a 4).
+    const { data: asig } = await servicio.from("centroamericano_asignaciones").select("id, tnr, mesa_desde, mesa_hasta, vence, revocada").eq("revocada", false).gt("vence", new Date().toISOString());
+    const porTorneo = new Map<string, { id: string; mesa_desde: number; mesa_hasta: number }[]>();
+    for (const a of asig ?? []) porTorneo.set(a.tnr, [...(porTorneo.get(a.tnr) ?? []), a]);
+    const errores: { tnr: string; error: string }[] = [];
+    let leidos = 0;
+    const cola = [...porTorneo.entries()];
+    const trabajar = async () => {
+      for (let par = cola.shift(); par; par = cola.shift()) {
+        const [t, lista] = par;
+        const { data: acc } = await servicio.rpc("centroamericano_acceso", { p_tnr: t });
+        const a = Array.isArray(acc) ? acc[0] : acc;
+        if (!a) { errores.push({ tnr: t, error: "sin clave cargada" }); continue; }
+        const leida = await leerRonda(a.acceso as string, a.sid as string, t);
+        if ("error" in leida) { errores.push({ tnr: t, error: leida.error }); continue; }
+        leidos++;
+        for (const x of lista) await guardarAvance(servicio, x.id, leida.pantalla.ronda, avance(leida.pantalla.mesas, x.mesa_desde, x.mesa_hasta));
+      }
+    };
+    await Promise.all([trabajar(), trabajar(), trabajar(), trabajar()]);
+    return json({ ok: true, torneos: leidos, errores });
+  }
+
+  const { data: dr } = await servicio.rpc("centroamericano_drive_leer");
+  const puente = (Array.isArray(dr) ? dr[0] : dr) as { url: string | null; secreto: string | null } | null;
+  const conectado = !!(puente?.url && puente?.secreto);
+
+  if (accion === "drive_estado") {
+    const { count } = await servicio.from("centroamericano_planillas").select("id", { count: "exact", head: true }).eq("drive_ok", false);
+    const { data: c } = await servicio.from("centroamericano_copias").select("creada").eq("anillo", "d").eq("ranura", 0).maybeSingle();
+    return json({ ok: true, conectado, pendientes: count ?? 0, ultima_copia: c?.creada ?? null });
+  }
+
+  if (accion === "drive_conectar") {
+    const url = String(cuerpo.url ?? "").trim();
+    const secreto = String(cuerpo.secreto ?? "").trim();
+    // Se prueba ANTES de guardar: una dirección o un secreto mal copiados se descubren acá.
+    const r = await llamarPuente(url, secreto, { accion: "probar" }, 30000);
+    if (!r.ok) return json({ error: "No se pudo conectar: " + (r.error ?? "el Drive no aceptó el secreto.") + " No se guardó nada." }, 400);
+    const { error } = await servicio.rpc("centroamericano_drive_guardar", { p_url: url, p_secreto: secreto });
+    if (error) return json({ error: "El Drive contestó bien, pero no se pudo guardar la conexión." }, 500);
+    return json({ ok: true, carpeta: String(r.carpeta ?? "Planillas Centroamericano") });
+  }
+
+  if (accion === "drive_reintentar") {
+    if (!conectado) return json({ error: "El Drive todavía no está conectado." }, 409);
+    const { data: lista } = await servicio.from("centroamericano_planillas").select("id, tnr, ronda, mesa, lado, jugador, rival, ruta").eq("drive_ok", false).order("subida", { ascending: true }).limit(12);
+    let enviadas = 0, fallaron = 0;
+    for (const f of lista ?? []) {
+      const { data: blob } = await servicio.storage.from(BUCKET).download(f.ruta);
+      if (!blob) { fallaron++; continue; }
+      const { data: t } = await servicio.from("centroamericano_torneos").select("nombre").eq("tnr", f.tnr).maybeSingle();
+      const blancas = f.lado === "blancas" ? f.jugador : f.rival, negras = f.lado === "blancas" ? f.rival : f.jugador;
+      const r = await llamarPuente(puente!.url!, puente!.secreto!, {
+        accion: "planilla", torneo: t?.nombre ?? f.tnr, ronda: f.ronda, mesa: f.mesa, lado: f.lado, blancas, negras, jugador: f.jugador, imagen: aBase64(new Uint8Array(await blob.arrayBuffer())),
+      });
+      await servicio.from("centroamericano_planillas").update(r.ok ? { drive_ok: true, drive_en: new Date().toISOString(), drive_error: "" } : { drive_error: String(r.error ?? "").slice(0, 300) }).eq("id", f.id);
+      if (r.ok) enviadas++; else fallaron++;
+    }
+    const { count } = await servicio.from("centroamericano_planillas").select("id", { count: "exact", head: true }).eq("drive_ok", false);
+    return json({ ok: true, enviadas, fallaron, quedan: count ?? 0 });
+  }
+
+  return json({ error: "Acción desconocida." }, 400);
+}

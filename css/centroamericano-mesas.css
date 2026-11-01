@@ -188,14 +188,6 @@
   .cam-mascota { animation: none; }
 }
 
-/* «Imprimir los QR»: solo salen los enlaces de los árbitros, uno por tarjeta, para
- * pegarlos o entregarlos en papel. La clase la pone la página justo antes de imprimir. */
-@media print {
-  body.cam-imprime-qr .cam-no-qr { display: none !important; }
-  body.cam-imprime-qr .cam-asignacion { break-inside: avoid; border: 2px solid #000; background: #fff; color: #000; }
-  body.cam-imprime-qr .cam-qr { border-color: #000; }
-}
-
 /* ===== La tablet: la usan los árbitros en la mesa, con las manos ocupadas ===== */
 /* Botones y campos más grandes donde se toca con el dedo (tablet y celular). */
 @media (pointer: coarse) {
@@ -292,5 +284,107 @@
 .dark .cam-estado-torneo[data-clave="si"] { border-color: #9be0bb; }
 .cam-estado-torneo[data-clave="no"] { border-color: var(--cac-rojo); }
 
+
+/* ===== El programa de la organización: ventana, menú, cuadrícula y barra de estado ===== */
+.cam-ventana { border: 2px solid var(--cac-morado-hondo); border-radius: 0.7rem; overflow: hidden; background: #fff; color: var(--cac-morado-hondo); box-shadow: 0 8px 24px rgb(30 36 83 / 0.25); }
+.dark .cam-ventana { background: rgb(var(--c-brand-900, 10 31 51)); color: rgb(var(--c-brand-100, 217 226 236)); border-color: #b8bbf2; }
+.cam-titulo-ventana { display: flex; align-items: center; gap: 0.6rem; background: var(--cac-morado-hondo); color: #fff; padding: 0.4rem 0.8rem; font-weight: 800; }
+.cam-titulo-ventana img { border-radius: 0.3rem; }
+.cam-titulo-texto { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.cam-titulo-reloj { font-variant-numeric: tabular-nums; font-weight: 700; }
+.cam-menu { display: flex; flex-wrap: wrap; gap: 0.15rem; background: #dfe0f7; padding: 0.4rem 0.5rem 0; border-bottom: 2px solid var(--cac-morado-hondo); }
+.dark .cam-menu { background: rgb(var(--c-brand-800, 16 42 67)); border-bottom-color: #b8bbf2; }
+.cam-menu .cam-pestana { min-height: 44px; border-radius: 0.6rem 0.6rem 0 0; border: 2px solid transparent; border-bottom: 0; background: transparent; color: var(--cac-morado-hondo); margin-bottom: -2px; padding: 0.3rem 0.85rem; font-size: 0.95rem; }
+.cam-menu .cam-pestana:hover { background: rgb(255 255 255 / 0.6); }
+.cam-menu .cam-pestana[aria-selected="true"] { background: #fff; color: var(--cac-morado-hondo); border-color: var(--cac-morado-hondo); border-bottom: 2px solid #fff; }
+.dark .cam-menu .cam-pestana { color: #dfe0f7; background: transparent; }
+.dark .cam-menu .cam-pestana:hover { background: rgb(255 255 255 / 0.08); }
+.dark .cam-menu .cam-pestana[aria-selected="true"] { background: rgb(var(--c-brand-900, 10 31 51)); color: #fff; border-color: #b8bbf2; border-bottom-color: rgb(var(--c-brand-900, 10 31 51)); }
+.cam-contenido { padding: 0.9rem 1rem 1.2rem; min-height: 22rem; }
+.cam-herramientas { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 0.7rem; background: #f4f4fb; border: 1px solid #c9cbee; border-radius: 0.5rem; padding: 0.45rem 0.6rem; }
+.dark .cam-herramientas { background: rgb(255 255 255 / 0.05); border-color: rgb(255 255 255 / 0.18); }
+.cam-herramientas-nota { font-size: 0.85rem; }
+.cam-herramientas-campo { display: inline-flex; align-items: center; gap: 0.4rem; font-weight: 700; font-size: 0.9rem; }
+.cam-subtitulo { font-weight: 800; font-size: 1.05rem; margin-top: 0.9rem; margin-bottom: 0.4rem; padding-bottom: 0.2rem; border-bottom: 2px solid #c9cbee; }
+.dark .cam-subtitulo { border-bottom-color: rgb(255 255 255 / 0.2); }
+.cam-subtitulo-nota { font-weight: 600; font-size: 0.9rem; }
+.cam-nota-vacia { font-size: 0.9rem; padding: 0.6rem 0.2rem; }
+.cam-detalle { border: 1px solid #c9cbee; border-radius: 0.5rem; padding: 0.5rem 0.8rem; background: #fff; }
+.dark .cam-detalle { background: transparent; border-color: rgb(255 255 255 / 0.2); }
+.cam-detalle > summary { font-weight: 800; cursor: pointer; min-height: 32px; }
+.cam-formulario { padding: 0.2rem 0; }
+.cam-lista-simple { list-style: disc; padding-left: 1.2rem; display: grid; gap: 0.35rem; }
+
+/* La cuadrícula: bordes en todas las celdas, encabezado fijo, filas alternas y al pasar el mouse. */
+.cam-rejilla { border: 1px solid #aeb1e0; }
+.cam-rejilla th, .cam-rejilla td { border: 1px solid #c9cbee; }
+.cam-rejilla thead th { position: sticky; top: 0; background: #dfe0f7; color: var(--cac-morado-hondo); z-index: 1; }
+.cam-rejilla tbody tr:nth-child(even) td { background: #f4f4fb; }
+.cam-rejilla tbody tr:hover td { background: #e6e8fb; }
+.dark .cam-rejilla, .dark .cam-rejilla th, .dark .cam-rejilla td { border-color: rgb(255 255 255 / 0.2); }
+.dark .cam-rejilla thead th { background: rgb(var(--c-brand-800, 16 42 67)); color: #dfe0f7; }
+.dark .cam-rejilla tbody tr:nth-child(even) td { background: rgb(255 255 255 / 0.04); }
+.dark .cam-rejilla tbody tr:hover td { background: rgb(255 255 255 / 0.09); }
+.cam-rejilla tr.cam-grupo-torneo th { background: var(--cac-morado); color: #fff; text-align: left; font-size: 0.9rem; position: static; }
+.cam-asignacion[data-estado="apagado"] td, .cam-asignacion[data-estado="vencido"] td { opacity: 0.65; }
+.cam-avance { display: inline-flex; align-items: center; gap: 0.4rem; white-space: nowrap; }
+.cam-avance progress { width: 6.5rem; height: 0.8rem; accent-color: var(--cac-verde); }
+.cam-quedan { font-weight: 700; }
+.cam-chip[data-estado="finalizada"] { background: var(--cac-verde); }
+.cam-chip[data-estado="termino"] { background: var(--cac-azul); }
+.cam-chip[data-estado="en-curso"] { background: var(--cac-morado); }
+.cam-chip[data-estado="sin-datos"] { background: #4d5266; }
+.cam-lista-previa-estado { font-size: 0.8rem; }
+.cam-pedidos-abiertos { display: block; font-weight: 800; }
+.cam-sugerencia { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.5rem; margin-top: 0.4rem; padding: 0.4rem 0.6rem; border: 1px dashed var(--cac-morado); border-radius: 0.5rem; }
+.cam-pedido[data-tipo="termino"] { border-color: var(--cac-azul); }
+.cam-pedido[data-tipo="finalizo"] { border-color: var(--cac-verde); }
+.cam-estado-drive { margin-top: 0.7rem; padding: 0.5rem 0.8rem; border-radius: 0.6rem; font-weight: 700; background: #f4f4fb; border: 2px solid #c9cbee; }
+.cam-estado-drive[data-estado="si"] { border-color: var(--cac-verde); }
+.cam-estado-drive[data-estado="no"] { border-color: var(--cac-naranja); }
+.dark .cam-estado-drive { background: rgb(255 255 255 / 0.05); border-color: rgb(255 255 255 / 0.25); }
+
+/* La barra de estado: siempre abajo de la ventana. */
+.cam-barra-estado { position: sticky; bottom: 0; z-index: 30; display: flex; flex-wrap: wrap; align-items: center; gap: 0.2rem 0; background: #dfe0f7; color: var(--cac-morado-hondo); border-top: 2px solid var(--cac-morado-hondo); padding: 0.25rem 0.5rem; font-size: 0.88rem; }
+.dark .cam-barra-estado { background: rgb(var(--c-brand-800, 16 42 67)); color: rgb(var(--c-brand-100, 217 226 236)); border-top-color: #b8bbf2; }
+.cam-celda-estado { padding: 0.2rem 0.7rem; border-right: 1px solid #aeb1e0; }
+.cam-celda-estado:empty { display: none; }
+.cam-barra-estado .cam-btn { margin-left: auto; }
+
+.cam-dialogo { width: min(34rem, calc(100% - 2rem)); border: 2px solid var(--cac-morado-hondo); border-radius: 0.7rem; padding: 0; background: #fff; color: var(--cac-morado-hondo); }
+.dark .cam-dialogo { background: rgb(var(--c-brand-900, 10 31 51)); color: rgb(var(--c-brand-100, 217 226 236)); border-color: #b8bbf2; }
+.cam-dialogo::backdrop { background: rgb(0 0 0 / 0.5); }
+.cam-dialogo-titulo { display: flex; align-items: center; justify-content: space-between; gap: 0.6rem; background: var(--cac-morado-hondo); color: #fff; padding: 0.4rem 0.8rem; font-weight: 800; }
+.cam-dialogo-cuerpo { padding: 1rem; display: grid; gap: 0.6rem; justify-items: center; text-align: center; }
+.cam-foto-planilla { max-width: 100%; max-height: 70vh; border: 2px solid #c9cbee; border-radius: 0.4rem; }
+.cam-qr-grande { width: 260px; height: 260px; }
+
+/* La hoja de QR: solo se ve al imprimir; cada QR lleva la marca de Ajedrez Integral. */
+.cam-hoja-qr { display: none; }
+@media print {
+  body.cam-imprime-qr header, body.cam-imprime-qr footer, body.cam-imprime-qr .cac-portada, body.cam-imprime-qr .cam-ventana, body.cam-imprime-qr .cam-barra-estado { display: none !important; }
+  body.cam-imprime-qr main { padding: 0 !important; max-width: none !important; }
+  body.cam-imprime-qr #app, body.cam-imprime-qr .cam-ventana { display: block !important; }
+  body.cam-imprime-qr .cam-hoja-qr { display: grid !important; grid-template-columns: repeat(2, 1fr); gap: 1rem; padding: 0.5rem; }
+  .cam-hoja-tarjeta { break-inside: avoid; border: 2px solid #000; border-radius: 0.6rem; padding: 0.8rem; text-align: center; color: #000; background: #fff; }
+  .cam-hoja-tarjeta h3 { font-size: 1.3rem; font-weight: 800; }
+  .cam-hoja-tarjeta .cam-qr { margin: 0.5rem auto; border-color: #000; }
+  .cam-hoja-pie { font-weight: 800; }
+  .cam-hoja-pie img { display: inline; vertical-align: middle; }
+  .cam-hoja-nota { font-size: 0.8rem; }
+}
+
+/* ===== La página del árbitro: horarios, planillas, lista previa y revisión final ===== */
+.cam-espera { margin-top: 0.5rem; font-weight: 700; }
+.cam-planillas { padding: 0.6rem 0.9rem; border-top: 1px dashed #c9cbee; }
+.cam-planillas-estado { font-size: 0.85rem; }
+.cam-lista-previa, .cam-revision { margin-bottom: 1rem; padding: 1rem 1.1rem; border: 3px solid var(--cac-morado); border-radius: 1rem; background: #fff; color: var(--cac-morado-hondo); }
+.cam-lista-previa { border-color: var(--cac-naranja); }
+.cam-revision[data-estado="finalizada"] { border-color: var(--cac-verde); }
+.dark .cam-lista-previa, .dark .cam-revision { background: rgb(var(--c-brand-900, 10 31 51)); color: rgb(var(--c-brand-100, 217 226 236)); }
+.cam-pasos { display: flex; flex-wrap: wrap; gap: 0.4rem 1.2rem; margin-top: 0.5rem; font-weight: 700; }
+.cam-pasos li[data-estado="hecho"] { color: var(--cac-verde); }
+.dark .cam-pasos li[data-estado="hecho"] { color: #9be0bb; }
+.cam-check-revision { display: flex; align-items: flex-start; gap: 0.6rem; min-height: 48px; padding: 0.3rem 0; }
 .cam-acciones-sin-margen { margin-top: 0; }
 .cam-chip-al-lado { margin-left: 0.5rem; }

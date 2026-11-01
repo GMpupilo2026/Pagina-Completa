@@ -84,10 +84,18 @@
                     <label class="cam-ir"><span class="sr-only">Ir a la mesa</span><input id="ir-mesa" type="number" inputmode="numeric" min="1" max="9999" placeholder="Ir a la mesa…" class="cam-campo" aria-label="Ir a la mesa número"></label>
                     <label class="cam-check"><input id="solo-faltan" type="checkbox" class="w-5 h-5"> <span>Solo las que faltan</span></label>
                     <button type="button" id="actualizar" class="cam-btn cam-btn-claro"><span aria-hidden="true">🔄</span> Actualizar</button>
+                    <button type="button" id="horarios" class="cam-btn cam-btn-claro"><span aria-hidden="true">⏰</span> Horarios</button>
                     <button type="button" id="pedir-ayuda" class="cam-btn cam-btn-rojo"><span aria-hidden="true">🆘</span> Pedir al árbitro principal</button>
                 </div>
+                <p id="espera" class="cam-espera" role="status"></p>
                 <p id="estado-ayuda" class="cam-estado-ayuda" role="status" hidden></p>
             </section>
+
+            <!-- Antes de iniciar la ronda: la lista previa, paso a paso (la arma la página). -->
+            <section id="lista-previa" class="cam-lista-previa" aria-labelledby="lista-titulo" hidden></section>
+
+            <!-- Al terminar tus mesas: revisar y finalizar la ronda (lo arma la página). -->
+            <section id="revision" class="cam-revision" aria-labelledby="revision-titulo" hidden></section>
 
             <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
                 <h2 class="cac-seccion text-xl">Las mesas de la ronda<span class="cac-seccion-raya" aria-hidden="true"></span></h2>
@@ -126,6 +134,7 @@
     <script src="js/hora-cr.js"></script>
     <script src="js/mesa-arbitro.js"></script>
     <script src="js/centroamericano-mesas.js"></script>
+    <script src="js/centroamericano-horario.js"></script>
     <script src="js/main.js"></script>
     <script src="js/centroamericano-arbitro.js"></script>
 </body>

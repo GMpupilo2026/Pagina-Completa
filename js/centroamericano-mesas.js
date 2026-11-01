@@ -180,7 +180,97 @@
     return [...por.values()].sort((a, b) => String(b.creado).localeCompare(String(a.creado)));
   }
 
-  const api = { ARTICULO_ILEGAL, FIN_DEL_TORNEO, marcasTexto, avisoIlegal, estadoMesa, estadoAsignacion, vencimiento, enlaceArbitro, textoWhatsapp, leerClaves, jugadoresMarcados, repartirMesas, leerRango, nombrePorDefinir, enLinea, hace, enviosAgrupados };
+  // ---- Los tipos de jugada ilegal y de irregularidad, para elegirlos de una lista y que
+  // queden en la bitácora sin escribir. Son los casos de siempre de un torneo; el artículo
+  // solo va donde el reglamento de FIDE lo dice sin duda (si falta uno, el árbitro puede
+  // elegir «Otra» y escribirlo). La ilegal es siempre el 7.5.5 (dos minutos al rival la
+  // primera; la segunda pierde la partida).
+  const TIPOS_ILEGAL = [
+    { id: "pieza", texto: "Movió una pieza como esa pieza no puede moverse" },
+    { id: "rey-jaque", texto: "Dejó o puso su propio rey en jaque" },
+    { id: "no-salio-jaque", texto: "No salió de un jaque" },
+    { id: "enroque", texto: "Enroque ilegal" },
+    { id: "captura", texto: "Captura ilegal (de su propia pieza o de una casilla que no corresponde)" },
+    { id: "promocion", texto: "Peón en la última fila sin promover a una pieza válida" },
+    { id: "turno", texto: "Jugó fuera de turno o dos jugadas seguidas" },
+    { id: "otra", texto: "Otra (escribir qué pasó)" },
+  ];
+  const TIPOS_IRREGULARIDAD = [
+    { id: "toque", texto: "Tocó una pieza y no la movió (pieza tocada)", articulo: "4.3" },
+    { id: "componer", texto: "Arregló piezas sin decir «compongo»", articulo: "4.2" },
+    { id: "planilla", texto: "No anota la partida en la planilla", articulo: "8.1" },
+    { id: "tablas", texto: "Ofreció tablas de forma incorrecta", articulo: "9.2" },
+    { id: "celular", texto: "Celular o aparato electrónico sonó o lo tenía encendido", articulo: "11.3.2" },
+    { id: "ruido", texto: "Molestó al rival o hizo ruido" },
+    { id: "salio", texto: "Salió del área de juego sin permiso" },
+    { id: "ayuda", texto: "Recibió ayuda o habló con otras personas durante la partida" },
+    { id: "reloj", texto: "Usó mal el reloj (con la otra mano, golpeándolo, sin soltar la pieza)" },
+    { id: "otra", texto: "Otra (escribir qué pasó)" },
+  ];
+  // Lo que se anota en el registro de una ilegal o irregularidad elegida de la lista.
+  function textoTipo(lista, id, nota) {
+    const t = lista.find((x) => x.id === id);
+    if (!t) return null;
+    const n = String(nota || "").trim();
+    if (id === "otra" && !n) return null;
+    return { texto: (id === "otra" ? "Otra: " + n : t.texto + (n ? ". " + n : "")), articulo: t.articulo || "" };
+  }
+
+  // «22, 24 a 26, 30»: las mesas juntas en rangos para leerlas de un vistazo.
+  function listaMesas(mesas) {
+    const m = [...new Set(mesas)].sort((a, b) => a - b);
+    const out = [];
+    for (let i = 0; i < m.length;) {
+      let j = i;
+      while (j + 1 < m.length && m[j + 1] === m[j] + 1) j++;
+      out.push(j - i >= 2 ? m[i] + " a " + m[j] : m.slice(i, j + 1).join(", "));
+      i = j + 1;
+    }
+    return out.join(", ");
+  }
+
+  // El resumen de la ronda: una fila por enlace activo con lo que le queda. `progreso` son
+  // las filas de centroamericano_progreso; `finales`, las de centroamericano_finales (sin
+  // reabrir). Solo cuenta la ronda más alta con datos (la que está en juego).
+  function resumenRonda(asignaciones, progreso, finales, ahora, listas) {
+    const activas = asignaciones.filter((a) => estadoAsignacion(a, ahora) === "activo");
+    const ronda = Math.max(0, ...progreso.map((p) => p.ronda));
+    return activas.map((a) => {
+      const p = progreso.find((x) => x.asignacion_id === a.id && x.ronda === ronda) || null;
+      const f = finales.find((x) => x.asignacion_id === a.id && x.ronda === ronda && !x.reabierta) || null;
+      const lista = (listas || []).filter((x) => x.asignacion_id === a.id && x.ronda === ronda).length;
+      const total = p ? p.total : (a.mesa_hasta - a.mesa_desde + 1);
+      const quedan = p ? p.total - p.con_resultado : null;
+      return {
+        id: a.id, arbitro: a.arbitro, tnr: a.tnr, mesa_desde: a.mesa_desde, mesa_hasta: a.mesa_hasta, ronda: p ? p.ronda : ronda,
+        total, quedan, con_resultado: p ? p.con_resultado : null, pendientes: p ? p.pendientes : [], actualizado: p ? p.actualizado : null,
+        finalizada: f ? f.finalizada_en : null, sinDatos: !p, lista,
+        estado: f ? "finalizada" : !p ? "sin-datos" : quedan === 0 ? "termino" : "en-curso",
+      };
+    });
+  }
+
+  // A dónde puede ir a ayudar quien terminó: los que más mesas les quedan, primero los de su
+  // mismo torneo (suelen compartir sala). Le toca la mitad de lo que le queda al otro, desde
+  // el final de su lista (así no se pisan: él sigue desde el principio).
+  function sugerirAyuda(quien, filas) {
+    return filas
+      .filter((f) => f.id !== quien.id && f.estado === "en-curso" && f.quedan > 0)
+      .map((f) => {
+        const mitad = Math.ceil(f.pendientes.length / 2);
+        return { id: f.id, arbitro: f.arbitro, tnr: f.tnr, quedan: f.quedan, mesas: f.pendientes.slice(f.pendientes.length - mitad), mismoTorneo: f.tnr === quien.tnr };
+      })
+      .sort((a, b) => (b.mismoTorneo - a.mismoTorneo) || (b.quedan - a.quedan) || (a.id < b.id ? -1 : 1))
+      .slice(0, 3);
+  }
+
+  // El aviso que se le manda a quien terminó, con la sugerencia elegida.
+  function textoSugerencia(s, nombreTorneo) {
+    return "Terminaste tus mesas, gracias. Ve a ayudar a " + s.arbitro + " (" + nombreTorneo + "): le quedan " + s.quedan +
+      (s.quedan === 1 ? " mesa" : " mesas") + ". Toma la" + (s.mesas.length === 1 ? " mesa " : "s mesas ") + listaMesas(s.mesas) + ".";
+  }
+
+  const api = { ARTICULO_ILEGAL, FIN_DEL_TORNEO, marcasTexto, avisoIlegal, estadoMesa, estadoAsignacion, vencimiento, enlaceArbitro, textoWhatsapp, leerClaves, jugadoresMarcados, repartirMesas, leerRango, nombrePorDefinir, enLinea, hace, enviosAgrupados, TIPOS_ILEGAL, TIPOS_IRREGULARIDAD, textoTipo, listaMesas, resumenRonda, sugerirAyuda, textoSugerencia };
   if (enNode) module.exports = api;
   else raiz.CentroamericanoMesas = api;
 })(typeof self !== "undefined" ? self : this);

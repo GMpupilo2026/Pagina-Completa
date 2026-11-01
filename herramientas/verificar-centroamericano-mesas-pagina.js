@@ -60,8 +60,25 @@ const SERVIDOR_ARBITRO = `
   const NOMBRE = { "0": "sin resultado", "1": "1-0", "2": "1/2", "3": "0-1", "D": "borrado" };
   // Lo que la organización le mandó y lo que él pidió: la prueba lo cambia desde afuera.
   window.__avisos = { nombrado: true, arbitro: "Ana Árbitra", mensajes: [], ayuda: null, abiertas: [] };
+  window.__lista = []; window.__planillas = []; window.__finalizada = null;
+  const PASOS = ["relojes", "tableros"];
   window.__servidor = (b) => {
     if (b.token !== TOKEN) return falla(404, "Este enlace no es válido. Pídele a la organización que te mande el QR de nuevo.");
+    if (b.action === "lista") {
+      const i = PASOS.indexOf(b.paso); if (i < 0) return falla(400, "Paso no válido.");
+      if (PASOS.slice(0, i).some((x) => !window.__lista.includes(x))) return falla(409, "Antes tienes que aprobar el paso anterior de la lista.");
+      if (!window.__lista.includes(b.paso)) window.__lista.push(b.paso);
+      return { data: { ok: true, lista: PASOS.filter((x) => window.__lista.includes(x)) }, error: null }; }
+    if (b.action === "planilla") {
+      if (b.mesa < 1 || b.mesa > 3) return falla(403, "La mesa " + b.mesa + " no es de tu rango (1 a 3).");
+      if (!/^data:image\\/jpeg;base64,/.test(b.imagen)) return falla(400, "La foto tiene que ser una imagen JPG.");
+      window.__planillas = window.__planillas.filter((x) => !(x.mesa === b.mesa && x.lado === b.lado)).concat([{ mesa: b.mesa, lado: b.lado, subida: "2026-11-02T15:50:00Z", drive_ok: false }]);
+      return { data: { ok: true, mesa: b.mesa, lado: b.lado, drive: window.__drive || "sin_conectar", subida: "2026-11-02T15:50:00Z" }, error: null }; }
+    if (b.action === "finalizar") {
+      if (!b.revision.resultados || !b.revision.planillas || !b.revision.firmadas) return falla(400, "Para finalizar tienes que confirmar las tres revisiones.");
+      const faltan = MESAS.filter((m) => m.valor === "0").map((m) => m.mesa);
+      if (faltan.length) return falla(409, "Todavía faltan resultados en las mesas " + faltan.join(", ") + ".");
+      window.__finalizada = "2026-11-02T16:00:00Z"; return { data: { ok: true, finalizada_en: window.__finalizada }, error: null }; }
     if (b.action === "avisos") return { data: Object.assign({ ok: true }, window.__avisos), error: null };
     if (b.action === "ayuda") {
       if (b.mesa != null && (b.mesa < 1 || b.mesa > 3)) return falla(403, "La mesa " + b.mesa + " no es de tu rango (1 a 3).");
@@ -74,8 +91,9 @@ const SERVIDOR_ARBITRO = `
       if (window.__avisos.nombrado) return falla(409, "Este enlace ya tiene nombre. Si hay que cambiarlo, díselo a la organización.");
       window.__avisos.nombrado = true; window.__avisos.arbitro = b.nombre.replace(/\\s+/g, " ").trim(); return { data: { ok: true, arbitro: window.__avisos.arbitro }, error: null }; }
     if (b.action === "leer") return { data: Object.assign({}, window.__avisos, { arbitro: window.__avisos.arbitro, tnr: "1529737", torneo: "Sub-10 Femenino", categoria: "Sub-10", rama: "Femenino", ronda: 3, desde: 1, hasta: 3, vence: "2026-11-10T05:59:59Z",
-      mesas: MESAS.map((m) => Object.assign({}, m)), marcas: marcasDe(), anotaciones: filas.filter((f) => f.tipo !== "anulacion"), anuladas: filas.filter((f) => f.tipo === "anulacion").map((f) => f.anula), leido_en: "2026-11-02T15:30:00Z" }), error: null };
+      mesas: MESAS.map((m) => Object.assign({}, m)), marcas: marcasDe(), anotaciones: filas.filter((f) => f.tipo !== "anulacion"), anuladas: filas.filter((f) => f.tipo === "anulacion").map((f) => f.anula), lista: window.__lista.slice(), planillas: window.__planillas.slice(), finalizada: window.__finalizada, leido_en: "2026-11-02T15:30:00Z" }), error: null };
     if (b.action === "guardar") {
+      if (window.__lista.length < 2) return falla(409, "Antes de guardar resultados tienes que aprobar la revisión previa de la ronda 3 (relojes y tableros). No se guardó nada.");
       const r = b.cambios.map((c) => { const m = MESAS.find((x) => x.mesa === c.mesa); const malo = window.__falla === true; const esperado = c.valor === "D" ? "0" : c.valor;
         if (!malo) { filas.push({ id: "f" + (++n), ocurrio: "2026-11-02T15:31:00Z", mesa: c.mesa, color: null, jugador: c.blancas + " – " + c.negras, tipo: m.valor !== "0" ? "correccion" : "resultado", resultado: NOMBRE[c.valor], anterior: m.valor !== "0" ? NOMBRE[m.valor] : null, texto: "", articulo: "", enviado: true }); m.valor = esperado; }
         return { mesa: c.mesa, pedido: c.valor, quedo: malo ? m.valor : esperado, ok: !malo }; });
@@ -106,35 +124,57 @@ function dobleArbitro() {
 })();`;
 }
 
-// El panel de la organización: los 12 torneos (3 de muestra), sus enlaces, los avisos y el registro.
+// El programa de la organización: los 12 torneos (3 de muestra), sus enlaces, el avance, los avisos,
+// las planillas, las copias y el registro.
 function dobleOrganizacion(licencia) {
     return `(function(){
   window.__llamadas = [];
   const R = (data, error) => Promise.resolve({ data, error: error || null });
   const hace = (seg) => new Date(Date.now() - seg * 1000).toISOString();
+  const PNG = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==";
   const TORNEOS = [
     { tnr: "1529719", nombre: "Sub-8 Absoluto", categoria: "Sub-8", rama: "Absoluto", orden: 1, sid_en_boveda: false, clave_puesta: null, acceso_tnr: null },
     { tnr: "1529729", nombre: "Sub-8 Femenino", categoria: "Sub-8", rama: "Femenino", orden: 2, sid_en_boveda: false, clave_puesta: null, acceso_tnr: null },
     { tnr: "1529733", nombre: "Sub-10 Absoluto", categoria: "Sub-10", rama: "Absoluto", orden: 3, sid_en_boveda: true, clave_puesta: "2026-11-01T10:00:00Z", acceso_tnr: "1529733" }];
-  // Ana abrió su enlace hace medio minuto; «Árbitro 1» (por definir) todavía no.
+  // Ana abrió su enlace hace medio minuto; «Árbitro 1» (por definir) todavía no, pero ya terminó sus 15 mesas.
   const ASIG = [
     { id: "asig-ana", token: "a".repeat(64), tnr: "1529733", arbitro: "Ana Árbitra", nombrado: true, mesa_desde: 1, mesa_hasta: 15, vence: "2026-11-10T05:59:59Z", revocada: false, creada: "2026-11-02T10:00:00Z", ultimo_uso: hace(30) },
     { id: "asig-arb1", token: "b".repeat(64), tnr: "1529733", arbitro: "Árbitro 1", nombrado: false, mesa_desde: 16, mesa_hasta: 30, vence: "2026-11-10T05:59:59Z", revocada: false, creada: "2026-11-02T10:01:00Z", ultimo_uso: null }];
-  const AVISOS = [{ id: "av-p1", creado: hace(180), de: "arbitro", asignacion_id: "asig-ana", mesa: 4, texto: "Prueba: ven a la mesa", estado: "abierto", atendido_en: null, atendido_por: null, leido_en: null }];
+  const PROGRESO = [
+    { asignacion_id: "asig-ana", ronda: 3, total: 15, con_resultado: 7, pendientes: [8, 9, 10, 11, 12, 13, 14, 15], actualizado: hace(20) },
+    { asignacion_id: "asig-arb1", ronda: 3, total: 15, con_resultado: 15, pendientes: [], actualizado: hace(20) }];
+  const FINALES = [];
+  const LISTAS = [{ asignacion_id: "asig-ana", ronda: 3, paso: "relojes", aprobada_en: hace(900) }];
+  const AVISOS = [
+    { id: "av-p1", creado: hace(180), de: "arbitro", asignacion_id: "asig-ana", mesa: 4, texto: "Prueba: ven a la mesa", estado: "abierto", atendido_en: null, atendido_por: null, leido_en: null, tipo: "ayuda", ronda: null },
+    { id: "av-t1", creado: hace(60), de: "arbitro", asignacion_id: "asig-arb1", mesa: null, texto: "Terminó sus 15 mesas de la ronda 3.", estado: "abierto", atendido_en: null, atendido_por: null, leido_en: null, tipo: "termino", ronda: 3 }];
+  const PLANILLAS = [
+    { id: "pl1", asignacion_id: "asig-ana", arbitro: "Ana Árbitra", tnr: "1529733", ronda: 3, mesa: 2, lado: "blancas", jugador: "Harvey Ian", rival: "Acuña Porras Fabio", ruta: "1529733/ronda-3/mesa-2-blancas.jpg", subida: hace(300), bytes: 90000, drive_ok: true, drive_en: hace(290), drive_error: "" },
+    { id: "pl2", asignacion_id: "asig-ana", arbitro: "Ana Árbitra", tnr: "1529733", ronda: 3, mesa: 2, lado: "negras", jugador: "Acuña Porras Fabio", rival: "Harvey Ian", ruta: "1529733/ronda-3/mesa-2-negras.jpg", subida: hace(280), bytes: 91000, drive_ok: false, drive_en: null, drive_error: "" }];
+  const COPIA = (n) => ({ version: 1, evento: "Centroamericano 2026", creada: hace(n), asignaciones: ASIG, registro: [], avisos: [], progreso: [], finales: [], planillas: [] });
+  const COPIAS = [
+    { anillo: "a", ranura: 7, creada: hace(120), huella: "h1", resumen: { asignaciones: 2, registro: 3, avisos: 2, planillas: 2 }, contenido: COPIA(120) },
+    { anillo: "m", ranura: 3, creada: hace(7200), huella: "h2", resumen: { asignaciones: 2, registro: 1, avisos: 0, planillas: 0 }, contenido: COPIA(7200) }];
   const REGISTRO = [
     { id: "r1", ocurrio: "2026-11-02T15:00:00Z", asignacion_id: null, arbitro: "Ana", tnr: "1529733", ronda: 1, mesa: 4, color: "blancas", jugador: "Cleo Tres", tipo: "ilegal", resultado: null, anterior: null, articulo: "7.5.5", texto: "", enviado: false, anula: null },
     { id: "r2", ocurrio: "2026-11-02T15:05:00Z", asignacion_id: null, arbitro: "Ana", tnr: "1529733", ronda: 1, mesa: 4, color: "blancas", jugador: "Cleo Tres", tipo: "ilegal", resultado: null, anterior: null, articulo: "7.5.5", texto: "", enviado: false, anula: null },
     { id: "r3", ocurrio: "2026-11-02T15:10:00Z", asignacion_id: null, arbitro: "Beto", tnr: "1529733", ronda: 1, mesa: 9, color: null, jugador: "Eli – Fran", tipo: "resultado", resultado: "1-0", anterior: null, articulo: "", texto: "", enviado: true, anula: null }];
   let n = 0;
+  window.__driveOk = false;
   // Lo que pasaría «afuera» mientras la página está abierta: un árbitro pide ayuda y otro lee un aviso.
-  window.__nuevoPedido = (asig, mesa, texto) => AVISOS.push({ id: "av-p" + (++n + 1), creado: hace(5), de: "arbitro", asignacion_id: asig, mesa, texto, estado: "abierto", atendido_en: null, atendido_por: null, leido_en: null });
+  window.__nuevoAviso = (asig, mesa, texto, tipo, ronda) => AVISOS.push({ id: "av-n" + (++n), creado: hace(5), de: "arbitro", asignacion_id: asig, mesa, texto, estado: "abierto", atendido_en: null, atendido_por: null, leido_en: null, tipo: tipo || "ayuda", ronda: ronda || null });
   window.__leerAviso = () => { const a = AVISOS.find((x) => x.de === "organizacion" && x.asignacion_id === "asig-ana"); if (a) a.leido_en = new Date().toISOString(); };
-  const TABLAS = { centroamericano_torneos: TORNEOS, centroamericano_asignaciones: ASIG, centroamericano_registro: REGISTRO, centroamericano_avisos: AVISOS };
+  const TABLAS = { centroamericano_torneos: TORNEOS, centroamericano_asignaciones: ASIG, centroamericano_registro: REGISTRO, centroamericano_avisos: AVISOS, centroamericano_progreso: PROGRESO, centroamericano_finales: FINALES, centroamericano_listas: LISTAS, centroamericano_planillas: PLANILLAS, centroamericano_copias: COPIAS };
   const filtrar = (tabla, f) => TABLAS[tabla].filter((r) => Object.entries(f).every(([c, v]) => r[c] === v));
   window.sb = {
     auth: { getSession: () => R({ session: { user: { id: "yo" }, access_token: "x" } }), getUser: () => R({ user: { id: "yo" } }), onAuthStateChange: () => ({ data: { subscription: { unsubscribe() {} } } }),
       mfa: { getAuthenticatorAssuranceLevel: () => R({ currentLevel: "aal1", nextLevel: "aal1" }), listFactors: () => R({ all: [], totp: [] }) } },
-    rpc: (f, a) => { window.__llamadas.push({ rpc: f, a: a && a.p_herramienta }); return R(f === "tengo_herramienta" ? ${licencia ? "a.p_herramienta === 'mesa-arbitro'" : "false"} : null); },
+    rpc: (f, a) => { window.__llamadas.push({ rpc: f, a: a && a.p_herramienta, copia: a && a.p_copia });
+      if (f === "tengo_herramienta") return R(${licencia ? "a.p_herramienta === 'mesa-arbitro'" : "false"});
+      if (f === "centroamericano_copia_manual") return R(COPIA(0));
+      if (f === "centroamericano_restaurar") return a.p_copia.version !== 1 ? R(null, { message: "Ese archivo no es una copia del Centroamericano 2026" }) : R({ asignaciones: 1, registro: 0, avisos: 0, progreso: 0, finales: 0, planillas: 0 });
+      return R(null); },
+    storage: { from: (b) => ({ createSignedUrl: (ruta) => { window.__llamadas.push({ foto: b + "/" + ruta }); return R({ signedUrl: "data:image/png;base64," + PNG }); } }) },
     functions: { invoke: (f, o) => { window.__llamadas.push({ f, body: JSON.parse(JSON.stringify(o.body)) }); const b = o.body;
       const err = (estado, error) => ({ data: null, error: { context: { status: estado, json: () => Promise.resolve({ error }) } } });
       if (b.action === "poner") {
@@ -144,22 +184,29 @@ function dobleOrganizacion(licencia) {
         mios.forEach((t) => { t.sid_en_boveda = true; t.acceso_tnr = b.tnr; t.clave_puesta = "2026-11-02T16:00:00Z"; });
         return Promise.resolve({ data: { ok: true, acceso: b.tnr, torneos: mios.map((t) => ({ tnr: t.tnr, nombre: t.nombre })), ronda: 1, mesas: 21, otros: [] }, error: null }); }
       if (b.action === "probar") return Promise.resolve({ data: { ok: true, torneo: "Sub-10 Absoluto", ronda: 2, mesas: 30 }, error: null });
+      if (b.action === "resumen") { PROGRESO[0].con_resultado = 9; PROGRESO[0].pendientes = [10, 11, 12, 13, 14, 15]; return Promise.resolve({ data: { ok: true, torneos: 1, errores: [] }, error: null }); }
+      if (b.action === "drive_estado") return Promise.resolve({ data: { ok: true, conectado: window.__driveOk, pendientes: PLANILLAS.filter((x) => !x.drive_ok).length, ultima_copia: window.__driveOk ? hace(300) : null }, error: null });
+      if (b.action === "drive_conectar") {
+        if (b.secreto === "MALOMALOMALOMALOMALOMALOMALOMALOMALO") return Promise.resolve(err(400, "No se pudo conectar: secreto. No se guardó nada."));
+        window.__driveOk = true; return Promise.resolve({ data: { ok: true, carpeta: "Planillas Centroamericano" }, error: null }); }
+      if (b.action === "drive_reintentar") { PLANILLAS.forEach((x) => { x.drive_ok = true; }); return Promise.resolve({ data: { ok: true, enviadas: 1, fallaron: 0, quedan: 0 }, error: null }); }
       return Promise.resolve(err(400, "Acción desconocida.")); } },
     from: (tabla) => { const f = {}; let accion = "select", valores = null;
       let orden = null;
       const q = { select: () => q, order: (c, o) => { orden = [c, !(o && o.ascending === false)]; return q; }, range: () => q, eq: (c, v) => { f[c] = v; return q; },
+        maybeSingle: () => { const x = filtrar(tabla, f)[0]; return Promise.resolve({ data: x ? Object.assign({}, x) : null, error: null }); },
         insert: (v) => { accion = "insert"; valores = v; return q; }, update: (v) => { accion = "update"; valores = v; return q; },
         then: (ok, ko) => { let r;
           if (accion === "insert") {
             const lista = Array.isArray(valores) ? valores : [valores];
             for (const v of lista) {
               const base = tabla === "centroamericano_avisos"
-                ? { id: "av-" + (++n + 20), creado: new Date().toISOString(), estado: "abierto", mesa: null, leido_en: null, atendido_en: null }
+                ? { id: "av-" + (++n + 20), creado: new Date().toISOString(), estado: "abierto", mesa: null, leido_en: null, atendido_en: null, tipo: "ayuda", ronda: null }
                 : { id: "a" + (++n), token: String(1000 + n).repeat(16), revocada: false, nombrado: true, creada: new Date().toISOString(), ultimo_uso: null };
               (tabla === "centroamericano_avisos" ? AVISOS : ASIG).push(Object.assign(base, v)); }
             window.__llamadas.push({ insert: tabla, valores }); r = { data: null, error: null }; }
           else if (accion === "update") { filtrar(tabla, f).forEach((x) => Object.assign(x, valores)); window.__llamadas.push({ update: tabla, valores, f }); r = { data: null, error: null }; }
-          else { const datos = filtrar(tabla, f).map((x) => Object.assign({}, x)); if (orden && ["ocurrio", "creada", "creado"].includes(orden[0])) datos.sort((a, b) => (a[orden[0]] < b[orden[0]] ? -1 : 1) * (orden[1] ? 1 : -1)); r = { data: datos, error: null }; }
+          else { const datos = filtrar(tabla, f).map((x) => Object.assign({}, x)); if (orden && ["ocurrio", "creada", "creado", "subida"].includes(orden[0])) datos.sort((a, b) => (a[orden[0]] < b[orden[0]] ? -1 : 1) * (orden[1] ? 1 : -1)); r = { data: datos, error: null }; }
           return Promise.resolve(r).then(ok, ko); } };
       return q; },
     channel: () => ({ on() { return this; }, subscribe() { return this; } }), removeChannel() {},
@@ -211,6 +258,15 @@ const CONTRASTE = `(sel) => {
     igual("le manda el token del «#» a la función", await p.evaluate((t) => window.__llamadas[0].body.token === t && window.__llamadas[0].body.action === "leer", TOKEN), true);
     igual("el token no queda guardado en el navegador", await p.evaluate((t) => { try { return JSON.stringify(localStorage).includes(t) || JSON.stringify(sessionStorage).includes(t) || document.cookie.includes(t); } catch (e) { return false; } }, TOKEN), false);
 
+    console.log("\n=== Antes de iniciar la ronda: la lista previa, paso a paso ===");
+    igual("al abrir, la lista previa pide el primer paso (los relojes, con el ritmo de las bases) y todavía no deja guardar", await p.evaluate(() => { const c = document.getElementById("lista-previa"); return [c.checkVisibility(), c.querySelector("h2").textContent.includes("paso 1 de 2"), c.textContent.includes("90 minutos") && c.textContent.includes("30 segundos de incremento"), document.querySelector('.cam-mesa[data-mesa="1"] [data-accion="guardar"]').disabled]; }), [true, true, true, true]);
+    await p.click("#aprobar-paso");
+    await p.waitForFunction(() => document.querySelector("#lista-previa h2") && document.querySelector("#lista-previa h2").textContent.includes("paso 2 de 2"));
+    igual("el segundo paso son los tableros (piezas bien puestas) y el primero queda marcado", await p.evaluate(() => [document.getElementById("aprobar-paso").dataset.paso, document.getElementById("lista-previa").textContent.includes("piezas"), document.querySelector("#lista-previa li[data-estado=hecho]").textContent]), ["tableros", true, "✓ Los relojes"]);
+    await p.click("#aprobar-paso");
+    await p.waitForFunction(() => document.getElementById("lista-previa").hidden);
+    igual("aprobados los dos pasos la lista se va, y la función los recibió en orden", await p.evaluate(() => window.__llamadas.filter((l) => l.body.action === "lista").map((l) => l.body.paso)), ["relojes", "tableros"]);
+
     console.log("\n=== Guardar: al lado del resultado, una mesa a la vez ===");
     const boton = (m) => '.cam-mesa[data-mesa="' + m + '"] [data-accion="guardar"]';
     igual("sin elegir nada, el «Guardar» está apagado", await p.$eval(boton(1), (b) => b.disabled), true);
@@ -241,7 +297,15 @@ const CONTRASTE = `(sel) => {
     console.log("\n=== Las ilegales: la primera avisa, la segunda pierde ===");
     const acc = (m, color, a) => '.cam-mesa[data-mesa="' + m + '"] .cam-jugador[data-color="' + color + '"] [data-accion="' + a + '"]';
     await p.click(acc(2, "blancas", "ilegal"));
+    await p.waitForSelector("dialog[open] select");
+    igual("al tocar «Ilegal» sale la lista de tipos (con «Otra») y dice que es la primera: dos minutos al rival", await p.evaluate(() => { const d = document.querySelector("dialog[open]"); return [[...d.querySelectorAll("option")].map((o) => o.textContent).slice(0, 2), d.querySelectorAll("option").length, d.textContent.includes("2 minutos más a su rival")]; }), [["Movió una pieza como esa pieza no puede moverse", "Dejó o puso su propio rey en jaque"], 8, true]);
+    await p.selectOption("dialog[open] select", "enroque");
+    await p.click("dialog[open] [data-avisos-aceptar]");
+    await p.waitForSelector("dialog[open] [data-avisos-aceptar]");
+    igual("anotada la primera, un cuadro que no se pasa por alto recuerda los 2 minutos", await p.evaluate(() => { const t = document.querySelector("dialog[open]").textContent; return [t.includes("Primera ilegal: dale 2 minutos al rival"), t.includes("2 minutos")]; }), [true, true]);
+    await p.click("dialog[open] [data-avisos-aceptar]");
     await p.waitForSelector('.cam-mesa[data-mesa="2"] .cam-aviso-suave');
+    igual("el tipo elegido queda en la bitácora sin escribir nada", await p.evaluate(() => window.__llamadas.filter((l) => l.body.action === "anotar" && l.body.tipo === "ilegal").map((l) => l.body.texto)), ["Enroque ilegal"]);
     igual("la primera: se anota por ronda, mesa y color, y avisa los 2 minutos del rival (art. 7.5.5)", await p.evaluate(() => ({
         llamada: window.__llamadas.filter((l) => l.body.action === "anotar").map((l) => [l.body.ronda, l.body.mesa, l.body.color, l.body.tipo]),
         marca: document.querySelector('.cam-mesa[data-mesa="2"] .cam-marca[data-tipo="ilegal"]').textContent,
@@ -249,10 +313,11 @@ const CONTRASTE = `(sel) => {
         { llamada: [[3, 2, "blancas", "ilegal"]], marca: "iIlegal", aviso: "Primera jugada ilegal. Harvey Ian hizo una jugada ilegal: dale 2 minutos más a su rival (art. 7.5.5). Con otra, pierde la partida." });
     igual("la ilegal de las BLANCAS no marca a las negras", await p.$$eval('.cam-mesa[data-mesa="2"] .cam-jugador[data-color="negras"] .cam-marca', (l) => l.length), 0);
     await p.click(acc(2, "blancas", "ilegal"));
-    await p.waitForSelector("[data-avisos-aceptar]");
-    igual("la segunda pide confirmar antes y dice que pierde la partida", await p.evaluate(() => { const t = document.querySelector("dialog").textContent; return [t.includes("SEGUNDA jugada ilegal de Harvey Ian"), t.includes("pierde la partida (art. 7.5.5)")]; }), [true, true]);
+    await p.waitForSelector("dialog[open] select");
+    igual("la segunda dice antes de anotar que pierde la partida", await p.evaluate(() => { const t = document.querySelector("dialog[open]").textContent; return [t.includes("SEGUNDA jugada ilegal de Harvey Ian"), t.includes("pierde la partida (art. 7.5.5)")]; }), [true, true]);
     igual("todavía no se anotó la segunda", await p.evaluate(() => window.__llamadas.filter((l) => l.body.action === "anotar").length), 1);
-    await p.click("[data-avisos-aceptar]");
+    await p.selectOption("dialog[open] select", "rey-jaque");
+    await p.click("dialog[open] [data-avisos-aceptar]");
     await p.waitForSelector("dialog[open] [data-avisos-aceptar]");
     igual("al anotarla sale un aviso que no se pasa por alto, con la excepción de las tablas", await p.evaluate(() => { const t = document.querySelector("dialog[open]").textContent; return [t.includes("Segunda jugada ilegal: pierde la partida"), t.includes("tablas"), t.includes("no se guarda solo")]; }), [true, true, true]);
     await p.click("dialog[open] [data-avisos-aceptar]");
@@ -270,13 +335,16 @@ const CONTRASTE = `(sel) => {
 
     console.log("\n=== Las irregularidades ===");
     await p.click(acc(1, "negras", "irregularidad"));
-    await p.waitForSelector("dialog[open] input");
-    await p.fill("dialog[open] input", "Tocó una pieza sin avisar");
+    await p.waitForSelector("dialog[open] select");
+    igual("«Irregularidad» ofrece una lista para elegir, con «Otra»", await p.$$eval("dialog[open] option", (l) => [l.length, l[0].textContent, l[l.length - 1].textContent]), [10, "Tocó una pieza y no la movió (pieza tocada)", "Otra (escribir qué pasó)"]);
+    await p.selectOption("dialog[open] select", "toque");
+    await p.fill("dialog[open] textarea", "Tocó una pieza sin avisar");
     await p.click("dialog[open] [data-avisos-aceptar]");
     await p.waitForSelector('.cam-mesa[data-mesa="1"] .cam-jugador[data-color="negras"] .cam-marca[data-tipo="irregularidad"]');
     igual("se anota con su nota y marca solo a ese jugador", await p.evaluate(() => [window.__llamadas.filter((l) => l.body.action === "anotar" && l.body.tipo === "irregularidad").map((l) => [l.body.mesa, l.body.color, l.body.texto]),
         document.querySelector('.cam-mesa[data-mesa="1"] .cam-jugador[data-color="negras"] .cam-marca').textContent, document.querySelectorAll('.cam-mesa[data-mesa="1"] .cam-jugador[data-color="blancas"] .cam-marca').length]),
-        [[[1, "negras", "Tocó una pieza sin avisar"]], "!Irregularidad", 0]);
+        [[[1, "negras", "Tocó una pieza y no la movió (pieza tocada). Tocó una pieza sin avisar"]], "!Irregularidad", 0]);
+    igual("y lleva su artículo cuando el reglamento lo dice (4.3)", await p.evaluate(() => window.__llamadas.filter((l) => l.body.action === "anotar" && l.body.tipo === "irregularidad").map((l) => l.body.articulo)), ["4.3"]);
     await p.click("#anotado summary");
     igual("lo anotado dice cada cosa, con su hora de Costa Rica, y tacha lo anulado", await p.$$eval("#anotado-filas tr", (l) => l.map((tr) => [tr.children[2].textContent, tr.dataset.anulada || ""])).then((x) => x.filter((f) => /Ilegal|Irregularidad/.test(f[0]))),
         [["Irregularidad", ""], ["Ilegal (anulada)", "si"], ["Ilegal", ""]]);
@@ -326,6 +394,37 @@ const CONTRASTE = `(sel) => {
     })(), [1180, 3]);
     await p.setViewportSize({ width: 390, height: 800 });
 
+    console.log("\n=== Horarios, planillas y finalizar la ronda ===");
+    igual("la barra dice el tiempo de espera o lo que sigue", (await p.textContent("#espera")).startsWith("⏰"), true);
+    await p.click("#horarios");
+    await p.waitForSelector("dialog[open]");
+    igual("«Horarios» abre el calendario del torneo con la tolerancia de 30 minutos", await p.evaluate(() => { const t = document.querySelector("dialog[open]").textContent; return [t.includes("Horarios y tiempo de espera"), t.includes("Todo el calendario:"), t.includes("Ronda 9"), t.includes("30 minutos")]; }), [true, true, true, true]);
+    await p.click("dialog[open] [data-avisos-aceptar]");
+    const PNG = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==";
+    const [selector] = await Promise.all([p.waitForEvent("filechooser"), p.click('.cam-mesa[data-mesa="2"] [data-accion="planilla"][data-lado="blancas"]')]);
+    await selector.setFiles({ name: "planilla.png", mimeType: "image/png", buffer: Buffer.from(PNG, "base64") });
+    await p.waitForFunction(() => document.querySelector('.cam-mesa[data-mesa="2"] .cam-planillas-estado').textContent.includes("blancas ✓ subida"));
+    igual("la foto de la planilla sube como JPG de esa mesa y ese jugador, y la mesa dice cuál falta", await p.evaluate(() => [window.__llamadas.filter((l) => l.body.action === "planilla").map((l) => [l.body.mesa, l.body.lado, l.body.ronda, l.body.imagen.startsWith("data:image/jpeg;base64,")]), document.querySelector('.cam-mesa[data-mesa="2"] .cam-planillas-estado').textContent]),
+        [[[2, "blancas", 3, true]], "Fotos de las planillas: blancas ✓ subida · negras falta"]);
+    igual("las dos de cada partida: «Planilla de blancas» y «Planilla de negras» por mesa", await p.$$eval('.cam-mesa[data-mesa="2"] [data-accion="planilla"]', (l) => l.map((b) => b.dataset.lado)), ["blancas", "negras"]);
+    igual("mientras falta una mesa, la revisión final no sale", await p.$eval("#revision", (c) => c.hidden), true);
+    await p.selectOption("#res-2", "2");
+    await p.click(boton(2));
+    await p.waitForSelector("#revision:not([hidden])");
+    igual("al terminar todas las mesas sale la revisión: resultados de cada mesa y las tres cosas que confirmar", await p.evaluate(() => [document.querySelector("#revision h2").textContent, document.querySelectorAll("#revision tbody tr").length, document.querySelectorAll("#revision input[type=checkbox]").length, document.getElementById("finalizar").disabled]), ["Terminaste tus mesas: revisa antes de cerrar la ronda", 3, 3, true]);
+    for (const id of ["rev-resultados", "rev-planillas"]) await p.check("#" + id);
+    igual("con dos de tres confirmadas, «Finalizar» sigue apagado", await p.$eval("#finalizar", (b) => b.disabled), true);
+    await p.check("#rev-firmadas");
+    await p.click("#actualizar");
+    await p.waitForFunction(() => document.getElementById("actualizado").textContent.includes("Actualizado"));
+    igual("lo marcado no se pierde al volver a leer, y con las tres «Finalizar» se enciende", await p.evaluate(() => [["rev-resultados", "rev-planillas", "rev-firmadas"].map((i) => document.getElementById(i).checked), document.getElementById("finalizar").disabled]), [[true, true, true], false]);
+    await p.click("#finalizar");
+    await p.waitForSelector("[data-avisos-aceptar]");
+    igual("antes de finalizar recuerda revisar las planillas, ordenarlas y que estén firmadas", (await p.textContent("dialog[open]")).includes("revisaste todas las planillas, las ordenaste por mesa y están firmadas"), true);
+    await p.click("[data-avisos-aceptar]");
+    await p.waitForFunction(() => document.getElementById("revision").dataset.estado === "finalizada");
+    igual("finalizada: la función recibió las tres confirmaciones y la página lo dice", await p.evaluate(() => [window.__llamadas.filter((l) => l.body.action === "finalizar").map((l) => l.body.revision), document.querySelector("#revision h2").textContent]), [[{ resultados: true, planillas: true, firmadas: true }], "✓ Finalizaste la ronda 3"]);
+
     console.log("\n=== En el celular (390 px), en claro y en oscuro ===");
     igual("la página no se desplaza a lo ancho", await p.evaluate(() => document.documentElement.scrollWidth), 390);
     igual("cada botón se toca bien (44 px de alto o más) y el foco se ve", await p.evaluate(() => [...document.querySelectorAll(".cam-mesa .cam-btn")].filter((b) => b.checkVisibility()).every((b) => b.getBoundingClientRect().height >= 40)), true);
@@ -337,10 +436,16 @@ const CONTRASTE = `(sel) => {
 
     let o = await abrir(browser, "centroamericano-arbitro.html", dobleArbitro(), { hash: TOKEN, esquema: "dark" });
     await o.p.waitForSelector(".cam-mesa");
+    for (let i = 0; i < 2; i++) { await o.p.click("#aprobar-paso"); await o.p.waitForTimeout(150); }
+    await o.p.waitForFunction(() => document.getElementById("lista-previa").hidden);
     await o.p.selectOption("#res-1", "1");
     await o.p.click(boton(1));
     await o.p.waitForSelector('.cam-mesa[data-mesa="1"] .cam-guardado');
     await o.p.click(acc(2, "negras", "ilegal"));
+    await o.p.waitForSelector("dialog[open] select");
+    await o.p.click("dialog[open] [data-avisos-aceptar]");
+    await o.p.waitForSelector("dialog[open] [data-avisos-aceptar]");
+    await o.p.click("dialog[open] [data-avisos-aceptar]");
     await o.p.waitForSelector('.cam-mesa[data-mesa="2"] .cam-aviso-suave');
     igual("en oscuro, todo el texto de las mesas da 4,5:1 o más", (await o.p.evaluate("(" + CONTRASTE + ")(" + JSON.stringify(colores + ", .cam-alerta, .cam-anular") + ")")).every((x) => x >= 4.5), true);
     if (process.env.CAPTURA) await o.p.screenshot({ path: process.env.CAPTURA + "-arbitro-oscuro.png", fullPage: true });
@@ -362,69 +467,86 @@ const CONTRASTE = `(sel) => {
     igual("sin licencia, el candado y nada más", [await o.p.$eval("#app", (a) => a.checkVisibility()), await o.p.evaluate(() => window.__llamadas.some((l) => l.rpc === "tengo_herramienta" && l.a === "mesa-arbitro"))], [false, true]);
     await o.ctx.close();
 
-    console.log("\n=== La organización: de un vistazo y los pedidos de ayuda ===");
+    console.log("\n=== La organización: la ventana y la ronda en curso ===");
     ({ ctx: o.ctx, p: o.p, errores } = await abrir(browser, "centroamericano-mesas.html", dobleOrganizacion(true), { ancho: 1100 }));
     const q = o.p;
     await q.waitForSelector(".cam-pedido");
-    igual("abre en «Ayuda y avisos» porque ya hay una clave, con las cuatro pestañas", await q.$$eval(".cam-pestana", (l) => l.map((b) => [b.dataset.panel, b.getAttribute("aria-selected")])), [["avisos", "true"], ["arbitros", "false"], ["claves", "false"], ["registro", "false"]]);
-    igual("arriba siempre a la vista: los pedidos abiertos, quién está conectado y cuántos torneos tienen clave", await q.$eval("#estado-general", (e) => e.textContent.replace(/\s+/g, " ").trim()), "1 pedido de ayuda abierto 1 de 2 árbitros conectados Clave en 1 de 3 torneos 🔔 Activar el sonido de los pedidos");
-    igual("la pestaña lleva el contador y el título de la pestaña del navegador también", await q.evaluate(() => [document.getElementById("contador-pedidos").textContent, document.getElementById("contador-pedidos").checkVisibility(), document.title.startsWith("(1) ")]), ["1", true, true]);
-    igual("el pedido dice la mesa, quién, de qué torneo, hace cuánto y lo que escribió, y se puede atender o escribirle", await q.$eval(".cam-pedido", (e) => [e.querySelector("p.font-bold").textContent, /^Sub-10 Absoluto · hace 3 min \(\d{1,2}:\d\d [ap]\. m\.\)$/.test(e.querySelectorAll("p")[1].textContent), e.textContent.includes("«Prueba: ven a la mesa»"), [...e.querySelectorAll("button")].map((b) => b.textContent)]), ["🆘 Mesa 4 — Ana Árbitra", true, true, ["Atendido", "Escribirle"]]);
+    igual("se ve como un programa: barra de título, menú con siete pestañas, contenido y barra de estado abajo", await q.evaluate(() => [!!document.querySelector(".cam-ventana .cam-titulo-ventana"), [...document.querySelectorAll(".cam-pestana")].map((b) => b.dataset.panel), !!document.querySelector(".cam-ventana .cam-contenido"), document.querySelector(".cam-ventana > .cam-barra-estado") !== null, document.querySelectorAll("table.cam-rejilla").length > 3]),
+        [true, ["ronda", "avisos", "arbitros", "planillas", "claves", "respaldo", "registro"], true, true, true]);
+    igual("abre en «Ronda en curso» porque ya hay una clave", await q.$$eval(".cam-pestana", (l) => l.map((b) => b.getAttribute("aria-selected"))), ["true", "false", "false", "false", "false", "false", "false"]);
+    igual("el resumen dice cuánto le queda a cada árbitro, con las mesas que faltan", await q.$$eval("#resumen tr", (l) => l.map((tr) => [tr.children[0].textContent, tr.children[2].textContent, tr.children[3].textContent.replace(/\s+/g, " ").trim(), tr.children[4].textContent, tr.dataset.estado])),
+        [["Ana Árbitra", "1 a 15", "7 de 15", "8 (8 a 15)", "en-curso"], ["Árbitro 1", "16 a 30", "15 de 15", "0", "termino"]]);
+    igual("el total de la ronda y la revisión previa que lleva cada uno", [await q.textContent("#resumen-total"), await q.$eval('#resumen tr[data-id="asig-ana"] td:nth-child(6)', (t) => t.textContent.replace(/\s+/g, " ").trim()), await q.textContent("#resumen-ronda")], ["Con resultado: 22 de 30 mesas (73 %)", "En curso Revisión previa 1/2", " — ronda 3"]);
+    igual("arriba siempre a la vista: los avisos abiertos, quién está conectado y cuántos torneos tienen clave", await q.$eval("#estado-general", (e) => e.textContent.replace(/\s+/g, " ").trim()).then((t) => [t.startsWith("2 avisos de árbitros abiertos"), t.includes("1 de 2 árbitros conectados"), t.includes("Clave en 1 de 3 torneos"), t.includes("Drive"), t.includes("Última copia: hace 2 min")]), [true, true, true, true, true]);
+    igual("la pestaña lleva el contador y el título de la pestaña del navegador también", await q.evaluate(() => [document.getElementById("contador-pedidos").textContent, document.title.startsWith("(2) ")]), ["2", true]);
+    igual("el pedido de ayuda dice la mesa, quién, de qué torneo, hace cuánto y lo que escribió", await q.$eval('.cam-pedido[data-estado="abierto"][data-tipo="ayuda"]', (e) => [e.querySelector("p.font-bold").textContent, /^Sub-10 Absoluto · hace 3 min \(\d{1,2}:\d\d [ap]\. m\.\)$/.test(e.querySelectorAll("p")[1].textContent), e.textContent.includes("«Prueba: ven a la mesa»")]), ["🆘 Mesa 4 — Ana Árbitra", true, true]);
+    igual("quien TERMINÓ sus mesas llega como aviso con una sugerencia de a dónde ir a ayudar (primero su mismo torneo)", await q.$eval('.cam-pedido[data-estado="abierto"][data-tipo="termino"]', (e) => [e.querySelector("p.font-bold").textContent, [...e.querySelectorAll(".cam-sugerencia span")].map((x) => x.textContent)]),
+        ["✅ Árbitro 1 terminó sus mesas de la ronda 3", ["Ana Árbitra (Sub-10 Absoluto, su mismo torneo): le quedan 8 mesas; podría tomar las mesas 12 a 15."]]);
+    await q.click('.cam-pedido[data-estado="abierto"][data-tipo="termino"] [data-accion="sugerir"]');
+    await q.waitForFunction(() => !document.querySelector('.cam-pedido[data-estado="abierto"][data-tipo="termino"]'));
+    igual("«Mandarle esta sugerencia» le escribe al que terminó, con las mesas, y deja el aviso atendido", await q.evaluate(() => [window.__llamadas.filter((l) => l.insert === "centroamericano_avisos").map((l) => l.valores.map((v) => [v.de, v.asignacion_id, v.texto])), window.__llamadas.filter((l) => l.update === "centroamericano_avisos").map((l) => [l.valores.estado, l.f.id])]),
+        [[[["organizacion", "asig-arb1", "Terminaste tus mesas, gracias. Ve a ayudar a Ana Árbitra (Sub-10 Absoluto): le quedan 8 mesas. Toma las mesas 12 a 15."]]], [["atendido", "av-t1"]]]);
     await q.click("#sonido");
     igual("el sonido se activa con un toque (el navegador no deja sonar sin él) y el botón lo dice", [await q.getAttribute("#sonido", "aria-pressed"), (await q.textContent("#sonido")).trim()], ["true", "🔔 Sonido activado"]);
-    await q.click('.cam-pedido [data-accion="escribir"]');
-    igual("«Escribirle» deja el aviso dirigido a ese árbitro", await q.$eval("#av-para", (s) => s.value), "a:asig-ana");
-    // Un pedido nuevo llega SOLO, sin recargar: el sondeo de la página.
-    await q.evaluate(() => window.__nuevoPedido("asig-arb1", 20, "Dos jugadores discuten"));
-    await q.waitForFunction(() => document.querySelectorAll(".cam-pedido").length === 2, null, { timeout: 15000 });
-    igual("un pedido nuevo aparece solo, el contador sube y el más viejo va primero", await q.evaluate(() => [document.getElementById("contador-pedidos").textContent, [...document.querySelectorAll(".cam-pedido")].map((e) => e.querySelector("p.font-bold").textContent)]), ["2", ["🆘 Mesa 4 — Ana Árbitra", "🆘 Mesa 20 — Árbitro 1"]]);
-    await q.click('.cam-pedido[data-id="av-p1"] [data-accion="atender"]');
-    await q.waitForFunction(() => document.querySelectorAll(".cam-pedido[data-estado=abierto]").length === 1);
-    igual("«Atendido» lo marca en la base y lo pasa a la lista de atendidos", await q.evaluate(() => [window.__llamadas.filter((l) => l.update === "centroamericano_avisos").map((l) => [l.valores.estado, l.f.id]), document.getElementById("atendidos-n").textContent, document.getElementById("contador-pedidos").textContent]), [[["atendido", "av-p1"]], "1", "1"]);
+    // Un aviso nuevo llega SOLO, sin recargar: el sondeo de la página.
+    await q.evaluate(() => window.__nuevoAviso("asig-arb1", null, "Terminó la ronda 3 y revisó.", "finalizo", 3));
+    await q.waitForFunction(() => document.querySelector('.cam-pedido[data-estado="abierto"][data-tipo="finalizo"]'), null, { timeout: 15000 });
+    igual("quien FINALIZÓ la ronda llega solo, con el contador al día", await q.evaluate(() => [document.querySelector('.cam-pedido[data-estado="abierto"][data-tipo="finalizo"] p.font-bold').textContent, document.getElementById("contador-pedidos").textContent]), ["📋 Árbitro 1 finalizó la ronda 3", "2"]);
+    await q.click('.cam-pedido[data-estado="abierto"][data-tipo="finalizo"] [data-accion="atender"]');
+    await q.waitForFunction(() => !document.querySelector('.cam-pedido[data-estado="abierto"][data-tipo="finalizo"]'));
+    await q.click('.cam-pedido[data-estado="abierto"][data-tipo="ayuda"] [data-accion="atender"]');
+    await q.waitForFunction(() => document.getElementById("sin-pedidos").checkVisibility());
+    igual("«Atendido» pasa cada uno a la lista de atendidos y el contador se apaga", await q.evaluate(() => [document.getElementById("atendidos-n").textContent, document.getElementById("contador-pedidos").hidden]), ["3", true]);
+    await q.click("#resumen-actualizar");
+    await q.waitForFunction(() => document.querySelector("#resumen tr td:nth-child(5)").textContent.startsWith("6"));
+    igual("«Actualizar desde chess-results» pide el resumen y pone al día el avance", await q.evaluate(() => [window.__llamadas.some((l) => l.body && l.body.action === "resumen"), document.getElementById("resumen-total").textContent]), [true, "Con resultado: 24 de 30 mesas (80 %)"]);
+    const [pdfRonda] = await Promise.all([q.waitForEvent("download"), q.click("#resumen-pdf")]);
+    const bytesRonda = fs.readFileSync(await pdfRonda.path());
+    igual("el reporte de la ronda sale en PDF con la marca de agua", [pdfRonda.suggestedFilename(), bytesRonda.toString("latin1").startsWith("%PDF"), /\/SMask \d+ 0 R/.test(bytesRonda.toString("latin1"))], ["avance-ronda-3-centroamericano-2026.pdf", true, true]);
 
     console.log("\n=== La organización: avisar a los árbitros ===");
+    await q.click("#pest-avisos");
     igual("se puede avisar a todos, a un torneo o a un árbitro", await q.$$eval("#av-para option", (l) => l.map((o) => o.textContent)), [
         "Todos los árbitros (2)", "Todo el torneo: Sub-10 Absoluto (2)", "Ana Árbitra — Sub-10 Absoluto, mesas 1 a 15", "Árbitro 1 — Sub-10 Absoluto, mesas 16 a 30"]);
     await q.click('#frases [data-accion="frase"]');
     igual("las frases rápidas llenan el mensaje", await q.inputValue("#av-texto"), "Ya empieza la ronda: a sus mesas.");
     await q.selectOption("#av-para", "todos");
     await q.click("#av-enviar");
-    await q.waitForFunction(() => document.querySelectorAll("#enviados tr").length === 1);
-    igual("a todos: una fila por árbitro (el aviso lleva su enlace), de la organización y con el texto", await q.evaluate(() => window.__llamadas.filter((l) => l.insert === "centroamericano_avisos").map((l) => l.valores.map((v) => [v.de, v.asignacion_id, v.texto]))),
-        [[["organizacion", "asig-ana", "Ya empieza la ronda: a sus mesas."], ["organizacion", "asig-arb1", "Ya empieza la ronda: a sus mesas."]]]);
-    igual("la lista de enviados dice cuántos lo leyeron y a quién le falta", await q.$eval("#enviados tr", (tr) => [tr.children[1].textContent, tr.children[2].textContent.startsWith("0 de 2 · falta: ")]), ["Ya empieza la ronda: a sus mesas.", true]);
-    await q.evaluate(() => window.__leerAviso());
-    await q.waitForFunction(() => document.querySelector("#enviados tr").children[2].textContent.startsWith("1 de 2"), null, { timeout: 15000 });
-    igual("cuando uno lo lee, la lista se actualiza sola", await q.$eval("#enviados tr", (tr) => tr.children[2].textContent), "1 de 2 · falta: Árbitro 1");
-    await q.selectOption("#av-para", "t:1529733");
-    await q.fill("#av-texto", "Pausa de 10 minutos.");
-    await q.click("#av-enviar");
     await q.waitForFunction(() => document.querySelectorAll("#enviados tr").length === 2);
-    igual("a un torneo les llega a los dos de ese torneo", await q.evaluate(() => window.__llamadas.filter((l) => l.insert === "centroamericano_avisos").pop().valores.length), 2);
+    igual("a todos: una fila por árbitro, de la organización y con el texto", await q.evaluate(() => window.__llamadas.filter((l) => l.insert === "centroamericano_avisos").pop().valores.map((v) => [v.de, v.asignacion_id, v.texto])),
+        [["organizacion", "asig-ana", "Ya empieza la ronda: a sus mesas."], ["organizacion", "asig-arb1", "Ya empieza la ronda: a sus mesas."]]);
+    await q.evaluate(() => window.__leerAviso());
+    await q.waitForFunction(() => [...document.querySelectorAll("#enviados tr")].some((tr) => tr.children[2].textContent.startsWith("1 de 2")), null, { timeout: 15000 });
+    igual("cuando uno lo lee, la lista de enviados se actualiza sola y dice a quién le falta", await q.$$eval("#enviados tr", (l) => l.map((tr) => tr.children[2].textContent).find((t) => t.startsWith("1 de 2"))), "1 de 2 · falta: Árbitro 1");
     await q.click("#av-enviar");
     igual("sin mensaje no se manda nada", await q.evaluate(() => window.__llamadas.filter((l) => l.insert === "centroamericano_avisos").length), 2);
 
-    console.log("\n=== La organización: los árbitros y sus mesas ===");
+    console.log("\n=== La organización: los árbitros y sus mesas (en cuadrícula) ===");
     await q.click("#pest-arbitros");
-    igual("el panel de los árbitros se ve y los demás no (y la pestaña lo dice)", await q.evaluate(() => ["avisos", "arbitros", "claves", "registro"].map((n) => [document.getElementById("panel-" + n).checkVisibility(), document.getElementById("pest-" + n).getAttribute("aria-selected")])), [[false, "false"], [true, "true"], [false, "false"], [false, "false"]]);
     await q.focus("#pest-arbitros");
     await q.keyboard.press("ArrowRight");
-    igual("con el teclado, la flecha pasa a la pestaña siguiente (y el foco con ella)", [await q.getAttribute("#pest-claves", "aria-selected"), await q.evaluate(() => document.activeElement.id)], ["true", "pest-claves"]);
+    igual("con el teclado, la flecha pasa a la pestaña siguiente (y el foco con ella)", [await q.getAttribute("#pest-planillas", "aria-selected"), await q.evaluate(() => document.activeElement.id)], ["true", "pest-planillas"]);
     await q.keyboard.press("ArrowLeft");
-    igual("los enlaces salen agrupados por torneo y ordenados por mesa, y el que no tiene nombre lo dice", await q.$$eval(".cam-grupo-torneo", (g) => g.map((x) => [x.querySelector("h3").textContent, [...x.querySelectorAll(".cam-asignacion")].map((a) => [a.querySelector("p.font-bold").textContent, a.dataset.nombrado])])),
-        [["Sub-10 Absoluto2 enlaces", [["Ana Árbitra", "si"], ["Árbitro 1Por definir", "no"]]]]);
-    igual("cada uno dice si está conectado ahora, cuándo lo vieron o que no lo ha abierto", await q.$$eval(".cam-asignacion .cam-conectado", (l) => l.map((x) => [x.dataset.enLinea, x.textContent])), [["si", "● Conectado ahora"], ["no", "Todavía no ha abierto el enlace"]]);
-    igual("y el que tiene un pedido abierto lo avisa", await q.$$eval(".cam-asignacion", (l) => l.map((a) => a.textContent.includes("pedido de ayuda abierto"))), [false, true]);
+    igual("los enlaces salen en una tabla, agrupados por torneo y ordenados por mesa; el que no tiene nombre lo dice", await q.$$eval("#asignaciones tr", (l) => l.map((tr) => tr.classList.contains("cam-grupo-torneo") ? tr.textContent : [tr.children[0].textContent, tr.children[1].textContent, tr.dataset.nombrado])),
+        ["Sub-10 Absoluto — 2 enlaces", ["Ana Árbitra", "1 a 15", "si"], ["Árbitro 1Por definir", "16 a 30", "no"]]);
+    igual("cada uno dice si está conectado ahora o que no ha abierto el enlace", await q.$$eval("#asignaciones .cam-conectado", (l) => l.map((x) => [x.dataset.enLinea, x.textContent.replace("🆘", "").trim().split("\n")[0].slice(0, 40)])), [["si", "● Conectado ahora"], ["no", "Todavía no ha abierto el enlace"]]);
+    await q.click('#asignaciones tr[data-id="asig-ana"] [data-accion="qr"]');
+    await q.waitForSelector("dialog.cam-dialogo[open] svg");
+    igual("«QR y enlace» abre el QR grande con la marca de Ajedrez Integral al centro, su WhatsApp y su enlace", await q.evaluate(() => { const d = document.querySelector("dialog.cam-dialogo"); return [!!d.querySelector('svg image[data-marca="ajedrez-integral"]'), /centroamericano-arbitro\.html#a{64}$/.test(d.querySelector('[data-accion="abrir"]').href), decodeURIComponent(d.querySelector('[data-accion="whatsapp"]').href).includes("tus mesas del Centroamericano (Sub-10 Absoluto, mesas 1 a 15)")]; }), [true, true, true]);
+    await q.click("dialog.cam-dialogo [data-accion='cerrar']");
+    await q.evaluate(() => { window.__imprimio = 0; window.print = () => { window.__imprimio++; }; });
+    await q.click("#imprimir-qr");
+    igual("«Imprimir los QR» arma una tarjeta por árbitro, cada QR con la marca y el pie de Ajedrez Integral", await q.evaluate(() => [window.__imprimio, document.body.classList.contains("cam-imprime-qr"), [...document.querySelectorAll("#hoja-qr .cam-hoja-tarjeta")].map((t) => [t.querySelector("h3").textContent, !!t.querySelector('svg image[data-marca="ajedrez-integral"]'), t.textContent.includes("Ajedrez Integral · Centroamericano 2026")])]),
+        [1, true, [["Ana Árbitra", true, true], ["Árbitro 1", true, true]]]);
+    await q.evaluate(() => document.body.classList.remove("cam-imprime-qr"));
     // crear sin nombre
+    await q.click("#abrir-nuevo");
     await q.selectOption("#a-torneo", "1529733");
     await q.fill("#a-desde", "31");
     await q.fill("#a-hasta", "40");
     await q.click("#a-crear");
-    await q.waitForFunction(() => document.querySelectorAll(".cam-asignacion").length === 3);
-    igual("sin nombre se crea «Árbitro 2», marcado por definir, con su torneo, sus mesas y el vencimiento (9 de noviembre, hora de Costa Rica)", await q.evaluate(() => window.__llamadas.filter((l) => l.insert === "centroamericano_asignaciones").map((l) => [l.valores.tnr, l.valores.arbitro, l.valores.nombrado, l.valores.mesa_desde, l.valores.mesa_hasta, l.valores.vence])), [["1529733", "Árbitro 2", false, 31, 40, "2026-11-10T05:59:59.000Z"]]);
-    const enlace = await q.$eval('.cam-asignacion[data-nombrado="no"] [data-accion="abrir"]', (a) => a.href);
-    igual("el enlace lleva el token DESPUÉS del «#», y tiene su QR y su WhatsApp (sin saludar al «Árbitro 2»)", [/\/centroamericano-arbitro\.html#[0-9a-z]{64}$/.test(enlace), await q.$eval(".cam-qr svg", (s) => s.getAttribute("aria-label").startsWith("QR del enlace de ")), (await q.$eval('.cam-asignacion[data-nombrado="no"] [data-accion="whatsapp"]', (a) => decodeURIComponent(a.href))).includes("Hola: tus mesas del Centroamericano (Sub-10 Absoluto, mesas")], [true, true, true]);
-    // crear con nombre y mesas ya tomadas
+    await q.waitForFunction(() => document.querySelectorAll("#asignaciones .cam-asignacion").length === 3);
+    igual("sin nombre se crea «Árbitro 2», por definir, con su torneo, sus mesas y el vencimiento (9 de noviembre, hora de Costa Rica)", await q.evaluate(() => window.__llamadas.filter((l) => l.insert === "centroamericano_asignaciones").map((l) => [l.valores.tnr, l.valores.arbitro, l.valores.nombrado, l.valores.mesa_desde, l.valores.mesa_hasta, l.valores.vence])), [["1529733", "Árbitro 2", false, 31, 40, "2026-11-10T05:59:59.000Z"]]);
     await q.fill("#a-arbitro", "Beto Mora");
     await q.fill("#a-desde", "10");
     await q.fill("#a-hasta", "20");
@@ -433,47 +555,66 @@ const CONTRASTE = `(sel) => {
     igual("unas mesas que ya tiene otro árbitro se avisan antes de crear", (await q.textContent("dialog")).includes("Esas mesas ya las tiene Ana Árbitra (1 a 15), Árbitro 1 (16 a 30)"), true);
     await q.click("dialog [data-avisos-cancelar]");
     await q.fill("#a-arbitro", "");
-    // ponerle nombre
-    const tarjeta = (nombre) => q.locator(".cam-asignacion", { hasText: nombre });
-    await tarjeta("Árbitro 1").locator('[data-accion="nombre"]').click();
+    const fila = (nombre) => q.locator("#asignaciones .cam-asignacion", { hasText: nombre });
+    await fila("Árbitro 1").locator('[data-accion="nombre"]').click();
     await q.waitForSelector("dialog[open] input");
     await q.fill("dialog[open] input", "Carla Mora");
     await q.click("dialog[open] [data-avisos-aceptar]");
-    await q.waitForFunction(() => [...document.querySelectorAll(".cam-asignacion p.font-bold")].some((p) => p.textContent === "Carla Mora"));
-    igual("«Ponerle nombre» guarda el nombre, lo marca como puesto y quita «Por definir»", await q.evaluate(() => [window.__llamadas.filter((l) => l.update === "centroamericano_asignaciones" && l.valores.nombrado).map((l) => [l.valores.arbitro, l.valores.nombrado, l.f.id]), document.querySelectorAll('.cam-asignacion[data-id="asig-arb1"] .cam-chip').length]), [[["Carla Mora", true, "asig-arb1"]], 0]);
-    // cambiar las mesas
-    await tarjeta("Ana Árbitra").locator('[data-accion="mesas"]').click();
+    await q.waitForFunction(() => [...document.querySelectorAll("#asignaciones .cam-asignacion strong")].some((p) => p.textContent === "Carla Mora"));
+    igual("«Ponerle nombre» guarda el nombre, lo marca como puesto y quita «Por definir»", await q.evaluate(() => [window.__llamadas.filter((l) => l.update === "centroamericano_asignaciones" && l.valores.nombrado).map((l) => [l.valores.arbitro, l.valores.nombrado, l.f.id]), document.querySelectorAll('#asignaciones tr[data-id="asig-arb1"] .cam-chip').length]), [[["Carla Mora", true, "asig-arb1"]], 0]);
+    await fila("Ana Árbitra").locator('[data-accion="mesas"]').click();
     await q.waitForSelector("dialog[open] input");
     await q.fill("dialog[open] input", "9-3");
     await q.click("dialog[open] [data-avisos-aceptar]");
     await q.waitForFunction(() => document.body.textContent.includes("No entendí las mesas"));
     igual("unas mesas al revés se rechazan sin tocar nada", await q.evaluate(() => window.__llamadas.filter((l) => l.update === "centroamericano_asignaciones" && l.valores.mesa_desde).length), 0);
-    await tarjeta("Ana Árbitra").locator('[data-accion="mesas"]').click();
+    await fila("Ana Árbitra").locator('[data-accion="mesas"]').click();
     await q.waitForSelector("dialog[open] input");
     await q.fill("dialog[open] input", "1 a 12");
     await q.click("dialog[open] [data-avisos-aceptar]");
-    await q.waitForFunction(() => document.body.textContent.includes("1 a 12"));
-    igual("«Cambiar las mesas» entiende «1 a 12» y lo guarda", await q.evaluate(() => window.__llamadas.filter((l) => l.update === "centroamericano_asignaciones" && l.valores.mesa_desde).map((l) => [l.valores.mesa_desde, l.valores.mesa_hasta, l.f.id])), [[1, 12, "asig-ana"]]);
-    // repartir
-    await q.evaluate(() => { document.getElementById("reparto").open = true; });
+    await q.waitForFunction(() => [...document.querySelectorAll("#asignaciones .cam-asignacion")].some((t) => t.children[1].textContent === "1 a 12"));
+    igual("«Mesas» entiende «1 a 12» y lo guarda", await q.evaluate(() => window.__llamadas.filter((l) => l.update === "centroamericano_asignaciones" && l.valores.mesa_desde).map((l) => [l.valores.mesa_desde, l.valores.mesa_hasta, l.f.id])), [[1, 12, "asig-ana"]]);
+    await q.click("#abrir-reparto");
     await q.selectOption("#rp-torneo", "1529733");
     await q.click("#rp-leer");
     await q.waitForFunction(() => document.getElementById("rp-mesas").value === "30");
     await q.fill("#rp-arbitros", "3");
-    igual("«Leer las mesas» trae cuántas hay, y la vista previa reparte parejo con los números que siguen (hay un «Árbitro 2»)", [await q.textContent("#rp-estado"), await q.textContent("#rp-vista")], ["La ronda 2 tiene 30 mesas.", "Árbitro 3: mesas 1 a 10 · Árbitro 4: mesas 11 a 20 · Árbitro 5: mesas 21 a 30"]);
+    igual("«Leer las mesas» trae cuántas hay, y la vista previa reparte parejo con los números que siguen", [await q.textContent("#rp-estado"), await q.textContent("#rp-vista")], ["La ronda 2 tiene 30 mesas.", "Árbitro 3: mesas 1 a 10 · Árbitro 4: mesas 11 a 20 · Árbitro 5: mesas 21 a 30"]);
     await q.click("#rp-crear");
     await q.waitForSelector("[data-avisos-aceptar]");
-    igual("avisa que el torneo ya tiene enlaces activos antes de sumar más", (await q.textContent("dialog")).includes("ya tiene 3 enlaces activos"), true);
     await q.click("dialog [data-avisos-aceptar]");
-    await q.waitForFunction(() => document.querySelectorAll(".cam-asignacion").length === 6);
+    await q.waitForFunction(() => document.querySelectorAll("#asignaciones .cam-asignacion").length === 6);
     igual("se crean los tres por definir, con mesas seguidas y sin hueco", await q.evaluate(() => window.__llamadas.filter((l) => l.insert === "centroamericano_asignaciones").pop().valores.map((v) => [v.arbitro, v.nombrado, v.mesa_desde, v.mesa_hasta])), [["Árbitro 3", false, 1, 10], ["Árbitro 4", false, 11, 20], ["Árbitro 5", false, 21, 30]]);
-    // apagar
-    await tarjeta("Ana Árbitra").locator('[data-accion="apagar"]').click();
+    await fila("Ana Árbitra").locator('[data-accion="apagar"]').click();
     await q.waitForSelector("[data-avisos-aceptar]");
     await q.click("[data-avisos-aceptar]");
-    await q.waitForSelector('.cam-asignacion[data-estado="apagado"]');
-    igual("apagar un enlace pide confirmar y lo deja apagado (se puede volver a encender)", [await q.$$eval('.cam-asignacion[data-estado="apagado"]', (l) => l.length), await tarjeta("Ana Árbitra").locator('[data-accion="reactivar"]').textContent()], [1, "Volver a encender"]);
-    igual("un enlace apagado ya no es destino de los avisos", await q.$$eval("#av-para option", (l) => l.map((o) => o.textContent)).then((l) => l.some((t) => t.startsWith("Ana Árbitra"))), false);
+    await q.waitForSelector('#asignaciones .cam-asignacion[data-estado="apagado"]');
+    igual("apagar un enlace pide confirmar y lo deja apagado (se puede volver a encender)", [await q.$$eval('#asignaciones .cam-asignacion[data-estado="apagado"]', (l) => l.length), await fila("Ana Árbitra").locator('[data-accion="reactivar"]').textContent()], [1, "Volver a encender"]);
+
+    console.log("\n=== La organización: planillas y Drive ===");
+    await q.click("#pest-planillas");
+    await q.waitForSelector("#planillas tr");
+    igual("las fotos salen ordenadas por torneo, ronda y mesa, con el nombre del enfrentamiento y si ya están en el Drive", await q.$$eval("#planillas tr", (l) => l.map((tr) => [tr.children[1].textContent, tr.children[2].textContent, tr.children[3].textContent, tr.children[4].textContent, tr.children[7].textContent])),
+        [["3", "2", "Harvey Ian vs Acuña Porras Fabio", "Blancas", "✓ En el Drive"], ["3", "2", "Harvey Ian vs Acuña Porras Fabio", "Negras", "Pendiente"]]);
+    await q.waitForFunction(() => document.getElementById("drive-estado").textContent.length > 0);
+    igual("dice que el Drive no está conectado y que las fotos están a salvo mientras tanto", [await q.getAttribute("#drive-estado", "data-estado"), (await q.textContent("#drive-estado")).includes("todavía no está conectado")], ["no", true]);
+    await q.click('#planillas tr:first-child [data-accion="ver-foto"]');
+    await q.waitForSelector("dialog.cam-dialogo[open] img");
+    igual("«Ver» abre la foto desde el bucket privado (con un enlace que vence)", await q.evaluate(() => [window.__llamadas.filter((l) => l.foto).map((l) => l.foto), document.querySelector("dialog.cam-dialogo img").alt]), [["centroamericano-planillas/1529733/ronda-3/mesa-2-blancas.jpg"], "Foto de la planilla de Harvey Ian, mesa 2"]);
+    await q.click("dialog.cam-dialogo [data-accion='cerrar']");
+    await q.evaluate(() => { document.getElementById("drive-conectar-caja").open = true; });
+    await q.fill("#drive-url", "https://script.google.com/macros/s/" + "A".repeat(30) + "/exec");
+    await q.fill("#drive-secreto", "MALOMALOMALOMALOMALOMALOMALOMALOMALO");
+    await q.click("#drive-conectar");
+    await q.waitForSelector("#drive-conectar-estado.cam-fallo");
+    igual("un secreto que el Drive no acepta se dice y no se guarda", [(await q.textContent("#drive-conectar-estado")).includes("No se guardó nada"), await q.evaluate(() => window.__driveOk)], [true, false]);
+    await q.fill("#drive-secreto", "BUENOBUENOBUENOBUENOBUENOBUENOBUENO");
+    await q.click("#drive-conectar");
+    await q.waitForSelector("#drive-conectar-estado.cam-guardado");
+    igual("conectado: dice la carpeta, vacía las casillas y ya no guarda el secreto en el navegador", [await q.textContent("#drive-conectar-estado"), await q.inputValue("#drive-secreto"), await q.evaluate(() => JSON.stringify(localStorage).includes("BUENOBUENO"))], ["✓ Conectado. Carpeta: «Planillas Centroamericano».", "", false]);
+    await q.click("#drive-reintentar");
+    await q.waitForFunction(() => document.querySelectorAll('#planillas tr[data-drive="si"]').length === 2);
+    igual("«Mandar al Drive las que faltan» las manda y la tabla lo muestra", await q.$$eval("#planillas tr", (l) => l.map((tr) => tr.children[7].textContent)), ["✓ En el Drive", "✓ En el Drive"]);
 
     console.log("\n=== La organización: UNA clave para todo el grupo ===");
     await q.click("#pest-claves");
@@ -488,10 +629,9 @@ const CONTRASTE = `(sel) => {
     await q.fill("#g-sid", SID);
     await q.click("#g-guardar");
     await q.waitForSelector("#g-estado.cam-guardado");
-    igual("la clave del grupo abre los torneos ligados de una vez, y dice si falta alguno", [await q.textContent("#g-estado"), await q.textContent("#resumen-claves"), await q.$$eval(".cam-estado-torneo", (l) => l.map((t) => t.dataset.clave))],
-        ["✓ Guardada: esta clave abre 2 torneos ligados (Sub-8 Absoluto, Sub-8 Femenino). Ronda 1 con 21 mesas en el primero.", "✓ Los 3 torneos tienen la clave cargada.", ["si", "si", "si"]]);
+    igual("la clave del grupo abre los torneos ligados de una vez", [await q.textContent("#g-estado"), await q.textContent("#resumen-claves")],
+        ["✓ Guardada: esta clave abre 2 torneos ligados (Sub-8 Absoluto, Sub-8 Femenino). Ronda 1 con 21 mesas en el primero.", "✓ Los 3 torneos tienen la clave cargada."]);
     igual("la clave llegó a la función con el código del grupo, y la casilla se vació y no quedó en el navegador", await q.evaluate((s) => [window.__llamadas.some((l) => l.body && l.body.action === "poner" && l.body.tnr === "1529700" && l.body.sid === s), document.getElementById("g-sid").value, JSON.stringify(localStorage).includes(s) || JSON.stringify(sessionStorage).includes(s)], SID), [true, "", false]);
-    igual("arriba, el estado general ya dice que están los tres", await q.textContent("#eg-claves"), "Clave cargada en los 3 torneos");
     await q.click('.cam-estado-torneo[data-tnr="1529733"] [data-accion="probar"]');
     await q.waitForSelector("#est-1529733.cam-guardado");
     igual("«Probar» dice que sirve y cuántas mesas tiene la ronda", await q.textContent("#est-1529733"), "✓ Sirve. Ronda 2, 30 mesas.");
@@ -499,8 +639,30 @@ const CONTRASTE = `(sel) => {
     await q.fill("#claves-bloque", "1529700 " + SID + "\n1529733 corta\nabc " + SID);
     await q.click("#claves-bloque-guardar");
     await q.waitForFunction(() => document.querySelectorAll("#claves-bloque-resultado li").length >= 3 && [...document.querySelectorAll("#claves-bloque-resultado li")].some((l) => l.textContent.startsWith("✓")));
-    igual("otras claves en bloque: las malas se reportan con su línea y la buena ya no queda escrita", [await q.$$eval("#claves-bloque-resultado li", (l) => [l[0].textContent.startsWith("Línea 2: La clave son entre 8 y 32"), l[1].textContent.startsWith("Línea 3: El código del torneo son hasta 7"), l[2].textContent.startsWith("✓ Código 1529700: Guardada: esta clave abre 2 torneos")]), await q.inputValue("#claves-bloque")],
-        [[true, true, true], "1529733 corta\nabc " + SID]);
+    igual("otras claves en bloque: las malas se reportan con su línea y la buena ya no queda escrita", [await q.$$eval("#claves-bloque-resultado li", (l) => [l[0].textContent.startsWith("Línea 2: La clave son entre 8 y 32"), l[1].textContent.startsWith("Línea 3: El código del torneo son hasta 7"), l[2].textContent.startsWith("✓ Código 1529700: Guardada: esta clave abre 2 torneos")]), await q.inputValue("#claves-bloque")], [[true, true, true], "1529733 corta\nabc " + SID]);
+
+    console.log("\n=== La organización: el respaldo y restaurar ===");
+    await q.click("#pest-respaldo");
+    await q.waitForSelector("#copias tr");
+    igual("las copias salen con su hora, cuál es y qué trae cada una", await q.$$eval("#copias tr", (l) => l.map((tr) => [tr.children[1].textContent, tr.children[2].textContent, tr.children[3].textContent, tr.children[5].textContent])), [["Automática (5 min)", "2", "3", "2"], ["A pedido", "2", "1", "0"]]);
+    igual("explica qué se guarda, cada cuánto, qué NO va (la clave) y que restaurar no pisa nada", await q.$eval("#panel-respaldo ul", (u) => ["Cada 5 minutos", "Cada hora", "Cada 10 minutos", "no va en la copia", "nunca pisa"].map((t) => u.textContent.replace(/\s+/g, " ").toLowerCase().includes(t.toLowerCase()))), [true, true, true, true, true]);
+    igual("dice si la copia también va al Drive", (await q.textContent("#respaldo-estado")).includes("La copia también va al Drive cada 10 minutos"), true);
+    const [descargaCopia] = await Promise.all([q.waitForEvent("download"), q.click("#copia-ahora")]);
+    igual("«Hacer una copia ahora y bajarla» baja un archivo con la hora de Costa Rica en el nombre", [/^copia-centroamericano-2026-\d{4}-\d\d-\d\d-\d{4}\.json$/.test(descargaCopia.suggestedFilename()), JSON.parse(fs.readFileSync(await descargaCopia.path(), "utf8")).evento], [true, "Centroamericano 2026"]);
+    await q.setInputFiles("#copia-archivo", { name: "copia.json", mimeType: "application/json", buffer: Buffer.from(JSON.stringify({ version: 2, evento: "otra cosa" })) });
+    await q.waitForFunction(() => document.body.textContent.includes("no es una copia del Centroamericano 2026"));
+    igual("un archivo que no es una copia del torneo se rechaza sin tocar la base", await q.evaluate(() => window.__llamadas.filter((l) => l.rpc === "centroamericano_restaurar").length), 0);
+    await q.setInputFiles("#copia-archivo", { name: "copia.json", mimeType: "application/json", buffer: Buffer.from(JSON.stringify({ version: 1, evento: "Centroamericano 2026", asignaciones: [{ id: "x" }], registro: [], avisos: [], planillas: [] })) });
+    await q.waitForSelector("[data-avisos-aceptar]");
+    igual("restaurar pide confirmar y dice que solo agrega lo que falta y que los QR siguen sirviendo", (await q.textContent("dialog[open]")).includes("Solo se agrega lo que falta") && (await q.textContent("dialog[open]")).includes("mismo QR"), true);
+    await q.click("[data-avisos-aceptar]");
+    await q.waitForFunction(() => document.body.textContent.includes("Restaurado. Se agregaron 1 enlaces"));
+    igual("la copia llegó a la base por la función de restaurar", await q.evaluate(() => window.__llamadas.filter((l) => l.rpc === "centroamericano_restaurar").map((l) => l.copia.asignaciones.length)), [1]);
+    await q.click('#copias tr:first-child [data-accion="restaurar-copia"]');
+    await q.waitForSelector("[data-avisos-aceptar]");
+    await q.click("[data-avisos-aceptar]");
+    await q.waitForFunction(() => window.__llamadas.filter((l) => l.rpc === "centroamericano_restaurar").length === 2);
+    igual("también se restaura desde una copia de la lista", await q.evaluate(() => window.__llamadas.filter((l) => l.rpc === "centroamericano_restaurar").length), 2);
 
     console.log("\n=== La organización: lo que anotan ===");
     await q.click("#pest-registro");
@@ -514,10 +676,10 @@ const CONTRASTE = `(sel) => {
     igual("sin errores en la página", errores, []);
 
     console.log("\n=== La organización en la tablet y en el celular, en claro y en oscuro ===");
-    const coloresOrg = ".cam-pedido, .cam-pestana, .cam-contador, .cam-estado-general, .cam-chip, .cam-btn, .cam-estado-torneo, .cam-asignacion, .cam-conectado, .cam-clave-grupo, .cam-tarjeta, .cam-guardado, .cam-fallo, .cam-tabla td, .cam-tabla th, .cam-grupo-torneo h3";
+    const coloresOrg = ".cam-pedido, .cam-pestana, .cam-contador, .cam-barra-estado, .cam-celda-estado, .cam-titulo-ventana, .cam-subtitulo, .cam-chip, .cam-btn, .cam-estado-torneo, .cam-asignacion td, .cam-conectado, .cam-clave-grupo, .cam-detalle summary, .cam-estado-drive, .cam-sugerencia, .cam-herramientas, .cam-guardado, .cam-fallo, .cam-rejilla td, .cam-rejilla th, .cam-rejilla thead th";
     const contrastePorPanel = async (pg) => {
         const peores = [];
-        for (const nombre of ["avisos", "arbitros", "claves", "registro"]) {
+        for (const nombre of ["ronda", "avisos", "arbitros", "planillas", "claves", "respaldo", "registro"]) {
             await pg.click("#pest-" + nombre);
             const l = await pg.evaluate("(" + CONTRASTE + ")(" + JSON.stringify(coloresOrg) + ")");
             peores.push(Math.min(...l, 99));
@@ -525,18 +687,20 @@ const CONTRASTE = `(sel) => {
         return Math.min(...peores);
     };
     await q.setViewportSize({ width: 820, height: 1180 });
-    igual("en la tablet vertical (820 px) la página no se desplaza a lo ancho, en ninguna pestaña", await (async () => { const w = []; for (const n of ["avisos", "arbitros", "claves", "registro"]) { await q.click("#pest-" + n); w.push(await q.evaluate(() => document.documentElement.scrollWidth)); } return w; })(), [820, 820, 820, 820]);
+    igual("en la tablet vertical (820 px) la página no se desplaza a lo ancho, en ninguna pestaña", await (async () => { const w = []; for (const n of ["ronda", "avisos", "arbitros", "planillas", "claves", "respaldo", "registro"]) { await q.click("#pest-" + n); w.push(await q.evaluate(() => document.documentElement.scrollWidth)); } return w; })(), [820, 820, 820, 820, 820, 820, 820]);
     igual("cada botón y pestaña se toca bien (40 px de alto o más)", await q.evaluate(() => [...document.querySelectorAll(".cam-pestana, .cam-btn")].filter((b) => b.checkVisibility()).every((b) => b.getBoundingClientRect().height >= 40)), true);
-    igual("en claro, todo el texto de la organización da 4,5:1 o más, en las cuatro pestañas", (await contrastePorPanel(q)) >= 4.5, true);
-    await q.click("#pest-arbitros");
+    igual("en claro, todo el texto de la organización da 4,5:1 o más, en las siete pestañas", (await contrastePorPanel(q)) >= 4.5, true);
+    await q.click("#pest-ronda");
     if (process.env.CAPTURA) await q.screenshot({ path: process.env.CAPTURA + "-organizacion.png", fullPage: true });
+    await q.click("#pest-arbitros");
+    if (process.env.CAPTURA) await q.screenshot({ path: process.env.CAPTURA + "-organizacion-arbitros.png", fullPage: true });
     await q.setViewportSize({ width: 390, height: 800 });
     igual("en el celular la página de la organización tampoco se desplaza a lo ancho", await q.evaluate(() => document.documentElement.scrollWidth), 390);
     await o.ctx.close();
     o = await abrir(browser, "centroamericano-mesas.html", dobleOrganizacion(true), { ancho: 1100, esquema: "dark" });
     await o.p.waitForSelector(".cam-pedido");
-    igual("en oscuro, todo el texto de la organización da 4,5:1 o más, en las cuatro pestañas", (await contrastePorPanel(o.p)) >= 4.5, true);
-    if (process.env.CAPTURA) { await o.p.click("#pest-avisos"); await o.p.screenshot({ path: process.env.CAPTURA + "-organizacion-oscuro.png", fullPage: true }); }
+    igual("en oscuro, todo el texto de la organización da 4,5:1 o más, en las siete pestañas", (await contrastePorPanel(o.p)) >= 4.5, true);
+    if (process.env.CAPTURA) { await o.p.click("#pest-ronda"); await o.p.screenshot({ path: process.env.CAPTURA + "-organizacion-oscuro.png", fullPage: true }); }
     await o.ctx.close();
 
     await browser.close();

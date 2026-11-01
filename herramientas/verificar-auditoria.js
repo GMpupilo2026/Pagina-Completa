@@ -53,7 +53,7 @@ const VIGILADAS = [
   "pareo_solicitudes_sello",
   // Los árbitros del Centroamericano: el enlace (QR) de cada uno da acceso a sus mesas, y
   // cargar o cambiar la clave de un torneo deja anotado quién y cuándo (nunca la clave).
-  "centroamericano_asignaciones", "centroamericano_torneos",
+  "centroamericano_asignaciones", "centroamericano_finales", "centroamericano_torneos",
 ];
 
 let fallos = 0;

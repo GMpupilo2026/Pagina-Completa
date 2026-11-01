@@ -1,42 +1,58 @@
-/* El código de centroamericano-mesas.html: la página de la ORGANIZACIÓN (la cuenta
-   principal) del Centroamericano 2026 para sus árbitros. Pensada para una tablet o una
+/* El código de centroamericano-mesas.html: el «programa» de la ORGANIZACIÓN (la cuenta
+   principal) del Centroamericano 2026 para sus árbitros. Una ventana con barra de título,
+   menú de pestañas, tablas en cuadrícula y barra de estado, pensada para una tablet o una
    computadora que se queda abierta durante la ronda.
 
-   Cuatro pestañas:
-   1. Ayuda y avisos: los pedidos de ayuda de los árbitros (con sonido y contador, y
-      «Atendido») y los avisos que la organización les manda, con quién ya los leyó.
-   2. Árbitros y mesas: un enlace con su QR por árbitro (o «por definir», sin nombre, y
-      el reparto de las mesas entre varios de una vez), agrupados por torneo y
-      ordenados por mesa; cambiar el nombre y las mesas, avisarle, apagar.
-   3. Clave de chess-results: UNA sola para todo el grupo de torneos ligados (código del
-      grupo + SID). Va a la Edge Function centroamericano-clave, que la prueba y la
-      guarda CIFRADA en la bóveda: esta página nunca la vuelve a ver y la casilla se vacía.
-   4. Lo que anotan: resultados enviados, ilegales e irregularidades, y el PDF.
+   Siete pestañas:
+   1. Ronda en curso: cuánto le queda a cada árbitro (resumen), la revisión previa que lleva,
+      y los pedidos de ayuda y avisos de los árbitros —con sonido y contador—: quién pidió
+      ayuda, quién TERMINÓ sus mesas (con una sugerencia de a dónde ir a ayudar) y quién
+      FINALIZÓ la ronda.
+   2. Avisos: mandar un mensaje a un árbitro, a un torneo o a todos, y ver quién lo leyó.
+   3. Árbitros y mesas: un enlace con su QR por árbitro (o «por definir», sin nombre, y el
+      reparto de las mesas entre varios de una vez); nombre, mesas, aviso, apagar; la hoja de
+      QR para imprimir (todos los QR llevan la marca de Ajedrez Integral).
+   4. Planillas y Drive: las fotos de las planillas y su paso al Drive «Planillas
+      Centroamericano»; conectar el Drive y reintentar lo que no llegó.
+   5. Clave de chess-results: UNA sola para el grupo de torneos ligados. Va a la Edge Function
+      centroamericano-clave, que la prueba y la guarda CIFRADA: esta página nunca la vuelve a
+      ver y la casilla se vacía.
+   6. Respaldo: las copias automáticas, hacer una ahora y bajarla, y restaurar (solo agrega lo
+      que falta).
+   7. Lo que anotan: resultados enviados, ilegales e irregularidades, y el PDF.
 
-   Quien entra tiene que tener la licencia «mesa-arbitro» (administración también): lo
-   hace cumplir la base (RLS), no esta página.
-   Ver «Mesas de los árbitros del Centroamericano» y «Avisos y árbitros por definir» en
-   docs/decisiones/juegos-y-torneos.md. */
+   Quien entra tiene que tener la licencia «mesa-arbitro» (administración también): lo hace
+   cumplir la base (RLS), no esta página.
+   Ver «Mesas de los árbitros del Centroamericano» y «Terminar la ronda, planillas y
+   respaldo» en docs/decisiones/juegos-y-torneos.md. */
 (function () {
     "use strict";
     const C = window.CentroamericanoMesas;
     const M = window.MesaArbitro;
     const $ = (id) => document.getElementById(id);
     const avisar = (texto, error) => Avisos.avisar(texto, { tipo: error ? "error" : "ok" });
-    const TIC_MS = 6000; // cada cuánto se miran los pedidos de ayuda
+    const TIC_MS = 6000; // cada cuánto se miran los avisos y el avance
     const TITULO = document.title;
     const FRASES = ["Ya empieza la ronda: a sus mesas.", "Pasen por el escritorio principal, por favor.", "Pausa de 10 minutos.", "Revisen que cada mesa tenga su resultado guardado."];
+    const PASOS_LISTA = 2; // relojes y tableros (centroamericano-mesa)
 
     let torneos = [];
     let asignaciones = [];
     let avisos = [];
+    let progreso = [];
+    let finales = [];
+    let listas = [];
+    let planillas = [];
+    let copias = [];
     let registro = [];
+    let drive = null;
     let pedidosVistos = null; // null: todavía no se leyó nada (la primera lectura no suena)
     let audio = null;
     let sonido = false;
     let tic = 0;
-    let firmaAvisos = "";
+    let firmaRonda = "";
     let firmaAsignaciones = "";
+    let firmaEnviados = "";
 
     function el(tag, attrs, ...hijos) {
         const n = document.createElement(tag);
@@ -51,7 +67,7 @@
         return n;
     }
 
-    // La función contesta con un error legible aun en 4xx/5xx: se lee el cuerpo.
+    // Las funciones contestan con un error legible aun en 4xx/5xx: se lee el cuerpo.
     async function invocar(cuerpo) {
         let { data, error } = await sb.functions.invoke("centroamericano-clave", { body: cuerpo });
         if (error && error.context && typeof error.context.json === "function") {
@@ -61,16 +77,29 @@
         return data;
     }
 
+    // Una ventanita propia (el QR, una foto): <dialog> con showModal(), que encierra el foco.
+    function ventanita(titulo, ...cuerpo) {
+        const d = el("dialog", { class: "cam-dialogo", "aria-label": titulo });
+        d.append(
+            el("div", { class: "cam-dialogo-titulo" }, el("span", { texto: titulo }), el("button", { type: "button", class: "cam-btn cam-btn-claro cam-btn-chico", "data-accion": "cerrar", onclick: () => d.close() }, "Cerrar")),
+            el("div", { class: "cam-dialogo-cuerpo" }, ...cuerpo));
+        d.addEventListener("close", () => d.remove());
+        document.body.append(d);
+        d.showModal();
+        return d;
+    }
+
     const nombreTorneo = (tnr) => (torneos.find((t) => t.tnr === tnr) || { nombre: tnr }).nombre;
     const asig = (id) => asignaciones.find((a) => a.id === id);
     const nombreAsig = (id) => (asig(id) || { arbitro: "Un árbitro" }).arbitro;
     const activa = (a) => C.estadoAsignacion(a, new Date()) === "activo";
+    const ahoraTxt = () => window.HoraCR.hora(new Date());
 
     // ------------------------------------------------------------- pestañas
 
-    const PANELES = ["avisos", "arbitros", "claves", "registro"];
+    const PANELES = ["ronda", "avisos", "arbitros", "planillas", "claves", "respaldo", "registro"];
     function abrirPanel(nombre, enfocar) {
-        if (!PANELES.includes(nombre)) nombre = "avisos";
+        if (!PANELES.includes(nombre)) nombre = "ronda";
         for (const p of PANELES) {
             const sel = p === nombre;
             const b = $("pest-" + p);
@@ -80,30 +109,36 @@
         }
         if (enfocar) $("pest-" + nombre).focus();
         try { history.replaceState(null, "", "#" + nombre); } catch (e) { /* sin historial */ }
+        if (nombre === "planillas") { cargarPlanillas(); cargarDrive(); }
+        if (nombre === "respaldo") { cargarCopias(); cargarDrive(); }
+        if (nombre === "registro") cargarRegistro();
     }
     function teclaPestana(ev) {
         const i = PANELES.indexOf(ev.currentTarget.dataset.panel);
         const salto = { ArrowRight: 1, ArrowLeft: -1 }[ev.key];
-        let j = salto ? (i + salto + PANELES.length) % PANELES.length : ev.key === "Home" ? 0 : ev.key === "End" ? PANELES.length - 1 : null;
+        const j = salto ? (i + salto + PANELES.length) % PANELES.length : ev.key === "Home" ? 0 : ev.key === "End" ? PANELES.length - 1 : null;
         if (j == null) return;
         ev.preventDefault();
         abrirPanel(PANELES[j], true);
     }
 
-    // ------------------------------------------------------------- estado general y sonido
+    // ------------------------------------------------------------- barra de estado y sonido
 
-    function pedidosAbiertos() {
-        return avisos.filter((f) => f.de === "arbitro" && f.estado === "abierto").sort((a, b) => String(a.creado).localeCompare(String(b.creado)));
-    }
+    const abiertosDeArbitros = () => avisos.filter((f) => f.de === "arbitro" && f.estado === "abierto").sort((a, b) => String(a.creado).localeCompare(String(b.creado)));
+    const pedidosAbiertos = () => abiertosDeArbitros().filter((f) => f.tipo === "ayuda");
 
     function pintarEstadoGeneral() {
-        const n = pedidosAbiertos().length;
+        const n = abiertosDeArbitros().length;
         const act = asignaciones.filter(activa);
         const en = act.filter((a) => C.enLinea(a, new Date())).length;
         const con = torneos.filter((t) => t.sid_en_boveda).length;
-        $("eg-pedidos").replaceChildren(el("strong", { texto: n ? n + (n === 1 ? " pedido de ayuda abierto" : " pedidos de ayuda abiertos") : "Sin pedidos de ayuda" }));
+        $("eg-pedidos").replaceChildren(el("strong", { texto: n ? n + (n === 1 ? " aviso de árbitros abierto" : " avisos de árbitros abiertos") : "Sin pedidos de ayuda" }));
         $("eg-enlinea").textContent = act.length ? en + " de " + act.length + " árbitros conectados" : "Sin enlaces activos";
         $("eg-claves").textContent = torneos.length ? (con === torneos.length ? "Clave cargada en los " + torneos.length + " torneos" : "Clave en " + con + " de " + torneos.length + " torneos") : "";
+        $("eg-drive").textContent = drive ? (drive.conectado ? "Drive conectado" + (drive.pendientes ? " · " + drive.pendientes + " planillas sin enviar" : "") : "Drive sin conectar") : "";
+        const ultima = copias.filter((c) => c.anillo !== "d").map((c) => c.creada).sort().pop();
+        $("eg-copia").textContent = ultima ? "Última copia: " + C.hace(ultima, new Date()) : "Sin copias todavía";
+        $("eg-reloj").textContent = ahoraTxt();
         const c = $("contador-pedidos");
         c.hidden = n === 0;
         c.textContent = String(n);
@@ -140,31 +175,72 @@
         if (sonido) pitar();
     }
 
-    // ------------------------------------------------------------- 1. ayuda y avisos
+    // ------------------------------------------------------------- 1. ronda en curso
 
-    async function cargarAvisos() {
-        const { data, error } = await sb.from("centroamericano_avisos").select("*").order("creado", { ascending: false }).range(0, 499);
-        if (error) { if (pedidosVistos === null) avisar("No se pudieron leer los avisos: " + error.message, true); return; }
-        avisos = data || [];
-        const ids = new Set(pedidosAbiertos().map((f) => f.id));
-        if (pedidosVistos !== null && [...ids].some((id) => !pedidosVistos.has(id))) pitar();
-        pedidosVistos = ids;
-        pintarAvisos();
-        marcarPedidos();
-        pintarEstadoGeneral();
+    async function cargarAvance() {
+        const [p, f, l] = await Promise.all([
+            sb.from("centroamericano_progreso").select("*").range(0, 999),
+            sb.from("centroamericano_finales").select("*").range(0, 999),
+            sb.from("centroamericano_listas").select("*").range(0, 999),
+        ]);
+        if (!p.error) progreso = p.data || [];
+        if (!f.error) finales = f.data || [];
+        if (!l.error) listas = l.data || [];
     }
 
-    function tarjetaPedido(f, atendido) {
+    const filasRonda = () => C.resumenRonda(asignaciones, progreso, finales, new Date(), listas)
+        .sort((a, b) => (torneos.findIndex((t) => t.tnr === a.tnr) - torneos.findIndex((t) => t.tnr === b.tnr)) || a.mesa_desde - b.mesa_desde);
+
+    const ETIQUETA_ESTADO = { "sin-datos": "Sin datos", "en-curso": "En curso", termino: "Terminó sus mesas", finalizada: "Ronda finalizada ✓" };
+
+    function pintarResumen(filas) {
+        $("resumen-vacio").hidden = filas.length > 0;
+        const ronda = filas.length ? filas[0].ronda : 0;
+        $("resumen-ronda").textContent = ronda ? " — ronda " + ronda : "";
+        const con = filas.reduce((s, f) => s + (f.con_resultado || 0), 0), total = filas.reduce((s, f) => s + (f.sinDatos ? 0 : f.total), 0);
+        $("resumen-total").textContent = total ? "Con resultado: " + con + " de " + total + " mesas (" + Math.round(con * 100 / total) + " %)" : "";
+        $("resumen").replaceChildren(...filas.map((f) => el("tr", { "data-id": f.id, "data-estado": f.estado },
+            el("td", { texto: f.arbitro }),
+            el("td", { texto: nombreTorneo(f.tnr) }),
+            el("td", { texto: f.mesa_desde + " a " + f.mesa_hasta }),
+            el("td", {}, f.sinDatos ? el("span", { texto: "—" }) : el("span", { class: "cam-avance" }, el("progress", { max: String(f.total), value: String(f.con_resultado), "aria-label": "Mesas con resultado de " + f.arbitro }), " " + f.con_resultado + " de " + f.total)),
+            el("td", { class: "cam-quedan", title: f.pendientes && f.pendientes.length ? "Faltan las mesas " + C.listaMesas(f.pendientes) : null, texto: f.sinDatos ? "—" : f.quedan === 0 ? "0" : f.quedan + " (" + C.listaMesas(f.pendientes) + ")" }),
+            el("td", {}, el("span", { class: "cam-chip", "data-estado": f.estado, texto: ETIQUETA_ESTADO[f.estado] }), f.estado === "en-curso" || f.estado === "sin-datos" ? el("span", { class: "cam-lista-previa-estado", texto: " Revisión previa " + f.lista + "/" + PASOS_LISTA }) : null),
+            el("td", { class: "cam-conectado", "data-en-linea": C.enLinea(asig(f.id) || {}, new Date()) ? "si" : "no", texto: C.enLinea(asig(f.id) || {}, new Date()) ? "● Conectado" : "—" }))));
+    }
+
+    function tarjetaAviso(f, atendido, filas) {
         const a = asig(f.asignacion_id);
-        return el("article", { class: "cam-pedido", "data-estado": atendido ? "atendido" : "abierto", "data-id": f.id },
+        const quien = a ? a.arbitro : "Un árbitro";
+        const donde = a ? nombreTorneo(a.tnr) + " · " : "";
+        let titulo = "";
+        if (f.tipo === "termino") titulo = "✅ " + quien + " terminó sus mesas de la ronda " + f.ronda;
+        else if (f.tipo === "finalizo") titulo = "📋 " + quien + " finalizó la ronda " + f.ronda;
+        else titulo = (atendido ? "✓ " : "🆘 ") + (f.mesa ? "Mesa " + f.mesa : "Ayuda general") + " — " + quien;
+        const hora = atendido && f.atendido_en ? "atendido a las " + window.HoraCR.hora(new Date(f.atendido_en)) : null;
+        const sugerencias = [];
+        if (f.tipo === "termino" && !atendido) {
+            const yo = filas.find((x) => x.id === f.asignacion_id);
+            const lista = yo && yo.ronda === f.ronda ? C.sugerirAyuda(yo, filas) : [];
+            sugerencias.push(el("p", { class: "mt-2 font-bold", texto: "Sugerencia: a dónde puede ir a ayudar" }));
+            if (!lista.length) sugerencias.push(el("p", { class: "cam-herramientas-nota", texto: "Nadie más tiene mesas pendientes según el último avance. Toca «Actualizar desde chess-results» para estar seguro." }));
+            for (const s of lista) {
+                sugerencias.push(el("div", { class: "cam-sugerencia", "data-id": s.id },
+                    el("span", { texto: s.arbitro + " (" + nombreTorneo(s.tnr) + (s.mismoTorneo ? ", su mismo torneo" : "") + "): le quedan " + s.quedan + (s.quedan === 1 ? " mesa" : " mesas") + "; podría tomar " + (s.mesas.length === 1 ? "la mesa " : "las mesas ") + C.listaMesas(s.mesas) + "." }),
+                    el("button", { type: "button", class: "cam-btn cam-btn-chico", "data-accion": "sugerir", onclick: () => mandarSugerencia(f, s) }, "Mandarle esta sugerencia")));
+            }
+        }
+        return el("article", { class: "cam-pedido", "data-estado": atendido ? "atendido" : "abierto", "data-tipo": f.tipo, "data-id": f.id },
             el("div", { class: "flex flex-wrap items-start justify-between gap-2" },
                 el("div", {},
-                    el("p", { class: "font-bold text-lg", texto: (atendido ? "✓ " : "🆘 ") + (f.mesa ? "Mesa " + f.mesa : "Ayuda general") + " — " + (a ? a.arbitro : "Un árbitro") }),
-                    el("p", { class: "text-sm", texto: (a ? nombreTorneo(a.tnr) + " · " : "") + (atendido && f.atendido_en ? "atendido a las " + window.HoraCR.hora(new Date(f.atendido_en)) : C.hace(f.creado, new Date()) + " (" + window.HoraCR.hora(new Date(f.creado)) + ")"), "data-creado": atendido ? null : f.creado, "data-antes": atendido ? null : (a ? nombreTorneo(a.tnr) + " · " : "") })),
+                    el("p", { class: "font-bold text-lg", texto: titulo }),
+                    el("p", { class: "text-sm", ...(hora ? { texto: donde + hora } : { "data-creado": f.creado, "data-antes": donde, texto: donde + C.hace(f.creado, new Date()) + " (" + window.HoraCR.hora(new Date(f.creado)) + ")" }) })),
                 atendido ? null : el("div", { class: "cam-acciones cam-acciones-sin-margen" },
-                    el("button", { type: "button", class: "cam-btn", "data-accion": "atender", onclick: () => atender(f) }, "Atendido"),
-                    a ? el("button", { type: "button", class: "cam-btn cam-btn-claro", "data-accion": "escribir", onclick: () => escribirA(a.id) }, "Escribirle") : null)),
-            f.texto ? el("p", { class: "mt-2 font-bold", texto: "«" + f.texto + "»" }) : null);
+                    el("button", { type: "button", class: "cam-btn cam-btn-chico", "data-accion": "atender", onclick: () => atender(f) }, "Atendido"),
+                    a && f.tipo === "ayuda" ? el("button", { type: "button", class: "cam-btn cam-btn-claro cam-btn-chico", "data-accion": "escribir", onclick: () => escribirA(a.id) }, "Escribirle") : null)),
+            f.texto && f.tipo === "ayuda" ? el("p", { class: "mt-2 font-bold", texto: "«" + f.texto + "»" }) : null,
+            f.tipo === "finalizo" && f.texto ? el("p", { class: "mt-2 text-sm", texto: f.texto }) : null,
+            ...sugerencias);
     }
 
     // Lo que cambia con el tiempo y no hace falta repintar: «hace 3 min» se corrige en el lugar.
@@ -172,25 +248,36 @@
         document.querySelectorAll("[data-creado]").forEach((p) => { p.textContent = p.dataset.antes + C.hace(p.dataset.creado, new Date()) + " (" + window.HoraCR.hora(new Date(p.dataset.creado)) + ")"; });
     }
 
-    function pintarAvisos() {
-        const abiertos = pedidosAbiertos();
+    function pintarRonda() {
+        const filas = filasRonda();
+        const abiertos = abiertosDeArbitros();
+        const hechos = avisos.filter((f) => f.de === "arbitro" && f.estado === "atendido").slice(0, 20);
         // Se llega acá cada pocos segundos: si nada cambió, no se vuelven a dibujar los botones
         // (un toque no debe caer en un botón que se acaba de reemplazar).
-        const firma = JSON.stringify([abiertos.map((f) => f.id), avisos.filter((f) => f.estado === "atendido").map((f) => f.id), avisos.filter((f) => f.de === "organizacion").map((f) => [f.id, !!f.leido_en]), asignaciones.map((a) => [a.id, a.arbitro])]);
-        if (firma === firmaAvisos) { refrescarHace(); return; }
-        firmaAvisos = firma;
-        $("pedidos").replaceChildren(...abiertos.map((f) => tarjetaPedido(f, false)));
+        const firma = JSON.stringify([filas.map((f) => [f.id, f.arbitro, f.con_resultado, f.estado, f.lista, C.enLinea(asig(f.id) || {}, new Date())]), abiertos.map((f) => f.id), hechos.map((f) => f.id), torneos.map((t) => t.nombre)]);
+        if (firma === firmaRonda) { refrescarHace(); return; }
+        firmaRonda = firma;
+        pintarResumen(filas);
+        $("pedidos").replaceChildren(...abiertos.map((f) => tarjetaAviso(f, false, filas)));
         $("sin-pedidos").hidden = abiertos.length > 0;
-        const hechos = avisos.filter((f) => f.de === "arbitro" && f.estado === "atendido").slice(0, 20);
         $("atendidos-caja").hidden = hechos.length === 0;
         $("atendidos-n").textContent = String(hechos.length);
-        $("atendidos").replaceChildren(...hechos.map((f) => tarjetaPedido(f, true)));
-        const envios = C.enviosAgrupados(avisos, nombreAsig).slice(0, 40);
-        $("enviados").replaceChildren(...envios.map((e) => el("tr", { "data-total": String(e.total), "data-leidos": String(e.leidos) },
-            el("td", { texto: window.HoraCR.fechaHora(e.creado) }),
-            el("td", { texto: e.texto }),
-            el("td", { texto: e.leidos + " de " + e.total + (e.sinLeer.length ? " · falta: " + e.sinLeer.slice(0, 6).join(", ") + (e.sinLeer.length > 6 ? "…" : "") : " ✓") }))));
-        $("enviados-vacio").hidden = envios.length > 0;
+        $("atendidos").replaceChildren(...hechos.map((f) => tarjetaAviso(f, true, filas)));
+        marcarPedidos();
+    }
+
+    async function cargarAvisos() {
+        const { data, error } = await sb.from("centroamericano_avisos").select("*").order("creado", { ascending: false }).range(0, 499);
+        if (error) { if (pedidosVistos === null) avisar("No se pudieron leer los avisos: " + error.message, true); return; }
+        avisos = data || [];
+        await cargarAvance();
+        const ids = new Set(abiertosDeArbitros().map((f) => f.id));
+        if (pedidosVistos !== null && [...ids].some((id) => !pedidosVistos.has(id))) pitar();
+        pedidosVistos = ids;
+        pintarRonda();
+        marcarPedidos();
+        pintarEnviados();
+        pintarEstadoGeneral();
     }
 
     async function atender(f) {
@@ -199,11 +286,92 @@
         await cargarAvisos();
     }
 
+    async function mandarSugerencia(f, s) {
+        const texto = C.textoSugerencia(s, nombreTorneo(s.tnr));
+        const { error } = await sb.from("centroamericano_avisos").insert([{ de: "organizacion", asignacion_id: f.asignacion_id, texto }]);
+        if (error) { avisar("No se pudo enviar: " + error.message, true); return; }
+        await sb.from("centroamericano_avisos").update({ estado: "atendido" }).eq("id", f.id);
+        avisar("Sugerencia enviada a " + nombreAsig(f.asignacion_id) + ".");
+        await cargarAvisos();
+    }
+
+    async function actualizarResumen() {
+        const b = $("resumen-actualizar");
+        b.disabled = true;
+        $("resumen-total").textContent = "Leyendo chess-results…";
+        try {
+            const d = await invocar({ action: "resumen" });
+            await cargarAvance();
+            firmaRonda = "";
+            pintarRonda();
+            avisar("Avance puesto al día (" + d.torneos + (d.torneos === 1 ? " torneo" : " torneos") + ")." + (d.errores && d.errores.length ? " No se pudo leer: " + d.errores.map((e) => nombreTorneo(e.tnr)).join(", ") + "." : ""), !!(d.errores && d.errores.length && !d.torneos));
+        } catch (e) {
+            avisar(e.message, true);
+        } finally {
+            b.disabled = false;
+        }
+    }
+
+    async function reportePdf() {
+        const filas = filasRonda();
+        if (!filas.length) { avisar("No hay enlaces activos para el reporte.", true); return; }
+        const ronda = filas[0].ronda;
+        const doc = {
+            titulo: "Avance de la ronda " + (ronda || ""),
+            subtitulo: "Centroamericano 2026 · " + window.HoraCR.fechaHora(new Date()),
+            pie: "Centroamericano 2026 · ajedrez-integral.com",
+            bloques: [
+                { tipo: "titulo", texto: "Cuánto le queda a cada árbitro" },
+                { tipo: "tabla", encabezados: ["Árbitro", "Torneo", "Mesas", "Con resultado", "Faltan", "Estado"], anchos: [2.4, 2.4, 1.1, 1.3, 2, 2],
+                  filas: filas.map((f) => [f.arbitro, nombreTorneo(f.tnr), f.mesa_desde + " a " + f.mesa_hasta, f.sinDatos ? "—" : f.con_resultado + " de " + f.total, f.sinDatos ? "—" : f.quedan ? C.listaMesas(f.pendientes) : "ninguna", ETIQUETA_ESTADO[f.estado]]) },
+                { tipo: "titulo", texto: "Pedidos y avisos sin atender" },
+                abiertosDeArbitros().length
+                    ? { tipo: "lista", items: abiertosDeArbitros().map((f) => nombreAsig(f.asignacion_id) + ": " + (f.tipo === "termino" ? "terminó sus mesas" : f.tipo === "finalizo" ? "finalizó la ronda" : "pidió ayuda" + (f.mesa ? " en la mesa " + f.mesa : "")) + " (" + window.HoraCR.hora(new Date(f.creado)) + ")") }
+                    : { tipo: "parrafo", texto: "Ninguno." },
+            ],
+            fotos: [],
+        };
+        await descargarPdf(doc, "avance-ronda-" + (ronda || "x") + "-centroamericano-2026.pdf");
+    }
+
+    async function descargarPdf(doc, nombre) {
+        try {
+            const blob = await window.ReportePDF.generar(doc);
+            descargar(blob, nombre);
+        } catch (e) {
+            avisar("No se pudo armar el PDF: " + (e.message || e), true);
+        }
+    }
+
+    function descargar(blob, nombre) {
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = nombre;
+        document.body.append(a);
+        a.click();
+        a.remove();
+        setTimeout(() => URL.revokeObjectURL(a.href), 10000);
+    }
+
     function escribirA(id) {
         abrirPanel("avisos");
         $("av-para").value = "a:" + id;
         $("form-aviso").scrollIntoView({ block: "center" });
         $("av-texto").focus();
+    }
+
+    // ------------------------------------------------------------- 2. avisos
+
+    function pintarEnviados() {
+        const envios = C.enviosAgrupados(avisos, nombreAsig).slice(0, 40);
+        const firma = JSON.stringify(envios.map((e) => [e.creado, e.texto, e.leidos, e.total]));
+        if (firma === firmaEnviados) return;
+        firmaEnviados = firma;
+        $("enviados").replaceChildren(...envios.map((e) => el("tr", { "data-total": String(e.total), "data-leidos": String(e.leidos) },
+            el("td", { texto: window.HoraCR.fechaHora(e.creado) }),
+            el("td", { texto: e.texto }),
+            el("td", { texto: e.leidos + " de " + e.total + (e.sinLeer.length ? " · falta: " + e.sinLeer.slice(0, 6).join(", ") + (e.sinLeer.length > 6 ? "…" : "") : " ✓") }))));
+        $("enviados-vacio").hidden = envios.length > 0;
     }
 
     function pintarDestinos() {
@@ -236,7 +404,7 @@
         await cargarAvisos();
     }
 
-    // ------------------------------------------------------------- 3. la clave del grupo
+    // ------------------------------------------------------------- 5. la clave del grupo
 
     async function cargarTorneos() {
         const { data, error } = await sb.from("centroamericano_torneos").select("tnr, nombre, categoria, rama, orden, sid_en_boveda, clave_puesta, acceso_tnr").order("orden");
@@ -244,9 +412,9 @@
         torneos = data || [];
         pintarTorneos();
         const opciones = () => torneos.map((t) => el("option", { value: t.tnr, texto: t.nombre + (t.sid_en_boveda ? "" : " (sin clave)") }));
-        for (const id of ["a-torneo", "rp-torneo", "r-torneo"]) {
+        for (const id of ["a-torneo", "rp-torneo", "r-torneo", "pl-torneo"]) {
             const s = $(id), antes = s.value;
-            s.replaceChildren(...(id === "r-torneo" ? [el("option", { value: "", texto: "Todos los torneos" })] : []), ...opciones());
+            s.replaceChildren(...(id === "r-torneo" || id === "pl-torneo" ? [el("option", { value: "", texto: "Todos los torneos" })] : []), ...opciones());
             if (antes) s.value = antes;
         }
         // El código del grupo no es secreto: se propone el que ya se usó.
@@ -349,7 +517,7 @@
         await cargarTorneos();
     }
 
-    // ------------------------------------------------------------- 2. árbitros y mesas
+    // ------------------------------------------------------------- 3. árbitros y mesas
 
     async function cargarAsignaciones() {
         const { data, error } = await sb.from("centroamericano_asignaciones").select("*").range(0, 499);
@@ -357,9 +525,9 @@
         asignaciones = data || [];
         pintarAsignaciones();
         pintarDestinos();
+        firmaRonda = "";
+        pintarRonda();
         pintarEstadoGeneral();
-        pintarAvisos();
-        marcarPedidos();
     }
 
     function textoEstado(a) {
@@ -374,41 +542,51 @@
         catch (e) { await Avisos.pedir("Copia el enlace:", { titulo: "Enlace del árbitro", valor: texto, aceptar: "Listo", soloLectura: true }); }
     }
 
-    const textoPedidos = (n) => "🆘 Tiene " + n + (n === 1 ? " pedido de ayuda abierto" : " pedidos de ayuda abiertos");
-    // Los pedidos de cada árbitro se ponen al día en su tarjeta, sin repintarla.
+    // El QR siempre lleva la marca de Ajedrez Integral al centro.
+    const qrDe = (a, enlace) => (window.QrSvg ? window.QrSvg.dibujar(enlace, "QR del enlace de " + a.arbitro, { marca: true }) : null);
+
+    function verQr(a) {
+        const enlace = C.enlaceArbitro(location.origin, a.token);
+        const torneo = nombreTorneo(a.tnr);
+        const wa = "https://wa.me/?text=" + encodeURIComponent(C.textoWhatsapp(a, torneo, enlace));
+        const qr = qrDe(a, enlace);
+        ventanita("Enlace de " + a.arbitro,
+            el("p", { class: "font-bold", texto: torneo + " · mesas " + a.mesa_desde + " a " + a.mesa_hasta }),
+            qr ? el("div", { class: "cam-qr cam-qr-grande" }, qr) : null,
+            el("p", { class: "text-sm", texto: textoEstado(a) }),
+            el("div", { class: "cam-acciones" },
+                el("button", { type: "button", class: "cam-btn cam-btn-chico", "data-accion": "copiar", onclick: () => copiar(enlace) }, "Copiar el enlace"),
+                el("a", { class: "cam-btn cam-btn-claro cam-btn-chico", href: wa, target: "_blank", rel: "noopener", "data-accion": "whatsapp" }, "Mandar por WhatsApp"),
+                el("a", { class: "cam-btn cam-btn-claro cam-btn-chico", href: enlace, target: "_blank", rel: "noopener", "data-accion": "abrir" }, "Abrir")));
+    }
+
+    function filaAsignacion(a) {
+        const est = C.estadoAsignacion(a, new Date());
+        const linea = C.enLinea(a, new Date());
+        const boton = (accion, texto, fn, extra) => el("button", { type: "button", class: "cam-btn cam-btn-chico " + (extra || "cam-btn-claro"), "data-accion": accion, onclick: fn }, texto);
+        return el("tr", { class: "cam-asignacion", "data-estado": est, "data-id": a.id, "data-nombrado": a.nombrado === false ? "no" : "si" },
+            el("td", {}, el("strong", { texto: a.arbitro }), a.nombrado === false ? el("span", { class: "cam-chip cam-chip-al-lado", "data-clave": "neutro", texto: "Por definir" }) : null),
+            el("td", { texto: a.mesa_desde + " a " + a.mesa_hasta }),
+            el("td", { texto: textoEstado(a) }),
+            el("td", { class: "cam-conectado", "data-en-linea": linea ? "si" : "no" }, linea ? "● Conectado ahora" : a.ultimo_uso ? "Visto: " + window.HoraCR.fechaHora(a.ultimo_uso) : "Todavía no ha abierto el enlace",
+                el("span", { class: "cam-fallo cam-pedidos-abiertos", "data-pedidos": a.id, hidden: true })),
+            el("td", {}, el("div", { class: "cam-acciones cam-acciones-sin-margen" },
+                boton("qr", "QR y enlace", () => verQr(a), ""),
+                boton("nombre", a.nombrado === false ? "Ponerle nombre" : "Nombre", () => cambiarNombre(a)),
+                boton("mesas", "Mesas", () => cambiarMesas(a)),
+                est === "activo" ? boton("avisarle", "Avisarle", () => escribirA(a.id)) : null,
+                boton(a.revocada ? "reactivar" : "apagar", a.revocada ? "Volver a encender" : "Apagar", () => cambiar(a, !a.revocada), a.revocada ? "cam-btn-claro" : "cam-btn-rojo"))));
+    }
+
+    const textoPedidos = (n) => "🆘 " + n + (n === 1 ? " aviso abierto" : " avisos abiertos");
+    // Lo abierto de cada árbitro se pone al día en su fila, sin repintarla.
     function marcarPedidos() {
-        const abiertos = pedidosAbiertos();
+        const abiertos = abiertosDeArbitros();
         document.querySelectorAll("[data-pedidos]").forEach((p) => {
             const n = abiertos.filter((f) => f.asignacion_id === p.dataset.pedidos).length;
             p.hidden = n === 0;
-            p.textContent = textoPedidos(n);
+            p.textContent = n ? textoPedidos(n) : "";
         });
-    }
-
-    function tarjetaAsignacion(a) {
-        const enlace = C.enlaceArbitro(location.origin, a.token);
-        const est = C.estadoAsignacion(a, new Date());
-        const torneo = nombreTorneo(a.tnr);
-        const qr = window.QrSvg ? window.QrSvg.dibujar(enlace, "QR del enlace de " + a.arbitro) : null;
-        const wa = "https://wa.me/?text=" + encodeURIComponent(C.textoWhatsapp(a, torneo, enlace));
-        const linea = C.enLinea(a, new Date());
-        const pedidos = pedidosAbiertos().filter((f) => f.asignacion_id === a.id).length;
-        return el("article", { class: "cam-asignacion", "data-estado": est, "data-id": a.id, "data-nombrado": a.nombrado === false ? "no" : "si" },
-            el("div", {},
-                el("p", { class: "font-bold text-lg" }, a.arbitro, a.nombrado === false ? el("span", { class: "cam-chip cam-chip-al-lado", "data-clave": "neutro", texto: "Por definir" }) : null),
-                el("p", { texto: torneo + " · mesas " + a.mesa_desde + " a " + a.mesa_hasta }),
-                el("p", { class: "text-sm", texto: textoEstado(a) }),
-                el("p", { class: "cam-conectado", "data-en-linea": linea ? "si" : "no", texto: linea ? "● Conectado ahora" : a.ultimo_uso ? "Visto por última vez: " + window.HoraCR.fechaHora(a.ultimo_uso) : "Todavía no ha abierto el enlace" }),
-                el("p", { class: "font-bold cam-fallo", "data-pedidos": a.id, hidden: pedidos === 0, texto: textoPedidos(pedidos) }),
-                el("div", { class: "cam-acciones cam-no-qr" },
-                    el("button", { type: "button", class: "cam-btn cam-btn-chico", "data-accion": "copiar", onclick: () => copiar(enlace) }, "Copiar el enlace"),
-                    el("a", { class: "cam-btn cam-btn-claro cam-btn-chico", href: wa, target: "_blank", rel: "noopener", "data-accion": "whatsapp" }, "Mandar por WhatsApp"),
-                    el("a", { class: "cam-btn cam-btn-claro cam-btn-chico", href: enlace, target: "_blank", rel: "noopener", "data-accion": "abrir" }, "Abrir"),
-                    el("button", { type: "button", class: "cam-btn cam-btn-claro cam-btn-chico", "data-accion": "nombre", onclick: () => cambiarNombre(a) }, a.nombrado === false ? "Ponerle nombre" : "Cambiar el nombre"),
-                    el("button", { type: "button", class: "cam-btn cam-btn-claro cam-btn-chico", "data-accion": "mesas", onclick: () => cambiarMesas(a) }, "Cambiar las mesas"),
-                    est === "activo" ? el("button", { type: "button", class: "cam-btn cam-btn-claro cam-btn-chico", "data-accion": "avisarle", onclick: () => escribirA(a.id) }, "Mandarle un aviso") : null,
-                    el("button", { type: "button", class: "cam-btn cam-btn-chico " + (a.revocada ? "cam-btn-claro" : "cam-btn-rojo"), "data-accion": a.revocada ? "reactivar" : "apagar", onclick: () => cambiar(a, !a.revocada) }, a.revocada ? "Volver a encender" : "Apagar el enlace"))),
-            qr ? el("div", { class: "cam-qr" }, qr) : null);
     }
 
     function pintarAsignaciones() {
@@ -420,15 +598,15 @@
         const grupos = new Map();
         for (const t of torneos) grupos.set(t.tnr, []);
         for (const a of asignaciones) { if (!grupos.has(a.tnr)) grupos.set(a.tnr, []); grupos.get(a.tnr).push(a); }
-        const secciones = [];
+        const filas = [];
         for (const [tnr, lista] of grupos) {
             if (!lista.length) continue;
             lista.sort((x, y) => x.mesa_desde - y.mesa_desde || x.mesa_hasta - y.mesa_hasta || String(x.creada).localeCompare(String(y.creada)));
-            secciones.push(el("section", { class: "cam-grupo-torneo", "data-tnr": tnr },
-                el("h3", {}, nombreTorneo(tnr), el("span", { class: "text-sm font-normal", texto: lista.length + (lista.length === 1 ? " enlace" : " enlaces") })),
-                el("div", { class: "cam-asignaciones-lista" }, ...lista.map(tarjetaAsignacion))));
+            filas.push(el("tr", { class: "cam-grupo-torneo", "data-tnr": tnr }, el("th", { colspan: "5", scope: "colgroup", texto: nombreTorneo(tnr) + " — " + lista.length + (lista.length === 1 ? " enlace" : " enlaces") })));
+            filas.push(...lista.map(filaAsignacion));
         }
-        $("asignaciones").replaceChildren(...secciones);
+        $("asignaciones").replaceChildren(...filas);
+        marcarPedidos();
     }
 
     async function cambiar(a, apagar) {
@@ -507,7 +685,7 @@
     function vistaReparto() {
         const rangos = C.repartirMesas(entero("rp-mesas") || 0, entero("rp-arbitros") || 0);
         const tnr = $("rp-torneo").value;
-        let sig = parseInt(C.nombrePorDefinir(asignaciones.filter((a) => a.tnr === tnr)).replace(/\D+/g, ""), 10);
+        const sig = parseInt(C.nombrePorDefinir(asignaciones.filter((a) => a.tnr === tnr)).replace(/\D+/g, ""), 10);
         $("rp-vista").textContent = rangos.length ? rangos.map((r, i) => "Árbitro " + (sig + i) + ": mesas " + r.desde + " a " + r.hasta).join(" · ") : "";
         $("rp-crear").disabled = rangos.length === 0;
         return rangos;
@@ -542,7 +720,7 @@
         const sigue = await Avisos.confirmar(avisos2.concat(["Se crean " + rangos.length + " enlaces. ¿Seguir?"]).join(" "), { titulo: "Crear los enlaces", aceptar: "Sí, crearlos" });
         if (!sigue) return;
         const vence = C.vencimiento($("a-vence").value, new Date(), window.HoraCR.hoy()).toISOString();
-        let n = parseInt(C.nombrePorDefinir(asignaciones.filter((a) => a.tnr === tnr)).replace(/\D+/g, ""), 10);
+        const n = parseInt(C.nombrePorDefinir(asignaciones.filter((a) => a.tnr === tnr)).replace(/\D+/g, ""), 10);
         $("rp-crear").disabled = true;
         const { error } = await sb.from("centroamericano_asignaciones").insert(rangos.map((r, i) => ({ tnr, arbitro: "Árbitro " + (n + i), nombrado: false, mesa_desde: r.desde, mesa_hasta: r.hasta, vence })));
         if (error) { $("rp-crear").disabled = false; avisar("No se pudieron crear los enlaces: " + error.message, true); return; }
@@ -553,7 +731,187 @@
         await cargarAsignaciones();
     }
 
-    // ------------------------------------------------------------- 4. lo que anotan
+    // La hoja de QR para imprimir: una tarjeta por árbitro, cada QR con la marca de la academia.
+    function imprimirQr() {
+        const act = asignaciones.filter(activa).sort((a, b) => (torneos.findIndex((t) => t.tnr === a.tnr) - torneos.findIndex((t) => t.tnr === b.tnr)) || a.mesa_desde - b.mesa_desde);
+        if (!act.length) { avisar("No hay enlaces activos para imprimir.", true); return; }
+        $("hoja-qr").replaceChildren(...act.map((a) => {
+            const qr = qrDe(a, C.enlaceArbitro(location.origin, a.token));
+            return el("article", { class: "cam-hoja-tarjeta" },
+                el("h3", { texto: a.arbitro }),
+                el("p", { texto: nombreTorneo(a.tnr) + " · mesas " + a.mesa_desde + " a " + a.mesa_hasta }),
+                qr ? el("div", { class: "cam-qr cam-qr-grande" }, qr) : null,
+                el("p", { class: "cam-hoja-pie" }, el("img", { src: "img/app/icon-192.png", width: "20", height: "20", alt: "" }), " Ajedrez Integral · Centroamericano 2026"),
+                el("p", { class: "cam-hoja-nota", texto: "Escanea con la cámara del celular o la tablet. Vence el " + window.HoraCR.fechaHora(a.vence) + "." }));
+        }));
+        document.body.classList.add("cam-imprime-qr");
+        window.addEventListener("afterprint", () => document.body.classList.remove("cam-imprime-qr"), { once: true });
+        window.print();
+    }
+
+    // ------------------------------------------------------------- 4. planillas y Drive
+
+    async function cargarDrive() {
+        try { drive = await invocar({ action: "drive_estado" }); } catch (e) { drive = null; }
+        const t = $("drive-estado");
+        if (drive) {
+            t.dataset.estado = drive.conectado ? "si" : "no";
+            t.textContent = drive.conectado
+                ? "☁️ Drive conectado. " + (drive.pendientes ? drive.pendientes + " planillas todavía no llegaron al Drive (están a salvo aquí): toca «Mandar al Drive las que faltan»." : "Todas las planillas subidas están en el Drive.")
+                : "☁️ El Drive todavía no está conectado: las fotos se guardan aquí, a salvo, y pasan al Drive cuando lo conectes. Abajo está cómo.";
+            $("respaldo-estado").textContent = drive.conectado ? "La copia también va al Drive cada 10 minutos" + (drive.ultima_copia ? " (la última, " + C.hace(drive.ultima_copia, new Date()) + ")." : ".") : "El Drive no está conectado: las copias quedan solo en la base (y las que bajes tú).";
+            $("respaldo-estado").dataset.estado = drive.conectado ? "si" : "no";
+        }
+        pintarEstadoGeneral();
+    }
+
+    async function conectarDrive() {
+        const url = $("drive-url").value.trim(), secreto = $("drive-secreto").value.trim();
+        const t = $("drive-conectar-estado");
+        t.textContent = "Probando el Drive…";
+        $("drive-conectar").disabled = true;
+        try {
+            const d = await invocar({ action: "drive_conectar", url, secreto });
+            $("drive-secreto").value = "";
+            $("drive-url").value = "";
+            t.textContent = "✓ Conectado. Carpeta: «" + d.carpeta + "».";
+            t.className = "cam-guardado text-sm mt-2";
+            await cargarDrive();
+        } catch (e) {
+            t.textContent = "✗ " + e.message;
+            t.className = "cam-fallo text-sm mt-2";
+        } finally {
+            $("drive-conectar").disabled = false;
+        }
+    }
+
+    async function reintentarDrive() {
+        const b = $("drive-reintentar");
+        b.disabled = true;
+        try {
+            const d = await invocar({ action: "drive_reintentar" });
+            avisar("Enviadas al Drive: " + d.enviadas + (d.fallaron ? ". No se pudieron: " + d.fallaron : "") + (d.quedan ? ". Quedan " + d.quedan + "." : "."), !!d.fallaron);
+            await Promise.all([cargarPlanillas(), cargarDrive()]);
+        } catch (e) {
+            avisar(e.message, true);
+        } finally {
+            b.disabled = false;
+        }
+    }
+
+    async function cargarPlanillas() {
+        const { data, error } = await sb.from("centroamericano_planillas").select("*").order("subida", { ascending: false }).range(0, 999);
+        if (error) { avisar("No se pudieron leer las planillas: " + error.message, true); return; }
+        planillas = data || [];
+        pintarPlanillas();
+    }
+
+    function pintarPlanillas() {
+        const tnr = $("pl-torneo").value, actual = $("pl-ronda").value;
+        const rondas = [...new Set(planillas.map((p) => p.ronda))].sort((a, b) => a - b);
+        $("pl-ronda").replaceChildren(el("option", { value: "", texto: "Todas" }), ...rondas.map((r) => el("option", { value: String(r), texto: "Ronda " + r })));
+        $("pl-ronda").value = actual;
+        const ronda = $("pl-ronda").value;
+        const lista = planillas.filter((p) => (!tnr || p.tnr === tnr) && (!ronda || String(p.ronda) === ronda))
+            .sort((a, b) => a.tnr.localeCompare(b.tnr) || a.ronda - b.ronda || a.mesa - b.mesa || a.lado.localeCompare(b.lado));
+        $("planillas").replaceChildren(...lista.map((p) => el("tr", { "data-drive": p.drive_ok ? "si" : "no" },
+            el("td", { texto: nombreTorneo(p.tnr) }), el("td", { texto: String(p.ronda) }), el("td", { texto: String(p.mesa) }),
+            el("td", { texto: (p.lado === "blancas" ? p.jugador + " vs " + p.rival : p.rival + " vs " + p.jugador) }),
+            el("td", { texto: p.lado === "blancas" ? "Blancas" : "Negras" }), el("td", { texto: p.arbitro }), el("td", { texto: window.HoraCR.fechaHora(p.subida) }),
+            el("td", { texto: p.drive_ok ? "✓ En el Drive" : p.drive_error ? "✗ " + p.drive_error : "Pendiente" }),
+            el("td", {}, el("button", { type: "button", class: "cam-btn cam-btn-claro cam-btn-chico", "data-accion": "ver-foto", onclick: () => verFoto(p) }, "Ver")))));
+        $("planillas-vacio").hidden = lista.length > 0;
+    }
+
+    async function verFoto(p) {
+        const { data, error } = await sb.storage.from("centroamericano-planillas").createSignedUrl(p.ruta, 120);
+        if (error || !data) { avisar("No se pudo abrir la foto: " + (error ? error.message : ""), true); return; }
+        ventanita("Mesa " + p.mesa + " · " + (p.lado === "blancas" ? "blancas" : "negras") + " · " + p.jugador,
+            el("img", { src: data.signedUrl, alt: "Foto de la planilla de " + p.jugador + ", mesa " + p.mesa, class: "cam-foto-planilla" }));
+    }
+
+    // ------------------------------------------------------------- 6. respaldo
+
+    async function cargarCopias() {
+        const { data, error } = await sb.from("centroamericano_copias").select("anillo, ranura, creada, huella, resumen").order("creada", { ascending: false }).range(0, 199);
+        if (error) { avisar("No se pudieron leer las copias: " + error.message, true); return; }
+        copias = data || [];
+        pintarCopias();
+        pintarEstadoGeneral();
+    }
+
+    const NOMBRE_ANILLO = { a: "Automática (5 min)", b: "Automática (cada hora)", m: "A pedido" };
+
+    function pintarCopias() {
+        const lista = copias.filter((c) => c.anillo !== "d").slice(0, 40);
+        $("copias-vacio").hidden = lista.length > 0;
+        $("copias").replaceChildren(...lista.map((c) => el("tr", { "data-anillo": c.anillo },
+            el("td", { texto: window.HoraCR.fechaHora(c.creada) }), el("td", { texto: NOMBRE_ANILLO[c.anillo] || c.anillo }),
+            el("td", { texto: String((c.resumen || {}).asignaciones ?? "") }), el("td", { texto: String((c.resumen || {}).registro ?? "") }),
+            el("td", { texto: String((c.resumen || {}).avisos ?? "") }), el("td", { texto: String((c.resumen || {}).planillas ?? "") }),
+            el("td", {}, el("div", { class: "cam-acciones cam-acciones-sin-margen" },
+                el("button", { type: "button", class: "cam-btn cam-btn-claro cam-btn-chico", "data-accion": "bajar-copia", onclick: () => bajarCopia(c) }, "Bajar"),
+                el("button", { type: "button", class: "cam-btn cam-btn-chico", "data-accion": "restaurar-copia", onclick: () => restaurarCopia(c) }, "Restaurar"))))));
+    }
+
+    // copia-centroamericano-2026-AAAA-MM-DD-HHMM.json, en hora de Costa Rica.
+    function nombreArchivoCopia(fecha) {
+        const p = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Costa_Rica", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).formatToParts(new Date(fecha));
+        const g = (t) => (p.find((x) => x.type === t) || { value: "" }).value;
+        return "copia-centroamericano-2026-" + g("year") + "-" + g("month") + "-" + g("day") + "-" + g("hour") + g("minute") + ".json";
+    }
+
+    function bajarJson(copia, fecha) {
+        descargar(new Blob([JSON.stringify(copia)], { type: "application/json" }), nombreArchivoCopia(fecha || copia.creada));
+    }
+
+    async function copiaAhora() {
+        $("copia-ahora").disabled = true;
+        try {
+            const { data, error } = await sb.rpc("centroamericano_copia_manual");
+            if (error || !data) throw new Error(error ? error.message : "No se pudo hacer la copia.");
+            bajarJson(data);
+            avisar("Copia hecha: " + data.asignaciones.length + " enlaces, " + data.registro.length + " anotaciones. Guárdala en un lugar seguro.");
+            await cargarCopias();
+        } catch (e) {
+            avisar(e.message, true);
+        } finally {
+            $("copia-ahora").disabled = false;
+        }
+    }
+
+    async function bajarCopia(c) {
+        const { data, error } = await sb.from("centroamericano_copias").select("contenido").eq("anillo", c.anillo).eq("ranura", c.ranura).maybeSingle();
+        if (error || !data || !data.contenido) { avisar("No se pudo bajar esa copia.", true); return; }
+        bajarJson(data.contenido, c.creada);
+    }
+
+    async function restaurarDe(copia, origen) {
+        if (!copia || copia.version !== 1 || copia.evento !== "Centroamericano 2026") { avisar("Ese archivo no es una copia del Centroamericano 2026.", true); return; }
+        const sigue = await Avisos.confirmar("Vas a restaurar " + origen + ": " + (copia.asignaciones || []).length + " enlaces, " + (copia.registro || []).length + " anotaciones, " + (copia.avisos || []).length + " avisos y " + (copia.planillas || []).length + " planillas. Solo se agrega lo que falta: lo que ya está no se toca. Los enlaces conservan su mismo QR.", { titulo: "Restaurar la copia", aceptar: "Sí, restaurar" });
+        if (!sigue) return;
+        const { data, error } = await sb.rpc("centroamericano_restaurar", { p_copia: copia });
+        if (error) { avisar("No se pudo restaurar: " + error.message, true); return; }
+        avisar("Restaurado. Se agregaron " + data.asignaciones + " enlaces, " + data.registro + " anotaciones, " + data.avisos + " avisos, " + data.planillas + " planillas.");
+        await Promise.all([cargarAsignaciones(), cargarAvisos(), cargarPlanillas(), cargarRegistro()]);
+    }
+
+    async function restaurarCopia(c) {
+        const { data, error } = await sb.from("centroamericano_copias").select("contenido").eq("anillo", c.anillo).eq("ranura", c.ranura).maybeSingle();
+        if (error || !data || !data.contenido) { avisar("No se pudo leer esa copia.", true); return; }
+        await restaurarDe(data.contenido, "la copia de " + window.HoraCR.fechaHora(c.creada));
+    }
+
+    async function restaurarArchivo() {
+        const f = $("copia-archivo").files && $("copia-archivo").files[0];
+        $("copia-archivo").value = "";
+        if (!f) return;
+        let copia;
+        try { copia = JSON.parse(await f.text()); } catch (e) { avisar("Ese archivo no se pudo leer.", true); return; }
+        await restaurarDe(copia, "el archivo «" + f.name + "»");
+    }
+
+    // ------------------------------------------------------------- 7. lo que anotan
 
     const NOMBRE_TIPO = { resultado: "Resultado", correccion: "Corrección", ilegal: "Ilegal", irregularidad: "Irregularidad", incidencia: "Incidencia", nota: "Nota", anulacion: "Anulación" };
 
@@ -579,7 +937,7 @@
         }
         registro = todas;
         pintarRegistro();
-        $("r-estado").textContent = "Actualizado a las " + window.HoraCR.hora(new Date());
+        $("r-estado").textContent = "Actualizado a las " + ahoraTxt();
     }
 
     function pintarRegistro() {
@@ -610,36 +968,21 @@
         const doc = M.documento({ tnr: tnr || "todos", torneo: tnr ? nombreTorneo(tnr) : "Centroamericano 2026 (todos los torneos)" }, filas, "", (x) => window.HoraCR.fechaHora(x));
         doc.titulo = "Registro de los árbitros del Centroamericano 2026";
         doc.pie = "Centroamericano 2026 · ajedrez-integral.com";
-        try {
-            const blob = await window.ReportePDF.generar(doc);
-            const a = document.createElement("a");
-            a.href = URL.createObjectURL(blob);
-            a.download = "registro-arbitros-centroamericano-2026" + (tnr ? "-" + tnr : "") + ".pdf";
-            document.body.append(a);
-            a.click();
-            a.remove();
-            setTimeout(() => URL.revokeObjectURL(a.href), 10000);
-        } catch (e) {
-            avisar("No se pudo armar el PDF: " + (e.message || e), true);
-        }
+        await descargarPdf(doc, "registro-arbitros-centroamericano-2026" + (tnr ? "-" + tnr : "") + ".pdf");
     }
 
     // ------------------------------------------------------------- arranque
 
-    function imprimirQr() {
-        document.body.classList.add("cam-imprime-qr");
-        window.addEventListener("afterprint", () => document.body.classList.remove("cam-imprime-qr"), { once: true });
-        window.print();
-    }
-
-    // Cada 6 s se miran los avisos (es lo urgente); los enlaces cada 18 s (quién está
-    // conectado) y el registro cada 30 s, solo si esa pestaña está a la vista.
+    // Cada 6 s se miran los avisos y el avance (es lo urgente); los enlaces cada 18 s (quién está
+    // conectado), el Drive y las copias cada minuto, y el registro cada 30 s si está a la vista.
     async function pulso() {
         if (document.hidden) return;
         tic++;
         const tareas = [cargarAvisos()];
         if (tic % 3 === 0) tareas.push(cargarAsignaciones());
         if (tic % 5 === 0 && !$("panel-registro").hidden) tareas.push(cargarRegistro());
+        if (tic % 10 === 0) tareas.push(cargarCopias(), cargarDrive());
+        if (tic % 5 === 0 && !$("panel-planillas").hidden) tareas.push(cargarPlanillas());
         await Promise.all(tareas);
     }
 
@@ -657,24 +1000,36 @@
         $("frases").replaceChildren(...FRASES.map((f) => el("button", { type: "button", class: "cam-btn cam-btn-claro cam-btn-chico", "data-accion": "frase", onclick: () => { $("av-texto").value = f; $("av-texto").focus(); } }, f)));
         $("sonido").addEventListener("click", alternarSonido);
         $("form-aviso").addEventListener("submit", enviarAviso);
+        $("resumen-actualizar").addEventListener("click", actualizarResumen);
+        $("resumen-pdf").addEventListener("click", reportePdf);
         $("g-guardar").addEventListener("click", guardarGrupo);
         $("claves-bloque-guardar").addEventListener("click", guardarBloque);
         $("form-asignar").addEventListener("submit", crear);
+        $("abrir-nuevo").addEventListener("click", () => { $("nuevo").open = true; $("a-arbitro").focus(); });
+        $("abrir-reparto").addEventListener("click", () => { $("reparto").open = true; $("rp-mesas").focus(); });
         for (const id of ["rp-mesas", "rp-arbitros"]) $(id).addEventListener("input", vistaReparto);
         $("rp-torneo").addEventListener("change", vistaReparto);
         $("rp-leer").addEventListener("click", leerMesas);
         $("rp-crear").addEventListener("click", repartir);
         $("imprimir-qr").addEventListener("click", imprimirQr);
+        $("pl-actualizar").addEventListener("click", () => { cargarPlanillas(); cargarDrive(); });
+        $("pl-torneo").addEventListener("change", pintarPlanillas);
+        $("pl-ronda").addEventListener("change", pintarPlanillas);
+        $("drive-conectar").addEventListener("click", conectarDrive);
+        $("drive-reintentar").addEventListener("click", reintentarDrive);
+        $("copia-ahora").addEventListener("click", copiaAhora);
+        $("copia-restaurar").addEventListener("click", () => $("copia-archivo").click());
+        $("copia-archivo").addEventListener("change", restaurarArchivo);
         $("r-actualizar").addEventListener("click", cargarRegistro);
         $("r-torneo").addEventListener("change", cargarRegistro);
         $("r-tipo").addEventListener("change", pintarRegistro);
         $("r-pdf").addEventListener("click", bajarPdf);
         await cargarTorneos();
         await cargarAsignaciones();
-        await Promise.all([cargarAvisos(), cargarRegistro()]);
+        await Promise.all([cargarAvisos(), cargarCopias(), cargarDrive()]);
         // Sin clave todavía: lo primero que hay que hacer es ponerla.
         const hash = location.hash.replace("#", "");
-        abrirPanel(PANELES.includes(hash) ? hash : torneos.some((t) => t.sid_en_boveda) ? "avisos" : "claves");
+        abrirPanel(PANELES.includes(hash) ? hash : torneos.some((t) => t.sid_en_boveda) ? "ronda" : "claves");
         setInterval(pulso, TIC_MS);
     }
 

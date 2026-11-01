@@ -36,6 +36,12 @@
 //   "guardar" { ronda, cambios[] }        -> manda resultados y los anota si quedaron
 //   "anotar"  { ronda, mesa, color, tipo, texto?, articulo? } -> una línea del registro
 //   "anular"  { id }                      -> deshace una ilegal o irregularidad
+//   "lista"   { ronda, paso }             -> aprueba un paso de la lista previa de la ronda (relojes, tableros; en ese orden).
+//                                             Sin los dos aprobados, "guardar" responde 409.
+//   "planilla" { ronda, mesa, lado, imagen } -> la foto de la planilla de blancas o negras: se guarda
+//                                             en el bucket privado y pasa al Drive («Planillas Centroamericano»)
+//   "finalizar" { ronda, revision }       -> el árbitro finaliza la ronda (todas sus mesas con resultado y
+//                                             confirmó que revisó resultados y planillas ordenadas y firmadas)
 // y las que NO hablan con chess-results (ni necesitan la clave), para que el árbitro
 // reciba lo que le manda la organización aunque chess-results esté caído:
 //   "avisos"  {}                          -> mensajes sin leer de la organización y el estado de su pedido de ayuda
@@ -47,6 +53,8 @@
 
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { guardarYComprobar, leerRonda, MAX_CAMBIOS } from "./chess-results-ingreso.ts";
+import { avance, guardarAvance } from "./avance-ronda.ts";
+import { aBase64, deBase64, llamarPuente } from "./drive-puente.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -64,6 +72,10 @@ function json(body: unknown, status = 200) {
 // El valor del desplegable de chess-results → cómo se llama en el registro.
 const NOMBRE_RESULTADO: Record<string, string> = { "0": "sin resultado", "1": "1-0", "2": "1/2", "3": "0-1", "4": "1f-0f", "5": "0f-1f", "6": "0f-0f", D: "borrado" };
 const TIPOS_ANOTABLES = ["ilegal", "irregularidad", "incidencia", "nota"];
+const BUCKET = "centroamericano-planillas";
+// La lista previa de cada ronda, en este orden (paso a paso): ver la migración centroamericano_lista_previa.
+const PASOS = ["relojes", "tableros"];
+const MAX_IMAGEN = 6 * 1024 * 1024; // lo mismo que el bucket
 
 type Fila = {
   id: string; ocurrio: string; arbitro: string; mesa: number; color: string | null; jugador: string; tipo: string;
@@ -112,14 +124,14 @@ Deno.serve(async (req) => {
   const torneoInfo = (Array.isArray(a.centroamericano_torneos) ? a.centroamericano_torneos[0] : a.centroamericano_torneos) as { nombre: string; categoria: string; rama: string } | null;
 
   // Los avisos van por la base, sin chess-results: no necesitan la clave ni se caen con ella.
-  const DE_AVISOS = ["avisos", "ayuda", "leido", "nombre"];
+  const DE_AVISOS = ["avisos", "ayuda", "leido", "nombre", "lista"];
   const { data: acc } = DE_AVISOS.includes(String(cuerpo.action)) ? { data: null } : await servicio.rpc("centroamericano_acceso", { p_tnr: a.tnr });
   const acceso = (Array.isArray(acc) ? acc[0] : acc) as { acceso: string; sid: string } | null;
   if (!acceso && !DE_AVISOS.includes(String(cuerpo.action))) return json({ error: "La organización todavía no cargó la clave de este torneo. Avísale." }, 409);
 
   // Lo que la organización le mandó (sin leer) y cómo va su último pedido de ayuda.
   const avisosDe = async () => {
-    const { data } = await servicio.from("centroamericano_avisos").select("id, creado, de, mesa, texto, estado, atendido_en, leido_en").eq("asignacion_id", a.id).order("creado", { ascending: true }).range(0, 199);
+    const { data } = await servicio.from("centroamericano_avisos").select("id, creado, de, mesa, texto, estado, atendido_en, leido_en, tipo").eq("asignacion_id", a.id).eq("tipo", "ayuda").order("creado", { ascending: true }).range(0, 199);
     const filas = (data ?? []) as { id: string; creado: string; de: string; mesa: number | null; texto: string; estado: string; atendido_en: string | null; leido_en: string | null }[];
     const pedidos = filas.filter((f) => f.de === "arbitro");
     const reciente = [...pedidos].reverse().find((f) => f.estado === "abierto" || (f.atendido_en && Date.now() - new Date(f.atendido_en).getTime() < 15 * 60_000)) ?? null;
@@ -152,8 +164,15 @@ Deno.serve(async (req) => {
       const p = leida.pantalla;
       const filas = await registroDe(p.ronda);
       visto();
+      await guardarAvance(servicio, a.id, p.ronda, avance(p.mesas, a.mesa_desde, a.mesa_hasta));
+      const { data: fin } = await servicio.from("centroamericano_finales").select("finalizada_en").eq("asignacion_id", a.id).eq("ronda", p.ronda).eq("reabierta", false).maybeSingle();
+      const { data: pasosOk } = await servicio.from("centroamericano_listas").select("paso").eq("asignacion_id", a.id).eq("ronda", p.ronda);
+      const { data: plan } = await servicio.from("centroamericano_planillas").select("mesa, lado, subida, drive_ok").eq("tnr", a.tnr).eq("ronda", p.ronda).gte("mesa", a.mesa_desde).lte("mesa", a.mesa_hasta);
       return json({
         ...(await avisosDe()),
+        finalizada: fin ? fin.finalizada_en : null,
+        lista: PASOS.filter((x) => (pasosOk ?? []).some((f: { paso: string }) => f.paso === x)),
+        planillas: plan ?? [],
         arbitro: a.arbitro, tnr: a.tnr, torneo: torneoInfo?.nombre ?? p.torneo, categoria: torneoInfo?.categoria ?? "", rama: torneoInfo?.rama ?? "",
         ronda: p.ronda, desde: a.mesa_desde, hasta: a.mesa_hasta, vence: a.vence,
         mesas: p.mesas.filter((m) => enRango(m.mesa)).map(({ mesa, blancas, negras, valor }) => ({ mesa, blancas, negras, valor })),
@@ -175,6 +194,11 @@ Deno.serve(async (req) => {
       const fuera = cambios.find((c) => !enRango(c.mesa));
       if (fuera) return json({ error: "La mesa " + fuera.mesa + " no es de tu rango (" + a.mesa_desde + " a " + a.mesa_hasta + "). No se guardó nada." }, 403);
 
+      // Antes de guardar resultados de la ronda, la lista previa completa (relojes y tableros).
+      const { data: aprobados } = await servicio.from("centroamericano_listas").select("paso").eq("asignacion_id", a.id).eq("ronda", ronda);
+      const faltan = PASOS.filter((x) => !(aprobados ?? []).some((f: { paso: string }) => f.paso === x));
+      if (faltan.length) return json({ error: "Antes de guardar resultados tienes que aprobar la revisión previa de la ronda " + ronda + " (relojes y tableros). No se guardó nada." }, 409);
+
       const res = await guardarYComprobar(acceso!.acceso, acceso!.sid, a.tnr, ronda, cambios);
       if (res.estado !== 200 || !("cuerpo" in res)) return json({ error: (res as { error: string }).error }, res.estado);
 
@@ -189,6 +213,9 @@ Deno.serve(async (req) => {
           resultado: NOMBRE_RESULTADO[c.valor], anterior: antes !== "0" ? NOMBRE_RESULTADO[antes] : null, enviado: true,
         };
       });
+      // El avance con lo que quedó: lo de la pantalla de antes, con lo confirmado encima.
+      const quedo = new Map(res.cuerpo.resultados.filter((r) => r.ok).map((r) => [r.mesa, r.pedido === "D" ? "0" : r.pedido]));
+      await guardarAvance(servicio, a.id, res.cuerpo.ronda, avance(res.antes.mesas.map((m) => ({ mesa: m.mesa, valor: quedo.get(m.mesa) ?? m.valor })), a.mesa_desde, a.mesa_hasta));
       let registroError = false;
       if (filas.length) {
         const { error } = await servicio.from("centroamericano_registro").insert(filas);
@@ -245,6 +272,93 @@ Deno.serve(async (req) => {
       return json({ ok: true, color: f.color, mesa: f.mesa, marca });
     }
 
+    if (cuerpo.action === "lista") {
+      const ronda = Number(cuerpo.ronda);
+      const paso = String(cuerpo.paso ?? "");
+      const i = PASOS.indexOf(paso);
+      if (i < 0) return json({ error: "Paso no válido." }, 400);
+      if (!Number.isInteger(ronda) || ronda < 1 || ronda > 99) return json({ error: "Falta la ronda." }, 400);
+      // Paso a paso: el siguiente no se aprueba sin el anterior.
+      const { data: hechos } = await servicio.from("centroamericano_listas").select("paso").eq("asignacion_id", a.id).eq("ronda", ronda);
+      const ok = (hechos ?? []).map((f: { paso: string }) => f.paso);
+      if (PASOS.slice(0, i).some((x) => !ok.includes(x))) return json({ error: "Antes tienes que aprobar el paso anterior de la lista." }, 409);
+      if (!ok.includes(paso)) {
+        const { error } = await servicio.from("centroamericano_listas").insert({ asignacion_id: a.id, ronda, paso });
+        if (error && error.code !== "23505") { console.error("centroamericano-mesa: lista", a.tnr, error.code); return json({ error: "No se pudo anotar. Intenta de nuevo." }, 500); }
+      }
+      return json({ ok: true, lista: PASOS.filter((x) => x === paso || ok.includes(x)) });
+    }
+
+    if (cuerpo.action === "planilla") {
+      const ronda = Number(cuerpo.ronda);
+      const mesa = Number(cuerpo.mesa);
+      const lado = cuerpo.lado === "blancas" || cuerpo.lado === "negras" ? cuerpo.lado : null;
+      const imagen = String(cuerpo.imagen ?? "");
+      if (!lado) return json({ error: "Falta decir de quién es la planilla (blancas o negras)." }, 400);
+      if (!enRango(mesa)) return json({ error: "La mesa " + mesa + " no es de tu rango (" + a.mesa_desde + " a " + a.mesa_hasta + ")." }, 403);
+      const m64 = imagen.match(/^data:image\/jpeg;base64,([A-Za-z0-9+/=]+)$/);
+      if (!m64) return json({ error: "La foto tiene que ser una imagen JPG." }, 400);
+      if (m64[1].length > MAX_IMAGEN * 1.4) return json({ error: "La foto es demasiado grande. Toma otra más cerca o con menos resolución." }, 413);
+      const bytes = deBase64(m64[1]);
+      if (bytes.length > MAX_IMAGEN || bytes.length < 2000) return json({ error: "La foto no es válida o es demasiado grande." }, 400);
+      // El nombre del enfrentamiento sale de chess-results, no de lo que mande la pantalla.
+      const leida = await leerRonda(acceso!.acceso, acceso!.sid, a.tnr);
+      if ("error" in leida) return json({ error: leida.error }, leida.estado);
+      const p = leida.pantalla;
+      if (!Number.isInteger(ronda) || p.ronda !== ronda) return json({ error: "La ronda abierta en chess-results es la " + p.ronda + ", no la " + cuerpo.ronda + ". Actualiza la página." }, 409);
+      const m = p.mesas.find((x) => x.mesa === mesa);
+      if (!m) return json({ error: "La mesa " + mesa + " no está en la ronda " + p.ronda + "." }, 404);
+      const jugador = lado === "blancas" ? m.blancas : m.negras;
+      const rival = lado === "blancas" ? m.negras : m.blancas;
+      const ruta = a.tnr + "/ronda-" + p.ronda + "/mesa-" + mesa + "-" + lado + ".jpg";
+      const { error: eSubida } = await servicio.storage.from(BUCKET).upload(ruta, bytes, { contentType: "image/jpeg", upsert: true });
+      if (eSubida) { console.error("centroamericano-mesa: planilla", a.tnr, eSubida.message); return json({ error: "No se pudo guardar la foto. Intenta de nuevo." }, 500); }
+      const { data: fila, error: eFila } = await servicio.from("centroamericano_planillas").upsert({
+        asignacion_id: a.id, arbitro: a.arbitro, tnr: a.tnr, ronda: p.ronda, mesa, lado, jugador: jugador.slice(0, 120), rival: rival.slice(0, 120),
+        ruta, subida: new Date().toISOString(), bytes: bytes.length, drive_ok: false, drive_en: null, drive_error: "",
+      }, { onConflict: "tnr,ronda,mesa,lado" }).select("id").single();
+      if (eFila || !fila) { console.error("centroamericano-mesa: planilla fila", a.tnr, eFila?.code); return json({ error: "La foto se guardó pero no se pudo anotar. Intenta de nuevo." }, 500); }
+      // Al Drive, si está conectado. Si falla, la foto ya está a salvo y se reintenta desde la organización.
+      let drive = "sin_conectar";
+      const { data: dr } = await servicio.rpc("centroamericano_drive_leer");
+      const puente = (Array.isArray(dr) ? dr[0] : dr) as { url: string; secreto: string } | null;
+      if (puente?.url && puente?.secreto) {
+        const r = await llamarPuente(puente.url, puente.secreto, {
+          accion: "planilla", torneo: torneoInfo?.nombre ?? p.torneo, ronda: p.ronda, mesa, lado, blancas: m.blancas, negras: m.negras, jugador, imagen: aBase64(bytes),
+        });
+        drive = r.ok ? "enviada" : "pendiente";
+        await servicio.from("centroamericano_planillas").update(r.ok ? { drive_ok: true, drive_en: new Date().toISOString(), drive_error: "" } : { drive_error: String(r.error ?? "").slice(0, 300) }).eq("id", fila.id);
+      }
+      return json({ ok: true, mesa, lado, drive, subida: new Date().toISOString() });
+    }
+
+    if (cuerpo.action === "finalizar") {
+      const ronda = Number(cuerpo.ronda);
+      const rev = (cuerpo.revision ?? {}) as Record<string, unknown>;
+      const revision = { resultados: rev.resultados === true, planillas: rev.planillas === true, firmadas: rev.firmadas === true };
+      if (!revision.resultados || !revision.planillas || !revision.firmadas) return json({ error: "Para finalizar tienes que confirmar las tres revisiones." }, 400);
+      const leida = await leerRonda(acceso!.acceso, acceso!.sid, a.tnr);
+      if ("error" in leida) return json({ error: leida.error }, leida.estado);
+      const p = leida.pantalla;
+      if (!Number.isInteger(ronda) || p.ronda !== ronda) return json({ error: "La ronda abierta en chess-results es la " + p.ronda + ", no la " + cuerpo.ronda + ". Actualiza la página." }, 409);
+      const av = avance(p.mesas, a.mesa_desde, a.mesa_hasta);
+      await guardarAvance(servicio, a.id, p.ronda, av);
+      if (av.total === 0) return json({ error: "Tus mesas todavía no aparecen en la ronda " + p.ronda + "." }, 409);
+      if (av.pendientes.length) return json({ error: "Todavía faltan resultados en las mesas " + av.pendientes.join(", ") + "." }, 409);
+      const { data: previa } = await servicio.from("centroamericano_finales").select("id, reabierta, finalizada_en").eq("asignacion_id", a.id).eq("ronda", p.ronda).maybeSingle();
+      if (previa && !previa.reabierta) return json({ ok: true, ya: true, finalizada_en: previa.finalizada_en });
+      const ahora = new Date().toISOString();
+      const { error } = previa
+        ? await servicio.from("centroamericano_finales").update({ reabierta: false, finalizada_en: ahora, revision }).eq("id", previa.id)
+        : await servicio.from("centroamericano_finales").insert({ asignacion_id: a.id, ronda: p.ronda, finalizada_en: ahora, revision });
+      if (error) { console.error("centroamericano-mesa: finalizar", a.tnr, error.code); return json({ error: "No se pudo finalizar. Intenta de nuevo." }, 500); }
+      await servicio.from("centroamericano_avisos").insert({
+        de: "arbitro", asignacion_id: a.id, tipo: "finalizo", ronda: p.ronda,
+        texto: "Finalizó la ronda " + p.ronda + " (" + av.total + (av.total === 1 ? " mesa" : " mesas") + "): revisó resultados y confirmó planillas ordenadas y firmadas.",
+      });
+      return json({ ok: true, finalizada_en: ahora });
+    }
+
     if (cuerpo.action === "avisos") {
       visto();
       return json({ ok: true, ...(await avisosDe()) });
@@ -255,7 +369,7 @@ Deno.serve(async (req) => {
       const texto = String(cuerpo.texto ?? "").trim().slice(0, 500);
       if (mesa != null && !enRango(mesa)) return json({ error: "La mesa " + mesa + " no es de tu rango (" + a.mesa_desde + " a " + a.mesa_hasta + ")." }, 403);
       // Un pedido por mesa a la vez: si ya hay uno abierto para esa mesa, no se repite (ni se llena de avisos la cuenta principal).
-      const { data: abiertos } = await servicio.from("centroamericano_avisos").select("id, mesa, creado").eq("asignacion_id", a.id).eq("de", "arbitro").eq("estado", "abierto");
+      const { data: abiertos } = await servicio.from("centroamericano_avisos").select("id, mesa, creado").eq("asignacion_id", a.id).eq("de", "arbitro").eq("tipo", "ayuda").eq("estado", "abierto");
       const igual = (abiertos ?? []).find((f) => (f.mesa ?? null) === mesa);
       if (igual) return json({ ok: true, ya: true, id: igual.id, creado: igual.creado });
       if ((abiertos ?? []).length >= 5) return json({ error: "Ya tienes 5 pedidos abiertos: la organización los está atendiendo." }, 429);

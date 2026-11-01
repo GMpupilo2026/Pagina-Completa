@@ -8591,6 +8591,109 @@ principal** (le llega un aviso a la cuenta principal) y que la cuenta principal 
   segundo): `ayuda` (repetida, general, fuera de rango), `nombre` (y su segundo intento),
   `leer` con un mensaje pendiente y `leido` (una vez, y desde otro enlace).
 
+### Terminar la ronda, planillas y respaldo (Centroamericano)
+
+Lo que pidió el dueño la víspera del torneo (1 de noviembre): que la cuenta principal se entere
+cuando un árbitro **terminó sus mesas** y reciba una **sugerencia de a dónde ir a ayudar**; ver
+**cuántas mesas le quedan a cada árbitro**; que cada árbitro, al terminar, **revise y finalice la
+ronda** con un botón que le recuerde revisar, ordenar y firmar las planillas; una **copia de
+seguridad constante** con la que se pueda volver a subir todo; un botón con los **horarios y el
+tiempo de espera**; elegir de una **lista el tipo de ilegal** (con el recordatorio de los 2
+minutos) y **de irregularidad**; subir la **foto de las dos planillas** de cada partida al Drive
+«Planillas Centroamericano», por torneo y ronda y con el nombre del enfrentamiento; los **QR con
+la marca de la academia**; que la organización se vea **como un programa de computadora**; y,
+antes de cada ronda, una **lista previa** aprobada paso a paso (relojes y tableros). Y permiso
+para probar con escritura en el «Torneo de Prueba 2» (se probó y se dejó con las mesas sin
+resultado).
+
+- **El avance de cada árbitro** (`centroamericano_progreso`: mesas con resultado y cuáles faltan).
+  Lo escribe la función cada vez que el árbitro lee o guarda (`avance-ronda.ts`, copia
+  compartida) y «Actualizar desde chess-results» lo lee de todos los torneos con enlaces activos
+  (acción `resumen` de `centroamericano-clave`, de a 4 torneos en paralelo). La organización lo
+  ve en «Ronda en curso»: barra de avance, cuántas quedan (con cuáles), estado (sin datos / en
+  curso / terminó / ronda finalizada) y cuántos pasos de la lista previa lleva. Si un árbitro no
+  abrió su tablet, su fila dice «Sin datos» en vez de inventar un número.
+- **«Terminó sus mesas»**: al llegar a todas, la función le avisa a la cuenta principal una sola
+  vez por ronda (`centroamericano_avisos`, `tipo = 'termino'`; el índice único lo garantiza). La
+  **sugerencia** la arma la página con el avance de todos (`sugerirAyuda`, probada sin navegador):
+  primero los de su mismo torneo (suelen compartir sala; **no sabemos dónde queda cada sala**),
+  luego los que más mesas tienen; le propone **la mitad de lo que le queda al otro, desde el
+  final de su lista**, para que no se pisen. «Mandarle esta sugerencia» le escribe al que
+  terminó y da el aviso por atendido. Nada se reasigna solo: lo decide la cuenta principal.
+- **Finalizar la ronda** (`centroamericano_finales`): con todas sus mesas con resultado (lo
+  comprueba la función leyendo chess-results, 409 si faltan), el árbitro ve la tabla de sus
+  resultados con las fotos subidas, confirma tres cosas —revisó los resultados contra las
+  planillas, las tiene ordenadas por mesa, están firmadas— y toca «Finalizar la ronda» (que
+  pregunta una vez más). Lo marcado no se pierde al volver a leer. A la cuenta principal le llega
+  «finalizó la ronda» y la ronda queda anotada; la organización puede reabrirla
+  (`finales.reabierta`, auditado) y el árbitro la vuelve a finalizar.
+- **La lista previa** (`centroamericano_listas`, pasos `relojes` y `tableros`, en ese orden): un
+  cuadro paso a paso al abrir la tablet con la ronda lista; sin los dos aprobados la función
+  responde 409 a «guardar» (no a «anotar» una ilegal: una sanción no puede esperar). El ritmo
+  escrito en el paso de los relojes es el de las bases: **90 minutos con 30 segundos de
+  incremento por jugada desde el inicio**. La lista son dos pasos porque eso fue lo pedido;
+  agregar otro es una línea en `PASOS` (función) y en `PASOS_LISTA` (página) más el `check` de la
+  tabla. No va en la copia de seguridad (son dos toques si hubiera que repetirla).
+- **Horarios y tiempo de espera**: `js/centroamericano-horario.js` repite el calendario de
+  `centroamericano-2026.html` (**el verificador exige que sean idénticos**) y dice cuánto queda de
+  la tolerancia de 30 minutos desde el inicio de la ronda; se ve siempre en una línea de la
+  barra y el botón «Horarios» abre todo el calendario.
+- **Ilegales e irregularidades de una lista** (`TIPOS_ILEGAL`, `TIPOS_IRREGULARIDAD` en
+  `js/centroamericano-mesas.js`): ocho tipos de ilegal y diez de irregularidad, cada uno con
+  «Otra» que pide explicar. Lo elegido va a la bitácora como texto (y el artículo cuando el
+  reglamento lo dice sin duda: 4.2, 4.3, 8.1, 9.2, 11.3.2; la ilegal es siempre 7.5.5). Tras anotar
+  una ilegal sale un cuadro que no se pasa por alto: la primera recuerda dar **2 minutos al
+  rival**; la segunda, que pierde la partida (la página solo avisa; el resultado lo decide el
+  árbitro). **Las listas son una propuesta: si el árbitro principal quiere otros tipos, se
+  cambian en esas dos constantes.**
+- **Planillas a un Drive ordenado.** El árbitro toca «Planilla de blancas» o «de negras» de cada
+  mesa, toma la foto (se achica a ≤1800 px y JPG en el aparato) y sube. La función la guarda
+  **primero** en el bucket privado `centroamericano-planillas` y después la manda al Drive; si
+  el Drive falla o no está conectado, la foto ya está a salvo y se reintenta desde la
+  organización («Mandar al Drive las que faltan»). El nombre del enfrentamiento sale de
+  chess-results, no de la pantalla. En el Drive: `Planillas Centroamericano / <torneo> / Ronda N /
+  Mesa 07 - <blancas> vs <negras> - Planilla de blancas (<jugador>).jpg`; una foto nueva de la
+  misma planilla manda la vieja a la papelera. **El Drive lo toca un Apps Script de la dueña del
+  Drive** (`documentos/centroamericano/puente-drive.gs`, mismo patrón del de los JDN): se instala
+  una vez, se pega su dirección y su secreto en «Planillas y Drive» y se prueban antes de
+  guardarse (la dirección y el secreto van a la bóveda, `centroamericano_drive_*`, solo
+  `service_role`). Sin eso las fotos se guardan igual.
+- **Respaldo constante** (`centroamericano_copias`, anillos con ranuras que se sobrescriben: no hay
+  nada que borrar). Cada 5 minutos **si algo cambió** (36 ranuras: las últimas 3 horas), cada
+  hora (72: tres días), a pedido (20), y cada 10 minutos al Drive si está conectado (`pg_net` al
+  Apps Script, carpeta `_Copias de seguridad`). Trae lo que **solo vive en nuestra base**: los
+  enlaces con su mismo token (los QR impresos siguen sirviendo), el registro, los avisos, el
+  avance, las rondas finalizadas y el índice de planillas. **No trae la clave de chess-results**
+  (cifrada en la bóveda: se vuelve a poner una vez) **ni los resultados**, que viven en
+  chess-results y Swiss-Manager. «Restaurar» (`centroamericano_restaurar`, desde la lista o desde
+  un archivo que se bajó) **solo agrega lo que falta y nunca pisa nada**; exige la licencia con
+  `coalesce(…, false)`. Todo se apaga solo el 13 de noviembre. **Probado**: la copia y su
+  restauración (dos veces: la segunda no agrega nada) y los anillos corriendo solos.
+- **Los QR llevan la marca de Ajedrez Integral** (`QrSvg.dibujar(texto, etiqueta, { marca: true })`:
+  corrección de errores H y el caballo al centro, 22 % del lado). La hoja «Imprimir los QR» arma
+  una tarjeta por árbitro con su nombre, torneo, mesas y el pie «Ajedrez Integral · Centroamericano
+  2026». Los PDF (el registro y el nuevo «Reporte de la ronda») llevan la marca de agua de
+  siempre.
+- **Como un programa de computadora**: una ventana con barra de título, menú de siete pestañas
+  pegadas al panel (Ronda en curso, Avisos, Árbitros y mesas, Planillas y Drive, Clave, Respaldo,
+  Lo que anotan), barras de herramientas, tablas en cuadrícula (encabezado fijo, filas
+  alternadas) y una barra de estado abajo que siempre dice cuántos avisos hay abiertos, quién está
+  conectado, la clave, el Drive y la última copia. Los enlaces dejaron de ser tarjetas: son filas
+  de una tabla con sus botones, y el QR se abre en una ventana propia.
+- Lo prueban `verificar-centroamericano-mesas.js` (reglas puras, horario contra la página del
+  torneo, promesas de seguridad leídas de las funciones y las migraciones) y
+  `verificar-centroamericano-mesas-pagina.js` (las dos páginas en el navegador, a 390, 820 y 1180
+  px, en claro y en oscuro). Rompiendo a propósito el rango de «ayuda», el «una sola vez» del
+  nombre o el envío a todos, saltan.
+- **Probado con el grupo de prueba real, escribiendo en el «Torneo de Prueba 2»**: «guardar» sin la
+  lista da 409; «tableros» antes que «relojes» da 409; con la lista, cinco resultados guardados y
+  comprobados leyendo chess-results; el aviso «terminó» salió solo; «finalizar» sin las tres
+  confirmaciones da 400 y con ellas guarda (y la segunda vez dice «ya»); una foto JPG real quedó en
+  el bucket y en `centroamericano_planillas`, una PNG o de una mesa ajena se rechaza; después se
+  borraron los cinco resultados y el torneo quedó como estaba. **Sin probar de verdad**: el paso
+  al Drive (necesita que la dueña instale el Apps Script) y «Actualizar desde chess-results» con
+  sesión (lo prueba el navegador con un doble, no la función desplegada).
+
 ## La ficha del jugador federado
 
 En la vitrina, «Ficha del jugador federado» (`ficha-federado`, con licencia,

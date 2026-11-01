@@ -35,6 +35,8 @@
 
     let estado = null; // lo que contestó «leer»
     let elegido = {}; // mesa → resultado elegido, todavía sin guardar
+    let subiendo = new Set();
+    let revisadas = {};
     let ocupadas = new Set(); // mesas que se están guardando o anotando
     let mensajes = {}; // mesa → { ok, texto } de lo último que pasó ahí
     let anuladas = new Set();
@@ -181,8 +183,176 @@
             el("div", { class: "cam-resultado" },
                 el("p", { class: "cam-resultado-actual" }, "En chess-results: ", el("strong", { texto: M.textoResultado(m.valor) })),
                 el("div", { class: "cam-resultado-fila" }, sel,
-                    el("button", { type: "button", class: "cam-btn", "data-accion": "guardar", disabled: !pendiente || ocupada, onclick: () => guardar(m) }, ocupada ? "Guardando…" : "Guardar")),
-                msg ? el("p", { class: msg.ok ? "cam-guardado" : "cam-fallo", role: msg.ok ? "status" : "alert", texto: msg.texto }) : null));
+                    el("button", { type: "button", class: "cam-btn", "data-accion": "guardar", disabled: !pendiente || ocupada || !listaCompleta(), title: listaCompleta() ? null : "Primero la revisión previa de la ronda", onclick: () => guardar(m) }, ocupada ? "Guardando…" : "Guardar")),
+                msg ? el("p", { class: msg.ok ? "cam-guardado" : "cam-fallo", role: msg.ok ? "status" : "alert", texto: msg.texto }) : null),
+            bloquePlanillas(m, ocupada));
+    }
+
+    // ------------------------------------------------------------- las planillas (fotos)
+
+    const subidas = () => (estado && estado.planillas) || [];
+    const tienePlanilla = (mesa, lado) => subidas().some((x) => x.mesa === mesa && x.lado === lado);
+
+    function bloquePlanillas(m, ocupada) {
+        const boton = (lado) => el("button", { type: "button", class: "cam-btn cam-btn-claro cam-btn-chico", "data-accion": "planilla", "data-lado": lado, "data-subida": tienePlanilla(m.mesa, lado) ? "si" : null, disabled: ocupada || subiendo.has(m.mesa + lado),
+            "aria-label": (tienePlanilla(m.mesa, lado) ? "Cambiar la foto de la planilla de " : "Subir la foto de la planilla de ") + lado + " de la mesa " + m.mesa, onclick: () => subirPlanilla(m, lado) },
+            el("span", { "aria-hidden": "true", texto: "📷 " }), (subiendo.has(m.mesa + lado) ? "Subiendo…" : "Planilla de " + lado), tienePlanilla(m.mesa, lado) ? el("span", { texto: " ✓" }) : null);
+        return el("div", { class: "cam-planillas" },
+            el("p", { class: "cam-planillas-estado", texto: "Fotos de las planillas: blancas " + (tienePlanilla(m.mesa, "blancas") ? "✓ subida" : "falta") + " · negras " + (tienePlanilla(m.mesa, "negras") ? "✓ subida" : "falta") }),
+            el("div", { class: "cam-acciones" }, boton("blancas"), boton("negras")));
+    }
+
+    // La foto se achica y se pasa a JPG en el aparato (una planilla legible cabe en ~400 KB):
+    // así sube rápido aunque la señal del salón sea mala.
+    async function reducir(archivo) {
+        const bmp = await createImageBitmap(archivo);
+        const lado = Math.max(bmp.width, bmp.height), esc = lado > 1800 ? 1800 / lado : 1;
+        const c = document.createElement("canvas");
+        c.width = Math.round(bmp.width * esc);
+        c.height = Math.round(bmp.height * esc);
+        c.getContext("2d").drawImage(bmp, 0, 0, c.width, c.height);
+        if (bmp.close) bmp.close();
+        const blob = await new Promise((ok) => c.toBlob(ok, "image/jpeg", 0.82));
+        if (!blob) throw new Error("No se pudo preparar la foto.");
+        return await new Promise((ok, mal) => { const r = new FileReader(); r.onload = () => ok(r.result); r.onerror = () => mal(new Error("No se pudo leer la foto.")); r.readAsDataURL(blob); });
+    }
+
+    function subirPlanilla(m, lado) {
+        const entrada = document.createElement("input");
+        entrada.type = "file";
+        entrada.accept = "image/*";
+        entrada.setAttribute("capture", "environment");
+        entrada.addEventListener("change", async () => {
+            const archivo = entrada.files && entrada.files[0];
+            if (!archivo) return;
+            const k = m.mesa + lado;
+            subiendo.add(k);
+            pintar();
+            try {
+                const imagen = await reducir(archivo);
+                const d = await invocar("planilla", { ronda: estado.ronda, mesa: m.mesa, lado, imagen });
+                estado.planillas = subidas().filter((x) => !(x.mesa === m.mesa && x.lado === lado)).concat([{ mesa: m.mesa, lado, subida: d.subida, drive_ok: d.drive === "enviada" }]);
+                avisar("Planilla de " + lado + " de la mesa " + m.mesa + " guardada" + (d.drive === "enviada" ? " y ya está en el Drive." : d.drive === "pendiente" ? ". El Drive la recibirá en un rato." : "."));
+            } catch (e) {
+                avisar(e.message, true);
+            } finally {
+                subiendo.delete(k);
+                pintar();
+            }
+        });
+        entrada.click();
+    }
+
+    // ------------------------------------------------------------- antes de iniciar: la lista previa
+
+    // Paso a paso, en este orden. El ritmo es el de las bases del torneo (centroamericano-2026.html:
+    // «90 minutos con 30 segundos de incremento por jugada desde el inicio»). Sin los dos pasos
+    // aprobados la función no guarda resultados de la ronda.
+    const PASOS_LISTA = [
+        { id: "relojes", titulo: "Los relojes", texto: "Revisa el reloj de cada una de tus mesas: puesto en 90 minutos para cada jugador, con 30 segundos de incremento por jugada desde el inicio (el ritmo de las bases), con el tiempo programado y listo para que arranque el de las blancas.", boton: "Sí, revisé los relojes de mis mesas" },
+        { id: "tableros", titulo: "Los tableros", texto: "Revisa el tablero de cada una de tus mesas: bien orientado (casilla blanca a la derecha de cada jugador), con las 32 piezas y todas bien puestas (la dama en su color, los reyes enfrentados, los peones en su fila).", boton: "Sí, revisé los tableros de mis mesas" },
+    ];
+    const listaOk = () => ((estado && estado.lista) || []);
+    const listaCompleta = () => PASOS_LISTA.every((x) => listaOk().includes(x.id));
+
+    function pintarLista() {
+        const caja = $("lista-previa");
+        const hay = estado.mesas.length > 0 && !estado.finalizada;
+        caja.hidden = !hay || listaCompleta();
+        if (caja.hidden) { caja.replaceChildren(); return; }
+        const i = PASOS_LISTA.findIndex((x) => !listaOk().includes(x.id));
+        const paso = PASOS_LISTA[i];
+        caja.replaceChildren(
+            el("h2", { id: "lista-titulo", class: "font-bold text-xl", texto: "Antes de iniciar la ronda " + estado.ronda + ": revisión previa (paso " + (i + 1) + " de " + PASOS_LISTA.length + ")" }),
+            el("ol", { class: "cam-pasos" }, ...PASOS_LISTA.map((x, j) => el("li", { "data-estado": listaOk().includes(x.id) ? "hecho" : j === i ? "actual" : "pendiente", texto: (listaOk().includes(x.id) ? "✓ " : j === i ? "▶ " : "· ") + x.titulo }))),
+            el("p", { class: "mt-2 font-bold", texto: paso.titulo }),
+            el("p", { class: "mt-1", texto: paso.texto }),
+            el("div", { class: "cam-acciones" }, el("button", { type: "button", id: "aprobar-paso", class: "cam-btn", "data-paso": paso.id, onclick: () => aprobarPaso(paso) }, paso.boton)),
+            el("p", { class: "cam-herramientas-nota mt-2", texto: "Hasta aprobar los dos pasos no se pueden guardar resultados de esta ronda." }));
+    }
+
+    async function aprobarPaso(paso) {
+        $("aprobar-paso").disabled = true;
+        try {
+            const d = await invocar("lista", { ronda: estado.ronda, paso: paso.id });
+            estado.lista = d.lista;
+            pintar();
+            avisar(listaCompleta() ? "Revisión previa completa: ya puedes guardar resultados." : "Paso aprobado: sigue el siguiente.");
+        } catch (e) {
+            avisar(e.message, true);
+            $("aprobar-paso").disabled = false;
+        }
+    }
+
+    // ------------------------------------------------------------- terminar: revisar y finalizar
+
+    function pintarRevision() {
+        const caja = $("revision");
+        const todas = estado.mesas.length > 0 && estado.mesas.every((m) => m.valor !== "0");
+        caja.hidden = !todas;
+        if (!todas) { caja.replaceChildren(); return; }
+        const faltanFotos = [];
+        for (const m of estado.mesas) for (const l of ["blancas", "negras"]) if (!tienePlanilla(m.mesa, l)) faltanFotos.push(m.mesa);
+        if (estado.finalizada) {
+            caja.dataset.estado = "finalizada";
+            caja.replaceChildren(
+                el("h2", { id: "revision-titulo", class: "font-bold text-xl", texto: "✓ Finalizaste la ronda " + estado.ronda }),
+                el("p", { class: "mt-2", texto: "A las " + hora(estado.finalizada) + ". Entrega las planillas ordenadas por mesa y firmadas. Si algún resultado cambia, avísale a la organización: ella puede reabrir tu ronda." }));
+            return;
+        }
+        caja.dataset.estado = "pendiente";
+        const completas = () => ["rev-resultados", "rev-planillas", "rev-firmadas"].every((i) => revisadas[i]);
+        // Lo marcado se recuerda: la página se vuelve a dibujar con cada lectura y no debe desmarcar nada.
+        const casilla = (id, texto) => el("label", { class: "cam-check cam-check-revision" }, el("input", { type: "checkbox", id, class: "w-6 h-6", checked: !!revisadas[id], onchange: (e) => { revisadas[id] = e.target.checked; $("finalizar").disabled = !completas(); } }), el("span", { texto }));
+        const filas = estado.mesas.slice().sort((a, b) => a.mesa - b.mesa).map((m) => el("tr", {},
+            el("td", { texto: String(m.mesa) }), el("td", { texto: m.blancas + " – " + m.negras }), el("td", { texto: M.textoResultado(m.valor) }),
+            el("td", { texto: (tienePlanilla(m.mesa, "blancas") ? "✓" : "—") + " / " + (tienePlanilla(m.mesa, "negras") ? "✓" : "—") })));
+        caja.replaceChildren(
+            el("h2", { id: "revision-titulo", class: "font-bold text-xl", texto: "Terminaste tus mesas: revisa antes de cerrar la ronda" }),
+            el("p", { class: "mt-2", texto: "Repasa cada resultado contra su planilla. Cuando todo esté bien, confirma las tres cosas y finaliza la ronda: la organización recibe el aviso." }),
+            el("div", { class: "cam-tabla-envoltura mt-3" }, el("table", { class: "cam-tabla" },
+                el("caption", { class: "sr-only", texto: "Resultados de tus mesas para revisar" }),
+                el("thead", {}, el("tr", {}, el("th", { scope: "col", texto: "Mesa" }), el("th", { scope: "col", texto: "Partida" }), el("th", { scope: "col", texto: "Resultado" }), el("th", { scope: "col", texto: "Fotos (blancas / negras)" }))),
+                el("tbody", {}, ...filas))),
+            faltanFotos.length ? el("p", { class: "cam-aviso-suave mt-3", texto: "Todavía no subes la foto de algunas planillas (mesas " + C.listaMesas(faltanFotos) + "). Es opcional, pero ayuda a no perder nada." }) : null,
+            el("div", { class: "mt-3" },
+                casilla("rev-resultados", "Revisé que cada resultado coincide con su planilla."),
+                casilla("rev-planillas", "Tengo todas las planillas de mis partidas, ordenadas por mesa."),
+                casilla("rev-firmadas", "Todas están firmadas (por los dos jugadores y por mí).")),
+            el("div", { class: "cam-acciones" }, el("button", { type: "button", id: "finalizar", class: "cam-btn", disabled: !completas(), onclick: finalizarRonda }, "Finalizar la ronda " + estado.ronda)));
+    }
+
+    async function finalizarRonda() {
+        const sigue = await Avisos.confirmar("Vas a finalizar la ronda " + estado.ronda + ". Antes de seguir: ¿revisaste todas las planillas, las ordenaste por mesa y están firmadas?", { titulo: "Finalizar la ronda", aceptar: "Sí, finalizar la ronda" });
+        if (!sigue) return;
+        $("finalizar").disabled = true;
+        try {
+            const d = await invocar("finalizar", { ronda: estado.ronda, revision: { resultados: $("rev-resultados").checked, planillas: $("rev-planillas").checked, firmadas: $("rev-firmadas").checked } });
+            estado.finalizada = d.finalizada_en;
+            pintar();
+            avisar("Ronda " + estado.ronda + " finalizada. La organización ya lo sabe.");
+        } catch (e) {
+            avisar(e.message, true);
+            $("finalizar").disabled = false;
+        }
+    }
+
+    // ------------------------------------------------------------- horarios y tiempo de espera
+
+    function pintarEspera() {
+        const H = window.CentroamericanoHorario;
+        if (!H) return;
+        const e = H.estado(new Date());
+        let t = "";
+        if (e.enCurso) t = e.quedan > 0 ? "⏰ " + e.enCurso.nombre + ": quedan " + H.minutosTexto(e.quedan) + " de tolerancia (hasta las " + hora(e.hasta) + ")." : "⏰ " + e.enCurso.nombre + ": la tolerancia de 30 minutos ya pasó.";
+        else if (e.siguiente) t = "⏰ Sigue: " + e.siguiente.nombre + " a las " + hora(new Date(e.siguiente.inicio + ":00-06:00")) + ".";
+        $("espera").textContent = t;
+    }
+
+    function verHorarios() {
+        const H = window.CentroamericanoHorario;
+        const dia = (d) => new Intl.DateTimeFormat("es-CR", { timeZone: "America/Costa_Rica", weekday: "long", day: "numeric", month: "long" }).format(d);
+        Avisos.alerta(H.lineas(new Date(), (d) => hora(d), dia), { titulo: "Horarios y tiempo de espera", aceptar: "Cerrar" });
     }
 
     function pintarAnotado() {
@@ -221,6 +391,9 @@
         $("lista").replaceChildren(...visibles.map(tarjeta));
         $("sin-mesas").hidden = estado.mesas.length > 0;
         pintarProgreso();
+        pintarLista();
+        pintarRevision();
+        pintarEspera();
         pintarAnotado();
     }
 
@@ -354,7 +527,7 @@
             const cambioRonda = estado && estado.ronda !== d.ronda;
             estado = d;
             anuladas = new Set(d.anuladas || []);
-            if (cambioRonda) { elegido = {}; mensajes = {}; }
+            if (cambioRonda) { elegido = {}; mensajes = {}; revisadas = {}; }
             $("problema").hidden = true;
             $("cargando").hidden = true;
             $("app").hidden = false;
@@ -422,22 +595,43 @@
         (estado.anotaciones = estado.anotaciones || []).push({ id, ocurrio: new Date().toISOString(), mesa: m.mesa, color, jugador, tipo, resultado: null, anterior: null, texto: texto || "", articulo: "", enviado: false });
     }
 
+    // Las dos de la lista: ilegal e irregularidad se eligen de una lista y la bitácora queda sola
+    // (tipo de jugada, el artículo cuando lo hay y lo que quiera agregar el árbitro).
+    async function elegirTipo(titulo, texto, lista, etiqueta, aceptar, peligro) {
+        const r = await Avisos.formulario({
+            titulo, texto, aceptar, peligro,
+            campos: [
+                { nombre: "tipo", etiqueta, tipo: "select", opciones: lista.map((t) => [t.id, t.texto]) },
+                { nombre: "nota", etiqueta: "Detalle (opcional; obligatorio si eliges «Otra»)", tipo: "textarea", max: 500 },
+            ],
+        });
+        if (r === null) return null;
+        const t = C.textoTipo(lista, r.tipo, r.nota);
+        if (!t) { avisar("Cuenta qué pasó para anotar «Otra».", true); return null; }
+        return t;
+    }
+
     async function ilegal(m, color) {
         const k = marcaDe(m.mesa, color);
         const nombre = nombreDe(m, color);
-        if (k.ilegales >= 1) {
-            const sigue = await Avisos.confirmar("Esta sería la SEGUNDA jugada ilegal de " + nombre + " en esta partida: pierde la partida (art. 7.5.5). ¿Anotarla?", { titulo: "Segunda ilegal", aceptar: "Sí, anotar la ilegal", peligro: true });
-            if (!sigue) return;
-        }
+        const segunda = k.ilegales >= 1;
+        const t = await elegirTipo(
+            "Jugada ilegal de " + nombre + " (mesa " + m.mesa + ")",
+            segunda
+                ? "Esta sería la SEGUNDA jugada ilegal de " + nombre + " en esta partida: pierde la partida (art. 7.5.5)."
+                : "Elige qué jugada ilegal fue: queda en la bitácora. Es la primera de " + nombre + ": se le dan 2 minutos más a su rival (art. 7.5.5).",
+            C.TIPOS_ILEGAL, "¿Qué jugada ilegal fue?", segunda ? "Anotar la SEGUNDA ilegal" : "Anotar la ilegal", segunda);
+        if (!t) return;
         ocupadas.add(m.mesa);
         pintar();
         try {
-            const d = await invocar("anotar", { ronda: estado.ronda, mesa: m.mesa, color, tipo: "ilegal" });
+            const d = await invocar("anotar", { ronda: estado.ronda, mesa: m.mesa, color, tipo: "ilegal", texto: t.texto });
             estado.marcas[clave(m.mesa, color)] = d.marca;
-            sumarAnotacion(m, color, "ilegal", d.id, d.jugador || nombre);
+            sumarAnotacion(m, color, "ilegal", d.id, d.jugador || nombre, t.texto);
             const a = C.avisoIlegal(d.marca.ilegales, d.jugador || nombre, color);
-            if (a.nivel === "pierde") { pintar(); await Avisos.alerta(a.texto, { titulo: a.titulo, aceptar: "Entendido" }); }
-            else avisar(a.texto);
+            pintar();
+            // Las dos se avisan con un cuadro que no se pasa por alto: la primera recuerda los 2 minutos.
+            await Avisos.alerta(a.texto, { titulo: a.nivel === "pierde" ? a.titulo : "Primera ilegal: dale 2 minutos al rival", aceptar: "Entendido" });
         } catch (e) {
             avisar(e.message, true);
         } finally {
@@ -448,14 +642,14 @@
 
     async function irregularidad(m, color) {
         const nombre = nombreDe(m, color);
-        const nota = await Avisos.pedir("Irregularidad de " + nombre + " (mesa " + m.mesa + "). Si quieres, cuenta qué pasó.", { titulo: "Anotar una irregularidad", etiqueta: "Qué pasó (opcional)", aceptar: "Anotar la irregularidad" });
-        if (nota === null) return;
+        const t = await elegirTipo("Irregularidad de " + nombre + " (mesa " + m.mesa + ")", "Elige qué fue: queda en la bitácora con la hora y tu nombre.", C.TIPOS_IRREGULARIDAD, "¿Qué irregularidad fue?", "Anotar la irregularidad", false);
+        if (!t) return;
         ocupadas.add(m.mesa);
         pintar();
         try {
-            const d = await invocar("anotar", { ronda: estado.ronda, mesa: m.mesa, color, tipo: "irregularidad", texto: String(nota).trim() });
+            const d = await invocar("anotar", { ronda: estado.ronda, mesa: m.mesa, color, tipo: "irregularidad", texto: t.texto, articulo: t.articulo });
             estado.marcas[clave(m.mesa, color)] = d.marca;
-            sumarAnotacion(m, color, "irregularidad", d.id, d.jugador || nombre, String(nota).trim());
+            sumarAnotacion(m, color, "irregularidad", d.id, d.jugador || nombre, t.texto);
             avisar("Irregularidad anotada: " + (d.jugador || nombre) + ".");
         } catch (e) {
             avisar(e.message, true);
@@ -501,6 +695,8 @@
         $("actualizar").addEventListener("click", () => { prepararAudio(); leer(false); consultarAvisos(); });
         $("problema-reintentar").addEventListener("click", () => { $("problema").hidden = true; $("cargando").hidden = false; leer(false); });
         $("pedir-ayuda").addEventListener("click", () => pedirAyuda(null));
+        $("horarios").addEventListener("click", verHorarios);
+        setInterval(() => { if (!document.hidden && estado) pintarEspera(); }, 30000);
         $("nombre-guardar").addEventListener("click", guardarNombre);
         $("nombre-campo").addEventListener("keydown", (e) => { if (e.key === "Enter") guardarNombre(); });
         $("ir-mesa").addEventListener("change", irAMesa);

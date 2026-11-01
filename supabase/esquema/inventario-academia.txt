@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20261101055014
+# al-dia-con: 20261101061850
 tabla  Ejercicios Lichess  rls=true
 tabla  _foto_rls_tmp  rls=false
 tabla  _pedidos_elo  rls=false
@@ -45,6 +45,11 @@ tabla  bromas_clase  rls=true
 tabla  bromas_preferencias  rls=true
 tabla  centroamericano_asignaciones  rls=true
 tabla  centroamericano_avisos  rls=true
+tabla  centroamericano_copias  rls=true
+tabla  centroamericano_finales  rls=true
+tabla  centroamericano_listas  rls=true
+tabla  centroamericano_planillas  rls=true
+tabla  centroamericano_progreso  rls=true
 tabla  centroamericano_registro  rls=true
 tabla  centroamericano_torneos  rls=true
 tabla  certificados  rls=true
@@ -554,7 +559,46 @@ columna  centroamericano_avisos.estado  text
 columna  centroamericano_avisos.id  uuid
 columna  centroamericano_avisos.leido_en  timestamp with time zone
 columna  centroamericano_avisos.mesa  integer
+columna  centroamericano_avisos.ronda  integer
 columna  centroamericano_avisos.texto  text
+columna  centroamericano_avisos.tipo  text
+columna  centroamericano_copias.anillo  text
+columna  centroamericano_copias.contenido  jsonb
+columna  centroamericano_copias.creada  timestamp with time zone
+columna  centroamericano_copias.huella  text
+columna  centroamericano_copias.ranura  integer
+columna  centroamericano_copias.resumen  jsonb
+columna  centroamericano_finales.asignacion_id  uuid
+columna  centroamericano_finales.finalizada_en  timestamp with time zone
+columna  centroamericano_finales.id  uuid
+columna  centroamericano_finales.reabierta  boolean
+columna  centroamericano_finales.revision  jsonb
+columna  centroamericano_finales.ronda  integer
+columna  centroamericano_listas.aprobada_en  timestamp with time zone
+columna  centroamericano_listas.asignacion_id  uuid
+columna  centroamericano_listas.paso  text
+columna  centroamericano_listas.ronda  integer
+columna  centroamericano_planillas.arbitro  text
+columna  centroamericano_planillas.asignacion_id  uuid
+columna  centroamericano_planillas.bytes  integer
+columna  centroamericano_planillas.drive_en  timestamp with time zone
+columna  centroamericano_planillas.drive_error  text
+columna  centroamericano_planillas.drive_ok  boolean
+columna  centroamericano_planillas.id  uuid
+columna  centroamericano_planillas.jugador  text
+columna  centroamericano_planillas.lado  text
+columna  centroamericano_planillas.mesa  integer
+columna  centroamericano_planillas.rival  text
+columna  centroamericano_planillas.ronda  integer
+columna  centroamericano_planillas.ruta  text
+columna  centroamericano_planillas.subida  timestamp with time zone
+columna  centroamericano_planillas.tnr  text
+columna  centroamericano_progreso.actualizado  timestamp with time zone
+columna  centroamericano_progreso.asignacion_id  uuid
+columna  centroamericano_progreso.con_resultado  integer
+columna  centroamericano_progreso.pendientes  integer[]
+columna  centroamericano_progreso.ronda  integer
+columna  centroamericano_progreso.total  integer
 columna  centroamericano_registro.anterior  text
 columna  centroamericano_registro.anula  uuid
 columna  centroamericano_registro.arbitro  text
@@ -2233,7 +2277,11 @@ funcion  canjear_licencia(p_codigo text)  definer  anon=false  auth=true
 funcion  canjear_premio(p_premio_id uuid)  definer  anon=false  auth=true
 funcion  centroamericano_acceso(p_tnr text)  definer  anon=false  auth=false
 funcion  centroamericano_avisos_atendido()  definer  anon=false  auth=false
+funcion  centroamericano_copia_manual()  definer  anon=false  auth=true
+funcion  centroamericano_drive_guardar(p_url text, p_secreto text)  definer  anon=false  auth=false
+funcion  centroamericano_drive_leer()  definer  anon=false  auth=false
 funcion  centroamericano_guardar_acceso(p_acceso text, p_sid text, p_tnrs text[], p_persona uuid)  definer  anon=false  auth=false
+funcion  centroamericano_restaurar(p_copia jsonb)  definer  anon=false  auth=true
 funcion  cerrar_examen(p_examen uuid, p_motivo text)  definer  anon=false  auth=true
 funcion  certificado_publico(p_codigo text)  definer  anon=true  auth=true
 funcion  cifras_academia()  definer  anon=true  auth=true
@@ -2389,6 +2437,9 @@ funcion  interno.avance_reto(p_alumno uuid, p_metrica text, p_desde timestamp wi
 funcion  interno.avisos_que_mande()  definer  anon=false  auth=true
 funcion  interno.avisos_que_recibi()  definer  anon=false  auth=true
 funcion  interno.bajo_mi_coordinacion_conjunto()  definer  anon=false  auth=true
+funcion  interno.centroamericano_copia_a_drive()  definer  anon=false  auth=false
+funcion  interno.centroamericano_hacer_copia(p_anillo text, p_forzar boolean)  definer  anon=false  auth=false
+funcion  interno.centroamericano_instantanea()  definer  anon=false  auth=false
 funcion  interno.cerrar_clases_inactivas(p_inactiva interval)  definer  anon=false  auth=false
 funcion  interno.clases_donde_aparezco(p_desde timestamp with time zone)  definer  anon=false  auth=true
 funcion  interno.clases_que_coordino()  definer  anon=false  auth=true
@@ -2805,6 +2856,12 @@ politica  centroamericano_asignaciones  centroamericano_asignaciones_ver  SELECT
 politica  centroamericano_avisos  centroamericano_avisos_atender  UPDATE
 politica  centroamericano_avisos  centroamericano_avisos_enviar  INSERT
 politica  centroamericano_avisos  centroamericano_avisos_ver  SELECT
+politica  centroamericano_copias  centroamericano_copias_ver  SELECT
+politica  centroamericano_finales  centroamericano_finales_reabrir  UPDATE
+politica  centroamericano_finales  centroamericano_finales_ver  SELECT
+politica  centroamericano_listas  centroamericano_listas_ver  SELECT
+politica  centroamericano_planillas  centroamericano_planillas_ver  SELECT
+politica  centroamericano_progreso  centroamericano_progreso_ver  SELECT
 politica  centroamericano_registro  centroamericano_registro_ver  SELECT
 politica  centroamericano_torneos  centroamericano_torneos_ver  SELECT
 politica  certificados  certificados_lee  SELECT
@@ -3266,6 +3323,7 @@ trigger  auditoria  auditoria_intocable
 trigger  auditoria  auditoria_sin_truncate
 trigger  centroamericano_asignaciones  auditar
 trigger  centroamericano_avisos  atendido
+trigger  centroamericano_finales  auditar
 trigger  centroamericano_torneos  auditar
 trigger  certificados  auditar
 trigger  class_presence_log  class_presence_log_protege_tiempos
@@ -3445,6 +3503,14 @@ indice  centroamericano_asignaciones  centroamericano_asignaciones_token_key
 indice  centroamericano_avisos  centroamericano_avisos_abiertos_idx
 indice  centroamericano_avisos  centroamericano_avisos_asignacion_idx
 indice  centroamericano_avisos  centroamericano_avisos_pkey
+indice  centroamericano_avisos  centroamericano_avisos_termino_uidx
+indice  centroamericano_copias  centroamericano_copias_pkey
+indice  centroamericano_finales  centroamericano_finales_asignacion_id_ronda_key
+indice  centroamericano_finales  centroamericano_finales_pkey
+indice  centroamericano_listas  centroamericano_listas_pkey
+indice  centroamericano_planillas  centroamericano_planillas_pkey
+indice  centroamericano_planillas  centroamericano_planillas_tnr_ronda_mesa_lado_key
+indice  centroamericano_progreso  centroamericano_progreso_pkey
 indice  centroamericano_registro  centroamericano_registro_anula_idx
 indice  centroamericano_registro  centroamericano_registro_partida_idx
 indice  centroamericano_registro  centroamericano_registro_pkey
@@ -3978,6 +4044,9 @@ cron  auditoria-purga  17 9 1 * *
 cron  avisar-fichas-faltantes  10 * * * *
 cron  avisar-rachas  5 0 * * *
 cron  avisos-arbitros  7 14 1 * *
+cron  centroamericano-copia-5min  */5 * * * *
+cron  centroamericano-copia-drive  */10 * * * *
+cron  centroamericano-copia-hora  0 * * * *
 cron  cerrar-clases-inactivas  */10 * * * *
 cron  cobros-generar  30 11 * * *
 cron  cobros-recordatorios  30 12 * * *
@@ -4148,6 +4217,11 @@ grant  bromas_clase  authenticated  SELECT
 grant  bromas_preferencias  authenticated  SELECT
 grant  centroamericano_asignaciones  authenticated  SELECT
 grant  centroamericano_avisos  authenticated  SELECT
+grant  centroamericano_copias  authenticated  SELECT
+grant  centroamericano_finales  authenticated  SELECT
+grant  centroamericano_listas  authenticated  SELECT
+grant  centroamericano_planillas  authenticated  SELECT
+grant  centroamericano_progreso  authenticated  SELECT
 grant  centroamericano_registro  authenticated  SELECT
 grant  certificados  authenticated  SELECT
 grant  clase_elegidos  authenticated  DELETE

@@ -7,13 +7,19 @@
    Lleva su margen blanco de 4 módulos, que es parte del código (sin él la
    cámara no lo encuentra), y corrección de errores M.
 
-       window.QrSvg.dibujar(texto, etiqueta)  → <svg role="img"> o null */
+   Con `{ marca: true }` lleva el caballo de Ajedrez Integral en el centro (los QR del
+   Centroamericano siempre la llevan): para que se pueda leer igual, el código sube a
+   corrección de errores H (la que tolera perder el 30 %) y la marca tapa menos del 6 %.
+
+       window.QrSvg.dibujar(texto, etiqueta, { marca })  → <svg role="img"> o null */
 (function () {
     "use strict";
     const NS = "http://www.w3.org/2000/svg";
-    function dibujar(texto, etiqueta) {
+    const MARCA = new URL("../img/app/icon-192.png", (document.currentScript && document.currentScript.src) || document.baseURI).href;
+    function dibujar(texto, etiqueta, opciones) {
         if (!window.qrcode) return null;
-        const q = window.qrcode(0, "M");
+        const marca = !!(opciones && opciones.marca);
+        const q = window.qrcode(0, marca ? "H" : "M");
         q.addData(texto);
         q.make();
         const n = q.getModuleCount(), borde = 4, lado = n + borde * 2;
@@ -34,6 +40,26 @@
         puntos.setAttribute("d", d);
         puntos.setAttribute("fill", "#000000");
         s.append(fondo, puntos);
+        if (marca) {
+            // Un cuadro blanco con el caballo, al centro: 22 % del lado del código (la zona
+            // central no lleva los tres cuadros de las esquinas ni la alineación del borde).
+            const lado22 = Math.round(n * 0.22), x0 = borde + Math.floor((n - lado22) / 2);
+            const blanco = document.createElementNS(NS, "rect");
+            blanco.setAttribute("x", String(x0 - 0.6));
+            blanco.setAttribute("y", String(x0 - 0.6));
+            blanco.setAttribute("width", String(lado22 + 1.2));
+            blanco.setAttribute("height", String(lado22 + 1.2));
+            blanco.setAttribute("rx", "1.2");
+            blanco.setAttribute("fill", "#ffffff");
+            const logo = document.createElementNS(NS, "image");
+            logo.setAttribute("href", MARCA);
+            logo.setAttribute("x", String(x0));
+            logo.setAttribute("y", String(x0));
+            logo.setAttribute("width", String(lado22));
+            logo.setAttribute("height", String(lado22));
+            logo.setAttribute("data-marca", "ajedrez-integral");
+            s.append(blanco, logo);
+        }
         return s;
     }
     window.QrSvg = { dibujar };
