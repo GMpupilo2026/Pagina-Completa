@@ -1045,12 +1045,17 @@ const porNombre = (m) => Object.fromEntries(m.map((f) => [f[0], f]));
     await ctx.close();
     ({ ctx, p } = await abrir(browser, "arbitros-cr.html", true, null, true));
     await p.waitForFunction(() => document.querySelectorAll("#tabla-avisos tbody tr").length > 0);
+    // «Sale el día 1» es el primer día del mes que viene (hora de Costa Rica): se calcula, no se escribe
+    // a mano (escrito «01/11/2026» la prueba se rompió justo el 1 de noviembre).
+    const hoyCR = new Intl.DateTimeFormat("sv-SE", { timeZone: "America/Costa_Rica" }).format(new Date());
+    const mesHoy = +hoyCR.slice(5, 7), anioHoy = +hoyCR.slice(0, 4);
+    const proximoDia1 = "01/" + String(mesHoy === 12 ? 1 : mesHoy + 1).padStart(2, "0") + "/" + (mesHoy === 12 ? anioHoy + 1 : anioHoy);
     igual("los avisos: cuándo vence, a quién, y si sale el día 1, no sale (sin correo) o ya se avisó",
         [await filas(p, "#tabla-avisos"), await p.$eval("#avisos-cuenta", (e) => e.textContent)],
         [[["20/11/2026", "Viejo Prueba, Juan", "Quedas inactivo en la Federación", "No sale: no tiene correo"],
-          ["01/12/2026", "Rojas Prueba, Luis", "La norma de AF deja de contar", "Sale el 01/11/2026"],
+          ["01/12/2026", "Rojas Prueba, Luis", "La norma de AF deja de contar", "Sale el " + proximoDia1],
           ["20/12/2026", "Rojas Prueba, Luis", "El seminario deja de valer", "Avisado el 01/10/2026"]],
-         "3 cosas se vencen en los próximos 90 días: 1 sale el 01/11/2026 y 1 no sale porque esa persona no tiene correo registrado."]);
+         "3 cosas se vencen en los próximos 90 días: 1 sale el " + proximoDia1 + " y 1 no sale porque esa persona no tiene correo registrado."]);
     const csv = ["ID FIDE;Nombre;Qué;Categoría;Fecha;Horas;Nota;Detalle;Correo;Autorizó;Avisos",
         "6500003;;Categoría;B;15/01/2024;;;;;;",
         ";Luis Rojas Prueba;Curso intermedio;;01/06/2025;20;90%;Taller FCA;;;",
