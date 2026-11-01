@@ -2703,10 +2703,13 @@ async function esperarJugadas(p, n) {
     igual(r + " la deja encendida solo para el sitio", /camera=\(self\)/.test(pp(r)) && !/camera=\(\)/.test(pp(r)), true);
   }
   const conCamara = Object.keys(reglas).filter((r) => /camera=\((?!\))/.test(pp(r)));
+  for (const r of ["/centroamericano-arbitro", "/centroamericano-arbitro.html"]) {
+    igual(r + " (la guía de las planillas) también la tiene, y solo para el sitio", /camera=\(self\)/.test(pp(r)) && !/camera=\(\)/.test(pp(r)) && (reglas[r] || []).includes("! Permissions-Policy"), true);
+  }
   for (const r of ["/camaras", "/camaras.html"]) {
     igual(r + " (la de los cuadritos) también la tiene: sin eso, ningún cuadrito podría usarla", /camera=\(self\)/.test(pp(r)) && (reglas[r] || []).includes("! Permissions-Policy"), true);
   }
-  igual("ninguna otra página tiene la cámara (tampoco la de mirar la partida)", [...conCamara].sort(), ["/camara-tablero", "/camara-tablero.html", "/camaras", "/camaras.html"]);
+  igual("ninguna otra página tiene la cámara (tampoco la de mirar la partida); la del árbitro del Centroamericano sí, para su guía de planillas", [...conCamara].sort(), ["/camara-tablero", "/camara-tablero.html", "/camaras", "/camaras.html", "/centroamericano-arbitro", "/centroamericano-arbitro.html"]);
 
   await browser.close();
   console.log(fallos ? `\n✗ ${fallos} comprobaciones fallaron.` : "\nLa cámara que lee el tablero y la partida en vivo están como se pidió.");

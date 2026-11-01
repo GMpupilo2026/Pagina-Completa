@@ -218,11 +218,11 @@
             sube ? el("span", { class: "cam-iconos-estado", role: "status", texto: "Subiendo…" }) : null);
     }
 
-    // La foto se achica y se pasa a JPG en el aparato (una planilla legible cabe en ~400 KB):
+    // La foto se achica y se pasa a JPG en el aparato (lado largo de 2600 px como máximo: son dos planillas en una foto):
     // así sube rápido aunque la señal del salón sea mala.
     async function reducir(archivo) {
         const bmp = await createImageBitmap(archivo);
-        const lado = Math.max(bmp.width, bmp.height), esc = lado > 1800 ? 1800 / lado : 1;
+        const lado = Math.max(bmp.width, bmp.height), esc = lado > 2600 ? 2600 / lado : 1;
         const c = document.createElement("canvas");
         c.width = Math.round(bmp.width * esc);
         c.height = Math.round(bmp.height * esc);
@@ -233,7 +233,45 @@
         return await new Promise((ok, mal) => { const r = new FileReader(); r.onload = () => ok(r.result); r.onerror = () => mal(new Error("No se pudo leer la foto.")); r.readAsDataURL(blob); });
     }
 
-    function subirPlanilla(m) {
+    // El botón de la camarita. Primero la cámara CON GUÍA (dos marcos para acomodar las planillas; ver
+    // js/guia-planillas.js); si el aparato no la da (sin permiso, sin cámara, o el árbitro prefiere la suya),
+    // la cámara del aparato de siempre. Nunca se queda sin poder subir la foto.
+    async function subirPlanilla(m) {
+        const G = window.GuiaPlanillas;
+        if (G && G.disponible()) {
+            const r = await G.abrir({
+                titulo: "Foto de las planillas · Mesa " + m.mesa,
+                rotulos: ["Blancas · " + m.blancas, "Negras · " + m.negras],
+            });
+            if (r.imagen) { await enviarPlanilla(m, r.imagen); enfocarCamarita(m.mesa); return; }
+            if (r.cancelado) { enfocarCamarita(m.mesa); return; }
+            if (!r.elegida && r.motivo) avisar(r.motivo + " Se usa la cámara del aparato.", true);
+        }
+        subirConLaCamaraDelAparato(m);
+    }
+
+    // Al volver de la cámara, el foco del teclado vuelve a la camarita de esa mesa (la página se vuelve a dibujar al subir).
+    function enfocarCamarita(mesa) {
+        const b = document.querySelector('.cam-mesa[data-mesa="' + mesa + '"] [data-accion="planilla"]');
+        if (b && !b.disabled) b.focus();
+    }
+
+    async function enviarPlanilla(m, imagen) {
+        subiendo.add(m.mesa);
+        pintar();
+        try {
+            const d = await invocar("planilla", { ronda: estado.ronda, mesa: m.mesa, imagen });
+            estado.planillas = subidas().filter((x) => x.mesa !== m.mesa).concat([{ mesa: m.mesa, lado: "blancas", subida: d.subida, drive_ok: d.drive === "enviada" }]);
+            avisar("Foto de las planillas de la mesa " + m.mesa + " guardada" + (d.drive === "enviada" ? " y ya está en el Drive." : d.drive === "pendiente" ? ". El Drive la recibirá en un rato." : "."));
+        } catch (e) {
+            avisar(e.message, true);
+        } finally {
+            subiendo.delete(m.mesa);
+            pintar();
+        }
+    }
+
+    function subirConLaCamaraDelAparato(m) {
         const entrada = document.createElement("input");
         entrada.type = "file";
         entrada.accept = "image/*";
@@ -244,13 +282,9 @@
             subiendo.add(m.mesa);
             pintar();
             try {
-                const imagen = await reducir(archivo);
-                const d = await invocar("planilla", { ronda: estado.ronda, mesa: m.mesa, imagen });
-                estado.planillas = subidas().filter((x) => x.mesa !== m.mesa).concat([{ mesa: m.mesa, lado: "blancas", subida: d.subida, drive_ok: d.drive === "enviada" }]);
-                avisar("Foto de las planillas de la mesa " + m.mesa + " guardada" + (d.drive === "enviada" ? " y ya está en el Drive." : d.drive === "pendiente" ? ". El Drive la recibirá en un rato." : "."));
+                await enviarPlanilla(m, await reducir(archivo));
             } catch (e) {
                 avisar(e.message, true);
-            } finally {
                 subiendo.delete(m.mesa);
                 pintar();
             }

@@ -8727,6 +8727,36 @@ activarlo**; que la ayuda sea **de las dos formas** (en una mesa concreta, o ayu
   organización, «Otro torneo» en la fila de un árbitro (o «¿Ya tiene mesas en otro torneo?» en el
   formulario) crea el nuevo enlace con su mismo nombre y su misma `persona`; un aviso a «todos» o a
   «todo el torneo» le llega **una vez** al árbitro aunque tenga dos enlaces.
+- **La cámara con guía para las planillas** (`js/guia-planillas.js`). La camarita ya no abre la cámara del
+  aparato (que no deja dibujar encima) sino la cámara DENTRO de la página, a pantalla completa, con dos
+  marcos verticales —«Blancas · <jugador>» a la izquierda, «Negras · <jugador>» a la derecha— y todo lo de
+  afuera oscurecido. Se toma la foto, **se revisa** («¿Se ven bien las dos planillas?», «Repetir la foto» o
+  «Usar esta foto») y recién entonces se manda. Por qué así:
+  - **La guía ayuda, nunca bloquea.** El botón de tomar la foto siempre funciona. Si el aparato no da la
+    cámara (sin permiso, sin cámara, navegador sin `getUserMedia`) o la persona toca «Usar la cámara del
+    aparato», se abre la de siempre: nunca se queda sin poder subir la foto.
+  - **El verde es una ayuda que se mide, no un adorno** (`analizar`): se baja el cuadro a 160 px, se separa
+    papel de mesa con el método de Otsu y, por cada marco, se mide la hoja que hay —su inclinación (por la
+    dirección en que se estira el papel), su tamaño (filas y columnas con papel) y qué tan centrada está—.
+    Se exige: hasta 4° de giro (desde 5° dice «Endereza la planilla de las …»), un tamaño de 0,80 a 1,07
+    del marco (una hoja Carta, algo más ancha que la A4, pasa si se aleja un poco el aparato) y centrada.
+    Con poco contraste entre hoja y mesa no se afirma nada. Para no parpadear: 3 lecturas buenas seguidas
+    para pasar a verde, 2 malas para salir. Calibrado con cuadros sintéticos; **falta probarlo con la luz y
+    la mesa reales del salón**, y por eso nunca bloquea.
+  - **Siempre con palabras**: cada estado dice qué corregir («Falta la planilla de las blancas», «Acerca el
+    aparato», «Centra la planilla…»); el verde además cambia el borde de discontinuo a continuo.
+  - **Celular parado**: pide «Gira el aparato a lo ancho» (no caben dos hojas verticales de lado), esconde
+    los marcos y no deja disparar; al girar se quita sola.
+  - La foto sale con el lado largo de hasta **2600 px** (antes 1800: con dos planillas en una foto, cada una
+    quedaba en ~600 px, poco para leer letra a mano). Pide la mejor resolución que dé la cámara (`ideal`
+    3840×2160) y la linterna solo si el aparato la ofrece. Al cerrar —o con Escape— la cámara se apaga.
+  - **Permiso**: `_headers` deja `camera=(self)` también en `/centroamericano-arbitro(.html)` (la regla
+    general la apaga en todo el sitio); `verificar-camara-tablero.js` lleva la lista de las páginas con
+    cámara. El verificador `verificar-guia-planillas.js` prueba la detección con cuadros sintéticos y la
+    página con una **cámara simulada** (Chromium reproduce un video Y4M armado ahí mismo: planillas bien
+    puestas → verde y foto; chuecas → no verde y aun así se toma; celular parado; ✕/Escape; sin permiso).
+    El doble de Supabase del árbitro vive ahora en `herramientas/lib/doble-centroamericano-arbitro.js`
+    (una sola copia para los dos verificadores de la página).
 - **El reloj de cada mesa** (control de tiempos). Cada mesa SIN terminar tiene un relojito (SVG, sin
   texto) junto a la camarita; al tocarlo se abre la ventanita de ESA mesa con **Blancas** (su
   nombre, el tiempo del reloj y las jugadas que lleva) y **Negras** (lo mismo) y «Guardar». Se
