@@ -96,6 +96,9 @@ function dobleOrganizacion(licencia) {
     rpc: (f, a) => { window.__llamadas.push({ rpc: f, a: a && a.p_herramienta, copia: a && a.p_copia });
       if (f === "tengo_herramienta") return R(${licencia ? "a.p_herramienta === 'mesa-arbitro'" : "false"});
       if (f === "centroamericano_copia_manual") return R(COPIA(0));
+      if (f === "centroamericano_hojas") return R([
+        { asignacion: "asig-ana", arbitro: "Ana Árbitra", tnr: "1529737", torneo: "Sub-10 Absoluto", categoria: "Sub-10", rama: "Absoluto", mesa_desde: 1, mesa_hasta: 2, ronda: 3, leida: "2026-11-03T15:00:00Z", mesas: [{ mesa: 1, blancas: "Eli", negras: "Fran", valor: "1" }, { mesa: 2, blancas: "Gus", negras: "Hana", valor: "0" }] },
+        { asignacion: "asig-b", arbitro: "Beto Árbitro", tnr: "1529737", torneo: "Sub-10 Absoluto", categoria: "Sub-10", rama: "Absoluto", mesa_desde: 3, mesa_hasta: 3, ronda: 3, leida: "2026-11-03T15:00:00Z", mesas: [{ mesa: 3, blancas: "Ivo", negras: "Jana", valor: "0" }] }]);
       if (f === "centroamericano_restaurar") return a.p_copia.version !== 1 ? R(null, { message: "Ese archivo no es una copia del Centroamericano 2026" }) : R({ asignaciones: 1, registro: 0, avisos: 0, progreso: 0, finales: 0, planillas: 0 });
       return R(null); },
     storage: { from: (b) => ({ createSignedUrl: (ruta) => { window.__llamadas.push({ foto: b + "/" + ruta }); return R({ signedUrl: "data:image/png;base64," + PNG }); } }) },
@@ -738,6 +741,11 @@ const CONTRASTE = `(sel) => {
     const [descarga] = await Promise.all([q.waitForEvent("download"), q.click("#r-pdf")]);
     const pdf = fs.readFileSync(await descarga.path());
     igual("el PDF del registro, con su nombre y la marca de agua", [descarga.suggestedFilename(), pdf.toString("latin1").startsWith("%PDF"), /\/SMask \d+ 0 R/.test(pdf.toString("latin1"))], ["registro-arbitros-centroamericano-2026.pdf", true, true]);
+    await q.click("#pest-ronda");
+    const [descargaH] = await Promise.all([q.waitForEvent("download"), q.click("#resumen-hojas")]);
+    const pdfH = fs.readFileSync(await descargaH.path());
+    igual("las hojas en papel (plan B): un PDF con una hoja por árbitro, su nombre y la marca de agua", [descargaH.suggestedFilename(), pdfH.toString("latin1").startsWith("%PDF"), /\/SMask \d+ 0 R/.test(pdfH.toString("latin1")), (pdfH.toString("latin1").match(/\/Type \/Page\b/g) || []).length, await q.evaluate(() => window.__llamadas.filter((l) => l.rpc === "centroamericano_hojas").length)], ["hojas-resultados-papel-ronda-3-centroamericano-2026.pdf", true, true, 2, 1]);
+    await q.click("#pest-registro");
     const [descargaF] = await Promise.all([q.waitForEvent("download"), q.click("#r-informe")]);
     const pdfF = fs.readFileSync(await descargaF.path());
     igual("el informe final en PDF (resumen por ronda, ilegales, ausentes, rondas finalizadas y planillas), con su nombre y la marca de agua", [descargaF.suggestedFilename(), pdfF.toString("latin1").startsWith("%PDF"), /\/SMask \d+ 0 R/.test(pdfF.toString("latin1")), await q.$eval("#r-informe", (b) => b.disabled)], ["informe-final-arbitros-centroamericano-2026.pdf", true, true, false]);

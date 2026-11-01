@@ -8843,6 +8843,17 @@ puede fallar por la conexión. Dos decisiones, una en el servidor y una en la ta
   Lo prueba `verificar-centroamericano-cola.js` con fallas de red simuladas (503, falla corta, respuesta
   perdida, sin señal, recarga sin señal, foto, «no» de verdad); `verificar-lecturas-cache.js` prueba la lectura
   compartida con 15 pedidos concurrentes (1 sola visita) y el respaldo.
+- **La función se mantiene «caliente»** (migración `centroamericano_calentar`). Una función que lleva rato sin
+  pedidos se apaga y el primer pedido paga el arranque: en la prueba con 20 pedidos a la vez, 3 dieron `BOOT_ERROR`.
+  Cada minuto, del 1 al 9 de noviembre y de 6:00 a 22:00 hora de Costa Rica, `interno.centroamericano_calentar()`
+  (pg_cron + pg_net) manda 8 pedidos en paralelo con la acción `calentar` de `centroamericano-mesa`, que no pide
+  token, no toca la base ni chess-results y solo contesta `{ok:true}`: así hay varias copias de la función
+  arrancadas. Se apaga sola fuera de esas fechas (o con `cron.unschedule('centroamericano-calentar')`).
+- **Plan B en papel** («Hojas en papel (plan B)» en «Ronda en curso» de la organización): un PDF con una hoja por
+  árbitro —sus mesas con los jugadores, un renglón para marcar `1-0 / 1/2 / 0-1` a mano, una columna de notas y la
+  firma— por si falla la señal de toda la sala. Sale de la última lectura de chess-results (la copia compartida) por
+  `public.centroamericano_hojas()` (solo con la licencia; las tablas siguen cerradas); si no hay lectura, dice que
+  primero se toque «Actualizar desde chess-results». `js/reporte-pdf.js` admite `altoFila` para tablas que se llenan a mano.
 - **iPad y Android.** El iPad no tiene `navigator.vibrate`: los avisos de la organización no pueden depender de
   vibrar. Se ven (aviso fijo arriba, grande, con número en el título de la pestaña) y la tablet vibra donde se
   puede (Android). Sigue sin sonido, por orden del dueño. Nada usa APIs que Safari no tenga (`randomUUID` y

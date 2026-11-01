@@ -53,6 +53,7 @@
 //   "ayuda"   { mesa?, texto? }           -> pide al árbitro principal (le llega un aviso a la cuenta principal)
 //   "leido"   { id }                      -> marca un mensaje de la organización como leído («Entendido»)
 //   "nombre"  { nombre }                  -> el árbitro «por definir» pone su nombre (una sola vez)
+//   "calentar" {}                         -> sin token: solo contesta ok (la base lo manda cada minuto para mantener la función arrancada)
 //
 // EL MISMO ÁRBITRO EN VARIOS TORNEOS: la organización junta sus enlaces con `persona`. El árbitro
 // abre uno y `leer` le devuelve los otros (`hermanas`, con su token) para pasar de uno a otro;
@@ -131,6 +132,9 @@ Deno.serve(async (req) => {
 
   let cuerpo: Record<string, unknown> = {};
   try { cuerpo = await req.json(); } catch { cuerpo = {}; }
+  // «calentar»: lo manda la base cada minuto durante el torneo para tener la función arrancada (ver la migración
+  // centroamericano_calentar). No pide token, no toca la base y no habla con chess-results: solo contesta.
+  if (cuerpo.action === "calentar") return json({ ok: true });
   const token = String(cuerpo.token ?? "").trim();
   if (!/^[0-9a-f]{64}$/.test(token)) return json({ error: "Este enlace no es válido. Pídele a la organización que te mande el QR de nuevo." }, 404);
 

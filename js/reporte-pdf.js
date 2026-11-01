@@ -208,9 +208,10 @@ window.ReportePDF = (function () {
      celdas no parten en varios renglones a propósito — se recortan. Una tabla
      de informe con celdas de tres líneas se vuelve ilegible, y lo largo va en
      los párrafos. */
-  Lienzo.prototype.tabla = function (encabezados, filas, anchos) {
+  Lienzo.prototype.tabla = function (encabezados, filas, anchos, altoFila) {
     const tam = 9;
-    const alto = 16;
+    // `altoFila`: una tabla para llenar a mano (una hoja de resultados en papel) pide filas más altas.
+    const alto = altoFila || 16;
     const total = anchos.reduce((a, b) => a + b, 0);
     const escala = this.anchoUtil() / total;
     const cols = anchos.map((a) => a * escala);
@@ -470,7 +471,7 @@ window.ReportePDF = (function () {
         for (const item of bloque.items) lienzo.parrafo("- " + item, 10, false, 12);
       } else if (bloque.tipo === "tabla") {
         lienzo.tabla(bloque.encabezados, bloque.filas, bloque.anchos ||
-          bloque.encabezados.map(() => 1));
+          bloque.encabezados.map(() => 1), bloque.altoFila);
       } else if (bloque.tipo === "foto") {
         const nombre = idPorFoto.get(bloque.foto);
         if (nombre) {

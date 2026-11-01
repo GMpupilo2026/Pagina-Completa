@@ -367,6 +367,39 @@
         await descargarPdf(doc, "avance-ronda-" + (ronda || "x") + "-centroamericano-2026.pdf");
     }
 
+    // El plan B en papel: una hoja por árbitro con sus mesas, los jugadores y un renglón para marcar el resultado a mano,
+    // por si falla la señal de la sala. Sale de la última lectura de chess-results (la misma de las tablets).
+    async function hojasPapelPdf() {
+        $("resumen-hojas").disabled = true;
+        try {
+            const { data, error } = await sb.rpc("centroamericano_hojas");
+            if (error) throw new Error(error.message);
+            const hojas = (data || []).filter((h) => h.mesas && h.mesas.length);
+            if (!hojas.length) { avisar("Todavía no hay mesas leídas. Toca «Actualizar desde chess-results» y vuelve a intentar.", true); return; }
+            const bloques = [];
+            hojas.forEach((h, i) => {
+                if (i) bloques.push({ tipo: "salto" });
+                bloques.push({ tipo: "titulo", texto: h.arbitro + " — mesas " + h.mesa_desde + " a " + h.mesa_hasta });
+                bloques.push({ tipo: "parrafo", texto: (h.categoria ? h.categoria + " " + (h.rama || "") : h.torneo) + " · ronda " + h.ronda + " · mesas de chess-results a las " + window.HoraCR.hora(new Date(h.leida)) });
+                bloques.push({ tipo: "nota", texto: "Marca con una X el resultado de cada partida y anota al lado lo que haga falta (ilegales, control de tiempos, incidencias). Cuando vuelva la señal, pasa los resultados a la tablet." });
+                bloques.push({
+                    tipo: "tabla", altoFila: 30, encabezados: ["Mesa", "Blancas", "Negras", "Resultado", "Notas"], anchos: [1.1, 3, 3, 3.6, 2.2],
+                    filas: h.mesas.map((m) => [String(m.mesa), m.blancas, m.negras, m.valor && m.valor !== "0" ? "ya en chess-results: " + M.textoResultado(m.valor) : "[   ] 1-0     [   ] 1/2     [   ] 0-1", ""]),
+                });
+                bloques.push({ tipo: "parrafo", texto: "Firma del árbitro: ______________________________" });
+            });
+            const doc = {
+                titulo: "Hojas de resultados en papel (plan B)",
+                subtitulo: "Centroamericano 2026 · " + window.HoraCR.fechaHora(new Date()),
+                pie: "Centroamericano 2026 · ajedrez-integral.com",
+                bloques, fotos: [],
+            };
+            await descargarPdf(doc, "hojas-resultados-papel-ronda-" + (hojas[0].ronda || "x") + "-centroamericano-2026.pdf");
+        } catch (e) {
+            avisar("No se pudo armar las hojas: " + (e.message || e), true);
+        } finally { $("resumen-hojas").disabled = false; }
+    }
+
     async function descargarPdf(doc, nombre) {
         try {
             const blob = await window.ReportePDF.generar(doc);
@@ -1179,6 +1212,7 @@
         $("form-aviso").addEventListener("submit", enviarAviso);
         $("resumen-actualizar").addEventListener("click", actualizarResumen);
         $("resumen-pdf").addEventListener("click", reportePdf);
+        $("resumen-hojas").addEventListener("click", hojasPapelPdf);
         $("g-guardar").addEventListener("click", guardarGrupo);
         $("claves-bloque-guardar").addEventListener("click", guardarBloque);
         $("form-asignar").addEventListener("submit", crear);
