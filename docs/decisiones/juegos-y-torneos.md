@@ -8745,7 +8745,11 @@ activarlo**; que la ayuda sea **de las dos formas** (en una mesa concreta, o ayu
   (ni de restricción ni de política): la herramienta de migraciones de Supabase pregunta a la
   persona antes de aplicar cualquier `drop` y, sin respuesta, vence sin aplicar nada (como pasó con
   el `delete` de otra vez). Por eso `control_tiempos` es una columna nueva en vez de un valor nuevo
-  de `tipo`.
+  de `tipo`. Aplicada el 1 de noviembre (`20261101142607`) con `centroamericano-mesa` v4 desplegada;
+  probada con los dos torneos de prueba ligados: los enlaces con la misma `persona` se ven entre sí
+  (`hermanas`), el aviso de control de tiempos de un enlace le llega al otro, la presencia se
+  corrige sin duplicar filas, el tiempo solo entra en una partida sin resultado, y restaurar con la
+  copia actual no agrega nada de más.
 
 ## La ficha del jugador federado
 
