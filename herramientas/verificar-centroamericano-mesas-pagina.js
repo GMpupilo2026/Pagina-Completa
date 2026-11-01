@@ -628,6 +628,19 @@ const CONTRASTE = `(sel) => {
     await q.click("dialog [data-avisos-cancelar]");
     await q.fill("#a-arbitro", "");
     const fila = (nombre) => q.locator("#asignaciones .cam-asignacion", { hasText: nombre });
+    // La tabla de enlaces se ve como tabla: cada fila es una fila de verdad y cada celda queda bajo su encabezado
+    // (antes la fila era una tarjeta con display:grid y los encabezados no coincidían con lo de abajo).
+    for (const ancho of [820, 1280]) {
+        await q.setViewportSize({ width: ancho, height: 900 });
+        igual("los enlaces son filas de la tabla y sus celdas están bajo su encabezado (" + ancho + " px)", await q.evaluate(() => {
+            const cab = [...document.querySelectorAll("#asignaciones-tabla thead th")].map((th) => th.getBoundingClientRect());
+            return [...document.querySelectorAll("#asignaciones .cam-asignacion")].map((tr) => {
+                const celdas = [...tr.children].map((td) => td.getBoundingClientRect());
+                return [getComputedStyle(tr).display, celdas.length, celdas.every((c, i) => Math.abs(c.left - cab[i].left) <= 2 && Math.abs(c.width - cab[i].width) <= 2)];
+            });
+        }), [["table-row", 5, true], ["table-row", 5, true], ["table-row", 5, true]]);
+    }
+    await q.setViewportSize({ width: 1100, height: 800 });
     await fila("Árbitro 1").locator('[data-accion="nombre"]').click();
     await q.waitForSelector("dialog[open] input");
     await q.fill("dialog[open] input", "Carla Mora");

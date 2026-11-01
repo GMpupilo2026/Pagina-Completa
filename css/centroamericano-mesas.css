@@ -169,10 +169,15 @@
 .cam-chip[data-clave="no"] { background: var(--cac-rojo); }
 .cam-chip[data-clave="neutro"] { background: var(--cac-morado); }
 
-.cam-asignacion { display: grid; grid-template-columns: 1fr; gap: 0.8rem; border: 2px solid #dfe0f7; border-radius: 1rem; padding: 0.9rem; background: #fff; color: var(--cac-morado-hondo); }
-@media (min-width: 640px) { .cam-asignacion { grid-template-columns: 1fr 150px; } }
-.dark .cam-asignacion { background: rgb(var(--c-brand-900, 10 31 51)); color: rgb(var(--c-brand-100, 217 226 236)); border-color: rgb(255 255 255 / 0.14); }
-.cam-asignacion[data-estado="apagado"], .cam-asignacion[data-estado="vencido"] { opacity: 0.7; border-style: dashed; }
+/* Un enlace es una FILA de la tabla «Los enlaces creados»: sus celdas tienen que quedar bajo los
+   encabezados Árbitro, Mesas, Estado, Conexión y Acciones. (Antes era una tarjeta con display:grid
+   y, al ponerse en un <tr>, se salía de la tabla y los encabezados no coincidían.) */
+.cam-asignacion { color: var(--cac-morado-hondo); }
+.dark .cam-asignacion { color: rgb(var(--c-brand-100, 217 226 236)); }
+.cam-asignacion td:nth-child(1) { min-width: 11rem; }
+.cam-asignacion td:nth-child(2) { white-space: nowrap; }
+.cam-asignacion td:nth-child(5) { min-width: 15rem; }
+.cam-asignacion[data-estado="apagado"] td:first-child, .cam-asignacion[data-estado="vencido"] td:first-child { border-left: 4px dashed var(--cac-morado); }
 .cam-qr { width: 150px; height: 150px; background: #fff; border: 2px solid #dfe0f7; border-radius: 0.6rem; padding: 2px; justify-self: center; }
 
 .cam-tabla-envoltura { overflow-x: auto; }
