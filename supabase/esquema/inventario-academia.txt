@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20261101153757
+# al-dia-con: 20261101181532
 tabla  Ejercicios Lichess  rls=true
 tabla  _foto_rls_tmp  rls=false
 tabla  _pedidos_elo  rls=false
@@ -47,6 +47,7 @@ tabla  centroamericano_asignaciones  rls=true
 tabla  centroamericano_avisos  rls=true
 tabla  centroamericano_copias  rls=true
 tabla  centroamericano_finales  rls=true
+tabla  centroamericano_lecturas  rls=true
 tabla  centroamericano_listas  rls=true
 tabla  centroamericano_planillas  rls=true
 tabla  centroamericano_presencia  rls=true
@@ -578,6 +579,12 @@ columna  centroamericano_finales.id  uuid
 columna  centroamericano_finales.reabierta  boolean
 columna  centroamericano_finales.revision  jsonb
 columna  centroamericano_finales.ronda  integer
+columna  centroamericano_lecturas.leida  timestamp with time zone
+columna  centroamericano_lecturas.leyendo_hasta  timestamp with time zone
+columna  centroamericano_lecturas.mesas  jsonb
+columna  centroamericano_lecturas.ronda  integer
+columna  centroamericano_lecturas.tnr  text
+columna  centroamericano_lecturas.torneo  text
 columna  centroamericano_listas.aprobada_en  timestamp with time zone
 columna  centroamericano_listas.asignacion_id  uuid
 columna  centroamericano_listas.paso  text
@@ -3540,6 +3547,7 @@ indice  centroamericano_avisos  centroamericano_avisos_termino_uidx
 indice  centroamericano_copias  centroamericano_copias_pkey
 indice  centroamericano_finales  centroamericano_finales_asignacion_id_ronda_key
 indice  centroamericano_finales  centroamericano_finales_pkey
+indice  centroamericano_lecturas  centroamericano_lecturas_pkey
 indice  centroamericano_listas  centroamericano_listas_pkey
 indice  centroamericano_planillas  centroamericano_planillas_pkey
 indice  centroamericano_planillas  centroamericano_planillas_tnr_ronda_mesa_lado_key

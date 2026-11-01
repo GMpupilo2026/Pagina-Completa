@@ -63,7 +63,10 @@ function doble(licencia) {
       const b = o.body;
       if (b.action === "leer") {
         if (window.__modo === "clave") return R({ error: "chess-results no aceptó el código o la clave. Revísalos en Swiss-Manager." });
-        return R({ tnr: b.tnr, torneo: "Torneo de Prueba", ronda: 3, mesas: MESAS.map((m) => Object.assign({}, m)) });
+        // Dos torneos LIGADOS en un grupo: con la misma clave se abre cualquiera (destino).
+        const abierto = b.destino || b.tnr;
+        const torneos = [{ tnr: "1532448", nombre: "Torneo de Prueba" }, { tnr: "1532486", nombre: "Torneo de Prueba 2" }].map((t) => Object.assign({ elegido: t.tnr === abierto }, t));
+        return R({ tnr: abierto, torneo: (torneos.find((t) => t.elegido) || torneos[0]).nombre, torneos, ronda: abierto === "1532486" ? 5 : 3, mesas: MESAS.map((m) => Object.assign({}, m)) });
       }
       window.__guardados = (window.__guardados || []).concat([b]);
       const resultados = b.cambios.map((c) => {
@@ -130,6 +133,18 @@ async function abrir(browser, licencia) {
     igual("sin elegir nada, no se puede guardar", await p.evaluate(() => ["m-guardar", "m-anotar", "m-copiar"].map((b) => document.getElementById(b).disabled)), [true, true, true]);
     igual("la ronda de la bitácora ya viene puesta", await p.inputValue("#b-ronda"), "3");
 
+    console.log("\n=== Torneos ligados en un grupo ===");
+    igual("si el grupo tiene más de un torneo, se ofrece un desplegable con todos y el abierto elegido",
+        await p.evaluate(() => { const z = document.getElementById("m-ligados-zona"), s = document.getElementById("m-ligados"); return [z.checkVisibility(), [...s.options].map((o) => o.value + "|" + o.textContent), s.value]; }),
+        [true, ["1532448|Torneo de Prueba · 1532448", "1532486|Torneo de Prueba 2 · 1532486"], "1532448"]);
+    await p.selectOption("#m-ligados", "1532486");
+    await p.waitForFunction(() => document.getElementById("m-torneo").textContent.includes("Prueba 2"));
+    igual("al elegir el otro torneo se lee ESE (misma clave, con `destino`) y la pantalla cambia de torneo y de ronda",
+        [await p.evaluate(() => { const b = window.__ultimo; return [b.action, b.tnr, b.destino]; }), await p.textContent("#m-torneo"), await p.inputValue("#b-ronda")],
+        [["leer", "1532448", "1532486"], "Torneo de Prueba 2 · ronda 5", "5"]);
+    await p.selectOption("#m-ligados", "1532448");
+    await p.waitForFunction(() => document.getElementById("m-torneo").textContent.startsWith("Torneo de Prueba ·") && document.getElementById("b-ronda").value === "3");
+
     if (process.env.CAPTURA) await p.screenshot({ path: process.env.CAPTURA, fullPage: true }); // para mirar la pantalla, no solo el DOM
     console.log("\n=== Buscar ===");
     await p.fill("#m-buscar", "acuna");
@@ -153,6 +168,7 @@ async function abrir(browser, licencia) {
     igual("manda SOLO lo cambiado, con la ronda, el código y los jugadores que vio el árbitro",
         await p.evaluate(() => { const g = window.__guardados[0]; return [g.action, g.tnr, g.ronda, g.cambios]; }),
         ["guardar", "1532448", 3, [{ mesa: 1, blancas: "Muñoz Feliz Alejandro", negras: "Gramajo Tovar Marco", valor: "1" }]]);
+    igual("al guardar manda también el torneo abierto (`destino`), para no escribir en el otro del grupo", await p.evaluate(() => window.__guardados[0].destino), "1532448");
     igual("el informe dice que quedó en chess-results", await p.$$eval("#m-informe li", (l) => l.map((x) => x.textContent)), ["✓ Mesa 1: quedó «1-0 (ganan blancas)» en chess-results."]);
     igual("la tabla muestra lo que chess-results tiene ahora", await p.$eval('#m-mesas tr[data-mesa="1"]', (tr) => tr.children[3].textContent), "1-0 (ganan blancas)");
     igual("en la bitácora queda un «resultado» enviado, con la ronda y los jugadores",

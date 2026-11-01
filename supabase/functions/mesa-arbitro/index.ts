@@ -46,8 +46,9 @@
 // antes_de_cada_pedido() y la verificación en dos pasos la exige la base.
 //
 // Dos acciones (body.action):
-//   "leer"    { tnr, sid }                         -> { tnr, torneo, ronda, mesas }
-//   "guardar" { tnr, sid, ronda, cambios:[{ mesa, blancas, negras, valor }] }
+//   "leer"    { tnr, sid, destino? }               -> { tnr, torneo, ronda, mesas, torneos[] }  (torneos = los ligados del grupo;
+//                                                        `destino` es el que se eligió entre ellos)
+//   "guardar" { tnr, sid, destino?, ronda, cambios:[{ mesa, blancas, negras, valor }] }
 //                                                  -> { ok, ronda, resultados, diferencias }
 //
 // LO QUE HABLA CON CHESS-RESULTS (leer la pantalla, entrar, armar el «Save» y guardar
@@ -58,7 +59,7 @@
 // verify_jwt en true.
 
 import { createClient } from "npm:@supabase/supabase-js@2";
-import { guardarYComprobar, leerRonda, MAX_CAMBIOS, resumir } from "./chess-results-ingreso.ts";
+import { entrar, guardarYComprobar, leerRonda, MAX_CAMBIOS, resumir } from "./chess-results-ingreso.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
@@ -89,18 +90,30 @@ Deno.serve(async (req) => {
   if (errPermiso) return json({ error: "No se pudo comprobar tu licencia: " + errPermiso.message }, 403);
   if (puede !== true) return json({ error: "Tu cuenta no tiene una licencia vigente de esta herramienta." }, 403);
 
-  let cuerpo: { action?: unknown; tnr?: unknown; sid?: unknown; ronda?: unknown; cambios?: unknown } = {};
+  let cuerpo: { action?: unknown; tnr?: unknown; sid?: unknown; destino?: unknown; ronda?: unknown; cambios?: unknown } = {};
   try { cuerpo = await req.json(); } catch { cuerpo = {}; }
   const tnr = String(cuerpo.tnr ?? "").trim();
   const sid = String(cuerpo.sid ?? "").trim();
   if (!/^\d{1,7}$/.test(tnr)) return json({ error: "El código de la base de datos del torneo son hasta 7 números." }, 400);
   if (!/^[A-Za-z0-9]{8,32}$/.test(sid)) return json({ error: "La clave (SID) son hasta 32 letras y números." }, 400);
+  // Si los torneos están LIGADOS en un grupo de chess-results, con el mismo código y clave se entra al grupo y
+  // `destino` es el torneo ligado que se quiere leer o guardar (el que se eligió en el desplegable). Sin
+  // `destino`, se lee el torneo con el que abre la clave.
+  const destino = /^\d{1,7}$/.test(String(cuerpo.destino ?? "")) ? String(cuerpo.destino) : "";
 
   try {
     if (cuerpo.action === "leer") {
-      const leida = await leerRonda(tnr, sid);
-      if ("error" in leida) return json({ error: leida.error }, leida.estado);
-      return json({ ...resumir(leida.pantalla), leido_en: new Date().toISOString() });
+      let pantalla;
+      if (destino) {
+        const leida = await leerRonda(tnr, sid, destino);
+        if ("error" in leida) return json({ error: leida.error }, leida.estado);
+        pantalla = leida.pantalla;
+      } else {
+        pantalla = (await entrar(tnr, sid)).pantalla;
+        if (!pantalla.entro) return json({ error: "chess-results no aceptó el código o la clave. Revísalos en Swiss-Manager." }, 401);
+      }
+      // `torneos`: los torneos ligados del grupo (si hay más de uno), para que la página deje elegir.
+      return json({ ...resumir(pantalla), torneos: pantalla.torneos.map(({ tnr: t, nombre, elegido }) => ({ tnr: t, nombre, elegido })), leido_en: new Date().toISOString() });
     }
 
     if (cuerpo.action === "guardar") {
@@ -111,7 +124,7 @@ Deno.serve(async (req) => {
       const cambios = lista.map((c: Record<string, unknown>) => ({
         mesa: Number(c?.mesa), blancas: String(c?.blancas ?? ""), negras: String(c?.negras ?? ""), valor: String(c?.valor ?? ""),
       }));
-      const res = await guardarYComprobar(tnr, sid, tnr, ronda, cambios);
+      const res = await guardarYComprobar(tnr, sid, destino || tnr, ronda, cambios);
       if (res.estado !== 200 || !("cuerpo" in res)) return json({ error: (res as { error: string }).error }, res.estado);
       return json(res.cuerpo);
     }

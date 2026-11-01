@@ -39,6 +39,11 @@
                     <div><label for="m-tnr" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Clave de la base de datos</label><input id="m-tnr" type="text" inputmode="numeric" maxlength="7" autocomplete="off" placeholder="1532448" class="w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none"></div>
                     <div class="sm:col-span-2"><label for="m-sid" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">SID (security ID)</label><input id="m-sid" type="password" maxlength="32" autocomplete="off" spellcheck="false" class="w-full px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none"></div>
                 </div>
+                <div id="m-ligados-zona" class="hidden mt-3">
+                    <label for="m-ligados" class="block text-xs font-semibold text-brand-500 dark:text-brand-300 uppercase tracking-wide mb-1">Torneo del grupo</label>
+                    <select id="m-ligados" class="w-full sm:w-auto sm:min-w-[22rem] px-3 py-2 rounded-lg bg-brand-50 dark:bg-brand-950 border border-brand-200 dark:border-brand-700 text-sm focus:ring-2 focus:ring-accent-500 outline-none"></select>
+                    <p class="text-sm text-brand-500 dark:text-brand-300 mt-1">Estos torneos están ligados en un grupo de chess-results: con la misma clave abres cualquiera. Al elegir otro se lee su ronda.</p>
+                </div>
                 <p class="text-sm text-brand-500 dark:text-brand-300 mt-2"><strong>La clave no se guarda.</strong> Se usa para entrar a chess-results y se olvida; no queda en la bitácora ni en ningún archivo. Si cierras o recargas la página, hay que volver a escribirla.</p>
                 <div class="flex flex-wrap gap-2 mt-3">
                     <button type="button" id="m-leer" class="bg-accent-500 hover:bg-accent-600 text-brand-900 font-semibold px-5 py-2 rounded-lg text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400">Leer la ronda</button>

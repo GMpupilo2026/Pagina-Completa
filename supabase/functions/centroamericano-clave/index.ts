@@ -39,6 +39,7 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 import { entrar, leerRonda } from "./chess-results-ingreso.ts";
 import { avance, guardarAvance } from "./avance-ronda.ts";
 import { aBase64, llamarPuente } from "./drive-puente.ts";
+import { leerConCache } from "./lecturas-cache.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
@@ -154,10 +155,12 @@ async function accionesGenerales(accion: string, cuerpo: Record<string, unknown>
         const { data: acc } = await servicio.rpc("centroamericano_acceso", { p_tnr: t });
         const a = Array.isArray(acc) ? acc[0] : acc;
         if (!a) { errores.push({ tnr: t, error: "sin clave cargada" }); continue; }
-        const leida = await leerRonda(a.acceso as string, a.sid as string, t);
-        if ("error" in leida) { errores.push({ tnr: t, error: leida.error }); continue; }
+        // «Actualizar desde chess-results» lee en fresco (la organización lo pidió) y deja la copia compartida al día
+        // para los árbitros (lecturas-cache.ts).
+        const leida = await leerConCache(servicio, { acceso: a.acceso as string, sid: a.sid as string }, t, { maxEdadMs: 0, fresca: true });
+        if (!leida.ok) { errores.push({ tnr: t, error: leida.error }); continue; }
         leidos++;
-        for (const x of lista) await guardarAvance(servicio, x.id, leida.pantalla.ronda, avance(leida.pantalla.mesas, x.mesa_desde, x.mesa_hasta));
+        for (const x of lista) await guardarAvance(servicio, x.id, leida.lectura.ronda, avance(leida.lectura.mesas, x.mesa_desde, x.mesa_hasta));
       }
     };
     await Promise.all([trabajar(), trabajar(), trabajar(), trabajar()]);

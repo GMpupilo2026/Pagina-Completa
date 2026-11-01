@@ -104,7 +104,18 @@
         $("m-guardar-estado").textContent = n ? n + (n === 1 ? " mesa con un resultado por guardar." : " mesas con un resultado por guardar.") : "";
     }
 
-    async function leer() {
+    // Los torneos ligados del grupo: si hay más de uno, un desplegable para pasar de uno a otro.
+    function pintarLigados(torneos, actual) {
+        const sel = $("m-ligados");
+        sel.replaceChildren();
+        const varios = Array.isArray(torneos) && torneos.length > 1;
+        $("m-ligados-zona").classList.toggle("hidden", !varios);
+        if (!varios) return;
+        for (const t of torneos) sel.append(el("option", { value: t.tnr, texto: (t.nombre || "Torneo") + " · " + t.tnr }));
+        sel.value = actual;
+    }
+
+    async function leer(destino) {
         const tnr = tnrEscrito();
         const sid = $("m-sid").value.trim();
         if (!tnr) { avisar("El código de la base de datos son hasta 7 números.", true); return; }
@@ -112,9 +123,10 @@
         $("m-leer").disabled = true;
         $("m-estado").textContent = "Entrando a chess-results…";
         try {
-            const d = await invocar({ action: "leer", tnr, sid });
-            pantalla = { tnr: d.tnr, torneo: d.torneo, ronda: d.ronda, mesas: d.mesas };
+            const d = await invocar(Object.assign({ action: "leer", tnr, sid }, typeof destino === "string" && destino ? { destino } : {}));
+            pantalla = { acceso: tnr, tnr: d.tnr, torneo: d.torneo, ronda: d.ronda, mesas: d.mesas };
             elegido = {};
+            pintarLigados(d.torneos, d.tnr);
             $("m-estado").textContent = d.mesas.length
                 ? "Leída la ronda " + d.ronda + ": " + d.mesas.length + " mesas."
                 : "Se entró a chess-results, pero la ronda " + d.ronda + " no tiene mesas todavía. ¿Ya emparejaste en Swiss-Manager y subiste el torneo?";
@@ -167,7 +179,7 @@
         $("m-guardar-estado").textContent = "Guardando en chess-results y comprobando lo que quedó…";
         try {
             const d = await invocar({
-                action: "guardar", tnr: pantalla.tnr, sid, ronda: pantalla.ronda,
+                action: "guardar", tnr: pantalla.acceso || pantalla.tnr, destino: pantalla.tnr, sid, ronda: pantalla.ronda,
                 cambios: cs.map((c) => ({ mesa: c.mesa, blancas: c.blancas, negras: c.negras, valor: c.valor })),
             });
             informe(d.resultados, d.diferencias);
@@ -313,7 +325,8 @@
         const { data: puede, error } = await sb.rpc("tengo_herramienta", { p_herramienta: "mesa-arbitro" });
         if (error || puede !== true) { $("denegado").classList.remove("hidden"); return; }
         $("app").classList.remove("hidden");
-        $("m-leer").addEventListener("click", leer);
+        $("m-leer").addEventListener("click", () => leer());
+        $("m-ligados").addEventListener("change", (e) => { if (e.target.value) leer(e.target.value); });
         $("m-ver-bitacora").addEventListener("click", async () => {
             const tnr = tnrEscrito();
             if (!tnr) { avisar("El código de la base de datos son hasta 7 números.", true); return; }
