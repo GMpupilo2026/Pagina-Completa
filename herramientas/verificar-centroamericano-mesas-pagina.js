@@ -413,7 +413,7 @@ const CONTRASTE = `(sel) => {
     await p.setViewportSize({ width: 390, height: 800 });
 
     console.log("\n=== Presencia, control de tiempos y avisos sin ruido ===");
-    await p.evaluate(() => { window.__audio = 0; window.AudioContext = window.webkitAudioContext = function () { window.__audio++; }; navigator.vibrate = () => { window.__audio++; return true; }; });
+    await p.evaluate(() => { window.__audio = 0; window.__vib = 0; window.AudioContext = window.webkitAudioContext = function () { window.__audio++; }; navigator.vibrate = () => { window.__vib++; return true; }; });
     igual("cada jugador dice «sin revisar» y la barra cuenta cuántos faltan por revisar", await p.evaluate(() => [document.querySelector('.cam-mesa[data-mesa="2"] .cam-jugador[data-color="blancas"] .cam-presencia-estado').textContent, document.getElementById("presencia-resumen").textContent]), ["Presencia: sin revisar", "Presencia revisada: 0 de 6 jugadores."]);
     await p.click(acc(2, "blancas", "ausente"));
     await p.waitForFunction(() => document.getElementById("presencia-resumen").textContent.includes("no han llegado: 1"));
@@ -451,7 +451,7 @@ const CONTRASTE = `(sel) => {
     await p.click('#mensajes [data-accion="entendido"]');
     await p.waitForFunction(() => document.getElementById("mensajes").hidden);
     await p.click('#control-tiempos [data-accion="cerrar-tiempos"]');
-    igual("NADA suena ni vibra: ni el aviso de la organización ni el de que atendieron la ayuda (no se usó el audio ni la vibración del aparato)", await p.evaluate(() => window.__audio), 0);
+    igual("NADA suena (no se usa el audio) pero la tablet VIBRA cuando llega el aviso de la organización", await p.evaluate(() => [window.__audio, window.__vib]), [0, 1]);
     igual("la ayuda tiene dos modos: «Principal en esta mesa» (va directo a la mesa) y «Necesito ayuda (para mí)»", await p.evaluate(() => [document.querySelector('.cam-mesa[data-mesa="2"] [data-accion="ayuda"]').textContent.includes("Principal en esta mesa"), document.getElementById("pedir-ayuda").textContent.includes("Necesito ayuda (para mí)")]), [true, true]);
 
     console.log("\n=== Un árbitro con mesas de varios torneos ===");
@@ -539,7 +539,7 @@ const CONTRASTE = `(sel) => {
     console.log("\n=== La organización: la ventana y la ronda en curso ===");
     ({ ctx: o.ctx, p: o.p, errores } = await abrir(browser, "centroamericano-mesas.html", dobleOrganizacion(true), { ancho: 1100 }));
     const q = o.p;
-    await q.evaluate(() => { window.__audio = 0; window.AudioContext = window.webkitAudioContext = function () { window.__audio++; }; navigator.vibrate = () => { window.__audio++; return true; }; });
+    await q.evaluate(() => { window.__audio = 0; window.__vib = 0; window.AudioContext = window.webkitAudioContext = function () { window.__audio++; }; navigator.vibrate = () => { window.__vib++; return true; }; });
     await q.waitForSelector(".cam-pedido");
     igual("se ve como un programa: barra de título, menú con ocho pestañas, contenido y barra de estado abajo", await q.evaluate(() => [!!document.querySelector(".cam-ventana .cam-titulo-ventana"), [...document.querySelectorAll(".cam-pestana")].map((b) => b.dataset.panel), !!document.querySelector(".cam-ventana .cam-contenido"), document.querySelector(".cam-ventana > .cam-barra-estado") !== null, document.querySelectorAll("table.cam-rejilla").length > 3]),
         [true, ["ronda", "avisos", "arbitros", "tiempos", "planillas", "claves", "respaldo", "registro"], true, true, true]);
@@ -563,6 +563,7 @@ const CONTRASTE = `(sel) => {
     await q.evaluate(() => window.__nuevoAviso("asig-arb1", null, "Terminó la ronda 3 y revisó.", "finalizo", 3));
     await q.waitForFunction(() => document.querySelector('.cam-pedido[data-estado="abierto"][data-tipo="finalizo"]'), null, { timeout: 15000 });
     igual("quien FINALIZÓ la ronda llega solo, con el contador al día", await q.evaluate(() => [document.querySelector('.cam-pedido[data-estado="abierto"][data-tipo="finalizo"] p.font-bold').textContent, document.getElementById("contador-pedidos").textContent]), ["📋 Árbitro 1 finalizó la ronda 3", "2"]);
+    igual("y al llegar un aviso de un árbitro la tablet de la organización vibra (una vez) y no suena nada", await q.evaluate(() => [window.__vib, window.__audio]), [1, 0]);
     await q.click('.cam-pedido[data-estado="abierto"][data-tipo="finalizo"] [data-accion="atender"]');
     await q.waitForFunction(() => !document.querySelector('.cam-pedido[data-estado="abierto"][data-tipo="finalizo"]'));
     await q.click('.cam-pedido[data-estado="abierto"][data-tipo="ayuda"] [data-accion="atender"]');

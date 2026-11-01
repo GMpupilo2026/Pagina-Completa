@@ -84,10 +84,12 @@
     const nombreDe = (m, color) => (color === "blancas" ? m.blancas : m.negras);
     const hora = (x) => window.HoraCR.hora(x);
 
-    // ------------------------------------------------------------- pantalla encendida (SIN sonido ni vibración)
+    // ------------------------------------------------------------- avisos sin ruido, y pantalla encendida
 
-    // En un torneo no puede haber ruido: los avisos de la organización se ven (arriba, pegados, con
-    // un parpadeo suave y un número en el título de la pestaña) pero NUNCA suenan ni vibran.
+    // En un torneo no puede haber ruido: los avisos de la organización NUNCA suenan. Se ven (arriba,
+    // pegados, con un parpadeo suave y un número en el título de la pestaña) y la tablet VIBRA, que
+    // no hace ruido en la sala (lo pidió el dueño: vibración sí, sonido no).
+    function vibrar() { try { if (navigator.vibrate) navigator.vibrate([200, 100, 200]); } catch (e) { /* sin vibración */ } }
     const TITULO = document.title;
     function marcarTitulo() { document.title = (pendientes.length ? "(" + pendientes.length + ") " : "") + TITULO; }
     async function mantenerEncendida() {
@@ -567,9 +569,11 @@
         pendientes = d.mensajes || [];
         const nuevos = pendientes.filter((m) => !vistosMensajes.has(m.id));
         nuevos.forEach((m) => vistosMensajes.add(m.id));
+        if (nuevos.length) vibrar();
         if (nuevos.some((m) => m.control_tiempos)) abrirTiempos(true);
         const estabaAbierta = ayuda && ayuda.estado === "abierto";
         ayuda = d.ayuda || null;
+        if (estabaAbierta && ayuda && ayuda.estado === "atendido") vibrar();
         abiertas = d.abiertas || (ayuda && ayuda.estado === "abierto" ? [ayuda.mesa] : []);
         pintarMensajes();
         marcarTitulo();

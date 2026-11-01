@@ -145,7 +145,7 @@
         const ultima = copias.filter((c) => c.anillo !== "d").map((c) => c.creada).sort().pop();
         $("eg-copia").textContent = ultima ? "Última copia: " + C.hace(ultima, new Date()) : "Sin copias todavía";
         $("eg-reloj").textContent = ahoraTxt();
-        // Sin sonido: la barra de abajo parpadea suave mientras haya avisos abiertos.
+        // Sin sonido (la vibración sí): la barra de abajo parpadea suave mientras haya avisos abiertos.
         $("estado-general").dataset.alerta = n ? "si" : "no";
         const c = $("contador-pedidos");
         c.hidden = n === 0;
@@ -271,6 +271,8 @@
         avisos = data || [];
         await cargarAvance();
         const ids = new Set(abiertosDeArbitros().map((f) => f.id));
+        // Un aviso nuevo hace vibrar la tablet (no hace ruido); la primera lectura no vibra.
+        if (pedidosVistos !== null && [...ids].some((id) => !pedidosVistos.has(id))) { try { if (navigator.vibrate) navigator.vibrate([200, 100, 200]); } catch (e) { /* sin vibración */ } }
         pedidosVistos = ids;
         pintarRonda();
         marcarPedidos();

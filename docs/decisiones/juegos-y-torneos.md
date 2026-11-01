@@ -8704,12 +8704,14 @@ terminar y se anotan jugada y tiempos, por si un reloj falla) y que **el árbitr
 activarlo**; que la ayuda sea **de las dos formas** (en una mesa concreta, o ayuda para el
 árbitro); y que **los avisos no hagan ruido: en un torneo no se puede**.
 
-- **Sin ruido, en las dos páginas.** Se quitó todo el audio (WebAudio) y la vibración, también el
-  botón «Activar el sonido» de la organización. Los avisos se ven: arriba y pegados en la tablet
+- **Sin ruido, en las dos páginas, pero con vibración.** Se quitó todo el audio (WebAudio), también el
+  botón «Activar el sonido» de la organización; **la vibración se queda** (lo pidió el dueño: no hace
+  ruido en la sala): la tablet vibra cuando llega un aviso nuevo o cuando atienden una ayuda, y la de
+  la organización cuando llega un aviso de un árbitro (la primera lectura no vibra). Los avisos se ven: arriba y pegados en la tablet
   del árbitro (con un parpadeo suave que se apaga con `prefers-reduced-motion`), y en la
   organización el número de la pestaña, el título del navegador y la barra de estado, que parpadea
   mientras haya algo abierto. El verificador falla si en las dos páginas aparece `AudioContext`,
-  `createOscillator`, `vibrate` o `new Audio(`.
+  `createOscillator` o `new Audio(`, y exige que sí estén `navigator.vibrate`.
 - **Un árbitro, varios torneos** (`centroamericano_asignaciones.persona`, un uuid que junta
   enlaces). Cada enlace sigue siendo UN torneo y UN rango, con su avance, su lista previa y su
   «finalizar»: es la unidad que ya funcionaba. `persona` solo los junta: el árbitro abre un QR y
