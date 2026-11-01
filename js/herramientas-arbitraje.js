@@ -442,6 +442,23 @@
             ],
         },
         {
+            id: "mesa-arbitro",
+            tema: "arbitraje",
+            emoji: "♟️",
+            nombre: "Mesa del árbitro: resultados y bitácora",
+            corto: "Mesa del árbitro",
+            href: "mesa-arbitro.html",
+            disponible: true,
+            resumen: "Para un torneo suizo individual publicado en chess-results: lee las mesas de la ronda abierta, anota los resultados, mándalos con la clave del torneo y lleva tu bitácora de árbitro, con su hora, en PDF o Word.",
+            puntos: [
+                "Entra con las mismas dos claves de «Enter Results Online» de chess-results (el código de la base de datos y el SID) y trae las mesas de la ronda abierta.",
+                "Antes de guardar comprueba que sea la misma ronda y los mismos jugadores que viste, y después vuelve a leer chess-results: solo dice «guardado» si el resultado está ahí.",
+                "La clave no se guarda: se usa para entrar y se olvida.",
+                "La bitácora anota cada resultado y cada corrección (con el resultado anterior), las incidencias con su artículo y las notas. Solo se agrega: nada se edita ni se borra.",
+                "La bitácora sale en PDF o en Word, con la marca de agua de Ajedrez Integral y el espacio para tu firma.",
+            ],
+        },
+        {
             id: "acta-jde",
             tema: "jde",
             emoji: "📝",

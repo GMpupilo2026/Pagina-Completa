@@ -1,6 +1,6 @@
 # Retrato del esquema de la Academia (bgtijpimpcokxatxxbki): public e interno.
 # Lo arma herramientas/inventario-esquema.sql; no se edita a mano.
-# al-dia-con: 20261101013000
+# al-dia-con: 20261101035107
 tabla  Ejercicios Lichess  rls=true
 tabla  _foto_rls_tmp  rls=false
 tabla  _pedidos_elo  rls=false
@@ -14,6 +14,7 @@ tabla  analisis_partidas_alumno  rls=true
 tabla  arbitraje_casos_var  rls=true
 tabla  arbitraje_consulta_config  rls=true
 tabla  arbitrajes_publicos  rls=true
+tabla  arbitro_bitacora  rls=true
 tabla  arbitros_cr  rls=true
 tabla  arbitros_cr_avisos_enviados  rls=true
 tabla  arbitros_cr_cargos  rls=true
@@ -322,6 +323,19 @@ columna  arbitrajes_publicos.retroalimentacion  text
 columna  arbitrajes_publicos.revisado  boolean
 columna  arbitrajes_publicos.revisado_at  timestamp with time zone
 columna  arbitrajes_publicos.revisado_por  uuid
+columna  arbitro_bitacora.anterior  text
+columna  arbitro_bitacora.articulo  text
+columna  arbitro_bitacora.creada_por  uuid
+columna  arbitro_bitacora.enviado  boolean
+columna  arbitro_bitacora.id  uuid
+columna  arbitro_bitacora.mesa  integer
+columna  arbitro_bitacora.ocurrio  timestamp with time zone
+columna  arbitro_bitacora.resultado  text
+columna  arbitro_bitacora.ronda  integer
+columna  arbitro_bitacora.texto  text
+columna  arbitro_bitacora.tipo  text
+columna  arbitro_bitacora.tnr  text
+columna  arbitro_bitacora.torneo  text
 columna  arbitros_cr.federacion  text
 columna  arbitros_cr.fide_id  integer
 columna  arbitros_cr.nombre  text
@@ -2684,6 +2698,8 @@ politica  arbitraje_consulta_config  arbitraje_consulta_config_select  SELECT
 politica  arbitrajes_publicos  arbitrajes_publicos_insert  INSERT
 politica  arbitrajes_publicos  arbitrajes_publicos_select  SELECT
 politica  arbitrajes_publicos  arbitrajes_publicos_update  UPDATE
+politica  arbitro_bitacora  arbitro_bitacora_anotar  INSERT
+politica  arbitro_bitacora  arbitro_bitacora_ver  SELECT
 politica  arbitros_cr  arbitros_cr_con_herramienta  SELECT
 politica  arbitros_cr_avisos_enviados  arbitros_cr_avisos_enviados_admin  SELECT
 politica  arbitros_cr_cargos  arbitros_cr_cargos_con_herramienta  SELECT
@@ -3309,6 +3325,8 @@ indice  arbitraje_consulta_config  arbitraje_consulta_config_pkey
 indice  arbitrajes_publicos  arbitrajes_publicos_pendientes
 indice  arbitrajes_publicos  arbitrajes_publicos_pkey
 indice  arbitrajes_publicos  arbitrajes_publicos_revisado_por_fk
+indice  arbitro_bitacora  arbitro_bitacora_persona_torneo_idx
+indice  arbitro_bitacora  arbitro_bitacora_pkey
 indice  arbitros_cr  arbitros_cr_pkey
 indice  arbitros_cr_avisos_enviados  arbitros_cr_avisos_enviados_pkey
 indice  arbitros_cr_cargos  arbitros_cr_cargos_fide_id
@@ -3971,6 +3989,7 @@ grant  arbitrajes_publicos  authenticated  SELECT
 grant  arbitrajes_publicos  authenticated  TRIGGER
 grant  arbitrajes_publicos  authenticated  TRUNCATE
 grant  arbitrajes_publicos  authenticated  UPDATE
+grant  arbitro_bitacora  authenticated  SELECT
 grant  arbitros_cr  authenticated  REFERENCES
 grant  arbitros_cr  authenticated  SELECT
 grant  arbitros_cr  authenticated  TRIGGER
