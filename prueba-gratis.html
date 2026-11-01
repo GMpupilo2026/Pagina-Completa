@@ -115,6 +115,16 @@
                 <button type="button" id="prueba-otra" class="mt-3 text-sm font-semibold underline text-brand-700 dark:text-brand-200 hover:text-accent-600">Crear otra prueba</button>
             </div>
 
+            <!-- Solo quien administra: las cuentas de invitado de 5 días que la
+                 gente se abrió sola desde la página del Centroamericano
+                 (pruebas_gratis con origen). Las pinta js/prueba-gratis.js. -->
+            <section id="invitados" class="hidden mt-6 bg-white dark:bg-brand-900 rounded-2xl shadow-xl p-6" aria-labelledby="invitados-titulo">
+                <h2 id="invitados-titulo" class="font-serif text-xl font-bold text-brand-800 dark:text-white"><span aria-hidden="true">🏆 </span>Cuentas de invitado del Centroamericano</h2>
+                <p class="text-sm text-brand-600 dark:text-brand-300 mt-1">Las de 5 días que cada persona se abrió sola desde la página del torneo, del 1 al 9 de noviembre. Se cierran solas; con un paquete vuelven a entrar con el mismo usuario.</p>
+                <p id="invitados-resumen" class="mt-3 font-semibold text-brand-800 dark:text-white" role="status"></p>
+                <ul id="invitados-lista" class="mt-3 divide-y divide-brand-100 dark:divide-brand-800 text-sm"></ul>
+            </section>
+
             <p class="text-center mt-6">
                 <a href="precios.html" class="text-sm text-brand-600 dark:text-brand-300 hover:text-accent-500 transition-colors">← Ver precios</a>
             </p>

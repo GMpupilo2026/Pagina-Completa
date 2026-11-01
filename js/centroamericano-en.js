@@ -172,6 +172,7 @@ window.CentroamericanoEN = {
     "Las rondas, el Rapid, el Blitz y las ceremonias, con un aviso 30 minutos antes de cada ronda.": "The rounds, the Rapid, the Blitz and the ceremonies, with a reminder 30 minutes before every round.",
 
     // Las ventanas: lo común
+    "Pruébala gratis →": "Try it free →",
     "Cerrar": "Close",
     "Abrir en otra pestaña ↗": "Open in a new tab ↗",
 

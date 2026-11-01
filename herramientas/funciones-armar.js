@@ -54,6 +54,10 @@ const FUNCIONES = {
   "jdn-drive": ["hora-cr.ts"],
   // Pública (verify_jwt en false): ver su cabecera.
   "prueba-gratis": ["usuario-alumno.ts"],
+  // Las cuentas de invitado del Centroamericano (verify_jwt en false: la llama
+  // quien todavía no tiene cuenta; las fechas y el freno los pone la base).
+  // Ver su cabecera.
+  "cuenta-invitado": ["usuario-alumno.ts"],
   // La pizarra de la sala de cine: lee chess-results. Ver su cabecera.
   "pizarra-torneo": [],
   // «Busca a tu jugador», el medallero y los avisos de ronda del

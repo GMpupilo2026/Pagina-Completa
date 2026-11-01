@@ -113,9 +113,16 @@
     return "https://wa.me/" + (digitos.length === 8 ? "506" + digitos : digitos);
   }
 
+  // «prueba gratis» o, la que se abrió sola en el festival, «cuenta gratis del Centroamericano».
+  function nombrePrueba(a) {
+    return a && a.origen === "centroamericano-2026" ? "cuenta gratis del Centroamericano" : "prueba gratis";
+  }
+
   function porQue(a) {
     if (a.motivo === "prueba_vencida") {
-      return "Tu prueba gratis de 3 días terminó el " + fechaHora(a.vence) + ".";
+      // La de 5 días del Centroamericano dice cuál fue (mi_acceso trae
+      // `origen` y `dias_total`); las de antes de eso no los traen: 3 días.
+      return "Tu " + nombrePrueba(a) + " de " + (a.dias_total || 3) + " días terminó el " + fechaHora(a.vence) + ".";
     }
     if (a.motivo === "temporal_vencida") {
       return "Tu cuenta temporal" + (a.detalle ? " (" + a.detalle + ")" : "") + " se cerró el " + dia(a.vence) + ".";
@@ -214,7 +221,7 @@
     const h1 = document.createElement("h1");
     h1.className = "font-serif text-2xl font-bold text-brand-800 dark:text-white mb-2";
     h1.tabIndex = -1;
-    h1.textContent = a.motivo === "prueba_vencida" ? "Tu prueba gratis terminó"
+    h1.textContent = a.motivo === "prueba_vencida" ? "Tu " + nombrePrueba(a) + " terminó"
       : a.motivo === "temporal_vencida" ? "Tu cuenta temporal se cerró"
       : "Tu acceso no está activo";
     const p = document.createElement("p");
@@ -263,7 +270,7 @@
 
     if (a.vigente) {
       if (enPanel() && a.motivo === "prueba" && typeof a.horas === "number") {
-        franja("Estás en tu prueba gratis: te quedan " + cuantoQueda(a.horas) + " (hasta el " + fechaHora(a.vence) + ").", await whatsapp(sb), false, "prueba");
+        franja("Estás en tu " + nombrePrueba(a) + ": te quedan " + cuantoQueda(a.horas) + " (hasta el " + fechaHora(a.vence) + ").", await whatsapp(sb), false, "prueba");
         return;
       }
       if (enPanel() && a.motivo === "temporal" && typeof a.dias === "number" && a.dias <= DIAS_AVISO) {

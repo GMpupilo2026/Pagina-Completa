@@ -1642,6 +1642,7 @@ columna  pruebas_gratis.aceptado_en  timestamp with time zone
 columna  pruebas_gratis.alumno_id  uuid
 columna  pruebas_gratis.empieza  timestamp with time zone
 columna  pruebas_gratis.ip  text
+columna  pruebas_gratis.origen  text
 columna  pruebas_gratis.privacidad_version  text
 columna  pruebas_gratis.terminos_version  text
 columna  pruebas_gratis.vence  timestamp with time zone
@@ -2215,6 +2216,8 @@ funcion  correos_de_supervision(p_alumno uuid)  definer  anon=false  auth=false
 funcion  crear_examen(p_alumnos uuid[], p_titulo text, p_instrucciones text, p_minutos integer, p_vence timestamp with time zone, p_items jsonb, p_salidas_permitidas integer, p_disponible_desde timestamp with time zone)  invoker  anon=true  auth=true
 funcion  crear_relevo(p_blancas uuid[], p_negras uuid[])  definer  anon=false  auth=true
 funcion  crear_tarea(p_alumnos uuid[], p_titulo text, p_instrucciones text, p_vence timestamp with time zone, p_items jsonb, p_disponible_desde timestamp with time zone)  invoker  anon=true  auth=true
+funcion  cuenta_invitado_activar(p_alumno uuid, p_nombre text, p_ip text, p_privacidad text, p_terminos text)  definer  anon=false  auth=false
+funcion  cuenta_invitado_frenar(p_ip text)  definer  anon=false  auth=false
 funcion  cuentas_temporales_fijar(p_personas uuid[], p_vence timestamp with time zone, p_detalle text)  definer  anon=false  auth=true
 funcion  cuestionario_de_tarea(p_item uuid)  definer  anon=false  auth=true
 funcion  dejar_volver_a_la_clase(p_clase uuid, p_alumno uuid)  definer  anon=false  auth=true
@@ -2342,6 +2345,7 @@ funcion  interno.coordinadores_de(p_persona uuid)  definer  anon=false  auth=fal
 funcion  interno.corrijo_cobros_de(p_alumno uuid)  definer  anon=false  auth=true
 funcion  interno.cuaderno_al_cambiar()  invoker  anon=false  auth=false
 funcion  interno.cuaderno_tope()  definer  anon=false  auth=false
+funcion  interno.cuentas_invitado_abiertas(p_hoy date)  invoker  anon=false  auth=false
 funcion  interno.cuestionario_del_renglon(p_item uuid)  definer  anon=false  auth=false
 funcion  interno.dias_entrenados(p_alumno uuid, p_lunes date)  definer  anon=false  auth=false
 funcion  interno.emitir_cobros(p_hasta date, p_suscripcion uuid)  definer  anon=false  auth=false

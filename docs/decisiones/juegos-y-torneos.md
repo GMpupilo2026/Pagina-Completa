@@ -11090,6 +11090,8 @@ la lista única `js/avatar-profe-oscar.js`.
 - **Un detalle que costó:** el botón de una pregunta ya no está en la página
   cuando el clic llega al `document` (el panel se repintó), y parecía un clic
   afuera que cerraba el panel. Por eso se mira `e.target.isConnected`.
+- **Siete preguntas:** la séptima, «¿Quiénes hacen esta página?», lleva a
+  «Conoce la Academia».
 - **Los idiomas:** español e inglés en el archivo; francés en
   `CentroamericanoFR.profe`, con las mismas claves. El traductor de la página
   no toca el botón ni el panel (`data-no-traducir`).
@@ -11099,6 +11101,26 @@ su botón, Escape, el foco, que no diga «Oscar», la cara del buscador vista en
 `::before`) y `verificar-centroamericano-ejercicios.js` (las caras de los
 ejercicios y el panel en francés). Los rompí a propósito (sin `isConnected`,
 con «profe Oscar» en el título, sin el `data-profe`) y saltaron.
+
+### Conoce la Academia y la cuenta gratis de 5 días
+
+Lo pidió el dueño: que la gente que entra a la página haga publicidad a la
+Academia. Debajo de las fichas va «Conoce la Academia»: qué hace la Academia
+todo el año, en cuatro tarjetas, y la cuenta gratis de 5 días que cada uno se
+abre solo del 1 al 9 de noviembre, con los precios y el WhatsApp. La franja de
+arriba lleva «Pruébala gratis →» y el profe tiene una séptima pregunta,
+«¿Quiénes hacen esta página?».
+
+Las imágenes que se comparten («¡Hoy juega!», «Así terminó mi torneo», la de la
+delegación) ya llevaban el logo, la marca de agua y la dirección de la página,
+que ahora termina en esta sección: no se tocaron.
+
+El detalle de la cuenta está en «Las cuentas de invitado del Centroamericano»
+(cobros-acceso-y-tienda.md).
+
+**Lo que no se hizo, a propósito:** usar los avisos al celular ni los correos
+de quien sigue a un jugador para mandar publicidad. Esa gente dio permiso solo
+para los avisos del torneo, y la política de privacidad lo dice así.
 
 ### Mientras esperas
 

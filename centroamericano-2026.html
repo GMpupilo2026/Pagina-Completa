@@ -116,6 +116,7 @@
                 <span class="font-serif text-xl md:text-2xl font-bold text-white">Academia Ajedrez <span class="text-accent-400">Integral</span></span>
             </a>
             <p class="text-sm text-brand-200">Un servicio de la academia para jugadores y familias.</p>
+            <a href="#conoce" class="cac-academia-conoce">Pruébala gratis →</a>
         </div>
     </section>
 
@@ -368,6 +369,25 @@
             </a>
         </div>
     </section>
+
+    <!-- «Conoce la Academia» y la cuenta gratis de 5 días: las arma
+         js/centroamericano-academia.js (la cuenta la crea la Edge Function
+         cuenta-invitado; las fechas y los 5 días los decide la base). Sin
+         JavaScript queda el enlace a los precios. -->
+    <section id="conoce" class="cac-conoce scroll-mt-24" aria-labelledby="conoce-titulo" data-no-traducir>
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+            <h2 id="conoce-titulo" class="cac-conoce-titulo">Academia Ajedrez Integral</h2>
+            <p class="cac-conoce-intro">Clases en línea, entrenamiento y herramientas para torneos. <a href="precios.html" class="underline">Ver planes y precios</a>.</p>
+        </div>
+    </section>
+
+    <dialog id="cuenta-gratis" class="ficha-dialogo w-[calc(100%-1rem)] sm:w-[calc(100%-2rem)] max-w-xl max-h-[92vh] rounded-2xl shadow-2xl p-0 bg-brand-50 dark:bg-brand-950 text-brand-800 dark:text-brand-100 backdrop:bg-black/60" aria-labelledby="cuenta-gratis-titulo">
+        <div class="sticky top-0 z-10 flex items-center gap-3 px-4 sm:px-6 py-3 bg-white dark:bg-brand-900 border-b border-brand-100 dark:border-brand-800">
+            <h2 id="cuenta-gratis-titulo" data-no-traducir class="font-serif text-xl md:text-2xl font-bold text-brand-800 dark:text-white flex-1 min-w-0">Tu cuenta gratis de 5 días</h2>
+            <button type="button" data-cerrar class="shrink-0 bg-brand-800 hover:bg-brand-700 text-white font-semibold text-sm px-4 py-2 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2">Cerrar</button>
+        </div>
+        <div id="cuenta-gratis-contenido" data-no-traducir class="px-4 sm:px-6 pt-4 pb-6"></div>
+    </dialog>
 
     <!-- Contacta a la organización: los nombres completos y los cargos salen de
          las bases (Comité organizador) y de lo que dio el dueño; los teléfonos,
@@ -1025,6 +1045,8 @@
     <script src="js/tablero-pregunta.js"></script>
     <script src="js/centroamericano-ejercicios.js"></script>
     <script src="js/avatar-profe-oscar.js"></script>
+    <script src="js/legal-version.js"></script>
+    <script src="js/centroamericano-academia.js"></script>
     <script src="js/centroamericano-profe.js"></script>
 </body>
 </html>

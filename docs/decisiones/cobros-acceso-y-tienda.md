@@ -1038,6 +1038,85 @@ administración, `precios.html` y el aviso. Está probado que falla de verdad:
 con la pregunta por la prueba después del interruptor, con el desbloqueo antes
 de activar y sin la comprobación de `is_admin`, salta.
 
+## Las cuentas de invitado del Centroamericano
+
+Del 1 al 9 de noviembre de 2026, **cualquiera se abre sola una cuenta de 5
+días** desde `centroamericano-2026.html`, sin que intervenga quien administra.
+Lo pidió el dueño del sitio para que los que entran a la página del torneo
+conozcan la Academia: «que se las puedan hacer automáticamente sin yo
+intervenir, que se almacene en cuentas de invitado para llevar ese control y
+que se cierren automáticamente». Es la excepción a «la prueba la crea
+administración» (ver «La prueba gratis de 3 días»), con fecha de fin y todo en
+la base.
+
+- **Es la prueba gratis con otra puerta, en la misma tabla.**
+  `pruebas_gratis` lleva `origen = 'centroamericano-2026'` y vence a los 5
+  días. Así `acceso_vigente()` la corta sin cambiar una línea: a los 5 días se
+  le cierran las políticas restrictivas, los triggers y el candado de los
+  cursos, aunque el interruptor esté apagado. Con un paquete vigente vuelve a
+  entrar con el mismo usuario y su progreso.
+- **La crea la Edge Function `cuenta-invitado`, con `verify_jwt` en false**
+  (quien la llama todavía no tiene cuenta). Mismo orden que la prueba: freno →
+  crear bloqueada → activar → desbloquear, y si algo falla la borra.
+- **Las fechas, el freno y los 5 días los decide la base.**
+  `cuenta_invitado_frenar()` rechaza fuera de fechas y pasa por el freno de
+  envíos públicos (tipo `cuenta_evento`: 20 por IP y 150 en total por hora).
+  `cuenta_invitado_activar()` vuelve a mirar las fechas, exige la aceptación
+  legal y una cuenta de alumno creada hace menos de 10 minutos. Las fechas están
+  una sola vez, en `interno.cuentas_invitado_abiertas(p_hoy)`, que recibe el día
+  para poder probarla con cualquiera. Las dos funciones solo las llama la
+  service role.
+- **El freno es más holgado que el de la prueba (3 por IP)** a propósito: en el
+  Gimnasio Nacional media sala sale a internet por la misma IP.
+- **La página** (`js/centroamericano-academia.js`) tiene la sección «Conoce la
+  Academia» y la ventana `#cuenta-gratis`:
+  - pide nombre y contraseña, con la casilla de la Política y de los Términos
+    (`terminos.html#cuenta-centroamericano`);
+  - al crearla enseña el usuario y la contraseña para anotarlos, porque no hay
+    correo para recuperarla;
+  - «Entrar a la Academia» inicia sesión con ellos.
+
+  La fecha que mira la página solo decide qué se pinta: fuera de fechas, el
+  WhatsApp en lugar del formulario.
+- **Lo que jugó como invitado no se pierde.** Las estrellas de «Aprende a
+  jugar» y Batalla naval suben solas a la cuenta al entrar: `js/progreso-usuario.js`
+  junta lo del aparato con lo de la cuenta. La franja de esos juegos invita a
+  abrirla (`js/invitado-centroamericano.js`).
+- **El panel dice cuál es.** `mi_acceso()` devuelve `origen` y `dias_total`, y
+  `js/acceso-vigente.js` dice «tu cuenta gratis del Centroamericano» y «de 5
+  días», no «prueba gratis de 3 días».
+- **El control: la lista de administración.** En `prueba-gratis.html`, la cara
+  de quien administra, «Cuentas de invitado del Centroamericano» dice cuántas
+  hay, abiertas y cerradas. Cada cuenta lleva su nombre, su usuario, cuándo se
+  abrió y cuándo se cierra, y el estado va escrito, no solo en color. Las lee
+  de mil en mil.
+
+Comprobado en una transacción revertida, antes de aplicarla:
+- las fechas (31/10 y 10/11 no, 1/11 y 9/11 sí);
+- hoy, 31 de octubre, el freno y la activación rechazan;
+- `anon` y `authenticated` no pueden llamar a ninguna de las dos;
+- con una fila de 5 días, `mi_acceso()` da `prueba`, `origen` y `dias_total` 5,
+  y `acceso_vigente()` da true;
+- vencida, da `prueba_vencida` y false;
+- el check rechaza otro origen.
+
+La función, llamada de verdad el 31 de octubre: rechaza por las fechas (429) y
+por el nombre (400).
+
+**Al tocarlas, correr `node herramientas/verificar-cuenta-invitado.js`.** Lee
+la migración y la función y prueba la página con la función de mentira:
+- la sección;
+- la ventana antes, durante y después del festival;
+- los errores y el freno;
+- la cuenta creada y el francés;
+- la invitación desde los juegos.
+
+Está probado que falla de verdad. Saltó con:
+- la cuenta sin crear bloqueada;
+- la página con otras fechas que la base;
+- otra versión legal en el pedido;
+- la invitación sin `target="_top"`.
+
 ## Las cuentas temporales
 
 Una cuenta de alumno que **se cierra sola en una fecha**. La primera vez fue
